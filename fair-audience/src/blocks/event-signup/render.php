@@ -439,13 +439,10 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 			}
 		}
 
-		$tt_price = null;
-		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$tt_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type(
-				$tt->id,
-				$participant ? (int) $participant->id : null
-			);
-		}
+		$tt_price = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type(
+			$tt->id,
+			$participant ? (int) $participant->id : null
+		);
 		if ( null === $tt_price ) {
 			continue;
 		}
@@ -634,8 +631,8 @@ if ( $has_ticket_types ) {
 	if ( null === $signup_price ) {
 		$signup_price = $ticket_types_for_display[0]['price'];
 	}
-} elseif ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-	$signup_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price(
+} elseif ( $pricing_event_date_id ) {
+	$signup_price = \FairAudience\Services\SignupPriceResolver::resolve_price(
 		(int) $pricing_event_date_id,
 		$participant ? (int) $participant->id : null
 	);
@@ -688,10 +685,10 @@ if ( null !== $signup_price ) {
 		if ( $signup_price > 0 ) {
 			// Resolved price is positive — connector required.
 			$payment_unavailable = true;
-		} elseif ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+		} else {
 			// Resolved price is zero but event may carry a paid base price
 			// (e.g. 100%-discounted or pricing-service glitch).
-			$payment_unavailable = \FairEventsExperimental\Services\EventSignupPricing::has_paid_price_configured(
+			$payment_unavailable = \FairAudience\Services\SignupPriceResolver::has_paid_price_configured(
 				(int) $pricing_event_date_id
 			);
 		}

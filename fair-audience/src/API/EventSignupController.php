@@ -913,11 +913,8 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Recompute the per-instance price server-side; never trust a client amount.
-		$unit_price = 0.0;
-		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$resolved   = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
-			$unit_price = null !== $resolved ? (float) $resolved : 0.0;
-		}
+		$resolved     = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
+		$unit_price   = null !== $resolved ? (float) $resolved : 0.0;
 		$count        = count( $pending_occurrences );
 		$total_amount = $unit_price * $count;
 
@@ -1894,16 +1891,17 @@ class EventSignupController extends WP_REST_Controller {
 	 */
 	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $invitation_token = '', $chosen_amount = null ) {
 		$final_price = null;
-		if ( $event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+		if ( $event_date_id ) {
 			if ( $ticket_type_id ) {
-				$final_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type_id, $participant->id );
-			} elseif ( \FairEventsExperimental\Services\EventSignupPricing::resolve_sliding_scale( $event_date_id ) ) {
+				$final_price = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type_id, $participant->id );
+			} elseif ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class )
+				&& \FairEventsExperimental\Services\EventSignupPricing::resolve_sliding_scale( $event_date_id ) ) {
 				// Sliding scale replaces the fixed base-price path; group discounts
 				// (resolve_price()) do not stack on a buyer-chosen amount. Never
 				// trust the client value — always re-clamp against stored [min, max].
 				$final_price = \FairEventsExperimental\Services\EventSignupPricing::clamp_chosen_amount( $event_date_id, $chosen_amount );
 			} else {
-				$final_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price( $event_date_id, $participant->id );
+				$final_price = \FairAudience\Services\SignupPriceResolver::resolve_price( $event_date_id, $participant->id );
 			}
 		}
 
@@ -1933,8 +1931,7 @@ class EventSignupController extends WP_REST_Controller {
 		// Determine whether a price is configured for this event regardless of
 		// how the resolution turned out (discount-to-zero, service unavailable, etc.).
 		$has_paid_price_configured = $event_date_id
-			&& class_exists( \FairEventsExperimental\Services\EventSignupPricing::class )
-			&& \FairEventsExperimental\Services\EventSignupPricing::has_paid_price_configured(
+			&& \FairAudience\Services\SignupPriceResolver::has_paid_price_configured(
 				(int) $event_date_id,
 				$ticket_type_id
 			);
@@ -2149,11 +2146,8 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
-		$series_price = 0.0;
-		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$resolved     = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
-			$series_price = null !== $resolved ? (float) $resolved : 0.0;
-		}
+		$resolved     = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
+		$series_price = null !== $resolved ? (float) $resolved : 0.0;
 
 		$ledger = new EventParticipantTransactionRepository();
 
@@ -2912,8 +2906,7 @@ class EventSignupController extends WP_REST_Controller {
 					$resume_url = add_query_arg( 'resume', $resume_token, $token_url );
 
 					$is_paid = $event_date_id
-						&& class_exists( \FairEventsExperimental\Services\EventSignupPricing::class )
-						&& \FairEventsExperimental\Services\EventSignupPricing::has_paid_price_configured(
+						&& \FairAudience\Services\SignupPriceResolver::has_paid_price_configured(
 							(int) $event_date_id,
 							$ticket_type_id ? (int) $ticket_type_id : null
 						);
