@@ -553,28 +553,66 @@ describe('EventTickets — save button and dirty tracking (#987)', () => {
 	});
 });
 
-describe('EventTickets — payment-not-configured notice (#988)', () => {
+describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 	const originalFairPaymentsConnector = window.fairPaymentsConnector;
+
+	// A ticket type carrying a price > 0 through the prices map, so
+	// hasPurchasablePrice is true and the warning is relevant.
+	const initialDataWithPaidTicket = {
+		...emptyInitialData,
+		ticket_types: [initialDataWithTicketType.ticket_types[0]],
+		sale_periods: [
+			{ id: 10, name: '', sale_start: '', sale_end: '', sort_order: 0 },
+		],
+		prices: [
+			{
+				ticket_type_id: 1,
+				sale_period_id: 10,
+				price: 15,
+				capacity: null,
+			},
+		],
+	};
+
+	// Only an add-on carries a price; no ticket-type price at all.
+	const initialDataWithPaidAddon = {
+		...emptyInitialData,
+		ticket_types: [initialDataWithTicketType.ticket_types[0]],
+		options: [
+			{
+				name: 'Dinner',
+				short_name: '',
+				price: 20,
+				discounted_price: null,
+				capacity: null,
+				collaborator_ids: [],
+				period_prices: [],
+				sort_order: 0,
+			},
+		],
+	};
+
+	const mollieRegex =
+		/Paid tickets won't be sold until Mollie payments are configured/i;
+	const missingPluginRegex =
+		/Paid tickets need the Fair Payments Connector plugin/i;
 
 	afterEach(() => {
 		window.fairPaymentsConnector = originalFairPaymentsConnector;
 	});
 
-	it('shows the notice when payments are unconfigured and tickets exist', () => {
+	it('shows the Mollie notice when the connector is active but unconfigured and a price > 0', () => {
 		window.fairPaymentsConnector = {
+			connectorActive: true,
 			paymentConfigured: false,
 			settingsUrl:
 				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
 		};
 		const { container } = renderTickets({
-			initialData: initialDataWithTicketType,
+			initialData: initialDataWithPaidTicket,
 		});
 
-		expect(
-			within(container).getByText(
-				/Prices are set, but payments aren't configured/i
-			)
-		).toBeInTheDocument();
+		expect(within(container).getByText(mollieRegex)).toBeInTheDocument();
 		const link = within(container).getByRole('link', {
 			name: 'Set up Mollie',
 		});
@@ -584,48 +622,74 @@ describe('EventTickets — payment-not-configured notice (#988)', () => {
 		);
 	});
 
-	it('does not show the notice when there are no tickets yet', () => {
-		window.fairPaymentsConnector = {
-			paymentConfigured: false,
-			settingsUrl:
-				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
-		};
-		const { container } = renderTickets({ initialData: emptyInitialData });
-
-		expect(
-			within(container).queryByText(
-				/Prices are set, but payments aren't configured/i
-			)
-		).not.toBeInTheDocument();
-	});
-
-	it('does not show the notice when payments are configured', () => {
-		window.fairPaymentsConnector = {
-			paymentConfigured: true,
-			settingsUrl:
-				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
-		};
+	it('shows the missing-plugin notice when the connector is inactive and a price > 0', () => {
+		window.fairPaymentsConnector = { currency: 'EUR' };
 		const { container } = renderTickets({
-			initialData: initialDataWithTicketType,
+			initialData: initialDataWithPaidTicket,
 		});
 
 		expect(
-			within(container).queryByText(
-				/Prices are set, but payments aren't configured/i
-			)
+			within(container).getByText(missingPluginRegex)
+		).toBeInTheDocument();
+		// No settings link when the plugin isn't installed.
+		expect(
+			within(container).queryByRole('link', { name: 'Set up Mollie' })
 		).not.toBeInTheDocument();
 	});
 
-	it('does not show the notice when paymentConfigured is absent (connector inactive)', () => {
+	it('shows the notice for add-on-only pricing', () => {
+		window.fairPaymentsConnector = { currency: 'EUR' };
+		const { container } = renderTickets({
+			initialData: initialDataWithPaidAddon,
+		});
+
+		expect(
+			within(container).getByText(missingPluginRegex)
+		).toBeInTheDocument();
+	});
+
+	it('does not show any notice when every price is 0', () => {
 		window.fairPaymentsConnector = { currency: 'EUR' };
 		const { container } = renderTickets({
 			initialData: initialDataWithTicketType,
 		});
 
 		expect(
-			within(container).queryByText(
-				/Prices are set, but payments aren't configured/i
-			)
+			within(container).queryByText(mollieRegex)
+		).not.toBeInTheDocument();
+		expect(
+			within(container).queryByText(missingPluginRegex)
+		).not.toBeInTheDocument();
+	});
+
+	it('does not show any notice when there are no tickets yet', () => {
+		window.fairPaymentsConnector = { connectorActive: false };
+		const { container } = renderTickets({ initialData: emptyInitialData });
+
+		expect(
+			within(container).queryByText(mollieRegex)
+		).not.toBeInTheDocument();
+		expect(
+			within(container).queryByText(missingPluginRegex)
+		).not.toBeInTheDocument();
+	});
+
+	it('does not show any notice when payments are configured', () => {
+		window.fairPaymentsConnector = {
+			connectorActive: true,
+			paymentConfigured: true,
+			settingsUrl:
+				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
+		};
+		const { container } = renderTickets({
+			initialData: initialDataWithPaidTicket,
+		});
+
+		expect(
+			within(container).queryByText(mollieRegex)
+		).not.toBeInTheDocument();
+		expect(
+			within(container).queryByText(missingPluginRegex)
 		).not.toBeInTheDocument();
 	});
 });

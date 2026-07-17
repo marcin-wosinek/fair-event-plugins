@@ -225,6 +225,18 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 		}
 
+		// Fail closed: a priced ticket must never be saved when payment can't
+		// be collected. Rejecting up front avoids the orphaned pending_payment
+		// row left by the connector-unconfigured case and the silent
+		// free-confirmation the old connector-absent fallback produced.
+		if ( $amount > 0 && $this->payments_unavailable() ) {
+			return new WP_Error(
+				'payment_unavailable',
+				__( 'Paid tickets are not available because online payments are not configured.', 'fair-events' ),
+				array( 'status' => 503 )
+			);
+		}
+
 		$this->increment_rate_limit();
 
 		// Persist the signup row.
@@ -265,18 +277,9 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		// Paid path — fall back to confirmed if payment connector is absent.
-		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
-			\FairEvents\Models\EventSignup::update_status( $signup_id, 'confirmed' );
-			$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, null );
-			return rest_ensure_response(
-				array(
-					'status'  => 'confirmed',
-					'message' => __( 'You have successfully registered!', 'fair-events' ),
-				)
-			);
-		}
-
+		// Paid path — payments were confirmed available before the signup row
+		// was saved (see the fail-closed guard above), so a transaction can be
+		// created here without a free-fallback.
 		$currency    = get_option( 'fair_payment_currency', 'EUR' );
 		$description = sprintf(
 			/* translators: %d: event date ID */
@@ -492,6 +495,16 @@ class GetTicketsController extends WP_REST_Controller {
 		$count        = count( $occurrences );
 		$total_amount = $unit_price * $count;
 
+		// Fail closed before any row is written: reject a priced multi-instance
+		// signup when payment can't be collected, mirroring create_signup().
+		if ( $total_amount > 0 && $this->payments_unavailable() ) {
+			return new WP_Error(
+				'payment_unavailable',
+				__( 'Paid tickets are not available because online payments are not configured.', 'fair-events' ),
+				array( 'status' => 503 )
+			);
+		}
+
 		// Persist one signup row per chosen occurrence (quantity fixed at 1;
 		// instance count is the only multiplier for this scope).
 		$signup_ids = array();
@@ -543,20 +556,9 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		// Paid path — fall back to confirmed if payment connector is absent.
-		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
-			foreach ( $signup_ids as $index => $signup_id ) {
-				\FairEvents\Models\EventSignup::update_status( $signup_id, 'confirmed' );
-				$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, null );
-			}
-			return rest_ensure_response(
-				array(
-					'status'  => 'confirmed',
-					'message' => __( 'You have successfully registered!', 'fair-events' ),
-				)
-			);
-		}
-
+		// Paid path — payments were confirmed available before any signup row
+		// was saved (see the fail-closed guard above), so a shared transaction
+		// can be created here without a free-fallback.
 		$currency    = get_option( 'fair_payment_currency', 'EUR' );
 		$description = sprintf(
 			/* translators: %d: event date ID */
@@ -634,6 +636,22 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'       => $currency,
 			)
 		);
+	}
+
+	/**
+	 * Whether online payments can be collected right now.
+	 *
+	 * True when the payments connector is missing entirely, or installed but
+	 * not configured (no Mollie key / OAuth). Priced signups are rejected up
+	 * front in that case instead of being saved and then failing at payment
+	 * time, so no orphaned pending_payment rows are created and no priced
+	 * ticket is ever confirmed for free.
+	 *
+	 * @return bool
+	 */
+	private function payments_unavailable() {
+		return ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+			|| ! \FairPaymentsConnector\API\TransactionAPI::is_configured();
 	}
 
 	/**

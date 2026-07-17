@@ -88,8 +88,30 @@ export default function EventTickets({
 	// period is ever hidden.
 	const effectiveMultiple =
 		salePeriods.length > 1 || settings.multiple_pricing_periods;
-	const paymentNotConfigured =
-		window.fairPaymentsConnector?.paymentConfigured === false;
+	// Payments are unavailable when the connector plugin is missing
+	// (connectorActive !== true) or installed but not yet configured
+	// (paymentConfigured === false). The two cases show different warnings.
+	const connectorActive =
+		window.fairPaymentsConnector?.connectorActive === true;
+	const paymentConfigured =
+		window.fairPaymentsConnector?.paymentConfigured === true;
+	const paymentsUnavailable = !connectorActive || !paymentConfigured;
+	// Any price > 0 across every source makes at least one ticket purchasable,
+	// so the "payments not set up" warning is relevant. Free ticketing (all
+	// prices 0) works without payments, so it must not trigger the warning.
+	const hasPurchasablePrice =
+		Object.values(prices).some(
+			(cell) =>
+				cell && cell.enabled !== false && parseFloat(cell.price) > 0
+		) ||
+		options.some((o) => {
+			if (parseFloat(o.price) > 0) return true;
+			if (parseFloat(o.discounted_price) > 0) return true;
+			return Object.values(o.period_prices_map || {}).some(
+				(v) => parseFloat(v) > 0
+			);
+		});
+	const showPaymentsWarning = paymentsUnavailable && hasPurchasablePrice;
 	const hasInvitationTickets = ticketTypes.some((t) => t.invitation_only);
 	const hasGroups = groups.length > 0;
 	const groupNameById = Object.fromEntries(groups.map((g) => [g.id, g.name]));
@@ -866,23 +888,31 @@ export default function EventTickets({
 				</Notice>
 			)}
 
-			{paymentNotConfigured && hasAdvancedTickets && (
-				<Notice
-					status="warning"
-					isDismissible={false}
-					actions={[
-						{
-							label: __('Set up Mollie', 'fair-events'),
-							url: window.fairPaymentsConnector.settingsUrl,
-						},
-					]}
-				>
-					{__(
-						"Prices are set, but payments aren't configured.",
-						'fair-events'
-					)}
-				</Notice>
-			)}
+			{showPaymentsWarning &&
+				(connectorActive ? (
+					<Notice
+						status="warning"
+						isDismissible={false}
+						actions={[
+							{
+								label: __('Set up Mollie', 'fair-events'),
+								url: window.fairPaymentsConnector.settingsUrl,
+							},
+						]}
+					>
+						{__(
+							"Paid tickets won't be sold until Mollie payments are configured.",
+							'fair-events'
+						)}
+					</Notice>
+				) : (
+					<Notice status="warning" isDismissible={false}>
+						{__(
+							'Paid tickets need the Fair Payments Connector plugin. Install and activate it to sell tickets.',
+							'fair-events'
+						)}
+					</Notice>
+				))}
 
 			<HStack spacing={2} justify="space-between">
 				<Button

@@ -328,14 +328,20 @@ class AdminPages {
 				$localized_data
 			);
 
+			// `connectorActive` is always present so the tickets screen can tell
+			// "connector plugin missing" apart from "installed but unconfigured"
+			// — the JS shows a different warning for each. `paymentConfigured`
+			// and `settingsUrl` only exist when the connector is active.
+			$connector_active        = class_exists( '\FairPaymentsConnector\Payment\MolliePaymentHandler' );
 			$payments_connector_data = array(
-				'currency' => get_option( 'fair_payment_currency', 'EUR' ),
+				'currency'        => get_option( 'fair_payment_currency', 'EUR' ),
+				'connectorActive' => $connector_active,
 			);
 
 			// Reuse the connector's own "configured" definition rather than
 			// re-reading its options here, so the notice matches the
 			// top-of-page admin notice in fair-payments-connector.
-			if ( class_exists( '\FairPaymentsConnector\Payment\MolliePaymentHandler' ) ) {
+			if ( $connector_active ) {
 				$payments_connector_data['paymentConfigured'] = \FairPaymentsConnector\Payment\MolliePaymentHandler::is_configured();
 				$payments_connector_data['settingsUrl']       = admin_url( 'admin.php?page=fair-payments-connector-settings' );
 			}
