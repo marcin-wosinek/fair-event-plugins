@@ -797,3 +797,116 @@ describe('EventTickets — single pricing period by default (#1138)', () => {
 		expect(screen.getByText('Day of event')).toBeInTheDocument();
 	});
 });
+
+describe('EventTickets — pricing an event with no stored prices (#1175)', () => {
+	// A ticket type + sale period saved without any price. In single-period
+	// mode the pricing cell is seeded enabled:false and there is no "Available"
+	// checkbox to flip it, so a typed price must still reach the save payload.
+	const initialDataUnpriced = {
+		...initialDataWithTicketType,
+		sale_periods: [
+			{
+				id: 701,
+				name: '',
+				sale_start: '2026-01-01',
+				sale_end: '2026-02-01',
+			},
+		],
+		prices: [],
+	};
+
+	// Same data, but multiple-periods mode is on so the "Available" checkbox
+	// renders and its unchecked state must still exclude the cell.
+	const initialDataUnpricedMulti = {
+		...initialDataUnpriced,
+		settings: { multiple_pricing_periods: true },
+	};
+
+	// The per-cell Price input is the only spinbutton carrying step="0.01"
+	// (Total capacity / ticket-type capacity inputs have no step).
+	const getPriceInput = () =>
+		screen
+			.getAllByRole('spinbutton')
+			.find((el) => el.getAttribute('step') === '0.01');
+
+	async function saveAndCapturePayload(onSaveRef) {
+		let savedPayload = null;
+		apiFetch.mockImplementation(({ method, data }) => {
+			if (method === 'PUT') {
+				savedPayload = data;
+				return Promise.resolve({
+					...initialDataUnpriced,
+					prices: [],
+				});
+			}
+			return new Promise(() => {});
+		});
+
+		expect(onSaveRef.current).not.toBeNull();
+		await act(async () => {
+			await onSaveRef.current();
+		});
+		return savedPayload;
+	}
+
+	it('single-period mode: a typed price is included in the save payload', async () => {
+		const { onSaveRef } = renderTickets({
+			initialData: initialDataUnpriced,
+		});
+
+		// Single-period mode renders no "Available" checkbox.
+		expect(screen.queryByText('Available')).not.toBeInTheDocument();
+
+		const priceInput = getPriceInput();
+		expect(priceInput).toBeTruthy();
+		fireEvent.change(priceInput, { target: { value: '15' } });
+
+		const savedPayload = await saveAndCapturePayload(onSaveRef);
+
+		expect(savedPayload).not.toBeNull();
+		expect(savedPayload.prices).toHaveLength(1);
+		expect(savedPayload.prices[0]).toMatchObject({
+			ticket_type_index: 0,
+			sale_period_index: 0,
+			price: 15,
+		});
+	});
+
+	it('multiple-periods mode: an unchecked cell stays excluded from the save payload', async () => {
+		const { onSaveRef } = renderTickets({
+			initialData: initialDataUnpricedMulti,
+		});
+
+		// The checkbox renders unchecked and hides the price input.
+		const available = screen.getByRole('checkbox', { name: 'Available' });
+		expect(available).not.toBeChecked();
+		expect(getPriceInput()).toBeUndefined();
+
+		const savedPayload = await saveAndCapturePayload(onSaveRef);
+
+		expect(savedPayload).not.toBeNull();
+		expect(savedPayload.prices).toHaveLength(0);
+	});
+
+	it('multiple-periods mode: checking Available then typing a price includes the cell', async () => {
+		const { onSaveRef } = renderTickets({
+			initialData: initialDataUnpricedMulti,
+		});
+
+		fireEvent.click(screen.getByRole('checkbox', { name: 'Available' }));
+
+		const priceInput = getPriceInput();
+		expect(priceInput).toBeTruthy();
+		fireEvent.change(priceInput, { target: { value: '9' } });
+
+		const savedPayload = await saveAndCapturePayload(onSaveRef);
+
+		expect(savedPayload).not.toBeNull();
+		expect(savedPayload.prices).toHaveLength(1);
+		expect(savedPayload.prices[0]).toMatchObject({
+			ticket_type_index: 0,
+			sale_period_index: 0,
+			price: 9,
+		});
+	});
+});
