@@ -229,6 +229,33 @@ foreach ( $ticket_types as $ticket_type ) {
 	}
 }
 
+// Fail closed on the visitor form too: when online payments can't be
+// collected (connector missing, or installed but unconfigured), a ticket type
+// priced above 0 is not purchasable — the endpoint would reject it. Disable
+// those options so a priced ticket is never presented as buyable; when every
+// configured type is paid, hide the form and show a single message instead of
+// a list of dead options (per the ticket's open-question recommendation).
+$payments_unavailable = ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+	|| ! \FairPaymentsConnector\API\TransactionAPI::is_configured();
+
+$has_paid_type = false;
+$has_free_type = false;
+foreach ( $ticket_types as $ticket_type ) {
+	$tt_price = $price_by_type_id[ (int) $ticket_type->id ] ?? null;
+	if ( null !== $tt_price && $tt_price > 0 ) {
+		$has_paid_type = true;
+	} else {
+		$has_free_type = true;
+	}
+}
+// Nothing is purchasable when payments are down and every configured ticket
+// type carries a price. Registering with no ticket type, or a free type, still
+// works — so the form is only hidden when a free path doesn't exist.
+$all_purchases_blocked = $payments_unavailable
+	&& ! empty( $ticket_types )
+	&& $has_paid_type
+	&& ! $has_free_type;
+
 // Generate unique form ID.
 $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 ?>
@@ -248,7 +275,11 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 	</div>
 <?php endif; ?>
 
-<?php if ( 'confirmed' !== $callback_status ) : ?>
+<?php if ( 'confirmed' !== $callback_status && $all_purchases_blocked ) : ?>
+	<div class="message-container message-error" role="alert">
+		<?php esc_html_e( 'Ticket sales are temporarily unavailable. Please check back later.', 'fair-events' ); ?>
+	</div>
+<?php elseif ( 'confirmed' !== $callback_status ) : ?>
 	<form
 		id="<?php echo esc_attr( $form_id ); ?>"
 		class="fair-events-get-tickets-form"
@@ -312,13 +343,17 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 					<option value=""><?php esc_html_e( 'Select a ticket type…', 'fair-events' ); ?></option>
 					<?php foreach ( $ticket_types as $ticket_type ) : ?>
 						<?php
-						$type_id    = (int) $ticket_type->id;
-						$type_price = $price_by_type_id[ $type_id ] ?? null;
-						$label      = esc_html( $ticket_type->name );
+						$type_id          = (int) $ticket_type->id;
+						$type_price       = $price_by_type_id[ $type_id ] ?? null;
+						$type_unavailable = $payments_unavailable && null !== $type_price && $type_price > 0;
+						$label            = esc_html( $ticket_type->name );
 						if ( null !== $type_price ) {
 							$label .= ' — ' . esc_html( $currency_symbol . number_format( $type_price, 2 ) );
 						} elseif ( null === $active_sale_period ) {
 							$label .= ' — ' . esc_html__( 'No active sale period', 'fair-events' );
+						}
+						if ( $type_unavailable ) {
+							$label .= ' — ' . esc_html__( 'ticket sales temporarily unavailable', 'fair-events' );
 						}
 						?>
 						<option
@@ -326,6 +361,7 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 							data-ticket-price="<?php echo esc_attr( null !== $type_price ? number_format( $type_price, 2, '.', '' ) : '' ); ?>"
 							data-recurrence-scope="<?php echo esc_attr( $ticket_type->recurrence_scope ); ?>"
 							data-min-instances="<?php echo esc_attr( (string) $ticket_type->minimum_instances ); ?>"
+							<?php echo $type_unavailable ? 'disabled' : ''; ?>
 						>
 							<?php echo esc_html( $label ); ?>
 						</option>
