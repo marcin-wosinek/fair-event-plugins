@@ -28,14 +28,14 @@ import './editor.css';
 
 const UNIFIED_NAME = 'fair-events/event-signup';
 
-// Custom question blocks that can be nested inside the signup form. Mirrors
-// the legacy fair-audience/event-signup block's set, minus the file-upload
-// question: the unified form is submittable by anonymous visitors and
-// uploads stay out until there is a vetted path.
-const ALLOWED_BLOCKS = [
-	'core/heading',
-	'core/paragraph',
-	'core/list',
+// Blocks always allowed in the form content area, regardless of fair-form.
+const BASE_ALLOWED_BLOCKS = ['core/heading', 'core/paragraph', 'core/list'];
+
+// Custom question blocks that can additionally be nested once fair-form is
+// active. Mirrors the legacy fair-audience/event-signup block's set, minus
+// the file-upload question: the unified form is submittable by anonymous
+// visitors and uploads stay out until there is a vetted path.
+const FAIR_FORM_ALLOWED_BLOCKS = [
 	'fair-audience/fair-form-short-text',
 	'fair-audience/fair-form-long-text',
 	'fair-audience/fair-form-phone',
@@ -62,10 +62,14 @@ registerBlockType(metadata.name, {
 			[]
 		);
 
+		const allowedBlocks = isFairFormActive
+			? [...BASE_ALLOWED_BLOCKS, ...FAIR_FORM_ALLOWED_BLOCKS]
+			: BASE_ALLOWED_BLOCKS;
+
 		const innerBlocksProps = useInnerBlocksProps(
 			{ className: 'fair-events-event-signup-questions' },
 			{
-				allowedBlocks: ALLOWED_BLOCKS,
+				allowedBlocks,
 				renderAppender: InnerBlocks.ButtonBlockAppender,
 			}
 		);
@@ -89,14 +93,10 @@ registerBlockType(metadata.name, {
 						block={UNIFIED_NAME}
 						attributes={attributes}
 					/>
-					{isFairFormActive && (
-						<>
-							<div className="fair-events-event-signup-questions-label">
-								{__('Custom questions', 'fair-events')}
-							</div>
-							<div {...innerBlocksProps} />
-						</>
-					)}
+					<div className="fair-events-event-signup-questions-label">
+						{__('Form content', 'fair-events')}
+					</div>
+					<div {...innerBlocksProps} />
 				</div>
 			</>
 		);

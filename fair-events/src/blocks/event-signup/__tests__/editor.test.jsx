@@ -29,9 +29,12 @@ jest.mock('@wordpress/data', () => {
 // useBlockProps/useInnerBlocksProps need the editor's block context, which
 // jsdom doesn't provide; stub them to plain markers so we can assert on the
 // questions region without a full editor.
+const mockUseInnerBlocksProps = jest.fn(() => ({
+	'data-testid': 'inner-blocks',
+}));
 jest.mock('@wordpress/block-editor', () => ({
 	useBlockProps: () => ({}),
-	useInnerBlocksProps: () => ({ 'data-testid': 'inner-blocks' }),
+	useInnerBlocksProps: (...args) => mockUseInnerBlocksProps(...args),
 	InspectorControls: ({ children }) => children,
 	InnerBlocks: Object.assign(() => null, {
 		Content: () => null,
@@ -66,19 +69,39 @@ describe('Event Signup EditComponent', () => {
 		);
 	};
 
-	it('shows the custom-questions region when fair-form is active', () => {
-		renderEdit(true);
+	it('always shows the form content region, fair-form active or not', () => {
+		const { unmount } = renderEdit(true);
 
 		expect(screen.getByTestId('ssr')).toBeInTheDocument();
 		expect(screen.getByTestId('inner-blocks')).toBeInTheDocument();
-		expect(screen.getByText('Custom questions')).toBeInTheDocument();
-	});
+		expect(screen.getByText('Form content')).toBeInTheDocument();
+		unmount();
 
-	it('hides the custom-questions region when fair-form is inactive', () => {
 		renderEdit(false);
 
 		expect(screen.getByTestId('ssr')).toBeInTheDocument();
-		expect(screen.queryByTestId('inner-blocks')).toBeNull();
-		expect(screen.queryByText('Custom questions')).toBeNull();
+		expect(screen.getByTestId('inner-blocks')).toBeInTheDocument();
+		expect(screen.getByText('Form content')).toBeInTheDocument();
+	});
+
+	it('only offers the fair-form question blocks once fair-form is active', () => {
+		const { unmount } = renderEdit(false);
+		const [, inactiveOptions] = mockUseInnerBlocksProps.mock.calls.at(-1);
+		expect(inactiveOptions.allowedBlocks).toEqual([
+			'core/heading',
+			'core/paragraph',
+			'core/list',
+		]);
+		unmount();
+
+		renderEdit(true);
+		const [, activeOptions] = mockUseInnerBlocksProps.mock.calls.at(-1);
+		expect(activeOptions.allowedBlocks).toEqual(
+			expect.arrayContaining([
+				'core/heading',
+				'fair-audience/fair-form-short-text',
+				'fair-audience/fair-form-conditional',
+			])
+		);
 	});
 });
