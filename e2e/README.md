@@ -17,6 +17,9 @@ e2e/
 │   └── wp-cli.js                         # wpCli / runScript / resetCapturedMail / loginAsAdmin
 ├── user-flows/                           # functional specs
 │   └── ticket-purchase-confirmation.spec.js
+├── screenshots/                          # visual-review captures (no behavioural assertions)
+│   ├── event-signup-combinations.spec.js
+│   └── output/                           # gitignored PNGs
 └── mu-plugins/                           # mounted into wp-env only (see .wp-env.json)
     ├── fair-e2e-support.php              # auto-loaded mu-plugin (mail capture + Mollie test creds + loads the double)
     ├── lib/
@@ -123,9 +126,15 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
     `multiple_instances` ticket type priced per instance (default `10.00`;
     override `{"price":N}`), `minimum_instances` default `2` (override
     `{"minimumInstances":N}`).
+  - `three-ticket-scopes` — a 3-occurrence weekly series **pinned to a fixed
+    absolute date** (not `+7 days`, so screenshots stay stable across runs)
+    carrying one ticket type per recurrence scope: `single_instance`,
+    `whole_series`, `multiple_instances`. Always renders the unified
+    `fair-events/event-signup` block regardless of the `block` override. Used
+    by `screenshots/event-signup-combinations.spec.js`.
 
   Emits the event permalink + ids: `flavour`, `eventId`, `eventDateId`,
-  `salePeriodId`, `ticketTypeId`, `optionIds`, `occurrenceIds`,
+  `salePeriodId`, `ticketTypeId`, `extraTypeIds`, `optionIds`, `occurrenceIds`,
   `minimumInstances`, `price`.
 - **`cleanup-event.php <eventId> <eventDateId>`** — deletes a seeded event and
   everything off it (signed-up participants + their option rows, the

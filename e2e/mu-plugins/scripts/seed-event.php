@@ -14,6 +14,12 @@
  *                        ticket type priced per instance (default 10.00; override
  *                        {"price":N}), minimum_instances default 2 (override
  *                        {"minimumInstances":N}).
+ *   three-ticket-scopes  a 3-occurrence weekly series (fixed base date, for
+ *                        stable screenshots) carrying one ticket type of each
+ *                        recurrence scope: single_instance, whole_series, and
+ *                        multiple_instances (default prices 15/40/10; override
+ *                        {"price":N} sets the single_instance price). Always
+ *                        renders the unified fair-events/event-signup block.
  *
  * Examples:
  *   wp eval-file .../seed-event.php paid
@@ -48,6 +54,7 @@ $minimum_instances = isset( $overrides['minimumInstances'] ) ? (int) $overrides[
 $ticket_type_id    = 0;
 $option_ids        = array();
 $occurrence_ids    = array();
+$extra_type_ids    = array();
 $is_paid           = true;
 
 // Which purchase block the event page carries. Default: fair-audience
@@ -57,7 +64,11 @@ $is_paid           = true;
 // unified fair-events/event-signup block with a nested fair-form question,
 // delegated through fair-audience's participant-aware flow (#1160).
 $block_content = '<!-- wp:fair-audience/event-signup /-->';
-if ( isset( $overrides['block'] ) && 'get-tickets' === $overrides['block'] ) {
+if ( 'three-ticket-scopes' === $flavour ) {
+	// Always the unified block — this flavour exists to screenshot it across
+	// plugin combinations, so the block override is not honoured here.
+	$block_content = '<!-- wp:fair-events/event-signup /-->';
+} elseif ( isset( $overrides['block'] ) && 'get-tickets' === $overrides['block'] ) {
 	$block_content = '<!-- wp:fair-events/get-tickets /-->';
 } elseif ( isset( $overrides['block'] ) && 'unified-with-question' === $overrides['block'] ) {
 	$block_content = implode(
@@ -70,8 +81,14 @@ if ( isset( $overrides['block'] ) && 'get-tickets' === $overrides['block'] ) {
 	);
 }
 
-$event_id       = fair_e2e_create_event( 'E2E ' . $flavour . ' Event ' . gmdate( 'YmdHis' ) . ' ' . wp_rand( 1000, 9999 ), $block_content );
-$event_date_id  = fair_e2e_add_date( $event_id );
+$event_id = fair_e2e_create_event( 'E2E ' . $flavour . ' Event ' . gmdate( 'YmdHis' ) . ' ' . wp_rand( 1000, 9999 ), $block_content );
+
+// three-ticket-scopes pins its occurrence to a fixed absolute date (rather than
+// fair_e2e_add_date()'s '+7 days') so the rendered dates/prices are stable and
+// reviewable as regressions across runs.
+$event_date_id  = 'three-ticket-scopes' === $flavour
+	? fair_e2e_add_date_at( $event_id, '2027-01-15 18:00:00' )
+	: fair_e2e_add_date( $event_id );
 $sale_period_id = fair_e2e_add_sale_period( $event_date_id );
 
 switch ( $flavour ) {
@@ -115,8 +132,23 @@ switch ( $flavour ) {
 		fair_e2e_add_price( $ticket_type_id, $sale_period_id, $price, null );
 		break;
 
+	case 'three-ticket-scopes':
+		$price = isset( $overrides['price'] ) ? (float) $overrides['price'] : 15.00;
+		// Turns the single occurrence already created above into the series
+		// master (same event_date_id/sale_period_id) plus 2 generated siblings.
+		$occurrence_ids = fair_e2e_add_series( $event_id, 3 );
+		$single_type_id = fair_e2e_add_ticket_type( $event_date_id, 'Single Session', null );
+		$whole_type_id  = fair_e2e_add_whole_series_ticket_type( $event_date_id, 'Full Series Pass' );
+		$multi_type_id  = fair_e2e_add_multi_instance_ticket_type( $event_date_id, 'Pick your sessions', $minimum_instances );
+		fair_e2e_add_price( $single_type_id, $sale_period_id, $price, null );
+		fair_e2e_add_price( $whole_type_id, $sale_period_id, 40.00, null );
+		fair_e2e_add_price( $multi_type_id, $sale_period_id, 10.00, null );
+		$ticket_type_id = $single_type_id;
+		$extra_type_ids = array( $whole_type_id, $multi_type_id );
+		break;
+
 	default:
-		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances." );
+		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes." );
 }
 
 echo 'E2E_SEED:' . wp_json_encode(
@@ -127,6 +159,7 @@ echo 'E2E_SEED:' . wp_json_encode(
 		'eventDateId'      => (int) $event_date_id,
 		'salePeriodId'     => (int) $sale_period_id,
 		'ticketTypeId'     => (int) $ticket_type_id,
+		'extraTypeIds'     => array_map( 'intval', $extra_type_ids ),
 		'optionIds'        => array_map( 'intval', $option_ids ),
 		'occurrenceIds'    => array_map( 'intval', $occurrence_ids ),
 		'minimumInstances' => (int) $minimum_instances,

@@ -32,7 +32,8 @@ export const test = base.extend({
 		 * Seed a fresh event in the given flavour and return its parsed
 		 * E2E_SEED payload (pageUrl + ids).
 		 *
-		 * @param {string} flavour   Preset: free | paid | paid-with-options | capacity-1.
+		 * @param {string} flavour   Preset: free | paid | paid-with-options | capacity-1 |
+		 *                           multiple-instances | three-ticket-scopes.
 		 * @param {object} overrides Optional JSON overrides (e.g. { price, options }).
 		 * @return {object} Parsed E2E_SEED payload.
 		 */
