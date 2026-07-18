@@ -1100,4 +1100,3 @@ msgstr "Szczegóły"
 #: fair-payments-connector.php
 msgid "Mollie payments and bookkeeping for WordPress: payment block, itemized transactions, budgets, and bank reconciliation."
 msgstr "Płatności Mollie i księgowość dla WordPress: blok płatności, transakcje szczegółowe, budżety i reconciliacja bankowa."
-

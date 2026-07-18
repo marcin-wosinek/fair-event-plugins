@@ -18,12 +18,12 @@ msgstr ""
 #: src/Core/Plugin.php:81
 #: src/Core/Plugin.php:82
 msgid "Fair Timetable"
-msgstr ""
+msgstr "Fair Timetable"
 
 #. Plugin URI of the plugin
 #: fair-timetable.php
 msgid "https://github.com/marcin-wosinek/fair-event-plugins"
-msgstr ""
+msgstr "https://github.com/marcin-wosinek/fair-event-plugins"
 
 #. Description of the plugin
 #: fair-timetable.php
@@ -33,12 +33,12 @@ msgstr "Plugin de gestión de horarios para eventos y actividades semanales."
 #. Author of the plugin
 #: fair-timetable.php
 msgid "Marcin Wosinek"
-msgstr ""
+msgstr "Marcin Wosinek"
 
 #. Author URI of the plugin
 #: fair-timetable.php
 msgid "https://github.com/marcin-wosinek"
-msgstr ""
+msgstr "https://github.com/marcin-wosinek"
 
 #: src/Core/Features.php:115
 msgid "Core"
@@ -194,3 +194,4 @@ msgstr "Horario"
 msgctxt "block description"
 msgid "A timetable block for displaying scheduled events"
 msgstr "Un bloque de horario para mostrar eventos programados"
+

@@ -493,4 +493,3 @@ msgstr "Télécharger CSV"
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:804
 msgid "Copy to clipboard"
 msgstr "Copier dans le presse-papiers"
-
