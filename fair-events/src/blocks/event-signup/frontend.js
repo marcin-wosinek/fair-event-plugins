@@ -101,6 +101,16 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 	}
 
 	/**
+	 * Whether the selected ticket type is a 'whole_series' scope pass.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {boolean} True when the selected ticket covers the whole series.
+	 */
+	function isWholeSeriesSelected(form) {
+		const option = getSelectedTicketTypeOption(form);
+		return !!option && option.dataset.recurrenceScope === 'whole_series';
+	}
+
+	/**
 	 * Checked ticket type radio input, if any.
 	 * @param {HTMLFormElement} form The get-tickets form.
 	 * @return {HTMLInputElement|null} The checked radio input element.
@@ -122,6 +132,26 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 	}
 
 	/**
+	 * Toggle the single-occurrence dropdown based on the selected ticket type's
+	 * scope: visible for 'single_instance' (or no ticket type selected), hidden
+	 * for 'whole_series' and 'multiple_instances' (the checkbox picker handles
+	 * that case instead).
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function updateOccurrencePicker(form) {
+		const occurrencePicker = form.querySelector(
+			'.fair-events-occurrence-picker'
+		);
+		if (!occurrencePicker) {
+			return;
+		}
+
+		const active =
+			!isMultipleInstancesSelected(form) && !isWholeSeriesSelected(form);
+		occurrencePicker.style.display = active ? '' : 'none';
+	}
+
+	/**
 	 * Toggle the multi-occurrence checkbox picker (and hide the quantity field,
 	 * since v1 fixes quantity to 1 for this scope — instance count is the only
 	 * multiplier) based on the selected ticket type, and keep the minimum hint
@@ -129,6 +159,8 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 	 * @param {HTMLFormElement} form The get-tickets form.
 	 */
 	function updateInstancePicker(form) {
+		updateOccurrencePicker(form);
+
 		const instancePicker = form.querySelector(
 			'.fair-events-instance-picker'
 		);
@@ -298,10 +330,21 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 	function collectFormData(form) {
 		const data = {};
 
-		data.event_date_id = parseInt(
-			form.getAttribute('data-event-date-id') || '0',
-			10
+		const occurrenceSelect = form.querySelector(
+			'select[name="event_date_id_single"]'
 		);
+		if (
+			occurrenceSelect &&
+			!isMultipleInstancesSelected(form) &&
+			!isWholeSeriesSelected(form)
+		) {
+			data.event_date_id = parseInt(occurrenceSelect.value, 10);
+		} else {
+			data.event_date_id = parseInt(
+				form.getAttribute('data-event-date-id') || '0',
+				10
+			);
+		}
 
 		const nameField = form.querySelector('input[name="name"]');
 		if (nameField) {
