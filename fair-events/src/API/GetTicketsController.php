@@ -63,17 +63,17 @@ class GetTicketsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_signup' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'event_date_id'  => array(
+						'event_date_id'         => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'name'           => array(
+						'name'                  => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'email'          => array(
+						'email'                 => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_email',
@@ -81,19 +81,19 @@ class GetTicketsController extends WP_REST_Controller {
 								return is_email( $value );
 							},
 						),
-						'ticket_type_id' => array(
+						'ticket_type_id'        => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'default'           => 0,
 							'sanitize_callback' => 'absint',
 						),
-						'quantity'       => array(
+						'quantity'              => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'default'           => 1,
 							'sanitize_callback' => 'absint',
 						),
-						'mailing_opt_in' => array(
+						'mailing_opt_in'        => array(
 							'type'              => 'boolean',
 							'required'          => false,
 							'default'           => false,
@@ -102,7 +102,7 @@ class GetTicketsController extends WP_REST_Controller {
 						// Chosen occurrence IDs for 'multiple_instances' ticket types.
 						// Capped so a crafted request can't force an unbounded number
 						// of line items / DB rows per submission.
-						'event_date_ids' => array(
+						'event_date_ids'        => array(
 							'type'              => 'array',
 							'items'             => array( 'type' => 'integer' ),
 							'required'          => false,
@@ -110,10 +110,20 @@ class GetTicketsController extends WP_REST_Controller {
 								return ! is_array( $value ) || count( $value ) <= 50;
 							},
 						),
-						'_honeypot'      => array(
+						'_honeypot'             => array(
 							'type'     => 'string',
 							'required' => false,
 							'default'  => '',
+						),
+						// No 'type' declared: QuestionnaireService::parse_answers()
+						// handles both a decoded array and a raw JSON string.
+						// Capped at 50 answers, mirroring the event_date_ids cap above.
+						'questionnaire_answers' => array(
+							'required'          => false,
+							'default'           => array(),
+							'validate_callback' => function ( $value ) {
+								return ! is_array( $value ) || count( $value ) <= 50;
+							},
 						),
 					),
 				),
@@ -166,6 +176,11 @@ class GetTicketsController extends WP_REST_Controller {
 		$quantity       = max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) );
 		$mailing_opt_in = (bool) $request->get_param( 'mailing_opt_in' );
 
+		$questionnaire_answers = $this->prepare_questionnaire_answers( $request );
+		if ( is_wp_error( $questionnaire_answers ) ) {
+			return $questionnaire_answers;
+		}
+
 		// Validate event date exists.
 		if ( ! class_exists( \FairEvents\Models\EventDates::class ) ) {
 			return new WP_Error(
@@ -215,7 +230,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// path that creates one signup row per chosen occurrence.
 			if ( $ticket_type->is_multiple_instances() ) {
 				$this->increment_rate_limit();
-				return $this->create_multi_instance_signup( $request, $ticket_type, $event_date_id, $name, $email, $mailing_opt_in );
+				return $this->create_multi_instance_signup( $request, $ticket_type, $event_date_id, $name, $email, $mailing_opt_in, $questionnaire_answers );
 			}
 
 			// Resolve price from the active sale period (server-side; client amount is ignored).
@@ -269,6 +284,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// Free path.
 		if ( $amount <= 0 ) {
 			$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, null );
+			$this->persist_questionnaire_answers( $signup_id, $event_date_id, $questionnaire_answers );
 			return rest_ensure_response(
 				array(
 					'status'  => 'confirmed',
@@ -318,6 +334,7 @@ class GetTicketsController extends WP_REST_Controller {
 		\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
 
 		$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, (int) $transaction_id );
+		$this->persist_questionnaire_answers( $signup_id, $event_date_id, $questionnaire_answers );
 
 		// Load the freshly created transaction so its access token can be attached
 		// to the redirect URL, mirroring PaymentEndpoint::create_payment. The token
@@ -383,6 +400,67 @@ class GetTicketsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Parse and sanitize the custom question answers from a get-tickets
+	 * request, mirroring fair-audience's EventSignupController. Validation
+	 * runs before any signup mutation so bad input (e.g. a malformed phone
+	 * number) is rejected with a 400 without creating a signup row.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array|WP_Error Sanitized answers, or WP_Error on invalid input.
+	 */
+	private function prepare_questionnaire_answers( $request ) {
+		if ( ! class_exists( \FairForm\Services\QuestionnaireService::class ) ) {
+			return array();
+		}
+		$service = new \FairForm\Services\QuestionnaireService();
+		$answers = $service->parse_answers( $request->get_param( 'questionnaire_answers' ) );
+		return $service->sanitize_answers( $answers );
+	}
+
+	/**
+	 * Persist sanitized custom-question answers for a signup, called right
+	 * after fire_signup_created() so the participant_id fair-audience's
+	 * SignupHookBridge::link_participant() may have just set on the row is
+	 * picked up; the submission stores null (anonymous) when fair-audience
+	 * is inactive or the bridge left it unset. Nothing is persisted for
+	 * signups without custom questions, avoiding empty submissions.
+	 *
+	 * @param int   $signup_id     The fair_events_signups row just created.
+	 * @param int   $event_date_id Event-date ID the signup targets.
+	 * @param array $answers       Sanitized answers from prepare_questionnaire_answers().
+	 * @return void
+	 */
+	private function persist_questionnaire_answers( $signup_id, $event_date_id, $answers ) {
+		if ( empty( $answers ) ) {
+			return;
+		}
+		if ( ! class_exists( \FairForm\Services\QuestionnaireService::class ) ) {
+			return;
+		}
+
+		$signup         = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
+		$participant_id = $signup && $signup->participant_id ? (int) $signup->participant_id : null;
+
+		$event_id = 0;
+		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date && ! empty( $event_date->event_id ) ) {
+				$event_id = (int) $event_date->event_id;
+			}
+		}
+
+		$service = new \FairForm\Services\QuestionnaireService();
+		$service->save_answers(
+			$participant_id,
+			$answers,
+			$event_date_id,
+			$event_id,
+			__( 'Event Signup', 'fair-events' ),
+			true
+		);
+	}
+
+	/**
 	 * Resolve the page the buyer should return to after checkout.
 	 *
 	 * This runs inside a REST request, which carries no post context —
@@ -430,9 +508,10 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @param string                        $name           Buyer name.
 	 * @param string                        $email          Buyer email.
 	 * @param bool                          $mailing_opt_in Whether the buyer opted into mailings.
+	 * @param array                         $questionnaire_answers Sanitized custom-question answers, shared across every occurrence row.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	private function create_multi_instance_signup( $request, $ticket_type, $series_page_id, $name, $email, $mailing_opt_in ) {
+	private function create_multi_instance_signup( $request, $ticket_type, $series_page_id, $name, $email, $mailing_opt_in, $questionnaire_answers = array() ) {
 		$raw_ids = $request->get_param( 'event_date_ids' ) ?? array();
 		$raw_ids = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
 		$raw_ids = array_filter( $raw_ids );
@@ -547,6 +626,7 @@ class GetTicketsController extends WP_REST_Controller {
 		if ( $total_amount <= 0 ) {
 			foreach ( $signup_ids as $index => $signup_id ) {
 				$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, null );
+				$this->persist_questionnaire_answers( $signup_id, $occurrence_ids[ $index ], $questionnaire_answers );
 			}
 			return rest_ensure_response(
 				array(
@@ -605,6 +685,7 @@ class GetTicketsController extends WP_REST_Controller {
 		foreach ( $signup_ids as $index => $signup_id ) {
 			\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
 			$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, (int) $transaction_id );
+			$this->persist_questionnaire_answers( $signup_id, $occurrence_ids[ $index ], $questionnaire_answers );
 		}
 
 		$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );
