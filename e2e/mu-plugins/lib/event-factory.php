@@ -73,6 +73,31 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	}
 
 	/**
+	 * Add a single occurrence at a fixed absolute datetime (two hours long), for
+	 * flavours whose screenshots must stay stable across runs instead of
+	 * drifting with fair_e2e_add_date()'s '+7 days'.
+	 *
+	 * @param int    $event_id Event post ID.
+	 * @param string $start    Start datetime, 'Y-m-d H:i:s' (UTC).
+	 * @return int Event date ID.
+	 */
+	function fair_e2e_add_date_at( $event_id, $start ) {
+		$event_date_id = EventDates::save_occurrence(
+			$event_id,
+			$start,
+			gmdate( 'Y-m-d H:i:s', strtotime( $start . ' +2 hours' ) ),
+			false,
+			'single'
+		);
+
+		if ( ! $event_date_id ) {
+			WP_CLI::error( 'Failed to create event date.' );
+		}
+
+		return (int) $event_date_id;
+	}
+
+	/**
 	 * Turn an event's single occurrence into a weekly recurring series (master +
 	 * generated occurrences), all linked to the event post like production
 	 * recurring events — as opposed to the standalone event-dates created via
@@ -166,6 +191,33 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 
 		if ( ! $ticket_type_id ) {
 			WP_CLI::error( 'Failed to create multiple_instances ticket type.' );
+		}
+
+		return (int) $ticket_type_id;
+	}
+
+	/**
+	 * Add a 'whole_series' ticket type (covers every occurrence of the series,
+	 * priced once) on the series master.
+	 *
+	 * @param int    $master_event_date_id The series master's event_date_id.
+	 * @param string $name                 Ticket type name.
+	 * @return int Ticket type ID.
+	 */
+	function fair_e2e_add_whole_series_ticket_type( $master_event_date_id, $name ) {
+		$ticket_type_id = TicketType::create(
+			$master_event_date_id,
+			$name,
+			null, // capacity.
+			0, // sort_order.
+			false, // invitation_only.
+			0, // minimum_activities.
+			null, // disable_at.
+			'whole_series'
+		);
+
+		if ( ! $ticket_type_id ) {
+			WP_CLI::error( 'Failed to create whole_series ticket type.' );
 		}
 
 		return (int) $ticket_type_id;
