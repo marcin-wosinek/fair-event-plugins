@@ -41,6 +41,7 @@ export default function EventTickets({
 	onDataRef,
 	startDatetime,
 	endDatetime: endDatetimeProp,
+	lastOccurrenceDatetime,
 	isSeries,
 	onDirtyChange,
 }) {
@@ -438,6 +439,14 @@ export default function EventTickets({
 		return d.toISOString().slice(0, 10);
 	};
 
+	// The day after the event/series' last occurrence — the lazily-resolved
+	// default sale end when the window is left unset. Falls back to the
+	// single event's own end when there's no series data (e.g. still loading).
+	const defaultSaleEnd = () => {
+		const anchor = lastOccurrenceDatetime || endDatetime;
+		return anchor ? dayAfterDate(anchor.split(' ')[0].split('T')[0]) : '';
+	};
+
 	const formatSaleDateLabel = (dateStr) => {
 		if (!dateStr) return __('—', 'fair-events');
 		const dateOnly = dateStr.split(' ')[0].split('T')[0];
@@ -460,24 +469,16 @@ export default function EventTickets({
 		return diff > 0 ? diff : null;
 	};
 
+	// Seeds a single default sale period row so prices have somewhere to
+	// attach, but leaves sale_start/sale_end unset: the effective window is
+	// resolved lazily (open start, day-after-last-occurrence end) rather than
+	// frozen into storage at creation time. See getEffectiveSalePeriods().
 	const seedDefaultSalePeriods = () => {
-		const today = getSiteToday();
-		const eventFirstDay = startDatetime
-			? startDatetime.split(' ')[0].split('T')[0]
-			: today;
-		const afterEventEnd = endDatetime
-			? dayAfterDate(endDatetime)
-			: dayAfterDate(eventFirstDay);
-		// A single sale window covering today through the day after the event
-		// ends. For an event already in the past (today would be after the
-		// window's own end), default to the event's own dates instead of an
-		// inverted range.
-		const saleStart = today > afterEventEnd ? eventFirstDay : today;
 		setSalePeriods([
 			{
 				name: '',
-				sale_start: saleStart,
-				sale_end: afterEventEnd,
+				sale_start: '',
+				sale_end: '',
 				sort_order: 0,
 			},
 		]);
@@ -645,9 +646,7 @@ export default function EventTickets({
 					? startDatetime.split(' ')[0].split('T')[0]
 					: getSiteToday();
 				const windowStart = base?.sale_start || getSiteToday();
-				const windowEnd =
-					base?.sale_end ||
-					(endDatetime ? dayAfterDate(endDatetime) : '');
+				const windowEnd = base?.sale_end || defaultSaleEnd();
 				if (base) {
 					const newPrices = { ...prices };
 					ticketTypes.forEach((type) => {
@@ -707,9 +706,7 @@ export default function EventTickets({
 				{
 					name: '',
 					sale_start: first.sale_start,
-					sale_end:
-						last.sale_end ||
-						(endDatetime ? dayAfterDate(endDatetime) : ''),
+					sale_end: last.sale_end || defaultSaleEnd(),
 					sort_order: 0,
 				},
 			]);
@@ -740,14 +737,14 @@ export default function EventTickets({
 			? dateStr + ' 00:00:00'
 			: dateStr;
 
+	// An unset sale_start/sale_end is sent through as empty so the backend
+	// stores NULL — the effective window is then resolved lazily server-side
+	// (open start, day-after-last-occurrence end) rather than frozen here.
 	const getEffectiveSalePeriods = () => {
 		const periods = salePeriods.map((p, i) => {
 			const updated = { ...p };
 			if (i > 0) {
 				updated.sale_start = salePeriods[i - 1].sale_end || '';
-			}
-			if (i === salePeriods.length - 1 && endDatetime && !p.sale_end) {
-				updated.sale_end = dayAfterDate(endDatetime);
 			}
 			updated.sale_start = appendTime(updated.sale_start);
 			updated.sale_end = appendTime(updated.sale_end);
@@ -1031,12 +1028,13 @@ export default function EventTickets({
 													];
 												const end =
 													last.sale_end ||
-													(endDatetime
-														? dayAfterDate(
-																endDatetime
-														  )
-														: '');
-												return end
+													defaultSaleEnd();
+												if (!end)
+													return __(
+														'—',
+														'fair-events'
+													);
+												return last.sale_end
 													? sprintf(
 															/* translators: %s: formatted date */
 															__(
@@ -1047,7 +1045,16 @@ export default function EventTickets({
 																end
 															)
 													  )
-													: __('—', 'fair-events');
+													: sprintf(
+															/* translators: %s: formatted date */
+															__(
+																'until %s (default)',
+																'fair-events'
+															),
+															formatSaleDateLabel(
+																end
+															)
+													  );
 											})()}
 										</div>
 									</HStack>
@@ -1243,11 +1250,7 @@ export default function EventTickets({
 												type="date"
 												value={
 													salePeriods[0].sale_end ||
-													(endDatetime
-														? dayAfterDate(
-																endDatetime
-														  )
-														: '') ||
+													defaultSaleEnd() ||
 													''
 												}
 												onChange={(v) =>
@@ -1399,11 +1402,7 @@ export default function EventTickets({
 														const untilValue =
 															isLast
 																? period.sale_end ||
-																  (endDatetime
-																		? dayAfterDate(
-																				endDatetime
-																		  )
-																		: '')
+																  defaultSaleEnd()
 																: period.sale_end ||
 																  '';
 														const dateTooltip = `${

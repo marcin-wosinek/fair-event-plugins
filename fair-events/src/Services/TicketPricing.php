@@ -7,6 +7,7 @@
 
 namespace FairEvents\Services;
 
+use FairEvents\Models\EventDates;
 use FairEvents\Models\TicketPrice;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketType;
@@ -21,11 +22,23 @@ defined( 'WPINC' ) || die;
 class TicketPricing {
 
 	/**
+	 * Sentinel used as the effective sale_start for a period whose start is
+	 * unset, so it always compares as "already started" against any real
+	 * datetime string without special-casing the comparison in pick_active_period().
+	 */
+	const OPEN_START_SENTINEL = '0000-01-01 00:00:00';
+
+	/**
 	 * Resolve the currently active sale period for an event date.
 	 *
 	 * Periods use a half-open day range [sale_start, sale_end) in the site
 	 * timezone: sale_start is the first day on sale (00:00:00 site time) and
 	 * sale_end is the first day no longer on sale (00:00:00 site time).
+	 *
+	 * A period with an unset sale_start/sale_end is not "closed" — it
+	 * resolves lazily: an open start (always on sale) and/or an end of the
+	 * day after the event/series' last occurrence, computed fresh on every
+	 * call so it automatically tracks series changes.
 	 *
 	 * Sale periods always chain: when no period matches, falls back to the
 	 * last period whose start is already in the past.
@@ -37,7 +50,64 @@ class TicketPricing {
 		$now          = current_time( 'mysql' );
 		$sale_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
 
+		$default_end  = self::compute_default_sale_end( EventDates::get_last_occurrence_end( $event_date_id ) );
+		$sale_periods = self::apply_default_window( $sale_periods, $default_end );
+
 		return self::pick_active_period( $sale_periods, $now, true );
+	}
+
+	/**
+	 * Compute the lazy default sale_end: the day after the last occurrence,
+	 * at 00:00:00 site time, preserving the half-open [start, end) range so
+	 * the final day stays purchasable.
+	 *
+	 * @param string|null $last_occurrence_end Latest end_datetime across the event/series ('Y-m-d H:i:s'), or null.
+	 * @return string|null Default sale_end ('Y-m-d H:i:s'), or null when there's no occurrence to anchor to.
+	 */
+	public static function compute_default_sale_end( $last_occurrence_end ) {
+		if ( empty( $last_occurrence_end ) ) {
+			return null;
+		}
+
+		$date = new \DateTime( $last_occurrence_end, wp_timezone() );
+		$date->setTime( 0, 0, 0 );
+		$date->modify( '+1 day' );
+
+		return $date->format( 'Y-m-d H:i:s' );
+	}
+
+	/**
+	 * Substitute the lazy default for any period with an unset sale_start
+	 * and/or sale_end, without mutating the originals. Pure → unit-testable
+	 * without a database.
+	 *
+	 * An unset sale_start becomes open (always already started). An unset
+	 * sale_end becomes $default_end when one is available; otherwise it's
+	 * left unset (pick_active_period() then never matches it as current, but
+	 * the continues-fallback can still select it, same as any closed period).
+	 *
+	 * @param object[]    $periods     Sale periods with sale_start/sale_end strings, in sort order.
+	 * @param string|null $default_end Lazy default sale_end ('Y-m-d H:i:s'), or null.
+	 * @return object[] Periods with unset windows resolved; explicit values untouched.
+	 */
+	public static function apply_default_window( $periods, $default_end ) {
+		$resolved = array();
+
+		foreach ( $periods as $period ) {
+			$resolved_period = clone $period;
+
+			if ( empty( $resolved_period->sale_start ) ) {
+				$resolved_period->sale_start = self::OPEN_START_SENTINEL;
+			}
+
+			if ( empty( $resolved_period->sale_end ) && $default_end ) {
+				$resolved_period->sale_end = $default_end;
+			}
+
+			$resolved[] = $resolved_period;
+		}
+
+		return $resolved;
 	}
 
 	/**

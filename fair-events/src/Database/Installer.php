@@ -285,6 +285,11 @@ class Installer {
 			self::migrate_to_3_24_0();
 		}
 
+		// Run migration if upgrading from pre-3.25.0 (allow NULL sale_start/sale_end).
+		if ( version_compare( $current_version, '3.25.0', '<' ) ) {
+			self::migrate_to_3_25_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -451,6 +456,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.24.0', '<' ) ) {
 				self::migrate_to_3_24_0();
+			}
+
+			if ( version_compare( $current_version, '3.25.0', '<' ) ) {
+				self::migrate_to_3_25_0();
 			}
 
 			// Install/update tables
@@ -1989,6 +1998,37 @@ class Installer {
 		 * fair-audience can link existing signup rows to participants.
 		 */
 		do_action( 'fair_events_backfill_signup_participant_ids' );
+	}
+
+	/**
+	 * Migrate to version 3.25.0 - Allow NULL sale_start/sale_end on ticket
+	 * sale periods.
+	 *
+	 * Widens the columns so an "unset" window can be stored as a true NULL
+	 * instead of an eagerly-computed date, letting on-sale evaluation resolve
+	 * a lazy default at read time. Additive only — existing rows keep their
+	 * stored values.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_25_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_sale_periods';
+
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i MODIFY COLUMN sale_start DATETIME DEFAULT NULL',
+				$table_name
+			)
+		);
+
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i MODIFY COLUMN sale_end DATETIME DEFAULT NULL',
+				$table_name
+			)
+		);
 	}
 
 	/**
