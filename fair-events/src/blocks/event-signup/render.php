@@ -297,6 +297,84 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 		do_action( 'fair_events_signup_render_before_form', $context );
 		?>
 
+		<?php if ( ! empty( $ticket_types ) ) : ?>
+			<?php
+			$first_enabled_type_id = null;
+			foreach ( $ticket_types as $ticket_type ) {
+				$type_id    = (int) $ticket_type->id;
+				$type_price = $price_by_type_id[ $type_id ] ?? null;
+				if ( ! ( $payments_unavailable && null !== $type_price && $type_price > 0 ) ) {
+					$first_enabled_type_id = $type_id;
+					break;
+				}
+			}
+			?>
+			<div class="form-row">
+				<fieldset class="fair-events-ticket-fieldset">
+					<legend class="form-label"><?php esc_html_e( 'Choose ticket type', 'fair-events' ); ?></legend>
+					<?php foreach ( $ticket_types as $ticket_type ) : ?>
+						<?php
+						$type_id          = (int) $ticket_type->id;
+						$type_price       = $price_by_type_id[ $type_id ] ?? null;
+						$type_unavailable = $payments_unavailable && null !== $type_price && $type_price > 0;
+						$label            = esc_html( $ticket_type->name );
+						if ( null !== $type_price ) {
+							$label .= ' — ' . esc_html( $currency_symbol . number_format( $type_price, 2 ) );
+						} elseif ( null === $active_sale_period ) {
+							$label .= ' — ' . esc_html__( 'No active sale period', 'fair-events' );
+						}
+						if ( $type_unavailable ) {
+							$label .= ' — ' . esc_html__( 'ticket sales temporarily unavailable', 'fair-events' );
+						}
+						$radio_id = $form_id . '-ticket-type-' . $type_id;
+						?>
+						<label class="fair-events-ticket-option" for="<?php echo esc_attr( $radio_id ); ?>">
+							<input
+								type="radio"
+								id="<?php echo esc_attr( $radio_id ); ?>"
+								name="ticket_type_id"
+								value="<?php echo esc_attr( $type_id ); ?>"
+								data-ticket-price="<?php echo esc_attr( null !== $type_price ? number_format( $type_price, 2, '.', '' ) : '' ); ?>"
+								data-recurrence-scope="<?php echo esc_attr( $ticket_type->recurrence_scope ); ?>"
+								data-min-instances="<?php echo esc_attr( (string) $ticket_type->minimum_instances ); ?>"
+								<?php echo $type_unavailable ? 'disabled' : ''; ?>
+								<?php echo $type_id === $first_enabled_type_id ? 'checked' : ''; ?>
+							/>
+							<?php echo esc_html( $label ); ?>
+						</label>
+					<?php endforeach; ?>
+				</fieldset>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( $has_instance_picker ) : ?>
+			<div class="form-row fair-events-instance-picker" style="display: none;">
+				<span class="form-label"><?php esc_html_e( 'Choose occurrences', 'fair-events' ); ?></span>
+				<?php foreach ( $occurrences_for_picker as $occ_row ) : ?>
+					<?php
+					$occ_label   = \FairEvents\Helpers\DateRangeFormatter::format(
+						$occ_row['start_datetime'],
+						$occ_row['end_datetime'],
+						$occ_row['all_day']
+					);
+					$checkbox_id = $form_id . '-inst-' . (int) $occ_row['id'];
+					?>
+					<label class="fair-events-instance-option" for="<?php echo esc_attr( $checkbox_id ); ?>">
+						<input
+							type="checkbox"
+							name="event_date_ids[]"
+							id="<?php echo esc_attr( $checkbox_id ); ?>"
+							value="<?php echo (int) $occ_row['id']; ?>"
+							class="form-checkbox"
+						/>
+						<?php echo esc_html( $occ_label ); ?>
+					</label>
+				<?php endforeach; ?>
+				<p class="fair-events-instance-picker-hint"></p>
+				<p class="fair-events-instance-picker-total"></p>
+			</div>
+		<?php endif; ?>
+
 		<div class="form-row">
 			<label for="<?php echo esc_attr( $form_id ); ?>-name" class="form-label">
 				<?php esc_html_e( 'Your Name', 'fair-events' ); ?>
@@ -330,99 +408,33 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 			/>
 		</div>
 
-		<?php if ( ! empty( $ticket_types ) ) : ?>
-			<div class="form-row">
-				<label for="<?php echo esc_attr( $form_id ); ?>-ticket-type" class="form-label">
-					<?php esc_html_e( 'Ticket Type', 'fair-events' ); ?>
+		<div class="fair-events-quantity-newsletter-row">
+			<div class="form-row fair-events-quantity-row">
+				<label for="<?php echo esc_attr( $form_id ); ?>-quantity" class="form-label">
+					<?php esc_html_e( 'Quantity', 'fair-events' ); ?>
 				</label>
-				<select
-					id="<?php echo esc_attr( $form_id ); ?>-ticket-type"
-					name="ticket_type_id"
-					class="form-input"
-				>
-					<option value=""><?php esc_html_e( 'Select a ticket type…', 'fair-events' ); ?></option>
-					<?php foreach ( $ticket_types as $ticket_type ) : ?>
-						<?php
-						$type_id          = (int) $ticket_type->id;
-						$type_price       = $price_by_type_id[ $type_id ] ?? null;
-						$type_unavailable = $payments_unavailable && null !== $type_price && $type_price > 0;
-						$label            = esc_html( $ticket_type->name );
-						if ( null !== $type_price ) {
-							$label .= ' — ' . esc_html( $currency_symbol . number_format( $type_price, 2 ) );
-						} elseif ( null === $active_sale_period ) {
-							$label .= ' — ' . esc_html__( 'No active sale period', 'fair-events' );
-						}
-						if ( $type_unavailable ) {
-							$label .= ' — ' . esc_html__( 'ticket sales temporarily unavailable', 'fair-events' );
-						}
-						?>
-						<option
-							value="<?php echo esc_attr( $type_id ); ?>"
-							data-ticket-price="<?php echo esc_attr( null !== $type_price ? number_format( $type_price, 2, '.', '' ) : '' ); ?>"
-							data-recurrence-scope="<?php echo esc_attr( $ticket_type->recurrence_scope ); ?>"
-							data-min-instances="<?php echo esc_attr( (string) $ticket_type->minimum_instances ); ?>"
-							<?php echo $type_unavailable ? 'disabled' : ''; ?>
-						>
-							<?php echo esc_html( $label ); ?>
-						</option>
-					<?php endforeach; ?>
-				</select>
-			</div>
-		<?php endif; ?>
-
-		<?php if ( $has_instance_picker ) : ?>
-			<div class="form-row fair-events-instance-picker" style="display: none;">
-				<span class="form-label"><?php esc_html_e( 'Choose occurrences', 'fair-events' ); ?></span>
-				<?php foreach ( $occurrences_for_picker as $occ_row ) : ?>
-					<?php
-					$occ_label   = \FairEvents\Helpers\DateRangeFormatter::format(
-						$occ_row['start_datetime'],
-						$occ_row['end_datetime'],
-						$occ_row['all_day']
-					);
-					$checkbox_id = $form_id . '-inst-' . (int) $occ_row['id'];
-					?>
-					<label class="fair-events-instance-option" for="<?php echo esc_attr( $checkbox_id ); ?>">
-						<input
-							type="checkbox"
-							name="event_date_ids[]"
-							id="<?php echo esc_attr( $checkbox_id ); ?>"
-							value="<?php echo (int) $occ_row['id']; ?>"
-							class="form-checkbox"
-						/>
-						<?php echo esc_html( $occ_label ); ?>
-					</label>
-				<?php endforeach; ?>
-				<p class="fair-events-instance-picker-hint"></p>
-				<p class="fair-events-instance-picker-total"></p>
-			</div>
-		<?php endif; ?>
-
-		<div class="form-row fair-events-quantity-row">
-			<label for="<?php echo esc_attr( $form_id ); ?>-quantity" class="form-label">
-				<?php esc_html_e( 'Quantity', 'fair-events' ); ?>
-			</label>
-			<input
-				type="number"
-				id="<?php echo esc_attr( $form_id ); ?>-quantity"
-				name="quantity"
-				class="form-input"
-				value="1"
-				min="1"
-				max="10"
-			/>
-		</div>
-
-		<div class="form-row">
-			<label class="form-checkbox-label">
 				<input
-					type="checkbox"
-					name="mailing_opt_in"
+					type="number"
+					id="<?php echo esc_attr( $form_id ); ?>-quantity"
+					name="quantity"
+					class="form-input"
 					value="1"
-					class="form-checkbox"
+					min="1"
+					max="10"
 				/>
-				<?php esc_html_e( 'Keep me informed about future events', 'fair-events' ); ?>
-			</label>
+			</div>
+
+			<div class="form-row">
+				<label class="form-checkbox-label">
+					<input
+						type="checkbox"
+						name="mailing_opt_in"
+						value="1"
+						class="form-checkbox"
+					/>
+					<?php esc_html_e( 'Keep me informed about future events', 'fair-events' ); ?>
+				</label>
+			</div>
 		</div>
 
 		<?php if ( '' !== trim( $content ) ) : ?>

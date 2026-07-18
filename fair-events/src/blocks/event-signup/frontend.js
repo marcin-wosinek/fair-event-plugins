@@ -75,14 +75,14 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 			submitForm(form, data);
 		});
 
-		const ticketTypeField = form.querySelector(
-			'select[name="ticket_type_id"]'
+		const ticketTypeFields = form.querySelectorAll(
+			'input[name="ticket_type_id"]'
 		);
-		if (ticketTypeField) {
-			ticketTypeField.addEventListener('change', function () {
+		ticketTypeFields.forEach(function (field) {
+			field.addEventListener('change', function () {
 				updateInstancePicker(form);
 			});
-		}
+		});
 
 		const instancePicker = form.querySelector(
 			'.fair-events-instance-picker'
@@ -101,16 +101,12 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 	}
 
 	/**
-	 * Selected <option> of the ticket type <select>, if any.
+	 * Checked ticket type radio input, if any.
 	 * @param {HTMLFormElement} form The get-tickets form.
-	 * @return {HTMLOptionElement|null} The selected option element.
+	 * @return {HTMLInputElement|null} The checked radio input element.
 	 */
 	function getSelectedTicketTypeOption(form) {
-		const select = form.querySelector('select[name="ticket_type_id"]');
-		if (!select || !select.value) {
-			return null;
-		}
-		return select.options[select.selectedIndex] || null;
+		return form.querySelector('input[name="ticket_type_id"]:checked');
 	}
 
 	/**
@@ -318,7 +314,7 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 		}
 
 		const ticketTypeField = form.querySelector(
-			'select[name="ticket_type_id"]'
+			'input[name="ticket_type_id"]:checked'
 		);
 		if (ticketTypeField && ticketTypeField.value) {
 			data.ticket_type_id = parseInt(ticketTypeField.value, 10);

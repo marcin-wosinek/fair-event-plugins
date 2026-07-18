@@ -51,8 +51,10 @@ test.describe('get-tickets block (fair-audience inactive): abandon and restart',
 		await form.locator('input[name="name"]').fill(`Abandoned ${stamp}`);
 		await form.locator('input[name="email"]').fill(abandonedEmail);
 		await form
-			.locator('select[name="ticket_type_id"]')
-			.selectOption(String(event.ticketTypeId));
+			.locator(
+				`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
+			)
+			.check();
 
 		// Submit → redirected through the Mollie double to the callback URL,
 		// which only polls; the buyer never lands on a confirmed state because
@@ -80,8 +82,10 @@ test.describe('get-tickets block (fair-audience inactive): abandon and restart',
 		await form.locator('input[name="name"]').fill(`Fresh Buyer ${stamp}`);
 		await form.locator('input[name="email"]').fill(buyerEmail);
 		await form
-			.locator('select[name="ticket_type_id"]')
-			.selectOption(String(event.ticketTypeId));
+			.locator(
+				`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
+			)
+			.check();
 		await form.locator('button[type="submit"]').click();
 		await expect(page.locator('.message-processing')).toBeVisible({
 			timeout: 30000,

@@ -76,3 +76,33 @@
 	font-size: 0.9em;
 	color: #555;
 }
+
+.fair-events-get-tickets-form .fair-events-ticket-fieldset {
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	padding: 12px 16px 16px;
+	margin: 0;
+}
+
+.fair-events-get-tickets-form .fair-events-ticket-fieldset legend {
+	padding: 0 4px;
+}
+
+.fair-events-get-tickets-form .fair-events-ticket-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: normal;
+	margin-bottom: 8px;
+}
+
+.fair-events-get-tickets-form .fair-events-ticket-option:last-child {
+	margin-bottom: 0;
+}
+
+.fair-events-get-tickets-form .fair-events-quantity-newsletter-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: flex-end;
+}

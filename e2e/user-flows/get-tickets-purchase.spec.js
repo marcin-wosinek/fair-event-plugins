@@ -62,8 +62,10 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 		await form.locator('input[name="name"]').fill(buyerName);
 		await form.locator('input[name="email"]').fill(email);
 		await form
-			.locator('select[name="ticket_type_id"]')
-			.selectOption(String(event.ticketTypeId));
+			.locator(
+				`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
+			)
+			.check();
 
 		// Submit → payment_required with a checkout_url that (via the Mollie
 		// double) is the callback URL itself, so the browser lands straight on
@@ -137,8 +139,10 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 			.fill(`E2E GetTickets Free ${stamp}`);
 		await form.locator('input[name="email"]').fill(email);
 		await form
-			.locator('select[name="ticket_type_id"]')
-			.selectOption(String(event.ticketTypeId));
+			.locator(
+				`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
+			)
+			.check();
 
 		await form.locator('button[type="submit"]').click();
 
