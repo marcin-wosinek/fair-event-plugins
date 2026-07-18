@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 1.9.0
+Stable tag: 1.10.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,12 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.10.0
+
+### Minor Changes
+
+-   6973be8: Add a signup hook contract shared with fair-events, resolve payment webhooks via the transaction ledger, and support simple HTML in the weekly digest intro/outro text. Require confirmed status for the marketing email consent gate, fix the weekly digest to stamp its last-sent-week when the send slot already passed, and use the date param for the event-signup occurrence picker.
 
 ## 1.9.0
 

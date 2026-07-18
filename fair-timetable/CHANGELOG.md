@@ -1,5 +1,11 @@
 # fair-timetable
 
+## 0.6.7
+
+### Patch Changes
+
+-   6973be8: Add Spanish (es_ES) WordPress.org screenshots and linkify GitHub URLs in the readme.
+
 ## 0.6.6
 
 ### Patch Changes

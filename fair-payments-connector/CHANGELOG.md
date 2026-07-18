@@ -1,5 +1,11 @@
 # fair-payments-connector
 
+## 1.5.2
+
+### Patch Changes
+
+-   6973be8: Rewrite the readme for WordPress.org and convert hand-rolled admin notices to wp_admin_notice().
+
 ## 1.5.1
 
 ### Patch Changes

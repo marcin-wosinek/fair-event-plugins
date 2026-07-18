@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+### Patch Changes
+
+-   6973be8: Convert hand-rolled admin notices to wp_admin_notice().
+
 ## 1.2.0
 
 ### Minor Changes

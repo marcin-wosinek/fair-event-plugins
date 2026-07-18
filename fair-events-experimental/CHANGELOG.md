@@ -1,5 +1,11 @@
 # fair-events-experimental
 
+## 1.3.2
+
+### Patch Changes
+
+-   6973be8: Simplify ticket setup to a single sale period by default.
+
 ## 1.3.1
 
 ### Patch Changes
