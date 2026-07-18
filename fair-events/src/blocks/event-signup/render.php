@@ -137,8 +137,12 @@ foreach ( $ticket_types as $ticket_type ) {
 	}
 }
 
+// Loaded whenever the event is part of a recurring series, independent of
+// which ticket scopes are configured — the single-occurrence dropdown (below)
+// needs the same upcoming-occurrences list as the multi-occurrence checkbox
+// picker, even on a series with only a 'single_instance' ticket type.
 $occurrences_for_picker = array();
-if ( $has_multiple_instances_type && $series_master_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
+if ( $series_master_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
 	$upcoming = \FairEvents\Models\EventDates::get_upcoming_by_master_id( $series_master_id );
 	foreach ( $upcoming as $occ ) {
 		$occurrences_for_picker[] = array(
@@ -149,7 +153,7 @@ if ( $has_multiple_instances_type && $series_master_id && class_exists( \FairEve
 		);
 	}
 }
-$has_instance_picker = ! empty( $occurrences_for_picker );
+$has_instance_picker = $has_multiple_instances_type && ! empty( $occurrences_for_picker );
 
 // Find active sale period and load prices.
 $price_by_type_id   = array();
@@ -213,7 +217,6 @@ $ticket_types           = $context['ticket_types'];
 $price_by_type_id       = $context['price_by_type_id'];
 $active_sale_period     = $context['active_sale_period'];
 $occurrences_for_picker = $context['occurrences_for_picker'];
-$has_instance_picker    = ! empty( $occurrences_for_picker );
 $currency_symbol        = $context['currency_symbol'];
 $callback_status        = $context['callback_status'];
 $prefill_name           = $context['prefill_name'];
@@ -226,6 +229,21 @@ foreach ( $ticket_types as $ticket_type ) {
 	if ( $ticket_type->is_multiple_instances() ) {
 		$has_multiple_instances_type = true;
 		break;
+	}
+}
+$has_instance_picker = $has_multiple_instances_type && ! empty( $occurrences_for_picker );
+
+// Single-occurrence dropdown: offered whenever the series has more than one
+// upcoming occurrence, regardless of which ticket scopes are configured.
+// frontend.js shows/hides it based on the selected ticket type's scope.
+$has_occurrence_dropdown  = count( $occurrences_for_picker ) > 1;
+$default_occurrence_index = 0;
+if ( $has_occurrence_dropdown ) {
+	foreach ( $occurrences_for_picker as $occ_index => $occ_row ) {
+		if ( (int) $occ_row['id'] === $event_date_id ) {
+			$default_occurrence_index = $occ_index;
+			break;
+		}
 	}
 }
 
@@ -344,6 +362,28 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 						</label>
 					<?php endforeach; ?>
 				</fieldset>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( $has_occurrence_dropdown ) : ?>
+			<div class="form-row fair-events-occurrence-picker" style="display: none;">
+				<label for="<?php echo esc_attr( $form_id ); ?>-occ" class="form-label">
+					<?php esc_html_e( 'Choose a date', 'fair-events' ); ?>
+				</label>
+				<select id="<?php echo esc_attr( $form_id ); ?>-occ" name="event_date_id_single" class="form-input fair-events-occurrence-select">
+					<?php foreach ( $occurrences_for_picker as $occ_index => $occ_row ) : ?>
+						<?php
+						$occ_label = \FairEvents\Helpers\DateRangeFormatter::format(
+							$occ_row['start_datetime'],
+							$occ_row['end_datetime'],
+							$occ_row['all_day']
+						);
+						?>
+						<option value="<?php echo (int) $occ_row['id']; ?>" <?php echo $occ_index === $default_occurrence_index ? 'selected' : ''; ?>>
+							<?php echo esc_html( $occ_label ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
 			</div>
 		<?php endif; ?>
 
