@@ -144,8 +144,8 @@ class TicketSalePeriod {
 	 *
 	 * @param int         $event_date_id Event date ID.
 	 * @param string|null $name          Name.
-	 * @param string      $sale_start    Sale start datetime.
-	 * @param string      $sale_end      Sale end datetime.
+	 * @param string|null $sale_start    Sale start datetime, or null/empty for unset (resolved lazily).
+	 * @param string|null $sale_end      Sale end datetime, or null/empty for unset (resolved lazily).
 	 * @param int         $sort_order    Sort order.
 	 * @return int|false The sale period ID on success, false on failure.
 	 */
@@ -159,8 +159,8 @@ class TicketSalePeriod {
 			array(
 				'event_date_id' => $event_date_id,
 				'name'          => $name,
-				'sale_start'    => $sale_start,
-				'sale_end'      => $sale_end,
+				'sale_start'    => '' !== $sale_start && null !== $sale_start ? $sale_start : null,
+				'sale_end'      => '' !== $sale_end && null !== $sale_end ? $sale_end : null,
 				'sort_order'    => $sort_order,
 			),
 			array( '%d', '%s', '%s', '%s', '%d' )
@@ -193,13 +193,13 @@ class TicketSalePeriod {
 			$update_format[]     = '%s';
 		}
 
-		if ( isset( $data['sale_start'] ) ) {
-			$update_data['sale_start'] = $data['sale_start'];
+		if ( array_key_exists( 'sale_start', $data ) ) {
+			$update_data['sale_start'] = '' !== $data['sale_start'] && null !== $data['sale_start'] ? $data['sale_start'] : null;
 			$update_format[]           = '%s';
 		}
 
-		if ( isset( $data['sale_end'] ) ) {
-			$update_data['sale_end'] = $data['sale_end'];
+		if ( array_key_exists( 'sale_end', $data ) ) {
+			$update_data['sale_end'] = '' !== $data['sale_end'] && null !== $data['sale_end'] ? $data['sale_end'] : null;
 			$update_format[]         = '%s';
 		}
 

@@ -367,8 +367,8 @@ class TicketsController extends WP_REST_Controller {
 			: array();
 		foreach ( $incoming_periods as $index => $item ) {
 			$name       = isset( $item['name'] ) ? sanitize_text_field( $item['name'] ) : null;
-			$sale_start = sanitize_text_field( $item['sale_start'] ?? '' );
-			$sale_end   = sanitize_text_field( $item['sale_end'] ?? '' );
+			$sale_start = ! empty( $item['sale_start'] ) ? sanitize_text_field( $item['sale_start'] ) : null;
+			$sale_end   = ! empty( $item['sale_end'] ) ? sanitize_text_field( $item['sale_end'] ) : null;
 
 			$new_id = TicketSalePeriod::create( $event_date_id, $name, $sale_start, $sale_end, $index );
 			if ( $new_id ) {
@@ -596,8 +596,8 @@ class TicketsController extends WP_REST_Controller {
 		$id_map = array();
 		foreach ( $incoming as $index => $item ) {
 			$name       = isset( $item['name'] ) ? sanitize_text_field( $item['name'] ) : null;
-			$sale_start = sanitize_text_field( $item['sale_start'] ?? '' );
-			$sale_end   = sanitize_text_field( $item['sale_end'] ?? '' );
+			$sale_start = ! empty( $item['sale_start'] ) ? sanitize_text_field( $item['sale_start'] ) : null;
+			$sale_end   = ! empty( $item['sale_end'] ) ? sanitize_text_field( $item['sale_end'] ) : null;
 			$sort_order = $index;
 
 			if ( ! empty( $item['id'] ) && in_array( (int) $item['id'], $existing_ids, true ) ) {

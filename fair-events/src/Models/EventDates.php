@@ -1409,4 +1409,32 @@ class EventDates {
 
 		return self::hydrate( $result );
 	}
+
+	/**
+	 * Get the latest end_datetime across an event date row and its active
+	 * generated occurrences.
+	 *
+	 * Used to resolve the lazy default ticket sale-period end (day after the
+	 * last occurrence) for a single event as well as recurring series: a
+	 * single/master row with no generated children just returns its own end.
+	 *
+	 * @param int $event_date_id Event date ID (master or single row).
+	 * @return string|null Latest end_datetime ('Y-m-d H:i:s'), or null if the row doesn't exist.
+	 */
+	public static function get_last_occurrence_end( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		return $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT MAX(end_datetime) FROM %i
+				WHERE id = %d
+				OR ( master_id = %d AND status = 'active' )",
+				$table_name,
+				$event_date_id,
+				$event_date_id
+			)
+		);
+	}
 }

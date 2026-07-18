@@ -795,7 +795,7 @@ describe('EventTickets — single pricing period by default (#1138)', () => {
 		expect(screen.queryByText('Available')).not.toBeInTheDocument();
 	});
 
-	it('a seeded sale window for a past-dated event is never inverted', () => {
+	it('adding a ticket type leaves the sale window unset (#1189) — no concrete dates are seeded', () => {
 		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
 		renderTickets({
 			initialData: emptyInitialData,
@@ -808,10 +808,9 @@ describe('EventTickets — single pricing period by default (#1138)', () => {
 		);
 		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
 
-		const fromInput = screen.getByLabelText('From');
-		const untilInput = screen.getByLabelText('Until');
-		expect(fromInput.value <= untilInput.value).toBe(true);
-		expect(fromInput.value).toBe('2020-01-01');
+		// Nothing is frozen into the "From" field — the window stays unset
+		// until the organiser explicitly picks a date.
+		expect(screen.getByLabelText('From').value).toBe('');
 	});
 
 	it('turning on "Multiple pricing periods" splits the window into Advance ticket / Day of event and migrates the price', () => {
@@ -859,6 +858,73 @@ describe('EventTickets — single pricing period by default (#1138)', () => {
 
 		expect(screen.getByText('Advance ticket')).toBeInTheDocument();
 		expect(screen.getByText('Day of event')).toBeInTheDocument();
+	});
+});
+
+describe('EventTickets — unset sale window shows the resolved default (#1189)', () => {
+	const initialDataWithUnsetPeriod = {
+		...initialDataWithTicketType,
+		sale_periods: [{ id: 701, name: '', sale_start: '', sale_end: '' }],
+		prices: [{ ticket_type_id: 1, sale_period_id: 701, price: '12' }],
+	};
+
+	it('a single event with an unset window shows the day after the event as the default, marked as a default', () => {
+		renderTickets({
+			initialData: initialDataWithUnsetPeriod,
+			startDatetime: '2026-08-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		// formatSaleDateLabel() renders a locale-formatted weekday/day/month —
+		// assert on the "(default)" marker and August, not an exact ISO string.
+		expect(
+			screen.getByText(/until .*August.*\(default\)/)
+		).toBeInTheDocument();
+	});
+
+	it("a series with an unset window resolves the default from the last occurrence, not the master's own end", () => {
+		renderTickets({
+			initialData: initialDataWithUnsetPeriod,
+			startDatetime: '2026-08-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+			lastOccurrenceDatetime: '2026-08-22 12:00:00',
+			isSeries: true,
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		expect(
+			screen.getByText(/until .*August.*\(default\)/)
+		).toBeInTheDocument();
+	});
+
+	it('an explicit sale_end suppresses the "(default)" marker', () => {
+		renderTickets({
+			initialData: {
+				...initialDataWithTicketType,
+				sale_periods: [
+					{
+						id: 702,
+						name: '',
+						sale_start: '2026-08-01',
+						sale_end: '2026-09-01',
+					},
+				],
+				prices: [
+					{ ticket_type_id: 1, sale_period_id: 702, price: '12' },
+				],
+			},
+			startDatetime: '2026-08-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+			lastOccurrenceDatetime: '2026-08-22 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		expect(screen.getByText(/until .*September/)).toBeInTheDocument();
+		expect(screen.queryByText(/\(default\)/)).not.toBeInTheDocument();
 	});
 });
 

@@ -480,6 +480,21 @@ export default function ManageEventApp() {
 	const isSeries =
 		!!eventDate?.rrule || eventDate?.recurrence_mode === 'manual';
 
+	// The latest end_datetime across the event and its generated occurrences —
+	// the anchor for the ticket editor's lazily-resolved default sale end
+	// (day after the last occurrence). Recomputed from eventDate so it tracks
+	// series edits (add/remove/extend occurrences) automatically.
+	const lastOccurrenceDatetime = useMemo(() => {
+		if (!eventDate) return null;
+		const ends = [
+			eventDate.end_datetime,
+			...(eventDate.generated_occurrences || []).map(
+				(o) => o.end_datetime
+			),
+		].filter(Boolean);
+		return ends.length ? ends.sort()[ends.length - 1] : null;
+	}, [eventDate]);
+
 	const seriesSummary = useMemo(() => {
 		if (eventDate?.recurrence_mode === 'manual') {
 			const dateCount =
@@ -708,6 +723,7 @@ export default function ManageEventApp() {
 					eventDateId={eventDateId}
 					startDatetime={eventDate.start_datetime}
 					endDatetime={eventDate.end_datetime}
+					lastOccurrenceDatetime={lastOccurrenceDatetime}
 					isSeries={isSeries}
 					onDirtyChange={handleTicketsDirtyChange}
 				/>

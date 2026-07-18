@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.24.0';
+	const DB_VERSION = '3.25.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -285,8 +285,8 @@ class Schema {
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			event_date_id BIGINT UNSIGNED NOT NULL,
 			name VARCHAR(255) DEFAULT NULL,
-			sale_start DATETIME NOT NULL,
-			sale_end DATETIME NOT NULL,
+			sale_start DATETIME DEFAULT NULL,
+			sale_end DATETIME DEFAULT NULL,
 			sort_order INT UNSIGNED NOT NULL DEFAULT 0,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
