@@ -1,0 +1,22 @@
+/**
+ * Entries admin page styles.
+ *
+ * The totals summary is an `HStack justify="space-around"`, which renders a
+ * non-wrapping flex row. On narrow screens the three amounts overlap and
+ * become unreadable. Below the mobile breakpoint we stack them vertically
+ * instead of forcing them onto one row.
+ *
+ * Scoped under `.wrap.fair-payments-connector-entries-page` so nothing else
+ * is touched, and lives inside a media query so the desktop layout is
+ * unchanged.
+ */
+
+.wrap.fair-payments-connector-entries-page {
+	@media screen and (max-width: 600px) {
+		.fair-finance-entries-summary {
+			flex-direction: column;
+			gap: 1em;
+			align-items: center;
+		}
+	}
+}
