@@ -7,17 +7,17 @@
  * mobile breakpoint we drop the table grid and render each row as a stacked
  * card with label/value pairs so the content stays readable.
  *
- * Everything is scoped under `.fair-payment-budgets-page` so other
+ * Everything is scoped under `.fair-payments-connector-budgets-page` so other
  * `wp-list-table`s in the admin are untouched, and lives inside a media query
  * so the desktop layout is unchanged.
  *
- * The selectors deliberately stack `.wrap.fair-payment-budgets-page` and
+ * The selectors deliberately stack `.wrap.fair-payments-connector-budgets-page` and
  * `.wp-list-table.widefat` to outweigh WordPress core's responsive list-table
  * rules (`...td::before { content: attr(data-colname); }`, active below 782px),
  * which would otherwise blank out our `data-label` text.
  */
 
-.wrap.fair-payment-budgets-page {
+.wrap.fair-payments-connector-budgets-page {
 	@media screen and (max-width: 600px) {
 		.wp-list-table.widefat {
 			display: block;
@@ -84,7 +84,7 @@
 			}
 
 			// Let the View / Edit / Delete buttons wrap and stay right-aligned.
-			.fair-payment-budget-actions {
+			.fair-payments-connector-budget-actions {
 				flex-wrap: wrap;
 				justify-content: flex-end;
 			}
