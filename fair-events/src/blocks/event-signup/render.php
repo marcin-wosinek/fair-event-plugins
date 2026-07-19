@@ -176,7 +176,6 @@ if ( class_exists( \FairEvents\Models\TicketSalePeriod::class ) && class_exists(
 }
 
 $currency_symbol = 'EUR' === get_option( 'fair_payment_currency', 'EUR' ) ? '€' : get_option( 'fair_payment_currency', 'EUR' );
-$powered_by      = (bool) get_option( 'fair_events_powered_by_branding', false );
 
 /**
  * Extension point for plugins (e.g. fair-audience) that want to enrich the
@@ -514,10 +513,8 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 
 	<div class="message-container" role="alert" aria-live="polite"></div>
 
-	<?php if ( $powered_by ) : ?>
-		<p class="fair-events-powered-by">
-			<?php esc_html_e( 'Powered by Fair Events', 'fair-events' ); ?>
-		</p>
+	<?php if ( class_exists( \FairAudience\Services\Branding::class ) ) : ?>
+		<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
 	<?php endif; ?>
 <?php endif; ?>
 </div>

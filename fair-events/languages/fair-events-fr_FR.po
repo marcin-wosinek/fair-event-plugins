@@ -571,12 +571,12 @@ msgid "4 hours"
 msgstr "4 heures"
 
 #: src/blocks/event-proposal/render.php:58
-#: src/blocks/event-signup/render.php:420
+#: src/blocks/event-signup/render.php:419
 msgid "Your Name"
 msgstr "Votre nom"
 
 #: src/blocks/event-proposal/render.php:73
-#: src/blocks/event-signup/render.php:437
+#: src/blocks/event-signup/render.php:436
 msgid "Your Email"
 msgstr "Votre e-mail"
 
@@ -1364,37 +1364,37 @@ msgstr "Filtrer par type d'occurrence."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:68
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d days"
 msgstr "Tous les %d jours"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:75
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every 2 weeks on %s"
 msgstr "Tous les 2 semaines le %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:79
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Tous les %1$d semaines le %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:82
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %s"
 msgstr "Tous les %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:87
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d months"
 msgstr "Tous les %d mois"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:94
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d years"
 msgstr "Tous les %d ans"
 
@@ -1404,7 +1404,7 @@ msgstr "Annuellement"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:169
-#, php-format, js-format
+#, php-format,js-format
 msgid "Next: %s"
 msgstr "Suivant : %s"
 
@@ -2030,7 +2030,7 @@ msgstr "L'une des occurrences sélectionnées n'est pas valide pour ce billet."
 #: src/API/GetTicketsController.php:558
 #: src/blocks/event-signup/frontend.js:206
 #: src/blocks/event-signup/frontend.js:292
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Veuillez sélectionner au moins %d occurrence."
@@ -2056,38 +2056,34 @@ msgstr "Charge d'importation invalide."
 msgid "Get Tickets"
 msgstr "Obtenir les billets"
 
-#: src/blocks/event-signup/render.php:284
+#: src/blocks/event-signup/render.php:283
 #: src/blocks/event-signup/frontend.js:52
 msgid "Your ticket purchase was successful! Thank you."
 msgstr "Votre achat de billet a réussi ! Merci."
 
-#: src/blocks/event-signup/render.php:288
+#: src/blocks/event-signup/render.php:287
 msgid "Your payment was not completed. Please try again."
 msgstr "Votre paiement n'a pas été complété. Veuillez réessayer."
 
-#: src/blocks/event-signup/render.php:292
+#: src/blocks/event-signup/render.php:291
 msgid "Your payment is being processed. Please check back shortly."
 msgstr "Votre paiement est en cours de traitement. Veuillez revenir bientôt."
 
-#: src/blocks/event-signup/render.php:342
+#: src/blocks/event-signup/render.php:341
 msgid "No active sale period"
 msgstr "Aucune période de vente active"
 
-#: src/blocks/event-signup/render.php:392
+#: src/blocks/event-signup/render.php:391
 msgid "Choose occurrences"
 msgstr "Choisir les occurrences"
 
-#: src/blocks/event-signup/render.php:454
+#: src/blocks/event-signup/render.php:453
 msgid "Quantity"
 msgstr "Quantité"
 
-#: src/blocks/event-signup/render.php:475
+#: src/blocks/event-signup/render.php:474
 msgid "Keep me informed about future events"
 msgstr "Me tenir informé des événements futurs"
-
-#: src/blocks/event-signup/render.php:519
-msgid "Powered by Fair Events"
-msgstr "Powered by Fair Events"
 
 #: src/Core/Features.php:178
 msgid "Ticketing"
@@ -2807,19 +2803,19 @@ msgstr "Les billets payants ne sont pas disponibles car les paiements en ligne n
 msgid "Event Signup"
 msgstr "Inscription à l'événement"
 
-#: src/blocks/event-signup/render.php:298
+#: src/blocks/event-signup/render.php:297
 msgid "Ticket sales are temporarily unavailable. Please check back later."
 msgstr "Les ventes de billets sont temporairement indisponibles. Veuillez réessayer plus tard."
 
-#: src/blocks/event-signup/render.php:332
+#: src/blocks/event-signup/render.php:331
 msgid "Choose ticket type"
 msgstr "Choisir le type de billet"
 
-#: src/blocks/event-signup/render.php:345
+#: src/blocks/event-signup/render.php:344
 msgid "ticket sales temporarily unavailable"
 msgstr "ventes de billets temporairement indisponibles"
 
-#: src/blocks/event-signup/render.php:371
+#: src/blocks/event-signup/render.php:370
 msgid "Choose a date"
 msgstr "Choisir une date"
 
@@ -2840,4 +2836,3 @@ msgstr "jusqu'à %s (par défaut)"
 #: src/blocks/event-signup/editor.js:97
 msgid "Form content"
 msgstr "Contenu du formulaire"
-
