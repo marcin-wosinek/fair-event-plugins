@@ -83,7 +83,6 @@ export default function EventTickets({
 	const manageInvitationsUrl =
 		window.fairEventsManageEventData?.manageInvitationsUrl || '';
 
-	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
 	// An event loaded with more than one stored sale period always renders in
 	// multiple-periods mode, regardless of the stored toggle, so no configured
 	// period is ever hidden.
@@ -385,6 +384,9 @@ export default function EventTickets({
 	};
 
 	const addTicketType = (scope = 'single_instance') => {
+		if (salePeriods.length === 0) {
+			seedDefaultSalePeriods();
+		}
 		setTicketTypes([
 			...ticketTypes,
 			{
@@ -874,7 +876,6 @@ export default function EventTickets({
 					{error}
 				</Notice>
 			)}
-
 			{success && (
 				<Notice
 					status="success"
@@ -884,7 +885,6 @@ export default function EventTickets({
 					{success}
 				</Notice>
 			)}
-
 			{showPaymentsWarning &&
 				(connectorActive ? (
 					<Notice
@@ -910,7 +910,6 @@ export default function EventTickets({
 						)}
 					</Notice>
 				))}
-
 			<HStack spacing={2} justify="space-between">
 				<Button
 					variant="primary"
@@ -938,450 +937,115 @@ export default function EventTickets({
 				style={{ display: 'none' }}
 				onChange={handleImportFile}
 			/>
-
-			{!hasAdvancedTickets && (
-				<Card>
-					<CardHeader>
-						<strong>{__('Tickets', 'fair-events')}</strong>
-					</CardHeader>
-					<CardBody>
-						<VStack spacing={3} alignment="flex-start">
-							<p style={{ margin: 0 }}>
-								{__(
-									'No ticket types configured yet. Add a ticket type to start selling tickets for this event.',
-									'fair-events'
-								)}
-							</p>
-							<Button
-								variant="primary"
-								onClick={() => {
-									seedDefaultSalePeriods();
-									openAddTicketModal();
-								}}
-							>
-								{__('+ Add Ticket Type', 'fair-events')}
-							</Button>
-						</VStack>
-					</CardBody>
-				</Card>
-			)}
-
-			{hasAdvancedTickets && (
-				<Card>
-					<Panel>
-						<PanelBody
-							title={__('Sale Periods', 'fair-events')}
-							initialOpen={false}
-						>
-							<VStack spacing={4}>
-								{salePeriods.length > 0 && (
-									<HStack spacing={4} justify="flex-start">
-										<div>
-											<strong>
-												{__(
-													'Sale start at:',
-													'fair-events'
-												)}
-											</strong>{' '}
-											{(() => {
-												const start =
-													salePeriods[0].sale_start;
-												const days =
-													daysBeforeEvent(start);
-												const label =
-													formatSaleDateLabel(start);
-												return start
-													? days !== null
-														? sprintf(
-																/* translators: 1: formatted date, 2: number of days */
-																_n(
-																	'From %1$s (%2$d day before event)',
-																	'From %1$s (%2$d days before event)',
-																	days,
-																	'fair-events'
-																),
-																label,
-																days
-														  )
-														: sprintf(
-																/* translators: %s: formatted date */
-																__(
-																	'From %s',
-																	'fair-events'
-																),
-																label
-														  )
-													: __('—', 'fair-events');
-											})()}
-										</div>
-										<div>
-											<strong>
-												{__(
-													'Sale end at:',
-													'fair-events'
-												)}
-											</strong>{' '}
-											{(() => {
-												const last =
-													salePeriods[
-														salePeriods.length - 1
-													];
-												const end =
-													last.sale_end ||
-													defaultSaleEnd();
-												if (!end)
-													return __(
-														'—',
-														'fair-events'
-													);
-												return last.sale_end
+			<Card>
+				<Panel>
+					<PanelBody
+						title={__('Sale Periods', 'fair-events')}
+						initialOpen={false}
+					>
+						<VStack spacing={4}>
+							{salePeriods.length > 0 && (
+								<HStack spacing={4} justify="flex-start">
+									<div>
+										<strong>
+											{__(
+												'Sale start at:',
+												'fair-events'
+											)}
+										</strong>{' '}
+										{(() => {
+											const start =
+												salePeriods[0].sale_start;
+											const days = daysBeforeEvent(start);
+											const label =
+												formatSaleDateLabel(start);
+											return start
+												? days !== null
 													? sprintf(
-															/* translators: %s: formatted date */
-															__(
-																'until %s',
+															/* translators: 1: formatted date, 2: number of days */
+															_n(
+																'From %1$s (%2$d day before event)',
+																'From %1$s (%2$d days before event)',
+																days,
 																'fair-events'
 															),
-															formatSaleDateLabel(
-																end
-															)
+															label,
+															days
 													  )
 													: sprintf(
 															/* translators: %s: formatted date */
 															__(
-																'until %s (default)',
+																'From %s',
 																'fair-events'
 															),
-															formatSaleDateLabel(
-																end
-															)
-													  );
-											})()}
-										</div>
-									</HStack>
-								)}
-								{effectiveMultiple ? (
-									<VStack spacing={3}>
-										<div style={{ overflowX: 'auto' }}>
-											<table className="wp-list-table widefat striped">
-												<thead>
-													<tr>
-														<th>
-															{__(
-																'Name',
-																'fair-events'
-															)}
-														</th>
-														<th>
-															{__(
-																'From',
-																'fair-events'
-															)}
-														</th>
-														<th>
-															{__(
-																'Until',
-																'fair-events'
-															)}
-														</th>
-														<th />
-													</tr>
-												</thead>
-												<tbody>
-													{salePeriods.map(
-														(period, pIndex) => {
-															const isFirst =
-																pIndex === 0;
-															const isLast =
-																pIndex ===
-																salePeriods.length -
-																	1;
-															const fromValue =
-																!isFirst
-																	? salePeriods[
-																			pIndex -
-																				1
-																	  ]
-																			?.sale_end ||
-																	  ''
-																	: period.sale_start ||
-																	  '';
-															const untilValue =
-																isLast
-																	? period.sale_end ||
-																	  endDatetime
-																	: period.sale_end ||
-																	  '';
-
-															return (
-																<tr
-																	key={
-																		period.id ||
-																		`new-${pIndex}`
-																	}
-																>
-																	<td>
-																		<TextControl
-																			placeholder={__(
-																				'Period name',
-																				'fair-events'
-																			)}
-																			value={
-																				period.name ||
-																				''
-																			}
-																			onChange={(
-																				v
-																			) =>
-																				updateSalePeriod(
-																					pIndex,
-																					'name',
-																					v
-																				)
-																			}
-																			__nextHasNoMarginBottom
-																		/>
-																	</td>
-																	<td>
-																		<TextControl
-																			type="date"
-																			value={
-																				fromValue ||
-																				''
-																			}
-																			onChange={(
-																				v
-																			) =>
-																				updateSalePeriod(
-																					pIndex,
-																					'sale_start',
-																					v
-																				)
-																			}
-																			__nextHasNoMarginBottom
-																		/>
-																	</td>
-																	<td>
-																		<TextControl
-																			type="date"
-																			value={
-																				untilValue ||
-																				''
-																			}
-																			onChange={(
-																				v
-																			) =>
-																				updateSalePeriod(
-																					pIndex,
-																					'sale_end',
-																					v
-																				)
-																			}
-																			__nextHasNoMarginBottom
-																		/>
-																	</td>
-																	<td>
-																		<Button
-																			variant="tertiary"
-																			isDestructive
-																			size="small"
-																			onClick={() =>
-																				removeSalePeriod(
-																					pIndex
-																				)
-																			}
-																		>
-																			{__(
-																				'Remove',
-																				'fair-events'
-																			)}
-																		</Button>
-																	</td>
-																</tr>
-															);
-														}
-													)}
-												</tbody>
-											</table>
-										</div>
-										<HStack justify="flex-start">
-											<Button
-												variant="secondary"
-												size="small"
-												onClick={addSalePeriod}
-											>
-												{__(
-													'+ Add Period',
-													'fair-events'
-												)}
-											</Button>
-										</HStack>
-									</VStack>
-								) : (
-									salePeriods.length > 0 && (
-										<HStack
-											alignment="flex-end"
-											spacing={3}
-											justify="flex-start"
-										>
-											<TextControl
-												label={__(
-													'From',
-													'fair-events'
-												)}
-												type="date"
-												value={
-													salePeriods[0].sale_start ||
-													''
-												}
-												onChange={(v) =>
-													updateSalePeriod(
-														0,
-														'sale_start',
-														v
-													)
-												}
-												__nextHasNoMarginBottom
-											/>
-											<TextControl
-												label={__(
-													'Until',
-													'fair-events'
-												)}
-												type="date"
-												value={
-													salePeriods[0].sale_end ||
-													defaultSaleEnd() ||
-													''
-												}
-												onChange={(v) =>
-													updateSalePeriod(
-														0,
-														'sale_end',
-														v
-													)
-												}
-												__nextHasNoMarginBottom
-											/>
-										</HStack>
-									)
-								)}
-							</VStack>
-						</PanelBody>
-					</Panel>
-				</Card>
-			)}
-
-			{hasAdvancedTickets && (
-				<Card>
-					<CardHeader>
-						<strong>{__('Tickets', 'fair-events')}</strong>
-						<DropdownMenu
-							icon={moreVertical}
-							label={__('More actions', 'fair-events')}
-						>
-							{({ onClose }) => (
-								<MenuGroup>
-									<MenuItem
-										onClick={() => {
-											handleExport();
-											onClose();
-										}}
-										disabled={importing || saving}
-									>
-										{__(
-											'Export ticket settings',
-											'fair-events'
-										)}
-									</MenuItem>
-									<MenuItem
-										onClick={() => {
-											fileInputRef.current?.click();
-											onClose();
-										}}
-										disabled={importing || saving}
-									>
-										{__(
-											'Import ticket settings',
-											'fair-events'
-										)}
-									</MenuItem>
-								</MenuGroup>
+															label
+													  )
+												: __('—', 'fair-events');
+										})()}
+									</div>
+									<div>
+										<strong>
+											{__('Sale end at:', 'fair-events')}
+										</strong>{' '}
+										{(() => {
+											const last =
+												salePeriods[
+													salePeriods.length - 1
+												];
+											const end =
+												last.sale_end ||
+												defaultSaleEnd();
+											if (!end)
+												return __('—', 'fair-events');
+											return last.sale_end
+												? sprintf(
+														/* translators: %s: formatted date */
+														__(
+															'until %s',
+															'fair-events'
+														),
+														formatSaleDateLabel(end)
+												  )
+												: sprintf(
+														/* translators: %s: formatted date */
+														__(
+															'until %s (default)',
+															'fair-events'
+														),
+														formatSaleDateLabel(end)
+												  );
+										})()}
+									</div>
+								</HStack>
 							)}
-						</DropdownMenu>
-					</CardHeader>
-					<CardBody>
-						<VStack spacing={4}>
-							<TextControl
-								label={__('Total capacity', 'fair-events')}
-								type="number"
-								min="0"
-								value={capacity}
-								onChange={setCapacity}
-								help={__(
-									'Leave empty for unlimited capacity.',
-									'fair-events'
-								)}
-							/>
-							<VStack spacing={4}>
-								<div style={{ overflowX: 'auto' }}>
-									<table className="wp-list-table widefat striped">
-										<thead>
-											<tr>
-												<th>
-													{__(
-														'Ticket Type',
-														'fair-events'
-													)}
-												</th>
-												{settings.show_ticket_type_capacity && (
+							{effectiveMultiple ? (
+								<VStack spacing={3}>
+									<div style={{ overflowX: 'auto' }}>
+										<table className="wp-list-table widefat striped">
+											<thead>
+												<tr>
 													<th>
 														{__(
-															'Capacity',
+															'Name',
 															'fair-events'
 														)}
 													</th>
-												)}
-												{hasGroups && (
 													<th>
 														{__(
-															'Groups',
+															'From',
 															'fair-events'
 														)}
 													</th>
-												)}
-												{hasGroups && (
 													<th>
 														{__(
-															'Invitation only',
+															'Until',
 															'fair-events'
 														)}
 													</th>
-												)}
-												{settings.show_ticket_type_minimum_activities &&
-													options.length > 0 && (
-														<th>
-															{__(
-																'Min. add-ons',
-																'fair-events'
-															)}
-														</th>
-													)}
-												{settings.show_ticket_type_end_date && (
-													<th>
-														{__(
-															'End date',
-															'fair-events'
-														)}
-													</th>
-												)}
-												{isSeries && (
-													<th>
-														{__(
-															'Scope',
-															'fair-events'
-														)}
-													</th>
-												)}
+													<th />
+												</tr>
+											</thead>
+											<tbody>
 												{salePeriods.map(
 													(period, pIndex) => {
 														const isFirst =
@@ -1402,375 +1066,672 @@ export default function EventTickets({
 														const untilValue =
 															isLast
 																? period.sale_end ||
-																  defaultSaleEnd()
+																  endDatetime
 																: period.sale_end ||
 																  '';
-														const dateTooltip = `${
-															fromValue || '?'
-														} → ${
-															untilValue || '?'
-														}`;
 
 														return (
-															<th
+															<tr
 																key={
 																	period.id ||
 																	`new-${pIndex}`
 																}
-																title={
-																	dateTooltip
-																}
 															>
-																{effectiveMultiple
-																	? period.name ||
-																	  __(
-																			'(unnamed)',
+																<td>
+																	<TextControl
+																		placeholder={__(
+																			'Period name',
 																			'fair-events'
-																	  )
-																	: __(
-																			'Price',
-																			'fair-events'
-																	  )}
-															</th>
-														);
-													}
-												)}
-											</tr>
-										</thead>
-										<tbody>
-											{ticketTypes.map((type, tIndex) => (
-												<tr
-													key={
-														type.id ||
-														`new-${tIndex}`
-													}
-												>
-													<td>
-														<TextControl
-															placeholder={__(
-																'Type name',
-																'fair-events'
-															)}
-															value={
-																type.name || ''
-															}
-															onChange={(v) =>
-																updateTicketType(
-																	tIndex,
-																	'name',
-																	v
-																)
-															}
-														/>
-														{type.disabled && (
-															<span
-																style={{
-																	color: '#757575',
-																	fontSize:
-																		'0.85em',
-																}}
-															>
-																{__(
-																	'Disabled — no longer on sale',
-																	'fair-events'
-																)}
-															</span>
-														)}
-													</td>
-													{settings.show_ticket_type_capacity && (
-														<td>
-															<TextControl
-																type="number"
-																min="0"
-																placeholder={__(
-																	'Unlimited',
-																	'fair-events'
-																)}
-																value={
-																	type.capacity !==
-																		null &&
-																	type.capacity !==
-																		undefined
-																		? String(
-																				type.capacity
-																		  )
-																		: ''
-																}
-																onChange={(v) =>
-																	updateTicketType(
-																		tIndex,
-																		'capacity',
-																		v !== ''
-																			? parseInt(
-																					v,
-																					10
-																			  )
-																			: null
-																	)
-																}
-															/>
-														</td>
-													)}
-													{hasGroups && (
-														<td>
-															<FormTokenField
-																value={(
-																	type.group_ids ||
-																	[]
-																).map(
-																	(id) =>
-																		groupNameById[
-																			id
-																		] ||
-																		`#${id}`
-																)}
-																suggestions={
-																	groupSuggestions
-																}
-																onChange={(
-																	tokens
-																) => {
-																	const ids =
-																		tokens
-																			.map(
-																				(
-																					name
-																				) =>
-																					groupIdByName[
-																						name
-																					]
-																			)
-																			.filter(
-																				Boolean
-																			);
-																	updateTicketType(
-																		tIndex,
-																		'group_ids',
-																		ids
-																	);
-																}}
-																__experimentalExpandOnFocus
-																__experimentalAutoSelectFirstMatch
-																placeholder={__(
-																	'All participants',
-																	'fair-events'
-																)}
-															/>
-														</td>
-													)}
-													{hasGroups && (
-														<td>
-															<CheckboxControl
-																checked={
-																	type.invitation_only ||
-																	false
-																}
-																onChange={(v) =>
-																	updateTicketType(
-																		tIndex,
-																		'invitation_only',
-																		v
-																	)
-																}
-															/>
-														</td>
-													)}
-													{settings.show_ticket_type_minimum_activities &&
-														options.length > 0 && (
-															<td>
-																<TextControl
-																	type="number"
-																	min="0"
-																	placeholder="0"
-																	value={String(
-																		type.minimum_activities ||
-																			0
-																	)}
-																	onChange={(
-																		v
-																	) =>
-																		updateTicketType(
-																			tIndex,
-																			'minimum_activities',
-																			v !==
-																				''
-																				? Math.max(
-																						0,
-																						parseInt(
-																							v,
-																							10
-																						) ||
-																							0
-																				  )
-																				: 0
-																		)
-																	}
-																	help={__(
-																		'Only raises the event-wide minimum add-ons for this ticket type. Leave 0 to inherit.',
-																		'fair-events'
-																	)}
-																/>
-															</td>
-														)}
-													{settings.show_ticket_type_end_date && (
-														<td>
-															<TextControl
-																type="datetime-local"
-																value={
-																	type.disable_at
-																		? type.disable_at.replace(
-																				' ',
-																				'T'
-																		  )
-																		: ''
-																}
-																onChange={(v) =>
-																	updateTicketType(
-																		tIndex,
-																		'disable_at',
-																		v
-																			? v.replace(
-																					'T',
-																					' '
-																			  )
-																			: null
-																	)
-																}
-															/>
-														</td>
-													)}
-													{isSeries && (
-														<td>
-															{type.has_sales ? (
-																<span>
-																	{type.recurrence_scope ===
-																	'whole_series'
-																		? __(
-																				'Whole series',
-																				'fair-events'
-																		  )
-																		: type.recurrence_scope ===
-																		  'multiple_instances'
-																		? __(
-																				'Multiple instances',
-																				'fair-events'
-																		  )
-																		: __(
-																				'This instance',
-																				'fair-events'
-																		  )}
-																</span>
-															) : (
-																<>
-																	<SelectControl
+																		)}
 																		value={
-																			type.recurrence_scope ||
-																			'single_instance'
+																			period.name ||
+																			''
 																		}
-																		options={[
-																			{
-																				value: 'single_instance',
-																				label: __(
-																					'This instance',
-																					'fair-events'
-																				),
-																			},
-																			{
-																				value: 'whole_series',
-																				label: __(
-																					'Whole series',
-																					'fair-events'
-																				),
-																			},
-																			{
-																				value: 'multiple_instances',
-																				label: __(
-																					'Multiple instances',
-																					'fair-events'
-																				),
-																			},
-																		]}
 																		onChange={(
 																			v
 																		) =>
-																			updateTicketType(
-																				tIndex,
-																				'recurrence_scope',
+																			updateSalePeriod(
+																				pIndex,
+																				'name',
 																				v
 																			)
 																		}
 																		__nextHasNoMarginBottom
 																	/>
-																	{type.recurrence_scope ===
-																		'multiple_instances' && (
-																		<TextControl
-																			type="number"
-																			min="0"
-																			placeholder="0"
+																</td>
+																<td>
+																	<TextControl
+																		type="date"
+																		value={
+																			fromValue ||
+																			''
+																		}
+																		onChange={(
+																			v
+																		) =>
+																			updateSalePeriod(
+																				pIndex,
+																				'sale_start',
+																				v
+																			)
+																		}
+																		__nextHasNoMarginBottom
+																	/>
+																</td>
+																<td>
+																	<TextControl
+																		type="date"
+																		value={
+																			untilValue ||
+																			''
+																		}
+																		onChange={(
+																			v
+																		) =>
+																			updateSalePeriod(
+																				pIndex,
+																				'sale_end',
+																				v
+																			)
+																		}
+																		__nextHasNoMarginBottom
+																	/>
+																</td>
+																<td>
+																	<Button
+																		variant="tertiary"
+																		isDestructive
+																		size="small"
+																		onClick={() =>
+																			removeSalePeriod(
+																				pIndex
+																			)
+																		}
+																	>
+																		{__(
+																			'Remove',
+																			'fair-events'
+																		)}
+																	</Button>
+																</td>
+															</tr>
+														);
+													}
+												)}
+											</tbody>
+										</table>
+									</div>
+									<HStack justify="flex-start">
+										<Button
+											variant="secondary"
+											size="small"
+											onClick={addSalePeriod}
+										>
+											{__('+ Add Period', 'fair-events')}
+										</Button>
+									</HStack>
+								</VStack>
+							) : (
+								salePeriods.length > 0 && (
+									<HStack
+										alignment="flex-end"
+										spacing={3}
+										justify="flex-start"
+									>
+										<TextControl
+											label={__('From', 'fair-events')}
+											type="date"
+											value={
+												salePeriods[0].sale_start || ''
+											}
+											onChange={(v) =>
+												updateSalePeriod(
+													0,
+													'sale_start',
+													v
+												)
+											}
+											__nextHasNoMarginBottom
+										/>
+										<TextControl
+											label={__('Until', 'fair-events')}
+											type="date"
+											value={
+												salePeriods[0].sale_end ||
+												defaultSaleEnd() ||
+												''
+											}
+											onChange={(v) =>
+												updateSalePeriod(
+													0,
+													'sale_end',
+													v
+												)
+											}
+											__nextHasNoMarginBottom
+										/>
+									</HStack>
+								)
+							)}
+						</VStack>
+					</PanelBody>
+				</Panel>
+			</Card>
+
+			<Card>
+				<CardHeader>
+					<strong>{__('Tickets', 'fair-events')}</strong>
+					<DropdownMenu
+						icon={moreVertical}
+						label={__('More actions', 'fair-events')}
+					>
+						{({ onClose }) => (
+							<MenuGroup>
+								<MenuItem
+									onClick={() => {
+										handleExport();
+										onClose();
+									}}
+									disabled={importing || saving}
+								>
+									{__(
+										'Export ticket settings',
+										'fair-events'
+									)}
+								</MenuItem>
+								<MenuItem
+									onClick={() => {
+										fileInputRef.current?.click();
+										onClose();
+									}}
+									disabled={importing || saving}
+								>
+									{__(
+										'Import ticket settings',
+										'fair-events'
+									)}
+								</MenuItem>
+							</MenuGroup>
+						)}
+					</DropdownMenu>
+				</CardHeader>
+				<CardBody>
+					<VStack spacing={4}>
+						<TextControl
+							label={__('Total capacity', 'fair-events')}
+							type="number"
+							min="0"
+							value={capacity}
+							onChange={setCapacity}
+							help={__(
+								'Leave empty for unlimited capacity.',
+								'fair-events'
+							)}
+						/>
+						<VStack spacing={4}>
+							<div style={{ overflowX: 'auto' }}>
+								<table className="wp-list-table widefat striped">
+									<thead>
+										<tr>
+											<th>
+												{__(
+													'Ticket Type',
+													'fair-events'
+												)}
+											</th>
+											{settings.show_ticket_type_capacity && (
+												<th>
+													{__(
+														'Capacity',
+														'fair-events'
+													)}
+												</th>
+											)}
+											{hasGroups && (
+												<th>
+													{__(
+														'Groups',
+														'fair-events'
+													)}
+												</th>
+											)}
+											{hasGroups && (
+												<th>
+													{__(
+														'Invitation only',
+														'fair-events'
+													)}
+												</th>
+											)}
+											{settings.show_ticket_type_minimum_activities &&
+												options.length > 0 && (
+													<th>
+														{__(
+															'Min. add-ons',
+															'fair-events'
+														)}
+													</th>
+												)}
+											{settings.show_ticket_type_end_date && (
+												<th>
+													{__(
+														'End date',
+														'fair-events'
+													)}
+												</th>
+											)}
+											{isSeries && (
+												<th>
+													{__('Scope', 'fair-events')}
+												</th>
+											)}
+											{salePeriods.map(
+												(period, pIndex) => {
+													const isFirst =
+														pIndex === 0;
+													const isLast =
+														pIndex ===
+														salePeriods.length - 1;
+													const fromValue = !isFirst
+														? salePeriods[
+																pIndex - 1
+														  ]?.sale_end || ''
+														: period.sale_start ||
+														  '';
+													const untilValue = isLast
+														? period.sale_end ||
+														  defaultSaleEnd()
+														: period.sale_end || '';
+													const dateTooltip = `${
+														fromValue || '?'
+													} → ${untilValue || '?'}`;
+
+													return (
+														<th
+															key={
+																period.id ||
+																`new-${pIndex}`
+															}
+															title={dateTooltip}
+														>
+															{effectiveMultiple
+																? period.name ||
+																  __(
+																		'(unnamed)',
+																		'fair-events'
+																  )
+																: __(
+																		'Price',
+																		'fair-events'
+																  )}
+														</th>
+													);
+												}
+											)}
+										</tr>
+									</thead>
+									<tbody>
+										{ticketTypes.map((type, tIndex) => (
+											<tr
+												key={type.id || `new-${tIndex}`}
+											>
+												<td>
+													<TextControl
+														placeholder={__(
+															'Type name',
+															'fair-events'
+														)}
+														value={type.name || ''}
+														onChange={(v) =>
+															updateTicketType(
+																tIndex,
+																'name',
+																v
+															)
+														}
+													/>
+													{type.disabled && (
+														<span
+															style={{
+																color: '#757575',
+																fontSize:
+																	'0.85em',
+															}}
+														>
+															{__(
+																'Disabled — no longer on sale',
+																'fair-events'
+															)}
+														</span>
+													)}
+												</td>
+												{settings.show_ticket_type_capacity && (
+													<td>
+														<TextControl
+															type="number"
+															min="0"
+															placeholder={__(
+																'Unlimited',
+																'fair-events'
+															)}
+															value={
+																type.capacity !==
+																	null &&
+																type.capacity !==
+																	undefined
+																	? String(
+																			type.capacity
+																	  )
+																	: ''
+															}
+															onChange={(v) =>
+																updateTicketType(
+																	tIndex,
+																	'capacity',
+																	v !== ''
+																		? parseInt(
+																				v,
+																				10
+																		  )
+																		: null
+																)
+															}
+														/>
+													</td>
+												)}
+												{hasGroups && (
+													<td>
+														<FormTokenField
+															value={(
+																type.group_ids ||
+																[]
+															).map(
+																(id) =>
+																	groupNameById[
+																		id
+																	] ||
+																	`#${id}`
+															)}
+															suggestions={
+																groupSuggestions
+															}
+															onChange={(
+																tokens
+															) => {
+																const ids =
+																	tokens
+																		.map(
+																			(
+																				name
+																			) =>
+																				groupIdByName[
+																					name
+																				]
+																		)
+																		.filter(
+																			Boolean
+																		);
+																updateTicketType(
+																	tIndex,
+																	'group_ids',
+																	ids
+																);
+															}}
+															__experimentalExpandOnFocus
+															__experimentalAutoSelectFirstMatch
+															placeholder={__(
+																'All participants',
+																'fair-events'
+															)}
+														/>
+													</td>
+												)}
+												{hasGroups && (
+													<td>
+														<CheckboxControl
+															checked={
+																type.invitation_only ||
+																false
+															}
+															onChange={(v) =>
+																updateTicketType(
+																	tIndex,
+																	'invitation_only',
+																	v
+																)
+															}
+														/>
+													</td>
+												)}
+												{settings.show_ticket_type_minimum_activities &&
+													options.length > 0 && (
+														<td>
+															<TextControl
+																type="number"
+																min="0"
+																placeholder="0"
+																value={String(
+																	type.minimum_activities ||
+																		0
+																)}
+																onChange={(v) =>
+																	updateTicketType(
+																		tIndex,
+																		'minimum_activities',
+																		v !== ''
+																			? Math.max(
+																					0,
+																					parseInt(
+																						v,
+																						10
+																					) ||
+																						0
+																			  )
+																			: 0
+																	)
+																}
+																help={__(
+																	'Only raises the event-wide minimum add-ons for this ticket type. Leave 0 to inherit.',
+																	'fair-events'
+																)}
+															/>
+														</td>
+													)}
+												{settings.show_ticket_type_end_date && (
+													<td>
+														<TextControl
+															type="datetime-local"
+															value={
+																type.disable_at
+																	? type.disable_at.replace(
+																			' ',
+																			'T'
+																	  )
+																	: ''
+															}
+															onChange={(v) =>
+																updateTicketType(
+																	tIndex,
+																	'disable_at',
+																	v
+																		? v.replace(
+																				'T',
+																				' '
+																		  )
+																		: null
+																)
+															}
+														/>
+													</td>
+												)}
+												{isSeries && (
+													<td>
+														{type.has_sales ? (
+															<span>
+																{type.recurrence_scope ===
+																'whole_series'
+																	? __(
+																			'Whole series',
+																			'fair-events'
+																	  )
+																	: type.recurrence_scope ===
+																	  'multiple_instances'
+																	? __(
+																			'Multiple instances',
+																			'fair-events'
+																	  )
+																	: __(
+																			'This instance',
+																			'fair-events'
+																	  )}
+															</span>
+														) : (
+															<>
+																<SelectControl
+																	value={
+																		type.recurrence_scope ||
+																		'single_instance'
+																	}
+																	options={[
+																		{
+																			value: 'single_instance',
+																			label: __(
+																				'This instance',
+																				'fair-events'
+																			),
+																		},
+																		{
+																			value: 'whole_series',
+																			label: __(
+																				'Whole series',
+																				'fair-events'
+																			),
+																		},
+																		{
+																			value: 'multiple_instances',
+																			label: __(
+																				'Multiple instances',
+																				'fair-events'
+																			),
+																		},
+																	]}
+																	onChange={(
+																		v
+																	) =>
+																		updateTicketType(
+																			tIndex,
+																			'recurrence_scope',
+																			v
+																		)
+																	}
+																	__nextHasNoMarginBottom
+																/>
+																{type.recurrence_scope ===
+																	'multiple_instances' && (
+																	<TextControl
+																		type="number"
+																		min="0"
+																		placeholder="0"
+																		label={__(
+																			'Minimum instances',
+																			'fair-events'
+																		)}
+																		value={String(
+																			type.minimum_instances ||
+																				0
+																		)}
+																		onChange={(
+																			v
+																		) =>
+																			updateTicketType(
+																				tIndex,
+																				'minimum_instances',
+																				v !==
+																					''
+																					? Math.max(
+																							0,
+																							parseInt(
+																								v,
+																								10
+																							) ||
+																								0
+																					  )
+																					: 0
+																			)
+																		}
+																		__next40pxDefaultSize
+																		__nextHasNoMarginBottom
+																	/>
+																)}
+															</>
+														)}
+													</td>
+												)}
+												{salePeriods.map(
+													(period, pIndex) => {
+														const cell = getPrice(
+															type,
+															period
+														);
+														return (
+															<td
+																key={
+																	period.id ||
+																	`new-${pIndex}`
+																}
+															>
+																<VStack
+																	spacing={1}
+																>
+																	{effectiveMultiple && (
+																		<CheckboxControl
+																			__nextHasNoMarginBottom
 																			label={__(
-																				'Minimum instances',
+																				'Available',
 																				'fair-events'
 																			)}
-																			value={String(
-																				type.minimum_instances ||
-																					0
-																			)}
+																			checked={
+																				cell.enabled !==
+																				false
+																			}
 																			onChange={(
 																				v
 																			) =>
-																				updateTicketType(
-																					tIndex,
-																					'minimum_instances',
-																					v !==
-																						''
-																						? Math.max(
-																								0,
-																								parseInt(
-																									v,
-																									10
-																								) ||
-																									0
-																						  )
-																						: 0
+																				updatePrice(
+																					type,
+																					period,
+																					'enabled',
+																					v
 																				)
 																			}
-																			__next40pxDefaultSize
-																			__nextHasNoMarginBottom
 																		/>
 																	)}
-																</>
-															)}
-														</td>
-													)}
-													{salePeriods.map(
-														(period, pIndex) => {
-															const cell =
-																getPrice(
-																	type,
-																	period
-																);
-															return (
-																<td
-																	key={
-																		period.id ||
-																		`new-${pIndex}`
-																	}
-																>
-																	<VStack
-																		spacing={
-																			1
-																		}
-																	>
-																		{effectiveMultiple && (
-																			<CheckboxControl
-																				__nextHasNoMarginBottom
-																				label={__(
-																					'Available',
+																	{(!effectiveMultiple ||
+																		cell.enabled !==
+																			false) && (
+																		<HStack
+																			alignment="center"
+																			spacing={
+																				2
+																			}
+																		>
+																			<span
+																				style={{
+																					whiteSpace:
+																						'nowrap',
+																				}}
+																			>
+																				{__(
+																					'Price',
 																					'fair-events'
 																				)}
-																				checked={
-																					cell.enabled !==
-																					false
+																			</span>
+																			<TextControl
+																				type="number"
+																				step="0.01"
+																				min="0"
+																				value={
+																					cell.price
 																				}
 																				onChange={(
 																					v
@@ -1778,122 +1739,100 @@ export default function EventTickets({
 																					updatePrice(
 																						type,
 																						period,
-																						'enabled',
+																						'price',
 																						v
 																					)
 																				}
 																			/>
-																		)}
-																		{(!effectiveMultiple ||
-																			cell.enabled !==
-																				false) && (
-																			<HStack
-																				alignment="center"
-																				spacing={
-																					2
-																				}
-																			>
-																				<span
-																					style={{
-																						whiteSpace:
-																							'nowrap',
-																					}}
-																				>
-																					{__(
-																						'Price',
-																						'fair-events'
-																					)}
-																				</span>
-																				<TextControl
-																					type="number"
-																					step="0.01"
-																					min="0"
-																					value={
-																						cell.price
-																					}
-																					onChange={(
-																						v
-																					) =>
-																						updatePrice(
-																							type,
-																							period,
-																							'price',
-																							v
-																						)
-																					}
-																				/>
-																			</HStack>
-																		)}
-																	</VStack>
-																</td>
-															);
-														}
-													)}
-													<td>
-														{type.has_sales ? (
-															<ToggleControl
-																label={
-																	type.disabled
-																		? __(
-																				'Disabled',
-																				'fair-events'
-																		  )
-																		: __(
-																				'Enabled',
-																				'fair-events'
-																		  )
-																}
-																checked={
-																	!type.disabled
-																}
-																onChange={(v) =>
-																	updateTicketType(
-																		tIndex,
-																		'disabled',
-																		!v
-																	)
-																}
-															/>
-														) : (
-															<Button
-																variant="tertiary"
-																isDestructive
-																size="small"
-																onClick={() =>
-																	removeTicketType(
-																		tIndex
-																	)
-																}
-															>
-																{__(
-																	'Remove',
-																	'fair-events'
-																)}
-															</Button>
-														)}
-													</td>
-												</tr>
-											))}
-										</tbody>
-										<tfoot>
-											<tr>
-												<td
-													colSpan={
-														salePeriods.length +
-														1 +
-														(settings.show_ticket_type_capacity
-															? 1
-															: 0) +
-														(hasGroups ? 2 : 0) +
-														(settings.show_ticket_type_minimum_activities &&
-														options.length > 0
-															? 1
-															: 0) +
-														(settings.show_ticket_type_end_date
-															? 1
-															: 0)
+																		</HStack>
+																	)}
+																</VStack>
+															</td>
+														);
 													}
+												)}
+												<td>
+													{type.has_sales ? (
+														<ToggleControl
+															label={
+																type.disabled
+																	? __(
+																			'Disabled',
+																			'fair-events'
+																	  )
+																	: __(
+																			'Enabled',
+																			'fair-events'
+																	  )
+															}
+															checked={
+																!type.disabled
+															}
+															onChange={(v) =>
+																updateTicketType(
+																	tIndex,
+																	'disabled',
+																	!v
+																)
+															}
+														/>
+													) : (
+														<Button
+															variant="tertiary"
+															isDestructive
+															size="small"
+															onClick={() =>
+																removeTicketType(
+																	tIndex
+																)
+															}
+														>
+															{__(
+																'Remove',
+																'fair-events'
+															)}
+														</Button>
+													)}
+												</td>
+											</tr>
+										))}
+									</tbody>
+									<tfoot>
+										<tr>
+											<td
+												colSpan={
+													salePeriods.length +
+													1 +
+													(settings.show_ticket_type_capacity
+														? 1
+														: 0) +
+													(hasGroups ? 2 : 0) +
+													(settings.show_ticket_type_minimum_activities &&
+													options.length > 0
+														? 1
+														: 0) +
+													(settings.show_ticket_type_end_date
+														? 1
+														: 0)
+												}
+											>
+												<VStack
+													spacing={2}
+													alignment="flex-start"
 												>
+													{ticketTypes.length ===
+														0 && (
+														<p
+															style={{
+																margin: 0,
+															}}
+														>
+															{__(
+																'No ticket types yet. Add one to start selling tickets for this event.',
+																'fair-events'
+															)}
+														</p>
+													)}
 													<Button
 														variant="secondary"
 														size="small"
@@ -1906,17 +1845,16 @@ export default function EventTickets({
 															'fair-events'
 														)}
 													</Button>
-												</td>
-											</tr>
-										</tfoot>
-									</table>
-								</div>
-							</VStack>
+												</VStack>
+											</td>
+										</tr>
+									</tfoot>
+								</table>
+							</div>
 						</VStack>
-					</CardBody>
-				</Card>
-			)}
-
+					</VStack>
+				</CardBody>
+			</Card>
 			<Card>
 				<Panel>
 					<PanelBody
@@ -2345,7 +2283,6 @@ export default function EventTickets({
 					</PanelBody>
 				</Panel>
 			</Card>
-
 			<Card>
 				<Panel>
 					<PanelBody

@@ -80,17 +80,14 @@ function renderTickets(extraProps = {}) {
 	return { onSaveRef, container };
 }
 
-describe('EventTickets — empty state (no advanced tickets)', () => {
-	it('renders the empty state with a "+ Add Ticket Type" button', () => {
+describe('EventTickets — empty state (no ticket types) (#1199)', () => {
+	it('renders the full editor with zero ticket types', () => {
 		renderTickets({ initialData: emptyInitialData });
+		expect(screen.getByText('Ticket Type')).toBeInTheDocument();
 		expect(
-			screen.getByText(/No ticket types configured yet/i)
+			screen.getByRole('button', { name: '+ Add Ticket Type' })
 		).toBeInTheDocument();
-		// The empty-state card and the (collapsed) Edit tickets table footer
-		// both expose a "+ Add Ticket Type" affordance.
-		expect(
-			screen.getAllByRole('button', { name: '+ Add Ticket Type' }).length
-		).toBeGreaterThanOrEqual(1);
+		expect(screen.getByText(/No ticket types yet/i)).toBeInTheDocument();
 	});
 
 	it('does not render a Signup price field', () => {
@@ -112,18 +109,45 @@ describe('EventTickets — empty state (no advanced tickets)', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('opens the advanced editor when "+ Add Ticket Type" is clicked from the empty state', () => {
-		renderTickets({ initialData: emptyInitialData });
+	it('clicking "+ Add Ticket Type" adds a ticket-type row without a scope modal (non-series)', () => {
+		renderTickets({ initialData: emptyInitialData, isSeries: false });
 		const addButton = screen.getByRole('button', {
 			name: '+ Add Ticket Type',
 		});
 		fireEvent.click(addButton);
-		// Adding a ticket type flips hasAdvancedTickets true: the empty-state
-		// message is gone and the pricing grid header appears.
 		expect(
-			screen.queryByText(/No ticket types configured yet/i)
+			screen.queryByText('Choose ticket scope')
 		).not.toBeInTheDocument();
-		expect(screen.getByText('Ticket Type')).toBeInTheDocument();
+		expect(screen.getByPlaceholderText('Type name')).toBeInTheDocument();
+		expect(
+			screen.queryByText(/No ticket types yet/i)
+		).not.toBeInTheDocument();
+	});
+
+	it('export/import is reachable through the ⋯ menu with zero ticket types', () => {
+		renderTickets({ initialData: emptyInitialData });
+		fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+		expect(
+			screen.getByRole('menuitem', { name: 'Export ticket settings' })
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole('menuitem', { name: 'Import ticket settings' })
+		).toBeInTheDocument();
+	});
+
+	it('saving with zero ticket types persists no sale period', () => {
+		const onDataRef = { current: null };
+		render(
+			<EventTickets
+				eventDateId={99}
+				onSaveRef={{ current: null }}
+				initialData={emptyInitialData}
+				onDataRef={onDataRef}
+			/>
+		);
+		expect(onDataRef.current()).toEqual(
+			expect.objectContaining({ sale_periods: [] })
+		);
 	});
 });
 
