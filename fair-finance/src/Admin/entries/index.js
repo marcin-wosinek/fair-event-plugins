@@ -8,6 +8,7 @@ import { createRoot } from '@wordpress/element';
  * Internal dependencies
  */
 import EntriesApp from './EntriesApp.js';
+import './style.scss';
 
 /**
  * Initialize the entries page

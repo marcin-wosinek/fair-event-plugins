@@ -629,7 +629,10 @@ const EntriesApp = () => {
 				{/* Totals Summary */}
 				<Card>
 					<CardBody>
-						<HStack justify="space-around">
+						<HStack
+							justify="space-around"
+							className="fair-finance-entries-summary"
+						>
 							<div style={{ textAlign: 'center' }}>
 								<div
 									style={{
