@@ -164,6 +164,35 @@ if ( ! function_exists( 'esc_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_parse_url' ) ) {
+	/**
+	 * Stub of WordPress wp_parse_url() — delegates to PHP's parse_url().
+	 *
+	 * @param string   $url       URL to parse.
+	 * @param int|null $component PHP_URL_* component, or null for all.
+	 * @return mixed Parsed component, full array, or false on failure.
+	 */
+	function wp_parse_url( $url, $component = -1 ) {
+		return -1 === $component ? parse_url( $url ) : parse_url( $url, $component ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- this *is* the wp_parse_url() stub.
+	}
+}
+
+if ( ! function_exists( 'get_site_url' ) ) {
+	/**
+	 * Stub of WordPress get_site_url() backed by $GLOBALS['_fair_test_options'].
+	 *
+	 * Seed via `$GLOBALS['_fair_test_options']['siteurl']` to change it; defaults
+	 * to 'https://example.test' so internal-vs-external host checks are
+	 * deterministic in tests.
+	 *
+	 * @return string Site URL.
+	 */
+	function get_site_url() {
+		$options = isset( $GLOBALS['_fair_test_options'] ) ? $GLOBALS['_fair_test_options'] : array();
+		return isset( $options['siteurl'] ) ? $options['siteurl'] : 'https://example.test';
+	}
+}
+
 if ( ! function_exists( '__' ) ) {
 	/**
 	 * Stub of WordPress __().

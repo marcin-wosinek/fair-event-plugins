@@ -126,6 +126,56 @@ class WeeklyDigestRenderer {
 	}
 
 	/**
+	 * Non-profile Instagram path segments that aren't a handle.
+	 *
+	 * @var string[]
+	 */
+	const INSTAGRAM_NON_PROFILE_SEGMENTS = array( 'p', 'reel', 'reels', 'explore', 'stories', 'tv' );
+
+	/**
+	 * Build the "(by …)" attribution to append after an event link.
+	 *
+	 * Internal links (empty host, or host matching the site) return ''.
+	 * Instagram links resolve to the profile handle when the first path
+	 * segment looks like one, else fall back to the bare host. Everything
+	 * else uses the host with a leading "www." stripped.
+	 *
+	 * @param string $url Event URL.
+	 * @return string Attribution text, e.g. "(by example.com)", or ''.
+	 */
+	private static function source_attribution( $url ) {
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		if ( empty( $host ) ) {
+			return '';
+		}
+
+		$host      = strtolower( $host );
+		$site_host = strtolower( (string) wp_parse_url( get_site_url(), PHP_URL_HOST ) );
+		if ( $host === $site_host ) {
+			return '';
+		}
+
+		if ( in_array( $host, array( 'instagram.com', 'www.instagram.com', 'm.instagram.com' ), true ) ) {
+			$path    = (string) wp_parse_url( $url, PHP_URL_PATH );
+			$segment = trim( $path, '/' );
+			$segment = false !== strpos( $segment, '/' ) ? strstr( $segment, '/', true ) : $segment;
+
+			if ( '' === $segment || in_array( $segment, self::INSTAGRAM_NON_PROFILE_SEGMENTS, true ) ) {
+				/* translators: %s: source host, e.g. "instagram.com". */
+				return sprintf( __( '(by %s)', 'fair-audience' ), 'instagram.com' );
+			}
+
+			/* translators: %s: Instagram handle, e.g. "@example". */
+			return sprintf( __( '(by @%s)', 'fair-audience' ), $segment );
+		}
+
+		$host = preg_replace( '/^www\./', '', $host );
+
+		/* translators: %s: source domain, e.g. "example.com". */
+		return sprintf( __( '(by %s)', 'fair-audience' ), $host );
+	}
+
+	/**
 	 * Render the digest's inner HTML body for a week.
 	 *
 	 * Returned HTML is the *inner* content — the caller (EmailService) wraps
@@ -165,7 +215,11 @@ class WeeklyDigestRenderer {
 
 				$title = $event['title'];
 				if ( ! empty( $event['url'] ) ) {
-					$html .= '<a href="' . esc_url( $event['url'] ) . '">' . esc_html( $title ) . '</a>';
+					$html       .= '<a href="' . esc_url( $event['url'] ) . '">' . esc_html( $title ) . '</a>';
+					$attribution = self::source_attribution( $event['url'] );
+					if ( '' !== $attribution ) {
+						$html .= ' <span style="color:#666;">' . esc_html( $attribution ) . '</span>';
+					}
 				} else {
 					$html .= esc_html( $title );
 				}

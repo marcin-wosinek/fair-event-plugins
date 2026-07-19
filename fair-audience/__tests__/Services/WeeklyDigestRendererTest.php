@@ -229,6 +229,96 @@ class WeeklyDigestRendererTest extends TestCase {
 	}
 
 	/**
+	 * Build a single-event week for source-attribution assertions.
+	 *
+	 * @param string $url Event URL.
+	 * @return array Week data with one Monday event.
+	 */
+	private function week_with_event_url( $url ) {
+		return $this->week(
+			array(
+				array(
+					'weekday'    => 'Monday',
+					'month_name' => 'July',
+					'day_num'    => '6',
+					'events'     => array(
+						array(
+							'title' => 'Weekly Standup',
+							'url'   => $url,
+						),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Reset the seeded site URL after each test so it doesn't leak between tests.
+	 */
+	protected function tearDown(): void {
+		unset( $GLOBALS['_fair_test_options']['siteurl'] );
+		parent::tearDown();
+	}
+
+	/**
+	 * An external website link gets a "(by <domain>)" suffix with "www." stripped.
+	 */
+	public function test_render_appends_source_attribution_for_external_website() {
+		$GLOBALS['_fair_test_options']['siteurl'] = 'https://example.test';
+		$html                                     = WeeklyDigestRenderer::render( $this->week_with_event_url( 'https://www.example.com/event' ) );
+		$this->assertStringContainsString( '<a href="https://www.example.com/event">Weekly Standup</a> <span style="color:#666;">(by example.com)</span>', $html );
+	}
+
+	/**
+	 * An Instagram profile link gets a "(by @handle)" suffix.
+	 */
+	public function test_render_appends_instagram_handle_attribution() {
+		$GLOBALS['_fair_test_options']['siteurl'] = 'https://example.test';
+		$html                                     = WeeklyDigestRenderer::render( $this->week_with_event_url( 'https://www.instagram.com/acroyoga_valencia/' ) );
+		$this->assertStringContainsString( '(by @acroyoga_valencia)', $html );
+	}
+
+	/**
+	 * A non-profile Instagram URL falls back to the bare "instagram.com" attribution.
+	 */
+	public function test_render_falls_back_to_instagram_host_for_non_profile_urls() {
+		$GLOBALS['_fair_test_options']['siteurl'] = 'https://example.test';
+		$html                                     = WeeklyDigestRenderer::render( $this->week_with_event_url( 'https://www.instagram.com/p/abc123/' ) );
+		$this->assertStringContainsString( '(by instagram.com)', $html );
+		$this->assertStringNotContainsString( '(by @p)', $html );
+	}
+
+	/**
+	 * An internal on-site permalink renders without an attribution suffix.
+	 */
+	public function test_render_omits_attribution_for_internal_link() {
+		$GLOBALS['_fair_test_options']['siteurl'] = 'https://example.test';
+		$html                                     = WeeklyDigestRenderer::render( $this->week_with_event_url( 'https://example.test/event/1' ) );
+		$this->assertStringContainsString( '<a href="https://example.test/event/1">Weekly Standup</a></li>', $html );
+		$this->assertStringNotContainsString( '(by', $html );
+	}
+
+	/**
+	 * An event with no URL renders as plain text, unchanged.
+	 */
+	public function test_render_omits_attribution_when_no_url() {
+		$GLOBALS['_fair_test_options']['siteurl'] = 'https://example.test';
+		$week                                     = $this->week(
+			array(
+				array(
+					'weekday'    => 'Monday',
+					'month_name' => 'July',
+					'day_num'    => '6',
+					'events'     => array( array( 'title' => 'Weekly Standup' ) ),
+				),
+			)
+		);
+		$html                                     = WeeklyDigestRenderer::render( $week );
+		$this->assertStringContainsString( 'Weekly Standup', $html );
+		$this->assertStringNotContainsString( '(by', $html );
+	}
+
+	/**
 	 * Intro HTML is prepended above the day listing.
 	 */
 	public function test_render_prepends_intro_html() {
