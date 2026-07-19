@@ -17,6 +17,7 @@ import {
  */
 import {
 	loadConnectionSettings,
+	loadConnectionOverview,
 	saveSettings,
 	testConnection,
 	fetchOAuthState,
@@ -42,6 +43,9 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
+	const [overview, setOverview] = useState(null);
+	const [overviewLoading, setOverviewLoading] = useState(false);
+	const [overviewError, setOverviewError] = useState(null);
 
 	/**
 	 * Load connection settings from API
@@ -96,6 +100,40 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 			loadSettings();
 		}
 	}, [shouldReload]);
+
+	/**
+	 * Load the connected profile name and enabled payment methods.
+	 *
+	 * Re-runs whenever the connection state or active mode changes, since the
+	 * enabled methods differ between test and live mode.
+	 */
+	useEffect(() => {
+		if (!connected) {
+			setOverview(null);
+			setOverviewError(null);
+			return;
+		}
+
+		setOverviewLoading(true);
+		setOverviewError(null);
+
+		loadConnectionOverview()
+			.then((data) => {
+				setOverview(data);
+				setOverviewLoading(false);
+			})
+			.catch((error) => {
+				setOverviewError(
+					error.message ||
+						(error.data && error.data.message) ||
+						__(
+							'Failed to load payment methods.',
+							'fair-payments-connector'
+						)
+				);
+				setOverviewLoading(false);
+			});
+	}, [connected, mode]);
 
 	/**
 	 * Handle Connect button click — fetches a CSRF state token first, then redirects.
@@ -384,6 +422,94 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 										'fair-payments-connector'
 									)}
 								</p>
+							)}
+						</div>
+
+						<div style={{ marginTop: '1rem' }}>
+							{overviewLoading && (
+								<p style={{ fontSize: '0.9em', color: '#666' }}>
+									{__(
+										'Loading payment methods…',
+										'fair-payments-connector'
+									)}
+								</p>
+							)}
+
+							{overviewError && (
+								<Notice status="warning" isDismissible={false}>
+									{overviewError}
+								</Notice>
+							)}
+
+							{overview && !overviewLoading && (
+								<>
+									<p>
+										<strong>
+											{__(
+												'Profile name:',
+												'fair-payments-connector'
+											)}
+										</strong>{' '}
+										{overview.profile_name}
+									</p>
+
+									<p style={{ marginBottom: '0.25rem' }}>
+										<strong>
+											{__(
+												'Enabled payment methods:',
+												'fair-payments-connector'
+											)}
+										</strong>
+									</p>
+									{overview.methods.length > 0 ? (
+										<ul
+											style={{
+												listStyle: 'disc',
+												marginLeft: '1.5rem',
+											}}
+										>
+											{overview.methods.map((method) => (
+												<li key={method.id}>
+													{method.image && (
+														<img
+															src={method.image}
+															alt=""
+															width="20"
+															height="20"
+															style={{
+																verticalAlign:
+																	'middle',
+																marginRight:
+																	'0.5rem',
+															}}
+														/>
+													)}
+													{method.description}
+												</li>
+											))}
+										</ul>
+									) : (
+										<p>
+											{__(
+												'No payment methods are currently enabled.',
+												'fair-payments-connector'
+											)}
+										</p>
+									)}
+
+									<p>
+										<a
+											href={overview.manage_url}
+											target="_blank"
+											rel="noreferrer"
+										>
+											{__(
+												'Manage payment methods in Mollie',
+												'fair-payments-connector'
+											)}
+										</a>
+									</p>
+								</>
 							)}
 						</div>
 
