@@ -1,7 +1,10 @@
 module.exports = {
 	preset: '@wordpress/jest-preset-default',
 	testEnvironment: 'jsdom',
-	testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
+	testMatch: [
+		'**/__tests__/**/*.[jt]s?(x)',
+		'**/?(*.)+(spec|test).[jt]s?(x)',
+	],
 	testPathIgnorePatterns: [
 		'/node_modules/',
 		'/vendor/',

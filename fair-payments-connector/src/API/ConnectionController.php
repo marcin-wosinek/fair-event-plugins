@@ -33,6 +33,48 @@ class ConnectionController extends \WP_REST_Controller {
 				},
 			)
 		);
+
+		register_rest_route(
+			'fair-payments-connector/v1',
+			'/connection/overview',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_connection_overview' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+	}
+
+	/**
+	 * Get the connected Mollie profile name and enabled payment methods.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_connection_overview() {
+		if ( ! get_option( 'fair_payment_mollie_connected', false ) ) {
+			return new \WP_Error(
+				'not_connected',
+				__( 'Mollie is not connected. Please connect your Mollie account first.', 'fair-payments-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		try {
+			$handler  = new MolliePaymentHandler();
+			$overview = $handler->get_connection_overview();
+		} catch ( \Exception $e ) {
+			return new \WP_Error(
+				'mollie_unreachable',
+				$e->getMessage(),
+				array( 'status' => 502 )
+			);
+		}
+
+		$overview['manage_url'] = 'https://my.mollie.com/dashboard/';
+
+		return new \WP_REST_Response( $overview, 200 );
 	}
 
 	/**

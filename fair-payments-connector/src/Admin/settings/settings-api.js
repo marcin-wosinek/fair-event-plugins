@@ -72,6 +72,17 @@ export function saveOAuthCallback(data) {
 }
 
 /**
+ * Load the connected Mollie profile name and enabled payment methods.
+ *
+ * @return {Promise<Object>} Promise resolving to the connection overview
+ */
+export function loadConnectionOverview() {
+	return apiFetch({
+		path: '/fair-payments-connector/v1/connection/overview',
+	});
+}
+
+/**
  * Test Mollie connection and trigger token refresh if needed
  *
  * @return {Promise<Object>} Promise resolving to connection test result

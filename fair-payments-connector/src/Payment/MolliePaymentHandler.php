@@ -219,6 +219,67 @@ class MolliePaymentHandler {
 	}
 
 	/**
+	 * Get a snapshot of the connected Mollie profile and its enabled payment methods.
+	 *
+	 * Used by the settings page to show the profile name and enabled methods for
+	 * the currently selected mode. Cached briefly so an admin page load doesn't
+	 * always incur a live Mollie round trip.
+	 *
+	 * @return array Connection overview: profile_name, profile_id, mode, methods.
+	 * @throws \Exception If the Mollie profile/methods lookup fails.
+	 */
+	public function get_connection_overview() {
+		$mode      = get_option( 'fair_payment_mode', 'test' );
+		$cache_key = 'fair_payment_connection_overview_' . $mode;
+
+		$cached = get_transient( $cache_key );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		try {
+			$profile  = $this->mollie->profiles->get( 'me' );
+			$testmode = ( 'live' !== $mode );
+			$methods  = $this->mollie->methods->allEnabled(
+				array(
+					'profileId' => $profile->id,
+					'testmode'  => $testmode,
+				)
+			);
+		} catch ( ApiException $e ) {
+			throw new \Exception(
+				esc_html(
+					sprintf(
+						/* translators: %s: error message */
+						__( 'Failed to load Mollie connection overview: %s', 'fair-payments-connector' ),
+						$e->getMessage()
+					)
+				)
+			);
+		}
+
+		$method_list = array();
+		foreach ( $methods as $method ) {
+			$method_list[] = array(
+				'id'          => $method->id,
+				'description' => $method->description,
+				'image'       => isset( $method->image->size1x ) ? $method->image->size1x : '',
+			);
+		}
+
+		$overview = array(
+			'profile_name' => $profile->name,
+			'profile_id'   => $profile->id,
+			'mode'         => $mode,
+			'methods'      => $method_list,
+		);
+
+		set_transient( $cache_key, $overview, 5 * MINUTE_IN_SECONDS );
+
+		return $overview;
+	}
+
+	/**
 	 * Create a payment
 	 *
 	 * @param array $args Payment arguments.
