@@ -80,6 +80,11 @@
 	color: #d63638;
 }
 
+.fair-form-submit-button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
 /* "Powered by Fair Event Plugins" attribution (opt-in, issue #864). */
 .fair-audience-powered-by {
 	margin: 16px 0 0;

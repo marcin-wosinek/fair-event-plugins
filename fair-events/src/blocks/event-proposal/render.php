@@ -197,8 +197,8 @@ $duration_options = array(
 			aria-hidden="true"
 		/>
 
-		<div class="form-row form-submit">
-			<button type="submit" class="form-button">
+		<div class="form-row form-submit wp-block-button">
+			<button type="submit" class="form-button wp-block-button__link wp-element-button">
 				<?php echo esc_html( $submit_button_text ); ?>
 			</button>
 		</div>

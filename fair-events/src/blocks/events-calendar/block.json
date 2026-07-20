@@ -65,7 +65,7 @@
 	},
 	"editorScript": "file:./editor.js",
 	"editorStyle": "file:./editor.css",
-	"style": "file:./style-editor.css",
+	"style": ["wp-block-button", "file:./style-editor.css"],
 	"viewScriptModule": "file:./view.js",
 	"render": "file:./render.php"
 }
