@@ -19,7 +19,7 @@ import {
 	InspectorControls,
 	InnerBlocks,
 } from '@wordpress/block-editor';
-import { PanelBody, TextControl } from '@wordpress/components';
+import { ExternalLink, PanelBody, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
@@ -66,6 +66,13 @@ registerBlockType(metadata.name, {
 			? [...BASE_ALLOWED_BLOCKS, ...FAIR_FORM_ALLOWED_BLOCKS]
 			: BASE_ALLOWED_BLOCKS;
 
+		const {
+			postEventDateId = 0,
+			manageEventUrl = '',
+			ticketingEnabled = false,
+			canManageEvents = false,
+		} = window.fairEventsSignupBlock || {};
+
 		const innerBlocksProps = useInnerBlocksProps(
 			{ className: 'fair-events-event-signup-questions' },
 			{
@@ -85,6 +92,22 @@ registerBlockType(metadata.name, {
 								setAttributes({ submitButtonText: value })
 							}
 						/>
+						{ticketingEnabled &&
+							canManageEvents &&
+							(postEventDateId > 0 ? (
+								<ExternalLink
+									href={`${manageEventUrl}&event_date_id=${postEventDateId}&tab=tickets`}
+								>
+									{__('Edit tickets', 'fair-events')}
+								</ExternalLink>
+							) : (
+								<p>
+									{__(
+										'Connect this block to an event date to edit its tickets.',
+										'fair-events'
+									)}
+								</p>
+							))}
 					</PanelBody>
 				</InspectorControls>
 

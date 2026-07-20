@@ -42,6 +42,12 @@ jest.mock('@wordpress/block-editor', () => ({
 	}),
 }));
 
+jest.mock('@wordpress/components', () => ({
+	PanelBody: ({ children }) => children,
+	TextControl: () => null,
+	ExternalLink: ({ href, children }) => <a href={href}>{children}</a>,
+}));
+
 // Capture the block settings passed to registerBlockType so the edit
 // function can be rendered directly, without a live block registry.
 let capturedSettings;
@@ -68,6 +74,10 @@ describe('Event Signup EditComponent', () => {
 			/>
 		);
 	};
+
+	afterEach(() => {
+		delete window.fairEventsSignupBlock;
+	});
 
 	it('always shows the form content region, fair-form active or not', () => {
 		const { unmount } = renderEdit(true);
@@ -103,5 +113,78 @@ describe('Event Signup EditComponent', () => {
 				'fair-audience/fair-form-conditional',
 			])
 		);
+	});
+
+	describe('ticket-editor link', () => {
+		it('shows the edit-tickets link when ticketing is enabled, the user can manage events, and an event date resolved', () => {
+			window.fairEventsSignupBlock = {
+				postEventDateId: 42,
+				manageEventUrl:
+					'http://example.test/wp-admin/admin.php?page=fair-events-manage-event',
+				ticketingEnabled: true,
+				canManageEvents: true,
+			};
+			renderEdit(false);
+
+			const link = screen.getByText('Edit tickets');
+			expect(link).toHaveAttribute(
+				'href',
+				'http://example.test/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=42&tab=tickets'
+			);
+		});
+
+		it('shows a hint instead of the link when no event date resolved', () => {
+			window.fairEventsSignupBlock = {
+				postEventDateId: 0,
+				manageEventUrl:
+					'http://example.test/wp-admin/admin.php?page=fair-events-manage-event',
+				ticketingEnabled: true,
+				canManageEvents: true,
+			};
+			renderEdit(false);
+
+			expect(
+				screen.getByText(
+					'Connect this block to an event date to edit its tickets.'
+				)
+			).toBeInTheDocument();
+			expect(screen.queryByText('Edit tickets')).not.toBeInTheDocument();
+		});
+
+		it('renders nothing when ticketing is disabled', () => {
+			window.fairEventsSignupBlock = {
+				postEventDateId: 42,
+				manageEventUrl:
+					'http://example.test/wp-admin/admin.php?page=fair-events-manage-event',
+				ticketingEnabled: false,
+				canManageEvents: true,
+			};
+			renderEdit(false);
+
+			expect(screen.queryByText('Edit tickets')).not.toBeInTheDocument();
+			expect(
+				screen.queryByText(
+					'Connect this block to an event date to edit its tickets.'
+				)
+			).not.toBeInTheDocument();
+		});
+
+		it('renders nothing when the user cannot manage events', () => {
+			window.fairEventsSignupBlock = {
+				postEventDateId: 42,
+				manageEventUrl:
+					'http://example.test/wp-admin/admin.php?page=fair-events-manage-event',
+				ticketingEnabled: true,
+				canManageEvents: false,
+			};
+			renderEdit(false);
+
+			expect(screen.queryByText('Edit tickets')).not.toBeInTheDocument();
+			expect(
+				screen.queryByText(
+					'Connect this block to an event date to edit its tickets.'
+				)
+			).not.toBeInTheDocument();
+		});
 	});
 });

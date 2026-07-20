@@ -20,6 +20,7 @@ class BlockHooks {
 	public function __construct() {
 		add_action( 'init', array( $this, 'register_blocks' ) );
 		add_action( 'init', array( $this, 'set_script_translations' ) );
+		add_action( 'enqueue_block_editor_assets', array( $this, 'localize_event_signup_editor_context' ) );
 	}
 
 	/**
@@ -129,6 +130,36 @@ class BlockHooks {
 			'fair-events-get-tickets-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
+		);
+	}
+
+	/**
+	 * Localize the current post's event date and manage-event link onto the
+	 * event-signup block editor script, so its sidebar can offer a direct
+	 * "Edit tickets" link. Mirrors the meta-box localization pattern.
+	 *
+	 * @return void
+	 */
+	public function localize_event_signup_editor_context() {
+		global $post;
+
+		$post_event_date_id = 0;
+		if ( $post && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_event_id( $post->ID );
+			if ( $event_date ) {
+				$post_event_date_id = (int) $event_date->id;
+			}
+		}
+
+		wp_localize_script(
+			'fair-events-event-signup-editor-script',
+			'fairEventsSignupBlock',
+			array(
+				'postEventDateId'  => $post_event_date_id,
+				'manageEventUrl'   => admin_url( 'admin.php?page=fair-events-manage-event' ),
+				'ticketingEnabled' => \FairEvents\Core\Features::is_enabled( 'ticketing' ),
+				'canManageEvents'  => current_user_can( 'edit_posts' ),
+			)
 		);
 	}
 }
