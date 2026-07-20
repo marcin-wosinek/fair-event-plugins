@@ -33,15 +33,33 @@ defined( 'WPINC' ) || die;
  * every other internal consumer (EventDates, WeeklyEventsProvider, blocks)
  * already uses. Callers that need ISO 8601 (the public REST feed) convert
  * at their own boundary via DateHelper::local_to_iso8601().
+ *
+ * `get_occurrences()` accepts `null` for an open-ended start and/or end;
+ * MIN_DATETIME/MAX_DATETIME are an internal implementation detail callers
+ * should not depend on.
  */
 class EventFeedProvider {
 
 	/**
+	 * Lower bound used when `get_occurrences()` is called with a `null` start.
+	 * A private implementation detail — callers pass `null`, not this value.
+	 */
+	const MIN_DATETIME = '1970-01-01 00:00:00';
+
+	/**
+	 * Upper bound used when `get_occurrences()` is called with a `null` end.
+	 * A private implementation detail — callers pass `null`, not this value.
+	 */
+	const MAX_DATETIME = '2099-12-31 23:59:59';
+
+	/**
 	 * Get normalized occurrence DTOs for a date range, sorted by start.
 	 *
-	 * @param string $start   Range start, naive 'Y-m-d H:i:s' site-local.
-	 * @param string $end     Range end, naive 'Y-m-d H:i:s' site-local.
-	 * @param array  $filters {
+	 * @param string|null $start   Range start, naive 'Y-m-d H:i:s' site-local,
+	 *                             or null for an open-ended (unbounded) start.
+	 * @param string|null $end     Range end, naive 'Y-m-d H:i:s' site-local,
+	 *                             or null for an open-ended (unbounded) end.
+	 * @param array       $filters {
 	 *     Optional filters.
 	 *
 	 *     @type int[]  $categories           Category term IDs (OR'd with any
@@ -56,7 +74,10 @@ class EventFeedProvider {
 	 * }
 	 * @return array[] Flat array of occurrence DTOs, sorted by 'start' ASC.
 	 */
-	public function get_occurrences( $start, $end, $filters = array() ) {
+	public function get_occurrences( $start = null, $end = null, $filters = array() ) {
+		$start = null !== $start ? $start : self::MIN_DATETIME;
+		$end   = null !== $end ? $end : self::MAX_DATETIME;
+
 		$filters = array_merge(
 			array(
 				'categories'           => array(),

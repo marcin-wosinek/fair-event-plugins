@@ -17,6 +17,14 @@ defined( 'WPINC' ) || die;
  * that specific occurrence instead of the master row. This helper validates
  * the URL-provided date (or, for legacy links, the numeric id) and falls
  * back to the default row otherwise.
+ *
+ * This is the sanctioned single-event read path for display blocks/hooks
+ * (event-info, OpenGraphHooks, AdminBarHooks) — it is not superseded by
+ * FairEvents\Services\EventFeedProvider. It deliberately returns raw
+ * EventDates rows rather than feed DTOs because those consumers need
+ * venue_id/address/rrule/occurrence_type/id (not part of the DTO shape)
+ * plus the `?event_date=` URL resolution above, which a DTO accessor
+ * would not perform.
  */
 class SelectedOccurrence {
 

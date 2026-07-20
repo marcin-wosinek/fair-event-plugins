@@ -172,13 +172,15 @@ $is_query_loop_pattern = ( strpos( $pattern_content, '<!-- wp:query' ) !== false
 		<?php
 		// For non-Query Loop patterns, render post-linked, standalone, and
 		// external (iCal/API) occurrences from the shared feed provider.
+		// `null` bounds are open-ended; the provider resolves them
+		// internally instead of callers hardcoding sentinel dates.
 		switch ( $time_filter ) {
 			case 'upcoming':
 				$range_start = $current_time;
-				$range_end   = '2099-12-31 23:59:59';
+				$range_end   = null;
 				break;
 			case 'past':
-				$range_start = '1970-01-01 00:00:00';
+				$range_start = null;
 				$range_end   = $current_time;
 				break;
 			case 'ongoing':
@@ -187,8 +189,8 @@ $is_query_loop_pattern = ( strpos( $pattern_content, '<!-- wp:query' ) !== false
 				break;
 			case 'all':
 			default:
-				$range_start = '1970-01-01 00:00:00';
-				$range_end   = '2099-12-31 23:59:59';
+				$range_start = null;
+				$range_end   = null;
 				break;
 		}
 
