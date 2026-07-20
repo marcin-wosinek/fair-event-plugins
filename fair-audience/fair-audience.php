@@ -67,7 +67,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_transactions_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.40.0' );
+	update_option( 'fair_audience_db_version', '1.41.0' );
 
 	// Link any existing fair_events_signups rows to participants by email —
 	// the fair-events migration that adds participant_id may already have
@@ -770,6 +770,21 @@ function fair_audience_maybe_upgrade_db() {
 		\FairAudience\Hooks\SignupHookBridge::backfill_signup_participant_ids();
 
 		update_option( 'fair_audience_db_version', '1.40.0' );
+	}
+
+	if ( version_compare( $db_version, '1.41.0', '<' ) ) {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'fair_audience_participants';
+
+		// DEFAULT 0 means absence = opted in, so existing subscribers keep
+		// receiving the weekly summary until they explicitly opt out.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"ALTER TABLE {$table_name}
+			 ADD COLUMN IF NOT EXISTS weekly_summary_opt_out TINYINT(1) NOT NULL DEFAULT 0 AFTER email_profile"
+		);
+
+		update_option( 'fair_audience_db_version', '1.41.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );
