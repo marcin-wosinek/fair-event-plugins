@@ -1,8 +1,9 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { Card, CardBody } from '@wordpress/components';
+import { Button, Card, CardBody } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
+import { chevronRight, chevronDown } from '@wordpress/icons';
 import {
 	formatSiteLocalDatetime,
 	getEventDisplayTitle,
@@ -32,6 +33,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
+	showLevels: true,
 	fields: [
 		'title',
 		'start_datetime',
@@ -62,17 +64,96 @@ export default function AllEvents() {
 	const [totalPages, setTotalPages] = useState(0);
 	const [isLoading, setIsLoading] = useState(true);
 	const [view, setView] = useState(DEFAULT_VIEW);
+	const [expanded, setExpanded] = useState(() => new Set());
+
+	const toggleExpanded = useCallback((masterId) => {
+		setExpanded((prev) => {
+			const next = new Set(prev);
+			if (next.has(masterId)) {
+				next.delete(masterId);
+			} else {
+				next.add(masterId);
+			}
+			return next;
+		});
+	}, []);
 
 	const fields = useMemo(
 		() => [
 			{
 				id: 'title',
 				label: __('Name', 'fair-events'),
-				render: ({ item }) => (
-					<a href={`${manageEventUrl}&event_date_id=${item.id}`}>
-						{getEventDisplayTitle(item.title)}
-					</a>
-				),
+				render: ({ item }) => {
+					if (
+						item.occurrence_type === 'generated' &&
+						item.master_id
+					) {
+						const label = item.start_datetime
+							? formatSiteLocalDatetime(item.start_datetime)
+							: getEventDisplayTitle(item.title);
+						if (item.status === 'cancelled') {
+							return (
+								<span className="fair-events-all-events__cancelled">
+									{label}{' '}
+									<small>
+										({__('Cancelled', 'fair-events')})
+									</small>
+								</span>
+							);
+						}
+						return (
+							<a
+								href={`${manageEventUrl}&event_date_id=${item.id}`}
+							>
+								{label}
+							</a>
+						);
+					}
+
+					if (item.occurrence_type === 'master') {
+						const isExpanded = expanded.has(item.id);
+						const count = item.children_count || 0;
+						return (
+							<>
+								<Button
+									icon={
+										isExpanded ? chevronDown : chevronRight
+									}
+									onClick={() => toggleExpanded(item.id)}
+									aria-expanded={isExpanded}
+									label={
+										isExpanded
+											? __(
+													'Collapse series dates',
+													'fair-events'
+											  )
+											: __(
+													'Expand series dates',
+													'fair-events'
+											  )
+									}
+									showTooltip={false}
+								/>
+								<a
+									href={`${manageEventUrl}&event_date_id=${item.id}`}
+								>
+									{getEventDisplayTitle(item.title)}
+								</a>{' '}
+								{sprintf(
+									/* translators: %d: number of dates in the series. */
+									__('(%d dates)', 'fair-events'),
+									count
+								)}
+							</>
+						);
+					}
+
+					return (
+						<a href={`${manageEventUrl}&event_date_id=${item.id}`}>
+							{getEventDisplayTitle(item.title)}
+						</a>
+					);
+				},
 				enableSorting: true,
 				enableHiding: false,
 				getValue: ({ item }) => (item.title || '').toLowerCase(),
@@ -151,7 +232,7 @@ export default function AllEvents() {
 				},
 			},
 		],
-		[]
+		[expanded, toggleExpanded]
 	);
 
 	const queryArgs = useMemo(() => {
@@ -224,6 +305,32 @@ export default function AllEvents() {
 		loadEvents();
 	}, [loadEvents]);
 
+	// Stale expanded ids should not leak across pages/filters.
+	useEffect(() => {
+		setExpanded(new Set());
+	}, [queryArgs]);
+
+	const flattenedEvents = useMemo(() => {
+		const rows = [];
+		for (const event of events) {
+			rows.push(event);
+			if (
+				event.occurrence_type === 'master' &&
+				expanded.has(event.id) &&
+				event.children
+			) {
+				rows.push(...event.children);
+			}
+		}
+		return rows;
+	}, [events, expanded]);
+
+	const getItemLevel = useCallback(
+		(item) =>
+			item.occurrence_type === 'generated' && item.master_id ? 1 : 0,
+		[]
+	);
+
 	const actions = useMemo(
 		() => [
 			{
@@ -253,13 +360,14 @@ export default function AllEvents() {
 			<Card>
 				<CardBody>
 					<DataViews
-						data={events}
+						data={flattenedEvents}
 						fields={fields}
 						view={view}
 						onChangeView={setView}
 						paginationInfo={paginationInfo}
 						defaultLayouts={DEFAULT_LAYOUTS}
 						actions={actions}
+						getItemLevel={getItemLevel}
 						isLoading={isLoading}
 						getItemId={(item) => item.id}
 					/>

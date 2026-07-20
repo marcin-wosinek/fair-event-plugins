@@ -1485,6 +1485,10 @@ class EventDatesController extends WP_REST_Controller {
 		if ( ! empty( $occurrence_type ) ) {
 			$where_clauses[] = 'occurrence_type = %s';
 			$where_values[]  = $occurrence_type;
+		} else {
+			// Top level only: generated series dates ride along with their
+			// master row (attached below) rather than appearing standalone.
+			$where_clauses[] = "occurrence_type IN ('single', 'master')";
 		}
 
 		$where_sql = '';
@@ -1502,7 +1506,7 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		// Count total items.
-		if ( ! empty( $where_values ) ) {
+		if ( ! empty( $where_clauses ) ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i $where_sql", $table_name, ...$where_values ) );
 		} else {
@@ -1515,7 +1519,7 @@ class EventDatesController extends WP_REST_Controller {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$order_sql = "ORDER BY `$orderby` $order LIMIT %d OFFSET %d";
 
-		if ( ! empty( $where_values ) ) {
+		if ( ! empty( $where_clauses ) ) {
 			$select_args = array_merge( array( $table_name ), $where_values, array( $per_page, $offset ) );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$results = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i $where_sql $order_sql", ...$select_args ) );
@@ -1524,9 +1528,44 @@ class EventDatesController extends WP_REST_Controller {
 			$results = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i $order_sql", $table_name, $per_page, $offset ) );
 		}
 
+		// Batch-fetch generated children for any masters on this page, in one
+		// query, so groups never split across pages and we avoid an N+1 per
+		// master (they ride with their master rather than being counted/offset).
+		$master_ids = array();
+		foreach ( $results as $result ) {
+			if ( 'master' === $result->occurrence_type ) {
+				$master_ids[] = (int) $result->id;
+			}
+		}
+
+		$children_by_master = array();
+		if ( ! empty( $master_ids ) ) {
+			$placeholders  = implode( ', ', array_fill( 0, count( $master_ids ), '%d' ) );
+			$children_args = array_merge( array( $table_name ), $master_ids, array( 'generated' ) );
+			$child_results = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is a fixed run of %d tokens, not request input.
+				$wpdb->prepare( "SELECT * FROM %i WHERE master_id IN ($placeholders) AND occurrence_type = %s ORDER BY start_datetime ASC", ...$children_args )
+			);
+
+			foreach ( $child_results as $child ) {
+				$children_by_master[ (int) $child->master_id ][] = $child;
+			}
+		}
+
 		$items = array();
 		foreach ( $results as $result ) {
-			$items[] = $this->prepare_event_date_summary( $result );
+			$item = $this->prepare_event_date_summary( $result );
+
+			if ( 'master' === $result->occurrence_type ) {
+				$children               = $children_by_master[ (int) $result->id ] ?? array();
+				$item['children']       = array_map(
+					array( $this, 'prepare_event_date_summary' ),
+					$children
+				);
+				$item['children_count'] = count( $children );
+			}
+
+			$items[] = $item;
 		}
 
 		$response = new WP_REST_Response( $items, 200 );
@@ -1555,6 +1594,7 @@ class EventDatesController extends WP_REST_Controller {
 			'link_type'       => $result->link_type,
 			'external_url'    => $result->external_url,
 			'venue_id'        => $result->venue_id ? (int) $result->venue_id : null,
+			'status'          => $result->status,
 		);
 
 		// Add display_url.
