@@ -4,7 +4,7 @@
  * Owns the frequency/ends fields and a live schedule preview, and saves
  * immediately on confirm (recurrence no longer rides along with the details
  * form's dirty-snapshot / Save flow). Also owns the "Irregular series"
- * hand-picked-dates editor.
+ * click-to-toggle date picker.
  *
  * @package FairEvents
  */
@@ -15,7 +15,6 @@ import {
 	Modal,
 	Notice,
 	TabPanel,
-	TextControl,
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
@@ -25,6 +24,7 @@ import {
 	buildRRule,
 	expandRRulePreview,
 	parseRRule,
+	MiniCalendar,
 	RecurrenceControl,
 } from 'fair-events-shared';
 
@@ -116,27 +116,69 @@ export default function SeriesModal({
 
 	const rrule = buildRRule(recurrence);
 
+	// totalCount/lastDate cover every generated date regardless of `limit`, so
+	// a large limit doubles as "give me the full list" for the calendar.
 	const preview = useMemo(
-		() => expandRRulePreview(rrule, startDatetime, 4),
+		() => expandRRulePreview(rrule, startDatetime, Infinity),
 		[rrule, startDatetime]
 	);
+	const generatedDatesSet = useMemo(() => new Set(preview.dates), [preview]);
 
-	const filledManualDates = manualDates.filter(Boolean);
-	const allManualDates = [masterDateStr, ...filledManualDates];
+	const regularDayProps = (dateStr) => {
+		if (!generatedDatesSet.has(dateStr)) return {};
+		const isMaster = dateStr === masterDateStr;
+		return {
+			background: isMaster ? '#007cba' : '#4ab866',
+			color: '#fff',
+			fontWeight: 600,
+		};
+	};
+
+	const allManualDates = [masterDateStr, ...manualDates];
 	const uniqueManualDates = new Set(allManualDates);
 	const hasDuplicateManualDates =
 		uniqueManualDates.size !== allManualDates.length;
+	const sortedSelectedDates = [...uniqueManualDates].sort();
 
-	const updateManualDate = (index, value) => {
-		setManualDates((prev) => prev.map((d, i) => (i === index ? value : d)));
+	const toggleManualDate = (dateStr) => {
+		if (dateStr === masterDateStr) return;
+		setManualDates((prev) =>
+			prev.includes(dateStr)
+				? prev.filter((d) => d !== dateStr)
+				: [...prev, dateStr].sort()
+		);
 	};
 
-	const addManualDateRow = () => {
-		setManualDates((prev) => [...prev, '']);
-	};
+	const irregularDayProps = (dateStr) => {
+		const isMaster = dateStr === masterDateStr;
+		const isSelected = uniqueManualDates.has(dateStr);
 
-	const removeManualDateRow = (index) => {
-		setManualDates((prev) => prev.filter((_, i) => i !== index));
+		if (isMaster) {
+			return {
+				background: '#007cba',
+				color: '#fff',
+				fontWeight: 600,
+				interactive: true,
+				disabled: true,
+				ariaPressed: true,
+				tooltip: __(
+					'Master date — edit it from Event Details',
+					'fair-events'
+				),
+			};
+		}
+
+		return {
+			background: isSelected ? '#4ab866' : 'transparent',
+			color: isSelected ? '#fff' : '#1e1e1e',
+			fontWeight: isSelected ? 600 : 400,
+			interactive: true,
+			ariaPressed: isSelected,
+			onActivate: () => toggleManualDate(dateStr),
+			tooltip: isSelected
+				? __('Selected — click to remove this date', 'fair-events')
+				: __('Click to add this date', 'fair-events'),
+		};
 	};
 
 	const isManualTab = 'irregular' === activeTab;
@@ -258,37 +300,38 @@ export default function SeriesModal({
 								/>
 							</VStack>
 
-							<VStack spacing={2} style={{ minWidth: '200px' }}>
+							<VStack spacing={2} style={{ minWidth: '260px' }}>
 								<strong>
 									{__('Schedule preview', 'fair-events')}
 								</strong>
-								{preview.dates.length === 0 && (
+								{preview.dates.length === 0 ? (
 									<p>
 										{__(
 											'No dates match this schedule yet.',
 											'fair-events'
 										)}
 									</p>
-								)}
-								<ul style={{ margin: 0, paddingLeft: '20px' }}>
-									{preview.dates.map((date) => (
-										<li key={date}>
-											{formatPreviewDate(date)}
-										</li>
-									))}
-								</ul>
-								{preview.remainingCount > 0 && (
-									<p>
-										{sprintf(
-											/* translators: 1: number of remaining dates, 2: last date in the series */
-											__(
-												'… %1$d more, until %2$s',
-												'fair-events'
-											),
-											preview.remainingCount,
-											formatPreviewDate(preview.lastDate)
-										)}
-									</p>
+								) : (
+									<>
+										<MiniCalendar
+											minDate={preview.dates[0]}
+											maxDate={preview.lastDate}
+											dayProps={regularDayProps}
+										/>
+										<p>
+											{sprintf(
+												/* translators: 1: number of dates in the series, 2: last date in the series */
+												__(
+													'%1$d dates, until %2$s',
+													'fair-events'
+												),
+												preview.totalCount,
+												formatPreviewDate(
+													preview.lastDate
+												)
+											)}
+										</p>
+									</>
 								)}
 							</VStack>
 						</HStack>
@@ -316,57 +359,24 @@ export default function SeriesModal({
 								</Notice>
 							)}
 
-							<VStack spacing={2}>
-								<HStack alignment="center">
-									<TextControl
-										type="date"
-										label={__('Master date', 'fair-events')}
-										hideLabelFromVision
-										value={masterDateStr}
-										disabled
-									/>
-									<span style={{ color: '#757575' }}>
-										{__(
-											'Master date — edit it from Event Details',
-											'fair-events'
-										)}
-									</span>
-								</HStack>
-								{manualDates.map((date, index) => (
-									// eslint-disable-next-line react/no-array-index-key
-									<HStack key={index} alignment="center">
-										<TextControl
-											type="date"
-											label={sprintf(
-												/* translators: %d: 1-based row number in the extra-dates list */
-												__('Date %d', 'fair-events'),
-												index + 1
-											)}
-											hideLabelFromVision
-											value={date}
-											onChange={(value) =>
-												updateManualDate(index, value)
-											}
-										/>
-										<Button
-											variant="tertiary"
-											isDestructive
-											onClick={() =>
-												removeManualDateRow(index)
-											}
-										>
-											{__('Remove', 'fair-events')}
-										</Button>
-									</HStack>
-								))}
-							</VStack>
+							<MiniCalendar
+								minDate={sortedSelectedDates[0]}
+								maxDate={
+									sortedSelectedDates[
+										sortedSelectedDates.length - 1
+									]
+								}
+								dayProps={irregularDayProps}
+								allowForwardBeyondRange
+							/>
 
-							<Button
-								variant="secondary"
-								onClick={addManualDateRow}
-							>
-								{__('Add date', 'fair-events')}
-							</Button>
+							<p style={{ color: '#757575' }}>
+								{sprintf(
+									/* translators: %d: number of selected dates */
+									__('%d dates selected', 'fair-events'),
+									manualDateCount
+								)}
+							</p>
 						</VStack>
 					)
 				}

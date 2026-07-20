@@ -3,26 +3,16 @@
  *
  * Simple mini-calendar showing recurring event occurrences. Every occurrence
  * and the master cell navigate to their manage-event page; cancelling and
- * restoring occurrences happens in the "Edit instances" modal instead.
+ * restoring occurrences happens in the "Edit instances" modal instead. Thin
+ * adapter over the shared `MiniCalendar` grid/paging primitive.
  *
  * @package FairEvents
  */
 
-import { useState, useMemo, useEffect } from '@wordpress/element';
-import {
-	Button,
-	Card,
-	CardHeader,
-	CardBody,
-	Tooltip,
-	__experimentalHStack as HStack,
-} from '@wordpress/components';
+import { useMemo } from '@wordpress/element';
+import { Card, CardHeader, CardBody } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import {
-	formatLocalDate,
-	getWeekdayLabels,
-	calculateLeadingDays,
-} from 'fair-events-shared';
+import { MiniCalendar } from 'fair-events-shared';
 
 export default function RecurrenceCalendar({
 	generatedOccurrences,
@@ -64,102 +54,67 @@ export default function RecurrenceCalendar({
 		return dates.sort();
 	}, [occurrences, cancelledDatesList, masterDate]);
 
-	// Calculate which months to show
-	const months = useMemo(() => {
-		if (allDates.length === 0) return [];
-		const first = new Date(allDates[0] + 'T00:00:00');
-		const last = new Date(allDates[allDates.length - 1] + 'T00:00:00');
-		const result = [];
-		const current = new Date(first.getFullYear(), first.getMonth(), 1);
-		const end = new Date(last.getFullYear(), last.getMonth(), 1);
-		while (current <= end) {
-			result.push(new Date(current));
-			current.setMonth(current.getMonth() + 1);
-		}
-		return result;
-	}, [allDates]);
-
-	// Navigation state: show months in pages, sized to viewport width.
-	const [startIndex, setStartIndex] = useState(0);
-	const [visibleCount, setVisibleCount] = useState(() =>
-		computeVisibleMonths(
-			typeof window !== 'undefined' ? window.innerWidth : 1280
-		)
-	);
-	useEffect(() => {
-		const onResize = () =>
-			setVisibleCount(computeVisibleMonths(window.innerWidth));
-		window.addEventListener('resize', onResize);
-		return () => window.removeEventListener('resize', onResize);
-	}, []);
-	const visibleMonths = months.slice(startIndex, startIndex + visibleCount);
-	const canGoBack = startIndex > 0;
-	const canGoForward = startIndex + visibleCount < months.length;
-
-	const weekdayLabels = useMemo(
-		() => getWeekdayLabels(1, { weekday: 'narrow' }),
-		[]
-	);
-	const todayStr = formatLocalDate(new Date());
-
 	if (allDates.length === 0) return null;
 
-	const navControls = months.length > visibleCount && (
-		<HStack spacing={1}>
-			<Button
-				icon="arrow-left-alt2"
-				size="small"
-				disabled={!canGoBack}
-				label={__('Previous months', 'fair-events')}
-				onClick={() =>
-					setStartIndex(Math.max(0, startIndex - visibleCount))
-				}
-			/>
-			<Button
-				icon="arrow-right-alt2"
-				size="small"
-				disabled={!canGoForward}
-				label={__('Next months', 'fair-events')}
-				onClick={() =>
-					setStartIndex(
-						Math.min(months.length - 1, startIndex + visibleCount)
-					)
-				}
-			/>
-		</HStack>
-	);
+	const dayProps = (dateStr) => {
+		const occ = occurrenceByDate[dateStr];
+		const isCancelled =
+			occ?.status === 'cancelled' || cancelledSet.has(dateStr);
+		const isOccurrence = !!occ && !isCancelled;
+		const isMaster = dateStr === masterDate;
+
+		if (!isMaster && !isOccurrence && !isCancelled) {
+			return {};
+		}
+
+		let background = 'transparent';
+		let color = '#1e1e1e';
+		let opacity = 1;
+		let textDecoration = 'none';
+
+		if (isMaster) {
+			background = '#007cba';
+			color = '#fff';
+		} else if (isCancelled) {
+			background = '#cc1818';
+			color = '#fff';
+			opacity = 0.6;
+			textDecoration = 'line-through';
+		} else if (isOccurrence) {
+			background = '#4ab866';
+			color = '#fff';
+		}
+
+		const common = {
+			background,
+			color,
+			opacity,
+			textDecoration,
+			fontWeight: 600,
+		};
+
+		if (isMaster) {
+			return {
+				...common,
+				href: `${manageEventUrl}&event_date_id=${masterEventDateId}`,
+				tooltip: __('Master event', 'fair-events'),
+			};
+		}
+
+		return {
+			...common,
+			href: `${manageEventUrl}&event_date_id=${occ.id}`,
+			tooltip: __('Open this occurrence', 'fair-events'),
+		};
+	};
 
 	const calendarBody = (
 		<>
-			{navControls && (
-				<HStack
-					alignment="center"
-					style={{ marginBottom: '12px', justifyContent: 'flex-end' }}
-				>
-					{navControls}
-				</HStack>
-			)}
-			<div
-				style={{
-					display: 'flex',
-					gap: '24px',
-					flexWrap: 'wrap',
-				}}
-			>
-				{visibleMonths.map((monthDate) => (
-					<MiniMonth
-						key={`${monthDate.getFullYear()}-${monthDate.getMonth()}`}
-						monthDate={monthDate}
-						weekdayLabels={weekdayLabels}
-						occurrenceByDate={occurrenceByDate}
-						cancelledSet={cancelledSet}
-						masterDate={masterDate}
-						todayStr={todayStr}
-						manageEventUrl={manageEventUrl}
-						masterEventDateId={masterEventDateId}
-					/>
-				))}
-			</div>
+			<MiniCalendar
+				minDate={allDates[0]}
+				maxDate={allDates[allDates.length - 1]}
+				dayProps={dayProps}
+			/>
 			<div
 				style={{
 					marginTop: '16px',
@@ -230,183 +185,4 @@ export default function RecurrenceCalendar({
 			<CardBody>{calendarBody}</CardBody>
 		</Card>
 	);
-}
-
-function MiniMonth({
-	monthDate,
-	weekdayLabels,
-	occurrenceByDate,
-	cancelledSet,
-	masterDate,
-	todayStr,
-	manageEventUrl,
-	masterEventDateId,
-}) {
-	const year = monthDate.getFullYear();
-	const month = monthDate.getMonth();
-	const firstDay = new Date(year, month, 1);
-	const daysInMonth = new Date(year, month + 1, 0).getDate();
-	const leadingDays = calculateLeadingDays(firstDay, 1);
-
-	const monthLabel = firstDay.toLocaleDateString(undefined, {
-		year: 'numeric',
-		month: 'long',
-	});
-
-	const cells = [];
-
-	// Leading empty cells
-	for (let i = 0; i < leadingDays; i++) {
-		cells.push(<div key={`lead-${i}`} />);
-	}
-
-	for (let day = 1; day <= daysInMonth; day++) {
-		const date = new Date(year, month, day);
-		const dateStr = formatLocalDate(date);
-		const occ = occurrenceByDate[dateStr];
-		const isCancelled =
-			occ?.status === 'cancelled' || cancelledSet.has(dateStr);
-		const isOccurrence = !!occ && !isCancelled;
-		const isMaster = dateStr === masterDate;
-		const isToday = dateStr === todayStr;
-		const fullDateLabel = date.toLocaleDateString(undefined, {
-			weekday: 'long',
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-		});
-
-		let bg = 'transparent';
-		let color = '#1e1e1e';
-		let opacity = 1;
-		let cursor = 'default';
-		let border = 'none';
-
-		if (isMaster) {
-			bg = '#007cba';
-			color = '#fff';
-		} else if (isCancelled) {
-			bg = '#cc1818';
-			color = '#fff';
-			opacity = 0.6;
-			cursor = 'pointer';
-		} else if (isOccurrence) {
-			bg = '#4ab866';
-			color = '#fff';
-			cursor = 'pointer';
-		}
-
-		if (isToday) {
-			border = '2px solid #1e1e1e';
-		}
-
-		const cellStyle = {
-			width: '28px',
-			height: '28px',
-			display: 'flex',
-			alignItems: 'center',
-			justifyContent: 'center',
-			borderRadius: '4px',
-			fontSize: '12px',
-			fontWeight: isOccurrence || isCancelled || isMaster ? 600 : 400,
-			background: bg,
-			color,
-			opacity,
-			cursor,
-			border,
-			textDecoration: isCancelled ? 'line-through' : 'none',
-			position: 'relative',
-		};
-
-		const isNavigable = (isOccurrence || isCancelled) && !isMaster;
-
-		const cellContent = (
-			<div key={dateStr} style={cellStyle}>
-				{day}
-			</div>
-		);
-
-		if (isMaster) {
-			cells.push(
-				<Tooltip key={dateStr} text={__('Master event', 'fair-events')}>
-					<a
-						href={`${manageEventUrl}&event_date_id=${masterEventDateId}`}
-						aria-label={fullDateLabel}
-						style={{ textDecoration: 'none' }}
-					>
-						{cellContent}
-					</a>
-				</Tooltip>
-			);
-		} else if (isNavigable) {
-			cells.push(
-				<Tooltip
-					key={dateStr}
-					text={__('Open this occurrence', 'fair-events')}
-				>
-					<a
-						href={`${manageEventUrl}&event_date_id=${occ.id}`}
-						aria-label={fullDateLabel}
-						style={{ textDecoration: 'none' }}
-					>
-						{cellContent}
-					</a>
-				</Tooltip>
-			);
-		} else {
-			cells.push(
-				<div key={dateStr} style={cellStyle}>
-					{day}
-				</div>
-			);
-		}
-	}
-
-	return (
-		<div style={{ minWidth: '220px' }}>
-			<div
-				style={{
-					fontWeight: 600,
-					marginBottom: '8px',
-					fontSize: '13px',
-					textAlign: 'center',
-				}}
-			>
-				{monthLabel}
-			</div>
-			<div
-				style={{
-					display: 'grid',
-					gridTemplateColumns: 'repeat(7, 28px)',
-					gap: '2px',
-					justifyContent: 'center',
-				}}
-			>
-				{weekdayLabels.map((label, i) => (
-					<div
-						key={i}
-						style={{
-							textAlign: 'center',
-							fontSize: '11px',
-							color: '#757575',
-							fontWeight: 600,
-							height: '20px',
-							lineHeight: '20px',
-						}}
-					>
-						{label}
-					</div>
-				))}
-				{cells}
-			</div>
-		</div>
-	);
-}
-
-function computeVisibleMonths(width) {
-	if (width < 600) return 1;
-	if (width < 900) return 2;
-	if (width < 1200) return 3;
-	if (width < 1500) return 4;
-	return 5;
 }
