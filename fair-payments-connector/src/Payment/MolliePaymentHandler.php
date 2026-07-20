@@ -195,27 +195,11 @@ class MolliePaymentHandler {
 			return false;
 		}
 
-		// Check cached profile ID.
+		// Profile ID is stored at connect time. Org-level OAuth tokens can't
+		// resolve /profiles/me (it 403s), so there is no live fallback here.
 		$profile_id = get_option( 'fair_payment_mollie_profile_id' );
-		if ( ! empty( $profile_id ) ) {
-			return $profile_id;
-		}
 
-		// Fetch current profile from Mollie.
-		try {
-			$profile = $this->mollie->profiles->get( 'me' );
-			if ( $profile && ! empty( $profile->id ) ) {
-				update_option( 'fair_payment_mollie_profile_id', $profile->id );
-				return $profile->id;
-			}
-		} catch ( \Exception $e ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( 'Failed to fetch Mollie profile: ' . $e->getMessage() );
-			}
-		}
-
-		return false;
+		return ! empty( $profile_id ) ? $profile_id : false;
 	}
 
 	/**
@@ -237,8 +221,16 @@ class MolliePaymentHandler {
 			return $cached;
 		}
 
+		$profile_id = get_option( 'fair_payment_mollie_profile_id' );
+
+		if ( empty( $profile_id ) ) {
+			throw new \Exception(
+				esc_html__( 'Failed to load Mollie connection overview: Mollie profile is not configured.', 'fair-payments-connector' )
+			);
+		}
+
 		try {
-			$profile  = $this->mollie->profiles->get( 'me' );
+			$profile  = $this->mollie->profiles->get( $profile_id );
 			$testmode = ( 'live' !== $mode );
 			$methods  = $this->mollie->methods->allEnabled(
 				array(
