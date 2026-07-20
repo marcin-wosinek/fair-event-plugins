@@ -11,6 +11,12 @@ defined( 'WPINC' ) || die;
 
 /**
  * Helper class for custom table queries
+ *
+ * These `posts_join`/`posts_where`/`posts_orderby` filters are the one
+ * sanctioned non-provider read path: Query Loop patterns (events-list
+ * block) drive a real WP_Query, which cannot consume the DTOs that
+ * FairEvents\Services\EventFeedProvider produces, so this joins the
+ * fair_event_dates table directly into the post query instead.
  */
 class QueryHelper {
 
