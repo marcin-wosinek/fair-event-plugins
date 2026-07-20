@@ -20,6 +20,7 @@ import {
 	loadConnectionOverview,
 	saveSettings,
 	testConnection,
+	createTestPayment,
 	fetchOAuthState,
 } from './settings-api';
 
@@ -46,6 +47,8 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 	const [overview, setOverview] = useState(null);
 	const [overviewLoading, setOverviewLoading] = useState(false);
 	const [overviewError, setOverviewError] = useState(null);
+	const [isTestingPayment, setIsTestingPayment] = useState(false);
+	const [testCheckoutUrl, setTestCheckoutUrl] = useState(null);
 
 	/**
 	 * Load connection settings from API
@@ -332,6 +335,58 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 			});
 	};
 
+	/**
+	 * Handle Create test payment button click.
+	 *
+	 * Creates a one-unit payment and opens the Mollie checkout in a new tab. In
+	 * live mode it confirms first, since a real payment with real money is made.
+	 * The checkout URL is also kept in state so a fallback link can be shown when
+	 * the browser blocks the popup.
+	 */
+	const handleTestPayment = () => {
+		if (
+			mode === 'live' &&
+			// eslint-disable-next-line no-alert
+			!confirm(
+				__(
+					'You are in live mode. This creates a real 1-unit payment with real money and gateway fees. Continue?',
+					'fair-payments-connector'
+				)
+			)
+		) {
+			return;
+		}
+
+		setIsTestingPayment(true);
+		setTestCheckoutUrl(null);
+
+		createTestPayment()
+			.then((response) => {
+				setTestCheckoutUrl(response.checkout_url);
+				window.open(response.checkout_url, '_blank', 'noopener');
+				onNotice({
+					status: 'success',
+					message: __(
+						'Test payment created. Complete or cancel the checkout in the new tab; its status updates automatically.',
+						'fair-payments-connector'
+					),
+				});
+				setIsTestingPayment(false);
+			})
+			.catch((error) => {
+				onNotice({
+					status: 'error',
+					message:
+						error.message ||
+						__(
+							'Failed to create test payment.',
+							'fair-payments-connector'
+						),
+				});
+				setIsTestingPayment(false);
+			});
+	};
+
 	if (isLoading) {
 		return (
 			<Card>
@@ -348,251 +403,341 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 	}
 
 	return (
-		<Card>
-			<CardBody>
-				<h2>{__('Mollie Connection', 'fair-payments-connector')}</h2>
+		<>
+			<Card>
+				<CardBody>
+					<h2>
+						{__('Mollie Connection', 'fair-payments-connector')}
+					</h2>
 
-				{!connected ? (
-					<>
-						<p>
-							{__(
-								'Connect your Mollie account to accept payments. This uses secure OAuth authentication.',
-								'fair-payments-connector'
-							)}
-						</p>
-						<Button isPrimary onClick={handleConnect}>
-							{__(
-								'Connect with Mollie',
-								'fair-payments-connector'
-							)}
-						</Button>
-					</>
-				) : (
-					<>
-						<Notice status="success" isDismissible={false}>
-							{__(
-								'Connected to Mollie',
-								'fair-payments-connector'
-							)}
-						</Notice>
-
-						{organizationId && (
-							<div style={{ marginTop: '1rem' }}>
-								<p>
-									<strong>
-										{__(
-											'Organization ID:',
-											'fair-payments-connector'
-										)}
-									</strong>{' '}
-									<code>{organizationId}</code>
-								</p>
-							</div>
-						)}
-
-						<div style={{ marginTop: '0.5rem' }}>
+					{!connected ? (
+						<>
 							<p>
-								<strong>
-									{__(
-										'Profile ID:',
-										'fair-payments-connector'
-									)}
-								</strong>{' '}
-								{profileId ? (
-									<code>{profileId}</code>
-								) : (
-									<span style={{ color: '#d63638' }}>
-										{__(
-											'Missing (required for payments)',
-											'fair-payments-connector'
-										)}
-									</span>
+								{__(
+									'Connect your Mollie account to accept payments. This uses secure OAuth authentication.',
+									'fair-payments-connector'
 								)}
 							</p>
-							{!profileId && (
-								<p
-									style={{
-										fontSize: '0.9em',
-										color: '#d63638',
-										marginTop: '0.5rem',
-									}}
-								>
-									{__(
-										'Please reconnect to Mollie to fetch the profile ID.',
-										'fair-payments-connector'
-									)}
-								</p>
-							)}
-						</div>
+							<Button isPrimary onClick={handleConnect}>
+								{__(
+									'Connect with Mollie',
+									'fair-payments-connector'
+								)}
+							</Button>
+						</>
+					) : (
+						<>
+							<Notice status="success" isDismissible={false}>
+								{__(
+									'Connected to Mollie',
+									'fair-payments-connector'
+								)}
+							</Notice>
 
-						<div style={{ marginTop: '1rem' }}>
-							{overviewLoading && (
-								<p style={{ fontSize: '0.9em', color: '#666' }}>
-									{__(
-										'Loading payment methods…',
-										'fair-payments-connector'
-									)}
-								</p>
-							)}
-
-							{overviewError && (
-								<Notice status="warning" isDismissible={false}>
-									{overviewError}
-								</Notice>
-							)}
-
-							{overview && !overviewLoading && (
-								<>
+							{organizationId && (
+								<div style={{ marginTop: '1rem' }}>
 									<p>
 										<strong>
 											{__(
-												'Profile name:',
+												'Organization ID:',
 												'fair-payments-connector'
 											)}
 										</strong>{' '}
-										{overview.profile_name}
+										<code>{organizationId}</code>
 									</p>
-
-									<p style={{ marginBottom: '0.25rem' }}>
-										<strong>
-											{__(
-												'Enabled payment methods:',
-												'fair-payments-connector'
-											)}
-										</strong>
-									</p>
-									{overview.methods.length > 0 ? (
-										<ul
-											style={{
-												listStyle: 'disc',
-												marginLeft: '1.5rem',
-											}}
-										>
-											{overview.methods.map((method) => (
-												<li key={method.id}>
-													{method.image && (
-														<img
-															src={method.image}
-															alt=""
-															width="20"
-															height="20"
-															style={{
-																verticalAlign:
-																	'middle',
-																marginRight:
-																	'0.5rem',
-															}}
-														/>
-													)}
-													{method.description}
-												</li>
-											))}
-										</ul>
-									) : (
-										<p>
-											{__(
-												'No payment methods are currently enabled.',
-												'fair-payments-connector'
-											)}
-										</p>
-									)}
-
-									<p>
-										<a
-											href={overview.manage_url}
-											target="_blank"
-											rel="noreferrer"
-										>
-											{__(
-												'Manage payment methods in Mollie',
-												'fair-payments-connector'
-											)}
-										</a>
-									</p>
-								</>
+								</div>
 							)}
-						</div>
 
-						{tokenExpires && (
 							<div style={{ marginTop: '0.5rem' }}>
-								<p
-									style={{
-										fontSize: '0.9em',
-										color: '#666',
-									}}
-								>
-									{sprintf(
-										/* translators: %s: expiration date */
-										__(
-											'Token expires: %s',
+								<p>
+									<strong>
+										{__(
+											'Profile ID:',
 											'fair-payments-connector'
-										),
-										new Date(
-											tokenExpires * 1000
-										).toLocaleString()
+										)}
+									</strong>{' '}
+									{profileId ? (
+										<code>{profileId}</code>
+									) : (
+										<span style={{ color: '#d63638' }}>
+											{__(
+												'Missing (required for payments)',
+												'fair-payments-connector'
+											)}
+										</span>
 									)}
 								</p>
+								{!profileId && (
+									<p
+										style={{
+											fontSize: '0.9em',
+											color: '#d63638',
+											marginTop: '0.5rem',
+										}}
+									>
+										{__(
+											'Please reconnect to Mollie to fetch the profile ID.',
+											'fair-payments-connector'
+										)}
+									</p>
+								)}
 							</div>
-						)}
 
-						<div style={{ marginTop: '1.5rem' }}>
-							<RadioControl
-								label={__('Mode', 'fair-payments-connector')}
-								selected={mode}
-								options={[
-									{
-										label: __(
-											'Test Mode',
+							<div style={{ marginTop: '1rem' }}>
+								{overviewLoading && (
+									<p
+										style={{
+											fontSize: '0.9em',
+											color: '#666',
+										}}
+									>
+										{__(
+											'Loading payment methods…',
 											'fair-payments-connector'
-										),
-										value: 'test',
-									},
-									{
-										label: __(
-											'Live Mode',
-											'fair-payments-connector'
-										),
-										value: 'live',
-									},
-								]}
-								onChange={handleModeChange}
-								disabled={isSaving}
-							/>
-						</div>
+										)}
+									</p>
+								)}
 
-						<div style={{ marginTop: '1.5rem' }}>
-							<ButtonGroup>
-								<Button
-									isDestructive
-									onClick={handleDisconnect}
-									disabled={isSaving}
-								>
-									{__(
-										'Disconnect',
+								{overviewError && (
+									<Notice
+										status="warning"
+										isDismissible={false}
+									>
+										{overviewError}
+									</Notice>
+								)}
+
+								{overview && !overviewLoading && (
+									<>
+										<p>
+											<strong>
+												{__(
+													'Profile name:',
+													'fair-payments-connector'
+												)}
+											</strong>{' '}
+											{overview.profile_name}
+										</p>
+
+										<p style={{ marginBottom: '0.25rem' }}>
+											<strong>
+												{__(
+													'Enabled payment methods:',
+													'fair-payments-connector'
+												)}
+											</strong>
+										</p>
+										{overview.methods.length > 0 ? (
+											<ul
+												style={{
+													listStyle: 'disc',
+													marginLeft: '1.5rem',
+												}}
+											>
+												{overview.methods.map(
+													(method) => (
+														<li key={method.id}>
+															{method.image && (
+																<img
+																	src={
+																		method.image
+																	}
+																	alt=""
+																	width="20"
+																	height="20"
+																	style={{
+																		verticalAlign:
+																			'middle',
+																		marginRight:
+																			'0.5rem',
+																	}}
+																/>
+															)}
+															{method.description}
+														</li>
+													)
+												)}
+											</ul>
+										) : (
+											<p>
+												{__(
+													'No payment methods are currently enabled.',
+													'fair-payments-connector'
+												)}
+											</p>
+										)}
+
+										<p>
+											<a
+												href={overview.manage_url}
+												target="_blank"
+												rel="noreferrer"
+											>
+												{__(
+													'Manage payment methods in Mollie',
+													'fair-payments-connector'
+												)}
+											</a>
+										</p>
+									</>
+								)}
+							</div>
+
+							{tokenExpires && (
+								<div style={{ marginTop: '0.5rem' }}>
+									<p
+										style={{
+											fontSize: '0.9em',
+											color: '#666',
+										}}
+									>
+										{sprintf(
+											/* translators: %s: expiration date */
+											__(
+												'Token expires: %s',
+												'fair-payments-connector'
+											),
+											new Date(
+												tokenExpires * 1000
+											).toLocaleString()
+										)}
+									</p>
+								</div>
+							)}
+
+							<div style={{ marginTop: '1.5rem' }}>
+								<RadioControl
+									label={__(
+										'Mode',
 										'fair-payments-connector'
 									)}
-								</Button>
-								<Button
-									isSecondary
-									onClick={handleRefreshToken}
-									isBusy={isRefreshing}
-									disabled={isRefreshing}
-								>
-									{isRefreshing
-										? __(
-												'Refreshing...',
+									selected={mode}
+									options={[
+										{
+											label: __(
+												'Test Mode',
 												'fair-payments-connector'
-										  )
-										: __(
-												'Refresh Connection',
+											),
+											value: 'test',
+										},
+										{
+											label: __(
+												'Live Mode',
 												'fair-payments-connector'
-										  )}
-								</Button>
-							</ButtonGroup>
-						</div>
-					</>
-				)}
-			</CardBody>
-		</Card>
+											),
+											value: 'live',
+										},
+									]}
+									onChange={handleModeChange}
+									disabled={isSaving}
+								/>
+							</div>
+
+							<div style={{ marginTop: '1.5rem' }}>
+								<ButtonGroup>
+									<Button
+										isDestructive
+										onClick={handleDisconnect}
+										disabled={isSaving}
+									>
+										{__(
+											'Disconnect',
+											'fair-payments-connector'
+										)}
+									</Button>
+									<Button
+										isSecondary
+										onClick={handleRefreshToken}
+										isBusy={isRefreshing}
+										disabled={isRefreshing}
+									>
+										{isRefreshing
+											? __(
+													'Refreshing...',
+													'fair-payments-connector'
+											  )
+											: __(
+													'Refresh Connection',
+													'fair-payments-connector'
+											  )}
+									</Button>
+								</ButtonGroup>
+							</div>
+						</>
+					)}
+				</CardBody>
+			</Card>
+
+			<Card>
+				<CardBody>
+					<h2>{__('Test payment', 'fair-payments-connector')}</h2>
+					<p>
+						{__(
+							'Create a one-unit payment to verify the full checkout and webhook flow end to end.',
+							'fair-payments-connector'
+						)}
+					</p>
+
+					{connected && (
+						<p style={{ fontSize: '0.9em', color: '#666' }}>
+							{mode === 'live'
+								? __(
+										'Live mode: this creates a real payment with real money and gateway fees.',
+										'fair-payments-connector'
+								  )
+								: __(
+										'Test mode: no real money is charged.',
+										'fair-payments-connector'
+								  )}
+						</p>
+					)}
+
+					{testCheckoutUrl && (
+						<Notice status="success" isDismissible={false}>
+							{__(
+								'Test payment created. If the checkout did not open in a new tab, ',
+								'fair-payments-connector'
+							)}
+							<a
+								href={testCheckoutUrl}
+								target="_blank"
+								rel="noreferrer"
+							>
+								{__('open it here.', 'fair-payments-connector')}
+							</a>
+						</Notice>
+					)}
+
+					<div style={{ marginTop: '1rem' }}>
+						<Button
+							isSecondary
+							onClick={handleTestPayment}
+							isBusy={isTestingPayment}
+							disabled={!connected || isTestingPayment}
+						>
+							{__(
+								'Create test payment',
+								'fair-payments-connector'
+							)}
+						</Button>
+					</div>
+
+					{!connected && (
+						<p
+							style={{
+								fontSize: '0.9em',
+								color: '#666',
+								marginTop: '0.5rem',
+							}}
+						>
+							{__(
+								'Connect Mollie first to run a test payment.',
+								'fair-payments-connector'
+							)}
+						</p>
+					)}
+				</CardBody>
+			</Card>
+		</>
 	);
 }

@@ -8,6 +8,7 @@
 namespace FairPaymentsConnector\API;
 
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
+use FairPaymentsConnector\Models\Transaction;
 
 defined( 'WPINC' ) || die;
 
@@ -40,6 +41,20 @@ class ConnectionController extends \WP_REST_Controller {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_connection_overview' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+
+		register_rest_route(
+			'fair-payments-connector/v1',
+			'/test-payment',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'create_test_payment' ),
+				// Admin-only: this creates a real transaction (real money in live mode)
+				// with no backing block, so it must not reuse the public payment path.
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
@@ -79,6 +94,96 @@ class ConnectionController extends \WP_REST_Controller {
 			: 'https://my.mollie.com/dashboard/';
 
 		return new \WP_REST_Response( $overview, 200 );
+	}
+
+	/**
+	 * Create a one-unit test payment and return its Mollie checkout URL.
+	 *
+	 * Exercises the full payment flow (transaction creation, checkout, webhook
+	 * status update) from the settings page, without a backing payment block.
+	 * Admin-only — see the permission callback on the route.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function create_test_payment() {
+		if ( ! get_option( 'fair_payment_mollie_connected', false ) ) {
+			return new \WP_Error(
+				'not_connected',
+				__( 'Mollie is not connected. Please connect your Mollie account first.', 'fair-payments-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$currency    = get_option( 'fair_payment_currency', 'EUR' );
+		$mode        = get_option( 'fair_payment_mode', 'test' );
+		$description = __( 'Test payment (Fair Payments Connector settings)', 'fair-payments-connector' );
+
+		$transaction_id = TransactionAPI::create_transaction(
+			array(
+				array(
+					'name'     => $description,
+					'quantity' => 1,
+					'amount'   => 1.0,
+				),
+			),
+			array(
+				'currency'    => $currency,
+				'description' => $description,
+				'user_id'     => get_current_user_id(),
+				'metadata'    => array(
+					'test_payment' => true,
+					'user_id'      => get_current_user_id(),
+				),
+			)
+		);
+
+		if ( is_wp_error( $transaction_id ) ) {
+			return new \WP_Error(
+				'test_payment_failed',
+				$transaction_id->get_error_message(),
+				array( 'status' => 500 )
+			);
+		}
+
+		$transaction  = Transaction::get_by_id( $transaction_id );
+		$settings_url = add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) );
+
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'transaction_id'        => $transaction_id,
+				'token'                 => $transaction ? $transaction->access_token : '',
+			),
+			$settings_url
+		);
+
+		$payment = TransactionAPI::initiate_payment(
+			$transaction_id,
+			array(
+				'redirect_url' => $redirect_url,
+				'webhook_url'  => rest_url( 'fair-payments-connector/v1/webhook' ),
+			)
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return new \WP_Error(
+				'test_payment_failed',
+				$payment->get_error_message(),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new \WP_REST_Response(
+			array(
+				'success'        => true,
+				'transaction_id' => $transaction_id,
+				'checkout_url'   => $payment['checkout_url'],
+				'status'         => $payment['status'],
+				'currency'       => $currency,
+				'mode'           => $mode,
+			),
+			201
+		);
 	}
 
 	/**
