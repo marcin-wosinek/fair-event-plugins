@@ -219,6 +219,22 @@ test.describe('PublicEventsController — standalone events', () => {
 		expect(event.url).toBe(eventDate.display_url);
 	});
 
+	test('external-link event carries location as an online marker', async () => {
+		const res = await api.get(
+			'/wp-json/fair-events/v1/events?start_date=2035-08-01&end_date=2035-08-31&per_page=500'
+		);
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+
+		const event = body.events.find((e) => e.event_date_id === eventDateId);
+
+		expect(event).toBeTruthy();
+		expect(event.location).toEqual({
+			online: true,
+			url: 'https://example.com/standalone-test',
+		});
+	});
+
 	test('categories filter narrows the feed to matching standalone events', async () => {
 		const category = await (
 			await api.get(`/wp-json/wp/v2/categories/${categoryId}`, {
@@ -249,5 +265,100 @@ test.describe('PublicEventsController — standalone events', () => {
 		expect(
 			nonMatchingBody.events.some((e) => e.event_date_id === eventDateId)
 		).toBe(false);
+	});
+});
+
+test.describe('PublicEventsController — location field', () => {
+	let api;
+	let addressEventDateId;
+	let noLocationEventDateId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const addressRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Public feed address test ${Date.now()}`,
+					start_datetime: '2035-08-10 10:00:00',
+					end_datetime: '2035-08-10 12:00:00',
+					link_type: 'none',
+				},
+			}
+		);
+		expect(addressRes.ok()).toBeTruthy();
+		addressEventDateId = (await addressRes.json()).id;
+
+		// The create endpoint doesn't wire `address` through — a PUT is
+		// needed, same quirk as `event_id` (see the recurring-occurrences
+		// test above).
+		const addressUpdateRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${addressEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { address: 'Calle X 1, Madrid' },
+			}
+		);
+		expect(addressUpdateRes.ok()).toBeTruthy();
+
+		const noLocationRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Public feed no-location test ${Date.now()}`,
+					start_datetime: '2035-08-11 10:00:00',
+					end_datetime: '2035-08-11 12:00:00',
+					link_type: 'none',
+				},
+			}
+		);
+		expect(noLocationRes.ok()).toBeTruthy();
+		noLocationEventDateId = (await noLocationRes.json()).id;
+	});
+
+	test.afterAll(async () => {
+		if (addressEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${addressEventDateId}`,
+				{ headers: adminHeaders }
+			);
+		}
+		if (noLocationEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${noLocationEventDateId}`,
+				{ headers: adminHeaders }
+			);
+		}
+	});
+
+	test('free-text address resolves to a location object', async () => {
+		const res = await api.get(
+			'/wp-json/fair-events/v1/events?start_date=2035-08-10&end_date=2035-08-10&per_page=500'
+		);
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+
+		const event = body.events.find(
+			(e) => e.event_date_id === addressEventDateId
+		);
+		expect(event).toBeTruthy();
+		expect(event.location).toEqual({ address: 'Calle X 1, Madrid' });
+	});
+
+	test('event with no location omits the field entirely', async () => {
+		const res = await api.get(
+			'/wp-json/fair-events/v1/events?start_date=2035-08-11&end_date=2035-08-11&per_page=500'
+		);
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+
+		const event = body.events.find(
+			(e) => e.event_date_id === noLocationEventDateId
+		);
+		expect(event).toBeTruthy();
+		expect(event).not.toHaveProperty('location');
 	});
 });
