@@ -14,11 +14,10 @@ defined( 'WPINC' ) || die;
  *
  * Links each registration (event_participant row) to every
  * fair-payments-connector transaction it accumulates — the initial charge, any
- * later upgrade charge, and, in the future, refunds. The event_participant row
- * only keeps the most recent transaction in its own transaction_id column, so
- * this table is the source of truth for payment history. Amounts and currency
- * are read by joining fair_payment_transactions (single source of truth),
- * mirroring FeePaymentTransactionRepository.
+ * later upgrade charge, and, in the future, refunds. This is the sole
+ * registration↔transaction link and the source of truth for payment history.
+ * Amounts and currency are read by joining fair_payment_transactions (single
+ * source of truth), mirroring FeePaymentTransactionRepository.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
@@ -159,6 +158,47 @@ class EventParticipantTransactionRepository {
 		);
 
 		return array_map( 'intval', $results );
+	}
+
+	/**
+	 * Batched lookup of the latest charge transaction per registration, keyed
+	 * by event_participant_id. Replaces the old single-value
+	 * event_participant.transaction_id column now that a registration can
+	 * accumulate multiple charges over time.
+	 *
+	 * @param array $event_participant_ids Event participant row IDs.
+	 * @return array Associative array: event_participant_id => transaction_id.
+	 */
+	public function get_latest_charge_transaction_ids( $event_participant_ids ) {
+		global $wpdb;
+
+		if ( empty( $event_participant_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $event_participant_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is safely constructed.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT event_participant_id, transaction_id, created_at FROM %i
+				 WHERE event_participant_id IN ($placeholders) AND kind = 'charge'
+				 ORDER BY created_at DESC",
+				array_merge( array( $this->get_table_name() ), array_map( 'intval', $event_participant_ids ) )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		$latest = array();
+		foreach ( $results as $row ) {
+			$event_participant_id = (int) $row['event_participant_id'];
+			if ( ! isset( $latest[ $event_participant_id ] ) ) {
+				$latest[ $event_participant_id ] = (int) $row['transaction_id'];
+			}
+		}
+
+		return $latest;
 	}
 
 	/**

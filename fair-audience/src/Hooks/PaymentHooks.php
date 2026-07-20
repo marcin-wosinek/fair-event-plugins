@@ -153,8 +153,10 @@ class PaymentHooks {
 			$context['participant_url']        = admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id );
 		}
 
+		$ledger_repo            = new EventParticipantTransactionRepository();
+		$event_participant_ids  = $ledger_repo->get_event_participant_ids_by_transaction_id( (int) $transaction->id );
 		$event_participant_repo = new EventParticipantRepository();
-		$event_participant      = $event_participant_repo->get_by_transaction_id( (int) $transaction->id );
+		$event_participant      = $event_participant_ids ? $event_participant_repo->get_by_id( $event_participant_ids[0] ) : null;
 		if ( $event_participant ) {
 			$event = get_post( (int) $event_participant->event_id );
 			if ( $event ) {
@@ -408,9 +410,8 @@ class PaymentHooks {
 
 	/**
 	 * Resolve the event_participant row(s) a transaction was charged
-	 * against, via the ledger (source of truth) — falling back to the
-	 * mutable event_participants.transaction_id column only for rows
-	 * created before the ledger was populated at creation time (#1112).
+	 * against, via the ledger — the sole source of truth since every
+	 * creation site records to it (#1112).
 	 *
 	 * @param EventParticipantRepository            $repo           Event participant repository.
 	 * @param EventParticipantTransactionRepository $ledger         Ledger repository.
@@ -420,18 +421,14 @@ class PaymentHooks {
 	private static function resolve_event_participants_for_transaction( $repo, $ledger, $transaction_id ) {
 		$event_participant_ids = $ledger->get_event_participant_ids_by_transaction_id( $transaction_id );
 
-		if ( ! empty( $event_participant_ids ) ) {
-			$event_participants = array();
-			foreach ( $event_participant_ids as $event_participant_id ) {
-				$event_participant = $repo->get_by_id( $event_participant_id );
-				if ( $event_participant ) {
-					$event_participants[] = $event_participant;
-				}
+		$event_participants = array();
+		foreach ( $event_participant_ids as $event_participant_id ) {
+			$event_participant = $repo->get_by_id( $event_participant_id );
+			if ( $event_participant ) {
+				$event_participants[] = $event_participant;
 			}
-			return $event_participants;
 		}
-
-		return $repo->get_all_by_transaction_id( $transaction_id );
+		return $event_participants;
 	}
 
 	/**
@@ -450,11 +447,10 @@ class PaymentHooks {
 		$repo   = new EventParticipantRepository();
 		$ledger = new EventParticipantTransactionRepository();
 
-		// Resolve via the ledger (source of truth): a later attempt may have
-		// re-pointed the row's transaction_id column away from this paid
-		// transaction (see #1112). A 'multiple_instances' purchase links
-		// several rows to the same transaction; every other signup path
-		// links exactly one.
+		// Resolve via the ledger, the sole registration↔transaction link
+		// (see #1112, #1113). A 'multiple_instances' purchase links several
+		// rows to the same transaction; every other signup path links exactly
+		// one.
 		$event_participants = self::resolve_event_participants_for_transaction( $repo, $ledger, (int) $transaction->id );
 		if ( empty( $event_participants ) ) {
 			return;
@@ -470,10 +466,10 @@ class PaymentHooks {
 			$event_participant->payment_expires_at = null;
 			$event_participant->save();
 
-			// Preserve this charge in the ledger so a registration keeps its full
-			// payment history even when its transaction_id column is later
-			// overwritten (e.g. by a series-pass upgrade). Idempotent under
-			// webhook retries via the ledger's unique key.
+			// Preserve this charge in the ledger so a registration keeps its
+			// full payment history across later attempts (e.g. a series-pass
+			// upgrade). Idempotent under webhook retries via the ledger's
+			// unique key.
 			$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
 
 			if ( null === $confirmation_participant ) {
@@ -495,9 +491,8 @@ class PaymentHooks {
 	 * still holds capacity for the remainder of the original 15-minute window,
 	 * and the cleanup cron releases the slot when that hold expires (capacity
 	 * counts already filter out expired holds, so over-booking can't happen).
-	 * The transaction_id is overwritten when retry_payment creates a fresh
-	 * transaction, so keeping the failed id here doesn't block subsequent
-	 * retries.
+	 * retry_payment records a fresh ledger charge, so keeping the failed
+	 * transaction's ledger entry here doesn't block subsequent retries.
 	 *
 	 * @param object $payment     Mollie payment object.
 	 * @param object $transaction Transaction row from fair-payments-connector.
@@ -618,7 +613,6 @@ class PaymentHooks {
 
 		// Upgrade the ticket type in place.
 		$event_participant->ticket_type_id = $ticket_type_id;
-		$event_participant->transaction_id = (int) $transaction->id;
 		$event_participant->save();
 
 		// Preserve the upgrade charge alongside the original payment.

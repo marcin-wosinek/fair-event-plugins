@@ -4,12 +4,15 @@
  *
  * Each event entry now carries a `transaction_status` derived from the
  * matching fair-payments-connector transaction ('success' | 'pending' |
- * 'failed' | null). Seeding a real paid/pending/failed transaction requires
- * routing a signup through the Mollie flow, so — mirroring
- * TimelineController.api.spec.js — this suite covers the shape contract that
- * is reachable over HTTP: a free (no-transaction) signup must report
- * transaction_id/transaction_status as null. The paid/pending/failed status
- * mapping itself is exercised via the WP-CLI eval-file manual check
+ * 'failed' | null). Since #1113, both `transaction_id` and `transaction_status`
+ * are sourced from the event-participant transaction ledger (the latest
+ * charge per registration) rather than the removed
+ * event_participants.transaction_id column. Seeding a real paid/pending/failed
+ * transaction requires routing a signup through the Mollie flow, so —
+ * mirroring TimelineController.api.spec.js — this suite covers the shape
+ * contract that is reachable over HTTP: a free (no-transaction) signup must
+ * report transaction_id/transaction_status as null. The paid/pending/failed
+ * status mapping itself is exercised via the WP-CLI eval-file manual check
  * (TESTING.md).
  */
 

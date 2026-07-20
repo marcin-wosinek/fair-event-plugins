@@ -15,6 +15,7 @@ defined( 'WPINC' ) || die;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
+use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\ParticipantToken;
 use FairEvents\Models\EventDates;
@@ -299,12 +300,18 @@ if ( $is_valid_post_type ) {
 				&& $pending_row->payment_expires_at
 				&& strtotime( $pending_row->payment_expires_at ) > time();
 
+			$candidate_tx_id = 0;
+			if ( $pending_row ) {
+				$latest_charge_transaction_ids = ( new EventParticipantTransactionRepository() )
+					->get_latest_charge_transaction_ids( array( (int) $pending_row->id ) );
+				$candidate_tx_id               = $latest_charge_transaction_ids[ (int) $pending_row->id ] ?? 0;
+			}
+
 			if ( $pending_row
 				&& 'pending_payment' === $pending_row->label
-				&& $pending_row->transaction_id
+				&& $candidate_tx_id
 				&& $within_hold
 			) {
-				$candidate_tx_id = (int) $pending_row->transaction_id;
 				if ( function_exists( 'fair_payment_sync_transaction_status' ) ) {
 					fair_payment_sync_transaction_status( $candidate_tx_id );
 				}

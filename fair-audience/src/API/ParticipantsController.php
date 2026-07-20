@@ -389,9 +389,13 @@ class ParticipantsController extends WP_REST_Controller {
 		$events        = array();
 		$relationships = $this->event_participant_repository->get_by_participant( $id );
 
-		$transaction_ids = array_filter( array_map( fn( $rel ) => (int) $rel->transaction_id, $relationships ) );
-		$statuses        = $has_payments && $transaction_ids
-			? $this->event_participant_transaction_repository->get_statuses_by_transaction_ids( array_unique( $transaction_ids ) )
+		$event_participant_ids        = array_map( fn( $rel ) => (int) $rel->id, $relationships );
+		$latest_transaction_ids_by_ep = $event_participant_ids
+			? $this->event_participant_transaction_repository->get_latest_charge_transaction_ids( $event_participant_ids )
+			: array();
+		$transaction_ids              = array_values( array_unique( array_filter( $latest_transaction_ids_by_ep ) ) );
+		$statuses                     = $has_payments && $transaction_ids
+			? $this->event_participant_transaction_repository->get_statuses_by_transaction_ids( $transaction_ids )
 			: array();
 
 		foreach ( $relationships as $rel ) {
@@ -404,7 +408,7 @@ class ParticipantsController extends WP_REST_Controller {
 				}
 			}
 
-			$transaction_id = $rel->transaction_id ? (int) $rel->transaction_id : null;
+			$transaction_id = $latest_transaction_ids_by_ep[ (int) $rel->id ] ?? null;
 
 			$events[] = array(
 				'id'                 => (int) $rel->id,

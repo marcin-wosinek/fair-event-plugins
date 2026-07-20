@@ -147,10 +147,16 @@ class SignupHookBridge {
 		if ( $stamp_payment ) {
 			$relationship = $event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant->id );
 			if ( $relationship ) {
-				$relationship->transaction_id     = $transaction_id;
 				$relationship->ticket_type_id     = $ticket_type_id;
 				$relationship->payment_expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
 				$relationship->save();
+
+				// Record the ledger link at creation time, not just on webhook
+				// confirmation — mirrors EventSignupController's own creation
+				// sites (see #1112).
+				if ( $transaction_id ) {
+					( new EventParticipantTransactionRepository() )->record( (int) $relationship->id, (int) $transaction_id, 'charge' );
+				}
 			}
 		}
 
