@@ -202,10 +202,10 @@ test.describe('CalendarFeedController — ICS calendar feed', () => {
 			'URL;VALUE=URI:https://example.com/calendar-feed-test'
 		);
 
-		// All-day event: DATE value, exclusive end (+1 day).
+		// All-day event: DATE value (basic YYYYMMDD, no dashes), exclusive end (+1 day).
 		expect(body).toContain(`UID:standalone_${allDayEventDateId}@`);
-		expect(body).toMatch(/DTSTART;VALUE=DATE:2035-09-03/);
-		expect(body).toMatch(/DTEND;VALUE=DATE:2035-09-04/);
+		expect(body).toMatch(/DTSTART;VALUE=DATE:20350903/);
+		expect(body).toMatch(/DTEND;VALUE=DATE:20350904/);
 	});
 
 	test('categories filter narrows the feed', async () => {
@@ -238,5 +238,78 @@ test.describe('CalendarFeedController — ICS calendar feed', () => {
 		expect(nonMatchingBody).not.toContain(
 			`UID:standalone_${standaloneEventDateId}@`
 		);
+	});
+});
+
+test.describe('CalendarFeedController — VTIMEZONE block on named zones', () => {
+	let api;
+	let originalTimezone;
+	let namedZoneEventDateId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const settingsRes = await api.get('/wp-json/wp/v2/settings', {
+			headers: adminHeaders,
+		});
+		originalTimezone = (await settingsRes.json()).timezone;
+
+		const tzRes = await api.post('/wp-json/wp/v2/settings', {
+			headers: adminHeaders,
+			data: { timezone: 'Europe/Madrid' },
+		});
+		expect(tzRes.ok()).toBeTruthy();
+
+		// Range spans the Europe/Madrid spring-forward DST transition.
+		const eventDateRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Calendar feed VTIMEZONE test ${Date.now()}`,
+					start_datetime: '2035-03-15 10:00:00',
+					end_datetime: '2035-03-15 12:00:00',
+					link_type: 'external',
+					external_url: 'https://example.com/calendar-feed-vtimezone',
+				},
+			}
+		);
+		expect(eventDateRes.ok()).toBeTruthy();
+		namedZoneEventDateId = (await eventDateRes.json()).id;
+	});
+
+	test.afterAll(async () => {
+		if (namedZoneEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${namedZoneEventDateId}`,
+				{ headers: adminHeaders }
+			);
+		}
+		await api.post('/wp-json/wp/v2/settings', {
+			headers: adminHeaders,
+			data: { timezone: originalTimezone },
+		});
+	});
+
+	test('emits a real STANDARD/DAYLIGHT sub-component, not a flattened property', async () => {
+		const res = await api.get(
+			'/wp-json/fair-events/v1/calendar.ics?start_date=2035-03-01&end_date=2035-04-30'
+		);
+		expect(res.ok()).toBeTruthy();
+		// Unfold RFC 5545 line folding before substring/regex assertions.
+		const body = (await res.text()).replace(/\r\n /g, '');
+
+		expect(body).toContain('BEGIN:VTIMEZONE');
+		expect(body).toContain('TZID:Europe/Madrid');
+
+		expect(body).toMatch(
+			/BEGIN:(STANDARD|DAYLIGHT)[\s\S]*?END:(STANDARD|DAYLIGHT)/
+		);
+		expect(body).toMatch(/TZOFFSETFROM:[+-]\d{4}/);
+		expect(body).toMatch(/TZOFFSETTO:[+-]\d{4}/);
+
+		// The bug flattened STANDARD/DAYLIGHT into a property with
+		// parameters instead of a real sub-component.
+		expect(body).not.toMatch(/^(DAYLIGHT|STANDARD);DTSTART=/m);
 	});
 });
