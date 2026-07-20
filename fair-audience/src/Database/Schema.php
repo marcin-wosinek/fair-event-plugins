@@ -66,7 +66,6 @@ class Schema {
 			participant_id BIGINT UNSIGNED NOT NULL,
 			label ENUM('interested', 'signed_up', 'collaborator', 'pending_payment') NOT NULL DEFAULT 'interested',
 			payment_expires_at DATETIME DEFAULT NULL,
-			transaction_id BIGINT UNSIGNED DEFAULT NULL,
 			ticket_type_id BIGINT UNSIGNED DEFAULT NULL,
 			attended_at DATETIME DEFAULT NULL,
 			admin_comment TEXT DEFAULT NULL,
@@ -78,7 +77,6 @@ class Schema {
 			KEY idx_event_date_id (event_date_id),
 			KEY idx_participant_id (participant_id),
 			KEY idx_label (label),
-			KEY idx_transaction_id (transaction_id),
 			KEY idx_payment_expires_at (payment_expires_at),
 			KEY idx_ticket_type_id (ticket_type_id)
 		) ENGINE=InnoDB $charset_collate;";
@@ -643,10 +641,10 @@ class Schema {
 	 * A registration (event_participant row) can accumulate more than one
 	 * fair-payments-connector transaction over its lifetime — e.g. an initial
 	 * single-instance charge followed by a series-pass upgrade charge, and, in
-	 * the future, refunds. The row's own transaction_id column only ever holds
-	 * the most recent transaction, so this ledger preserves the full history.
-	 * Amounts/currency are read by joining fair_payment_transactions (single
-	 * source of truth), mirroring FeePaymentTransactionRepository.
+	 * the future, refunds. This ledger is the sole registration↔transaction
+	 * link, preserving the full history. Amounts/currency are read by joining
+	 * fair_payment_transactions (single source of truth), mirroring
+	 * FeePaymentTransactionRepository.
 	 *
 	 * @return string SQL statement.
 	 */

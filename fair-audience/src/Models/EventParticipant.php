@@ -57,13 +57,6 @@ class EventParticipant {
 	public $payment_expires_at;
 
 	/**
-	 * fair-payments-connector transaction ID, when the signup requires payment.
-	 *
-	 * @var int|null
-	 */
-	public $transaction_id;
-
-	/**
 	 * Ticket type ID from fair_events_ticket_types, when the signup was made against a specific ticket type.
 	 *
 	 * @var int|null
@@ -121,7 +114,6 @@ class EventParticipant {
 		$this->participant_id     = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
 		$this->label              = isset( $data['label'] ) ? $data['label'] : 'interested';
 		$this->payment_expires_at = isset( $data['payment_expires_at'] ) && $data['payment_expires_at'] ? $data['payment_expires_at'] : null;
-		$this->transaction_id     = isset( $data['transaction_id'] ) && $data['transaction_id'] ? (int) $data['transaction_id'] : null;
 		$this->ticket_type_id     = isset( $data['ticket_type_id'] ) && $data['ticket_type_id'] ? (int) $data['ticket_type_id'] : null;
 		$this->attended_at        = isset( $data['attended_at'] ) && $data['attended_at'] ? $data['attended_at'] : null;
 		$this->admin_comment      = isset( $data['admin_comment'] ) && '' !== $data['admin_comment'] ? $data['admin_comment'] : null;
@@ -154,13 +146,12 @@ class EventParticipant {
 			'participant_id'     => $this->participant_id,
 			'label'              => $this->label,
 			'payment_expires_at' => $this->payment_expires_at,
-			'transaction_id'     => $this->transaction_id,
 			'ticket_type_id'     => $this->ticket_type_id,
 			'attended_at'        => $this->attended_at,
 			'admin_comment'      => $this->admin_comment,
 		);
 
-		$format = array( '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%s', '%s' );
+		$format = array( '%d', '%d', '%d', '%s', '%s', '%d', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.

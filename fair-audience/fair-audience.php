@@ -67,7 +67,7 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_transactions_table_sql() );
 
 	// Update database version.
-	update_option( 'fair_audience_db_version', '1.41.0' );
+	update_option( 'fair_audience_db_version', '1.42.0' );
 
 	// Link any existing fair_events_signups rows to participants by email —
 	// the fair-events migration that adds participant_id may already have
@@ -785,6 +785,42 @@ function fair_audience_maybe_upgrade_db() {
 		);
 
 		update_option( 'fair_audience_db_version', '1.41.0' );
+	}
+
+	if ( version_compare( $db_version, '1.42.0', '<' ) ) {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'fair_audience_event_participants';
+
+		// event_participants.transaction_id is superseded by the
+		// fair_audience_event_participant_transactions ledger (#1112); every
+		// reader now resolves through it (#1113).
+		$has_index = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.STATISTICS
+				 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND INDEX_NAME = %s',
+				$table_name,
+				'idx_transaction_id'
+			)
+		);
+		if ( $has_index ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE {$table_name} DROP INDEX idx_transaction_id" );
+		}
+
+		$has_column = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.COLUMNS
+				 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				$table_name,
+				'transaction_id'
+			)
+		);
+		if ( $has_column ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE {$table_name} DROP COLUMN transaction_id" );
+		}
+
+		update_option( 'fair_audience_db_version', '1.42.0' );
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

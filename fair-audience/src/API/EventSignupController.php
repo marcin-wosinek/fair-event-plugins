@@ -976,7 +976,6 @@ class EventSignupController extends WP_REST_Controller {
 			if ( $existing_occ ) {
 				$existing_occ->label              = 'pending_payment';
 				$existing_occ->payment_expires_at = $expires_at;
-				$existing_occ->transaction_id     = null;
 				$existing_occ->ticket_type_id     = $ticket_type->id;
 				$existing_occ->save();
 				$ep = $existing_occ;
@@ -1037,14 +1036,8 @@ class EventSignupController extends WP_REST_Controller {
 
 		$ledger = new EventParticipantTransactionRepository();
 		foreach ( $event_participant_ids as $ep_id ) {
-			$ep = $this->event_participant_repository->get_by_id( $ep_id );
-			if ( $ep ) {
-				$ep->transaction_id = (int) $transaction_id;
-				$ep->save();
-
-				// One ledger row per occurrence row, all sharing this transaction.
-				$ledger->record( (int) $ep->id, (int) $transaction_id, 'charge' );
-			}
+			// One ledger row per occurrence row, all sharing this transaction.
+			$ledger->record( $ep_id, (int) $transaction_id, 'charge' );
 		}
 
 		$redirect_url = add_query_arg(
@@ -1936,7 +1929,6 @@ class EventSignupController extends WP_REST_Controller {
 		if ( $existing ) {
 			$existing->label              = 'pending_payment';
 			$existing->payment_expires_at = $expires_at;
-			$existing->transaction_id     = null;
 			$existing->ticket_type_id     = $ticket_type_id ?: null;
 			$existing->save();
 			$event_participant = $existing;
@@ -2018,12 +2010,9 @@ class EventSignupController extends WP_REST_Controller {
 			return $transaction_id;
 		}
 
-		$event_participant->transaction_id = (int) $transaction_id;
-		$event_participant->save();
-
 		// Record the ledger link at creation time, not just on webhook
-		// confirmation — a later attempt re-pointing this row's transaction_id
-		// column must not orphan this charge (see #1112).
+		// confirmation — a later attempt on this registration must not orphan
+		// this charge (see #1112).
 		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $transaction_id, 'charge' );
 
 		$redirect_url = add_query_arg(
@@ -2105,18 +2094,7 @@ class EventSignupController extends WP_REST_Controller {
 		$resolved     = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
 		$series_price = null !== $resolved ? (float) $resolved : 0.0;
 
-		$ledger = new EventParticipantTransactionRepository();
-
-		// Backfill: rows created before the ledger existed only record their
-		// original charge in the row's own transaction_id column. Seed it so the
-		// difference is computed against what was actually paid.
-		// TODO (W30): now that every creation site records the ledger link
-		// up front (#1112), this seed is redundant for new rows — remove once
-		// #1113 drops event_participants.transaction_id.
-		if ( $existing->transaction_id ) {
-			$ledger->record( (int) $existing->id, (int) $existing->transaction_id, 'charge' );
-		}
-
+		$ledger   = new EventParticipantTransactionRepository();
 		$net_paid = $ledger->get_net_paid( (int) $existing->id );
 		$delta    = max( 0.0, $series_price - $net_paid );
 
@@ -2508,7 +2486,6 @@ class EventSignupController extends WP_REST_Controller {
 		if ( $event_participant ) {
 			$event_participant->label              = 'pending_payment';
 			$event_participant->payment_expires_at = $expires_at;
-			$event_participant->transaction_id     = null;
 			$event_participant->ticket_type_id     = $retry_ticket_type_id;
 			$event_participant->save();
 		} else {
@@ -2557,12 +2534,9 @@ class EventSignupController extends WP_REST_Controller {
 			return $new_transaction_id;
 		}
 
-		$event_participant->transaction_id = (int) $new_transaction_id;
-		$event_participant->save();
-
-		// Record the ledger link at creation time: this retry re-points the
-		// row's transaction_id column, so the ledger is the only place that
-		// still remembers the prior attempt's charge (see #1112).
+		// Record the ledger link at creation time: this retry accumulates a
+		// new charge alongside the prior attempt's, so the ledger is the only
+		// place that remembers each attempt (see #1112).
 		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $new_transaction_id, 'charge' );
 
 		$redirect_url = add_query_arg(

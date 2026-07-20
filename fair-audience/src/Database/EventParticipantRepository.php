@@ -407,66 +407,6 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Find an event participant row by its fair-payments-connector transaction ID.
-	 *
-	 * @param int $transaction_id fair-payments-connector transaction ID.
-	 * @return EventParticipant|null Relationship or null.
-	 */
-	public function get_by_transaction_id( $transaction_id ) {
-		global $wpdb;
-
-		$table_name = $this->get_table_name();
-
-		$result = $wpdb->get_row(
-			$wpdb->prepare(
-				'SELECT * FROM %i WHERE transaction_id = %d LIMIT 1',
-				$table_name,
-				$transaction_id
-			),
-			ARRAY_A
-		);
-
-		return $result ? new EventParticipant( $result ) : null;
-	}
-
-	/**
-	 * Find all event participant rows sharing a fair-payments-connector
-	 * transaction ID. A 'multiple_instances' ticket-type purchase creates one
-	 * row per chosen occurrence under a single transaction; every other
-	 * signup path creates exactly one row, so this is a superset of
-	 * get_by_transaction_id() safe to use wherever "the rows this payment
-	 * covers" is needed.
-	 *
-	 * @param int $transaction_id fair-payments-connector transaction ID.
-	 * @return EventParticipant[] Relationships (empty array when none match).
-	 */
-	public function get_all_by_transaction_id( $transaction_id ) {
-		global $wpdb;
-
-		$table_name = $this->get_table_name();
-
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT * FROM %i WHERE transaction_id = %d',
-				$table_name,
-				$transaction_id
-			),
-			ARRAY_A
-		);
-
-		if ( empty( $results ) ) {
-			return array();
-		}
-
-		return array_map(
-			static function ( $row ) {
-				return new EventParticipant( $row );
-			},
-			$results
-		);
-	}
-
-	/**
 	 * Find an event participant row by its primary key.
 	 *
 	 * @param int $id Event participant row ID.
