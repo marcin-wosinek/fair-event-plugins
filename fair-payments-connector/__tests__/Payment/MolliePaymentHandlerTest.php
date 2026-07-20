@@ -22,8 +22,10 @@ use Mollie\Api\Http\PendingRequest;
 use Mollie\Api\Http\Requests\CreatePaymentRequest;
 use Mollie\Api\Http\Requests\GetPaymentRequest;
 use Mollie\Api\Http\Requests\GetEnabledMethodsRequest;
+use Mollie\Api\Http\Requests\GetProfileRequest;
 use Mollie\Api\Resources\Payment;
 use Mollie\Api\Resources\MethodCollection;
+use Mollie\Api\Resources\Profile;
 
 /**
  * Unit tests for MolliePaymentHandler's test/live mode handling.
@@ -34,7 +36,8 @@ class MolliePaymentHandlerTest extends TestCase {
 	 * Reset shared test state before each test.
 	 */
 	protected function setUp(): void {
-		$GLOBALS['_fair_test_options'] = array();
+		$GLOBALS['_fair_test_options']    = array();
+		$GLOBALS['_fair_test_transients'] = array();
 		PaymentLogRepository::reset_request_id();
 	}
 
@@ -253,5 +256,61 @@ class MolliePaymentHandlerTest extends TestCase {
 		$this->assertTrue( $request->getTestmode() );
 		// The SDK stringifies query booleans ('true'/'false') for URL encoding.
 		$this->assertSame( 'true', $request->query()->get( 'testmode' ) );
+	}
+
+	/**
+	 * Regression guard for the #1208 follow-up fix: `get_connection_overview()`
+	 * must resolve the profile via the stored ID, not `/profiles/me` -- an
+	 * org-level OAuth token 403s on `/me` since it isn't bound to one profile.
+	 */
+	public function test_get_connection_overview_uses_stored_profile_id_not_me() {
+		$GLOBALS['_fair_test_options']['fair_payment_mollie_profile_id'] = 'pfl_test123';
+		$GLOBALS['_fair_test_options']['fair_payment_mode']              = 'test';
+
+		$mollie = MollieApiClient::fake(
+			array(
+				GetProfileRequest::class        => MockResponse::resource( Profile::class )
+					->with(
+						array(
+							'id'   => 'pfl_test123',
+							'name' => 'My Test Shop',
+						)
+					)->create(),
+				GetEnabledMethodsRequest::class => MockResponse::list( MethodCollection::class )
+					->add(
+						array(
+							'id'          => 'ideal',
+							'description' => 'iDEAL',
+							'resource'    => 'method',
+						)
+					)
+					->create(),
+			)
+		);
+
+		$handler  = new MolliePaymentHandler( $mollie );
+		$overview = $handler->get_connection_overview();
+
+		$profile_request = $this->sent_request( $mollie, GetProfileRequest::class );
+
+		$this->assertSame( 'profiles/pfl_test123', $profile_request->getRequest()->resolveResourcePath() );
+		$this->assertSame( 'My Test Shop', $overview['profile_name'] );
+		$this->assertSame( 'pfl_test123', $overview['profile_id'] );
+	}
+
+	/**
+	 * A missing stored profile ID must throw a clear "not configured" error
+	 * instead of attempting a `/profiles/me` call, which can only 403 under
+	 * an org-level OAuth token.
+	 */
+	public function test_get_connection_overview_throws_when_profile_id_missing() {
+		$mollie = MollieApiClient::fake( array() );
+
+		$handler = new MolliePaymentHandler( $mollie );
+
+		$this->expectException( \Exception::class );
+		$this->expectExceptionMessageMatches( '/not configured/' );
+
+		$handler->get_connection_overview();
 	}
 }

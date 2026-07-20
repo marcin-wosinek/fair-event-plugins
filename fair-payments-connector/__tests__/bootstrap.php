@@ -153,6 +153,38 @@ if ( ! function_exists( 'wp_unslash' ) ) {
 	}
 }
 
+if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+	define( 'MINUTE_IN_SECONDS', 60 );
+}
+
+if ( ! function_exists( 'get_transient' ) ) {
+	/**
+	 * Stub of WordPress get_transient() backed by $GLOBALS['_fair_test_transients'].
+	 *
+	 * @param string $key Transient key.
+	 * @return mixed Stored value, or false when unset.
+	 */
+	function get_transient( $key ) {
+		$transients = isset( $GLOBALS['_fair_test_transients'] ) ? $GLOBALS['_fair_test_transients'] : array();
+		return array_key_exists( $key, $transients ) ? $transients[ $key ] : false;
+	}
+}
+
+if ( ! function_exists( 'set_transient' ) ) {
+	/**
+	 * Stub of WordPress set_transient() backed by $GLOBALS['_fair_test_transients'].
+	 *
+	 * @param string $key        Transient key.
+	 * @param mixed  $value      Value to store.
+	 * @param int    $expiration Expiration in seconds (unused; test transients never expire).
+	 * @return true
+	 */
+	function set_transient( $key, $value, $expiration = 0 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		$GLOBALS['_fair_test_transients'][ $key ] = $value;
+		return true;
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WPDB.php';
 
 // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
