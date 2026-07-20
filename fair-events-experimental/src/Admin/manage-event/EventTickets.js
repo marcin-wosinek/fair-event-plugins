@@ -41,7 +41,6 @@ export default function EventTickets({
 		show_ticket_type_capacity: false,
 		multiple_pricing_periods: false,
 		show_seats_per_ticket: false,
-		activity_collaborator_discount: false,
 		minimum_activities: 0,
 		show_ticket_type_minimum_activities: false,
 		activity_period_pricing: false,
@@ -393,12 +392,6 @@ export default function EventTickets({
 				name: o.name || '',
 				short_name: o.short_name || '',
 				price: o.price !== undefined ? o.price : 0,
-				discounted_price:
-					o.discounted_price !== undefined &&
-					o.discounted_price !== null &&
-					o.discounted_price !== ''
-						? o.discounted_price
-						: null,
 				capacity:
 					o.capacity !== undefined &&
 					o.capacity !== null &&
@@ -792,19 +785,14 @@ export default function EventTickets({
 			)}
 
 			<HStack spacing={2} justify="flex-end">
-				{(hasInvitationTickets ||
-					settings.activity_collaborator_discount) &&
-					manageInvitationsUrl && (
-						<Button
-							variant="secondary"
-							href={`${manageInvitationsUrl}${eventDateId}`}
-						>
-							{__(
-								'Manage Invitations',
-								'fair-events-experimental'
-							)}
-						</Button>
-					)}
+				{hasInvitationTickets && manageInvitationsUrl && (
+					<Button
+						variant="secondary"
+						href={`${manageInvitationsUrl}${eventDateId}`}
+					>
+						{__('Manage Invitations', 'fair-events-experimental')}
+					</Button>
+				)}
 				<Button
 					variant="secondary"
 					onClick={handleExport}
@@ -1989,14 +1977,6 @@ export default function EventTickets({
 														'fair-events-experimental'
 													)}
 												</th>
-												{settings.activity_collaborator_discount && (
-													<th>
-														{__(
-															'Discounted price (EUR)',
-															'fair-events-experimental'
-														)}
-													</th>
-												)}
 												<th>
 													{__(
 														'Capacity',
@@ -2145,57 +2125,6 @@ export default function EventTickets({
 																/>
 															)}
 														</td>
-														{settings.activity_collaborator_discount && (
-															<td>
-																<TextControl
-																	type="number"
-																	step="0.01"
-																	min="0"
-																	value={
-																		option.discounted_price !==
-																			null &&
-																		option.discounted_price !==
-																			undefined &&
-																		option.discounted_price !==
-																			''
-																			? String(
-																					option.discounted_price
-																			  )
-																			: ''
-																	}
-																	placeholder={__(
-																		'No discount',
-																		'fair-events-experimental'
-																	)}
-																	onChange={(
-																		v
-																	) => {
-																		const updated =
-																			[
-																				...options,
-																			];
-																		updated[
-																			index
-																		] = {
-																			...updated[
-																				index
-																			],
-																			discounted_price:
-																				v ===
-																				''
-																					? null
-																					: parseFloat(
-																							v
-																					  ),
-																		};
-																		setOptions(
-																			updated
-																		);
-																	}}
-																	__nextHasNoMarginBottom
-																/>
-															</td>
-														)}
 														<td>
 															<TextControl
 																type="number"
@@ -2339,7 +2268,6 @@ export default function EventTickets({
 											name: '',
 											short_name: '',
 											price: 0,
-											discounted_price: null,
 											capacity: null,
 											derive_price_from_sale_period: false,
 											period_prices_map: {},
@@ -2448,25 +2376,6 @@ export default function EventTickets({
 									setSettings((prev) => ({
 										...prev,
 										show_ticket_type_end_date: value,
-									}))
-								}
-							/>
-							<CheckboxControl
-								label={__(
-									'Activity collaborator discount',
-									'fair-events-experimental'
-								)}
-								help={__(
-									'Allow a discounted price on each activity option for participants invited by a collaborator linked to that activity. Adds a second price column to the activity options table and enables Manage Invitations.',
-									'fair-events-experimental'
-								)}
-								checked={
-									settings.activity_collaborator_discount
-								}
-								onChange={(value) =>
-									setSettings((prev) => ({
-										...prev,
-										activity_collaborator_discount: value,
 									}))
 								}
 							/>

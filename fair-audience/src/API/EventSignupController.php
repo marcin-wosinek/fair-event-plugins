@@ -1235,12 +1235,10 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$invitation_inviter_id = $this->resolve_invitation_inviter_id( $invitation_token, $event_date_id );
-
 		$line_items   = array();
 		$total_amount = 0;
 		foreach ( $new_options as $opt ) {
-			$opt_price     = $this->compute_option_price( $opt, $event_date_id, $invitation_inviter_id, $best_discount_rule );
+			$opt_price     = $this->compute_option_price( $opt, $event_date_id, $best_discount_rule );
 			$total_amount += $opt_price;
 			if ( 0.0 !== (float) $opt_price ) {
 				$line_items[] = array(
@@ -1735,53 +1733,15 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Resolve the inviter participant ID from a (possibly empty) invitation token.
+	 * Compute the effective price for a ticket option, applying the group
+	 * pricing rule when the buyer qualifies.
 	 *
-	 * Does not record any token use — that is handled by validate_invitation_token
-	 * for invitation-only ticket types. Here we only need to read the inviter so
-	 * we can apply the activity collaborator discount when relevant.
-	 *
-	 * @param string $invitation_token Token string from the request.
-	 * @param int    $event_date_id    Event date ID for cross-checking the token scope.
-	 * @return int|null Inviter participant ID, or null if no valid token applies.
-	 */
-	private function resolve_invitation_inviter_id( $invitation_token, $event_date_id ) {
-		if ( empty( $invitation_token ) || ! class_exists( \FairEvents\Models\InvitationToken::class ) ) {
-			return null;
-		}
-		$token = \FairEvents\Models\InvitationToken::get_by_token( $invitation_token );
-		if ( ! $token || ! $token->is_valid() ) {
-			return null;
-		}
-		if ( $event_date_id && (int) $token->event_date_id !== (int) $event_date_id ) {
-			return null;
-		}
-		return (int) $token->inviter_participant_id;
-	}
-
-	/**
-	 * Compute the effective price for a ticket option, applying activity
-	 * collaborator discount first (if eligible) and falling back to the
-	 * group pricing rule when no per-activity discount applies.
-	 *
-	 * @param object      $option                 TicketOption object.
-	 * @param int         $event_date_id          Event date ID.
-	 * @param int|null    $inviter_participant_id Inviter participant ID resolved from the invitation token.
-	 * @param object|null $best_discount_rule     Best group pricing rule for the buyer, if any.
+	 * @param object      $option              TicketOption object.
+	 * @param int         $event_date_id       Event date ID.
+	 * @param object|null $best_discount_rule  Best group pricing rule for the buyer, if any.
 	 * @return float Effective option price (>= 0 inputs assumed; may be 0).
 	 */
-	private function compute_option_price( $option, $event_date_id, $inviter_participant_id, $best_discount_rule ) {
-		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$invitation_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_option_invitation_price(
-				$option,
-				$event_date_id,
-				$inviter_participant_id
-			);
-			if ( null !== $invitation_price ) {
-				return (float) $invitation_price;
-			}
-		}
-
+	private function compute_option_price( $option, $event_date_id, $best_discount_rule ) {
 		if ( class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class ) ) {
 			$resolved  = \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $option );
 			$opt_price = null !== $resolved ? (float) $resolved : 0.0;
@@ -1914,15 +1874,12 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$invitation_inviter_id = $this->resolve_invitation_inviter_id( $invitation_token, $event_date_id );
-
 		// Option prices count towards the total even when there is no base price.
 		$options_total = 0;
 		foreach ( $option_items as $opt ) {
 			$options_total += $this->compute_option_price(
 				$opt,
 				$event_date_id,
-				$invitation_inviter_id,
 				$best_discount_rule
 			);
 		}
@@ -2019,7 +1976,6 @@ class EventSignupController extends WP_REST_Controller {
 			$opt_price = $this->compute_option_price(
 				$opt,
 				$event_date_id,
-				$invitation_inviter_id,
 				$best_discount_rule
 			);
 			if ( 0.0 !== $opt_price ) {
