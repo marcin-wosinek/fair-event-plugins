@@ -128,7 +128,48 @@ class FairEventsApiParser {
 			'start'       => $start_local,
 			'end'         => $end_local,
 			'all_day'     => $event['all_day'] ?? false,
+			'location'    => self::parse_location( $event['location'] ?? null ),
 		);
+	}
+
+	/**
+	 * Sanitize an ingested feed location object into the neutral location
+	 * shape (EventLocation::resolve()).
+	 *
+	 * @param mixed $location Raw `location` value from the feed JSON.
+	 * @return array|null Neutral location shape, or null when absent/invalid.
+	 */
+	private static function parse_location( $location ) {
+		if ( empty( $location ) || ! is_array( $location ) ) {
+			return null;
+		}
+
+		$parsed = array();
+
+		if ( ! empty( $location['online'] ) ) {
+			$parsed['online'] = true;
+
+			if ( ! empty( $location['url'] ) ) {
+				$parsed['url'] = sanitize_url( $location['url'] );
+			}
+
+			return $parsed;
+		}
+
+		if ( ! empty( $location['name'] ) ) {
+			$parsed['name'] = sanitize_text_field( $location['name'] );
+		}
+
+		if ( ! empty( $location['address'] ) ) {
+			$parsed['address'] = sanitize_text_field( $location['address'] );
+		}
+
+		if ( is_numeric( $location['latitude'] ?? null ) && is_numeric( $location['longitude'] ?? null ) ) {
+			$parsed['latitude']  = (string) $location['latitude'];
+			$parsed['longitude'] = (string) $location['longitude'];
+		}
+
+		return ! empty( $parsed ) ? $parsed : null;
 	}
 
 	/**

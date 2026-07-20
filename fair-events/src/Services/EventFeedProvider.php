@@ -13,6 +13,7 @@ namespace FairEvents\Services;
 
 use FairEvents\Database\EventSourceRepository;
 use FairEvents\Helpers\DateHelper;
+use FairEvents\Helpers\EventLocation;
 use FairEvents\Helpers\FairEventsApiParser;
 use FairEvents\Helpers\ICalParser;
 use FairEvents\Models\EventDates;
@@ -25,7 +26,8 @@ defined( 'WPINC' ) || die;
  *
  * DTO shape: uid, event_date_id, event_id, occurrence_type, title,
  * description, start, end, all_day, url, categories, source
- * ('post'|'standalone'|'ical'|'api'), is_draft, source_color.
+ * ('post'|'standalone'|'ical'|'api'), is_draft, source_color, location
+ * (neutral shape from EventLocation::resolve(), or null).
  *
  * `start`/`end` are naive site-local 'Y-m-d H:i:s' strings — the same form
  * every other internal consumer (EventDates, WeeklyEventsProvider, blocks)
@@ -252,6 +254,7 @@ class EventFeedProvider {
 			'source'          => 'post',
 			'is_draft'        => $is_draft,
 			'source_color'    => null,
+			'location'        => EventLocation::resolve( $row, $event_id ),
 		);
 	}
 
@@ -285,6 +288,7 @@ class EventFeedProvider {
 			'source'          => 'standalone',
 			'is_draft'        => false,
 			'source_color'    => null,
+			'location'        => EventLocation::resolve( $row, null ),
 		);
 	}
 
@@ -415,6 +419,7 @@ class EventFeedProvider {
 			'source'          => $source,
 			'is_draft'        => false,
 			'source_color'    => $color,
+			'location'        => $event['location'] ?? null,
 		);
 	}
 }

@@ -241,6 +241,94 @@ test.describe('CalendarFeedController — ICS calendar feed', () => {
 	});
 });
 
+test.describe('CalendarFeedController — LOCATION line', () => {
+	let api;
+	let addressEventDateId;
+	let noLocationEventDateId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const addressRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Calendar feed address test ${Date.now()}`,
+					start_datetime: '2035-09-10 10:00:00',
+					end_datetime: '2035-09-10 12:00:00',
+					link_type: 'none',
+				},
+			}
+		);
+		expect(addressRes.ok()).toBeTruthy();
+		addressEventDateId = (await addressRes.json()).id;
+
+		// The create endpoint doesn't wire `address` through — a PUT is
+		// needed, same quirk as `event_id` (see the timed-event setup above).
+		const addressUpdateRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${addressEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { address: 'Calle X 1, Madrid' },
+			}
+		);
+		expect(addressUpdateRes.ok()).toBeTruthy();
+
+		const noLocationRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Calendar feed no-location test ${Date.now()}`,
+					start_datetime: '2035-09-11 10:00:00',
+					end_datetime: '2035-09-11 12:00:00',
+					link_type: 'none',
+				},
+			}
+		);
+		expect(noLocationRes.ok()).toBeTruthy();
+		noLocationEventDateId = (await noLocationRes.json()).id;
+	});
+
+	test.afterAll(async () => {
+		if (addressEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${addressEventDateId}`,
+				{ headers: adminHeaders }
+			);
+		}
+		if (noLocationEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${noLocationEventDateId}`,
+				{ headers: adminHeaders }
+			);
+		}
+	});
+
+	test('emits a LOCATION line for an address event, none for a location-less one', async () => {
+		const res = await api.get(
+			'/wp-json/fair-events/v1/calendar.ics?start_date=2035-09-10&end_date=2035-09-11'
+		);
+		expect(res.ok()).toBeTruthy();
+		const body = (await res.text()).replace(/\r\n /g, '');
+
+		expect(body).toMatch(
+			new RegExp(
+				`UID:standalone_${addressEventDateId}@[^]*?LOCATION:Calle X 1\\\\, Madrid`
+			)
+		);
+
+		const noLocationBlock = body
+			.split('BEGIN:VEVENT')
+			.find((block) =>
+				block.includes(`standalone_${noLocationEventDateId}@`)
+			);
+		expect(noLocationBlock).toBeTruthy();
+		expect(noLocationBlock).not.toContain('LOCATION:');
+	});
+});
+
 test.describe('CalendarFeedController — VTIMEZONE block on named zones', () => {
 	let api;
 	let originalTimezone;

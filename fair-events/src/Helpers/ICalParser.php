@@ -131,6 +131,9 @@ class ICalParser {
 			'start'       => $start_datetime,
 			'end'         => $end_datetime,
 			'all_day'     => $all_day,
+			'location'    => isset( $vevent->LOCATION ) && '' !== (string) $vevent->LOCATION
+				? array( 'address' => sanitize_text_field( (string) $vevent->LOCATION ) )
+				: null,
 		);
 	}
 

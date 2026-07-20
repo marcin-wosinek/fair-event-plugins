@@ -268,6 +268,11 @@ class CalendarFeedController extends WP_REST_Controller {
 			$vevent->add( 'URL', $occurrence['url'] );
 		}
 
+		$location_line = $this->build_location_line( $occurrence['location'] ?? null );
+		if ( $location_line ) {
+			$vevent->add( 'LOCATION', $location_line );
+		}
+
 		if ( $occurrence['all_day'] ) {
 			$start_date = new \DateTimeImmutable( DateHelper::local_date( $occurrence['start'] ) );
 			$end_date   = new \DateTimeImmutable( DateHelper::next_date( DateHelper::local_date( $occurrence['end'] ) ) );
@@ -281,6 +286,34 @@ class CalendarFeedController extends WP_REST_Controller {
 			$vevent->add( 'DTSTART', DateHelper::local_to_ical_utc( $occurrence['start'] ) );
 			$vevent->add( 'DTEND', DateHelper::local_to_ical_utc( $occurrence['end'] ) );
 		}
+	}
+
+	/**
+	 * Build the iCalendar LOCATION text line from a neutral location shape.
+	 *
+	 * Standard `LOCATION` text only (name + address); geo stays feed-only per
+	 * the ICS recommendation. Online events use the meeting URL.
+	 *
+	 * @param array|null $location Neutral location shape (EventLocation::resolve()), or null.
+	 * @return string LOCATION text, or '' when there's nothing to show.
+	 */
+	private function build_location_line( $location ) {
+		if ( empty( $location ) ) {
+			return '';
+		}
+
+		if ( ! empty( $location['online'] ) ) {
+			return $location['url'] ?? '';
+		}
+
+		$parts = array_filter(
+			array(
+				$location['name'] ?? '',
+				$location['address'] ?? '',
+			)
+		);
+
+		return implode( ', ', $parts );
 	}
 
 	/**

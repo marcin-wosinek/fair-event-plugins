@@ -271,7 +271,7 @@ class PublicEventsController extends WP_REST_Controller {
 	 * @return array Formatted event data.
 	 */
 	private function format_for_response( array $occurrence ) {
-		return array(
+		$response = array(
 			'uid'             => $occurrence['uid'],
 			'event_date_id'   => $occurrence['event_date_id'],
 			'occurrence_type' => $occurrence['occurrence_type'],
@@ -283,6 +283,12 @@ class PublicEventsController extends WP_REST_Controller {
 			'url'             => $occurrence['url'] ?? '',
 			'categories'      => $occurrence['categories'],
 		);
+
+		if ( ! empty( $occurrence['location'] ) ) {
+			$response['location'] = $occurrence['location'];
+		}
+
+		return $response;
 	}
 
 	/**

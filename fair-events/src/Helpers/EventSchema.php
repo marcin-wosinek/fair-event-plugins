@@ -81,8 +81,9 @@ class EventSchema {
 	 * Build a lean Schema.org Event object from an EventFeedProvider occurrence
 	 * DTO, for use inside an `ItemList`.
 	 *
-	 * Carries `name`, `startDate`, `endDate`, `url`, `description`, and —
-	 * for post/standalone occurrences only — `location`. Does not include
+	 * Carries `name`, `startDate`, `endDate`, `url`, `description`, and
+	 * `location` (built from the DTO's carried neutral location, when
+	 * present, for every source). Does not include
 	 * `offers`/`organizer`/`image`/`eventStatus`; those stay single-page-only.
 	 *
 	 * @param array $dto Occurrence DTO, as returned by EventFeedProvider::get_occurrences().
@@ -108,12 +109,8 @@ class EventSchema {
 			$event['description'] = $dto['description'];
 		}
 
-		if ( in_array( $dto['source'], array( 'post', 'standalone' ), true ) && ! empty( $dto['event_date_id'] ) ) {
-			$event_date = EventDates::get_by_id( $dto['event_date_id'] );
-			if ( $event_date ) {
-				$location_data     = self::get_jsonld_location( $event_date, $dto['event_id'] );
-				$event['location'] = $location_data['location'];
-			}
+		if ( ! empty( $dto['location'] ) ) {
+			$event['location'] = self::location_to_jsonld( $dto['location'] );
 		}
 
 		return $event;
@@ -214,91 +211,60 @@ class EventSchema {
 	 * @return array{location: array, attendance_mode: string} Location data and eventAttendanceMode value.
 	 */
 	public static function get_jsonld_location( EventDates $event_date, $post_id ) {
-		$offline = 'https://schema.org/OfflineEventAttendanceMode';
-		$online  = 'https://schema.org/OnlineEventAttendanceMode';
+		$neutral = EventLocation::resolve( $event_date, $post_id );
 
-		// 1. Venue.
-		if ( ! empty( $event_date->venue_id )
-			&& class_exists( \FairEventsExperimental\Models\Venue::class ) ) {
-			$venue = \FairEventsExperimental\Models\Venue::get_by_id( $event_date->venue_id );
-			if ( $venue ) {
-				$location = array(
-					'@type' => 'Place',
-					'name'  => $venue->name,
-				);
-
-				if ( ! empty( $venue->address ) ) {
-					$location['address'] = array(
-						'@type' => 'PostalAddress',
-						'name'  => $venue->address,
-					);
-				}
-
-				if ( ! empty( $venue->latitude ) && ! empty( $venue->longitude ) ) {
-					$location['geo'] = array(
-						'@type'     => 'GeoCoordinates',
-						'latitude'  => $venue->latitude,
-						'longitude' => $venue->longitude,
-					);
-				}
-
-				return array(
-					'location'        => $location,
-					'attendance_mode' => $offline,
-				);
-			}
-		}
-
-		// 2. Event date's own free-text address.
-		if ( ! empty( $event_date->address ) ) {
-			return array(
-				'location'        => array(
-					'@type'   => 'Place',
-					'name'    => $event_date->address,
-					'address' => array(
-						'@type' => 'PostalAddress',
-						'name'  => $event_date->address,
-					),
-				),
-				'attendance_mode' => $offline,
-			);
-		}
-
-		// 3. Fall back to event_location meta.
-		$meta_location = $post_id ? get_post_meta( $post_id, 'event_location', true ) : '';
-		if ( ! empty( $meta_location ) ) {
-			return array(
-				'location'        => array(
-					'@type'   => 'Place',
-					'name'    => $meta_location,
-					'address' => array(
-						'@type' => 'PostalAddress',
-						'name'  => $meta_location,
-					),
-				),
-				'attendance_mode' => $offline,
-			);
-		}
-
-		// 4. Online event: no physical location, but an external link.
-		if ( 'external' === $event_date->link_type && ! empty( $event_date->external_url ) ) {
-			return array(
-				'location'        => array(
-					'@type' => 'VirtualLocation',
-					'url'   => $event_date->external_url,
-				),
-				'attendance_mode' => $online,
-			);
-		}
-
-		// 5. Final fallback so `location` is never absent.
 		return array(
-			'location'        => array(
+			'location'        => self::location_to_jsonld( $neutral ),
+			'attendance_mode' => ! empty( $neutral['online'] )
+				? 'https://schema.org/OnlineEventAttendanceMode'
+				: 'https://schema.org/OfflineEventAttendanceMode',
+		);
+	}
+
+	/**
+	 * Map a neutral location shape (EventLocation::resolve()) to a
+	 * Schema.org `Place`/`VirtualLocation` node, guaranteeing a valid,
+	 * never-null result via a site-name backstop.
+	 *
+	 * @param array|null $neutral Neutral location shape, or null when nothing resolved.
+	 * @return array Schema.org location node.
+	 */
+	public static function location_to_jsonld( $neutral ) {
+		if ( empty( $neutral ) ) {
+			return array(
 				'@type' => 'Place',
 				'name'  => get_bloginfo( 'name' ),
-			),
-			'attendance_mode' => $offline,
+			);
+		}
+
+		if ( ! empty( $neutral['online'] ) ) {
+			return array(
+				'@type' => 'VirtualLocation',
+				'url'   => $neutral['url'],
+			);
+		}
+
+		$location = array(
+			'@type' => 'Place',
+			'name'  => ! empty( $neutral['name'] ) ? $neutral['name'] : $neutral['address'],
 		);
+
+		if ( ! empty( $neutral['address'] ) ) {
+			$location['address'] = array(
+				'@type' => 'PostalAddress',
+				'name'  => $neutral['address'],
+			);
+		}
+
+		if ( ! empty( $neutral['latitude'] ) && ! empty( $neutral['longitude'] ) ) {
+			$location['geo'] = array(
+				'@type'     => 'GeoCoordinates',
+				'latitude'  => $neutral['latitude'],
+				'longitude' => $neutral['longitude'],
+			);
+		}
+
+		return $location;
 	}
 
 	/**
