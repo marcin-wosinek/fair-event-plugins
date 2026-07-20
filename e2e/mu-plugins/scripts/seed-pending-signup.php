@@ -16,11 +16,12 @@
  *     one of the statuses event-signup/render.php treats as retriable: failed,
  *     canceled, expired, draft);
  *   - an event_participants row with label 'pending_payment' and a
- *     payment_expires_at an hour out (within the hold window), so
- *     event-signup/render.php's "no URL callback? look up an in-progress
- *     payment" fallback (issue #554) synthesises the retry UI even when the
- *     spec navigates straight to the plain participant-token URL, exactly as a
- *     buyer returning to the page directly (not via Mollie's redirect) would.
+ *     payment_expires_at an hour out (within the hold window), plus a ledger
+ *     row linking it to the transaction (#1113), so event-signup/render.php's
+ *     "no URL callback? look up an in-progress payment" fallback (issue #554)
+ *     synthesises the retry UI even when the spec navigates straight to the
+ *     plain participant-token URL, exactly as a buyer returning to the page
+ *     directly (not via Mollie's redirect) would.
  *
  * Prints a single `E2E_PENDING:{json}` line with the participant id,
  * transaction id, and participant token.
@@ -30,6 +31,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Models\EventParticipant;
 use FairAudience\Services\ParticipantToken;
@@ -81,7 +83,6 @@ $event_participant = new EventParticipant(
 		'event_date_id'      => $event_date_id,
 		'participant_id'     => $participant->id,
 		'label'              => 'pending_payment',
-		'transaction_id'     => $transaction_id,
 		'ticket_type_id'     => $ticket_type_id ? $ticket_type_id : null,
 		'payment_expires_at' => gmdate( 'Y-m-d H:i:s', strtotime( '+1 hour' ) ),
 	)
@@ -89,6 +90,9 @@ $event_participant = new EventParticipant(
 if ( ! $event_participant->save() ) {
 	WP_CLI::error( 'Failed to create event_participant row.' );
 }
+
+// The transaction↔registration link now lives solely in the ledger (#1113).
+( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $transaction_id, 'charge' );
 
 $token = ParticipantToken::generate( (int) $participant->id, $event_date_id );
 
