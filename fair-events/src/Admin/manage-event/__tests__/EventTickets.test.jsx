@@ -607,7 +607,6 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 				name: 'Dinner',
 				short_name: '',
 				price: 20,
-				discounted_price: null,
 				capacity: null,
 				collaborator_ids: [],
 				period_prices: [],
@@ -1062,5 +1061,40 @@ describe('EventTickets — pricing an event with no stored prices (#1175)', () =
 			sale_period_index: 0,
 			price: 9,
 		});
+	});
+});
+
+describe('EventTickets — Add-on collaborator discount removed (#1139)', () => {
+	const initialDataWithOption = {
+		...initialDataWithTicketType,
+		options: [
+			{
+				id: 5,
+				name: 'Dinner',
+				short_name: '',
+				price: 20,
+				capacity: null,
+				collaborator_ids: [],
+				period_prices: [],
+				sort_order: 0,
+			},
+		],
+	};
+
+	it('does not render the checkbox or the Discounted price column, even for a stored discount', () => {
+		renderTickets({
+			initialData: {
+				...initialDataWithOption,
+				settings: { activity_collaborator_discount: true },
+			},
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		expect(
+			screen.queryByRole('checkbox', {
+				name: /Add-on collaborator discount/i,
+			})
+		).not.toBeInTheDocument();
+		expect(screen.queryByText(/Discounted price/i)).not.toBeInTheDocument();
 	});
 });

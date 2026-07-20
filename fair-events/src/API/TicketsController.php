@@ -188,25 +188,22 @@ class TicketsController extends WP_REST_Controller {
 			$incoming_options = $body['options'] ?? array();
 			$kept_ids         = array();
 			foreach ( $incoming_options as $index => $option_data ) {
-				$name                 = sanitize_text_field( $option_data['name'] ?? '' );
-				$short_name_raw       = $option_data['short_name'] ?? null;
-				$short_name           = ( null !== $short_name_raw && '' !== $short_name_raw )
+				$name              = sanitize_text_field( $option_data['name'] ?? '' );
+				$short_name_raw    = $option_data['short_name'] ?? null;
+				$short_name        = ( null !== $short_name_raw && '' !== $short_name_raw )
 					? sanitize_text_field( $short_name_raw )
 					: null;
-				$price                = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
-				$discounted_price_raw = $option_data['discounted_price'] ?? null;
-				$discounted_price     = ( null === $discounted_price_raw || '' === $discounted_price_raw )
-					? null
-					: (float) $discounted_price_raw;
-				$capacity_raw         = $option_data['capacity'] ?? null;
-				$capacity             = ( null === $capacity_raw || '' === $capacity_raw )
+				$price             = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
+				$discounted_price  = null;
+				$capacity_raw      = $option_data['capacity'] ?? null;
+				$capacity          = ( null === $capacity_raw || '' === $capacity_raw )
 					? null
 					: absint( $capacity_raw );
-				$derive               = ! empty( $option_data['derive_price_from_sale_period'] );
-				$collaborator_ids     = isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] )
+				$derive            = ! empty( $option_data['derive_price_from_sale_period'] );
+				$collaborator_ids  = isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] )
 					? array_values( array_unique( array_filter( array_map( 'absint', $option_data['collaborator_ids'] ) ) ) )
 					: array();
-				$period_prices_raw    = isset( $option_data['period_prices'] ) && is_array( $option_data['period_prices'] )
+				$period_prices_raw = isset( $option_data['period_prices'] ) && is_array( $option_data['period_prices'] )
 					? $option_data['period_prices']
 					: array();
 				if ( '' === $name ) {
@@ -425,21 +422,18 @@ class TicketsController extends WP_REST_Controller {
 				? $body['options']
 				: array();
 			foreach ( $incoming_options as $index => $option_data ) {
-				$name                 = sanitize_text_field( $option_data['name'] ?? '' );
-				$short_name_raw       = $option_data['short_name'] ?? null;
-				$short_name           = ( null !== $short_name_raw && '' !== $short_name_raw )
+				$name             = sanitize_text_field( $option_data['name'] ?? '' );
+				$short_name_raw   = $option_data['short_name'] ?? null;
+				$short_name       = ( null !== $short_name_raw && '' !== $short_name_raw )
 					? sanitize_text_field( $short_name_raw )
 					: null;
-				$price                = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
-				$discounted_price_raw = $option_data['discounted_price'] ?? null;
-				$discounted_price     = ( null === $discounted_price_raw || '' === $discounted_price_raw )
-					? null
-					: (float) $discounted_price_raw;
-				$capacity_raw         = $option_data['capacity'] ?? null;
-				$capacity             = ( null === $capacity_raw || '' === $capacity_raw )
+				$price            = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
+				$discounted_price = null;
+				$capacity_raw     = $option_data['capacity'] ?? null;
+				$capacity         = ( null === $capacity_raw || '' === $capacity_raw )
 					? null
 					: absint( $capacity_raw );
-				$derive               = ! empty( $option_data['derive_price_from_sale_period'] );
+				$derive           = ! empty( $option_data['derive_price_from_sale_period'] );
 				if ( '' !== $name ) {
 					$new_id = \FairEventsExperimental\Models\TicketOption::create( $event_date_id, $name, $price, $index, $short_name, $discounted_price, $capacity, $derive );
 					if ( $new_id ) {
@@ -707,6 +701,7 @@ class TicketsController extends WP_REST_Controller {
 			'options'      => array_map(
 				function ( $o ) use ( $collaborators, $option_prices_by_option ) {
 					$data                     = $o->to_array();
+					unset( $data['discounted_price'] );
 					$data['collaborator_ids'] = $collaborators[ $o->id ] ?? array();
 					$data['period_prices']    = $option_prices_by_option[ $o->id ] ?? array();
 					return $data;

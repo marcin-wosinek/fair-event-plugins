@@ -166,3 +166,42 @@ describe('EventTickets — sliding scale toggle', () => {
 		expect(String(savedPayload.settings.sliding_scale_max)).toBe('50.25');
 	});
 });
+
+describe('EventTickets — Activity collaborator discount removed (#1139)', () => {
+	const initialDataWithOption = {
+		...emptyInitialData,
+		options: [
+			{
+				id: 5,
+				name: 'Dinner',
+				short_name: '',
+				price: 20,
+				capacity: null,
+				collaborator_ids: [],
+				period_prices: [],
+				sort_order: 0,
+			},
+		],
+	};
+
+	it('does not render the checkbox or the Discounted price column, even for a stored discount', () => {
+		renderTickets({
+			initialData: {
+				...initialDataWithOption,
+				settings: { activity_collaborator_discount: true },
+			},
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+		expect(
+			screen.queryByRole('checkbox', {
+				name: /Activity collaborator discount/i,
+			})
+		).not.toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: /Activity Options/i })
+		);
+		expect(screen.queryByText(/Discounted price/i)).not.toBeInTheDocument();
+	});
+});

@@ -395,3 +395,93 @@ test.describe('TicketsController — retired pricing-period settings (#1138)', (
 		expect(body.ticket_types?.[0]?.name).toBe('General');
 	});
 });
+
+test.describe('TicketsController — discounted_price dropped from add-on options (#1139)', () => {
+	let api;
+	let eventDateId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Discounted-price test ${Date.now()}`,
+				start_datetime: '2030-08-01 10:00:00',
+				end_datetime: '2030-08-01 12:00:00',
+			},
+		});
+		expect(edRes.ok()).toBeTruthy();
+		eventDateId = (await edRes.json()).id;
+	});
+
+	test.afterAll(async () => {
+		if (eventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+				{ headers: adminHeaders }
+			);
+		}
+	});
+
+	test('saving an option omits discounted_price from the response', async () => {
+		const putRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [],
+					sale_periods: [],
+					prices: [],
+					settings: {},
+					options: [
+						{
+							name: 'Dinner',
+							short_name: '',
+							price: 20,
+							discounted_price: 12,
+							capacity: null,
+							collaborator_ids: [],
+						},
+					],
+				},
+			}
+		);
+		expect(putRes.ok()).toBeTruthy();
+		const body = await putRes.json();
+		expect(body.options).toHaveLength(1);
+		expect(body.options[0]).not.toHaveProperty('discounted_price');
+	});
+
+	test('importing an export that includes discounted_price succeeds and drops it', async () => {
+		const importRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets/import`,
+			{
+				headers: adminHeaders,
+				data: {
+					version: 1,
+					type: 'fair-events-tickets',
+					capacity: null,
+					settings: {},
+					ticket_types: [],
+					sale_periods: [],
+					prices: [],
+					options: [
+						{
+							name: 'Dinner',
+							short_name: '',
+							price: 20,
+							discounted_price: 12,
+							capacity: null,
+							collaborator_ids: [],
+						},
+					],
+				},
+			}
+		);
+		expect(importRes.ok()).toBeTruthy();
+		const body = await importRes.json();
+		expect(body.options).toHaveLength(1);
+		expect(body.options[0]).not.toHaveProperty('discounted_price');
+	});
+});

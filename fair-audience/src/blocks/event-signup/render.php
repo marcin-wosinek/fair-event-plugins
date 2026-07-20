@@ -488,8 +488,6 @@ $ticket_options_for_display = array();
 if ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
 	$raw_options = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( (int) $pricing_event_date_id );
 
-	$invitation_inviter_id = $valid_invitation_token ? (int) $valid_invitation_token->inviter_participant_id : null;
-
 	foreach ( $raw_options as $opt ) {
 		$resolved_base = class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class )
 			? \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $opt )
@@ -498,18 +496,8 @@ if ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Models\Tick
 			// Derived mode with no active period / no row → option not purchasable; skip.
 			continue;
 		}
-		$opt_price        = (float) $resolved_base;
-		$invitation_price = null;
-		if ( $invitation_inviter_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$invitation_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_option_invitation_price(
-				$opt,
-				(int) $pricing_event_date_id,
-				$invitation_inviter_id
-			);
-		}
-		if ( null !== $invitation_price ) {
-			$opt_price = (float) $invitation_price;
-		} elseif ( $best_discount_rule && $opt_price > 0 ) {
+		$opt_price = (float) $resolved_base;
+		if ( $best_discount_rule && $opt_price > 0 ) {
 			$opt_price = \FairEventsExperimental\Services\EventSignupPricing::apply_discount(
 				$opt_price,
 				$best_discount_rule->discount_type,
