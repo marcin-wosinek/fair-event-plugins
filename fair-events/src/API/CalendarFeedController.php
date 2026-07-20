@@ -197,7 +197,7 @@ class CalendarFeedController extends WP_REST_Controller {
 				continue;
 			}
 
-			$sub = $vtimezone->add( $transition['isdst'] ? 'DAYLIGHT' : 'STANDARD' );
+			$sub = $vcalendar->createComponent( $transition['isdst'] ? 'DAYLIGHT' : 'STANDARD' );
 			$sub->add( 'DTSTART', gmdate( 'Ymd\THis', $transition['ts'] + $transition['offset'] ) );
 			$sub->add( 'TZOFFSETFROM', $this->format_utc_offset( $previous_offset ) );
 			$sub->add( 'TZOFFSETTO', $this->format_utc_offset( $transition['offset'] ) );
@@ -206,13 +206,15 @@ class CalendarFeedController extends WP_REST_Controller {
 				$sub->add( 'TZNAME', $transition['abbr'] );
 			}
 
+			$vtimezone->add( $sub );
+
 			$previous_offset = $transition['offset'];
 		}
 
 		// A zone without DST transitions in range yields no STANDARD/DAYLIGHT
 		// sub-component above, but RFC 5545 requires at least one.
 		if ( 0 === count( $vtimezone->select( 'STANDARD' ) ) + count( $vtimezone->select( 'DAYLIGHT' ) ) ) {
-			$sub = $vtimezone->add( $transitions[0]['isdst'] ? 'DAYLIGHT' : 'STANDARD' );
+			$sub = $vcalendar->createComponent( $transitions[0]['isdst'] ? 'DAYLIGHT' : 'STANDARD' );
 			$sub->add( 'DTSTART', '19700101T000000' );
 			$sub->add( 'TZOFFSETFROM', $this->format_utc_offset( $transitions[0]['offset'] ) );
 			$sub->add( 'TZOFFSETTO', $this->format_utc_offset( $transitions[0]['offset'] ) );
@@ -220,6 +222,8 @@ class CalendarFeedController extends WP_REST_Controller {
 			if ( ! empty( $transitions[0]['abbr'] ) ) {
 				$sub->add( 'TZNAME', $transitions[0]['abbr'] );
 			}
+
+			$vtimezone->add( $sub );
 		}
 	}
 
@@ -265,8 +269,8 @@ class CalendarFeedController extends WP_REST_Controller {
 		}
 
 		if ( $occurrence['all_day'] ) {
-			$start_date = DateHelper::local_date( $occurrence['start'] );
-			$end_date   = DateHelper::next_date( DateHelper::local_date( $occurrence['end'] ) );
+			$start_date = new \DateTimeImmutable( DateHelper::local_date( $occurrence['start'] ) );
+			$end_date   = new \DateTimeImmutable( DateHelper::next_date( DateHelper::local_date( $occurrence['end'] ) ) );
 
 			$vevent->add( 'DTSTART', $start_date, array( 'VALUE' => 'DATE' ) );
 			$vevent->add( 'DTEND', $end_date, array( 'VALUE' => 'DATE' ) );
