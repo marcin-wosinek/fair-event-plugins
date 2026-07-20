@@ -83,6 +83,18 @@ export function loadConnectionOverview() {
 }
 
 /**
+ * Create a one-unit test payment and return its Mollie checkout details.
+ *
+ * @return {Promise<Object>} Promise resolving to { checkout_url, transaction_id, mode, currency }
+ */
+export function createTestPayment() {
+	return apiFetch({
+		path: '/fair-payments-connector/v1/test-payment',
+		method: 'POST',
+	});
+}
+
+/**
  * Test Mollie connection and trigger token refresh if needed
  *
  * @return {Promise<Object>} Promise resolving to connection test result
