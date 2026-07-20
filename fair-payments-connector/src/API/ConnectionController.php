@@ -72,7 +72,11 @@ class ConnectionController extends \WP_REST_Controller {
 			);
 		}
 
-		$overview['manage_url'] = 'https://my.mollie.com/dashboard/';
+		$organization_id = get_option( 'fair_payment_organization_id', '' );
+
+		$overview['manage_url'] = $organization_id
+			? "https://my.mollie.com/dashboard/{$organization_id}/settings/payment-methods"
+			: 'https://my.mollie.com/dashboard/';
 
 		return new \WP_REST_Response( $overview, 200 );
 	}
