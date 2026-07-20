@@ -66,6 +66,10 @@ class EventSchema {
 		$offers = self::get_jsonld_offers( $event_date, $post_id );
 		if ( ! empty( $offers ) ) {
 			$data['offers'] = $offers;
+
+			if ( self::is_free_offer_set( $offers ) ) {
+				$data['isAccessibleForFree'] = true;
+			}
 		}
 
 		$data['organizer'] = array(
@@ -356,5 +360,29 @@ class EventSchema {
 		}
 
 		return $offers;
+	}
+
+	/**
+	 * Whether an offer set represents a genuinely free event.
+	 *
+	 * True only when every offer is priced at zero AND at least one offer
+	 * exists — an empty set means ticketing isn't configured, not that the
+	 * event is free, so it must not trigger `isAccessibleForFree`.
+	 *
+	 * @param array $offers Offer objects, as built by get_jsonld_offers().
+	 * @return bool True when every offer is priced at zero.
+	 */
+	public static function is_free_offer_set( array $offers ): bool {
+		if ( empty( $offers ) ) {
+			return false;
+		}
+
+		foreach ( $offers as $offer ) {
+			if ( 0.0 !== (float) $offer['price'] ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

@@ -149,4 +149,63 @@ class EventSchemaTest extends TestCase {
 
 		$this->assertCount( 1, $item_list['itemListElement'] );
 	}
+
+	/**
+	 * Build a minimal Offer array with the given price.
+	 *
+	 * @param float $price Offer price.
+	 * @return array Offer object.
+	 */
+	private function make_offer( $price ): array {
+		return array(
+			'@type'         => 'Offer',
+			'price'         => (string) $price,
+			'priceCurrency' => 'EUR',
+			'availability'  => 'https://schema.org/InStock',
+			'url'           => 'https://example.com/event',
+		);
+	}
+
+	/**
+	 * An offer set where every offer is priced at zero is free.
+	 *
+	 * @return void
+	 */
+	public function test_is_free_offer_set_true_when_all_zero() {
+		$offers = array( $this->make_offer( 0 ), $this->make_offer( 0.0 ) );
+
+		$this->assertTrue( EventSchema::is_free_offer_set( $offers ) );
+	}
+
+	/**
+	 * A mix of zero-priced and priced offers is not free.
+	 *
+	 * @return void
+	 */
+	public function test_is_free_offer_set_false_when_mixed() {
+		$offers = array( $this->make_offer( 0 ), $this->make_offer( 15 ) );
+
+		$this->assertFalse( EventSchema::is_free_offer_set( $offers ) );
+	}
+
+	/**
+	 * An offer set with only priced offers is not free.
+	 *
+	 * @return void
+	 */
+	public function test_is_free_offer_set_false_when_all_priced() {
+		$offers = array( $this->make_offer( 10 ), $this->make_offer( 15 ) );
+
+		$this->assertFalse( EventSchema::is_free_offer_set( $offers ) );
+	}
+
+	/**
+	 * An empty offer set is not free — it means ticketing isn't configured,
+	 * not that the event is free, so it must not claim `isAccessibleForFree`.
+	 *
+	 * @return void
+	 */
+	public function test_is_free_offer_set_false_when_empty() {
+		$this->assertFalse( EventSchema::is_free_offer_set( array() ) );
+	}
 }
