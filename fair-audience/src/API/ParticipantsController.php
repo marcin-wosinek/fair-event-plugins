@@ -844,18 +844,19 @@ class ParticipantsController extends WP_REST_Controller {
 		}
 
 		return array(
-			'id'            => $participant->id,
-			'name'          => $participant->name,
-			'surname'       => $participant->surname,
-			'email'         => $participant->email,
-			'phone'         => $participant->phone,
-			'instagram'     => $participant->instagram,
-			'email_profile' => $participant->email_profile,
-			'status'        => $participant->status,
-			'wp_user_id'    => $participant->wp_user_id,
-			'wp_user'       => $wp_user,
-			'created_at'    => $participant->created_at,
-			'updated_at'    => $participant->updated_at,
+			'id'                     => $participant->id,
+			'name'                   => $participant->name,
+			'surname'                => $participant->surname,
+			'email'                  => $participant->email,
+			'phone'                  => $participant->phone,
+			'instagram'              => $participant->instagram,
+			'email_profile'          => $participant->email_profile,
+			'weekly_summary_opt_out' => (bool) $participant->weekly_summary_opt_out,
+			'status'                 => $participant->status,
+			'wp_user_id'             => $participant->wp_user_id,
+			'wp_user'                => $wp_user,
+			'created_at'             => $participant->created_at,
+			'updated_at'             => $participant->updated_at,
 		);
 	}
 

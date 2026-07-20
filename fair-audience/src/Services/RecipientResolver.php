@@ -240,7 +240,7 @@ class RecipientResolver {
 	 * Check if a participant can receive a specific type of email.
 	 *
 	 * @param Participant $participant The participant to check.
-	 * @param string      $email_type  EmailType::MINIMAL or EmailType::MARKETING.
+	 * @param string      $email_type  EmailType::MINIMAL, EmailType::MARKETING, or EmailType::WEEKLY_SUMMARY.
 	 * @return bool True if the participant can receive the email.
 	 */
 	public function can_receive_email( Participant $participant, string $email_type ): bool {
@@ -248,8 +248,14 @@ class RecipientResolver {
 			return true;
 		}
 
-		return 'marketing' === $participant->email_profile
+		$has_marketing_consent = 'marketing' === $participant->email_profile
 			&& 'confirmed' === $participant->status;
+
+		if ( EmailType::WEEKLY_SUMMARY === $email_type ) {
+			return $has_marketing_consent && ! $participant->weekly_summary_opt_out;
+		}
+
+		return $has_marketing_consent;
 	}
 
 	/**

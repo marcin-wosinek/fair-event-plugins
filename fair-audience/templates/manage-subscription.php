@@ -64,6 +64,12 @@ if ( false === $participant_id ) {
 			if ( in_array( $new_profile, array( 'minimal', 'marketing' ), true ) ) {
 				$participant->email_profile = $new_profile;
 
+				$weekly_digest_config = get_option( 'fair_audience_weekly_digest', array() );
+				if ( ! empty( $weekly_digest_config['enabled'] ) && 'marketing' === $new_profile ) {
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public form, token provides auth.
+					$participant->weekly_summary_opt_out = isset( $_POST['weekly_summary'] ) ? 0 : 1;
+				}
+
 				if ( $participant->save() ) {
 					// Save category preferences.
 					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public form, token provides auth.
@@ -81,10 +87,14 @@ if ( false === $participant_id ) {
 	}
 }
 
+// Whether the weekly summary preference should be shown at all.
+$weekly_digest_option = get_option( 'fair_audience_weekly_digest', array() );
+$weekly_enabled       = ! empty( $weekly_digest_option['enabled'] );
+
 // Load mailing categories for display.
-$mailing_category_ids  = get_option( 'fair_audience_mailing_category_ids', array() );
-$mailing_categories    = array();
-$participant_cat_ids   = array();
+$mailing_category_ids = get_option( 'fair_audience_mailing_category_ids', array() );
+$mailing_categories   = array();
+$participant_cat_ids  = array();
 
 if ( ! empty( $mailing_category_ids ) && $result['success'] ) {
 	$mailing_categories = get_terms(
@@ -242,6 +252,10 @@ $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES
 		text-decoration: underline;
 	}
 
+	.fair-audience-subscription-weekly-summary {
+		margin: -8px 0 24px 44px;
+	}
+
 	.fair-audience-subscription-categories {
 		margin-bottom: 24px;
 		padding: 16px;
@@ -378,6 +392,25 @@ $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES
 						</label>
 					</div>
 
+					<?php if ( $weekly_enabled ) : ?>
+						<div
+							class="fair-audience-subscription-weekly-summary"
+							id="fair-audience-weekly-summary-wrap"
+							<?php echo 'marketing' !== $result['participant']->email_profile ? 'style="display:none;"' : ''; ?>
+						>
+							<label class="fair-audience-subscription-category-label">
+								<input
+									type="checkbox"
+									name="weekly_summary"
+									id="fair-audience-weekly-summary"
+									<?php checked( empty( $result['participant']->weekly_summary_opt_out ) ); ?>
+									<?php disabled( 'marketing' !== $result['participant']->email_profile ); ?>
+								/>
+								<?php echo esc_html__( 'Weekly summary of upcoming events', 'fair-audience' ); ?>
+							</label>
+						</div>
+					<?php endif; ?>
+
 					<?php if ( ! empty( $mailing_categories ) ) : ?>
 						<div class="fair-audience-subscription-categories">
 							<h2 class="fair-audience-subscription-categories-title">
@@ -436,6 +469,20 @@ $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES
 <script>
 	document.addEventListener('DOMContentLoaded', function() {
 		var options = document.querySelectorAll('.fair-audience-subscription-option');
+		var weeklySummaryWrap = document.getElementById('fair-audience-weekly-summary-wrap');
+		var weeklySummaryInput = document.getElementById('fair-audience-weekly-summary');
+
+		function updateWeeklySummaryVisibility(profile) {
+			if (!weeklySummaryWrap) {
+				return;
+			}
+			var isMarketing = 'marketing' === profile;
+			weeklySummaryWrap.style.display = isMarketing ? '' : 'none';
+			if (weeklySummaryInput) {
+				weeklySummaryInput.disabled = !isMarketing;
+			}
+		}
+
 		options.forEach(function(option) {
 			var radio = option.querySelector('input[type="radio"]');
 			radio.addEventListener('change', function() {
@@ -444,6 +491,7 @@ $site_name_header = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES
 				});
 				if (radio.checked) {
 					option.classList.add('selected');
+					updateWeeklySummaryVisibility(radio.value);
 				}
 			});
 		});

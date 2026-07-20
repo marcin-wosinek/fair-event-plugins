@@ -64,6 +64,16 @@ class Participant {
 	public $email_profile;
 
 	/**
+	 * Whether the participant opted out of the weekly events summary.
+	 *
+	 * Independent of email_profile: a marketing subscriber can still opt out
+	 * of just the summary while remaining reachable by other marketing sends.
+	 *
+	 * @var bool
+	 */
+	public $weekly_summary_opt_out;
+
+	/**
 	 * Subscription status (pending or confirmed).
 	 *
 	 * @var string
@@ -108,17 +118,18 @@ class Participant {
 	 * @param array $data Data array.
 	 */
 	public function populate( $data ) {
-		$this->id            = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->name          = isset( $data['name'] ) ? sanitize_text_field( $data['name'] ) : '';
-		$this->surname       = isset( $data['surname'] ) ? sanitize_text_field( $data['surname'] ) : '';
-		$this->email         = isset( $data['email'] ) ? sanitize_email( $data['email'] ) : '';
-		$this->phone         = isset( $data['phone'] ) ? sanitize_text_field( $data['phone'] ) : '';
-		$this->instagram     = isset( $data['instagram'] ) ? sanitize_text_field( $data['instagram'] ) : '';
-		$this->email_profile = isset( $data['email_profile'] ) ? $data['email_profile'] : 'minimal';
-		$this->status        = isset( $data['status'] ) ? $data['status'] : 'confirmed';
-		$this->wp_user_id    = isset( $data['wp_user_id'] ) && $data['wp_user_id'] ? (int) $data['wp_user_id'] : null;
-		$this->created_at    = isset( $data['created_at'] ) ? $data['created_at'] : '';
-		$this->updated_at    = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
+		$this->id                     = isset( $data['id'] ) ? (int) $data['id'] : null;
+		$this->name                   = isset( $data['name'] ) ? sanitize_text_field( $data['name'] ) : '';
+		$this->surname                = isset( $data['surname'] ) ? sanitize_text_field( $data['surname'] ) : '';
+		$this->email                  = isset( $data['email'] ) ? sanitize_email( $data['email'] ) : '';
+		$this->phone                  = isset( $data['phone'] ) ? sanitize_text_field( $data['phone'] ) : '';
+		$this->instagram              = isset( $data['instagram'] ) ? sanitize_text_field( $data['instagram'] ) : '';
+		$this->email_profile          = isset( $data['email_profile'] ) ? $data['email_profile'] : 'minimal';
+		$this->weekly_summary_opt_out = isset( $data['weekly_summary_opt_out'] ) ? (int) $data['weekly_summary_opt_out'] : 0;
+		$this->status                 = isset( $data['status'] ) ? $data['status'] : 'confirmed';
+		$this->wp_user_id             = isset( $data['wp_user_id'] ) && $data['wp_user_id'] ? (int) $data['wp_user_id'] : null;
+		$this->created_at             = isset( $data['created_at'] ) ? $data['created_at'] : '';
+		$this->updated_at             = isset( $data['updated_at'] ) ? $data['updated_at'] : '';
 	}
 
 	/**
@@ -155,13 +166,14 @@ class Participant {
 
 		if ( $this->id ) {
 			// Update existing - use raw query to properly handle NULL values.
-			$sql  = "UPDATE {$table_name} SET name = %s, surname = %s, phone = %s, instagram = %s, email_profile = %s, status = %s, {$email_sql}, {$wp_user_id_sql} WHERE id = %d";
+			$sql  = "UPDATE {$table_name} SET name = %s, surname = %s, phone = %s, instagram = %s, email_profile = %s, weekly_summary_opt_out = %d, status = %s, {$email_sql}, {$wp_user_id_sql} WHERE id = %d";
 			$args = array(
 				$this->name,
 				$this->surname,
 				$this->phone,
 				$this->instagram,
 				$this->email_profile,
+				(int) $this->weekly_summary_opt_out,
 				$this->status,
 			);
 			if ( null !== $email ) {
@@ -179,13 +191,14 @@ class Participant {
 			$email_col      = null === $email ? 'NULL' : '%s';
 			$wp_user_id_col = null === $this->wp_user_id ? 'NULL' : '%d';
 
-			$sql  = "INSERT INTO {$table_name} (name, surname, phone, instagram, email_profile, status, email, wp_user_id) VALUES (%s, %s, %s, %s, %s, %s, {$email_col}, {$wp_user_id_col})";
+			$sql  = "INSERT INTO {$table_name} (name, surname, phone, instagram, email_profile, weekly_summary_opt_out, status, email, wp_user_id) VALUES (%s, %s, %s, %s, %s, %d, %s, {$email_col}, {$wp_user_id_col})";
 			$args = array(
 				$this->name,
 				$this->surname,
 				$this->phone,
 				$this->instagram,
 				$this->email_profile,
+				(int) $this->weekly_summary_opt_out,
 				$this->status,
 			);
 			if ( null !== $email ) {
@@ -236,13 +249,14 @@ class Participant {
 			return false;
 		}
 
-		$this->name          = 'Deleted';
-		$this->surname       = '';
-		$this->email         = '';
-		$this->phone         = '';
-		$this->instagram     = '';
-		$this->email_profile = 'minimal';
-		$this->wp_user_id    = null;
+		$this->name                   = 'Deleted';
+		$this->surname                = '';
+		$this->email                  = '';
+		$this->phone                  = '';
+		$this->instagram              = '';
+		$this->email_profile          = 'minimal';
+		$this->weekly_summary_opt_out = 0;
+		$this->wp_user_id             = null;
 
 		return $this->save();
 	}

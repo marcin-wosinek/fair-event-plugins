@@ -144,12 +144,22 @@ class EmailService {
 	 * Human-readable reason a participant was skipped for a marketing send.
 	 *
 	 * @param Participant $participant The skipped participant.
+	 * @param string      $email_type  The email type being sent (EmailType::MARKETING or EmailType::WEEKLY_SUMMARY).
 	 * @return string Skip reason.
 	 */
-	private function marketing_skip_reason( Participant $participant ): string {
+	private function marketing_skip_reason( Participant $participant, string $email_type = EmailType::MARKETING ): string {
 		if ( 'marketing' === $participant->email_profile && 'pending' === $participant->status ) {
 			return __( 'Participant has not yet confirmed their marketing subscription.', 'fair-audience' );
 		}
+
+		if ( EmailType::WEEKLY_SUMMARY === $email_type
+			&& 'marketing' === $participant->email_profile
+			&& 'confirmed' === $participant->status
+			&& $participant->weekly_summary_opt_out
+		) {
+			return __( 'Opted out of the weekly summary.', 'fair-audience' );
+		}
+
 		return __( 'Participant opted out of marketing emails.', 'fair-audience' );
 	}
 
@@ -1581,9 +1591,11 @@ class EmailService {
 	 * @param string $content      Email content (HTML).
 	 * @param bool   $is_marketing         Whether to filter by marketing consent.
 	 * @param array  $skip_participant_ids  Participant IDs to skip.
+	 * @param array  $group_ids    Group IDs to filter by.
+	 * @param string $email_type   EmailType constant used for the consent check (defaults to MARKETING).
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
-	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true, $skip_participant_ids = array(), $group_ids = array() ) {
+	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true, $skip_participant_ids = array(), $group_ids = array(), $email_type = EmailType::MARKETING ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -1622,11 +1634,11 @@ class EmailService {
 			}
 
 			// Check marketing consent if needed.
-			if ( $is_marketing && ! $this->can_receive_email( $participant, EmailType::MARKETING ) ) {
+			if ( $is_marketing && ! $this->can_receive_email( $participant, $email_type ) ) {
 				$results['skipped'][] = array(
 					'name'   => $participant->name,
 					'email'  => $participant->email,
-					'reason' => $this->marketing_skip_reason( $participant ),
+					'reason' => $this->marketing_skip_reason( $participant, $email_type ),
 				);
 				continue;
 			}
