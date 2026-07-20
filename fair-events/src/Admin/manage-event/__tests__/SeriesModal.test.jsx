@@ -1,16 +1,18 @@
 /**
  * @jest-environment jsdom
  *
- * Tests for the "Irregular series" hand-picked-dates editor in SeriesModal
- * (#979).
+ * Tests for SeriesModal's "Regular schedule" and "Irregular series" tabs
+ * (#979, #1127).
  *
  * Covers:
- *   - Seeding the date list from existing generated occurrences.
- *   - The master's own date row is fixed (disabled, no Remove button) —
- *     only the extra occurrence rows are editable/removable.
- *   - Duplicate-day rejection (visible Notice, confirm disabled).
- *   - Confirm sends { recurrence_mode: 'manual', manual_dates } (master date
- *     + extras) on the Irregular tab instead of { rrule }.
+ *   - Regular tab: a display-only calendar highlights every rule-generated
+ *     date and a compact "N dates, until <date>" summary line replaces the
+ *     old text list.
+ *   - Irregular tab: seeding the selection from existing generated
+ *     occurrences, the master's own date is fixed (disabled button, can't be
+ *     toggled), clicking an unselected day adds it and clicking a selected
+ *     day removes it, and confirm still sends
+ *     { recurrence_mode: 'manual', manual_dates }.
  */
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -18,6 +20,16 @@ import apiFetch from '@wordpress/api-fetch';
 import SeriesModal from '../SeriesModal.js';
 
 jest.mock('@wordpress/api-fetch');
+
+// Matches the full-date aria-label MiniCalendar builds by default.
+function fullDateLabel(dateStr) {
+	return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
+		weekday: 'long',
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+	});
+}
 
 beforeEach(() => {
 	// The Regular schedule tab renders RecurrenceControl, which uses
@@ -28,6 +40,18 @@ beforeEach(() => {
 	// ManageEventApp.test.jsx.
 	jest.spyOn(console, 'warn').mockImplementation(() => {});
 	jest.spyOn(console, 'error').mockImplementation(() => {});
+
+	// jsdom has no layout engine; @wordpress/components' HStack/Button use
+	// matchMedia for responsive spacing, which jsdom doesn't implement.
+	window.matchMedia =
+		window.matchMedia ||
+		function () {
+			return {
+				matches: false,
+				addListener: () => {},
+				removeListener: () => {},
+			};
+		};
 });
 
 afterEach(() => {
@@ -50,7 +74,33 @@ function openIrregularTab() {
 	fireEvent.click(screen.getByRole('tab', { name: 'Irregular series' }));
 }
 
-it('seeds the date list from existing generated occurrences when editing a manual series', async () => {
+it('Regular tab shows a display-only calendar and a compact dates summary', async () => {
+	await renderModal({
+		eventDateId: 1,
+		initialRrule: null,
+		initialRecurrenceMode: null,
+		startDatetime: '2026-07-01 18:00:00',
+		generatedOccurrences: [],
+		onClose: () => {},
+		onSaved: () => {},
+		onImpact: () => {},
+	});
+
+	// Default recurrence is weekly, 10 occurrences (DEFAULT_RECURRENCE).
+	expect(screen.getByText('July 2026')).toBeInTheDocument();
+	expect(screen.getByText(/10 dates, until/)).toBeInTheDocument();
+
+	// Display-only: no toggle buttons in the calendar (aria-pressed is only
+	// used by the Irregular tab's picker).
+	expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
+	expect(screen.queryAllByRole('button', { pressed: false })).toHaveLength(0);
+
+	// RecurrenceControl's SelectControl/NumberControl emit an unrelated
+	// @wordpress/components 36px-default-size deprecation notice on mount.
+	expect(console).toHaveWarned();
+});
+
+it('seeds the calendar selection from existing generated occurrences when editing a manual series', async () => {
 	await renderModal({
 		eventDateId: 1,
 		initialRrule: null,
@@ -65,15 +115,28 @@ it('seeds the date list from existing generated occurrences when editing a manua
 		onImpact: () => {},
 	});
 
-	const dateInputs = screen.getAllByDisplayValue(/2026-07-/);
-	expect(dateInputs.map((el) => el.value)).toEqual([
-		'2026-07-01',
-		'2026-07-08',
-		'2026-07-20',
-	]);
+	openIrregularTab();
+
+	const masterButton = screen.getByRole('button', {
+		name: fullDateLabel('2026-07-01'),
+	});
+	expect(masterButton).toBeDisabled();
+	expect(masterButton).toHaveAttribute('aria-pressed', 'true');
+
+	expect(
+		screen.getByRole('button', { name: fullDateLabel('2026-07-08') })
+	).toHaveAttribute('aria-pressed', 'true');
+	expect(
+		screen.getByRole('button', { name: fullDateLabel('2026-07-20') })
+	).toHaveAttribute('aria-pressed', 'true');
+	expect(
+		screen.getByRole('button', { name: fullDateLabel('2026-07-15') })
+	).toHaveAttribute('aria-pressed', 'false');
+
+	expect(screen.getByText('3 dates selected')).toBeInTheDocument();
 });
 
-it('adds and removes date rows, and keeps the master date fixed', async () => {
+it('clicking an unselected day adds it and clicking it again removes it, keeping the master date fixed', async () => {
 	await renderModal({
 		eventDateId: 1,
 		initialRrule: null,
@@ -87,49 +150,27 @@ it('adds and removes date rows, and keeps the master date fixed', async () => {
 
 	openIrregularTab();
 
-	// The master's own date row is disabled and has no Remove button.
-	const masterInput = screen.getByDisplayValue('2026-07-01');
-	expect(masterInput).toBeDisabled();
-	expect(
-		screen.queryByRole('button', { name: 'Remove' })
-	).not.toBeInTheDocument();
-
-	fireEvent.click(screen.getByRole('button', { name: 'Add date' }));
-	expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(1);
-
-	fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
-	expect(
-		screen.queryByRole('button', { name: 'Remove' })
-	).not.toBeInTheDocument();
-});
-
-it('shows a Notice and disables confirm when two rows share the same date', async () => {
-	await renderModal({
-		eventDateId: 1,
-		initialRrule: null,
-		initialRecurrenceMode: 'manual',
-		startDatetime: '2026-07-01 18:00:00',
-		generatedOccurrences: [
-			{ id: 2, start_datetime: '2026-07-08 18:00:00' },
-		],
-		onClose: () => {},
-		onSaved: () => {},
-		onImpact: () => {},
+	const masterButton = screen.getByRole('button', {
+		name: fullDateLabel('2026-07-01'),
 	});
+	expect(masterButton).toBeDisabled();
+	expect(screen.getByText('1 dates selected')).toBeInTheDocument();
 
-	const [firstDate, secondDate] = screen.getAllByDisplayValue(/2026-07-/);
-	fireEvent.change(secondDate, { target: { value: firstDate.value } });
+	fireEvent.click(masterButton);
+	expect(screen.getByText('1 dates selected')).toBeInTheDocument();
 
-	// The WP a11y-speak live region duplicates Notice text for screen readers,
-	// so there are two matches — assert at least one is present.
-	expect(
-		screen.getAllByText(/Each date can only be used once/).length
-	).toBeGreaterThan(0);
-
-	const confirmButton = screen.getByRole('button', {
-		name: /Update series/,
+	const dayButton = screen.getByRole('button', {
+		name: fullDateLabel('2026-07-05'),
 	});
-	expect(confirmButton).toBeDisabled();
+	expect(dayButton).toHaveAttribute('aria-pressed', 'false');
+
+	fireEvent.click(dayButton);
+	expect(dayButton).toHaveAttribute('aria-pressed', 'true');
+	expect(screen.getByText('2 dates selected')).toBeInTheDocument();
+
+	fireEvent.click(dayButton);
+	expect(dayButton).toHaveAttribute('aria-pressed', 'false');
+	expect(screen.getByText('1 dates selected')).toBeInTheDocument();
 });
 
 it('sends recurrence_mode + manual_dates on confirm from the Irregular tab', async () => {
@@ -152,9 +193,9 @@ it('sends recurrence_mode + manual_dates on confirm from the Irregular tab', asy
 	});
 
 	openIrregularTab();
-	fireEvent.click(screen.getByRole('button', { name: 'Add date' }));
-	const [, secondDate] = screen.getAllByDisplayValue(/2026-07-01|^$/);
-	fireEvent.change(secondDate, { target: { value: '2026-07-15' } });
+	fireEvent.click(
+		screen.getByRole('button', { name: fullDateLabel('2026-07-15') })
+	);
 
 	fireEvent.click(screen.getByRole('button', { name: /Create series/ }));
 
