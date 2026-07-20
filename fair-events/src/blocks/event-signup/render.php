@@ -513,8 +513,6 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 
 	<div class="message-container" role="alert" aria-live="polite"></div>
 
-	<?php if ( class_exists( \FairAudience\Services\Branding::class ) ) : ?>
-		<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
-	<?php endif; ?>
+	<?php echo wp_kses_post( \FairEvents\Services\Branding::block_html() ); ?>
 <?php endif; ?>
 </div>
