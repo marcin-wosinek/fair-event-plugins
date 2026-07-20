@@ -68,12 +68,16 @@ $wrapper_id = 'fair-payments-connector-' . wp_unique_id();
 				<p><?php esc_html_e( 'Your payment was not completed. Please try again.', 'fair-payments-connector' ); ?></p>
 			</div>
 
-			<button type="button" class="fair-payments-connector-callback-dismiss wp-element-button" style="<?php echo esc_attr( 'failed' === $callback_status ? 'display: none;' : '' ); ?>">
-				<?php esc_html_e( 'Continue', 'fair-payments-connector' ); ?>
-			</button>
-			<button type="button" class="fair-payments-connector-restart wp-element-button" style="<?php echo esc_attr( 'failed' === $callback_status ? '' : 'display: none;' ); ?>">
-				<?php esc_html_e( 'Try Again', 'fair-payments-connector' ); ?>
-			</button>
+			<div class="wp-block-button is-style-outline fair-payments-connector-callback-dismiss" style="<?php echo esc_attr( 'failed' === $callback_status ? 'display: none;' : '' ); ?>">
+				<button type="button" class="wp-block-button__link wp-element-button">
+					<?php esc_html_e( 'Continue', 'fair-payments-connector' ); ?>
+				</button>
+			</div>
+			<div class="wp-block-button is-style-outline fair-payments-connector-restart" style="<?php echo esc_attr( 'failed' === $callback_status ? '' : 'display: none;' ); ?>">
+				<button type="button" class="wp-block-button__link wp-element-button">
+					<?php esc_html_e( 'Try Again', 'fair-payments-connector' ); ?>
+				</button>
+			</div>
 		</div>
 
 		<div class="fair-payments-connector-payment-form" style="<?php echo esc_attr( $is_callback ? 'display: none;' : '' ); ?>">
@@ -85,16 +89,18 @@ $wrapper_id = 'fair-payments-connector-' . wp_unique_id();
 			</div>
 
 			<?php if ( $is_configured ) : ?>
-				<button
-					class="fair-payments-connector-button wp-element-button"
-					data-amount="<?php echo esc_attr( $amount ); ?>"
-					data-currency="<?php echo esc_attr( $currency ); ?>"
-					data-description="<?php echo esc_attr( $description ); ?>"
-					data-post-id="<?php echo esc_attr( $current_post_id ); ?>"
-					data-block-id="<?php echo esc_attr( $block_id ); ?>"
-				>
-					<?php esc_html_e( 'Pay Now', 'fair-payments-connector' ); ?>
-				</button>
+				<div class="wp-block-button">
+					<button
+						class="fair-payments-connector-button wp-block-button__link wp-element-button"
+						data-amount="<?php echo esc_attr( $amount ); ?>"
+						data-currency="<?php echo esc_attr( $currency ); ?>"
+						data-description="<?php echo esc_attr( $description ); ?>"
+						data-post-id="<?php echo esc_attr( $current_post_id ); ?>"
+						data-block-id="<?php echo esc_attr( $block_id ); ?>"
+					>
+						<?php esc_html_e( 'Pay Now', 'fair-payments-connector' ); ?>
+					</button>
+				</div>
 				<div class="fair-payments-connector-loading" style="display: none;">
 					<?php esc_html_e( 'Processing payment...', 'fair-payments-connector' ); ?>
 				</div>

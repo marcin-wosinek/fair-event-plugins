@@ -318,6 +318,12 @@
 	cursor: not-allowed;
 }
 
+.fair-audience-add-activities-button:disabled,
+.fair-audience-add-activities-button.is-disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
 /* Recurrence occurrence picker */
 .fair-audience-occurrence-picker {
 	border: 1px solid #ccc;

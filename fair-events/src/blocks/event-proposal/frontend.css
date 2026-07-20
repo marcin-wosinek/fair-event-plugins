@@ -105,24 +105,8 @@
 	margin-top: 0.5rem;
 }
 
-.form-button {
-	padding: 0.75rem 1.5rem;
-	background: #2271b1;
-	color: #fff;
-	border: none;
-	border-radius: 4px;
-	font-size: 1rem;
-	font-weight: 600;
-	cursor: pointer;
-	transition: background 0.2s ease;
-}
-
-.form-button:hover {
-	background: #135e96;
-}
-
 .form-button:disabled {
-	background: #8c8f94;
+	opacity: 0.5;
 	cursor: not-allowed;
 }
 
@@ -154,7 +138,11 @@
 		padding: 0 1rem;
 	}
 
-	.form-button {
+	.form-submit {
+		width: 100%;
+	}
+
+	.form-submit .wp-block-button__link {
 		width: 100%;
 	}
 }

@@ -314,12 +314,14 @@ if ( $show_copy_summary ) {
 		);
 		?>
 	>
-		<button
-			class="fair-events-copy-summary-btn"
-			type="button"
-			data-wp-on--click="actions.copy"
-			data-wp-text="state.label"
-		></button>
+		<div class="wp-block-button is-style-outline">
+			<button
+				class="fair-events-copy-summary-btn wp-block-button__link wp-element-button"
+				type="button"
+				data-wp-on--click="actions.copy"
+				data-wp-text="state.label"
+			></button>
+		</div>
 	</div>
 	<?php endif; ?>
 

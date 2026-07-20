@@ -11,6 +11,7 @@
 	"editorScript": "file:./index.js",
 	"render": "file:./render.php",
 	"viewScript": "file:./view.js",
+	"style": ["wp-block-button"],
 	"attributes": {
 		"blockId": {
 			"type": "string",
