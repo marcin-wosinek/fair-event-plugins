@@ -323,9 +323,7 @@ if ( $show_copy_summary ) {
 	</div>
 	<?php endif; ?>
 
-	<?php if ( class_exists( \FairAudience\Services\Branding::class ) ) : ?>
-		<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
-	<?php endif; ?>
+	<?php echo wp_kses_post( \FairEvents\Services\Branding::block_html() ); ?>
 
 </div>
 <?php if ( null !== $item_list ) : ?>

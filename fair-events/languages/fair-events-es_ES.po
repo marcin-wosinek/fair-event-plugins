@@ -1930,6 +1930,11 @@ msgstr "Copiar resumen"
 msgid "Show a \"Powered by Fair Event Plugins\" line on signup forms and participant emails"
 msgstr "Mostrar una línea «Powered by Fair Event Plugins» en formularios de registro y correos de participantes"
 
+#. translators: %s: "Fair Event Plugins" linked to the project site
+#: src/Services/Branding.php:57
+msgid "Powered by %s"
+msgstr "Desarrollado por %s"
+
 #. translators: %s: currency code
 #: src/Admin/manage-event/EventTickets.js:1970
 #, js-format
