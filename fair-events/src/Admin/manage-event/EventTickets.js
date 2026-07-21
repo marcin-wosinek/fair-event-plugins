@@ -33,7 +33,7 @@ import {
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { moreVertical } from '@wordpress/icons';
 import apiFetch from '@wordpress/api-fetch';
-import SalePeriodsCalendar from './SalePeriodsCalendar.js';
+import SalePeriodsCalendar, { salePeriodColor } from './SalePeriodsCalendar.js';
 
 export default function EventTickets({
 	eventDateId,
@@ -637,21 +637,6 @@ export default function EventTickets({
 		setSalePeriods(updated);
 	};
 
-	// Maps a SalePeriodsCalendar boundary click onto the chained setter:
-	// boundary 0 is the first period's start, boundary N (the period count)
-	// is the last period's end, and everything in between is the start of
-	// the period at that index (updateSalePeriod's chaining already
-	// propagates it to the previous period's end).
-	const handleMoveSalePeriodBoundary = (boundaryIndex, dateStr) => {
-		if (boundaryIndex === 0) {
-			updateSalePeriod(0, 'sale_start', dateStr);
-		} else if (boundaryIndex === salePeriods.length) {
-			updateSalePeriod(salePeriods.length - 1, 'sale_end', dateStr);
-		} else {
-			updateSalePeriod(boundaryIndex, 'sale_start', dateStr);
-		}
-	};
-
 	// "Multiple pricing periods" toggled on: split the single sale window at
 	// the event's first day into two named, prefilled, editable periods,
 	// migrating the existing single-period prices to the first one.
@@ -1043,9 +1028,6 @@ export default function EventTickets({
 								<SalePeriodsCalendar
 									salePeriods={salePeriods}
 									eventDay={eventDay}
-									onMoveBoundary={
-										handleMoveSalePeriodBoundary
-									}
 									embedded
 								/>
 							)}
@@ -1055,6 +1037,7 @@ export default function EventTickets({
 										<table className="wp-list-table widefat striped">
 											<thead>
 												<tr>
+													<th />
 													<th>
 														{__(
 															'Name',
@@ -1110,6 +1093,22 @@ export default function EventTickets({
 																	`new-${pIndex}`
 																}
 															>
+																<td>
+																	<span
+																		style={{
+																			display:
+																				'inline-block',
+																			width: '12px',
+																			height: '12px',
+																			background:
+																				salePeriodColor(
+																					pIndex
+																				),
+																			borderRadius:
+																				'2px',
+																		}}
+																	/>
+																</td>
 																<td>
 																	<TextControl
 																		placeholder={__(
