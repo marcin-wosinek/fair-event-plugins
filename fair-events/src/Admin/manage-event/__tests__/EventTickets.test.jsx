@@ -1172,3 +1172,163 @@ describe('EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 		expect(onDirtyChange).toHaveBeenLastCalledWith(true);
 	});
 });
+
+describe('EventTickets — sale end tracks the series, not frozen (#1203)', () => {
+	const initialDataWithUnsetPeriod = {
+		...initialDataWithTicketType,
+		sale_periods: [{ id: 701, name: '', sale_start: '', sale_end: '' }],
+		prices: [{ ticket_type_id: 1, sale_period_id: 701, price: '12' }],
+	};
+
+	it('enabling multiple pricing periods on an unset window leaves the last period unset, showing the resolved default as automatic', () => {
+		renderTickets({
+			initialData: initialDataWithUnsetPeriod,
+			startDatetime: '2026-08-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', {
+				name: /Multiple pricing periods/i,
+			})
+		);
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		expect(
+			screen.getByText(/Automatic: until .*August/)
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: 'Reset to automatic' })
+		).not.toBeInTheDocument();
+	});
+
+	it('merging periods with an unset trailing end restores the automatic default, not a frozen snapshot', () => {
+		const initialDataTwoPeriodsUnsetEnd = {
+			...initialDataWithTicketType,
+			sale_periods: [
+				{
+					id: 601,
+					name: 'Advance ticket',
+					sale_start: '2026-01-01',
+					sale_end: '2026-01-15',
+				},
+				{
+					id: 602,
+					name: 'Day of event',
+					sale_start: '2026-01-15',
+					sale_end: '',
+				},
+			],
+			prices: [
+				{ ticket_type_id: 1, sale_period_id: 601, price: '20' },
+				{ ticket_type_id: 1, sale_period_id: 602, price: '5' },
+			],
+			settings: { multiple_pricing_periods: true },
+		};
+
+		renderTickets({
+			initialData: initialDataTwoPeriodsUnsetEnd,
+			startDatetime: '2026-01-10 10:00:00',
+			endDatetime: '2026-01-10 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', {
+				name: /Multiple pricing periods/i,
+			})
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'Merge periods' }));
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		expect(
+			screen.getByText(/Automatic: until .*January/)
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: 'Reset to automatic' })
+		).not.toBeInTheDocument();
+	});
+
+	it('merging periods with an explicit trailing end preserves it verbatim', () => {
+		const initialDataTwoPeriodsExplicitEnd = {
+			...initialDataWithTicketType,
+			sale_periods: [
+				{
+					id: 601,
+					name: 'Advance ticket',
+					sale_start: '2026-01-01',
+					sale_end: '2026-01-15',
+				},
+				{
+					id: 602,
+					name: 'Day of event',
+					sale_start: '2026-01-15',
+					sale_end: '2026-02-01',
+				},
+			],
+			prices: [
+				{ ticket_type_id: 1, sale_period_id: 601, price: '20' },
+				{ ticket_type_id: 1, sale_period_id: 602, price: '5' },
+			],
+			settings: { multiple_pricing_periods: true },
+		};
+
+		renderTickets({ initialData: initialDataTwoPeriodsExplicitEnd });
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', {
+				name: /Multiple pricing periods/i,
+			})
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'Merge periods' }));
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		expect(screen.getByDisplayValue('2026-02-01')).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: 'Reset to automatic' })
+		).toBeInTheDocument();
+	});
+
+	it('"Reset to automatic" clears an explicit single-period end and shows the resolved default again', () => {
+		renderTickets({
+			initialData: {
+				...initialDataWithTicketType,
+				sale_periods: [
+					{
+						id: 702,
+						name: '',
+						sale_start: '2026-08-01',
+						sale_end: '2026-09-01',
+					},
+				],
+				prices: [
+					{ ticket_type_id: 1, sale_period_id: 702, price: '12' },
+				],
+			},
+			startDatetime: '2026-08-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+			lastOccurrenceDatetime: '2026-08-22 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		expect(screen.getByDisplayValue('2026-09-01')).toBeInTheDocument();
+		const resetButton = screen.getByRole('button', {
+			name: 'Reset to automatic',
+		});
+
+		fireEvent.click(resetButton);
+
+		expect(
+			screen.queryByDisplayValue('2026-09-01')
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByText(/Automatic: until .*August/)
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: 'Reset to automatic' })
+		).not.toBeInTheDocument();
+	});
+});

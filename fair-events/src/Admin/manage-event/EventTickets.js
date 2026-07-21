@@ -664,8 +664,11 @@ export default function EventTickets({
 				const eventFirstDay = startDatetime
 					? startDatetime.split(' ')[0].split('T')[0]
 					: getSiteToday();
-				const windowStart = base?.sale_start || getSiteToday();
-				const windowEnd = base?.sale_end || defaultSaleEnd();
+				// Only the split boundary (eventFirstDay) needs a stored date.
+				// An unset start/end stays unset here rather than snapshotting
+				// today's default — the organiser never chose those dates.
+				const windowStart = base?.sale_start || '';
+				const windowEnd = base?.sale_end || '';
 				if (base) {
 					const newPrices = { ...prices };
 					ticketTypes.forEach((type) => {
@@ -725,7 +728,10 @@ export default function EventTickets({
 				{
 					name: '',
 					sale_start: first.sale_start,
-					sale_end: last.sale_end || defaultSaleEnd(),
+					// Merging returns to automatic: an unset end stays unset
+					// (lazily resolved) instead of freezing whatever the
+					// default happened to compute to at merge time.
+					sale_end: last.sale_end || '',
 					sort_order: 0,
 				},
 			]);
@@ -1088,12 +1094,15 @@ export default function EventTickets({
 																  ''
 																: period.sale_start ||
 																  '';
+														// The last period's end is lazily resolved when unset — show
+														// the field empty (not a frozen snapshot) with the resolved
+														// default as help text, plus a way back to automatic.
+														const untilIsAutomatic =
+															isLast &&
+															!period.sale_end;
 														const untilValue =
-															isLast
-																? period.sale_end ||
-																  endDatetime
-																: period.sale_end ||
-																  '';
+															period.sale_end ||
+															'';
 
 														return (
 															<tr
@@ -1144,23 +1153,62 @@ export default function EventTickets({
 																	/>
 																</td>
 																<td>
-																	<TextControl
-																		type="date"
-																		value={
-																			untilValue ||
-																			''
+																	<VStack
+																		spacing={
+																			1
 																		}
-																		onChange={(
-																			v
-																		) =>
-																			updateSalePeriod(
-																				pIndex,
-																				'sale_end',
+																	>
+																		<TextControl
+																			type="date"
+																			value={
+																				untilValue
+																			}
+																			onChange={(
 																				v
-																			)
-																		}
-																		__nextHasNoMarginBottom
-																	/>
+																			) =>
+																				updateSalePeriod(
+																					pIndex,
+																					'sale_end',
+																					v
+																				)
+																			}
+																			help={
+																				untilIsAutomatic &&
+																				defaultSaleEnd()
+																					? sprintf(
+																							/* translators: %s: formatted date */
+																							__(
+																								'Automatic: until %s',
+																								'fair-events'
+																							),
+																							formatSaleDateLabel(
+																								defaultSaleEnd()
+																							)
+																					  )
+																					: undefined
+																			}
+																			__nextHasNoMarginBottom
+																		/>
+																		{isLast &&
+																			period.sale_end && (
+																				<Button
+																					variant="link"
+																					size="small"
+																					onClick={() =>
+																						updateSalePeriod(
+																							pIndex,
+																							'sale_end',
+																							''
+																						)
+																					}
+																				>
+																					{__(
+																						'Reset to automatic',
+																						'fair-events'
+																					)}
+																				</Button>
+																			)}
+																	</VStack>
 																</td>
 																<td>
 																	<Button
@@ -1218,23 +1266,60 @@ export default function EventTickets({
 											}
 											__nextHasNoMarginBottom
 										/>
-										<TextControl
-											label={__('Until', 'fair-events')}
-											type="date"
-											value={
-												salePeriods[0].sale_end ||
-												defaultSaleEnd() ||
-												''
-											}
-											onChange={(v) =>
-												updateSalePeriod(
-													0,
-													'sale_end',
-													v
-												)
-											}
-											__nextHasNoMarginBottom
-										/>
+										<VStack spacing={1}>
+											<TextControl
+												label={__(
+													'Until',
+													'fair-events'
+												)}
+												type="date"
+												value={
+													salePeriods[0].sale_end ||
+													''
+												}
+												onChange={(v) =>
+													updateSalePeriod(
+														0,
+														'sale_end',
+														v
+													)
+												}
+												help={
+													!salePeriods[0].sale_end &&
+													defaultSaleEnd()
+														? sprintf(
+																/* translators: %s: formatted date */
+																__(
+																	'Automatic: until %s',
+																	'fair-events'
+																),
+																formatSaleDateLabel(
+																	defaultSaleEnd()
+																)
+														  )
+														: undefined
+												}
+												__nextHasNoMarginBottom
+											/>
+											{salePeriods[0].sale_end && (
+												<Button
+													variant="link"
+													size="small"
+													onClick={() =>
+														updateSalePeriod(
+															0,
+															'sale_end',
+															''
+														)
+													}
+												>
+													{__(
+														'Reset to automatic',
+														'fair-events'
+													)}
+												</Button>
+											)}
+										</VStack>
 									</HStack>
 								)
 							)}
