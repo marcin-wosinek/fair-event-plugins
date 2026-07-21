@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  *
- * Tests for EventContextHeader (#1049).
+ * Tests for EventContextHeader (#1049, #1198).
  *
  * Covers:
  *   - Occurrence variants: single (no series badge), master (recurring-series
@@ -9,7 +9,9 @@
  *     tickets-on-series note).
  *   - Link-status variants: post, external, none.
  *   - Breadcrumb calendar link carries &month=YYYY-MM from start_datetime.
- *   - "View public page" button present iff display_url is set.
+ *   - Link-state actions: placeholder (single "set up" button), internal
+ *     (view + edit + change link), external (open link + change link) — each
+ *     firing onManageLink.
  */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
@@ -109,7 +111,7 @@ it('link status: post shows the linked post title', () => {
 	const eventDate = {
 		...baseEventDate,
 		link_type: 'post',
-		linked_posts: [{ id: 5, title: 'My Public Page' }],
+		linked_posts: [{ id: 5, title: 'My Public Page', is_primary: true }],
 	};
 	render(
 		<EventContextHeader
@@ -167,8 +169,99 @@ it('breadcrumb calendar link carries &month=YYYY-MM from start_datetime', () => 
 	);
 });
 
-it('"View public page" button is shown only when display_url is set', () => {
-	const { rerender } = render(
+it('link actions: placeholder shows a single "set up" button that calls onManageLink', () => {
+	const onManageLink = jest.fn();
+	render(
+		<EventContextHeader
+			eventDate={baseEventDate}
+			manageEventUrl={manageEventUrl}
+			calendarUrl={calendarUrl}
+			onManageLink={onManageLink}
+		/>
+	);
+	const button = screen.getByRole('button', {
+		name: /Set up event page/i,
+	});
+	expect(
+		screen.queryByRole('link', { name: /View public page/i })
+	).not.toBeInTheDocument();
+	expect(
+		screen.queryByRole('button', { name: /Change link/i })
+	).not.toBeInTheDocument();
+	button.click();
+	expect(onManageLink).toHaveBeenCalledTimes(1);
+});
+
+it('link actions: internal link shows view + edit + change link', () => {
+	const onManageLink = jest.fn();
+	const eventDate = {
+		...baseEventDate,
+		link_type: 'post',
+		display_url: 'https://example.com/event',
+		linked_posts: [
+			{
+				id: 5,
+				title: 'My Public Page',
+				is_primary: true,
+				edit_url: 'https://example.com/wp-admin/post.php?post=5',
+			},
+		],
+	};
+	render(
+		<EventContextHeader
+			eventDate={eventDate}
+			manageEventUrl={manageEventUrl}
+			calendarUrl={calendarUrl}
+			onManageLink={onManageLink}
+		/>
+	);
+
+	const viewButton = screen.getByRole('link', {
+		name: /View public page/i,
+	});
+	expect(viewButton).toHaveAttribute('href', 'https://example.com/event');
+
+	const editButton = screen.getByRole('link', { name: /Edit page/i });
+	expect(editButton).toHaveAttribute(
+		'href',
+		'https://example.com/wp-admin/post.php?post=5'
+	);
+
+	const changeLinkButton = screen.getByRole('button', {
+		name: /Change link/i,
+	});
+	changeLinkButton.click();
+	expect(onManageLink).toHaveBeenCalledTimes(1);
+});
+
+it('link actions: external link shows open link + change link', () => {
+	const onManageLink = jest.fn();
+	const eventDate = {
+		...baseEventDate,
+		link_type: 'external',
+		external_url: 'https://example.com/external',
+	};
+	render(
+		<EventContextHeader
+			eventDate={eventDate}
+			manageEventUrl={manageEventUrl}
+			calendarUrl={calendarUrl}
+			onManageLink={onManageLink}
+		/>
+	);
+
+	const openButton = screen.getByRole('link', { name: /Open link/i });
+	expect(openButton).toHaveAttribute('href', 'https://example.com/external');
+
+	const changeLinkButton = screen.getByRole('button', {
+		name: /Change link/i,
+	});
+	changeLinkButton.click();
+	expect(onManageLink).toHaveBeenCalledTimes(1);
+});
+
+it('link actions: no onManageLink prop renders no action buttons for the placeholder state', () => {
+	render(
 		<EventContextHeader
 			eventDate={baseEventDate}
 			manageEventUrl={manageEventUrl}
@@ -176,21 +269,8 @@ it('"View public page" button is shown only when display_url is set', () => {
 		/>
 	);
 	expect(
-		screen.queryByRole('link', { name: /View public page/i })
+		screen.queryByRole('button', { name: /Set up event page/i })
 	).not.toBeInTheDocument();
-
-	rerender(
-		<EventContextHeader
-			eventDate={{
-				...baseEventDate,
-				display_url: 'https://example.com/event',
-			}}
-			manageEventUrl={manageEventUrl}
-			calendarUrl={calendarUrl}
-		/>
-	);
-	const button = screen.getByRole('link', { name: /View public page/i });
-	expect(button).toHaveAttribute('href', 'https://example.com/event');
 });
 
 it('resolves the venue name from the venues prop', () => {

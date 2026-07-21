@@ -3,13 +3,14 @@
  *
  * Structured context header shown directly under the Manage Event H1:
  * breadcrumb, date/time/venue meta line, a chip row (link status, series
- * badge, categories), and a "View public page" button. For generated
- * occurrences, also explains why the Tickets tab is disabled.
+ * badge, categories), and link-state actions (view/edit the linked page,
+ * open an external link, or set one up). For generated occurrences, also
+ * explains why the Tickets tab is disabled.
  *
  * @package FairEvents
  */
 
-import { Button } from '@wordpress/components';
+import { Button, __experimentalHStack as HStack } from '@wordpress/components';
 import { createInterpolateElement } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { dateI18n, getSettings } from '@wordpress/date';
@@ -25,12 +26,14 @@ import {
  * @param {string}      props.manageEventUrl Base Manage Event admin URL (no event_date_id).
  * @param {string}      props.calendarUrl    Base Calendar admin URL.
  * @param {Array}       props.venues         Venues loaded for the site (id, name).
+ * @param {Function}    [props.onManageLink] Called to open the link-target popup. Omitted → no link actions render (read-only contexts).
  */
 export default function EventContextHeader({
 	eventDate,
 	manageEventUrl,
 	calendarUrl,
 	venues = [],
+	onManageLink,
 }) {
 	if (!eventDate) return null;
 
@@ -45,17 +48,31 @@ export default function EventContextHeader({
 	const venueLine = venue?.name || eventDate.address || null;
 
 	const linkedPosts = eventDate.linked_posts || [];
-	let linkChip;
+
+	// Drives both the status chip and the action buttons below it, so the two
+	// never disagree about what state the event's public page is in.
+	let linkState;
+	let primaryPost = null;
 	if (eventDate.link_type === 'post' && linkedPosts.length > 0) {
+		linkState = 'post';
+		primaryPost = linkedPosts.find((lp) => lp.is_primary) || linkedPosts[0];
+	} else if (eventDate.link_type === 'external' && eventDate.external_url) {
+		linkState = 'external';
+	} else {
+		linkState = 'none';
+	}
+
+	let linkChip;
+	if (linkState === 'post') {
 		linkChip = {
 			label: sprintf(
 				/* translators: %s: title of the linked post/page */
 				__('Public page: %s', 'fair-events'),
-				linkedPosts[0].title
+				primaryPost.title
 			),
 			className: 'fair-events-context-badge is-linked',
 		};
-	} else if (eventDate.link_type === 'external' && eventDate.external_url) {
+	} else if (linkState === 'external') {
 		linkChip = {
 			label: sprintf(
 				/* translators: %s: external URL the event links to */
@@ -69,6 +86,60 @@ export default function EventContextHeader({
 			label: __('No public page yet', 'fair-events'),
 			className: 'fair-events-context-badge',
 		};
+	}
+
+	let linkActions = null;
+	if (linkState === 'post') {
+		linkActions = (
+			<HStack spacing={2} alignment="left" wrap>
+				{eventDate.display_url && (
+					<Button
+						variant="secondary"
+						href={eventDate.display_url}
+						target="_blank"
+						rel="noreferrer"
+					>
+						{__('View public page', 'fair-events')}
+					</Button>
+				)}
+				{primaryPost?.edit_url && (
+					<Button variant="secondary" href={primaryPost.edit_url}>
+						{__('Edit page', 'fair-events')}
+					</Button>
+				)}
+				{onManageLink && (
+					<Button variant="tertiary" onClick={onManageLink}>
+						{__('Change link', 'fair-events')}
+					</Button>
+				)}
+			</HStack>
+		);
+	} else if (linkState === 'external') {
+		linkActions = (
+			<HStack spacing={2} alignment="left" wrap>
+				<Button
+					variant="secondary"
+					href={eventDate.external_url}
+					target="_blank"
+					rel="noreferrer"
+				>
+					{__('Open link', 'fair-events')}
+				</Button>
+				{onManageLink && (
+					<Button variant="tertiary" onClick={onManageLink}>
+						{__('Change link', 'fair-events')}
+					</Button>
+				)}
+			</HStack>
+		);
+	} else if (onManageLink) {
+		linkActions = (
+			<HStack spacing={2} alignment="left" wrap>
+				<Button variant="primary" onClick={onManageLink}>
+					{__('Set up event page…', 'fair-events')}
+				</Button>
+			</HStack>
+		);
 	}
 
 	const isMaster = eventDate.occurrence_type === 'master';
@@ -176,17 +247,8 @@ export default function EventContextHeader({
 					</span>
 				))}
 			</p>
-			{eventDate.display_url && (
-				<p style={{ margin: '0 0 4px' }}>
-					<Button
-						variant="secondary"
-						href={eventDate.display_url}
-						target="_blank"
-						rel="noreferrer"
-					>
-						{__('View public page', 'fair-events')}
-					</Button>
-				</p>
+			{linkActions && (
+				<div style={{ margin: '0 0 4px' }}>{linkActions}</div>
 			)}
 			{isGenerated && (
 				<p style={{ margin: 0 }}>

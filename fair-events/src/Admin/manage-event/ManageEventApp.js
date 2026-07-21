@@ -23,7 +23,6 @@ import {
 	TextControl,
 	CheckboxControl,
 	SelectControl,
-	RadioControl,
 	FormTokenField,
 	TabPanel,
 	__experimentalVStack as VStack,
@@ -49,6 +48,7 @@ import RecurrenceCalendar from './RecurrenceCalendar.js';
 import RecurrenceImpactSummary from './RecurrenceImpactSummary.js';
 import SeriesModal from './SeriesModal.js';
 import EditInstancesModal from './EditInstancesModal.js';
+import EventLinkModal from './EventLinkModal.js';
 import EventSignups from './EventSignups.js';
 import EventContextHeader from './EventContextHeader.js';
 
@@ -101,22 +101,14 @@ export default function ManageEventApp() {
 	const [availableCategories, setAvailableCategories] = useState([]);
 	const [creatingCategories, setCreatingCategories] = useState([]);
 
-	// Post creation state
-	const [creatingPost, setCreatingPost] = useState(false);
-	const [selectedPostType, setSelectedPostType] = useState(
-		enabledPostTypes[0]?.slug || 'fair_event'
-	);
-
-	// Link additional post state
-	const [linkingPost, setLinkingPost] = useState(false);
-	const [linkPostId, setLinkPostId] = useState('');
-	const [searchResults, setSearchResults] = useState([]);
 	const [togglingExdate, setTogglingExdate] = useState(null);
 	const [recurrenceImpact, setRecurrenceImpact] = useState(null);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [seriesModalOpen, setSeriesModalOpen] = useState(false);
 	const [editInstancesModalOpen, setEditInstancesModalOpen] = useState(false);
 	const [endSeriesDialogOpen, setEndSeriesDialogOpen] = useState(false);
+	const [linkModalOpen, setLinkModalOpen] = useState(false);
+	const [linkModalConfirmOpen, setLinkModalConfirmOpen] = useState(false);
 
 	// Dirty-state tracking (#987): snapshot the saved form/ticket state so we
 	// can warn before losing edits and mark which tab holds them.
@@ -546,97 +538,23 @@ export default function ManageEventApp() {
 			  );
 	}, [eventDate]);
 
-	const handleCreatePost = async () => {
-		setCreatingPost(true);
-		setError(null);
-
-		try {
-			const result = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}/create-post`,
-				method: 'POST',
-				data: {
-					post_type: selectedPostType,
-					post_status: 'draft',
-				},
-			});
-
-			if (result.edit_url) {
-				window.location.href = result.edit_url;
-			}
-		} catch (err) {
-			setError(
-				err.message || __('Failed to create post.', 'fair-events')
-			);
-		} finally {
-			setCreatingPost(false);
-		}
+	const handleLinkModalSaved = (updated) => {
+		setEventDate(updated);
+		populateForm(updated);
 	};
 
-	const handleUnlinkPost = async (postId) => {
-		setSaving(true);
-		setError(null);
-
-		try {
-			const updated = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}/link-post`,
-				method: 'DELETE',
-				data: {
-					post_id: postId,
-				},
-			});
-			setEventDate(updated);
-			populateForm(updated);
-			setSuccess(__('Post unlinked successfully.', 'fair-events'));
-		} catch (err) {
-			setError(
-				err.message || __('Failed to unlink post.', 'fair-events')
-			);
-		} finally {
-			setSaving(false);
-		}
-	};
-
-	const handleLinkPost = async () => {
-		if (!linkPostId) return;
-		setLinkingPost(true);
-		setError(null);
-
-		try {
-			const updated = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}/link-post`,
-				method: 'POST',
-				data: {
-					post_id: parseInt(linkPostId, 10),
-				},
-			});
-			setEventDate(updated);
-			populateForm(updated);
-			setLinkPostId('');
-			setSearchResults([]);
-			setSuccess(__('Post linked successfully.', 'fair-events'));
-		} catch (err) {
-			setError(err.message || __('Failed to link post.', 'fair-events'));
-		} finally {
-			setLinkingPost(false);
-		}
-	};
-
-	const handleSearchPosts = async (searchTerm) => {
-		if (!searchTerm || searchTerm.length < 2) {
-			setSearchResults([]);
+	const handleManageLink = () => {
+		if (detailsDirty) {
+			setLinkModalConfirmOpen(true);
 			return;
 		}
+		setLinkModalOpen(true);
+	};
 
-		try {
-			const results = await apiFetch({
-				path: `/wp/v2/search?search=${encodeURIComponent(
-					searchTerm
-				)}&type=post&subtype=any&per_page=10`,
-			});
-			setSearchResults(results);
-		} catch {
-			// Ignore search errors.
-		}
+	const confirmSaveThenManageLink = async () => {
+		setLinkModalConfirmOpen(false);
+		await handleSave();
+		setLinkModalOpen(true);
 	};
 
 	const handleToggleExdate = async (date) => {
@@ -673,9 +591,6 @@ export default function ManageEventApp() {
 		{ label: __('— No venue —', 'fair-events'), value: '' },
 		...venues.map((v) => ({ label: v.name, value: String(v.id) })),
 	];
-
-	const isLinkedToPost =
-		eventDate?.link_type === 'post' && eventDate?.event_id;
 
 	const urlTab = useMemo(() => {
 		const urlParams = new URLSearchParams(window.location.search);
@@ -854,8 +769,6 @@ export default function ManageEventApp() {
 			</div>
 		);
 	}
-
-	const linkedPosts = eventDate.linked_posts || [];
 
 	const renderEventDetailsTab = () => (
 		<>
@@ -1130,8 +1043,6 @@ export default function ManageEventApp() {
 						</CardBody>
 					</Card>
 				)}
-
-				{renderLinksTab()}
 			</div>
 
 			<HStack
@@ -1154,201 +1065,6 @@ export default function ManageEventApp() {
 				)}
 			</HStack>
 		</>
-	);
-
-	const renderLinksTab = () => (
-		<Card className="fair-events-event-details-card">
-			<CardHeader>
-				<h2>{__('Where does this event link to?', 'fair-events')}</h2>
-			</CardHeader>
-			<CardBody>
-				<VStack spacing={4}>
-					{linkedPosts.length > 0 && (
-						<>
-							<Notice status="info" isDismissible={false}>
-								{sprintf(
-									/* translators: %d: number of linked posts */
-									_n(
-										'This event is linked to %d post.',
-										'This event is linked to %d posts.',
-										linkedPosts.length,
-										'fair-events'
-									),
-									linkedPosts.length
-								)}
-							</Notice>
-							{linkedPosts.map((lp) => (
-								<HStack key={lp.id} spacing={3} wrap>
-									<span>
-										<strong>{lp.title}</strong> ({lp.status}
-										)
-										{lp.is_primary && (
-											<span
-												style={{
-													marginLeft: '4px',
-													color: '#007cba',
-													fontSize: '12px',
-												}}
-											>
-												{__('Primary', 'fair-events')}
-											</span>
-										)}
-									</span>
-									{lp.view_url && (
-										<Button
-											variant="secondary"
-											href={lp.view_url}
-											target="_blank"
-											size="small"
-										>
-											{__('View Entry', 'fair-events')}
-										</Button>
-									)}
-									{lp.edit_url && (
-										<Button
-											variant="secondary"
-											href={lp.edit_url}
-											size="small"
-										>
-											{__('Edit Post', 'fair-events')}
-										</Button>
-									)}
-									<Button
-										variant="tertiary"
-										size="small"
-										isDestructive
-										onClick={() => handleUnlinkPost(lp.id)}
-									>
-										{__('Unlink', 'fair-events')}
-									</Button>
-								</HStack>
-							))}
-						</>
-					)}
-
-					{!isLinkedToPost && linkedPosts.length === 0 && (
-						<>
-							<RadioControl
-								label={__('Link type', 'fair-events')}
-								hideLabelFromVision
-								selected={linkType}
-								options={[
-									{
-										label: __(
-											'A page on this site',
-											'fair-events'
-										),
-										value: 'post',
-									},
-									{
-										label: __(
-											'An external website',
-											'fair-events'
-										),
-										value: 'external',
-									},
-									{
-										label: __(
-											'Nowhere — show details only',
-											'fair-events'
-										),
-										value: 'none',
-									},
-								]}
-								onChange={setLinkType}
-							/>
-
-							{linkType === 'external' && (
-								<TextControl
-									label={__('External URL', 'fair-events')}
-									type="url"
-									value={externalUrl}
-									onChange={setExternalUrl}
-									placeholder="https://"
-								/>
-							)}
-
-							{linkType === 'post' && (
-								<>
-									<SelectControl
-										label={__('Post type', 'fair-events')}
-										value={selectedPostType}
-										options={enabledPostTypes.map((pt) => ({
-											label: pt.label,
-											value: pt.slug,
-										}))}
-										onChange={setSelectedPostType}
-									/>
-									<Button
-										variant="primary"
-										onClick={handleCreatePost}
-										isBusy={creatingPost}
-										disabled={creatingPost}
-									>
-										{__('Create New Post', 'fair-events')}
-									</Button>
-
-									<VStack spacing={2}>
-										<h3 style={{ margin: 0 }}>
-											{__(
-												'Link Additional Post',
-												'fair-events'
-											)}
-										</h3>
-										<TextControl
-											label={__(
-												'Search posts by title',
-												'fair-events'
-											)}
-											onChange={handleSearchPosts}
-											placeholder={__(
-												'Start typing to search...',
-												'fair-events'
-											)}
-										/>
-										{searchResults.length > 0 && (
-											<SelectControl
-												label={__(
-													'Select a post',
-													'fair-events'
-												)}
-												value={linkPostId}
-												options={[
-													{
-														label: __(
-															'Select...',
-															'fair-events'
-														),
-														value: '',
-													},
-													...searchResults.map(
-														(r) => ({
-															label: r.title,
-															value: String(r.id),
-														})
-													),
-												]}
-												onChange={setLinkPostId}
-											/>
-										)}
-										{linkPostId && (
-											<Button
-												variant="primary"
-												onClick={handleLinkPost}
-												isBusy={linkingPost}
-												disabled={linkingPost}
-											>
-												{__('Link Post', 'fair-events')}
-											</Button>
-										)}
-									</VStack>
-								</>
-							)}
-						</>
-					)}
-				</VStack>
-			</CardBody>
-		</Card>
 	);
 
 	return (
@@ -1398,6 +1114,7 @@ export default function ManageEventApp() {
 				manageEventUrl={manageEventUrl}
 				calendarUrl={calendarUrl}
 				venues={venues}
+				onManageLink={handleManageLink}
 			/>
 
 			{error && (
@@ -1460,6 +1177,29 @@ export default function ManageEventApp() {
 			>
 				{endSeriesConfirmMessage}
 			</ConfirmDialog>
+
+			<ConfirmDialog
+				isOpen={linkModalConfirmOpen}
+				onConfirm={confirmSaveThenManageLink}
+				onCancel={() => setLinkModalConfirmOpen(false)}
+				confirmButtonText={__('Save and continue', 'fair-events')}
+				cancelButtonText={__('Cancel', 'fair-events')}
+			>
+				{__(
+					'You have unsaved changes. Save event details before setting up the link?',
+					'fair-events'
+				)}
+			</ConfirmDialog>
+
+			{linkModalOpen && (
+				<EventLinkModal
+					eventDateId={eventDateId}
+					eventDate={eventDate}
+					enabledPostTypes={enabledPostTypes}
+					onClose={() => setLinkModalOpen(false)}
+					onSaved={handleLinkModalSaved}
+				/>
+			)}
 
 			{seriesModalOpen && (
 				<SeriesModal
