@@ -317,3 +317,200 @@ test.describe('EventParticipantsController marketing-consent', () => {
 		expect(res.status()).toBeLessThan(404);
 	});
 });
+
+/**
+ * Issue #1107: EmailService::deliver() is now the single enforcement point
+ * for marketing consent, belt-and-suspenders behind the callers' own
+ * pre-filtering. These tests exercise the bulk custom-mail and event-invitation
+ * send paths end to end and assert a declined participant, and a pending
+ * marketing participant (the exact #1106 regression shape), land in `skipped`
+ * rather than `sent`.
+ */
+test.describe('EmailService consent enforcement (bulk sends)', () => {
+	let api;
+	let eventId;
+	let eventDateId;
+	// A second, unrelated event date — event-invitations skips participants
+	// already signed up to the target date, which would mask the consent skip
+	// under test if we reused eventDateId (linked below for the custom-mail
+	// case).
+	let invitationsEventId;
+	let invitationsEventDateId;
+	let declinedId;
+	let declinedEmail;
+	let confirmedMarketingId;
+	let confirmedMarketingEmail;
+	let pendingId;
+	let pendingEmail;
+
+	async function createTestEvent(title) {
+		const eventRes = await api.post('/wp-json/wp/v2/fair_event', {
+			headers: authHeaders,
+			data: { title, status: 'publish' },
+		});
+		expect(eventRes.ok()).toBeTruthy();
+		const createdEventId = (await eventRes.json()).id;
+
+		const eventsRes = await api.get('/wp-json/fair-audience/v1/events', {
+			headers: authHeaders,
+			params: { per_page: 100 },
+		});
+		expect(eventsRes.ok()).toBeTruthy();
+		const events = await eventsRes.json();
+		const match = events.find((e) => e.event_id === createdEventId);
+		expect(match, 'event-date row for the test event').toBeTruthy();
+
+		return { eventId: createdEventId, eventDateId: match.event_date_id };
+	}
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		({ eventId, eventDateId } = await createTestEvent(
+			`Consent Enforcement Test ${Date.now()}`
+		));
+		({ eventId: invitationsEventId, eventDateId: invitationsEventDateId } =
+			await createTestEvent(
+				`Consent Enforcement Invitations Test ${Date.now()}`
+			));
+
+		declinedEmail = uniqueEmail('consent-declined');
+		declinedId = await createParticipant(api, {
+			name: 'Consent Declined',
+			email: declinedEmail,
+			email_profile: 'declined',
+		});
+
+		confirmedMarketingEmail = uniqueEmail('consent-confirmed');
+		confirmedMarketingId = await createParticipant(api, {
+			name: 'Consent Confirmed',
+			email: confirmedMarketingEmail,
+			email_profile: 'marketing',
+		});
+
+		// Mirrors the #1106 regression shape: created through the public
+		// audience-signup "keep me informed" flow, which sets
+		// email_profile=marketing but leaves status=pending until the
+		// participant clicks the confirmation link — there is no admin API
+		// to create this combination directly.
+		pendingEmail = uniqueEmail('consent-pending');
+		const signupRes = await api.post(
+			'/wp-json/fair-audience/v1/audience-signup',
+			{
+				data: {
+					name: 'Consent Pending',
+					email: pendingEmail,
+					keep_informed: true,
+				},
+			}
+		);
+		expect(signupRes.ok()).toBeTruthy();
+
+		const searchRes = await api.get(
+			'/wp-json/fair-audience/v1/participants',
+			{ headers: authHeaders, params: { search: pendingEmail } }
+		);
+		expect(searchRes.ok()).toBeTruthy();
+		const searchResults = await searchRes.json();
+		const pendingParticipant = searchResults.find(
+			(p) => p.email === pendingEmail
+		);
+		expect(
+			pendingParticipant,
+			'pending participant created via audience-signup'
+		).toBeTruthy();
+		expect(pendingParticipant.email_profile).toBe('marketing');
+		expect(pendingParticipant.status).toBe('pending');
+		pendingId = pendingParticipant.id;
+
+		// Link all three to the test event as signed_up — required for the
+		// event-scoped custom-mail send; event-invitations targets them
+		// directly via participant_ids instead (linking them here would make
+		// "already signed up" the skip reason instead of consent).
+		const linkRes = await api.post(
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/participants/batch`,
+			{
+				headers: authHeaders,
+				data: {
+					participant_ids: [
+						declinedId,
+						confirmedMarketingId,
+						pendingId,
+					],
+					label: 'signed_up',
+				},
+			}
+		);
+		expect(linkRes.ok()).toBeTruthy();
+	});
+
+	test.afterAll(async () => {
+		for (const id of [declinedId, confirmedMarketingId, pendingId]) {
+			if (id) {
+				await api.delete(
+					`/wp-json/fair-audience/v1/participants/${id}`,
+					{ headers: authHeaders }
+				);
+			}
+		}
+		for (const id of [eventId, invitationsEventId]) {
+			if (id) {
+				await api.delete(`/wp-json/wp/v2/fair_event/${id}`, {
+					headers: authHeaders,
+					params: { force: 'true' },
+				});
+			}
+		}
+		await api.dispose();
+	});
+
+	test('declined and pending participants are skipped on custom-mail bulk send', async () => {
+		const res = await api.post('/wp-json/fair-audience/v1/custom-mail', {
+			headers: authHeaders,
+			data: {
+				subject: 'Consent enforcement test',
+				content: '<p>Test</p>',
+				event_date_id: eventDateId,
+				is_marketing: true,
+				labels: ['signed_up'],
+			},
+		});
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+
+		const skippedEmails = body.skipped.map((r) => r.email);
+		expect(skippedEmails).toContain(declinedEmail);
+		expect(skippedEmails).toContain(pendingEmail);
+		expect(body.sent).not.toContain(declinedEmail);
+		expect(body.sent).not.toContain(pendingEmail);
+
+		// Consent isn't why the confirmed participant would be skipped —
+		// transport failure in this environment is a separate concern.
+		expect(skippedEmails).not.toContain(confirmedMarketingEmail);
+	});
+
+	test('declined and pending participants are skipped on event-invitation bulk send', async () => {
+		const res = await api.post(
+			`/wp-json/fair-audience/v1/event-dates/${invitationsEventDateId}/event-invitations`,
+			{
+				headers: authHeaders,
+				data: {
+					participant_ids: [
+						declinedId,
+						confirmedMarketingId,
+						pendingId,
+					],
+				},
+			}
+		);
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+
+		const skippedEmails = body.skipped.map((r) => r.email);
+		expect(skippedEmails).toContain(declinedEmail);
+		expect(skippedEmails).toContain(pendingEmail);
+		expect(body.sent).not.toContain(declinedEmail);
+		expect(body.sent).not.toContain(pendingEmail);
+		expect(skippedEmails).not.toContain(confirmedMarketingEmail);
+	});
+});
