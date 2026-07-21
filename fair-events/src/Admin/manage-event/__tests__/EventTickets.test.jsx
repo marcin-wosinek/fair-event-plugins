@@ -1116,3 +1116,59 @@ describe('EventTickets — Add-on collaborator discount removed (#1139)', () => 
 		expect(screen.queryByText(/Discounted price/i)).not.toBeInTheDocument();
 	});
 });
+
+describe('EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
+	const initialDataWithTwoPeriods = {
+		...initialDataWithTicketType,
+		sale_periods: [
+			{
+				id: 601,
+				name: 'Advance ticket',
+				sale_start: '2026-01-01',
+				sale_end: '2026-01-15',
+			},
+			{
+				id: 602,
+				name: 'Day of event',
+				sale_start: '2026-01-15',
+				sale_end: '2026-02-01',
+			},
+		],
+		prices: [
+			{ ticket_type_id: 1, sale_period_id: 601, price: '20' },
+			{ ticket_type_id: 1, sale_period_id: 602, price: '5' },
+		],
+	};
+
+	function moveMessage(boundaryLabel, dateStr) {
+		const formatted = new Date(`${dateStr}T00:00:00`).toLocaleDateString(
+			undefined,
+			{ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
+		);
+		return `Move the ${boundaryLabel} to ${formatted}`;
+	}
+
+	it('clicking a calendar day updates both chained date inputs and trips the dirty indicator', () => {
+		const onDirtyChange = jest.fn();
+		renderTickets({
+			initialData: initialDataWithTwoPeriods,
+			startDatetime: '2026-01-25 10:00:00',
+			endDatetime: '2026-02-01 12:00:00',
+			onDirtyChange,
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+
+		const button = screen.getByRole('button', {
+			name: moveMessage("start of 'Day of event'", '2026-01-16'),
+		});
+		fireEvent.click(button);
+
+		// Both the Advance-ticket "Until" input and the Day-of-event "From"
+		// input mirror the moved boundary — updateSalePeriod() chains them.
+		expect(screen.getAllByDisplayValue('2026-01-16')).toHaveLength(2);
+		expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+	});
+});
