@@ -673,7 +673,7 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 					<h2>{__('Test payment', 'fair-payments-connector')}</h2>
 					<p>
 						{__(
-							'Create a one-unit payment to verify the full checkout and webhook flow end to end.',
+							'Make a small payment (one unit of your currency, e.g. €1) to check that checkout and confirmation work from start to finish.',
 							'fair-payments-connector'
 						)}
 					</p>
