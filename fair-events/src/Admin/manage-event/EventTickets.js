@@ -90,10 +90,15 @@ export default function EventTickets({
 	// Payments are unavailable when the connector plugin is missing
 	// (connectorActive !== true) or installed but not yet configured
 	// (paymentConfigured === false). The two cases show different warnings.
-	const connectorActive =
-		window.fairPaymentsConnector?.connectorActive === true;
-	const paymentConfigured =
-		window.fairPaymentsConnector?.paymentConfigured === true;
+	// wp_localize_script casts booleans to strings ("1"/""), so read the
+	// connector flags tolerantly rather than comparing against real booleans.
+	const asBool = (v) => v === true || v === '1' || v === 1;
+	const connectorActive = asBool(
+		window.fairPaymentsConnector?.connectorActive
+	);
+	const paymentConfigured = asBool(
+		window.fairPaymentsConnector?.paymentConfigured
+	);
 	const paymentsUnavailable = !connectorActive || !paymentConfigured;
 	// Any price > 0 across every source makes at least one ticket purchasable,
 	// so the "payments not set up" warning is relevant. Free ticketing (all
