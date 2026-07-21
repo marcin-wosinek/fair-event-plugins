@@ -16,10 +16,13 @@ import {
 	FormTokenField,
 	PanelBody,
 	Button,
+	Notice,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
+	__experimentalToggleGroupControl as ToggleGroupControl,
+	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	formatLocalDate,
@@ -40,6 +43,14 @@ export default function QuickEventModal({ date, onClose, onSuccess }) {
 	const [venues, setVenues] = useState([]);
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState(null);
+
+	// From-URL tab.
+	const [activeTab, setActiveTab] = useState('manual');
+	const [lookupUrl, setLookupUrl] = useState('');
+	const [isLookingUp, setIsLookingUp] = useState(false);
+	const [lookupError, setLookupError] = useState(null);
+	const [fetchedLocation, setFetchedLocation] = useState(null);
+	const [missingFields, setMissingFields] = useState([]);
 
 	// Categories.
 	const [categories, setCategories] = useState([]);
@@ -89,6 +100,70 @@ export default function QuickEventModal({ date, onClose, onSuccess }) {
 			setSearchResults(results);
 		} catch {
 			// Ignore search errors.
+		}
+	};
+
+	const handleLookup = async () => {
+		if (!lookupUrl.trim()) {
+			setLookupError(__('Enter a URL to look up.', 'fair-events'));
+			return;
+		}
+
+		setIsLookingUp(true);
+		setLookupError(null);
+
+		// The pasted URL becomes the external link regardless of outcome.
+		setLinkType('external');
+		setExternalUrl(lookupUrl);
+
+		try {
+			const metadata = await apiFetch({
+				path: '/fair-events/v1/lookup-url',
+				method: 'POST',
+				data: { url: lookupUrl },
+			});
+
+			if (metadata.title) {
+				setTitle(metadata.title);
+			}
+
+			if (metadata.start_datetime) {
+				setAllDay(Boolean(metadata.all_day));
+				setStartDate(metadata.start_datetime.slice(0, 10));
+				setStartTime(metadata.start_datetime.slice(11, 16));
+			}
+
+			if (metadata.end_datetime) {
+				setEndDate(metadata.end_datetime.slice(0, 10));
+				setEndTime(metadata.end_datetime.slice(11, 16));
+			}
+
+			setFetchedLocation(metadata.location || null);
+
+			if (metadata.location) {
+				const match = venues.find(
+					(v) =>
+						v.name.toLowerCase() === metadata.location.toLowerCase()
+				);
+				if (match) {
+					setVenueId(String(match.id));
+				}
+			}
+
+			const found = metadata.found || [];
+			setMissingFields(
+				['start', 'end', 'location'].filter(
+					(field) => !found.includes(field)
+				)
+			);
+
+			setActiveTab('manual');
+		} catch (err) {
+			setLookupError(
+				err.message || __('Could not look up that page.', 'fair-events')
+			);
+		} finally {
+			setIsLookingUp(false);
 		}
 	};
 
@@ -181,197 +256,310 @@ export default function QuickEventModal({ date, onClose, onSuccess }) {
 						</div>
 					)}
 
-					<TextControl
-						label={__('Title', 'fair-events')}
-						value={title}
-						onChange={setTitle}
-						required
-						autoFocus
-					/>
+					<ToggleGroupControl
+						label={__('Add event', 'fair-events')}
+						hideLabelFromVision
+						value={activeTab}
+						onChange={setActiveTab}
+						isBlock
+					>
+						<ToggleGroupControlOption
+							value="manual"
+							label={__('Manual', 'fair-events')}
+						/>
+						<ToggleGroupControlOption
+							value="url"
+							label={__('From URL', 'fair-events')}
+						/>
+					</ToggleGroupControl>
 
-					<CheckboxControl
-						label={__('All day', 'fair-events')}
-						checked={allDay}
-						onChange={setAllDay}
-					/>
+					{'url' === activeTab && (
+						<VStack spacing={4}>
+							{lookupError && (
+								<div className="notice notice-error inline">
+									<p>{lookupError}</p>
+								</div>
+							)}
 
-					{allDay ? (
-						<HStack spacing={4} alignment="top">
 							<TextControl
-								label={__('Start date', 'fair-events')}
-								type="date"
-								value={startDate}
-								onChange={setStartDate}
-								required
+								label={__('Event page URL', 'fair-events')}
+								type="url"
+								value={lookupUrl}
+								onChange={setLookupUrl}
+								placeholder="https://"
+								autoFocus
 							/>
-							<TextControl
-								label={__('End date', 'fair-events')}
-								type="date"
-								value={endDate}
-								onChange={setEndDate}
-								required
-							/>
-						</HStack>
-					) : (
-						<>
-							<HStack spacing={4} alignment="top">
-								<TextControl
-									label={__('Start date', 'fair-events')}
-									type="date"
-									value={startDate}
-									onChange={setStartDate}
-									required
-								/>
-								<TextControl
-									label={__('Start time', 'fair-events')}
-									type="time"
-									value={startTime}
-									onChange={setStartTime}
-									required
-								/>
+
+							<HStack justify="flex-start">
+								<Button
+									variant="secondary"
+									isBusy={isLookingUp}
+									disabled={isLookingUp || !lookupUrl.trim()}
+									onClick={handleLookup}
+								>
+									{__('Look up', 'fair-events')}
+								</Button>
 							</HStack>
-							<HStack spacing={4} alignment="top">
-								<TextControl
-									label={__('End date', 'fair-events')}
-									type="date"
-									value={endDate}
-									onChange={setEndDate}
-									required
-								/>
-								<TextControl
-									label={__('End time', 'fair-events')}
-									type="time"
-									value={endTime}
-									onChange={setEndTime}
-									required
-								/>
-							</HStack>
-						</>
+						</VStack>
 					)}
 
-					<SelectControl
-						label={__('Venue', 'fair-events')}
-						value={venueId}
-						options={venueOptions}
-						onChange={setVenueId}
-					/>
-
-					<PanelBody
-						title={__('More options', 'fair-events')}
-						initialOpen={false}
-					>
-						<VStack spacing={4}>
-							<FormTokenField
-								label={__('Categories', 'fair-events')}
-								value={categories
-									.map((id) => {
-										const cat = availableCategories.find(
-											(c) => c.id === id
-										);
-										return cat ? cat.name : '';
+					{'manual' === activeTab && missingFields.length > 0 && (
+						<Notice status="info" isDismissible={false}>
+							{sprintf(
+								/* translators: %s: comma-separated list of missing field names */
+								__(
+									"This page didn't specify: %s. Fill these in manually.",
+									'fair-events'
+								),
+								missingFields
+									.map((field) => {
+										if ('start' === field) {
+											return __(
+												'start date',
+												'fair-events'
+											);
+										}
+										if ('end' === field) {
+											return __(
+												'end date',
+												'fair-events'
+											);
+										}
+										return __('location', 'fair-events');
 									})
-									.filter(Boolean)}
-								suggestions={availableCategories.map(
-									(c) => c.name
-								)}
-								onChange={(tokens) => {
-									const ids = tokens
-										.map((token) => {
-											const cat =
-												availableCategories.find(
-													(c) => c.name === token
-												);
-											return cat ? cat.id : null;
-										})
-										.filter((id) => id !== null);
-									setCategories(ids);
-								}}
-							/>
-
-							<RadioControl
-								label={__('Link to', 'fair-events')}
-								selected={linkType}
-								options={[
-									{
-										label: __(
-											'Nowhere — show details only',
-											'fair-events'
-										),
-										value: 'none',
-									},
-									{
-										label: __(
-											'An external website',
-											'fair-events'
-										),
-										value: 'external',
-									},
-									{
-										label: __(
-											'A page on this site',
-											'fair-events'
-										),
-										value: 'post',
-									},
-								]}
-								onChange={setLinkType}
-							/>
-
-							{linkType === 'external' && (
-								<TextControl
-									label={__('External URL', 'fair-events')}
-									type="url"
-									value={externalUrl}
-									onChange={setExternalUrl}
-									placeholder="https://"
-								/>
+									.join(', ')
 							)}
+						</Notice>
+					)}
 
-							{linkType === 'post' && (
-								<VStack spacing={2}>
+					{'manual' === activeTab && (
+						<>
+							<TextControl
+								label={__('Title', 'fair-events')}
+								value={title}
+								onChange={setTitle}
+								required
+								autoFocus
+							/>
+
+							<CheckboxControl
+								label={__('All day', 'fair-events')}
+								checked={allDay}
+								onChange={setAllDay}
+							/>
+
+							{allDay ? (
+								<HStack spacing={4} alignment="top">
 									<TextControl
-										label={__(
-											'Search posts by title',
-											'fair-events'
-										)}
-										onChange={handleSearchPosts}
-										placeholder={__(
-											'Start typing to search...',
-											'fair-events'
-										)}
+										label={__('Start date', 'fair-events')}
+										type="date"
+										value={startDate}
+										onChange={setStartDate}
+										required
 									/>
-									{searchResults.length > 0 && (
-										<SelectControl
+									<TextControl
+										label={__('End date', 'fair-events')}
+										type="date"
+										value={endDate}
+										onChange={setEndDate}
+										required
+									/>
+								</HStack>
+							) : (
+								<>
+									<HStack spacing={4} alignment="top">
+										<TextControl
 											label={__(
-												'Select a post',
+												'Start date',
 												'fair-events'
 											)}
-											value={linkPostId}
-											options={[
-												{
-													label: __(
-														'Select...',
-														'fair-events'
-													),
-													value: '',
-												},
-												...searchResults.map((r) => ({
-													label: r.title,
-													value: String(r.id),
-												})),
-											]}
-											onChange={setLinkPostId}
+											type="date"
+											value={startDate}
+											onChange={setStartDate}
+											required
 										/>
-									)}
-								</VStack>
+										<TextControl
+											label={__(
+												'Start time',
+												'fair-events'
+											)}
+											type="time"
+											value={startTime}
+											onChange={setStartTime}
+											required
+										/>
+									</HStack>
+									<HStack spacing={4} alignment="top">
+										<TextControl
+											label={__(
+												'End date',
+												'fair-events'
+											)}
+											type="date"
+											value={endDate}
+											onChange={setEndDate}
+											required
+										/>
+										<TextControl
+											label={__(
+												'End time',
+												'fair-events'
+											)}
+											type="time"
+											value={endTime}
+											onChange={setEndTime}
+											required
+										/>
+									</HStack>
+								</>
 							)}
 
-							<RecurrenceControl
-								value={recurrence}
-								onChange={setRecurrence}
+							<SelectControl
+								label={__('Venue', 'fair-events')}
+								value={venueId}
+								options={venueOptions}
+								onChange={setVenueId}
+								help={
+									fetchedLocation
+										? sprintf(
+												/* translators: %s: location name found on the source page */
+												__(
+													'From the page: %s',
+													'fair-events'
+												),
+												fetchedLocation
+										  )
+										: undefined
+								}
 							/>
-						</VStack>
-					</PanelBody>
+
+							<PanelBody
+								title={__('More options', 'fair-events')}
+								initialOpen={false}
+							>
+								<VStack spacing={4}>
+									<FormTokenField
+										label={__('Categories', 'fair-events')}
+										value={categories
+											.map((id) => {
+												const cat =
+													availableCategories.find(
+														(c) => c.id === id
+													);
+												return cat ? cat.name : '';
+											})
+											.filter(Boolean)}
+										suggestions={availableCategories.map(
+											(c) => c.name
+										)}
+										onChange={(tokens) => {
+											const ids = tokens
+												.map((token) => {
+													const cat =
+														availableCategories.find(
+															(c) =>
+																c.name === token
+														);
+													return cat ? cat.id : null;
+												})
+												.filter((id) => id !== null);
+											setCategories(ids);
+										}}
+									/>
+
+									<RadioControl
+										label={__('Link to', 'fair-events')}
+										selected={linkType}
+										options={[
+											{
+												label: __(
+													'Nowhere — show details only',
+													'fair-events'
+												),
+												value: 'none',
+											},
+											{
+												label: __(
+													'An external website',
+													'fair-events'
+												),
+												value: 'external',
+											},
+											{
+												label: __(
+													'A page on this site',
+													'fair-events'
+												),
+												value: 'post',
+											},
+										]}
+										onChange={setLinkType}
+									/>
+
+									{linkType === 'external' && (
+										<TextControl
+											label={__(
+												'External URL',
+												'fair-events'
+											)}
+											type="url"
+											value={externalUrl}
+											onChange={setExternalUrl}
+											placeholder="https://"
+										/>
+									)}
+
+									{linkType === 'post' && (
+										<VStack spacing={2}>
+											<TextControl
+												label={__(
+													'Search posts by title',
+													'fair-events'
+												)}
+												onChange={handleSearchPosts}
+												placeholder={__(
+													'Start typing to search...',
+													'fair-events'
+												)}
+											/>
+											{searchResults.length > 0 && (
+												<SelectControl
+													label={__(
+														'Select a post',
+														'fair-events'
+													)}
+													value={linkPostId}
+													options={[
+														{
+															label: __(
+																'Select...',
+																'fair-events'
+															),
+															value: '',
+														},
+														...searchResults.map(
+															(r) => ({
+																label: r.title,
+																value: String(
+																	r.id
+																),
+															})
+														),
+													]}
+													onChange={setLinkPostId}
+												/>
+											)}
+										</VStack>
+									)}
+
+									<RecurrenceControl
+										value={recurrence}
+										onChange={setRecurrence}
+									/>
+								</VStack>
+							</PanelBody>
+						</>
+					)}
 
 					<HStack justify="flex-end" spacing={2}>
 						<Button
@@ -381,14 +569,16 @@ export default function QuickEventModal({ date, onClose, onSuccess }) {
 						>
 							{__('Cancel', 'fair-events')}
 						</Button>
-						<Button
-							variant="primary"
-							type="submit"
-							isBusy={isSaving}
-							disabled={isSaving || !title.trim()}
-						>
-							{__('Create Event', 'fair-events')}
-						</Button>
+						{'manual' === activeTab && (
+							<Button
+								variant="primary"
+								type="submit"
+								isBusy={isSaving}
+								disabled={isSaving || !title.trim()}
+							>
+								{__('Create Event', 'fair-events')}
+							</Button>
+						)}
 					</HStack>
 				</VStack>
 			</form>

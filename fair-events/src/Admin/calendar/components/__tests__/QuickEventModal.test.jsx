@@ -10,6 +10,15 @@ import QuickEventModal from '../QuickEventModal.js';
 
 jest.mock('@wordpress/api-fetch');
 
+// ToggleGroupControl measures itself via ResizeObserver, which jsdom doesn't implement.
+global.ResizeObserver =
+	global.ResizeObserver ||
+	class ResizeObserver {
+		observe() {}
+		unobserve() {}
+		disconnect() {}
+	};
+
 const availableCategories = [
 	{ id: 1, name: 'Music' },
 	{ id: 2, name: 'Sports' },
@@ -17,16 +26,27 @@ const availableCategories = [
 
 const createdEventDate = { id: 99, title: 'Test Event' };
 
+const venues = [{ id: 5, name: 'The Venue' }];
+
+let lookupResponse = null;
+
 beforeEach(() => {
+	lookupResponse = null;
 	apiFetch.mockImplementation(({ path, method }) => {
 		if (path === '/fair-events/v1/venues') {
-			return Promise.resolve([]);
+			return Promise.resolve(venues);
 		}
 		if (path === '/fair-events/v1/sources/categories') {
 			return Promise.resolve(availableCategories);
 		}
 		if (path.startsWith('/wp/v2/search')) {
 			return Promise.resolve([{ id: 7, title: 'About Us' }]);
+		}
+		if (path === '/fair-events/v1/lookup-url' && method === 'POST') {
+			if (lookupResponse instanceof Error) {
+				return Promise.reject(lookupResponse);
+			}
+			return Promise.resolve(lookupResponse);
 		}
 		if (path === '/fair-events/v1/event-dates' && method === 'POST') {
 			return Promise.resolve(createdEventDate);
@@ -175,5 +195,107 @@ describe('QuickEventModal', () => {
 		expect(createCall[0].data.rrule).toBeTruthy();
 
 		expect(console).toHaveWarned();
+	});
+
+	it('switches to the From URL tab and shows the lookup field', async () => {
+		await renderModal();
+
+		fireEvent.click(screen.getByRole('radio', { name: 'From URL' }));
+
+		expect(screen.getByLabelText('Event page URL')).toBeInTheDocument();
+		expect(screen.queryByLabelText('Title')).not.toBeInTheDocument();
+	});
+
+	it('prefills the manual form and switches tabs on a successful lookup', async () => {
+		lookupResponse = {
+			title: 'Fetched Event',
+			start_datetime: '2026-07-01 18:00:00',
+			end_datetime: '2026-07-01 20:00:00',
+			all_day: false,
+			location: 'The Venue',
+			source: 'schema',
+			found: ['title', 'start', 'end', 'location'],
+		};
+
+		await renderModal();
+
+		fireEvent.click(screen.getByRole('radio', { name: 'From URL' }));
+		fireEvent.change(screen.getByLabelText('Event page URL'), {
+			target: { value: 'https://example.com/event' },
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Look up' }));
+
+		await waitFor(() =>
+			expect(screen.getByLabelText('Title')).toHaveValue('Fetched Event')
+		);
+
+		expect(screen.getByLabelText('Start date')).toHaveValue('2026-07-01');
+		expect(screen.getByLabelText('Venue')).toHaveValue('5');
+		expect(screen.queryByText(/didn't specify/)).not.toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole('button', { name: 'Create Event' }));
+		await waitFor(() =>
+			expect(apiFetch).toHaveBeenCalledWith(
+				expect.objectContaining({
+					path: '/fair-events/v1/event-dates',
+					method: 'POST',
+				})
+			)
+		);
+
+		const createCall = apiFetch.mock.calls.find(
+			([opts]) =>
+				opts.path === '/fair-events/v1/event-dates' &&
+				opts.method === 'POST'
+		);
+		expect(createCall[0].data.link_type).toBe('external');
+		expect(createCall[0].data.external_url).toBe(
+			'https://example.com/event'
+		);
+	});
+
+	it('shows a missing-fields notice for partial lookup results', async () => {
+		lookupResponse = {
+			title: 'Fetched Event',
+			start_datetime: null,
+			end_datetime: null,
+			all_day: false,
+			location: null,
+			source: 'title',
+			found: ['title'],
+		};
+
+		await renderModal();
+
+		fireEvent.click(screen.getByRole('radio', { name: 'From URL' }));
+		fireEvent.change(screen.getByLabelText('Event page URL'), {
+			target: { value: 'https://example.com/event' },
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Look up' }));
+
+		await waitFor(() =>
+			expect(screen.getByLabelText('Title')).toHaveValue('Fetched Event')
+		);
+
+		expect(screen.getAllByText(/didn't specify/).length).toBeGreaterThan(0);
+	});
+
+	it('shows an error and keeps the URL tab on a failed lookup', async () => {
+		lookupResponse = new Error('Could not reach that page.');
+
+		await renderModal();
+
+		fireEvent.click(screen.getByRole('radio', { name: 'From URL' }));
+		fireEvent.change(screen.getByLabelText('Event page URL'), {
+			target: { value: 'https://example.com/event' },
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Look up' }));
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('Could not reach that page.')
+			).toBeInTheDocument()
+		);
+		expect(screen.getByLabelText('Event page URL')).toBeInTheDocument();
 	});
 });
