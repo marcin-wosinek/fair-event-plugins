@@ -363,11 +363,10 @@ class PaymentEndpoint extends WP_REST_Controller {
 					),
 				)
 			);
-			return new WP_Error(
-				'payment_initiation_failed',
-				$payment->get_error_message(),
-				array( 'status' => 500 )
-			);
+			// Return as-is: initiate_payment() already sanitizes the message and
+			// sets status/admin data, so re-wrapping here would strip data.admin
+			// and re-flatten the status to a hardcoded 500.
+			return $payment;
 		}
 
 		$logger->log(

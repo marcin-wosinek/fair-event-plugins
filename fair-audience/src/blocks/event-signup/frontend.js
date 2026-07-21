@@ -5,6 +5,7 @@ import {
 	extractErrorMessage,
 	showNotification,
 	showMessage,
+	renderPaymentError,
 	setButtonLoading,
 	onDomReady,
 	wireNotYouButton,
@@ -1155,10 +1156,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					error,
 					__('Failed to sign up. Please try again.', 'fair-audience')
 				);
-				showMessage(
+				renderPaymentError(
 					messageContainer,
+					error,
 					errorMessage,
-					'error',
 					CSS_PREFIX
 				);
 				showNotification(errorMessage, 'error');
@@ -1436,10 +1437,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					error,
 					__('Failed to sign up. Please try again.', 'fair-audience')
 				);
-				showMessage(
+				renderPaymentError(
 					messageContainer,
+					error,
 					errorMessage,
-					'error',
 					CSS_PREFIX
 				);
 				showNotification(errorMessage, 'error');
