@@ -664,8 +664,12 @@ export default function EventTickets({
 				const eventFirstDay = startDatetime
 					? startDatetime.split(' ')[0].split('T')[0]
 					: getSiteToday();
-				const windowStart = base?.sale_start || getSiteToday();
-				const windowEnd = base?.sale_end || defaultSaleEnd();
+				// Only the split boundary (eventFirstDay) needs a stored date.
+				// The outer start/end stay unset unless the organiser already
+				// typed one — an unset value must not be frozen here, or the
+				// derived default gets snapshotted as if it were explicit.
+				const windowStart = base?.sale_start || '';
+				const windowEnd = base?.sale_end || '';
 				if (base) {
 					const newPrices = { ...prices };
 					ticketTypes.forEach((type) => {
@@ -725,7 +729,9 @@ export default function EventTickets({
 				{
 					name: '',
 					sale_start: first.sale_start,
-					sale_end: last.sale_end || defaultSaleEnd(),
+					// Restores unset (automatic) rather than snapshotting
+					// whatever the default currently resolves to.
+					sale_end: last.sale_end || '',
 					sort_order: 0,
 				},
 			]);
@@ -1089,11 +1095,13 @@ export default function EventTickets({
 																: period.sale_start ||
 																  '';
 														const untilValue =
-															isLast
-																? period.sale_end ||
-																  endDatetime
-																: period.sale_end ||
-																  '';
+															period.sale_end ||
+															'';
+														const untilPlaceholder =
+															isLast &&
+															!period.sale_end
+																? defaultSaleEnd()
+																: undefined;
 
 														return (
 															<tr
@@ -1147,8 +1155,10 @@ export default function EventTickets({
 																	<TextControl
 																		type="date"
 																		value={
-																			untilValue ||
-																			''
+																			untilValue
+																		}
+																		placeholder={
+																			untilPlaceholder
 																		}
 																		onChange={(
 																			v
@@ -1161,6 +1171,25 @@ export default function EventTickets({
 																		}
 																		__nextHasNoMarginBottom
 																	/>
+																	{isLast &&
+																		period.sale_end && (
+																			<Button
+																				variant="link"
+																				size="small"
+																				onClick={() =>
+																					updateSalePeriod(
+																						pIndex,
+																						'sale_end',
+																						''
+																					)
+																				}
+																			>
+																				{__(
+																					'Reset to automatic',
+																					'fair-events'
+																				)}
+																			</Button>
+																		)}
 																</td>
 																<td>
 																	<Button
@@ -1222,9 +1251,21 @@ export default function EventTickets({
 											label={__('Until', 'fair-events')}
 											type="date"
 											value={
-												salePeriods[0].sale_end ||
-												defaultSaleEnd() ||
-												''
+												salePeriods[0].sale_end || ''
+											}
+											placeholder={
+												salePeriods[0].sale_end
+													? undefined
+													: defaultSaleEnd()
+											}
+											help={
+												!salePeriods[0].sale_end &&
+												defaultSaleEnd()
+													? __(
+															'Until the day after the last occurrence.',
+															'fair-events'
+													  )
+													: undefined
 											}
 											onChange={(v) =>
 												updateSalePeriod(
@@ -1235,6 +1276,24 @@ export default function EventTickets({
 											}
 											__nextHasNoMarginBottom
 										/>
+										{salePeriods[0].sale_end && (
+											<Button
+												variant="link"
+												size="small"
+												onClick={() =>
+													updateSalePeriod(
+														0,
+														'sale_end',
+														''
+													)
+												}
+											>
+												{__(
+													'Reset to automatic',
+													'fair-events'
+												)}
+											</Button>
+										)}
 									</HStack>
 								)
 							)}
