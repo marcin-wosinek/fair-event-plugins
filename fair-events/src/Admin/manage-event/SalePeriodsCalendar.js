@@ -2,11 +2,9 @@
  * Sale Periods Calendar Component
  *
  * Month-grid visualization for the "Sale Periods" panel: each day is shaded
- * with the color of the sale period it falls in, the event day carries a
- * distinct marker, and clicking a day moves the nearest period boundary
- * there. Thin adapter over the shared `MiniCalendar` grid/paging primitive,
- * modeled on RecurrenceCalendar.js (shading + legend) and SeriesModal.js's
- * irregularDayProps (the interactive click pattern).
+ * with the color of the sale period it falls in, and the event day carries a
+ * distinct marker. Display-only — thin adapter over the shared `MiniCalendar`
+ * grid/paging primitive, modeled on RecurrenceCalendar.js (shading + legend).
  *
  * @package FairEvents
  */
@@ -15,8 +13,9 @@ import { Card, CardHeader, CardBody } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import { MiniCalendar } from 'fair-events-shared';
 
-// Cycled by period index; every color pairs with white cell text.
-const SALE_PERIOD_COLORS = [
+// Cycled by period index; every color pairs with white cell text. Exported
+// so the Sale Periods edit table can reuse the exact same colors.
+export const SALE_PERIOD_COLORS = [
 	'#007cba',
 	'#4ab866',
 	'#9b51e0',
@@ -24,58 +23,36 @@ const SALE_PERIOD_COLORS = [
 	'#cc1818',
 ];
 
+export function salePeriodColor(index) {
+	return SALE_PERIOD_COLORS[index % SALE_PERIOD_COLORS.length];
+}
+
 // Deliberately distinct from MiniCalendar's built-in "today" border
 // (`2px solid #1e1e1e`) so the event-day marker never blends into it when
 // the event happens to be today.
 const EVENT_DAY_BORDER = '3px solid #f0b849';
 
-function dayDiffAbs(dateStrA, dateStrB) {
-	const a = new Date(`${dateStrA}T00:00:00`);
-	const b = new Date(`${dateStrB}T00:00:00`);
-	return Math.abs(Math.round((a - b) / (1000 * 60 * 60 * 24)));
-}
-
-// Describes which boundary a click would move, e.g. "start of 'Regular'" or
-// (unnamed) "period 2". Boundary `salePeriods.length` is the trailing edge
-// of the last period ("end of ..."); every other boundary is the leading
-// edge of the period at that index ("start of ...").
-function boundaryDescriptor(boundaryIndex, salePeriods) {
-	const isLast = boundaryIndex === salePeriods.length;
-	const period = salePeriods[isLast ? salePeriods.length - 1 : boundaryIndex];
-	const periodNumber = isLast ? salePeriods.length : boundaryIndex + 1;
-
-	if (!period?.name) {
-		return sprintf(
+// The period's name, or "Period N" when unnamed — matches the legend wording.
+function periodLabel(period, index) {
+	return (
+		period.name ||
+		sprintf(
 			/* translators: %d: sale period number */
-			__('period %d', 'fair-events'),
-			periodNumber
-		);
-	}
-
-	return isLast
-		? sprintf(
-				/* translators: %s: sale period name */
-				__("end of '%s'", 'fair-events'),
-				period.name
-		  )
-		: sprintf(
-				/* translators: %s: sale period name */
-				__("start of '%s'", 'fair-events'),
-				period.name
-		  );
+			__('Period %d', 'fair-events'),
+			index + 1
+		)
+	);
 }
 
 /**
- * @param {Object}   props
- * @param {Array}    props.salePeriods    Chained sale periods (`sale_start`/`sale_end`/`name`, Y-m-d strings); consecutive periods share a boundary.
- * @param {string}   [props.eventDay]     Event start date (Y-m-d) for the event-day marker.
- * @param {Function} props.onMoveBoundary `(boundaryIndex, dateStr) => void`, called when a day is clicked.
- * @param {boolean}  [props.embedded]     Card-less render for placement inside an existing panel.
+ * @param {Object}  props
+ * @param {Array}   props.salePeriods Chained sale periods (`sale_start`/`sale_end`/`name`, Y-m-d strings); consecutive periods share a boundary.
+ * @param {string}  [props.eventDay]  Event start date (Y-m-d) for the event-day marker.
+ * @param {boolean} [props.embedded]  Card-less render for placement inside an existing panel.
  */
 export default function SalePeriodsCalendar({
 	salePeriods,
 	eventDay,
-	onMoveBoundary,
 	embedded = false,
 }) {
 	const periods = salePeriods || [];
@@ -108,54 +85,32 @@ export default function SalePeriodsCalendar({
 			(p) => p.sale_start <= dateStr && dateStr < p.sale_end
 		);
 
-	// The clicked day always sits inside (or at the edge of) some gap
-	// between two boundaries, so moving the nearest one to that day can
-	// never push it past its neighbor — ordering stays intact by construction.
-	const nearestBoundaryIndex = (dateStr) => {
-		let bestIndex = 0;
-		let bestDiff = Infinity;
-		boundaries.forEach((b, i) => {
-			const diff = dayDiffAbs(dateStr, b);
-			if (diff < bestDiff) {
-				bestDiff = diff;
-				bestIndex = i;
-			}
-		});
-		return bestIndex;
-	};
-
-	const dayProps = (dateStr, date) => {
+	const dayProps = (dateStr) => {
 		const periodIndex = periodIndexForDate(dateStr);
 		const isEventDay = dateStr === eventDay;
-		const boundaryIndex = nearestBoundaryIndex(dateStr);
 
-		const formattedDate = date.toLocaleDateString(undefined, {
-			weekday: 'long',
-			day: 'numeric',
-			month: 'long',
-			year: 'numeric',
-		});
-		const message = sprintf(
-			/* translators: 1: which boundary a click would move (e.g. "start of 'Regular'"), 2: target date */
-			__('Move the %1$s to %2$s', 'fair-events'),
-			boundaryDescriptor(boundaryIndex, periods),
-			formattedDate
-		);
+		let tooltip;
+		if (isEventDay && periodIndex !== -1) {
+			tooltip = sprintf(
+				/* translators: %s: sale period name */
+				__('%s (event day)', 'fair-events'),
+				periodLabel(periods[periodIndex], periodIndex)
+			);
+		} else if (isEventDay) {
+			tooltip = __('Event day', 'fair-events');
+		} else if (periodIndex !== -1) {
+			tooltip = periodLabel(periods[periodIndex], periodIndex);
+		}
 
 		return {
 			background:
 				periodIndex !== -1
-					? SALE_PERIOD_COLORS[
-							periodIndex % SALE_PERIOD_COLORS.length
-					  ]
+					? salePeriodColor(periodIndex)
 					: 'transparent',
 			color: periodIndex !== -1 ? '#fff' : '#1e1e1e',
 			fontWeight: periodIndex !== -1 ? 600 : 400,
 			border: isEventDay ? EVENT_DAY_BORDER : undefined,
-			interactive: true,
-			onActivate: () => onMoveBoundary(boundaryIndex, dateStr),
-			ariaLabel: message,
-			tooltip: message,
+			tooltip,
 		};
 	};
 
@@ -183,21 +138,13 @@ export default function SalePeriodsCalendar({
 								display: 'inline-block',
 								width: '12px',
 								height: '12px',
-								background:
-									SALE_PERIOD_COLORS[
-										index % SALE_PERIOD_COLORS.length
-									],
+								background: salePeriodColor(index),
 								borderRadius: '2px',
 								verticalAlign: 'middle',
 								marginRight: '4px',
 							}}
 						/>
-						{period.name ||
-							sprintf(
-								/* translators: %d: sale period number */
-								__('Period %d', 'fair-events'),
-								index + 1
-							)}
+						{periodLabel(period, index)}
 					</span>
 				))}
 				{eventDay && (

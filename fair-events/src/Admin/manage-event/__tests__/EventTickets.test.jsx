@@ -22,6 +22,7 @@ import {
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventTickets from '../EventTickets.js';
+import { salePeriodColor } from '../SalePeriodsCalendar.js';
 
 jest.mock('@wordpress/api-fetch');
 
@@ -1284,35 +1285,34 @@ describe('EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 		],
 	};
 
-	function moveMessage(boundaryLabel, dateStr) {
-		const formatted = new Date(`${dateStr}T00:00:00`).toLocaleDateString(
-			undefined,
-			{ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
-		);
-		return `Move the ${boundaryLabel} to ${formatted}`;
+	// jsdom normalizes inline hex colors to rgb() on the CSSOM.
+	function hexToRgb(hex) {
+		const r = parseInt(hex.slice(1, 3), 16);
+		const g = parseInt(hex.slice(3, 5), 16);
+		const b = parseInt(hex.slice(5, 7), 16);
+		return `rgb(${r}, ${g}, ${b})`;
 	}
 
-	it('clicking a calendar day updates both chained date inputs and trips the dirty indicator', () => {
-		const onDirtyChange = jest.fn();
+	it('renders a swatch per Sale Periods table row matching the calendar palette', () => {
 		renderTickets({
 			initialData: initialDataWithTwoPeriods,
 			startDatetime: '2026-01-25 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
-			onDirtyChange,
 		});
 
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		const toggle = screen.getByRole('button', { name: /Sale Periods/i });
+		fireEvent.click(toggle);
 
-		expect(onDirtyChange).toHaveBeenLastCalledWith(false);
-
-		const button = screen.getByRole('button', {
-			name: moveMessage("start of 'Day of event'", '2026-01-16'),
-		});
-		fireEvent.click(button);
-
-		// Both the Advance-ticket "Until" input and the Day-of-event "From"
-		// input mirror the moved boundary — updateSalePeriod() chains them.
-		expect(screen.getAllByDisplayValue('2026-01-16')).toHaveLength(2);
-		expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+		const panelBody = toggle.closest('.components-panel__body');
+		const rows = panelBody
+			.querySelector('table')
+			.querySelectorAll('tbody tr');
+		expect(rows).toHaveLength(2);
+		expect(rows[0].querySelector('td span').style.background).toBe(
+			hexToRgb(salePeriodColor(0))
+		);
+		expect(rows[1].querySelector('td span').style.background).toBe(
+			hexToRgb(salePeriodColor(1))
+		);
 	});
 });
