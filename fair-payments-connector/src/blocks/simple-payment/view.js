@@ -9,6 +9,7 @@ import { __ } from '@wordpress/i18n';
 import {
 	initiatePayment,
 	handlePaymentCallback,
+	renderPaymentError,
 	wireRestartButton,
 } from 'fair-events-shared';
 
@@ -176,11 +177,13 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 						'Failed to create payment',
 						'fair-payments-connector'
 					),
-					onError: (message) => {
-						if (errorEl) {
-							errorEl.textContent = message;
-							errorEl.style.display = 'block';
-						}
+					onError: (message, error) => {
+						renderPaymentError(
+							errorEl,
+							error,
+							message,
+							'fair-payments-connector'
+						);
 						if (loadingEl) {
 							loadingEl.style.display = 'none';
 						}

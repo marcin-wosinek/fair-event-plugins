@@ -144,6 +144,82 @@ export function handlePaymentCallback({
 }
 
 /**
+ * Render a sanitized payment-creation error into a message container.
+ *
+ * Always shows the generic message from `error`/`defaultMessage` (via
+ * `extractErrorMessage`), matching plain error rendering elsewhere. When the
+ * REST error additionally carries `error.data.admin` (only present for a
+ * capability-checked admin — see `PaymentGatewayError::to_wp_error()` in the
+ * connector), it appends the interpreted cause and fix-it links below the
+ * message; both cause and link labels arrive already-translated from PHP, so
+ * no client-side string-building is needed. Adds (never replaces) CSS
+ * classes, so callers that re-query the container by its original class
+ * (e.g. `.fair-payments-connector-error`) keep finding it on retry.
+ *
+ * @param {HTMLElement|null} container    Message container element. No-op when null.
+ * @param {Object}           error        Error object from apiFetch (or any error with a `.data.admin` shape).
+ * @param {string}           defaultMessage Fallback message when the error has none.
+ * @param {string}           cssPrefix    CSS class prefix (e.g. 'fair-payments-connector').
+ */
+export function renderPaymentError(
+	container,
+	error,
+	defaultMessage,
+	cssPrefix
+) {
+	if (!container) {
+		return;
+	}
+
+	const message = extractErrorMessage(error, defaultMessage);
+	const admin = error && error.data && error.data.admin;
+
+	container.classList.add(
+		cssPrefix + '-message',
+		cssPrefix + '-message-error'
+	);
+	container.textContent = '';
+	container.style.display = 'block';
+
+	const messageEl = document.createElement('p');
+	messageEl.className = cssPrefix + '-message-text';
+	messageEl.textContent = message;
+	container.appendChild(messageEl);
+
+	if (admin && admin.cause) {
+		const causeEl = document.createElement('p');
+		causeEl.className = cssPrefix + '-message-admin-cause';
+		causeEl.textContent = admin.cause;
+		container.appendChild(causeEl);
+	}
+
+	if (admin && Array.isArray(admin.links) && admin.links.length > 0) {
+		const list = document.createElement('ul');
+		list.className = cssPrefix + '-message-admin-links';
+		admin.links.forEach(function (link) {
+			const item = document.createElement('li');
+			const anchor = document.createElement('a');
+			anchor.href = link.url;
+			anchor.textContent = link.label;
+			anchor.target = '_blank';
+			anchor.rel = 'noopener noreferrer';
+			item.appendChild(anchor);
+			list.appendChild(item);
+		});
+		container.appendChild(list);
+	}
+
+	// Auto-hide like plain error messages elsewhere, but only when there is no
+	// admin guidance to read — an admin following the links needs more than a
+	// few seconds before the container disappears under them.
+	if (!admin) {
+		setTimeout(function () {
+			container.style.display = 'none';
+		}, 8000);
+	}
+}
+
+/**
  * Wire a "try again" button that clears the callback URL params and restores
  * the form to a fresh state so the buyer can start a new payment attempt.
  *

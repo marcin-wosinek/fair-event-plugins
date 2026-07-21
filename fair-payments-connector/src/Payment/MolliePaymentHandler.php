@@ -276,7 +276,7 @@ class MolliePaymentHandler {
 	 *
 	 * @param array $args Payment arguments.
 	 * @return array Payment data including mollie_payment_id and checkout_url.
-	 * @throws \Exception If the underlying Mollie call fails.
+	 * @throws PaymentGatewayException If the Mollie API call fails.
 	 */
 	public function create_payment( $args ) {
 		$defaults = array(
@@ -406,15 +406,8 @@ class MolliePaymentHandler {
 					),
 				)
 			);
-			throw new \Exception(
-				esc_html(
-					sprintf(
-						/* translators: %s: error message */
-						__( 'Failed to create payment: %s', 'fair-payments-connector' ),
-						$e->getMessage()
-					)
-				)
-			);
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- constructor takes a PaymentGatewayError value object, not a message string; nothing here is unescaped output.
+			throw new PaymentGatewayException( PaymentGatewayError::from_api_exception( $e ) );
 		}
 	}
 

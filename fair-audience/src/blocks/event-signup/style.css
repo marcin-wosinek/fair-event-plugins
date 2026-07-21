@@ -157,6 +157,20 @@
 	border: 1px solid #bee5eb;
 }
 
+.fair-audience-signup-message-text {
+	margin: 0;
+}
+
+.fair-audience-signup-message-admin-cause {
+	margin: 0.5em 0 0;
+	font-style: italic;
+}
+
+.fair-audience-signup-message-admin-links {
+	margin: 0.5em 0 0;
+	padding-left: 1.25em;
+}
+
 /* Not linked message */
 .fair-audience-signup-not-linked {
 	padding: 20px;

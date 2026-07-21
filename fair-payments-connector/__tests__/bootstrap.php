@@ -107,6 +107,35 @@ if ( ! function_exists( 'wp_json_encode' ) ) {
 	}
 }
 
+if ( ! function_exists( 'current_user_can' ) ) {
+	/**
+	 * Stub of WordPress current_user_can() backed by $GLOBALS['_fair_test_current_user_can'].
+	 *
+	 * Tests toggle this global to simulate an anonymous visitor (false, the
+	 * default) vs. a capability-checked admin (true).
+	 *
+	 * @param string $capability Capability to check (ignored — tests set a single bool).
+	 * @return bool
+	 */
+	function current_user_can( $capability ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		return ! empty( $GLOBALS['_fair_test_current_user_can'] );
+	}
+}
+
+if ( ! function_exists( 'admin_url' ) ) {
+	/**
+	 * Stub of WordPress admin_url().
+	 *
+	 * @param string $path Path appended to the admin URL.
+	 * @return string
+	 */
+	function admin_url( $path = '' ) {
+		return 'https://example.test/wp-admin/' . ltrim( $path, '/' );
+	}
+}
+
+require_once __DIR__ . '/Fair_Test_WP_Error.php';
+
 if ( ! function_exists( 'get_current_user_id' ) ) {
 	/**
 	 * Stub of WordPress get_current_user_id() — no logged-in user in tests.

@@ -10,6 +10,8 @@ namespace FairPaymentsConnector\API;
 use FairPaymentsConnector\Models\Transaction;
 use FairPaymentsConnector\Models\LineItem;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
+use FairPaymentsConnector\Payment\PaymentGatewayError;
+use FairPaymentsConnector\Payment\PaymentGatewayException;
 use FairPaymentsConnector\Payment\WorkingDays;
 use FairPaymentsConnector\Database\PaymentLogRepository;
 
@@ -213,11 +215,23 @@ class TransactionAPI {
 		try {
 			$handler        = new MolliePaymentHandler();
 			$mollie_payment = $handler->create_payment( $payment_args );
+		} catch ( PaymentGatewayException $e ) {
+			return $e->get_error()->to_wp_error( (int) $transaction_id );
 		} catch ( \Exception $e ) {
-			return new \WP_Error(
+			// Non-gateway failure (e.g. missing API key/OAuth connection). Full
+			// detail is logged here; the public response stays fully generic —
+			// this is the security-critical fallback, since $e->getMessage()
+			// must never reach an anonymous visitor.
+			$logger->log(
 				'mollie_payment_failed',
-				$e->getMessage()
+				array(
+					'level'          => 'error',
+					'transaction_id' => (int) $transaction_id,
+					'message'        => sprintf( 'Payment initiation failed: %s', $e->getMessage() ),
+					'context'        => array( 'exception_class' => get_class( $e ) ),
+				)
 			);
+			return PaymentGatewayError::generic()->to_wp_error( (int) $transaction_id );
 		}
 
 		// 6. Update transaction.

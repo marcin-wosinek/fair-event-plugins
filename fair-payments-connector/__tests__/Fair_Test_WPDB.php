@@ -25,7 +25,16 @@ class Fair_Test_WPDB {
 	public $insert_id = 1;
 
 	/**
-	 * Stub of $wpdb->insert() — always succeeds.
+	 * Rows passed to insert(), in call order — lets tests assert on what a
+	 * repository actually wrote (e.g. PaymentLogRepository::log() context)
+	 * without a real database.
+	 *
+	 * @var array[]
+	 */
+	public $inserted_rows = array();
+
+	/**
+	 * Stub of $wpdb->insert() — always succeeds and records the row.
 	 *
 	 * @param string $table  Table name.
 	 * @param array  $data   Row data.
@@ -33,6 +42,7 @@ class Fair_Test_WPDB {
 	 * @return int Number of rows inserted (always 1).
 	 */
 	public function insert( $table, $data, $format = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		$this->inserted_rows[] = $data;
 		return 1;
 	}
 }

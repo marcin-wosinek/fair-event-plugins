@@ -15,6 +15,8 @@ namespace FairPaymentsConnector\Tests\Payment;
 
 use PHPUnit\Framework\TestCase;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
+use FairPaymentsConnector\Payment\PaymentGatewayError;
+use FairPaymentsConnector\Payment\PaymentGatewayException;
 use FairPaymentsConnector\Database\PaymentLogRepository;
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Fake\MockResponse;
@@ -38,6 +40,8 @@ class MolliePaymentHandlerTest extends TestCase {
 	protected function setUp(): void {
 		$GLOBALS['_fair_test_options']    = array();
 		$GLOBALS['_fair_test_transients'] = array();
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
 		PaymentLogRepository::reset_request_id();
 	}
 
@@ -312,5 +316,70 @@ class MolliePaymentHandlerTest extends TestCase {
 		$this->expectExceptionMessageMatches( '/not configured/' );
 
 		$handler->get_connection_overview();
+	}
+
+	/**
+	 * Regression lock for #1209: a Mollie API error must surface as a typed
+	 * PaymentGatewayException carrying a sanitized PaymentGatewayError — never
+	 * as a raw \Exception whose message embeds the request body/IDs/URLs.
+	 */
+	public function test_create_payment_throws_payment_gateway_exception_on_api_error() {
+		$mollie = MollieApiClient::fake(
+			array(
+				CreatePaymentRequest::class => MockResponse::unprocessableEntity( 'The payment method is not activated on your account.' ),
+			)
+		);
+
+		$handler = new MolliePaymentHandler( $mollie );
+
+		try {
+			$handler->create_payment( array( 'amount' => '10.00' ) );
+			$this->fail( 'Expected PaymentGatewayException was not thrown.' );
+		} catch ( PaymentGatewayException $e ) {
+			$this->assertInstanceOf( PaymentGatewayError::class, $e->get_error() );
+			// The exception's own message (e.g. surfaced by an uncaught-exception
+			// handler/logger elsewhere) must not carry the gateway dump either.
+			$this->assertStringNotContainsString( 'Request body', $e->getMessage() );
+			$this->assertStringNotContainsString( 'redirectUrl', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * The full technical detail (including the request body) must still reach
+	 * the payment log — it moves there exclusively instead of the thrown
+	 * exception, it doesn't disappear.
+	 */
+	public function test_create_payment_logs_full_detail_on_api_error() {
+		$mollie = MollieApiClient::fake(
+			array(
+				CreatePaymentRequest::class => MockResponse::unprocessableEntity( 'The payment method is not activated on your account.' ),
+			)
+		);
+
+		$handler = new MolliePaymentHandler( $mollie );
+
+		try {
+			$handler->create_payment(
+				array(
+					'amount'   => '10.00',
+					'metadata' => array( 'transaction_id' => 7 ),
+				)
+			);
+		} catch ( PaymentGatewayException $e ) {
+			unset( $e );
+		}
+
+		$logged_rows = $GLOBALS['wpdb']->inserted_rows;
+		$failure_row = current(
+			array_filter( $logged_rows, static fn( $row ) => 'mollie_call_failed' === $row['event'] )
+		);
+
+		$this->assertNotFalse( $failure_row, 'Expected a mollie_call_failed log row.' );
+		$this->assertSame( 'error', $failure_row['level'] );
+		$this->assertSame( 7, $failure_row['transaction_id'] );
+		$this->assertStringContainsString( 'not activated', $failure_row['message'] );
+
+		$context = json_decode( $failure_row['context'], true );
+		$this->assertStringContainsString( 'not activated', $context['exception_message'] );
 	}
 }
