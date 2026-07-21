@@ -33,6 +33,7 @@ import {
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { moreVertical } from '@wordpress/icons';
 import apiFetch from '@wordpress/api-fetch';
+import SalePeriodsCalendar from './SalePeriodsCalendar.js';
 
 export default function EventTickets({
 	eventDateId,
@@ -468,6 +469,10 @@ export default function EventTickets({
 		return diff > 0 ? diff : null;
 	};
 
+	const eventDay = startDatetime
+		? startDatetime.split(' ')[0].split('T')[0]
+		: '';
+
 	// Seeds a single default sale period row so prices have somewhere to
 	// attach, but leaves sale_start/sale_end unset: the effective window is
 	// resolved lazily (open start, day-after-last-occurrence end) rather than
@@ -630,6 +635,21 @@ export default function EventTickets({
 		}
 
 		setSalePeriods(updated);
+	};
+
+	// Maps a SalePeriodsCalendar boundary click onto the chained setter:
+	// boundary 0 is the first period's start, boundary N (the period count)
+	// is the last period's end, and everything in between is the start of
+	// the period at that index (updateSalePeriod's chaining already
+	// propagates it to the previous period's end).
+	const handleMoveSalePeriodBoundary = (boundaryIndex, dateStr) => {
+		if (boundaryIndex === 0) {
+			updateSalePeriod(0, 'sale_start', dateStr);
+		} else if (boundaryIndex === salePeriods.length) {
+			updateSalePeriod(salePeriods.length - 1, 'sale_end', dateStr);
+		} else {
+			updateSalePeriod(boundaryIndex, 'sale_start', dateStr);
+		}
 	};
 
 	// "Multiple pricing periods" toggled on: split the single sale window at
@@ -1012,6 +1032,16 @@ export default function EventTickets({
 										})()}
 									</div>
 								</HStack>
+							)}
+							{salePeriods.length > 0 && (
+								<SalePeriodsCalendar
+									salePeriods={salePeriods}
+									eventDay={eventDay}
+									onMoveBoundary={
+										handleMoveSalePeriodBoundary
+									}
+									embedded
+								/>
 							)}
 							{effectiveMultiple ? (
 								<VStack spacing={3}>
