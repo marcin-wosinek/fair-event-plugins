@@ -162,6 +162,17 @@ class Plugin {
 			}
 		);
 
+		// Event lookup controller — registers `/fair-events/v1/lookup-url`,
+		// used by the Quick Add modal's "From URL" tab to prefill event
+		// details from a pasted event page.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\EventLookupController();
+				$controller->register_routes();
+			}
+		);
+
 		if ( Features::is_enabled( 'ticketing' ) ) {
 			add_action(
 				'rest_api_init',
