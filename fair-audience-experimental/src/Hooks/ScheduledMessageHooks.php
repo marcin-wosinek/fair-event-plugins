@@ -16,6 +16,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Services\RecipientResolver;
 use FairAudienceExperimental\Services\ScheduledMessageScheduler;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\EmailType;
 use FairAudienceExperimental\Models\ScheduledMessage;
 
 defined( 'WPINC' ) || die;
@@ -114,6 +115,7 @@ class ScheduledMessageHooks {
 		try {
 			$context    = self::build_context( $message );
 			$recipients = $resolver->resolve_by_event_date( $message->recipients_filter, $message->event_date_id );
+			$email_type = ! empty( $message->recipients_filter['is_marketing'] ) ? EmailType::MARKETING : EmailType::MINIMAL;
 
 			foreach ( $recipients as $recipient ) {
 				if ( empty( $recipient['has_valid_email'] ) ) {
@@ -137,7 +139,8 @@ class ScheduledMessageHooks {
 					$message->subject,
 					$message->body,
 					(int) $message->event_date_id,
-					$context
+					$context,
+					$email_type
 				);
 
 				if ( $success ) {

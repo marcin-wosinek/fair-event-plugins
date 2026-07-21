@@ -295,26 +295,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -539,26 +520,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -752,26 +714,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -875,26 +818,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -1007,26 +931,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -1148,26 +1053,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -1303,14 +1189,36 @@ class EmailService {
 	}
 
 	/**
-	 * Dispatch an HTML email, toggling the content-type filter around the send.
+	 * Send an email — the only wp_mail() call site in fair-audience.
 	 *
-	 * @param string $to      Recipient email address.
-	 * @param string $subject Email subject.
-	 * @param string $message Full HTML body.
-	 * @return bool Whether wp_mail() accepted the message.
+	 * Enforces marketing consent for Participant recipients so no send path
+	 * can bypass RecipientResolver::can_receive_email() by forgetting a
+	 * caller-side check. Raw-address recipients (admin notifications, test
+	 * sends) have no participant to check consent for and are sent
+	 * unconditionally — callers must pass EmailType::MINIMAL for those.
+	 *
+	 * @param Participant|string $recipient  Participant (consent + valid-email checked) or a raw email address.
+	 * @param string             $subject    Email subject.
+	 * @param string             $message    Full HTML body.
+	 * @param string             $email_type EmailType constant describing this send.
+	 * @return string 'sent', 'skipped' (consent), or 'failed' (no valid email / wp_mail() failure).
 	 */
-	private function dispatch_html_mail( $to, $subject, $message ) {
+	private function deliver( Participant|string $recipient, string $subject, string $message, string $email_type ): string {
+		if ( $recipient instanceof Participant ) {
+			if ( ! $this->has_valid_email( $recipient ) ) {
+				return 'failed';
+			}
+
+			if ( ( EmailType::MARKETING === $email_type || EmailType::WEEKLY_SUMMARY === $email_type )
+				&& ! $this->can_receive_email( $recipient, $email_type ) ) {
+				return 'skipped';
+			}
+
+			$to = $recipient->email;
+		} else {
+			$to = $recipient;
+		}
+
 		$content_type = static function () {
 			return 'text/html';
 		};
@@ -1319,7 +1227,7 @@ class EmailService {
 		$result = wp_mail( $to, $subject, $this->append_branding_footer( $message ) );
 		remove_filter( 'wp_mail_content_type', $content_type );
 
-		return $result;
+		return $result ? 'sent' : 'failed';
 	}
 
 	/**
@@ -1359,9 +1267,10 @@ class EmailService {
 	 * @param string      $content       Body HTML with placeholders.
 	 * @param int         $event_date_id Event date ID for tokenized links.
 	 * @param array       $context       Per-message context: event_name, event_date.
+	 * @param string      $email_type    EmailType constant used for the consent check.
 	 * @return bool Success.
 	 */
-	public function send_custom_mail_rendered( $participant, $subject, $content, $event_date_id = 0, $context = array() ) {
+	public function send_custom_mail_rendered( $participant, $subject, $content, $event_date_id = 0, $context = array(), $email_type = EmailType::MARKETING ) {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
@@ -1369,7 +1278,7 @@ class EmailService {
 		$content = $this->replace_placeholders( $content, $participant, $event_date_id, $context );
 		$message = $this->build_custom_mail_html( $participant, $content );
 
-		return $this->dispatch_html_mail( $participant->email, $subject, $message );
+		return 'sent' === $this->deliver( $participant, $subject, $message, $email_type );
 	}
 
 	/**
@@ -1380,9 +1289,10 @@ class EmailService {
 	 * @param string      $subject       Email subject.
 	 * @param string      $content       Email content (HTML).
 	 * @param int         $event_date_id Event date ID for placeholder replacement.
+	 * @param string      $email_type    EmailType constant used for the consent check.
 	 * @return bool Success.
 	 */
-	public function send_custom_mail( $event, $participant, $subject, $content, $event_date_id = 0 ) {
+	public function send_custom_mail( $event, $participant, $subject, $content, $event_date_id = 0, $email_type = EmailType::MARKETING ) {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
@@ -1456,26 +1366,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, $email_type );
 	}
 
 	/**
@@ -1511,6 +1402,7 @@ class EmailService {
 		}
 
 		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
+		$email_type            = $is_marketing ? EmailType::MARKETING : EmailType::MINIMAL;
 
 		// Get participants signed up for this event.
 		$event_participants = $this->event_participant_repository->get_by_event( $event_id );
@@ -1568,7 +1460,7 @@ class EmailService {
 			}
 
 			// Send custom mail.
-			$success = $this->send_custom_mail( $event, $participant, $subject, $content, $event_date_id );
+			$success = $this->send_custom_mail( $event, $participant, $subject, $content, $event_date_id, $email_type );
 
 			if ( $success ) {
 				$results['sent'][] = $participant->email;
@@ -1607,6 +1499,7 @@ class EmailService {
 
 		$participants          = $this->participant_repository->get_all();
 		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
+		$deliver_email_type    = $is_marketing ? $email_type : EmailType::MINIMAL;
 
 		foreach ( $participants as $participant ) {
 			// Filter by group membership.
@@ -1644,7 +1537,7 @@ class EmailService {
 			}
 
 			// Send custom mail (no event context).
-			$success = $this->send_custom_mail_without_event( $participant, $subject, $content );
+			$success = $this->send_custom_mail_without_event( $participant, $subject, $content, $deliver_email_type );
 
 			if ( $success ) {
 				$results['sent'][] = $participant->email;
@@ -1666,9 +1559,10 @@ class EmailService {
 	 * @param Participant $participant Participant object.
 	 * @param string      $subject     Email subject.
 	 * @param string      $content     Email content (HTML).
+	 * @param string      $email_type  EmailType constant used for the consent check.
 	 * @return bool Success.
 	 */
-	public function send_custom_mail_without_event( $participant, $subject, $content ) {
+	public function send_custom_mail_without_event( $participant, $subject, $content, $email_type = EmailType::MARKETING ) {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
@@ -1742,26 +1636,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, $email_type );
 	}
 
 	/**
@@ -1910,26 +1785,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -2115,23 +1971,7 @@ class EmailService {
 </body>
 </html>';
 
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		$result = wp_mail( $to_email, $subject, $this->append_branding_footer( $message ) );
-
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $to_email, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -2198,23 +2038,7 @@ class EmailService {
 </body>
 </html>';
 
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		$result = wp_mail( $to_email, $subject, $this->append_branding_footer( $message ) );
-
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $to_email, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -2394,23 +2218,7 @@ class EmailService {
 </body>
 </html>';
 
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -2561,23 +2369,7 @@ class EmailService {
 </body>
 </html>';
 
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -2697,23 +2489,7 @@ class EmailService {
 </body>
 </html>';
 
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -2833,23 +2609,7 @@ class EmailService {
 </body>
 </html>';
 
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -2999,26 +2759,7 @@ class EmailService {
 </body>
 </html>';
 
-		// Set email content type to HTML.
-		add_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		// Send email.
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-
-		// Reset content type to avoid conflicts.
-		remove_filter(
-			'wp_mail_content_type',
-			function () {
-				return 'text/html';
-			}
-		);
-
-		return $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MARKETING );
 	}
 
 	/**
@@ -3267,14 +3008,7 @@ class EmailService {
 </body>
 </html>';
 
-		$content_type_filter = function () {
-			return 'text/html';
-		};
-		add_filter( 'wp_mail_content_type', $content_type_filter );
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-		remove_filter( 'wp_mail_content_type', $content_type_filter );
-
-		return (bool) $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
@@ -3362,14 +3096,7 @@ class EmailService {
 </body>
 </html>';
 
-		$content_type_filter = function () {
-			return 'text/html';
-		};
-		add_filter( 'wp_mail_content_type', $content_type_filter );
-		$result = wp_mail( $participant->email, $subject, $this->append_branding_footer( $message ) );
-		remove_filter( 'wp_mail_content_type', $content_type_filter );
-
-		return (bool) $result;
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
 
 	/**
