@@ -274,12 +274,19 @@ class EventSchema {
 	/**
 	 * Build Schema.org Offer objects for JSON-LD from the ticketing models.
 	 *
+	 * Priced ticket types yield a paid `Offer`; a genuinely free ticket type
+	 * (enabled, non-invitation, with no positive price in any sale period — the
+	 * free RSVP/signup case) yields a price-"0" `Offer` so the event can be
+	 * marked `isAccessibleForFree`. A paid type whose sale window has closed
+	 * yields nothing and is never advertised as free.
+	 *
 	 * Everything is behind class_exists() guards since a fair-events-only
 	 * site (without ticketing) must not fatal.
 	 *
 	 * @param EventDates $event_date Event date object.
 	 * @param int        $post_id    Post ID.
-	 * @return array Offer objects (empty when ticketing is unavailable or unpriced).
+	 * @return array Offer objects (empty when ticketing is unavailable, or every
+	 *               type is a paid ticket with sales closed).
 	 */
 	public static function get_jsonld_offers( EventDates $event_date, $post_id ) {
 		if ( ! class_exists( \FairEvents\Models\TicketType::class )
@@ -300,6 +307,7 @@ class EventSchema {
 			return array();
 		}
 
+		$all_prices   = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id );
 		$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $pricing_event_date_id );
 
 		$now             = current_time( 'mysql' );
@@ -317,22 +325,34 @@ class EventSchema {
 
 		// Search crawls happen outside the sale window: fall back to the
 		// nearest upcoming period's price so `offers` isn't empty just
-		// because sales haven't opened yet.
+		// because sales haven't opened yet. When no period exists at all the
+		// event can still carry free RSVP ticket types (handled below).
 		$selected_period = $active_period ? $active_period : $upcoming_period;
-		if ( ! $selected_period ) {
-			return array();
+
+		// Price for each type inside the selected window.
+		$price_by_type_id = array();
+		if ( $selected_period ) {
+			foreach ( $all_prices as $price ) {
+				if ( (int) $price->sale_period_id === (int) $selected_period->id ) {
+					$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
+				}
+			}
 		}
 
-		$price_by_type_id = array();
-		foreach ( \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id ) as $price ) {
-			if ( (int) $price->sale_period_id === (int) $selected_period->id ) {
-				$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
+		// Type IDs carrying a positive price in *any* period: paid tickets, even
+		// when the current window has none (sales closed). Never advertised free.
+		$paid_type_ids = array();
+		foreach ( $all_prices as $price ) {
+			if ( (float) $price->price > 0.0 ) {
+				$paid_type_ids[ (int) $price->ticket_type_id ] = true;
 			}
 		}
 
 		$currency   = get_option( 'fair_payment_currency', 'EUR' );
 		$permalink  = get_permalink( $post_id );
-		$valid_from = $active_period ? null : DateHelper::local_to_iso8601( $selected_period->sale_start );
+		$valid_from = ( $selected_period && ! $active_period )
+			? DateHelper::local_to_iso8601( $selected_period->sale_start )
+			: null;
 
 		$offers = array();
 		foreach ( $ticket_types as $ticket_type ) {
@@ -340,23 +360,41 @@ class EventSchema {
 				continue;
 			}
 
-			if ( ! isset( $price_by_type_id[ $ticket_type->id ] ) ) {
+			$type_id = (int) $ticket_type->id;
+
+			// Priced in the current window (the price may itself be 0).
+			if ( isset( $price_by_type_id[ $type_id ] ) ) {
+				$offer = array(
+					'@type'         => 'Offer',
+					'price'         => (string) $price_by_type_id[ $type_id ],
+					'priceCurrency' => $currency,
+					'availability'  => 'https://schema.org/InStock',
+					'url'           => $permalink,
+				);
+
+				if ( $valid_from ) {
+					$offer['validFrom'] = $valid_from;
+				}
+
+				$offers[] = $offer;
 				continue;
 			}
 
-			$offer = array(
+			// No price in the current window: a type priced elsewhere is a paid
+			// ticket with sales closed — emit nothing.
+			if ( isset( $paid_type_ids[ $type_id ] ) ) {
+				continue;
+			}
+
+			// Genuinely free ticket type (a free RSVP/signup with no price row):
+			// advertise a price-"0" offer so the event is accessible for free.
+			$offers[] = array(
 				'@type'         => 'Offer',
-				'price'         => (string) $price_by_type_id[ $ticket_type->id ],
+				'price'         => '0',
 				'priceCurrency' => $currency,
 				'availability'  => 'https://schema.org/InStock',
 				'url'           => $permalink,
 			);
-
-			if ( $valid_from ) {
-				$offer['validFrom'] = $valid_from;
-			}
-
-			$offers[] = $offer;
 		}
 
 		return $offers;
