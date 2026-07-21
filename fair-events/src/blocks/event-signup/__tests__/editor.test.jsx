@@ -5,10 +5,17 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 
 // ServerSideRender hits the REST API for a live render; stub it to a marker
-// so we can render the block in isolation.
+// that also emits the questions slot render.php puts in preview markup, so
+// the portal logic has somewhere to land. Captures its props so tests can
+// assert on the attributes sent to the REST renderer.
+const mockServerSideRender = jest.fn(() => (
+	<div data-testid="ssr">
+		<div className="fair-events-event-signup-questions-slot" />
+	</div>
+));
 jest.mock(
 	'@wordpress/server-side-render',
-	() => () => <div data-testid="ssr" />,
+	() => (props) => mockServerSideRender(props),
 	{ virtual: true }
 );
 
@@ -92,6 +99,23 @@ describe('Event Signup EditComponent', () => {
 		expect(screen.getByTestId('ssr')).toBeInTheDocument();
 		expect(screen.getByTestId('inner-blocks')).toBeInTheDocument();
 		expect(screen.getByText('Form content')).toBeInTheDocument();
+	});
+
+	it('portals the form content area into the SSR-rendered questions slot', () => {
+		renderEdit(false);
+
+		const slot = document.querySelector(
+			'.fair-events-event-signup-questions-slot'
+		);
+		expect(slot).toContainElement(screen.getByTestId('inner-blocks'));
+		expect(slot).toContainElement(screen.getByText('Form content'));
+	});
+
+	it('flags the SSR preview as an editor preview so render.php emits a slot', () => {
+		renderEdit(false);
+
+		const [{ attributes }] = mockServerSideRender.mock.calls.at(-1);
+		expect(attributes.isEditorPreview).toBe(true);
 	});
 
 	it('only offers the fair-form question blocks once fair-form is active', () => {
