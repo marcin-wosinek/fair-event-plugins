@@ -467,15 +467,17 @@ $subscribe_urls = fair_events_build_subscribe_urls( is_array( $categories ) ? $c
 		data-wp-on-document--click="actions.handleOutsideClick"
 		data-wp-on-document--keydown="actions.handleKeydown"
 	>
-		<button
-			type="button"
-			class="fair-events-subscribe-trigger wp-block-button__link wp-element-button is-style-outline"
-			aria-haspopup="true"
-			data-wp-on--click="actions.toggle"
-			data-wp-bind--aria-expanded="state.isOpen"
-		>
-			<?php esc_html_e( 'Subscribe to calendar', 'fair-events' ); ?>
-		</button>
+		<div class="wp-block-button is-style-outline">
+			<button
+				type="button"
+				class="fair-events-subscribe-trigger wp-block-button__link wp-element-button"
+				aria-haspopup="true"
+				data-wp-on--click="actions.toggle"
+				data-wp-bind--aria-expanded="state.isOpen"
+			>
+				<?php esc_html_e( 'Subscribe to calendar', 'fair-events' ); ?>
+			</button>
+		</div>
 
 		<div class="fair-events-subscribe-panel"
 			role="menu"
