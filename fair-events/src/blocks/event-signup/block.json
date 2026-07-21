@@ -22,6 +22,10 @@
 		"submitButtonText": {
 			"type": "string",
 			"default": "Get Tickets"
+		},
+		"isEditorPreview": {
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"editorScript": "file:./editor.js",

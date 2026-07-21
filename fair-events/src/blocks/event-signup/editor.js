@@ -21,12 +21,18 @@ import {
 } from '@wordpress/block-editor';
 import { ExternalLink, PanelBody, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
+import { createPortal, useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
 import metadata from './block.json';
 import './editor.css';
 
 const UNIFIED_NAME = 'fair-events/event-signup';
+
+// Where render.php puts an empty slot (instead of the real nested content)
+// when isEditorPreview is set, so the editor can portal the editable "Form
+// content" area into the same on-screen position as the frontend.
+const QUESTIONS_SLOT_SELECTOR = '.fair-events-event-signup-questions-slot';
 
 // Blocks always allowed in the form content area, regardless of fair-form.
 const BASE_ALLOWED_BLOCKS = ['core/heading', 'core/paragraph', 'core/list'];
@@ -81,6 +87,57 @@ registerBlockType(metadata.name, {
 			}
 		);
 
+		// The preview slot is injected into the SSR markup asynchronously
+		// (after the REST fetch resolves, and again on every re-render that
+		// changes an SSR attribute), so watch for it with a MutationObserver
+		// rather than assuming it's there on mount.
+		const previewRef = useRef(null);
+		const [slotNode, setSlotNode] = useState(null);
+
+		useEffect(() => {
+			const container = previewRef.current;
+			if (!container) {
+				return;
+			}
+
+			const findSlot = () => {
+				setSlotNode(container.querySelector(QUESTIONS_SLOT_SELECTOR));
+			};
+
+			findSlot();
+
+			const observer = new MutationObserver((records) => {
+				// The portal's own content lands inside the slot node, which
+				// is itself inside the observed subtree, so most mutations
+				// here are just React writing the editable area into place.
+				// Only re-resolve the slot when a mutation happened outside
+				// it — that's an SSR refetch replacing the preview markup.
+				const currentSlot = container.querySelector(
+					QUESTIONS_SLOT_SELECTOR
+				);
+				const isPortalOnlyChange = records.every(
+					(record) =>
+						currentSlot && currentSlot.contains(record.target)
+				);
+				if (isPortalOnlyChange) {
+					return;
+				}
+				findSlot();
+			});
+			observer.observe(container, { childList: true, subtree: true });
+
+			return () => observer.disconnect();
+		}, []);
+
+		const formContent = (
+			<>
+				<div className="fair-events-event-signup-questions-label">
+					{__('Form content', 'fair-events')}
+				</div>
+				<div {...innerBlocksProps} />
+			</>
+		);
+
 		return (
 			<>
 				<InspectorControls>
@@ -112,14 +169,18 @@ registerBlockType(metadata.name, {
 				</InspectorControls>
 
 				<div {...blockProps}>
-					<ServerSideRender
-						block={UNIFIED_NAME}
-						attributes={attributes}
-					/>
-					<div className="fair-events-event-signup-questions-label">
-						{__('Form content', 'fair-events')}
+					<div ref={previewRef}>
+						<ServerSideRender
+							block={UNIFIED_NAME}
+							attributes={{
+								...attributes,
+								isEditorPreview: true,
+							}}
+						/>
 					</div>
-					<div {...innerBlocksProps} />
+					{slotNode
+						? createPortal(formContent, slotNode)
+						: formContent}
 				</div>
 			</>
 		);

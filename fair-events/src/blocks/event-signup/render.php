@@ -476,7 +476,9 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 			</div>
 		</div>
 
-		<?php if ( '' !== trim( $content ) ) : ?>
+		<?php if ( ! empty( $attributes['isEditorPreview'] ) ) : ?>
+			<div class="fair-events-event-signup-questions-slot"></div>
+		<?php elseif ( '' !== trim( $content ) ) : ?>
 			<div class="fair-events-event-signup-questions">
 				<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner blocks content is already escaped by WordPress. ?>
 			</div>
