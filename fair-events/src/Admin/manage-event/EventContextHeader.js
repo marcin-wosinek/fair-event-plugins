@@ -50,14 +50,19 @@ export default function EventContextHeader({
 	const linkedPosts = eventDate.linked_posts || [];
 
 	// Drives both the status chip and the action buttons below it, so the two
-	// never disagree about what state the event's public page is in.
+	// never disagree about what state the event's public page is in. The
+	// junction table (linked_posts) is the source of truth for a linked page —
+	// the same signal the link modal and the backend's get_display_url() trust —
+	// because link_type can drift out of sync (e.g. a details save re-sending a
+	// stale value) and must not override an actually-linked post. Precedence
+	// mirrors get_display_url(): external URL first, then any linked post.
 	let linkState;
 	let primaryPost = null;
-	if (eventDate.link_type === 'post' && linkedPosts.length > 0) {
+	if (eventDate.link_type === 'external' && eventDate.external_url) {
+		linkState = 'external';
+	} else if (linkedPosts.length > 0) {
 		linkState = 'post';
 		primaryPost = linkedPosts.find((lp) => lp.is_primary) || linkedPosts[0];
-	} else if (eventDate.link_type === 'external' && eventDate.external_url) {
-		linkState = 'external';
 	} else {
 		linkState = 'none';
 	}

@@ -125,6 +125,41 @@ it('link status: post shows the linked post title', () => {
 	).toBeInTheDocument();
 });
 
+it('link status: a linked post is recognized even when link_type is stale (not "post")', () => {
+	// The junction table is the source of truth: an event can have a linked
+	// post while its link_type column still reads "none" (e.g. a details save
+	// re-sent a stale value). The header must agree with the link modal and
+	// show the public page, not "No public page yet".
+	const eventDate = {
+		...baseEventDate,
+		link_type: 'none',
+		display_url: 'https://example.com/event',
+		linked_posts: [
+			{
+				id: 5,
+				title: 'My Public Page',
+				is_primary: true,
+				edit_url: '/wp-admin/post.php?post=5&action=edit',
+			},
+		],
+	};
+	render(
+		<EventContextHeader
+			eventDate={eventDate}
+			manageEventUrl={manageEventUrl}
+			calendarUrl={calendarUrl}
+			onManageLink={jest.fn()}
+		/>
+	);
+	expect(
+		screen.getByText(/Public page: My Public Page/i)
+	).toBeInTheDocument();
+	expect(screen.queryByText(/No public page yet/i)).not.toBeInTheDocument();
+	expect(
+		screen.getByRole('link', { name: /View public page/i })
+	).toBeInTheDocument();
+});
+
 it('link status: external shows the external URL', () => {
 	const eventDate = {
 		...baseEventDate,
