@@ -625,9 +625,11 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 	});
 
 	it('shows the Mollie notice when the connector is active but unconfigured and a price > 0', () => {
+		// wp_localize_script delivers booleans as strings ("1"/"") — feed
+		// that stringified transport form, not real booleans.
 		window.fairPaymentsConnector = {
-			connectorActive: true,
-			paymentConfigured: false,
+			connectorActive: '1',
+			paymentConfigured: '',
 			settingsUrl:
 				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
 		};
@@ -646,7 +648,7 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 	});
 
 	it('shows the missing-plugin notice when the connector is inactive and a price > 0', () => {
-		window.fairPaymentsConnector = { currency: 'EUR' };
+		window.fairPaymentsConnector = { connectorActive: '', currency: 'EUR' };
 		const { container } = renderTickets({
 			initialData: initialDataWithPaidTicket,
 		});
@@ -661,7 +663,7 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 	});
 
 	it('shows the notice for add-on-only pricing', () => {
-		window.fairPaymentsConnector = { currency: 'EUR' };
+		window.fairPaymentsConnector = { connectorActive: '', currency: 'EUR' };
 		const { container } = renderTickets({
 			initialData: initialDataWithPaidAddon,
 		});
@@ -671,22 +673,35 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 		).toBeInTheDocument();
 	});
 
-	it('does not show any notice when every price is 0', () => {
-		window.fairPaymentsConnector = { currency: 'EUR' };
-		const { container } = renderTickets({
-			initialData: initialDataWithTicketType,
-		});
+	it.each([
+		['missing/inactive', { connectorActive: '', currency: 'EUR' }],
+		[
+			'active but unconfigured',
+			{ connectorActive: '1', paymentConfigured: '', settingsUrl: 'x' },
+		],
+		[
+			'active and configured',
+			{ connectorActive: '1', paymentConfigured: '1', settingsUrl: 'x' },
+		],
+	])(
+		'does not show any notice when every price is 0 (%s)',
+		(_label, connectorState) => {
+			window.fairPaymentsConnector = connectorState;
+			const { container } = renderTickets({
+				initialData: initialDataWithTicketType,
+			});
 
-		expect(
-			within(container).queryByText(mollieRegex)
-		).not.toBeInTheDocument();
-		expect(
-			within(container).queryByText(missingPluginRegex)
-		).not.toBeInTheDocument();
-	});
+			expect(
+				within(container).queryByText(mollieRegex)
+			).not.toBeInTheDocument();
+			expect(
+				within(container).queryByText(missingPluginRegex)
+			).not.toBeInTheDocument();
+		}
+	);
 
 	it('does not show any notice when there are no tickets yet', () => {
-		window.fairPaymentsConnector = { connectorActive: false };
+		window.fairPaymentsConnector = { connectorActive: '' };
 		const { container } = renderTickets({ initialData: emptyInitialData });
 
 		expect(
@@ -698,9 +713,12 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 	});
 
 	it('does not show any notice when payments are configured', () => {
+		// wp_localize_script delivers booleans as strings ("1"/"") — feed
+		// that stringified transport form, not real booleans. This is the
+		// green-path state the notice must correctly suppress.
 		window.fairPaymentsConnector = {
-			connectorActive: true,
-			paymentConfigured: true,
+			connectorActive: '1',
+			paymentConfigured: '1',
 			settingsUrl:
 				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
 		};
