@@ -225,6 +225,14 @@ export default function ParticipantDetail() {
 								</td>
 							</tr>
 							<tr>
+								<th>{__('Weekly summary', 'fair-audience')}</th>
+								<td>
+									{participant.weekly_summary_opt_out
+										? __('Opted out', 'fair-audience')
+										: __('Subscribed', 'fair-audience')}
+								</td>
+							</tr>
+							<tr>
 								<th>{__('Phone', 'fair-audience')}</th>
 								<td>{participant.phone || '—'}</td>
 							</tr>
