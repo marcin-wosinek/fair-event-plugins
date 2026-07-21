@@ -969,6 +969,150 @@ describe('EventTickets — unset sale window shows the resolved default (#1189)'
 	});
 });
 
+describe('EventTickets — sale end tracks the series across conversion (#1203)', () => {
+	const initialDataWithUnsetSinglePeriod = {
+		...initialDataWithTicketType,
+		sale_periods: [{ id: 801, name: '', sale_start: '', sale_end: '' }],
+		prices: [{ ticket_type_id: 1, sale_period_id: 801, price: '12' }],
+	};
+
+	const initialDataWithSetSinglePeriod = {
+		...initialDataWithTicketType,
+		sale_periods: [
+			{
+				id: 802,
+				name: '',
+				sale_start: '2026-07-01',
+				sale_end: '2026-08-02',
+			},
+		],
+		prices: [{ ticket_type_id: 1, sale_period_id: 802, price: '12' }],
+	};
+
+	const initialDataWithTwoPeriodsUnsetEnd = {
+		...initialDataWithTicketType,
+		sale_periods: [
+			{
+				id: 601,
+				name: 'Advance ticket',
+				sale_start: '2026-07-01',
+				sale_end: '2026-08-01',
+			},
+			{
+				id: 602,
+				name: 'Day of event',
+				sale_start: '2026-08-01',
+				sale_end: '',
+			},
+		],
+		prices: [
+			{ ticket_type_id: 1, sale_period_id: 601, price: '20' },
+			{ ticket_type_id: 1, sale_period_id: 602, price: '5' },
+		],
+		settings: { multiple_pricing_periods: true },
+	};
+
+	it('turning on "Multiple pricing periods" with an unset window leaves the last period\'s end unset', () => {
+		const onDataRef = { current: null };
+		renderTickets({
+			initialData: initialDataWithUnsetSinglePeriod,
+			startDatetime: '2026-08-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+			onDataRef,
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', { name: /Multiple pricing periods/i })
+		);
+
+		const payload = onDataRef.current();
+		expect(payload.sale_periods).toHaveLength(2);
+		// Only the split boundary is stored — the trailing end stays unset.
+		expect(payload.sale_periods[0].sale_start).toBe('');
+		expect(payload.sale_periods[0].sale_end).toBe('2026-08-01 00:00:00');
+		expect(payload.sale_periods[1].sale_start).toBe('2026-08-01 00:00:00');
+		expect(payload.sale_periods[1].sale_end).toBe('');
+	});
+
+	it('the last period\'s "Until" field shows the resolved default as a placeholder, not a frozen value', () => {
+		const { container } = renderTickets({
+			initialData: initialDataWithUnsetSinglePeriod,
+			startDatetime: '2026-08-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+			lastOccurrenceDatetime: '2026-08-22 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', { name: /Multiple pricing periods/i })
+		);
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		const dateInputs = container.querySelectorAll('input[type="date"]');
+		const lastUntilInput = dateInputs[dateInputs.length - 1];
+		expect(lastUntilInput.value).toBe('');
+		// Placeholder is anchored to the series' last occurrence (Aug 22/23
+		// depending on local TZ rounding), not the master's own day (Aug 02).
+		expect(lastUntilInput.placeholder).toMatch(/^2026-08-2[23]$/);
+	});
+
+	it('merging periods restores an unset (automatic) end', () => {
+		const onDataRef = { current: null };
+		renderTickets({
+			initialData: initialDataWithTwoPeriodsUnsetEnd,
+			onDataRef,
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', { name: /Multiple pricing periods/i })
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'Merge periods' }));
+
+		const payload = onDataRef.current();
+		expect(payload.sale_periods).toHaveLength(1);
+		expect(payload.sale_periods[0].sale_end).toBe('');
+	});
+
+	it('a "Reset to automatic" control clears an explicit end back to unset', () => {
+		const onDataRef = { current: null };
+		renderTickets({
+			initialData: initialDataWithSetSinglePeriod,
+			startDatetime: '2026-07-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+			onDataRef,
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Reset to automatic' })
+		);
+
+		const payload = onDataRef.current();
+		expect(payload.sale_periods[0].sale_end).toBe('');
+	});
+
+	it('an organiser-typed sale end survives turning multiple pricing periods on', () => {
+		const onDataRef = { current: null };
+		renderTickets({
+			initialData: initialDataWithSetSinglePeriod,
+			startDatetime: '2026-07-01 10:00:00',
+			endDatetime: '2026-08-01 12:00:00',
+			onDataRef,
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', { name: /Multiple pricing periods/i })
+		);
+
+		const payload = onDataRef.current();
+		expect(payload.sale_periods[1].sale_end).toBe('2026-08-02 00:00:00');
+	});
+});
+
 describe('EventTickets — pricing an event with no stored prices (#1175)', () => {
 	// A ticket type + sale period saved without any price. In single-period
 	// mode the pricing cell is seeded enabled:false and there is no "Available"

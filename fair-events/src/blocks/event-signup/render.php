@@ -155,22 +155,20 @@ if ( $series_master_id && class_exists( \FairEvents\Models\EventDates::class ) )
 }
 $has_instance_picker = $has_multiple_instances_type && ! empty( $occurrences_for_picker );
 
-// Find active sale period and load prices.
+// Find active sale period and load prices. Delegates to the shared
+// TicketPricing service — the same authority the get-tickets purchase flow
+// uses — so the lazy default window and last-period fallback apply here too
+// instead of a second, divergent evaluation.
 $price_by_type_id   = array();
 $active_sale_period = null;
-if ( class_exists( \FairEvents\Models\TicketSalePeriod::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
-	$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $pricing_event_date_id );
-	$now          = current_time( 'mysql' );
-	foreach ( $sale_periods as $period ) {
-		if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
-			$active_sale_period = $period;
-			$prices             = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id );
-			foreach ( $prices as $price ) {
-				if ( (int) $price->sale_period_id === (int) $period->id ) {
-					$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
-				}
+if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
+	$active_sale_period = \FairEvents\Services\TicketPricing::resolve_active_sale_period( $pricing_event_date_id );
+	if ( $active_sale_period ) {
+		$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id );
+		foreach ( $prices as $price ) {
+			if ( (int) $price->sale_period_id === (int) $active_sale_period->id ) {
+				$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
 			}
-			break;
 		}
 	}
 }
