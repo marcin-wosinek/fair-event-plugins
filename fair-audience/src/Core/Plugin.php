@@ -92,6 +92,9 @@ class Plugin {
 		// Initialize the weekly events digest cron.
 		\FairAudience\Hooks\WeeklyDigestHooks::init();
 
+		// Initialize the pending-subscription timeout cron.
+		\FairAudience\Hooks\PendingSubscriptionTimeoutHooks::init();
+
 		// Extend fair-events' unified signup block/route for the simple
 		// anonymous/linked case via the fair_events_signup_* hook contract.
 		\FairAudience\Hooks\SignupHookBridge::init();

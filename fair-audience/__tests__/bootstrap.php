@@ -14,6 +14,14 @@ if ( ! defined( 'WPINC' ) ) {
 	define( 'WPINC', 'wp-includes' );
 }
 
+if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+	define( 'MINUTE_IN_SECONDS', 60 );
+}
+
+if ( ! defined( 'WEEK_IN_SECONDS' ) ) {
+	define( 'WEEK_IN_SECONDS', 7 * 24 * 60 * 60 );
+}
+
 // Minimal WordPress function stubs so pure digest logic can be unit tested
 // without a full WP bootstrap. Tests seed values via $GLOBALS['_fair_test_options'].
 if ( ! function_exists( 'is_wp_error' ) ) {

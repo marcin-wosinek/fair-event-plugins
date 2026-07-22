@@ -87,6 +87,39 @@ class ParticipantRepository {
 	}
 
 	/**
+	 * Get marketing subscribers still pending confirmation past a cutoff.
+	 *
+	 * Used by the pending-subscription timeout sweep to find participants who
+	 * signed up for marketing mail but never confirmed. The caller reverts each
+	 * one and writes its own consent-log row, so this returns the models rather
+	 * than mutating them.
+	 *
+	 * @param string $cutoff MySQL UTC datetime; rows updated before this match.
+	 * @return Participant[] Array of expired pending-marketing participants.
+	 */
+	public function get_expired_pending_marketing( $cutoff ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE email_profile = 'marketing' AND status = 'pending' AND updated_at < %s",
+				$table_name,
+				$cutoff
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new Participant( $row );
+			},
+			$results
+		);
+	}
+
+	/**
 	 * Get participant by email.
 	 *
 	 * @param string $email Email address.
