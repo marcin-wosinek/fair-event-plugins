@@ -405,6 +405,38 @@ class ParticipantRepository {
 	}
 
 	/**
+	 * Get participants stuck at marketing+pending past the given cutoff.
+	 *
+	 * Used by the pending-subscription timeout sweep; rows are returned (not
+	 * bulk-updated) because each revert needs its own EmailConsentLog entry.
+	 *
+	 * @param string $cutoff Datetime string (UTC, 'Y-m-d H:i:s'); rows with
+	 *                       updated_at older than this are returned.
+	 * @return Participant[] Array of participants.
+	 */
+	public function get_expired_pending_marketing( $cutoff ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE email_profile = 'marketing' AND status = 'pending' AND updated_at < %s",
+				$table_name,
+				$cutoff
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new Participant( $row );
+			},
+			$results
+		);
+	}
+
+	/**
 	 * Get audience stats: total participants, and how many are in the
 	 * mailing (marketing + confirmed), pending confirmation, or declined.
 	 *
