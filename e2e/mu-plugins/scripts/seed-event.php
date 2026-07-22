@@ -20,6 +20,11 @@
  *                        multiple_instances (default prices 15/40/10; override
  *                        {"price":N} sets the single_instance price). Always
  *                        renders the unified fair-events/event-signup block.
+ *   audience-ticket-scopes  like three-ticket-scopes, but renders the default
+ *                        fair-audience/event-signup block instead. Override
+ *                        {"omitMulti":true} to skip the multiple_instances
+ *                        type (single_instance + whole_series only), the
+ *                        regression scenario.
  *
  * Examples:
  *   wp eval-file .../seed-event.php paid
@@ -51,6 +56,7 @@ $price             = isset( $overrides['price'] ) ? (float) $overrides['price'] 
 $option_names      = isset( $overrides['options'] ) ? (array) $overrides['options'] : array( 'dinner', 'tshirt' );
 $option_price      = isset( $overrides['optionPrice'] ) ? (float) $overrides['optionPrice'] : 10.00;
 $minimum_instances = isset( $overrides['minimumInstances'] ) ? (int) $overrides['minimumInstances'] : 2;
+$omit_multi        = isset( $overrides['omitMulti'] ) && $overrides['omitMulti'];
 $ticket_type_id    = 0;
 $option_ids        = array();
 $occurrence_ids    = array();
@@ -147,8 +153,26 @@ switch ( $flavour ) {
 		$extra_type_ids = array( $whole_type_id, $multi_type_id );
 		break;
 
+	case 'audience-ticket-scopes':
+		$price = isset( $overrides['price'] ) ? (float) $overrides['price'] : 15.00;
+		// Turns the single occurrence already created above into the series
+		// master (same event_date_id/sale_period_id) plus 2 generated siblings.
+		$occurrence_ids = fair_e2e_add_series( $event_id, 3 );
+		$single_type_id = fair_e2e_add_ticket_type( $event_date_id, 'Single Session', null );
+		$whole_type_id  = fair_e2e_add_whole_series_ticket_type( $event_date_id, 'Full Series Pass' );
+		fair_e2e_add_price( $single_type_id, $sale_period_id, $price, null );
+		fair_e2e_add_price( $whole_type_id, $sale_period_id, 40.00, null );
+		$ticket_type_id = $single_type_id;
+		$extra_type_ids = array( $whole_type_id );
+		if ( ! $omit_multi ) {
+			$multi_type_id    = fair_e2e_add_multi_instance_ticket_type( $event_date_id, 'Pick your sessions', $minimum_instances );
+			$extra_type_ids[] = $multi_type_id;
+			fair_e2e_add_price( $multi_type_id, $sale_period_id, 10.00, null );
+		}
+		break;
+
 	default:
-		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes." );
+		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes, audience-ticket-scopes." );
 }
 
 echo 'E2E_SEED:' . wp_json_encode(
