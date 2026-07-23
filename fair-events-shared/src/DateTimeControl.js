@@ -162,10 +162,7 @@ export default function DateTimeControl({
 					<div style={{ padding: '16px', textAlign: 'center' }}>
 						<Spinner />
 						<p style={{ marginTop: '8px' }}>
-							{__(
-								'Loading date options...',
-								'fair-timetable'
-							)}
+							{__('Loading date options...', 'fair-timetable')}
 						</p>
 					</div>
 				</>
@@ -221,10 +218,7 @@ export default function DateTimeControl({
 								}}
 							>
 								<strong>
-									{__(
-										'Resolved value:',
-										'fair-timetable'
-									)}
+									{__('Resolved value:', 'fair-timetable')}
 								</strong>{' '}
 								{formatEventDate(eventStart, eventAllDay)}
 							</p>
@@ -244,10 +238,7 @@ export default function DateTimeControl({
 								}}
 							>
 								<strong>
-									{__(
-										'Resolved value:',
-										'fair-timetable'
-									)}
+									{__('Resolved value:', 'fair-timetable')}
 								</strong>{' '}
 								{formatEventDate(eventEnd, eventAllDay)}
 							</p>
