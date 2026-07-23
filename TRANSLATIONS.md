@@ -286,6 +286,64 @@ npm run makemo --workspace=fair-events
 npm run build --workspace=fair-events
 ```
 
+### Shared Package Strings (`fair-events-shared`)
+
+`fair-events-shared` lives in its own npm workspace, so a plugin's own
+`wp i18n make-pot . --exclude=node_modules,...` scan never sees the strings
+its shared components contribute (recurrence controls, the mini calendar,
+event-source selector, questionnaire/form helpers, duration options,
+date/time controls). `npm run makepot` for a consuming plugin now runs a
+second step automatically to pick these up:
+
+```bash
+wp i18n make-pot . languages/<plugin>.pot --exclude=node_modules,vendor,tests,build,svn
+node ../scripts/translation/merge-shared-strings.js --plugin=<plugin>
+```
+
+`merge-shared-strings.js` (`scripts/translation/merge-shared-strings.js`)
+re-scans `fair-events-shared/src` filtered to the plugin's own text domain
+(`--domain=<plugin>`) and merges the result into the plugin's already-generated
+POT file. Nothing else in the pipeline changes — `updatepo`, the AI/community
+translation tools, and the coverage/untranslated reports all just read the
+resulting `.pot`/`.po` files, so they include shared strings automatically
+once a plugin's catalog has been regenerated this way.
+
+**How a string is routed.** Each shared string is extracted into the catalog
+of the text domain it *literally* declares in its `__( 'string', 'domain' )`
+call — not into every plugin that happens to import the file. A file authored
+against `'fair-events'` only ever lands in `fair-events.pot`; the same file's
+strings authored against `'fair-audience'` only land in `fair-audience.pot`.
+This is enforced by a Jest check,
+`fair-events-shared/__tests__/text-domains.test.js`, which fails the build if
+a literal domain used anywhere in `fair-events-shared/src` doesn't match a
+known plugin's text domain (config.js `plugins` list) — the fastest way to
+catch a typo'd or stale domain (e.g. an old plugin slug left behind after a
+rename) before it silently ships strings that can never resolve at runtime.
+
+**Source references and the JS translation path.** The merged entries'
+`#:` reference comments are rewritten to
+`../fair-events-shared/src/<file>:<line>` — the exact path
+`webpack-bundle-output` records for shared modules in `build/map.json`. This
+match is required for `wp i18n make-json --use-map=build/map.json` (see
+[I18N_SETUP.md](./I18N_SETUP.md)) to route a shared string into the correct
+per-bundle JSON file; a bare filename reference resolves fine for the PHP
+`.mo` path but is silently dropped from every JS translation JSON, since the
+map lookup is a literal string match.
+
+**Dynamic text domains are not extracted.** `DurationOptions` takes its text
+domain at runtime (`new DurationOptions({ textDomain: 'fair-events', ... })`),
+so its `__( label, this.textDomain )` calls can't be statically parsed by
+`wp i18n make-pot` — the same limitation applies to any other shared component
+written this way. These strings are invisible to extraction entirely (not
+misfiled, just skipped) and must be declared as literal `__()` calls in the
+*consuming* plugin's own source if they need to be translatable.
+
+**Only plugins that depend on `fair-events-shared`** (checked via each
+plugin's `package.json` `dependencies`) run the merge step in their `makepot`
+script. Currently: `fair-audience`, `fair-audience-experimental`,
+`fair-events`, `fair-events-experimental`, `fair-form`,
+`fair-payments-connector`.
+
 ## Architecture
 
 ### Directory Structure

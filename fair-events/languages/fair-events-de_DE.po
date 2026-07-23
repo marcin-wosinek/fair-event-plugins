@@ -460,6 +460,7 @@ msgstr "Raster"
 #: src/blocks/events-calendar/components/EditComponent.js:204
 #: src/blocks/events-list/components/EditComponent.js:159
 #: src/blocks/events-week/components/EditComponent.js:151
+#: ../fair-events-shared/src/EventSourceSelector.js:24
 msgid "Event Sources"
 msgstr "Veranstaltungsquellen"
 
@@ -963,6 +964,7 @@ msgstr "Startdatum"
 #: src/Admin/manage-event/EventTickets.js:1400
 #: src/Admin/manage-event/ManageEventApp.js:809
 #: src/Admin/manage-event/ManageEventApp.js:842
+#: ../fair-events-shared/src/RecurrenceControl.js:76
 msgid "End date"
 msgstr "Enddatum"
 
@@ -1014,10 +1016,12 @@ msgid "Event length"
 msgstr "Event-Dauer"
 
 #: src/blocks/event-info/render.php:70
+#: ../fair-events-shared/src/recurrence.js:12
 msgid "Daily"
 msgstr "Täglich"
 
 #: src/blocks/event-info/render.php:89
+#: ../fair-events-shared/src/recurrence.js:15
 msgid "Monthly"
 msgstr "Monatlich"
 
@@ -1353,37 +1357,37 @@ msgstr "Nach Vorkommen-Typ filtern."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:68
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d days"
 msgstr "Alle %d Tage"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:75
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every 2 weeks on %s"
 msgstr "Alle 2 Wochen am %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:79
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Alle %1$d Wochen am %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:82
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %s"
 msgstr "Jeden %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:87
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d months"
 msgstr "Alle %d Monate"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:94
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d years"
 msgstr "Alle %d Jahre"
 
@@ -1393,7 +1397,7 @@ msgstr "Jährlich"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:169
-#, php-format, js-format
+#, php-format,js-format
 msgid "Next: %s"
 msgstr "Nächste: %s"
 
@@ -2006,7 +2010,7 @@ msgstr "Eines der ausgewählten Vorkommen ist für dieses Ticket ungültig."
 #: src/API/GetTicketsController.php:558
 #: src/blocks/event-signup/frontend.js:206
 #: src/blocks/event-signup/frontend.js:292
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Bitte wählen Sie mindestens %d Vorkommen aus."
@@ -2982,3 +2986,62 @@ msgstr "Veranstaltungstag"
 msgid "Sale Periods Timeline"
 msgstr "Verkaufszeiträume-Zeitstrahl"
 
+#: ../fair-events-shared/src/event-utils.js:31
+msgid "(untitled event)"
+msgstr ""
+
+#: ../fair-events-shared/src/EventSourceSelector.js:25
+msgid "Select event sources to display"
+msgstr ""
+
+#: ../fair-events-shared/src/EventSourceSelector.js:42
+msgid "Failed to load event sources"
+msgstr ""
+
+#: ../fair-events-shared/src/EventSourceSelector.js:70
+msgid "No event sources configured. Create event sources in Fair Events settings."
+msgstr ""
+
+#: ../fair-events-shared/src/EventSourceSelector.js:111
+msgid "Manage Event Sources"
+msgstr ""
+
+#: ../fair-events-shared/src/MiniCalendar.js:152
+msgid "Previous months"
+msgstr ""
+
+#: ../fair-events-shared/src/MiniCalendar.js:163
+msgid "Next months"
+msgstr ""
+
+#: ../fair-events-shared/src/recurrence.js:13
+msgid "Weekly"
+msgstr ""
+
+#: ../fair-events-shared/src/recurrence.js:14
+msgid "Biweekly"
+msgstr ""
+
+#: ../fair-events-shared/src/recurrence.js:19
+msgid "After number of occurrences"
+msgstr ""
+
+#: ../fair-events-shared/src/recurrence.js:20
+msgid "On a specific date"
+msgstr ""
+
+#: ../fair-events-shared/src/RecurrenceControl.js:39
+msgid "Repeat this event"
+msgstr ""
+
+#: ../fair-events-shared/src/RecurrenceControl.js:48
+msgid "Frequency"
+msgstr ""
+
+#: ../fair-events-shared/src/RecurrenceControl.js:56
+msgid "Ends"
+msgstr ""
+
+#: ../fair-events-shared/src/RecurrenceControl.js:65
+msgid "Number of occurrences"
+msgstr ""

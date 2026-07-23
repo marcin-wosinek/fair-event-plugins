@@ -131,7 +131,7 @@ export default function DateTimeControl({
 	const buildSelectOptions = () => {
 		const options = [
 			{
-				label: __('Custom date/time', 'fair-schedule-blocks'),
+				label: __('Custom date/time', 'fair-timetable'),
 				value: 'custom',
 			},
 		];
@@ -164,7 +164,7 @@ export default function DateTimeControl({
 						<p style={{ marginTop: '8px' }}>
 							{__(
 								'Loading date options...',
-								'fair-schedule-blocks'
+								'fair-timetable'
 							)}
 						</p>
 					</div>
@@ -180,7 +180,7 @@ export default function DateTimeControl({
 							selectedOption !== 'custom'
 								? __(
 										'Using a dynamic date from plugin',
-										'fair-schedule-blocks'
+										'fair-timetable'
 								  )
 								: help
 						}
@@ -202,7 +202,7 @@ export default function DateTimeControl({
 								onClick={handleTodayClick}
 								style={{ marginTop: '8px' }}
 							>
-								{__('Today', 'fair-schedule-blocks')}
+								{__('Today', 'fair-timetable')}
 							</Button>
 						</>
 					)}
@@ -223,7 +223,7 @@ export default function DateTimeControl({
 								<strong>
 									{__(
 										'Resolved value:',
-										'fair-schedule-blocks'
+										'fair-timetable'
 									)}
 								</strong>{' '}
 								{formatEventDate(eventStart, eventAllDay)}
@@ -246,7 +246,7 @@ export default function DateTimeControl({
 								<strong>
 									{__(
 										'Resolved value:',
-										'fair-schedule-blocks'
+										'fair-timetable'
 									)}
 								</strong>{' '}
 								{formatEventDate(eventEnd, eventAllDay)}
