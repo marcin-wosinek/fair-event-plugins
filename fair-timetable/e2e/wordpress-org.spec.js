@@ -164,6 +164,20 @@ async function buildDemoPost(page, content) {
 	await editorFrame.locator('.block-editor-iframe__body').waitFor();
 	await page.waitForTimeout(2000);
 
+	// Dismiss the "Welcome to the block editor" guide if it shows up. It
+	// appears on a fresh admin session (e.g. local runs) but is already
+	// dismissed via user meta on CI. Escape closes it regardless of locale.
+	const modalOverlay = page.locator('.components-modal__screen-overlay');
+	if (
+		await modalOverlay
+			.first()
+			.isVisible()
+			.catch(() => false)
+	) {
+		await page.keyboard.press('Escape');
+		await modalOverlay.first().waitFor({ state: 'detached' });
+	}
+
 	// Title. Uses the stable class name rather than the accessible name,
 	// which is locale-dependent (e.g. "Escribe un título" under es_ES).
 	await editorFrame
@@ -191,8 +205,13 @@ async function buildDemoPost(page, content) {
 	// Wait for timetable container to be inserted in the iframe.
 	await editorFrame.locator('.wp-block-fair-timetable-timetable').waitFor();
 
-	// Close the block inserter popup before editing further.
-	await page.keyboard.press('Escape');
+	// Close the block inserter panel before editing further. Escape doesn't
+	// reliably reach it once focus has moved into the block canvas iframe
+	// after insertion, so toggle the same button that opened it instead.
+	const inserterSearch = page.locator('.block-editor-inserter__search');
+	if (await inserterSearch.isVisible().catch(() => false)) {
+		await page.locator('.editor-document-tools__inserter-toggle').click();
+	}
 	await page.waitForTimeout(500);
 
 	// Fill each column's title.
