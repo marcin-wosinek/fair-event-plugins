@@ -488,7 +488,7 @@ msgid "Income"
 msgstr "Revenu"
 
 #: src/Admin/entries/components/TagField.js:23
-#: src/Admin/entries/EntriesApp.js:825
+#: src/Admin/entries/EntriesApp.js:828
 msgid "Tag"
 msgstr "Étiquette"
 
@@ -496,6 +496,6 @@ msgstr "Étiquette"
 msgid "e.g. venue, catering, travel"
 msgstr "p. ex. lieu, restauration, transport"
 
-#: src/Admin/entries/EntriesApp.js:829
+#: src/Admin/entries/EntriesApp.js:832
 msgid "All Tags"
 msgstr "Toutes les étiquettes"

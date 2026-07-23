@@ -1059,7 +1059,7 @@ msgstr "Manage-Event-Erweiterungen"
 msgid "The Mailings tab in the manage-event admin UI."
 msgstr "Die Registerkarte \"Mailings\" in der Manage-Event-Admin-Benutzeroberfläche."
 
-#: src/Hooks/ScheduledMessageHooks.php:75
+#: src/Hooks/ScheduledMessageHooks.php:76
 msgid "Every 5 minutes (fair-audience)"
 msgstr "Alle 5 Minuten (fair-audience)"
 

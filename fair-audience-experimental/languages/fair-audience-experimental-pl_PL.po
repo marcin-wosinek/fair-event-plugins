@@ -1064,7 +1064,7 @@ msgstr "Rozszerzenia Manage-event"
 msgid "The Mailings tab in the manage-event admin UI."
 msgstr "Karta Mailings w interfejsie administracyjnym manage-event."
 
-#: src/Hooks/ScheduledMessageHooks.php:75
+#: src/Hooks/ScheduledMessageHooks.php:76
 msgid "Every 5 minutes (fair-audience)"
 msgstr "Co 5 minut (fair-audience)"
 
