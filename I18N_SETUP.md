@@ -80,6 +80,11 @@ npm run makemo      # Generate .mo files (PHP)
 npm run build       # Builds JS and runs makejson (generates JSON with correct hashes)
 ```
 
+For plugins that bundle `fair-events-shared`, `makepot` also merges in that
+package's strings with source references rewritten to match `build/map.json`,
+so `make-json --use-map=` can route them correctly — see
+[TRANSLATIONS.md](./TRANSLATIONS.md#shared-package-strings-fair-events-shared).
+
 ## Default: WordPress.org language packs (no `load_plugin_textdomain()`)
 
 Since WordPress 4.6, core auto-loads language packs for plugins hosted on

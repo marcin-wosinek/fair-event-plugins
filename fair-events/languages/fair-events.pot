@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-23T09:09:42+00:00\n"
+"POT-Creation-Date: 2026-07-23T11:40:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -466,6 +466,7 @@ msgid "Every %d days"
 msgstr ""
 
 #: src/blocks/event-info/render.php:70
+#: ../fair-events-shared/src/recurrence.js:12
 msgid "Daily"
 msgstr ""
 
@@ -494,6 +495,7 @@ msgid "Every %d months"
 msgstr ""
 
 #: src/blocks/event-info/render.php:89
+#: ../fair-events-shared/src/recurrence.js:15
 msgid "Monthly"
 msgstr ""
 
@@ -1153,6 +1155,7 @@ msgstr ""
 #: src/Admin/manage-event/EventTickets.js:1400
 #: src/Admin/manage-event/ManageEventApp.js:809
 #: src/Admin/manage-event/ManageEventApp.js:842
+#: ../fair-events-shared/src/RecurrenceControl.js:76
 msgid "End date"
 msgstr ""
 
@@ -2750,6 +2753,7 @@ msgstr ""
 #: src/blocks/events-calendar/components/EditComponent.js:204
 #: src/blocks/events-list/components/EditComponent.js:159
 #: src/blocks/events-week/components/EditComponent.js:151
+#: ../fair-events-shared/src/EventSourceSelector.js:24
 msgid "Event Sources"
 msgstr ""
 
@@ -2982,3 +2986,64 @@ msgstr ""
 msgctxt "block description"
 msgid "Legacy signup block. Superseded by Event Signup — transform existing instances to fair-events/event-signup."
 msgstr ""
+
+#: ../fair-events-shared/src/event-utils.js:31
+msgid "(untitled event)"
+msgstr ""
+
+#: ../fair-events-shared/src/EventSourceSelector.js:25
+msgid "Select event sources to display"
+msgstr ""
+
+#: ../fair-events-shared/src/EventSourceSelector.js:42
+msgid "Failed to load event sources"
+msgstr ""
+
+#: ../fair-events-shared/src/EventSourceSelector.js:70
+msgid "No event sources configured. Create event sources in Fair Events settings."
+msgstr ""
+
+#: ../fair-events-shared/src/EventSourceSelector.js:111
+msgid "Manage Event Sources"
+msgstr ""
+
+#: ../fair-events-shared/src/MiniCalendar.js:152
+msgid "Previous months"
+msgstr ""
+
+#: ../fair-events-shared/src/MiniCalendar.js:163
+msgid "Next months"
+msgstr ""
+
+#: ../fair-events-shared/src/recurrence.js:13
+msgid "Weekly"
+msgstr ""
+
+#: ../fair-events-shared/src/recurrence.js:14
+msgid "Biweekly"
+msgstr ""
+
+#: ../fair-events-shared/src/recurrence.js:19
+msgid "After number of occurrences"
+msgstr ""
+
+#: ../fair-events-shared/src/recurrence.js:20
+msgid "On a specific date"
+msgstr ""
+
+#: ../fair-events-shared/src/RecurrenceControl.js:39
+msgid "Repeat this event"
+msgstr ""
+
+#: ../fair-events-shared/src/RecurrenceControl.js:48
+msgid "Frequency"
+msgstr ""
+
+#: ../fair-events-shared/src/RecurrenceControl.js:56
+msgid "Ends"
+msgstr ""
+
+#: ../fair-events-shared/src/RecurrenceControl.js:65
+msgid "Number of occurrences"
+msgstr ""
+

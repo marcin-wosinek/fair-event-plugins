@@ -315,7 +315,7 @@ msgstr "Pregunta rápida sobre %s"
 #: src/Services/EmailService.php:2987
 #: src/Services/EmailService.php:3080
 #: src/Admin/event-participants/EventParticipants.js:1192
-#, php-format, js-format
+#, php-format,js-format
 msgid "Hi %s,"
 msgstr "Hola %s,"
 
@@ -441,6 +441,7 @@ msgstr "Creado"
 #: src/blocks/event-interest/frontend.js:69
 #: src/blocks/event-signup/frontend.js:1061
 #: src/blocks/mailing-signup/frontend.js:125
+#: ../fair-events-shared/src/form-utils.js:126
 msgid "Submitting..."
 msgstr "Enviando..."
 
@@ -573,7 +574,7 @@ msgstr "¡Las fotos de %s están listas!"
 #. translators: %s: event title
 #: src/Services/EmailService.php:453
 #: src/Admin/event-participants/EventParticipants.js:1204
-#, php-format, js-format
+#, php-format,js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "¡Las fotos de %s ya están disponibles para que las veas y te gusten!"
 
@@ -991,7 +992,7 @@ msgstr "¡Hola %s! Haz clic en el botón de abajo para inscribirte en este event
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:1268
 #: src/blocks/event-signup/frontend.js:1679
-#, php-format, js-format
+#, php-format,js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "¡Hola %s! Puedes inscribirte en este evento."
 
@@ -2368,7 +2369,7 @@ msgstr "Este tipo de entrada está agotado. Por favor, elija otra opción."
 #: src/API/EventSignupController.php:1667
 #: src/blocks/event-signup/render.php:825
 #: src/blocks/event-signup/frontend.js:389
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Por favor, selecciona al menos %d actividad para registrarte."
@@ -2982,7 +2983,7 @@ msgstr "Una de las fechas seleccionadas no es válida para esta entrada."
 #. translators: %d: minimum number of occurrences required
 #: src/API/EventSignupController.php:867
 #: src/blocks/event-signup/frontend.js:310
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Selecciona al menos %d ocurrencia."
@@ -3780,6 +3781,7 @@ msgstr "Revertido a mínimo: la suscripción de marketing nunca fue confirmada e
 msgid "Opted out of the weekly summary."
 msgstr "Ha rechazado el resumen semanal."
 
+#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Services/WeeklyDigestRenderer.php:165
 #: src/Services/WeeklyDigestRenderer.php:175
@@ -3809,3 +3811,18 @@ msgstr "Rechazado"
 msgid "Subscribed"
 msgstr "Suscrito"
 
+#: ../fair-events-shared/src/questionnaire.js:349
+msgid "Please answer the required question: "
+msgstr ""
+
+#: ../fair-events-shared/src/questionnaire.js:371
+msgid "Please enter a valid phone number with country code (e.g. +49170...): "
+msgstr ""
+
+#: ../fair-events-shared/src/questionnaire.js:395
+msgid "Please enter a valid email address for: "
+msgstr ""
+
+#: ../fair-events-shared/src/questionnaire.js:425
+msgid "File is too large. Maximum size is "
+msgstr ""
