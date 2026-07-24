@@ -4,7 +4,7 @@ Tags: finance, budgeting, events
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,12 @@ Fair Finance provides budgeting, financial entries, and reconciliation features 
 2. Activate the plugin through the **Plugins** screen in WordPress.
 
 == Changelog ==
+
+## 1.0.4
+
+### Patch Changes
+
+-   a7c09e1: Fix the budgets page's responsive card layout not applying on mobile (its styles were still scoped to the old fair-payments-connector class names), and stack the finance entries summary totals vertically below 600px instead of letting them overlap.
 
 ## 1.0.3
 

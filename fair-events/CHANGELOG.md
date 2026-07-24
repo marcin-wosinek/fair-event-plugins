@@ -1,5 +1,16 @@
 # fair-events
 
+## 1.11.0
+
+### Minor Changes
+
+-   a7c09e1: Add CSV export and a mailing opt-ins filter to the Signups tab, a From-URL tab on the Quick Add Event modal that prefills from a pasted page's schema.org/Open Graph data, an edit-tickets link on the Event Signup block sidebar, and a display-only shaded mini-calendar on the Sale Periods panel (replacing the old click-to-move-boundary interaction) whose colors now match the sale-period table. Nest generated series occurrences under their master in All Events instead of listing them as untitled top-level rows, carry event location through the public events feed and ICS mirror, and mark free RSVP/zero-priced ticket types as accessible-for-free in JSON-LD. Replace the series-modal date pickers with a shared click-to-pick MiniCalendar, give fair-events its own "Powered by" branding so attribution keeps showing without fair-audience active, and standardize remaining block buttons on core Button styles. Fix ticket sale-end dates freezing on series conversion, the editor preview order mismatching the frontend for Event Signup, a stale link_type desyncing the Manage Event context header from the actual linked post, the Tickets tab payments warning misfiring on every site, an unreadable calendar subscribe button before hover, invalid VTIMEZONE/all-day dates in the ICS feed, and drop the unused event_participants.transaction_id column and the Add-on collaborator discount ticket option.
+
+### Patch Changes
+
+-   Updated dependencies [a7c09e1]
+    -   fair-events-shared@0.4.0
+
 ## 1.10.0
 
 ### Minor Changes

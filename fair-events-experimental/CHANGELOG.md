@@ -1,5 +1,16 @@
 # fair-events-experimental
 
+## 1.4.0
+
+### Minor Changes
+
+-   a7c09e1: Remove the Add-on collaborator discount ticket option; signup now always charges the add-on's regular price.
+
+### Patch Changes
+
+-   Updated dependencies [a7c09e1]
+    -   fair-events-shared@0.4.0
+
 ## 1.3.2
 
 ### Patch Changes

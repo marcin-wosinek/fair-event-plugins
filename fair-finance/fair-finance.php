@@ -3,7 +3,7 @@
  * Plugin Name: Fair Finance
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Budgeting, financial entries, and reconciliation for fair event management.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: GPL-2.0-or-later
@@ -21,7 +21,7 @@ namespace FairFinance;
 defined( 'ABSPATH' ) || die;
 
 // Plugin constants.
-define( 'FAIR_FINANCE_VERSION', '1.0.3' );
+define( 'FAIR_FINANCE_VERSION', '1.0.4' );
 define( 'FAIR_FINANCE_FILE', __FILE__ );
 define( 'FAIR_FINANCE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_FINANCE_URL', plugin_dir_url( __FILE__ ) );

@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 1.10.0
+Stable tag: 1.11.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,17 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.11.0
+
+### Minor Changes
+
+-   a7c09e1: Time out unconfirmed marketing subscriptions after a week (reverting them to minimal+confirmed and sweeping expired confirmation tokens), let subscribers opt out of just the weekly events summary independently of their other topic preferences, and show that weekly-summary opt-out on the participant detail page. Show the link source (domain or @handle) next to off-site event links in the weekly digest. Route every outgoing email through a single consent-enforcing method so marketing-consent checks can no longer be skipped by a new send path, sanitize payment gateway errors before they reach the event-signup form, and drop the redundant event_participants.transaction_id column in favor of the transaction ledger. Remove the Add-on collaborator discount ticket option and standardize remaining block buttons on core Button styles.
+
+### Patch Changes
+
+-   Updated dependencies [a7c09e1]
+    -   fair-events-shared@0.4.0
 
 ## 1.10.0
 
