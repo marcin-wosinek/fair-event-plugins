@@ -4,10 +4,10 @@ module.exports = {
 	testMatch: ['**/?(*.)+(test).[jt]s?(x)'],
 	testPathIgnorePatterns: ['/node_modules/', '/vendor/', '/build/', '/e2e/'],
 	transformIgnorePatterns: [
-		'/node_modules/(?!(uuid|@wordpress/components)/)',
+		'/node_modules/(?!(uuid|@wordpress/components|@wordpress/dataviews|@wordpress/ui|@wordpress/theme)/)',
 	],
 	transform: {
-		'^.+\\.[jt]sx?$': [
+		'^.+\\.(mjs|[jt]sx?)$': [
 			'babel-jest',
 			{
 				presets: [
