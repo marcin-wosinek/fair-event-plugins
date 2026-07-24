@@ -12,7 +12,7 @@ export default {
 		'\\.api\\.spec\\.js$',
 	],
 	transformIgnorePatterns: [
-		'/node_modules/(?!(uuid|@wordpress/components)/)',
+		'/node_modules/(?!(uuid|@wordpress/components|@wordpress/dataviews|@wordpress/ui|@wordpress/theme)/)',
 	],
 	collectCoverageFrom: [
 		'src/**/*.js',
@@ -24,9 +24,10 @@ export default {
 	],
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'lcov', 'html'],
+	setupFiles: ['<rootDir>/jest.setup.js'],
 	setupFilesAfterEnv: [],
 	transform: {
-		'^.+\\.[jt]sx?$': [
+		'^.+\\.(mjs|[jt]sx?)$': [
 			'babel-jest',
 			{
 				presets: [
