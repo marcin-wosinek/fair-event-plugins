@@ -11,14 +11,7 @@ import {
 	SelectControl,
 } from '@wordpress/components';
 import { submissionToMarkdown } from '../utils/submission-markdown.js';
-
-function formatDate(dateString) {
-	if (!dateString) {
-		return '';
-	}
-	const date = new Date(dateString + 'Z');
-	return date.toLocaleString();
-}
+import { formatDate } from '../utils/format-date.js';
 
 function AnswerDisplay({ answer }) {
 	const { question_type, answer_value, file_url } = answer;

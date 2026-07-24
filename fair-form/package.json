@@ -26,12 +26,19 @@
 		"svn:copy": "cp -r readme.txt fair-form.php composer* languages CHANGELOG.md svn/trunk"
 	},
 	"devDependencies": {
+		"@babel/core": "^7.28.3",
+		"@babel/preset-env": "^7.28.3",
+		"@babel/preset-react": "^7.28.3",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
 		"@wordpress/scripts": "^32.4.0",
+		"babel-jest": "^30.0.5",
 		"webpack-bundle-output": "^1.1.0"
 	},
 	"dependencies": {
 		"@wordpress/api-fetch": "^7.12.0",
 		"@wordpress/components": "^36.0.0",
+		"@wordpress/dataviews": "^17.0.0",
 		"@wordpress/element": "^8.0.0",
 		"@wordpress/i18n": "^6.21.0",
 		"fair-events-shared": "*"

@@ -15,6 +15,7 @@ import {
 	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
+import { formatDate } from '../utils/format-date.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -115,9 +116,26 @@ export default function QuestionnaireResponses() {
 		}));
 	}, [responses]);
 
+	// Unique participant IDs from responses (skip null/0).
+	const uniqueParticipantIds = useMemo(() => {
+		const ids = new Set();
+		responses.forEach((response) => {
+			const pid = parseInt(response.participant_id, 10);
+			if (pid > 0) {
+				ids.add(pid);
+			}
+		});
+		return Array.from(ids);
+	}, [responses]);
+
+	// Whether any loaded response carries a participant link — drives the
+	// participant columns, the group button and the export picker so they
+	// can never disagree with each other.
+	const hasParticipantData = uniqueParticipantIds.length > 0;
+
 	// Build fields for DataViews.
 	const fields = useMemo(() => {
-		const baseFields = [
+		const participantFields = [
 			{
 				id: 'participant_name',
 				label: __('Name', 'fair-form'),
@@ -208,13 +226,23 @@ export default function QuestionnaireResponses() {
 					return cats.map((c) => c.name).join(', ');
 				},
 			},
-			{
-				id: 'created_at',
-				label: __('Date', 'fair-form'),
-				enableSorting: true,
-				getValue: ({ item }) => item.created_at || '',
-			},
 		];
+
+		const createdAtField = {
+			id: 'created_at',
+			label: __('Date', 'fair-form'),
+			enableSorting: true,
+			// Hideable only when it isn't the primary column.
+			enableHiding: hasParticipantData,
+			getValue: ({ item }) => item.created_at || '',
+			render: ({ item }) => (
+				<a
+					href={`admin.php?page=fair-form-submission-detail&submission_id=${item.id}`}
+				>
+					{formatDate(item.created_at) || '—'}
+				</a>
+			),
+		};
 
 		const dynamicFields = questionColumns.map((col) => ({
 			id: `question_${col.key}`,
@@ -228,18 +256,26 @@ export default function QuestionnaireResponses() {
 			},
 		}));
 
-		return [...baseFields, ...dynamicFields];
-	}, [questionColumns]);
+		return [
+			...(hasParticipantData ? participantFields : []),
+			createdAtField,
+			...dynamicFields,
+		];
+	}, [questionColumns, hasParticipantData]);
 
-	const defaultViewFields = useMemo(() => fields.map((f) => f.id), [fields]);
-
-	const viewWithFields = useMemo(
-		() => ({
+	// Reconcile the persisted view.fields against the current data-derived
+	// field set: keep the user's order/selection for fields that still exist,
+	// and append any newly-available fields (e.g. once responses load, or
+	// once participant columns appear) instead of losing them.
+	const viewWithFields = useMemo(() => {
+		const ids = fields.map((f) => f.id);
+		const selected = (view.fields || []).filter((id) => ids.includes(id));
+		const missing = ids.filter((id) => !(view.fields || []).includes(id));
+		return {
 			...view,
-			fields: view.fields || defaultViewFields,
-		}),
-		[view, defaultViewFields]
-	);
+			fields: view.fields ? [...selected, ...missing] : ids,
+		};
+	}, [view, fields]);
 
 	const paginationInfo = useMemo(
 		() => ({
@@ -281,17 +317,26 @@ export default function QuestionnaireResponses() {
 		}
 
 		return sprintf(
-			/* translators: %s: participant name */
+			/* translators: %s: participant name, or the submission date when there is no participant */
 			__(
 				'Delete the response from %s? This cannot be undone.',
 				'fair-form'
 			),
-			deleteItem.participant_name || __('this participant', 'fair-form')
+			deleteItem.participant_name || formatDate(deleteItem.created_at)
 		);
 	}, [deleteItem]);
 
 	const actions = useMemo(
 		() => [
+			{
+				id: 'view',
+				label: __('View', 'fair-form'),
+				icon: 'visibility',
+				callback: ([item]) => {
+					window.location.href = `admin.php?page=fair-form-submission-detail&submission_id=${item.id}`;
+				},
+				supportsBulk: false,
+			},
 			{
 				id: 'delete',
 				label: __('Delete', 'fair-form'),
@@ -302,18 +347,6 @@ export default function QuestionnaireResponses() {
 		],
 		[]
 	);
-
-	// Unique participant IDs from responses (skip null/0).
-	const uniqueParticipantIds = useMemo(() => {
-		const ids = new Set();
-		responses.forEach((response) => {
-			const pid = parseInt(response.participant_id, 10);
-			if (pid > 0) {
-				ids.add(pid);
-			}
-		});
-		return Array.from(ids);
-	}, [responses]);
 
 	const openGroupModal = () => {
 		setGroupMode('existing');
@@ -560,13 +593,11 @@ export default function QuestionnaireResponses() {
 					gap: '8px',
 				}}
 			>
-				<Button
-					variant="primary"
-					onClick={openGroupModal}
-					disabled={uniqueParticipantIds.length === 0}
-				>
-					{__('Add participants to group', 'fair-form')}
-				</Button>
+				{hasParticipantData && (
+					<Button variant="primary" onClick={openGroupModal}>
+						{__('Add participants to group', 'fair-form')}
+					</Button>
+				)}
 				<Button
 					variant="secondary"
 					onClick={openWaModal}
