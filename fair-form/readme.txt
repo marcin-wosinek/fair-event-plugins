@@ -4,7 +4,7 @@ Tags: form, events, fair
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: Private
 License URI: https://fair-event-plugins.com
 
@@ -15,6 +15,19 @@ Form blocks and answer data layer for Fair Event Plugins.
 Fair Form provides the form block family (`fair-form*`) and the questionnaire answer storage layer for Fair Event Plugins.
 
 == Changelog ==
+
+## 1.2.0
+
+### Minor Changes
+
+-   a7c09e1: Standardize the Fair Form block's button on core Button block styles so it inherits the active theme like other blocks.
+
+    Focus the per-form Questionnaire Responses table on standalone forms: participant columns, the "Add participants to group" button, and the export column picker now only appear when a loaded response actually carries a participant link, and the submission date is a clickable primary column that opens the submission detail page.
+
+### Patch Changes
+
+-   Updated dependencies [a7c09e1]
+    -   fair-events-shared@0.4.0
 
 ## 1.1.0
 

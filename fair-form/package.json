@@ -1,6 +1,6 @@
 {
 	"name": "fair-form",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"description": "Form blocks and answer data layer for Fair Event Plugins",
 	"license": "proprietary",
 	"author": "Marcin Wosinek",

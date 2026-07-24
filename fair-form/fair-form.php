@@ -3,7 +3,7 @@
  * Plugin Name: Fair Form
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Form blocks and answer data layer for Fair Event Plugins.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: Private
@@ -20,7 +20,7 @@ namespace FairForm;
 defined( 'ABSPATH' ) || die;
 
 // Plugin constants.
-define( 'FAIR_FORM_VERSION', '1.1.0' );
+define( 'FAIR_FORM_VERSION', '1.2.0' );
 define( 'FAIR_FORM_FILE', __FILE__ );
 define( 'FAIR_FORM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_FORM_URL', plugin_dir_url( __FILE__ ) );
