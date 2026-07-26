@@ -38,12 +38,13 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		// This companion is never distributed on WordPress.org, so it always
+		// bundles its own translation files rather than waiting on a language
+		// pack that will never exist.
 		add_action(
 			'init',
 			function () {
-				if ( Features::is_enabled( 'bundled-translations' ) ) {
-					load_plugin_textdomain( 'fair-payments-connector-experimental', false, 'fair-payments-connector-experimental/languages' );
-				}
+				load_plugin_textdomain( 'fair-payments-connector-experimental', false, 'fair-payments-connector-experimental/languages' );
 			}
 		);
 

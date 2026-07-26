@@ -64,89 +64,49 @@ class Plugin {
 			}
 		);
 
-		if ( is_admin() ) {
-			add_action( 'admin_menu', array( $this, 'register_settings_page' ) );
-		}
-
+		$this->load_shared_settings_page();
 		$this->load_hooks();
 	}
 
 	/**
-	 * Register the Fair Timetable settings page.
+	 * Boot the shared central "Fair Event Plugins" settings screen and
+	 * register this plugin's bundled-translations row on it.
 	 *
 	 * @return void
 	 */
-	public function register_settings_page() {
-		add_options_page(
-			__( 'Fair Timetable', 'fair-timetable' ),
-			__( 'Fair Timetable', 'fair-timetable' ),
-			'manage_options',
-			'fair-timetable-settings',
-			array( $this, 'render_settings_page' )
-		);
+	private function load_shared_settings_page() {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( class_exists( '\FairEventsShared\Admin\SettingsPage' ) ) {
+			\FairEventsShared\Admin\SettingsPage::boot();
+		}
+
+		add_filter( 'fair_event_plugins_settings_fields', array( $this, 'register_shared_settings_fields' ) );
 	}
 
 	/**
-	 * Render the Fair Timetable settings page (Features-only).
+	 * Register this plugin's bundled-translations row on the shared screen.
 	 *
-	 * @return void
+	 * @param array $fields Field descriptors collected so far.
+	 * @return array Field descriptors with this plugin's row appended.
 	 */
-	public function render_settings_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'fair-timetable' ) );
-		}
-
-		if ( isset( $_POST['fair_timetable_features_nonce'] ) &&
-			wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['fair_timetable_features_nonce'] ) ), 'fair_timetable_features' ) ) {
-			$submitted = isset( $_POST['fair_timetable_features'] ) && is_array( $_POST['fair_timetable_features'] )
-				? wp_unslash( $_POST['fair_timetable_features'] )
-				: array();
-			update_option( Features::OPTION, Features::sanitize_option( $submitted ) );
-			add_settings_error( 'fair_timetable_features', 'saved', __( 'Features saved.', 'fair-timetable' ), 'success' );
-		}
-
-		$features = Features::all();
-		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Fair Timetable - Features', 'fair-timetable' ); ?></h1>
-			<?php settings_errors( 'fair_timetable_features' ); ?>
-			<form method="post">
-				<?php wp_nonce_field( 'fair_timetable_features', 'fair_timetable_features_nonce' ); ?>
-				<table class="form-table" role="presentation">
-					<tbody>
-						<?php foreach ( $features as $key => $meta ) : ?>
-							<?php
-							if ( $meta['always_on'] ) {
-								continue;
-							}
-							?>
-							<tr>
-								<th scope="row"><?php echo esc_html( $meta['label'] ); ?></th>
-								<td>
-									<label>
-										<input
-											type="checkbox"
-											name="fair_timetable_features[<?php echo esc_attr( $key ); ?>]"
-											value="1"
-											<?php checked( $meta['enabled'] ); ?>
-											<?php disabled( $meta['forced'] ); ?>
-										/>
-										<?php echo esc_html( $meta['description'] ); ?>
-									</label>
-									<?php if ( $meta['forced'] ) : ?>
-										<p class="description">
-											<?php esc_html_e( 'Forced by a wp-config constant — change it there.', 'fair-timetable' ); ?>
-										</p>
-									<?php endif; ?>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-				<?php submit_button( __( 'Save Features', 'fair-timetable' ) ); ?>
-			</form>
-		</div>
-		<?php
+	public function register_shared_settings_fields( $fields ) {
+		$fields[] = array(
+			'section'       => 'translations',
+			'section_title' => __( 'Translations', 'fair-timetable' ),
+			'id'            => 'fair-timetable/bundled-translations',
+			'type'          => 'checkbox',
+			'option'        => Features::OPTION,
+			'key'           => 'bundled-translations',
+			'label'         => __( 'Fair Timetable', 'fair-timetable' ),
+			'description'   => __( 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.', 'fair-timetable' ),
+			'value'         => Features::is_enabled( 'bundled-translations' ),
+			'locked'        => Features::is_forced( 'bundled-translations' ),
+			'locked_note'   => __( 'Forced by a wp-config constant — change it there.', 'fair-timetable' ),
+		);
+		return $fields;
 	}
 
 	/**

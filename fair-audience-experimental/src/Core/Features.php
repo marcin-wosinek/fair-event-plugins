@@ -290,4 +290,15 @@ class Features {
 	private static function feature_constant_name( $key ) {
 		return 'FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_' . strtoupper( str_replace( '-', '_', $key ) );
 	}
+
+	/**
+	 * Bundled translations path. This companion is never distributed on
+	 * WordPress.org, so it always loads the .mo/.json files it ships instead
+	 * of waiting on a language pack that will never exist.
+	 *
+	 * @return string
+	 */
+	public static function script_translations_path() {
+		return FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'build/languages';
+	}
 }

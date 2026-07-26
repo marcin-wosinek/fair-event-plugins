@@ -67,6 +67,7 @@ class Features {
 				'label'       => 'Bundled translations',
 				'description' => 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.',
 				'default'     => false,
+				'central'     => true,
 			),
 			'ticketing'            => array(
 				'label'       => 'Ticketing',
@@ -186,6 +187,7 @@ class Features {
 				'description' => $translated[ $key ]['description'] ?? $entry['description'],
 				'default'     => (bool) $entry['default'],
 				'always_on'   => ! empty( $entry['always_on'] ),
+				'central'     => ! empty( $entry['central'] ),
 				'enabled'     => self::is_enabled( $key ),
 				'forced'      => self::is_forced( $key ),
 			);

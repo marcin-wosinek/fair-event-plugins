@@ -105,8 +105,14 @@ language pack is installed.
 ## Opt-in: `bundled-translations` feature flag
 
 Each plugin (`fair-events`, `fair-payments-connector`, `fair-audience`, `fair-platform`,
-`fair-timetable`) exposes a `bundled-translations` flag through its `Features`
-registry. When the flag is **on**:
+`fair-timetable`, `fair-form`) exposes a `bundled-translations` flag through its
+`Features` registry. The toggle for it lives on a single central screen —
+**Settings → Fair Event Plugins**, registered once by
+`FairEventsShared\Admin\SettingsPage` (see
+[PHP_PATTERNS.md](./PHP_PATTERNS.md#shared-settings-screen-fair_event_plugins_settings_fields))
+— not on each plugin's own Features tab/page. Storage is unchanged: each
+plugin still reads/writes its own `fair_{plugin}_features` option; only the UI
+moved. When the flag is **on**:
 
 - `load_plugin_textdomain( '{slug}', false, '{slug}/languages' )` is invoked on
   `init`, so the bundled `.mo` files in `languages/` are loaded.
@@ -123,7 +129,7 @@ features pattern):
 1. Per-feature constant `FAIR_{PLUGIN}_FEATURE_BUNDLED_TRANSLATIONS`
 2. Master switch `FAIR_{PLUGIN}_INTERNAL`
 3. `fair_{plugin}_feature_enabled` filter
-4. Stored option `fair_{plugin}_features` (Settings → Features tab)
+4. Stored option `fair_{plugin}_features` (Settings → Fair Event Plugins)
 5. Hardcoded default (`false`)
 
 **Helper.** Each plugin's `Features` class exposes
@@ -137,5 +143,15 @@ wp_set_script_translations(
     \FairEvents\Core\Features::script_translations_path()
 );
 ```
+
+## Experimental companions: always bundled
+
+`fair-events-experimental`, `fair-audience-experimental` and
+`fair-payments-connector-experimental` are never distributed on
+WordPress.org, so there is no language pack for them to wait on. Each calls
+`load_plugin_textdomain()` unconditionally on `init`, and their
+`Features::script_translations_path()` always returns the bundled
+`build/languages/` path (no flag, no `null` case). They don't get a row on
+the central Settings → Fair Event Plugins screen — there's nothing to toggle.
 
 **Reference**: [I18n improvements in WordPress 6.7](https://make.wordpress.org/core/2024/10/21/i18n-improvements-6-7/)

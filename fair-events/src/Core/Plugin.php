@@ -60,9 +60,51 @@ class Plugin {
 		$this->load_post_cleanup();
 		$this->load_auto_create_event();
 		$this->load_title_sync();
+		$this->load_shared_settings_page();
 
 		// Shared REST API endpoints (block renderer).
 		new \FairEventsShared\API\RestHooks();
+	}
+
+	/**
+	 * Boot the shared central "Fair Event Plugins" settings screen and
+	 * register this plugin's bundled-translations row on it.
+	 *
+	 * @return void
+	 */
+	private function load_shared_settings_page() {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( class_exists( '\FairEventsShared\Admin\SettingsPage' ) ) {
+			\FairEventsShared\Admin\SettingsPage::boot();
+		}
+
+		add_filter( 'fair_event_plugins_settings_fields', array( $this, 'register_shared_settings_fields' ) );
+	}
+
+	/**
+	 * Register this plugin's bundled-translations row on the shared screen.
+	 *
+	 * @param array $fields Field descriptors collected so far.
+	 * @return array Field descriptors with this plugin's row appended.
+	 */
+	public function register_shared_settings_fields( $fields ) {
+		$fields[] = array(
+			'section'       => 'translations',
+			'section_title' => __( 'Translations', 'fair-events' ),
+			'id'            => 'fair-events/bundled-translations',
+			'type'          => 'checkbox',
+			'option'        => Features::OPTION,
+			'key'           => 'bundled-translations',
+			'label'         => __( 'Fair Events', 'fair-events' ),
+			'description'   => __( 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.', 'fair-events' ),
+			'value'         => Features::is_enabled( 'bundled-translations' ),
+			'locked'        => Features::is_forced( 'bundled-translations' ),
+			'locked_note'   => __( 'Forced by a wp-config constant — change it there.', 'fair-events' ),
+		);
+		return $fields;
 	}
 
 	/**

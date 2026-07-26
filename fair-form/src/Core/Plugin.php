@@ -54,6 +54,21 @@ class Plugin {
 			}
 		);
 
+		add_action(
+			'admin_init',
+			function () {
+				register_setting(
+					'fair_form_settings',
+					Features::OPTION,
+					array(
+						'type'              => 'object',
+						'sanitize_callback' => array( Features::class, 'sanitize_option' ),
+						'default'           => array(),
+					)
+				);
+			}
+		);
+
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 
 		// Deferred notification dispatch: the admin notification email is
@@ -70,6 +85,49 @@ class Plugin {
 		new \FairForm\Admin\AdminHooks();
 
 		$block_hooks = new \FairForm\Hooks\BlockHooks();
+
+		$this->load_shared_settings_page();
+	}
+
+	/**
+	 * Boot the shared central "Fair Event Plugins" settings screen and
+	 * register this plugin's bundled-translations row on it.
+	 *
+	 * @return void
+	 */
+	private function load_shared_settings_page() {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( class_exists( '\FairEventsShared\Admin\SettingsPage' ) ) {
+			\FairEventsShared\Admin\SettingsPage::boot();
+		}
+
+		add_filter( 'fair_event_plugins_settings_fields', array( $this, 'register_shared_settings_fields' ) );
+	}
+
+	/**
+	 * Register this plugin's bundled-translations row on the shared screen.
+	 *
+	 * @param array $fields Field descriptors collected so far.
+	 * @return array Field descriptors with this plugin's row appended.
+	 */
+	public function register_shared_settings_fields( $fields ) {
+		$fields[] = array(
+			'section'       => 'translations',
+			'section_title' => __( 'Translations', 'fair-form' ),
+			'id'            => 'fair-form/bundled-translations',
+			'type'          => 'checkbox',
+			'option'        => Features::OPTION,
+			'key'           => 'bundled-translations',
+			'label'         => __( 'Fair Form', 'fair-form' ),
+			'description'   => __( 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs.', 'fair-form' ),
+			'value'         => Features::is_enabled( 'bundled-translations' ),
+			'locked'        => Features::is_forced( 'bundled-translations' ),
+			'locked_note'   => __( 'Forced by a wp-config constant — change it there.', 'fair-form' ),
+		);
+		return $fields;
 	}
 
 	/**

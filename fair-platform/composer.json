@@ -3,9 +3,19 @@
 	"description": "Mollie OAuth integration platform for Fair Event Plugins",
 	"type": "wordpress-plugin",
 	"license": "proprietary",
+	"repositories": [
+		{
+			"type": "path",
+			"url": "../fair-events-shared/php",
+			"options": {
+				"symlink": false
+			}
+		}
+	],
 	"require": {
 		"php": "^8.0",
-		"mollie/mollie-api-php": "^3.0"
+		"mollie/mollie-api-php": "^3.0",
+		"fair-events/shared": "^0.2"
 	},
 	"authors": [
 		{

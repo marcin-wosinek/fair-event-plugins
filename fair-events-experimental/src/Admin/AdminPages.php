@@ -237,7 +237,7 @@ class AdminPages {
 				)
 			);
 
-			wp_set_script_translations( 'fair-events-experimental-settings', 'fair-events-experimental' );
+			wp_set_script_translations( 'fair-events-experimental-settings', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 			wp_enqueue_style( 'wp-components' );
 			return;
 		}
@@ -250,14 +250,14 @@ class AdminPages {
 			case 'fair-events-migration':
 				$asset_file = include $exp_dir . 'build/admin/migration/index.asset.php';
 				wp_enqueue_script( 'fair-events-migration', $exp_url . 'build/admin/migration/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_set_script_translations( 'fair-events-migration', 'fair-events-experimental' );
+				wp_set_script_translations( 'fair-events-migration', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
 			case 'fair-events-migration-summary':
 				$asset_file = include $exp_dir . 'build/admin/migration-summary/index.asset.php';
 				wp_enqueue_script( 'fair-events-migration-summary', $exp_url . 'build/admin/migration-summary/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_set_script_translations( 'fair-events-migration-summary', 'fair-events-experimental' );
+				wp_set_script_translations( 'fair-events-migration-summary', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
@@ -272,7 +272,7 @@ class AdminPages {
 						'jsonUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/json' ),
 					)
 				);
-				wp_set_script_translations( 'fair-events-sources', 'fair-events-experimental' );
+				wp_set_script_translations( 'fair-events-sources', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
@@ -294,13 +294,13 @@ class AdminPages {
 						'jsonUrlTemplate' => rest_url( 'fair-events/v1/sources/{slug}/json' ),
 					)
 				);
-				wp_set_script_translations( 'fair-events-source-view', 'fair-events-experimental' );
+				wp_set_script_translations( 'fair-events-source-view', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				break;
 
 			case 'fair-events-venues':
 				$asset_file = include $exp_dir . 'build/admin/venues/index.asset.php';
 				wp_enqueue_script( 'fair-events-venues', $exp_url . 'build/admin/venues/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_set_script_translations( 'fair-events-venues', 'fair-events-experimental' );
+				wp_set_script_translations( 'fair-events-venues', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
@@ -317,7 +317,7 @@ class AdminPages {
 						'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
 					)
 				);
-				wp_set_script_translations( 'fair-events-event-statistics', 'fair-events-experimental' );
+				wp_set_script_translations( 'fair-events-event-statistics', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
@@ -342,7 +342,7 @@ class AdminPages {
 						'signupPageUrl'  => $signup_page_url,
 					)
 				);
-				wp_set_script_translations( 'fair-events-manage-invitations', 'fair-events-experimental' );
+				wp_set_script_translations( 'fair-events-manage-invitations', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
@@ -359,7 +359,7 @@ class AdminPages {
 					$localized['audienceUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
 				}
 				wp_localize_script( 'fair-events-duplicate-event', 'fairEventsDuplicateEventData', $localized );
-				wp_set_script_translations( 'fair-events-duplicate-event', 'fair-events-experimental' );
+				wp_set_script_translations( 'fair-events-duplicate-event', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
 
@@ -376,7 +376,7 @@ class AdminPages {
 						'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
 					)
 				);
-				wp_set_script_translations( 'fair-events-merge-event', 'fair-events-experimental' );
+				wp_set_script_translations( 'fair-events-merge-event', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
 		}

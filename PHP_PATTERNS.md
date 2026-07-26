@@ -491,6 +491,71 @@ cd fair-plugin-name
 vendor/bin/phpcs  # Check PHP code style
 ```
 
+## Shared Settings Screen: `fair_event_plugins_settings_fields`
+
+`FairEventsShared\Admin\SettingsPage` (in the `fair-events-shared/php`
+Composer package) registers a single **Settings → Fair Event Plugins**
+screen, shared by every active Fair plugin. Plugins never call into the
+class directly — each pushes plain-array field descriptors through a filter,
+so the extension point tolerates version skew: if two active plugins bundle
+different versions of `fair-events-shared`, only one copy of the
+`SettingsPage` class is ever loaded (whichever plugin's autoloader PHP
+resolves it from first), and every other plugin's fields are just arrays that
+copy can read regardless of which version registered them.
+
+**Registering a field** — call this once per plugin, guarded by `is_admin()`:
+
+```php
+if ( is_admin() ) {
+    if ( class_exists( '\FairEventsShared\Admin\SettingsPage' ) ) {
+        \FairEventsShared\Admin\SettingsPage::boot();
+    }
+    add_filter( 'fair_event_plugins_settings_fields', array( $this, 'register_shared_settings_fields' ) );
+}
+
+// ...
+
+public function register_shared_settings_fields( $fields ) {
+    $fields[] = array(
+        'section'       => 'translations',
+        'section_title' => __( 'Translations', 'my-plugin' ), // first registrant for a section wins the title
+        'id'            => 'my-plugin/bundled-translations',   // unique across every plugin
+        'option'        => Features::OPTION,                    // the plugin's own option name
+        'key'           => 'bundled-translations',               // key within that option's array
+        'label'         => __( 'My Plugin', 'my-plugin' ),
+        'description'   => __( 'Load .mo/.json files shipped with the plugin…', 'my-plugin' ),
+        'value'         => Features::is_enabled( 'bundled-translations' ),
+        'locked'        => Features::is_forced( 'bundled-translations' ),
+        'locked_note'   => __( 'Forced by a wp-config constant — change it there.', 'my-plugin' ),
+    );
+    return $fields;
+}
+```
+
+**Field shape**: `id` (string, unique), `option` (the option name to write),
+`key` (the array key inside that option), `label`, `description`, `value`
+(bool), `locked` (bool — the shared save handler drops writes to locked
+fields server-side, not just in the markup), `locked_note`, `section` and
+`section_title` (fields sharing a `section` are grouped under one heading;
+whichever field registers first for that section's title wins).
+
+**Version-skew rules**:
+
+-   Only ever push plain arrays through the filter — never call a method on
+    `FairEventsShared\Admin\SettingsPage` directly, and never assume a
+    specific version's shape beyond the fields documented above.
+-   Guard `SettingsPage::boot()` behind `class_exists()` so a plugin whose own
+    bundled copy predates this feature doesn't fatal.
+-   Storage stays per-plugin (`fair_{plugin}_features` etc.) — the shared
+    screen never introduces a new option of its own.
+
+**No translatable strings in the shared package itself.** Every user-visible
+string on the screen comes from the registering plugin's own textdomain (or
+from WordPress core, e.g. `submit_button()`). This sidesteps the
+just-in-time-textdomain trap ([I18N_SETUP.md](./I18N_SETUP.md)) — filter
+callbacks run at render time (after `init`), so a plugin's own `__()` calls
+inside `register_shared_settings_fields()` are safe.
+
 ## See Also
 
 -   [CLAUDE.md](./CLAUDE.md) - Main project documentation

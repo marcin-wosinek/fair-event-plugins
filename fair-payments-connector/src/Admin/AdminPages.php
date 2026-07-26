@@ -113,14 +113,6 @@ class AdminPages {
 		// Settings page.
 		if ( false !== strpos( $hook, 'fair-payments-connector-settings' ) ) {
 			$this->enqueue_admin_page_script( 'settings' );
-			wp_localize_script(
-				'fair-payments-connector-settings',
-				'fairPaymentSettingsData',
-				array(
-					'features' => \FairPaymentsConnector\Core\Features::all(),
-					'testMode' => 'test' === get_option( 'fair_payment_mode', 'test' ),
-				)
-			);
 			return;
 		}
 

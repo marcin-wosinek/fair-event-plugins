@@ -10,7 +10,6 @@ import { Notice, TabPanel } from '@wordpress/components';
  */
 import ConnectionTab from './ConnectionTab';
 import CurrencyTab from './CurrencyTab.js';
-import FeaturesTab from './FeaturesTab.js';
 import PaymentMethodsTab from './PaymentMethodsTab.js';
 import { saveOAuthCallback } from './settings-api';
 
@@ -186,10 +185,6 @@ export default function SettingsApp() {
 						title: __('Connection', 'fair-payments-connector'),
 					},
 					{
-						name: 'features',
-						title: __('Features', 'fair-payments-connector'),
-					},
-					{
 						name: 'payment-methods',
 						title: __('Payment Methods', 'fair-payments-connector'),
 					},
@@ -207,9 +202,6 @@ export default function SettingsApp() {
 								onNotice={setNotice}
 								shouldReload={shouldReloadConnection}
 							/>
-						)}
-						{tab.name === 'features' && (
-							<FeaturesTab onNotice={setNotice} />
 						)}
 						{tab.name === 'payment-methods' && (
 							<PaymentMethodsTab onNotice={setNotice} />

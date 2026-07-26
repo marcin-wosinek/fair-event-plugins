@@ -38,6 +38,16 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		// This companion is never distributed on WordPress.org, so it always
+		// bundles its own translation files rather than waiting on a language
+		// pack that will never exist.
+		add_action(
+			'init',
+			function () {
+				load_plugin_textdomain( 'fair-audience-experimental', false, 'fair-audience-experimental/languages' );
+			}
+		);
+
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_rest_api();
@@ -87,7 +97,7 @@ class Plugin {
 			true
 		);
 
-		wp_set_script_translations( 'fair-audience-experimental-manage-event-ext', 'fair-audience-experimental' );
+		wp_set_script_translations( 'fair-audience-experimental-manage-event-ext', 'fair-audience-experimental', Features::script_translations_path() );
 	}
 
 	/**

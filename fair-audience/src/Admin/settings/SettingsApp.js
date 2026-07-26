@@ -10,7 +10,6 @@ import { Notice, TabPanel } from '@wordpress/components';
  */
 import InstagramTab from './InstagramTab.js';
 import MailingTab from './MailingTab.js';
-import FeaturesTab from './FeaturesTab.js';
 import { saveSettings } from './settings-api.js';
 
 /**
@@ -139,10 +138,6 @@ export default function SettingsApp() {
 						name: 'mailing',
 						title: __('Mailing', 'fair-audience'),
 					},
-					{
-						name: 'features',
-						title: __('Features', 'fair-audience'),
-					},
 				]}
 			>
 				{(tab) => (
@@ -155,9 +150,6 @@ export default function SettingsApp() {
 						)}
 						{tab.name === 'mailing' && (
 							<MailingTab onNotice={setNotice} />
-						)}
-						{tab.name === 'features' && (
-							<FeaturesTab onNotice={setNotice} />
 						)}
 					</div>
 				)}

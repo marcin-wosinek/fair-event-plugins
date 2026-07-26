@@ -19,6 +19,7 @@
 		"composer:install": "composer install",
 		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
+		"composer:update:shared": "composer update fair-events/shared",
 		"composer:validate": "composer validate --strict",
 		"test": "npm-run-all test:*",
 		"test:js": "jest",
