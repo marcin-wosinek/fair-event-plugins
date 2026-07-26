@@ -105,6 +105,7 @@ test.describe('GetTicketsController — questionnaire_answers', () => {
 			headers: adminHeaders,
 			data: {
 				event_id: eventPostId,
+				title: `Get-tickets questionnaire test ${Date.now()}`,
 				start_datetime: '2035-06-01 10:00:00',
 				end_datetime: '2035-06-01 12:00:00',
 			},
@@ -133,6 +134,7 @@ test.describe('GetTicketsController — questionnaire_answers', () => {
 			headers: adminHeaders,
 			data: {
 				event_id: eventPostId,
+				title: `Anon signup test ${Date.now()}`,
 				start_datetime: '2035-06-02 10:00:00',
 				end_datetime: '2035-06-02 12:00:00',
 			},
@@ -219,6 +221,33 @@ test.describe('GetTicketsController — questionnaire_answers', () => {
 		expect(res.status()).toBe(400);
 		expect((await res.json()).code).toBe('invalid_phone');
 		expect(await countSignups(eventDateId)).toBe(before);
+	});
+
+	test('phone answers with separators are normalized when stored (#1267)', async () => {
+		test.skip(!fairFormActive, 'fair-form not active');
+
+		const email = uniqueEmail('phone-ok');
+		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+			data: {
+				event_date_id: eventDateId,
+				name: 'Phone Tester',
+				email,
+				quantity: 1,
+				questionnaire_answers: [
+					nameQuestion(email),
+					phoneQuestion('+49 170 123 45 67'),
+				],
+			},
+		});
+		expect(res.ok()).toBeTruthy();
+		expect((await res.json()).status).toBe('confirmed');
+
+		const submission = await findSubmission(email);
+		expect(submission).toBeTruthy();
+		const phoneAnswer = submission.answers.find(
+			(a) => a.question_key === 'phone'
+		);
+		expect(phoneAnswer.answer_value).toBe('+491701234567');
 	});
 
 	test('answers are ignored gracefully when fair-form is inactive', async () => {

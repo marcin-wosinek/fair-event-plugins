@@ -30,6 +30,7 @@ class QuestionnaireAnswer {
 		'multiselect',
 		'file_upload',
 		'phone',
+		'email',
 	);
 
 	/**

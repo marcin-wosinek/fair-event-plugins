@@ -53,6 +53,24 @@ class QuestionnaireService {
 	const VALID_TYPES = array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'multiselect', 'file_upload', 'phone', 'email' );
 
 	/**
+	 * HTML `pattern` attribute value for the phone question's `<input>`.
+	 *
+	 * Interleaved form of the normalized rule below: separators (spaces,
+	 * dots, parens, hyphens) may appear anywhere after the leading `+`,
+	 * since the `pattern` attribute can't post-process the typed value.
+	 *
+	 * @var string
+	 */
+	const PHONE_HTML_PATTERN = '[\s\.\(\)\-]*\+[\s\.\(\)\-]*[1-9](?:[\s\.\(\)\-]*[0-9]){6,14}[\s\.\(\)\-]*';
+
+	/**
+	 * Regex a normalized phone value (separators already stripped) must match.
+	 *
+	 * @var string
+	 */
+	const PHONE_NORMALIZED_PATTERN = '/^\+[1-9][0-9]{6,14}$/';
+
+	/**
 	 * Questionnaire submission repository instance.
 	 *
 	 * @var QuestionnaireSubmissionRepository
@@ -129,16 +147,20 @@ class QuestionnaireService {
 				}
 			}
 
-			if ( 'phone' === $question_type && '' !== $answer_value && ! preg_match( '/^\+[1-9][0-9]{6,14}$/', $answer_value ) ) {
-				return new WP_Error(
-					'invalid_phone',
-					sprintf(
-						/* translators: %s: question text */
-						__( 'Please enter a valid phone number with country code (e.g. +49170...) for: %s', 'fair-form' ),
-						$question_text
-					),
-					array( 'status' => 400 )
-				);
+			if ( 'phone' === $question_type && '' !== $answer_value ) {
+				$normalized = self::normalize_phone( $answer_value );
+				if ( ! preg_match( self::PHONE_NORMALIZED_PATTERN, $normalized ) ) {
+					return new WP_Error(
+						'invalid_phone',
+						sprintf(
+							/* translators: %s: question text */
+							__( 'Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s', 'fair-form' ),
+							$question_text
+						),
+						array( 'status' => 400 )
+					);
+				}
+				$answer_value = $normalized;
 			}
 
 			$sanitized[] = array(
@@ -151,6 +173,22 @@ class QuestionnaireService {
 		}
 
 		return $sanitized;
+	}
+
+	/**
+	 * Strip separators (spaces, including NBSP/narrow NBSP, dots, parens,
+	 * hyphens) from a phone value, leaving `+` followed by digits only.
+	 *
+	 * PHP's `\s` is ASCII-only even under the `/u` modifier, and
+	 * `sanitize_text_field()` (already applied upstream) only trims ASCII
+	 * whitespace, so NBSP survives to this point and must be listed via
+	 * `\p{Z}` explicitly.
+	 *
+	 * @param string $value Raw phone value.
+	 * @return string Normalized value.
+	 */
+	public static function normalize_phone( $value ) {
+		return preg_replace( '/[\p{Z}\s\x{FEFF}.()-]/u', '', $value );
 	}
 
 	/**
