@@ -36,6 +36,7 @@ import {
 	DurationOptions,
 	calculateDuration,
 	isLinkOnlyEvent,
+	formatDateOnly,
 	formatSiteLocalDatetime,
 	getEventDisplayTitle,
 	parseRRule,
@@ -51,15 +52,6 @@ import EditInstancesModal from './EditInstancesModal.js';
 import EventLinkModal from './EventLinkModal.js';
 import EventSignups from './EventSignups.js';
 import EventContextHeader from './EventContextHeader.js';
-
-// Naive site-local date (no timezone re-conversion — see UI_GUIDELINES.md
-// "Dates and times"). `dateStr` may be a plain date or a full datetime.
-function formatDateOnly(dateStr) {
-	return new Date(`${dateStr.split(' ')[0]}T00:00:00`).toLocaleDateString(
-		undefined,
-		{ year: 'numeric', month: 'short', day: 'numeric' }
-	);
-}
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -513,12 +505,12 @@ export default function ManageEventApp() {
 
 		let endLabel = '';
 		if (parsed.endType === 'until' && parsed.until) {
-			endLabel = formatDateOnly(parsed.until);
+			endLabel = formatDateOnly(parsed.until, 'short');
 		} else {
 			const occurrences = eventDate.generated_occurrences || [];
 			const last = occurrences[occurrences.length - 1];
 			if (last) {
-				endLabel = formatDateOnly(last.start_datetime);
+				endLabel = formatDateOnly(last.start_datetime, 'short');
 			}
 		}
 

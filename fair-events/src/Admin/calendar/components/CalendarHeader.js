@@ -8,6 +8,7 @@
 
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { formatMonthLabel } from 'fair-events-shared';
 
 export default function CalendarHeader({
 	currentDate,
@@ -16,10 +17,7 @@ export default function CalendarHeader({
 	onToday,
 	onAddEvent,
 }) {
-	const monthYear = currentDate.toLocaleDateString(undefined, {
-		month: 'long',
-		year: 'numeric',
-	});
+	const monthYear = formatMonthLabel(currentDate);
 
 	return (
 		<>

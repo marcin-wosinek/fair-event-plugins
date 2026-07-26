@@ -11,14 +11,7 @@
 
 import { Notice } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
-
-function formatDate(dateStr) {
-	return new Date(dateStr).toLocaleDateString(undefined, {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	});
-}
+import { formatDateOnly } from 'fair-events-shared';
 
 /**
  * @param {Object}        props
@@ -54,7 +47,7 @@ export default function RecurrenceImpactSummary({
 				<ul style={{ margin: 0, paddingLeft: '20px' }}>
 					{blockedRemovals.map((r) => (
 						<li key={r.id}>
-							{formatDate(r.start_datetime)}
+							{formatDateOnly(r.start_datetime)}
 							{r.dependents > 0 && (
 								<>
 									{' — '}

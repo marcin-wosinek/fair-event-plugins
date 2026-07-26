@@ -17,18 +17,14 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
+import { formatDateOnly } from 'fair-events-shared';
 import SeriesModal from '../SeriesModal.js';
 
 jest.mock('@wordpress/api-fetch');
 
 // Matches the full-date aria-label MiniCalendar builds by default.
 function fullDateLabel(dateStr) {
-	return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	});
+	return formatDateOnly(dateStr, 'long');
 }
 
 beforeEach(() => {

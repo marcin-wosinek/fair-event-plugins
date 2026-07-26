@@ -12,6 +12,7 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
+import { formatDateOnly } from 'fair-events-shared';
 
 const MatchModal = ({ entry, onMatch, onCancel }) => {
 	const [transactions, setTransactions] = useState([]);
@@ -106,11 +107,6 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 			);
 			setMatching(false);
 		}
-	};
-
-	const formatDate = (dateString) => {
-		const date = new Date(dateString);
-		return date.toLocaleDateString();
 	};
 
 	const formatAmount = (amount, currency = 'EUR') => {
@@ -226,7 +222,10 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 							{transactions.map((transaction) => (
 								<tr key={transaction.id}>
 									<td>
-										{formatDate(transaction.created_at)}
+										{formatDateOnly(
+											transaction.created_at,
+											'numeric'
+										)}
 									</td>
 									<td>
 										{formatAmount(

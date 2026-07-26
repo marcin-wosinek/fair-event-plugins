@@ -10,6 +10,7 @@
  */
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { formatDateOnly } from 'fair-events-shared';
 import EditInstancesModal from '../EditInstancesModal.js';
 
 const generatedOccurrences = [
@@ -19,12 +20,7 @@ const generatedOccurrences = [
 
 // Matches the date formatting in EditInstancesModal.
 function instanceDateLabel(dateStr) {
-	return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	});
+	return formatDateOnly(dateStr, 'long');
 }
 
 it('lists occurrences with Cancel / Restore actions', () => {
