@@ -20,7 +20,8 @@ Follow [TICKETS.md](../../TICKETS.md). The essentials:
    Motivation, Expected behaviour, Risks, Open questions (real forks with a
    recommendation), Acceptance criteria as a `- [ ]` behaviour-level checklist.
    Linking reference docs (REST_API_BACKEND.md, TESTING.md, …) is fine — they
-   are stable; code isn't.
+   are stable; code isn't. If the behaviour splits into independently
+   shippable stages, propose separate tickets instead of one big one.
 
 3. **Pick the milestone.** Tickets go into the current sprint or the next one.
    Milestones are named `YYYY.W<week>`; `date +%G.W%V` gives the current one.

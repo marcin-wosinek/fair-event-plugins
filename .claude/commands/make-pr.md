@@ -20,8 +20,18 @@ Read the issue and its discussion with `gh issue view <number> --comments`.
 When the target is a comment, find that exact comment (match the
 `#issuecomment-<id>` anchor — `gh api repos/{owner}/{repo}/issues/comments/<id>`
 fetches it directly) and treat **its** content as the spec; use the rest of the
-thread only as context. If anything about the scope is ambiguous, ask me before
-writing code.
+thread only as context.
+
+For a whole-ticket target: if the issue has an approved implementation plan
+comment (from `/plan-ticket`), **the plan is the spec** and the ticket body is
+context. Follow its "Read first" list before touching code, and honour its
+**Decisions** section. If the plan predates significant changes to the files
+it names, flag the discrepancies before implementing rather than following it
+blindly.
+
+If you hit a decision the ticket and plan don't resolve — scope **or**
+design — stop and ask me; never pick silently. After we decide, append the
+decision to the plan comment so the ticket stays the record.
 
 ## 2. Branch
 
@@ -37,12 +47,13 @@ existing sibling pattern. Follow all Critical Rules in CLAUDE.md.
 
 Before committing:
 
-- Run `npm run format` in the affected plugin (catches files touched outside
-  the format hook).
-- Run `npm run build` in the affected plugin if you changed JS/CSS, so
-  generated assets land.
-- Run the relevant tests (`npm test`, `vendor/bin/phpcs`, etc.) and report
-  results honestly.
+- Run through the **Definition of Done** in CLAUDE.md — all six items (build,
+  format, phpcs, tests, i18n, screenshots for `responsive-ui` tickets) — and
+  report results honestly.
+- For user-visible changes, verify in the running site (docker compose,
+  `:8080`) before opening the PR — tests alone don't catch layout and
+  interaction breakage.
+- If the change is user-facing, add a changeset per RELEASES.md (`/release`).
 
 ## 4. Commit, push, open the PR
 
@@ -54,6 +65,12 @@ Follow [COMMIT_GUIDE.md](../../COMMIT_GUIDE.md):
 - Put `Closes #<number>` on its own line at the bottom of the commit body, and
   also in the PR **Summary** so the link shows in the UI. Use `Refs #<number>`
   instead if the comment is only part of the larger ticket.
+- Walk the ticket's **acceptance criteria** and state in the PR body how each
+  is met (or why it is deferred).
 
 Push the branch and open the PR with `gh pr create`. Write the PR body to a
 temp file and pass `--body-file` (then remove it). Report the PR URL when done.
+
+After opening the PR, suggest running `/code-review` — and `/security-review`
+when the ticket's Risks section flags security surface (endpoints, tokens,
+uploads).
