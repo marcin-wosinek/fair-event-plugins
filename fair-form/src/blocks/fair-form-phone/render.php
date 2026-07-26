@@ -19,7 +19,11 @@ use FairForm\Services\QuestionnaireService;
 $question_text = $attributes['questionText'] ?? '';
 $question_key  = $attributes['questionKey'] ?? '';
 $required      = ! empty( $attributes['required'] );
-$placeholder   = $attributes['placeholder'] ?? '';
+$placeholder   = trim( $attributes['placeholder'] ?? '' );
+
+if ( '' === $placeholder ) {
+	$placeholder = QuestionnaireService::phone_placeholder();
+}
 
 // Skip rendering if no question text is set.
 if ( empty( $question_text ) ) {
@@ -60,8 +64,6 @@ $format_hint = __( 'Include the country code, starting with "+" — spaces, dash
 		<?php if ( $required ) : ?>
 			required
 		<?php endif; ?>
-		<?php if ( ! empty( $placeholder ) ) : ?>
-			placeholder="<?php echo esc_attr( $placeholder ); ?>"
-		<?php endif; ?>
+		placeholder="<?php echo esc_attr( $placeholder ); ?>"
 	/>
 </div>

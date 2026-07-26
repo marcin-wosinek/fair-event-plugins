@@ -28,7 +28,7 @@
 		},
 		"placeholder": {
 			"type": "string",
-			"default": "+49 170 1234567"
+			"default": ""
 		}
 	},
 	"editorScript": "file:./editor.js",

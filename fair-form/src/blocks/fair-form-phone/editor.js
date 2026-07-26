@@ -4,7 +4,12 @@ import { registerBlockType, createBlock } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { autosizeTextarea, generateQuestionKey } from 'fair-events-shared';
+import { getSettings } from '@wordpress/date';
+import {
+	autosizeTextarea,
+	generateQuestionKey,
+	resolvePhonePlaceholder,
+} from 'fair-events-shared';
 
 registerBlockType('fair-audience/fair-form-phone', {
 	transforms: {
@@ -23,6 +28,8 @@ registerBlockType('fair-audience/fair-form-phone', {
 	},
 	edit: ({ attributes, setAttributes }) => {
 		const { questionText, questionKey, required, placeholder } = attributes;
+		const timezoneString = getSettings().timezone.string;
+		const derivedPlaceholder = resolvePhonePlaceholder('', timezoneString);
 
 		const onQuestionTextChange = (value) => {
 			const updates = { questionText: value };
@@ -67,8 +74,9 @@ registerBlockType('fair-audience/fair-form-phone', {
 							onChange={(value) =>
 								setAttributes({ placeholder: value })
 							}
+							placeholder={derivedPlaceholder}
 							help={__(
-								'Must include country code with leading "+" (e.g. +49170...).',
+								'Must include country code with leading "+" (e.g. +49 170 123 45 67). Leave empty to use the example for your site’s timezone.',
 								'fair-audience'
 							)}
 						/>
@@ -98,10 +106,10 @@ registerBlockType('fair-audience/fair-form-phone', {
 						<input
 							type="tel"
 							disabled
-							placeholder={
-								placeholder ||
-								__('+49 170 1234567', 'fair-audience')
-							}
+							placeholder={resolvePhonePlaceholder(
+								placeholder,
+								timezoneString
+							)}
 						/>
 					</p>
 				</div>
