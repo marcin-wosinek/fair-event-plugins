@@ -1,0 +1,21 @@
+/**
+ * Questionnaire Responses admin page styles.
+ *
+ * @wordpress/dataviews is bundled into this page's build (not externalised
+ * as `wp-dataviews`), so its own stylesheet is never enqueued and the
+ * responses table renders with no width containment. With one column per
+ * question key the table can be far wider than the viewport, dragging the
+ * whole `.wrap` page sideways instead of scrolling internally. Scope the
+ * table's own scrollbar here instead of loading DataViews' full stylesheet.
+ */
+
+.fair-form-questionnaire-responses__table {
+	overflow-x: auto;
+}
+
+.fair-form-questionnaire-responses__actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+}

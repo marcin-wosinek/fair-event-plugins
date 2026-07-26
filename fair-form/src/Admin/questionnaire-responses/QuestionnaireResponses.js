@@ -559,7 +559,7 @@ export default function QuestionnaireResponses() {
 	};
 
 	return (
-		<div className="wrap">
+		<div className="wrap fair-form-questionnaire-responses-page">
 			<h1>{__('Questionnaire Responses', 'fair-form')}</h1>
 
 			<p>
@@ -586,13 +586,7 @@ export default function QuestionnaireResponses() {
 				)}
 			</p>
 
-			<div
-				style={{
-					marginBottom: '16px',
-					display: 'flex',
-					gap: '8px',
-				}}
-			>
+			<div className="fair-form-questionnaire-responses__actions">
 				{hasParticipantData && (
 					<Button variant="primary" onClick={openGroupModal}>
 						{__('Add participants to group', 'fair-form')}
@@ -839,7 +833,7 @@ export default function QuestionnaireResponses() {
 			)}
 
 			<Card>
-				<CardBody>
+				<CardBody className="fair-form-questionnaire-responses__table">
 					<DataViews
 						data={responses}
 						fields={fields}

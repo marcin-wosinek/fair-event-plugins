@@ -94,7 +94,7 @@ export default function AnswersOverview() {
 	};
 
 	return (
-		<div className="wrap">
+		<div className="wrap fair-form-answers-overview-page">
 			<h1>{__('Form Answers Overview', 'fair-form')}</h1>
 
 			<div style={{ marginBottom: '16px' }}>
@@ -124,7 +124,7 @@ export default function AnswersOverview() {
 			</p>
 
 			<Card>
-				<CardBody>
+				<CardBody className="fair-form-answers-overview__table">
 					<DataViews
 						data={groups}
 						fields={fields}

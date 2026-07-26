@@ -1,0 +1,13 @@
+/**
+ * Form Answers Overview admin page styles.
+ *
+ * @wordpress/dataviews is bundled into this page's build (not externalised
+ * as `wp-dataviews`), so its own stylesheet is never enqueued and the
+ * groups table renders with no width containment, dragging the whole
+ * `.wrap` page sideways instead of scrolling internally. Scope the table's
+ * own scrollbar here instead of loading DataViews' full stylesheet.
+ */
+
+.fair-form-answers-overview__table {
+	overflow-x: auto;
+}
