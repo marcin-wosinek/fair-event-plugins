@@ -14,17 +14,7 @@ import {
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-
-// Naive site-local date (no timezone re-conversion — see UI_GUIDELINES.md
-// "Dates and times"). Only the calendar date matters here.
-function formatInstanceDate(dateStr) {
-	return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	});
-}
+import { formatDateOnly } from 'fair-events-shared';
 
 /**
  * @param {Object}   props
@@ -69,7 +59,7 @@ export default function EditInstancesModal({
 										: 'none',
 								}}
 							>
-								{formatInstanceDate(date)}
+								{formatDateOnly(date, 'long')}
 								{isCancelled &&
 									` (${__('Cancelled', 'fair-events')})`}
 							</span>

@@ -24,6 +24,7 @@ import {
 	buildRRule,
 	expandRRulePreview,
 	parseRRule,
+	formatDateOnly,
 	MiniCalendar,
 	RecurrenceControl,
 } from 'fair-events-shared';
@@ -36,17 +37,7 @@ const DEFAULT_RECURRENCE = {
 	until: '',
 };
 
-// Naive site-local date (no timezone re-conversion — see UI_GUIDELINES.md
-// "Dates and times"). Only the calendar date matters for the preview.
-function formatPreviewDate(dateStr) {
-	return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric',
-	});
-}
-
-// Naive site-local Y-m-d slice — mirrors formatPreviewDate's no-reconversion
+// Naive site-local Y-m-d slice — mirrors formatDateOnly's no-reconversion
 // rule (UI_GUIDELINES.md "Dates and times").
 function dateOnly(datetime) {
 	return datetime ? datetime.slice(0, 10) : '';
@@ -326,8 +317,9 @@ export default function SeriesModal({
 													'fair-events'
 												),
 												preview.totalCount,
-												formatPreviewDate(
-													preview.lastDate
+												formatDateOnly(
+													preview.lastDate,
+													'short'
 												)
 											)}
 										</p>

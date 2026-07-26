@@ -21,17 +21,13 @@ import {
  * Internal dependencies
  */
 import SettlementImportModal from './components/SettlementImportModal.js';
+import { formatDateOnly } from 'fair-events-shared';
 
 const formatAmount = (amount, currency = 'EUR') => {
 	return new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency,
 	}).format(amount);
-};
-
-const formatDate = (dateString) => {
-	if (!dateString) return '';
-	return new Date(dateString).toLocaleDateString();
 };
 
 const ReconciliationApp = () => {
@@ -706,8 +702,9 @@ const ReconciliationApp = () => {
 																	/>
 																</td>
 																<td>
-																	{formatDate(
-																		t.created_at
+																	{formatDateOnly(
+																		t.created_at,
+																		'numeric'
 																	)}
 																</td>
 																<td>
@@ -887,8 +884,9 @@ const ReconciliationApp = () => {
 														(t) => (
 															<tr key={t.id}>
 																<td>
-																	{formatDate(
-																		t.created_at
+																	{formatDateOnly(
+																		t.created_at,
+																		'numeric'
 																	)}
 																</td>
 																<td>

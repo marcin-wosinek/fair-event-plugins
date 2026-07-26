@@ -71,3 +71,51 @@ export function formatSiteLocalTime(datetime) {
 	const { formats } = getSettings();
 	return dateI18n(formats.time, `${datetime.replace(' ', 'T')}Z`, true);
 }
+
+// Naive site-local parsing shared by formatDateOnly/formatMonthLabel: slices
+// off any time component and re-parses at local midnight so no timezone
+// re-conversion happens (see UI_GUIDELINES.md "Dates and times"). `Date`
+// inputs (e.g. from MiniCalendar's month grid) pass through unchanged.
+function toLocalDate(value) {
+	if (value instanceof Date) return value;
+	if (!value) return null;
+	const [datePart] = String(value).split(/[ T]/);
+	return new Date(`${datePart}T00:00:00`);
+}
+
+const DATE_ONLY_STYLES = {
+	long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+	medium: { year: 'numeric', month: 'long', day: 'numeric' },
+	short: { year: 'numeric', month: 'short', day: 'numeric' },
+	numeric: undefined,
+};
+
+/**
+ * Format a date-only value (Y-m-d or Y-m-d H:i:s string, or a Date) for
+ * display, using the browser locale (these are timezone-agnostic day labels,
+ * not a site-formatted datetime — see formatSiteLocalDatetime for that).
+ *
+ * @param {string|Date|null|undefined} value Date-only/datetime string, or a Date object.
+ * @param {string} [style] One of 'long' | 'medium' | 'short' | 'numeric'.
+ * @return {string} Formatted date, or '' if value is empty.
+ */
+export function formatDateOnly(value, style = 'medium') {
+	const date = toLocalDate(value);
+	if (!date) return '';
+	return date.toLocaleDateString(undefined, DATE_ONLY_STYLES[style]);
+}
+
+/**
+ * Format a month/year header label (e.g. calendar navigation titles).
+ *
+ * @param {string|Date|null|undefined} value Date-only/datetime string, or a Date object.
+ * @return {string} Formatted "Month YYYY" label, or '' if value is empty.
+ */
+export function formatMonthLabel(value) {
+	const date = toLocalDate(value);
+	if (!date) return '';
+	return date.toLocaleDateString(undefined, {
+		month: 'long',
+		year: 'numeric',
+	});
+}

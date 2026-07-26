@@ -12,6 +12,7 @@
  */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
+import { formatDateOnly } from 'fair-events-shared';
 import RecurrenceCalendar from '../RecurrenceCalendar.js';
 
 const generatedOccurrences = [
@@ -21,12 +22,7 @@ const generatedOccurrences = [
 
 // Matches the aria-label built in RecurrenceCalendar's MiniMonth.
 function fullDateLabel(dateStr) {
-	return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	});
+	return formatDateOnly(dateStr, 'long');
 }
 
 it('renders active occurrences as navigable links with a full-date aria-label', () => {

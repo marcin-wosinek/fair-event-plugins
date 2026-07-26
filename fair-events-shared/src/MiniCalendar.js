@@ -32,6 +32,7 @@ import {
 	getWeekdayLabels,
 	calculateLeadingDays,
 } from './calendarUtils.js';
+import { formatDateOnly, formatMonthLabel } from './dateTime.js';
 
 function computeMonthRange(minDate, maxDate) {
 	if (!minDate) return [];
@@ -188,10 +189,7 @@ function MiniMonth({ monthDate, weekdayLabels, todayStr, dayProps }) {
 	const daysInMonth = new Date(year, month + 1, 0).getDate();
 	const leadingDays = calculateLeadingDays(firstDay, 1);
 
-	const monthLabel = firstDay.toLocaleDateString(undefined, {
-		year: 'numeric',
-		month: 'long',
-	});
+	const monthLabel = formatMonthLabel(firstDay);
 
 	const cells = [];
 
@@ -258,12 +256,7 @@ function MiniMonth({ monthDate, weekdayLabels, todayStr, dayProps }) {
 function DayCell({ date, dateStr, day, todayStr, dayProps }) {
 	const props = dayProps(dateStr, date) || {};
 	const isToday = dateStr === todayStr;
-	const fullDateLabel = date.toLocaleDateString(undefined, {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	});
+	const fullDateLabel = formatDateOnly(date, 'long');
 	const ariaLabel = props.ariaLabel || fullDateLabel;
 
 	const cellStyle = {
