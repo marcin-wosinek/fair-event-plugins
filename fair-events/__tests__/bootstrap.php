@@ -134,6 +134,86 @@ if ( ! function_exists( 'current_time' ) ) {
 	}
 }
 
+if ( ! function_exists( 'esc_url_raw' ) ) {
+	/**
+	 * Stub of WordPress esc_url_raw() — a no-op pass-through for test input.
+	 *
+	 * @param string $url URL to sanitize.
+	 * @return string Unmodified URL.
+	 */
+	function esc_url_raw( $url ) {
+		return (string) $url;
+	}
+}
+
+if ( ! function_exists( 'home_url' ) ) {
+	/**
+	 * Stub of WordPress home_url() — overridable via $GLOBALS['_fair_test_home_url'].
+	 *
+	 * @param string $path Path to append.
+	 * @return string Fake home URL.
+	 */
+	function home_url( $path = '' ) {
+		$base = isset( $GLOBALS['_fair_test_home_url'] ) ? $GLOBALS['_fair_test_home_url'] : 'https://example.com';
+		return $base . $path;
+	}
+}
+
+if ( ! function_exists( 'get_bloginfo' ) ) {
+	/**
+	 * Stub of WordPress get_bloginfo() — overridable via $GLOBALS['_fair_test_bloginfo'].
+	 *
+	 * @param string $show Which value to retrieve.
+	 * @return string Fake site info.
+	 */
+	function get_bloginfo( $show = '' ) {
+		$values = isset( $GLOBALS['_fair_test_bloginfo'] ) ? $GLOBALS['_fair_test_bloginfo'] : array();
+		return isset( $values[ $show ] ) ? $values[ $show ] : 'Test Site';
+	}
+}
+
+if ( ! function_exists( 'get_theme_mod' ) ) {
+	/**
+	 * Stub of WordPress get_theme_mod() backed by $GLOBALS['_fair_test_theme_mods'].
+	 *
+	 * @param string $name          Theme mod name.
+	 * @param mixed  $default_value Value returned when the mod is unset.
+	 * @return mixed Stored value or the default.
+	 */
+	function get_theme_mod( $name, $default_value = false ) {
+		$mods = isset( $GLOBALS['_fair_test_theme_mods'] ) ? $GLOBALS['_fair_test_theme_mods'] : array();
+		return array_key_exists( $name, $mods ) ? $mods[ $name ] : $default_value;
+	}
+}
+
+if ( ! function_exists( 'wp_get_attachment_image_url' ) ) {
+	/**
+	 * Stub of WordPress wp_get_attachment_image_url() backed by
+	 * $GLOBALS['_fair_test_attachment_urls'].
+	 *
+	 * @param int    $attachment_id Attachment ID.
+	 * @param string $size          Image size.
+	 * @return string|false Stored URL, or false when the attachment is "gone".
+	 */
+	function wp_get_attachment_image_url( $attachment_id, $size = 'thumbnail' ) {
+		$urls = isset( $GLOBALS['_fair_test_attachment_urls'] ) ? $GLOBALS['_fair_test_attachment_urls'] : array();
+		return array_key_exists( $attachment_id, $urls ) ? $urls[ $attachment_id ] : false;
+	}
+}
+
+if ( ! function_exists( 'apply_filters' ) ) {
+	/**
+	 * Stub of WordPress apply_filters() — a no-op pass-through for test input.
+	 *
+	 * @param string $tag   Filter name (ignored).
+	 * @param mixed  $value Value to filter.
+	 * @return mixed Unmodified value.
+	 */
+	function apply_filters( $tag, $value ) {
+		return $value;
+	}
+}
+
 if ( ! function_exists( 'add_query_arg' ) ) {
 	/**
 	 * Minimal stub of WordPress add_query_arg() for a single key/value pair.

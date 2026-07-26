@@ -72,11 +72,7 @@ class EventSchema {
 			}
 		}
 
-		$data['organizer'] = array(
-			'@type' => 'Organization',
-			'name'  => get_bloginfo( 'name' ),
-			'url'   => home_url(),
-		);
+		$data['organizer'] = OrganizationSchema::organizer_ref();
 
 		return $data;
 	}

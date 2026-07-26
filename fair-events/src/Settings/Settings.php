@@ -118,6 +118,39 @@ class Settings {
 				'default'           => false,
 			)
 		);
+
+		// Sitewide organizer identity, used to build the sitewide Organization
+		// JSON-LD block and the single-event `organizer` reference. Explicit
+		// `properties` (not `additionalProperties`) so core validates shape
+		// before Organizer::sanitize_option() runs.
+		register_setting(
+			'fair_events_settings',
+			\FairEvents\Settings\Organizer::OPTION,
+			array(
+				'type'              => 'object',
+				'description'       => __( 'Sitewide organizer identity for structured data', 'fair-events' ),
+				'sanitize_callback' => array( \FairEvents\Settings\Organizer::class, 'sanitize_option' ),
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'       => 'object',
+						'properties' => array(
+							'name'             => array( 'type' => 'string' ),
+							'type'             => array( 'type' => 'string' ),
+							'street_address'   => array( 'type' => 'string' ),
+							'address_locality' => array( 'type' => 'string' ),
+							'address_region'   => array( 'type' => 'string' ),
+							'postal_code'      => array( 'type' => 'string' ),
+							'address_country'  => array( 'type' => 'string' ),
+							'same_as'          => array(
+								'type'  => 'array',
+								'items' => array( 'type' => 'string' ),
+							),
+						),
+					),
+				),
+				'default'           => array(),
+			)
+		);
 	}
 
 	/**

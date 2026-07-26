@@ -21,6 +21,27 @@ export function loadGeneralSettings() {
 }
 
 /**
+ * Load organizer settings from WordPress REST API
+ *
+ * @return {Promise<Object>} Promise resolving to the organizer identity
+ */
+export function loadOrganizerSettings() {
+	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
+		return {
+			name: '',
+			type: 'Organization',
+			street_address: '',
+			address_locality: '',
+			address_region: '',
+			postal_code: '',
+			address_country: '',
+			same_as: [],
+			...settings.fair_events_organizer,
+		};
+	});
+}
+
+/**
  * Save settings to WordPress REST API
  *
  * @param {Object} data Settings data to save
