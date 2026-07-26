@@ -171,3 +171,17 @@ describe('QuestionnaireResponses — empty state', () => {
 		expect(await screen.findByText('No results')).toBeInTheDocument();
 	});
 });
+
+describe('QuestionnaireResponses — table containment', () => {
+	it('scopes the DataViews table in a scrollable CardBody so a wide table cannot drag the page sideways', async () => {
+		mockResponses(STANDALONE_RESPONSES);
+
+		const { container } = render(<QuestionnaireResponses />);
+
+		await screen.findByText('Google');
+
+		expect(
+			container.querySelector('.fair-form-questionnaire-responses__table')
+		).toBeInTheDocument();
+	});
+});

@@ -244,11 +244,11 @@ export default function FormAnswers() {
 	);
 
 	return (
-		<div className="wrap">
+		<div className="wrap fair-form-form-answers-page">
 			<h1>{__('Form Answers', 'fair-form')}</h1>
 
 			<Card>
-				<CardBody>
+				<CardBody className="fair-form-form-answers__table">
 					<DataViews
 						data={submissions}
 						fields={fields}

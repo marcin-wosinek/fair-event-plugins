@@ -1,0 +1,13 @@
+/**
+ * Form Answers admin page styles.
+ *
+ * @wordpress/dataviews is bundled into this page's build (not externalised
+ * as `wp-dataviews`), so its own stylesheet is never enqueued and the
+ * submissions table renders with no width containment, dragging the whole
+ * `.wrap` page sideways instead of scrolling internally. Scope the table's
+ * own scrollbar here instead of loading DataViews' full stylesheet.
+ */
+
+.fair-form-form-answers__table {
+	overflow-x: auto;
+}
