@@ -14,7 +14,20 @@
 
 .wrap.fair-audience-participant-detail {
 	max-width: 900px;
-	margin: 20px 0;
+	margin: 20px 20px 0 0;
+}
+
+.fair-audience-participant-detail--loading {
+	text-align: center;
+}
+
+.fair-audience-participant-detail__back {
+	margin: 0 0 8px;
+}
+
+.wrap.fair-audience-participant-detail h1,
+.wrap.fair-audience-participant-detail h2 {
+	margin: 0;
 }
 
 .fair-audience-participant-detail__header {
@@ -28,6 +41,14 @@
 .fair-audience-participant-detail__actions {
 	display: flex;
 	gap: 8px;
+}
+
+.fair-audience-participant-detail__card {
+	margin-top: 16px;
+}
+
+.fair-audience-participant-detail__profile-table {
+	border: none;
 }
 
 .fair-audience-participant-detail__profile-table th {
@@ -47,7 +68,6 @@
 	.wrap.fair-audience-participant-detail
 		.widefat.fair-audience-participant-detail__profile-table {
 		display: block;
-		border: none;
 	}
 
 	.wrap.fair-audience-participant-detail
@@ -63,7 +83,7 @@
 		.widefat.fair-audience-participant-detail__profile-table
 		td {
 		display: block;
-		width: auto !important;
+		width: auto;
 	}
 
 	.wrap.fair-audience-participant-detail

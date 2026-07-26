@@ -88,6 +88,15 @@ describe('ParticipantDetail', () => {
 		);
 		expect(tables).toHaveLength(2);
 
+		const cards = container.querySelectorAll(
+			'.fair-audience-participant-detail__card'
+		);
+		expect(cards).toHaveLength(3);
+
+		expect(
+			container.querySelector('.fair-audience-participant-detail__back')
+		).toBeInTheDocument();
+
 		expect(screen.getByText('jane@example.com')).toBeInTheDocument();
 		expect(screen.getAllByText('Spring Meetup').length).toBeGreaterThan(0);
 		expect(screen.getByText('Signup form')).toBeInTheDocument();
