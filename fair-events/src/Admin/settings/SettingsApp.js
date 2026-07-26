@@ -10,6 +10,7 @@ import { Notice, TabPanel } from '@wordpress/components';
  */
 import GeneralTab from './GeneralTab.js';
 import FeaturesTab from './FeaturesTab.js';
+import OrganizerTab from './OrganizerTab.js';
 
 /**
  * Settings App Component
@@ -30,6 +31,10 @@ export default function SettingsApp() {
 			{
 				name: 'features',
 				title: __('Features', 'fair-events'),
+			},
+			{
+				name: 'organizer',
+				title: __('Organizer', 'fair-events'),
 			},
 		],
 		[]
@@ -86,6 +91,9 @@ export default function SettingsApp() {
 						)}
 						{tab.name === 'features' && (
 							<FeaturesTab onNotice={setNotice} />
+						)}
+						{tab.name === 'organizer' && (
+							<OrganizerTab onNotice={setNotice} />
 						)}
 					</div>
 				)}

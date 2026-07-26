@@ -49,11 +49,16 @@ async function login(page) {
 
 async function getJsonLd(page, url) {
 	await page.goto(url);
-	const raw = await page
+	const scripts = await page
 		.locator('script[type="application/ld+json"]')
-		.first()
-		.textContent();
-	return JSON.parse(raw);
+		.allTextContents();
+	for (const raw of scripts) {
+		const data = JSON.parse(raw);
+		if ('Event' === data['@type']) {
+			return data;
+		}
+	}
+	return null;
 }
 
 async function getMetaContent(page, url, property) {
