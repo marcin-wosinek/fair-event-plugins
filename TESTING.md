@@ -210,13 +210,32 @@ the repo)
 **Purpose**: Generate screenshots for WordPress.org plugin directory
 
 **Runner**: Playwright
-**Location**: `e2e/screenshots/wordpress-org.spec.js`
+**Location**: `fair-events/e2e/wordpress-org.spec.js`
 
 **Special considerations**:
 
 -   Use consistent viewport (1200x900)
 -   Capture specific states for documentation
 -   Save to `assets/` directory
+
+**Localized captures**: the spec is parameterized by `SCREENSHOT_LOCALE`
+(default `''` = English). `npm run screenshots -w fair-events` captures
+`assets/screenshot-N.png`; `npm run screenshots:es -w fair-events` sets
+`SCREENSHOT_LOCALE=es_ES` and captures the Spanish set to
+`assets/screenshot-N-es.png` (the `-es` suffix is the partial-locale asset
+name WordPress.org falls back to for every Spanish locale — see
+[DEPLOYMENT.md](./DEPLOYMENT.md)). Run both scripts **in the same session** so
+the two sets never drift apart. Before capturing a locale, the Docker host
+needs that locale's core/theme language packs and an up-to-date `.mo`/JSON
+catalog:
+
+```bash
+docker compose run wpcli wp language core install es_ES
+docker compose run wpcli wp language theme install --all es_ES
+npm run translation:untranslated -- --plugin=fair-events --locale=es_ES
+npm run makemo -w fair-events
+npm run build -w fair-events
+```
 
 ### Ad-hoc page screenshots (`npm run screenshot`)
 

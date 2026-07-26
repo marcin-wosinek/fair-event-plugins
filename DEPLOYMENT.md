@@ -157,6 +157,14 @@ The password is only exposed as an env var on the `svn ci` step; it is never pas
 3. Inspect the `svn status` output in the job log. Confirm the new `tags/<version>/` directory and any updated `trunk/` / `assets/` files look right.
 4. Re-run with `dry_run=false` to commit to wordpress.org.
 
+`assets/` carries both the default screenshots (`screenshot-N.png`) and any
+locale-suffixed sets (e.g. `screenshot-N-es.png` for Spanish, per
+[TESTING.md](./TESTING.md)). The "Refresh assets" step copies everything in
+`assets/` as a flat glob, so a locale set needs no workflow change — but the
+default and locale sets must be re-captured together whenever the plugin UI
+changes, or the listing's localized gallery drifts out of sync with the
+English one.
+
 ### Optional hardening
 
 The commit step can be gated behind a dedicated GitHub Environment (e.g. `wordpress.org`) with required reviewers. Add `environment: wordpress.org` to the `publish` job and move the two secrets onto that environment if you want a second-pair-of-eyes prompt before the live commit.
