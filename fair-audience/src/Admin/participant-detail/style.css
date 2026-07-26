@@ -1,0 +1,87 @@
+/**
+ * Participant Detail admin page styles.
+ *
+ * The page used to render outside `.wrap`, with inline flex/width styles
+ * that a media query can't override without `!important`. The Events and
+ * Form-submissions tables scroll inside their own card instead of pushing
+ * the page sideways, and below the mobile breakpoint the header stacks and
+ * the Profile table becomes full-width label/value cards.
+ *
+ * The selectors deliberately stack `.wrap.fair-audience-participant-detail`
+ * and `.widefat` to outweigh WordPress core's responsive list-table rules
+ * (active below 782px).
+ */
+
+.wrap.fair-audience-participant-detail {
+	max-width: 900px;
+	margin: 20px 0;
+}
+
+.fair-audience-participant-detail__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.fair-audience-participant-detail__actions {
+	display: flex;
+	gap: 8px;
+}
+
+.fair-audience-participant-detail__profile-table th {
+	width: 200px;
+}
+
+.fair-audience-participant-detail__table {
+	overflow-x: auto;
+}
+
+@media screen and (max-width: 600px) {
+	.fair-audience-participant-detail__header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.wrap.fair-audience-participant-detail
+		.widefat.fair-audience-participant-detail__profile-table {
+		display: block;
+		border: none;
+	}
+
+	.wrap.fair-audience-participant-detail
+		.widefat.fair-audience-participant-detail__profile-table
+		tbody,
+	.wrap.fair-audience-participant-detail
+		.widefat.fair-audience-participant-detail__profile-table
+		tr,
+	.wrap.fair-audience-participant-detail
+		.widefat.fair-audience-participant-detail__profile-table
+		th,
+	.wrap.fair-audience-participant-detail
+		.widefat.fair-audience-participant-detail__profile-table
+		td {
+		display: block;
+		width: auto !important;
+	}
+
+	.wrap.fair-audience-participant-detail
+		.widefat.fair-audience-participant-detail__profile-table
+		tr {
+		margin: 0 0 1em;
+		padding: 0.25em 0.75em;
+		border: 1px solid #c3c4c7;
+		border-radius: 4px;
+		background: #fff;
+	}
+
+	.wrap.fair-audience-participant-detail
+		.widefat.fair-audience-participant-detail__profile-table
+		th,
+	.wrap.fair-audience-participant-detail
+		.widefat.fair-audience-participant-detail__profile-table
+		td {
+		overflow-wrap: anywhere;
+	}
+}
