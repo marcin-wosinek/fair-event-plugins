@@ -105,8 +105,8 @@ export default function DayCell({
 	manageEventUrl,
 }) {
 	const dayNumber = date.getDate();
+	const monthName = date.toLocaleDateString(undefined, { month: 'long' });
 	const hasEvents = events.length > 0;
-	const visibleEvents = events.slice(0, MAX_VISIBLE_EVENTS);
 	const hiddenCount = events.length - MAX_VISIBLE_EVENTS;
 
 	const cellClasses = [
@@ -127,7 +127,10 @@ export default function DayCell({
 	return (
 		<div className={cellClasses}>
 			<div className="fair-events-calendar-day-header">
-				<span className="fair-events-calendar-day-number">
+				<span
+					className="fair-events-calendar-day-number"
+					data-month-name={monthName}
+				>
 					{dayNumber}
 				</span>
 				{onAddEvent && (
@@ -142,7 +145,7 @@ export default function DayCell({
 			</div>
 			{hasEvents && (
 				<div className="fair-events-calendar-day-events">
-					{visibleEvents.map((event, index) => {
+					{events.map((event, index) => {
 						const eventPostId = getEventPostId(event.uid);
 						const linkType = getEventLinkType(event);
 						const linkTypeIcon = getLinkTypeIcon(linkType);

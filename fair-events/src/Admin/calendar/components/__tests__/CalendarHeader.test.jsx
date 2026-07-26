@@ -29,6 +29,26 @@ it('renders Previous, Today, Next, and Add event buttons', () => {
 	).toBeInTheDocument();
 });
 
+it('wraps the title and nav in a scoped header element for responsive styling', () => {
+	const { container } = render(
+		<CalendarHeader
+			currentDate={currentDate}
+			onPrevMonth={() => {}}
+			onNextMonth={() => {}}
+			onToday={() => {}}
+			onAddEvent={() => {}}
+		/>
+	);
+	const header = container.querySelector('.fair-events-calendar-header');
+	expect(header).toBeInTheDocument();
+	expect(
+		header.querySelector('.fair-events-calendar-title')
+	).toBeInTheDocument();
+	expect(
+		header.querySelector('.fair-events-calendar-nav')
+	).toBeInTheDocument();
+});
+
 it('calls onAddEvent when the Add event button is clicked', () => {
 	const onAddEvent = jest.fn();
 	render(

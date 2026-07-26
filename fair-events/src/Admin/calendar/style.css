@@ -15,6 +15,13 @@
 }
 
 /* Header (rendered inside CardHeader, so no outer spacing of its own) */
+.fair-events-calendar-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
 .fair-events-calendar-nav {
 	display: flex;
 	gap: 8px;
@@ -130,7 +137,8 @@
 	height: 16px;
 }
 
-.fair-events-calendar-day:hover .fair-events-calendar-add-btn {
+.fair-events-calendar-day:hover .fair-events-calendar-add-btn,
+.fair-events-calendar-day:focus-within .fair-events-calendar-add-btn {
 	opacity: 1;
 }
 
@@ -268,10 +276,35 @@ a.fair-events-calendar-event:visited {
 	background: #4e5157;
 }
 
+/*
+ * Grid mode clamps to 3 event rows and reveals "+N more". This is the default
+ * so that any viewport width the mobile query below does not match still gets
+ * the clamp; the mobile agenda opts back out. Keep the row count in sync with
+ * MAX_VISIBLE_EVENTS in components/DayCell.js, which computes the "+N more"
+ * label.
+ */
+.fair-events-calendar-day-events
+	.fair-events-calendar-event-row:nth-child(n + 4) {
+	display: none;
+}
+
 .fair-events-calendar-more {
+	display: block;
 	font-size: 11px;
 	color: #646970;
 	padding: 2px 6px;
+}
+
+/*
+ * Agenda empty state. Only the mobile agenda hides event-less days, so grid
+ * mode never needs it.
+ */
+.fair-events-calendar-empty {
+	display: none;
+	margin: 0;
+	padding: 12px 0;
+	color: #646970;
+	text-align: center;
 }
 
 /* Legend */
@@ -295,5 +328,117 @@ a.fair-events-calendar-event:visited {
 
 	.fair-events-calendar-event {
 		font-size: 10px;
+	}
+}
+
+/* Touch devices have no hover state to reveal the add button */
+@media (hover: none) {
+	.fair-events-calendar-add-btn {
+		opacity: 1;
+	}
+}
+
+/* Mobile: header stacks, grid collapses into an agenda list of day cards */
+@media screen and (max-width: 600px) {
+	.fair-events-calendar-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+	}
+
+	.fair-events-calendar-nav {
+		flex-wrap: wrap;
+	}
+
+	.fair-events-calendar-weekdays {
+		display: none;
+	}
+
+	.fair-events-calendar-days {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 12px;
+	}
+
+	.fair-events-calendar-day {
+		display: none;
+	}
+
+	.fair-events-calendar-day.has-events {
+		display: block;
+		min-height: auto;
+		overflow: visible;
+		padding: 0;
+		border: 1px solid #c3c4c7;
+		border-radius: 4px;
+	}
+
+	.fair-events-calendar-day.has-events.other-month {
+		display: none;
+	}
+
+	.fair-events-calendar-day.has-events.today {
+		border: 2px solid #2271b1;
+	}
+
+	.fair-events-calendar-day-header {
+		margin: 0;
+		padding: 10px 12px;
+		background: #f6f7f7;
+		border-bottom: 1px solid #c3c4c7;
+	}
+
+	.fair-events-calendar-day.today .fair-events-calendar-day-header {
+		background: #e7f5ff;
+	}
+
+	.fair-events-calendar-day-number {
+		font-size: 15px;
+	}
+
+	/*
+	 * Reset the desktop "today" badge back to inline text. display must be
+	 * unset too: as a flex container the ::after below would be blockified
+	 * into a flex item and its leading space stripped ("15July").
+	 */
+	.fair-events-calendar-day.today .fair-events-calendar-day-number {
+		display: block;
+		width: auto;
+		height: auto;
+		padding: 2px 6px;
+		background: none;
+		color: #2271b1;
+		border-radius: 0;
+	}
+
+	.fair-events-calendar-day-number::after {
+		content: " " attr(data-month-name);
+		font-size: 13px;
+		font-weight: 400;
+		color: #646970;
+	}
+
+	.fair-events-calendar-day-events {
+		gap: 6px;
+		padding: 10px 12px;
+	}
+
+	/* The agenda has room for every event, so drop the grid-mode clamp */
+	.fair-events-calendar-day-events
+		.fair-events-calendar-event-row:nth-child(n + 4) {
+		display: flex;
+	}
+
+	.fair-events-calendar-more {
+		display: none;
+	}
+
+	.fair-events-calendar-event {
+		white-space: normal;
+	}
+
+	.fair-events-calendar-empty {
+		display: block;
 	}
 }
