@@ -24,15 +24,21 @@ Propose an implementation plan for GitHub issue #$ARGUMENTS.
    the implementing session reads those before touching code instead of
    guessing which docs matter.
 
-4. **Surface open questions — only if still relevant.** Re-check the ticket's Open
-   Questions against the current code: some may already be resolved. List the ones
-   that genuinely remain, with a recommended option and why, plus the alternative.
-   Drop any that no longer apply.
+4. **Collect every open fork.** Re-check the ticket's Open Questions against
+   the current code — some may already be resolved; drop those. Then add any
+   **new** fork you discovered while grounding the plan in the codebase (these
+   are usually the majority). Every fork gets a recommended option with the
+   why, plus the alternative.
 
-5. **Check it with me.** Show the full plan in chat and pause. Do **not** post
-   until I approve. Incorporate my feedback and re-confirm if I change anything.
+5. **Check it with me — and resolve the questions.** Show the full plan in
+   chat and pause. During this review, ask me to decide each remaining open
+   question. Do **not** post until I approve. Incorporate my feedback and
+   re-confirm if I change anything.
 
-6. **Post as a comment.** Once approved, write the body to a temp file and post
-   with `gh issue comment $ARGUMENTS --body-file /tmp/plan-$ARGUMENTS.md`, then
+6. **Post as a comment — decisions, not questions.** The posted plan records
+   the outcomes of step 5 under a **Decisions** heading; a plan with
+   unresolved open questions is not ready to post. Once approved, write the
+   body to a temp file and post with
+   `gh issue comment $ARGUMENTS --body-file /tmp/plan-$ARGUMENTS.md`, then
    `rm -f /tmp/plan-$ARGUMENTS.md`. Use heredoc-clean markdown (headings,
    checkboxes). Follow the no-attribution rule — no Claude footer.
