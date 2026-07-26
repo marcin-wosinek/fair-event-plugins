@@ -123,10 +123,7 @@ export default function ParticipantDetail() {
 
 	if (isLoading) {
 		return (
-			<div
-				className="wrap fair-audience-participant-detail"
-				style={{ textAlign: 'center' }}
-			>
+			<div className="wrap fair-audience-participant-detail fair-audience-participant-detail--loading">
 				<Spinner />
 			</div>
 		);
@@ -154,15 +151,13 @@ export default function ParticipantDetail() {
 
 	return (
 		<div className="wrap fair-audience-participant-detail">
-			<p style={{ margin: '0 0 8px' }}>
+			<p className="fair-audience-participant-detail__back">
 				<a href="admin.php?page=fair-audience-all-participants">
 					&larr; {__('All participants', 'fair-audience')}
 				</a>
 			</p>
 			<div className="fair-audience-participant-detail__header">
-				<h1 style={{ margin: 0 }}>
-					{fullName || __('Participant', 'fair-audience')}
-				</h1>
+				<h1>{fullName || __('Participant', 'fair-audience')}</h1>
 				<div className="fair-audience-participant-detail__actions">
 					<Button
 						variant="secondary"
@@ -180,17 +175,12 @@ export default function ParticipantDetail() {
 				</div>
 			</div>
 
-			<Card style={{ marginTop: '16px', marginBottom: '16px' }}>
+			<Card className="fair-audience-participant-detail__card">
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
-						{__('Profile', 'fair-audience')}
-					</h2>
+					<h2>{__('Profile', 'fair-audience')}</h2>
 				</CardHeader>
 				<CardBody>
-					<table
-						className="widefat striped fair-audience-participant-detail__profile-table"
-						style={{ border: 'none' }}
-					>
+					<table className="widefat striped fair-audience-participant-detail__profile-table">
 						<tbody>
 							<tr>
 								<th>{__('Name', 'fair-audience')}</th>
@@ -265,9 +255,9 @@ export default function ParticipantDetail() {
 				</CardBody>
 			</Card>
 
-			<Card style={{ marginBottom: '16px' }}>
+			<Card className="fair-audience-participant-detail__card">
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
+					<h2>
 						{__('Events', 'fair-audience')} ({events.length})
 					</h2>
 				</CardHeader>
@@ -375,9 +365,9 @@ export default function ParticipantDetail() {
 				</CardBody>
 			</Card>
 
-			<Card>
+			<Card className="fair-audience-participant-detail__card">
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
+					<h2>
 						{__('Form submissions', 'fair-audience')} (
 						{submissions.length})
 					</h2>
