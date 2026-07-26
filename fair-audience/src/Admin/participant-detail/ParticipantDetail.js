@@ -123,7 +123,10 @@ export default function ParticipantDetail() {
 
 	if (isLoading) {
 		return (
-			<div style={{ padding: '20px', textAlign: 'center' }}>
+			<div
+				className="wrap fair-audience-participant-detail"
+				style={{ textAlign: 'center' }}
+			>
 				<Spinner />
 			</div>
 		);
@@ -131,7 +134,7 @@ export default function ParticipantDetail() {
 
 	if (error) {
 		return (
-			<div style={{ maxWidth: '900px', margin: '20px 0' }}>
+			<div className="wrap fair-audience-participant-detail">
 				<Notice status="error" isDismissible={false}>
 					{error}
 				</Notice>
@@ -150,24 +153,17 @@ export default function ParticipantDetail() {
 	const submissions = activity?.submissions || [];
 
 	return (
-		<div style={{ maxWidth: '900px', margin: '20px 0' }}>
+		<div className="wrap fair-audience-participant-detail">
 			<p style={{ margin: '0 0 8px' }}>
 				<a href="admin.php?page=fair-audience-all-participants">
 					&larr; {__('All participants', 'fair-audience')}
 				</a>
 			</p>
-			<div
-				style={{
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-					gap: '16px',
-				}}
-			>
+			<div className="fair-audience-participant-detail__header">
 				<h1 style={{ margin: 0 }}>
 					{fullName || __('Participant', 'fair-audience')}
 				</h1>
-				<div style={{ display: 'flex', gap: '8px' }}>
+				<div className="fair-audience-participant-detail__actions">
 					<Button
 						variant="secondary"
 						onClick={() => setIsEditModalOpen(true)}
@@ -192,14 +188,12 @@ export default function ParticipantDetail() {
 				</CardHeader>
 				<CardBody>
 					<table
-						className="widefat striped"
+						className="widefat striped fair-audience-participant-detail__profile-table"
 						style={{ border: 'none' }}
 					>
 						<tbody>
 							<tr>
-								<th style={{ width: '200px' }}>
-									{__('Name', 'fair-audience')}
-								</th>
+								<th>{__('Name', 'fair-audience')}</th>
 								<td>{fullName || '—'}</td>
 							</tr>
 							<tr>
@@ -277,7 +271,7 @@ export default function ParticipantDetail() {
 						{__('Events', 'fair-audience')} ({events.length})
 					</h2>
 				</CardHeader>
-				<CardBody>
+				<CardBody className="fair-audience-participant-detail__table">
 					{events.length === 0 ? (
 						<p>{__('No events yet.', 'fair-audience')}</p>
 					) : (
@@ -388,7 +382,7 @@ export default function ParticipantDetail() {
 						{submissions.length})
 					</h2>
 				</CardHeader>
-				<CardBody>
+				<CardBody className="fair-audience-participant-detail__table">
 					{submissions.length === 0 ? (
 						<p>{__('No form submissions yet.', 'fair-audience')}</p>
 					) : (
