@@ -6,6 +6,7 @@
  * @package FairEvents
  */
 
+import { __ } from '@wordpress/i18n';
 import DayCell from './DayCell.js';
 import {
 	formatLocalDate,
@@ -82,6 +83,12 @@ export default function CalendarGrid({
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
 
+	// The mobile agenda only lists current-month days that have events, so it
+	// renders nothing at all for a month like this. Grid mode hides the notice.
+	const isAgendaEmpty = !days.some(
+		(day) => day.isCurrentMonth && day.events.length > 0
+	);
+
 	return (
 		<div className="fair-events-calendar-grid">
 			<div className="fair-events-calendar-weekdays">
@@ -111,6 +118,11 @@ export default function CalendarGrid({
 						/>
 					);
 				})}
+				{isAgendaEmpty && (
+					<p className="fair-events-calendar-empty">
+						{__('No events this month.', 'fair-events')}
+					</p>
+				)}
 			</div>
 		</div>
 	);
