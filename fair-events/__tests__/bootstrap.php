@@ -42,6 +42,32 @@ if ( ! function_exists( 'get_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'update_option' ) ) {
+	/**
+	 * Stub of WordPress update_option() backed by $GLOBALS['_fair_test_options'].
+	 * Also records each call in $GLOBALS['_fair_test_update_option_calls'] so
+	 * tests can assert how many times (and with what option names) it ran.
+	 *
+	 * @param string $name     Option name.
+	 * @param mixed  $value    Value to store.
+	 * @param mixed  $autoload Ignored — present only to match the real signature.
+	 * @return bool Always true.
+	 */
+	function update_option( $name, $value, $autoload = null ) {
+		if ( ! isset( $GLOBALS['_fair_test_options'] ) ) {
+			$GLOBALS['_fair_test_options'] = array();
+		}
+		$GLOBALS['_fair_test_options'][ $name ] = $value;
+
+		if ( ! isset( $GLOBALS['_fair_test_update_option_calls'] ) ) {
+			$GLOBALS['_fair_test_update_option_calls'] = array();
+		}
+		$GLOBALS['_fair_test_update_option_calls'][] = $name;
+
+		return true;
+	}
+}
+
 if ( ! function_exists( 'get_permalink' ) ) {
 	/**
 	 * Stub of WordPress get_permalink() — deterministic URL from a post ID.
@@ -203,14 +229,33 @@ if ( ! function_exists( 'wp_get_attachment_image_url' ) ) {
 
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
-	 * Stub of WordPress apply_filters() — a no-op pass-through for test input.
+	 * Stub of WordPress apply_filters(). Passes through unmodified unless a
+	 * test registered a callback for this tag in
+	 * $GLOBALS['_fair_test_filters'][ $tag ], in which case that callback runs.
 	 *
-	 * @param string $tag   Filter name (ignored).
+	 * @param string $tag   Filter name.
 	 * @param mixed  $value Value to filter.
-	 * @return mixed Unmodified value.
+	 * @return mixed Filtered (or unmodified) value.
 	 */
 	function apply_filters( $tag, $value ) {
+		if ( isset( $GLOBALS['_fair_test_filters'][ $tag ] ) ) {
+			return call_user_func( $GLOBALS['_fair_test_filters'][ $tag ], $value );
+		}
 		return $value;
+	}
+}
+
+if ( ! function_exists( 'wp_parse_args' ) ) {
+	/**
+	 * Stub of WordPress wp_parse_args() — array-only merge (test inputs never
+	 * pass an object or query string here).
+	 *
+	 * @param array $args     Values to parse.
+	 * @param array $defaults Defaults to merge under.
+	 * @return array Merged arguments.
+	 */
+	function wp_parse_args( $args, $defaults = array() ) {
+		return array_merge( $defaults, (array) $args );
 	}
 }
 

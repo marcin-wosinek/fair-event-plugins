@@ -37,6 +37,9 @@ export default function FeaturesTab({ onNotice }) {
 				const stored = settings.fair_events_features || {};
 				const next = {};
 				Object.entries(registry).forEach(([key, meta]) => {
+					if (meta.central) {
+						return;
+					}
 					if (meta.always_on || meta.forced) {
 						next[key] = meta.enabled;
 					} else {
@@ -71,7 +74,7 @@ export default function FeaturesTab({ onNotice }) {
 		// clear.
 		const payload = {};
 		Object.entries(registry).forEach(([key, meta]) => {
-			if (meta.always_on || meta.forced) {
+			if (meta.central || meta.always_on || meta.forced) {
 				return;
 			}
 			payload[key] = !!values[key];
@@ -112,7 +115,9 @@ export default function FeaturesTab({ onNotice }) {
 		);
 	}
 
-	const entries = Object.entries(registry);
+	const entries = Object.entries(registry).filter(
+		([, meta]) => !meta.central
+	);
 
 	return (
 		<Card style={{ marginTop: '16px' }}>
@@ -123,6 +128,12 @@ export default function FeaturesTab({ onNotice }) {
 				<p className="description">
 					{__(
 						'Toggle optional feature bundles. Bundles fixed in wp-config (FAIR_EVENTS_INTERNAL or FAIR_EVENTS_FEATURE_*) are read-only here.',
+						'fair-events'
+					)}
+				</p>
+				<p className="description">
+					{__(
+						'Bundled translations moved to Settings → Fair Event Plugins.',
 						'fair-events'
 					)}
 				</p>

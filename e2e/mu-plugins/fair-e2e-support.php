@@ -24,6 +24,16 @@
 defined( 'ABSPATH' ) || exit;
 
 /*
+ * 0. Force fair-form's bundled-translations flag from an option, so specs can
+ *    exercise the central Fair Event Plugins settings screen's "locked by a
+ *    wp-config constant" behavior without restarting PHP between requests —
+ *    each request re-reads the option and (re)defines the constant.
+ */
+if ( get_option( 'fair_e2e_force_form_bundled_translations' ) ) {
+	define( 'FAIR_FORM_FEATURE_BUNDLED_TRANSLATIONS', true );
+}
+
+/*
  * 1. Intercept the Mollie HTTP transport.
  *
  * Hooks into plugins_loaded (priority 1) — after fair-payments-connector has

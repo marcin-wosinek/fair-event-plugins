@@ -27,13 +27,13 @@ class Features {
 	}
 
 	/**
-	 * Return the bundled translations path when the flag is on, null otherwise.
+	 * Bundled translations path. This companion is never distributed on
+	 * WordPress.org, so it always loads the .mo/.json files it ships instead
+	 * of waiting on a language pack that will never exist.
 	 *
-	 * @return string|null
+	 * @return string
 	 */
 	public static function script_translations_path() {
-		return self::is_enabled( 'bundled-translations' )
-			? FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_DIR . 'build/languages'
-			: null;
+		return FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_DIR . 'build/languages';
 	}
 }

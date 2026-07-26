@@ -38,6 +38,16 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		// This companion is never distributed on WordPress.org, so it always
+		// bundles its own translation files rather than waiting on a language
+		// pack that will never exist.
+		add_action(
+			'init',
+			function () {
+				load_plugin_textdomain( 'fair-events-experimental', false, 'fair-events-experimental/languages' );
+			}
+		);
+
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_rest_api();
@@ -98,7 +108,7 @@ class Plugin {
 			true
 		);
 
-		wp_set_script_translations( 'fair-events-experimental-manage-event-ext', 'fair-events-experimental' );
+		wp_set_script_translations( 'fair-events-experimental-manage-event-ext', 'fair-events-experimental', Features::script_translations_path() );
 	}
 
 	/**

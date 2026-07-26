@@ -75,6 +75,70 @@ class Features {
 	}
 
 	/**
+	 * Whether the resolved value is forced by a constant — used by the
+	 * Settings UI to render the toggle disabled and ignored by the option
+	 * sanitizer so a UI write cannot override wp-config.
+	 *
+	 * @param string $key Bundle key.
+	 * @return bool
+	 */
+	public static function is_forced( $key ) {
+		$registry = self::registry();
+		if ( ! isset( $registry[ $key ] ) ) {
+			return false;
+		}
+
+		if ( ! empty( $registry[ $key ]['always_on'] ) ) {
+			return true;
+		}
+
+		if ( defined( self::feature_constant_name( $key ) ) ) {
+			return true;
+		}
+
+		return defined( self::MASTER_CONSTANT ) && true === constant( self::MASTER_CONSTANT );
+	}
+
+	/**
+	 * Sanitize an option payload to the known key set, dropping forced keys
+	 * (so a UI write cannot override a wp-config decision).
+	 *
+	 * @param mixed $value Raw option value.
+	 * @return array<string,bool>
+	 */
+	public static function sanitize_option( $value ) {
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+
+		$existing = get_option( self::OPTION, array() );
+		if ( ! is_array( $existing ) ) {
+			$existing = array();
+		}
+
+		$out = array();
+		foreach ( self::registry() as $key => $entry ) {
+			if ( ! empty( $entry['always_on'] ) ) {
+				continue;
+			}
+
+			if ( self::is_forced( $key ) ) {
+				if ( array_key_exists( $key, $existing ) ) {
+					$out[ $key ] = (bool) $existing[ $key ];
+				}
+				continue;
+			}
+
+			if ( array_key_exists( $key, $value ) ) {
+				$out[ $key ] = (bool) $value[ $key ];
+			} elseif ( array_key_exists( $key, $existing ) ) {
+				$out[ $key ] = (bool) $existing[ $key ];
+			}
+		}
+		return $out;
+	}
+
+	/**
 	 * Path passed to wp_set_script_translations() for the bundled-translations
 	 * opt-in. Returns null when the flag is off.
 	 *

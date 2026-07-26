@@ -281,7 +281,37 @@ wp_set_script_translations(
 );
 ```
 
-See [I18N_SETUP.md](./I18N_SETUP.md) for the resolution order and Settings UI.
+See [I18N_SETUP.md](./I18N_SETUP.md) for the resolution order. Register the
+toggle itself on the shared Settings → Fair Event Plugins screen (below) —
+don't build a new plugin-specific Features tab/page for it.
+
+### Registering on the shared Settings screen
+
+A new plugin doesn't get its own Features UI for suite-wide settings like
+`bundled-translations`. Instead, require the shared package and register a
+field on the central screen:
+
+```json
+"repositories": [
+    { "type": "composer", "url": "https://wpackagist.org" },
+    { "type": "path", "url": "../fair-events-shared/php", "options": { "symlink": false } }
+],
+"require": {
+    "fair-events/shared": "^0.2"
+}
+```
+
+Then, guarded by `is_admin()` in `Core\Plugin::init()`:
+
+```php
+if ( class_exists( '\FairEventsShared\Admin\SettingsPage' ) ) {
+    \FairEventsShared\Admin\SettingsPage::boot();
+}
+add_filter( 'fair_event_plugins_settings_fields', array( $this, 'register_shared_settings_fields' ) );
+```
+
+See [PHP_PATTERNS.md](./PHP_PATTERNS.md#shared-settings-screen-fair_event_plugins_settings_fields)
+for the field descriptor shape and version-skew rules.
 
 ## Versioning and Deployment
 

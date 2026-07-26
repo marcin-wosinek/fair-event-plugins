@@ -287,7 +287,7 @@ class AdminPages {
 				)
 			);
 
-			wp_set_script_translations( 'fair-audience-experimental-settings', 'fair-audience-experimental' );
+			wp_set_script_translations( 'fair-audience-experimental-settings', 'fair-audience-experimental', \FairAudienceExperimental\Core\Features::script_translations_path() );
 			wp_enqueue_style( 'wp-components' );
 			return;
 		}
@@ -418,7 +418,7 @@ class AdminPages {
 			true
 		);
 
-		wp_set_script_translations( $handle, 'fair-audience-experimental' );
+		wp_set_script_translations( $handle, 'fair-audience-experimental', \FairAudienceExperimental\Core\Features::script_translations_path() );
 
 		wp_enqueue_style( 'wp-components' );
 	}
