@@ -14,6 +14,8 @@
 
 defined( 'WPINC' ) || die;
 
+use FairForm\Services\QuestionnaireService;
+
 $question_text = $attributes['questionText'] ?? '';
 $question_key  = $attributes['questionKey'] ?? '';
 $required      = ! empty( $attributes['required'] );
@@ -38,7 +40,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	)
 );
 
-$format_hint = __( 'Include country code with leading "+" (e.g. +49170...).', 'fair-audience' );
+$format_hint = __( 'Include the country code, starting with "+" — spaces, dashes and brackets are fine (for example +49 170 123 45 67).', 'fair-form' );
 ?>
 
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
@@ -51,7 +53,7 @@ $format_hint = __( 'Include country code with leading "+" (e.g. +49170...).', 'f
 	<input
 		type="tel"
 		inputmode="tel"
-		pattern="^\+[1-9][0-9]{6,14}$"
+		pattern="<?php echo esc_attr( QuestionnaireService::PHONE_HTML_PATTERN ); ?>"
 		title="<?php echo esc_attr( $format_hint ); ?>"
 		id="<?php echo esc_attr( $input_id ); ?>"
 		name="<?php echo esc_attr( 'fair_form_q_' . $question_key ); ?>"

@@ -85,6 +85,15 @@ if ( 'three-ticket-scopes' === $flavour ) {
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
+} elseif ( isset( $overrides['block'] ) && 'unified-with-phone' === $overrides['block'] ) {
+	$block_content = implode(
+		"\n",
+		array(
+			'<!-- wp:fair-events/event-signup -->',
+			'<!-- wp:fair-audience/fair-form-phone {"questionKey":"mobile","questionText":"Mobile"} /-->',
+			'<!-- /wp:fair-events/event-signup -->',
+		)
+	);
 }
 
 $event_id = fair_e2e_create_event( 'E2E ' . $flavour . ' Event ' . gmdate( 'YmdHis' ) . ' ' . wp_rand( 1000, 9999 ), $block_content );

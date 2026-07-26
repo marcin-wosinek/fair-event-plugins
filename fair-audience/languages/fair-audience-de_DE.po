@@ -3811,18 +3811,18 @@ msgstr "Abgemeldet"
 msgid "Subscribed"
 msgstr "Abonniert"
 
-#: ../fair-events-shared/src/questionnaire.js:349
+#: ../fair-events-shared/src/questionnaire.js:384
 msgid "Please answer the required question: "
 msgstr ""
 
-#: ../fair-events-shared/src/questionnaire.js:371
-msgid "Please enter a valid phone number with country code (e.g. +49170...): "
-msgstr ""
-
-#: ../fair-events-shared/src/questionnaire.js:395
+#: ../fair-events-shared/src/questionnaire.js:432
 msgid "Please enter a valid email address for: "
 msgstr ""
 
-#: ../fair-events-shared/src/questionnaire.js:425
+#: ../fair-events-shared/src/questionnaire.js:462
 msgid "File is too large. Maximum size is "
+msgstr ""
+
+#: ../fair-events-shared/src/questionnaire.js:407
+msgid "Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s"
 msgstr ""

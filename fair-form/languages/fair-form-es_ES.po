@@ -18,7 +18,7 @@ msgstr ""
 #: src/Admin/AdminHooks.php:129
 #: src/Admin/AdminHooks.php:130
 #: src/API/FairFormController.php:238
-#: src/Services/QuestionnaireService.php:293
+#: src/Services/QuestionnaireService.php:331
 msgid "Fair Form"
 msgstr ""
 
@@ -90,7 +90,7 @@ msgstr "Heredado (sin ID de formulario)"
 
 #: src/API/QuestionnaireResponsesController.php:446
 #: src/API/QuestionnaireResponsesController.php:526
-#: src/Admin/submission-detail/SubmissionDetail.js:229
+#: src/Admin/submission-detail/SubmissionDetail.js:222
 msgid "Submission not found."
 msgstr "Envío no encontrado."
 
@@ -108,37 +108,31 @@ msgid "Response not found."
 msgstr "Respuesta no encontrada."
 
 #. translators: %s: question text
-#: src/Services/QuestionnaireService.php:124
+#: src/Services/QuestionnaireService.php:142
 #, php-format
 msgid "Please enter a valid email address for: %s"
 msgstr "Introduce una dirección de correo válida para: %s"
 
-#. translators: %s: question text
-#: src/Services/QuestionnaireService.php:137
-#, php-format
-msgid "Please enter a valid phone number with country code (e.g. +49170...) for: %s"
-msgstr "Introduce un número de teléfono válido con código de país (p. ej. +49170...) para: %s"
-
-#: src/Services/QuestionnaireService.php:194
+#: src/Services/QuestionnaireService.php:232
 msgid "File upload failed. Please try again."
 msgstr "La carga de archivo falló. Inténtalo de nuevo."
 
-#: src/Services/QuestionnaireService.php:203
+#: src/Services/QuestionnaireService.php:241
 msgid "File is too large."
 msgstr "El archivo es demasiado grande."
 
-#: src/Services/QuestionnaireService.php:213
+#: src/Services/QuestionnaireService.php:251
 msgid "File type not allowed."
 msgstr "Tipo de archivo no permitido."
 
-#: src/Services/QuestionnaireService.php:247
+#: src/Services/QuestionnaireService.php:285
 msgid "Failed to save uploaded file."
 msgstr "No se pudo guardar el archivo cargado."
 
 #: src/Admin/answers-overview/AnswersOverview.js:54
 #: src/Admin/form-answers/FormAnswers.js:126
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:123
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:656
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:141
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:681
 msgid "Name"
 msgstr "Nombre"
 
@@ -173,7 +167,7 @@ msgstr "Página"
 #: src/Admin/answers-overview/AnswersOverview.js:113
 #: src/Admin/form-answers/FormAnswers.js:152
 #: src/Admin/form-answers/FormAnswers.js:272
-#: src/Admin/submission-detail/SubmissionDetail.js:323
+#: src/Admin/submission-detail/SubmissionDetail.js:310
 msgid "Event"
 msgstr "Evento"
 
@@ -184,20 +178,20 @@ msgstr "Formulario"
 
 #: src/Admin/form-answers/FormAnswers.js:112
 #: src/Admin/form-answers/FormAnswers.js:197
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:268
-#: src/Admin/submission-detail/SubmissionDetail.js:120
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:304
+#: src/Admin/submission-detail/SubmissionDetail.js:113
 msgid "Error: "
 msgstr "Error: "
 
 #: src/Admin/form-answers/FormAnswers.js:140
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:141
-#: src/Admin/submission-detail/SubmissionDetail.js:315
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
+#: src/Admin/submission-detail/SubmissionDetail.js:302
 msgid "Email"
 msgstr "Correo electrónico"
 
 #: src/Admin/form-answers/FormAnswers.js:158
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:213
-#: src/Admin/submission-detail/SubmissionDetail.js:319
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:233
+#: src/Admin/submission-detail/SubmissionDetail.js:306
 msgid "Date"
 msgstr "Fecha"
 
@@ -210,21 +204,22 @@ msgid "Failed to delete submission."
 msgstr "No se pudo eliminar el envío."
 
 #: src/Admin/form-answers/FormAnswers.js:208
-#: src/Admin/submission-detail/SubmissionDetail.js:148
+#: src/Admin/submission-detail/SubmissionDetail.js:141
 msgid "Edit"
 msgstr "Editar"
 
 #: src/Admin/form-answers/FormAnswers.js:215
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:333
 msgid "View"
 msgstr "Ver"
 
 #: src/Admin/form-answers/FormAnswers.js:224
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:297
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:342
 msgid "Delete"
 msgstr "Eliminar"
 
 #: src/Admin/form-answers/FormAnswers.js:235
-#: src/Admin/submission-detail/SubmissionDetail.js:130
+#: src/Admin/submission-detail/SubmissionDetail.js:123
 msgid "— None —"
 msgstr "— Ninguno —"
 
@@ -237,259 +232,265 @@ msgid "Edit Submission"
 msgstr "Editar envío"
 
 #: src/Admin/form-answers/FormAnswers.js:289
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:594
-#: src/Admin/submission-detail/SubmissionDetail.js:172
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:619
+#: src/Admin/submission-detail/SubmissionDetail.js:165
 msgid "Cancel"
 msgstr "Cancelar"
 
 #: src/Admin/form-answers/FormAnswers.js:297
-#: src/Admin/submission-detail/SubmissionDetail.js:169
+#: src/Admin/submission-detail/SubmissionDetail.js:162
 msgid "Save"
 msgstr "Guardar"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:147
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:165
 msgid "Status"
 msgstr "Estado"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:152
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:162
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:170
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:180
 msgid "Pending"
 msgstr "Pendiente"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:153
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:165
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:171
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:183
 msgid "Confirmed"
 msgstr "Confirmado"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:172
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:190
 msgid "Mailing"
 msgstr "Correo"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:177
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:187
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:195
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:205
 msgid "Minimal"
 msgstr "Mínimo"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:178
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:190
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:196
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:208
 msgid "Marketing"
 msgstr "Marketing"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:197
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:215
 msgid "Subscribed Categories"
 msgstr "Categorías suscritas"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:270
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:306
 msgid "Failed to delete response."
 msgstr "No se pudo eliminar la respuesta."
 
 #. translators: 1: number added, 2: number already in group
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:390
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:423
 #, js-format
 msgid "%1$d participant(s) added, %2$d already in group."
 msgstr "%1$d participante(s) añadido(s), %2$d ya en el grupo."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:404
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:437
 msgid "Failed to add participants to group."
 msgstr "No se pudieron añadir participantes al grupo."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:530
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:563
 msgid "Questionnaire Responses"
 msgstr "Respuestas del cuestionario"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:491
-#: src/Admin/submission-detail/SubmissionDetail.js:192
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:524
+#: src/Admin/submission-detail/SubmissionDetail.js:185
 msgid "Clipboard not available."
 msgstr "Portapapeles no disponible."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:201
+#: src/Admin/submission-detail/SubmissionDetail.js:194
 msgid "Markdown copied to clipboard. Paste into Google Docs."
 msgstr "Markdown copiado al portapapeles. Pégalo en Google Docs."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:506
-#: src/Admin/submission-detail/SubmissionDetail.js:210
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:539
+#: src/Admin/submission-detail/SubmissionDetail.js:203
 msgid "Failed to copy."
 msgstr "Error al copiar."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:534
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:567
 msgid "Back to Answers Overview"
 msgstr "Volver a descripción general de respuestas"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:542
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:575
 msgid "Event edit page"
 msgstr "Página de edición del evento"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:550
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:583
 msgid "Post entry"
 msgstr "Entrada de entrada"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:568
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:601
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:592
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:626
 msgid "Add participants to group"
 msgstr "Añadir participantes al grupo"
 
 #. translators: %d: number of unique participants
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:608
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:633
 #, js-format
 msgid "%d unique participant(s) will be added."
 msgstr "%d participante(s) único(s) será(n) añadido(s)."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:617
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:642
 msgid "Target group"
 msgstr "Grupo destino"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:621
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:646
 msgid "Use existing group"
 msgstr "Usar grupo existente"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:625
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:650
 msgid "Create new group"
 msgstr "Crear nuevo grupo"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:634
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:659
 msgid "Group"
 msgstr "Grupo"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:640
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:665
 msgid "Loading..."
 msgstr "Cargando..."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:641
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:666
 msgid "— Select a group —"
 msgstr "— Selecciona un grupo —"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:659
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:684
 msgid "Enter group name..."
 msgstr "Introduce el nombre del grupo..."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:665
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:690
 msgid "Description"
 msgstr "Descripción"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:668
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:693
 msgid "Enter group description (optional)..."
 msgstr "Introduce la descripción del grupo (opcional)..."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:697
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:788
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:722
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:813
 msgid "Close"
 msgstr "Cerrar"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:706
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:731
 msgid "Create group and add"
 msgstr "Crear grupo y añadir"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:707
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:732
 msgid "Add to group"
 msgstr "Añadir al grupo"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:42
+#: src/Admin/submission-detail/SubmissionDetail.js:35
 msgid "View file"
 msgstr "Ver archivo"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:121
+#: src/Admin/submission-detail/SubmissionDetail.js:114
 msgid "Failed to update."
 msgstr "Error al actualizar."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:218
+#: src/Admin/submission-detail/SubmissionDetail.js:211
 msgid "No submission ID provided."
 msgstr "No se proporcionó ID de envío."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:269
+#: src/Admin/submission-detail/SubmissionDetail.js:258
 msgid "Form Submission"
 msgstr "Envío de formulario"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:272
+#: src/Admin/submission-detail/SubmissionDetail.js:261
 msgid "Copy markdown"
 msgstr "Copiar markdown"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:288
+#: src/Admin/submission-detail/SubmissionDetail.js:277
 msgid "Submission Info"
 msgstr "Información del envío"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:299
+#: src/Admin/submission-detail/SubmissionDetail.js:287
 msgid "Submitted by"
 msgstr "Enviado por"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:336
+#: src/Admin/submission-detail/SubmissionDetail.js:323
 msgid "Answers"
 msgstr "Respuestas"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:340
+#: src/Admin/submission-detail/SubmissionDetail.js:327
 msgid "No answers recorded."
 msgstr "No hay respuestas registradas."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:349
+#: src/Admin/submission-detail/SubmissionDetail.js:335
 msgid "Question"
 msgstr "Pregunta"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:351
+#: src/Admin/submission-detail/SubmissionDetail.js:336
 msgid "Answer"
 msgstr "Respuesta"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:64
+#: src/Admin/submission-detail/SubmissionDetail.js:57
 msgid "Yes"
 msgstr "Sí"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:65
+#: src/Admin/submission-detail/SubmissionDetail.js:58
 msgid "No"
 msgstr "No"
 
-#. translators: %s: participant name
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:285
+#. translators: %s: participant name, or the submission date when there is no participant
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:321
 #, js-format
 msgid "Delete the response from %s? This cannot be undone."
 msgstr "¿Eliminar la respuesta de %s? Esta acción no se puede deshacer."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:289
-msgid "this participant"
-msgstr "este participante"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:500
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:533
 msgid "Message copied to clipboard."
 msgstr "Mensaje copiado al portapapeles."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:575
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:715
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:600
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:740
 msgid "Export"
 msgstr "Exportar"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:593
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:618
 msgid "Delete response"
 msgstr "Eliminar respuesta"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:720
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:745
 msgid "Columns"
 msgstr "Columnas"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:724
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:749
 msgid "All columns"
 msgstr "Todas las columnas"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:728
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:753
 msgid "Handpicked columns"
 msgstr "Columnas seleccionadas"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:751
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:776
 msgid "Format"
 msgstr "Formato"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:755
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:780
 msgid "Markdown"
 msgstr "Markdown"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:758
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:783
 msgid "CSV"
 msgstr "CSV"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:760
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:785
 msgid "One line per person"
 msgstr "Una línea por persona"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:796
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:821
 msgid "Download CSV"
 msgstr "Descargar CSV"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:804
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:829
 msgid "Copy to clipboard"
 msgstr "Copiar al portapapeles"
+
+#: src/blocks/fair-form-phone/render.php:43
+msgid "Include the country code, starting with \"+\" — spaces, dashes and brackets are fine (for example +49 170 123 45 67)."
+msgstr ""
+
+#. translators: %s: question text
+#: src/Services/QuestionnaireService.php:157
+#, php-format
+msgid "Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s"
+msgstr ""

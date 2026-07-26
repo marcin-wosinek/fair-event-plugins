@@ -21,6 +21,7 @@
 		"updatepo": "wp i18n update-po languages/fair-form.pot languages/",
 		"test": "wp-scripts test-unit-js --config jest.config.js",
 		"test:js": "wp-scripts test-unit-js --config jest.config.js",
+		"test:api": "playwright test src/API/__tests__/",
 		"test:php": "vendor/bin/phpunit",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-form svn",
 		"svn:copy": "cp -r readme.txt fair-form.php composer* languages CHANGELOG.md svn/trunk"

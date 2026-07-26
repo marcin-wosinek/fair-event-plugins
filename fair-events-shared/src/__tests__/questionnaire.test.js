@@ -6,6 +6,8 @@ import {
 	getQuestionValue,
 	collectQuestionAnswers,
 	validateQuestions,
+	isValidPhoneNumber,
+	PHONE_HTML_PATTERN,
 } from '../questionnaire.js';
 
 const VISIBLE = 'fair-form-conditional-visible';
@@ -279,6 +281,78 @@ describe('checkbox question type', () => {
 				consentQuestion({ checked: false, required: false })
 			);
 			expect(validateQuestions(form)).toBeNull();
+		});
+	});
+});
+
+/**
+ * Build a phone question as fair-form-phone/render.php emits it.
+ *
+ * @param {string} value Field value.
+ * @return {string} The question markup.
+ */
+function phoneQuestion(value) {
+	return (
+		'<div data-fair-form-question data-question-key="mobile" data-question-text="Mobile" data-question-type="phone" data-required="0">' +
+		`<input type="tel" value="${value}" /></div>`
+	);
+}
+
+describe('phone question type', () => {
+	// One separator per accept case is enough to prove the class is
+	// accepted anywhere between the leading `+` and the last digit; the
+	// browser pattern and isValidPhoneNumber() must agree on every case.
+	const ACCEPT = [
+		'+491701234567',
+		'+49 170 123 45 67',
+		'+49-170-123-45-67',
+		'+49.170.123.4567',
+		'+49 (170) 1234567',
+		'+49 170 123 45 67', // NBSP
+		'+49 170 1234567', // narrow NBSP
+	];
+
+	const REJECT = [
+		'49 170 1234567',
+		'+49 17a 1234',
+		'++49 1701234',
+		'+ - . ( )',
+		'+0491701234567',
+		'+491234', // 6 digits, below the 7-digit minimum
+		'+4912345678901234567',
+	];
+
+	const htmlPatternRegex = new RegExp(`^(?:${PHONE_HTML_PATTERN})$`, 'u');
+
+	describe.each(ACCEPT)('accepts %j', (value) => {
+		it('via isValidPhoneNumber()', () => {
+			expect(isValidPhoneNumber(value)).toBe(true);
+		});
+
+		it('via the HTML pattern', () => {
+			expect(htmlPatternRegex.test(value)).toBe(true);
+		});
+	});
+
+	describe.each(REJECT)('rejects %j', (value) => {
+		it('via isValidPhoneNumber()', () => {
+			expect(isValidPhoneNumber(value)).toBe(false);
+		});
+
+		it('via the HTML pattern', () => {
+			expect(htmlPatternRegex.test(value)).toBe(false);
+		});
+	});
+
+	describe('validateQuestions', () => {
+		it('passes a phone number with separators', () => {
+			const form = buildForm(phoneQuestion('+49 170 123 45 67'));
+			expect(validateQuestions(form)).toBeNull();
+		});
+
+		it('blocks a phone number without a country code', () => {
+			const form = buildForm(phoneQuestion('49 170 1234567'));
+			expect(validateQuestions(form)).toMatch(/Mobile/);
 		});
 	});
 });

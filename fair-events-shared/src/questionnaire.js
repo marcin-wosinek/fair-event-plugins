@@ -10,7 +10,42 @@
  * that renders the question blocks.
  */
 
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
+
+/**
+ * HTML `pattern` attribute value for the phone question's `<input>`, shared
+ * with the server's `QuestionnaireService::PHONE_HTML_PATTERN`. Interleaved
+ * form: separators (spaces, dots, parens, hyphens) may appear anywhere after
+ * the leading `+`, since the `pattern` attribute can't post-process the
+ * typed value.
+ *
+ * @type {string}
+ */
+export const PHONE_HTML_PATTERN =
+	'[\\s\\.\\(\\)\\-]*\\+[\\s\\.\\(\\)\\-]*[1-9](?:[\\s\\.\\(\\)\\-]*[0-9]){6,14}[\\s\\.\\(\\)\\-]*';
+
+/**
+ * Strip separators (whitespace, including NBSP/narrow NBSP, dots, parens,
+ * hyphens) from a phone value, leaving `+` followed by digits only. Mirrors
+ * the server's `QuestionnaireService::normalize_phone()`.
+ *
+ * @param {string} value Raw phone value.
+ * @return {string} Normalized value.
+ */
+export function normalizePhoneNumber(value) {
+	return value.replace(/[\s.()-]/g, '');
+}
+
+/**
+ * Whether a phone value, once normalized, is a valid E.164-style number
+ * (leading `+`, no leading zero, 7-15 digits total).
+ *
+ * @param {string} value Raw phone value.
+ * @return {boolean} Whether the value is valid.
+ */
+export function isValidPhoneNumber(value) {
+	return /^\+[1-9]\d{6,14}$/.test(normalizePhoneNumber(value));
+}
 
 /**
  * Read the current value of a question element.
@@ -365,13 +400,15 @@ export function validateQuestions(form) {
 		if (!value) {
 			continue;
 		}
-		if (!/^\+[1-9]\d{6,14}$/.test(value)) {
+		if (!isValidPhoneNumber(value)) {
 			const questionText = el.dataset.questionText || '';
-			return (
+			return sprintf(
+				/* translators: %s: question text */
 				__(
-					'Please enter a valid phone number with country code (e.g. +49170...): ',
+					'Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s',
 					'fair-audience'
-				) + questionText
+				),
+				questionText
 			);
 		}
 	}
