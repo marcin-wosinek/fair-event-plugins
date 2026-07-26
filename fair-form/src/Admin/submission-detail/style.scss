@@ -1,0 +1,89 @@
+/**
+ * Submission Detail admin page styles.
+ *
+ * The page used to render outside `.wrap`, with inline flex/width styles
+ * that a media query can't override without `!important`. Below the mobile
+ * breakpoint we stack the header and turn both tables into full-width
+ * label/value cards instead of a fixed grid, so long emails, event names and
+ * answers wrap normally instead of forcing horizontal overflow.
+ *
+ * Scoped under `.wrap.fair-form-submission-detail` so other admin pages are
+ * untouched, and the responsive rules live inside a media query so desktop
+ * is unchanged.
+ *
+ * The selectors deliberately stack `.wrap.fair-form-submission-detail` and
+ * `.widefat` to outweigh WordPress core's responsive list-table rules
+ * (active below 782px).
+ */
+
+.wrap.fair-form-submission-detail {
+	max-width: 800px;
+	margin: 20px 0;
+
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 16px;
+	}
+
+	&__event-edit {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.fair-form-submission-detail__info-table th {
+		width: 200px;
+	}
+
+	.fair-form-submission-detail__answers-table th:first-child {
+		width: 40%;
+	}
+
+	@media screen and (max-width: 600px) {
+		&__header {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		&__event-edit {
+			flex-wrap: wrap;
+
+			.components-select-control {
+				flex: 1 1 100%;
+			}
+		}
+
+		.widefat {
+			display: block;
+			border: none;
+
+			thead {
+				display: none;
+			}
+
+			tbody,
+			tr,
+			th,
+			td {
+				display: block;
+				width: auto !important;
+			}
+
+			tr {
+				margin: 0 0 1em;
+				padding: 0.25em 0.75em;
+				border: 1px solid #c3c4c7;
+				border-radius: 4px;
+				background: #fff;
+			}
+
+			th,
+			td {
+				overflow-wrap: anywhere;
+			}
+		}
+	}
+}

@@ -25,7 +25,7 @@ function AnswerDisplay({ answer }) {
 							src={file_url}
 							alt={answer.question_text}
 							style={{
-								maxWidth: '300px',
+								maxWidth: '100%',
 								maxHeight: '200px',
 								display: 'block',
 								marginTop: '4px',
@@ -146,7 +146,7 @@ function EventField({ submission, onUpdate }) {
 
 	return (
 		<td>
-			<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+			<div className="fair-form-submission-detail__event-edit">
 				<SelectControl
 					value={selectedEventDateId}
 					options={eventDateOptions}
@@ -228,7 +228,10 @@ export default function SubmissionDetail() {
 
 	if (isLoading) {
 		return (
-			<div style={{ padding: '20px', textAlign: 'center' }}>
+			<div
+				className="wrap fair-form-submission-detail"
+				style={{ textAlign: 'center' }}
+			>
 				<Spinner />
 			</div>
 		);
@@ -236,7 +239,7 @@ export default function SubmissionDetail() {
 
 	if (error) {
 		return (
-			<div style={{ maxWidth: '800px', margin: '20px 0' }}>
+			<div className="wrap fair-form-submission-detail">
 				<Notice status="error" isDismissible={false}>
 					{error}
 				</Notice>
@@ -249,15 +252,8 @@ export default function SubmissionDetail() {
 	}
 
 	return (
-		<div style={{ maxWidth: '800px', margin: '20px 0' }}>
-			<div
-				style={{
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-					gap: '16px',
-				}}
-			>
+		<div className="wrap fair-form-submission-detail">
+			<div className="fair-form-submission-detail__header">
 				<h1>
 					{submission.title || __('Form Submission', 'fair-form')}
 				</h1>
@@ -283,14 +279,12 @@ export default function SubmissionDetail() {
 				</CardHeader>
 				<CardBody>
 					<table
-						className="widefat striped"
+						className="widefat striped fair-form-submission-detail__info-table"
 						style={{ border: 'none' }}
 					>
 						<tbody>
 							<tr>
-								<th style={{ width: '200px' }}>
-									{__('Submitted by', 'fair-form')}
-								</th>
+								<th>{__('Submitted by', 'fair-form')}</th>
 								<td>
 									{submission.participant_id ? (
 										// TODO(phase-3): retarget to fair-form participant detail once it exists.
@@ -333,14 +327,12 @@ export default function SubmissionDetail() {
 						<p>{__('No answers recorded.', 'fair-form')}</p>
 					) : (
 						<table
-							className="widefat striped"
+							className="widefat striped fair-form-submission-detail__answers-table"
 							style={{ border: 'none' }}
 						>
 							<thead>
 								<tr>
-									<th style={{ width: '40%' }}>
-										{__('Question', 'fair-form')}
-									</th>
+									<th>{__('Question', 'fair-form')}</th>
 									<th>{__('Answer', 'fair-form')}</th>
 								</tr>
 							</thead>

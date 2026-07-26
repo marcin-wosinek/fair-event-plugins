@@ -251,7 +251,9 @@ class AdminHooks {
 
 			wp_enqueue_style( 'wp-components' );
 
+			// Enqueue the page's stylesheet when one was emitted by the build.
 			$style_file = $plugin_dir . "build/admin/{$page_name}/style-index.css";
+
 			if ( file_exists( $style_file ) ) {
 				wp_enqueue_style(
 					"fair-form-{$page_name}",
