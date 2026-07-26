@@ -17,6 +17,7 @@ export { default as MiniCalendar } from './MiniCalendar.js';
 export { default as RecurrenceControl } from './RecurrenceControl.js';
 export * from './recurrence.js';
 export * from './questionnaire.js';
+export * from './phone-placeholder.js';
 export * from './form-utils.js';
 export * from './question-utils.js';
 export * from './payment-flow.js';

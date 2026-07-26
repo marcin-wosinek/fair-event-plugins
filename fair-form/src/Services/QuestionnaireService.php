@@ -71,6 +71,59 @@ class QuestionnaireService {
 	const PHONE_NORMALIZED_PATTERN = '/^\+[1-9][0-9]{6,14}$/';
 
 	/**
+	 * Example phone number per site timezone for the phone question's
+	 * placeholder, one entry per country in ticket #1269's table. Mirrored
+	 * by the JS twin `PHONE_PLACEHOLDER_BY_TIMEZONE` in
+	 * `fair-events-shared/src/phone-placeholder.js` — keep both maps in sync.
+	 *
+	 * @var array
+	 */
+	const PHONE_PLACEHOLDERS = array(
+		'Europe/Madrid'       => '+34 612 34 56 78',
+		'Europe/Berlin'       => '+49 170 1234567',
+		'Europe/Paris'        => '+33 6 12 34 56 78',
+		'Europe/Rome'         => '+39 312 345 6789',
+		'Europe/Amsterdam'    => '+31 6 12345678',
+		'Europe/Brussels'     => '+32 470 12 34 56',
+		'Europe/Zurich'       => '+41 79 123 45 67',
+		'Europe/Warsaw'       => '+48 512 345 678',
+		'Europe/Lisbon'       => '+351 912 345 678',
+		'Europe/London'       => '+44 7700 900123',
+		'America/New_York'    => '+1 201 555 0123',
+		'America/Chicago'     => '+1 201 555 0123',
+		'America/Denver'      => '+1 201 555 0123',
+		'America/Los_Angeles' => '+1 201 555 0123',
+	);
+
+	/**
+	 * Fallback example for timezones outside the mapped set, and for sites
+	 * configured with a raw UTC offset instead of a city.
+	 *
+	 * @var string
+	 */
+	const PHONE_PLACEHOLDER_FALLBACK = '+49 170 1234567';
+
+	/**
+	 * Resolve the example placeholder for a given (or the site's) timezone.
+	 *
+	 * Deliberately reads the raw `timezone_string` option rather than
+	 * `wp_timezone_string()`, which returns a `+02:00`-style offset on sites
+	 * configured with a raw UTC offset instead of a city — the same raw
+	 * value `@wordpress/date`'s `getSettings().timezone.string` sees in JS,
+	 * which is what gives editor/frontend parity.
+	 *
+	 * @param string|null $timezone_string Timezone string, or null to read the site's.
+	 * @return string The mapped example, or the fallback.
+	 */
+	public static function phone_placeholder( $timezone_string = null ) {
+		if ( null === $timezone_string ) {
+			$timezone_string = get_option( 'timezone_string' );
+		}
+
+		return self::PHONE_PLACEHOLDERS[ $timezone_string ] ?? self::PHONE_PLACEHOLDER_FALLBACK;
+	}
+
+	/**
 	 * Questionnaire submission repository instance.
 	 *
 	 * @var QuestionnaireSubmissionRepository
