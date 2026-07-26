@@ -8,6 +8,7 @@
 namespace FairForm\API;
 
 use FairForm\Services\QuestionnaireService;
+use FairForm\Services\FormNotificationService;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -99,12 +100,6 @@ class FairFormController extends WP_REST_Controller {
 						'questionnaire_answers' => array(
 							'required' => false,
 							'default'  => array(),
-						),
-						'notification_email'    => array(
-							'type'              => 'string',
-							'required'          => false,
-							'default'           => '',
-							'sanitize_callback' => 'sanitize_email',
 						),
 						'form_id'               => array(
 							'type'              => 'string',
@@ -230,7 +225,7 @@ class FairFormController extends WP_REST_Controller {
 		$questionnaire_answers = $file_result;
 
 		// Save questionnaire answers (participant_id may be null for anonymous submissions).
-		$this->questionnaire_service->save_answers(
+		$submission_id = $this->questionnaire_service->save_answers(
 			$participant_id,
 			$questionnaire_answers,
 			$event_date_id,
@@ -247,15 +242,19 @@ class FairFormController extends WP_REST_Controller {
 				'send_form_confirmation',
 				array( $participant, $questionnaire_answers, $post_id )
 			);
+		}
 
-			// Send admin notification email if configured (also deferred).
-			$notification_email = $request->get_param( 'notification_email' );
-			if ( ! empty( $notification_email ) && is_email( $notification_email ) ) {
-				\FairAudience\Services\EmailService::defer(
-					'send_form_notification',
-					array( $notification_email, '', '', $email ?? '', $questionnaire_answers, $post_id )
-				);
-			}
+		// Admin notification is decoupled from participant creation: it must
+		// fire regardless of whether the form collected an email address or
+		// fair-audience is active. Recipient is resolved server-side from the
+		// block's own attributes, not the (now-removed) client-supplied param.
+		$notification_email = FormNotificationService::resolve_notification_email(
+			$post_id,
+			$request->get_param( 'form_id' )
+		);
+
+		if ( $submission_id > 0 && '' !== $notification_email ) {
+			FormNotificationService::defer( $submission_id, $notification_email );
 		}
 
 		return rest_ensure_response(

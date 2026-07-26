@@ -14,20 +14,18 @@
 
 defined( 'WPINC' ) || die;
 
-$submit_text        = ! empty( $attributes['submitButtonText'] ) ? $attributes['submitButtonText'] : __( 'Submit', 'fair-audience' );
-$success_message    = ! empty( $attributes['successMessage'] ) ? $attributes['successMessage'] : __( 'Thank you for your submission!', 'fair-audience' );
-$event_date_id      = (int) ( $attributes['eventDateId'] ?? 0 );
-$notification_email = ! empty( $attributes['notificationEmail'] ) ? sanitize_email( $attributes['notificationEmail'] ) : '';
-$block_form_id      = ! empty( $attributes['formId'] ) ? sanitize_text_field( $attributes['formId'] ) : '';
-$block_form_title   = ! empty( $attributes['formTitle'] ) ? sanitize_text_field( $attributes['formTitle'] ) : '';
+$submit_text      = ! empty( $attributes['submitButtonText'] ) ? $attributes['submitButtonText'] : __( 'Submit', 'fair-audience' );
+$success_message  = ! empty( $attributes['successMessage'] ) ? $attributes['successMessage'] : __( 'Thank you for your submission!', 'fair-audience' );
+$event_date_id    = (int) ( $attributes['eventDateId'] ?? 0 );
+$block_form_id    = ! empty( $attributes['formId'] ) ? sanitize_text_field( $attributes['formId'] ) : '';
+$block_form_title = ! empty( $attributes['formTitle'] ) ? sanitize_text_field( $attributes['formTitle'] ) : '';
 
 // Get wrapper attributes.
 $wrapper_data = array(
-	'class'                   => 'fair-form',
-	'data-success-message'    => esc_attr( $success_message ),
-	'data-event-date-id'      => esc_attr( $event_date_id ),
-	'data-post-id'            => esc_attr( get_the_ID() ),
-	'data-notification-email' => esc_attr( $notification_email ),
+	'class'                => 'fair-form',
+	'data-success-message' => esc_attr( $success_message ),
+	'data-event-date-id'   => esc_attr( $event_date_id ),
+	'data-post-id'         => esc_attr( get_the_ID() ),
 );
 
 if ( '' !== $block_form_id ) {
