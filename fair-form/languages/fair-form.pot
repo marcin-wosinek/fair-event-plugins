@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-26T14:20:45+00:00\n"
+"POT-Creation-Date: 2026-07-26T22:08:09+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-form\n"
@@ -18,8 +18,8 @@ msgstr ""
 #: fair-form.php
 #: src/Admin/AdminHooks.php:129
 #: src/Admin/AdminHooks.php:130
-#: src/API/FairFormController.php:238
-#: src/Services/QuestionnaireService.php:331
+#: src/API/FairFormController.php:233
+#: src/Services/QuestionnaireService.php:384
 msgid "Fair Form"
 msgstr ""
 
@@ -53,15 +53,15 @@ msgstr ""
 msgid "All Answers"
 msgstr ""
 
-#: src/API/FairFormController.php:154
+#: src/API/FairFormController.php:149
 msgid "Too many requests. Please try again later."
 msgstr ""
 
-#: src/API/FairFormController.php:186
+#: src/API/FairFormController.php:181
 msgid "Failed to process submission. Please try again."
 msgstr ""
 
-#: src/API/FairFormController.php:264
+#: src/API/FairFormController.php:263
 msgid "Thank you for your submission!"
 msgstr ""
 
@@ -108,35 +108,58 @@ msgstr ""
 msgid "Response not found."
 msgstr ""
 
-#: src/blocks/fair-form-phone/render.php:43
+#: src/blocks/fair-form-phone/render.php:47
 msgid "Include the country code, starting with \"+\" — spaces, dashes and brackets are fine (for example +49 170 123 45 67)."
 msgstr ""
 
+#. translators: %s: site name
+#: src/Services/FormNotificationService.php:181
+#, php-format
+msgid "New form submission — %s"
+msgstr ""
+
+#: src/Services/FormNotificationService.php:188
+#: src/Admin/form-answers/FormAnswers.js:140
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
+#: src/Admin/submission-detail/SubmissionDetail.js:302
+msgid "Email"
+msgstr ""
+
+#. translators: %s: page title
+#: src/Services/FormNotificationService.php:200
+#, php-format
+msgid "Page: %s"
+msgstr ""
+
+#: src/Services/FormNotificationService.php:228
+msgid "A new form submission has been received."
+msgstr ""
+
 #. translators: %s: question text
-#: src/Services/QuestionnaireService.php:142
+#: src/Services/QuestionnaireService.php:195
 #, php-format
 msgid "Please enter a valid email address for: %s"
 msgstr ""
 
 #. translators: %s: question text
-#: src/Services/QuestionnaireService.php:157
+#: src/Services/QuestionnaireService.php:210
 #, php-format
 msgid "Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s"
 msgstr ""
 
-#: src/Services/QuestionnaireService.php:232
+#: src/Services/QuestionnaireService.php:285
 msgid "File upload failed. Please try again."
 msgstr ""
 
-#: src/Services/QuestionnaireService.php:241
+#: src/Services/QuestionnaireService.php:294
 msgid "File is too large."
 msgstr ""
 
-#: src/Services/QuestionnaireService.php:251
+#: src/Services/QuestionnaireService.php:304
 msgid "File type not allowed."
 msgstr ""
 
-#: src/Services/QuestionnaireService.php:285
+#: src/Services/QuestionnaireService.php:338
 msgid "Failed to save uploaded file."
 msgstr ""
 
@@ -192,12 +215,6 @@ msgstr ""
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:304
 #: src/Admin/submission-detail/SubmissionDetail.js:113
 msgid "Error: "
-msgstr ""
-
-#: src/Admin/form-answers/FormAnswers.js:140
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
-#: src/Admin/submission-detail/SubmissionDetail.js:302
-msgid "Email"
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:158

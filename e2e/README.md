@@ -153,6 +153,16 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   `post_id`).
 - **`transaction-state.php <transaction_id>`** — reports one
   `fair_payment_transactions` row (status, testmode, amount, Mollie id).
+- **`seed-fair-form-notification-page.php <notificationEmail> [formId] [noBlock]`**
+  / **`cleanup-fair-form-notification-page.php <pageId>`** — create/delete a
+  published page carrying a `fair-audience/fair-form` block with the given
+  `notificationEmail`/`formId` attributes (no inner question blocks; answers
+  are posted directly to REST). Pass `1` as `noBlock` to omit the block
+  entirely. Cleanup also removes any questionnaire submissions/answers
+  created against the page.
+- **`fair-form-notification-state.php [email]`** — reports mail captured for
+  the given recipient (or everything captured, unfiltered, when called with
+  no address — used by the "nothing should be sent" scenarios).
 - **`seed-pending-signup.php <eventId> <eventDateId> <ticketTypeId> <price> [status]`**
   — writes a stuck `pending_payment` event-signup directly (participant +
   `fair_payment_transactions` row in the given status, default `failed`, +

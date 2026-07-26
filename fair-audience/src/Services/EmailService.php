@@ -1871,6 +1871,13 @@ class EmailService {
 	/**
 	 * Send form submission notification to admin/configured email.
 	 *
+	 * @deprecated Superseded by fair-form's own `FormNotificationService`
+	 * (ticket #1212), which decouples the notification from participant
+	 * creation and drops fair-form's dependency on this plugin. Kept (with
+	 * its DEFERRABLE_METHODS entry) so a site running an updated fair-form
+	 * alongside an un-updated fair-audience doesn't lose notifications mid
+	 * rollout. Removal is a follow-up cleanup ticket.
+	 *
 	 * @param string $to_email          Recipient email address.
 	 * @param string $submitter_name    Submitter's first name.
 	 * @param string $submitter_surname Submitter's surname.

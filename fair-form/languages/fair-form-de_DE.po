@@ -17,8 +17,8 @@ msgstr ""
 #: fair-form.php
 #: src/Admin/AdminHooks.php:129
 #: src/Admin/AdminHooks.php:130
-#: src/API/FairFormController.php:238
-#: src/Services/QuestionnaireService.php:331
+#: src/API/FairFormController.php:233
+#: src/Services/QuestionnaireService.php:384
 msgid "Fair Form"
 msgstr ""
 
@@ -52,15 +52,15 @@ msgstr "Antworten-Übersicht"
 msgid "All Answers"
 msgstr "Alle Antworten"
 
-#: src/API/FairFormController.php:154
+#: src/API/FairFormController.php:149
 msgid "Too many requests. Please try again later."
 msgstr "Zu viele Anfragen. Bitte versuchen Sie es später erneut."
 
-#: src/API/FairFormController.php:186
+#: src/API/FairFormController.php:181
 msgid "Failed to process submission. Please try again."
 msgstr "Fehler beim Verarbeiten der Einreichung. Bitte versuchen Sie es erneut."
 
-#: src/API/FairFormController.php:264
+#: src/API/FairFormController.php:263
 msgid "Thank you for your submission!"
 msgstr "Vielen Dank für Ihre Einreichung!"
 
@@ -108,24 +108,24 @@ msgid "Response not found."
 msgstr "Antwort nicht gefunden."
 
 #. translators: %s: question text
-#: src/Services/QuestionnaireService.php:142
+#: src/Services/QuestionnaireService.php:195
 #, php-format
 msgid "Please enter a valid email address for: %s"
 msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein für: %s"
 
-#: src/Services/QuestionnaireService.php:232
+#: src/Services/QuestionnaireService.php:285
 msgid "File upload failed. Please try again."
 msgstr "Datei-Upload fehlgeschlagen. Bitte versuchen Sie es erneut."
 
-#: src/Services/QuestionnaireService.php:241
+#: src/Services/QuestionnaireService.php:294
 msgid "File is too large."
 msgstr "Datei ist zu groß."
 
-#: src/Services/QuestionnaireService.php:251
+#: src/Services/QuestionnaireService.php:304
 msgid "File type not allowed."
 msgstr "Dateityp nicht zulässig."
 
-#: src/Services/QuestionnaireService.php:285
+#: src/Services/QuestionnaireService.php:338
 msgid "Failed to save uploaded file."
 msgstr "Hochgeladene Datei konnte nicht gespeichert werden."
 
@@ -183,6 +183,7 @@ msgstr "Formular"
 msgid "Error: "
 msgstr "Fehler: "
 
+#: src/Services/FormNotificationService.php:188
 #: src/Admin/form-answers/FormAnswers.js:140
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
 #: src/Admin/submission-detail/SubmissionDetail.js:302
@@ -485,12 +486,28 @@ msgstr "CSV herunterladen"
 msgid "Copy to clipboard"
 msgstr "In die Zwischenablage kopieren"
 
-#: src/blocks/fair-form-phone/render.php:43
+#: src/blocks/fair-form-phone/render.php:47
 msgid "Include the country code, starting with \"+\" — spaces, dashes and brackets are fine (for example +49 170 123 45 67)."
 msgstr ""
 
 #. translators: %s: question text
-#: src/Services/QuestionnaireService.php:157
+#: src/Services/QuestionnaireService.php:210
 #, php-format
 msgid "Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s"
+msgstr ""
+
+#. translators: %s: site name
+#: src/Services/FormNotificationService.php:181
+#, php-format
+msgid "New form submission — %s"
+msgstr ""
+
+#. translators: %s: page title
+#: src/Services/FormNotificationService.php:200
+#, php-format
+msgid "Page: %s"
+msgstr ""
+
+#: src/Services/FormNotificationService.php:228
+msgid "A new form submission has been received."
 msgstr ""

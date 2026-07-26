@@ -56,6 +56,17 @@ class Plugin {
 
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 
+		// Deferred notification dispatch: the admin notification email is
+		// scheduled rather than sent inline so a slow/unreachable mail
+		// transport can't make submit requests time out. See
+		// FormNotificationService::defer().
+		add_action(
+			\FairForm\Services\FormNotificationService::DEFERRED_HOOK,
+			array( \FairForm\Services\FormNotificationService::class, 'run_deferred' ),
+			10,
+			2
+		);
+
 		new \FairForm\Admin\AdminHooks();
 
 		$block_hooks = new \FairForm\Hooks\BlockHooks();
