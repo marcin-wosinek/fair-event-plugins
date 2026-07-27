@@ -15,6 +15,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\EmailService;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -260,7 +261,7 @@ class PaymentHooks {
 			$label = '-' . $value . '%';
 		} else {
 			$currency = isset( $transaction->currency ) ? (string) $transaction->currency : '';
-			$value    = number_format( (float) $rule->discount_value, 2, '.', '' );
+			$value    = Money::format_value( (float) $rule->discount_value );
 			$label    = '-' . $value . ( '' !== $currency ? ' ' . $currency : '' );
 		}
 
@@ -347,7 +348,7 @@ class PaymentHooks {
 				continue;
 			}
 
-			$delta    = number_format( $price - $discounted_price, 2, '.', '' );
+			$delta    = Money::format_value( $price - $discounted_price );
 			$labels[] = $name . ' collaborator -' . $delta . ( '' !== $currency ? ' ' . $currency : '' );
 		}
 

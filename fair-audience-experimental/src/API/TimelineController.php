@@ -12,6 +12,7 @@ use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -214,7 +215,7 @@ class TimelineController extends WP_REST_Controller {
 					$payment_groups[ $day ] = array(
 						'day'          => $day,
 						'latest_at'    => $row['paid_at'],
-						'currency'     => $row['currency'] ?? 'EUR',
+						'currency'     => $row['currency'] ?? Money::site_currency(),
 						'total_amount' => 0.0,
 						'participants' => array(),
 					);
@@ -268,16 +269,15 @@ class TimelineController extends WP_REST_Controller {
 
 			$fees = $this->repository->get_recent_fees( $fetch_limit );
 			foreach ( $fees as $row ) {
-				$currency = $row['currency'] ?? 'EUR';
+				$currency = $row['currency'] ?? Money::site_currency();
 
 				// Build pending breakdown string: "15 × 45€, 1 × 30€".
 				$pending_parts = array();
 				foreach ( $row['pending_groups'] as $group ) {
 					$pending_parts[] = sprintf(
-						'%d × %s %s',
+						'%d × %s',
 						(int) $group['count'],
-						number_format( (float) $group['amount'], 2 ),
-						$currency
+						Money::format_display( (float) $group['amount'], $currency )
 					);
 				}
 				$pending_text = $pending_parts ? implode( ', ', $pending_parts ) : '0';
@@ -314,7 +314,7 @@ class TimelineController extends WP_REST_Controller {
 					$ticket_groups[ $day ] = array(
 						'day'          => $day,
 						'latest_at'    => $row['created_at'],
-						'currency'     => $row['currency'] ?? 'EUR',
+						'currency'     => $row['currency'] ?? Money::site_currency(),
 						'total_amount' => 0.0,
 						'tickets'      => array(),
 					);

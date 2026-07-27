@@ -10,6 +10,7 @@ namespace FairPaymentsConnector\Payment;
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Exceptions\ApiException;
 use FairPaymentsConnector\Database\PaymentLogRepository;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -281,7 +282,7 @@ class MolliePaymentHandler {
 	public function create_payment( $args ) {
 		$defaults = array(
 			'amount'          => '10.00',
-			'currency'        => get_option( 'fair_payment_currency', 'EUR' ),
+			'currency'        => Money::site_currency(),
 			'application_fee' => null,
 			'description'     => __( 'Payment', 'fair-payments-connector' ),
 			'redirect_url'    => home_url(),
@@ -301,7 +302,7 @@ class MolliePaymentHandler {
 			$payment_data = array(
 				'amount'      => array(
 					'currency' => $args['currency'],
-					'value'    => number_format( (float) $args['amount'], 2, '.', '' ),
+					'value'    => Money::format_value( (float) $args['amount'] ),
 				),
 				'description' => $args['description'],
 				'redirectUrl' => $args['redirect_url'],
@@ -314,7 +315,7 @@ class MolliePaymentHandler {
 				$payment_data['applicationFee'] = array(
 					'amount'      => array(
 						'currency' => $args['currency'],
-						'value'    => number_format( (float) $args['application_fee'], 2, '.', '' ),
+						'value'    => Money::format_value( (float) $args['application_fee'] ),
 					),
 					'description' => __( 'Application fee', 'fair-payments-connector' ),
 				);
@@ -353,9 +354,8 @@ class MolliePaymentHandler {
 					'level'          => 'info',
 					'transaction_id' => $transaction_id,
 					'message'        => sprintf(
-						'Calling Mollie API to create payment (%s %s, testmode=%s)',
-						number_format( (float) $args['amount'], 2 ),
-						$args['currency'],
+						'Calling Mollie API to create payment (%s, testmode=%s)',
+						Money::format_display( (float) $args['amount'], $args['currency'] ),
 						$testmode ? 'true' : 'false'
 					),
 					'context'        => array(

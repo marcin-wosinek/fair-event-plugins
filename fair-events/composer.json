@@ -40,7 +40,7 @@
 		"php": ">=7.4 <9.0",
 		"composer/installers": "^2.3",
 		"sabre/vobject": "^4.5",
-		"fair-events/shared": "^0.1"
+		"fair-events/shared": "^0.2"
 	},
 	"autoload": {
 		"psr-4": {

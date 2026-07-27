@@ -13,6 +13,7 @@
 namespace FairEvents\Helpers;
 
 use FairEvents\Models\EventDates;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -344,7 +345,7 @@ class EventSchema {
 			}
 		}
 
-		$currency   = get_option( 'fair_payment_currency', 'EUR' );
+		$currency   = Money::site_currency();
 		$permalink  = get_permalink( $post_id );
 		$valid_from = ( $selected_period && ! $active_period )
 			? DateHelper::local_to_iso8601( $selected_period->sale_start )

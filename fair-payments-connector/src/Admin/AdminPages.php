@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnector\Admin;
 
+use FairEventsShared\Money;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -129,7 +131,7 @@ class AdminPages {
 				'fair-payments-connector-fee-dashboard',
 				'fairPaymentsConnector',
 				array(
-					'currency' => get_option( 'fair_payment_currency', 'EUR' ),
+					'currency' => Money::site_currency(),
 				)
 			);
 			return;

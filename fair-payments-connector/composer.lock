@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "15abb3eb1730cb215cd1c12939944ac3",
+    "content-hash": "5757dd2fbb2185714cf778f27d6e4b47",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -80,11 +80,11 @@
         },
         {
             "name": "fair-events/shared",
-            "version": "0.1.0",
+            "version": "0.2.0",
             "dist": {
                 "type": "path",
                 "url": "../fair-events-shared/php",
-                "reference": "6f5a9ba9323481037ab3afa21ef3b812b9366326"
+                "reference": "da91ec85c1acf8e0f82979c87cee3a49d7dba55c"
             },
             "require": {
                 "php": ">=7.4 <9.0"

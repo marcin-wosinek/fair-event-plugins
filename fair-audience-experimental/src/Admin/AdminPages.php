@@ -10,6 +10,8 @@
 
 namespace FairAudienceExperimental\Admin;
 
+use FairEventsShared\Money;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -320,7 +322,7 @@ class AdminPages {
 					'fair-audience-experimental-fee-detail',
 					'fairPaymentsConnector',
 					array(
-						'currency' => get_option( 'fair_payment_currency', 'EUR' ),
+						'currency' => Money::site_currency(),
 					)
 				);
 				break;

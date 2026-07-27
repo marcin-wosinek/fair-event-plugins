@@ -10,7 +10,8 @@ import {
 	onDomReady,
 	wireNotYouButton,
 	computeTicketTotal,
-	formatPrice,
+	formatMoney,
+	formatMoneyInline,
 } from 'fair-events-shared';
 import {
 	collectQuestionAnswers,
@@ -330,12 +331,13 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 				checked > 0
 					? sprintf(
 							/* translators: %s: formatted total price */
-							__('Total: €%s', 'fair-audience'),
-							formatPrice(
+							__('Total: %s', 'fair-audience'),
+							formatMoney(
 								computeTicketTotal({
 									unitPrice: price,
 									count: checked,
-								})
+								}),
+								block.dataset.currency
 							)
 					  )
 					: '';
@@ -528,9 +530,9 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 
 		let signupText, registerText;
 		if (total > 0) {
-			const formatted = formatPrice(total);
-			signupText = signupBaseText + ' \u2014 \u20ac' + formatted;
-			registerText = registerBaseText + ' \u2014 \u20ac' + formatted;
+			const formatted = formatMoneyInline(total, block.dataset.currency);
+			signupText = signupBaseText + ' \u2014 ' + formatted;
+			registerText = registerBaseText + ' \u2014 ' + formatted;
 		} else {
 			signupText = __('Sign up for free', 'fair-audience');
 			registerText = __('Register for free', 'fair-audience');
@@ -1484,7 +1486,11 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			const total = computeTicketTotal({ unitPrice: 0, optionPrices });
 			button.disabled = !anyChecked;
 			button.textContent =
-				total > 0 ? baseText + ' — €' + formatPrice(total) : baseText;
+				total > 0
+					? baseText +
+					  ' — ' +
+					  formatMoneyInline(total, block.dataset.currency)
+					: baseText;
 		};
 
 		checkboxes.forEach(function (cb) {
