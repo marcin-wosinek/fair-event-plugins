@@ -47,17 +47,36 @@ function getOptionJson(name) {
 	}
 }
 
+function isPluginActive(plugin) {
+	return wpCli(`plugin get ${plugin} --field=status`).trim() === 'active';
+}
+
 test.describe('Fair Event Plugins — central settings screen', () => {
-	// The tests-cli instance only activates fair-events, fair-audience and
-	// fair-form by default. Bring the other two supporting plugins in for
-	// this suite so "several plugins active" is actually exercised, then
-	// restore the baseline so other suites aren't affected.
+	// fair-payments-connector and fair-platform are normally active
+	// throughout the whole e2e run (other specs depend on that, e.g.
+	// user-flows/get-tickets-purchase.spec.js needs the payments-connector
+	// webhook route). Only toggle them here if they were inactive to begin
+	// with, and restore that exact prior state afterwards — unconditionally
+	// deactivating them in afterAll previously broke every later spec in the
+	// same serial run that relies on fair-payments-connector being active.
+	let payWasActive;
+	let platformWasActive;
+
 	test.beforeAll(() => {
-		wpCli('plugin activate fair-payments-connector fair-platform');
+		payWasActive = isPluginActive('fair-payments-connector');
+		platformWasActive = isPluginActive('fair-platform');
+		if (!payWasActive || !platformWasActive) {
+			wpCli('plugin activate fair-payments-connector fair-platform');
+		}
 	});
 
 	test.afterAll(() => {
-		wpCli('plugin deactivate fair-payments-connector fair-platform');
+		if (!payWasActive) {
+			wpCli('plugin deactivate fair-payments-connector');
+		}
+		if (!platformWasActive) {
+			wpCli('plugin deactivate fair-platform');
+		}
 	});
 
 	test.afterEach(() => {
