@@ -224,8 +224,8 @@ if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( 
  * prices can all be layered on by filtering this context array. See
  * REST_API_BACKEND.md for the documented shape and consumers.
  *
- * @param array    $context    Render context (event_date_id, ticket_types, price_by_type_id,
- *                              active_sale_period, occurrences_for_picker,
+ * @param array    $context    Render context (event_date_id, pricing_event_date_id, ticket_types,
+ *                              price_by_type_id, active_sale_period, occurrences_for_picker,
  *                              callback_status, callback_tx_id, callback_token, callback_state,
  *                              callback_source, prefill_name, prefill_email, submit_button_text).
  * @param array    $attributes Block attributes.
@@ -235,6 +235,9 @@ $context = apply_filters(
 	'fair_events_signup_render_context',
 	array(
 		'event_date_id'          => $event_date_id,
+		// The series-master pivot config/pricing lookups already resolved to,
+		// so a companion plugin doesn't need to re-derive it.
+		'pricing_event_date_id'  => $pricing_event_date_id,
 		'ticket_types'           => $ticket_types,
 		'price_by_type_id'       => $price_by_type_id,
 		'active_sale_period'     => $active_sale_period,
@@ -636,6 +639,16 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 			autocomplete="off"
 			aria-hidden="true"
 		/>
+
+		<?php
+		/**
+		 * Fires just inside the signup <form>, immediately before the submit
+		 * button. fair-audience uses this to render a group discount note.
+		 *
+		 * @param array $context Render context, see fair_events_signup_render_context.
+		 */
+		do_action( 'fair_events_signup_render_before_submit', $context );
+		?>
 
 		<div class="form-row form-submit">
 			<button type="submit" class="form-button wp-block-button__link wp-element-button">

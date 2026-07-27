@@ -574,8 +574,8 @@ companion plugin renders a richer flow) and
 create route) expose:
 
 -   **`fair_events_signup_render_context` filter** — the base render builds a
-    context array (`event_date_id`, `ticket_types`, `price_by_type_id`,
-    `active_sale_period`, `occurrences_for_picker`, `currency_symbol`,
+    context array (`event_date_id`, `pricing_event_date_id`, `ticket_types`,
+    `price_by_type_id`, `active_sale_period`, `occurrences_for_picker`, `currency_symbol`,
     `callback_status`/`callback_tx_id`/`callback_token`, `prefill_name`,
     `prefill_email`, `submit_button_text`) and runs it through this filter
     before rendering, so a companion plugin can inject viewer identity,
@@ -584,7 +584,27 @@ create route) expose:
     `fair_events_signup_render_before_form` and
     `fair_events_signup_render_after_form` (both passed the same context),
     let a companion plugin contribute UI fragments (e.g. a resume/retry card)
-    directly inside the `<form>`.
+    directly inside the `<form>`. A third action, `fair_events_signup_render_before_submit`
+    (also passed the context), fires immediately before the submit button —
+    fair-audience uses it to render a group discount note.
+-   **`fair_events_signup_ticket_type_error` filter** — `GetTicketsController::create_signup()`
+    runs this right after a submitted ticket type is validated and confirmed
+    not disabled: `apply_filters( 'fair_events_signup_ticket_type_error', null, $ticket_type_id, $event_date_id )`.
+    Returning a `WP_Error` rejects the signup with that error (fair-audience
+    returns a 403 `ticket_type_restricted` when the ticket type is
+    group-restricted and the viewer isn't a member); returning `null` (the
+    default) allows the signup to proceed. Runs once before either the
+    single- or `multiple_instances` path dispatches, so it covers both.
+-   **`fair_events_signup_unit_price` filter** — runs immediately after
+    `TicketPricing::resolve_unit_price()` in both `create_signup()` and
+    `create_multi_instance_signup()`: `apply_filters( 'fair_events_signup_unit_price', $unit_price, $ticket_type_id, $event_date_id )`.
+    A companion plugin uses this to apply participant-specific discounts (e.g.
+    a group pricing rule) on top of the base price; `$unit_price` is `null`
+    when no active sale period configures one, which a filter callback should
+    pass through unchanged. This is a dedicated seam rather than the
+    pre-existing `fair_events_resolve_ticket_price` filter (which is also the
+    base price inside `EventSignupPricing::resolve_price_for_ticket_type()` —
+    hooking it here would double-discount that path).
 -   **`fair_events_signup_created` action** — fires
     `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id )`
     after a signup row is persisted through the base create path (once per

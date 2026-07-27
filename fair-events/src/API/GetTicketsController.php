@@ -306,6 +306,15 @@ class GetTicketsController extends WP_REST_Controller {
 				);
 			}
 
+			// Extension point for plugins (e.g. fair-audience) that restrict a
+			// ticket type to specific groups. Applies to both the single- and
+			// multiple_instances paths below, since this runs before either
+			// dispatches. See REST_API_BACKEND.md.
+			$restriction_error = apply_filters( 'fair_events_signup_ticket_type_error', null, (int) $ticket_type_id, (int) $event_date_id );
+			if ( is_wp_error( $restriction_error ) ) {
+				return $restriction_error;
+			}
+
 			// 'multiple_instances' ticket types pick several specific occurrences
 			// instead of the single event_date_id above — handled by a dedicated
 			// path that creates one signup row per chosen occurrence.
@@ -315,7 +324,10 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 
 			// Resolve price from the active sale period (server-side; client amount is ignored).
+			// The filter is the extension point a companion plugin uses to apply
+			// participant-specific discounts on top of this base price.
 			$unit_price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type_id );
+			$unit_price = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type_id, (int) $event_date_id );
 			if ( null !== $unit_price ) {
 				$amount = $unit_price * $quantity;
 			}
@@ -652,6 +664,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		// Resolve the per-instance price from the active sale period (server-side; client amount is ignored).
 		$unit_price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type->id );
+		$unit_price = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type->id, (int) $series_page_id );
 		$unit_price = null !== $unit_price ? $unit_price : 0.0;
 
 		$count        = count( $occurrences );

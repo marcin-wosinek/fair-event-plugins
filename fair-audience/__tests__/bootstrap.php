@@ -197,6 +197,20 @@ if ( ! function_exists( 'get_site_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'number_format_i18n' ) ) {
+	/**
+	 * Stub of WordPress number_format_i18n() — delegates to PHP's number_format()
+	 * without locale-specific separators, sufficient for deterministic tests.
+	 *
+	 * @param float $number   Number to format.
+	 * @param int   $decimals Number of decimal points.
+	 * @return string Formatted number.
+	 */
+	function number_format_i18n( $number, $decimals = 0 ) {
+		return number_format( (float) $number, $decimals );
+	}
+}
+
 if ( ! function_exists( '__' ) ) {
 	/**
 	 * Stub of WordPress __().
