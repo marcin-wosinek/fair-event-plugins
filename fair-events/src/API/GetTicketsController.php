@@ -142,6 +142,86 @@ class GetTicketsController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /fair-events/v1/get-tickets/payment-state — resolved
+		// confirmed/processing/resume/retry state + card payload. Consumed by
+		// the return-from-payment callback card and the direct-navigation
+		// in-progress card poller. transaction_id/token are optional: when
+		// absent, ownership resolves from the SignupPaymentSession cookie.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/payment-state',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_payment_state' ),
+				'permission_callback' => array( $this, 'signup_payment_permissions_check' ),
+				'args'                => array(
+					'transaction_id' => array(
+						'type'              => 'integer',
+						'required'          => false,
+						'default'           => 0,
+						'sanitize_callback' => 'absint',
+					),
+					'token'          => array(
+						'type'              => 'string',
+						'required'          => false,
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		// POST /fair-events/v1/get-tickets/retry-payment — re-initiate a
+		// failed/canceled/expired (or checkout-link-less) payment.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/retry-payment',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'retry_payment' ),
+				'permission_callback' => array( $this, 'signup_payment_permissions_check' ),
+				'args'                => array(
+					'transaction_id' => array(
+						'type'              => 'integer',
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					),
+					'token'          => array(
+						'type'              => 'string',
+						'required'          => false,
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		// POST /fair-events/v1/get-tickets/cancel-payment — mark the
+		// in-progress signup row(s) failed and clear the session cookie, so
+		// "Cancel and start over" doesn't resurrect the same checkout.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/cancel-payment',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'cancel_payment' ),
+				'permission_callback' => array( $this, 'signup_payment_permissions_check' ),
+				'args'                => array(
+					'transaction_id' => array(
+						'type'              => 'integer',
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					),
+					'token'          => array(
+						'type'              => 'string',
+						'required'          => false,
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -359,6 +439,8 @@ class GetTicketsController extends WP_REST_Controller {
 		if ( is_wp_error( $payment ) ) {
 			return $payment;
 		}
+
+		\FairEvents\Services\SignupPaymentSession::set( $signup_id, (int) $transaction_id );
 
 		return rest_ensure_response(
 			array(
@@ -709,6 +791,8 @@ class GetTicketsController extends WP_REST_Controller {
 			return $payment;
 		}
 
+		\FairEvents\Services\SignupPaymentSession::set( (int) $signup_ids[0], (int) $transaction_id );
+
 		return rest_ensure_response(
 			array(
 				'status'         => 'payment_required',
@@ -780,6 +864,339 @@ class GetTicketsController extends WP_REST_Controller {
 	 */
 	public function admin_permissions_check() {
 		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Permission check shared by payment-state / retry-payment /
+	 * cancel-payment: the visitor must own the transaction. Returns a 404 on
+	 * any failure so an anonymous caller cannot enumerate transaction IDs by
+	 * distinguishing missing rows from token mismatches, matching
+	 * PaymentEndpoint::get_transaction_status_permissions_check().
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error
+	 */
+	public function signup_payment_permissions_check( $request ) {
+		if ( null !== $this->resolve_transaction_from_request( $request ) ) {
+			return true;
+		}
+
+		return new WP_Error(
+			'transaction_not_found',
+			__( 'Transaction not found.', 'fair-events' ),
+			array( 'status' => 404 )
+		);
+	}
+
+	/**
+	 * Resolve the transaction a request is authorized to act on.
+	 *
+	 * Allowed (in order): a `transaction_id` + `token` matching the
+	 * transaction's access_token (hash_equals); the transaction's owning
+	 * logged-in user; or — the direct-navigation case, no explicit
+	 * transaction_id/token at all, or a token that failed to match — the
+	 * SignupPaymentSession cookie, provided it resolves to the same
+	 * transaction_id (when one was supplied) and its signup row is still
+	 * within its payment hold window.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return object|null Transaction object, or null when unauthorized.
+	 */
+	private function resolve_transaction_from_request( $request ) {
+		if ( ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
+			return null;
+		}
+
+		$transaction_id = (int) $request->get_param( 'transaction_id' );
+		$token          = (string) $request->get_param( 'token' );
+
+		if ( $transaction_id <= 0 ) {
+			return $this->resolve_transaction_from_cookie( null );
+		}
+
+		$transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $transaction_id );
+		if ( ! $transaction ) {
+			return null;
+		}
+
+		$expected_token = (string) ( $transaction->access_token ?? '' );
+		if ( '' !== $token && '' !== $expected_token && hash_equals( $expected_token, $token ) ) {
+			return $transaction;
+		}
+
+		$user_id = get_current_user_id();
+		if ( $user_id && ! empty( $transaction->user_id ) && (int) $transaction->user_id === $user_id ) {
+			return $transaction;
+		}
+
+		return $this->resolve_transaction_from_cookie( $transaction_id );
+	}
+
+	/**
+	 * Resolve a transaction from the SignupPaymentSession cookie, optionally
+	 * constrained to a specific transaction_id (so a stale/foreign cookie
+	 * can't ride along on someone else's transaction reference).
+	 *
+	 * @param int|null $expected_transaction_id Required transaction_id match, or null to accept any.
+	 * @return object|null Transaction object, or null when the cookie is absent/invalid/expired.
+	 */
+	private function resolve_transaction_from_cookie( $expected_transaction_id ) {
+		$session = \FairEvents\Services\SignupPaymentSession::get();
+		if ( ! $session ) {
+			return null;
+		}
+		if ( null !== $expected_transaction_id && $session['transaction_id'] !== (int) $expected_transaction_id ) {
+			return null;
+		}
+
+		$signup = \FairEvents\Models\EventSignup::get_by_id( $session['signup_id'] );
+		if ( ! $signup || (int) $signup->transaction_id !== $session['transaction_id'] ) {
+			return null;
+		}
+		if ( 'pending_payment' !== $signup->status
+			|| empty( $signup->payment_expires_at )
+			|| strtotime( $signup->payment_expires_at ) <= time()
+		) {
+			return null;
+		}
+
+		return \FairPaymentsConnector\API\TransactionAPI::get_transaction( $session['transaction_id'] );
+	}
+
+	/**
+	 * Resolved confirmed/processing/resume/retry state + card payload for a
+	 * transaction, used by the return-from-payment callback card and the
+	 * direct-navigation in-progress card's poller.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_payment_state( $request ) {
+		$transaction = $this->resolve_transaction_from_request( $request );
+		if ( ! $transaction ) {
+			return new WP_Error(
+				'transaction_not_found',
+				__( 'Transaction not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$signup_rows = \FairEvents\Models\EventSignup::get_all_by_transaction_id( (int) $transaction->id );
+		$state       = \FairEvents\Services\SignupPaymentState::resolve_for_transaction( $transaction, $signup_rows );
+
+		// Also expose the canonical confirmed|processing|failed lifecycle
+		// status other pollers (fair-events-shared's pollPaymentStatus) key
+		// on, so this route can be polled the same way as the connector's.
+		$state['lifecycle_status'] = \FairPaymentsConnector\Payment\PaymentStatus::from_raw_status( (string) $transaction->status );
+
+		return rest_ensure_response( $state );
+	}
+
+	/**
+	 * Re-initiate payment for a previously failed/canceled/expired (or
+	 * checkout-link-less) get-tickets transaction. A new
+	 * fair-payments-connector transaction is always created, mirroring
+	 * fair-audience's retry: the connector refuses to re-initiate a
+	 * transaction once a Mollie payment has been attached
+	 * (Transaction::can_initiate_payment()).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function retry_payment( $request ) {
+		$transaction = $this->resolve_transaction_from_request( $request );
+		if ( ! $transaction ) {
+			return new WP_Error(
+				'transaction_not_found',
+				__( 'Transaction not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$status = (string) $transaction->status;
+		if ( in_array( $status, array( 'paid', 'pending' ), true ) ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'This payment cannot be retried.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		if ( ( $metadata['source'] ?? '' ) !== 'fair-events-get-tickets' ) {
+			return new WP_Error(
+				'invalid_retry_source',
+				__( 'This payment is not retriable from this endpoint.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$signup_ids  = \FairEvents\Models\EventSignup::resolve_signup_ids_from_transaction( $transaction );
+		$signup_rows = array_values(
+			array_filter(
+				array_map(
+					function ( $id ) {
+						return \FairEvents\Models\EventSignup::get_by_id( $id );
+					},
+					$signup_ids
+				)
+			)
+		);
+
+		if ( empty( $signup_rows ) ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'This payment is missing context needed to retry.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		// The cleanup cron releases the hold (and the seats it reserves)
+		// once payment_expires_at elapses — retrying past that point could
+		// oversell, so it's refused rather than silently recreating the hold.
+		$within_hold = false;
+		foreach ( $signup_rows as $row ) {
+			if ( $row->payment_expires_at && strtotime( $row->payment_expires_at ) > time() ) {
+				$within_hold = true;
+				break;
+			}
+		}
+		if ( ! $within_hold ) {
+			return new WP_Error(
+				'retry_window_expired',
+				__( 'This payment session has expired. Please start over.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		if ( $this->payments_unavailable() ) {
+			return new WP_Error(
+				'payment_unavailable',
+				__( 'Paid tickets are not available because online payments are not configured.', 'fair-events' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		$old_line_items = \FairPaymentsConnector\Models\LineItem::get_by_transaction_id( (int) $transaction->id );
+		if ( empty( $old_line_items ) ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'Original line items could not be loaded.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$line_items = array();
+		foreach ( $old_line_items as $li ) {
+			$line_items[] = array(
+				'name'     => (string) $li->name,
+				'quantity' => isset( $li->quantity ) ? (int) $li->quantity : 1,
+				'amount'   => (float) $li->unit_amount,
+			);
+		}
+
+		$event_date_id = isset( $metadata['event_date_id'] ) ? (int) $metadata['event_date_id'] : (int) ( $transaction->event_date_id ?? 0 );
+		$user_id       = isset( $transaction->user_id ) ? (int) $transaction->user_id : 0;
+
+		$new_signup_ids = array_map(
+			function ( $row ) {
+				return (int) $row->id;
+			},
+			$signup_rows
+		);
+
+		$new_transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
+			$line_items,
+			array(
+				'currency'      => $transaction->currency,
+				'description'   => $transaction->description,
+				'event_date_id' => $event_date_id,
+				'user_id'       => $user_id ? $user_id : null,
+				'metadata'      => array(
+					'source'                  => 'fair-events-get-tickets',
+					'event_date_id'           => $event_date_id,
+					'signup_ids'              => $new_signup_ids,
+					'retry_of_transaction_id' => (int) $transaction->id,
+				),
+			)
+		);
+
+		if ( is_wp_error( $new_transaction_id ) ) {
+			return $new_transaction_id;
+		}
+
+		foreach ( $signup_rows as $row ) {
+			\FairEvents\Models\EventSignup::update_transaction( (int) $row->id, (int) $new_transaction_id );
+		}
+
+		$new_transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $new_transaction_id );
+
+		$redirect_url = add_query_arg(
+			array(
+				'fair_payment_callback' => 'true',
+				'transaction_id'        => $new_transaction_id,
+				'token'                 => $new_transaction ? $new_transaction->access_token : '',
+			),
+			$this->resolve_return_url( $event_date_id )
+		);
+
+		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
+			$new_transaction_id,
+			array( 'redirect_url' => $redirect_url )
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		\FairEvents\Services\SignupPaymentSession::set( $new_signup_ids[0], (int) $new_transaction_id );
+
+		return rest_ensure_response(
+			array(
+				'status'         => 'payment_required',
+				'checkout_url'   => esc_url_raw( $payment['checkout_url'] ),
+				'transaction_id' => (int) $new_transaction_id,
+				'amount'         => $transaction->amount,
+				'currency'       => $transaction->currency,
+			)
+		);
+	}
+
+	/**
+	 * Cancel an in-progress get-tickets payment: mark its signup row(s)
+	 * failed and clear their hold, and clear the session cookie, so "Cancel
+	 * and start over" doesn't resurrect the same checkout on the next load.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function cancel_payment( $request ) {
+		$transaction = $this->resolve_transaction_from_request( $request );
+		if ( ! $transaction ) {
+			return new WP_Error(
+				'transaction_not_found',
+				__( 'Transaction not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		if ( ( $metadata['source'] ?? '' ) !== 'fair-events-get-tickets' ) {
+			return new WP_Error(
+				'invalid_retry_source',
+				__( 'This payment is not manageable from this endpoint.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$signup_ids = \FairEvents\Models\EventSignup::resolve_signup_ids_from_transaction( $transaction );
+		foreach ( $signup_ids as $signup_id ) {
+			\FairEvents\Models\EventSignup::cancel_pending( $signup_id );
+		}
+
+		\FairEvents\Services\SignupPaymentSession::clear();
+
+		return rest_ensure_response( array( 'success' => true ) );
 	}
 
 	/**

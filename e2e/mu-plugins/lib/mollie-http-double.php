@@ -14,10 +14,13 @@
  *   - POST /v2/payments        -> a payment in status "open" whose checkout link
  *                                 points straight back at the redirectUrl, so the
  *                                 buyer lands on the signup callback page.
- *   - GET  /v2/payments/{id}   -> the same payment in status "paid", so the
- *                                 callback page's sync pulls "paid" and the real
- *                                 fair_payment_paid -> signup-confirmation chain
- *                                 fires.
+ *   - GET  /v2/payments/{id}   -> the same payment in the status set via the
+ *                                 `fair_e2e_mollie_get_status` WP option
+ *                                 (default "paid", settable per-test via
+ *                                 set-mollie-status.php — see #1244), so the
+ *                                 callback page's sync pulls that status and
+ *                                 the real fair_payment_paid/fair_payment_failed
+ *                                 chain fires accordingly.
  *   - GET  /v2/methods         -> empty list (method allowlist stays unset).
  *   - GET  /v2/balances...     -> empty list (fee capture finds nothing).
  *
@@ -112,9 +115,12 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 			return $this->payment_response( $payload, 'open' );
 		}
 
-		// Get single payment: GET /v2/payments/{id}
+		// Get single payment: GET /v2/payments/{id}. Status is settable via
+		// set-mollie-status.php so a spec can drive the return-and-retry flow
+		// (default "paid" keeps every pre-existing spec's assumption intact).
 		if ( \preg_match( '#/payments/([^/]+)$#', $path, $m ) ) {
-			return $this->payment_response( array(), 'paid', $m[1] );
+			$status = (string) \get_option( 'fair_e2e_mollie_get_status', 'paid' );
+			return $this->payment_response( array(), $status, $m[1] );
 		}
 
 		// Payment methods allowlist lookup: GET /v2/methods

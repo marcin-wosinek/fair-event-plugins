@@ -1,4 +1,102 @@
-import { renderPaymentError } from '../payment-flow.js';
+import apiFetch from '@wordpress/api-fetch';
+import { renderPaymentError, pollPaymentStatus } from '../payment-flow.js';
+
+jest.mock('@wordpress/api-fetch');
+
+describe('pollPaymentStatus', () => {
+	beforeEach(() => {
+		jest.useFakeTimers();
+		apiFetch.mockReset();
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
+	test('calls onConfirmed once lifecycle_status is confirmed', async () => {
+		apiFetch.mockResolvedValueOnce({ lifecycle_status: 'confirmed' });
+		const onConfirmed = jest.fn();
+
+		pollPaymentStatus({
+			path: '/fair-events/v1/get-tickets/payment-state',
+			onConfirmed,
+		});
+		await flushPromises();
+
+		expect(onConfirmed).toHaveBeenCalledWith({
+			lifecycle_status: 'confirmed',
+		});
+	});
+
+	test('calls onFailed once lifecycle_status is failed', async () => {
+		apiFetch.mockResolvedValueOnce({ lifecycle_status: 'failed' });
+		const onFailed = jest.fn();
+
+		pollPaymentStatus({ path: '/some/path', onFailed });
+		await flushPromises();
+
+		expect(onFailed).toHaveBeenCalledWith({ lifecycle_status: 'failed' });
+	});
+
+	test('calls onProcessing and schedules another tick while still in progress', async () => {
+		apiFetch.mockResolvedValue({
+			lifecycle_status: 'processing',
+			state: 'resume',
+		});
+		const onProcessing = jest.fn();
+
+		pollPaymentStatus({
+			path: '/some/path',
+			onProcessing,
+			intervalMs: 1000,
+		});
+		await flushPromises();
+
+		expect(onProcessing).toHaveBeenCalledWith({
+			lifecycle_status: 'processing',
+			state: 'resume',
+		});
+		expect(apiFetch).toHaveBeenCalledTimes(1);
+
+		jest.advanceTimersByTime(1000);
+		await flushPromises();
+
+		expect(apiFetch).toHaveBeenCalledTimes(2);
+	});
+
+	test('stops after maxAttempts ticks', async () => {
+		apiFetch.mockResolvedValue({ lifecycle_status: 'processing' });
+
+		pollPaymentStatus({
+			path: '/some/path',
+			maxAttempts: 1,
+			intervalMs: 1000,
+		});
+		await flushPromises();
+
+		expect(apiFetch).toHaveBeenCalledTimes(1);
+
+		jest.advanceTimersByTime(1000);
+		await flushPromises();
+
+		// maxAttempts reached on the first tick — no second call is scheduled.
+		expect(apiFetch).toHaveBeenCalledTimes(1);
+	});
+
+	test('stops silently on a fetch error', async () => {
+		apiFetch.mockRejectedValueOnce(new Error('network error'));
+
+		expect(() => pollPaymentStatus({ path: '/some/path' })).not.toThrow();
+		await flushPromises();
+
+		jest.advanceTimersByTime(10000);
+		expect(apiFetch).toHaveBeenCalledTimes(1);
+	});
+
+	function flushPromises() {
+		return Promise.resolve().then(() => Promise.resolve());
+	}
+});
 
 describe('renderPaymentError', () => {
 	let container;

@@ -78,12 +78,19 @@ if ( ! $event_date_id ) {
 	return;
 }
 
-// Handle fair_payment_callback return state.
+// Handle fair_payment_callback return state, plus a direct-navigation
+// fallback: a visitor who navigates straight back to the event page (no
+// provider redirect) is recognised via the short-lived SignupPaymentSession
+// cookie set when create_signup() returned payment_required, so the same
+// confirmed/processing/resume/retry card shows within the payment hold
+// window. See SignupPaymentState for the state resolution this feeds.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $is_payment_callback = ! empty( $_GET['fair_payment_callback'] ) && ! empty( $_GET['transaction_id'] );
-$callback_status     = '';
 $callback_tx_id      = 0;
 $callback_token      = '';
+$signup_transaction  = null;
+$signup_state        = null;
+
 if ( $is_payment_callback && class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$callback_tx_id = absint( $_GET['transaction_id'] );
@@ -92,8 +99,45 @@ if ( $is_payment_callback && class_exists( \FairPaymentsConnector\API\Transactio
 	$transaction    = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $callback_tx_id );
 	$expected_token = $transaction ? (string) ( $transaction->access_token ?? '' ) : '';
 	if ( $transaction && '' !== $expected_token && '' !== $callback_token && hash_equals( $expected_token, $callback_token ) ) {
-		$callback_status = \FairPaymentsConnector\Payment\PaymentStatus::from_raw_status( (string) $transaction->status );
+		$signup_transaction = $transaction;
 	}
+}
+
+if ( ! $signup_transaction
+	&& class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+	&& class_exists( \FairEvents\Services\SignupPaymentSession::class )
+) {
+	$session = \FairEvents\Services\SignupPaymentSession::get();
+	if ( $session ) {
+		$session_signup = \FairEvents\Models\EventSignup::get_by_id( $session['signup_id'] );
+		if ( $session_signup
+			&& (int) $session_signup->transaction_id === $session['transaction_id']
+			&& 'pending_payment' === $session_signup->status
+			&& $session_signup->payment_expires_at
+			&& strtotime( $session_signup->payment_expires_at ) > time()
+		) {
+			$signup_transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $session['transaction_id'] );
+			if ( $signup_transaction ) {
+				$callback_tx_id = (int) $session['transaction_id'];
+				$callback_token = (string) ( $signup_transaction->access_token ?? '' );
+			}
+		}
+	}
+}
+
+if ( $signup_transaction && class_exists( \FairEvents\Services\SignupPaymentState::class ) ) {
+	$signup_rows  = \FairEvents\Models\EventSignup::get_all_by_transaction_id( (int) $signup_transaction->id );
+	$signup_state = \FairEvents\Services\SignupPaymentState::resolve_for_transaction( $signup_transaction, $signup_rows );
+}
+
+// Legacy three-value key, kept for back-compat with fair_events_signup_render_context
+// consumers documented in REST_API_BACKEND.md; 'resume'/'retry' both map to
+// 'failed' here since that enum predates the richer state.
+$callback_status = '';
+if ( $signup_state ) {
+	$callback_status = in_array( $signup_state['state'], array( 'resume', 'retry' ), true )
+		? 'failed'
+		: $signup_state['state'];
 }
 
 // Load event date.
@@ -182,8 +226,8 @@ if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( 
  *
  * @param array    $context    Render context (event_date_id, ticket_types, price_by_type_id,
  *                              active_sale_period, occurrences_for_picker,
- *                              callback_status, callback_tx_id, callback_token, prefill_name,
- *                              prefill_email, submit_button_text).
+ *                              callback_status, callback_tx_id, callback_token, callback_state,
+ *                              callback_source, prefill_name, prefill_email, submit_button_text).
  * @param array    $attributes Block attributes.
  * @param WP_Block $block      Block instance.
  */
@@ -198,6 +242,15 @@ $context = apply_filters(
 		'callback_status'        => $callback_status,
 		'callback_tx_id'         => $callback_tx_id,
 		'callback_token'         => $callback_token,
+		// Resolved confirmed/processing/resume/retry state + card payload
+		// (SignupPaymentState::resolve_for_transaction()'s shape), or null
+		// when there's nothing to show. A companion plugin (fair-audience,
+		// at the #1245 cutover) overrides this to plug in its own identity
+		// lookup instead of the anonymous cookie fallback.
+		'callback_state'         => $signup_state,
+		// Which lookup produced callback_state: 'url' (provider redirect),
+		// 'session' (direct-navigation cookie), or '' when none applied.
+		'callback_source'        => $signup_state ? ( $is_payment_callback ? 'url' : 'session' ) : '',
 		'prefill_name'           => '',
 		'prefill_email'          => '',
 		'submit_button_text'     => $submit_button_text,
@@ -212,6 +265,7 @@ $price_by_type_id       = $context['price_by_type_id'];
 $active_sale_period     = $context['active_sale_period'];
 $occurrences_for_picker = $context['occurrences_for_picker'];
 $callback_status        = $context['callback_status'];
+$signup_state           = $context['callback_state'];
 $prefill_name           = $context['prefill_name'];
 $prefill_email          = $context['prefill_email'];
 $submit_button_text     = $context['submit_button_text'];
@@ -272,25 +326,119 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 ?>
 
 <div class="fair-events-get-tickets">
-<?php if ( 'confirmed' === $callback_status ) : ?>
-	<div class="message-container message-success" role="alert">
-		<?php esc_html_e( 'Your ticket purchase was successful! Thank you.', 'fair-events' ); ?>
-	</div>
-<?php elseif ( 'failed' === $callback_status ) : ?>
-	<div class="message-container message-error" role="alert">
-		<?php esc_html_e( 'Your payment was not completed. Please try again.', 'fair-events' ); ?>
-	</div>
-<?php elseif ( 'processing' === $callback_status ) : ?>
-	<div class="message-container message-processing" role="alert">
-		<?php esc_html_e( 'Your payment is being processed. Please check back shortly.', 'fair-events' ); ?>
-	</div>
-<?php endif; ?>
-
-<?php if ( 'confirmed' !== $callback_status && $all_purchases_blocked ) : ?>
+<?php if ( $signup_state ) : ?>
+	<?php
+	$amount_display = \FairEventsShared\Money::format_display( (float) $signup_state['amount'], $signup_state['currency'] );
+	?>
+	<?php if ( 'confirmed' === $signup_state['state'] ) : ?>
+		<div class="fair-events-get-tickets-callback fair-events-get-tickets-callback-confirmed" data-transaction-id="<?php echo esc_attr( (string) $signup_state['transaction_id'] ); ?>">
+			<div class="fair-events-get-tickets-callback-icon" aria-hidden="true">✓</div>
+			<h2 class="fair-events-get-tickets-callback-heading"><?php esc_html_e( 'Payment confirmed', 'fair-events' ); ?></h2>
+			<?php if ( $signup_state['event_title'] ) : ?>
+				<p class="fair-events-get-tickets-callback-event">
+					<?php
+					printf(
+						/* translators: %s: event title */
+						esc_html__( "You're signed up for %s.", 'fair-events' ),
+						'<strong>' . esc_html( $signup_state['event_title'] ) . '</strong>'
+					);
+					?>
+				</p>
+			<?php endif; ?>
+			<p class="fair-events-get-tickets-callback-amount">
+				<?php
+				printf(
+					/* translators: %s: formatted amount with currency */
+					esc_html__( 'Amount paid: %s', 'fair-events' ),
+					esc_html( $amount_display )
+				);
+				?>
+			</p>
+			<p class="fair-events-get-tickets-callback-email">
+				<?php esc_html_e( 'A confirmation email is on its way. You can close this page.', 'fair-events' ); ?>
+			</p>
+		</div>
+	<?php elseif ( 'processing' === $signup_state['state'] ) : ?>
+		<div class="fair-events-get-tickets-callback fair-events-get-tickets-callback-processing"
+			data-transaction-id="<?php echo esc_attr( (string) $signup_state['transaction_id'] ); ?>"
+			data-token="<?php echo esc_attr( $callback_token ); ?>">
+			<div class="fair-events-get-tickets-callback-spinner" aria-hidden="true"></div>
+			<h2 class="fair-events-get-tickets-callback-heading"><?php esc_html_e( 'Thank you for your payment!', 'fair-events' ); ?></h2>
+			<p class="fair-events-get-tickets-callback-status">
+				<?php esc_html_e( "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done.", 'fair-events' ); ?>
+			</p>
+			<p class="fair-events-get-tickets-callback-amount">
+				<?php
+				printf(
+					/* translators: %s: formatted amount with currency */
+					esc_html__( 'Amount: %s', 'fair-events' ),
+					esc_html( $amount_display )
+				);
+				?>
+			</p>
+		</div>
+	<?php elseif ( 'resume' === $signup_state['state'] ) : ?>
+		<div class="fair-events-get-tickets-callback fair-events-get-tickets-callback-resume"
+			data-transaction-id="<?php echo esc_attr( (string) $signup_state['transaction_id'] ); ?>"
+			data-token="<?php echo esc_attr( $callback_token ); ?>">
+			<p class="fair-events-get-tickets-callback-heading"><strong><?php esc_html_e( 'Your payment is waiting.', 'fair-events' ); ?></strong></p>
+			<p class="fair-events-get-tickets-callback-status">
+				<?php esc_html_e( 'You can pick up where you left off on the secure payment page.', 'fair-events' ); ?>
+			</p>
+			<p class="fair-events-get-tickets-callback-amount">
+				<?php
+				printf(
+					/* translators: %s: formatted amount with currency */
+					esc_html__( 'Amount due: %s', 'fair-events' ),
+					esc_html( $amount_display )
+				);
+				?>
+			</p>
+			<div class="wp-block-button">
+				<a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $signup_state['checkout_url'] ); ?>">
+					<?php esc_html_e( 'Continue payment', 'fair-events' ); ?>
+				</a>
+			</div>
+			<p class="fair-events-get-tickets-callback-cancel">
+				<a href="#" class="fair-events-get-tickets-callback-cancel-link"><?php esc_html_e( 'Cancel and start over', 'fair-events' ); ?></a>
+			</p>
+		</div>
+	<?php elseif ( 'retry' === $signup_state['state'] ) : ?>
+		<div class="fair-events-get-tickets-callback fair-events-get-tickets-callback-retry"
+			data-transaction-id="<?php echo esc_attr( (string) $signup_state['transaction_id'] ); ?>"
+			data-token="<?php echo esc_attr( $callback_token ); ?>">
+			<p class="fair-events-get-tickets-callback-heading"><strong><?php esc_html_e( "Your payment didn't go through.", 'fair-events' ); ?></strong></p>
+			<p class="fair-events-get-tickets-callback-amount">
+				<?php
+				printf(
+					/* translators: %s: formatted amount with currency */
+					esc_html__( 'Amount due: %s', 'fair-events' ),
+					esc_html( $amount_display )
+				);
+				?>
+			</p>
+			<?php if ( $all_purchases_blocked ) : ?>
+				<div class="message-container message-error" role="alert">
+					<?php esc_html_e( 'Ticket sales are temporarily unavailable. Please check back later.', 'fair-events' ); ?>
+				</div>
+			<?php else : ?>
+				<div class="wp-block-button">
+					<button type="button" class="wp-block-button__link wp-element-button fair-events-get-tickets-callback-retry-button">
+						<?php esc_html_e( 'Retry payment', 'fair-events' ); ?>
+					</button>
+				</div>
+			<?php endif; ?>
+			<p class="fair-events-get-tickets-callback-cancel">
+				<a href="#" class="fair-events-get-tickets-callback-cancel-link"><?php esc_html_e( 'Cancel and start over', 'fair-events' ); ?></a>
+			</p>
+			<div class="fair-events-get-tickets-callback-message message-container" style="display: none;"></div>
+		</div>
+	<?php endif; ?>
+<?php elseif ( $all_purchases_blocked ) : ?>
 	<div class="message-container message-error" role="alert">
 		<?php esc_html_e( 'Ticket sales are temporarily unavailable. Please check back later.', 'fair-events' ); ?>
 	</div>
-<?php elseif ( 'confirmed' !== $callback_status ) : ?>
+<?php else : ?>
 	<form
 		id="<?php echo esc_attr( $form_id ); ?>"
 		class="fair-events-get-tickets-form"

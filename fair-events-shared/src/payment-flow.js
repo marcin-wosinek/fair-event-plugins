@@ -67,6 +67,69 @@ export async function initiatePayment({
 }
 
 /**
+ * Poll a REST path until the response's `lifecycle_status` reaches a
+ * terminal state (`confirmed`/`failed`), or `maxAttempts` is reached.
+ *
+ * Generic over the endpoint shape: any route that returns a
+ * `lifecycle_status` of `confirmed`/`failed`/`processing` can be polled this
+ * way, not just the connector's own status endpoint — callers that need more
+ * than the three-way split (e.g. a resume/retry distinction) read the extra
+ * fields off the same response passed to `onProcessing`.
+ *
+ * @param {Object}   args                Options.
+ * @param {string}   args.path           Full REST path to poll (including any query string) — rebuilt fresh on every tick, so a caller can vary it per attempt if needed.
+ * @param {Function} [args.onConfirmed]  Called with the response once `lifecycle_status` is `confirmed`.
+ * @param {Function} [args.onFailed]     Called with the response once `lifecycle_status` is `failed`.
+ * @param {Function} [args.onProcessing] Called with the response on each poll while still in progress.
+ * @param {number}   [args.maxAttempts]  Stop polling after this many ticks.
+ * @param {number}   [args.intervalMs]   Delay between ticks.
+ */
+export function pollPaymentStatus({
+	path,
+	onConfirmed,
+	onFailed,
+	onProcessing,
+	maxAttempts = MAX_ATTEMPTS,
+	intervalMs = POLL_INTERVAL_MS,
+}) {
+	poll(0);
+
+	function poll(attempt) {
+		if (attempt >= maxAttempts) {
+			return;
+		}
+
+		apiFetch({ path })
+			.then(function (response) {
+				if (response.lifecycle_status === 'confirmed') {
+					if (onConfirmed) {
+						onConfirmed(response);
+					}
+					return;
+				}
+
+				if (response.lifecycle_status === 'failed') {
+					if (onFailed) {
+						onFailed(response);
+					}
+					return;
+				}
+
+				if (onProcessing) {
+					onProcessing(response);
+				}
+
+				setTimeout(function () {
+					poll(attempt + 1);
+				}, intervalMs);
+			})
+			.catch(function () {
+				// Ignore polling errors — stop polling silently.
+			});
+	}
+}
+
+/**
  * Detect a return from the payment gateway and poll the canonical status
  * endpoint until the transaction reaches a terminal state.
  *
@@ -102,45 +165,16 @@ export function handlePaymentCallback({
 		return;
 	}
 
-	poll(resolvedTransactionId, 0);
+	const query = resolvedToken
+		? `?token=${encodeURIComponent(resolvedToken)}`
+		: '';
 
-	function poll(txId, attempt) {
-		if (attempt >= MAX_ATTEMPTS) {
-			return;
-		}
-
-		const query = resolvedToken
-			? `?token=${encodeURIComponent(resolvedToken)}`
-			: '';
-
-		apiFetch({ path: `${statusPath}/${txId}/status${query}` })
-			.then(function (response) {
-				if (response.lifecycle_status === 'confirmed') {
-					if (onConfirmed) {
-						onConfirmed(response);
-					}
-					return;
-				}
-
-				if (response.lifecycle_status === 'failed') {
-					if (onFailed) {
-						onFailed(response);
-					}
-					return;
-				}
-
-				if (onProcessing) {
-					onProcessing(response);
-				}
-
-				setTimeout(function () {
-					poll(txId, attempt + 1);
-				}, POLL_INTERVAL_MS);
-			})
-			.catch(function () {
-				// Ignore polling errors — stop polling silently.
-			});
-	}
+	pollPaymentStatus({
+		path: `${statusPath}/${resolvedTransactionId}/status${query}`,
+		onConfirmed,
+		onFailed,
+		onProcessing,
+	});
 }
 
 /**

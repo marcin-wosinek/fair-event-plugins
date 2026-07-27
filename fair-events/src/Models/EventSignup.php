@@ -181,6 +181,87 @@ class EventSignup {
 	}
 
 	/**
+	 * Get every signup row sharing a transaction ID. A 'multiple_instances'
+	 * ticket-type purchase creates one row per chosen occurrence under a
+	 * single transaction; every other purchase resolves to exactly one row.
+	 *
+	 * @param int $transaction_id Transaction ID.
+	 * @return object[]
+	 */
+	public static function get_all_by_transaction_id( int $transaction_id ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'fair_events_signups';
+
+		return $wpdb->get_results(
+			$wpdb->prepare( 'SELECT * FROM %i WHERE transaction_id = %d ORDER BY id ASC', $table, $transaction_id )
+		);
+	}
+
+	/**
+	 * Resolve the signup row ID(s) tied to a fair-payments-connector
+	 * transaction, from its metadata. Returns an empty array when the
+	 * transaction isn't a get-tickets purchase.
+	 *
+	 * Promoted from PaymentHooks so the retry/cancel REST routes can resolve
+	 * the same multi-row set the payment webhook confirms/fails together.
+	 *
+	 * @param object $transaction Transaction object.
+	 * @return int[] Signup IDs (empty when none apply).
+	 */
+	public static function resolve_signup_ids_from_transaction( $transaction ) {
+		if ( ! isset( $transaction->metadata ) ) {
+			return array();
+		}
+
+		$metadata = is_string( $transaction->metadata )
+			? json_decode( $transaction->metadata, true )
+			: (array) $transaction->metadata;
+
+		if ( ( $metadata['source'] ?? '' ) !== 'fair-events-get-tickets' ) {
+			return array();
+		}
+
+		// 'multiple_instances' purchases store one signup row ID per chosen occurrence.
+		if ( ! empty( $metadata['signup_ids'] ) && is_array( $metadata['signup_ids'] ) ) {
+			return array_map( 'intval', $metadata['signup_ids'] );
+		}
+
+		if ( ! empty( $metadata['signup_id'] ) ) {
+			return array( (int) $metadata['signup_id'] );
+		}
+
+		// Fall back to lookup by transaction_id.
+		$signup = self::get_by_transaction_id( (int) $transaction->id );
+		return $signup ? array( (int) $signup->id ) : array();
+	}
+
+	/**
+	 * Cancel a pending-payment signup row: mark it failed and clear its hold,
+	 * so a direct-navigation lookup (SignupPaymentSession) can't resurrect the
+	 * same checkout after the visitor explicitly starts over.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return bool
+	 */
+	public static function cancel_pending( int $signup_id ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'fair_events_signups';
+
+		return (bool) $wpdb->update(
+			$table,
+			array(
+				'status'             => 'failed',
+				'payment_expires_at' => null,
+			),
+			array( 'id' => $signup_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+	}
+
+	/**
 	 * Get all signups for an event date.
 	 *
 	 * @param int $event_date_id Event date ID.

@@ -98,33 +98,13 @@ class PaymentHooks {
 	 * Resolve the signup ID(s) from a transaction, returning an empty array
 	 * if not a get-tickets transaction.
 	 *
+	 * Delegates to EventSignup::resolve_signup_ids_from_transaction() so the
+	 * retry/cancel REST routes resolve the exact same multi-row set.
+	 *
 	 * @param object $transaction Transaction object.
 	 * @return int[] Signup IDs (empty when none apply).
 	 */
 	private static function resolve_signup_ids( $transaction ) {
-		if ( ! isset( $transaction->metadata ) ) {
-			return array();
-		}
-
-		$metadata = is_string( $transaction->metadata )
-			? json_decode( $transaction->metadata, true )
-			: (array) $transaction->metadata;
-
-		if ( ( $metadata['source'] ?? '' ) !== 'fair-events-get-tickets' ) {
-			return array();
-		}
-
-		// 'multiple_instances' purchases store one signup row ID per chosen occurrence.
-		if ( ! empty( $metadata['signup_ids'] ) && is_array( $metadata['signup_ids'] ) ) {
-			return array_map( 'intval', $metadata['signup_ids'] );
-		}
-
-		if ( ! empty( $metadata['signup_id'] ) ) {
-			return array( (int) $metadata['signup_id'] );
-		}
-
-		// Fall back to lookup by transaction_id.
-		$signup = \FairEvents\Models\EventSignup::get_by_transaction_id( (int) $transaction->id );
-		return $signup ? array( (int) $signup->id ) : array();
+		return \FairEvents\Models\EventSignup::resolve_signup_ids_from_transaction( $transaction );
 	}
 }

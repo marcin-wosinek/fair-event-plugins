@@ -13,10 +13,14 @@
  *   - free ticket type → immediate confirmation, signup row 'confirmed' with
  *     no transaction;
  *   - paid ticket type → payment_required, redirect through the Mollie double
- *     back to the callback URL, webhook flips the transaction to paid (the
- *     production path — Mollie calls /webhook; the redirect page itself only
- *     polls), fair_payment_paid → FairEvents PaymentHooks confirms the signup,
- *     and the block UI shows the success message.
+ *     back to the callback URL. Since #1244, render.php reconciles status
+ *     with the provider on every callback render (SignupPaymentState's "sync
+ *     before you read"), so the double is set to report "pending" (a real
+ *     still-processing Mollie status) rather than the default "paid" — that
+ *     keeps the transaction in-flight through the first render, and the
+ *     webhook (the actual production trigger once Mollie settles) flips it
+ *     to paid from there, fair_payment_paid → FairEvents PaymentHooks
+ *     confirms the signup, and the block's poller swaps in the confirmed card.
  *
  * The get-tickets endpoint rate-limits by IP (3/hour), so transients are
  * cleared before each test to keep repeated local runs deterministic.
@@ -37,6 +41,12 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 	test.beforeEach(() => {
 		// Reset the get-tickets per-IP rate limit (3 requests/hour).
 		wpCli('transient delete --all');
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'pending');
+	});
+
+	test.afterEach(() => {
+		// Leave the double reporting "paid", the default every other spec assumes.
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
 	});
 
 	test('paid ticket: checkout via the Mollie double, webhook confirms the signup', async ({
@@ -70,13 +80,13 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 		// Submit → payment_required with a checkout_url that (via the Mollie
 		// double) is the callback URL itself, so the browser lands straight on
 		// ?fair_payment_callback=true&transaction_id=…&token=…. Wait for the
-		// rendered processing state rather than the navigation itself
+		// rendered processing card rather than the navigation itself
 		// (waitForURL can abort when a redirect supersedes it — see
 		// ticket-purchase-confirmation.spec.js), then assert the URL by polling.
 		await form.locator('button[type="submit"]').click();
-		await expect(page.locator('.message-processing')).toBeVisible({
-			timeout: 30000,
-		});
+		await expect(
+			page.locator('.fair-events-get-tickets-callback-processing')
+		).toBeVisible({ timeout: 30000 });
 		await expect(page).toHaveURL(/fair_payment_callback=true/);
 
 		// The signup row is pending and its transaction still open — the
@@ -92,22 +102,23 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 		expect(state.signups[0].amount).toBe(event.price);
 		expect(state.signups[0].mollie_payment_id).toBeTruthy();
 
-		// Simulate Mollie's webhook call (production path). The handler fetches
-		// the payment from the double, which reports it paid, and fires the real
+		// The buyer's bank has now confirmed the payment. Simulate Mollie's
+		// webhook call (production path): the handler fetches the payment
+		// from the double (now reporting paid) and fires the real
 		// fair_payment_paid → FairEvents\Hooks\PaymentHooks chain.
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
 		const webhookResponse = await page.request.post(
 			'/wp-json/fair-payments-connector/v1/webhook',
 			{ form: { id: state.signups[0].mollie_payment_id } }
 		);
 		expect(webhookResponse.ok()).toBe(true);
 
-		// The block's callback poller picks the paid status up and swaps the
-		// form for the success message.
+		// The block's payment-state poller picks the paid status up and swaps
+		// the processing card for the confirmed one in place.
 		await expect(
-			page.getByText('Your ticket purchase was successful', {
-				exact: false,
-			})
+			page.locator('.fair-events-get-tickets-callback-confirmed')
 		).toBeVisible({ timeout: 30000 });
+		await expect(page.getByText('Payment confirmed')).toBeVisible();
 
 		// Server-side: signup confirmed, transaction paid (in test mode).
 		state = runScript(
