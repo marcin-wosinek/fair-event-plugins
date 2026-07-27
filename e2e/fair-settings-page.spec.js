@@ -112,6 +112,13 @@ test.describe('Fair Event Plugins — central settings screen', () => {
 	});
 
 	test('toggling a row flips that plugin option', async ({ page }) => {
+		// The save round-trip re-renders the full admin page (collecting
+		// fields from all 5 active plugins) after the redirect, which has
+		// twice run past the default 60s budget on a loaded CI runner while
+		// never failing locally — give it more headroom rather than chase a
+		// non-reproducing race.
+		test.slow();
+
 		wpCli('option delete fair_form_features', { allowFailure: true });
 
 		await loginAsAdmin(page);
