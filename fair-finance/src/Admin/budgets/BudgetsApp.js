@@ -201,7 +201,7 @@ const BudgetsApp = () => {
 	};
 
 	return (
-		<div className="wrap fair-payments-connector-budgets-page">
+		<div className="wrap fair-finance-budgets-page">
 			{/*
 			 * Anchor for WordPress admin notices. Core's common.js inserts
 			 * .notice elements right after `.wp-header-end` (or, lacking it,
@@ -410,12 +410,12 @@ const BudgetsApp = () => {
 													>
 														<HStack
 															spacing={2}
-															className="fair-payments-connector-budget-actions"
+															className="fair-finance-budget-actions"
 														>
 															<Button
 																variant="secondary"
 																size="small"
-																href={`admin.php?page=fair-payments-connector-entries&budget_id=${budget.id}`}
+																href={`admin.php?page=fair-finance-entries&budget_id=${budget.id}`}
 															>
 																{__(
 																	'View',
@@ -514,7 +514,7 @@ const BudgetsApp = () => {
 												<Button
 													variant="secondary"
 													size="small"
-													href="admin.php?page=fair-payments-connector-entries&budget_id=none"
+													href="admin.php?page=fair-finance-entries&budget_id=none"
 												>
 													{__(
 														'View',

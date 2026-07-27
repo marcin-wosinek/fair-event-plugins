@@ -248,7 +248,7 @@ login + `WP_BASE_URL` convention; defaults to the dev wp-env on `:8888`,
 
 ```bash
 # npm run screenshot -- <path> <dimensions> <filename>
-npm run screenshot -- "/wp-admin/admin.php?page=fair-payments-connector-budgets" mobile budgets-mobile.png
+npm run screenshot -- "/wp-admin/admin.php?page=fair-finance-budgets" mobile budgets-mobile.png
 
 # dimensions: desktop | tablet | mobile | WIDTHxHEIGHT (e.g. 414x900)
 # options: --viewport (visible area only), --wait <ms>, --wait-for <selector>,
