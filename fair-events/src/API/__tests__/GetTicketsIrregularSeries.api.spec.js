@@ -95,7 +95,6 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 						{
 							name: 'Season pass',
 							capacity: null,
-							invitation_only: false,
 							minimum_activities: 0,
 							disable_at: null,
 							recurrence_scope: 'whole_series',

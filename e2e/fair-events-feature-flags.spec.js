@@ -69,12 +69,6 @@ const BUNDLE_PAGES = {
 			root: 'fair-events-source-view-root',
 		},
 	],
-	ticketing: [
-		{
-			slug: 'fair-events-manage-invitations',
-			root: 'fair-events-manage-invitations-root',
-		},
-	],
 	migration: [
 		{
 			slug: 'fair-events-migration',
@@ -96,6 +90,7 @@ const BUNDLE_PROBE_ROUTES = {
 	sources: '/fair-events/v1/sources',
 	galleries: '/fair-events/v1/event-dates/1/gallery',
 	migration: '/fair-events/v1/migration/post-types',
+	ticketing: '/fair-events/v1/event-dates/1/group-pricing-rules',
 };
 
 async function expectRootMounts(page, slug, root) {

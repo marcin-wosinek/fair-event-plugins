@@ -58,7 +58,7 @@ class Features {
 			),
 			'ticketing'           => array(
 				'label'       => 'Ticketing',
-				'description' => 'Tickets, group pricing/permission rules, invitations. Requires fair-audience.',
+				'description' => 'Tickets, group pricing/permission rules. Requires fair-audience.',
 				'default'     => true,
 			),
 			'event-tools'         => array(
@@ -159,7 +159,7 @@ class Features {
 			),
 			'ticketing'           => array(
 				'label'       => __( 'Ticketing', 'fair-events-experimental' ),
-				'description' => __( 'Tickets, group pricing/permission rules, invitations. Requires fair-audience.', 'fair-events-experimental' ),
+				'description' => __( 'Tickets, group pricing/permission rules. Requires fair-audience.', 'fair-events-experimental' ),
 			),
 			'event-tools'         => array(
 				'label'       => __( 'Event tools', 'fair-events-experimental' ),

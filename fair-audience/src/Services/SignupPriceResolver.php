@@ -16,8 +16,8 @@ defined( 'WPINC' ) || die;
  * base resolution that lives in fair-events proper
  * (`FairEvents\Services\SignupPricing` / `TicketPricing`).
  *
- * Experimental-only pricing (group discounts, sliding scale, invitation
- * prices, activity options) stays behind its own `class_exists` guards at
+ * Experimental-only pricing (group discounts, sliding scale, activity
+ * options) stays behind its own `class_exists` guards at
  * each call site — those already degrade to null/no-op, never to free, so
  * they don't need a facade.
  */

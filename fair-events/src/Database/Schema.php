@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.25.0';
+	const DB_VERSION = '3.26.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -256,7 +256,6 @@ class Schema {
 			event_date_id BIGINT UNSIGNED NOT NULL,
 			name VARCHAR(255) NOT NULL,
 			capacity INT UNSIGNED DEFAULT NULL,
-			invitation_only TINYINT(1) NOT NULL DEFAULT 0,
 			minimum_activities INT UNSIGNED NOT NULL DEFAULT 0,
 			disable_at DATETIME DEFAULT NULL,
 			recurrence_scope ENUM('single_instance','whole_series','multiple_instances') NOT NULL DEFAULT 'single_instance',
@@ -466,39 +465,6 @@ class Schema {
 			participant_id BIGINT UNSIGNED NOT NULL,
 			PRIMARY KEY (ticket_option_id, participant_id),
 			KEY idx_participant_id (participant_id)
-		) ENGINE=InnoDB {$charset_collate};";
-	}
-
-	/**
-	 * Get the SQL for creating the fair_events_invitation_tokens table
-	 *
-	 * Tracks personal invitation links for invitation-only ticket types.
-	 *
-	 * @return string SQL statement for creating the table.
-	 */
-	public static function get_invitation_tokens_table_sql() {
-		global $wpdb;
-
-		$table_name      = $wpdb->prefix . 'fair_events_invitation_tokens';
-		$charset_collate = $wpdb->get_charset_collate();
-
-		return "CREATE TABLE {$table_name} (
-			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			event_date_id BIGINT UNSIGNED NOT NULL,
-			group_id BIGINT UNSIGNED NOT NULL,
-			inviter_participant_id BIGINT UNSIGNED NOT NULL,
-			token CHAR(32) NOT NULL,
-			invitee_participant_id BIGINT UNSIGNED DEFAULT NULL,
-			max_uses INT UNSIGNED NOT NULL DEFAULT 1,
-			uses_count INT UNSIGNED NOT NULL DEFAULT 0,
-			expires_at DATETIME DEFAULT NULL,
-			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			UNIQUE KEY idx_token (token),
-			KEY idx_event_date_id (event_date_id),
-			KEY idx_group_id (group_id),
-			KEY idx_inviter (inviter_participant_id),
-			KEY idx_invitee (invitee_participant_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

@@ -246,14 +246,6 @@ class Plugin {
 					$controller->register_routes();
 				}
 			);
-
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEventsExperimental\API\InvitationTokensController();
-					$controller->register_routes();
-				}
-			);
 		}
 
 		if ( Features::is_enabled( 'venues' ) ) {

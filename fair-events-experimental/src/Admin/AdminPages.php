@@ -3,7 +3,7 @@
  * Admin Pages for Fair Events Experimental
  *
  * Registers the experimental feature admin pages (migration, sources, venues,
- * invitations, copy, settings) as submenus under the fair-events-calendar menu.
+ * copy, settings) as submenus under the fair-events-calendar menu.
  * Page rendering and JS assets are delegated to the fair-events plugin; only
  * the settings page uses assets from this plugin's own build directory.
  *
@@ -116,20 +116,6 @@ class AdminPages {
 				'fair-events-venues',
 				array( $this, 'render_venues_page' )
 			);
-		}
-
-		// Manage Invitations page — `ticketing` bundle (hidden).
-		if ( \FairEventsExperimental\Core\Features::is_enabled( 'ticketing' ) ) {
-			$this->page_hooks['fair-events-manage-invitations'] = add_submenu_page(
-				'',
-				__( 'Manage Invitations', 'fair-events-experimental' ),
-				__( 'Manage Invitations', 'fair-events-experimental' ),
-				'manage_options',
-				'fair-events-manage-invitations',
-				array( $this, 'render_manage_invitations_page' )
-			);
-
-			$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-invitations'], __( 'Manage Invitations', 'fair-events-experimental' ) );
 		}
 
 		// Event Statistics page — `audience-statistics` bundle (hidden).
@@ -321,31 +307,6 @@ class AdminPages {
 				wp_enqueue_style( 'wp-components' );
 				break;
 
-			case 'fair-events-manage-invitations':
-				$asset_file = include $exp_dir . 'build/admin/manage-invitations/index.asset.php';
-				wp_enqueue_script( 'fair-events-manage-invitations', $exp_url . 'build/admin/manage-invitations/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$event_date_id   = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
-				$signup_page_url = '';
-				if ( $event_date_id ) {
-					$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
-					if ( $event_date && $event_date->event_id ) {
-						$signup_page_url = get_permalink( $event_date->event_id );
-					}
-				}
-				wp_localize_script(
-					'fair-events-manage-invitations',
-					'fairEventsManageInvitationsData',
-					array(
-						'eventDateId'    => $event_date_id,
-						'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
-						'signupPageUrl'  => $signup_page_url,
-					)
-				);
-				wp_set_script_translations( 'fair-events-manage-invitations', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-				wp_enqueue_style( 'wp-components' );
-				break;
-
 			case 'fair-events-duplicate-event':
 				$asset_file = include $exp_dir . 'build/admin/duplicate-event/index.asset.php';
 				wp_enqueue_script( 'fair-events-duplicate-event', $exp_url . 'build/admin/duplicate-event/index.js', $asset_file['dependencies'], $asset_file['version'], true );
@@ -456,16 +417,6 @@ class AdminPages {
 	public function render_event_statistics_page() {
 		$page = new \FairEventsExperimental\Admin\EventStatisticsPage();
 		$page->render();
-	}
-
-	/**
-	 * Render manage invitations page
-	 *
-	 * @return void
-	 */
-	public function render_manage_invitations_page() {
-		$manage_invitations_page = new \FairEventsExperimental\Admin\ManageInvitationsPage();
-		$manage_invitations_page->render();
 	}
 
 	/**

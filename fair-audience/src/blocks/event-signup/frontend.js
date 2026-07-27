@@ -1014,11 +1014,6 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			requestData.event_date_id = eventDateId;
 		}
 
-		const invitationToken = block.dataset.invitationToken || '';
-		if (invitationToken) {
-			requestData.invitation_token = invitationToken;
-		}
-
 		const ticketTypeInput = form.querySelector(
 			'input[name="ticket_type_id"]:checked'
 		);
@@ -1291,11 +1286,6 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			requestData.participant_token = token;
 		}
 
-		const invitationToken = block.dataset.invitationToken || '';
-		if (invitationToken) {
-			requestData.invitation_token = invitationToken;
-		}
-
 		const ticketTypeInput = block.querySelector(
 			'input[name="ticket_type_id"]:checked'
 		);
@@ -1538,10 +1528,6 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		}
 		if (token) {
 			requestData.participant_token = token;
-		}
-		const invitationToken = block.dataset.invitationToken || '';
-		if (invitationToken) {
-			requestData.invitation_token = invitationToken;
 		}
 
 		const restoreButton = setButtonLoading(

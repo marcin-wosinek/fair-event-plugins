@@ -199,12 +199,6 @@ class EventSignupController extends WP_REST_Controller {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'invitation_token'      => array(
-							'type'              => 'string',
-							'required'          => false,
-							'default'           => '',
-							'sanitize_callback' => 'sanitize_text_field',
-						),
 						// No 'type' declared: a JSON string sent via FormData would
 						// otherwise be mangled. The QuestionnaireService parse/sanitize
 						// helpers handle both raw JSON strings and decoded arrays.
@@ -337,12 +331,6 @@ class EventSignupController extends WP_REST_Controller {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'invitation_token'  => array(
-							'type'              => 'string',
-							'required'          => false,
-							'default'           => '',
-							'sanitize_callback' => 'sanitize_text_field',
-						),
 					),
 				),
 			)
@@ -416,12 +404,6 @@ class EventSignupController extends WP_REST_Controller {
 							'required'          => false,
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
-						),
-						'invitation_token'      => array(
-							'type'              => 'string',
-							'required'          => false,
-							'default'           => '',
-							'sanitize_callback' => 'sanitize_text_field',
 						),
 						// No 'type' declared: a JSON string sent via FormData would
 						// otherwise be mangled. The QuestionnaireService parse/sanitize
@@ -619,7 +601,6 @@ class EventSignupController extends WP_REST_Controller {
 		$event_id          = $request->get_param( 'event_id' );
 		$participant_token = $request->get_param( 'participant_token' );
 		$ticket_type_id    = $request->get_param( 'ticket_type_id' ) ?: null;
-		$invitation_token  = $request->get_param( 'invitation_token' ) ?: '';
 		$user_id           = get_current_user_id();
 		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ?: array();
 		$chosen_amount     = $request->get_param( 'chosen_amount' );
@@ -670,7 +651,7 @@ class EventSignupController extends WP_REST_Controller {
 		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
 			$tt_for_multi = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 			if ( $tt_for_multi && $tt_for_multi->is_multiple_instances() ) {
-				return $this->create_multi_instance_signup( $request, $event, $event_id, $participant, $tt_for_multi, $invitation_token );
+				return $this->create_multi_instance_signup( $request, $event, $event_id, $participant, $tt_for_multi );
 			}
 		}
 
@@ -692,8 +673,8 @@ class EventSignupController extends WP_REST_Controller {
 			return $questionnaire_answers;
 		}
 
-		// Validate ticket type group restrictions (and invitation tokens for invitation-only types).
-		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id, $invitation_token );
+		// Validate ticket type group restrictions.
+		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id );
 		if ( is_wp_error( $group_error ) ) {
 			return $group_error;
 		}
@@ -762,7 +743,7 @@ class EventSignupController extends WP_REST_Controller {
 			return $save_error;
 		}
 
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $invitation_token, $chosen_amount );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $chosen_amount );
 		if ( null !== $paid_response ) {
 			if ( ! is_wp_error( $paid_response ) ) {
 				AudienceSession::set( (int) $participant->id );
@@ -811,10 +792,9 @@ class EventSignupController extends WP_REST_Controller {
 	 * @param int                              $event_id         Event post ID.
 	 * @param \FairAudience\Models\Participant $participant      Participant doing the signup.
 	 * @param \FairEvents\Models\TicketType    $ticket_type      The 'multiple_instances' ticket type.
-	 * @param string                           $invitation_token Optional invitation token presented by the buyer.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	private function create_multi_instance_signup( $request, $event, $event_id, $participant, $ticket_type, $invitation_token ) {
+	private function create_multi_instance_signup( $request, $event, $event_id, $participant, $ticket_type ) {
 		$raw_ids = $request->get_param( 'event_date_ids' ) ?: array();
 		$raw_ids = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
 		$raw_ids = array_filter( $raw_ids );
@@ -898,7 +878,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type->id, $participant->id, $invitation_token );
+		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type->id, $participant->id );
 		if ( is_wp_error( $group_error ) ) {
 			return $group_error;
 		}
@@ -1089,7 +1069,6 @@ class EventSignupController extends WP_REST_Controller {
 	public function add_activities( $request ) {
 		$event_id          = $request->get_param( 'event_id' );
 		$participant_token = $request->get_param( 'participant_token' );
-		$invitation_token  = $request->get_param( 'invitation_token' ) ?: '';
 		$user_id           = get_current_user_id();
 		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ?: array();
 
@@ -1175,7 +1154,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$paid_response = $this->maybe_start_addon_payment( $event_id, $event_date_id, $participant, $existing, $user_id, $new_options, $invitation_token );
+		$paid_response = $this->maybe_start_addon_payment( $event_id, $event_date_id, $participant, $existing, $user_id, $new_options );
 		if ( null !== $paid_response ) {
 			if ( ! is_wp_error( $paid_response ) ) {
 				AudienceSession::set( (int) $participant->id );
@@ -1217,10 +1196,9 @@ class EventSignupController extends WP_REST_Controller {
 	 * @param \FairAudience\Models\EventParticipant $event_participant Existing signed-up row.
 	 * @param int                                   $user_id           Current WP user ID (0 for anonymous).
 	 * @param array                                 $new_options       New TicketOption objects to add.
-	 * @param string                                $invitation_token  Optional invitation token.
 	 * @return \WP_REST_Response|\WP_Error|null Response/error on paid path, null on free path.
 	 */
-	private function maybe_start_addon_payment( $event_id, $event_date_id, $participant, $event_participant, $user_id, $new_options, $invitation_token = '' ) {
+	private function maybe_start_addon_payment( $event_id, $event_date_id, $participant, $event_participant, $user_id, $new_options ) {
 		$best_discount_rule = null;
 		if ( $event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
 			$best_discount_rule = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
@@ -1350,20 +1328,11 @@ class EventSignupController extends WP_REST_Controller {
 	 *
 	 * @param int|null $ticket_type_id   Ticket type ID, or null if none selected.
 	 * @param int      $participant_id   Participant ID.
-	 * @param string   $invitation_token Optional invitation token string.
 	 * @return WP_Error|null WP_Error if restricted, null if allowed.
 	 */
-	private function validate_ticket_type_group_restriction( $ticket_type_id, $participant_id, $invitation_token = '' ) {
+	private function validate_ticket_type_group_restriction( $ticket_type_id, $participant_id ) {
 		if ( ! $ticket_type_id ) {
 			return null;
-		}
-
-		// Check if this is an invitation-only ticket type.
-		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
-			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
-			if ( $ticket_type && $ticket_type->invitation_only ) {
-				return $this->validate_invitation_token( $invitation_token, $ticket_type_id, $participant_id );
-			}
 		}
 
 		if ( ! class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ||
@@ -1517,45 +1486,6 @@ class EventSignupController extends WP_REST_Controller {
 				array( 'status' => 409 )
 			);
 		}
-
-		return null;
-	}
-
-	/**
-	 * Validate an invitation token for an invitation-only ticket type.
-	 *
-	 * @param string $invitation_token Invitation token string.
-	 * @param int    $ticket_type_id   Ticket type ID.
-	 * @param int    $participant_id   Participant ID (the invitee).
-	 * @return WP_Error|null WP_Error if invalid, null if valid.
-	 */
-	private function validate_invitation_token( $invitation_token, $ticket_type_id, $participant_id ) {
-		if ( empty( $invitation_token ) || ! class_exists( \FairEvents\Models\InvitationToken::class ) ) {
-			return new WP_Error(
-				'invitation_required',
-				__( 'This ticket type requires an invitation link.', 'fair-audience' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		$token = \FairEvents\Models\InvitationToken::get_by_token( $invitation_token );
-		if ( ! $token ) {
-			return new WP_Error(
-				'invalid_invitation',
-				__( 'This invitation link is not valid.', 'fair-audience' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		if ( ! $token->is_valid() ) {
-			return new WP_Error(
-				'invitation_expired',
-				__( 'This invitation link has expired or has been fully used.', 'fair-audience' ),
-				array( 'status' => 410 )
-			);
-		}
-
-		$token->record_use( $participant_id );
 
 		return null;
 	}
@@ -1839,11 +1769,10 @@ class EventSignupController extends WP_REST_Controller {
 	 * @param int                                        $user_id        Current WP user ID (0 for anonymous).
 	 * @param int|null                                   $ticket_type_id Selected ticket type ID, or null when not using ticket types.
 	 * @param array                                      $option_items     Selected TicketOption objects.
-	 * @param string                                     $invitation_token Optional invitation token presented by the buyer.
 	 * @param float|null                                 $chosen_amount    Buyer-chosen amount for a sliding-scale price, or null.
 	 * @return \WP_REST_Response|\WP_Error|null WP_REST_Response/WP_Error on paid path, null on free path.
 	 */
-	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $invitation_token = '', $chosen_amount = null ) {
+	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $chosen_amount = null ) {
 		$final_price = null;
 		if ( $event_date_id ) {
 			if ( $ticket_type_id ) {
@@ -2724,15 +2653,14 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function register_and_signup( $request ) {
-		$event_id         = $request->get_param( 'event_id' );
-		$name             = $request->get_param( 'name' );
-		$surname          = $request->get_param( 'surname' );
-		$email            = $request->get_param( 'email' );
-		$keep_informed    = $request->get_param( 'keep_informed' );
-		$ticket_type_id   = $request->get_param( 'ticket_type_id' ) ?: null;
-		$invitation_token = $request->get_param( 'invitation_token' ) ?: '';
-		$raw_option_ids   = $request->get_param( 'ticket_option_ids' ) ?: array();
-		$chosen_amount    = $request->get_param( 'chosen_amount' );
+		$event_id       = $request->get_param( 'event_id' );
+		$name           = $request->get_param( 'name' );
+		$surname        = $request->get_param( 'surname' );
+		$email          = $request->get_param( 'email' );
+		$keep_informed  = $request->get_param( 'keep_informed' );
+		$ticket_type_id = $request->get_param( 'ticket_type_id' ) ?: null;
+		$raw_option_ids = $request->get_param( 'ticket_option_ids' ) ?: array();
+		$chosen_amount  = $request->get_param( 'chosen_amount' );
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -2929,7 +2857,7 @@ class EventSignupController extends WP_REST_Controller {
 		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
 			$tt_for_multi = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 			if ( $tt_for_multi && $tt_for_multi->is_multiple_instances() ) {
-				$multi_response = $this->create_multi_instance_signup( $request, $event, $event_id, $participant, $tt_for_multi, $invitation_token );
+				$multi_response = $this->create_multi_instance_signup( $request, $event, $event_id, $participant, $tt_for_multi );
 				if ( $is_new_participant && ! is_wp_error( $multi_response ) ) {
 					AudienceSession::set( (int) $participant->id );
 				}
@@ -2937,8 +2865,8 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
-		// Validate ticket type group restrictions (and invitation tokens for invitation-only types).
-		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id, $invitation_token );
+		// Validate ticket type group restrictions.
+		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id );
 		if ( is_wp_error( $group_error ) ) {
 			return $group_error;
 		}
@@ -2972,7 +2900,7 @@ class EventSignupController extends WP_REST_Controller {
 			return $save_error;
 		}
 
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $wp_user_id, $ticket_type_id, $option_items, $invitation_token, $chosen_amount );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $wp_user_id, $ticket_type_id, $option_items, $chosen_amount );
 		if ( null !== $paid_response ) {
 			if ( $is_new_participant && ! is_wp_error( $paid_response ) ) {
 				AudienceSession::set( (int) $participant->id );

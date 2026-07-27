@@ -60,9 +60,6 @@ export default function EventTickets({
 	const [participants, setParticipants] = useState([]);
 	const fileInputRef = useRef(null);
 
-	const manageInvitationsUrl =
-		window.fairEventsManageEventData?.manageInvitationsUrl || '';
-
 	const hasAdvancedTickets = ticketTypes.length > 0 || salePeriods.length > 0;
 	const isSlidingScaleRangeValid =
 		!settings.sliding_scale_enabled ||
@@ -71,7 +68,6 @@ export default function EventTickets({
 				(parseFloat(signupPrice) || 0) &&
 			(parseFloat(signupPrice) || 0) <=
 				parseFloat(settings.sliding_scale_max));
-	const hasInvitationTickets = ticketTypes.some((t) => t.invitation_only);
 	const hasGroups = groups.length > 0;
 	const groupNameById = Object.fromEntries(groups.map((g) => [g.id, g.name]));
 	const groupIdByName = Object.fromEntries(groups.map((g) => [g.name, g.id]));
@@ -377,7 +373,6 @@ export default function EventTickets({
 						? t.capacity
 						: null,
 				seats_per_ticket: t.seats_per_ticket || 1,
-				invitation_only: t.invitation_only || false,
 				minimum_activities: t.minimum_activities || 0,
 				disable_at: t.disable_at || null,
 				group_ids: t.group_ids || [],
@@ -508,7 +503,6 @@ export default function EventTickets({
 				name: '',
 				capacity: null,
 				seats_per_ticket: 1,
-				invitation_only: false,
 				minimum_activities: 0,
 				disable_at: null,
 				group_ids: [],
@@ -785,14 +779,6 @@ export default function EventTickets({
 			)}
 
 			<HStack spacing={2} justify="flex-end">
-				{hasInvitationTickets && manageInvitationsUrl && (
-					<Button
-						variant="secondary"
-						href={`${manageInvitationsUrl}${eventDateId}`}
-					>
-						{__('Manage Invitations', 'fair-events-experimental')}
-					</Button>
-				)}
 				<Button
 					variant="secondary"
 					onClick={handleExport}
@@ -1435,14 +1421,6 @@ export default function EventTickets({
 															)}
 														</th>
 													)}
-													{hasGroups && (
-														<th>
-															{__(
-																'Invitation only',
-																'fair-events-experimental'
-															)}
-														</th>
-													)}
 													{settings.show_ticket_type_minimum_activities &&
 														options.length > 0 && (
 															<th>
@@ -1674,25 +1652,6 @@ export default function EventTickets({
 																	/>
 																</td>
 															)}
-															{hasGroups && (
-																<td>
-																	<CheckboxControl
-																		checked={
-																			type.invitation_only ||
-																			false
-																		}
-																		onChange={(
-																			v
-																		) =>
-																			updateTicketType(
-																				tIndex,
-																				'invitation_only',
-																				v
-																			)
-																		}
-																	/>
-																</td>
-															)}
 															{settings.show_ticket_type_minimum_activities &&
 																options.length >
 																	0 && (
@@ -1883,7 +1842,7 @@ export default function EventTickets({
 																? 1
 																: 0) +
 															(hasGroups
-																? 2
+																? 1
 																: 0) +
 															(settings.show_ticket_type_minimum_activities &&
 															options.length > 0

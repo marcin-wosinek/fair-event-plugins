@@ -14,7 +14,7 @@ defined( 'WPINC' ) || die;
 /**
  * Canonical home for base (non-experimental) signup pricing: the plain
  * per-date signup price and the "is this event actually paid" fail-closed
- * check. Group discounts, sliding scale, and invitation pricing stay in
+ * check. Group discounts and sliding scale pricing stay in
  * FairEventsExperimental\Services\EventSignupPricing, which delegates its
  * base portions here so the two copies can't drift.
  *

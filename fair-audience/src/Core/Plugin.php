@@ -259,7 +259,6 @@ class Plugin {
 		$vars[] = 'resume';
 		$vars[] = 'manage_subscription';
 		$vars[] = 'edit_audience_signup';
-		$vars[] = 'invitation';
 		$vars[] = 'unsubscribe_event_interest';
 		return $vars;
 	}

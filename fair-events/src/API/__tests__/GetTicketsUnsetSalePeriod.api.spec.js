@@ -63,7 +63,6 @@ async function createEventWithUnsetWindow(
 					{
 						name: 'General admission',
 						capacity: null,
-						invitation_only: false,
 						minimum_activities: 0,
 						disable_at: null,
 						recurrence_scope: 'single_instance',

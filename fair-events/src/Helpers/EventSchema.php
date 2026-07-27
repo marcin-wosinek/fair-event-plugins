@@ -272,8 +272,8 @@ class EventSchema {
 	 * Build Schema.org Offer objects for JSON-LD from the ticketing models.
 	 *
 	 * Priced ticket types yield a paid `Offer`; a genuinely free ticket type
-	 * (enabled, non-invitation, with no positive price in any sale period — the
-	 * free RSVP/signup case) yields a price-"0" `Offer` so the event can be
+	 * (enabled, with no positive price in any sale period — the free
+	 * RSVP/signup case) yields a price-"0" `Offer` so the event can be
 	 * marked `isAccessibleForFree`. A paid type whose sale window has closed
 	 * yields nothing and is never advertised as free.
 	 *
@@ -353,7 +353,7 @@ class EventSchema {
 
 		$offers = array();
 		foreach ( $ticket_types as $ticket_type ) {
-			if ( $ticket_type->disabled || $ticket_type->invitation_only ) {
+			if ( $ticket_type->disabled ) {
 				continue;
 			}
 

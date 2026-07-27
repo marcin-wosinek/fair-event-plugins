@@ -71,9 +71,6 @@ class Installer {
 		$sql = Schema::get_ticket_type_group_restrictions_table_sql();
 		dbDelta( $sql );
 
-		$sql = Schema::get_invitation_tokens_table_sql();
-		dbDelta( $sql );
-
 		$sql = Schema::get_ticket_option_collaborators_table_sql();
 		dbDelta( $sql );
 
@@ -290,6 +287,11 @@ class Installer {
 			self::migrate_to_3_25_0();
 		}
 
+		// Run migration if upgrading from pre-3.26.0 (drop invitation-only gating).
+		if ( version_compare( $current_version, '3.26.0', '<' ) ) {
+			self::migrate_to_3_26_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -460,6 +462,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.25.0', '<' ) ) {
 				self::migrate_to_3_25_0();
+			}
+
+			if ( version_compare( $current_version, '3.26.0', '<' ) ) {
+				self::migrate_to_3_26_0();
 			}
 
 			// Install/update tables
@@ -2027,6 +2033,46 @@ class Installer {
 			$wpdb->prepare(
 				'ALTER TABLE %i MODIFY COLUMN sale_end DATETIME DEFAULT NULL',
 				$table_name
+			)
+		);
+	}
+
+	/**
+	 * Migrate to version 3.26.0 - Drop invitation-only gating.
+	 *
+	 * Removes the invitation-token mechanism entirely. Ticket types that were
+	 * marked invitation-only are disabled rather than made public, since the
+	 * gating check they relied on was already broken (see #1287) and those
+	 * rows are currently invisible on the public form, not merely restricted —
+	 * dropping the flag alone would silently publish them at upgrade time.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_26_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_ticket_types';
+
+		if ( self::column_exists( $table_name, 'invitation_only' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i SET disabled = 1 WHERE invitation_only = 1',
+					$table_name
+				)
+			);
+
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i DROP COLUMN invitation_only',
+					$table_name
+				)
+			);
+		}
+
+		$wpdb->query(
+			$wpdb->prepare(
+				'DROP TABLE IF EXISTS %i',
+				$wpdb->prefix . 'fair_events_invitation_tokens'
 			)
 		);
 	}

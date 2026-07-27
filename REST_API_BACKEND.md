@@ -608,10 +608,9 @@ it hooks `fair_events_signup_created` to link a `Participant`/`EventParticipant`
 for the anonymous/linked signup case, and `fair_events_signup_confirmed` /
 `fair_events_signup_payment_failed` to flip that `EventParticipant`'s label
 and (on confirmation) record the charge in its transaction ledger. Richer
-identity flows (invitation-gated signup, resume/retry payment,
-group-restricted ticket types) still go through `fair-audience/v1`'s own
-routes — this contract only covers the simple path; see issue #1083 for the
-phased migration.
+identity flows (resume/retry payment, group-restricted ticket types) still
+go through `fair-audience/v1`'s own routes — this contract only covers the
+simple path; see issue #1083 for the phased migration.
 
 ### Canonical signup store — participant write-back and multiplicity
 

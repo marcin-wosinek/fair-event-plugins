@@ -108,7 +108,6 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 		// always-on sale period so each price resolves server-side.
 		const baseType = {
 			capacity: null,
-			invitation_only: false,
 			minimum_activities: 0,
 			disable_at: null,
 			group_ids: [],

@@ -302,13 +302,10 @@ class AdminPages {
 			);
 
 			// Audience-dependent URLs require both the sibling plugin AND the
-			// ticketing/invitations bundle (manage-invitations page lives there).
+			// ticketing bundle.
 			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
 				$localized_data['audienceUrl']         = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
 				$localized_data['groupPricingEnabled'] = \FairEvents\Core\Features::is_enabled( 'ticketing' );
-				if ( \FairEvents\Core\Features::is_enabled( 'ticketing' ) ) {
-					$localized_data['manageInvitationsUrl'] = admin_url( 'admin.php?page=fair-events-manage-invitations&event_date_id=' );
-				}
 				if ( class_exists( 'FairEventsExperimental\Core\Features' ) && \FairEventsExperimental\Core\Features::is_enabled( 'audience-statistics' ) ) {
 					$localized_data['statisticsUrl'] = admin_url( 'admin.php?page=fair-events-event-statistics&event_date_id=' );
 				}
