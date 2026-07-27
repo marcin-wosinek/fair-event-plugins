@@ -27,6 +27,9 @@ const BANNED_REFERENCES = [
 	'fair-team',
 	'php-ci.yml',
 	'deploy-acroyoga.yml',
+	'fair-payments-connector-entries',
+	'fair-payments-connector-budgets',
+	'fair-payments-connector-reconciliation',
 ];
 
 // Historical records are allowed to mention old names.

@@ -624,7 +624,7 @@ const EntriesApp = () => {
 	];
 
 	return (
-		<div className="wrap fair-payments-connector-entries-page">
+		<div className="wrap fair-finance-entries-page">
 			<VStack spacing={4}>
 				{/* Totals Summary */}
 				<Card>

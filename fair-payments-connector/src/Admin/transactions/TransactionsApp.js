@@ -620,26 +620,12 @@ const TransactionsApp = () => {
 											<td>
 												{t.entry_ids &&
 												t.entry_ids.length > 0
-													? t.entry_ids.map(
-															(entryId, i) => (
-																<span
-																	key={
-																		entryId
-																	}
-																>
-																	{i > 0 &&
-																		', '}
-																	<a
-																		href={`admin.php?page=fair-payments-connector-entries&entry_id=${entryId}`}
-																	>
-																		#
-																		{
-																			entryId
-																		}
-																	</a>
-																</span>
+													? t.entry_ids
+															.map(
+																(entryId) =>
+																	`#${entryId}`
 															)
-													  )
+															.join(', ')
 													: '-'}
 											</td>
 											<td>{t.created_at}</td>
