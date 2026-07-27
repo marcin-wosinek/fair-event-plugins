@@ -82,6 +82,9 @@ test.describe('Fair Events sitewide Organization JSON-LD', () => {
 					address_locality: 'Madrid',
 					address_country: 'ES',
 					same_as: ['https://example.com/acme'],
+					website: 'https://acme.example',
+					contact_email: 'info@acme.example',
+					contact_phone: '+34 600 000 000',
 				},
 			},
 		});
@@ -117,13 +120,23 @@ test.describe('Fair Events sitewide Organization JSON-LD', () => {
 		expect(org.name).toBe('Acme Sports Club');
 		expect(org.address.addressLocality).toBe('Madrid');
 		expect(org.sameAs).toEqual(['https://example.com/acme']);
+		expect(org.url).toBe('https://acme.example');
+		expect(org.contactPoint).toMatchObject({
+			'@type': 'ContactPoint',
+			contactType: 'customer service',
+			email: 'info@acme.example',
+			telephone: '+34 600 000 000',
+		});
 		const organizationId = org['@id'];
 		expect(organizationId).toBeTruthy();
 
-		// The event's organizer references the same identity node.
+		// The event's organizer references the same identity node, with the
+		// overridden website (not home_url()) and no repeated contactPoint.
 		const event = await getJsonLdByType(page, permalink, 'Event');
 		expect(event.organizer['@id']).toBe(organizationId);
 		expect(event.organizer.name).toBe('Acme Sports Club');
+		expect(event.organizer.url).toBe('https://acme.example');
+		expect(event.organizer.contactPoint).toBeUndefined();
 
 		// Clear the setting: the event organizer falls back to today's
 		// site-name/home-URL behaviour, unchanged.

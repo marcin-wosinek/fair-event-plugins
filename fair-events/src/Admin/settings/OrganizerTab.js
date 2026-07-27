@@ -17,7 +17,34 @@ import {
 /**
  * Internal dependencies
  */
-import { loadOrganizerSettings, saveSettings } from './settings-api.js';
+import {
+	loadOrganizerSettings,
+	loadAttachmentUrl,
+	saveSettings,
+} from './settings-api.js';
+
+/**
+ * Open the WordPress media picker and call onSelect with the chosen attachment.
+ *
+ * @param {Object}   options          Media picker options
+ * @param {string}   options.title    Dialog title
+ * @param {string}   options.button   Button label
+ * @param {string}   options.type     MIME type filter
+ * @param {Function} options.onSelect Callback receiving the selected attachment
+ */
+function openMediaPicker({ title, button, type, onSelect }) {
+	const frame = wp.media({
+		title,
+		button: { text: button },
+		library: { type },
+		multiple: false,
+	});
+	frame.on('select', () => {
+		const attachment = frame.state().get('selection').first().toJSON();
+		onSelect(attachment);
+	});
+	frame.open();
+}
 
 /**
  * Whether a `sameAs` entry is either empty (dropped on save) or a valid
@@ -52,13 +79,25 @@ function isValidLink(value) {
  */
 export default function OrganizerTab({ onNotice }) {
 	const [organizer, setOrganizer] = useState(null);
+	const [defaults, setDefaults] = useState({
+		name: '',
+		website: '',
+		logoId: 0,
+	});
+	const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
+
+	const applySettings = (settings) => {
+		const { defaults: siteDefaults, ...organizerData } = settings;
+		setOrganizer(organizerData);
+		setDefaults(siteDefaults);
+	};
 
 	useEffect(() => {
 		loadOrganizerSettings()
 			.then((settings) => {
-				setOrganizer(settings);
+				applySettings(settings);
 				setIsLoading(false);
 			})
 			.catch(() => {
@@ -72,6 +111,16 @@ export default function OrganizerTab({ onNotice }) {
 				setIsLoading(false);
 			});
 	}, [onNotice]);
+
+	useEffect(() => {
+		if (!organizer) {
+			return;
+		}
+
+		const effectiveLogoId = organizer.logo_id || defaults.logoId;
+		loadAttachmentUrl(effectiveLogoId).then(setLogoPreviewUrl);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [organizer && organizer.logo_id, defaults.logoId]);
 
 	const updateField = (field, value) => {
 		setOrganizer({ ...organizer, [field]: value });
@@ -96,6 +145,7 @@ export default function OrganizerTab({ onNotice }) {
 
 	const hasInvalidLink =
 		organizer && organizer.same_as.some((url) => !isValidLink(url));
+	const hasInvalidWebsite = organizer && !isValidLink(organizer.website);
 
 	const handleSave = () => {
 		setIsSaving(true);
@@ -103,7 +153,7 @@ export default function OrganizerTab({ onNotice }) {
 		saveSettings({ fair_events_organizer: organizer })
 			.then(() => loadOrganizerSettings())
 			.then((settings) => {
-				setOrganizer(settings);
+				applySettings(settings);
 				onNotice({
 					status: 'success',
 					message: __(
@@ -156,9 +206,29 @@ export default function OrganizerTab({ onNotice }) {
 						</p>
 						<TextControl
 							label={__('Name', 'fair-events')}
+							placeholder={defaults.name}
 							value={organizer.name}
 							onChange={(value) => updateField('name', value)}
 							disabled={isSaving}
+						/>
+						<TextControl
+							type="url"
+							label={__('Website', 'fair-events')}
+							placeholder={defaults.website}
+							value={organizer.website}
+							onChange={(value) => updateField('website', value)}
+							disabled={isSaving}
+							help={
+								hasInvalidWebsite
+									? __(
+											'Enter a valid URL, e.g. https://example.com.',
+											'fair-events'
+									  )
+									: undefined
+							}
+							className={
+								hasInvalidWebsite ? 'has-error' : undefined
+							}
 						/>
 						<SelectControl
 							__next40pxDefaultSize
@@ -177,6 +247,76 @@ export default function OrganizerTab({ onNotice }) {
 							onChange={(value) => updateField('type', value)}
 							disabled={isSaving}
 						/>
+
+						<div style={{ marginTop: '1rem' }}>
+							<p
+								style={{
+									marginBottom: '0.5rem',
+									fontWeight: 500,
+								}}
+							>
+								{__('Logo', 'fair-events')}
+							</p>
+							<HStack alignment="left">
+								{logoPreviewUrl && (
+									<img
+										src={logoPreviewUrl}
+										alt=""
+										style={{
+											maxWidth: '80px',
+											maxHeight: '80px',
+											objectFit: 'contain',
+										}}
+									/>
+								)}
+								<Button
+									variant="secondary"
+									onClick={() =>
+										openMediaPicker({
+											title: __(
+												'Select logo',
+												'fair-events'
+											),
+											button: __(
+												'Use image',
+												'fair-events'
+											),
+											type: 'image',
+											onSelect(attachment) {
+												updateField(
+													'logo_id',
+													attachment.id
+												);
+												setLogoPreviewUrl(
+													attachment.url
+												);
+											},
+										})
+									}
+									disabled={isSaving}
+								>
+									{__('Change image', 'fair-events')}
+								</Button>
+								{!!organizer.logo_id && (
+									<Button
+										variant="tertiary"
+										isDestructive
+										onClick={() =>
+											updateField('logo_id', 0)
+										}
+										disabled={isSaving}
+									>
+										{__('Remove', 'fair-events')}
+									</Button>
+								)}
+							</HStack>
+							<p className="description">
+								{__(
+									"Falls back to the site's logo when not overridden.",
+									'fair-events'
+								)}
+							</p>
+						</div>
 					</CardBody>
 				</Card>
 
@@ -300,21 +440,55 @@ export default function OrganizerTab({ onNotice }) {
 					</CardBody>
 				</Card>
 
+				<Card>
+					<CardHeader>
+						<h2>{__('Contact point', 'fair-events')}</h2>
+					</CardHeader>
+					<CardBody>
+						<p className="description">
+							{__(
+								'Optional contact details for the organization, shown alongside its structured data.',
+								'fair-events'
+							)}
+						</p>
+						<TextControl
+							type="email"
+							label={__('Contact email', 'fair-events')}
+							value={organizer.contact_email}
+							onChange={(value) =>
+								updateField('contact_email', value)
+							}
+							disabled={isSaving}
+						/>
+						<TextControl
+							type="tel"
+							label={__('Contact phone', 'fair-events')}
+							value={organizer.contact_phone}
+							onChange={(value) =>
+								updateField('contact_phone', value)
+							}
+							disabled={isSaving}
+						/>
+					</CardBody>
+				</Card>
+
 				<div>
 					<Button
 						variant="primary"
 						type="submit"
 						isBusy={isSaving}
-						disabled={isSaving || hasInvalidLink}
+						disabled={
+							isSaving || hasInvalidLink || hasInvalidWebsite
+						}
 					>
 						{isSaving
 							? __('Saving...', 'fair-events')
 							: __('Save organizer', 'fair-events')}
 					</Button>
-					{hasInvalidLink && (
+					{(hasInvalidLink || hasInvalidWebsite) && (
 						<p className="description">
 							{__(
-								'Fix the invalid social/profile link above before saving.',
+								'Fix the invalid link(s) above before saving.',
 								'fair-events'
 							)}
 						</p>

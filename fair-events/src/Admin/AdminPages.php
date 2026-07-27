@@ -371,6 +371,8 @@ class AdminPages {
 		$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/settings/index.asset.php';
 
 		if ( 'fair-events-settings' === $slug ) {
+			wp_enqueue_media();
+
 			wp_enqueue_script(
 				'fair-events-settings',
 				FAIR_EVENTS_PLUGIN_URL . 'build/admin/settings/index.js',

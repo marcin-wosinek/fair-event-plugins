@@ -40,6 +40,10 @@ class OrganizerTest extends TestCase {
 				'postal_code'      => '',
 				'address_country'  => '',
 				'same_as'          => array(),
+				'logo_id'          => 0,
+				'website'          => '',
+				'contact_email'    => '',
+				'contact_phone'    => '',
 			),
 			Organizer::get()
 		);
@@ -196,5 +200,84 @@ class OrganizerTest extends TestCase {
 	 */
 	public function test_sanitize_non_array_input_returns_empty() {
 		$this->assertSame( array(), Organizer::sanitize_option( 'nope' ) );
+	}
+
+	/**
+	 * A valid image attachment ID is stored as the logo.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_accepts_valid_image_attachment() {
+		$GLOBALS['_fair_test_image_attachments'] = array( 42 );
+
+		$this->assertSame( 42, Organizer::sanitize_option( array( 'logo_id' => 42 ) )['logo_id'] );
+	}
+
+	/**
+	 * A non-existent (or non-image) attachment ID is dropped.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_drops_non_image_attachment() {
+		$GLOBALS['_fair_test_image_attachments'] = array();
+
+		$this->assertArrayNotHasKey( 'logo_id', Organizer::sanitize_option( array( 'logo_id' => 999 ) ) );
+	}
+
+	/**
+	 * A valid website URL is preserved.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_accepts_valid_website() {
+		$this->assertSame(
+			'https://example.com',
+			Organizer::sanitize_option( array( 'website' => 'https://example.com' ) )['website']
+		);
+	}
+
+	/**
+	 * A malformed website URL is dropped.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_drops_malformed_website() {
+		$this->assertArrayNotHasKey( 'website', Organizer::sanitize_option( array( 'website' => 'not a url' ) ) );
+	}
+
+	/**
+	 * A valid contact email is preserved.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_accepts_valid_contact_email() {
+		$this->assertSame(
+			'info@example.com',
+			Organizer::sanitize_option( array( 'contact_email' => 'info@example.com' ) )['contact_email']
+		);
+	}
+
+	/**
+	 * An invalid contact email is dropped.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_drops_invalid_contact_email() {
+		$this->assertArrayNotHasKey(
+			'contact_email',
+			Organizer::sanitize_option( array( 'contact_email' => 'not an email' ) )
+		);
+	}
+
+	/**
+	 * A contact phone number passes through, trimmed.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_trims_contact_phone() {
+		$this->assertSame(
+			'+34 600 000 000',
+			Organizer::sanitize_option( array( 'contact_phone' => '  +34 600 000 000  ' ) )['contact_phone']
+		);
 	}
 }
