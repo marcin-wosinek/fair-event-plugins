@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnectorExperimental\Services;
 
+use FairEventsShared\Money;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -44,7 +46,7 @@ class DigestBuilder {
 
 		$summary_parts = array();
 		foreach ( $totals as $currency => $total ) {
-			$summary_parts[] = number_format( $total, 2, '.', '' ) . ' ' . $currency;
+			$summary_parts[] = Money::format_display( $total, $currency );
 		}
 
 		$summary = $count . ' ' . ( 1 === $count ? 'sale' : 'sales' );

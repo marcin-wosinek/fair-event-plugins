@@ -173,8 +173,6 @@ if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( 
 	}
 }
 
-$currency_symbol = 'EUR' === get_option( 'fair_payment_currency', 'EUR' ) ? '€' : get_option( 'fair_payment_currency', 'EUR' );
-
 /**
  * Extension point for plugins (e.g. fair-audience) that want to enrich the
  * base signup form without owning a competing render — resolved viewer
@@ -183,7 +181,7 @@ $currency_symbol = 'EUR' === get_option( 'fair_payment_currency', 'EUR' ) ? '€
  * REST_API_BACKEND.md for the documented shape and consumers.
  *
  * @param array    $context    Render context (event_date_id, ticket_types, price_by_type_id,
- *                              active_sale_period, occurrences_for_picker, currency_symbol,
+ *                              active_sale_period, occurrences_for_picker,
  *                              callback_status, callback_tx_id, callback_token, prefill_name,
  *                              prefill_email, submit_button_text).
  * @param array    $attributes Block attributes.
@@ -197,7 +195,6 @@ $context = apply_filters(
 		'price_by_type_id'       => $price_by_type_id,
 		'active_sale_period'     => $active_sale_period,
 		'occurrences_for_picker' => $occurrences_for_picker,
-		'currency_symbol'        => $currency_symbol,
 		'callback_status'        => $callback_status,
 		'callback_tx_id'         => $callback_tx_id,
 		'callback_token'         => $callback_token,
@@ -214,7 +211,6 @@ $ticket_types           = $context['ticket_types'];
 $price_by_type_id       = $context['price_by_type_id'];
 $active_sale_period     = $context['active_sale_period'];
 $occurrences_for_picker = $context['occurrences_for_picker'];
-$currency_symbol        = $context['currency_symbol'];
 $callback_status        = $context['callback_status'];
 $prefill_name           = $context['prefill_name'];
 $prefill_email          = $context['prefill_email'];
@@ -298,6 +294,7 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 	<form
 		id="<?php echo esc_attr( $form_id ); ?>"
 		class="fair-events-get-tickets-form"
+		data-currency="<?php echo esc_attr( \FairEventsShared\Money::site_currency() ); ?>"
 		data-event-date-id="<?php echo esc_attr( $event_date_id ); ?>"
 		data-fair-audience-active="<?php echo esc_attr( class_exists( \FairAudience\API\EventSignupController::class ) ? '1' : '0' ); ?>"
 	>
@@ -334,7 +331,7 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 						$type_unavailable = $payments_unavailable && null !== $type_price && $type_price > 0;
 						$label            = esc_html( $ticket_type->name );
 						if ( null !== $type_price ) {
-							$label .= ' — ' . esc_html( $currency_symbol . number_format( $type_price, 2 ) );
+							$label .= ' — ' . esc_html( \FairEventsShared\Money::format_inline( $type_price ) );
 						} elseif ( null === $active_sale_period ) {
 							$label .= ' — ' . esc_html__( 'No active sale period', 'fair-events' );
 						}
@@ -349,7 +346,7 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 								id="<?php echo esc_attr( $radio_id ); ?>"
 								name="ticket_type_id"
 								value="<?php echo esc_attr( $type_id ); ?>"
-								data-ticket-price="<?php echo esc_attr( null !== $type_price ? number_format( $type_price, 2, '.', '' ) : '' ); ?>"
+								data-ticket-price="<?php echo esc_attr( null !== $type_price ? \FairEventsShared\Money::format_value( $type_price ) : '' ); ?>"
 								data-recurrence-scope="<?php echo esc_attr( $ticket_type->recurrence_scope ); ?>"
 								data-min-instances="<?php echo esc_attr( (string) $ticket_type->minimum_instances ); ?>"
 								<?php echo $type_unavailable ? 'disabled' : ''; ?>

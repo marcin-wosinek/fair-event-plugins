@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\API;
 
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
 use FairPaymentsConnector\Models\Transaction;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -114,7 +115,7 @@ class ConnectionController extends \WP_REST_Controller {
 			);
 		}
 
-		$currency    = get_option( 'fair_payment_currency', 'EUR' );
+		$currency    = Money::site_currency();
 		$mode        = get_option( 'fair_payment_mode', 'test' );
 		$description = __( 'Test payment (Fair Payments Connector settings)', 'fair-payments-connector' );
 

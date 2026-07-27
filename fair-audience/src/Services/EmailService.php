@@ -24,6 +24,7 @@ use FairAudience\Services\ManageSubscriptionToken;
 use FairAudience\Services\ParticipantToken;
 use FairAudienceExperimental\Services\FeePaymentToken;
 use FairAudience\Services\RecipientResolver;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -1721,7 +1722,7 @@ class EmailService {
 								</tr>
 								<tr>
 									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( number_format( (float) $fee_payment->amount, 2 ) . ' ' . $fee->currency ) . '</td>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( Money::format_display( (float) $fee_payment->amount, $fee->currency ) ) . '</td>
 								</tr>';
 
 		if ( ! empty( $fee->due_date ) ) {
@@ -2266,7 +2267,7 @@ class EmailService {
 							<table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0;">
 								<tr>
 									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount paid:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( number_format( $amount, 2 ) . ' ' . $currency ) . '</td>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( Money::format_display( $amount, $currency ) ) . '</td>
 								</tr>
 							</table>';
 		}
@@ -2416,7 +2417,7 @@ class EmailService {
 							<table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0;">
 								<tr>
 									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount paid:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( number_format( $amount, 2 ) . ' ' . $currency ) . '</td>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( Money::format_display( $amount, $currency ) ) . '</td>
 								</tr>
 							</table>';
 		}
@@ -2541,7 +2542,7 @@ class EmailService {
 							<table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0;">
 								<tr>
 									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( number_format( $amount, 2 ) . ' ' . $currency ) . '</td>
+									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( Money::format_display( $amount, $currency ) ) . '</td>
 								</tr>
 							</table>';
 		}

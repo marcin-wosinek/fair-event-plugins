@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnector\Core;
 
+use FairEventsShared\Money;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -75,7 +77,7 @@ class Plugin {
 	public function localize_block_editor_data() {
 		wp_add_inline_script(
 			'fair-payment-simple-payment-editor-script',
-			'window.fairPaymentsConnector = window.fairPaymentsConnector || {}; window.fairPaymentsConnector.currency = ' . wp_json_encode( get_option( 'fair_payment_currency', 'EUR' ) ) . ';',
+			'window.fairPaymentsConnector = window.fairPaymentsConnector || {}; window.fairPaymentsConnector.currency = ' . wp_json_encode( Money::site_currency() ) . ';',
 			'before'
 		);
 	}

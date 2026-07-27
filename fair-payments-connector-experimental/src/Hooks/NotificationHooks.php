@@ -15,6 +15,7 @@ use FairPaymentsConnectorExperimental\Services\TelegramService;
 use FairPaymentsConnectorExperimental\Services\TelegramChannel;
 use FairPaymentsConnectorExperimental\Services\EmailChannel;
 use FairPaymentsConnectorExperimental\Settings\Settings;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -196,7 +197,7 @@ class NotificationHooks {
 			'payment'                => $payment,
 			'test_label'             => $is_test ? '[TEST] ' : '',
 			'site_domain'            => (string) wp_parse_url( home_url(), PHP_URL_HOST ),
-			'amount'                 => null !== $amount ? number_format( (float) $amount, 2, '.', '' ) : '',
+			'amount'                 => null !== $amount ? Money::format_value( (float) $amount ) : '',
 			'currency'               => $currency,
 			'date'                   => $date,
 			'transaction_id'         => isset( $transaction->id ) ? (string) $transaction->id : '',

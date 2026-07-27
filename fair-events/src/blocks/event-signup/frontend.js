@@ -11,7 +11,7 @@ import {
 	initiatePayment,
 	handlePaymentCallback,
 	computeTicketTotal,
-	formatPrice,
+	formatMoney,
 	collectQuestionAnswers,
 	validateQuestions,
 } from 'fair-events-shared';
@@ -222,12 +222,13 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 				checked > 0
 					? sprintf(
 							/* translators: %s: formatted total price */
-							__('Total: €%s', 'fair-events'),
-							formatPrice(
+							__('Total: %s', 'fair-events'),
+							formatMoney(
 								computeTicketTotal({
 									unitPrice: price,
 									count: checked,
-								})
+								}),
+								form.dataset.currency
 							)
 					  )
 					: '';

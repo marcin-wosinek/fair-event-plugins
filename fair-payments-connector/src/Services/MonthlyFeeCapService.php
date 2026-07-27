@@ -13,6 +13,7 @@ defined( 'WPINC' ) || die;
 
 use FairPaymentsConnector\Database\Schema;
 use FairPaymentsConnector\Services\CurrencyRates;
+use FairEventsShared\Money;
 
 /**
  * Computes the configured monthly fee cap and the current month's accumulated fees.
@@ -30,7 +31,7 @@ class MonthlyFeeCapService {
 	 * @return array<string,float>
 	 */
 	public static function plugin_price_map(): array {
-		$currency = get_option( 'fair_payment_currency', 'EUR' );
+		$currency = Money::site_currency();
 
 		$prices = array(
 			'fair-payments-connector' => CurrencyRates::from_eur( 4.0, $currency ),

@@ -456,6 +456,29 @@ define( 'WP_DEBUG', false );
 -   [Debugging in WordPress – Advanced Administration Handbook](https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/)
 -   [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
 
+## Shared Package (`fair-events-shared`)
+
+`fair-events-shared/php` is a Composer path package (`fair-events/shared`,
+namespace `FairEventsShared\`) consumed by several plugins via a `path`
+repository in each consumer's `composer.json`. Each plugin bundles its own
+copy under its own `vendor/`, resolved independently by Composer.
+
+**Only one copy of a given `FairEventsShared\` class is ever loaded per
+request** — whichever active plugin's autoloader resolves it first wins; the
+others never load their copy of that class at all. When plugins update
+independently (e.g. via wp.org, on different release cadences), one site can
+end up running plugin A at version 2.0 alongside plugin B still at 1.0, so the
+copy of the shared package that "wins" the autoload race is not guaranteed to
+be the newest one.
+
+**Additive-only.** Never change an existing shared method's signature (params,
+return type, or removal); ship new capability as a new class or a new method
+instead. A new class/method is skew-safe — Composer's PSR-4 loader simply
+returns when the file is absent, so an older sibling's autoloader falls
+through to whichever plugin ships the new copy. A changed signature fatals
+whenever an older copy of the class wins the autoload race and gets called
+with the new call shape.
+
 ## Code Quality Standards
 
 Formatting is automatic — see [CLAUDE.md § Formatting & Build](./CLAUDE.md#formatting--build)

@@ -14,6 +14,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use FairEventsShared\Money;
 
 /**
  * Handles get-tickets REST API endpoints
@@ -296,7 +297,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// Paid path — payments were confirmed available before the signup row
 		// was saved (see the fail-closed guard above), so a transaction can be
 		// created here without a free-fallback.
-		$currency    = get_option( 'fair_payment_currency', 'EUR' );
+		$currency    = Money::site_currency();
 		$description = sprintf(
 			/* translators: %d: event date ID */
 			__( 'Ticket for event #%d', 'fair-events' ),
@@ -639,7 +640,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// Paid path — payments were confirmed available before any signup row
 		// was saved (see the fail-closed guard above), so a shared transaction
 		// can be created here without a free-fallback.
-		$currency    = get_option( 'fair_payment_currency', 'EUR' );
+		$currency    = Money::site_currency();
 		$description = sprintf(
 			/* translators: %d: event date ID */
 			__( 'Tickets for event #%d', 'fair-events' ),

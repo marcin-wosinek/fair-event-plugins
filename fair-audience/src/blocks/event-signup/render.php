@@ -20,6 +20,7 @@ use FairAudience\Services\AudienceSession;
 use FairAudience\Services\ParticipantToken;
 use FairEvents\Models\EventDates;
 use FairEvents\Models\EventDateSetting;
+use FairEventsShared\Money;
 
 // Detect a return-from-Mollie callback. When a fair_signup_tx is present we
 // short-circuit the regular signup UI and render a transaction-scoped state
@@ -651,15 +652,15 @@ if ( null !== $signup_price ) {
 	if ( $signup_price > 0 ) {
 		$signup_button_text = sprintf(
 			/* translators: 1: base button label, 2: formatted price */
-			__( '%1$s — €%2$s', 'fair-audience' ),
+			__( '%1$s — %2$s', 'fair-audience' ),
 			$signup_button_text,
-			number_format_i18n( $signup_price, 2 )
+			Money::format_inline( $signup_price )
 		);
 		$register_button_text = sprintf(
 			/* translators: 1: base button label, 2: formatted price */
-			__( '%1$s — €%2$s', 'fair-audience' ),
+			__( '%1$s — %2$s', 'fair-audience' ),
 			$register_button_text,
-			number_format_i18n( $signup_price, 2 )
+			Money::format_inline( $signup_price )
 		);
 	} else {
 		$signup_button_text   = __( 'Sign up for free', 'fair-audience' );
@@ -711,9 +712,9 @@ if ( $best_discount_rule ) {
 		);
 	} else {
 		$discount_label = sprintf(
-			/* translators: 1: discount amount in euros, 2: group name */
-			__( '€%1$s discount applied (%2$s)', 'fair-audience' ),
-			number_format_i18n( (float) $best_discount_rule->discount_value, 2 ),
+			/* translators: 1: discount amount, 2: group name */
+			__( '%1$s discount applied (%2$s)', 'fair-audience' ),
+			Money::format_inline( (float) $best_discount_rule->discount_value ),
 			$group_name
 		);
 	}
@@ -761,9 +762,9 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 		$tt_label   = $tt['name'];
 		if ( $show_ticket_type_prices && null !== $tt['price'] ) {
 			if ( $tt['price'] > 0 ) {
-				$tt_label .= ' — €' . number_format_i18n( (float) $tt['price'], 2 );
+				$tt_label .= ' — ' . Money::format_inline( (float) $tt['price'] );
 			} elseif ( $tt['price'] < 0 ) {
-				$tt_label .= ' — -€' . number_format_i18n( abs( (float) $tt['price'] ), 2 );
+				$tt_label .= ' — -' . Money::format_inline( abs( (float) $tt['price'] ) );
 			} else {
 				$tt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
@@ -783,7 +784,7 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 			$classes .= ' fair-audience-ticket-type-full';
 		}
 		echo '<label class="' . esc_attr( $classes ) . '" for="' . $radio_id . '">';
-		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '" data-ticket-price="' . ( null !== $tt['price'] ? esc_attr( number_format( (float) $tt['price'], 2, '.', '' ) ) : '' ) . '" data-min-activities="' . esc_attr( (string) ( $tt['minimum_activities'] ?? 0 ) ) . '" data-recurrence-scope="' . esc_attr( $tt['recurrence_scope'] ?? 'single_instance' ) . '" data-min-instances="' . esc_attr( (string) ( $tt['minimum_instances'] ?? 0 ) ) . '"';
+		echo '<input type="radio" name="ticket_type_id" id="' . $radio_id . '" value="' . (int) $tt['id'] . '" data-ticket-price="' . ( null !== $tt['price'] ? esc_attr( Money::format_value( (float) $tt['price'] ) ) : '' ) . '" data-min-activities="' . esc_attr( (string) ( $tt['minimum_activities'] ?? 0 ) ) . '" data-recurrence-scope="' . esc_attr( $tt['recurrence_scope'] ?? 'single_instance' ) . '" data-min-instances="' . esc_attr( (string) ( $tt['minimum_instances'] ?? 0 ) ) . '"';
 		if ( $tt_is_full ) {
 			echo ' disabled';
 		} elseif ( ! $default_selected ) {
@@ -844,9 +845,9 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 		// feature-active case uses the toggled "(+price)" tag emitted below.
 		if ( ! $feature_active && $show_option_prices ) {
 			if ( $opt['price'] > 0 ) {
-				$opt_label .= ' — €' . number_format_i18n( $opt['price'], 2 );
+				$opt_label .= ' — ' . Money::format_inline( $opt['price'] );
 			} elseif ( $opt['price'] < 0 ) {
-				$opt_label .= ' — -€' . number_format_i18n( abs( $opt['price'] ), 2 );
+				$opt_label .= ' — -' . Money::format_inline( abs( $opt['price'] ) );
 			} else {
 				$opt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
@@ -861,7 +862,7 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 			$classes .= ' fair-audience-ticket-option-full';
 		}
 		echo '<label class="' . esc_attr( $classes ) . '" for="' . $checkbox_id . '">';
-		echo '<input type="checkbox" name="ticket_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '" data-option-short-name="' . esc_attr( $opt['short_name'] ?? '' ) . '"';
+		echo '<input type="checkbox" name="ticket_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( Money::format_value( $opt['price'] ) ) . '" data-option-short-name="' . esc_attr( $opt['short_name'] ?? '' ) . '"';
 		if ( $is_full ) {
 			echo ' disabled';
 		}
@@ -879,8 +880,8 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 				esc_html(
 					sprintf(
 						/* translators: %s: formatted add-on price */
-						__( '(+€%s)', 'fair-audience' ),
-						number_format_i18n( $opt['price'], 2 )
+						__( '(+%s)', 'fair-audience' ),
+						Money::format_inline( $opt['price'] )
 					)
 				)
 			);
@@ -907,9 +908,9 @@ $render_add_activities = static function () use ( $addable_options, $has_addable
 		$opt_label = $opt['name'];
 		if ( $show_option_prices ) {
 			if ( $opt['price'] > 0 ) {
-				$opt_label .= ' — €' . number_format_i18n( $opt['price'], 2 );
+				$opt_label .= ' — ' . Money::format_inline( $opt['price'] );
 			} elseif ( $opt['price'] < 0 ) {
-				$opt_label .= ' — -€' . number_format_i18n( abs( $opt['price'] ), 2 );
+				$opt_label .= ' — -' . Money::format_inline( abs( $opt['price'] ) );
 			} else {
 				$opt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
@@ -924,7 +925,7 @@ $render_add_activities = static function () use ( $addable_options, $has_addable
 			$classes .= ' fair-audience-ticket-option-full';
 		}
 		echo '<label class="' . esc_attr( $classes ) . '" for="' . $checkbox_id . '">';
-		echo '<input type="checkbox" name="add_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( number_format( $opt['price'], 2, '.', '' ) ) . '" data-option-short-name="' . esc_attr( $opt['short_name'] ?? '' ) . '"';
+		echo '<input type="checkbox" name="add_option_ids[]" id="' . $checkbox_id . '" value="' . (int) $opt['id'] . '" data-option-price="' . esc_attr( Money::format_value( $opt['price'] ) ) . '" data-option-short-name="' . esc_attr( $opt['short_name'] ?? '' ) . '"';
 		if ( $is_full ) {
 			echo ' disabled';
 		}
@@ -1085,6 +1086,7 @@ $base_register_button_text = $attributes['registerButtonText'] ?? __( 'Register 
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
 		'class'                      => 'fair-audience-event-signup',
+		'data-currency'              => esc_attr( Money::site_currency() ),
 		'data-event-id'              => esc_attr( (string) $event_id ),
 		'data-event-date-id'         => esc_attr( $event_date_id ),
 		'data-state'                 => esc_attr( $state ),
@@ -1116,7 +1118,7 @@ if ( ! $is_valid_post_type ) :
 <div <?php echo wp_kses_data( $wrapper_attributes ); ?>>
 	<?php if ( $has_callback_state ) : ?>
 		<?php
-		$amount_display = sprintf( '%s %s', number_format_i18n( (float) $callback_tx->amount, 2 ), esc_html( $callback_tx->currency ) );
+		$amount_display = Money::format_display( (float) $callback_tx->amount, $callback_tx->currency );
 		?>
 		<?php if ( $callback_is_paid ) : ?>
 			<div class="fair-audience-signup-callback fair-audience-signup-paid" data-transaction-id="<?php echo esc_attr( (string) $callback_tx_id ); ?>">

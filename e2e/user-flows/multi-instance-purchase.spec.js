@@ -57,7 +57,7 @@ test.describe('multiple_instances ticket type purchase (new buyer)', () => {
 		).toFixed(2);
 		await expect(
 			instancePicker.locator('.fair-audience-instance-picker-total')
-		).toHaveText(`Total: €${expectedTotal}`);
+		).toHaveText(`Total: ${expectedTotal} EUR`);
 
 		const stamp = Date.now();
 		await form

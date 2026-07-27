@@ -10,6 +10,7 @@
 namespace FairPaymentsConnector\Models;
 
 use FairPaymentsConnector\Services\MonthlyFeeCapService;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -55,7 +56,7 @@ class Transaction {
 			'user_id'           => get_current_user_id(),
 			'participant_id'    => null,
 			'amount'            => 0,
-			'currency'          => get_option( 'fair_payment_currency', 'EUR' ),
+			'currency'          => Money::site_currency(),
 			'status'            => 'draft',
 			'testmode'          => $testmode,
 			'description'       => '',
@@ -142,7 +143,7 @@ class Transaction {
 
 		$row = array(
 			'amount'          => isset( $data['amount'] ) ? (float) $data['amount'] : 0,
-			'currency'        => ! empty( $data['currency'] ) ? (string) $data['currency'] : get_option( 'fair_payment_currency', 'EUR' ),
+			'currency'        => ! empty( $data['currency'] ) ? (string) $data['currency'] : Money::site_currency(),
 			'mollie_fee'      => isset( $data['mollie_fee'] ) && null !== $data['mollie_fee'] ? (float) $data['mollie_fee'] : null,
 			'application_fee' => isset( $data['application_fee'] ) && null !== $data['application_fee'] ? (float) $data['application_fee'] : null,
 			'status'          => ! empty( $data['status'] ) ? (string) $data['status'] : 'paid',

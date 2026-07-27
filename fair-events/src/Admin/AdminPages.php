@@ -7,6 +7,8 @@
 
 namespace FairEvents\Admin;
 
+use FairEventsShared\Money;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -334,7 +336,7 @@ class AdminPages {
 			// and `settingsUrl` only exist when the connector is active.
 			$connector_active        = class_exists( '\FairPaymentsConnector\Payment\MolliePaymentHandler' );
 			$payments_connector_data = array(
-				'currency'        => get_option( 'fair_payment_currency', 'EUR' ),
+				'currency'        => Money::site_currency(),
 				'connectorActive' => $connector_active,
 			);
 

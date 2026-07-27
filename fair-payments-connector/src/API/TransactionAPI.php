@@ -14,6 +14,7 @@ use FairPaymentsConnector\Payment\PaymentGatewayError;
 use FairPaymentsConnector\Payment\PaymentGatewayException;
 use FairPaymentsConnector\Payment\WorkingDays;
 use FairPaymentsConnector\Database\PaymentLogRepository;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -128,11 +129,10 @@ class TransactionAPI {
 				'level'          => 'info',
 				'transaction_id' => (int) $transaction_id,
 				'message'        => sprintf(
-					'Transaction #%d created with %d line item(s) (%s %s)',
+					'Transaction #%d created with %d line item(s) (%s)',
 					(int) $transaction_id,
 					count( $line_items ),
-					number_format( $total, 2 ),
-					$args['currency']
+					Money::format_display( $total, $args['currency'] )
 				),
 				'context'        => array(
 					'amount'         => $total,

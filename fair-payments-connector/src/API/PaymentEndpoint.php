@@ -16,6 +16,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
 
@@ -74,7 +75,7 @@ class PaymentEndpoint extends WP_REST_Controller {
 						'currency'    => array(
 							'required'          => false,
 							'type'              => 'string',
-							'default'           => get_option( 'fair_payment_currency', 'EUR' ),
+							'default'           => Money::site_currency(),
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'description' => array(
