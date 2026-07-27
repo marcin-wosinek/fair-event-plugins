@@ -88,6 +88,13 @@
 	padding: 0 4px;
 }
 
+.fair-events-get-tickets-discount-note {
+	font-size: 0.875em;
+	color: #2e7d32;
+	margin: 0 0 0.75em;
+	text-align: center;
+}
+
 .fair-events-get-tickets-form .fair-events-ticket-option {
 	display: flex;
 	align-items: center;

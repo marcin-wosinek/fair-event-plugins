@@ -17,6 +17,8 @@ use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\GroupSignupPricing;
+use FairAudience\Services\SignupPriceResolver;
 
 defined( 'WPINC' ) || die;
 
@@ -36,6 +38,9 @@ class SignupHookBridge {
 	 */
 	public static function init() {
 		add_filter( 'fair_events_signup_render_context', array( static::class, 'enrich_render_context' ), 10, 1 );
+		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
+		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 2 );
+		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 2 );
 		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 6 );
 		add_action( 'fair_events_signup_confirmed', array( static::class, 'handle_signup_confirmed' ), 10, 2 );
 		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
@@ -44,28 +49,144 @@ class SignupHookBridge {
 
 	/**
 	 * Inject the signed-in/known viewer's name and email into the base
-	 * form's pre-fill so returning participants don't retype them.
+	 * form's pre-fill so returning participants don't retype them, filter out
+	 * group-restricted ticket types the viewer can't buy, and re-resolve
+	 * prices through the viewer's group discounts.
 	 *
 	 * @param array $context Render context from fair-events' base render.
 	 * @return array Filtered context.
 	 */
 	public static function enrich_render_context( $context ) {
-		$participant_repository = new ParticipantRepository();
-		$participant            = null;
-
-		$participant_id = AudienceSession::get_participant_id();
-		if ( $participant_id ) {
-			$participant = $participant_repository->get_by_id( $participant_id );
-		} elseif ( get_current_user_id() ) {
-			$participant = $participant_repository->get_by_user_id( get_current_user_id() );
-		}
+		$participant    = GroupSignupPricing::resolve_viewer_participant();
+		$participant_id = $participant ? (int) $participant->id : null;
 
 		if ( $participant ) {
 			$context['prefill_name']  = trim( $participant->name . ' ' . $participant->surname );
 			$context['prefill_email'] = (string) $participant->email;
 		}
 
+		$context['group_discount_rule'] = null;
+
+		if ( empty( $context['ticket_types'] ) ) {
+			return $context;
+		}
+
+		$pricing_event_date_id = (int) $context['pricing_event_date_id'];
+
+		if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
+			$restrictions_map = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
+
+			if ( ! empty( $restrictions_map ) ) {
+				$member_group_ids = array();
+				if ( $participant_id && class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
+					$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
+					$memberships            = $group_participant_repo->get_by_participant( $participant_id );
+					$member_group_ids       = array_map(
+						function ( $membership ) {
+							return (int) $membership->group_id;
+						},
+						$memberships
+					);
+				}
+
+				$context['ticket_types'] = GroupSignupPricing::allowed_ticket_types(
+					$context['ticket_types'],
+					$restrictions_map,
+					$member_group_ids
+				);
+			}
+		}
+
+		// Re-resolve prices for the surviving types through the same authority
+		// the create route uses, so the displayed price matches what gets
+		// charged. Clamped at 0 — an amount-discount larger than the price
+		// can never show (or charge) a negative amount.
+		$price_by_type_id = array();
+		foreach ( $context['ticket_types'] as $ticket_type ) {
+			$resolved = SignupPriceResolver::resolve_price_for_ticket_type( (int) $ticket_type->id, $participant_id );
+			if ( null !== $resolved ) {
+				$price_by_type_id[ (int) $ticket_type->id ] = max( 0, $resolved );
+			}
+		}
+		$context['price_by_type_id'] = $price_by_type_id;
+
+		if ( $participant_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			$context['group_discount_rule'] = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
+				$pricing_event_date_id,
+				$participant_id
+			);
+		}
+
 		return $context;
+	}
+
+	/**
+	 * Render the group discount note just before the submit button, when the
+	 * viewer's best-matching group discount rule was stashed onto the context
+	 * by enrich_render_context().
+	 *
+	 * @param array $context Render context, see fair_events_signup_render_context.
+	 * @return void
+	 */
+	public static function render_discount_note( $context ) {
+		$rule = $context['group_discount_rule'] ?? null;
+		if ( ! $rule ) {
+			return;
+		}
+
+		$group_name = '';
+		if ( class_exists( \FairAudienceExperimental\Database\GroupRepository::class ) ) {
+			$group_repo = new \FairAudienceExperimental\Database\GroupRepository();
+			$group      = $group_repo->get_by_id( (int) $rule->group_id );
+			if ( $group ) {
+				$group_name = $group->name;
+			}
+		}
+
+		echo '<p class="fair-events-get-tickets-discount-note">'
+			. esc_html( GroupSignupPricing::discount_note_label( $rule, $group_name ) )
+			. '</p>';
+	}
+
+	/**
+	 * Reject a signup for a group-restricted ticket type the viewer isn't a
+	 * member of. Hooked on fair_events_signup_ticket_type_error.
+	 *
+	 * @param WP_Error|null $error          Prior filter result — passed through unchanged if already an error.
+	 * @param int           $ticket_type_id Ticket type ID.
+	 * @return \WP_Error|null
+	 */
+	public static function filter_ticket_type_error( $error, $ticket_type_id ) {
+		if ( is_wp_error( $error ) ) {
+			return $error;
+		}
+
+		$participant = GroupSignupPricing::resolve_viewer_participant();
+		return GroupSignupPricing::restriction_error( $ticket_type_id, $participant ? (int) $participant->id : null );
+	}
+
+	/**
+	 * Re-resolve a ticket type's unit price through the viewer's group
+	 * discounts. Hooked on fair_events_signup_unit_price.
+	 *
+	 * @param float|null $unit_price     Base unit price, or null when not purchasable.
+	 * @param int        $ticket_type_id Ticket type ID.
+	 * @return float|null
+	 */
+	public static function filter_unit_price( $unit_price, $ticket_type_id ) {
+		if ( null === $unit_price ) {
+			return $unit_price;
+		}
+
+		$participant    = GroupSignupPricing::resolve_viewer_participant();
+		$participant_id = $participant ? (int) $participant->id : null;
+
+		$resolved = SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type_id, $participant_id );
+		if ( null === $resolved ) {
+			return $unit_price;
+		}
+
+		return max( 0, $resolved );
 	}
 
 	/**
