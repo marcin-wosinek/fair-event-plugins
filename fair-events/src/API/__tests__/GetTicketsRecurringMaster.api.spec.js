@@ -97,7 +97,6 @@ test.describe('GetTicketsController — recurring series master pivot', () => {
 						{
 							name: 'Single session',
 							capacity: null,
-							invitation_only: false,
 							minimum_activities: 0,
 							disable_at: null,
 							recurrence_scope: 'single_instance',

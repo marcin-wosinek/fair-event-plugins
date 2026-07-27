@@ -45,13 +45,6 @@ class TicketType {
 	public $capacity;
 
 	/**
-	 * Whether this ticket type requires an invitation token
-	 *
-	 * @var bool
-	 */
-	public $invitation_only = false;
-
-	/**
 	 * Minimum activities this ticket type requires (0 = inherit event-date global).
 	 *
 	 * Only ever raises the event-date-wide minimum; a value below the global is
@@ -189,7 +182,6 @@ class TicketType {
 	 * @param string      $name               Name.
 	 * @param int|null    $capacity           Capacity (null = no limit).
 	 * @param int         $sort_order         Sort order.
-	 * @param bool        $invitation_only    Whether this ticket requires an invitation token.
 	 * @param int         $minimum_activities Minimum activities this type requires (0 = inherit global).
 	 * @param string|null $disable_at         Date/time after which this ticket type is unavailable (null = no end date).
 	 * @param string      $recurrence_scope   'single_instance', 'whole_series', or 'multiple_instances'.
@@ -197,7 +189,7 @@ class TicketType {
 	 * @param int         $minimum_instances  Minimum occurrences a buyer must choose when scope is 'multiple_instances'.
 	 * @return int|false The ticket type ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $capacity, $sort_order, $invitation_only = false, $minimum_activities = 0, $disable_at = null, $recurrence_scope = 'single_instance', $disabled = false, $minimum_instances = 0 ) {
+	public static function create( $event_date_id, $name, $capacity, $sort_order, $minimum_activities = 0, $disable_at = null, $recurrence_scope = 'single_instance', $disabled = false, $minimum_instances = 0 ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -212,7 +204,6 @@ class TicketType {
 				'event_date_id'      => $event_date_id,
 				'name'               => $name,
 				'capacity'           => $capacity,
-				'invitation_only'    => $invitation_only ? 1 : 0,
 				'minimum_activities' => max( 0, (int) $minimum_activities ),
 				'disable_at'         => $disable_at,
 				'recurrence_scope'   => $recurrence_scope,
@@ -220,7 +211,7 @@ class TicketType {
 				'disabled'           => $disabled ? 1 : 0,
 				'sort_order'         => $sort_order,
 			),
-			array( '%d', '%s', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%d' )
+			array( '%d', '%s', '%d', '%d', '%s', '%s', '%d', '%d', '%d' )
 		);
 
 		if ( $result ) {
@@ -253,11 +244,6 @@ class TicketType {
 		if ( array_key_exists( 'capacity', $data ) ) {
 			$update_data['capacity'] = $data['capacity'];
 			$update_format[]         = '%d';
-		}
-
-		if ( array_key_exists( 'invitation_only', $data ) ) {
-			$update_data['invitation_only'] = $data['invitation_only'] ? 1 : 0;
-			$update_format[]                = '%d';
 		}
 
 		if ( array_key_exists( 'minimum_activities', $data ) ) {
@@ -360,7 +346,6 @@ class TicketType {
 		$item->event_date_id      = (int) $row->event_date_id;
 		$item->name               = $row->name;
 		$item->capacity           = null !== $row->capacity ? (int) $row->capacity : null;
-		$item->invitation_only    = isset( $row->invitation_only ) && (int) $row->invitation_only === 1;
 		$item->minimum_activities = isset( $row->minimum_activities ) ? (int) $row->minimum_activities : 0;
 		$item->disable_at         = $row->disable_at ?? null;
 		$raw_scope                = $row->recurrence_scope ?? 'single_instance';
@@ -403,7 +388,6 @@ class TicketType {
 			'event_date_id'      => $this->event_date_id,
 			'name'               => $this->name,
 			'capacity'           => $this->capacity,
-			'invitation_only'    => $this->invitation_only,
 			'minimum_activities' => $this->minimum_activities,
 			'disable_at'         => $this->disable_at,
 			'recurrence_scope'   => $this->recurrence_scope,

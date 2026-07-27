@@ -133,7 +133,6 @@ $form_id = 'fair-audience-signup-' . wp_unique_id();
 // Determine user state.
 $participant_token = get_query_var( 'participant_token', '' );
 $resume_token      = get_query_var( 'resume', '' );
-$invitation_token  = get_query_var( 'invitation', '' );
 $user_id           = get_current_user_id();
 
 $state            = 'anonymous';
@@ -386,28 +385,6 @@ if ( $has_occurrence_picker ) {
 	$occurrences_for_picker[ $default_idx ] = array_merge( $default_occ, array( 'is_default' => true ) );
 }
 
-// Validate invitation token if present.
-$valid_invitation_token = null;
-if ( ! empty( $invitation_token ) && class_exists( \FairEvents\Models\InvitationToken::class ) ) {
-	$invitation_obj = \FairEvents\Models\InvitationToken::get_by_token( $invitation_token );
-	if ( $invitation_obj && $invitation_obj->is_valid() ) {
-		$valid_invitation_token = $invitation_obj;
-	}
-}
-
-// Resolve inviter name for display when invitation is valid.
-$inviter_name = '';
-$show_inviter = $attributes['showInviterName'] ?? false;
-if ( $valid_invitation_token && $show_inviter ) {
-	if ( class_exists( \FairAudience\Database\ParticipantRepository::class ) ) {
-		$inviter_repo = new \FairAudience\Database\ParticipantRepository();
-		$inviter      = $inviter_repo->get_by_id( $valid_invitation_token->inviter_participant_id );
-		if ( $inviter ) {
-			$inviter_name = trim( $inviter->name . ' ' . ( $inviter->surname ?? '' ) );
-		}
-	}
-}
-
 // Resolve ticket types for this event date, if any. When present, the
 // signup form switches from a single-price button to a radio picker of
 // ticket types, each with its own price and seat count.
@@ -428,20 +405,14 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 	}
 
 	foreach ( $raw_types as $tt ) {
-		// Invitation-only ticket types: only show when a valid invitation token is present.
-		if ( $tt->invitation_only && ! $valid_invitation_token ) {
-			continue;
-		}
-
 		// Hide ticket types whose end date has passed or that have been manually disabled.
 		if ( $tt->disabled || ( $tt->disable_at && strtotime( $tt->disable_at ) <= time() ) ) {
 			continue;
 		}
 
-		// Skip ticket types restricted to groups the participant doesn't belong to
-		// (but skip this check for invitation-only types unlocked by a valid token).
+		// Skip ticket types restricted to groups the participant doesn't belong to.
 		$allowed_groups = $tt_group_restrictions[ $tt->id ] ?? array();
-		if ( ! empty( $allowed_groups ) && ! $tt->invitation_only ) {
+		if ( ! empty( $allowed_groups ) ) {
 			if ( empty( $participant_group_ids ) || empty( array_intersect( $allowed_groups, $participant_group_ids ) ) ) {
 				continue;
 			}
@@ -471,7 +442,6 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 			'id'                 => (int) $tt->id,
 			'name'               => $tt->name,
 			'price'              => $tt_price,
-			'invitation_only'    => (bool) $tt->invitation_only,
 			'minimum_activities' => (int) $tt->minimum_activities,
 			'recurrence_scope'   => $tt->recurrence_scope,
 			'minimum_instances'  => (int) $tt->minimum_instances,
@@ -731,27 +701,9 @@ if ( $best_discount_rule ) {
 // Read block attribute to control whether ticket type prices are displayed.
 $show_ticket_type_prices = $attributes['showTicketTypePrices'] ?? true;
 
-$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id, $valid_invitation_token, $inviter_name, $show_ticket_type_prices ) {
+$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id, $show_ticket_type_prices ) {
 	if ( ! $has_ticket_types ) {
 		return;
-	}
-
-	// Show invitation notice above ticket types when arriving via invitation link.
-	if ( $valid_invitation_token ) {
-		echo '<div class="fair-audience-invitation-notice">';
-		if ( $inviter_name ) {
-			printf(
-				'<p>%s</p>',
-				sprintf(
-					/* translators: %s: inviter's name */
-					esc_html__( 'You have been invited by %s.', 'fair-audience' ),
-					'<strong>' . esc_html( $inviter_name ) . '</strong>'
-				)
-			);
-		} else {
-			echo '<p>' . esc_html__( 'You have been invited to this event.', 'fair-audience' ) . '</p>';
-		}
-		echo '</div>';
 	}
 
 	echo '<fieldset class="fair-audience-ticket-types">';
@@ -769,17 +721,11 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 				$tt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
 		}
-		if ( $tt['invitation_only'] ) {
-			$tt_label .= ' — ' . __( 'invitation', 'fair-audience' );
-		}
 		if ( $tt_is_full ) {
 			$tt_label .= ' — ' . __( 'sold out', 'fair-audience' );
 		}
 		$radio_id = esc_attr( $form_id ) . '-tt-' . (int) $tt['id'];
 		$classes  = 'fair-audience-ticket-type-option';
-		if ( $tt['invitation_only'] ) {
-			$classes .= ' fair-audience-ticket-type-invited';
-		}
 		if ( $tt_is_full ) {
 			$classes .= ' fair-audience-ticket-type-full';
 		}
@@ -1094,7 +1040,6 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-participant-token'     => esc_attr( $participant_token ),
 		'data-resume-token'          => esc_attr( 'with_token' === $state ? $resume_token : '' ),
 		'data-success-message'       => esc_attr( $success_message ),
-		'data-invitation-token'      => esc_attr( $valid_invitation_token ? $invitation_token : '' ),
 		'data-base-price'            => null !== $signup_price ? esc_attr( (string) $signup_price ) : ( $has_priced_options ? '0' : '' ),
 		'data-signup-base-text'      => esc_attr( $base_signup_button_text ),
 		'data-register-base-text'    => esc_attr( $base_register_button_text ),

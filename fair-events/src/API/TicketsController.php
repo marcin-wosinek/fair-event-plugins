@@ -336,7 +336,6 @@ class TicketsController extends WP_REST_Controller {
 			$capacity           = isset( $item['capacity'] ) && '' !== $item['capacity'] && null !== $item['capacity']
 				? absint( $item['capacity'] )
 				: null;
-			$invitation_only    = ! empty( $item['invitation_only'] );
 			$minimum_activities = isset( $item['minimum_activities'] ) ? absint( $item['minimum_activities'] ) : 0;
 			$disable_at         = isset( $item['disable_at'] ) && '' !== $item['disable_at'] && null !== $item['disable_at']
 				? sanitize_text_field( $item['disable_at'] )
@@ -346,7 +345,7 @@ class TicketsController extends WP_REST_Controller {
 				: 'single_instance';
 			$minimum_instances  = isset( $item['minimum_instances'] ) ? absint( $item['minimum_instances'] ) : 0;
 
-			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $invitation_only, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
+			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
 			if ( $new_id ) {
 				$type_ids_by_index[ $index ] = (int) $new_id;
 
@@ -512,7 +511,6 @@ class TicketsController extends WP_REST_Controller {
 			$capacity           = isset( $item['capacity'] ) && '' !== $item['capacity'] && null !== $item['capacity']
 				? absint( $item['capacity'] )
 				: null;
-			$invitation_only    = ! empty( $item['invitation_only'] );
 			$minimum_activities = isset( $item['minimum_activities'] ) ? absint( $item['minimum_activities'] ) : 0;
 			$disable_at         = isset( $item['disable_at'] ) && '' !== $item['disable_at'] && null !== $item['disable_at']
 				? sanitize_text_field( $item['disable_at'] )
@@ -532,7 +530,6 @@ class TicketsController extends WP_REST_Controller {
 				$update           = array(
 					'name'               => $name,
 					'capacity'           => $capacity,
-					'invitation_only'    => $invitation_only,
 					'minimum_activities' => $minimum_activities,
 					'minimum_instances'  => $minimum_instances,
 					'disable_at'         => $disable_at,
@@ -547,7 +544,7 @@ class TicketsController extends WP_REST_Controller {
 					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 				}
 			} else {
-				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $invitation_only, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
+				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
 				$id_map[ $index ] = (int) $new_id;
 				if ( $new_id && ! empty( $group_ids ) && class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
 					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );

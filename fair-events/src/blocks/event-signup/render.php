@@ -4,7 +4,7 @@
  *
  * Base (fair-audience inactive) behaviour is the anonymous get-tickets form.
  * When fair-audience is active this delegates to its Event Signup block so the
- * participant-aware flow (identity, pricing, invitations) renders unchanged.
+ * participant-aware flow (identity, pricing) renders unchanged.
  *
  * @package FairEvents
  *

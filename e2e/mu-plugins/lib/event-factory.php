@@ -181,7 +181,6 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 			$name,
 			null, // capacity.
 			0, // sort_order.
-			false, // invitation_only.
 			0, // minimum_activities.
 			null, // disable_at.
 			'multiple_instances',
@@ -210,7 +209,6 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 			$name,
 			null, // capacity.
 			0, // sort_order.
-			false, // invitation_only.
 			0, // minimum_activities.
 			null, // disable_at.
 			'whole_series'

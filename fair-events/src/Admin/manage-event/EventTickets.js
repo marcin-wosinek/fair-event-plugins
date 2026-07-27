@@ -80,9 +80,6 @@ export default function EventTickets({
 	const [snapshot, setSnapshot] = useState(null);
 	const [loadGen, setLoadGen] = useState(0);
 
-	const manageInvitationsUrl =
-		window.fairEventsManageEventData?.manageInvitationsUrl || '';
-
 	// An event loaded with more than one stored sale period always renders in
 	// multiple-periods mode, regardless of the stored toggle, so no configured
 	// period is ever hidden.
@@ -116,7 +113,6 @@ export default function EventTickets({
 			);
 		});
 	const showPaymentsWarning = paymentsUnavailable && hasPurchasablePrice;
-	const hasInvitationTickets = ticketTypes.some((t) => t.invitation_only);
 	const hasGroups = groups.length > 0;
 	const groupNameById = Object.fromEntries(groups.map((g) => [g.id, g.name]));
 	const groupIdByName = Object.fromEntries(groups.map((g) => [g.name, g.id]));
@@ -258,7 +254,6 @@ export default function EventTickets({
 					t.capacity !== null && t.capacity !== undefined
 						? t.capacity
 						: null,
-				invitation_only: t.invitation_only || false,
 				minimum_activities: t.minimum_activities || 0,
 				disable_at: t.disable_at || null,
 				recurrence_scope: t.recurrence_scope || 'single_instance',
@@ -390,7 +385,6 @@ export default function EventTickets({
 			{
 				name: '',
 				capacity: null,
-				invitation_only: false,
 				minimum_activities: 0,
 				disable_at: null,
 				recurrence_scope: scope,
@@ -918,24 +912,14 @@ export default function EventTickets({
 						)}
 					</Notice>
 				))}
-			<HStack spacing={2} justify="space-between">
-				<Button
-					variant="primary"
-					onClick={handleSave}
-					isBusy={saving}
-					disabled={saving}
-				>
-					{__('Save tickets', 'fair-events')}
-				</Button>
-				{hasInvitationTickets && manageInvitationsUrl && (
-					<Button
-						variant="secondary"
-						href={`${manageInvitationsUrl}${eventDateId}`}
-					>
-						{__('Manage Invitations', 'fair-events')}
-					</Button>
-				)}
-			</HStack>
+			<Button
+				variant="primary"
+				onClick={handleSave}
+				isBusy={saving}
+				disabled={saving}
+			>
+				{__('Save tickets', 'fair-events')}
+			</Button>
 			<input
 				ref={fileInputRef}
 				type="file"
@@ -1378,14 +1362,6 @@ export default function EventTickets({
 													)}
 												</th>
 											)}
-											{hasGroups && (
-												<th>
-													{__(
-														'Invitation only',
-														'fair-events'
-													)}
-												</th>
-											)}
 											{settings.show_ticket_type_minimum_activities &&
 												options.length > 0 && (
 													<th>
@@ -1566,23 +1542,6 @@ export default function EventTickets({
 																'All participants',
 																'fair-events'
 															)}
-														/>
-													</td>
-												)}
-												{hasGroups && (
-													<td>
-														<CheckboxControl
-															checked={
-																type.invitation_only ||
-																false
-															}
-															onChange={(v) =>
-																updateTicketType(
-																	tIndex,
-																	'invitation_only',
-																	v
-																)
-															}
 														/>
 													</td>
 												)}
@@ -1889,7 +1848,7 @@ export default function EventTickets({
 													(settings.show_ticket_type_capacity
 														? 1
 														: 0) +
-													(hasGroups ? 2 : 0) +
+													(hasGroups ? 1 : 0) +
 													(settings.show_ticket_type_minimum_activities &&
 													options.length > 0
 														? 1

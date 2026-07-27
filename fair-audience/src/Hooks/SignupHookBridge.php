@@ -22,8 +22,8 @@ defined( 'WPINC' ) || die;
 
 /**
  * Bridges the base fair-events signup render/create path to fair-audience's
- * participant records for the simple (anonymous/linked, non-invitation,
- * non-group-restricted) signup case. The identity routes (/status, /resume,
+ * participant records for the simple (anonymous/linked, non-group-restricted)
+ * signup case. The identity routes (/status, /resume,
  * /request-link, /register, /retry-payment, /add-activities) stay on
  * fair-audience/v1 and are unaffected by this bridge.
  */
@@ -73,7 +73,7 @@ class SignupHookBridge {
 	 * created through the base fair-events/v1/get-tickets route, set the
 	 * session cookie, and send the confirmation email — mirroring the simple
 	 * path of EventSignupController::create_signup() without duplicating its
-	 * invitation/group/sliding-scale/questionnaire handling.
+	 * group/sliding-scale/questionnaire handling.
 	 *
 	 * @param int      $signup_id        The fair_events_signups row just created.
 	 * @param int      $event_date_id    Event-date ID the signup targets.

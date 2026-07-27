@@ -51,10 +51,6 @@ const PAGES = [
 	{ slug: 'fair-events-venues', root: 'fair-events-venues-root' },
 	{ slug: 'fair-events-manage-event', root: 'fair-events-manage-event-root' },
 	{ slug: 'fair-events-source-view', root: 'fair-events-source-view-root' },
-	{
-		slug: 'fair-events-manage-invitations',
-		root: 'fair-events-manage-invitations-root',
-	},
 	{ slug: 'fair-events-settings', root: 'fair-events-settings-root' },
 	// Migration pages only register when the CPT exists.
 	{
