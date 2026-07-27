@@ -31,13 +31,15 @@ class SettingsPageTest extends TestCase {
 	}
 
 	/**
-	 * A field whose id is absent from the posted allowlist (e.g. its plugin
-	 * was deactivated between page load and submit) is skipped entirely —
-	 * its option is left untouched.
+	 * A field id absent from the posted allowlist is skipped entirely — its
+	 * option is left untouched. `$posted_ids` is a form-integrity allowlist
+	 * (protects against a truncated or forged POST flipping a field that was
+	 * never rendered), not a deactivation guard — see
+	 * test_build_updates_ignores_ids_with_no_registered_field() for that.
 	 *
 	 * @return void
 	 */
-	public function test_build_updates_skips_fields_absent_from_posted_ids() {
+	public function test_build_updates_skips_fields_not_in_the_posted_allowlist() {
 		$fields = array(
 			array(
 				'id'     => 'fair-events/bundled-translations',
@@ -48,6 +50,25 @@ class SettingsPageTest extends TestCase {
 		);
 
 		$updates = SettingsPage::build_updates( $fields, array(), array() );
+
+		$this->assertSame( array(), $updates );
+	}
+
+	/**
+	 * A posted+checked id with no matching entry in `$fields` (its plugin was
+	 * deactivated between page load and submit, so collect_fields() no
+	 * longer returns its descriptor) writes nothing. This is the real
+	 * deactivation guard — re-collecting `$fields` at save time, not the
+	 * `$posted_ids` allowlist.
+	 *
+	 * @return void
+	 */
+	public function test_build_updates_ignores_ids_with_no_registered_field() {
+		$updates = SettingsPage::build_updates(
+			array(),
+			array( 'fair-form/bundled-translations' ),
+			array( 'fair-form/bundled-translations' )
+		);
 
 		$this->assertSame( array(), $updates );
 	}

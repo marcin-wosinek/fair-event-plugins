@@ -61,18 +61,32 @@ class SettingsPage {
 	}
 
 	/**
-	 * Register the submenu page under Settings.
+	 * Register the submenu page under Settings, and the load-hook that
+	 * handles the save POST before headers are sent.
+	 *
+	 * Bails when no plugin has registered any field — there is nothing to
+	 * show, so the page (and its "no settings yet" state) simply don't exist.
 	 *
 	 * @return void
 	 */
 	public static function register_page() {
-		add_options_page(
+		if ( empty( self::collect_fields() ) ) {
+			return;
+		}
+
+		// "Fair Event Plugins" is a brand name, left untranslated by design
+		// (see the Decisions section in PHP_PATTERNS.md).
+		$hook = add_options_page(
 			'Fair Event Plugins',
 			'Fair Event Plugins',
 			'manage_options',
 			self::PAGE_SLUG,
 			array( __CLASS__, 'render' )
 		);
+
+		if ( $hook ) {
+			add_action( "load-{$hook}", array( __CLASS__, 'handle_post' ) );
+		}
 	}
 
 	/**
@@ -115,9 +129,13 @@ class SettingsPage {
 	 * fields and the submitted form state. No WordPress option calls happen
 	 * here, so this is directly unit-testable.
 	 *
-	 * - A field id absent from `$posted_ids` (e.g. its plugin was deactivated
-	 *   between page load and submit) is skipped entirely — its option is
-	 *   left untouched.
+	 * - `$posted_ids` is a form-integrity allowlist, not a deactivation guard:
+	 *   it is populated from hidden inputs rendered while every field's
+	 *   plugin was still active, so a truncated or forged POST can't flip a
+	 *   field that was never rendered. A field id absent from `$posted_ids`
+	 *   is skipped entirely — its option is left untouched. Deactivation
+	 *   safety instead comes from `$fields` itself being re-collected at save
+	 *   time, so a since-deactivated plugin's descriptor is simply gone.
 	 * - A `locked` field is never written from the UI, even if present in
 	 *   `$posted_ids`.
 	 * - Any other posted field id not present in `$checked_ids` means the
@@ -187,22 +205,43 @@ class SettingsPage {
 	}
 
 	/**
-	 * Render the settings page, handling the POST save first.
+	 * Handle the save POST on `load-{$hook}`, before any headers are sent, so
+	 * a redirect back to the page is possible. Runs once per submit, ahead of
+	 * the `render()` GET that follows the redirect.
+	 *
+	 * @return void
+	 */
+	public static function handle_post() {
+		if ( ! isset( $_POST[ self::NONCE_FIELD ] ) ) {
+			return;
+		}
+
+		check_admin_referer( self::NONCE_ACTION, self::NONCE_FIELD );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.' ), 403 );
+		}
+
+		self::save( self::collect_fields(), wp_unslash( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
+		wp_safe_redirect( add_query_arg( 'settings-updated', 'true', menu_page_url( self::PAGE_SLUG, false ) ) );
+		exit;
+	}
+
+	/**
+	 * Render the settings page.
 	 *
 	 * @return void
 	 */
 	public static function render() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( 'You do not have sufficient permissions to access this page.' );
+			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.' ), 403 );
 		}
 
-		$saved = false;
-		if ( isset( $_POST[ self::NONCE_FIELD ] ) && check_admin_referer( self::NONCE_ACTION, self::NONCE_FIELD ) ) {
-			self::save( self::collect_fields(), wp_unslash( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$saved = true;
-		}
-
-		// Re-collect after saving so the form reflects the values just written.
+		// Read-only display flag reflecting the redirect from handle_post(),
+		// which already verified the nonce before writing anything — nothing
+		// is processed or written here.
+		$saved  = isset( $_GET['settings-updated'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$fields = self::collect_fields();
 
 		self::render_form( $fields, $saved );
@@ -239,51 +278,48 @@ class SettingsPage {
 		}
 		?>
 		<div class="wrap">
+			<?php // "Fair Event Plugins" is a brand name, left untranslated by design. ?>
 			<h1>Fair Event Plugins</h1>
 			<?php if ( $saved ) : ?>
-				<div class="notice notice-success is-dismissible"><p>Settings saved.</p></div>
+				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.' ); ?></p></div>
 			<?php endif; ?>
 
-			<?php if ( empty( $sections ) ) : ?>
-				<p>No shared settings are available yet.</p>
-			<?php else : ?>
-				<form method="post">
-					<?php wp_nonce_field( self::NONCE_ACTION, self::NONCE_FIELD ); ?>
-					<?php foreach ( $fields as $field ) : ?>
-						<input type="hidden" name="fair_event_plugins_fields[]" value="<?php echo esc_attr( $field['id'] ); ?>" />
-					<?php endforeach; ?>
+			<form method="post">
+				<?php wp_nonce_field( self::NONCE_ACTION, self::NONCE_FIELD ); ?>
+				<?php foreach ( $fields as $field ) : ?>
+					<input type="hidden" name="fair_event_plugins_fields[]" value="<?php echo esc_attr( $field['id'] ); ?>" />
+				<?php endforeach; ?>
 
-					<?php foreach ( $sections as $section ) : ?>
-						<h2><?php echo esc_html( $section['title'] ); ?></h2>
-						<table class="form-table" role="presentation">
-							<tbody>
-								<?php foreach ( $section['fields'] as $field ) : ?>
-									<tr>
-										<th scope="row"><?php echo esc_html( $field['label'] ); ?></th>
-										<td>
-											<label>
-												<input
-													type="checkbox"
-													name="fair_event_plugins_values[<?php echo esc_attr( $field['id'] ); ?>]"
-													value="1"
-													<?php checked( (bool) $field['value'] ); ?>
-													<?php disabled( (bool) $field['locked'] ); ?>
-												/>
-												<?php echo esc_html( $field['description'] ); ?>
-											</label>
-											<?php if ( $field['locked'] && $field['locked_note'] ) : ?>
-												<p class="description"><?php echo esc_html( $field['locked_note'] ); ?></p>
-											<?php endif; ?>
-										</td>
-									</tr>
-								<?php endforeach; ?>
-							</tbody>
-						</table>
-					<?php endforeach; ?>
+				<?php foreach ( $sections as $section ) : ?>
+					<h2><?php echo esc_html( $section['title'] ); ?></h2>
+					<table class="form-table" role="presentation">
+						<tbody>
+							<?php foreach ( $section['fields'] as $field ) : ?>
+								<tr>
+									<th scope="row"><?php echo esc_html( $field['label'] ); ?></th>
+									<td>
+										<label>
+											<input
+												type="checkbox"
+												name="fair_event_plugins_values[<?php echo esc_attr( $field['id'] ); ?>]"
+												value="1"
+												<?php checked( (bool) $field['value'] ); ?>
+												<?php disabled( (bool) $field['locked'] ); ?>
+											/>
+											<?php echo esc_html( $field['description'] ); ?>
+										</label>
+										<?php if ( $field['locked'] && $field['locked_note'] ) : ?>
+											<p class="description"><?php echo esc_html( $field['locked_note'] ); ?></p>
+										<?php endif; ?>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endforeach; ?>
 
-					<?php submit_button(); ?>
-				</form>
-			<?php endif; ?>
+				<?php submit_button(); ?>
+			</form>
 		</div>
 		<?php
 	}

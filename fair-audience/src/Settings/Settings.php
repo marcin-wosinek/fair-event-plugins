@@ -20,6 +20,14 @@ class Settings {
 	 */
 	public function init() {
 		add_action( 'rest_api_init', array( $this, 'register_settings' ) );
+
+		// Registered on both hooks: REST writes need it on rest_api_init, but
+		// the shared Settings → Fair Event Plugins screen (SettingsPage.php)
+		// saves via a plain admin POST outside REST, so the
+		// sanitize_callback must also be attached on admin_init or that
+		// write path has no sanitization at all.
+		add_action( 'rest_api_init', array( $this, 'register_feature_settings' ) );
+		add_action( 'admin_init', array( $this, 'register_feature_settings' ) );
 	}
 
 	/**
@@ -201,7 +209,16 @@ class Settings {
 				'default'           => array(),
 			)
 		);
+	}
 
+	/**
+	 * Register the feature-flag bundle option. Kept separate from
+	 * register_settings() and hooked on both rest_api_init and admin_init —
+	 * see init().
+	 *
+	 * @return void
+	 */
+	public function register_feature_settings() {
 		// Feature flag bundle toggles — UI state only, never overrides a
 		// wp-config constant (see Features::sanitize_option()).
 		register_setting(
