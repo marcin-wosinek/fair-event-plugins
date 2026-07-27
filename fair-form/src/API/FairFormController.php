@@ -169,6 +169,10 @@ class FairFormController extends WP_REST_Controller {
 				$participant = new \FairAudience\Models\Participant();
 				$participant->populate(
 					array(
+						// Fair Form has no dedicated "name" question type, but
+						// Participant::save() requires a non-empty name — fall
+						// back to the email's local part rather than 500ing.
+						'name'          => $this->derive_name_from_email( $email ),
 						'email'         => $email,
 						'email_profile' => 'minimal',
 						'status'        => 'confirmed',
@@ -248,13 +252,17 @@ class FairFormController extends WP_REST_Controller {
 		// fire regardless of whether the form collected an email address or
 		// fair-audience is active. Recipient is resolved server-side from the
 		// block's own attributes, not the (now-removed) client-supplied param.
-		$notification_email = FormNotificationService::resolve_notification_email(
-			$post_id,
-			$request->get_param( 'form_id' )
-		);
+		if ( $submission_id > 0 ) {
+			$notification_email = FormNotificationService::resolve_notification_email(
+				$post_id,
+				$request->get_param( 'form_id' )
+			);
 
-		if ( $submission_id > 0 && '' !== $notification_email ) {
-			FormNotificationService::defer( $submission_id, $notification_email );
+			if ( '' !== $notification_email ) {
+				FormNotificationService::defer( $submission_id, $notification_email );
+			}
+		} else {
+			FormNotificationService::notify_submission_not_persisted( $post_id, $request->get_param( 'form_id' ) );
 		}
 
 		return rest_ensure_response(
@@ -263,6 +271,23 @@ class FairFormController extends WP_REST_Controller {
 				'message' => __( 'Thank you for your submission!', 'fair-form' ),
 			)
 		);
+	}
+
+	/**
+	 * Derive a fallback participant name from an email address.
+	 *
+	 * Fair Form questionnaires have no dedicated "name" question type, so a
+	 * submission that only collects an email has nothing else to populate
+	 * `Participant::name` with — and `Participant::save()` rejects an empty
+	 * name. Uses the local part (before `@`) rather than leaving it blank.
+	 *
+	 * @param string $email Sanitized submitter email.
+	 * @return string Fallback name, never empty.
+	 */
+	private function derive_name_from_email( $email ) {
+		$local_part = strstr( $email, '@', true );
+
+		return $local_part ? sanitize_text_field( $local_part ) : __( 'Guest', 'fair-form' );
 	}
 
 	/**

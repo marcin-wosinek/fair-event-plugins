@@ -57,6 +57,20 @@ class FormNotificationService {
 	}
 
 	/**
+	 * Signal that a submission's questionnaire answers failed to persist, so
+	 * no notification could be scheduled for it. Called by the REST
+	 * controller — the notification path never runs in this case since there
+	 * is no submission ID to defer against.
+	 *
+	 * @param int    $post_id Post ID the form was submitted from, when known.
+	 * @param string $form_id Form UUID, when known.
+	 * @return void
+	 */
+	public static function notify_submission_not_persisted( int $post_id, string $form_id ): void {
+		self::notify_failure( 'submission_not_persisted', $post_id, $form_id );
+	}
+
+	/**
 	 * Resolve the notification recipient configured on the Fair Form block
 	 * that produced this submission.
 	 *
@@ -90,12 +104,17 @@ class FormNotificationService {
 			return '';
 		}
 
-		$email = ! empty( $block['attrs']['notificationEmail'] )
-			? sanitize_email( $block['attrs']['notificationEmail'] )
-			: '';
+		$raw_email = $block['attrs']['notificationEmail'] ?? '';
+		if ( '' === $raw_email ) {
+			// Notification Email deliberately left blank — not a failure,
+			// nothing was expected to be sent.
+			return '';
+		}
 
-		if ( '' === $email ) {
-			self::notify_failure( 'unresolved_recipient', $post_id, $form_id );
+		$email = sanitize_email( $raw_email );
+		if ( ! is_email( $email ) ) {
+			self::notify_failure( 'invalid_recipient', $post_id, $form_id );
+			return '';
 		}
 
 		return $email;
@@ -105,20 +124,30 @@ class FormNotificationService {
 	 * Recursively search parsed blocks for the matching Fair Form block,
 	 * dereferencing `core/block` (reusable/synced pattern) references.
 	 *
-	 * @param array  $blocks  Parsed blocks (from parse_blocks()).
-	 * @param string $form_id Form UUID to match, or '' to take the first block found.
+	 * `$seen_refs` guards against a `core/block` referencing itself (directly
+	 * or via a mutual A→B→A pair, reachable through pattern duplication or
+	 * import), mirroring core's `render_block_core_block()` — without it,
+	 * such a reference recurses until memory is exhausted.
+	 *
+	 * @param array  $blocks    Parsed blocks (from parse_blocks()).
+	 * @param string $form_id   Form UUID to match, or '' to take the first block found.
+	 * @param array  $seen_refs Reusable-block post IDs already visited on this path, keyed by ID.
 	 * @return array|null The matching block, or null.
 	 */
-	private static function find_form_block( array $blocks, string $form_id ) {
+	private static function find_form_block( array $blocks, string $form_id, array $seen_refs = array() ) {
 		foreach ( $blocks as $block ) {
 			$block_name = $block['blockName'] ?? '';
 
 			if ( 'core/block' === $block_name ) {
 				$ref_id = (int) ( $block['attrs']['ref'] ?? 0 );
-				if ( $ref_id > 0 ) {
+				if ( $ref_id > 0 && ! isset( $seen_refs[ $ref_id ] ) ) {
 					$reusable_post = get_post( $ref_id );
 					if ( $reusable_post ) {
-						$found = self::find_form_block( parse_blocks( $reusable_post->post_content ), $form_id );
+						$found = self::find_form_block(
+							parse_blocks( $reusable_post->post_content ),
+							$form_id,
+							$seen_refs + array( $ref_id => true )
+						);
 						if ( $found ) {
 							return $found;
 						}
@@ -134,7 +163,7 @@ class FormNotificationService {
 			}
 
 			if ( ! empty( $block['innerBlocks'] ) ) {
-				$found = self::find_form_block( $block['innerBlocks'], $form_id );
+				$found = self::find_form_block( $block['innerBlocks'], $form_id, $seen_refs );
 				if ( $found ) {
 					return $found;
 				}
@@ -158,7 +187,7 @@ class FormNotificationService {
 
 		$submission = ( new QuestionnaireSubmissionRepository() )->get_by_id( $submission_id );
 		if ( ! $submission ) {
-			self::notify_failure( 'submission_not_found', 0, '' );
+			self::notify_failure( 'submission_not_found', 0, '', $submission_id );
 			return false;
 		}
 
@@ -254,7 +283,7 @@ class FormNotificationService {
 		$sent = $this->deliver( $to_email, $subject, $message );
 
 		if ( ! $sent ) {
-			self::notify_failure( 'mail_failed', $post_id, (string) $submission->form_id );
+			self::notify_failure( 'mail_failed', $post_id, (string) $submission->form_id, $submission_id );
 		}
 
 		return $sent;
@@ -387,17 +416,18 @@ class FormNotificationService {
 	 * Fire the graceful-degradation failure hook and, under WP_DEBUG, log the
 	 * reason. No admin-visible notice yet — see ticket #1212 follow-ups.
 	 *
-	 * @param string $reason  Machine-readable reason: 'unresolved_recipient', 'submission_not_found', or 'mail_failed'.
-	 * @param int    $post_id Post ID the form was submitted from, when known.
-	 * @param string $form_id Form UUID, when known.
+	 * @param string $reason        Machine-readable reason: 'unresolved_recipient', 'invalid_recipient', 'submission_not_persisted', 'submission_not_found', or 'mail_failed'.
+	 * @param int    $post_id       Post ID the form was submitted from, when known.
+	 * @param string $form_id       Form UUID, when known.
+	 * @param int    $submission_id Questionnaire submission ID, when known.
 	 * @return void
 	 */
-	private static function notify_failure( string $reason, int $post_id, string $form_id ): void {
-		do_action( 'fair_form_notification_failed', $reason, $post_id, $form_id );
+	private static function notify_failure( string $reason, int $post_id, string $form_id, int $submission_id = 0 ): void {
+		do_action( 'fair_form_notification_failed', $reason, $post_id, $form_id, $submission_id );
 
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( sprintf( 'fair-form: notification not sent (%s) for post_id=%d form_id=%s', $reason, $post_id, $form_id ) );
+			error_log( sprintf( 'fair-form: notification not sent (%s) for post_id=%d form_id=%s submission_id=%d', $reason, $post_id, $form_id, $submission_id ) );
 		}
 	}
 }

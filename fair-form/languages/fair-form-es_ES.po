@@ -17,7 +17,7 @@ msgstr ""
 #: fair-form.php
 #: src/Admin/AdminHooks.php:129
 #: src/Admin/AdminHooks.php:130
-#: src/API/FairFormController.php:233
+#: src/API/FairFormController.php:237
 #: src/Services/QuestionnaireService.php:384
 msgid "Fair Form"
 msgstr ""
@@ -56,11 +56,11 @@ msgstr "Todas las respuestas"
 msgid "Too many requests. Please try again later."
 msgstr "Demasiadas solicitudes. Inténtalo de nuevo más tarde."
 
-#: src/API/FairFormController.php:181
+#: src/API/FairFormController.php:185
 msgid "Failed to process submission. Please try again."
 msgstr "No se pudo procesar el envío. Inténtalo de nuevo."
 
-#: src/API/FairFormController.php:263
+#: src/API/FairFormController.php:271
 msgid "Thank you for your submission!"
 msgstr "¡Gracias por tu envío!"
 
@@ -183,7 +183,7 @@ msgstr "Formulario"
 msgid "Error: "
 msgstr "Error: "
 
-#: src/Services/FormNotificationService.php:188
+#: src/Services/FormNotificationService.php:217
 #: src/Admin/form-answers/FormAnswers.js:140
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
 #: src/Admin/submission-detail/SubmissionDetail.js:302
@@ -497,17 +497,21 @@ msgid "Enter a valid phone number with country code (for example +49 170 123 45 
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/FormNotificationService.php:181
+#: src/Services/FormNotificationService.php:210
 #, php-format
 msgid "New form submission — %s"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/FormNotificationService.php:200
+#: src/Services/FormNotificationService.php:229
 #, php-format
 msgid "Page: %s"
 msgstr ""
 
-#: src/Services/FormNotificationService.php:228
+#: src/Services/FormNotificationService.php:257
 msgid "A new form submission has been received."
+msgstr ""
+
+#: src/API/FairFormController.php:290
+msgid "Guest"
 msgstr ""

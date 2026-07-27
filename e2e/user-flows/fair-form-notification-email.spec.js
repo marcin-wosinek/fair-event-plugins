@@ -163,9 +163,7 @@ test.describe('Fair Form admin notification', () => {
 		const seed = runScript(
 			'seed-fair-form-notification-page.php',
 			'E2E_FAIR_FORM_NOTIFICATION_PAGE',
-			`unused.${Date.now()}@example.test`,
-			'',
-			'1'
+			`unused.${Date.now()}@example.test '' 1`
 		);
 
 		await submitForm(page, seed.pageId, shortTextAnswer());

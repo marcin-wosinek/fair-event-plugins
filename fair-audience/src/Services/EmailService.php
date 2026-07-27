@@ -1873,10 +1873,13 @@ class EmailService {
 	 *
 	 * @deprecated Superseded by fair-form's own `FormNotificationService`
 	 * (ticket #1212), which decouples the notification from participant
-	 * creation and drops fair-form's dependency on this plugin. Kept (with
-	 * its DEFERRABLE_METHODS entry) so a site running an updated fair-form
-	 * alongside an un-updated fair-audience doesn't lose notifications mid
-	 * rollout. Removal is a follow-up cleanup ticket.
+	 * creation and drops fair-form's dependency on this plugin. An updated
+	 * fair-form never calls this method regardless of fair-audience's
+	 * version — it's kept (with its DEFERRABLE_METHODS entry) for the
+	 * opposite pairing: a site whose fair-form is not yet updated but whose
+	 * fair-audience is, and for any `fair_audience_send_deferred_email` cron
+	 * events already queued against this method before the upgrade. Removal
+	 * is a follow-up cleanup ticket.
 	 *
 	 * @param string $to_email          Recipient email address.
 	 * @param string $submitter_name    Submitter's first name.
