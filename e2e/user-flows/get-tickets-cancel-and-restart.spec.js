@@ -1,20 +1,20 @@
 /**
  * E2E: abandoning a payment and starting over (fair-events get-tickets block).
  *
- * Companion to signup-cancel-and-restart.spec.js, which found that the
- * fair-audience event-signup block's "Cancel and start over" link is a no-op —
- * clicking it re-shows the identical stuck retry screen because render.php
- * re-derives that screen from a persistent per-participant DB row that the
- * link never clears.
+ * Companion to signup-cancel-and-restart.spec.js (the fair-audience
+ * equivalent). Rewritten for #1244: the base get-tickets form now has its own
+ * direct-navigation fallback (FairEvents\Services\SignupPaymentSession, a
+ * short-lived signed cookie set when create_signup() returns
+ * payment_required) — a buyer who abandons Mollie's checkout and navigates
+ * straight back to the event page (no provider redirect) sees the same
+ * resume card the return-from-payment callback would show, within the
+ * 15-minute hold window, and "Cancel and start over" clears it server-side
+ * so a fresh purchase isn't blocked by the stale card resurrecting.
  *
- * The get-tickets block has no such identity to get stuck against: it doesn't
- * link the page render to a signed-up participant/session at all (buyers
- * aren't known until they submit name+email), so there's no server-side
- * "resume the in-progress payment" fallback to go stale. This spec asserts
- * that behaviour holds: a buyer who starts a paid checkout and then goes back
- * to the event page (Mollie's redirect never followed / abandoned) sees a
- * plain, fresh form — not stuck on the earlier processing state — and can
- * complete a brand new purchase from it.
+ * Uses the Mollie double's settable GET status (set-mollie-status.php,
+ * #1244 Decisions #8) to report "open" — a checkout link that was created
+ * but never completed — so SignupPaymentState resolves 'resume' both on the
+ * initial callback render and via the cookie fallback.
  */
 
 import { test, expect } from '../support/fixtures.js';
@@ -32,9 +32,15 @@ test.describe('get-tickets block (fair-audience inactive): abandon and restart',
 	test.beforeEach(() => {
 		// Reset the get-tickets per-IP rate limit (3 requests/hour).
 		wpCli('transient delete --all');
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'open');
 	});
 
-	test('going back after starting a paid checkout shows a fresh form the buyer can complete', async ({
+	test.afterEach(() => {
+		// Leave the double reporting "paid" for every other spec's assumption.
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
+	});
+
+	test('abandoning checkout shows a resume card even via direct navigation, and canceling allows a fresh purchase', async ({
 		page,
 		seedEvent,
 	}) => {
@@ -45,7 +51,7 @@ test.describe('get-tickets block (fair-audience inactive): abandon and restart',
 
 		await page.goto(event.pageUrl);
 
-		let form = page.locator('.fair-events-get-tickets-form');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
 		await form.locator('input[name="name"]').fill(`Abandoned ${stamp}`);
@@ -56,51 +62,67 @@ test.describe('get-tickets block (fair-audience inactive): abandon and restart',
 			)
 			.check();
 
-		// Submit → redirected through the Mollie double to the callback URL,
-		// which only polls; the buyer never lands on a confirmed state because
-		// no webhook fires here — this models an abandoned/failed attempt.
+		// Submit → redirected through the Mollie double to the callback URL;
+		// render.php syncs on that first load, pulls "open" (checkout created,
+		// never finished) from the double, and shows the resume card.
 		await form.locator('button[type="submit"]').click();
-		await expect(page.locator('.message-processing')).toBeVisible({
-			timeout: 30000,
-		});
+		const resumeCard = page.locator(
+			'.fair-events-get-tickets-callback-resume'
+		);
+		await expect(resumeCard).toBeVisible({ timeout: 30000 });
+		await expect(resumeCard.getByText('Continue payment')).toBeVisible();
 
-		// The buyer gives up and goes back to the plain event page instead of
-		// completing or retrying the Mollie checkout.
+		// The buyer gives up and navigates straight back to the plain event
+		// page — no fair_payment_callback/transaction_id/token in the URL at
+		// all. The session cookie set at checkout time is what recognises
+		// them now.
 		await page.goto(event.pageUrl);
 
-		form = page.locator('.fair-events-get-tickets-form');
-		await expect(form).toBeVisible();
-		// No leftover processing/error message from the abandoned attempt (the
-		// block always renders an empty `.message-container` for its JS to fill
-		// in later — only the populated status classes indicate a stuck state).
-		await expect(page.locator('.message-processing')).toHaveCount(0);
-		await expect(page.locator('.message-error')).toHaveCount(0);
-		await expect(page.locator('.message-success')).toHaveCount(0);
+		await expect(
+			page.locator('.fair-events-get-tickets-callback-resume')
+		).toBeVisible({ timeout: 15000 });
+		await expect(page.locator('.fair-events-get-tickets-form')).toHaveCount(
+			0
+		);
 
-		// A completely fresh purchase (different buyer identity) works.
+		// Cancel and start over: clears the hold + cookie server-side, then
+		// strips any callback params and reloads to a plain form.
+		await page.getByRole('link', { name: 'Cancel and start over' }).click();
+
+		const freshForm = page.locator('.fair-events-get-tickets-form');
+		await expect(freshForm).toBeVisible({ timeout: 15000 });
+		await expect(
+			page.locator('.fair-events-get-tickets-callback')
+		).toHaveCount(0);
+
+		// A completely fresh purchase (different buyer identity) works, and
+		// this time Mollie confirms it outright.
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
 		const buyerEmail = `get-tickets.fresh.${stamp}@example.test`;
-		await form.locator('input[name="name"]').fill(`Fresh Buyer ${stamp}`);
-		await form.locator('input[name="email"]').fill(buyerEmail);
-		await form
+		await freshForm
+			.locator('input[name="name"]')
+			.fill(`Fresh Buyer ${stamp}`);
+		await freshForm.locator('input[name="email"]').fill(buyerEmail);
+		await freshForm
 			.locator(
 				`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
 			)
 			.check();
-		await form.locator('button[type="submit"]').click();
-		await expect(page.locator('.message-processing')).toBeVisible({
-			timeout: 30000,
-		});
+		await freshForm.locator('button[type="submit"]').click();
+		await expect(
+			page.locator('.fair-events-get-tickets-callback-confirmed')
+		).toBeVisible({ timeout: 30000 });
 
 		const state = runScript(
 			'get-tickets-state.php',
 			'E2E_GT_STATE',
 			String(event.eventDateId)
 		);
-		// Both the abandoned attempt and the fresh purchase left their own
-		// pending signup row — the abandoned one was never blocking the retry.
+		// The abandoned attempt was canceled (failed), the fresh purchase confirmed.
 		expect(state.signups).toHaveLength(2);
-		expect(state.signups.map((s) => s.email).sort()).toEqual(
-			[abandonedEmail, buyerEmail].sort()
-		);
+		const abandoned = state.signups.find((s) => s.email === abandonedEmail);
+		const fresh = state.signups.find((s) => s.email === buyerEmail);
+		expect(abandoned.status).toBe('failed');
+		expect(fresh.status).toBe('confirmed');
 	});
 });

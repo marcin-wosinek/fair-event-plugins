@@ -4,12 +4,13 @@
  * @package FairEvents
  */
 
+import apiFetch from '@wordpress/api-fetch';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import {
 	showMessage,
 	onDomReady,
 	initiatePayment,
-	handlePaymentCallback,
+	pollPaymentStatus,
 	computeTicketTotal,
 	formatMoney,
 	collectQuestionAnswers,
@@ -18,7 +19,7 @@ import {
 import './frontend.css';
 
 const CSS_PREFIX = 'fair-events-get-tickets';
-const STATUS_PATH = '/fair-payments-connector/v1/payments';
+const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 
 (function () {
 	'use strict';
@@ -26,11 +27,17 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 	onDomReady(initialize);
 
 	function initialize() {
-		const container = document.querySelector('.fair-events-get-tickets');
-		handlePaymentCallback({
-			statusPath: STATUS_PATH,
-			onConfirmed: () => handleConfirmed(container),
-		});
+		document
+			.querySelectorAll('.fair-events-get-tickets-callback-processing')
+			.forEach(wireProcessingCard);
+		document
+			.querySelectorAll(
+				'.fair-events-get-tickets-callback-resume, .fair-events-get-tickets-callback-retry'
+			)
+			.forEach(function (container) {
+				wireRetryButton(container);
+				wireCancelLink(container);
+			});
 
 		const forms = document.querySelectorAll(
 			'.fair-events-get-tickets-form'
@@ -38,29 +45,176 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 		forms.forEach(setupForm);
 	}
 
-	function handleConfirmed(container) {
-		if (!container) {
+	/**
+	 * Build the payment-state query string from a callback card's data
+	 * attributes.
+	 * @param {HTMLElement} container Card element carrying data-transaction-id/data-token.
+	 * @return {string} Query string including the leading '?'.
+	 */
+	function paymentStateQuery(container) {
+		const transactionId = container.dataset.transactionId || '';
+		const token = container.dataset.token || '';
+		const params = new URLSearchParams();
+		if (transactionId) {
+			params.set('transaction_id', transactionId);
+		}
+		if (token) {
+			params.set('token', token);
+		}
+		const query = params.toString();
+		return query ? `?${query}` : '';
+	}
+
+	/**
+	 * Poll the payment-state endpoint while the "thank you, confirming with
+	 * your bank" card is showing. Swaps to the confirmed card in place once
+	 * paid; reloads the page on any other resolved outcome (failed/resume/
+	 * retry) so the visitor sees the exact server-rendered card instead of a
+	 * client-built approximation.
+	 * @param {HTMLElement} container The processing card element.
+	 */
+	function wireProcessingCard(container) {
+		if (!container.dataset.transactionId) {
 			return;
 		}
 
-		const messageContainer = container.querySelector('.message-container');
-		const form = container.querySelector('.fair-events-get-tickets-form');
+		pollPaymentStatus({
+			path: `${PAYMENT_STATE_PATH}${paymentStateQuery(container)}`,
+			onConfirmed: (response) => swapToConfirmedCard(container, response),
+			onFailed: () => window.location.reload(),
+			onProcessing: (response) => {
+				if (response.state === 'resume' || response.state === 'retry') {
+					window.location.reload();
+				}
+			},
+		});
+	}
 
-		if (messageContainer) {
-			showMessage(
-				messageContainer,
-				__(
-					'Your ticket purchase was successful! Thank you.',
+	/**
+	 * Replace the processing card's contents with the paid confirmation.
+	 * @param {HTMLElement} container The processing card element.
+	 * @param {Object}      response  payment-state response.
+	 */
+	function swapToConfirmedCard(container, response) {
+		container.classList.remove(
+			'fair-events-get-tickets-callback-processing'
+		);
+		container.classList.add('fair-events-get-tickets-callback-confirmed');
+		container.innerHTML = '';
+
+		const icon = document.createElement('div');
+		icon.className = 'fair-events-get-tickets-callback-icon';
+		icon.setAttribute('aria-hidden', 'true');
+		icon.textContent = '✓';
+		container.appendChild(icon);
+
+		const heading = document.createElement('h2');
+		heading.className = 'fair-events-get-tickets-callback-heading';
+		heading.textContent = __('Payment confirmed', 'fair-events');
+		container.appendChild(heading);
+
+		if (response.amount) {
+			const amountEl = document.createElement('p');
+			amountEl.className = 'fair-events-get-tickets-callback-amount';
+			amountEl.textContent = `${__(
+				'Amount paid:',
+				'fair-events'
+			)} ${formatMoney(response.amount, response.currency)}`;
+			container.appendChild(amountEl);
+		}
+
+		const emailEl = document.createElement('p');
+		emailEl.className = 'fair-events-get-tickets-callback-email';
+		emailEl.textContent = __(
+			'A confirmation email is on its way. You can close this page.',
+			'fair-events'
+		);
+		container.appendChild(emailEl);
+	}
+
+	/**
+	 * Wire a resume/retry card's "Retry payment" button, if present (the
+	 * resume card links straight to its existing checkout_url instead).
+	 * @param {HTMLElement} container The resume/retry card element.
+	 */
+	function wireRetryButton(container) {
+		const button = container.querySelector(
+			'.fair-events-get-tickets-callback-retry-button'
+		);
+		if (!button) {
+			return;
+		}
+
+		const messageContainer = container.querySelector(
+			'.fair-events-get-tickets-callback-message'
+		);
+
+		button.addEventListener('click', function () {
+			initiatePayment({
+				apiPath: '/fair-events/v1/get-tickets/retry-payment',
+				data: {
+					transaction_id: parseInt(
+						container.dataset.transactionId,
+						10
+					),
+					token: container.dataset.token || '',
+				},
+				button,
+				loadingText: __('Redirecting…', 'fair-events'),
+				defaultErrorMessage: __(
+					'Could not start the retry. Please try again.',
 					'fair-events'
 				),
-				'success',
-				CSS_PREFIX
-			);
+				onError: (message) => {
+					showMessage(messageContainer, message, 'error', CSS_PREFIX);
+				},
+			}).catch(function () {
+				// Error already surfaced via onError.
+			});
+		});
+	}
+
+	/**
+	 * Wire a resume/retry card's "Cancel and start over" link so it clears
+	 * the pending_payment hold (and the session cookie) server-side before
+	 * reloading with the callback params stripped — without this, the
+	 * direct-navigation fallback would resurrect the same checkout on the
+	 * next load.
+	 * @param {HTMLElement} container The resume/retry card element.
+	 */
+	function wireCancelLink(container) {
+		const link = container.querySelector(
+			'.fair-events-get-tickets-callback-cancel-link'
+		);
+		if (!link) {
+			return;
 		}
 
-		if (form) {
-			form.style.display = 'none';
-		}
+		link.addEventListener('click', function (event) {
+			event.preventDefault();
+
+			apiFetch({
+				path: '/fair-events/v1/get-tickets/cancel-payment',
+				method: 'POST',
+				data: {
+					transaction_id: parseInt(
+						container.dataset.transactionId,
+						10
+					),
+					token: container.dataset.token || '',
+				},
+			})
+				.catch(function (error) {
+					console.error('Cancel payment error:', error);
+				})
+				.finally(function () {
+					const url = new URL(window.location.href);
+					url.searchParams.delete('fair_payment_callback');
+					url.searchParams.delete('transaction_id');
+					url.searchParams.delete('token');
+					window.location.href = url.toString();
+				});
+		});
 	}
 
 	function setupForm(form) {
