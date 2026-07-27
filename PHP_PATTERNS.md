@@ -548,13 +548,31 @@ whichever field registers first for that section's title wins).
     bundled copy predates this feature doesn't fatal.
 -   Storage stays per-plugin (`fair_{plugin}_features` etc.) — the shared
     screen never introduces a new option of its own.
+-   A plugin registering a field must attach its option's `sanitize_callback`
+    (via `register_setting()`) on `admin_init`, not only `rest_api_init` —
+    the shared screen saves through a plain admin POST, outside REST, so a
+    `sanitize_option_{$option}` filter that's only wired to `rest_api_init`
+    never runs for that write path. See `register_feature_settings()` in
+    fair-audience's and fair-payments-connector's `Settings.php` for the
+    pattern: the features-option registration is split out of the REST-only
+    `register_settings()` method and hooked on both `rest_api_init` and
+    `admin_init`.
 
-**No translatable strings in the shared package itself.** Every user-visible
-string on the screen comes from the registering plugin's own textdomain (or
-from WordPress core, e.g. `submit_button()`). This sidesteps the
-just-in-time-textdomain trap ([I18N_SETUP.md](./I18N_SETUP.md)) — filter
-callbacks run at render time (after `init`), so a plugin's own `__()` calls
-inside `register_shared_settings_fields()` are safe.
+**No translatable strings in the shared package itself** — but that splits
+into three distinct sources on the rendered screen:
+
+-   Row strings (`label`, `description`, `locked_note`) come from the
+    registering plugin's own textdomain. This sidesteps the
+    just-in-time-textdomain trap ([I18N_SETUP.md](./I18N_SETUP.md)) — filter
+    callbacks run at render time (after `init`), so a plugin's own `__()`
+    calls inside `register_shared_settings_fields()` are safe.
+-   Chrome strings (`Settings saved.`, the "Sorry, you are not allowed to
+    access this page." 403 message, `submit_button()`'s "Save Changes") are
+    wrapped in domain-less `__()`/`esc_html__()` calls, which resolve against
+    WordPress core's own **default** textdomain — every locale gets them for
+    free, with no textdomain of its own for the shared package.
+-   The page/menu title, "Fair Event Plugins", is left untranslated on
+    purpose: it's a brand name, not UI copy.
 
 ## See Also
 

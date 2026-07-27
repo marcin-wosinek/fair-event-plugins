@@ -119,11 +119,26 @@ test.describe('Fair Event Plugins — central settings screen', () => {
 
 		const row = page.locator('tr').filter({ hasText: 'Fair Form' });
 		await row.locator('input[type="checkbox"]').check();
-		await page
-			.locator('form')
-			.getByRole('button', { name: 'Save Changes' })
-			.click();
-
+		// The save handler redirects back to the page with
+		// settings-updated=true, so this also locks in that a plain form
+		// submit doesn't leave the browser on a resubmittable POST. Assert
+		// on the network response rather than the final page.url(): WP core
+		// (the admin command-palette's @wordpress/router) rewrites the URL
+		// via history.replaceState shortly after load, stripping
+		// settings-updated — so by the time a URL assertion would poll, the
+		// query arg is already gone even though the redirect did happen.
+		const [redirectedResponse] = await Promise.all([
+			page.waitForResponse(
+				(response) =>
+					response.request().method() === 'GET' &&
+					/[?&]settings-updated=true\b/.test(response.url())
+			),
+			page
+				.locator('form')
+				.getByRole('button', { name: 'Save Changes' })
+				.click(),
+		]);
+		expect(redirectedResponse.ok()).toBeTruthy();
 		await expect(page.getByText('Settings saved.')).toBeVisible();
 
 		const stored = getOptionJson('fair_form_features');
