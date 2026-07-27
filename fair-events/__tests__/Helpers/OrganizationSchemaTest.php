@@ -23,10 +23,11 @@ class OrganizationSchemaTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$GLOBALS['_fair_test_options']         = array();
-		$GLOBALS['_fair_test_theme_mods']      = array();
-		$GLOBALS['_fair_test_attachment_urls'] = array();
-		$GLOBALS['_fair_test_home_url']        = 'https://example.com';
+		$GLOBALS['_fair_test_options']           = array();
+		$GLOBALS['_fair_test_theme_mods']        = array();
+		$GLOBALS['_fair_test_attachment_urls']   = array();
+		$GLOBALS['_fair_test_image_attachments'] = array();
+		$GLOBALS['_fair_test_home_url']          = 'https://example.com';
 	}
 
 	/**
@@ -186,5 +187,89 @@ class OrganizationSchemaTest extends TestCase {
 			),
 			OrganizationSchema::organizer_ref()
 		);
+	}
+
+	/**
+	 * The organizer's own `website` overrides `home_url()` in both the
+	 * sitewide node and the event `organizer` reference.
+	 *
+	 * @return void
+	 */
+	public function test_website_override_used_in_url() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+			'name'    => 'Acme Club',
+			'website' => 'https://acme.example/',
+		);
+
+		$this->assertSame( 'https://acme.example/', OrganizationSchema::organization_to_jsonld()['url'] );
+		$this->assertSame( 'https://acme.example/', OrganizationSchema::organizer_ref()['url'] );
+	}
+
+	/**
+	 * The organizer's `logo_id` takes priority over the `custom_logo` theme mod.
+	 *
+	 * @return void
+	 */
+	public function test_logo_id_overrides_theme_mod() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+			'name'    => 'Acme Club',
+			'logo_id' => 7,
+		);
+		$GLOBALS['_fair_test_theme_mods']['custom_logo']    = 42;
+		$GLOBALS['_fair_test_attachment_urls'][7]           = 'https://example.com/override-logo.png';
+		$GLOBALS['_fair_test_attachment_urls'][42]          = 'https://example.com/theme-logo.png';
+
+		$this->assertSame(
+			'https://example.com/override-logo.png',
+			OrganizationSchema::organization_to_jsonld()['logo']
+		);
+	}
+
+	/**
+	 * No contactPoint is emitted when neither contact field is set.
+	 *
+	 * @return void
+	 */
+	public function test_contact_point_omitted_when_unset() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array( 'name' => 'Acme Club' );
+
+		$this->assertArrayNotHasKey( 'contactPoint', OrganizationSchema::organization_to_jsonld() );
+	}
+
+	/**
+	 * A contactPoint with only the populated field(s) is emitted when set.
+	 *
+	 * @return void
+	 */
+	public function test_contact_point_included_when_set() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+			'name'          => 'Acme Club',
+			'contact_email' => 'info@example.com',
+			'contact_phone' => '+34 600 000 000',
+		);
+
+		$this->assertSame(
+			array(
+				'@type'       => 'ContactPoint',
+				'contactType' => 'customer service',
+				'email'       => 'info@example.com',
+				'telephone'   => '+34 600 000 000',
+			),
+			OrganizationSchema::organization_to_jsonld()['contactPoint']
+		);
+	}
+
+	/**
+	 * The contactPoint is never repeated in the per-event organizer reference.
+	 *
+	 * @return void
+	 */
+	public function test_contact_point_not_in_organizer_ref() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+			'name'          => 'Acme Club',
+			'contact_email' => 'info@example.com',
+		);
+
+		$this->assertArrayNotHasKey( 'contactPoint', OrganizationSchema::organizer_ref() );
 	}
 }

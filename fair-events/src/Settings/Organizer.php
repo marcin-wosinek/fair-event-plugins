@@ -36,7 +36,7 @@ class Organizer {
 	 * present. Public so other plugins can read the identity (same pattern
 	 * as `Branding::is_enabled()`).
 	 *
-	 * @return array{name: string, type: string, street_address: string, address_locality: string, address_region: string, postal_code: string, address_country: string, same_as: string[]}
+	 * @return array{name: string, type: string, street_address: string, address_locality: string, address_region: string, postal_code: string, address_country: string, same_as: string[], logo_id: int, website: string, contact_email: string, contact_phone: string}
 	 */
 	public static function get(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -57,6 +57,10 @@ class Organizer {
 			'same_as'          => isset( $stored['same_as'] ) && is_array( $stored['same_as'] )
 				? array_values( $stored['same_as'] )
 				: array(),
+			'logo_id'          => isset( $stored['logo_id'] ) ? absint( $stored['logo_id'] ) : 0,
+			'website'          => isset( $stored['website'] ) ? (string) $stored['website'] : '',
+			'contact_email'    => isset( $stored['contact_email'] ) ? (string) $stored['contact_email'] : '',
+			'contact_phone'    => isset( $stored['contact_phone'] ) ? (string) $stored['contact_phone'] : '',
 		);
 	}
 
@@ -99,6 +103,34 @@ class Organizer {
 			}
 		}
 		$out['same_as'] = array_values( array_unique( $same_as ) );
+
+		if ( ! empty( $value['logo_id'] ) ) {
+			$logo_id = absint( $value['logo_id'] );
+			if ( $logo_id && wp_attachment_is_image( $logo_id ) ) {
+				$out['logo_id'] = $logo_id;
+			}
+		}
+
+		if ( ! empty( $value['website'] ) ) {
+			$website = esc_url_raw( (string) $value['website'] );
+			if ( '' !== $website && filter_var( $website, FILTER_VALIDATE_URL ) ) {
+				$out['website'] = $website;
+			}
+		}
+
+		if ( ! empty( $value['contact_email'] ) ) {
+			$email = sanitize_email( (string) $value['contact_email'] );
+			if ( '' !== $email && is_email( $email ) ) {
+				$out['contact_email'] = $email;
+			}
+		}
+
+		if ( ! empty( $value['contact_phone'] ) ) {
+			$phone = trim( sanitize_text_field( $value['contact_phone'] ) );
+			if ( '' !== $phone ) {
+				$out['contact_phone'] = $phone;
+			}
+		}
 
 		return $out;
 	}

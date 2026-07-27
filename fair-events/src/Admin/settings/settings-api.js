@@ -21,9 +21,11 @@ export function loadGeneralSettings() {
 }
 
 /**
- * Load organizer settings from WordPress REST API
+ * Load organizer settings from WordPress REST API, alongside the site's own
+ * defaults (title, URL, logo) that the organizer identity falls back to when
+ * left blank.
  *
- * @return {Promise<Object>} Promise resolving to the organizer identity
+ * @return {Promise<Object>} Promise resolving to the organizer identity, with a `defaults` key.
  */
 export function loadOrganizerSettings() {
 	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
@@ -36,7 +38,16 @@ export function loadOrganizerSettings() {
 			postal_code: '',
 			address_country: '',
 			same_as: [],
+			logo_id: 0,
+			website: '',
+			contact_email: '',
+			contact_phone: '',
 			...settings.fair_events_organizer,
+			defaults: {
+				name: settings.title || '',
+				website: settings.url || '',
+				logoId: settings.site_logo || 0,
+			},
 		};
 	});
 }
@@ -53,4 +64,20 @@ export function saveSettings(data) {
 		method: 'POST',
 		data,
 	});
+}
+
+/**
+ * Resolve an attachment's URL from its ID, for logo preview.
+ *
+ * @param {number} attachmentId Attachment ID (0 = none).
+ * @return {Promise<string>} Promise resolving to the attachment's URL, or an empty string.
+ */
+export function loadAttachmentUrl(attachmentId) {
+	if (!attachmentId) {
+		return Promise.resolve('');
+	}
+
+	return apiFetch({ path: `/wp/v2/media/${attachmentId}` })
+		.then((media) => media.source_url || '')
+		.catch(() => '');
 }

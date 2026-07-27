@@ -227,6 +227,44 @@ if ( ! function_exists( 'wp_get_attachment_image_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'sanitize_email' ) ) {
+	/**
+	 * Stub of WordPress sanitize_email() — trims whitespace only.
+	 *
+	 * @param string $email Email to sanitize.
+	 * @return string Trimmed value.
+	 */
+	function sanitize_email( $email ) {
+		return trim( (string) $email );
+	}
+}
+
+if ( ! function_exists( 'is_email' ) ) {
+	/**
+	 * Stub of WordPress is_email() — delegates to PHP's filter_var().
+	 *
+	 * @param string $email Email to validate.
+	 * @return string|false The email when valid, false otherwise.
+	 */
+	function is_email( $email ) {
+		return filter_var( $email, FILTER_VALIDATE_EMAIL ) ? $email : false;
+	}
+}
+
+if ( ! function_exists( 'wp_attachment_is_image' ) ) {
+	/**
+	 * Stub of WordPress wp_attachment_is_image() backed by
+	 * $GLOBALS['_fair_test_image_attachments'] (a list of "valid image" IDs).
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return bool Whether the attachment ID is a registered test image.
+	 */
+	function wp_attachment_is_image( $attachment_id ) {
+		$ids = isset( $GLOBALS['_fair_test_image_attachments'] ) ? $GLOBALS['_fair_test_image_attachments'] : array();
+		return in_array( (int) $attachment_id, $ids, true );
+	}
+}
+
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
 	 * Stub of WordPress apply_filters(). Passes through unmodified unless a

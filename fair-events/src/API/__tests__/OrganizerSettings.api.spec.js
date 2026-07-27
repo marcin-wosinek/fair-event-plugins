@@ -45,6 +45,9 @@ test.describe('fair_events_organizer setting', () => {
 					address_locality: 'Madrid',
 					address_country: 'ES',
 					same_as: ['https://example.com/acme', 'not a valid url'],
+					website: 'https://acme.example',
+					contact_email: 'info@example.com',
+					contact_phone: '+34 600 000 000',
 				},
 			},
 		});
@@ -57,6 +60,13 @@ test.describe('fair_events_organizer setting', () => {
 		expect(body.fair_events_organizer.same_as).toEqual([
 			'https://example.com/acme',
 		]);
+		expect(body.fair_events_organizer.website).toBe('https://acme.example');
+		expect(body.fair_events_organizer.contact_email).toBe(
+			'info@example.com'
+		);
+		expect(body.fair_events_organizer.contact_phone).toBe(
+			'+34 600 000 000'
+		);
 
 		const read = await api.get('/wp-json/wp/v2/settings', {
 			headers: authHeader,
@@ -66,6 +76,28 @@ test.describe('fair_events_organizer setting', () => {
 		expect(readBody.fair_events_organizer.same_as).toEqual([
 			'https://example.com/acme',
 		]);
+		expect(readBody.fair_events_organizer.website).toBe(
+			'https://acme.example'
+		);
+	});
+
+	test('drops a malformed website URL and an invalid contact email', async () => {
+		const res = await api.post('/wp-json/wp/v2/settings', {
+			headers: authHeader,
+			data: {
+				fair_events_organizer: {
+					name: 'Acme Club',
+					website: 'not a url',
+					contact_email: 'not an email',
+				},
+			},
+		});
+
+		expect(res.status()).toBe(200);
+		const body = await res.json();
+
+		expect(body.fair_events_organizer.website).toBeUndefined();
+		expect(body.fair_events_organizer.contact_email).toBeUndefined();
 	});
 
 	test('rejects an unauthenticated write', async () => {

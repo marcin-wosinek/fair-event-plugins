@@ -45,7 +45,7 @@ class OrganizationSchema {
 			'@type' => $organizer['type'],
 			'@id'   => self::node_id(),
 			'name'  => $organizer['name'],
-			'url'   => home_url(),
+			'url'   => '' !== $organizer['website'] ? $organizer['website'] : home_url(),
 		);
 
 		$address = self::build_address( $organizer );
@@ -57,9 +57,14 @@ class OrganizationSchema {
 			$data['sameAs'] = $organizer['same_as'];
 		}
 
-		$logo_url = self::get_logo_url();
+		$logo_url = self::get_logo_url( $organizer );
 		if ( $logo_url ) {
 			$data['logo'] = $logo_url;
+		}
+
+		$contact_point = self::build_contact_point( $organizer );
+		if ( ! empty( $contact_point ) ) {
+			$data['contactPoint'] = $contact_point;
 		}
 
 		return $data;
@@ -89,7 +94,7 @@ class OrganizationSchema {
 			'@type' => $organizer['type'],
 			'@id'   => self::node_id(),
 			'name'  => $organizer['name'],
-			'url'   => home_url(),
+			'url'   => '' !== $organizer['website'] ? $organizer['website'] : home_url(),
 		);
 	}
 
@@ -123,14 +128,16 @@ class OrganizationSchema {
 	}
 
 	/**
-	 * Resolve the site's logo URL from the `custom_logo` theme mod. Block
-	 * themes' site-logo block writes to the same theme mod, so this covers
-	 * classic and block themes alike.
+	 * Resolve the organizer's logo URL: the organizer setting's `logo_id`
+	 * when set, else the `custom_logo` theme mod (block themes' site-logo
+	 * block writes to the same theme mod, so this covers classic and block
+	 * themes alike).
 	 *
+	 * @param array $organizer Normalized organizer identity, as returned by Organizer::get().
 	 * @return string|null Logo URL, or null when there is no logo set (or the attachment is gone).
 	 */
-	private static function get_logo_url() {
-		$attachment_id = get_theme_mod( 'custom_logo' );
+	private static function get_logo_url( array $organizer ) {
+		$attachment_id = $organizer['logo_id'] ? $organizer['logo_id'] : get_theme_mod( 'custom_logo' );
 		if ( ! $attachment_id ) {
 			return null;
 		}
@@ -138,5 +145,32 @@ class OrganizationSchema {
 		$url = wp_get_attachment_image_url( $attachment_id, 'full' );
 
 		return $url ? $url : null;
+	}
+
+	/**
+	 * Build a Schema.org ContactPoint from the organizer's contact fields.
+	 *
+	 * @param array $organizer Normalized organizer identity, as returned by Organizer::get().
+	 * @return array ContactPoint object, or an empty array when neither field is set.
+	 */
+	private static function build_contact_point( array $organizer ): array {
+		if ( '' === $organizer['contact_email'] && '' === $organizer['contact_phone'] ) {
+			return array();
+		}
+
+		$contact_point = array(
+			'@type'       => 'ContactPoint',
+			'contactType' => 'customer service',
+		);
+
+		if ( '' !== $organizer['contact_email'] ) {
+			$contact_point['email'] = $organizer['contact_email'];
+		}
+
+		if ( '' !== $organizer['contact_phone'] ) {
+			$contact_point['telephone'] = $organizer['contact_phone'];
+		}
+
+		return $contact_point;
 	}
 }
