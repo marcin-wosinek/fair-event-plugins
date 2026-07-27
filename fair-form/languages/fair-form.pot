@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-26T22:08:09+00:00\n"
+"POT-Creation-Date: 2026-07-27T08:20:47+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-form\n"
@@ -18,7 +18,7 @@ msgstr ""
 #: fair-form.php
 #: src/Admin/AdminHooks.php:129
 #: src/Admin/AdminHooks.php:130
-#: src/API/FairFormController.php:233
+#: src/API/FairFormController.php:237
 #: src/Services/QuestionnaireService.php:384
 msgid "Fair Form"
 msgstr ""
@@ -57,12 +57,16 @@ msgstr ""
 msgid "Too many requests. Please try again later."
 msgstr ""
 
-#: src/API/FairFormController.php:181
+#: src/API/FairFormController.php:185
 msgid "Failed to process submission. Please try again."
 msgstr ""
 
-#: src/API/FairFormController.php:263
+#: src/API/FairFormController.php:271
 msgid "Thank you for your submission!"
+msgstr ""
+
+#: src/API/FairFormController.php:290
+msgid "Guest"
 msgstr ""
 
 #. translators: %d: WordPress post ID.
@@ -113,12 +117,12 @@ msgid "Include the country code, starting with \"+\" — spaces, dashes and brac
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/FormNotificationService.php:181
+#: src/Services/FormNotificationService.php:210
 #, php-format
 msgid "New form submission — %s"
 msgstr ""
 
-#: src/Services/FormNotificationService.php:188
+#: src/Services/FormNotificationService.php:217
 #: src/Admin/form-answers/FormAnswers.js:140
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
 #: src/Admin/submission-detail/SubmissionDetail.js:302
@@ -126,12 +130,12 @@ msgid "Email"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/FormNotificationService.php:200
+#: src/Services/FormNotificationService.php:229
 #, php-format
 msgid "Page: %s"
 msgstr ""
 
-#: src/Services/FormNotificationService.php:228
+#: src/Services/FormNotificationService.php:257
 msgid "A new form submission has been received."
 msgstr ""
 
