@@ -111,6 +111,17 @@ class GetTicketsController extends WP_REST_Controller {
 								return ! is_array( $value ) || count( $value ) <= 50;
 							},
 						),
+						// Chosen activity (ticket option) IDs. Capped, mirroring
+						// event_date_ids above. Ignored on the 'multiple_instances'
+						// path, which never reads this param.
+						'ticket_option_ids'     => array(
+							'type'              => 'array',
+							'items'             => array( 'type' => 'integer' ),
+							'required'          => false,
+							'validate_callback' => function ( $value ) {
+								return ! is_array( $value ) || count( $value ) <= 50;
+							},
+						),
 						'_honeypot'             => array(
 							'type'     => 'string',
 							'required' => false,
@@ -257,6 +268,18 @@ class GetTicketsController extends WP_REST_Controller {
 		$quantity       = max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) );
 		$mailing_opt_in = (bool) $request->get_param( 'mailing_opt_in' );
 
+		// Chosen activity (ticket option) IDs, deduped/cast defensively even
+		// though the route arg already caps the count — see register_routes().
+		$ticket_option_ids = $request->get_param( 'ticket_option_ids' ) ?? array();
+		$ticket_option_ids = array_values( array_filter( array_unique( array_map( 'absint', (array) $ticket_option_ids ) ) ) );
+
+		// Activities attach to a single EventParticipant row, so a crafted
+		// request can't multiply an activity set by ticket quantity — pinned
+		// before $amount is derived from quantity below.
+		if ( ! empty( $ticket_option_ids ) ) {
+			$quantity = 1;
+		}
+
 		$questionnaire_answers = $this->prepare_questionnaire_answers( $request );
 		if ( is_wp_error( $questionnaire_answers ) ) {
 			return $questionnaire_answers;
@@ -333,10 +356,30 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 		}
 
+		// Extension point for plugins (e.g. fair-audience) that sell selectable
+		// activities (ticket options) alongside a signup. Runs unconditionally
+		// — even a signup with no ticket type can carry a minimum-activities
+		// requirement. See REST_API_BACKEND.md.
+		$options_error = apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, (int) $config_event_date_id, (int) $ticket_type_id );
+		if ( is_wp_error( $options_error ) ) {
+			return $options_error;
+		}
+
+		// fair-audience resolves discounted per-activity prices; summed here
+		// into $amount and kept as separate line items (below) so the finance
+		// ledger names what was bought instead of folding it into the ticket line.
+		$option_line_items = apply_filters( 'fair_events_signup_option_line_items', array(), $ticket_option_ids, (int) $config_event_date_id );
+		$ticket_amount     = $amount;
+		foreach ( $option_line_items as $item ) {
+			$amount += (float) $item['quantity'] * (float) $item['amount'];
+		}
+
 		// Fail closed: a priced ticket must never be saved when payment can't
 		// be collected. Rejecting up front avoids the orphaned pending_payment
 		// row left by the connector-unconfigured case and the silent
-		// free-confirmation the old connector-absent fallback produced.
+		// free-confirmation the old connector-absent fallback produced. Covers
+		// activity-only pricing too (free ticket type + paid activity), since
+		// $amount already includes the options total above.
 		if ( $amount > 0 && $this->payments_unavailable() ) {
 			return new WP_Error(
 				'payment_unavailable',
@@ -370,8 +413,9 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		$ticket_selection = array(
-			'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
-			'quantity'       => $quantity,
+			'ticket_type_id'    => $ticket_type_id ? $ticket_type_id : null,
+			'quantity'          => $quantity,
+			'ticket_option_ids' => $ticket_option_ids,
 		);
 
 		// Free path.
@@ -396,13 +440,22 @@ class GetTicketsController extends WP_REST_Controller {
 			$event_date_id
 		);
 
-		$line_items = array(
-			array(
+		// Activities get their own line item(s) (from $option_line_items,
+		// resolved above) instead of being folded into the ticket line, so the
+		// finance ledger names what was bought. The ticket line is only added
+		// when there's an actual ticket price — a pure activity-only signup
+		// (free/no ticket type + paid activity) skips a nonsensical €0 line.
+		$line_items = array();
+		if ( $ticket_amount > 0 ) {
+			$line_items[] = array(
 				'name'     => $description,
 				'quantity' => $quantity,
-				'amount'   => $amount / $quantity,
-			),
-		);
+				'amount'   => $ticket_amount / $quantity,
+			);
+		}
+		foreach ( $option_line_items as $item ) {
+			$line_items[] = $item;
+		}
 
 		$user_id        = get_current_user_id();
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(

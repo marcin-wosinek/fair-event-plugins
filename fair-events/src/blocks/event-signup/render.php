@@ -217,6 +217,42 @@ if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( 
 	}
 }
 
+// Resolve activity options (ticket options) for this event date, if the
+// experimental catalogue is active. Options are displayed as checkboxes —
+// participants can select zero or more at signup. Gated on fair-audience
+// being active too: selections can only be persisted through its options
+// junction table, so a base-alone site must not render dead checkboxes.
+$ticket_options = array();
+if ( class_exists( \FairAudience\API\EventSignupController::class )
+	&& class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+	$raw_options = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $pricing_event_date_id );
+	foreach ( $raw_options as $opt ) {
+		$resolved_base = class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class )
+			? \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $opt )
+			: (float) $opt->price;
+		if ( null === $resolved_base ) {
+			// Derived mode with no active period / no row → option not purchasable; skip.
+			continue;
+		}
+		$ticket_options[] = array(
+			'id'         => (int) $opt->id,
+			'name'       => $opt->name,
+			'short_name' => $opt->short_name ?? null,
+			'price'      => (float) $resolved_base,
+			'is_full'    => false,
+		);
+	}
+}
+
+// Minimum number of activities the participant must select. Capped at the
+// number of options actually available so the requirement is never
+// impossible to satisfy, and only meaningful when at least one option exists.
+$minimum_activities = 0;
+if ( ! empty( $ticket_options ) && class_exists( \FairEvents\Models\EventDateSetting::class ) ) {
+	$minimum_activities = (int) \FairEvents\Models\EventDateSetting::get( $pricing_event_date_id, 'minimum_activities' );
+	$minimum_activities = max( 0, min( $minimum_activities, count( $ticket_options ) ) );
+}
+
 /**
  * Extension point for plugins (e.g. fair-audience) that want to enrich the
  * base signup form without owning a competing render — resolved viewer
@@ -226,6 +262,7 @@ if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( 
  *
  * @param array    $context    Render context (event_date_id, pricing_event_date_id, ticket_types,
  *                              price_by_type_id, active_sale_period, occurrences_for_picker,
+ *                              ticket_options, minimum_activities,
  *                              callback_status, callback_tx_id, callback_token, callback_state,
  *                              callback_source, prefill_name, prefill_email, submit_button_text).
  * @param array    $attributes Block attributes.
@@ -242,6 +279,12 @@ $context = apply_filters(
 		'price_by_type_id'       => $price_by_type_id,
 		'active_sale_period'     => $active_sale_period,
 		'occurrences_for_picker' => $occurrences_for_picker,
+		// Activity add-ons and their minimum-selection requirement. A companion
+		// plugin (fair-audience) overrides 'price'/'is_full' with participant-
+		// aware resolution and adds 'addable_options'/'current_activity_names'
+		// for a recognised, already-signed-up viewer.
+		'ticket_options'         => $ticket_options,
+		'minimum_activities'     => $minimum_activities,
 		'callback_status'        => $callback_status,
 		'callback_tx_id'         => $callback_tx_id,
 		'callback_token'         => $callback_token,
@@ -267,6 +310,8 @@ $ticket_types           = $context['ticket_types'];
 $price_by_type_id       = $context['price_by_type_id'];
 $active_sale_period     = $context['active_sale_period'];
 $occurrences_for_picker = $context['occurrences_for_picker'];
+$ticket_options         = $context['ticket_options'];
+$minimum_activities     = $context['minimum_activities'];
 $callback_status        = $context['callback_status'];
 $signup_state           = $context['callback_state'];
 $prefill_name           = $context['prefill_name'];
@@ -282,6 +327,19 @@ foreach ( $ticket_types as $ticket_type ) {
 	}
 }
 $has_instance_picker = $has_multiple_instances_type && ! empty( $occurrences_for_picker );
+
+// A ticket type can raise the minimum-activities requirement above the
+// event-date global. Determine whether any selectable type carries a higher
+// requirement, and the effective minimum for the type that's pre-selected on
+// first paint (the first not-payment-blocked type, mirroring the radio
+// pre-selection below). frontend.js recomputes this live as the buyer
+// switches ticket type.
+$any_ticket_type_min = 0;
+if ( ! empty( $ticket_options ) ) {
+	foreach ( $ticket_types as $tt_for_min ) {
+		$any_ticket_type_min = max( $any_ticket_type_min, (int) $tt_for_min->minimum_activities );
+	}
+}
 
 // Single-occurrence dropdown: offered whenever the series has more than one
 // upcoming occurrence, regardless of which ticket scopes are configured.
@@ -448,6 +506,7 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 		data-currency="<?php echo esc_attr( \FairEventsShared\Money::site_currency() ); ?>"
 		data-event-date-id="<?php echo esc_attr( $event_date_id ); ?>"
 		data-fair-audience-active="<?php echo esc_attr( class_exists( \FairAudience\API\EventSignupController::class ) ? '1' : '0' ); ?>"
+		data-min-activities="<?php echo esc_attr( (string) $minimum_activities ); ?>"
 	>
 		<?php
 		/**
@@ -500,12 +559,111 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 								data-ticket-price="<?php echo esc_attr( null !== $type_price ? \FairEventsShared\Money::format_value( $type_price ) : '' ); ?>"
 								data-recurrence-scope="<?php echo esc_attr( $ticket_type->recurrence_scope ); ?>"
 								data-min-instances="<?php echo esc_attr( (string) $ticket_type->minimum_instances ); ?>"
+								data-min-activities="<?php echo esc_attr( (string) $ticket_type->minimum_activities ); ?>"
 								<?php echo $type_unavailable ? 'disabled' : ''; ?>
 								<?php echo $type_id === $first_enabled_type_id ? 'checked' : ''; ?>
 							/>
 							<?php echo esc_html( $label ); ?>
 						</label>
 					<?php endforeach; ?>
+				</fieldset>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( ! empty( $ticket_options ) ) : ?>
+			<?php
+			// Effective minimum for the type pre-selected on first paint (the
+			// first not-payment-blocked type, mirroring the radio pre-selection
+			// above) — frontend.js recomputes this live as the buyer switches
+			// ticket type.
+			$preselected_type_min = 0;
+			if ( ! empty( $first_enabled_type_id ) ) {
+				foreach ( $ticket_types as $tt_preselected ) {
+					if ( (int) $tt_preselected->id === $first_enabled_type_id ) {
+						$preselected_type_min = (int) $tt_preselected->minimum_activities;
+						break;
+					}
+				}
+			}
+			// A minimum-activities requirement (global or ticket-type-raised)
+			// switches option prices from an always-on inline price to a hidden
+			// per-option "(+price)" add-on tag toggled by frontend.js once the
+			// minimum is met, so the requirement reads clearly.
+			$options_feature_active = ( $minimum_activities > 0 || $any_ticket_type_min > 0 );
+			$initial_min_activities = min( count( $ticket_options ), max( $minimum_activities, $preselected_type_min ) );
+			?>
+			<div class="form-row">
+				<fieldset class="fair-events-ticket-options">
+					<legend class="form-label"><?php esc_html_e( 'Select activities', 'fair-events' ); ?></legend>
+					<?php if ( $options_feature_active ) : ?>
+						<?php
+						$hint_text = $initial_min_activities > 0
+							? sprintf(
+								/* translators: %d: minimum number of activities required */
+								_n(
+									'Please select at least %d activity to sign up.',
+									'Please select at least %d activities to sign up.',
+									$initial_min_activities,
+									'fair-events'
+								),
+								$initial_min_activities
+							)
+							: '';
+						$hint_style = $initial_min_activities > 0 ? '' : ' style="display: none;"';
+						?>
+						<p class="fair-events-ticket-options-min-hint"<?php echo $hint_style; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static literal. ?>>
+							<?php echo esc_html( $hint_text ); ?>
+						</p>
+					<?php endif; ?>
+					<?php foreach ( $ticket_options as $opt ) : ?>
+						<?php
+						$opt_label = $opt['name'];
+						if ( ! $options_feature_active ) {
+							if ( $opt['price'] > 0 ) {
+								$opt_label .= ' — ' . \FairEventsShared\Money::format_inline( $opt['price'] );
+							} elseif ( $opt['price'] < 0 ) {
+								$opt_label .= ' — -' . \FairEventsShared\Money::format_inline( abs( $opt['price'] ) );
+							} else {
+								$opt_label .= ' — ' . __( 'free', 'fair-events' );
+							}
+						}
+						$opt_is_full = ! empty( $opt['is_full'] );
+						if ( $opt_is_full ) {
+							$opt_label .= ' — ' . __( 'full', 'fair-events' );
+						}
+						$opt_checkbox_id = $form_id . '-opt-' . (int) $opt['id'];
+						$opt_classes     = 'fair-events-ticket-option-item';
+						if ( $opt_is_full ) {
+							$opt_classes .= ' fair-events-ticket-option-full';
+						}
+						?>
+						<label class="<?php echo esc_attr( $opt_classes ); ?>" for="<?php echo esc_attr( $opt_checkbox_id ); ?>">
+							<input
+								type="checkbox"
+								name="ticket_option_ids[]"
+								id="<?php echo esc_attr( $opt_checkbox_id ); ?>"
+								value="<?php echo (int) $opt['id']; ?>"
+								class="form-checkbox"
+								data-option-price="<?php echo esc_attr( \FairEventsShared\Money::format_value( $opt['price'] ) ); ?>"
+								<?php echo $opt_is_full ? 'disabled' : ''; ?>
+							/>
+							<span class="fair-events-ticket-option-text">
+								<?php echo esc_html( $opt_label ); ?>
+								<?php if ( $options_feature_active && $opt['price'] > 0 ) : ?>
+									<span class="fair-events-ticket-option-addon" style="display: none;">
+										<?php
+										printf(
+											/* translators: %s: formatted add-on price */
+											esc_html__( '(+%s)', 'fair-events' ),
+											esc_html( \FairEventsShared\Money::format_inline( $opt['price'] ) )
+										);
+										?>
+									</span>
+								<?php endif; ?>
+							</span>
+						</label>
+					<?php endforeach; ?>
+					<p class="fair-events-ticket-options-total"></p>
 				</fieldset>
 			</div>
 		<?php endif; ?>

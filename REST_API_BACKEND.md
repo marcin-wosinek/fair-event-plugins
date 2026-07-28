@@ -576,14 +576,27 @@ create route) expose:
 -   **`fair_events_signup_render_context` filter** — the base render builds a
     context array (`event_date_id`, `pricing_event_date_id`, `ticket_types`,
     `price_by_type_id`, `active_sale_period`, `occurrences_for_picker`, `currency_symbol`,
+    `ticket_options`, `minimum_activities`,
     `callback_status`/`callback_tx_id`/`callback_token`, `prefill_name`,
     `prefill_email`, `submit_button_text`) and runs it through this filter
     before rendering, so a companion plugin can inject viewer identity,
     session pre-fill, or participant-filtered ticket types/prices without a
-    parallel template. Two render-slot actions,
+    parallel template. `ticket_options` is a list of
+    `[ id, name, short_name, price, is_full ]` (empty unless both
+    `fair-events-experimental`'s activity catalogue and fair-audience — the
+    only consumer that can persist a selection — are active); fair-audience's
+    `SignupHookBridge::enrich_render_context()` overrides each option's
+    `price`/`is_full` with participant-aware resolution (group discount,
+    live capacity) and, for a recognised viewer already signed up for this
+    event date, adds `addable_options` (options they don't already have) and
+    `current_activity_names`. `minimum_activities` is the event-date global
+    requirement, capped at `count( $ticket_options )`; a ticket type can raise
+    it further via its own `minimum_activities` property — see
+    `frontend.js`' `getEffectiveMinimum()`. Two render-slot actions,
     `fair_events_signup_render_before_form` and
     `fair_events_signup_render_after_form` (both passed the same context),
-    let a companion plugin contribute UI fragments (e.g. a resume/retry card)
+    let a companion plugin contribute UI fragments (e.g. a resume/retry card,
+    or fair-audience's "add activities" section for a signed-up viewer)
     directly inside the `<form>`. A third action, `fair_events_signup_render_before_submit`
     (also passed the context), fires immediately before the submit button —
     fair-audience uses it to render a group discount note.
@@ -605,6 +618,29 @@ create route) expose:
     pre-existing `fair_events_resolve_ticket_price` filter (which is also the
     base price inside `EventSignupPricing::resolve_price_for_ticket_type()` —
     hooking it here would double-discount that path).
+-   **`fair_events_signup_options_error` filter** — `GetTicketsController::create_signup()`
+    runs this once, unconditionally (outside the `if ( $ticket_type_id )`
+    block, so a global minimum-activities requirement still applies to a
+    signup with no ticket type):
+    `apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, $config_event_date_id, $ticket_type_id )`,
+    where `$ticket_option_ids` is the sanitized (deduped, capped at 50)
+    submitted array and `$config_event_date_id` is the series-master-resolved
+    event date the ticket-type validation above already computed. Returning a
+    `WP_Error` rejects the signup (fair-audience returns 400
+    `invalid_ticket_option` for an ID that doesn't belong to the event date,
+    409 `ticket_option_full` naming the activity when it has no capacity
+    left, or 400 `minimum_activities_not_met` when the selection is short);
+    `null` (the default) allows the signup to proceed.
+-   **`fair_events_signup_option_line_items` filter** — runs immediately
+    after the filter above, once validation passed:
+    `apply_filters( 'fair_events_signup_option_line_items', array(), $ticket_option_ids, $config_event_date_id )`.
+    A companion plugin resolves each selected option to a priced line item
+    (`[ 'name', 'quantity', 'amount' ]`, participant discounts applied);
+    `create_signup()` sums them into `$amount` and appends them to the paid
+    transaction's line items as their own entries — never folded into the
+    ticket line — so the finance ledger names what was bought. Quantity is
+    forced to 1 server-side (and client-side) whenever any activity is
+    selected, since activities attach to a single `EventParticipant` row.
 -   **`fair_events_signup_created` action** — fires
     `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id )`
     after a signup row is persisted through the base create path (once per
@@ -627,10 +663,16 @@ create route) expose:
 it hooks `fair_events_signup_created` to link a `Participant`/`EventParticipant`
 for the anonymous/linked signup case, and `fair_events_signup_confirmed` /
 `fair_events_signup_payment_failed` to flip that `EventParticipant`'s label
-and (on confirmation) record the charge in its transaction ledger. Richer
-identity flows (resume/retry payment, group-restricted ticket types) still
-go through `fair-audience/v1`'s own routes — this contract only covers the
-simple path; see issue #1083 for the phased migration.
+and (on confirmation) record the charge in its transaction ledger. It also
+hooks `fair_events_signup_options_error` / `fair_events_signup_option_line_items`
+(delegating the actual validation/pricing logic to
+`fair-audience/src/Services/SignupActivities.php`, mirroring
+`GroupSignupPricing.php` from #1242) and, once `link_participant()` creates or
+finds the `EventParticipant` row, attaches the selected `ticket_option_ids`
+via `EventParticipantRepository::add_options()`. Richer identity flows
+(resume/retry payment, group-restricted ticket types) still go through
+`fair-audience/v1`'s own routes — this contract only covers the simple path;
+see issue #1083 for the phased migration.
 
 ### Canonical signup store — participant write-back and multiplicity
 

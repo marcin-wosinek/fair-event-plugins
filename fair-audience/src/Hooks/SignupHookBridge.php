@@ -18,6 +18,7 @@ use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\GroupSignupPricing;
+use FairAudience\Services\SignupActivities;
 use FairAudience\Services\SignupPriceResolver;
 
 defined( 'WPINC' ) || die;
@@ -41,6 +42,9 @@ class SignupHookBridge {
 		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
 		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 2 );
 		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 2 );
+		add_filter( 'fair_events_signup_options_error', array( static::class, 'filter_options_error' ), 10, 3 );
+		add_filter( 'fair_events_signup_option_line_items', array( static::class, 'filter_option_line_items' ), 10, 2 );
+		add_action( 'fair_events_signup_render_after_form', array( static::class, 'render_add_activities' ), 10, 1 );
 		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 6 );
 		add_action( 'fair_events_signup_confirmed', array( static::class, 'handle_signup_confirmed' ), 10, 2 );
 		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
@@ -67,55 +71,58 @@ class SignupHookBridge {
 
 		$context['group_discount_rule'] = null;
 
-		if ( empty( $context['ticket_types'] ) ) {
-			return $context;
-		}
+		if ( ! empty( $context['ticket_types'] ) ) {
+			$pricing_event_date_id = (int) $context['pricing_event_date_id'];
 
-		$pricing_event_date_id = (int) $context['pricing_event_date_id'];
+			if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
+				$restrictions_map = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
 
-		if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
-			$restrictions_map = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
+				if ( ! empty( $restrictions_map ) ) {
+					$member_group_ids = array();
+					if ( $participant_id && class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
+						$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
+						$memberships            = $group_participant_repo->get_by_participant( $participant_id );
+						$member_group_ids       = array_map(
+							function ( $membership ) {
+								return (int) $membership->group_id;
+							},
+							$memberships
+						);
+					}
 
-			if ( ! empty( $restrictions_map ) ) {
-				$member_group_ids = array();
-				if ( $participant_id && class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
-					$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
-					$memberships            = $group_participant_repo->get_by_participant( $participant_id );
-					$member_group_ids       = array_map(
-						function ( $membership ) {
-							return (int) $membership->group_id;
-						},
-						$memberships
+					$context['ticket_types'] = GroupSignupPricing::allowed_ticket_types(
+						$context['ticket_types'],
+						$restrictions_map,
+						$member_group_ids
 					);
 				}
+			}
 
-				$context['ticket_types'] = GroupSignupPricing::allowed_ticket_types(
-					$context['ticket_types'],
-					$restrictions_map,
-					$member_group_ids
+			// Re-resolve prices for the surviving types through the same authority
+			// the create route uses, so the displayed price matches what gets
+			// charged. Clamped at 0 — an amount-discount larger than the price
+			// can never show (or charge) a negative amount.
+			$price_by_type_id = array();
+			foreach ( $context['ticket_types'] as $ticket_type ) {
+				$resolved = SignupPriceResolver::resolve_price_for_ticket_type( (int) $ticket_type->id, $participant_id );
+				if ( null !== $resolved ) {
+					$price_by_type_id[ (int) $ticket_type->id ] = max( 0, $resolved );
+				}
+			}
+			$context['price_by_type_id'] = $price_by_type_id;
+
+			if ( $participant_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+				$context['group_discount_rule'] = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
+					$pricing_event_date_id,
+					$participant_id
 				);
 			}
 		}
 
-		// Re-resolve prices for the surviving types through the same authority
-		// the create route uses, so the displayed price matches what gets
-		// charged. Clamped at 0 — an amount-discount larger than the price
-		// can never show (or charge) a negative amount.
-		$price_by_type_id = array();
-		foreach ( $context['ticket_types'] as $ticket_type ) {
-			$resolved = SignupPriceResolver::resolve_price_for_ticket_type( (int) $ticket_type->id, $participant_id );
-			if ( null !== $resolved ) {
-				$price_by_type_id[ (int) $ticket_type->id ] = max( 0, $resolved );
-			}
-		}
-		$context['price_by_type_id'] = $price_by_type_id;
-
-		if ( $participant_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$context['group_discount_rule'] = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
-				$pricing_event_date_id,
-				$participant_id
-			);
-		}
+		// Activities (ticket options) are independent of ticket types — an
+		// event can sell activities alongside a free, type-less signup — so
+		// this runs unconditionally.
+		$context = SignupActivities::enrich_render_context( $context, $participant_id );
 
 		return $context;
 	}
@@ -187,6 +194,132 @@ class SignupHookBridge {
 		}
 
 		return max( 0, $resolved );
+	}
+
+	/**
+	 * Validate a submitted activity (ticket option) selection: belongs to the
+	 * event date, not full, and meets the effective minimum-activities
+	 * requirement. Hooked on fair_events_signup_options_error.
+	 *
+	 * @param WP_Error|null $error                 Prior filter result — passed through unchanged if already an error.
+	 * @param int[]         $ticket_option_ids      Submitted option IDs.
+	 * @param int           $pricing_event_date_id Event date the activity catalogue belongs to.
+	 * @param int           $ticket_type_id         Selected ticket type ID, or 0 for none.
+	 * @return \WP_Error|null
+	 */
+	public static function filter_options_error( $error, $ticket_option_ids, $pricing_event_date_id, $ticket_type_id ) {
+		if ( is_wp_error( $error ) ) {
+			return $error;
+		}
+
+		return SignupActivities::validate_selection( (array) $ticket_option_ids, (int) $pricing_event_date_id, (int) $ticket_type_id );
+	}
+
+	/**
+	 * Resolve priced line items for a submitted activity selection, applying
+	 * the viewer's best group discount rule. Hooked on
+	 * fair_events_signup_option_line_items.
+	 *
+	 * @param array $line_items            Prior filter result (empty by default).
+	 * @param int[] $ticket_option_ids     Submitted option IDs.
+	 * @param int   $pricing_event_date_id Event date the activity catalogue belongs to.
+	 * @return array[]
+	 */
+	public static function filter_option_line_items( $line_items, $ticket_option_ids, $pricing_event_date_id ) {
+		if ( empty( $ticket_option_ids ) ) {
+			return $line_items;
+		}
+
+		$participant    = GroupSignupPricing::resolve_viewer_participant();
+		$participant_id = $participant ? (int) $participant->id : null;
+
+		return array_merge(
+			$line_items,
+			SignupActivities::line_items( (array) $ticket_option_ids, (int) $pricing_event_date_id, $participant_id )
+		);
+	}
+
+	/**
+	 * Render the "add activities" section for a signed-up viewer, listing
+	 * only the activities they don't already have (stashed onto the context
+	 * as 'addable_options' by enrich_render_context()). No-op when there's
+	 * nothing to add. Reuses the legacy form's markup/behaviour, submitting
+	 * through fair-audience's existing add-activities route — the path a
+	 * companion plugin owns is read from a data attribute so the base plugin
+	 * never hardcodes it.
+	 *
+	 * @param array $context Render context, see fair_events_signup_render_context.
+	 * @return void
+	 */
+	public static function render_add_activities( $context ) {
+		$addable_options = $context['addable_options'] ?? array();
+		if ( empty( $addable_options ) ) {
+			return;
+		}
+
+		$event_date_id = (int) ( $context['event_date_id'] ?? 0 );
+		$event_id      = 0;
+		if ( $event_date_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date ) {
+				$event_id = (int) $event_date->get_resolved_event_id();
+			}
+		}
+		if ( ! $event_id ) {
+			return;
+		}
+
+		$participant = GroupSignupPricing::resolve_viewer_participant();
+		$token       = $participant ? \FairAudience\Services\ParticipantToken::generate( (int) $participant->id, $event_date_id ) : '';
+
+		echo '<div class="fair-events-add-activities"'
+			. ' data-event-id="' . esc_attr( (string) $event_id ) . '"'
+			. ' data-event-date-id="' . esc_attr( (string) $event_date_id ) . '"'
+			. ' data-participant-token="' . esc_attr( $token ) . '">';
+		echo '<fieldset>';
+		echo '<legend>' . esc_html__( 'Add activities', 'fair-audience' ) . '</legend>';
+
+		if ( ! empty( $context['current_activity_names'] ) ) {
+			echo '<p>' . esc_html__( 'Your activities:', 'fair-audience' ) . '</p><ul>';
+			foreach ( $context['current_activity_names'] as $activity_name ) {
+				echo '<li>' . esc_html( $activity_name ) . '</li>';
+			}
+			echo '</ul>';
+		}
+
+		foreach ( $addable_options as $option ) {
+			$is_full      = ! empty( $option['is_full'] );
+			$option_label = $option['name'];
+			if ( $option['price'] > 0 ) {
+				$option_label .= ' — ' . \FairEventsShared\Money::format_inline( $option['price'] );
+			} elseif ( $option['price'] < 0 ) {
+				$option_label .= ' — -' . \FairEventsShared\Money::format_inline( abs( $option['price'] ) );
+			} else {
+				$option_label .= ' — ' . __( 'free', 'fair-audience' );
+			}
+			if ( $is_full ) {
+				$option_label .= ' — ' . __( 'full', 'fair-audience' );
+			}
+			$checkbox_id = 'fair-events-add-opt-' . (int) $option['id'];
+			$classes     = 'fair-events-ticket-option-item';
+			if ( $is_full ) {
+				$classes .= ' fair-events-ticket-option-full';
+			}
+			echo '<label class="' . esc_attr( $classes ) . '" for="' . esc_attr( $checkbox_id ) . '">';
+			echo '<input type="checkbox" name="add_option_ids[]" id="' . esc_attr( $checkbox_id ) . '" value="' . (int) $option['id'] . '"'
+				. ' data-option-price="' . esc_attr( \FairEventsShared\Money::format_value( $option['price'] ) ) . '"'
+				. ( $is_full ? ' disabled' : '' ) . ' /> ';
+			echo esc_html( $option_label );
+			echo '</label>';
+		}
+
+		echo '<div class="wp-block-button">';
+		echo '<button type="button" class="wp-block-button__link wp-element-button fair-events-add-activities-button" disabled>';
+		echo esc_html__( 'Add activities', 'fair-audience' );
+		echo '</button>';
+		echo '</div>';
+		echo '</fieldset>';
+		echo '</div>';
 	}
 
 	/**
@@ -278,6 +411,26 @@ class SignupHookBridge {
 				if ( $transaction_id ) {
 					( new EventParticipantTransactionRepository() )->record( (int) $relationship->id, (int) $transaction_id, 'charge' );
 				}
+			}
+		}
+
+		// Attach selected activities on both the free and pending_payment
+		// paths, matching the legacy form. Uses $existing (already fetched
+		// above) when the relationship pre-existed, otherwise re-fetches the
+		// row add_participant_to_event() just created.
+		if ( ! empty( $ticket_selection['ticket_option_ids'] ) && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+			$relationship_for_options = $existing
+				? $existing
+				: $event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant->id );
+			if ( $relationship_for_options ) {
+				$options = array();
+				foreach ( $ticket_selection['ticket_option_ids'] as $option_id ) {
+					$option = \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $option_id );
+					if ( $option ) {
+						$options[] = $option;
+					}
+				}
+				$event_participant_repository->add_options( (int) $relationship_for_options->id, $options );
 			}
 		}
 
