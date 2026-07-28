@@ -160,6 +160,20 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   are posted directly to REST). Pass `1` as `noBlock` to omit the block
   entirely. Cleanup also removes any questionnaire submissions/answers
   created against the page.
+- **`seed-fair-form-questions-page.php [formId] [formTitle]`** — creates a
+  published page carrying a `fair-audience/fair-form` block with **real inner
+  question blocks** (short text, email, and a select-one built from option
+  blocks), so a spec can fill and submit the form through the browser instead
+  of posting to REST. Emits the page id + permalink and the seeded question
+  texts/choices. Tear down with `cleanup-fair-form-notification-page.php`,
+  which is generic (page id → submissions/answers) and serves both fair-form
+  seeds; the participant the email answer auto-creates needs
+  `cleanup-participant.php` on top.
+- **`fair-form-submission-state.php <postId>`** — reports the most recent
+  questionnaire submission stored for a page (`submissionId`,
+  `participantId`, `title`, `formId`/`formTitle`, answer count). The public
+  submit endpoint returns only `{success, message}`, so specs resolve the
+  submission id server-side rather than reading it off the response.
 - **`fair-form-notification-state.php [email]`** — reports mail captured for
   the given recipient (or everything captured, unfiltered, when called with
   no address — used by the "nothing should be sent" scenarios).
