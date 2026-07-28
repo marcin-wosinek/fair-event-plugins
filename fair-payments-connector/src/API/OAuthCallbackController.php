@@ -83,6 +83,18 @@ class OAuthCallbackController extends \WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			'fair-payments-connector/v1',
+			'/oauth/disconnect',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'handle_disconnect' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
 	}
 
 	/**
@@ -124,6 +136,26 @@ class OAuthCallbackController extends \WP_REST_Controller {
 		update_option( 'fair_payment_mollie_profile_id', $request->get_param( 'profile_id' ) );
 		update_option( 'fair_payment_mollie_connected', true );
 		update_option( 'fair_payment_mode', $request->get_param( 'test_mode' ) ? 'test' : 'live' );
+
+		return new \WP_REST_Response( array( 'success' => true ), 200 );
+	}
+
+	/**
+	 * Remove the stored Mollie OAuth credentials and connection state.
+	 *
+	 * The tokens have no show_in_rest entry (see Settings::register_settings()),
+	 * so /wp/v2/settings can no longer clear them — this is the only write
+	 * path for disconnecting.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function handle_disconnect() {
+		delete_option( 'fair_payment_mollie_access_token' );
+		delete_option( 'fair_payment_mollie_refresh_token' );
+		update_option( 'fair_payment_mollie_token_expires', 0 );
+		update_option( 'fair_payment_mollie_connected', false );
+		delete_transient( 'fair_payment_connection_overview_test' );
+		delete_transient( 'fair_payment_connection_overview_live' );
 
 		return new \WP_REST_Response( array( 'success' => true ), 200 );
 	}

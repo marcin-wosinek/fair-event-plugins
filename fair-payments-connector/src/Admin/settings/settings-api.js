@@ -72,6 +72,18 @@ export function saveOAuthCallback(data) {
 }
 
 /**
+ * Disconnect from Mollie: server clears the stored OAuth credentials.
+ *
+ * @return {Promise<Object>} Promise resolving to the API response
+ */
+export function disconnectOAuth() {
+	return apiFetch({
+		path: '/fair-payments-connector/v1/oauth/disconnect',
+		method: 'POST',
+	});
+}
+
+/**
  * Load the connected Mollie profile name and enabled payment methods.
  *
  * @return {Promise<Object>} Promise resolving to the connection overview

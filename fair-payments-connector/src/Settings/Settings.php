@@ -98,7 +98,10 @@ class Settings {
 			)
 		);
 
-		// OAuth Access Token.
+		// OAuth Access Token. No show_in_rest: write-only credential,
+		// written server-side only via OAuthCallbackController. Omitting the
+		// key (rather than scoping context) is what actually hides it from
+		// /wp/v2/settings — see #859.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_mollie_access_token',
@@ -106,17 +109,11 @@ class Settings {
 				'type'              => 'string',
 				'description'       => __( 'Mollie OAuth Access Token', 'fair-payments-connector' ),
 				'sanitize_callback' => 'sanitize_text_field',
-				'show_in_rest'      => array(
-					'schema' => array(
-						'type'    => 'string',
-						'context' => array( 'edit' ),
-					),
-				),
 				'default'           => '',
 			)
 		);
 
-		// OAuth Refresh Token.
+		// OAuth Refresh Token. No show_in_rest — see access token above.
 		register_setting(
 			'fair_payment_settings',
 			'fair_payment_mollie_refresh_token',
@@ -124,12 +121,6 @@ class Settings {
 				'type'              => 'string',
 				'description'       => __( 'Mollie OAuth Refresh Token', 'fair-payments-connector' ),
 				'sanitize_callback' => 'sanitize_text_field',
-				'show_in_rest'      => array(
-					'schema' => array(
-						'type'    => 'string',
-						'context' => array( 'edit' ),
-					),
-				),
 				'default'           => '',
 			)
 		);
