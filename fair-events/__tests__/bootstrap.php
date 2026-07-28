@@ -13,6 +13,22 @@ if ( ! defined( 'WPINC' ) ) {
 	define( 'WPINC', 'wp-includes' );
 }
 
+if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+	define( 'MINUTE_IN_SECONDS', 60 );
+}
+
+if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
+	define( 'HOUR_IN_SECONDS', 60 * MINUTE_IN_SECONDS );
+}
+
+if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+	define( 'DAY_IN_SECONDS', 24 * HOUR_IN_SECONDS );
+}
+
+if ( ! defined( 'YEAR_IN_SECONDS' ) ) {
+	define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
+}
+
 // Minimal WordPress function stubs so pure settings logic can be unit tested
 // without a full WP bootstrap. Tests seed values via $GLOBALS['_fair_test_options'].
 if ( ! function_exists( 'sanitize_key' ) ) {
@@ -103,6 +119,45 @@ if ( ! function_exists( 'wp_timezone' ) ) {
 		$timezone = isset( $GLOBALS['_fair_test_timezone'] ) ? $GLOBALS['_fair_test_timezone'] : 'UTC';
 
 		return new \DateTimeZone( $timezone );
+	}
+}
+
+if ( ! function_exists( 'wp_timezone_string' ) ) {
+	/**
+	 * Stub of WordPress wp_timezone_string() — UTC by default, overridable via
+	 * $GLOBALS['_fair_test_timezone'] (same backing global as wp_timezone()).
+	 *
+	 * @return string Site timezone string, e.g. 'America/New_York'.
+	 */
+	function wp_timezone_string() {
+		return isset( $GLOBALS['_fair_test_timezone'] ) ? $GLOBALS['_fair_test_timezone'] : 'UTC';
+	}
+}
+
+if ( ! function_exists( 'wp_date' ) ) {
+	/**
+	 * Stub of WordPress wp_date() — formats a timestamp in the site timezone
+	 * (via wp_timezone(), overridable through $GLOBALS['_fair_test_timezone']).
+	 * No locale/i18n handling — always formats in the default PHP locale.
+	 *
+	 * @param string             $format    date() format string.
+	 * @param int|null           $timestamp Unix timestamp; defaults to now.
+	 * @param \DateTimeZone|null $timezone  Timezone to format in; defaults to the site timezone.
+	 * @return string Formatted date.
+	 */
+	function wp_date( $format, $timestamp = null, $timezone = null ) {
+		if ( null === $timestamp ) {
+			$timestamp = time();
+		}
+
+		if ( ! $timezone instanceof \DateTimeZone ) {
+			$timezone = wp_timezone();
+		}
+
+		$datetime = new \DateTime( '@' . $timestamp );
+		$datetime->setTimezone( $timezone );
+
+		return $datetime->format( $format );
 	}
 }
 
@@ -311,3 +366,66 @@ if ( ! function_exists( 'add_query_arg' ) ) {
 		return $url . $separator . rawurlencode( $key ) . '=' . rawurlencode( $value );
 	}
 }
+
+if ( ! function_exists( 'wp_remote_get' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_get() backed by
+	 * $GLOBALS['_fair_test_remote_responses'][ $url ] (a raw response array
+	 * with 'response' => [ 'code' => int ] and 'body' => string). Defaults to
+	 * an HTTP 200 with an empty body when the URL is not seeded.
+	 *
+	 * @param string $url  URL to fetch.
+	 * @param array  $args Request args (ignored by this stub).
+	 * @return array Raw response array, matching the shape wp_remote_* readers expect.
+	 */
+	function wp_remote_get( $url, $args = array() ) {
+		$responses = isset( $GLOBALS['_fair_test_remote_responses'] ) ? $GLOBALS['_fair_test_remote_responses'] : array();
+
+		return array_key_exists( $url, $responses )
+			? $responses[ $url ]
+			: array(
+				'response' => array( 'code' => 200 ),
+				'body'     => '',
+			);
+	}
+}
+
+if ( ! function_exists( 'is_wp_error' ) ) {
+	/**
+	 * Stub of WordPress is_wp_error() — no WP_Error stub class exists here, so
+	 * this always returns false (the "instanceof" check against a class that
+	 * doesn't exist is valid PHP and simply never matches).
+	 *
+	 * @param mixed $thing Value to check.
+	 * @return bool Always false.
+	 */
+	function is_wp_error( $thing ) {
+		return $thing instanceof \WP_Error;
+	}
+}
+
+if ( ! function_exists( 'wp_remote_retrieve_response_code' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_retrieve_response_code().
+	 *
+	 * @param array $response Raw response array from wp_remote_get().
+	 * @return int HTTP status code, or 0 if absent.
+	 */
+	function wp_remote_retrieve_response_code( $response ) {
+		return isset( $response['response']['code'] ) ? (int) $response['response']['code'] : 0;
+	}
+}
+
+if ( ! function_exists( 'wp_remote_retrieve_body' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_retrieve_body().
+	 *
+	 * @param array $response Raw response array from wp_remote_get().
+	 * @return string Response body, or empty string if absent.
+	 */
+	function wp_remote_retrieve_body( $response ) {
+		return isset( $response['body'] ) ? $response['body'] : '';
+	}
+}
+
+require_once __DIR__ . '/wp-class-stubs.php';

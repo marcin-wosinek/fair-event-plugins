@@ -117,4 +117,40 @@ class EventFeedProviderTest extends TestCase {
 
 		$this->assertSame( array( '2026-03-10' ), array_keys( $by_day ) );
 	}
+
+	/**
+	 * A multi-day occurrence spanning a year boundary is expanded correctly —
+	 * the walk is pure civil-date string/strtotime arithmetic with no timezone
+	 * object involved, so Dec 31 -> Jan 1 needs no special handling.
+	 */
+	public function test_multi_day_occurrence_spans_year_boundary() {
+		$occurrences = array(
+			$this->make_occurrence( 'a', '2025-12-30 20:00:00', '2026-01-02 10:00:00' ),
+		);
+
+		$by_day = EventFeedProvider::group_by_day( $occurrences, '2025-12-01 00:00:00', '2026-01-31 23:59:59' );
+
+		$this->assertSame(
+			array( '2025-12-30', '2025-12-31', '2026-01-01', '2026-01-02' ),
+			array_keys( $by_day )
+		);
+
+		$this->assertTrue( $by_day['2025-12-30'][0]['is_first_day'] );
+		$this->assertTrue( $by_day['2026-01-02'][0]['is_last_day'] );
+	}
+
+	/**
+	 * A multi-day occurrence spanning the 2026 US DST spring-forward date
+	 * (March 8) is expanded correctly — group_by_day()'s civil-date walk is
+	 * unaffected by the local clock skipping an hour that day.
+	 */
+	public function test_multi_day_occurrence_spans_dst_spring_forward() {
+		$occurrences = array(
+			$this->make_occurrence( 'a', '2026-03-07 22:00:00', '2026-03-09 06:00:00' ),
+		);
+
+		$by_day = EventFeedProvider::group_by_day( $occurrences, '2026-03-01 00:00:00', '2026-03-31 23:59:59' );
+
+		$this->assertSame( array( '2026-03-07', '2026-03-08', '2026-03-09' ), array_keys( $by_day ) );
+	}
 }
