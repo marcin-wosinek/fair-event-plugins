@@ -3,6 +3,9 @@ import { test, expect, request } from '@playwright/test';
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const STATE_ENDPOINT = '/wp-json/fair-payments-connector/v1/oauth/state';
 const CALLBACK_ENDPOINT = '/wp-json/fair-payments-connector/v1/oauth/callback';
+const DISCONNECT_ENDPOINT =
+	'/wp-json/fair-payments-connector/v1/oauth/disconnect';
+const SETTINGS_ENDPOINT = '/wp-json/wp/v2/settings';
 
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -121,6 +124,79 @@ test.describe('OAuthCallbackController', () => {
 			expect(second.status()).toBe(403);
 			const body = await second.json();
 			expect(body.code).toBe('invalid_oauth_state');
+		});
+	});
+
+	test.describe('GET/POST /wp/v2/settings — token write-only (#859)', () => {
+		test('GET does not include the OAuth token values', async () => {
+			// Ensure tokens are populated first, via a normal callback.
+			const stateRes = await api.post(STATE_ENDPOINT, {
+				headers: adminAuth(),
+			});
+			const { state } = await stateRes.json();
+			const callbackRes = await api.post(CALLBACK_ENDPOINT, {
+				headers: adminAuth(),
+				data: { state, ...VALID_TOKENS },
+			});
+			expect(callbackRes.status()).toBe(200);
+
+			const res = await api.get(SETTINGS_ENDPOINT, {
+				headers: adminAuth(),
+			});
+			expect(res.status()).toBe(200);
+			const body = await res.json();
+			expect(body).not.toHaveProperty('fair_payment_mollie_access_token');
+			expect(body).not.toHaveProperty(
+				'fair_payment_mollie_refresh_token'
+			);
+		});
+
+		test('POST carrying token keys is accepted but ignores them', async () => {
+			const res = await api.post(SETTINGS_ENDPOINT, {
+				headers: adminAuth(),
+				data: {
+					fair_payment_mollie_access_token: 'attacker_supplied',
+					fair_payment_mollie_refresh_token: 'attacker_supplied',
+				},
+			});
+			expect(res.status()).toBe(200);
+			const body = await res.json();
+			expect(body).not.toHaveProperty('fair_payment_mollie_access_token');
+			expect(body).not.toHaveProperty(
+				'fair_payment_mollie_refresh_token'
+			);
+		});
+	});
+
+	test.describe('POST /oauth/disconnect', () => {
+		test('returns 401 for unauthenticated requests', async () => {
+			const res = await api.post(DISCONNECT_ENDPOINT);
+			expect(res.status()).toBe(401);
+		});
+
+		test('clears the connection and returns 200 for an admin', async () => {
+			// Connect first so there is something to disconnect.
+			const stateRes = await api.post(STATE_ENDPOINT, {
+				headers: adminAuth(),
+			});
+			const { state } = await stateRes.json();
+			await api.post(CALLBACK_ENDPOINT, {
+				headers: adminAuth(),
+				data: { state, ...VALID_TOKENS },
+			});
+
+			const res = await api.post(DISCONNECT_ENDPOINT, {
+				headers: adminAuth(),
+			});
+			expect(res.status()).toBe(200);
+			const body = await res.json();
+			expect(body.success).toBe(true);
+
+			const settingsRes = await api.get(SETTINGS_ENDPOINT, {
+				headers: adminAuth(),
+			});
+			const settings = await settingsRes.json();
+			expect(settings.fair_payment_mollie_connected).toBe(false);
 		});
 	});
 });

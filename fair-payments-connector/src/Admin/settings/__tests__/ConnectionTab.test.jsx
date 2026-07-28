@@ -8,7 +8,7 @@
  *     connected controls (mode switch, disconnect) still render.
  */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import ConnectionTab from '../ConnectionTab.js';
 
@@ -117,6 +117,39 @@ describe('ConnectionTab — connection overview', () => {
 			screen.getByRole('button', { name: 'Disconnect' })
 		).toBeInTheDocument();
 
+		expect(console).toHaveLogged();
+	});
+});
+
+describe('ConnectionTab — disconnect', () => {
+	it('calls the oauth/disconnect endpoint, not /wp/v2/settings, on confirm', async () => {
+		mockApiFetchFor({ connected: true, overview: OVERVIEW });
+		jest.spyOn(window, 'confirm').mockReturnValue(true);
+
+		render(<ConnectionTab onNotice={() => {}} shouldReload={false} />);
+
+		const disconnectButton = await screen.findByRole('button', {
+			name: 'Disconnect',
+		});
+		fireEvent.click(disconnectButton);
+
+		await waitFor(() => {
+			expect(apiFetch).toHaveBeenCalledWith(
+				expect.objectContaining({
+					path: '/fair-payments-connector/v1/oauth/disconnect',
+					method: 'POST',
+				})
+			);
+		});
+
+		expect(apiFetch).not.toHaveBeenCalledWith(
+			expect.objectContaining({
+				path: '/wp/v2/settings',
+				method: 'POST',
+			})
+		);
+
+		window.confirm.mockRestore();
 		expect(console).toHaveLogged();
 	});
 });

@@ -22,6 +22,7 @@ import {
 	testConnection,
 	createTestPayment,
 	fetchOAuthState,
+	disconnectOAuth,
 } from './settings-api';
 
 /**
@@ -190,12 +191,7 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 
 		setIsSaving(true);
 
-		saveSettings({
-			fair_payment_mollie_access_token: '',
-			fair_payment_mollie_refresh_token: '',
-			fair_payment_mollie_token_expires: 0,
-			fair_payment_mollie_connected: false,
-		})
+		disconnectOAuth()
 			.then(() => {
 				loadSettings();
 				onNotice({
