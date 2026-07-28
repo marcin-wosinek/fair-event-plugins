@@ -192,6 +192,17 @@ class PaymentEndpoint extends WP_REST_Controller {
 		$post_id     = $request->get_param( 'post_id' );
 		$block_id    = $request->get_param( 'block_id' );
 
+		// WordPress' `required` check on args passes on ''. An empty block_id would
+		// otherwise match any legacy block whose saved blockId is also '', so reject
+		// it outright rather than resolving an ambiguous match.
+		if ( '' === $block_id ) {
+			return new WP_Error(
+				'invalid_block',
+				__( 'Block not found.', 'fair-payments-connector' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		// Derive authoritative amount from saved block content.
 		$post = $post_id ? get_post( $post_id ) : null;
 		if ( ! $post ) {

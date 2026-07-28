@@ -20,6 +20,7 @@ import { __ } from '@wordpress/i18n';
 import { useState, useEffect, useRef } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
+import { generateUuid } from 'fair-events-shared';
 
 const ALLOWED_BLOCKS = [
 	'core/heading',
@@ -136,7 +137,7 @@ registerBlockType('fair-audience/fair-form', {
 				);
 
 			if (!formId || isDuplicate) {
-				setAttributes({ formId: crypto.randomUUID() });
+				setAttributes({ formId: generateUuid() });
 			}
 		}, [formId, clientId, allBlocks, setAttributes]);
 

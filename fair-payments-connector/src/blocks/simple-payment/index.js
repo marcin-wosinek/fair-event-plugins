@@ -3,9 +3,14 @@
  */
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps } from '@wordpress/block-editor';
-import { TextControl } from '@wordpress/components';
+import { Notice, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
+
+/**
+ * Internal dependencies
+ */
+import { generateUuid } from 'fair-events-shared';
 
 /**
  * Block metadata
@@ -28,9 +33,14 @@ registerBlockType(metadata.name, {
 		const blockProps = useBlockProps();
 		const { blockId, amount, currency, description } = attributes;
 
+		// The blockId assigned here only takes effect on the frontend once the post is
+		// saved, so a legacy block (blockId missing before this mount) keeps warning
+		// even after the id is generated in-memory — until the user actually saves.
+		const [wasMissingBlockId] = useState(() => !blockId);
+
 		useEffect(() => {
 			if (!blockId) {
-				setAttributes({ blockId: crypto.randomUUID() });
+				setAttributes({ blockId: generateUuid() });
 			}
 			if (!currency) {
 				setAttributes({
@@ -45,6 +55,14 @@ registerBlockType(metadata.name, {
 					<h3>
 						{__('Simple Payment Block', 'fair-payments-connector')}
 					</h3>
+					{wasMissingBlockId && (
+						<Notice status="warning" isDismissible={false}>
+							{__(
+								'This block is missing an identifier and payments will fail until the post is saved. Save or update the post now.',
+								'fair-payments-connector'
+							)}
+						</Notice>
+					)}
 					<TextControl
 						label={__('Amount', 'fair-payments-connector')}
 						value={amount}
