@@ -178,6 +178,34 @@ npm run build --workspace=fair-events
 - `openai` - GPT-4o-mini ($0.15/$0.60 per 1M tokens)
 - `claude` - Claude 3.5 Haiku ($0.80/$4.00 per 1M tokens)
 
+#### Per-Locale Style Conventions
+
+`config.js` → `ai.localeConventions` holds a per-locale style note appended to
+the AI system prompt. It exists so machine translations match what the
+WordPress community locale team would actually approve — which keeps the diff
+small when those strings later come back through `translation:pull`.
+
+Defined for `es_ES` and `pl_PL`. The `pl_PL` note is distilled from the
+official Codex page [Konwencje przyjęte w polskim tłumaczeniu WordPressa](https://codex.wordpress.org/pl:Konwencje_przyj%C4%99te_w_polskim_t%C5%82umaczeniu_WordPressa)
+and covers four areas:
+
+- **Form of address** — informal *ty*, never `Proszę` + infinitive; personal
+  pronouns always lowercase (`twój`, not `Twój`); sentence case.
+- **Typography** — Polish quotes `„…”`, the single ellipsis character `…`, the
+  en dash `–` for dashes, and literal characters rather than HTML entities.
+- **Inflection** — *WordPressa*, *blogu* (not *bloga*), *witryna* for the site
+  vs *strona* for a single page within it.
+- **Glossary** — the Codex term table (`link` → *odnośnik*, `dashboard` →
+  *kokpit*, `slug` → *uproszczona nazwa*, `URL` → *adres URL*, `image` →
+  *obrazek*, `load` → *wczytywać*, and so on).
+
+These notes only steer **new** AI translations — `translation:ai` skips
+non-empty `msgstr` values, so existing entries are left alone. To re-translate
+what is already there, blank the offending `msgstr` values first and re-run.
+
+To add a locale note, add a key to `ai.localeConventions` keyed by locale code.
+Locales with no entry fall back to the generic prompt.
+
 ### Coverage Reports
 
 Generate translation coverage statistics:
