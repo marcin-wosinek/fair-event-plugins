@@ -6,6 +6,15 @@
  * representing the WordPress site timezone (Settings > General > Timezone).
  * This helper provides correct conversions at import/export boundaries.
  *
+ * All-day events store an *inclusive* end date at 00:00:00 (the last day the
+ * event runs), not the exclusive day-after that iCal's DATE-typed DTEND uses.
+ * Import (ICalParser) and export (CalendarFeedController) each apply a one-day
+ * shift at their respective boundary to bridge the two conventions.
+ *
+ * Floating/timezone-less values (no TZID, no 'Z') have no source timezone of
+ * their own and are interpreted directly as site-local wall-clock time — see
+ * ICalParser's use of getDateTime( wp_timezone() ).
+ *
  * @package FairEvents
  */
 
@@ -98,15 +107,18 @@ class DateHelper {
 	/**
 	 * Convert a timezone-aware DateTime object to site-local 'Y-m-d H:i:s'.
 	 *
+	 * Accepts any \DateTimeInterface, mutable or immutable (e.g. Sabre VObject's
+	 * getDateTime() always returns a \DateTimeImmutable). setTimezone() mutates
+	 * and returns $this on \DateTime but returns a new instance on
+	 * \DateTimeImmutable, so the return value is always reassigned to handle
+	 * both.
+	 *
 	 * @param \DateTimeInterface $datetime Timezone-aware DateTime object.
 	 * @return string Site-local 'Y-m-d H:i:s'.
 	 */
 	public static function datetime_to_local( $datetime ) {
 		$dt = clone $datetime;
-
-		if ( $dt instanceof \DateTime ) {
-			$dt->setTimezone( wp_timezone() );
-		}
+		$dt = $dt->setTimezone( wp_timezone() );
 
 		return $dt->format( 'Y-m-d H:i:s' );
 	}

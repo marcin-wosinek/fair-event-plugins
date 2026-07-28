@@ -97,7 +97,10 @@ class ICalParser {
 		}
 
 		// Get start date — convert from source timezone to site-local time.
-		$dtstart        = $vevent->DTSTART->getDateTime();
+		// Floating/all-day values (no TZID, no Z) have no source timezone, so
+		// Sabre defaults the reference to UTC unless one is passed explicitly;
+		// passing wp_timezone() interprets them directly as site-local instead.
+		$dtstart        = $vevent->DTSTART->getDateTime( wp_timezone() );
 		$start_datetime = DateHelper::datetime_to_local( $dtstart );
 
 		// Check if all-day event (DATE vs DATE-TIME)
@@ -105,7 +108,7 @@ class ICalParser {
 
 		// Get end date (use DTEND or DURATION, fallback to start date)
 		if ( isset( $vevent->DTEND ) ) {
-			$dtend        = $vevent->DTEND->getDateTime();
+			$dtend        = $vevent->DTEND->getDateTime( wp_timezone() );
 			$end_datetime = DateHelper::datetime_to_local( $dtend );
 		} elseif ( isset( $vevent->DURATION ) ) {
 			$dtend = clone $dtstart;

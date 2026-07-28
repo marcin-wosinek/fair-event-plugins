@@ -708,6 +708,13 @@ class EventDates {
 	 * This method fetches all event dates that fall within the given range,
 	 * including both post-linked and standalone (external/unlinked) events.
 	 *
+	 * The WHERE clause is an inclusive overlap check (start <= $end_date AND
+	 * end >= $start_date), verified against a live DB for events landing
+	 * exactly on the 00:00:00/23:59:59 boundaries (fair-events#678): an event
+	 * exactly at $start_date or $end_date is included, one second outside
+	 * either edge is excluded. No fix needed here — this comment locks the
+	 * behavior in.
+	 *
 	 * @param string $start_date Start date (Y-m-d H:i:s format).
 	 * @param string $end_date   End date (Y-m-d H:i:s format).
 	 * @return EventDates[] Array of EventDates objects.

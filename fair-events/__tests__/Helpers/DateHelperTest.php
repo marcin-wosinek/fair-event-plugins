@@ -97,4 +97,40 @@ class DateHelperTest extends TestCase {
 	public function test_local_to_datetime_invalid_datetime() {
 		$this->assertFalse( DateHelper::local_to_datetime( 'not-a-date' ) );
 	}
+
+	/**
+	 * DST spring-forward gap: '2026-03-08 02:30:00' does not exist in
+	 * America/New_York (clocks jump from 02:00 to 03:00). PHP's date_create()
+	 * normalizes it by rolling forward one hour, landing already in the new
+	 * (summer) offset rather than erroring.
+	 *
+	 * @return void
+	 */
+	public function test_local_to_timestamp_dst_spring_forward_gap() {
+		$GLOBALS['_fair_test_timezone'] = 'America/New_York';
+
+		$dt = DateHelper::local_to_datetime( '2026-03-08 02:30:00' );
+
+		$this->assertInstanceOf( \DateTime::class, $dt );
+		$this->assertSame( '2026-03-08 03:30:00', $dt->format( 'Y-m-d H:i:s' ) );
+		$this->assertSame( '-04:00', $dt->format( 'P' ) );
+	}
+
+	/**
+	 * DST fall-back overlap: '2026-11-01 01:30:00' occurs twice in
+	 * America/New_York (clocks fall back from 03:00 to 02:00). PHP's
+	 * date_create() resolves the ambiguity to the first occurrence, i.e. the
+	 * still-DST offset.
+	 *
+	 * @return void
+	 */
+	public function test_local_to_timestamp_dst_fall_back_overlap() {
+		$GLOBALS['_fair_test_timezone'] = 'America/New_York';
+
+		$dt = DateHelper::local_to_datetime( '2026-11-01 01:30:00' );
+
+		$this->assertInstanceOf( \DateTime::class, $dt );
+		$this->assertSame( '2026-11-01 01:30:00', $dt->format( 'Y-m-d H:i:s' ) );
+		$this->assertSame( '-04:00', $dt->format( 'P' ) );
+	}
 }
