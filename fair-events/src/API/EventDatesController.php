@@ -1019,7 +1019,7 @@ class EventDatesController extends WP_REST_Controller {
 
 			// Propagate event_id from a master to its existing generated children.
 			// event_id is not inherited (NULL-means-inherit only applies to
-			// title/venue_id/address/link_type/external_url/capacity/signup_price,
+			// title/venue_id/address/link_type/external_url/capacity,
 			// which children resolve against the master at read time) — it matters
 			// when a standalone recurring series is linked to a post after its
 			// children were already generated.

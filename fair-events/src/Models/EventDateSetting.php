@@ -73,9 +73,6 @@ class EventDateSetting {
 		'show_ticket_type_minimum_activities' => '0',
 		'activity_period_pricing'             => '0',
 		'show_ticket_type_end_date'           => '0',
-		'sliding_scale_enabled'               => '0',
-		'sliding_scale_min'                   => '0',
-		'sliding_scale_max'                   => '0',
 	);
 
 	/**
@@ -87,7 +84,7 @@ class EventDateSetting {
 	/**
 	 * Setting keys whose values are decimals (not booleans or integers).
 	 */
-	const DECIMAL_KEYS = array( 'sliding_scale_min', 'sliding_scale_max' );
+	const DECIMAL_KEYS = array();
 
 	/**
 	 * Get table name

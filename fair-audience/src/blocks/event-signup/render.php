@@ -78,9 +78,9 @@ if ( class_exists( EventDates::class ) ) {
 	}
 }
 
-// For generated occurrences, ticket types, ticket options, and signup_price
-// are stored on the master event date.  Use $pricing_event_date_id for all
-// pricing/option lookups so they resolve correctly.
+// For generated occurrences, ticket types and ticket options are stored on
+// the master event date.  Use $pricing_event_date_id for all pricing/option
+// lookups so they resolve correctly.
 $pricing_event_date_id = $event_date_id;
 if ( $event_dates_obj
 	&& 'generated' === ( $event_dates_obj->occurrence_type ?? null )
@@ -597,25 +597,6 @@ if ( $has_ticket_types ) {
 	if ( null === $signup_price ) {
 		$signup_price = $ticket_types_for_display[0]['price'];
 	}
-} elseif ( $pricing_event_date_id ) {
-	$signup_price = \FairAudience\Services\SignupPriceResolver::resolve_price(
-		(int) $pricing_event_date_id,
-		$participant ? (int) $participant->id : null
-	);
-}
-
-// Sliding scale (pay-what-you-can) replaces the fixed base price with a
-// buyer-chosen amount in [min, max], defaulting to the suggested price.
-// Only offered in the non-ticket-types (Simple) pricing mode; group
-// discounts do not stack on a buyer-chosen amount.
-$sliding_scale = null;
-if ( ! $has_ticket_types && $pricing_event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-	$sliding_scale = \FairEventsExperimental\Services\EventSignupPricing::resolve_sliding_scale(
-		(int) $pricing_event_date_id
-	);
-	if ( $sliding_scale ) {
-		$signup_price = $sliding_scale['suggested'];
-	}
 }
 
 if ( null !== $signup_price ) {
@@ -652,11 +633,14 @@ if ( null !== $signup_price ) {
 			// Resolved price is positive — connector required.
 			$payment_unavailable = true;
 		} else {
-			// Resolved price is zero but event may carry a paid base price
-			// (e.g. 100%-discounted or pricing-service glitch).
-			$payment_unavailable = \FairAudience\Services\SignupPriceResolver::has_paid_price_configured(
-				(int) $pricing_event_date_id
-			);
+			// The pre-selected tier is free, but another ticket type for
+			// this event may still be paid.
+			foreach ( $ticket_types_for_display as $tt_check ) {
+				if ( $tt_check['price'] > 0 ) {
+					$payment_unavailable = true;
+					break;
+				}
+			}
 		}
 	}
 }
@@ -930,44 +914,6 @@ $render_occurrence_picker = static function () use ( $occurrences_for_picker, $h
 	echo '</div>';
 };
 
-/**
- * Render the pay-what-you-can slider (+ accessible number input) when
- * sliding scale is configured for this event date. Frontend.js reads the
- * number input's value to seed the live total and the signup request's
- * chosen_amount; the two inputs stay in sync client-side.
- */
-$render_sliding_scale_picker = static function () use ( $sliding_scale, $form_id ) {
-	if ( ! $sliding_scale ) {
-		return;
-	}
-	$input_id = esc_attr( $form_id ) . '-sliding-scale';
-	?>
-	<div class="fair-audience-sliding-scale-picker">
-		<label for="<?php echo esc_attr( $input_id ); ?>">
-			<?php esc_html_e( 'Choose what you pay', 'fair-audience' ); ?>
-		</label>
-		<input
-			type="range"
-			class="fair-audience-sliding-scale-range"
-			min="<?php echo esc_attr( (string) $sliding_scale['min'] ); ?>"
-			max="<?php echo esc_attr( (string) $sliding_scale['max'] ); ?>"
-			step="0.01"
-			value="<?php echo esc_attr( (string) $sliding_scale['suggested'] ); ?>"
-			aria-describedby="<?php echo esc_attr( $input_id ); ?>-value"
-		/>
-		<input
-			type="number"
-			id="<?php echo esc_attr( $input_id ); ?>"
-			name="chosen_amount"
-			class="fair-audience-sliding-scale-number"
-			min="<?php echo esc_attr( (string) $sliding_scale['min'] ); ?>"
-			max="<?php echo esc_attr( (string) $sliding_scale['max'] ); ?>"
-			step="0.01"
-			value="<?php echo esc_attr( (string) $sliding_scale['suggested'] ); ?>"
-		/>
-	</div>
-	<?php
-};
 
 /**
  * Render the multi-occurrence checkbox picker for 'multiple_instances' ticket
@@ -1045,10 +991,6 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-register-base-text'    => esc_attr( $base_register_button_text ),
 		'data-min-activities'        => esc_attr( (string) $minimum_activities ),
 		'data-has-occurrence-picker' => $has_occurrence_picker ? 'true' : 'false',
-		'data-sliding-scale'         => $sliding_scale ? 'true' : 'false',
-		'data-sliding-min'           => $sliding_scale ? esc_attr( (string) $sliding_scale['min'] ) : '',
-		'data-sliding-max'           => $sliding_scale ? esc_attr( (string) $sliding_scale['max'] ) : '',
-		'data-sliding-suggested'     => $sliding_scale ? esc_attr( (string) $sliding_scale['suggested'] ) : '',
 	)
 );
 ?>
@@ -1224,7 +1166,6 @@ if ( ! $is_valid_post_type ) :
 				<?php $render_ticket_types(); ?>
 				<?php $render_instance_picker(); ?>
 				<?php $render_ticket_options(); ?>
-				<?php $render_sliding_scale_picker(); ?>
 				<?php if ( '' !== trim( $content ) ) : ?>
 					<div class="fair-audience-signup-questions">
 						<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner blocks content is already escaped by WordPress. ?>
@@ -1299,7 +1240,6 @@ if ( ! $is_valid_post_type ) :
 				<?php $render_ticket_types(); ?>
 				<?php $render_instance_picker(); ?>
 				<?php $render_ticket_options(); ?>
-				<?php $render_sliding_scale_picker(); ?>
 				<p>
 					<label for="<?php echo esc_attr( $form_id ); ?>-name">
 						<?php echo esc_html__( 'First Name', 'fair-audience' ); ?> <span class="required">*</span>

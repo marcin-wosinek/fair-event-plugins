@@ -9,6 +9,8 @@ namespace FairEvents\Tests\Models;
 
 use PHPUnit\Framework\TestCase;
 use FairEvents\Models\EventDates;
+use ReflectionClass;
+use ReflectionMethod;
 use ReflectionProperty;
 
 /**
@@ -224,5 +226,44 @@ class EventDatesTest extends TestCase {
 		$occurrence->occurrence_type = 'single';
 
 		$this->assertNull( $occurrence->get_resolved_event_id() );
+	}
+
+	/**
+	 * hydrate() must only assign properties the class actually declares —
+	 * a regression lock for the PHP 8.2 dynamic-property deprecation that
+	 * fired on the long-removed signup_price field (fair-events#1314).
+	 * occurrence_type is 'single' so resolve_instance() returns early and
+	 * no DB access is needed.
+	 */
+	public function test_hydrate_creates_no_dynamic_properties() {
+		$row                    = new \stdClass();
+		$row->id                = 1;
+		$row->event_id          = 42;
+		$row->start_datetime    = '2026-06-29 18:30:00';
+		$row->end_datetime      = '2026-06-29 20:00:00';
+		$row->all_day           = 0;
+		$row->occurrence_type   = 'single';
+		$row->master_id         = null;
+		$row->rrule             = null;
+		$row->status            = 'active';
+		$row->recurrence_mode   = 'none';
+		$row->venue_id          = null;
+		$row->title             = null;
+		$row->external_url      = null;
+		$row->link_type         = 'post';
+		$row->capacity          = null;
+		$row->address           = null;
+		$row->recurrence_anchor = null;
+
+		$obj = ( new ReflectionMethod( EventDates::class, 'hydrate' ) )->invoke( null, $row );
+
+		$declared = array_map(
+			function ( $property ) {
+				return $property->getName();
+			},
+			( new ReflectionClass( EventDates::class ) )->getProperties()
+		);
+
+		$this->assertSame( array(), array_values( array_diff( array_keys( get_object_vars( $obj ) ), $declared ) ) );
 	}
 }

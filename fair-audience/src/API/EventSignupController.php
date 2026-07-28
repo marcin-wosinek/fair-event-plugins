@@ -1769,23 +1769,13 @@ class EventSignupController extends WP_REST_Controller {
 	 * @param int                                        $user_id        Current WP user ID (0 for anonymous).
 	 * @param int|null                                   $ticket_type_id Selected ticket type ID, or null when not using ticket types.
 	 * @param array                                      $option_items     Selected TicketOption objects.
-	 * @param float|null                                 $chosen_amount    Buyer-chosen amount for a sliding-scale price, or null.
+	 * @param float|null                                 $chosen_amount    Unused; kept for call-site compatibility.
 	 * @return \WP_REST_Response|\WP_Error|null WP_REST_Response/WP_Error on paid path, null on free path.
 	 */
 	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $chosen_amount = null ) {
 		$final_price = null;
-		if ( $event_date_id ) {
-			if ( $ticket_type_id ) {
-				$final_price = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type_id, $participant->id );
-			} elseif ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class )
-				&& \FairEventsExperimental\Services\EventSignupPricing::resolve_sliding_scale( $event_date_id ) ) {
-				// Sliding scale replaces the fixed base-price path; group discounts
-				// (resolve_price()) do not stack on a buyer-chosen amount. Never
-				// trust the client value — always re-clamp against stored [min, max].
-				$final_price = \FairEventsExperimental\Services\EventSignupPricing::clamp_chosen_amount( $event_date_id, $chosen_amount );
-			} else {
-				$final_price = \FairAudience\Services\SignupPriceResolver::resolve_price( $event_date_id, $participant->id );
-			}
+		if ( $event_date_id && $ticket_type_id ) {
+			$final_price = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type_id, $participant->id );
 		}
 
 		// Apply group discount to option prices when the participant qualifies.
