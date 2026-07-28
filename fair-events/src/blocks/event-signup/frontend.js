@@ -15,6 +15,8 @@ import {
 	formatMoney,
 	collectQuestionAnswers,
 	validateQuestions,
+	extractErrorMessage,
+	setButtonLoading,
 } from 'fair-events-shared';
 import './frontend.css';
 
@@ -234,7 +236,7 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 		);
 		ticketTypeFields.forEach(function (field) {
 			field.addEventListener('change', function () {
-				updateInstancePicker(form);
+				refreshSignupState(form);
 			});
 		});
 
@@ -246,12 +248,38 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 				.querySelectorAll('input[name="event_date_ids[]"]')
 				.forEach(function (checkbox) {
 					checkbox.addEventListener('change', function () {
-						updateInstancePicker(form);
+						refreshSignupState(form);
 					});
 				});
 		}
 
+		const ticketOptions = form.querySelector('.fair-events-ticket-options');
+		if (ticketOptions) {
+			ticketOptions
+				.querySelectorAll('input[name="ticket_option_ids[]"]')
+				.forEach(function (checkbox) {
+					checkbox.addEventListener('change', function () {
+						refreshSignupState(form);
+					});
+				});
+		}
+
+		wireAddActivities(form);
+
+		refreshSignupState(form);
+	}
+
+	/**
+	 * Recompute every selection-dependent piece of UI (occurrence/instance
+	 * picker, ticket-options fieldset, submit gate) in one pass. Wired to every
+	 * input whose change can affect any of them, so the instance and activity
+	 * gates always compose correctly regardless of which one changed.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function refreshSignupState(form) {
 		updateInstancePicker(form);
+		updateTicketOptions(form);
+		updateSubmitGate(form);
 	}
 
 	/**
@@ -389,6 +417,354 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 		}
 	}
 
+	/**
+	 * Whether the event date has an activities (ticket options) fieldset at
+	 * all — used to pin quantity to 1, same treatment 'multiple_instances'
+	 * ticket types get, since activities attach to a single EventParticipant
+	 * row.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {boolean} True when an activities fieldset is present.
+	 */
+	function hasActivityOptions(form) {
+		return !!form.querySelector('.fair-events-ticket-options');
+	}
+
+	/**
+	 * Compute the effective minimum number of activities: the event-date
+	 * global baseline, possibly raised by the selected ticket type, capped at
+	 * the number of options available so the requirement is never impossible
+	 * to satisfy.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {number} The effective minimum (0 when no minimum applies).
+	 */
+	function getEffectiveActivityMinimum(form) {
+		const globalMin = parseInt(form.dataset.minActivities || '0', 10);
+		const selectedTicketType = getSelectedTicketTypeOption(form);
+		const typeMin = selectedTicketType
+			? parseInt(selectedTicketType.dataset.minActivities || '0', 10)
+			: 0;
+		const optionCount = form.querySelectorAll(
+			'input[name="ticket_option_ids[]"]'
+		).length;
+
+		return Math.min(Math.max(globalMin, typeMin), optionCount);
+	}
+
+	/**
+	 * Whether enough activities are currently checked to satisfy the
+	 * effective minimum. Always true when the fieldset is hidden
+	 * ('multiple_instances' ignores activities) or there's no minimum.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {boolean} True when the requirement is satisfied.
+	 */
+	function meetsActivityMinimum(form) {
+		if (!hasActivityOptions(form) || isMultipleInstancesSelected(form)) {
+			return true;
+		}
+		const effectiveMin = getEffectiveActivityMinimum(form);
+		if (!effectiveMin) {
+			return true;
+		}
+		const checkedCount = form.querySelectorAll(
+			'input[name="ticket_option_ids[]"]:checked'
+		).length;
+		return checkedCount >= effectiveMin;
+	}
+
+	/**
+	 * Whether enough occurrences are checked to satisfy the selected
+	 * 'multiple_instances' ticket type's minimum. Always true when that scope
+	 * isn't active.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {boolean} True when the requirement is satisfied.
+	 */
+	function meetsInstanceMinimum(form) {
+		if (!isMultipleInstancesSelected(form)) {
+			return true;
+		}
+		const option = getSelectedTicketTypeOption(form);
+		const min = Math.max(
+			1,
+			parseInt(option.dataset.minInstances || '0', 10)
+		);
+		const checked = form.querySelectorAll(
+			'input[name="event_date_ids[]"]:checked'
+		).length;
+		return checked >= min;
+	}
+
+	/**
+	 * Disable the submit button until both the instance and activity
+	 * minimums (independent gates that must both hold) are satisfied. Also
+	 * pins quantity to 1 whenever activities are configured, since
+	 * updateInstancePicker() only knows about the 'multiple_instances' case.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function updateSubmitGate(form) {
+		const quantityRow = form.querySelector('.fair-events-quantity-row');
+		const quantityField = form.querySelector('input[name="quantity"]');
+		if (
+			hasActivityOptions(form) &&
+			!isMultipleInstancesSelected(form) &&
+			quantityField
+		) {
+			if (quantityRow) {
+				quantityRow.style.display = 'none';
+			}
+			quantityField.value = '1';
+		}
+
+		const submitButton = form.querySelector('button[type="submit"]');
+		if (!submitButton) {
+			return;
+		}
+		const enabled =
+			meetsInstanceMinimum(form) && meetsActivityMinimum(form);
+		submitButton.disabled = !enabled;
+		submitButton.classList.toggle('is-disabled', !enabled);
+	}
+
+	/**
+	 * Toggle the activities (ticket options) fieldset based on the selected
+	 * ticket type ('multiple_instances' ignores activities, mirroring the
+	 * legacy form), and keep its minimum hint, per-option add-on price tags,
+	 * and live total in sync.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function updateTicketOptions(form) {
+		const fieldset = form.querySelector('.fair-events-ticket-options');
+		if (!fieldset) {
+			return;
+		}
+		const row = fieldset.closest('.form-row') || fieldset;
+
+		const hidden = isMultipleInstancesSelected(form);
+		row.style.display = hidden ? 'none' : '';
+		if (hidden) {
+			fieldset
+				.querySelectorAll('input[type="checkbox"]')
+				.forEach(function (cb) {
+					cb.checked = false;
+				});
+		}
+
+		const effectiveMin = getEffectiveActivityMinimum(form);
+		const checkedOptions = fieldset.querySelectorAll(
+			'input[name="ticket_option_ids[]"]:checked'
+		);
+
+		const hint = fieldset.querySelector(
+			'.fair-events-ticket-options-min-hint'
+		);
+		if (hint) {
+			if (!hidden && effectiveMin > 0) {
+				hint.textContent = sprintf(
+					/* translators: %d: minimum number of activities required */
+					_n(
+						'Please select at least %d activity to sign up.',
+						'Please select at least %d activities to sign up.',
+						effectiveMin,
+						'fair-events'
+					),
+					effectiveMin
+				);
+				hint.style.display = '';
+			} else {
+				hint.style.display = 'none';
+			}
+		}
+
+		// Reveal the per-option "(+price)" add-on tag on unchecked options once
+		// the minimum is met (or there is none), so the checkbox list doesn't
+		// show a price twice.
+		const meetsMin =
+			effectiveMin === 0 || checkedOptions.length >= effectiveMin;
+		fieldset
+			.querySelectorAll('input[name="ticket_option_ids[]"]')
+			.forEach(function (input) {
+				const label = input.closest('label');
+				const addon = label
+					? label.querySelector('.fair-events-ticket-option-addon')
+					: null;
+				if (!addon) {
+					return;
+				}
+				addon.style.display = meetsMin && !input.checked ? '' : 'none';
+			});
+
+		const totalEl = fieldset.querySelector(
+			'.fair-events-ticket-options-total'
+		);
+		if (totalEl) {
+			const selectedTicketType = getSelectedTicketTypeOption(form);
+			const unitPrice = selectedTicketType
+				? parseFloat(selectedTicketType.dataset.ticketPrice || 0)
+				: 0;
+			const optionPrices = Array.from(checkedOptions).map((input) =>
+				parseFloat(input.dataset.optionPrice || 0)
+			);
+			const total = computeTicketTotal({
+				unitPrice,
+				count: 1,
+				optionPrices,
+			});
+			totalEl.textContent =
+				!hidden && checkedOptions.length > 0
+					? sprintf(
+							/* translators: %s: formatted total price */
+							__('Total: %s', 'fair-events'),
+							formatMoney(total, form.dataset.currency)
+					  )
+					: '';
+		}
+	}
+
+	/**
+	 * Wire the "add activities" section shown to a signed-up viewer (rendered
+	 * by fair-audience's SignupHookBridge, since only it can persist the
+	 * selection): keep the Add button's total in sync with the checked
+	 * options and submit on click. No-op when the section isn't present.
+	 * @param {HTMLFormElement} form The get-tickets form (used to reach the
+	 *                                shared currency/message container).
+	 */
+	function wireAddActivities(form) {
+		const block = form.closest('.fair-events-get-tickets');
+		const section = block
+			? block.querySelector('.fair-events-add-activities')
+			: null;
+		if (!section) {
+			return;
+		}
+		const button = section.querySelector(
+			'.fair-events-add-activities-button'
+		);
+		if (!button) {
+			return;
+		}
+		const checkboxes = section.querySelectorAll(
+			'input[name="add_option_ids[]"]'
+		);
+
+		const baseText = __('Add activities', 'fair-events');
+		const updateButton = function () {
+			const optionPrices = [];
+			let anyChecked = false;
+			checkboxes.forEach(function (cb) {
+				if (cb.checked) {
+					anyChecked = true;
+					optionPrices.push(parseFloat(cb.dataset.optionPrice || 0));
+				}
+			});
+			const total = computeTicketTotal({ unitPrice: 0, optionPrices });
+			button.disabled = !anyChecked;
+			button.textContent =
+				total > 0
+					? baseText +
+					  ' — ' +
+					  formatMoney(total, form.dataset.currency)
+					: baseText;
+		};
+
+		checkboxes.forEach(function (cb) {
+			cb.addEventListener('change', updateButton);
+		});
+		button.addEventListener('click', function () {
+			submitAddActivities(block, section, button);
+		});
+
+		updateButton();
+	}
+
+	/**
+	 * Submit the add-activities request to fair-audience's existing route.
+	 * Redirects to checkout when the added activities are priced; otherwise
+	 * reloads to reflect the updated list.
+	 * @param {HTMLElement} block   The .fair-events-get-tickets wrapper.
+	 * @param {HTMLElement} section The .fair-events-add-activities section.
+	 * @param {HTMLElement} button  The add-activities button.
+	 */
+	function submitAddActivities(block, section, button) {
+		const eventId = parseInt(section.dataset.eventId, 10);
+		const eventDateId = section.dataset.eventDateId
+			? parseInt(section.dataset.eventDateId, 10)
+			: null;
+		const token = section.dataset.participantToken || '';
+		const messageContainer = block.querySelector('.message-container');
+
+		const checked = section.querySelectorAll(
+			'input[name="add_option_ids[]"]:checked'
+		);
+		if (checked.length === 0) {
+			return;
+		}
+
+		const requestData = {
+			event_id: eventId,
+			ticket_option_ids: Array.from(checked).map((i) =>
+				parseInt(i.value, 10)
+			),
+		};
+		if (eventDateId) {
+			requestData.event_date_id = eventDateId;
+		}
+		if (token) {
+			requestData.participant_token = token;
+		}
+
+		const restoreButton = setButtonLoading(
+			button,
+			__('Adding…', 'fair-events')
+		);
+
+		apiFetch({
+			path: '/fair-audience/v1/event-signup/add-activities',
+			method: 'POST',
+			data: requestData,
+		})
+			.then(function (response) {
+				if (
+					response &&
+					response.status === 'payment_required' &&
+					response.checkout_url
+				) {
+					window.location = response.checkout_url;
+					return;
+				}
+				if (response && response.success) {
+					showMessage(
+						messageContainer,
+						response.message ||
+							__(
+								'Your activities have been added!',
+								'fair-events'
+							),
+						'success',
+						CSS_PREFIX
+					);
+					window.location.reload();
+					return;
+				}
+				restoreButton();
+			})
+			.catch(function (error) {
+				console.error('Add activities error:', error);
+				const errorMessage = extractErrorMessage(
+					error,
+					__(
+						'Failed to add activities. Please try again.',
+						'fair-events'
+					)
+				);
+				showMessage(
+					messageContainer,
+					errorMessage,
+					'error',
+					CSS_PREFIX
+				);
+				restoreButton();
+			});
+	}
+
 	function validateForm(form) {
 		const messageContainer = form
 			.closest('.fair-events-get-tickets')
@@ -473,6 +849,26 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 			}
 		}
 
+		if (!meetsActivityMinimum(form)) {
+			const effectiveMin = getEffectiveActivityMinimum(form);
+			showMessage(
+				messageContainer,
+				sprintf(
+					/* translators: %d: minimum number of activities required */
+					_n(
+						'Please select at least %d activity to sign up.',
+						'Please select at least %d activities to sign up.',
+						effectiveMin,
+						'fair-events'
+					),
+					effectiveMin
+				),
+				'error',
+				CSS_PREFIX
+			);
+			return false;
+		}
+
 		const questionError = validateQuestions(form);
 		if (questionError) {
 			showMessage(messageContainer, questionError, 'error', CSS_PREFIX);
@@ -534,6 +930,15 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 					Math.min(10, parseInt(quantityField.value, 10) || 1)
 				);
 			}
+		}
+
+		if (hasActivityOptions(form) && !isMultipleInstancesSelected(form)) {
+			const optionInputs = form.querySelectorAll(
+				'input[name="ticket_option_ids[]"]:checked'
+			);
+			data.ticket_option_ids = Array.from(optionInputs).map((i) =>
+				parseInt(i.value, 10)
+			);
 		}
 
 		const mailingField = form.querySelector('input[name="mailing_opt_in"]');

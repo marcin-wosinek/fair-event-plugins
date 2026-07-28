@@ -35,6 +35,13 @@
  *                        master). Override {"createVenue":true} (+ optional
  *                        {"venueName":"…","venueAddress":"…"}) to attach a
  *                        venue, which must win over any address on the row.
+ *   unified-with-options like paid-with-options, but renders the unified
+ *                        fair-events/event-signup block (instead of the
+ *                        default fair-audience/event-signup) so the base
+ *                        plugin's own activities fieldset is under test.
+ *                        Override {"minimumActivities":N} to set the
+ *                        event-date global minimum-activities requirement
+ *                        (default 0 = none).
  *
  * Examples:
  *   wp eval-file .../seed-event.php paid
@@ -62,22 +69,23 @@ if ( isset( $args[1] ) && '' !== $args[1] ) {
 	$overrides = $decoded;
 }
 
-$price             = isset( $overrides['price'] ) ? (float) $overrides['price'] : 25.00;
-$option_names      = isset( $overrides['options'] ) ? (array) $overrides['options'] : array( 'dinner', 'tshirt' );
-$option_price      = isset( $overrides['optionPrice'] ) ? (float) $overrides['optionPrice'] : 10.00;
-$minimum_instances = isset( $overrides['minimumInstances'] ) ? (int) $overrides['minimumInstances'] : 2;
-$omit_multi        = isset( $overrides['omitMulti'] ) && $overrides['omitMulti'];
-$address           = isset( $overrides['address'] ) ? (string) $overrides['address'] : 'Calle Mayor 1, Madrid';
-$recurring         = isset( $overrides['recurring'] ) && $overrides['recurring'];
-$create_venue      = isset( $overrides['createVenue'] ) && $overrides['createVenue'];
-$venue_name        = isset( $overrides['venueName'] ) ? (string) $overrides['venueName'] : 'Test Hall';
-$venue_address     = isset( $overrides['venueAddress'] ) ? (string) $overrides['venueAddress'] : 'Calle Venue 1';
-$ticket_type_id    = 0;
-$option_ids        = array();
-$occurrence_ids    = array();
-$extra_type_ids    = array();
-$venue_id          = 0;
-$is_paid           = true;
+$price              = isset( $overrides['price'] ) ? (float) $overrides['price'] : 25.00;
+$option_names       = isset( $overrides['options'] ) ? (array) $overrides['options'] : array( 'dinner', 'tshirt' );
+$option_price       = isset( $overrides['optionPrice'] ) ? (float) $overrides['optionPrice'] : 10.00;
+$minimum_instances  = isset( $overrides['minimumInstances'] ) ? (int) $overrides['minimumInstances'] : 2;
+$minimum_activities = isset( $overrides['minimumActivities'] ) ? (int) $overrides['minimumActivities'] : 0;
+$omit_multi         = isset( $overrides['omitMulti'] ) && $overrides['omitMulti'];
+$address            = isset( $overrides['address'] ) ? (string) $overrides['address'] : 'Calle Mayor 1, Madrid';
+$recurring          = isset( $overrides['recurring'] ) && $overrides['recurring'];
+$create_venue       = isset( $overrides['createVenue'] ) && $overrides['createVenue'];
+$venue_name         = isset( $overrides['venueName'] ) ? (string) $overrides['venueName'] : 'Test Hall';
+$venue_address      = isset( $overrides['venueAddress'] ) ? (string) $overrides['venueAddress'] : 'Calle Venue 1';
+$ticket_type_id     = 0;
+$option_ids         = array();
+$occurrence_ids     = array();
+$extra_type_ids     = array();
+$venue_id           = 0;
+$is_paid            = true;
 
 // Which purchase block the event page carries. Default: fair-audience
 // event-signup. Override {"block":"get-tickets"} for specs that exercise the
@@ -101,6 +109,8 @@ if ( 'three-ticket-scopes' === $flavour ) {
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
+} elseif ( 'unified-with-options' === $flavour ) {
+	$block_content = '<!-- wp:fair-events/event-signup /-->';
 } elseif ( isset( $overrides['block'] ) && 'unified-with-phone' === $overrides['block'] ) {
 	$block_content = implode(
 		"\n",
@@ -172,6 +182,27 @@ switch ( $flavour ) {
 		}
 		break;
 
+	case 'unified-with-options':
+		// Override {"fullOptionIndex":N} pre-fills that option's capacity to 0
+		// (already full, no seed signup needed) for full-option render specs.
+		$full_option_index = isset( $overrides['fullOptionIndex'] ) ? (int) $overrides['fullOptionIndex'] : -1;
+		$ticket_type_id    = fair_e2e_add_ticket_type( $event_date_id, 'General Admission', null );
+		fair_e2e_add_price( $ticket_type_id, $sale_period_id, $price, null );
+		foreach ( array_values( $option_names ) as $index => $name ) {
+			$option_ids[] = fair_e2e_add_option(
+				$event_date_id,
+				(string) $name,
+				$option_price,
+				substr( (string) $name, 0, 12 ),
+				$index,
+				$index === $full_option_index ? 0 : null
+			);
+		}
+		if ( $minimum_activities > 0 ) {
+			fair_e2e_set_event_date_setting( $event_date_id, 'minimum_activities', $minimum_activities );
+		}
+		break;
+
 	case 'capacity-1':
 		$ticket_type_id = fair_e2e_add_ticket_type( $event_date_id, 'Limited Admission', 1 );
 		fair_e2e_add_price( $ticket_type_id, $sale_period_id, $price, 1 );
@@ -234,7 +265,7 @@ switch ( $flavour ) {
 		break;
 
 	default:
-		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes, audience-ticket-scopes, address." );
+		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes, audience-ticket-scopes, address, unified-with-options." );
 }
 
 echo 'E2E_SEED:' . wp_json_encode(

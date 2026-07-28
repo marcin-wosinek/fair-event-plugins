@@ -6,11 +6,12 @@
  *   wp eval-file wp-content/mu-plugins/scripts/signup-state.php <email> <event_date_id>
  *
  * Prints a single `E2E_STATE:{json}` line with the participant's marketing
- * profile, the event-participant label, and the mail captured for this buyer
- * (including the HTML body, so a spec can pull a link out of it, e.g. a
- * resume-registration URL), so the spec can assert that consent was recorded
- * only when opted in, that payment flipped the row to signed_up, and that the
- * confirmation email was delivered.
+ * profile, the event-participant label, the attached activity (ticket option)
+ * ids, and the mail captured for this buyer (including the HTML body, so a
+ * spec can pull a link out of it, e.g. a resume-registration URL), so the
+ * spec can assert that consent was recorded only when opted in, that payment
+ * flipped the row to signed_up, that selected activities were attached, and
+ * that the confirmation email was delivered.
  *
  * @package FairEventsE2E
  */
@@ -32,13 +33,18 @@ if ( ! $participant ) {
 	return;
 }
 
-$label = null;
+$label      = null;
+$option_ids = array();
 if ( $event_date_id ) {
-	$event_participant = ( new EventParticipantRepository() )->get_by_event_date_and_participant(
+	$event_participant_repository = new EventParticipantRepository();
+	$event_participant            = $event_participant_repository->get_by_event_date_and_participant(
 		$event_date_id,
 		$participant->id
 	);
-	$label             = $event_participant ? $event_participant->label : null;
+	$label                        = $event_participant ? $event_participant->label : null;
+	if ( $event_participant ) {
+		$option_ids = $event_participant_repository->get_option_ids_for_event_participant( (int) $event_participant->id );
+	}
 }
 
 // Mail addressed to this buyer, captured by fair-e2e-support.php.
@@ -60,6 +66,7 @@ echo 'E2E_STATE:' . wp_json_encode(
 		'email_profile' => $participant->email_profile,
 		'status'        => $participant->status,
 		'label'         => $label,
+		'option_ids'    => $option_ids,
 		'mail'          => $mail,
 	)
 ) . "\n";

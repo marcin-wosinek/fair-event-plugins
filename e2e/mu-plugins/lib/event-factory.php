@@ -16,6 +16,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Models\EventDateSetting;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketPrice;
@@ -241,15 +242,16 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	/**
 	 * Add a ticket option (activity-style add-on) carrying a short_name.
 	 *
-	 * @param int    $event_date_id Event date ID.
-	 * @param string $name          Option name.
-	 * @param float  $price         Option price.
-	 * @param string $short_name    Short name.
-	 * @param int    $sort_order    Sort order.
+	 * @param int      $event_date_id Event date ID.
+	 * @param string   $name          Option name.
+	 * @param float    $price         Option price.
+	 * @param string   $short_name    Short name.
+	 * @param int      $sort_order    Sort order.
+	 * @param int|null $capacity      Max signups for this option (null = unlimited).
 	 * @return int Option ID.
 	 */
-	function fair_e2e_add_option( $event_date_id, $name, $price, $short_name, $sort_order = 0 ) {
-		$option_id = TicketOption::create( $event_date_id, $name, $price, $sort_order, $short_name );
+	function fair_e2e_add_option( $event_date_id, $name, $price, $short_name, $sort_order = 0, $capacity = null ) {
+		$option_id = TicketOption::create( $event_date_id, $name, $price, $sort_order, $short_name, null, $capacity );
 
 		if ( ! $option_id ) {
 			WP_CLI::error( 'Failed to create ticket option.' );
@@ -300,5 +302,17 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 		}
 
 		return (int) $venue_id;
+	}
+
+	/**
+	 * Set an event-date-scoped setting (e.g. the minimum-activities requirement).
+	 *
+	 * @param int    $event_date_id Event date ID.
+	 * @param string $key           Setting key.
+	 * @param mixed  $value         Setting value.
+	 * @return void
+	 */
+	function fair_e2e_set_event_date_setting( $event_date_id, $key, $value ) {
+		EventDateSetting::set( $event_date_id, $key, $value );
 	}
 }
