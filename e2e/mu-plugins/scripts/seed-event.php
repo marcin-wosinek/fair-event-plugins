@@ -25,6 +25,16 @@
  *                        {"omitMulti":true} to skip the multiple_instances
  *                        type (single_instance + whole_series only), the
  *                        regression scenario.
+ *   address              event-info block + a calendar button, no ticket
+ *                        type/sale period (signup path untouched). Renders
+ *                        {"address":"…"} (default 'Calle Mayor 1, Madrid') via
+ *                        the event date's inline address column. Override
+ *                        {"recurring":true} to seed a 3-occurrence weekly
+ *                        series with the master dated -10 days (so the public
+ *                        page pivots to a generated child instead of the
+ *                        master). Override {"createVenue":true} (+ optional
+ *                        {"venueName":"…","venueAddress":"…"}) to attach a
+ *                        venue, which must win over any address on the row.
  *
  * Examples:
  *   wp eval-file .../seed-event.php paid
@@ -57,10 +67,16 @@ $option_names      = isset( $overrides['options'] ) ? (array) $overrides['option
 $option_price      = isset( $overrides['optionPrice'] ) ? (float) $overrides['optionPrice'] : 10.00;
 $minimum_instances = isset( $overrides['minimumInstances'] ) ? (int) $overrides['minimumInstances'] : 2;
 $omit_multi        = isset( $overrides['omitMulti'] ) && $overrides['omitMulti'];
+$address           = isset( $overrides['address'] ) ? (string) $overrides['address'] : 'Calle Mayor 1, Madrid';
+$recurring         = isset( $overrides['recurring'] ) && $overrides['recurring'];
+$create_venue      = isset( $overrides['createVenue'] ) && $overrides['createVenue'];
+$venue_name        = isset( $overrides['venueName'] ) ? (string) $overrides['venueName'] : 'Test Hall';
+$venue_address     = isset( $overrides['venueAddress'] ) ? (string) $overrides['venueAddress'] : 'Calle Venue 1';
 $ticket_type_id    = 0;
 $option_ids        = array();
 $occurrence_ids    = array();
 $extra_type_ids    = array();
+$venue_id          = 0;
 $is_paid           = true;
 
 // Which purchase block the event page carries. Default: fair-audience
@@ -94,6 +110,21 @@ if ( 'three-ticket-scopes' === $flavour ) {
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
+} elseif ( 'address' === $flavour ) {
+	// event-info block (renders the address/venue) + a calendar button — no
+	// signup block, since this flavour never touches the purchase path.
+	$block_content = implode(
+		"\n",
+		array(
+			'<!-- wp:fair-events/event-info /-->',
+			'',
+			'<!-- wp:buttons -->',
+			'<div class="wp-block-buttons"><!-- wp:button {"isCalendarButton":true} -->',
+			'<div class="wp-block-button"><a class="wp-block-button__link wp-element-button">Add to calendar</a></div>',
+			'<!-- /wp:button --></div>',
+			'<!-- /wp:buttons -->',
+		)
+	);
 }
 
 $event_id = fair_e2e_create_event( 'E2E ' . $flavour . ' Event ' . gmdate( 'YmdHis' ) . ' ' . wp_rand( 1000, 9999 ), $block_content );
@@ -101,10 +132,19 @@ $event_id = fair_e2e_create_event( 'E2E ' . $flavour . ' Event ' . gmdate( 'YmdH
 // three-ticket-scopes pins its occurrence to a fixed absolute date (rather than
 // fair_e2e_add_date()'s '+7 days') so the rendered dates/prices are stable and
 // reviewable as regressions across runs.
-$event_date_id  = 'three-ticket-scopes' === $flavour
-	? fair_e2e_add_date_at( $event_id, '2027-01-15 18:00:00' )
-	: fair_e2e_add_date( $event_id );
-$sale_period_id = fair_e2e_add_sale_period( $event_date_id );
+if ( 'three-ticket-scopes' === $flavour ) {
+	$event_date_id = fair_e2e_add_date_at( $event_id, '2027-01-15 18:00:00' );
+} elseif ( 'address' === $flavour && $recurring ) {
+	// The master must start in the past: get_upcoming_by_master_id() includes
+	// the master row itself when its own start is still upcoming, so a
+	// future-dated master would make SelectedOccurrence::resolve() pivot back
+	// to the master and never reach a generated child.
+	$event_date_id = fair_e2e_add_date_at( $event_id, gmdate( 'Y-m-d H:i:s', strtotime( '-10 days' ) ) );
+} else {
+	$event_date_id = fair_e2e_add_date( $event_id );
+}
+// 'address' scenarios never touch the signup path — skip the sale period.
+$sale_period_id = 'address' === $flavour ? 0 : fair_e2e_add_sale_period( $event_date_id );
 
 switch ( $flavour ) {
 	case 'free':
@@ -180,8 +220,21 @@ switch ( $flavour ) {
 		}
 		break;
 
+	case 'address':
+		fair_e2e_set_address( $event_date_id, $address );
+		if ( $recurring ) {
+			$occurrence_ids = fair_e2e_add_series( $event_id, 3 );
+		}
+		if ( $create_venue ) {
+			$venue_id = fair_e2e_create_venue( $venue_name, $venue_address );
+			fair_e2e_set_venue( $event_date_id, $venue_id );
+		}
+		$is_paid = false;
+		$price   = 0.00;
+		break;
+
 	default:
-		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes, audience-ticket-scopes." );
+		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes, audience-ticket-scopes, address." );
 }
 
 echo 'E2E_SEED:' . wp_json_encode(
@@ -197,5 +250,6 @@ echo 'E2E_SEED:' . wp_json_encode(
 		'occurrenceIds'    => array_map( 'intval', $occurrence_ids ),
 		'minimumInstances' => (int) $minimum_instances,
 		'price'            => $is_paid ? $price : 0.00,
+		'venueId'          => (int) $venue_id,
 	)
 ) . "\n";

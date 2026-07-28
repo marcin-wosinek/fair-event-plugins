@@ -54,7 +54,7 @@ export const test = base.extend({
 			runScript(
 				'cleanup-event.php',
 				'E2E_CLEANUP',
-				`${event.eventId} ${event.eventDateId}`
+				`${event.eventId} ${event.eventDateId} ${event.venueId || 0}`
 			);
 		}
 		resetCapturedMail();
