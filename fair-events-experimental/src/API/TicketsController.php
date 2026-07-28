@@ -150,21 +150,10 @@ class TicketsController extends WP_REST_Controller {
 			? $this->normalize_settings( $body['settings'] )
 			: array();
 
-		$sliding_scale_error = $this->validate_sliding_scale_settings( $event_date_id, $event_date, $body, $normalized_settings );
-		if ( is_wp_error( $sliding_scale_error ) ) {
-			return $sliding_scale_error;
-		}
-
-		// 1. Update capacity + signup_price on event_dates row.
+		// 1. Update capacity on event_dates row.
 		$event_date_updates = array();
 		if ( array_key_exists( 'capacity', $body ) ) {
 			$event_date_updates['capacity'] = null !== $body['capacity'] ? absint( $body['capacity'] ) : null;
-		}
-		if ( array_key_exists( 'signup_price', $body ) ) {
-			$raw_price                          = $body['signup_price'];
-			$event_date_updates['signup_price'] = ( null === $raw_price || '' === $raw_price )
-				? null
-				: (float) $raw_price;
 		}
 		if ( ! empty( $event_date_updates ) ) {
 			EventDates::update_by_id( $event_date_id, $event_date_updates );
@@ -315,18 +304,12 @@ class TicketsController extends WP_REST_Controller {
 			);
 		}
 
-		// 1. Update capacity + signup_price on event_dates row.
+		// 1. Update capacity on event_dates row.
 		$event_date_updates = array();
 		if ( array_key_exists( 'capacity', $body ) ) {
 			$event_date_updates['capacity'] = null !== $body['capacity'] && '' !== $body['capacity']
 				? absint( $body['capacity'] )
 				: null;
-		}
-		if ( array_key_exists( 'signup_price', $body ) ) {
-			$raw_price                          = $body['signup_price'];
-			$event_date_updates['signup_price'] = ( null === $raw_price || '' === $raw_price )
-				? null
-				: (float) $raw_price;
 		}
 		if ( ! empty( $event_date_updates ) ) {
 			EventDates::update_by_id( $event_date_id, $event_date_updates );
@@ -621,54 +604,6 @@ class TicketsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validate min <= suggested <= max for the sliding-scale price band.
-	 *
-	 * Only runs the check when sliding scale ends up enabled after applying
-	 * the incoming settings; falls back to already-stored values for any
-	 * field not present in this request so a partial update can't bypass it.
-	 *
-	 * @param int        $event_date_id       Event date ID.
-	 * @param EventDates $event_date          Current event date row (pre-update).
-	 * @param array      $body                Raw request body.
-	 * @param array      $normalized_settings Settings already normalized via normalize_settings().
-	 * @return WP_Error|null Error on violation, null when valid.
-	 */
-	private function validate_sliding_scale_settings( $event_date_id, $event_date, $body, $normalized_settings ) {
-		$enabled = array_key_exists( 'sliding_scale_enabled', $normalized_settings )
-			? '1' === $normalized_settings['sliding_scale_enabled']
-			: '1' === (string) EventDateSetting::get( $event_date_id, 'sliding_scale_enabled' );
-
-		if ( ! $enabled ) {
-			return null;
-		}
-
-		$min = array_key_exists( 'sliding_scale_min', $normalized_settings )
-			? (float) $normalized_settings['sliding_scale_min']
-			: (float) EventDateSetting::get( $event_date_id, 'sliding_scale_min' );
-
-		$max = array_key_exists( 'sliding_scale_max', $normalized_settings )
-			? (float) $normalized_settings['sliding_scale_max']
-			: (float) EventDateSetting::get( $event_date_id, 'sliding_scale_max' );
-
-		if ( array_key_exists( 'signup_price', $body ) ) {
-			$raw_price = $body['signup_price'];
-			$suggested = ( null === $raw_price || '' === $raw_price ) ? 0.0 : (float) $raw_price;
-		} else {
-			$suggested = null !== $event_date->signup_price ? (float) $event_date->signup_price : 0.0;
-		}
-
-		if ( $min < 0 || $max < 0 || $suggested < 0 || $min > $suggested || $suggested > $max ) {
-			return new WP_Error(
-				'rest_invalid_sliding_scale',
-				__( 'Sliding-scale prices must satisfy minimum ≤ suggested ≤ maximum, all non-negative.', 'fair-events' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		return null;
-	}
-
-	/**
 	 * Build the full response for ticket config
 	 *
 	 * @param int        $event_date_id Event date ID.
@@ -706,7 +641,6 @@ class TicketsController extends WP_REST_Controller {
 
 		return array(
 			'capacity'     => $event_date->capacity,
-			'signup_price' => null !== $event_date->signup_price ? (float) $event_date->signup_price : null,
 			'end_datetime' => $event_date->end_datetime,
 			'ticket_types' => array_map(
 				function ( $t ) use ( $restrictions ) {

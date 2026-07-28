@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.26.0';
+	const DB_VERSION = '3.27.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -47,7 +47,6 @@ class Schema {
 			external_url TEXT DEFAULT NULL,
 			link_type VARCHAR(20) DEFAULT NULL,
 			capacity INT UNSIGNED DEFAULT NULL,
-			signup_price DECIMAL(10,2) DEFAULT NULL,
 			address TEXT DEFAULT NULL,
 			recurrence_anchor DATE DEFAULT NULL,
 			status ENUM('active','cancelled') NOT NULL DEFAULT 'active',

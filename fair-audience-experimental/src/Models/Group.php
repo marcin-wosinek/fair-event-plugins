@@ -50,6 +50,15 @@ class Group {
 	public $updated_at;
 
 	/**
+	 * Member count. Populated only by
+	 * GroupRepository::get_all_with_member_counts(); null when hydrated any
+	 * other way.
+	 *
+	 * @var int|null
+	 */
+	public $member_count;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param array $data Optional data to populate.

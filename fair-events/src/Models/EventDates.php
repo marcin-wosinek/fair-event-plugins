@@ -205,7 +205,6 @@ class EventDates {
 		$event_dates->external_url      = $result->external_url ?? null;
 		$event_dates->link_type         = $result->link_type ?? null;
 		$event_dates->capacity          = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
-		$event_dates->signup_price      = isset( $result->signup_price ) && null !== $result->signup_price ? (float) $result->signup_price : null;
 		$event_dates->address           = isset( $result->address ) ? $result->address : null;
 		$event_dates->recurrence_anchor = $result->recurrence_anchor ?? null;
 
@@ -245,7 +244,7 @@ class EventDates {
 			return;
 		}
 
-		foreach ( array( 'title', 'venue_id', 'address', 'link_type', 'external_url', 'capacity', 'signup_price' ) as $field ) {
+		foreach ( array( 'title', 'venue_id', 'address', 'link_type', 'external_url', 'capacity' ) as $field ) {
 			if ( null === $event_dates->$field ) {
 				$event_dates->$field = $master->$field;
 			}
@@ -766,8 +765,7 @@ class EventDates {
 			COALESCE( ed.address, m.address ) AS address,
 			COALESCE( ed.link_type, m.link_type ) AS link_type,
 			COALESCE( ed.external_url, m.external_url ) AS external_url,
-			COALESCE( ed.capacity, m.capacity ) AS capacity,
-			COALESCE( ed.signup_price, m.signup_price ) AS signup_price
+			COALESCE( ed.capacity, m.capacity ) AS capacity
 			FROM %i ed LEFT JOIN %i m ON ed.master_id = m.id';
 	}
 
@@ -891,7 +889,6 @@ class EventDates {
 			'external_url'      => '%s',
 			'link_type'         => '%s',
 			'capacity'          => '%d',
-			'signup_price'      => '%f',
 			'address'           => '%s',
 			'recurrence_anchor' => '%s',
 			'status'            => '%s',

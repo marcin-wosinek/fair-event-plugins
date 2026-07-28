@@ -1,15 +1,15 @@
 /**
- * Playwright API tests for base signup pricing without the experimental
- * plugin (#1180): with only fair-events + fair-audience active, the signup
- * flow must resolve prices through FairEvents\Services\SignupPricing /
- * TicketPricing (via FairAudience\Services\SignupPriceResolver) instead of
- * silently collapsing to free.
+ * Playwright API tests for ticket-type signup pricing without the
+ * experimental plugin (#1180): with only fair-events + fair-audience active,
+ * the signup flow must resolve prices through FairEvents\Services\TicketPricing
+ * (via FairAudience\Services\SignupPriceResolver) instead of silently
+ * collapsing to free.
  *
- * Like EventSignupSlidingScale's and GetTicketsPaymentUnavailable's specs,
- * this assumes the dev stack has no payment connector configured: any event
- * with a positive price must be rejected with 503 payment_unavailable,
- * never confirmed for free. A free (price-0) ticket type on the same event
- * must still confirm, proving the guard isn't over-blocking.
+ * Like GetTicketsPaymentUnavailable's spec, this assumes the dev stack has no
+ * payment connector configured: any event with a positive price must be
+ * rejected with 503 payment_unavailable, never confirmed for free. A free
+ * (price-0) ticket type on the same event must still confirm, proving the
+ * guard isn't over-blocking.
  *
  * These assertions hold in both plugin configurations (base-only and with
  * fair-events-experimental active) — the resolver falls back correctly
@@ -60,61 +60,6 @@ async function deleteEvent(api, eventId) {
 		params: { force: 'true' },
 	});
 }
-
-test.describe('Base signup pricing — simple per-date price', () => {
-	let api;
-	let event;
-
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-		event = await createEventWithDates(
-			api,
-			`Base Pricing Simple Test ${Date.now()}`
-		);
-
-		const configRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${event.eventDateId}/tickets`,
-			{
-				headers: authHeaders,
-				data: {
-					signup_price: 12.5,
-					settings: {},
-				},
-			}
-		);
-		expect(configRes.ok(), await configRes.text()).toBeTruthy();
-	});
-
-	test.afterAll(async () => {
-		await deleteEvent(api, event?.eventId);
-		await api.dispose();
-	});
-
-	test('a priced simple signup is rejected 503 and writes nothing (never falls through free)', async () => {
-		const res = await api.post('/wp-json/fair-audience/v1/event-signup', {
-			headers: authHeaders,
-			data: {
-				event_id: event.eventId,
-				event_date_id: event.eventDateId,
-			},
-		});
-		expect(res.status()).toBe(503);
-		expect((await res.json()).code).toBe('payment_unavailable');
-
-		const statusRes = await api.get(
-			'/wp-json/fair-audience/v1/event-signup/status',
-			{
-				headers: authHeaders,
-				params: {
-					event_id: event.eventId,
-					event_date_id: event.eventDateId,
-				},
-			}
-		);
-		expect(statusRes.ok()).toBeTruthy();
-		expect((await statusRes.json()).is_signed_up).toBe(false);
-	});
-});
 
 test.describe('Base signup pricing — ticket-type price', () => {
 	let api;

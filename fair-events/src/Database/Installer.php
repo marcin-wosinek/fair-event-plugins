@@ -292,6 +292,11 @@ class Installer {
 			self::migrate_to_3_26_0();
 		}
 
+		// Run migration if upgrading from pre-3.27.0 (drop signup_price from event_dates).
+		if ( version_compare( $current_version, '3.27.0', '<' ) ) {
+			self::migrate_to_3_27_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -466,6 +471,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.26.0', '<' ) ) {
 				self::migrate_to_3_26_0();
+			}
+
+			if ( version_compare( $current_version, '3.27.0', '<' ) ) {
+				self::migrate_to_3_27_0();
 			}
 
 			// Install/update tables
@@ -2075,6 +2084,29 @@ class Installer {
 				$wpdb->prefix . 'fair_events_invitation_tokens'
 			)
 		);
+	}
+
+	/**
+	 * Migrate to version 3.27.0 - Drop signup_price from event_dates.
+	 *
+	 * The column was the flat "simple pricing" mode; pricing is now always
+	 * ticket-type driven, so it is obsolete.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_27_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		if ( self::column_exists( $table_name, 'signup_price' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i DROP COLUMN signup_price',
+					$table_name
+				)
+			);
+		}
 	}
 
 	/**
