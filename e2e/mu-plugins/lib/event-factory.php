@@ -21,6 +21,7 @@ use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketPrice;
 use FairEvents\Services\RecurrenceService;
 use FairEventsExperimental\Models\TicketOption;
+use FairEventsExperimental\Models\Venue;
 
 if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	/**
@@ -255,5 +256,49 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 		}
 
 		return (int) $option_id;
+	}
+
+	/**
+	 * Set the free-text address on an event date row (Venues bundle disabled path).
+	 *
+	 * @param int    $event_date_id Event date ID.
+	 * @param string $address       Address text.
+	 * @return void
+	 */
+	function fair_e2e_set_address( $event_date_id, $address ) {
+		if ( ! EventDates::update_by_id( $event_date_id, array( 'address' => $address ) ) ) {
+			WP_CLI::error( 'Failed to set event date address.' );
+		}
+	}
+
+	/**
+	 * Attach a venue to an event date row.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @param int $venue_id      Venue ID.
+	 * @return void
+	 */
+	function fair_e2e_set_venue( $event_date_id, $venue_id ) {
+		if ( ! EventDates::update_by_id( $event_date_id, array( 'venue_id' => $venue_id ) ) ) {
+			WP_CLI::error( 'Failed to set event date venue.' );
+		}
+	}
+
+	/**
+	 * Create a venue (fair-events-experimental's venues bundle table, created
+	 * unconditionally by fair-events' own installer — no bundle flag involved).
+	 *
+	 * @param string $name    Venue name.
+	 * @param string $address Venue address.
+	 * @return int Venue ID.
+	 */
+	function fair_e2e_create_venue( $name, $address ) {
+		$venue_id = Venue::create( $name, $address );
+
+		if ( ! $venue_id ) {
+			WP_CLI::error( 'Failed to create venue.' );
+		}
+
+		return (int) $venue_id;
 	}
 }

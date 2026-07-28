@@ -3,13 +3,16 @@
  * Delete an E2E-seeded event and everything hanging off it, by id.
  *
  * Run via WP-CLI against the wp-env tests instance:
- *   wp eval-file wp-content/mu-plugins/scripts/cleanup-event.php <eventId> <eventDateId>
+ *   wp eval-file wp-content/mu-plugins/scripts/cleanup-event.php <eventId> <eventDateId> [venueId]
  *
  * Removes the participants that signed up for the event date (buyers), their
  * option rows, the event-participant rows, the ticket types/prices/options/
  * sale periods/dates, and finally the fair_event post. Deleting by id keeps
  * repeated local runs from accumulating rows and guarantees no later test sees
  * a previous test's data. Captured mail is reset separately by the fixture.
+ *
+ * The optional third arg deletes a venue created for the test (0/omitted =
+ * no venue to clean up — backward compatible with every existing caller).
  *
  * Prints a single `E2E_CLEANUP:{json}` line with row counts for debuggability.
  *
@@ -20,9 +23,10 @@ global $wpdb;
 
 $event_id      = isset( $args[0] ) ? (int) $args[0] : 0;
 $event_date_id = isset( $args[1] ) ? (int) $args[1] : 0;
+$venue_id      = isset( $args[2] ) ? (int) $args[2] : 0;
 
 if ( ! $event_id || ! $event_date_id ) {
-	WP_CLI::error( 'Usage: cleanup-event.php <eventId> <eventDateId>' );
+	WP_CLI::error( 'Usage: cleanup-event.php <eventId> <eventDateId> [venueId]' );
 }
 
 $participants_table  = $wpdb->prefix . 'fair_audience_participants';
@@ -163,5 +167,9 @@ $deleted['event_dates'] = (int) $wpdb->query(
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 $deleted['post'] = wp_delete_post( $event_id, true ) ? 1 : 0;
+
+if ( $venue_id ) {
+	$deleted['venue'] = \FairEventsExperimental\Models\Venue::delete( $venue_id ) ? 1 : 0;
+}
 
 echo 'E2E_CLEANUP:' . wp_json_encode( $deleted ) . "\n";
