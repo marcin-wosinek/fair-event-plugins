@@ -18,9 +18,10 @@ $description = isset( $args[1] ) && '' !== $args[1] ? (string) $args[1] : 'E2E s
 // The editor assigns every simple-payment block a UUID blockId attribute;
 // the payment endpoint derives the authoritative amount by matching it, so
 // the seeded block must carry one too.
+$block_id    = wp_generate_uuid4();
 $block_attrs = wp_json_encode(
 	array(
-		'blockId'     => wp_generate_uuid4(),
+		'blockId'     => $block_id,
 		'amount'      => $amount,
 		'description' => $description,
 	)
@@ -46,5 +47,6 @@ echo 'E2E_PAYMENT_PAGE:' . wp_json_encode(
 		'pageUrl'     => get_permalink( $page_id ),
 		'amount'      => (float) $amount,
 		'description' => $description,
+		'blockId'     => $block_id,
 	)
 ) . "\n";

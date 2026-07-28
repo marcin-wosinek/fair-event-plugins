@@ -93,4 +93,77 @@ test.describe('simple-payment block purchase', () => {
 		expect(tx.status).toBe('paid');
 		expect(tx.testmode).toBe(true);
 	});
+
+	test('rejects a submitted amount below the block-configured amount with 422', async ({
+		page,
+	}) => {
+		const nonceRes = await page.request.get(
+			'/wp-json/fair-payments-connector/v1/nonce'
+		);
+		const { nonce } = await nonceRes.json();
+
+		const res = await page.request.post(
+			'/wp-json/fair-payments-connector/v1/payments',
+			{
+				data: {
+					amount: '1.00',
+					currency: 'EUR',
+					post_id: seed.pageId,
+					block_id: seed.blockId,
+					nonce,
+				},
+			}
+		);
+
+		expect(res.status()).toBe(422);
+		const body = await res.json();
+		expect(body.code).toBe('amount_too_low');
+	});
+
+	test('rejects an empty block_id with 403 (regression guard)', async ({
+		page,
+	}) => {
+		const nonceRes = await page.request.get(
+			'/wp-json/fair-payments-connector/v1/nonce'
+		);
+		const { nonce } = await nonceRes.json();
+
+		const res = await page.request.post(
+			'/wp-json/fair-payments-connector/v1/payments',
+			{
+				data: {
+					amount: String(seed.amount),
+					currency: 'EUR',
+					post_id: seed.pageId,
+					block_id: '',
+					nonce,
+				},
+			}
+		);
+
+		expect(res.status()).toBe(403);
+		const body = await res.json();
+		expect(body.code).toBe('invalid_block');
+	});
+
+	test('rejects a client-tampered amount and does not reach Mollie checkout', async ({
+		page,
+	}) => {
+		await page.goto(seed.pageUrl);
+
+		const payButton = page.locator('.fair-payments-connector-button');
+		await expect(payButton).toBeVisible();
+
+		// The server derives the authoritative amount from the saved block, so a
+		// tampered data-amount must be rejected rather than trusted.
+		await payButton.evaluate((button) =>
+			button.setAttribute('data-amount', '0.01')
+		);
+		await payButton.click();
+
+		await expect(
+			page.locator('.fair-payments-connector-error')
+		).toBeVisible({ timeout: 15000 });
+		await expect(page).not.toHaveURL(/fair_payment_callback=true/);
+	});
 });
