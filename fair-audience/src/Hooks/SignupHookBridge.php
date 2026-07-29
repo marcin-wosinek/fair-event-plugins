@@ -42,8 +42,8 @@ class SignupHookBridge {
 		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
 		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 2 );
 		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 2 );
-		add_filter( 'fair_events_signup_options_error', array( static::class, 'filter_options_error' ), 10, 3 );
-		add_filter( 'fair_events_signup_option_line_items', array( static::class, 'filter_option_line_items' ), 10, 2 );
+		add_filter( 'fair_events_signup_options_error', array( static::class, 'filter_options_error' ), 10, 4 );
+		add_filter( 'fair_events_signup_option_line_items', array( static::class, 'filter_option_line_items' ), 10, 3 );
 		add_action( 'fair_events_signup_render_after_form', array( static::class, 'render_add_activities' ), 10, 1 );
 		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 6 );
 		add_action( 'fair_events_signup_confirmed', array( static::class, 'handle_signup_confirmed' ), 10, 2 );
