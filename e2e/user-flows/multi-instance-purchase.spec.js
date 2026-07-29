@@ -1,22 +1,18 @@
 /**
  * E2E: 'multiple_instances' ticket type purchase — pick-N occurrences at a
- * per-instance price, through the public (anonymous, first-time buyer)
- * registration form.
+ * per-instance price, through the unified Event Signup form (re-pointed at
+ * the unified markup by #1245; seedEvent's default block since the cutover).
  *
  * Reproduces a reported bug: the buyer picks 3 occurrences of a series priced
- * at 10.00 each. The frontend total (basePrice * checked count, see
- * frontend.js updateButtonTotal()/updateInstancePickerHint()) correctly shows
- * 30.00 — but the amount actually charged (the transaction row, and therefore
- * what's sent to Mollie) is only 10.00, the per-instance price for a single
- * occurrence.
+ * at 10.00 each. The frontend total must show the sum across all chosen
+ * occurrences (30.00) and the transaction actually created (what's sent to
+ * Mollie) must match — not a single occurrence's per-instance price (10.00).
  *
- * Root cause: EventSignupController::create_signup() dispatches
- * 'multiple_instances' ticket types to create_multi_instance_signup(), which
- * correctly sums the per-instance price across every chosen occurrence.
- * EventSignupController::register_and_signup() — the endpoint the public
- * "I'm new" form submits to, used by every first-time buyer — now mirrors
- * that dispatch instead of falling through to maybe_start_paid_signup(),
- * which resolved a single per-instance price and ignored event_date_ids.
+ * Root cause (pre-cutover, on the legacy block): EventSignupController's
+ * register endpoint didn't dispatch 'multiple_instances' ticket types the
+ * same way its logged-in create_signup() path did. The unified route
+ * (GetTicketsController::create_multi_instance_signup()) has always summed
+ * correctly; this locks that in on the now-single signup path.
  */
 
 import { test, expect } from '../support/fixtures.js';
@@ -31,7 +27,7 @@ test.describe('multiple_instances ticket type purchase (new buyer)', () => {
 		expect(event.occurrenceIds.length).toBe(3);
 
 		await page.goto(event.pageUrl);
-		const form = page.locator('.fair-audience-signup-register');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
 		const ticket = form.locator('input[name="ticket_type_id"]');
@@ -40,7 +36,7 @@ test.describe('multiple_instances ticket type purchase (new buyer)', () => {
 			'multiple_instances'
 		);
 
-		const instancePicker = form.locator('.fair-audience-instance-picker');
+		const instancePicker = form.locator('.fair-events-instance-picker');
 		await expect(instancePicker).toBeVisible();
 
 		for (const occurrenceId of event.occurrenceIds) {
@@ -56,24 +52,26 @@ test.describe('multiple_instances ticket type purchase (new buyer)', () => {
 			event.price * event.occurrenceIds.length
 		).toFixed(2);
 		await expect(
-			instancePicker.locator('.fair-audience-instance-picker-total')
+			instancePicker.locator('.fair-events-instance-picker-total')
 		).toHaveText(`Total: ${expectedTotal} EUR`);
 
 		const stamp = Date.now();
 		await form
-			.locator('input[name="signup_name"]')
+			.locator('input[name="name"]')
 			.fill(`E2E Multi Instance ${stamp}`);
 		await form
-			.locator('input[name="signup_email"]')
+			.locator('input[name="email"]')
 			.fill(`multi-instance-${stamp}@example.test`);
 
-		// Submit → register REST call. Via the Mollie double, the checkout URL
-		// points back at the signup callback with the transaction id.
-		await form.locator('.fair-audience-signup-submit-button').click();
-		await expect(page).toHaveURL(/fair_signup_tx=/, { timeout: 30000 });
+		// Submit → create-signup REST call. Via the Mollie double, the
+		// checkout URL points back at the callback with the transaction id.
+		await form.locator('.form-button').click();
+		await expect(page).toHaveURL(/fair_payment_callback=true/, {
+			timeout: 30000,
+		});
 
 		const url = new URL(page.url());
-		const transactionId = url.searchParams.get('fair_signup_tx');
+		const transactionId = url.searchParams.get('transaction_id');
 		expect(transactionId).toBeTruthy();
 
 		const tx = runScript(

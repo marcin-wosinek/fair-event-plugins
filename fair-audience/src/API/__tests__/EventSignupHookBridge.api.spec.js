@@ -35,6 +35,7 @@ test.describe('SignupHookBridge — base get-tickets route links a Participant',
 	let fairAudienceActive = false;
 	let eventPostId;
 	let eventDateId;
+	let ticketTypeId;
 	const buyerEmail = `signup-hook-bridge-${Date.now()}@example.test`;
 	const buyerName = 'Signup Hook Bridge Tester';
 
@@ -68,13 +69,54 @@ test.describe('SignupHookBridge — base get-tickets route links a Participant',
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				event_id: eventPostId,
+				title: `Signup hook bridge test ${Date.now()}`,
+				link_type: 'post',
 				start_datetime: '2035-07-01 10:00:00',
 				end_datetime: '2035-07-01 12:00:00',
 			},
 		});
 		expect(edRes.ok()).toBeTruthy();
 		eventDateId = (await edRes.json()).id;
+
+		// The create endpoint doesn't wire event_id through — a PUT is needed
+		// to actually link the post (see CalendarFeedController.api.spec.js
+		// for the same quirk). Needed here so link_participant()'s
+		// get_resolved_event_id() resolves to a real post.
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { event_id: eventPostId },
+			}
+		);
+		expect(linkRes.ok()).toBeTruthy();
+
+		// A free ticket type so the duplicate-ticket precheck guard (#1245)
+		// has something with a ticket_type_id to guard.
+		const ticketsRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [
+						{
+							name: 'General admission',
+							capacity: null,
+							minimum_activities: 0,
+							disable_at: null,
+							recurrence_scope: 'single_instance',
+							group_ids: [],
+						},
+					],
+					sale_periods: [],
+					prices: [],
+					settings: {},
+				},
+			}
+		);
+		expect(ticketsRes.ok()).toBeTruthy();
+		ticketTypeId = (await ticketsRes.json()).ticket_types?.[0]?.id;
+		expect(ticketTypeId).toBeTruthy();
 	});
 
 	test.afterAll(async () => {
@@ -146,8 +188,8 @@ test.describe('SignupHookBridge — base get-tickets route links a Participant',
 
 		// ...and an EventParticipant row ties that participant to this event date.
 		const eventParticipantsRes = await api.get(
-			'/wp-json/fair-audience/v1/event-participants',
-			{ headers: adminHeaders, params: { event_date_id: eventDateId } }
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/participants`,
+			{ headers: adminHeaders }
 		);
 		expect(eventParticipantsRes.ok()).toBeTruthy();
 		const eventParticipants = await eventParticipantsRes.json();
@@ -160,7 +202,7 @@ test.describe('SignupHookBridge — base get-tickets route links a Participant',
 
 		// PR 3: the signup row itself is linked back to the participant.
 		const linkedSignup = signups.find((s) => s.email === buyerEmail);
-		expect(linkedSignup.participant_id).toBe(participant.id);
+		expect(Number(linkedSignup.participant_id)).toBe(participant.id);
 	});
 
 	test('two signups with the same email on the same event date share one participant_id and one EventParticipant row', async () => {
@@ -215,8 +257,8 @@ test.describe('SignupHookBridge — base get-tickets route links a Participant',
 
 		// ...and exactly one EventParticipant (operational) row, never downgraded.
 		const eventParticipantsRes = await api.get(
-			'/wp-json/fair-audience/v1/event-participants',
-			{ headers: adminHeaders, params: { event_date_id: eventDateId } }
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/participants`,
+			{ headers: adminHeaders }
 		);
 		expect(eventParticipantsRes.ok()).toBeTruthy();
 		const eventParticipantsBody = await eventParticipantsRes.json();
@@ -224,9 +266,107 @@ test.describe('SignupHookBridge — base get-tickets route links a Participant',
 			? eventParticipantsBody
 			: eventParticipantsBody.items || [];
 		const matching = items.filter(
-			(ep) => ep.participant_id === repeatSignups[0].participant_id
+			(ep) =>
+				Number(ep.participant_id) ===
+				Number(repeatSignups[0].participant_id)
 		);
 		expect(matching.length).toBe(1);
 		expect(matching[0].label).toBe('signed_up');
+	});
+
+	test('a resubmitted ticket purchase for a date the viewer already holds a ticket for is rejected 409 (#1245 precheck guard)', async () => {
+		test.skip(!fairAudienceActive, 'fair-audience not active');
+
+		// link_participant() only stamps ticket_type_id onto the
+		// EventParticipant row on the paid path (stamp_payment requires a
+		// transaction_id) — this dev stack has no payment connector
+		// configured, so a real paid purchase can't be driven here (see the
+		// file docblock). Seed the same end state an admin sees after a paid
+		// purchase directly via the admin event-participants route, then
+		// assert the guard rejects a same-email/same-date/same-ticket-type
+		// resubmit — the actual scenario Gap #1 (#1245) closes: a
+		// double-clicked paid ticket purchase writing a second row and
+		// charging again.
+		const ticketEmail = `signup-hook-bridge-dup-ticket-${Date.now()}@example.test`;
+
+		const firstRes = await api.post('/wp-json/fair-events/v1/get-tickets', {
+			data: {
+				event_date_id: eventDateId,
+				name: 'Duplicate Ticket Buyer',
+				email: ticketEmail,
+				quantity: 1,
+			},
+		});
+		expect(firstRes.ok()).toBeTruthy();
+
+		const participantsRes = await api.get(
+			'/wp-json/fair-audience/v1/participants',
+			{ headers: adminHeaders, params: { search: ticketEmail } }
+		);
+		const participant = (await participantsRes.json()).find(
+			(p) => p.email === ticketEmail
+		);
+		expect(participant).toBeTruthy();
+
+		const seedRes = await api.put(
+			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/participants/${participant.id}`,
+			{
+				headers: adminHeaders,
+				data: { label: 'signed_up', ticket_type_id: ticketTypeId },
+			}
+		);
+		expect(seedRes.ok()).toBeTruthy();
+
+		// Resolved as the returning viewer via the session cookie
+		// link_participant() set on the first request (this Playwright
+		// request context carries cookies across requests, like a browser).
+		const secondRes = await api.post(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				data: {
+					event_date_id: eventDateId,
+					name: 'Duplicate Ticket Buyer',
+					email: ticketEmail,
+					ticket_type_id: ticketTypeId,
+					quantity: 1,
+				},
+			}
+		);
+		expect(secondRes.status()).toBe(409);
+		expect((await secondRes.json()).code).toBe('already_signed_up');
+	});
+
+	test('the per-email rate limit rejects a 4th signup within the window (#1245)', async () => {
+		test.skip(!fairAudienceActive, 'fair-audience not active');
+
+		const rateLimitEmail = `signup-hook-bridge-rl-${Date.now()}@example.test`;
+
+		// No ticket_type_id: exercises the rate limiter in isolation from the
+		// duplicate-ticket precheck guard above.
+		for (let i = 0; i < 3; i++) {
+			const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+				data: {
+					event_date_id: eventDateId,
+					name: 'Rate Limit Tester',
+					email: rateLimitEmail,
+					quantity: 1,
+				},
+			});
+			expect(res.ok()).toBeTruthy();
+		}
+
+		const fourthRes = await api.post(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				data: {
+					event_date_id: eventDateId,
+					name: 'Rate Limit Tester',
+					email: rateLimitEmail,
+					quantity: 1,
+				},
+			}
+		);
+		expect(fourthRes.status()).toBe(429);
+		expect((await fourthRes.json()).code).toBe('rate_limited');
 	});
 });

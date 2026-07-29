@@ -38,9 +38,16 @@ class GetTicketsController extends WP_REST_Controller {
 	protected $rest_base = 'get-tickets';
 
 	/**
-	 * Rate limit: max requests per IP per window.
+	 * Rate limit: max requests per IP per window. Loose — a shared-NAT venue
+	 * can still produce more than a handful of legitimate signups in an hour.
+	 * The per-email limit below is the real abuse gate.
 	 */
-	const RATE_LIMIT_MAX = 3;
+	const RATE_LIMIT_MAX_PER_IP = 20;
+
+	/**
+	 * Rate limit: max requests per email address per window.
+	 */
+	const RATE_LIMIT_MAX_PER_EMAIL = 3;
 
 	/**
 	 * Rate limit window in seconds (1 hour).
@@ -252,21 +259,24 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		// Server-side rate limit by IP.
-		if ( $this->is_rate_limited() ) {
-			return new WP_Error(
-				'rate_limited',
-				__( 'Too many requests. Please try again later.', 'fair-events' ),
-				array( 'status' => 429 )
-			);
-		}
-
 		$event_date_id  = $request->get_param( 'event_date_id' );
 		$name           = $request->get_param( 'name' );
 		$email          = $request->get_param( 'email' );
 		$ticket_type_id = $request->get_param( 'ticket_type_id' );
 		$quantity       = max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) );
 		$mailing_opt_in = (bool) $request->get_param( 'mailing_opt_in' );
+
+		// Server-side rate limit by IP and by email. The IP ceiling is loose
+		// enough that a shared-NAT venue's fourth signup that hour doesn't
+		// 429; the tighter per-email limit is what actually stops abuse once
+		// this is the only signup path (#1245 cutover).
+		if ( $this->is_rate_limited( $email ) ) {
+			return new WP_Error(
+				'rate_limited',
+				__( 'Too many requests. Please try again later.', 'fair-events' ),
+				array( 'status' => 429 )
+			);
+		}
 
 		// Chosen activity (ticket option) IDs, deduped/cast defensively even
 		// though the route arg already caps the count — see register_routes().
@@ -301,6 +311,16 @@ class GetTicketsController extends WP_REST_Controller {
 				__( 'Event date not found.', 'fair-events' ),
 				array( 'status' => 404 )
 			);
+		}
+
+		// Extension point for plugins (e.g. fair-audience) that need to reject
+		// a signup before any row is written — a duplicate already-signed-up
+		// guard, for instance. Runs before ticket-type/options validation so
+		// it covers the single-, multiple-instances- and no-ticket-type paths
+		// alike. See REST_API_BACKEND.md.
+		$precheck_error = apply_filters( 'fair_events_signup_precheck_error', null, (int) $event_date_id, $email, (int) $ticket_type_id );
+		if ( is_wp_error( $precheck_error ) ) {
+			return $precheck_error;
 		}
 
 		// Validate ticket type belongs to this event date (or its series master)
@@ -342,7 +362,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// instead of the single event_date_id above — handled by a dedicated
 			// path that creates one signup row per chosen occurrence.
 			if ( $ticket_type->is_multiple_instances() ) {
-				$this->increment_rate_limit();
+				$this->increment_rate_limit( $email );
 				return $this->create_multi_instance_signup( $request, $ticket_type, $event_date_id, $name, $email, $mailing_opt_in, $questionnaire_answers );
 			}
 
@@ -388,7 +408,7 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$this->increment_rate_limit();
+		$this->increment_rate_limit( $email );
 
 		// Persist the signup row.
 		$signup_id = \FairEvents\Models\EventSignup::save(
@@ -1266,24 +1286,44 @@ class GetTicketsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Check if the current IP has exceeded the rate limit.
+	 * Check if the current IP or the submitted email has exceeded its rate limit.
 	 *
+	 * @param string $email Submitted email address.
 	 * @return bool
 	 */
-	private function is_rate_limited() {
-		$key   = 'fair_events_get_tickets_rl_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		$count = (int) get_transient( $key );
-		return $count >= self::RATE_LIMIT_MAX;
+	private function is_rate_limited( $email ) {
+		$ip_key   = 'fair_events_get_tickets_rl_ip_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$ip_count = (int) get_transient( $ip_key );
+		if ( $ip_count >= self::RATE_LIMIT_MAX_PER_IP ) {
+			return true;
+		}
+
+		if ( '' !== $email ) {
+			$email_key   = 'fair_events_get_tickets_rl_email_' . md5( strtolower( $email ) );
+			$email_count = (int) get_transient( $email_key );
+			if ( $email_count >= self::RATE_LIMIT_MAX_PER_EMAIL ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
-	 * Increment the rate limit counter for the current IP.
+	 * Increment the rate limit counters for the current IP and the submitted email.
 	 *
+	 * @param string $email Submitted email address.
 	 * @return void
 	 */
-	private function increment_rate_limit() {
-		$key   = 'fair_events_get_tickets_rl_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		$count = (int) get_transient( $key );
-		set_transient( $key, $count + 1, self::RATE_LIMIT_WINDOW );
+	private function increment_rate_limit( $email ) {
+		$ip_key   = 'fair_events_get_tickets_rl_ip_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$ip_count = (int) get_transient( $ip_key );
+		set_transient( $ip_key, $ip_count + 1, self::RATE_LIMIT_WINDOW );
+
+		if ( '' !== $email ) {
+			$email_key   = 'fair_events_get_tickets_rl_email_' . md5( strtolower( $email ) );
+			$email_count = (int) get_transient( $email_key );
+			set_transient( $email_key, $email_count + 1, self::RATE_LIMIT_WINDOW );
+		}
 	}
 }

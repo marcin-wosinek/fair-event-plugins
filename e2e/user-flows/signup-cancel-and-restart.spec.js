@@ -2,6 +2,13 @@
  * E2E: "Cancel and start over" on a stuck payment (fair-audience event-signup
  * block).
  *
+ * Stays on the legacy fair-audience/event-signup block (`{block: 'legacy'}`):
+ * this scenario is keyed on `participant_token` URL recognition of an
+ * in-progress payment, which is deferred to a follow-up ticket at the #1245
+ * cutover. The unified block's own direct-navigation resume/cancel fallback
+ * (SignupPaymentSession cookie, not participant_token) has equivalent
+ * coverage in get-tickets-cancel-and-restart.spec.js.
+ *
  * Reported bug: a buyer whose Mollie payment failed (or who just navigates
  * back to the event page instead of following Mollie's redirect) sees the
  * retry screen — "Your payment didn't go through." / Retry payment / Cancel
@@ -34,7 +41,7 @@ test.describe('event-signup block: cancel a stuck payment and restart', () => {
 		page,
 		seedEvent,
 	}) => {
-		const event = seedEvent('paid');
+		const event = seedEvent('paid', { block: 'legacy' });
 
 		const pending = runScript(
 			'seed-pending-signup.php',

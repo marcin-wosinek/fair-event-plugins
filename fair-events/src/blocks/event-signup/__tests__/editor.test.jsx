@@ -1,5 +1,17 @@
 /**
  * @jest-environment jsdom
+ *
+ * ServerSideRender is mocked below (it hits a live REST render, which jsdom
+ * can't do), so these tests can't exercise the #1245 fix directly — that bug
+ * (nested questions rendering outside the editor preview when fair-audience
+ * was active) was entirely in render.php's now-removed delegation, invisible
+ * to a mocked SSR response either way. What IS covered here, unconditionally
+ * (the block always ServerSideRenders itself — see the isFairFormActive
+ * true/false cases below, and the "always renders the unified block" test):
+ * the preview and nested-question portal work the same in both
+ * configurations, because there is only one configuration from the editor's
+ * side — fair-audience enriches the same render, it never owns a competing
+ * one.
  */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
@@ -116,6 +128,16 @@ describe('Event Signup EditComponent', () => {
 
 		const [{ attributes }] = mockServerSideRender.mock.calls.at(-1);
 		expect(attributes.isEditorPreview).toBe(true);
+	});
+
+	it('always ServerSideRenders the unified block itself, never a delegated one (#1245)', () => {
+		renderEdit(true);
+		const [firstProps] = mockServerSideRender.mock.calls.at(-1);
+		expect(firstProps.block).toBe('fair-events/event-signup');
+
+		renderEdit(false);
+		const [secondProps] = mockServerSideRender.mock.calls.at(-1);
+		expect(secondProps.block).toBe('fair-events/event-signup');
 	});
 
 	it('only offers the fair-form question blocks once fair-form is active', () => {

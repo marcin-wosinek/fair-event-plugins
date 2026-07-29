@@ -41,9 +41,10 @@ class BlockHooks {
 			register_block_type( __DIR__ . '/../../build/blocks/event-proposal' );
 		}
 
-		// Unified signup block (fair-events owned). Base behaviour is the
-		// anonymous get-tickets form; when fair-audience is active the render
-		// delegates to its participant-aware Event Signup flow.
+		// Unified signup block (fair-events owned). Renders the anonymous
+		// get-tickets form; when fair-audience is active it enriches the same
+		// render via the fair_events_signup_render_context filter and render
+		// slots instead of owning a competing template.
 		register_block_type( __DIR__ . '/../../build/blocks/event-signup' );
 
 		// Legacy get-tickets block — kept registered (hidden from the inserter)

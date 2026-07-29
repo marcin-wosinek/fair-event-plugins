@@ -28,7 +28,7 @@ test.describe('conditional signup fields by event-option short name', () => {
 		await page.goto(event.pageUrl);
 
 		// Anonymous visitors get the registration form by default.
-		const form = page.locator('.fair-audience-signup-register');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
 		const dinner = form.locator(

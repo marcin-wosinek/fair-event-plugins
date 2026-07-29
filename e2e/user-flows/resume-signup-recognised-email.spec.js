@@ -3,6 +3,14 @@
  * the anti-enumeration guard when the browser already holds a session for a
  * *different* participant.
  *
+ * Stays on the legacy fair-audience/event-signup block (`{block: 'legacy'}`):
+ * the request-link/resume-by-email flow and its `participant_token`+`resume`
+ * URL tokens are deferred to a follow-up ticket at the #1245 cutover — the
+ * unified block has no equivalent tab/flow yet, so this scenario isn't
+ * reachable there. Session pre-fill (step 1 below) already works on the
+ * unified block too; see resume-signup coverage there once the follow-up
+ * lands.
+ *
  * The API spec (EventSignupResume.api.spec.js) covers the register/resume
  * endpoints in isolation but only from a cookie-less request context, and
  * can't drive the emailed resume link at all. Here we go through the real
@@ -35,7 +43,7 @@ test.describe('event-signup block: resume anonymous signup on recognised email',
 		context,
 		seedEvent,
 	}) => {
-		const event = seedEvent('paid');
+		const event = seedEvent('paid', { block: 'legacy' });
 		const stamp = Date.now();
 
 		const recognisedEmail = `resume.recognised.${stamp}@example.test`;

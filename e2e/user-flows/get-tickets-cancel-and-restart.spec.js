@@ -1,15 +1,17 @@
 /**
  * E2E: abandoning a payment and starting over (fair-events get-tickets block).
  *
- * Companion to signup-cancel-and-restart.spec.js (the fair-audience
- * equivalent). Rewritten for #1244: the base get-tickets form now has its own
- * direct-navigation fallback (FairEvents\Services\SignupPaymentSession, a
+ * Rewritten for #1244: the base get-tickets form has its own direct-
+ * navigation fallback (FairEvents\Services\SignupPaymentSession, a
  * short-lived signed cookie set when create_signup() returns
  * payment_required) — a buyer who abandons Mollie's checkout and navigates
  * straight back to the event page (no provider redirect) sees the same
  * resume card the return-from-payment callback would show, within the
  * 15-minute hold window, and "Cancel and start over" clears it server-side
- * so a fresh purchase isn't blocked by the stale card resurrecting.
+ * so a fresh purchase isn't blocked by the stale card resurrecting. Runs with
+ * fair-audience active (the .wp-env.json default, and the only signup path
+ * since #1245) — its render-context/render-slot enrichment doesn't touch this
+ * anonymous-abandon path, so no deactivation is needed here anymore.
  *
  * Uses the Mollie double's settable GET status (set-mollie-status.php,
  * #1244 Decisions #8) to report "open" — a checkout link that was created
@@ -18,20 +20,10 @@
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { wpCli, runScript } from '../support/wp-cli.js';
+import { runScript } from '../support/wp-cli.js';
 
-test.describe('get-tickets block (fair-audience inactive): abandon and restart', () => {
-	test.beforeAll(() => {
-		wpCli('plugin deactivate fair-audience');
-	});
-
-	test.afterAll(() => {
-		wpCli('plugin activate fair-audience');
-	});
-
+test.describe('get-tickets block: abandon and restart', () => {
 	test.beforeEach(() => {
-		// Reset the get-tickets per-IP rate limit (3 requests/hour).
-		wpCli('transient delete --all');
 		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'open');
 	});
 

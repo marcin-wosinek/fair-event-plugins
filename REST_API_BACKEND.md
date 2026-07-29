@@ -578,10 +578,10 @@ create route) expose:
     `price_by_type_id`, `active_sale_period`, `occurrences_for_picker`, `currency_symbol`,
     `ticket_options`, `minimum_activities`,
     `callback_status`/`callback_tx_id`/`callback_token`, `prefill_name`,
-    `prefill_email`, `submit_button_text`) and runs it through this filter
-    before rendering, so a companion plugin can inject viewer identity,
-    session pre-fill, or participant-filtered ticket types/prices without a
-    parallel template. `ticket_options` is a list of
+    `prefill_email`, `submit_button_text`, `suppress_form`) and runs it through
+    this filter before rendering, so a companion plugin can inject viewer
+    identity, session pre-fill, or participant-filtered ticket types/prices
+    without a parallel template. `ticket_options` is a list of
     `[ id, name, short_name, price, is_full ]` (empty unless both
     `fair-events-experimental`'s activity catalogue and fair-audience — the
     only consumer that can persist a selection — are active); fair-audience's
@@ -592,14 +592,45 @@ create route) expose:
     `current_activity_names`. `minimum_activities` is the event-date global
     requirement, capped at `count( $ticket_options )`; a ticket type can raise
     it further via its own `minimum_activities` property — see
-    `frontend.js`' `getEffectiveMinimum()`. Two render-slot actions,
+    `frontend.js`' `getEffectiveMinimum()`. Each `occurrences_for_picker` row
+    also carries `signed_up` (`false` by default); fair-audience's
+    `enrich_render_context()` flips it true for occurrences the recognised
+    viewer already holds (including via a whole-series pass), so both the
+    single-occurrence dropdown and the multi-occurrence checkbox picker label
+    (and, for the checkbox picker, disable) them instead of allowing a silent
+    double-book. `suppress_form` (`false` by default) lets a companion plugin
+    skip the `<form>` entirely — used when a recognised viewer already holds
+    this exact signup, so a ticket-type/quantity form makes no sense — in
+    which case the base renders a plain
+    `<div class="fair-events-get-tickets-companion">` instead, still firing
+    the two render-slot actions below inside it so the companion can render
+    its own signed-up/cancel UI (echoing and escaping its own markup, exactly
+    as `SignupHookBridge::render_add_activities()` already does — no HTML
+    travels through the context array). Two render-slot actions,
     `fair_events_signup_render_before_form` and
     `fair_events_signup_render_after_form` (both passed the same context),
     let a companion plugin contribute UI fragments (e.g. a resume/retry card,
-    or fair-audience's "add activities" section for a signed-up viewer)
-    directly inside the `<form>`. A third action, `fair_events_signup_render_before_submit`
+    the signed-up/cancel card, or fair-audience's "add activities" section)
+    either inside the `<form>` or inside the `suppress_form` wrapper div. A
+    third action, `fair_events_signup_render_before_submit`
     (also passed the context), fires immediately before the submit button —
     fair-audience uses it to render a group discount note.
+-   **`fair_events_signup_precheck_error` filter** — `GetTicketsController::create_signup()`
+    runs this immediately after the event date is validated, before ticket-type
+    or options validation, so it covers the single-, `multiple_instances`- and
+    no-ticket-type paths alike:
+    `apply_filters( 'fair_events_signup_precheck_error', null, $event_date_id, $email, $ticket_type_id )`.
+    Returning a `WP_Error` rejects the signup. fair-audience scopes this to a
+    duplicate *ticket* purchase only: when the request carries a
+    `$ticket_type_id` and the recognised viewer already holds a `signed_up`
+    relationship for this event date with a ticket type attached, it returns
+    409 `already_signed_up` — this is a guard against a resubmitted/
+    double-clicked ticket purchase writing a second row (and, on a paid tier,
+    charging again), not a one-signup-per-participant rule. A `$ticket_type_id`
+    of `0` (no ticket type — activity-only or a companion signup) or a
+    `pending_payment` relationship (an incomplete payment, not a genuine
+    repeat) is never rejected here, matching the "Canonical signup store"
+    multiplicity below. `null` (the default) allows the signup to proceed.
 -   **`fair_events_signup_ticket_type_error` filter** — `GetTicketsController::create_signup()`
     runs this right after a submitted ticket type is validated and confirmed
     not disabled: `apply_filters( 'fair_events_signup_ticket_type_error', null, $ticket_type_id, $event_date_id )`.
@@ -670,6 +701,8 @@ unified-signup submission fatal'd):
 | Hook                                  | args passed | `add_filter`/`add_action` call            |
 | -------------------------------------- | :---------: | ------------------------------------------ |
 | `fair_events_signup_render_context`    | 1           | `add_filter( ..., 10, 1 )`                 |
+| `fair_events_signup_precheck_error`    | 4           | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_signup_render_before_form` | 1          | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_before_submit` | 1        | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_after_form` | 1           | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_ticket_type_error` | 3           | `add_filter( ..., 10, 2 )` or `3`          |
@@ -698,10 +731,12 @@ hooks `fair_events_signup_options_error` / `fair_events_signup_option_line_items
 `fair-audience/src/Services/SignupActivities.php`, mirroring
 `GroupSignupPricing.php` from #1242) and, once `link_participant()` creates or
 finds the `EventParticipant` row, attaches the selected `ticket_option_ids`
-via `EventParticipantRepository::add_options()`. Richer identity flows
-(resume/retry payment, group-restricted ticket types) still go through
-`fair-audience/v1`'s own routes — this contract only covers the simple path;
-see issue #1083 for the phased migration.
+via `EventParticipantRepository::add_options()`. `participant_token` URL login
+and the "I have an account" / request-link prompt still go through
+`fair-audience/v1`'s own routes (deferred to a follow-up ticket at the #1245
+cutover) — everything else (identity pre-fill, cancel/resignup, per-occurrence
+signup status, whole-series passes) is bridged through this contract, no
+parallel template.
 
 ### Canonical signup store — participant write-back and multiplicity
 

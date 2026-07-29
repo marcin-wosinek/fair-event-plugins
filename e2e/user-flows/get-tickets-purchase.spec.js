@@ -22,8 +22,6 @@
  *     to paid from there, fair_payment_paid → FairEvents PaymentHooks
  *     confirms the signup, and the block's poller swaps in the confirmed card.
  *
- * The get-tickets endpoint rate-limits by IP (3/hour), so transients are
- * cleared before each test to keep repeated local runs deterministic.
  */
 
 import { test, expect } from '../support/fixtures.js';
@@ -39,8 +37,6 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 	});
 
 	test.beforeEach(() => {
-		// Reset the get-tickets per-IP rate limit (3 requests/hour).
-		wpCli('transient delete --all');
 		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'pending');
 	});
 

@@ -22,15 +22,17 @@ use FairEvents\Models\TicketPrice;
 use FairEventsExperimental\Models\TicketOption;
 
 // Nested block content: the conditional reveals the "diet" question only when
-// the "dinner" option is selected.
+// the "dinner" option is selected. Wrapped in the unified fair-events/event-signup
+// block (#1245) — the nested fair-form blocks render unchanged regardless of
+// which signup block wraps them.
 $content = implode(
 	"\n",
 	array(
-		'<!-- wp:fair-audience/event-signup -->',
+		'<!-- wp:fair-events/event-signup -->',
 		'<!-- wp:fair-audience/fair-form-conditional {"conditionSource":"eventOption","conditionOptionShortName":"dinner","conditionOperator":"selected"} -->',
 		'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"diet","questionText":"Dietary restrictions"} /-->',
 		'<!-- /wp:fair-audience/fair-form-conditional -->',
-		'<!-- /wp:fair-audience/event-signup -->',
+		'<!-- /wp:fair-events/event-signup -->',
 	)
 );
 

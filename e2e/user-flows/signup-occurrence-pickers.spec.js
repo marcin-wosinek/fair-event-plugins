@@ -1,7 +1,7 @@
 /**
- * E2E: occurrence-picker visibility in the participant-aware Event Signup
- * form (fair-audience/event-signup) across all three ticket recurrence
- * scopes — single_instance, multiple_instances, whole_series.
+ * E2E: occurrence-picker visibility in the unified Event Signup form
+ * (re-pointed at the unified markup by #1245) across all three ticket
+ * recurrence scopes — single_instance, multiple_instances, whole_series.
  *
  * The picker toggling is entirely client-side (frontend.js
  * syncOccurrencePickers()), keyed off each ticket radio's
@@ -14,16 +14,16 @@
 
 import { test, expect } from '../support/fixtures.js';
 
-test.describe('Occurrence pickers for all three ticket scopes (fair-audience)', () => {
+test.describe('Occurrence pickers for all three ticket scopes', () => {
 	test('single-occurrence scope shows the date dropdown, not the checkbox picker', async ({
 		page,
 		seedEvent,
 	}) => {
-		const event = seedEvent('audience-ticket-scopes');
+		const event = seedEvent('three-ticket-scopes');
 
 		await page.goto(event.pageUrl);
 
-		const form = page.locator('.fair-audience-signup-register');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
 		const ticketRadio = form.locator(
@@ -32,23 +32,21 @@ test.describe('Occurrence pickers for all three ticket scopes (fair-audience)', 
 		await expect(ticketRadio).toBeChecked();
 
 		await expect(
-			page.locator('.fair-audience-occurrence-picker')
+			page.locator('.fair-events-occurrence-picker')
 		).toBeVisible();
-		await expect(
-			form.locator('.fair-audience-instance-picker')
-		).toBeHidden();
+		await expect(form.locator('.fair-events-instance-picker')).toBeHidden();
 	});
 
 	test('multiple-occurrence scope shows the checkbox picker, not the date dropdown', async ({
 		page,
 		seedEvent,
 	}) => {
-		const event = seedEvent('audience-ticket-scopes');
+		const event = seedEvent('three-ticket-scopes');
 		const [, multiInstanceTypeId] = event.extraTypeIds;
 
 		await page.goto(event.pageUrl);
 
-		const form = page.locator('.fair-audience-signup-register');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
 		await form
@@ -58,10 +56,10 @@ test.describe('Occurrence pickers for all three ticket scopes (fair-audience)', 
 			.check();
 
 		await expect(
-			form.locator('.fair-audience-instance-picker')
+			form.locator('.fair-events-instance-picker')
 		).toBeVisible();
 		await expect(
-			page.locator('.fair-audience-occurrence-picker')
+			page.locator('.fair-events-occurrence-picker')
 		).toBeHidden();
 	});
 
@@ -69,12 +67,12 @@ test.describe('Occurrence pickers for all three ticket scopes (fair-audience)', 
 		page,
 		seedEvent,
 	}) => {
-		const event = seedEvent('audience-ticket-scopes');
+		const event = seedEvent('three-ticket-scopes');
 		const [wholeSeriesTypeId] = event.extraTypeIds;
 
 		await page.goto(event.pageUrl);
 
-		const form = page.locator('.fair-audience-signup-register');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
 		await form
@@ -84,27 +82,25 @@ test.describe('Occurrence pickers for all three ticket scopes (fair-audience)', 
 			.check();
 
 		await expect(
-			page.locator('.fair-audience-occurrence-picker')
+			page.locator('.fair-events-occurrence-picker')
 		).toBeHidden();
-		await expect(
-			form.locator('.fair-audience-instance-picker')
-		).toBeHidden();
+		await expect(form.locator('.fair-events-instance-picker')).toBeHidden();
 	});
 
 	test('switching ticket types updates the visible picker live and clears a stale checkbox selection', async ({
 		page,
 		seedEvent,
 	}) => {
-		const event = seedEvent('audience-ticket-scopes');
+		const event = seedEvent('three-ticket-scopes');
 		const [wholeSeriesTypeId, multiInstanceTypeId] = event.extraTypeIds;
 
 		await page.goto(event.pageUrl);
 
-		const form = page.locator('.fair-audience-signup-register');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
-		const dropdown = page.locator('.fair-audience-occurrence-picker');
-		const instancePicker = form.locator('.fair-audience-instance-picker');
+		const dropdown = page.locator('.fair-events-occurrence-picker');
+		const instancePicker = form.locator('.fair-events-instance-picker');
 
 		// Single-session (default) — dropdown visible, checkbox picker hidden.
 		await expect(dropdown).toBeVisible();
@@ -164,17 +160,17 @@ test.describe('Occurrence pickers for all three ticket scopes (fair-audience)', 
 		page,
 		seedEvent,
 	}) => {
-		const event = seedEvent('audience-ticket-scopes', {
+		const event = seedEvent('three-ticket-scopes', {
 			omitMulti: true,
 		});
 		const [wholeSeriesTypeId] = event.extraTypeIds;
 
 		await page.goto(event.pageUrl);
 
-		const form = page.locator('.fair-audience-signup-register');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
-		const dropdown = page.locator('.fair-audience-occurrence-picker');
+		const dropdown = page.locator('.fair-events-occurrence-picker');
 
 		// Single-session (default) — dropdown visible.
 		await expect(dropdown).toBeVisible();
@@ -187,8 +183,8 @@ test.describe('Occurrence pickers for all three ticket scopes (fair-audience)', 
 			)
 			.check();
 		await expect(dropdown).toBeHidden();
-		await expect(
-			form.locator('.fair-audience-instance-picker')
-		).toHaveCount(0);
+		await expect(form.locator('.fair-events-instance-picker')).toHaveCount(
+			0
+		);
 	});
 });

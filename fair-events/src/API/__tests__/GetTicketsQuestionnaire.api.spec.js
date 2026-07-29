@@ -104,14 +104,28 @@ test.describe('GetTicketsController — questionnaire_answers', () => {
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				event_id: eventPostId,
 				title: `Get-tickets questionnaire test ${Date.now()}`,
+				link_type: 'post',
 				start_datetime: '2035-06-01 10:00:00',
 				end_datetime: '2035-06-01 12:00:00',
 			},
 		});
 		expect(edRes.ok()).toBeTruthy();
 		eventDateId = (await edRes.json()).id;
+
+		// The create endpoint doesn't wire event_id through — a PUT is
+		// needed to actually link the post (see CalendarFeedController.api.spec.js
+		// for the same quirk). Needed here so the "linked to fair-audience
+		// participant" test's SignupHookBridge::link_participant() call can
+		// resolve a real event_id via get_resolved_event_id().
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { event_id: eventPostId },
+			}
+		);
+		expect(linkRes.ok()).toBeTruthy();
 	});
 
 	test.afterAll(async () => {
@@ -126,8 +140,6 @@ test.describe('GetTicketsController — questionnaire_answers', () => {
 
 	test('answers are stored with participant_id 0 (anonymous) when fair-audience is inactive', async () => {
 		test.skip(!fairFormActive, 'fair-form not active');
-		test.skip(fairAudienceActive, 'fair-audience active — see linked test');
-
 		const email = uniqueEmail('anon');
 		// Use its own event date so the submission lookup by email is unambiguous.
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {

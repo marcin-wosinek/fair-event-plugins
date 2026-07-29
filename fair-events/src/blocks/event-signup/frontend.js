@@ -17,6 +17,7 @@ import {
 	validateQuestions,
 	extractErrorMessage,
 	setButtonLoading,
+	wireNotYouButton,
 } from 'fair-events-shared';
 import './frontend.css';
 
@@ -45,6 +46,19 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 			'.fair-events-get-tickets-form'
 		);
 		forms.forEach(setupForm);
+
+		// Companion wrapper rendered in place of the <form> for a recognised
+		// viewer who already holds this signup (fair-audience's
+		// SignupHookBridge, via the suppress_form context key) — no <form> to
+		// hang the add-activities/cancel-signup wiring off of, so wire them
+		// directly against the block.
+		document
+			.querySelectorAll('.fair-events-get-tickets-companion')
+			.forEach(function (companion) {
+				const block = companion.closest('.fair-events-get-tickets');
+				wireAddActivities(block);
+				wireCancelSignup(block);
+			});
 	}
 
 	/**
@@ -264,7 +278,8 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 				});
 		}
 
-		wireAddActivities(form);
+		wireAddActivities(form.closest('.fair-events-get-tickets'));
+		wireNotYouButton(form.querySelector('.fair-events-not-you-button'));
 
 		refreshSignupState(form);
 	}
@@ -624,11 +639,10 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 	 * by fair-audience's SignupHookBridge, since only it can persist the
 	 * selection): keep the Add button's total in sync with the checked
 	 * options and submit on click. No-op when the section isn't present.
-	 * @param {HTMLFormElement} form The get-tickets form (used to reach the
-	 *                                shared currency/message container).
+	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper (used to
+	 *                              reach the shared currency/message container).
 	 */
-	function wireAddActivities(form) {
-		const block = form.closest('.fair-events-get-tickets');
+	function wireAddActivities(block) {
 		const section = block
 			? block.querySelector('.fair-events-add-activities')
 			: null;
@@ -661,7 +675,7 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 				total > 0
 					? baseText +
 					  ' — ' +
-					  formatMoney(total, form.dataset.currency)
+					  formatMoney(total, block.dataset.currency)
 					: baseText;
 		};
 
@@ -752,6 +766,96 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 					error,
 					__(
 						'Failed to add activities. Please try again.',
+						'fair-events'
+					)
+				);
+				showMessage(
+					messageContainer,
+					errorMessage,
+					'error',
+					CSS_PREFIX
+				);
+				restoreButton();
+			});
+	}
+
+	/**
+	 * Wire the cancel-signup button shown to a signed-up viewer (rendered by
+	 * fair-audience's SignupHookBridge). The companion supplies the route via
+	 * a data attribute — the base plugin never hardcodes a fair-audience/v1
+	 * path. No-op when the card isn't present.
+	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper.
+	 */
+	function wireCancelSignup(block) {
+		const card = block
+			? block.querySelector('.fair-events-signed-up-card')
+			: null;
+		if (!card) {
+			return;
+		}
+		const button = card.querySelector('.fair-events-cancel-signup-button');
+		if (!button) {
+			return;
+		}
+
+		button.addEventListener('click', function () {
+			submitCancelSignup(block, card, button);
+		});
+	}
+
+	/**
+	 * Submit the cancel-signup request to the route the companion attached
+	 * to the card via data-cancel-route, then reload to reflect the cleared
+	 * signup.
+	 * @param {HTMLElement} block  The .fair-events-get-tickets wrapper.
+	 * @param {HTMLElement} card   The .fair-events-signed-up-card element.
+	 * @param {HTMLElement} button The cancel-signup button.
+	 */
+	function submitCancelSignup(block, card, button) {
+		const route = card.dataset.cancelRoute || '';
+		if (!route) {
+			return;
+		}
+		const eventId = parseInt(card.dataset.eventId, 10);
+		const eventDateId = card.dataset.eventDateId
+			? parseInt(card.dataset.eventDateId, 10)
+			: null;
+		const token = card.dataset.participantToken || '';
+		const messageContainer = block.querySelector('.message-container');
+
+		const requestData = { event_id: eventId };
+		if (eventDateId) {
+			requestData.event_date_id = eventDateId;
+		}
+		if (token) {
+			requestData.participant_token = token;
+		}
+
+		const restoreButton = setButtonLoading(
+			button,
+			__('Cancelling…', 'fair-events')
+		);
+
+		apiFetch({
+			path: route,
+			method: 'DELETE',
+			data: requestData,
+		})
+			.then(function () {
+				showMessage(
+					messageContainer,
+					__('Your signup has been cancelled.', 'fair-events'),
+					'success',
+					CSS_PREFIX
+				);
+				window.location.reload();
+			})
+			.catch(function (error) {
+				console.error('Cancel signup error:', error);
+				const errorMessage = extractErrorMessage(
+					error,
+					__(
+						'Failed to cancel signup. Please try again.',
 						'fair-events'
 					)
 				);

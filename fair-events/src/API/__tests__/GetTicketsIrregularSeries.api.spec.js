@@ -2,11 +2,6 @@
  * Playwright API tests for whole-series ticket coverage on an irregular
  * (manually-built) series — recurrence_mode='manual', no rrule (#1158).
  *
- * This endpoint only serves signups when fair-audience is NOT active
- * (fair-events/src/blocks/get-tickets/render.php defers to the Event Signup
- * block otherwise), so these tests skip gracefully when fair-audience is
- * active in the test environment.
- *
  * Covers:
  *   - a whole_series ticket type on a manual-mode master is accepted when
  *     purchasing a non-first (generated) occurrence.
@@ -29,7 +24,6 @@ const adminHeaders = {
 
 test.describe('GetTicketsController — irregular (manual) series whole_series scope', () => {
 	let api;
-	let fairAudienceActive = false;
 	let eventPostId;
 	let masterEventDateId;
 	let occurrenceIds;
@@ -38,20 +32,6 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 
 	test.beforeAll(async () => {
 		api = await request.newContext({ baseURL: BASE_URL });
-
-		const pluginsRes = await api.get('/wp-json/wp/v2/plugins', {
-			headers: adminHeaders,
-		});
-		if (pluginsRes.ok()) {
-			const plugins = await pluginsRes.json();
-			fairAudienceActive = plugins.some(
-				(p) =>
-					p.plugin?.includes('fair-audience') && p.status === 'active'
-			);
-		}
-		if (fairAudienceActive) {
-			return;
-		}
 
 		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
@@ -66,7 +46,8 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				event_id: eventPostId,
+				title: `Get-tickets irregular series test ${Date.now()}`,
+				link_type: 'post',
 				start_datetime: '2035-07-01 10:00:00',
 				end_datetime: '2035-07-01 12:00:00',
 				recurrence_mode: 'manual',
@@ -74,14 +55,29 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 			},
 		});
 		expect(edRes.ok()).toBeTruthy();
-		masterEventDateId = (await edRes.json()).id;
+		const edBody = await edRes.json();
+		masterEventDateId = edBody.id;
 
-		const occRes = await api.get(
-			`/wp-json/fair-events/v1/event-dates?event_id=${eventPostId}`,
-			{ headers: adminHeaders }
+		// The create endpoint doesn't wire event_id through — a PUT is
+		// needed to actually link the post (see CalendarFeedController.api.spec.js
+		// for the same quirk).
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { event_id: eventPostId },
+			}
 		);
-		expect(occRes.ok()).toBeTruthy();
-		occurrenceIds = (await occRes.json()).map((o) => o.id).sort();
+		expect(linkRes.ok()).toBeTruthy();
+
+		// generated_occurrences comes straight off the create response
+		// (master + 2 generated for COUNT=3 / 3 manual dates) — the
+		// event_id query-filter on the list route doesn't actually filter
+		// (a separate pre-existing bug), so deriving from edRes avoids it.
+		occurrenceIds = [
+			masterEventDateId,
+			...edBody.generated_occurrences.map((o) => o.id),
+		].sort();
 		expect(occurrenceIds.length).toBe(3);
 		// A non-first occurrence — the case exercised for whole-series coverage.
 		childEventDateId = occurrenceIds[1];
@@ -126,9 +122,6 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 	});
 
 	test.afterAll(async () => {
-		if (fairAudienceActive) {
-			return;
-		}
 		if (eventPostId) {
 			await api.delete(
 				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
@@ -139,8 +132,6 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 	});
 
 	test('whole_series ticket type on a manual master is accepted for a generated occurrence', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: childEventDateId,
@@ -154,8 +145,6 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 	});
 
 	test('the signup persists against the child occurrence, priced from the master', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const signupsRes = await api.get(
 			'/wp-json/fair-events/v1/get-tickets',
 			{

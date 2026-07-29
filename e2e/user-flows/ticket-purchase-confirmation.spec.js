@@ -2,8 +2,11 @@
  * E2E: ticket purchase happy path — confirmation email, marketing opt-in, and
  * the buyer's name on the admin participants list.
  *
- * Buys a paid ticket through the public event-signup block against the isolated
- * wp-env instance and asserts the buyer-facing AND organizer-facing outcomes:
+ * Buys a paid ticket through the public unified event-signup block (the
+ * default block seedEvent renders since the #1245 cutover; fair-audience
+ * enriches the same render, it doesn't own a competing template) against the
+ * isolated wp-env instance and asserts the buyer-facing AND organizer-facing
+ * outcomes:
  *   - the purchase confirmation email is delivered (both opt-in cases),
  *   - a marketing (double opt-in) confirmation email is sent ONLY when the
  *     buyer ticks "Keep me informed", and
@@ -53,7 +56,7 @@ test.describe('ticket purchase confirmation', () => {
 			// Public event page renders the signup block; the "I'm new"
 			// registration form is shown by default for anonymous visitors.
 			await page.goto(event.pageUrl);
-			const form = page.locator('.fair-audience-signup-register');
+			const form = page.locator('.fair-events-get-tickets-form');
 			await expect(form).toBeVisible();
 
 			// One paid ticket type is seeded and auto-selected; assert it carries
@@ -64,12 +67,10 @@ test.describe('ticket purchase confirmation', () => {
 				Number(await ticket.getAttribute('data-ticket-price'))
 			).toBeGreaterThan(0);
 
-			await form.locator('input[name="signup_name"]').fill(buyerName);
-			await form.locator('input[name="signup_email"]').fill(email);
+			await form.locator('input[name="name"]').fill(buyerName);
+			await form.locator('input[name="email"]').fill(email);
 			if (scenario.optIn) {
-				await form
-					.locator('input[name="signup_keep_informed"]')
-					.check();
+				await form.locator('input[name="mailing_opt_in"]').check();
 			}
 
 			// Submit → register REST call returns payment_required with a
@@ -78,7 +79,7 @@ test.describe('ticket purchase confirmation', () => {
 			// Wait for the final confirmation UI rather than a specific mid-chain
 			// navigation (waitForURL can abort with ERR_NETWORK_IO_SUSPENDED when a
 			// redirect supersedes it), then assert the callback URL by polling.
-			await form.locator('.fair-audience-signup-submit-button').click();
+			await form.locator('.form-button').click();
 			await expect(
 				page.getByText('Payment confirmed', { exact: false })
 			).toBeVisible({ timeout: 30000 });
