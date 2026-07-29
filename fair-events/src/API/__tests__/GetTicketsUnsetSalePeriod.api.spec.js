@@ -6,11 +6,6 @@
  * end at the day after the last occurrence — rather than treating the
  * unset window as closed.
  *
- * This endpoint only serves signups when fair-audience is NOT active
- * (fair-events/src/blocks/get-tickets/render.php defers to the Event Signup
- * block otherwise), so these tests skip gracefully when fair-audience is
- * active in the test environment.
- *
  * Covers:
  *   - single, non-recurring event with an unset window is purchasable.
  *   - recurring event with an unset window is purchasable through the
@@ -113,22 +108,10 @@ async function purchase(api, eventDateId, ticketTypeId) {
 
 test.describe('GetTicketsController — lazy default sale-period resolution', () => {
 	let api;
-	let fairAudienceActive = false;
 	const createdEventDateIds = [];
 
 	test.beforeAll(async () => {
 		api = await request.newContext({ baseURL: BASE_URL });
-
-		const pluginsRes = await api.get('/wp-json/wp/v2/plugins', {
-			headers: adminHeaders,
-		});
-		if (pluginsRes.ok()) {
-			const plugins = await pluginsRes.json();
-			fairAudienceActive = plugins.some(
-				(p) =>
-					p.plugin?.includes('fair-audience') && p.status === 'active'
-			);
-		}
 	});
 
 	test.afterAll(async () => {
@@ -141,8 +124,6 @@ test.describe('GetTicketsController — lazy default sale-period resolution', ()
 	});
 
 	test('single, non-recurring event with an unset window is purchasable', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const { eventDateId, ticketTypeId } = await createEventWithUnsetWindow(
 			api,
 			{
@@ -159,8 +140,6 @@ test.describe('GetTicketsController — lazy default sale-period resolution', ()
 	});
 
 	test('recurring event with an unset window is purchasable through the day after its last occurrence', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const { eventDateId, ticketTypeId } = await createEventWithUnsetWindow(
 			api,
 			{
@@ -178,8 +157,6 @@ test.describe('GetTicketsController — lazy default sale-period resolution', ()
 	});
 
 	test('a series entirely in the past with an unset window is still purchasable, never inverted', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const { eventDateId, ticketTypeId } = await createEventWithUnsetWindow(
 			api,
 			{

@@ -1,12 +1,12 @@
 /**
  * E2E: signup with a custom question nested in the unified Event Signup
- * block, delegated through fair-audience's participant-aware flow (#1160).
+ * block (#1160, re-pointed at the unified markup by #1245).
  *
- * The unified fair-events/event-signup block now accepts nested fair-form
- * question blocks and forwards them, unchanged, to the legacy
- * fair-audience/event-signup render when fair-audience is active. This drives
- * a real free signup through the browser with a nested short-text question to
- * prove the question renders on the unified block and the signup completes.
+ * The unified fair-events/event-signup block accepts nested fair-form
+ * question blocks and forwards them, unchanged, as inner block content
+ * (render.php echoes $content inside the form). This drives a real free
+ * signup through the browser with a nested short-text question to prove the
+ * question renders on the unified block and the signup completes.
  */
 
 import { test, expect } from '../support/fixtures.js';
@@ -22,23 +22,23 @@ test.describe('unified event-signup block: nested custom question', () => {
 
 		await page.goto(event.pageUrl);
 
-		const form = page.locator('.fair-audience-signup-register');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
-		// The nested fair-form question, forwarded through the delegated
-		// render, appears alongside the name/email fields.
+		// The nested fair-form question, forwarded as inner block content,
+		// appears alongside the name/email fields.
 		const question = form.locator('[data-question-key="dietary"]');
 		await expect(question).toBeVisible();
 		await expect(question).toContainText('Dietary needs');
 
-		await form.locator('input[name="signup_name"]').fill('Unified Visitor');
-		await form.locator('input[name="signup_email"]').fill(email);
+		await form.locator('input[name="name"]').fill('Unified Visitor');
+		await form.locator('input[name="email"]').fill(email);
 		await question.locator('input[type="text"]').fill('No nuts');
 
-		await form.locator('.fair-audience-signup-submit-button').click();
+		await form.locator('.form-button').click();
 
 		await expect(
-			page.getByText('You are signed up for this event', {
+			page.getByText('You have successfully registered', {
 				exact: false,
 			})
 		).toBeVisible();

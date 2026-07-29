@@ -39,6 +39,9 @@ class SignupHookBridge {
 	 */
 	public static function init() {
 		add_filter( 'fair_events_signup_render_context', array( static::class, 'enrich_render_context' ), 10, 1 );
+		add_filter( 'fair_events_signup_precheck_error', array( static::class, 'filter_precheck_error' ), 10, 4 );
+		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_signed_up_card' ), 10, 1 );
+		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_not_you' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
 		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 2 );
 		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 2 );
@@ -124,7 +127,246 @@ class SignupHookBridge {
 		// this runs unconditionally.
 		$context = SignupActivities::enrich_render_context( $context, $participant_id );
 
+		$context['suppress_form'] = false;
+		$context['is_signed_up']  = false;
+
+		if ( $participant_id && ! empty( $context['event_date_id'] ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date_id                = (int) $context['event_date_id'];
+			$event_participant_repository = new EventParticipantRepository();
+
+			$existing     = $event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant_id );
+			$is_signed_up = ( $existing && 'signed_up' === $existing->label );
+
+			// Resolve a whole-series pass on the master once, so it can also
+			// cover this occurrence (a pass covers occurrences starting on or
+			// after its purchase date — mid-series semantics) and feed the
+			// per-occurrence picker loop below without a query per row.
+			$series_pass        = null;
+			$event_date_row     = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			$master_id_for_pass = null;
+			if ( $event_date_row ) {
+				if ( 'master' === ( $event_date_row->occurrence_type ?? null ) ) {
+					$master_id_for_pass = (int) $event_date_row->id;
+				} elseif ( 'generated' === ( $event_date_row->occurrence_type ?? null ) && $event_date_row->master_id ) {
+					$master_id_for_pass = (int) $event_date_row->master_id;
+				}
+			}
+			if ( $master_id_for_pass && class_exists( \FairEvents\Models\TicketType::class ) ) {
+				$candidate_pass = $event_participant_repository->get_series_pass_for_participant( $master_id_for_pass, $participant_id );
+				if ( $candidate_pass && $candidate_pass->ticket_type_id ) {
+					$pass_tt = \FairEvents\Models\TicketType::get_by_id( (int) $candidate_pass->ticket_type_id );
+					if ( $pass_tt && $pass_tt->is_whole_series() ) {
+						$series_pass = $candidate_pass;
+					}
+				}
+			}
+
+			if ( ! $is_signed_up && $series_pass && $event_date_row && $event_date_row->start_datetime
+				&& strtotime( $event_date_row->start_datetime ) >= strtotime( $series_pass->created_at )
+			) {
+				$is_signed_up = true;
+			}
+
+			$context['is_signed_up'] = $is_signed_up;
+
+			if ( $is_signed_up ) {
+				$context['suppress_form']          = true;
+				$context['signed_up_ticket_label'] = '';
+
+				$relationship_for_label = ( $existing && 'signed_up' === $existing->label ) ? $existing : $series_pass;
+				if ( $relationship_for_label && $relationship_for_label->ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+					$signed_up_ticket_type = \FairEvents\Models\TicketType::get_by_id( (int) $relationship_for_label->ticket_type_id );
+					if ( $signed_up_ticket_type ) {
+						$context['signed_up_ticket_label'] = $signed_up_ticket_type->name;
+					}
+				}
+			}
+
+			// Populate per-occurrence signup state for the pickers, mirroring
+			// the legacy render — including the whole-series pass check above.
+			if ( ! empty( $context['occurrences_for_picker'] ) ) {
+				foreach ( $context['occurrences_for_picker'] as $idx => $occ_row ) {
+					$rel           = $event_participant_repository->get_by_event_date_and_participant( (int) $occ_row['id'], $participant_id );
+					$occ_signed_up = ( $rel && 'signed_up' === $rel->label );
+					if ( ! $occ_signed_up && $series_pass && ! empty( $occ_row['start_datetime'] ) ) {
+						$occ_signed_up = strtotime( $occ_row['start_datetime'] ) >= strtotime( $series_pass->created_at );
+					}
+					$context['occurrences_for_picker'][ $idx ]['signed_up'] = $occ_signed_up;
+				}
+			}
+		}
+
 		return $context;
+	}
+
+	/**
+	 * Reject a signup for an event date the viewer already holds a
+	 * `signed_up` relationship for. Hooked on fair_events_signup_precheck_error.
+	 * A `pending_payment` relationship is not rejected here — that's an
+	 * incomplete payment, not a genuine repeat, so a resubmit (e.g. via the
+	 * payment retry card) must still be allowed through.
+	 *
+	 * @param WP_Error|null $error          Prior filter result — passed through unchanged if already an error.
+	 * @param int           $event_date_id  Event-date ID the signup targets.
+	 * @param string        $email          Submitted email (unused — the viewer is resolved by session/login).
+	 * @param int           $ticket_type_id Submitted ticket type ID (unused).
+	 * @return \WP_Error|null
+	 */
+	public static function filter_precheck_error( $error, $event_date_id, $email, $ticket_type_id ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- viewer is resolved by session/login, not the submitted email; required by the hook signature.
+		if ( is_wp_error( $error ) ) {
+			return $error;
+		}
+
+		// Scoped to a duplicate *ticket* purchase only — a free/no-ticket-type
+		// signup (companion tickets, activity-only, a whole-series pass bought
+		// again) is intentionally allowed to repeat; fair_events_signups rows
+		// are many-per-participant-per-event by design (see the "Canonical
+		// signup store" section of REST_API_BACKEND.md). This guard exists to
+		// stop a resubmitted/double-clicked ticket purchase from writing a
+		// second row and, on a paid tier, charging again — not to enforce
+		// one-signup-per-participant in general.
+		if ( ! $ticket_type_id ) {
+			return $error;
+		}
+
+		$participant = GroupSignupPricing::resolve_viewer_participant();
+		if ( ! $participant ) {
+			return $error;
+		}
+
+		$event_participant_repository = new EventParticipantRepository();
+		$existing                     = $event_participant_repository->get_by_event_date_and_participant( (int) $event_date_id, (int) $participant->id );
+
+		if ( $existing && 'signed_up' === $existing->label && ! empty( $existing->ticket_type_id ) ) {
+			return new \WP_Error(
+				'already_signed_up',
+				__( 'You already have a ticket for this date.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return $error;
+	}
+
+	/**
+	 * Render the signed-up/cancel card for a recognised viewer who already
+	 * holds this signup — shown in place of the suppressed <form> (see
+	 * enrich_render_context()'s suppress_form). Hooked on
+	 * fair_events_signup_render_before_form.
+	 *
+	 * @param array $context Render context, see fair_events_signup_render_context.
+	 * @return void
+	 */
+	public static function render_signed_up_card( $context ) {
+		if ( empty( $context['is_signed_up'] ) ) {
+			return;
+		}
+
+		$event_date_id = (int) ( $context['event_date_id'] ?? 0 );
+		$event_id      = 0;
+		if ( $event_date_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date ) {
+				$event_id = (int) $event_date->get_resolved_event_id();
+			}
+		}
+		if ( ! $event_id ) {
+			return;
+		}
+
+		$participant = GroupSignupPricing::resolve_viewer_participant();
+		if ( ! $participant ) {
+			return;
+		}
+
+		// The cancel route's permission check only accepts a logged-in user
+		// or a valid participant_token — not the AudienceSession cookie most
+		// unified-form viewers are recognised by — so a server-generated
+		// token travels with the card exactly as render_add_activities() does.
+		$token = \FairAudience\Services\ParticipantToken::generate( (int) $participant->id, $event_date_id );
+
+		echo '<div class="fair-events-signed-up-card"'
+			. ' data-event-id="' . esc_attr( (string) $event_id ) . '"'
+			. ' data-event-date-id="' . esc_attr( (string) $event_date_id ) . '"'
+			. ' data-participant-token="' . esc_attr( $token ) . '"'
+			. ' data-cancel-route="/fair-audience/v1/event-signup">';
+
+		echo '<p class="fair-events-signed-up-status">' . esc_html__( 'You are signed up for this date.', 'fair-audience' ) . '</p>';
+
+		$ticket_label = $context['signed_up_ticket_label'] ?? '';
+		if ( '' !== $ticket_label ) {
+			echo '<p class="fair-events-signed-up-ticket">';
+			printf(
+				/* translators: %s: ticket type name */
+				esc_html__( 'Your ticket: %s', 'fair-audience' ),
+				'<strong>' . esc_html( $ticket_label ) . '</strong>' // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pre-escaped substitution.
+			);
+			echo '</p>';
+		}
+
+		if ( ! empty( $context['current_activity_names'] ) ) {
+			echo '<div class="fair-events-signed-up-activities"><p>' . esc_html__( 'Your activities:', 'fair-audience' ) . '</p><ul>';
+			foreach ( $context['current_activity_names'] as $activity_name ) {
+				echo '<li>' . esc_html( $activity_name ) . '</li>';
+			}
+			echo '</ul></div>';
+		}
+
+		// A date switcher that navigates via the existing ?event_date= param
+		// (fair-events' render.php already resolves it) rather than
+		// re-pivoting client-side, mirroring the legacy picker's own
+		// behaviour — no client-side re-evaluation of a server-side decision.
+		$occurrences = $context['occurrences_for_picker'] ?? array();
+		if ( count( $occurrences ) > 1 ) {
+			echo '<ul class="fair-events-signed-up-switch-date">';
+			foreach ( $occurrences as $occ_row ) {
+				if ( (int) $occ_row['id'] === $event_date_id ) {
+					continue;
+				}
+				$occ_label = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
+					? \FairEvents\Helpers\DateRangeFormatter::format( $occ_row['start_datetime'], $occ_row['end_datetime'], $occ_row['all_day'] )
+					: $occ_row['start_datetime'];
+				if ( ! empty( $occ_row['signed_up'] ) ) {
+					$occ_label .= ' — ' . __( 'already signed up', 'fair-audience' );
+				}
+				$date_param = gmdate( 'Y-m-d', strtotime( $occ_row['start_datetime'] ) );
+				$link       = add_query_arg( 'event_date', $date_param );
+				echo '<li><a href="' . esc_url( $link ) . '">' . esc_html( $occ_label ) . '</a></li>';
+			}
+			echo '</ul>';
+		}
+
+		echo '<div class="wp-block-button">';
+		echo '<button type="button" class="wp-block-button__link wp-element-button fair-events-cancel-signup-button is-style-outline">';
+		echo esc_html__( 'Cancel signup', 'fair-audience' );
+		echo '</button>';
+		echo '</div>';
+
+		echo '</div>';
+	}
+
+	/**
+	 * Render the "Not you? Start fresh" button for a viewer recognised only
+	 * via the session cookie (not signed up, form not suppressed) — lets them
+	 * clear the pre-filled name/email and register as someone else. Hooked on
+	 * fair_events_signup_render_before_form; wired client-side against the
+	 * existing DELETE /fair-audience/v1/session route by fair-events-shared's
+	 * wireNotYouButton(), the same helper the legacy block uses.
+	 *
+	 * @param array $context Render context, see fair_events_signup_render_context.
+	 * @return void
+	 */
+	public static function render_not_you( $context ) {
+		if ( ! empty( $context['suppress_form'] ) || empty( $context['prefill_email'] ) ) {
+			return;
+		}
+		if ( ! AudienceSession::get_participant_id() ) {
+			return;
+		}
+
+		echo '<button type="button" class="fair-events-not-you-button">'
+			. esc_html__( 'Not you? Start fresh', 'fair-audience' )
+			. '</button>';
 	}
 
 	/**

@@ -13,26 +13,16 @@
  * Uses the Mollie double's settable GET status (set-mollie-status.php,
  * #1244 Decisions #8) rather than driving a real checkout, mirroring
  * get-tickets-purchase.spec.js's use of the webhook double for the
- * already-covered straight-through paid path.
+ * already-covered straight-through paid path. Runs with fair-audience active
+ * (the .wp-env.json default, and the only signup path since #1245) — its
+ * render-context/render-slot enrichment doesn't touch this anonymous
+ * return/retry path, so no deactivation is needed here anymore.
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { wpCli, runScript } from '../support/wp-cli.js';
+import { runScript } from '../support/wp-cli.js';
 
-test.describe('get-tickets block (fair-audience inactive): return and retry', () => {
-	test.beforeAll(() => {
-		wpCli('plugin deactivate fair-audience');
-	});
-
-	test.afterAll(() => {
-		wpCli('plugin activate fair-audience');
-	});
-
-	test.beforeEach(() => {
-		// Reset the get-tickets per-IP rate limit (3 requests/hour).
-		wpCli('transient delete --all');
-	});
-
+test.describe('get-tickets block: return and retry', () => {
 	test.afterEach(() => {
 		// Leave the double reporting "paid" for every other spec's assumption.
 		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');

@@ -19,21 +19,21 @@ test.describe('unified event-signup block: nested phone question', () => {
 
 		await page.goto(event.pageUrl);
 
-		const form = page.locator('.fair-audience-signup-register');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
 		const question = form.locator('[data-question-key="mobile"]');
 		await expect(question).toBeVisible();
 		await expect(question).toContainText('Mobile');
 
-		await form.locator('input[name="signup_name"]').fill('Unified Visitor');
-		await form.locator('input[name="signup_email"]').fill(email);
+		await form.locator('input[name="name"]').fill('Unified Visitor');
+		await form.locator('input[name="email"]').fill(email);
 		await question.locator('input[type="tel"]').fill('+49 170 123 45 67');
 
-		await form.locator('.fair-audience-signup-submit-button').click();
+		await form.locator('.form-button').click();
 
 		await expect(
-			page.getByText('You are signed up for this event', {
+			page.getByText('You have successfully registered', {
 				exact: false,
 			})
 		).toBeVisible();

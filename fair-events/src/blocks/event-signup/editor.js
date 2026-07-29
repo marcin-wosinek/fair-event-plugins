@@ -1,9 +1,11 @@
 /**
  * Event Signup Block - Editor Component
  *
- * Canonical fair-events signup block. Base behaviour is the anonymous
- * get-tickets form; when fair-audience is active the render delegates to its
- * participant-aware flow.
+ * Canonical fair-events signup block. Renders the anonymous get-tickets form;
+ * when fair-audience is active it enriches the same render via render-context
+ * filters and render slots instead of a competing template — so the editor
+ * preview (ServerSideRender of this same block) always reflects it, in both
+ * configurations.
  *
  * The legacy fair-audience/event-signup and fair-events/get-tickets blocks
  * hide themselves from the inserter and register their own transforms to

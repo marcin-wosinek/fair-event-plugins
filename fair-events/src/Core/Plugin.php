@@ -226,16 +226,14 @@ class Plugin {
 			);
 		}
 
-		// GetTickets controller — registers the public ticket purchase endpoint when fair-audience is absent.
-		if ( ! class_exists( \FairAudience\API\EventSignupController::class ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEvents\API\GetTicketsController();
-					$controller->register_routes();
-				}
-			);
-		}
+		// GetTickets controller — registers the public ticket purchase endpoint.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\GetTicketsController();
+				$controller->register_routes();
+			}
+		);
 	}
 
 	/**

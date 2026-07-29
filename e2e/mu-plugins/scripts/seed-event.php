@@ -18,13 +18,15 @@
  *                        stable screenshots) carrying one ticket type of each
  *                        recurrence scope: single_instance, whole_series, and
  *                        multiple_instances (default prices 15/40/10; override
- *                        {"price":N} sets the single_instance price). Always
- *                        renders the unified fair-events/event-signup block.
- *   audience-ticket-scopes  like three-ticket-scopes, but renders the default
- *                        fair-audience/event-signup block instead. Override
+ *                        {"price":N} sets the single_instance price). Override
  *                        {"omitMulti":true} to skip the multiple_instances
  *                        type (single_instance + whole_series only), the
- *                        regression scenario.
+ *                        occurrence-picker regression scenario.
+ *   audience-ticket-scopes  like three-ticket-scopes, but always renders the
+ *                        dormant fair-audience/event-signup block regardless
+ *                        of any {"block":…} override — for specs proving old
+ *                        pages (authored before #1245) keep rendering it
+ *                        unchanged.
  *   address              event-info block + a calendar button, no ticket
  *                        type/sale period (signup path untouched). Renders
  *                        {"address":"…"} (default 'Calle Mayor 1, Madrid') via
@@ -87,17 +89,24 @@ $extra_type_ids     = array();
 $venue_id           = 0;
 $is_paid            = true;
 
-// Which purchase block the event page carries. Default: fair-audience
-// event-signup. Override {"block":"get-tickets"} for specs that exercise the
+// Which purchase block the event page carries. Default (#1245 cutover): the
+// unified fair-events/event-signup block — the only signup block new content
+// uses now that render.php no longer delegates to fair-audience's legacy
+// block. Override {"block":"get-tickets"} for specs that exercise the
 // fair-events standalone purchase path (with fair-audience deactivated).
 // Override {"block":"unified-with-question"} for specs that exercise the
-// unified fair-events/event-signup block with a nested fair-form question,
-// delegated through fair-audience's participant-aware flow (#1160).
-$block_content = '<!-- wp:fair-audience/event-signup /-->';
-if ( 'three-ticket-scopes' === $flavour ) {
-	// Always the unified block — this flavour exists to screenshot it across
-	// plugin combinations, so the block override is not honoured here.
-	$block_content = '<!-- wp:fair-events/event-signup /-->';
+// unified block with a nested fair-form question.
+$block_content = '<!-- wp:fair-events/event-signup /-->';
+if ( 'audience-ticket-scopes' === $flavour ) {
+	// The legacy block deliberately, regardless of any override — this
+	// flavour exists to prove old pages (authored before #1245) keep
+	// rendering their dormant fair-audience/event-signup block unchanged.
+	$block_content = '<!-- wp:fair-audience/event-signup /-->';
+} elseif ( isset( $overrides['block'] ) && 'legacy' === $overrides['block'] ) {
+	// The dormant legacy block, on request — for specs covering
+	// functionality still deferred to it post-#1245 (participant_token URL
+	// login, the request-link/resume-by-email flow).
+	$block_content = '<!-- wp:fair-audience/event-signup /-->';
 } elseif ( isset( $overrides['block'] ) && 'get-tickets' === $overrides['block'] ) {
 	$block_content = '<!-- wp:fair-events/get-tickets /-->';
 } elseif ( isset( $overrides['block'] ) && 'unified-with-question' === $overrides['block'] ) {
@@ -225,12 +234,15 @@ switch ( $flavour ) {
 		$occurrence_ids = fair_e2e_add_series( $event_id, 3 );
 		$single_type_id = fair_e2e_add_ticket_type( $event_date_id, 'Single Session', null );
 		$whole_type_id  = fair_e2e_add_whole_series_ticket_type( $event_date_id, 'Full Series Pass' );
-		$multi_type_id  = fair_e2e_add_multi_instance_ticket_type( $event_date_id, 'Pick your sessions', $minimum_instances );
 		fair_e2e_add_price( $single_type_id, $sale_period_id, $price, null );
 		fair_e2e_add_price( $whole_type_id, $sale_period_id, 40.00, null );
-		fair_e2e_add_price( $multi_type_id, $sale_period_id, 10.00, null );
 		$ticket_type_id = $single_type_id;
-		$extra_type_ids = array( $whole_type_id, $multi_type_id );
+		$extra_type_ids = array( $whole_type_id );
+		if ( ! $omit_multi ) {
+			$multi_type_id    = fair_e2e_add_multi_instance_ticket_type( $event_date_id, 'Pick your sessions', $minimum_instances );
+			$extra_type_ids[] = $multi_type_id;
+			fair_e2e_add_price( $multi_type_id, $sale_period_id, 10.00, null );
+		}
 		break;
 
 	case 'audience-ticket-scopes':

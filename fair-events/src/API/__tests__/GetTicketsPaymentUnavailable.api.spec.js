@@ -2,11 +2,6 @@
  * Playwright API tests for the get-tickets fallback endpoint's fail-closed
  * behaviour when online payments can't be collected (#1177).
  *
- * This endpoint only serves signups when fair-audience is NOT active
- * (fair-events/src/blocks/event-signup/render.php defers to the Event Signup
- * block otherwise), so these tests skip gracefully when fair-audience is
- * active in the test environment.
- *
  * Like fair-audience's EventSignupSlidingScale spec, this assumes the dev
  * stack has no payment connector configured: a priced signup must be rejected
  * up front with 503 payment_unavailable, creating no signup (and therefore no
@@ -38,7 +33,6 @@ function uniqueEmail(prefix) {
 
 test.describe('GetTicketsController — payments unavailable (fail closed)', () => {
 	let api;
-	let fairAudienceActive = false;
 	let eventPostId;
 	let masterEventDateId;
 	let occurrenceIds;
@@ -60,20 +54,6 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 	test.beforeAll(async () => {
 		api = await request.newContext({ baseURL: BASE_URL });
 
-		const pluginsRes = await api.get('/wp-json/wp/v2/plugins', {
-			headers: adminHeaders,
-		});
-		if (pluginsRes.ok()) {
-			const plugins = await pluginsRes.json();
-			fairAudienceActive = plugins.some(
-				(p) =>
-					p.plugin?.includes('fair-audience') && p.status === 'active'
-			);
-		}
-		if (fairAudienceActive) {
-			return;
-		}
-
 		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: {
@@ -87,21 +67,37 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				event_id: eventPostId,
+				title: `Get-tickets payments-unavailable test ${Date.now()}`,
+				link_type: 'post',
 				start_datetime: '2035-05-01 10:00:00',
 				end_datetime: '2035-05-01 12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			},
 		});
 		expect(edRes.ok()).toBeTruthy();
-		masterEventDateId = (await edRes.json()).id;
+		const edBody = await edRes.json();
+		masterEventDateId = edBody.id;
 
-		const occRes = await api.get(
-			`/wp-json/fair-events/v1/event-dates?event_id=${eventPostId}`,
-			{ headers: adminHeaders }
+		// The create endpoint doesn't wire event_id through — a PUT is
+		// needed to actually link the post (see CalendarFeedController.api.spec.js
+		// for the same quirk).
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{
+				headers: adminHeaders,
+				data: { event_id: eventPostId },
+			}
 		);
-		expect(occRes.ok()).toBeTruthy();
-		occurrenceIds = (await occRes.json()).map((o) => o.id).sort();
+		expect(linkRes.ok()).toBeTruthy();
+
+		// generated_occurrences comes straight off the create response
+		// (master + 2 generated for COUNT=3 / 3 manual dates) — the
+		// event_id query-filter on the list route doesn't actually filter
+		// (a separate pre-existing bug), so deriving from edRes avoids it.
+		occurrenceIds = [
+			masterEventDateId,
+			...edBody.generated_occurrences.map((o) => o.id),
+		].sort();
 		expect(occurrenceIds.length).toBe(3);
 
 		// Three priced ticket types — one per purchase path — plus an
@@ -180,9 +176,6 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 	});
 
 	test.afterAll(async () => {
-		if (fairAudienceActive) {
-			return;
-		}
 		if (eventPostId) {
 			await api.delete(
 				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
@@ -193,8 +186,6 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 	});
 
 	test('a paid single-instance signup is rejected 503 and writes nothing', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const before = await countSignups(masterEventDateId);
 		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
 			data: {
@@ -211,8 +202,6 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 	});
 
 	test('a paid whole-series signup is rejected 503 and writes nothing', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const before = await countSignups(masterEventDateId);
 		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
 			data: {
@@ -229,8 +218,6 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 	});
 
 	test('a paid multiple-instances signup is rejected 503 and writes nothing', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const chosen = [occurrenceIds[0], occurrenceIds[1]];
 		const before = await Promise.all(chosen.map(countSignups));
 		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
@@ -249,8 +236,6 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 	});
 
 	test('a free signup on the same event still confirms', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		// No ticket type → amount 0 → free path, unaffected by the guard.
 		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
 			data: {

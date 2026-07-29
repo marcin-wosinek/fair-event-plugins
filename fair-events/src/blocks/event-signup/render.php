@@ -2,9 +2,10 @@
 /**
  * Event Signup Block - Server-side rendering
  *
- * Base (fair-audience inactive) behaviour is the anonymous get-tickets form.
- * When fair-audience is active this delegates to its Event Signup block so the
- * participant-aware flow (identity, pricing) renders unchanged.
+ * Renders the anonymous get-tickets form. When fair-audience is active it
+ * enriches this same render via the fair_events_signup_render_context filter
+ * and the render slots (identity, pricing, cancel/resignup) instead of owning
+ * a competing template.
  *
  * @package FairEvents
  *
@@ -14,21 +15,6 @@
  */
 
 defined( 'WPINC' ) || die;
-
-// When fair-audience is active it owns the participant-aware signup flow.
-// Delegate to its block via render_block() so its richer render runs unchanged
-// and its view script/styles enqueue, then stop. Nested question blocks are
-// forwarded so the delegated render receives them as $content, exactly as on
-// the legacy fair-audience block.
-if ( class_exists( \FairAudience\API\EventSignupController::class ) ) {
-	$delegated_block              = $block->parsed_block;
-	$delegated_block['blockName'] = 'fair-audience/event-signup';
-	$delegated_block['attrs']     = array(
-		'signupButtonText' => $attributes['submitButtonText'] ?? '',
-	);
-	echo render_block( $delegated_block ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_block() returns trusted, already-escaped block markup.
-	return;
-}
 
 $submit_button_text = $attributes['submitButtonText'] ?? __( 'Get Tickets', 'fair-events' );
 
@@ -194,6 +180,11 @@ if ( $series_master_id && class_exists( \FairEvents\Models\EventDates::class ) )
 			'start_datetime' => $occ->start_datetime,
 			'end_datetime'   => $occ->end_datetime,
 			'all_day'        => (bool) $occ->all_day,
+			// A companion plugin (fair-audience) flips this true for
+			// occurrences the recognised viewer already holds, so the
+			// pickers below can label/disable them instead of allowing a
+			// silent double-book.
+			'signed_up'      => false,
 		);
 	}
 }
@@ -264,7 +255,8 @@ if ( ! empty( $ticket_options ) && class_exists( \FairEvents\Models\EventDateSet
  *                              price_by_type_id, active_sale_period, occurrences_for_picker,
  *                              ticket_options, minimum_activities,
  *                              callback_status, callback_tx_id, callback_token, callback_state,
- *                              callback_source, prefill_name, prefill_email, submit_button_text).
+ *                              callback_source, prefill_name, prefill_email, submit_button_text,
+ *                              suppress_form).
  * @param array    $attributes Block attributes.
  * @param WP_Block $block      Block instance.
  */
@@ -300,6 +292,11 @@ $context = apply_filters(
 		'prefill_name'           => '',
 		'prefill_email'          => '',
 		'submit_button_text'     => $submit_button_text,
+		// When a companion plugin sets this true (e.g. a recognised viewer
+		// who already holds a signup), the base skips the <form> entirely and
+		// emits a plain wrapper div instead, still firing the render slots
+		// inside it so the companion can render its own signed-up/cancel UI.
+		'suppress_form'          => false,
 	),
 	$attributes,
 	$block
@@ -317,6 +314,7 @@ $signup_state           = $context['callback_state'];
 $prefill_name           = $context['prefill_name'];
 $prefill_email          = $context['prefill_email'];
 $submit_button_text     = $context['submit_button_text'];
+$suppress_form          = ! empty( $context['suppress_form'] );
 
 // Recompute the multiple_instances flag from the (possibly filtered) ticket types.
 $has_multiple_instances_type = false;
@@ -386,7 +384,7 @@ $all_purchases_blocked = $payments_unavailable
 $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 ?>
 
-<div class="fair-events-get-tickets">
+<div class="fair-events-get-tickets" data-currency="<?php echo esc_attr( \FairEventsShared\Money::site_currency() ); ?>">
 <?php if ( $signup_state ) : ?>
 	<?php
 	$amount_display = \FairEventsShared\Money::format_display( (float) $signup_state['amount'], $signup_state['currency'] );
@@ -499,13 +497,35 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 	<div class="message-container message-error" role="alert">
 		<?php esc_html_e( 'Ticket sales are temporarily unavailable. Please check back later.', 'fair-events' ); ?>
 	</div>
+<?php elseif ( $suppress_form ) : ?>
+	<div class="fair-events-get-tickets-companion" data-event-date-id="<?php echo esc_attr( $event_date_id ); ?>">
+		<?php
+		/**
+		 * Fires in place of the suppressed signup <form>. fair-audience uses
+		 * this to render the signed-up/cancel card for a recognised viewer
+		 * who already holds this signup.
+		 *
+		 * @param array $context Render context, see fair_events_signup_render_context.
+		 */
+		do_action( 'fair_events_signup_render_before_form', $context );
+		?>
+		<?php
+		/**
+		 * Fires in place of the suppressed signup <form>, after the
+		 * before-form slot. fair-audience uses this for the add-activities
+		 * section.
+		 *
+		 * @param array $context Render context, see fair_events_signup_render_context.
+		 */
+		do_action( 'fair_events_signup_render_after_form', $context );
+		?>
+	</div>
 <?php else : ?>
 	<form
 		id="<?php echo esc_attr( $form_id ); ?>"
 		class="fair-events-get-tickets-form"
 		data-currency="<?php echo esc_attr( \FairEventsShared\Money::site_currency() ); ?>"
 		data-event-date-id="<?php echo esc_attr( $event_date_id ); ?>"
-		data-fair-audience-active="<?php echo esc_attr( class_exists( \FairAudience\API\EventSignupController::class ) ? '1' : '0' ); ?>"
 		data-min-activities="<?php echo esc_attr( (string) $minimum_activities ); ?>"
 	>
 		<?php
@@ -681,6 +701,9 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 							$occ_row['end_datetime'],
 							$occ_row['all_day']
 						);
+						if ( ! empty( $occ_row['signed_up'] ) ) {
+							$occ_label .= ' — ' . __( 'already signed up', 'fair-events' );
+						}
 						?>
 						<option value="<?php echo (int) $occ_row['id']; ?>" <?php echo $occ_index === $default_occurrence_index ? 'selected' : ''; ?>>
 							<?php echo esc_html( $occ_label ); ?>
@@ -695,11 +718,15 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 				<span class="form-label"><?php esc_html_e( 'Choose occurrences', 'fair-events' ); ?></span>
 				<?php foreach ( $occurrences_for_picker as $occ_row ) : ?>
 					<?php
-					$occ_label   = \FairEvents\Helpers\DateRangeFormatter::format(
+					$occ_label     = \FairEvents\Helpers\DateRangeFormatter::format(
 						$occ_row['start_datetime'],
 						$occ_row['end_datetime'],
 						$occ_row['all_day']
 					);
+					$occ_signed_up = ! empty( $occ_row['signed_up'] );
+					if ( $occ_signed_up ) {
+						$occ_label .= ' — ' . __( 'already signed up', 'fair-events' );
+					}
 					$checkbox_id = $form_id . '-inst-' . (int) $occ_row['id'];
 					?>
 					<label class="fair-events-instance-option" for="<?php echo esc_attr( $checkbox_id ); ?>">
@@ -709,6 +736,7 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 							id="<?php echo esc_attr( $checkbox_id ); ?>"
 							value="<?php echo (int) $occ_row['id']; ?>"
 							class="form-checkbox"
+							<?php echo $occ_signed_up ? 'disabled' : ''; ?>
 						/>
 						<?php echo esc_html( $occ_label ); ?>
 					</label>

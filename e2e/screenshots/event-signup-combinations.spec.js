@@ -1,13 +1,16 @@
 /**
  * Screenshot e2e: the unified fair-events/event-signup block across three
- * plugin combinations, for manual visual review (#1185).
+ * plugin combinations, for manual visual review (#1185, re-pointed at the
+ * unified markup by #1245).
  *
  * The SAME `wp:fair-events/event-signup` block is placed on the page in every
- * combination — only the active-plugin set changes. The block is designed to
- * be usable always: with fair-audience inactive it renders its own anonymous
- * get-tickets form; with fair-audience active it delegates to
- * fair-audience/event-signup for the participant-aware flow (see
- * fair-events/src/blocks/event-signup/render.php). fair-audience-experimental
+ * combination — only the active-plugin set changes. The block renders its own
+ * markup unconditionally now (fair-events/src/blocks/event-signup/render.php):
+ * with fair-audience inactive it's the plain anonymous get-tickets form; with
+ * fair-audience active, SignupHookBridge enriches the same render via the
+ * fair_events_signup_render_context filter and render slots (identity,
+ * pricing) instead of a competing template — so all three combos below render
+ * the same `.fair-events-get-tickets-form` markup. fair-audience-experimental
  * is deactivated in all three combos (it's active by default in
  * .wp-env.json). fair-payments-connector, fair-form, and fair-platform are
  * infrastructure and stay untouched throughout.
@@ -90,7 +93,7 @@ test.describe('Event Signup screenshots: fair-events + fair-audience', () => {
 
 		await page.goto(event.pageUrl);
 
-		const form = page.locator('.fair-audience-event-signup');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
 		const screenshotPath = path.join(
@@ -123,7 +126,7 @@ test.describe('Event Signup screenshots: fair-events + fair-audience + fair-even
 
 		await page.goto(event.pageUrl);
 
-		const form = page.locator('.fair-audience-event-signup');
+		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
 		const screenshotPath = path.join(

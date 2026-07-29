@@ -11,11 +11,6 @@
  * these routes shares: SignupPaymentSession::get() resolve_transaction_from_request()
  * must 404 — never a more specific error — for any transaction_id it can't
  * verify, so an anonymous caller can't enumerate other visitors' payments.
- *
- * This endpoint only serves signups when fair-audience is NOT active
- * (fair-events/src/blocks/event-signup/render.php defers to the Event Signup
- * block otherwise), so these tests skip gracefully when fair-audience is
- * active in the test environment.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -35,21 +30,9 @@ const BOGUS_TRANSACTION_ID = 999999999;
 
 test.describe('GetTicketsController — payment-state / retry-payment / cancel-payment', () => {
 	let api;
-	let fairAudienceActive = false;
 
 	test.beforeAll(async () => {
 		api = await request.newContext({ baseURL: BASE_URL });
-
-		const pluginsRes = await api.get('/wp-json/wp/v2/plugins', {
-			headers: adminHeaders,
-		});
-		if (pluginsRes.ok()) {
-			const plugins = await pluginsRes.json();
-			fairAudienceActive = plugins.some(
-				(p) =>
-					p.plugin?.includes('fair-audience') && p.status === 'active'
-			);
-		}
 	});
 
 	test.afterAll(async () => {
@@ -57,8 +40,6 @@ test.describe('GetTicketsController — payment-state / retry-payment / cancel-p
 	});
 
 	test('payment-state with no transaction_id and no session cookie 404s', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const res = await api.get(
 			'/wp-json/fair-events/v1/get-tickets/payment-state'
 		);
@@ -67,8 +48,6 @@ test.describe('GetTicketsController — payment-state / retry-payment / cancel-p
 	});
 
 	test('payment-state with an unknown transaction_id 404s', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const res = await api.get(
 			'/wp-json/fair-events/v1/get-tickets/payment-state',
 			{ params: { transaction_id: BOGUS_TRANSACTION_ID, token: 'wrong' } }
@@ -78,8 +57,6 @@ test.describe('GetTicketsController — payment-state / retry-payment / cancel-p
 	});
 
 	test('retry-payment requires a transaction_id', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const res = await api.post(
 			'/wp-json/fair-events/v1/get-tickets/retry-payment',
 			{ data: {} }
@@ -88,8 +65,6 @@ test.describe('GetTicketsController — payment-state / retry-payment / cancel-p
 	});
 
 	test('retry-payment with an unknown transaction_id 404s, never a more specific error', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const res = await api.post(
 			'/wp-json/fair-events/v1/get-tickets/retry-payment',
 			{ data: { transaction_id: BOGUS_TRANSACTION_ID, token: 'wrong' } }
@@ -99,8 +74,6 @@ test.describe('GetTicketsController — payment-state / retry-payment / cancel-p
 	});
 
 	test('cancel-payment requires a transaction_id', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const res = await api.post(
 			'/wp-json/fair-events/v1/get-tickets/cancel-payment',
 			{ data: {} }
@@ -109,8 +82,6 @@ test.describe('GetTicketsController — payment-state / retry-payment / cancel-p
 	});
 
 	test('cancel-payment with an unknown transaction_id 404s, never a more specific error', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		const res = await api.post(
 			'/wp-json/fair-events/v1/get-tickets/cancel-payment',
 			{ data: { transaction_id: BOGUS_TRANSACTION_ID, token: 'wrong' } }
@@ -120,8 +91,6 @@ test.describe('GetTicketsController — payment-state / retry-payment / cancel-p
 	});
 
 	test('admins get the same 404 as anyone else for an unknown transaction_id', async () => {
-		test.skip(fairAudienceActive, 'fair-audience active — block deferred');
-
 		// signup_payment_permissions_check() has no manage_options carve-out
 		// (unlike PaymentEndpoint's own status check) — ownership of a
 		// get-tickets signup is never an admin concern, so this stays a
