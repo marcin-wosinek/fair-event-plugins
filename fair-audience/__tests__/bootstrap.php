@@ -60,6 +60,42 @@ if ( ! function_exists( 'update_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_filter' ) ) {
+	/**
+	 * Stub of WordPress add_filter() recording registrations into
+	 * $GLOBALS['_fair_test_hooks'] so tests can assert on accepted_args.
+	 *
+	 * @param string   $hook_name     Hook name.
+	 * @param callable $callback      Callback.
+	 * @param int      $priority      Priority (unused by the stub).
+	 * @param int      $accepted_args Number of accepted args.
+	 * @return true
+	 */
+	function add_filter( $hook_name, $callback, $priority = 10, $accepted_args = 1 ) {
+		$GLOBALS['_fair_test_hooks'][ $hook_name ][] = array(
+			'callback'      => $callback,
+			'accepted_args' => $accepted_args,
+		);
+		return true;
+	}
+}
+
+if ( ! function_exists( 'add_action' ) ) {
+	/**
+	 * Stub of WordPress add_action(), delegating to the add_filter() stub —
+	 * both record into the same $GLOBALS['_fair_test_hooks'] structure.
+	 *
+	 * @param string   $hook_name     Hook name.
+	 * @param callable $callback      Callback.
+	 * @param int      $priority      Priority (unused by the stub).
+	 * @param int      $accepted_args Number of accepted args.
+	 * @return true
+	 */
+	function add_action( $hook_name, $callback, $priority = 10, $accepted_args = 1 ) {
+		return add_filter( $hook_name, $callback, $priority, $accepted_args );
+	}
+}
+
 if ( ! function_exists( 'current_time' ) ) {
 	/**
 	 * Stub of WordPress current_time(). Always returns UTC 'mysql' format.
@@ -117,6 +153,28 @@ if ( ! function_exists( 'sanitize_title' ) ) {
 		$value = strtolower( trim( (string) $value ) );
 		$value = preg_replace( '/[^a-z0-9]+/', '-', $value );
 		return trim( $value, '-' );
+	}
+}
+
+if ( ! function_exists( 'wpautop' ) ) {
+	/**
+	 * Stub of WordPress wpautop() — wraps double-line-break-separated blocks
+	 * in <p> tags, sufficient for deterministic tests.
+	 *
+	 * @param string $text Raw text.
+	 * @return string Text with paragraphs wrapped in <p> tags.
+	 */
+	function wpautop( $text ) {
+		$paragraphs = preg_split( '/\n\s*\n/', trim( (string) $text ) );
+		return implode(
+			'',
+			array_map(
+				function ( $paragraph ) {
+					return '<p>' . trim( $paragraph ) . "</p>\n";
+				},
+				array_filter( $paragraphs, 'strlen' )
+			)
+		);
 	}
 }
 

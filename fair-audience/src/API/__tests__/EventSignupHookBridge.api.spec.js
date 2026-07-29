@@ -87,6 +87,24 @@ test.describe('SignupHookBridge — base get-tickets route links a Participant',
 		await api.dispose();
 	});
 
+	test('a signup with no ticket type and no activities selected still completes (#1310: the options filters run unconditionally)', async () => {
+		test.skip(!fairAudienceActive, 'fair-audience not active');
+
+		const guardEmail = `signup-hook-bridge-no-options-${Date.now()}@example.test`;
+
+		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+			data: {
+				event_date_id: eventDateId,
+				name: 'No Options Buyer',
+				email: guardEmail,
+				quantity: 1,
+			},
+		});
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+		expect(body.status).toBe('confirmed');
+	});
+
 	test('a free signup through the base route creates a linked Participant and EventParticipant', async () => {
 		test.skip(!fairAudienceActive, 'fair-audience not active');
 

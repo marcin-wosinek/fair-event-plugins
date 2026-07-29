@@ -659,6 +659,35 @@ create route) expose:
     charge) instead of relying solely on its own webhook listener, which
     never sees transactions created through the base route.
 
+**`accepted_args` contract.** Register each hook with `accepted_args` matching
+what the call site above actually passes — not the callback's own parameter
+count, and never a value the callback can't accept. A callback that requires
+more arguments than the hook is registered with makes WordPress call it with
+too few, throwing `ArgumentCountError` on every dispatch (#1310: two of
+`SignupHookBridge`'s filters were registered one argument short, so every
+unified-signup submission fatal'd):
+
+| Hook                                  | args passed | `add_filter`/`add_action` call            |
+| -------------------------------------- | :---------: | ------------------------------------------ |
+| `fair_events_signup_render_context`    | 1           | `add_filter( ..., 10, 1 )`                 |
+| `fair_events_signup_render_before_submit` | 1        | `add_action( ..., 10, 1 )`                 |
+| `fair_events_signup_render_after_form` | 1           | `add_action( ..., 10, 1 )`                 |
+| `fair_events_signup_ticket_type_error` | 3           | `add_filter( ..., 10, 2 )` or `3`          |
+| `fair_events_signup_unit_price`        | 3           | `add_filter( ..., 10, 2 )` or `3`          |
+| `fair_events_signup_options_error`     | 4           | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_signup_option_line_items` | 3           | `add_filter( ..., 10, 3 )`                 |
+| `fair_events_signup_created`           | 6           | `add_action( ..., 10, 6 )`                 |
+| `fair_events_signup_confirmed`         | 2           | `add_action( ..., 10, 2 )`                 |
+| `fair_events_signup_payment_failed`    | 2           | `add_action( ..., 10, 2 )`                 |
+| `fair_events_backfill_signup_participant_ids` | 0    | `add_action( ... )` (default, no args)     |
+
+A registered `accepted_args` may be lower than "args passed" — the callback
+just won't receive the trailing ones — but never lower than the callback's own
+required-parameter count. `fair-audience/__tests__/Hooks/SignupHookBridgeRegistrationTest.php`
+locks this table against `SignupHookBridge::init()` with a reflection check,
+so a future hook/registration mismatch fails CI instead of only surfacing as a
+500 on the live signup form.
+
 `fair-audience/src/Hooks/SignupHookBridge.php` is the reference consumer:
 it hooks `fair_events_signup_created` to link a `Participant`/`EventParticipant`
 for the anonymous/linked signup case, and `fair_events_signup_confirmed` /
