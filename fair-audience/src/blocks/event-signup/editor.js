@@ -8,13 +8,7 @@ import {
 	InspectorControls,
 	InnerBlocks,
 } from '@wordpress/block-editor';
-import {
-	PanelBody,
-	TextControl,
-	TextareaControl,
-	ToggleControl,
-	Notice,
-} from '@wordpress/components';
+import { PanelBody, TextControl, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 const UNIFIED_NAME = 'fair-events/event-signup';
@@ -71,14 +65,7 @@ registerBlockType('fair-audience/event-signup', {
 		],
 	},
 	edit: ({ attributes, setAttributes }) => {
-		const {
-			signupButtonText,
-			registerButtonText,
-			requestLinkButtonText,
-			successMessage,
-			showOptionPrices,
-			showTicketTypePrices,
-		} = attributes;
+		const { signupButtonText } = attributes;
 
 		const blockProps = useBlockProps({
 			className: 'fair-audience-event-signup',
@@ -107,86 +94,6 @@ registerBlockType('fair-audience/event-signup', {
 								'Button text for authenticated users.',
 								'fair-audience'
 							)}
-						/>
-						<TextControl
-							label={__('Register Button Text', 'fair-audience')}
-							value={registerButtonText}
-							onChange={(value) =>
-								setAttributes({ registerButtonText: value })
-							}
-							placeholder={__(
-								'Register & Sign Up',
-								'fair-audience'
-							)}
-							help={__(
-								'Button text for new registrations.',
-								'fair-audience'
-							)}
-						/>
-						<TextControl
-							label={__(
-								'Request Link Button Text',
-								'fair-audience'
-							)}
-							value={requestLinkButtonText}
-							onChange={(value) =>
-								setAttributes({
-									requestLinkButtonText: value,
-								})
-							}
-							placeholder={__(
-								'Send Signup Link',
-								'fair-audience'
-							)}
-							help={__(
-								'Button text for existing participants.',
-								'fair-audience'
-							)}
-						/>
-						<TextareaControl
-							label={__('Success Message', 'fair-audience')}
-							value={successMessage}
-							onChange={(value) =>
-								setAttributes({ successMessage: value })
-							}
-							placeholder={__(
-								'You have successfully signed up for the event!',
-								'fair-audience'
-							)}
-							help={__(
-								'Message shown after successful signup.',
-								'fair-audience'
-							)}
-						/>
-						<ToggleControl
-							label={__(
-								'Show ticket type prices',
-								'fair-audience'
-							)}
-							help={__(
-								'Display the price of each ticket type next to its label.',
-								'fair-audience'
-							)}
-							checked={showTicketTypePrices}
-							onChange={(value) =>
-								setAttributes({
-									showTicketTypePrices: value,
-								})
-							}
-						/>
-						<ToggleControl
-							label={__(
-								'Show activity option prices',
-								'fair-audience'
-							)}
-							help={__(
-								'Display the price of each activity option next to its label. The running total in the button always updates regardless of this setting.',
-								'fair-audience'
-							)}
-							checked={showOptionPrices}
-							onChange={(value) =>
-								setAttributes({ showOptionPrices: value })
-							}
 						/>
 					</PanelBody>
 				</InspectorControls>
@@ -233,8 +140,7 @@ registerBlockType('fair-audience/event-signup', {
 								className="wp-block-button__link wp-element-button"
 								disabled
 							>
-								{registerButtonText ||
-									__('Register & Sign Up', 'fair-audience')}
+								{__('Register & Sign Up', 'fair-audience')}
 							</button>
 						</div>
 					</div>

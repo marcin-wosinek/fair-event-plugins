@@ -57,10 +57,13 @@ if ( isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_c
 
 // Get block attributes — the defaults are the only literals that need
 // translating; a saved attribute value must never be run through __().
+// Only the signup button label stays configurable: the unified fair-events
+// block forwards that one attribute and nothing else, so every other label
+// and display toggle is a fixed default here.
 $signup_button_text       = $attributes['signupButtonText'] ?? __( 'Sign Up', 'fair-audience' );
-$register_button_text     = $attributes['registerButtonText'] ?? __( 'Register & Sign Up', 'fair-audience' );
-$request_link_button_text = $attributes['requestLinkButtonText'] ?? __( 'Send Signup Link', 'fair-audience' );
-$success_message          = $attributes['successMessage'] ?? __( 'You have successfully signed up for the event!', 'fair-audience' );
+$register_button_text     = __( 'Register & Sign Up', 'fair-audience' );
+$request_link_button_text = __( 'Send Signup Link', 'fair-audience' );
+$success_message          = __( 'You have successfully signed up for the event!', 'fair-audience' );
 
 // Get the current post ID (may be a direct event post or a linked page).
 $post_id = get_the_ID();
@@ -532,9 +535,6 @@ if ( $has_ticket_options && $has_ticket_types ) {
 }
 $initial_minimum_activities = min( $option_count, max( $minimum_activities, $preselected_type_min ) );
 
-// Read block attribute to control whether option prices are displayed.
-$show_option_prices = $attributes['showOptionPrices'] ?? true;
-
 // Detect whether any ticket option carries a non-zero price.  Used below to
 // decide whether data-base-price should be "0" (options-only pricing) vs ""
 // (truly free, no JS total updates needed).
@@ -682,10 +682,7 @@ if ( $best_discount_rule ) {
  * Render the ticket-type radio fieldset. No-op when the event date has no
  * ticket types configured. First enabled option is pre-selected.
  */
-// Read block attribute to control whether ticket type prices are displayed.
-$show_ticket_type_prices = $attributes['showTicketTypePrices'] ?? true;
-
-$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id, $show_ticket_type_prices ) {
+$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id ) {
 	if ( ! $has_ticket_types ) {
 		return;
 	}
@@ -696,7 +693,7 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 	foreach ( $ticket_types_for_display as $tt ) {
 		$tt_is_full = ! empty( $tt['is_full'] );
 		$tt_label   = $tt['name'];
-		if ( $show_ticket_type_prices && null !== $tt['price'] ) {
+		if ( null !== $tt['price'] ) {
 			if ( $tt['price'] > 0 ) {
 				$tt_label .= ' — ' . Money::format_inline( (float) $tt['price'] );
 			} elseif ( $tt['price'] < 0 ) {
@@ -731,7 +728,7 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 /**
  * Render the ticket options checkbox fieldset. No-op when no options configured.
  */
-$render_ticket_options = static function () use ( $ticket_options_for_display, $has_ticket_options, $form_id, $show_option_prices, $minimum_activities, $any_ticket_type_min, $initial_minimum_activities ) {
+$render_ticket_options = static function () use ( $ticket_options_for_display, $has_ticket_options, $form_id, $minimum_activities, $any_ticket_type_min, $initial_minimum_activities ) {
 	if ( ! $has_ticket_options ) {
 		return;
 	}
@@ -773,7 +770,7 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 		$opt_label = $opt['name'];
 		// Inline price only when the minimum-activities feature is inactive; the
 		// feature-active case uses the toggled "(+price)" tag emitted below.
-		if ( ! $feature_active && $show_option_prices ) {
+		if ( ! $feature_active ) {
 			if ( $opt['price'] > 0 ) {
 				$opt_label .= ' — ' . Money::format_inline( $opt['price'] );
 			} elseif ( $opt['price'] < 0 ) {
@@ -804,7 +801,7 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
 		echo esc_html( $opt_label );
 		// Hidden add-on tag, revealed by frontend.js on unchecked options once
 		// the minimum is reached. Positive prices only (no "(+€0.00)").
-		if ( $feature_active && $show_option_prices && $opt['price'] > 0 ) {
+		if ( $feature_active && $opt['price'] > 0 ) {
 			printf(
 				'<span class="fair-audience-ticket-option-addon" style="display: none;"> %s</span>',
 				esc_html(
@@ -828,7 +825,7 @@ $render_ticket_options = static function () use ( $ticket_options_for_display, $
  * there's nothing left to add. The Add button total is kept in sync by the
  * frontend JS from the checked options' data-option-price.
  */
-$render_add_activities = static function () use ( $addable_options, $has_addable_options, $form_id, $show_option_prices ) {
+$render_add_activities = static function () use ( $addable_options, $has_addable_options, $form_id ) {
 	if ( ! $has_addable_options ) {
 		return;
 	}
@@ -836,14 +833,12 @@ $render_add_activities = static function () use ( $addable_options, $has_addable
 	echo '<legend>' . esc_html__( 'Add activities', 'fair-audience' ) . '</legend>';
 	foreach ( $addable_options as $opt ) {
 		$opt_label = $opt['name'];
-		if ( $show_option_prices ) {
-			if ( $opt['price'] > 0 ) {
-				$opt_label .= ' — ' . Money::format_inline( $opt['price'] );
-			} elseif ( $opt['price'] < 0 ) {
-				$opt_label .= ' — -' . Money::format_inline( abs( $opt['price'] ) );
-			} else {
-				$opt_label .= ' — ' . __( 'free', 'fair-audience' );
-			}
+		if ( $opt['price'] > 0 ) {
+			$opt_label .= ' — ' . Money::format_inline( $opt['price'] );
+		} elseif ( $opt['price'] < 0 ) {
+			$opt_label .= ' — -' . Money::format_inline( abs( $opt['price'] ) );
+		} else {
+			$opt_label .= ' — ' . __( 'free', 'fair-audience' );
 		}
 		$is_full = ! empty( $opt['is_full'] );
 		if ( $is_full ) {
@@ -972,7 +967,7 @@ $render_instance_picker = static function () use ( $occurrences_for_picker, $has
 
 // Base button labels (without price suffix) for dynamic JS price updates.
 $base_signup_button_text   = $attributes['signupButtonText'] ?? __( 'Sign Up', 'fair-audience' );
-$base_register_button_text = $attributes['registerButtonText'] ?? __( 'Register & Sign Up', 'fair-audience' );
+$base_register_button_text = __( 'Register & Sign Up', 'fair-audience' );
 
 // Get wrapper attributes.
 $wrapper_attributes = get_block_wrapper_attributes(
