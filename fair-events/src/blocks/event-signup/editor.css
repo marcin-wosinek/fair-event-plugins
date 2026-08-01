@@ -6,6 +6,16 @@
 		pointer-events: none;
 		cursor: default;
 	}
+
+	.fair-events-event-signup-questions-slot {
+		a,
+		button,
+		input,
+		select {
+			pointer-events: auto;
+			cursor: auto;
+		}
+	}
 }
 
 .fair-events-event-signup-questions-label {
