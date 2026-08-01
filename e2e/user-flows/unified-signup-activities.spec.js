@@ -25,6 +25,7 @@ test.describe('Activities fieldset (fair-audience active)', () => {
 		const event = seedEvent('unified-with-options', {
 			price: 0,
 			options: ['dinner'],
+			optionPrice: 0,
 		});
 		const stamp = Date.now();
 		const email = `unified.activities.${stamp}@example.test`;

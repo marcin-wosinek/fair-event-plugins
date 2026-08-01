@@ -665,6 +665,7 @@ $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 								value="<?php echo (int) $opt['id']; ?>"
 								class="form-checkbox"
 								data-option-price="<?php echo esc_attr( \FairEventsShared\Money::format_value( $opt['price'] ) ); ?>"
+								data-option-short-name="<?php echo esc_attr( $opt['short_name'] ?? '' ); ?>"
 								<?php echo $opt_is_full ? 'disabled' : ''; ?>
 							/>
 							<span class="fair-events-ticket-option-text">
