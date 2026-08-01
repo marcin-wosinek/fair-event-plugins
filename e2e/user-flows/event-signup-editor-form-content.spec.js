@@ -73,4 +73,51 @@ test.describe('Event Signup block "Form content" area in the editor', () => {
 		await paragraph.type('Extra instructions');
 		await expect(paragraph).toHaveText('Extra instructions');
 	});
+
+	test('question fields can be found and inserted from the appender (#1347)', async ({
+		page,
+		seedEvent,
+	}) => {
+		// A bare unified block — no pre-existing question — to prove insertion
+		// itself works, not just rendering of already-nested questions.
+		const event = seedEvent('free');
+
+		await loginAsAdmin(page);
+		await page.goto(`/wp-admin/post.php?post=${event.eventId}&action=edit`);
+
+		const editorFrame = page.frameLocator('[name="editor-canvas"]');
+		await editorFrame.locator('.block-editor-iframe__body').waitFor();
+
+		const welcomeGuide = page.locator('.components-guide');
+		if (await welcomeGuide.isVisible().catch(() => false)) {
+			await page.getByRole('button', { name: 'Close' }).first().click();
+		}
+
+		const signupBlock = editorFrame.locator(
+			'.wp-block-fair-events-event-signup'
+		);
+		await signupBlock.waitFor();
+
+		const questionsArea = signupBlock.locator(
+			'.fair-events-event-signup-questions'
+		);
+		const appender = questionsArea.locator('.block-list-appender button');
+		await appender.click();
+
+		await page.fill(
+			'.block-editor-inserter__search input',
+			'Conditional Section'
+		);
+		await page.click(
+			'.block-editor-block-types-list__item:has-text("Conditional Section")'
+		);
+
+		// The inserted question block lands inside the Form content area, not
+		// somewhere else in the block tree, and remains selectable/configurable.
+		const question = questionsArea.locator(
+			'.wp-block-fair-audience-fair-form-conditional'
+		);
+		await question.waitFor();
+		await expect(question).toHaveClass(/is-selected/);
+	});
 });
