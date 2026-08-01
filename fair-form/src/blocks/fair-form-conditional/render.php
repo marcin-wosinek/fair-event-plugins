@@ -19,12 +19,18 @@ $condition_question_key      = $attributes['conditionQuestionKey'] ?? '';
 $condition_operator          = $attributes['conditionOperator'] ?? 'equals';
 $condition_value             = $attributes['conditionValue'] ?? '';
 $condition_option_short_name = $attributes['conditionOptionShortName'] ?? '';
+$condition_ticket_type_ids   = $attributes['conditionTicketTypeIds'] ?? array();
 
 // Don't render if the controlling reference is missing for the active source:
-// a question key for the question source, or an option short name for the
-// event-option source.
+// a question key for the question source, an option short name for the
+// event-option source, or at least one ticket type ID for the ticket-type
+// source.
 if ( 'eventOption' === $condition_source ) {
 	if ( empty( $condition_option_short_name ) ) {
+		return '';
+	}
+} elseif ( 'ticketType' === $condition_source ) {
+	if ( empty( $condition_ticket_type_ids ) ) {
 		return '';
 	}
 } elseif ( empty( $condition_question_key ) ) {
@@ -40,6 +46,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-condition-operator'          => esc_attr( $condition_operator ),
 		'data-condition-value'             => esc_attr( $condition_value ),
 		'data-condition-option-short-name' => esc_attr( $condition_option_short_name ),
+		'data-condition-ticket-type-ids'   => esc_attr( wp_json_encode( $condition_ticket_type_ids ) ),
 	)
 );
 ?>

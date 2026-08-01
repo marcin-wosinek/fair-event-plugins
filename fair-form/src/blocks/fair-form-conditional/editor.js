@@ -8,9 +8,17 @@ import {
 	InspectorControls,
 	InnerBlocks,
 } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import {
+	PanelBody,
+	SelectControl,
+	TextControl,
+	CheckboxControl,
+	Notice,
+} from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';
+import { useState, useEffect } from '@wordpress/element';
+import apiFetch from '@wordpress/api-fetch';
 
 const ALLOWED_BLOCKS = [
 	'core/heading',
@@ -34,9 +42,10 @@ const OPERATOR_OPTIONS = [
 	{ label: __('is not empty', 'fair-audience'), value: 'not_empty' },
 ];
 
-// Event options are boolean per checkbox, so they get a dedicated
-// selected/not-selected operator pair rather than reusing equals/contains.
-const EVENT_OPTION_OPERATOR_OPTIONS = [
+// Event options and ticket types are boolean per checkbox/radio, so they
+// share a dedicated selected/not-selected operator pair rather than reusing
+// equals/contains.
+const SELECTED_OPERATOR_OPTIONS = [
 	{ label: __('is selected', 'fair-audience'), value: 'selected' },
 	{ label: __('is not selected', 'fair-audience'), value: 'not_selected' },
 ];
@@ -45,6 +54,11 @@ const SOURCE_OPTIONS = [
 	{ label: __('Question', 'fair-audience'), value: 'question' },
 	{ label: __('Event option', 'fair-audience'), value: 'eventOption' },
 ];
+
+const TICKET_TYPE_SOURCE_OPTION = {
+	label: __('Ticket type', 'fair-audience'),
+	value: 'ticketType',
+};
 
 const OPTION_BLOCK_PARENTS = [
 	'fair-audience/fair-form-multiselect',
@@ -89,41 +103,108 @@ registerBlockType('fair-audience/fair-form-conditional', {
 			conditionOperator,
 			conditionValue,
 			conditionOptionShortName,
+			conditionTicketTypeIds = [],
 		} = attributes;
 
-		const { questionOptions, isEventSignup } = useSelect(
+		const { questionOptions, isEventSignup, eventDateId } = useSelect(
 			(select) => {
 				const { getBlockParents, getBlocks, getBlock } =
 					select('core/block-editor');
 				const parents = getBlockParents(clientId);
 				// Find the nearest form-like parent: a Fair Form or an Event
 				// Signup (which accepts nested fair-form questions since #615).
+				// Both the legacy (fair-audience) and unified (fair-events)
+				// Event Signup blocks qualify.
 				const formParentId = parents.find((parentId) => {
 					const parentBlock = getBlock(parentId);
 					return (
 						parentBlock?.name === 'fair-audience/fair-form' ||
-						parentBlock?.name === 'fair-audience/event-signup'
+						parentBlock?.name === 'fair-audience/event-signup' ||
+						parentBlock?.name === 'fair-events/event-signup'
 					);
 				});
 				if (!formParentId) {
-					return { questionOptions: [], isEventSignup: false };
+					return {
+						questionOptions: [],
+						isEventSignup: false,
+						eventDateId: 0,
+					};
 				}
 				const formBlock = getBlock(formParentId);
 				const formBlocks = getBlocks(formParentId);
 				return {
 					questionOptions: findQuestionBlocks(formBlocks),
 					isEventSignup:
-						formBlock?.name === 'fair-audience/event-signup',
+						formBlock?.name === 'fair-audience/event-signup' ||
+						formBlock?.name === 'fair-events/event-signup',
+					// The unified block's own eventDateId attribute is only
+					// set in edge cases (e.g. the legacy get-tickets
+					// transform) — in normal usage editing a fair_event post
+					// it stays 0, since the block resolves its event date
+					// from post context at render time. The editor's actual
+					// source of truth for "which event date is this post" is
+					// the same localized global the block's own "Edit
+					// tickets" link uses (BlockHooks::localize_event_signup_editor_context).
+					eventDateId:
+						formBlock?.name === 'fair-events/event-signup'
+							? formBlock.attributes?.eventDateId ||
+							  window.fairEventsSignupBlock?.postEventDateId ||
+							  0
+							: 0,
 				};
 			},
 			[clientId]
 		);
+
+		// The ticket-type source additionally needs a resolved event date to
+		// fetch its ticket types from.
+		const canUseTicketType = isEventSignup && eventDateId > 0;
 
 		// The event-option source is only meaningful inside an Event Signup,
 		// whose runtime option checkboxes carry the short name. Outside one,
 		// keep the source on "question" regardless of the stored attribute.
 		const source = isEventSignup ? conditionSource : 'question';
 		const isEventOption = source === 'eventOption';
+		const isTicketType = source === 'ticketType' && canUseTicketType;
+
+		const sourceOptions = canUseTicketType
+			? [...SOURCE_OPTIONS, TICKET_TYPE_SOURCE_OPTION]
+			: SOURCE_OPTIONS;
+
+		// Ticket types for the active event date, fetched only while the
+		// ticket-type source is available. `null` means "not loaded yet".
+		const [ticketTypes, setTicketTypes] = useState(null);
+
+		useEffect(() => {
+			if (!canUseTicketType) {
+				setTicketTypes(null);
+				return;
+			}
+			let cancelled = false;
+			apiFetch({
+				path: `/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			})
+				.then((response) => {
+					if (!cancelled) {
+						setTicketTypes(response.ticket_types || []);
+					}
+				})
+				.catch(() => {
+					if (!cancelled) {
+						setTicketTypes([]);
+					}
+				});
+			return () => {
+				cancelled = true;
+			};
+		}, [canUseTicketType, eventDateId]);
+
+		const staleTicketTypeIds =
+			ticketTypes !== null
+				? conditionTicketTypeIds.filter(
+						(id) => !ticketTypes.some((tt) => tt.id === id)
+				  )
+				: [];
 
 		const questionSelectOptions = [
 			{
@@ -143,13 +224,15 @@ registerBlockType('fair-audience/fair-form-conditional', {
 			selectedQuestion?.options && selectedQuestion.options.length > 0;
 
 		// Keep the operator valid for the active source: the question
-		// operators (equals/…) and the event-option operators
-		// (selected/not_selected) are disjoint sets.
-		const eventOptionOperator =
+		// operators (equals/…) and the selected/not_selected operators
+		// (event option, ticket type) are disjoint sets.
+		const selectedOperator =
 			conditionOperator === 'not_selected' ? 'not_selected' : 'selected';
 
 		const isConfigured = isEventOption
 			? !!conditionOptionShortName
+			: isTicketType
+			? conditionTicketTypeIds.length > 0
 			: !!conditionQuestionKey;
 
 		let conditionLabel;
@@ -157,7 +240,20 @@ registerBlockType('fair-audience/fair-form-conditional', {
 			conditionLabel = __('No condition set', 'fair-audience');
 		} else if (isEventOption) {
 			conditionLabel = `${conditionOptionShortName} ${
-				eventOptionOperator === 'not_selected'
+				selectedOperator === 'not_selected'
+					? __('is not selected', 'fair-audience')
+					: __('is selected', 'fair-audience')
+			}`;
+		} else if (isTicketType) {
+			const names = conditionTicketTypeIds
+				.map((id) => ticketTypes?.find((tt) => tt.id === id)?.name)
+				.filter(Boolean);
+			conditionLabel = `${
+				names.length > 0
+					? names.join(', ')
+					: conditionTicketTypeIds.join(', ')
+			} ${
+				selectedOperator === 'not_selected'
 					? __('is not selected', 'fair-audience')
 					: __('is selected', 'fair-audience')
 			}`;
@@ -193,14 +289,15 @@ registerBlockType('fair-audience/fair-form-conditional', {
 							<SelectControl
 								label={__('Condition source', 'fair-audience')}
 								value={source}
-								options={SOURCE_OPTIONS}
+								options={sourceOptions}
 								onChange={(value) =>
 									setAttributes({
 										conditionSource: value,
 										// Reset the operator to one valid for the
 										// newly selected source.
 										conditionOperator:
-											value === 'eventOption'
+											value === 'eventOption' ||
+											value === 'ticketType'
 												? 'selected'
 												: 'equals',
 									})
@@ -227,14 +324,61 @@ registerBlockType('fair-audience/fair-form-conditional', {
 								/>
 								<SelectControl
 									label={__('Operator', 'fair-audience')}
-									value={eventOptionOperator}
-									options={EVENT_OPTION_OPERATOR_OPTIONS}
+									value={selectedOperator}
+									options={SELECTED_OPERATOR_OPTIONS}
 									onChange={(value) =>
 										setAttributes({
 											conditionOperator: value,
 										})
 									}
 								/>
+							</>
+						) : isTicketType ? (
+							<>
+								{(ticketTypes || []).map((ticketType) => (
+									<CheckboxControl
+										key={ticketType.id}
+										label={ticketType.name}
+										checked={conditionTicketTypeIds.includes(
+											ticketType.id
+										)}
+										onChange={(checked) => {
+											const next = checked
+												? [
+														...conditionTicketTypeIds,
+														ticketType.id,
+												  ]
+												: conditionTicketTypeIds.filter(
+														(id) =>
+															id !== ticketType.id
+												  );
+											setAttributes({
+												conditionTicketTypeIds: next,
+											});
+										}}
+									/>
+								))}
+								<SelectControl
+									label={__('Operator', 'fair-audience')}
+									value={selectedOperator}
+									options={SELECTED_OPERATOR_OPTIONS}
+									onChange={(value) =>
+										setAttributes({
+											conditionOperator: value,
+										})
+									}
+								/>
+								{staleTicketTypeIds.length > 0 && (
+									<Notice
+										status="warning"
+										isDismissible={false}
+									>
+										{__(
+											'One or more referenced ticket types no longer exist and will be ignored.',
+											'fair-audience'
+										)}
+									</Notice>
+								)}
 							</>
 						) : (
 							<>
