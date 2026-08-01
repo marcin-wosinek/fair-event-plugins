@@ -9,7 +9,11 @@
 	"description": "A single consent checkbox question for Fair Form (e.g. terms and conditions)",
 	"keywords": ["question", "checkbox", "consent", "terms"],
 	"textdomain": "fair-audience",
-	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
+	"ancestor": [
+		"fair-audience/fair-form",
+		"fair-audience/event-signup",
+		"fair-events/event-signup"
+	],
 	"supports": {
 		"html": false
 	},
