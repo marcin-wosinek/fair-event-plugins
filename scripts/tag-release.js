@@ -26,6 +26,8 @@ const ALL_PLUGINS = [
 	'fair-finance',
 	'fair-events-experimental',
 	'fair-audience-experimental',
+	'fair-payments-connector-experimental',
+	'fair-form',
 ];
 
 function getVersion(pluginName) {
