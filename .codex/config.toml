@@ -1,0 +1,11 @@
+[mcp_servers.context7]
+command = "npx"
+args = [
+    "-y",
+    "@upstash/context7-mcp",
+    "--api-key",
+    "ctx7sk-8109d734-4dd8-4f0f-8343-b5f81ccfc165",
+]
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
