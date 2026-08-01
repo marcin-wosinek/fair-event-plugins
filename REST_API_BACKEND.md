@@ -676,9 +676,11 @@ create route) expose:
     `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id )`
     after a signup row is persisted through the base create path (once per
     row for multi-occurrence signups; `$transaction_id` is `null` on the free
-    path). A companion plugin hooks this to create/link its own participant
-    record, set a session cookie, or send its own confirmation email —
-    instead of owning a competing create route.
+    path). `$ticket_selection` carries `'ticket_type_id'`, `'quantity'`,
+    `'ticket_option_ids'` (or `'event_date_ids'` for `'multiple_instances'`
+    types), and `'mailing_opt_in'` (bool). A companion plugin hooks this to
+    create/link its own participant record, set a session cookie, or send its
+    own confirmation email — instead of owning a competing create route.
 -   **`fair_events_signup_confirmed` / `fair_events_signup_payment_failed`
     actions** — `fair-events/src/Hooks/PaymentHooks.php` fires one of these
     per resolved signup row (`$signup, $transaction`) after a
@@ -688,7 +690,10 @@ create route) expose:
     confirmation/failure onto its own operational record (e.g. flipping a
     `pending_payment` relationship to a confirmed label and recording the
     charge) instead of relying solely on its own webhook listener, which
-    never sees transactions created through the base route.
+    never sees transactions created through the base route — and, on
+    confirmation, to send its own paid-signup confirmation email, since the
+    free path's `fair_events_signup_created` listener never sees a paid
+    signup's confirmation.
 
 **`accepted_args` contract.** Register each hook with `accepted_args` matching
 what the call site above actually passes — not the callback's own parameter

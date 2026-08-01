@@ -15,6 +15,7 @@ import {
 	formatMoney,
 	collectQuestionAnswers,
 	validateQuestions,
+	setupQuestionnaire,
 	extractErrorMessage,
 	setButtonLoading,
 	wireNotYouButton,
@@ -280,6 +281,7 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 
 		wireAddActivities(form.closest('.fair-events-get-tickets'));
 		wireNotYouButton(form.querySelector('.fair-events-not-you-button'));
+		setupQuestionnaire(form);
 
 		refreshSignupState(form);
 	}

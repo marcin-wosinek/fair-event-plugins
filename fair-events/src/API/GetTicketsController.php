@@ -436,6 +436,7 @@ class GetTicketsController extends WP_REST_Controller {
 			'ticket_type_id'    => $ticket_type_id ? $ticket_type_id : null,
 			'quantity'          => $quantity,
 			'ticket_option_ids' => $ticket_option_ids,
+			'mailing_opt_in'    => $mailing_opt_in,
 		);
 
 		// Free path.
@@ -549,7 +550,8 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @param string   $name             Buyer name.
 	 * @param string   $email            Buyer email.
 	 * @param array    $ticket_selection Ticket selection: 'ticket_type_id', 'quantity',
-	 *                                   and — for 'multiple_instances' types — 'event_date_ids'.
+	 *                                   'ticket_option_ids' (or 'event_date_ids' for
+	 *                                   'multiple_instances' types), and 'mailing_opt_in'.
 	 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
 	 * @return void
 	 */
@@ -789,6 +791,7 @@ class GetTicketsController extends WP_REST_Controller {
 			'ticket_type_id' => (int) $ticket_type->id,
 			'quantity'       => 1,
 			'event_date_ids' => $occurrence_ids,
+			'mailing_opt_in' => $mailing_opt_in,
 		);
 
 		// Free path.

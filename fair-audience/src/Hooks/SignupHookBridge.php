@@ -12,6 +12,7 @@
 namespace FairAudience\Hooks;
 
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Models\Participant;
@@ -575,7 +576,8 @@ class SignupHookBridge {
 	 * @param int      $event_date_id    Event-date ID the signup targets.
 	 * @param string   $name             Buyer name.
 	 * @param string   $email            Buyer email.
-	 * @param array    $ticket_selection Ticket selection ('ticket_type_id', 'quantity', 'event_date_ids').
+	 * @param array    $ticket_selection Ticket selection ('ticket_type_id', 'quantity',
+	 *                                   'ticket_option_ids'/'event_date_ids', 'mailing_opt_in').
 	 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
 	 * @return void
 	 */
@@ -600,6 +602,8 @@ class SignupHookBridge {
 
 		$participant_repository = new ParticipantRepository();
 		$participant            = $participant_repository->get_by_email( $email );
+		$mailing_opt_in         = ! empty( $ticket_selection['mailing_opt_in'] );
+		$is_new_participant     = false;
 
 		if ( ! $participant ) {
 			$participant = new Participant();
@@ -607,12 +611,30 @@ class SignupHookBridge {
 				array(
 					'name'          => $name,
 					'email'         => $email,
-					'email_profile' => 'minimal',
-					'status'        => 'confirmed',
+					// Mirrors EventSignupController::register()'s new-participant
+					// branch: only a brand-new participant's consent is recorded
+					// here — an existing participant's profile/status is never
+					// overwritten by a later signup's checkbox state.
+					'email_profile' => $mailing_opt_in ? 'marketing' : 'minimal',
+					'status'        => $mailing_opt_in ? 'pending' : 'confirmed',
 				)
 			);
 			if ( ! $participant->save() ) {
 				return;
+			}
+			$is_new_participant = true;
+		}
+
+		// Mailing-list double opt-in: dispatch the confirmation email as soon
+		// as the participant lands in 'pending' status, mirroring
+		// EventSignupController::register() (see #1112 for why this can't
+		// wait until the free-signup tail below — a paid signup never
+		// reaches it).
+		if ( $is_new_participant && $mailing_opt_in ) {
+			$token_repository = new EmailConfirmationTokenRepository();
+			$token            = $token_repository->create_token( $participant->id );
+			if ( $token ) {
+				( new EmailService() )->send_confirmation_email( $participant, $token->token );
 			}
 		}
 
@@ -716,6 +738,11 @@ class SignupHookBridge {
 
 		$ledger = new EventParticipantTransactionRepository();
 		$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
+
+		// The free path emails its confirmation inline in link_participant();
+		// a paid signup only reaches "confirmed" here, so this is the sole
+		// place a base-route paid signup's confirmation email gets sent.
+		\FairAudience\Hooks\PaymentHooks::send_signup_confirmation_email( $event_participant, $transaction );
 	}
 
 	/**
