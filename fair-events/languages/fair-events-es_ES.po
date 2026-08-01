@@ -1913,7 +1913,7 @@ msgstr "Mostrar una línea «Powered by Fair Event Plugins» en formularios de r
 #: src/Services/Branding.php:57
 #, php-format
 msgid "Powered by %s"
-msgstr "Desarrollado por %s"
+msgstr "Funciona con %s"
 
 #. translators: %s: currency code
 #: src/Admin/manage-event/EventTickets.js:1950

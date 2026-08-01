@@ -2943,7 +2943,7 @@ msgstr "El pago en línea no está disponible para este evento en este momento. 
 #: src/Services/Branding.php:75
 #, php-format
 msgid "Powered by %s"
-msgstr "Desarrollado por %s"
+msgstr "Funciona con %s"
 
 #: src/Admin/all-participants/AllParticipants.js:128
 #: src/Admin/all-participants/AllParticipants.js:164
