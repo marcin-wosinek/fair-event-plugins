@@ -199,6 +199,134 @@ describe('evaluateConditionals — eventOption source', () => {
 	});
 });
 
+/**
+ * Build a ticket type radio as the Event Signup render.php emits it.
+ *
+ * @param {Object}  opts         Radio config.
+ * @param {number}  opts.id      Ticket type ID (radio value).
+ * @param {boolean} opts.checked Whether it starts checked.
+ * @return {string} The input markup.
+ */
+function ticketTypeRadio({ id, checked }) {
+	return `<input type="radio" name="ticket_type_id" value="${id}"${
+		checked ? ' checked' : ''
+	} />`;
+}
+
+/**
+ * Build a conditional section keyed on the selected ticket type.
+ *
+ * @param {Object} opts           Section config.
+ * @param {Array}  opts.ids       conditionTicketTypeIds (as a JS array, JSON-encoded here).
+ * @param {string} opts.operator  selected | not_selected.
+ * @param {string} opts.inner     Inner HTML.
+ * @return {string} The section markup.
+ */
+function ticketTypeSection({ ids = [], operator = 'selected', inner = '' }) {
+	return `<div data-fair-form-conditional data-condition-source="ticketType" data-condition-operator="${operator}" data-condition-ticket-type-ids='${JSON.stringify(
+		ids
+	)}'>${inner}</div>`;
+}
+
+describe('evaluateConditionals — ticketType source', () => {
+	it('shows the section when the matching ticket type is selected', () => {
+		const form = buildForm(
+			ticketTypeRadio({ id: 1, checked: true }) +
+				ticketTypeRadio({ id: 2, checked: false }) +
+				ticketTypeSection({ ids: [1], operator: 'selected' })
+		);
+		const section = form.querySelector('[data-fair-form-conditional]');
+		expect(section.classList.contains(VISIBLE)).toBe(true);
+	});
+
+	it('hides the section when a different ticket type is selected', () => {
+		const form = buildForm(
+			ticketTypeRadio({ id: 1, checked: false }) +
+				ticketTypeRadio({ id: 2, checked: true }) +
+				ticketTypeSection({ ids: [1], operator: 'selected' })
+		);
+		const section = form.querySelector('[data-fair-form-conditional]');
+		expect(section.classList.contains(VISIBLE)).toBe(false);
+	});
+
+	it('inverts visibility for the not_selected operator', () => {
+		const form = buildForm(
+			ticketTypeRadio({ id: 1, checked: false }) +
+				ticketTypeRadio({ id: 2, checked: true }) +
+				ticketTypeSection({ ids: [1], operator: 'not_selected' })
+		);
+		const section = form.querySelector('[data-fair-form-conditional]');
+		expect(section.classList.contains(VISIBLE)).toBe(true);
+	});
+
+	it('OR-matches when multiple ticket type IDs are referenced', () => {
+		const form = buildForm(
+			ticketTypeRadio({ id: 1, checked: false }) +
+				ticketTypeRadio({ id: 2, checked: true }) +
+				ticketTypeSection({ ids: [1, 2], operator: 'selected' })
+		);
+		const section = form.querySelector('[data-fair-form-conditional]');
+		expect(section.classList.contains(VISIBLE)).toBe(true);
+	});
+
+	it('hides the section when no ticket types are referenced', () => {
+		const form = buildForm(
+			ticketTypeRadio({ id: 1, checked: true }) +
+				ticketTypeSection({ ids: [], operator: 'selected' })
+		);
+		const section = form.querySelector('[data-fair-form-conditional]');
+		expect(section.classList.contains(VISIBLE)).toBe(false);
+	});
+
+	it('hides the section when no ticket type is selected at all', () => {
+		const form = buildForm(
+			ticketTypeRadio({ id: 1, checked: false }) +
+				ticketTypeSection({ ids: [1], operator: 'selected' })
+		);
+		const section = form.querySelector('[data-fair-form-conditional]');
+		expect(section.classList.contains(VISIBLE)).toBe(false);
+	});
+
+	it('keeps an inner section hidden when its parent conditional is hidden, even if its ticket type is selected', () => {
+		const form = buildForm(
+			ticketTypeRadio({ id: 1, checked: false }) +
+				ticketTypeRadio({ id: 2, checked: true }) +
+				ticketTypeSection({
+					ids: [1],
+					operator: 'selected',
+					inner: ticketTypeSection({
+						ids: [2],
+						operator: 'selected',
+					}),
+				})
+		);
+		const [outer, inner] = form.querySelectorAll(
+			'[data-fair-form-conditional]'
+		);
+		expect(outer.classList.contains(VISIBLE)).toBe(false);
+		expect(inner.classList.contains(VISIBLE)).toBe(false);
+	});
+
+	it('shows a nested section when both its ticket type and its ancestor are visible', () => {
+		const form = buildForm(
+			ticketTypeRadio({ id: 1, checked: true }) +
+				ticketTypeSection({
+					ids: [1],
+					operator: 'selected',
+					inner: ticketTypeSection({
+						ids: [1],
+						operator: 'selected',
+					}),
+				})
+		);
+		const [outer, inner] = form.querySelectorAll(
+			'[data-fair-form-conditional]'
+		);
+		expect(outer.classList.contains(VISIBLE)).toBe(true);
+		expect(inner.classList.contains(VISIBLE)).toBe(true);
+	});
+});
+
 describe('evaluateConditionals — question source (regression)', () => {
 	it('still shows a question-keyed section when its answer matches', () => {
 		const form = buildForm(

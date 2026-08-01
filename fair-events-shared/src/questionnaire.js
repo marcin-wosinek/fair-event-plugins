@@ -137,9 +137,50 @@ function evaluateEventOptionCondition(form, section) {
 }
 
 /**
+ * Whether a ticket type (identified by ID) is the one currently selected via
+ * the `ticket_type_id` radio group.
+ *
+ * @param {HTMLElement} form         The form (or container) element.
+ * @param {number}      ticketTypeId The ticket type's ID.
+ * @return {boolean} Whether that ticket type is currently selected.
+ */
+function isTicketTypeSelected(form, ticketTypeId) {
+	const checked = form.querySelector('input[name="ticket_type_id"]:checked');
+	return !!checked && String(checked.value) === String(ticketTypeId);
+}
+
+/**
+ * Resolve whether a conditional section keyed on the selected ticket type
+ * should show, honoring the selected/not_selected operator and an empty
+ * reference list.
+ *
+ * @param {HTMLElement} form    The form (or container) element.
+ * @param {HTMLElement} section The conditional section element.
+ * @return {boolean} Whether the section's own condition is met.
+ */
+function evaluateTicketTypeCondition(form, section) {
+	let ticketTypeIds = [];
+	try {
+		ticketTypeIds = JSON.parse(
+			section.dataset.conditionTicketTypeIds || '[]'
+		);
+	} catch (e) {
+		ticketTypeIds = [];
+	}
+	if (!Array.isArray(ticketTypeIds) || ticketTypeIds.length === 0) {
+		return false;
+	}
+	const selected = ticketTypeIds.some((id) => isTicketTypeSelected(form, id));
+	return section.dataset.conditionOperator === 'not_selected'
+		? !selected
+		: selected;
+}
+
+/**
  * Show/hide conditional sections based on their controlling question's value
- * (the default "question" source) or whether an event option is selected (the
- * "eventOption" source).
+ * (the default "question" source), whether an event option is selected (the
+ * "eventOption" source), or whether a specific ticket type is selected (the
+ * "ticketType" source).
  *
  * @param {HTMLElement} form The form (or container) element.
  */
@@ -152,6 +193,16 @@ export function evaluateConditionals(form) {
 			const visible =
 				isQuestionVisible(section.parentElement) &&
 				evaluateEventOptionCondition(form, section);
+			section.classList.toggle('fair-form-conditional-visible', visible);
+			return;
+		}
+
+		if (section.dataset.conditionSource === 'ticketType') {
+			// A section nested inside a hidden conditional stays hidden
+			// regardless of its own condition.
+			const visible =
+				isQuestionVisible(section.parentElement) &&
+				evaluateTicketTypeCondition(form, section);
 			section.classList.toggle('fair-form-conditional-visible', visible);
 			return;
 		}

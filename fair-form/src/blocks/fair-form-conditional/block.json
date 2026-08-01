@@ -37,6 +37,13 @@
 		"conditionOptionShortName": {
 			"type": "string",
 			"default": ""
+		},
+		"conditionTicketTypeIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			},
+			"default": []
 		}
 	},
 	"editorScript": "file:./editor.js",
