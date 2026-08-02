@@ -24,7 +24,7 @@
 	border-bottom-color: #2271b1;
 }
 
-.fair-form-question-long-text textarea:disabled {
+.fair-form-question-long-text textarea {
 	box-sizing: border-box;
 	width: 100%;
 	padding: 8px 12px;
@@ -32,6 +32,12 @@
 	border-radius: 4px;
 	font-size: inherit;
 	line-height: 1.5;
+	resize: none;
+	overflow-y: auto;
+	max-height: calc(1.5em * 12 + 16px);
+}
+
+.fair-form-question-long-text textarea:disabled {
 	resize: vertical;
 	background: #f0f0f0;
 }

@@ -8,9 +8,12 @@
  *
  * Creates a fair_event post whose content is an event-signup block containing a
  * fair-form-conditional (conditionSource=eventOption, short name "dinner") that
- * wraps a short-text question. Adds one event date, an active sale period, a
- * free ticket type + price, and a "dinner" ticket option carrying the short
- * name. Prints a single `E2E_SEED:{json}` line the spec parses.
+ * wraps a short-text question and a long-text question (issue #1352 — verifies
+ * the long-text autosize re-triggers once the conditional section is revealed,
+ * instead of staying collapsed from the hidden-textarea autosize pass on load).
+ * Adds one event date, an active sale period, a free ticket type + price, and a
+ * "dinner" ticket option carrying the short name. Prints a single
+ * `E2E_SEED:{json}` line the spec parses.
  *
  * @package FairEventsE2E
  */
@@ -31,6 +34,7 @@ $content = implode(
 		'<!-- wp:fair-events/event-signup -->',
 		'<!-- wp:fair-audience/fair-form-conditional {"conditionSource":"eventOption","conditionOptionShortName":"dinner","conditionOperator":"selected"} -->',
 		'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"diet","questionText":"Dietary restrictions"} /-->',
+		'<!-- wp:fair-audience/fair-form-long-text {"questionKey":"notes","questionText":"Anything else?"} /-->',
 		'<!-- /wp:fair-audience/fair-form-conditional -->',
 		'<!-- /wp:fair-events/event-signup -->',
 	)
