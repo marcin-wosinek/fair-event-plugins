@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-23T09:09:44+00:00\n"
+"POT-Creation-Date: 2026-08-02T09:52:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-platform\n"
@@ -39,57 +39,36 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:37
+#: src/Admin/AdminHooks.php:36
 msgid "Fair Platform Settings"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:38
+#: src/Admin/AdminHooks.php:37
+#: src/Core/Plugin.php:157
 msgid "Fair Platform"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:48
+#: src/Admin/AdminHooks.php:47
 #: src/Admin/connections/ConnectionsPage.js:163
 msgid "Connection Logs"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:49
+#: src/Admin/AdminHooks.php:48
 msgid "Connections"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:57
+#: src/Admin/AdminHooks.php:56
 msgid "Instagram Connections"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:58
+#: src/Admin/AdminHooks.php:57
 msgid "Instagram"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:66
-#: src/Admin/AdminHooks.php:67
-msgid "Features"
-msgstr ""
-
-#: src/Admin/AdminHooks.php:81
-#: src/Admin/AdminHooks.php:217
+#: src/Admin/AdminHooks.php:145
 #: src/Admin/ConnectionsPage.php:24
 #: src/Admin/InstagramConnectionsPage.php:24
 msgid "You do not have sufficient permissions to access this page."
-msgstr ""
-
-#: src/Admin/AdminHooks.php:90
-msgid "Features saved."
-msgstr ""
-
-#: src/Admin/AdminHooks.php:96
-msgid "Fair Platform - Features"
-msgstr ""
-
-#: src/Admin/AdminHooks.php:122
-msgid "Forced by a wp-config constant — change it there."
-msgstr ""
-
-#: src/Admin/AdminHooks.php:130
-msgid "Save Features"
 msgstr ""
 
 #: src/Admin/settings-page.php:12
@@ -326,24 +305,33 @@ msgid "Bundled translations"
 msgstr ""
 
 #: src/Core/Features.php:120
+#: src/Core/Plugin.php:158
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr ""
 
-#: src/Core/Plugin.php:1441
-#: src/Core/Plugin.php:1465
-#: src/Core/Plugin.php:1489
+#: src/Core/Plugin.php:152
+msgid "Translations"
+msgstr ""
+
+#: src/Core/Plugin.php:161
+msgid "Forced by a wp-config constant — change it there."
+msgstr ""
+
+#: src/Core/Plugin.php:1484
+#: src/Core/Plugin.php:1508
+#: src/Core/Plugin.php:1532
 msgid "Fair Platform:"
 msgstr ""
 
-#: src/Core/Plugin.php:1442
+#: src/Core/Plugin.php:1485
 msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
 msgstr ""
 
-#: src/Core/Plugin.php:1466
+#: src/Core/Plugin.php:1509
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr ""
 
-#: src/Core/Plugin.php:1490
+#: src/Core/Plugin.php:1533
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr ""
 

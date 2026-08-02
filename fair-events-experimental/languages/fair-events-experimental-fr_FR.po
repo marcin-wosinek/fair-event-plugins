@@ -388,7 +388,7 @@ msgstr "Date de début"
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:680
 #: src/Admin/manage-event/DuplicateEventWizard.js:713
-#: src/Admin/manage-event/EventTickets.js:1435
+#: src/Admin/manage-event/EventTickets.js:1161
 msgid "End date"
 msgstr "Date de fin"
 
@@ -476,317 +476,272 @@ msgstr "Collaborateurs"
 msgid "Select which collaborators to copy to the new event."
 msgstr "Sélectionnez les collaborateurs à copier vers le nouvel événement."
 
-#: src/Admin/manage-event/EventTickets.js:144
+#: src/Admin/manage-event/EventTickets.js:126
 msgid "Failed to load tickets."
 msgstr "Échec du chargement des tickets."
 
-#: src/Admin/manage-event/EventTickets.js:328
+#: src/Admin/manage-event/EventTickets.js:276
 msgid "Tickets saved successfully."
 msgstr "Tickets enregistrés avec succès."
 
-#: src/Admin/manage-event/EventTickets.js:333
+#: src/Admin/manage-event/EventTickets.js:281
 msgid "Failed to save tickets."
 msgstr "Échec de l'enregistrement des tickets."
 
-#: src/Admin/manage-event/EventTickets.js:427
+#: src/Admin/manage-event/EventTickets.js:370
 msgid "Failed to export ticket configuration."
 msgstr "Échec de l'export de la configuration des tickets."
 
-#: src/Admin/manage-event/EventTickets.js:440
+#: src/Admin/manage-event/EventTickets.js:383
 msgid "Importing will replace all current ticket types, sale periods, prices, and settings for this event. Continue?"
 msgstr "L'importation remplacera tous les types de tickets actuels, les périodes de vente, les prix et les paramètres de cet événement. Continuer ?"
 
-#: src/Admin/manage-event/EventTickets.js:464
+#: src/Admin/manage-event/EventTickets.js:407
 msgid "Invalid file format. Expected a fair-events-tickets export."
 msgstr "Format de fichier invalide. Un export fair-events-tickets était attendu."
 
-#: src/Admin/manage-event/EventTickets.js:479
+#: src/Admin/manage-event/EventTickets.js:422
 msgid "Ticket configuration imported successfully."
 msgstr "Configuration des tickets importée avec succès."
 
-#: src/Admin/manage-event/EventTickets.js:487
+#: src/Admin/manage-event/EventTickets.js:430
 msgid "Failed to import ticket configuration."
 msgstr "Échec de l'importation de la configuration des tickets."
 
-#: src/Admin/manage-event/EventTickets.js:598
+#: src/Admin/manage-event/EventTickets.js:541
 msgid "Add sale periods first."
 msgstr "Ajoutez d'abord des périodes de vente."
 
-#: src/Admin/manage-event/EventTickets.js:615
+#: src/Admin/manage-event/EventTickets.js:558
 msgid "Period"
 msgstr "Période"
 
-#: src/Admin/manage-event/EventTickets.js:787
+#: src/Admin/manage-event/EventTickets.js:713
 msgid "Export ticket settings"
 msgstr "Exporter les paramètres des tickets"
 
-#: src/Admin/manage-event/EventTickets.js:795
+#: src/Admin/manage-event/EventTickets.js:721
 msgid "Import ticket settings"
 msgstr "Importer les paramètres des tickets"
 
-#: src/Admin/manage-event/EventTickets.js:810
-msgid "Signup price"
-msgstr "Prix d'inscription"
-
-#: src/Admin/manage-event/EventTickets.js:816
-msgid "Free signup. Enter a price below to charge for this event, or switch to advanced ticketing for multiple ticket types."
-msgstr "Inscription gratuite. Entrez un prix ci-dessous pour facturer cet événement, ou passez à la billetterie avancée pour plusieurs types de tickets."
-
-#. translators: %s: formatted price
-#: src/Admin/manage-event/EventTickets.js:822
-#, js-format
-msgid "Signup price: %s. Group discounts configured in the Groups tab still apply."
-msgstr "Prix d'inscription : %s. Les remises de groupe configurées dans l'onglet Groupes s'appliquent toujours."
-
-#. translators: 1: group name, 2: discount, 3: final price
-#: src/Admin/manage-event/EventTickets.js:851
-#, js-format
-msgid "%1$s: %2$s discount → %3$s"
-msgstr "%1$s : %2$s remise → %3$s"
-
-#: src/Admin/manage-event/EventTickets.js:878
+#: src/Admin/manage-event/EventTickets.js:735
 msgid "Ticket Prices"
 msgstr "Prix des tickets"
 
-#: src/Admin/manage-event/EventTickets.js:887
-#: src/Admin/manage-event/EventTickets.js:1395
+#: src/Admin/manage-event/EventTickets.js:744
+#: src/Admin/manage-event/EventTickets.js:1121
 msgid "Ticket Type"
 msgstr "Type de ticket"
 
-#: src/Admin/manage-event/EventTickets.js:900
-#: src/Admin/manage-event/EventTickets.js:917
-#: src/Admin/manage-event/EventTickets.js:1493
+#: src/Admin/manage-event/EventTickets.js:757
+#: src/Admin/manage-event/EventTickets.js:774
+#: src/Admin/manage-event/EventTickets.js:1218
 msgid "(unnamed)"
 msgstr "(sans nom)"
 
-#: src/Admin/manage-event/EventTickets.js:904
-#: src/Admin/manage-event/EventTickets.js:1497
-#: src/Admin/manage-event/EventTickets.js:1780
+#: src/Admin/manage-event/EventTickets.js:761
+#: src/Admin/manage-event/EventTickets.js:1222
+#: src/Admin/manage-event/EventTickets.js:1489
 msgid "Price"
 msgstr "Prix"
 
-#: src/Admin/manage-event/EventTickets.js:959
+#: src/Admin/manage-event/EventTickets.js:814
 msgid "Sale Periods"
 msgstr "Périodes de vente"
 
-#: src/Admin/manage-event/EventTickets.js:970
+#: src/Admin/manage-event/EventTickets.js:822
 msgid "Sale start at:"
 msgstr "Début de vente :"
 
-#: src/Admin/manage-event/EventTickets.js:980
-#: src/Admin/manage-event/EventTickets.js:1002
+#: src/Admin/manage-event/EventTickets.js:832
+#: src/Admin/manage-event/EventTickets.js:853
 msgid "—"
 msgstr "—"
 
-#: src/Admin/manage-event/EventTickets.js:987
+#: src/Admin/manage-event/EventTickets.js:839
 msgid "Sale end at:"
 msgstr "Fin de vente :"
 
-#: src/Admin/manage-event/EventTickets.js:1017
-#: src/Admin/manage-event/EventTickets.js:1928
-#: src/Admin/manage-event/EventTickets.js:1967
+#: src/Admin/manage-event/EventTickets.js:868
+#: src/Admin/manage-event/EventTickets.js:1630
+#: src/Admin/manage-event/EventTickets.js:1669
 msgid "Name"
 msgstr "Nom"
 
-#: src/Admin/manage-event/EventTickets.js:1023
-#: src/Admin/manage-event/EventTickets.js:1189
+#: src/Admin/manage-event/EventTickets.js:874
+#: src/Admin/manage-event/EventTickets.js:1039
 msgid "From"
 msgstr "De"
 
-#: src/Admin/manage-event/EventTickets.js:1029
-#: src/Admin/manage-event/EventTickets.js:1212
+#: src/Admin/manage-event/EventTickets.js:880
+#: src/Admin/manage-event/EventTickets.js:1062
 msgid "Until"
 msgstr "Jusqu'à"
 
-#: src/Admin/manage-event/EventTickets.js:1072
+#: src/Admin/manage-event/EventTickets.js:922
 msgid "Period name"
 msgstr "Nom de la période"
 
-#: src/Admin/manage-event/EventTickets.js:1155
-#: src/Admin/manage-event/EventTickets.js:1822
-#: src/Admin/manage-event/EventTickets.js:2207
+#: src/Admin/manage-event/EventTickets.js:1005
+#: src/Admin/manage-event/EventTickets.js:1531
+#: src/Admin/manage-event/EventTickets.js:1910
 msgid "Remove"
 msgstr "Supprimer"
 
-#: src/Admin/manage-event/EventTickets.js:1174
+#: src/Admin/manage-event/EventTickets.js:1024
 msgid "+ Add Period"
 msgstr "+ Ajouter une période"
 
-#: src/Admin/manage-event/EventTickets.js:1249
+#: src/Admin/manage-event/EventTickets.js:1097
 msgid "Edit tickets"
 msgstr "Modifier les billets"
 
-#: src/Admin/manage-event/EventTickets.js:1254
+#: src/Admin/manage-event/EventTickets.js:1102
 msgid "Total capacity"
 msgstr "Capacité totale"
 
-#: src/Admin/manage-event/EventTickets.js:1262
+#: src/Admin/manage-event/EventTickets.js:1110
 msgid "Leave empty for unlimited capacity."
 msgstr "Laissez vide pour une capacité illimitée."
 
-#: src/Admin/manage-event/EventTickets.js:1270
-msgid "Signup price (EUR)"
-msgstr "Prix d'inscription (EUR)"
-
-#: src/Admin/manage-event/EventTickets.js:1274
-msgid "Leave empty for free signup. Group discounts (Groups tab) apply to this base price."
-msgstr "Laissez vide pour une inscription gratuite. Les réductions de groupe (onglet Groupes) s'appliquent à ce prix de base."
-
-#: src/Admin/manage-event/EventTickets.js:1364
-msgid "Need multiple ticket types or time-based pricing? Switch to advanced ticketing below."
-msgstr "Besoin de plusieurs types de billets ou de tarification basée sur le temps ? Passez à la billetterie avancée ci-dessous."
-
-#: src/Admin/manage-event/EventTickets.js:1381
-#: src/Admin/manage-event/EventTickets.js:2390
-msgid "Switch to advanced ticketing"
-msgstr "Passer à la billetterie avancée"
-
-#: src/Admin/manage-event/EventTickets.js:1402
-#: src/Admin/manage-event/EventTickets.js:1940
+#: src/Admin/manage-event/EventTickets.js:1128
+#: src/Admin/manage-event/EventTickets.js:1642
 msgid "Capacity"
 msgstr "Capacité"
 
-#: src/Admin/manage-event/EventTickets.js:1410
+#: src/Admin/manage-event/EventTickets.js:1136
 msgid "Seats"
 msgstr "Places"
 
-#: src/Admin/manage-event/EventTickets.js:1418
+#: src/Admin/manage-event/EventTickets.js:1144
 msgid "Groups"
 msgstr "Groupes"
 
-#: src/Admin/manage-event/EventTickets.js:1427
+#: src/Admin/manage-event/EventTickets.js:1153
 msgid "Min. activities"
 msgstr "Activités min."
 
-#: src/Admin/manage-event/EventTickets.js:1518
+#: src/Admin/manage-event/EventTickets.js:1242
 msgid "Type name"
 msgstr "Nom du type"
 
-#: src/Admin/manage-event/EventTickets.js:1542
-#: src/Admin/manage-event/EventTickets.js:2091
+#: src/Admin/manage-event/EventTickets.js:1263
+#: src/Admin/manage-event/EventTickets.js:1793
 msgid "Unlimited"
 msgstr "Illimité"
 
-#: src/Admin/manage-event/EventTickets.js:1599
+#: src/Admin/manage-event/EventTickets.js:1315
 msgid "How many capacity slots this ticket consumes (1 = single, 2 = pair/+1)."
 msgstr "Combien de places de capacité ce billet consomme (1 = simple, 2 = paire/+1)."
 
-#: src/Admin/manage-event/EventTickets.js:1648
+#: src/Admin/manage-event/EventTickets.js:1363
 msgid "All participants"
 msgstr "Tous les participants"
 
-#: src/Admin/manage-event/EventTickets.js:1686
+#: src/Admin/manage-event/EventTickets.js:1400
 msgid "Only raises the event-wide minimum for this ticket type. Leave 0 to inherit."
 msgstr "Augmente uniquement le minimum au niveau de l'événement pour ce type de billet. Laissez 0 pour hériter."
 
-#: src/Admin/manage-event/EventTickets.js:1746
+#: src/Admin/manage-event/EventTickets.js:1455
 msgid "Available"
 msgstr "Disponible"
 
-#: src/Admin/manage-event/EventTickets.js:1863
+#: src/Admin/manage-event/EventTickets.js:1567
 msgid "+ Add Ticket Type"
 msgstr "+ Ajouter un type de billet"
 
-#: src/Admin/manage-event/EventTickets.js:1883
+#: src/Admin/manage-event/EventTickets.js:1585
 msgid "Activity Options"
 msgstr "Options d'activité"
 
-#: src/Admin/manage-event/EventTickets.js:1891
+#: src/Admin/manage-event/EventTickets.js:1593
 msgid "Minimum number of activities"
 msgstr "Nombre minimum d'activités"
 
-#: src/Admin/manage-event/EventTickets.js:1895
+#: src/Admin/manage-event/EventTickets.js:1597
 msgid "Participants must select at least this many activities to sign up. Set to 0 to disable."
 msgstr "Les participants doivent sélectionner au moins ce nombre d'activités pour s'inscrire. Définissez à 0 pour désactiver."
 
-#: src/Admin/manage-event/EventTickets.js:1917
+#: src/Admin/manage-event/EventTickets.js:1619
 msgid "Add selectable activity options (checkboxes) shown to participants at signup. Each option has its own price added on top of the base price."
 msgstr "Ajouter des options d'activité sélectionnables (cases à cocher) affichées aux participants lors de l'inscription. Chaque option a son propre prix ajouté au prix de base."
 
-#: src/Admin/manage-event/EventTickets.js:1934
+#: src/Admin/manage-event/EventTickets.js:1636
 msgid "Price (EUR)"
 msgstr "Prix (EUR)"
 
-#: src/Admin/manage-event/EventTickets.js:1946
+#: src/Admin/manage-event/EventTickets.js:1648
 msgid "Collaborator(s)"
 msgstr "Collaborateur(s)"
 
-#: src/Admin/manage-event/EventTickets.js:1972
+#: src/Admin/manage-event/EventTickets.js:1674
 msgid "Activity name"
 msgstr "Nom de l'activité"
 
-#: src/Admin/manage-event/EventTickets.js:2002
-#: src/Admin/manage-event/EventTickets.js:2007
+#: src/Admin/manage-event/EventTickets.js:1704
+#: src/Admin/manage-event/EventTickets.js:1709
 msgid "Short name"
 msgstr "Nom court"
 
-#: src/Admin/manage-event/EventTickets.js:2183
+#: src/Admin/manage-event/EventTickets.js:1886
 msgid "Add participants"
 msgstr "Ajouter des participants"
 
-#: src/Admin/manage-event/EventTickets.js:2239
+#: src/Admin/manage-event/EventTickets.js:1942
 msgid "+ Add Option"
 msgstr "+ Ajouter une option"
 
-#: src/Admin/manage-event/EventTickets.js:2249
+#: src/Admin/manage-event/EventTickets.js:1951
 msgid "Settings"
 msgstr "Paramètres"
 
-#: src/Admin/manage-event/EventTickets.js:2254
+#: src/Admin/manage-event/EventTickets.js:1956
 msgid "Per-ticket-type capacity"
 msgstr "Capacité par type de billet"
 
-#: src/Admin/manage-event/EventTickets.js:2258
+#: src/Admin/manage-event/EventTickets.js:1960
 msgid "Show a Capacity input on each ticket type to cap how many can be sold of that type."
 msgstr "Afficher une entrée Capacité sur chaque type de billet pour limiter le nombre de billets de ce type qui peuvent être vendus."
 
-#: src/Admin/manage-event/EventTickets.js:2271
+#: src/Admin/manage-event/EventTickets.js:1973
 msgid "Multiple pricing periods"
 msgstr "Périodes de tarification multiples"
 
-#: src/Admin/manage-event/EventTickets.js:2275
+#: src/Admin/manage-event/EventTickets.js:1977
 msgid "Enable time-based pricing with multiple sale periods (e.g. early bird, regular, late). When off, a single flat price applies for the whole sale window."
 msgstr "Activez la tarification basée sur le temps avec plusieurs périodes de vente (par exemple, tarif précoce, régulier, tardif). Lorsque cette option est désactivée, un prix unique s'applique à toute la fenêtre de vente."
 
-#: src/Admin/manage-event/EventTickets.js:2288
+#: src/Admin/manage-event/EventTickets.js:1990
 msgid "Seats per ticket"
 msgstr "Sièges par billet"
 
-#: src/Admin/manage-event/EventTickets.js:2292
+#: src/Admin/manage-event/EventTickets.js:1994
 msgid "Show a Seats input on each ticket type to let one ticket consume more than one capacity slot (e.g. couples or +1 tickets). When off, every ticket counts as 1 seat."
 msgstr "Afficher une entrée Sièges sur chaque type de billet pour permettre à un billet de consommer plus d'une place de capacité (par exemple, couples ou billets +1). Lorsque cette option est désactivée, chaque billet compte comme 1 siège."
 
-#: src/Admin/manage-event/EventTickets.js:2305
+#: src/Admin/manage-event/EventTickets.js:2007
 msgid "Per-ticket-type minimum activities"
 msgstr "Activités minimales par type de billet"
 
-#: src/Admin/manage-event/EventTickets.js:2309
+#: src/Admin/manage-event/EventTickets.js:2011
 msgid "Show a Min. activities input on each ticket type to require more activities than the event-wide minimum (it only ever raises it). When off, every ticket type uses the event-wide minimum."
 msgstr "Afficher une entrée Min. activités sur chaque type de billet pour exiger plus d'activités que le minimum au niveau de l'événement (cela ne fait que l'augmenter). Lorsque cette option est désactivée, chaque type de billet utilise le minimum au niveau de l'événement."
 
-#: src/Admin/manage-event/EventTickets.js:2325
+#: src/Admin/manage-event/EventTickets.js:2027
 msgid "Per-ticket-type end date"
 msgstr "Date de fin par type de billet"
 
-#: src/Admin/manage-event/EventTickets.js:2329
+#: src/Admin/manage-event/EventTickets.js:2031
 msgid "Show a date/time input on each ticket type to stop selling it after a fixed date, regardless of remaining capacity."
 msgstr "Afficher une entrée date/heure sur chaque type de billet pour arrêter sa vente après une date fixe, indépendamment de la capacité restante."
 
-#: src/Admin/manage-event/EventTickets.js:2342
+#: src/Admin/manage-event/EventTickets.js:2044
 msgid "Per-period pricing"
 msgstr "Tarification par période"
 
-#: src/Admin/manage-event/EventTickets.js:2346
+#: src/Admin/manage-event/EventTickets.js:2048
 msgid "Price every activity option per sale period instead of a single flat price. The Pricing column in the activity options table becomes one input per sale period. Requires sale periods to be defined."
 msgstr "Tarifiez chaque option d'activité par période de vente au lieu d'un prix unique. La colonne Tarification du tableau des options d'activité devient une entrée par période de vente. Nécessite que les périodes de vente soient définies."
-
-#: src/Admin/manage-event/EventTickets.js:2365
-msgid "Switching back to simple ticketing will remove all ticket types, sale periods, and prices. Continue?"
-msgstr "Le passage à la billetterie simple supprimera tous les types de billets, les périodes de vente et les tarifs. Continuer ?"
-
-#: src/Admin/manage-event/EventTickets.js:2377
-msgid "Switch to simple ticketing"
-msgstr "Passer à la billetterie simple"
 
 #: src/Admin/manage-event/MergeEventWizard.js:27
 msgid "Event Photos"
@@ -981,30 +936,7 @@ msgstr "Créez une copie de cet événement avec les mêmes détails, liens et p
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr "Fusionnez cet événement avec une autre date d'événement, en déplaçant ou en nettoyant toutes les données liées."
 
-#: src/Admin/manage-event/EventTickets.js:231
-msgid "Fix the sliding-scale price range before saving: minimum ≤ suggested ≤ maximum."
-msgstr "Corrigez la plage de prix à l'échelle mobile avant d'enregistrer : minimum ≤ suggéré ≤ maximum."
-
-#: src/Admin/manage-event/EventTickets.js:1286
-msgid "Pay what you can (sliding scale)"
-msgstr "Payez ce que vous pouvez (échelle mobile)"
-
-#: src/Admin/manage-event/EventTickets.js:1290
-msgid "Let attendees choose their own price within a min/max band instead of paying the fixed price above."
-msgstr "Permettez aux participants de choisir leur propre prix dans une bande min/max au lieu de payer le prix fixe ci-dessus."
-
-#: src/Admin/manage-event/EventTickets.js:1308
-msgid "Minimum (EUR)"
-msgstr "Minimum (EUR)"
-
-#: src/Admin/manage-event/EventTickets.js:1329
-msgid "Maximum (EUR)"
-msgstr "Maximum (EUR)"
-
-#: src/Admin/manage-event/EventTickets.js:1355
-msgid "Minimum must be less than or equal to the suggested price above, and the suggested price must be less than or equal to the maximum."
-msgstr "Le minimum doit être inférieur ou égal au prix suggéré ci-dessus, et le prix suggéré doit être inférieur ou égal au maximum."
-
 #: src/Core/Features.php:162
 msgid "Tickets, group pricing/permission rules. Requires fair-audience."
-msgstr ""
+msgstr "Billets, tarification de groupe/règles de permission. Nécessite fair-audience."
+

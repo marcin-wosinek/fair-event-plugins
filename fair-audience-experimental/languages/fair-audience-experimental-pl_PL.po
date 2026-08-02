@@ -42,73 +42,73 @@ msgstr ""
 msgid "Fair Audience Experimental requires the Fair Audience plugin to be active."
 msgstr "Fair Audience Experimental wymaga aktywnego wtyczki Fair Audience."
 
-#: src/Admin/AdminPages.php:58
+#: src/Admin/AdminPages.php:60
 msgid "Experimental Settings"
 msgstr "Ustawienia eksperymentalne"
 
-#: src/Admin/AdminPages.php:59
+#: src/Admin/AdminPages.php:61
 msgid "Experimental"
 msgstr "Eksperymentalne"
 
-#: src/Admin/AdminPages.php:69
-#: src/Admin/AdminPages.php:70
+#: src/Admin/AdminPages.php:71
+#: src/Admin/AdminPages.php:72
 msgid "Activity"
 msgstr "Aktywność"
 
-#: src/Admin/AdminPages.php:81
-#: src/Admin/AdminPages.php:82
+#: src/Admin/AdminPages.php:83
+#: src/Admin/AdminPages.php:84
 #: src/Core/Features.php:198
 #: src/Admin/custom-mail/CustomMail.js:781
 #: src/Admin/manage-event-ext/EventMailings.js:51
 msgid "Collaborators"
 msgstr "Współpracownicy"
 
-#: src/Admin/AdminPages.php:93
-#: src/Admin/AdminPages.php:94
+#: src/Admin/AdminPages.php:95
+#: src/Admin/AdminPages.php:96
 msgid "Membership Fees"
 msgstr "Opłaty członkowskie"
 
-#: src/Admin/AdminPages.php:102
-#: src/Admin/AdminPages.php:103
-#: src/Admin/AdminPages.php:109
+#: src/Admin/AdminPages.php:104
+#: src/Admin/AdminPages.php:105
+#: src/Admin/AdminPages.php:111
 msgid "Fee Detail"
 msgstr "Szczegóły opłaty"
 
-#: src/Admin/AdminPages.php:116
-#: src/Admin/AdminPages.php:117
+#: src/Admin/AdminPages.php:118
+#: src/Admin/AdminPages.php:119
 #: src/Core/Features.php:214
 msgid "Import"
 msgstr "Import"
 
-#: src/Admin/AdminPages.php:128
-#: src/Admin/AdminPages.php:129
+#: src/Admin/AdminPages.php:130
+#: src/Admin/AdminPages.php:131
 #: src/Core/Features.php:182
 msgid "Polls"
 msgstr "Ankiety"
 
-#: src/Admin/AdminPages.php:137
-#: src/Admin/AdminPages.php:138
-#: src/Admin/AdminPages.php:144
+#: src/Admin/AdminPages.php:139
+#: src/Admin/AdminPages.php:140
+#: src/Admin/AdminPages.php:146
 msgid "Edit Poll"
 msgstr "Edytuj ankietę"
 
-#: src/Admin/AdminPages.php:151
-#: src/Admin/AdminPages.php:152
+#: src/Admin/AdminPages.php:153
+#: src/Admin/AdminPages.php:154
 msgid "Instagram Posts"
 msgstr "Posty Instagram"
 
-#: src/Admin/AdminPages.php:163
-#: src/Admin/AdminPages.php:164
+#: src/Admin/AdminPages.php:165
+#: src/Admin/AdminPages.php:166
 msgid "Image Templates"
 msgstr "Szablony obrazów"
 
-#: src/Admin/AdminPages.php:175
-#: src/Admin/AdminPages.php:176
+#: src/Admin/AdminPages.php:177
+#: src/Admin/AdminPages.php:178
 msgid "Weekly Schedule"
 msgstr "Harmonogram tygodniowy"
 
-#: src/Admin/AdminPages.php:187
-#: src/Admin/AdminPages.php:188
+#: src/Admin/AdminPages.php:189
+#: src/Admin/AdminPages.php:190
 #: src/Core/Features.php:194
 #: src/Admin/custom-mail/CustomMail.js:823
 #: src/Admin/groups/Groups.js:323
@@ -116,30 +116,30 @@ msgstr "Harmonogram tygodniowy"
 msgid "Groups"
 msgstr "Grupy"
 
-#: src/Admin/AdminPages.php:196
-#: src/Admin/AdminPages.php:197
-#: src/Admin/AdminPages.php:203
+#: src/Admin/AdminPages.php:198
+#: src/Admin/AdminPages.php:199
+#: src/Admin/AdminPages.php:205
 msgid "Group Detail"
 msgstr "Szczegóły grupy"
 
-#: src/Admin/AdminPages.php:210
-#: src/Admin/AdminPages.php:211
+#: src/Admin/AdminPages.php:212
+#: src/Admin/AdminPages.php:213
 #: src/Admin/custom-mail/CustomMail.js:534
 #: src/Admin/custom-mail/CustomMail.js:550
 msgid "Custom Mail"
 msgstr "Niestandardowa poczta"
 
-#: src/Admin/AdminPages.php:219
-#: src/Admin/AdminPages.php:220
+#: src/Admin/AdminPages.php:221
+#: src/Admin/AdminPages.php:222
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:84
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:93
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:104
 msgid "Extra Messages"
 msgstr "Dodatkowe wiadomości"
 
-#: src/Admin/AdminPages.php:228
-#: src/Admin/AdminPages.php:229
-#: src/Admin/AdminPages.php:235
+#: src/Admin/AdminPages.php:230
+#: src/Admin/AdminPages.php:231
+#: src/Admin/AdminPages.php:237
 #: src/Admin/edit-extra-message/EditExtraMessage.js:152
 #: src/Admin/edit-extra-message/EditExtraMessage.js:167
 msgid "Edit Extra Message"
@@ -366,111 +366,111 @@ msgstr "Zawartość jest wymagana."
 msgid "The specified category does not exist."
 msgstr "Określona kategoria nie istnieje."
 
-#: src/API/FeesController.php:282
-#: src/API/FeesController.php:375
-#: src/API/FeesController.php:426
-#: src/API/FeesController.php:459
-#: src/API/FeesController.php:482
-#: src/API/FeesController.php:736
-#: src/API/FeesController.php:759
-#: src/API/FeesController.php:822
+#: src/API/FeesController.php:283
+#: src/API/FeesController.php:376
+#: src/API/FeesController.php:427
+#: src/API/FeesController.php:460
+#: src/API/FeesController.php:483
+#: src/API/FeesController.php:737
+#: src/API/FeesController.php:760
+#: src/API/FeesController.php:823
 msgid "Fee not found."
 msgstr "Opłata nie znaleziona."
 
-#: src/API/FeesController.php:304
+#: src/API/FeesController.php:305
 msgid "Fee name is required."
 msgstr "Nazwa opłaty jest wymagana."
 
-#: src/API/FeesController.php:312
+#: src/API/FeesController.php:313
 msgid "Group is required."
 msgstr "Grupa jest wymagana."
 
-#: src/API/FeesController.php:320
+#: src/API/FeesController.php:321
 msgid "Amount must be a positive number."
 msgstr "Kwota musi być liczbą dodatnią."
 
-#: src/API/FeesController.php:345
+#: src/API/FeesController.php:346
 msgid "Failed to create fee."
 msgstr "Nie udało się utworzyć opłaty."
 
-#: src/API/FeesController.php:357
+#: src/API/FeesController.php:358
 msgid "Fee created successfully."
 msgstr "Opłata utworzona pomyślnie."
 
-#: src/API/FeesController.php:400
+#: src/API/FeesController.php:401
 msgid "Failed to update fee."
 msgstr "Nie udało się zaktualizować opłaty."
 
-#: src/API/FeesController.php:408
+#: src/API/FeesController.php:409
 msgid "Fee updated successfully."
 msgstr "Opłata zaktualizowana pomyślnie."
 
-#: src/API/FeesController.php:434
+#: src/API/FeesController.php:435
 msgid "Failed to delete fee."
 msgstr "Nie udało się usunąć opłaty."
 
-#: src/API/FeesController.php:441
+#: src/API/FeesController.php:442
 msgid "Fee deleted successfully."
 msgstr "Opłata usunięta pomyślnie."
 
-#: src/API/FeesController.php:491
+#: src/API/FeesController.php:492
 msgid "Participant is required."
 msgstr "Uczestnik jest wymagany."
 
-#: src/API/FeesController.php:502
-#: src/API/FeesController.php:589
+#: src/API/FeesController.php:503
+#: src/API/FeesController.php:590
 msgid "Amount must be a non-negative number."
 msgstr "Kwota musi być liczbą nieujemną."
 
-#: src/API/FeesController.php:522
+#: src/API/FeesController.php:523
 msgid "Participant is not a member of this fee's group."
 msgstr "Uczestnik nie jest członkiem grupy tej opłaty."
 
-#: src/API/FeesController.php:532
+#: src/API/FeesController.php:533
 msgid "This participant already has a payment for this fee."
 msgstr "Ten uczestnik ma już płatność za tę opłatę."
 
-#: src/API/FeesController.php:550
+#: src/API/FeesController.php:551
 msgid "Failed to add participant to fee."
 msgstr "Nie udało się dodać uczestnika do opłaty."
 
-#: src/API/FeesController.php:560
+#: src/API/FeesController.php:561
 msgid "Participant added manually."
 msgstr "Uczestnik dodany ręcznie."
 
-#: src/API/FeesController.php:566
+#: src/API/FeesController.php:567
 msgid "Participant added to fee."
 msgstr "Uczestnik dodany do opłaty."
 
-#: src/API/FeesController.php:597
+#: src/API/FeesController.php:598
 msgid "A reason for the adjustment is required."
 msgstr "Wymagana jest przyczyna korekty."
 
-#: src/API/FeesController.php:608
+#: src/API/FeesController.php:609
 msgid "Failed to update payment amount."
 msgstr "Nie udało się zaktualizować kwoty płatności."
 
-#: src/API/FeesController.php:624
+#: src/API/FeesController.php:625
 msgid "Payment amount adjusted successfully."
 msgstr "Kwota płatności została pomyślnie dostosowana."
 
-#: src/API/FeesController.php:648
+#: src/API/FeesController.php:649
 msgid "Failed to mark payment as paid."
 msgstr "Nie udało się oznaczyć płatności jako opłaconej."
 
-#: src/API/FeesController.php:663
+#: src/API/FeesController.php:664
 msgid "Payment marked as paid."
 msgstr "Płatność oznaczona jako opłacona."
 
-#: src/API/FeesController.php:686
+#: src/API/FeesController.php:687
 msgid "Failed to cancel payment."
 msgstr "Nie udało się anulować płatności."
 
-#: src/API/FeesController.php:701
+#: src/API/FeesController.php:702
 msgid "Payment canceled."
 msgstr "Płatność anulowana."
 
-#: src/API/FeesController.php:831
+#: src/API/FeesController.php:832
 #: templates/fee-payment.php:51
 msgid "Payment not found."
 msgstr "Płatność nie znaleziona."
@@ -928,7 +928,7 @@ msgid "Sale-period anchors are not supported yet."
 msgstr "Kotwice okresu sprzedaży nie są jeszcze obsługiwane."
 
 #. translators: 1: number of people, 2: event title
-#: src/API/TimelineController.php:121
+#: src/API/TimelineController.php:122
 #, php-format
 msgid "%1$d person signed up %2$s"
 msgid_plural "%1$d people signed up %2$s"
@@ -936,29 +936,29 @@ msgstr[0] "%1$d osoba zarejestrowała się %2$s"
 msgstr[1] "%1$d osoby zarejestrowały się %2$s"
 msgstr[2] "%1$d osób zarejestrowało się %2$s"
 
-#: src/API/TimelineController.php:164
+#: src/API/TimelineController.php:165
 msgid "Fair Form"
 msgstr ""
 
 #. translators: 1: participant name, 2: form name, 3: page title
-#: src/API/TimelineController.php:172
+#: src/API/TimelineController.php:173
 #, php-format
 msgid "%1$s submitted \"%2$s\" on \"%3$s\""
 msgstr "%1$s przesłał(a) \"%2$s\" w dniu \"%3$s\""
 
 #. translators: 1: participant name, 2: form name
-#: src/API/TimelineController.php:180
+#: src/API/TimelineController.php:181
 #, php-format
 msgid "%1$s submitted \"%2$s\""
 msgstr "%1$s przesłał(a) \"%2$s\""
 
-#: src/API/TimelineController.php:230
+#: src/API/TimelineController.php:231
 #: src/API/TimelineController.php:334
 msgid "Unknown"
 msgstr "Nieznany"
 
 #. translators: 1: number of payments, 2: day
-#: src/API/TimelineController.php:250
+#: src/API/TimelineController.php:251
 #, php-format
 msgid "%1$d fee payment on %2$s"
 msgid_plural "%1$d fee payments on %2$s"

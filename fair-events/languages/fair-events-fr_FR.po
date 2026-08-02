@@ -217,7 +217,7 @@ msgstr "Le slug d'URL utilisé pour les permaliens d'événements (ex. /fair-eve
 
 #: src/Admin/settings/FeaturesTab.js:180
 #: src/Admin/settings/GeneralTab.js:309
-#: src/Admin/settings/OrganizerTab.js:311
+#: src/Admin/settings/OrganizerTab.js:485
 msgid "Saving..."
 msgstr "Enregistrement..."
 
@@ -348,7 +348,7 @@ msgctxt "block keyword"
 msgid "list"
 msgstr "liste"
 
-#: src/Admin/AdminPages.php:542
+#: src/Admin/AdminPages.php:544
 msgid "Upcoming"
 msgstr "À venir"
 
@@ -486,7 +486,8 @@ msgstr "Date & Heure"
 #: src/Admin/manage-event/EventTickets.js:1832
 #: src/Admin/manage-event/EventTickets.js:2225
 #: src/Admin/manage-event/PhotoDetail.js:182
-#: src/Admin/settings/OrganizerTab.js:285
+#: src/Admin/settings/OrganizerTab.js:309
+#: src/Admin/settings/OrganizerTab.js:425
 msgid "Remove"
 msgstr "Supprimer"
 
@@ -495,7 +496,7 @@ msgstr "Supprimer"
 #: src/Admin/manage-event/EventTickets.js:1026
 #: src/Admin/manage-event/EventTickets.js:1945
 #: src/Admin/manage-event/EventTickets.js:1985
-#: src/Admin/settings/OrganizerTab.js:158
+#: src/Admin/settings/OrganizerTab.js:208
 msgid "Name"
 msgstr "Nom"
 
@@ -576,12 +577,12 @@ msgid "4 hours"
 msgstr "4 heures"
 
 #: src/blocks/event-proposal/render.php:58
-#: src/blocks/event-signup/render.php:562
+#: src/blocks/event-signup/render.php:752
 msgid "Your Name"
 msgstr "Votre nom"
 
 #: src/blocks/event-proposal/render.php:73
-#: src/blocks/event-signup/render.php:579
+#: src/blocks/event-signup/render.php:769
 msgid "Your Email"
 msgstr "Votre e-mail"
 
@@ -622,7 +623,7 @@ msgid "Display event with time range and title"
 msgstr "Afficher l'événement avec la plage horaire et le titre"
 
 #: src/blocks/event-proposal/editor.js:21
-#: src/blocks/event-signup/editor.js:144
+#: src/blocks/event-signup/editor.js:146
 msgid "Form Settings"
 msgstr "Paramètres du formulaire"
 
@@ -659,7 +660,7 @@ msgid "Email address for notifications"
 msgstr "Adresse e-mail pour les notifications"
 
 #: src/blocks/event-proposal/editor.js:75
-#: src/blocks/event-signup/editor.js:146
+#: src/blocks/event-signup/editor.js:148
 msgid "Submit Button Text"
 msgstr "Texte du bouton de soumission"
 
@@ -819,8 +820,8 @@ msgstr "Échec de la création de la date d'événement."
 #: src/API/EventDatesController.php:1247
 #: src/API/EventDatesController.php:1314
 #: src/API/EventDatesController.php:1377
-#: src/API/GetTicketsController.php:269
-#: src/API/GetTicketsController.php:278
+#: src/API/GetTicketsController.php:302
+#: src/API/GetTicketsController.php:311
 #: src/API/TicketsController.php:117
 #: src/API/TicketsController.php:138
 #: src/API/TicketsController.php:288
@@ -1278,7 +1279,7 @@ msgstr "Général"
 
 #: src/Admin/event-meta-box/EventEditForm.js:400
 #: src/Admin/manage-event/ManageEventApp.js:927
-#: src/Admin/settings/OrganizerTab.js:185
+#: src/Admin/settings/OrganizerTab.js:325
 msgid "Address"
 msgstr "Adresse"
 
@@ -1362,37 +1363,37 @@ msgstr "Filtrer par type d'occurrence."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:68
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d days"
 msgstr "Tous les %d jours"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:75
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every 2 weeks on %s"
 msgstr "Tous les 2 semaines le %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:79
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Tous les %1$d semaines le %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:82
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %s"
 msgstr "Tous les %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:87
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d months"
 msgstr "Tous les %d mois"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:94
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d years"
 msgstr "Tous les %d ans"
 
@@ -1402,7 +1403,7 @@ msgstr "Annuellement"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:169
-#, php-format,js-format
+#, php-format, js-format
 msgid "Next: %s"
 msgstr "Suivant : %s"
 
@@ -1963,66 +1964,66 @@ msgctxt "block description"
 msgid "Display events for the current week in a 7-day grid."
 msgstr "Affiche les événements de la semaine actuelle dans une grille de 7 jours."
 
-#: src/API/GetTicketsController.php:239
+#: src/API/GetTicketsController.php:257
 msgid "Thank you!"
 msgstr "Merci !"
 
-#: src/API/GetTicketsController.php:248
+#: src/API/GetTicketsController.php:276
 msgid "Too many requests. Please try again later."
 msgstr "Trop de requêtes. Veuillez réessayer plus tard."
 
-#: src/API/GetTicketsController.php:297
-#: src/API/GetTicketsController.php:617
+#: src/API/GetTicketsController.php:340
+#: src/API/GetTicketsController.php:704
 msgid "Invalid ticket type."
 msgstr "Type de billet invalide."
 
-#: src/API/GetTicketsController.php:304
+#: src/API/GetTicketsController.php:347
 msgid "This ticket type is no longer available."
 msgstr "Ce type de billet n'est plus disponible."
 
-#: src/API/GetTicketsController.php:355
-#: src/API/GetTicketsController.php:689
+#: src/API/GetTicketsController.php:430
+#: src/API/GetTicketsController.php:777
 msgid "Failed to save signup. Please try again."
 msgstr "Échec de l'enregistrement. Veuillez réessayer."
 
-#: src/API/GetTicketsController.php:372
-#: src/API/GetTicketsController.php:717
-#: src/blocks/event-signup/frontend.js:580
+#: src/API/GetTicketsController.php:449
+#: src/API/GetTicketsController.php:806
+#: src/blocks/event-signup/frontend.js:1091
 msgid "You have successfully registered!"
 msgstr "Vous vous êtes inscrit avec succès !"
 
 #. translators: %d: event date ID
-#: src/API/GetTicketsController.php:383
+#: src/API/GetTicketsController.php:460
 #, php-format
 msgid "Ticket for event #%d"
 msgstr "Billet pour l'événement #%d"
 
-#: src/API/GetTicketsController.php:605
+#: src/API/GetTicketsController.php:692
 msgid "Please select at least one occurrence."
 msgstr "Veuillez sélectionner au moins une occurrence."
 
-#: src/API/GetTicketsController.php:628
+#: src/API/GetTicketsController.php:715
 msgid "One of the selected occurrences is not valid for this ticket."
 msgstr "L'une des occurrences sélectionnées n'est pas valide pour ce billet."
 
 #. translators: %d: minimum number of occurrences required
-#: src/API/GetTicketsController.php:641
-#: src/blocks/event-signup/frontend.js:360
-#: src/blocks/event-signup/frontend.js:447
-#, php-format,js-format
+#: src/API/GetTicketsController.php:728
+#: src/blocks/event-signup/frontend.js:405
+#: src/blocks/event-signup/frontend.js:929
+#, php-format, js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Veuillez sélectionner au moins %d occurrence."
 msgstr[1] "Veuillez sélectionner au moins %d occurrences."
 
 #. translators: %d: event date ID
-#: src/API/GetTicketsController.php:728
+#: src/API/GetTicketsController.php:817
 #, php-format
 msgid "Tickets for event #%d"
 msgstr "Billets pour l'événement #%d"
 
 #. translators: %s: occurrence date/time label
-#: src/API/GetTicketsController.php:740
+#: src/API/GetTicketsController.php:829
 #, php-format
 msgid "Ticket for %s"
 msgstr "Billet pour %s"
@@ -2031,23 +2032,23 @@ msgstr "Billet pour %s"
 msgid "Invalid import payload."
 msgstr "Charge d'importation invalide."
 
-#: src/blocks/event-signup/render.php:33
+#: src/blocks/event-signup/render.php:19
 msgid "Get Tickets"
 msgstr "Obtenir les billets"
 
-#: src/blocks/event-signup/render.php:484
+#: src/blocks/event-signup/render.php:566
 msgid "No active sale period"
 msgstr "Aucune période de vente active"
 
-#: src/blocks/event-signup/render.php:534
+#: src/blocks/event-signup/render.php:719
 msgid "Choose occurrences"
 msgstr "Choisir les occurrences"
 
-#: src/blocks/event-signup/render.php:596
+#: src/blocks/event-signup/render.php:786
 msgid "Quantity"
 msgstr "Quantité"
 
-#: src/blocks/event-signup/render.php:617
+#: src/blocks/event-signup/render.php:807
 msgid "Keep me informed about future events"
 msgstr "Me tenir informé des événements futurs"
 
@@ -2208,23 +2209,23 @@ msgstr "%d supprimé(s)"
 msgid "Recurrence updated: %s."
 msgstr "Récurrence mise à jour : %s."
 
-#: src/blocks/event-signup/frontend.js:411
+#: src/blocks/event-signup/frontend.js:893
 msgid "Please fill in all required fields."
 msgstr "Veuillez remplir tous les champs obligatoires."
 
-#: src/blocks/event-signup/frontend.js:424
+#: src/blocks/event-signup/frontend.js:906
 msgid "Please enter a valid email address."
 msgstr "Veuillez entrer une adresse e-mail valide."
 
-#: src/blocks/event-signup/frontend.js:467
+#: src/blocks/event-signup/frontend.js:949
 msgid "Quantity must be between 1 and 10."
 msgstr "La quantité doit être entre 1 et 10."
 
-#: src/blocks/event-signup/frontend.js:563
+#: src/blocks/event-signup/frontend.js:1074
 msgid "Processing…"
 msgstr "Traitement…"
 
-#: src/blocks/event-signup/frontend.js:564
+#: src/blocks/event-signup/frontend.js:1075
 msgid "Failed to submit. Please try again."
 msgstr "Échec de la soumission. Veuillez réessayer."
 
@@ -2471,7 +2472,7 @@ msgstr "Chaque date manuelle doit être une date de calendrier valide."
 msgid "Manual dates must not contain duplicates — only one occurrence per day is supported."
 msgstr "Les dates manuelles ne doivent pas contenir de doublons — une seule occurrence par jour est prise en charge."
 
-#: src/blocks/event-signup/render.php:76
+#: src/blocks/event-signup/render.php:62
 msgid "Event Signup: could not resolve an event date for this page."
 msgstr "Inscription à l'événement : impossible de résoudre une date d'événement pour cette page."
 
@@ -2724,30 +2725,30 @@ msgstr "Outlook"
 msgid "Apple Calendar"
 msgstr "Apple Calendar"
 
-#: src/API/GetTicketsController.php:331
-#: src/API/GetTicketsController.php:665
-#: src/API/GetTicketsController.php:1075
+#: src/API/GetTicketsController.php:406
+#: src/API/GetTicketsController.php:753
+#: src/API/GetTicketsController.php:1164
 msgid "Paid tickets are not available because online payments are not configured."
 msgstr "Les billets payants ne sont pas disponibles car les paiements en ligne ne sont pas configurés."
 
-#: src/API/GetTicketsController.php:541
+#: src/API/GetTicketsController.php:628
 msgid "Event Signup"
 msgstr "Inscription à l'événement"
 
-#: src/blocks/event-signup/render.php:422
-#: src/blocks/event-signup/render.php:439
+#: src/blocks/event-signup/render.php:481
+#: src/blocks/event-signup/render.php:498
 msgid "Ticket sales are temporarily unavailable. Please check back later."
 msgstr "Les ventes de billets sont temporairement indisponibles. Veuillez réessayer plus tard."
 
-#: src/blocks/event-signup/render.php:474
+#: src/blocks/event-signup/render.php:556
 msgid "Choose ticket type"
 msgstr "Choisir le type de billet"
 
-#: src/blocks/event-signup/render.php:487
+#: src/blocks/event-signup/render.php:569
 msgid "ticket sales temporarily unavailable"
 msgstr "ventes de billets temporairement indisponibles"
 
-#: src/blocks/event-signup/render.php:513
+#: src/blocks/event-signup/render.php:695
 msgid "Choose a date"
 msgstr "Choisir une date"
 
@@ -2765,7 +2766,7 @@ msgstr "Les billets payants nécessitent le plugin Fair Payments Connector. Inst
 msgid "until %s (default)"
 msgstr "jusqu'à %s (par défaut)"
 
-#: src/blocks/event-signup/editor.js:135
+#: src/blocks/event-signup/editor.js:137
 msgid "Form content"
 msgstr "Contenu du formulaire"
 
@@ -2793,11 +2794,11 @@ msgstr "%1$d dates, jusqu'au %2$s"
 msgid "%d dates selected"
 msgstr "%d dates sélectionnées"
 
-#: src/blocks/event-signup/editor.js:158
+#: src/blocks/event-signup/editor.js:160
 msgid "Edit tickets"
 msgstr "Modifier les billets"
 
-#: src/blocks/event-signup/editor.js:162
+#: src/blocks/event-signup/editor.js:164
 msgid "Connect this block to an event date to edit its tickets."
 msgstr "Connectez ce bloc à une date d'événement pour modifier ses billets."
 
@@ -2970,285 +2971,392 @@ msgstr "Chronologie des périodes de vente"
 
 #: ../fair-events-shared/src/event-utils.js:31
 msgid "(untitled event)"
-msgstr ""
+msgstr "(événement sans titre)"
 
 #: ../fair-events-shared/src/EventSourceSelector.js:25
 msgid "Select event sources to display"
-msgstr ""
+msgstr "Sélectionner les sources d'événements à afficher"
 
 #: ../fair-events-shared/src/EventSourceSelector.js:42
 msgid "Failed to load event sources"
-msgstr ""
+msgstr "Échec du chargement des sources d'événements"
 
 #: ../fair-events-shared/src/EventSourceSelector.js:70
 msgid "No event sources configured. Create event sources in Fair Events settings."
-msgstr ""
+msgstr "Aucune source d'événements configurée. Créez des sources d'événements dans les paramètres Fair Events."
 
 #: ../fair-events-shared/src/EventSourceSelector.js:111
 msgid "Manage Event Sources"
-msgstr ""
+msgstr "Gérer les sources d'événements"
 
 #: ../fair-events-shared/src/MiniCalendar.js:153
 msgid "Previous months"
-msgstr ""
+msgstr "Mois précédents"
 
 #: ../fair-events-shared/src/MiniCalendar.js:164
 msgid "Next months"
-msgstr ""
+msgstr "Mois suivants"
 
 #: ../fair-events-shared/src/recurrence.js:13
 msgid "Weekly"
-msgstr ""
+msgstr "Hebdomadaire"
 
 #: ../fair-events-shared/src/recurrence.js:14
 msgid "Biweekly"
-msgstr ""
+msgstr "Bihebdomadaire"
 
 #: ../fair-events-shared/src/recurrence.js:19
 msgid "After number of occurrences"
-msgstr ""
+msgstr "Après un nombre d'occurrences"
 
 #: ../fair-events-shared/src/recurrence.js:20
 msgid "On a specific date"
-msgstr ""
+msgstr "À une date spécifique"
 
 #: ../fair-events-shared/src/RecurrenceControl.js:39
 msgid "Repeat this event"
-msgstr ""
+msgstr "Répéter cet événement"
 
 #: ../fair-events-shared/src/RecurrenceControl.js:48
 msgid "Frequency"
-msgstr ""
+msgstr "Fréquence"
 
 #: ../fair-events-shared/src/RecurrenceControl.js:56
 msgid "Ends"
-msgstr ""
+msgstr "Se termine"
 
 #: ../fair-events-shared/src/RecurrenceControl.js:65
 msgid "Number of occurrences"
-msgstr ""
+msgstr "Nombre d'occurrences"
 
 #: src/Settings/Settings.php:131
 msgid "Sitewide organizer identity for structured data"
-msgstr ""
+msgstr "Identité de l'organisateur à l'échelle du site pour les données structurées"
 
 #: src/Admin/calendar/components/CalendarGrid.js:123
 msgid "No events this month."
-msgstr ""
+msgstr "Aucun événement ce mois-ci."
 
-#: src/Admin/settings/OrganizerTab.js:67
+#: src/Admin/settings/OrganizerTab.js:106
 msgid "Failed to load organizer settings."
-msgstr ""
+msgstr "Échec du chargement des paramètres de l'organisateur."
 
-#: src/Admin/settings/OrganizerTab.js:109
+#: src/Admin/settings/OrganizerTab.js:159
 msgid "Organizer settings saved successfully."
-msgstr ""
-
-#: src/Admin/settings/OrganizerTab.js:119
-msgid "Failed to save organizer settings."
-msgstr ""
-
-#: src/Admin/settings/OrganizerTab.js:132
-msgid "Loading organizer settings..."
-msgstr ""
-
-#: src/Admin/settings/OrganizerTab.js:148
-msgid "Identity"
-msgstr ""
-
-#: src/Admin/settings/OrganizerTab.js:152
-msgid "This identity is used to build a sitewide Schema.org Organization block and to identify the event organizer, taking the place of the site name and home URL. Everything here is optional; leave it blank to keep today's behaviour."
-msgstr ""
-
-#: src/Admin/settings/OrganizerTab.js:165
-msgid "Organization type"
-msgstr ""
+msgstr "Paramètres de l'organisateur enregistrés avec succès."
 
 #: src/Admin/settings/OrganizerTab.js:169
+msgid "Failed to save organizer settings."
+msgstr "Échec de l'enregistrement des paramètres de l'organisateur."
+
+#: src/Admin/settings/OrganizerTab.js:182
+msgid "Loading organizer settings..."
+msgstr "Chargement des paramètres de l'organisateur..."
+
+#: src/Admin/settings/OrganizerTab.js:198
+msgid "Identity"
+msgstr "Identité"
+
+#: src/Admin/settings/OrganizerTab.js:202
+msgid "This identity is used to build a sitewide Schema.org Organization block and to identify the event organizer, taking the place of the site name and home URL. Everything here is optional; leave it blank to keep today's behaviour."
+msgstr "Cette identité est utilisée pour construire un bloc Schema.org Organization au niveau du site et pour identifier l'organisateur de l'événement, en remplaçant le nom du site et l'URL d'accueil. Tout ici est facultatif ; laissez vide pour conserver le comportement actuel."
+
+#: src/Admin/settings/OrganizerTab.js:235
+msgid "Organization type"
+msgstr "Type d'organisation"
+
+#: src/Admin/settings/OrganizerTab.js:239
 msgid "Organization"
-msgstr ""
+msgstr "Organisation"
 
-#: src/Admin/settings/OrganizerTab.js:173
+#: src/Admin/settings/OrganizerTab.js:243
 msgid "Sports club"
-msgstr ""
+msgstr "Club sportif"
 
-#: src/Admin/settings/OrganizerTab.js:189
+#: src/Admin/settings/OrganizerTab.js:329
 msgid "Street address"
-msgstr ""
+msgstr "Adresse postale"
 
-#: src/Admin/settings/OrganizerTab.js:197
+#: src/Admin/settings/OrganizerTab.js:337
 msgid "City"
-msgstr ""
+msgstr "Ville"
 
-#: src/Admin/settings/OrganizerTab.js:205
+#: src/Admin/settings/OrganizerTab.js:345
 msgid "Region"
-msgstr ""
+msgstr "Région"
 
-#: src/Admin/settings/OrganizerTab.js:213
+#: src/Admin/settings/OrganizerTab.js:353
 msgid "Postal code"
-msgstr ""
+msgstr "Code postal"
 
-#: src/Admin/settings/OrganizerTab.js:221
+#: src/Admin/settings/OrganizerTab.js:361
 msgid "Country"
-msgstr ""
+msgstr "Pays"
 
-#: src/Admin/settings/OrganizerTab.js:222
+#: src/Admin/settings/OrganizerTab.js:362
 msgid "Use a two-letter code, e.g. ES."
-msgstr ""
+msgstr "Utilisez un code à deux lettres, par exemple ES."
 
-#: src/Admin/settings/OrganizerTab.js:237
+#: src/Admin/settings/OrganizerTab.js:377
 msgid "Social & profile links"
-msgstr ""
+msgstr "Réseaux sociaux et liens de profil"
 
-#: src/Admin/settings/OrganizerTab.js:241
+#: src/Admin/settings/OrganizerTab.js:381
 msgid "Links to social media profiles or other pages that identify the organization (Instagram, Facebook, etc.)."
-msgstr ""
+msgstr "Liens vers les profils de réseaux sociaux ou d'autres pages qui identifient l'organisation (Instagram, Facebook, etc.)."
 
-#: src/Admin/settings/OrganizerTab.js:255
+#: src/Admin/settings/OrganizerTab.js:395
 msgid "Profile URL"
-msgstr ""
+msgstr "URL du profil"
 
-#: src/Admin/settings/OrganizerTab.js:267
+#: src/Admin/settings/OrganizerTab.js:407
 msgid "Enter a valid URL, e.g. https://example.com/profile."
-msgstr ""
+msgstr "Entrez une URL valide, par exemple https://example.com/profile."
 
-#: src/Admin/settings/OrganizerTab.js:298
+#: src/Admin/settings/OrganizerTab.js:438
 msgid "Add link"
-msgstr ""
+msgstr "Ajouter un lien"
 
-#: src/Admin/settings/OrganizerTab.js:312
+#: src/Admin/settings/OrganizerTab.js:486
 msgid "Save organizer"
-msgstr ""
-
-#: src/Admin/settings/OrganizerTab.js:316
-msgid "Fix the invalid social/profile link above before saving."
-msgstr ""
+msgstr "Enregistrer l'organisateur"
 
 #: src/Admin/settings/SettingsApp.js:37
 msgid "Organizer"
-msgstr ""
+msgstr "Organisateur"
 
 #. translators: %s: formatted total price
-#: src/blocks/event-signup/frontend.js:379
+#: src/blocks/event-signup/frontend.js:424
+#: src/blocks/event-signup/frontend.js:632
 #, js-format
 msgid "Total: %s"
-msgstr ""
+msgstr "Total : %s"
 
-#: src/API/GetTicketsController.php:886
-#: src/API/GetTicketsController.php:979
-#: src/API/GetTicketsController.php:1011
-#: src/API/GetTicketsController.php:1178
+#: src/API/GetTicketsController.php:975
+#: src/API/GetTicketsController.php:1068
+#: src/API/GetTicketsController.php:1100
+#: src/API/GetTicketsController.php:1267
 msgid "Transaction not found."
-msgstr ""
+msgstr "Transaction introuvable."
 
-#: src/API/GetTicketsController.php:1020
+#: src/API/GetTicketsController.php:1109
 msgid "This payment cannot be retried."
-msgstr ""
+msgstr "Ce paiement ne peut pas être réessayé."
 
-#: src/API/GetTicketsController.php:1029
+#: src/API/GetTicketsController.php:1118
 msgid "This payment is not retriable from this endpoint."
-msgstr ""
+msgstr "Ce paiement ne peut pas être réessayé à partir de ce point de terminaison."
 
-#: src/API/GetTicketsController.php:1049
+#: src/API/GetTicketsController.php:1138
 msgid "This payment is missing context needed to retry."
-msgstr ""
+msgstr "Ce paiement manque du contexte nécessaire pour réessayer."
 
-#: src/API/GetTicketsController.php:1067
+#: src/API/GetTicketsController.php:1156
 msgid "This payment session has expired. Please start over."
-msgstr ""
+msgstr "Cette session de paiement a expiré. Veuillez recommencer."
 
-#: src/API/GetTicketsController.php:1084
+#: src/API/GetTicketsController.php:1173
 msgid "Original line items could not be loaded."
-msgstr ""
+msgstr "Les articles de ligne d'origine n'ont pas pu être chargés."
 
-#: src/API/GetTicketsController.php:1187
+#: src/API/GetTicketsController.php:1276
 msgid "This payment is not manageable from this endpoint."
-msgstr ""
+msgstr "Ce paiement ne peut pas être géré à partir de ce point de terminaison."
 
-#: src/blocks/event-signup/render.php:336
-#: src/blocks/event-signup/frontend.js:113
+#: src/blocks/event-signup/render.php:395
+#: src/blocks/event-signup/frontend.js:130
 msgid "Payment confirmed"
-msgstr ""
+msgstr "Paiement confirmé"
 
 #. translators: %s: event title
-#: src/blocks/event-signup/render.php:342
+#: src/blocks/event-signup/render.php:401
 #, php-format
 msgid "You're signed up for %s."
-msgstr ""
+msgstr "Vous êtes inscrit pour %s."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:352
+#: src/blocks/event-signup/render.php:411
 #, php-format
 msgid "Amount paid: %s"
-msgstr ""
+msgstr "Montant payé : %s"
 
-#: src/blocks/event-signup/render.php:358
-#: src/blocks/event-signup/frontend.js:128
+#: src/blocks/event-signup/render.php:417
+#: src/blocks/event-signup/frontend.js:145
 msgid "A confirmation email is on its way. You can close this page."
-msgstr ""
+msgstr "Un e-mail de confirmation est en route. Vous pouvez fermer cette page."
 
-#: src/blocks/event-signup/render.php:366
+#: src/blocks/event-signup/render.php:425
 msgid "Thank you for your payment!"
-msgstr ""
-
-#: src/blocks/event-signup/render.php:368
-msgid "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done."
-msgstr ""
-
-#. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:374
-#, php-format
-msgid "Amount: %s"
-msgstr ""
-
-#: src/blocks/event-signup/render.php:384
-msgid "Your payment is waiting."
-msgstr ""
-
-#: src/blocks/event-signup/render.php:386
-msgid "You can pick up where you left off on the secure payment page."
-msgstr ""
-
-#. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:392
-#: src/blocks/event-signup/render.php:415
-#, php-format
-msgid "Amount due: %s"
-msgstr ""
-
-#: src/blocks/event-signup/render.php:399
-msgid "Continue payment"
-msgstr ""
-
-#: src/blocks/event-signup/render.php:403
-#: src/blocks/event-signup/render.php:432
-msgid "Cancel and start over"
-msgstr ""
-
-#: src/blocks/event-signup/render.php:410
-msgid "Your payment didn't go through."
-msgstr ""
+msgstr "Merci pour votre paiement !"
 
 #: src/blocks/event-signup/render.php:427
+msgid "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done."
+msgstr "Nous confirmons auprès de votre banque. Cela prend généralement quelques secondes — la page se mettra à jour dès que ce sera fait."
+
+#. translators: %s: formatted amount with currency
+#: src/blocks/event-signup/render.php:433
+#, php-format
+msgid "Amount: %s"
+msgstr "Montant : %s"
+
+#: src/blocks/event-signup/render.php:443
+msgid "Your payment is waiting."
+msgstr "Votre paiement est en attente."
+
+#: src/blocks/event-signup/render.php:445
+msgid "You can pick up where you left off on the secure payment page."
+msgstr "Vous pouvez reprendre où vous vous étiez arrêté sur la page de paiement sécurisée."
+
+#. translators: %s: formatted amount with currency
+#: src/blocks/event-signup/render.php:451
+#: src/blocks/event-signup/render.php:474
+#, php-format
+msgid "Amount due: %s"
+msgstr "Montant dû : %s"
+
+#: src/blocks/event-signup/render.php:458
+msgid "Continue payment"
+msgstr "Continuer le paiement"
+
+#: src/blocks/event-signup/render.php:462
+#: src/blocks/event-signup/render.php:491
+msgid "Cancel and start over"
+msgstr "Annuler et recommencer"
+
+#: src/blocks/event-signup/render.php:469
+msgid "Your payment didn't go through."
+msgstr "Votre paiement n'a pas fonctionné."
+
+#: src/blocks/event-signup/render.php:486
 msgid "Retry payment"
-msgstr ""
+msgstr "Réessayer le paiement"
 
 #: src/Core/Plugin.php:96
 msgid "Translations"
-msgstr ""
+msgstr "Traductions"
 
 #: src/Admin/settings/FeaturesTab.js:135
 msgid "Bundled translations moved to Settings → Fair Event Plugins."
-msgstr ""
+msgstr "Les traductions groupées ont été déplacées vers Paramètres → Fair Event Plugins."
 
-#: src/blocks/event-signup/frontend.js:119
+#: src/blocks/event-signup/frontend.js:136
 msgid "Amount paid:"
-msgstr ""
+msgstr "Montant payé :"
 
-#: src/blocks/event-signup/frontend.js:163
+#: src/blocks/event-signup/frontend.js:180
 msgid "Redirecting…"
-msgstr ""
+msgstr "Redirection…"
 
-#: src/blocks/event-signup/frontend.js:164
+#: src/blocks/event-signup/frontend.js:181
 msgid "Could not start the retry. Please try again."
-msgstr ""
+msgstr "Impossible de démarrer la nouvelle tentative. Veuillez réessayer."
+
+#: src/blocks/event-signup/render.php:617
+msgid "Select activities"
+msgstr "Sélectionner les activités"
+
+#. translators: %d: minimum number of activities required
+#: src/blocks/event-signup/render.php:623
+#: src/blocks/event-signup/frontend.js:580
+#: src/blocks/event-signup/frontend.js:964
+#, php-format, js-format
+msgid "Please select at least %d activity to sign up."
+msgid_plural "Please select at least %d activities to sign up."
+msgstr[0] "Veuillez sélectionner au moins %d activité pour vous inscrire."
+msgstr[1] "Veuillez sélectionner au moins %d activités pour vous inscrire."
+
+#: src/blocks/event-signup/render.php:647
+msgid "free"
+msgstr "gratuit"
+
+#: src/blocks/event-signup/render.php:652
+msgid "full"
+msgstr "complet"
+
+#. translators: %s: formatted add-on price
+#: src/blocks/event-signup/render.php:678
+#, php-format
+msgid "(+%s)"
+msgstr "(+%s)"
+
+#: src/blocks/event-signup/render.php:706
+#: src/blocks/event-signup/render.php:729
+msgid "already signed up"
+msgstr "déjà inscrit"
+
+#: src/Admin/settings/OrganizerTab.js:216
+msgid "Website"
+msgstr "Site web"
+
+#: src/Admin/settings/OrganizerTab.js:223
+msgid "Enter a valid URL, e.g. https://example.com."
+msgstr "Veuillez entrer une URL valide, par exemple https://example.com."
+
+#: src/Admin/settings/OrganizerTab.js:258
+msgid "Logo"
+msgstr "Logo"
+
+#: src/Admin/settings/OrganizerTab.js:276
+msgid "Select logo"
+msgstr "Sélectionner le logo"
+
+#: src/Admin/settings/OrganizerTab.js:280
+msgid "Use image"
+msgstr "Utiliser l'image"
+
+#: src/Admin/settings/OrganizerTab.js:298
+msgid "Change image"
+msgstr "Modifier l'image"
+
+#: src/Admin/settings/OrganizerTab.js:314
+msgid "Falls back to the site's logo when not overridden."
+msgstr "Revient au logo du site lorsqu'il n'est pas remplacé."
+
+#: src/Admin/settings/OrganizerTab.js:445
+msgid "Contact point"
+msgstr "Point de contact"
+
+#: src/Admin/settings/OrganizerTab.js:449
+msgid "Optional contact details for the organization, shown alongside its structured data."
+msgstr "Détails de contact facultatifs pour l'organisation, affichés avec ses données structurées."
+
+#: src/Admin/settings/OrganizerTab.js:456
+msgid "Contact email"
+msgstr "Email de contact"
+
+#: src/Admin/settings/OrganizerTab.js:465
+msgid "Contact phone"
+msgstr "Téléphone de contact"
+
+#: src/Admin/settings/OrganizerTab.js:490
+msgid "Fix the invalid link(s) above before saving."
+msgstr "Corrigez le(s) lien(s) invalide(s) ci-dessus avant d'enregistrer."
+
+#: src/blocks/event-signup/frontend.js:664
+msgid "Add activities"
+msgstr "Ajouter des activités"
+
+#: src/blocks/event-signup/frontend.js:732
+msgid "Adding…"
+msgstr "Ajout en cours…"
+
+#: src/blocks/event-signup/frontend.js:753
+msgid "Your activities have been added!"
+msgstr "Vos activités ont été ajoutées !"
+
+#: src/blocks/event-signup/frontend.js:769
+msgid "Failed to add activities. Please try again."
+msgstr "Échec de l'ajout des activités. Veuillez réessayer."
+
+#: src/blocks/event-signup/frontend.js:838
+msgid "Cancelling…"
+msgstr "Annulation en cours…"
+
+#: src/blocks/event-signup/frontend.js:849
+msgid "Your signup has been cancelled."
+msgstr "Votre inscription a été annulée."
+
+#: src/blocks/event-signup/frontend.js:859
+msgid "Failed to cancel signup. Please try again."
+msgstr "Échec de l'annulation de l'inscription. Veuillez réessayer."
+

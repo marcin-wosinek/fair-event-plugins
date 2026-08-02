@@ -397,6 +397,16 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 
 				let translations = result.translations;
 
+				// Claude occasionally stringifies the array (e.g. under a
+				// long system prompt) instead of returning it structurally.
+				if (typeof translations === 'string') {
+					try {
+						translations = JSON.parse(translations);
+					} catch (e) {
+						// leave as-is; the length check below will report it
+					}
+				}
+
 				if (
 					!Array.isArray(translations) ||
 					translations.length !== strings.length

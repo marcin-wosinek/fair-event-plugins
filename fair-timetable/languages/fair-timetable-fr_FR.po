@@ -15,8 +15,7 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: fair-timetable.php
-#: src/Core/Plugin.php:81
-#: src/Core/Plugin.php:82
+#: src/Core/Plugin.php:103
 msgid "Fair Timetable"
 msgstr ""
 
@@ -53,28 +52,13 @@ msgid "Bundled translations"
 msgstr "Traductions intégrées"
 
 #: src/Core/Features.php:120
+#: src/Core/Plugin.php:104
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Charger les fichiers .mo/.json fournis avec le plugin au lieu de dépendre des packs de langue de WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90% sur translate.wordpress.org ou pour les chaînes en cours de traduction."
 
-#: src/Core/Plugin.php:96
-msgid "You do not have sufficient permissions to access this page."
-msgstr "Vous n'avez pas les permissions suffisantes pour accéder à cette page."
-
-#: src/Core/Plugin.php:105
-msgid "Features saved."
-msgstr "Fonctionnalités enregistrées."
-
-#: src/Core/Plugin.php:111
-msgid "Fair Timetable - Features"
-msgstr "Fair Timetable - Fonctionnalités"
-
-#: src/Core/Plugin.php:138
+#: src/Core/Plugin.php:107
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là."
-
-#: src/Core/Plugin.php:146
-msgid "Save Features"
-msgstr "Enregistrer les fonctionnalités"
 
 #: src/blocks/time-column/components/EditComponent.js:27
 msgid "Column Title"
@@ -194,3 +178,8 @@ msgstr "Calendrier"
 msgctxt "block description"
 msgid "A timetable block for displaying scheduled events"
 msgstr "Un bloc de calendrier pour afficher les événements programmés"
+
+#: src/Core/Plugin.php:98
+msgid "Translations"
+msgstr "Traductions"
+

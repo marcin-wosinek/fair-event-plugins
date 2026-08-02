@@ -34,33 +34,33 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:37
+#: src/Admin/AdminHooks.php:36
 msgid "Fair Platform Settings"
 msgstr "Paramètres Fair Platform"
 
-#: src/Admin/AdminHooks.php:38
+#: src/Admin/AdminHooks.php:37
+#: src/Core/Plugin.php:157
 msgid "Fair Platform"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:48
+#: src/Admin/AdminHooks.php:47
 #: src/Admin/connections/ConnectionsPage.js:163
 msgid "Connection Logs"
 msgstr "Journaux de connexion"
 
-#: src/Admin/AdminHooks.php:49
+#: src/Admin/AdminHooks.php:48
 msgid "Connections"
 msgstr "Connexions"
 
-#: src/Admin/AdminHooks.php:57
+#: src/Admin/AdminHooks.php:56
 msgid "Instagram Connections"
 msgstr "Connexions Instagram"
 
-#: src/Admin/AdminHooks.php:58
+#: src/Admin/AdminHooks.php:57
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Admin/AdminHooks.php:81
-#: src/Admin/AdminHooks.php:217
+#: src/Admin/AdminHooks.php:145
 #: src/Admin/ConnectionsPage.php:24
 #: src/Admin/InstagramConnectionsPage.php:24
 msgid "You do not have sufficient permissions to access this page."
@@ -287,21 +287,21 @@ msgstr "Suppression de %d anciens journaux de connexion Instagram."
 msgid "You do not have permission to view Instagram connection logs."
 msgstr "Vous n'avez pas la permission de consulter les journaux de connexion Instagram."
 
-#: src/Core/Plugin.php:1441
-#: src/Core/Plugin.php:1465
-#: src/Core/Plugin.php:1489
+#: src/Core/Plugin.php:1484
+#: src/Core/Plugin.php:1508
+#: src/Core/Plugin.php:1532
 msgid "Fair Platform:"
 msgstr "Fair Platform :"
 
-#: src/Core/Plugin.php:1442
+#: src/Core/Plugin.php:1485
 msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
 msgstr "Les identifiants OAuth Instagram ne sont pas configurés. Veuillez ajouter INSTAGRAM_APP_ID et INSTAGRAM_APP_SECRET à wp-config.php pour l'intégration Instagram."
 
-#: src/Core/Plugin.php:1466
+#: src/Core/Plugin.php:1509
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr "Les identifiants OAuth Mollie ne sont pas configurés. Veuillez ajouter MOLLIE_CLIENT_ID et MOLLIE_CLIENT_SECRET à wp-config.php"
 
-#: src/Core/Plugin.php:1490
+#: src/Core/Plugin.php:1533
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "La bibliothèque PHP Mollie n'est pas installée. Veuillez exécuter : composer require mollie/mollie-api-php"
 
@@ -512,26 +512,9 @@ msgstr "ID utilisateur IG"
 msgid "https://github.com/marcin-wosinek/fair-event-plugins"
 msgstr ""
 
-#: src/Admin/AdminHooks.php:66
-#: src/Admin/AdminHooks.php:67
-msgid "Features"
-msgstr "Fonctionnalités"
-
-#: src/Admin/AdminHooks.php:90
-msgid "Features saved."
-msgstr "Fonctionnalités enregistrées."
-
-#: src/Admin/AdminHooks.php:96
-msgid "Fair Platform - Features"
-msgstr "Fair Platform - Fonctionnalités"
-
-#: src/Admin/AdminHooks.php:122
+#: src/Core/Plugin.php:161
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là-bas."
-
-#: src/Admin/AdminHooks.php:130
-msgid "Save Features"
-msgstr "Enregistrer les fonctionnalités"
 
 #: src/Core/Features.php:115
 msgid "Core"
@@ -546,5 +529,11 @@ msgid "Bundled translations"
 msgstr "Traductions intégrées"
 
 #: src/Core/Features.php:120
+#: src/Core/Plugin.php:158
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Charger les fichiers .mo/.json fournis avec l'extension au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
+
+#: src/Core/Plugin.php:152
+msgid "Translations"
+msgstr "Traductions"
+

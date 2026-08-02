@@ -18,6 +18,7 @@ msgstr ""
 #: src/Admin/AdminHooks.php:129
 #: src/Admin/AdminHooks.php:130
 #: src/API/FairFormController.php:237
+#: src/Core/Plugin.php:124
 #: src/Services/QuestionnaireService.php:384
 msgid "Fair Form"
 msgstr ""
@@ -488,30 +489,43 @@ msgstr "Skopiuj do schowka"
 
 #: src/blocks/fair-form-phone/render.php:47
 msgid "Include the country code, starting with \"+\" — spaces, dashes and brackets are fine (for example +49 170 123 45 67)."
-msgstr ""
+msgstr "Podaj kod kraju zaczynający się od „+” – spacje, myślniki i nawiasy są dozwolone (na przykład +49 170 123 45 67)."
 
 #. translators: %s: question text
 #: src/Services/QuestionnaireService.php:210
 #, php-format
 msgid "Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s"
-msgstr ""
+msgstr "Podaj prawidłowy numer telefonu z kodem kraju (na przykład +49 170 123 45 67) dla: %s"
 
 #. translators: %s: site name
 #: src/Services/FormNotificationService.php:210
 #, php-format
 msgid "New form submission — %s"
-msgstr ""
+msgstr "Nowe zgłoszenie formularza – %s"
 
 #. translators: %s: page title
 #: src/Services/FormNotificationService.php:229
 #, php-format
 msgid "Page: %s"
-msgstr ""
+msgstr "Strona: %s"
 
 #: src/Services/FormNotificationService.php:257
 msgid "A new form submission has been received."
-msgstr ""
+msgstr "Otrzymano nowe zgłoszenie formularza."
 
 #: src/API/FairFormController.php:290
 msgid "Guest"
-msgstr ""
+msgstr "Gość"
+
+#: src/Core/Plugin.php:119
+msgid "Translations"
+msgstr "Tłumaczenia"
+
+#: src/Core/Plugin.php:125
+msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs."
+msgstr "Wczytuj pliki .mo/.json dołączone do wtyczki zamiast polegać na pakietach językowych z WordPress.org."
+
+#: src/Core/Plugin.php:128
+msgid "Forced by a wp-config constant — change it there."
+msgstr "Wymuszone przez stałą w wp-config – zmień ją tam."
+

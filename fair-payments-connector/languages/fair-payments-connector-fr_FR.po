@@ -14,20 +14,20 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Domain: fair-payments-connector\n"
 
-#: src/Admin/AdminPages.php:48
-#: src/Admin/AdminPages.php:49
+#: src/Admin/AdminPages.php:50
+#: src/Admin/AdminPages.php:51
 msgid "Transactions"
 msgstr "Transactions"
 
-#: src/Admin/AdminPages.php:57
-#: src/Admin/AdminPages.php:58
-#: src/Admin/AdminPages.php:65
+#: src/Admin/AdminPages.php:59
+#: src/Admin/AdminPages.php:60
+#: src/Admin/AdminPages.php:67
 #: src/Admin/transaction/TransactionPage.js:550
 msgid "Transaction Detail"
 msgstr "Détail de la transaction"
 
-#: src/Admin/AdminPages.php:81
-#: src/Admin/AdminPages.php:82
+#: src/Admin/AdminPages.php:83
+#: src/Admin/AdminPages.php:84
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -36,59 +36,59 @@ msgid "Please migrate to OAuth authentication."
 msgstr "Veuillez migrer vers l'authentification OAuth."
 
 #: src/Admin/MigrationNotice.php:69
-#: src/Admin/settings/ConnectionTab.js:422
+#: src/Admin/settings/ConnectionTab.js:418
 msgid "Connect with Mollie"
 msgstr "Se connecter avec Mollie"
 
-#: src/API/ConnectionController.php:74
-#: src/API/ConnectionController.php:112
-#: src/API/ConnectionController.php:200
+#: src/API/ConnectionController.php:75
+#: src/API/ConnectionController.php:113
+#: src/API/ConnectionController.php:201
 msgid "Mollie is not connected. Please connect your Mollie account first."
 msgstr "Mollie n'est pas connecté. Veuillez d'abord connecter votre compte Mollie."
 
-#: src/API/ConnectionController.php:222
+#: src/API/ConnectionController.php:223
 msgid "Connection test successful. Token was refreshed."
 msgstr "Test de connexion réussi. Le jeton a été actualisé."
 
-#: src/API/ConnectionController.php:223
+#: src/API/ConnectionController.php:224
 msgid "Connection test successful. Token is still valid."
 msgstr "Test de connexion réussi. Le jeton est toujours valide."
 
 #. translators: %s: error message
-#: src/API/ConnectionController.php:241
+#: src/API/ConnectionController.php:242
 #, php-format
 msgid "Connection test failed: %s"
 msgstr "Échec du test de connexion : %s"
 
-#: src/API/PaymentEndpoint.php:416
-#: src/API/PaymentEndpoint.php:457
+#: src/API/PaymentEndpoint.php:428
+#: src/API/PaymentEndpoint.php:469
 #: src/API/TransactionAPI.php:165
 #: src/API/TransactionsController.php:271
 #: src/API/TransactionsController.php:291
 #: src/API/TransactionsController.php:423
-#: src/Models/Transaction.php:517
+#: src/Models/Transaction.php:518
 msgid "Transaction not found."
 msgstr "Transaction non trouvée."
 
-#: src/API/PaymentEndpoint.php:255
+#: src/API/PaymentEndpoint.php:267
 msgid "Mollie payment gateway is not configured. Please configure your API keys in settings."
 msgstr "La passerelle de paiement Mollie n'est pas configurée. Veuillez configurer vos clés API dans les paramètres."
 
-#: src/API/PaymentEndpoint.php:275
+#: src/API/PaymentEndpoint.php:287
 msgid "Invalid payment amount."
 msgstr "Montant de paiement invalide."
 
 #. translators: %s: amount and currency
-#: src/API/PaymentEndpoint.php:283
+#: src/API/PaymentEndpoint.php:295
 #, php-format
 msgid "Payment of %1$s %2$s"
 msgstr "Paiement de %1$s %2$s"
 
-#: src/API/TransactionAPI.php:102
+#: src/API/TransactionAPI.php:103
 msgid "Failed to create transaction."
 msgstr "Échec de la création de la transaction."
 
-#: src/API/TransactionAPI.php:118
+#: src/API/TransactionAPI.php:119
 msgid "Failed to create line items."
 msgstr "Échec de la création des articles de ligne."
 
@@ -165,7 +165,7 @@ msgid "Thank you! Your payment is being processed."
 msgstr "Merci ! Votre paiement est en cours de traitement."
 
 #: src/blocks/simple-payment/render.php:101
-#: src/blocks/simple-payment/index.js:89
+#: src/blocks/simple-payment/index.js:107
 msgid "Pay Now"
 msgstr "Payer maintenant"
 
@@ -177,29 +177,29 @@ msgstr "Traitement du paiement en cours..."
 msgid "Payment gateway is not configured. Please configure your Mollie API keys."
 msgstr "La passerelle de paiement n'est pas configurée. Veuillez configurer vos clés API Mollie."
 
-#: src/Models/Transaction.php:525
+#: src/Models/Transaction.php:526
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr "Un paiement a déjà été initié pour cette transaction. Créez une nouvelle transaction pour réessayer."
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:535
+#: src/Models/Transaction.php:536
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr "Le statut de la transaction doit être « brouillon » pour initier le paiement. Statut actuel : %s"
 
-#: src/Payment/MolliePaymentHandler.php:66
+#: src/Payment/MolliePaymentHandler.php:67
 msgid "Mollie API key is not configured."
 msgstr "La clé API Mollie n'est pas configurée."
 
-#: src/Payment/MolliePaymentHandler.php:85
+#: src/Payment/MolliePaymentHandler.php:86
 msgid "Mollie is not connected. Please connect your Mollie account in settings."
 msgstr "Mollie n'est pas connecté. Veuillez connecter votre compte Mollie dans les paramètres."
 
-#: src/Payment/MolliePaymentHandler.php:286
+#: src/Payment/MolliePaymentHandler.php:287
 msgid "Payment"
 msgstr "Paiement"
 
-#: src/Payment/MolliePaymentHandler.php:319
+#: src/Payment/MolliePaymentHandler.php:320
 msgid "Application fee"
 msgstr "Frais d'application"
 
@@ -209,43 +209,43 @@ msgstr "Frais d'application"
 msgid "Failed to retrieve payment: %s"
 msgstr "Échec de la récupération du paiement : %s"
 
-#: src/Settings/Settings.php:37
+#: src/Settings/Settings.php:45
 msgid "Mollie Test API Key"
 msgstr "Clé API de test Mollie"
 
-#: src/Settings/Settings.php:55
+#: src/Settings/Settings.php:63
 msgid "Mollie Live API Key"
 msgstr "Clé API en direct Mollie"
 
-#: src/Settings/Settings.php:73
+#: src/Settings/Settings.php:81
 msgid "Payment mode (test or live)"
 msgstr "Mode de paiement (test ou en direct)"
 
-#: src/Settings/Settings.php:86
+#: src/Settings/Settings.php:94
 msgid "Mollie Organization ID"
 msgstr "ID d'organisation Mollie"
 
-#: src/Settings/Settings.php:99
+#: src/Settings/Settings.php:110
 msgid "Mollie OAuth Access Token"
 msgstr "Jeton d'accès OAuth Mollie"
 
-#: src/Settings/Settings.php:117
+#: src/Settings/Settings.php:122
 msgid "Mollie OAuth Refresh Token"
 msgstr "Jeton d'actualisation OAuth Mollie"
 
-#: src/Settings/Settings.php:135
+#: src/Settings/Settings.php:134
 msgid "Mollie OAuth Token Expiration (Unix timestamp)"
 msgstr "Expiration du jeton OAuth Mollie (horodatage Unix)"
 
-#: src/Settings/Settings.php:153
+#: src/Settings/Settings.php:152
 msgid "Unique Site Identifier for OAuth"
 msgstr "Identifiant de site unique pour OAuth"
 
-#: src/Settings/Settings.php:171
+#: src/Settings/Settings.php:170
 msgid "Mollie OAuth Connection Status"
 msgstr "Statut de connexion OAuth Mollie"
 
-#: src/Settings/Settings.php:189
+#: src/Settings/Settings.php:188
 msgid "Mollie Profile ID (cached)"
 msgstr "ID de profil Mollie (en cache)"
 
@@ -283,7 +283,7 @@ msgstr "Événement"
 
 #: src/Admin/transaction/TransactionPage.js:660
 #: src/Admin/transactions/TransactionsApp.js:461
-#: src/blocks/simple-payment/index.js:49
+#: src/blocks/simple-payment/index.js:67
 msgid "Amount"
 msgstr "Montant"
 
@@ -304,169 +304,156 @@ msgstr "Impossible de charger les transactions."
 msgid "Remove"
 msgstr "Supprimer"
 
-#: src/Admin/transactions/TransactionsApp.js:668
+#: src/Admin/transactions/TransactionsApp.js:654
 msgid "Previous"
 msgstr "Précédent"
 
-#: src/Admin/transactions/TransactionsApp.js:688
+#: src/Admin/transactions/TransactionsApp.js:674
 msgid "Next"
 msgstr "Suivant"
 
-#: src/Admin/settings/ConnectionTab.js:82
+#: src/Admin/settings/ConnectionTab.js:83
 msgid "Failed to load settings."
 msgstr "Échec du chargement des paramètres."
 
-#: src/Admin/settings/ConnectionTab.js:182
+#: src/Admin/settings/ConnectionTab.js:183
 msgid "Are you sure you want to disconnect from Mollie? You will need to reconnect to accept payments."
 msgstr "Êtes-vous sûr de vouloir vous déconnecter de Mollie ? Vous devrez vous reconnecter pour accepter les paiements."
 
-#: src/Admin/settings/ConnectionTab.js:203
+#: src/Admin/settings/ConnectionTab.js:199
 msgid "Disconnected from Mollie."
 msgstr "Déconnecté de Mollie."
 
-#: src/Admin/settings/ConnectionTab.js:213
+#: src/Admin/settings/ConnectionTab.js:209
 msgid "Failed to disconnect."
 msgstr "Échec de la déconnexion."
 
 #. translators: %s: mode name (Test or Live)
-#: src/Admin/settings/ConnectionTab.js:239
+#: src/Admin/settings/ConnectionTab.js:235
 #, js-format
 msgid "Switched to %s mode."
 msgstr "Passage en mode %s."
 
-#: src/Admin/settings/ConnectionTab.js:241
+#: src/Admin/settings/ConnectionTab.js:237
 #: src/Admin/transaction/TransactionPage.js:712
 #: src/Admin/transactions/TransactionsApp.js:40
 #: src/Admin/transactions/TransactionsApp.js:585
 msgid "Test"
 msgstr "Test"
 
-#: src/Admin/settings/ConnectionTab.js:242
+#: src/Admin/settings/ConnectionTab.js:238
 #: src/Admin/transaction/TransactionPage.js:716
 #: src/Admin/transactions/TransactionsApp.js:39
 #: src/Admin/transactions/TransactionsApp.js:589
 msgid "Live"
 msgstr "En direct"
 
-#: src/Admin/settings/ConnectionTab.js:250
+#: src/Admin/settings/ConnectionTab.js:246
 msgid "Failed to change mode."
 msgstr "Échec du changement de mode."
 
-#: src/Admin/settings/ConnectionTab.js:272
+#: src/Admin/settings/ConnectionTab.js:268
 msgid "Connection refreshed successfully."
 msgstr "Connexion actualisée avec succès."
 
-#: src/Admin/settings/ConnectionTab.js:293
+#: src/Admin/settings/ConnectionTab.js:289
 msgid "Failed to refresh connection."
 msgstr "Échec de l'actualisation de la connexion."
 
-#: src/Admin/settings/ConnectionTab.js:325
+#: src/Admin/settings/ConnectionTab.js:321
 msgid "Please check the error log for more details or try reconnecting to Mollie."
 msgstr "Veuillez vérifier le journal des erreurs pour plus de détails ou essayer de vous reconnecter à Mollie."
 
-#: src/Admin/settings/ConnectionTab.js:395
+#: src/Admin/settings/ConnectionTab.js:391
 msgid "Loading connection settings..."
 msgstr "Chargement des paramètres de connexion..."
 
-#: src/Admin/settings/ConnectionTab.js:410
+#: src/Admin/settings/ConnectionTab.js:406
 msgid "Mollie Connection"
 msgstr "Connexion Mollie"
 
-#: src/Admin/settings/ConnectionTab.js:416
+#: src/Admin/settings/ConnectionTab.js:412
 msgid "Connect your Mollie account to accept payments. This uses secure OAuth authentication."
 msgstr "Connectez votre compte Mollie pour accepter les paiements. Cela utilise une authentification OAuth sécurisée."
 
-#: src/Admin/settings/ConnectionTab.js:431
+#: src/Admin/settings/ConnectionTab.js:427
 msgid "Connected to Mollie"
 msgstr "Connecté à Mollie"
 
-#: src/Admin/settings/ConnectionTab.js:441
+#: src/Admin/settings/ConnectionTab.js:437
 msgid "Organization ID:"
 msgstr "ID d'organisation :"
 
-#: src/Admin/settings/ConnectionTab.js:454
+#: src/Admin/settings/ConnectionTab.js:450
 msgid "Profile ID:"
 msgstr "ID de profil :"
 
-#: src/Admin/settings/ConnectionTab.js:463
+#: src/Admin/settings/ConnectionTab.js:459
 msgid "Missing (required for payments)"
 msgstr "Manquant (requis pour les paiements)"
 
-#: src/Admin/settings/ConnectionTab.js:478
+#: src/Admin/settings/ConnectionTab.js:474
 msgid "Please reconnect to Mollie to fetch the profile ID."
 msgstr "Veuillez vous reconnecter à Mollie pour récupérer l'ID de profil."
 
 #. translators: %s: expiration date
-#: src/Admin/settings/ConnectionTab.js:596
+#: src/Admin/settings/ConnectionTab.js:592
 #, js-format
 msgid "Token expires: %s"
 msgstr "Le jeton expire : %s"
 
-#: src/Admin/settings/ConnectionTab.js:610
+#: src/Admin/settings/ConnectionTab.js:606
 #: src/Admin/transaction/TransactionPage.js:693
 #: src/Admin/transactions/TransactionsApp.js:329
 #: src/Admin/transactions/TransactionsApp.js:486
 msgid "Mode"
 msgstr "Mode"
 
-#: src/Admin/settings/ConnectionTab.js:617
+#: src/Admin/settings/ConnectionTab.js:613
 msgid "Test Mode"
 msgstr "Mode Test"
 
-#: src/Admin/settings/ConnectionTab.js:624
+#: src/Admin/settings/ConnectionTab.js:620
 msgid "Live Mode"
 msgstr "Mode Live"
 
-#: src/Admin/settings/ConnectionTab.js:643
+#: src/Admin/settings/ConnectionTab.js:639
 msgid "Disconnect"
 msgstr "Déconnecter"
 
-#: src/Admin/settings/ConnectionTab.js:655
+#: src/Admin/settings/ConnectionTab.js:651
 msgid "Refreshing..."
 msgstr "Actualisation en cours..."
 
-#: src/Admin/settings/ConnectionTab.js:659
+#: src/Admin/settings/ConnectionTab.js:655
 msgid "Refresh Connection"
 msgstr "Actualiser la connexion"
 
-#: src/Admin/settings/FeaturesTab.js:72
-msgid "Features saved. Reload the page to see menu changes."
-msgstr "Fonctionnalités enregistrées. Rechargez la page pour voir les modifications du menu."
-
-#: src/Admin/settings/FeaturesTab.js:82
-msgid "Failed to save features."
-msgstr "Échec de l'enregistrement des fonctionnalités."
-
 #: src/Admin/settings/CurrencyTab.js:124
-#: src/Admin/settings/FeaturesTab.js:143
 #: src/Admin/settings/PaymentMethodsTab.js:151
 #: src/Admin/transaction/TransactionPage.js:128
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src/Admin/settings/SettingsApp.js:48
+#: src/Admin/settings/SettingsApp.js:47
 msgid "Authorization cancelled. Please try again."
 msgstr "Autorisation annulée. Veuillez réessayer."
 
-#: src/Admin/settings/SettingsApp.js:110
+#: src/Admin/settings/SettingsApp.js:109
 msgid "Successfully connected to Mollie!"
 msgstr "Connecté avec succès à Mollie !"
 
-#: src/Admin/settings/SettingsApp.js:120
+#: src/Admin/settings/SettingsApp.js:119
 msgid "Failed to save OAuth tokens: "
 msgstr "Échec de l'enregistrement des jetons OAuth : "
 
-#: src/Admin/settings/SettingsApp.js:66
+#: src/Admin/settings/SettingsApp.js:65
 msgid "OAuth callback incomplete: refresh token not received from authorization server."
 msgstr "Rappel OAuth incomplet : le jeton d'actualisation n'a pas été reçu du serveur d'autorisation."
 
-#: src/Admin/settings/SettingsApp.js:186
+#: src/Admin/settings/SettingsApp.js:185
 msgid "Connection"
 msgstr "Connexion"
-
-#: src/Admin/settings/SettingsApp.js:190
-msgid "Features"
-msgstr "Fonctionnalités"
 
 #: src/Admin/transaction/TransactionPage.js:513
 msgid "No transaction ID provided."
@@ -614,20 +601,20 @@ msgstr "Aucune transaction trouvée."
 msgid "ID"
 msgstr "ID"
 
-#: src/blocks/simple-payment/index.js:46
+#: src/blocks/simple-payment/index.js:56
 msgid "Simple Payment Block"
 msgstr "Bloc de paiement simple"
 
-#: src/Admin/settings/SettingsApp.js:198
-#: src/blocks/simple-payment/index.js:57
+#: src/Admin/settings/SettingsApp.js:193
+#: src/blocks/simple-payment/index.js:75
 msgid "Currency"
 msgstr "Devise"
 
-#: src/blocks/simple-payment/index.js:62
+#: src/blocks/simple-payment/index.js:80
 msgid "Description (optional)"
 msgstr "Description (facultatif)"
 
-#: src/blocks/simple-payment/index.js:70
+#: src/blocks/simple-payment/index.js:88
 msgid "Optional description for the payment"
 msgstr "Description facultative pour le paiement"
 
@@ -733,11 +720,11 @@ msgstr "Aucun champ à mettre à jour."
 msgid "Failed to update transaction."
 msgstr "Échec de la mise à jour de la transaction."
 
-#: src/Settings/Settings.php:202
+#: src/Settings/Settings.php:201
 msgid "Disable bank transfer when close to the key date of the sale"
 msgstr "Désactiver le virement bancaire à proximité de la date clé de la vente"
 
-#: src/Settings/Settings.php:215
+#: src/Settings/Settings.php:214
 msgid "Working-day threshold for disabling bank transfer"
 msgstr "Seuil de jours ouvrables pour désactiver le virement bancaire"
 
@@ -777,7 +764,7 @@ msgstr "Seuil de jours ouvrables"
 msgid "Disable bank transfer when fewer than this many working days remain before the key date."
 msgstr "Désactiver le virement bancaire lorsque moins de ce nombre de jours ouvrables restent avant la date clé."
 
-#: src/Admin/settings/SettingsApp.js:194
+#: src/Admin/settings/SettingsApp.js:189
 msgid "Payment Methods"
 msgstr "Modes de paiement"
 
@@ -909,8 +896,9 @@ msgstr "Synchronisation des frais Mollie : %1$d / %2$d (mises à jour : %3$d, é
 
 #. Plugin Name of the plugin
 #: fair-payments-connector.php
-#: src/Admin/AdminPages.php:36
-#: src/Admin/AdminPages.php:37
+#: src/Admin/AdminPages.php:38
+#: src/Admin/AdminPages.php:39
+#: src/Core/Plugin.php:102
 msgid "Fair Payments Connector"
 msgstr ""
 
@@ -929,14 +917,14 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:70
-#: src/Admin/AdminPages.php:71
+#: src/Admin/AdminPages.php:72
+#: src/Admin/AdminPages.php:73
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:103
 msgid "Fee Dashboard"
 msgstr "Tableau de bord des frais"
 
 #. translators: %s: link to settings page
-#: src/Admin/AdminPages.php:170
+#: src/Admin/AdminPages.php:164
 #, php-format
 msgid "Fair Payment is in <strong>Test mode</strong> — no real payments are being processed. <a href=\"%s\">Switch to Live mode</a>."
 msgstr "Fair Payment est en <strong>mode Test</strong> — aucun paiement réel n'est traité. <a href=\"%s\">Passer en mode Live</a>."
@@ -958,10 +946,11 @@ msgid "Bundled translations"
 msgstr "Traductions groupées"
 
 #: src/Core/Features.php:127
+#: src/Core/Plugin.php:103
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Charger les fichiers .mo/.json fournis avec le plugin au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
 
-#: src/Settings/Settings.php:242
+#: src/Settings/Settings.php:250
 msgid "Per-bundle feature toggles"
 msgstr "Bascules de fonctionnalités par bundle"
 
@@ -993,42 +982,39 @@ msgstr "restant"
 msgid "Active plan"
 msgstr "Plan actif"
 
-#: src/Admin/settings/FeaturesTab.js:102
+#: src/Core/Plugin.php:106
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là."
 
-#: src/Admin/settings/FeaturesTab.js:129
-msgid "One or more bundles are forced by wp-config and cannot be toggled here."
-msgstr "Un ou plusieurs bundles sont forcés par wp-config et ne peuvent pas être basculés ici."
-
-#: src/Admin/settings/SettingsApp.js:164
+#: src/Admin/settings/SettingsApp.js:163
 msgid "Fair Payments Connector Settings"
 msgstr "Paramètres Fair Payments Connector"
 
 #. translators: %s: link to settings page
-#: src/Admin/AdminPages.php:173
+#: src/Admin/AdminPages.php:167
 #, php-format
 msgid "Fair Payment is <strong>not set up</strong> — no payments can be processed yet. <a href=\"%s\">Set up Mollie</a>."
 msgstr "Fair Payment n'est <strong>pas configuré</strong> — aucun paiement ne peut être traité pour le moment. <a href=\"%s\">Configurer Mollie</a>."
 
-#: src/Admin/AdminPages.php:220
+#: src/Admin/AdminPages.php:214
 msgid "Set up"
 msgstr "Configurer"
 
-#: src/API/OAuthCallbackController.php:115
+#: src/API/OAuthCallbackController.php:127
 msgid "Invalid or expired OAuth state. Please try connecting again."
 msgstr "État OAuth invalide ou expiré. Veuillez essayer de vous reconnecter."
 
-#: src/API/PaymentEndpoint.php:182
+#: src/API/PaymentEndpoint.php:183
 msgid "Invalid request."
 msgstr "Demande invalide."
 
-#: src/API/PaymentEndpoint.php:199
-#: src/API/PaymentEndpoint.php:210
+#: src/API/PaymentEndpoint.php:201
+#: src/API/PaymentEndpoint.php:211
+#: src/API/PaymentEndpoint.php:222
 msgid "Block not found."
 msgstr "Bloc non trouvé."
 
-#: src/API/PaymentEndpoint.php:221
+#: src/API/PaymentEndpoint.php:233
 msgid "Amount does not match block configuration."
 msgstr "Le montant ne correspond pas à la configuration du bloc."
 
@@ -1044,11 +1030,11 @@ msgstr "Votre paiement n'a pas été complété. Veuillez réessayer."
 msgid "Try Again"
 msgstr "Réessayer"
 
-#: src/Settings/Settings.php:228
+#: src/Settings/Settings.php:227
 msgid "Default currency for all transactions"
 msgstr "Devise par défaut pour toutes les transactions"
 
-#: src/Admin/settings/ConnectionTab.js:168
+#: src/Admin/settings/ConnectionTab.js:169
 msgid "Failed to initiate Mollie connection. Please try again."
 msgstr "Impossible d'initier la connexion Mollie. Veuillez réessayer."
 
@@ -1076,11 +1062,11 @@ msgstr "Définissez la devise par défaut pour toutes les nouvelles transactions
 msgid "Site currency"
 msgstr "Devise du site"
 
-#: src/Admin/settings/SettingsApp.js:79
+#: src/Admin/settings/SettingsApp.js:78
 msgid "OAuth callback is missing the state parameter. Please try connecting again."
 msgstr "Le rappel OAuth ne dispose pas du paramètre d'état. Veuillez essayer de vous reconnecter."
 
-#: src/Admin/settings/SettingsApp.js:230
+#: src/Admin/settings/SettingsApp.js:222
 msgid "Need help?"
 msgstr "Besoin d'aide ?"
 
@@ -1097,16 +1083,16 @@ msgstr "Détails"
 msgid "Mollie payments and bookkeeping for WordPress: payment block, itemized transactions, budgets, and bank reconciliation."
 msgstr "Paiements Mollie et comptabilité pour WordPress : bloc de paiement, transactions détaillées, budgets et rapprochement bancaire."
 
-#: src/API/ConnectionController.php:119
+#: src/API/ConnectionController.php:120
 msgid "Test payment (Fair Payments Connector settings)"
 msgstr "Paiement de test (paramètres Fair Payments Connector)"
 
-#: src/Payment/MolliePaymentHandler.php:228
+#: src/Payment/MolliePaymentHandler.php:229
 msgid "Failed to load Mollie connection overview: Mollie profile is not configured."
 msgstr "Impossible de charger l'aperçu de la connexion Mollie : le profil Mollie n'est pas configuré."
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:246
+#: src/Payment/MolliePaymentHandler.php:247
 #, php-format
 msgid "Failed to load Mollie connection overview: %s"
 msgstr "Impossible de charger l'aperçu de la connexion Mollie : %s"
@@ -1135,71 +1121,79 @@ msgstr "Le profil Mollie connecté n'a aucune méthode de paiement appropriée a
 msgid "The payment gateway rejected the request. See the payment log for technical details."
 msgstr "La passerelle de paiement a rejeté la demande. Consultez le journal des paiements pour plus de détails techniques."
 
-#: src/Admin/settings/ConnectionTab.js:132
+#: src/Admin/settings/ConnectionTab.js:133
 msgid "Failed to load payment methods."
 msgstr "Impossible de charger les méthodes de paiement."
 
-#: src/Admin/settings/ConnectionTab.js:351
+#: src/Admin/settings/ConnectionTab.js:347
 msgid "You are in live mode. This creates a real 1-unit payment with real money and gateway fees. Continue?"
 msgstr "Vous êtes en mode réel. Cela crée un vrai paiement d'une unité avec de l'argent réel et des frais de passerelle. Continuer ?"
 
-#: src/Admin/settings/ConnectionTab.js:369
+#: src/Admin/settings/ConnectionTab.js:365
 msgid "Test payment created. Complete or cancel the checkout in the new tab; its status updates automatically."
 msgstr "Paiement de test créé. Complétez ou annulez le paiement dans le nouvel onglet ; son statut se met à jour automatiquement."
 
-#: src/Admin/settings/ConnectionTab.js:381
+#: src/Admin/settings/ConnectionTab.js:377
 msgid "Failed to create test payment."
 msgstr "Impossible de créer le paiement de test."
 
-#: src/Admin/settings/ConnectionTab.js:494
+#: src/Admin/settings/ConnectionTab.js:490
 msgid "Loading payment methods…"
 msgstr "Chargement des méthodes de paiement…"
 
-#: src/Admin/settings/ConnectionTab.js:514
+#: src/Admin/settings/ConnectionTab.js:510
 msgid "Profile name:"
 msgstr "Nom du profil :"
 
-#: src/Admin/settings/ConnectionTab.js:524
+#: src/Admin/settings/ConnectionTab.js:520
 msgid "Enabled payment methods:"
 msgstr "Méthodes de paiement activées :"
 
-#: src/Admin/settings/ConnectionTab.js:563
+#: src/Admin/settings/ConnectionTab.js:559
 msgid "No payment methods are currently enabled."
 msgstr "Aucune méthode de paiement n'est actuellement activée."
 
-#: src/Admin/settings/ConnectionTab.js:576
+#: src/Admin/settings/ConnectionTab.js:572
 msgid "Manage payment methods in Mollie"
 msgstr "Gérer les méthodes de paiement dans Mollie"
 
-#: src/Admin/settings/ConnectionTab.js:673
+#: src/Admin/settings/ConnectionTab.js:669
 msgid "Test payment"
 msgstr "Paiement de test"
 
-#: src/Admin/settings/ConnectionTab.js:675
+#: src/Admin/settings/ConnectionTab.js:671
 msgid "Make a small payment (one unit of your currency, e.g. €1) to check that checkout and confirmation work from start to finish."
 msgstr "Effectuez un petit paiement (une unité de votre devise, par ex. 1 €) pour vérifier que le paiement et la confirmation fonctionnent du début à la fin."
 
-#: src/Admin/settings/ConnectionTab.js:684
+#: src/Admin/settings/ConnectionTab.js:680
 msgid "Live mode: this creates a real payment with real money and gateway fees."
 msgstr "Mode réel : cela crée un vrai paiement avec de l'argent réel et des frais de passerelle."
 
-#: src/Admin/settings/ConnectionTab.js:688
+#: src/Admin/settings/ConnectionTab.js:684
 msgid "Test mode: no real money is charged."
 msgstr "Mode test : aucun argent réel n'est débité."
 
-#: src/Admin/settings/ConnectionTab.js:697
+#: src/Admin/settings/ConnectionTab.js:693
 msgid "Test payment created. If the checkout did not open in a new tab, "
 msgstr "Paiement test créé. Si la page de paiement ne s'est pas ouverte dans un nouvel onglet, "
 
-#: src/Admin/settings/ConnectionTab.js:706
+#: src/Admin/settings/ConnectionTab.js:702
 msgid "open it here."
 msgstr "ouvrez-la ici."
 
-#: src/Admin/settings/ConnectionTab.js:718
+#: src/Admin/settings/ConnectionTab.js:714
 msgid "Create test payment"
 msgstr "Créer un paiement test"
 
-#: src/Admin/settings/ConnectionTab.js:733
+#: src/Admin/settings/ConnectionTab.js:729
 msgid "Connect Mollie first to run a test payment."
 msgstr "Connectez d'abord Mollie pour effectuer un paiement test."
+
+#: src/Core/Plugin.php:97
+msgid "Translations"
+msgstr "Traductions"
+
+#: src/blocks/simple-payment/index.js:60
+msgid "This block is missing an identifier and payments will fail until the post is saved. Save or update the post now."
+msgstr "Ce bloc est dépourvu d'un identifiant et les paiements échoueront jusqu'à ce que l'article soit enregistré. Enregistrez ou mettez à jour l'article maintenant."
 
