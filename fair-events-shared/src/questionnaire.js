@@ -234,6 +234,20 @@ export function evaluateConditionals(form) {
 		);
 		section.classList.toggle('fair-form-conditional-visible', visible);
 	});
+
+	// A hidden textarea always has a scrollHeight of 0, so an autosize run
+	// while it was still hidden collapsed it to a single line. Re-run
+	// autosize on every long-text textarea that just became visible so it
+	// grows to fit its content instead of staying collapsed.
+	form.querySelectorAll('[data-question-type="long_text"] textarea').forEach(
+		(textarea) => {
+			if (
+				isQuestionVisible(textarea.closest('[data-fair-form-question]'))
+			) {
+				autosizeTextarea(textarea);
+			}
+		}
+	);
 }
 
 /**

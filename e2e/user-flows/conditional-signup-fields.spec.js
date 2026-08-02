@@ -51,4 +51,29 @@ test.describe('conditional signup fields by event-option short name', () => {
 		await dinner.uncheck();
 		await expect(dietQuestion).toBeHidden();
 	});
+
+	test('sizes a revealed long-text question to fit its content instead of staying collapsed (#1352)', async ({
+		page,
+	}) => {
+		await page.goto(event.pageUrl);
+
+		const form = page.locator('.fair-events-get-tickets-form');
+		const dinner = form.locator(
+			'input[name="ticket_option_ids[]"][data-option-short-name="dinner"]'
+		);
+
+		// The long-text "notes" question shares the same hidden conditional as
+		// "diet". Its textarea gets autosized on load while still hidden
+		// (scrollHeight is always 0 for a display:none element), which used to
+		// bake in a collapsed height that never recovered once revealed.
+		const notesTextarea = form.locator(
+			'[data-question-key="notes"] textarea'
+		);
+
+		await dinner.check();
+		await expect(notesTextarea).toBeVisible();
+
+		const height = await notesTextarea.evaluate((el) => el.offsetHeight);
+		expect(height).toBeGreaterThan(40);
+	});
 });

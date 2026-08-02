@@ -347,6 +347,51 @@ describe('evaluateConditionals — question source (regression)', () => {
 	});
 });
 
+/**
+ * Build a long-text question wrapped in a conditional section keyed on a
+ * short-text "color" question.
+ *
+ * @param {string} colorValue The color question's current value.
+ * @return {string} The markup.
+ */
+function conditionalLongTextQuestion(colorValue) {
+	return (
+		`<div data-fair-form-question data-question-key="color" data-question-type="short_text"><input type="text" value="${colorValue}" /></div>` +
+		`<div data-fair-form-conditional data-condition-source="question" data-condition-question-key="color" data-condition-operator="equals" data-condition-value="blue">` +
+		`<div data-fair-form-question data-question-key="details" data-question-type="long_text"><textarea></textarea></div>` +
+		`</div>`
+	);
+}
+
+describe('evaluateConditionals — long-text autosize on reveal', () => {
+	// jsdom performs no real layout, so scrollHeight is always 0 unless mocked.
+	it('autosizes a long-text textarea once its conditional section becomes visible', () => {
+		const form = buildForm(conditionalLongTextQuestion('blue'));
+		const textarea = form.querySelector('textarea');
+		Object.defineProperty(textarea, 'scrollHeight', {
+			configurable: true,
+			value: 120,
+		});
+
+		evaluateConditionals(form);
+
+		expect(textarea.style.height).toBe('120px');
+	});
+
+	it('leaves a long-text textarea unsized while its conditional section stays hidden', () => {
+		const form = buildForm(conditionalLongTextQuestion('red'));
+		const textarea = form.querySelector('textarea');
+		Object.defineProperty(textarea, 'scrollHeight', {
+			configurable: true,
+			value: 120,
+		});
+
+		evaluateConditionals(form);
+
+		expect(textarea.style.height).not.toBe('120px');
+	});
+});
+
 function consentQuestion({ checked = false, required = true } = {}) {
 	return (
 		`<div data-fair-form-question data-question-key="tos" data-question-text="I accept" data-question-type="checkbox" data-required="${
