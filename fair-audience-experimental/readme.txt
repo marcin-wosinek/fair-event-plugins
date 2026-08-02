@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: audience, experimental
 Requires at least: 6.7
 Tested up to: 6.7
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -31,6 +31,19 @@ This plugin is a companion to Fair Audience. It carries the advanced feature bun
 Requires Fair Audience to be active.
 
 == Changelog ==
+
+## 1.1.1
+
+### Patch Changes
+
+-   7281a45: Centralize amount and currency formatting behind a shared `FairEventsShared\Money` helper (PHP) and matching `formatMoney`/`formatMoneyInline` helpers (JS), fixing the Fair Audience and Fair Events signup blocks, which previously hardcoded the € symbol regardless of the site's configured currency. A non-EUR site (e.g. PLN, CZK, HUF) now shows its real currency on ticket labels, add-on prices, and the running total — including after ticking an option, which previously reverted to €. EUR output is unchanged everywhere (signup blocks, emails, Timeline, Mollie payloads).
+-   ab61aba: Fixed a PHP 8.2 dynamic-property deprecation notice that fired on nearly every event-date read (`EventDates::$signup_price`, left over from a partially-reverted merge). Rather than re-declaring the field, finished removing it: the flat per-date "simple pricing" mode and pay-what-you-can sliding scale it powered were already superseded by ticket-type pricing everywhere except the legacy fair-audience Event Signup block, which now prices signups from ticket types only. The `signup_price` column is dropped from the event dates table via migration. Also fixed the same class of deprecation notice on `FairAudienceExperimental\Models\Group::$member_count`, populated by the groups admin list.
+-   Updated dependencies [7281a45]
+-   Updated dependencies [84cfda0]
+-   Updated dependencies [8d196d7]
+-   Updated dependencies [9ae94d2]
+-   Updated dependencies [1f9fcc1]
+    -   fair-events-shared@0.5.0
 
 ## 1.1.0
 

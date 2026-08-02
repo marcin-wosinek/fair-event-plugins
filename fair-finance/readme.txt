@@ -4,7 +4,7 @@ Tags: finance, budgeting, events
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,18 @@ Fair Finance provides budgeting, financial entries, and reconciliation features 
 2. Activate the plugin through the **Plugins** screen in WordPress.
 
 == Changelog ==
+
+## 1.0.5
+
+### Patch Changes
+
+-   f0aa452: Fixed broken links left over from the Budgets/Entries/Reconciliation screens' move from Payments Connector into Finance: the budgets list's "View" links (for a specific budget and for unbudgeted entries) now point at the current `fair-finance-entries` admin page instead of the retired, unregistered slug that produced a permissions-denied page. The transactions list's entry column, whose deep link into a specific entry never actually worked, now shows the entry ids as plain text instead of a dead link.
+-   Updated dependencies [7281a45]
+-   Updated dependencies [84cfda0]
+-   Updated dependencies [8d196d7]
+-   Updated dependencies [9ae94d2]
+-   Updated dependencies [1f9fcc1]
+    -   fair-events-shared@0.5.0
 
 ## 1.0.4
 

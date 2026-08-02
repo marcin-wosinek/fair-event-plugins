@@ -4,7 +4,7 @@ Tags: payments, mollie, telegram
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.3.0
+Stable tag: 0.3.1
 License: Private
 License URI: https://fair-event-plugins.com
 
@@ -21,6 +21,12 @@ This plugin houses features that are under active development and not yet ready 
 * Telegram Notifications — send payment notifications to Telegram chats
 
 == Changelog ==
+
+## 0.3.1
+
+### Patch Changes
+
+-   7281a45: Centralize amount and currency formatting behind a shared `FairEventsShared\Money` helper (PHP) and matching `formatMoney`/`formatMoneyInline` helpers (JS), fixing the Fair Audience and Fair Events signup blocks, which previously hardcoded the € symbol regardless of the site's configured currency. A non-EUR site (e.g. PLN, CZK, HUF) now shows its real currency on ticket labels, add-on prices, and the running total — including after ticking an option, which previously reverted to €. EUR output is unchanged everywhere (signup blocks, emails, Timeline, Mollie payloads).
 
 ## 0.1.0
 

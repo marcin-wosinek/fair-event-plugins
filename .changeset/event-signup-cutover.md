@@ -1,6 +1,0 @@
----
-"fair-events": minor
-"fair-audience": minor
----
-
-The unified Event Signup block (`fair-events/event-signup`) no longer delegates its render to fair-audience's legacy block when fair-audience is active — it renders its own markup unconditionally, and fair-audience enriches that same render via the existing filter/render-slot hooks instead of owning a competing template. A returning participant who already holds a ticket for the date now sees a signed-up/cancel card in place of the signup form, with a "cancel signup" action; per-occurrence date pickers label dates the viewer already holds (including via a whole-series pass); a resubmitted paid-ticket purchase for a date already held is rejected instead of silently creating a second charge; the per-IP rate limit is raised to 20/hour with an added 3/hour per-email limit, so a shared venue Wi-Fi no longer blocks legitimate signups. Sites without fair-audience see no change. The legacy `fair-audience/event-signup` block, its own identity routes, and existing signup links keep working unchanged for content authored before this change; participant_token URL login and the "I have an account" resume-by-email flow are not yet available on the unified form and remain on the legacy block for now.

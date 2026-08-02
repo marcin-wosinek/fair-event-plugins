@@ -1,5 +1,18 @@
 # fair-events-shared
 
+## 0.5.0
+
+### Minor Changes
+
+-   7281a45: Centralize amount and currency formatting behind a shared `FairEventsShared\Money` helper (PHP) and matching `formatMoney`/`formatMoneyInline` helpers (JS), fixing the Fair Audience and Fair Events signup blocks, which previously hardcoded the € symbol regardless of the site's configured currency. A non-EUR site (e.g. PLN, CZK, HUF) now shows its real currency on ticket labels, add-on prices, and the running total — including after ticking an option, which previously reverted to €. EUR output is unchanged everywhere (signup blocks, emails, Timeline, Mollie payloads).
+-   84cfda0: The Conditional Section block, when nested inside a signup form, can now show or hide its contents based on the visitor's selected ticket type (in addition to the existing question and event-option sources) — pick one or more ticket types and an "is selected" / "is not selected" operator, and the section reacts live as the visitor changes their selection. Also fixes the Conditional Section's "Event option" condition source, which failed to appear when nested inside the unified Event Signup block (it only recognized the older, hidden legacy block).
+-   9ae94d2: The unified Event Signup form (used when fair-audience is inactive) now shows a rich outcome when a visitor returns from paying: a confirmed card (event, amount, "confirmation email on its way"), a processing card that polls and updates in place, or a resume/retry card for a failed, canceled, expired, or abandoned payment — with buttons to continue the existing checkout, retry with a new one, or cancel and start over. A visitor who navigates directly back to the event page (no return link followed) now also sees their in-progress payment, recognised via a short-lived signed cookie, within the 15-minute hold window. Payment status is reconciled with the payment provider on return so the page never misreports a payment mid-redirect. When online payments are unavailable, ticket sales still show the existing "temporarily unavailable" notice instead of a dead retry button.
+
+### Patch Changes
+
+-   8d196d7: Add a `generateUuid()` helper that falls back to `crypto.getRandomValues()` when `crypto.randomUUID()` is unavailable (plain-HTTP sites are not a secure context), for blocks that need to mint a stable id in the editor.
+-   1f9fcc1: Fix long-answer question fields rendering collapsed to a single line instead of sizing to fit their content. A long-text question nested inside a Conditional Section stayed collapsed until the respondent typed in it, because the auto-grow behavior ran on hidden textareas (always 0 height) and never re-ran once the section was revealed. Long-text fields also had no styling at all outside the plain Fair Form block (e.g. in the Event Signup blocks), and could grow without limit; they now cap at roughly 12 lines and scroll internally beyond that.
+
 ## 0.4.0
 
 ### Minor Changes

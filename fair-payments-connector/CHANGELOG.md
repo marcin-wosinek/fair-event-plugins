@@ -1,5 +1,24 @@
 # fair-payments-connector
 
+## 1.7.0
+
+### Minor Changes
+
+-   3e696d0: Move the "Bundled translations" toggle out of each plugin's own settings screen into a single shared **Settings → Fair Event Plugins** screen that lists one row per active plugin. Previously saved values keep working unchanged. fair-audience and fair-payments-connector lose their Features tab (bundled-translations was its only entry); fair-timetable loses its whole Settings page; fair-platform loses its Features submenu. fair-events keeps its Features tab for the Ticketing bundle. The experimental companion plugins (fair-events-experimental, fair-audience-experimental, fair-payments-connector-experimental) now always load their bundled translation files instead of waiting on a WordPress.org language pack that will never exist for them.
+
+### Patch Changes
+
+-   7281a45: Centralize amount and currency formatting behind a shared `FairEventsShared\Money` helper (PHP) and matching `formatMoney`/`formatMoneyInline` helpers (JS), fixing the Fair Audience and Fair Events signup blocks, which previously hardcoded the € symbol regardless of the site's configured currency. A non-EUR site (e.g. PLN, CZK, HUF) now shows its real currency on ticket labels, add-on prices, and the running total — including after ticking an option, which previously reverted to €. EUR output is unchanged everywhere (signup blocks, emails, Timeline, Mollie payloads).
+-   f0aa452: Fixed broken links left over from the Budgets/Entries/Reconciliation screens' move from Payments Connector into Finance: the budgets list's "View" links (for a specific budget and for unbudgeted entries) now point at the current `fair-finance-entries` admin page instead of the retired, unregistered slug that produced a permissions-denied page. The transactions list's entry column, whose deep link into a specific entry never actually worked, now shows the entry ids as plain text instead of a dead link.
+-   8d196d7: Reject a payment request whose `block_id` is empty instead of matching it against any legacy simple-payment block with the same blank saved id — closes a mischarge risk on pages with more than one such block. The block editor also now warns with a save prompt when a simple-payment block is missing its id, since the id is only fixed in the published post once it's re-saved.
+-   5a55c92: Security: Mollie OAuth access and refresh tokens are no longer readable or writable through `/wp/v2/settings` (they were previously returned in full to any `manage_options` user despite a REST context scope that had no effect). Disconnecting from Mollie now goes through a dedicated `oauth/disconnect` endpoint instead of clearing the tokens via the settings REST route.
+-   Updated dependencies [7281a45]
+-   Updated dependencies [84cfda0]
+-   Updated dependencies [8d196d7]
+-   Updated dependencies [9ae94d2]
+-   Updated dependencies [1f9fcc1]
+    -   fair-events-shared@0.5.0
+
 ## 1.6.0
 
 ### Minor Changes

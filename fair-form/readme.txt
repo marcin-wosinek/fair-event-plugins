@@ -4,7 +4,7 @@ Tags: form, events, fair
 Requires at least: 6.7
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: Private
 License URI: https://fair-event-plugins.com
 
@@ -15,6 +15,30 @@ Form blocks and answer data layer for Fair Event Plugins.
 Fair Form provides the form block family (`fair-form*`) and the questionnaire answer storage layer for Fair Event Plugins.
 
 == Changelog ==
+
+## 1.3.0
+
+### Minor Changes
+
+-   3e696d0: Move the "Bundled translations" toggle out of each plugin's own settings screen into a single shared **Settings → Fair Event Plugins** screen that lists one row per active plugin. Previously saved values keep working unchanged. fair-audience and fair-payments-connector lose their Features tab (bundled-translations was its only entry); fair-timetable loses its whole Settings page; fair-platform loses its Features submenu. fair-events keeps its Features tab for the Ticketing bundle. The experimental companion plugins (fair-events-experimental, fair-audience-experimental, fair-payments-connector-experimental) now always load their bundled translation files instead of waiting on a WordPress.org language pack that will never exist for them.
+-   84cfda0: The Conditional Section block, when nested inside a signup form, can now show or hide its contents based on the visitor's selected ticket type (in addition to the existing question and event-option sources) — pick one or more ticket types and an "is selected" / "is not selected" operator, and the section reacts live as the visitor changes their selection. Also fixes the Conditional Section's "Event option" condition source, which failed to appear when nested inside the unified Event Signup block (it only recognized the older, hidden legacy block).
+
+### Patch Changes
+
+-   183d8a2: Fix the Fair Form block's "Notification Email" so it fires on every submission, not just ones where the form collects the submitter's email address and the audience-tracking plugin is active. The notification now has its own mail path in fair-form and no longer depends on fair-audience being installed.
+
+    Note: the recipient is now resolved from the block's attributes in the page's own content. A Fair Form block placed outside a page/post's content — for example in a full-site-editing template or template part, a widget area, or a non-synced pattern used that way — will not receive notifications. Previously this worked because the recipient was carried on the rendered block markup. If you rely on a Fair Form block in a template or template part, move it into page/post content until this is addressed in a follow-up.
+
+-   8d196d7: Fix the Fair Form block failing to assign a form id on plain-HTTP sites (common for self-hosted staging), where `crypto.randomUUID()` is unavailable outside a secure context. The block now falls back to `crypto.getRandomValues()` when generating its id.
+-   22a339f: Fix question fields (short text, phone, consent, conditional section, etc.) not being insertable into the Event Signup block's Form content area.
+-   1f9fcc1: Fix long-answer question fields rendering collapsed to a single line instead of sizing to fit their content. A long-text question nested inside a Conditional Section stayed collapsed until the respondent typed in it, because the auto-grow behavior ran on hidden textareas (always 0 height) and never re-ran once the section was revealed. Long-text fields also had no styling at all outside the plain Fair Form block (e.g. in the Event Signup blocks), and could grow without limit; they now cap at roughly 12 lines and scroll internally beyond that.
+-   afa93d5: Derive the phone question's placeholder example from the site's timezone instead of always showing a German example — a Madrid-configured site now shows a Spanish example, a Brussels one a Belgian example, and so on across eleven countries, falling back to the German example on unmapped timezones. An explicit placeholder set on the block still always wins.
+-   Updated dependencies [7281a45]
+-   Updated dependencies [84cfda0]
+-   Updated dependencies [8d196d7]
+-   Updated dependencies [9ae94d2]
+-   Updated dependencies [1f9fcc1]
+    -   fair-events-shared@0.5.0
 
 ## 1.2.0
 
