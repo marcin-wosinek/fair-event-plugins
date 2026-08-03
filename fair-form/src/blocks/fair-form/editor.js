@@ -30,6 +30,7 @@ const ALLOWED_BLOCKS = [
 	'fair-audience/fair-form-long-text',
 	'fair-audience/fair-form-email',
 	'fair-audience/fair-form-phone',
+	'fair-audience/fair-form-url',
 	'fair-audience/fair-form-select-one',
 	'fair-audience/fair-form-multiselect',
 	'fair-audience/fair-form-radio',
