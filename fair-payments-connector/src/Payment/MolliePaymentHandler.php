@@ -40,34 +40,7 @@ class MolliePaymentHandler {
 
 		$this->mollie = new MollieApiClient();
 
-		// Prefer OAuth if connected, otherwise fall back to API keys.
-		if ( get_option( 'fair_payment_mollie_connected', false ) ) {
-			$this->set_access_token();
-		} else {
-			$this->set_api_key();
-		}
-	}
-
-	/**
-	 * Set API key based on mode
-	 *
-	 * @return void
-	 * @throws \Exception If no API key is configured.
-	 */
-	private function set_api_key() {
-		$mode = get_option( 'fair_payment_mode', 'test' );
-
-		if ( 'live' === $mode ) {
-			$api_key = get_option( 'fair_payment_live_api_key', '' );
-		} else {
-			$api_key = get_option( 'fair_payment_test_api_key', '' );
-		}
-
-		if ( empty( $api_key ) ) {
-			throw new \Exception( esc_html__( 'Mollie API key is not configured.', 'fair-payments-connector' ) );
-		}
-
-		$this->mollie->setApiKey( $api_key );
+		$this->set_access_token();
 	}
 
 	/**
@@ -518,26 +491,9 @@ class MolliePaymentHandler {
 	/**
 	 * Check if API is configured
 	 *
-	 * Checks if either OAuth connection or API keys are configured.
-	 * OAuth is preferred, but API keys are still supported for backward compatibility.
-	 *
-	 * @return bool True if OAuth is connected or API key is set.
+	 * @return bool True if the site has an OAuth Mollie connection.
 	 */
 	public static function is_configured() {
-		// Check OAuth connection first.
-		if ( get_option( 'fair_payment_mollie_connected', false ) ) {
-			return true;
-		}
-
-		// Fall back to API key check.
-		$mode = get_option( 'fair_payment_mode', 'test' );
-
-		if ( 'live' === $mode ) {
-			$api_key = get_option( 'fair_payment_live_api_key', '' );
-		} else {
-			$api_key = get_option( 'fair_payment_test_api_key', '' );
-		}
-
-		return ! empty( $api_key );
+		return (bool) get_option( 'fair_payment_mollie_connected', false );
 	}
 }

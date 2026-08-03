@@ -8,6 +8,7 @@
 namespace FairPaymentsConnector\Admin;
 
 use FairEventsShared\Money;
+use FairPaymentsConnector\Payment\MolliePaymentHandler;
 
 defined( 'WPINC' ) || die;
 
@@ -159,7 +160,7 @@ class AdminPages {
 
 		$settings_url = add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) );
 
-		if ( $this->is_configured() ) {
+		if ( MolliePaymentHandler::is_configured() ) {
 			/* translators: %s: link to settings page */
 			$message = __( 'Fair Payment is in <strong>Test mode</strong> — no real payments are being processed. <a href="%s">Switch to Live mode</a>.', 'fair-payments-connector' );
 		} else {
@@ -187,29 +188,16 @@ class AdminPages {
 	}
 
 	/**
-	 * Whether Mollie is configured (OAuth connection or stored API keys).
-	 *
-	 * @return bool
-	 */
-	private function is_configured() {
-		$connected = get_option( 'fair_payment_mollie_connected', false );
-		$test_key  = get_option( 'fair_payment_test_api_key', '' );
-		$live_key  = get_option( 'fair_payment_live_api_key', '' );
-
-		return (bool) ( $connected || $test_key || $live_key );
-	}
-
-	/**
 	 * Add action links on the plugins list page.
 	 *
-	 * Shows a "Set up" link when Mollie is not yet configured (no OAuth connection
-	 * and no API keys stored), so admins are guided to the settings page.
+	 * Shows a "Set up" link when Mollie is not yet configured (no OAuth connection),
+	 * so admins are guided to the settings page.
 	 *
 	 * @param string[] $links Existing action links.
 	 * @return string[] Modified action links.
 	 */
 	public function add_plugin_action_links( $links ) {
-		if ( ! $this->is_configured() ) {
+		if ( ! MolliePaymentHandler::is_configured() ) {
 			$settings_url = add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) );
 			$setup_link   = '<a href="' . esc_url( $settings_url ) . '">' . esc_html__( 'Set up', 'fair-payments-connector' ) . '</a>';
 			array_unshift( $links, $setup_link );

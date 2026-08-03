@@ -165,9 +165,10 @@ class Schema {
 		self::migrate_to_v20();
 		self::migrate_to_v21();
 		self::migrate_to_v22();
+		self::migrate_to_v23();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '22.0' );
+		update_option( 'fair_payment_db_version', '23.0' );
 	}
 
 	/**
@@ -1157,6 +1158,32 @@ class Schema {
 						$table_name
 					)
 				);
+			}
+		}
+	}
+
+	/**
+	 * Migrate database from v22.0 to v23.0
+	 *
+	 * Retires Mollie API key authentication (#1317). Deletes any stored test/live
+	 * API key so no dead credential lingers in the database, and — if the site
+	 * isn't already OAuth-connected — sets a one-off flag so ApiKeyRemovedNotice
+	 * shows the "your key was removed" notice on the admin's next page load.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v23() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '23.0', '<' ) ) {
+			$had_test_key = ! empty( get_option( 'fair_payment_test_api_key', '' ) );
+			$had_live_key = ! empty( get_option( 'fair_payment_live_api_key', '' ) );
+
+			delete_option( 'fair_payment_test_api_key' );
+			delete_option( 'fair_payment_live_api_key' );
+
+			if ( ( $had_test_key || $had_live_key ) && ! get_option( 'fair_payment_mollie_connected', false ) ) {
+				update_option( 'fair_payment_api_key_removed_notice', true );
 			}
 		}
 	}

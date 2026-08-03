@@ -11,8 +11,10 @@
  *   1. Captures outgoing mail into the `fair_e2e_captured_mail` option instead
  *      of sending it, so specs can assert on subject/recipient/body and no real
  *      mail leaves the host.
- *   2. Forces fair-payments-connector into Mollie "test" mode with a dummy key, so the
- *      production Mollie code path runs without a real API key.
+ *   2. Forces fair-payments-connector into Mollie "test" mode with a fake OAuth
+ *      connection, so the production Mollie code path runs without a real
+ *      Mollie account. (API key authentication was retired in #1317 — there
+ *      is no key-based fallback left to fake.)
  *   3. Pre-declares a fake Mollie HTTP transport (see lib/mollie-http-double.php)
  *      so every Mollie API call returns canned responses. This keeps ALL of the
  *      real fair-payments-connector / fair-audience purchase code in play while making the
@@ -51,16 +53,38 @@ if ( get_option( 'fair_e2e_force_form_bundled_translations' ) ) {
 );
 
 /*
- * 2. Force fair-payments-connector into test mode with a syntactically valid dummy key.
+ * 2. Force fair-payments-connector into test mode with a fake OAuth connection.
  *
- * MollieApiClient::setApiKey() requires `^(live|test)_\w{30,}$`. The double
- * ignores the key, but the real handler still validates it before use, so it
- * must look real.
+ * MolliePaymentHandler::is_configured() and its constructor only ever consult
+ * the OAuth option set — there is no API-key fallback since #1317 — so the
+ * double needs a connected-looking site: a truthy `_connected` flag, a
+ * profile ID (used for the payment/method-allowlist calls), a syntactically
+ * plausible access token, and an expiry far enough in the future that
+ * get_valid_access_token() never calls the real, un-doubled
+ * `https://fair-event-plugins.com/oauth/refresh`.
  */
 add_filter(
-	'pre_option_fair_payment_test_api_key',
+	'pre_option_fair_payment_mollie_connected',
 	static function () {
-		return 'test_' . str_repeat( 'e', 30 );
+		return true;
+	}
+);
+add_filter(
+	'pre_option_fair_payment_mollie_profile_id',
+	static function () {
+		return 'pfl_e2e0000000';
+	}
+);
+add_filter(
+	'pre_option_fair_payment_mollie_access_token',
+	static function () {
+		return 'access_e2e_' . str_repeat( 'e', 30 );
+	}
+);
+add_filter(
+	'pre_option_fair_payment_mollie_token_expires',
+	static function () {
+		return time() + YEAR_IN_SECONDS;
 	}
 );
 add_filter(

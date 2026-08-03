@@ -63,7 +63,7 @@ class Plugin {
 
 		$this->load_admin();
 		$this->load_settings();
-		$this->load_migration_notice();
+		$this->load_api_key_removed_notice();
 		$this->load_shared_settings_page();
 	}
 
@@ -195,14 +195,14 @@ class Plugin {
 	}
 
 	/**
-	 * Load and initialize migration notice
+	 * Load and initialize the one-off API-key-removed notice
 	 *
 	 * @return void
 	 */
-	private function load_migration_notice() {
+	private function load_api_key_removed_notice() {
 		if ( is_admin() ) {
-			$migration_notice = new \FairPaymentsConnector\Admin\MigrationNotice();
-			$migration_notice->init();
+			$notice = new \FairPaymentsConnector\Admin\ApiKeyRemovedNotice();
+			$notice->init();
 		}
 	}
 

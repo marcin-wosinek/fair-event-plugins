@@ -33,7 +33,7 @@ The integration allows content authors to place payment blocks on pages/posts wh
    - Stores transaction details and status
 
 6. **Admin Pages** (`src/Admin/AdminPages.php`)
-   - Settings page for API key configuration
+   - Settings page for the guided Mollie OAuth connection
    - Transactions page to view payment history
 
 ## Payment Flow
@@ -67,15 +67,11 @@ The integration allows content authors to place payment blocks on pages/posts wh
 
 ## Configuration
 
-### API Keys
+### Mollie Connection
 
 1. Navigate to **Fair Payments Connector > Settings** in WordPress admin
-2. Configure API keys:
-   - **Test API Key**: For testing (starts with `test_`)
-   - **Live API Key**: For production (starts with `live_`)
+2. Connect your Mollie account through the guided OAuth flow
 3. Set the mode (test or live)
-
-Get your API keys from: https://www.mollie.com/dashboard/developers/api-keys
 
 ### Database
 
@@ -146,7 +142,7 @@ add_action('fair_payment_status_changed', function($payment, $transaction) {
 ### Test Mode
 
 1. Set mode to "test" in settings
-2. Use test API key
+2. Connect a Mollie account through the guided OAuth flow
 3. Use Mollie test payment methods:
    - Test credit cards
    - Ideal test issuer
@@ -164,7 +160,7 @@ Then use the ngrok URL in your test environment.
 
 ## Security Considerations
 
-1. **API Keys**: Stored in WordPress options, accessible only to administrators
+1. **OAuth Tokens**: Stored in WordPress options, write-only through the settings REST API, accessible only to administrators
 2. **Nonce Protection**: Not required as REST API uses WordPress authentication
 3. **Input Sanitization**: All user inputs are sanitized
 4. **Output Escaping**: All outputs are escaped

@@ -30,6 +30,20 @@ if ( ! function_exists( 'get_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'update_option' ) ) {
+	/**
+	 * Stub of WordPress update_option() backed by $GLOBALS['_fair_test_options'].
+	 *
+	 * @param string $name  Option name.
+	 * @param mixed  $value Value to store.
+	 * @return true
+	 */
+	function update_option( $name, $value ) {
+		$GLOBALS['_fair_test_options'][ $name ] = $value;
+		return true;
+	}
+}
+
 if ( ! function_exists( 'wp_parse_args' ) ) {
 	/**
 	 * Stub of WordPress wp_parse_args().
