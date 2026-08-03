@@ -22,6 +22,12 @@
  *     to paid from there, fair_payment_paid → FairEvents PaymentHooks
  *     confirms the signup, and the block's poller swaps in the confirmed card.
  *
+ * Both scenarios also assert fair-events' own baseline confirmation email
+ * (FairEvents\Services\EmailService, wired via SignupEmailHooks) is captured —
+ * with fair-audience inactive there is no other mailer to send it, so a site
+ * running fair-events standalone must not leave the "check your email"
+ * promise in the UI unfulfilled (#1360).
+ *
  */
 
 import { test, expect } from '../support/fixtures.js';
@@ -97,6 +103,7 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 		expect(state.signups[0].status).toBe('pending_payment');
 		expect(state.signups[0].amount).toBe(event.price);
 		expect(state.signups[0].mollie_payment_id).toBeTruthy();
+		expect(state.signups[0].mail).toHaveLength(0);
 
 		// The buyer's bank has now confirmed the payment. Simulate Mollie's
 		// webhook call (production path): the handler fetches the payment
@@ -125,6 +132,12 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 		expect(state.signups[0].status).toBe('confirmed');
 		expect(state.signups[0].transaction_status).toBe('paid');
 		expect(state.signups[0].transaction_testmode).toBe(true);
+
+		// fair-events' own confirmation email goes out once payment is
+		// confirmed — not before (the earlier pending_payment read above
+		// carried no mail yet).
+		expect(state.signups[0].mail).toHaveLength(1);
+		expect(state.signups[0].mail[0].subject).toContain('registration');
 	});
 
 	test('free ticket: immediate confirmation without any transaction', async ({
@@ -169,5 +182,7 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 		expect(state.signups[0].status).toBe('confirmed');
 		expect(state.signups[0].amount).toBe(0);
 		expect(state.signups[0].transaction_id).toBeNull();
+		expect(state.signups[0].mail).toHaveLength(1);
+		expect(state.signups[0].mail[0].subject).toContain('registration');
 	});
 });

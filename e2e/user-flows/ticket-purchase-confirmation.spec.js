@@ -122,6 +122,18 @@ test.describe('ticket purchase confirmation', () => {
 				).toBeFalsy();
 			}
 
+			// fair-events' own baseline confirmation (SignupEmailHooks) must not
+			// also fire here — fair-audience is active, so it already sent the
+			// richer "Signup confirmed" email above; a duplicate would show up
+			// as extra captured mail beyond the two subjects asserted here.
+			const ownBaselineConfirmation = state.mail.find((m) =>
+				m.subject.includes('registration')
+			);
+			expect(
+				ownBaselineConfirmation,
+				'fair-events must not send its own confirmation when fair-audience is active'
+			).toBeFalsy();
+
 			// Organizer-facing: the buyer's name is on the per-event participants
 			// page. Drive the real admin UI (React app fetching the participants
 			// REST endpoint), not a DB read.
