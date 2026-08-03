@@ -14,6 +14,7 @@
 		"composer:install": "composer install",
 		"composer:install:prod": "composer install --no-dev",
 		"composer:update": "composer update",
+		"composer:update:shared": "composer update fair-events/shared",
 		"composer:validate": "composer validate --strict",
 		"makepot": "wp i18n make-pot . languages/fair-payments-connector-experimental.pot --exclude=node_modules,vendor,tests,build,svn",
 		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-payments-connector-experimental --pretty-print --no-purge --use-map=build/map.json",
