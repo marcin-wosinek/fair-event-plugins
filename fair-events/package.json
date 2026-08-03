@@ -23,7 +23,7 @@
 		"updatepo": "wp i18n update-po languages/fair-events.pot languages/",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-events svn",
 		"svn:copy": "cp -r readme.txt fair-events.php src package* composer* languages CHANGELOG.md svn/trunk; cp assets/* svn/assets",
-		"test": "npm-run-all test:js",
+		"test": "npm-run-all test:js test:php",
 		"test:js": "jest",
 		"test:php": "vendor/bin/phpunit",
 		"test:api": "playwright test src/API/__tests__/",

@@ -19,7 +19,7 @@
 		"makejson": "wp i18n make-json languages ./build/languages --domain=fair-payments-connector-experimental --pretty-print --no-purge --use-map=build/map.json",
 		"makemo": "wp i18n make-mo languages/",
 		"updatepo": "wp i18n update-po languages/fair-payments-connector-experimental.pot languages/",
-		"test": "wp-scripts test-unit-js --config jest.config.js",
+		"test": "npm-run-all test:js test:php",
 		"test:js": "wp-scripts test-unit-js --config jest.config.js",
 		"test:php": "vendor/bin/phpunit",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-payments-connector-experimental svn",

@@ -189,8 +189,15 @@ the repo)
     (e.g. an `insert()` that returns success) rather than pulling in a DB
     library.
 -   Run via `npm run test:php` (→ `vendor/bin/phpunit`) or `composer test`.
-    `npm test` already chains `test:php` after `test:js`, so it runs in CI with
-    no dedicated workflow step.
+    **Every plugin's `test` script must chain `test:php` after `test:js`**
+    (e.g. `"test": "npm-run-all test:js test:php"`) — the root `npm test` runs
+    `npm run test --workspaces`, so CI only picks up a plugin's PHP suite if
+    its own `test` script includes it. There is no dedicated CI workflow step
+    for PHP unit tests; adding a suite to a plugin that doesn't chain it yet
+    means it silently never runs.
+-   A plugin with a `test:php` script but no `phpunit.xml`/`__tests__/*Test.php`
+    is stale — either add the suite or delete the command; don't leave a
+    script that references a suite that doesn't exist.
 
 **When to use**:
 
@@ -201,7 +208,7 @@ the repo)
 -   Pure PHP logic (settings parsing, formatting, recurrence math) that doesn't
     need a live WordPress instance — see `fair-events/__tests__/`.
 
-**Examples**: `fair-events`, `fair-payments-connector`,
+**Examples**: `fair-events`, `fair-payments-connector`, `fair-audience`,
 `fair-payments-connector-experimental`, `fair-events-experimental`,
 `fair-timetable`.
 
@@ -533,13 +540,19 @@ Each plugin should define these scripts:
 ```json
 {
 	"scripts": {
-		"test": "npm-run-all test:*",
+		"test": "npm-run-all test:js test:php",
 		"test:js": "jest",
+		"test:php": "vendor/bin/phpunit",
 		"test:e2e": "playwright test e2e/",
 		"test:api": "playwright test src/API/__tests__/"
 	}
 }
 ```
+
+`test` lists `test:js`/`test:php` explicitly rather than globbing `test:*` —
+`test:e2e` and `test:api` need a live WordPress instance and must stay opt-in,
+not swept into the plain `npm test` run. Omit `test:php` from the list (and
+the script) entirely on a plugin with no PHP suite.
 
 ## Notes and Best Practices
 
