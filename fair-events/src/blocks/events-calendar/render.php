@@ -214,12 +214,14 @@ $categories      = $attributes['categories'] ?? array();
 $show_drafts     = $attributes['showDrafts'] ?? false;
 $bg_color        = $attributes['backgroundColor'] ?? 'primary';
 $text_color      = $attributes['textColor'] ?? '#ffffff';
+$header_bg_color = $attributes['headerBackgroundColor'] ?? '#f9f9f9';
 $event_sources   = $attributes['eventSources'] ?? array();
 $show_subscribe  = $attributes['showSubscribe'] ?? true;
 
 // Convert WordPress event colors to CSS values (used for post-linked/standalone events)
 $bg_color_value   = fair_events_convert_color_to_css( $bg_color );
 $text_color_value = fair_events_convert_color_to_css( $text_color );
+$header_bg_value  = fair_events_convert_color_to_css( $header_bg_color );
 
 // Get month/year from URL parameters or block attributes
 // URL params take precedence (for navigation), then block attributes, then current date
@@ -312,7 +314,7 @@ $subscribe_urls = fair_events_build_subscribe_urls( is_array( $categories ) ? $c
 ?>
 <div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-events-calendar' ) ) ); ?>>
 	<?php if ( $show_navigation ) : ?>
-	<div class="fair-events-navigation">
+	<div class="fair-events-navigation" style="--fair-events-header-bg: <?php echo esc_attr( $header_bg_value ); ?>">
 		<div class="wp-block-button is-style-outline">
 			<a href="<?php echo esc_url( $prev_url ); ?>" class="nav-prev wp-block-button__link wp-element-button">
 				<?php esc_html_e( 'Previous', 'fair-events' ); ?>
