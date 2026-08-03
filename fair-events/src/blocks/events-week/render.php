@@ -230,15 +230,19 @@ if ( $show_copy_summary ) {
 
 	<?php if ( $show_navigation ) : ?>
 	<div class="fair-events-navigation">
-		<a href="<?php echo esc_url( $prev_url ); ?>" class="nav-prev">
-			<?php esc_html_e( 'Previous', 'fair-events' ); ?>
-		</a>
+		<div class="wp-block-button is-style-outline">
+			<a href="<?php echo esc_url( $prev_url ); ?>" class="nav-prev wp-block-button__link wp-element-button">
+				<?php esc_html_e( 'Previous', 'fair-events' ); ?>
+			</a>
+		</div>
 		<h2 class="navigation-title">
 			<?php echo esc_html( $nav_title ); ?>
 		</h2>
-		<a href="<?php echo esc_url( $next_url ); ?>" class="nav-next">
-			<?php esc_html_e( 'Next', 'fair-events' ); ?>
-		</a>
+		<div class="wp-block-button is-style-outline">
+			<a href="<?php echo esc_url( $next_url ); ?>" class="nav-next wp-block-button__link wp-element-button">
+				<?php esc_html_e( 'Next', 'fair-events' ); ?>
+			</a>
+		</div>
 	</div>
 	<?php endif; ?>
 

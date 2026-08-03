@@ -23,26 +23,8 @@ $fair-events-today-bg-color: #e7f5ff;
 			color: #1e1e1e;
 		}
 
-		.nav-prev,
-		.nav-next {
-			padding: 0.5rem 1rem;
-			background: #fff;
-			border: 1px solid #ddd;
-			border-radius: 4px;
-			text-decoration: none;
-			color: #1e1e1e;
-			transition: all 0.2s ease;
-
-			&:hover {
-				background: #2271b1;
-				color: #fff;
-				border-color: #2271b1;
-			}
-
-			&:focus {
-				outline: 2px solid #2271b1;
-				outline-offset: 2px;
-			}
+		.wp-block-button {
+			margin: 0;
 		}
 	}
 }
