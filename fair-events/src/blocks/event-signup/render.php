@@ -383,12 +383,24 @@ $all_purchases_blocked = $payments_unavailable
 // Generate unique form ID.
 $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 
-$wrapper_attributes = get_block_wrapper_attributes(
-	array(
-		'class'         => 'fair-events-get-tickets',
-		'data-currency' => \FairEventsShared\Money::site_currency(),
-	)
-);
+// The editor's live preview nests this render inside its own block wrapper
+// (editor.js's useBlockProps() div), which already carries the
+// wp-block-fair-events-event-signup class and any spacing support styles. Adding
+// get_block_wrapper_attributes() here too would duplicate both — a second
+// element matching the block's wrapper class, and doubled-up padding/margin.
+if ( ! empty( $attributes['isEditorPreview'] ) ) {
+	$wrapper_attributes = sprintf(
+		'class="fair-events-get-tickets" data-currency="%s"',
+		esc_attr( \FairEventsShared\Money::site_currency() )
+	);
+} else {
+	$wrapper_attributes = get_block_wrapper_attributes(
+		array(
+			'class'         => 'fair-events-get-tickets',
+			'data-currency' => \FairEventsShared\Money::site_currency(),
+		)
+	);
+}
 ?>
 
 <div <?php echo wp_kses_post( $wrapper_attributes ); ?>>
