@@ -97,4 +97,100 @@ test.describe('VenueController', () => {
 		expect(body).not.toHaveProperty('google_maps_link');
 		expect(body.maps_url).toBeNull();
 	});
+
+	test('creates a venue with a decimal-comma pair and stores it normalized to dots', async () => {
+		const res = await api.post('/wp-json/fair-events/v1/venues', {
+			headers: authHeader,
+			data: {
+				name: `API Test Venue Comma ${Date.now()}`,
+				latitude: '39,48',
+				longitude: '-0,36',
+			},
+		});
+
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+
+		await api.delete(`/wp-json/fair-events/v1/venues/${body.id}`, {
+			headers: authHeader,
+		});
+
+		expect(body.latitude).toBe('39.48');
+		expect(body.longitude).toBe('-0.36');
+	});
+
+	test.describe('rejected coordinates on POST', () => {
+		const invalidCases = [
+			{
+				label: 'out-of-range latitude',
+				data: { latitude: '200', longitude: '0' },
+			},
+			{
+				label: 'out-of-range longitude',
+				data: { latitude: '0', longitude: '200' },
+			},
+			{
+				label: 'only latitude filled',
+				data: { latitude: '39.4878023', longitude: '' },
+			},
+			{
+				label: 'only longitude filled',
+				data: { latitude: '', longitude: '-0.3613204' },
+			},
+			{
+				label: 'non-numeric latitude',
+				data: { latitude: 'not-a-number', longitude: '0' },
+			},
+			{
+				label: 'coordinate exceeding stored length',
+				data: { latitude: '0.1234567890123456789', longitude: '0' },
+			},
+		];
+
+		for (const { label, data } of invalidCases) {
+			test(`rejects ${label}`, async () => {
+				const res = await api.post('/wp-json/fair-events/v1/venues', {
+					headers: authHeader,
+					data: {
+						name: `API Test Venue Invalid ${Date.now()}`,
+						...data,
+					},
+				});
+
+				expect(res.status()).toBe(400);
+				const body = await res.json();
+				expect(body.code).toBe('rest_invalid_coordinates');
+			});
+		}
+	});
+
+	test('rejects invalid coordinates on PUT', async () => {
+		const createRes = await api.post('/wp-json/fair-events/v1/venues', {
+			headers: authHeader,
+			data: {
+				name: `API Test Venue Update ${Date.now()}`,
+			},
+		});
+		const created = await createRes.json();
+
+		const res = await api.put(
+			`/wp-json/fair-events/v1/venues/${created.id}`,
+			{
+				headers: authHeader,
+				data: {
+					name: created.name,
+					latitude: '39.4878023',
+					longitude: '',
+				},
+			}
+		);
+
+		expect(res.status()).toBe(400);
+		const body = await res.json();
+		expect(body.code).toBe('rest_invalid_coordinates');
+
+		await api.delete(`/wp-json/fair-events/v1/venues/${created.id}`, {
+			headers: authHeader,
+		});
+	});
 });

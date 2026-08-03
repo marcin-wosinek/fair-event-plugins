@@ -46,4 +46,80 @@ class VenueTest extends TestCase {
 		$this->assertNotNull( $url );
 		$this->assertStringContainsString( 'Fallback', rawurldecode( $url ) );
 	}
+
+	public function test_both_coordinates_empty_is_valid() {
+		$result = Venue::validate_coordinates( '', '' );
+		$this->assertTrue( $result['valid'] );
+		$this->assertNull( $result['latitude'] );
+		$this->assertNull( $result['longitude'] );
+
+		$result = Venue::validate_coordinates( null, null );
+		$this->assertTrue( $result['valid'] );
+	}
+
+	public function test_valid_coordinates_pass_through() {
+		$result = Venue::validate_coordinates( '39.4878023', '-0.3613204' );
+		$this->assertTrue( $result['valid'] );
+		$this->assertSame( '39.4878023', $result['latitude'] );
+		$this->assertSame( '-0.3613204', $result['longitude'] );
+	}
+
+	public function test_decimal_comma_is_normalized_to_dot() {
+		$result = Venue::validate_coordinates( '39,48', '-0,36' );
+		$this->assertTrue( $result['valid'] );
+		$this->assertSame( '39.48', $result['latitude'] );
+		$this->assertSame( '-0.36', $result['longitude'] );
+	}
+
+	public function test_pasted_pair_is_split_across_fields() {
+		$result = Venue::validate_coordinates( '39.4878023, -0.3613204', '' );
+		$this->assertTrue( $result['valid'] );
+		$this->assertSame( '39.4878023', $result['latitude'] );
+		$this->assertSame( '-0.3613204', $result['longitude'] );
+	}
+
+	public function test_only_one_coordinate_filled_is_rejected() {
+		$result = Venue::validate_coordinates( '39.4878023', '' );
+		$this->assertFalse( $result['valid'] );
+		$this->assertSame( 'coordinate_pair_incomplete', $result['code'] );
+
+		$result = Venue::validate_coordinates( '', '-0.3613204' );
+		$this->assertFalse( $result['valid'] );
+		$this->assertSame( 'coordinate_pair_incomplete', $result['code'] );
+	}
+
+	public function test_non_numeric_coordinates_are_rejected() {
+		$result = Venue::validate_coordinates( 'not-a-number', '-0.3613204' );
+		$this->assertFalse( $result['valid'] );
+		$this->assertSame( 'coordinate_not_numeric', $result['code'] );
+	}
+
+	public function test_out_of_range_latitude_is_rejected() {
+		$result = Venue::validate_coordinates( '90.0001', '0' );
+		$this->assertFalse( $result['valid'] );
+		$this->assertSame( 'coordinate_out_of_range', $result['code'] );
+
+		$valid = Venue::validate_coordinates( '90', '0' );
+		$this->assertTrue( $valid['valid'] );
+	}
+
+	public function test_out_of_range_longitude_is_rejected() {
+		$result = Venue::validate_coordinates( '0', '180.0001' );
+		$this->assertFalse( $result['valid'] );
+		$this->assertSame( 'coordinate_out_of_range', $result['code'] );
+
+		$valid = Venue::validate_coordinates( '0', '-180' );
+		$this->assertTrue( $valid['valid'] );
+	}
+
+	public function test_coordinates_exceeding_stored_length_are_rejected() {
+		// Long, but within range, so this exercises the length check specifically
+		// rather than being caught earlier by the range check.
+		$too_long = '0.1234567890123456789';
+		$this->assertGreaterThan( 20, strlen( $too_long ) );
+
+		$result = Venue::validate_coordinates( $too_long, '0' );
+		$this->assertFalse( $result['valid'] );
+		$this->assertSame( 'coordinate_too_long', $result['code'] );
+	}
 }

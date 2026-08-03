@@ -208,6 +208,17 @@ class VenueController extends WP_REST_Controller {
 			);
 		}
 
+		$coordinates = Venue::validate_coordinates( $latitude, $longitude );
+		if ( ! $coordinates['valid'] ) {
+			return new WP_Error(
+				'rest_invalid_coordinates',
+				$coordinates['message'],
+				array( 'status' => 400 )
+			);
+		}
+		$latitude  = $coordinates['latitude'];
+		$longitude = $coordinates['longitude'];
+
 		$venue_id = Venue::create( $name, $address, $latitude, $longitude, $facebook_page_link, $instagram_handle, $website_url );
 
 		if ( ! $venue_id ) {
@@ -256,6 +267,17 @@ class VenueController extends WP_REST_Controller {
 				array( 'status' => 400 )
 			);
 		}
+
+		$coordinates = Venue::validate_coordinates( $latitude, $longitude );
+		if ( ! $coordinates['valid'] ) {
+			return new WP_Error(
+				'rest_invalid_coordinates',
+				$coordinates['message'],
+				array( 'status' => 400 )
+			);
+		}
+		$latitude  = $coordinates['latitude'];
+		$longitude = $coordinates['longitude'];
 
 		$success = Venue::update( $id, $name, $address, $latitude, $longitude, $facebook_page_link, $instagram_handle, $website_url );
 

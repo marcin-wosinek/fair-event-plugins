@@ -332,6 +332,110 @@ class Venue {
 		return self::build_maps_url( $this->latitude, $this->longitude, $this->address );
 	}
 
+	/**
+	 * Replace a decimal-comma separator with a dot, but only when the value
+	 * doesn't already contain a dot (a pair-split result already uses dots).
+	 *
+	 * @param string $value Raw coordinate value.
+	 * @return string Normalized value.
+	 */
+	private static function normalize_decimal_separator( $value ) {
+		if ( '' === $value || false === strpos( $value, ',' ) || false !== strpos( $value, '.' ) ) {
+			return $value;
+		}
+
+		return str_replace( ',', '.', $value );
+	}
+
+	/**
+	 * Validate (and normalize) a latitude/longitude pair before it is stored.
+	 *
+	 * Both empty is valid (coordinates are optional). A decimal comma is
+	 * normalized to a dot. A "lat, lng" pair pasted into the latitude field
+	 * is split across both fields when longitude is empty — the split only
+	 * triggers when the comma is followed by whitespace (the shape mapping
+	 * tools paste, e.g. "39.4878023, -0.3613204"), so a plain decimal-comma
+	 * value like "39,48" (no space) is normalized instead of misread as a pair.
+	 *
+	 * @param string|null $latitude  Raw latitude input.
+	 * @param string|null $longitude Raw longitude input.
+	 * @return array {
+	 *     @type bool        $valid     Whether the pair is acceptable.
+	 *     @type string|null $latitude  Normalized latitude (only when valid).
+	 *     @type string|null $longitude Normalized longitude (only when valid).
+	 *     @type string      $code      Error code (only when invalid).
+	 *     @type string      $message   Translated error message (only when invalid).
+	 * }
+	 */
+	public static function validate_coordinates( $latitude, $longitude ) {
+		$latitude  = null === $latitude ? '' : trim( (string) $latitude );
+		$longitude = null === $longitude ? '' : trim( (string) $longitude );
+
+		if ( '' === $longitude && '' !== $latitude
+			&& preg_match( '/^(-?[0-9]+(?:\.[0-9]+)?)\s*,\s+(-?[0-9]+(?:\.[0-9]+)?)$/', $latitude, $matches )
+		) {
+			$latitude  = $matches[1];
+			$longitude = $matches[2];
+		}
+
+		$latitude  = self::normalize_decimal_separator( $latitude );
+		$longitude = self::normalize_decimal_separator( $longitude );
+
+		if ( '' === $latitude && '' === $longitude ) {
+			return array(
+				'valid'     => true,
+				'latitude'  => null,
+				'longitude' => null,
+			);
+		}
+
+		if ( '' === $latitude || '' === $longitude ) {
+			return array(
+				'valid'   => false,
+				'code'    => 'coordinate_pair_incomplete',
+				'message' => __( 'Enter both latitude and longitude, or leave both blank.', 'fair-events-experimental' ),
+			);
+		}
+
+		if ( ! is_numeric( $latitude ) || ! is_numeric( $longitude ) ) {
+			return array(
+				'valid'   => false,
+				'code'    => 'coordinate_not_numeric',
+				'message' => __( 'Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204.', 'fair-events-experimental' ),
+			);
+		}
+
+		if ( (float) $latitude < -90 || (float) $latitude > 90 ) {
+			return array(
+				'valid'   => false,
+				'code'    => 'coordinate_out_of_range',
+				'message' => __( 'Latitude must be between -90 and 90.', 'fair-events-experimental' ),
+			);
+		}
+
+		if ( (float) $longitude < -180 || (float) $longitude > 180 ) {
+			return array(
+				'valid'   => false,
+				'code'    => 'coordinate_out_of_range',
+				'message' => __( 'Longitude must be between -180 and 180.', 'fair-events-experimental' ),
+			);
+		}
+
+		if ( strlen( $latitude ) > 20 || strlen( $longitude ) > 20 ) {
+			return array(
+				'valid'   => false,
+				'code'    => 'coordinate_too_long',
+				'message' => __( 'Latitude and longitude must be 20 characters or fewer.', 'fair-events-experimental' ),
+			);
+		}
+
+		return array(
+			'valid'     => true,
+			'latitude'  => $latitude,
+			'longitude' => $longitude,
+		);
+	}
+
 	public function to_array() {
 		return array(
 			'id'                 => $this->id,
