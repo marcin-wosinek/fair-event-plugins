@@ -22,7 +22,6 @@
 		"updatepo": "wp i18n update-po languages/fair-platform.pot languages/",
 		"test": "echo 'No tests yet'",
 		"test:js": "echo 'No JavaScript tests'",
-		"test:php": "vendor/bin/phpunit",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-platform svn",
 		"svn:copy": "cp -r readme.txt fair-platform.php composer* languages CHANGELOG.md svn/trunk"
 	},

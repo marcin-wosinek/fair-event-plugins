@@ -21,7 +21,6 @@
 		"updatepo": "wp i18n update-po languages/fair-finance.pot languages/",
 		"test": "jest",
 		"test:js": "jest",
-		"test:php": "vendor/bin/phpunit",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-finance svn",
 		"svn:copy": "cp -r readme.txt fair-finance.php composer* languages CHANGELOG.md svn/trunk"
 	},

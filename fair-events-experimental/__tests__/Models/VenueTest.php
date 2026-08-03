@@ -20,7 +20,7 @@ class VenueTest extends TestCase {
 		$url = Venue::build_maps_url( '39.4878023', '-0.3613204', null );
 		$this->assertNotNull( $url );
 		$this->assertStringContainsString( 'query=39.4878023%2C-0.3613204', $url );
-		$this->assertStringContainsString( 'maps.google.com', $url );
+		$this->assertStringContainsString( 'google.com/maps', $url );
 	}
 
 	public function test_lat_lng_takes_priority_over_address() {
