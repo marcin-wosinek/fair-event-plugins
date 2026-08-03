@@ -8,11 +8,11 @@
     "packages": [
         {
             "name": "fair-events/shared",
-            "version": "0.2.1",
+            "version": "0.2.2",
             "dist": {
                 "type": "path",
                 "url": "../fair-events-shared/php",
-                "reference": "a510a98d90c0da800c1e05bb2c497b17e51e6206"
+                "reference": "7282e0b97cc1b1abfad91e89704b49098f6400b5"
             },
             "require": {
                 "php": ">=7.4 <9.0"
