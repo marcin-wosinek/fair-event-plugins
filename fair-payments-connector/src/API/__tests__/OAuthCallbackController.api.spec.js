@@ -168,6 +168,32 @@ test.describe('OAuthCallbackController', () => {
 		});
 	});
 
+	test.describe('GET/POST /wp/v2/settings — Mollie API keys removed (#1317)', () => {
+		test('GET does not include the retired API key settings', async () => {
+			const res = await api.get(SETTINGS_ENDPOINT, {
+				headers: adminAuth(),
+			});
+			expect(res.status()).toBe(200);
+			const body = await res.json();
+			expect(body).not.toHaveProperty('fair_payment_test_api_key');
+			expect(body).not.toHaveProperty('fair_payment_live_api_key');
+		});
+
+		test('POST carrying the retired API key settings is accepted but ignores them', async () => {
+			const res = await api.post(SETTINGS_ENDPOINT, {
+				headers: adminAuth(),
+				data: {
+					fair_payment_test_api_key: 'test_attacker_supplied',
+					fair_payment_live_api_key: 'live_attacker_supplied',
+				},
+			});
+			expect(res.status()).toBe(200);
+			const body = await res.json();
+			expect(body).not.toHaveProperty('fair_payment_test_api_key');
+			expect(body).not.toHaveProperty('fair_payment_live_api_key');
+		});
+	});
+
 	test.describe('POST /oauth/disconnect', () => {
 		test('returns 401 for unauthenticated requests', async () => {
 			const res = await api.post(DISCONNECT_ENDPOINT);

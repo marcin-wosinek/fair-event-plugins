@@ -28,6 +28,9 @@ if ( file_exists( FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'vendor/autoload.php' ) )
 // Initialize the plugin.
 add_action( 'plugins_loaded', 'fair_payments_connector_init' );
 
+// Run pending DB migrations on ordinary plugin updates (not just activation).
+add_action( 'plugins_loaded', 'fair_payments_connector_maybe_upgrade' );
+
 // Activation and deactivation hooks.
 register_activation_hook( __FILE__, 'fair_payment_activate' );
 register_deactivation_hook( __FILE__, 'fair_payment_deactivate' );
@@ -65,6 +68,29 @@ function fair_payment_activate() {
 function fair_payment_deactivate() {
 	// Flush rewrite rules to clean up REST API routes.
 	flush_rewrite_rules();
+}
+
+/**
+ * Run pending database migrations on ordinary plugin updates
+ *
+ * The activation hook only fires on (re)activation, so a site updated via
+ * WP auto-update (files replaced, no deactivate/reactivate) would never
+ * otherwise pick up a new Schema migration. Schema::create_tables() is safe
+ * to re-run: dbDelta() is idempotent and every migrate_to_vN() step gates on
+ * version_compare() internally.
+ *
+ * @return void
+ */
+function fair_payments_connector_maybe_upgrade() {
+	if ( ! class_exists( 'FairPaymentsConnector\Database\Schema' ) ) {
+		return;
+	}
+
+	$db_version = get_option( 'fair_payment_db_version', '1.0' );
+
+	if ( version_compare( $db_version, '23.0', '<' ) ) {
+		FairPaymentsConnector\Database\Schema::create_tables();
+	}
 }
 
 /**

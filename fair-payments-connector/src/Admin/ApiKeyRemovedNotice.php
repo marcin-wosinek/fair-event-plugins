@@ -1,6 +1,6 @@
 <?php
 /**
- * Migration Notice for API Key to OAuth migration
+ * One-off notice for sites whose stored Mollie API key was removed on upgrade
  *
  * @package FairPaymentsConnector
  */
@@ -10,25 +10,33 @@ namespace FairPaymentsConnector\Admin;
 defined( 'WPINC' ) || die;
 
 /**
- * Displays admin notices to guide users migrating from API keys to OAuth
+ * Shows a one-off admin notice to sites whose stored Mollie API key was
+ * deleted on upgrade (see Schema::migrate_to_v23()), pointing them at the
+ * guided OAuth connection.
  */
-class MigrationNotice {
+class ApiKeyRemovedNotice {
 	/**
-	 * Initialize migration notice
+	 * Option flag set by the v23 migration when a stored key was removed
+	 * without an existing OAuth connection. Consumed (deleted) on first render
+	 * so the notice shows exactly once rather than on every admin page load.
+	 */
+	const OPTION = 'fair_payment_api_key_removed_notice';
+
+	/**
+	 * Initialize the notice.
 	 *
 	 * @return void
 	 */
 	public function init() {
-		add_action( 'admin_notices', array( $this, 'show_migration_notice' ) );
+		add_action( 'admin_notices', array( $this, 'maybe_show_notice' ) );
 	}
 
 	/**
-	 * Show migration notice to users with API keys but no OAuth connection
+	 * Show the notice once, then consume the flag.
 	 *
 	 * @return void
 	 */
-	public function show_migration_notice() {
-		// Only show on admin pages.
+	public function maybe_show_notice() {
 		if ( ! is_admin() ) {
 			return;
 		}
@@ -40,31 +48,27 @@ class MigrationNotice {
 			return;
 		}
 
-		// Check if user has API keys configured.
-		$has_api_keys = ! empty( get_option( 'fair_payment_test_api_key' ) ) ||
-						! empty( get_option( 'fair_payment_live_api_key' ) );
-
-		// Check if OAuth is connected.
-		$has_oauth = get_option( 'fair_payment_mollie_connected', false );
-
-		// Show notice only if API keys exist but OAuth is not connected.
-		if ( $has_api_keys && ! $has_oauth ) {
-			$this->render_migration_notice();
+		if ( ! get_option( self::OPTION, false ) ) {
+			return;
 		}
+
+		$this->render_notice();
+
+		delete_option( self::OPTION );
 	}
 
 	/**
-	 * Render the migration notice
+	 * Render the notice.
 	 *
 	 * @return void
 	 */
-	private function render_migration_notice() {
+	private function render_notice() {
 		$settings_url = admin_url( 'admin.php?page=fair-payments-connector-settings' );
 
 		$message = sprintf(
 			'<strong>%1$s</strong> %2$s <a href="%3$s" class="button button-small" style="margin-left: 10px;">%4$s</a>',
 			esc_html__( 'Fair Payments Connector:', 'fair-payments-connector' ),
-			esc_html__( 'Please migrate to OAuth authentication.', 'fair-payments-connector' ),
+			esc_html__( 'Your stored Mollie API key was removed. Complete the guided connection to keep accepting payments.', 'fair-payments-connector' ),
 			esc_url( $settings_url ),
 			esc_html__( 'Connect with Mollie', 'fair-payments-connector' )
 		);

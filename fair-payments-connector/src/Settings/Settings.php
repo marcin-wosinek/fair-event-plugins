@@ -36,42 +36,6 @@ class Settings {
 	 * @return void
 	 */
 	public function register_settings() {
-		// Test API Key.
-		register_setting(
-			'fair_payment_settings',
-			'fair_payment_test_api_key',
-			array(
-				'type'              => 'string',
-				'description'       => __( 'Mollie Test API Key', 'fair-payments-connector' ),
-				'sanitize_callback' => 'sanitize_text_field',
-				'show_in_rest'      => array(
-					'schema' => array(
-						'type'    => 'string',
-						'context' => array( 'edit' ),
-					),
-				),
-				'default'           => '',
-			)
-		);
-
-		// Live API Key.
-		register_setting(
-			'fair_payment_settings',
-			'fair_payment_live_api_key',
-			array(
-				'type'              => 'string',
-				'description'       => __( 'Mollie Live API Key', 'fair-payments-connector' ),
-				'sanitize_callback' => 'sanitize_text_field',
-				'show_in_rest'      => array(
-					'schema' => array(
-						'type'    => 'string',
-						'context' => array( 'edit' ),
-					),
-				),
-				'default'           => '',
-			)
-		);
-
 		// Mode (test or live).
 		register_setting(
 			'fair_payment_settings',

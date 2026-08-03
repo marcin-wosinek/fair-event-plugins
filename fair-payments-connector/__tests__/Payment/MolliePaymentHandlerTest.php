@@ -319,6 +319,18 @@ class MolliePaymentHandlerTest extends TestCase {
 	}
 
 	/**
+	 * Regression lock for #1317: API key authentication was removed, so a site
+	 * with no OAuth connection must fail with a clear "not connected" error
+	 * when constructing the real client — never fall back to a stored key.
+	 */
+	public function test_constructor_throws_when_not_connected() {
+		$this->expectException( \Exception::class );
+		$this->expectExceptionMessageMatches( '/not connected/' );
+
+		new MolliePaymentHandler();
+	}
+
+	/**
 	 * Regression lock for #1209: a Mollie API error must surface as a typed
 	 * PaymentGatewayException carrying a sanitized PaymentGatewayError — never
 	 * as a raw \Exception whose message embeds the request body/IDs/URLs.

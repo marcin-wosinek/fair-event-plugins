@@ -18,7 +18,7 @@ Fair Payments Connector is the money layer for your WordPress site: it takes pay
 
 **Key Features:**
 
-* **Mollie Checkout in Minutes:** Connect your Mollie account with a guided flow (or paste an API key) and switch between test and live modes
+* **Mollie Checkout in Minutes:** Connect your Mollie account with a guided flow and switch between test and live modes
 * **Your Payment Methods:** Whatever you enable in your Mollie account — iDEAL, credit cards, Bancontact, PayPal, bank transfer, and more
 * **Simple Payment Block:** Take a payment from any page; set amount, currency, and description right in the editor
 * **Ticket Checkout for Fair Events:** Powers the paid signup flow of [Fair Events](https://wordpress.org/plugins/fair-events/) automatically when both plugins are active
@@ -39,7 +39,7 @@ Fair Payments Connector is the money layer for your WordPress site: it takes pay
 
 1. Upload the plugin files to the `/wp-content/plugins/fair-payments-connector` directory, or install the plugin through the WordPress plugins screen directly.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Open the plugin's Settings page and connect your Mollie account (guided flow or API key). Start in test mode to try it out.
+3. Open the plugin's Settings page and connect your Mollie account with the guided flow. Start in test mode to try it out.
 4. Add the Simple Payment block to a page, or configure ticket prices in Fair Events.
 
 == Development ==
@@ -83,7 +83,7 @@ Used to process payments. When a customer initiates a payment through the plugin
 
 = Fair Event Plugins OAuth proxy (fair-event-plugins.com) =
 
-Used only if you connect Mollie through the built-in OAuth flow instead of pasting a personal API key. The plugin redirects you to `https://fair-event-plugins.com/oauth/authorize` to authorize access to your Mollie account, and later calls `https://fair-event-plugins.com/oauth/refresh` to refresh the Mollie access token when it expires. Data sent includes: the OAuth refresh token stored in your site and, during initial authorization, the parameters Mollie returns to the proxy. The proxy is operated by the plugin author (Marcin Wosinek) and exists because Mollie OAuth requires a registered client secret that cannot ship in a public plugin.
+Used when you connect Mollie through the built-in OAuth flow. The plugin redirects you to `https://fair-event-plugins.com/oauth/authorize` to authorize access to your Mollie account, and later calls `https://fair-event-plugins.com/oauth/refresh` to refresh the Mollie access token when it expires. Data sent includes: the OAuth refresh token stored in your site and, during initial authorization, the parameters Mollie returns to the proxy. The proxy is operated by the plugin author (Marcin Wosinek) and exists because Mollie OAuth requires a registered client secret that cannot ship in a public plugin.
 
 * Terms of service: https://fair-event-plugins.com/terms/
 * Privacy policy: https://fair-event-plugins.com/privacy/
