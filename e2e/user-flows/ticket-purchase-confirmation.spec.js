@@ -106,6 +106,14 @@ test.describe('ticket purchase confirmation', () => {
 				'a "Signup confirmed" email should be captured for the buyer'
 			).toBeTruthy();
 
+			// Shared formatter fields (#1369): event date, registration
+			// reference, ticket type, and (paid path) amount paid.
+			expect(confirmation.body).toContain('Event date:');
+			expect(confirmation.body).toContain('Registration reference:');
+			expect(confirmation.body).toContain('Ticket type:');
+			expect(confirmation.body).toContain('General Admission');
+			expect(confirmation.body).toContain('Amount paid:');
+
 			// The marketing (double opt-in) email is sent ONLY when opting in.
 			const marketing = state.mail.find((m) =>
 				m.subject.includes('Confirm your subscription')

@@ -428,4 +428,128 @@ if ( ! function_exists( 'wp_remote_retrieve_body' ) ) {
 	}
 }
 
+if ( ! function_exists( '__' ) ) {
+	/**
+	 * Stub of WordPress __() — returns the string untranslated.
+	 *
+	 * @param string $text   Text to translate.
+	 * @param string $domain Text domain (unused).
+	 * @return string
+	 */
+	function __( $text, $domain = 'default' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		return $text;
+	}
+}
+
+if ( ! function_exists( 'esc_html__' ) ) {
+	/**
+	 * Stub of WordPress esc_html__().
+	 *
+	 * @param string $text   Text to translate/escape.
+	 * @param string $domain Text domain (unused).
+	 * @return string HTML-escaped text.
+	 */
+	function esc_html__( $text, $domain = 'default' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		return esc_html( $text );
+	}
+}
+
+if ( ! function_exists( 'esc_html' ) ) {
+	/**
+	 * Stub of WordPress esc_html().
+	 *
+	 * @param string $text Text to escape.
+	 * @return string HTML-escaped text.
+	 */
+	function esc_html( $text ) {
+		return htmlspecialchars( (string) $text, ENT_QUOTES );
+	}
+}
+
+if ( ! function_exists( 'wp_specialchars_decode' ) ) {
+	/**
+	 * Stub of WordPress wp_specialchars_decode() — delegates to htmlspecialchars_decode().
+	 *
+	 * @param string $text        Text to decode.
+	 * @param mixed  $quote_style Quote style (ignored by the stub).
+	 * @return string Decoded text.
+	 */
+	function wp_specialchars_decode( $text, $quote_style = ENT_NOQUOTES ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- stub always decodes with ENT_QUOTES.
+		return htmlspecialchars_decode( (string) $text, ENT_QUOTES );
+	}
+}
+
+if ( ! function_exists( 'add_filter' ) ) {
+	/**
+	 * Stub of WordPress add_filter() — a no-op for test purposes; nothing in
+	 * this bootstrap calls a real apply_filters() against registered filters.
+	 *
+	 * @param string   $hook_name     Hook name.
+	 * @param callable $callback      Callback.
+	 * @param int      $priority      Priority (unused by the stub).
+	 * @param int      $accepted_args Number of accepted args (unused by the stub).
+	 * @return true
+	 */
+	function add_filter( $hook_name, $callback, $priority = 10, $accepted_args = 1 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- no-op stub.
+		return true;
+	}
+}
+
+if ( ! function_exists( 'remove_filter' ) ) {
+	/**
+	 * Stub of WordPress remove_filter() — a no-op for test purposes.
+	 *
+	 * @param string   $hook_name Hook name.
+	 * @param callable $callback  Callback.
+	 * @param int      $priority  Priority (unused by the stub).
+	 * @return true
+	 */
+	function remove_filter( $hook_name, $callback, $priority = 10 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- no-op stub.
+		return true;
+	}
+}
+
+if ( ! function_exists( 'number_format_i18n' ) ) {
+	/**
+	 * Stub of WordPress number_format_i18n() — delegates to PHP's number_format()
+	 * without locale-specific separators, sufficient for deterministic tests.
+	 *
+	 * @param float $number   Number to format.
+	 * @param int   $decimals Number of decimal points.
+	 * @return string Formatted number.
+	 */
+	function number_format_i18n( $number, $decimals = 0 ) {
+		return number_format( (float) $number, $decimals );
+	}
+}
+
+if ( ! function_exists( 'wp_mail' ) ) {
+	/**
+	 * Stub of WordPress wp_mail() recording each send into
+	 * $GLOBALS['_fair_test_sent_emails'] so tests can assert on subject/message.
+	 *
+	 * @param string $to      Recipient email address.
+	 * @param string $subject Email subject.
+	 * @param string $message Email body.
+	 * @return bool Always true.
+	 */
+	function wp_mail( $to, $subject, $message ) {
+		if ( ! isset( $GLOBALS['_fair_test_sent_emails'] ) ) {
+			$GLOBALS['_fair_test_sent_emails'] = array();
+		}
+		$GLOBALS['_fair_test_sent_emails'][] = array(
+			'to'      => $to,
+			'subject' => $subject,
+			'message' => $message,
+		);
+		return true;
+	}
+}
+
 require_once __DIR__ . '/wp-class-stubs.php';
+require_once __DIR__ . '/Fair_Test_WPDB.php';
+
+// Global $wpdb double so model calls with a "not found" id (e.g. 0) resolve
+// safely instead of fataling on a null global. See Fair_Test_WPDB's docblock.
+// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+$GLOBALS['wpdb'] = new Fair_Test_WPDB();

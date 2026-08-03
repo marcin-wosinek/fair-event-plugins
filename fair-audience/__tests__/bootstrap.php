@@ -96,6 +96,90 @@ if ( ! function_exists( 'add_action' ) ) {
 	}
 }
 
+if ( ! function_exists( 'remove_filter' ) ) {
+	/**
+	 * Stub of WordPress remove_filter() — a no-op for test purposes; the
+	 * add_filter() stub never wires callbacks into a real apply_filters().
+	 *
+	 * @param string   $hook_name Hook name.
+	 * @param callable $callback  Callback.
+	 * @param int      $priority  Priority (unused by the stub).
+	 * @return true
+	 */
+	function remove_filter( $hook_name, $callback, $priority = 10 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- no-op stub, kept param-compatible with the real signature.
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_mail' ) ) {
+	/**
+	 * Stub of WordPress wp_mail() recording each send into
+	 * $GLOBALS['_fair_test_sent_emails'] so tests can assert on subject/message.
+	 *
+	 * @param string $to      Recipient email address.
+	 * @param string $subject Email subject.
+	 * @param string $message Email body.
+	 * @return bool Always true.
+	 */
+	function wp_mail( $to, $subject, $message ) {
+		if ( ! isset( $GLOBALS['_fair_test_sent_emails'] ) ) {
+			$GLOBALS['_fair_test_sent_emails'] = array();
+		}
+		$GLOBALS['_fair_test_sent_emails'][] = array(
+			'to'      => $to,
+			'subject' => $subject,
+			'message' => $message,
+		);
+		return true;
+	}
+}
+
+if ( ! function_exists( 'get_post' ) ) {
+	/**
+	 * Stub of WordPress get_post() backed by $GLOBALS['_fair_test_posts'] (a
+	 * map of post ID => object). Also passes through an already-object $post.
+	 *
+	 * @param int|object $post Post ID, or an already-built post-like object.
+	 * @return object|null Stored post object, the passed object, or null.
+	 */
+	function get_post( $post ) {
+		if ( is_object( $post ) ) {
+			return $post;
+		}
+		$posts = isset( $GLOBALS['_fair_test_posts'] ) ? $GLOBALS['_fair_test_posts'] : array();
+		return isset( $posts[ $post ] ) ? $posts[ $post ] : null;
+	}
+}
+
+if ( ! function_exists( 'wp_specialchars_decode' ) ) {
+	/**
+	 * Stub of WordPress wp_specialchars_decode() — delegates to htmlspecialchars_decode().
+	 *
+	 * @param string $text  Text to decode.
+	 * @param mixed  $quote_style Quote style (ignored by the stub).
+	 * @return string Decoded text.
+	 */
+	function wp_specialchars_decode( $text, $quote_style = ENT_NOQUOTES ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- stub always decodes with ENT_QUOTES.
+		return htmlspecialchars_decode( (string) $text, ENT_QUOTES );
+	}
+}
+
+if ( ! function_exists( 'wp_date' ) ) {
+	/**
+	 * Stub of WordPress wp_date() — formats a timestamp in UTC, no locale/i18n handling.
+	 *
+	 * @param string   $format    date() format string.
+	 * @param int|null $timestamp Unix timestamp; defaults to now.
+	 * @return string Formatted date.
+	 */
+	function wp_date( $format, $timestamp = null ) {
+		if ( null === $timestamp ) {
+			$timestamp = time();
+		}
+		return gmdate( $format, $timestamp );
+	}
+}
+
 if ( ! function_exists( 'current_time' ) ) {
 	/**
 	 * Stub of WordPress current_time(). Always returns UTC 'mysql' format.

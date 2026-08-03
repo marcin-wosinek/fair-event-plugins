@@ -7,25 +7,31 @@
 
 namespace FairEvents\Services;
 
+use FairEventsShared\Money;
+use FairEventsShared\Notifications\SignupConfirmationEmail;
+
 defined( 'WPINC' ) || die;
 
 /**
- * Sends fair-events' own minimal signup confirmation email. Only used when no
- * companion plugin (fair-audience) is active to send a richer one instead —
- * see FairEvents\Hooks\SignupEmailHooks.
+ * Sends fair-events' own baseline signup confirmation email, built on the
+ * same shared formatter fair-audience uses. Only used when no companion
+ * plugin (fair-audience) is active to send a richer one instead — see
+ * FairEvents\Hooks\SignupEmailHooks.
  */
 class EmailService {
 
 	/**
 	 * Send a signup confirmation email to the buyer.
 	 *
-	 * @param int    $signup_id     The fair_events_signups row ID, used as the registration reference.
-	 * @param int    $event_date_id Event date ID the signup targets.
-	 * @param string $name          Buyer name.
-	 * @param string $email         Buyer email.
+	 * @param int    $signup_id      The fair_events_signups row ID, used as the registration reference.
+	 * @param int    $event_date_id  Event date ID the signup targets.
+	 * @param string $name           Buyer name.
+	 * @param string $email          Buyer email.
+	 * @param int    $ticket_type_id Ticket type ID shown in the email. Pass 0 to omit.
+	 * @param float  $amount         Amount paid, shown on paid signups. Pass 0 to omit.
 	 * @return bool True on send success.
 	 */
-	public function send_signup_confirmation( $signup_id, $event_date_id, $name, $email ) {
+	public function send_signup_confirmation( $signup_id, $event_date_id, $name, $email, $ticket_type_id = 0, $amount = 0.0 ) {
 		$event_title        = __( 'the event', 'fair-events' );
 		$event_date_display = '';
 
@@ -42,25 +48,50 @@ class EmailService {
 			}
 		}
 
+		$ticket_type_name = '';
+		if ( $ticket_type_id > 0 && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+			if ( $ticket_type ) {
+				$ticket_type_name = $ticket_type->name;
+			}
+		}
+
+		$payment_amount_display = $amount > 0 ? Money::format_display( (float) $amount ) : '';
+
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
-		$subject = sprintf(
+		$subject_template =
 			/* translators: %s: event title */
-			__( 'Your registration for %s is confirmed', 'fair-events' ),
-			$event_title
-		);
+			__( 'Your registration for %s is confirmed', 'fair-events' );
 
-		$message = sprintf(
-			/* translators: 1: buyer name, 2: event title, 3: event date, 4: registration reference, 5: site name */
-			__(
-				"Hi %1\$s,\n\nYour registration for %2\$s on %3\$s is confirmed.\n\nRegistration reference: #%4\$s\n\nThanks,\nThe %5\$s Team",
-				'fair-events'
-			),
-			$name,
-			$event_title,
-			$event_date_display,
-			$signup_id,
-			$site_name
+		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
+		$message = SignupConfirmationEmail::html(
+			array(
+				'event_title'                  => esc_html( $event_title ),
+				'participant_name'             => esc_html( $name ),
+				'site_name'                    => esc_html( $site_name ),
+				'event_date_display'           => esc_html( $event_date_display ),
+				'registration_reference'       => '#' . $signup_id,
+				'ticket_type_name'             => esc_html( $ticket_type_name ),
+				'payment_amount_display'       => esc_html( $payment_amount_display ),
+				'option_names'                 => array(),
+				'answers_html'                 => '',
+				/* translators: %s: buyer first name */
+				'greeting_template'            => esc_html__( 'Hi %s,', 'fair-events' ),
+				'confirmation_sentence'        => sprintf(
+					/* translators: %s: event title */
+					esc_html__( 'Your registration for %s is confirmed.', 'fair-events' ),
+					'<strong>' . esc_html( $event_title ) . '</strong>'
+				),
+				'event_date_label'             => esc_html__( 'Event date:', 'fair-events' ),
+				'registration_reference_label' => esc_html__( 'Registration reference:', 'fair-events' ),
+				'ticket_type_label'            => esc_html__( 'Ticket type:', 'fair-events' ),
+				'amount_paid_label'            => esc_html__( 'Amount paid:', 'fair-events' ),
+				'selected_options_label'       => esc_html__( 'Selected options:', 'fair-events' ),
+				'your_answers_label'           => esc_html__( 'Your answers:', 'fair-events' ),
+				/* translators: 1: line break, 2: site name */
+				'sign_off_template'            => esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-events' ),
+			)
 		);
 
 		return $this->deliver( $email, $subject, $message );
@@ -71,10 +102,18 @@ class EmailService {
 	 *
 	 * @param string $to      Recipient email address.
 	 * @param string $subject Email subject.
-	 * @param string $message Plain-text body.
+	 * @param string $message Full HTML body.
 	 * @return bool True on success.
 	 */
 	private function deliver( $to, $subject, $message ) {
-		return wp_mail( $to, $subject, $message );
+		$content_type = static function () {
+			return 'text/html';
+		};
+
+		add_filter( 'wp_mail_content_type', $content_type );
+		$result = wp_mail( $to, $subject, $message );
+		remove_filter( 'wp_mail_content_type', $content_type );
+
+		return $result;
 	}
 }
