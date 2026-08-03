@@ -12,3 +12,17 @@ require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 if ( ! defined( 'WPINC' ) ) {
 	define( 'WPINC', 'wp-includes' );
 }
+
+if ( ! function_exists( '__' ) ) {
+	/**
+	 * Stub for WordPress' translation function — returns the text unchanged.
+	 *
+	 * @param string $text   Text to translate.
+	 * @param string $domain Text domain (unused in the stub).
+	 * @return string Untranslated text.
+	 */
+	function __( $text, $domain = 'default' ) {
+		unset( $domain );
+		return $text;
+	}
+}

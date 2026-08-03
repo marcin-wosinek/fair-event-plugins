@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -28,6 +28,85 @@ const VENUE_FIELDS = [
 	'website_url',
 ];
 
+/**
+ * Replace a decimal-comma separator with a dot, unless the value already
+ * contains a dot (e.g. a pasted pair already split into its own field).
+ *
+ * @param {string} value Raw coordinate value.
+ * @return {string} Normalized value.
+ */
+export function normalizeDecimalSeparator(value) {
+	if (!value || value.includes('.') || !value.includes(',')) {
+		return value;
+	}
+	return value.replace(',', '.');
+}
+
+/**
+ * Split a pasted "lat, lng" pair into its two parts. Only matches when the
+ * comma is followed by whitespace (the shape mapping tools paste, e.g.
+ * "39.4878023, -0.3613204") so a plain decimal-comma value like "39,48"
+ * isn't misread as a pair.
+ *
+ * @param {string} value Raw latitude field value.
+ * @return {{latitude: string, longitude: string}|null} The split pair, or null.
+ */
+export function splitCoordinatePair(value) {
+	const match = value.match(/^(-?\d+(?:\.\d+)?)\s*,\s+(-?\d+(?:\.\d+)?)$/);
+	if (!match) {
+		return null;
+	}
+	return { latitude: match[1], longitude: match[2] };
+}
+
+/**
+ * Derive a coordinate validation error message from the current latitude/
+ * longitude form values, or null when they're valid (including both blank).
+ *
+ * @param {string} latitude  Raw latitude field value.
+ * @param {string} longitude Raw longitude field value.
+ * @return {string|null} Translated error message, or null when valid.
+ */
+export function getCoordinateError(latitude, longitude) {
+	const lat = normalizeDecimalSeparator((latitude || '').trim());
+	const lng = normalizeDecimalSeparator((longitude || '').trim());
+
+	if (!lat && !lng) {
+		return null;
+	}
+
+	if (!lat || !lng) {
+		return __(
+			'Enter both latitude and longitude, or leave both blank.',
+			'fair-events'
+		);
+	}
+
+	if (Number.isNaN(Number(lat)) || Number.isNaN(Number(lng))) {
+		return __(
+			'Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204.',
+			'fair-events'
+		);
+	}
+
+	if (Number(lat) < -90 || Number(lat) > 90) {
+		return __('Latitude must be between -90 and 90.', 'fair-events');
+	}
+
+	if (Number(lng) < -180 || Number(lng) > 180) {
+		return __('Longitude must be between -180 and 180.', 'fair-events');
+	}
+
+	if (lat.length > 20 || lng.length > 20) {
+		return __(
+			'Latitude and longitude must be 20 characters or fewer.',
+			'fair-events'
+		);
+	}
+
+	return null;
+}
+
 const VenuesApp = () => {
 	const [venues, setVenues] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -47,6 +126,11 @@ const VenuesApp = () => {
 	const [isSaving, setIsSaving] = useState(false);
 	const [selectedVenues, setSelectedVenues] = useState(new Set());
 	const [isImporting, setIsImporting] = useState(false);
+
+	const coordinateError = getCoordinateError(
+		formData.latitude,
+		formData.longitude
+	);
 
 	useEffect(() => {
 		loadVenues();
@@ -160,6 +244,21 @@ const VenuesApp = () => {
 		}
 	};
 
+	const handleLatitudeChange = (value) => {
+		if (!formData.longitude) {
+			const pair = splitCoordinatePair(value.trim());
+			if (pair) {
+				setFormData({
+					...formData,
+					latitude: pair.latitude,
+					longitude: pair.longitude,
+				});
+				return;
+			}
+		}
+		setFormData({ ...formData, latitude: value });
+	};
+
 	const handleFormCancel = () => {
 		setIsFormOpen(false);
 		setEditingVenue(null);
@@ -243,6 +342,7 @@ const VenuesApp = () => {
 			}
 
 			let created = 0;
+			const skippedCoordinates = [];
 			for (const venue of importedVenues) {
 				if (!venue.name) {
 					continue;
@@ -253,6 +353,13 @@ const VenuesApp = () => {
 						data[field] = venue[field];
 					}
 				});
+
+				if (getCoordinateError(data.latitude, data.longitude)) {
+					delete data.latitude;
+					delete data.longitude;
+					skippedCoordinates.push(venue.name);
+				}
+
 				await apiFetch({
 					path: '/fair-events/v1/venues',
 					method: 'POST',
@@ -261,13 +368,27 @@ const VenuesApp = () => {
 				created++;
 			}
 
-			setSuccess(
-				// translators: %d is the number of imported venues
-				__('%d venue(s) imported.', 'fair-events').replace(
-					'%d',
-					created
-				)
+			let message = sprintf(
+				/* translators: %d is the number of imported venues */
+				_n(
+					'%d venue imported.',
+					'%d venues imported.',
+					created,
+					'fair-events'
+				),
+				created
 			);
+			if (skippedCoordinates.length > 0) {
+				message += ` ${sprintf(
+					/* translators: %s is a comma-separated list of venue names */
+					__(
+						'Imported without coordinates (invalid): %s',
+						'fair-events'
+					),
+					skippedCoordinates.join(', ')
+				)}`;
+			}
+			setSuccess(message);
 			loadVenues();
 		} catch (err) {
 			setError(
@@ -490,16 +611,17 @@ const VenuesApp = () => {
 							<TextControl
 								label={__('Latitude', 'fair-events')}
 								value={formData.latitude}
-								onChange={(value) =>
-									setFormData({
-										...formData,
-										latitude: value,
-									})
+								onChange={handleLatitudeChange}
+								help={
+									coordinateError ||
+									__(
+										'Latitude coordinate (e.g., 39.4878023)',
+										'fair-events'
+									)
 								}
-								help={__(
-									'Latitude coordinate (e.g., 39.4878023)',
-									'fair-events'
-								)}
+								className={
+									coordinateError ? 'has-error' : undefined
+								}
 							/>
 							<TextControl
 								label={__('Longitude', 'fair-events')}
@@ -510,10 +632,16 @@ const VenuesApp = () => {
 										longitude: value,
 									})
 								}
-								help={__(
-									'Longitude coordinate (e.g., -0.3613204)',
-									'fair-events'
-								)}
+								help={
+									coordinateError ||
+									__(
+										'Longitude coordinate (e.g., -0.3613204)',
+										'fair-events'
+									)
+								}
+								className={
+									coordinateError ? 'has-error' : undefined
+								}
 							/>
 							<TextControl
 								label={__('Facebook Page Link', 'fair-events')}
@@ -568,7 +696,11 @@ const VenuesApp = () => {
 									variant="primary"
 									type="submit"
 									isBusy={isSaving}
-									disabled={isSaving || !formData.name}
+									disabled={
+										isSaving ||
+										!formData.name ||
+										!!coordinateError
+									}
 								>
 									{editingVenue
 										? __('Update Venue', 'fair-events')
