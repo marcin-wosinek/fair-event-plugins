@@ -33,6 +33,10 @@
 			"type": "string",
 			"default": "#ffffff"
 		},
+		"headerBackgroundColor": {
+			"type": "string",
+			"default": "#f9f9f9"
+		},
 		"eventSources": {
 			"type": "array",
 			"default": [],

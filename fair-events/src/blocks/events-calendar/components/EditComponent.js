@@ -29,6 +29,7 @@ const EditComponent = ({ attributes, setAttributes }) => {
 		showDrafts,
 		backgroundColor,
 		textColor,
+		headerBackgroundColor,
 		eventSources,
 		showSubscribe,
 	} = attributes;
@@ -172,7 +173,7 @@ const EditComponent = ({ attributes, setAttributes }) => {
 								setAttributes({
 									backgroundColor: color || 'primary',
 								}),
-							label: __('Background', 'fair-events'),
+							label: __('Event Background', 'fair-events'),
 						},
 						{
 							value: textColor,
@@ -180,7 +181,15 @@ const EditComponent = ({ attributes, setAttributes }) => {
 								setAttributes({
 									textColor: color || '#ffffff',
 								}),
-							label: __('Text', 'fair-events'),
+							label: __('Event Text', 'fair-events'),
+						},
+						{
+							value: headerBackgroundColor,
+							onChange: (color) =>
+								setAttributes({
+									headerBackgroundColor: color || '#f9f9f9',
+								}),
+							label: __('Header Background', 'fair-events'),
 						},
 					]}
 				>

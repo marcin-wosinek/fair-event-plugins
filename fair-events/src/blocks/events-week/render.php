@@ -103,8 +103,9 @@ $show_drafts       = $attributes['showDrafts'] ?? false;
 $event_sources     = $attributes['eventSources'] ?? array();
 $show_copy_summary = $attributes['showCopySummary'] ?? false;
 
-$bg_color   = $attributes['backgroundColor'] ?? 'primary';
-$text_color = $attributes['textColor'] ?? '#ffffff';
+$bg_color        = $attributes['backgroundColor'] ?? 'primary';
+$text_color      = $attributes['textColor'] ?? '#ffffff';
+$header_bg_color = $attributes['headerBackgroundColor'] ?? '#f9f9f9';
 
 if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $bg_color ) ) {
 	$bg_color_value = $bg_color;
@@ -115,6 +116,11 @@ if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $text_color ) ) {
 	$text_color_value = $text_color;
 } else {
 	$text_color_value = 'var(--wp--preset--color--' . esc_attr( $text_color ) . ')';
+}
+if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $header_bg_color ) ) {
+	$header_bg_value = $header_bg_color;
+} else {
+	$header_bg_value = 'var(--wp--preset--color--' . esc_attr( $header_bg_color ) . ')';
 }
 
 // Week date range.
@@ -229,7 +235,7 @@ if ( $show_copy_summary ) {
 <div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-events-week' ) ) ); ?>>
 
 	<?php if ( $show_navigation ) : ?>
-	<div class="fair-events-navigation">
+	<div class="fair-events-navigation" style="--fair-events-header-bg: <?php echo esc_attr( $header_bg_value ); ?>">
 		<div class="wp-block-button is-style-outline">
 			<a href="<?php echo esc_url( $prev_url ); ?>" class="nav-prev wp-block-button__link wp-element-button">
 				<?php esc_html_e( 'Previous', 'fair-events' ); ?>
