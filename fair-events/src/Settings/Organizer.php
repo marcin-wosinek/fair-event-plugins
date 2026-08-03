@@ -104,34 +104,72 @@ class Organizer {
 		}
 		$out['same_as'] = array_values( array_unique( $same_as ) );
 
-		if ( ! empty( $value['logo_id'] ) ) {
-			$logo_id = absint( $value['logo_id'] );
-			if ( $logo_id && wp_attachment_is_image( $logo_id ) ) {
-				$out['logo_id'] = $logo_id;
+		foreach (
+			array(
+				'logo_id'       => array( self::class, 'sanitize_logo_id' ),
+				'website'       => array( self::class, 'sanitize_website' ),
+				'contact_email' => array( self::class, 'sanitize_contact_email' ),
+				'contact_phone' => array( self::class, 'sanitize_contact_phone' ),
+			) as $key => $sanitizer
+		) {
+			if ( empty( $value[ $key ] ) ) {
+				continue;
 			}
-		}
 
-		if ( ! empty( $value['website'] ) ) {
-			$website = esc_url_raw( (string) $value['website'] );
-			if ( '' !== $website && filter_var( $website, FILTER_VALIDATE_URL ) ) {
-				$out['website'] = $website;
-			}
-		}
-
-		if ( ! empty( $value['contact_email'] ) ) {
-			$email = sanitize_email( (string) $value['contact_email'] );
-			if ( '' !== $email && is_email( $email ) ) {
-				$out['contact_email'] = $email;
-			}
-		}
-
-		if ( ! empty( $value['contact_phone'] ) ) {
-			$phone = trim( sanitize_text_field( $value['contact_phone'] ) );
-			if ( '' !== $phone ) {
-				$out['contact_phone'] = $phone;
+			$sanitized = call_user_func( $sanitizer, $value[ $key ] );
+			if ( null !== $sanitized ) {
+				$out[ $key ] = $sanitized;
 			}
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Sanitize+validate a raw `logo_id` value.
+	 *
+	 * @param mixed $raw_value Raw attachment ID.
+	 * @return int|null Sanitized attachment ID, or null when invalid.
+	 */
+	private static function sanitize_logo_id( $raw_value ) {
+		$logo_id = absint( $raw_value );
+
+		return ( $logo_id && wp_attachment_is_image( $logo_id ) ) ? $logo_id : null;
+	}
+
+	/**
+	 * Sanitize+validate a raw `website` value.
+	 *
+	 * @param mixed $raw_value Raw website URL.
+	 * @return string|null Sanitized URL, or null when invalid.
+	 */
+	private static function sanitize_website( $raw_value ) {
+		$website = esc_url_raw( (string) $raw_value );
+
+		return ( '' !== $website && filter_var( $website, FILTER_VALIDATE_URL ) ) ? $website : null;
+	}
+
+	/**
+	 * Sanitize+validate a raw `contact_email` value.
+	 *
+	 * @param mixed $raw_value Raw email address.
+	 * @return string|null Sanitized email, or null when invalid.
+	 */
+	private static function sanitize_contact_email( $raw_value ) {
+		$email = sanitize_email( (string) $raw_value );
+
+		return ( '' !== $email && is_email( $email ) ) ? $email : null;
+	}
+
+	/**
+	 * Sanitize+validate a raw `contact_phone` value.
+	 *
+	 * @param mixed $raw_value Raw phone number.
+	 * @return string|null Sanitized phone number, or null when empty.
+	 */
+	private static function sanitize_contact_phone( $raw_value ) {
+		$phone = trim( sanitize_text_field( $raw_value ) );
+
+		return ( '' !== $phone ) ? $phone : null;
 	}
 }
