@@ -479,6 +479,20 @@ through to whichever plugin ships the new copy. A changed signature fatals
 whenever an older copy of the class wins the autoload race and gets called
 with the new call shape.
 
+**After editing anything under `fair-events-shared/php/src/`, bump the
+`version` in `fair-events-shared/php/composer.json` and run `npm run
+composer:update:shared`** (runs `composer update fair-events/shared` in every
+consumer workspace) before committing. `composer install` only re-mirrors a
+`path`-type dependency when the lock file's version/reference for that
+package changes — if the version isn't bumped, consumers' vendor copies
+(including CI's restored vendor cache) silently keep the *old* shared code
+even though the source changed, with no install error to flag it. This broke
+CI once already (class-not-found on a plugin whose cached vendor still had
+the pre-edit copy). If you scaffold a new plugin that consumes the shared
+package, make sure its `package.json` gets a `composer:update:shared` script
+too (see [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md)) — two plugins were
+found missing it.
+
 ## Code Quality Standards
 
 Formatting is automatic — see [CLAUDE.md § Formatting & Build](./CLAUDE.md#formatting--build)

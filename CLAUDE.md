@@ -86,6 +86,10 @@ Before declaring a task finished (and before any commit), all of these hold:
    when a wording pass touched them.
 6. For PRs on `responsive-ui` tickets: before/after screenshots at all three
    viewports ([COMMIT_GUIDE.md](./COMMIT_GUIDE.md)).
+7. If `fair-events-shared/php/src/**` changed: version bumped in its
+   `composer.json` and `npm run composer:update:shared` ran (see
+   [PHP_PATTERNS.md § Shared Package](./PHP_PATTERNS.md#shared-package-fair-events-shared)) —
+   otherwise consumers' vendor copies silently keep the old code.
 
 ## Critical Rules
 
