@@ -1,0 +1,41 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-url",
+	"version": "1.0.0",
+	"title": "URL Question",
+	"category": "widgets",
+	"icon": "admin-links",
+	"description": "A URL input question with built-in web-address validation for Fair Form",
+	"keywords": ["question", "url", "link", "website"],
+	"textdomain": "fair-audience",
+	"ancestor": [
+		"fair-audience/fair-form",
+		"fair-audience/event-signup",
+		"fair-events/event-signup"
+	],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"questionText": {
+			"type": "string",
+			"default": ""
+		},
+		"questionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"placeholder": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-editor.css"
+}

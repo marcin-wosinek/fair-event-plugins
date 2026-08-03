@@ -408,8 +408,8 @@ export function applyQuestionAnswers(form, answers) {
  * Validate the nested question blocks within a form.
  *
  * Checks required questions (respecting conditional visibility), phone format
- * (E.164), and file-upload size limits. The caller is responsible for any
- * non-question fields (name/email).
+ * (E.164), URL format (accepting a bare domain), and file-upload size limits.
+ * The caller is responsible for any non-question fields (name/email).
  *
  * @param {HTMLElement} form The form (or container) element.
  * @return {string|null} An error message, or null when valid.
@@ -498,6 +498,40 @@ export function validateQuestions(form) {
 					'Please enter a valid email address for: ',
 					'fair-audience'
 				) + questionText
+			);
+		}
+	}
+
+	// Validate URL questions (format check, accepting a bare domain).
+	const urlQuestions = form.querySelectorAll(
+		'[data-fair-form-question][data-question-type="url"]'
+	);
+	for (const el of urlQuestions) {
+		if (!isQuestionVisible(el)) {
+			continue;
+		}
+		const input = el.querySelector('input');
+		const value = input ? input.value.trim() : '';
+		if (!value) {
+			continue;
+		}
+		const normalized = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//.test(value)
+			? value
+			: 'https://' + value;
+		let isValid = false;
+		try {
+			const parsed = new URL(normalized);
+			isValid =
+				parsed.protocol === 'http:' || parsed.protocol === 'https:';
+		} catch (e) {
+			isValid = false;
+		}
+		if (!isValid) {
+			const questionText = el.dataset.questionText || '';
+			return sprintf(
+				/* translators: %s: question text */
+				__('Please enter a valid web address for: %s', 'fair-audience'),
+				questionText
 			);
 		}
 	}

@@ -529,3 +529,50 @@ describe('phone question type', () => {
 		});
 	});
 });
+
+/**
+ * Build a URL question as fair-form-url/render.php emits it.
+ *
+ * @param {string} value Field value.
+ * @return {string} The question markup.
+ */
+function urlQuestion(value) {
+	return (
+		'<div data-fair-form-question data-question-key="website" data-question-text="Website" data-question-type="url" data-required="0">' +
+		`<input type="text" inputmode="url" value="${value}" /></div>`
+	);
+}
+
+describe('url question type', () => {
+	describe('validateQuestions', () => {
+		it('passes a bare domain (accepted as shorthand for https://)', () => {
+			const form = buildForm(urlQuestion('example.com/my-event'));
+			expect(validateQuestions(form)).toBeNull();
+		});
+
+		it('passes an already-schemed https:// value', () => {
+			const form = buildForm(urlQuestion('https://example.com'));
+			expect(validateQuestions(form)).toBeNull();
+		});
+
+		it('passes an already-schemed http:// value', () => {
+			const form = buildForm(urlQuestion('http://example.com'));
+			expect(validateQuestions(form)).toBeNull();
+		});
+
+		it('passes an empty, non-required value', () => {
+			const form = buildForm(urlQuestion(''));
+			expect(validateQuestions(form)).toBeNull();
+		});
+
+		it('blocks a javascript: address', () => {
+			const form = buildForm(urlQuestion('javascript:alert(1)'));
+			expect(validateQuestions(form)).toMatch(/Website/);
+		});
+
+		it('blocks free text', () => {
+			const form = buildForm(urlQuestion('just some free text'));
+			expect(validateQuestions(form)).toMatch(/Website/);
+		});
+	});
+});

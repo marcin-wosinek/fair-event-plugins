@@ -84,5 +84,21 @@ function fair_form_maybe_upgrade_db() {
 
 		update_option( 'fair_form_db_version', '0.2.0' );
 	}
+
+	if ( version_compare( $db_version, '0.3.0', '<' ) ) {
+		global $wpdb;
+
+		$answers_table = $wpdb->prefix . 'fair_audience_questionnaire_answers';
+
+		// Add 'url' to the question_type ENUM so URL-field answers persist
+		// correctly, and 'phone' (a pre-existing gap left by the 0.2.0 step)
+		// in the same ALTER TABLE statement.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query(
+			$wpdb->prepare( "ALTER TABLE %i MODIFY question_type ENUM('radio','checkbox','short_text','long_text','select','number','date','multiselect','file_upload','email','phone','url') NOT NULL DEFAULT 'short_text'", $answers_table )
+		);
+
+		update_option( 'fair_form_db_version', '0.3.0' );
+	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_form_maybe_upgrade_db' );

@@ -129,6 +129,15 @@ if ( 'audience-ticket-scopes' === $flavour ) {
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
+} elseif ( isset( $overrides['block'] ) && 'unified-with-url' === $overrides['block'] ) {
+	$block_content = implode(
+		"\n",
+		array(
+			'<!-- wp:fair-events/event-signup -->',
+			'<!-- wp:fair-audience/fair-form-url {"questionKey":"website","questionText":"Website"} /-->',
+			'<!-- /wp:fair-events/event-signup -->',
+		)
+	);
 } elseif ( 'address' === $flavour ) {
 	// event-info block (renders the address/venue) + a calendar button — no
 	// signup block, since this flavour never touches the purchase path.
