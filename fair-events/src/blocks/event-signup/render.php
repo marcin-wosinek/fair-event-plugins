@@ -382,9 +382,16 @@ $all_purchases_blocked = $payments_unavailable
 
 // Generate unique form ID.
 $form_id = 'fair-events-get-tickets-' . wp_unique_id();
+
+$wrapper_attributes = get_block_wrapper_attributes(
+	array(
+		'class'         => 'fair-events-get-tickets',
+		'data-currency' => \FairEventsShared\Money::site_currency(),
+	)
+);
 ?>
 
-<div class="fair-events-get-tickets" data-currency="<?php echo esc_attr( \FairEventsShared\Money::site_currency() ); ?>">
+<div <?php echo wp_kses_post( $wrapper_attributes ); ?>>
 <?php if ( $signup_state ) : ?>
 	<?php
 	$amount_display = \FairEventsShared\Money::format_display( (float) $signup_state['amount'], $signup_state['currency'] );

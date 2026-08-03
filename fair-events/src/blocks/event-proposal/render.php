@@ -46,7 +46,7 @@ $duration_options = array(
 );
 ?>
 
-<div class="fair-events-proposal-form">
+<div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'fair-events-proposal-form' ) ) ); ?>>
 	<form
 		id="<?php echo esc_attr( $form_id ); ?>"
 		class="proposal-form"
