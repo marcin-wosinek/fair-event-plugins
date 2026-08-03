@@ -119,6 +119,7 @@ class Plugin {
 		new \FairEvents\Hooks\OrganizationHooks();
 		new \FairEvents\Hooks\AdminBarHooks();
 		\FairEvents\Hooks\PaymentHooks::init();
+		\FairEvents\Hooks\SignupEmailHooks::init();
 	}
 
 	/**

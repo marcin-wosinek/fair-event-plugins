@@ -6,9 +6,11 @@
  *   wp eval-file wp-content/mu-plugins/scripts/get-tickets-state.php <event_date_id>
  *
  * Prints a single `E2E_GT_STATE:{json}` line with one entry per
- * fair_events_signups row: name, email, quantity, amount, status, and — when a
- * transaction is attached — its status, testmode flag, and Mollie payment id
- * from fair_payment_transactions.
+ * fair_events_signups row: name, email, quantity, amount, status, mail
+ * (captured mail addressed to the row's email — fair-events' own baseline
+ * confirmation, since this script targets the fair-audience-inactive path),
+ * and — when a transaction is attached — its status, testmode flag, and
+ * Mollie payment id from fair_payment_transactions.
  *
  * @package FairEventsE2E
  */
@@ -24,6 +26,7 @@ if ( ! $event_date_id ) {
 
 $signups_table      = $wpdb->prefix . 'fair_events_signups';
 $transactions_table = $wpdb->prefix . 'fair_payment_transactions';
+$captured_mail      = get_option( 'fair_e2e_captured_mail', array() );
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off state dump for the spec, no cache to honour.
 $rows = $wpdb->get_results(
@@ -32,6 +35,18 @@ $rows = $wpdb->get_results(
 
 $signups = array();
 foreach ( $rows as $row ) {
+	$mail = array();
+	foreach ( $captured_mail as $captured ) {
+		$recipients = (array) ( $captured['to'] ?? array() );
+		if ( in_array( $row->email, $recipients, true ) ) {
+			$mail[] = array(
+				'to'      => $captured['to'] ?? '',
+				'subject' => $captured['subject'] ?? '',
+				'body'    => $captured['body'] ?? '',
+			);
+		}
+	}
+
 	$entry = array(
 		'id'             => (int) $row->id,
 		'name'           => (string) $row->name,
@@ -40,6 +55,7 @@ foreach ( $rows as $row ) {
 		'amount'         => (float) $row->amount,
 		'status'         => (string) $row->status,
 		'transaction_id' => $row->transaction_id ? (int) $row->transaction_id : null,
+		'mail'           => $mail,
 	);
 
 	if ( $row->transaction_id ) {

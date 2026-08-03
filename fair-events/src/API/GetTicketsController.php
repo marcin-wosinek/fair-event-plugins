@@ -446,7 +446,7 @@ class GetTicketsController extends WP_REST_Controller {
 			return rest_ensure_response(
 				array(
 					'status'  => 'confirmed',
-					'message' => __( 'You have successfully registered!', 'fair-events' ),
+					'message' => __( 'You have successfully registered! A confirmation email is on its way.', 'fair-events' ),
 				)
 			);
 		}
@@ -803,7 +803,7 @@ class GetTicketsController extends WP_REST_Controller {
 			return rest_ensure_response(
 				array(
 					'status'  => 'confirmed',
-					'message' => __( 'You have successfully registered!', 'fair-events' ),
+					'message' => __( 'You have successfully registered! A confirmation email is on its way.', 'fair-events' ),
 				)
 			);
 		}

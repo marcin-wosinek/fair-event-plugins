@@ -1088,7 +1088,10 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 				showMessage(
 					messageContainer,
 					response.message ||
-						__('You have successfully registered!', 'fair-events'),
+						__(
+							'You have successfully registered! A confirmation email is on its way.',
+							'fair-events'
+						),
 					'success',
 					CSS_PREFIX
 				);
