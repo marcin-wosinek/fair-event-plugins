@@ -41,12 +41,7 @@ class OrganizationSchema {
 			return null;
 		}
 
-		$data = array(
-			'@type' => $organizer['type'],
-			'@id'   => self::node_id(),
-			'name'  => $organizer['name'],
-			'url'   => '' !== $organizer['website'] ? $organizer['website'] : home_url(),
-		);
+		$data = self::build_identity_node( $organizer );
 
 		$address = self::build_address( $organizer );
 		if ( ! empty( $address ) ) {
@@ -90,6 +85,17 @@ class OrganizationSchema {
 			);
 		}
 
+		return self::build_identity_node( $organizer );
+	}
+
+	/**
+	 * Build the shared `@type`/`@id`/`name`/`url` identity block used by both
+	 * the sitewide Organization object and the per-event organizer reference.
+	 *
+	 * @param array $organizer Normalized organizer identity, as returned by Organizer::get().
+	 * @return array{'@type': string, '@id': string, name: string, url: string} Identity node.
+	 */
+	private static function build_identity_node( array $organizer ): array {
 		return array(
 			'@type' => $organizer['type'],
 			'@id'   => self::node_id(),

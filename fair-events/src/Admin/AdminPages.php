@@ -370,38 +370,36 @@ class AdminPages {
 
 		$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/settings/index.asset.php';
 
-		if ( 'fair-events-settings' === $slug ) {
-			wp_enqueue_media();
+		wp_enqueue_media();
 
-			wp_enqueue_script(
-				'fair-events-settings',
-				FAIR_EVENTS_PLUGIN_URL . 'build/admin/settings/index.js',
-				$asset_file['dependencies'],
-				$asset_file['version'],
-				true
-			);
+		wp_enqueue_script(
+			'fair-events-settings',
+			FAIR_EVENTS_PLUGIN_URL . 'build/admin/settings/index.js',
+			$asset_file['dependencies'],
+			$asset_file['version'],
+			true
+		);
 
-			wp_localize_script(
-				'fair-events-settings',
-				'fairEventsSettingsData',
-				array(
-					'eventsApiUrl' => rest_url( 'fair-events/v1/events' ),
-					// Feature registry (labels/descriptions/forced state) for the
-					// Features tab; resolved enabled state comes via the stored
-					// option once toggles are saved, but the registry itself is
-					// PHP-owned.
-					'features'     => \FairEvents\Core\Features::all(),
-				)
-			);
+		wp_localize_script(
+			'fair-events-settings',
+			'fairEventsSettingsData',
+			array(
+				'eventsApiUrl' => rest_url( 'fair-events/v1/events' ),
+				// Feature registry (labels/descriptions/forced state) for the
+				// Features tab; resolved enabled state comes via the stored
+				// option once toggles are saved, but the registry itself is
+				// PHP-owned.
+				'features'     => \FairEvents\Core\Features::all(),
+			)
+		);
 
-			wp_set_script_translations(
-				'fair-events-settings',
-				'fair-events',
-				\FairEvents\Core\Features::script_translations_path()
-			);
+		wp_set_script_translations(
+			'fair-events-settings',
+			'fair-events',
+			\FairEvents\Core\Features::script_translations_path()
+		);
 
-			wp_enqueue_style( 'wp-components' );
-		}
+		wp_enqueue_style( 'wp-components' );
 	}
 
 	/**
