@@ -4,40 +4,14 @@
  * @package FairEvents
  */
 
+@use "../navigation" as nav;
+
 .wp-block-fair-events-events-week {
-	// Navigation
-	.fair-events-navigation {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 1rem;
-		padding: 0.5rem 1rem;
-		background: #f9f9f9;
-		border-radius: 4px;
+	// Navigation (shared with events-calendar)
+	@include nav.fair-events-navigation;
 
-		.navigation-title {
-			margin: 0;
-			font-size: 1rem;
-			font-weight: 600;
-			color: #1e1e1e;
-		}
-
-		.nav-prev,
-		.nav-next {
-			padding: 0.375rem 0.75rem;
-			background: #fff;
-			border: 1px solid #ddd;
-			border-radius: 4px;
-			text-decoration: none;
-			color: #1e1e1e;
-			transition: all 0.2s ease;
-
-			&:hover {
-				background: #2271b1;
-				color: #fff;
-				border-color: #2271b1;
-			}
-		}
+	.fair-events-navigation .navigation-title {
+		font-size: 1rem;
 	}
 
 	// 7-column grid
@@ -67,13 +41,13 @@
 			border-right: none;
 		}
 
-		// Today: border + body background only, header stays neutral
+		// Today
 		&.is-today {
-			outline: 2px solid #2271b1;
-			outline-offset: -1px;
+			border: 2px solid nav.$fair-events-today-border-color;
 
+			.week-day-header,
 			.week-day-events {
-				background: #e7f5ff;
+				background: nav.$fair-events-today-bg-color;
 			}
 		}
 
