@@ -215,6 +215,18 @@ if ( ! function_exists( 'current_time' ) ) {
 	}
 }
 
+if ( ! function_exists( 'esc_url' ) ) {
+	/**
+	 * Stub of WordPress esc_url() — a no-op pass-through for test input.
+	 *
+	 * @param string $url URL to sanitize.
+	 * @return string Unmodified URL.
+	 */
+	function esc_url( $url ) {
+		return (string) $url;
+	}
+}
+
 if ( ! function_exists( 'esc_url_raw' ) ) {
 	/**
 	 * Stub of WordPress esc_url_raw() — a no-op pass-through for test input.
@@ -520,6 +532,39 @@ if ( ! function_exists( 'number_format_i18n' ) ) {
 	 */
 	function number_format_i18n( $number, $decimals = 0 ) {
 		return number_format( (float) $number, $decimals );
+	}
+}
+
+if ( ! function_exists( 'get_transient' ) ) {
+	/**
+	 * Stub of WordPress get_transient() backed by $GLOBALS['_fair_test_transients'].
+	 *
+	 * @param string $key Transient key.
+	 * @return mixed Stored value, or false when unset.
+	 */
+	function get_transient( $key ) {
+		$transients = isset( $GLOBALS['_fair_test_transients'] ) ? $GLOBALS['_fair_test_transients'] : array();
+		return array_key_exists( $key, $transients ) ? $transients[ $key ] : false;
+	}
+}
+
+if ( ! function_exists( 'set_transient' ) ) {
+	/**
+	 * Stub of WordPress set_transient() backed by $GLOBALS['_fair_test_transients'].
+	 * Expiration is ignored — tests that need expiry semantics unset the key
+	 * directly on $GLOBALS['_fair_test_transients'].
+	 *
+	 * @param string $key        Transient key.
+	 * @param mixed  $value      Value to store.
+	 * @param int    $expiration Expiration in seconds (ignored by the stub).
+	 * @return bool Always true.
+	 */
+	function set_transient( $key, $value, $expiration = 0 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- stub ignores expiry.
+		if ( ! isset( $GLOBALS['_fair_test_transients'] ) ) {
+			$GLOBALS['_fair_test_transients'] = array();
+		}
+		$GLOBALS['_fair_test_transients'][ $key ] = $value;
+		return true;
 	}
 }
 

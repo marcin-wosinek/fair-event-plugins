@@ -14,18 +14,21 @@ use FairEvents\Hooks\SignupEmailHooks;
  * Verifies SignupEmailHooks reads the fair_events_signups row and threads its
  * ticket_type_id/amount through to EmailService::send_signup_confirmation()
  * for both the free-path (handle_signup_created) and paid-path
- * (handle_signup_confirmed) hooks. FairAudience\Hooks\SignupHookBridge is
+ * (handle_signup_confirmed) hooks, and through to
+ * EmailService::send_signup_payment_failed() for the failed-path hook
+ * (handle_signup_payment_failed). FairAudience\Hooks\SignupHookBridge is
  * never loaded in fair-events' own test process, so the
  * "fair-audience active" suppression guard never trips here.
  */
 class SignupEmailHooksTest extends TestCase {
 
 	/**
-	 * Reset recorded test emails and seeded rows before each test.
+	 * Reset recorded test emails/transients and seeded rows before each test.
 	 */
 	protected function setUp(): void {
 		parent::setUp();
 		$GLOBALS['_fair_test_sent_emails'] = array();
+		$GLOBALS['_fair_test_transients']  = array();
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
 		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
 	}
@@ -112,5 +115,66 @@ class SignupEmailHooksTest extends TestCase {
 		$sent = $GLOBALS['_fair_test_sent_emails'][0];
 		$this->assertStringContainsString( 'Amount paid:', $sent['message'] );
 		$this->assertStringContainsString( '25.50 EUR', $sent['message'] );
+	}
+
+	/**
+	 * The failed-path hook sends a payment-failed email once, threading the
+	 * signup's name/email through.
+	 */
+	public function test_handle_signup_payment_failed_sends_email(): void {
+		$signup = (object) array(
+			'id'             => 13,
+			'event_date_id'  => 0,
+			'name'           => 'Jane Doe',
+			'email'          => 'jane@example.test',
+			'ticket_type_id' => 0,
+			'amount'         => 0.0,
+		);
+
+		SignupEmailHooks::handle_signup_payment_failed( $signup, (object) array( 'id' => 501 ) );
+
+		$this->assertCount( 1, $GLOBALS['_fair_test_sent_emails'] );
+		$sent = $GLOBALS['_fair_test_sent_emails'][0];
+		$this->assertSame( 'jane@example.test', $sent['to'] );
+	}
+
+	/**
+	 * A retry of the same failed transaction (e.g. a webhook retry) must not
+	 * send a second email.
+	 */
+	public function test_handle_signup_payment_failed_dedupes_by_transaction(): void {
+		$signup      = (object) array(
+			'id'             => 14,
+			'event_date_id'  => 0,
+			'name'           => 'Jane Doe',
+			'email'          => 'jane@example.test',
+			'ticket_type_id' => 0,
+			'amount'         => 0.0,
+		);
+		$transaction = (object) array( 'id' => 502 );
+
+		SignupEmailHooks::handle_signup_payment_failed( $signup, $transaction );
+		SignupEmailHooks::handle_signup_payment_failed( $signup, $transaction );
+
+		$this->assertCount( 1, $GLOBALS['_fair_test_sent_emails'] );
+	}
+
+	/**
+	 * A separate failed attempt (its own transaction ID) gets its own email.
+	 */
+	public function test_handle_signup_payment_failed_sends_again_for_new_transaction(): void {
+		$signup = (object) array(
+			'id'             => 15,
+			'event_date_id'  => 0,
+			'name'           => 'Jane Doe',
+			'email'          => 'jane@example.test',
+			'ticket_type_id' => 0,
+			'amount'         => 0.0,
+		);
+
+		SignupEmailHooks::handle_signup_payment_failed( $signup, (object) array( 'id' => 601 ) );
+		SignupEmailHooks::handle_signup_payment_failed( $signup, (object) array( 'id' => 602 ) );
+
+		$this->assertCount( 2, $GLOBALS['_fair_test_sent_emails'] );
 	}
 }

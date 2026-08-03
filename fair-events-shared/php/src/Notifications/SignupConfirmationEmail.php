@@ -33,13 +33,15 @@ class SignupConfirmationEmail {
 	 * `$args` keys — data: event_title, participant_name, site_name,
 	 * event_date_display, registration_reference, ticket_type_name,
 	 * payment_amount_display, option_names (array), answers_html
-	 * (pre-rendered `<tr>` fragment). Copy (already translated/escaped):
-	 * greeting_template, confirmation_sentence, event_date_label,
-	 * registration_reference_label, ticket_type_label, amount_paid_label,
-	 * selected_options_label, your_answers_label, sign_off_template.
+	 * (pre-rendered `<tr>` fragment), action_url (pre-escaped, e.g. via
+	 * esc_url()). Copy (already translated/escaped): greeting_template,
+	 * confirmation_sentence, event_date_label, registration_reference_label,
+	 * ticket_type_label, amount_paid_label, selected_options_label,
+	 * your_answers_label, sign_off_template, action_label.
 	 *
 	 * Each optional data/label pair renders only when the data value is
-	 * non-empty.
+	 * non-empty. The action link (action_url + action_label) is a plain text
+	 * link — not a resume/token URL — so it renders only when both are set.
 	 *
 	 * @param array $args See above.
 	 * @return string Full HTML document.
@@ -54,6 +56,7 @@ class SignupConfirmationEmail {
 		$payment_amount_display = $args['payment_amount_display'] ?? '';
 		$option_names           = $args['option_names'] ?? array();
 		$answers_html           = $args['answers_html'] ?? '';
+		$action_url             = $args['action_url'] ?? '';
 
 		$greeting_template            = $args['greeting_template'] ?? '';
 		$confirmation_sentence        = $args['confirmation_sentence'] ?? '';
@@ -64,6 +67,7 @@ class SignupConfirmationEmail {
 		$selected_options_label       = $args['selected_options_label'] ?? '';
 		$your_answers_label           = $args['your_answers_label'] ?? '';
 		$sign_off_template            = $args['sign_off_template'] ?? '';
+		$action_label                 = $args['action_label'] ?? '';
 
 		$details_rows = '';
 		foreach (
@@ -108,6 +112,14 @@ class SignupConfirmationEmail {
 							<table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; border: 1px solid #eeeeee; border-radius: 4px;">' . $answers_html . '</table>';
 		}
 
+		$action_html = '';
+		if ( '' !== $action_url && '' !== $action_label ) {
+			$action_html = '
+							<p style="margin: 0 0 20px 0; font-size: 16px;">
+								<a href="' . $action_url . '" style="color: #0073aa;">' . $action_label . '</a>
+							</p>';
+		}
+
 		return '<!DOCTYPE html>
 <html>
 <head>
@@ -140,6 +152,8 @@ class SignupConfirmationEmail {
 							' . $options_html . '
 
 							' . $answers_section . '
+
+							' . $action_html . '
 
 							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
 								' . sprintf( $sign_off_template, '<br>', $site_name ) . '

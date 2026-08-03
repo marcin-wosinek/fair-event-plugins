@@ -3,8 +3,9 @@
  * Signup confirmation email hooks for Fair Events
  *
  * Sends fair-events' own baseline confirmation email on the free and paid
- * signup lifecycle actions, but only on sites where fair-audience isn't
- * active to send its own (richer) confirmation instead — see #1360.
+ * signup lifecycle actions, and a payment-failed email on the failed one, but
+ * only on sites where fair-audience isn't active to send its own (richer)
+ * versions instead — see #1360 and #1373.
  *
  * @package FairEvents
  */
@@ -29,6 +30,7 @@ class SignupEmailHooks {
 	public static function init() {
 		add_action( 'fair_events_signup_created', array( static::class, 'handle_signup_created' ), 10, 6 );
 		add_action( 'fair_events_signup_confirmed', array( static::class, 'handle_signup_confirmed' ), 10, 2 );
+		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
 	}
 
 	/**
@@ -62,6 +64,38 @@ class SignupEmailHooks {
 	 */
 	public static function handle_signup_confirmed( $signup, $transaction ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- required by the fair_events_signup_confirmed hook signature.
 		self::maybe_send_confirmation( (int) $signup->id, (int) $signup->event_date_id, $signup->name, $signup->email );
+	}
+
+	/**
+	 * Failed-path signup: send a payment-failed email once, unless
+	 * fair-audience is active — it already sends its own failed-payment
+	 * email via the same hook (see FairAudience\Hooks\SignupHookBridge).
+	 * Dedupes per transaction via a transient so payment-webhook retries for
+	 * the same failed attempt don't double-mail the buyer; a later, separate
+	 * failed attempt gets its own transaction ID and so its own email.
+	 *
+	 * @param object $signup      The fair_events_signups row (status already 'failed').
+	 * @param object $transaction Transaction object from fair-payments-connector.
+	 * @return void
+	 */
+	public static function handle_signup_payment_failed( $signup, $transaction ) {
+		if ( class_exists( \FairAudience\Hooks\SignupHookBridge::class ) ) {
+			return;
+		}
+
+		$transaction_id = isset( $transaction->id ) ? (int) $transaction->id : 0;
+		if ( $transaction_id > 0 ) {
+			$transient_key = 'fair_events_payment_failed_email_' . $transaction_id;
+			if ( get_transient( $transient_key ) ) {
+				return;
+			}
+			set_transient( $transient_key, 1, HOUR_IN_SECONDS );
+		}
+
+		$ticket_type_id = isset( $signup->ticket_type_id ) ? (int) $signup->ticket_type_id : 0;
+		$amount         = isset( $signup->amount ) ? (float) $signup->amount : 0.0;
+
+		( new EmailService() )->send_signup_payment_failed( (int) $signup->id, (int) $signup->event_date_id, $signup->name, $signup->email, $ticket_type_id, $amount );
 	}
 
 	/**
