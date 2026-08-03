@@ -83,4 +83,36 @@ class EmailServiceTest extends TestCase {
 		$sent = $GLOBALS['_fair_test_sent_emails'][0];
 		$this->assertStringContainsString( '<!DOCTYPE html>', $sent['message'] );
 	}
+
+	/**
+	 * A payment-failed email links back to the site's home URL (event_date_id
+	 * 0 means EventDates::get_by_id() finds no row, so the fallback link
+	 * applies) with a plain, non-token link.
+	 */
+	public function test_payment_failed_links_back_to_event(): void {
+		$email_service = new EmailService();
+
+		$result = $email_service->send_signup_payment_failed( 42, 0, 'Jane Doe', 'jane@example.test' );
+
+		$this->assertTrue( $result );
+		$this->assertCount( 1, $GLOBALS['_fair_test_sent_emails'] );
+
+		$sent = $GLOBALS['_fair_test_sent_emails'][0];
+		$this->assertSame( 'jane@example.test', $sent['to'] );
+		$this->assertStringContainsString( 'href="https://example.com/"', $sent['message'] );
+		$this->assertStringContainsString( 'Return to the event page to try again', $sent['message'] );
+	}
+
+	/**
+	 * The failed-payment email's subject calls out that the payment didn't
+	 * go through, distinguishing it from the paid confirmation email.
+	 */
+	public function test_payment_failed_subject_mentions_payment(): void {
+		$email_service = new EmailService();
+
+		$email_service->send_signup_payment_failed( 42, 0, 'Jane Doe', 'jane@example.test' );
+
+		$sent = $GLOBALS['_fair_test_sent_emails'][0];
+		$this->assertStringContainsString( 'Payment', $sent['subject'] );
+	}
 }
