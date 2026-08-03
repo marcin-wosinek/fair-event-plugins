@@ -39,6 +39,18 @@ function AnswerDisplay({ answer }) {
 		);
 	}
 
+	if (
+		question_type === 'url' &&
+		answer_value &&
+		/^https?:\/\//.test(answer_value)
+	) {
+		return (
+			<a href={answer_value} target="_blank" rel="noopener noreferrer">
+				{answer_value}
+			</a>
+		);
+	}
+
 	if (question_type === 'multiselect' && answer_value) {
 		try {
 			const values = JSON.parse(answer_value);

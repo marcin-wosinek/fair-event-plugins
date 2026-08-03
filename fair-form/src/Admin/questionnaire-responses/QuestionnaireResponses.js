@@ -106,13 +106,17 @@ export default function QuestionnaireResponses() {
 		responses.forEach((response) => {
 			(response.answers || []).forEach((answer) => {
 				if (!seen.has(answer.question_key)) {
-					seen.set(answer.question_key, answer.question_text);
+					seen.set(answer.question_key, {
+						text: answer.question_text,
+						type: answer.question_type,
+					});
 				}
 			});
 		});
-		return Array.from(seen.entries()).map(([key, text]) => ({
+		return Array.from(seen.entries()).map(([key, { text, type }]) => ({
 			key,
 			text,
+			type,
 		}));
 	}, [responses]);
 
@@ -254,6 +258,26 @@ export default function QuestionnaireResponses() {
 				);
 				return answer ? answer.answer_value : '';
 			},
+			...(col.type === 'url' && {
+				render: ({ item }) => {
+					const answer = (item.answers || []).find(
+						(a) => a.question_key === col.key
+					);
+					const value = answer ? answer.answer_value : '';
+					if (!value || !/^https?:\/\//.test(value)) {
+						return value || '';
+					}
+					return (
+						<a
+							href={value}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{value}
+						</a>
+					);
+				},
+			}),
 		}));
 
 		return [

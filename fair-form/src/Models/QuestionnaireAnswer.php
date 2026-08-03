@@ -31,6 +31,7 @@ class QuestionnaireAnswer {
 		'file_upload',
 		'phone',
 		'email',
+		'url',
 	);
 
 	/**

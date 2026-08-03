@@ -50,7 +50,7 @@ class QuestionnaireService {
 	 *
 	 * @var array
 	 */
-	const VALID_TYPES = array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'multiselect', 'file_upload', 'phone', 'email' );
+	const VALID_TYPES = array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'multiselect', 'file_upload', 'phone', 'email', 'url' );
 
 	/**
 	 * HTML `pattern` attribute value for the phone question's `<input>`.
@@ -216,6 +216,22 @@ class QuestionnaireService {
 				$answer_value = $normalized;
 			}
 
+			if ( 'url' === $question_type && '' !== $answer_value ) {
+				$normalized = self::normalize_url( $answer_value );
+				if ( ! self::is_valid_web_url( $normalized ) ) {
+					return new WP_Error(
+						'invalid_url',
+						sprintf(
+							/* translators: %s: question text */
+							__( 'Please enter a valid web address for: %s', 'fair-form' ),
+							$question_text
+						),
+						array( 'status' => 400 )
+					);
+				}
+				$answer_value = $normalized;
+			}
+
 			$sanitized[] = array(
 				'question_key'  => sanitize_key( $answer['question_key'] ?? '' ),
 				'question_text' => $question_text,
@@ -242,6 +258,40 @@ class QuestionnaireService {
 	 */
 	public static function normalize_phone( $value ) {
 		return preg_replace( '/[\p{Z}\s\x{FEFF}.()-]/u', '', $value );
+	}
+
+	/**
+	 * Prepend `https://` to a URL question value that has no scheme, so a
+	 * bare domain (e.g. "example.com/my-event") is accepted as shorthand for
+	 * the full web address. Mirrored by the JS twin in
+	 * `fair-events-shared/src/questionnaire.js`'s `validateQuestions()`.
+	 *
+	 * @param string $value Raw URL value.
+	 * @return string Value with a scheme, unchanged if it already had one.
+	 */
+	public static function normalize_url( $value ) {
+		if ( ! preg_match( '#^[a-zA-Z][a-zA-Z\d+.-]*://#', $value ) ) {
+			return 'https://' . $value;
+		}
+		return $value;
+	}
+
+	/**
+	 * Whether a (already-schemed) value is a well-formed `http`/`https` web
+	 * address. Rejects other schemes (`javascript:`, `file:`, …) and free
+	 * text that doesn't parse as a URL at all.
+	 *
+	 * @param string $value URL value, expected to already carry a scheme.
+	 * @return bool Whether the value is a valid http/https URL.
+	 */
+	public static function is_valid_web_url( $value ) {
+		$filtered = filter_var( $value, FILTER_VALIDATE_URL );
+		if ( false === $filtered ) {
+			return false;
+		}
+
+		$scheme = wp_parse_url( $filtered, PHP_URL_SCHEME );
+		return in_array( $scheme, array( 'http', 'https' ), true );
 	}
 
 	/**
