@@ -20,24 +20,16 @@ import { __ } from '@wordpress/i18n';
 import { useState, useEffect, useRef } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
-import { generateUuid } from 'fair-events-shared';
+import {
+	generateUuid,
+	FAIR_FORM_QUESTION_BLOCK_NAMES,
+} from 'fair-events-shared';
 
 const ALLOWED_BLOCKS = [
 	'core/heading',
 	'core/paragraph',
 	'core/list',
-	'fair-audience/fair-form-short-text',
-	'fair-audience/fair-form-long-text',
-	'fair-audience/fair-form-email',
-	'fair-audience/fair-form-phone',
-	'fair-audience/fair-form-url',
-	'fair-audience/fair-form-select-one',
-	'fair-audience/fair-form-multiselect',
-	'fair-audience/fair-form-radio',
-	'fair-audience/fair-form-file-upload',
-	'fair-audience/fair-form-consent',
-	'fair-audience/fair-form-conditional',
-	'fair-audience/fair-form-mailing-signup',
+	...FAIR_FORM_QUESTION_BLOCK_NAMES,
 ];
 
 function EventDateSelect({ eventDateId, onChange }) {

@@ -36,16 +36,24 @@ Mirror the closest existing sibling under `fair-form/src/blocks/fair-form-{type}
 `ancestor` in `block.json` is necessary but **not sufficient** — each parent
 block also keeps its own hardcoded allow-list passed to
 `useInnerBlocksProps`/`InnerBlocks`, and the inserter only offers a question
-block where it appears in **both** places:
+block where it appears in **both** places. There are four such gates:
 
 -   `fair-form/src/blocks/fair-form/editor.js` — `ALLOWED_BLOCKS`
+-   `fair-form/src/blocks/fair-form-conditional/editor.js` — `ALLOWED_BLOCKS`
 -   `fair-audience/src/blocks/event-signup/editor.js` — `ALLOWED_BLOCKS`
 -   `fair-events/src/blocks/event-signup/editor.js` — `FAIR_FORM_ALLOWED_BLOCKS`
 
-Add `'fair-audience/fair-form-{type}'` to every array named in the new
-block's `ancestor` list. A block with a correct `ancestor` array and no entry
-here will register cleanly, pass review, and simply never show up in the
-inserter.
+The first two source from `FAIR_FORM_QUESTION_BLOCK_NAMES`
+(`fair-events-shared/src/question-utils.js`), since a fair-form and a
+conditional section inside it are supposed to accept the exact same set of
+question types — add the new block's name there and both arrays pick it up.
+The two `event-signup` arrays are genuine, deliberately smaller subsets (e.g.
+file-upload and mailing-signup are excluded) and stay hardcoded — add
+`'fair-audience/fair-form-{type}'` to each one directly, if the new type
+belongs there.
+
+A block with a correct `ancestor` array and no entry in these arrays will
+register cleanly, pass review, and simply never show up in the inserter.
 
 ## 4. Answer validation (shared across every submission path)
 

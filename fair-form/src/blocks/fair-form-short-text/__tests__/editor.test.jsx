@@ -36,6 +36,7 @@ jest.mock('@wordpress/components', () => ({
 }));
 
 jest.mock('fair-events-shared', () => ({
+	autosizeTextarea: () => {},
 	generateQuestionKey: (text) =>
 		text
 			.toLowerCase()
@@ -52,7 +53,7 @@ jest.mock('@wordpress/blocks', () => ({
 	createBlock: (name, attributes) => ({ name, attributes }),
 }));
 
-describe('Fair Form URL Question Edit', () => {
+describe('Fair Form Short Text Question Edit', () => {
 	let Edit;
 
 	beforeAll(() => {
@@ -83,19 +84,19 @@ describe('Fair Form URL Question Edit', () => {
 			'Enter your question...'
 		);
 		fireEvent.change(questionTextInput, {
-			target: { value: 'Portfolio website' },
+			target: { value: 'Favorite color' },
 		});
 
 		expect(setAttributes).toHaveBeenCalledWith({
-			questionText: 'Portfolio website',
-			questionKey: 'portfolio_website',
+			questionText: 'Favorite color',
+			questionKey: 'favorite_color',
 		});
 	});
 
 	it('does not override a manually-edited question key', () => {
 		const setAttributes = jest.fn();
 		renderEdit(
-			{ questionText: 'Website', questionKey: 'custom_key' },
+			{ questionText: 'Color', questionKey: 'custom_key' },
 			setAttributes
 		);
 
@@ -103,11 +104,11 @@ describe('Fair Form URL Question Edit', () => {
 			'Enter your question...'
 		);
 		fireEvent.change(questionTextInput, {
-			target: { value: 'Website updated' },
+			target: { value: 'Color updated' },
 		});
 
 		expect(setAttributes).toHaveBeenCalledWith({
-			questionText: 'Website updated',
+			questionText: 'Color updated',
 		});
 	});
 
@@ -133,29 +134,40 @@ describe('Fair Form URL Question Edit', () => {
 		renderEdit({}, setAttributes);
 
 		fireEvent.change(screen.getByLabelText('Placeholder'), {
-			target: { value: 'https://example.com' },
+			target: { value: 'Type your answer...' },
 		});
 
 		expect(setAttributes).toHaveBeenCalledWith({
-			placeholder: 'https://example.com',
+			placeholder: 'Type your answer...',
 		});
 	});
 
-	it('transforms to short-text, preserving attributes', () => {
-		const transform = capturedSettings.transforms.to.find((t) =>
-			t.blocks.includes('fair-audience/fair-form-short-text')
-		);
-
+	describe('transforms.to', () => {
 		const attributes = {
 			questionText: 'Website',
 			questionKey: 'website',
 			required: true,
-			placeholder: 'https://example.com',
+			placeholder: '',
 		};
 
-		expect(transform.transform(attributes)).toEqual({
-			name: 'fair-audience/fair-form-short-text',
-			attributes,
+		it('includes long-text, phone, and url, preserving attributes', () => {
+			const targets = [
+				'fair-audience/fair-form-long-text',
+				'fair-audience/fair-form-phone',
+				'fair-audience/fair-form-url',
+			];
+
+			for (const target of targets) {
+				const transform = capturedSettings.transforms.to.find((t) =>
+					t.blocks.includes(target)
+				);
+
+				expect(transform).toBeDefined();
+				expect(transform.transform(attributes)).toEqual({
+					name: target,
+					attributes,
+				});
+			}
 		});
 	});
 });
