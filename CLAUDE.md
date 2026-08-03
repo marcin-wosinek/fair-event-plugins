@@ -34,6 +34,7 @@ guessing which ones matter.
 | Translation tooling (`npm run translation:*`)                   | [TRANSLATIONS.md](./TRANSLATIONS.md)                           |
 | Webpack config                                                  | [WEBPACK_CONFIG.md](./WEBPACK_CONFIG.md)                       |
 | Block creation                                                  | [BLOCK_CREATION.md](./BLOCK_CREATION.md)                       |
+| Fair Form question blocks (field types)                        | [FAIR_FORM_QUESTION_BLOCKS.md](./FAIR_FORM_QUESTION_BLOCKS.md) |
 | Deployment / releases                                           | [DEPLOYMENT.md](./DEPLOYMENT.md), [RELEASES.md](./RELEASES.md) |
 
 ## Development Commands

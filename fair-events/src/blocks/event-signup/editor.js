@@ -46,7 +46,9 @@ const BASE_ALLOWED_BLOCKS = ['core/heading', 'core/paragraph', 'core/list'];
 const FAIR_FORM_ALLOWED_BLOCKS = [
 	'fair-audience/fair-form-short-text',
 	'fair-audience/fair-form-long-text',
+	'fair-audience/fair-form-email',
 	'fair-audience/fair-form-phone',
+	'fair-audience/fair-form-url',
 	'fair-audience/fair-form-select-one',
 	'fair-audience/fair-form-radio',
 	'fair-audience/fair-form-multiselect',
