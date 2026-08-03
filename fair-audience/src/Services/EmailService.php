@@ -25,6 +25,7 @@ use FairAudience\Services\ParticipantToken;
 use FairAudienceExperimental\Services\FeePaymentToken;
 use FairAudience\Services\RecipientResolver;
 use FairEventsShared\Money;
+use FairEventsShared\Notifications\SignupConfirmationEmail;
 
 defined( 'WPINC' ) || die;
 
@@ -2235,16 +2236,18 @@ class EmailService {
 	/**
 	 * Send signup confirmation email to the participant.
 	 *
-	 * @param Participant   $participant   Participant who signed up.
-	 * @param \WP_Post|null $event         Event post object (nullable).
-	 * @param object|null   $transaction   Transaction row from fair-payments-connector (null for free signups).
-	 * @param array         $option_names  Names of the selected ticket-activity options.
-	 * @param int           $event_date_id Event date ID — used to load the signup
-	 *                                     questionnaire answers so they can be
-	 *                                     included in the email. Pass 0 to skip.
+	 * @param Participant   $participant             Participant who signed up.
+	 * @param \WP_Post|null $event                   Event post object (nullable).
+	 * @param object|null   $transaction             Transaction row from fair-payments-connector (null for free signups).
+	 * @param array         $option_names            Names of the selected ticket-activity options.
+	 * @param int           $event_date_id           Event date ID — used to load the event date
+	 *                                                and the signup questionnaire answers. Pass 0 to skip both.
+	 * @param int           $ticket_type_id           Ticket type ID shown in the email. Pass 0 to omit.
+	 * @param int           $registration_reference  EventParticipant row ID shown as the registration
+	 *                                                reference. Pass 0 to omit.
 	 * @return bool Success.
 	 */
-	public function send_signup_payment_confirmation( Participant $participant, $event, $transaction = null, $option_names = array(), int $event_date_id = 0 ): bool {
+	public function send_signup_payment_confirmation( Participant $participant, $event, $transaction = null, $option_names = array(), int $event_date_id = 0, int $ticket_type_id = 0, int $registration_reference = 0 ): bool {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
@@ -2252,36 +2255,32 @@ class EmailService {
 		$site_name   = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$event_title = $event ? $event->post_title : __( 'Event', 'fair-audience' );
 
-		$subject = sprintf(
+		$subject_template =
 			/* translators: %s: event title */
-			__( 'Signup confirmed — %s', 'fair-audience' ),
-			$event_title
-		);
+			__( 'Signup confirmed — %s', 'fair-audience' );
 
-		$amount   = isset( $transaction->amount ) ? (float) $transaction->amount : 0;
-		$currency = ! empty( $transaction->currency ) ? $transaction->currency : 'EUR';
-
-		$payment_html = '';
-		if ( $amount > 0 ) {
-			$payment_html = '
-							<table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0;">
-								<tr>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount paid:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( Money::format_display( $amount, $currency ) ) . '</td>
-								</tr>
-							</table>';
-		}
-
-		$options_html = '';
-		if ( ! empty( $option_names ) ) {
-			$options_list = '';
-			foreach ( $option_names as $name ) {
-				$options_list .= '<li style="padding: 4px 0;">' . esc_html( $name ) . '</li>';
+		$event_date_display = '';
+		if ( $event_date_id > 0 && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date ) {
+				$timestamp = strtotime( $event_date->start_datetime );
+				if ( false !== $timestamp ) {
+					$event_date_display = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
+				}
 			}
-			$options_html = '
-							<p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">' . esc_html__( 'Selected options:', 'fair-audience' ) . '</p>
-							<ul style="margin: 0 0 20px 20px; padding: 0;">' . $options_list . '</ul>';
 		}
+
+		$ticket_type_name = '';
+		if ( $ticket_type_id > 0 && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+			if ( $ticket_type ) {
+				$ticket_type_name = $ticket_type->name;
+			}
+		}
+
+		$amount                 = isset( $transaction->amount ) ? (float) $transaction->amount : 0;
+		$currency               = ! empty( $transaction->currency ) ? $transaction->currency : 'EUR';
+		$payment_amount_display = $amount > 0 ? Money::format_display( $amount, $currency ) : '';
 
 		// Custom signup question answers (Event Signup questionnaire submission).
 		$answers_html = '';
@@ -2296,89 +2295,45 @@ class EmailService {
 			);
 
 			if ( ! empty( $submissions ) ) {
-				$answer_repo = new \FairForm\Database\QuestionnaireAnswerRepository();
-				$rows_html   = $this->render_answer_rows( $answer_repo->get_by_submission( $submissions[0]->id ) );
-				if ( '' !== $rows_html ) {
-					$answers_html = '
-							<p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">' . esc_html__( 'Your answers:', 'fair-audience' ) . '</p>
-							<table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; border: 1px solid #eeeeee; border-radius: 4px;">'
-						. $rows_html
-						. '</table>';
-				}
+				$answer_repo  = new \FairForm\Database\QuestionnaireAnswerRepository();
+				$answers_html = $this->render_answer_rows( $answer_repo->get_by_submission( $submissions[0]->id ) );
 			}
 		}
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $event_title ) . '</h1>
-						</td>
-					</tr>
+		$confirmation_sentence = sprintf(
+			$transaction
+				/* translators: %s: event title */
+				? esc_html__( 'Your signup for %s has been confirmed and your payment has been received.', 'fair-audience' )
+				/* translators: %s: event title */
+				: esc_html__( 'Your signup for %s has been confirmed.', 'fair-audience' ),
+			'<strong>' . esc_html( $event_title ) . '</strong>'
+		);
 
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-								$transaction
-									/* translators: %s: event title */
-									? esc_html__( 'Your signup for %s has been confirmed and your payment has been received.', 'fair-audience' )
-									/* translators: %s: event title */
-									: esc_html__( 'Your signup for %s has been confirmed.', 'fair-audience' ),
-								'<strong>' . esc_html( $event_title ) . '</strong>'
-							) . '
-							</p>
-
-							' . $payment_html . '
-
-							' . $options_html . '
-
-							' . $answers_html . '
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-								esc_html__( 'See you there!%1$sThe %2$s Team', 'fair-audience' ),
-								'<br>',
-								esc_html( $site_name )
-							) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">
-								' . esc_html( $site_name ) . '
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
+		$message = SignupConfirmationEmail::html(
+			array(
+				'event_title'                  => esc_html( $event_title ),
+				'participant_name'             => esc_html( $participant->name ),
+				'site_name'                    => esc_html( $site_name ),
+				'event_date_display'           => esc_html( $event_date_display ),
+				'registration_reference'       => $registration_reference > 0 ? '#' . $registration_reference : '',
+				'ticket_type_name'             => esc_html( $ticket_type_name ),
+				'payment_amount_display'       => esc_html( $payment_amount_display ),
+				'option_names'                 => array_map( 'esc_html', $option_names ),
+				'answers_html'                 => $answers_html,
+				/* translators: %s: participant first name */
+				'greeting_template'            => esc_html__( 'Hi %s,', 'fair-audience' ),
+				'confirmation_sentence'        => $confirmation_sentence,
+				'event_date_label'             => esc_html__( 'Event date:', 'fair-audience' ),
+				'registration_reference_label' => esc_html__( 'Registration reference:', 'fair-audience' ),
+				'ticket_type_label'            => esc_html__( 'Ticket type:', 'fair-audience' ),
+				'amount_paid_label'            => esc_html__( 'Amount paid:', 'fair-audience' ),
+				'selected_options_label'       => esc_html__( 'Selected options:', 'fair-audience' ),
+				'your_answers_label'           => esc_html__( 'Your answers:', 'fair-audience' ),
+				/* translators: 1: line break, 2: site name */
+				'sign_off_template'            => esc_html__( 'See you there!%1$sThe %2$s Team', 'fair-audience' ),
+			)
+		);
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}

@@ -758,15 +758,16 @@ class EventSignupController extends WP_REST_Controller {
 			} else {
 				$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
 			}
+			$event_participant_id = (int) $existing->id;
 		} else {
-			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
+			$event_participant_id = (int) $this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
 		}
 
 		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
 		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
 		$option_names = array_map( fn( $o ) => $o->name, $option_items );
-		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id );
+		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
 
 		AudienceSession::set( (int) $participant->id );
 
@@ -2905,15 +2906,16 @@ class EventSignupController extends WP_REST_Controller {
 			} else {
 				$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
 			}
+			$event_participant_id = (int) $existing->id;
 		} else {
-			$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
+			$event_participant_id = (int) $this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
 		}
 
 		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
 		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
 		$option_names = array_map( fn( $o ) => $o->name, $option_items );
-		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id );
+		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
 
 		if ( $is_new_participant ) {
 			AudienceSession::set( (int) $participant->id );

@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Audience 1.11.0\n"
+"Project-Id-Version: Fair Audience 1.12.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-audience\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-02T09:52:40+00:00\n"
+"POT-Creation-Date: 2026-08-03T15:42:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -68,16 +68,16 @@ msgstr ""
 
 #: src/API/AudienceSignupController.php:204
 #: src/API/EventInterestController.php:156
-#: src/API/EventSignupController.php:2146
-#: src/API/EventSignupController.php:2678
+#: src/API/EventSignupController.php:2147
+#: src/API/EventSignupController.php:2679
 #: src/API/MailingSignupController.php:172
 msgid "Please enter a valid email address."
 msgstr ""
 
 #: src/API/AudienceSignupController.php:223
 #: src/API/EventInterestController.php:182
-#: src/API/EventSignupController.php:2155
-#: src/API/EventSignupController.php:2717
+#: src/API/EventSignupController.php:2156
+#: src/API/EventSignupController.php:2718
 #: src/API/MailingSignupController.php:192
 msgid "Too many requests. Please try again later."
 msgstr ""
@@ -147,22 +147,22 @@ msgstr ""
 #: src/API/EventParticipantsController.php:1468
 #: src/API/EventSignupController.php:468
 #: src/API/EventSignupController.php:613
-#: src/API/EventSignupController.php:1080
-#: src/API/EventSignupController.php:2137
-#: src/API/EventSignupController.php:2340
-#: src/API/EventSignupController.php:2532
-#: src/API/EventSignupController.php:2660
-#: src/API/EventSignupController.php:2960
-#: src/Services/EmailService.php:336
-#: src/Services/EmailService.php:560
-#: src/Services/EmailService.php:1400
-#: src/Services/EmailService.php:2816
+#: src/API/EventSignupController.php:1081
+#: src/API/EventSignupController.php:2138
+#: src/API/EventSignupController.php:2341
+#: src/API/EventSignupController.php:2533
+#: src/API/EventSignupController.php:2661
+#: src/API/EventSignupController.php:2962
+#: src/Services/EmailService.php:337
+#: src/Services/EmailService.php:561
+#: src/Services/EmailService.php:1401
+#: src/Services/EmailService.php:2771
 msgid "Event not found."
 msgstr ""
 
 #: src/API/EventParticipantsController.php:582
-#: src/API/EventSignupController.php:1751
-#: src/Services/EmailService.php:2294
+#: src/API/EventSignupController.php:1752
+#: src/Services/EmailService.php:2293
 #: src/blocks/event-signup/editor.js:110
 msgid "Event Signup"
 msgstr ""
@@ -175,11 +175,11 @@ msgstr ""
 #: src/API/ParticipantsController.php:729
 #: src/API/ParticipantsController.php:762
 #: src/API/ParticipantsController.php:789
-#: src/Services/EmailService.php:360
-#: src/Services/EmailService.php:583
-#: src/Services/EmailService.php:1439
-#: src/Services/EmailService.php:1829
-#: src/Services/EmailService.php:2891
+#: src/Services/EmailService.php:361
+#: src/Services/EmailService.php:584
+#: src/Services/EmailService.php:1440
+#: src/Services/EmailService.php:1830
+#: src/Services/EmailService.php:2846
 #: src/Admin/participant-detail/ParticipantDetail.js:86
 msgid "Participant not found."
 msgstr ""
@@ -304,40 +304,40 @@ msgid "This registration link has expired. Please fill in the form again."
 msgstr ""
 
 #: src/API/EventSignupController.php:642
-#: src/API/EventSignupController.php:1108
-#: src/API/EventSignupController.php:2989
+#: src/API/EventSignupController.php:1109
+#: src/API/EventSignupController.php:2991
 msgid "Could not find your participant profile."
 msgstr ""
 
 #: src/API/EventSignupController.php:726
-#: src/API/EventSignupController.php:2368
-#: src/API/EventSignupController.php:2794
+#: src/API/EventSignupController.php:2369
+#: src/API/EventSignupController.php:2795
 msgid "You are already signed up for this event."
 msgstr ""
 
-#: src/API/EventSignupController.php:776
-#: src/API/EventSignupController.php:918
+#: src/API/EventSignupController.php:777
+#: src/API/EventSignupController.php:919
 #: src/blocks/event-signup/render.php:66
 #: src/blocks/event-signup/frontend.js:961
 #: src/blocks/event-signup/frontend.js:1271
 msgid "You have successfully signed up for the event!"
 msgstr ""
 
-#: src/API/EventSignupController.php:805
+#: src/API/EventSignupController.php:806
 msgid "Please select at least one occurrence."
 msgstr ""
 
-#: src/API/EventSignupController.php:813
-#: src/API/EventSignupController.php:824
+#: src/API/EventSignupController.php:814
+#: src/API/EventSignupController.php:825
 msgid "Invalid ticket type."
 msgstr ""
 
-#: src/API/EventSignupController.php:835
+#: src/API/EventSignupController.php:836
 msgid "One of the selected occurrences is not valid for this ticket."
 msgstr ""
 
 #. translators: %d: minimum number of occurrences required
-#: src/API/EventSignupController.php:848
+#: src/API/EventSignupController.php:849
 #: src/blocks/event-signup/frontend.js:311
 #, php-format,js-format
 msgid "Please select at least %d occurrence."
@@ -345,79 +345,79 @@ msgid_plural "Please select at least %d occurrences."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/API/EventSignupController.php:875
+#: src/API/EventSignupController.php:876
 msgid "You are already signed up for these occurrences."
 msgstr ""
 
-#: src/API/EventSignupController.php:928
-#: src/API/EventSignupController.php:1816
-#: src/API/EventSignupController.php:1828
-#: src/API/EventSignupController.php:2039
+#: src/API/EventSignupController.php:929
+#: src/API/EventSignupController.php:1817
+#: src/API/EventSignupController.php:1829
+#: src/API/EventSignupController.php:2040
 msgid "Paid signup is not available because the payment plugin is not configured."
 msgstr ""
 
-#: src/API/EventSignupController.php:945
+#: src/API/EventSignupController.php:946
 msgid "One of the selected occurrences is fully booked."
 msgstr ""
 
 #. translators: %s: event title or occurrence date/time label
-#: src/API/EventSignupController.php:984
-#: src/API/EventSignupController.php:998
-#: src/API/EventSignupController.php:1873
+#: src/API/EventSignupController.php:985
+#: src/API/EventSignupController.php:999
+#: src/API/EventSignupController.php:1874
 #, php-format
 msgid "Signup for %s"
 msgstr ""
 
-#: src/API/EventSignupController.php:1051
-#: src/API/EventSignupController.php:1317
-#: src/API/EventSignupController.php:1965
-#: src/API/EventSignupController.php:2112
-#: src/API/EventSignupController.php:2489
-#: src/API/EventSignupController.php:2630
+#: src/API/EventSignupController.php:1052
+#: src/API/EventSignupController.php:1318
+#: src/API/EventSignupController.php:1966
+#: src/API/EventSignupController.php:2113
+#: src/API/EventSignupController.php:2490
+#: src/API/EventSignupController.php:2631
 #: src/blocks/event-signup/frontend.js:1080
 #: src/blocks/event-signup/frontend.js:1362
 msgid "Redirecting to payment…"
 msgstr ""
 
-#: src/API/EventSignupController.php:1130
+#: src/API/EventSignupController.php:1131
 msgid "You need an active signup before you can add activities."
 msgstr ""
 
-#: src/API/EventSignupController.php:1152
+#: src/API/EventSignupController.php:1153
 msgid "No new activities to add."
 msgstr ""
 
-#: src/API/EventSignupController.php:1177
+#: src/API/EventSignupController.php:1178
 #: src/blocks/event-signup/frontend.js:1556
 msgid "Your activities have been added!"
 msgstr ""
 
-#: src/API/EventSignupController.php:1239
-#: src/API/EventSignupController.php:1251
+#: src/API/EventSignupController.php:1240
+#: src/API/EventSignupController.php:1252
 msgid "Paid activities are not available because the payment plugin is not configured."
 msgstr ""
 
 #. translators: %s: event title
-#: src/API/EventSignupController.php:1258
+#: src/API/EventSignupController.php:1259
 #, php-format
 msgid "Added activities for %s"
 msgstr ""
 
-#: src/API/EventSignupController.php:1355
+#: src/API/EventSignupController.php:1356
 #: src/Services/GroupSignupPricing.php:113
 msgid "This ticket type is not available for your account."
 msgstr ""
 
-#: src/API/EventSignupController.php:1458
+#: src/API/EventSignupController.php:1459
 msgid "This ticket type is sold out. Please pick another option."
 msgstr ""
 
-#: src/API/EventSignupController.php:1485
+#: src/API/EventSignupController.php:1486
 msgid "This ticket type is no longer available. Please pick another option."
 msgstr ""
 
 #. translators: %d: minimum number of activities required
-#: src/API/EventSignupController.php:1598
+#: src/API/EventSignupController.php:1599
 #: src/blocks/event-signup/render.php:753
 #: src/Services/SignupActivities.php:187
 #: src/blocks/event-signup/frontend.js:391
@@ -427,99 +427,99 @@ msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/API/EventSignupController.php:1841
+#: src/API/EventSignupController.php:1842
 msgid "This event is fully booked."
 msgstr ""
 
-#: src/API/EventSignupController.php:2030
+#: src/API/EventSignupController.php:2031
 msgid "Your series pass is now active!"
 msgstr ""
 
 #. translators: %s: ticket type name
-#: src/API/EventSignupController.php:2048
+#: src/API/EventSignupController.php:2049
 #, php-format
 msgid "Upgrade to series pass: %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/API/EventSignupController.php:2062
+#: src/API/EventSignupController.php:2063
 #, php-format
 msgid "Series pass upgrade for %s"
 msgstr ""
 
-#: src/API/EventSignupController.php:2187
+#: src/API/EventSignupController.php:2188
 msgid "If your email is in our system, you will receive a signup link shortly. Please check your inbox."
 msgstr ""
 
-#: src/API/EventSignupController.php:2206
+#: src/API/EventSignupController.php:2207
 msgid "Invalid transaction."
 msgstr ""
 
-#: src/API/EventSignupController.php:2214
+#: src/API/EventSignupController.php:2215
 msgid "Payment plugin is missing."
 msgstr ""
 
-#: src/API/EventSignupController.php:2223
-#: src/API/EventSignupController.php:2288
+#: src/API/EventSignupController.php:2224
+#: src/API/EventSignupController.php:2289
 msgid "Transaction not found."
 msgstr ""
 
-#: src/API/EventSignupController.php:2264
+#: src/API/EventSignupController.php:2265
 msgid "You are not authorized to retry this payment."
 msgstr ""
 
-#: src/API/EventSignupController.php:2300
+#: src/API/EventSignupController.php:2301
 msgid "This payment cannot be retried."
 msgstr ""
 
-#: src/API/EventSignupController.php:2318
+#: src/API/EventSignupController.php:2319
 msgid "This payment is not retriable from this endpoint."
 msgstr ""
 
-#: src/API/EventSignupController.php:2331
-#: src/API/EventSignupController.php:2523
+#: src/API/EventSignupController.php:2332
+#: src/API/EventSignupController.php:2524
 msgid "This payment is missing context needed to retry."
 msgstr ""
 
-#: src/API/EventSignupController.php:2379
-#: src/API/EventSignupController.php:2566
+#: src/API/EventSignupController.php:2380
+#: src/API/EventSignupController.php:2567
 msgid "Original line items could not be loaded."
 msgstr ""
 
-#: src/API/EventSignupController.php:2541
+#: src/API/EventSignupController.php:2542
 msgid "Your signup is no longer active."
 msgstr ""
 
-#: src/API/EventSignupController.php:2555
+#: src/API/EventSignupController.php:2556
 msgid "These activities are already on your signup."
 msgstr ""
 
-#: src/API/EventSignupController.php:2687
+#: src/API/EventSignupController.php:2688
 msgid "Please enter your name."
 msgstr ""
 
-#: src/API/EventSignupController.php:2769
+#: src/API/EventSignupController.php:2770
 #: src/blocks/event-signup/frontend.js:1096
 msgid "We recognise this email — check your inbox to continue."
 msgstr ""
 
-#: src/API/EventSignupController.php:2821
+#: src/API/EventSignupController.php:2822
 msgid "Failed to process registration. Please try again."
 msgstr ""
 
-#: src/API/EventSignupController.php:2929
+#: src/API/EventSignupController.php:2931
 msgid "You have been signed up for the event! Please check your email to confirm your subscription."
 msgstr ""
 
-#: src/API/EventSignupController.php:2938
+#: src/API/EventSignupController.php:2940
 msgid "You have successfully registered and signed up for the event!"
 msgstr ""
 
-#: src/API/EventSignupController.php:3010
+#: src/API/EventSignupController.php:3012
 msgid "You are not signed up for this event."
 msgstr ""
 
-#: src/API/EventSignupController.php:3026
+#: src/API/EventSignupController.php:3028
 #: src/blocks/event-signup/frontend.js:1640
 msgid "You have been removed from this event."
 msgstr ""
@@ -655,7 +655,7 @@ msgstr ""
 #: src/blocks/event-signup/render.php:1265
 #: src/blocks/event-signup/render.php:1320
 #: src/blocks/mailing-signup/render.php:125
-#: src/Services/EmailService.php:1920
+#: src/Services/EmailService.php:1921
 #: src/Admin/all-participants/AllParticipants.js:108
 #: src/Admin/components/ParticipantEditModal.js:177
 #: src/Admin/participant-detail/ParticipantDetail.js:190
@@ -708,7 +708,7 @@ msgid "This block can only be used on event pages."
 msgstr ""
 
 #: src/blocks/event-interest/render.php:135
-#: src/Services/EmailService.php:1916
+#: src/Services/EmailService.php:1917
 #: src/Admin/all-participants/AllParticipants.js:93
 #: src/Admin/event-participants/EventParticipants.js:629
 #: src/Admin/manage-event-audience-tab/EventAudience.js:892
@@ -1057,12 +1057,12 @@ msgstr ""
 msgid "Every 5 minutes (fair-audience)"
 msgstr ""
 
-#: src/Hooks/PaymentHooks.php:819
+#: src/Hooks/PaymentHooks.php:827
 msgid "Paid online via Mollie"
 msgstr ""
 
 #. translators: %1$s: Mollie status, %2$d: transaction ID
-#: src/Hooks/PaymentHooks.php:863
+#: src/Hooks/PaymentHooks.php:871
 #, php-format
 msgid "Online payment %1$s (transaction #%2$d)"
 msgstr ""
@@ -1105,322 +1105,322 @@ msgstr ""
 msgid "Powered by %s"
 msgstr ""
 
-#: src/Services/EmailService.php:153
+#: src/Services/EmailService.php:154
 msgid "Participant has not yet confirmed their marketing subscription."
 msgstr ""
 
-#: src/Services/EmailService.php:161
+#: src/Services/EmailService.php:162
 msgid "Opted out of the weekly summary."
 msgstr ""
 
-#: src/Services/EmailService.php:164
+#: src/Services/EmailService.php:165
 msgid "Participant opted out of marketing emails."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:210
+#: src/Services/EmailService.php:211
 #, php-format
 msgid "Quick question about %s"
 msgstr ""
 
 #. translators: %s: participant first name
-#: src/Services/EmailService.php:239
-#: src/Services/EmailService.php:446
-#: src/Services/EmailService.php:666
-#: src/Services/EmailService.php:774
-#: src/Services/EmailService.php:875
-#: src/Services/EmailService.php:997
-#: src/Services/EmailService.php:1159
-#: src/Services/EmailService.php:1334
-#: src/Services/EmailService.php:1604
-#: src/Services/EmailService.php:1709
-#: src/Services/EmailService.php:2193
-#: src/Services/EmailService.php:2335
-#: src/Services/EmailService.php:2460
-#: src/Services/EmailService.php:2572
-#: src/Services/EmailService.php:2709
-#: src/Services/EmailService.php:2998
-#: src/Services/EmailService.php:3091
+#: src/Services/EmailService.php:240
+#: src/Services/EmailService.php:447
+#: src/Services/EmailService.php:667
+#: src/Services/EmailService.php:775
+#: src/Services/EmailService.php:876
+#: src/Services/EmailService.php:998
+#: src/Services/EmailService.php:1160
+#: src/Services/EmailService.php:1335
+#: src/Services/EmailService.php:1605
+#: src/Services/EmailService.php:1710
+#: src/Services/EmailService.php:2194
+#: src/Services/EmailService.php:2325
+#: src/Services/EmailService.php:2415
+#: src/Services/EmailService.php:2527
+#: src/Services/EmailService.php:2664
+#: src/Services/EmailService.php:2953
+#: src/Services/EmailService.php:3046
 #: src/Admin/event-participants/EventParticipants.js:1192
 #, php-format,js-format
 msgid "Hi %s,"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:247
+#: src/Services/EmailService.php:248
 #, php-format
 msgid "We'd love to hear from you about %s!"
 msgstr ""
 
-#: src/Services/EmailService.php:261
+#: src/Services/EmailService.php:262
 msgid "Please take a moment to answer our quick poll:"
 msgstr ""
 
-#: src/Services/EmailService.php:266
+#: src/Services/EmailService.php:267
 msgid "Answer Poll"
 msgstr ""
 
 #. translators: 1: line break, 2: site name
-#: src/Services/EmailService.php:273
-#: src/Services/EmailService.php:498
-#: src/Services/EmailService.php:692
-#: src/Services/EmailService.php:796
-#: src/Services/EmailService.php:905
-#: src/Services/EmailService.php:1027
-#: src/Services/EmailService.php:1169
-#: src/Services/EmailService.php:1346
-#: src/Services/EmailService.php:1616
-#: src/Services/EmailService.php:1754
-#: src/Services/EmailService.php:2209
+#: src/Services/EmailService.php:274
+#: src/Services/EmailService.php:499
+#: src/Services/EmailService.php:693
+#: src/Services/EmailService.php:797
+#: src/Services/EmailService.php:906
+#: src/Services/EmailService.php:1028
+#: src/Services/EmailService.php:1170
+#: src/Services/EmailService.php:1347
+#: src/Services/EmailService.php:1617
+#: src/Services/EmailService.php:1755
+#: src/Services/EmailService.php:2210
 #, php-format
 msgid "Thanks,%1$sThe %2$s Team"
 msgstr ""
 
-#: src/Services/EmailService.php:285
-#: src/Services/EmailService.php:510
-#: src/Services/EmailService.php:704
-#: src/Services/EmailService.php:808
-#: src/Services/EmailService.php:917
-#: src/Services/EmailService.php:1039
-#: src/Services/EmailService.php:1769
-#: src/Services/EmailService.php:2755
+#: src/Services/EmailService.php:286
+#: src/Services/EmailService.php:511
+#: src/Services/EmailService.php:705
+#: src/Services/EmailService.php:809
+#: src/Services/EmailService.php:918
+#: src/Services/EmailService.php:1040
+#: src/Services/EmailService.php:1770
+#: src/Services/EmailService.php:2710
 msgid "If the button above doesn't work, copy and paste this link:"
 msgstr ""
 
-#: src/Services/EmailService.php:325
+#: src/Services/EmailService.php:326
 msgid "Poll not found."
 msgstr ""
 
-#: src/Services/EmailService.php:369
-#: src/Services/EmailService.php:592
-#: src/Services/EmailService.php:1448
-#: src/Services/EmailService.php:1525
-#: src/Services/EmailService.php:1838
-#: src/Services/EmailService.php:2900
+#: src/Services/EmailService.php:370
+#: src/Services/EmailService.php:593
+#: src/Services/EmailService.php:1449
+#: src/Services/EmailService.php:1526
+#: src/Services/EmailService.php:1839
+#: src/Services/EmailService.php:2855
 msgid "Participant has no email address."
 msgstr ""
 
-#: src/Services/EmailService.php:387
-#: src/Services/EmailService.php:609
-#: src/Services/EmailService.php:1472
-#: src/Services/EmailService.php:1549
-#: src/Services/EmailService.php:1864
-#: src/Services/EmailService.php:2927
+#: src/Services/EmailService.php:388
+#: src/Services/EmailService.php:610
+#: src/Services/EmailService.php:1473
+#: src/Services/EmailService.php:1550
+#: src/Services/EmailService.php:1865
+#: src/Services/EmailService.php:2882
 msgid "wp_mail() failed to send."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:417
+#: src/Services/EmailService.php:418
 #, php-format
 msgid "Photos from %s are ready!"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:454
+#: src/Services/EmailService.php:455
 #: src/Admin/event-participants/EventParticipants.js:1204
 #, php-format,js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr ""
 
-#: src/Services/EmailService.php:468
+#: src/Services/EmailService.php:469
 #: src/Admin/event-participants/EventParticipants.js:1217
 msgid "Click the button below to browse the gallery and let us know which photos you like best:"
 msgstr ""
 
-#: src/Services/EmailService.php:473
+#: src/Services/EmailService.php:474
 #: src/Admin/event-participants/EventParticipants.js:1239
 msgid "View Gallery"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:637
+#: src/Services/EmailService.php:638
 #, php-format
 msgid "Confirm your subscription to %s"
 msgstr ""
 
-#: src/Services/EmailService.php:672
+#: src/Services/EmailService.php:673
 msgid "Thank you for signing up for our mailing list! Please confirm your email address by clicking the button below."
 msgstr ""
 
-#: src/Services/EmailService.php:677
+#: src/Services/EmailService.php:678
 msgid "Confirm Email"
 msgstr ""
 
-#: src/Services/EmailService.php:682
+#: src/Services/EmailService.php:683
 msgid "This link will expire in 48 hours."
 msgstr ""
 
-#: src/Services/EmailService.php:686
+#: src/Services/EmailService.php:687
 msgid "If you didn't sign up for this mailing list, you can safely ignore this email."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:743
+#: src/Services/EmailService.php:744
 #, php-format
 msgid "Your signup answers — %s"
 msgstr ""
 
-#: src/Services/EmailService.php:780
+#: src/Services/EmailService.php:781
 msgid "Thank you for signing up! Here are the answers you submitted:"
 msgstr ""
 
-#: src/Services/EmailService.php:789
+#: src/Services/EmailService.php:790
 msgid "Edit Your Answers"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:846
+#: src/Services/EmailService.php:847
 #, php-format
 msgid "Sign up for %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:883
+#: src/Services/EmailService.php:884
 #, php-format
 msgid "You requested a signup link for %s."
 msgstr ""
 
-#: src/Services/EmailService.php:889
+#: src/Services/EmailService.php:890
 msgid "Click the button below to sign up for the event:"
 msgstr ""
 
-#: src/Services/EmailService.php:894
-#: src/Services/EmailService.php:2736
+#: src/Services/EmailService.php:895
+#: src/Services/EmailService.php:2691
 msgid "Sign Up Now"
 msgstr ""
 
-#: src/Services/EmailService.php:899
+#: src/Services/EmailService.php:900
 msgid "If you didn't request this link, you can safely ignore this email."
-msgstr ""
-
-#: src/Services/EmailService.php:923
-#: src/Services/EmailService.php:1045
-#: src/Services/EmailService.php:2761
-msgid "Don't want to receive event invitations?"
 msgstr ""
 
 #: src/Services/EmailService.php:924
 #: src/Services/EmailService.php:1046
-#: src/Services/EmailService.php:1180
-#: src/Services/EmailService.php:1359
-#: src/Services/EmailService.php:1629
-#: src/Services/EmailService.php:2762
+#: src/Services/EmailService.php:2716
+msgid "Don't want to receive event invitations?"
+msgstr ""
+
+#: src/Services/EmailService.php:925
+#: src/Services/EmailService.php:1047
+#: src/Services/EmailService.php:1181
+#: src/Services/EmailService.php:1360
+#: src/Services/EmailService.php:1630
+#: src/Services/EmailService.php:2717
 msgid "Manage your preferences"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:964
+#: src/Services/EmailService.php:965
 #, php-format
 msgid "Continue registering for %s"
 msgstr ""
 
-#: src/Services/EmailService.php:969
+#: src/Services/EmailService.php:970
 msgid "Continue to payment"
 msgstr ""
 
-#: src/Services/EmailService.php:970
+#: src/Services/EmailService.php:971
 msgid "Continue to sign up"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1005
+#: src/Services/EmailService.php:1006
 #, php-format
 msgid "You're registering for %s."
 msgstr ""
 
-#: src/Services/EmailService.php:1011
+#: src/Services/EmailService.php:1012
 msgid "We've saved your answers — click below to continue where you left off:"
 msgstr ""
 
-#: src/Services/EmailService.php:1021
+#: src/Services/EmailService.php:1022
 msgid "If you didn't try to register, you can safely ignore this email."
 msgstr ""
 
-#: src/Services/EmailService.php:1179
-#: src/Services/EmailService.php:1358
-#: src/Services/EmailService.php:1628
+#: src/Services/EmailService.php:1180
+#: src/Services/EmailService.php:1359
+#: src/Services/EmailService.php:1629
 msgid "Don't want to receive these emails?"
 msgstr ""
 
-#: src/Services/EmailService.php:1428
-#: src/Services/EmailService.php:1516
+#: src/Services/EmailService.php:1429
+#: src/Services/EmailService.php:1517
 msgid "Manually skipped."
 msgstr ""
 
 #. translators: %s: fee name
-#: src/Services/EmailService.php:1680
+#: src/Services/EmailService.php:1681
 #, php-format
 msgid "Payment reminder: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1715
+#: src/Services/EmailService.php:1716
 msgid "This is a friendly reminder about a pending payment:"
 msgstr ""
 
-#: src/Services/EmailService.php:1720
+#: src/Services/EmailService.php:1721
 msgid "Fee:"
 msgstr ""
 
-#: src/Services/EmailService.php:1724
-#: src/Services/EmailService.php:2544
+#: src/Services/EmailService.php:1725
+#: src/Services/EmailService.php:2499
 msgid "Amount:"
 msgstr ""
 
-#: src/Services/EmailService.php:1731
+#: src/Services/EmailService.php:1732
 msgid "Due Date:"
 msgstr ""
 
-#: src/Services/EmailService.php:1745
+#: src/Services/EmailService.php:1746
 msgid "Pay Now"
 msgstr ""
 
-#: src/Services/EmailService.php:1815
+#: src/Services/EmailService.php:1816
 msgid "Fee not found."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1910
+#: src/Services/EmailService.php:1911
 #, php-format
 msgid "New form submission — %s"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/EmailService.php:1931
+#: src/Services/EmailService.php:1932
 #, php-format
 msgid "Page: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1959
+#: src/Services/EmailService.php:1960
 msgid "A new form submission has been received."
 msgstr ""
 
-#: src/Services/EmailService.php:2041
+#: src/Services/EmailService.php:2042
 msgid "[Test email — real sends to subscribers include a \"Manage your preferences\" unsubscribe link here.]"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:2140
+#: src/Services/EmailService.php:2141
 #, php-format
 msgid "Your submission — %s"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/EmailService.php:2151
+#: src/Services/EmailService.php:2152
 #, php-format
 msgid "Form: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:2161
+#: src/Services/EmailService.php:2162
 msgid "Here are the answers you submitted:"
 msgstr ""
 
-#: src/Services/EmailService.php:2199
+#: src/Services/EmailService.php:2200
 msgid "Thank you for your submission! We have received your response."
 msgstr ""
 
-#: src/Services/EmailService.php:2253
-#: src/Services/EmailService.php:2403
-#: src/Services/EmailService.php:2525
+#: src/Services/EmailService.php:2256
+#: src/Services/EmailService.php:2358
+#: src/Services/EmailService.php:2480
 #: src/Admin/events-list/EventsList.js:37
 #: src/Admin/manage-event-audience-tab/EventAudience.js:778
 #: src/Admin/participant-detail/ParticipantDetail.js:271
@@ -1429,160 +1429,172 @@ msgid "Event"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2257
+#: src/Services/EmailService.php:2260
 #, php-format
 msgid "Signup confirmed — %s"
 msgstr ""
 
-#: src/Services/EmailService.php:2269
-#: src/Services/EmailService.php:2419
-#: src/blocks/event-signup/frontend.js:1816
-#: src/blocks/event-signup/frontend.js:1938
-msgid "Amount paid:"
-msgstr ""
-
-#: src/Services/EmailService.php:2282
-msgid "Selected options:"
-msgstr ""
-
-#: src/Services/EmailService.php:2303
-msgid "Your answers:"
-msgstr ""
-
 #. translators: %s: event title
-#: src/Services/EmailService.php:2344
+#: src/Services/EmailService.php:2306
 #, php-format
 msgid "Your signup for %s has been confirmed and your payment has been received."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2346
+#: src/Services/EmailService.php:2308
 #, php-format
 msgid "Your signup for %s has been confirmed."
 msgstr ""
 
+#: src/Services/EmailService.php:2327
+msgid "Event date:"
+msgstr ""
+
+#: src/Services/EmailService.php:2328
+msgid "Registration reference:"
+msgstr ""
+
+#: src/Services/EmailService.php:2329
+msgid "Ticket type:"
+msgstr ""
+
+#: src/Services/EmailService.php:2330
+#: src/Services/EmailService.php:2374
+#: src/blocks/event-signup/frontend.js:1816
+#: src/blocks/event-signup/frontend.js:1938
+msgid "Amount paid:"
+msgstr ""
+
+#: src/Services/EmailService.php:2331
+msgid "Selected options:"
+msgstr ""
+
+#: src/Services/EmailService.php:2332
+msgid "Your answers:"
+msgstr ""
+
 #. translators: 1: line break, 2: site name
-#: src/Services/EmailService.php:2360
-#: src/Services/EmailService.php:2480
-#: src/Services/EmailService.php:2743
+#: src/Services/EmailService.php:2334
+#: src/Services/EmailService.php:2435
+#: src/Services/EmailService.php:2698
 #, php-format
 msgid "See you there!%1$sThe %2$s Team"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2407
+#: src/Services/EmailService.php:2362
 #, php-format
 msgid "Activities added — %s"
 msgstr ""
 
-#: src/Services/EmailService.php:2432
+#: src/Services/EmailService.php:2387
 msgid "Activities added:"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2468
+#: src/Services/EmailService.php:2423
 #, php-format
 msgid "The following activities have been added to your signup for %s."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2532
+#: src/Services/EmailService.php:2487
 #, php-format
 msgid "Payment didn’t go through — %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2580
+#: src/Services/EmailService.php:2535
 #, php-format
 msgid "Your payment for %s didn’t go through. Your spot is still held for a short while — pick up where you left off using the link below."
 msgstr ""
 
-#: src/Services/EmailService.php:2589
+#: src/Services/EmailService.php:2544
 msgid "Resume payment"
 msgstr ""
 
-#: src/Services/EmailService.php:2594
+#: src/Services/EmailService.php:2549
 msgid "If the button doesn’t work, copy and paste this link into your browser:"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:2601
+#: src/Services/EmailService.php:2556
 #, php-format
 msgid "See you soon,%1$sThe %2$s Team"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2680
+#: src/Services/EmailService.php:2635
 #, php-format
 msgid "You're invited: %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2717
+#: src/Services/EmailService.php:2672
 #, php-format
 msgid "We have a new event coming up: %s."
 msgstr ""
 
-#: src/Services/EmailService.php:2731
+#: src/Services/EmailService.php:2686
 msgid "Would you like to join? Click the button below to sign up:"
 msgstr ""
 
-#: src/Services/EmailService.php:2879
+#: src/Services/EmailService.php:2834
 msgid "Already signed up"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2972
+#: src/Services/EmailService.php:2927
 #, php-format
 msgid "Thanks for your interest in %s"
 msgstr ""
 
-#: src/Services/EmailService.php:2976
-#: src/Services/EmailService.php:3054
+#: src/Services/EmailService.php:2931
+#: src/Services/EmailService.php:3009
 msgid "there"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:3003
+#: src/Services/EmailService.php:2958
 #, php-format
 msgid "Thanks for registering your interest in %s. We will let you know when there are updates."
 msgstr ""
 
-#: src/Services/EmailService.php:3006
+#: src/Services/EmailService.php:2961
 msgid "If you didn't register your interest, you can safely ignore this email."
 msgstr ""
 
-#: src/Services/EmailService.php:3011
+#: src/Services/EmailService.php:2966
 msgid "No longer interested?"
 msgstr ""
 
-#: src/Services/EmailService.php:3012
+#: src/Services/EmailService.php:2967
 msgid "Unsubscribe from updates about this event"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:3050
+#: src/Services/EmailService.php:3005
 #, php-format
 msgid "Welcome to the %s mailing list"
 msgstr ""
 
 #. translators: 1: site name, 2: event title
-#: src/Services/EmailService.php:3059
+#: src/Services/EmailService.php:3014
 #, php-format
 msgid "You've been added to the %1$s mailing list following the consent you gave at %2$s. We'll keep you posted about upcoming events and news."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:3066
+#: src/Services/EmailService.php:3021
 #, php-format
 msgid "You've been added to the %s mailing list following the consent you gave. We'll keep you posted about upcoming events and news."
 msgstr ""
 
-#: src/Services/EmailService.php:3099
+#: src/Services/EmailService.php:3054
 msgid "Changed your mind?"
 msgstr ""
 
-#: src/Services/EmailService.php:3100
+#: src/Services/EmailService.php:3055
 msgid "Manage your subscription or unsubscribe"
 msgstr ""
 
@@ -3748,7 +3760,11 @@ msgstr ""
 msgid "Please enter a valid email address for: "
 msgstr ""
 
-#: ../fair-events-shared/src/questionnaire.js:527
+#: ../fair-events-shared/src/questionnaire.js:533
+msgid "Please enter a valid web address for: %s"
+msgstr ""
+
+#: ../fair-events-shared/src/questionnaire.js:561
 msgid "File is too large. Maximum size is "
 msgstr ""
 

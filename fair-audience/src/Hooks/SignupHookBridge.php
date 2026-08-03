@@ -646,8 +646,9 @@ class SignupHookBridge {
 		$label                        = $transaction_id ? 'pending_payment' : 'signed_up';
 		$ticket_type_id               = ! empty( $ticket_selection['ticket_type_id'] ) ? (int) $ticket_selection['ticket_type_id'] : null;
 
-		$existing      = $event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant->id );
-		$stamp_payment = false;
+		$existing             = $event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant->id );
+		$stamp_payment        = false;
+		$event_participant_id = $existing ? (int) $existing->id : 0;
 
 		if ( $existing ) {
 			if ( 'signed_up' !== $existing->label ) {
@@ -655,8 +656,8 @@ class SignupHookBridge {
 				$stamp_payment = (bool) $transaction_id;
 			}
 		} else {
-			$event_participant_repository->add_participant_to_event( $event_id, $participant->id, $label, $event_date_id );
-			$stamp_payment = (bool) $transaction_id;
+			$event_participant_id = (int) $event_participant_repository->add_participant_to_event( $event_id, $participant->id, $label, $event_date_id );
+			$stamp_payment        = (bool) $transaction_id;
 		}
 
 		// Only stamp payment metadata when this call created the junction row
@@ -703,7 +704,7 @@ class SignupHookBridge {
 		if ( ! $transaction_id ) {
 			$email_service = new EmailService();
 			$event         = get_post( $event_id );
-			$email_service->send_signup_payment_confirmation( $participant, $event, null, array(), (int) $event_date_id );
+			$email_service->send_signup_payment_confirmation( $participant, $event, null, array(), (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
 		}
 	}
 

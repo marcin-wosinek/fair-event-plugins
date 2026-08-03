@@ -11,6 +11,7 @@
 
 namespace FairEvents\Hooks;
 
+use FairEvents\Models\EventSignup;
 use FairEvents\Services\EmailService;
 
 defined( 'WPINC' ) || die;
@@ -79,6 +80,10 @@ class SignupEmailHooks {
 			return;
 		}
 
-		( new EmailService() )->send_signup_confirmation( $signup_id, $event_date_id, $name, $email );
+		$signup         = EventSignup::get_by_id( $signup_id );
+		$ticket_type_id = $signup ? (int) $signup->ticket_type_id : 0;
+		$amount         = $signup ? (float) $signup->amount : 0.0;
+
+		( new EmailService() )->send_signup_confirmation( $signup_id, $event_date_id, $name, $email, $ticket_type_id, $amount );
 	}
 }
