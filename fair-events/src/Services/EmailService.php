@@ -34,13 +34,16 @@ class EmailService {
 	public function send_signup_confirmation( $signup_id, $event_date_id, $name, $email, $ticket_type_id = 0, $amount = 0.0 ) {
 		$event_title        = __( 'the event', 'fair-events' );
 		$event_date_display = '';
+		$event_url          = '';
 
 		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
 		if ( $event_date ) {
-			$event = get_post( $event_date->event_id );
+			$event = get_post( $event_date->get_resolved_event_id() );
 			if ( $event ) {
 				$event_title = $event->post_title;
 			}
+
+			$event_url = (string) $event_date->get_display_url();
 
 			$timestamp = strtotime( $event_date->start_datetime );
 			if ( false !== $timestamp ) {
@@ -81,7 +84,7 @@ class EmailService {
 				'confirmation_sentence'        => sprintf(
 					/* translators: %s: event title */
 					esc_html__( 'Your registration for %s is confirmed.', 'fair-events' ),
-					'<strong>' . esc_html( $event_title ) . '</strong>'
+					SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
 				),
 				'event_date_label'             => esc_html__( 'Event date:', 'fair-events' ),
 				'registration_reference_label' => esc_html__( 'Registration reference:', 'fair-events' ),
@@ -116,6 +119,7 @@ class EmailService {
 		$event_title        = __( 'the event', 'fair-events' );
 		$event_date_display = '';
 		$event_url          = home_url( '/' );
+		$inline_link_url    = '';
 
 		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
 		if ( $event_date ) {
@@ -126,7 +130,8 @@ class EmailService {
 
 			$display_url = $event_date->get_display_url();
 			if ( $display_url ) {
-				$event_url = $display_url;
+				$event_url       = $display_url;
+				$inline_link_url = $display_url;
 			}
 
 			$timestamp = strtotime( $event_date->start_datetime );
@@ -169,7 +174,7 @@ class EmailService {
 				'confirmation_sentence'        => sprintf(
 					/* translators: %s: event title */
 					esc_html__( 'Your payment for %s didn’t go through, so the registration wasn’t completed.', 'fair-events' ),
-					'<strong>' . esc_html( $event_title ) . '</strong>'
+					SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $inline_link_url ) )
 				),
 				'event_date_label'             => esc_html__( 'Event date:', 'fair-events' ),
 				'registration_reference_label' => esc_html__( 'Registration reference:', 'fair-events' ),

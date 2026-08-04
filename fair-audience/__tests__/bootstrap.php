@@ -364,3 +364,77 @@ if ( ! function_exists( '__' ) ) {
 		return $text;
 	}
 }
+
+if ( ! function_exists( 'home_url' ) ) {
+	/**
+	 * Stub of WordPress home_url() — overridable via $GLOBALS['_fair_test_home_url'].
+	 *
+	 * @param string $path Path to append.
+	 * @return string Fake home URL.
+	 */
+	function home_url( $path = '' ) {
+		$base = isset( $GLOBALS['_fair_test_home_url'] ) ? $GLOBALS['_fair_test_home_url'] : 'https://example.com';
+		return $base . $path;
+	}
+}
+
+if ( ! function_exists( 'get_permalink' ) ) {
+	/**
+	 * Stub of WordPress get_permalink() — a deterministic fake URL keyed on the post ID.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Fake permalink.
+	 */
+	function get_permalink( $post_id ) {
+		return 'https://example.com/?p=' . (int) $post_id;
+	}
+}
+
+if ( ! function_exists( 'get_the_title' ) ) {
+	/**
+	 * Stub of WordPress get_the_title() backed by $GLOBALS['_fair_test_post_titles'].
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Title, or '' if not seeded.
+	 */
+	function get_the_title( $post_id ) {
+		$titles = isset( $GLOBALS['_fair_test_post_titles'] ) ? $GLOBALS['_fair_test_post_titles'] : array();
+		return isset( $titles[ $post_id ] ) ? $titles[ $post_id ] : '';
+	}
+}
+
+if ( ! function_exists( 'add_query_arg' ) ) {
+	/**
+	 * Stub of WordPress add_query_arg() — supports the two call shapes used in
+	 * this codebase: a single key/value pair, or an associative array.
+	 *
+	 * @param string|array $key   Query arg key, or an associative array of args.
+	 * @param string       $value Query arg value (when $key is a string).
+	 * @param string       $url   Base URL.
+	 * @return string URL with the query args appended.
+	 */
+	function add_query_arg( $key, $value = '', $url = '' ) {
+		if ( is_array( $key ) ) {
+			$args = $key;
+			$url  = $value;
+		} else {
+			$args = array( $key => $value );
+		}
+
+		$separator = false === strpos( $url, '?' ) ? '?' : '&';
+		return $url . $separator . http_build_query( $args );
+	}
+}
+
+if ( ! function_exists( 'wp_salt' ) ) {
+	/**
+	 * Stub of WordPress wp_salt() — a fixed value, sufficient for deterministic
+	 * HMAC signing in tests.
+	 *
+	 * @param string $scheme Salt scheme (ignored).
+	 * @return string Fake salt.
+	 */
+	function wp_salt( $scheme = 'auth' ) {
+		return 'test-salt';
+	}
+}
