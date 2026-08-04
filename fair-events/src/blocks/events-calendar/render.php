@@ -108,17 +108,20 @@ if ( ! function_exists( 'fair_events_render_subscribe_icon' ) ) {
 /**
  * Convert color value to CSS value
  *
- * Converts either a hex color or a WordPress color preset name to a CSS value.
+ * Converts either a WordPress color preset slug or a literal CSS color to a
+ * CSS value. Preset slugs are always kebab-case identifiers (e.g. 'primary',
+ * 'vivid-green-cyan'), so anything else — hex, rgb()/hsl()/oklch(), etc. — is
+ * passed through as a literal color instead of being mistaken for a slug.
  *
- * @param string $color Color value (hex like '#4caf50' or preset name like 'primary').
+ * @param string $color Color value (preset slug like 'primary' or a literal CSS color).
  * @return string CSS color value.
  */
 if ( ! function_exists( 'fair_events_convert_color_to_css' ) ) {
 	function fair_events_convert_color_to_css( $color ) {
-		if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $color ) ) {
-			return $color;
+		if ( preg_match( '/^[a-z0-9]+(-[a-z0-9]+)*$/', $color ) ) {
+			return 'var(--wp--preset--color--' . esc_attr( $color ) . ')';
 		}
-		return 'var(--wp--preset--color--' . esc_attr( $color ) . ')';
+		return $color;
 	}
 }
 
