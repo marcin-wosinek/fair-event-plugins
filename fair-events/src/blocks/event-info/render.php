@@ -200,4 +200,18 @@ if ( $is_recurring ) {
 			</div>
 		</div>
 	<?php endif; ?>
+	<?php
+	$neutral_location = \FairEvents\Helpers\EventLocation::resolve( $event_dates, $post_id );
+	$attendance_mode  = $neutral_location['mode'] ?? ( $event_dates->attendance_mode ?? 'in_person' );
+	?>
+	<?php if ( 'online' === $attendance_mode || 'hybrid' === $attendance_mode ) : ?>
+		<div class="wp-block-fair-events-event-info__attendance-mode">
+			<?php echo esc_html( 'online' === $attendance_mode ? __( 'Online event', 'fair-events' ) : __( 'Hybrid event', 'fair-events' ) ); ?>
+			<?php if ( ! empty( $neutral_location['joining_url'] ) ) : ?>
+				<a href="<?php echo esc_url( $neutral_location['joining_url'] ); ?>" target="_blank" rel="noopener noreferrer">
+					<?php esc_html_e( 'Join online', 'fair-events' ); ?>
+				</a>
+			<?php endif; ?>
+		</div>
+	<?php endif; ?>
 </div>

@@ -413,4 +413,123 @@ test.describe('Fair Events JSON-LD structured data', () => {
 			method: 'DELETE',
 		}).catch(() => {});
 	});
+
+	test('emits a VirtualLocation node + OnlineEventAttendanceMode for an online event', async ({
+		page,
+	}) => {
+		test.setTimeout(120_000);
+
+		await page.setViewportSize({ width: 1200, height: 900 });
+		await login(page);
+		await page.goto('/wp-admin/admin.php?page=fair-events-all-events');
+		await page.waitForFunction(() => window.wp && window.wp.apiFetch);
+
+		const now = new Date();
+		const start = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+		const iso = (d) => d.toISOString().slice(0, 19).replace('T', ' ');
+
+		const eventDate = await apiFetch(page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: 'JSON-LD Test Online Event',
+				start_datetime: iso(start),
+				end_datetime: iso(
+					new Date(start.getTime() + 2 * 60 * 60 * 1000)
+				),
+				all_day: false,
+				attendance_mode: 'online',
+				joining_link: 'https://example.com/meet',
+			},
+		});
+
+		const post = await apiFetch(page, {
+			path: `/fair-events/v1/event-dates/${eventDate.id}/create-post`,
+			method: 'POST',
+			data: { post_status: 'publish' },
+		});
+		const postId = post.event_id || post.post_id;
+
+		const permalink = post.link || `/?p=${postId}`;
+		const data = await getJsonLd(page, permalink);
+
+		expect(data.eventAttendanceMode).toBe(
+			'https://schema.org/OnlineEventAttendanceMode'
+		);
+		expect(data.location['@type']).toBe('VirtualLocation');
+		expect(data.location.url).toBe('https://example.com/meet');
+
+		// Cleanup.
+		await apiFetch(page, {
+			path: `/wp/v2/fair_event/${postId}?force=true`,
+			method: 'DELETE',
+		}).catch(() => {});
+		await apiFetch(page, {
+			path: `/fair-events/v1/event-dates/${eventDate.id}`,
+			method: 'DELETE',
+		}).catch(() => {});
+	});
+
+	test('emits both a Place and a VirtualLocation node + MixedEventAttendanceMode for a hybrid event', async ({
+		page,
+	}) => {
+		test.setTimeout(120_000);
+
+		await page.setViewportSize({ width: 1200, height: 900 });
+		await login(page);
+		await page.goto('/wp-admin/admin.php?page=fair-events-all-events');
+		await page.waitForFunction(() => window.wp && window.wp.apiFetch);
+
+		const now = new Date();
+		const start = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+		const iso = (d) => d.toISOString().slice(0, 19).replace('T', ' ');
+
+		const eventDate = await apiFetch(page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: 'JSON-LD Test Hybrid Event',
+				start_datetime: iso(start),
+				end_datetime: iso(
+					new Date(start.getTime() + 2 * 60 * 60 * 1000)
+				),
+				all_day: false,
+				attendance_mode: 'hybrid',
+				address: '123 Test Street, Testville',
+				joining_link: 'https://example.com/hybrid-meet',
+			},
+		});
+
+		const post = await apiFetch(page, {
+			path: `/fair-events/v1/event-dates/${eventDate.id}/create-post`,
+			method: 'POST',
+			data: { post_status: 'publish' },
+		});
+		const postId = post.event_id || post.post_id;
+
+		const permalink = post.link || `/?p=${postId}`;
+		const data = await getJsonLd(page, permalink);
+
+		expect(data.eventAttendanceMode).toBe(
+			'https://schema.org/MixedEventAttendanceMode'
+		);
+		expect(Array.isArray(data.location)).toBe(true);
+		expect(data.location).toHaveLength(2);
+		expect(data.location[0]['@type']).toBe('Place');
+		expect(data.location[0].address.name).toBe(
+			'123 Test Street, Testville'
+		);
+		expect(data.location[1]['@type']).toBe('VirtualLocation');
+		expect(data.location[1].url).toBe('https://example.com/hybrid-meet');
+
+		// Cleanup.
+		await apiFetch(page, {
+			path: `/wp/v2/fair_event/${postId}?force=true`,
+			method: 'DELETE',
+		}).catch(() => {});
+		await apiFetch(page, {
+			path: `/fair-events/v1/event-dates/${eventDate.id}`,
+			method: 'DELETE',
+		}).catch(() => {});
+	});
 });

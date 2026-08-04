@@ -352,6 +352,20 @@ class EventDatesController extends WP_REST_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'esc_url_raw',
 			),
+			'attendance_mode' => array(
+				'description' => __( 'Attendance mode (in_person, online, hybrid).', 'fair-events' ),
+				'type'        => 'string',
+				'required'    => false,
+				'default'     => 'in_person',
+				'enum'        => array( 'in_person', 'online', 'hybrid' ),
+			),
+			'joining_link'    => array(
+				'description'       => __( 'Public joining URL for online/hybrid events. Falls back to the event page URL when empty.', 'fair-events' ),
+				'type'              => array( 'string', 'null' ),
+				'required'          => false,
+				'sanitize_callback' => 'esc_url_raw',
+				'validate_callback' => array( $this, 'validate_joining_link' ),
+			),
 			'event_id'        => array(
 				'description' => __( 'Linked post ID.', 'fair-events' ),
 				'type'        => array( 'integer', 'null' ),
@@ -469,19 +483,46 @@ class EventDatesController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Validate the `joining_link` param.
+	 *
+	 * Empty/null is valid (the mode falls back to the event page URL); a
+	 * non-empty value must be a well-formed http(s) URL.
+	 *
+	 * @param mixed $value Raw param value.
+	 * @return true|WP_Error True if valid, WP_Error otherwise.
+	 */
+	public function validate_joining_link( $value ) {
+		if ( null === $value || '' === $value ) {
+			return true;
+		}
+
+		if ( ! is_string( $value ) || ! wp_http_validate_url( $value ) ) {
+			return new WP_Error(
+				'rest_invalid_joining_link',
+				__( 'The joining link must be a valid URL.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
 	 * Create a standalone event date
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function create_item( $request ) {
-		$title          = $request->get_param( 'title' );
-		$start_datetime = $request->get_param( 'start_datetime' );
-		$end_datetime   = $request->get_param( 'end_datetime' );
-		$all_day        = $request->get_param( 'all_day' );
-		$venue_id       = $request->get_param( 'venue_id' );
-		$link_type      = $request->get_param( 'link_type' ) ?? 'none';
-		$external_url   = $request->get_param( 'external_url' );
+		$title           = $request->get_param( 'title' );
+		$start_datetime  = $request->get_param( 'start_datetime' );
+		$end_datetime    = $request->get_param( 'end_datetime' );
+		$all_day         = $request->get_param( 'all_day' );
+		$venue_id        = $request->get_param( 'venue_id' );
+		$link_type       = $request->get_param( 'link_type' ) ?? 'none';
+		$external_url    = $request->get_param( 'external_url' );
+		$attendance_mode = $request->get_param( 'attendance_mode' ) ?? 'in_person';
+		$joining_link    = $request->get_param( 'joining_link' );
 
 		if ( empty( $title ) || '' === trim( $title ) ) {
 			return new WP_Error(
@@ -500,12 +541,14 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		$data = array(
-			'title'          => $title,
-			'start_datetime' => $start_datetime,
-			'end_datetime'   => $end_datetime,
-			'all_day'        => $all_day,
-			'link_type'      => $link_type,
-			'external_url'   => $external_url,
+			'title'           => $title,
+			'start_datetime'  => $start_datetime,
+			'end_datetime'    => $end_datetime,
+			'all_day'         => $all_day,
+			'link_type'       => $link_type,
+			'external_url'    => $external_url,
+			'attendance_mode' => $attendance_mode,
+			'joining_link'    => $joining_link,
 		);
 
 		$id = EventDates::create_standalone( $data );
@@ -911,6 +954,16 @@ class EventDatesController extends WP_REST_Controller {
 		$external_url = $request->get_param( 'external_url' );
 		if ( null !== $external_url ) {
 			$update_data['external_url'] = $external_url;
+		}
+
+		$attendance_mode = $request->get_param( 'attendance_mode' );
+		if ( null !== $attendance_mode ) {
+			$update_data['attendance_mode'] = $attendance_mode;
+		}
+
+		if ( $request->has_param( 'joining_link' ) ) {
+			$joining_link                = $request->get_param( 'joining_link' );
+			$update_data['joining_link'] = ( null === $joining_link || '' === $joining_link ) ? null : $joining_link;
 		}
 
 		$event_id = $request->get_param( 'event_id' );
@@ -1593,6 +1646,8 @@ class EventDatesController extends WP_REST_Controller {
 			'master_id'       => $result->master_id ? (int) $result->master_id : null,
 			'link_type'       => $result->link_type,
 			'external_url'    => $result->external_url,
+			'attendance_mode' => $result->attendance_mode ?? 'in_person',
+			'joining_link'    => $result->joining_link ?? null,
 			'venue_id'        => $result->venue_id ? (int) $result->venue_id : null,
 			'status'          => $result->status,
 		);
@@ -1643,6 +1698,8 @@ class EventDatesController extends WP_REST_Controller {
 			'address'         => $event_date->address,
 			'link_type'       => $event_date->link_type,
 			'external_url'    => $event_date->external_url,
+			'attendance_mode' => $event_date->attendance_mode ?? 'in_person',
+			'joining_link'    => $event_date->joining_link,
 			'display_url'     => $event_date->get_display_url(),
 			'rrule'           => $event_date->rrule,
 			'status'          => $event_date->status,

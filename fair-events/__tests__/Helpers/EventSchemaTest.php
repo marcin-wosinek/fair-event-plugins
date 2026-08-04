@@ -208,4 +208,153 @@ class EventSchemaTest extends TestCase {
 	public function test_is_free_offer_set_false_when_empty() {
 		$this->assertFalse( EventSchema::is_free_offer_set( array() ) );
 	}
+
+	/**
+	 * A null neutral location location_to_jsonld()s to the site-name Place backstop.
+	 *
+	 * @return void
+	 */
+	public function test_location_to_jsonld_null_neutral_is_site_backstop() {
+		$node = EventSchema::location_to_jsonld( null );
+
+		$this->assertSame( 'Place', $node['@type'] );
+		$this->assertSame( 'Test Site', $node['name'] );
+	}
+
+	/**
+	 * In-person mode location_to_jsonld()s to a single Place node.
+	 *
+	 * @return void
+	 */
+	public function test_location_to_jsonld_in_person_is_place() {
+		$node = EventSchema::location_to_jsonld(
+			array(
+				'mode'    => 'in_person',
+				'name'    => 'Venue Name',
+				'address' => '123 Main St',
+			)
+		);
+
+		$this->assertSame( 'Place', $node['@type'] );
+		$this->assertSame( 'Venue Name', $node['name'] );
+		$this->assertSame( '123 Main St', $node['address']['name'] );
+	}
+
+	/**
+	 * Online mode location_to_jsonld()s to a single VirtualLocation node.
+	 *
+	 * @return void
+	 */
+	public function test_location_to_jsonld_online_is_virtual_location() {
+		$node = EventSchema::location_to_jsonld(
+			array(
+				'mode'        => 'online',
+				'joining_url' => 'https://example.com/meet',
+			)
+		);
+
+		$this->assertSame( 'VirtualLocation', $node['@type'] );
+		$this->assertSame( 'https://example.com/meet', $node['url'] );
+	}
+
+	/**
+	 * Hybrid mode location_to_jsonld()s to an array of both a Place and a
+	 * VirtualLocation node — search engines require both entries.
+	 *
+	 * @return void
+	 */
+	public function test_location_to_jsonld_hybrid_is_both_nodes() {
+		$nodes = EventSchema::location_to_jsonld(
+			array(
+				'mode'        => 'hybrid',
+				'name'        => 'Venue Name',
+				'joining_url' => 'https://example.com/meet',
+			)
+		);
+
+		$this->assertCount( 2, $nodes );
+		$this->assertSame( 'Place', $nodes[0]['@type'] );
+		$this->assertSame( 'Venue Name', $nodes[0]['name'] );
+		$this->assertSame( 'VirtualLocation', $nodes[1]['@type'] );
+		$this->assertSame( 'https://example.com/meet', $nodes[1]['url'] );
+	}
+
+	/**
+	 * Hybrid mode with no physical fields falls back to the site-name Place
+	 * backstop for the Place side, still alongside the VirtualLocation node.
+	 *
+	 * @return void
+	 */
+	public function test_location_to_jsonld_hybrid_with_no_physical_uses_backstop() {
+		$nodes = EventSchema::location_to_jsonld(
+			array(
+				'mode'        => 'hybrid',
+				'joining_url' => 'https://example.com/meet',
+			)
+		);
+
+		$this->assertSame( 'Place', $nodes[0]['@type'] );
+		$this->assertSame( 'Test Site', $nodes[0]['name'] );
+		$this->assertSame( 'VirtualLocation', $nodes[1]['@type'] );
+	}
+
+	/**
+	 * Build a minimal EventDates fixture with no venue_id (so the optional
+	 * Venue model is never touched) and post_id 0 (so get_post_meta(), which
+	 * isn't stubbed, is never called).
+	 *
+	 * @param array $overrides Property overrides.
+	 * @return \FairEvents\Models\EventDates Fixture.
+	 */
+	private function make_event_date_fixture( array $overrides = array() ) {
+		$event_date                  = new \FairEvents\Models\EventDates();
+		$event_date->id              = 1;
+		$event_date->link_type       = 'none';
+		$event_date->attendance_mode = 'in_person';
+
+		foreach ( $overrides as $key => $value ) {
+			$event_date->$key = $value;
+		}
+
+		return $event_date;
+	}
+
+	/**
+	 * Get_jsonld_location() reports the correct eventAttendanceMode for each
+	 * of the three explicit modes, driven end-to-end from an EventDates row.
+	 *
+	 * @return void
+	 */
+	public function test_get_jsonld_location_attendance_mode_values() {
+		$in_person = EventSchema::get_jsonld_location(
+			$this->make_event_date_fixture( array( 'address' => '123 Main St' ) ),
+			0
+		);
+		$this->assertSame( 'https://schema.org/OfflineEventAttendanceMode', $in_person['attendance_mode'] );
+
+		$online = EventSchema::get_jsonld_location(
+			$this->make_event_date_fixture(
+				array(
+					'attendance_mode' => 'online',
+					'joining_link'    => 'https://example.com/meet',
+				)
+			),
+			0
+		);
+		$this->assertSame( 'https://schema.org/OnlineEventAttendanceMode', $online['attendance_mode'] );
+		$this->assertSame( 'VirtualLocation', $online['location']['@type'] );
+
+		$hybrid = EventSchema::get_jsonld_location(
+			$this->make_event_date_fixture(
+				array(
+					'attendance_mode' => 'hybrid',
+					'address'         => '123 Main St',
+					'joining_link'    => 'https://example.com/meet',
+				)
+			),
+			0
+		);
+		$this->assertSame( 'https://schema.org/MixedEventAttendanceMode', $hybrid['attendance_mode'] );
+		$this->assertCount( 2, $hybrid['location'] );
+	}
 }

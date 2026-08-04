@@ -266,4 +266,98 @@ class EventDatesTest extends TestCase {
 
 		$this->assertSame( array(), array_values( array_diff( array_keys( get_object_vars( $obj ) ), $declared ) ) );
 	}
+
+	/**
+	 * Build a minimal DB-row stdClass for hydrate(), covering every column
+	 * hydrate() reads so a generated-row test doesn't need to know the
+	 * whole schema — only override what the test cares about.
+	 *
+	 * @param array $overrides Column overrides.
+	 * @return \stdClass Row.
+	 */
+	private function make_row( array $overrides = array() ): \stdClass {
+		$row                    = new \stdClass();
+		$row->id                = 1;
+		$row->event_id          = null;
+		$row->start_datetime    = '2026-06-29 18:30:00';
+		$row->end_datetime      = null;
+		$row->all_day           = 0;
+		$row->occurrence_type   = 'single';
+		$row->master_id         = null;
+		$row->rrule             = null;
+		$row->status            = 'active';
+		$row->recurrence_mode   = 'none';
+		$row->venue_id          = null;
+		$row->title             = null;
+		$row->external_url      = null;
+		$row->link_type         = 'post';
+		$row->attendance_mode   = null;
+		$row->joining_link      = null;
+		$row->capacity          = null;
+		$row->address           = null;
+		$row->recurrence_anchor = null;
+
+		foreach ( $overrides as $key => $value ) {
+			$row->$key = $value;
+		}
+
+		return $row;
+	}
+
+	/**
+	 * A generated occurrence with attendance_mode/joining_link both NULL
+	 * inherits both from its master, joining the same NULL-inherit set as
+	 * title/venue_id/address/link_type/external_url/capacity.
+	 */
+	public function test_attendance_mode_and_joining_link_inherit_from_master() {
+		$master                  = new EventDates();
+		$master->id              = 1;
+		$master->attendance_mode = 'online';
+		$master->joining_link    = 'https://example.com/meet';
+
+		$this->seed_master_cache( $master );
+
+		$occurrence = ( new ReflectionMethod( EventDates::class, 'hydrate' ) )->invoke(
+			null,
+			$this->make_row(
+				array(
+					'id'              => 2,
+					'occurrence_type' => 'generated',
+					'master_id'       => 1,
+				)
+			)
+		);
+
+		$this->assertSame( 'online', $occurrence->attendance_mode );
+		$this->assertSame( 'https://example.com/meet', $occurrence->joining_link );
+	}
+
+	/**
+	 * A generated occurrence that overrides attendance_mode/joining_link
+	 * keeps its own value rather than inheriting the master's.
+	 */
+	public function test_attendance_mode_and_joining_link_override_master() {
+		$master                  = new EventDates();
+		$master->id              = 1;
+		$master->attendance_mode = 'online';
+		$master->joining_link    = 'https://example.com/meet';
+
+		$this->seed_master_cache( $master );
+
+		$occurrence = ( new ReflectionMethod( EventDates::class, 'hydrate' ) )->invoke(
+			null,
+			$this->make_row(
+				array(
+					'id'              => 2,
+					'occurrence_type' => 'generated',
+					'master_id'       => 1,
+					'attendance_mode' => 'in_person',
+					'joining_link'    => 'https://example.com/own-meet',
+				)
+			)
+		);
+
+		$this->assertSame( 'in_person', $occurrence->attendance_mode );
+		$this->assertSame( 'https://example.com/own-meet', $occurrence->joining_link );
+	}
 }

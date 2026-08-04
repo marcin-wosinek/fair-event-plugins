@@ -261,7 +261,7 @@ class RecurrenceService {
 
 		// Reconcile generated children (occurrences[1..n]) against existing rows.
 		// Inheritable fields (title, venue_id, address, link_type, external_url,
-		// capacity) are NOT propagated here — instances hold NULL
+		// capacity, attendance_mode, joining_link) are NOT propagated here — instances hold NULL
 		// for them unless explicitly overridden, and resolve against the master
 		// at read time.
 		$generated = array_slice( $occurrences, 1 );
@@ -449,7 +449,7 @@ class RecurrenceService {
 	 *   reappears later.
 	 *
 	 * Inheritable instance fields (title, venue_id, address, link_type,
-	 * external_url, capacity) are never stamped here — instances
+	 * external_url, capacity, attendance_mode, joining_link) are never stamped here — instances
 	 * hold NULL for them unless explicitly overridden, and resolve against the
 	 * master at read time.
 	 *
@@ -482,7 +482,7 @@ class RecurrenceService {
 			if ( isset( $existing_by_anchor[ $anchor ] ) ) {
 				// Match — update in place, preserving id. Inheritable fields
 				// (title, venue_id, address, link_type, external_url,
-				// capacity) are intentionally NOT touched: instances hold
+				// capacity, attendance_mode, joining_link) are intentionally NOT touched: instances hold
 				// NULL for them unless explicitly overridden, and resolve
 				// against the master at read time.
 				$row    = $existing_by_anchor[ $anchor ];

@@ -292,7 +292,10 @@ class CalendarFeedController extends WP_REST_Controller {
 	 * Build the iCalendar LOCATION text line from a neutral location shape.
 	 *
 	 * Standard `LOCATION` text only (name + address); geo stays feed-only per
-	 * the ICS recommendation. Online events use the meeting URL.
+	 * the ICS recommendation. Online events use the joining URL as the whole
+	 * line; hybrid events append it to the physical location text — a
+	 * separate per-VEVENT `URL` property isn't available for this since
+	 * `add_vevent()` already uses it for the event page link.
 	 *
 	 * @param array|null $location Neutral location shape (EventLocation::resolve()), or null.
 	 * @return string LOCATION text, or '' when there's nothing to show.
@@ -302,8 +305,10 @@ class CalendarFeedController extends WP_REST_Controller {
 			return '';
 		}
 
-		if ( ! empty( $location['online'] ) ) {
-			return $location['url'] ?? '';
+		$mode = $location['mode'] ?? 'in_person';
+
+		if ( 'online' === $mode ) {
+			return $location['joining_url'] ?? '';
 		}
 
 		$parts = array_filter(
@@ -313,7 +318,13 @@ class CalendarFeedController extends WP_REST_Controller {
 			)
 		);
 
-		return implode( ', ', $parts );
+		$line = implode( ', ', $parts );
+
+		if ( 'hybrid' === $mode && ! empty( $location['joining_url'] ) ) {
+			$line = $line ? "{$line} — {$location['joining_url']}" : $location['joining_url'];
+		}
+
+		return $line;
 	}
 
 	/**
