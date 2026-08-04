@@ -22,7 +22,8 @@ const signups = [
 		id: 1,
 		name: 'Ada Lovelace',
 		email: 'ada@example.com',
-		ticket_type_id: 'General',
+		ticket_type_id: 3,
+		ticket_type_name: 'General',
 		quantity: 1,
 		amount: '20.00',
 		status: 'paid',
@@ -33,7 +34,8 @@ const signups = [
 		id: 2,
 		name: 'Bob, Jr.',
 		email: 'bob@example.com',
-		ticket_type_id: 'General',
+		ticket_type_id: 3,
+		ticket_type_name: 'General',
 		quantity: 2,
 		amount: '40.00',
 		status: 'paid',
@@ -41,6 +43,19 @@ const signups = [
 		created_at: '2026-07-21 10:00:00',
 	},
 ];
+
+const signupWithMissingTicketType = {
+	id: 3,
+	name: 'Carol Danvers',
+	email: 'carol@example.com',
+	ticket_type_id: 99,
+	ticket_type_name: null,
+	quantity: 1,
+	amount: '0.00',
+	status: 'confirmed',
+	mailing_opt_in: false,
+	created_at: '2026-07-22 10:00:00',
+};
 
 function mockObjectUrlAndClick() {
 	let clickedFilename = null;
@@ -151,6 +166,27 @@ describe('EventSignups — CSV export (#1171)', () => {
 		const button = screen.getByRole('button', { name: 'Download CSV' });
 		expect(button).toBeDisabled();
 		expect(screen.getByText('No signups yet.')).toBeInTheDocument();
+	});
+
+	it('shows the ticket type name, not its id, in the table and the CSV', async () => {
+		await renderSignups();
+		expect(screen.getAllByText('General')).toHaveLength(2);
+		expect(screen.queryByText('3')).not.toBeInTheDocument();
+
+		const mock = mockObjectUrlAndClick();
+		fireEvent.click(screen.getByRole('button', { name: 'Download CSV' }));
+		expect(mock.getText()).toContain(',General,');
+		mock.restore();
+	});
+
+	it('falls back to an em dash when the ticket type is missing or deleted', async () => {
+		await renderSignups([signupWithMissingTicketType]);
+		expect(screen.getByText('—')).toBeInTheDocument();
+
+		const mock = mockObjectUrlAndClick();
+		fireEvent.click(screen.getByRole('button', { name: 'Download CSV' }));
+		expect(mock.getText()).toContain(',—,');
+		mock.restore();
 	});
 
 	it('disables the button when the mailing filter matches nothing', async () => {

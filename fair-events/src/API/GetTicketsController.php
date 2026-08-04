@@ -943,6 +943,35 @@ class GetTicketsController extends WP_REST_Controller {
 	public function get_items( $request ) {
 		$event_date_id = $request->get_param( 'event_date' );
 		$signups       = \FairEvents\Models\EventSignup::get_all_by_event_date_id( $event_date_id );
+
+		$ticket_type_names = array();
+		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( $event_date_id );
+
+			// A 'whole_series'/'multiple_instances' ticket type is configured
+			// on the series master, not the occurrence a signup was made
+			// against (see create_signup()'s $config_event_date_id pivot
+			// above) — pull those in too so a child-occurrence signup still
+			// resolves the name instead of falling back to null.
+			$master_event_date_id = $this->resolve_master_event_date_id( $event_date_id );
+			if ( $master_event_date_id && (int) $master_event_date_id !== (int) $event_date_id ) {
+				$ticket_types = array_merge(
+					$ticket_types,
+					\FairEvents\Models\TicketType::get_all_by_event_date_id( $master_event_date_id )
+				);
+			}
+
+			foreach ( $ticket_types as $ticket_type ) {
+				$ticket_type_names[ (int) $ticket_type->id ] = $ticket_type->name;
+			}
+		}
+
+		foreach ( $signups as $signup ) {
+			$signup->ticket_type_name = $signup->ticket_type_id && isset( $ticket_type_names[ (int) $signup->ticket_type_id ] )
+				? $ticket_type_names[ (int) $signup->ticket_type_id ]
+				: null;
+		}
+
 		return rest_ensure_response( $signups );
 	}
 

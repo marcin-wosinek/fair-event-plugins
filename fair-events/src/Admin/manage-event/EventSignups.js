@@ -59,7 +59,7 @@ function buildSignupsCsv(rows) {
 		const row = [
 			s.email,
 			s.name,
-			s.ticket_type_id || '',
+			s.ticket_type_name || '—',
 			s.quantity,
 			s.amount,
 			s.status,
@@ -220,7 +220,7 @@ export default function EventSignups({ eventDateId }) {
 											borderBottom: '1px solid #eee',
 										}}
 									>
-										{s.ticket_type_id || '—'}
+										{s.ticket_type_name || '—'}
 									</td>
 									<td
 										style={{
