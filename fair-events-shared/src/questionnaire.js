@@ -318,13 +318,19 @@ export function collectQuestionAnswers(form) {
 			answerValue = input.value;
 		}
 
-		answers.push({
+		const answer = {
 			question_key: el.dataset.questionKey,
 			question_text: el.dataset.questionText,
 			question_type: questionType,
 			answer_value: answerValue,
 			display_order: index,
-		});
+		};
+
+		if (questionType === 'url' && el.dataset.extractEventDetails === '1') {
+			answer.extract_event_details = true;
+		}
+
+		answers.push(answer);
 	});
 
 	return answers;

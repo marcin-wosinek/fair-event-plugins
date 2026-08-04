@@ -172,6 +172,59 @@ describe('QuestionnaireResponses — empty state', () => {
 	});
 });
 
+describe('QuestionnaireResponses — url answer with captured event details', () => {
+	const RESPONSES_WITH_EVENT_DETAILS = [
+		{
+			id: 3,
+			participant_id: 0,
+			participant_name: '',
+			participant_email: '',
+			participant_status: '',
+			participant_mailing: '',
+			participant_categories: [],
+			created_at: '2026-01-17 12:00:00',
+			answers: [
+				{
+					question_key: 'website',
+					question_text: 'Event page',
+					question_type: 'url',
+					answer_value: 'https://example.com/my-event',
+					event_details: {
+						title: 'Community Picnic',
+						source: 'schema',
+					},
+				},
+			],
+		},
+	];
+
+	it('shows an indicator next to the link when details were captured', async () => {
+		mockResponses(RESPONSES_WITH_EVENT_DETAILS);
+
+		render(<QuestionnaireResponses />);
+
+		const link = await screen.findByRole('link', {
+			name: 'https://example.com/my-event',
+		});
+		expect(link).toBeInTheDocument();
+		expect(
+			screen.getByTitle('Event details were read from the linked page.')
+		).toBeInTheDocument();
+	});
+
+	it('shows no indicator when a url answer has no captured details', async () => {
+		mockResponses(STANDALONE_RESPONSES);
+
+		render(<QuestionnaireResponses />);
+
+		await screen.findByText('Google');
+
+		expect(
+			screen.queryByTitle('Event details were read from the linked page.')
+		).not.toBeInTheDocument();
+	});
+});
+
 describe('QuestionnaireResponses — table containment', () => {
 	it('scopes the DataViews table in a scrollable CardBody so a wide table cannot drag the page sideways', async () => {
 		mockResponses(STANDALONE_RESPONSES);

@@ -9,7 +9,8 @@ namespace FairEvents\API;
 
 defined( 'WPINC' ) || die;
 
-use FairEvents\Helpers\PageMetadataParser;
+use FairEventsShared\Helpers\PageMetadataParser;
+use FairEventsShared\Helpers\SafeUrlFetcher;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -81,56 +82,10 @@ class EventLookupController extends WP_REST_Controller {
 	public function create_item( $request ) {
 		$url = $request->get_param( 'url' );
 
-		// wp_safe_remote_get() rejects redirects/targets that resolve to
-		// private/internal addresses (reject_unsafe_urls), unlike wp_remote_get().
-		$response = wp_safe_remote_get(
-			$url,
-			array(
-				'timeout'             => 5,
-				'redirection'         => 3,
-				'limit_response_size' => 2 * MB_IN_BYTES,
-				'headers'             => array(
-					'Accept' => 'text/html',
-				),
-			)
-		);
+		$body = SafeUrlFetcher::fetch( $url );
 
-		if ( is_wp_error( $response ) ) {
-			return new WP_Error(
-				'rest_lookup_unreachable',
-				__( 'Could not reach that page.', 'fair-events' ),
-				array( 'status' => 502 )
-			);
-		}
-
-		$status = (int) wp_remote_retrieve_response_code( $response );
-
-		if ( $status < 200 || $status >= 300 ) {
-			return new WP_Error(
-				'rest_lookup_bad_status',
-				__( 'That page could not be fetched.', 'fair-events' ),
-				array( 'status' => 502 )
-			);
-		}
-
-		$content_type = wp_remote_retrieve_header( $response, 'content-type' );
-
-		if ( $content_type && false === stripos( $content_type, 'html' ) ) {
-			return new WP_Error(
-				'rest_lookup_not_html',
-				__( 'That URL did not return a web page.', 'fair-events' ),
-				array( 'status' => 415 )
-			);
-		}
-
-		$body = wp_remote_retrieve_body( $response );
-
-		if ( empty( $body ) ) {
-			return new WP_Error(
-				'rest_lookup_empty',
-				__( 'That page had no content to read.', 'fair-events' ),
-				array( 'status' => 422 )
-			);
+		if ( is_wp_error( $body ) ) {
+			return $body;
 		}
 
 		$metadata = PageMetadataParser::parse( $body );

@@ -33,6 +33,10 @@
 		"placeholder": {
 			"type": "string",
 			"default": ""
+		},
+		"extractEventDetails": {
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"editorScript": "file:./editor.js",

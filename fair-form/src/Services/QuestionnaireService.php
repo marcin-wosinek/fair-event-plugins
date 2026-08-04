@@ -15,6 +15,8 @@ namespace FairForm\Services;
 use FairForm\Database\QuestionnaireSubmissionRepository;
 use FairForm\Database\QuestionnaireAnswerRepository;
 use FairForm\Models\QuestionnaireSubmission;
+use FairEventsShared\Helpers\SafeUrlFetcher;
+use FairEventsShared\Helpers\PageMetadataParser;
 use WP_REST_Request;
 use WP_Error;
 
@@ -233,11 +235,12 @@ class QuestionnaireService {
 			}
 
 			$sanitized[] = array(
-				'question_key'  => sanitize_key( $answer['question_key'] ?? '' ),
-				'question_text' => $question_text,
-				'question_type' => $question_type,
-				'answer_value'  => $answer_value,
-				'display_order' => (int) ( $answer['display_order'] ?? 0 ),
+				'question_key'          => sanitize_key( $answer['question_key'] ?? '' ),
+				'question_text'         => $question_text,
+				'question_type'         => $question_type,
+				'answer_value'          => $answer_value,
+				'display_order'         => (int) ( $answer['display_order'] ?? 0 ),
+				'extract_event_details' => ! empty( $answer['extract_event_details'] ),
 			);
 		}
 
@@ -409,6 +412,54 @@ class QuestionnaireService {
 
 			// Store attachment ID as the answer value.
 			$answer['answer_value'] = (string) $attachment_id;
+		}
+
+		return $answers;
+	}
+
+	/**
+	 * For url answers opted into extraction, fetch the linked page server-side
+	 * and store whatever event details it publishes alongside the answer.
+	 *
+	 * Extraction never blocks submission: an unreachable page, a non-HTML
+	 * response, or a page with no usable data simply leaves the answer
+	 * without captured details — this method never returns a WP_Error.
+	 *
+	 * @param array $answers Sanitized questionnaire answers.
+	 * @return array Updated answers array (`extract_event_details` stripped,
+	 *               `answer_meta` set on url answers where extraction found data).
+	 */
+	public function process_url_extractions( $answers ) {
+		foreach ( $answers as &$answer ) {
+			$extract = ! empty( $answer['extract_event_details'] );
+			unset( $answer['extract_event_details'] );
+
+			if ( ! $extract
+				|| 'url' !== ( $answer['question_type'] ?? '' )
+				|| empty( $answer['answer_value'] ) ) {
+				continue;
+			}
+
+			$body = SafeUrlFetcher::fetch( $answer['answer_value'] );
+			if ( is_wp_error( $body ) ) {
+				continue;
+			}
+
+			$metadata = PageMetadataParser::parse( $body );
+			if ( empty( $metadata['found'] ) ) {
+				continue;
+			}
+
+			$captured = array( 'source' => $metadata['source'] );
+			foreach ( $metadata['found'] as $field ) {
+				$key              = 'start' === $field ? 'start_datetime' : ( 'end' === $field ? 'end_datetime' : $field );
+				$captured[ $key ] = $metadata[ $key ];
+			}
+			if ( in_array( 'start', $metadata['found'], true ) ) {
+				$captured['all_day'] = $metadata['all_day'];
+			}
+
+			$answer['answer_meta'] = wp_json_encode( $captured );
 		}
 
 		return $answers;

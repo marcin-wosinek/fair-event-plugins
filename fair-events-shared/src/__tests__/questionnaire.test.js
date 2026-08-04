@@ -533,17 +533,35 @@ describe('phone question type', () => {
 /**
  * Build a URL question as fair-form-url/render.php emits it.
  *
- * @param {string} value Field value.
+ * @param {string}  value               Field value.
+ * @param {boolean} extractEventDetails Whether `data-extract-event-details` is set.
  * @return {string} The question markup.
  */
-function urlQuestion(value) {
+function urlQuestion(value, extractEventDetails = false) {
 	return (
-		'<div data-fair-form-question data-question-key="website" data-question-text="Website" data-question-type="url" data-required="0">' +
-		`<input type="text" inputmode="url" value="${value}" /></div>`
+		`<div data-fair-form-question data-question-key="website" data-question-text="Website" data-question-type="url" data-required="0" data-extract-event-details="${
+			extractEventDetails ? '1' : '0'
+		}">` + `<input type="text" inputmode="url" value="${value}" /></div>`
 	);
 }
 
 describe('url question type', () => {
+	describe('collectQuestionAnswers', () => {
+		it('adds extract_event_details: true when the toggle is on', () => {
+			const form = buildForm(urlQuestion('https://example.com', true));
+			const answers = collectQuestionAnswers(form);
+			expect(answers).toHaveLength(1);
+			expect(answers[0].extract_event_details).toBe(true);
+		});
+
+		it('omits extract_event_details when the toggle is off', () => {
+			const form = buildForm(urlQuestion('https://example.com', false));
+			const answers = collectQuestionAnswers(form);
+			expect(answers).toHaveLength(1);
+			expect(answers[0]).not.toHaveProperty('extract_event_details');
+		});
+	});
+
 	describe('validateQuestions', () => {
 		it('passes a bare domain (accepted as shorthand for https://)', () => {
 			const form = buildForm(urlQuestion('example.com/my-event'));

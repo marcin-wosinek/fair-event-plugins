@@ -250,6 +250,10 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 					}
 				}
 
+				if ( 'url' === $answer->question_type && ! empty( $answer->answer_meta ) ) {
+					$answer_item['event_details'] = json_decode( $answer->answer_meta, true );
+				}
+
 				$answers_data[] = $answer_item;
 			}
 
@@ -469,6 +473,10 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 					$mime                    = get_post_mime_type( $attachment_id );
 					$answer_item['is_image'] = $mime && 0 === strpos( $mime, 'image/' );
 				}
+			}
+
+			if ( 'url' === $answer->question_type && ! empty( $answer->answer_meta ) ) {
+				$answer_item['event_details'] = json_decode( $answer->answer_meta, true );
 			}
 
 			$answers_data[] = $answer_item;

@@ -34,6 +34,21 @@
 		gap: 8px;
 	}
 
+	&__event-details {
+		margin-top: 6px;
+		font-size: 13px;
+		color: #50575e;
+
+		&-label {
+			font-style: italic;
+		}
+
+		ul {
+			margin: 2px 0 0 16px;
+			list-style: disc;
+		}
+	}
+
 	.fair-form-submission-detail__info-table th {
 		width: 200px;
 	}
