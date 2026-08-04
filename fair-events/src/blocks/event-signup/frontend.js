@@ -24,6 +24,11 @@ import './frontend.css';
 
 const CSS_PREFIX = 'fair-events-get-tickets';
 const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
+const VIEWER_CONTEXT_PATH = '/fair-events/v1/get-tickets/viewer-context';
+// A member's discount/eligibility must be applied before the submit button
+// is usable, but a slow/failed fetch must never strand the visitor with a
+// permanently disabled form — release the gate after this either way.
+const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 (function () {
 	'use strict';
@@ -60,6 +65,281 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 				wireAddActivities(block);
 				wireCancelSignup(block);
 			});
+
+		// Per-viewer personalization (#1300): the markup above is the
+		// cache-safe baseline, identical for every viewer. Hydrate the
+		// actual viewer's restricted tiers, discounted prices, prefill, and
+		// signed-up state after load, for every page load — cached or not —
+		// so the visible result never depends on who the page was rendered
+		// for.
+		document
+			.querySelectorAll('.fair-events-get-tickets')
+			.forEach(hydrateViewerContext);
+	}
+
+	/**
+	 * Fetch and apply the request-time viewer-context personalization for a
+	 * single Event Signup block.
+	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper.
+	 */
+	function hydrateViewerContext(block) {
+		const eventDateId = parseInt(block.dataset.eventDateId || '0', 10);
+		if (!eventDateId) {
+			return;
+		}
+
+		const form = block.querySelector('.fair-events-get-tickets-form');
+		const submitButton = form
+			? form.querySelector('button[type="submit"]')
+			: null;
+		if (submitButton) {
+			submitButton.disabled = true;
+			submitButton.classList.add('is-disabled');
+		}
+
+		let settled = false;
+		const release = function () {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			if (form) {
+				updateSubmitGate(form);
+			}
+		};
+		const timeoutId = setTimeout(release, VIEWER_CONTEXT_TIMEOUT);
+
+		const params = new URLSearchParams({ event_date_id: eventDateId });
+		if (block.dataset.showTicketPrice !== undefined) {
+			params.set('show_ticket_price', block.dataset.showTicketPrice);
+		}
+		if (block.dataset.showOptionPrices !== undefined) {
+			params.set('show_option_prices', block.dataset.showOptionPrices);
+		}
+
+		apiFetch({ path: `${VIEWER_CONTEXT_PATH}?${params.toString()}` })
+			.then(function (response) {
+				clearTimeout(timeoutId);
+				applyViewerContext(block, form, response);
+				release();
+			})
+			.catch(function (error) {
+				console.error('Viewer-context fetch error:', error);
+				clearTimeout(timeoutId);
+				release();
+			});
+	}
+
+	/**
+	 * Apply a viewer-context response to a block: swap to the companion
+	 * markup for a signed-up viewer, or patch the selection fieldsets,
+	 * prefill, signed-up occurrences, and render-slot fragments into the
+	 * existing form.
+	 * @param {HTMLElement}          block    The .fair-events-get-tickets wrapper.
+	 * @param {HTMLFormElement|null} form     The block's signup form, if present.
+	 * @param {Object}               response viewer-context response.
+	 */
+	function applyViewerContext(block, form, response) {
+		if (!response || !response.viewer_resolved) {
+			return;
+		}
+
+		if (response.suppress_form) {
+			swapToCompanion(block, form, response);
+			return;
+		}
+
+		if (!form) {
+			return;
+		}
+
+		if (response.ticket_type_fieldset_html) {
+			replaceFieldset(
+				form,
+				'.fair-events-ticket-fieldset',
+				response.ticket_type_fieldset_html
+			);
+			wireTicketTypeInputs(form);
+		}
+		if (response.ticket_options_fieldset_html) {
+			replaceFieldset(
+				form,
+				'.fair-events-ticket-options',
+				response.ticket_options_fieldset_html
+			);
+			wireTicketOptionInputs(form);
+		}
+
+		const nameField = form.querySelector('input[name="name"]');
+		if (nameField && response.prefill_name) {
+			nameField.value = response.prefill_name;
+		}
+		const emailField = form.querySelector('input[name="email"]');
+		if (emailField && response.prefill_email) {
+			emailField.value = response.prefill_email;
+		}
+
+		markSignedUpOccurrences(form, response.occurrences_signed_up || []);
+
+		prependSlotFragment(form, response.before_form_html);
+		insertBeforeSubmitFragment(form, response.before_submit_html);
+		appendSlotFragment(form, response.after_form_html);
+
+		wireNotYouButton(form.querySelector('.fair-events-not-you-button'));
+		wireAddActivities(block);
+		wireCancelSignup(block);
+
+		refreshSignupState(form);
+	}
+
+	/**
+	 * Replace a fieldset's enclosing .form-row with freshly rendered markup
+	 * for the same fieldset (identified by its own class), matching what
+	 * FairEvents\Services\SignupFieldsetRenderer produces server-side.
+	 * @param {HTMLFormElement} form          The get-tickets form.
+	 * @param {string}          fieldsetClass CSS class identifying the fieldset (e.g. '.fair-events-ticket-fieldset').
+	 * @param {string}          html          Replacement HTML, including the enclosing .form-row.
+	 */
+	function replaceFieldset(form, fieldsetClass, html) {
+		const existing = form.querySelector(fieldsetClass);
+		const row = existing ? existing.closest('.form-row') : null;
+		if (!row) {
+			return;
+		}
+		const template = document.createElement('template');
+		template.innerHTML = html.trim();
+		const replacement = template.content.firstElementChild;
+		if (!replacement) {
+			return;
+		}
+		row.replaceWith(replacement);
+	}
+
+	/**
+	 * Label (and disable, for the checkbox picker) occurrences the viewer
+	 * already holds a signup for, mirroring the server-rendered "already
+	 * signed up" treatment the baseline render can no longer bake in.
+	 * @param {HTMLFormElement} form          The get-tickets form.
+	 * @param {number[]}        signedUpIds   event_date_ids the viewer already holds.
+	 */
+	function markSignedUpOccurrences(form, signedUpIds) {
+		if (!signedUpIds.length) {
+			return;
+		}
+		const idSet = new Set(signedUpIds.map(Number));
+		const suffix = ' — ' + __('already signed up', 'fair-events');
+
+		const select = form.querySelector(
+			'select[name="event_date_id_single"]'
+		);
+		if (select) {
+			Array.from(select.options).forEach(function (option) {
+				if (
+					idSet.has(parseInt(option.value, 10)) &&
+					option.textContent.indexOf(suffix) === -1
+				) {
+					option.textContent += suffix;
+				}
+			});
+		}
+
+		form.querySelectorAll('input[name="event_date_ids[]"]').forEach(
+			function (checkbox) {
+				if (!idSet.has(parseInt(checkbox.value, 10))) {
+					return;
+				}
+				checkbox.checked = false;
+				checkbox.disabled = true;
+				const label = checkbox.closest('label');
+				if (label && label.textContent.indexOf(suffix) === -1) {
+					label.append(suffix);
+				}
+			}
+		);
+	}
+
+	/**
+	 * Insert a render-slot HTML fragment as the form's first child.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @param {string|null}     html Fragment HTML, or null/empty for nothing to insert.
+	 */
+	function prependSlotFragment(form, html) {
+		if (!html) {
+			return;
+		}
+		const wrapper = document.createElement('div');
+		wrapper.className = 'fair-events-get-tickets-viewer-slot';
+		wrapper.innerHTML = html;
+		form.insertBefore(wrapper, form.firstChild);
+	}
+
+	/**
+	 * Append a render-slot HTML fragment as the form's last child.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @param {string|null}     html Fragment HTML, or null/empty for nothing to insert.
+	 */
+	function appendSlotFragment(form, html) {
+		if (!html) {
+			return;
+		}
+		const wrapper = document.createElement('div');
+		wrapper.className = 'fair-events-get-tickets-viewer-slot';
+		wrapper.innerHTML = html;
+		form.appendChild(wrapper);
+	}
+
+	/**
+	 * Insert a render-slot HTML fragment immediately before the submit
+	 * button's row, mirroring render.php's fair_events_signup_render_before_submit
+	 * call site (inside the <form>, just before the submit button).
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @param {string|null}     html Fragment HTML, or null/empty for nothing to insert.
+	 */
+	function insertBeforeSubmitFragment(form, html) {
+		if (!html) {
+			return;
+		}
+		const submitRow = form.querySelector('.form-submit');
+		if (!submitRow || !submitRow.parentNode) {
+			return;
+		}
+		const wrapper = document.createElement('div');
+		wrapper.className = 'fair-events-get-tickets-viewer-slot';
+		wrapper.innerHTML = html;
+		submitRow.parentNode.insertBefore(wrapper, submitRow);
+	}
+
+	/**
+	 * Replace the <form> with the companion wrapper for a viewer who already
+	 * holds this signup, mirroring render.php's suppress_form branch —
+	 * done client-side here since the viewer isn't known until after load.
+	 * @param {HTMLElement}          block    The .fair-events-get-tickets wrapper.
+	 * @param {HTMLFormElement|null} form     The form being replaced.
+	 * @param {Object}               response viewer-context response.
+	 */
+	function swapToCompanion(block, form, response) {
+		if (!form) {
+			return;
+		}
+		const companion = document.createElement('div');
+		companion.className = 'fair-events-get-tickets-companion';
+		companion.setAttribute(
+			'data-event-date-id',
+			block.dataset.eventDateId || ''
+		);
+		if (response.before_form_html) {
+			companion.insertAdjacentHTML(
+				'beforeend',
+				response.before_form_html
+			);
+		}
+		if (response.after_form_html) {
+			companion.insertAdjacentHTML('beforeend', response.after_form_html);
+		}
+		form.replaceWith(companion);
+
+		wireAddActivities(block);
+		wireCancelSignup(block);
 	}
 
 	/**
@@ -246,44 +526,70 @@ const PAYMENT_STATE_PATH = '/fair-events/v1/get-tickets/payment-state';
 			submitForm(form, data);
 		});
 
-		const ticketTypeFields = form.querySelectorAll(
-			'input[name="ticket_type_id"]'
-		);
-		ticketTypeFields.forEach(function (field) {
-			field.addEventListener('change', function () {
-				refreshSignupState(form);
-			});
-		});
-
-		const instancePicker = form.querySelector(
-			'.fair-events-instance-picker'
-		);
-		if (instancePicker) {
-			instancePicker
-				.querySelectorAll('input[name="event_date_ids[]"]')
-				.forEach(function (checkbox) {
-					checkbox.addEventListener('change', function () {
-						refreshSignupState(form);
-					});
-				});
-		}
-
-		const ticketOptions = form.querySelector('.fair-events-ticket-options');
-		if (ticketOptions) {
-			ticketOptions
-				.querySelectorAll('input[name="ticket_option_ids[]"]')
-				.forEach(function (checkbox) {
-					checkbox.addEventListener('change', function () {
-						refreshSignupState(form);
-					});
-				});
-		}
+		wireTicketTypeInputs(form);
+		wireInstancePickerInputs(form);
+		wireTicketOptionInputs(form);
 
 		wireAddActivities(form.closest('.fair-events-get-tickets'));
 		wireNotYouButton(form.querySelector('.fair-events-not-you-button'));
 		setupQuestionnaire(form);
 
 		refreshSignupState(form);
+	}
+
+	/**
+	 * Wire the ticket-type radios' change listener. Reusable both at initial
+	 * setup and after a viewer-context swap replaces the fieldset (#1300).
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function wireTicketTypeInputs(form) {
+		form.querySelectorAll('input[name="ticket_type_id"]').forEach(function (
+			field
+		) {
+			field.addEventListener('change', function () {
+				refreshSignupState(form);
+			});
+		});
+	}
+
+	/**
+	 * Wire the multi-occurrence checkbox picker's change listener, if present.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function wireInstancePickerInputs(form) {
+		const instancePicker = form.querySelector(
+			'.fair-events-instance-picker'
+		);
+		if (!instancePicker) {
+			return;
+		}
+		instancePicker
+			.querySelectorAll('input[name="event_date_ids[]"]')
+			.forEach(function (checkbox) {
+				checkbox.addEventListener('change', function () {
+					refreshSignupState(form);
+				});
+			});
+	}
+
+	/**
+	 * Wire the activities (ticket options) checkboxes' change listener, if
+	 * present. Reusable both at initial setup and after a viewer-context
+	 * swap replaces the fieldset (#1300).
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function wireTicketOptionInputs(form) {
+		const ticketOptions = form.querySelector('.fair-events-ticket-options');
+		if (!ticketOptions) {
+			return;
+		}
+		ticketOptions
+			.querySelectorAll('input[name="ticket_option_ids[]"]')
+			.forEach(function (checkbox) {
+				checkbox.addEventListener('change', function () {
+					refreshSignupState(form);
+				});
+			});
 	}
 
 	/**

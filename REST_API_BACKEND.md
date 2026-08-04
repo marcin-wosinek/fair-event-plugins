@@ -568,20 +568,75 @@ truth and lets experimental features stay additive.
 
 ### Example: `fair-events` unified signup
 
-`fair-events/src/blocks/event-signup/render.php` (base render, used when no
-companion plugin renders a richer flow) and
-`fair-events/src/API/GetTicketsController.php` (the `fair-events/v1/get-tickets`
-create route) expose:
+`fair-events/src/blocks/event-signup/render.php` (base render — the
+cache-safe baseline every viewer gets, see below),
+`fair-events/src/Services/SignupFieldsetRenderer.php` (the ticket-type/
+ticket-options fieldset markup, shared between the base render and the
+viewer-context endpoint), and `fair-events/src/API/GetTicketsController.php`
+(the `fair-events/v1/get-tickets` create route, plus its `viewer-context`
+sub-route) expose:
 
 -   **`fair_events_signup_render_context` filter** — the base render builds a
     context array (`event_date_id`, `pricing_event_date_id`, `ticket_types`,
-    `price_by_type_id`, `active_sale_period`, `occurrences_for_picker`, `currency_symbol`,
+    `price_by_type_id`, `active_sale_period`, `occurrences_for_picker`,
     `ticket_options`, `minimum_activities`,
     `callback_status`/`callback_tx_id`/`callback_token`, `prefill_name`,
-    `prefill_email`, `submit_button_text`, `suppress_form`) and runs it through
-    this filter before rendering, so a companion plugin can inject viewer
-    identity, session pre-fill, or participant-filtered ticket types/prices
-    without a parallel template. `ticket_options` is a list of
+    `prefill_email`, `submit_button_text`, `suppress_form`) and runs it
+    through this filter before rendering. Since a full-page cache stores and
+    replays this render for every viewer (#1300), `ticket_types` here already
+    excludes any group-restricted tier, and `prefill_name`/`prefill_email`/
+    `suppress_form`/every occurrence's `signed_up` are always their
+    viewer-independent defaults (`''`/`''`/`false`/`false`) — **no consumer
+    may set viewer-dependent state through this filter.** It exists only for
+    a future genuinely viewer-independent extension; fair-audience does not
+    hook it. Per-viewer personalization is resolved by the
+    `fair_events_signup_viewer_context` filter below instead.
+-   **`fair_events_signup_viewer_context` filter** — resolved at request time
+    by `GetTicketsController::get_viewer_context()`
+    (`GET fair-events/v1/get-tickets/viewer-context?event_date_id=…`,
+    `permission_callback: __return_true` — safe because the route carries no
+    identity parameter; the viewer is resolved purely server-side from the
+    session cookie/login, same as the public
+    `/fair-audience/v1/event-signup/status` endpoint), never by the render a
+    full-page cache stores. frontend.js calls this endpoint after load for
+    every page view — cached or not — and patches the response into the DOM,
+    so the visible result never depends on who the page happened to be
+    rendered for. The endpoint rebuilds the same-shaped context as
+    `fair_events_signup_render_context` above, but *unfiltered* (including
+    group-restricted tiers), plus a `viewer_resolved` key (`false` by
+    default). A companion plugin sets `viewer_resolved = true` whenever it
+    recognises the viewer (fair-audience's
+    `SignupHookBridge::enrich_render_context()` — the same method, now
+    hooked to this filter instead) and overrides `ticket_types`/
+    `price_by_type_id` (participant-filtered/discounted), `prefill_name`/
+    `prefill_email`, `suppress_form`, and each `occurrences_for_picker`
+    row's `signed_up`, exactly as it used to for the base render. When
+    `viewer_resolved` is true the endpoint renders the personalized
+    fragments below and returns them as HTML (reusing
+    `SignupFieldsetRenderer` and the same render-slot actions the base
+    render fires — no templating logic duplicated in JavaScript); an
+    unrecognised viewer (the common case) gets an empty/no-op response, so
+    no rendering work happens for the anonymous majority. Response shape:
+    `viewer_resolved`, `suppress_form`, `ticket_type_fieldset_html` /
+    `ticket_options_fieldset_html` (the two fieldsets, HTML or `null`),
+    `before_form_html` / `before_submit_html` / `after_form_html` (the three
+    render-slot actions' captured output, HTML or `null`),
+    `occurrences_signed_up` (event_date_ids), `prefill_name`, `prefill_email`.
+    frontend.js swaps the `<form>` for a `fair-events-get-tickets-companion`
+    wrapper client-side when `suppress_form` is true (mirroring what the base
+    render used to do server-side), instead of patching the fieldsets.
+-   **Three render-slot actions**, all passed the context from whichever
+    filter above ran (so they no-op on the base render's un-enriched
+    context, and produce fragments on the viewer-context endpoint's enriched
+    one): `fair_events_signup_render_before_form` and
+    `fair_events_signup_render_after_form` let a companion plugin contribute
+    UI fragments (e.g. a resume/retry card, the signed-up/cancel card, or
+    fair-audience's "add activities" section) either inside the `<form>` (or
+    its client-side companion swap) or inside the base render's (now
+    effectively unreachable, kept for future use) `suppress_form` wrapper
+    div. A third action, `fair_events_signup_render_before_submit`, fires
+    immediately before the submit button — fair-audience uses it to render a
+    group discount note. `ticket_options` is a list of
     `[ id, name, short_name, price, is_full ]` (empty unless both
     `fair-events-experimental`'s activity catalogue and fair-audience — the
     only consumer that can persist a selection — are active); fair-audience's
@@ -592,29 +647,7 @@ create route) expose:
     `current_activity_names`. `minimum_activities` is the event-date global
     requirement, capped at `count( $ticket_options )`; a ticket type can raise
     it further via its own `minimum_activities` property — see
-    `frontend.js`' `getEffectiveMinimum()`. Each `occurrences_for_picker` row
-    also carries `signed_up` (`false` by default); fair-audience's
-    `enrich_render_context()` flips it true for occurrences the recognised
-    viewer already holds (including via a whole-series pass), so both the
-    single-occurrence dropdown and the multi-occurrence checkbox picker label
-    (and, for the checkbox picker, disable) them instead of allowing a silent
-    double-book. `suppress_form` (`false` by default) lets a companion plugin
-    skip the `<form>` entirely — used when a recognised viewer already holds
-    this exact signup, so a ticket-type/quantity form makes no sense — in
-    which case the base renders a plain
-    `<div class="fair-events-get-tickets-companion">` instead, still firing
-    the two render-slot actions below inside it so the companion can render
-    its own signed-up/cancel UI (echoing and escaping its own markup, exactly
-    as `SignupHookBridge::render_add_activities()` already does — no HTML
-    travels through the context array). Two render-slot actions,
-    `fair_events_signup_render_before_form` and
-    `fair_events_signup_render_after_form` (both passed the same context),
-    let a companion plugin contribute UI fragments (e.g. a resume/retry card,
-    the signed-up/cancel card, or fair-audience's "add activities" section)
-    either inside the `<form>` or inside the `suppress_form` wrapper div. A
-    third action, `fair_events_signup_render_before_submit`
-    (also passed the context), fires immediately before the submit button —
-    fair-audience uses it to render a group discount note.
+    `frontend.js`' `getEffectiveActivityMinimum()`.
 -   **`fair_events_signup_precheck_error` filter** — `GetTicketsController::create_signup()`
     runs this immediately after the event date is validated, before ticket-type
     or options validation, so it covers the single-, `multiple_instances`- and
@@ -705,7 +738,7 @@ unified-signup submission fatal'd):
 
 | Hook                                  | args passed | `add_filter`/`add_action` call            |
 | -------------------------------------- | :---------: | ------------------------------------------ |
-| `fair_events_signup_render_context`    | 1           | `add_filter( ..., 10, 1 )`                 |
+| `fair_events_signup_viewer_context`    | 1           | `add_filter( ..., 10, 1 )`                 |
 | `fair_events_signup_precheck_error`    | 4           | `add_filter( ..., 10, 4 )`                 |
 | `fair_events_signup_render_before_form` | 1          | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_before_submit` | 1        | `add_action( ..., 10, 1 )`                 |

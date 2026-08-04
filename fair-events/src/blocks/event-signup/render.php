@@ -2,10 +2,19 @@
 /**
  * Event Signup Block - Server-side rendering
  *
- * Renders the anonymous get-tickets form. When fair-audience is active it
- * enriches this same render via the fair_events_signup_render_context filter
- * and the render slots (identity, pricing, cancel/resignup) instead of owning
- * a competing template.
+ * Renders the cache-safe baseline get-tickets form: unrestricted ticket
+ * types at their undiscounted prices, no prefill, no signed-up state —
+ * identical for every viewer, since a full-page cache stores and replays
+ * this markup (#1300). frontend.js hydrates per-viewer personalization
+ * (restricted tiers, discounts, prefill, signed-up state) after load via
+ * GET fair-events/v1/get-tickets/viewer-context, which runs the
+ * fair_events_signup_viewer_context filter fair-audience hooks — the render
+ * slots below (identity, pricing, cancel/resignup) are fired from both this
+ * base render (with the un-enriched baseline context, so they no-op) and
+ * that endpoint (with the enriched context, so they produce the fragments
+ * frontend.js injects), instead of owning a competing template.
+ * fair_events_signup_render_context still fires here too, for any future
+ * genuinely viewer-independent extension.
  *
  * @package FairEvents
  *
@@ -148,6 +157,26 @@ if ( $event_date
 $ticket_types = array();
 if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
 	$ticket_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( $pricing_event_date_id );
+}
+
+// Baseline excludes any group-restricted tier outright, independent of the
+// viewer — this is the "unrestricted tiers at undiscounted prices" a
+// full-page cache is allowed to store (#1300). A recognised viewer's
+// restricted tiers are re-added at request time by the
+// fair_events_signup_viewer_context filter, resolved by the
+// GET .../viewer-context endpoint frontend.js hydrates after load.
+if ( ! empty( $ticket_types ) && class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
+	$restrictions_map = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
+	if ( ! empty( $restrictions_map ) ) {
+		$ticket_types = array_values(
+			array_filter(
+				$ticket_types,
+				function ( $type ) use ( $restrictions_map ) {
+					return empty( $restrictions_map[ (int) $type->id ] ?? array() );
+				}
+			)
+		);
+	}
 }
 
 // Resolve the series master (if any) so 'multiple_instances' ticket types can
@@ -332,19 +361,6 @@ foreach ( $ticket_types as $ticket_type ) {
 }
 $has_instance_picker = $has_multiple_instances_type && ! empty( $occurrences_for_picker );
 
-// A ticket type can raise the minimum-activities requirement above the
-// event-date global. Determine whether any selectable type carries a higher
-// requirement, and the effective minimum for the type that's pre-selected on
-// first paint (the first not-payment-blocked type, mirroring the radio
-// pre-selection below). frontend.js recomputes this live as the buyer
-// switches ticket type.
-$any_ticket_type_min = 0;
-if ( ! empty( $ticket_options ) ) {
-	foreach ( $ticket_types as $tt_for_min ) {
-		$any_ticket_type_min = max( $any_ticket_type_min, (int) $tt_for_min->minimum_activities );
-	}
-}
-
 // Single-occurrence dropdown: offered whenever the series has at least one
 // upcoming occurrence, regardless of which ticket scopes are configured.
 // frontend.js shows/hides it based on the selected ticket type's scope.
@@ -402,8 +418,16 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 } else {
 	$wrapper_attributes = get_block_wrapper_attributes(
 		array(
-			'class'         => 'fair-events-get-tickets',
-			'data-currency' => \FairEventsShared\Money::site_currency(),
+			'class'                   => 'fair-events-get-tickets',
+			'data-currency'           => \FairEventsShared\Money::site_currency(),
+			// Read by frontend.js to fetch the request-time
+			// fair-events/v1/get-tickets/viewer-context personalization for
+			// this occurrence (#1300) — present on every branch below
+			// (form, companion, blocked, callback card) so hydration always
+			// has somewhere to attach.
+			'data-event-date-id'      => $event_date_id,
+			'data-show-ticket-price'  => $show_ticket_price ? '1' : '0',
+			'data-show-option-prices' => $show_option_prices ? '1' : '0',
 		)
 	);
 }
@@ -564,157 +588,31 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 		do_action( 'fair_events_signup_render_before_form', $context );
 		?>
 
-		<?php if ( ! empty( $ticket_types ) ) : ?>
-			<?php
-			$first_enabled_type_id = null;
-			foreach ( $ticket_types as $ticket_type ) {
-				$type_id    = (int) $ticket_type->id;
-				$type_price = $price_by_type_id[ $type_id ] ?? null;
-				if ( ! ( $payments_unavailable && null !== $type_price && $type_price > 0 ) ) {
-					$first_enabled_type_id = $type_id;
-					break;
-				}
-			}
-			?>
-			<div class="form-row">
-				<fieldset class="fair-events-ticket-fieldset">
-					<legend class="form-label"><?php esc_html_e( 'Choose ticket type', 'fair-events' ); ?></legend>
-					<?php foreach ( $ticket_types as $ticket_type ) : ?>
-						<?php
-						$type_id          = (int) $ticket_type->id;
-						$type_price       = $price_by_type_id[ $type_id ] ?? null;
-						$type_unavailable = $payments_unavailable && null !== $type_price && $type_price > 0;
-						$label            = esc_html( $ticket_type->name );
-						if ( $show_ticket_price && null !== $type_price ) {
-							$label .= ' — ' . esc_html( \FairEventsShared\Money::format_inline( $type_price ) );
-						} elseif ( null === $active_sale_period ) {
-							$label .= ' — ' . esc_html__( 'No active sale period', 'fair-events' );
-						}
-						if ( $type_unavailable ) {
-							$label .= ' — ' . esc_html__( 'ticket sales temporarily unavailable', 'fair-events' );
-						}
-						$radio_id = $form_id . '-ticket-type-' . $type_id;
-						?>
-						<label class="fair-events-ticket-option" for="<?php echo esc_attr( $radio_id ); ?>">
-							<input
-								type="radio"
-								id="<?php echo esc_attr( $radio_id ); ?>"
-								name="ticket_type_id"
-								value="<?php echo esc_attr( $type_id ); ?>"
-								data-ticket-price="<?php echo esc_attr( null !== $type_price ? \FairEventsShared\Money::format_value( $type_price ) : '' ); ?>"
-								data-recurrence-scope="<?php echo esc_attr( $ticket_type->recurrence_scope ); ?>"
-								data-min-instances="<?php echo esc_attr( (string) $ticket_type->minimum_instances ); ?>"
-								data-min-activities="<?php echo esc_attr( (string) $ticket_type->minimum_activities ); ?>"
-								<?php echo $type_unavailable ? 'disabled' : ''; ?>
-								<?php echo $type_id === $first_enabled_type_id ? 'checked' : ''; ?>
-							/>
-							<?php echo esc_html( $label ); ?>
-						</label>
-					<?php endforeach; ?>
-				</fieldset>
-			</div>
-		<?php endif; ?>
-
-		<?php if ( ! empty( $ticket_options ) ) : ?>
-			<?php
-			// Effective minimum for the type pre-selected on first paint (the
-			// first not-payment-blocked type, mirroring the radio pre-selection
-			// above) — frontend.js recomputes this live as the buyer switches
-			// ticket type.
-			$preselected_type_min = 0;
-			if ( ! empty( $first_enabled_type_id ) ) {
-				foreach ( $ticket_types as $tt_preselected ) {
-					if ( (int) $tt_preselected->id === $first_enabled_type_id ) {
-						$preselected_type_min = (int) $tt_preselected->minimum_activities;
-						break;
-					}
-				}
-			}
-			// Whether a minimum-activities requirement (global or ticket-type-
-			// raised) applies, so the min-selection hint is only shown when
-			// relevant. Independent of $show_option_prices — the "+price"
-			// add-on tag is always emitted below when option prices are shown,
-			// with frontend.js toggling its visibility until the minimum is met.
-			$options_feature_active = ( $minimum_activities > 0 || $any_ticket_type_min > 0 );
-			$initial_min_activities = min( count( $ticket_options ), max( $minimum_activities, $preselected_type_min ) );
-			?>
-			<div class="form-row">
-				<fieldset class="fair-events-ticket-options">
-					<legend class="form-label"><?php esc_html_e( 'Select activities', 'fair-events' ); ?></legend>
-					<?php if ( $options_feature_active ) : ?>
-						<?php
-						$hint_text = $initial_min_activities > 0
-							? sprintf(
-								/* translators: %d: minimum number of activities required */
-								_n(
-									'Please select at least %d activity to sign up.',
-									'Please select at least %d activities to sign up.',
-									$initial_min_activities,
-									'fair-events'
-								),
-								$initial_min_activities
-							)
-							: '';
-						$hint_style = $initial_min_activities > 0 ? '' : ' style="display: none;"';
-						?>
-						<p class="fair-events-ticket-options-min-hint"<?php echo $hint_style; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static literal. ?>>
-							<?php echo esc_html( $hint_text ); ?>
-						</p>
-					<?php endif; ?>
-					<?php foreach ( $ticket_options as $opt ) : ?>
-						<?php
-						$opt_label   = $opt['name'];
-						$opt_is_full = ! empty( $opt['is_full'] );
-						if ( $opt_is_full ) {
-							$opt_label .= ' — ' . __( 'full', 'fair-events' );
-						}
-						$opt_checkbox_id = $form_id . '-opt-' . (int) $opt['id'];
-						$opt_classes     = 'fair-events-ticket-option-item';
-						if ( $opt_is_full ) {
-							$opt_classes .= ' fair-events-ticket-option-full';
-						}
-						?>
-						<label class="<?php echo esc_attr( $opt_classes ); ?>" for="<?php echo esc_attr( $opt_checkbox_id ); ?>">
-							<input
-								type="checkbox"
-								name="ticket_option_ids[]"
-								id="<?php echo esc_attr( $opt_checkbox_id ); ?>"
-								value="<?php echo (int) $opt['id']; ?>"
-								class="form-checkbox"
-								data-option-price="<?php echo esc_attr( \FairEventsShared\Money::format_value( $opt['price'] ) ); ?>"
-								data-option-short-name="<?php echo esc_attr( $opt['short_name'] ?? '' ); ?>"
-								<?php echo $opt_is_full ? 'disabled' : ''; ?>
-							/>
-							<span class="fair-events-ticket-option-text">
-								<?php echo esc_html( $opt_label ); ?>
-								<?php if ( $show_option_prices && 0.0 !== (float) $opt['price'] ) : ?>
-									<span class="fair-events-ticket-option-addon" style="display: none;">
-										<?php if ( $opt['price'] > 0 ) : ?>
-											<?php
-											printf(
-												/* translators: %s: formatted add-on price */
-												esc_html__( '+%s', 'fair-events' ),
-												esc_html( \FairEventsShared\Money::format_inline( $opt['price'] ) )
-											);
-											?>
-										<?php else : ?>
-											<?php
-											printf(
-												/* translators: %s: formatted add-on price */
-												esc_html__( '-%s', 'fair-events' ),
-												esc_html( \FairEventsShared\Money::format_inline( abs( $opt['price'] ) ) )
-											);
-											?>
-										<?php endif; ?>
-									</span>
-								<?php endif; ?>
-							</span>
-						</label>
-					<?php endforeach; ?>
-					<p class="fair-events-ticket-options-total"></p>
-				</fieldset>
-			</div>
-		<?php endif; ?>
+		<?php
+		// Both fieldsets are rendered by the shared FairEvents\Services\SignupFieldsetRenderer
+		// so the base render and the fair-events/v1/get-tickets/viewer-context
+		// REST endpoint (personalized fragments, #1300) produce identical markup
+		// for a given ticket-type/options set instead of templating it twice.
+		$ticket_type_fieldset_html    = \FairEvents\Services\SignupFieldsetRenderer::ticket_type_fieldset(
+			$ticket_types,
+			$price_by_type_id,
+			$active_sale_period,
+			$show_ticket_price,
+			$payments_unavailable,
+			$form_id
+		);
+		$ticket_options_fieldset_html = \FairEvents\Services\SignupFieldsetRenderer::ticket_options_fieldset(
+			$ticket_options,
+			$ticket_types,
+			$price_by_type_id,
+			$minimum_activities,
+			$show_option_prices,
+			$payments_unavailable,
+			$form_id
+		);
+		echo $ticket_type_fieldset_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fully escaped inside the renderer.
+		echo $ticket_options_fieldset_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fully escaped inside the renderer.
+		?>
 
 		<?php if ( $has_occurrence_dropdown ) : ?>
 			<div class="form-row fair-events-occurrence-picker" style="display: none;">

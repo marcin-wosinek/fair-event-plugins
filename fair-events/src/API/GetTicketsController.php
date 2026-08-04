@@ -161,6 +161,47 @@ class GetTicketsController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-events/v1/get-tickets/viewer-context — request-time-only
+		// per-viewer personalization (restricted tiers, discounted prices,
+		// prefill, signed-up state) for the cache-safe baseline render's
+		// occurrence, resolved outside the base render so a full-page cache
+		// never stores another viewer's tiers, prices, or details (#1300).
+		// permission_callback: __return_true is safe here — the route takes
+		// no identity parameter at all; the viewer is resolved purely
+		// server-side from the session cookie/login, exactly like the
+		// existing public /fair-audience/v1/event-signup/status endpoint.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/viewer-context',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_viewer_context' ),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'event_date_id'      => array(
+						'type'              => 'integer',
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					),
+					// Block-author display choices, viewer-independent — read
+					// from the baseline render's data attributes by
+					// frontend.js so the personalized fragments match it.
+					'show_ticket_price'  => array(
+						'type'              => 'boolean',
+						'required'          => false,
+						'default'           => true,
+						'sanitize_callback' => 'rest_sanitize_boolean',
+					),
+					'show_option_prices' => array(
+						'type'              => 'boolean',
+						'required'          => false,
+						'default'           => true,
+						'sanitize_callback' => 'rest_sanitize_boolean',
+					),
+				),
+			)
+		);
+
 		// GET /fair-events/v1/get-tickets/payment-state — resolved
 		// confirmed/processing/resume/retry state + card payload. Consumed by
 		// the return-from-payment callback card and the direct-navigation
@@ -537,6 +578,233 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'       => $currency,
 			)
 		);
+	}
+
+	/**
+	 * Resolve request-time per-viewer personalization for the Event Signup
+	 * block's cache-safe baseline render: restricted tiers becoming visible,
+	 * discounted prices, name/email pre-fill, and signed-up state — none of
+	 * which the base render (render.php) may compute, since a full-page
+	 * cache stores and replays it (#1300). frontend.js hydrates this after
+	 * load for every viewer, cached page or not, so the visible result never
+	 * depends on who the page happened to be rendered for.
+	 *
+	 * Rebuilds the full (unfiltered, including group-restricted) ticket
+	 * type/options/occurrences context render.php itself builds, runs it
+	 * through the fair_events_signup_viewer_context filter (fair-audience's
+	 * SignupHookBridge::enrich_render_context() is the intended consumer),
+	 * and — only when that filter actually recognised a viewer — renders the
+	 * two selection fieldsets and captures whatever the three render-slot
+	 * actions echo, via output buffering, exactly as render.php fires them.
+	 * An anonymous caller (the common case) does none of that rendering
+	 * work: the response is an empty/no-op payload.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_viewer_context( $request ) {
+		$event_date_id = (int) $request->get_param( 'event_date_id' );
+
+		if ( ! class_exists( \FairEvents\Models\EventDates::class ) ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Pivot config/pricing lookups to the series master for generated
+		// occurrences, mirroring render.php.
+		$pricing_event_date_id = $event_date_id;
+		if ( 'generated' === ( $event_date->occurrence_type ?? null ) && ! empty( $event_date->master_id ) ) {
+			$pricing_event_date_id = (int) $event_date->master_id;
+		}
+
+		$ticket_types = array();
+		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( $pricing_event_date_id );
+		}
+
+		$series_master_id = null;
+		if ( 'master' === ( $event_date->occurrence_type ?? null ) ) {
+			$series_master_id = (int) $event_date->id;
+		} elseif ( 'generated' === ( $event_date->occurrence_type ?? null ) && ! empty( $event_date->master_id ) ) {
+			$series_master_id = (int) $event_date->master_id;
+		}
+
+		$occurrences_for_picker = array();
+		if ( $series_master_id ) {
+			$upcoming = \FairEvents\Models\EventDates::get_upcoming_by_master_id( $series_master_id );
+			foreach ( $upcoming as $occ ) {
+				$occurrences_for_picker[] = array(
+					'id'             => (int) $occ->id,
+					'start_datetime' => $occ->start_datetime,
+					'end_datetime'   => $occ->end_datetime,
+					'all_day'        => (bool) $occ->all_day,
+					'signed_up'      => false,
+				);
+			}
+		}
+
+		$price_by_type_id   = array();
+		$active_sale_period = null;
+		if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
+			$active_sale_period = \FairEvents\Services\TicketPricing::resolve_active_sale_period( $pricing_event_date_id );
+			if ( $active_sale_period ) {
+				$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id );
+				foreach ( $prices as $price ) {
+					if ( (int) $price->sale_period_id === (int) $active_sale_period->id ) {
+						$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
+					}
+				}
+			}
+		}
+
+		$ticket_options = array();
+		if ( class_exists( \FairAudience\API\EventSignupController::class )
+			&& class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+			$raw_options = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $pricing_event_date_id );
+			foreach ( $raw_options as $opt ) {
+				$resolved_base = class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class )
+					? \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $opt )
+					: (float) $opt->price;
+				if ( null === $resolved_base ) {
+					continue;
+				}
+				$ticket_options[] = array(
+					'id'         => (int) $opt->id,
+					'name'       => $opt->name,
+					'short_name' => $opt->short_name ?? null,
+					'price'      => (float) $resolved_base,
+					'is_full'    => false,
+				);
+			}
+		}
+
+		$minimum_activities = 0;
+		if ( ! empty( $ticket_options ) && class_exists( \FairEvents\Models\EventDateSetting::class ) ) {
+			$minimum_activities = (int) \FairEvents\Models\EventDateSetting::get( $pricing_event_date_id, 'minimum_activities' );
+			$minimum_activities = max( 0, min( $minimum_activities, count( $ticket_options ) ) );
+		}
+
+		$show_ticket_price    = (bool) $request->get_param( 'show_ticket_price' );
+		$show_option_prices   = (bool) $request->get_param( 'show_option_prices' );
+		$payments_unavailable = ! class_exists( \FairPaymentsConnector\API\TransactionAPI::class )
+			|| ! \FairPaymentsConnector\API\TransactionAPI::is_configured();
+
+		/**
+		 * Extension point for plugins (e.g. fair-audience) that resolve
+		 * per-viewer personalization at request time. Safe to compute here —
+		 * unlike fair_events_signup_render_context, this runs inside an
+		 * uncached REST request, never inside the page a full-page cache
+		 * stores. See REST_API_BACKEND.md.
+		 *
+		 * @param array $context Context array, the same shape
+		 *                       fair_events_signup_render_context builds,
+		 *                       plus 'viewer_resolved' (bool, default
+		 *                       false) — a companion plugin sets this true
+		 *                       whenever it recognises the viewer, signalling
+		 *                       this endpoint to render the personalized
+		 *                       fragments below.
+		 */
+		$context = apply_filters(
+			'fair_events_signup_viewer_context',
+			array(
+				'event_date_id'          => $event_date_id,
+				'pricing_event_date_id'  => $pricing_event_date_id,
+				'ticket_types'           => $ticket_types,
+				'price_by_type_id'       => $price_by_type_id,
+				'active_sale_period'     => $active_sale_period,
+				'occurrences_for_picker' => $occurrences_for_picker,
+				'ticket_options'         => $ticket_options,
+				'minimum_activities'     => $minimum_activities,
+				'prefill_name'           => '',
+				'prefill_email'          => '',
+				'suppress_form'          => false,
+				'viewer_resolved'        => false,
+			)
+		);
+
+		$viewer_resolved = ! empty( $context['viewer_resolved'] );
+		$suppress_form   = ! empty( $context['suppress_form'] );
+
+		$occurrences_signed_up = array();
+		foreach ( (array) ( $context['occurrences_for_picker'] ?? array() ) as $occ_row ) {
+			if ( ! empty( $occ_row['signed_up'] ) ) {
+				$occurrences_signed_up[] = (int) $occ_row['id'];
+			}
+		}
+
+		$response = array(
+			'viewer_resolved'              => $viewer_resolved,
+			'suppress_form'                => $suppress_form,
+			'ticket_type_fieldset_html'    => null,
+			'ticket_options_fieldset_html' => null,
+			'before_form_html'             => null,
+			'before_submit_html'           => null,
+			'after_form_html'              => null,
+			'occurrences_signed_up'        => $occurrences_signed_up,
+			'prefill_name'                 => (string) ( $context['prefill_name'] ?? '' ),
+			'prefill_email'                => (string) ( $context['prefill_email'] ?? '' ),
+		);
+
+		// Anonymous majority case: no viewer was recognised, so there is
+		// nothing to personalize — skip all rendering work below.
+		if ( ! $viewer_resolved ) {
+			return rest_ensure_response( $response );
+		}
+
+		// Deterministic and namespaced away from render.php's own
+		// wp_unique_id()-based $form_id (a bare per-request counter) so IDs
+		// generated by this separate REST request can never collide with the
+		// IDs already present in the page's DOM.
+		$form_id = 'fair-events-get-tickets-viewer-' . $event_date_id;
+
+		if ( ! $suppress_form ) {
+			$response['ticket_type_fieldset_html']    = \FairEvents\Services\SignupFieldsetRenderer::ticket_type_fieldset(
+				$context['ticket_types'],
+				$context['price_by_type_id'],
+				$context['active_sale_period'],
+				$show_ticket_price,
+				$payments_unavailable,
+				$form_id
+			);
+			$response['ticket_options_fieldset_html'] = \FairEvents\Services\SignupFieldsetRenderer::ticket_options_fieldset(
+				$context['ticket_options'],
+				$context['ticket_types'],
+				$context['price_by_type_id'],
+				(int) $context['minimum_activities'],
+				$show_option_prices,
+				$payments_unavailable,
+				$form_id
+			);
+
+			ob_start();
+			do_action( 'fair_events_signup_render_before_submit', $context );
+			$response['before_submit_html'] = ob_get_clean();
+		}
+
+		// Fired regardless of suppress_form — inside the <form> when not
+		// suppressed, inside the client-swapped companion wrapper otherwise,
+		// mirroring render.php's two call sites for these same actions.
+		ob_start();
+		do_action( 'fair_events_signup_render_before_form', $context );
+		$response['before_form_html'] = ob_get_clean();
+
+		ob_start();
+		do_action( 'fair_events_signup_render_after_form', $context );
+		$response['after_form_html'] = ob_get_clean();
+
+		return rest_ensure_response( $response );
 	}
 
 	/**
