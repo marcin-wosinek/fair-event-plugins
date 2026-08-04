@@ -213,35 +213,69 @@ class EventSchema {
 	 */
 	public static function get_jsonld_location( EventDates $event_date, $post_id ) {
 		$neutral = EventLocation::resolve( $event_date, $post_id );
+		$mode    = $neutral['mode'] ?? 'in_person';
+
+		$attendance_mode_map = array(
+			'online' => 'https://schema.org/OnlineEventAttendanceMode',
+			'hybrid' => 'https://schema.org/MixedEventAttendanceMode',
+		);
 
 		return array(
 			'location'        => self::location_to_jsonld( $neutral ),
-			'attendance_mode' => ! empty( $neutral['online'] )
-				? 'https://schema.org/OnlineEventAttendanceMode'
-				: 'https://schema.org/OfflineEventAttendanceMode',
+			'attendance_mode' => $attendance_mode_map[ $mode ] ?? 'https://schema.org/OfflineEventAttendanceMode',
 		);
 	}
 
 	/**
 	 * Map a neutral location shape (EventLocation::resolve()) to a
-	 * Schema.org `Place`/`VirtualLocation` node, guaranteeing a valid,
-	 * never-null result via a site-name backstop.
+	 * Schema.org location node, guaranteeing a valid, never-null result via
+	 * a site-name backstop.
+	 *
+	 * - `in_person` (or empty/null) → a single `Place` node.
+	 * - `online` → a single `VirtualLocation` node.
+	 * - `hybrid` → an array of both a `Place` and a `VirtualLocation` node
+	 *   (search engines require both entries for a hybrid event).
 	 *
 	 * @param array|null $neutral Neutral location shape, or null when nothing resolved.
-	 * @return array Schema.org location node.
+	 * @return array|array[] Schema.org location node, or an array of two nodes for hybrid.
 	 */
 	public static function location_to_jsonld( $neutral ) {
-		if ( empty( $neutral ) ) {
+		$mode = $neutral['mode'] ?? 'in_person';
+
+		if ( 'online' === $mode ) {
 			return array(
-				'@type' => 'Place',
-				'name'  => get_bloginfo( 'name' ),
+				'@type' => 'VirtualLocation',
+				'url'   => $neutral['joining_url'] ?? '',
 			);
 		}
 
-		if ( ! empty( $neutral['online'] ) ) {
+		$place = self::place_jsonld( $neutral );
+
+		if ( 'hybrid' === $mode ) {
 			return array(
-				'@type' => 'VirtualLocation',
-				'url'   => $neutral['url'],
+				$place,
+				array(
+					'@type' => 'VirtualLocation',
+					'url'   => $neutral['joining_url'] ?? '',
+				),
+			);
+		}
+
+		return $place;
+	}
+
+	/**
+	 * Build the Schema.org `Place` node from a neutral location shape's
+	 * physical fields, falling back to the site name when none resolved.
+	 *
+	 * @param array|null $neutral Neutral location shape, or null.
+	 * @return array Schema.org `Place` node.
+	 */
+	private static function place_jsonld( $neutral ) {
+		if ( empty( $neutral['name'] ) && empty( $neutral['address'] ) ) {
+			return array(
+				'@type' => 'Place',
+				'name'  => get_bloginfo( 'name' ),
 			);
 		}
 

@@ -216,6 +216,16 @@ export default function EventContextHeader({
 			</p>
 			<p style={{ margin: '0 0 4px' }}>
 				<span className={linkChip.className}>{linkChip.label}</span>
+				{eventDate.attendance_mode === 'online' && (
+					<span className="fair-events-context-badge">
+						{__('Online event', 'fair-events')}
+					</span>
+				)}
+				{eventDate.attendance_mode === 'hybrid' && (
+					<span className="fair-events-context-badge">
+						{__('Hybrid event', 'fair-events')}
+					</span>
+				)}
 				{isMaster && (
 					<span className="fair-events-context-badge">
 						{sprintf(

@@ -115,6 +115,20 @@ class EventDates {
 	public $link_type = 'post';
 
 	/**
+	 * Attendance mode ('in_person', 'online', 'hybrid')
+	 *
+	 * @var string
+	 */
+	public $attendance_mode = 'in_person';
+
+	/**
+	 * Joining link, published as the virtual-location URL for online/hybrid events.
+	 *
+	 * @var string|null
+	 */
+	public $joining_link;
+
+	/**
 	 * Event capacity
 	 *
 	 * @var int|null
@@ -204,6 +218,8 @@ class EventDates {
 		$event_dates->title             = $result->title ?? null;
 		$event_dates->external_url      = $result->external_url ?? null;
 		$event_dates->link_type         = $result->link_type ?? null;
+		$event_dates->attendance_mode   = $result->attendance_mode ?? null;
+		$event_dates->joining_link      = $result->joining_link ?? null;
 		$event_dates->capacity          = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
 		$event_dates->address           = isset( $result->address ) ? $result->address : null;
 		$event_dates->recurrence_anchor = $result->recurrence_anchor ?? null;
@@ -244,7 +260,7 @@ class EventDates {
 			return;
 		}
 
-		foreach ( array( 'title', 'venue_id', 'address', 'link_type', 'external_url', 'capacity' ) as $field ) {
+		foreach ( array( 'title', 'venue_id', 'address', 'link_type', 'external_url', 'capacity', 'attendance_mode', 'joining_link' ) as $field ) {
 			if ( null === $event_dates->$field ) {
 				$event_dates->$field = $master->$field;
 			}
@@ -765,7 +781,9 @@ class EventDates {
 			COALESCE( ed.address, m.address ) AS address,
 			COALESCE( ed.link_type, m.link_type ) AS link_type,
 			COALESCE( ed.external_url, m.external_url ) AS external_url,
-			COALESCE( ed.capacity, m.capacity ) AS capacity
+			COALESCE( ed.capacity, m.capacity ) AS capacity,
+			COALESCE( ed.attendance_mode, m.attendance_mode ) AS attendance_mode,
+			COALESCE( ed.joining_link, m.joining_link ) AS joining_link
 			FROM %i ed LEFT JOIN %i m ON ed.master_id = m.id';
 	}
 
@@ -851,9 +869,11 @@ class EventDates {
 			'title'           => $data['title'],
 			'external_url'    => $data['external_url'] ?? null,
 			'link_type'       => $data['link_type'],
+			'attendance_mode' => $data['attendance_mode'] ?? null,
+			'joining_link'    => $data['joining_link'] ?? null,
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 
@@ -888,6 +908,8 @@ class EventDates {
 			'title'             => '%s',
 			'external_url'      => '%s',
 			'link_type'         => '%s',
+			'attendance_mode'   => '%s',
+			'joining_link'      => '%s',
 			'capacity'          => '%d',
 			'address'           => '%s',
 			'recurrence_anchor' => '%s',
@@ -1132,13 +1154,15 @@ class EventDates {
 			'title'             => $data['title'] ?? null,
 			'external_url'      => $data['external_url'] ?? null,
 			'link_type'         => $data['link_type'] ?? null,
+			'attendance_mode'   => $data['attendance_mode'] ?? null,
+			'joining_link'      => $data['joining_link'] ?? null,
 			'venue_id'          => $data['venue_id'] ?? null,
 			'address'           => $data['address'] ?? null,
 			'recurrence_anchor' => $data['recurrence_anchor'] ?? null,
 			'status'            => $data['status'] ?? 'active',
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 

@@ -87,6 +87,8 @@ export default function ManageEventApp() {
 	const [endTime, setEndTime] = useState('');
 	const [venueId, setVenueId] = useState('');
 	const [address, setAddress] = useState('');
+	const [attendanceMode, setAttendanceMode] = useState('in_person');
+	const [joiningLink, setJoiningLink] = useState('');
 	const [linkType, setLinkType] = useState('none');
 	const [externalUrl, setExternalUrl] = useState('');
 	const [categories, setCategories] = useState([]);
@@ -190,6 +192,8 @@ export default function ManageEventApp() {
 		setExternalUrl(data.external_url || '');
 		setVenueId(data.venue_id ? String(data.venue_id) : '');
 		setAddress(data.address || '');
+		setAttendanceMode(data.attendance_mode || 'in_person');
+		setJoiningLink(data.joining_link || '');
 		setCategories(data.categories?.map((c) => c.id) || []);
 
 		if (data.start_datetime) {
@@ -216,6 +220,8 @@ export default function ManageEventApp() {
 			endTime,
 			venueId,
 			address,
+			attendanceMode,
+			joiningLink,
 			linkType,
 			externalUrl,
 			categories: [...categories].sort(),
@@ -346,6 +352,12 @@ export default function ManageEventApp() {
 							: null
 						: undefined,
 					address: venuesEnabled ? undefined : address,
+					attendance_mode: attendanceMode,
+					joining_link:
+						attendanceMode === 'online' ||
+						attendanceMode === 'hybrid'
+							? joiningLink
+							: null,
 					link_type: linkType,
 					external_url: linkType === 'external' ? externalUrl : null,
 					categories,
@@ -915,18 +927,59 @@ export default function ManageEventApp() {
 									__experimentalExpandOnFocus
 								/>
 
-								{venuesEnabled ? (
-									<SelectControl
-										label={__('Venue', 'fair-events')}
-										value={venueId}
-										options={venueOptions}
-										onChange={setVenueId}
-									/>
-								) : (
+								{attendanceMode !== 'online' &&
+									(venuesEnabled ? (
+										<SelectControl
+											label={__('Venue', 'fair-events')}
+											value={venueId}
+											options={venueOptions}
+											onChange={setVenueId}
+										/>
+									) : (
+										<TextControl
+											label={__('Address', 'fair-events')}
+											value={address}
+											onChange={setAddress}
+										/>
+									))}
+
+								<SelectControl
+									label={__('Attendance mode', 'fair-events')}
+									value={attendanceMode}
+									options={[
+										{
+											label: __(
+												'In person',
+												'fair-events'
+											),
+											value: 'in_person',
+										},
+										{
+											label: __('Online', 'fair-events'),
+											value: 'online',
+										},
+										{
+											label: __('Hybrid', 'fair-events'),
+											value: 'hybrid',
+										},
+									]}
+									onChange={setAttendanceMode}
+								/>
+
+								{(attendanceMode === 'online' ||
+									attendanceMode === 'hybrid') && (
 									<TextControl
-										label={__('Address', 'fair-events')}
-										value={address}
-										onChange={setAddress}
+										label={__(
+											'Joining link',
+											'fair-events'
+										)}
+										help={__(
+											'Shown publicly. Leave empty to link to the event page instead.',
+											'fair-events'
+										)}
+										type="url"
+										value={joiningLink}
+										onChange={setJoiningLink}
 									/>
 								)}
 							</VStack>

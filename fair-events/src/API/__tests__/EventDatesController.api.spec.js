@@ -914,3 +914,150 @@ test.describe('EventDatesController — title validation', () => {
 		expect(updateRes.status()).toBe(400);
 	});
 });
+
+test.describe('EventDatesController — attendance mode + joining link', () => {
+	let api;
+	let eventDateId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+	});
+
+	test.afterEach(async () => {
+		if (eventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+				{ headers: adminHeaders }
+			);
+			eventDateId = null;
+		}
+	});
+
+	test('a created event date defaults to in_person with no joining link', async () => {
+		const res = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Attendance Mode Default ${Date.now()}`,
+				start_datetime: '2030-01-01 10:00:00',
+				end_datetime: '2030-01-01 12:00:00',
+			},
+		});
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+		eventDateId = body.id;
+
+		expect(body.attendance_mode).toBe('in_person');
+		expect(body.joining_link).toBeNull();
+	});
+
+	test('persists and reads back attendance_mode + joining_link on create', async () => {
+		const res = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Online Event ${Date.now()}`,
+				start_datetime: '2030-01-01 10:00:00',
+				end_datetime: '2030-01-01 12:00:00',
+				attendance_mode: 'online',
+				joining_link: 'https://example.com/meet',
+			},
+		});
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+		eventDateId = body.id;
+
+		expect(body.attendance_mode).toBe('online');
+		expect(body.joining_link).toBe('https://example.com/meet');
+	});
+
+	test('persists and reads back attendance_mode + joining_link on update', async () => {
+		const createRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Hybrid Event Update ${Date.now()}`,
+					start_datetime: '2030-01-01 10:00:00',
+					end_datetime: '2030-01-01 12:00:00',
+				},
+			}
+		);
+		expect(createRes.ok()).toBeTruthy();
+		eventDateId = (await createRes.json()).id;
+
+		const updateRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+			{
+				headers: adminHeaders,
+				data: {
+					attendance_mode: 'hybrid',
+					joining_link: 'https://example.com/hybrid-meet',
+				},
+			}
+		);
+		expect(updateRes.ok()).toBeTruthy();
+		const body = await updateRes.json();
+
+		expect(body.attendance_mode).toBe('hybrid');
+		expect(body.joining_link).toBe('https://example.com/hybrid-meet');
+	});
+
+	test('rejects create with an invalid joining_link URL', async () => {
+		const res = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Invalid Joining Link ${Date.now()}`,
+				start_datetime: '2030-01-01 10:00:00',
+				end_datetime: '2030-01-01 12:00:00',
+				attendance_mode: 'online',
+				joining_link: 'not-a-url',
+			},
+		});
+		expect(res.status()).toBe(400);
+	});
+
+	test('rejects create with an out-of-enum attendance_mode', async () => {
+		const res = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Invalid Attendance Mode ${Date.now()}`,
+				start_datetime: '2030-01-01 10:00:00',
+				end_datetime: '2030-01-01 12:00:00',
+				attendance_mode: 'not-a-mode',
+			},
+		});
+		expect(res.status()).toBe(400);
+	});
+
+	test('a generated occurrence inherits attendance_mode + joining_link from its series master', async () => {
+		const createRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Series Inheritance ${Date.now()}`,
+					start_datetime: '2030-02-03 10:00:00',
+					end_datetime: '2030-02-03 12:00:00',
+					attendance_mode: 'online',
+					joining_link: 'https://example.com/series-meet',
+					rrule: 'FREQ=WEEKLY;COUNT=3',
+				},
+			}
+		);
+		expect(createRes.ok()).toBeTruthy();
+		const master = await createRes.json();
+		eventDateId = master.id;
+
+		expect(master.generated_occurrences?.length).toBeGreaterThan(0);
+		const occurrenceId = master.generated_occurrences[0].id;
+
+		const occurrenceRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${occurrenceId}`,
+			{ headers: adminHeaders }
+		);
+		expect(occurrenceRes.ok()).toBeTruthy();
+		const occurrence = await occurrenceRes.json();
+
+		expect(occurrence.attendance_mode).toBe('online');
+		expect(occurrence.joining_link).toBe('https://example.com/series-meet');
+	});
+});

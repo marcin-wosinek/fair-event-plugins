@@ -146,14 +146,24 @@ class FairEventsApiParser {
 
 		$parsed = array();
 
-		if ( ! empty( $location['online'] ) ) {
-			$parsed['online'] = true;
+		// New shape: explicit mode + joining_url. Older sites on a
+		// pre-attendance-mode version still send the boolean `online`/`url`
+		// pair, treated as an online-only location for interop.
+		$mode = $location['mode'] ?? ( ! empty( $location['online'] ) ? 'online' : 'in_person' );
 
-			if ( ! empty( $location['url'] ) ) {
-				$parsed['url'] = sanitize_url( $location['url'] );
+		if ( 'online' === $mode || 'hybrid' === $mode ) {
+			$parsed['mode'] = $mode;
+
+			$joining_url = $location['joining_url'] ?? ( $location['url'] ?? null );
+			if ( ! empty( $joining_url ) ) {
+				$parsed['joining_url'] = sanitize_url( $joining_url );
 			}
 
-			return $parsed;
+			if ( 'online' === $mode ) {
+				return $parsed;
+			}
+		} else {
+			$parsed['mode'] = 'in_person';
 		}
 
 		if ( ! empty( $location['name'] ) ) {
@@ -169,7 +179,11 @@ class FairEventsApiParser {
 			$parsed['longitude'] = (string) $location['longitude'];
 		}
 
-		return ! empty( $parsed ) ? $parsed : null;
+		// A parsed shape with only `mode` (no physical fields and, for
+		// hybrid, no joining_url either) carries nothing worth keeping.
+		$has_content = array_diff_key( $parsed, array( 'mode' => true ) );
+
+		return ! empty( $has_content ) ? $parsed : null;
 	}
 
 	/**

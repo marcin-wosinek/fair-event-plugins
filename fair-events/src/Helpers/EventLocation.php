@@ -25,12 +25,52 @@ class EventLocation {
 	 * EventSchema::get_jsonld_location() minus the site-name backstop —
 	 * callers here must be able to omit the field entirely.
 	 *
+	 * The physical side (name/address/latitude/longitude) is resolved
+	 * independently of the attendance mode, then the mode decides which
+	 * parts of the result are kept: `in_person` returns physical fields
+	 * only, `online` returns the joining URL only, `hybrid` returns both.
+	 *
 	 * @param EventDates $event_date Event date object.
 	 * @param int|null   $post_id    Linked post ID, or null for standalone events.
-	 * @return array|null Neutral location shape (keys: name, address, latitude,
-	 *                     longitude, online, url — all optional), or null when nothing resolves.
+	 * @return array|null Neutral location shape (keys: mode, name, address,
+	 *                     latitude, longitude, joining_url — all but `mode`
+	 *                     optional), or null when nothing resolves.
 	 */
 	public static function resolve( EventDates $event_date, $post_id ) {
+		$mode     = $event_date->attendance_mode ?? 'in_person';
+		$physical = self::resolve_physical( $event_date, $post_id );
+
+		$location = array( 'mode' => $mode );
+
+		if ( 'in_person' === $mode || 'hybrid' === $mode ) {
+			if ( null === $physical ) {
+				if ( 'in_person' === $mode ) {
+					return null;
+				}
+			} else {
+				$location = array_merge( $location, $physical );
+			}
+		}
+
+		if ( 'online' === $mode || 'hybrid' === $mode ) {
+			$location['joining_url'] = ! empty( $event_date->joining_link )
+				? $event_date->joining_link
+				: $event_date->get_display_url();
+		}
+
+		return $location;
+	}
+
+	/**
+	 * Resolve the physical side of a location (venue → free-text address →
+	 * event_location meta), independent of attendance mode.
+	 *
+	 * @param EventDates $event_date Event date object.
+	 * @param int|null   $post_id    Linked post ID, or null for standalone events.
+	 * @return array|null Physical location shape (keys: name, address,
+	 *                     latitude, longitude), or null when nothing resolves.
+	 */
+	private static function resolve_physical( EventDates $event_date, $post_id ) {
 		// 1. Venue.
 		if ( ! empty( $event_date->venue_id )
 			&& class_exists( \FairEventsExperimental\Models\Venue::class ) ) {
@@ -60,14 +100,6 @@ class EventLocation {
 		$meta_location = $post_id ? get_post_meta( $post_id, 'event_location', true ) : '';
 		if ( ! empty( $meta_location ) ) {
 			return array( 'address' => $meta_location );
-		}
-
-		// 4. Online event: no physical location, but an external link.
-		if ( 'external' === $event_date->link_type && ! empty( $event_date->external_url ) ) {
-			return array(
-				'online' => true,
-				'url'    => $event_date->external_url,
-			);
 		}
 
 		return null;

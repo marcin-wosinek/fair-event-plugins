@@ -150,4 +150,85 @@ class CalendarFeedControllerTest extends TestCase {
 		$this->assertSame( '2026-06-15 18:00:00', $events[0]['start'] );
 		$this->assertSame( '2026-06-15 19:00:00', $events[0]['end'] );
 	}
+
+	/**
+	 * Call the private build_location_line() with a neutral location shape.
+	 *
+	 * @param array|null $location Neutral location shape.
+	 * @return string LOCATION text.
+	 */
+	private function build_location_line( $location ) {
+		$controller = new CalendarFeedController();
+		$method     = new \ReflectionMethod( CalendarFeedController::class, 'build_location_line' );
+		$method->setAccessible( true );
+
+		return $method->invoke( $controller, $location );
+	}
+
+	/**
+	 * In-person shows the physical name/address text.
+	 *
+	 * @return void
+	 */
+	public function test_location_line_in_person() {
+		$line = $this->build_location_line(
+			array(
+				'mode'    => 'in_person',
+				'name'    => 'Venue Name',
+				'address' => '123 Main St',
+			)
+		);
+
+		$this->assertSame( 'Venue Name, 123 Main St', $line );
+	}
+
+	/**
+	 * Online uses the joining URL as the whole LOCATION line.
+	 *
+	 * @return void
+	 */
+	public function test_location_line_online() {
+		$line = $this->build_location_line(
+			array(
+				'mode'        => 'online',
+				'joining_url' => 'https://example.com/meet',
+			)
+		);
+
+		$this->assertSame( 'https://example.com/meet', $line );
+	}
+
+	/**
+	 * Hybrid appends the joining URL to the physical location text.
+	 *
+	 * @return void
+	 */
+	public function test_location_line_hybrid_appends_joining_url() {
+		$line = $this->build_location_line(
+			array(
+				'mode'        => 'hybrid',
+				'name'        => 'Venue Name',
+				'joining_url' => 'https://example.com/meet',
+			)
+		);
+
+		$this->assertSame( 'Venue Name — https://example.com/meet', $line );
+	}
+
+	/**
+	 * Hybrid with no physical fields shows only the joining URL, no leading
+	 * separator.
+	 *
+	 * @return void
+	 */
+	public function test_location_line_hybrid_with_no_physical() {
+		$line = $this->build_location_line(
+			array(
+				'mode'        => 'hybrid',
+				'joining_url' => 'https://example.com/meet',
+			)
+		);
+
+		$this->assertSame( 'https://example.com/meet', $line );
+	}
 }

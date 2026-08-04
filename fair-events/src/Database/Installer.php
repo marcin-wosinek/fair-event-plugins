@@ -297,6 +297,11 @@ class Installer {
 			self::migrate_to_3_27_0();
 		}
 
+		// Run migration if upgrading from pre-3.28.0 (add attendance_mode/joining_link).
+		if ( version_compare( $current_version, '3.28.0', '<' ) ) {
+			self::migrate_to_3_28_0();
+		}
+
 		// Update database version
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -475,6 +480,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.27.0', '<' ) ) {
 				self::migrate_to_3_27_0();
+			}
+
+			if ( version_compare( $current_version, '3.28.0', '<' ) ) {
+				self::migrate_to_3_28_0();
 			}
 
 			// Install/update tables
@@ -2103,6 +2112,44 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i DROP COLUMN signup_price',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.28.0 - Add explicit attendance_mode/joining_link.
+	 *
+	 * Replaces the inferred "external link + no location = online" heuristic
+	 * with an explicit per-event-date attendance mode. The column is
+	 * nullable, NULL-inherit, exactly like `link_type`/`venue_id`: existing
+	 * rows (and generated occurrences that haven't overridden it) come back
+	 * NULL and are treated as `in_person` by the application layer
+	 * (EventLocation::resolve()), including rows the old inference currently
+	 * reports as online — organizers must re-select the mode for those after
+	 * upgrading. No backfill UPDATE (see #1306).
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_28_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		if ( ! self::column_exists( $table_name, 'attendance_mode' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN attendance_mode VARCHAR(20) DEFAULT NULL AFTER link_type',
+					$table_name
+				)
+			);
+		}
+
+		if ( ! self::column_exists( $table_name, 'joining_link' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN joining_link VARCHAR(500) DEFAULT NULL AFTER attendance_mode',
 					$table_name
 				)
 			);
