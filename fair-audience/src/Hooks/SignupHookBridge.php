@@ -39,7 +39,7 @@ class SignupHookBridge {
 	 * @return void
 	 */
 	public static function init() {
-		add_filter( 'fair_events_signup_render_context', array( static::class, 'enrich_render_context' ), 10, 1 );
+		add_filter( 'fair_events_signup_viewer_context', array( static::class, 'enrich_render_context' ), 10, 1 );
 		add_filter( 'fair_events_signup_precheck_error', array( static::class, 'filter_precheck_error' ), 10, 4 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_signed_up_card' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_not_you' ), 10, 1 );
@@ -56,17 +56,26 @@ class SignupHookBridge {
 	}
 
 	/**
-	 * Inject the signed-in/known viewer's name and email into the base
-	 * form's pre-fill so returning participants don't retype them, filter out
+	 * Inject the signed-in/known viewer's name and email into the form's
+	 * pre-fill so returning participants don't retype them, filter out
 	 * group-restricted ticket types the viewer can't buy, and re-resolve
 	 * prices through the viewer's group discounts.
 	 *
-	 * @param array $context Render context from fair-events' base render.
+	 * Hooked on fair_events_signup_viewer_context — resolved at request time
+	 * by GetTicketsController::get_viewer_context(), never by the base
+	 * render.php a full-page cache stores and replays (#1300).
+	 *
+	 * @param array $context Context from fair-events' viewer-context endpoint.
 	 * @return array Filtered context.
 	 */
 	public static function enrich_render_context( $context ) {
 		$participant    = GroupSignupPricing::resolve_viewer_participant();
 		$participant_id = $participant ? (int) $participant->id : null;
+
+		// Signals the endpoint that a viewer was actually recognised, so it
+		// renders the personalized fragments — true whenever prefill applies,
+		// even when nothing else about ticket types/pricing changed.
+		$context['viewer_resolved'] = (bool) $participant;
 
 		if ( $participant ) {
 			$context['prefill_name']  = trim( $participant->name . ' ' . $participant->surname );
@@ -255,7 +264,8 @@ class SignupHookBridge {
 	 * enrich_render_context()'s suppress_form). Hooked on
 	 * fair_events_signup_render_before_form.
 	 *
-	 * @param array $context Render context, see fair_events_signup_render_context.
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
 	 * @return void
 	 */
 	public static function render_signed_up_card( $context ) {
@@ -354,7 +364,8 @@ class SignupHookBridge {
 	 * existing DELETE /fair-audience/v1/session route by fair-events-shared's
 	 * wireNotYouButton(), the same helper the legacy block uses.
 	 *
-	 * @param array $context Render context, see fair_events_signup_render_context.
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
 	 * @return void
 	 */
 	public static function render_not_you( $context ) {
@@ -375,7 +386,8 @@ class SignupHookBridge {
 	 * viewer's best-matching group discount rule was stashed onto the context
 	 * by enrich_render_context().
 	 *
-	 * @param array $context Render context, see fair_events_signup_render_context.
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
 	 * @return void
 	 */
 	public static function render_discount_note( $context ) {
@@ -491,7 +503,8 @@ class SignupHookBridge {
 	 * companion plugin owns is read from a data attribute so the base plugin
 	 * never hardcodes it.
 	 *
-	 * @param array $context Render context, see fair_events_signup_render_context.
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
 	 * @return void
 	 */
 	public static function render_add_activities( $context ) {
