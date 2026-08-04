@@ -339,10 +339,10 @@ if ( ! empty( $ticket_options ) ) {
 	}
 }
 
-// Single-occurrence dropdown: offered whenever the series has more than one
+// Single-occurrence dropdown: offered whenever the series has at least one
 // upcoming occurrence, regardless of which ticket scopes are configured.
 // frontend.js shows/hides it based on the selected ticket type's scope.
-$has_occurrence_dropdown  = count( $occurrences_for_picker ) > 1;
+$has_occurrence_dropdown  = ! empty( $occurrences_for_picker );
 $default_occurrence_index = 0;
 if ( $has_occurrence_dropdown ) {
 	foreach ( $occurrences_for_picker as $occ_index => $occ_row ) {

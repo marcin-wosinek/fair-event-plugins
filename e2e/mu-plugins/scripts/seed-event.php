@@ -21,7 +21,10 @@
  *                        {"price":N} sets the single_instance price). Override
  *                        {"omitMulti":true} to skip the multiple_instances
  *                        type (single_instance + whole_series only), the
- *                        occurrence-picker regression scenario.
+ *                        occurrence-picker regression scenario. Override
+ *                        {"seriesCount":N} to change the number of occurrences
+ *                        (default 3); {"seriesCount":1} seeds a series with
+ *                        exactly one upcoming occurrence.
  *   audience-ticket-scopes  like three-ticket-scopes, but always renders the
  *                        dormant fair-audience/event-signup block regardless
  *                        of any {"block":…} override — for specs proving old
@@ -75,6 +78,7 @@ $price              = isset( $overrides['price'] ) ? (float) $overrides['price']
 $option_names       = isset( $overrides['options'] ) ? (array) $overrides['options'] : array( 'dinner', 'tshirt' );
 $option_price       = isset( $overrides['optionPrice'] ) ? (float) $overrides['optionPrice'] : 10.00;
 $minimum_instances  = isset( $overrides['minimumInstances'] ) ? (int) $overrides['minimumInstances'] : 2;
+$series_count       = isset( $overrides['seriesCount'] ) ? (int) $overrides['seriesCount'] : 3;
 $minimum_activities = isset( $overrides['minimumActivities'] ) ? (int) $overrides['minimumActivities'] : 0;
 $omit_multi         = isset( $overrides['omitMulti'] ) && $overrides['omitMulti'];
 $address            = isset( $overrides['address'] ) ? (string) $overrides['address'] : 'Calle Mayor 1, Madrid';
@@ -239,8 +243,10 @@ switch ( $flavour ) {
 	case 'three-ticket-scopes':
 		$price = isset( $overrides['price'] ) ? (float) $overrides['price'] : 15.00;
 		// Turns the single occurrence already created above into the series
-		// master (same event_date_id/sale_period_id) plus 2 generated siblings.
-		$occurrence_ids = fair_e2e_add_series( $event_id, 3 );
+		// master (same event_date_id/sale_period_id) plus generated siblings
+		// (default 2, for 3 total; override {"seriesCount":1} for the
+		// last-occurrence-remaining scenario).
+		$occurrence_ids = fair_e2e_add_series( $event_id, $series_count );
 		$single_type_id = fair_e2e_add_ticket_type( $event_date_id, 'Single Session', null );
 		$whole_type_id  = fair_e2e_add_whole_series_ticket_type( $event_date_id, 'Full Series Pass' );
 		fair_e2e_add_price( $single_type_id, $sale_period_id, $price, null );

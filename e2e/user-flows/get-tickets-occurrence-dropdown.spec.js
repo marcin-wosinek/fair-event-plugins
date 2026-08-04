@@ -130,6 +130,55 @@ test.describe('Occurrence dropdown for single-occurrence tickets (fair-events al
 		await expect(instancePicker).toBeHidden();
 	});
 
+	test('single remaining occurrence: dropdown still shows with one pre-selected option', async ({
+		page,
+		seedEvent,
+	}) => {
+		const event = seedEvent('three-ticket-scopes', {
+			price: 0,
+			seriesCount: 1,
+		});
+		const [onlyOccurrenceId] = event.occurrenceIds;
+
+		await page.goto(event.pageUrl);
+
+		const form = page.locator('.fair-events-get-tickets-form');
+		await expect(form).toBeVisible();
+
+		// Single-session ticket is the first enabled type, preselected by default.
+		const ticketRadio = form.locator(
+			`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
+		);
+		await expect(ticketRadio).toBeChecked();
+
+		const dropdown = form.locator('.fair-events-occurrence-picker');
+		await expect(dropdown).toBeVisible();
+
+		const select = dropdown.locator('select[name="event_date_id_single"]');
+		await expect(select.locator('option')).toHaveCount(1);
+		await expect(select).toHaveValue(String(onlyOccurrenceId));
+
+		const stamp = Date.now();
+		const email = `occurrence-dropdown-single.${stamp}@example.test`;
+		await form
+			.locator('input[name="name"]')
+			.fill(`E2E Occurrence Dropdown Single ${stamp}`);
+		await form.locator('input[name="email"]').fill(email);
+
+		await form.locator('button[type="submit"]').click();
+		await expect(
+			page.getByText('You have successfully registered', { exact: false })
+		).toBeVisible({ timeout: 15000 });
+
+		const chosenState = runScript(
+			'get-tickets-state.php',
+			'E2E_GT_STATE',
+			String(onlyOccurrenceId)
+		);
+		expect(chosenState.signups).toHaveLength(1);
+		expect(chosenState.signups[0].email).toBe(email);
+	});
+
 	test('non-recurring event renders no occurrence dropdown', async ({
 		page,
 		seedEvent,
