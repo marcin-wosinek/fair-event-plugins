@@ -22,7 +22,13 @@ registerBlockType('fair-audience/fair-form-url', {
 		],
 	},
 	edit: ({ attributes, setAttributes }) => {
-		const { questionText, questionKey, required, placeholder } = attributes;
+		const {
+			questionText,
+			questionKey,
+			required,
+			placeholder,
+			extractEventDetails,
+		} = attributes;
 
 		const onQuestionTextChange = (value) => {
 			const updates = { questionText: value };
@@ -66,6 +72,20 @@ registerBlockType('fair-audience/fair-form-url', {
 							value={placeholder}
 							onChange={(value) =>
 								setAttributes({ placeholder: value })
+							}
+						/>
+						<ToggleControl
+							label={__(
+								'Read event details from the linked page',
+								'fair-audience'
+							)}
+							help={__(
+								'When submitted, the link is fetched and any event details it publishes (title, dates, location) are captured with the answer.',
+								'fair-audience'
+							)}
+							checked={extractEventDetails}
+							onChange={(value) =>
+								setAttributes({ extractEventDetails: value })
 							}
 						/>
 					</PanelBody>

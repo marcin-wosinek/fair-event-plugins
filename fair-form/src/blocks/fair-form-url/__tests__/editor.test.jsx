@@ -65,6 +65,7 @@ describe('Fair Form URL Question Edit', () => {
 		questionKey: '',
 		required: false,
 		placeholder: '',
+		extractEventDetails: false,
 	};
 
 	const renderEdit = (attributes = {}, setAttributes = () => {}) =>
@@ -117,6 +118,29 @@ describe('Fair Form URL Question Edit', () => {
 		expect(screen.getByLabelText('Required')).toBeInTheDocument();
 		expect(screen.getByLabelText('Placeholder')).toBeInTheDocument();
 		expect(screen.getByLabelText('Question Key')).toBeInTheDocument();
+	});
+
+	it('renders the "Read event details from the linked page" toggle, off by default', () => {
+		renderEdit();
+
+		const toggle = screen.getByLabelText(
+			'Read event details from the linked page'
+		);
+		expect(toggle).toBeInTheDocument();
+		expect(toggle).not.toBeChecked();
+	});
+
+	it('toggles the extractEventDetails attribute', () => {
+		const setAttributes = jest.fn();
+		renderEdit({}, setAttributes);
+
+		fireEvent.click(
+			screen.getByLabelText('Read event details from the linked page')
+		);
+
+		expect(setAttributes).toHaveBeenCalledWith({
+			extractEventDetails: true,
+		});
 	});
 
 	it('toggles the required attribute', () => {

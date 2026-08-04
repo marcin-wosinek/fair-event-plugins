@@ -29,6 +29,10 @@ if ( ! defined( 'YEAR_IN_SECONDS' ) ) {
 	define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
 }
 
+if ( ! defined( 'MB_IN_BYTES' ) ) {
+	define( 'MB_IN_BYTES', 1048576 );
+}
+
 // Minimal WordPress function stubs so pure settings logic can be unit tested
 // without a full WP bootstrap. Tests seed values via $GLOBALS['_fair_test_options'].
 if ( ! function_exists( 'sanitize_key' ) ) {
@@ -402,6 +406,36 @@ if ( ! function_exists( 'wp_remote_get' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_safe_remote_get' ) ) {
+	/**
+	 * Stub of WordPress wp_safe_remote_get() — delegates to the wp_remote_get()
+	 * stub above (this bootstrap has no notion of "unsafe" URL rejection;
+	 * seed $GLOBALS['_fair_test_remote_responses'][ $url ] with a WP_Error to
+	 * simulate that outcome).
+	 *
+	 * @param string $url  URL to fetch.
+	 * @param array  $args Request args (ignored by this stub).
+	 * @return array|WP_Error Raw response array, or a seeded WP_Error.
+	 */
+	function wp_safe_remote_get( $url, $args = array() ) {
+		return wp_remote_get( $url, $args );
+	}
+}
+
+if ( ! function_exists( 'wp_remote_retrieve_header' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_retrieve_header() backed by a response
+	 * array's 'headers' key (a plain associative array in test fixtures).
+	 *
+	 * @param array  $response Raw response array from wp_remote_get().
+	 * @param string $header   Header name to read.
+	 * @return string Header value, or empty string if absent.
+	 */
+	function wp_remote_retrieve_header( $response, $header ) {
+		return isset( $response['headers'][ $header ] ) ? $response['headers'][ $header ] : '';
+	}
+}
+
 if ( ! function_exists( 'is_wp_error' ) ) {
 	/**
 	 * Stub of WordPress is_wp_error() — no WP_Error stub class exists here, so
@@ -592,6 +626,7 @@ if ( ! function_exists( 'wp_mail' ) ) {
 }
 
 require_once __DIR__ . '/wp-class-stubs.php';
+require_once __DIR__ . '/wp-error-stub.php';
 require_once __DIR__ . '/Fair_Test_WPDB.php';
 
 // Global $wpdb double so model calls with a "not found" id (e.g. 0) resolve

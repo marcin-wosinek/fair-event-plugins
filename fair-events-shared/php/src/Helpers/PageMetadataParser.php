@@ -1,14 +1,14 @@
 <?php
 /**
- * Page Metadata Parser Helper for Fair Events
+ * Page Metadata Parser Helper for Fair Event Plugins
  *
  * Extracts event-ish metadata from an arbitrary HTML page: schema.org Event
  * (JSON-LD) first, falling back field-by-field to Open Graph, then <title>.
  *
- * @package FairEvents
+ * @package FairEventsShared
  */
 
-namespace FairEvents\Helpers;
+namespace FairEventsShared\Helpers;
 
 defined( 'WPINC' ) || die;
 
@@ -220,7 +220,7 @@ class PageMetadataParser {
 			);
 		}
 
-		$local = DateHelper::iso8601_to_local( $value );
+		$local = self::iso8601_to_local( $value );
 
 		if ( ! $local ) {
 			return null;
@@ -230,6 +230,24 @@ class PageMetadataParser {
 			'datetime' => $local,
 			'all_day'  => false,
 		);
+	}
+
+	/**
+	 * Convert an ISO 8601 date/datetime string to site-local 'Y-m-d H:i:s'.
+	 *
+	 * @param string $iso8601 ISO 8601 date/datetime string.
+	 * @return string|null Site-local 'Y-m-d H:i:s', or null if unparsable.
+	 */
+	private static function iso8601_to_local( $iso8601 ) {
+		try {
+			$dt = new \DateTime( $iso8601 );
+		} catch ( \Exception $e ) {
+			return null;
+		}
+
+		$dt->setTimezone( wp_timezone() );
+
+		return $dt->format( 'Y-m-d H:i:s' );
 	}
 
 	/**

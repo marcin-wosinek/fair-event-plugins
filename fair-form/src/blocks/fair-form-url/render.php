@@ -14,10 +14,11 @@
 
 defined( 'WPINC' ) || die;
 
-$question_text = $attributes['questionText'] ?? '';
-$question_key  = $attributes['questionKey'] ?? '';
-$required      = ! empty( $attributes['required'] );
-$placeholder   = $attributes['placeholder'] ?? '';
+$question_text         = $attributes['questionText'] ?? '';
+$question_key          = $attributes['questionKey'] ?? '';
+$required              = ! empty( $attributes['required'] );
+$placeholder           = $attributes['placeholder'] ?? '';
+$extract_event_details = ! empty( $attributes['extractEventDetails'] );
 
 // Skip rendering if no question text is set.
 if ( empty( $question_text ) ) {
@@ -29,12 +30,13 @@ $input_id = 'fair-form-q-' . sanitize_title( $question_key ) . '-' . wp_unique_i
 
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'class'                   => 'fair-form-question fair-form-question-url',
-		'data-fair-form-question' => '',
-		'data-question-key'       => esc_attr( $question_key ),
-		'data-question-text'      => esc_attr( $question_text ),
-		'data-question-type'      => 'url',
-		'data-required'           => $required ? '1' : '0',
+		'class'                      => 'fair-form-question fair-form-question-url',
+		'data-fair-form-question'    => '',
+		'data-question-key'          => esc_attr( $question_key ),
+		'data-question-text'         => esc_attr( $question_text ),
+		'data-question-type'         => 'url',
+		'data-required'              => $required ? '1' : '0',
+		'data-extract-event-details' => $extract_event_details ? '1' : '0',
 	)
 );
 ?>

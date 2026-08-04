@@ -268,13 +268,27 @@ export default function QuestionnaireResponses() {
 						return value || '';
 					}
 					return (
-						<a
-							href={value}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							{value}
-						</a>
+						<span>
+							<a
+								href={value}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{value}
+							</a>
+							{answer.event_details && (
+								<span
+									className="fair-form-questionnaire-responses__event-details-indicator"
+									title={__(
+										'Event details were read from the linked page.',
+										'fair-form'
+									)}
+								>
+									{' '}
+									★
+								</span>
+							)}
+						</span>
 					);
 				},
 			}),

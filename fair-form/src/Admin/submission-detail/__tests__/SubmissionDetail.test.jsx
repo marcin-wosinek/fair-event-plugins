@@ -33,6 +33,26 @@ const SUBMISSION = {
 	],
 };
 
+const SUBMISSION_WITH_EVENT_DETAILS = {
+	...SUBMISSION,
+	answers: [
+		{
+			question_key: 'website',
+			question_text: 'Event page',
+			question_type: 'url',
+			answer_value: 'https://example.com/my-event',
+			event_details: {
+				title: 'Community Picnic',
+				start_datetime: '2026-09-12 18:00:00',
+				end_datetime: '2026-09-12 20:00:00',
+				all_day: false,
+				location: 'Central Park',
+				source: 'schema',
+			},
+		},
+	],
+};
+
 beforeEach(() => {
 	window.history.pushState(
 		{},
@@ -62,5 +82,31 @@ describe('SubmissionDetail', () => {
 			screen.getByRole('columnheader', { name: 'Question' })
 		).toBeInTheDocument();
 		expect(screen.getByText('Submitted by')).toBeInTheDocument();
+	});
+
+	it('renders captured event details beneath a url answer, marked as read from the page', async () => {
+		apiFetch.mockResolvedValue(SUBMISSION_WITH_EVENT_DETAILS);
+
+		render(<SubmissionDetail />);
+
+		await screen.findByText('https://example.com/my-event');
+
+		expect(
+			screen.getByText('Read from the linked page:')
+		).toBeInTheDocument();
+		expect(screen.getByText('Community Picnic')).toBeInTheDocument();
+		expect(screen.getByText('Central Park')).toBeInTheDocument();
+	});
+
+	it('renders a url answer with no captured details exactly as before', async () => {
+		const { container } = render(<SubmissionDetail />);
+
+		await screen.findByText('Google');
+
+		expect(
+			container.querySelector(
+				'.fair-form-submission-detail__event-details'
+			)
+		).not.toBeInTheDocument();
 	});
 });
