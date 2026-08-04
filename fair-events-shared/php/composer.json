@@ -1,7 +1,7 @@
 {
 	"name": "fair-events/shared",
 	"description": "Shared PHP utilities for Fair Event plugins",
-	"version": "0.2.4",
+	"version": "0.2.5",
 	"type": "library",
 	"license": "GPL-3.0-or-later",
 	"autoload": {

@@ -28,6 +28,23 @@ class SignupConfirmationEmail {
 	}
 
 	/**
+	 * Wrap the event title for its inline mention in the confirmation
+	 * sentence — a link when an event URL is available, otherwise the
+	 * existing bold-only markup.
+	 *
+	 * @param string $event_title_html Pre-escaped event title.
+	 * @param string $event_url        Pre-escaped event URL. Pass '' to omit the link.
+	 * @return string HTML fragment: `<a href="…">…</a>` or `<strong>…</strong>`.
+	 */
+	public static function linked_event_title( string $event_title_html, string $event_url = '' ): string {
+		if ( '' === $event_url ) {
+			return '<strong>' . $event_title_html . '</strong>';
+		}
+
+		return '<a href="' . $event_url . '" style="color:#0073aa; font-weight:bold; text-decoration:underline;">' . $event_title_html . '</a>';
+	}
+
+	/**
 	 * Build the full HTML email body.
 	 *
 	 * `$args` keys — data: event_title, participant_name, site_name,

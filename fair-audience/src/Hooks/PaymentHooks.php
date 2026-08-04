@@ -736,7 +736,7 @@ class PaymentHooks {
 		$added_names = array_map( static fn( $row ) => $row['name'], $option_rows );
 
 		$email_service = new EmailService();
-		$email_service->send_activities_added_confirmation( $participant, $event, $transaction, $added_names );
+		$email_service->send_activities_added_confirmation( $participant, $event, $transaction, $added_names, (int) $event_participant->event_date_id );
 	}
 
 	/**

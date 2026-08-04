@@ -73,6 +73,20 @@ class EmailServiceTest extends TestCase {
 	}
 
 	/**
+	 * With no event_date_id, EventDates::get_by_id() finds no row, so no event
+	 * URL is available and the inline event-name mention stays bold-only.
+	 */
+	public function test_free_signup_bolds_event_name_without_link(): void {
+		$email_service = new EmailService();
+
+		$email_service->send_signup_confirmation( 42, 0, 'Jane Doe', 'jane@example.test' );
+
+		$sent = $GLOBALS['_fair_test_sent_emails'][0];
+		$this->assertStringContainsString( '<strong>the event</strong>', $sent['message'] );
+		$this->assertStringNotContainsString( '<a href', $sent['message'] );
+	}
+
+	/**
 	 * The email is sent as HTML (wp_mail_content_type filtered to text/html).
 	 */
 	public function test_sends_as_html(): void {
@@ -114,5 +128,20 @@ class EmailServiceTest extends TestCase {
 
 		$sent = $GLOBALS['_fair_test_sent_emails'][0];
 		$this->assertStringContainsString( 'Payment', $sent['subject'] );
+	}
+
+	/**
+	 * With no event_date_id, the action button still falls back to the home
+	 * URL, but the inline event-name mention in the sentence must not link
+	 * there too — it stays bold-only. Only the action button's href appears.
+	 */
+	public function test_payment_failed_inline_event_name_not_linked_on_fallback(): void {
+		$email_service = new EmailService();
+
+		$email_service->send_signup_payment_failed( 42, 0, 'Jane Doe', 'jane@example.test' );
+
+		$sent = $GLOBALS['_fair_test_sent_emails'][0];
+		$this->assertStringContainsString( '<strong>the event</strong>', $sent['message'] );
+		$this->assertSame( 1, substr_count( $sent['message'], '<a href' ) );
 	}
 }

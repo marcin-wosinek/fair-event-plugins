@@ -172,4 +172,26 @@ class SignupConfirmationEmailTest extends TestCase {
 		// Footer repeats the site name in its own <p>.
 		$this->assertSame( 2, substr_count( $html, 'Test Site' ) );
 	}
+
+	/**
+	 * The linked-event-title helper falls back to plain bold markup when no
+	 * URL is given.
+	 */
+	public function test_linked_event_title_bolds_when_url_empty(): void {
+		$this->assertSame(
+			'<strong>Test Event</strong>',
+			SignupConfirmationEmail::linked_event_title( 'Test Event' )
+		);
+	}
+
+	/**
+	 * The linked-event-title helper wraps the title in a styled link when a
+	 * URL is given.
+	 */
+	public function test_linked_event_title_links_when_url_present(): void {
+		$this->assertSame(
+			'<a href="https://example.com/event" style="color:#0073aa; font-weight:bold; text-decoration:underline;">Test Event</a>',
+			SignupConfirmationEmail::linked_event_title( 'Test Event', 'https://example.com/event' )
+		);
+	}
 }

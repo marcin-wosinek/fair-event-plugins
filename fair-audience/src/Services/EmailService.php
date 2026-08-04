@@ -2260,9 +2260,12 @@ class EmailService {
 			__( 'Signup confirmed — %s', 'fair-audience' );
 
 		$event_date_display = '';
+		$event_url          = '';
 		if ( $event_date_id > 0 && class_exists( \FairEvents\Models\EventDates::class ) ) {
 			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
 			if ( $event_date ) {
+				$event_url = (string) $event_date->get_display_url();
+
 				$timestamp = strtotime( $event_date->start_datetime );
 				if ( false !== $timestamp ) {
 					$event_date_display = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
@@ -2306,7 +2309,7 @@ class EmailService {
 				? esc_html__( 'Your signup for %s has been confirmed and your payment has been received.', 'fair-audience' )
 				/* translators: %s: event title */
 				: esc_html__( 'Your signup for %s has been confirmed.', 'fair-audience' ),
-			'<strong>' . esc_html( $event_title ) . '</strong>'
+			SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
 		);
 
 		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
@@ -2347,15 +2350,25 @@ class EmailService {
 	 * @param \WP_Post|null $event             Event post object (nullable).
 	 * @param object|null   $transaction       Transaction row (null for free adds).
 	 * @param array         $added_option_names Names of the activities that were added.
+	 * @param int           $event_date_id     Event date ID — used only to link the event
+	 *                                          name in the body sentence. Pass 0 to omit the link.
 	 * @return bool Success.
 	 */
-	public function send_activities_added_confirmation( Participant $participant, $event, $transaction = null, $added_option_names = array() ): bool {
+	public function send_activities_added_confirmation( Participant $participant, $event, $transaction = null, $added_option_names = array(), int $event_date_id = 0 ): bool {
 		if ( ! $this->has_valid_email( $participant ) ) {
 			return false;
 		}
 
 		$site_name   = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$event_title = $event ? $event->post_title : __( 'Event', 'fair-audience' );
+
+		$event_url = '';
+		if ( $event_date_id > 0 && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date ) {
+				$event_url = (string) $event_date->get_display_url();
+			}
+		}
 
 		$subject = sprintf(
 			/* translators: %s: event title */
@@ -2421,7 +2434,7 @@ class EmailService {
 								' . sprintf(
 									/* translators: %s: event title */
 								esc_html__( 'The following activities have been added to your signup for %s.', 'fair-audience' ),
-								'<strong>' . esc_html( $event_title ) . '</strong>'
+								SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
 							) . '
 							</p>
 
@@ -2482,6 +2495,14 @@ class EmailService {
 
 		$resume_url = ParticipantToken::get_url( (int) $participant->id, $event_date_id, $event_id );
 
+		$event_url = '';
+		if ( $event_date_id > 0 && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date ) {
+				$event_url = (string) $event_date->get_display_url();
+			}
+		}
+
 		$subject = sprintf(
 			/* translators: %s: event title */
 			__( 'Payment didn’t go through — %s', 'fair-audience' ),
@@ -2533,7 +2554,7 @@ class EmailService {
 								' . sprintf(
 									/* translators: %s: event title */
 								esc_html__( 'Your payment for %s didn’t go through. Your spot is still held for a short while — pick up where you left off using the link below.', 'fair-audience' ),
-								'<strong>' . esc_html( $event_title ) . '</strong>'
+								SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
 							) . '
 							</p>
 
@@ -2909,6 +2930,14 @@ class EmailService {
 			$event_title = $site_name;
 		}
 
+		$event_url = '';
+		if ( $event_date_id > 0 && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date ) {
+				$event_url = (string) $event_date->get_display_url();
+			}
+		}
+
 		// Token encodes (participant_id, event_date_id) so the unsubscribe is
 		// scoped to this single event. The query var triggers a
 		// template_redirect handler that runs the same logic as the DELETE
@@ -2956,7 +2985,7 @@ class EmailService {
 							<p style="margin: 0 0 20px 0;">' . sprintf(
 								/* translators: %s: event title */
 								esc_html__( 'Thanks for registering your interest in %s. We will let you know when there are updates.', 'fair-audience' ),
-								'<strong>' . esc_html( $event_title ) . '</strong>'
+								SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
 							) . '</p>
 							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">' . esc_html__( "If you didn't register your interest, you can safely ignore this email.", 'fair-audience' ) . '</p>
 						</td>
@@ -2997,6 +3026,7 @@ class EmailService {
 
 		$site_name   = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$event_title = $event_id ? get_the_title( $event_id ) : '';
+		$event_url   = $event_id ? (string) get_permalink( $event_id ) : '';
 
 		$manage_subscription_url = ManageSubscriptionToken::get_url( (int) $participant->id );
 
@@ -3013,7 +3043,7 @@ class EmailService {
 				/* translators: 1: site name, 2: event title */
 				esc_html__( 'You\'ve been added to the %1$s mailing list following the consent you gave at %2$s. We\'ll keep you posted about upcoming events and news.', 'fair-audience' ),
 				'<strong>' . esc_html( $site_name ) . '</strong>',
-				'<strong>' . esc_html( $event_title ) . '</strong>'
+				SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
 			);
 		} else {
 			$intro = sprintf(
