@@ -17,6 +17,8 @@
 defined( 'WPINC' ) || die;
 
 $submit_button_text = $attributes['submitButtonText'] ?? __( 'Get Tickets', 'fair-events' );
+$show_ticket_price  = (bool) ( $attributes['showTicketPrice'] ?? true );
+$show_option_prices = (bool) ( $attributes['showOptionPrices'] ?? true );
 
 // Resolve event_date_id: query string (date, scoped to this post's series;
 // legacy numeric id kept for old links) → block attribute → current post's
@@ -256,7 +258,7 @@ if ( ! empty( $ticket_options ) && class_exists( \FairEvents\Models\EventDateSet
  *                              ticket_options, minimum_activities,
  *                              callback_status, callback_tx_id, callback_token, callback_state,
  *                              callback_source, prefill_name, prefill_email, submit_button_text,
- *                              suppress_form).
+ *                              show_ticket_price, show_option_prices, suppress_form).
  * @param array    $attributes Block attributes.
  * @param WP_Block $block      Block instance.
  */
@@ -292,6 +294,8 @@ $context = apply_filters(
 		'prefill_name'           => '',
 		'prefill_email'          => '',
 		'submit_button_text'     => $submit_button_text,
+		'show_ticket_price'      => $show_ticket_price,
+		'show_option_prices'     => $show_option_prices,
 		// When a companion plugin sets this true (e.g. a recognised viewer
 		// who already holds a signup), the base skips the <form> entirely and
 		// emits a plain wrapper div instead, still firing the render slots
@@ -314,6 +318,8 @@ $signup_state           = $context['callback_state'];
 $prefill_name           = $context['prefill_name'];
 $prefill_email          = $context['prefill_email'];
 $submit_button_text     = $context['submit_button_text'];
+$show_ticket_price      = (bool) $context['show_ticket_price'];
+$show_option_prices     = (bool) $context['show_option_prices'];
 $suppress_form          = ! empty( $context['suppress_form'] );
 
 // Recompute the multiple_instances flag from the (possibly filtered) ticket types.
@@ -579,7 +585,7 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 						$type_price       = $price_by_type_id[ $type_id ] ?? null;
 						$type_unavailable = $payments_unavailable && null !== $type_price && $type_price > 0;
 						$label            = esc_html( $ticket_type->name );
-						if ( null !== $type_price ) {
+						if ( $show_ticket_price && null !== $type_price ) {
 							$label .= ' — ' . esc_html( \FairEventsShared\Money::format_inline( $type_price ) );
 						} elseif ( null === $active_sale_period ) {
 							$label .= ' — ' . esc_html__( 'No active sale period', 'fair-events' );
@@ -624,10 +630,11 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 					}
 				}
 			}
-			// A minimum-activities requirement (global or ticket-type-raised)
-			// switches option prices from an always-on inline price to a hidden
-			// per-option "(+price)" add-on tag toggled by frontend.js once the
-			// minimum is met, so the requirement reads clearly.
+			// Whether a minimum-activities requirement (global or ticket-type-
+			// raised) applies, so the min-selection hint is only shown when
+			// relevant. Independent of $show_option_prices — the "+price"
+			// add-on tag is always emitted below when option prices are shown,
+			// with frontend.js toggling its visibility until the minimum is met.
 			$options_feature_active = ( $minimum_activities > 0 || $any_ticket_type_min > 0 );
 			$initial_min_activities = min( count( $ticket_options ), max( $minimum_activities, $preselected_type_min ) );
 			?>
@@ -656,16 +663,7 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 					<?php endif; ?>
 					<?php foreach ( $ticket_options as $opt ) : ?>
 						<?php
-						$opt_label = $opt['name'];
-						if ( ! $options_feature_active ) {
-							if ( $opt['price'] > 0 ) {
-								$opt_label .= ' — ' . \FairEventsShared\Money::format_inline( $opt['price'] );
-							} elseif ( $opt['price'] < 0 ) {
-								$opt_label .= ' — -' . \FairEventsShared\Money::format_inline( abs( $opt['price'] ) );
-							} else {
-								$opt_label .= ' — ' . __( 'free', 'fair-events' );
-							}
-						}
+						$opt_label   = $opt['name'];
 						$opt_is_full = ! empty( $opt['is_full'] );
 						if ( $opt_is_full ) {
 							$opt_label .= ' — ' . __( 'full', 'fair-events' );
@@ -689,15 +687,25 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 							/>
 							<span class="fair-events-ticket-option-text">
 								<?php echo esc_html( $opt_label ); ?>
-								<?php if ( $options_feature_active && $opt['price'] > 0 ) : ?>
+								<?php if ( $show_option_prices && 0.0 !== (float) $opt['price'] ) : ?>
 									<span class="fair-events-ticket-option-addon" style="display: none;">
-										<?php
-										printf(
-											/* translators: %s: formatted add-on price */
-											esc_html__( '(+%s)', 'fair-events' ),
-											esc_html( \FairEventsShared\Money::format_inline( $opt['price'] ) )
-										);
-										?>
+										<?php if ( $opt['price'] > 0 ) : ?>
+											<?php
+											printf(
+												/* translators: %s: formatted add-on price */
+												esc_html__( '+%s', 'fair-events' ),
+												esc_html( \FairEventsShared\Money::format_inline( $opt['price'] ) )
+											);
+											?>
+										<?php else : ?>
+											<?php
+											printf(
+												/* translators: %s: formatted add-on price */
+												esc_html__( '-%s', 'fair-events' ),
+												esc_html( \FairEventsShared\Money::format_inline( abs( $opt['price'] ) ) )
+											);
+											?>
+										<?php endif; ?>
 									</span>
 								<?php endif; ?>
 							</span>
