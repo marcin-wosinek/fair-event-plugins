@@ -55,7 +55,7 @@ class EventLocation {
 		if ( 'online' === $mode || 'hybrid' === $mode ) {
 			$location['joining_url'] = ! empty( $event_date->joining_link )
 				? $event_date->joining_link
-				: $event_date->get_display_url();
+				: $event_date->get_event_page_url();
 		}
 
 		return $location;

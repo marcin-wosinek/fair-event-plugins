@@ -22,6 +22,16 @@ use FairEvents\Models\EventDates;
 class EventLocationTest extends TestCase {
 
 	/**
+	 * Reset the fake $wpdb before each test so junction-table seeding
+	 * (get_primary_linked_post_id()'s get_col() lookup) never leaks between tests.
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
+	}
+
+	/**
 	 * Build a minimal EventDates fixture.
 	 *
 	 * @param array $overrides Property overrides.
@@ -84,22 +94,50 @@ class EventLocationTest extends TestCase {
 	}
 
 	/**
-	 * Online with no joining_link falls back to the event page URL via
-	 * get_display_url() (exercised here through an external link_type).
+	 * Online with no joining_link falls back to the event's own page URL
+	 * (get_event_page_url()), never the external_url configured for
+	 * `link_type = 'external'` — that's an unrelated calendar/RSVP target,
+	 * not the event's own page.
 	 */
-	public function test_online_falls_back_to_display_url() {
+	public function test_online_falls_back_to_event_page_url() {
 		$event_date = $this->make_event_date(
 			array(
+				'id'              => 7,
 				'attendance_mode' => 'online',
 				'link_type'       => 'external',
-				'external_url'    => 'https://example.com/event-page',
+				'external_url'    => 'https://example.com/unrelated-listing',
 			)
 		);
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb']->seed_col( 'wp_fair_event_date_posts', 7, array( 42 ) );
 
 		$location = EventLocation::resolve( $event_date, null );
 
 		$this->assertSame( 'online', $location['mode'] );
-		$this->assertSame( 'https://example.com/event-page', $location['joining_url'] );
+		// Falls back to the event's own page permalink, ignoring the unrelated external_url.
+		$this->assertSame( 'https://example.com/?p=42', $location['joining_url'] );
+	}
+
+	/**
+	 * A blank external_url (empty-string regression) still falls back to the
+	 * event's own page permalink rather than producing an empty joining URL.
+	 */
+	public function test_online_falls_back_to_event_page_url_with_blank_external_url() {
+		$event_date = $this->make_event_date(
+			array(
+				'id'              => 8,
+				'attendance_mode' => 'online',
+				'link_type'       => 'external',
+				'external_url'    => '',
+			)
+		);
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb']->seed_col( 'wp_fair_event_date_posts', 8, array( 43 ) );
+
+		$location = EventLocation::resolve( $event_date, null );
+
+		$this->assertSame( 'online', $location['mode'] );
+		$this->assertSame( 'https://example.com/?p=43', $location['joining_url'] );
 	}
 
 	/**
