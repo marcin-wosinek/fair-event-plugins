@@ -81,6 +81,25 @@ if ( ! function_exists( 'fair_events_offset_week' ) ) {
 	}
 }
 
+if ( ! function_exists( 'fair_events_convert_color_to_css' ) ) {
+	/**
+	 * Convert a block color attribute to a CSS value.
+	 *
+	 * Preset slugs are always kebab-case identifiers (e.g. 'primary'), so
+	 * anything else — hex, rgb()/hsl()/oklch(), etc. — is passed through as a
+	 * literal color instead of being mistaken for a slug.
+	 *
+	 * @param string $color Color value (preset slug like 'primary' or a literal CSS color).
+	 * @return string CSS color value.
+	 */
+	function fair_events_convert_color_to_css( $color ) {
+		if ( preg_match( '/^[a-z0-9]+(-[a-z0-9]+)*$/', $color ) ) {
+			return 'var(--wp--preset--color--' . esc_attr( $color ) . ')';
+		}
+		return $color;
+	}
+}
+
 // Resolve which week to show — URL param takes precedence over current week.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $url_week_param = isset( $_GET['week_view'] ) ? sanitize_text_field( wp_unslash( $_GET['week_view'] ) ) : '';
@@ -107,21 +126,9 @@ $bg_color        = $attributes['backgroundColor'] ?? 'primary';
 $text_color      = $attributes['textColor'] ?? '#ffffff';
 $header_bg_color = $attributes['headerBackgroundColor'] ?? '#f9f9f9';
 
-if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $bg_color ) ) {
-	$bg_color_value = $bg_color;
-} else {
-	$bg_color_value = 'var(--wp--preset--color--' . esc_attr( $bg_color ) . ')';
-}
-if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $text_color ) ) {
-	$text_color_value = $text_color;
-} else {
-	$text_color_value = 'var(--wp--preset--color--' . esc_attr( $text_color ) . ')';
-}
-if ( preg_match( '/^#[0-9A-Fa-f]{3,6}$/', $header_bg_color ) ) {
-	$header_bg_value = $header_bg_color;
-} else {
-	$header_bg_value = 'var(--wp--preset--color--' . esc_attr( $header_bg_color ) . ')';
-}
+$bg_color_value   = fair_events_convert_color_to_css( $bg_color );
+$text_color_value = fair_events_convert_color_to_css( $text_color );
+$header_bg_value  = fair_events_convert_color_to_css( $header_bg_color );
 
 // Week date range.
 $boundaries = fair_events_get_week_boundaries( $year, $week, $start_of_week );
