@@ -32,6 +32,13 @@ class Fair_Test_WPDB {
 	private $rows = array();
 
 	/**
+	 * Seeded column lists, keyed by table name then id — backs get_col().
+	 *
+	 * @var array<string, array<int, array<int>>>
+	 */
+	private $cols = array();
+
+	/**
 	 * Seed a row so get_row() resolves it for the given table + id.
 	 *
 	 * @param string $table Table name, including prefix (e.g. 'wp_fair_events_signups').
@@ -41,6 +48,19 @@ class Fair_Test_WPDB {
 	 */
 	public function seed_row( $table, $id, $row ) {
 		$this->rows[ $table ][ $id ] = $row;
+	}
+
+	/**
+	 * Seed a column list so get_col() resolves it for the given table + id
+	 * (e.g. junction-table post ids for `wp_fair_event_date_posts`).
+	 *
+	 * @param string $table Table name, including prefix.
+	 * @param int    $id    Lookup id.
+	 * @param array  $values Column values to return.
+	 * @return void
+	 */
+	public function seed_col( $table, $id, array $values ) {
+		$this->cols[ $table ][ $id ] = $values;
 	}
 
 	/**
@@ -71,5 +91,19 @@ class Fair_Test_WPDB {
 			return null;
 		}
 		return $this->rows[ $prepared['table'] ][ $prepared['id'] ] ?? null;
+	}
+
+	/**
+	 * Stub of wpdb::get_col() — resolves a prepare()d table/id lookup against
+	 * values seeded via seed_col(), or an empty array when nothing was seeded.
+	 *
+	 * @param array{table: string|null, id: int|null}|mixed $prepared Value returned by prepare().
+	 * @return array Seeded column values, or an empty array.
+	 */
+	public function get_col( $prepared ) {
+		if ( ! is_array( $prepared ) ) {
+			return array();
+		}
+		return $this->cols[ $prepared['table'] ][ $prepared['id'] ] ?? array();
 	}
 }

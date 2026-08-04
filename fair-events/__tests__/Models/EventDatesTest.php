@@ -360,4 +360,76 @@ class EventDatesTest extends TestCase {
 		$this->assertSame( 'in_person', $occurrence->attendance_mode );
 		$this->assertSame( 'https://example.com/own-meet', $occurrence->joining_link );
 	}
+
+	/**
+	 * Resolves the junction-table-linked post's permalink regardless of
+	 * link_type — including 'external', where get_display_url() would
+	 * return the unrelated external_url instead.
+	 *
+	 * @dataProvider linkTypeProvider
+	 * @param string $link_type link_type value under test.
+	 */
+	public function test_event_page_url_resolves_regardless_of_link_type( $link_type ) {
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
+		$GLOBALS['wpdb']->seed_col( 'wp_fair_event_date_posts', 5, array( 99 ) );
+
+		$occurrence                  = new EventDates();
+		$occurrence->id              = 5;
+		$occurrence->master_id       = null;
+		$occurrence->occurrence_type = 'single';
+		$occurrence->link_type       = $link_type;
+		$occurrence->external_url    = 'https://example.org/unrelated-listing';
+
+		$this->assertSame( 'https://example.com/?p=99', $occurrence->get_event_page_url() );
+	}
+
+	/**
+	 * Data provider for test_event_page_url_resolves_regardless_of_link_type().
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public function linkTypeProvider(): array {
+		return array(
+			'none'     => array( 'none' ),
+			'post'     => array( 'post' ),
+			'external' => array( 'external' ),
+		);
+	}
+
+	/**
+	 * Decorates the permalink with `?event_date=` for a generated
+	 * occurrence, resolving the junction-table link via the master's id
+	 * (links are stored on the master row).
+	 */
+	public function test_event_page_url_decorates_generated_occurrence() {
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
+		$GLOBALS['wpdb']->seed_col( 'wp_fair_event_date_posts', 1, array( 42 ) );
+
+		$occurrence                  = new EventDates();
+		$occurrence->id              = 2;
+		$occurrence->master_id       = 1;
+		$occurrence->occurrence_type = 'generated';
+		$occurrence->link_type       = 'none';
+		$occurrence->start_datetime  = '2026-06-29 18:30:00';
+
+		$this->assertSame( 'https://example.com/?p=42&event_date=2026-06-29', $occurrence->get_event_page_url() );
+	}
+
+	/**
+	 * Returns null when no post is linked at all.
+	 */
+	public function test_event_page_url_returns_null_when_unlinked() {
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
+
+		$occurrence                  = new EventDates();
+		$occurrence->id              = 5;
+		$occurrence->master_id       = null;
+		$occurrence->occurrence_type = 'single';
+		$occurrence->link_type       = 'none';
+
+		$this->assertNull( $occurrence->get_event_page_url() );
+	}
 }

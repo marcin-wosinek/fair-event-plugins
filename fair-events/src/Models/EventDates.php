@@ -652,6 +652,25 @@ class EventDates {
 	}
 
 	/**
+	 * Get this event's own page URL, independent of `link_type`.
+	 *
+	 * Unlike get_display_url() (which points wherever the calendar/RSVP link
+	 * is configured to go — an external partner page for `link_type =
+	 * 'external'`), this always resolves the permalink of the post linked via
+	 * the junction table (see get_primary_linked_post_id()), regardless of
+	 * how the link/calendar entry is configured. Used as the joining-link
+	 * fallback for online/hybrid events, so the fallback is never an
+	 * unrelated external URL (see EventLocation::resolve()).
+	 *
+	 * @return string|null The event's own page URL, or null if no post is linked.
+	 */
+	public function get_event_page_url() {
+		$linked_post_id = $this->get_primary_linked_post_id();
+
+		return $linked_post_id ? $this->with_occurrence_arg( get_permalink( $linked_post_id ) ) : null;
+	}
+
+	/**
 	 * Append `?event_date={Y-m-d}` to a URL for generated occurrences only.
 	 *
 	 * @param string|false $url Permalink to decorate.
