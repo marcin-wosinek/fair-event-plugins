@@ -14,7 +14,7 @@
  * one.
  */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 // ServerSideRender hits the REST API for a live render; stub it to a marker
 // that also emits the questions slot render.php puts in preview markup, so
@@ -64,6 +64,16 @@ jest.mock('@wordpress/block-editor', () => ({
 jest.mock('@wordpress/components', () => ({
 	PanelBody: ({ children }) => children,
 	TextControl: () => null,
+	ToggleControl: ({ label, checked, onChange }) => (
+		<label>
+			<input
+				type="checkbox"
+				checked={checked}
+				onChange={(e) => onChange(e.target.checked)}
+			/>
+			{label}
+		</label>
+	),
 	ExternalLink: ({ href, children }) => <a href={href}>{children}</a>,
 }));
 
@@ -84,12 +94,21 @@ describe('Event Signup EditComponent', () => {
 		Edit = capturedSettings.edit;
 	});
 
-	const renderEdit = (isFairFormActive) => {
+	const renderEdit = (
+		isFairFormActive,
+		attributes = {},
+		setAttributes = () => {}
+	) => {
 		mockUseSelect.mockReturnValue(isFairFormActive);
 		return render(
 			<Edit
-				attributes={{ submitButtonText: 'Get Tickets' }}
-				setAttributes={() => {}}
+				attributes={{
+					submitButtonText: 'Get Tickets',
+					showTicketPrice: true,
+					showOptionPrices: true,
+					...attributes,
+				}}
+				setAttributes={setAttributes}
 			/>
 		);
 	};
@@ -159,6 +178,37 @@ describe('Event Signup EditComponent', () => {
 				'fair-audience/fair-form-conditional',
 			])
 		);
+	});
+
+	describe('price toggles', () => {
+		it('shows both toggles checked by default', () => {
+			renderEdit(false);
+
+			expect(screen.getByLabelText('Show ticket price')).toBeChecked();
+			expect(screen.getByLabelText('Show option prices')).toBeChecked();
+		});
+
+		it('toggles the showTicketPrice attribute', () => {
+			const setAttributes = jest.fn();
+			renderEdit(false, {}, setAttributes);
+
+			fireEvent.click(screen.getByLabelText('Show ticket price'));
+
+			expect(setAttributes).toHaveBeenCalledWith({
+				showTicketPrice: false,
+			});
+		});
+
+		it('toggles the showOptionPrices attribute', () => {
+			const setAttributes = jest.fn();
+			renderEdit(false, {}, setAttributes);
+
+			fireEvent.click(screen.getByLabelText('Show option prices'));
+
+			expect(setAttributes).toHaveBeenCalledWith({
+				showOptionPrices: false,
+			});
+		});
 	});
 
 	describe('ticket-editor link', () => {

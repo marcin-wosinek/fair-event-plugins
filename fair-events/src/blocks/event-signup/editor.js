@@ -21,7 +21,12 @@ import {
 	InspectorControls,
 	InnerBlocks,
 } from '@wordpress/block-editor';
-import { ExternalLink, PanelBody, TextControl } from '@wordpress/components';
+import {
+	ExternalLink,
+	PanelBody,
+	TextControl,
+	ToggleControl,
+} from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { createPortal, useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -151,6 +156,20 @@ registerBlockType(metadata.name, {
 							value={attributes.submitButtonText}
 							onChange={(value) =>
 								setAttributes({ submitButtonText: value })
+							}
+						/>
+						<ToggleControl
+							label={__('Show ticket price', 'fair-events')}
+							checked={attributes.showTicketPrice}
+							onChange={(value) =>
+								setAttributes({ showTicketPrice: value })
+							}
+						/>
+						<ToggleControl
+							label={__('Show option prices', 'fair-events')}
+							checked={attributes.showOptionPrices}
+							onChange={(value) =>
+								setAttributes({ showOptionPrices: value })
 							}
 						/>
 						{ticketingEnabled &&

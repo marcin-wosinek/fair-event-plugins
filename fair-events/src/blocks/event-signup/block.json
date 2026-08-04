@@ -23,6 +23,14 @@
 			"type": "string",
 			"default": "Get Tickets"
 		},
+		"showTicketPrice": {
+			"type": "boolean",
+			"default": true
+		},
+		"showOptionPrices": {
+			"type": "boolean",
+			"default": true
+		},
 		"isEditorPreview": {
 			"type": "boolean",
 			"default": false
