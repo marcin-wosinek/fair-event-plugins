@@ -728,33 +728,31 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 			/>
 		</div>
 
-		<div class="fair-events-quantity-newsletter-row">
-			<div class="form-row fair-events-quantity-row">
-				<label for="<?php echo esc_attr( $form_id ); ?>-quantity" class="form-label">
-					<?php esc_html_e( 'Quantity', 'fair-events' ); ?>
-				</label>
-				<input
-					type="number"
-					id="<?php echo esc_attr( $form_id ); ?>-quantity"
-					name="quantity"
-					class="form-input"
-					value="1"
-					min="1"
-					max="10"
-				/>
-			</div>
+		<div class="form-row fair-events-quantity-row">
+			<label for="<?php echo esc_attr( $form_id ); ?>-quantity" class="form-label">
+				<?php esc_html_e( 'Quantity', 'fair-events' ); ?>
+			</label>
+			<input
+				type="number"
+				id="<?php echo esc_attr( $form_id ); ?>-quantity"
+				name="quantity"
+				class="form-input"
+				value="1"
+				min="1"
+				max="10"
+			/>
+		</div>
 
-			<div class="form-row">
-				<label class="form-checkbox-label">
-					<input
-						type="checkbox"
-						name="mailing_opt_in"
-						value="1"
-						class="form-checkbox"
-					/>
-					<?php esc_html_e( 'Keep me informed about future events', 'fair-events' ); ?>
-				</label>
-			</div>
+		<div class="form-row">
+			<label class="form-checkbox-label">
+				<input
+					type="checkbox"
+					name="mailing_opt_in"
+					value="1"
+					class="form-checkbox"
+				/>
+				<?php esc_html_e( 'Keep me informed about future events', 'fair-events' ); ?>
+			</label>
 		</div>
 
 		<?php if ( ! empty( $attributes['isEditorPreview'] ) ) : ?>
