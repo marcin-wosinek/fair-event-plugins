@@ -22,3 +22,25 @@
 	line-height: 1.5;
 	background: #f0f0f0;
 }
+
+.fair-form-url-preview {
+	margin-top: 8px;
+	padding: 8px 12px;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #f6f7f7;
+	font-size: 0.9em;
+}
+
+.fair-form-url-preview__label {
+	display: block;
+	font-size: 0.85em;
+	color: #757575;
+	margin-bottom: 4px;
+}
+
+.fair-form-url-preview ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}

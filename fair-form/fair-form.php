@@ -101,20 +101,6 @@ function fair_form_maybe_upgrade_db() {
 		update_option( 'fair_form_db_version', '0.3.0' );
 	}
 
-	if ( version_compare( $db_version, '0.4.0', '<' ) ) {
-		global $wpdb;
-
-		$answers_table = $wpdb->prefix . 'fair_audience_questionnaire_answers';
-
-		// Add answer_meta for captured details (e.g. url answers' extracted event data).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->query(
-			$wpdb->prepare( 'ALTER TABLE %i ADD COLUMN answer_meta LONGTEXT NULL DEFAULT NULL AFTER answer_value', $answers_table )
-		);
-
-		update_option( 'fair_form_db_version', '0.4.0' );
-	}
-
 	if ( version_compare( $db_version, '0.5.0', '<' ) ) {
 		global $wpdb;
 

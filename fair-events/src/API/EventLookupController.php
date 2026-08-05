@@ -9,18 +9,15 @@ namespace FairEvents\API;
 
 defined( 'WPINC' ) || die;
 
-use FairEventsShared\Helpers\PageMetadataParser;
-use FairEventsShared\Helpers\SafeUrlFetcher;
-use WP_REST_Controller;
+use FairEventsShared\API\AbstractUrlLookupController;
 use WP_REST_Server;
 use WP_REST_Request;
-use WP_REST_Response;
 use WP_Error;
 
 /**
  * Fetches a user-supplied page server-side and extracts event metadata from it
  */
-class EventLookupController extends WP_REST_Controller {
+class EventLookupController extends AbstractUrlLookupController {
 
 	/**
 	 * Namespace for the REST API
@@ -49,28 +46,12 @@ class EventLookupController extends WP_REST_Controller {
 							'description'       => __( 'URL of the event page to look up.', 'fair-events' ),
 							'type'              => 'string',
 							'required'          => true,
-							'validate_callback' => array( $this, 'validate_url' ),
+							'validate_callback' => array( $this, 'validate_url_param' ),
 						),
 					),
 				),
 			)
 		);
-	}
-
-	/**
-	 * Validate that the given value is a safe http(s) URL.
-	 *
-	 * @param string $value The url param.
-	 * @return bool True when valid.
-	 */
-	public function validate_url( $value ) {
-		if ( ! is_string( $value ) || ! wp_http_validate_url( $value ) ) {
-			return false;
-		}
-
-		$scheme = wp_parse_url( $value, PHP_URL_SCHEME );
-
-		return in_array( $scheme, array( 'http', 'https' ), true );
 	}
 
 	/**
@@ -80,25 +61,7 @@ class EventLookupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
 	public function create_item( $request ) {
-		$url = $request->get_param( 'url' );
-
-		$body = SafeUrlFetcher::fetch( $url );
-
-		if ( is_wp_error( $body ) ) {
-			return $body;
-		}
-
-		$metadata = PageMetadataParser::parse( $body );
-
-		if ( empty( $metadata['title'] ) ) {
-			return new WP_Error(
-				'rest_lookup_no_metadata',
-				__( 'Could not find any event details on that page.', 'fair-events' ),
-				array( 'status' => 422 )
-			);
-		}
-
-		return new WP_REST_Response( $metadata, 200 );
+		return $this->lookup_url( $request->get_param( 'url' ) );
 	}
 
 	/**

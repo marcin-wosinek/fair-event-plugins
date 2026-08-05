@@ -1,6 +1,7 @@
 /**
  * @jest-environment jsdom
  */
+import apiFetch from '@wordpress/api-fetch';
 import {
 	evaluateConditionals,
 	getQuestionValue,
@@ -8,7 +9,11 @@ import {
 	validateQuestions,
 	isValidPhoneNumber,
 	PHONE_HTML_PATTERN,
+	setupUrlPreviews,
 } from '../questionnaire.js';
+import { formatSiteLocalDatetime, formatDateOnly } from '../dateTime.js';
+
+jest.mock('@wordpress/api-fetch');
 
 const VISIBLE = 'fair-form-conditional-visible';
 
@@ -546,22 +551,6 @@ function urlQuestion(value, extractEventDetails = false) {
 }
 
 describe('url question type', () => {
-	describe('collectQuestionAnswers', () => {
-		it('adds extract_event_details: true when the toggle is on', () => {
-			const form = buildForm(urlQuestion('https://example.com', true));
-			const answers = collectQuestionAnswers(form);
-			expect(answers).toHaveLength(1);
-			expect(answers[0].extract_event_details).toBe(true);
-		});
-
-		it('omits extract_event_details when the toggle is off', () => {
-			const form = buildForm(urlQuestion('https://example.com', false));
-			const answers = collectQuestionAnswers(form);
-			expect(answers).toHaveLength(1);
-			expect(answers[0]).not.toHaveProperty('extract_event_details');
-		});
-	});
-
 	describe('validateQuestions', () => {
 		it('passes a bare domain (accepted as shorthand for https://)', () => {
 			const form = buildForm(urlQuestion('example.com/my-event'));
@@ -591,6 +580,172 @@ describe('url question type', () => {
 		it('blocks free text', () => {
 			const form = buildForm(urlQuestion('just some free text'));
 			expect(validateQuestions(form)).toMatch(/Website/);
+		});
+	});
+
+	describe('setupUrlPreviews', () => {
+		beforeEach(() => {
+			apiFetch.mockReset();
+		});
+
+		function flushPromises() {
+			return Promise.resolve().then(() => Promise.resolve());
+		}
+
+		it('fetches a preview on blur and renders it under the field', async () => {
+			apiFetch.mockResolvedValueOnce({
+				title: 'Community Picnic',
+				start_datetime: null,
+				end_datetime: null,
+				all_day: false,
+				location: 'Central Park',
+			});
+
+			const form = buildForm(urlQuestion('https://example.com', true));
+			setupUrlPreviews(form);
+
+			const input = form.querySelector('input');
+			input.value = 'https://example.com';
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+
+			expect(apiFetch).toHaveBeenCalledWith({
+				path: '/fair-form/v1/url-preview',
+				method: 'POST',
+				data: { url: 'https://example.com' },
+			});
+
+			const preview = form.querySelector('.fair-form-url-preview');
+			expect(preview).not.toBeNull();
+			expect(preview.textContent).toContain('Community Picnic');
+			expect(preview.textContent).toContain('Central Park');
+		});
+
+		it('renders a formatted start–end range for a dated event, in site-local time', async () => {
+			apiFetch.mockResolvedValueOnce({
+				title: 'Community Picnic',
+				start_datetime: '2026-09-12 18:00:00',
+				end_datetime: '2026-09-12 20:00:00',
+				all_day: false,
+				location: null,
+			});
+
+			const form = buildForm(urlQuestion('https://example.com', true));
+			setupUrlPreviews(form);
+
+			const input = form.querySelector('input');
+			input.value = 'https://example.com';
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+
+			const preview = form.querySelector('.fair-form-url-preview');
+			expect(preview.textContent).toContain(
+				formatSiteLocalDatetime('2026-09-12 18:00:00')
+			);
+			expect(preview.textContent).toContain(
+				formatSiteLocalDatetime('2026-09-12 20:00:00')
+			);
+		});
+
+		it('renders an all-day date without a time component', async () => {
+			apiFetch.mockResolvedValueOnce({
+				title: 'Community Picnic',
+				start_datetime: '2026-09-12 00:00:00',
+				end_datetime: null,
+				all_day: true,
+				location: null,
+			});
+
+			const form = buildForm(urlQuestion('https://example.com', true));
+			setupUrlPreviews(form);
+
+			const input = form.querySelector('input');
+			input.value = 'https://example.com';
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+
+			const preview = form.querySelector('.fair-form-url-preview');
+			expect(preview.textContent).toContain(
+				formatDateOnly('2026-09-12 00:00:00')
+			);
+		});
+
+		it('does not fetch on blur when the field is empty', async () => {
+			const form = buildForm(urlQuestion('', true));
+			setupUrlPreviews(form);
+
+			const input = form.querySelector('input');
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+
+			expect(apiFetch).not.toHaveBeenCalled();
+		});
+
+		it('does not re-fetch on a second blur with the same value', async () => {
+			apiFetch.mockResolvedValue({ title: 'Community Picnic' });
+
+			const form = buildForm(urlQuestion('https://example.com', true));
+			setupUrlPreviews(form);
+
+			const input = form.querySelector('input');
+			input.value = 'https://example.com';
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+
+			expect(apiFetch).toHaveBeenCalledTimes(1);
+		});
+
+		it('silently clears any bubble when the preview request fails', async () => {
+			apiFetch.mockResolvedValueOnce({ title: 'Community Picnic' });
+
+			const form = buildForm(urlQuestion('https://example.com', true));
+			setupUrlPreviews(form);
+
+			const input = form.querySelector('input');
+			input.value = 'https://example.com';
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+			expect(form.querySelector('.fair-form-url-preview')).not.toBeNull();
+
+			apiFetch.mockRejectedValueOnce(new Error('rate limited'));
+			input.value = 'https://example.com/other-page';
+			input.dispatchEvent(new Event('input'));
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+
+			expect(form.querySelector('.fair-form-url-preview')).toBeNull();
+		});
+
+		it('clears an existing bubble immediately on input, before any re-fetch', async () => {
+			apiFetch.mockResolvedValueOnce({ title: 'Community Picnic' });
+
+			const form = buildForm(urlQuestion('https://example.com', true));
+			setupUrlPreviews(form);
+
+			const input = form.querySelector('input');
+			input.value = 'https://example.com';
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+			expect(form.querySelector('.fair-form-url-preview')).not.toBeNull();
+
+			input.value = 'https://example.com/x';
+			input.dispatchEvent(new Event('input'));
+
+			expect(form.querySelector('.fair-form-url-preview')).toBeNull();
+		});
+
+		it('does not wire up a preview when extractEventDetails is off', async () => {
+			const form = buildForm(urlQuestion('https://example.com', false));
+			setupUrlPreviews(form);
+
+			const input = form.querySelector('input');
+			input.value = 'https://example.com';
+			input.dispatchEvent(new Event('blur'));
+			await flushPromises();
+
+			expect(apiFetch).not.toHaveBeenCalled();
 		});
 	});
 });

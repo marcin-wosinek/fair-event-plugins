@@ -228,11 +228,6 @@ class FairFormController extends WP_REST_Controller {
 		}
 		$questionnaire_answers = $file_result;
 
-		// Fetch linked pages for url answers opted into extraction and capture
-		// any event details they publish. Never blocks submission — see
-		// process_url_extractions() docblock.
-		$questionnaire_answers = $this->questionnaire_service->process_url_extractions( $questionnaire_answers );
-
 		// Save questionnaire answers (participant_id may be null for anonymous submissions).
 		$submission_id = $this->questionnaire_service->save_answers(
 			$participant_id,
