@@ -107,11 +107,73 @@
 	margin-bottom: 0;
 }
 
-.fair-events-get-tickets-form .fair-events-quantity-newsletter-row {
+.fair-events-get-tickets-form .form-checkbox-label {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 16px;
-	align-items: flex-end;
+	align-items: center;
+	gap: 8px;
+	font-weight: normal;
+	cursor: pointer;
+}
+
+.fair-events-get-tickets-form .form-checkbox {
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+/* Custom question fields (fair-form question blocks nested in this form).
+ * Their own styling only targets fair-form's own .fair-form-form ancestor,
+ * which doesn't exist here, so the label/spacing/input treatment is
+ * reproduced under this form's own class instead. */
+.fair-events-get-tickets-form .fair-form-question {
+	margin-bottom: 16px;
+}
+
+.fair-events-get-tickets-form .fair-form-question > label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.fair-events-get-tickets-form .fair-form-question .required {
+	color: #d63638;
+	margin-left: 2px;
+}
+
+.fair-events-get-tickets-form .fair-form-question input[type="text"],
+.fair-events-get-tickets-form .fair-form-question input[type="email"],
+.fair-events-get-tickets-form .fair-form-question input[type="tel"],
+.fair-events-get-tickets-form .fair-form-question input[type="url"],
+.fair-events-get-tickets-form .fair-form-question input[type="date"],
+.fair-events-get-tickets-form .fair-form-question input[type="datetime-local"],
+.fair-events-get-tickets-form .fair-form-question textarea,
+.fair-events-get-tickets-form .fair-form-question select {
+	width: 100%;
+	max-width: 400px;
+	padding: 14px 16px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-size: 1em;
+	background-color: #fafafa;
+	box-sizing: border-box;
+	transition: border-color 0.2s ease;
+}
+
+.fair-events-get-tickets-form .fair-form-question input[type="text"]:focus,
+.fair-events-get-tickets-form .fair-form-question input[type="email"]:focus,
+.fair-events-get-tickets-form .fair-form-question input[type="tel"]:focus,
+.fair-events-get-tickets-form .fair-form-question input[type="url"]:focus,
+.fair-events-get-tickets-form .fair-form-question input[type="date"]:focus,
+.fair-events-get-tickets-form
+	.fair-form-question
+	input[type="datetime-local"]:focus,
+.fair-events-get-tickets-form .fair-form-question textarea:focus,
+.fair-events-get-tickets-form .fair-form-question select:focus {
+	outline: none;
+	border-color: #0073aa;
+	box-shadow: 0 0 0 1px #0073aa;
+	background-color: #fff;
 }
 
 /* Activities (ticket options) */
