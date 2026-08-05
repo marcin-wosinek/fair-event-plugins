@@ -183,4 +183,26 @@ class TicketPricing {
 			)
 		);
 	}
+
+	/**
+	 * Keep only the ticket types actually purchasable right now — i.e. those
+	 * with a resolved price for the currently active sale period. A type
+	 * absent from $price_by_type_id has no price row for that period (or no
+	 * period is active at all), so it must not be offered as a selectable
+	 * option. Pure, DB-free — the caller resolves $price_by_type_id first.
+	 *
+	 * @param object[] $ticket_types     Ticket type objects.
+	 * @param float[]  $price_by_type_id Ticket-type ID => resolved price for the active period.
+	 * @return object[] Ticket types with a key in $price_by_type_id, re-indexed.
+	 */
+	public static function filter_purchasable_types( array $ticket_types, array $price_by_type_id ) {
+		return array_values(
+			array_filter(
+				$ticket_types,
+				function ( $ticket_type ) use ( $price_by_type_id ) {
+					return array_key_exists( (int) $ticket_type->id, $price_by_type_id );
+				}
+			)
+		);
+	}
 }

@@ -239,6 +239,18 @@ if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( 
 	}
 }
 
+// A ticket type with no price row for the active sale period isn't
+// purchasable right now — drop it from the list rather than showing it
+// unpriced and selectable. When every configured type is dropped this way,
+// $ticket_types_hidden_by_sale_period feeds $all_purchases_blocked below so
+// the form shows the same "temporarily unavailable" treatment instead of an
+// empty ticket-type fieldset.
+$ticket_types_before_pricing_filter = $ticket_types;
+if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
+	$ticket_types = \FairEvents\Services\TicketPricing::filter_purchasable_types( $ticket_types, $price_by_type_id );
+}
+$ticket_types_hidden_by_sale_period = ! empty( $ticket_types_before_pricing_filter ) && empty( $ticket_types );
+
 // Resolve activity options (ticket options) for this event date, if the
 // experimental catalogue is active. Options are displayed as checkboxes —
 // participants can select zero or more at signup. Gated on fair-audience
@@ -396,11 +408,15 @@ foreach ( $ticket_types as $ticket_type ) {
 }
 // Nothing is purchasable when payments are down and every configured ticket
 // type carries a price. Registering with no ticket type, or a free type, still
-// works — so the form is only hidden when a free path doesn't exist.
-$all_purchases_blocked = $payments_unavailable
-	&& ! empty( $ticket_types )
-	&& $has_paid_type
-	&& ! $has_free_type;
+// works — so the form is only hidden when a free path doesn't exist. Also
+// nothing is purchasable when every configured ticket type was dropped for
+// having no price in the currently active sale period (or no period active
+// at all) — same "temporarily unavailable" treatment as the payments case.
+$all_purchases_blocked = $ticket_types_hidden_by_sale_period
+	|| ( $payments_unavailable
+		&& ! empty( $ticket_types )
+		&& $has_paid_type
+		&& ! $has_free_type );
 
 // Generate unique form ID.
 $form_id = 'fair-events-get-tickets-' . wp_unique_id();

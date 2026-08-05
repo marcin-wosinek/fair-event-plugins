@@ -70,8 +70,6 @@ class SignupFieldsetRenderer {
 					$label            = esc_html( $ticket_type->name );
 					if ( $show_ticket_price && null !== $type_price ) {
 						$label .= ' — ' . esc_html( \FairEventsShared\Money::format_inline( $type_price ) );
-					} elseif ( null === $active_sale_period ) {
-						$label .= ' — ' . esc_html__( 'No active sale period', 'fair-events' );
 					}
 					if ( $type_unavailable ) {
 						$label .= ' — ' . esc_html__( 'ticket sales temporarily unavailable', 'fair-events' );
