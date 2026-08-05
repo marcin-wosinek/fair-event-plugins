@@ -194,9 +194,58 @@ test('picking a logo stores its attachment id and shows a preview; removing it r
 
 	fireEvent.click(removeButton);
 
+	const confirmButton = await screen.findByRole('button', {
+		name: /Remove logo/i,
+	});
+	fireEvent.click(confirmButton);
+
 	await waitFor(() =>
 		expect(
 			screen.queryByRole('button', { name: /^Remove$/i })
 		).not.toBeInTheDocument()
 	);
+});
+
+test('cancelling the remove-logo dialog leaves the override untouched', async () => {
+	const handlers = {};
+	const frame = {
+		on: (event, cb) => {
+			handlers[event] = cb;
+		},
+		open: () => handlers.select(),
+		state: () => ({
+			get: () => ({
+				first: () => ({
+					toJSON: () => ({
+						id: 42,
+						url: 'https://example.com/logo.png',
+					}),
+				}),
+			}),
+		}),
+	};
+	global.wp = { ...global.wp, media: jest.fn(() => frame) };
+
+	render(<OrganizerTab onNotice={jest.fn()} />);
+	await waitFor(() => expect(nameField()).toBeInTheDocument());
+
+	fireEvent.click(screen.getByRole('button', { name: /Change image/i }));
+
+	await waitFor(() =>
+		expect(screen.getByAltText('')).toHaveAttribute(
+			'src',
+			'https://example.com/logo.png'
+		)
+	);
+
+	fireEvent.click(screen.getByRole('button', { name: /^Remove$/i }));
+
+	const cancelButton = await screen.findByRole('button', {
+		name: /Cancel/i,
+	});
+	fireEvent.click(cancelButton);
+
+	expect(
+		screen.getByRole('button', { name: /^Remove$/i })
+	).toBeInTheDocument();
 });
