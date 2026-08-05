@@ -171,4 +171,60 @@ class TicketPricingTest extends TestCase {
 		// The final day (day after the occurrence) is no longer on sale — half-open range.
 		$this->assertNull( TicketPricing::pick_active_period( $resolved, '2026-06-16 00:00:00', false ) );
 	}
+
+	/**
+	 * Build a ticket type stub with the given id.
+	 *
+	 * @param int $id Ticket type ID.
+	 * @return object Anonymous ticket type object exposing id.
+	 */
+	private function ticket_type( $id ) {
+		return (object) array( 'id' => $id );
+	}
+
+	/**
+	 * A type with a price row for the active period is kept.
+	 */
+	public function test_filter_purchasable_types_keeps_priced_type() {
+		$type = $this->ticket_type( 1 );
+		$this->assertSame(
+			array( $type ),
+			TicketPricing::filter_purchasable_types( array( $type ), array( 1 => 12.5 ) )
+		);
+	}
+
+	/**
+	 * A type absent from $price_by_type_id is dropped.
+	 */
+	public function test_filter_purchasable_types_removes_unpriced_type() {
+		$priced   = $this->ticket_type( 1 );
+		$unpriced = $this->ticket_type( 2 );
+		$this->assertSame(
+			array( $priced ),
+			TicketPricing::filter_purchasable_types( array( $priced, $unpriced ), array( 1 => 12.5 ) )
+		);
+	}
+
+	/**
+	 * A 0-price row still counts as configured/kept — its presence in the map
+	 * is the signal, not the price value.
+	 */
+	public function test_filter_purchasable_types_keeps_zero_priced_type() {
+		$type = $this->ticket_type( 1 );
+		$this->assertSame(
+			array( $type ),
+			TicketPricing::filter_purchasable_types( array( $type ), array( 1 => 0.0 ) )
+		);
+	}
+
+	/**
+	 * No price rows for any configured type returns an empty list.
+	 */
+	public function test_filter_purchasable_types_empty_price_map_returns_empty() {
+		$type = $this->ticket_type( 1 );
+		$this->assertSame(
+			array(),
+			TicketPricing::filter_purchasable_types( array( $type ), array() )
+		);
+	}
 }

@@ -412,9 +412,14 @@ class GetTicketsController extends WP_REST_Controller {
 			// participant-specific discounts on top of this base price.
 			$unit_price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type_id );
 			$unit_price = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type_id, (int) $event_date_id );
-			if ( null !== $unit_price ) {
-				$amount = $unit_price * $quantity;
+			if ( null === $unit_price ) {
+				return new WP_Error(
+					'ticket_type_unavailable',
+					__( 'This ticket type is not currently on sale.', 'fair-events' ),
+					array( 'status' => 409 )
+				);
 			}
+			$amount = $unit_price * $quantity;
 		}
 
 		// Extension point for plugins (e.g. fair-audience) that sell selectable
@@ -667,6 +672,15 @@ class GetTicketsController extends WP_REST_Controller {
 					}
 				}
 			}
+		}
+
+		// A ticket type with no price row for the active sale period isn't
+		// purchasable right now — drop it, mirroring render.php. Runs before
+		// SignupHookBridge::enrich_render_context() (hooked below) re-filters
+		// for group restrictions, so sale-period and group-restriction
+		// filtering compose correctly regardless of order.
+		if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
+			$ticket_types = \FairEvents\Services\TicketPricing::filter_purchasable_types( $ticket_types, $price_by_type_id );
 		}
 
 		$ticket_options = array();
@@ -1008,7 +1022,13 @@ class GetTicketsController extends WP_REST_Controller {
 		// Resolve the per-instance price from the active sale period (server-side; client amount is ignored).
 		$unit_price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type->id );
 		$unit_price = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type->id, (int) $series_page_id );
-		$unit_price = null !== $unit_price ? $unit_price : 0.0;
+		if ( null === $unit_price ) {
+			return new WP_Error(
+				'ticket_type_unavailable',
+				__( 'This ticket type is not currently on sale.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
 
 		$count        = count( $occurrences );
 		$total_amount = $unit_price * $count;
