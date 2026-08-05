@@ -194,14 +194,19 @@ class TicketPricingTest extends TestCase {
 	}
 
 	/**
-	 * A type absent from $price_by_type_id is dropped.
+	 * A type priced for some other period, but not the active one, is
+	 * dropped — its sale window lapsed.
 	 */
-	public function test_filter_purchasable_types_removes_unpriced_type() {
-		$priced   = $this->ticket_type( 1 );
-		$unpriced = $this->ticket_type( 2 );
+	public function test_filter_purchasable_types_removes_type_priced_elsewhere() {
+		$priced           = $this->ticket_type( 1 );
+		$priced_elsewhere = $this->ticket_type( 2 );
 		$this->assertSame(
 			array( $priced ),
-			TicketPricing::filter_purchasable_types( array( $priced, $unpriced ), array( 1 => 12.5 ) )
+			TicketPricing::filter_purchasable_types(
+				array( $priced, $priced_elsewhere ),
+				array( 1 => 12.5 ),
+				array( 1, 2 )
+			)
 		);
 	}
 
@@ -213,18 +218,20 @@ class TicketPricingTest extends TestCase {
 		$type = $this->ticket_type( 1 );
 		$this->assertSame(
 			array( $type ),
-			TicketPricing::filter_purchasable_types( array( $type ), array( 1 => 0.0 ) )
+			TicketPricing::filter_purchasable_types( array( $type ), array( 1 => 0.0 ), array( 1 ) )
 		);
 	}
 
 	/**
-	 * No price rows for any configured type returns an empty list.
+	 * A type that has never had a price row for any period is free by
+	 * convention (the admin ticket editor leaves a blank price cell unsaved)
+	 * and stays, even though it's absent from $price_by_type_id.
 	 */
-	public function test_filter_purchasable_types_empty_price_map_returns_empty() {
+	public function test_filter_purchasable_types_keeps_never_priced_type() {
 		$type = $this->ticket_type( 1 );
 		$this->assertSame(
-			array(),
-			TicketPricing::filter_purchasable_types( array( $type ), array() )
+			array( $type ),
+			TicketPricing::filter_purchasable_types( array( $type ), array(), array() )
 		);
 	}
 }
