@@ -82,10 +82,10 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 				expiredData,
 			] = await Promise.all([
 				apiFetch({
-					path: `/fair-finance/v1/financial-entries/totals?event_date_id=${eventDateId}`,
+					path: `/fair-finance/v1/financial-entries/totals?event_date_id=${eventDateId}&unmatched=true`,
 				}),
 				apiFetch({
-					path: `/fair-finance/v1/financial-entries?event_date_id=${eventDateId}&per_page=10`,
+					path: `/fair-finance/v1/financial-entries?event_date_id=${eventDateId}&per_page=10&unmatched=true`,
 				}),
 				apiFetch({
 					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=paid&mode=live&per_page=100`,
