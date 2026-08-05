@@ -142,25 +142,31 @@ class PaymentEndpoint extends WP_REST_Controller {
 	}
 
 	/**
-	 * Find a block in a parsed block tree by its blockId attribute.
+	 * Find all blocks in a parsed block tree matching a blockId attribute.
+	 *
+	 * A page can legitimately contain unrelated blocks that happen to carry a
+	 * `blockId` attribute of their own; this only matches Simple Payment
+	 * blocks so it can't be confused by those.
 	 *
 	 * @param array  $blocks   Parsed blocks array.
 	 * @param string $block_id UUID to search for.
-	 * @return array|null Matching block or null.
+	 * @return array List of matching blocks (possibly empty).
 	 */
-	private function find_block_by_id( array $blocks, string $block_id ): ?array {
+	private function find_blocks_by_id( array $blocks, string $block_id ): array {
+		$matches = array();
 		foreach ( $blocks as $block ) {
-			if ( isset( $block['attrs']['blockId'] ) && $block['attrs']['blockId'] === $block_id ) {
-				return $block;
+			if (
+				'fair-payment/simple-payment' === ( $block['blockName'] ?? '' )
+				&& isset( $block['attrs']['blockId'] )
+				&& $block['attrs']['blockId'] === $block_id
+			) {
+				$matches[] = $block;
 			}
 			if ( ! empty( $block['innerBlocks'] ) ) {
-				$found = $this->find_block_by_id( $block['innerBlocks'], $block_id );
-				if ( null !== $found ) {
-					return $found;
-				}
+				$matches = array_merge( $matches, $this->find_blocks_by_id( $block['innerBlocks'], $block_id ) );
 			}
 		}
-		return null;
+		return $matches;
 	}
 
 	/**
@@ -213,10 +219,10 @@ class PaymentEndpoint extends WP_REST_Controller {
 			);
 		}
 
-		$blocks        = parse_blocks( $post->post_content );
-		$matched_block = $this->find_block_by_id( $blocks, $block_id );
+		$blocks         = parse_blocks( $post->post_content );
+		$matched_blocks = $this->find_blocks_by_id( $blocks, $block_id );
 
-		if ( ! $matched_block ) {
+		if ( ! $matched_blocks ) {
 			return new WP_Error(
 				'invalid_block',
 				__( 'Block not found.', 'fair-payments-connector' ),
@@ -224,6 +230,19 @@ class PaymentEndpoint extends WP_REST_Controller {
 			);
 		}
 
+		// More than one block shares this id (e.g. a pre-fix duplicated block
+		// nobody has reopened in the editor since). Trusting the first match
+		// would mischarge the buyer if the copies have different prices, so
+		// fail closed instead.
+		if ( count( $matched_blocks ) > 1 ) {
+			return new WP_Error(
+				'ambiguous_block',
+				__( 'This payment option is misconfigured. Please contact the site owner.', 'fair-payments-connector' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$matched_block    = $matched_blocks[0];
 		$expected_amount  = floatval( $matched_block['attrs']['amount'] ?? 0 );
 		$submitted_amount = floatval( $request->get_param( 'amount' ) );
 
