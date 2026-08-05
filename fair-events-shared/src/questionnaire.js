@@ -542,6 +542,57 @@ export function validateQuestions(form) {
 		}
 	}
 
+	// Validate date questions (defense in depth; real enforcement is
+	// server-side — see QuestionnaireService::sanitize_answers()).
+	const dateQuestions = form.querySelectorAll(
+		'[data-fair-form-question][data-question-type="date"]'
+	);
+	for (const el of dateQuestions) {
+		if (!isQuestionVisible(el)) {
+			continue;
+		}
+		const input = el.querySelector('input[type="date"]');
+		const value = input ? input.value.trim() : '';
+		if (!value) {
+			continue;
+		}
+		if (Number.isNaN(new Date(`${value}T00:00:00`).getTime())) {
+			const questionText = el.dataset.questionText || '';
+			return sprintf(
+				/* translators: %s: question text */
+				__('Please enter a valid date for: %s', 'fair-audience'),
+				questionText
+			);
+		}
+	}
+
+	// Validate date & time questions (defense in depth; real enforcement is
+	// server-side — see QuestionnaireService::sanitize_answers()).
+	const datetimeQuestions = form.querySelectorAll(
+		'[data-fair-form-question][data-question-type="datetime"]'
+	);
+	for (const el of datetimeQuestions) {
+		if (!isQuestionVisible(el)) {
+			continue;
+		}
+		const input = el.querySelector('input[type="datetime-local"]');
+		const value = input ? input.value.trim() : '';
+		if (!value) {
+			continue;
+		}
+		if (Number.isNaN(new Date(value).getTime())) {
+			const questionText = el.dataset.questionText || '';
+			return sprintf(
+				/* translators: %s: question text */
+				__(
+					'Please enter a valid date and time for: %s',
+					'fair-audience'
+				),
+				questionText
+			);
+		}
+	}
+
 	// Validate file upload constraints (size), skip hidden ones.
 	const fileUploadQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="file_upload"]'

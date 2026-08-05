@@ -38,6 +38,8 @@ class BlockHooks {
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-email' );
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-phone' );
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-url' );
+		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-date' );
+		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-datetime' );
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-select-one' );
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-multiselect' );
 		register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-radio' );
@@ -57,6 +59,8 @@ class BlockHooks {
 		wp_set_script_translations( 'fair-form-fair-form-email-editor-script', 'fair-audience', $translations_path );
 		wp_set_script_translations( 'fair-form-fair-form-phone-editor-script', 'fair-audience', $translations_path );
 		wp_set_script_translations( 'fair-form-fair-form-url-editor-script', 'fair-audience', $translations_path );
+		wp_set_script_translations( 'fair-form-fair-form-date-editor-script', 'fair-audience', $translations_path );
+		wp_set_script_translations( 'fair-form-fair-form-datetime-editor-script', 'fair-audience', $translations_path );
 		wp_set_script_translations( 'fair-form-fair-form-select-one-editor-script', 'fair-audience', $translations_path );
 		wp_set_script_translations( 'fair-form-fair-form-multiselect-editor-script', 'fair-audience', $translations_path );
 		wp_set_script_translations( 'fair-form-fair-form-radio-editor-script', 'fair-audience', $translations_path );

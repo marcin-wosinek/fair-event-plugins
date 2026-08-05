@@ -14,6 +14,8 @@ export const FAIR_FORM_QUESTION_BLOCK_NAMES = [
 	'fair-audience/fair-form-email',
 	'fair-audience/fair-form-phone',
 	'fair-audience/fair-form-url',
+	'fair-audience/fair-form-date',
+	'fair-audience/fair-form-datetime',
 	'fair-audience/fair-form-select-one',
 	'fair-audience/fair-form-multiselect',
 	'fair-audience/fair-form-radio',

@@ -111,6 +111,14 @@ function AnswerDisplay({ answer }) {
 		);
 	}
 
+	if (question_type === 'date' && answer_value) {
+		return <span>{formatDateOnly(answer_value)}</span>;
+	}
+
+	if (question_type === 'datetime' && answer_value) {
+		return <span>{formatSiteLocalDatetime(answer_value)}</span>;
+	}
+
 	return <span>{answer_value || '—'}</span>;
 }
 

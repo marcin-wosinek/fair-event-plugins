@@ -32,6 +32,7 @@ class QuestionnaireAnswer {
 		'phone',
 		'email',
 		'url',
+		'datetime',
 	);
 
 	/**

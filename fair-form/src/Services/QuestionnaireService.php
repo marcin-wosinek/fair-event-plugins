@@ -52,7 +52,7 @@ class QuestionnaireService {
 	 *
 	 * @var array
 	 */
-	const VALID_TYPES = array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'multiselect', 'file_upload', 'phone', 'email', 'url' );
+	const VALID_TYPES = array( 'radio', 'checkbox', 'short_text', 'long_text', 'select', 'number', 'date', 'datetime', 'multiselect', 'file_upload', 'phone', 'email', 'url' );
 
 	/**
 	 * HTML `pattern` attribute value for the phone question's `<input>`.
@@ -234,6 +234,38 @@ class QuestionnaireService {
 				$answer_value = $normalized;
 			}
 
+			if ( 'date' === $question_type && '' !== $answer_value ) {
+				$normalized = self::normalize_date( $answer_value );
+				if ( null === $normalized ) {
+					return new WP_Error(
+						'invalid_date',
+						sprintf(
+							/* translators: %s: question text */
+							__( 'Please enter a valid date for: %s', 'fair-form' ),
+							$question_text
+						),
+						array( 'status' => 400 )
+					);
+				}
+				$answer_value = $normalized;
+			}
+
+			if ( 'datetime' === $question_type && '' !== $answer_value ) {
+				$normalized = self::normalize_datetime( $answer_value );
+				if ( null === $normalized ) {
+					return new WP_Error(
+						'invalid_datetime',
+						sprintf(
+							/* translators: %s: question text */
+							__( 'Please enter a valid date and time for: %s', 'fair-form' ),
+							$question_text
+						),
+						array( 'status' => 400 )
+					);
+				}
+				$answer_value = $normalized;
+			}
+
 			$sanitized[] = array(
 				'question_key'          => sanitize_key( $answer['question_key'] ?? '' ),
 				'question_text'         => $question_text,
@@ -295,6 +327,41 @@ class QuestionnaireService {
 
 		$scheme = wp_parse_url( $filtered, PHP_URL_SCHEME );
 		return in_array( $scheme, array( 'http', 'https' ), true );
+	}
+
+	/**
+	 * Validate a date question value (native `type="date"` value,
+	 * `YYYY-MM-DD`) and re-serialize it, rejecting out-of-range values (e.g.
+	 * `2024-02-30`) that `DateTime::createFromFormat()` would otherwise
+	 * silently roll over to a different date.
+	 *
+	 * @param string $value Raw date value.
+	 * @return string|null The value unchanged if valid, null otherwise.
+	 */
+	public static function normalize_date( $value ) {
+		$date = \DateTime::createFromFormat( 'Y-m-d', $value );
+		if ( false === $date || $date->format( 'Y-m-d' ) !== $value ) {
+			return null;
+		}
+		return $value;
+	}
+
+	/**
+	 * Validate a datetime question value (native `type="datetime-local"`
+	 * value, `YYYY-MM-DDTHH:mm`) and normalize it to `Y-m-d H:i:00` (space
+	 * separator, seconds appended) so it's directly consumable by the JS
+	 * `formatSiteLocalDatetime()` helper without a second conversion layer.
+	 * Stored as site-local wall-clock time, not converted to UTC.
+	 *
+	 * @param string $value Raw datetime-local value.
+	 * @return string|null The normalized value if valid, null otherwise.
+	 */
+	public static function normalize_datetime( $value ) {
+		$date = \DateTime::createFromFormat( 'Y-m-d\TH:i', $value );
+		if ( false === $date || $date->format( 'Y-m-d\TH:i' ) !== $value ) {
+			return null;
+		}
+		return $date->format( 'Y-m-d H:i:00' );
 	}
 
 	/**
