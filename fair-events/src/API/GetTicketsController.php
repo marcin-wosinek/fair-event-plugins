@@ -661,26 +661,34 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		$price_by_type_id   = array();
+		$priced_type_ids    = array();
 		$active_sale_period = null;
 		if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
 			$active_sale_period = \FairEvents\Services\TicketPricing::resolve_active_sale_period( $pricing_event_date_id );
 			if ( $active_sale_period ) {
 				$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id );
 				foreach ( $prices as $price ) {
+					$priced_type_ids[ (int) $price->ticket_type_id ] = true;
 					if ( (int) $price->sale_period_id === (int) $active_sale_period->id ) {
 						$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
 					}
 				}
 			}
 		}
+		$priced_type_ids = array_keys( $priced_type_ids );
 
-		// A ticket type with no price row for the active sale period isn't
-		// purchasable right now — drop it, mirroring render.php. Runs before
+		// A ticket type with no price row for the active sale period, but
+		// priced for some other period, isn't purchasable right now — drop
+		// it, mirroring render.php. A type never priced for any period is
+		// free by convention and stays; with no active period at all,
+		// nothing is purchasable. Runs before
 		// SignupHookBridge::enrich_render_context() (hooked below) re-filters
 		// for group restrictions, so sale-period and group-restriction
 		// filtering compose correctly regardless of order.
 		if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
-			$ticket_types = \FairEvents\Services\TicketPricing::filter_purchasable_types( $ticket_types, $price_by_type_id );
+			$ticket_types = $active_sale_period
+				? \FairEvents\Services\TicketPricing::filter_purchasable_types( $ticket_types, $price_by_type_id, $priced_type_ids )
+				: array();
 		}
 
 		$ticket_options = array();

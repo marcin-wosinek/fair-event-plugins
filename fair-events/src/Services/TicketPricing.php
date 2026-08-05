@@ -158,7 +158,12 @@ class TicketPricing {
 
 		$price_row = TicketPrice::get_by_type_and_period( $ticket_type_id, $active_period->id );
 		if ( ! $price_row ) {
-			return null;
+			// No row for this period. A type with no price row for ANY period
+			// was never configured as paid — the admin ticket editor leaves a
+			// blank price cell unsaved, so that's "free" by convention, not
+			// "unpriced". A type priced for other periods but not this one is
+			// a real paid type whose sale window lapsed, so it stays unavailable.
+			return empty( TicketPrice::get_all_by_ticket_type_id( $ticket_type_id ) ) ? 0.0 : null;
 		}
 
 		/**
@@ -185,22 +190,32 @@ class TicketPricing {
 	}
 
 	/**
-	 * Keep only the ticket types actually purchasable right now — i.e. those
-	 * with a resolved price for the currently active sale period. A type
-	 * absent from $price_by_type_id has no price row for that period (or no
-	 * period is active at all), so it must not be offered as a selectable
-	 * option. Pure, DB-free — the caller resolves $price_by_type_id first.
+	 * Keep only the ticket types actually purchasable right now under the
+	 * currently active sale period. A type is purchasable when it either has
+	 * a resolved price for the active period ($price_by_type_id), or has
+	 * never had a price row for any period at all ($priced_type_ids) — free
+	 * by convention, since the admin ticket editor leaves a blank price cell
+	 * unsaved rather than writing a row. A type priced for other periods but
+	 * not this one is a real paid type whose sale window lapsed, so it's
+	 * dropped. Only call this when a sale period is actually active — the
+	 * caller must drop everything itself when it isn't. Pure, DB-free — the
+	 * caller resolves both maps first.
 	 *
 	 * @param object[] $ticket_types     Ticket type objects.
 	 * @param float[]  $price_by_type_id Ticket-type ID => resolved price for the active period.
-	 * @return object[] Ticket types with a key in $price_by_type_id, re-indexed.
+	 * @param int[]    $priced_type_ids  Ticket-type IDs with a price row for at least one period.
+	 * @return object[] Purchasable ticket types, re-indexed.
 	 */
-	public static function filter_purchasable_types( array $ticket_types, array $price_by_type_id ) {
+	public static function filter_purchasable_types( array $ticket_types, array $price_by_type_id, array $priced_type_ids = array() ) {
 		return array_values(
 			array_filter(
 				$ticket_types,
-				function ( $ticket_type ) use ( $price_by_type_id ) {
-					return array_key_exists( (int) $ticket_type->id, $price_by_type_id );
+				function ( $ticket_type ) use ( $price_by_type_id, $priced_type_ids ) {
+					$id = (int) $ticket_type->id;
+					if ( array_key_exists( $id, $price_by_type_id ) ) {
+						return true;
+					}
+					return ! in_array( $id, $priced_type_ids, true );
 				}
 			)
 		);
