@@ -1261,6 +1261,25 @@ describe('EventTickets — Add-on collaborator discount removed (#1139)', () => 
 });
 
 describe('EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
+	const initialDataWithOnePeriod = {
+		...initialDataWithTicketType,
+		sale_periods: [
+			{
+				id: 501,
+				name: '',
+				sale_start: '2026-01-01',
+				sale_end: '2026-02-01',
+			},
+		],
+		prices: [
+			{
+				ticket_type_id: 1,
+				sale_period_id: 501,
+				price: '12',
+			},
+		],
+	};
+
 	const initialDataWithTwoPeriods = {
 		...initialDataWithTicketType,
 		sale_periods: [
@@ -1312,5 +1331,70 @@ describe('EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 		expect(rows[1].querySelector('td span').style.background).toBe(
 			hexToRgb(salePeriodColor(1))
 		);
+	});
+
+	it('hides the calendar when Multiple pricing periods is off, with a single stored period', () => {
+		renderTickets({
+			initialData: initialDataWithOnePeriod,
+			startDatetime: '2026-01-10 10:00:00',
+			endDatetime: '2026-02-01 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		expect(screen.queryByText(/Event day/i)).not.toBeInTheDocument();
+	});
+
+	it('shows the calendar when Multiple pricing periods is on, with two stored periods', () => {
+		renderTickets({
+			initialData: initialDataWithTwoPeriods,
+			startDatetime: '2026-01-25 10:00:00',
+			endDatetime: '2026-02-01 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		expect(screen.getByText(/Event day/i)).toBeInTheDocument();
+	});
+
+	it('shows the calendar after turning on Multiple pricing periods from a single period', () => {
+		renderTickets({
+			initialData: initialDataWithOnePeriod,
+			startDatetime: '2026-01-10 10:00:00',
+			endDatetime: '2026-02-01 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		expect(screen.queryByText(/Event day/i)).not.toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', {
+				name: /Multiple pricing periods/i,
+			})
+		);
+
+		expect(screen.getByText(/Event day/i)).toBeInTheDocument();
+	});
+
+	it('hides the calendar again after confirming the merge back to a single period', () => {
+		renderTickets({
+			initialData: initialDataWithTwoPeriods,
+			startDatetime: '2026-01-25 10:00:00',
+			endDatetime: '2026-02-01 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		expect(screen.getByText(/Event day/i)).toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole('checkbox', {
+				name: /Multiple pricing periods/i,
+			})
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'Merge periods' }));
+
+		expect(screen.queryByText(/Event day/i)).not.toBeInTheDocument();
 	});
 });

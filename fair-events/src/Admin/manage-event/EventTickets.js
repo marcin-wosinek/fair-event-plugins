@@ -1008,7 +1008,7 @@ export default function EventTickets({
 									</div>
 								</HStack>
 							)}
-							{salePeriods.length > 0 && (
+							{effectiveMultiple && salePeriods.length > 0 && (
 								<SalePeriodsCalendar
 									salePeriods={salePeriods}
 									eventDay={eventDay}
