@@ -64,7 +64,6 @@ class Schema {
 			question_text VARCHAR(500) NOT NULL,
 			question_type ENUM('radio','checkbox','short_text','long_text','select','number','date','multiselect','file_upload','email','phone','url','datetime') NOT NULL DEFAULT 'short_text',
 			answer_value TEXT NOT NULL,
-			answer_meta LONGTEXT NULL DEFAULT NULL,
 			display_order INT DEFAULT 0,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),

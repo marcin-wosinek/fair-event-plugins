@@ -11,6 +11,8 @@
  */
 
 import { __, sprintf } from '@wordpress/i18n';
+import apiFetch from '@wordpress/api-fetch';
+import { formatSiteLocalDatetime, formatDateOnly } from './dateTime.js';
 
 /**
  * HTML `pattern` attribute value for the phone question's `<input>`, shared
@@ -325,10 +327,6 @@ export function collectQuestionAnswers(form) {
 			answer_value: answerValue,
 			display_order: index,
 		};
-
-		if (questionType === 'url' && el.dataset.extractEventDetails === '1') {
-			answer.extract_event_details = true;
-		}
 
 		answers.push(answer);
 	});
@@ -711,6 +709,133 @@ export function handleFilePreview(input) {
 }
 
 /**
+ * Render (or replace) the preview bubble under a url question's input with
+ * whatever event details were found.
+ *
+ * @param {HTMLElement} wrapper  Question wrapper element.
+ * @param {Object}      metadata Response body from `/fair-form/v1/url-preview`.
+ */
+function renderUrlPreview(wrapper, metadata) {
+	clearUrlPreview(wrapper);
+
+	const {
+		title,
+		start_datetime: start,
+		end_datetime: end,
+		all_day,
+		location,
+	} = metadata;
+
+	const formatWhen = (value) =>
+		all_day ? formatDateOnly(value) : formatSiteLocalDatetime(value);
+
+	const preview = document.createElement('div');
+	preview.className = 'fair-form-url-preview';
+
+	const label = document.createElement('span');
+	label.className = 'fair-form-url-preview__label';
+	label.textContent = __('Read from the linked page:', 'fair-form');
+	preview.appendChild(label);
+
+	const list = document.createElement('ul');
+
+	if (title) {
+		const li = document.createElement('li');
+		li.textContent = title;
+		list.appendChild(li);
+	}
+
+	if (start) {
+		const li = document.createElement('li');
+		li.textContent = end
+			? sprintf(
+					/* translators: 1: start date/time, 2: end date/time */
+					__('%1$s – %2$s', 'fair-form'),
+					formatWhen(start),
+					formatWhen(end)
+			  )
+			: formatWhen(start);
+		list.appendChild(li);
+	}
+
+	if (location) {
+		const li = document.createElement('li');
+		li.textContent = location;
+		list.appendChild(li);
+	}
+
+	preview.appendChild(list);
+	wrapper.appendChild(preview);
+}
+
+/**
+ * Remove any existing preview bubble from a url question's wrapper.
+ *
+ * @param {HTMLElement} wrapper Question wrapper element.
+ */
+function clearUrlPreview(wrapper) {
+	const existing = wrapper.querySelector('.fair-form-url-preview');
+	if (existing) {
+		existing.remove();
+	}
+}
+
+/**
+ * Wire up live preview bubbles for url questions opted into "read event
+ * details from the linked page": on blur, fetch a preview from the public
+ * `/fair-form/v1/url-preview` endpoint and render it under the field. Never
+ * triggered on keystroke, and any failure (unreachable, non-HTML, no
+ * metadata, rate-limited) fails silently — a preview is a nice-to-have, never
+ * a submission blocker.
+ *
+ * @param {HTMLElement} form The form (or container) element.
+ */
+export function setupUrlPreviews(form) {
+	const wrappers = form.querySelectorAll(
+		'[data-fair-form-question][data-question-type="url"][data-extract-event-details="1"]'
+	);
+
+	wrappers.forEach((wrapper) => {
+		const input = wrapper.querySelector('input');
+		if (!input) {
+			return;
+		}
+
+		let lastCheckedValue = null;
+
+		input.addEventListener('blur', () => {
+			const value = input.value.trim();
+
+			if (!value || value === lastCheckedValue) {
+				return;
+			}
+			lastCheckedValue = value;
+
+			apiFetch({
+				path: '/fair-form/v1/url-preview',
+				method: 'POST',
+				data: { url: value },
+			})
+				.then((metadata) => {
+					if (input.value.trim() !== value) {
+						// The visitor kept typing before the response arrived.
+						return;
+					}
+					renderUrlPreview(wrapper, metadata);
+				})
+				.catch(() => {
+					clearUrlPreview(wrapper);
+				});
+		});
+
+		input.addEventListener('input', () => {
+			lastCheckedValue = null;
+			clearUrlPreview(wrapper);
+		});
+	});
+}
+
+/**
  * Grow a textarea's height to fit its content, removing the need for manual
  * resizing.
  *
@@ -753,6 +878,8 @@ export function setupQuestionnaire(form) {
 	fileInputs.forEach((input) => {
 		input.addEventListener('change', () => handleFilePreview(input));
 	});
+
+	setupUrlPreviews(form);
 
 	// Evaluate conditionals on load and on any input change.
 	evaluateConditionals(form);

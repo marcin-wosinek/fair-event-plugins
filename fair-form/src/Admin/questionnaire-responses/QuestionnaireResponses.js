@@ -277,18 +277,6 @@ export default function QuestionnaireResponses() {
 							>
 								{value}
 							</a>
-							{answer.event_details && (
-								<span
-									className="fair-form-questionnaire-responses__event-details-indicator"
-									title={__(
-										'Event details were read from the linked page.',
-										'fair-form'
-									)}
-								>
-									{' '}
-									★
-								</span>
-							)}
 						</span>
 					);
 				},

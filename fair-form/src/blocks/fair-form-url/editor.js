@@ -80,7 +80,7 @@ registerBlockType('fair-audience/fair-form-url', {
 								'fair-audience'
 							)}
 							help={__(
-								'When submitted, the link is fetched and any event details it publishes (title, dates, location) are captured with the answer.',
+								'Once the visitor leaves the field, any event details the link publishes (title, dates, location) are shown right underneath it; nothing is stored.',
 								'fair-audience'
 							)}
 							checked={extractEventDetails}

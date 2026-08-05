@@ -1,4 +1,4 @@
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -12,41 +12,9 @@ import {
 } from '@wordpress/components';
 import { submissionToMarkdown } from '../utils/submission-markdown.js';
 import { formatDate } from '../utils/format-date.js';
-import { formatSiteLocalDatetime, formatDateOnly } from 'fair-events-shared';
-
-function EventDetails({ details }) {
-	const { title, start_datetime, end_datetime, all_day, location } = details;
-
-	const formatWhen = (value) =>
-		all_day ? formatDateOnly(value) : formatSiteLocalDatetime(value);
-
-	return (
-		<div className="fair-form-submission-detail__event-details">
-			<span className="fair-form-submission-detail__event-details-label">
-				{__('Read from the linked page:', 'fair-form')}
-			</span>
-			<ul>
-				{title && <li>{title}</li>}
-				{start_datetime && (
-					<li>
-						{end_datetime
-							? sprintf(
-									/* translators: 1: start date/time, 2: end date/time */
-									__('%1$s – %2$s', 'fair-form'),
-									formatWhen(start_datetime),
-									formatWhen(end_datetime)
-							  )
-							: formatWhen(start_datetime)}
-					</li>
-				)}
-				{location && <li>{location}</li>}
-			</ul>
-		</div>
-	);
-}
 
 function AnswerDisplay({ answer }) {
-	const { question_type, answer_value, file_url, event_details } = answer;
+	const { question_type, answer_value, file_url } = answer;
 
 	if (question_type === 'file_upload' && file_url) {
 		return (
@@ -85,7 +53,6 @@ function AnswerDisplay({ answer }) {
 				>
 					{answer_value}
 				</a>
-				{event_details && <EventDetails details={event_details} />}
 			</div>
 		);
 	}

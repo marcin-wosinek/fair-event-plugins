@@ -78,13 +78,6 @@ class QuestionnaireAnswer {
 	public $answer_value;
 
 	/**
-	 * Captured details JSON (e.g. url answers' extracted event data), or null.
-	 *
-	 * @var string|null
-	 */
-	public $answer_meta;
-
-	/**
 	 * Display order within submission.
 	 *
 	 * @var int
@@ -121,7 +114,6 @@ class QuestionnaireAnswer {
 		$this->question_text = isset( $data['question_text'] ) ? $data['question_text'] : '';
 		$this->question_type = isset( $data['question_type'] ) ? $data['question_type'] : 'short_text';
 		$this->answer_value  = isset( $data['answer_value'] ) ? $data['answer_value'] : '';
-		$this->answer_meta   = isset( $data['answer_meta'] ) ? $data['answer_meta'] : null;
 		$this->display_order = isset( $data['display_order'] ) ? (int) $data['display_order'] : 0;
 		$this->created_at    = isset( $data['created_at'] ) ? $data['created_at'] : '';
 	}
@@ -152,11 +144,10 @@ class QuestionnaireAnswer {
 			'question_text' => $this->question_text,
 			'question_type' => $this->question_type,
 			'answer_value'  => $this->answer_value,
-			'answer_meta'   => $this->answer_meta,
 			'display_order' => $this->display_order,
 		);
 
-		$format = array( '%d', '%s', '%s', '%s', '%s', '%s', '%d' );
+		$format = array( '%d', '%s', '%s', '%s', '%s', '%d' );
 
 		if ( $this->id ) {
 			// Update existing.

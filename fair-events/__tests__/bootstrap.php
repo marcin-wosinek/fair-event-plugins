@@ -112,6 +112,37 @@ if ( ! function_exists( 'get_the_title' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_http_validate_url' ) ) {
+	/**
+	 * Stub of WordPress wp_http_validate_url() — delegates to PHP's
+	 * filter_var(), sufficient for the http(s)-scheme validation this
+	 * bootstrap's controllers perform (real WP additionally rejects
+	 * private/reserved IPs, which is out of scope for these unit tests).
+	 *
+	 * @param string $url URL to validate.
+	 * @return string|false The URL when it looks valid, false otherwise.
+	 */
+	function wp_http_validate_url( $url ) {
+		if ( ! is_string( $url ) || '' === $url ) {
+			return false;
+		}
+		return filter_var( $url, FILTER_VALIDATE_URL ) ? $url : false;
+	}
+}
+
+if ( ! function_exists( 'wp_parse_url' ) ) {
+	/**
+	 * Stub of WordPress wp_parse_url() — delegates to PHP's parse_url().
+	 *
+	 * @param string $url       URL to parse.
+	 * @param int    $component PHP_URL_* component constant, or -1 for all.
+	 * @return mixed Parsed component value, or array/false per parse_url().
+	 */
+	function wp_parse_url( $url, $component = -1 ) {
+		return parse_url( $url, $component ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- stub implements wp_parse_url() itself.
+	}
+}
+
 if ( ! function_exists( 'wp_timezone' ) ) {
 	/**
 	 * Stub of WordPress wp_timezone() — UTC by default, overridable via
@@ -602,6 +633,18 @@ if ( ! function_exists( 'set_transient' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_json_encode' ) ) {
+	/**
+	 * Stub of WordPress wp_json_encode() — delegates to PHP's json_encode().
+	 *
+	 * @param mixed $data Data to encode.
+	 * @return string|false JSON-encoded string, or false on failure.
+	 */
+	function wp_json_encode( $data ) {
+		return json_encode( $data ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- stub implements wp_json_encode() itself.
+	}
+}
+
 if ( ! function_exists( 'wp_mail' ) ) {
 	/**
 	 * Stub of WordPress wp_mail() recording each send into
@@ -626,6 +669,7 @@ if ( ! function_exists( 'wp_mail' ) ) {
 }
 
 require_once __DIR__ . '/wp-class-stubs.php';
+require_once __DIR__ . '/wp-rest-response-stub.php';
 require_once __DIR__ . '/wp-error-stub.php';
 require_once __DIR__ . '/Fair_Test_WPDB.php';
 

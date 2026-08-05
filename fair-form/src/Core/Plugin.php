@@ -141,6 +141,9 @@ class Plugin {
 
 		$questionnaire_responses_controller = new \FairForm\API\QuestionnaireResponsesController();
 		$questionnaire_responses_controller->register_routes();
+
+		$url_preview_controller = new \FairForm\API\UrlPreviewController();
+		$url_preview_controller->register_routes();
 	}
 
 	/**
