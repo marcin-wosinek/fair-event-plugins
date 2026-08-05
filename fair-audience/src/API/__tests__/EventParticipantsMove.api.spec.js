@@ -58,6 +58,7 @@ test.describe('EventParticipantsController — move', () => {
 			headers: authHeaders,
 			data: {
 				event_id: eventPostId,
+				title: `Move test ${Date.now()}`,
 				start_datetime: '2036-06-01 10:00:00',
 				end_datetime: '2036-06-01 12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
@@ -71,6 +72,15 @@ test.describe('EventParticipantsController — move', () => {
 			...edBody.generated_occurrences.map((o) => o.id),
 		];
 		expect(occurrenceIds.length).toBe(3);
+
+		// The create endpoint doesn't wire event_id through — a PUT is
+		// needed to actually link the post (see CalendarFeedController.api.spec.js
+		// for the same quirk).
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{ headers: authHeaders, data: { event_id: eventPostId } }
+		);
+		expect(linkRes.ok()).toBeTruthy();
 
 		// Unrelated event date, not part of the recurring series above.
 		const otherPostRes = await api.post('/wp-json/wp/v2/fair_event', {
@@ -86,6 +96,7 @@ test.describe('EventParticipantsController — move', () => {
 				headers: authHeaders,
 				data: {
 					event_id: otherEventPostId,
+					title: `Unrelated event ${Date.now()}`,
 					start_datetime: '2036-06-15 10:00:00',
 					end_datetime: '2036-06-15 12:00:00',
 				},
@@ -93,6 +104,12 @@ test.describe('EventParticipantsController — move', () => {
 		);
 		expect(otherEdRes.ok()).toBeTruthy();
 		otherEventDateId = (await otherEdRes.json()).id;
+
+		const otherLinkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${otherEventDateId}`,
+			{ headers: authHeaders, data: { event_id: otherEventPostId } }
+		);
+		expect(otherLinkRes.ok()).toBeTruthy();
 
 		participantAId = await createParticipant(api, 'Move Person A');
 		participantBId = await createParticipant(api, 'Move Person B');

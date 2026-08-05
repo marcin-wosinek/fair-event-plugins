@@ -25,6 +25,7 @@
 		"test:js": "jest",
 		"test:php": "vendor/bin/phpunit",
 		"test:e2e": "playwright test",
+		"test:api": "playwright test src/API/__tests__/",
 		"playwright:run": "playwright test --headed",
 		"playwright:up": "playwright test --headed --ui",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-audience svn",

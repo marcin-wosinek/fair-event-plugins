@@ -22,10 +22,12 @@ export default defineConfig({
 			use: { ...devices['Desktop Chrome'] },
 		},
 	],
-	webServer: {
-		command: 'docker compose up',
-		url: 'http://localhost:8080',
-		reuseExistingServer: !process.env.CI,
-		timeout: 120 * 1000,
-	},
+	webServer: process.env.CI
+		? undefined
+		: {
+				command: 'docker compose up',
+				url: 'http://localhost:8080',
+				reuseExistingServer: !process.env.CI,
+				timeout: 120 * 1000,
+		  },
 });

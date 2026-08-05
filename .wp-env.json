@@ -8,7 +8,9 @@
 		"./fair-audience",
 		"./fair-audience-experimental",
 		"./fair-form",
-		"./fair-platform"
+		"./fair-platform",
+		"./fair-finance",
+		"./fair-payments-connector-experimental"
 	],
 	"mappings": {
 		"wp-content/mu-plugins": "./e2e/mu-plugins"

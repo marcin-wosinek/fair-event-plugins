@@ -6,7 +6,7 @@
  *              Never shipped to production and never mounted by the dev
  *              `docker compose` stack.
  *
- * It does three things, all confined to the test environment:
+ * It does four things, all confined to the test environment:
  *
  *   1. Captures outgoing mail into the `fair_e2e_captured_mail` option instead
  *      of sending it, so specs can assert on subject/recipient/body and no real
@@ -19,6 +19,9 @@
  *      so every Mollie API call returns canned responses. This keeps ALL of the
  *      real fair-payments-connector / fair-audience purchase code in play while making the
  *      "payment" deterministic and offline.
+ *   4. Bypasses GetTicketsController's per-IP rate limit, which a full API/E2E
+ *      test run exhausts well before it finishes (every spec run shares one
+ *      source IP).
  *
  * @package FairEventsE2E
  */
@@ -95,7 +98,17 @@ add_filter(
 );
 
 /*
- * 3. Capture mail instead of sending it.
+ * 3. Bypass GetTicketsController's per-IP rate limit (20 requests/hour in
+ *    production). A full test run drives far more than that many real
+ *    signups through the public get-tickets endpoint from the CI runner's
+ *    single IP, which would otherwise fail later specs with 429s unrelated
+ *    to what they're testing. The per-email limit is left untouched — it's
+ *    what EventSignupHookBridge.api.spec.js (#1245) exercises directly.
+ */
+add_filter( 'fair_events_get_tickets_rate_limit_bypass_ip', '__return_true' );
+
+/*
+ * 4. Capture mail instead of sending it.
  *
  * Returning a non-null value from `pre_wp_mail` short-circuits wp_mail() (so
  * nothing is dispatched) and becomes its return value. We log each message to

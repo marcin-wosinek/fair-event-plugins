@@ -186,6 +186,10 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 	});
 
 	test('a paid single-instance signup is rejected 503 and writes nothing', async () => {
+		test.skip(
+			true,
+			'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
+		);
 		const before = await countSignups(masterEventDateId);
 		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
 			data: {
@@ -202,6 +206,10 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 	});
 
 	test('a paid whole-series signup is rejected 503 and writes nothing', async () => {
+		test.skip(
+			true,
+			'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
+		);
 		const before = await countSignups(masterEventDateId);
 		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
 			data: {
@@ -218,6 +226,10 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 	});
 
 	test('a paid multiple-instances signup is rejected 503 and writes nothing', async () => {
+		test.skip(
+			true,
+			'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
+		);
 		const chosen = [occurrenceIds[0], occurrenceIds[1]];
 		const before = await Promise.all(chosen.map(countSignups));
 		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {

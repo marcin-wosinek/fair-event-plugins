@@ -39,6 +39,7 @@ test.describe('EventDatesController — siblings', () => {
 			headers: adminHeaders,
 			data: {
 				event_id: eventPostId,
+				title: `Siblings test ${Date.now()}`,
 				start_datetime: '2036-04-01 10:00:00',
 				end_datetime: '2036-04-01 12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
