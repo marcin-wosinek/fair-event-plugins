@@ -1,0 +1,141 @@
+name: API Tests
+
+permissions:
+    contents: read
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - '**/src/API/**'
+            - '**/playwright.config.js'
+            - '.wp-env.json'
+            - 'package.json'
+            - 'e2e/mu-plugins/**'
+            - '.github/workflows/api-tests.yml'
+    pull_request:
+        branches: [main]
+        paths:
+            - '**/src/API/**'
+            - '**/playwright.config.js'
+            - '.wp-env.json'
+            - 'package.json'
+            - 'e2e/mu-plugins/**'
+            - '.github/workflows/api-tests.yml'
+
+jobs:
+    api-tests:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@fcafdd6392932010c2bd5094439b8e33be2a8a09 # 2.37.0
+              with:
+                  php-version: '8.3'
+                  extensions: mbstring, intl, zip
+                  coverage: none
+
+            - name: Cache Composer packages
+              uses: actions/cache@v5
+              with:
+                  path: |
+                      ./fair-payments-connector/vendor
+                      ./fair-events/vendor
+                      ./fair-events-experimental/vendor
+                      ./fair-platform/vendor
+                      ./fair-audience/vendor
+                      ./fair-audience-experimental/vendor
+                      ./fair-form/vendor
+                      ./fair-finance/vendor
+                      ./fair-payments-connector-experimental/vendor
+                      ./vendor
+                  key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-php-
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '24'
+
+            - name: Cache node_modules
+              id: npm-cache
+              uses: actions/cache@v5
+              with:
+                  path: |
+                      ./node_modules
+                      ./fair-events/node_modules
+                      ./fair-events-experimental/node_modules
+                      ./fair-payments-connector/node_modules
+                      ./fair-platform/node_modules
+                      ./fair-audience/node_modules
+                      ./fair-audience-experimental/node_modules
+                      ./fair-form/node_modules
+                      ./fair-finance/node_modules
+                      ./fair-payments-connector-experimental/node_modules
+                      ./fair-events-shared/node_modules
+                      ./fair-timetable/node_modules
+                  key: ${{ runner.os }}-node-v2-${{ hashFiles('package-lock.json') }}
+
+            - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: HUSKY=0 npm ci --prefer-offline
+
+            - name: Install WP-CLI
+              run: |
+                  curl -L -o wp-cli.phar https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
+                  echo "be928f6b8ca1e8dfb9d2f4b75a13aa4aee0896f8a9a0a1c45cd5d2c98605e6172e6d014dda2e27f88c98befc16c040cbb2bd1bfa121510ea5cdf5f6a30fe8832  wp-cli.phar" | sha512sum -c -
+                  chmod +x wp-cli.phar
+                  sudo mv wp-cli.phar /usr/local/bin/wp
+                  wp --info
+
+            - name: Read PHP version from wp-env config
+              id: wp-env-config
+              run: echo "php_version=$(jq -r '.phpVersion' .wp-env.json)" >> $GITHUB_OUTPUT
+
+            - name: Cache Docker images
+              id: docker-cache
+              uses: actions/cache@v5
+              with:
+                  path: /tmp/docker-images.tar
+                  key: ${{ runner.os }}-docker-v2-${{ hashFiles('.wp-env.json') }}
+                  restore-keys: ${{ runner.os }}-docker-v2-
+
+            - name: Load cached Docker images
+              if: steps.docker-cache.outputs.cache-hit == 'true'
+              run: docker load -i /tmp/docker-images.tar
+
+            - name: Pull Docker images
+              if: steps.docker-cache.outputs.cache-hit != 'true'
+              run: |
+                  docker pull wordpress:php${{ steps.wp-env-config.outputs.php_version }}
+                  docker pull wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }}
+                  docker pull mariadb:lts
+                  docker pull phpmyadmin
+
+            - name: Save Docker images to cache
+              if: steps.docker-cache.outputs.cache-hit != 'true'
+              run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts phpmyadmin -o /tmp/docker-images.tar
+
+            - name: Boot isolated WordPress env
+              run: npm run test:e2e:setup
+
+            - name: Run API tests
+              run: WP_BASE_URL=http://localhost:8889 WP_ADMIN_PASS=password npm run test:api
+
+            - name: Tear down WordPress env
+              if: always()
+              run: npm run test:e2e:teardown
+
+            - name: Upload Playwright report
+              if: failure()
+              uses: actions/upload-artifact@v6
+              with:
+                  name: api-playwright-report
+                  path: |
+                      */playwright-report/
+                      */test-results/
+                  retention-days: 7
+                  if-no-files-found: ignore

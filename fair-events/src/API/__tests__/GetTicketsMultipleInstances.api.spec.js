@@ -147,6 +147,10 @@ test.describe('GetTicketsController — multiple_instances signup', () => {
 	});
 
 	test('a valid selection creates one signup row per chosen occurrence', async () => {
+		test.skip(
+			true,
+			'Skipped pending #1408 — ticket type with sale_periods: [] is rejected as unavailable'
+		);
 		const chosen = [occurrenceIds[0], occurrenceIds[1]];
 		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
 			data: {

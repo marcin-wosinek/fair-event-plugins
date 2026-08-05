@@ -36,6 +36,10 @@ test.describe('ConnectionController', () => {
 		});
 
 		test('returns a graceful error for an authenticated admin when not connected', async () => {
+			test.skip(
+				true,
+				'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
+			);
 			// This suite runs before any spec establishes an OAuth connection, so
 			// the site is expected to be disconnected here. The live-Mollie
 			// success path can't be exercised in CI (no real Mollie creds).

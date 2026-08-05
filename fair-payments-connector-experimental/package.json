@@ -23,6 +23,7 @@
 		"test": "npm-run-all test:js test:php",
 		"test:js": "wp-scripts test-unit-js --config jest.config.js",
 		"test:php": "vendor/bin/phpunit",
+		"test:api": "playwright test src/API/__tests__/",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-payments-connector-experimental svn",
 		"svn:copy": "cp -r readme.txt fair-payments-connector-experimental.php composer* languages CHANGELOG.md svn/trunk"
 	},

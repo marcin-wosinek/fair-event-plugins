@@ -150,6 +150,34 @@ fair-{plugin-name}/
 -   Tests against running WordPress (localhost:8080)
 -   No PHP test suite setup required
 
+#### CI
+
+`.github/workflows/api-tests.yml` runs on PRs touching `**/src/API/**`,
+`**/playwright.config.js`, `.wp-env.json`, `package.json`, or `e2e/mu-plugins/**`.
+It boots the same isolated `@wordpress/env` `tests` instance as the E2E job
+(`npm run test:e2e:setup`, port **8889**) and runs `npm run test:api` from the
+repo root, which fans out to every workspace's `test:api` script. It reuses
+the E2E job's provisioning but skips the Chromium install/cache step — API
+specs authenticate via `request.newContext()` and never open a browser page.
+
+Specs authenticate with Basic Auth using the real admin login password
+(`WP_ADMIN_USER`/`WP_ADMIN_PASSWORD`, default `admin`/`password`; one spec
+reads `WP_ADMIN_PASS` instead — the CI job sets both). Plain WordPress 401s
+that; the `e2e/mu-plugins/fair-e2e-basic-auth.php` mu-plugin (a vendored copy
+of [WP-API/Basic-Auth](https://github.com/WP-API/Basic-Auth), test-only,
+mounted only into the wp-env `tests` instance) adds the `determine_current_user`
+handler that accepts it.
+
+To reproduce a CI API failure locally:
+
+```bash
+npm run test:e2e:setup      # boot the tests instance on :8889 (shared with E2E)
+WP_BASE_URL=http://localhost:8889 WP_ADMIN_PASS=password npm run test:api
+npm run test:e2e:teardown
+```
+
+Or scope to one plugin: `WP_BASE_URL=http://localhost:8889 WP_ADMIN_PASS=password npm run test:api --workspace=fair-events`.
+
 ### E2E Tests
 
 **Purpose**: Test complete user workflows through the browser

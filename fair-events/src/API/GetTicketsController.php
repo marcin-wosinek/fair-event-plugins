@@ -1620,10 +1620,26 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @return bool
 	 */
 	private function is_rate_limited( $email ) {
-		$ip_key   = 'fair_events_get_tickets_rl_ip_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		$ip_count = (int) get_transient( $ip_key );
-		if ( $ip_count >= self::RATE_LIMIT_MAX_PER_IP ) {
-			return true;
+		/**
+		 * Filters whether the per-IP portion of get-tickets rate limiting is
+		 * bypassed. The per-email limit below still applies.
+		 *
+		 * Test-only escape hatch: a CI/local test run drives far more than
+		 * RATE_LIMIT_MAX_PER_IP real signups through this public endpoint
+		 * from a single IP within the rate limit window (each using its own
+		 * email), which would otherwise fail unrelated later specs with
+		 * 429s. Never hooked in production.
+		 *
+		 * @param bool $bypass Whether to bypass the per-IP limit. Default false.
+		 */
+		$bypass_ip_limit = apply_filters( 'fair_events_get_tickets_rate_limit_bypass_ip', false );
+
+		if ( ! $bypass_ip_limit ) {
+			$ip_key   = 'fair_events_get_tickets_rl_ip_' . md5( $_SERVER['REMOTE_ADDR'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$ip_count = (int) get_transient( $ip_key );
+			if ( $ip_count >= self::RATE_LIMIT_MAX_PER_IP ) {
+				return true;
+			}
 		}
 
 		if ( '' !== $email ) {
