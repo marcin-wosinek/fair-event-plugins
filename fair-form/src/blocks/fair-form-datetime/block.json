@@ -1,0 +1,41 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-audience/fair-form-datetime",
+	"version": "1.0.0",
+	"title": "Date & Time Question",
+	"category": "widgets",
+	"icon": "clock",
+	"description": "A date-and-time input question using the browser's native date/time picker for Fair Form",
+	"keywords": ["question", "date", "time", "datetime", "input"],
+	"textdomain": "fair-audience",
+	"ancestor": [
+		"fair-audience/fair-form",
+		"fair-audience/event-signup",
+		"fair-events/event-signup"
+	],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"questionText": {
+			"type": "string",
+			"default": ""
+		},
+		"questionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"placeholder": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php",
+	"style": "file:./style-editor.css"
+}

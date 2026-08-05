@@ -16,6 +16,7 @@ import {
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 import { formatDate } from '../utils/format-date.js';
+import { formatSiteLocalDatetime, formatDateOnly } from 'fair-events-shared';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -290,6 +291,24 @@ export default function QuestionnaireResponses() {
 							)}
 						</span>
 					);
+				},
+			}),
+			...(col.type === 'date' && {
+				render: ({ item }) => {
+					const answer = (item.answers || []).find(
+						(a) => a.question_key === col.key
+					);
+					return formatDateOnly(answer?.answer_value) || '';
+				},
+			}),
+			...(col.type === 'datetime' && {
+				render: ({ item }) => {
+					const answer = (item.answers || []).find(
+						(a) => a.question_key === col.key
+					);
+					return answer?.answer_value
+						? formatSiteLocalDatetime(answer.answer_value)
+						: '';
 				},
 			}),
 		}));

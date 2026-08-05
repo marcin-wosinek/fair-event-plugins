@@ -142,6 +142,16 @@ if ( 'audience-ticket-scopes' === $flavour ) {
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
+} elseif ( isset( $overrides['block'] ) && 'unified-with-date-fields' === $overrides['block'] ) {
+	$block_content = implode(
+		"\n",
+		array(
+			'<!-- wp:fair-events/event-signup -->',
+			'<!-- wp:fair-audience/fair-form-date {"questionKey":"visit_date","questionText":"Visit date"} /-->',
+			'<!-- wp:fair-audience/fair-form-datetime {"questionKey":"appointment_slot","questionText":"Appointment slot"} /-->',
+			'<!-- /wp:fair-events/event-signup -->',
+		)
+	);
 } elseif ( 'address' === $flavour ) {
 	// event-info block (renders the address/venue) + a calendar button — no
 	// signup block, since this flavour never touches the purchase path.
