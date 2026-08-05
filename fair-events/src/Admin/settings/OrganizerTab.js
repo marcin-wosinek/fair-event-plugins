@@ -12,6 +12,7 @@ import {
 	CardBody,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
+	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 
 /**
@@ -87,6 +88,7 @@ export default function OrganizerTab({ onNotice }) {
 	const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
+	const [removeLogoDialogOpen, setRemoveLogoDialogOpen] = useState(false);
 
 	const applySettings = (settings) => {
 		const { defaults: siteDefaults, ...organizerData } = settings;
@@ -302,7 +304,7 @@ export default function OrganizerTab({ onNotice }) {
 										variant="tertiary"
 										isDestructive
 										onClick={() =>
-											updateField('logo_id', 0)
+											setRemoveLogoDialogOpen(true)
 										}
 										disabled={isSaving}
 									>
@@ -495,6 +497,18 @@ export default function OrganizerTab({ onNotice }) {
 					)}
 				</div>
 			</VStack>
+			<ConfirmDialog
+				isOpen={removeLogoDialogOpen}
+				onConfirm={() => {
+					updateField('logo_id', 0);
+					setRemoveLogoDialogOpen(false);
+				}}
+				onCancel={() => setRemoveLogoDialogOpen(false)}
+				confirmButtonText={__('Remove logo', 'fair-events')}
+				cancelButtonText={__('Cancel', 'fair-events')}
+			>
+				{__('Remove organizer logo?', 'fair-events')}
+			</ConfirmDialog>
 		</form>
 	);
 }
