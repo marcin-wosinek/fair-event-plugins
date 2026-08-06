@@ -98,10 +98,6 @@ describe('WeeklyDigest — loading', () => {
 		expect(
 			screen.getByText('The digest has not run yet.')
 		).toBeInTheDocument();
-
-		// SelectControl's 36px default size is deprecated as of WP 6.8;
-		// pre-existing in this component, not part of this change.
-		expect(console).toHaveWarned();
 	});
 });
 

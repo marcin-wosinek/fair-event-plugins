@@ -101,9 +101,6 @@ describe('QuickEventModal', () => {
 		expect(
 			screen.getByRole('button', { name: 'More options' })
 		).toBeInTheDocument();
-
-		// The always-visible Venue SelectControl emits a 40px-default-size notice.
-		expect(console).toHaveWarned();
 	});
 
 	it('sends selected category IDs on create', async () => {
@@ -125,9 +122,6 @@ describe('QuickEventModal', () => {
 				opts.method === 'POST'
 		);
 		expect(createCall[0].data.categories).toEqual([1]);
-
-		// FormTokenField/SelectControl emit an expected 40px-default-size notice.
-		expect(console).toHaveWarned();
 	});
 
 	it('sends link_type external with the URL', async () => {
@@ -193,8 +187,6 @@ describe('QuickEventModal', () => {
 				opts.method === 'POST'
 		);
 		expect(createCall[0].data.rrule).toBeTruthy();
-
-		expect(console).toHaveWarned();
 	});
 
 	it('switches to the From URL tab and shows the lookup field', async () => {

@@ -160,10 +160,6 @@ describe('AllParticipants — header action', () => {
 
 		fireEvent.click(addButton);
 		expect(await screen.findByRole('dialog')).toBeInTheDocument();
-
-		// ParticipantEditModal's SelectControl pre-dates the WP 6.8 40px
-		// default-size opt-in; not part of this change, just acknowledged here.
-		expect(console).toHaveWarned();
 	});
 });
 

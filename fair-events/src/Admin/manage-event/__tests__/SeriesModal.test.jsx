@@ -90,10 +90,6 @@ it('Regular tab shows a display-only calendar and a compact dates summary', asyn
 	// used by the Irregular tab's picker).
 	expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
 	expect(screen.queryAllByRole('button', { pressed: false })).toHaveLength(0);
-
-	// RecurrenceControl's SelectControl/NumberControl emit an unrelated
-	// @wordpress/components 36px-default-size deprecation notice on mount.
-	expect(console).toHaveWarned();
 });
 
 it('seeds the calendar selection from existing generated occurrences when editing a manual series', async () => {

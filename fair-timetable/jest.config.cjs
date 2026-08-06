@@ -2,10 +2,10 @@ module.exports = {
   testEnvironment: "node",
   testMatch: ["<rootDir>/__tests__/**/*.test.js"],
   transformIgnorePatterns: [
-    "/node_modules/(?!(uuid|@wordpress/components)/)",
+    "/node_modules/(?!(uuid|@wordpress/components|@wordpress/dataviews|@wordpress/ui|@wordpress/theme)/)",
   ],
   transform: {
-    "^.+\\.js$": "babel-jest",
+    "^.+\\.m?js$": "babel-jest",
   },
   moduleNameMapper: {
     "^@utils/(.*)$": "<rootDir>/src/utils/$1",

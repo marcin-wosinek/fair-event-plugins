@@ -59,9 +59,5 @@ describe('TransactionsApp — entry column', () => {
 				)
 			);
 		expect(staleLink).toBeUndefined();
-
-		// Pre-existing SelectControl default-size deprecation warning, not
-		// under test here.
-		expect(console).toHaveWarned();
 	});
 });

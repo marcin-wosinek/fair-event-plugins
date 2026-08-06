@@ -770,7 +770,7 @@ export default function EventAudience({
 						'>': '&gt;',
 						'"': '&quot;',
 						"'": '&#39;',
-					}[c])
+					})[c]
 			);
 
 		const headerTitle = eventTitle
@@ -834,8 +834,8 @@ export default function EventAudience({
 <head>
 	<meta charset="utf-8" />
 	<title>${escape(headerTitle)} — ${escape(
-			__('Participant list', 'fair-audience')
-		)}</title>
+		__('Participant list', 'fair-audience')
+	)}</title>
 	<style>
 		* { box-sizing: border-box; }
 		body {
