@@ -176,19 +176,6 @@ deferred loading because the event may already have fired. Example:
     service, then delete it. **Use absolute paths — never `cd … && cp/rm`**, which
     forces an approval prompt every run.
 
-## Shared Package: fair-events-shared
-
-Private workspace package of shared JS utilities used across the Fair Event
-plugins. To consume: add
-`"fair-events-shared": "*"` to the plugin's `dependencies`, export the utility
-from `fair-events-shared/src/index.js`, and import it
-`from 'fair-events-shared'`. Uses ES modules; tested with Jest + Babel.
-
 ## Adding a New Plugin
 
-Follow [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md). Root files to update:
-`package.json` (workspaces + scripts),
-`.github/workflows/continuous-integration.yml` (vendor cache),
-`.github/workflows/deploy-to-environment.yml` (deploy list, if applicable),
-`compose.yml` (volume mounts), `scripts/sync-wp-versions.js`,
-`scripts/sync-changelog.js`.
+Follow [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md).
