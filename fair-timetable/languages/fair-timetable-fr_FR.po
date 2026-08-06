@@ -182,4 +182,3 @@ msgstr "Un bloc de calendrier pour afficher les événements programmés"
 #: src/Core/Plugin.php:98
 msgid "Translations"
 msgstr "Traductions"
-

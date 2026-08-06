@@ -674,20 +674,21 @@ msgstr "Tickets, Gruppenpreisgestaltung/Berechtigungsregeln. Erfordert fair-audi
 
 #: src/Models/Venue.php:396
 msgid "Enter both latitude and longitude, or leave both blank."
-msgstr ""
+msgstr "Geben Sie sowohl Breitengrad als auch Längengrad ein, oder lassen Sie beide leer."
 
 #: src/Models/Venue.php:404
 msgid "Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204."
-msgstr ""
+msgstr "Breitengrad und Längengrad müssen Zahlen sein, z. B. 39.4878023, -0.3613204."
 
 #: src/Models/Venue.php:412
 msgid "Latitude must be between -90 and 90."
-msgstr ""
+msgstr "Der Breitengrad muss zwischen -90 und 90 liegen."
 
 #: src/Models/Venue.php:420
 msgid "Longitude must be between -180 and 180."
-msgstr ""
+msgstr "Der Längengrad muss zwischen -180 und 180 liegen."
 
 #: src/Models/Venue.php:428
 msgid "Latitude and longitude must be 20 characters or fewer."
-msgstr ""
+msgstr "Breitengrad und Längengrad dürfen maximal 20 Zeichen lang sein."
+

@@ -536,4 +536,3 @@ msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de 
 #: src/Core/Plugin.php:152
 msgid "Translations"
 msgstr "Traducciones"
-

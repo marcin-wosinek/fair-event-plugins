@@ -182,4 +182,3 @@ msgstr "Ein Zeitplantabellen-Block zur Anzeige geplanter Ereignisse"
 #: src/Core/Plugin.php:98
 msgid "Translations"
 msgstr "Übersetzungen"
-

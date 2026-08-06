@@ -316,7 +316,7 @@ msgstr "Szybkie pytanie o %s"
 #: src/Services/EmailService.php:2982
 #: src/Services/EmailService.php:3076
 #: src/Admin/event-participants/EventParticipants.js:1192
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s,"
 msgstr "Cześć %s,"
 
@@ -574,7 +574,7 @@ msgstr "Zdjęcia z %s są gotowe!"
 #. translators: %s: event title
 #: src/Services/EmailService.php:455
 #: src/Admin/event-participants/EventParticipants.js:1204
-#, php-format,js-format
+#, php-format, js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "Zdjęcia z %s są już dostępne do przeglądania i polubienia!"
 
@@ -987,7 +987,7 @@ msgstr "Cześć %s! Kliknij poniższy przycisk, aby zapisać się na to wydarzen
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:1220
 #: src/blocks/event-signup/frontend.js:1671
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "Cześć %s! Możesz zapisać się na to wydarzenie."
 
@@ -2298,7 +2298,7 @@ msgstr "Ten typ biletu jest wyprzedany. Proszę wybrać inną opcję."
 #: src/blocks/event-signup/render.php:821
 #: src/Services/SignupActivities.php:210
 #: src/blocks/event-signup/frontend.js:391
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Proszę wybrać co najmniej %d aktywność do zarejestowania."
@@ -2874,7 +2874,7 @@ msgstr "Jedno z wybranych wystąpień nie jest ważne dla tego biletu."
 #. translators: %d: minimum number of occurrences required
 #: src/API/EventSignupController.php:849
 #: src/blocks/event-signup/frontend.js:311
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Proszę wybrać co najmniej %d wystąpienie."
@@ -3667,7 +3667,6 @@ msgstr "Przywrócono do minimalnego: subskrypcja marketingowa nie została potwi
 msgid "Opted out of the weekly summary."
 msgstr "Zrezygnowano z cotygodniowego podsumowania."
 
-#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Services/WeeklyDigestRenderer.php:165
 #: src/Services/WeeklyDigestRenderer.php:175
@@ -3762,28 +3761,29 @@ msgstr "\"%s\" jest pełne."
 #: src/blocks/event-signup/render.php:768
 #, php-format
 msgid "%1$s off · %2$s"
-msgstr ""
+msgstr "%1$s rabatu · %2$s"
 
 #: src/Services/EmailService.php:2330
 msgid "Event date:"
-msgstr ""
+msgstr "Data wydarzenia:"
 
 #: src/Services/EmailService.php:2331
 msgid "Registration reference:"
-msgstr ""
+msgstr "Numer referencyjny rejestracji:"
 
 #: src/Services/EmailService.php:2332
 msgid "Ticket type:"
-msgstr ""
+msgstr "Typ biletu:"
 
 #: ../fair-events-shared/src/questionnaire.js:537
 msgid "Please enter a valid web address for: %s"
-msgstr ""
+msgstr "Wprowadź prawidłowy adres internetowy dla: %s"
 
 #: ../fair-events-shared/src/questionnaire.js:561
 msgid "Please enter a valid date for: %s"
-msgstr ""
+msgstr "Wprowadź prawidłową datę dla: %s"
 
 #: ../fair-events-shared/src/questionnaire.js:585
 msgid "Please enter a valid date and time for: %s"
-msgstr ""
+msgstr "Wprowadź prawidłową datę i godzinę dla: %s"
+

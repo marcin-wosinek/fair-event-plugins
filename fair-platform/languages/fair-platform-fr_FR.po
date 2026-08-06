@@ -536,4 +536,3 @@ msgstr "Charger les fichiers .mo/.json fournis avec l'extension au lieu de dépe
 #: src/Core/Plugin.php:152
 msgid "Translations"
 msgstr "Traductions"
-

@@ -182,4 +182,3 @@ msgstr "Un bloque de horario para mostrar eventos programados"
 #: src/Core/Plugin.php:98
 msgid "Translations"
 msgstr "Traducciones"
-

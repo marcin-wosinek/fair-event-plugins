@@ -14,28 +14,24 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "X-Domain: fair-payments-connector\n"
 
-#: src/Admin/AdminPages.php:50
 #: src/Admin/AdminPages.php:51
+#: src/Admin/AdminPages.php:52
 msgid "Transactions"
 msgstr "Transakcje"
 
-#: src/Admin/AdminPages.php:59
 #: src/Admin/AdminPages.php:60
-#: src/Admin/AdminPages.php:67
+#: src/Admin/AdminPages.php:61
+#: src/Admin/AdminPages.php:68
 #: src/Admin/transaction/TransactionPage.js:550
 msgid "Transaction Detail"
 msgstr "Szczegóły transakcji"
 
-#: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
+#: src/Admin/AdminPages.php:85
 msgid "Settings"
 msgstr "Ustawienia"
 
-#: src/Admin/MigrationNotice.php:67
-msgid "Please migrate to OAuth authentication."
-msgstr "Proszę przeprowadzić migrację do uwierzytelniania OAuth."
-
-#: src/Admin/MigrationNotice.php:69
+#: src/Admin/ApiKeyRemovedNotice.php:73
 #: src/Admin/settings/ConnectionTab.js:418
 msgid "Connect with Mollie"
 msgstr "Połącz się z Mollie"
@@ -60,8 +56,8 @@ msgstr "Test połączenia powiódł się. Token jest nadal ważny."
 msgid "Connection test failed: %s"
 msgstr "Test połączenia nie powiódł się: %s"
 
-#: src/API/PaymentEndpoint.php:428
-#: src/API/PaymentEndpoint.php:469
+#: src/API/PaymentEndpoint.php:447
+#: src/API/PaymentEndpoint.php:488
 #: src/API/TransactionAPI.php:165
 #: src/API/TransactionsController.php:271
 #: src/API/TransactionsController.php:291
@@ -70,16 +66,16 @@ msgstr "Test połączenia nie powiódł się: %s"
 msgid "Transaction not found."
 msgstr "Transakcja nie znaleziona."
 
-#: src/API/PaymentEndpoint.php:267
+#: src/API/PaymentEndpoint.php:286
 msgid "Mollie payment gateway is not configured. Please configure your API keys in settings."
 msgstr "Brama płatności Mollie nie jest skonfigurowana. Skonfiguruj klucze API w ustawieniach."
 
-#: src/API/PaymentEndpoint.php:287
+#: src/API/PaymentEndpoint.php:306
 msgid "Invalid payment amount."
 msgstr "Nieprawidłowa kwota płatności."
 
 #. translators: %s: amount and currency
-#: src/API/PaymentEndpoint.php:295
+#: src/API/PaymentEndpoint.php:314
 #, php-format
 msgid "Payment of %1$s %2$s"
 msgstr "Płatność %1$s %2$s"
@@ -165,7 +161,7 @@ msgid "Thank you! Your payment is being processed."
 msgstr "Dziękujemy! Twoja płatność jest przetwarzana."
 
 #: src/blocks/simple-payment/render.php:101
-#: src/blocks/simple-payment/index.js:107
+#: src/blocks/simple-payment/index.js:155
 msgid "Pay Now"
 msgstr "Zapłać teraz"
 
@@ -187,65 +183,53 @@ msgstr "Płatność została już zainicjowana dla tej transakcji. Utwórz nową
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr "Status transakcji musi być \"draft\" aby zainicjować płatność. Obecny status: %s"
 
-#: src/Payment/MolliePaymentHandler.php:67
-msgid "Mollie API key is not configured."
-msgstr "Klucz API Mollie nie jest skonfigurowany."
-
-#: src/Payment/MolliePaymentHandler.php:86
+#: src/Payment/MolliePaymentHandler.php:59
 msgid "Mollie is not connected. Please connect your Mollie account in settings."
 msgstr "Mollie nie jest połączony. Proszę połączyć swoje konto Mollie w ustawieniach."
 
-#: src/Payment/MolliePaymentHandler.php:287
+#: src/Payment/MolliePaymentHandler.php:260
 msgid "Payment"
 msgstr "Płatność"
 
-#: src/Payment/MolliePaymentHandler.php:320
+#: src/Payment/MolliePaymentHandler.php:293
 msgid "Application fee"
 msgstr "Opłata aplikacji"
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:482
+#: src/Payment/MolliePaymentHandler.php:455
 #, php-format
 msgid "Failed to retrieve payment: %s"
 msgstr "Nie udało się pobrać płatności: %s"
 
 #: src/Settings/Settings.php:45
-msgid "Mollie Test API Key"
-msgstr "Testowy klucz API Mollie"
-
-#: src/Settings/Settings.php:63
-msgid "Mollie Live API Key"
-msgstr "Klucz API Mollie na żywo"
-
-#: src/Settings/Settings.php:81
 msgid "Payment mode (test or live)"
 msgstr "Tryb płatności (test lub na żywo)"
 
-#: src/Settings/Settings.php:94
+#: src/Settings/Settings.php:58
 msgid "Mollie Organization ID"
 msgstr "ID organizacji Mollie"
 
-#: src/Settings/Settings.php:110
+#: src/Settings/Settings.php:74
 msgid "Mollie OAuth Access Token"
 msgstr "Token dostępu OAuth Mollie"
 
-#: src/Settings/Settings.php:122
+#: src/Settings/Settings.php:86
 msgid "Mollie OAuth Refresh Token"
 msgstr "Token odświeżania OAuth Mollie"
 
-#: src/Settings/Settings.php:134
+#: src/Settings/Settings.php:98
 msgid "Mollie OAuth Token Expiration (Unix timestamp)"
 msgstr "Wygaśnięcie tokenu OAuth Mollie (znacznik czasu Unix)"
 
-#: src/Settings/Settings.php:152
+#: src/Settings/Settings.php:116
 msgid "Unique Site Identifier for OAuth"
 msgstr "Unikalny identyfikator witryny dla OAuth"
 
-#: src/Settings/Settings.php:170
+#: src/Settings/Settings.php:134
 msgid "Mollie OAuth Connection Status"
 msgstr "Status połączenia OAuth Mollie"
 
-#: src/Settings/Settings.php:188
+#: src/Settings/Settings.php:152
 msgid "Mollie Profile ID (cached)"
 msgstr "ID profilu Mollie (w pamięci podręcznej)"
 
@@ -283,7 +267,7 @@ msgstr "Wydarzenie"
 
 #: src/Admin/transaction/TransactionPage.js:660
 #: src/Admin/transactions/TransactionsApp.js:461
-#: src/blocks/simple-payment/index.js:67
+#: src/blocks/simple-payment/index.js:115
 msgid "Amount"
 msgstr "Kwota"
 
@@ -601,20 +585,20 @@ msgstr "Nie znaleziono transakcji."
 msgid "ID"
 msgstr "ID"
 
-#: src/blocks/simple-payment/index.js:56
+#: src/blocks/simple-payment/index.js:96
 msgid "Simple Payment Block"
 msgstr "Prosty blok płatności"
 
 #: src/Admin/settings/SettingsApp.js:193
-#: src/blocks/simple-payment/index.js:75
+#: src/blocks/simple-payment/index.js:123
 msgid "Currency"
 msgstr "Waluta"
 
-#: src/blocks/simple-payment/index.js:80
+#: src/blocks/simple-payment/index.js:128
 msgid "Description (optional)"
 msgstr "Opis (opcjonalnie)"
 
-#: src/blocks/simple-payment/index.js:88
+#: src/blocks/simple-payment/index.js:136
 msgid "Optional description for the payment"
 msgstr "Opcjonalny opis płatności"
 
@@ -665,7 +649,7 @@ msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
 msgstr "Zaimportowano %1$d nowych, zaktualizowano %2$d, pominięto %3$d transakcja(e)."
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:510
+#: src/Payment/MolliePaymentHandler.php:483
 #, php-format
 msgid "Failed to list balance transactions: %s"
 msgstr "Nie udało się wyświetlić transakcji salda: %s"
@@ -720,11 +704,11 @@ msgstr "Brak pól do aktualizacji."
 msgid "Failed to update transaction."
 msgstr "Nie udało się zaktualizować transakcji."
 
-#: src/Settings/Settings.php:201
+#: src/Settings/Settings.php:165
 msgid "Disable bank transfer when close to the key date of the sale"
 msgstr "Wyłącz transfer bankowy w pobliżu kluczowej daty sprzedaży"
 
-#: src/Settings/Settings.php:214
+#: src/Settings/Settings.php:178
 msgid "Working-day threshold for disabling bank transfer"
 msgstr "Próg dni roboczych dla wyłączenia transferu bankowego"
 
@@ -896,8 +880,8 @@ msgstr "Synchronizowanie opłat Mollie: %1$d / %2$d (zaktualizowano: %3$d, nie p
 
 #. Plugin Name of the plugin
 #: fair-payments-connector.php
-#: src/Admin/AdminPages.php:38
 #: src/Admin/AdminPages.php:39
+#: src/Admin/AdminPages.php:40
 #: src/Core/Plugin.php:102
 msgid "Fair Payments Connector"
 msgstr ""
@@ -917,19 +901,19 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:72
 #: src/Admin/AdminPages.php:73
+#: src/Admin/AdminPages.php:74
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:103
 msgid "Fee Dashboard"
 msgstr "Pulpit opłat"
 
 #. translators: %s: link to settings page
-#: src/Admin/AdminPages.php:164
+#: src/Admin/AdminPages.php:165
 #, php-format
 msgid "Fair Payment is in <strong>Test mode</strong> — no real payments are being processed. <a href=\"%s\">Switch to Live mode</a>."
 msgstr "Fair Payment jest w <strong>trybie testowym</strong> — nie są przetwarzane rzeczywiste płatności. <a href=\"%s\">Przełącz na tryb Live</a>."
 
-#: src/Admin/MigrationNotice.php:66
+#: src/Admin/ApiKeyRemovedNotice.php:70
 msgid "Fair Payments Connector:"
 msgstr "Fair Payments Connector:"
 
@@ -950,7 +934,7 @@ msgstr "Tłumaczenia w pakiecie"
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Załaduj pliki .mo/.json dostarczone z wtyczką zamiast polegać na pakietach językowych WordPress.org. Przydatne, gdy lokalizacja jest poniżej progu 90% na translate.wordpress.org lub dla ciągów w trakcie opracowania."
 
-#: src/Settings/Settings.php:250
+#: src/Settings/Settings.php:214
 msgid "Per-bundle feature toggles"
 msgstr "Przełączniki funkcji dla każdego pakietu"
 
@@ -991,12 +975,12 @@ msgid "Fair Payments Connector Settings"
 msgstr "Ustawienia Fair Payments Connector"
 
 #. translators: %s: link to settings page
-#: src/Admin/AdminPages.php:167
+#: src/Admin/AdminPages.php:168
 #, php-format
 msgid "Fair Payment is <strong>not set up</strong> — no payments can be processed yet. <a href=\"%s\">Set up Mollie</a>."
 msgstr "Fair Payment nie jest <strong>skonfigurowany</strong> — nie można jeszcze przetwarzać płatności. <a href=\"%s\">Skonfiguruj Mollie</a>."
 
-#: src/Admin/AdminPages.php:214
+#: src/Admin/AdminPages.php:202
 msgid "Set up"
 msgstr "Skonfiguruj"
 
@@ -1004,17 +988,17 @@ msgstr "Skonfiguruj"
 msgid "Invalid or expired OAuth state. Please try connecting again."
 msgstr "Nieprawidłowy lub wygasły stan OAuth. Spróbuj połączyć się ponownie."
 
-#: src/API/PaymentEndpoint.php:183
+#: src/API/PaymentEndpoint.php:189
 msgid "Invalid request."
 msgstr "Nieprawidłowe żądanie."
 
-#: src/API/PaymentEndpoint.php:201
-#: src/API/PaymentEndpoint.php:211
-#: src/API/PaymentEndpoint.php:222
+#: src/API/PaymentEndpoint.php:207
+#: src/API/PaymentEndpoint.php:217
+#: src/API/PaymentEndpoint.php:228
 msgid "Block not found."
 msgstr "Blok nie znaleziony."
 
-#: src/API/PaymentEndpoint.php:233
+#: src/API/PaymentEndpoint.php:252
 msgid "Amount does not match block configuration."
 msgstr "Kwota nie odpowiada konfiguracji bloku."
 
@@ -1030,7 +1014,7 @@ msgstr "Twoja płatność nie została ukończona. Spróbuj ponownie."
 msgid "Try Again"
 msgstr "Spróbuj ponownie"
 
-#: src/Settings/Settings.php:227
+#: src/Settings/Settings.php:191
 msgid "Default currency for all transactions"
 msgstr "Domyślna waluta dla wszystkich transakcji"
 
@@ -1087,12 +1071,12 @@ msgstr "Płatności Mollie i księgowość dla WordPress: blok płatności, tran
 msgid "Test payment (Fair Payments Connector settings)"
 msgstr "Testowa płatność (ustawienia Fair Payments Connector)"
 
-#: src/Payment/MolliePaymentHandler.php:229
+#: src/Payment/MolliePaymentHandler.php:202
 msgid "Failed to load Mollie connection overview: Mollie profile is not configured."
 msgstr "Nie udało się załadować przeglądu połączenia Mollie: profil Mollie nie jest skonfigurowany."
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:247
+#: src/Payment/MolliePaymentHandler.php:220
 #, php-format
 msgid "Failed to load Mollie connection overview: %s"
 msgstr "Nie udało się załadować przeglądu połączenia Mollie: %s"
@@ -1193,7 +1177,19 @@ msgstr "Najpierw połącz Mollie, aby uruchomić płatność testową."
 msgid "Translations"
 msgstr "Tłumaczenia"
 
-#: src/blocks/simple-payment/index.js:60
+#: src/blocks/simple-payment/index.js:100
 msgid "This block is missing an identifier and payments will fail until the post is saved. Save or update the post now."
 msgstr "Ten blok nie ma identyfikatora i płatności będą nieudane, dopóki wpis nie zostanie zapisany. Zapisz lub zaktualizuj wpis teraz."
+
+#: src/Admin/ApiKeyRemovedNotice.php:71
+msgid "Your stored Mollie API key was removed. Complete the guided connection to keep accepting payments."
+msgstr "Twój zapisany klucz API Mollie został usunięty. Ukończ kierowane połączenie, aby nadal akceptować płatności."
+
+#: src/API/PaymentEndpoint.php:240
+msgid "This payment option is misconfigured. Please contact the site owner."
+msgstr "Ta opcja płatności jest błędnie skonfigurowana. Skontaktuj się z właścicielem witryny."
+
+#: src/blocks/simple-payment/index.js:108
+msgid "This block shared its identifier with another Simple Payment block on this page, which could cause buyers to be charged the wrong price. A new identifier was assigned — save or update the post now."
+msgstr "Ten blok udostępnił swój identyfikator innemu blokowi Simple Payment na tej stronie, co mogło spowodować, że kupujący zostaną obciążeni nieprawidłową ceną. Przypisano nowy identyfikator – zapisz lub zaktualizuj wpis teraz."
 

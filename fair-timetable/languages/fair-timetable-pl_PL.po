@@ -182,4 +182,3 @@ msgstr "Blok tabeli czasowej do wyświetlania zaplanowanych zdarzeń"
 #: src/Core/Plugin.php:98
 msgid "Translations"
 msgstr "Tłumaczenia"
-

@@ -536,4 +536,3 @@ msgstr "Załaduj pliki .mo/.json dostarczane z wtyczką zamiast polegać na paki
 #: src/Core/Plugin.php:152
 msgid "Translations"
 msgstr "Tłumaczenia"
-

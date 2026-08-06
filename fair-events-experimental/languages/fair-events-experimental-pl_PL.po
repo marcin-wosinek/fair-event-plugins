@@ -674,20 +674,21 @@ msgstr "Bilety, zasady cenowe/uprawnień dla grup. Wymaga fair-audience."
 
 #: src/Models/Venue.php:396
 msgid "Enter both latitude and longitude, or leave both blank."
-msgstr ""
+msgstr "Wpisz zarówno szerokość jak i długość geograficzną, lub pozostaw oba pola puste."
 
 #: src/Models/Venue.php:404
 msgid "Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204."
-msgstr ""
+msgstr "Szerokość i długość geograficzna muszą być liczbami, np. 39.4878023, -0.3613204."
 
 #: src/Models/Venue.php:412
 msgid "Latitude must be between -90 and 90."
-msgstr ""
+msgstr "Szerokość geograficzna musi być między -90 a 90."
 
 #: src/Models/Venue.php:420
 msgid "Longitude must be between -180 and 180."
-msgstr ""
+msgstr "Długość geograficzna musi być między -180 a 180."
 
 #: src/Models/Venue.php:428
 msgid "Latitude and longitude must be 20 characters or fewer."
-msgstr ""
+msgstr "Szerokość i długość geograficzna muszą mieć 20 znaków lub mniej."
+

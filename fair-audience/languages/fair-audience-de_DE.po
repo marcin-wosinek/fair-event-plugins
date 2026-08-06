@@ -316,7 +316,7 @@ msgstr "Kurze Frage zu %s"
 #: src/Services/EmailService.php:2982
 #: src/Services/EmailService.php:3076
 #: src/Admin/event-participants/EventParticipants.js:1192
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s,"
 msgstr "Hallo %s,"
 
@@ -574,7 +574,7 @@ msgstr "Fotos von %s sind fertig!"
 #. translators: %s: event title
 #: src/Services/EmailService.php:455
 #: src/Admin/event-participants/EventParticipants.js:1204
-#, php-format,js-format
+#, php-format, js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "Die Fotos von %s sind jetzt für Sie zum Ansehen und Liken verfügbar!"
 
@@ -987,7 +987,7 @@ msgstr "Hallo %s! Klicken Sie auf die Schaltfläche unten, um sich für dieses E
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:1220
 #: src/blocks/event-signup/frontend.js:1671
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "Hallo %s! Sie können sich für dieses Ereignis anmelden."
 
@@ -2296,7 +2296,7 @@ msgstr "Dieser Tickettyp ist ausverkauft. Bitte wählen Sie eine andere Option."
 #: src/blocks/event-signup/render.php:821
 #: src/Services/SignupActivities.php:210
 #: src/blocks/event-signup/frontend.js:391
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Bitte wählen Sie mindestens %d Aktivität aus, um sich anzumelden."
@@ -2871,7 +2871,7 @@ msgstr "Eines der ausgewählten Vorkommen ist für dieses Ticket nicht gültig."
 #. translators: %d: minimum number of occurrences required
 #: src/API/EventSignupController.php:849
 #: src/blocks/event-signup/frontend.js:311
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Bitte wählen Sie mindestens %d Vorkommen aus."
@@ -3660,7 +3660,6 @@ msgstr "Auf minimal zurückgesetzt: Marketing-Abonnement wurde nicht innerhalb e
 msgid "Opted out of the weekly summary."
 msgstr "Wöchentliche Zusammenfassung abgemeldet."
 
-#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Services/WeeklyDigestRenderer.php:165
 #: src/Services/WeeklyDigestRenderer.php:175
@@ -3755,28 +3754,29 @@ msgstr "\"%s\" ist voll."
 #: src/blocks/event-signup/render.php:768
 #, php-format
 msgid "%1$s off · %2$s"
-msgstr ""
+msgstr "%1$s Rabatt · %2$s"
 
 #: src/Services/EmailService.php:2330
 msgid "Event date:"
-msgstr ""
+msgstr "Veranstaltungsdatum:"
 
 #: src/Services/EmailService.php:2331
 msgid "Registration reference:"
-msgstr ""
+msgstr "Registrierungsreferenz:"
 
 #: src/Services/EmailService.php:2332
 msgid "Ticket type:"
-msgstr ""
+msgstr "Tickettyp:"
 
 #: ../fair-events-shared/src/questionnaire.js:537
 msgid "Please enter a valid web address for: %s"
-msgstr ""
+msgstr "Bitte geben Sie eine gültige Webadresse ein für: %s"
 
 #: ../fair-events-shared/src/questionnaire.js:561
 msgid "Please enter a valid date for: %s"
-msgstr ""
+msgstr "Bitte geben Sie ein gültiges Datum ein für: %s"
 
 #: ../fair-events-shared/src/questionnaire.js:585
 msgid "Please enter a valid date and time for: %s"
-msgstr ""
+msgstr "Bitte geben Sie ein gültiges Datum und eine gültige Uhrzeit ein für: %s"
+

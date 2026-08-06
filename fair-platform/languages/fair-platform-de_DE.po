@@ -536,4 +536,3 @@ msgstr "Laden Sie .mo/.json-Dateien, die mit dem Plugin geliefert werden, anstat
 #: src/Core/Plugin.php:152
 msgid "Translations"
 msgstr "Übersetzungen"
-

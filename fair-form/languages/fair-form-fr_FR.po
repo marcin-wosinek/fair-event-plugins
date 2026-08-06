@@ -19,7 +19,7 @@ msgstr ""
 #: src/Admin/AdminHooks.php:130
 #: src/API/FairFormController.php:237
 #: src/Core/Plugin.php:124
-#: src/Services/QuestionnaireService.php:384
+#: src/Services/QuestionnaireService.php:501
 msgid "Fair Form"
 msgstr ""
 
@@ -91,7 +91,7 @@ msgstr "Hérité (pas d'ID de formulaire)"
 
 #: src/API/QuestionnaireResponsesController.php:446
 #: src/API/QuestionnaireResponsesController.php:526
-#: src/Admin/submission-detail/SubmissionDetail.js:222
+#: src/Admin/submission-detail/SubmissionDetail.js:248
 msgid "Submission not found."
 msgstr "Soumission introuvable."
 
@@ -114,26 +114,26 @@ msgstr "Réponse introuvable."
 msgid "Please enter a valid email address for: %s"
 msgstr "Veuillez entrer une adresse e-mail valide pour : %s"
 
-#: src/Services/QuestionnaireService.php:285
+#: src/Services/QuestionnaireService.php:402
 msgid "File upload failed. Please try again."
 msgstr "Échec du téléchargement du fichier. Veuillez réessayer."
 
-#: src/Services/QuestionnaireService.php:294
+#: src/Services/QuestionnaireService.php:411
 msgid "File is too large."
 msgstr "Le fichier est trop volumineux."
 
-#: src/Services/QuestionnaireService.php:304
+#: src/Services/QuestionnaireService.php:421
 msgid "File type not allowed."
 msgstr "Type de fichier non autorisé."
 
-#: src/Services/QuestionnaireService.php:338
+#: src/Services/QuestionnaireService.php:455
 msgid "Failed to save uploaded file."
 msgstr "Impossible d'enregistrer le fichier téléchargé."
 
 #: src/Admin/answers-overview/AnswersOverview.js:54
 #: src/Admin/form-answers/FormAnswers.js:126
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:141
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:681
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:146
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:726
 msgid "Name"
 msgstr "Nom"
 
@@ -168,7 +168,7 @@ msgstr "Page"
 #: src/Admin/answers-overview/AnswersOverview.js:113
 #: src/Admin/form-answers/FormAnswers.js:152
 #: src/Admin/form-answers/FormAnswers.js:272
-#: src/Admin/submission-detail/SubmissionDetail.js:310
+#: src/Admin/submission-detail/SubmissionDetail.js:336
 msgid "Event"
 msgstr "Événement"
 
@@ -179,21 +179,21 @@ msgstr "Formulaire"
 
 #: src/Admin/form-answers/FormAnswers.js:112
 #: src/Admin/form-answers/FormAnswers.js:197
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:304
-#: src/Admin/submission-detail/SubmissionDetail.js:113
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:349
+#: src/Admin/submission-detail/SubmissionDetail.js:139
 msgid "Error: "
 msgstr "Erreur : "
 
 #: src/Services/FormNotificationService.php:217
 #: src/Admin/form-answers/FormAnswers.js:140
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
-#: src/Admin/submission-detail/SubmissionDetail.js:302
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:164
+#: src/Admin/submission-detail/SubmissionDetail.js:328
 msgid "Email"
 msgstr "E-mail"
 
 #: src/Admin/form-answers/FormAnswers.js:158
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:233
-#: src/Admin/submission-detail/SubmissionDetail.js:306
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:238
+#: src/Admin/submission-detail/SubmissionDetail.js:332
 msgid "Date"
 msgstr "Date"
 
@@ -206,22 +206,22 @@ msgid "Failed to delete submission."
 msgstr "Impossible de supprimer la soumission."
 
 #: src/Admin/form-answers/FormAnswers.js:208
-#: src/Admin/submission-detail/SubmissionDetail.js:141
+#: src/Admin/submission-detail/SubmissionDetail.js:167
 msgid "Edit"
 msgstr "Modifier"
 
 #: src/Admin/form-answers/FormAnswers.js:215
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:333
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:378
 msgid "View"
 msgstr "Afficher"
 
 #: src/Admin/form-answers/FormAnswers.js:224
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:342
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:387
 msgid "Delete"
 msgstr "Supprimer"
 
 #: src/Admin/form-answers/FormAnswers.js:235
-#: src/Admin/submission-detail/SubmissionDetail.js:123
+#: src/Admin/submission-detail/SubmissionDetail.js:149
 msgid "— None —"
 msgstr "— Aucun —"
 
@@ -234,149 +234,149 @@ msgid "Edit Submission"
 msgstr "Modifier la soumission"
 
 #: src/Admin/form-answers/FormAnswers.js:289
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:619
-#: src/Admin/submission-detail/SubmissionDetail.js:165
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:664
+#: src/Admin/submission-detail/SubmissionDetail.js:191
 msgid "Cancel"
 msgstr "Annuler"
 
 #: src/Admin/form-answers/FormAnswers.js:297
-#: src/Admin/submission-detail/SubmissionDetail.js:162
+#: src/Admin/submission-detail/SubmissionDetail.js:188
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:165
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:170
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:170
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:180
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:175
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:185
 msgid "Pending"
 msgstr "En attente"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:171
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:183
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:176
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:188
 msgid "Confirmed"
 msgstr "Confirmé"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:190
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:195
 msgid "Mailing"
 msgstr "Envoi postal"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:195
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:205
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:200
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:210
 msgid "Minimal"
 msgstr "Minimal"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:196
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:208
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:201
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:213
 msgid "Marketing"
 msgstr "Marketing"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:215
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:220
 msgid "Subscribed Categories"
 msgstr "Catégories abonnées"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:306
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:351
 msgid "Failed to delete response."
 msgstr "Échec de la suppression de la réponse."
 
 #. translators: 1: number added, 2: number already in group
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:423
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:468
 #, js-format
 msgid "%1$d participant(s) added, %2$d already in group."
 msgstr "%1$d participant(s) ajouté(s), %2$d déjà dans le groupe."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:437
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:482
 msgid "Failed to add participants to group."
 msgstr "Échec de l'ajout des participants au groupe."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:563
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:608
 msgid "Questionnaire Responses"
 msgstr "Réponses au questionnaire"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:524
-#: src/Admin/submission-detail/SubmissionDetail.js:185
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:569
+#: src/Admin/submission-detail/SubmissionDetail.js:211
 msgid "Clipboard not available."
 msgstr "Presse-papiers non disponible."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:194
+#: src/Admin/submission-detail/SubmissionDetail.js:220
 msgid "Markdown copied to clipboard. Paste into Google Docs."
 msgstr "Markdown copié dans le presse-papiers. Collez dans Google Docs."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:539
-#: src/Admin/submission-detail/SubmissionDetail.js:203
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:584
+#: src/Admin/submission-detail/SubmissionDetail.js:229
 msgid "Failed to copy."
 msgstr "Échec de la copie."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:567
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:612
 msgid "Back to Answers Overview"
 msgstr "Retour à l'aperçu des réponses"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:575
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:620
 msgid "Event edit page"
 msgstr "Page d'édition de l'événement"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:583
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:628
 msgid "Post entry"
 msgstr "Entrée de publication"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:592
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:626
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:637
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:671
 msgid "Add participants to group"
 msgstr "Ajouter des participants au groupe"
 
 #. translators: %d: number of unique participants
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:633
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:678
 #, js-format
 msgid "%d unique participant(s) will be added."
 msgstr "%d participant(s) unique(s) sera/seront ajouté(s)."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:642
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:687
 msgid "Target group"
 msgstr "Groupe cible"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:646
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:691
 msgid "Use existing group"
 msgstr "Utiliser un groupe existant"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:650
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:695
 msgid "Create new group"
 msgstr "Créer un nouveau groupe"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:659
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:704
 msgid "Group"
 msgstr "Groupe"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:665
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:710
 msgid "Loading..."
 msgstr "Chargement..."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:666
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:711
 msgid "— Select a group —"
 msgstr "— Sélectionner un groupe —"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:684
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:729
 msgid "Enter group name..."
 msgstr "Entrez le nom du groupe..."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:690
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:735
 msgid "Description"
 msgstr "Description"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:693
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:738
 msgid "Enter group description (optional)..."
 msgstr "Entrez la description du groupe (facultatif)..."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:722
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:813
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:767
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:858
 msgid "Close"
 msgstr "Fermer"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:731
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:776
 msgid "Create group and add"
 msgstr "Créer le groupe et ajouter"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:732
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:777
 msgid "Add to group"
 msgstr "Ajouter au groupe"
 
@@ -384,106 +384,106 @@ msgstr "Ajouter au groupe"
 msgid "View file"
 msgstr "Afficher le fichier"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:114
+#: src/Admin/submission-detail/SubmissionDetail.js:140
 msgid "Failed to update."
 msgstr "Échec de la mise à jour."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:211
+#: src/Admin/submission-detail/SubmissionDetail.js:237
 msgid "No submission ID provided."
 msgstr "Aucun ID de soumission fourni."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:258
+#: src/Admin/submission-detail/SubmissionDetail.js:284
 msgid "Form Submission"
 msgstr "Soumission de formulaire"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:261
+#: src/Admin/submission-detail/SubmissionDetail.js:287
 msgid "Copy markdown"
 msgstr "Copier le markdown"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:277
+#: src/Admin/submission-detail/SubmissionDetail.js:303
 msgid "Submission Info"
 msgstr "Informations de soumission"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:287
+#: src/Admin/submission-detail/SubmissionDetail.js:313
 msgid "Submitted by"
 msgstr "Soumis par"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:323
+#: src/Admin/submission-detail/SubmissionDetail.js:349
 msgid "Answers"
 msgstr "Réponses"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:327
+#: src/Admin/submission-detail/SubmissionDetail.js:353
 msgid "No answers recorded."
 msgstr "Aucune réponse enregistrée."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:335
+#: src/Admin/submission-detail/SubmissionDetail.js:361
 msgid "Question"
 msgstr "Question"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:336
+#: src/Admin/submission-detail/SubmissionDetail.js:362
 msgid "Answer"
 msgstr "Réponse"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:57
+#: src/Admin/submission-detail/SubmissionDetail.js:75
 msgid "Yes"
 msgstr "Oui"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:58
+#: src/Admin/submission-detail/SubmissionDetail.js:76
 msgid "No"
 msgstr "Non"
 
 #. translators: %s: participant name, or the submission date when there is no participant
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:321
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:366
 #, js-format
 msgid "Delete the response from %s? This cannot be undone."
 msgstr "Supprimer la réponse de %s ? Cette action ne peut pas être annulée."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:533
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:578
 msgid "Message copied to clipboard."
 msgstr "Message copié dans le presse-papiers."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:600
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:740
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:645
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:785
 msgid "Export"
 msgstr "Exporter"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:618
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:663
 msgid "Delete response"
 msgstr "Supprimer la réponse"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:745
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:790
 msgid "Columns"
 msgstr "Colonnes"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:749
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:794
 msgid "All columns"
 msgstr "Toutes les colonnes"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:753
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:798
 msgid "Handpicked columns"
 msgstr "Colonnes sélectionnées"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:776
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:821
 msgid "Format"
 msgstr "Format"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:780
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:825
 msgid "Markdown"
 msgstr "Markdown"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:783
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:828
 msgid "CSV"
 msgstr "CSV"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:785
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:830
 msgid "One line per person"
 msgstr "Une ligne par personne"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:821
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:866
 msgid "Download CSV"
 msgstr "Télécharger CSV"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:829
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:874
 msgid "Copy to clipboard"
 msgstr "Copier dans le presse-papiers"
 
@@ -528,4 +528,38 @@ msgstr "Charger les fichiers .mo/.json fournis avec l'extension au lieu de dépe
 #: src/Core/Plugin.php:128
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là-bas."
+
+#: src/API/UrlPreviewController.php:60
+msgid "URL of the linked page to preview."
+msgstr "URL de la page liée à prévisualiser."
+
+#: src/API/UrlPreviewController.php:93
+msgid "Too many preview requests. Please try again later."
+msgstr "Trop de demandes de prévisualisation. Veuillez réessayer plus tard."
+
+#. translators: %s: question text
+#: src/Services/QuestionnaireService.php:226
+#, php-format
+msgid "Please enter a valid web address for: %s"
+msgstr "Veuillez entrer une adresse web valide pour : %s"
+
+#. translators: %s: question text
+#: src/Services/QuestionnaireService.php:242
+#, php-format
+msgid "Please enter a valid date for: %s"
+msgstr "Veuillez entrer une date valide pour : %s"
+
+#. translators: %s: question text
+#: src/Services/QuestionnaireService.php:258
+#, php-format
+msgid "Please enter a valid date and time for: %s"
+msgstr "Veuillez entrer une date et une heure valides pour : %s"
+
+#: ../fair-events-shared/src/questionnaire.js:737
+msgid "Read from the linked page:"
+msgstr "Lire à partir de la page liée :"
+
+#: ../fair-events-shared/src/questionnaire.js:753
+msgid "%1$s – %2$s"
+msgstr "%1$s – %2$s"
 

@@ -674,20 +674,21 @@ msgstr "Billets, tarification de groupe/règles de permission. Nécessite fair-a
 
 #: src/Models/Venue.php:396
 msgid "Enter both latitude and longitude, or leave both blank."
-msgstr ""
+msgstr "Entrez à la fois la latitude et la longitude, ou laissez les deux vides."
 
 #: src/Models/Venue.php:404
 msgid "Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204."
-msgstr ""
+msgstr "La latitude et la longitude doivent être des nombres, par exemple 39.4878023, -0.3613204."
 
 #: src/Models/Venue.php:412
 msgid "Latitude must be between -90 and 90."
-msgstr ""
+msgstr "La latitude doit être comprise entre -90 et 90."
 
 #: src/Models/Venue.php:420
 msgid "Longitude must be between -180 and 180."
-msgstr ""
+msgstr "La longitude doit être comprise entre -180 et 180."
 
 #: src/Models/Venue.php:428
 msgid "Latitude and longitude must be 20 characters or fewer."
-msgstr ""
+msgstr "La latitude et la longitude doivent contenir 20 caractères ou moins."
+
