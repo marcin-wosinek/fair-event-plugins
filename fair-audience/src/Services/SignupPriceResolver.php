@@ -160,7 +160,16 @@ class SignupPriceResolver {
 			return array();
 		}
 
-		$resolved_prices       = \FairEvents\Services\TicketPricing::resolve_unit_prices_for_event_date( $event_date_id );
+		$resolved_prices = \FairEvents\Services\TicketPricing::resolve_unit_prices_for_event_date( $event_date_id );
+
+		// No active sale period at all → nothing is purchasable (matches
+		// resolve_unit_price()'s null), not "every type is free" — an empty
+		// price map alone can't distinguish that from a period being active
+		// with nothing ever priced.
+		if ( ! $resolved_prices['active_period'] ) {
+			return array();
+		}
+
 		$base_price_by_type_id = \FairEvents\Services\TicketPricing::base_prices_for_types(
 			$ticket_type_ids,
 			$resolved_prices['price_by_type_id'],
@@ -169,8 +178,21 @@ class SignupPriceResolver {
 
 		$resolved = array();
 		foreach ( $base_price_by_type_id as $ticket_type_id => $price ) {
+			// Mirrors resolve_unit_price()'s own filter application — the
+			// bulk helper this fallback is built on intentionally skips it
+			// (see base_prices_for_types()' docblock), so apply it here per
+			// type to keep this fallback's behaviour identical to the old
+			// single-item resolve_price_and_rule_for_ticket_type() fallback.
 			$resolved[ $ticket_type_id ] = array(
-				'price' => $price,
+				'price' => (float) apply_filters(
+					'fair_events_resolve_ticket_price',
+					$price,
+					$ticket_type_id,
+					array(
+						'event_date_id'  => $event_date_id,
+						'sale_period_id' => $resolved_prices['active_period']->id,
+					)
+				),
 				'rule'  => null,
 			);
 		}

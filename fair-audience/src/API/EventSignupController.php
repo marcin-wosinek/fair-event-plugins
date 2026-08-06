@@ -16,6 +16,7 @@ use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\GroupSignupPricing;
 use FairAudience\Services\ParticipantToken;
+use FairAudience\Services\SignupActivities;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -1660,28 +1661,10 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
-		if ( ! $participant_id ) {
-			return $base_price_by_option_id;
-		}
-
-		$discountable = array_filter(
-			$base_price_by_option_id,
-			static function ( $price ) {
-				return $price > 0;
-			}
-		);
-		if ( empty( $discountable ) ) {
-			return $base_price_by_option_id;
-		}
-
-		$resolved_by_option_id = \FairAudience\Services\SignupPriceResolver::resolve_prices_and_rules( $event_date_id, $discountable, $participant_id );
-
-		$prices = $base_price_by_option_id;
-		foreach ( $resolved_by_option_id as $option_id => $resolved ) {
-			$prices[ $option_id ] = $resolved['price'];
-		}
-
-		return $prices;
+		// Discount resolution itself is identical to the render overlay's own
+		// bulk option-price step — delegate instead of a second hand-rolled
+		// copy of the same "filter discountable, bulk-resolve, merge back" logic.
+		return SignupActivities::resolve_prices_for_participant( $base_price_by_option_id, $event_date_id, $participant_id );
 	}
 
 	/**
@@ -1784,10 +1767,18 @@ class EventSignupController extends WP_REST_Controller {
 		// Each option resolves its own best-matching group discount rule
 		// against its own real base price (issue #1297), resolved once for the
 		// whole selection here and reused below when building line items,
-		// instead of recomputing per option twice over (issue #1299).
+		// instead of recomputing per option twice over (issue #1299). Summed
+		// per raw selected item (not per unique option ID) so a duplicate
+		// option ID counts twice here exactly as it does in the line items
+		// built below — array_sum() over the ID-keyed map would silently
+		// collapse a duplicate and undercount the total against what's
+		// actually charged.
 		$option_prices = $this->resolve_option_prices( $option_items, $event_date_id, (int) $participant->id );
-		$options_total = array_sum( $option_prices );
-		$total_amount  = (float) ( $final_price ?? 0 ) + $options_total;
+		$options_total = 0.0;
+		foreach ( $option_items as $opt ) {
+			$options_total += $option_prices[ (int) $opt->id ];
+		}
+		$total_amount = (float) ( $final_price ?? 0 ) + $options_total;
 
 		// Determine whether a price is configured for this event regardless of
 		// how the resolution turned out (discount-to-zero, service unavailable, etc.).
