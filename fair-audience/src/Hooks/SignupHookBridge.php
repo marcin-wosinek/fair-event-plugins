@@ -114,21 +114,31 @@ class SignupHookBridge {
 			// Re-resolve prices for the surviving types through the same authority
 			// the create route uses, so the displayed price matches what gets
 			// charged. Clamped at 0 — an amount-discount larger than the price
-			// can never show (or charge) a negative amount.
+			// can never show (or charge) a negative amount. Each type's own
+			// winning rule rides along so the note below can tell whether every
+			// discounted type agrees on the same rule (issue #1297).
 			$price_by_type_id = array();
+			$rule_by_type_id  = array();
 			foreach ( $context['ticket_types'] as $ticket_type ) {
-				$resolved = SignupPriceResolver::resolve_price_for_ticket_type( (int) $ticket_type->id, $participant_id );
-				if ( null !== $resolved ) {
-					$price_by_type_id[ (int) $ticket_type->id ] = max( 0, $resolved );
+				$resolved = SignupPriceResolver::resolve_price_and_rule_for_ticket_type( (int) $ticket_type->id, $participant_id );
+				if ( null === $resolved ) {
+					continue;
+				}
+				$price_by_type_id[ (int) $ticket_type->id ] = max( 0, $resolved['price'] );
+				if ( null !== $resolved['rule'] ) {
+					$rule_by_type_id[ (int) $ticket_type->id ] = $resolved['rule'];
 				}
 			}
 			$context['price_by_type_id'] = $price_by_type_id;
 
-			if ( $participant_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-				$context['group_discount_rule'] = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
-					$pricing_event_date_id,
-					$participant_id
-				);
+			// A single note can only name one rule, so it's shown solely when
+			// every discounted type resolved to the same rule. A mixed-rule
+			// event drops the note rather than risk misnaming a type's discount
+			// — this block's note-only template has no per-type slot to attach
+			// a per-type tag to (unlike fair-audience's own event-signup block).
+			$reduced_rule_ids = array_values( array_unique( array_map( static fn( $rule ) => (int) $rule->id, $rule_by_type_id ) ) );
+			if ( 1 === count( $reduced_rule_ids ) ) {
+				$context['group_discount_rule'] = reset( $rule_by_type_id );
 			}
 		}
 

@@ -1200,18 +1200,10 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|\WP_Error|null Response/error on paid path, null on free path.
 	 */
 	private function maybe_start_addon_payment( $event_id, $event_date_id, $participant, $event_participant, $user_id, $new_options ) {
-		$best_discount_rule = null;
-		if ( $event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$best_discount_rule = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
-				$event_date_id,
-				$participant->id
-			);
-		}
-
 		$line_items   = array();
 		$total_amount = 0;
 		foreach ( $new_options as $opt ) {
-			$opt_price     = $this->compute_option_price( $opt, $event_date_id, $best_discount_rule );
+			$opt_price     = $this->compute_option_price( $opt, $event_date_id, (int) $participant->id );
 			$total_amount += $opt_price;
 			if ( 0.0 !== (float) $opt_price ) {
 				$line_items[] = array(
@@ -1658,27 +1650,29 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Compute the effective price for a ticket option, applying the group
-	 * pricing rule when the buyer qualifies.
+	 * Compute the effective price for a ticket option, applying the buyer's
+	 * best-matching group pricing rule for this option's own real base
+	 * price — not a shared event-date-level rule, so mixed percentage/amount
+	 * rules resolve correctly per option (issue #1297).
 	 *
-	 * @param object      $option              TicketOption object.
-	 * @param int         $event_date_id       Event date ID.
-	 * @param object|null $best_discount_rule  Best group pricing rule for the buyer, if any.
+	 * @param object   $option         TicketOption object.
+	 * @param int      $event_date_id  Event date ID.
+	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
 	 * @return float Effective option price (>= 0 inputs assumed; may be 0).
 	 */
-	private function compute_option_price( $option, $event_date_id, $best_discount_rule ) {
+	private function compute_option_price( $option, $event_date_id, $participant_id ) {
 		if ( class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class ) ) {
 			$resolved  = \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $option );
 			$opt_price = null !== $resolved ? (float) $resolved : 0.0;
 		} else {
 			$opt_price = (float) $option->price;
 		}
-		if ( $best_discount_rule && $opt_price > 0 && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$opt_price = \FairEventsExperimental\Services\EventSignupPricing::apply_discount(
+		if ( $participant_id && $opt_price > 0 && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			$opt_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule(
 				$opt_price,
-				$best_discount_rule->discount_type,
-				(float) $best_discount_rule->discount_value
-			);
+				$event_date_id,
+				$participant_id
+			)['price'];
 		}
 		return $opt_price;
 	}
@@ -1779,22 +1773,15 @@ class EventSignupController extends WP_REST_Controller {
 			$final_price = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type_id, $participant->id );
 		}
 
-		// Apply group discount to option prices when the participant qualifies.
-		$best_discount_rule = null;
-		if ( $event_date_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$best_discount_rule = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
-				$event_date_id,
-				$participant->id
-			);
-		}
-
 		// Option prices count towards the total even when there is no base price.
+		// Each option resolves its own best-matching group discount rule
+		// against its own real base price (issue #1297).
 		$options_total = 0;
 		foreach ( $option_items as $opt ) {
 			$options_total += $this->compute_option_price(
 				$opt,
 				$event_date_id,
-				$best_discount_rule
+				(int) $participant->id
 			);
 		}
 		$total_amount = (float) ( $final_price ?? 0 ) + $options_total;
@@ -1889,7 +1876,7 @@ class EventSignupController extends WP_REST_Controller {
 			$opt_price = $this->compute_option_price(
 				$opt,
 				$event_date_id,
-				$best_discount_rule
+				(int) $participant->id
 			);
 			if ( 0.0 !== $opt_price ) {
 				$line_items[] = array(

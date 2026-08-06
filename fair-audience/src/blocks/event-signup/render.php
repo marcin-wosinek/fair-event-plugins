@@ -421,13 +421,15 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 			}
 		}
 
-		$tt_price = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type(
+		$tt_resolved = \FairAudience\Services\SignupPriceResolver::resolve_price_and_rule_for_ticket_type(
 			$tt->id,
 			$participant ? (int) $participant->id : null
 		);
-		if ( null === $tt_price ) {
+		if ( null === $tt_resolved ) {
 			continue;
 		}
+		$tt_price = $tt_resolved['price'];
+		$tt_rule  = $tt_resolved['rule'];
 
 		// Capacity check: limited-quantity tiers (e.g. "Early Bird – first
 		// 10") disappear once capacity is reached. We render them as a
@@ -445,6 +447,7 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 			'id'                 => (int) $tt->id,
 			'name'               => $tt->name,
 			'price'              => $tt_price,
+			'rule'               => $tt_rule,
 			'minimum_activities' => (int) $tt->minimum_activities,
 			'recurrence_scope'   => $tt->recurrence_scope,
 			'minimum_instances'  => (int) $tt->minimum_instances,
@@ -454,14 +457,71 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 }
 $has_ticket_types = ! empty( $ticket_types_for_display );
 
-// Resolve best group discount rule; used for both option pricing and the discount note.
-$best_discount_rule = null;
-if ( $pricing_event_date_id && $participant && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-	$best_discount_rule = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
-		(int) $pricing_event_date_id,
-		(int) $participant->id
-	);
+// Group discount rules that actually reduced a displayed tier's price
+// (issue #1297) — each tier resolved its own winning rule against its own
+// real base price, so mixed percentage/amount rules can legitimately name
+// different rules per tier. Drives both the single note (0 or 1 unique
+// rule) and the per-tier inline tags (2+ unique rules) below.
+$reduced_tiers    = array_filter(
+	$ticket_types_for_display,
+	static function ( $tt ) {
+		return null !== $tt['rule'];
+	}
+);
+$reduced_rule_ids = array_values(
+	array_unique(
+		array_map(
+			static function ( $tt ) {
+				return (int) $tt['rule']->id;
+			},
+			$reduced_tiers
+		)
+	)
+);
+// A single note names the rule only when every discounted tier agrees on
+// which rule won; otherwise the note would misname the discount for at
+// least one tier, so it's dropped in favor of the per-tier inline tags.
+$note_rule = null;
+if ( 1 === count( $reduced_rule_ids ) ) {
+	foreach ( $reduced_tiers as $reduced_tier ) {
+		$note_rule = $reduced_tier['rule'];
+		break;
+	}
 }
+$show_inline_discount_tags = count( $reduced_rule_ids ) >= 2;
+
+// Shared group-name lookup + magnitude formatting for the note and the
+// per-tier inline tags, so both surfaces describe a rule identically.
+$discount_group_repo         = class_exists( \FairAudienceExperimental\Database\GroupRepository::class )
+	? new \FairAudienceExperimental\Database\GroupRepository()
+	: null;
+$resolve_discount_group_name = static function ( $rule ) use ( $discount_group_repo ) {
+	if ( ! $discount_group_repo ) {
+		return '';
+	}
+	$group = $discount_group_repo->get_by_id( (int) $rule->group_id );
+	return $group ? $group->name : '';
+};
+// A fractional percentage (e.g. 12.5%) must render with its decimals
+// instead of being rounded away (issue #1297) — but no more than it needs
+// (12.5, not 12.50). discount_value is DECIMAL(10,2), so rounding to whole
+// hundredths and checking divisibility avoids float-precision surprises.
+$discount_percentage_decimals = static function ( $value ) {
+	$hundredths = (int) round( $value * 100 );
+	if ( 0 === $hundredths % 100 ) {
+		return 0;
+	}
+	return 0 === $hundredths % 10 ? 1 : 2;
+};
+// Full magnitude label used only by the per-tier inline tag, e.g. "12.5%"
+// or "€5.00" — the single note keeps its own existing translated strings.
+$format_discount_magnitude = static function ( $rule ) use ( $discount_percentage_decimals ) {
+	if ( 'percentage' === $rule->discount_type ) {
+		$value = (float) $rule->discount_value;
+		return number_format_i18n( $value, $discount_percentage_decimals( $value ) ) . '%';
+	}
+	return Money::format_inline( (float) $rule->discount_value );
+};
 
 // Resolve ticket options for this event date, if any. Options are displayed
 // as checkboxes — participants can select zero or more at signup.
@@ -478,12 +538,12 @@ if ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Models\Tick
 			continue;
 		}
 		$opt_price = (float) $resolved_base;
-		if ( $best_discount_rule && $opt_price > 0 ) {
-			$opt_price = \FairEventsExperimental\Services\EventSignupPricing::apply_discount(
+		if ( $participant && $opt_price > 0 && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			$opt_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule(
 				$opt_price,
-				$best_discount_rule->discount_type,
-				(float) $best_discount_rule->discount_value
-			);
+				(int) $pricing_event_date_id,
+				(int) $participant->id
+			)['price'];
 		}
 
 		$is_full = false;
@@ -645,30 +705,27 @@ if ( null !== $signup_price ) {
 	}
 }
 
-// Build a group discount note to render near the signup button.
+// Build a group discount note to render near the signup button. Only shown
+// when every discounted tier agrees on the same rule ($note_rule, computed
+// above); a mixed-rule event instead gets per-tier inline tags in
+// $render_ticket_types, so the note is never left naming the wrong tier's
+// discount (issue #1297).
 $discount_note_html = '';
-if ( $best_discount_rule ) {
-	$group_name = '';
-	if ( class_exists( \FairAudienceExperimental\Database\GroupRepository::class ) ) {
-		$group_repo = new \FairAudienceExperimental\Database\GroupRepository();
-		$group      = $group_repo->get_by_id( (int) $best_discount_rule->group_id );
-		if ( $group ) {
-			$group_name = $group->name;
-		}
-	}
+if ( $note_rule ) {
+	$group_name = $resolve_discount_group_name( $note_rule );
 
-	if ( 'percentage' === $best_discount_rule->discount_type ) {
+	if ( 'percentage' === $note_rule->discount_type ) {
 		$discount_label = sprintf(
 			/* translators: 1: discount percentage, 2: group name */
 			__( '%1$s%% discount applied (%2$s)', 'fair-audience' ),
-			number_format_i18n( (float) $best_discount_rule->discount_value ),
+			number_format_i18n( (float) $note_rule->discount_value, $discount_percentage_decimals( (float) $note_rule->discount_value ) ),
 			$group_name
 		);
 	} else {
 		$discount_label = sprintf(
 			/* translators: 1: discount amount, 2: group name */
 			__( '%1$s discount applied (%2$s)', 'fair-audience' ),
-			Money::format_inline( (float) $best_discount_rule->discount_value ),
+			Money::format_inline( (float) $note_rule->discount_value ),
 			$group_name
 		);
 	}
@@ -682,7 +739,7 @@ if ( $best_discount_rule ) {
  * Render the ticket-type radio fieldset. No-op when the event date has no
  * ticket types configured. First enabled option is pre-selected.
  */
-$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id ) {
+$render_ticket_types = static function () use ( $ticket_types_for_display, $has_ticket_types, $form_id, $show_inline_discount_tags, $format_discount_magnitude, $resolve_discount_group_name ) {
 	if ( ! $has_ticket_types ) {
 		return;
 	}
@@ -701,6 +758,17 @@ $render_ticket_types = static function () use ( $ticket_types_for_display, $has_
 			} else {
 				$tt_label .= ' — ' . __( 'free', 'fair-audience' );
 			}
+		}
+		// Mixed-rule event: the shared note above the submit button was
+		// suppressed, so each discounted tier names its own rule inline
+		// instead (issue #1297).
+		if ( $show_inline_discount_tags && ! empty( $tt['rule'] ) ) {
+			$tt_label .= ' (' . sprintf(
+				/* translators: 1: discount magnitude e.g. "20%" or "€5.00", 2: group name */
+				__( '%1$s off · %2$s', 'fair-audience' ),
+				$format_discount_magnitude( $tt['rule'] ),
+				$resolve_discount_group_name( $tt['rule'] )
+			) . ')';
 		}
 		if ( $tt_is_full ) {
 			$tt_label .= ' — ' . __( 'sold out', 'fair-audience' );

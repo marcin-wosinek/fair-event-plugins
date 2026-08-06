@@ -32,6 +32,22 @@ class EventSignupPricing {
 	 * @return float|null Final price, or null when not purchasable right now.
 	 */
 	public static function resolve_price_for_ticket_type( $ticket_type_id, $participant_id = null ) {
+		$resolved = self::resolve_price_and_rule_for_ticket_type( $ticket_type_id, $participant_id );
+		return null === $resolved ? null : $resolved['price'];
+	}
+
+	/**
+	 * Resolve the effective price for a specific ticket type, plus the
+	 * group discount rule that produced it (if any). The single source of
+	 * truth for both the charged price and the rule that explains it,
+	 * closing the gap where a note could name a different rule than the one
+	 * that actually won on the real price (issue #1297).
+	 *
+	 * @param int      $ticket_type_id Ticket type ID.
+	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
+	 * @return array{price: float, rule: GroupPricingRule|null}|null Null when not purchasable right now.
+	 */
+	public static function resolve_price_and_rule_for_ticket_type( $ticket_type_id, $participant_id = null ) {
 		$ticket_type = TicketType::get_by_id( $ticket_type_id );
 		if ( ! $ticket_type ) {
 			return null;
@@ -42,29 +58,79 @@ class EventSignupPricing {
 			return null;
 		}
 
+		return self::resolve_price_and_rule( $base_price, $ticket_type->event_date_id, $participant_id );
+	}
+
+	/**
+	 * Resolve the best group discount rule for a base price on an event
+	 * date, and the price it produces. Compares every matching rule against
+	 * the real `$base_price` — not a notional reference price — so a
+	 * percentage rule and a fixed-amount rule are compared on equal footing
+	 * for the price actually being charged (issue #1297). The returned rule
+	 * is only set when it strictly reduced the price, so a free/€0 base
+	 * price never comes back with a rule attached.
+	 *
+	 * @param float    $base_price     Base (undiscounted) price.
+	 * @param int      $event_date_id  Event date ID the discount rules belong to.
+	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
+	 * @return array{price: float, rule: GroupPricingRule|null} Resolved price and the rule that produced it.
+	 */
+	public static function resolve_price_and_rule( $base_price, $event_date_id, $participant_id = null ) {
 		if ( empty( $participant_id ) ) {
-			return $base_price;
+			return array(
+				'price' => $base_price,
+				'rule'  => null,
+			);
 		}
 
-		$rules = GroupPricingRule::get_all_by_event_date_id( $ticket_type->event_date_id );
+		$rules = GroupPricingRule::get_all_by_event_date_id( $event_date_id );
 		if ( empty( $rules ) || ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
-			return $base_price;
+			return array(
+				'price' => $base_price,
+				'rule'  => null,
+			);
 		}
 
-		$group_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
-		$best_price = $base_price;
-
+		$group_repo     = new \FairAudienceExperimental\Database\GroupParticipantRepository();
+		$matching_rules = array();
 		foreach ( $rules as $rule ) {
-			if ( ! $group_repo->get_by_group_and_participant( $rule->group_id, $participant_id ) ) {
-				continue;
+			if ( $group_repo->get_by_group_and_participant( $rule->group_id, $participant_id ) ) {
+				$matching_rules[] = $rule;
 			}
+		}
+
+		return self::best_rule_for_price( $base_price, $matching_rules );
+	}
+
+	/**
+	 * Pick the discount rule that produces the lowest price for a given base
+	 * price, out of a list of rules already known to match the participant
+	 * (e.g. group membership already checked by the caller). Pure math, no DB
+	 * access — the seam that makes the mixed percentage/amount comparison
+	 * from issue #1297 unit-testable without a WordPress bootstrap. The
+	 * returned rule is only set when it strictly reduced the price, so a
+	 * free/€0 base price never comes back with a rule attached.
+	 *
+	 * @param float              $base_price     Base (undiscounted) price.
+	 * @param GroupPricingRule[] $matching_rules Rules that already match the participant.
+	 * @return array{price: float, rule: GroupPricingRule|null} Resolved price and the rule that produced it.
+	 */
+	public static function best_rule_for_price( $base_price, array $matching_rules ) {
+		$best_price = $base_price;
+		$best_rule  = null;
+
+		foreach ( $matching_rules as $rule ) {
 			$candidate = self::apply_discount( $base_price, $rule->discount_type, (float) $rule->discount_value );
 			if ( $candidate < $best_price ) {
 				$best_price = $candidate;
+				$best_rule  = $rule;
 			}
 		}
 
-		return $best_price;
+		return array(
+			'price' => $best_price,
+			'rule'  => $best_rule,
+		);
 	}
 
 	/**
@@ -79,44 +145,6 @@ class EventSignupPricing {
 	 */
 	public static function resolve_active_sale_period( $event_date_id ) {
 		return TicketPricing::resolve_active_sale_period( $event_date_id );
-	}
-
-	/**
-	 * Resolve the best group discount rule for a participant on an event date.
-	 *
-	 * Returns the GroupPricingRule that yields the lowest price, or null
-	 * when no discount applies.
-	 *
-	 * @param int      $event_date_id  Event date ID.
-	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
-	 * @return GroupPricingRule|null Best matching rule, or null.
-	 */
-	public static function resolve_best_discount_rule( $event_date_id, $participant_id = null ) {
-		if ( empty( $participant_id ) ) {
-			return null;
-		}
-
-		$rules = GroupPricingRule::get_all_by_event_date_id( $event_date_id );
-		if ( empty( $rules ) || ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
-			return null;
-		}
-
-		$group_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
-		$best_rule  = null;
-		$best_price = PHP_FLOAT_MAX;
-
-		foreach ( $rules as $rule ) {
-			if ( ! $group_repo->get_by_group_and_participant( $rule->group_id, $participant_id ) ) {
-				continue;
-			}
-			$candidate = self::apply_discount( 100.0, $rule->discount_type, (float) $rule->discount_value );
-			if ( $candidate < $best_price ) {
-				$best_price = $candidate;
-				$best_rule  = $rule;
-			}
-		}
-
-		return $best_rule;
 	}
 
 	/**

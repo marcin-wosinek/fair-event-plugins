@@ -85,6 +85,29 @@ class SignupActivities {
 	}
 
 	/**
+	 * Resolve an activity option's price for the viewer via the real-price
+	 * group-discount resolver: each option is compared against its own base
+	 * price, not one rule shared across the whole event date, so mixed
+	 * percentage/amount rules pick the correct winner per option (issue
+	 * #1297).
+	 *
+	 * @param float    $base_price            Base (undiscounted) option price.
+	 * @param int      $pricing_event_date_id Event date the discount rules belong to.
+	 * @param int|null $participant_id        Viewer's participant ID, or null for anonymous.
+	 * @return float Resolved price.
+	 */
+	public static function resolve_price_for_participant( $base_price, $pricing_event_date_id, $participant_id ) {
+		if ( ! $participant_id || $base_price <= 0 || ! class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			return $base_price;
+		}
+		return \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule(
+			(float) $base_price,
+			$pricing_event_date_id,
+			$participant_id
+		)['price'];
+	}
+
+	/**
 	 * Whether a raw TicketOption is full, based on its configured capacity.
 	 *
 	 * @param object                     $option Raw TicketOption row (needs `id`, `capacity`).
@@ -201,10 +224,10 @@ class SignupActivities {
 
 	/**
 	 * Resolve priced line items for a submitted activity selection, applying
-	 * the participant's best group discount rule. Hooked on
-	 * `fair_events_signup_option_line_items`. Assumes the selection was
-	 * already validated by validate_selection() — an ID that no longer
-	 * resolves is skipped rather than erroring.
+	 * each option's own best-matching group discount rule against its own
+	 * real base price. Hooked on `fair_events_signup_option_line_items`.
+	 * Assumes the selection was already validated by validate_selection() —
+	 * an ID that no longer resolves is skipped rather than erroring.
 	 *
 	 * @param int[]    $ticket_option_ids     Submitted option IDs.
 	 * @param int      $pricing_event_date_id Event date the activity catalogue belongs to.
@@ -214,14 +237,6 @@ class SignupActivities {
 	public static function line_items( array $ticket_option_ids, $pricing_event_date_id, $participant_id ) {
 		if ( empty( $ticket_option_ids ) || ! class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
 			return array();
-		}
-
-		$discount_rule = null;
-		if ( $participant_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$discount_rule = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
-				$pricing_event_date_id,
-				$participant_id
-			);
 		}
 
 		$line_items = array();
@@ -241,7 +256,7 @@ class SignupActivities {
 			$line_items[] = array(
 				'name'     => $option->name,
 				'quantity' => 1,
-				'amount'   => self::resolve_price( (float) $base_price, $discount_rule ),
+				'amount'   => self::resolve_price_for_participant( (float) $base_price, $pricing_event_date_id, $participant_id ),
 			);
 		}
 
@@ -268,14 +283,6 @@ class SignupActivities {
 
 		$pricing_event_date_id = (int) $context['pricing_event_date_id'];
 
-		$discount_rule = null;
-		if ( $participant_id && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$discount_rule = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
-				$pricing_event_date_id,
-				$participant_id
-			);
-		}
-
 		$event_participant_repository = new EventParticipantRepository();
 
 		$signed_row = null;
@@ -294,7 +301,7 @@ class SignupActivities {
 			: array();
 
 		foreach ( $context['ticket_options'] as &$option ) {
-			$option['price'] = self::resolve_price( (float) $option['price'], $discount_rule );
+			$option['price'] = self::resolve_price_for_participant( (float) $option['price'], $pricing_event_date_id, $participant_id );
 
 			$is_full = false;
 			if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
