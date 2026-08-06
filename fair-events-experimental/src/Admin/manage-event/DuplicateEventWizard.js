@@ -35,10 +35,11 @@ import {
 	calculateDuration,
 	parseRRule,
 	buildRRule,
+	expandRRulePreview,
 	RecurrenceControl,
 } from 'fair-events-shared';
+import { EventTickets } from 'fair-events';
 import { adjustTicketDates } from './adjustTicketDates.js';
-import EventTickets from './EventTickets.js';
 
 export default function DuplicateEventWizard({
 	sourceEventDate,
@@ -46,6 +47,7 @@ export default function DuplicateEventWizard({
 	audienceUrl,
 	onCancel,
 	manageEventUrl,
+	enabledFeatures,
 }) {
 	// Event details state - pre-populated from source
 	const [title, setTitle] = useState(
@@ -76,7 +78,12 @@ export default function DuplicateEventWizard({
 	// Tickets state
 	const [ticketInitialData, setTicketInitialData] = useState(null);
 	const [loadingTickets, setLoadingTickets] = useState(true);
+	const [ticketsDirty, setTicketsDirty] = useState(false);
 	const ticketDataRef = useRef(null);
+	const handleTicketsDirtyChange = useCallback(
+		(isDirty) => setTicketsDirty(isDirty),
+		[]
+	);
 
 	// Audience state
 	const [collaborators, setCollaborators] = useState([]);
@@ -214,6 +221,20 @@ export default function DuplicateEventWizard({
 			.finally(() => setLoadingGroupRules(false));
 	}, [audienceUrl, sourceEventDateId]);
 
+	// Warn before losing unsaved ticket edits, mirroring ManageEventApp.js.
+	useEffect(() => {
+		if (!ticketsDirty) {
+			return;
+		}
+		const handleBeforeUnload = (event) => {
+			event.preventDefault();
+			event.returnValue = '';
+		};
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		return () =>
+			window.removeEventListener('beforeunload', handleBeforeUnload);
+	}, [ticketsDirty]);
+
 	// Duration helpers
 	const timedDurationOptions = useMemo(
 		() =>
@@ -331,6 +352,25 @@ export default function DuplicateEventWizard({
 		if (allDay) return `${endDate} 00:00:00`;
 		return `${endDate} ${endTime}:00`;
 	};
+
+	// Recurrence is decided in step 1 and can be changed before the Tickets
+	// step renders, so the ticket editor's series awareness must come from
+	// this wizard's own (possibly edited) recurrence state, not the source
+	// event's rrule.
+	const isSeries = recurrence.enabled;
+
+	// The ticket editor's lazily-resolved default sale end is anchored on the
+	// last occurrence's date. The new event doesn't exist yet (no server-side
+	// generated_occurrences), so expand the rrule client-side the same way the
+	// server would — capped identically — to find it.
+	const lastOccurrenceDatetime = useMemo(() => {
+		if (!recurrence.enabled || !startDate) return getNewEndDatetime();
+		const rrule = buildRRule(recurrence);
+		if (!rrule) return getNewEndDatetime();
+		const preview = expandRRulePreview(rrule, getNewStartDatetime());
+		return preview.lastDate || getNewEndDatetime();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [recurrence, startDate, startTime]);
 
 	// Creation sequence
 	const handleCreate = async () => {
@@ -515,10 +555,12 @@ export default function DuplicateEventWizard({
 				title: __('Links', 'fair-events-experimental'),
 			});
 		}
-		s.push({
-			name: 'tickets',
-			title: __('Tickets', 'fair-events-experimental'),
-		});
+		if (enabledFeatures?.ticketing) {
+			s.push({
+				name: 'tickets',
+				title: __('Tickets', 'fair-events-experimental'),
+			});
+		}
 		if (audienceUrl && sourceEventDateId) {
 			s.push({
 				name: 'audience',
@@ -530,7 +572,7 @@ export default function DuplicateEventWizard({
 			});
 		}
 		return s;
-	}, [audienceUrl, linkedPosts.length, sourceEventDateId]);
+	}, [audienceUrl, enabledFeatures, linkedPosts.length, sourceEventDateId]);
 
 	const isLastStep = activeStep === steps.length - 1;
 	const currentStep = steps[activeStep];
@@ -865,6 +907,10 @@ export default function DuplicateEventWizard({
 			<EventTickets
 				initialData={ticketInitialData}
 				onDataRef={ticketDataRef}
+				startDatetime={getNewStartDatetime()}
+				lastOccurrenceDatetime={lastOccurrenceDatetime}
+				isSeries={isSeries}
+				onDirtyChange={handleTicketsDirtyChange}
 			/>
 		);
 	}
