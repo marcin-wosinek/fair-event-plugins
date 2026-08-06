@@ -12,7 +12,7 @@ import apiFetch from '@wordpress/api-fetch';
 import DuplicateEventWizard from '../manage-event/DuplicateEventWizard.js';
 
 function DuplicateEventPage() {
-	const { eventDateId, manageEventUrl, audienceUrl } =
+	const { eventDateId, manageEventUrl, audienceUrl, enabledFeatures } =
 		window.fairEventsDuplicateEventData || {};
 
 	const [eventDate, setEventDate] = useState(null);
@@ -56,6 +56,7 @@ function DuplicateEventPage() {
 			sourceEventDateId={eventDateId}
 			audienceUrl={audienceUrl || ''}
 			manageEventUrl={manageEventUrl || ''}
+			enabledFeatures={enabledFeatures || {}}
 			onCancel={() => {
 				window.location.href = `${manageEventUrl}&event_date_id=${eventDateId}&tab=admin`;
 			}}

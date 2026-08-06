@@ -313,13 +313,39 @@ class AdminPages {
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
 				$localized     = array(
-					'eventDateId'    => $event_date_id,
-					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
+					'eventDateId'     => $event_date_id,
+					'manageEventUrl'  => admin_url( 'admin.php?page=fair-events-manage-event' ),
+					// Mirrors fair-events' own manage-event localization so the
+					// wizard's Tickets step can gate itself the same way.
+					'enabledFeatures' => apply_filters( 'fair_events_enabled_features_map', \FairEvents\Core\Features::public_map() ),
 				);
 				if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
 					$localized['audienceUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
 				}
 				wp_localize_script( 'fair-events-duplicate-event', 'fairEventsDuplicateEventData', $localized );
+
+				// `connectorActive` is always present so the ported ticket editor
+				// can tell "connector plugin missing" apart from "installed but
+				// unconfigured", mirroring fair-events' own manage-event page.
+				$connector_active        = class_exists( '\FairPaymentsConnector\Payment\MolliePaymentHandler' );
+				$payments_connector_data = array(
+					'currency'        => get_option( 'fair_payment_currency', 'EUR' ),
+					'connectorActive' => $connector_active,
+				);
+				if ( $connector_active ) {
+					$payments_connector_data['paymentConfigured'] = \FairPaymentsConnector\Payment\MolliePaymentHandler::is_configured();
+					$payments_connector_data['settingsUrl']       = admin_url( 'admin.php?page=fair-payments-connector-settings' );
+				}
+				wp_localize_script( 'fair-events-duplicate-event', 'fairPaymentsConnector', $payments_connector_data );
+
+				// The ported ticket editor reads the site-today default from this
+				// global regardless of which page it's mounted on.
+				wp_localize_script(
+					'fair-events-duplicate-event',
+					'fairEventsManageEventData',
+					array( 'siteToday' => wp_date( 'Y-m-d' ) )
+				);
+
 				wp_set_script_translations( 'fair-events-duplicate-event', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;

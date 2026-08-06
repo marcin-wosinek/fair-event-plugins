@@ -26,6 +26,7 @@
 		"test:api": "playwright test src/API/__tests__/"
 	},
 	"dependencies": {
+		"fair-events": "*",
 		"fair-events-shared": "*",
 		"@wordpress/api-fetch": "^7.2.0",
 		"@wordpress/components": "^36.0.0",

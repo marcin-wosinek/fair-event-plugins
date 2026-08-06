@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Events Experimental 1.4.0\n"
+"Project-Id-Version: Fair Events Experimental 1.4.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events-experimental\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-02T09:52:45+00:00\n"
+"POT-Creation-Date: 2026-08-06T06:56:41+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -97,7 +97,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:155
 #: src/Admin/AdminPages.php:161
 #: src/Admin/manage-event-ext/index.js:67
-#: src/Admin/manage-event/DuplicateEventWizard.js:564
+#: src/Admin/manage-event/DuplicateEventWizard.js:606
 msgid "Duplicate Event"
 msgstr ""
 
@@ -109,11 +109,11 @@ msgstr ""
 msgid "Merge Event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:516
+#: src/Admin/AdminPages.php:542
 msgid "Copy"
 msgstr ""
 
-#: src/Admin/AdminPages.php:519
+#: src/Admin/AdminPages.php:545
 msgid "Copy this event"
 msgstr ""
 
@@ -151,25 +151,25 @@ msgid "Website URL."
 msgstr ""
 
 #: src/API/VenueController.php:180
-#: src/API/VenueController.php:247
-#: src/API/VenueController.php:289
+#: src/API/VenueController.php:258
+#: src/API/VenueController.php:311
 msgid "Venue not found."
 msgstr ""
 
 #: src/API/VenueController.php:206
-#: src/API/VenueController.php:255
+#: src/API/VenueController.php:266
 msgid "Venue name is required."
 msgstr ""
 
-#: src/API/VenueController.php:216
+#: src/API/VenueController.php:227
 msgid "Failed to create venue."
 msgstr ""
 
-#: src/API/VenueController.php:265
+#: src/API/VenueController.php:287
 msgid "Failed to update venue."
 msgstr ""
 
-#: src/API/VenueController.php:299
+#: src/API/VenueController.php:321
 msgid "Failed to delete venue."
 msgstr ""
 
@@ -237,6 +237,26 @@ msgstr ""
 msgid "Event associated with this image"
 msgstr ""
 
+#: src/Models/Venue.php:396
+msgid "Enter both latitude and longitude, or leave both blank."
+msgstr ""
+
+#: src/Models/Venue.php:404
+msgid "Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204."
+msgstr ""
+
+#: src/Models/Venue.php:412
+msgid "Latitude must be between -90 and 90."
+msgstr ""
+
+#: src/Models/Venue.php:420
+msgid "Longitude must be between -180 and 180."
+msgstr ""
+
+#: src/Models/Venue.php:428
+msgid "Latitude and longitude must be 20 characters or fewer."
+msgstr ""
+
 #: src/Settings/Settings.php:36
 msgid "Per-bundle feature toggles for experimental features"
 msgstr ""
@@ -295,7 +315,7 @@ msgid "Days before event"
 msgstr ""
 
 #: src/Admin/event-statistics/EventStatistics.js:290
-#: src/Admin/manage-event/DuplicateEventWizard.js:520
+#: src/Admin/manage-event/DuplicateEventWizard.js:561
 msgid "Tickets"
 msgstr ""
 
@@ -311,453 +331,185 @@ msgstr ""
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:320
+#: src/Admin/manage-event/DuplicateEventWizard.js:341
 msgid "— No venue —"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:347
+#: src/Admin/manage-event/DuplicateEventWizard.js:387
 msgid "Creating event…"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:368
+#: src/Admin/manage-event/DuplicateEventWizard.js:408
 msgid "Cloning posts…"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:383
+#: src/Admin/manage-event/DuplicateEventWizard.js:423
 msgid "Saving tickets…"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:399
+#: src/Admin/manage-event/DuplicateEventWizard.js:439
 msgid "Adding collaborators…"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:451
+#: src/Admin/manage-event/DuplicateEventWizard.js:491
 msgid "Copying group rules…"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:487
+#: src/Admin/manage-event/DuplicateEventWizard.js:527
 msgid "Done! Redirecting…"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:494
+#: src/Admin/manage-event/DuplicateEventWizard.js:534
 msgid "Failed to create duplicate event."
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:509
-#: src/Admin/manage-event/DuplicateEventWizard.js:650
+#: src/Admin/manage-event/DuplicateEventWizard.js:549
+#: src/Admin/manage-event/DuplicateEventWizard.js:692
 msgid "Event Details"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:515
+#: src/Admin/manage-event/DuplicateEventWizard.js:555
 msgid "Links"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:525
+#: src/Admin/manage-event/DuplicateEventWizard.js:567
 msgid "Audience"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:529
-#: src/Admin/manage-event/DuplicateEventWizard.js:922
+#: src/Admin/manage-event/DuplicateEventWizard.js:571
+#: src/Admin/manage-event/DuplicateEventWizard.js:968
 msgid "Group Rules"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:580
+#: src/Admin/manage-event/DuplicateEventWizard.js:622
 msgid "View partially created event"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:602
+#: src/Admin/manage-event/DuplicateEventWizard.js:644
 #: src/Admin/manage-event/MergeEventWizard.js:455
 msgid "Step"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:617
+#: src/Admin/manage-event/DuplicateEventWizard.js:659
 #: src/Admin/manage-event/MergeEventWizard.js:470
 msgid "Back"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:626
+#: src/Admin/manage-event/DuplicateEventWizard.js:668
 #: src/Admin/manage-event/MergeEventWizard.js:479
 #: src/Admin/manage-event/MergeEventWizard.js:488
 msgid "Next"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:635
+#: src/Admin/manage-event/DuplicateEventWizard.js:677
 msgid "Create Duplicate"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:639
+#: src/Admin/manage-event/DuplicateEventWizard.js:681
 #: src/Admin/manage-event/MergeEventWizard.js:492
 msgid "Cancel"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:655
+#: src/Admin/manage-event/DuplicateEventWizard.js:697
 msgid "Title"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:662
+#: src/Admin/manage-event/DuplicateEventWizard.js:704
 msgid "All day"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:670
-#: src/Admin/manage-event/DuplicateEventWizard.js:693
+#: src/Admin/manage-event/DuplicateEventWizard.js:712
+#: src/Admin/manage-event/DuplicateEventWizard.js:735
 msgid "Start date"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:680
-#: src/Admin/manage-event/DuplicateEventWizard.js:713
-#: src/Admin/manage-event/EventTickets.js:1161
+#: src/Admin/manage-event/DuplicateEventWizard.js:722
+#: src/Admin/manage-event/DuplicateEventWizard.js:755
 msgid "End date"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:703
+#: src/Admin/manage-event/DuplicateEventWizard.js:745
 msgid "Start time"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:723
+#: src/Admin/manage-event/DuplicateEventWizard.js:765
 msgid "End time"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:736
+#: src/Admin/manage-event/DuplicateEventWizard.js:778
 msgid "Event length"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:749
+#: src/Admin/manage-event/DuplicateEventWizard.js:791
 msgid "Venue"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:756
+#: src/Admin/manage-event/DuplicateEventWizard.js:798
 msgid "Categories"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:792
+#: src/Admin/manage-event/DuplicateEventWizard.js:834
 msgid "Linked Posts"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:797
+#: src/Admin/manage-event/DuplicateEventWizard.js:839
 msgid "How to handle linked posts"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:804
+#: src/Admin/manage-event/DuplicateEventWizard.js:846
 msgid "Clone linked posts — create draft copies"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:811
+#: src/Admin/manage-event/DuplicateEventWizard.js:853
 msgid "Leave empty — no links"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:824
+#: src/Admin/manage-event/DuplicateEventWizard.js:866
 msgid "Source event linked posts:"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:842
+#: src/Admin/manage-event/DuplicateEventWizard.js:884
 msgid "Primary"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:886
+#: src/Admin/manage-event/DuplicateEventWizard.js:932
 msgid "No group rules found on source event."
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:899
+#: src/Admin/manage-event/DuplicateEventWizard.js:945
 msgid "Invited"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:901
+#: src/Admin/manage-event/DuplicateEventWizard.js:947
 msgid "View signups"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:903
+#: src/Admin/manage-event/DuplicateEventWizard.js:949
 msgid "Manage signups"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:927
+#: src/Admin/manage-event/DuplicateEventWizard.js:973
 msgid "Select which groups to copy rules for."
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:970
+#: src/Admin/manage-event/DuplicateEventWizard.js:1016
 msgid "Discount:"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:982
+#: src/Admin/manage-event/DuplicateEventWizard.js:1028
 msgid "Permissions:"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1016
+#: src/Admin/manage-event/DuplicateEventWizard.js:1062
 msgid "No collaborators found on source event."
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1029
+#: src/Admin/manage-event/DuplicateEventWizard.js:1075
 msgid "Collaborators"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1034
+#: src/Admin/manage-event/DuplicateEventWizard.js:1080
 msgid "Select which collaborators to copy to the new event."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:126
-msgid "Failed to load tickets."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:276
-msgid "Tickets saved successfully."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:281
-msgid "Failed to save tickets."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:370
-msgid "Failed to export ticket configuration."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:383
-msgid "Importing will replace all current ticket types, sale periods, prices, and settings for this event. Continue?"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:407
-msgid "Invalid file format. Expected a fair-events-tickets export."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:422
-msgid "Ticket configuration imported successfully."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:430
-msgid "Failed to import ticket configuration."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:541
-msgid "Add sale periods first."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:558
-msgid "Period"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:713
-msgid "Export ticket settings"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:721
-msgid "Import ticket settings"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:735
-msgid "Ticket Prices"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:744
-#: src/Admin/manage-event/EventTickets.js:1121
-msgid "Ticket Type"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:757
-#: src/Admin/manage-event/EventTickets.js:774
-#: src/Admin/manage-event/EventTickets.js:1218
-msgid "(unnamed)"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:761
-#: src/Admin/manage-event/EventTickets.js:1222
-#: src/Admin/manage-event/EventTickets.js:1489
-msgid "Price"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:814
-msgid "Sale Periods"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:822
-msgid "Sale start at:"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:832
-#: src/Admin/manage-event/EventTickets.js:853
-msgid "—"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:839
-msgid "Sale end at:"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:868
-#: src/Admin/manage-event/EventTickets.js:1630
-#: src/Admin/manage-event/EventTickets.js:1669
-msgid "Name"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:874
-#: src/Admin/manage-event/EventTickets.js:1039
-msgid "From"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:880
-#: src/Admin/manage-event/EventTickets.js:1062
-msgid "Until"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:922
-msgid "Period name"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1005
-#: src/Admin/manage-event/EventTickets.js:1531
-#: src/Admin/manage-event/EventTickets.js:1910
-msgid "Remove"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1024
-msgid "+ Add Period"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1097
-msgid "Edit tickets"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1102
-msgid "Total capacity"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1110
-msgid "Leave empty for unlimited capacity."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1128
-#: src/Admin/manage-event/EventTickets.js:1642
-msgid "Capacity"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1136
-msgid "Seats"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1144
-msgid "Groups"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1153
-msgid "Min. activities"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1242
-msgid "Type name"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1263
-#: src/Admin/manage-event/EventTickets.js:1793
-msgid "Unlimited"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1315
-msgid "How many capacity slots this ticket consumes (1 = single, 2 = pair/+1)."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1363
-msgid "All participants"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1400
-msgid "Only raises the event-wide minimum for this ticket type. Leave 0 to inherit."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1455
-msgid "Available"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1567
-msgid "+ Add Ticket Type"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1585
-msgid "Activity Options"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1593
-msgid "Minimum number of activities"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1597
-msgid "Participants must select at least this many activities to sign up. Set to 0 to disable."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1619
-msgid "Add selectable activity options (checkboxes) shown to participants at signup. Each option has its own price added on top of the base price."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1636
-msgid "Price (EUR)"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1648
-msgid "Collaborator(s)"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1674
-msgid "Activity name"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1704
-#: src/Admin/manage-event/EventTickets.js:1709
-msgid "Short name"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1886
-msgid "Add participants"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1942
-msgid "+ Add Option"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1951
-msgid "Settings"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1956
-msgid "Per-ticket-type capacity"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1960
-msgid "Show a Capacity input on each ticket type to cap how many can be sold of that type."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1973
-msgid "Multiple pricing periods"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1977
-msgid "Enable time-based pricing with multiple sale periods (e.g. early bird, regular, late). When off, a single flat price applies for the whole sale window."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1990
-msgid "Seats per ticket"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:1994
-msgid "Show a Seats input on each ticket type to let one ticket consume more than one capacity slot (e.g. couples or +1 tickets). When off, every ticket counts as 1 seat."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:2007
-msgid "Per-ticket-type minimum activities"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:2011
-msgid "Show a Min. activities input on each ticket type to require more activities than the event-wide minimum (it only ever raises it). When off, every ticket type uses the event-wide minimum."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:2027
-msgid "Per-ticket-type end date"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:2031
-msgid "Show a date/time input on each ticket type to stop selling it after a fixed date, regardless of remaining capacity."
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:2044
-msgid "Per-period pricing"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:2048
-msgid "Price every activity option per sale period instead of a single flat price. The Pricing column in the activity options table becomes one input per sale period. Requires sale periods to be defined."
 msgstr ""
 
 #: src/Admin/manage-event/MergeEventWizard.js:27

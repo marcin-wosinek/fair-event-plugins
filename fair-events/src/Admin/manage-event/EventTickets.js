@@ -853,6 +853,14 @@ export default function EventTickets({
 
 	const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
 
+	// Controlled mode (initialData + onDataRef, e.g. the Duplicate Event
+	// wizard): the caller owns fetch/save against its own event lifecycle, so
+	// this component's internal PUT-to-`eventDateId` save and JSON import
+	// (both of which need a real, already-created event) must stay hidden.
+	// Self-load/self-save mode (eventDateId alone, e.g. Manage Event) keeps
+	// both.
+	const controlledMode = !!onDataRef;
+
 	if (loading) {
 		return (
 			<Card style={{ marginTop: '16px' }}>
@@ -912,14 +920,16 @@ export default function EventTickets({
 						)}
 					</Notice>
 				))}
-			<Button
-				variant="primary"
-				onClick={handleSave}
-				isBusy={saving}
-				disabled={saving}
-			>
-				{__('Save tickets', 'fair-events')}
-			</Button>
+			{!controlledMode && (
+				<Button
+					variant="primary"
+					onClick={handleSave}
+					isBusy={saving}
+					disabled={saving}
+				>
+					{__('Save tickets', 'fair-events')}
+				</Button>
+			)}
 			<input
 				ref={fileInputRef}
 				type="file"
@@ -1306,18 +1316,20 @@ export default function EventTickets({
 										'fair-events'
 									)}
 								</MenuItem>
-								<MenuItem
-									onClick={() => {
-										fileInputRef.current?.click();
-										onClose();
-									}}
-									disabled={importing || saving}
-								>
-									{__(
-										'Import ticket settings',
-										'fair-events'
-									)}
-								</MenuItem>
+								{!controlledMode && (
+									<MenuItem
+										onClick={() => {
+											fileInputRef.current?.click();
+											onClose();
+										}}
+										disabled={importing || saving}
+									>
+										{__(
+											'Import ticket settings',
+											'fair-events'
+										)}
+									</MenuItem>
+								)}
 							</MenuGroup>
 						)}
 					</DropdownMenu>

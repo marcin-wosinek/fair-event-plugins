@@ -1398,3 +1398,117 @@ describe('EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 		expect(screen.queryByText(/Event day/i)).not.toBeInTheDocument();
 	});
 });
+
+describe('EventTickets — controlled mode without eventDateId (Duplicate Event wizard, #1330)', () => {
+	function renderControlled(extraProps = {}) {
+		const onDataRef = { current: null };
+		const { container } = render(
+			<EventTickets
+				initialData={initialDataWithTicketType}
+				onDataRef={onDataRef}
+				{...extraProps}
+			/>
+		);
+		return { onDataRef, container };
+	}
+
+	it('does not call the tickets endpoint on load when initialData is provided', () => {
+		renderControlled();
+		expect(apiFetch).not.toHaveBeenCalledWith(
+			expect.objectContaining({
+				path: expect.stringMatching(/event-dates\/undefined\/tickets/),
+			})
+		);
+	});
+
+	it('hides the internal "Save tickets" button — the wizard saves via onDataRef instead', () => {
+		renderControlled();
+		expect(
+			screen.queryByRole('button', { name: 'Save tickets' })
+		).not.toBeInTheDocument();
+	});
+
+	it('hides "Import ticket settings" but keeps "Export ticket settings" in the ⋯ menu', () => {
+		renderControlled();
+		fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+		expect(
+			screen.getByRole('menuitem', { name: 'Export ticket settings' })
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole('menuitem', { name: 'Import ticket settings' })
+		).not.toBeInTheDocument();
+	});
+
+	it('exposes recurrence_scope on the save payload when isSeries is true', () => {
+		const { onDataRef } = renderControlled({ isSeries: true });
+		const scopeSelect = screen
+			.getAllByRole('combobox')
+			.find(
+				(el) =>
+					el.value === 'single_instance' ||
+					el.value === 'whole_series'
+			);
+		expect(scopeSelect).toBeTruthy();
+		fireEvent.change(scopeSelect, { target: { value: 'whole_series' } });
+		expect(onDataRef.current()).toEqual(
+			expect.objectContaining({
+				ticket_types: [
+					expect.objectContaining({
+						recurrence_scope: 'whole_series',
+					}),
+				],
+			})
+		);
+	});
+
+	it('reads currency from window.fairPaymentsConnector rather than hardcoding EUR', () => {
+		window.fairPaymentsConnector = { currency: 'PLN' };
+		renderControlled({
+			initialData: {
+				...initialDataWithTicketType,
+				options: [
+					{
+						name: 'Add-on',
+						short_name: 'A',
+						price: 5,
+						capacity: null,
+						derive_price_from_sale_period: false,
+						period_prices: [],
+						collaborator_ids: [],
+					},
+				],
+			},
+		});
+		fireEvent.click(screen.getByRole('button', { name: /Add-ons/i }));
+		expect(screen.getByText('Price (PLN)')).toBeInTheDocument();
+		delete window.fairPaymentsConnector;
+	});
+
+	it('uses a lazily-resolved default sale end from lastOccurrenceDatetime rather than a fixed value', () => {
+		renderControlled({
+			initialData: {
+				...initialDataWithTicketType,
+				sale_periods: [
+					{
+						id: 1,
+						name: '',
+						sale_start: '2026-01-01',
+						sale_end: '',
+						sort_order: 0,
+					},
+				],
+			},
+			startDatetime: '2026-01-10 10:00:00',
+			lastOccurrenceDatetime: '2026-01-10 12:00:00',
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+
+		// The day after lastOccurrenceDatetime (2026-01-11), not endDatetime
+		// (unset here) — formatSaleDateLabel() renders a locale-formatted
+		// weekday/day/month, so assert on the marker and month.
+		expect(
+			screen.getByText(/until .*January.*\(default\)/)
+		).toBeInTheDocument();
+	});
+});
