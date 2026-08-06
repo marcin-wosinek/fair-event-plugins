@@ -120,12 +120,39 @@ class EventSignupPricing {
 	 *         (not purchasable right now), matching resolve_price_for_ticket_type()'s null.
 	 */
 	public static function resolve_prices_and_rules_for_ticket_types( $event_date_id, array $ticket_type_ids, $participant_id = null ) {
-		$resolved_prices       = TicketPricing::resolve_unit_prices_for_event_date( $event_date_id );
+		$resolved_prices = TicketPricing::resolve_unit_prices_for_event_date( $event_date_id );
+
+		// No active sale period at all → nothing is purchasable, matching
+		// resolve_unit_price()'s null (not "every type is free"). An empty
+		// price map here is ambiguous on its own — it also arises when a
+		// period *is* active but nothing has ever been priced — so the
+		// active_period flag is the only reliable discriminator.
+		if ( ! $resolved_prices['active_period'] ) {
+			return array();
+		}
+
 		$base_price_by_type_id = TicketPricing::base_prices_for_types(
 			$ticket_type_ids,
 			$resolved_prices['price_by_type_id'],
 			$resolved_prices['priced_type_ids']
 		);
+
+		// Mirrors resolve_price_and_rule_for_ticket_type()'s own base price,
+		// which goes through resolve_unit_price() and so picks up this
+		// filter — base_prices_for_types() intentionally doesn't apply it
+		// (see its docblock), so it's applied here per type instead, before
+		// the discount layer runs on top of it.
+		foreach ( $base_price_by_type_id as $ticket_type_id => $base_price ) {
+			$base_price_by_type_id[ $ticket_type_id ] = (float) apply_filters(
+				'fair_events_resolve_ticket_price',
+				$base_price,
+				$ticket_type_id,
+				array(
+					'event_date_id'  => $event_date_id,
+					'sale_period_id' => $resolved_prices['active_period']->id,
+				)
+			);
+		}
 
 		return self::resolve_prices_and_rules( $event_date_id, $base_price_by_type_id, $participant_id );
 	}

@@ -236,11 +236,16 @@ class TicketPricing {
 	/**
 	 * Resolve the base (undiscounted) price for each of the given ticket
 	 * types from the maps resolve_unit_prices_for_event_date() returns.
-	 * Mirrors resolve_unit_price()'s own per-type semantics exactly — same
-	 * "never priced is free by convention, priced elsewhere is unavailable"
-	 * rule filter_purchasable_types() applies — but as a pure, DB-free lookup
-	 * so a caller resolving many types reuses one bulk fetch instead of
-	 * calling resolve_unit_price() (and re-querying) once per type.
+	 * Mirrors resolve_unit_price()'s "never priced is free by convention,
+	 * priced elsewhere is unavailable" per-type selection rule as a pure,
+	 * DB-free lookup, so a caller resolving many types reuses one bulk fetch
+	 * instead of calling resolve_unit_price() (and re-querying) once per
+	 * type. Unlike resolve_unit_price(), this does **not** run the price
+	 * through the `fair_events_resolve_ticket_price` filter — matching the
+	 * event-signup block's own existing bulk-fetch render path, which never
+	 * applied that filter either. A caller that needs the filter applied
+	 * (e.g. a single-item fallback that used to go through
+	 * resolve_unit_price()) must apply it itself per type.
 	 *
 	 * @param int[]   $ticket_type_ids  Ticket type IDs to resolve.
 	 * @param float[] $price_by_type_id Ticket-type ID => price for the active period.
