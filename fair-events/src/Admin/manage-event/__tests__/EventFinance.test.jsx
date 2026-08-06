@@ -1,12 +1,13 @@
 /**
  * @jest-environment jsdom
  *
- * Component tests for the Finance tab double-counting fix (#1337).
+ * Component tests for the redesigned Finance tab (#1337).
  *
- * fair-finance FinancialEntry rows that have been reconciliation-matched to a
- * fair-payments-connector Transaction must be excluded from the totals/entries
- * fetched here (via `unmatched=true`), since the matched transaction's gross
- * amount already covers that income.
+ * The transaction table is the single source of truth for income — entries
+ * never contribute to Total Income, which removes the double-count bug class
+ * from the earlier `unmatched=true` approach (a matched-but-unlinked entry
+ * could still be summed on top of its transaction). fair-finance entries are
+ * reduced to a cost-only annotation table.
  */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -15,36 +16,45 @@ import EventFinance from '../EventFinance.js';
 
 jest.mock('@wordpress/api-fetch');
 
-const paidTransaction = {
+const paidTransactionWithEntry = {
 	id: 1,
 	amount: 45,
 	mollie_fee: 0.79,
 	application_fee: 0,
 	status: 'paid',
 	created_at: '2026-07-20 10:00:00',
+	entry_ids: [5],
 };
 
-const unmatchedIncomeEntry = {
-	id: 5,
-	entry_type: 'income',
+const paidTransactionWithoutEntry = {
+	id: 2,
+	amount: 50,
+	mollie_fee: 0.88,
+	application_fee: 0,
+	status: 'paid',
+	created_at: '2026-07-21 10:00:00',
+	entry_ids: [],
+};
+
+const costEntry = {
+	id: 9,
+	entry_type: 'cost',
 	entry_date: '2026-07-19',
-	amount: 30,
-	description: 'Sponsorship',
+	amount: 12,
+	description: 'Venue rental',
 };
 
 function mockApiFetchByPath({
 	totals = { total_income: 0, total_cost: 0, balance: 0 },
-	entries = [],
+	costEntries = [],
 	paidTransactions = [],
 } = {}) {
 	apiFetch.mockImplementation(({ path }) => {
 		if (path.startsWith('/fair-finance/v1/financial-entries/totals')) {
-			expect(path).toContain('unmatched=true');
 			return Promise.resolve(totals);
 		}
 		if (path.startsWith('/fair-finance/v1/financial-entries')) {
-			expect(path).toContain('unmatched=true');
-			return Promise.resolve({ entries });
+			return Promise.resolve({ entries: costEntries });
 		}
 		if (path.includes('status=paid')) {
 			return Promise.resolve({ transactions: paidTransactions });
@@ -61,13 +71,11 @@ function statValue(label) {
 	return screen.getByText(label).previousSibling.textContent;
 }
 
-describe('EventFinance — reconciled entries are not double-counted (#1337)', () => {
-	it('reports Total Income as only the gross transaction amount when the matching entry is excluded', async () => {
-		// Simulates the backend already filtering out the matched entry via
-		// unmatched=true — totals only reflect the paid transaction.
+describe('EventFinance — transaction table is the income source of truth (#1337)', () => {
+	it('reports Total Income as the transaction gross sum, ignoring entries entirely', async () => {
 		mockApiFetchByPath({
-			totals: { total_income: 0, total_cost: 0, balance: 0 },
-			paidTransactions: [paidTransaction],
+			totals: { total_income: 999, total_cost: 0, balance: 999 },
+			paidTransactions: [paidTransactionWithEntry],
 		});
 
 		render(<EventFinance eventDateId={42} entriesUrl="admin.php" />);
@@ -79,23 +87,47 @@ describe('EventFinance — reconciled entries are not double-counted (#1337)', (
 		expect(statValue('Total Income')).toBe('€45.00');
 	});
 
-	it('still includes an unmatched manual entry in totals and the entries table', async () => {
+	it('shows the linked entry id in the Budget entry column', async () => {
 		mockApiFetchByPath({
-			totals: { total_income: 30, total_cost: 0, balance: 30 },
-			entries: [unmatchedIncomeEntry],
-			paidTransactions: [],
+			paidTransactions: [paidTransactionWithEntry],
+		});
+
+		render(<EventFinance eventDateId={42} entriesUrl="admin.php" />);
+
+		await waitFor(() => expect(screen.getByText('#5')).toBeInTheDocument());
+	});
+
+	it('shows a dash in the Budget entry column when the transaction has no linked entry', async () => {
+		mockApiFetchByPath({
+			paidTransactions: [paidTransactionWithoutEntry],
 		});
 
 		render(<EventFinance eventDateId={42} entriesUrl="admin.php" />);
 
 		await waitFor(() =>
-			expect(screen.getByText('Sponsorship')).toBeInTheDocument()
+			expect(screen.getByText('Payments')).toBeInTheDocument()
 		);
 
-		expect(statValue('Total Income')).toBe('€30.00');
+		const row = screen.getByRole('link', { name: '€50.00' }).closest('tr');
+		expect(row).toHaveTextContent('-');
 	});
 
-	it('requests both fair-finance endpoints with unmatched=true', async () => {
+	it('lists a cost entry in the Costs table and includes it in Total Costs', async () => {
+		mockApiFetchByPath({
+			totals: { total_income: 0, total_cost: 12, balance: -12 },
+			costEntries: [costEntry],
+		});
+
+		render(<EventFinance eventDateId={42} entriesUrl="admin.php" />);
+
+		await waitFor(() =>
+			expect(screen.getByText('Venue rental')).toBeInTheDocument()
+		);
+
+		expect(statValue('Total Costs')).toBe('€12.00');
+	});
+
+	it('requests only cost-type entries', async () => {
 		mockApiFetchByPath({});
 
 		render(<EventFinance eventDateId={42} entriesUrl="admin.php" />);
@@ -103,23 +135,17 @@ describe('EventFinance — reconciled entries are not double-counted (#1337)', (
 		await waitFor(() => expect(apiFetch).toHaveBeenCalled());
 
 		const calledPaths = apiFetch.mock.calls.map((call) => call[0].path);
-		const totalsCall = calledPaths.find((p) =>
-			p.startsWith('/fair-finance/v1/financial-entries/totals')
-		);
 		const entriesCall = calledPaths.find(
 			(p) =>
-				p.startsWith('/fair-finance/v1/financial-entries?') ||
-				(p.startsWith('/fair-finance/v1/financial-entries') &&
-					!p.includes('/totals'))
+				p.startsWith('/fair-finance/v1/financial-entries?') &&
+				!p.includes('/totals')
 		);
-		expect(totalsCall).toContain('unmatched=true');
-		expect(entriesCall).toContain('unmatched=true');
+		expect(entriesCall).toContain('entry_type=cost');
 	});
 
 	it('still computes Total Net from paid-transaction fee data', async () => {
 		mockApiFetchByPath({
-			totals: { total_income: 0, total_cost: 0, balance: 0 },
-			paidTransactions: [paidTransaction],
+			paidTransactions: [paidTransactionWithEntry],
 		});
 
 		render(<EventFinance eventDateId={42} entriesUrl="admin.php" />);

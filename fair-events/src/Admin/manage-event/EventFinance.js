@@ -54,7 +54,7 @@ const renderParticipant = (tx) => {
 
 export default function EventFinance({ eventDateId, entriesUrl }) {
 	const [totals, setTotals] = useState(null);
-	const [entries, setEntries] = useState([]);
+	const [costEntries, setCostEntries] = useState([]);
 	const [transactions, setTransactions] = useState([]);
 	const [failedTransactions, setFailedTransactions] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -82,10 +82,10 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 				expiredData,
 			] = await Promise.all([
 				apiFetch({
-					path: `/fair-finance/v1/financial-entries/totals?event_date_id=${eventDateId}&unmatched=true`,
+					path: `/fair-finance/v1/financial-entries/totals?event_date_id=${eventDateId}`,
 				}),
 				apiFetch({
-					path: `/fair-finance/v1/financial-entries?event_date_id=${eventDateId}&per_page=10&unmatched=true`,
+					path: `/fair-finance/v1/financial-entries?event_date_id=${eventDateId}&per_page=10&entry_type=cost`,
 				}),
 				apiFetch({
 					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=paid&mode=live&per_page=100`,
@@ -127,15 +127,16 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 				(b.created_at || '').localeCompare(a.created_at || '')
 			);
 
+			const totalCost = totalsData.total_cost || 0;
+
 			setTotals({
-				...totalsData,
-				total_income:
-					(totalsData.total_income || 0) + transactionIncome,
-				balance: (totalsData.balance || 0) + transactionIncome,
+				total_cost: totalCost,
+				total_income: transactionIncome,
+				balance: transactionIncome - totalCost,
 				total_net: transactionNet,
 				net_complete: netComplete,
 			});
-			setEntries(entriesData.entries || []);
+			setCostEntries(entriesData.entries || []);
 			setTransactions(paidTransactions);
 			setFailedTransactions(failed);
 		} catch (err) {
@@ -252,13 +253,15 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 							</HStack>
 						)}
 
-						{entries.length > 0 && (
+						{costEntries.length > 0 && (
 							<div style={{ overflowX: 'auto' }}>
+								<h3 style={{ marginBottom: '8px' }}>
+									{__('Costs', 'fair-events')}
+								</h3>
 								<table className="wp-list-table widefat striped">
 									<thead>
 										<tr>
 											<th>{__('Date', 'fair-events')}</th>
-											<th>{__('Type', 'fair-events')}</th>
 											<th>
 												{__('Amount', 'fair-events')}
 											</th>
@@ -271,34 +274,15 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 										</tr>
 									</thead>
 									<tbody>
-										{entries.map((entry) => (
+										{costEntries.map((entry) => (
 											<tr key={entry.id}>
 												<td>{entry.entry_date}</td>
 												<td>
-													<span
+													<strong
 														style={{
-															color:
-																entry.entry_type ===
-																'cost'
-																	? '#d63638'
-																	: '#007017',
-															fontWeight: 'bold',
+															color: '#d63638',
 														}}
 													>
-														{entry.entry_type ===
-														'cost'
-															? __(
-																	'Cost',
-																	'fair-events'
-															  )
-															: __(
-																	'Income',
-																	'fair-events'
-															  )}
-													</span>
-												</td>
-												<td>
-													<strong>
 														{formatAmount(
 															entry.amount
 														)}
@@ -348,6 +332,12 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 											<th>
 												{__(
 													'Participant',
+													'fair-events'
+												)}
+											</th>
+											<th>
+												{__(
+													'Budget entry',
 													'fair-events'
 												)}
 											</th>
@@ -403,6 +393,16 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 													</td>
 													<td>
 														{renderParticipant(tx)}
+													</td>
+													<td>
+														{tx.entry_ids?.length
+															? tx.entry_ids
+																	.map(
+																		(id) =>
+																			`#${id}`
+																	)
+																	.join(', ')
+															: '-'}
 													</td>
 												</tr>
 											);
@@ -490,7 +490,7 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 							</div>
 						)}
 
-						{entries.length === 0 &&
+						{costEntries.length === 0 &&
 							transactions.length === 0 &&
 							failedTransactions.length === 0 &&
 							!totals?.total_cost &&
