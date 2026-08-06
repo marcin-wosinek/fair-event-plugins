@@ -27,13 +27,13 @@
 		"svn:copy": "cp -r readme.txt fair-form.php composer* languages CHANGELOG.md svn/trunk"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.28.3",
-		"@babel/preset-env": "^7.28.3",
-		"@babel/preset-react": "^7.28.3",
+		"@babel/core": "^8.0.1",
+		"@babel/preset-env": "^8.0.2",
+		"@babel/preset-react": "^8.0.1",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/react": "^16.3.2",
 		"@wordpress/scripts": "^32.4.0",
-		"babel-jest": "^30.0.5",
+		"babel-jest": "^30.4.1",
 		"webpack-bundle-output": "^1.1.0"
 	},
 	"dependencies": {
