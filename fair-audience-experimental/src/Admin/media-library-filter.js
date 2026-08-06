@@ -53,8 +53,7 @@
 						},
 						priority: 51 + index,
 					};
-				},
-				this);
+				}, this);
 			}
 		},
 	});

@@ -77,7 +77,6 @@ describe('EventEditForm secondary actions', () => {
 		expect(
 			screen.getByRole('button', { name: 'Unlink from event' })
 		).toBeInTheDocument();
-		expect(console).toHaveWarned();
 	});
 
 	it('hides Unlink when onUnlink is not provided (fair_event post)', async () => {

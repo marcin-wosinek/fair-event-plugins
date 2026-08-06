@@ -543,13 +543,13 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 * @param {HTMLFormElement} form The get-tickets form.
 	 */
 	function wireTicketTypeInputs(form) {
-		form.querySelectorAll('input[name="ticket_type_id"]').forEach(function (
-			field
-		) {
-			field.addEventListener('change', function () {
-				refreshSignupState(form);
-			});
-		});
+		form.querySelectorAll('input[name="ticket_type_id"]').forEach(
+			function (field) {
+				field.addEventListener('change', function () {
+					refreshSignupState(form);
+				});
+			}
+		);
 	}
 
 	/**

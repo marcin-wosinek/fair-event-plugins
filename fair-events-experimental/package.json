@@ -29,10 +29,11 @@
 		"fair-events": "*",
 		"fair-events-shared": "*",
 		"@wordpress/api-fetch": "^7.2.0",
-		"@wordpress/components": "^36.0.0",
+		"@wordpress/components": "37.0.0",
 		"@wordpress/dom-ready": "^4.2.0",
 		"@wordpress/element": "^8.0.0",
 		"@wordpress/i18n": "^6.21.0",
+		"@wordpress/icons": "15.2.0",
 		"recharts": "^3.0.0"
 	},
 	"devDependencies": {
@@ -42,7 +43,7 @@
 		"@playwright/test": "^1.40.0",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/react": "^16.3.2",
-		"@wordpress/scripts": "^32.4.0",
+		"@wordpress/scripts": "33.0.0",
 		"babel-jest": "^30.4.1",
 		"jest": "^30.0.0",
 		"npm-run-all2": "^9.0.2",

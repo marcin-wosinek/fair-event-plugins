@@ -13,10 +13,10 @@ module.exports = {
 		'\\.api\\.spec\\.js$',
 	],
 	transformIgnorePatterns: [
-		'/node_modules/(?!(uuid|@wordpress/components)/)',
+		'/node_modules/(?!(uuid|@wordpress/components|@wordpress/dataviews|@wordpress/ui|@wordpress/theme)/)',
 	],
 	transform: {
-		'^.+\\.[jt]sx?$': [
+		'^.+\\.m?[jt]sx?$': [
 			'babel-jest',
 			{
 				presets: [

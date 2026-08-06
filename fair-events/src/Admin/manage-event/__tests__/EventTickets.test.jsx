@@ -158,9 +158,6 @@ describe('EventTickets — recurrence scope selector', () => {
 			initialData: initialDataWithTicketType,
 		});
 		expect(screen.getByText('Scope')).toBeInTheDocument();
-		// Acknowledge WordPress TextControl / SelectControl size deprecation
-		// notices emitted the first time those component types render in the suite.
-		expect(console).toHaveWarned();
 	});
 
 	it('does not show Scope column when isSeries is false', () => {
