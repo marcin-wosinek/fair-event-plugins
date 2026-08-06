@@ -190,6 +190,82 @@ class TicketPricing {
 	}
 
 	/**
+	 * Resolve the active sale period and every ticket type's price for it in
+	 * one pass — the bulk counterpart to resolve_unit_price(), which
+	 * re-resolves the active period and re-queries prices from scratch for
+	 * every ticket type it's called for. Callers looping over an event
+	 * date's ticket types (the signup render, the signup pricing overlay)
+	 * should call this once and read the returned maps instead.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array{
+	 *     active_period: TicketSalePeriod|null,
+	 *     price_by_type_id: float[],
+	 *     priced_type_ids: int[]
+	 * } `price_by_type_id` covers only types with a price row for the
+	 *   active period; `priced_type_ids` lists every type with a price row
+	 *   for *any* period, for filter_purchasable_types()'s "never priced is
+	 *   free by convention" check.
+	 */
+	public static function resolve_unit_prices_for_event_date( $event_date_id ) {
+		$active_period = self::resolve_active_sale_period( $event_date_id );
+		if ( ! $active_period ) {
+			return array(
+				'active_period'    => null,
+				'price_by_type_id' => array(),
+				'priced_type_ids'  => array(),
+			);
+		}
+
+		$price_by_type_id   = array();
+		$priced_type_id_set = array();
+		foreach ( TicketPrice::get_all_by_event_date_id( $event_date_id ) as $price_row ) {
+			$priced_type_id_set[ (int) $price_row->ticket_type_id ] = true;
+			if ( (int) $price_row->sale_period_id === (int) $active_period->id ) {
+				$price_by_type_id[ (int) $price_row->ticket_type_id ] = (float) $price_row->price;
+			}
+		}
+
+		return array(
+			'active_period'    => $active_period,
+			'price_by_type_id' => $price_by_type_id,
+			'priced_type_ids'  => array_keys( $priced_type_id_set ),
+		);
+	}
+
+	/**
+	 * Resolve the base (undiscounted) price for each of the given ticket
+	 * types from the maps resolve_unit_prices_for_event_date() returns.
+	 * Mirrors resolve_unit_price()'s own per-type semantics exactly — same
+	 * "never priced is free by convention, priced elsewhere is unavailable"
+	 * rule filter_purchasable_types() applies — but as a pure, DB-free lookup
+	 * so a caller resolving many types reuses one bulk fetch instead of
+	 * calling resolve_unit_price() (and re-querying) once per type.
+	 *
+	 * @param int[]   $ticket_type_ids  Ticket type IDs to resolve.
+	 * @param float[] $price_by_type_id Ticket-type ID => price for the active period.
+	 * @param int[]   $priced_type_ids  Ticket-type IDs with a price row for at least one period.
+	 * @return float[] Base price, keyed by ticket type ID; a type priced for
+	 *                 other periods but not the active one is omitted (not
+	 *                 purchasable right now), matching resolve_unit_price()'s null.
+	 */
+	public static function base_prices_for_types( array $ticket_type_ids, array $price_by_type_id, array $priced_type_ids ) {
+		$base_price_by_type_id = array();
+
+		foreach ( $ticket_type_ids as $ticket_type_id ) {
+			$ticket_type_id = (int) $ticket_type_id;
+			if ( array_key_exists( $ticket_type_id, $price_by_type_id ) ) {
+				$base_price_by_type_id[ $ticket_type_id ] = (float) $price_by_type_id[ $ticket_type_id ];
+			} elseif ( ! in_array( $ticket_type_id, $priced_type_ids, true ) ) {
+				$base_price_by_type_id[ $ticket_type_id ] = 0.0;
+			}
+			// Else: priced for other periods but not the active one → not purchasable, omitted.
+		}
+
+		return $base_price_by_type_id;
+	}
+
+	/**
 	 * Keep only the ticket types actually purchasable right now under the
 	 * currently active sale period. A type is purchasable when it either has
 	 * a resolved price for the active period ($price_by_type_id), or has
