@@ -226,23 +226,28 @@ class PaymentHooks {
 	/**
 	 * Format the applied group-discount rule as a human-readable label.
 	 *
-	 * Re-resolves the best discount rule for the participant on the event date —
-	 * the same call EventSignupController uses at price-computation time — and
-	 * formats it as e.g. "Students -20%" or "Members -5.00 EUR".
+	 * Re-resolves the rule that actually won against the participant's
+	 * ticket type's real price — the same resolution EventSignupController
+	 * uses at charge time (issue #1297) — and formats it as e.g.
+	 * "Students -20%" or "Members -5.00 EUR". Signups with no ticket type
+	 * (options-only events) have no single price to resolve a rule against,
+	 * so no label is shown for them.
 	 *
 	 * @param object $event_participant Event participant row.
 	 * @param object $transaction       Transaction row.
 	 * @return string Formatted label, or empty string when no discount applies.
 	 */
 	private static function format_applied_discount( $event_participant, $transaction ) {
-		if ( ! class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+		if ( empty( $event_participant->ticket_type_id )
+			|| ! class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
 			return '';
 		}
 
-		$rule = \FairEventsExperimental\Services\EventSignupPricing::resolve_best_discount_rule(
-			(int) $event_participant->event_date_id,
+		$resolved = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule_for_ticket_type(
+			(int) $event_participant->ticket_type_id,
 			(int) $event_participant->participant_id
 		);
+		$rule     = $resolved['rule'] ?? null;
 		if ( ! $rule ) {
 			return '';
 		}

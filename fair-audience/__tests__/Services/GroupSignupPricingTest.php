@@ -131,4 +131,14 @@ class GroupSignupPricingTest extends TestCase {
 
 		$this->assertSame( '€5.00 discount applied (Staff)', $label );
 	}
+
+	/**
+	 * A fractional percentage renders with its decimals instead of being
+	 * rounded to a whole number (issue #1297).
+	 */
+	public function test_discount_note_label_percentage_keeps_fractional_decimals() {
+		$label = GroupSignupPricing::discount_note_label( $this->rule( 'percentage', 12.5 ), 'Volunteers' );
+
+		$this->assertSame( '12.5% discount applied (Volunteers)', $label );
+	}
 }

@@ -129,10 +129,22 @@ class GroupSignupPricing {
 	 */
 	public static function discount_note_label( $rule, $group_name ) {
 		if ( 'percentage' === $rule->discount_type ) {
+			// A fractional percentage (e.g. 12.5%) must render with its
+			// decimals instead of being rounded away (issue #1297) — but no
+			// more than it needs (12.5, not 12.50). discount_value is
+			// DECIMAL(10,2), so rounding to whole hundredths and checking
+			// divisibility avoids float-precision surprises.
+			$value      = (float) $rule->discount_value;
+			$hundredths = (int) round( $value * 100 );
+			if ( 0 === $hundredths % 100 ) {
+				$decimals = 0;
+			} else {
+				$decimals = 0 === $hundredths % 10 ? 1 : 2;
+			}
 			return sprintf(
 				/* translators: 1: discount percentage, 2: group name */
 				__( '%1$s%% discount applied (%2$s)', 'fair-audience' ),
-				number_format_i18n( (float) $rule->discount_value ),
+				number_format_i18n( $value, $decimals ),
 				$group_name
 			);
 		}

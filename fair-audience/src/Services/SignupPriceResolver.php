@@ -42,6 +42,34 @@ class SignupPriceResolver {
 	}
 
 	/**
+	 * Resolve the effective price for a specific ticket type, plus the
+	 * group discount rule that produced it (if any). Mirrors
+	 * resolve_price_for_ticket_type()'s fallback pattern: prefers the
+	 * full-featured experimental resolver, and otherwise falls back to the
+	 * base fair-events price with no rule (group discounts are
+	 * experimental-only).
+	 *
+	 * @param int      $ticket_type_id Ticket type ID.
+	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
+	 * @return array{price: float, rule: object|null}|null Null when not purchasable right now.
+	 */
+	public static function resolve_price_and_rule_for_ticket_type( $ticket_type_id, $participant_id = null ) {
+		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			return \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule_for_ticket_type( $ticket_type_id, $participant_id );
+		}
+
+		if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
+			$price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type_id );
+			return null === $price ? null : array(
+				'price' => $price,
+				'rule'  => null,
+			);
+		}
+
+		return null;
+	}
+
+	/**
 	 * Check whether a positive price is configured for a ticket type,
 	 * ignoring discount rules and sale-period timing. Used by the
 	 * fail-closed "payment unavailable" guard so a paid event never
