@@ -14,6 +14,7 @@ use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\GroupSignupPricing;
 use FairAudience\Services\ParticipantToken;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -1200,10 +1201,12 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|\WP_Error|null Response/error on paid path, null on free path.
 	 */
 	private function maybe_start_addon_payment( $event_id, $event_date_id, $participant, $event_participant, $user_id, $new_options ) {
+		$option_prices = $this->resolve_option_prices( $new_options, $event_date_id, (int) $participant->id );
+
 		$line_items   = array();
 		$total_amount = 0;
 		foreach ( $new_options as $opt ) {
-			$opt_price     = $this->compute_option_price( $opt, $event_date_id, (int) $participant->id );
+			$opt_price     = $option_prices[ (int) $opt->id ];
 			$total_amount += $opt_price;
 			if ( 0.0 !== (float) $opt_price ) {
 				$line_items[] = array(
@@ -1323,40 +1326,17 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validate that a participant is allowed to use a group-restricted ticket type.
+	 * Validate that a participant is allowed to use a group-restricted ticket
+	 * type. Delegates to the shared GroupSignupPricing service — the same
+	 * membership-consulting authority the unified-block render overlay uses
+	 * — instead of a separately hand-rolled lookup (issue #1299).
 	 *
 	 * @param int|null $ticket_type_id   Ticket type ID, or null if none selected.
 	 * @param int      $participant_id   Participant ID.
 	 * @return WP_Error|null WP_Error if restricted, null if allowed.
 	 */
 	private function validate_ticket_type_group_restriction( $ticket_type_id, $participant_id ) {
-		if ( ! $ticket_type_id ) {
-			return null;
-		}
-
-		if ( ! class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ||
-		! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
-			return null;
-		}
-
-		$allowed_group_ids = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_group_ids_by_ticket_type_id( $ticket_type_id );
-		if ( empty( $allowed_group_ids ) ) {
-			return null;
-		}
-
-		$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
-		$memberships            = $group_participant_repo->get_by_participant( $participant_id );
-		$participant_group_ids  = array_map( fn( $m ) => (int) $m->group_id, $memberships );
-
-		if ( empty( array_intersect( $allowed_group_ids, $participant_group_ids ) ) ) {
-			return new WP_Error(
-				'ticket_type_restricted',
-				__( 'This ticket type is not available for your account.', 'fair-audience' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		return null;
+		return GroupSignupPricing::restriction_error( $ticket_type_id, $participant_id );
 	}
 
 	/**
@@ -1656,31 +1636,52 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Compute the effective price for a ticket option, applying the buyer's
-	 * best-matching group pricing rule for this option's own real base
-	 * price — not a shared event-date-level rule, so mixed percentage/amount
-	 * rules resolve correctly per option (issue #1297).
+	 * Resolve every selected option's effective price in one bulk call,
+	 * applying the buyer's best-matching group pricing rule for each
+	 * option's own real base price — not a shared event-date-level rule, so
+	 * mixed percentage/amount rules resolve correctly per option (issue
+	 * #1297). The event's discount rules and the buyer's group membership
+	 * are each fetched once for the whole selection rather than once per
+	 * option (issue #1299).
 	 *
-	 * @param object   $option         TicketOption object.
+	 * @param object[] $option_items   Selected TicketOption objects.
 	 * @param int      $event_date_id  Event date ID.
 	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
-	 * @return float Effective option price (>= 0 inputs assumed; may be 0).
+	 * @return array<int, float> Effective prices (>= 0 inputs assumed; may be 0), keyed by option ID.
 	 */
-	private function compute_option_price( $option, $event_date_id, $participant_id ) {
-		if ( class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class ) ) {
-			$resolved  = \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $option );
-			$opt_price = null !== $resolved ? (float) $resolved : 0.0;
-		} else {
-			$opt_price = (float) $option->price;
+	private function resolve_option_prices( array $option_items, $event_date_id, $participant_id ) {
+		$base_price_by_option_id = array();
+		foreach ( $option_items as $option ) {
+			if ( class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class ) ) {
+				$resolved                                     = \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $option );
+				$base_price_by_option_id[ (int) $option->id ] = null !== $resolved ? (float) $resolved : 0.0;
+			} else {
+				$base_price_by_option_id[ (int) $option->id ] = (float) $option->price;
+			}
 		}
-		if ( $participant_id && $opt_price > 0 ) {
-			$opt_price = \FairAudience\Services\SignupPriceResolver::resolve_price_and_rule(
-				$opt_price,
-				$event_date_id,
-				$participant_id
-			)['price'];
+
+		if ( ! $participant_id ) {
+			return $base_price_by_option_id;
 		}
-		return $opt_price;
+
+		$discountable = array_filter(
+			$base_price_by_option_id,
+			static function ( $price ) {
+				return $price > 0;
+			}
+		);
+		if ( empty( $discountable ) ) {
+			return $base_price_by_option_id;
+		}
+
+		$resolved_by_option_id = \FairAudience\Services\SignupPriceResolver::resolve_prices_and_rules( $event_date_id, $discountable, $participant_id );
+
+		$prices = $base_price_by_option_id;
+		foreach ( $resolved_by_option_id as $option_id => $resolved ) {
+			$prices[ $option_id ] = $resolved['price'];
+		}
+
+		return $prices;
 	}
 
 	/**
@@ -1781,16 +1782,12 @@ class EventSignupController extends WP_REST_Controller {
 
 		// Option prices count towards the total even when there is no base price.
 		// Each option resolves its own best-matching group discount rule
-		// against its own real base price (issue #1297).
-		$options_total = 0;
-		foreach ( $option_items as $opt ) {
-			$options_total += $this->compute_option_price(
-				$opt,
-				$event_date_id,
-				(int) $participant->id
-			);
-		}
-		$total_amount = (float) ( $final_price ?? 0 ) + $options_total;
+		// against its own real base price (issue #1297), resolved once for the
+		// whole selection here and reused below when building line items,
+		// instead of recomputing per option twice over (issue #1299).
+		$option_prices = $this->resolve_option_prices( $option_items, $event_date_id, (int) $participant->id );
+		$options_total = array_sum( $option_prices );
+		$total_amount  = (float) ( $final_price ?? 0 ) + $options_total;
 
 		// Determine whether a price is configured for this event regardless of
 		// how the resolution turned out (discount-to-zero, service unavailable, etc.).
@@ -1879,11 +1876,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 		foreach ( $option_items as $opt ) {
-			$opt_price = $this->compute_option_price(
-				$opt,
-				$event_date_id,
-				(int) $participant->id
-			);
+			$opt_price = $option_prices[ (int) $opt->id ];
 			if ( 0.0 !== $opt_price ) {
 				$line_items[] = array(
 					'name'     => $opt->name,

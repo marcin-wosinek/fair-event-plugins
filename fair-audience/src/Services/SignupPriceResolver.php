@@ -137,6 +137,76 @@ class SignupPriceResolver {
 	}
 
 	/**
+	 * Bulk counterpart to resolve_price_and_rule_for_ticket_type(): resolves
+	 * every ticket type's price + winning discount rule for one event date in
+	 * a single call, instead of once per type — the fix for the per-tier
+	 * query multiplication in issue #1299. Callers looping over an event
+	 * date's ticket types (the signup render, the purchase flow) should call
+	 * this once instead of resolve_price_and_rule_for_ticket_type() per type.
+	 *
+	 * @param int      $event_date_id   Event date ID.
+	 * @param int[]    $ticket_type_ids Ticket type IDs to resolve, all belonging to $event_date_id.
+	 * @param int|null $participant_id  fair-audience participant ID, or null for anonymous.
+	 * @return array<int, array{price: float, rule: object|null}> Keyed by ticket type ID;
+	 *         a type not purchasable right now is omitted, matching resolve_price_and_rule_for_ticket_type()'s null.
+	 */
+	public static function resolve_prices_and_rules_for_ticket_types( $event_date_id, array $ticket_type_ids, $participant_id = null ) {
+		$result = self::call_experimental( 'resolve_prices_and_rules_for_ticket_types', array( $event_date_id, $ticket_type_ids, $participant_id ) );
+		if ( $result['ok'] ) {
+			return $result['value'];
+		}
+
+		if ( ! class_exists( \FairEvents\Services\TicketPricing::class ) ) {
+			return array();
+		}
+
+		$resolved_prices       = \FairEvents\Services\TicketPricing::resolve_unit_prices_for_event_date( $event_date_id );
+		$base_price_by_type_id = \FairEvents\Services\TicketPricing::base_prices_for_types(
+			$ticket_type_ids,
+			$resolved_prices['price_by_type_id'],
+			$resolved_prices['priced_type_ids']
+		);
+
+		$resolved = array();
+		foreach ( $base_price_by_type_id as $ticket_type_id => $price ) {
+			$resolved[ $ticket_type_id ] = array(
+				'price' => $price,
+				'rule'  => null,
+			);
+		}
+
+		return $resolved;
+	}
+
+	/**
+	 * Bulk counterpart to resolve_price_and_rule(): resolves the winning
+	 * discount rule for several already-known base prices on one event date
+	 * — e.g. activity/ticket-option prices — in a single call instead of once
+	 * per price.
+	 *
+	 * @param int                      $event_date_id     Event date ID the discount rules belong to.
+	 * @param array<int|string, float> $base_price_by_key Base (undiscounted) prices, keyed however the caller likes.
+	 * @param int|null                 $participant_id    fair-audience participant ID, or null for anonymous.
+	 * @return array<int|string, array{price: float, rule: object|null}> Same keys as $base_price_by_key.
+	 */
+	public static function resolve_prices_and_rules( $event_date_id, array $base_price_by_key, $participant_id = null ) {
+		$result = self::call_experimental( 'resolve_prices_and_rules', array( $event_date_id, $base_price_by_key, $participant_id ) );
+		if ( $result['ok'] ) {
+			return $result['value'];
+		}
+
+		$resolved = array();
+		foreach ( $base_price_by_key as $key => $base_price ) {
+			$resolved[ $key ] = array(
+				'price' => $base_price,
+				'rule'  => null,
+			);
+		}
+
+		return $resolved;
+	}
+
+	/**
 	 * Check whether a positive price is configured for a ticket type,
 	 * ignoring discount rules and sale-period timing. Used by the
 	 * fail-closed "payment unavailable" guard so a paid event never

@@ -136,4 +136,106 @@ class EventSignupPricingTest extends TestCase {
 		$this->assertSame( 10.0, $result['price'] );
 		$this->assertNull( $result['rule'] );
 	}
+
+	/**
+	 * Covers filter_matching_rules() — the pure rule-matching step behind the
+	 * bulk resolver's single get_by_participant() call (issue #1299),
+	 * replacing resolve_price_and_rule()'s per-rule
+	 * get_by_group_and_participant() loop.
+	 */
+
+	/**
+	 * A rule whose group the participant belongs to is kept.
+	 */
+	public function test_filter_matching_rules_keeps_matching_group() {
+		$rule           = $this->rule( 1, 'percentage', 20 );
+		$rule->group_id = 5;
+
+		$result = EventSignupPricing::filter_matching_rules( array( $rule ), array( 5, 6 ) );
+
+		$this->assertSame( array( $rule ), $result );
+	}
+
+	/**
+	 * A rule whose group the participant does not belong to is dropped.
+	 */
+	public function test_filter_matching_rules_drops_non_matching_group() {
+		$rule           = $this->rule( 1, 'percentage', 20 );
+		$rule->group_id = 9;
+
+		$result = EventSignupPricing::filter_matching_rules( array( $rule ), array( 5, 6 ) );
+
+		$this->assertSame( array(), $result );
+	}
+
+	/**
+	 * A mixed set of rules keeps only the ones matching the participant's
+	 * groups, reindexed — this is the batch equivalent of calling
+	 * get_by_group_and_participant() once per rule, done as one in-memory
+	 * pass over a membership set fetched exactly once.
+	 */
+	public function test_filter_matching_rules_mixed_set() {
+		$matching               = $this->rule( 1, 'percentage', 20 );
+		$matching->group_id     = 5;
+		$non_matching           = $this->rule( 2, 'amount', 3 );
+		$non_matching->group_id = 9;
+
+		$result = EventSignupPricing::filter_matching_rules( array( $matching, $non_matching ), array( 5 ) );
+
+		$this->assertSame( array( $matching ), $result );
+	}
+
+	/**
+	 * No membership at all matches nothing.
+	 */
+	public function test_filter_matching_rules_no_membership_matches_nothing() {
+		$rule           = $this->rule( 1, 'percentage', 20 );
+		$rule->group_id = 5;
+
+		$result = EventSignupPricing::filter_matching_rules( array( $rule ), array() );
+
+		$this->assertSame( array(), $result );
+	}
+
+	/**
+	 * Covers resolve_prices_and_rules() — the bulk price+rule resolver.
+	 */
+
+	/**
+	 * Without a participant, every key's base price passes through
+	 * unchanged with no rule, and no rule/membership lookup is attempted —
+	 * matches resolve_price_and_rule()'s anonymous-viewer fast path.
+	 */
+	public function test_resolve_prices_and_rules_without_participant_passes_prices_through() {
+		$result = EventSignupPricing::resolve_prices_and_rules(
+			5,
+			array(
+				1 => 10.0,
+				2 => 0.0,
+			),
+			null
+		);
+
+		$this->assertSame(
+			array(
+				1 => array(
+					'price' => 10.0,
+					'rule'  => null,
+				),
+				2 => array(
+					'price' => 0.0,
+					'rule'  => null,
+				),
+			),
+			$result
+		);
+	}
+
+	/**
+	 * An empty price map resolves to an empty result without touching
+	 * anything else.
+	 */
+	public function test_resolve_prices_and_rules_empty_input_returns_empty() {
+		$this->assertSame( array(), EventSignupPricing::resolve_prices_and_rules( 5, array(), 2 ) );
+	}
 }

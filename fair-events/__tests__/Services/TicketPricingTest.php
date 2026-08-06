@@ -234,4 +234,67 @@ class TicketPricingTest extends TestCase {
 			TicketPricing::filter_purchasable_types( array( $type ), array(), array() )
 		);
 	}
+
+	/**
+	 * Covers base_prices_for_types() — the bulk counterpart to
+	 * resolve_unit_price(), consumed by callers resolving many types from
+	 * one resolve_unit_prices_for_event_date() call instead of once per type
+	 * (issue #1299). Mirrors resolve_unit_price()'s exact per-type rules.
+	 */
+
+	/**
+	 * A type with a price row for the active period resolves to that price.
+	 */
+	public function test_base_prices_for_types_uses_active_period_price() {
+		$result = TicketPricing::base_prices_for_types( array( 1 ), array( 1 => 12.5 ), array( 1 ) );
+
+		$this->assertSame( array( 1 => 12.5 ), $result );
+	}
+
+	/**
+	 * A type never priced for any period is free by convention, even though
+	 * it's absent from $price_by_type_id.
+	 */
+	public function test_base_prices_for_types_never_priced_is_free() {
+		$result = TicketPricing::base_prices_for_types( array( 1 ), array(), array() );
+
+		$this->assertSame( array( 1 => 0.0 ), $result );
+	}
+
+	/**
+	 * A type priced for some other period, but not the active one, is
+	 * omitted entirely — not purchasable right now, matching
+	 * resolve_unit_price()'s null.
+	 */
+	public function test_base_prices_for_types_omits_type_priced_elsewhere() {
+		$result = TicketPricing::base_prices_for_types( array( 1, 2 ), array( 1 => 12.5 ), array( 1, 2 ) );
+
+		$this->assertSame( array( 1 => 12.5 ), $result );
+	}
+
+	/**
+	 * Several requested types resolve independently in one call, each under
+	 * its own rule (priced, free-by-convention, or omitted) — the "query
+	 * count doesn't scale with tier count" guarantee reduces to this being a
+	 * single pure pass over the maps already fetched once.
+	 */
+	public function test_base_prices_for_types_resolves_several_types_independently() {
+		$price_by_type_id = array(
+			1 => 10.0,
+			3 => 0.0,
+		);
+		$priced_type_ids  = array( 1, 2, 3 );
+
+		$result = TicketPricing::base_prices_for_types( array( 1, 2, 3, 4 ), $price_by_type_id, $priced_type_ids );
+
+		$this->assertSame(
+			array(
+				1 => 10.0,
+				// 2 omitted: priced for another period, not the active one.
+				3 => 0.0,
+				4 => 0.0, // never priced anywhere → free by convention.
+			),
+			$result
+		);
+	}
 }

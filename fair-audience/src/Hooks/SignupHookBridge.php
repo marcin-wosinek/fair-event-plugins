@@ -116,17 +116,28 @@ class SignupHookBridge {
 			// charged. Clamped at 0 — an amount-discount larger than the price
 			// can never show (or charge) a negative amount. Each type's own
 			// winning rule rides along so the note below can tell whether every
-			// discounted type agrees on the same rule (issue #1297).
+			// discounted type agrees on the same rule (issue #1297). Resolved in
+			// one bulk call so the sale period, discount rules, and viewer's
+			// group membership are each fetched once per render, not once per
+			// tier (issue #1299).
+			$ticket_type_ids     = array_map(
+				static function ( $ticket_type ) {
+					return (int) $ticket_type->id;
+				},
+				$context['ticket_types']
+			);
+			$resolved_by_type_id = SignupPriceResolver::resolve_prices_and_rules_for_ticket_types(
+				$pricing_event_date_id,
+				$ticket_type_ids,
+				$participant_id
+			);
+
 			$price_by_type_id = array();
 			$rule_by_type_id  = array();
-			foreach ( $context['ticket_types'] as $ticket_type ) {
-				$resolved = SignupPriceResolver::resolve_price_and_rule_for_ticket_type( (int) $ticket_type->id, $participant_id );
-				if ( null === $resolved ) {
-					continue;
-				}
-				$price_by_type_id[ (int) $ticket_type->id ] = max( 0, $resolved['price'] );
+			foreach ( $resolved_by_type_id as $ticket_type_id => $resolved ) {
+				$price_by_type_id[ $ticket_type_id ] = max( 0, $resolved['price'] );
 				if ( null !== $resolved['rule'] ) {
-					$rule_by_type_id[ (int) $ticket_type->id ] = $resolved['rule'];
+					$rule_by_type_id[ $ticket_type_id ] = $resolved['rule'];
 				}
 			}
 			$context['price_by_type_id'] = $price_by_type_id;

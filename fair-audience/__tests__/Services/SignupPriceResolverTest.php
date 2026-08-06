@@ -57,4 +57,49 @@ class SignupPriceResolverTest extends TestCase {
 			$result
 		);
 	}
+
+	/**
+	 * Confirms resolve_prices_and_rules_for_ticket_types() — the bulk
+	 * facade added for issue #1299 — degrades to an empty result instead of
+	 * fataling when the stale stub lacks the method and fair-events'
+	 * TicketPricing isn't loaded in this isolated unit test either (the
+	 * facade's own fallback chain, same as resolve_price_and_rule_for_ticket_type()).
+	 */
+	public function test_resolve_prices_and_rules_for_ticket_types_degrades_without_fatal() {
+		$this->assertSame(
+			array(),
+			SignupPriceResolver::resolve_prices_and_rules_for_ticket_types( 5, array( 1, 2 ), 2 )
+		);
+	}
+
+	/**
+	 * Confirms resolve_prices_and_rules() — the bulk facade added for issue
+	 * #1299 — degrades to passing every base price through unchanged with no
+	 * rule, mirroring resolve_price_and_rule()'s own fallback, instead of
+	 * fataling when the stale stub lacks the method.
+	 */
+	public function test_resolve_prices_and_rules_degrades_to_base_prices_without_fatal() {
+		$result = SignupPriceResolver::resolve_prices_and_rules(
+			5,
+			array(
+				10 => 20.0,
+				11 => 0.0,
+			),
+			2
+		);
+
+		$this->assertSame(
+			array(
+				10 => array(
+					'price' => 20.0,
+					'rule'  => null,
+				),
+				11 => array(
+					'price' => 0.0,
+					'rule'  => null,
+				),
+			),
+			$result
+		);
+	}
 }

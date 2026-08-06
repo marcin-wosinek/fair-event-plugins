@@ -228,19 +228,12 @@ $has_instance_picker = $has_multiple_instances_type && ! empty( $occurrences_for
 $price_by_type_id   = array();
 $priced_type_ids    = array();
 $active_sale_period = null;
-if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
-	$active_sale_period = \FairEvents\Services\TicketPricing::resolve_active_sale_period( $pricing_event_date_id );
-	if ( $active_sale_period ) {
-		$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id );
-		foreach ( $prices as $price ) {
-			$priced_type_ids[ (int) $price->ticket_type_id ] = true;
-			if ( (int) $price->sale_period_id === (int) $active_sale_period->id ) {
-				$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
-			}
-		}
-	}
+if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
+	$resolved_prices    = \FairEvents\Services\TicketPricing::resolve_unit_prices_for_event_date( $pricing_event_date_id );
+	$active_sale_period = $resolved_prices['active_period'];
+	$price_by_type_id   = $resolved_prices['price_by_type_id'];
+	$priced_type_ids    = $resolved_prices['priced_type_ids'];
 }
-$priced_type_ids = array_keys( $priced_type_ids );
 
 // A ticket type with no price row for the active sale period, but priced for
 // some other period, isn't purchasable right now — drop it from the list

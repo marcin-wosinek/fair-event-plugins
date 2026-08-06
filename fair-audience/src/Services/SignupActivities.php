@@ -108,6 +108,46 @@ class SignupActivities {
 	}
 
 	/**
+	 * Bulk counterpart to resolve_price_for_participant(): resolves several
+	 * options' discounted prices in one call instead of once per option, so
+	 * the event's discount rules and the viewer's group membership are each
+	 * fetched once per render/request rather than once per option (issue
+	 * #1299). Options with a zero/negative base price are left out of the
+	 * lookup (nothing to discount) and pass through unchanged, mirroring
+	 * resolve_price_for_participant()'s own guard.
+	 *
+	 * @param array<int, float> $base_price_by_option_id Base (undiscounted) option prices, keyed by option ID.
+	 * @param int               $pricing_event_date_id  Event date the discount rules belong to.
+	 * @param int|null          $participant_id          Viewer's participant ID, or null for anonymous.
+	 * @return array<int, float> Resolved prices, keyed by option ID — same keys as the input.
+	 */
+	public static function resolve_prices_for_participant( array $base_price_by_option_id, $pricing_event_date_id, $participant_id ) {
+		if ( ! $participant_id ) {
+			return $base_price_by_option_id;
+		}
+
+		$discountable = array_filter(
+			$base_price_by_option_id,
+			static function ( $price ) {
+				return $price > 0;
+			}
+		);
+
+		$resolved_by_option_id = empty( $discountable )
+			? array()
+			: \FairAudience\Services\SignupPriceResolver::resolve_prices_and_rules( $pricing_event_date_id, $discountable, $participant_id );
+
+		$prices = array();
+		foreach ( $base_price_by_option_id as $option_id => $base_price ) {
+			$prices[ $option_id ] = isset( $resolved_by_option_id[ $option_id ] )
+				? $resolved_by_option_id[ $option_id ]['price']
+				: $base_price;
+		}
+
+		return $prices;
+	}
+
+	/**
 	 * Whether a raw TicketOption is full, based on its configured capacity.
 	 *
 	 * @param object                     $option Raw TicketOption row (needs `id`, `capacity`).
@@ -239,7 +279,8 @@ class SignupActivities {
 			return array();
 		}
 
-		$line_items = array();
+		$name_by_option_id       = array();
+		$base_price_by_option_id = array();
 		foreach ( $ticket_option_ids as $option_id ) {
 			$option = \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $option_id );
 			if ( ! $option ) {
@@ -253,10 +294,21 @@ class SignupActivities {
 				continue;
 			}
 
+			$name_by_option_id[ (int) $option_id ]       = $option->name;
+			$base_price_by_option_id[ (int) $option_id ] = (float) $base_price;
+		}
+
+		// One bulk call resolves every selected option's discount at once,
+		// instead of re-fetching the event's rules and the participant's
+		// group membership per option (issue #1299).
+		$resolved_prices = self::resolve_prices_for_participant( $base_price_by_option_id, $pricing_event_date_id, $participant_id );
+
+		$line_items = array();
+		foreach ( $name_by_option_id as $option_id => $name ) {
 			$line_items[] = array(
-				'name'     => $option->name,
+				'name'     => $name,
 				'quantity' => 1,
-				'amount'   => self::resolve_price_for_participant( (float) $base_price, $pricing_event_date_id, $participant_id ),
+				'amount'   => $resolved_prices[ $option_id ],
 			);
 		}
 
@@ -303,8 +355,17 @@ class SignupActivities {
 			? $event_participant_repository->get_confirmed_option_ids_for_event_participant( (int) $signed_row->id )
 			: array();
 
+		// One bulk call resolves every option's discount at once, instead of
+		// re-fetching the event's rules and the participant's group
+		// membership per option on every render (issue #1299).
+		$base_price_by_option_id = array();
+		foreach ( $context['ticket_options'] as $option ) {
+			$base_price_by_option_id[ (int) $option['id'] ] = (float) $option['price'];
+		}
+		$resolved_prices = self::resolve_prices_for_participant( $base_price_by_option_id, $pricing_event_date_id, $participant_id );
+
 		foreach ( $context['ticket_options'] as &$option ) {
-			$option['price'] = self::resolve_price_for_participant( (float) $option['price'], $pricing_event_date_id, $participant_id );
+			$option['price'] = $resolved_prices[ (int) $option['id'] ];
 
 			$is_full = false;
 			if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {

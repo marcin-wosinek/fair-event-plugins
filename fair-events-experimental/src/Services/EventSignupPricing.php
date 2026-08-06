@@ -103,6 +103,113 @@ class EventSignupPricing {
 	}
 
 	/**
+	 * Bulk counterpart to resolve_price_and_rule_for_ticket_type(): resolves
+	 * every ticket type's price + winning discount rule for one event date in
+	 * a single pass, instead of once per type. Where the single-item version
+	 * re-resolves the active sale period, re-fetches the event's discount
+	 * rules, and re-queries the participant's group membership per matching
+	 * rule on every call, this fetches each exactly once and reuses them
+	 * across every requested type — the query count no longer scales with the
+	 * number of ticket types (issue #1299).
+	 *
+	 * @param int      $event_date_id  Event date ID.
+	 * @param int[]    $ticket_type_ids Ticket type IDs to resolve, all belonging to $event_date_id.
+	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
+	 * @return array<int, array{price: float, rule: GroupPricingRule|null}> Keyed by ticket type ID;
+	 *         a type with no active-period price and no price row for any period is omitted
+	 *         (not purchasable right now), matching resolve_price_for_ticket_type()'s null.
+	 */
+	public static function resolve_prices_and_rules_for_ticket_types( $event_date_id, array $ticket_type_ids, $participant_id = null ) {
+		$resolved_prices       = TicketPricing::resolve_unit_prices_for_event_date( $event_date_id );
+		$base_price_by_type_id = TicketPricing::base_prices_for_types(
+			$ticket_type_ids,
+			$resolved_prices['price_by_type_id'],
+			$resolved_prices['priced_type_ids']
+		);
+
+		return self::resolve_prices_and_rules( $event_date_id, $base_price_by_type_id, $participant_id );
+	}
+
+	/**
+	 * Bulk counterpart to resolve_price_and_rule(): resolves the winning
+	 * discount rule for several already-known base prices on one event date
+	 * — e.g. activity/ticket-option prices — fetching the event's discount
+	 * rules and the participant's group membership once for the whole batch
+	 * instead of once per price.
+	 *
+	 * @param int                      $event_date_id     Event date ID the discount rules belong to.
+	 * @param array<int|string, float> $base_price_by_key Base (undiscounted) prices, keyed however the caller likes
+	 *                                             (ticket type ID, ticket option ID, ...) — the same keys come back.
+	 * @param int|null                 $participant_id    fair-audience participant ID, or null for anonymous.
+	 * @return array<int|string, array{price: float, rule: GroupPricingRule|null}> Same keys as $base_price_by_key.
+	 */
+	public static function resolve_prices_and_rules( $event_date_id, array $base_price_by_key, $participant_id = null ) {
+		$matching_rules = empty( $base_price_by_key )
+			? array()
+			: self::matching_rules_for_participant( $event_date_id, $participant_id );
+
+		$result = array();
+		foreach ( $base_price_by_key as $key => $base_price ) {
+			$result[ $key ] = self::best_rule_for_price( $base_price, $matching_rules );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Resolve the discount rules on an event date that the given participant
+	 * actually matches, fetching the event's rules and the participant's full
+	 * group-membership set exactly once each — the bulk counterpart to
+	 * resolve_price_and_rule()'s per-rule get_by_group_and_participant() loop.
+	 *
+	 * @param int      $event_date_id  Event date ID the discount rules belong to.
+	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
+	 * @return GroupPricingRule[] Rules the participant belongs to a matching group for.
+	 */
+	private static function matching_rules_for_participant( $event_date_id, $participant_id ) {
+		if ( empty( $participant_id ) ) {
+			return array();
+		}
+
+		$rules = GroupPricingRule::get_all_by_event_date_id( $event_date_id );
+		if ( empty( $rules ) || ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
+			return array();
+		}
+
+		$group_repo       = new \FairAudienceExperimental\Database\GroupParticipantRepository();
+		$memberships      = $group_repo->get_by_participant( $participant_id );
+		$member_group_ids = array_map(
+			static function ( $membership ) {
+				return (int) $membership->group_id;
+			},
+			$memberships
+		);
+
+		return self::filter_matching_rules( $rules, $member_group_ids );
+	}
+
+	/**
+	 * Keep only the rules a participant belonging to the given groups
+	 * actually matches. Pure, DB-free — the seam that makes the bulk
+	 * resolver's rule-matching unit-testable without a WordPress bootstrap,
+	 * mirroring how best_rule_for_price() isolates the discount math below.
+	 *
+	 * @param GroupPricingRule[] $rules            Candidate rules for an event date.
+	 * @param int[]              $member_group_ids Group IDs the participant belongs to.
+	 * @return GroupPricingRule[] Rules whose group_id is in $member_group_ids.
+	 */
+	public static function filter_matching_rules( array $rules, array $member_group_ids ) {
+		return array_values(
+			array_filter(
+				$rules,
+				static function ( $rule ) use ( $member_group_ids ) {
+					return in_array( (int) $rule->group_id, $member_group_ids, true );
+				}
+			)
+		);
+	}
+
+	/**
 	 * Pick the discount rule that produces the lowest price for a given base
 	 * price, out of a list of rules already known to match the participant
 	 * (e.g. group membership already checked by the caller). Pure math, no DB
