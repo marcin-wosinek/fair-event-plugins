@@ -238,12 +238,11 @@ class PaymentHooks {
 	 * @return string Formatted label, or empty string when no discount applies.
 	 */
 	private static function format_applied_discount( $event_participant, $transaction ) {
-		if ( empty( $event_participant->ticket_type_id )
-			|| ! class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+		if ( empty( $event_participant->ticket_type_id ) ) {
 			return '';
 		}
 
-		$resolved = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule_for_ticket_type(
+		$resolved = \FairAudience\Services\SignupPriceResolver::resolve_price_and_rule_for_ticket_type(
 			(int) $event_participant->ticket_type_id,
 			(int) $event_participant->participant_id
 		);

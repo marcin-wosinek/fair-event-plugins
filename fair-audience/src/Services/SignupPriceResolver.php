@@ -25,13 +25,25 @@ class SignupPriceResolver {
 	/**
 	 * Resolve the effective price for a specific ticket type.
 	 *
+	 * Guards with `method_exists()`, not just `class_exists()`: if
+	 * fair-events-experimental is active but stuck on a build that predates
+	 * this method (a cross-plugin release gap — see issue #1421), the class
+	 * still exists so `class_exists()` alone would stay true and the call
+	 * would fatal with "Call to undefined method". Falls back to the base
+	 * fair-events price instead.
+	 *
 	 * @param int      $ticket_type_id Ticket type ID.
 	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
 	 * @return float|null Final price, or null when not purchasable right now.
 	 */
 	public static function resolve_price_for_ticket_type( $ticket_type_id, $participant_id = null ) {
-		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+		if ( method_exists( \FairEventsExperimental\Services\EventSignupPricing::class, 'resolve_price_for_ticket_type' ) ) {
 			return \FairEventsExperimental\Services\EventSignupPricing::resolve_price_for_ticket_type( $ticket_type_id, $participant_id );
+		}
+
+		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'FairAudience: fair-events-experimental is missing EventSignupPricing::resolve_price_for_ticket_type() (version mismatch); falling back to base price.' );
 		}
 
 		if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
@@ -47,15 +59,21 @@ class SignupPriceResolver {
 	 * resolve_price_for_ticket_type()'s fallback pattern: prefers the
 	 * full-featured experimental resolver, and otherwise falls back to the
 	 * base fair-events price with no rule (group discounts are
-	 * experimental-only).
+	 * experimental-only). Guarded with `method_exists()` for the same
+	 * version-skew reason (issue #1421).
 	 *
 	 * @param int      $ticket_type_id Ticket type ID.
 	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
 	 * @return array{price: float, rule: object|null}|null Null when not purchasable right now.
 	 */
 	public static function resolve_price_and_rule_for_ticket_type( $ticket_type_id, $participant_id = null ) {
-		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+		if ( method_exists( \FairEventsExperimental\Services\EventSignupPricing::class, 'resolve_price_and_rule_for_ticket_type' ) ) {
 			return \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule_for_ticket_type( $ticket_type_id, $participant_id );
+		}
+
+		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'FairAudience: fair-events-experimental is missing EventSignupPricing::resolve_price_and_rule_for_ticket_type() (version mismatch); falling back to base price with no rule.' );
 		}
 
 		if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
@@ -67,6 +85,35 @@ class SignupPriceResolver {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Resolve the best group discount rule for a base price on an event
+	 * date, and the price it produces. Mirrors
+	 * resolve_price_and_rule_for_ticket_type()'s fallback pattern, for
+	 * call sites that already have a resolved base price (activity option
+	 * pricing) rather than a ticket type. Guarded with `method_exists()`
+	 * for the same version-skew reason (issue #1421).
+	 *
+	 * @param float    $base_price     Base (undiscounted) price.
+	 * @param int      $event_date_id  Event date ID the discount rules belong to.
+	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
+	 * @return array{price: float, rule: object|null} Resolved price and the rule that produced it.
+	 */
+	public static function resolve_price_and_rule( $base_price, $event_date_id, $participant_id = null ) {
+		if ( method_exists( \FairEventsExperimental\Services\EventSignupPricing::class, 'resolve_price_and_rule' ) ) {
+			return \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule( $base_price, $event_date_id, $participant_id );
+		}
+
+		if ( class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'FairAudience: fair-events-experimental is missing EventSignupPricing::resolve_price_and_rule() (version mismatch); falling back to base price with no rule.' );
+		}
+
+		return array(
+			'price' => $base_price,
+			'rule'  => null,
+		);
 	}
 
 	/**

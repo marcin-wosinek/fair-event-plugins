@@ -538,8 +538,8 @@ if ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Models\Tick
 			continue;
 		}
 		$opt_price = (float) $resolved_base;
-		if ( $participant && $opt_price > 0 && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$opt_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule(
+		if ( $participant && $opt_price > 0 ) {
+			$opt_price = \FairAudience\Services\SignupPriceResolver::resolve_price_and_rule(
 				$opt_price,
 				(int) $pricing_event_date_id,
 				(int) $participant->id
