@@ -1673,8 +1673,8 @@ class EventSignupController extends WP_REST_Controller {
 		} else {
 			$opt_price = (float) $option->price;
 		}
-		if ( $participant_id && $opt_price > 0 && class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
-			$opt_price = \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule(
+		if ( $participant_id && $opt_price > 0 ) {
+			$opt_price = \FairAudience\Services\SignupPriceResolver::resolve_price_and_rule(
 				$opt_price,
 				$event_date_id,
 				$participant_id

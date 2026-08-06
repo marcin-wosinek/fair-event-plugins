@@ -97,10 +97,10 @@ class SignupActivities {
 	 * @return float Resolved price.
 	 */
 	public static function resolve_price_for_participant( $base_price, $pricing_event_date_id, $participant_id ) {
-		if ( ! $participant_id || $base_price <= 0 || ! class_exists( \FairEventsExperimental\Services\EventSignupPricing::class ) ) {
+		if ( ! $participant_id || $base_price <= 0 ) {
 			return $base_price;
 		}
-		return \FairEventsExperimental\Services\EventSignupPricing::resolve_price_and_rule(
+		return \FairAudience\Services\SignupPriceResolver::resolve_price_and_rule(
 			(float) $base_price,
 			$pricing_event_date_id,
 			$participant_id

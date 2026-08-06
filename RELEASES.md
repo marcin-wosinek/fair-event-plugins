@@ -116,6 +116,36 @@ Changesets is configured in `.changeset/config.json`:
 - **Changelog generation**: Automatic changelog per plugin
 - **WordPress sync**: Automatic plugin header version updates
 
+## 🔗 Cross-plugin interface changes
+
+Changesets only version-bumps and releases the packages named in a
+changeset. If a change touches a method/class in one plugin (e.g.
+`fair-events-experimental`) and migrates call sites in another plugin (e.g.
+`fair-audience`) onto the new interface, the changeset **must declare a
+version bump for every plugin whose code changed** — not just the one where
+the primary feature lives. Otherwise the release ships the calling plugin's
+new code while the plugin it calls into stays on its old build, and any site
+that updates one but not the other hits a mismatch (missing method, changed
+signature) at runtime — see issue #1421, where a note-formatting fix updated
+`fair-audience` call sites onto renamed/new `fair-events-experimental`
+methods, but the changeset only declared `fair-audience`.
+
+Before adding a changeset for a change that crosses plugin boundaries, check
+every plugin directory the diff touches and list all of them in the
+changeset frontmatter, e.g.:
+
+```markdown
+---
+"fair-audience": patch
+"fair-events-experimental": patch
+---
+```
+
+As defense in depth, call sites that reach into another plugin's namespace
+should also guard with `method_exists()` (not just `class_exists()`) and
+degrade gracefully — see `fair-audience/src/Services/SignupPriceResolver.php`
+— so a future release gap doesn't fatal a page even if a changeset is missed.
+
 ## 🎉 Benefits
 
 - ✅ **Independent versioning**: Release plugins separately
