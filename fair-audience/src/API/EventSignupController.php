@@ -1276,6 +1276,12 @@ class EventSignupController extends WP_REST_Controller {
 			return $transaction_id;
 		}
 
+		// Reserve the option's capacity while payment is in flight — the
+		// parent row stays signed_up throughout, so only the junction rows
+		// carry the pending hold (see count_signups_for_ticket_option()).
+		$addon_expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
+		$this->event_participant_repository->add_pending_options( (int) $event_participant->id, $new_options, $addon_expires_at );
+
 		// Also closes a secondary gap: add-on charges never recorded to the
 		// ledger, so payment history for the registration was missing them.
 		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $transaction_id, 'charge' );
@@ -2531,9 +2537,11 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Already attached (e.g. the original payment landed after all)? Nothing
-		// to retry.
-		$already_ids   = $this->event_participant_repository->get_option_ids_for_event_participant( $event_participant_id );
+		// Already confirmed (e.g. the original payment landed after all)?
+		// Nothing to retry. Deliberately confirmed-only: the option's own
+		// still-pending hold from the attempt being retried is expected to be
+		// present here and must not look like it's already attached.
+		$already_ids   = $this->event_participant_repository->get_confirmed_option_ids_for_event_participant( $event_participant_id );
 		$remaining_ids = array_values( array_diff( $option_ids, $already_ids ) );
 		if ( empty( $remaining_ids ) ) {
 			return rest_ensure_response(
@@ -2587,6 +2595,13 @@ class EventSignupController extends WP_REST_Controller {
 		if ( is_wp_error( $new_transaction_id ) ) {
 			return $new_transaction_id;
 		}
+
+		// Refresh the pending reservation for this retry attempt so the hold
+		// survives — mirrors the base retry path re-creating its pending_payment
+		// row (maybe_start_paid_signup()/retry_payment()).
+		$remaining_options = $this->load_valid_options( $event_date_id, $remaining_ids );
+		$addon_expires_at  = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
+		$this->event_participant_repository->add_pending_options( $event_participant_id, $remaining_options, $addon_expires_at );
 
 		$redirect_url = add_query_arg(
 			array(

@@ -627,11 +627,14 @@ class Schema {
 			event_participant_id BIGINT UNSIGNED NOT NULL,
 			ticket_option_id BIGINT UNSIGNED NOT NULL,
 			ticket_option_name VARCHAR(255) NOT NULL DEFAULT '',
+			status ENUM('confirmed', 'pending_payment') NOT NULL DEFAULT 'confirmed',
+			expires_at DATETIME DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			UNIQUE KEY idx_participant_option (event_participant_id, ticket_option_id),
 			KEY idx_event_participant_id (event_participant_id),
-			KEY idx_ticket_option_id (ticket_option_id)
+			KEY idx_ticket_option_id (ticket_option_id),
+			KEY idx_status_expires (status, expires_at)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 

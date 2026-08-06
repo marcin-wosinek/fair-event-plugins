@@ -624,10 +624,16 @@ if ( $is_signed_up && $participant && ! empty( $event_date_id ) && isset( $event
 			}
 		}
 
-		$selected_option_ids = $event_participant_repository->get_option_ids_for_event_participant( (int) $signed_row->id );
+		$selected_option_ids  = $event_participant_repository->get_option_ids_for_event_participant( (int) $signed_row->id );
+		$confirmed_option_ids = $event_participant_repository->get_confirmed_option_ids_for_event_participant( (int) $signed_row->id );
 		foreach ( $ticket_options_for_display as $opt ) {
-			if ( in_array( (int) $opt['id'], $selected_option_ids, true ) ) {
+			if ( in_array( (int) $opt['id'], $confirmed_option_ids, true ) ) {
 				$current_activity_names[] = $opt['name'];
+				continue;
+			}
+			if ( in_array( (int) $opt['id'], $selected_option_ids, true ) ) {
+				// An add-on payment is already in flight for this option —
+				// don't offer it again until it confirms or expires.
 				continue;
 			}
 			// Full options are kept in the list but rendered disabled, so the

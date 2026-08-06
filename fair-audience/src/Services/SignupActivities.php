@@ -296,8 +296,11 @@ class SignupActivities {
 			}
 		}
 
-		$current_option_ids = $signed_row
+		$current_option_ids   = $signed_row
 			? $event_participant_repository->get_option_ids_for_event_participant( (int) $signed_row->id )
+			: array();
+		$confirmed_option_ids = $signed_row
+			? $event_participant_repository->get_confirmed_option_ids_for_event_participant( (int) $signed_row->id )
 			: array();
 
 		foreach ( $context['ticket_options'] as &$option ) {
@@ -313,9 +316,9 @@ class SignupActivities {
 			$option['is_full'] = $is_full;
 
 			if ( $signed_row ) {
-				if ( in_array( (int) $option['id'], $current_option_ids, true ) ) {
+				if ( in_array( (int) $option['id'], $confirmed_option_ids, true ) ) {
 					$context['current_activity_names'][] = $option['name'];
-				} else {
+				} elseif ( ! in_array( (int) $option['id'], $current_option_ids, true ) ) {
 					$context['addable_options'][] = $option;
 				}
 			}
