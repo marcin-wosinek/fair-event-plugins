@@ -407,11 +407,14 @@ class PaymentHooks {
 	 *
 	 * Protects against lost webhook deliveries: stale rows still hold a slot
 	 * until this cleanup runs (or a new request triggers the capacity check,
-	 * which already filters on payment_expires_at).
+	 * which already filters on payment_expires_at). Also releases expired
+	 * add-on activity holds (pending junction rows on an otherwise signed_up
+	 * subscription), the same latency the base signup path already tolerates.
 	 */
 	public static function cleanup_expired_signups() {
 		$repo = new EventParticipantRepository();
 		$repo->delete_expired_pending_payments();
+		$repo->delete_expired_pending_options();
 	}
 
 	/**

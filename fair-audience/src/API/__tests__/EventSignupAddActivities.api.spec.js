@@ -5,8 +5,17 @@
  * The endpoint resolves the acting participant from the logged-in user, so the
  * suite links a participant to the admin WP user (Application Password creds)
  * and tears it down afterwards. A free (price 0) activity is used so the happy
- * path attaches immediately without routing through Mollie — the paid delta
- * flow is covered by manual verification.
+ * path attaches immediately without routing through Mollie.
+ *
+ * A priced activity proves the payment_unavailable 503 guard the same way
+ * EventSignupActivities.api.spec.js does (no payment connector is configured
+ * on the dev/test stack, so a paid add-on can never actually reach Mollie
+ * here). Because of that, this suite cannot create a genuine pending-payment
+ * hold on an option through HTTP requests alone (maybe_start_addon_payment()
+ * only writes the hold after create_transaction() succeeds) — the DB-level
+ * reserve → confirm → expire cycle, including the duplicate-guard against a
+ * pending (not just confirmed) reservation, is covered instead by the WP-CLI
+ * eval-file manual check described in TESTING.md (#1311).
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -52,6 +61,7 @@ test.describe('EventSignupController add-activities', () => {
 	let signedUpEvent;
 	let otherEvent;
 	let freeOptionId;
+	let paidOptionId;
 	let fixtureOk = true;
 
 	test.beforeAll(async () => {
@@ -107,21 +117,31 @@ test.describe('EventSignupController add-activities', () => {
 			return;
 		}
 
-		// Add a free activity option on the signed-up event date.
+		// Add a free and a priced activity option on the signed-up event date.
 		const ticketsRes = await api.put(
 			`/wp-json/fair-events/v1/event-dates/${signedUpEvent.eventDateId}/tickets`,
 			{
 				headers: authHeaders,
-				data: { options: [{ name: 'Free Workshop', price: 0 }] },
+				data: {
+					options: [
+						{ name: 'Free Workshop', price: 0 },
+						{ name: 'Priced Workshop', price: 20 },
+					],
+				},
 			}
 		);
 		expect(ticketsRes.ok()).toBeTruthy();
 		const config = await ticketsRes.json();
-		const option = (config.options || []).find(
+		const freeOption = (config.options || []).find(
 			(o) => o.name === 'Free Workshop'
 		);
-		expect(option, 'created free option').toBeTruthy();
-		freeOptionId = option.id;
+		const paidOption = (config.options || []).find(
+			(o) => o.name === 'Priced Workshop'
+		);
+		expect(freeOption, 'created free option').toBeTruthy();
+		expect(paidOption, 'created priced option').toBeTruthy();
+		freeOptionId = freeOption.id;
+		paidOptionId = paidOption.id;
 	});
 
 	test.afterAll(async () => {
@@ -240,5 +260,37 @@ test.describe('EventSignupController add-activities', () => {
 		);
 		expect(res.status()).toBe(400);
 		expect((await res.json()).code).toBe('no_new_activities');
+	});
+
+	test('adding a priced activity is rejected with 503 payment_unavailable (no payment connector configured)', async () => {
+		test.skip(
+			!fixtureOk,
+			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
+		);
+		const res = await api.post(
+			'/wp-json/fair-audience/v1/event-signup/add-activities',
+			{
+				headers: authHeaders,
+				data: {
+					event_id: signedUpEvent.eventId,
+					ticket_option_ids: [paidOptionId],
+				},
+			}
+		);
+		expect(res.status()).toBe(503);
+		expect((await res.json()).code).toBe('payment_unavailable');
+
+		// The rejected attempt must not have left a hold on the option: it
+		// should still be offered as addable.
+		const listRes = await api.get(
+			`/wp-json/fair-audience/v1/event-dates/${signedUpEvent.eventDateId}/participants`,
+			{ headers: authHeaders }
+		);
+		expect(listRes.ok()).toBeTruthy();
+		const row = (await listRes.json()).find(
+			(p) => p.participant_id === participantId
+		);
+		expect(row).toBeTruthy();
+		expect(row.ticket_option_ids).not.toContain(paidOptionId);
 	});
 });

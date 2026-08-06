@@ -374,7 +374,10 @@ class EventParticipantRepository {
 	 * Counts event_participant rows that have an entry in the
 	 * fair_audience_event_participant_options junction table for the given
 	 * option, restricted to rows with label = 'signed_up' or unexpired
-	 * 'pending_payment'. Used for per-activity capacity enforcement.
+	 * 'pending_payment', and to junction rows that are themselves either
+	 * confirmed or an unexpired pending hold (an add-on purchase in flight on
+	 * an otherwise signed_up parent row). Used for per-activity capacity
+	 * enforcement.
 	 *
 	 * @param int $ticket_option_id Ticket option ID.
 	 * @return int Number of signups held against the option.
@@ -395,10 +398,15 @@ class EventParticipantRepository {
 				 AND (
 				     ep.label = 'signed_up'
 				     OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
+				 )
+				 AND (
+				     epo.status = 'confirmed'
+				     OR ( epo.status = 'pending_payment' AND epo.expires_at IS NOT NULL AND epo.expires_at > %s )
 				 )",
 				$participants_table,
 				$options_table,
 				$ticket_option_id,
+				$now,
 				$now
 			)
 		);
@@ -428,10 +436,12 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Get the ticket option IDs currently attached to an event participant.
+	 * Get the ticket option IDs attached to an event participant, confirmed or
+	 * pending. Use this to guard against re-adding/re-purchasing an option
+	 * that already has a hold on it (confirmed or an in-flight payment).
 	 *
 	 * @param int $event_participant_id Event participant row ID.
-	 * @return int[] Attached ticket option IDs.
+	 * @return int[] Attached ticket option IDs (any status).
 	 */
 	public function get_option_ids_for_event_participant( $event_participant_id ) {
 		global $wpdb;
@@ -441,6 +451,31 @@ class EventParticipantRepository {
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				'SELECT ticket_option_id FROM %i WHERE event_participant_id = %d',
+				$options_table,
+				$event_participant_id
+			)
+		);
+
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
+	 * Get the ticket option IDs actually confirmed for an event participant —
+	 * excludes rows still holding an unpaid add-on reservation. Use this for
+	 * anything the viewer sees as "yours" (e.g. "current activities" summary),
+	 * so a payment still in flight is never displayed as already granted.
+	 *
+	 * @param int $event_participant_id Event participant row ID.
+	 * @return int[] Confirmed ticket option IDs.
+	 */
+	public function get_confirmed_option_ids_for_event_participant( $event_participant_id ) {
+		global $wpdb;
+
+		$options_table = $wpdb->prefix . 'fair_audience_event_participant_options';
+
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ticket_option_id FROM %i WHERE event_participant_id = %d AND status = 'confirmed'",
 				$options_table,
 				$event_participant_id
 			)
@@ -480,6 +515,51 @@ class EventParticipantRepository {
 					'ticket_option_name'   => (string) $option_name,
 				),
 				array( '%d', '%d', '%s' )
+			);
+		}
+	}
+
+	/**
+	 * Reserve ticket options against an event participant while their payment
+	 * is in flight, without confirming them. Unlike add_options(), rows are
+	 * written with status = 'pending_payment' and the given expiry, so
+	 * count_signups_for_ticket_option() holds their capacity until either the
+	 * payment confirms (add_options() re-writes the row as 'confirmed') or the
+	 * hold expires and delete_expired_pending_options() releases it.
+	 *
+	 * Idempotent: uses REPLACE, so re-reserving the same option (e.g. a retry)
+	 * just refreshes its expiry.
+	 *
+	 * @param int    $event_participant_id Event participant row ID.
+	 * @param array  $options              Array of objects/arrays with `id` and `name`.
+	 * @param string $expires_at           MySQL datetime the hold expires at.
+	 * @return void
+	 */
+	public function add_pending_options( $event_participant_id, $options, $expires_at ) {
+		global $wpdb;
+
+		if ( empty( $options ) ) {
+			return;
+		}
+
+		$options_table = $wpdb->prefix . 'fair_audience_event_participant_options';
+
+		foreach ( $options as $option ) {
+			$option_id   = is_array( $option ) ? ( $option['id'] ?? 0 ) : ( $option->id ?? 0 );
+			$option_name = is_array( $option ) ? ( $option['name'] ?? '' ) : ( $option->name ?? '' );
+			if ( ! $option_id ) {
+				continue;
+			}
+			$wpdb->replace(
+				$options_table,
+				array(
+					'event_participant_id' => (int) $event_participant_id,
+					'ticket_option_id'     => (int) $option_id,
+					'ticket_option_name'   => (string) $option_name,
+					'status'               => 'pending_payment',
+					'expires_at'           => $expires_at,
+				),
+				array( '%d', '%d', '%s', '%s', '%s' )
 			);
 		}
 	}
@@ -569,6 +649,37 @@ class EventParticipantRepository {
 			)
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		return (int) $deleted;
+	}
+
+	/**
+	 * Delete pending_payment junction rows whose expires_at has passed.
+	 *
+	 * Unlike delete_expired_pending_payments(), this never touches the parent
+	 * event_participant row — an add-on hold sits on top of an already
+	 * signed_up subscription, which stays valid throughout. Deleting just the
+	 * junction row releases the option's capacity for a payment that never
+	 * confirmed.
+	 *
+	 * @return int Number of rows deleted.
+	 */
+	public function delete_expired_pending_options() {
+		global $wpdb;
+
+		$options_table = $wpdb->prefix . 'fair_audience_event_participant_options';
+		$now           = current_time( 'mysql' );
+
+		$deleted = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM %i
+				 WHERE status = 'pending_payment'
+				 AND expires_at IS NOT NULL
+				 AND expires_at <= %s",
+				$options_table,
+				$now
+			)
+		);
 
 		return (int) $deleted;
 	}
