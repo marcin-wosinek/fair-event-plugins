@@ -8,6 +8,38 @@ organization with fair pricing models. It is a monorepo. npm workspaces:
 shared `fair-events-shared` package. The list in the root `package.json` is
 authoritative.
 
+## Ticket Workflow
+
+Most work flows through three commands, each consuming the previous one's
+output: `/write-ticket` → `/plan-ticket` → `/make-pr`. (These are Claude Code
+slash commands defined in `.claude/commands/`; on other tools, follow the same
+three steps manually.)
+
+1. **`/write-ticket`** files a GitHub issue with no code references (behaviour
+   only) — see [TICKETS.md](./TICKETS.md). It carries an **Open questions**
+   section (real forks, with a recommendation) and a `- [ ]` **Acceptance
+   criteria** checklist. Apply the `responsive-ui` label whenever the
+   behaviour changes layout across viewports — it's the only signal step 3
+   uses to require before/after screenshots.
+2. **`/plan-ticket`** grounds that ticket in the codebase as it exists now and
+   posts an implementation plan as an issue comment, starting with a
+   `## Implementation plan` heading. It resolves the ticket's Open Questions
+   (and any new ones found while planning) under a **Decisions** heading, and
+   ends with a **"Read first"** list of reference docs from the table below.
+   Nothing gets posted until you approve it — a plan with unresolved
+   questions isn't ready.
+3. **`/make-pr`** implements the ticket. It looks for a comment starting with
+   `## Implementation plan`; if one exists, that plan (its Read first list and
+   Decisions) is the spec and the ticket body is context — otherwise the
+   ticket body is the spec directly. It closes the loop by checking off the
+   ticket's acceptance criteria in the PR body and linking `Closes #NNN`.
+
+The contract that keeps this chain unattended: **stable headings** (`##
+Implementation plan`, `## Decisions`, `## Read first`) so each command can
+find what it needs in the previous one's output without guessing, and the
+**`responsive-ui` label** as the one piece of state that has to survive from
+ticket-writing time to PR time.
+
 ## Reference Docs
 
 Detailed guides live next to this file. Load the relevant one **before** working
@@ -34,6 +66,7 @@ guessing which ones matter.
 | Translation tooling (`npm run translation:*`)                   | [TRANSLATIONS.md](./TRANSLATIONS.md)                           |
 | Webpack config                                                  | [WEBPACK_CONFIG.md](./WEBPACK_CONFIG.md)                       |
 | Block creation                                                  | [BLOCK_CREATION.md](./BLOCK_CREATION.md)                       |
+| Fair Form question blocks (field types)                        | [FAIR_FORM_QUESTION_BLOCKS.md](./FAIR_FORM_QUESTION_BLOCKS.md) |
 | Deployment / releases                                           | [DEPLOYMENT.md](./DEPLOYMENT.md), [RELEASES.md](./RELEASES.md) |
 
 ## Development Commands
@@ -55,10 +88,10 @@ vendor/bin/phpcbf        # Auto-fix
 
 ## Formatting & Build
 
--   **Formatting is automatic.** A PostToolUse hook
-    (`.Codex/hooks/format-edited-file.sh`, wired in `.Codex/settings.json`)
-    runs `wp-scripts format` (JS/CSS/JSON) or `phpcbf` (PHP) on each file you
-    edit. Do **not** run `npm run format` manually after edits.
+-   **Formatting is automatic.** A PostToolUse hook (`.claude/hooks/format-edited-file.sh`
+    for Claude Code, `.codex/hooks/format-edited-file.sh` for Codex) runs
+    `wp-scripts format` (JS/CSS/JSON) or `phpcbf` (PHP) on each file you edit.
+    Do **not** run `npm run format` manually after edits.
 -   **Before committing**, run `npm run format` in the affected plugin to catch
     any files touched outside the hook (manual shell edits, generated files, or
     cross-session edits). Only stage clean, formatted files.
@@ -85,6 +118,10 @@ Before declaring a task finished (and before any commit), all of these hold:
    when a wording pass touched them.
 6. For PRs on `responsive-ui` tickets: before/after screenshots at all three
    viewports ([COMMIT_GUIDE.md](./COMMIT_GUIDE.md)).
+7. If `fair-events-shared/php/src/**` changed: version bumped in its
+   `composer.json` and `npm run composer:update:shared` ran (see
+   [PHP_PATTERNS.md § Shared Package](./PHP_PATTERNS.md#shared-package-fair-events-shared)) —
+   otherwise consumers' vendor copies silently keep the old code.
 
 ## Critical Rules
 
