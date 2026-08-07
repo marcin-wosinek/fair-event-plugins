@@ -32,19 +32,35 @@ grounding happens at planning time (`/plan-ticket`), not in the ticket.
    per-participant token vs. open public link), state the recommended option
    and why, and list the alternative — don't silently pick one.
 
-5. **Pick the milestone.** Tickets go into the current sprint or the next one.
-   Milestones are named `YYYY.W<week>` (e.g. `2026.W29`); `date +%G.W%V`
-   prints the current one. Confirm the exact title against
-   `gh api 'repos/{owner}/{repo}/milestones?state=open' --jq '.[].title'`.
+5. **Pick the sprint.** Tickets go into the current sprint or the next one, as
+   items in the **Fair Event Plugins** GitHub Project (project 5, owned by
+   `marcin-wosinek`) — not a milestone:
+   - Current sprint view: https://github.com/users/marcin-wosinek/projects/5/views/1
+   - Next sprint view: https://github.com/users/marcin-wosinek/projects/5/views/2
 
-6. **Create the issue with `gh`.** Write the body to a temp file and pass
-   `--body-file` (heredocs preserve the markdown / checkboxes cleanly):
+   Sprints are the project's `Iteration` field (named `YYYY.W<week>`, e.g.
+   `2026.W29`). Resolve which iteration is current/next by comparing today
+   (`date +%F`) against each iteration's `startDate`/`duration`:
+
+   ```bash
+   gh api graphql -f query='query { user(login: "marcin-wosinek") { projectV2(number: 5) { fields(first: 20) { nodes { ... on ProjectV2IterationField { id configuration { iterations { id title startDate duration } } } } } } } }'
+   ```
+
+6. **Create the issue with `gh`, then add it to the sprint.** Write the body
+   to a temp file and pass `--body-file` (heredocs preserve the markdown /
+   checkboxes cleanly), then add the issue to the project and set its
+   Iteration field to the resolved sprint:
 
    ```bash
    cat > /tmp/ticket.md <<'EOF'
    ...body...
    EOF
-   gh issue create --title "…" --body-file /tmp/ticket.md --milestone "2026.W29"
+   gh issue create --title "…" --body-file /tmp/ticket.md
+   ITEM_ID=$(gh project item-add 5 --owner marcin-wosinek --url "<issue-url>" --format json --jq '.id')
+   gh project item-edit --id "$ITEM_ID" \
+     --project-id PVT_kwHOAA-jmM4Bfe4P \
+     --field-id PVTIF_lAHOAA-jmM4Bfe4PzhZxd2o \
+     --iteration-id "<resolved-iteration-id>"
    rm -f /tmp/ticket.md
    ```
 
