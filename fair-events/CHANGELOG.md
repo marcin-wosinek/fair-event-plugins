@@ -1,5 +1,40 @@
 # fair-events
 
+## 1.13.0
+
+### Minor Changes
+
+-   e0ea5a6: Add an explicit in-person/online/hybrid attendance mode with a joining link on the event date, replacing the old inference from the event's link type. Structured data (JSON-LD), calendar feeds, and the public event-info block now reflect the selected mode, and the mode/link are inherited by generated series occurrences like venue and address.
+-   1a85cf6: Add "Show ticket price" and "Show option prices" toggles to the Event Signup block, so organizers can hide itemized pricing from the signup form when it's communicated elsewhere. When option prices are shown, they now consistently display as an addition to the base price (e.g. "+10.00€").
+-   49f2e0a: Link the event name to its page in the confirmation-family emails — signup confirmation, payment-failed, activities-added, event-interest, and mailing-list-welcome — instead of just bolding it. Falls back to the previous bold-only text when no event URL is available.
+-   aeda159: Send a payment-failed email (event name, plain link back to the event page) from the standalone Event Signup block when a payment fails, is rejected, cancelled, or expires — mirroring fair-audience's own failed-payment email so buyers on fair-audience-free sites get the same notice. The shared `SignupConfirmationEmail` formatter gains an optional plain action link, reused for this new email.
+-   bab5a8a: Send a baseline signup confirmation email (event name, date, and registration reference) when fair-audience isn't active, so the "check your email" promise in the event-signup block is always fulfilled. The free-signup success message now mentions the confirmation email too, matching the paid path.
+-   f64745d: Move fair-audience's signup confirmation email formatting into a shared `FairEventsShared\Notifications\SignupConfirmationEmail` formatter, and use it for both plugins' confirmation emails. fair-audience's confirmation email now also shows the event date, a registration reference, and the ticket type. fair-events' standalone confirmation email (sent when fair-audience isn't active) is now built from the same branded HTML template instead of a plain-text message, and includes the ticket type and — on paid signups — the amount paid.
+
+### Patch Changes
+
+-   5fa6fd6: Align nav bar spacing and "today" highlight styling between the events-calendar and events-week blocks, which had visually diverged.
+-   5fe6658: Reduce the database queries issued when rendering or purchasing through the Event Signup form: the active sale period, the viewer's group memberships, and the event's discount rules are now resolved once per render/request and reused across every ticket tier and activity, instead of being re-resolved once per tier. Query count no longer scales with the number of ticket tiers; displayed and charged prices are unchanged.
+-   0e27b5c: Fix the Event Signup form leaking one visitor's group-restricted ticket tiers, discounted prices, and name/email pre-fill to another visitor under full-page caching. The form now server-renders the same unrestricted, undiscounted, unfilled markup for every viewer, and fetches the actual viewer's personalization (restricted tiers, discounts, pre-fill, signed-up state) client-side after load.
+-   3508d85: Require confirmation before clearing the organizer logo override, matching the confirmation pattern used for other destructive actions in the admin.
+-   f62946d: Fix the ticket editor's "Save tickets" button and JSON import misfiring against a nonexistent event when the component is used in controlled mode (e.g. embedded in another plugin's wizard) instead of Manage Event's own self-load/self-save mode.
+-   58e85f6: Add a "Header Background" color control to events-calendar and events-week, and rename events-calendar's ambiguous "Background"/"Text" color labels to "Event Background"/"Event Text" to match events-week.
+-   1d9d738: Fix event-proposal and event-signup blocks to use the standard block wrapper markup, so their padding/margin sidebar controls now actually apply on the frontend.
+-   c30daa6: Fix the event signup form's newsletter checkbox and custom question fields (short text, long text, select, radio, multiselect, consent) rendering unstyled — they now match the form's standard input styling and the newsletter checkbox drops to its own row instead of sitting inline with the quantity field.
+-   0a116a2: Fix events-calendar/events-week block colors being silently ignored when the color picker returns a non-hex CSS value (e.g. `oklch(...)`, `rgb(...)`) instead of a preset slug or hex code — such values were wrongly treated as WordPress preset-color slugs, producing invalid CSS that browsers dropped.
+-   c5c60b7: Fix the event Finance tab counting income twice when a bank-statement entry has been reconciliation-matched to a payment transaction: matched financial entries are now excluded from totals, so only the transaction's gross amount is counted.
+-   64ffbf9: Fix the Event Signup block's "Choose a date" picker disappearing once a recurring series ages down to its last upcoming occurrence, leaving no confirmation of which date a per-occurrence ticket was signing up for.
+-   09d5d55: Fix the Event Signup form listing ticket types with no pricing for the currently active sale period — they now stay out of the list entirely instead of showing unpriced and selectable. When no sale period is active at all, the ticket-type section is hidden and signup is treated as temporarily unavailable, matching the existing payments-unavailable treatment. The get-tickets purchase endpoint also now rejects an out-of-window ticket type with a 409 error instead of silently charging 0.
+-   089a463: Allow an event page to be linked as a secondary alias of another event page, and allow adding another linked page to an event that already has one. Relinking a page cleanly detaches its own auto-created event date instead of the previous "already linked to another event" error.
+-   b138421: Render the Previous/Next navigation links in events-calendar and events-week as standard `core/button` outline buttons, so they follow the active theme's button styling instead of hardcoded colors.
+-   d51522b: Fix the event Finance tab double-counting income: Total Income now comes only from paid transactions instead of also adding fair-finance entries, which could duplicate the same money when an entry wasn't explicitly reconciliation-matched. The entries table is now cost-only, and the Payments table shows each transaction's linked budget entry (if any).
+-   fc86b53: Show the ticket type name instead of its raw numeric ID in the Manage Event page's signups table and CSV export. A signup whose ticket type is missing or was later deleted now shows "—" instead of an ID or a blank field.
+-   172880a: Hide the multi-period sale-periods calendar on the Tickets tab when Multiple pricing periods is off, so the single From/Until sale window isn't cluttered with chrome built for comparing several named periods.
+-   Updated dependencies [49f2e0a]
+-   Updated dependencies [aeda159]
+-   Updated dependencies [f64745d]
+    -   fair-events-shared@0.6.0
+
 ## 1.12.0
 
 ### Minor Changes
