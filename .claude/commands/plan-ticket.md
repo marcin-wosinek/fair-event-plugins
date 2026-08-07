@@ -35,10 +35,12 @@ Propose an implementation plan for GitHub issue #$ARGUMENTS.
    question. Do **not** post until I approve. Incorporate my feedback and
    re-confirm if I change anything.
 
-6. **Post as a comment — decisions, not questions.** The posted plan records
-   the outcomes of step 5 under a **Decisions** heading; a plan with
-   unresolved open questions is not ready to post. Once approved, write the
-   body to a temp file and post with
+6. **Post as a comment — decisions, not questions.** Start the comment with a
+   `## Implementation plan` heading — `/make-pr` looks for exactly this
+   heading to find the plan among an issue's other comments, so it must be
+   the first line. The posted plan records the outcomes of step 5 under a
+   **Decisions** heading; a plan with unresolved open questions is not ready
+   to post. Once approved, write the body to a temp file and post with
    `gh issue comment $ARGUMENTS --body-file /tmp/plan-$ARGUMENTS.md`, then
    `rm -f /tmp/plan-$ARGUMENTS.md`. Use heredoc-clean markdown (headings,
    checkboxes). Follow the no-attribution rule — no Claude footer.

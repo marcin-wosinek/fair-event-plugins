@@ -55,5 +55,8 @@ Follow [TICKETS.md](../../TICKETS.md). The essentials:
      --iteration-id "<resolved-iteration-id>"
    ```
    then `rm -f /tmp/ticket.md`. Labels: only if one genuinely fits
-   (`gh label list` first); leave unlabeled rather than forcing one. No Claude
-   attribution anywhere. Report the issue URL.
+   (`gh label list` first); leave unlabeled rather than forcing one. Apply
+   `responsive-ui` whenever the expected behaviour changes layout across
+   viewports — it's what gates the before/after screenshot requirement at
+   `/make-pr` time (COMMIT_GUIDE.md). No Claude attribution anywhere. Report
+   the issue URL.

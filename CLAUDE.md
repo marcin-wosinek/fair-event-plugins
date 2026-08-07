@@ -8,6 +8,36 @@ organization with fair pricing models. It is a monorepo. npm workspaces:
 shared `fair-events-shared` package. The list in the root `package.json` is
 authoritative.
 
+## Ticket Workflow
+
+Most work flows through three commands, each consuming the previous one's
+output: `/write-ticket` → `/plan-ticket` → `/make-pr`.
+
+1. **`/write-ticket`** files a GitHub issue with no code references (behaviour
+   only) — see [TICKETS.md](./TICKETS.md). It carries an **Open questions**
+   section (real forks, with a recommendation) and a `- [ ]` **Acceptance
+   criteria** checklist. Apply the `responsive-ui` label whenever the
+   behaviour changes layout across viewports — it's the only signal step 3
+   uses to require before/after screenshots.
+2. **`/plan-ticket`** grounds that ticket in the codebase as it exists now and
+   posts an implementation plan as an issue comment, starting with a
+   `## Implementation plan` heading. It resolves the ticket's Open Questions
+   (and any new ones found while planning) under a **Decisions** heading, and
+   ends with a **"Read first"** list of reference docs from the table below.
+   Nothing gets posted until you approve it — a plan with unresolved
+   questions isn't ready.
+3. **`/make-pr`** implements the ticket. It looks for a comment starting with
+   `## Implementation plan`; if one exists, that plan (its Read first list and
+   Decisions) is the spec and the ticket body is context — otherwise the
+   ticket body is the spec directly. It closes the loop by checking off the
+   ticket's acceptance criteria in the PR body and linking `Closes #NNN`.
+
+The contract that keeps this chain unattended: **stable headings** (`##
+Implementation plan`, `## Decisions`, `## Read first`) so each command can
+find what it needs in the previous one's output without guessing, and the
+**`responsive-ui` label** as the one piece of state that has to survive from
+ticket-writing time to PR time.
+
 ## Reference Docs
 
 Detailed guides live next to this file. Load the relevant one **before** working

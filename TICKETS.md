@@ -68,6 +68,10 @@ grounding happens at planning time (`/plan-ticket`), not in the ticket.
      (e.g. "Add attendee photo-upload page (token-gated via event emails)").
    - Labels: only apply one if it genuinely fits. Check `gh label list` first;
      leave unlabeled rather than forcing a wrong label, and offer to add one.
+     Apply `responsive-ui` whenever the expected behaviour changes layout or
+     rendering across viewports — it's the only signal
+     [COMMIT_GUIDE.md](./COMMIT_GUIDE.md) uses to require before/after
+     screenshots at PR time, so skipping it silently skips that check.
 
 ## Ticket structure
 

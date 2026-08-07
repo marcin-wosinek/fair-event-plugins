@@ -22,16 +22,19 @@ When the target is a comment, find that exact comment (match the
 fetches it directly) and treat **its** content as the spec; use the rest of the
 thread only as context.
 
-For a whole-ticket target: if the issue has an approved implementation plan
-comment (from `/plan-ticket`), **the plan is the spec** and the ticket body is
-context. Follow its "Read first" list before touching code, and honour its
-**Decisions** section. If the plan predates significant changes to the files
-it names, flag the discrepancies before implementing rather than following it
-blindly.
+For a whole-ticket target: look for a comment starting with the heading
+`## Implementation plan` (posted by `/plan-ticket`). If one exists, **the plan
+is the spec** and the ticket body is context. Follow its "Read first" list
+before touching code, and honour its **Decisions** section. If the plan
+predates significant changes to the files it names, flag the discrepancies
+before implementing rather than following it blindly. If no such comment
+exists, the ticket body itself is the spec.
 
 If you hit a decision the ticket and plan don't resolve — scope **or**
-design — stop and ask me; never pick silently. After we decide, append the
-decision to the plan comment so the ticket stays the record.
+design — stop and ask me; never pick silently. After we decide, record it
+with a new comment (not an edit to the plan comment) so the ticket keeps a
+timestamped trail:
+`gh issue comment <number> --body $'## Decision\n\n<what and why>'`.
 
 ## 2. Branch
 
