@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  *
- * Tests for EventLinkModal (#1198).
+ * Tests for EventLinkModal (#1198, #1429).
  *
  * Covers:
  *   - External flow: choosing "external", entering a URL and confirming
@@ -9,6 +9,8 @@
  *   - None flow: choosing "nowhere" and confirming PUTs link_type: 'none'.
  *   - Linked-posts list: view/edit links render, and Unlink DELETEs and
  *     calls onSaved.
+ *   - Add-another-post: the "Link Existing Post" UI still renders (and
+ *     works) once an event already has a linked post (#1429 AC4).
  */
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -109,6 +111,75 @@ it('choosing "nowhere" and confirming PUTs link_type: none', async () => {
 			link_type: 'none',
 			external_url: null,
 		},
+	});
+	expect(onSaved).toHaveBeenCalledWith(updated);
+});
+
+it('link-existing-post UI still renders when the event already has a linked post, and links a second post', async () => {
+	const eventDate = {
+		...baseEventDate,
+		link_type: 'post',
+		linked_posts: [
+			{
+				id: 5,
+				title: 'My Public Page',
+				status: 'publish',
+				is_primary: true,
+				view_url: 'https://example.com/event',
+				edit_url: 'https://example.com/wp-admin/post.php?post=5',
+			},
+		],
+	};
+	const searchResults = [{ id: 9, title: 'Another Page' }];
+	const updated = {
+		...eventDate,
+		linked_posts: [
+			...eventDate.linked_posts,
+			{
+				id: 9,
+				title: 'Another Page',
+				status: 'publish',
+				is_primary: false,
+				view_url: 'https://example.com/another',
+				edit_url: 'https://example.com/wp-admin/post.php?post=9',
+			},
+		],
+	};
+	apiFetch.mockResolvedValueOnce(searchResults);
+	apiFetch.mockResolvedValueOnce(updated);
+	const onSaved = jest.fn();
+
+	render(
+		<EventLinkModal
+			eventDateId={eventDateId}
+			eventDate={eventDate}
+			enabledPostTypes={enabledPostTypes}
+			onClose={jest.fn()}
+			onSaved={onSaved}
+		/>
+	);
+
+	// Add-another-post UI is visible even though a post is already linked.
+	expect(
+		screen.getByRole('heading', { name: 'Link Existing Post' })
+	).toBeInTheDocument();
+
+	fireEvent.change(screen.getByLabelText('Search posts by title'), {
+		target: { value: 'Another' },
+	});
+
+	await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(1));
+
+	fireEvent.change(screen.getByLabelText('Select a post'), {
+		target: { value: '9' },
+	});
+	fireEvent.click(screen.getByRole('button', { name: /Link Post/i }));
+
+	await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
+	expect(apiFetch).toHaveBeenNthCalledWith(2, {
+		path: `/fair-events/v1/event-dates/${eventDateId}/link-post`,
+		method: 'POST',
+		data: { post_id: 9 },
 	});
 	expect(onSaved).toHaveBeenCalledWith(updated);
 });

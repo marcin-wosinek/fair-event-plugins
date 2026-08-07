@@ -312,81 +312,75 @@ export default function EventLinkModal({
 								</Button>
 							</HStack>
 						)}
+					</>
+				)}
 
-						{linkType === 'post' && (
-							<>
+				{linkType === 'post' && (
+					<>
+						<SelectControl
+							label={__('Post type', 'fair-events')}
+							value={selectedPostType}
+							options={enabledPostTypes.map((pt) => ({
+								label: pt.label,
+								value: pt.slug,
+							}))}
+							onChange={setSelectedPostType}
+						/>
+						<Button
+							variant="primary"
+							onClick={handleCreatePost}
+							isBusy={creatingPost}
+							disabled={creatingPost}
+						>
+							{__('Create New Post', 'fair-events')}
+						</Button>
+
+						<VStack spacing={2}>
+							<h3 style={{ margin: 0 }}>
+								{__('Link Existing Post', 'fair-events')}
+							</h3>
+							<TextControl
+								label={__(
+									'Search posts by title',
+									'fair-events'
+								)}
+								onChange={handleSearchPosts}
+								placeholder={__(
+									'Start typing to search...',
+									'fair-events'
+								)}
+							/>
+							{searchResults.length > 0 && (
 								<SelectControl
-									label={__('Post type', 'fair-events')}
-									value={selectedPostType}
-									options={enabledPostTypes.map((pt) => ({
-										label: pt.label,
-										value: pt.slug,
-									}))}
-									onChange={setSelectedPostType}
+									label={__('Select a post', 'fair-events')}
+									value={linkPostId}
+									options={[
+										{
+											label: __(
+												'Select...',
+												'fair-events'
+											),
+											value: '',
+										},
+										...searchResults.map((r) => ({
+											label: r.title,
+											value: String(r.id),
+										})),
+									]}
+									onChange={setLinkPostId}
 								/>
+							)}
+							{linkPostId && (
 								<Button
 									variant="primary"
-									onClick={handleCreatePost}
-									isBusy={creatingPost}
-									disabled={creatingPost}
+									onClick={handleLinkPost}
+									isBusy={linkingPost}
+									disabled={linkingPost}
 								>
-									{__('Create New Post', 'fair-events')}
+									{__('Link Post', 'fair-events')}
 								</Button>
-
-								<VStack spacing={2}>
-									<h3 style={{ margin: 0 }}>
-										{__(
-											'Link Existing Post',
-											'fair-events'
-										)}
-									</h3>
-									<TextControl
-										label={__(
-											'Search posts by title',
-											'fair-events'
-										)}
-										onChange={handleSearchPosts}
-										placeholder={__(
-											'Start typing to search...',
-											'fair-events'
-										)}
-									/>
-									{searchResults.length > 0 && (
-										<SelectControl
-											label={__(
-												'Select a post',
-												'fair-events'
-											)}
-											value={linkPostId}
-											options={[
-												{
-													label: __(
-														'Select...',
-														'fair-events'
-													),
-													value: '',
-												},
-												...searchResults.map((r) => ({
-													label: r.title,
-													value: String(r.id),
-												})),
-											]}
-											onChange={setLinkPostId}
-										/>
-									)}
-									{linkPostId && (
-										<Button
-											variant="primary"
-											onClick={handleLinkPost}
-											isBusy={linkingPost}
-											disabled={linkingPost}
-										>
-											{__('Link Post', 'fair-events')}
-										</Button>
-									)}
-								</VStack>
-							</>
-						)}
+							)}
+						</VStack>
 					</>
 				)}
 
