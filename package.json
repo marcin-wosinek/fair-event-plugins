@@ -80,7 +80,7 @@
 	"dependencies": {
 		"@wordpress/scripts": "33.0.0",
 		"husky": "^9.1.7",
-		"npm-run-all2": "^8.0.4"
+		"npm-run-all2": "^9.0.2"
 	},
 	"workspaces": [
 		"fair-payments-connector",
