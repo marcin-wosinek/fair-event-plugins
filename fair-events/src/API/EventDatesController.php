@@ -1320,14 +1320,14 @@ class EventDatesController extends WP_REST_Controller {
 			}
 		}
 
-		// Check if post is already linked to a different event.
+		// If the post is already linked to a different event, detach it from
+		// there first so it can be relinked here (e.g. a translated duplicate
+		// event page that auto-created its own, still-empty event date). The
+		// old event date row is not deleted — it's left unlinked, same as any
+		// manually-unlinked event.
 		$existing = EventDates::get_by_event_id( $post_id );
 		if ( $existing && (int) $existing->id !== $link_event_date->id ) {
-			return new WP_Error(
-				'rest_post_already_linked',
-				__( 'This post is already linked to another event.', 'fair-events' ),
-				array( 'status' => 409 )
-			);
+			$this->detach_post_from_event( $existing, $post_id );
 		}
 
 		// Add to junction table.
@@ -1378,6 +1378,29 @@ class EventDatesController extends WP_REST_Controller {
 			}
 		}
 
+		$this->detach_post_from_event( $link_event_date, $post_id );
+
+		// Return the originally requested event date (occurrence, not master).
+		$event_date = EventDates::get_by_id( $id );
+
+		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
+	}
+
+	/**
+	 * Detach a post from an event date's link.
+	 *
+	 * Removes the post from the junction table, and if it was holding the
+	 * primary `event_id` slot, promotes the next remaining linked post to
+	 * primary or clears the link entirely (event_id => null, link_type =>
+	 * 'none') if none remain. Nothing is deleted — a cleared event date
+	 * shows up as an ordinary unlinked event afterward. Shared by
+	 * unlink_post() and link_post()'s detach-then-relink path.
+	 *
+	 * @param EventDates $link_event_date Event date the post is currently linked to.
+	 * @param int        $post_id         Post ID to detach.
+	 * @return void
+	 */
+	private function detach_post_from_event( $link_event_date, $post_id ) {
 		// Remove from junction table.
 		EventDates::remove_linked_post( $link_event_date->id, $post_id );
 
@@ -1400,11 +1423,6 @@ class EventDatesController extends WP_REST_Controller {
 				);
 			}
 		}
-
-		// Return the originally requested event date (occurrence, not master).
-		$event_date = EventDates::get_by_id( $id );
-
-		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
 	}
 
 	/**

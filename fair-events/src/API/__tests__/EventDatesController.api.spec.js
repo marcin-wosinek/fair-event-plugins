@@ -157,6 +157,153 @@ test.describe('EventDatesController — standalone category copy on first link',
 	});
 });
 
+test.describe('EventDatesController — link_post detach-then-link (#1429)', () => {
+	let api;
+	let postA;
+	let eventDateA;
+	let postB;
+	let eventDateB;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		// postA/postB each get their own event date (event_id = post), the
+		// same DB state a fair_event post's auto-created event date is in.
+		const postARes = await api.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: `Link Post A ${Date.now()}`, status: 'publish' },
+		});
+		expect(postARes.ok()).toBeTruthy();
+		postA = (await postARes.json()).id;
+
+		const postBRes = await api.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: `Link Post B ${Date.now()}`, status: 'publish' },
+		});
+		expect(postBRes.ok()).toBeTruthy();
+		postB = (await postBRes.json()).id;
+
+		const edARes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Link ED A ${Date.now()}`,
+				start_datetime: '2031-01-01 10:00:00',
+			},
+		});
+		expect(edARes.ok()).toBeTruthy();
+		eventDateA = (await edARes.json()).id;
+		const linkARes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateA}`,
+			{ headers: adminHeaders, data: { event_id: postA } }
+		);
+		expect(linkARes.ok()).toBeTruthy();
+
+		const edBRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Link ED B ${Date.now()}`,
+				start_datetime: '2031-02-01 10:00:00',
+			},
+		});
+		expect(edBRes.ok()).toBeTruthy();
+		eventDateB = (await edBRes.json()).id;
+		const linkBRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${eventDateB}`,
+			{ headers: adminHeaders, data: { event_id: postB } }
+		);
+		expect(linkBRes.ok()).toBeTruthy();
+	});
+
+	test.afterAll(async () => {
+		if (eventDateA) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${eventDateA}`,
+				{ headers: adminHeaders }
+			);
+		}
+		if (eventDateB) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${eventDateB}`,
+				{ headers: adminHeaders }
+			);
+		}
+		if (postA) {
+			await api.delete(`/wp-json/wp/v2/fair_event/${postA}?force=true`, {
+				headers: adminHeaders,
+			});
+		}
+		if (postB) {
+			await api.delete(`/wp-json/wp/v2/fair_event/${postB}?force=true`, {
+				headers: adminHeaders,
+			});
+		}
+	});
+
+	test('relinking postA as secondary to eventDateB succeeds', async () => {
+		const res = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${eventDateB}/link-post`,
+			{
+				headers: adminHeaders,
+				data: { post_id: postA },
+			}
+		);
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+
+		// eventDateB keeps its own primary (postB); postA is now a secondary link.
+		expect(body.event_id).toBe(postB);
+		const linkedIds = body.linked_posts.map((lp) => lp.id);
+		expect(linkedIds).toContain(postA);
+		expect(body.linked_posts.find((lp) => lp.id === postA).is_primary).toBe(
+			false
+		);
+	});
+
+	test("postA's old auto-created event date survives detached, not deleted", async () => {
+		const res = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${eventDateA}`,
+			{ headers: adminHeaders }
+		);
+		expect(res.ok()).toBeTruthy();
+		const body = await res.json();
+
+		expect(body.event_id).toBeNull();
+		expect(body.link_type).toBe('none');
+	});
+
+	test('a second post can be linked to an event that already has a primary', async () => {
+		// eventDateB already has postB as primary and postA as secondary from
+		// the earlier test — link a brand-new third post too.
+		const postCRes = await api.post('/wp-json/wp/v2/pages', {
+			headers: adminHeaders,
+			data: { title: `Link Post C ${Date.now()}`, status: 'publish' },
+		});
+		expect(postCRes.ok()).toBeTruthy();
+		const postC = (await postCRes.json()).id;
+
+		try {
+			const res = await api.post(
+				`/wp-json/fair-events/v1/event-dates/${eventDateB}/link-post`,
+				{
+					headers: adminHeaders,
+					data: { post_id: postC },
+				}
+			);
+			expect(res.ok()).toBeTruthy();
+			const body = await res.json();
+
+			expect(body.event_id).toBe(postB);
+			const linkedIds = body.linked_posts.map((lp) => lp.id);
+			expect(linkedIds).toContain(postA);
+			expect(linkedIds).toContain(postC);
+		} finally {
+			await api.delete(`/wp-json/wp/v2/pages/${postC}?force=true`, {
+				headers: adminHeaders,
+			});
+		}
+	});
+});
+
 test.describe('EventDatesController — create_item with categories + rrule (quick add)', () => {
 	let api;
 	let categoryId;
@@ -258,7 +405,10 @@ test.describe('EventDatesController — recurrence reconciliation', () => {
 	) {
 		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
-			data: { title: `Recurrence test ${Date.now()}`, status: 'publish' },
+			data: {
+				title: `Recurrence test ${Date.now()}`,
+				status: 'publish',
+			},
 		});
 		expect(postRes.ok()).toBeTruthy();
 		eventPostId = (await postRes.json()).id;
@@ -428,7 +578,10 @@ test.describe('EventDatesController — ending a series', () => {
 	) {
 		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
-			data: { title: `End series test ${Date.now()}`, status: 'publish' },
+			data: {
+				title: `End series test ${Date.now()}`,
+				status: 'publish',
+			},
 		});
 		expect(postRes.ok()).toBeTruthy();
 		eventPostId = (await postRes.json()).id;
