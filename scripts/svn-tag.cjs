@@ -85,9 +85,10 @@ try {
 					stdio: 'inherit',
 				});
 			} catch (error) {
-				console.warn(
-					'Warning: composer install failed, continuing anyway...'
+				console.error(
+					'Error: composer install --no-dev failed; aborting before packaging a broken zip.'
 				);
+				throw error;
 			}
 		}
 
@@ -156,11 +157,9 @@ try {
 			fs.mkdirSync(trunkDir, { recursive: true });
 		}
 		for (const entry of fs.readdirSync(tagDir)) {
-			fs.cpSync(
-				path.join(tagDir, entry),
-				path.join(trunkDir, entry),
-				{ recursive: true }
-			);
+			fs.cpSync(path.join(tagDir, entry), path.join(trunkDir, entry), {
+				recursive: true,
+			});
 		}
 	}
 
@@ -180,7 +179,9 @@ try {
 		}
 	}
 
-	console.log(`\n✓ Successfully created SVN tag ${version} for ${pluginName}`);
+	console.log(
+		`\n✓ Successfully created SVN tag ${version} for ${pluginName}`
+	);
 	console.log(`  Location: ${tagDir}`);
 	console.log(
 		`\nNext steps:\n  cd ${pluginName}/svn\n  svn add tags/${version}\n  svn ci -m "Tagging version ${version}"`
