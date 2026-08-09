@@ -6,9 +6,12 @@ const path = require('path');
 
 /**
  * Verifies a built plugin ZIP includes its Composer-generated
- * vendor/autoload.php. Every plugin with a composer.json requires that
- * file unconditionally from its main entry point, so a ZIP missing it
- * fatals on activation instead of failing at build time (see #1434).
+ * vendor/autoload.php. Every plugin with a composer.json depends on
+ * that file being present: most require it unconditionally from their
+ * main entry point and fatal on activation if it's missing; the rest
+ * (e.g. fair-payments-connector) guard the require with file_exists()
+ * and instead silently lose all Composer-dependent functionality — a
+ * ZIP missing vendor/ is a bug either way (see #1434).
  *
  * Usage:
  *   node scripts/verify-dist-archive.cjs <plugin> <zipPath>   # targeted
