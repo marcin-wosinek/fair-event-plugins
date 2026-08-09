@@ -131,6 +131,9 @@ jobs:
                   echo "Contents of dist directory:"
                   ls -lah ./dist/ || echo "dist directory not found"
 
+            - name: Verify dist archives include composer dependencies
+              run: node scripts/verify-dist-archive.cjs
+
             - name: Install dev PHP dependencies in all plugins
               run: npm run composer:install
 
