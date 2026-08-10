@@ -494,4 +494,32 @@ class EventSchemaTest extends TestCase {
 
 		$this->assertSame( '2026-09-01T00:00:00+00:00', $offers[0]['validFrom'] );
 	}
+
+	/**
+	 * A blank ticket type name is omitted rather than serialized as an empty
+	 * string — an empty `name` is itself a structured-data quality issue.
+	 *
+	 * @return void
+	 */
+	public function test_build_offers_for_types_omits_blank_name() {
+		$paid_offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, '' ) ),
+			array( 1 => 15.0 ),
+			array( 1 => true ),
+			null,
+			'EUR',
+			'https://example.com/event'
+		);
+		$this->assertArrayNotHasKey( 'name', $paid_offers[0] );
+
+		$free_offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, '' ) ),
+			array(),
+			array(),
+			null,
+			'EUR',
+			'https://example.com/event'
+		);
+		$this->assertArrayNotHasKey( 'name', $free_offers[0] );
+	}
 }

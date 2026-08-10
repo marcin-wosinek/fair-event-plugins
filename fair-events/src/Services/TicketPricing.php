@@ -137,6 +137,29 @@ class TicketPricing {
 	}
 
 	/**
+	 * Pick the earliest period that hasn't started yet, for callers wanting a
+	 * "sales open soon" fallback when nothing is active right now (e.g. a
+	 * search crawl hitting the page before a sale window opens). Pure,
+	 * DB-free — split out for unit testing without a database, mirroring
+	 * pick_active_period().
+	 *
+	 * @param object[] $periods Sale periods with sale_start strings, post apply_default_window().
+	 * @param string   $now     Current datetime string ('Y-m-d H:i:s'), comparable lexically.
+	 * @return object|null Earliest not-yet-started period, or null when every period has already started.
+	 */
+	public static function pick_upcoming_period( $periods, $now ) {
+		$upcoming = null;
+
+		foreach ( $periods as $period ) {
+			if ( $period->sale_start > $now && ( ! $upcoming || $period->sale_start < $upcoming->sale_start ) ) {
+				$upcoming = $period;
+			}
+		}
+
+		return $upcoming;
+	}
+
+	/**
 	 * Resolve the unit price for a ticket type from its currently active
 	 * sale period.
 	 *

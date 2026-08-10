@@ -101,6 +101,43 @@ class TicketPricingTest extends TestCase {
 	}
 
 	/**
+	 * No periods start in the future.
+	 */
+	public function test_pick_upcoming_period_no_future_period_returns_null() {
+		$period = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$this->assertNull( TicketPricing::pick_upcoming_period( array( $period ), '2026-03-01 00:00:00' ) );
+	}
+
+	/**
+	 * A period starting in the future is picked as upcoming.
+	 */
+	public function test_pick_upcoming_period_picks_future_period() {
+		$period = $this->period( '2026-06-01 00:00:00', '2026-07-01 00:00:00' );
+		$this->assertSame( $period, TicketPricing::pick_upcoming_period( array( $period ), '2026-01-01 00:00:00' ) );
+	}
+
+	/**
+	 * Of several future periods, the earliest-starting one is picked.
+	 */
+	public function test_pick_upcoming_period_picks_earliest_future_period() {
+		$later   = $this->period( '2026-08-01 00:00:00', '2026-09-01 00:00:00' );
+		$earlier = $this->period( '2026-06-01 00:00:00', '2026-07-01 00:00:00' );
+		$this->assertSame(
+			$earlier,
+			TicketPricing::pick_upcoming_period( array( $later, $earlier ), '2026-01-01 00:00:00' )
+		);
+	}
+
+	/**
+	 * A period whose sale_start equals now has already started, so it's not
+	 * "upcoming" — matches pick_active_period()'s inclusive start.
+	 */
+	public function test_pick_upcoming_period_start_equal_to_now_is_not_upcoming() {
+		$period = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$this->assertNull( TicketPricing::pick_upcoming_period( array( $period ), '2026-01-01 00:00:00' ) );
+	}
+
+	/**
 	 * An unset sale_end substitutes the computed default.
 	 */
 	public function test_apply_default_window_substitutes_unset_end() {

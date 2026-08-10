@@ -24,6 +24,14 @@ defined( 'WPINC' ) || die;
 class EventSchema {
 
 	/**
+	 * Sentinel used as the effective sale_end for a JSON-LD offer period
+	 * whose end couldn't be resolved to a real default (no last-occurrence
+	 * anchor available), so it compares as "never closes" rather than being
+	 * mistaken for already-closed by pick_active_period()'s half-open check.
+	 */
+	const OPEN_END_SENTINEL = '9999-12-31 23:59:59';
+
+	/**
 	 * Build the full Schema.org Event object for a single event page.
 	 *
 	 * @param EventDates  $event_date Event date object.
@@ -357,15 +365,23 @@ class EventSchema {
 		$default_end = TicketPricing::compute_default_sale_end( EventDates::get_last_occurrence_end( $pricing_event_date_id ) );
 		$periods     = TicketPricing::apply_default_window( $sale_periods, $default_end );
 
+		// A sale_end that's still unresolved after apply_default_window() (no
+		// default was available — e.g. the event/series itself has no
+		// end_datetime to anchor one) is not "closed"; it's the same lazy,
+		// still-open state as any other unset end. The purchase flow never
+		// notices this because its continues=true fallback ignores sale_end
+		// entirely, but JSON-LD's continues=false pick below does check it —
+		// substitute a far-future sentinel so it isn't mistaken for closed.
+		foreach ( $periods as $period ) {
+			if ( empty( $period->sale_end ) ) {
+				$period->sale_end = self::OPEN_END_SENTINEL;
+			}
+		}
+
 		// continues = false: a genuinely closed sale (no lazy fallback) must
 		// show no offer in structured data, unlike the purchase form.
 		$active_period   = TicketPricing::pick_active_period( $periods, $now, false );
-		$upcoming_period = null;
-		foreach ( $periods as $period ) {
-			if ( $period->sale_start > $now && ( ! $upcoming_period || $period->sale_start < $upcoming_period->sale_start ) ) {
-				$upcoming_period = $period;
-			}
-		}
+		$upcoming_period = TicketPricing::pick_upcoming_period( $periods, $now );
 
 		// Search crawls happen outside the sale window: fall back to the
 		// nearest upcoming period's price so `offers` isn't empty just
@@ -433,12 +449,18 @@ class EventSchema {
 			if ( isset( $price_by_type_id[ $type_id ] ) ) {
 				$offer = array(
 					'@type'         => 'Offer',
-					'name'          => $ticket_type->name,
 					'price'         => (string) $price_by_type_id[ $type_id ],
 					'priceCurrency' => $currency,
 					'availability'  => 'https://schema.org/InStock',
 					'url'           => $permalink,
 				);
+
+				// A blank name (the admin ticket editor doesn't require one)
+				// is omitted rather than serialized as "" — an empty `name`
+				// is itself a structured-data quality issue.
+				if ( '' !== (string) $ticket_type->name ) {
+					$offer['name'] = $ticket_type->name;
+				}
 
 				if ( $valid_from ) {
 					$offer['validFrom'] = $valid_from;
@@ -456,14 +478,19 @@ class EventSchema {
 
 			// Genuinely free ticket type (a free RSVP/signup with no price row):
 			// advertise a price-"0" offer so the event is accessible for free.
-			$offers[] = array(
+			$offer = array(
 				'@type'         => 'Offer',
-				'name'          => $ticket_type->name,
 				'price'         => '0',
 				'priceCurrency' => $currency,
 				'availability'  => 'https://schema.org/InStock',
 				'url'           => $permalink,
 			);
+
+			if ( '' !== (string) $ticket_type->name ) {
+				$offer['name'] = $ticket_type->name;
+			}
+
+			$offers[] = $offer;
 		}
 
 		return $offers;
