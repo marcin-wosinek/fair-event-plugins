@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fair Events Experimental
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: Activates advanced feature bundles for Fair Events (galleries, sources, ticketing, event-tools, migration, venues). Requires fair-events.
+ * Description: Activates advanced feature bundles for Fair Events (galleries, sources, ticketing, event-tools, migration). Requires fair-events.
  * Version: 1.5.0
  * Requires at least: 6.7
  * Requires PHP: 8.0
