@@ -15,7 +15,7 @@ import {
 	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
-import { formatDate } from '../utils/format-date.js';
+import { formatDate, formatDateLong } from '../utils/format-date.js';
 import { formatSiteLocalDatetime, formatDateOnly } from 'fair-events-shared';
 
 const DEFAULT_VIEW = {
@@ -554,11 +554,36 @@ export default function QuestionnaireResponses() {
 
 		// Markdown.
 		return responses
-			.map((item) =>
+			.map((item) => {
+				const hasHeading = Boolean(item.participant_id);
+				const lines = [];
+
+				if (hasHeading) {
+					const respondent =
+						item.participant_name ||
+						item.participant_email ||
+						`#${item.id}`;
+					lines.push(`## ${respondent}`, '');
+				}
+
 				columns
-					.map((c) => `**${c.label}:** ${c.getValue({ item }) || ''}`)
-					.join('\n')
-			)
+					.filter((c) => !hasHeading || c.id !== 'participant_name')
+					.forEach((c) => {
+						const label =
+							c.id === 'created_at'
+								? __('Submission date', 'fair-form')
+								: c.label;
+						const value =
+							c.id === 'created_at'
+								? formatDateLong(item.created_at)
+								: c.getValue({ item }) || '';
+						lines.push(`**${label}:** ${value}`, '');
+					});
+
+				// Drop the trailing blank line before joining responses.
+				lines.pop();
+				return lines.join('\n');
+			})
 			.join('\n\n---\n\n');
 	};
 
