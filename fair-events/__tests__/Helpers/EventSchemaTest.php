@@ -357,4 +357,141 @@ class EventSchemaTest extends TestCase {
 		$this->assertSame( 'https://schema.org/MixedEventAttendanceMode', $hybrid['attendance_mode'] );
 		$this->assertCount( 2, $hybrid['location'] );
 	}
+
+	/**
+	 * Build a minimal ticket type stub.
+	 *
+	 * @param int    $id       Ticket type ID.
+	 * @param string $name     Ticket type name.
+	 * @param bool   $disabled Whether the type is manually disabled.
+	 * @return object Anonymous ticket type object exposing id/name/disabled.
+	 */
+	private function ticket_type( $id, $name, $disabled = false ) {
+		return (object) array(
+			'id'       => $id,
+			'name'     => $name,
+			'disabled' => $disabled,
+		);
+	}
+
+	/**
+	 * Multiple paid types with a resolved price each yield one named offer per
+	 * type.
+	 *
+	 * @return void
+	 */
+	public function test_build_offers_for_types_multiple_paid_types_each_named() {
+		$types = array(
+			$this->ticket_type( 1, 'Single class' ),
+			$this->ticket_type( 2, '3-class pass' ),
+		);
+
+		$offers = EventSchema::build_offers_for_types(
+			$types,
+			array(
+				1 => 15.0,
+				2 => 40.0,
+			),
+			array(
+				1 => true,
+				2 => true,
+			),
+			null,
+			'EUR',
+			'https://example.com/event'
+		);
+
+		$this->assertCount( 2, $offers );
+		$this->assertSame( 'Single class', $offers[0]['name'] );
+		$this->assertSame( '15', $offers[0]['price'] );
+		$this->assertSame( '3-class pass', $offers[1]['name'] );
+		$this->assertSame( '40', $offers[1]['price'] );
+	}
+
+	/**
+	 * A free type (no price row anywhere) yields a named, zero-priced offer.
+	 *
+	 * @return void
+	 */
+	public function test_build_offers_for_types_free_type_is_named_and_zero_priced() {
+		$offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, 'RSVP' ) ),
+			array(),
+			array(),
+			null,
+			'EUR',
+			'https://example.com/event'
+		);
+
+		$this->assertCount( 1, $offers );
+		$this->assertSame( 'RSVP', $offers[0]['name'] );
+		$this->assertSame( '0', $offers[0]['price'] );
+	}
+
+	/**
+	 * A paid type with no price in the resolved window, but priced elsewhere
+	 * (closed sale), yields no offer for that type.
+	 *
+	 * @return void
+	 */
+	public function test_build_offers_for_types_closed_sale_paid_type_yields_no_offer() {
+		$offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, 'Single class' ) ),
+			array(),
+			array( 1 => true ),
+			null,
+			'EUR',
+			'https://example.com/event'
+		);
+
+		$this->assertSame( array(), $offers );
+	}
+
+	/**
+	 * No ticket types yields an empty array.
+	 *
+	 * @return void
+	 */
+	public function test_build_offers_for_types_no_types_yields_empty_array() {
+		$offers = EventSchema::build_offers_for_types( array(), array(), array(), null, 'EUR', 'https://example.com/event' );
+
+		$this->assertSame( array(), $offers );
+	}
+
+	/**
+	 * A disabled type is skipped even when priced.
+	 *
+	 * @return void
+	 */
+	public function test_build_offers_for_types_skips_disabled_type() {
+		$offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, 'Single class', true ) ),
+			array( 1 => 15.0 ),
+			array( 1 => true ),
+			null,
+			'EUR',
+			'https://example.com/event'
+		);
+
+		$this->assertSame( array(), $offers );
+	}
+
+	/**
+	 * An upcoming (not yet active) window's validFrom carries through to the
+	 * built offer.
+	 *
+	 * @return void
+	 */
+	public function test_build_offers_for_types_carries_valid_from() {
+		$offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, 'Single class' ) ),
+			array( 1 => 15.0 ),
+			array( 1 => true ),
+			'2026-09-01T00:00:00+00:00',
+			'EUR',
+			'https://example.com/event'
+		);
+
+		$this->assertSame( '2026-09-01T00:00:00+00:00', $offers[0]['validFrom'] );
+	}
 }
