@@ -172,6 +172,44 @@ describe('QuestionnaireResponses — empty state', () => {
 	});
 });
 
+describe('QuestionnaireResponses — Markdown export (#1422)', () => {
+	it('headings link submissions to their participant, dates get the long label/format, and every field is blank-line separated', async () => {
+		mockResponses([...LINKED_RESPONSES, ...STANDALONE_RESPONSES]);
+		const writeText = jest.fn(() => Promise.resolve());
+		Object.assign(navigator, { clipboard: { writeText } });
+
+		render(<QuestionnaireResponses />);
+		await screen.findByText('Friend');
+
+		fireEvent.click(screen.getByRole('button', { name: 'Export' }));
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Copy to clipboard' })
+		);
+
+		await screen.findByText('Message copied to clipboard.');
+
+		const message = writeText.mock.calls[0][0];
+
+		// (a) participant-linked submission: heading, no duplicate Name line.
+		expect(message).toContain('## Jane Doe');
+		expect(message).not.toContain('**Name:** Jane Doe');
+
+		// (b) submission without a participant link: no heading.
+		expect(message).not.toContain('## #1');
+
+		// (c) date line uses the long label, no seconds.
+		expect(message).toContain('**Submission date:**');
+		expect(message).not.toContain('**Date:**');
+		expect(message).not.toMatch(
+			/\*\*Submission date:\*\*[^\n]*\d{2}:\d{2}:\d{2}/
+		);
+
+		// (d) every field is followed by a blank line.
+		const linkedBlock = message.split('\n\n---\n\n')[0];
+		expect(linkedBlock.split('\n\n').length).toBeGreaterThan(1);
+	});
+});
+
 describe('QuestionnaireResponses — table containment', () => {
 	it('scopes the DataViews table in a scrollable CardBody so a wide table cannot drag the page sideways', async () => {
 		mockResponses(STANDALONE_RESPONSES);
