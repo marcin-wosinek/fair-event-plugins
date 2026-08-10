@@ -1,5 +1,45 @@
 # fair-events-experimental
 
+## 1.5.0
+
+### Minor Changes
+
+-   f62946d: Duplicate Event wizard's Tickets step now uses the same ticket editor as Manage Event, fixing silent data loss when toggling multiple sale periods off and preserving series ticket scope (whole series / multiple instances) on duplicated events. The step also gains sale-periods calendar, add-ons, and capacity display, and is now hidden when the ticketing feature is off.
+-   a6419da: Validate venue latitude/longitude on save (form and API), accepting a decimal comma and auto-splitting a pasted "lat, lng" pair, and skip invalid coordinates (with a notice) instead of importing them unchecked.
+
+### Patch Changes
+
+-   5fe6658: Reduce the database queries issued when rendering or purchasing through the Event Signup form: the active sale period, the viewer's group memberships, and the event's discount rules are now resolved once per render/request and reused across every ticket tier and activity, instead of being re-resolved once per tier. Query count no longer scales with the number of ticket tiers; displayed and charged prices are unchanged.
+-   4eb856e: Fix the group discount note on the signup form so it always matches the price actually charged: it now compares each rule against the ticket's real price (not a notional reference price), stays hidden unless a price is genuinely reduced, and shows fractional percentages (e.g. 12.5%) without rounding them away. When different ticket tiers get their best price from different rules, the shared note is dropped in favor of a per-tier label.
+-   Updated dependencies [e0ea5a6]
+-   Updated dependencies [4b9d893]
+-   Updated dependencies [4ec1056]
+-   Updated dependencies [5fa6fd6]
+-   Updated dependencies [5fe6658]
+-   Updated dependencies [0e27b5c]
+-   Updated dependencies [3508d85]
+-   Updated dependencies [1a85cf6]
+-   Updated dependencies [f62946d]
+-   Updated dependencies [58e85f6]
+-   Updated dependencies [1d9d738]
+-   Updated dependencies [c30daa6]
+-   Updated dependencies [0a116a2]
+-   Updated dependencies [c5c60b7]
+-   Updated dependencies [64ffbf9]
+-   Updated dependencies [09d5d55]
+-   Updated dependencies [49f2e0a]
+-   Updated dependencies [089a463]
+-   Updated dependencies [b138421]
+-   Updated dependencies [d51522b]
+-   Updated dependencies [aeda159]
+-   Updated dependencies [bab5a8a]
+-   Updated dependencies [f64745d]
+-   Updated dependencies [fc86b53]
+-   Updated dependencies [172880a]
+-   Updated dependencies [7932bb2]
+    -   fair-events@1.13.0
+    -   fair-events-shared@0.6.0
+
 ## 1.4.1
 
 ### Patch Changes

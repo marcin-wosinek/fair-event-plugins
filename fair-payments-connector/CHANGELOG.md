@@ -1,5 +1,22 @@
 # fair-payments-connector
 
+## 2.0.0
+
+### Major Changes
+
+-   b92cd39: Remove Mollie API key authentication in favour of the guided OAuth connection. Stored test/live API keys are deleted on upgrade and are no longer accepted through the settings API; a site that only had a key (no guided connection) sees a one-off notice explaining that it needs to reconnect Mollie, and stops being able to take payments until it does.
+
+### Patch Changes
+
+-   7622d31: Fix a mischarge bug where duplicating a Simple Payment block copied its hidden identifier along with it: the editor now reassigns a fresh identifier to the duplicate and warns the owner to save, and the payment endpoint rejects a payment when the submitted identifier matches more than one saved block instead of trusting the first match.
+-   Updated dependencies [4b9d893]
+-   Updated dependencies [4ec1056]
+-   Updated dependencies [49f2e0a]
+-   Updated dependencies [aeda159]
+-   Updated dependencies [f64745d]
+-   Updated dependencies [7932bb2]
+    -   fair-events-shared@0.6.0
+
 ## 1.7.0
 
 ### Minor Changes
