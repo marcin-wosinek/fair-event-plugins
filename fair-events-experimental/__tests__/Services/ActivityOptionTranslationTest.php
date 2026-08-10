@@ -159,4 +159,44 @@ class ActivityOptionTranslationTest extends TestCase {
 
 		$this->assertSame( 'Clase de yoga', $result );
 	}
+
+	/**
+	 * An option literally named "0" is a real value, not a blank one —
+	 * `empty( '0' )` is true in PHP, so a naive empty() check would wrongly
+	 * skip it. translate_name() must still return it unchanged in this
+	 * process (Polylang absent).
+	 */
+	public function test_translate_name_treats_the_string_zero_as_a_real_value() {
+		$option = $this->option( 1, '0' );
+
+		$this->assertSame( '0', ActivityOptionTranslation::translate_name( $option ) );
+	}
+
+	/**
+	 * Same "0" pitfall for short_name.
+	 */
+	public function test_translate_short_name_treats_the_string_zero_as_a_real_value() {
+		$option = $this->option( 1, 'Yoga class', '0' );
+
+		$this->assertSame( '0', ActivityOptionTranslation::translate_short_name( $option ) );
+	}
+
+	/**
+	 * Register() must register a name/short_name of "0" — it's a real
+	 * value, not an empty one.
+	 *
+	 * @runInSeparateProcess
+	 */
+	public function test_register_registers_the_string_zero_as_a_real_value() {
+		require_once __DIR__ . '/../helpers/pll-stubs.php';
+
+		$option = $this->option( 9, '0', '0' );
+
+		ActivityOptionTranslation::register( $option );
+
+		$calls = $GLOBALS['_fair_pll_registered_strings'];
+
+		$this->assertSame( '0', $calls['fair_events_ticket_option_9_name']['string'] );
+		$this->assertSame( '0', $calls['fair_events_ticket_option_9_short_name']['string'] );
+	}
 }
