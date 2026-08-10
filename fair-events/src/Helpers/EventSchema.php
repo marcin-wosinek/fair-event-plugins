@@ -25,11 +25,13 @@ class EventSchema {
 	/**
 	 * Build the full Schema.org Event object for a single event page.
 	 *
-	 * @param EventDates $event_date Event date object.
-	 * @param int        $post_id    Linked post ID.
+	 * @param EventDates  $event_date Event date object.
+	 * @param int         $post_id    Linked post ID.
+	 * @param string|null $url        URL to report, e.g. a per-occurrence canonical.
+	 *                                Defaults to the post's plain permalink.
 	 * @return array|null Event object (without `@context`), or null when there is no start date.
 	 */
-	public static function event_to_jsonld( EventDates $event_date, $post_id ) {
+	public static function event_to_jsonld( EventDates $event_date, $post_id, $url = null ) {
 		if ( empty( $event_date->start_datetime ) ) {
 			return null;
 		}
@@ -40,7 +42,7 @@ class EventSchema {
 			'@type'       => 'Event',
 			'name'        => self::get_title( $post, $event_date ),
 			'startDate'   => DateHelper::local_to_iso8601( $event_date->start_datetime ),
-			'url'         => get_permalink( $post_id ),
+			'url'         => $url ?? get_permalink( $post_id ),
 			'eventStatus' => 'cancelled' === $event_date->status
 				? 'https://schema.org/EventCancelled'
 				: 'https://schema.org/EventScheduled',
