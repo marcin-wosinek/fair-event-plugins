@@ -697,6 +697,9 @@ class TicketsController extends WP_REST_Controller {
 			'settings'     => $settings,
 			'options'      => array_map(
 				function ( $o ) use ( $collaborators, $option_prices_by_option ) {
+					if ( class_exists( \FairEventsExperimental\Services\ActivityOptionTranslation::class ) ) {
+						\FairEventsExperimental\Services\ActivityOptionTranslation::register( $o );
+					}
 					$data                     = $o->to_array();
 					unset( $data['discounted_price'] );
 					$data['collaborator_ids'] = $collaborators[ $o->id ] ?? array();
