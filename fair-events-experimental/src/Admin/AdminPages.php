@@ -2,7 +2,7 @@
 /**
  * Admin Pages for Fair Events Experimental
  *
- * Registers the experimental feature admin pages (migration, sources, venues,
+ * Registers the experimental feature admin pages (migration, sources,
  * copy, settings) as submenus under the fair-events-calendar menu.
  * Page rendering and JS assets are delegated to the fair-events plugin; only
  * the settings page uses assets from this plugin's own build directory.
@@ -104,18 +104,6 @@ class AdminPages {
 			);
 
 			$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Source', 'fair-events-experimental' ) );
-		}
-
-		// Venues page — `venues` bundle.
-		if ( \FairEventsExperimental\Core\Features::is_enabled( 'venues' ) ) {
-			$this->page_hooks['fair-events-venues'] = add_submenu_page(
-				$parent,
-				__( 'Venues', 'fair-events-experimental' ),
-				__( 'Venues', 'fair-events-experimental' ),
-				'manage_options',
-				'fair-events-venues',
-				array( $this, 'render_venues_page' )
-			);
 		}
 
 		// Event Statistics page — `audience-statistics` bundle (hidden).
@@ -283,13 +271,6 @@ class AdminPages {
 				wp_set_script_translations( 'fair-events-source-view', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				break;
 
-			case 'fair-events-venues':
-				$asset_file = include $exp_dir . 'build/admin/venues/index.asset.php';
-				wp_enqueue_script( 'fair-events-venues', $exp_url . 'build/admin/venues/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_set_script_translations( 'fair-events-venues', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-				wp_enqueue_style( 'wp-components' );
-				break;
-
 			case 'fair-events-event-statistics':
 				$asset_file = include $exp_dir . 'build/admin/event-statistics/index.asset.php';
 				wp_enqueue_script( 'fair-events-event-statistics', $exp_url . 'build/admin/event-statistics/index.js', $asset_file['dependencies'], $asset_file['version'], true );
@@ -421,17 +402,6 @@ class AdminPages {
 	public function render_source_view_page() {
 		?>
 		<div id="fair-events-source-view-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render venues page
-	 *
-	 * @return void
-	 */
-	public function render_venues_page() {
-		?>
-		<div id="fair-events-venues-root"></div>
 		<?php
 	}
 

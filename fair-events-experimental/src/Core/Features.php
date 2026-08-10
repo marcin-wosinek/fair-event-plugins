@@ -3,7 +3,7 @@
  * Feature flag registry for Fair Events Experimental.
  *
  * Manages the advanced bundles moved out of fair-events:
- * galleries, sources, ticketing, event-tools, migration, venues, mailings.
+ * galleries, sources, ticketing, event-tools, migration, mailings.
  * All default to true — installing this plugin signals intent to use the full
  * internal feature set.
  *
@@ -69,11 +69,6 @@ class Features {
 			'migration'           => array(
 				'label'       => 'Migration',
 				'description' => 'One-time post → event migration tooling.',
-				'default'     => true,
-			),
-			'venues'              => array(
-				'label'       => 'Venues',
-				'description' => 'Venues admin page and REST controller.',
 				'default'     => true,
 			),
 			'audience-statistics' => array(
@@ -168,10 +163,6 @@ class Features {
 			'migration'           => array(
 				'label'       => __( 'Migration', 'fair-events-experimental' ),
 				'description' => __( 'One-time post → event migration tooling.', 'fair-events-experimental' ),
-			),
-			'venues'              => array(
-				'label'       => __( 'Venues', 'fair-events-experimental' ),
-				'description' => __( 'Venues admin page and REST controller.', 'fair-events-experimental' ),
 			),
 			'audience-statistics' => array(
 				'label'       => __( 'Audience statistics', 'fair-events-experimental' ),

@@ -236,6 +236,15 @@ class Plugin {
 				$controller->register_routes();
 			}
 		);
+
+		// Venue controller — registers `/fair-events/v1/venues`.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\VenueController();
+				$controller->register_routes();
+			}
+		);
 	}
 
 	/**

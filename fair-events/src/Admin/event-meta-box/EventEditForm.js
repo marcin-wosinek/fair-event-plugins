@@ -45,7 +45,6 @@ export default function EventEditForm({
 	postType,
 	onUnlink,
 	unlinking,
-	venuesEnabled = false,
 }) {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -76,9 +75,7 @@ export default function EventEditForm({
 
 	useEffect(() => {
 		loadEventDate();
-		if (venuesEnabled) {
-			loadVenues();
-		}
+		loadVenues();
 	}, [eventDateId]);
 
 	const loadEventDate = async () => {
@@ -234,12 +231,8 @@ export default function EventEditForm({
 					start_datetime: startDate ? startDatetime : null,
 					end_datetime: endDatetime,
 					all_day: allDay,
-					venue_id: venuesEnabled
-						? venueId
-							? parseInt(venueId, 10)
-							: null
-						: undefined,
-					address: venuesEnabled ? undefined : address,
+					venue_id: venueId ? parseInt(venueId, 10) : null,
+					address,
 					rrule: buildRRule(recurrence),
 				},
 			});
@@ -388,20 +381,18 @@ export default function EventEditForm({
 				/>
 			)}
 
-			{venuesEnabled ? (
-				<SelectControl
-					label={__('Venue', 'fair-events')}
-					value={venueId}
-					options={venueOptions}
-					onChange={setVenueId}
-				/>
-			) : (
-				<TextControl
-					label={__('Address', 'fair-events')}
-					value={address}
-					onChange={setAddress}
-				/>
-			)}
+			<SelectControl
+				label={__('Venue', 'fair-events')}
+				value={venueId}
+				options={venueOptions}
+				onChange={setVenueId}
+			/>
+
+			<TextControl
+				label={__('Address', 'fair-events')}
+				value={address}
+				onChange={setAddress}
+			/>
 
 			<RecurrenceControl value={recurrence} onChange={setRecurrence} />
 
