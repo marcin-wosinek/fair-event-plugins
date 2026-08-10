@@ -334,7 +334,7 @@ class EventDatesController extends WP_REST_Controller {
 				'required'    => false,
 			),
 			'address'         => array(
-				'description'       => __( 'Free-text address (used when Venues feature is disabled).', 'fair-events' ),
+				'description'       => __( 'Free-text address, used as a fallback when no venue is selected.', 'fair-events' ),
 				'type'              => array( 'string', 'null' ),
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',

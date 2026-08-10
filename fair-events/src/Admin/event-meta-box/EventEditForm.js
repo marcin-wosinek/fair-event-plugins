@@ -392,6 +392,10 @@ export default function EventEditForm({
 				label={__('Address', 'fair-events')}
 				value={address}
 				onChange={setAddress}
+				help={__(
+					'Used as the event location only when no venue is selected above.',
+					'fair-events'
+				)}
 			/>
 
 			<RecurrenceControl value={recurrence} onChange={setRecurrence} />

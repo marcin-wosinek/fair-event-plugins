@@ -932,6 +932,10 @@ export default function ManageEventApp() {
 											label={__('Address', 'fair-events')}
 											value={address}
 											onChange={setAddress}
+											help={__(
+												'Used as the event location only when no venue is selected above.',
+												'fair-events'
+											)}
 										/>
 									</>
 								)}

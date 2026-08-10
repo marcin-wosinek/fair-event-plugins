@@ -101,7 +101,7 @@ class CalendarButtonHooks {
 		$description = get_the_excerpt( $post_id );
 
 		// Get location from venue if available, otherwise fall back to the
-		// event date's inline address (used when Venues is disabled).
+		// event date's inline address (used when no venue is selected).
 		$location = '';
 		if ( ! empty( $event_dates->venue_id ) ) {
 			$venue = \FairEvents\Models\Venue::get_by_id( $event_dates->venue_id );
