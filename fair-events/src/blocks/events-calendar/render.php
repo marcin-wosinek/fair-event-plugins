@@ -277,6 +277,11 @@ $events_by_date = EventFeedProvider::group_by_day( $occurrences, $query_start, $
 
 $item_list = EventSchema::item_list_from_occurrences( $occurrences );
 
+// Id the browser scrolls to after navigation, so paging months doesn't jump
+// the visitor back to the top of the page. Defers to a site owner's own
+// custom anchor (block's Advanced panel) when one is set.
+$scroll_anchor_id = ! empty( $attributes['anchor'] ) ? $attributes['anchor'] : 'fair-events-calendar';
+
 // Calculate previous/next month URLs
 $prev_month_timestamp = strtotime( '-1 month', $first_day_of_month_ts );
 $next_month_timestamp = strtotime( '+1 month', $first_day_of_month_ts );
@@ -286,14 +291,14 @@ $prev_url = add_query_arg(
 		'calendar_month' => gmdate( 'm', $prev_month_timestamp ),
 		'calendar_year'  => gmdate( 'Y', $prev_month_timestamp ),
 	)
-);
+) . '#' . $scroll_anchor_id;
 
 $next_url = add_query_arg(
 	array(
 		'calendar_month' => gmdate( 'm', $next_month_timestamp ),
 		'calendar_year'  => gmdate( 'Y', $next_month_timestamp ),
 	)
-);
+) . '#' . $scroll_anchor_id;
 
 // Generate localized weekday labels using WordPress date formatting
 // Start from the configured start_of_week (0 = Sunday, 1 = Monday)
@@ -314,8 +319,15 @@ $today = current_time( 'Y-m-d' );
 // Subscription feed links (webcal:// + copyable https:// fallback).
 $subscribe_urls = fair_events_build_subscribe_urls( is_array( $categories ) ? $categories : array() );
 
+$wrapper_attributes = array( 'class' => 'wp-block-fair-events-events-calendar' );
+if ( empty( $attributes['anchor'] ) ) {
+	// No custom anchor set — fall back to the fixed scroll-target id so
+	// get_block_wrapper_attributes()'s own anchor-support merge (which
+	// always prefers an explicitly-set 'id') never fights this.
+	$wrapper_attributes['id'] = $scroll_anchor_id;
+}
 ?>
-<div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-events-calendar' ) ) ); ?>>
+<div <?php echo wp_kses_post( get_block_wrapper_attributes( $wrapper_attributes ) ); ?>>
 	<?php if ( $show_navigation ) : ?>
 	<div class="fair-events-navigation" style="--fair-events-header-bg: <?php echo esc_attr( $header_bg_value ); ?>">
 		<div class="wp-block-button is-style-outline">
