@@ -45,11 +45,11 @@ class ActivityOptionTranslation {
 			return;
 		}
 
-		if ( ! empty( $option->name ) ) {
+		if ( self::has_value( $option->name ?? null ) ) {
 			pll_register_string( self::string_name( $option->id, 'name' ), $option->name, self::GROUP );
 		}
 
-		if ( ! empty( $option->short_name ) ) {
+		if ( self::has_value( $option->short_name ?? null ) ) {
 			pll_register_string( self::string_name( $option->id, 'short_name' ), $option->short_name, self::GROUP );
 		}
 	}
@@ -95,11 +95,23 @@ class ActivityOptionTranslation {
 
 		$value = $option->$field ?? $fallback;
 
-		if ( empty( $value ) || ! function_exists( 'pll__' ) ) {
+		if ( ! self::has_value( $value ) || ! function_exists( 'pll__' ) ) {
 			return $value;
 		}
 
 		return pll__( $value );
+	}
+
+	/**
+	 * Whether a stored field value counts as set. Deliberately not
+	 * `empty()` — a `"0"` option name/short_name is a real value, not a
+	 * blank one, and `empty( '0' )` is true in PHP.
+	 *
+	 * @param mixed $value Field value.
+	 * @return bool
+	 */
+	private static function has_value( $value ) {
+		return null !== $value && '' !== $value;
 	}
 
 	/**
