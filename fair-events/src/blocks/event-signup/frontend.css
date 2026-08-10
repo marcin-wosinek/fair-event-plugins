@@ -130,6 +130,13 @@
 	margin-bottom: 16px;
 }
 
+/* The last question's own margin-bottom has no sibling .form-row to pair
+ * with before the submit button, so it collapses flush against it. Give
+ * the wrapper the same 16px gap used between other fields (issue #1404). */
+.fair-events-get-tickets-form .fair-events-event-signup-questions {
+	margin-bottom: 16px;
+}
+
 .fair-events-get-tickets-form .fair-form-question > label {
 	display: block;
 	font-weight: 600;
