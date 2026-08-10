@@ -768,7 +768,7 @@ class EventSignupController extends WP_REST_Controller {
 		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
 		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
-		$option_names = array_map( fn( $o ) => $o->name, $option_items );
+		$option_names = $this->translated_option_names( $option_items );
 		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
 
 		AudienceSession::set( (int) $participant->id );
@@ -1676,6 +1676,26 @@ class EventSignupController extends WP_REST_Controller {
 	 */
 	private function save_participant_options( $event_participant_id, $option_items ) {
 		$this->event_participant_repository->add_options( $event_participant_id, $option_items );
+	}
+
+	/**
+	 * Resolve option display names for the confirmation email, translated
+	 * through Polylang when fair-events-experimental's translation bridge
+	 * is available — keeps the emailed list matching whatever language the
+	 * buyer saw the option names in on the signup form.
+	 *
+	 * @param object[] $option_items Selected TicketOption objects.
+	 * @return string[] Option names.
+	 */
+	private function translated_option_names( array $option_items ) {
+		return array_map(
+			function ( $o ) {
+				return class_exists( \FairEventsExperimental\Services\ActivityOptionTranslation::class )
+					? \FairEventsExperimental\Services\ActivityOptionTranslation::translate_name( $o )
+					: $o->name;
+			},
+			$option_items
+		);
 	}
 
 	/**
@@ -2900,7 +2920,7 @@ class EventSignupController extends WP_REST_Controller {
 		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
 		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
 
-		$option_names = array_map( fn( $o ) => $o->name, $option_items );
+		$option_names = $this->translated_option_names( $option_items );
 		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
 
 		if ( $is_new_participant ) {

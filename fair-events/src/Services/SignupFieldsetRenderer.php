@@ -40,6 +40,29 @@ class SignupFieldsetRenderer {
 	}
 
 	/**
+	 * Resolve an activity option's display name/short_name, translated
+	 * through Polylang when fair-events-experimental's translation bridge
+	 * is available — shared so render.php and get_viewer_context() don't
+	 * each carry their own copy of the class_exists() guard.
+	 *
+	 * @param object $opt TicketOption-like object (needs name, short_name).
+	 * @return array{name: string, short_name: string|null}
+	 */
+	public static function resolve_option_display( $opt ) {
+		if ( ! class_exists( \FairEventsExperimental\Services\ActivityOptionTranslation::class ) ) {
+			return array(
+				'name'       => $opt->name,
+				'short_name' => $opt->short_name ?? null,
+			);
+		}
+
+		return array(
+			'name'       => \FairEventsExperimental\Services\ActivityOptionTranslation::translate_name( $opt ),
+			'short_name' => \FairEventsExperimental\Services\ActivityOptionTranslation::translate_short_name( $opt ),
+		);
+	}
+
+	/**
 	 * Render the "Choose ticket type" fieldset.
 	 *
 	 * @param object[]    $ticket_types         Ticket type objects for this event date.

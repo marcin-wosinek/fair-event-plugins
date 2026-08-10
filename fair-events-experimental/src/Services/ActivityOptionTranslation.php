@@ -63,15 +63,7 @@ class ActivityOptionTranslation {
 	 *                translation for it.
 	 */
 	public static function translate_name( $option ) {
-		if ( ! $option || empty( $option->name ) ) {
-			return $option->name ?? '';
-		}
-
-		if ( ! function_exists( 'pll__' ) ) {
-			return $option->name;
-		}
-
-		return pll__( $option->name );
+		return self::translate_field( $option, 'name', '' );
 	}
 
 	/**
@@ -84,15 +76,30 @@ class ActivityOptionTranslation {
 	 *                      was ever set.
 	 */
 	public static function translate_short_name( $option ) {
-		if ( ! $option || empty( $option->short_name ) ) {
-			return $option->short_name ?? null;
+		return self::translate_field( $option, 'short_name', null );
+	}
+
+	/**
+	 * Shared implementation behind translate_name()/translate_short_name().
+	 *
+	 * @param object      $option   Activity option.
+	 * @param string      $field    'name' or 'short_name'.
+	 * @param string|null $fallback Value to fall back to when $option is
+	 *                              missing or has no value for $field.
+	 * @return string|null
+	 */
+	private static function translate_field( $option, $field, $fallback ) {
+		if ( ! $option ) {
+			return $fallback;
 		}
 
-		if ( ! function_exists( 'pll__' ) ) {
-			return $option->short_name;
+		$value = $option->$field ?? $fallback;
+
+		if ( empty( $value ) || ! function_exists( 'pll__' ) ) {
+			return $value;
 		}
 
-		return pll__( $option->short_name );
+		return pll__( $value );
 	}
 
 	/**
