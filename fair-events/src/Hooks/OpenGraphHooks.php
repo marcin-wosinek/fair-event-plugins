@@ -169,9 +169,8 @@ class OpenGraphHooks {
 	 * @return string|null Location string or null.
 	 */
 	private function get_location( $event_date, $post_id ) {
-		if ( ! empty( $event_date->venue_id )
-			&& class_exists( \FairEventsExperimental\Models\Venue::class ) ) {
-			$venue = \FairEventsExperimental\Models\Venue::get_by_id( $event_date->venue_id );
+		if ( ! empty( $event_date->venue_id ) ) {
+			$venue = \FairEvents\Models\Venue::get_by_id( $event_date->venue_id );
 			if ( $venue ) {
 				$location = $venue->name;
 				if ( ! empty( $venue->address ) ) {

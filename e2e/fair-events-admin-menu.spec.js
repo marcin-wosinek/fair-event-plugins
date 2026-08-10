@@ -23,7 +23,6 @@ import { wpCli, loginAsAdmin } from './support/wp-cli.js';
  * `fair-events-feature-flags.spec.js`.
  */
 const ALL_EXPERIMENTAL_BUNDLES_ON = {
-	venues: true,
 	sources: true,
 	galleries: true,
 	ticketing: true,

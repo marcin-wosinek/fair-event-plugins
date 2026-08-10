@@ -69,7 +69,6 @@ export default function ManageEventApp() {
 		window.fairEventsManageEventData?.enabledFeatures || {};
 	const galleriesEnabled = !!enabledFeatures.galleries;
 	const ticketingEnabled = !!enabledFeatures.ticketing;
-	const venuesEnabled = !!enabledFeatures.venues;
 
 	const [eventDate, setEventDate] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -121,9 +120,7 @@ export default function ManageEventApp() {
 			return;
 		}
 		loadEventDate();
-		if (venuesEnabled) {
-			loadVenues();
-		}
+		loadVenues();
 		loadCategories();
 	}, []);
 
@@ -346,12 +343,8 @@ export default function ManageEventApp() {
 					start_datetime: startDatetime,
 					end_datetime: endDatetime,
 					all_day: allDay,
-					venue_id: venuesEnabled
-						? venueId
-							? parseInt(venueId, 10)
-							: null
-						: undefined,
-					address: venuesEnabled ? undefined : address,
+					venue_id: venueId ? parseInt(venueId, 10) : null,
+					address,
 					attendance_mode: attendanceMode,
 					joining_link:
 						attendanceMode === 'online' ||
@@ -927,21 +920,21 @@ export default function ManageEventApp() {
 									__experimentalExpandOnFocus
 								/>
 
-								{attendanceMode !== 'online' &&
-									(venuesEnabled ? (
+								{attendanceMode !== 'online' && (
+									<>
 										<SelectControl
 											label={__('Venue', 'fair-events')}
 											value={venueId}
 											options={venueOptions}
 											onChange={setVenueId}
 										/>
-									) : (
 										<TextControl
 											label={__('Address', 'fair-events')}
 											value={address}
 											onChange={setAddress}
 										/>
-									))}
+									</>
+								)}
 
 								<SelectControl
 									label={__('Attendance mode', 'fair-events')}

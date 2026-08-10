@@ -39,7 +39,6 @@ function clearExperimentalFeatures() {
 
 /** Bundle keys mirror FairEventsExperimental\\Core\\Features::registry(). */
 const ALL_BUNDLES_ON = {
-	venues: true,
 	sources: true,
 	galleries: true,
 	ticketing: true,
@@ -48,7 +47,6 @@ const ALL_BUNDLES_ON = {
 };
 
 const ALL_BUNDLES_OFF = {
-	venues: false,
 	sources: false,
 	galleries: false,
 	ticketing: false,
@@ -61,7 +59,6 @@ const ALL_BUNDLES_OFF = {
  * tested by direct URL so we still catch enqueue/registration regressions.
  */
 const BUNDLE_PAGES = {
-	venues: [{ slug: 'fair-events-venues', root: 'fair-events-venues-root' }],
 	sources: [
 		{ slug: 'fair-events-sources', root: 'fair-events-sources-root' },
 		{
@@ -163,6 +160,11 @@ test.describe('Fair Events — simplified public build (no bundles set)', () => 
 			page,
 			'fair-events-settings',
 			'fair-events-settings-root'
+		);
+		await expectRootMounts(
+			page,
+			'fair-events-venues',
+			'fair-events-venues-root'
 		);
 
 		for (const pages of Object.values(BUNDLE_PAGES)) {

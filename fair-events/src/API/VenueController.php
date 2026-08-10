@@ -2,14 +2,14 @@
 /**
  * REST API Controller for Venues
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
-namespace FairEventsExperimental\API;
+namespace FairEvents\API;
 
 defined( 'WPINC' ) || die;
 
-use FairEventsExperimental\Models\Venue;
+use FairEvents\Models\Venue;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -67,7 +67,7 @@ class VenueController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Unique identifier for the venue.', 'fair-events-experimental' ),
+							'description' => __( 'Unique identifier for the venue.', 'fair-events' ),
 							'type'        => 'integer',
 						),
 					),
@@ -84,7 +84,7 @@ class VenueController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Unique identifier for the venue.', 'fair-events-experimental' ),
+							'description' => __( 'Unique identifier for the venue.', 'fair-events' ),
 							'type'        => 'integer',
 						),
 					),
@@ -101,43 +101,43 @@ class VenueController extends WP_REST_Controller {
 	private function get_create_update_args() {
 		return array(
 			'name'               => array(
-				'description'       => __( 'Venue name.', 'fair-events-experimental' ),
+				'description'       => __( 'Venue name.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => true,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'address'            => array(
-				'description'       => __( 'Venue address.', 'fair-events-experimental' ),
+				'description'       => __( 'Venue address.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',
 			),
 			'latitude'           => array(
-				'description'       => __( 'Latitude coordinate.', 'fair-events-experimental' ),
+				'description'       => __( 'Latitude coordinate.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'longitude'          => array(
-				'description'       => __( 'Longitude coordinate.', 'fair-events-experimental' ),
+				'description'       => __( 'Longitude coordinate.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'facebook_page_link' => array(
-				'description'       => __( 'Facebook page URL.', 'fair-events-experimental' ),
+				'description'       => __( 'Facebook page URL.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'esc_url_raw',
 			),
 			'instagram_handle'   => array(
-				'description'       => __( 'Instagram handle (without @).', 'fair-events-experimental' ),
+				'description'       => __( 'Instagram handle (without @).', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'website_url'        => array(
-				'description'       => __( 'Website URL.', 'fair-events-experimental' ),
+				'description'       => __( 'Website URL.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'esc_url_raw',
@@ -177,7 +177,7 @@ class VenueController extends WP_REST_Controller {
 		if ( ! $venue ) {
 			return new WP_Error(
 				'rest_venue_not_found',
-				__( 'Venue not found.', 'fair-events-experimental' ),
+				__( 'Venue not found.', 'fair-events' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -203,7 +203,7 @@ class VenueController extends WP_REST_Controller {
 		if ( empty( $name ) ) {
 			return new WP_Error(
 				'rest_invalid_name',
-				__( 'Venue name is required.', 'fair-events-experimental' ),
+				__( 'Venue name is required.', 'fair-events' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -224,7 +224,7 @@ class VenueController extends WP_REST_Controller {
 		if ( ! $venue_id ) {
 			return new WP_Error(
 				'rest_venue_creation_failed',
-				__( 'Failed to create venue.', 'fair-events-experimental' ),
+				__( 'Failed to create venue.', 'fair-events' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -255,7 +255,7 @@ class VenueController extends WP_REST_Controller {
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_venue_not_found',
-				__( 'Venue not found.', 'fair-events-experimental' ),
+				__( 'Venue not found.', 'fair-events' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -263,7 +263,7 @@ class VenueController extends WP_REST_Controller {
 		if ( empty( $name ) ) {
 			return new WP_Error(
 				'rest_invalid_name',
-				__( 'Venue name is required.', 'fair-events-experimental' ),
+				__( 'Venue name is required.', 'fair-events' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -284,7 +284,7 @@ class VenueController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_venue_update_failed',
-				__( 'Failed to update venue.', 'fair-events-experimental' ),
+				__( 'Failed to update venue.', 'fair-events' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -308,7 +308,7 @@ class VenueController extends WP_REST_Controller {
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_venue_not_found',
-				__( 'Venue not found.', 'fair-events-experimental' ),
+				__( 'Venue not found.', 'fair-events' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -318,7 +318,7 @@ class VenueController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_venue_delete_failed',
-				__( 'Failed to delete venue.', 'fair-events-experimental' ),
+				__( 'Failed to delete venue.', 'fair-events' ),
 				array( 'status' => 500 )
 			);
 		}

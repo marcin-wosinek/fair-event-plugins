@@ -25,10 +25,6 @@ module.exports = {
       process.cwd(),
       "src/Admin/migration-summary/index.js",
     ),
-    "admin/venues/index": path.resolve(
-      process.cwd(),
-      "src/Admin/venues/index.js",
-    ),
     "admin/event-statistics/index": path.resolve(
       process.cwd(),
       "src/Admin/event-statistics/index.js",

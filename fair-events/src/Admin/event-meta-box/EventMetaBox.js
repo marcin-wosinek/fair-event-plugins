@@ -25,9 +25,7 @@ export default function EventMetaBox({
 	postType,
 	eventDateId: initialEventDateId,
 	manageEventUrl: initialManageEventUrl,
-	enabledFeatures = {},
 }) {
-	const venuesEnabled = !!enabledFeatures.venues;
 	const [eventDateId, setEventDateId] = useState(initialEventDateId || 0);
 	const [manageEventUrl, setManageEventUrl] = useState(
 		initialManageEventUrl || ''
@@ -129,7 +127,6 @@ export default function EventMetaBox({
 				postType={postType}
 				onUnlink={!isFairEvent ? handleUnlink : undefined}
 				unlinking={unlinking}
-				venuesEnabled={venuesEnabled}
 			/>
 		);
 	}

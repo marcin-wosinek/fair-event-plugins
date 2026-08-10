@@ -1,11 +1,11 @@
 <?php
 /**
- * Venue model for Fair Events Experimental
+ * Venue model for Fair Events
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
-namespace FairEventsExperimental\Models;
+namespace FairEvents\Models;
 
 defined( 'WPINC' ) || die;
 
@@ -393,7 +393,7 @@ class Venue {
 			return array(
 				'valid'   => false,
 				'code'    => 'coordinate_pair_incomplete',
-				'message' => __( 'Enter both latitude and longitude, or leave both blank.', 'fair-events-experimental' ),
+				'message' => __( 'Enter both latitude and longitude, or leave both blank.', 'fair-events' ),
 			);
 		}
 
@@ -401,7 +401,7 @@ class Venue {
 			return array(
 				'valid'   => false,
 				'code'    => 'coordinate_not_numeric',
-				'message' => __( 'Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204.', 'fair-events-experimental' ),
+				'message' => __( 'Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204.', 'fair-events' ),
 			);
 		}
 
@@ -409,7 +409,7 @@ class Venue {
 			return array(
 				'valid'   => false,
 				'code'    => 'coordinate_out_of_range',
-				'message' => __( 'Latitude must be between -90 and 90.', 'fair-events-experimental' ),
+				'message' => __( 'Latitude must be between -90 and 90.', 'fair-events' ),
 			);
 		}
 
@@ -417,7 +417,7 @@ class Venue {
 			return array(
 				'valid'   => false,
 				'code'    => 'coordinate_out_of_range',
-				'message' => __( 'Longitude must be between -180 and 180.', 'fair-events-experimental' ),
+				'message' => __( 'Longitude must be between -180 and 180.', 'fair-events' ),
 			);
 		}
 
@@ -425,7 +425,7 @@ class Venue {
 			return array(
 				'valid'   => false,
 				'code'    => 'coordinate_too_long',
-				'message' => __( 'Latitude and longitude must be 20 characters or fewer.', 'fair-events-experimental' ),
+				'message' => __( 'Latitude and longitude must be 20 characters or fewer.', 'fair-events' ),
 			);
 		}
 

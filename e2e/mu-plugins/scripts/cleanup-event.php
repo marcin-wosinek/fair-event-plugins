@@ -169,7 +169,7 @@ $deleted['event_dates'] = (int) $wpdb->query(
 $deleted['post'] = wp_delete_post( $event_id, true ) ? 1 : 0;
 
 if ( $venue_id ) {
-	$deleted['venue'] = \FairEventsExperimental\Models\Venue::delete( $venue_id ) ? 1 : 0;
+	$deleted['venue'] = \FairEvents\Models\Venue::delete( $venue_id ) ? 1 : 0;
 }
 
 echo 'E2E_CLEANUP:' . wp_json_encode( $deleted ) . "\n";

@@ -2,13 +2,13 @@
 /**
  * Venue model unit tests
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
-namespace FairEventsExperimental\Tests\Models;
+namespace FairEvents\Tests\Models;
 
 use PHPUnit\Framework\TestCase;
-use FairEventsExperimental\Models\Venue;
+use FairEvents\Models\Venue;
 
 /**
  * Tests the pure URL-building logic of Venue::build_maps_url().

@@ -120,6 +120,16 @@ class AdminPages {
 			array( $this, 'render_all_events_page' )
 		);
 
+		// Venues page.
+		$this->page_hooks['fair-events-venues'] = add_submenu_page(
+			$parent,
+			__( 'Venues', 'fair-events' ),
+			__( 'Venues', 'fair-events' ),
+			'manage_options',
+			'fair-events-venues',
+			array( $this, 'render_venues_page' )
+		);
+
 		// Settings page
 		$this->page_hooks['fair-events-settings'] = add_submenu_page(
 			$parent,
@@ -249,6 +259,28 @@ class AdminPages {
 
 			wp_set_script_translations(
 				'fair-events-all-events',
+				'fair-events',
+				\FairEvents\Core\Features::script_translations_path()
+			);
+
+			wp_enqueue_style( 'wp-components' );
+			return;
+		}
+
+		// Venues page.
+		if ( 'fair-events-venues' === $slug ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/venues/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-venues',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/venues/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			wp_set_script_translations(
+				'fair-events-venues',
 				'fair-events',
 				\FairEvents\Core\Features::script_translations_path()
 			);
@@ -432,6 +464,17 @@ class AdminPages {
 	public function render_all_events_page() {
 		?>
 		<div id="fair-events-all-events-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render venues page
+	 *
+	 * @return void
+	 */
+	public function render_venues_page() {
+		?>
+		<div id="fair-events-venues-root"></div>
 		<?php
 	}
 

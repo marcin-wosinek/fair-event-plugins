@@ -23,7 +23,7 @@
 		"test": "npm-run-all test:js test:php",
 		"test:js": "jest --passWithNoTests",
 		"test:php": "vendor/bin/phpunit",
-		"test:api": "playwright test src/API/__tests__/"
+		"test:api": "playwright test src/API/__tests__/ --pass-with-no-tests"
 	},
 	"dependencies": {
 		"fair-events": "*",

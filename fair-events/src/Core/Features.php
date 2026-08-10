@@ -63,6 +63,12 @@ class Features {
 				'default'     => true,
 				'always_on'   => true,
 			),
+			'venues'               => array(
+				'label'       => 'Venues',
+				'description' => 'Venues admin page and REST controller. Always on.',
+				'default'     => true,
+				'always_on'   => true,
+			),
 			'bundled-translations' => array(
 				'label'       => 'Bundled translations',
 				'description' => 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.',
@@ -170,6 +176,10 @@ class Features {
 			'core'                 => array(
 				'label'       => __( 'Core', 'fair-events' ),
 				'description' => __( 'Events, calendar, all-events, settings, core blocks. Always on.', 'fair-events' ),
+			),
+			'venues'               => array(
+				'label'       => __( 'Venues', 'fair-events' ),
+				'description' => __( 'Venues admin page and REST controller. Always on.', 'fair-events' ),
 			),
 			'bundled-translations' => array(
 				'label'       => __( 'Bundled translations', 'fair-events' ),

@@ -190,11 +190,10 @@ class Event {
 			'fair-events-event-meta-box',
 			'fairEventsMetaBox',
 			array(
-				'postId'          => $post_id,
-				'postType'        => $screen->post_type,
-				'eventDateId'     => $event_date_id,
-				'manageEventUrl'  => $manage_event_url,
-				'enabledFeatures' => apply_filters( 'fair_events_enabled_features_map', \FairEvents\Core\Features::public_map() ),
+				'postId'         => $post_id,
+				'postType'       => $screen->post_type,
+				'eventDateId'    => $event_date_id,
+				'manageEventUrl' => $manage_event_url,
 			)
 		);
 

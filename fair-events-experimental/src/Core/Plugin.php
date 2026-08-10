@@ -54,7 +54,7 @@ class Plugin {
 		$this->load_frontend();
 
 		// Merge experimental feature states into the manage-event enabledFeatures map
-		// so the React UI can show galleries/ticketing/venues tabs when active.
+		// so the React UI can show galleries/ticketing tabs when active.
 		add_filter(
 			'fair_events_enabled_features_map',
 			function ( $map ) {
@@ -243,16 +243,6 @@ class Plugin {
 				'rest_api_init',
 				function () {
 					$controller = new \FairEventsExperimental\API\GroupPermissionRulesController();
-					$controller->register_routes();
-				}
-			);
-		}
-
-		if ( Features::is_enabled( 'venues' ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEventsExperimental\API\VenueController();
 					$controller->register_routes();
 				}
 			);

@@ -22,7 +22,7 @@ use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketPrice;
 use FairEvents\Services\RecurrenceService;
 use FairEventsExperimental\Models\TicketOption;
-use FairEventsExperimental\Models\Venue;
+use FairEvents\Models\Venue;
 
 if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	/**
@@ -261,7 +261,7 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	}
 
 	/**
-	 * Set the free-text address on an event date row (Venues bundle disabled path).
+	 * Set the free-text address on an event date row (the no-venue fallback).
 	 *
 	 * @param int    $event_date_id Event date ID.
 	 * @param string $address       Address text.
@@ -287,8 +287,8 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	}
 
 	/**
-	 * Create a venue (fair-events-experimental's venues bundle table, created
-	 * unconditionally by fair-events' own installer — no bundle flag involved).
+	 * Create a venue (fair-events' venues feature — always on, no bundle flag
+	 * involved).
 	 *
 	 * @param string $name    Venue name.
 	 * @param string $address Venue address.
