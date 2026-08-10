@@ -11,6 +11,7 @@
 
 namespace FairEvents\Hooks;
 
+use FairEvents\Helpers\CanonicalUrl;
 use FairEvents\Helpers\DateHelper;
 use FairEvents\Helpers\EventSchema;
 use FairEvents\Helpers\SelectedOccurrence;
@@ -50,7 +51,7 @@ class OpenGraphHooks {
 		// Standard OG tags.
 		$this->output_meta_tag( 'og:title', EventSchema::get_title( $post, $event_date ) );
 		$this->output_meta_tag( 'og:description', EventSchema::get_description( $post ) );
-		$this->output_meta_tag( 'og:url', get_permalink( $post_id ) );
+		$this->output_meta_tag( 'og:url', CanonicalUrl::for_post( $post_id, get_permalink( $post_id ) ) );
 		$this->output_meta_tag( 'og:type', 'event' );
 		$this->output_meta_tag( 'og:site_name', get_bloginfo( 'name' ) );
 
@@ -112,7 +113,9 @@ class OpenGraphHooks {
 			return;
 		}
 
-		$event = EventSchema::event_to_jsonld( $context['event_date'], $context['post_id'] );
+		$post_id = $context['post_id'];
+		$url     = CanonicalUrl::for_post( $post_id, get_permalink( $post_id ) );
+		$event   = EventSchema::event_to_jsonld( $context['event_date'], $post_id, $url );
 
 		// Never emit half-valid event markup: without a start date there is no
 		// event to describe (matches the OG event:* guard above).

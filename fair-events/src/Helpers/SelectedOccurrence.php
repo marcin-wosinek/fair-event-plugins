@@ -80,24 +80,33 @@ class SelectedOccurrence {
 			}
 		}
 
-		// No (valid) URL param: for recurring series, prefer today's
-		// occurrence if one exists, otherwise pivot to the closest upcoming
-		// occurrence (the master itself if its own date is still in the
-		// future, otherwise the next generated child) so all blocks on the
-		// page describe the relevant date instead of the abstract master
-		// row. Falls back to the master if no matching occurrences exist
-		// (e.g. series has fully ended).
-		if ( 'master' === $default->occurrence_type ) {
-			$today    = EventDates::get_by_master_id_and_date( (int) $default->id, current_time( 'Y-m-d' ) );
-			$upcoming = $today ? array() : EventDates::get_upcoming_by_master_id( (int) $default->id );
-			$pivot    = self::pick_default_pivot( $today, $upcoming );
+		// No (valid) URL param: fall back to the page's default occurrence.
+		return self::default_pivot( $default );
+	}
 
-			if ( $pivot ) {
-				return self::with_master_venue_fallback( $pivot, $default );
-			}
+	/**
+	 * Determine the page's default occurrence when no (valid) URL param is
+	 * present: for recurring series, prefer today's occurrence if one
+	 * exists, otherwise pivot to the closest upcoming occurrence (the
+	 * master itself if its own date is still in the future, otherwise the
+	 * next generated child) so all blocks on the page describe the
+	 * relevant date instead of the abstract master row. Falls back to the
+	 * master if no matching occurrences exist (e.g. series has fully
+	 * ended), and returns non-recurring rows unchanged.
+	 *
+	 * @param EventDates $default The post's default (master or single) row.
+	 * @return EventDates
+	 */
+	public static function default_pivot( EventDates $default ): EventDates {
+		if ( 'master' !== $default->occurrence_type ) {
+			return $default;
 		}
 
-		return $default;
+		$today    = EventDates::get_by_master_id_and_date( (int) $default->id, current_time( 'Y-m-d' ) );
+		$upcoming = $today ? array() : EventDates::get_upcoming_by_master_id( (int) $default->id );
+		$pivot    = self::pick_default_pivot( $today, $upcoming );
+
+		return $pivot ? self::with_master_venue_fallback( $pivot, $default ) : $default;
 	}
 
 	/**
