@@ -13,6 +13,7 @@
 namespace FairEvents\Helpers;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Services\TicketPricing;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -313,6 +314,15 @@ class EventSchema {
 	 * marked `isAccessibleForFree`. A paid type whose sale window has closed
 	 * yields nothing and is never advertised as free.
 	 *
+	 * Sale-period resolution reuses TicketPricing's pure primitives — the
+	 * same "lazy" null-window resolution the purchase form
+	 * (event-signup/render.php, get-tickets) relies on — so a period left
+	 * open-ended isn't mistaken for closed just because it has no explicit
+	 * sale_end. Unlike the purchase form, the active-period lookup here does
+	 * *not* use the `continues` fallback: JSON-LD must show no offer once a
+	 * sale has genuinely closed, even though the purchase form itself keeps
+	 * such an event purchasable (see EventSchema #1381 decision).
+	 *
 	 * Everything is behind class_exists() guards since a fair-events-only
 	 * site (without ticketing) must not fatal.
 	 *
@@ -343,14 +353,15 @@ class EventSchema {
 		$all_prices   = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id );
 		$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $pricing_event_date_id );
 
-		$now             = current_time( 'mysql' );
-		$active_period   = null;
+		$now         = current_time( 'mysql' );
+		$default_end = TicketPricing::compute_default_sale_end( EventDates::get_last_occurrence_end( $pricing_event_date_id ) );
+		$periods     = TicketPricing::apply_default_window( $sale_periods, $default_end );
+
+		// continues = false: a genuinely closed sale (no lazy fallback) must
+		// show no offer in structured data, unlike the purchase form.
+		$active_period   = TicketPricing::pick_active_period( $periods, $now, false );
 		$upcoming_period = null;
-		foreach ( $sale_periods as $period ) {
-			if ( $period->sale_start <= $now && $period->sale_end >= $now ) {
-				$active_period = $period;
-				break;
-			}
+		foreach ( $periods as $period ) {
 			if ( $period->sale_start > $now && ( ! $upcoming_period || $period->sale_start < $upcoming_period->sale_start ) ) {
 				$upcoming_period = $period;
 			}
@@ -381,13 +392,36 @@ class EventSchema {
 			}
 		}
 
-		$currency   = Money::site_currency();
-		$permalink  = get_permalink( $post_id );
 		$valid_from = ( $selected_period && ! $active_period )
 			? DateHelper::local_to_iso8601( $selected_period->sale_start )
 			: null;
 
+		return self::build_offers_for_types(
+			$ticket_types,
+			$price_by_type_id,
+			$paid_type_ids,
+			$valid_from,
+			Money::site_currency(),
+			get_permalink( $post_id )
+		);
+	}
+
+	/**
+	 * Pure, DB-free per-type Offer builder, split out from get_jsonld_offers()
+	 * for unit testing without a database — mirrors how TicketPricing itself
+	 * splits DB fetching from pure, unit-tested math.
+	 *
+	 * @param object[]    $ticket_types     TicketType objects (id, name, disabled).
+	 * @param float[]     $price_by_type_id Ticket-type ID => price for the selected window.
+	 * @param bool[]      $paid_type_ids    Ticket-type ID => true for types with a positive price in *any* period.
+	 * @param string|null $valid_from    ISO 8601 `validFrom` for an upcoming (not yet active) window, or null.
+	 * @param string      $currency         Site currency code.
+	 * @param string      $permalink        Event permalink, used as the offer URL.
+	 * @return array Offer objects, one per purchasable type; disabled or closed-sale types are omitted.
+	 */
+	public static function build_offers_for_types( array $ticket_types, array $price_by_type_id, array $paid_type_ids, $valid_from, $currency, $permalink ) {
 		$offers = array();
+
 		foreach ( $ticket_types as $ticket_type ) {
 			if ( $ticket_type->disabled ) {
 				continue;
@@ -399,6 +433,7 @@ class EventSchema {
 			if ( isset( $price_by_type_id[ $type_id ] ) ) {
 				$offer = array(
 					'@type'         => 'Offer',
+					'name'          => $ticket_type->name,
 					'price'         => (string) $price_by_type_id[ $type_id ],
 					'priceCurrency' => $currency,
 					'availability'  => 'https://schema.org/InStock',
@@ -423,6 +458,7 @@ class EventSchema {
 			// advertise a price-"0" offer so the event is accessible for free.
 			$offers[] = array(
 				'@type'         => 'Offer',
+				'name'          => $ticket_type->name,
 				'price'         => '0',
 				'priceCurrency' => $currency,
 				'availability'  => 'https://schema.org/InStock',
