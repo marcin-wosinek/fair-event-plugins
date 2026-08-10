@@ -208,10 +208,15 @@ if ( $start_year !== $end_year ) {
 	$nav_title = sprintf( '%s–%s %s %s', $start_day_num, $end_day_num, $end_month, $end_year );
 }
 
+// Id the browser scrolls to after navigation, so paging weeks doesn't jump
+// the visitor back to the top of the page. Defers to a site owner's own
+// custom anchor (block's Advanced panel) when one is set.
+$scroll_anchor_id = ! empty( $attributes['anchor'] ) ? $attributes['anchor'] : 'fair-events-week';
+
 $prev     = fair_events_offset_week( $year, $week, -1 );
 $next     = fair_events_offset_week( $year, $week, 1 );
-$prev_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $prev['year'], $prev['week'] ) );
-$next_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $next['year'], $next['week'] ) );
+$prev_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $prev['year'], $prev['week'] ) ) . '#' . $scroll_anchor_id;
+$next_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $next['year'], $next['week'] ) ) . '#' . $scroll_anchor_id;
 
 // Build copy summary text.
 $summary_text = '';
@@ -238,8 +243,15 @@ if ( $show_copy_summary ) {
 	$summary_text = implode( "\n", $summary_lines );
 }
 
+$wrapper_attributes = array( 'class' => 'wp-block-fair-events-events-week' );
+if ( empty( $attributes['anchor'] ) ) {
+	// No custom anchor set — fall back to the fixed scroll-target id so
+	// get_block_wrapper_attributes()'s own anchor-support merge (which
+	// always prefers an explicitly-set 'id') never fights this.
+	$wrapper_attributes['id'] = $scroll_anchor_id;
+}
 ?>
-<div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-events-week' ) ) ); ?>>
+<div <?php echo wp_kses_post( get_block_wrapper_attributes( $wrapper_attributes ) ); ?>>
 
 	<?php if ( $show_navigation ) : ?>
 	<div class="fair-events-navigation" style="--fair-events-header-bg: <?php echo esc_attr( $header_bg_value ); ?>">
