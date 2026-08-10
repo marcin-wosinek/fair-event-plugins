@@ -268,16 +268,11 @@ if ( class_exists( \FairAudience\API\EventSignupController::class )
 			// Derived mode with no active period / no row → option not purchasable; skip.
 			continue;
 		}
-		$name       = $opt->name;
-		$short_name = $opt->short_name ?? null;
-		if ( class_exists( \FairEventsExperimental\Services\ActivityOptionTranslation::class ) ) {
-			$name       = \FairEventsExperimental\Services\ActivityOptionTranslation::translate_name( $opt );
-			$short_name = \FairEventsExperimental\Services\ActivityOptionTranslation::translate_short_name( $opt );
-		}
+		$display          = \FairEvents\Services\SignupFieldsetRenderer::resolve_option_display( $opt );
 		$ticket_options[] = array(
 			'id'         => (int) $opt->id,
-			'name'       => $name,
-			'short_name' => $short_name,
+			'name'       => $display['name'],
+			'short_name' => $display['short_name'],
 			'price'      => (float) $resolved_base,
 			'is_full'    => false,
 		);
