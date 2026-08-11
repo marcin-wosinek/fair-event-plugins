@@ -416,7 +416,6 @@ test.describe('EventDatesController — recurrence reconciliation', () => {
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				event_id: eventPostId,
 				title: `Recurrence test ${Date.now()}`,
 				start_datetime: start,
 				end_datetime: start.replace('10:00:00', '12:00:00'),
@@ -589,7 +588,6 @@ test.describe('EventDatesController — ending a series', () => {
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				event_id: eventPostId,
 				title: `End series test ${Date.now()}`,
 				start_datetime: start,
 				end_datetime: start.replace('10:00:00', '12:00:00'),
@@ -810,7 +808,6 @@ test.describe('EventDatesController — impact classification (PR 2)', () => {
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				event_id: eventPostId,
 				title: `Impact test ${Date.now()}`,
 				start_datetime: '2035-06-01 10:00:00',
 				end_datetime: '2035-06-01 12:00:00',
@@ -820,6 +817,12 @@ test.describe('EventDatesController — impact classification (PR 2)', () => {
 		expect(edRes.ok()).toBeTruthy();
 		const edBody = await edRes.json();
 		masterEventDateId = edBody.id;
+
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{ headers: adminHeaders, data: { event_id: eventPostId } }
+		);
+		expect(linkRes.ok()).toBeTruthy();
 
 		// Get the generated occurrences and attach a ticket type to the last one.
 		const occRes = await api.get(

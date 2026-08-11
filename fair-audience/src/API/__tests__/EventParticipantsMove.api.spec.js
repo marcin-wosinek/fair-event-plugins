@@ -57,7 +57,6 @@ test.describe('EventParticipantsController — move', () => {
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: authHeaders,
 			data: {
-				event_id: eventPostId,
 				title: `Move test ${Date.now()}`,
 				start_datetime: '2036-06-01 10:00:00',
 				end_datetime: '2036-06-01 12:00:00',
@@ -95,7 +94,6 @@ test.describe('EventParticipantsController — move', () => {
 			{
 				headers: authHeaders,
 				data: {
-					event_id: otherEventPostId,
 					title: `Unrelated event ${Date.now()}`,
 					start_datetime: '2036-06-15 10:00:00',
 					end_datetime: '2036-06-15 12:00:00',
