@@ -1094,9 +1094,7 @@ class EventDatesController extends WP_REST_Controller {
 			// when a standalone recurring series is linked to a post after its
 			// children were already generated.
 			if ( 'master' === $existing->occurrence_type && array_key_exists( 'event_id', $update_data ) ) {
-				foreach ( EventDates::get_generated_by_master_id( $id, true ) as $child ) {
-					EventDates::update_by_id( $child->id, array( 'event_id' => $update_data['event_id'] ) );
-				}
+				$this->propagate_event_id_to_children( $id, $update_data['event_id'] );
 			}
 
 			// When linking a standalone event to a post, copy categories to post taxonomy.
@@ -1281,6 +1279,11 @@ class EventDatesController extends WP_REST_Controller {
 		// Add to junction table.
 		EventDates::add_linked_post( $id, $post_id );
 
+		// Propagate the new link to any already-generated occurrences.
+		if ( 'master' === $event_date->occurrence_type ) {
+			$this->propagate_event_id_to_children( $id, $post_id );
+		}
+
 		// Copy standalone categories to the new post.
 		$standalone_cat_ids = $this->get_standalone_category_ids( $id );
 		if ( ! empty( $standalone_cat_ids ) ) {
@@ -1359,6 +1362,9 @@ class EventDatesController extends WP_REST_Controller {
 					'link_type' => 'post',
 				)
 			);
+			if ( 'master' === $link_event_date->occurrence_type ) {
+				$this->propagate_event_id_to_children( $link_event_date->id, $post_id );
+			}
 		}
 
 		$event_date = EventDates::get_by_id( $id );
@@ -1429,6 +1435,9 @@ class EventDatesController extends WP_REST_Controller {
 				// Promote first remaining post to primary.
 				$new_primary = $remaining_post_ids[0];
 				EventDates::update_by_id( $link_event_date->id, array( 'event_id' => $new_primary ) );
+				if ( 'master' === $link_event_date->occurrence_type ) {
+					$this->propagate_event_id_to_children( $link_event_date->id, $new_primary );
+				}
 			} else {
 				// No more linked posts, clear event_id and set link_type to none.
 				EventDates::update_by_id(
@@ -1438,7 +1447,29 @@ class EventDatesController extends WP_REST_Controller {
 						'link_type' => 'none',
 					)
 				);
+				if ( 'master' === $link_event_date->occurrence_type ) {
+					$this->propagate_event_id_to_children( $link_event_date->id, null );
+				}
 			}
+		}
+	}
+
+	/**
+	 * Propagate a master event date's event_id to its existing generated children.
+	 *
+	 * The event_id column is not inherited at read time (NULL-means-inherit
+	 * only applies to title/venue_id/address/link_type/external_url/capacity,
+	 * which children resolve against the master when null) — it matters
+	 * whenever a standalone recurring series is linked to, relinked, or
+	 * unlinked from a post after its children were already generated.
+	 *
+	 * @param int      $master_id Master event date ID.
+	 * @param int|null $event_id  Post ID to propagate, or null to clear.
+	 * @return void
+	 */
+	private function propagate_event_id_to_children( $master_id, $event_id ) {
+		foreach ( EventDates::get_generated_by_master_id( $master_id, true ) as $child ) {
+			EventDates::update_by_id( $child->id, array( 'event_id' => $event_id ) );
 		}
 	}
 
