@@ -43,6 +43,32 @@ class WeekViewParamTest extends TestCase {
 	}
 
 	/**
+	 * Week 53 is accepted for a year that actually has one.
+	 *
+	 * @return void
+	 */
+	public function test_parse_accepts_week_53_for_a_53_week_year() {
+		$this->assertSame(
+			array(
+				'year' => 2026,
+				'week' => 53,
+			),
+			WeekViewParam::parse( '2026-W53' )
+		);
+	}
+
+	/**
+	 * Week 53 is rejected for a year that only has 52 ISO weeks, instead of
+	 * silently rolling over to the following year's week 1 (which would let
+	 * two different `week_view` values describe the same dates).
+	 *
+	 * @return void
+	 */
+	public function test_parse_rejects_week_53_for_a_52_week_year() {
+		$this->assertNull( WeekViewParam::parse( '2027-W53' ) );
+	}
+
+	/**
 	 * Garbage/empty input is rejected.
 	 *
 	 * @return void

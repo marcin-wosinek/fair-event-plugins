@@ -56,21 +56,76 @@ class DatedViewCanonicalUrl {
 	 */
 	public static function for_post( \WP_Post $post, string $base_url ): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$calendar_month_raw = isset( $_GET['calendar_month'] ) ? sanitize_text_field( wp_unslash( $_GET['calendar_month'] ) ) : '';
+		$url_month = isset( $_GET['calendar_month'] ) ? sanitize_text_field( wp_unslash( $_GET['calendar_month'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$calendar_year_raw = isset( $_GET['calendar_year'] ) ? sanitize_text_field( wp_unslash( $_GET['calendar_year'] ) ) : '';
+		$url_year = isset( $_GET['calendar_year'] ) ? sanitize_text_field( wp_unslash( $_GET['calendar_year'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$week_raw = isset( $_GET['week_view'] ) ? sanitize_text_field( wp_unslash( $_GET['week_view'] ) ) : '';
 
+		$has_calendar_block = has_block( 'fair-events/events-calendar', $post );
+
+		// Mirrors events-calendar/render.php's own precedence: a URL param
+		// wins, otherwise fall back to the block's own currentMonth/
+		// currentYear attributes. Without this, a block whose attributes
+		// render a non-default month (with no URL param present) would
+		// render one month but canonicalize to the bare page URL.
+		$calendar_month_raw = $url_month;
+		$calendar_year_raw  = $url_year;
+		if ( $has_calendar_block && ( '' === $url_month || '' === $url_year ) ) {
+			$block_attrs        = self::calendar_block_attributes( $post );
+			$calendar_month_raw = '' !== $url_month ? $url_month : (string) ( $block_attrs['currentMonth'] ?? '' );
+			$calendar_year_raw  = '' !== $url_year ? $url_year : (string) ( $block_attrs['currentYear'] ?? '' );
+		}
+
 		return self::resolve_url(
 			$base_url,
-			has_block( 'fair-events/events-calendar', $post ),
+			$has_calendar_block,
 			CalendarMonthParam::parse( $calendar_month_raw, $calendar_year_raw ),
 			CalendarMonthParam::current(),
 			has_block( 'fair-events/events-week', $post ),
 			WeekViewParam::parse( $week_raw ),
 			WeekViewParam::current()
 		);
+	}
+
+	/**
+	 * Read the events-calendar block's attributes from a post's content, so
+	 * for_post() can fall back to its currentMonth/currentYear the same way
+	 * events-calendar/render.php does when no URL param is present.
+	 *
+	 * @param \WP_Post $post The queried post.
+	 * @return array Attributes of the first fair-events/events-calendar
+	 *               block found, or an empty array if none is present.
+	 */
+	private static function calendar_block_attributes( \WP_Post $post ): array {
+		$attrs = self::find_block_attrs( parse_blocks( $post->post_content ), 'fair-events/events-calendar' );
+
+		return $attrs ?? array();
+	}
+
+	/**
+	 * Recursively search a parsed block tree for the first block matching a
+	 * given name, returning its attributes.
+	 *
+	 * @param array  $blocks     Parsed blocks (parse_blocks() output, or an innerBlocks slice).
+	 * @param string $block_name Fully-qualified block name to find.
+	 * @return array|null The matching block's attrs (possibly empty), or null if not found.
+	 */
+	private static function find_block_attrs( array $blocks, string $block_name ): ?array {
+		foreach ( $blocks as $block ) {
+			if ( isset( $block['blockName'] ) && $block_name === $block['blockName'] ) {
+				return $block['attrs'] ?? array();
+			}
+
+			if ( ! empty( $block['innerBlocks'] ) ) {
+				$found = self::find_block_attrs( $block['innerBlocks'], $block_name );
+				if ( null !== $found ) {
+					return $found;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	/**
