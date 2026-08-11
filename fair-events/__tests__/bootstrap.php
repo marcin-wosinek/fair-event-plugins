@@ -112,6 +112,21 @@ if ( ! function_exists( 'get_the_title' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_post_status' ) ) {
+	/**
+	 * Stub of WordPress get_post_status() backed by
+	 * $GLOBALS['_fair_test_post_status'][ $post_id ]. Defaults to 'publish'
+	 * when the post id isn't seeded.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Post status.
+	 */
+	function get_post_status( $post_id ) {
+		$statuses = isset( $GLOBALS['_fair_test_post_status'] ) ? $GLOBALS['_fair_test_post_status'] : array();
+		return $statuses[ (int) $post_id ] ?? 'publish';
+	}
+}
+
 if ( ! function_exists( 'wp_http_validate_url' ) ) {
 	/**
 	 * Stub of WordPress wp_http_validate_url() — delegates to PHP's
