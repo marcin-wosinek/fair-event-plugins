@@ -1235,3 +1235,102 @@ test.describe('EventDatesController — attendance mode + joining link', () => {
 		expect(occurrence.joining_link).toBe('https://example.com/series-meet');
 	});
 });
+
+test.describe('EventDatesController — event_id propagation to generated children', () => {
+	let api;
+	let masterEventDateId;
+	let postId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+	});
+
+	test.afterEach(async () => {
+		if (masterEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+				{ headers: adminHeaders }
+			);
+			masterEventDateId = null;
+		}
+		if (postId) {
+			await api.delete(`/wp-json/wp/v2/fair_event/${postId}?force=true`, {
+				headers: adminHeaders,
+			});
+			postId = null;
+		}
+	});
+
+	test('create-post propagates the new post to already-generated occurrences', async () => {
+		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Create-post propagation ${Date.now()}`,
+				start_datetime: '2037-01-01 10:00:00',
+				end_datetime: '2037-01-01 12:00:00',
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+			},
+		});
+		expect(edRes.ok()).toBeTruthy();
+		const master = await edRes.json();
+		masterEventDateId = master.id;
+		expect(master.generated_occurrences.length).toBe(2);
+
+		const createPostRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/create-post`,
+			{ headers: adminHeaders, data: {} }
+		);
+		expect(createPostRes.ok()).toBeTruthy();
+		postId = (await createPostRes.json()).post_id;
+
+		const listRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${postId}`,
+			{ headers: adminHeaders }
+		);
+		expect(listRes.ok()).toBeTruthy();
+		const items = await listRes.json();
+		expect(items.length).toBe(3);
+		expect(items.every((item) => item.event_id === postId)).toBe(true);
+	});
+
+	test('link-post propagates an existing post to already-generated occurrences', async () => {
+		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Link-post propagation ${Date.now()}`,
+				status: 'publish',
+			},
+		});
+		expect(postRes.ok()).toBeTruthy();
+		postId = (await postRes.json()).id;
+
+		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Link-post propagation ${Date.now()}`,
+				start_datetime: '2037-02-01 10:00:00',
+				end_datetime: '2037-02-01 12:00:00',
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+			},
+		});
+		expect(edRes.ok()).toBeTruthy();
+		const master = await edRes.json();
+		masterEventDateId = master.id;
+		expect(master.generated_occurrences.length).toBe(2);
+
+		const linkRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/link-post`,
+			{ headers: adminHeaders, data: { post_id: postId } }
+		);
+		expect(linkRes.ok()).toBeTruthy();
+
+		const listRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${postId}`,
+			{ headers: adminHeaders }
+		);
+		expect(listRes.ok()).toBeTruthy();
+		const items = await listRes.json();
+		expect(items.length).toBe(3);
+		expect(items.every((item) => item.event_id === postId)).toBe(true);
+	});
+});
