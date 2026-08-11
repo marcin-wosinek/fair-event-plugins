@@ -29,6 +29,7 @@ class EventTranslationTest extends TestCase {
 				'event_id'        => 5,
 				'occurrence_type' => 'single',
 				'source'          => 'post',
+				'link_type'       => 'post',
 				'title'           => 'Post 5',
 				'url'             => 'https://example.com/?p=5',
 				'start'           => '2026-08-11 10:00:00',
@@ -64,6 +65,61 @@ class EventTranslationTest extends TestCase {
 			array(
 				'source'   => 'standalone',
 				'event_id' => null,
+			)
+		);
+
+		$result = EventTranslation::translate_occurrences( array( $occurrence ) );
+
+		$this->assertSame( $occurrence, $result[0] );
+		$this->assertSame( array(), $GLOBALS['_fair_pll_get_post_calls'] );
+	}
+
+	/**
+	 * A post-linked event date whose calendar link is configured as an
+	 * external URL (`link_type: 'external'`) is left unchanged, even though
+	 * `event_id`/`source: 'post'` are set — the event's own CPT post having
+	 * a translation is irrelevant, since the occurrence doesn't link there.
+	 *
+	 * @runInSeparateProcess
+	 */
+	public function test_external_link_type_is_left_unchanged() {
+		require_once __DIR__ . '/../pll-stubs.php';
+
+		$GLOBALS['_fair_pll_current_language']         = 'fr';
+		$GLOBALS['_fair_pll_translated_posts']['5:fr'] = 6;
+
+		$occurrence = $this->occurrence(
+			array(
+				'link_type' => 'external',
+				'url'       => 'https://tickets.example.com/event',
+			)
+		);
+
+		$result = EventTranslation::translate_occurrences( array( $occurrence ) );
+
+		$this->assertSame( $occurrence, $result[0] );
+		$this->assertSame( array(), $GLOBALS['_fair_pll_get_post_calls'] );
+	}
+
+	/**
+	 * A post-linked event date whose calendar link is configured to a
+	 * different junction-linked post (`link_type: 'none'`) is left
+	 * unchanged for the same reason — url/title didn't come from
+	 * `event_id`'s own post.
+	 *
+	 * @runInSeparateProcess
+	 */
+	public function test_none_link_type_is_left_unchanged() {
+		require_once __DIR__ . '/../pll-stubs.php';
+
+		$GLOBALS['_fair_pll_current_language']         = 'fr';
+		$GLOBALS['_fair_pll_translated_posts']['5:fr'] = 6;
+
+		$occurrence = $this->occurrence(
+			array(
+				'link_type' => 'none',
+				'url'       => 'https://example.com/?p=99',
+				'title'     => 'Post 99',
 			)
 		);
 

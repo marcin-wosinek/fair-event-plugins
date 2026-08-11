@@ -7,6 +7,8 @@
 
 namespace FairEvents\Services;
 
+use FairEvents\Helpers\OccurrenceDateParam;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -29,6 +31,17 @@ class EventTranslation {
 	 * @var array<string, int|null>
 	 */
 	private static $resolved_ids = array();
+
+	/**
+	 * Per-request cache of a translated post's title/permalink, keyed by
+	 * translated post id. Separate from $resolved_ids because a recurring
+	 * series' occurrences share one translated post but each need their own
+	 * `event_date` URL arg, so only the id-independent parts are cached
+	 * here.
+	 *
+	 * @var array<int, array{title: string, permalink: string}|null>
+	 */
+	private static $post_data = array();
 
 	/**
 	 * Translate every post-linked occurrence in place to the current
@@ -68,6 +81,15 @@ class EventTranslation {
 			return $occurrence;
 		}
 
+		// A post-linked event date can still route its title/url elsewhere
+		// (an admin-configured external URL, or a different junction-linked
+		// post) via link_type; only a plain 'post' link means title/url
+		// genuinely came from $event_id's own post, which is the only case
+		// this service knows how to swap for a translation.
+		if ( 'post' !== ( $occurrence['link_type'] ?? null ) ) {
+			return $occurrence;
+		}
+
 		$event_id      = (int) $occurrence['event_id'];
 		$translated_id = self::resolve_translated_id( $event_id, $language );
 
@@ -75,17 +97,18 @@ class EventTranslation {
 			return $occurrence;
 		}
 
-		if ( 'publish' !== get_post_status( $translated_id ) ) {
+		$post_data = self::resolve_post_data( $translated_id );
+		if ( null === $post_data ) {
 			return $occurrence;
 		}
 
-		$url = get_permalink( $translated_id );
-		if ( $url && 'generated' === $occurrence['occurrence_type'] ) {
-			$url = add_query_arg( 'event_date', gmdate( 'Y-m-d', strtotime( $occurrence['start'] ) ), $url );
+		$url = $post_data['permalink'];
+		if ( 'generated' === $occurrence['occurrence_type'] ) {
+			$url = add_query_arg( 'event_date', OccurrenceDateParam::format_datetime( $occurrence['start'] ), $url );
 		}
 
-		$occurrence['title'] = get_the_title( $translated_id );
-		$occurrence['url']   = $url ? $url : $occurrence['url'];
+		$occurrence['title'] = $post_data['title'];
+		$occurrence['url']   = $url;
 
 		return $occurrence;
 	}
@@ -109,5 +132,34 @@ class EventTranslation {
 		self::$resolved_ids[ $cache_key ] = $translated_id ? (int) $translated_id : null;
 
 		return self::$resolved_ids[ $cache_key ];
+	}
+
+	/**
+	 * Resolve (and cache) a translated post's title/permalink, or null when
+	 * it's unusable (not published, or no permalink).
+	 *
+	 * @param int $translated_id Translated post ID.
+	 * @return array{title: string, permalink: string}|null
+	 */
+	private static function resolve_post_data( $translated_id ) {
+		if ( array_key_exists( $translated_id, self::$post_data ) ) {
+			return self::$post_data[ $translated_id ];
+		}
+
+		$data = null;
+
+		if ( 'publish' === get_post_status( $translated_id ) ) {
+			$permalink = get_permalink( $translated_id );
+			if ( $permalink ) {
+				$data = array(
+					'title'     => get_the_title( $translated_id ),
+					'permalink' => $permalink,
+				);
+			}
+		}
+
+		self::$post_data[ $translated_id ] = $data;
+
+		return $data;
 	}
 }

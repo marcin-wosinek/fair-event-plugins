@@ -26,8 +26,10 @@ defined( 'WPINC' ) || die;
  *
  * DTO shape: uid, event_date_id, event_id, occurrence_type, title,
  * description, start, end, all_day, url, categories, source
- * ('post'|'standalone'|'ical'|'api'), is_draft, source_color, location
- * (neutral shape from EventLocation::resolve(), or null).
+ * ('post'|'standalone'|'ical'|'api'), link_type (the row's own
+ * 'post'|'external'|'none', only meaningful for source === 'post' — see
+ * format_post_occurrence()), is_draft, source_color, location (neutral
+ * shape from EventLocation::resolve(), or null).
  *
  * `start`/`end` are naive site-local 'Y-m-d H:i:s' strings — the same form
  * every other internal consumer (EventDates, WeeklyEventsProvider, blocks)
@@ -273,6 +275,7 @@ class EventFeedProvider {
 			'url'             => $row->get_display_url(),
 			'categories'      => $this->get_category_objects( $post_category_ids ),
 			'source'          => 'post',
+			'link_type'       => $row->link_type,
 			'is_draft'        => $is_draft,
 			'source_color'    => null,
 			'location'        => EventLocation::resolve( $row, $event_id ),
