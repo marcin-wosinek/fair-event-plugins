@@ -212,4 +212,31 @@ describe('MiniCalendar', () => {
 		fireEvent.click(masterButton);
 		expect(onActivate).not.toHaveBeenCalled();
 	});
+
+	test('a day with a badge renders it as a corner overlay; a day without one does not', () => {
+		const dayProps = (dateStr) =>
+			dateStr === '2026-07-05'
+				? { interactive: true, ariaLabel: 'Badged', badge: '3' }
+				: { interactive: true, ariaLabel: `Plain-${dateStr}` };
+
+		render(
+			<MiniCalendar
+				minDate="2026-07-01"
+				maxDate="2026-07-01"
+				dayProps={dayProps}
+			/>
+		);
+
+		const badgedButton = screen.getByRole('button', { name: 'Badged' });
+		const badge = badgedButton.parentElement.querySelector(
+			'span[aria-hidden="true"]'
+		);
+		expect(badge).toHaveTextContent('3');
+
+		// Only the badged cell gets the extra overlay wrapper — every other
+		// day in the grid renders as a bare button with no relative wrapper.
+		expect(
+			document.querySelectorAll('span[aria-hidden="true"]')
+		).toHaveLength(1);
+	});
 });

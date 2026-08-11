@@ -1125,6 +1125,41 @@ class EventDates {
 	}
 
 	/**
+	 * Get all rows belonging to a recurring series (the master row itself plus
+	 * every generated child), keyed by row id.
+	 *
+	 * Used by RecurrenceService's manual-sessions reconciliation (#1414),
+	 * which — unlike reconcile_occurrences()'s anchor-keyed matching — needs
+	 * to address more than one row sharing the same calendar day, so it
+	 * matches desired sessions against existing rows by id instead.
+	 *
+	 * @param int $master_id Master event date ID.
+	 * @return array<int, EventDates> Map of row id → EventDates.
+	 */
+	public static function get_all_by_master_id_flat( $master_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id = %d OR master_id = %d ORDER BY start_datetime ASC',
+				$table_name,
+				$master_id,
+				$master_id
+			)
+		);
+
+		$map = array();
+		foreach ( $results as $result ) {
+			$row             = self::hydrate( $result );
+			$map[ $row->id ] = $row;
+		}
+
+		return $map;
+	}
+
+	/**
 	 * Delete generated occurrences by master ID
 	 *
 	 * Used for standalone events that have no event_id.
@@ -1181,7 +1216,13 @@ class EventDates {
 			'status'            => $data['status'] ?? 'active',
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
+		// One %s per string field (was missing one — 15 formats for 16
+		// fields — which misaligned every field from joining_link onward:
+		// joining_link (a URL) was cast with %d, silently truncating it to
+		// an integer, and the trailing status field got no format at all.
+		// Found while adding reconcile_sessions() (#1414), which calls this
+		// for every new session on a standalone (unlinked) manual series.
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 

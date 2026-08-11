@@ -1249,6 +1249,7 @@ export default function ManageEventApp() {
 					initialRrule={eventDate.rrule}
 					initialRecurrenceMode={eventDate.recurrence_mode}
 					startDatetime={eventDate.start_datetime}
+					endDatetime={eventDate.end_datetime}
 					generatedOccurrences={eventDate.generated_occurrences}
 					onClose={() => setSeriesModalOpen(false)}
 					onSaved={handleSeriesSaved}

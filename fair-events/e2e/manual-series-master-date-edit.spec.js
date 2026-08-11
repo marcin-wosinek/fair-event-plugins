@@ -9,6 +9,11 @@ const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
  * not the "Edit series" modal — used to fall into the rrule-regenerate path
  * in EventDatesController::update_item(), which treated the manual master's
  * null rrule as "series ended" and wiped every hand-picked date.
+ *
+ * Also covers #1414: each session now carries its own independent
+ * start/end, so editing only the master's own time must NOT reflow onto its
+ * sibling sessions (the old date-only model applied the master's new
+ * time-of-day to every date; the new model leaves siblings untouched).
  */
 
 async function apiFetch(page, options) {
@@ -49,7 +54,7 @@ async function login(page) {
 }
 
 test.describe('Manual (irregular) series survives editing the master date', () => {
-	test('PUT with only start_datetime keeps recurrence_mode=manual and the other dates', async ({
+	test('PUT with only start_datetime keeps recurrence_mode=manual and leaves sibling sessions untouched', async ({
 		page,
 	}) => {
 		await login(page);
@@ -73,7 +78,23 @@ test.describe('Manual (irregular) series survives editing the master date', () =
 				method: 'PUT',
 				data: {
 					recurrence_mode: 'manual',
-					manual_dates: ['2026-08-01', '2026-08-15', '2026-09-01'],
+					manual_sessions: [
+						{
+							id: master.id,
+							start_datetime: '2026-08-01 18:00:00',
+							end_datetime: '2026-08-01 20:00:00',
+						},
+						{
+							id: null,
+							start_datetime: '2026-08-15 18:00:00',
+							end_datetime: '2026-08-15 20:00:00',
+						},
+						{
+							id: null,
+							start_datetime: '2026-09-01 18:00:00',
+							end_datetime: '2026-09-01 20:00:00',
+						},
+					],
 				},
 			});
 
@@ -84,7 +105,7 @@ test.describe('Manual (irregular) series survives editing the master date', () =
 			expect(afterCreate.generated_occurrences).toHaveLength(2);
 
 			// Edit only the master's own start/end time — what the Event
-			// Details start-date field sends — with no rrule/manual_dates.
+			// Details start-date field sends — with no rrule/manual_sessions.
 			await apiFetch(page, {
 				path: `/fair-events/v1/event-dates/${master.id}`,
 				method: 'PUT',
@@ -103,12 +124,15 @@ test.describe('Manual (irregular) series survives editing the master date', () =
 			expect(afterEdit.start_datetime).toBe('2026-08-01 19:00:00');
 			expect(afterEdit.generated_occurrences).toHaveLength(2);
 
+			// Each session carries its own independent time (#1414) — editing
+			// only the master's own time must not reflow onto its siblings,
+			// which keep their originally-set 18:00 start.
 			const dates = afterEdit.generated_occurrences
 				.map((occ) => occ.start_datetime)
 				.sort();
 			expect(dates).toEqual([
-				'2026-08-15 19:00:00',
-				'2026-09-01 19:00:00',
+				'2026-08-15 18:00:00',
+				'2026-09-01 18:00:00',
 			]);
 		} finally {
 			await apiFetch(page, {

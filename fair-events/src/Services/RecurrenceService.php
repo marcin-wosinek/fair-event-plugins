@@ -346,72 +346,69 @@ class RecurrenceService {
 	}
 
 	/**
-	 * Build the {start,end} occurrence set for a hand-picked list of dates.
+	 * Normalize/sort a hand-picked list of sessions for a manual series.
 	 *
-	 * Pure — no DB access. Each date takes the reference row's time-of-day
-	 * and duration (mirrors the RRULE path's duration handling in
-	 * generate_occurrences()). Dates are deduplicated and sorted ascending
-	 * so the first is always the earliest.
+	 * Pure — no DB access. Unlike the old date-only manual model, each
+	 * session already carries its own independent start/end (#1414) — no
+	 * reference time-of-day/duration is applied. Sessions are sorted
+	 * ascending by start so the first is always the earliest (and therefore
+	 * becomes the master — see set_manual_sessions()).
 	 *
-	 * @param string   $reference_start Reference start datetime (Y-m-d H:i:s) —
-	 *                                  supplies time-of-day and duration.
-	 * @param string   $reference_end   Reference end datetime (Y-m-d H:i:s).
-	 * @param string[] $dates           Occurrence dates (Y-m-d), any order, may contain duplicates.
-	 * @return array Array of occurrences with 'start' and 'end' keys, sorted ascending.
+	 * @param array $sessions Sessions, each `{ id: int|null, start_datetime, end_datetime }`
+	 *                        (Y-m-d H:i:s), any order.
+	 * @return array Same shape, sorted ascending by start_datetime.
 	 */
-	public static function build_manual_occurrences( $reference_start, $reference_end, array $dates ) {
-		$dates = array_values( array_unique( $dates ) );
-		sort( $dates );
+	public static function build_manual_sessions( array $sessions ) {
+		$sessions = array_map(
+			function ( $session ) {
+				return array(
+					'id'             => empty( $session['id'] ) ? null : (int) $session['id'],
+					'start_datetime' => $session['start_datetime'],
+					'end_datetime'   => $session['end_datetime'],
+				);
+			},
+			$sessions
+		);
 
-		if ( empty( $dates ) ) {
-			return array();
-		}
+		usort(
+			$sessions,
+			function ( $a, $b ) {
+				return strcmp( $a['start_datetime'], $b['start_datetime'] );
+			}
+		);
 
-		$start    = new \DateTime( $reference_start );
-		$end      = new \DateTime( $reference_end );
-		$duration = $start->diff( $end );
-		$time     = $start->format( 'H:i:s' );
-
-		$occurrences = array();
-		foreach ( $dates as $date ) {
-			$occ_start     = new \DateTime( $date . ' ' . $time );
-			$occ_end       = ( clone $occ_start )->add( $duration );
-			$occurrences[] = array(
-				'start' => $occ_start->format( 'Y-m-d\TH:i:s' ),
-				'end'   => $occ_end->format( 'Y-m-d\TH:i:s' ),
-			);
-		}
-
-		return $occurrences;
+		return $sessions;
 	}
 
 	/**
-	 * Set a series to a hand-picked (manual) list of occurrence dates.
+	 * Set a series to a hand-picked (manual) list of sessions, allowing more
+	 * than one session on the same calendar day (#1414).
 	 *
-	 * Uses reconcile_occurrences() so existing row IDs are preserved when
-	 * dates shift, same as the RRULE paths above. The earliest date becomes
-	 * the master; when only one date remains, the series collapses to a
-	 * plain 'none' single occurrence rather than a one-item manual series.
+	 * The earliest session's start/end is written onto the master row (same
+	 * "earliest becomes master" convention as the old date-only model); when
+	 * only one session remains, the series collapses to a plain 'none'
+	 * single occurrence rather than a one-item manual series. Every other
+	 * session is reconciled by id — see reconcile_sessions().
 	 *
-	 * @param int      $master_id Master (or single) event date row ID.
-	 * @param string[] $dates     Occurrence dates (Y-m-d).
-	 * @return int Number of occurrences set (master + surviving children).
+	 * @param int   $master_id Master (or single) event date row ID.
+	 * @param array $sessions  Sessions, each `{ id: int|null, start_datetime, end_datetime }`.
+	 * @return int Number of sessions set (master + surviving children).
 	 */
-	public static function set_manual_occurrences( $master_id, array $dates ) {
+	public static function set_manual_sessions( $master_id, array $sessions ) {
 		$master = EventDates::get_by_id( $master_id );
 
 		if ( ! $master ) {
 			return 0;
 		}
 
-		$occurrences = self::build_manual_occurrences( $master->start_datetime, $master->end_datetime, $dates );
+		$sessions = self::build_manual_sessions( $sessions );
 
-		if ( empty( $occurrences ) ) {
+		if ( empty( $sessions ) ) {
 			return 0;
 		}
 
-		$is_single = 1 === count( $occurrences );
-		$first     = $occurrences[0];
+		$is_single = 1 === count( $sessions );
+		$first     = $sessions[0];
 
 		EventDates::update_by_id(
 			$master_id,
@@ -419,20 +416,197 @@ class RecurrenceService {
 				'occurrence_type'   => $is_single ? 'single' : 'master',
 				'rrule'             => null,
 				'recurrence_mode'   => $is_single ? 'none' : 'manual',
-				'start_datetime'    => $first['start'],
-				'end_datetime'      => $first['end'],
-				'recurrence_anchor' => ( new \DateTime( $first['start'] ) )->format( 'Y-m-d' ),
+				'start_datetime'    => $first['start_datetime'],
+				'end_datetime'      => $first['end_datetime'],
+				'recurrence_anchor' => ( new \DateTime( $first['start_datetime'] ) )->format( 'Y-m-d' ),
 			)
 		);
 
 		// Inheritable fields are NOT propagated here — see regenerate_event_occurrences().
-		$generated = array_slice( $occurrences, 1 );
-		return 1 + self::reconcile_occurrences(
+		$rest = array_slice( $sessions, 1 );
+		return 1 + self::reconcile_sessions(
 			$master_id,
-			$generated,
+			$rest,
 			$master->all_day,
 			array( 'event_id' => $master->event_id )
 		);
+	}
+
+	/**
+	 * Reconcile the non-master sessions of a manual series against existing
+	 * generated rows, matched by id instead of anchor date (#1414) — the
+	 * anchor-keyed reconcile_occurrences() collapses same-day sessions onto
+	 * a single map entry, so manual mode needs its own id-keyed variant.
+	 *
+	 * - A session whose id matches an existing generated row updates that
+	 *   row in place (preserving id); a cancelled row whose id reappears is
+	 *   restored to active.
+	 * - A session with no id (or an id that isn't an existing generated
+	 *   child of this master) is inserted as a new row.
+	 * - An existing generated row whose id isn't present in `$desired` is
+	 *   soft-cancelled instead of deleted, so dependents (ticket types,
+	 *   signups) survive and the session can come back if re-added later.
+	 *
+	 * @param int   $master_id    Master event date row ID.
+	 * @param array $desired      Desired non-master sessions — each entry has
+	 *                            'id' (int|null), 'start_datetime', 'end_datetime'.
+	 * @param bool  $all_day      All-day flag to apply to inserted/updated rows.
+	 * @param array $master_props Non-inherited fields to copy onto children (currently just event_id).
+	 * @return int Number of surviving sessions (updated + inserted).
+	 */
+	private static function reconcile_sessions( $master_id, $desired, $all_day, $master_props = array() ) {
+		$existing = EventDates::get_all_by_master_id_flat( $master_id );
+		// The master row itself is handled separately by set_manual_sessions() —
+		// reconcile only touches generated children.
+		unset( $existing[ $master_id ] );
+
+		$count = 0;
+
+		foreach ( $desired as $session ) {
+			$anchor = ( new \DateTime( $session['start_datetime'] ) )->format( 'Y-m-d' );
+			$id     = $session['id'];
+
+			if ( $id && isset( $existing[ $id ] ) ) {
+				// Match — update in place, preserving id. Inheritable fields
+				// (title, venue_id, address, link_type, external_url,
+				// capacity, attendance_mode, joining_link) are intentionally
+				// NOT touched: instances hold NULL for them unless explicitly
+				// overridden, and resolve against the master at read time.
+				$row    = $existing[ $id ];
+				$update = array(
+					'start_datetime'    => $session['start_datetime'],
+					'end_datetime'      => $session['end_datetime'],
+					'all_day'           => $all_day ? 1 : 0,
+					'recurrence_anchor' => $anchor,
+				);
+				if ( array_key_exists( 'event_id', $master_props ) ) {
+					$update['event_id'] = $master_props['event_id'];
+				}
+				// Restore on regrow: a previously soft-cancelled session
+				// that's back in the desired set becomes active again.
+				if ( 'cancelled' === $row->status ) {
+					$update['status'] = 'active';
+				}
+				EventDates::update_by_id( $row->id, $update );
+				unset( $existing[ $id ] );
+				++$count;
+			} else {
+				// No id, or an id that isn't an existing generated child of
+				// this master (the controller's validate_manual_sessions()
+				// already rejects a spoofed id belonging to another series) —
+				// insert a new row.
+				if ( ! empty( $master_props['event_id'] ) ) {
+					EventDates::save_occurrence(
+						$master_props['event_id'],
+						$session['start_datetime'],
+						$session['end_datetime'],
+						$all_day,
+						'generated',
+						$master_id,
+						$anchor
+					);
+				} else {
+					EventDates::create_standalone_occurrence(
+						array(
+							'start_datetime'    => $session['start_datetime'],
+							'end_datetime'      => $session['end_datetime'],
+							'all_day'           => $all_day,
+							'master_id'         => $master_id,
+							'recurrence_anchor' => $anchor,
+						)
+					);
+				}
+				++$count;
+			}
+		}
+
+		// Soft-cancel rows whose id is no longer in the desired set instead
+		// of deleting them — dependents (ticket types, signups) survive, and
+		// the session can come back active if re-added later.
+		foreach ( $existing as $stale_row ) {
+			if ( 'cancelled' !== $stale_row->status ) {
+				EventDates::update_by_id( $stale_row->id, array( 'status' => 'cancelled' ) );
+			}
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Classify the impact of a proposed manual-sessions change on generated
+	 * children, matched by id (see reconcile_sessions()). Same
+	 * unchanged/shifted/added/removed shape as classify_change(), for the
+	 * impact-preview banner.
+	 *
+	 * Only classifies non-master sessions — the master row is always
+	 * preserved (its content is overwritten to the earliest session by
+	 * set_manual_sessions(), never removed).
+	 *
+	 * @param int   $master_id Master event date row ID.
+	 * @param array $sessions  Full desired session list (including the
+	 *                         master's own entry) — each entry has 'id'
+	 *                         (int|null), 'start_datetime', 'end_datetime'.
+	 * @return array {
+	 *     @type array $unchanged  Sessions that would remain identical.
+	 *     @type array $shifted    Sessions that would be updated in place (id matches, times differ).
+	 *     @type array $added      Sessions with no existing row.
+	 *     @type array $removed    Existing rows no longer desired.
+	 * }
+	 */
+	public static function classify_manual_sessions_change( $master_id, array $sessions ) {
+		$sessions = self::build_manual_sessions( $sessions );
+		$desired  = array_slice( $sessions, 1 );
+
+		$existing = EventDates::get_all_by_master_id_flat( $master_id );
+		unset( $existing[ $master_id ] );
+
+		$now = current_time( 'mysql' );
+
+		$result = array(
+			'unchanged' => array(),
+			'shifted'   => array(),
+			'added'     => array(),
+			'removed'   => array(),
+		);
+
+		foreach ( $desired as $session ) {
+			$id = $session['id'];
+
+			if ( $id && isset( $existing[ $id ] ) ) {
+				$row = $existing[ $id ];
+
+				if ( $row->start_datetime === $session['start_datetime'] && $row->end_datetime === $session['end_datetime'] ) {
+					$result['unchanged'][] = array(
+						'id'             => $row->id,
+						'start_datetime' => $row->start_datetime,
+					);
+				} else {
+					$result['shifted'][] = array(
+						'id'                 => $row->id,
+						'start_datetime'     => $row->start_datetime,
+						'new_start_datetime' => $session['start_datetime'],
+						'is_past'            => $row->start_datetime < $now,
+						'dependents'         => self::count_dependents( $row->id ),
+					);
+				}
+				unset( $existing[ $id ] );
+			} else {
+				$result['added'][] = array(
+					'start_datetime' => $session['start_datetime'],
+				);
+			}
+		}
+
+		foreach ( $existing as $stale_row ) {
+			$result['removed'][] = array(
+				'id'             => $stale_row->id,
+				'start_datetime' => $stale_row->start_datetime,
+				'is_past'        => $stale_row->start_datetime < $now,
+				'dependents'     => self::count_dependents( $stale_row->id ),
+			);
+		}
+
+		return $result;
 	}
 
 	/**

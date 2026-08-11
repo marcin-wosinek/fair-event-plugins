@@ -51,7 +51,23 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 				start_datetime: '2035-07-01 10:00:00',
 				end_datetime: '2035-07-01 12:00:00',
 				recurrence_mode: 'manual',
-				manual_dates: ['2035-07-01', '2035-07-10', '2035-07-20'],
+				manual_sessions: [
+					{
+						id: null,
+						start_datetime: '2035-07-01 10:00:00',
+						end_datetime: '2035-07-01 12:00:00',
+					},
+					{
+						id: null,
+						start_datetime: '2035-07-10 10:00:00',
+						end_datetime: '2035-07-10 12:00:00',
+					},
+					{
+						id: null,
+						start_datetime: '2035-07-20 10:00:00',
+						end_datetime: '2035-07-20 12:00:00',
+					},
+				],
 			},
 		});
 		expect(edRes.ok()).toBeTruthy();

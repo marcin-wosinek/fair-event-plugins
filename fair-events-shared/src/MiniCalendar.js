@@ -13,6 +13,8 @@
  *   - `background`/`color`/`opacity`/`border`/`fontWeight`/`textDecoration`
  *   - `ariaLabel`           overrides the default full-date label
  *   - `tooltip`             wraps the cell in a Tooltip
+ *   - `badge`               small corner overlay (e.g. a session count) — opt-in,
+ *                           callers that never return it render unchanged
  *
  * A day with none of `href`/`interactive` renders as a plain, non-operable
  * cell.
@@ -308,6 +310,34 @@ function DayCell({ date, dateStr, day, todayStr, dayProps }) {
 		);
 	} else {
 		cell = <div style={cellStyle}>{day}</div>;
+	}
+
+	if (props.badge) {
+		cell = (
+			<div style={{ position: 'relative' }}>
+				{cell}
+				<span
+					aria-hidden="true"
+					style={{
+						position: 'absolute',
+						top: '-4px',
+						right: '-4px',
+						minWidth: '14px',
+						height: '14px',
+						padding: '0 2px',
+						borderRadius: '7px',
+						background: '#cc1818',
+						color: '#fff',
+						fontSize: '9px',
+						fontWeight: 700,
+						lineHeight: '14px',
+						textAlign: 'center',
+					}}
+				>
+					{props.badge}
+				</span>
+			</div>
+		);
 	}
 
 	if (props.tooltip) {

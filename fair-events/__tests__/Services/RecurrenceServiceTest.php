@@ -120,50 +120,91 @@ class RecurrenceServiceTest extends TestCase {
 	}
 
 	// -----------------------------------------------------------------------
-	// build_manual_occurrences — pure, no DB
+	// build_manual_sessions — pure, no DB (#1414)
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Dates are sorted ascending regardless of input order, each taking the
-	 * reference row's time-of-day and duration.
+	 * Sessions are sorted ascending by start_datetime regardless of input
+	 * order; each session's own start/end passes through untouched (no
+	 * reference time-of-day/duration is applied, unlike the old
+	 * date-only manual model).
 	 */
-	public function test_build_manual_occurrences_sorts_and_applies_time_and_duration() {
-		$occurrences = RecurrenceService::build_manual_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			array( '2035-03-15', '2035-03-01', '2035-03-08' )
+	public function test_build_manual_sessions_sorts_by_start() {
+		$sessions = RecurrenceService::build_manual_sessions(
+			array(
+				array(
+					'id'             => 3,
+					'start_datetime' => '2035-03-15 09:00:00',
+					'end_datetime'   => '2035-03-15 11:00:00',
+				),
+				array(
+					'id'             => 1,
+					'start_datetime' => '2035-03-01 10:00:00',
+					'end_datetime'   => '2035-03-01 12:00:00',
+				),
+				array(
+					'id'             => 2,
+					'start_datetime' => '2035-03-08 14:00:00',
+					'end_datetime'   => '2035-03-08 16:00:00',
+				),
+			)
 		);
 
-		$this->assertCount( 3, $occurrences );
-		$this->assertSame( '2035-03-01T10:00:00', $occurrences[0]['start'] );
-		$this->assertSame( '2035-03-01T12:00:00', $occurrences[0]['end'] );
-		$this->assertSame( '2035-03-08T10:00:00', $occurrences[1]['start'] );
-		$this->assertSame( '2035-03-15T10:00:00', $occurrences[2]['start'] );
+		$this->assertCount( 3, $sessions );
+		$this->assertSame( '2035-03-01 10:00:00', $sessions[0]['start_datetime'] );
+		$this->assertSame( '2035-03-08 14:00:00', $sessions[1]['start_datetime'] );
+		$this->assertSame( '2035-03-15 09:00:00', $sessions[2]['start_datetime'] );
 	}
 
 	/**
-	 * Duplicate dates are collapsed to a single occurrence.
+	 * Two sessions sharing the same calendar day (with different times) are
+	 * both kept — this is the entire point of #1414, unlike the old
+	 * date-only model which deduplicated by date.
 	 */
-	public function test_build_manual_occurrences_deduplicates() {
-		$occurrences = RecurrenceService::build_manual_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			array( '2035-03-01', '2035-03-01' )
+	public function test_build_manual_sessions_keeps_multiple_sessions_same_day() {
+		$sessions = RecurrenceService::build_manual_sessions(
+			array(
+				array(
+					'id'             => null,
+					'start_datetime' => '2035-03-01 14:00:00',
+					'end_datetime'   => '2035-03-01 16:00:00',
+				),
+				array(
+					'id'             => null,
+					'start_datetime' => '2035-03-01 09:00:00',
+					'end_datetime'   => '2035-03-01 11:00:00',
+				),
+			)
 		);
 
-		$this->assertCount( 1, $occurrences );
+		$this->assertCount( 2, $sessions );
+		$this->assertSame( '2035-03-01 09:00:00', $sessions[0]['start_datetime'] );
+		$this->assertSame( '2035-03-01 14:00:00', $sessions[1]['start_datetime'] );
 	}
 
 	/**
-	 * An empty date list produces no occurrences (caller falls back / no-ops).
+	 * A falsy/empty id normalizes to null (a new session to insert).
 	 */
-	public function test_build_manual_occurrences_empty_list() {
-		$occurrences = RecurrenceService::build_manual_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			array()
+	public function test_build_manual_sessions_normalizes_empty_id_to_null() {
+		$sessions = RecurrenceService::build_manual_sessions(
+			array(
+				array(
+					'id'             => 0,
+					'start_datetime' => '2035-03-01 10:00:00',
+					'end_datetime'   => '2035-03-01 12:00:00',
+				),
+			)
 		);
 
-		$this->assertSame( array(), $occurrences );
+		$this->assertNull( $sessions[0]['id'] );
+	}
+
+	/**
+	 * An empty session list produces no sessions (caller falls back / no-ops).
+	 */
+	public function test_build_manual_sessions_empty_list() {
+		$sessions = RecurrenceService::build_manual_sessions( array() );
+
+		$this->assertSame( array(), $sessions );
 	}
 }

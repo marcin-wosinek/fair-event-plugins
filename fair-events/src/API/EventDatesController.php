@@ -383,15 +383,25 @@ class EventDatesController extends WP_REST_Controller {
 				'required'    => false,
 				'enum'        => array( 'none', 'rule', 'manual' ),
 			),
-			'manual_dates'    => array(
-				'description'       => __( 'Hand-picked occurrence dates (Y-m-d) for a manual-mode series. The earliest date becomes the master.', 'fair-events' ),
+			'manual_sessions' => array(
+				'description'       => __( 'Hand-picked sessions ({id, start_datetime, end_datetime}) for a manual-mode series. More than one session may share a calendar day; the earliest session becomes the master.', 'fair-events' ),
 				'type'              => 'array',
 				'required'          => false,
 				'items'             => array(
-					'type'   => 'string',
-					'format' => 'date',
+					'type'       => 'object',
+					'properties' => array(
+						'id'             => array(
+							'type' => array( 'integer', 'null' ),
+						),
+						'start_datetime' => array(
+							'type' => 'string',
+						),
+						'end_datetime'   => array(
+							'type' => 'string',
+						),
+					),
 				),
-				'validate_callback' => array( $this, 'validate_manual_dates' ),
+				'validate_callback' => array( $this, 'validate_manual_sessions' ),
 			),
 			'categories'      => array(
 				'description' => __( 'Category term IDs.', 'fair-events' ),
@@ -418,65 +428,122 @@ class EventDatesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validate the `manual_dates` param for a manual-mode series.
+	 * Validate the `manual_sessions` param for a manual-mode series.
 	 *
-	 * Rejects malformed/non-calendar dates, duplicate days (a manual series
-	 * supports one occurrence per day, same as reconcile_occurrences()'
-	 * anchor keying), and lists longer than RecurrenceService::MAX_OCCURRENCES.
+	 * Rejects malformed sessions (missing/invalid datetimes, end not after
+	 * start), lists longer than RecurrenceService::MAX_OCCURRENCES, a
+	 * non-null id repeated within the request, and — for an update request
+	 * (URL carries an `id`) — a non-null id that doesn't belong to this
+	 * series (isn't the master id or an existing generated child under it),
+	 * which would otherwise let a spoofed id repoint an unrelated
+	 * `event_dates` row. Duplicate calendar days are explicitly allowed —
+	 * that's the entire point of #1414.
 	 *
 	 * @param mixed           $value   Raw param value.
 	 * @param WP_REST_Request $request Full request object.
 	 * @param string          $param   Param name.
 	 * @return true|WP_Error True if valid, WP_Error otherwise.
 	 */
-	public function validate_manual_dates( $value, $request, $param ) {
+	public function validate_manual_sessions( $value, $request, $param ) {
 		if ( ! is_array( $value ) ) {
 			return new WP_Error(
 				'rest_invalid_param',
-				__( 'manual_dates must be an array of Y-m-d dates.', 'fair-events' ),
+				__( 'manual_sessions must be an array of sessions.', 'fair-events' ),
 				array( 'status' => 400 )
 			);
 		}
 
 		if ( count( $value ) > RecurrenceService::MAX_OCCURRENCES ) {
 			return new WP_Error(
-				'rest_too_many_manual_dates',
+				'rest_too_many_manual_sessions',
 				sprintf(
 					/* translators: %d: maximum allowed occurrence count. */
-					__( 'A series can have at most %d dates.', 'fair-events' ),
+					__( 'A series can have at most %d sessions.', 'fair-events' ),
 					RecurrenceService::MAX_OCCURRENCES
 				),
 				array( 'status' => 400 )
 			);
 		}
 
-		$seen = array();
-		foreach ( $value as $date ) {
-			if ( ! is_string( $date ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+		// Resolve which existing row ids belong to this series, when editing
+		// one — a create request (no `id` route param) has nothing to own
+		// yet, so any client-supplied id is simply treated as new below.
+		$request_id = (int) $request->get_param( 'id' );
+		$owned_ids  = array();
+		if ( $request_id ) {
+			$existing = EventDates::get_by_id( $request_id );
+			if ( $existing ) {
+				$owned_master_id               = ( 'generated' === $existing->occurrence_type && $existing->master_id )
+					? $existing->master_id
+					: $request_id;
+				$owned_ids[ $owned_master_id ] = true;
+				foreach ( EventDates::get_generated_by_master_id( $owned_master_id, true ) as $child ) {
+					$owned_ids[ $child->id ] = true;
+				}
+			}
+		}
+
+		$seen_ids = array();
+		foreach ( $value as $session ) {
+			if ( ! is_array( $session ) ) {
 				return new WP_Error(
-					'rest_invalid_manual_date',
-					__( 'Each manual date must be in Y-m-d format.', 'fair-events' ),
+					'rest_invalid_manual_session',
+					__( 'Each session must be an object with start_datetime and end_datetime.', 'fair-events' ),
 					array( 'status' => 400 )
 				);
 			}
 
-			$parsed = \DateTime::createFromFormat( 'Y-m-d', $date );
-			if ( ! $parsed || $parsed->format( 'Y-m-d' ) !== $date ) {
+			$start = $session['start_datetime'] ?? null;
+			$end   = $session['end_datetime'] ?? null;
+
+			if ( empty( $start ) || empty( $end ) ) {
 				return new WP_Error(
-					'rest_invalid_manual_date',
-					__( 'Each manual date must be a valid calendar date.', 'fair-events' ),
+					'rest_invalid_manual_session',
+					__( 'Each session needs a start_datetime and end_datetime.', 'fair-events' ),
 					array( 'status' => 400 )
 				);
 			}
 
-			if ( isset( $seen[ $date ] ) ) {
+			$start_dt = \DateTime::createFromFormat( 'Y-m-d H:i:s', $start );
+			$end_dt   = \DateTime::createFromFormat( 'Y-m-d H:i:s', $end );
+
+			if ( ! $start_dt || ! $end_dt ) {
 				return new WP_Error(
-					'rest_duplicate_manual_date',
-					__( 'Manual dates must not contain duplicates — only one occurrence per day is supported.', 'fair-events' ),
+					'rest_invalid_manual_session',
+					__( 'Session start_datetime/end_datetime must be valid Y-m-d H:i:s datetimes.', 'fair-events' ),
 					array( 'status' => 400 )
 				);
 			}
-			$seen[ $date ] = true;
+
+			if ( $end_dt <= $start_dt ) {
+				return new WP_Error(
+					'rest_invalid_manual_session',
+					__( "Each session's end time must be after its start time.", 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$id = $session['id'] ?? null;
+			if ( null !== $id && '' !== $id ) {
+				$id = (int) $id;
+
+				if ( isset( $seen_ids[ $id ] ) ) {
+					return new WP_Error(
+						'rest_duplicate_manual_session_id',
+						__( 'Each session id can only appear once.', 'fair-events' ),
+						array( 'status' => 400 )
+					);
+				}
+				$seen_ids[ $id ] = true;
+
+				if ( $request_id && ! isset( $owned_ids[ $id ] ) ) {
+					return new WP_Error(
+						'rest_invalid_manual_session_id',
+						__( 'A session id must belong to this series.', 'fair-events' ),
+						array( 'status' => 403 )
+					);
+				}
+			}
 		}
 
 		return true;
@@ -573,12 +640,12 @@ class EventDatesController extends WP_REST_Controller {
 			RecurrenceService::regenerate_standalone_occurrences( $id, $rrule );
 		}
 
-		// Set a hand-picked (manual) occurrence list, if provided.
+		// Set a hand-picked (manual) session list, if provided.
 		$recurrence_mode = $request->get_param( 'recurrence_mode' );
-		$manual_dates    = $request->get_param( 'manual_dates' );
-		$is_manual       = 'manual' === $recurrence_mode && ! empty( $manual_dates );
+		$manual_sessions = $request->get_param( 'manual_sessions' );
+		$is_manual       = 'manual' === $recurrence_mode && ! empty( $manual_sessions );
 		if ( $is_manual ) {
-			RecurrenceService::set_manual_occurrences( $id, $manual_dates );
+			RecurrenceService::set_manual_sessions( $id, $manual_sessions );
 		}
 
 		// Set categories for standalone event date.
@@ -1025,23 +1092,23 @@ class EventDatesController extends WP_REST_Controller {
 			$dates_changed_on_recurring = $dates_changed && ( $existing->occurrence_type === 'master' || $rrule_changed );
 
 			if ( 'manual' === $existing->recurrence_mode && ! $rrule_changed && $dates_changed_on_recurring ) {
-				// A manual (hand-picked-dates) master's own start/end changed via a
-				// plain field edit (e.g. the Event Details start-date field), not via
-				// the recurrence_mode/manual_dates params handled below. Reflow the
-				// shared time-of-day + duration across the existing hand-picked dates
-				// instead of falling into the rrule-regenerate branch below, which
+				// A manual (hand-picked-sessions) master's own start/end changed via
+				// a plain field edit (e.g. the Event Details start-date field), not
+				// via the recurrence_mode/manual_sessions params handled below.
+				// Each session now carries its own independent start/end (#1414),
+				// so — unlike the old date-only model, which reflowed the shared
+				// time-of-day/duration across every hand-picked date — there's
+				// nothing to reflow across siblings; only the master's own
+				// recurrence_anchor needs to stay in sync with its new date. This
+				// intentionally skips the rrule-regenerate branch below, which
 				// would treat the manual master's null rrule as "series ended" and
 				// wipe the whole series (#979).
-				$existing_dates = array_merge(
-					array( ( new \DateTime( $update_data['start_datetime'] ?? $existing->start_datetime ) )->format( 'Y-m-d' ) ),
-					array_map(
-						static function ( $child ) {
-							return ( new \DateTime( $child->start_datetime ) )->format( 'Y-m-d' );
-						},
-						EventDates::get_generated_by_master_id( $id, true )
+				EventDates::update_by_id(
+					$id,
+					array(
+						'recurrence_anchor' => ( new \DateTime( $update_data['start_datetime'] ?? $existing->start_datetime ) )->format( 'Y-m-d' ),
 					)
 				);
-				RecurrenceService::set_manual_occurrences( $id, $existing_dates );
 			} elseif ( $rrule_changed || $dates_changed_on_recurring ) {
 				$effective_rrule = $update_data['rrule'] ?? $existing->rrule;
 
@@ -1105,33 +1172,27 @@ class EventDatesController extends WP_REST_Controller {
 			}
 		}
 
-		// Set a hand-picked (manual) occurrence list. Not folded into the
-		// $update_data block above since recurrence_mode/manual_dates can be
-		// sent without any other field changing, and the manual path reads
-		// the master's (already-updated) start_datetime/end_datetime itself
-		// rather than needing them threaded through here.
+		// Set a hand-picked (manual) session list. Not folded into the
+		// $update_data block above since recurrence_mode/manual_sessions can
+		// be sent without any other field changing — each session already
+		// carries its own start_datetime/end_datetime, so nothing needs to be
+		// threaded through from the master row here.
 		$recurrence_mode = $request->get_param( 'recurrence_mode' );
-		$manual_dates    = $request->get_param( 'manual_dates' );
-		if ( 'manual' === $recurrence_mode && is_array( $manual_dates ) ) {
+		$manual_sessions = $request->get_param( 'manual_sessions' );
+		if ( 'manual' === $recurrence_mode && is_array( $manual_sessions ) ) {
 			$manual_master_id = ( 'generated' === $existing->occurrence_type && $existing->master_id )
 				? $existing->master_id
 				: $id;
-			$manual_master    = EventDates::get_by_id( $manual_master_id );
 
 			// Classify the impact before applying, for informational purposes
-			// only — reconcile_occurrences() soft-cancels stale rows, so
-			// there's no destructive-change guard to gate this on.
-			$manual_occurrences = RecurrenceService::build_manual_occurrences(
-				$manual_master->start_datetime,
-				$manual_master->end_datetime,
-				$manual_dates
-			);
-			$recurrence_impact  = RecurrenceService::classify_change(
+			// only — reconcile_sessions() soft-cancels stale rows, so there's
+			// no destructive-change guard to gate this on.
+			$recurrence_impact = RecurrenceService::classify_manual_sessions_change(
 				$manual_master_id,
-				array_slice( $manual_occurrences, 1 )
+				$manual_sessions
 			);
 
-			RecurrenceService::set_manual_occurrences( $manual_master_id, $manual_dates );
+			RecurrenceService::set_manual_sessions( $manual_master_id, $manual_sessions );
 		}
 
 		// Handle categories parameter.
@@ -1746,6 +1807,7 @@ class EventDatesController extends WP_REST_Controller {
 					return array(
 						'id'             => $occ->id,
 						'start_datetime' => $occ->start_datetime,
+						'end_datetime'   => $occ->end_datetime,
 						'title'          => $occ->title,
 						'status'         => $occ->status,
 					);
