@@ -366,11 +366,6 @@ class EventDatesController extends WP_REST_Controller {
 				'sanitize_callback' => 'esc_url_raw',
 				'validate_callback' => array( $this, 'validate_joining_link' ),
 			),
-			'event_id'        => array(
-				'description' => __( 'Linked post ID.', 'fair-events' ),
-				'type'        => array( 'integer', 'null' ),
-				'required'    => false,
-			),
 			'rrule'           => array(
 				'description'       => __( 'Recurrence rule in RRULE format.', 'fair-events' ),
 				'type'              => array( 'string', 'null' ),
@@ -413,6 +408,14 @@ class EventDatesController extends WP_REST_Controller {
 		// For updates, title and start_datetime are optional.
 		$args['title']['required']          = false;
 		$args['start_datetime']['required'] = false;
+
+		// event_id only ever worked on update (create_item() never read it,
+		// and EventDates::create_standalone() hard-codes event_id => null).
+		$args['event_id'] = array(
+			'description' => __( 'Linked post ID.', 'fair-events' ),
+			'type'        => array( 'integer', 'null' ),
+			'required'    => false,
+		);
 
 		return $args;
 	}
@@ -604,12 +607,26 @@ class EventDatesController extends WP_REST_Controller {
 	 * Get event dates
 	 *
 	 * By default returns unlinked events. Pass include_linked=true to include all events.
-	 * Supports search, per_page, and include_sources parameters.
+	 * Supports search, per_page, and include_sources parameters. Pass event_id to
+	 * short-circuit to that event's dates (master + generated occurrences),
+	 * bypassing every other filter/pagination param.
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response Response object.
 	 */
 	public function get_items( $request ) {
+		$event_id = $request->get_param( 'event_id' );
+		if ( $event_id ) {
+			$event_dates = EventDates::get_all_by_event_id( (int) $event_id );
+
+			$items = array();
+			foreach ( $event_dates as $event_date ) {
+				$items[] = $this->prepare_event_date( $event_date );
+			}
+
+			return new WP_REST_Response( $items, 200 );
+		}
+
 		$include_linked  = $request->get_param( 'include_linked' );
 		$search          = $request->get_param( 'search' );
 		$per_page        = $request->get_param( 'per_page' );

@@ -145,7 +145,6 @@ test.describe('GetTicketsController — questionnaire_answers', () => {
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				event_id: eventPostId,
 				title: `Anon signup test ${Date.now()}`,
 				start_datetime: '2035-06-02 10:00:00',
 				end_datetime: '2035-06-02 12:00:00',

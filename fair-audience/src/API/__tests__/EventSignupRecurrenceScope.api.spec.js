@@ -363,7 +363,6 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 	let event;
 	let occurrenceIds;
 	let ttId;
-	let fixtureOk = true;
 
 	async function createRecurringEvent(title, rrule) {
 		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
@@ -376,7 +375,6 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: authHeaders,
 			data: {
-				event_id: eventId,
 				title,
 				start_datetime: '2035-04-02 10:00:00',
 				end_datetime: '2035-04-02 12:00:00',
@@ -385,6 +383,12 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 		});
 		expect(edRes.ok()).toBeTruthy();
 		const masterEventDateId = (await edRes.json()).id;
+
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{ headers: authHeaders, data: { event_id: eventId } }
+		);
+		expect(linkRes.ok()).toBeTruthy();
 
 		const occRes = await api.get(
 			`/wp-json/fair-events/v1/event-dates?event_id=${eventId}`,
@@ -440,13 +444,7 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 			`Multiple Instances Test ${Date.now()}`,
 			'FREQ=WEEKLY;COUNT=4'
 		);
-		// #1415 — the event_id list filter doesn't filter, so this count
-		// includes every event date in the test database; captured (not
-		// asserted) so every test below can skip with a reference.
-		fixtureOk = event.occurrences.length === 4;
-		if (!fixtureOk) {
-			return;
-		}
+		expect(event.occurrences.length).toBe(4);
 		occurrenceIds = event.occurrences;
 
 		ttId = await createMultiInstanceTicketType(event.masterEventDateId, 2);
@@ -470,10 +468,6 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 	});
 
 	test('below the configured minimum is rejected', async () => {
-		test.skip(
-			!fixtureOk,
-			'Skipped pending #1415 — event-dates list endpoint ignores the event_id filter'
-		);
 		const res = await api.post('/wp-json/fair-audience/v1/event-signup', {
 			headers: authHeaders,
 			data: {
@@ -489,10 +483,6 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 	});
 
 	test("an occurrence outside the ticket type's series is rejected", async () => {
-		test.skip(
-			!fixtureOk,
-			'Skipped pending #1415 — event-dates list endpoint ignores the event_id filter'
-		);
 		const otherEvent = await createRecurringEvent(
 			`Multiple Instances Foreign ${Date.now()}`,
 			'FREQ=WEEKLY;COUNT=2'
@@ -525,10 +515,6 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 	});
 
 	test('a valid selection creates one row per chosen occurrence', async () => {
-		test.skip(
-			!fixtureOk,
-			'Skipped pending #1415 — event-dates list endpoint ignores the event_id filter'
-		);
 		const chosen = [occurrenceIds[0], occurrenceIds[1]];
 		const res = await api.post('/wp-json/fair-audience/v1/event-signup', {
 			headers: authHeaders,
@@ -577,7 +563,6 @@ test.describe('multiple_instances via register_and_signup — public "I\'m new" 
 	let occurrenceIds;
 	let ttId;
 	let createdParticipantIds;
-	let fixtureOk = true;
 
 	async function createRecurringEvent(title, rrule) {
 		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
@@ -590,7 +575,6 @@ test.describe('multiple_instances via register_and_signup — public "I\'m new" 
 		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
 			headers: authHeaders,
 			data: {
-				event_id: eventId,
 				title,
 				start_datetime: '2035-05-02 10:00:00',
 				end_datetime: '2035-05-02 12:00:00',
@@ -599,6 +583,12 @@ test.describe('multiple_instances via register_and_signup — public "I\'m new" 
 		});
 		expect(edRes.ok()).toBeTruthy();
 		const masterEventDateId = (await edRes.json()).id;
+
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			{ headers: authHeaders, data: { event_id: eventId } }
+		);
+		expect(linkRes.ok()).toBeTruthy();
 
 		const occRes = await api.get(
 			`/wp-json/fair-events/v1/event-dates?event_id=${eventId}`,
@@ -658,13 +648,7 @@ test.describe('multiple_instances via register_and_signup — public "I\'m new" 
 			`Register Multi Instance Test ${Date.now()}`,
 			'FREQ=WEEKLY;COUNT=3'
 		);
-		// #1415 — the event_id list filter doesn't filter, so this count
-		// includes every event date in the test database; captured (not
-		// asserted) so the test below can skip with a reference.
-		fixtureOk = event.occurrences.length === 3;
-		if (!fixtureOk) {
-			return;
-		}
+		expect(event.occurrences.length).toBe(3);
 		occurrenceIds = event.occurrences;
 
 		// Free ticket type (no prices configured) — exercises the dispatch
@@ -687,10 +671,6 @@ test.describe('multiple_instances via register_and_signup — public "I\'m new" 
 	});
 
 	test('a brand-new buyer picking N occurrences gets one signup row per occurrence, not just one', async () => {
-		test.skip(
-			!fixtureOk,
-			'Skipped pending #1415 — event-dates list endpoint ignores the event_id filter'
-		);
 		const email = uniqueEmail('register-multi-instance');
 		const chosen = [occurrenceIds[0], occurrenceIds[2]];
 
