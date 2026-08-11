@@ -18,37 +18,11 @@ defined( 'WPINC' ) || die;
 
 use FairEvents\Helpers\DateHelper;
 use FairEvents\Helpers\EventSchema;
+use FairEvents\Helpers\WeekViewParam;
 use FairEvents\Services\EventFeedProvider;
 use FairEvents\Settings\Settings;
 
 // Helper functions — guarded so they compose safely with weekly-schedule on the same page.
-if ( ! function_exists( 'fair_events_parse_iso_week' ) ) {
-	function fair_events_parse_iso_week( $iso_week_string ) {
-		if ( ! preg_match( '/^(\d{4})-W(\d{2})$/', $iso_week_string, $matches ) ) {
-			return null;
-		}
-		$year = (int) $matches[1];
-		$week = (int) $matches[2];
-		if ( $year < 1900 || $year > 2100 || $week < 1 || $week > 53 ) {
-			return null;
-		}
-		return array(
-			'year' => $year,
-			'week' => $week,
-		);
-	}
-}
-
-if ( ! function_exists( 'fair_events_get_current_week' ) ) {
-	function fair_events_get_current_week() {
-		$now = new DateTime( 'now', new DateTimeZone( wp_timezone_string() ) );
-		return array(
-			'year' => (int) $now->format( 'o' ),
-			'week' => (int) $now->format( 'W' ),
-		);
-	}
-}
-
 if ( ! function_exists( 'fair_events_get_week_boundaries' ) ) {
 	function fair_events_get_week_boundaries( $year, $week, $start_of_week ) {
 		$date = new DateTime();
@@ -103,13 +77,13 @@ if ( ! function_exists( 'fair_events_convert_color_to_css' ) ) {
 // Resolve which week to show — URL param takes precedence over current week.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $url_week_param = isset( $_GET['week_view'] ) ? sanitize_text_field( wp_unslash( $_GET['week_view'] ) ) : '';
-$parsed         = fair_events_parse_iso_week( $url_week_param );
+$parsed         = WeekViewParam::parse( $url_week_param );
 
 if ( $parsed ) {
 	$year = $parsed['year'];
 	$week = $parsed['week'];
 } else {
-	$current = fair_events_get_current_week();
+	$current = WeekViewParam::current();
 	$year    = $current['year'];
 	$week    = $current['week'];
 }
@@ -215,8 +189,8 @@ $scroll_anchor_id = ! empty( $attributes['anchor'] ) ? $attributes['anchor'] : '
 
 $prev     = fair_events_offset_week( $year, $week, -1 );
 $next     = fair_events_offset_week( $year, $week, 1 );
-$prev_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $prev['year'], $prev['week'] ) ) . '#' . $scroll_anchor_id;
-$next_url = add_query_arg( 'week_view', sprintf( '%04d-W%02d', $next['year'], $next['week'] ) ) . '#' . $scroll_anchor_id;
+$prev_url = add_query_arg( 'week_view', WeekViewParam::format( $prev['year'], $prev['week'] ) ) . '#' . $scroll_anchor_id;
+$next_url = add_query_arg( 'week_view', WeekViewParam::format( $next['year'], $next['week'] ) ) . '#' . $scroll_anchor_id;
 
 // Build copy summary text.
 $summary_text = '';
