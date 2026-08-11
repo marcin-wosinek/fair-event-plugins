@@ -14,6 +14,7 @@ defined( 'WPINC' ) || die;
 use FairEvents\Helpers\CalendarMonthParam;
 use FairEvents\Helpers\EventSchema;
 use FairEvents\Services\EventFeedProvider;
+use FairEvents\Services\EventTranslation;
 use FairEvents\Settings\Settings;
 
 /**
@@ -277,6 +278,7 @@ $occurrences = $provider->get_occurrences(
 		'include_drafts'     => $show_drafts,
 	)
 );
+$occurrences = EventTranslation::translate_occurrences( $occurrences );
 
 $events_by_date = EventFeedProvider::group_by_day( $occurrences, $query_start, $query_end );
 

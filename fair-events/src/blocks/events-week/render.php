@@ -20,6 +20,7 @@ use FairEvents\Helpers\DateHelper;
 use FairEvents\Helpers\EventSchema;
 use FairEvents\Helpers\WeekViewParam;
 use FairEvents\Services\EventFeedProvider;
+use FairEvents\Services\EventTranslation;
 use FairEvents\Settings\Settings;
 
 // Helper functions — guarded so they compose safely with weekly-schedule on the same page.
@@ -120,6 +121,7 @@ $occurrences = $provider->get_occurrences(
 		'include_drafts'     => $show_drafts,
 	)
 );
+$occurrences = EventTranslation::translate_occurrences( $occurrences );
 
 $occurrences_by_date = EventFeedProvider::group_by_day( $occurrences, $week_start, $week_end );
 
