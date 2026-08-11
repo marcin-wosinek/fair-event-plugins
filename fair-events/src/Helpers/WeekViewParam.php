@@ -38,6 +38,18 @@ class WeekViewParam {
 			return null;
 		}
 
+		// Not every year has a 53rd ISO week. setISODate() silently rolls an
+		// out-of-range week over into the following year's week 1 instead of
+		// erroring, so round-trip and reject anything that didn't land back
+		// on the requested year/week (e.g. `2027-W53`, since 2027 only has
+		// 52 ISO weeks) — otherwise that param and next year's `-W01` would
+		// resolve to the same dates but mint two different canonical URLs.
+		$date = new \DateTime();
+		$date->setISODate( $year, $week );
+		if ( (int) $date->format( 'o' ) !== $year || (int) $date->format( 'W' ) !== $week ) {
+			return null;
+		}
+
 		return array(
 			'year' => $year,
 			'week' => $week,
