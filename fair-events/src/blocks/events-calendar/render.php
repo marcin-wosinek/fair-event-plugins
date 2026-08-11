@@ -11,6 +11,7 @@
 
 defined( 'WPINC' ) || die;
 
+use FairEvents\Helpers\CalendarMonthParam;
 use FairEvents\Helpers\EventSchema;
 use FairEvents\Services\EventFeedProvider;
 use FairEvents\Settings\Settings;
@@ -226,21 +227,25 @@ $bg_color_value   = fair_events_convert_color_to_css( $bg_color );
 $text_color_value = fair_events_convert_color_to_css( $text_color );
 $header_bg_value  = fair_events_convert_color_to_css( $header_bg_color );
 
-// Get month/year from URL parameters or block attributes
-// URL params take precedence (for navigation), then block attributes, then current date
-$url_month     = isset( $_GET['calendar_month'] ) ? sanitize_text_field( $_GET['calendar_month'] ) : '';
-$url_year      = isset( $_GET['calendar_year'] ) ? sanitize_text_field( $_GET['calendar_year'] ) : '';
-$current_month = $url_month ?: ( $attributes['currentMonth'] ?: current_time( 'm' ) );
-$current_year  = $url_year ?: ( $attributes['currentYear'] ?: current_time( 'Y' ) );
+// Get month/year from URL parameters or block attributes.
+// URL params take precedence (for navigation), then block attributes, then current date.
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$url_month = isset( $_GET['calendar_month'] ) ? sanitize_text_field( wp_unslash( $_GET['calendar_month'] ) ) : '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$url_year = isset( $_GET['calendar_year'] ) ? sanitize_text_field( wp_unslash( $_GET['calendar_year'] ) ) : '';
 
-// Validate month (01-12)
-if ( ! preg_match( '/^(0[1-9]|1[0-2])$/', $current_month ) ) {
-	$current_month = current_time( 'm' );
-}
+$month_raw = $url_month ?: ( $attributes['currentMonth'] ?: '' );
+$year_raw  = $url_year ?: ( $attributes['currentYear'] ?: '' );
 
-// Validate year (1900-2100)
-if ( ! preg_match( '/^\d{4}$/', $current_year ) || $current_year < 1900 || $current_year > 2100 ) {
-	$current_year = current_time( 'Y' );
+$parsed = CalendarMonthParam::parse( (string) $month_raw, (string) $year_raw );
+
+if ( $parsed ) {
+	$current_month = $parsed['month'];
+	$current_year  = $parsed['year'];
+} else {
+	$now           = CalendarMonthParam::current();
+	$current_month = $now['month'];
+	$current_year  = $now['year'];
 }
 
 // Calculate grid structure early (needed for query range)
