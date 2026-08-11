@@ -26,7 +26,21 @@ class OccurrenceDateParam {
 	 * @return string Date in `Y-m-d` format.
 	 */
 	public static function format( EventDates $row ): string {
-		return gmdate( 'Y-m-d', strtotime( $row->start_datetime ) );
+		return self::format_datetime( $row->start_datetime );
+	}
+
+	/**
+	 * Format a raw naive start datetime for use as the public URL param.
+	 *
+	 * Same rule as format(), for callers (e.g. EventTranslation) that only
+	 * have an occurrence DTO's `start` string, not the EventDates row it
+	 * came from.
+	 *
+	 * @param string $start_datetime Naive 'Y-m-d H:i:s' datetime.
+	 * @return string Date in `Y-m-d` format.
+	 */
+	public static function format_datetime( string $start_datetime ): string {
+		return gmdate( 'Y-m-d', strtotime( $start_datetime ) );
 	}
 
 	/**
