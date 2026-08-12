@@ -485,7 +485,7 @@ msgstr "ID de perfil:"
 
 #: src/Admin/settings/ConnectionTab.js:459
 msgid "Missing (required for payments)"
-msgstr "Falta (requerido para pagos)"
+msgstr "Falta (obligatorio para los pagos)"
 
 #: src/Admin/settings/ConnectionTab.js:474
 msgid "Please reconnect to Mollie to fetch the profile ID."
@@ -862,7 +862,7 @@ msgstr "Cancelado"
 
 #: src/Admin/transactions/TransactionsApp.js:30
 msgid "Expired"
-msgstr "Expirado"
+msgstr "Caducado"
 
 #: src/Admin/transactions/TransactionsApp.js:31
 msgid "Draft"
@@ -1007,7 +1007,7 @@ msgstr "¡Gracias! Tu pago ha sido recibido y confirmado."
 
 #: src/blocks/simple-payment/render.php:68
 msgid "Your payment was not completed. Please try again."
-msgstr "Tu pago no se completó. Intenta de nuevo."
+msgstr "Tu pago no se ha completado. Inténtalo de nuevo."
 
 #: src/blocks/simple-payment/render.php:78
 msgid "Try Again"
@@ -1019,7 +1019,7 @@ msgstr "Moneda por defecto para todas las transacciones"
 
 #: src/Admin/settings/ConnectionTab.js:169
 msgid "Failed to initiate Mollie connection. Please try again."
-msgstr "Error al iniciar la conexión con Mollie. Intenta de nuevo."
+msgstr "Error al iniciar la conexión con Mollie. Inténtalo de nuevo."
 
 #: src/Admin/settings/CurrencyTab.js:58
 msgid "Failed to load currency settings."
@@ -1094,11 +1094,11 @@ msgstr "Registro de pagos"
 
 #: src/Payment/PaymentGatewayError.php:135
 msgid "Mollie dashboard"
-msgstr "Panel de Mollie"
+msgstr "Escritorio de Mollie"
 
 #: src/Payment/PaymentGatewayError.php:140
 msgid "The connected Mollie profile has no suitable payment method enabled."
-msgstr "El perfil de Mollie conectado no tiene ningún método de pago adecuado habilitado."
+msgstr "El perfil de Mollie conectado no tiene ningún método de pago adecuado activado."
 
 #: src/Payment/PaymentGatewayError.php:146
 msgid "The payment gateway rejected the request. See the payment log for technical details."
@@ -1110,7 +1110,7 @@ msgstr "No se pudieron cargar los métodos de pago."
 
 #: src/Admin/settings/ConnectionTab.js:347
 msgid "You are in live mode. This creates a real 1-unit payment with real money and gateway fees. Continue?"
-msgstr "Estás en modo en vivo. Esto crea un pago real de 1 unidad con dinero real y comisiones de pasarela. ¿Continuar?"
+msgstr "Estás en modo en vivo. Esto crea un pago real de 1 unidad con dinero real y cuota de pasarela. ¿Continuar?"
 
 #: src/Admin/settings/ConnectionTab.js:365
 msgid "Test payment created. Complete or cancel the checkout in the new tab; its status updates automatically."
@@ -1122,7 +1122,7 @@ msgstr "No se pudo crear el pago de prueba."
 
 #: src/Admin/settings/ConnectionTab.js:490
 msgid "Loading payment methods…"
-msgstr "Cargando métodos de pago…"
+msgstr "Cargando los métodos de pago…"
 
 #: src/Admin/settings/ConnectionTab.js:510
 msgid "Profile name:"
@@ -1130,15 +1130,15 @@ msgstr "Nombre del perfil:"
 
 #: src/Admin/settings/ConnectionTab.js:520
 msgid "Enabled payment methods:"
-msgstr "Métodos de pago habilitados:"
+msgstr "Métodos de pago activados:"
 
 #: src/Admin/settings/ConnectionTab.js:559
 msgid "No payment methods are currently enabled."
-msgstr "Actualmente no hay métodos de pago habilitados."
+msgstr "Actualmente no hay métodos de pago activados."
 
 #: src/Admin/settings/ConnectionTab.js:572
 msgid "Manage payment methods in Mollie"
-msgstr "Gestionar métodos de pago en Mollie"
+msgstr "Gestionar los métodos de pago en Mollie"
 
 #: src/Admin/settings/ConnectionTab.js:669
 msgid "Test payment"
@@ -1146,11 +1146,11 @@ msgstr "Pago de prueba"
 
 #: src/Admin/settings/ConnectionTab.js:671
 msgid "Make a small payment (one unit of your currency, e.g. €1) to check that checkout and confirmation work from start to finish."
-msgstr "Realiza un pequeño pago (una unidad de tu moneda, p. ej. €1) para comprobar que el pago y la confirmación funcionan de principio a fin."
+msgstr "Realiza un pequeño pago (una unidad de tu moneda, p. ej. 1 €) para comprobar que el pago y la confirmación funcionan de principio a fin."
 
 #: src/Admin/settings/ConnectionTab.js:680
 msgid "Live mode: this creates a real payment with real money and gateway fees."
-msgstr "Modo en vivo: esto crea un pago real con dinero real y comisiones de pasarela."
+msgstr "Modo en producción: esto crea un pago real con dinero real y cuotas de pasarela."
 
 #: src/Admin/settings/ConnectionTab.js:684
 msgid "Test mode: no real money is charged."
@@ -1158,7 +1158,7 @@ msgstr "Modo de prueba: no se cobra dinero real."
 
 #: src/Admin/settings/ConnectionTab.js:693
 msgid "Test payment created. If the checkout did not open in a new tab, "
-msgstr "Pago de prueba creado. Si el formulario de pago no se abrió en una pestaña nueva, "
+msgstr "Pago de prueba creado. Si el pago no se abrió en una pestaña nueva, "
 
 #: src/Admin/settings/ConnectionTab.js:702
 msgid "open it here."
@@ -1178,7 +1178,7 @@ msgstr "Traducciones"
 
 #: src/blocks/simple-payment/index.js:100
 msgid "This block is missing an identifier and payments will fail until the post is saved. Save or update the post now."
-msgstr "Este bloque no tiene un identificador y los pagos fallarán hasta que guardes la entrada. Guarda o actualiza la entrada ahora."
+msgstr "En este bloque, falta un identificador y los pagos fallarán hasta que guardes la entrada. Guarda o actualiza la entrada ahora."
 
 #: src/Admin/ApiKeyRemovedNotice.php:71
 msgid "Your stored Mollie API key was removed. Complete the guided connection to keep accepting payments."

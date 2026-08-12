@@ -23,11 +23,6 @@ msgstr "Fair Events Experimental"
 msgid "https://github.com/marcin-wosinek/fair-event-plugins"
 msgstr ""
 
-#. Description of the plugin
-#: fair-events-experimental.php
-msgid "Activates advanced feature bundles for Fair Events (galleries, sources, ticketing, event-tools, migration, venues). Requires fair-events."
-msgstr "Activa paquetes de funciones avanzadas para Fair Events (galerías, fuentes, venta de entradas, herramientas de eventos, migración, lugares). Requiere fair-events."
-
 #. Author of the plugin
 #: fair-events-experimental.php
 msgid "Marcin Wosinek"
@@ -76,155 +71,89 @@ msgstr "Ver fuente"
 
 #: src/Admin/AdminPages.php:113
 #: src/Admin/AdminPages.php:114
-#: src/Core/Features.php:173
-msgid "Venues"
-msgstr "Lugares"
-
-#: src/Admin/AdminPages.php:125
-#: src/Admin/AdminPages.php:126
-#: src/Admin/AdminPages.php:132
+#: src/Admin/AdminPages.php:120
 msgid "Event Statistics"
 msgstr "Estadísticas de eventos"
 
-#: src/Admin/AdminPages.php:139
-#: src/Admin/AdminPages.php:140
-#: src/Admin/AdminPages.php:146
+#: src/Admin/AdminPages.php:127
+#: src/Admin/AdminPages.php:128
+#: src/Admin/AdminPages.php:134
 msgid "Copy Event"
 msgstr "Copiar evento"
 
-#: src/Admin/AdminPages.php:154
-#: src/Admin/AdminPages.php:155
-#: src/Admin/AdminPages.php:161
+#: src/Admin/AdminPages.php:142
+#: src/Admin/AdminPages.php:143
+#: src/Admin/AdminPages.php:149
 #: src/Admin/manage-event-ext/index.js:67
 #: src/Admin/manage-event/DuplicateEventWizard.js:606
 msgid "Duplicate Event"
 msgstr "Duplicar evento"
 
-#: src/Admin/AdminPages.php:165
-#: src/Admin/AdminPages.php:166
-#: src/Admin/AdminPages.php:172
+#: src/Admin/AdminPages.php:153
+#: src/Admin/AdminPages.php:154
+#: src/Admin/AdminPages.php:160
 #: src/Admin/manage-event-ext/index.js:88
 #: src/Admin/manage-event/MergeEventWizard.js:429
 msgid "Merge Event"
 msgstr "Fusionar evento"
 
-#: src/Admin/AdminPages.php:542
+#: src/Admin/AdminPages.php:512
 msgid "Copy"
 msgstr "Copiar"
 
-#: src/Admin/AdminPages.php:545
+#: src/Admin/AdminPages.php:515
 msgid "Copy this event"
 msgstr "Copiar este evento"
 
-#: src/API/VenueController.php:70
-#: src/API/VenueController.php:87
-msgid "Unique identifier for the venue."
-msgstr "Identificador único del lugar."
-
-#: src/API/VenueController.php:104
-msgid "Venue name."
-msgstr "Nombre del lugar."
-
-#: src/API/VenueController.php:110
-msgid "Venue address."
-msgstr "Dirección del lugar."
-
-#: src/API/VenueController.php:116
-msgid "Latitude coordinate."
-msgstr "Coordenada de latitud."
-
-#: src/API/VenueController.php:122
-msgid "Longitude coordinate."
-msgstr "Coordenada de longitud."
-
-#: src/API/VenueController.php:128
-msgid "Facebook page URL."
-msgstr "URL de página de Facebook."
-
-#: src/API/VenueController.php:134
-msgid "Instagram handle (without @)."
-msgstr "Nombre de usuario de Instagram (sin @)."
-
-#: src/API/VenueController.php:140
-msgid "Website URL."
-msgstr "URL del sitio web."
-
-#: src/API/VenueController.php:180
-#: src/API/VenueController.php:258
-#: src/API/VenueController.php:311
-msgid "Venue not found."
-msgstr "Lugar no encontrado."
-
-#: src/API/VenueController.php:206
-#: src/API/VenueController.php:266
-msgid "Venue name is required."
-msgstr "El nombre del lugar es obligatorio."
-
-#: src/API/VenueController.php:227
-msgid "Failed to create venue."
-msgstr "No se pudo crear el lugar."
-
-#: src/API/VenueController.php:287
-msgid "Failed to update venue."
-msgstr "No se pudo actualizar el lugar."
-
-#: src/API/VenueController.php:321
-msgid "Failed to delete venue."
-msgstr "No se pudo eliminar el lugar."
-
-#: src/Core/Features.php:153
+#: src/Core/Features.php:148
 msgid "Galleries"
 msgstr "Galerías"
 
-#: src/Core/Features.php:154
+#: src/Core/Features.php:149
 msgid "Per-event photo galleries, photo likes/downloads, image exports, media library hooks."
 msgstr "Galerías de fotos por evento, me gusta/descargas de fotos, exportación de imágenes, hooks de biblioteca de medios."
 
-#: src/Core/Features.php:157
+#: src/Core/Features.php:152
 msgid "Event sources & feeds"
 msgstr "Fuentes y feeds de eventos"
 
-#: src/Core/Features.php:158
+#: src/Core/Features.php:153
 msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
 msgstr "Fuentes de eventos externos, importación de Facebook, feeds iCal/JSON, propuestas de eventos, programación semanal."
 
-#: src/Core/Features.php:161
+#: src/Core/Features.php:156
 msgid "Ticketing"
 msgstr "Venta de entradas"
 
-#: src/Core/Features.php:165
+#: src/Core/Features.php:160
 msgid "Event tools"
 msgstr "Herramientas de eventos"
 
-#: src/Core/Features.php:166
+#: src/Core/Features.php:161
 msgid "Event duplication, merge, and admin-bar Copy button."
 msgstr "Duplicación de eventos, fusión y botón Copiar en la barra de administración."
 
-#: src/Core/Features.php:169
+#: src/Core/Features.php:164
 msgid "Migration"
 msgstr "Migración"
 
-#: src/Core/Features.php:170
+#: src/Core/Features.php:165
 msgid "One-time post → event migration tooling."
 msgstr "Herramienta de migración de entradas a eventos de una sola vez."
 
-#: src/Core/Features.php:174
-msgid "Venues admin page and REST controller."
-msgstr "Página de administración de lugares y controlador REST."
-
-#: src/Core/Features.php:177
+#: src/Core/Features.php:168
 msgid "Audience statistics"
 msgstr "Estadísticas de audiencia"
 
-#: src/Core/Features.php:178
+#: src/Core/Features.php:169
 msgid "Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience."
 msgstr "Gráficos de estadísticas por evento (desglose de actividad, tiempo de venta). Requiere fair-audience."
 
-#: src/Core/Features.php:181
+#: src/Core/Features.php:172
 msgid "Mailings"
 msgstr "Envíos de correo"
 
-#: src/Core/Features.php:182
+#: src/Core/Features.php:173
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr "Envíos de correo electrónico programados para asistentes al evento. Requiere fair-audience."
 
@@ -668,27 +597,12 @@ msgstr "Crea una copia de este evento con los mismos detalles, enlaces y ajustes
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr "Fusiona este evento con otra fecha de evento, moviendo o limpiando todos los datos vinculados."
 
-#: src/Core/Features.php:162
+#: src/Core/Features.php:157
 msgid "Tickets, group pricing/permission rules. Requires fair-audience."
 msgstr "Entradas, reglas de precios de grupo/permisos. Requiere fair-audience."
 
-#: src/Models/Venue.php:396
-msgid "Enter both latitude and longitude, or leave both blank."
-msgstr "Introduce tanto la latitud como la longitud, o deja ambas en blanco."
-
-#: src/Models/Venue.php:404
-msgid "Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204."
-msgstr "La latitud y la longitud deben ser números, p. ej. 39.4878023, -0.3613204."
-
-#: src/Models/Venue.php:412
-msgid "Latitude must be between -90 and 90."
-msgstr "La latitud debe estar entre -90 y 90."
-
-#: src/Models/Venue.php:420
-msgid "Longitude must be between -180 and 180."
-msgstr "La longitud debe estar entre -180 y 180."
-
-#: src/Models/Venue.php:428
-msgid "Latitude and longitude must be 20 characters or fewer."
-msgstr "La latitud y la longitud deben tener 20 caracteres o menos."
+#. Description of the plugin
+#: fair-events-experimental.php
+msgid "Activates advanced feature bundles for Fair Events (galleries, sources, ticketing, event-tools, migration). Requires fair-events."
+msgstr "Activa paquetes de funciones avanzadas para Fair Events (galerías, fuentes, venta de entradas, herramientas de eventos, migración). Requiere fair-events."
 

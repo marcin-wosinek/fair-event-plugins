@@ -29,6 +29,10 @@ export const config = {
 			name: 'fair-audience-experimental',
 			textDomain: 'fair-audience-experimental',
 		},
+		{
+			name: 'fair-calendar-button',
+			textDomain: 'fair-calendar-button',
+		},
 	],
 
 	// Supported locales

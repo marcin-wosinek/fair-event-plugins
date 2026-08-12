@@ -1192,4 +1192,3 @@ msgstr "Diese Zahlungsoption ist nicht richtig konfiguriert. Bitte kontaktiere d
 #: src/blocks/simple-payment/index.js:108
 msgid "This block shared its identifier with another Simple Payment block on this page, which could cause buyers to be charged the wrong price. A new identifier was assigned — save or update the post now."
 msgstr "Dieser Block hat seine Kennung mit einem anderen Simple Payment Block auf dieser Seite geteilt, was dazu führen könnte, dass Käufer den falschen Preis berechnet bekommen. Eine neue Kennung wurde zugewiesen — speichere oder aktualisiere den Beitrag jetzt."
-

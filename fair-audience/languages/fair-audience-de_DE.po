@@ -62,14 +62,14 @@ msgstr "Veranstaltungsteilnehmer"
 #: src/API/EventParticipantsController.php:386
 #: src/API/EventParticipantsController.php:649
 #: src/API/EventParticipantsController.php:1468
-#: src/API/EventSignupController.php:468
-#: src/API/EventSignupController.php:613
-#: src/API/EventSignupController.php:1081
-#: src/API/EventSignupController.php:2125
-#: src/API/EventSignupController.php:2328
-#: src/API/EventSignupController.php:2520
-#: src/API/EventSignupController.php:2648
-#: src/API/EventSignupController.php:2949
+#: src/API/EventSignupController.php:470
+#: src/API/EventSignupController.php:615
+#: src/API/EventSignupController.php:1083
+#: src/API/EventSignupController.php:2135
+#: src/API/EventSignupController.php:2338
+#: src/API/EventSignupController.php:2530
+#: src/API/EventSignupController.php:2667
+#: src/API/EventSignupController.php:2968
 #: src/Services/EmailService.php:337
 #: src/Services/EmailService.php:561
 #: src/Services/EmailService.php:1401
@@ -175,8 +175,8 @@ msgstr "Name"
 
 #: src/blocks/audience-signup/render.php:217
 #: src/blocks/event-interest/render.php:122
-#: src/blocks/event-signup/render.php:1333
-#: src/blocks/event-signup/render.php:1388
+#: src/blocks/event-signup/render.php:1339
+#: src/blocks/event-signup/render.php:1394
 #: src/blocks/mailing-signup/render.php:125
 #: src/Services/EmailService.php:1921
 #: src/Admin/all-participants/AllParticipants.js:108
@@ -316,7 +316,7 @@ msgstr "Kurze Frage zu %s"
 #: src/Services/EmailService.php:2982
 #: src/Services/EmailService.php:3076
 #: src/Admin/event-participants/EventParticipants.js:1192
-#, php-format, js-format
+#, php-format,js-format
 msgid "Hi %s,"
 msgstr "Hallo %s,"
 
@@ -370,7 +370,7 @@ msgstr "Falls der Button oben nicht funktioniert, kopieren und fügen Sie diesen
 msgid "wp_mail() failed to send."
 msgstr "wp_mail() konnte keine E-Mail senden."
 
-#: src/blocks/event-signup/render.php:1321
+#: src/blocks/event-signup/render.php:1327
 #: src/Admin/components/ParticipantEditModal.js:170
 #: src/blocks/event-signup/editor.js:123
 msgid "Surname"
@@ -470,16 +470,16 @@ msgstr "Teilnehmer-ID %d nicht gefunden"
 
 #: src/API/AudienceSignupController.php:204
 #: src/API/EventInterestController.php:156
-#: src/API/EventSignupController.php:2134
-#: src/API/EventSignupController.php:2666
+#: src/API/EventSignupController.php:2144
+#: src/API/EventSignupController.php:2685
 #: src/API/MailingSignupController.php:172
 msgid "Please enter a valid email address."
 msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein."
 
 #: src/API/AudienceSignupController.php:223
 #: src/API/EventInterestController.php:182
-#: src/API/EventSignupController.php:2143
-#: src/API/EventSignupController.php:2705
+#: src/API/EventSignupController.php:2153
+#: src/API/EventSignupController.php:2724
 #: src/API/MailingSignupController.php:192
 msgid "Too many requests. Please try again later."
 msgstr "Zu viele Anfragen. Bitte versuchen Sie es später erneut."
@@ -536,14 +536,14 @@ msgid "Subscribe"
 msgstr "Abonnieren"
 
 #: src/blocks/audience-signup/render.php:192
-#: src/blocks/event-signup/render.php:1308
+#: src/blocks/event-signup/render.php:1314
 #: src/blocks/mailing-signup/render.php:99
 #: src/blocks/event-signup/editor.js:119
 msgid "First Name"
 msgstr "Vorname"
 
 #: src/blocks/audience-signup/render.php:199
-#: src/blocks/event-signup/render.php:1315
+#: src/blocks/event-signup/render.php:1321
 #: src/blocks/mailing-signup/render.php:106
 msgid "Enter your first name"
 msgstr "Geben Sie Ihren Vornamen ein"
@@ -559,8 +559,8 @@ msgid "Enter your last name"
 msgstr "Geben Sie Ihren Nachnamen ein"
 
 #: src/blocks/audience-signup/render.php:224
-#: src/blocks/event-signup/render.php:1340
-#: src/blocks/event-signup/render.php:1395
+#: src/blocks/event-signup/render.php:1346
+#: src/blocks/event-signup/render.php:1401
 #: src/blocks/mailing-signup/render.php:132
 msgid "Enter your email"
 msgstr "Geben Sie Ihre E-Mail-Adresse ein"
@@ -574,7 +574,7 @@ msgstr "Fotos von %s sind fertig!"
 #. translators: %s: event title
 #: src/Services/EmailService.php:455
 #: src/Admin/event-participants/EventParticipants.js:1204
-#, php-format, js-format
+#, php-format,js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "Die Fotos von %s sind jetzt für Sie zum Ansehen und Liken verfügbar!"
 
@@ -896,43 +896,43 @@ msgstr "Galerielink an alle senden"
 msgid "Groups"
 msgstr "Gruppen"
 
-#: src/API/EventSignupController.php:447
+#: src/API/EventSignupController.php:449
 msgid "You must be logged in or have a valid signup link."
 msgstr "Sie müssen angemeldet sein oder einen gültigen Anmeldelink haben."
 
-#: src/API/EventSignupController.php:642
-#: src/API/EventSignupController.php:1109
-#: src/API/EventSignupController.php:2978
+#: src/API/EventSignupController.php:644
+#: src/API/EventSignupController.php:1111
+#: src/API/EventSignupController.php:2997
 msgid "Could not find your participant profile."
 msgstr "Ihr Teilnehmerprofil konnte nicht gefunden werden."
 
-#: src/API/EventSignupController.php:726
-#: src/API/EventSignupController.php:2356
-#: src/API/EventSignupController.php:2782
+#: src/API/EventSignupController.php:728
+#: src/API/EventSignupController.php:2366
+#: src/API/EventSignupController.php:2801
 msgid "You are already signed up for this event."
 msgstr "Sie sind bereits für diese Veranstaltung angemeldet."
 
-#: src/API/EventSignupController.php:777
-#: src/API/EventSignupController.php:919
+#: src/API/EventSignupController.php:779
+#: src/API/EventSignupController.php:921
 #: src/blocks/event-signup/render.php:66
 #: src/blocks/event-signup/frontend.js:961
 #: src/blocks/event-signup/frontend.js:1271
 msgid "You have successfully signed up for the event!"
 msgstr "Sie haben sich erfolgreich für die Veranstaltung angemeldet!"
 
-#: src/API/EventSignupController.php:2175
+#: src/API/EventSignupController.php:2185
 msgid "If your email is in our system, you will receive a signup link shortly. Please check your inbox."
 msgstr "Wenn Ihre E-Mail in unserem System ist, erhalten Sie gleich einen Anmeldelink. Bitte überprüfen Sie Ihren Posteingang."
 
-#: src/API/EventSignupController.php:2675
+#: src/API/EventSignupController.php:2694
 msgid "Please enter your name."
 msgstr "Bitte geben Sie Ihren Namen ein."
 
-#: src/API/EventSignupController.php:2809
+#: src/API/EventSignupController.php:2828
 msgid "Failed to process registration. Please try again."
 msgstr "Die Registrierung konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut."
 
-#: src/API/EventSignupController.php:2927
+#: src/API/EventSignupController.php:2946
 msgid "You have successfully registered and signed up for the event!"
 msgstr "Sie haben sich erfolgreich registriert und für die Veranstaltung angemeldet!"
 
@@ -947,7 +947,7 @@ msgid "This WordPress user is already linked to another participant."
 msgstr "Dieser WordPress-Benutzer ist bereits mit einem anderen Teilnehmer verknüpft."
 
 #: src/blocks/event-signup/render.php:63
-#: src/blocks/event-signup/render.php:1037
+#: src/blocks/event-signup/render.php:1043
 #: src/blocks/event-signup/editor.js:96
 #: src/blocks/event-signup/frontend.js:472
 #: src/blocks/event-signup/frontend.js:506
@@ -956,7 +956,7 @@ msgid "Sign Up"
 msgstr "Anmelden"
 
 #: src/blocks/event-signup/render.php:64
-#: src/blocks/event-signup/render.php:1038
+#: src/blocks/event-signup/render.php:1044
 #: src/blocks/event-signup/editor.js:147
 #: src/blocks/event-signup/frontend.js:475
 #: src/blocks/event-signup/frontend.js:509
@@ -968,47 +968,47 @@ msgid "Send Signup Link"
 msgstr "Anmeldelink senden"
 
 #: src/blocks/event-interest/render.php:115
-#: src/blocks/event-signup/render.php:1065
+#: src/blocks/event-signup/render.php:1071
 msgid "This block can only be used on event pages."
 msgstr "Dieser Block kann nur auf Ereignisseiten verwendet werden."
 
-#: src/blocks/event-signup/render.php:1193
+#: src/blocks/event-signup/render.php:1199
 #: src/blocks/event-signup/frontend.js:1140
 #: src/blocks/event-signup/frontend.js:1403
 msgid "You are signed up for this event!"
 msgstr "Sie sind für dieses Ereignis angemeldet!"
 
 #. translators: %s: participant name
-#: src/blocks/event-signup/render.php:1214
+#: src/blocks/event-signup/render.php:1220
 #, php-format
 msgid "Hi %s! Click the button below to sign up for this event."
 msgstr "Hallo %s! Klicken Sie auf die Schaltfläche unten, um sich für dieses Ereignis anzumelden."
 
 #. translators: %s: participant name
-#: src/blocks/event-signup/render.php:1220
+#: src/blocks/event-signup/render.php:1226
 #: src/blocks/event-signup/frontend.js:1671
-#, php-format, js-format
+#, php-format,js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "Hallo %s! Sie können sich für dieses Ereignis anmelden."
 
-#: src/blocks/event-signup/render.php:1293
+#: src/blocks/event-signup/render.php:1299
 msgid "I'm new"
 msgstr "Ich bin neu"
 
-#: src/blocks/event-signup/render.php:1296
+#: src/blocks/event-signup/render.php:1302
 msgid "I have an account"
 msgstr "Ich habe ein Konto"
 
-#: src/blocks/event-signup/render.php:1327
+#: src/blocks/event-signup/render.php:1333
 msgid "Enter your surname"
 msgstr "Geben Sie Ihren Nachnamen ein"
 
 #: src/blocks/audience-signup/render.php:386
-#: src/blocks/event-signup/render.php:1347
+#: src/blocks/event-signup/render.php:1353
 msgid "Keep me informed about future events"
 msgstr "Halten Sie mich über zukünftige Veranstaltungen auf dem Laufenden"
 
-#: src/blocks/event-signup/render.php:1384
+#: src/blocks/event-signup/render.php:1390
 msgid "Enter your email to receive a signup link."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um einen Anmeldelink zu erhalten."
 
@@ -1332,12 +1332,12 @@ msgstr "Gebühr nicht gefunden."
 msgid "Could not read SVG file."
 msgstr "SVG-Datei konnte nicht gelesen werden."
 
-#: src/Hooks/PaymentHooks.php:832
+#: src/Hooks/PaymentHooks.php:834
 msgid "Paid online via Mollie"
 msgstr "Online bezahlt via Mollie"
 
 #. translators: %1$s: Mollie status, %2$d: transaction ID
-#: src/Hooks/PaymentHooks.php:876
+#: src/Hooks/PaymentHooks.php:878
 #, php-format
 msgid "Online payment %1$s (transaction #%2$d)"
 msgstr "Online-Zahlung %1$s (Transaktions-Nr. %2$d)"
@@ -1737,7 +1737,7 @@ msgstr "Sie wurden erfolgreich registriert!"
 msgid "Audience Signup"
 msgstr "Audience Signup"
 
-#: src/API/EventSignupController.php:2918
+#: src/API/EventSignupController.php:2937
 msgid "You have been signed up for the event! Please check your email to confirm your subscription."
 msgstr "Sie haben sich für die Veranstaltung angemeldet! Bitte überprüfen Sie Ihre E-Mail, um Ihr Abonnement zu bestätigen."
 
@@ -1944,17 +1944,17 @@ msgctxt "block keyword"
 msgid "member"
 msgstr "Mitglied"
 
-#: src/API/EventSignupController.php:2999
+#: src/API/EventSignupController.php:3018
 msgid "You are not signed up for this event."
 msgstr "Sie sind nicht für diese Veranstaltung angemeldet."
 
-#: src/API/EventSignupController.php:3015
+#: src/API/EventSignupController.php:3034
 #: src/blocks/event-signup/frontend.js:1640
 msgid "You have been removed from this event."
 msgstr "Sie wurden aus dieser Veranstaltung entfernt."
 
-#: src/blocks/event-signup/render.php:1279
-#: src/Hooks/SignupHookBridge.php:362
+#: src/blocks/event-signup/render.php:1285
+#: src/Hooks/SignupHookBridge.php:373
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2369
 #: src/blocks/event-signup/frontend.js:1411
 msgid "Cancel signup"
@@ -1974,9 +1974,9 @@ msgstr "Kein Veranstaltungsdatum für diese Veranstaltung gefunden"
 
 #: src/blocks/audience-signup/render.php:393
 #: src/blocks/event-interest/render.php:161
-#: src/blocks/event-signup/render.php:1359
+#: src/blocks/event-signup/render.php:1365
 #: src/blocks/mailing-signup/render.php:156
-#: src/Hooks/SignupHookBridge.php:390
+#: src/Hooks/SignupHookBridge.php:401
 msgid "Not you? Start fresh"
 msgstr "Nicht Sie? Von vorne beginnen"
 
@@ -2075,60 +2075,59 @@ msgstr "Datei ansehen"
 msgid "Failed to update attendance."
 msgstr "Anwesenheit konnte nicht aktualisiert werden."
 
-#: src/API/EventSignupController.php:1348
 #: src/Services/GroupSignupPricing.php:113
 msgid "This ticket type is not available for your account."
 msgstr "Dieser Tickettyp ist für Ihr Konto nicht verfügbar."
 
-#: src/API/EventSignupController.php:1829
+#: src/API/EventSignupController.php:1843
 msgid "This event is fully booked."
 msgstr "Diese Veranstaltung ist vollständig ausgebucht."
 
 #. translators: %s: event title or occurrence date/time label
-#: src/API/EventSignupController.php:985
-#: src/API/EventSignupController.php:999
-#: src/API/EventSignupController.php:1861
+#: src/API/EventSignupController.php:987
+#: src/API/EventSignupController.php:1001
+#: src/API/EventSignupController.php:1875
 #, php-format
 msgid "Signup for %s"
 msgstr "Anmeldung für %s"
 
-#: src/API/EventSignupController.php:1052
-#: src/API/EventSignupController.php:1310
-#: src/API/EventSignupController.php:1953
-#: src/API/EventSignupController.php:2100
-#: src/API/EventSignupController.php:2477
-#: src/API/EventSignupController.php:2618
+#: src/API/EventSignupController.php:1054
+#: src/API/EventSignupController.php:1320
+#: src/API/EventSignupController.php:1963
+#: src/API/EventSignupController.php:2110
+#: src/API/EventSignupController.php:2487
+#: src/API/EventSignupController.php:2637
 #: src/blocks/event-signup/frontend.js:1080
 #: src/blocks/event-signup/frontend.js:1362
 msgid "Redirecting to payment…"
 msgstr "Weiterleitung zur Zahlung…"
 
-#: src/blocks/event-signup/render.php:677
+#: src/blocks/event-signup/render.php:683
 #: src/blocks/event-signup/frontend.js:537
 msgid "Sign up for free"
 msgstr "Kostenlos anmelden"
 
-#: src/blocks/event-signup/render.php:678
+#: src/blocks/event-signup/render.php:684
 #: src/blocks/event-signup/frontend.js:538
 msgid "Register for free"
 msgstr "Kostenlos registrieren"
 
-#: src/blocks/event-signup/render.php:748
+#: src/blocks/event-signup/render.php:754
 msgid "Choose ticket type"
 msgstr "Tickettyp wählen"
 
-#: src/blocks/event-signup/render.php:759
-#: src/blocks/event-signup/render.php:847
-#: src/blocks/event-signup/render.php:909
-#: src/Hooks/SignupHookBridge.php:564
+#: src/blocks/event-signup/render.php:765
+#: src/blocks/event-signup/render.php:853
+#: src/blocks/event-signup/render.php:915
+#: src/Hooks/SignupHookBridge.php:575
 msgid "free"
 msgstr "kostenlos"
 
-#: src/blocks/event-signup/render.php:811
+#: src/blocks/event-signup/render.php:817
 msgid "Select activities"
 msgstr "Aktivitäten auswählen"
 
-#: src/Hooks/PaymentHooks.php:399
+#: src/Hooks/PaymentHooks.php:398
 #: src/Hooks/PendingSubscriptionTimeoutHooks.php:56
 #: src/Hooks/WeeklyDigestHooks.php:55
 msgid "Every 5 minutes (fair-audience)"
@@ -2287,57 +2286,57 @@ msgstr "Teilnehmerdatensatz für dieses Veranstaltungsdatum nicht gefunden."
 msgid "Selected ticket type was not found."
 msgstr "Ausgewählter Tickettyp wurde nicht gefunden."
 
-#: src/API/EventSignupController.php:1451
+#: src/API/EventSignupController.php:1438
 msgid "This ticket type is sold out. Please pick another option."
 msgstr "Dieser Tickettyp ist ausverkauft. Bitte wählen Sie eine andere Option."
 
 #. translators: %d: minimum number of activities required
-#: src/API/EventSignupController.php:1591
-#: src/blocks/event-signup/render.php:821
-#: src/Services/SignupActivities.php:210
+#: src/API/EventSignupController.php:1578
+#: src/blocks/event-signup/render.php:827
+#: src/Services/SignupActivities.php:250
 #: src/blocks/event-signup/frontend.js:391
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Bitte wählen Sie mindestens %d Aktivität aus, um sich anzumelden."
 msgstr[1] "Bitte wählen Sie mindestens %d Aktivitäten aus, um sich anzumelden."
 
-#: src/API/EventSignupController.php:2194
+#: src/API/EventSignupController.php:2204
 msgid "Invalid transaction."
 msgstr "Ungültige Transaktion."
 
-#: src/API/EventSignupController.php:2202
+#: src/API/EventSignupController.php:2212
 msgid "Payment plugin is missing."
 msgstr "Zahlungs-Plugin fehlt."
 
-#: src/API/EventSignupController.php:2211
-#: src/API/EventSignupController.php:2276
+#: src/API/EventSignupController.php:2221
+#: src/API/EventSignupController.php:2286
 msgid "Transaction not found."
 msgstr "Transaktion nicht gefunden."
 
-#: src/API/EventSignupController.php:2252
+#: src/API/EventSignupController.php:2262
 msgid "You are not authorized to retry this payment."
 msgstr "Sie sind nicht berechtigt, diese Zahlung erneut zu versuchen."
 
-#: src/API/EventSignupController.php:2288
+#: src/API/EventSignupController.php:2298
 msgid "This payment cannot be retried."
 msgstr "Diese Zahlung kann nicht erneut versucht werden."
 
-#: src/API/EventSignupController.php:2306
+#: src/API/EventSignupController.php:2316
 msgid "This payment is not retriable from this endpoint."
 msgstr "Diese Zahlung kann von diesem Endpunkt aus nicht erneut versucht werden."
 
-#: src/API/EventSignupController.php:2319
-#: src/API/EventSignupController.php:2511
+#: src/API/EventSignupController.php:2329
+#: src/API/EventSignupController.php:2521
 msgid "This payment is missing context needed to retry."
 msgstr "Diese Zahlung fehlt der Kontext, der zum erneuten Versuch erforderlich ist."
 
-#: src/API/EventSignupController.php:2367
-#: src/API/EventSignupController.php:2554
+#: src/API/EventSignupController.php:2377
+#: src/API/EventSignupController.php:2566
 msgid "Original line items could not be loaded."
 msgstr "Originale Positionen konnten nicht geladen werden."
 
-#: src/API/EventSignupController.php:2757
+#: src/API/EventSignupController.php:2776
 #: src/blocks/event-signup/frontend.js:1096
 msgid "We recognise this email — check your inbox to continue."
 msgstr "Wir erkennen diese E-Mail — überprüfen Sie Ihren Posteingang, um fortzufahren."
@@ -2346,105 +2345,105 @@ msgstr "Wir erkennen diese E-Mail — überprüfen Sie Ihren Posteingang, um for
 msgid "You have been subscribed."
 msgstr "Sie wurden abonniert."
 
-#: src/blocks/event-signup/render.php:774
+#: src/blocks/event-signup/render.php:780
 msgid "sold out"
 msgstr "ausverkauft"
 
-#: src/blocks/event-signup/render.php:852
-#: src/blocks/event-signup/render.php:913
-#: src/Hooks/SignupHookBridge.php:567
+#: src/blocks/event-signup/render.php:858
+#: src/blocks/event-signup/render.php:919
+#: src/Hooks/SignupHookBridge.php:578
 msgid "full"
 msgstr "voll"
 
-#: src/blocks/event-signup/render.php:954
+#: src/blocks/event-signup/render.php:960
 msgid "Choose a date"
 msgstr "Wählen Sie ein Datum"
 
 #. translators: appended to a date label when the viewer is signed up — they can cancel from this row
-#: src/blocks/event-signup/render.php:965
+#: src/blocks/event-signup/render.php:971
 msgid "signed up (manage)"
 msgstr "angemeldet (verwalten)"
 
-#: src/blocks/event-signup/render.php:967
+#: src/blocks/event-signup/render.php:973
 msgid "signed up"
 msgstr "angemeldet"
 
-#: src/blocks/event-signup/render.php:1077
+#: src/blocks/event-signup/render.php:1083
 #: src/blocks/event-signup/frontend.js:1809
 msgid "Payment confirmed"
 msgstr "Zahlung bestätigt"
 
 #. translators: %s: event title
-#: src/blocks/event-signup/render.php:1083
+#: src/blocks/event-signup/render.php:1089
 #, php-format
 msgid "You're signed up for %s."
 msgstr "Du bist angemeldet für %s."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:1092
+#: src/blocks/event-signup/render.php:1098
 #, php-format
 msgid "Amount paid: %s"
 msgstr "Gezahlter Betrag: %s"
 
-#: src/blocks/event-signup/render.php:1098
+#: src/blocks/event-signup/render.php:1104
 #: src/blocks/event-signup/frontend.js:1823
 msgid "A confirmation email is on its way. You can close this page."
 msgstr "Eine Bestätigungsmail ist unterwegs. Du kannst diese Seite jetzt schließen."
 
-#: src/blocks/event-signup/render.php:1105
+#: src/blocks/event-signup/render.php:1111
 msgid "Thank you for your payment!"
 msgstr "Vielen Dank für deine Zahlung!"
 
-#: src/blocks/event-signup/render.php:1108
+#: src/blocks/event-signup/render.php:1114
 msgid "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done."
 msgstr "Wir bestätigen dies mit deiner Bank. Das dauert normalerweise ein paar Sekunden — die Seite wird aktualisiert, sobald es fertig ist."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:1114
+#: src/blocks/event-signup/render.php:1120
 #, php-format
 msgid "Amount: %s"
 msgstr "Betrag: %s"
 
-#: src/blocks/event-signup/render.php:1123
+#: src/blocks/event-signup/render.php:1129
 msgid "Your payment is waiting."
 msgstr "Deine Zahlung wartet."
 
-#: src/blocks/event-signup/render.php:1126
+#: src/blocks/event-signup/render.php:1132
 msgid "You can pick up where you left off on the secure payment page."
 msgstr "Du kannst dort weitermachen, wo du aufgehört hast, auf der sicheren Zahlungsseite."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:1132
-#: src/blocks/event-signup/render.php:1159
+#: src/blocks/event-signup/render.php:1138
+#: src/blocks/event-signup/render.php:1165
 #, php-format
 msgid "Amount due: %s"
 msgstr "Fälliger Betrag: %s"
 
-#: src/blocks/event-signup/render.php:1139
+#: src/blocks/event-signup/render.php:1145
 msgid "Continue payment"
 msgstr "Zahlung fortsetzen"
 
-#: src/blocks/event-signup/render.php:1144
-#: src/blocks/event-signup/render.php:1171
+#: src/blocks/event-signup/render.php:1150
+#: src/blocks/event-signup/render.php:1177
 msgid "Cancel and start over"
 msgstr "Abbrechen und von vorne beginnen"
 
-#: src/blocks/event-signup/render.php:1153
+#: src/blocks/event-signup/render.php:1159
 msgid "Your payment didn't go through."
 msgstr "Deine Zahlung ist fehlgeschlagen."
 
-#: src/blocks/event-signup/render.php:1166
+#: src/blocks/event-signup/render.php:1172
 msgid "Retry payment"
 msgstr "Zahlung erneut versuchen"
 
 #. translators: %s: transaction status
-#: src/blocks/event-signup/render.php:1182
+#: src/blocks/event-signup/render.php:1188
 #, php-format
 msgid "Payment status: %s"
 msgstr "Zahlungsstatus: %s"
 
-#: src/blocks/event-signup/render.php:1253
-#: src/Hooks/SignupHookBridge.php:315
+#: src/blocks/event-signup/render.php:1259
+#: src/Hooks/SignupHookBridge.php:326
 msgid "You are signed up for this date."
 msgstr "Du bist für diesen Termin angemeldet."
 
@@ -2569,30 +2568,30 @@ msgstr "Fehler beim Upgrade der Teilnehmer-ID %d"
 msgid "Verbal consent recorded by %1$s on %2$s at event %3$s"
 msgstr "Mündliche Zustimmung aufgezeichnet von %1$s am %2$s beim Event %3$s"
 
-#: src/API/EventSignupController.php:1131
+#: src/API/EventSignupController.php:1133
 msgid "You need an active signup before you can add activities."
 msgstr "Sie benötigen eine aktive Anmeldung, bevor Sie Aktivitäten hinzufügen können."
 
-#: src/API/EventSignupController.php:1153
+#: src/API/EventSignupController.php:1155
 msgid "No new activities to add."
 msgstr "Keine neuen Aktivitäten zum Hinzufügen."
 
-#: src/API/EventSignupController.php:1178
+#: src/API/EventSignupController.php:1180
 #: src/blocks/event-signup/frontend.js:1556
 msgid "Your activities have been added!"
 msgstr "Ihre Aktivitäten wurden hinzugefügt!"
 
 #. translators: %s: event title
-#: src/API/EventSignupController.php:1251
+#: src/API/EventSignupController.php:1255
 #, php-format
 msgid "Added activities for %s"
 msgstr "Aktivitäten hinzugefügt für %s"
 
-#: src/API/EventSignupController.php:2529
+#: src/API/EventSignupController.php:2539
 msgid "Your signup is no longer active."
 msgstr "Ihre Anmeldung ist nicht mehr aktiv."
 
-#: src/API/EventSignupController.php:2543
+#: src/API/EventSignupController.php:2555
 msgid "These activities are already on your signup."
 msgstr "Diese Aktivitäten befinden sich bereits in Ihrer Anmeldung."
 
@@ -2616,30 +2615,30 @@ msgstr "Bestätigungs-E-Mail versendet."
 msgid "Website"
 msgstr "Website"
 
-#: src/blocks/event-signup/render.php:901
-#: src/blocks/event-signup/render.php:931
-#: src/Hooks/SignupHookBridge.php:546
-#: src/Hooks/SignupHookBridge.php:584
+#: src/blocks/event-signup/render.php:907
+#: src/blocks/event-signup/render.php:937
+#: src/Hooks/SignupHookBridge.php:557
+#: src/Hooks/SignupHookBridge.php:595
 #: src/blocks/event-signup/frontend.js:1466
 msgid "Add activities"
 msgstr "Aktivitäten hinzufügen"
 
 #. translators: %s: participant name
-#: src/blocks/event-signup/render.php:1208
+#: src/blocks/event-signup/render.php:1214
 #, php-format
 msgid "Hi %s! Here is your registration for this event."
 msgstr "Hallo %s! Hier ist deine Anmeldung für dieses Ereignis."
 
 #. translators: %s: ticket type name
-#: src/blocks/event-signup/render.php:1260
-#: src/Hooks/SignupHookBridge.php:322
+#: src/blocks/event-signup/render.php:1266
+#: src/Hooks/SignupHookBridge.php:333
 #, php-format
 msgid "Your ticket: %s"
 msgstr "Dein Ticket: %s"
 
-#: src/blocks/event-signup/render.php:1268
-#: src/Hooks/SignupHookBridge.php:329
-#: src/Hooks/SignupHookBridge.php:549
+#: src/blocks/event-signup/render.php:1274
+#: src/Hooks/SignupHookBridge.php:340
+#: src/Hooks/SignupHookBridge.php:560
 msgid "Your activities:"
 msgstr "Deine Aktivitäten:"
 
@@ -2789,7 +2788,7 @@ msgid "interest"
 msgstr "Interesse"
 
 #: src/API/EventParticipantsController.php:582
-#: src/API/EventSignupController.php:1746
+#: src/API/EventSignupController.php:1756
 #: src/Services/EmailService.php:2296
 #: src/blocks/event-signup/editor.js:114
 msgid "Event Signup"
@@ -2807,12 +2806,12 @@ msgstr "Tickettypen, Aktivitätsoptionen und Preise werden auf der veröffentlic
 msgid "Custom questions"
 msgstr "Benutzerdefinierte Fragen"
 
-#: src/API/EventSignupController.php:1478
+#: src/API/EventSignupController.php:1465
 msgid "This ticket type is no longer available. Please pick another option."
 msgstr "Dieser Tickettyp ist nicht mehr verfügbar. Bitte wählen Sie eine andere Option."
 
 #. translators: 1: discount percentage, 2: group name
-#: src/blocks/event-signup/render.php:720
+#: src/blocks/event-signup/render.php:726
 #: src/Services/GroupSignupPricing.php:146
 #, php-format
 msgid "%1$s%% discount applied (%2$s)"
@@ -2855,59 +2854,59 @@ msgstr "Fehler beim Aufzeichnen der Ablehnung für Teilnehmer-ID %d"
 msgid "Decline recorded by %1$s on %2$s at event %3$s"
 msgstr "Ablehnung aufgezeichnet von %1$s am %2$s bei Veranstaltung %3$s"
 
-#: src/API/EventSignupController.php:806
+#: src/API/EventSignupController.php:808
 msgid "Please select at least one occurrence."
 msgstr "Bitte wählen Sie mindestens ein Vorkommen aus."
 
-#: src/API/EventSignupController.php:814
-#: src/API/EventSignupController.php:825
+#: src/API/EventSignupController.php:816
+#: src/API/EventSignupController.php:827
 msgid "Invalid ticket type."
 msgstr "Ungültiger Tickettyp."
 
-#: src/API/EventSignupController.php:836
+#: src/API/EventSignupController.php:838
 msgid "One of the selected occurrences is not valid for this ticket."
 msgstr "Eines der ausgewählten Vorkommen ist für dieses Ticket nicht gültig."
 
 #. translators: %d: minimum number of occurrences required
-#: src/API/EventSignupController.php:849
+#: src/API/EventSignupController.php:851
 #: src/blocks/event-signup/frontend.js:311
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Bitte wählen Sie mindestens %d Vorkommen aus."
 msgstr[1] "Bitte wählen Sie mindestens %d Vorkommen aus."
 
-#: src/API/EventSignupController.php:876
+#: src/API/EventSignupController.php:878
 msgid "You are already signed up for these occurrences."
 msgstr "Sie sind bereits für diese Vorkommen angemeldet."
 
-#: src/API/EventSignupController.php:929
-#: src/API/EventSignupController.php:1804
-#: src/API/EventSignupController.php:1816
-#: src/API/EventSignupController.php:2027
+#: src/API/EventSignupController.php:931
+#: src/API/EventSignupController.php:1818
+#: src/API/EventSignupController.php:1830
+#: src/API/EventSignupController.php:2037
 msgid "Paid signup is not available because the payment plugin is not configured."
 msgstr "Bezahlte Anmeldung ist nicht verfügbar, da das Zahlungs-Plugin nicht konfiguriert ist."
 
-#: src/API/EventSignupController.php:946
+#: src/API/EventSignupController.php:948
 msgid "One of the selected occurrences is fully booked."
 msgstr "Eines der ausgewählten Vorkommen ist vollständig gebucht."
 
-#: src/API/EventSignupController.php:1232
-#: src/API/EventSignupController.php:1244
+#: src/API/EventSignupController.php:1236
+#: src/API/EventSignupController.php:1248
 msgid "Paid activities are not available because the payment plugin is not configured."
 msgstr "Bezahlte Aktivitäten sind nicht verfügbar, da das Zahlungs-Plugin nicht konfiguriert ist."
 
-#: src/blocks/event-signup/render.php:1006
+#: src/blocks/event-signup/render.php:1012
 msgid "Choose occurrences"
 msgstr "Vorkommen auswählen"
 
-#: src/blocks/event-signup/render.php:1027
-#: src/Hooks/SignupHookBridge.php:351
+#: src/blocks/event-signup/render.php:1033
+#: src/Hooks/SignupHookBridge.php:362
 msgid "already signed up"
 msgstr "bereits angemeldet"
 
-#: src/blocks/event-signup/render.php:1242
-#: src/blocks/event-signup/render.php:1365
+#: src/blocks/event-signup/render.php:1248
+#: src/blocks/event-signup/render.php:1371
 msgid "Online payment is not available for this event at the moment. Please contact the organiser."
 msgstr "Online-Zahlung ist für diese Veranstaltung derzeit nicht verfügbar. Bitte kontaktieren Sie den Organisator."
 
@@ -2953,26 +2952,26 @@ msgstr "Dieser Teilnehmer ist bereits am Zieldatum angemeldet."
 msgid "Signup moved successfully."
 msgstr "Anmeldung erfolgreich verschoben."
 
-#: src/API/EventSignupController.php:570
+#: src/API/EventSignupController.php:572
 msgid "This link is invalid or has expired."
 msgstr "Dieser Link ist ungültig oder abgelaufen."
 
-#: src/API/EventSignupController.php:579
+#: src/API/EventSignupController.php:581
 msgid "This registration link has expired. Please fill in the form again."
 msgstr "Dieser Registrierungslink ist abgelaufen. Bitte füllen Sie das Formular erneut aus."
 
-#: src/API/EventSignupController.php:2018
+#: src/API/EventSignupController.php:2028
 msgid "Your series pass is now active!"
 msgstr "Ihre Serienpass ist jetzt aktiv!"
 
 #. translators: %s: ticket type name
-#: src/API/EventSignupController.php:2036
+#: src/API/EventSignupController.php:2046
 #, php-format
 msgid "Upgrade to series pass: %s"
 msgstr "Upgrade auf Serienpass: %s"
 
 #. translators: %s: event title
-#: src/API/EventSignupController.php:2050
+#: src/API/EventSignupController.php:2060
 #, php-format
 msgid "Series pass upgrade for %s"
 msgstr "Serienpass-Upgrade für %s"
@@ -3660,6 +3659,7 @@ msgstr "Auf minimal zurückgesetzt: Marketing-Abonnement wurde nicht innerhalb e
 msgid "Opted out of the weekly summary."
 msgstr "Wöchentliche Zusammenfassung abgemeldet."
 
+#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Services/WeeklyDigestRenderer.php:165
 #: src/Services/WeeklyDigestRenderer.php:175
@@ -3706,21 +3706,21 @@ msgid "Enter a valid phone number with country code (for example +49 170 123 45 
 msgstr "Geben Sie eine gültige Telefonnummer mit Ländervorwahl ein (z. B. +49 170 123 45 67) für: %s"
 
 #. translators: 1: base button label, 2: formatted price
-#: src/blocks/event-signup/render.php:666
 #: src/blocks/event-signup/render.php:672
+#: src/blocks/event-signup/render.php:678
 #, php-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
 #. translators: 1: discount amount, 2: group name
-#: src/blocks/event-signup/render.php:727
+#: src/blocks/event-signup/render.php:733
 #: src/Services/GroupSignupPricing.php:154
 #, php-format
 msgid "%1$s discount applied (%2$s)"
 msgstr "%1$s Rabatt angewendet (%2$s)"
 
 #. translators: %s: formatted add-on price
-#: src/blocks/event-signup/render.php:878
+#: src/blocks/event-signup/render.php:884
 #, php-format
 msgid "(+%s)"
 msgstr "(+%s)"
@@ -3735,23 +3735,23 @@ msgstr "Gesamt: %s"
 msgid "Translations"
 msgstr "Übersetzungen"
 
-#: src/Hooks/SignupHookBridge.php:263
+#: src/Hooks/SignupHookBridge.php:274
 msgid "You already have a ticket for this date."
 msgstr "Sie haben bereits ein Ticket für dieses Datum."
 
-#: src/Services/SignupActivities.php:168
-#: src/Services/SignupActivities.php:187
+#: src/Services/SignupActivities.php:208
+#: src/Services/SignupActivities.php:227
 msgid "One of the selected activities is not available for this event."
 msgstr "Eine der ausgewählten Aktivitäten ist für diese Veranstaltung nicht verfügbar."
 
 #. translators: %s: activity name
-#: src/Services/SignupActivities.php:196
+#: src/Services/SignupActivities.php:236
 #, php-format
 msgid "\"%s\" is full."
 msgstr "\"%s\" ist voll."
 
 #. translators: 1: discount magnitude e.g. "20%" or "€5.00", 2: group name
-#: src/blocks/event-signup/render.php:768
+#: src/blocks/event-signup/render.php:774
 #, php-format
 msgid "%1$s off · %2$s"
 msgstr "%1$s Rabatt · %2$s"
@@ -3779,4 +3779,3 @@ msgstr "Bitte geben Sie ein gültiges Datum ein für: %s"
 #: ../fair-events-shared/src/questionnaire.js:585
 msgid "Please enter a valid date and time for: %s"
 msgstr "Bitte geben Sie ein gültiges Datum und eine gültige Uhrzeit ein für: %s"
-
