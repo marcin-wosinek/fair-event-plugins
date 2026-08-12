@@ -27,9 +27,14 @@ defined( 'WPINC' ) || die;
  * DTO shape: uid, event_date_id, event_id, occurrence_type, title,
  * description, start, end, all_day, url, categories, source
  * ('post'|'standalone'|'ical'|'api'), link_type (the row's own
- * 'post'|'external'|'none', only meaningful for source === 'post' — see
- * format_post_occurrence()), is_draft, source_color, location (neutral
- * shape from EventLocation::resolve(), or null).
+ * 'post'|'external'|'none', exposed for both source === 'post' — see
+ * format_post_occurrence() — and source === 'standalone' — see
+ * format_standalone_occurrence()), is_draft, source_color, location (neutral
+ * shape from EventLocation::resolve(), or null), attendance_mode (the row's
+ * raw, possibly-null 'in_person'|'online'|'hybrid' column — as opposed to
+ * `location`'s already-defaulted mode — exposed only for source ===
+ * 'standalone' so PublicEventsController can tell "never explicitly chosen"
+ * apart from an explicit 'in_person').
  *
  * `start`/`end` are naive site-local 'Y-m-d H:i:s' strings — the same form
  * every other internal consumer (EventDates, WeeklyEventsProvider, blocks)
@@ -310,6 +315,8 @@ class EventFeedProvider {
 			'url'             => $row->get_display_url(),
 			'categories'      => $this->get_category_objects( $row_category_ids ),
 			'source'          => 'standalone',
+			'link_type'       => $row->link_type,
+			'attendance_mode' => $row->attendance_mode,
 			'is_draft'        => false,
 			'source_color'    => null,
 			'location'        => EventLocation::resolve( $row, null ),
