@@ -66,6 +66,11 @@ const plugins = [
 		phpFile: 'fair-form/fair-form.php',
 		readmeFile: 'fair-form/readme.txt',
 	},
+	{
+		name: 'fair-calendar-button',
+		phpFile: 'fair-calendar-button/fair-calendar-button.php',
+		readmeFile: 'fair-calendar-button/readme.txt',
+	},
 ];
 
 function getBuildVersion(pluginName) {

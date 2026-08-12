@@ -1,0 +1,20 @@
+{
+	"landingPage": "/fair-calendar-button-examples/",
+	"steps": [
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "wordpress.org/plugins",
+				"slug": "fair-calendar-button"
+			}
+		},
+		{
+			"step": "activatePlugin",
+			"pluginPath": "fair-calendar-button/fair-calendar-button.php"
+		},
+		{
+			"step": "wp-cli",
+			"command": "wp post create --post_type=page --post_title=\"Fair Calendar Button Examples\" --post_status=publish --post_content=\"<!-- wp:fair-calendar-button/calendar-button {\\\"start\\\":\\\"2024-12-15T14:00\\\",\\\"end\\\":\\\"2024-12-15T16:00\\\",\\\"description\\\":\\\"WordPress Development Workshop\\\",\\\"location\\\":\\\"Tech Hub Conference Room\\\"} --><div class=\\\"wp-block-fair-calendar-button-calendar-button wp-block-buttons\\\"><!-- wp:button --><div class=\\\"wp-block-button\\\"><a class=\\\"wp-block-button__link wp-element-button\\\" href=\\\"\\\">Add to Calendar</a></div><!-- /wp:button --></div><!-- /wp:fair-calendar-button/calendar-button -->\""
+		}
+	]
+}

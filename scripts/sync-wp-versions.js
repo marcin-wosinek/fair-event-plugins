@@ -89,6 +89,12 @@ const plugins = [
 		readmeFiles: ['fair-audience-experimental/readme.txt'],
 		versionConstant: 'FAIR_AUDIENCE_EXPERIMENTAL_VERSION',
 	},
+	{
+		name: 'fair-calendar-button',
+		packagePath: 'fair-calendar-button/package.json',
+		phpFiles: ['fair-calendar-button/fair-calendar-button.php'],
+		readmeFiles: ['fair-calendar-button/readme.txt'],
+	},
 ];
 
 /**
