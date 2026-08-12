@@ -22,6 +22,12 @@ $current_title = get_the_title();
 
 $classes = 'calendar-button-container';
 
+// is_plugin_active() lives in wp-admin/includes/plugin.php, which isn't
+// autoloaded on front-end requests where this render callback also runs.
+if ( ! function_exists( 'is_plugin_active' ) ) {
+	require_once ABSPATH . 'wp-admin/includes/plugin.php';
+}
+
 if ( is_plugin_active( 'plausible-analytics/plausible-analytics.php' ) ) {
 	$classes .= ' plausible-event-name=Fair+calendar+button';
 }

@@ -421,11 +421,7 @@ export default function EditComponent({ attributes, setAttributes }) {
 								: __('Start Date/Time', 'fair-calendar-button')
 						}
 						value={start}
-						onChange={
-							allDay
-								? handleStartTimeChange
-								: handleStartTimeChange
-						}
+						onChange={handleStartTimeChange}
 						type={allDay ? 'date' : 'datetime-local'}
 						disabled={syncWithEvent && isOnFairEvent}
 					/>
