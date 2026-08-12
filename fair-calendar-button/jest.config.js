@@ -4,6 +4,8 @@ export default {
 
 	testMatch: ['**/__tests__/**/*.test.js', '**/__tests__/**/*.test.jsx'],
 
+	setupFilesAfterEnv: [],
+
 	testPathIgnorePatterns: [
 		'/node_modules/',
 		'/vendor/',
