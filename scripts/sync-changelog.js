@@ -47,6 +47,11 @@ const plugins = [
 		changelogPath: 'fair-audience-experimental/CHANGELOG.md',
 		readmeFiles: ['fair-audience-experimental/readme.txt'],
 	},
+	{
+		name: 'fair-calendar-button',
+		changelogPath: 'fair-calendar-button/CHANGELOG.md',
+		readmeFiles: ['fair-calendar-button/readme.txt'],
+	},
 ];
 
 /**
