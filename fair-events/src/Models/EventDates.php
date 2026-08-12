@@ -164,10 +164,12 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
-		// Fast path: direct event_id lookup (primary post).
+		// Fast path: direct event_id lookup (primary post). Restricted to
+		// single/master rows so the lookup always resolves to the series'
+		// primary date, never to a generated occurrence within it.
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE event_id = %d LIMIT 1',
+				"SELECT * FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') LIMIT 1",
 				$table_name,
 				$event_id
 			)
