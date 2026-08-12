@@ -304,6 +304,138 @@ test.describe('EventDatesController — link_post detach-then-link (#1429)', () 
 	});
 });
 
+test.describe('EventDatesController — relink resolves to series, not a generated date (#1431)', () => {
+	let api;
+	let postA;
+	let postB;
+	let masterEventDateId;
+
+	test.beforeAll(async () => {
+		api = await request.newContext({ baseURL: BASE_URL });
+
+		const postARes = await api.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Series Relink Post A ${Date.now()}`,
+				status: 'publish',
+			},
+		});
+		expect(postARes.ok()).toBeTruthy();
+		postA = (await postARes.json()).id;
+
+		const postBRes = await api.post('/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Series Relink Post B ${Date.now()}`,
+				status: 'publish',
+			},
+		});
+		expect(postBRes.ok()).toBeTruthy();
+		postB = (await postBRes.json()).id;
+
+		// A recurring series with generated children, linked to postA so
+		// event_id propagates onto every generated occurrence too.
+		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Series Relink ${Date.now()}`,
+				start_datetime: '2038-01-01 10:00:00',
+				end_datetime: '2038-01-01 12:00:00',
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+			},
+		});
+		expect(edRes.ok()).toBeTruthy();
+		const master = await edRes.json();
+		masterEventDateId = master.id;
+		expect(master.generated_occurrences.length).toBe(2);
+
+		const linkRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/link-post`,
+			{ headers: adminHeaders, data: { post_id: postA } }
+		);
+		expect(linkRes.ok()).toBeTruthy();
+	});
+
+	test.afterAll(async () => {
+		if (masterEventDateId) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+				{ headers: adminHeaders }
+			);
+		}
+		if (postA) {
+			await api.delete(`/wp-json/wp/v2/fair_event/${postA}?force=true`, {
+				headers: adminHeaders,
+			});
+		}
+		if (postB) {
+			await api.delete(`/wp-json/wp/v2/fair_event/${postB}?force=true`, {
+				headers: adminHeaders,
+			});
+		}
+	});
+
+	test('relinking postA to a different event clears the whole series, not just one generated date', async () => {
+		// postA is linked to the series's master through several generated
+		// children too; get_by_event_id() must resolve that lookup to the
+		// master (not a buried generated row) so the detach below clears the
+		// whole series, not just one date.
+		const edBRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Series Relink Target ${Date.now()}`,
+				start_datetime: '2038-06-01 10:00:00',
+			},
+		});
+		expect(edBRes.ok()).toBeTruthy();
+		const eventDateB = (await edBRes.json()).id;
+
+		try {
+			const relinkRes = await api.post(
+				`/wp-json/fair-events/v1/event-dates/${eventDateB}/link-post`,
+				{ headers: adminHeaders, data: { post_id: postA } }
+			);
+			expect(relinkRes.ok()).toBeTruthy();
+			const relinkBody = await relinkRes.json();
+			expect(relinkBody.event_id).toBe(postA);
+
+			const masterRes = await api.get(
+				`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+				{ headers: adminHeaders }
+			);
+			expect(masterRes.ok()).toBeTruthy();
+			const masterBody = await masterRes.json();
+
+			expect(masterBody.event_id).toBeNull();
+			expect(masterBody.link_type).toBe('none');
+
+			// Every generated child must also have cleared, not just the master.
+			for (const occ of masterBody.generated_occurrences) {
+				const childRes = await api.get(
+					`/wp-json/fair-events/v1/event-dates/${occ.id}`,
+					{ headers: adminHeaders }
+				);
+				expect(childRes.ok()).toBeTruthy();
+				expect((await childRes.json()).event_id).toBeNull();
+			}
+
+			// postA now resolves only to eventDateB, never to the old series.
+			const listRes = await api.get(
+				`/wp-json/fair-events/v1/event-dates?event_id=${postA}`,
+				{ headers: adminHeaders }
+			);
+			expect(listRes.ok()).toBeTruthy();
+			const listBody = await listRes.json();
+			expect(listBody.map((item) => item.id)).toEqual([eventDateB]);
+		} finally {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${eventDateB}`,
+				{ headers: adminHeaders }
+			);
+		}
+	});
+});
+
 test.describe('EventDatesController — create_item with categories + rrule (quick add)', () => {
 	let api;
 	let categoryId;
