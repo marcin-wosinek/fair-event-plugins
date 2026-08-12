@@ -284,11 +284,48 @@ class PublicEventsController extends WP_REST_Controller {
 			'categories'      => $occurrence['categories'],
 		);
 
-		if ( ! empty( $occurrence['location'] ) ) {
-			$response['location'] = $occurrence['location'];
+		$location = $this->format_location( $occurrence );
+		if ( ! empty( $location ) ) {
+			$response['location'] = $location;
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Resolve the location field for the public response: pass through
+	 * EventLocation::resolve()'s neutral shape when present, otherwise
+	 * synthesize an online marker for a standalone external-link event whose
+	 * `attendance_mode` column is still NULL — i.e. a row that predates the
+	 * 3.28.0 migration and was never re-saved since (that migration
+	 * deliberately left it NULL, no backfill; every event created since
+	 * always gets an explicit 'in_person'/'online'/'hybrid' value, see
+	 * EventDatesController::create_item()). Gating on the raw column, not
+	 * EventLocation::resolve()'s defaulted mode, is what keeps this from
+	 * overriding an event that's genuinely, deliberately in_person — this
+	 * only shapes what the public feed shows for data that never got an
+	 * explicit choice, never the event's stored attendance mode.
+	 *
+	 * @param array $occurrence Occurrence DTO from EventFeedProvider.
+	 * @return array|null Neutral location shape, or null when nothing resolves.
+	 */
+	private function format_location( array $occurrence ) {
+		if ( ! empty( $occurrence['location'] ) ) {
+			return $occurrence['location'];
+		}
+
+		if ( 'standalone' === $occurrence['source']
+			&& 'external' === ( $occurrence['link_type'] ?? '' )
+			&& null === ( $occurrence['attendance_mode'] ?? null )
+			&& ! empty( $occurrence['url'] )
+		) {
+			return array(
+				'mode'        => 'online',
+				'joining_url' => $occurrence['url'],
+			);
+		}
+
+		return null;
 	}
 
 	/**
