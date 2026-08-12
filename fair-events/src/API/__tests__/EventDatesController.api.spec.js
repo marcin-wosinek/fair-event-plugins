@@ -307,7 +307,6 @@ test.describe('EventDatesController — link_post detach-then-link (#1429)', () 
 test.describe('EventDatesController — relink resolves to series, not a generated date (#1431)', () => {
 	let api;
 	let postA;
-	let postB;
 	let masterEventDateId;
 
 	test.beforeAll(async () => {
@@ -322,16 +321,6 @@ test.describe('EventDatesController — relink resolves to series, not a generat
 		});
 		expect(postARes.ok()).toBeTruthy();
 		postA = (await postARes.json()).id;
-
-		const postBRes = await api.post('/wp-json/wp/v2/fair_event', {
-			headers: adminHeaders,
-			data: {
-				title: `Series Relink Post B ${Date.now()}`,
-				status: 'publish',
-			},
-		});
-		expect(postBRes.ok()).toBeTruthy();
-		postB = (await postBRes.json()).id;
 
 		// A recurring series with generated children, linked to postA so
 		// event_id propagates onto every generated occurrence too.
@@ -365,11 +354,6 @@ test.describe('EventDatesController — relink resolves to series, not a generat
 		}
 		if (postA) {
 			await api.delete(`/wp-json/wp/v2/fair_event/${postA}?force=true`, {
-				headers: adminHeaders,
-			});
-		}
-		if (postB) {
-			await api.delete(`/wp-json/wp/v2/fair_event/${postB}?force=true`, {
 				headers: adminHeaders,
 			});
 		}
