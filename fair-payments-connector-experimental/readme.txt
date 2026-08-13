@@ -2,7 +2,7 @@
 Contributors: marcinwosinek
 Tags: payments, mollie, telegram
 Requires at least: 6.7
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.0
 Stable tag: 0.3.1
 License: Private

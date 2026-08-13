@@ -2,7 +2,7 @@
 Contributors: marcinwosinek
 Tags: events, calendar, recurring events, tickets, gutenberg
 Requires at least: 6.7
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.13.0
 License: GPLv3 or later

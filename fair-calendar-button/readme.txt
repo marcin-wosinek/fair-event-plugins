@@ -2,7 +2,7 @@
 Contributors: marcinwosinek
 Tags: calendar, events, gutenberg, block
 Requires at least: 6.7
-Tested up to: 6.9
+Tested up to: 7.1
 Requires PHP: 8.0
 Stable tag: 1.5.2
 License: GPLv3 or later
