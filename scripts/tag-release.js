@@ -28,6 +28,7 @@ const ALL_PLUGINS = [
 	'fair-audience-experimental',
 	'fair-payments-connector-experimental',
 	'fair-form',
+	'fair-calendar-button',
 ];
 
 function getVersion(pluginName) {
