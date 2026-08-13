@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.1
+
+### Patch Changes
+
+-   abaa3be: Give questionnaire responses' Markdown export a readable submission heading, a long-format "Submission date" label, and blank lines between every field, instead of a raw timestamp mixed in with the answers.
+
 ## 1.4.0
 
 ### Minor Changes

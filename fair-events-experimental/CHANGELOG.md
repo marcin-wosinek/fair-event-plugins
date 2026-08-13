@@ -1,5 +1,28 @@
 # fair-events-experimental
 
+## 1.6.0
+
+### Minor Changes
+
+-   990ff3e: Remove the "Venues" bundle — the Venues admin page, model, and REST controller now live in Fair Events core and are always available there.
+
+### Patch Changes
+
+-   4d4aeae: Register activity option (ticket option) names and short names for Polylang string translation, so multilingual sites can translate them and have the translation appear on the public signup form.
+-   Updated dependencies [8e06c54]
+-   Updated dependencies [049bf89]
+-   Updated dependencies [6920161]
+-   Updated dependencies [d64b596]
+-   Updated dependencies [c40036a]
+-   Updated dependencies [990ff3e]
+-   Updated dependencies [8d9430e]
+-   Updated dependencies [4d4aeae]
+-   Updated dependencies [840488b]
+-   Updated dependencies [bb63051]
+-   Updated dependencies [c8b1abf]
+-   Updated dependencies [6462cc8]
+    -   fair-events@1.14.0
+
 ## 1.5.0
 
 ### Minor Changes

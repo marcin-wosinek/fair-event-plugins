@@ -1,5 +1,25 @@
 # fair-events
 
+## 1.14.0
+
+### Minor Changes
+
+-   049bf89: Give the events-calendar and events-week blocks' month/week views their own canonical URLs when requested within a bounded window (±3 months / ±12 weeks of today), so individual month/week pages can be indexed separately instead of collapsing into the default page's canonical.
+-   990ff3e: Add a Venues admin page and REST API, promoted from Fair Events Experimental. Venues are now available by default — no experimental feature flag required — and the event edit screens show both a venue picker and a free-text address field.
+-   8d9430e: Give each occurrence of a recurring event its own canonical URL (and matching Open Graph/JSON-LD `url`), so individual dates can be indexed separately instead of collapsing into one canonical page.
+
+### Patch Changes
+
+-   8e06c54: Fix calendar month view and week view resetting scroll position to the top of the page when clicking next/previous navigation.
+-   6920161: Fix `GET /event-dates?event_id=<id>` returning every event date in the database instead of filtering by the given event.
+-   d64b596: Fix linking/unlinking a page from a recurring event sometimes only applying to one date in the series instead of the whole series, by making the "which event is this page linked to" lookup always resolve through the series' primary date.
+-   c40036a: Fix event structured data (JSON-LD) dropping all ticket offers when a sale period has no explicit end date, and add each offer's ticket option name so multiple tiers are distinguishable in rich results.
+-   4d4aeae: Register activity option (ticket option) names and short names for Polylang string translation, so multilingual sites can translate them and have the translation appear on the public signup form.
+-   840488b: On sites running Polylang, the Events Calendar and Events Week blocks now link each event to the translation of its linked page matching the calendar/week page's current language, falling back to the currently linked page when no matching translation exists.
+-   bb63051: Fix the public events feed: a standalone external-link event with no explicit attendance mode now carries `location: { mode: 'online', joining_url: ... }` instead of omitting the `location` field entirely.
+-   c8b1abf: Fix calendar and week view header wrapping letter-by-letter on mobile widths; the Previous/Next buttons now stay legible and stack full-width below the title on narrow screens.
+-   6462cc8: Add spacing between the last custom question and the "Get Tickets" button in the event signup form, matching the gap used between other fields.
+
 ## 1.13.0
 
 ### Minor Changes

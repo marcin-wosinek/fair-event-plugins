@@ -4,7 +4,7 @@ Tags: form, events, fair
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: Private
 License URI: https://fair-event-plugins.com
 
@@ -15,6 +15,12 @@ Form blocks and answer data layer for Fair Event Plugins.
 Fair Form provides the form block family (`fair-form*`) and the questionnaire answer storage layer for Fair Event Plugins.
 
 == Changelog ==
+
+## 1.4.1
+
+### Patch Changes
+
+-   abaa3be: Give questionnaire responses' Markdown export a readable submission heading, a long-format "Submission date" label, and blank lines between every field, instead of a raw timestamp mixed in with the answers.
 
 ## 1.4.0
 
