@@ -501,11 +501,18 @@ class GetTicketsController extends WP_REST_Controller {
 		// was saved (see the fail-closed guard above), so a transaction can be
 		// created here without a free-fallback.
 		$currency    = Money::site_currency();
-		$description = sprintf(
-			/* translators: %d: event date ID */
-			__( 'Ticket for event #%d', 'fair-events' ),
-			$event_date_id
-		);
+		$event_title = $this->resolve_event_title( $event_date );
+		$description = $event_title
+			? sprintf(
+				/* translators: %s: event name */
+				__( 'Ticket for %s', 'fair-events' ),
+				$event_title
+			)
+			: sprintf(
+				/* translators: %d: event date ID */
+				__( 'Ticket for event #%d', 'fair-events' ),
+				$event_date_id
+			);
 
 		// Activities get their own line item(s) (from $option_line_items,
 		// resolved above) instead of being folded into the ticket line, so the
@@ -1108,12 +1115,20 @@ class GetTicketsController extends WP_REST_Controller {
 		// Paid path — payments were confirmed available before any signup row
 		// was saved (see the fail-closed guard above), so a shared transaction
 		// can be created here without a free-fallback.
-		$currency    = Money::site_currency();
-		$description = sprintf(
-			/* translators: %d: event date ID */
-			__( 'Tickets for event #%d', 'fair-events' ),
-			$series_master_id
-		);
+		$currency      = Money::site_currency();
+		$series_master = \FairEvents\Models\EventDates::get_by_id( $series_master_id );
+		$event_title   = $series_master ? $this->resolve_event_title( $series_master ) : null;
+		$description   = $event_title
+			? sprintf(
+				/* translators: %s: event name */
+				__( 'Tickets for %s', 'fair-events' ),
+				$event_title
+			)
+			: sprintf(
+				/* translators: %d: event date ID */
+				__( 'Tickets for event #%d', 'fair-events' ),
+				$series_master_id
+			);
 
 		$line_items = array();
 		foreach ( $occurrences as $occ ) {
@@ -1229,6 +1244,20 @@ class GetTicketsController extends WP_REST_Controller {
 			return (int) $ed->id;
 		}
 		return null;
+	}
+
+	/**
+	 * Resolve the human-readable event title for a transaction description,
+	 * mirroring EmailService::send_signup_confirmation()'s title lookup.
+	 *
+	 * @param \FairEvents\Models\EventDates $event_date Event date row.
+	 * @return string|null Event post title, or null when no post can be
+	 *                      resolved (e.g. an external-URL event date), letting
+	 *                      the caller fall back to the numeric #<id> format.
+	 */
+	private function resolve_event_title( \FairEvents\Models\EventDates $event_date ) {
+		$event = get_post( $event_date->get_resolved_event_id() );
+		return $event ? $event->post_title : null;
 	}
 
 	/**
