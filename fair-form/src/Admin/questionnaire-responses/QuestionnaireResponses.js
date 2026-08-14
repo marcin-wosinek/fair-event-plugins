@@ -15,8 +15,9 @@ import {
 	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
-import { formatDate, formatDateLong } from '../utils/format-date.js';
+import { formatDate } from '../utils/format-date.js';
 import { formatSiteLocalDatetime, formatDateOnly } from 'fair-events-shared';
+import { buildBulkExportText } from '../utils/export-format.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -253,12 +254,39 @@ export default function QuestionnaireResponses() {
 			id: `question_${col.key}`,
 			label: col.text,
 			enableSorting: false,
+			getAnswer: ({ item }) =>
+				(item.answers || []).find((a) => a.question_key === col.key),
 			getValue: ({ item }) => {
 				const answer = (item.answers || []).find(
 					(a) => a.question_key === col.key
 				);
+				if (col.type === 'file_upload') {
+					return answer?.file_url || answer?.answer_value || '';
+				}
 				return answer ? answer.answer_value : '';
 			},
+			...(col.type === 'file_upload' && {
+				render: ({ item }) => {
+					const answer = (item.answers || []).find(
+						(a) => a.question_key === col.key
+					);
+					if (!answer?.file_url) {
+						return answer?.answer_value || '';
+					}
+					const label = answer.is_image
+						? __('Photo', 'fair-form')
+						: __('File', 'fair-form');
+					return (
+						<a
+							href={answer.file_url}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{label}
+						</a>
+					);
+				},
+			}),
 			...(col.type === 'url' && {
 				render: ({ item }) => {
 					const answer = (item.answers || []).find(
@@ -514,78 +542,12 @@ export default function QuestionnaireResponses() {
 		return fields.filter((f) => waSelectedColumns.includes(f.id));
 	}, [waColumnMode, waSelectedColumns, fields]);
 
-	const buildWaMessage = () => {
-		const columns = activeWaColumns;
-
-		if (waFormat === 'csv') {
-			const escapeCsvField = (field) => {
-				const str = String(field ?? '');
-				if (
-					str.includes(',') ||
-					str.includes('"') ||
-					str.includes('\n')
-				) {
-					return '"' + str.replace(/"/g, '""') + '"';
-				}
-				return str;
-			};
-			const headers = columns.map((c) => c.label);
-			const rows = responses.map((item) =>
-				columns.map((c) => c.getValue({ item }))
-			);
-			return [
-				headers.map(escapeCsvField).join(','),
-				...rows.map((row) => row.map(escapeCsvField).join(',')),
-			].join('\n');
-		}
-
-		if (waFormat === 'oneline') {
-			return responses
-				.map((item) =>
-					columns
-						.map((c) => c.getValue({ item }))
-						.filter(
-							(v) => v !== '' && v !== null && v !== undefined
-						)
-						.join(' ')
-				)
-				.join('\n');
-		}
-
-		// Markdown.
-		return responses
-			.map((item) => {
-				const hasHeading = Boolean(item.participant_id);
-				const lines = [];
-
-				if (hasHeading) {
-					const respondent =
-						item.participant_name ||
-						item.participant_email ||
-						`#${item.id}`;
-					lines.push(`## ${respondent}`, '');
-				}
-
-				columns
-					.filter((c) => !hasHeading || c.id !== 'participant_name')
-					.forEach((c) => {
-						const label =
-							c.id === 'created_at'
-								? __('Submission date', 'fair-form')
-								: c.label;
-						const value =
-							c.id === 'created_at'
-								? formatDateLong(item.created_at)
-								: c.getValue({ item }) || '';
-						lines.push(`**${label}:** ${value}`, '');
-					});
-
-				// Drop the trailing blank line before joining responses.
-				lines.pop();
-				return lines.join('\n');
-			})
-			.join('\n\n---\n\n');
-	};
+	const buildWaMessage = () =>
+		buildBulkExportText({
+			responses,
+			columns: activeWaColumns,
+			format: waFormat,
+		});
 
 	const copyWaMessage = () => {
 		if (!navigator.clipboard) {

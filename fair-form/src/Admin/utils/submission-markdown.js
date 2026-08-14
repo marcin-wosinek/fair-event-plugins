@@ -1,17 +1,25 @@
 import { __ } from '@wordpress/i18n';
 
+// Markdown for a file_upload answer: an embedded image when the attachment
+// is an image, otherwise a plain link. `is_image` comes from the server mime
+// check — single source of truth. Returns null when the answer has no file.
+export function fileAnswerMarkdown(answer) {
+	if (!answer?.file_url) {
+		return null;
+	}
+	const alt = answer.question_text || '';
+	return answer.is_image
+		? `![${alt}](${answer.file_url})`
+		: `[${alt}](${answer.file_url})`;
+}
+
 // Serialize one answer to markdown lines (### heading + value/link).
 function answerToMarkdownLines(answer) {
 	const lines = [`### ${answer.question_text}`, ''];
 
-	if (answer.file_url) {
-		const alt = answer.question_text || '';
-		// is_image comes from the server mime check — single source of truth.
-		lines.push(
-			answer.is_image
-				? `![${alt}](${answer.file_url})`
-				: `[${alt}](${answer.file_url})`
-		);
+	const fileMarkdown = fileAnswerMarkdown(answer);
+	if (fileMarkdown) {
+		lines.push(fileMarkdown);
 	} else if (answer.question_type === 'multiselect' && answer.answer_value) {
 		let value = answer.answer_value;
 		try {
