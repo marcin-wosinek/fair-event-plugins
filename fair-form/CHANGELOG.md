@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.2
+
+### Patch Changes
+
+-   9070a19: Bulk Questionnaire Responses export now embeds photo answers as Markdown images and shows a working link for other file uploads, matching the single-response export, instead of a bare attachment ID. CSV and "one line per person" formats now show the file's URL instead of the raw ID, and the on-page table links file-upload answers directly.
+
 ## 1.4.1
 
 ### Patch Changes
