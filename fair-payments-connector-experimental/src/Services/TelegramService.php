@@ -98,6 +98,12 @@ class TelegramService {
 	 * initial, e.g. "Lucianna C.") so the channel still shows who paid without
 	 * exposing the full identity.
 	 *
+	 * A transaction only ever populates one of the labeled optional lines
+	 * (Group/Fee for membership fees; Ticket/Activities/Discounts for event
+	 * signups), plus the event link when there's an event. Lines whose value
+	 * resolved empty are dropped entirely — rendered with an empty label they
+	 * look like valid-but-blank data rather than "not applicable".
+	 *
 	 * @param string $template    Template string.
 	 * @param array  $context     Context with raw values (will be HTML-escaped on insertion).
 	 * @param bool   $include_pii Whether to substitute PII placeholders.
@@ -115,6 +121,8 @@ class TelegramService {
 			'participant_email',
 			'amount',
 			'currency',
+			'group_label',
+			'fee_label',
 			'ticket_label',
 			'activities',
 			'discounts',
@@ -147,7 +155,42 @@ class TelegramService {
 			$replacements[ '{' . $key . '}' ] = $value;
 		}
 
-		return strtr( (string) $template, $replacements );
+		$rendered = strtr( (string) $template, $replacements );
+
+		return self::drop_empty_lines( $rendered );
+	}
+
+	/**
+	 * Drop optional lines that resolved to an empty value.
+	 *
+	 * Removes the whole line (not just the value) for any `Label: {value}`
+	 * placeholder line whose value is empty, plus the event link line when
+	 * there's no event — its literal empty-attribute rendering
+	 * (`<a href=""></a>`) is otherwise a stray blank line.
+	 *
+	 * @param string $rendered Template after placeholder substitution.
+	 * @return string
+	 */
+	private static function drop_empty_lines( $rendered ) {
+		$optional_prefixes = array( 'Group:', 'Fee:', 'Ticket:', 'Activities:', 'Discounts:' );
+
+		$lines = explode( "\n", $rendered );
+		$lines = array_filter(
+			$lines,
+			static function ( $line ) use ( $optional_prefixes ) {
+				if ( '<a href=""></a>' === $line ) {
+					return false;
+				}
+				foreach ( $optional_prefixes as $prefix ) {
+					if ( 0 === strpos( $line, $prefix ) && '' === trim( substr( $line, strlen( $prefix ) ) ) ) {
+						return false;
+					}
+				}
+				return true;
+			}
+		);
+
+		return implode( "\n", $lines );
 	}
 
 	/**

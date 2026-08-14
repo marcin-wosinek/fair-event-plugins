@@ -13,6 +13,30 @@ if ( ! defined( 'WPINC' ) ) {
 	define( 'WPINC', 'wp-includes' );
 }
 
+if ( ! function_exists( 'esc_html' ) ) {
+	/**
+	 * Stub of WordPress esc_html() — returns the string unescaped.
+	 *
+	 * @param string $text Text to escape.
+	 * @return string
+	 */
+	function esc_html( $text ) {
+		return (string) $text;
+	}
+}
+
+if ( ! function_exists( 'esc_url' ) ) {
+	/**
+	 * Stub of WordPress esc_url() — a no-op pass-through for test input.
+	 *
+	 * @param string $url URL to sanitize.
+	 * @return string Unmodified URL.
+	 */
+	function esc_url( $url ) {
+		return (string) $url;
+	}
+}
+
 if ( ! function_exists( 'number_format_i18n' ) ) {
 	/**
 	 * Stub of WordPress number_format_i18n() — delegates to number_format()

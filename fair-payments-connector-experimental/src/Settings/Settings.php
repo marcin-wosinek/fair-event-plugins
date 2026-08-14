@@ -205,6 +205,8 @@ class Settings {
 		return '<b>{test_label}{site_domain}</b>' . "\n"
 			. '<a href="{event_url}">{event_title}</a>' . "\n"
 			. '<a href="{participant_url}">{participant_name}</a>' . "\n"
+			. 'Group: {group_label}' . "\n"
+			. 'Fee: {fee_label}' . "\n"
 			. 'Ticket: {ticket_label}' . "\n"
 			. 'Activities: {activities}' . "\n"
 			. 'Discounts: {discounts}' . "\n"

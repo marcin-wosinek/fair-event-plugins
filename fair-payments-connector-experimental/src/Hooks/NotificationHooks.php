@@ -207,6 +207,8 @@ class NotificationHooks {
 			'participant_name_short' => '',
 			'participant_url'        => '',
 			'participant_email'      => '',
+			'group_label'            => '',
+			'fee_label'              => '',
 			'ticket_label'           => '',
 			'activities'             => '',
 			'discounts'              => '',

@@ -11,6 +11,7 @@ namespace FairAudience\Hooks;
 
 use FairAudienceExperimental\Database\FeePaymentRepository;
 use FairAudienceExperimental\Database\FeeAuditLogRepository;
+use FairAudienceExperimental\Database\FeeRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
@@ -152,6 +153,23 @@ class PaymentHooks {
 			$context['participant_name_short'] = trim( $participant->name . ' ' . $surname_initial );
 			$context['participant_email']      = isset( $participant->email ) ? (string) $participant->email : '';
 			$context['participant_url']        = admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id );
+		}
+
+		// Membership-fee payments — resolve the group/fee names so the
+		// notification names what was actually purchased instead of the
+		// (always empty, for this transaction type) event-ticket fields.
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		if ( ! empty( $metadata['fee_payment_id'] ) && class_exists( FeeRepository::class ) ) {
+			$fee_payment_repo = new FeePaymentRepository();
+			$fee_payment      = $fee_payment_repo->get_by_id( (int) $metadata['fee_payment_id'] );
+			if ( $fee_payment ) {
+				$fee_repo = new FeeRepository();
+				$fee      = $fee_repo->get_by_id_with_group( (int) $fee_payment->fee_id );
+				if ( $fee ) {
+					$context['fee_label']   = isset( $fee['name'] ) ? (string) $fee['name'] : '';
+					$context['group_label'] = isset( $fee['group_name'] ) ? (string) $fee['group_name'] : '';
+				}
+			}
 		}
 
 		$ledger_repo            = new EventParticipantTransactionRepository();
