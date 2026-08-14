@@ -138,24 +138,31 @@ class PaymentHooks {
 	public static function enrich_notification_context( $context, $transaction, $payment ) {
 		global $wpdb;
 
-		// Ledger/event branch — always runs, independent of whether
-		// transaction->participant_id resolved. The event/ticket/activities/
-		// discounts data is keyed on the transaction via the ledger, not on
-		// the participant, so it must not be gated behind participant
-		// resolution (a transaction can have a working ledger link even when
-		// participant_id itself never got set at creation time).
-		$ledger_repo            = new EventParticipantTransactionRepository();
-		$event_participant_ids  = $ledger_repo->get_event_participant_ids_by_transaction_id( (int) $transaction->id );
-		$event_participant_repo = new EventParticipantRepository();
-		$event_participant      = $event_participant_ids ? $event_participant_repo->get_by_id( $event_participant_ids[0] ) : null;
+		// A transaction is either a membership-fee payment (metadata carries
+		// fee_payment_id, no ledger row ever exists for it) or an event
+		// signup (resolved via the ledger) — never both, so skip the ledger
+		// lookup entirely for fee payments instead of querying it for a
+		// guaranteed-empty result.
+		$metadata           = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		$is_fee_payment     = ! empty( $metadata['fee_payment_id'] );
+		$event_participants = array();
+		$event_participant  = null;
 
-		// Membership-fee payments — resolve the group/fee names so the
-		// notification names what was actually purchased instead of the
-		// (always empty, for this transaction type) event-ticket fields.
-		// Independent of both participant_id and the ledger branch, since a
-		// fee payment has no event_participant.
-		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
-		if ( ! empty( $metadata['fee_payment_id'] ) && class_exists( FeeRepository::class ) ) {
+		if ( ! $is_fee_payment ) {
+			// Resolve via the ledger — keyed on the transaction, not on
+			// participant_id, so this must not be gated behind participant
+			// resolution (a transaction can have a working ledger link even
+			// when participant_id itself never got set at creation time).
+			$event_participants = self::resolve_event_participants_for_transaction(
+				new EventParticipantRepository(),
+				new EventParticipantTransactionRepository(),
+				(int) $transaction->id
+			);
+			$event_participant  = $event_participants ? $event_participants[0] : null;
+		} elseif ( class_exists( FeeRepository::class ) ) {
+			// Membership-fee payments — resolve the group/fee names so the
+			// notification names what was actually purchased instead of the
+			// (always empty, for this transaction type) event-ticket fields.
 			$fee_payment_repo = new FeePaymentRepository();
 			$fee_payment      = $fee_payment_repo->get_by_id( (int) $metadata['fee_payment_id'] );
 			if ( $fee_payment ) {
@@ -169,12 +176,13 @@ class PaymentHooks {
 		}
 
 		// Participant branch — prefer transaction->participant_id, but fall
-		// back to the ledger's event_participant->participant_id (always set
-		// on that row) when the transaction's own participant_id never
-		// resolved. Costs nothing extra since $event_participant is already
-		// fetched above for the ticket/activity data.
+		// back to the ledger's event_participant->participant_id when the
+		// transaction's own id never resolved. Only safe when exactly one
+		// event_participant is linked: a 'multiple_instances' purchase can
+		// charge one transaction against several registrants, and picking
+		// an arbitrary one there would misattribute the notification.
 		$participant_id = isset( $transaction->participant_id ) ? (int) $transaction->participant_id : 0;
-		if ( $participant_id <= 0 && $event_participant && ! empty( $event_participant->participant_id ) ) {
+		if ( $participant_id <= 0 && 1 === count( $event_participants ) && ! empty( $event_participant->participant_id ) ) {
 			$participant_id = (int) $event_participant->participant_id;
 		}
 
