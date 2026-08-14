@@ -138,26 +138,22 @@ class PaymentHooks {
 	public static function enrich_notification_context( $context, $transaction, $payment ) {
 		global $wpdb;
 
-		$participant_id = isset( $transaction->participant_id ) ? (int) $transaction->participant_id : 0;
-		if ( $participant_id <= 0 ) {
-			return $context;
-		}
-
-		$participant_repo = new ParticipantRepository();
-		$participant      = $participant_repo->get_by_id( $participant_id );
-		if ( $participant ) {
-			$full_name                         = trim( $participant->name . ' ' . $participant->surname );
-			$surname                           = trim( (string) $participant->surname );
-			$surname_initial                   = '' !== $surname ? mb_strtoupper( mb_substr( $surname, 0, 1 ) ) . '.' : '';
-			$context['participant_name']       = $full_name;
-			$context['participant_name_short'] = trim( $participant->name . ' ' . $surname_initial );
-			$context['participant_email']      = isset( $participant->email ) ? (string) $participant->email : '';
-			$context['participant_url']        = admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id );
-		}
+		// Ledger/event branch — always runs, independent of whether
+		// transaction->participant_id resolved. The event/ticket/activities/
+		// discounts data is keyed on the transaction via the ledger, not on
+		// the participant, so it must not be gated behind participant
+		// resolution (a transaction can have a working ledger link even when
+		// participant_id itself never got set at creation time).
+		$ledger_repo            = new EventParticipantTransactionRepository();
+		$event_participant_ids  = $ledger_repo->get_event_participant_ids_by_transaction_id( (int) $transaction->id );
+		$event_participant_repo = new EventParticipantRepository();
+		$event_participant      = $event_participant_ids ? $event_participant_repo->get_by_id( $event_participant_ids[0] ) : null;
 
 		// Membership-fee payments — resolve the group/fee names so the
 		// notification names what was actually purchased instead of the
 		// (always empty, for this transaction type) event-ticket fields.
+		// Independent of both participant_id and the ledger branch, since a
+		// fee payment has no event_participant.
 		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
 		if ( ! empty( $metadata['fee_payment_id'] ) && class_exists( FeeRepository::class ) ) {
 			$fee_payment_repo = new FeePaymentRepository();
@@ -172,10 +168,30 @@ class PaymentHooks {
 			}
 		}
 
-		$ledger_repo            = new EventParticipantTransactionRepository();
-		$event_participant_ids  = $ledger_repo->get_event_participant_ids_by_transaction_id( (int) $transaction->id );
-		$event_participant_repo = new EventParticipantRepository();
-		$event_participant      = $event_participant_ids ? $event_participant_repo->get_by_id( $event_participant_ids[0] ) : null;
+		// Participant branch — prefer transaction->participant_id, but fall
+		// back to the ledger's event_participant->participant_id (always set
+		// on that row) when the transaction's own participant_id never
+		// resolved. Costs nothing extra since $event_participant is already
+		// fetched above for the ticket/activity data.
+		$participant_id = isset( $transaction->participant_id ) ? (int) $transaction->participant_id : 0;
+		if ( $participant_id <= 0 && $event_participant && ! empty( $event_participant->participant_id ) ) {
+			$participant_id = (int) $event_participant->participant_id;
+		}
+
+		if ( $participant_id > 0 ) {
+			$participant_repo = new ParticipantRepository();
+			$participant      = $participant_repo->get_by_id( $participant_id );
+			if ( $participant ) {
+				$full_name                         = trim( $participant->name . ' ' . $participant->surname );
+				$surname                           = trim( (string) $participant->surname );
+				$surname_initial                   = '' !== $surname ? mb_strtoupper( mb_substr( $surname, 0, 1 ) ) . '.' : '';
+				$context['participant_name']       = $full_name;
+				$context['participant_name_short'] = trim( $participant->name . ' ' . $surname_initial );
+				$context['participant_email']      = isset( $participant->email ) ? (string) $participant->email : '';
+				$context['participant_url']        = admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id );
+			}
+		}
+
 		if ( $event_participant ) {
 			$event = get_post( (int) $event_participant->event_id );
 			if ( $event ) {
