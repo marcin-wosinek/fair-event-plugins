@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PostToolUse hook: format a single file after Claude edits it.
+# PostToolUse hook: format files after Codex edits them.
 #
 # Formats only the file that changed (by extension), not the whole tree —
 # `npm run format` rewrites every file and is too slow to run per-edit.
@@ -14,26 +14,33 @@
 
 set -u
 
-root="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
-# The tool payload arrives as JSON on stdin; pull out the edited file path.
-file="$(node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{try{process.stdout.write(JSON.parse(s).tool_input.file_path||'')}catch(e){}})")"
-
-# Ignore edits outside the repo (e.g. scratch files in /tmp).
-case "$file" in
-	"$root"/*) ;;
-	*) exit 0 ;;
-esac
+# Codex sends the complete apply_patch command as tool_input.command. Extract
+# every Add/Update path; deleted files need no formatting.
+files="$(node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{try{const c=JSON.parse(s).tool_input.command||'';for(const m of c.matchAll(/^\\*\\*\\* (?:Add|Update) File: (.+)$/gm))console.log(m[1])}catch(e){}})")"
 
 cd "$root" || exit 0
 
-case "$file" in
-	*.js | *.jsx | *.ts | *.tsx | *.css | *.scss | *.json)
-		npx wp-scripts format "$file" >/dev/null 2>&1 || true
-		;;
-	*.php)
-		vendor/bin/phpcbf --standard=WordPress --extensions=php "$file" >/dev/null 2>&1 || true
-		;;
-esac
+while IFS= read -r file; do
+	[ -n "$file" ] || continue
+	case "$file" in
+		/*) absolute="$file" ;;
+		*) absolute="$root/$file" ;;
+	esac
+	[ -f "$absolute" ] || continue
+	case "$absolute" in
+		"$root"/*) ;;
+		*) continue ;;
+	esac
+	case "$absolute" in
+		*.js | *.jsx | *.ts | *.tsx | *.css | *.scss | *.json)
+			npx wp-scripts format "$absolute" >/dev/null 2>&1 || true
+			;;
+		*.php)
+			vendor/bin/phpcbf --standard=WordPress --extensions=php "$absolute" >/dev/null 2>&1 || true
+			;;
+	esac
+done <<<"$files"
 
 exit 0

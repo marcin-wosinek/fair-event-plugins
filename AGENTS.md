@@ -10,25 +10,26 @@ authoritative.
 
 ## Ticket Workflow
 
-Most work flows through three commands, each consuming the previous one's
-output: `/write-ticket` → `/plan-ticket` → `/make-pr`. (These are Claude Code
-slash commands defined in `.claude/commands/`; on other tools, follow the same
-three steps manually.)
+Most work flows through three workflows, each consuming the previous one's
+output: `write-ticket` → `plan-ticket` → `make-pr`. Claude Code exposes these
+through `.claude/commands/`; Codex exposes them as repository skills under
+`.agents/skills/` (invoke them as `$write-ticket`, `$plan-ticket`, and
+`$make-pr`).
 
-1. **`/write-ticket`** files a GitHub issue with no code references (behaviour
+1. **`write-ticket`** files a GitHub issue with no code references (behaviour
    only) — see [TICKETS.md](./TICKETS.md). It carries an **Open questions**
    section (real forks, with a recommendation) and a `- [ ]` **Acceptance
    criteria** checklist. Apply the `responsive-ui` label whenever the
    behaviour changes layout across viewports — it's the only signal step 3
    uses to require before/after screenshots.
-2. **`/plan-ticket`** grounds that ticket in the codebase as it exists now and
+2. **`plan-ticket`** grounds that ticket in the codebase as it exists now and
    posts an implementation plan as an issue comment, starting with a
    `## Implementation plan` heading. It resolves the ticket's Open Questions
    (and any new ones found while planning) under a **Decisions** heading, and
    ends with a **"Read first"** list of reference docs from the table below.
    Nothing gets posted until you approve it — a plan with unresolved
    questions isn't ready.
-3. **`/make-pr`** implements the ticket. It looks for a comment starting with
+3. **`make-pr`** implements the ticket. It looks for a comment starting with
    `## Implementation plan`; if one exists, that plan (its Read first list and
    Decisions) is the spec and the ticket body is context — otherwise the
    ticket body is the spec directly. It closes the loop by checking off the
@@ -45,7 +46,7 @@ ticket-writing time to PR time.
 Detailed guides live next to this file. Load the relevant one **before** working
 in that area — this file only carries the always-true rules.
 
-**When writing an implementation plan** (a ticket plan, a `/plan-ticket` run, or
+**When writing an implementation plan** (a ticket plan, a `plan-ticket` run, or
 a plan handed to another session to implement), end it with a **"Read first"
 list naming the exact reference docs** from the table below that apply to the
 work. The implementer reads those docs before touching code instead of

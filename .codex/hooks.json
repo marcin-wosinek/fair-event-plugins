@@ -2,22 +2,22 @@
 	"hooks": {
 		"PreToolUse": [
 			{
-				"matcher": "Edit|Write|MultiEdit|NotebookEdit",
+				"matcher": "^apply_patch$",
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash '/Users/marcinwosinek/workspace/fair-event-plugins/.codex/hooks/guard-generated-files.sh'"
+						"command": "bash \"$(git rev-parse --show-toplevel)/.codex/hooks/guard-generated-files.sh\""
 					}
 				]
 			}
 		],
 		"PostToolUse": [
 			{
-				"matcher": "Edit|Write|MultiEdit|NotebookEdit",
+				"matcher": "^apply_patch$",
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash '/Users/marcinwosinek/workspace/fair-event-plugins/.codex/hooks/format-edited-file.sh'"
+						"command": "bash \"$(git rev-parse --show-toplevel)/.codex/hooks/format-edited-file.sh\""
 					}
 				]
 			}
