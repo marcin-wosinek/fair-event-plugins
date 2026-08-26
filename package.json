@@ -38,7 +38,7 @@
 		"composer:validate": "npm run composer:validate --workspaces --if-present",
 		"start": "npm run start --workspace=fair-payments-connector & npm run start --workspace=fair-events & npm run start --workspace=fair-audience & npm run start --workspace=fair-timetable & npm run start --workspace=fair-finance & npm run start --workspace=fair-events-experimental & npm run start --workspace=fair-payments-connector-experimental & npm run start --workspace=fair-form & npm run start --workspace=fair-audience-experimental & npm run start --workspace=fair-calendar-button & wait",
 		"format": "npm-run-all2 format:*",
-		"format:js": "wp-scripts format",
+		"format:js": "npm run format --workspaces --if-present",
 		"format:php": "vendor/bin/phpcbf --standard=WordPress --extensions=php fair-payments-connector/src/ fair-events/src/ fair-events/__tests__/ fair-platform/src/ fair-audience/src/ fair-audience/__tests__/ fair-timetable/src/ fair-timetable/__tests__/ fair-finance/src/ fair-finance/__tests__/ fair-events-experimental/src/ fair-payments-connector-experimental/src/ fair-form/src/ fair-audience-experimental/src/ fair-calendar-button/src/",
 		"prepare": "husky",
 		"changeset": "changeset",

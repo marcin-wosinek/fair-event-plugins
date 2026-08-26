@@ -6,6 +6,7 @@
 	"main": "src/index.js",
 	"private": true,
 	"scripts": {
+		"format": "wp-scripts format",
 		"test": "jest"
 	},
 	"devDependencies": {
