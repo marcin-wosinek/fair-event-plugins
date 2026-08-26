@@ -1574,7 +1574,7 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		foreach ( $signup_rows as $row ) {
-			\FairEvents\Models\EventSignup::update_transaction( (int) $row->id, (int) $new_transaction_id );
+			\FairEvents\Models\EventSignup::update_transaction( (int) $row->id, (int) $new_transaction_id, 'pending_payment' );
 		}
 
 		$new_transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $new_transaction_id );

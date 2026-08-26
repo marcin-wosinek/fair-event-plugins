@@ -109,10 +109,18 @@ class Fair_Test_WPDB {
 	 * @param string $table Table name.
 	 * @param array  $data  Updated columns.
 	 * @param array  $where Row selector.
+	 * @param array  $formats Value formats.
+	 * @param array  $where_formats Selector formats.
 	 * @return int Always one affected row.
 	 */
-	public function update( $table, $data, $where ) {
-		$this->last_update = compact( 'table', 'data', 'where' );
+	public function update( $table, $data, $where, $formats = null, $where_formats = null ) {
+		$this->last_update = array(
+			'table'         => $table,
+			'data'          => $data,
+			'where'         => $where,
+			'formats'       => $formats,
+			'where_formats' => $where_formats,
+		);
 		$id                = (int) ( $where['id'] ?? 0 );
 
 		if ( isset( $this->rows[ $table ][ $id ] ) ) {
@@ -140,8 +148,10 @@ class Fair_Test_WPDB {
 			$allowed = array_slice( $prepared['args'], 3 );
 			$row     = $this->rows[ $table ][ $id ] ?? null;
 			if ( $row && in_array( $row->status, $allowed, true ) ) {
-				$row->status             = $target;
-				$row->payment_expires_at = null;
+				$row->status = $target;
+				if ( str_contains( $prepared['query'], 'payment_expires_at = NULL' ) ) {
+					$row->payment_expires_at = null;
+				}
 				return 1;
 			}
 			return 0;
