@@ -301,7 +301,7 @@ if ( $is_valid_post_type ) {
 
 			$within_hold = $pending_row
 				&& $pending_row->payment_expires_at
-				&& strtotime( $pending_row->payment_expires_at ) > time();
+				&& strtotime( $pending_row->payment_expires_at . ' UTC' ) > time();
 
 			$candidate_tx_id = 0;
 			if ( $pending_row ) {

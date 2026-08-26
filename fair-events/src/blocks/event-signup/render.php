@@ -111,7 +111,7 @@ if ( ! $signup_transaction
 			&& (int) $session_signup->transaction_id === $session['transaction_id']
 			&& 'pending_payment' === $session_signup->status
 			&& $session_signup->payment_expires_at
-			&& strtotime( $session_signup->payment_expires_at ) > time()
+			&& strtotime( $session_signup->payment_expires_at . ' UTC' ) > time()
 		) {
 			$signup_transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( $session['transaction_id'] );
 			if ( $signup_transaction ) {

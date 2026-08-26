@@ -73,7 +73,7 @@ if ( ! function_exists( 'update_option' ) ) {
 	 * @param mixed  $autoload Ignored — present only to match the real signature.
 	 * @return bool Always true.
 	 */
-	function update_option( $name, $value, $autoload = null ) {
+	function update_option( $name, $value, $autoload = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- signature matches WordPress.
 		if ( ! isset( $GLOBALS['_fair_test_options'] ) ) {
 			$GLOBALS['_fair_test_options'] = array();
 		}
@@ -85,6 +85,19 @@ if ( ! function_exists( 'update_option' ) ) {
 		$GLOBALS['_fair_test_update_option_calls'][] = $name;
 
 		return true;
+	}
+}
+
+if ( ! function_exists( 'do_action' ) ) {
+	/**
+	 * Stub of WordPress do_action(), recording dispatched hook arguments.
+	 *
+	 * @param string $hook_name Hook name.
+	 * @param mixed  ...$args   Hook arguments.
+	 * @return void
+	 */
+	function do_action( $hook_name, ...$args ) {
+		$GLOBALS['_fair_test_actions'][ $hook_name ][] = $args;
 	}
 }
 
@@ -338,7 +351,7 @@ if ( ! function_exists( 'wp_get_attachment_image_url' ) ) {
 	 * @param string $size          Image size.
 	 * @return string|false Stored URL, or false when the attachment is "gone".
 	 */
-	function wp_get_attachment_image_url( $attachment_id, $size = 'thumbnail' ) {
+	function wp_get_attachment_image_url( $attachment_id, $size = 'thumbnail' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- signature matches WordPress.
 		$urls = isset( $GLOBALS['_fair_test_attachment_urls'] ) ? $GLOBALS['_fair_test_attachment_urls'] : array();
 		return array_key_exists( $attachment_id, $urls ) ? $urls[ $attachment_id ] : false;
 	}
@@ -440,7 +453,7 @@ if ( ! function_exists( 'wp_remote_get' ) ) {
 	 * @param array  $args Request args (ignored by this stub).
 	 * @return array Raw response array, matching the shape wp_remote_* readers expect.
 	 */
-	function wp_remote_get( $url, $args = array() ) {
+	function wp_remote_get( $url, $args = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- signature matches WordPress.
 		$responses = isset( $GLOBALS['_fair_test_remote_responses'] ) ? $GLOBALS['_fair_test_remote_responses'] : array();
 
 		return array_key_exists( $url, $responses )
