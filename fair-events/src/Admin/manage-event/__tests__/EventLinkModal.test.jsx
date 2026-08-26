@@ -17,11 +17,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventLinkModal from '../EventLinkModal.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
-beforeEach(() => {
-	jest.spyOn(console, 'warn').mockImplementation(() => {});
-	jest.spyOn(console, 'error').mockImplementation(() => {});
+beforeEach( () => {
+	jest.spyOn( console, 'warn' ).mockImplementation( () => {} );
+	jest.spyOn( console, 'error' ).mockImplementation( () => {} );
 
 	window.matchMedia =
 		window.matchMedia ||
@@ -32,15 +32,15 @@ beforeEach(() => {
 				removeListener: () => {},
 			};
 		};
-});
+} );
 
-afterEach(() => {
+afterEach( () => {
 	jest.restoreAllMocks();
 	jest.clearAllMocks();
-});
+} );
 
 const eventDateId = 1;
-const enabledPostTypes = [{ slug: 'fair_event', label: 'Event' }];
+const enabledPostTypes = [ { slug: 'fair_event', label: 'Event' } ];
 
 const baseEventDate = {
 	link_type: 'none',
@@ -48,74 +48,76 @@ const baseEventDate = {
 	linked_posts: [],
 };
 
-it('setting an external URL and confirming PUTs link_type/external_url and calls onSaved', async () => {
+it( 'setting an external URL and confirming PUTs link_type/external_url and calls onSaved', async () => {
 	const updated = {
 		...baseEventDate,
 		link_type: 'external',
 		external_url: 'https://example.com',
 	};
-	apiFetch.mockResolvedValueOnce(updated);
+	apiFetch.mockResolvedValueOnce( updated );
 	const onSaved = jest.fn();
 
 	render(
 		<EventLinkModal
-			eventDateId={eventDateId}
-			eventDate={baseEventDate}
-			enabledPostTypes={enabledPostTypes}
-			onClose={jest.fn()}
-			onSaved={onSaved}
+			eventDateId={ eventDateId }
+			eventDate={ baseEventDate }
+			enabledPostTypes={ enabledPostTypes }
+			onClose={ jest.fn() }
+			onSaved={ onSaved }
 		/>
 	);
 
-	fireEvent.click(screen.getByLabelText('An external website'));
-	fireEvent.change(screen.getByLabelText('External URL'), {
+	fireEvent.click( screen.getByLabelText( 'An external website' ) );
+	fireEvent.change( screen.getByLabelText( 'External URL' ), {
 		target: { value: 'https://example.com' },
-	});
-	fireEvent.click(screen.getByRole('button', { name: /Set external link/i }));
+	} );
+	fireEvent.click(
+		screen.getByRole( 'button', { name: /Set external link/i } )
+	);
 
-	await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(1));
-	expect(apiFetch).toHaveBeenCalledWith({
-		path: `/fair-events/v1/event-dates/${eventDateId}`,
+	await waitFor( () => expect( apiFetch ).toHaveBeenCalledTimes( 1 ) );
+	expect( apiFetch ).toHaveBeenCalledWith( {
+		path: `/fair-events/v1/event-dates/${ eventDateId }`,
 		method: 'PUT',
 		data: {
 			link_type: 'external',
 			external_url: 'https://example.com',
 		},
-	});
-	expect(onSaved).toHaveBeenCalledWith(updated);
-});
+	} );
+	expect( onSaved ).toHaveBeenCalledWith( updated );
+} );
 
-it('choosing "nowhere" and confirming PUTs link_type: none', async () => {
+it( 'choosing "nowhere" and confirming PUTs link_type: none', async () => {
 	const updated = { ...baseEventDate, link_type: 'none' };
-	apiFetch.mockResolvedValueOnce(updated);
+	apiFetch.mockResolvedValueOnce( updated );
 	const onSaved = jest.fn();
 
 	render(
 		<EventLinkModal
-			eventDateId={eventDateId}
-			eventDate={baseEventDate}
-			enabledPostTypes={enabledPostTypes}
-			onClose={jest.fn()}
-			onSaved={onSaved}
+			eventDateId={ eventDateId }
+			eventDate={ baseEventDate }
+			enabledPostTypes={ enabledPostTypes }
+			onClose={ jest.fn() }
+			onSaved={ onSaved }
 		/>
 	);
 
-	fireEvent.click(screen.getByLabelText('Nowhere — show details only'));
-	fireEvent.click(screen.getByRole('button', { name: /Confirm/i }));
+	fireEvent.click( screen.getByLabelText( 'Nowhere — show details only' ) );
+	fireEvent.click( screen.getByRole( 'button', { name: /Confirm/i } ) );
 
-	await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(1));
-	expect(apiFetch).toHaveBeenCalledWith({
-		path: `/fair-events/v1/event-dates/${eventDateId}`,
+	await waitFor( () => expect( apiFetch ).toHaveBeenCalledTimes( 1 ) );
+	expect( apiFetch ).toHaveBeenCalledWith( {
+		path: `/fair-events/v1/event-dates/${ eventDateId }`,
 		method: 'PUT',
 		data: {
 			link_type: 'none',
 			external_url: null,
 		},
-	});
-	expect(onSaved).toHaveBeenCalledWith(updated);
-});
+	} );
+	expect( onSaved ).toHaveBeenCalledWith( updated );
+} );
 
-it('link-existing-post UI still renders when the event already has a linked post, and links a second post', async () => {
+it( 'link-existing-post UI still renders when the event already has a linked post, and links a second post', async () => {
 	const eventDate = {
 		...baseEventDate,
 		link_type: 'post',
@@ -130,7 +132,7 @@ it('link-existing-post UI still renders when the event already has a linked post
 			},
 		],
 	};
-	const searchResults = [{ id: 9, title: 'Another Page' }];
+	const searchResults = [ { id: 9, title: 'Another Page' } ];
 	const updated = {
 		...eventDate,
 		linked_posts: [
@@ -145,46 +147,46 @@ it('link-existing-post UI still renders when the event already has a linked post
 			},
 		],
 	};
-	apiFetch.mockResolvedValueOnce(searchResults);
-	apiFetch.mockResolvedValueOnce(updated);
+	apiFetch.mockResolvedValueOnce( searchResults );
+	apiFetch.mockResolvedValueOnce( updated );
 	const onSaved = jest.fn();
 
 	render(
 		<EventLinkModal
-			eventDateId={eventDateId}
-			eventDate={eventDate}
-			enabledPostTypes={enabledPostTypes}
-			onClose={jest.fn()}
-			onSaved={onSaved}
+			eventDateId={ eventDateId }
+			eventDate={ eventDate }
+			enabledPostTypes={ enabledPostTypes }
+			onClose={ jest.fn() }
+			onSaved={ onSaved }
 		/>
 	);
 
 	// Add-another-post UI is visible even though a post is already linked.
 	expect(
-		screen.getByRole('heading', { name: 'Link Existing Post' })
+		screen.getByRole( 'heading', { name: 'Link Existing Post' } )
 	).toBeInTheDocument();
 
-	fireEvent.change(screen.getByLabelText('Search posts by title'), {
+	fireEvent.change( screen.getByLabelText( 'Search posts by title' ), {
 		target: { value: 'Another' },
-	});
+	} );
 
-	await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(1));
+	await waitFor( () => expect( apiFetch ).toHaveBeenCalledTimes( 1 ) );
 
-	fireEvent.change(screen.getByLabelText('Select a post'), {
+	fireEvent.change( screen.getByLabelText( 'Select a post' ), {
 		target: { value: '9' },
-	});
-	fireEvent.click(screen.getByRole('button', { name: /Link Post/i }));
+	} );
+	fireEvent.click( screen.getByRole( 'button', { name: /Link Post/i } ) );
 
-	await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
-	expect(apiFetch).toHaveBeenNthCalledWith(2, {
-		path: `/fair-events/v1/event-dates/${eventDateId}/link-post`,
+	await waitFor( () => expect( apiFetch ).toHaveBeenCalledTimes( 2 ) );
+	expect( apiFetch ).toHaveBeenNthCalledWith( 2, {
+		path: `/fair-events/v1/event-dates/${ eventDateId }/link-post`,
 		method: 'POST',
 		data: { post_id: 9 },
-	});
-	expect(onSaved).toHaveBeenCalledWith(updated);
-});
+	} );
+	expect( onSaved ).toHaveBeenCalledWith( updated );
+} );
 
-it('linked-posts list shows view/edit links and unlink DELETEs and calls onSaved', async () => {
+it( 'linked-posts list shows view/edit links and unlink DELETEs and calls onSaved', async () => {
 	const eventDate = {
 		...baseEventDate,
 		link_type: 'post',
@@ -200,34 +202,34 @@ it('linked-posts list shows view/edit links and unlink DELETEs and calls onSaved
 		],
 	};
 	const updated = { ...baseEventDate, link_type: 'none', linked_posts: [] };
-	apiFetch.mockResolvedValueOnce(updated);
+	apiFetch.mockResolvedValueOnce( updated );
 	const onSaved = jest.fn();
 
 	render(
 		<EventLinkModal
-			eventDateId={eventDateId}
-			eventDate={eventDate}
-			enabledPostTypes={enabledPostTypes}
-			onClose={jest.fn()}
-			onSaved={onSaved}
+			eventDateId={ eventDateId }
+			eventDate={ eventDate }
+			enabledPostTypes={ enabledPostTypes }
+			onClose={ jest.fn() }
+			onSaved={ onSaved }
 		/>
 	);
 
-	const viewLink = screen.getByRole('link', { name: /View Entry/i });
-	expect(viewLink).toHaveAttribute('href', 'https://example.com/event');
-	const editLink = screen.getByRole('link', { name: /Edit Post/i });
-	expect(editLink).toHaveAttribute(
+	const viewLink = screen.getByRole( 'link', { name: /View Entry/i } );
+	expect( viewLink ).toHaveAttribute( 'href', 'https://example.com/event' );
+	const editLink = screen.getByRole( 'link', { name: /Edit Post/i } );
+	expect( editLink ).toHaveAttribute(
 		'href',
 		'https://example.com/wp-admin/post.php?post=5'
 	);
 
-	fireEvent.click(screen.getByRole('button', { name: /Unlink/i }));
+	fireEvent.click( screen.getByRole( 'button', { name: /Unlink/i } ) );
 
-	await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(1));
-	expect(apiFetch).toHaveBeenCalledWith({
-		path: `/fair-events/v1/event-dates/${eventDateId}/link-post`,
+	await waitFor( () => expect( apiFetch ).toHaveBeenCalledTimes( 1 ) );
+	expect( apiFetch ).toHaveBeenCalledWith( {
+		path: `/fair-events/v1/event-dates/${ eventDateId }/link-post`,
 		method: 'DELETE',
 		data: { post_id: 5 },
-	});
-	expect(onSaved).toHaveBeenCalledWith(updated);
-});
+	} );
+	expect( onSaved ).toHaveBeenCalledWith( updated );
+} );

@@ -26,30 +26,32 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-function uniqueEmail(prefix) {
-	return `${prefix}-${Date.now()}-${Math.floor(
+function uniqueEmail( prefix ) {
+	return `${ prefix }-${ Date.now() }-${ Math.floor(
 		Math.random() * 1e6
-	)}@example.test`;
+	) }@example.test`;
 }
 
-const emailQuestion = (value) => ({
+const emailQuestion = ( value ) => ( {
 	question_key: 'email',
 	question_text: 'Email?',
 	question_type: 'email',
 	answer_value: value,
 	display_order: 0,
-});
+} );
 
-const phoneQuestion = (value) => ({
+const phoneQuestion = ( value ) => ( {
 	question_key: 'mobile',
 	question_text: 'Mobile?',
 	question_type: 'phone',
 	answer_value: value,
 	display_order: 1,
-});
+} );
 
 // Every accepted variant below normalizes to this same canonical value.
 const NORMALIZED = '+491701234567';
@@ -74,12 +76,12 @@ const REJECT_CASES = [
 	'+4912345678901234567', // 16 digits, above the 15-digit maximum
 ];
 
-test.describe('FairFormController — phone question normalization (#1267)', () => {
+test.describe( 'FairFormController — phone question normalization (#1267)', () => {
 	let api;
 	let fairAudienceActive = false;
 	const postId = Date.now();
 
-	async function findSubmissionByEmail(email) {
+	async function findSubmissionByEmail( email ) {
 		const res = await api.get(
 			'/wp-json/fair-form/v1/questionnaire-responses',
 			{
@@ -87,88 +89,89 @@ test.describe('FairFormController — phone question normalization (#1267)', () 
 				params: { post_id: postId, title: 'Fair Form' },
 			}
 		);
-		expect(res.ok()).toBeTruthy();
+		expect( res.ok() ).toBeTruthy();
 		const submissions = await res.json();
-		return submissions.find((s) =>
-			s.answers.some((a) => a.answer_value === email)
+		return submissions.find( ( s ) =>
+			s.answers.some( ( a ) => a.answer_value === email )
 		);
 	}
 
-	async function ensureParticipant(email) {
-		if (!fairAudienceActive) {
+	async function ensureParticipant( email ) {
+		if ( ! fairAudienceActive ) {
 			return;
 		}
-		await api.post('/wp-json/fair-audience/v1/participants', {
+		await api.post( '/wp-json/fair-audience/v1/participants', {
 			headers: adminHeaders,
 			data: { name: 'Phone Test', email },
-		});
+		} );
 	}
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const pluginsRes = await api.get('/wp-json/wp/v2/plugins', {
+		const pluginsRes = await api.get( '/wp-json/wp/v2/plugins', {
 			headers: adminHeaders,
-		});
-		if (pluginsRes.ok()) {
+		} );
+		if ( pluginsRes.ok() ) {
 			const plugins = await pluginsRes.json();
 			fairAudienceActive = plugins.some(
-				(p) =>
-					p.plugin?.includes('fair-audience') && p.status === 'active'
+				( p ) =>
+					p.plugin?.includes( 'fair-audience' ) &&
+					p.status === 'active'
 			);
 		}
-	});
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	for (const value of ACCEPT_CASES) {
-		test(`normalizes ${JSON.stringify(
+	for ( const value of ACCEPT_CASES ) {
+		test( `normalizes ${ JSON.stringify(
 			value
-		)} to ${NORMALIZED}`, async () => {
-			const email = uniqueEmail('phone-accept');
-			await ensureParticipant(email);
+		) } to ${ NORMALIZED }`, async () => {
+			const email = uniqueEmail( 'phone-accept' );
+			await ensureParticipant( email );
 			const res = await api.post(
 				'/wp-json/fair-form/v1/fair-form-submit',
 				{
 					data: {
 						post_id: postId,
 						questionnaire_answers: [
-							emailQuestion(email),
-							phoneQuestion(value),
+							emailQuestion( email ),
+							phoneQuestion( value ),
 						],
 					},
 				}
 			);
-			expect(res.ok()).toBeTruthy();
+			expect( res.ok() ).toBeTruthy();
 
-			const submission = await findSubmissionByEmail(email);
-			expect(submission).toBeTruthy();
+			const submission = await findSubmissionByEmail( email );
+			expect( submission ).toBeTruthy();
 			const phoneAnswer = submission.answers.find(
-				(a) => a.question_key === 'mobile'
+				( a ) => a.question_key === 'mobile'
 			);
-			expect(phoneAnswer.answer_value).toBe(NORMALIZED);
-		});
+			expect( phoneAnswer.answer_value ).toBe( NORMALIZED );
+		} );
 	}
 
-	for (const value of REJECT_CASES) {
-		test(`rejects ${JSON.stringify(value)}`, async () => {
-			const email = uniqueEmail('phone-reject');
+	for ( const value of REJECT_CASES ) {
+		test( `rejects ${ JSON.stringify( value ) }`, async () => {
+			const email = uniqueEmail( 'phone-reject' );
 			const res = await api.post(
 				'/wp-json/fair-form/v1/fair-form-submit',
 				{
 					data: {
 						post_id: postId,
 						questionnaire_answers: [
-							emailQuestion(email),
-							phoneQuestion(value),
+							emailQuestion( email ),
+							phoneQuestion( value ),
 						],
 					},
 				}
 			);
-			expect(res.status()).toBe(400);
-			expect((await res.json()).code).toBe('invalid_phone');
-		});
+			expect( res.status() ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe( 'invalid_phone' );
+		} );
 	}
-});
+} );

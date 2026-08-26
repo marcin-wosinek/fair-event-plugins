@@ -27,11 +27,11 @@ let variationRegistered = false;
  * @return {boolean} True if current post type is enabled
  */
 function isEnabledPostType() {
-	const currentPostType = select('core/editor')?.getCurrentPostType();
+	const currentPostType = select( 'core/editor' )?.getCurrentPostType();
 	const enabledTypes = window.fairEventsData?.enabledPostTypes || [
 		'fair_event',
 	];
-	return enabledTypes.includes(currentPostType);
+	return enabledTypes.includes( currentPostType );
 }
 
 /**
@@ -39,18 +39,18 @@ function isEnabledPostType() {
  *
  * @param {boolean} includeInserter Whether to include in block inserter
  */
-function registerCalendarButtonVariation(includeInserter = true) {
-	if (variationRegistered) {
+function registerCalendarButtonVariation( includeInserter = true ) {
+	if ( variationRegistered ) {
 		return;
 	}
 
 	const scope = includeInserter
-		? ['inserter', 'transform', 'block']
-		: ['transform', 'block'];
+		? [ 'inserter', 'transform', 'block' ]
+		: [ 'transform', 'block' ];
 
-	registerBlockVariation('core/button', {
+	registerBlockVariation( 'core/button', {
 		name: 'calendar-button',
-		title: __('Add to Calendar', 'fair-events'),
+		title: __( 'Add to Calendar', 'fair-events' ),
 		description: __(
 			'Button to add this event to a calendar',
 			'fair-events'
@@ -58,12 +58,12 @@ function registerCalendarButtonVariation(includeInserter = true) {
 		icon: 'calendar-alt',
 		attributes: {
 			isCalendarButton: true,
-			text: __('Add to Calendar', 'fair-events'),
+			text: __( 'Add to Calendar', 'fair-events' ),
 		},
-		isActive: (blockAttributes) =>
+		isActive: ( blockAttributes ) =>
 			blockAttributes.isCalendarButton === true,
 		scope,
-	});
+	} );
 
 	variationRegistered = true;
 }
@@ -76,21 +76,21 @@ function updateVariationScope() {
 	let currentIncludesInserter = true;
 
 	const checkAndUpdate = () => {
-		const currentPostType = select('core/editor')?.getCurrentPostType();
+		const currentPostType = select( 'core/editor' )?.getCurrentPostType();
 
 		// Only process if post type has changed
-		if (currentPostType === lastPostType) {
+		if ( currentPostType === lastPostType ) {
 			return;
 		}
 		lastPostType = currentPostType;
 
 		const shouldIncludeInserter = isEnabledPostType();
 
-		if (shouldIncludeInserter !== currentIncludesInserter) {
+		if ( shouldIncludeInserter !== currentIncludesInserter ) {
 			// Unregister and re-register with new scope
-			unregisterBlockVariation('core/button', 'calendar-button');
+			unregisterBlockVariation( 'core/button', 'calendar-button' );
 			variationRegistered = false;
-			registerCalendarButtonVariation(shouldIncludeInserter);
+			registerCalendarButtonVariation( shouldIncludeInserter );
 			currentIncludesInserter = shouldIncludeInserter;
 		}
 	};
@@ -99,7 +99,7 @@ function updateVariationScope() {
 	checkAndUpdate();
 
 	// Subscribe to store changes to handle post type changes
-	subscribe(checkAndUpdate);
+	subscribe( checkAndUpdate );
 }
 
 /**
@@ -109,8 +109,8 @@ function updateVariationScope() {
  * @param {string} name     Block name
  * @return {Object} Modified settings
  */
-function addCalendarButtonToButton(settings, name) {
-	if (name !== 'core/button') {
+function addCalendarButtonToButton( settings, name ) {
+	if ( name !== 'core/button' ) {
 		return settings;
 	}
 
@@ -119,7 +119,7 @@ function addCalendarButtonToButton(settings, name) {
 
 	const calendarVariation = {
 		name: 'calendar-button',
-		title: __('Add to Calendar', 'fair-events'),
+		title: __( 'Add to Calendar', 'fair-events' ),
 		description: __(
 			'Button to add this event to a calendar',
 			'fair-events'
@@ -127,16 +127,16 @@ function addCalendarButtonToButton(settings, name) {
 		icon: 'calendar-alt',
 		attributes: {
 			isCalendarButton: true,
-			text: __('Add to Calendar', 'fair-events'),
+			text: __( 'Add to Calendar', 'fair-events' ),
 		},
-		isActive: (blockAttributes) =>
+		isActive: ( blockAttributes ) =>
 			blockAttributes.isCalendarButton === true,
-		scope: ['inserter', 'transform', 'block'],
+		scope: [ 'inserter', 'transform', 'block' ],
 	};
 
 	return {
 		...settings,
-		variations: [...existingVariations, calendarVariation],
+		variations: [ ...existingVariations, calendarVariation ],
 	};
 }
 
@@ -145,9 +145,9 @@ function addCalendarButtonToButton(settings, name) {
  */
 function addTransformToFairCalendarButton() {
 	const blockName = 'fair-calendar-button/calendar-button';
-	const blockType = getBlockType(blockName);
+	const blockType = getBlockType( blockName );
 
-	if (!blockType) {
+	if ( ! blockType ) {
 		// Block not registered yet, try again later
 		return false;
 	}
@@ -158,50 +158,50 @@ function addTransformToFairCalendarButton() {
 	// Check if we already added the transform
 	const existingTo = settings.transforms?.to || [];
 	const hasOurTransform = existingTo.some(
-		(t) =>
-			t.blocks?.includes('core/buttons') &&
+		( t ) =>
+			t.blocks?.includes( 'core/buttons' ) &&
 			t.__fairEventsTransform === true
 	);
 
-	if (hasOurTransform) {
+	if ( hasOurTransform ) {
 		return true;
 	}
 
 	// Create new transform to core/buttons (which contains core/button)
 	const newTransform = {
 		type: 'block',
-		blocks: ['core/buttons'],
+		blocks: [ 'core/buttons' ],
 		__fairEventsTransform: true, // Marker to identify our transform
-		transform: (attributes, innerBlocks) => {
+		transform: ( attributes, innerBlocks ) => {
 			// The fair-calendar-button contains a core/button as inner block
 			const buttonBlock = innerBlocks.find(
-				(block) => block.name === 'core/button'
+				( block ) => block.name === 'core/button'
 			);
 
-			const calendarButton = createBlock('core/button', {
-				...(buttonBlock?.attributes || {}),
+			const calendarButton = createBlock( 'core/button', {
+				...( buttonBlock?.attributes || {} ),
 				text:
 					buttonBlock?.attributes?.text ||
-					__('Add to Calendar', 'fair-events'),
+					__( 'Add to Calendar', 'fair-events' ),
 				isCalendarButton: true,
-			});
+			} );
 
 			// Wrap in core/buttons
-			return createBlock('core/buttons', {}, [calendarButton]);
+			return createBlock( 'core/buttons', {}, [ calendarButton ] );
 		},
 	};
 
 	// Unregister the block
-	unregisterBlockType(blockName);
+	unregisterBlockType( blockName );
 
 	// Re-register with the new transform
-	registerBlockType(blockName, {
+	registerBlockType( blockName, {
 		...settings,
 		transforms: {
 			...settings.transforms,
-			to: [...existingTo, newTransform],
+			to: [ ...existingTo, newTransform ],
 		},
-	});
+	} );
 
 	return true;
 }
@@ -214,22 +214,22 @@ addFilter(
 );
 
 // Initialize after DOM is ready
-domReady(() => {
+domReady( () => {
 	// Mark as registered since it was added via filter
 	variationRegistered = true;
 
 	// Add transform to fair-calendar-button block
 	// Try immediately, then retry if not ready
-	if (!addTransformToFairCalendarButton()) {
+	if ( ! addTransformToFairCalendarButton() ) {
 		// Retry after a short delay
-		setTimeout(() => {
-			if (!addTransformToFairCalendarButton()) {
+		setTimeout( () => {
+			if ( ! addTransformToFairCalendarButton() ) {
 				// Retry again after blocks are fully loaded
-				setTimeout(addTransformToFairCalendarButton, 500);
+				setTimeout( addTransformToFairCalendarButton, 500 );
 			}
-		}, 100);
+		}, 100 );
 	}
 
 	// Update scope based on post type
-	setTimeout(updateVariationScope, 100);
-});
+	setTimeout( updateVariationScope, 100 );
+} );

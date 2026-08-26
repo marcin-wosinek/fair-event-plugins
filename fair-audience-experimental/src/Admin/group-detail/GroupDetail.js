@@ -16,8 +16,8 @@ import {
 } from '@wordpress/components';
 
 export default function GroupDetail() {
-	const urlParams = new URLSearchParams(window.location.search);
-	const groupId = urlParams.get('group_id');
+	const urlParams = new URLSearchParams( window.location.search );
+	const groupId = urlParams.get( 'group_id' );
 
 	const groupsListUrl =
 		// eslint-disable-next-line no-undef
@@ -26,189 +26,195 @@ export default function GroupDetail() {
 			  fairAudienceGroupDetailData.groupsListUrl
 			: 'admin.php?page=fair-audience-groups';
 
-	const [group, setGroup] = useState(null);
-	const [members, setMembers] = useState([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [membersLoading, setMembersLoading] = useState(true);
-	const [error, setError] = useState(null);
+	const [ group, setGroup ] = useState( null );
+	const [ members, setMembers ] = useState( [] );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ membersLoading, setMembersLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
 
 	// Edit modal state.
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-	const [editName, setEditName] = useState('');
-	const [editDescription, setEditDescription] = useState('');
-	const [isSaving, setIsSaving] = useState(false);
+	const [ isEditModalOpen, setIsEditModalOpen ] = useState( false );
+	const [ editName, setEditName ] = useState( '' );
+	const [ editDescription, setEditDescription ] = useState( '' );
+	const [ isSaving, setIsSaving ] = useState( false );
 
-	const [allParticipants, setAllParticipants] = useState([]);
-	const [participantsLoading, setParticipantsLoading] = useState(false);
-	const [participantSearch, setParticipantSearch] = useState('');
-	const [selectedParticipants, setSelectedParticipants] = useState([]);
-	const [isAddingMembers, setIsAddingMembers] = useState(false);
+	const [ allParticipants, setAllParticipants ] = useState( [] );
+	const [ participantsLoading, setParticipantsLoading ] = useState( false );
+	const [ participantSearch, setParticipantSearch ] = useState( '' );
+	const [ selectedParticipants, setSelectedParticipants ] = useState( [] );
+	const [ isAddingMembers, setIsAddingMembers ] = useState( false );
 
-	const loadGroup = useCallback(() => {
-		if (!groupId) {
-			setError(__('No group ID provided.', 'fair-audience-experimental'));
-			setIsLoading(false);
+	const loadGroup = useCallback( () => {
+		if ( ! groupId ) {
+			setError(
+				__( 'No group ID provided.', 'fair-audience-experimental' )
+			);
+			setIsLoading( false );
 			return;
 		}
 
-		apiFetch({ path: `/fair-audience/v1/groups/${groupId}` })
-			.then((data) => {
-				setGroup(data);
-			})
-			.catch(() => {
-				setError(__('Group not found.', 'fair-audience-experimental'));
-			})
-			.finally(() => {
-				setIsLoading(false);
-			});
-	}, [groupId]);
+		apiFetch( { path: `/fair-audience/v1/groups/${ groupId }` } )
+			.then( ( data ) => {
+				setGroup( data );
+			} )
+			.catch( () => {
+				setError(
+					__( 'Group not found.', 'fair-audience-experimental' )
+				);
+			} )
+			.finally( () => {
+				setIsLoading( false );
+			} );
+	}, [ groupId ] );
 
-	const loadMembers = useCallback(() => {
-		if (!groupId) {
+	const loadMembers = useCallback( () => {
+		if ( ! groupId ) {
 			return;
 		}
-		setMembersLoading(true);
-		apiFetch({ path: `/fair-audience/v1/groups/${groupId}/participants` })
-			.then((data) => {
-				setMembers(data);
-			})
-			.catch(() => {
+		setMembersLoading( true );
+		apiFetch( {
+			path: `/fair-audience/v1/groups/${ groupId }/participants`,
+		} )
+			.then( ( data ) => {
+				setMembers( data );
+			} )
+			.catch( () => {
 				// Ignore; main error handled in loadGroup.
-			})
-			.finally(() => {
-				setMembersLoading(false);
-			});
-	}, [groupId]);
+			} )
+			.finally( () => {
+				setMembersLoading( false );
+			} );
+	}, [ groupId ] );
 
-	const loadParticipants = useCallback((search = '') => {
-		setParticipantsLoading(true);
+	const loadParticipants = useCallback( ( search = '' ) => {
+		setParticipantsLoading( true );
 
 		const params = new URLSearchParams();
-		params.append('per_page', '100');
-		params.append('orderby', 'surname');
-		params.append('order', 'asc');
-		if (search) {
-			params.append('search', search);
+		params.append( 'per_page', '100' );
+		params.append( 'orderby', 'surname' );
+		params.append( 'order', 'asc' );
+		if ( search ) {
+			params.append( 'search', search );
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/participants?${params.toString()}`,
-		})
-			.then((data) => {
-				setAllParticipants(data);
-			})
-			.catch(() => {
-				setAllParticipants([]);
-			})
-			.finally(() => {
-				setParticipantsLoading(false);
-			});
-	}, []);
+		apiFetch( {
+			path: `/fair-audience/v1/participants?${ params.toString() }`,
+		} )
+			.then( ( data ) => {
+				setAllParticipants( data );
+			} )
+			.catch( () => {
+				setAllParticipants( [] );
+			} )
+			.finally( () => {
+				setParticipantsLoading( false );
+			} );
+	}, [] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadGroup();
 		loadMembers();
 		loadParticipants();
-	}, [loadGroup, loadMembers, loadParticipants]);
+	}, [ loadGroup, loadMembers, loadParticipants ] );
 
-	const handleParticipantSearch = (value) => {
-		setParticipantSearch(value);
-		loadParticipants(value);
+	const handleParticipantSearch = ( value ) => {
+		setParticipantSearch( value );
+		loadParticipants( value );
 	};
 
-	const toggleParticipantSelection = (participantId) => {
-		setSelectedParticipants((prev) => {
-			if (prev.includes(participantId)) {
-				return prev.filter((id) => id !== participantId);
+	const toggleParticipantSelection = ( participantId ) => {
+		setSelectedParticipants( ( prev ) => {
+			if ( prev.includes( participantId ) ) {
+				return prev.filter( ( id ) => id !== participantId );
 			}
-			return [...prev, participantId];
-		});
+			return [ ...prev, participantId ];
+		} );
 	};
 
 	const handleAddMembers = () => {
-		if (!groupId || selectedParticipants.length === 0) {
+		if ( ! groupId || selectedParticipants.length === 0 ) {
 			return;
 		}
 
-		setIsAddingMembers(true);
+		setIsAddingMembers( true );
 
-		const promises = selectedParticipants.map((participantId) =>
-			apiFetch({
-				path: `/fair-audience/v1/groups/${groupId}/participants`,
+		const promises = selectedParticipants.map( ( participantId ) =>
+			apiFetch( {
+				path: `/fair-audience/v1/groups/${ groupId }/participants`,
 				method: 'POST',
 				data: { participant_id: participantId },
-			}).catch((err) => {
-				if (!err.message?.includes('already')) {
+			} ).catch( ( err ) => {
+				if ( ! err.message?.includes( 'already' ) ) {
 					throw err;
 				}
-			})
+			} )
 		);
 
-		Promise.all(promises)
-			.then(() => {
-				setSelectedParticipants([]);
+		Promise.all( promises )
+			.then( () => {
+				setSelectedParticipants( [] );
 				loadMembers();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience-experimental') + err.message
+					__( 'Error: ', 'fair-audience-experimental' ) + err.message
 				);
-			})
-			.finally(() => {
-				setIsAddingMembers(false);
-			});
+			} )
+			.finally( () => {
+				setIsAddingMembers( false );
+			} );
 	};
 
 	const openEditModal = () => {
-		setEditName(group.name);
-		setEditDescription(group.description || '');
-		setIsEditModalOpen(true);
+		setEditName( group.name );
+		setEditDescription( group.description || '' );
+		setIsEditModalOpen( true );
 	};
 
 	const handleSaveGroup = () => {
-		if (!editName.trim()) {
+		if ( ! editName.trim() ) {
 			return;
 		}
 
-		setIsSaving(true);
+		setIsSaving( true );
 
-		apiFetch({
-			path: `/fair-audience/v1/groups/${groupId}`,
+		apiFetch( {
+			path: `/fair-audience/v1/groups/${ groupId }`,
 			method: 'PUT',
 			data: {
 				name: editName.trim(),
 				description: editDescription.trim(),
 			},
-		})
-			.then(() => {
-				setIsEditModalOpen(false);
+		} )
+			.then( () => {
+				setIsEditModalOpen( false );
 				loadGroup();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience-experimental') +
-						(err.message ||
+					__( 'Error: ', 'fair-audience-experimental' ) +
+						( err.message ||
 							__(
 								'Failed to save group.',
 								'fair-audience-experimental'
-							))
+							) )
 				);
-			})
-			.finally(() => {
-				setIsSaving(false);
-			});
+			} )
+			.finally( () => {
+				setIsSaving( false );
+			} );
 	};
 
-	const handleRemoveMember = (participantId) => {
-		if (!groupId) {
+	const handleRemoveMember = ( participantId ) => {
+		if ( ! groupId ) {
 			return;
 		}
 
 		// eslint-disable-next-line no-undef
 		if (
-			!confirm(
+			! confirm(
 				__(
 					'Remove this participant from the group?',
 					'fair-audience-experimental'
@@ -218,283 +224,293 @@ export default function GroupDetail() {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/groups/${groupId}/participants/${participantId}`,
+		apiFetch( {
+			path: `/fair-audience/v1/groups/${ groupId }/participants/${ participantId }`,
 			method: 'DELETE',
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				loadMembers();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience-experimental') + err.message
+					__( 'Error: ', 'fair-audience-experimental' ) + err.message
 				);
-			});
+			} );
 	};
 
-	if (isLoading) {
+	if ( isLoading ) {
 		return (
-			<div style={{ padding: '20px', textAlign: 'center' }}>
+			<div style={ { padding: '20px', textAlign: 'center' } }>
 				<Spinner />
 			</div>
 		);
 	}
 
-	if (error) {
+	if ( error ) {
 		return (
 			<div className="wrap">
 				<p>
-					<a href={groupsListUrl}>
-						{__('← Back to Groups', 'fair-audience-experimental')}
+					<a href={ groupsListUrl }>
+						{ __(
+							'← Back to Groups',
+							'fair-audience-experimental'
+						) }
 					</a>
 				</p>
-				<Notice status="error" isDismissible={false}>
-					{error}
+				<Notice status="error" isDismissible={ false }>
+					{ error }
 				</Notice>
 			</div>
 		);
 	}
 
-	if (!group) {
+	if ( ! group ) {
 		return null;
 	}
 
-	const memberIds = members.map((m) => m.id);
+	const memberIds = members.map( ( m ) => m.id );
 	const availableParticipants = allParticipants.filter(
-		(p) => !memberIds.includes(p.id)
+		( p ) => ! memberIds.includes( p.id )
 	);
 
 	return (
 		<div className="wrap">
 			<p>
-				<a href={groupsListUrl}>
-					{__('← Back to Groups', 'fair-audience-experimental')}
+				<a href={ groupsListUrl }>
+					{ __( '← Back to Groups', 'fair-audience-experimental' ) }
 				</a>
 			</p>
 
 			<div
-				style={{
+				style={ {
 					display: 'flex',
 					alignItems: 'center',
 					gap: '8px',
-				}}
+				} }
 			>
-				<h1 style={{ margin: 0 }}>{group.name}</h1>
-				<Button variant="secondary" icon="edit" onClick={openEditModal}>
-					{__('Edit', 'fair-audience-experimental')}
+				<h1 style={ { margin: 0 } }>{ group.name }</h1>
+				<Button
+					variant="secondary"
+					icon="edit"
+					onClick={ openEditModal }
+				>
+					{ __( 'Edit', 'fair-audience-experimental' ) }
 				</Button>
 			</div>
-			{group.description && (
-				<p style={{ color: '#666' }}>{group.description}</p>
-			)}
+			{ group.description && (
+				<p style={ { color: '#666' } }>{ group.description }</p>
+			) }
 
-			<Card style={{ marginBottom: '16px' }}>
+			<Card style={ { marginBottom: '16px' } }>
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
-						{__('Members', 'fair-audience-experimental')} (
-						{members.length})
+					<h2 style={ { margin: 0 } }>
+						{ __( 'Members', 'fair-audience-experimental' ) } (
+						{ members.length })
 					</h2>
 				</CardHeader>
 				<CardBody>
-					{membersLoading ? (
+					{ membersLoading ? (
 						<Spinner />
 					) : members.length === 0 ? (
 						<p>
-							{__(
+							{ __(
 								'No members in this group.',
 								'fair-audience-experimental'
-							)}
+							) }
 						</p>
 					) : (
 						<table className="wp-list-table widefat striped">
 							<thead>
 								<tr>
 									<th>
-										{__(
+										{ __(
 											'Name',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
 									<th>
-										{__(
+										{ __(
 											'Email',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
-									<th style={{ width: '120px' }}>
-										{__(
+									<th style={ { width: '120px' } }>
+										{ __(
 											'Actions',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								{members.map((member) => {
-									const detailUrl = `admin.php?page=fair-audience-participant-detail&participant_id=${member.id}`;
-									const fullName = `${member.name || ''} ${
+								{ members.map( ( member ) => {
+									const detailUrl = `admin.php?page=fair-audience-participant-detail&participant_id=${ member.id }`;
+									const fullName = `${ member.name || '' } ${
 										member.surname || ''
 									}`.trim();
 									return (
-										<tr key={member.id}>
+										<tr key={ member.id }>
 											<td>
-												<a href={detailUrl}>
-													{fullName ||
+												<a href={ detailUrl }>
+													{ fullName ||
 														__(
 															'(unnamed)',
 															'fair-audience-experimental'
-														)}
+														) }
 												</a>
 											</td>
-											<td>{member.email || '—'}</td>
+											<td>{ member.email || '—' }</td>
 											<td>
 												<Button
 													variant="link"
 													isDestructive
-													onClick={() =>
+													onClick={ () =>
 														handleRemoveMember(
 															member.id
 														)
 													}
 												>
-													{__(
+													{ __(
 														'Remove',
 														'fair-audience-experimental'
-													)}
+													) }
 												</Button>
 											</td>
 										</tr>
 									);
-								})}
+								} ) }
 							</tbody>
 						</table>
-					)}
+					) }
 				</CardBody>
 			</Card>
 
 			<Card>
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
-						{__('Add Members', 'fair-audience-experimental')}
+					<h2 style={ { margin: 0 } }>
+						{ __( 'Add Members', 'fair-audience-experimental' ) }
 					</h2>
 				</CardHeader>
 				<CardBody>
 					<SearchControl
-						value={participantSearch}
-						onChange={handleParticipantSearch}
-						placeholder={__(
+						value={ participantSearch }
+						onChange={ handleParticipantSearch }
+						placeholder={ __(
 							'Search participants...',
 							'fair-audience-experimental'
-						)}
+						) }
 					/>
 
 					<div
-						style={{
+						style={ {
 							maxHeight: '320px',
 							overflowY: 'auto',
 							marginTop: '8px',
 							marginBottom: '16px',
 							padding: '4px',
-						}}
+						} }
 					>
-						{participantsLoading ? (
+						{ participantsLoading ? (
 							<Spinner />
 						) : availableParticipants.length === 0 ? (
 							<p>
-								{__(
+								{ __(
 									'No participants available to add.',
 									'fair-audience-experimental'
-								)}
+								) }
 							</p>
 						) : (
-							availableParticipants.map((participant) => (
+							availableParticipants.map( ( participant ) => (
 								<CheckboxControl
-									key={participant.id}
-									label={`${participant.name || ''} ${
+									key={ participant.id }
+									label={ `${ participant.name || '' } ${
 										participant.surname || ''
 									}${
 										participant.email
-											? ` (${participant.email})`
+											? ` (${ participant.email })`
 											: ''
-									}`.trim()}
-									checked={selectedParticipants.includes(
+									}`.trim() }
+									checked={ selectedParticipants.includes(
 										participant.id
-									)}
-									onChange={() =>
+									) }
+									onChange={ () =>
 										toggleParticipantSelection(
 											participant.id
 										)
 									}
 								/>
-							))
-						)}
+							) )
+						) }
 					</div>
 
 					<Button
 						variant="primary"
-						onClick={handleAddMembers}
+						onClick={ handleAddMembers }
 						disabled={
 							selectedParticipants.length === 0 || isAddingMembers
 						}
-						isBusy={isAddingMembers}
+						isBusy={ isAddingMembers }
 					>
-						{__('Add Selected', 'fair-audience-experimental')}
+						{ __( 'Add Selected', 'fair-audience-experimental' ) }
 					</Button>
 				</CardBody>
 			</Card>
 
-			{isEditModalOpen && (
+			{ isEditModalOpen && (
 				<Modal
-					title={__('Edit Group', 'fair-audience-experimental')}
-					onRequestClose={() => setIsEditModalOpen(false)}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Edit Group', 'fair-audience-experimental' ) }
+					onRequestClose={ () => setIsEditModalOpen( false ) }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<TextControl
-						label={__('Name', 'fair-audience-experimental')}
-						value={editName}
-						onChange={setEditName}
-						placeholder={__(
+						label={ __( 'Name', 'fair-audience-experimental' ) }
+						value={ editName }
+						onChange={ setEditName }
+						placeholder={ __(
 							'Enter group name...',
 							'fair-audience-experimental'
-						)}
+						) }
 					/>
 
 					<TextareaControl
-						label={__('Description', 'fair-audience-experimental')}
-						value={editDescription}
-						onChange={setEditDescription}
-						placeholder={__(
+						label={ __(
+							'Description',
+							'fair-audience-experimental'
+						) }
+						value={ editDescription }
+						onChange={ setEditDescription }
+						placeholder={ __(
 							'Enter group description (optional)...',
 							'fair-audience-experimental'
-						)}
+						) }
 					/>
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setIsEditModalOpen(false)}
+							onClick={ () => setIsEditModalOpen( false ) }
 						>
-							{__('Cancel', 'fair-audience-experimental')}
+							{ __( 'Cancel', 'fair-audience-experimental' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleSaveGroup}
-							disabled={!editName.trim() || isSaving}
-							isBusy={isSaving}
+							onClick={ handleSaveGroup }
+							disabled={ ! editName.trim() || isSaving }
+							isBusy={ isSaving }
 						>
-							{__('Update', 'fair-audience-experimental')}
+							{ __( 'Update', 'fair-audience-experimental' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 }

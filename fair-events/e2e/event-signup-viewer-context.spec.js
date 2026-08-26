@@ -18,13 +18,13 @@ const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
  * configured payment connector.
  */
 
-async function apiFetch(page, options) {
-	const result = await page.evaluate(async (opts) => {
+async function apiFetch( page, options ) {
+	const result = await page.evaluate( async ( opts ) => {
 		try {
 			// eslint-disable-next-line no-undef
-			const res = await wp.apiFetch(opts);
+			const res = await wp.apiFetch( opts );
 			return { ok: true, data: res };
-		} catch (err) {
+		} catch ( err ) {
 			return {
 				ok: false,
 				error: {
@@ -34,47 +34,51 @@ async function apiFetch(page, options) {
 				},
 			};
 		}
-	}, options);
-	if (!result.ok) {
+	}, options );
+	if ( ! result.ok ) {
 		throw new Error(
-			`apiFetch ${options.method || 'GET'} ${
+			`apiFetch ${ options.method || 'GET' } ${
 				options.path
-			} failed: ${JSON.stringify(result.error)}`
+			} failed: ${ JSON.stringify( result.error ) }`
 		);
 	}
 	return result.data;
 }
 
-async function login(page) {
-	await page.goto('/wp-admin');
-	if (page.url().includes('wp-login.php')) {
-		await page.fill('#user_login', WP_ADMIN_USER);
-		await page.fill('#user_pass', WP_ADMIN_PASS);
-		await page.click('#wp-submit');
+async function login( page ) {
+	await page.goto( '/wp-admin' );
+	if ( page.url().includes( 'wp-login.php' ) ) {
+		await page.fill( '#user_login', WP_ADMIN_USER );
+		await page.fill( '#user_pass', WP_ADMIN_PASS );
+		await page.click( '#wp-submit' );
 	}
-	await page.waitForSelector('#wpadminbar');
+	await page.waitForSelector( '#wpadminbar' );
 }
 
-test.describe('Event Signup — cache-safe baseline + viewer-context hydration', () => {
-	test('a viewer who signs up sees their own state on reload; a fresh viewer on the same page never does', async ({
+test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration', () => {
+	test( 'a viewer who signs up sees their own state on reload; a fresh viewer on the same page never does', async ( {
 		browser,
-	}) => {
+	} ) => {
 		const adminContext = await browser.newContext();
 		const adminPage = await adminContext.newPage();
-		await login(adminPage);
-		await adminPage.goto('/wp-admin/admin.php?page=fair-events-all-events');
-		await adminPage.waitForFunction(() => window.wp && window.wp.apiFetch);
+		await login( adminPage );
+		await adminPage.goto(
+			'/wp-admin/admin.php?page=fair-events-all-events'
+		);
+		await adminPage.waitForFunction(
+			() => window.wp && window.wp.apiFetch
+		);
 
-		const eventPost = await apiFetch(adminPage, {
+		const eventPost = await apiFetch( adminPage, {
 			path: '/wp/v2/fair_event',
 			method: 'POST',
 			data: {
-				title: `Viewer-context e2e ${Date.now()}`,
+				title: `Viewer-context e2e ${ Date.now() }`,
 				status: 'publish',
 			},
-		});
+		} );
 
-		const eventDate = await apiFetch(adminPage, {
+		const eventDate = await apiFetch( adminPage, {
 			path: '/fair-events/v1/event-dates',
 			method: 'POST',
 			data: {
@@ -83,17 +87,17 @@ test.describe('Event Signup — cache-safe baseline + viewer-context hydration',
 				start_datetime: '2036-01-01 10:00:00',
 				end_datetime: '2036-01-01 12:00:00',
 			},
-		});
+		} );
 
 		try {
-			await apiFetch(adminPage, {
-				path: `/fair-events/v1/event-dates/${eventDate.id}`,
+			await apiFetch( adminPage, {
+				path: `/fair-events/v1/event-dates/${ eventDate.id }`,
 				method: 'PUT',
 				data: { event_id: eventPost.id },
-			});
+			} );
 
-			await apiFetch(adminPage, {
-				path: `/fair-events/v1/event-dates/${eventDate.id}/tickets`,
+			await apiFetch( adminPage, {
+				path: `/fair-events/v1/event-dates/${ eventDate.id }/tickets`,
 				method: 'PUT',
 				data: {
 					ticket_types: [
@@ -122,39 +126,45 @@ test.describe('Event Signup — cache-safe baseline + viewer-context hydration',
 					],
 					settings: {},
 				},
-			});
+			} );
 
-			const signupPage = await apiFetch(adminPage, {
+			const signupPage = await apiFetch( adminPage, {
 				path: '/wp/v2/pages',
 				method: 'POST',
 				data: {
-					title: `Viewer-context e2e page ${Date.now()}`,
+					title: `Viewer-context e2e page ${ Date.now() }`,
 					status: 'publish',
-					content: `<!-- wp:fair-events/event-signup {"eventDateId":${eventDate.id}} /-->`,
+					content: `<!-- wp:fair-events/event-signup {"eventDateId":${ eventDate.id }} /-->`,
 				},
-			});
+			} );
 
 			// Context B: the visitor who will sign up.
 			const visitorContext = await browser.newContext();
 			const visitorPage = await visitorContext.newPage();
-			await visitorPage.goto(`/?page_id=${signupPage.id}`);
+			await visitorPage.goto( `/?page_id=${ signupPage.id }` );
 
-			const form = visitorPage.locator('.fair-events-get-tickets-form');
-			await expect(form).toBeVisible();
+			const form = visitorPage.locator( '.fair-events-get-tickets-form' );
+			await expect( form ).toBeVisible();
 			// Baseline: no signed-up card, no pre-filled identity.
 			await expect(
-				visitorPage.locator('.fair-events-signed-up-card')
-			).toHaveCount(0);
-			await expect(form.locator('input[name="name"]')).toHaveValue('');
-			await expect(form.locator('input[name="email"]')).toHaveValue('');
+				visitorPage.locator( '.fair-events-signed-up-card' )
+			).toHaveCount( 0 );
+			await expect( form.locator( 'input[name="name"]' ) ).toHaveValue(
+				''
+			);
+			await expect( form.locator( 'input[name="email"]' ) ).toHaveValue(
+				''
+			);
 
-			await form.locator('input[name="name"]').fill('Ada Lovelace');
+			await form.locator( 'input[name="name"]' ).fill( 'Ada Lovelace' );
 			await form
-				.locator('input[name="email"]')
-				.fill(`ada-e2e-${Date.now()}@example.test`);
-			await form.locator('button[type="submit"]').click();
+				.locator( 'input[name="email"]' )
+				.fill( `ada-e2e-${ Date.now() }@example.test` );
+			await form.locator( 'button[type="submit"]' ).click();
 			await expect(
-				visitorPage.locator('.fair-events-get-tickets-message-success')
+				visitorPage.locator(
+					'.fair-events-get-tickets-message-success'
+				)
 			).toBeVisible();
 
 			// Reload as the same browser (same AudienceSession cookie): the
@@ -163,53 +173,53 @@ test.describe('Event Signup — cache-safe baseline + viewer-context hydration',
 			// holds the signup and swap in the signed-up card.
 			await visitorPage.reload();
 			await expect(
-				visitorPage.locator('.fair-events-get-tickets-form')
-			).toHaveCount(0);
+				visitorPage.locator( '.fair-events-get-tickets-form' )
+			).toHaveCount( 0 );
 			await expect(
-				visitorPage.locator('.fair-events-signed-up-card')
+				visitorPage.locator( '.fair-events-signed-up-card' )
 			).toBeVisible();
 			await expect(
-				visitorPage.locator('.fair-events-signed-up-card')
-			).toContainText('You are signed up for this date.');
+				visitorPage.locator( '.fair-events-signed-up-card' )
+			).toContainText( 'You are signed up for this date.' );
 
 			// Context C: a second, unrelated visitor loading the exact same
 			// page (same cached markup) must never see the first visitor's
 			// signed-up state or identity — the core of #1300's guarantee.
 			const strangerContext = await browser.newContext();
 			const strangerPage = await strangerContext.newPage();
-			await strangerPage.goto(`/?page_id=${signupPage.id}`);
+			await strangerPage.goto( `/?page_id=${ signupPage.id }` );
 
 			await expect(
-				strangerPage.locator('.fair-events-get-tickets-form')
+				strangerPage.locator( '.fair-events-get-tickets-form' )
 			).toBeVisible();
 			await expect(
-				strangerPage.locator('.fair-events-signed-up-card')
-			).toHaveCount(0);
+				strangerPage.locator( '.fair-events-signed-up-card' )
+			).toHaveCount( 0 );
 			await expect(
-				strangerPage.locator('input[name="name"]')
-			).toHaveValue('');
+				strangerPage.locator( 'input[name="name"]' )
+			).toHaveValue( '' );
 			await expect(
-				strangerPage.locator('input[name="email"]')
-			).toHaveValue('');
+				strangerPage.locator( 'input[name="email"]' )
+			).toHaveValue( '' );
 
 			await strangerContext.close();
 			await visitorContext.close();
-			await apiFetch(adminPage, {
-				path: `/wp/v2/pages/${signupPage.id}`,
+			await apiFetch( adminPage, {
+				path: `/wp/v2/pages/${ signupPage.id }`,
 				method: 'DELETE',
 				data: { force: true },
-			}).catch(() => {});
+			} ).catch( () => {} );
 		} finally {
-			await apiFetch(adminPage, {
-				path: `/wp/v2/fair_event/${eventPost.id}`,
+			await apiFetch( adminPage, {
+				path: `/wp/v2/fair_event/${ eventPost.id }`,
 				method: 'DELETE',
 				data: { force: true },
-			}).catch(() => {});
-			await apiFetch(adminPage, {
-				path: `/fair-events/v1/event-dates/${eventDate.id}`,
+			} ).catch( () => {} );
+			await apiFetch( adminPage, {
+				path: `/fair-events/v1/event-dates/${ eventDate.id }`,
 				method: 'DELETE',
-			}).catch(() => {});
+			} ).catch( () => {} );
 			await adminContext.close();
 		}
-	});
-});
+	} );
+} );

@@ -32,79 +32,79 @@ const ALLOWED_BLOCKS = [
 	...FAIR_FORM_QUESTION_BLOCK_NAMES,
 ];
 
-function EventDateSelect({ eventDateId, onChange }) {
-	const [eventDates, setEventDates] = useState([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const appliedDefault = useRef(false);
+function EventDateSelect( { eventDateId, onChange } ) {
+	const [ eventDates, setEventDates ] = useState( [] );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const appliedDefault = useRef( false );
 
-	const { postType, postId } = useSelect((select) => {
-		const editor = select('core/editor');
+	const { postType, postId } = useSelect( ( select ) => {
+		const editor = select( 'core/editor' );
 		return {
 			postType: editor.getCurrentPostType(),
 			postId: editor.getCurrentPostId(),
 		};
-	}, []);
+	}, [] );
 
-	useEffect(() => {
-		apiFetch({ path: '/fair-audience/v1/custom-mail/events' })
-			.then((data) => {
-				setEventDates(data);
-			})
-			.catch((err) => {
+	useEffect( () => {
+		apiFetch( { path: '/fair-audience/v1/custom-mail/events' } )
+			.then( ( data ) => {
+				setEventDates( data );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading event dates:', err);
-			})
-			.finally(() => {
-				setIsLoading(false);
-			});
-	}, []);
+				console.error( 'Error loading event dates:', err );
+			} )
+			.finally( () => {
+				setIsLoading( false );
+			} );
+	}, [] );
 
 	// Auto-select event date if on an event page and no event is set yet.
-	useEffect(() => {
+	useEffect( () => {
 		if (
 			appliedDefault.current ||
 			eventDateId ||
-			!postId ||
+			! postId ||
 			postType !== 'fair_event' ||
 			eventDates.length === 0
 		) {
 			return;
 		}
-		const match = eventDates.find((ed) => ed.event_id === postId);
-		if (match) {
+		const match = eventDates.find( ( ed ) => ed.event_id === postId );
+		if ( match ) {
 			appliedDefault.current = true;
-			onChange(match.id);
+			onChange( match.id );
 		}
-	}, [eventDates, postId, postType, eventDateId, onChange]);
+	}, [ eventDates, postId, postType, eventDateId, onChange ] );
 
-	if (isLoading) {
+	if ( isLoading ) {
 		return <Spinner />;
 	}
 
 	const options = [
-		{ label: __('— None —', 'fair-audience'), value: '' },
-		...eventDates.map((ed) => ({
+		{ label: __( '— None —', 'fair-audience' ), value: '' },
+		...eventDates.map( ( ed ) => ( {
 			label: ed.display_label,
-			value: String(ed.id),
-		})),
+			value: String( ed.id ),
+		} ) ),
 	];
 
 	return (
 		<SelectControl
-			label={__('Event', 'fair-audience')}
-			value={eventDateId ? String(eventDateId) : ''}
-			options={options}
-			onChange={(value) => onChange(parseInt(value, 10) || 0)}
-			help={__(
+			label={ __( 'Event', 'fair-audience' ) }
+			value={ eventDateId ? String( eventDateId ) : '' }
+			options={ options }
+			onChange={ ( value ) => onChange( parseInt( value, 10 ) || 0 ) }
+			help={ __(
 				'Optional. Link this form to a specific event.',
 				'fair-audience'
-			)}
+			) }
 		/>
 	);
 }
 
-registerBlockType('fair-audience/fair-form', {
-	edit: ({ attributes, setAttributes, clientId }) => {
+registerBlockType( 'fair-audience/fair-form', {
+	edit: ( { attributes, setAttributes, clientId } ) => {
 		const {
 			submitButtonText,
 			successMessage,
@@ -115,28 +115,28 @@ registerBlockType('fair-audience/fair-form', {
 		} = attributes;
 
 		const allBlocks = useSelect(
-			(select) => select('core/block-editor').getBlocks(),
+			( select ) => select( 'core/block-editor' ).getBlocks(),
 			[]
 		);
 
 		// Mint a stable UUID on first insert; regenerate on paste/duplicate collision.
-		useEffect(() => {
+		useEffect( () => {
 			const isDuplicate =
 				formId &&
 				allBlocks.some(
-					(b) =>
+					( b ) =>
 						b.attributes.formId === formId &&
 						b.clientId !== clientId
 				);
 
-			if (!formId || isDuplicate) {
-				setAttributes({ formId: generateUuid() });
+			if ( ! formId || isDuplicate ) {
+				setAttributes( { formId: generateUuid() } );
 			}
-		}, [formId, clientId, allBlocks, setAttributes]);
+		}, [ formId, clientId, allBlocks, setAttributes ] );
 
-		const blockProps = useBlockProps({
+		const blockProps = useBlockProps( {
 			className: 'fair-form',
-		});
+		} );
 
 		const innerBlocksProps = useInnerBlocksProps(
 			{ className: 'fair-form-inner-blocks' },
@@ -149,79 +149,85 @@ registerBlockType('fair-audience/fair-form', {
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Form Settings', 'fair-audience')}>
+					<PanelBody title={ __( 'Form Settings', 'fair-audience' ) }>
 						<TextControl
-							label={__('Submit Button Text', 'fair-audience')}
-							value={submitButtonText}
-							onChange={(value) =>
-								setAttributes({ submitButtonText: value })
+							label={ __(
+								'Submit Button Text',
+								'fair-audience'
+							) }
+							value={ submitButtonText }
+							onChange={ ( value ) =>
+								setAttributes( { submitButtonText: value } )
 							}
-							placeholder={__('Submit', 'fair-audience')}
+							placeholder={ __( 'Submit', 'fair-audience' ) }
 						/>
 						<TextareaControl
-							label={__('Success Message', 'fair-audience')}
-							value={successMessage}
-							onChange={(value) =>
-								setAttributes({ successMessage: value })
+							label={ __( 'Success Message', 'fair-audience' ) }
+							value={ successMessage }
+							onChange={ ( value ) =>
+								setAttributes( { successMessage: value } )
 							}
-							placeholder={__(
+							placeholder={ __(
 								'Thank you for your submission!',
 								'fair-audience'
-							)}
-							help={__(
+							) }
+							help={ __(
 								'Message shown after successful form submission.',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<EventDateSelect
-							eventDateId={eventDateId}
-							onChange={(value) =>
-								setAttributes({ eventDateId: value })
+							eventDateId={ eventDateId }
+							onChange={ ( value ) =>
+								setAttributes( { eventDateId: value } )
 							}
 						/>
 						<TextControl
-							label={__('Notification Email', 'fair-audience')}
-							value={notificationEmail}
-							onChange={(value) =>
-								setAttributes({
+							label={ __(
+								'Notification Email',
+								'fair-audience'
+							) }
+							value={ notificationEmail }
+							onChange={ ( value ) =>
+								setAttributes( {
 									notificationEmail: value,
-								})
+								} )
 							}
 							type="email"
 							placeholder="admin@example.com"
-							help={__(
+							help={ __(
 								'Send a notification to this email when someone submits the form. Leave empty to disable.',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<TextControl
-							label={__('Form Title', 'fair-audience')}
-							value={formTitle}
-							onChange={(value) =>
-								setAttributes({ formTitle: value })
+							label={ __( 'Form Title', 'fair-audience' ) }
+							value={ formTitle }
+							onChange={ ( value ) =>
+								setAttributes( { formTitle: value } )
 							}
-							placeholder={__(
+							placeholder={ __(
 								'e.g. Volunteer signup',
 								'fair-audience'
-							)}
-							help={__(
+							) }
+							help={ __(
 								'Internal label for grouping submissions by form. Does not appear on the frontend.',
 								'fair-audience'
-							)}
+							) }
 						/>
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
-					<div {...innerBlocksProps} />
+				<div { ...blockProps }>
+					<div { ...innerBlocksProps } />
 					<div className="fair-form-editor-footer">
 						<div className="wp-block-button">
 							<button
 								className="wp-block-button__link wp-element-button"
 								disabled
 							>
-								{submitButtonText ||
-									__('Submit', 'fair-audience')}
+								{ submitButtonText ||
+									__( 'Submit', 'fair-audience' ) }
 							</button>
 						</div>
 					</div>
@@ -232,4 +238,4 @@ registerBlockType('fair-audience/fair-form', {
 	save: () => {
 		return <InnerBlocks.Content />;
 	},
-});
+} );

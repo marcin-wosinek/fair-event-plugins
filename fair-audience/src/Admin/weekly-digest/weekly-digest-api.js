@@ -9,7 +9,7 @@ import apiFetch from '@wordpress/api-fetch';
  * @return {Promise<Object>} Promise resolving to `{ config, last_sent_week, last_run_result, next_send }`.
  */
 export function getDigestConfig() {
-	return apiFetch({ path: '/fair-audience/v1/weekly-digest' });
+	return apiFetch( { path: '/fair-audience/v1/weekly-digest' } );
 }
 
 /**
@@ -18,12 +18,12 @@ export function getDigestConfig() {
  * @param {Object} config Config fields to update.
  * @return {Promise<Object>} Promise resolving to `{ config }`.
  */
-export function saveDigestConfig(config) {
-	return apiFetch({
+export function saveDigestConfig( config ) {
+	return apiFetch( {
 		path: '/fair-audience/v1/weekly-digest',
 		method: 'PUT',
 		data: config,
-	});
+	} );
 }
 
 /**
@@ -32,7 +32,7 @@ export function saveDigestConfig(config) {
  * @return {Promise<Array>} Promise resolving to a list of `{ slug, name }`.
  */
 export function getDigestSources() {
-	return apiFetch({ path: '/fair-audience/v1/weekly-digest/sources' });
+	return apiFetch( { path: '/fair-audience/v1/weekly-digest/sources' } );
 }
 
 /**
@@ -41,10 +41,10 @@ export function getDigestSources() {
  * @return {Promise<Object>} Promise resolving to `{ subject, html, week, empty }`.
  */
 export function previewDigest() {
-	return apiFetch({
+	return apiFetch( {
 		path: '/fair-audience/v1/weekly-digest/preview',
 		method: 'POST',
-	});
+	} );
 }
 
 /**
@@ -53,8 +53,8 @@ export function previewDigest() {
  * @return {Promise<Object>} Promise resolving to `{ sent_to }`.
  */
 export function sendTestDigest() {
-	return apiFetch({
+	return apiFetch( {
 		path: '/fair-audience/v1/weekly-digest/test',
 		method: 'POST',
-	});
+	} );
 }

@@ -12,15 +12,15 @@ import {
 const { manageEventUrl } = window.fairEventsAllEventsData || {};
 
 const LINK_TYPE_OPTIONS = [
-	{ value: 'post', label: __('Page', 'fair-events') },
-	{ value: 'external', label: __('External', 'fair-events') },
-	{ value: 'none', label: __('None', 'fair-events') },
+	{ value: 'post', label: __( 'Page', 'fair-events' ) },
+	{ value: 'external', label: __( 'External', 'fair-events' ) },
+	{ value: 'none', label: __( 'None', 'fair-events' ) },
 ];
 
 const OCCURRENCE_TYPE_OPTIONS = [
-	{ value: 'single', label: __('Single date', 'fair-events') },
-	{ value: 'master', label: __('Series', 'fair-events') },
-	{ value: 'generated', label: __('Series date', 'fair-events') },
+	{ value: 'single', label: __( 'Single date', 'fair-events' ) },
+	{ value: 'master', label: __( 'Series', 'fair-events' ) },
+	{ value: 'generated', label: __( 'Series date', 'fair-events' ) },
 ];
 
 const DEFAULT_VIEW = {
@@ -48,70 +48,70 @@ const DEFAULT_LAYOUTS = {
 	table: {},
 };
 
-function getLinkTypeLabel(value) {
-	const option = LINK_TYPE_OPTIONS.find((o) => o.value === value);
+function getLinkTypeLabel( value ) {
+	const option = LINK_TYPE_OPTIONS.find( ( o ) => o.value === value );
 	return option ? option.label : value;
 }
 
-function getOccurrenceTypeLabel(value) {
-	const option = OCCURRENCE_TYPE_OPTIONS.find((o) => o.value === value);
+function getOccurrenceTypeLabel( value ) {
+	const option = OCCURRENCE_TYPE_OPTIONS.find( ( o ) => o.value === value );
 	return option ? option.label : value;
 }
 
 export default function AllEvents() {
-	const [events, setEvents] = useState([]);
-	const [totalItems, setTotalItems] = useState(0);
-	const [totalPages, setTotalPages] = useState(0);
-	const [isLoading, setIsLoading] = useState(true);
-	const [view, setView] = useState(DEFAULT_VIEW);
-	const [expanded, setExpanded] = useState(() => new Set());
+	const [ events, setEvents ] = useState( [] );
+	const [ totalItems, setTotalItems ] = useState( 0 );
+	const [ totalPages, setTotalPages ] = useState( 0 );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ view, setView ] = useState( DEFAULT_VIEW );
+	const [ expanded, setExpanded ] = useState( () => new Set() );
 
-	const toggleExpanded = useCallback((masterId) => {
-		setExpanded((prev) => {
-			const next = new Set(prev);
-			if (next.has(masterId)) {
-				next.delete(masterId);
+	const toggleExpanded = useCallback( ( masterId ) => {
+		setExpanded( ( prev ) => {
+			const next = new Set( prev );
+			if ( next.has( masterId ) ) {
+				next.delete( masterId );
 			} else {
-				next.add(masterId);
+				next.add( masterId );
 			}
 			return next;
-		});
-	}, []);
+		} );
+	}, [] );
 
 	const fields = useMemo(
 		() => [
 			{
 				id: 'title',
-				label: __('Name', 'fair-events'),
-				render: ({ item }) => {
+				label: __( 'Name', 'fair-events' ),
+				render: ( { item } ) => {
 					if (
 						item.occurrence_type === 'generated' &&
 						item.master_id
 					) {
 						const label = item.start_datetime
-							? formatSiteLocalDatetime(item.start_datetime)
-							: getEventDisplayTitle(item.title);
-						if (item.status === 'cancelled') {
+							? formatSiteLocalDatetime( item.start_datetime )
+							: getEventDisplayTitle( item.title );
+						if ( item.status === 'cancelled' ) {
 							return (
 								<span className="fair-events-all-events__cancelled">
-									{label}{' '}
+									{ label }{ ' ' }
 									<small>
-										({__('Cancelled', 'fair-events')})
+										({ __( 'Cancelled', 'fair-events' ) })
 									</small>
 								</span>
 							);
 						}
 						return (
 							<a
-								href={`${manageEventUrl}&event_date_id=${item.id}`}
+								href={ `${ manageEventUrl }&event_date_id=${ item.id }` }
 							>
-								{label}
+								{ label }
 							</a>
 						);
 					}
 
-					if (item.occurrence_type === 'master') {
-						const isExpanded = expanded.has(item.id);
+					if ( item.occurrence_type === 'master' ) {
+						const isExpanded = expanded.has( item.id );
 						const count = item.children_count || 0;
 						return (
 							<>
@@ -119,8 +119,8 @@ export default function AllEvents() {
 									icon={
 										isExpanded ? chevronDown : chevronRight
 									}
-									onClick={() => toggleExpanded(item.id)}
-									aria-expanded={isExpanded}
+									onClick={ () => toggleExpanded( item.id ) }
+									aria-expanded={ isExpanded }
 									label={
 										isExpanded
 											? __(
@@ -132,86 +132,88 @@ export default function AllEvents() {
 													'fair-events'
 											  )
 									}
-									showTooltip={false}
+									showTooltip={ false }
 								/>
 								<a
-									href={`${manageEventUrl}&event_date_id=${item.id}`}
+									href={ `${ manageEventUrl }&event_date_id=${ item.id }` }
 								>
-									{getEventDisplayTitle(item.title)}
-								</a>{' '}
-								{sprintf(
+									{ getEventDisplayTitle( item.title ) }
+								</a>{ ' ' }
+								{ sprintf(
 									/* translators: %d: number of dates in the series. */
-									__('(%d dates)', 'fair-events'),
+									__( '(%d dates)', 'fair-events' ),
 									count
-								)}
+								) }
 							</>
 						);
 					}
 
 					return (
-						<a href={`${manageEventUrl}&event_date_id=${item.id}`}>
-							{getEventDisplayTitle(item.title)}
+						<a
+							href={ `${ manageEventUrl }&event_date_id=${ item.id }` }
+						>
+							{ getEventDisplayTitle( item.title ) }
 						</a>
 					);
 				},
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ({ item }) => (item.title || '').toLowerCase(),
+				getValue: ( { item } ) => ( item.title || '' ).toLowerCase(),
 			},
 			{
 				id: 'start_datetime',
-				label: __('Date', 'fair-events'),
-				render: ({ item }) => {
-					if (!item.start_datetime) {
+				label: __( 'Date', 'fair-events' ),
+				render: ( { item } ) => {
+					if ( ! item.start_datetime ) {
 						return '—';
 					}
-					return formatSiteLocalDatetime(item.start_datetime);
+					return formatSiteLocalDatetime( item.start_datetime );
 				},
 				enableSorting: true,
-				getValue: ({ item }) => item.start_datetime || '',
+				getValue: ( { item } ) => item.start_datetime || '',
 			},
 			{
 				id: 'categories',
-				label: __('Categories', 'fair-events'),
-				render: ({ item }) => {
-					if (!item.categories || item.categories.length === 0) {
+				label: __( 'Categories', 'fair-events' ),
+				render: ( { item } ) => {
+					if ( ! item.categories || item.categories.length === 0 ) {
 						return '—';
 					}
-					return item.categories.map((c) => c.name).join(', ');
+					return item.categories.map( ( c ) => c.name ).join( ', ' );
 				},
 				enableSorting: false,
 			},
 			{
 				id: 'link_type',
-				label: __('Link Type', 'fair-events'),
-				render: ({ item }) => getLinkTypeLabel(item.link_type),
+				label: __( 'Link Type', 'fair-events' ),
+				render: ( { item } ) => getLinkTypeLabel( item.link_type ),
 				enableSorting: true,
-				getValue: ({ item }) => item.link_type,
+				getValue: ( { item } ) => item.link_type,
 				elements: LINK_TYPE_OPTIONS,
 				filterBy: {
-					operators: ['is'],
+					operators: [ 'is' ],
 				},
 			},
 			{
 				id: 'linked_post',
-				label: __('Linked Post / URL', 'fair-events'),
-				render: ({ item }) => {
-					if (item.post && item.post.edit_url) {
+				label: __( 'Linked Post / URL', 'fair-events' ),
+				render: ( { item } ) => {
+					if ( item.post && item.post.edit_url ) {
 						return (
-							<a href={item.post.edit_url}>
-								{item.post.title}{' '}
-								<small>({item.post.status})</small>
+							<a href={ item.post.edit_url }>
+								{ item.post.title }{ ' ' }
+								<small>({ item.post.status })</small>
 							</a>
 						);
 					}
-					if (item.link_type === 'external' && item.external_url) {
+					if ( item.link_type === 'external' && item.external_url ) {
 						return (
 							<a
-								href={item.external_url}
+								href={ item.external_url }
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								{item.external_url}
+								{ item.external_url }
 							</a>
 						);
 					}
@@ -221,112 +223,112 @@ export default function AllEvents() {
 			},
 			{
 				id: 'occurrence_type',
-				label: __('Type', 'fair-events'),
-				render: ({ item }) =>
-					getOccurrenceTypeLabel(item.occurrence_type),
+				label: __( 'Type', 'fair-events' ),
+				render: ( { item } ) =>
+					getOccurrenceTypeLabel( item.occurrence_type ),
 				enableSorting: true,
-				getValue: ({ item }) => item.occurrence_type,
+				getValue: ( { item } ) => item.occurrence_type,
 				elements: OCCURRENCE_TYPE_OPTIONS,
 				filterBy: {
-					operators: ['is'],
+					operators: [ 'is' ],
 				},
 			},
 		],
-		[expanded, toggleExpanded]
+		[ expanded, toggleExpanded ]
 	);
 
-	const queryArgs = useMemo(() => {
+	const queryArgs = useMemo( () => {
 		const params = new URLSearchParams();
 
-		if (view.search) {
-			params.append('search', view.search);
+		if ( view.search ) {
+			params.append( 'search', view.search );
 		}
 
-		if (view.sort?.field) {
-			params.append('orderby', view.sort.field);
-			params.append('order', view.sort.direction || 'desc');
+		if ( view.sort?.field ) {
+			params.append( 'orderby', view.sort.field );
+			params.append( 'order', view.sort.direction || 'desc' );
 		}
 
-		if (view.perPage) {
-			params.append('per_page', view.perPage);
+		if ( view.perPage ) {
+			params.append( 'per_page', view.perPage );
 		}
-		if (view.page) {
-			params.append('page', view.page);
+		if ( view.page ) {
+			params.append( 'page', view.page );
 		}
 
 		// Apply filters.
-		if (view.filters) {
-			for (const filter of view.filters) {
-				if (filter.field === 'link_type' && filter.value) {
-					params.append('link_type', filter.value);
+		if ( view.filters ) {
+			for ( const filter of view.filters ) {
+				if ( filter.field === 'link_type' && filter.value ) {
+					params.append( 'link_type', filter.value );
 				}
-				if (filter.field === 'occurrence_type' && filter.value) {
-					params.append('occurrence_type', filter.value);
+				if ( filter.field === 'occurrence_type' && filter.value ) {
+					params.append( 'occurrence_type', filter.value );
 				}
 			}
 		}
 
 		return params.toString();
-	}, [view]);
+	}, [ view ] );
 
-	const loadEvents = useCallback(() => {
-		setIsLoading(true);
+	const loadEvents = useCallback( () => {
+		setIsLoading( true );
 
 		const path = `/fair-events/v1/event-dates/all${
 			queryArgs ? '?' + queryArgs : ''
 		}`;
 
-		apiFetch({ path, parse: false })
-			.then((response) => {
+		apiFetch( { path, parse: false } )
+			.then( ( response ) => {
 				const total = parseInt(
-					response.headers.get('X-WP-Total') || '0',
+					response.headers.get( 'X-WP-Total' ) || '0',
 					10
 				);
 				const pages = parseInt(
-					response.headers.get('X-WP-TotalPages') || '1',
+					response.headers.get( 'X-WP-TotalPages' ) || '1',
 					10
 				);
-				setTotalItems(total);
-				setTotalPages(pages);
+				setTotalItems( total );
+				setTotalPages( pages );
 				return response.json();
-			})
-			.then((data) => {
-				setEvents(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
+			} )
+			.then( ( data ) => {
+				setEvents( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading events:', err);
-				setIsLoading(false);
-			});
-	}, [queryArgs]);
+				console.error( 'Error loading events:', err );
+				setIsLoading( false );
+			} );
+	}, [ queryArgs ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadEvents();
-	}, [loadEvents]);
+	}, [ loadEvents ] );
 
 	// Stale expanded ids should not leak across pages/filters.
-	useEffect(() => {
-		setExpanded(new Set());
-	}, [queryArgs]);
+	useEffect( () => {
+		setExpanded( new Set() );
+	}, [ queryArgs ] );
 
-	const flattenedEvents = useMemo(() => {
+	const flattenedEvents = useMemo( () => {
 		const rows = [];
-		for (const event of events) {
-			rows.push(event);
+		for ( const event of events ) {
+			rows.push( event );
 			if (
 				event.occurrence_type === 'master' &&
-				expanded.has(event.id) &&
+				expanded.has( event.id ) &&
 				event.children
 			) {
-				rows.push(...event.children);
+				rows.push( ...event.children );
 			}
 		}
 		return rows;
-	}, [events, expanded]);
+	}, [ events, expanded ] );
 
 	const getItemLevel = useCallback(
-		(item) =>
+		( item ) =>
 			item.occurrence_type === 'generated' && item.master_id ? 1 : 0,
 		[]
 	);
@@ -335,10 +337,10 @@ export default function AllEvents() {
 		() => [
 			{
 				id: 'edit',
-				label: __('Edit', 'fair-events'),
+				label: __( 'Edit', 'fair-events' ),
 				isPrimary: true,
-				callback: ([item]) => {
-					window.location.href = `${manageEventUrl}&event_date_id=${item.id}`;
+				callback: ( [ item ] ) => {
+					window.location.href = `${ manageEventUrl }&event_date_id=${ item.id }`;
 				},
 			},
 		],
@@ -346,30 +348,30 @@ export default function AllEvents() {
 	);
 
 	const paginationInfo = useMemo(
-		() => ({
+		() => ( {
 			totalItems,
 			totalPages,
-		}),
-		[totalItems, totalPages]
+		} ),
+		[ totalItems, totalPages ]
 	);
 
 	return (
 		<div className="wrap">
-			<h1>{__('All Events', 'fair-events')}</h1>
+			<h1>{ __( 'All Events', 'fair-events' ) }</h1>
 
 			<Card>
 				<CardBody>
 					<DataViews
-						data={flattenedEvents}
-						fields={fields}
-						view={view}
-						onChangeView={setView}
-						paginationInfo={paginationInfo}
-						defaultLayouts={DEFAULT_LAYOUTS}
-						actions={actions}
-						getItemLevel={getItemLevel}
-						isLoading={isLoading}
-						getItemId={(item) => item.id}
+						data={ flattenedEvents }
+						fields={ fields }
+						view={ view }
+						onChangeView={ setView }
+						paginationInfo={ paginationInfo }
+						defaultLayouts={ DEFAULT_LAYOUTS }
+						actions={ actions }
+						getItemLevel={ getItemLevel }
+						isLoading={ isLoading }
+						getItemId={ ( item ) => item.id }
 					/>
 				</CardBody>
 			</Card>

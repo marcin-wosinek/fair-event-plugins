@@ -23,8 +23,8 @@ export default {
 		'!**/e2e/**',
 	],
 	coverageDirectory: 'coverage',
-	coverageReporters: ['text', 'lcov', 'html'],
-	setupFiles: ['<rootDir>/jest.setup.js'],
+	coverageReporters: [ 'text', 'lcov', 'html' ],
+	setupFiles: [ '<rootDir>/jest.setup.js' ],
 	setupFilesAfterEnv: [],
 	transform: {
 		'^.+\\.(mjs|[jt]sx?)$': [
@@ -39,7 +39,7 @@ export default {
 							},
 						},
 					],
-					['@babel/preset-react', { runtime: 'automatic' }],
+					[ '@babel/preset-react', { runtime: 'automatic' } ],
 				],
 			},
 		],

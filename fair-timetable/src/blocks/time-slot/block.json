@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "clock",
 	"description": "A time slot block for timetable events",
-	"parent": ["fair-timetable/time-column-body"],
+	"parent": [ "fair-timetable/time-column-body" ],
 	"example": {},
 	"supports": {
 		"html": false,

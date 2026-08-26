@@ -13,7 +13,7 @@ export class LengthOptions {
 	 *
 	 * @param {number[]} values - Array of length values in decimal hours
 	 */
-	constructor(values) {
+	constructor( values ) {
 		this.values = values;
 		this.selectedValue = null;
 	}
@@ -24,8 +24,8 @@ export class LengthOptions {
 	 *
 	 * @param {number} value - Selected value in decimal hours
 	 */
-	setValue(value) {
-		const matchingValue = this.getMatchingValue(value);
+	setValue( value ) {
+		const matchingValue = this.getMatchingValue( value );
 		this.selectedValue =
 			matchingValue !== undefined ? matchingValue : value;
 	}
@@ -36,20 +36,20 @@ export class LengthOptions {
 	 * @param {number} lengthInHours - Length in hours
 	 * @return {string} Formatted duration string
 	 */
-	static formatLengthLabel(lengthInHours) {
-		const hours = Math.floor(lengthInHours);
-		const minutes = Math.round((lengthInHours - hours) * 60);
+	static formatLengthLabel( lengthInHours ) {
+		const hours = Math.floor( lengthInHours );
+		const minutes = Math.round( ( lengthInHours - hours ) * 60 );
 
-		if (minutes === 0) {
+		if ( minutes === 0 ) {
 			/* translators: %d: number of hours */
-			return sprintf(__('%d hours', 'fair-timetable'), hours);
-		} else if (hours === 0) {
+			return sprintf( __( '%d hours', 'fair-timetable' ), hours );
+		} else if ( hours === 0 ) {
 			/* translators: %d: number of minutes */
-			return sprintf(__('%d minutes', 'fair-timetable'), minutes);
+			return sprintf( __( '%d minutes', 'fair-timetable' ), minutes );
 		} else {
 			return sprintf(
 				/* translators: %1$d: number of hours, %2$d: number of minutes */
-				__('%1$d hours, %2$d minutes', 'fair-timetable'),
+				__( '%1$d hours, %2$d minutes', 'fair-timetable' ),
 				hours,
 				minutes
 			);
@@ -63,13 +63,13 @@ export class LengthOptions {
 	 * @param {number|null} value - Value to check (defaults to selectedValue)
 	 * @return {number|undefined} Matching predefined value or undefined if no match
 	 */
-	getMatchingValue(value = this.selectedValue) {
-		if (value === null) {
+	getMatchingValue( value = this.selectedValue ) {
+		if ( value === null ) {
 			return undefined;
 		}
 
 		return this.values.find(
-			(predefinedValue) => Math.abs(predefinedValue - value) < 0.01
+			( predefinedValue ) => Math.abs( predefinedValue - value ) < 0.01
 		);
 	}
 
@@ -80,10 +80,10 @@ export class LengthOptions {
 	 * @return {Object[]} Array of option objects with label and value properties
 	 */
 	getLengthOptions() {
-		let options = this.values.map((value) => ({
-			label: LengthOptions.formatLengthLabel(value),
+		let options = this.values.map( ( value ) => ( {
+			label: LengthOptions.formatLengthLabel( value ),
 			value: value,
-		}));
+		} ) );
 
 		// If selectedValue is set and not in the predefined list, add it temporarily
 		if (
@@ -91,13 +91,13 @@ export class LengthOptions {
 			this.getMatchingValue() === undefined &&
 			this.selectedValue > 0
 		) {
-			options.push({
-				label: LengthOptions.formatLengthLabel(this.selectedValue),
+			options.push( {
+				label: LengthOptions.formatLengthLabel( this.selectedValue ),
 				value: this.selectedValue,
-			});
+			} );
 
 			// Sort options by value
-			options.sort((a, b) => a.value - b.value);
+			options.sort( ( a, b ) => a.value - b.value );
 		}
 
 		return options;

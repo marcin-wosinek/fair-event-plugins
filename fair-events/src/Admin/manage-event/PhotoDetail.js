@@ -4,7 +4,7 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import PhotoTagModal from './PhotoTagModal.js';
 
-export default function PhotoDetail({
+export default function PhotoDetail( {
 	photo,
 	eventDateId,
 	onClose,
@@ -13,87 +13,87 @@ export default function PhotoDetail({
 	onNext,
 	hasPrev,
 	hasNext,
-}) {
-	const [tags, setTags] = useState(photo.tagged_participants || []);
-	const [loading, setLoading] = useState(false);
-	const [showTagModal, setShowTagModal] = useState(false);
+} ) {
+	const [ tags, setTags ] = useState( photo.tagged_participants || [] );
+	const [ loading, setLoading ] = useState( false );
+	const [ showTagModal, setShowTagModal ] = useState( false );
 
-	useEffect(() => {
-		setTags(photo.tagged_participants || []);
-	}, [photo]);
+	useEffect( () => {
+		setTags( photo.tagged_participants || [] );
+	}, [ photo ] );
 
 	const handleKeyDown = useCallback(
-		(e) => {
-			if (e.key === 'ArrowLeft' && hasPrev) {
+		( e ) => {
+			if ( e.key === 'ArrowLeft' && hasPrev ) {
 				onPrev();
-			} else if (e.key === 'ArrowRight' && hasNext) {
+			} else if ( e.key === 'ArrowRight' && hasNext ) {
 				onNext();
 			}
 		},
-		[hasPrev, hasNext, onPrev, onNext]
+		[ hasPrev, hasNext, onPrev, onNext ]
 	);
 
-	useEffect(() => {
-		document.addEventListener('keydown', handleKeyDown);
-		return () => document.removeEventListener('keydown', handleKeyDown);
-	}, [handleKeyDown]);
+	useEffect( () => {
+		document.addEventListener( 'keydown', handleKeyDown );
+		return () => document.removeEventListener( 'keydown', handleKeyDown );
+	}, [ handleKeyDown ] );
 
-	const handleAddTag = (participant) => {
-		setShowTagModal(false);
-		setLoading(true);
-		apiFetch({
-			path: `/fair-audience/v1/photos/${photo.id}/tags`,
+	const handleAddTag = ( participant ) => {
+		setShowTagModal( false );
+		setLoading( true );
+		apiFetch( {
+			path: `/fair-audience/v1/photos/${ photo.id }/tags`,
 			method: 'POST',
 			data: { participant_id: participant.id },
-		})
-			.then((result) => {
+		} )
+			.then( ( result ) => {
 				const newTag = {
 					participant_id: result.participant_id,
 					name: result.name,
 				};
-				const updated = [...tags, newTag];
-				setTags(updated);
-				onTagsChanged(photo.id, updated);
-			})
-			.finally(() => setLoading(false));
+				const updated = [ ...tags, newTag ];
+				setTags( updated );
+				onTagsChanged( photo.id, updated );
+			} )
+			.finally( () => setLoading( false ) );
 	};
 
-	const handleRemoveTag = (participantId) => {
-		setLoading(true);
-		apiFetch({
-			path: `/fair-audience/v1/photos/${photo.id}/tags/${participantId}`,
+	const handleRemoveTag = ( participantId ) => {
+		setLoading( true );
+		apiFetch( {
+			path: `/fair-audience/v1/photos/${ photo.id }/tags/${ participantId }`,
 			method: 'DELETE',
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				const updated = tags.filter(
-					(t) => t.participant_id !== participantId
+					( t ) => t.participant_id !== participantId
 				);
-				setTags(updated);
-				onTagsChanged(photo.id, updated);
-			})
-			.finally(() => setLoading(false));
+				setTags( updated );
+				onTagsChanged( photo.id, updated );
+			} )
+			.finally( () => setLoading( false ) );
 	};
 
 	return (
 		<Modal
-			title={photo.title || __('Photo Details', 'fair-events')}
-			onRequestClose={onClose}
-			style={{ maxWidth: '900px', width: '90vw' }}
+			title={ photo.title || __( 'Photo Details', 'fair-events' ) }
+			onRequestClose={ onClose }
+			style={ { maxWidth: '900px', width: '90vw' } }
 		>
-			<div style={{ display: 'flex', gap: '24px' }}>
+			<div style={ { display: 'flex', gap: '24px' } }>
 				<div
-					style={{
+					style={ {
 						flex: '1 1 60%',
 						position: 'relative',
 						display: 'flex',
 						alignItems: 'center',
-					}}
+					} }
 				>
-					{hasPrev && (
+					{ hasPrev && (
 						<Button
 							variant="secondary"
-							onClick={onPrev}
-							style={{
+							onClick={ onPrev }
+							style={ {
 								position: 'absolute',
 								left: '8px',
 								zIndex: 1,
@@ -104,26 +104,26 @@ export default function PhotoDetail({
 								display: 'flex',
 								alignItems: 'center',
 								justifyContent: 'center',
-							}}
-							label={__('Previous photo', 'fair-events')}
+							} }
+							label={ __( 'Previous photo', 'fair-events' ) }
 						>
 							&#8249;
 						</Button>
-					)}
+					) }
 					<img
-						src={photo.sizes.large || photo.url}
-						alt={photo.alt_text || photo.title}
-						style={{
+						src={ photo.sizes.large || photo.url }
+						alt={ photo.alt_text || photo.title }
+						style={ {
 							width: '100%',
 							borderRadius: '4px',
 							display: 'block',
-						}}
+						} }
 					/>
-					{hasNext && (
+					{ hasNext && (
 						<Button
 							variant="secondary"
-							onClick={onNext}
-							style={{
+							onClick={ onNext }
+							style={ {
 								position: 'absolute',
 								right: '8px',
 								zIndex: 1,
@@ -134,71 +134,72 @@ export default function PhotoDetail({
 								display: 'flex',
 								alignItems: 'center',
 								justifyContent: 'center',
-							}}
-							label={__('Next photo', 'fair-events')}
+							} }
+							label={ __( 'Next photo', 'fair-events' ) }
 						>
 							&#8250;
 						</Button>
-					)}
+					) }
 				</div>
-				<div style={{ flex: '0 0 250px' }}>
-					{photo.author_name && (
-						<p style={{ color: '#50575e', marginBottom: '4px' }}>
-							{__('Author:', 'fair-events')} {photo.author_name}
+				<div style={ { flex: '0 0 250px' } }>
+					{ photo.author_name && (
+						<p style={ { color: '#50575e', marginBottom: '4px' } }>
+							{ __( 'Author:', 'fair-events' ) }{ ' ' }
+							{ photo.author_name }
 						</p>
-					)}
-					<p style={{ color: '#9ca0a4', marginBottom: '16px' }}>
-						{'♥ '}
-						{photo.likes_count}
+					) }
+					<p style={ { color: '#9ca0a4', marginBottom: '16px' } }>
+						{ '♥ ' }
+						{ photo.likes_count }
 					</p>
 
-					<h4 style={{ marginTop: 0 }}>
-						{__('Tagged People', 'fair-events')}
+					<h4 style={ { marginTop: 0 } }>
+						{ __( 'Tagged People', 'fair-events' ) }
 					</h4>
-					{loading && <Spinner />}
-					{tags.length === 0 && !loading && (
-						<p style={{ color: '#9ca0a4' }}>
-							{__('No one tagged yet.', 'fair-events')}
+					{ loading && <Spinner /> }
+					{ tags.length === 0 && ! loading && (
+						<p style={ { color: '#9ca0a4' } }>
+							{ __( 'No one tagged yet.', 'fair-events' ) }
 						</p>
-					)}
-					{tags.map((tag) => (
+					) }
+					{ tags.map( ( tag ) => (
 						<div
-							key={tag.participant_id}
-							style={{
+							key={ tag.participant_id }
+							style={ {
 								display: 'flex',
 								alignItems: 'center',
 								justifyContent: 'space-between',
 								padding: '4px 0',
-							}}
+							} }
 						>
-							<span>{tag.name}</span>
+							<span>{ tag.name }</span>
 							<Button
 								variant="tertiary"
 								isDestructive
-								onClick={() =>
-									handleRemoveTag(tag.participant_id)
+								onClick={ () =>
+									handleRemoveTag( tag.participant_id )
 								}
 							>
-								{__('Remove', 'fair-events')}
+								{ __( 'Remove', 'fair-events' ) }
 							</Button>
 						</div>
-					))}
+					) ) }
 					<Button
 						variant="secondary"
-						onClick={() => setShowTagModal(true)}
-						style={{ marginTop: '8px' }}
+						onClick={ () => setShowTagModal( true ) }
+						style={ { marginTop: '8px' } }
 					>
-						{__('Add Tag', 'fair-events')}
+						{ __( 'Add Tag', 'fair-events' ) }
 					</Button>
 				</div>
 			</div>
-			{showTagModal && (
+			{ showTagModal && (
 				<PhotoTagModal
-					eventDateId={eventDateId}
-					onSelect={handleAddTag}
-					onClose={() => setShowTagModal(false)}
+					eventDateId={ eventDateId }
+					onSelect={ handleAddTag }
+					onClose={ () => setShowTagModal( false ) }
 				/>
-			)}
+			) }
 		</Modal>
 	);
 }

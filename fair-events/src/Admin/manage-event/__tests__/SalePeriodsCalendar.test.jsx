@@ -29,58 +29,62 @@ const twoNamedPeriods = [
 	},
 ];
 
-it('renders nothing when a boundary is unresolved (freshly seeded default)', () => {
+it( 'renders nothing when a boundary is unresolved (freshly seeded default)', () => {
 	const { container } = render(
 		<SalePeriodsCalendar
-			salePeriods={[{ name: '', sale_start: '', sale_end: '' }]}
+			salePeriods={ [ { name: '', sale_start: '', sale_end: '' } ] }
 			eventDay="2026-09-05"
 			embedded
 		/>
 	);
-	expect(container).toBeEmptyDOMElement();
-});
+	expect( container ).toBeEmptyDOMElement();
+} );
 
-it('renders nothing when there are no sale periods', () => {
+it( 'renders nothing when there are no sale periods', () => {
 	const { container } = render(
-		<SalePeriodsCalendar salePeriods={[]} eventDay="2026-09-05" embedded />
+		<SalePeriodsCalendar
+			salePeriods={ [] }
+			eventDay="2026-09-05"
+			embedded
+		/>
 	);
-	expect(container).toBeEmptyDOMElement();
-});
+	expect( container ).toBeEmptyDOMElement();
+} );
 
-it('renders in single-period mode once both boundaries are set', () => {
+it( 'renders in single-period mode once both boundaries are set', () => {
 	render(
 		<SalePeriodsCalendar
-			salePeriods={[
+			salePeriods={ [
 				{ name: '', sale_start: '2026-08-01', sale_end: '2026-09-01' },
-			]}
+			] }
 			eventDay="2026-08-20"
 			embedded
 		/>
 	);
-	expect(screen.getByText('Period 1')).toBeInTheDocument();
-	expect(screen.getByText('Event day')).toBeInTheDocument();
-});
+	expect( screen.getByText( 'Period 1' ) ).toBeInTheDocument();
+	expect( screen.getByText( 'Event day' ) ).toBeInTheDocument();
+} );
 
-it('lists every period by name (or "Period N" when unnamed) plus the event day in the legend', () => {
+it( 'lists every period by name (or "Period N" when unnamed) plus the event day in the legend', () => {
 	render(
 		<SalePeriodsCalendar
-			salePeriods={twoNamedPeriods}
+			salePeriods={ twoNamedPeriods }
 			eventDay="2026-08-20"
 			embedded
 		/>
 	);
-	expect(screen.getByText('Early bird')).toBeInTheDocument();
-	expect(screen.getByText('Regular')).toBeInTheDocument();
-	expect(screen.getByText('Event day')).toBeInTheDocument();
-});
+	expect( screen.getByText( 'Early bird' ) ).toBeInTheDocument();
+	expect( screen.getByText( 'Regular' ) ).toBeInTheDocument();
+	expect( screen.getByText( 'Event day' ) ).toBeInTheDocument();
+} );
 
-it('renders day cells as plain, non-operable cells rather than buttons', () => {
+it( 'renders day cells as plain, non-operable cells rather than buttons', () => {
 	render(
 		<SalePeriodsCalendar
-			salePeriods={twoNamedPeriods}
+			salePeriods={ twoNamedPeriods }
 			eventDay="2026-08-20"
 			embedded
 		/>
 	);
-	expect(screen.queryByRole('button')).not.toBeInTheDocument();
-});
+	expect( screen.queryByRole( 'button' ) ).not.toBeInTheDocument();
+} );

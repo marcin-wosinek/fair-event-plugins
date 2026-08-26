@@ -12,11 +12,11 @@ import TransactionPage from './TransactionPage.js';
 /**
  * Initialize the transaction detail page
  */
-domReady(() => {
+domReady( () => {
 	const root = document.getElementById(
 		'fair-payments-connector-transaction-root'
 	);
-	if (root) {
-		createRoot(root).render(<TransactionPage />);
+	if ( root ) {
+		createRoot( root ).render( <TransactionPage /> );
 	}
-});
+} );

@@ -9,22 +9,22 @@ import { createRoot } from '@wordpress/element';
  */
 import EventMetaBox from './EventMetaBox.js';
 
-domReady(() => {
-	const container = document.getElementById('fair-events-meta-box-root');
-	if (!container) {
+domReady( () => {
+	const container = document.getElementById( 'fair-events-meta-box-root' );
+	if ( ! container ) {
 		return;
 	}
 
 	const config = window.fairEventsMetaBox || {};
 	const { postId, postType, eventDateId, manageEventUrl } = config;
 
-	const root = createRoot(container);
+	const root = createRoot( container );
 	root.render(
 		<EventMetaBox
-			postId={postId}
-			postType={postType}
-			eventDateId={eventDateId}
-			manageEventUrl={manageEventUrl}
+			postId={ postId }
+			postType={ postType }
+			eventDateId={ eventDateId }
+			manageEventUrl={ manageEventUrl }
 		/>
 	);
-});
+} );

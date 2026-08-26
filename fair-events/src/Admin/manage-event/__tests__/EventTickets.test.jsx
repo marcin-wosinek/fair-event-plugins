@@ -24,23 +24,23 @@ import apiFetch from '@wordpress/api-fetch';
 import EventTickets from '../EventTickets.js';
 import { salePeriodColor } from '../SalePeriodsCalendar.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 // Suppress WordPress component deprecation warnings (TextControl / SelectControl
 // __next40pxDefaultSize) so they don't block assertions via @wordpress/jest-console.
-beforeEach(() => {
-	jest.spyOn(console, 'warn').mockImplementation(() => {});
-	jest.spyOn(console, 'error').mockImplementation(() => {});
+beforeEach( () => {
+	jest.spyOn( console, 'warn' ).mockImplementation( () => {} );
+	jest.spyOn( console, 'error' ).mockImplementation( () => {} );
 	// Return never-resolving promises for background apiFetch calls (groups,
 	// participants, group-pricing-rules) so they don't fire async state updates
 	// outside act() after assertions complete.
-	apiFetch.mockImplementation(() => new Promise(() => {}));
-});
+	apiFetch.mockImplementation( () => new Promise( () => {} ) );
+} );
 
-afterEach(() => {
+afterEach( () => {
 	jest.restoreAllMocks();
 	jest.clearAllMocks();
-});
+} );
 
 const emptyInitialData = {
 	capacity: null,
@@ -66,350 +66,360 @@ const initialDataWithTicketType = {
 	],
 };
 
-function renderTickets(extraProps = {}) {
+function renderTickets( extraProps = {} ) {
 	const onSaveRef = { current: null };
 	const { container } = render(
 		<EventTickets
-			eventDateId={99}
-			onSaveRef={onSaveRef}
-			initialData={emptyInitialData}
-			onDataRef={null}
-			{...extraProps}
+			eventDateId={ 99 }
+			onSaveRef={ onSaveRef }
+			initialData={ emptyInitialData }
+			onDataRef={ null }
+			{ ...extraProps }
 		/>
 	);
 	return { onSaveRef, container };
 }
 
-describe('EventTickets — empty state (no ticket types) (#1199)', () => {
-	it('renders the full editor with zero ticket types', () => {
-		renderTickets({ initialData: emptyInitialData });
-		expect(screen.getByText('Ticket Type')).toBeInTheDocument();
+describe( 'EventTickets — empty state (no ticket types) (#1199)', () => {
+	it( 'renders the full editor with zero ticket types', () => {
+		renderTickets( { initialData: emptyInitialData } );
+		expect( screen.getByText( 'Ticket Type' ) ).toBeInTheDocument();
 		expect(
-			screen.getByRole('button', { name: '+ Add Ticket Type' })
+			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
 		).toBeInTheDocument();
-		expect(screen.getByText(/No ticket types yet/i)).toBeInTheDocument();
-	});
-
-	it('does not render a Signup price field', () => {
-		renderTickets({ initialData: emptyInitialData });
-		expect(screen.queryByText(/Signup price/i)).not.toBeInTheDocument();
-	});
-
-	it('does not render a simple/advanced ticketing toggle', () => {
-		renderTickets({ initialData: emptyInitialData });
 		expect(
-			screen.queryByRole('button', {
+			screen.getByText( /No ticket types yet/i )
+		).toBeInTheDocument();
+	} );
+
+	it( 'does not render a Signup price field', () => {
+		renderTickets( { initialData: emptyInitialData } );
+		expect( screen.queryByText( /Signup price/i ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'does not render a simple/advanced ticketing toggle', () => {
+		renderTickets( { initialData: emptyInitialData } );
+		expect(
+			screen.queryByRole( 'button', {
 				name: /Switch to simple ticketing/i,
-			})
+			} )
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('button', {
+			screen.queryByRole( 'button', {
 				name: /Switch to advanced ticketing/i,
-			})
+			} )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	it('clicking "+ Add Ticket Type" adds a ticket-type row without a scope modal (non-series)', () => {
-		renderTickets({ initialData: emptyInitialData, isSeries: false });
-		const addButton = screen.getByRole('button', {
+	it( 'clicking "+ Add Ticket Type" adds a ticket-type row without a scope modal (non-series)', () => {
+		renderTickets( { initialData: emptyInitialData, isSeries: false } );
+		const addButton = screen.getByRole( 'button', {
 			name: '+ Add Ticket Type',
-		});
-		fireEvent.click(addButton);
+		} );
+		fireEvent.click( addButton );
 		expect(
-			screen.queryByText('Choose ticket scope')
+			screen.queryByText( 'Choose ticket scope' )
 		).not.toBeInTheDocument();
-		expect(screen.getByPlaceholderText('Type name')).toBeInTheDocument();
 		expect(
-			screen.queryByText(/No ticket types yet/i)
-		).not.toBeInTheDocument();
-	});
-
-	it('export/import is reachable through the ⋯ menu with zero ticket types', () => {
-		renderTickets({ initialData: emptyInitialData });
-		fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
-		expect(
-			screen.getByRole('menuitem', { name: 'Export ticket settings' })
+			screen.getByPlaceholderText( 'Type name' )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole('menuitem', { name: 'Import ticket settings' })
-		).toBeInTheDocument();
-	});
+			screen.queryByText( /No ticket types yet/i )
+		).not.toBeInTheDocument();
+	} );
 
-	it('saving with zero ticket types persists no sale period', () => {
+	it( 'export/import is reachable through the ⋯ menu with zero ticket types', () => {
+		renderTickets( { initialData: emptyInitialData } );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'More actions' } )
+		);
+		expect(
+			screen.getByRole( 'menuitem', { name: 'Export ticket settings' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'menuitem', { name: 'Import ticket settings' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'saving with zero ticket types persists no sale period', () => {
 		const onDataRef = { current: null };
 		render(
 			<EventTickets
-				eventDateId={99}
-				onSaveRef={{ current: null }}
-				initialData={emptyInitialData}
-				onDataRef={onDataRef}
+				eventDateId={ 99 }
+				onSaveRef={ { current: null } }
+				initialData={ emptyInitialData }
+				onDataRef={ onDataRef }
 			/>
 		);
-		expect(onDataRef.current()).toEqual(
-			expect.objectContaining({ sale_periods: [] })
+		expect( onDataRef.current() ).toEqual(
+			expect.objectContaining( { sale_periods: [] } )
 		);
-	});
-});
+	} );
+} );
 
-describe('EventTickets — recurrence scope selector', () => {
-	it('shows Scope column when isSeries is true', () => {
-		renderTickets({
+describe( 'EventTickets — recurrence scope selector', () => {
+	it( 'shows Scope column when isSeries is true', () => {
+		renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
-		});
-		expect(screen.getByText('Scope')).toBeInTheDocument();
-	});
+		} );
+		expect( screen.getByText( 'Scope' ) ).toBeInTheDocument();
+	} );
 
-	it('does not show Scope column when isSeries is false', () => {
-		renderTickets({
+	it( 'does not show Scope column when isSeries is false', () => {
+		renderTickets( {
 			isSeries: false,
 			initialData: initialDataWithTicketType,
-		});
-		expect(screen.queryByText('Scope')).not.toBeInTheDocument();
-	});
+		} );
+		expect( screen.queryByText( 'Scope' ) ).not.toBeInTheDocument();
+	} );
 
-	it('does not show Scope column when isSeries is omitted', () => {
-		renderTickets({ initialData: initialDataWithTicketType });
-		expect(screen.queryByText('Scope')).not.toBeInTheDocument();
-	});
+	it( 'does not show Scope column when isSeries is omitted', () => {
+		renderTickets( { initialData: initialDataWithTicketType } );
+		expect( screen.queryByText( 'Scope' ) ).not.toBeInTheDocument();
+	} );
 
-	it('new ticket type is seeded with recurrence_scope single_instance', () => {
-		renderTickets({
+	it( 'new ticket type is seeded with recurrence_scope single_instance', () => {
+		renderTickets( {
 			isSeries: true,
 			// Start with a ticket type so hasAdvancedTickets = true and the
 			// "+ Add Ticket Type" button is visible in the table footer.
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
-		const addButton = screen.getByRole('button', {
+		const addButton = screen.getByRole( 'button', {
 			name: '+ Add Ticket Type',
-		});
-		fireEvent.click(addButton);
+		} );
+		fireEvent.click( addButton );
 
 		// On a recurring event the button opens the scope-choice modal.
-		const confirmButton = screen.getByRole('button', {
+		const confirmButton = screen.getByRole( 'button', {
 			name: /add ticket type/i,
-		});
-		fireEvent.click(confirmButton);
+		} );
+		fireEvent.click( confirmButton );
 
 		// A second Scope combobox should appear (one per ticket type row).
 		const scopeSelects = screen
-			.getAllByRole('combobox')
+			.getAllByRole( 'combobox' )
 			.filter(
-				(el) =>
+				( el ) =>
 					el.value === 'single_instance' ||
 					el.value === 'whole_series'
 			);
 		// Both rows (original + new) should be single_instance.
-		expect(scopeSelects.length).toBeGreaterThanOrEqual(2);
-		scopeSelects.forEach((el) => expect(el.value).toBe('single_instance'));
-	});
+		expect( scopeSelects.length ).toBeGreaterThanOrEqual( 2 );
+		scopeSelects.forEach( ( el ) =>
+			expect( el.value ).toBe( 'single_instance' )
+		);
+	} );
 
-	it('changing scope selector to whole_series updates the combobox value', () => {
-		renderTickets({
+	it( 'changing scope selector to whole_series updates the combobox value', () => {
+		renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
-		const selects = screen.getAllByRole('combobox');
+		const selects = screen.getAllByRole( 'combobox' );
 		const scopeSelect = selects.find(
-			(el) =>
+			( el ) =>
 				el.value === 'single_instance' || el.value === 'whole_series'
 		);
-		expect(scopeSelect).toBeTruthy();
-		expect(scopeSelect.value).toBe('single_instance');
+		expect( scopeSelect ).toBeTruthy();
+		expect( scopeSelect.value ).toBe( 'single_instance' );
 
-		fireEvent.change(scopeSelect, { target: { value: 'whole_series' } });
-		expect(scopeSelect.value).toBe('whole_series');
-	});
+		fireEvent.change( scopeSelect, { target: { value: 'whole_series' } } );
+		expect( scopeSelect.value ).toBe( 'whole_series' );
+	} );
 
-	it('save payload includes updated recurrence_scope', async () => {
-		const { onSaveRef } = renderTickets({
+	it( 'save payload includes updated recurrence_scope', async () => {
+		const { onSaveRef } = renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
 		// Change scope to whole_series.
-		const selects = screen.getAllByRole('combobox');
+		const selects = screen.getAllByRole( 'combobox' );
 		const scopeSelect = selects.find(
-			(el) =>
+			( el ) =>
 				el.value === 'single_instance' || el.value === 'whole_series'
 		);
-		fireEvent.change(scopeSelect, { target: { value: 'whole_series' } });
+		fireEvent.change( scopeSelect, { target: { value: 'whole_series' } } );
 
 		// Capture the PUT payload on save.
 		let savedPayload = null;
-		apiFetch.mockImplementation(({ method, data }) => {
-			if (method === 'PUT') {
+		apiFetch.mockImplementation( ( { method, data } ) => {
+			if ( method === 'PUT' ) {
 				savedPayload = data;
-				return Promise.resolve({
+				return Promise.resolve( {
 					...initialDataWithTicketType,
 					ticket_types: [],
-				});
+				} );
 			}
-			return new Promise(() => {});
-		});
+			return new Promise( () => {} );
+		} );
 
-		expect(onSaveRef.current).not.toBeNull();
-		await act(async () => {
+		expect( onSaveRef.current ).not.toBeNull();
+		await act( async () => {
 			await onSaveRef.current();
-		});
+		} );
 
-		expect(savedPayload).not.toBeNull();
-		const savedType = savedPayload.ticket_types?.[0];
-		expect(savedType).toBeTruthy();
-		expect(savedType.recurrence_scope).toBe('whole_series');
-	});
-});
+		expect( savedPayload ).not.toBeNull();
+		const savedType = savedPayload.ticket_types?.[ 0 ];
+		expect( savedType ).toBeTruthy();
+		expect( savedType.recurrence_scope ).toBe( 'whole_series' );
+	} );
+} );
 
-describe('EventTickets — multiple_instances scope (#930)', () => {
-	it('offers multiple_instances as a scope option', () => {
-		renderTickets({
+describe( 'EventTickets — multiple_instances scope (#930)', () => {
+	it( 'offers multiple_instances as a scope option', () => {
+		renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
-		const selects = screen.getAllByRole('combobox');
+		const selects = screen.getAllByRole( 'combobox' );
 		const scopeSelect = selects.find(
-			(el) =>
+			( el ) =>
 				el.value === 'single_instance' || el.value === 'whole_series'
 		);
-		const optionValues = Array.from(scopeSelect.options).map(
-			(o) => o.value
+		const optionValues = Array.from( scopeSelect.options ).map(
+			( o ) => o.value
 		);
-		expect(optionValues).toContain('multiple_instances');
+		expect( optionValues ).toContain( 'multiple_instances' );
 		// Acknowledge the WordPress SelectControl size deprecation notice —
 		// only fires the first time it renders in the suite (deduped globally),
 		// so only assert when this test actually triggered it.
-		if (console.warn.mock.calls.length > 0) {
-			expect(console).toHaveWarned();
+		if ( console.warn.mock.calls.length > 0 ) {
+			expect( console ).toHaveWarned();
 		}
-	});
+	} );
 
-	it('shows a "Minimum instances" input once multiple_instances is selected', () => {
-		renderTickets({
+	it( 'shows a "Minimum instances" input once multiple_instances is selected', () => {
+		renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
-		const selects = screen.getAllByRole('combobox');
+		const selects = screen.getAllByRole( 'combobox' );
 		const scopeSelect = selects.find(
-			(el) =>
+			( el ) =>
 				el.value === 'single_instance' || el.value === 'whole_series'
 		);
 
 		expect(
-			screen.queryByLabelText(/Minimum instances/i)
+			screen.queryByLabelText( /Minimum instances/i )
 		).not.toBeInTheDocument();
 
-		fireEvent.change(scopeSelect, {
+		fireEvent.change( scopeSelect, {
 			target: { value: 'multiple_instances' },
-		});
+		} );
 
-		expect(scopeSelect.value).toBe('multiple_instances');
-		expect(screen.getByLabelText(/Minimum instances/i)).toBeInTheDocument();
-	});
+		expect( scopeSelect.value ).toBe( 'multiple_instances' );
+		expect(
+			screen.getByLabelText( /Minimum instances/i )
+		).toBeInTheDocument();
+	} );
 
-	it('save payload includes the entered minimum_instances', async () => {
-		const { onSaveRef } = renderTickets({
+	it( 'save payload includes the entered minimum_instances', async () => {
+		const { onSaveRef } = renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
-		const selects = screen.getAllByRole('combobox');
+		const selects = screen.getAllByRole( 'combobox' );
 		const scopeSelect = selects.find(
-			(el) =>
+			( el ) =>
 				el.value === 'single_instance' || el.value === 'whole_series'
 		);
-		fireEvent.change(scopeSelect, {
+		fireEvent.change( scopeSelect, {
 			target: { value: 'multiple_instances' },
-		});
+		} );
 
-		const minInstancesInput = screen.getByLabelText(/Minimum instances/i);
-		fireEvent.change(minInstancesInput, { target: { value: '3' } });
+		const minInstancesInput = screen.getByLabelText( /Minimum instances/i );
+		fireEvent.change( minInstancesInput, { target: { value: '3' } } );
 
 		let savedPayload = null;
-		apiFetch.mockImplementation(({ method, data }) => {
-			if (method === 'PUT') {
+		apiFetch.mockImplementation( ( { method, data } ) => {
+			if ( method === 'PUT' ) {
 				savedPayload = data;
-				return Promise.resolve({
+				return Promise.resolve( {
 					...initialDataWithTicketType,
 					ticket_types: [],
-				});
+				} );
 			}
-			return new Promise(() => {});
-		});
+			return new Promise( () => {} );
+		} );
 
-		expect(onSaveRef.current).not.toBeNull();
-		await act(async () => {
+		expect( onSaveRef.current ).not.toBeNull();
+		await act( async () => {
 			await onSaveRef.current();
-		});
+		} );
 
-		expect(savedPayload).not.toBeNull();
-		const savedType = savedPayload.ticket_types?.[0];
-		expect(savedType).toBeTruthy();
-		expect(savedType.recurrence_scope).toBe('multiple_instances');
-		expect(savedType.minimum_instances).toBe(3);
-	});
-});
+		expect( savedPayload ).not.toBeNull();
+		const savedType = savedPayload.ticket_types?.[ 0 ];
+		expect( savedType ).toBeTruthy();
+		expect( savedType.recurrence_scope ).toBe( 'multiple_instances' );
+		expect( savedType.minimum_instances ).toBe( 3 );
+	} );
+} );
 
-describe('EventTickets — scope-choice modal', () => {
-	it('opens a modal when "+ Add Ticket Type" is clicked on a recurring event', () => {
-		renderTickets({
+describe( 'EventTickets — scope-choice modal', () => {
+	it( 'opens a modal when "+ Add Ticket Type" is clicked on a recurring event', () => {
+		renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
 		fireEvent.click(
-			screen.getByRole('button', { name: '+ Add Ticket Type' })
+			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
 		);
 
-		expect(screen.getByText('Choose ticket scope')).toBeInTheDocument();
-		expect(screen.getByLabelText(/This instance/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/Whole series/i)).toBeInTheDocument();
-	});
+		expect( screen.getByText( 'Choose ticket scope' ) ).toBeInTheDocument();
+		expect( screen.getByLabelText( /This instance/i ) ).toBeInTheDocument();
+		expect( screen.getByLabelText( /Whole series/i ) ).toBeInTheDocument();
+	} );
 
-	it('does not open a modal on a non-recurring event', () => {
-		renderTickets({
+	it( 'does not open a modal on a non-recurring event', () => {
+		renderTickets( {
 			isSeries: false,
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
 		fireEvent.click(
-			screen.getByRole('button', { name: '+ Add Ticket Type' })
+			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
 		);
 
 		expect(
-			screen.queryByText('Choose ticket scope')
+			screen.queryByText( 'Choose ticket scope' )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	it('adds a whole_series ticket when that option is chosen in the modal', () => {
-		renderTickets({
+	it( 'adds a whole_series ticket when that option is chosen in the modal', () => {
+		renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
 		fireEvent.click(
-			screen.getByRole('button', { name: '+ Add Ticket Type' })
+			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
 		);
 
-		fireEvent.click(screen.getByLabelText(/Whole series/i));
+		fireEvent.click( screen.getByLabelText( /Whole series/i ) );
 		fireEvent.click(
-			screen.getByRole('button', { name: /add ticket type/i })
+			screen.getByRole( 'button', { name: /add ticket type/i } )
 		);
 
 		const scopeSelects = screen
-			.getAllByRole('combobox')
+			.getAllByRole( 'combobox' )
 			.filter(
-				(el) =>
+				( el ) =>
 					el.value === 'single_instance' ||
 					el.value === 'whole_series'
 			);
-		const newRow = scopeSelects[scopeSelects.length - 1];
-		expect(newRow.value).toBe('whole_series');
-	});
-});
+		const newRow = scopeSelects[ scopeSelects.length - 1 ];
+		expect( newRow.value ).toBe( 'whole_series' );
+	} );
+} );
 
 const initialDataWithSoldTicketType = {
 	...emptyInitialData,
@@ -427,160 +437,164 @@ const initialDataWithSoldTicketType = {
 	],
 };
 
-describe('EventTickets — scope lock when has_sales', () => {
-	it('renders scope as read-only text when has_sales is true', () => {
-		renderTickets({
+describe( 'EventTickets — scope lock when has_sales', () => {
+	it( 'renders scope as read-only text when has_sales is true', () => {
+		renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithSoldTicketType,
-		});
+		} );
 
-		expect(screen.getByText('Whole series')).toBeInTheDocument();
+		expect( screen.getByText( 'Whole series' ) ).toBeInTheDocument();
 		const scopeSelects = screen
-			.queryAllByRole('combobox')
+			.queryAllByRole( 'combobox' )
 			.filter(
-				(el) =>
+				( el ) =>
 					el.value === 'single_instance' ||
 					el.value === 'whole_series'
 			);
-		expect(scopeSelects.length).toBe(0);
-	});
+		expect( scopeSelects.length ).toBe( 0 );
+	} );
 
-	it('renders scope as SelectControl when has_sales is false', () => {
-		renderTickets({
+	it( 'renders scope as SelectControl when has_sales is false', () => {
+		renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
-		});
+		} );
 
 		const scopeSelects = screen
-			.getAllByRole('combobox')
+			.getAllByRole( 'combobox' )
 			.filter(
-				(el) =>
+				( el ) =>
 					el.value === 'single_instance' ||
 					el.value === 'whole_series'
 			);
-		expect(scopeSelects.length).toBeGreaterThanOrEqual(1);
-	});
-});
+		expect( scopeSelects.length ).toBeGreaterThanOrEqual( 1 );
+	} );
+} );
 
-describe('EventTickets — disable/enable when has_sales', () => {
-	it('shows Remove button when has_sales is false', () => {
-		renderTickets({ initialData: initialDataWithTicketType });
+describe( 'EventTickets — disable/enable when has_sales', () => {
+	it( 'shows Remove button when has_sales is false', () => {
+		renderTickets( { initialData: initialDataWithTicketType } );
 		expect(
-			screen.getByRole('button', { name: /Remove/i })
+			screen.getByRole( 'button', { name: /Remove/i } )
 		).toBeInTheDocument();
-	});
+	} );
 
-	it('shows toggle instead of Remove when has_sales is true', () => {
-		renderTickets({ initialData: initialDataWithSoldTicketType });
+	it( 'shows toggle instead of Remove when has_sales is true', () => {
+		renderTickets( { initialData: initialDataWithSoldTicketType } );
 		expect(
-			screen.queryByRole('button', { name: /Remove/i })
+			screen.queryByRole( 'button', { name: /Remove/i } )
 		).not.toBeInTheDocument();
-		expect(screen.getByRole('checkbox')).toBeInTheDocument();
-	});
+		expect( screen.getByRole( 'checkbox' ) ).toBeInTheDocument();
+	} );
 
-	it('shows disabled label when ticket type is disabled', () => {
+	it( 'shows disabled label when ticket type is disabled', () => {
 		const disabledData = {
 			...emptyInitialData,
 			ticket_types: [
 				{
-					...initialDataWithSoldTicketType.ticket_types[0],
+					...initialDataWithSoldTicketType.ticket_types[ 0 ],
 					disabled: true,
 				},
 			],
 		};
-		renderTickets({ initialData: disabledData });
+		renderTickets( { initialData: disabledData } );
 		expect(
-			screen.getByText('Disabled — no longer on sale')
+			screen.getByText( 'Disabled — no longer on sale' )
 		).toBeInTheDocument();
-	});
+	} );
 
-	it('does not show disabled label when ticket type is enabled', () => {
-		renderTickets({ initialData: initialDataWithSoldTicketType });
+	it( 'does not show disabled label when ticket type is enabled', () => {
+		renderTickets( { initialData: initialDataWithSoldTicketType } );
 		expect(
-			screen.queryByText('Disabled — no longer on sale')
+			screen.queryByText( 'Disabled — no longer on sale' )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	it('toggling disable updates the disabled field in the save payload', async () => {
-		const { onSaveRef } = renderTickets({
+	it( 'toggling disable updates the disabled field in the save payload', async () => {
+		const { onSaveRef } = renderTickets( {
 			initialData: initialDataWithSoldTicketType,
-		});
-		const toggle = screen.getByRole('checkbox');
-		fireEvent.click(toggle);
+		} );
+		const toggle = screen.getByRole( 'checkbox' );
+		fireEvent.click( toggle );
 
 		let savedPayload = null;
-		apiFetch.mockImplementation(({ method, data }) => {
-			if (method === 'PUT') {
+		apiFetch.mockImplementation( ( { method, data } ) => {
+			if ( method === 'PUT' ) {
 				savedPayload = data;
-				return Promise.resolve({
+				return Promise.resolve( {
 					...initialDataWithSoldTicketType,
 					ticket_types: [],
-				});
+				} );
 			}
-			return new Promise(() => {});
-		});
+			return new Promise( () => {} );
+		} );
 
-		await act(async () => {
+		await act( async () => {
 			await onSaveRef.current();
-		});
+		} );
 
-		expect(savedPayload?.ticket_types?.[0]?.disabled).toBe(true);
-	});
-});
+		expect( savedPayload?.ticket_types?.[ 0 ]?.disabled ).toBe( true );
+	} );
+} );
 
-describe('EventTickets — save button and dirty tracking (#987)', () => {
-	it('renders its own "Save tickets" button', () => {
-		renderTickets({ initialData: emptyInitialData });
+describe( 'EventTickets — save button and dirty tracking (#987)', () => {
+	it( 'renders its own "Save tickets" button', () => {
+		renderTickets( { initialData: emptyInitialData } );
 		expect(
-			screen.getByRole('button', { name: 'Save tickets' })
+			screen.getByRole( 'button', { name: 'Save tickets' } )
 		).toBeInTheDocument();
-	});
+	} );
 
-	it('reports dirty once a field changes, and clean again after save', async () => {
+	it( 'reports dirty once a field changes, and clean again after save', async () => {
 		const onDirtyChange = jest.fn();
-		renderTickets({
+		renderTickets( {
 			initialData: initialDataWithTicketType,
 			onDirtyChange,
-		});
+		} );
 
-		expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
 
-		const nameInput = screen.getByDisplayValue('General');
-		fireEvent.change(nameInput, { target: { value: 'General (edited)' } });
+		const nameInput = screen.getByDisplayValue( 'General' );
+		fireEvent.change( nameInput, {
+			target: { value: 'General (edited)' },
+		} );
 
-		expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
 
-		apiFetch.mockImplementation(({ method }) => {
-			if (method === 'PUT') {
-				return Promise.resolve({
+		apiFetch.mockImplementation( ( { method } ) => {
+			if ( method === 'PUT' ) {
+				return Promise.resolve( {
 					...initialDataWithTicketType,
 					ticket_types: [
 						{
-							...initialDataWithTicketType.ticket_types[0],
+							...initialDataWithTicketType.ticket_types[ 0 ],
 							name: 'General (edited)',
 						},
 					],
-				});
+				} );
 			}
-			return new Promise(() => {});
-		});
+			return new Promise( () => {} );
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: 'Save tickets' }));
-
-		await waitFor(() =>
-			expect(onDirtyChange).toHaveBeenLastCalledWith(false)
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save tickets' } )
 		);
-	});
-});
 
-describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
+		await waitFor( () =>
+			expect( onDirtyChange ).toHaveBeenLastCalledWith( false )
+		);
+	} );
+} );
+
+describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 	const originalFairPaymentsConnector = window.fairPaymentsConnector;
 
 	// A ticket type carrying a price > 0 through the prices map, so
 	// hasPurchasablePrice is true and the warning is relevant.
 	const initialDataWithPaidTicket = {
 		...emptyInitialData,
-		ticket_types: [initialDataWithTicketType.ticket_types[0]],
+		ticket_types: [ initialDataWithTicketType.ticket_types[ 0 ] ],
 		sale_periods: [
 			{ id: 10, name: '', sale_start: '', sale_end: '', sort_order: 0 },
 		],
@@ -597,7 +611,7 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 	// Only an add-on carries a price; no ticket-type price at all.
 	const initialDataWithPaidAddon = {
 		...emptyInitialData,
-		ticket_types: [initialDataWithTicketType.ticket_types[0]],
+		ticket_types: [ initialDataWithTicketType.ticket_types[ 0 ] ],
 		options: [
 			{
 				name: 'Dinner',
@@ -616,11 +630,11 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 	const missingPluginRegex =
 		/Paid tickets need the Fair Payments Connector plugin/i;
 
-	afterEach(() => {
+	afterEach( () => {
 		window.fairPaymentsConnector = originalFairPaymentsConnector;
-	});
+	} );
 
-	it('shows the Mollie notice when the connector is active but unconfigured and a price > 0', () => {
+	it( 'shows the Mollie notice when the connector is active but unconfigured and a price > 0', () => {
 		// wp_localize_script delivers booleans as strings ("1"/"") — feed
 		// that stringified transport form, not real booleans.
 		window.fairPaymentsConnector = {
@@ -629,48 +643,50 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 			settingsUrl:
 				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
 		};
-		const { container } = renderTickets({
+		const { container } = renderTickets( {
 			initialData: initialDataWithPaidTicket,
-		});
+		} );
 
-		expect(within(container).getByText(mollieRegex)).toBeInTheDocument();
-		const link = within(container).getByRole('link', {
+		expect(
+			within( container ).getByText( mollieRegex )
+		).toBeInTheDocument();
+		const link = within( container ).getByRole( 'link', {
 			name: 'Set up Mollie',
-		});
-		expect(link).toHaveAttribute(
+		} );
+		expect( link ).toHaveAttribute(
 			'href',
 			window.fairPaymentsConnector.settingsUrl
 		);
-	});
+	} );
 
-	it('shows the missing-plugin notice when the connector is inactive and a price > 0', () => {
+	it( 'shows the missing-plugin notice when the connector is inactive and a price > 0', () => {
 		window.fairPaymentsConnector = { connectorActive: '', currency: 'EUR' };
-		const { container } = renderTickets({
+		const { container } = renderTickets( {
 			initialData: initialDataWithPaidTicket,
-		});
+		} );
 
 		expect(
-			within(container).getByText(missingPluginRegex)
+			within( container ).getByText( missingPluginRegex )
 		).toBeInTheDocument();
 		// No settings link when the plugin isn't installed.
 		expect(
-			within(container).queryByRole('link', { name: 'Set up Mollie' })
+			within( container ).queryByRole( 'link', { name: 'Set up Mollie' } )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	it('shows the notice for add-on-only pricing', () => {
+	it( 'shows the notice for add-on-only pricing', () => {
 		window.fairPaymentsConnector = { connectorActive: '', currency: 'EUR' };
-		const { container } = renderTickets({
+		const { container } = renderTickets( {
 			initialData: initialDataWithPaidAddon,
-		});
+		} );
 
 		expect(
-			within(container).getByText(missingPluginRegex)
+			within( container ).getByText( missingPluginRegex )
 		).toBeInTheDocument();
-	});
+	} );
 
-	it.each([
-		['missing/inactive', { connectorActive: '', currency: 'EUR' }],
+	it.each( [
+		[ 'missing/inactive', { connectorActive: '', currency: 'EUR' } ],
 		[
 			'active but unconfigured',
 			{ connectorActive: '1', paymentConfigured: '', settingsUrl: 'x' },
@@ -679,36 +695,38 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 			'active and configured',
 			{ connectorActive: '1', paymentConfigured: '1', settingsUrl: 'x' },
 		],
-	])(
+	] )(
 		'does not show any notice when every price is 0 (%s)',
-		(_label, connectorState) => {
+		( _label, connectorState ) => {
 			window.fairPaymentsConnector = connectorState;
-			const { container } = renderTickets({
+			const { container } = renderTickets( {
 				initialData: initialDataWithTicketType,
-			});
+			} );
 
 			expect(
-				within(container).queryByText(mollieRegex)
+				within( container ).queryByText( mollieRegex )
 			).not.toBeInTheDocument();
 			expect(
-				within(container).queryByText(missingPluginRegex)
+				within( container ).queryByText( missingPluginRegex )
 			).not.toBeInTheDocument();
 		}
 	);
 
-	it('does not show any notice when there are no tickets yet', () => {
+	it( 'does not show any notice when there are no tickets yet', () => {
 		window.fairPaymentsConnector = { connectorActive: '' };
-		const { container } = renderTickets({ initialData: emptyInitialData });
+		const { container } = renderTickets( {
+			initialData: emptyInitialData,
+		} );
 
 		expect(
-			within(container).queryByText(mollieRegex)
+			within( container ).queryByText( mollieRegex )
 		).not.toBeInTheDocument();
 		expect(
-			within(container).queryByText(missingPluginRegex)
+			within( container ).queryByText( missingPluginRegex )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	it('does not show any notice when payments are configured', () => {
+	it( 'does not show any notice when payments are configured', () => {
 		// wp_localize_script delivers booleans as strings ("1"/"") — feed
 		// that stringified transport form, not real booleans. This is the
 		// green-path state the notice must correctly suppress.
@@ -718,59 +736,61 @@ describe('EventTickets — payments-unavailable notice (#988, #1177)', () => {
 			settingsUrl:
 				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
 		};
-		const { container } = renderTickets({
+		const { container } = renderTickets( {
 			initialData: initialDataWithPaidTicket,
-		});
+		} );
 
 		expect(
-			within(container).queryByText(mollieRegex)
+			within( container ).queryByText( mollieRegex )
 		).not.toBeInTheDocument();
 		expect(
-			within(container).queryByText(missingPluginRegex)
+			within( container ).queryByText( missingPluginRegex )
 		).not.toBeInTheDocument();
-	});
-});
+	} );
+} );
 
-describe('EventTickets — Export/Import moved to the ⋯ menu (#988)', () => {
-	it('does not show Export/Import as primary buttons', () => {
-		renderTickets({ initialData: initialDataWithTicketType });
+describe( 'EventTickets — Export/Import moved to the ⋯ menu (#988)', () => {
+	it( 'does not show Export/Import as primary buttons', () => {
+		renderTickets( { initialData: initialDataWithTicketType } );
 
 		expect(
-			screen.queryByRole('button', { name: 'Export ticket settings' })
+			screen.queryByRole( 'button', { name: 'Export ticket settings' } )
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('button', { name: 'Import ticket settings' })
+			screen.queryByRole( 'button', { name: 'Import ticket settings' } )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	it('reaches Export/Import through the ⋯ menu', () => {
-		renderTickets({ initialData: initialDataWithTicketType });
+	it( 'reaches Export/Import through the ⋯ menu', () => {
+		renderTickets( { initialData: initialDataWithTicketType } );
 
-		fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'More actions' } )
+		);
 
 		expect(
-			screen.getByRole('menuitem', { name: 'Export ticket settings' })
+			screen.getByRole( 'menuitem', { name: 'Export ticket settings' } )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole('menuitem', { name: 'Import ticket settings' })
+			screen.getByRole( 'menuitem', { name: 'Import ticket settings' } )
 		).toBeInTheDocument();
-	});
-});
+	} );
+} );
 
-describe('EventTickets — editable table renders without expanding a panel (#988)', () => {
-	it('shows the editable ticket type field directly', () => {
-		renderTickets({ initialData: initialDataWithTicketType });
+describe( 'EventTickets — editable table renders without expanding a panel (#988)', () => {
+	it( 'shows the editable ticket type field directly', () => {
+		renderTickets( { initialData: initialDataWithTicketType } );
 
-		expect(screen.getByDisplayValue('General')).toBeInTheDocument();
-	});
-});
+		expect( screen.getByDisplayValue( 'General' ) ).toBeInTheDocument();
+	} );
+} );
 
-describe('EventTickets — single pricing period by default (#1138)', () => {
+describe( 'EventTickets — single pricing period by default (#1138)', () => {
 	const originalManageEventData = window.fairEventsManageEventData;
 
-	afterEach(() => {
+	afterEach( () => {
 		window.fairEventsManageEventData = originalManageEventData;
-	});
+	} );
 
 	const initialDataWithOnePeriod = {
 		...initialDataWithTicketType,
@@ -814,131 +834,145 @@ describe('EventTickets — single pricing period by default (#1138)', () => {
 		settings: { multiple_pricing_periods: false },
 	};
 
-	it('adding the first ticket type seeds exactly one sale period and shows a single Price column with no Available checkbox', () => {
+	it( 'adding the first ticket type seeds exactly one sale period and shows a single Price column with no Available checkbox', () => {
 		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
-		renderTickets({
+		renderTickets( {
 			initialData: emptyInitialData,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
-		});
+		} );
 
 		fireEvent.click(
-			screen.getByRole('button', { name: '+ Add Ticket Type' })
+			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
 		);
 
 		expect(
-			screen.getAllByRole('columnheader', { name: 'Price' })
-		).toHaveLength(1);
-		expect(screen.queryByText('Available')).not.toBeInTheDocument();
-	});
+			screen.getAllByRole( 'columnheader', { name: 'Price' } )
+		).toHaveLength( 1 );
+		expect( screen.queryByText( 'Available' ) ).not.toBeInTheDocument();
+	} );
 
-	it('adding a ticket type leaves the sale window unset (#1189) — no concrete dates are seeded', () => {
+	it( 'adding a ticket type leaves the sale window unset (#1189) — no concrete dates are seeded', () => {
 		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
-		renderTickets({
+		renderTickets( {
 			initialData: emptyInitialData,
 			startDatetime: '2020-01-01 10:00:00',
 			endDatetime: '2020-01-01 12:00:00',
-		});
+		} );
 
 		fireEvent.click(
-			screen.getByRole('button', { name: '+ Add Ticket Type' })
+			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
 		);
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
 
 		// Nothing is frozen into the "From" field — the window stays unset
 		// until the organiser explicitly picks a date.
-		expect(screen.getByLabelText('From').value).toBe('');
-	});
+		expect( screen.getByLabelText( 'From' ).value ).toBe( '' );
+	} );
 
-	it('turning on "Multiple pricing periods" splits the window into Advance ticket / Day of event and migrates the price', () => {
-		renderTickets({
+	it( 'turning on "Multiple pricing periods" splits the window into Advance ticket / Day of event and migrates the price', () => {
+		renderTickets( {
 			initialData: initialDataWithOnePeriod,
 			startDatetime: '2026-01-10 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
 		fireEvent.click(
-			screen.getByRole('checkbox', {
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
+		fireEvent.click(
+			screen.getByRole( 'checkbox', {
 				name: /Multiple pricing periods/i,
-			})
+			} )
 		);
 
-		expect(screen.getByText('Advance ticket')).toBeInTheDocument();
-		expect(screen.getByText('Day of event')).toBeInTheDocument();
-		expect(screen.getByDisplayValue('12')).toBeInTheDocument();
-	});
+		expect( screen.getByText( 'Advance ticket' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Day of event' ) ).toBeInTheDocument();
+		expect( screen.getByDisplayValue( '12' ) ).toBeInTheDocument();
+	} );
 
-	it('turning off "Multiple pricing periods" with several periods asks for confirmation before merging', () => {
-		renderTickets({ initialData: initialDataWithTwoPeriods });
+	it( 'turning off "Multiple pricing periods" with several periods asks for confirmation before merging', () => {
+		renderTickets( { initialData: initialDataWithTwoPeriods } );
 
-		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
 		fireEvent.click(
-			screen.getByRole('checkbox', {
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
+		fireEvent.click(
+			screen.getByRole( 'checkbox', {
 				name: /Multiple pricing periods/i,
-			})
+			} )
 		);
 
 		expect(
-			screen.getByText(/Merge to one sale window/i)
+			screen.getByText( /Merge to one sale window/i )
 		).toBeInTheDocument();
 
-		fireEvent.click(screen.getByRole('button', { name: 'Merge periods' }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Merge periods' } )
+		);
 
-		expect(screen.queryByText('Advance ticket')).not.toBeInTheDocument();
-		expect(screen.queryByText('Day of event')).not.toBeInTheDocument();
-		expect(screen.getByDisplayValue('20')).toBeInTheDocument();
-	});
+		expect(
+			screen.queryByText( 'Advance ticket' )
+		).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Day of event' ) ).not.toBeInTheDocument();
+		expect( screen.getByDisplayValue( '20' ) ).toBeInTheDocument();
+	} );
 
-	it('an event loaded with two stored periods renders in multi-period mode regardless of the stored toggle', () => {
-		renderTickets({ initialData: initialDataWithTwoPeriods });
+	it( 'an event loaded with two stored periods renders in multi-period mode regardless of the stored toggle', () => {
+		renderTickets( { initialData: initialDataWithTwoPeriods } );
 
-		expect(screen.getByText('Advance ticket')).toBeInTheDocument();
-		expect(screen.getByText('Day of event')).toBeInTheDocument();
-	});
-});
+		expect( screen.getByText( 'Advance ticket' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Day of event' ) ).toBeInTheDocument();
+	} );
+} );
 
-describe('EventTickets — unset sale window shows the resolved default (#1189)', () => {
+describe( 'EventTickets — unset sale window shows the resolved default (#1189)', () => {
 	const initialDataWithUnsetPeriod = {
 		...initialDataWithTicketType,
-		sale_periods: [{ id: 701, name: '', sale_start: '', sale_end: '' }],
-		prices: [{ ticket_type_id: 1, sale_period_id: 701, price: '12' }],
+		sale_periods: [ { id: 701, name: '', sale_start: '', sale_end: '' } ],
+		prices: [ { ticket_type_id: 1, sale_period_id: 701, price: '12' } ],
 	};
 
-	it('a single event with an unset window shows the day after the event as the default, marked as a default', () => {
-		renderTickets({
+	it( 'a single event with an unset window shows the day after the event as the default, marked as a default', () => {
+		renderTickets( {
 			initialData: initialDataWithUnsetPeriod,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
 
 		// formatSaleDateLabel() renders a locale-formatted weekday/day/month —
 		// assert on the "(default)" marker and August, not an exact ISO string.
 		expect(
-			screen.getByText(/until .*August.*\(default\)/)
+			screen.getByText( /until .*August.*\(default\)/ )
 		).toBeInTheDocument();
-	});
+	} );
 
-	it("a series with an unset window resolves the default from the last occurrence, not the master's own end", () => {
-		renderTickets({
+	it( "a series with an unset window resolves the default from the last occurrence, not the master's own end", () => {
+		renderTickets( {
 			initialData: initialDataWithUnsetPeriod,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
 			lastOccurrenceDatetime: '2026-08-22 12:00:00',
 			isSeries: true,
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
 
 		expect(
-			screen.getByText(/until .*August.*\(default\)/)
+			screen.getByText( /until .*August.*\(default\)/ )
 		).toBeInTheDocument();
-	});
+	} );
 
-	it('an explicit sale_end suppresses the "(default)" marker', () => {
-		renderTickets({
+	it( 'an explicit sale_end suppresses the "(default)" marker', () => {
+		renderTickets( {
 			initialData: {
 				...initialDataWithTicketType,
 				sale_periods: [
@@ -956,20 +990,22 @@ describe('EventTickets — unset sale window shows the resolved default (#1189)'
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
 			lastOccurrenceDatetime: '2026-08-22 12:00:00',
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
 
-		expect(screen.getByText(/until .*September/)).toBeInTheDocument();
-		expect(screen.queryByText(/\(default\)/)).not.toBeInTheDocument();
-	});
-});
+		expect( screen.getByText( /until .*September/ ) ).toBeInTheDocument();
+		expect( screen.queryByText( /\(default\)/ ) ).not.toBeInTheDocument();
+	} );
+} );
 
-describe('EventTickets — sale end tracks the series across conversion (#1203)', () => {
+describe( 'EventTickets — sale end tracks the series across conversion (#1203)', () => {
 	const initialDataWithUnsetSinglePeriod = {
 		...initialDataWithTicketType,
-		sale_periods: [{ id: 801, name: '', sale_start: '', sale_end: '' }],
-		prices: [{ ticket_type_id: 1, sale_period_id: 801, price: '12' }],
+		sale_periods: [ { id: 801, name: '', sale_start: '', sale_end: '' } ],
+		prices: [ { ticket_type_id: 1, sale_period_id: 801, price: '12' } ],
 	};
 
 	const initialDataWithSetSinglePeriod = {
@@ -982,7 +1018,7 @@ describe('EventTickets — sale end tracks the series across conversion (#1203)'
 				sale_end: '2026-08-02',
 			},
 		],
-		prices: [{ ticket_type_id: 1, sale_period_id: 802, price: '12' }],
+		prices: [ { ticket_type_id: 1, sale_period_id: 802, price: '12' } ],
 	};
 
 	const initialDataWithTwoPeriodsUnsetEnd = {
@@ -1008,108 +1044,136 @@ describe('EventTickets — sale end tracks the series across conversion (#1203)'
 		settings: { multiple_pricing_periods: true },
 	};
 
-	it('turning on "Multiple pricing periods" with an unset window leaves the last period\'s end unset', () => {
+	it( 'turning on "Multiple pricing periods" with an unset window leaves the last period\'s end unset', () => {
 		const onDataRef = { current: null };
-		renderTickets({
+		renderTickets( {
 			initialData: initialDataWithUnsetSinglePeriod,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
 			onDataRef,
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
 		fireEvent.click(
-			screen.getByRole('checkbox', { name: /Multiple pricing periods/i })
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
+		fireEvent.click(
+			screen.getByRole( 'checkbox', {
+				name: /Multiple pricing periods/i,
+			} )
 		);
 
 		const payload = onDataRef.current();
-		expect(payload.sale_periods).toHaveLength(2);
+		expect( payload.sale_periods ).toHaveLength( 2 );
 		// Only the split boundary is stored — the trailing end stays unset.
-		expect(payload.sale_periods[0].sale_start).toBe('');
-		expect(payload.sale_periods[0].sale_end).toBe('2026-08-01 00:00:00');
-		expect(payload.sale_periods[1].sale_start).toBe('2026-08-01 00:00:00');
-		expect(payload.sale_periods[1].sale_end).toBe('');
-	});
+		expect( payload.sale_periods[ 0 ].sale_start ).toBe( '' );
+		expect( payload.sale_periods[ 0 ].sale_end ).toBe(
+			'2026-08-01 00:00:00'
+		);
+		expect( payload.sale_periods[ 1 ].sale_start ).toBe(
+			'2026-08-01 00:00:00'
+		);
+		expect( payload.sale_periods[ 1 ].sale_end ).toBe( '' );
+	} );
 
-	it('the last period\'s "Until" field shows the resolved default as a placeholder, not a frozen value', () => {
-		const { container } = renderTickets({
+	it( 'the last period\'s "Until" field shows the resolved default as a placeholder, not a frozen value', () => {
+		const { container } = renderTickets( {
 			initialData: initialDataWithUnsetSinglePeriod,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
 			lastOccurrenceDatetime: '2026-08-22 12:00:00',
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
 		fireEvent.click(
-			screen.getByRole('checkbox', { name: /Multiple pricing periods/i })
+			screen.getByRole( 'button', { name: /More options/i } )
 		);
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		fireEvent.click(
+			screen.getByRole( 'checkbox', {
+				name: /Multiple pricing periods/i,
+			} )
+		);
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
 
-		const dateInputs = container.querySelectorAll('input[type="date"]');
-		const lastUntilInput = dateInputs[dateInputs.length - 1];
-		expect(lastUntilInput.value).toBe('');
+		const dateInputs = container.querySelectorAll( 'input[type="date"]' );
+		const lastUntilInput = dateInputs[ dateInputs.length - 1 ];
+		expect( lastUntilInput.value ).toBe( '' );
 		// Placeholder is anchored to the series' last occurrence (Aug 22/23
 		// depending on local TZ rounding), not the master's own day (Aug 02).
-		expect(lastUntilInput.placeholder).toMatch(/^2026-08-2[23]$/);
-	});
+		expect( lastUntilInput.placeholder ).toMatch( /^2026-08-2[23]$/ );
+	} );
 
-	it('merging periods restores an unset (automatic) end', () => {
+	it( 'merging periods restores an unset (automatic) end', () => {
 		const onDataRef = { current: null };
-		renderTickets({
+		renderTickets( {
 			initialData: initialDataWithTwoPeriodsUnsetEnd,
 			onDataRef,
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
 		fireEvent.click(
-			screen.getByRole('checkbox', { name: /Multiple pricing periods/i })
+			screen.getByRole( 'button', { name: /More options/i } )
 		);
-		fireEvent.click(screen.getByRole('button', { name: 'Merge periods' }));
+		fireEvent.click(
+			screen.getByRole( 'checkbox', {
+				name: /Multiple pricing periods/i,
+			} )
+		);
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Merge periods' } )
+		);
 
 		const payload = onDataRef.current();
-		expect(payload.sale_periods).toHaveLength(1);
-		expect(payload.sale_periods[0].sale_end).toBe('');
-	});
+		expect( payload.sale_periods ).toHaveLength( 1 );
+		expect( payload.sale_periods[ 0 ].sale_end ).toBe( '' );
+	} );
 
-	it('a "Reset to automatic" control clears an explicit end back to unset', () => {
+	it( 'a "Reset to automatic" control clears an explicit end back to unset', () => {
 		const onDataRef = { current: null };
-		renderTickets({
+		renderTickets( {
 			initialData: initialDataWithSetSinglePeriod,
 			startDatetime: '2026-07-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
 			onDataRef,
-		});
-
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		} );
 
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Reset to automatic' })
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Reset to automatic' } )
 		);
 
 		const payload = onDataRef.current();
-		expect(payload.sale_periods[0].sale_end).toBe('');
-	});
+		expect( payload.sale_periods[ 0 ].sale_end ).toBe( '' );
+	} );
 
-	it('an organiser-typed sale end survives turning multiple pricing periods on', () => {
+	it( 'an organiser-typed sale end survives turning multiple pricing periods on', () => {
 		const onDataRef = { current: null };
-		renderTickets({
+		renderTickets( {
 			initialData: initialDataWithSetSinglePeriod,
 			startDatetime: '2026-07-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
 			onDataRef,
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
 		fireEvent.click(
-			screen.getByRole('checkbox', { name: /Multiple pricing periods/i })
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
+		fireEvent.click(
+			screen.getByRole( 'checkbox', {
+				name: /Multiple pricing periods/i,
+			} )
 		);
 
 		const payload = onDataRef.current();
-		expect(payload.sale_periods[1].sale_end).toBe('2026-08-02 00:00:00');
-	});
-});
+		expect( payload.sale_periods[ 1 ].sale_end ).toBe(
+			'2026-08-02 00:00:00'
+		);
+	} );
+} );
 
-describe('EventTickets — pricing an event with no stored prices (#1175)', () => {
+describe( 'EventTickets — pricing an event with no stored prices (#1175)', () => {
 	// A ticket type + sale period saved without any price. In single-period
 	// mode the pricing cell is seeded enabled:false and there is no "Available"
 	// checkbox to flip it, so a typed price must still reach the save payload.
@@ -1137,92 +1201,94 @@ describe('EventTickets — pricing an event with no stored prices (#1175)', () =
 	// (Total capacity / ticket-type capacity inputs have no step).
 	const getPriceInput = () =>
 		screen
-			.getAllByRole('spinbutton')
-			.find((el) => el.getAttribute('step') === '0.01');
+			.getAllByRole( 'spinbutton' )
+			.find( ( el ) => el.getAttribute( 'step' ) === '0.01' );
 
-	async function saveAndCapturePayload(onSaveRef) {
+	async function saveAndCapturePayload( onSaveRef ) {
 		let savedPayload = null;
-		apiFetch.mockImplementation(({ method, data }) => {
-			if (method === 'PUT') {
+		apiFetch.mockImplementation( ( { method, data } ) => {
+			if ( method === 'PUT' ) {
 				savedPayload = data;
-				return Promise.resolve({
+				return Promise.resolve( {
 					...initialDataUnpriced,
 					prices: [],
-				});
+				} );
 			}
-			return new Promise(() => {});
-		});
+			return new Promise( () => {} );
+		} );
 
-		expect(onSaveRef.current).not.toBeNull();
-		await act(async () => {
+		expect( onSaveRef.current ).not.toBeNull();
+		await act( async () => {
 			await onSaveRef.current();
-		});
+		} );
 		return savedPayload;
 	}
 
-	it('single-period mode: a typed price is included in the save payload', async () => {
-		const { onSaveRef } = renderTickets({
+	it( 'single-period mode: a typed price is included in the save payload', async () => {
+		const { onSaveRef } = renderTickets( {
 			initialData: initialDataUnpriced,
-		});
+		} );
 
 		// Single-period mode renders no "Available" checkbox.
-		expect(screen.queryByText('Available')).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Available' ) ).not.toBeInTheDocument();
 
 		const priceInput = getPriceInput();
-		expect(priceInput).toBeTruthy();
-		fireEvent.change(priceInput, { target: { value: '15' } });
+		expect( priceInput ).toBeTruthy();
+		fireEvent.change( priceInput, { target: { value: '15' } } );
 
-		const savedPayload = await saveAndCapturePayload(onSaveRef);
+		const savedPayload = await saveAndCapturePayload( onSaveRef );
 
-		expect(savedPayload).not.toBeNull();
-		expect(savedPayload.prices).toHaveLength(1);
-		expect(savedPayload.prices[0]).toMatchObject({
+		expect( savedPayload ).not.toBeNull();
+		expect( savedPayload.prices ).toHaveLength( 1 );
+		expect( savedPayload.prices[ 0 ] ).toMatchObject( {
 			ticket_type_index: 0,
 			sale_period_index: 0,
 			price: 15,
-		});
-	});
+		} );
+	} );
 
-	it('multiple-periods mode: an unchecked cell stays excluded from the save payload', async () => {
-		const { onSaveRef } = renderTickets({
+	it( 'multiple-periods mode: an unchecked cell stays excluded from the save payload', async () => {
+		const { onSaveRef } = renderTickets( {
 			initialData: initialDataUnpricedMulti,
-		});
+		} );
 
 		// The checkbox renders unchecked and hides the price input.
-		const available = screen.getByRole('checkbox', { name: 'Available' });
-		expect(available).not.toBeChecked();
-		expect(getPriceInput()).toBeUndefined();
+		const available = screen.getByRole( 'checkbox', { name: 'Available' } );
+		expect( available ).not.toBeChecked();
+		expect( getPriceInput() ).toBeUndefined();
 
-		const savedPayload = await saveAndCapturePayload(onSaveRef);
+		const savedPayload = await saveAndCapturePayload( onSaveRef );
 
-		expect(savedPayload).not.toBeNull();
-		expect(savedPayload.prices).toHaveLength(0);
-	});
+		expect( savedPayload ).not.toBeNull();
+		expect( savedPayload.prices ).toHaveLength( 0 );
+	} );
 
-	it('multiple-periods mode: checking Available then typing a price includes the cell', async () => {
-		const { onSaveRef } = renderTickets({
+	it( 'multiple-periods mode: checking Available then typing a price includes the cell', async () => {
+		const { onSaveRef } = renderTickets( {
 			initialData: initialDataUnpricedMulti,
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('checkbox', { name: 'Available' }));
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Available' } )
+		);
 
 		const priceInput = getPriceInput();
-		expect(priceInput).toBeTruthy();
-		fireEvent.change(priceInput, { target: { value: '9' } });
+		expect( priceInput ).toBeTruthy();
+		fireEvent.change( priceInput, { target: { value: '9' } } );
 
-		const savedPayload = await saveAndCapturePayload(onSaveRef);
+		const savedPayload = await saveAndCapturePayload( onSaveRef );
 
-		expect(savedPayload).not.toBeNull();
-		expect(savedPayload.prices).toHaveLength(1);
-		expect(savedPayload.prices[0]).toMatchObject({
+		expect( savedPayload ).not.toBeNull();
+		expect( savedPayload.prices ).toHaveLength( 1 );
+		expect( savedPayload.prices[ 0 ] ).toMatchObject( {
 			ticket_type_index: 0,
 			sale_period_index: 0,
 			price: 9,
-		});
-	});
-});
+		} );
+	} );
+} );
 
-describe('EventTickets — Add-on collaborator discount removed (#1139)', () => {
+describe( 'EventTickets — Add-on collaborator discount removed (#1139)', () => {
 	const initialDataWithOption = {
 		...initialDataWithTicketType,
 		options: [
@@ -1239,25 +1305,29 @@ describe('EventTickets — Add-on collaborator discount removed (#1139)', () => 
 		],
 	};
 
-	it('does not render the checkbox or the Discounted price column, even for a stored discount', () => {
-		renderTickets({
+	it( 'does not render the checkbox or the Discounted price column, even for a stored discount', () => {
+		renderTickets( {
 			initialData: {
 				...initialDataWithOption,
 				settings: { activity_collaborator_discount: true },
 			},
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
 		expect(
-			screen.queryByRole('checkbox', {
+			screen.queryByRole( 'checkbox', {
 				name: /Add-on collaborator discount/i,
-			})
+			} )
 		).not.toBeInTheDocument();
-		expect(screen.queryByText(/Discounted price/i)).not.toBeInTheDocument();
-	});
-});
+		expect(
+			screen.queryByText( /Discounted price/i )
+		).not.toBeInTheDocument();
+	} );
+} );
 
-describe('EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
+describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 	const initialDataWithOnePeriod = {
 		...initialDataWithTicketType,
 		sale_periods: [
@@ -1300,167 +1370,185 @@ describe('EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 	};
 
 	// jsdom normalizes inline hex colors to rgb() on the CSSOM.
-	function hexToRgb(hex) {
-		const r = parseInt(hex.slice(1, 3), 16);
-		const g = parseInt(hex.slice(3, 5), 16);
-		const b = parseInt(hex.slice(5, 7), 16);
-		return `rgb(${r}, ${g}, ${b})`;
+	function hexToRgb( hex ) {
+		const r = parseInt( hex.slice( 1, 3 ), 16 );
+		const g = parseInt( hex.slice( 3, 5 ), 16 );
+		const b = parseInt( hex.slice( 5, 7 ), 16 );
+		return `rgb(${ r }, ${ g }, ${ b })`;
 	}
 
-	it('renders a swatch per Sale Periods table row matching the calendar palette', () => {
-		renderTickets({
+	it( 'renders a swatch per Sale Periods table row matching the calendar palette', () => {
+		renderTickets( {
 			initialData: initialDataWithTwoPeriods,
 			startDatetime: '2026-01-25 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
-		});
+		} );
 
-		const toggle = screen.getByRole('button', { name: /Sale Periods/i });
-		fireEvent.click(toggle);
+		const toggle = screen.getByRole( 'button', { name: /Sale Periods/i } );
+		fireEvent.click( toggle );
 
-		const panelBody = toggle.closest('.components-panel__body');
+		const panelBody = toggle.closest( '.components-panel__body' );
 		const rows = panelBody
-			.querySelector('table')
-			.querySelectorAll('tbody tr');
-		expect(rows).toHaveLength(2);
-		expect(rows[0].querySelector('td span').style.background).toBe(
-			hexToRgb(salePeriodColor(0))
+			.querySelector( 'table' )
+			.querySelectorAll( 'tbody tr' );
+		expect( rows ).toHaveLength( 2 );
+		expect( rows[ 0 ].querySelector( 'td span' ).style.background ).toBe(
+			hexToRgb( salePeriodColor( 0 ) )
 		);
-		expect(rows[1].querySelector('td span').style.background).toBe(
-			hexToRgb(salePeriodColor(1))
+		expect( rows[ 1 ].querySelector( 'td span' ).style.background ).toBe(
+			hexToRgb( salePeriodColor( 1 ) )
 		);
-	});
+	} );
 
-	it('hides the calendar when Multiple pricing periods is off, with a single stored period', () => {
-		renderTickets({
+	it( 'hides the calendar when Multiple pricing periods is off, with a single stored period', () => {
+		renderTickets( {
 			initialData: initialDataWithOnePeriod,
 			startDatetime: '2026-01-10 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
 
-		expect(screen.queryByText(/Event day/i)).not.toBeInTheDocument();
-	});
+		expect( screen.queryByText( /Event day/i ) ).not.toBeInTheDocument();
+	} );
 
-	it('shows the calendar when Multiple pricing periods is on, with two stored periods', () => {
-		renderTickets({
+	it( 'shows the calendar when Multiple pricing periods is on, with two stored periods', () => {
+		renderTickets( {
 			initialData: initialDataWithTwoPeriods,
 			startDatetime: '2026-01-25 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
 
-		expect(screen.getByText(/Event day/i)).toBeInTheDocument();
-	});
+		expect( screen.getByText( /Event day/i ) ).toBeInTheDocument();
+	} );
 
-	it('shows the calendar after turning on Multiple pricing periods from a single period', () => {
-		renderTickets({
+	it( 'shows the calendar after turning on Multiple pricing periods from a single period', () => {
+		renderTickets( {
 			initialData: initialDataWithOnePeriod,
 			startDatetime: '2026-01-10 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
-		expect(screen.queryByText(/Event day/i)).not.toBeInTheDocument();
-
-		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
 		fireEvent.click(
-			screen.getByRole('checkbox', {
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+		expect( screen.queryByText( /Event day/i ) ).not.toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
+		fireEvent.click(
+			screen.getByRole( 'checkbox', {
 				name: /Multiple pricing periods/i,
-			})
+			} )
 		);
 
-		expect(screen.getByText(/Event day/i)).toBeInTheDocument();
-	});
+		expect( screen.getByText( /Event day/i ) ).toBeInTheDocument();
+	} );
 
-	it('hides the calendar again after confirming the merge back to a single period', () => {
-		renderTickets({
+	it( 'hides the calendar again after confirming the merge back to a single period', () => {
+		renderTickets( {
 			initialData: initialDataWithTwoPeriods,
 			startDatetime: '2026-01-25 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
-		expect(screen.getByText(/Event day/i)).toBeInTheDocument();
-
-		fireEvent.click(screen.getByRole('button', { name: /More options/i }));
 		fireEvent.click(
-			screen.getByRole('checkbox', {
-				name: /Multiple pricing periods/i,
-			})
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
 		);
-		fireEvent.click(screen.getByRole('button', { name: 'Merge periods' }));
+		expect( screen.getByText( /Event day/i ) ).toBeInTheDocument();
 
-		expect(screen.queryByText(/Event day/i)).not.toBeInTheDocument();
-	});
-});
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
+		fireEvent.click(
+			screen.getByRole( 'checkbox', {
+				name: /Multiple pricing periods/i,
+			} )
+		);
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Merge periods' } )
+		);
 
-describe('EventTickets — controlled mode without eventDateId (Duplicate Event wizard, #1330)', () => {
-	function renderControlled(extraProps = {}) {
+		expect( screen.queryByText( /Event day/i ) ).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'EventTickets — controlled mode without eventDateId (Duplicate Event wizard, #1330)', () => {
+	function renderControlled( extraProps = {} ) {
 		const onDataRef = { current: null };
 		const { container } = render(
 			<EventTickets
-				initialData={initialDataWithTicketType}
-				onDataRef={onDataRef}
-				{...extraProps}
+				initialData={ initialDataWithTicketType }
+				onDataRef={ onDataRef }
+				{ ...extraProps }
 			/>
 		);
 		return { onDataRef, container };
 	}
 
-	it('does not call the tickets endpoint on load when initialData is provided', () => {
+	it( 'does not call the tickets endpoint on load when initialData is provided', () => {
 		renderControlled();
-		expect(apiFetch).not.toHaveBeenCalledWith(
-			expect.objectContaining({
-				path: expect.stringMatching(/event-dates\/undefined\/tickets/),
-			})
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: expect.stringMatching(
+					/event-dates\/undefined\/tickets/
+				),
+			} )
 		);
-	});
+	} );
 
-	it('hides the internal "Save tickets" button — the wizard saves via onDataRef instead', () => {
+	it( 'hides the internal "Save tickets" button — the wizard saves via onDataRef instead', () => {
 		renderControlled();
 		expect(
-			screen.queryByRole('button', { name: 'Save tickets' })
+			screen.queryByRole( 'button', { name: 'Save tickets' } )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	it('hides "Import ticket settings" but keeps "Export ticket settings" in the ⋯ menu', () => {
+	it( 'hides "Import ticket settings" but keeps "Export ticket settings" in the ⋯ menu', () => {
 		renderControlled();
-		fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'More actions' } )
+		);
 		expect(
-			screen.getByRole('menuitem', { name: 'Export ticket settings' })
+			screen.getByRole( 'menuitem', { name: 'Export ticket settings' } )
 		).toBeInTheDocument();
 		expect(
-			screen.queryByRole('menuitem', { name: 'Import ticket settings' })
+			screen.queryByRole( 'menuitem', { name: 'Import ticket settings' } )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	it('exposes recurrence_scope on the save payload when isSeries is true', () => {
-		const { onDataRef } = renderControlled({ isSeries: true });
+	it( 'exposes recurrence_scope on the save payload when isSeries is true', () => {
+		const { onDataRef } = renderControlled( { isSeries: true } );
 		const scopeSelect = screen
-			.getAllByRole('combobox')
+			.getAllByRole( 'combobox' )
 			.find(
-				(el) =>
+				( el ) =>
 					el.value === 'single_instance' ||
 					el.value === 'whole_series'
 			);
-		expect(scopeSelect).toBeTruthy();
-		fireEvent.change(scopeSelect, { target: { value: 'whole_series' } });
-		expect(onDataRef.current()).toEqual(
-			expect.objectContaining({
+		expect( scopeSelect ).toBeTruthy();
+		fireEvent.change( scopeSelect, { target: { value: 'whole_series' } } );
+		expect( onDataRef.current() ).toEqual(
+			expect.objectContaining( {
 				ticket_types: [
-					expect.objectContaining({
+					expect.objectContaining( {
 						recurrence_scope: 'whole_series',
-					}),
+					} ),
 				],
-			})
+			} )
 		);
-	});
+	} );
 
-	it('reads currency from window.fairPaymentsConnector rather than hardcoding EUR', () => {
+	it( 'reads currency from window.fairPaymentsConnector rather than hardcoding EUR', () => {
 		window.fairPaymentsConnector = { currency: 'PLN' };
-		renderControlled({
+		renderControlled( {
 			initialData: {
 				...initialDataWithTicketType,
 				options: [
@@ -1475,14 +1563,14 @@ describe('EventTickets — controlled mode without eventDateId (Duplicate Event 
 					},
 				],
 			},
-		});
-		fireEvent.click(screen.getByRole('button', { name: /Add-ons/i }));
-		expect(screen.getByText('Price (PLN)')).toBeInTheDocument();
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: /Add-ons/i } ) );
+		expect( screen.getByText( 'Price (PLN)' ) ).toBeInTheDocument();
 		delete window.fairPaymentsConnector;
-	});
+	} );
 
-	it('uses a lazily-resolved default sale end from lastOccurrenceDatetime rather than a fixed value', () => {
-		renderControlled({
+	it( 'uses a lazily-resolved default sale end from lastOccurrenceDatetime rather than a fixed value', () => {
+		renderControlled( {
 			initialData: {
 				...initialDataWithTicketType,
 				sale_periods: [
@@ -1497,15 +1585,17 @@ describe('EventTickets — controlled mode without eventDateId (Duplicate Event 
 			},
 			startDatetime: '2026-01-10 10:00:00',
 			lastOccurrenceDatetime: '2026-01-10 12:00:00',
-		});
+		} );
 
-		fireEvent.click(screen.getByRole('button', { name: /Sale Periods/i }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
 
 		// The day after lastOccurrenceDatetime (2026-01-11), not endDatetime
 		// (unset here) — formatSaleDateLabel() renders a locale-formatted
 		// weekday/day/month, so assert on the marker and month.
 		expect(
-			screen.getByText(/until .*January.*\(default\)/)
+			screen.getByText( /until .*January.*\(default\)/ )
 		).toBeInTheDocument();
-	});
-});
+	} );
+} );

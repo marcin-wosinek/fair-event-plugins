@@ -20,221 +20,237 @@ import {
 import EventUrlField from './EventUrlField.js';
 import TagField from './TagField.js';
 
-const EntryForm = ({
+const EntryForm = ( {
 	entry,
 	budgets,
 	eventsEnabled,
 	tags,
 	onSave,
 	onCancel,
-}) => {
-	const [formData, setFormData] = useState({
+} ) => {
+	const [ formData, setFormData ] = useState( {
 		amount: '',
 		entry_type: 'cost',
-		entry_date: new Date().toISOString().split('T')[0],
+		entry_date: new Date().toISOString().split( 'T' )[ 0 ],
 		description: '',
 		budget_id: '',
 		event_url: '',
 		event_date_id: null,
 		tag: '',
-	});
-	const [isSaving, setIsSaving] = useState(false);
-	const [error, setError] = useState(null);
+	} );
+	const [ isSaving, setIsSaving ] = useState( false );
+	const [ error, setError ] = useState( null );
 
-	useEffect(() => {
-		if (entry) {
-			setFormData({
+	useEffect( () => {
+		if ( entry ) {
+			setFormData( {
 				amount: entry.amount?.toString() || '',
 				entry_type: entry.entry_type || 'cost',
 				entry_date:
-					entry.entry_date || new Date().toISOString().split('T')[0],
+					entry.entry_date ||
+					new Date().toISOString().split( 'T' )[ 0 ],
 				description: entry.description || '',
 				budget_id: entry.budget_id?.toString() || '',
 				event_url: entry.event_url || '',
 				event_date_id: entry.event_date_id || null,
 				tag: entry.tag || '',
-			});
+			} );
 		}
-	}, [entry]);
+	}, [ entry ] );
 
-	const handleSubmit = async (e) => {
+	const handleSubmit = async ( e ) => {
 		e.preventDefault();
-		setIsSaving(true);
-		setError(null);
+		setIsSaving( true );
+		setError( null );
 
 		try {
 			const data = {
 				...formData,
-				amount: parseFloat(formData.amount),
+				amount: parseFloat( formData.amount ),
 				budget_id: formData.budget_id
-					? parseInt(formData.budget_id, 10)
+					? parseInt( formData.budget_id, 10 )
 					: null,
 				event_url: formData.event_url || null,
 				event_date_id: formData.event_date_id || null,
 				tag: formData.tag || null,
 			};
 
-			if (entry) {
-				await apiFetch({
-					path: `/fair-finance/v1/financial-entries/${entry.id}`,
+			if ( entry ) {
+				await apiFetch( {
+					path: `/fair-finance/v1/financial-entries/${ entry.id }`,
 					method: 'PUT',
 					data,
-				});
+				} );
 			} else {
-				await apiFetch({
+				await apiFetch( {
 					path: '/fair-finance/v1/financial-entries',
 					method: 'POST',
 					data,
-				});
+				} );
 			}
 			onSave();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to save entry.', 'fair-payments-connector')
+					__( 'Failed to save entry.', 'fair-payments-connector' )
 			);
 		} finally {
-			setIsSaving(false);
+			setIsSaving( false );
 		}
 	};
 
 	const budgetOptions = [
-		{ label: __('-- No Budget --', 'fair-payments-connector'), value: '' },
-		...budgets.map((budget) => ({
+		{
+			label: __( '-- No Budget --', 'fair-payments-connector' ),
+			value: '',
+		},
+		...budgets.map( ( budget ) => ( {
 			label: budget.name,
 			value: budget.id.toString(),
-		})),
+		} ) ),
 	];
 
 	return (
 		<Modal
 			title={
 				entry
-					? __('Edit Financial Entry', 'fair-payments-connector')
-					: __('Add Financial Entry', 'fair-payments-connector')
+					? __( 'Edit Financial Entry', 'fair-payments-connector' )
+					: __( 'Add Financial Entry', 'fair-payments-connector' )
 			}
-			onRequestClose={onCancel}
-			style={{ maxWidth: '500px', width: '100%' }}
+			onRequestClose={ onCancel }
+			style={ { maxWidth: '500px', width: '100%' } }
 		>
-			<form onSubmit={handleSubmit}>
-				<VStack spacing={4}>
-					{error && (
+			<form onSubmit={ handleSubmit }>
+				<VStack spacing={ 4 }>
+					{ error && (
 						<div
 							className="notice notice-error"
-							style={{ margin: 0, padding: '8px' }}
+							style={ { margin: 0, padding: '8px' } }
 						>
-							{error}
+							{ error }
 						</div>
-					)}
+					) }
 
 					<SelectControl
-						label={__('Type', 'fair-payments-connector')}
-						value={formData.entry_type}
-						options={[
+						label={ __( 'Type', 'fair-payments-connector' ) }
+						value={ formData.entry_type }
+						options={ [
 							{
-								label: __('Cost', 'fair-payments-connector'),
+								label: __( 'Cost', 'fair-payments-connector' ),
 								value: 'cost',
 							},
 							{
-								label: __('Income', 'fair-payments-connector'),
+								label: __(
+									'Income',
+									'fair-payments-connector'
+								),
 								value: 'income',
 							},
-						]}
-						onChange={(value) =>
-							setFormData({ ...formData, entry_type: value })
+						] }
+						onChange={ ( value ) =>
+							setFormData( { ...formData, entry_type: value } )
 						}
 					/>
 
 					<TextControl
-						label={__('Amount', 'fair-payments-connector')}
-						value={formData.amount}
-						onChange={(value) =>
-							setFormData({ ...formData, amount: value })
+						label={ __( 'Amount', 'fair-payments-connector' ) }
+						value={ formData.amount }
+						onChange={ ( value ) =>
+							setFormData( { ...formData, amount: value } )
 						}
 						type="number"
 						step="0.01"
 						min="0.01"
 						required
-						help={__(
+						help={ __(
 							'Enter amount in EUR',
 							'fair-payments-connector'
-						)}
+						) }
 					/>
 
 					<TextControl
-						label={__('Date', 'fair-payments-connector')}
-						value={formData.entry_date}
-						onChange={(value) =>
-							setFormData({ ...formData, entry_date: value })
+						label={ __( 'Date', 'fair-payments-connector' ) }
+						value={ formData.entry_date }
+						onChange={ ( value ) =>
+							setFormData( { ...formData, entry_date: value } )
 						}
 						type="date"
 						required
 					/>
 
 					<TextareaControl
-						label={__('Description', 'fair-payments-connector')}
-						value={formData.description}
-						onChange={(value) =>
-							setFormData({ ...formData, description: value })
+						label={ __( 'Description', 'fair-payments-connector' ) }
+						value={ formData.description }
+						onChange={ ( value ) =>
+							setFormData( { ...formData, description: value } )
 						}
-						help={__(
+						help={ __(
 							'Optional description for this entry',
 							'fair-payments-connector'
-						)}
+						) }
 					/>
 
 					<SelectControl
-						label={__('Budget Category', 'fair-payments-connector')}
-						value={formData.budget_id}
-						options={budgetOptions}
-						onChange={(value) =>
-							setFormData({ ...formData, budget_id: value })
+						label={ __(
+							'Budget Category',
+							'fair-payments-connector'
+						) }
+						value={ formData.budget_id }
+						options={ budgetOptions }
+						onChange={ ( value ) =>
+							setFormData( { ...formData, budget_id: value } )
 						}
 					/>
 
-					{eventsEnabled && (
+					{ eventsEnabled && (
 						<EventUrlField
-							value={formData.event_url}
-							eventDateId={formData.event_date_id}
-							onChange={(url, dateId) =>
-								setFormData({
+							value={ formData.event_url }
+							eventDateId={ formData.event_date_id }
+							onChange={ ( url, dateId ) =>
+								setFormData( {
 									...formData,
 									event_url: url,
 									event_date_id: dateId,
-								})
+								} )
 							}
 						/>
-					)}
+					) }
 
 					<TagField
-						value={formData.tag}
-						tags={tags}
-						onChange={(value) =>
-							setFormData({ ...formData, tag: value })
+						value={ formData.tag }
+						tags={ tags }
+						onChange={ ( value ) =>
+							setFormData( { ...formData, tag: value } )
 						}
 					/>
 
-					<HStack justify="flex-end" spacing={2}>
+					<HStack justify="flex-end" spacing={ 2 }>
 						<Button
 							variant="tertiary"
-							onClick={onCancel}
-							disabled={isSaving}
+							onClick={ onCancel }
+							disabled={ isSaving }
 						>
-							{__('Cancel', 'fair-payments-connector')}
+							{ __( 'Cancel', 'fair-payments-connector' ) }
 						</Button>
 						<Button
 							variant="primary"
 							type="submit"
-							isBusy={isSaving}
+							isBusy={ isSaving }
 							disabled={
 								isSaving ||
-								!formData.amount ||
-								!formData.entry_date
+								! formData.amount ||
+								! formData.entry_date
 							}
 						>
-							{entry
-								? __('Update Entry', 'fair-payments-connector')
-								: __('Create Entry', 'fair-payments-connector')}
+							{ entry
+								? __(
+										'Update Entry',
+										'fair-payments-connector'
+								  )
+								: __(
+										'Create Entry',
+										'fair-payments-connector'
+								  ) }
 						</Button>
 					</HStack>
 				</VStack>

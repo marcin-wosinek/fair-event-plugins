@@ -34,8 +34,8 @@ export const PHONE_HTML_PATTERN =
  * @param {string} value Raw phone value.
  * @return {string} Normalized value.
  */
-export function normalizePhoneNumber(value) {
-	return value.replace(/[\s.()-]/g, '');
+export function normalizePhoneNumber( value ) {
+	return value.replace( /[\s.()-]/g, '' );
 }
 
 /**
@@ -45,8 +45,8 @@ export function normalizePhoneNumber(value) {
  * @param {string} value Raw phone value.
  * @return {boolean} Whether the value is valid.
  */
-export function isValidPhoneNumber(value) {
-	return /^\+[1-9]\d{6,14}$/.test(normalizePhoneNumber(value));
+export function isValidPhoneNumber( value ) {
+	return /^\+[1-9]\d{6,14}$/.test( normalizePhoneNumber( value ) );
 }
 
 /**
@@ -55,18 +55,20 @@ export function isValidPhoneNumber(value) {
  * @param {HTMLElement} questionEl Question wrapper element.
  * @return {string} The value (JSON-encoded array for multiselect).
  */
-export function getQuestionValue(questionEl) {
+export function getQuestionValue( questionEl ) {
 	const questionType = questionEl.dataset.questionType;
 
-	if (questionType === 'multiselect') {
+	if ( questionType === 'multiselect' ) {
 		const checked = questionEl.querySelectorAll(
 			'input[type="checkbox"]:checked'
 		);
-		return JSON.stringify(Array.from(checked).map((cb) => cb.value));
+		return JSON.stringify(
+			Array.from( checked ).map( ( cb ) => cb.value )
+		);
 	}
 
-	if (questionType === 'checkbox') {
-		const checkbox = questionEl.querySelector('input[type="checkbox"]');
+	if ( questionType === 'checkbox' ) {
+		const checkbox = questionEl.querySelector( 'input[type="checkbox"]' );
 		return checkbox && checkbox.checked ? '1' : '0';
 	}
 
@@ -84,14 +86,14 @@ export function getQuestionValue(questionEl) {
  * @param {string} expectedValue The value to compare against.
  * @return {boolean} Whether the condition is met.
  */
-function evaluateCondition(currentValue, operator, expectedValue) {
-	switch (operator) {
+function evaluateCondition( currentValue, operator, expectedValue ) {
+	switch ( operator ) {
 		case 'equals':
 			return currentValue === expectedValue;
 		case 'not_equals':
 			return currentValue !== expectedValue;
 		case 'contains':
-			return currentValue.includes(expectedValue);
+			return currentValue.includes( expectedValue );
 		case 'not_empty':
 			return currentValue.trim() !== '';
 		default:
@@ -108,14 +110,14 @@ function evaluateCondition(currentValue, operator, expectedValue) {
  * @param {string}      shortName The option's short name.
  * @return {boolean} Whether a matching option checkbox is checked.
  */
-function isEventOptionSelected(form, shortName) {
+function isEventOptionSelected( form, shortName ) {
 	const escaped =
 		typeof CSS !== 'undefined' && CSS.escape
-			? CSS.escape(shortName)
+			? CSS.escape( shortName )
 			: shortName;
-	return !!form.querySelector(
-		`input[name="ticket_option_ids[]"][data-option-short-name="${escaped}"]:checked,` +
-			`input[name="add_option_ids[]"][data-option-short-name="${escaped}"]:checked`
+	return !! form.querySelector(
+		`input[name="ticket_option_ids[]"][data-option-short-name="${ escaped }"]:checked,` +
+			`input[name="add_option_ids[]"][data-option-short-name="${ escaped }"]:checked`
 	);
 }
 
@@ -127,14 +129,14 @@ function isEventOptionSelected(form, shortName) {
  * @param {HTMLElement} section The conditional section element.
  * @return {boolean} Whether the section's own condition is met.
  */
-function evaluateEventOptionCondition(form, section) {
+function evaluateEventOptionCondition( form, section ) {
 	const shortName = section.dataset.conditionOptionShortName;
-	if (!shortName) {
+	if ( ! shortName ) {
 		return false;
 	}
-	const selected = isEventOptionSelected(form, shortName);
+	const selected = isEventOptionSelected( form, shortName );
 	return section.dataset.conditionOperator === 'not_selected'
-		? !selected
+		? ! selected
 		: selected;
 }
 
@@ -146,9 +148,11 @@ function evaluateEventOptionCondition(form, section) {
  * @param {number}      ticketTypeId The ticket type's ID.
  * @return {boolean} Whether that ticket type is currently selected.
  */
-function isTicketTypeSelected(form, ticketTypeId) {
-	const checked = form.querySelector('input[name="ticket_type_id"]:checked');
-	return !!checked && String(checked.value) === String(ticketTypeId);
+function isTicketTypeSelected( form, ticketTypeId ) {
+	const checked = form.querySelector(
+		'input[name="ticket_type_id"]:checked'
+	);
+	return !! checked && String( checked.value ) === String( ticketTypeId );
 }
 
 /**
@@ -160,21 +164,23 @@ function isTicketTypeSelected(form, ticketTypeId) {
  * @param {HTMLElement} section The conditional section element.
  * @return {boolean} Whether the section's own condition is met.
  */
-function evaluateTicketTypeCondition(form, section) {
+function evaluateTicketTypeCondition( form, section ) {
 	let ticketTypeIds = [];
 	try {
 		ticketTypeIds = JSON.parse(
 			section.dataset.conditionTicketTypeIds || '[]'
 		);
-	} catch (e) {
+	} catch ( e ) {
 		ticketTypeIds = [];
 	}
-	if (!Array.isArray(ticketTypeIds) || ticketTypeIds.length === 0) {
+	if ( ! Array.isArray( ticketTypeIds ) || ticketTypeIds.length === 0 ) {
 		return false;
 	}
-	const selected = ticketTypeIds.some((id) => isTicketTypeSelected(form, id));
+	const selected = ticketTypeIds.some( ( id ) =>
+		isTicketTypeSelected( form, id )
+	);
 	return section.dataset.conditionOperator === 'not_selected'
-		? !selected
+		? ! selected
 		: selected;
 }
 
@@ -186,26 +192,34 @@ function evaluateTicketTypeCondition(form, section) {
  *
  * @param {HTMLElement} form The form (or container) element.
  */
-export function evaluateConditionals(form) {
-	const conditionals = form.querySelectorAll('[data-fair-form-conditional]');
-	conditionals.forEach((section) => {
-		if (section.dataset.conditionSource === 'eventOption') {
+export function evaluateConditionals( form ) {
+	const conditionals = form.querySelectorAll(
+		'[data-fair-form-conditional]'
+	);
+	conditionals.forEach( ( section ) => {
+		if ( section.dataset.conditionSource === 'eventOption' ) {
 			// A section nested inside a hidden conditional stays hidden
 			// regardless of its own condition.
 			const visible =
-				isQuestionVisible(section.parentElement) &&
-				evaluateEventOptionCondition(form, section);
-			section.classList.toggle('fair-form-conditional-visible', visible);
+				isQuestionVisible( section.parentElement ) &&
+				evaluateEventOptionCondition( form, section );
+			section.classList.toggle(
+				'fair-form-conditional-visible',
+				visible
+			);
 			return;
 		}
 
-		if (section.dataset.conditionSource === 'ticketType') {
+		if ( section.dataset.conditionSource === 'ticketType' ) {
 			// A section nested inside a hidden conditional stays hidden
 			// regardless of its own condition.
 			const visible =
-				isQuestionVisible(section.parentElement) &&
-				evaluateTicketTypeCondition(form, section);
-			section.classList.toggle('fair-form-conditional-visible', visible);
+				isQuestionVisible( section.parentElement ) &&
+				evaluateTicketTypeCondition( form, section );
+			section.classList.toggle(
+				'fair-form-conditional-visible',
+				visible
+			);
 			return;
 		}
 
@@ -214,42 +228,42 @@ export function evaluateConditionals(form) {
 		const expectedValue = section.dataset.conditionValue;
 
 		const questionEl = form.querySelector(
-			`[data-fair-form-question][data-question-key="${questionKey}"]`
+			`[data-fair-form-question][data-question-key="${ questionKey }"]`
 		);
-		if (!questionEl) {
-			section.classList.remove('fair-form-conditional-visible');
+		if ( ! questionEl ) {
+			section.classList.remove( 'fair-form-conditional-visible' );
 			return;
 		}
 
 		// If the controlling question is itself inside a hidden conditional,
 		// hide this section too.
-		if (!isQuestionVisible(questionEl)) {
-			section.classList.remove('fair-form-conditional-visible');
+		if ( ! isQuestionVisible( questionEl ) ) {
+			section.classList.remove( 'fair-form-conditional-visible' );
 			return;
 		}
 
-		const currentValue = getQuestionValue(questionEl);
+		const currentValue = getQuestionValue( questionEl );
 		const visible = evaluateCondition(
 			currentValue,
 			operator,
 			expectedValue
 		);
-		section.classList.toggle('fair-form-conditional-visible', visible);
-	});
+		section.classList.toggle( 'fair-form-conditional-visible', visible );
+	} );
 
 	// A hidden textarea always has a scrollHeight of 0, so an autosize run
 	// while it was still hidden collapsed it to a single line. Re-run
 	// autosize on every long-text textarea that just became visible so it
 	// grows to fit its content instead of staying collapsed.
-	form.querySelectorAll('[data-question-type="long_text"] textarea').forEach(
-		(textarea) => {
-			if (
-				isQuestionVisible(textarea.closest('[data-fair-form-question]'))
-			) {
-				autosizeTextarea(textarea);
-			}
+	form.querySelectorAll(
+		'[data-question-type="long_text"] textarea'
+	).forEach( ( textarea ) => {
+		if (
+			isQuestionVisible( textarea.closest( '[data-fair-form-question]' ) )
+		) {
+			autosizeTextarea( textarea );
 		}
-	);
+	} );
 }
 
 /**
@@ -259,16 +273,16 @@ export function evaluateConditionals(form) {
  * @param {HTMLElement} el Question wrapper or conditional section element.
  * @return {boolean} Whether the element is visible.
  */
-export function isQuestionVisible(el) {
-	const conditional = el.closest('[data-fair-form-conditional]');
-	if (!conditional) {
+export function isQuestionVisible( el ) {
+	const conditional = el.closest( '[data-fair-form-conditional]' );
+	if ( ! conditional ) {
 		return true;
 	}
-	if (!conditional.classList.contains('fair-form-conditional-visible')) {
+	if ( ! conditional.classList.contains( 'fair-form-conditional-visible' ) ) {
 		return false;
 	}
 	// Check parent conditionals (nested case).
-	return isQuestionVisible(conditional.parentElement);
+	return isQuestionVisible( conditional.parentElement );
 }
 
 /**
@@ -277,36 +291,38 @@ export function isQuestionVisible(el) {
  * @param {HTMLElement} form The form (or container) element.
  * @return {Array<Object>} Answers ready for the `questionnaire_answers` payload.
  */
-export function collectQuestionAnswers(form) {
-	const questionElements = form.querySelectorAll('[data-fair-form-question]');
+export function collectQuestionAnswers( form ) {
+	const questionElements = form.querySelectorAll(
+		'[data-fair-form-question]'
+	);
 	const answers = [];
 
-	questionElements.forEach((el, index) => {
+	questionElements.forEach( ( el, index ) => {
 		// Skip questions inside hidden conditional sections.
-		if (!isQuestionVisible(el)) {
+		if ( ! isQuestionVisible( el ) ) {
 			return;
 		}
 
 		const questionType = el.dataset.questionType;
 		let answerValue = '';
 
-		if (questionType === 'file_upload') {
+		if ( questionType === 'file_upload' ) {
 			// File uploads are handled separately via FormData. Store a
 			// placeholder that the server replaces with the attachment ID.
-			const fileInput = el.querySelector('input[type="file"]');
+			const fileInput = el.querySelector( 'input[type="file"]' );
 			answerValue =
 				fileInput && fileInput.files.length > 0
 					? '__file_pending__'
 					: '';
-		} else if (questionType === 'multiselect') {
+		} else if ( questionType === 'multiselect' ) {
 			// Collect all checked checkboxes and JSON-encode.
 			const checked = el.querySelectorAll(
 				'input[type="checkbox"]:checked'
 			);
-			const values = Array.from(checked).map((cb) => cb.value);
-			answerValue = JSON.stringify(values);
-		} else if (questionType === 'checkbox') {
-			const checkbox = el.querySelector('input[type="checkbox"]');
+			const values = Array.from( checked ).map( ( cb ) => cb.value );
+			answerValue = JSON.stringify( values );
+		} else if ( questionType === 'checkbox' ) {
+			const checkbox = el.querySelector( 'input[type="checkbox"]' );
 			answerValue = checkbox && checkbox.checked ? '1' : '0';
 		} else {
 			// For select, radio, text, textarea - get value from first
@@ -314,7 +330,7 @@ export function collectQuestionAnswers(form) {
 			const input = el.querySelector(
 				'input:checked, select, input, textarea'
 			);
-			if (!input) {
+			if ( ! input ) {
 				return;
 			}
 			answerValue = input.value;
@@ -328,8 +344,8 @@ export function collectQuestionAnswers(form) {
 			display_order: index,
 		};
 
-		answers.push(answer);
-	});
+		answers.push( answer );
+	} );
 
 	return answers;
 }
@@ -344,68 +360,68 @@ export function collectQuestionAnswers(form) {
  * @param {HTMLElement}  form    The form (or container) element.
  * @param {Array<Object>} answers Answers as produced by collectQuestionAnswers.
  */
-export function applyQuestionAnswers(form, answers) {
-	if (!Array.isArray(answers)) {
+export function applyQuestionAnswers( form, answers ) {
+	if ( ! Array.isArray( answers ) ) {
 		return;
 	}
 
-	answers.forEach((answer) => {
+	answers.forEach( ( answer ) => {
 		const key = answer.question_key;
-		if (!key) {
+		if ( ! key ) {
 			return;
 		}
 		const escaped =
-			typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(key) : key;
+			typeof CSS !== 'undefined' && CSS.escape ? CSS.escape( key ) : key;
 		const el = form.querySelector(
-			`[data-fair-form-question][data-question-key="${escaped}"]`
+			`[data-fair-form-question][data-question-key="${ escaped }"]`
 		);
-		if (!el) {
+		if ( ! el ) {
 			return;
 		}
 
 		const questionType = answer.question_type;
 
-		if (questionType === 'file_upload') {
+		if ( questionType === 'file_upload' ) {
 			return;
 		}
 
-		if (questionType === 'multiselect') {
+		if ( questionType === 'multiselect' ) {
 			let values = [];
 			try {
-				values = JSON.parse(answer.answer_value);
-			} catch (e) {
+				values = JSON.parse( answer.answer_value );
+			} catch ( e ) {
 				values = [];
 			}
-			el.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-				cb.checked = values.includes(cb.value);
-			});
+			el.querySelectorAll( 'input[type="checkbox"]' ).forEach( ( cb ) => {
+				cb.checked = values.includes( cb.value );
+			} );
 			return;
 		}
 
-		if (questionType === 'checkbox') {
-			const checkbox = el.querySelector('input[type="checkbox"]');
-			if (checkbox) {
+		if ( questionType === 'checkbox' ) {
+			const checkbox = el.querySelector( 'input[type="checkbox"]' );
+			if ( checkbox ) {
 				checkbox.checked = answer.answer_value === '1';
 			}
 			return;
 		}
 
-		const radios = el.querySelectorAll('input[type="radio"]');
-		if (radios.length > 0) {
-			radios.forEach((radio) => {
+		const radios = el.querySelectorAll( 'input[type="radio"]' );
+		if ( radios.length > 0 ) {
+			radios.forEach( ( radio ) => {
 				radio.checked = radio.value === answer.answer_value;
-			});
+			} );
 			return;
 		}
 
-		const input = el.querySelector('select, input, textarea');
-		if (input) {
+		const input = el.querySelector( 'select, input, textarea' );
+		if ( input ) {
 			input.value = answer.answer_value;
-			if (questionType === 'long_text') {
-				autosizeTextarea(input);
+			if ( questionType === 'long_text' ) {
+				autosizeTextarea( input );
 			}
 		}
-	});
+	} );
 }
 
 /**
@@ -418,39 +434,39 @@ export function applyQuestionAnswers(form, answers) {
  * @param {HTMLElement} form The form (or container) element.
  * @return {string|null} An error message, or null when valid.
  */
-export function validateQuestions(form) {
+export function validateQuestions( form ) {
 	// Validate required questions (skip those inside hidden conditional sections).
 	const requiredQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-required="1"]'
 	);
-	for (const el of requiredQuestions) {
-		if (!isQuestionVisible(el)) {
+	for ( const el of requiredQuestions ) {
+		if ( ! isQuestionVisible( el ) ) {
 			continue;
 		}
 
 		const questionType = el.dataset.questionType;
 		let hasValue = false;
 
-		if (questionType === 'file_upload') {
-			const fileInput = el.querySelector('input[type="file"]');
+		if ( questionType === 'file_upload' ) {
+			const fileInput = el.querySelector( 'input[type="file"]' );
 			hasValue = fileInput && fileInput.files.length > 0;
-		} else if (questionType === 'multiselect') {
+		} else if ( questionType === 'multiselect' ) {
 			hasValue =
-				el.querySelectorAll('input[type="checkbox"]:checked').length >
+				el.querySelectorAll( 'input[type="checkbox"]:checked' ).length >
 				0;
-		} else if (questionType === 'checkbox') {
-			hasValue = !!el.querySelector('input[type="checkbox"]:checked');
-		} else if (el.querySelector('input[type="radio"]')) {
-			hasValue = !!el.querySelector('input[type="radio"]:checked');
+		} else if ( questionType === 'checkbox' ) {
+			hasValue = !! el.querySelector( 'input[type="checkbox"]:checked' );
+		} else if ( el.querySelector( 'input[type="radio"]' ) ) {
+			hasValue = !! el.querySelector( 'input[type="radio"]:checked' );
 		} else {
-			const input = el.querySelector('input, textarea, select');
+			const input = el.querySelector( 'input, textarea, select' );
 			hasValue = input && input.value.trim() !== '';
 		}
 
-		if (!hasValue) {
+		if ( ! hasValue ) {
 			const questionText = el.dataset.questionText || '';
 			return (
-				__('Please answer the required question: ', 'fair-audience') +
+				__( 'Please answer the required question: ', 'fair-audience' ) +
 				questionText
 			);
 		}
@@ -460,16 +476,16 @@ export function validateQuestions(form) {
 	const phoneQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="phone"]'
 	);
-	for (const el of phoneQuestions) {
-		if (!isQuestionVisible(el)) {
+	for ( const el of phoneQuestions ) {
+		if ( ! isQuestionVisible( el ) ) {
 			continue;
 		}
-		const input = el.querySelector('input[type="tel"]');
+		const input = el.querySelector( 'input[type="tel"]' );
 		const value = input ? input.value.trim() : '';
-		if (!value) {
+		if ( ! value ) {
 			continue;
 		}
-		if (!isValidPhoneNumber(value)) {
+		if ( ! isValidPhoneNumber( value ) ) {
 			const questionText = el.dataset.questionText || '';
 			return sprintf(
 				/* translators: %s: question text */
@@ -486,16 +502,16 @@ export function validateQuestions(form) {
 	const emailQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="email"]'
 	);
-	for (const el of emailQuestions) {
-		if (!isQuestionVisible(el)) {
+	for ( const el of emailQuestions ) {
+		if ( ! isQuestionVisible( el ) ) {
 			continue;
 		}
-		const input = el.querySelector('input[type="email"]');
+		const input = el.querySelector( 'input[type="email"]' );
 		const value = input ? input.value.trim() : '';
-		if (!value) {
+		if ( ! value ) {
 			continue;
 		}
-		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+		if ( ! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( value ) ) {
 			const questionText = el.dataset.questionText || '';
 			return (
 				__(
@@ -510,31 +526,34 @@ export function validateQuestions(form) {
 	const urlQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="url"]'
 	);
-	for (const el of urlQuestions) {
-		if (!isQuestionVisible(el)) {
+	for ( const el of urlQuestions ) {
+		if ( ! isQuestionVisible( el ) ) {
 			continue;
 		}
-		const input = el.querySelector('input');
+		const input = el.querySelector( 'input' );
 		const value = input ? input.value.trim() : '';
-		if (!value) {
+		if ( ! value ) {
 			continue;
 		}
-		const normalized = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//.test(value)
+		const normalized = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//.test( value )
 			? value
 			: 'https://' + value;
 		let isValid = false;
 		try {
-			const parsed = new URL(normalized);
+			const parsed = new URL( normalized );
 			isValid =
 				parsed.protocol === 'http:' || parsed.protocol === 'https:';
-		} catch (e) {
+		} catch ( e ) {
 			isValid = false;
 		}
-		if (!isValid) {
+		if ( ! isValid ) {
 			const questionText = el.dataset.questionText || '';
 			return sprintf(
 				/* translators: %s: question text */
-				__('Please enter a valid web address for: %s', 'fair-audience'),
+				__(
+					'Please enter a valid web address for: %s',
+					'fair-audience'
+				),
 				questionText
 			);
 		}
@@ -545,20 +564,20 @@ export function validateQuestions(form) {
 	const dateQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="date"]'
 	);
-	for (const el of dateQuestions) {
-		if (!isQuestionVisible(el)) {
+	for ( const el of dateQuestions ) {
+		if ( ! isQuestionVisible( el ) ) {
 			continue;
 		}
-		const input = el.querySelector('input[type="date"]');
+		const input = el.querySelector( 'input[type="date"]' );
 		const value = input ? input.value.trim() : '';
-		if (!value) {
+		if ( ! value ) {
 			continue;
 		}
-		if (Number.isNaN(new Date(`${value}T00:00:00`).getTime())) {
+		if ( Number.isNaN( new Date( `${ value }T00:00:00` ).getTime() ) ) {
 			const questionText = el.dataset.questionText || '';
 			return sprintf(
 				/* translators: %s: question text */
-				__('Please enter a valid date for: %s', 'fair-audience'),
+				__( 'Please enter a valid date for: %s', 'fair-audience' ),
 				questionText
 			);
 		}
@@ -569,16 +588,16 @@ export function validateQuestions(form) {
 	const datetimeQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="datetime"]'
 	);
-	for (const el of datetimeQuestions) {
-		if (!isQuestionVisible(el)) {
+	for ( const el of datetimeQuestions ) {
+		if ( ! isQuestionVisible( el ) ) {
 			continue;
 		}
-		const input = el.querySelector('input[type="datetime-local"]');
+		const input = el.querySelector( 'input[type="datetime-local"]' );
 		const value = input ? input.value.trim() : '';
-		if (!value) {
+		if ( ! value ) {
 			continue;
 		}
-		if (Number.isNaN(new Date(value).getTime())) {
+		if ( Number.isNaN( new Date( value ).getTime() ) ) {
 			const questionText = el.dataset.questionText || '';
 			return sprintf(
 				/* translators: %s: question text */
@@ -595,25 +614,25 @@ export function validateQuestions(form) {
 	const fileUploadQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="file_upload"]'
 	);
-	for (const el of fileUploadQuestions) {
-		if (!isQuestionVisible(el)) {
+	for ( const el of fileUploadQuestions ) {
+		if ( ! isQuestionVisible( el ) ) {
 			continue;
 		}
-		const fileInput = el.querySelector('input[type="file"]');
-		if (!fileInput || fileInput.files.length === 0) {
+		const fileInput = el.querySelector( 'input[type="file"]' );
+		if ( ! fileInput || fileInput.files.length === 0 ) {
 			continue;
 		}
 
-		const file = fileInput.files[0];
-		const maxSizeMB = parseInt(el.dataset.maxFileSize, 10) || 5;
+		const file = fileInput.files[ 0 ];
+		const maxSizeMB = parseInt( el.dataset.maxFileSize, 10 ) || 5;
 		const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-		if (file.size > maxSizeBytes) {
+		if ( file.size > maxSizeBytes ) {
 			const questionText = el.dataset.questionText || '';
 			return (
 				questionText +
 				': ' +
-				__('File is too large. Maximum size is ', 'fair-audience') +
+				__( 'File is too large. Maximum size is ', 'fair-audience' ) +
 				maxSizeMB +
 				' MB.'
 			);
@@ -629,16 +648,16 @@ export function validateQuestions(form) {
  * @param {HTMLElement} form The form (or container) element.
  * @return {boolean} True when at least one file is selected.
  */
-export function hasFileUploads(form) {
+export function hasFileUploads( form ) {
 	const fileQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="file_upload"]'
 	);
-	for (const el of fileQuestions) {
-		if (!isQuestionVisible(el)) {
+	for ( const el of fileQuestions ) {
+		if ( ! isQuestionVisible( el ) ) {
 			continue;
 		}
-		const fileInput = el.querySelector('input[type="file"]');
-		if (fileInput && fileInput.files.length > 0) {
+		const fileInput = el.querySelector( 'input[type="file"]' );
+		if ( fileInput && fileInput.files.length > 0 ) {
 			return true;
 		}
 	}
@@ -653,22 +672,22 @@ export function hasFileUploads(form) {
  * @param {HTMLElement} form     The form (or container) element.
  * @param {FormData}    formData The FormData to append to.
  */
-export function appendQuestionFiles(form, formData) {
+export function appendQuestionFiles( form, formData ) {
 	const fileQuestions = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="file_upload"]'
 	);
-	fileQuestions.forEach((el) => {
-		if (!isQuestionVisible(el)) {
+	fileQuestions.forEach( ( el ) => {
+		if ( ! isQuestionVisible( el ) ) {
 			return;
 		}
-		const fileInput = el.querySelector('input[type="file"]');
-		if (fileInput && fileInput.files.length > 0) {
+		const fileInput = el.querySelector( 'input[type="file"]' );
+		if ( fileInput && fileInput.files.length > 0 ) {
 			formData.append(
 				'fair_form_file_' + el.dataset.questionKey,
-				fileInput.files[0]
+				fileInput.files[ 0 ]
 			);
 		}
-	});
+	} );
 }
 
 /**
@@ -676,36 +695,36 @@ export function appendQuestionFiles(form, formData) {
  *
  * @param {HTMLInputElement} input The file input element.
  */
-export function handleFilePreview(input) {
-	const wrapper = input.closest('[data-fair-form-question]');
-	if (!wrapper) {
+export function handleFilePreview( input ) {
+	const wrapper = input.closest( '[data-fair-form-question]' );
+	if ( ! wrapper ) {
 		return;
 	}
 	// Remove existing preview.
-	const existing = wrapper.querySelector('.fair-form-file-preview');
-	if (existing) {
+	const existing = wrapper.querySelector( '.fair-form-file-preview' );
+	if ( existing ) {
 		existing.remove();
 	}
 
-	if (!input.files || input.files.length === 0) {
+	if ( ! input.files || input.files.length === 0 ) {
 		return;
 	}
 
-	const file = input.files[0];
-	if (!file.type.startsWith('image/')) {
+	const file = input.files[ 0 ];
+	if ( ! file.type.startsWith( 'image/' ) ) {
 		return;
 	}
 
-	const preview = document.createElement('div');
+	const preview = document.createElement( 'div' );
 	preview.className = 'fair-form-file-preview';
 
-	const img = document.createElement('img');
+	const img = document.createElement( 'img' );
 	img.alt = file.name;
-	img.src = URL.createObjectURL(file);
-	img.onload = () => URL.revokeObjectURL(img.src);
+	img.src = URL.createObjectURL( file );
+	img.onload = () => URL.revokeObjectURL( img.src );
 
-	preview.appendChild(img);
-	wrapper.appendChild(preview);
+	preview.appendChild( img );
+	wrapper.appendChild( preview );
 }
 
 /**
@@ -715,8 +734,8 @@ export function handleFilePreview(input) {
  * @param {HTMLElement} wrapper  Question wrapper element.
  * @param {Object}      metadata Response body from `/fair-form/v1/url-preview`.
  */
-function renderUrlPreview(wrapper, metadata) {
-	clearUrlPreview(wrapper);
+function renderUrlPreview( wrapper, metadata ) {
+	clearUrlPreview( wrapper );
 
 	const {
 		title,
@@ -726,46 +745,46 @@ function renderUrlPreview(wrapper, metadata) {
 		location,
 	} = metadata;
 
-	const formatWhen = (value) =>
-		all_day ? formatDateOnly(value) : formatSiteLocalDatetime(value);
+	const formatWhen = ( value ) =>
+		all_day ? formatDateOnly( value ) : formatSiteLocalDatetime( value );
 
-	const preview = document.createElement('div');
+	const preview = document.createElement( 'div' );
 	preview.className = 'fair-form-url-preview';
 
-	const label = document.createElement('span');
+	const label = document.createElement( 'span' );
 	label.className = 'fair-form-url-preview__label';
-	label.textContent = __('Read from the linked page:', 'fair-form');
-	preview.appendChild(label);
+	label.textContent = __( 'Read from the linked page:', 'fair-form' );
+	preview.appendChild( label );
 
-	const list = document.createElement('ul');
+	const list = document.createElement( 'ul' );
 
-	if (title) {
-		const li = document.createElement('li');
+	if ( title ) {
+		const li = document.createElement( 'li' );
 		li.textContent = title;
-		list.appendChild(li);
+		list.appendChild( li );
 	}
 
-	if (start) {
-		const li = document.createElement('li');
+	if ( start ) {
+		const li = document.createElement( 'li' );
 		li.textContent = end
 			? sprintf(
 					/* translators: 1: start date/time, 2: end date/time */
-					__('%1$s – %2$s', 'fair-form'),
-					formatWhen(start),
-					formatWhen(end)
+					__( '%1$s – %2$s', 'fair-form' ),
+					formatWhen( start ),
+					formatWhen( end )
 			  )
-			: formatWhen(start);
-		list.appendChild(li);
+			: formatWhen( start );
+		list.appendChild( li );
 	}
 
-	if (location) {
-		const li = document.createElement('li');
+	if ( location ) {
+		const li = document.createElement( 'li' );
 		li.textContent = location;
-		list.appendChild(li);
+		list.appendChild( li );
 	}
 
-	preview.appendChild(list);
-	wrapper.appendChild(preview);
+	preview.appendChild( list );
+	wrapper.appendChild( preview );
 }
 
 /**
@@ -773,9 +792,9 @@ function renderUrlPreview(wrapper, metadata) {
  *
  * @param {HTMLElement} wrapper Question wrapper element.
  */
-function clearUrlPreview(wrapper) {
-	const existing = wrapper.querySelector('.fair-form-url-preview');
-	if (existing) {
+function clearUrlPreview( wrapper ) {
+	const existing = wrapper.querySelector( '.fair-form-url-preview' );
+	if ( existing ) {
 		existing.remove();
 	}
 }
@@ -790,49 +809,49 @@ function clearUrlPreview(wrapper) {
  *
  * @param {HTMLElement} form The form (or container) element.
  */
-export function setupUrlPreviews(form) {
+export function setupUrlPreviews( form ) {
 	const wrappers = form.querySelectorAll(
 		'[data-fair-form-question][data-question-type="url"][data-extract-event-details="1"]'
 	);
 
-	wrappers.forEach((wrapper) => {
-		const input = wrapper.querySelector('input');
-		if (!input) {
+	wrappers.forEach( ( wrapper ) => {
+		const input = wrapper.querySelector( 'input' );
+		if ( ! input ) {
 			return;
 		}
 
 		let lastCheckedValue = null;
 
-		input.addEventListener('blur', () => {
+		input.addEventListener( 'blur', () => {
 			const value = input.value.trim();
 
-			if (!value || value === lastCheckedValue) {
+			if ( ! value || value === lastCheckedValue ) {
 				return;
 			}
 			lastCheckedValue = value;
 
-			apiFetch({
+			apiFetch( {
 				path: '/fair-form/v1/url-preview',
 				method: 'POST',
 				data: { url: value },
-			})
-				.then((metadata) => {
-					if (input.value.trim() !== value) {
+			} )
+				.then( ( metadata ) => {
+					if ( input.value.trim() !== value ) {
 						// The visitor kept typing before the response arrived.
 						return;
 					}
-					renderUrlPreview(wrapper, metadata);
-				})
-				.catch(() => {
-					clearUrlPreview(wrapper);
-				});
-		});
+					renderUrlPreview( wrapper, metadata );
+				} )
+				.catch( () => {
+					clearUrlPreview( wrapper );
+				} );
+		} );
 
-		input.addEventListener('input', () => {
+		input.addEventListener( 'input', () => {
 			lastCheckedValue = null;
-			clearUrlPreview(wrapper);
-		});
-	});
+			clearUrlPreview( wrapper );
+		} );
+	} );
 }
 
 /**
@@ -841,8 +860,8 @@ export function setupUrlPreviews(form) {
  *
  * @param {HTMLTextAreaElement} textarea The textarea to resize.
  */
-export function autosizeTextarea(textarea) {
-	if (!textarea) {
+export function autosizeTextarea( textarea ) {
+	if ( ! textarea ) {
 		return;
 	}
 	textarea.style.height = 'auto';
@@ -855,14 +874,16 @@ export function autosizeTextarea(textarea) {
  *
  * @param {HTMLElement} form The form (or container) element.
  */
-function setupAutosizeTextareas(form) {
+function setupAutosizeTextareas( form ) {
 	const textareas = form.querySelectorAll(
 		'[data-question-type="long_text"] textarea'
 	);
-	textareas.forEach((textarea) => {
-		autosizeTextarea(textarea);
-		textarea.addEventListener('input', () => autosizeTextarea(textarea));
-	});
+	textareas.forEach( ( textarea ) => {
+		autosizeTextarea( textarea );
+		textarea.addEventListener( 'input', () =>
+			autosizeTextarea( textarea )
+		);
+	} );
 }
 
 /**
@@ -870,21 +891,21 @@ function setupAutosizeTextareas(form) {
  *
  * @param {HTMLElement} form The form (or container) element.
  */
-export function setupQuestionnaire(form) {
+export function setupQuestionnaire( form ) {
 	// Set up file upload previews.
 	const fileInputs = form.querySelectorAll(
 		'[data-question-type="file_upload"] input[type="file"]'
 	);
-	fileInputs.forEach((input) => {
-		input.addEventListener('change', () => handleFilePreview(input));
-	});
+	fileInputs.forEach( ( input ) => {
+		input.addEventListener( 'change', () => handleFilePreview( input ) );
+	} );
 
-	setupUrlPreviews(form);
+	setupUrlPreviews( form );
 
 	// Evaluate conditionals on load and on any input change.
-	evaluateConditionals(form);
-	form.addEventListener('input', () => evaluateConditionals(form));
-	form.addEventListener('change', () => evaluateConditionals(form));
+	evaluateConditionals( form );
+	form.addEventListener( 'input', () => evaluateConditionals( form ) );
+	form.addEventListener( 'change', () => evaluateConditionals( form ) );
 
-	setupAutosizeTextareas(form);
+	setupAutosizeTextareas( form );
 }

@@ -29,37 +29,46 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const authHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-function uniqueEmail(prefix) {
-	return `${prefix}+${Date.now()}-${Math.floor(
+function uniqueEmail( prefix ) {
+	return `${ prefix }+${ Date.now() }-${ Math.floor(
 		Math.random() * 1e6
-	)}@example.test`;
+	) }@example.test`;
 }
 
-async function createEventWithDates(api, title) {
-	const res = await api.post('/wp-json/wp/v2/fair_event', {
+async function createEventWithDates( api, title ) {
+	const res = await api.post( '/wp-json/wp/v2/fair_event', {
 		headers: authHeaders,
 		data: { title, status: 'publish' },
-	});
-	expect(res.ok()).toBeTruthy();
-	const eventId = (await res.json()).id;
+	} );
+	expect( res.ok() ).toBeTruthy();
+	const eventId = ( await res.json() ).id;
 
 	// Resolve event-date row created by the fair-events lifecycle hook.
-	const eventsRes = await api.get('/wp-json/fair-audience/v1/events', {
+	const eventsRes = await api.get( '/wp-json/fair-audience/v1/events', {
 		headers: authHeaders,
 		params: { per_page: 100 },
-	});
-	expect(eventsRes.ok()).toBeTruthy();
-	const match = (await eventsRes.json()).find((e) => e.event_id === eventId);
-	expect(match, 'event-date row for test event').toBeTruthy();
+	} );
+	expect( eventsRes.ok() ).toBeTruthy();
+	const match = ( await eventsRes.json() ).find(
+		( e ) => e.event_id === eventId
+	);
+	expect( match, 'event-date row for test event' ).toBeTruthy();
 	return { eventId, masterEventDateId: match.event_date_id };
 }
 
-async function createTicketType(api, masterEventDateId, name, recurrenceScope) {
+async function createTicketType(
+	api,
+	masterEventDateId,
+	name,
+	recurrenceScope
+) {
 	const res = await api.post(
-		`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/tickets`,
+		`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/tickets`,
 		{
 			headers: authHeaders,
 			data: {
@@ -76,38 +85,41 @@ async function createTicketType(api, masterEventDateId, name, recurrenceScope) {
 			},
 		}
 	);
-	expect(res.ok(), `create ticket type (${recurrenceScope})`).toBeTruthy();
+	expect(
+		res.ok(),
+		`create ticket type (${ recurrenceScope })`
+	).toBeTruthy();
 	const body = await res.json();
-	const tt = body.ticket_types?.[0];
-	expect(tt, 'returned ticket type').toBeTruthy();
-	expect(tt.recurrence_scope).toBe(recurrenceScope);
+	const tt = body.ticket_types?.[ 0 ];
+	expect( tt, 'returned ticket type' ).toBeTruthy();
+	expect( tt.recurrence_scope ).toBe( recurrenceScope );
 	return tt.id;
 }
 
-async function createParticipant(api, adminUserId, label) {
-	const res = await api.post('/wp-json/fair-audience/v1/participants', {
+async function createParticipant( api, adminUserId, label ) {
+	const res = await api.post( '/wp-json/fair-audience/v1/participants', {
 		headers: authHeaders,
 		data: {
 			name: label,
-			email: uniqueEmail(label.toLowerCase().replace(/\s/g, '-')),
+			email: uniqueEmail( label.toLowerCase().replace( /\s/g, '-' ) ),
 			wp_user_id: adminUserId,
 		},
-	});
-	expect(res.ok(), 'create participant').toBeTruthy();
-	return (await res.json()).id;
+	} );
+	expect( res.ok(), 'create participant' ).toBeTruthy();
+	return ( await res.json() ).id;
 }
 
-async function deleteParticipant(api, participantId) {
-	if (!participantId) return;
+async function deleteParticipant( api, participantId ) {
+	if ( ! participantId ) return;
 	await api.delete(
-		`/wp-json/fair-audience/v1/participants/${participantId}`,
+		`/wp-json/fair-audience/v1/participants/${ participantId }`,
 		{
 			headers: authHeaders,
 		}
 	);
 }
 
-test.describe('Recurrence-scope ticket types — signup semantics', () => {
+test.describe( 'Recurrence-scope ticket types — signup semantics', () => {
 	let api;
 	let adminUserId;
 	let eventA; // used for whole_series tests
@@ -117,22 +129,22 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 	let participantId;
 	let fixtureOk = true;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const meRes = await api.get('/wp-json/wp/v2/users/me', {
+		const meRes = await api.get( '/wp-json/wp/v2/users/me', {
 			headers: authHeaders,
-		});
-		expect(meRes.ok()).toBeTruthy();
-		adminUserId = (await meRes.json()).id;
+		} );
+		expect( meRes.ok() ).toBeTruthy();
+		adminUserId = ( await meRes.json() ).id;
 
 		eventA = await createEventWithDates(
 			api,
-			`Recurrence Scope Test A ${Date.now()}`
+			`Recurrence Scope Test A ${ Date.now() }`
 		);
 		eventB = await createEventWithDates(
 			api,
-			`Recurrence Scope Test B ${Date.now()}`
+			`Recurrence Scope Test B ${ Date.now() }`
 		);
 
 		// #1410 — publishing a fair_event doesn't auto-create its event-date,
@@ -161,30 +173,30 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 			adminUserId,
 			'Scope Tester'
 		);
-	});
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		// Clean up participants (event posts cleaned by WP test fixture teardown).
-		await deleteParticipant(api, participantId);
+		await deleteParticipant( api, participantId );
 
-		if (eventA?.eventId) {
-			await api.delete(`/wp-json/wp/v2/fair_event/${eventA.eventId}`, {
+		if ( eventA?.eventId ) {
+			await api.delete( `/wp-json/wp/v2/fair_event/${ eventA.eventId }`, {
 				headers: authHeaders,
 				params: { force: 'true' },
-			});
+			} );
 		}
-		if (eventB?.eventId) {
-			await api.delete(`/wp-json/wp/v2/fair_event/${eventB.eventId}`, {
+		if ( eventB?.eventId ) {
+			await api.delete( `/wp-json/wp/v2/fair_event/${ eventB.eventId }`, {
 				headers: authHeaders,
 				params: { force: 'true' },
-			});
+			} );
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('whole_series signup is stored on the master event-date', async () => {
+	test( 'whole_series signup is stored on the master event-date', async () => {
 		test.skip(
-			!fixtureOk,
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 		const signupRes = await api.post(
@@ -198,27 +210,27 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 				},
 			}
 		);
-		expect(signupRes.ok()).toBeTruthy();
+		expect( signupRes.ok() ).toBeTruthy();
 		const body = await signupRes.json();
-		expect(body.status).toMatch(/^(signed_up|already_signed_up)$/);
+		expect( body.status ).toMatch( /^(signed_up|already_signed_up)$/ );
 
 		// Confirm the row is on the master event-date.
 		const participantsRes = await api.get(
-			`/wp-json/fair-audience/v1/event-dates/${eventA.masterEventDateId}/participants`,
+			`/wp-json/fair-audience/v1/event-dates/${ eventA.masterEventDateId }/participants`,
 			{ headers: authHeaders }
 		);
-		expect(participantsRes.ok()).toBeTruthy();
+		expect( participantsRes.ok() ).toBeTruthy();
 		const participants = await participantsRes.json();
 		const row = participants.find(
-			(p) => p.participant_id === participantId
+			( p ) => p.participant_id === participantId
 		);
-		expect(row, 'signup row on master event-date').toBeTruthy();
-		expect(row.label).toBe('signed_up');
-	});
+		expect( row, 'signup row on master event-date' ).toBeTruthy();
+		expect( row.label ).toBe( 'signed_up' );
+	} );
 
-	test('get_status for the master returns is_signed_up:true after whole_series signup', async () => {
+	test( 'get_status for the master returns is_signed_up:true after whole_series signup', async () => {
 		test.skip(
-			!fixtureOk,
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 		const statusRes = await api.get(
@@ -231,14 +243,14 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 				},
 			}
 		);
-		expect(statusRes.ok()).toBeTruthy();
+		expect( statusRes.ok() ).toBeTruthy();
 		const body = await statusRes.json();
-		expect(body.is_signed_up).toBe(true);
-	});
+		expect( body.is_signed_up ).toBe( true );
+	} );
 
-	test('single_instance signup is stored against the given event-date', async () => {
+	test( 'single_instance signup is stored against the given event-date', async () => {
 		test.skip(
-			!fixtureOk,
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 		const signupRes = await api.post(
@@ -252,26 +264,26 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 				},
 			}
 		);
-		expect(signupRes.ok()).toBeTruthy();
+		expect( signupRes.ok() ).toBeTruthy();
 		const body = await signupRes.json();
-		expect(body.status).toMatch(/^(signed_up|already_signed_up)$/);
+		expect( body.status ).toMatch( /^(signed_up|already_signed_up)$/ );
 
 		const participantsRes = await api.get(
-			`/wp-json/fair-audience/v1/event-dates/${eventB.masterEventDateId}/participants`,
+			`/wp-json/fair-audience/v1/event-dates/${ eventB.masterEventDateId }/participants`,
 			{ headers: authHeaders }
 		);
-		expect(participantsRes.ok()).toBeTruthy();
+		expect( participantsRes.ok() ).toBeTruthy();
 		const participants = await participantsRes.json();
 		const row = participants.find(
-			(p) => p.participant_id === participantId
+			( p ) => p.participant_id === participantId
 		);
-		expect(row, 'signup row on the event-date').toBeTruthy();
-		expect(row.label).toBe('signed_up');
-	});
+		expect( row, 'signup row on the event-date' ).toBeTruthy();
+		expect( row.label ).toBe( 'signed_up' );
+	} );
 
-	test('whole_series capacity: second participant is rejected when capacity=1 is full', async () => {
+	test( 'whole_series capacity: second participant is rejected when capacity=1 is full', async () => {
 		test.skip(
-			!fixtureOk,
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 		// First create a second participant to attempt the signup.
@@ -281,13 +293,13 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 				headers: authHeaders,
 				data: {
 					name: 'Second Tester',
-					email: uniqueEmail('second-scope'),
+					email: uniqueEmail( 'second-scope' ),
 					// No wp_user_id — anonymous participant, call via admin auth below.
 				},
 			}
 		);
-		expect(secondParticipantRes.ok()).toBeTruthy();
-		const secondParticipantId = (await secondParticipantRes.json()).id;
+		expect( secondParticipantRes.ok() ).toBeTruthy();
+		const secondParticipantId = ( await secondParticipantRes.json() ).id;
 
 		try {
 			// The whole_series ticket type for eventA has capacity=1, already consumed above.
@@ -295,7 +307,7 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 			// independent of other tests' cleanup ordering.
 			const capEvent = await createEventWithDates(
 				api,
-				`Capacity Test ${Date.now()}`
+				`Capacity Test ${ Date.now() }`
 			);
 			const capTtId = await createTicketType(
 				api,
@@ -316,7 +328,7 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 					},
 				}
 			);
-			expect(firstRes.ok()).toBeTruthy();
+			expect( firstRes.ok() ).toBeTruthy();
 
 			// Second signup with a fresh participant should be rejected (409 sold out).
 			const secondRes = await api.post(
@@ -341,22 +353,25 @@ test.describe('Recurrence-scope ticket types — signup semantics', () => {
 			// The key assertion is that capacity is not exceeded (no second distinct row can be created
 			// via the same admin creds, which is already_signed_up, not a new row).
 			const secondBody = await secondRes.json();
-			expect(secondBody.status).toMatch(
+			expect( secondBody.status ).toMatch(
 				/^(already_signed_up|ticket_type_sold_out)$/
 			);
 
 			// Cleanup capacity-test event.
-			await api.delete(`/wp-json/wp/v2/fair_event/${capEvent.eventId}`, {
-				headers: authHeaders,
-				params: { force: 'true' },
-			});
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ capEvent.eventId }`,
+				{
+					headers: authHeaders,
+					params: { force: 'true' },
+				}
+			);
 		} finally {
-			await deleteParticipant(api, secondParticipantId);
+			await deleteParticipant( api, secondParticipantId );
 		}
-	});
-});
+	} );
+} );
 
-test.describe('multiple_instances ticket types — pick-N signup semantics (#930)', () => {
+test.describe( 'multiple_instances ticket types — pick-N signup semantics (#930)', () => {
 	let api;
 	let adminUserId;
 	let participantId;
@@ -364,15 +379,15 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 	let occurrenceIds;
 	let ttId;
 
-	async function createRecurringEvent(title, rrule) {
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+	async function createRecurringEvent( title, rrule ) {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: authHeaders,
 			data: { title, status: 'publish' },
-		});
-		expect(postRes.ok()).toBeTruthy();
-		const eventId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		const eventId = ( await postRes.json() ).id;
 
-		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 			headers: authHeaders,
 			data: {
 				title,
@@ -380,22 +395,22 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 				end_datetime: '2035-04-02 12:00:00',
 				rrule,
 			},
-		});
-		expect(edRes.ok()).toBeTruthy();
-		const masterEventDateId = (await edRes.json()).id;
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		const masterEventDateId = ( await edRes.json() ).id;
 
 		const linkRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
 			{ headers: authHeaders, data: { event_id: eventId } }
 		);
-		expect(linkRes.ok()).toBeTruthy();
+		expect( linkRes.ok() ).toBeTruthy();
 
 		const occRes = await api.get(
-			`/wp-json/fair-events/v1/event-dates?event_id=${eventId}`,
+			`/wp-json/fair-events/v1/event-dates?event_id=${ eventId }`,
 			{ headers: authHeaders }
 		);
-		expect(occRes.ok()).toBeTruthy();
-		const occurrences = (await occRes.json()).map((o) => o.id).sort();
+		expect( occRes.ok() ).toBeTruthy();
+		const occurrences = ( await occRes.json() ).map( ( o ) => o.id ).sort();
 
 		return { eventId, masterEventDateId, occurrences };
 	}
@@ -405,7 +420,7 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 		minimumInstances
 	) {
 		const res = await api.post(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/tickets`,
 			{
 				headers: authHeaders,
 				data: {
@@ -423,68 +438,74 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 				},
 			}
 		);
-		expect(res.ok(), 'create multiple_instances ticket type').toBeTruthy();
+		expect(
+			res.ok(),
+			'create multiple_instances ticket type'
+		).toBeTruthy();
 		const body = await res.json();
-		const tt = body.ticket_types?.[0];
-		expect(tt.recurrence_scope).toBe('multiple_instances');
-		expect(tt.minimum_instances).toBe(minimumInstances);
+		const tt = body.ticket_types?.[ 0 ];
+		expect( tt.recurrence_scope ).toBe( 'multiple_instances' );
+		expect( tt.minimum_instances ).toBe( minimumInstances );
 		return tt.id;
 	}
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const meRes = await api.get('/wp-json/wp/v2/users/me', {
+		const meRes = await api.get( '/wp-json/wp/v2/users/me', {
 			headers: authHeaders,
-		});
-		expect(meRes.ok()).toBeTruthy();
-		adminUserId = (await meRes.json()).id;
+		} );
+		expect( meRes.ok() ).toBeTruthy();
+		adminUserId = ( await meRes.json() ).id;
 
 		event = await createRecurringEvent(
-			`Multiple Instances Test ${Date.now()}`,
+			`Multiple Instances Test ${ Date.now() }`,
 			'FREQ=WEEKLY;COUNT=4'
 		);
-		expect(event.occurrences.length).toBe(4);
+		expect( event.occurrences.length ).toBe( 4 );
 		occurrenceIds = event.occurrences;
 
-		ttId = await createMultiInstanceTicketType(event.masterEventDateId, 2);
+		ttId = await createMultiInstanceTicketType(
+			event.masterEventDateId,
+			2
+		);
 
 		participantId = await createParticipant(
 			api,
 			adminUserId,
 			'Multi Instance Tester'
 		);
-	});
+	} );
 
-	test.afterAll(async () => {
-		await deleteParticipant(api, participantId);
-		if (event?.eventId) {
-			await api.delete(`/wp-json/wp/v2/fair_event/${event.eventId}`, {
+	test.afterAll( async () => {
+		await deleteParticipant( api, participantId );
+		if ( event?.eventId ) {
+			await api.delete( `/wp-json/wp/v2/fair_event/${ event.eventId }`, {
 				headers: authHeaders,
 				params: { force: 'true' },
-			});
+			} );
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('below the configured minimum is rejected', async () => {
-		const res = await api.post('/wp-json/fair-audience/v1/event-signup', {
+	test( 'below the configured minimum is rejected', async () => {
+		const res = await api.post( '/wp-json/fair-audience/v1/event-signup', {
 			headers: authHeaders,
 			data: {
 				event_id: event.eventId,
 				event_date_id: event.masterEventDateId,
 				ticket_type_id: ttId,
-				event_date_ids: [occurrenceIds[0]],
+				event_date_ids: [ occurrenceIds[ 0 ] ],
 			},
-		});
-		expect(res.status()).toBe(400);
+		} );
+		expect( res.status() ).toBe( 400 );
 		const body = await res.json();
-		expect(body.code).toBe('minimum_instances_not_met');
-	});
+		expect( body.code ).toBe( 'minimum_instances_not_met' );
+	} );
 
-	test("an occurrence outside the ticket type's series is rejected", async () => {
+	test( "an occurrence outside the ticket type's series is rejected", async () => {
 		const otherEvent = await createRecurringEvent(
-			`Multiple Instances Foreign ${Date.now()}`,
+			`Multiple Instances Foreign ${ Date.now() }`,
 			'FREQ=WEEKLY;COUNT=2'
 		);
 		try {
@@ -497,26 +518,26 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 						event_date_id: event.masterEventDateId,
 						ticket_type_id: ttId,
 						event_date_ids: [
-							occurrenceIds[0],
-							otherEvent.occurrences[0],
+							occurrenceIds[ 0 ],
+							otherEvent.occurrences[ 0 ],
 						],
 					},
 				}
 			);
-			expect(res.status()).toBe(400);
+			expect( res.status() ).toBe( 400 );
 			const body = await res.json();
-			expect(body.code).toBe('invalid_occurrence');
+			expect( body.code ).toBe( 'invalid_occurrence' );
 		} finally {
 			await api.delete(
-				`/wp-json/wp/v2/fair_event/${otherEvent.eventId}`,
+				`/wp-json/wp/v2/fair_event/${ otherEvent.eventId }`,
 				{ headers: authHeaders, params: { force: 'true' } }
 			);
 		}
-	});
+	} );
 
-	test('a valid selection creates one row per chosen occurrence', async () => {
-		const chosen = [occurrenceIds[0], occurrenceIds[1]];
-		const res = await api.post('/wp-json/fair-audience/v1/event-signup', {
+	test( 'a valid selection creates one row per chosen occurrence', async () => {
+		const chosen = [ occurrenceIds[ 0 ], occurrenceIds[ 1 ] ];
+		const res = await api.post( '/wp-json/fair-audience/v1/event-signup', {
 			headers: authHeaders,
 			data: {
 				event_id: event.eventId,
@@ -524,55 +545,59 @@ test.describe('multiple_instances ticket types — pick-N signup semantics (#930
 				ticket_type_id: ttId,
 				event_date_ids: chosen,
 			},
-		});
-		expect(res.ok()).toBeTruthy();
+		} );
+		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
-		expect(body.status).toMatch(/^(signed_up|already_signed_up)$/);
+		expect( body.status ).toMatch( /^(signed_up|already_signed_up)$/ );
 
-		for (const occId of chosen) {
+		for ( const occId of chosen ) {
 			const participantsRes = await api.get(
-				`/wp-json/fair-audience/v1/event-dates/${occId}/participants`,
+				`/wp-json/fair-audience/v1/event-dates/${ occId }/participants`,
 				{ headers: authHeaders }
 			);
-			expect(participantsRes.ok()).toBeTruthy();
+			expect( participantsRes.ok() ).toBeTruthy();
 			const rows = await participantsRes.json();
-			const row = rows.find((p) => p.participant_id === participantId);
-			expect(row, `signup row on occurrence ${occId}`).toBeTruthy();
-			expect(row.label).toBe('signed_up');
+			const row = rows.find(
+				( p ) => p.participant_id === participantId
+			);
+			expect( row, `signup row on occurrence ${ occId }` ).toBeTruthy();
+			expect( row.label ).toBe( 'signed_up' );
 		}
 
 		// The unselected occurrences should have no row for this participant.
-		const untouched = occurrenceIds.filter((id) => !chosen.includes(id));
-		for (const occId of untouched) {
+		const untouched = occurrenceIds.filter(
+			( id ) => ! chosen.includes( id )
+		);
+		for ( const occId of untouched ) {
 			const participantsRes = await api.get(
-				`/wp-json/fair-audience/v1/event-dates/${occId}/participants`,
+				`/wp-json/fair-audience/v1/event-dates/${ occId }/participants`,
 				{ headers: authHeaders }
 			);
-			expect(participantsRes.ok()).toBeTruthy();
+			expect( participantsRes.ok() ).toBeTruthy();
 			const rows = await participantsRes.json();
 			expect(
-				rows.find((p) => p.participant_id === participantId)
+				rows.find( ( p ) => p.participant_id === participantId )
 			).toBeFalsy();
 		}
-	});
-});
+	} );
+} );
 
-test.describe('multiple_instances via register_and_signup — public "I\'m new" form (#1001)', () => {
+test.describe( 'multiple_instances via register_and_signup — public "I\'m new" form (#1001)', () => {
 	let api;
 	let event;
 	let occurrenceIds;
 	let ttId;
 	let createdParticipantIds;
 
-	async function createRecurringEvent(title, rrule) {
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+	async function createRecurringEvent( title, rrule ) {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: authHeaders,
 			data: { title, status: 'publish' },
-		});
-		expect(postRes.ok()).toBeTruthy();
-		const eventId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		const eventId = ( await postRes.json() ).id;
 
-		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 			headers: authHeaders,
 			data: {
 				title,
@@ -580,29 +605,29 @@ test.describe('multiple_instances via register_and_signup — public "I\'m new" 
 				end_datetime: '2035-05-02 12:00:00',
 				rrule,
 			},
-		});
-		expect(edRes.ok()).toBeTruthy();
-		const masterEventDateId = (await edRes.json()).id;
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		const masterEventDateId = ( await edRes.json() ).id;
 
 		const linkRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
 			{ headers: authHeaders, data: { event_id: eventId } }
 		);
-		expect(linkRes.ok()).toBeTruthy();
+		expect( linkRes.ok() ).toBeTruthy();
 
 		const occRes = await api.get(
-			`/wp-json/fair-events/v1/event-dates?event_id=${eventId}`,
+			`/wp-json/fair-events/v1/event-dates?event_id=${ eventId }`,
 			{ headers: authHeaders }
 		);
-		expect(occRes.ok()).toBeTruthy();
-		const occurrences = (await occRes.json()).map((o) => o.id).sort();
+		expect( occRes.ok() ).toBeTruthy();
+		const occurrences = ( await occRes.json() ).map( ( o ) => o.id ).sort();
 
 		return { eventId, masterEventDateId, occurrences };
 	}
 
-	async function createMultiInstanceTicketType(masterEventDateId) {
+	async function createMultiInstanceTicketType( masterEventDateId ) {
 		const res = await api.post(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/tickets`,
 			{
 				headers: authHeaders,
 				data: {
@@ -620,19 +645,22 @@ test.describe('multiple_instances via register_and_signup — public "I\'m new" 
 				},
 			}
 		);
-		expect(res.ok(), 'create multiple_instances ticket type').toBeTruthy();
-		const tt = (await res.json()).ticket_types?.[0];
-		expect(tt.recurrence_scope).toBe('multiple_instances');
+		expect(
+			res.ok(),
+			'create multiple_instances ticket type'
+		).toBeTruthy();
+		const tt = ( await res.json() ).ticket_types?.[ 0 ];
+		expect( tt.recurrence_scope ).toBe( 'multiple_instances' );
 		return tt.id;
 	}
 
-	async function findParticipantByEmail(email) {
-		const res = await api.get('/wp-json/fair-audience/v1/participants', {
+	async function findParticipantByEmail( email ) {
+		const res = await api.get( '/wp-json/fair-audience/v1/participants', {
 			headers: authHeaders,
 			params: { search: email },
-		});
-		expect(res.ok()).toBeTruthy();
-		const found = (await res.json()).find((p) => p.email === email);
+		} );
+		expect( res.ok() ).toBeTruthy();
+		const found = ( await res.json() ).find( ( p ) => p.email === email );
 		expect(
 			found,
 			'participant created by register_and_signup'
@@ -640,39 +668,39 @@ test.describe('multiple_instances via register_and_signup — public "I\'m new" 
 		return found;
 	}
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 		createdParticipantIds = [];
 
 		event = await createRecurringEvent(
-			`Register Multi Instance Test ${Date.now()}`,
+			`Register Multi Instance Test ${ Date.now() }`,
 			'FREQ=WEEKLY;COUNT=3'
 		);
-		expect(event.occurrences.length).toBe(3);
+		expect( event.occurrences.length ).toBe( 3 );
 		occurrenceIds = event.occurrences;
 
 		// Free ticket type (no prices configured) — exercises the dispatch
 		// itself without needing a configured payment connector, mirroring
 		// the sliding-scale tests' all-zero-band approach.
-		ttId = await createMultiInstanceTicketType(event.masterEventDateId);
-	});
+		ttId = await createMultiInstanceTicketType( event.masterEventDateId );
+	} );
 
-	test.afterAll(async () => {
-		for (const id of createdParticipantIds) {
-			await deleteParticipant(api, id);
+	test.afterAll( async () => {
+		for ( const id of createdParticipantIds ) {
+			await deleteParticipant( api, id );
 		}
-		if (event?.eventId) {
-			await api.delete(`/wp-json/wp/v2/fair_event/${event.eventId}`, {
+		if ( event?.eventId ) {
+			await api.delete( `/wp-json/wp/v2/fair_event/${ event.eventId }`, {
 				headers: authHeaders,
 				params: { force: 'true' },
-			});
+			} );
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('a brand-new buyer picking N occurrences gets one signup row per occurrence, not just one', async () => {
-		const email = uniqueEmail('register-multi-instance');
-		const chosen = [occurrenceIds[0], occurrenceIds[2]];
+	test( 'a brand-new buyer picking N occurrences gets one signup row per occurrence, not just one', async () => {
+		const email = uniqueEmail( 'register-multi-instance' );
+		const chosen = [ occurrenceIds[ 0 ], occurrenceIds[ 2 ] ];
 
 		const res = await api.post(
 			'/wp-json/fair-audience/v1/event-signup/register',
@@ -688,43 +716,47 @@ test.describe('multiple_instances via register_and_signup — public "I\'m new" 
 				},
 			}
 		);
-		expect(res.ok(), await res.text()).toBeTruthy();
+		expect( res.ok(), await res.text() ).toBeTruthy();
 		const body = await res.json();
-		expect(body.status).toMatch(/^(signed_up|already_signed_up)$/);
+		expect( body.status ).toMatch( /^(signed_up|already_signed_up)$/ );
 
-		const participant = await findParticipantByEmail(email);
-		createdParticipantIds.push(participant.id);
+		const participant = await findParticipantByEmail( email );
+		createdParticipantIds.push( participant.id );
 
-		for (const occId of chosen) {
+		for ( const occId of chosen ) {
 			const participantsRes = await api.get(
-				`/wp-json/fair-audience/v1/event-dates/${occId}/participants`,
+				`/wp-json/fair-audience/v1/event-dates/${ occId }/participants`,
 				{ headers: authHeaders }
 			);
-			expect(participantsRes.ok()).toBeTruthy();
+			expect( participantsRes.ok() ).toBeTruthy();
 			const rows = await participantsRes.json();
-			const row = rows.find((p) => p.participant_id === participant.id);
-			expect(row, `signup row on occurrence ${occId}`).toBeTruthy();
-			expect(row.label).toBe('signed_up');
+			const row = rows.find(
+				( p ) => p.participant_id === participant.id
+			);
+			expect( row, `signup row on occurrence ${ occId }` ).toBeTruthy();
+			expect( row.label ).toBe( 'signed_up' );
 		}
 
 		// The unselected occurrence must have no row — before the fix, the
 		// bug collapsed every selection onto a single event_date_id instead.
-		const untouched = occurrenceIds.filter((id) => !chosen.includes(id));
-		for (const occId of untouched) {
+		const untouched = occurrenceIds.filter(
+			( id ) => ! chosen.includes( id )
+		);
+		for ( const occId of untouched ) {
 			const participantsRes = await api.get(
-				`/wp-json/fair-audience/v1/event-dates/${occId}/participants`,
+				`/wp-json/fair-audience/v1/event-dates/${ occId }/participants`,
 				{ headers: authHeaders }
 			);
-			expect(participantsRes.ok()).toBeTruthy();
+			expect( participantsRes.ok() ).toBeTruthy();
 			const rows = await participantsRes.json();
 			expect(
-				rows.find((p) => p.participant_id === participant.id)
+				rows.find( ( p ) => p.participant_id === participant.id )
 			).toBeFalsy();
 		}
-	});
-});
+	} );
+} );
 
-test.describe('Series-pass upgrade — single_instance → whole_series', () => {
+test.describe( 'Series-pass upgrade — single_instance → whole_series', () => {
 	let api;
 	let adminUserId;
 	let event;
@@ -733,24 +765,24 @@ test.describe('Series-pass upgrade — single_instance → whole_series', () => 
 	let participantId;
 	let fixtureOk = true;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const meRes = await api.get('/wp-json/wp/v2/users/me', {
+		const meRes = await api.get( '/wp-json/wp/v2/users/me', {
 			headers: authHeaders,
-		});
-		expect(meRes.ok()).toBeTruthy();
-		adminUserId = (await meRes.json()).id;
+		} );
+		expect( meRes.ok() ).toBeTruthy();
+		adminUserId = ( await meRes.json() ).id;
 
 		event = await createEventWithDates(
 			api,
-			`Series Upgrade Test ${Date.now()}`
+			`Series Upgrade Test ${ Date.now() }`
 		);
 
 		// Both ticket types live on the same master date. The tickets endpoint
 		// saves the full set per event-date, so they must be created together.
 		const res = await api.post(
-			`/wp-json/fair-events/v1/event-dates/${event.masterEventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ event.masterEventDateId }/tickets`,
 			{
 				headers: authHeaders,
 				data: {
@@ -775,49 +807,54 @@ test.describe('Series-pass upgrade — single_instance → whole_series', () => 
 		// captured (not asserted) so the test below can skip with a
 		// reference instead of failing the hook.
 		fixtureOk = res.ok();
-		if (!fixtureOk) {
+		if ( ! fixtureOk ) {
 			return;
 		}
-		const tts = (await res.json()).ticket_types;
+		const tts = ( await res.json() ).ticket_types;
 		singleTtId = tts.find(
-			(t) => t.recurrence_scope === 'single_instance'
+			( t ) => t.recurrence_scope === 'single_instance'
 		).id;
-		seriesTtId = tts.find((t) => t.recurrence_scope === 'whole_series').id;
+		seriesTtId = tts.find(
+			( t ) => t.recurrence_scope === 'whole_series'
+		).id;
 
 		participantId = await createParticipant(
 			api,
 			adminUserId,
 			'Upgrade Tester'
 		);
-	});
+	} );
 
-	test.afterAll(async () => {
-		await deleteParticipant(api, participantId);
-		if (event?.eventId) {
-			await api.delete(`/wp-json/wp/v2/fair_event/${event.eventId}`, {
+	test.afterAll( async () => {
+		await deleteParticipant( api, participantId );
+		if ( event?.eventId ) {
+			await api.delete( `/wp-json/wp/v2/fair_event/${ event.eventId }`, {
 				headers: authHeaders,
 				params: { force: 'true' },
-			});
+			} );
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('whole_series purchase after a single_instance signup on the master upgrades in place instead of reporting already_signed_up', async () => {
+	test( 'whole_series purchase after a single_instance signup on the master upgrades in place instead of reporting already_signed_up', async () => {
 		test.skip(
-			!fixtureOk,
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 		// 1. Single-instance signup on the master (free).
-		const first = await api.post('/wp-json/fair-audience/v1/event-signup', {
-			headers: authHeaders,
-			data: {
-				event_id: event.eventId,
-				event_date_id: event.masterEventDateId,
-				ticket_type_id: singleTtId,
-			},
-		});
-		expect(first.ok()).toBeTruthy();
-		expect((await first.json()).status).toBe('signed_up');
+		const first = await api.post(
+			'/wp-json/fair-audience/v1/event-signup',
+			{
+				headers: authHeaders,
+				data: {
+					event_id: event.eventId,
+					event_date_id: event.masterEventDateId,
+					ticket_type_id: singleTtId,
+				},
+			}
+		);
+		expect( first.ok() ).toBeTruthy();
+		expect( ( await first.json() ).status ).toBe( 'signed_up' );
 
 		// 2. Whole-series purchase over that signup must NOT short-circuit as a
 		// duplicate. Both tickets are free, so the delta is zero and the upgrade
@@ -833,21 +870,21 @@ test.describe('Series-pass upgrade — single_instance → whole_series', () => 
 				},
 			}
 		);
-		expect(upgrade.ok()).toBeTruthy();
-		expect((await upgrade.json()).status).toBe('signed_up');
+		expect( upgrade.ok() ).toBeTruthy();
+		expect( ( await upgrade.json() ).status ).toBe( 'signed_up' );
 
 		// 3. The master row now carries the whole_series ticket type.
 		const participantsRes = await api.get(
-			`/wp-json/fair-audience/v1/event-dates/${event.masterEventDateId}/participants`,
+			`/wp-json/fair-audience/v1/event-dates/${ event.masterEventDateId }/participants`,
 			{ headers: authHeaders }
 		);
-		expect(participantsRes.ok()).toBeTruthy();
-		const row = (await participantsRes.json()).find(
-			(p) => p.participant_id === participantId
+		expect( participantsRes.ok() ).toBeTruthy();
+		const row = ( await participantsRes.json() ).find(
+			( p ) => p.participant_id === participantId
 		);
-		expect(row, 'upgraded row on master').toBeTruthy();
-		expect(row.label).toBe('signed_up');
-		expect(row.ticket_type_id).toBe(seriesTtId);
+		expect( row, 'upgraded row on master' ).toBeTruthy();
+		expect( row.label ).toBe( 'signed_up' );
+		expect( row.ticket_type_id ).toBe( seriesTtId );
 
 		// 4. A further whole_series attempt is now a genuine duplicate.
 		const repeat = await api.post(
@@ -861,7 +898,7 @@ test.describe('Series-pass upgrade — single_instance → whole_series', () => 
 				},
 			}
 		);
-		expect(repeat.ok()).toBeTruthy();
-		expect((await repeat.json()).status).toBe('already_signed_up');
-	});
-});
+		expect( repeat.ok() ).toBeTruthy();
+		expect( ( await repeat.json() ).status ).toBe( 'already_signed_up' );
+	} );
+} );

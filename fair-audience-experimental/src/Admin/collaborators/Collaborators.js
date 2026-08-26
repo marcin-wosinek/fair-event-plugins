@@ -15,7 +15,7 @@ import {
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 
-const COLLABORATOR_FIELDS = ['name', 'surname', 'email', 'instagram'];
+const COLLABORATOR_FIELDS = [ 'name', 'surname', 'email', 'instagram' ];
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -27,7 +27,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: ['name', 'email', 'photo_count', 'event_count'],
+	fields: [ 'name', 'email', 'photo_count', 'event_count' ],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -35,258 +35,260 @@ const DEFAULT_LAYOUTS = {
 };
 
 export default function Collaborators() {
-	const [collaborators, setCollaborators] = useState([]);
-	const [totalItems, setTotalItems] = useState(0);
-	const [totalPages, setTotalPages] = useState(0);
-	const [isLoading, setIsLoading] = useState(true);
-	const [view, setView] = useState(DEFAULT_VIEW);
+	const [ collaborators, setCollaborators ] = useState( [] );
+	const [ totalItems, setTotalItems ] = useState( 0 );
+	const [ totalPages, setTotalPages ] = useState( 0 );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ view, setView ] = useState( DEFAULT_VIEW );
 
 	// Add to event modal state.
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [selectedCollaborator, setSelectedCollaborator] = useState(null);
-	const [events, setEvents] = useState([]);
-	const [eventsLoading, setEventsLoading] = useState(false);
-	const [eventSearch, setEventSearch] = useState('');
-	const [selectedEvents, setSelectedEvents] = useState([]);
-	const [collaboratorEvents, setCollaboratorEvents] = useState([]);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [isImporting, setIsImporting] = useState(false);
-	const [notice, setNotice] = useState(null);
+	const [ isModalOpen, setIsModalOpen ] = useState( false );
+	const [ selectedCollaborator, setSelectedCollaborator ] = useState( null );
+	const [ events, setEvents ] = useState( [] );
+	const [ eventsLoading, setEventsLoading ] = useState( false );
+	const [ eventSearch, setEventSearch ] = useState( '' );
+	const [ selectedEvents, setSelectedEvents ] = useState( [] );
+	const [ collaboratorEvents, setCollaboratorEvents ] = useState( [] );
+	const [ isSubmitting, setIsSubmitting ] = useState( false );
+	const [ isImporting, setIsImporting ] = useState( false );
+	const [ notice, setNotice ] = useState( null );
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
 		() => [
 			{
 				id: 'name',
-				label: __('Name', 'fair-audience'),
-				render: ({ item }) => `${item.name} ${item.surname}`,
+				label: __( 'Name', 'fair-audience' ),
+				render: ( { item } ) => `${ item.name } ${ item.surname }`,
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ({ item }) =>
-					`${item.surname}, ${item.name}`.toLowerCase(),
+				getValue: ( { item } ) =>
+					`${ item.surname }, ${ item.name }`.toLowerCase(),
 			},
 			{
 				id: 'email',
-				label: __('Email', 'fair-audience'),
-				render: ({ item }) => item.email || '—',
+				label: __( 'Email', 'fair-audience' ),
+				render: ( { item } ) => item.email || '—',
 				enableSorting: true,
 			},
 			{
 				id: 'photo_count',
-				label: __('Photos', 'fair-audience'),
-				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>
-						{item.photo_count > 0 ? (
-							<a href={item.media_library_url}>
-								{item.photo_count}
+				label: __( 'Photos', 'fair-audience' ),
+				render: ( { item } ) => (
+					<div style={ { textAlign: 'right' } }>
+						{ item.photo_count > 0 ? (
+							<a href={ item.media_library_url }>
+								{ item.photo_count }
 							</a>
 						) : (
 							'0'
-						)}
+						) }
 					</div>
 				),
 				enableSorting: true,
-				getValue: ({ item }) => item.photo_count,
+				getValue: ( { item } ) => item.photo_count,
 			},
 			{
 				id: 'event_count',
-				label: __('Events', 'fair-audience'),
-				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>{item.event_count}</div>
+				label: __( 'Events', 'fair-audience' ),
+				render: ( { item } ) => (
+					<div style={ { textAlign: 'right' } }>
+						{ item.event_count }
+					</div>
 				),
 				enableSorting: true,
-				getValue: ({ item }) => item.event_count,
+				getValue: ( { item } ) => item.event_count,
 			},
 		],
 		[]
 	);
 
 	// Convert view state to API query params.
-	const queryArgs = useMemo(() => {
+	const queryArgs = useMemo( () => {
 		const params = new URLSearchParams();
 
-		if (view.search) {
-			params.append('search', view.search);
+		if ( view.search ) {
+			params.append( 'search', view.search );
 		}
 
-		if (view.sort?.field) {
+		if ( view.sort?.field ) {
 			// Map 'name' field to 'surname' for backend sorting.
 			const orderby =
 				view.sort.field === 'name' ? 'surname' : view.sort.field;
-			params.append('orderby', orderby);
-			params.append('order', view.sort.direction || 'asc');
+			params.append( 'orderby', orderby );
+			params.append( 'order', view.sort.direction || 'asc' );
 		}
 
 		// Pagination.
-		if (view.perPage) {
-			params.append('per_page', view.perPage);
+		if ( view.perPage ) {
+			params.append( 'per_page', view.perPage );
 		}
-		if (view.page) {
-			params.append('page', view.page);
+		if ( view.page ) {
+			params.append( 'page', view.page );
 		}
 
 		return params.toString();
-	}, [view]);
+	}, [ view ] );
 
-	const loadCollaborators = useCallback(() => {
-		setIsLoading(true);
+	const loadCollaborators = useCallback( () => {
+		setIsLoading( true );
 
 		const path = `/fair-audience/v1/collaborators${
 			queryArgs ? '?' + queryArgs : ''
 		}`;
 
-		apiFetch({ path, parse: false })
-			.then((response) => {
+		apiFetch( { path, parse: false } )
+			.then( ( response ) => {
 				const total = parseInt(
-					response.headers.get('X-WP-Total') || '0',
+					response.headers.get( 'X-WP-Total' ) || '0',
 					10
 				);
 				const pages = parseInt(
-					response.headers.get('X-WP-TotalPages') || '1',
+					response.headers.get( 'X-WP-TotalPages' ) || '1',
 					10
 				);
-				setTotalItems(total);
-				setTotalPages(pages);
+				setTotalItems( total );
+				setTotalPages( pages );
 				return response.json();
-			})
-			.then((data) => {
-				setCollaborators(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
+			} )
+			.then( ( data ) => {
+				setCollaborators( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading collaborators:', err);
-				setIsLoading(false);
-			});
-	}, [queryArgs]);
+				console.error( 'Error loading collaborators:', err );
+				setIsLoading( false );
+			} );
+	}, [ queryArgs ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadCollaborators();
-	}, [loadCollaborators]);
+	}, [ loadCollaborators ] );
 
 	// Load events for the modal.
-	const loadEvents = useCallback((search = '') => {
-		setEventsLoading(true);
+	const loadEvents = useCallback( ( search = '' ) => {
+		setEventsLoading( true );
 
 		const params = new URLSearchParams();
-		params.append('per_page', '100');
-		params.append('orderby', 'event_date');
-		params.append('order', 'desc');
-		if (search) {
-			params.append('search', search);
+		params.append( 'per_page', '100' );
+		params.append( 'orderby', 'event_date' );
+		params.append( 'order', 'desc' );
+		if ( search ) {
+			params.append( 'search', search );
 		}
 
-		apiFetch({ path: `/fair-audience/v1/events?${params.toString()}` })
-			.then((data) => {
-				setEvents(data);
-				setEventsLoading(false);
-			})
-			.catch((err) => {
+		apiFetch( { path: `/fair-audience/v1/events?${ params.toString() }` } )
+			.then( ( data ) => {
+				setEvents( data );
+				setEventsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading events:', err);
-				setEventsLoading(false);
-			});
-	}, []);
+				console.error( 'Error loading events:', err );
+				setEventsLoading( false );
+			} );
+	}, [] );
 
 	// Load events the collaborator is already part of.
-	const loadCollaboratorEvents = useCallback((collaboratorId) => {
-		apiFetch({
-			path: `/fair-audience/v1/participants/${collaboratorId}`,
-		})
-			.then(() => {
+	const loadCollaboratorEvents = useCallback( ( collaboratorId ) => {
+		apiFetch( {
+			path: `/fair-audience/v1/participants/${ collaboratorId }`,
+		} )
+			.then( () => {
 				// Get all event-participant relationships for this participant.
-				return apiFetch({
+				return apiFetch( {
 					path: `/fair-audience/v1/events?per_page=100`,
-				});
-			})
-			.then((allEvents) => {
+				} );
+			} )
+			.then( ( allEvents ) => {
 				// Filter to find events where this participant is a collaborator.
 				const promises = allEvents
-					.filter((event) => event.event_date_id)
-					.map((event) =>
-						apiFetch({
-							path: `/fair-audience/v1/event-dates/${event.event_date_id}/participants`,
-						}).then((participants) => {
+					.filter( ( event ) => event.event_date_id )
+					.map( ( event ) =>
+						apiFetch( {
+							path: `/fair-audience/v1/event-dates/${ event.event_date_id }/participants`,
+						} ).then( ( participants ) => {
 							const isCollaborator = participants.some(
-								(p) =>
+								( p ) =>
 									p.participant_id === collaboratorId &&
 									p.label === 'collaborator'
 							);
 							return isCollaborator ? event.event_id : null;
-						})
+						} )
 					);
 
-				return Promise.all(promises);
-			})
-			.then((results) => {
-				const eventIds = results.filter((id) => id !== null);
-				setCollaboratorEvents(eventIds);
-			})
-			.catch((err) => {
+				return Promise.all( promises );
+			} )
+			.then( ( results ) => {
+				const eventIds = results.filter( ( id ) => id !== null );
+				setCollaboratorEvents( eventIds );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading collaborator events:', err);
-			});
-	}, []);
+				console.error( 'Error loading collaborator events:', err );
+			} );
+	}, [] );
 
-	const openAddToEventModal = (collaborator) => {
-		setSelectedCollaborator(collaborator);
-		setSelectedEvents([]);
-		setEventSearch('');
-		setIsModalOpen(true);
+	const openAddToEventModal = ( collaborator ) => {
+		setSelectedCollaborator( collaborator );
+		setSelectedEvents( [] );
+		setEventSearch( '' );
+		setIsModalOpen( true );
 		loadEvents();
-		loadCollaboratorEvents(collaborator.id);
+		loadCollaboratorEvents( collaborator.id );
 	};
 
-	const handleEventSearchChange = (value) => {
-		setEventSearch(value);
-		loadEvents(value);
+	const handleEventSearchChange = ( value ) => {
+		setEventSearch( value );
+		loadEvents( value );
 	};
 
-	const toggleEventSelection = (eventDateId) => {
-		setSelectedEvents((prev) => {
-			if (prev.includes(eventDateId)) {
-				return prev.filter((id) => id !== eventDateId);
+	const toggleEventSelection = ( eventDateId ) => {
+		setSelectedEvents( ( prev ) => {
+			if ( prev.includes( eventDateId ) ) {
+				return prev.filter( ( id ) => id !== eventDateId );
 			}
-			return [...prev, eventDateId];
-		});
+			return [ ...prev, eventDateId ];
+		} );
 	};
 
 	const handleAddToEvents = () => {
-		if (!selectedCollaborator || selectedEvents.length === 0) {
+		if ( ! selectedCollaborator || selectedEvents.length === 0 ) {
 			return;
 		}
 
-		setIsSubmitting(true);
+		setIsSubmitting( true );
 
 		// Add collaborator to each selected event.
-		const promises = selectedEvents.map((eventDateId) =>
-			apiFetch({
-				path: `/fair-audience/v1/event-dates/${eventDateId}/participants`,
+		const promises = selectedEvents.map( ( eventDateId ) =>
+			apiFetch( {
+				path: `/fair-audience/v1/event-dates/${ eventDateId }/participants`,
 				method: 'POST',
 				data: {
 					participant_id: selectedCollaborator.id,
 					label: 'collaborator',
 				},
-			}).catch((err) => {
+			} ).catch( ( err ) => {
 				// Ignore "already exists" errors.
-				if (!err.message?.includes('already exist')) {
+				if ( ! err.message?.includes( 'already exist' ) ) {
 					throw err;
 				}
-			})
+			} )
 		);
 
-		Promise.all(promises)
-			.then(() => {
-				setIsModalOpen(false);
+		Promise.all( promises )
+			.then( () => {
+				setIsModalOpen( false );
 				loadCollaborators();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
-				alert(__('Error: ', 'fair-audience') + err.message);
-			})
-			.finally(() => {
-				setIsSubmitting(false);
-			});
+				alert( __( 'Error: ', 'fair-audience' ) + err.message );
+			} )
+			.finally( () => {
+				setIsSubmitting( false );
+			} );
 	};
 
 	// Define actions for DataViews.
@@ -294,16 +296,16 @@ export default function Collaborators() {
 		() => [
 			{
 				id: 'add-to-event',
-				label: __('Add to event', 'fair-audience'),
+				label: __( 'Add to event', 'fair-audience' ),
 				icon: 'calendar-alt',
-				callback: ([item]) => openAddToEventModal(item),
+				callback: ( [ item ] ) => openAddToEventModal( item ),
 				supportsBulk: false,
 			},
 			{
 				id: 'export',
-				label: __('Export', 'fair-audience'),
+				label: __( 'Export', 'fair-audience' ),
 				icon: 'download',
-				callback: (items) => handleExport(items),
+				callback: ( items ) => handleExport( items ),
 				supportsBulk: true,
 			},
 		],
@@ -311,60 +313,60 @@ export default function Collaborators() {
 	);
 
 	const paginationInfo = useMemo(
-		() => ({
+		() => ( {
 			totalItems,
 			totalPages,
-		}),
-		[totalItems, totalPages]
+		} ),
+		[ totalItems, totalPages ]
 	);
 
-	const handleExport = (items) => {
-		const dataToExport = items.map((item) => {
+	const handleExport = ( items ) => {
+		const dataToExport = items.map( ( item ) => {
 			const exported = {};
-			COLLABORATOR_FIELDS.forEach((field) => {
-				if (item[field]) {
-					exported[field] = item[field];
+			COLLABORATOR_FIELDS.forEach( ( field ) => {
+				if ( item[ field ] ) {
+					exported[ field ] = item[ field ];
 				}
-			});
+			} );
 			return exported;
-		});
+		} );
 
-		const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
+		const blob = new Blob( [ JSON.stringify( dataToExport, null, 2 ) ], {
 			type: 'application/json',
-		});
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
+		} );
+		const url = URL.createObjectURL( blob );
+		const a = document.createElement( 'a' );
 		a.href = url;
 		a.download = 'collaborators.json';
 		a.click();
-		URL.revokeObjectURL(url);
-		setNotice({
+		URL.revokeObjectURL( url );
+		setNotice( {
 			status: 'success',
 			// translators: %d is the number of exported collaborators
 			message: __(
 				'%d collaborator(s) exported.',
 				'fair-audience'
-			).replace('%d', dataToExport.length),
-		});
+			).replace( '%d', dataToExport.length ),
+		} );
 	};
 
-	const handleImport = async (e) => {
-		const file = e.target.files[0];
-		if (!file) {
+	const handleImport = async ( e ) => {
+		const file = e.target.files[ 0 ];
+		if ( ! file ) {
 			return;
 		}
 
 		// Reset the input so the same file can be re-selected.
 		e.target.value = '';
 
-		setIsImporting(true);
-		setNotice(null);
+		setIsImporting( true );
+		setNotice( null );
 
 		try {
 			const text = await file.text();
-			const imported = JSON.parse(text);
+			const imported = JSON.parse( text );
 
-			if (!Array.isArray(imported)) {
+			if ( ! Array.isArray( imported ) ) {
 				throw new Error(
 					__(
 						'Invalid file format. Expected a JSON array.',
@@ -374,82 +376,82 @@ export default function Collaborators() {
 			}
 
 			let created = 0;
-			for (const item of imported) {
-				if (!item.name && !item.surname) {
+			for ( const item of imported ) {
+				if ( ! item.name && ! item.surname ) {
 					continue;
 				}
 				const data = {};
-				COLLABORATOR_FIELDS.forEach((field) => {
-					if (item[field]) {
-						data[field] = item[field];
+				COLLABORATOR_FIELDS.forEach( ( field ) => {
+					if ( item[ field ] ) {
+						data[ field ] = item[ field ];
 					}
-				});
-				await apiFetch({
+				} );
+				await apiFetch( {
 					path: '/fair-audience/v1/participants',
 					method: 'POST',
 					data,
-				});
+				} );
 				created++;
 			}
 
-			setNotice({
+			setNotice( {
 				status: 'success',
 				// translators: %d is the number of imported collaborators
 				message: __(
 					'%d collaborator(s) imported.',
 					'fair-audience'
-				).replace('%d', created),
-			});
+				).replace( '%d', created ),
+			} );
 			loadCollaborators();
-		} catch (err) {
-			setNotice({
+		} catch ( err ) {
+			setNotice( {
 				status: 'error',
 				message:
 					err.message ||
-					__('Failed to import collaborators.', 'fair-audience'),
-			});
+					__( 'Failed to import collaborators.', 'fair-audience' ),
+			} );
 		} finally {
-			setIsImporting(false);
+			setIsImporting( false );
 		}
 	};
 
 	// Filter out events the collaborator is already part of.
 	const availableEvents = events.filter(
-		(event) => !collaboratorEvents.includes(event.event_id)
+		( event ) => ! collaboratorEvents.includes( event.event_id )
 	);
 
 	return (
 		<div className="wrap">
 			<HStack justify="space-between" align="center">
-				<h1>{__('Collaborators', 'fair-audience')}</h1>
-				<HStack spacing={2} expanded={false}>
+				<h1>{ __( 'Collaborators', 'fair-audience' ) }</h1>
+				<HStack spacing={ 2 } expanded={ false }>
 					<Button
 						variant="secondary"
-						onClick={() =>
+						onClick={ () =>
 							document
 								.getElementById(
 									'fair-audience-collaborator-import'
 								)
 								.click()
 						}
-						isBusy={isImporting}
-						disabled={isImporting}
+						isBusy={ isImporting }
+						disabled={ isImporting }
 					>
-						{__('Import', 'fair-audience')}
+						{ __( 'Import', 'fair-audience' ) }
 					</Button>
 					<input
 						id="fair-audience-collaborator-import"
 						type="file"
 						accept=".json"
-						style={{ display: 'none' }}
-						onChange={handleImport}
+						style={ { display: 'none' } }
+						onChange={ handleImport }
 					/>
 				</HStack>
 			</HStack>
 
-			{window.fairAudienceCollaboratorsData?.collaboratorProfileUrl && (
+			{ window.fairAudienceCollaboratorsData?.collaboratorProfileUrl && (
 				<p>
-					{__('Registration form:', 'fair-audience')}{' '}
+					{ __( 'Registration form:', 'fair-audience' ) }{ ' ' }
 					<ExternalLink
 						href={
 							window.fairAudienceCollaboratorsData
@@ -462,155 +464,158 @@ export default function Collaborators() {
 						}
 					</ExternalLink>
 				</p>
-			)}
+			) }
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
+					status={ notice.status }
 					isDismissible
-					onRemove={() => setNotice(null)}
+					onRemove={ () => setNotice( null ) }
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
 			<Card>
 				<CardBody>
 					<DataViews
-						data={collaborators}
-						fields={fields}
-						view={view}
-						onChangeView={setView}
-						actions={actions}
-						paginationInfo={paginationInfo}
-						defaultLayouts={DEFAULT_LAYOUTS}
-						isLoading={isLoading}
-						getItemId={(item) => item.id}
+						data={ collaborators }
+						fields={ fields }
+						view={ view }
+						onChangeView={ setView }
+						actions={ actions }
+						paginationInfo={ paginationInfo }
+						defaultLayouts={ DEFAULT_LAYOUTS }
+						isLoading={ isLoading }
+						getItemId={ ( item ) => item.id }
 					/>
 				</CardBody>
 			</Card>
 
-			{isModalOpen && selectedCollaborator && (
+			{ isModalOpen && selectedCollaborator && (
 				<Modal
-					title={__('Add to Event', 'fair-audience')}
-					onRequestClose={() => setIsModalOpen(false)}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Add to Event', 'fair-audience' ) }
+					onRequestClose={ () => setIsModalOpen( false ) }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<p>
-						{__(
+						{ __(
 							'Select events to add this collaborator to:',
 							'fair-audience'
-						)}
+						) }
 					</p>
 					<p>
 						<strong>
-							{selectedCollaborator.name}{' '}
-							{selectedCollaborator.surname}
+							{ selectedCollaborator.name }{ ' ' }
+							{ selectedCollaborator.surname }
 						</strong>
 					</p>
 
 					<SearchControl
-						value={eventSearch}
-						onChange={handleEventSearchChange}
-						placeholder={__('Search events...', 'fair-audience')}
+						value={ eventSearch }
+						onChange={ handleEventSearchChange }
+						placeholder={ __(
+							'Search events...',
+							'fair-audience'
+						) }
 					/>
 
 					<div
-						style={{
+						style={ {
 							maxHeight: '300px',
 							overflowY: 'auto',
 							marginTop: '16px',
 							marginBottom: '16px',
 							padding: '4px',
-						}}
+						} }
 					>
-						{eventsLoading ? (
+						{ eventsLoading ? (
 							<Spinner />
 						) : availableEvents.length === 0 ? (
 							<p>
-								{__(
+								{ __(
 									'No available events found.',
 									'fair-audience'
-								)}
+								) }
 							</p>
 						) : (
-							availableEvents.map((event) => (
+							availableEvents.map( ( event ) => (
 								<div
-									key={event.event_id}
-									style={{
+									key={ event.event_id }
+									style={ {
 										display: 'flex',
 										alignItems: 'center',
 										gap: '4px',
-									}}
+									} }
 								>
-									<div style={{ flex: 1 }}>
+									<div style={ { flex: 1 } }>
 										<CheckboxControl
-											label={`${event.title}${
+											label={ `${ event.title }${
 												event.event_date
-													? ` (${event.event_date})`
+													? ` (${ event.event_date })`
 													: ''
-											}`}
-											checked={selectedEvents.includes(
+											}` }
+											checked={ selectedEvents.includes(
 												event.event_date_id
-											)}
-											onChange={() =>
+											) }
+											onChange={ () =>
 												toggleEventSelection(
 													event.event_date_id
 												)
 											}
 										/>
 									</div>
-									{window.fairAudienceCollaboratorsData
+									{ window.fairAudienceCollaboratorsData
 										?.participantsUrl &&
 										event.event_date_id && (
 											<a
-												href={`${window.fairAudienceCollaboratorsData.participantsUrl}${event.event_date_id}`}
+												href={ `${ window.fairAudienceCollaboratorsData.participantsUrl }${ event.event_date_id }` }
 												target="_blank"
 												rel="noopener noreferrer"
-												title={__(
+												title={ __(
 													'View Participants',
 													'fair-audience'
-												)}
-												style={{
+												) }
+												style={ {
 													color: '#2271b1',
 													textDecoration: 'none',
 													flexShrink: 0,
-												}}
+												} }
 											>
 												<span className="dashicons dashicons-groups" />
 											</a>
-										)}
+										) }
 								</div>
-							))
-						)}
+							) )
+						) }
 					</div>
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setIsModalOpen(false)}
+							onClick={ () => setIsModalOpen( false ) }
 						>
-							{__('Cancel', 'fair-audience')}
+							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleAddToEvents}
+							onClick={ handleAddToEvents }
 							disabled={
 								selectedEvents.length === 0 || isSubmitting
 							}
-							isBusy={isSubmitting}
+							isBusy={ isSubmitting }
 						>
-							{__('Add to Events', 'fair-audience')}
+							{ __( 'Add to Events', 'fair-audience' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 }

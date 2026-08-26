@@ -17,7 +17,9 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
 /**
@@ -27,20 +29,20 @@ const adminHeaders = {
  * has no price row for the active period — the exact "caught between
  * windows" scenario from the ticket.
  */
-async function createEventWithInactiveType(api) {
-	const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+async function createEventWithInactiveType( api ) {
+	const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 		headers: adminHeaders,
 		data: {
-			title: `Inactive sale-period test ${Date.now()}-${Math.random()}`,
+			title: `Inactive sale-period test ${ Date.now() }-${ Math.random() }`,
 			start_datetime: '2035-06-01 10:00:00',
 			end_datetime: '2035-06-01 12:00:00',
 		},
-	});
-	expect(edRes.ok()).toBeTruthy();
-	const eventDateId = (await edRes.json()).id;
+	} );
+	expect( edRes.ok() ).toBeTruthy();
+	const eventDateId = ( await edRes.json() ).id;
 
 	const ticketsRes = await api.put(
-		`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+		`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
 		{
 			headers: adminHeaders,
 			data: {
@@ -93,61 +95,61 @@ async function createEventWithInactiveType(api) {
 			},
 		}
 	);
-	expect(ticketsRes.ok()).toBeTruthy();
+	expect( ticketsRes.ok() ).toBeTruthy();
 	const body = await ticketsRes.json();
-	const earlyBirdTypeId = body.ticket_types?.[0]?.id;
-	const regularTypeId = body.ticket_types?.[1]?.id;
-	expect(earlyBirdTypeId).toBeTruthy();
-	expect(regularTypeId).toBeTruthy();
+	const earlyBirdTypeId = body.ticket_types?.[ 0 ]?.id;
+	const regularTypeId = body.ticket_types?.[ 1 ]?.id;
+	expect( earlyBirdTypeId ).toBeTruthy();
+	expect( regularTypeId ).toBeTruthy();
 
 	return { eventDateId, earlyBirdTypeId, regularTypeId };
 }
 
-function purchase(api, eventDateId, ticketTypeId) {
-	return api.post('/wp-json/fair-events/v1/get-tickets', {
+function purchase( api, eventDateId, ticketTypeId ) {
+	return api.post( '/wp-json/fair-events/v1/get-tickets', {
 		data: {
 			event_date_id: eventDateId,
 			name: 'Inactive Window Tester',
-			email: `inactive-window-${Date.now()}-${Math.random()}@example.test`,
+			email: `inactive-window-${ Date.now() }-${ Math.random() }@example.test`,
 			ticket_type_id: ticketTypeId,
 			quantity: 1,
 		},
-	});
+	} );
 }
 
-test.describe('GetTicketsController — inactive sale-period ticket types (#1393)', () => {
+test.describe( 'GetTicketsController — inactive sale-period ticket types (#1393)', () => {
 	let api;
 	const createdEventDateIds = [];
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
-		for (const id of createdEventDateIds) {
-			await api.delete(`/wp-json/fair-events/v1/event-dates/${id}`, {
+	test.afterAll( async () => {
+		for ( const id of createdEventDateIds ) {
+			await api.delete( `/wp-json/fair-events/v1/event-dates/${ id }`, {
 				headers: adminHeaders,
-			});
+			} );
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('a ticket type with no price in the active sale period is rejected with 409 ticket_type_unavailable', async () => {
+	test( 'a ticket type with no price in the active sale period is rejected with 409 ticket_type_unavailable', async () => {
 		const { eventDateId, earlyBirdTypeId } =
-			await createEventWithInactiveType(api);
-		createdEventDateIds.push(eventDateId);
+			await createEventWithInactiveType( api );
+		createdEventDateIds.push( eventDateId );
 
-		const res = await purchase(api, eventDateId, earlyBirdTypeId);
-		expect(res.status()).toBe(409);
-		expect((await res.json()).code).toBe('ticket_type_unavailable');
-	});
+		const res = await purchase( api, eventDateId, earlyBirdTypeId );
+		expect( res.status() ).toBe( 409 );
+		expect( ( await res.json() ).code ).toBe( 'ticket_type_unavailable' );
+	} );
 
-	test('a ticket type priced for the active sale period is accepted', async () => {
+	test( 'a ticket type priced for the active sale period is accepted', async () => {
 		const { eventDateId, regularTypeId } =
-			await createEventWithInactiveType(api);
-		createdEventDateIds.push(eventDateId);
+			await createEventWithInactiveType( api );
+		createdEventDateIds.push( eventDateId );
 
-		const res = await purchase(api, eventDateId, regularTypeId);
-		expect(res.ok()).toBeTruthy();
-	});
-});
+		const res = await purchase( api, eventDateId, regularTypeId );
+		expect( res.ok() ).toBeTruthy();
+	} );
+} );

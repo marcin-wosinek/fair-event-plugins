@@ -23,8 +23,8 @@ const {
 addFilter(
 	'fairEvents.manageEvent.tabs',
 	'fair-events-experimental/statistics-tab',
-	(tabs, { eventDate } = {}) => {
-		if (!statisticsUrl) {
+	( tabs, { eventDate } = {} ) => {
+		if ( ! statisticsUrl ) {
 			return tabs;
 		}
 
@@ -32,12 +32,12 @@ addFilter(
 			...tabs,
 			{
 				name: 'statistics',
-				title: __('Statistics', 'fair-events-experimental'),
+				title: __( 'Statistics', 'fair-events-experimental' ),
 				order: 60,
 				isVisible: true,
-				disabled: isLinkOnlyEvent(eventDate),
-				render: ({ eventDateId }) => (
-					<EventStatistics eventDateId={eventDateId} />
+				disabled: isLinkOnlyEvent( eventDate ),
+				render: ( { eventDateId } ) => (
+					<EventStatistics eventDateId={ eventDateId } />
 				),
 			},
 		];
@@ -47,51 +47,54 @@ addFilter(
 addFilter(
 	'fairEvents.manageEvent.adminActions',
 	'fair-events-experimental/duplicate-merge-actions',
-	(actions, { eventDateId }) => {
+	( actions, { eventDateId } ) => {
 		const extraActions = [];
 
-		if (duplicateEventUrl) {
+		if ( duplicateEventUrl ) {
 			extraActions.push(
-				<VStack spacing={2} key="duplicate-event">
-					<p style={{ color: '#666' }}>
-						{__(
+				<VStack spacing={ 2 } key="duplicate-event">
+					<p style={ { color: '#666' } }>
+						{ __(
 							'Create a copy of this event with the same details, links, and settings.',
 							'fair-events-experimental'
-						)}
+						) }
 					</p>
 					<div>
 						<Button
 							variant="secondary"
-							href={`${duplicateEventUrl}${eventDateId}`}
+							href={ `${ duplicateEventUrl }${ eventDateId }` }
 						>
-							{__('Duplicate Event', 'fair-events-experimental')}
+							{ __(
+								'Duplicate Event',
+								'fair-events-experimental'
+							) }
 						</Button>
 					</div>
 				</VStack>
 			);
 		}
 
-		if (mergeEventUrl) {
+		if ( mergeEventUrl ) {
 			extraActions.push(
-				<VStack spacing={2} key="merge-event">
-					<p style={{ color: '#666' }}>
-						{__(
+				<VStack spacing={ 2 } key="merge-event">
+					<p style={ { color: '#666' } }>
+						{ __(
 							'Merge this event into another event date, moving or cleaning up all linked data.',
 							'fair-events-experimental'
-						)}
+						) }
 					</p>
 					<div>
 						<Button
 							variant="secondary"
-							href={`${mergeEventUrl}${eventDateId}`}
+							href={ `${ mergeEventUrl }${ eventDateId }` }
 						>
-							{__('Merge Event', 'fair-events-experimental')}
+							{ __( 'Merge Event', 'fair-events-experimental' ) }
 						</Button>
 					</div>
 				</VStack>
 			);
 		}
 
-		return [...actions, ...extraActions];
+		return [ ...actions, ...extraActions ];
 	}
 );

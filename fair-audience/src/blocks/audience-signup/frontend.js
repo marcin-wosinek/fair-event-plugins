@@ -18,32 +18,34 @@ import {
 
 const CSS_PREFIX = 'fair-audience-audience';
 
-(function () {
+( function () {
 	'use strict';
 
-	onDomReady(initializeAudienceSignupForms);
+	onDomReady( initializeAudienceSignupForms );
 
 	/**
 	 * Initialize all audience signup forms on the page
 	 */
 	function initializeAudienceSignupForms() {
-		const forms = document.querySelectorAll('.fair-audience-audience-form');
+		const forms = document.querySelectorAll(
+			'.fair-audience-audience-form'
+		);
 
-		forms.forEach(function (form) {
-			setupFormSubmission(form);
-			wireNotYouButton(form.querySelector('.fair-audience-not-you'));
-		});
+		forms.forEach( function ( form ) {
+			setupFormSubmission( form );
+			wireNotYouButton( form.querySelector( '.fair-audience-not-you' ) );
+		} );
 	}
 
 	/**
 	 * Setup form submission handling
 	 * @param {HTMLElement} form The form element
 	 */
-	function setupFormSubmission(form) {
-		form.addEventListener('submit', function (e) {
+	function setupFormSubmission( form ) {
+		form.addEventListener( 'submit', function ( e ) {
 			e.preventDefault();
-			submitSignup(form);
-		});
+			submitSignup( form );
+		} );
 	}
 
 	/**
@@ -51,11 +53,11 @@ const CSS_PREFIX = 'fair-audience-audience';
 	 * @param {HTMLElement} container The block wrapper element
 	 * @return {Array} Questions config array
 	 */
-	function getQuestionsConfig(container) {
+	function getQuestionsConfig( container ) {
 		const raw = container.dataset.questions;
-		if (!raw) return [];
+		if ( ! raw ) return [];
 		try {
-			return JSON.parse(raw);
+			return JSON.parse( raw );
 		} catch {
 			return [];
 		}
@@ -73,34 +75,34 @@ const CSS_PREFIX = 'fair-audience-audience';
 		questionsConfig,
 		messageContainer
 	) {
-		for (const question of questionsConfig) {
-			if (!question.required) continue;
+		for ( const question of questionsConfig ) {
+			if ( ! question.required ) continue;
 
 			const { key, type, text } = question;
 			let hasValue = false;
 
-			if (type === 'checkbox') {
+			if ( type === 'checkbox' ) {
 				const checked = form.querySelectorAll(
-					`input[name="questionnaire[${key}][]"]:checked`
+					`input[name="questionnaire[${ key }][]"]:checked`
 				);
 				hasValue = checked.length > 0;
-			} else if (type === 'radio') {
+			} else if ( type === 'radio' ) {
 				const checked = form.querySelector(
-					`input[name="questionnaire[${key}]"]:checked`
+					`input[name="questionnaire[${ key }]"]:checked`
 				);
-				hasValue = !!checked;
+				hasValue = !! checked;
 			} else {
 				const input = form.querySelector(
-					`[name="questionnaire[${key}]"]`
+					`[name="questionnaire[${ key }]"]`
 				);
 				hasValue = input && input.value.trim() !== '';
 			}
 
-			if (!hasValue) {
+			if ( ! hasValue ) {
 				showMessage(
 					messageContainer,
 					/* translators: %s: question text */
-					__('Please answer: ', 'fair-audience') + text,
+					__( 'Please answer: ', 'fair-audience' ) + text,
 					'error',
 					CSS_PREFIX
 				);
@@ -116,41 +118,41 @@ const CSS_PREFIX = 'fair-audience-audience';
 	 * @param {Array} questionsConfig Questions configuration
 	 * @return {Array} Answers array
 	 */
-	function collectQuestionnaireAnswers(form, questionsConfig) {
+	function collectQuestionnaireAnswers( form, questionsConfig ) {
 		const answers = [];
 
-		questionsConfig.forEach(function (question, index) {
+		questionsConfig.forEach( function ( question, index ) {
 			const { key, type, text } = question;
 			let answerValue = '';
 
-			if (type === 'checkbox') {
+			if ( type === 'checkbox' ) {
 				const checked = form.querySelectorAll(
-					`input[name="questionnaire[${key}][]"]:checked`
+					`input[name="questionnaire[${ key }][]"]:checked`
 				);
-				const values = Array.from(checked).map((el) => el.value);
-				answerValue = JSON.stringify(values);
-			} else if (type === 'radio') {
+				const values = Array.from( checked ).map( ( el ) => el.value );
+				answerValue = JSON.stringify( values );
+			} else if ( type === 'radio' ) {
 				const checked = form.querySelector(
-					`input[name="questionnaire[${key}]"]:checked`
+					`input[name="questionnaire[${ key }]"]:checked`
 				);
 				answerValue = checked ? checked.value : '';
 			} else {
 				const input = form.querySelector(
-					`[name="questionnaire[${key}]"]`
+					`[name="questionnaire[${ key }]"]`
 				);
 				answerValue = input ? input.value.trim() : '';
 			}
 
-			if (answerValue !== '' && answerValue !== '[]') {
-				answers.push({
+			if ( answerValue !== '' && answerValue !== '[]' ) {
+				answers.push( {
 					question_key: key,
 					question_text: text,
 					question_type: type,
 					answer_value: answerValue,
 					display_order: index,
-				});
+				} );
 			}
-		});
+		} );
 
 		return answers;
 	}
@@ -159,8 +161,8 @@ const CSS_PREFIX = 'fair-audience-audience';
 	 * Submit signup
 	 * @param {HTMLElement} form The form element
 	 */
-	function submitSignup(form) {
-		const container = form.closest('.fair-audience-audience-signup');
+	function submitSignup( form ) {
+		const container = form.closest( '.fair-audience-audience-signup' );
 		const submitButton = form.querySelector(
 			'.fair-audience-audience-submit-button'
 		);
@@ -169,17 +171,17 @@ const CSS_PREFIX = 'fair-audience-audience';
 		);
 		const successMessage =
 			container.dataset.successMessage ||
-			__('You have been registered successfully!', 'fair-audience');
+			__( 'You have been registered successfully!', 'fair-audience' );
 
 		// Get questions config
-		const questionsConfig = getQuestionsConfig(container);
+		const questionsConfig = getQuestionsConfig( container );
 
 		// Get form data
-		const nameInput = form.querySelector('input[name="audience_name"]');
+		const nameInput = form.querySelector( 'input[name="audience_name"]' );
 		const surnameInput = form.querySelector(
 			'input[name="audience_surname"]'
 		);
-		const emailInput = form.querySelector('input[name="audience_email"]');
+		const emailInput = form.querySelector( 'input[name="audience_email"]' );
 		const instagramInput = form.querySelector(
 			'input[name="audience_instagram"]'
 		);
@@ -188,20 +190,20 @@ const CSS_PREFIX = 'fair-audience-audience';
 		);
 
 		// Validate inputs
-		if (!nameInput || !nameInput.value.trim()) {
+		if ( ! nameInput || ! nameInput.value.trim() ) {
 			showMessage(
 				messageContainer,
-				__('Please enter your first name.', 'fair-audience'),
+				__( 'Please enter your first name.', 'fair-audience' ),
 				'error',
 				CSS_PREFIX
 			);
 			return;
 		}
 
-		if (!emailInput || !emailInput.value.trim()) {
+		if ( ! emailInput || ! emailInput.value.trim() ) {
 			showMessage(
 				messageContainer,
-				__('Please enter your email.', 'fair-audience'),
+				__( 'Please enter your email.', 'fair-audience' ),
 				'error',
 				CSS_PREFIX
 			);
@@ -210,7 +212,7 @@ const CSS_PREFIX = 'fair-audience-audience';
 
 		// Validate required questionnaire fields
 		if (
-			!validateQuestionnaireFields(
+			! validateQuestionnaireFields(
 				form,
 				questionsConfig,
 				messageContainer
@@ -228,63 +230,73 @@ const CSS_PREFIX = 'fair-audience-audience';
 
 		// Include participant_id if linked via participant token
 		const participantId = container.dataset.participantId
-			? parseInt(container.dataset.participantId, 10)
+			? parseInt( container.dataset.participantId, 10 )
 			: null;
-		if (participantId) {
+		if ( participantId ) {
 			requestData.participant_id = participantId;
 		}
 
-		if (instagramInput && instagramInput.value.trim()) {
+		if ( instagramInput && instagramInput.value.trim() ) {
 			requestData.instagram = instagramInput.value.trim();
 		}
 
-		if (keepInformedInput) {
+		if ( keepInformedInput ) {
 			requestData.keep_informed = keepInformedInput.checked;
 		}
 
 		// Include event_date_id if linked to an event
 		const eventDateId = container.dataset.eventDateId
-			? parseInt(container.dataset.eventDateId, 10)
+			? parseInt( container.dataset.eventDateId, 10 )
 			: null;
-		if (eventDateId) {
+		if ( eventDateId ) {
 			requestData.event_date_id = eventDateId;
 		}
 
 		// Include post_id for answer emails
 		const postId = container.dataset.postId
-			? parseInt(container.dataset.postId, 10)
+			? parseInt( container.dataset.postId, 10 )
 			: null;
-		if (postId) {
+		if ( postId ) {
 			requestData.post_id = postId;
 		}
 
 		// Collect questionnaire answers
-		const answers = collectQuestionnaireAnswers(form, questionsConfig);
-		if (answers.length > 0) {
+		const answers = collectQuestionnaireAnswers( form, questionsConfig );
+		if ( answers.length > 0 ) {
 			requestData.questionnaire_answers = answers;
 		}
 
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
 			submitButton,
-			__('Submitting...', 'fair-audience')
+			__( 'Submitting...', 'fair-audience' )
 		);
 
 		// Submit to API
 		const isEditMode = container.dataset.editMode === '1';
 
-		apiFetch({
+		apiFetch( {
 			path: '/fair-audience/v1/audience-signup',
 			method: 'POST',
 			data: requestData,
-		})
-			.then(function (response) {
+		} )
+			.then( function ( response ) {
 				let message = response.message || successMessage;
 
-				if (response.status === 'already_registered') {
-					showMessage(messageContainer, message, 'info', CSS_PREFIX);
-				} else if (response.status === 'pending') {
-					showMessage(messageContainer, message, 'info', CSS_PREFIX);
+				if ( response.status === 'already_registered' ) {
+					showMessage(
+						messageContainer,
+						message,
+						'info',
+						CSS_PREFIX
+					);
+				} else if ( response.status === 'pending' ) {
+					showMessage(
+						messageContainer,
+						message,
+						'info',
+						CSS_PREFIX
+					);
 				} else {
 					showMessage(
 						messageContainer,
@@ -298,25 +310,25 @@ const CSS_PREFIX = 'fair-audience-audience';
 				submitButton.disabled = true;
 
 				// Clean up token query params from URL
-				const url = new URL(window.location);
+				const url = new URL( window.location );
 				let urlChanged = false;
-				if (isEditMode) {
-					url.searchParams.delete('edit_audience_signup');
+				if ( isEditMode ) {
+					url.searchParams.delete( 'edit_audience_signup' );
 					urlChanged = true;
 				}
-				if (url.searchParams.has('participant_token')) {
-					url.searchParams.delete('participant_token');
+				if ( url.searchParams.has( 'participant_token' ) ) {
+					url.searchParams.delete( 'participant_token' );
 					urlChanged = true;
 				}
-				if (urlChanged) {
-					window.history.replaceState({}, '', url);
+				if ( urlChanged ) {
+					window.history.replaceState( {}, '', url );
 				}
 
 				// Show notification
-				showNotification(message, 'success');
-			})
-			.catch(function (error) {
-				console.error('Audience signup error:', error);
+				showNotification( message, 'success' );
+			} )
+			.catch( function ( error ) {
+				console.error( 'Audience signup error:', error );
 
 				const errorMessage = extractErrorMessage(
 					error,
@@ -332,10 +344,10 @@ const CSS_PREFIX = 'fair-audience-audience';
 					'error',
 					CSS_PREFIX
 				);
-				showNotification(errorMessage, 'error');
-			})
-			.finally(function () {
+				showNotification( errorMessage, 'error' );
+			} )
+			.finally( function () {
 				restoreButton();
-			});
+			} );
 	}
-})();
+} )();

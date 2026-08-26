@@ -8,10 +8,10 @@
 	"textdomain": "fair-events",
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"],
+		"align": [ "wide", "full" ],
 		"spacing": {
 			"padding": true,
-			"margin": ["top", "bottom"]
+			"margin": [ "top", "bottom" ]
 		}
 	},
 	"attributes": {
@@ -39,6 +39,6 @@
 	"editorScript": "file:./editor.js",
 	"editorStyle": "file:./editor.css",
 	"viewScript": "file:./frontend.js",
-	"style": ["wp-block-button", "file:./frontend.css"],
+	"style": [ "wp-block-button", "file:./frontend.css" ],
 	"render": "file:./render.php"
 }

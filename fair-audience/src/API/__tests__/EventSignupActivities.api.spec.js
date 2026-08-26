@@ -31,42 +31,46 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const authHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-function uniqueEmail(prefix) {
-	return `${prefix}+${Date.now()}-${Math.floor(
+function uniqueEmail( prefix ) {
+	return `${ prefix }+${ Date.now() }-${ Math.floor(
 		Math.random() * 1e6
-	)}@example.test`;
+	) }@example.test`;
 }
 
-async function createEventWithDates(api, title) {
-	const res = await api.post('/wp-json/wp/v2/fair_event', {
+async function createEventWithDates( api, title ) {
+	const res = await api.post( '/wp-json/wp/v2/fair_event', {
 		headers: authHeaders,
 		data: { title, status: 'publish' },
-	});
-	expect(res.ok()).toBeTruthy();
-	const eventId = (await res.json()).id;
+	} );
+	expect( res.ok() ).toBeTruthy();
+	const eventId = ( await res.json() ).id;
 
-	const eventsRes = await api.get('/wp-json/fair-audience/v1/events', {
+	const eventsRes = await api.get( '/wp-json/fair-audience/v1/events', {
 		headers: authHeaders,
 		params: { per_page: 100 },
-	});
-	expect(eventsRes.ok()).toBeTruthy();
-	const match = (await eventsRes.json()).find((e) => e.event_id === eventId);
-	expect(match, 'event-date row for test event').toBeTruthy();
+	} );
+	expect( eventsRes.ok() ).toBeTruthy();
+	const match = ( await eventsRes.json() ).find(
+		( e ) => e.event_id === eventId
+	);
+	expect( match, 'event-date row for test event' ).toBeTruthy();
 	return { eventId, eventDateId: match.event_date_id };
 }
 
-async function deleteEvent(api, eventId) {
-	if (!eventId) return;
-	await api.delete(`/wp-json/wp/v2/fair_event/${eventId}`, {
+async function deleteEvent( api, eventId ) {
+	if ( ! eventId ) return;
+	await api.delete( `/wp-json/wp/v2/fair_event/${ eventId }`, {
 		headers: authHeaders,
 		params: { force: 'true' },
-	});
+	} );
 }
 
-test.describe('Selectable activities in the unified Event Signup form (#1243)', () => {
+test.describe( 'Selectable activities in the unified Event Signup form (#1243)', () => {
 	let api;
 	let experimentalActive = false;
 	let event;
@@ -74,31 +78,31 @@ test.describe('Selectable activities in the unified Event Signup form (#1243)', 
 	let paidOptionId;
 	let fixtureOk = true;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const pluginsRes = await api.get('/wp-json/wp/v2/plugins', {
+		const pluginsRes = await api.get( '/wp-json/wp/v2/plugins', {
 			headers: authHeaders,
-		});
-		if (pluginsRes.ok()) {
+		} );
+		if ( pluginsRes.ok() ) {
 			const plugins = await pluginsRes.json();
 			experimentalActive = plugins.some(
-				(p) =>
-					p.plugin?.includes('fair-events-experimental') &&
+				( p ) =>
+					p.plugin?.includes( 'fair-events-experimental' ) &&
 					p.status === 'active'
 			);
 		}
-		if (!experimentalActive) {
+		if ( ! experimentalActive ) {
 			return;
 		}
 
 		event = await createEventWithDates(
 			api,
-			`Signup Activities Test ${Date.now()}`
+			`Signup Activities Test ${ Date.now() }`
 		);
 
 		const ticketsRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${event.eventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ event.eventDateId }/tickets`,
 			{
 				headers: authHeaders,
 				data: {
@@ -125,96 +129,113 @@ test.describe('Selectable activities in the unified Event Signup form (#1243)', 
 		// captured (not asserted) so every test below can skip with a
 		// reference instead of failing the hook.
 		fixtureOk = ticketsRes.ok();
-		if (!fixtureOk) {
+		if ( ! fixtureOk ) {
 			return;
 		}
-		const options = (await ticketsRes.json()).options || [];
-		freeOptionId = options.find((o) => o.name === 'Free Activity')?.id;
-		paidOptionId = options.find((o) => o.name === 'Paid Activity')?.id;
-		expect(freeOptionId).toBeTruthy();
-		expect(paidOptionId).toBeTruthy();
-	});
+		const options = ( await ticketsRes.json() ).options || [];
+		freeOptionId = options.find( ( o ) => o.name === 'Free Activity' )?.id;
+		paidOptionId = options.find( ( o ) => o.name === 'Paid Activity' )?.id;
+		expect( freeOptionId ).toBeTruthy();
+		expect( paidOptionId ).toBeTruthy();
+	} );
 
-	test.afterAll(async () => {
-		if (experimentalActive) {
-			await deleteEvent(api, event?.eventId);
+	test.afterAll( async () => {
+		if ( experimentalActive ) {
+			await deleteEvent( api, event?.eventId );
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('a signup with no activities selected is rejected with 400 minimum_activities_not_met', async () => {
-		test.skip(!experimentalActive, 'fair-events-experimental not active');
+	test( 'a signup with no activities selected is rejected with 400 minimum_activities_not_met', async () => {
 		test.skip(
-			!fixtureOk,
+			! experimentalActive,
+			'fair-events-experimental not active'
+		);
+		test.skip(
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 
-		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: event.eventDateId,
 				name: 'No Activities Buyer',
-				email: uniqueEmail('no-activities'),
+				email: uniqueEmail( 'no-activities' ),
 			},
-		});
-		expect(res.status()).toBe(400);
-		expect((await res.json()).code).toBe('minimum_activities_not_met');
-	});
+		} );
+		expect( res.status() ).toBe( 400 );
+		expect( ( await res.json() ).code ).toBe(
+			'minimum_activities_not_met'
+		);
+	} );
 
-	test('an unknown activity id is rejected with 400 invalid_ticket_option', async () => {
-		test.skip(!experimentalActive, 'fair-events-experimental not active');
+	test( 'an unknown activity id is rejected with 400 invalid_ticket_option', async () => {
 		test.skip(
-			!fixtureOk,
+			! experimentalActive,
+			'fair-events-experimental not active'
+		);
+		test.skip(
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 
-		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: event.eventDateId,
 				name: 'Invalid Option Buyer',
-				email: uniqueEmail('invalid-option'),
-				ticket_option_ids: [999999999],
+				email: uniqueEmail( 'invalid-option' ),
+				ticket_option_ids: [ 999999999 ],
 			},
-		});
-		expect(res.status()).toBe(400);
-		expect((await res.json()).code).toBe('invalid_ticket_option');
-	});
+		} );
+		expect( res.status() ).toBe( 400 );
+		expect( ( await res.json() ).code ).toBe( 'invalid_ticket_option' );
+	} );
 
-	test('a paid activity is charged into the signup amount (503 without a payment connector proves it)', async () => {
-		test.skip(!experimentalActive, 'fair-events-experimental not active');
+	test( 'a paid activity is charged into the signup amount (503 without a payment connector proves it)', async () => {
 		test.skip(
-			!fixtureOk,
+			! experimentalActive,
+			'fair-events-experimental not active'
+		);
+		test.skip(
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 
-		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: event.eventDateId,
 				name: 'Paid Activity Buyer',
-				email: uniqueEmail('paid-activity'),
-				ticket_option_ids: [paidOptionId],
+				email: uniqueEmail( 'paid-activity' ),
+				ticket_option_ids: [ paidOptionId ],
 			},
-		});
-		expect(res.status()).toBe(503);
-		expect((await res.json()).code).toBe('payment_unavailable');
-	});
+		} );
+		expect( res.status() ).toBe( 503 );
+		expect( ( await res.json() ).code ).toBe( 'payment_unavailable' );
+	} );
 
-	test('a free activity confirms immediately, then a capacity-1 activity 409s ticket_option_full for the next buyer', async () => {
-		test.skip(!experimentalActive, 'fair-events-experimental not active');
+	test( 'a free activity confirms immediately, then a capacity-1 activity 409s ticket_option_full for the next buyer', async () => {
 		test.skip(
-			!fixtureOk,
+			! experimentalActive,
+			'fair-events-experimental not active'
+		);
+		test.skip(
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 
-		const firstRes = await api.post('/wp-json/fair-events/v1/get-tickets', {
-			data: {
-				event_date_id: event.eventDateId,
-				name: 'Free Activity Buyer',
-				email: uniqueEmail('free-activity'),
-				ticket_option_ids: [freeOptionId],
-			},
-		});
-		expect(firstRes.ok(), await firstRes.text()).toBeTruthy();
-		expect((await firstRes.json()).status).toBe('confirmed');
+		const firstRes = await api.post(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				data: {
+					event_date_id: event.eventDateId,
+					name: 'Free Activity Buyer',
+					email: uniqueEmail( 'free-activity' ),
+					ticket_option_ids: [ freeOptionId ],
+				},
+			}
+		);
+		expect( firstRes.ok(), await firstRes.text() ).toBeTruthy();
+		expect( ( await firstRes.json() ).status ).toBe( 'confirmed' );
 
 		const secondRes = await api.post(
 			'/wp-json/fair-events/v1/get-tickets',
@@ -222,12 +243,12 @@ test.describe('Selectable activities in the unified Event Signup form (#1243)', 
 				data: {
 					event_date_id: event.eventDateId,
 					name: 'Second Free Activity Buyer',
-					email: uniqueEmail('free-activity-full'),
-					ticket_option_ids: [freeOptionId],
+					email: uniqueEmail( 'free-activity-full' ),
+					ticket_option_ids: [ freeOptionId ],
 				},
 			}
 		);
-		expect(secondRes.status()).toBe(409);
-		expect((await secondRes.json()).code).toBe('ticket_option_full');
-	});
-});
+		expect( secondRes.status() ).toBe( 409 );
+		expect( ( await secondRes.json() ).code ).toBe( 'ticket_option_full' );
+	} );
+} );

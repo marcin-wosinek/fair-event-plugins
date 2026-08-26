@@ -24,8 +24,8 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 const RELATIONSHIP_LABELS = {
-	event_photos: __('Event Photos', 'fair-events-experimental'),
-	participants: __('Participants', 'fair-events-experimental'),
+	event_photos: __( 'Event Photos', 'fair-events-experimental' ),
+	participants: __( 'Participants', 'fair-events-experimental' ),
 	questionnaire_submissions: __(
 		'Questionnaire Responses',
 		'fair-events-experimental'
@@ -33,162 +33,169 @@ const RELATIONSHIP_LABELS = {
 };
 
 const ACTION_OPTIONS = [
-	{ label: __('Move', 'fair-events-experimental'), value: 'move' },
-	{ label: __('Delete', 'fair-events-experimental'), value: 'delete' },
-	{ label: __('Skip', 'fair-events-experimental'), value: 'skip' },
+	{ label: __( 'Move', 'fair-events-experimental' ), value: 'move' },
+	{ label: __( 'Delete', 'fair-events-experimental' ), value: 'delete' },
+	{ label: __( 'Skip', 'fair-events-experimental' ), value: 'skip' },
 ];
 
-export default function MergeEventWizard({
+export default function MergeEventWizard( {
 	sourceEventDate,
 	sourceEventDateId,
 	manageEventUrl,
 	onCancel,
-}) {
-	const [activeStep, setActiveStep] = useState(0);
+} ) {
+	const [ activeStep, setActiveStep ] = useState( 0 );
 
 	// Step 1: Target selection.
-	const [searchTerm, setSearchTerm] = useState('');
-	const [searchResults, setSearchResults] = useState([]);
-	const [searching, setSearching] = useState(false);
-	const [targetEventDateId, setTargetEventDateId] = useState('');
+	const [ searchTerm, setSearchTerm ] = useState( '' );
+	const [ searchResults, setSearchResults ] = useState( [] );
+	const [ searching, setSearching ] = useState( false );
+	const [ targetEventDateId, setTargetEventDateId ] = useState( '' );
 
 	// Step 2: Preview & configuration.
-	const [sourcePreview, setSourcePreview] = useState(null);
-	const [targetPreview, setTargetPreview] = useState(null);
-	const [loadingPreview, setLoadingPreview] = useState(false);
-	const [actions, setActions] = useState({});
-	const [deleteSource, setDeleteSource] = useState(false);
+	const [ sourcePreview, setSourcePreview ] = useState( null );
+	const [ targetPreview, setTargetPreview ] = useState( null );
+	const [ loadingPreview, setLoadingPreview ] = useState( false );
+	const [ actions, setActions ] = useState( {} );
+	const [ deleteSource, setDeleteSource ] = useState( false );
 
 	// Step 3: Execution.
-	const [executing, setExecuting] = useState(false);
-	const [error, setError] = useState(null);
-	const [progress, setProgress] = useState('');
+	const [ executing, setExecuting ] = useState( false );
+	const [ error, setError ] = useState( null );
+	const [ progress, setProgress ] = useState( '' );
 
-	const handleSearch = async (term) => {
-		setSearchTerm(term);
-		if (!term || term.length < 2) {
-			setSearchResults([]);
+	const handleSearch = async ( term ) => {
+		setSearchTerm( term );
+		if ( ! term || term.length < 2 ) {
+			setSearchResults( [] );
 			return;
 		}
 
-		setSearching(true);
+		setSearching( true );
 		try {
-			const results = await apiFetch({
-				path: `/fair-events/v1/event-dates?search=${encodeURIComponent(
+			const results = await apiFetch( {
+				path: `/fair-events/v1/event-dates?search=${ encodeURIComponent(
 					term
-				)}&per_page=20`,
-			});
+				) }&per_page=20`,
+			} );
 			// Filter out the source event date.
 			setSearchResults(
-				results.filter((r) => r.id !== parseInt(sourceEventDateId, 10))
+				results.filter(
+					( r ) => r.id !== parseInt( sourceEventDateId, 10 )
+				)
 			);
 		} catch {
-			setSearchResults([]);
+			setSearchResults( [] );
 		} finally {
-			setSearching(false);
+			setSearching( false );
 		}
 	};
 
 	const loadPreviews = async () => {
-		setLoadingPreview(true);
-		setError(null);
+		setLoadingPreview( true );
+		setError( null );
 		try {
-			const [source, target] = await Promise.all([
-				apiFetch({
-					path: `/fair-events/v1/event-dates/${sourceEventDateId}/merge-preview`,
-				}),
-				apiFetch({
-					path: `/fair-events/v1/event-dates/${targetEventDateId}/merge-preview`,
-				}),
-			]);
-			setSourcePreview(source);
-			setTargetPreview(target);
+			const [ source, target ] = await Promise.all( [
+				apiFetch( {
+					path: `/fair-events/v1/event-dates/${ sourceEventDateId }/merge-preview`,
+				} ),
+				apiFetch( {
+					path: `/fair-events/v1/event-dates/${ targetEventDateId }/merge-preview`,
+				} ),
+			] );
+			setSourcePreview( source );
+			setTargetPreview( target );
 
 			// Initialize actions: default to "move" for keys with source data > 0.
 			const initialActions = {};
-			Object.keys(source.counts).forEach((key) => {
-				initialActions[key] = source.counts[key] > 0 ? 'move' : 'skip';
-			});
-			setActions(initialActions);
-		} catch (err) {
+			Object.keys( source.counts ).forEach( ( key ) => {
+				initialActions[ key ] =
+					source.counts[ key ] > 0 ? 'move' : 'skip';
+			} );
+			setActions( initialActions );
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to load preview.', 'fair-events-experimental')
+					__( 'Failed to load preview.', 'fair-events-experimental' )
 			);
 		} finally {
-			setLoadingPreview(false);
+			setLoadingPreview( false );
 		}
 	};
 
 	const handleGoToStep2 = () => {
-		setActiveStep(1);
+		setActiveStep( 1 );
 		loadPreviews();
 	};
 
 	const handleExecute = async () => {
-		setExecuting(true);
-		setError(null);
-		setProgress(__('Merging events...', 'fair-events-experimental'));
+		setExecuting( true );
+		setError( null );
+		setProgress( __( 'Merging events...', 'fair-events-experimental' ) );
 
 		try {
-			await apiFetch({
-				path: `/fair-events/v1/event-dates/${targetEventDateId}/merge`,
+			await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ targetEventDateId }/merge`,
 				method: 'POST',
 				data: {
-					source_id: parseInt(sourceEventDateId, 10),
+					source_id: parseInt( sourceEventDateId, 10 ),
 					actions,
 					delete_source: deleteSource,
 				},
-			});
-			setProgress(__('Done! Redirecting...', 'fair-events-experimental'));
-			window.location.href = `${manageEventUrl}&event_date_id=${targetEventDateId}`;
-		} catch (err) {
+			} );
+			setProgress(
+				__( 'Done! Redirecting...', 'fair-events-experimental' )
+			);
+			window.location.href = `${ manageEventUrl }&event_date_id=${ targetEventDateId }`;
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to merge events.', 'fair-events-experimental')
+					__( 'Failed to merge events.', 'fair-events-experimental' )
 			);
-			setExecuting(false);
+			setExecuting( false );
 		}
 	};
 
 	const selectedTarget = searchResults.find(
-		(r) => String(r.id) === String(targetEventDateId)
+		( r ) => String( r.id ) === String( targetEventDateId )
 	);
 
 	const renderStep1 = () => (
-		<Card style={{ marginTop: '16px' }}>
+		<Card style={ { marginTop: '16px' } }>
 			<CardHeader>
-				<h2>{__('Select Target Event', 'fair-events-experimental')}</h2>
+				<h2>
+					{ __( 'Select Target Event', 'fair-events-experimental' ) }
+				</h2>
 			</CardHeader>
 			<CardBody>
-				<VStack spacing={4}>
-					<p style={{ color: '#666' }}>
-						{__(
+				<VStack spacing={ 4 }>
+					<p style={ { color: '#666' } }>
+						{ __(
 							'Search for the event date you want to merge this event into. All data from the current event (source) will be moved to the target.',
 							'fair-events-experimental'
-						)}
+						) }
 					</p>
 					<TextControl
-						label={__(
+						label={ __(
 							'Search events by title',
 							'fair-events-experimental'
-						)}
-						value={searchTerm}
-						onChange={handleSearch}
-						placeholder={__(
+						) }
+						value={ searchTerm }
+						onChange={ handleSearch }
+						placeholder={ __(
 							'Start typing to search...',
 							'fair-events-experimental'
-						)}
+						) }
 					/>
-					{searching && <Spinner />}
-					{searchResults.length > 0 && (
+					{ searching && <Spinner /> }
+					{ searchResults.length > 0 && (
 						<SelectControl
-							label={__(
+							label={ __(
 								'Select target event',
 								'fair-events-experimental'
-							)}
-							value={targetEventDateId}
-							options={[
+							) }
+							value={ targetEventDateId }
+							options={ [
 								{
 									label: __(
 										'Select...',
@@ -196,134 +203,140 @@ export default function MergeEventWizard({
 									),
 									value: '',
 								},
-								...searchResults.map((r) => ({
+								...searchResults.map( ( r ) => ( {
 									label: `${
 										r.title ||
 										__(
 											'(No title)',
 											'fair-events-experimental'
 										)
-									} — ${r.start_datetime || ''}`,
-									value: String(r.id),
-								})),
-							]}
-							onChange={setTargetEventDateId}
+									} — ${ r.start_datetime || '' }`,
+									value: String( r.id ),
+								} ) ),
+							] }
+							onChange={ setTargetEventDateId }
 						/>
-					)}
-					{selectedTarget && (
-						<Notice status="info" isDismissible={false}>
-							{__('Target:', 'fair-events-experimental')}{' '}
+					) }
+					{ selectedTarget && (
+						<Notice status="info" isDismissible={ false }>
+							{ __( 'Target:', 'fair-events-experimental' ) }{ ' ' }
 							<strong>
-								{selectedTarget.title ||
+								{ selectedTarget.title ||
 									__(
 										'(No title)',
 										'fair-events-experimental'
-									)}
-							</strong>{' '}
-							({selectedTarget.start_datetime || ''})
+									) }
+							</strong>{ ' ' }
+							({ selectedTarget.start_datetime || '' })
 						</Notice>
-					)}
+					) }
 				</VStack>
 			</CardBody>
 		</Card>
 	);
 
 	const renderStep2 = () => {
-		if (loadingPreview) {
+		if ( loadingPreview ) {
 			return <Spinner />;
 		}
 
-		if (!sourcePreview || !targetPreview) {
+		if ( ! sourcePreview || ! targetPreview ) {
 			return null;
 		}
 
-		const keys = Object.keys(sourcePreview.counts);
+		const keys = Object.keys( sourcePreview.counts );
 
 		return (
-			<Card style={{ marginTop: '16px' }}>
+			<Card style={ { marginTop: '16px' } }>
 				<CardHeader>
 					<h2>
-						{__('Review & Configure', 'fair-events-experimental')}
+						{ __(
+							'Review & Configure',
+							'fair-events-experimental'
+						) }
 					</h2>
 				</CardHeader>
 				<CardBody>
-					<VStack spacing={4}>
-						<p style={{ color: '#666' }}>
-							{__(
+					<VStack spacing={ 4 }>
+						<p style={ { color: '#666' } }>
+							{ __(
 								'Review the linked data counts and choose what to do with each type.',
 								'fair-events-experimental'
-							)}
+							) }
 						</p>
 
 						<table
 							className="widefat striped"
-							style={{ maxWidth: '700px' }}
+							style={ { maxWidth: '700px' } }
 						>
 							<thead>
 								<tr>
 									<th>
-										{__(
+										{ __(
 											'Data Type',
 											'fair-events-experimental'
-										)}
+										) }
 									</th>
-									<th style={{ textAlign: 'center' }}>
-										{__(
+									<th style={ { textAlign: 'center' } }>
+										{ __(
 											'Source',
 											'fair-events-experimental'
-										)}
+										) }
 									</th>
-									<th style={{ textAlign: 'center' }}>
-										{__(
+									<th style={ { textAlign: 'center' } }>
+										{ __(
 											'Target',
 											'fair-events-experimental'
-										)}
+										) }
 									</th>
 									<th>
-										{__(
+										{ __(
 											'Action',
 											'fair-events-experimental'
-										)}
+										) }
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								{keys.map((key) => (
-									<tr key={key}>
+								{ keys.map( ( key ) => (
+									<tr key={ key }>
 										<td>
-											{RELATIONSHIP_LABELS[key] || key}
+											{ RELATIONSHIP_LABELS[ key ] ||
+												key }
 										</td>
-										<td style={{ textAlign: 'center' }}>
-											{sourcePreview.counts[key]}
+										<td style={ { textAlign: 'center' } }>
+											{ sourcePreview.counts[ key ] }
 										</td>
-										<td style={{ textAlign: 'center' }}>
-											{targetPreview.counts[key]}
+										<td style={ { textAlign: 'center' } }>
+											{ targetPreview.counts[ key ] }
 										</td>
 										<td>
 											<SelectControl
-												value={actions[key] || 'skip'}
-												options={ACTION_OPTIONS}
-												onChange={(val) =>
-													setActions((prev) => ({
+												value={
+													actions[ key ] || 'skip'
+												}
+												options={ ACTION_OPTIONS }
+												onChange={ ( val ) =>
+													setActions( ( prev ) => ( {
 														...prev,
-														[key]: val,
-													}))
+														[ key ]: val,
+													} ) )
 												}
 												__nextHasNoMarginBottom
 											/>
 										</td>
 									</tr>
-								))}
+								) ) }
 							</tbody>
 						</table>
 
 						<CheckboxControl
-							label={__(
+							label={ __(
 								'Delete source event after merge',
 								'fair-events-experimental'
-							)}
-							checked={deleteSource}
-							onChange={setDeleteSource}
+							) }
+							checked={ deleteSource }
+							onChange={ setDeleteSource }
 						/>
 					</VStack>
 				</CardBody>
@@ -332,61 +345,73 @@ export default function MergeEventWizard({
 	};
 
 	const renderStep3 = () => (
-		<Card style={{ marginTop: '16px' }}>
+		<Card style={ { marginTop: '16px' } }>
 			<CardHeader>
-				<h2>{__('Confirm Merge', 'fair-events-experimental')}</h2>
+				<h2>{ __( 'Confirm Merge', 'fair-events-experimental' ) }</h2>
 			</CardHeader>
 			<CardBody>
-				<VStack spacing={4}>
+				<VStack spacing={ 4 }>
 					<p>
 						<strong>
-							{__('Source:', 'fair-events-experimental')}
-						</strong>{' '}
-						{sourceEventDate.title ||
-							__('(No title)', 'fair-events-experimental')}{' '}
-						({sourceEventDate.start_datetime || ''})
+							{ __( 'Source:', 'fair-events-experimental' ) }
+						</strong>{ ' ' }
+						{ sourceEventDate.title ||
+							__(
+								'(No title)',
+								'fair-events-experimental'
+							) }{ ' ' }
+						({ sourceEventDate.start_datetime || '' })
 					</p>
 					<p>
 						<strong>
-							{__('Target:', 'fair-events-experimental')}
-						</strong>{' '}
-						{selectedTarget?.title ||
-							__('(No title)', 'fair-events-experimental')}{' '}
-						({selectedTarget?.start_datetime || ''})
+							{ __( 'Target:', 'fair-events-experimental' ) }
+						</strong>{ ' ' }
+						{ selectedTarget?.title ||
+							__(
+								'(No title)',
+								'fair-events-experimental'
+							) }{ ' ' }
+						({ selectedTarget?.start_datetime || '' })
 					</p>
 
-					{Object.entries(actions)
-						.filter(([, action]) => action !== 'skip')
-						.map(([key, action]) => (
-							<p key={key}>
-								{RELATIONSHIP_LABELS[key] || key}:{' '}
-								<strong>{action}</strong> (
-								{sourcePreview?.counts[key] || 0}{' '}
-								{sourcePreview?.counts[key] === 1
-									? __('item', 'fair-events-experimental')
-									: __('items', 'fair-events-experimental')}
+					{ Object.entries( actions )
+						.filter( ( [ , action ] ) => action !== 'skip' )
+						.map( ( [ key, action ] ) => (
+							<p key={ key }>
+								{ RELATIONSHIP_LABELS[ key ] || key }:{ ' ' }
+								<strong>{ action }</strong> (
+								{ sourcePreview?.counts[ key ] || 0 }{ ' ' }
+								{ sourcePreview?.counts[ key ] === 1
+									? __( 'item', 'fair-events-experimental' )
+									: __(
+											'items',
+											'fair-events-experimental'
+									  ) }
 								)
 							</p>
-						))}
+						) ) }
 
-					{deleteSource && (
-						<Notice status="warning" isDismissible={false}>
-							{__(
+					{ deleteSource && (
+						<Notice status="warning" isDismissible={ false }>
+							{ __(
 								'The source event date will be deleted after merge.',
 								'fair-events-experimental'
-							)}
+							) }
 						</Notice>
-					)}
+					) }
 
-					{!executing && (
+					{ ! executing && (
 						<Button
 							variant="primary"
-							onClick={handleExecute}
+							onClick={ handleExecute }
 							isDestructive
 						>
-							{__('Execute Merge', 'fair-events-experimental')}
+							{ __(
+								'Execute Merge',
+								'fair-events-experimental'
+							) }
 						</Button>
-					)}
+					) }
 				</VStack>
 			</CardBody>
 		</Card>
@@ -395,19 +420,19 @@ export default function MergeEventWizard({
 	const steps = [
 		{
 			name: 'select-target',
-			title: __('Select Target', 'fair-events-experimental'),
+			title: __( 'Select Target', 'fair-events-experimental' ),
 		},
 		{
 			name: 'review',
-			title: __('Review & Configure', 'fair-events-experimental'),
+			title: __( 'Review & Configure', 'fair-events-experimental' ),
 		},
-		{ name: 'confirm', title: __('Confirm', 'fair-events-experimental') },
+		{ name: 'confirm', title: __( 'Confirm', 'fair-events-experimental' ) },
 	];
 
-	const currentStep = steps[activeStep];
+	const currentStep = steps[ activeStep ];
 
 	const renderCurrentStep = () => {
-		switch (currentStep.name) {
+		switch ( currentStep.name ) {
 			case 'select-target':
 				return renderStep1();
 			case 'review':
@@ -422,77 +447,77 @@ export default function MergeEventWizard({
 	return (
 		<div className="wrap fair-events-manage-event">
 			<style>
-				{`.fair-events-manage-event .components-card > div:first-child { height: auto; }
-.fair-events-manage-event .components-card__body > * { max-width: 700px; }`}
+				{ `.fair-events-manage-event .components-card > div:first-child { height: auto; }
+.fair-events-manage-event .components-card__body > * { max-width: 700px; }` }
 			</style>
 			<h1>
-				{__('Merge Event', 'fair-events-experimental')}
-				{sourceEventDate.title && `: ${sourceEventDate.title}`}
+				{ __( 'Merge Event', 'fair-events-experimental' ) }
+				{ sourceEventDate.title && `: ${ sourceEventDate.title }` }
 			</h1>
 
-			{error && (
+			{ error && (
 				<Notice
 					status="error"
 					isDismissible
-					onRemove={() => setError(null)}
+					onRemove={ () => setError( null ) }
 				>
-					{error}
+					{ error }
 				</Notice>
-			)}
+			) }
 
-			{executing && (
-				<Notice status="info" isDismissible={false}>
-					<HStack spacing={2}>
+			{ executing && (
+				<Notice status="info" isDismissible={ false }>
+					<HStack spacing={ 2 }>
 						<Spinner />
-						<span>{progress}</span>
+						<span>{ progress }</span>
 					</HStack>
 				</Notice>
-			)}
+			) }
 
-			{!executing && (
+			{ ! executing && (
 				<>
-					<p style={{ color: '#666' }}>
-						{`${__('Step', 'fair-events-experimental')} ${
+					<p style={ { color: '#666' } }>
+						{ `${ __( 'Step', 'fair-events-experimental' ) } ${
 							activeStep + 1
-						} / ${steps.length}: ${currentStep?.title}`}
+						} / ${ steps.length }: ${ currentStep?.title }` }
 					</p>
-					{renderCurrentStep()}
+					{ renderCurrentStep() }
 				</>
-			)}
+			) }
 
-			{!executing && (
-				<HStack spacing={2} style={{ marginTop: '16px' }}>
-					{activeStep > 0 && (
+			{ ! executing && (
+				<HStack spacing={ 2 } style={ { marginTop: '16px' } }>
+					{ activeStep > 0 && (
 						<Button
 							variant="secondary"
-							onClick={() => setActiveStep((s) => s - 1)}
+							onClick={ () => setActiveStep( ( s ) => s - 1 ) }
 						>
-							{__('Back', 'fair-events-experimental')}
+							{ __( 'Back', 'fair-events-experimental' ) }
 						</Button>
-					)}
-					{activeStep === 0 && (
+					) }
+					{ activeStep === 0 && (
 						<Button
 							variant="primary"
-							onClick={handleGoToStep2}
-							disabled={!targetEventDateId}
+							onClick={ handleGoToStep2 }
+							disabled={ ! targetEventDateId }
 						>
-							{__('Next', 'fair-events-experimental')}
+							{ __( 'Next', 'fair-events-experimental' ) }
 						</Button>
-					)}
-					{activeStep === 1 && (
+					) }
+					{ activeStep === 1 && (
 						<Button
 							variant="primary"
-							onClick={() => setActiveStep(2)}
-							disabled={loadingPreview}
+							onClick={ () => setActiveStep( 2 ) }
+							disabled={ loadingPreview }
 						>
-							{__('Next', 'fair-events-experimental')}
+							{ __( 'Next', 'fair-events-experimental' ) }
 						</Button>
-					)}
-					<Button variant="tertiary" onClick={onCancel}>
-						{__('Cancel', 'fair-events-experimental')}
+					) }
+					<Button variant="tertiary" onClick={ onCancel }>
+						{ __( 'Cancel', 'fair-events-experimental' ) }
 					</Button>
 				</HStack>
-			)}
+			) }
 		</div>
 	);
 }

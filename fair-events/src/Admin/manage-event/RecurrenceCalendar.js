@@ -14,56 +14,56 @@ import { Card, CardHeader, CardBody } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { MiniCalendar } from 'fair-events-shared';
 
-export default function RecurrenceCalendar({
+export default function RecurrenceCalendar( {
 	generatedOccurrences,
 	cancelledDates,
 	masterDate,
 	manageEventUrl,
 	masterEventDateId,
 	embedded = false,
-}) {
+} ) {
 	const occurrences = generatedOccurrences || [];
 	const cancelledDatesList = cancelledDates || [];
 
 	// generatedOccurrences includes cancelled rows too (with id/status), so a
 	// single map covers both active and cancelled cells.
-	const occurrenceByDate = useMemo(() => {
+	const occurrenceByDate = useMemo( () => {
 		const map = {};
-		occurrences.forEach((occ) => {
-			const date = occ.start_datetime.split(' ')[0];
-			map[date] = occ;
-		});
+		occurrences.forEach( ( occ ) => {
+			const date = occ.start_datetime.split( ' ' )[ 0 ];
+			map[ date ] = occ;
+		} );
 		return map;
-	}, [occurrences]);
+	}, [ occurrences ] );
 
 	const cancelledSet = useMemo(
-		() => new Set(cancelledDatesList),
-		[cancelledDatesList]
+		() => new Set( cancelledDatesList ),
+		[ cancelledDatesList ]
 	);
 
 	// Determine the date range to show
-	const allDates = useMemo(() => {
+	const allDates = useMemo( () => {
 		const dates = [];
-		occurrences.forEach((occ) => {
-			dates.push(occ.start_datetime.split(' ')[0]);
-		});
-		cancelledDatesList.forEach((d) => dates.push(d));
-		if (masterDate) {
-			dates.push(masterDate);
+		occurrences.forEach( ( occ ) => {
+			dates.push( occ.start_datetime.split( ' ' )[ 0 ] );
+		} );
+		cancelledDatesList.forEach( ( d ) => dates.push( d ) );
+		if ( masterDate ) {
+			dates.push( masterDate );
 		}
 		return dates.sort();
-	}, [occurrences, cancelledDatesList, masterDate]);
+	}, [ occurrences, cancelledDatesList, masterDate ] );
 
-	if (allDates.length === 0) return null;
+	if ( allDates.length === 0 ) return null;
 
-	const dayProps = (dateStr) => {
-		const occ = occurrenceByDate[dateStr];
+	const dayProps = ( dateStr ) => {
+		const occ = occurrenceByDate[ dateStr ];
 		const isCancelled =
-			occ?.status === 'cancelled' || cancelledSet.has(dateStr);
-		const isOccurrence = !!occ && !isCancelled;
+			occ?.status === 'cancelled' || cancelledSet.has( dateStr );
+		const isOccurrence = !! occ && ! isCancelled;
 		const isMaster = dateStr === masterDate;
 
-		if (!isMaster && !isOccurrence && !isCancelled) {
+		if ( ! isMaster && ! isOccurrence && ! isCancelled ) {
 			return {};
 		}
 
@@ -72,15 +72,15 @@ export default function RecurrenceCalendar({
 		let opacity = 1;
 		let textDecoration = 'none';
 
-		if (isMaster) {
+		if ( isMaster ) {
 			background = '#007cba';
 			color = '#fff';
-		} else if (isCancelled) {
+		} else if ( isCancelled ) {
 			background = '#cc1818';
 			color = '#fff';
 			opacity = 0.6;
 			textDecoration = 'line-through';
-		} else if (isOccurrence) {
+		} else if ( isOccurrence ) {
 			background = '#4ab866';
 			color = '#fff';
 		}
@@ -93,40 +93,40 @@ export default function RecurrenceCalendar({
 			fontWeight: 600,
 		};
 
-		if (isMaster) {
+		if ( isMaster ) {
 			return {
 				...common,
-				href: `${manageEventUrl}&event_date_id=${masterEventDateId}`,
-				tooltip: __('Master event', 'fair-events'),
+				href: `${ manageEventUrl }&event_date_id=${ masterEventDateId }`,
+				tooltip: __( 'Master event', 'fair-events' ),
 			};
 		}
 
 		return {
 			...common,
-			href: `${manageEventUrl}&event_date_id=${occ.id}`,
-			tooltip: __('Open this occurrence', 'fair-events'),
+			href: `${ manageEventUrl }&event_date_id=${ occ.id }`,
+			tooltip: __( 'Open this occurrence', 'fair-events' ),
 		};
 	};
 
 	const calendarBody = (
 		<>
 			<MiniCalendar
-				minDate={allDates[0]}
-				maxDate={allDates[allDates.length - 1]}
-				dayProps={dayProps}
+				minDate={ allDates[ 0 ] }
+				maxDate={ allDates[ allDates.length - 1 ] }
+				dayProps={ dayProps }
 			/>
 			<div
-				style={{
+				style={ {
 					marginTop: '16px',
 					display: 'flex',
 					gap: '16px',
 					fontSize: '12px',
 					color: '#757575',
-				}}
+				} }
 			>
 				<span>
 					<span
-						style={{
+						style={ {
 							display: 'inline-block',
 							width: '12px',
 							height: '12px',
@@ -134,13 +134,13 @@ export default function RecurrenceCalendar({
 							borderRadius: '2px',
 							verticalAlign: 'middle',
 							marginRight: '4px',
-						}}
+						} }
 					/>
-					{__('Master', 'fair-events')}
+					{ __( 'Master', 'fair-events' ) }
 				</span>
 				<span>
 					<span
-						style={{
+						style={ {
 							display: 'inline-block',
 							width: '12px',
 							height: '12px',
@@ -148,13 +148,13 @@ export default function RecurrenceCalendar({
 							borderRadius: '2px',
 							verticalAlign: 'middle',
 							marginRight: '4px',
-						}}
+						} }
 					/>
-					{__('Active', 'fair-events')}
+					{ __( 'Active', 'fair-events' ) }
 				</span>
 				<span>
 					<span
-						style={{
+						style={ {
 							display: 'inline-block',
 							width: '12px',
 							height: '12px',
@@ -163,26 +163,26 @@ export default function RecurrenceCalendar({
 							verticalAlign: 'middle',
 							marginRight: '4px',
 							opacity: 0.6,
-						}}
+						} }
 					/>
-					{__('Cancelled', 'fair-events')}
+					{ __( 'Cancelled', 'fair-events' ) }
 				</span>
 			</div>
 		</>
 	);
 
-	if (embedded) {
+	if ( embedded ) {
 		return calendarBody;
 	}
 
 	return (
-		<Card style={{ marginTop: '16px' }}>
+		<Card style={ { marginTop: '16px' } }>
 			<CardHeader>
-				<h2 style={{ margin: 0 }}>
-					{__('Recurring Occurrences', 'fair-events')}
+				<h2 style={ { margin: 0 } }>
+					{ __( 'Recurring Occurrences', 'fair-events' ) }
 				</h2>
 			</CardHeader>
-			<CardBody>{calendarBody}</CardBody>
+			<CardBody>{ calendarBody }</CardBody>
 		</Card>
 	);
 }

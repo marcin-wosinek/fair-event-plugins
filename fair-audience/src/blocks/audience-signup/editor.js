@@ -14,8 +14,8 @@ import ServerSideRender from '@wordpress/server-side-render';
 import QuestionBuilder from './QuestionBuilder.js';
 import EventLinkPanel from './EventLinkPanel.js';
 
-registerBlockType('fair-audience/audience-signup', {
-	edit: ({ attributes, setAttributes }) => {
+registerBlockType( 'fair-audience/audience-signup', {
+	edit: ( { attributes, setAttributes } ) => {
 		const {
 			submitButtonText,
 			successMessage,
@@ -25,91 +25,97 @@ registerBlockType('fair-audience/audience-signup', {
 			eventDateId,
 		} = attributes;
 
-		const blockProps = useBlockProps({
+		const blockProps = useBlockProps( {
 			className: 'fair-audience-audience-signup',
-		});
+		} );
 
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Form Settings', 'fair-audience')}>
+					<PanelBody title={ __( 'Form Settings', 'fair-audience' ) }>
 						<TextControl
-							label={__('Submit Button Text', 'fair-audience')}
-							value={submitButtonText}
-							onChange={(value) =>
-								setAttributes({ submitButtonText: value })
+							label={ __(
+								'Submit Button Text',
+								'fair-audience'
+							) }
+							value={ submitButtonText }
+							onChange={ ( value ) =>
+								setAttributes( { submitButtonText: value } )
 							}
-							placeholder={__('Register', 'fair-audience')}
+							placeholder={ __( 'Register', 'fair-audience' ) }
 						/>
 						<TextareaControl
-							label={__('Success Message', 'fair-audience')}
-							value={successMessage}
-							onChange={(value) =>
-								setAttributes({ successMessage: value })
+							label={ __( 'Success Message', 'fair-audience' ) }
+							value={ successMessage }
+							onChange={ ( value ) =>
+								setAttributes( { successMessage: value } )
 							}
-							placeholder={__(
+							placeholder={ __(
 								'You have been registered successfully!',
 								'fair-audience'
-							)}
-							help={__(
+							) }
+							help={ __(
 								'Message shown after successful registration.',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<ToggleControl
-							label={__('Show Instagram field', 'fair-audience')}
-							checked={showInstagram}
-							onChange={(value) =>
-								setAttributes({ showInstagram: value })
+							label={ __(
+								'Show Instagram field',
+								'fair-audience'
+							) }
+							checked={ showInstagram }
+							onChange={ ( value ) =>
+								setAttributes( { showInstagram: value } )
 							}
-							help={__(
+							help={ __(
 								'Show an optional Instagram username field.',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<ToggleControl
-							label={__(
+							label={ __(
 								'Show "Keep me informed" checkbox',
 								'fair-audience'
-							)}
-							checked={showKeepInformed}
-							onChange={(value) =>
-								setAttributes({ showKeepInformed: value })
+							) }
+							checked={ showKeepInformed }
+							onChange={ ( value ) =>
+								setAttributes( { showKeepInformed: value } )
 							}
-							help={__(
+							help={ __(
 								'Allow users to opt-in to future event notifications.',
 								'fair-audience'
-							)}
+							) }
 						/>
 					</PanelBody>
 					<PanelBody
-						title={__('Questions', 'fair-audience')}
-						initialOpen={false}
+						title={ __( 'Questions', 'fair-audience' ) }
+						initialOpen={ false }
 					>
 						<QuestionBuilder
-							questions={questions || []}
-							onChange={(value) =>
-								setAttributes({ questions: value })
+							questions={ questions || [] }
+							onChange={ ( value ) =>
+								setAttributes( { questions: value } )
 							}
 						/>
 					</PanelBody>
 					<PanelBody
-						title={__('Event Link', 'fair-audience')}
-						initialOpen={false}
+						title={ __( 'Event Link', 'fair-audience' ) }
+						initialOpen={ false }
 					>
 						<EventLinkPanel
-							eventDateId={eventDateId || 0}
-							onChange={(value) =>
-								setAttributes({ eventDateId: value })
+							eventDateId={ eventDateId || 0 }
+							onChange={ ( value ) =>
+								setAttributes( { eventDateId: value } )
 							}
 						/>
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
+				<div { ...blockProps }>
 					<ServerSideRender
 						block="fair-audience/audience-signup"
-						attributes={attributes}
+						attributes={ attributes }
 					/>
 				</div>
 			</>
@@ -118,4 +124,4 @@ registerBlockType('fair-audience/audience-signup', {
 	save: () => {
 		return null; // Dynamic block, rendered via PHP
 	},
-});
+} );

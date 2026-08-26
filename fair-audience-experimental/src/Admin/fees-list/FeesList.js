@@ -40,42 +40,42 @@ const DEFAULT_LAYOUTS = {
 };
 
 export default function FeesList() {
-	const [fees, setFees] = useState([]);
-	const [totalItems, setTotalItems] = useState(0);
-	const [isLoading, setIsLoading] = useState(true);
-	const [view, setView] = useState(DEFAULT_VIEW);
+	const [ fees, setFees ] = useState( [] );
+	const [ totalItems, setTotalItems ] = useState( 0 );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ view, setView ] = useState( DEFAULT_VIEW );
 
 	// Create modal state.
-	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-	const [feeName, setFeeName] = useState('');
-	const [feeDescription, setFeeDescription] = useState('');
-	const [feeGroupId, setFeeGroupId] = useState('');
-	const [feeAmount, setFeeAmount] = useState('');
-	const [feeDueDate, setFeeDueDate] = useState('');
-	const [feeBudgetId, setFeeBudgetId] = useState('');
-	const [isSaving, setIsSaving] = useState(false);
+	const [ isCreateModalOpen, setIsCreateModalOpen ] = useState( false );
+	const [ feeName, setFeeName ] = useState( '' );
+	const [ feeDescription, setFeeDescription ] = useState( '' );
+	const [ feeGroupId, setFeeGroupId ] = useState( '' );
+	const [ feeAmount, setFeeAmount ] = useState( '' );
+	const [ feeDueDate, setFeeDueDate ] = useState( '' );
+	const [ feeBudgetId, setFeeBudgetId ] = useState( '' );
+	const [ isSaving, setIsSaving ] = useState( false );
 
 	// Edit modal state.
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-	const [editingFee, setEditingFee] = useState(null);
+	const [ isEditModalOpen, setIsEditModalOpen ] = useState( false );
+	const [ editingFee, setEditingFee ] = useState( null );
 
 	// Groups for select.
-	const [groups, setGroups] = useState([]);
+	const [ groups, setGroups ] = useState( [] );
 
 	// Budgets for select.
-	const [budgets, setBudgets] = useState([]);
+	const [ budgets, setBudgets ] = useState( [] );
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
 		() => [
 			{
 				id: 'name',
-				label: __('Name', 'fair-audience'),
-				render: ({ item }) => (
+				label: __( 'Name', 'fair-audience' ),
+				render: ( { item } ) => (
 					<a
-						href={`admin.php?page=fair-audience-fee-detail&fee_id=${item.id}`}
+						href={ `admin.php?page=fair-audience-fee-detail&fee_id=${ item.id }` }
 					>
-						{item.name}
+						{ item.name }
 					</a>
 				),
 				enableSorting: true,
@@ -83,64 +83,66 @@ export default function FeesList() {
 			},
 			{
 				id: 'group_name',
-				label: __('Group', 'fair-audience'),
-				render: ({ item }) => item.group_name || '—',
+				label: __( 'Group', 'fair-audience' ),
+				render: ( { item } ) => item.group_name || '—',
 				enableSorting: false,
 			},
 			{
 				id: 'budget_name',
-				label: __('Budget', 'fair-audience'),
-				render: ({ item }) => item.budget_name || '—',
+				label: __( 'Budget', 'fair-audience' ),
+				render: ( { item } ) => item.budget_name || '—',
 				enableSorting: false,
 			},
 			{
 				id: 'amount',
-				label: __('Amount', 'fair-audience'),
-				render: ({ item }) => {
-					const amountText = `${parseFloat(item.amount).toFixed(2)} ${
-						item.currency
-					}`;
-					const memberCount = parseInt(item.member_count) || 0;
-					if (memberCount > 0) {
+				label: __( 'Amount', 'fair-audience' ),
+				render: ( { item } ) => {
+					const amountText = `${ parseFloat( item.amount ).toFixed(
+						2
+					) } ${ item.currency }`;
+					const memberCount = parseInt( item.member_count ) || 0;
+					if ( memberCount > 0 ) {
 						const totalAmount = (
-							parseFloat(item.amount) * memberCount
-						).toFixed(2);
-						const tooltipText = `${parseFloat(item.amount).toFixed(
-							2
-						)} ${
+							parseFloat( item.amount ) * memberCount
+						).toFixed( 2 );
+						const tooltipText = `${ parseFloat(
+							item.amount
+						).toFixed( 2 ) } ${
 							item.currency
-						} x ${memberCount} members = ${totalAmount} ${
+						} x ${ memberCount } members = ${ totalAmount } ${
 							item.currency
 						}`;
 						return (
-							<Tooltip text={tooltipText}>
-								<span>{amountText}</span>
+							<Tooltip text={ tooltipText }>
+								<span>{ amountText }</span>
 							</Tooltip>
 						);
 					}
 					return amountText;
 				},
 				enableSorting: true,
-				getValue: ({ item }) => parseFloat(item.amount),
+				getValue: ( { item } ) => parseFloat( item.amount ),
 			},
 			{
 				id: 'due_date',
-				label: __('Due Date', 'fair-audience'),
-				render: ({ item }) => item.due_date || '—',
+				label: __( 'Due Date', 'fair-audience' ),
+				render: ( { item } ) => item.due_date || '—',
 				enableSorting: true,
 			},
 			{
 				id: 'status',
-				label: __('Status', 'fair-audience'),
-				render: ({ item }) => {
+				label: __( 'Status', 'fair-audience' ),
+				render: ( { item } ) => {
 					const colors = {
 						draft: '#888',
 						active: '#00a32a',
 						closed: '#d63638',
 					};
 					return (
-						<span style={{ color: colors[item.status] || '#333' }}>
-							{item.status}
+						<span
+							style={ { color: colors[ item.status ] || '#333' } }
+						>
+							{ item.status }
 						</span>
 					);
 				},
@@ -148,168 +150,170 @@ export default function FeesList() {
 			},
 			{
 				id: 'pending_count',
-				label: __('Pending', 'fair-audience'),
-				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>
-						{item.pending_count}
+				label: __( 'Pending', 'fair-audience' ),
+				render: ( { item } ) => (
+					<div style={ { textAlign: 'right' } }>
+						{ item.pending_count }
 					</div>
 				),
 				enableSorting: false,
-				getValue: ({ item }) => parseInt(item.pending_count),
+				getValue: ( { item } ) => parseInt( item.pending_count ),
 			},
 			{
 				id: 'paid_count',
-				label: __('Paid', 'fair-audience'),
-				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>{item.paid_count}</div>
+				label: __( 'Paid', 'fair-audience' ),
+				render: ( { item } ) => (
+					<div style={ { textAlign: 'right' } }>
+						{ item.paid_count }
+					</div>
 				),
 				enableSorting: false,
-				getValue: ({ item }) => parseInt(item.paid_count),
+				getValue: ( { item } ) => parseInt( item.paid_count ),
 			},
 		],
 		[]
 	);
 
 	// Convert view state to API query params.
-	const queryArgs = useMemo(() => {
+	const queryArgs = useMemo( () => {
 		const params = new URLSearchParams();
 
-		if (view.sort?.field) {
-			params.append('orderby', view.sort.field);
-			params.append('order', view.sort.direction || 'desc');
+		if ( view.sort?.field ) {
+			params.append( 'orderby', view.sort.field );
+			params.append( 'order', view.sort.direction || 'desc' );
 		}
 
 		return params.toString();
-	}, [view]);
+	}, [ view ] );
 
-	const loadFees = useCallback(() => {
-		setIsLoading(true);
+	const loadFees = useCallback( () => {
+		setIsLoading( true );
 
 		const path = `/fair-audience/v1/fees${
 			queryArgs ? '?' + queryArgs : ''
 		}`;
 
-		apiFetch({ path, parse: false })
-			.then((response) => {
+		apiFetch( { path, parse: false } )
+			.then( ( response ) => {
 				const total = parseInt(
-					response.headers.get('X-WP-Total') || '0',
+					response.headers.get( 'X-WP-Total' ) || '0',
 					10
 				);
-				setTotalItems(total);
+				setTotalItems( total );
 				return response.json();
-			})
-			.then((data) => {
-				setFees(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
+			} )
+			.then( ( data ) => {
+				setFees( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading fees:', err);
-				setIsLoading(false);
-			});
-	}, [queryArgs]);
+				console.error( 'Error loading fees:', err );
+				setIsLoading( false );
+			} );
+	}, [ queryArgs ] );
 
-	const loadGroups = useCallback(() => {
-		apiFetch({ path: '/fair-audience/v1/groups' })
-			.then((data) => {
-				setGroups(data);
-			})
-			.catch((err) => {
+	const loadGroups = useCallback( () => {
+		apiFetch( { path: '/fair-audience/v1/groups' } )
+			.then( ( data ) => {
+				setGroups( data );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading groups:', err);
-			});
-	}, []);
+				console.error( 'Error loading groups:', err );
+			} );
+	}, [] );
 
-	const loadBudgets = useCallback(() => {
-		apiFetch({ path: '/fair-payments-connector/v1/budgets' })
-			.then((data) => {
-				setBudgets(data);
-			})
-			.catch((err) => {
+	const loadBudgets = useCallback( () => {
+		apiFetch( { path: '/fair-payments-connector/v1/budgets' } )
+			.then( ( data ) => {
+				setBudgets( data );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading budgets:', err);
-			});
-	}, []);
+				console.error( 'Error loading budgets:', err );
+			} );
+	}, [] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadFees();
-	}, [loadFees]);
+	}, [ loadFees ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadGroups();
-	}, [loadGroups]);
+	}, [ loadGroups ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadBudgets();
-	}, [loadBudgets]);
+	}, [ loadBudgets ] );
 
 	// Open create modal.
 	const openCreateModal = () => {
-		setFeeName('');
-		setFeeDescription('');
-		setFeeGroupId('');
-		setFeeAmount('');
-		setFeeDueDate('');
-		setFeeBudgetId('');
-		setIsCreateModalOpen(true);
+		setFeeName( '' );
+		setFeeDescription( '' );
+		setFeeGroupId( '' );
+		setFeeAmount( '' );
+		setFeeDueDate( '' );
+		setFeeBudgetId( '' );
+		setIsCreateModalOpen( true );
 	};
 
 	// Handle create fee.
 	const handleCreateFee = () => {
-		if (!feeName.trim() || !feeGroupId || !feeAmount) {
+		if ( ! feeName.trim() || ! feeGroupId || ! feeAmount ) {
 			return;
 		}
 
-		setIsSaving(true);
+		setIsSaving( true );
 
-		apiFetch({
+		apiFetch( {
 			path: '/fair-audience/v1/fees',
 			method: 'POST',
 			data: {
 				name: feeName.trim(),
 				description: feeDescription.trim(),
-				group_id: parseInt(feeGroupId),
-				amount: parseFloat(feeAmount),
+				group_id: parseInt( feeGroupId ),
+				amount: parseFloat( feeAmount ),
 				due_date: feeDueDate || null,
-				budget_id: feeBudgetId ? parseInt(feeBudgetId) : null,
+				budget_id: feeBudgetId ? parseInt( feeBudgetId ) : null,
 			},
-		})
-			.then(() => {
-				setIsCreateModalOpen(false);
+		} )
+			.then( () => {
+				setIsCreateModalOpen( false );
 				loadFees();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to create fee.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__( 'Failed to create fee.', 'fair-audience' ) )
 				);
-			})
-			.finally(() => {
-				setIsSaving(false);
-			});
+			} )
+			.finally( () => {
+				setIsSaving( false );
+			} );
 	};
 
 	// Open edit modal.
-	const openEditModal = (fee) => {
-		setEditingFee(fee);
-		setFeeName(fee.name);
-		setFeeDescription(fee.description || '');
-		setFeeDueDate(fee.due_date || '');
-		setIsEditModalOpen(true);
+	const openEditModal = ( fee ) => {
+		setEditingFee( fee );
+		setFeeName( fee.name );
+		setFeeDescription( fee.description || '' );
+		setFeeDueDate( fee.due_date || '' );
+		setIsEditModalOpen( true );
 	};
 
 	// Handle update fee.
 	const handleUpdateFee = () => {
-		if (!feeName.trim() || !editingFee) {
+		if ( ! feeName.trim() || ! editingFee ) {
 			return;
 		}
 
-		setIsSaving(true);
+		setIsSaving( true );
 
-		apiFetch({
-			path: `/fair-audience/v1/fees/${editingFee.id}`,
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ editingFee.id }`,
 			method: 'PUT',
 			data: {
 				name: feeName.trim(),
@@ -317,30 +321,30 @@ export default function FeesList() {
 				due_date: feeDueDate || null,
 				status: editingFee.status,
 			},
-		})
-			.then(() => {
-				setIsEditModalOpen(false);
-				setEditingFee(null);
+		} )
+			.then( () => {
+				setIsEditModalOpen( false );
+				setEditingFee( null );
 				loadFees();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to update fee.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__( 'Failed to update fee.', 'fair-audience' ) )
 				);
-			})
-			.finally(() => {
-				setIsSaving(false);
-			});
+			} )
+			.finally( () => {
+				setIsSaving( false );
+			} );
 	};
 
 	// Handle delete fee.
-	const handleDeleteFee = (fee) => {
+	const handleDeleteFee = ( fee ) => {
 		// eslint-disable-next-line no-undef
 		if (
-			!confirm(
+			! confirm(
 				__(
 					'Are you sure you want to delete this fee? All payment records will also be deleted.',
 					'fair-audience'
@@ -350,21 +354,21 @@ export default function FeesList() {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/fees/${fee.id}`,
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ fee.id }`,
 			method: 'DELETE',
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				loadFees();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to delete fee.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__( 'Failed to delete fee.', 'fair-audience' ) )
 				);
-			});
+			} );
 	};
 
 	// Define actions for DataViews.
@@ -372,25 +376,25 @@ export default function FeesList() {
 		() => [
 			{
 				id: 'view-details',
-				label: __('View Details', 'fair-audience'),
+				label: __( 'View Details', 'fair-audience' ),
 				icon: 'visibility',
-				callback: ([item]) => {
-					window.location.href = `admin.php?page=fair-audience-fee-detail&fee_id=${item.id}`;
+				callback: ( [ item ] ) => {
+					window.location.href = `admin.php?page=fair-audience-fee-detail&fee_id=${ item.id }`;
 				},
 				supportsBulk: false,
 			},
 			{
 				id: 'edit',
-				label: __('Edit', 'fair-audience'),
+				label: __( 'Edit', 'fair-audience' ),
 				icon: 'edit',
-				callback: ([item]) => openEditModal(item),
+				callback: ( [ item ] ) => openEditModal( item ),
 				supportsBulk: false,
 			},
 			{
 				id: 'delete',
-				label: __('Delete', 'fair-audience'),
+				label: __( 'Delete', 'fair-audience' ),
 				icon: 'trash',
-				callback: ([item]) => handleDeleteFee(item),
+				callback: ( [ item ] ) => handleDeleteFee( item ),
 				supportsBulk: false,
 			},
 		],
@@ -398,218 +402,221 @@ export default function FeesList() {
 	);
 
 	const paginationInfo = useMemo(
-		() => ({
+		() => ( {
 			totalItems,
 			totalPages: 1,
-		}),
-		[totalItems]
+		} ),
+		[ totalItems ]
 	);
 
 	const groupOptions = [
-		{ label: __('Select a group...', 'fair-audience'), value: '' },
-		...groups.map((g) => ({ label: g.name, value: String(g.id) })),
+		{ label: __( 'Select a group...', 'fair-audience' ), value: '' },
+		...groups.map( ( g ) => ( { label: g.name, value: String( g.id ) } ) ),
 	];
 
 	const budgetOptions = [
-		{ label: __('-- No Budget --', 'fair-audience'), value: '' },
-		...budgets.map((b) => ({ label: b.name, value: String(b.id) })),
+		{ label: __( '-- No Budget --', 'fair-audience' ), value: '' },
+		...budgets.map( ( b ) => ( { label: b.name, value: String( b.id ) } ) ),
 	];
 
 	return (
 		<div className="wrap">
-			<h1>{__('Membership Fees', 'fair-audience')}</h1>
+			<h1>{ __( 'Membership Fees', 'fair-audience' ) }</h1>
 
 			<Card>
 				<CardBody>
-					<div style={{ marginBottom: '16px' }}>
-						<Button variant="primary" onClick={openCreateModal}>
-							{__('Create Fee', 'fair-audience')}
+					<div style={ { marginBottom: '16px' } }>
+						<Button variant="primary" onClick={ openCreateModal }>
+							{ __( 'Create Fee', 'fair-audience' ) }
 						</Button>
 					</div>
 
 					<DataViews
-						data={fees}
-						fields={fields}
-						view={view}
-						onChangeView={setView}
-						actions={actions}
-						paginationInfo={paginationInfo}
-						defaultLayouts={DEFAULT_LAYOUTS}
-						isLoading={isLoading}
-						getItemId={(item) => item.id}
+						data={ fees }
+						fields={ fields }
+						view={ view }
+						onChangeView={ setView }
+						actions={ actions }
+						paginationInfo={ paginationInfo }
+						defaultLayouts={ DEFAULT_LAYOUTS }
+						isLoading={ isLoading }
+						getItemId={ ( item ) => item.id }
 					/>
 				</CardBody>
 			</Card>
 
-			{/* Create Fee Modal */}
-			{isCreateModalOpen && (
+			{ /* Create Fee Modal */ }
+			{ isCreateModalOpen && (
 				<Modal
-					title={__('Create Fee', 'fair-audience')}
-					onRequestClose={() => setIsCreateModalOpen(false)}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Create Fee', 'fair-audience' ) }
+					onRequestClose={ () => setIsCreateModalOpen( false ) }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<TextControl
-						label={__('Name', 'fair-audience')}
-						value={feeName}
-						onChange={setFeeName}
-						placeholder={__('Enter fee name...', 'fair-audience')}
+						label={ __( 'Name', 'fair-audience' ) }
+						value={ feeName }
+						onChange={ setFeeName }
+						placeholder={ __(
+							'Enter fee name...',
+							'fair-audience'
+						) }
 					/>
 
 					<TextareaControl
-						label={__('Description', 'fair-audience')}
-						value={feeDescription}
-						onChange={setFeeDescription}
-						placeholder={__(
+						label={ __( 'Description', 'fair-audience' ) }
+						value={ feeDescription }
+						onChange={ setFeeDescription }
+						placeholder={ __(
 							'Enter description (optional)...',
 							'fair-audience'
-						)}
+						) }
 					/>
 
 					<SelectControl
-						label={__('Group', 'fair-audience')}
-						value={feeGroupId}
-						options={groupOptions}
-						onChange={setFeeGroupId}
+						label={ __( 'Group', 'fair-audience' ) }
+						value={ feeGroupId }
+						options={ groupOptions }
+						onChange={ setFeeGroupId }
 					/>
 
 					<TextControl
-						label={__('Amount', 'fair-audience')}
+						label={ __( 'Amount', 'fair-audience' ) }
 						type="number"
-						value={feeAmount}
-						onChange={setFeeAmount}
+						value={ feeAmount }
+						onChange={ setFeeAmount }
 						min="0"
 						step="0.01"
 						placeholder="0.00"
 					/>
 
 					<TextControl
-						label={__('Due Date', 'fair-audience')}
+						label={ __( 'Due Date', 'fair-audience' ) }
 						type="date"
-						value={feeDueDate}
-						onChange={setFeeDueDate}
+						value={ feeDueDate }
+						onChange={ setFeeDueDate }
 					/>
 
 					<SelectControl
-						label={__('Budget', 'fair-audience')}
-						value={feeBudgetId}
-						options={budgetOptions}
-						onChange={setFeeBudgetId}
-						help={__(
+						label={ __( 'Budget', 'fair-audience' ) }
+						value={ feeBudgetId }
+						options={ budgetOptions }
+						onChange={ setFeeBudgetId }
+						help={ __(
 							'Optionally link to a budget for financial tracking.',
 							'fair-audience'
-						)}
+						) }
 					/>
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setIsCreateModalOpen(false)}
+							onClick={ () => setIsCreateModalOpen( false ) }
 						>
-							{__('Cancel', 'fair-audience')}
+							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleCreateFee}
+							onClick={ handleCreateFee }
 							disabled={
-								!feeName.trim() ||
-								!feeGroupId ||
-								!feeAmount ||
+								! feeName.trim() ||
+								! feeGroupId ||
+								! feeAmount ||
 								isSaving
 							}
-							isBusy={isSaving}
+							isBusy={ isSaving }
 						>
-							{__('Create', 'fair-audience')}
+							{ __( 'Create', 'fair-audience' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 
-			{/* Edit Fee Modal */}
-			{isEditModalOpen && editingFee && (
+			{ /* Edit Fee Modal */ }
+			{ isEditModalOpen && editingFee && (
 				<Modal
-					title={__('Edit Fee', 'fair-audience')}
-					onRequestClose={() => {
-						setIsEditModalOpen(false);
-						setEditingFee(null);
-					}}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Edit Fee', 'fair-audience' ) }
+					onRequestClose={ () => {
+						setIsEditModalOpen( false );
+						setEditingFee( null );
+					} }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<TextControl
-						label={__('Name', 'fair-audience')}
-						value={feeName}
-						onChange={setFeeName}
+						label={ __( 'Name', 'fair-audience' ) }
+						value={ feeName }
+						onChange={ setFeeName }
 					/>
 
 					<TextareaControl
-						label={__('Description', 'fair-audience')}
-						value={feeDescription}
-						onChange={setFeeDescription}
+						label={ __( 'Description', 'fair-audience' ) }
+						value={ feeDescription }
+						onChange={ setFeeDescription }
 					/>
 
 					<TextControl
-						label={__('Due Date', 'fair-audience')}
+						label={ __( 'Due Date', 'fair-audience' ) }
 						type="date"
-						value={feeDueDate}
-						onChange={setFeeDueDate}
+						value={ feeDueDate }
+						onChange={ setFeeDueDate }
 					/>
 
 					<SelectControl
-						label={__('Status', 'fair-audience')}
-						value={editingFee.status}
-						options={[
+						label={ __( 'Status', 'fair-audience' ) }
+						value={ editingFee.status }
+						options={ [
 							{
-								label: __('Draft', 'fair-audience'),
+								label: __( 'Draft', 'fair-audience' ),
 								value: 'draft',
 							},
 							{
-								label: __('Active', 'fair-audience'),
+								label: __( 'Active', 'fair-audience' ),
 								value: 'active',
 							},
 							{
-								label: __('Closed', 'fair-audience'),
+								label: __( 'Closed', 'fair-audience' ),
 								value: 'closed',
 							},
-						]}
-						onChange={(value) =>
-							setEditingFee({ ...editingFee, status: value })
+						] }
+						onChange={ ( value ) =>
+							setEditingFee( { ...editingFee, status: value } )
 						}
 					/>
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => {
-								setIsEditModalOpen(false);
-								setEditingFee(null);
-							}}
+							onClick={ () => {
+								setIsEditModalOpen( false );
+								setEditingFee( null );
+							} }
 						>
-							{__('Cancel', 'fair-audience')}
+							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleUpdateFee}
-							disabled={!feeName.trim() || isSaving}
-							isBusy={isSaving}
+							onClick={ handleUpdateFee }
+							disabled={ ! feeName.trim() || isSaving }
+							isBusy={ isSaving }
 						>
-							{__('Update', 'fair-audience')}
+							{ __( 'Update', 'fair-audience' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 }

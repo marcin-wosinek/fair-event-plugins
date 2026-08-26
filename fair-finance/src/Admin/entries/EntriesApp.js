@@ -30,35 +30,35 @@ import { buildEntriesCsv, downloadCsv } from './exportEntriesCsv.js';
 
 const eventsEnabled = window.fairPaymentSettings?.eventsEnabled === '1';
 
-const getEventUrlLabel = (url) => {
+const getEventUrlLabel = ( url ) => {
 	try {
-		const parsed = new URL(url);
-		const path = parsed.pathname.replace(/\/$/, '');
-		const segment = path.split('/').pop();
-		return segment ? segment.replace(/-/g, ' ') : parsed.hostname;
+		const parsed = new URL( url );
+		const path = parsed.pathname.replace( /\/$/, '' );
+		const segment = path.split( '/' ).pop();
+		return segment ? segment.replace( /-/g, ' ' ) : parsed.hostname;
 	} catch {
 		return url;
 	}
 };
 
 const EntriesApp = () => {
-	const [entries, setEntries] = useState([]);
-	const [budgets, setBudgets] = useState([]);
-	const [eventUrls, setEventUrls] = useState([]);
-	const [eventDateOptions, setEventDateOptions] = useState([]);
-	const [tags, setTags] = useState([]);
-	const [tagTotals, setTagTotals] = useState({});
-	const [totals, setTotals] = useState({
+	const [ entries, setEntries ] = useState( [] );
+	const [ budgets, setBudgets ] = useState( [] );
+	const [ eventUrls, setEventUrls ] = useState( [] );
+	const [ eventDateOptions, setEventDateOptions ] = useState( [] );
+	const [ tags, setTags ] = useState( [] );
+	const [ tagTotals, setTagTotals ] = useState( {} );
+	const [ totals, setTotals ] = useState( {
 		total_cost: 0,
 		total_income: 0,
 		balance: 0,
-	});
-	const [pagination, setPagination] = useState({
+	} );
+	const [ pagination, setPagination ] = useState( {
 		total: 0,
 		pages: 0,
 		page: 1,
-	});
-	const [filters, setFilters] = useState({
+	} );
+	const [ filters, setFilters ] = useState( {
 		date_from: '',
 		date_to: '',
 		budget_id: '',
@@ -67,269 +67,269 @@ const EntriesApp = () => {
 		tag: '',
 		entry_type: '',
 		unmatched: false,
-	});
-	const [sort, setSort] = useState({
+	} );
+	const [ sort, setSort ] = useState( {
 		orderby: 'entry_date',
 		order: 'desc',
-	});
-	const [loading, setLoading] = useState(true);
-	const [exportLoading, setExportLoading] = useState(false);
-	const [error, setError] = useState(null);
-	const [success, setSuccess] = useState(null);
+	} );
+	const [ loading, setLoading ] = useState( true );
+	const [ exportLoading, setExportLoading ] = useState( false );
+	const [ error, setError ] = useState( null );
+	const [ success, setSuccess ] = useState( null );
 
 	// Modal states
-	const [isFormOpen, setIsFormOpen] = useState(false);
-	const [editingEntry, setEditingEntry] = useState(null);
-	const [matchingEntry, setMatchingEntry] = useState(null);
-	const [isImportOpen, setIsImportOpen] = useState(false);
-	const [splittingEntry, setSplittingEntry] = useState(null);
-	const [isTransferOpen, setIsTransferOpen] = useState(false);
-	const [transferEntry, setTransferEntry] = useState(null);
-	const [expandedEntries, setExpandedEntries] = useState({});
+	const [ isFormOpen, setIsFormOpen ] = useState( false );
+	const [ editingEntry, setEditingEntry ] = useState( null );
+	const [ matchingEntry, setMatchingEntry ] = useState( null );
+	const [ isImportOpen, setIsImportOpen ] = useState( false );
+	const [ splittingEntry, setSplittingEntry ] = useState( null );
+	const [ isTransferOpen, setIsTransferOpen ] = useState( false );
+	const [ transferEntry, setTransferEntry ] = useState( null );
+	const [ expandedEntries, setExpandedEntries ] = useState( {} );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadBudgets();
 
-		const params = new URLSearchParams(window.location.search);
-		const budgetId = params.get('budget_id');
-		if (budgetId) {
-			setFilters((prev) => ({ ...prev, budget_id: budgetId }));
+		const params = new URLSearchParams( window.location.search );
+		const budgetId = params.get( 'budget_id' );
+		if ( budgetId ) {
+			setFilters( ( prev ) => ( { ...prev, budget_id: budgetId } ) );
 		}
-		if (eventsEnabled) {
+		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
 
-			const params = new URLSearchParams(window.location.search);
-			const eventDateId = params.get('event_date_id');
-			if (eventDateId) {
-				setFilters((prev) => ({
+			const params = new URLSearchParams( window.location.search );
+			const eventDateId = params.get( 'event_date_id' );
+			if ( eventDateId ) {
+				setFilters( ( prev ) => ( {
 					...prev,
 					event_date_id: eventDateId,
-				}));
+				} ) );
 			}
 		}
 		loadTags();
-	}, []);
+	}, [] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadEntries();
 		loadTotals();
 		loadTagTotals();
-	}, [filters, pagination.page, sort]);
+	}, [ filters, pagination.page, sort ] );
 
 	const loadBudgets = async () => {
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-finance/v1/budgets',
-			});
-			setBudgets(data);
-		} catch (err) {
-			console.error('Failed to load budgets:', err);
+			} );
+			setBudgets( data );
+		} catch ( err ) {
+			console.error( 'Failed to load budgets:', err );
 		}
 	};
 
 	const loadEventUrls = async () => {
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-finance/v1/financial-entries/event-urls',
-			});
-			setEventUrls(data);
-		} catch (err) {
-			console.error('Failed to load event URLs:', err);
+			} );
+			setEventUrls( data );
+		} catch ( err ) {
+			console.error( 'Failed to load event URLs:', err );
 		}
 	};
 
 	const loadEventDateOptions = async () => {
 		try {
-			const ids = await apiFetch({
+			const ids = await apiFetch( {
 				path: '/fair-finance/v1/financial-entries/event-date-ids',
-			});
-			if (ids.length === 0) {
-				setEventDateOptions([]);
+			} );
+			if ( ids.length === 0 ) {
+				setEventDateOptions( [] );
 				return;
 			}
 			try {
-				const events = await apiFetch({
-					path: `/fair-events/v1/event-dates/batch?ids=${ids.join(
+				const events = await apiFetch( {
+					path: `/fair-events/v1/event-dates/batch?ids=${ ids.join(
 						','
-					)}`,
-				});
+					) }`,
+				} );
 				setEventDateOptions(
-					events.map((event) => ({
+					events.map( ( event ) => ( {
 						label:
 							event.title ||
-							getEventUrlLabel(event.display_url || ''),
+							getEventUrlLabel( event.display_url || '' ),
 						value: event.id.toString(),
-					}))
+					} ) )
 				);
 			} catch {
 				// fair-events not available, fall back to bare IDs.
 				setEventDateOptions(
-					ids.map((id) => ({
-						label: `#${id}`,
+					ids.map( ( id ) => ( {
+						label: `#${ id }`,
 						value: id.toString(),
-					}))
+					} ) )
 				);
 			}
-		} catch (err) {
-			console.error('Failed to load event date IDs:', err);
+		} catch ( err ) {
+			console.error( 'Failed to load event date IDs:', err );
 		}
 	};
 
 	const loadTags = async () => {
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-finance/v1/financial-entries/tags',
-			});
-			setTags(Array.isArray(data) ? data : []);
-		} catch (err) {
-			console.error('Failed to load tags:', err);
+			} );
+			setTags( Array.isArray( data ) ? data : [] );
+		} catch ( err ) {
+			console.error( 'Failed to load tags:', err );
 		}
 	};
 
 	const loadTagTotals = async () => {
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-finance/v1/financial-entries/totals-by-tag',
-			});
-			setTagTotals(data || {});
-		} catch (err) {
-			console.error('Failed to load tag totals:', err);
+			} );
+			setTagTotals( data || {} );
+		} catch ( err ) {
+			console.error( 'Failed to load tag totals:', err );
 		}
 	};
 
 	const loadEntries = async () => {
-		setLoading(true);
-		setError(null);
+		setLoading( true );
+		setError( null );
 
 		try {
 			const params = new URLSearchParams();
-			params.append('page', pagination.page);
-			params.append('per_page', 50);
+			params.append( 'page', pagination.page );
+			params.append( 'per_page', 50 );
 
-			if (filters.date_from)
-				params.append('date_from', filters.date_from);
-			if (filters.date_to) params.append('date_to', filters.date_to);
-			if (filters.budget_id)
-				params.append('budget_id', filters.budget_id);
-			if (filters.event_url)
-				params.append('event_url', filters.event_url);
-			if (filters.event_date_id)
-				params.append('event_date_id', filters.event_date_id);
-			if (filters.tag) params.append('tag', filters.tag);
-			if (filters.entry_type)
-				params.append('entry_type', filters.entry_type);
-			if (filters.unmatched) params.append('unmatched', 'true');
-			params.append('orderby', sort.orderby);
-			params.append('order', sort.order);
+			if ( filters.date_from )
+				params.append( 'date_from', filters.date_from );
+			if ( filters.date_to ) params.append( 'date_to', filters.date_to );
+			if ( filters.budget_id )
+				params.append( 'budget_id', filters.budget_id );
+			if ( filters.event_url )
+				params.append( 'event_url', filters.event_url );
+			if ( filters.event_date_id )
+				params.append( 'event_date_id', filters.event_date_id );
+			if ( filters.tag ) params.append( 'tag', filters.tag );
+			if ( filters.entry_type )
+				params.append( 'entry_type', filters.entry_type );
+			if ( filters.unmatched ) params.append( 'unmatched', 'true' );
+			params.append( 'orderby', sort.orderby );
+			params.append( 'order', sort.order );
 
-			const data = await apiFetch({
-				path: `/fair-finance/v1/financial-entries?${params.toString()}`,
-			});
+			const data = await apiFetch( {
+				path: `/fair-finance/v1/financial-entries?${ params.toString() }`,
+			} );
 
-			setEntries(data.entries);
-			setPagination((prev) => ({
+			setEntries( data.entries );
+			setPagination( ( prev ) => ( {
 				...prev,
 				total: data.total,
 				pages: data.pages,
-			}));
-		} catch (err) {
+			} ) );
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to load entries.', 'fair-payments-connector')
+					__( 'Failed to load entries.', 'fair-payments-connector' )
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
 	const loadTotals = async () => {
 		try {
 			const params = new URLSearchParams();
-			if (filters.date_from)
-				params.append('date_from', filters.date_from);
-			if (filters.date_to) params.append('date_to', filters.date_to);
-			if (filters.budget_id)
-				params.append('budget_id', filters.budget_id);
-			if (filters.event_url)
-				params.append('event_url', filters.event_url);
-			if (filters.event_date_id)
-				params.append('event_date_id', filters.event_date_id);
-			if (filters.tag) params.append('tag', filters.tag);
-			if (filters.unmatched) params.append('unmatched', 'true');
+			if ( filters.date_from )
+				params.append( 'date_from', filters.date_from );
+			if ( filters.date_to ) params.append( 'date_to', filters.date_to );
+			if ( filters.budget_id )
+				params.append( 'budget_id', filters.budget_id );
+			if ( filters.event_url )
+				params.append( 'event_url', filters.event_url );
+			if ( filters.event_date_id )
+				params.append( 'event_date_id', filters.event_date_id );
+			if ( filters.tag ) params.append( 'tag', filters.tag );
+			if ( filters.unmatched ) params.append( 'unmatched', 'true' );
 
-			const data = await apiFetch({
-				path: `/fair-finance/v1/financial-entries/totals?${params.toString()}`,
-			});
+			const data = await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/totals?${ params.toString() }`,
+			} );
 
-			setTotals(data);
-		} catch (err) {
-			console.error('Failed to load totals:', err);
+			setTotals( data );
+		} catch ( err ) {
+			console.error( 'Failed to load totals:', err );
 		}
 	};
 
 	const exportCsv = async () => {
-		setExportLoading(true);
+		setExportLoading( true );
 		try {
 			const params = new URLSearchParams();
-			if (filters.date_from)
-				params.append('date_from', filters.date_from);
-			if (filters.date_to) params.append('date_to', filters.date_to);
-			if (filters.budget_id)
-				params.append('budget_id', filters.budget_id);
-			if (filters.event_url)
-				params.append('event_url', filters.event_url);
-			if (filters.event_date_id)
-				params.append('event_date_id', filters.event_date_id);
-			if (filters.tag) params.append('tag', filters.tag);
-			if (filters.entry_type)
-				params.append('entry_type', filters.entry_type);
-			if (filters.unmatched) params.append('unmatched', 'true');
-			params.append('orderby', sort.orderby);
-			params.append('order', sort.order);
-			params.append('per_page', 100);
+			if ( filters.date_from )
+				params.append( 'date_from', filters.date_from );
+			if ( filters.date_to ) params.append( 'date_to', filters.date_to );
+			if ( filters.budget_id )
+				params.append( 'budget_id', filters.budget_id );
+			if ( filters.event_url )
+				params.append( 'event_url', filters.event_url );
+			if ( filters.event_date_id )
+				params.append( 'event_date_id', filters.event_date_id );
+			if ( filters.tag ) params.append( 'tag', filters.tag );
+			if ( filters.entry_type )
+				params.append( 'entry_type', filters.entry_type );
+			if ( filters.unmatched ) params.append( 'unmatched', 'true' );
+			params.append( 'orderby', sort.orderby );
+			params.append( 'order', sort.order );
+			params.append( 'per_page', 100 );
 
 			let allEntries = [];
 			let page = 1;
 			let totalPages = 1;
 			do {
-				params.set('page', page);
-				const data = await apiFetch({
-					path: `/fair-finance/v1/financial-entries?${params.toString()}`,
-				});
-				allEntries = allEntries.concat(data.entries);
+				params.set( 'page', page );
+				const data = await apiFetch( {
+					path: `/fair-finance/v1/financial-entries?${ params.toString() }`,
+				} );
+				allEntries = allEntries.concat( data.entries );
 				totalPages = data.pages;
 				page++;
-			} while (page <= totalPages);
+			} while ( page <= totalPages );
 
 			const scope = filters.budget_id
-				? `budget-${filters.budget_id}`
+				? `budget-${ filters.budget_id }`
 				: 'all';
-			const filename = `fair-finance-entries-${scope}.csv`;
-			downloadCsv(buildEntriesCsv(allEntries, budgets), filename);
-		} catch (err) {
+			const filename = `fair-finance-entries-${ scope }.csv`;
+			downloadCsv( buildEntriesCsv( allEntries, budgets ), filename );
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to export entries.', 'fair-payments-connector')
+					__( 'Failed to export entries.', 'fair-payments-connector' )
 			);
 		} finally {
-			setExportLoading(false);
+			setExportLoading( false );
 		}
 	};
 
 	const handleCreate = () => {
-		setEditingEntry(null);
-		setIsFormOpen(true);
+		setEditingEntry( null );
+		setIsFormOpen( true );
 	};
 
-	const handleEdit = (entry) => {
-		setEditingEntry(entry);
-		setIsFormOpen(true);
+	const handleEdit = ( entry ) => {
+		setEditingEntry( entry );
+		setIsFormOpen( true );
 	};
 
-	const handleDelete = async (id) => {
+	const handleDelete = async ( id ) => {
 		if (
-			!window.confirm(
+			! window.confirm(
 				__(
 					'Are you sure you want to delete this entry?',
 					'fair-payments-connector'
@@ -339,60 +339,60 @@ const EntriesApp = () => {
 			return;
 		}
 
-		setError(null);
-		setSuccess(null);
+		setError( null );
+		setSuccess( null );
 
 		try {
-			await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${id}`,
+			await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ id }`,
 				method: 'DELETE',
-			});
+			} );
 			setSuccess(
-				__('Entry deleted successfully.', 'fair-payments-connector')
+				__( 'Entry deleted successfully.', 'fair-payments-connector' )
 			);
 			loadEntries();
 			loadTotals();
-			if (eventsEnabled) {
+			if ( eventsEnabled ) {
 				loadEventUrls();
 				loadEventDateOptions();
 			}
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to delete entry.', 'fair-payments-connector')
+					__( 'Failed to delete entry.', 'fair-payments-connector' )
 			);
 		}
 	};
 
 	const handleFormSave = () => {
-		setIsFormOpen(false);
-		setEditingEntry(null);
+		setIsFormOpen( false );
+		setEditingEntry( null );
 		setSuccess(
 			editingEntry
-				? __('Entry updated successfully.', 'fair-payments-connector')
-				: __('Entry created successfully.', 'fair-payments-connector')
+				? __( 'Entry updated successfully.', 'fair-payments-connector' )
+				: __( 'Entry created successfully.', 'fair-payments-connector' )
 		);
 		loadEntries();
 		loadTotals();
 		loadTags();
-		if (eventsEnabled) {
+		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
 		}
 	};
 
 	const handleFormCancel = () => {
-		setIsFormOpen(false);
-		setEditingEntry(null);
+		setIsFormOpen( false );
+		setEditingEntry( null );
 	};
 
-	const handleMatch = (entry) => {
-		setMatchingEntry(entry);
+	const handleMatch = ( entry ) => {
+		setMatchingEntry( entry );
 	};
 
-	const handleUnmatch = async (id) => {
+	const handleUnmatch = async ( id ) => {
 		if (
-			!window.confirm(
+			! window.confirm(
 				__(
 					'Are you sure you want to unmatch this entry from its transaction?',
 					'fair-payments-connector'
@@ -403,83 +403,83 @@ const EntriesApp = () => {
 		}
 
 		try {
-			await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${id}/match`,
+			await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ id }/match`,
 				method: 'DELETE',
-			});
+			} );
 			setSuccess(
-				__('Entry unmatched successfully.', 'fair-payments-connector')
+				__( 'Entry unmatched successfully.', 'fair-payments-connector' )
 			);
 			loadEntries();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to unmatch entry.', 'fair-payments-connector')
+					__( 'Failed to unmatch entry.', 'fair-payments-connector' )
 			);
 		}
 	};
 
 	const handleMatchComplete = () => {
-		setMatchingEntry(null);
+		setMatchingEntry( null );
 		setSuccess(
-			__('Entry matched to transaction.', 'fair-payments-connector')
+			__( 'Entry matched to transaction.', 'fair-payments-connector' )
 		);
 		loadEntries();
 	};
 
 	const handleMatchCancel = () => {
-		setMatchingEntry(null);
+		setMatchingEntry( null );
 	};
 
 	const handleImport = () => {
-		setIsImportOpen(true);
+		setIsImportOpen( true );
 	};
 
 	const handleImportComplete = () => {
-		setIsImportOpen(false);
+		setIsImportOpen( false );
 		setSuccess(
-			__('Entries imported successfully.', 'fair-payments-connector')
+			__( 'Entries imported successfully.', 'fair-payments-connector' )
 		);
 		loadEntries();
 		loadTotals();
-		if (eventsEnabled) {
+		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
 		}
 	};
 
 	const handleImportCancel = () => {
-		setIsImportOpen(false);
+		setIsImportOpen( false );
 	};
 
-	const handleSplit = (entry) => {
-		setSplittingEntry(entry);
+	const handleSplit = ( entry ) => {
+		setSplittingEntry( entry );
 	};
 
 	const handleSplitComplete = () => {
 		const wasEdit =
 			splittingEntry?.children && splittingEntry.children.length > 0;
-		setSplittingEntry(null);
+		setSplittingEntry( null );
 		setSuccess(
 			wasEdit
-				? __('Split updated successfully.', 'fair-payments-connector')
-				: __('Entry split successfully.', 'fair-payments-connector')
+				? __( 'Split updated successfully.', 'fair-payments-connector' )
+				: __( 'Entry split successfully.', 'fair-payments-connector' )
 		);
 		loadEntries();
 		loadTotals();
-		if (eventsEnabled) {
+		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
 		}
 	};
 
 	const handleSplitCancel = () => {
-		setSplittingEntry(null);
+		setSplittingEntry( null );
 	};
 
-	const handleUnsplit = async (id) => {
+	const handleUnsplit = async ( id ) => {
 		if (
-			!window.confirm(
+			! window.confirm(
 				__(
 					'Are you sure you want to unsplit this entry? All child allocations will be deleted.',
 					'fair-payments-connector'
@@ -490,41 +490,41 @@ const EntriesApp = () => {
 		}
 
 		try {
-			await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${id}/split`,
+			await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ id }/split`,
 				method: 'DELETE',
-			});
-			setSplittingEntry(null);
+			} );
+			setSplittingEntry( null );
 			setSuccess(
-				__('Entry unsplit successfully.', 'fair-payments-connector')
+				__( 'Entry unsplit successfully.', 'fair-payments-connector' )
 			);
 			loadEntries();
 			loadTotals();
-			if (eventsEnabled) {
+			if ( eventsEnabled ) {
 				loadEventUrls();
 				loadEventDateOptions();
 			}
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to unsplit entry.', 'fair-payments-connector')
+					__( 'Failed to unsplit entry.', 'fair-payments-connector' )
 			);
 		}
 	};
 
 	const handleTransfer = () => {
-		setTransferEntry(null);
-		setIsTransferOpen(true);
+		setTransferEntry( null );
+		setIsTransferOpen( true );
 	};
 
-	const handleEditTransfer = (entry) => {
-		setTransferEntry(entry);
-		setIsTransferOpen(true);
+	const handleEditTransfer = ( entry ) => {
+		setTransferEntry( entry );
+		setIsTransferOpen( true );
 	};
 
 	const handleTransferSave = () => {
-		setIsTransferOpen(false);
-		setTransferEntry(null);
+		setIsTransferOpen( false );
+		setTransferEntry( null );
 		setSuccess(
 			transferEntry
 				? __(
@@ -538,45 +538,45 @@ const EntriesApp = () => {
 		);
 		loadEntries();
 		loadTotals();
-		if (eventsEnabled) {
+		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
 		}
 	};
 
 	const handleTransferCancel = () => {
-		setIsTransferOpen(false);
-		setTransferEntry(null);
+		setIsTransferOpen( false );
+		setTransferEntry( null );
 	};
 
-	const toggleExpanded = (entryId) => {
-		setExpandedEntries((prev) => ({
+	const toggleExpanded = ( entryId ) => {
+		setExpandedEntries( ( prev ) => ( {
 			...prev,
-			[entryId]: !prev[entryId],
-		}));
+			[ entryId ]: ! prev[ entryId ],
+		} ) );
 	};
 
-	const handleFilterChange = (key, value) => {
-		setFilters((prev) => ({ ...prev, [key]: value }));
-		setPagination((prev) => ({ ...prev, page: 1 }));
+	const handleFilterChange = ( key, value ) => {
+		setFilters( ( prev ) => ( { ...prev, [ key ]: value } ) );
+		setPagination( ( prev ) => ( { ...prev, page: 1 } ) );
 	};
 
-	const handlePageChange = (newPage) => {
-		setPagination((prev) => ({ ...prev, page: newPage }));
+	const handlePageChange = ( newPage ) => {
+		setPagination( ( prev ) => ( { ...prev, page: newPage } ) );
 	};
 
-	const handleSort = (column) => {
-		setSort((prev) => ({
+	const handleSort = ( column ) => {
+		setSort( ( prev ) => ( {
 			orderby: column,
 			order:
 				prev.orderby === column && prev.order === 'desc'
 					? 'asc'
 					: 'desc',
-		}));
-		setPagination((prev) => ({ ...prev, page: 1 }));
+		} ) );
+		setPagination( ( prev ) => ( { ...prev, page: 1 } ) );
 	};
 
-	const SortableHeader = ({ column, children }) => {
+	const SortableHeader = ( { column, children } ) => {
 		const isActive = sort.orderby === column;
 		const arrow = isActive
 			? sort.order === 'asc'
@@ -585,209 +585,221 @@ const EntriesApp = () => {
 			: '';
 		return (
 			<th
-				style={{ cursor: 'pointer', userSelect: 'none' }}
-				onClick={() => handleSort(column)}
+				style={ { cursor: 'pointer', userSelect: 'none' } }
+				onClick={ () => handleSort( column ) }
 			>
-				{children}
-				{arrow}
+				{ children }
+				{ arrow }
 			</th>
 		);
 	};
 
-	const formatAmount = (amount) => {
-		return new Intl.NumberFormat('en-US', {
+	const formatAmount = ( amount ) => {
+		return new Intl.NumberFormat( 'en-US', {
 			style: 'currency',
 			currency: 'EUR',
-		}).format(amount);
+		} ).format( amount );
 	};
 
-	const getBudgetName = (budgetId) => {
-		const budget = budgets.find((b) => b.id === budgetId);
+	const getBudgetName = ( budgetId ) => {
+		const budget = budgets.find( ( b ) => b.id === budgetId );
 		return budget ? budget.name : '-';
 	};
 
 	const budgetOptions = [
-		{ label: __('All Budgets', 'fair-payments-connector'), value: '' },
-		...budgets.map((budget) => ({
+		{ label: __( 'All Budgets', 'fair-payments-connector' ), value: '' },
+		...budgets.map( ( budget ) => ( {
 			label: budget.name,
 			value: budget.id.toString(),
-		})),
-		{ label: __('Unbudgeted', 'fair-payments-connector'), value: 'none' },
+		} ) ),
+		{ label: __( 'Unbudgeted', 'fair-payments-connector' ), value: 'none' },
 	];
 
 	const eventUrlOptions = [
-		{ label: __('All Links', 'fair-payments-connector'), value: '' },
-		...eventUrls.map((url) => ({
-			label: getEventUrlLabel(url),
+		{ label: __( 'All Links', 'fair-payments-connector' ), value: '' },
+		...eventUrls.map( ( url ) => ( {
+			label: getEventUrlLabel( url ),
 			value: url,
-		})),
+		} ) ),
 	];
 
 	return (
 		<div className="wrap fair-finance-entries-page">
-			<VStack spacing={4}>
-				{/* Totals Summary */}
+			<VStack spacing={ 4 }>
+				{ /* Totals Summary */ }
 				<Card>
 					<CardBody>
 						<HStack
 							justify="space-around"
 							className="fair-finance-entries-summary"
 						>
-							<div style={{ textAlign: 'center' }}>
+							<div style={ { textAlign: 'center' } }>
 								<div
-									style={{
+									style={ {
 										fontSize: '24px',
 										fontWeight: 'bold',
 										color: '#d63638',
-									}}
+									} }
 								>
-									{formatAmount(totals.total_cost)}
+									{ formatAmount( totals.total_cost ) }
 								</div>
-								<div style={{ color: '#666' }}>
-									{__(
+								<div style={ { color: '#666' } }>
+									{ __(
 										'Total Costs',
 										'fair-payments-connector'
-									)}
+									) }
 								</div>
 							</div>
-							<div style={{ textAlign: 'center' }}>
+							<div style={ { textAlign: 'center' } }>
 								<div
-									style={{
+									style={ {
 										fontSize: '24px',
 										fontWeight: 'bold',
 										color: '#007017',
-									}}
+									} }
 								>
-									{formatAmount(totals.total_income)}
+									{ formatAmount( totals.total_income ) }
 								</div>
-								<div style={{ color: '#666' }}>
-									{__(
+								<div style={ { color: '#666' } }>
+									{ __(
 										'Total Income',
 										'fair-payments-connector'
-									)}
+									) }
 								</div>
 							</div>
-							<div style={{ textAlign: 'center' }}>
+							<div style={ { textAlign: 'center' } }>
 								<div
-									style={{
+									style={ {
 										fontSize: '24px',
 										fontWeight: 'bold',
 										color:
 											totals.balance >= 0
 												? '#007017'
 												: '#d63638',
-									}}
+									} }
 								>
-									{formatAmount(totals.balance)}
+									{ formatAmount( totals.balance ) }
 								</div>
-								<div style={{ color: '#666' }}>
-									{__('Balance', 'fair-payments-connector')}
+								<div style={ { color: '#666' } }>
+									{ __(
+										'Balance',
+										'fair-payments-connector'
+									) }
 								</div>
 							</div>
 						</HStack>
 					</CardBody>
 				</Card>
 
-				{/* Tag Chart */}
-				{Object.keys(tagTotals).length > 0 && (
+				{ /* Tag Chart */ }
+				{ Object.keys( tagTotals ).length > 0 && (
 					<Card>
 						<CardBody>
-							<TagChart data={tagTotals} />
+							<TagChart data={ tagTotals } />
 						</CardBody>
 					</Card>
-				)}
+				) }
 
-				{/* Main Entries Card */}
+				{ /* Main Entries Card */ }
 				<Card>
 					<CardHeader>
 						<HStack justify="space-between">
 							<h1>
-								{__(
+								{ __(
 									'Financial Entries',
 									'fair-payments-connector'
-								)}
+								) }
 							</h1>
-							<div style={{ display: 'flex', gap: '8px' }}>
+							<div style={ { display: 'flex', gap: '8px' } }>
 								<Button
 									variant="primary"
-									onClick={handleCreate}
+									onClick={ handleCreate }
 								>
-									{__('Add Entry', 'fair-payments-connector')}
+									{ __(
+										'Add Entry',
+										'fair-payments-connector'
+									) }
 								</Button>
 								<Button
 									variant="secondary"
-									onClick={handleTransfer}
+									onClick={ handleTransfer }
 								>
-									{__('Transfer', 'fair-payments-connector')}
+									{ __(
+										'Transfer',
+										'fair-payments-connector'
+									) }
 								</Button>
 								<Button
 									variant="secondary"
-									onClick={handleImport}
+									onClick={ handleImport }
 								>
-									{__('Import', 'fair-payments-connector')}
+									{ __(
+										'Import',
+										'fair-payments-connector'
+									) }
 								</Button>
 								<Button
 									variant="secondary"
-									onClick={exportCsv}
+									onClick={ exportCsv }
 									disabled={
 										exportLoading || entries.length === 0
 									}
-									isBusy={exportLoading}
+									isBusy={ exportLoading }
 								>
-									{__(
+									{ __(
 										'Export CSV',
 										'fair-payments-connector'
-									)}
+									) }
 								</Button>
 							</div>
 						</HStack>
 					</CardHeader>
 					<CardBody>
-						<VStack spacing={4}>
-							{/* Filters */}
-							<HStack spacing={3} wrap>
+						<VStack spacing={ 4 }>
+							{ /* Filters */ }
+							<HStack spacing={ 3 } wrap>
 								<TextControl
-									label={__(
+									label={ __(
 										'From Date',
 										'fair-payments-connector'
-									)}
-									value={filters.date_from}
-									onChange={(value) =>
-										handleFilterChange('date_from', value)
+									) }
+									value={ filters.date_from }
+									onChange={ ( value ) =>
+										handleFilterChange( 'date_from', value )
 									}
 									type="date"
 								/>
 								<TextControl
-									label={__(
+									label={ __(
 										'To Date',
 										'fair-payments-connector'
-									)}
-									value={filters.date_to}
-									onChange={(value) =>
-										handleFilterChange('date_to', value)
+									) }
+									value={ filters.date_to }
+									onChange={ ( value ) =>
+										handleFilterChange( 'date_to', value )
 									}
 									type="date"
 								/>
 								<SelectControl
-									label={__(
+									label={ __(
 										'Budget',
 										'fair-payments-connector'
-									)}
-									value={filters.budget_id}
-									options={budgetOptions}
-									onChange={(value) =>
-										handleFilterChange('budget_id', value)
+									) }
+									value={ filters.budget_id }
+									options={ budgetOptions }
+									onChange={ ( value ) =>
+										handleFilterChange( 'budget_id', value )
 									}
 								/>
-								{eventsEnabled &&
+								{ eventsEnabled &&
 									eventDateOptions.length > 0 && (
 										<SelectControl
-											label={__(
+											label={ __(
 												'Link',
 												'fair-payments-connector'
-											)}
-											value={filters.event_date_id}
-											options={[
+											) }
+											value={ filters.event_date_id }
+											options={ [
 												{
 													label: __(
 														'All Links',
@@ -796,38 +808,38 @@ const EntriesApp = () => {
 													value: '',
 												},
 												...eventDateOptions,
-											]}
-											onChange={(value) =>
+											] }
+											onChange={ ( value ) =>
 												handleFilterChange(
 													'event_date_id',
 													value
 												)
 											}
 										/>
-									)}
-								{eventsEnabled &&
+									) }
+								{ eventsEnabled &&
 									eventDateOptions.length === 0 &&
 									eventUrls.length > 0 && (
 										<SelectControl
-											label={__(
+											label={ __(
 												'Link',
 												'fair-payments-connector'
-											)}
-											value={filters.event_url}
-											options={eventUrlOptions}
-											onChange={(value) =>
+											) }
+											value={ filters.event_url }
+											options={ eventUrlOptions }
+											onChange={ ( value ) =>
 												handleFilterChange(
 													'event_url',
 													value
 												)
 											}
 										/>
-									)}
-								{tags.length > 0 && (
+									) }
+								{ tags.length > 0 && (
 									<SelectControl
-										label={__('Tag', 'fair-finance')}
-										value={filters.tag}
-										options={[
+										label={ __( 'Tag', 'fair-finance' ) }
+										value={ filters.tag }
+										options={ [
 											{
 												label: __(
 													'All Tags',
@@ -835,23 +847,23 @@ const EntriesApp = () => {
 												),
 												value: '',
 											},
-											...tags.map((tag) => ({
+											...tags.map( ( tag ) => ( {
 												label: tag,
 												value: tag,
-											})),
-										]}
-										onChange={(value) =>
-											handleFilterChange('tag', value)
+											} ) ),
+										] }
+										onChange={ ( value ) =>
+											handleFilterChange( 'tag', value )
 										}
 									/>
-								)}
+								) }
 								<SelectControl
-									label={__(
+									label={ __(
 										'Type',
 										'fair-payments-connector'
-									)}
-									value={filters.entry_type}
-									options={[
+									) }
+									value={ filters.entry_type }
+									options={ [
 										{
 											label: __(
 												'All Types',
@@ -880,18 +892,23 @@ const EntriesApp = () => {
 											),
 											value: 'transfer',
 										},
-									]}
-									onChange={(value) =>
-										handleFilterChange('entry_type', value)
+									] }
+									onChange={ ( value ) =>
+										handleFilterChange(
+											'entry_type',
+											value
+										)
 									}
 								/>
 								<SelectControl
-									label={__(
+									label={ __(
 										'Matching',
 										'fair-payments-connector'
-									)}
-									value={filters.unmatched ? 'unmatched' : ''}
-									options={[
+									) }
+									value={
+										filters.unmatched ? 'unmatched' : ''
+									}
+									options={ [
 										{
 											label: __(
 												'All',
@@ -906,8 +923,8 @@ const EntriesApp = () => {
 											),
 											value: 'unmatched',
 										},
-									]}
-									onChange={(value) =>
+									] }
+									onChange={ ( value ) =>
 										handleFilterChange(
 											'unmatched',
 											value === 'unmatched'
@@ -916,139 +933,139 @@ const EntriesApp = () => {
 								/>
 							</HStack>
 
-							{/* Notices */}
-							{error && (
+							{ /* Notices */ }
+							{ error && (
 								<Notice
 									status="error"
 									isDismissible
-									onRemove={() => setError(null)}
+									onRemove={ () => setError( null ) }
 								>
-									{error}
+									{ error }
 								</Notice>
-							)}
+							) }
 
-							{success && (
+							{ success && (
 								<Notice
 									status="success"
 									isDismissible
-									onRemove={() => setSuccess(null)}
+									onRemove={ () => setSuccess( null ) }
 								>
-									{success}
+									{ success }
 								</Notice>
-							)}
+							) }
 
-							{/* Loading */}
-							{loading && (
+							{ /* Loading */ }
+							{ loading && (
 								<div
-									style={{
+									style={ {
 										textAlign: 'center',
 										padding: '20px',
-									}}
+									} }
 								>
 									<Spinner />
 									<p>
-										{__(
+										{ __(
 											'Loading entries...',
 											'fair-payments-connector'
-										)}
+										) }
 									</p>
 								</div>
-							)}
+							) }
 
-							{/* Empty State */}
-							{!loading && entries.length === 0 && (
+							{ /* Empty State */ }
+							{ ! loading && entries.length === 0 && (
 								<div
-									style={{
+									style={ {
 										textAlign: 'center',
 										padding: '20px',
-									}}
+									} }
 								>
 									<p>
-										{__(
+										{ __(
 											'No entries found. Add your first entry to start tracking costs and income.',
 											'fair-payments-connector'
-										)}
+										) }
 									</p>
 								</div>
-							)}
+							) }
 
-							{/* Entries Table */}
-							{!loading && entries.length > 0 && (
+							{ /* Entries Table */ }
+							{ ! loading && entries.length > 0 && (
 								<>
-									<div style={{ overflowX: 'auto' }}>
+									<div style={ { overflowX: 'auto' } }>
 										<table className="wp-list-table widefat striped">
 											<thead>
 												<tr>
 													<SortableHeader column="entry_date">
-														{__(
+														{ __(
 															'Date',
 															'fair-payments-connector'
-														)}
+														) }
 													</SortableHeader>
 													<th>
-														{__(
+														{ __(
 															'Type',
 															'fair-payments-connector'
-														)}
+														) }
 													</th>
 													<SortableHeader column="amount">
-														{__(
+														{ __(
 															'Amount',
 															'fair-payments-connector'
-														)}
+														) }
 													</SortableHeader>
 													<th>
-														{__(
+														{ __(
 															'Description',
 															'fair-payments-connector'
-														)}
+														) }
 													</th>
 													<SortableHeader column="budget_id">
-														{__(
+														{ __(
 															'Budget',
 															'fair-payments-connector'
-														)}
+														) }
 													</SortableHeader>
-													{eventsEnabled && (
+													{ eventsEnabled && (
 														<SortableHeader column="event_date_id">
-															{__(
+															{ __(
 																'Link',
 																'fair-payments-connector'
-															)}
+															) }
 														</SortableHeader>
-													)}
+													) }
 													<th>
-														{__(
+														{ __(
 															'Matched',
 															'fair-payments-connector'
-														)}
+														) }
 													</th>
 													<SortableHeader column="imported_at">
-														{__(
+														{ __(
 															'Imported',
 															'fair-payments-connector'
-														)}
+														) }
 													</SortableHeader>
 													<th>
-														{__(
+														{ __(
 															'Actions',
 															'fair-payments-connector'
-														)}
+														) }
 													</th>
 												</tr>
 											</thead>
 											<tbody>
-												{entries.map((entry) => {
+												{ entries.map( ( entry ) => {
 													const isTransfer =
 														entry.entry_type ===
 														'transfer';
 													const isSplit =
-														!isTransfer &&
+														! isTransfer &&
 														entry.children &&
 														entry.children.length >
 															0;
 													const isChild =
-														!!entry.parent_entry_id;
+														!! entry.parent_entry_id;
 													const isExpanded =
 														expandedEntries[
 															entry.id
@@ -1056,7 +1073,7 @@ const EntriesApp = () => {
 
 													return (
 														<Fragment
-															key={entry.id}
+															key={ entry.id }
 														>
 															<tr>
 																<td>
@@ -1066,7 +1083,7 @@ const EntriesApp = () => {
 																</td>
 																<td>
 																	<span
-																		style={{
+																		style={ {
 																			color: isTransfer
 																				? '#2271b1'
 																				: entry.entry_type ===
@@ -1075,9 +1092,9 @@ const EntriesApp = () => {
 																				: '#007017',
 																			fontWeight:
 																				'bold',
-																		}}
+																		} }
 																	>
-																		{isTransfer
+																		{ isTransfer
 																			? __(
 																					'Transfer',
 																					'fair-payments-connector'
@@ -1091,49 +1108,49 @@ const EntriesApp = () => {
 																			: __(
 																					'Income',
 																					'fair-payments-connector'
-																			  )}
+																			  ) }
 																	</span>
 																</td>
 																<td>
 																	<strong>
-																		{formatAmount(
+																		{ formatAmount(
 																			entry.amount
-																		)}
+																		) }
 																	</strong>
-																	{isChild && (
+																	{ isChild && (
 																		<span
-																			style={{
+																			style={ {
 																				marginLeft:
 																					'4px',
 																				color: '#2271b1',
 																				fontSize:
 																					'12px',
-																			}}
+																			} }
 																		>
-																			{__(
+																			{ __(
 																				'(split)',
 																				'fair-payments-connector'
-																			)}
+																			) }
 																		</span>
-																	)}
+																	) }
 																</td>
 																<td>
-																	{entry.description || (
+																	{ entry.description || (
 																		<em>
 																			-
 																		</em>
-																	)}
-																	{entry.participant && (
+																	) }
+																	{ entry.participant && (
 																		<div
-																			style={{
+																			style={ {
 																				fontSize:
 																					'12px',
 																				color: '#757575',
 																				marginTop:
 																					'2px',
-																			}}
+																			} }
 																		>
-																			{entry
+																			{ entry
 																				.participant
 																				.admin_url ? (
 																				<a
@@ -1142,11 +1159,11 @@ const EntriesApp = () => {
 																							.participant
 																							.admin_url
 																					}
-																					style={{
+																					style={ {
 																						color: '#2271b1',
 																						textDecoration:
 																							'none',
-																					}}
+																					} }
 																				>
 																					{
 																						entry
@@ -1158,13 +1175,13 @@ const EntriesApp = () => {
 																				entry
 																					.participant
 																					.name
-																			)}
+																			) }
 																		</div>
-																	)}
+																	) }
 																</td>
 																<td>
-																	{isTransfer ? (
-																		(() => {
+																	{ isTransfer ? (
+																		( () => {
 																			const costChild =
 																				entry.children?.find(
 																					(
@@ -1183,41 +1200,41 @@ const EntriesApp = () => {
 																				);
 																			return (
 																				<span
-																					style={{
+																					style={ {
 																						fontSize:
 																							'12px',
 																						lineHeight:
 																							'1.4',
-																					}}
+																					} }
 																				>
-																					{getBudgetName(
+																					{ getBudgetName(
 																						costChild?.budget_id
-																					)}
+																					) }
 																					<br />
 																					→
 																					<br />
-																					{getBudgetName(
+																					{ getBudgetName(
 																						incomeChild?.budget_id
-																					)}
+																					) }
 																				</span>
 																			);
-																		})()
+																		} )()
 																	) : isSplit ? (
 																		<Button
 																			variant="link"
 																			size="small"
-																			onClick={() =>
+																			onClick={ () =>
 																				toggleExpanded(
 																					entry.id
 																				)
 																			}
-																			style={{
+																			style={ {
 																				color: '#2271b1',
 																				fontWeight:
 																					'bold',
-																			}}
+																			} }
 																		>
-																			{isExpanded
+																			{ isExpanded
 																				? __(
 																						'Split \u25BE',
 																						'fair-payments-connector'
@@ -1225,18 +1242,18 @@ const EntriesApp = () => {
 																				: __(
 																						'Split \u25B8',
 																						'fair-payments-connector'
-																				  )}
+																				  ) }
 																		</Button>
 																	) : (
 																		getBudgetName(
 																			entry.budget_id
 																		)
-																	)}
+																	) }
 																</td>
 
-																{eventsEnabled && (
+																{ eventsEnabled && (
 																	<td>
-																		{entry.event_url ? (
+																		{ entry.event_url ? (
 																			<a
 																				href={
 																					entry.event_url
@@ -1246,31 +1263,31 @@ const EntriesApp = () => {
 																				title={
 																					entry.event_url
 																				}
-																				style={{
+																				style={ {
 																					fontSize:
 																						'13px',
-																				}}
+																				} }
 																			>
-																				{getEventUrlLabel(
+																				{ getEventUrlLabel(
 																					entry.event_url
-																				)}
+																				) }
 																			</a>
 																		) : isTransfer ? (
 																			<Button
 																				variant="link"
 																				size="small"
-																				onClick={() =>
+																				onClick={ () =>
 																					toggleExpanded(
 																						entry.id
 																					)
 																				}
-																				style={{
+																				style={ {
 																					color: '#2271b1',
 																					fontWeight:
 																						'bold',
-																				}}
+																				} }
 																			>
-																				{isExpanded
+																				{ isExpanded
 																					? __(
 																							'Transfer \u25BE',
 																							'fair-payments-connector'
@@ -1278,24 +1295,24 @@ const EntriesApp = () => {
 																					: __(
 																							'Transfer \u25B8',
 																							'fair-payments-connector'
-																					  )}
+																					  ) }
 																			</Button>
 																		) : isSplit ? (
 																			<Button
 																				variant="link"
 																				size="small"
-																				onClick={() =>
+																				onClick={ () =>
 																					toggleExpanded(
 																						entry.id
 																					)
 																				}
-																				style={{
+																				style={ {
 																					color: '#2271b1',
 																					fontWeight:
 																						'bold',
-																				}}
+																				} }
 																			>
-																				{isExpanded
+																				{ isExpanded
 																					? __(
 																							'Split \u25BE',
 																							'fair-payments-connector'
@@ -1303,27 +1320,27 @@ const EntriesApp = () => {
 																					: __(
 																							'Split \u25B8',
 																							'fair-payments-connector'
-																					  )}
+																					  ) }
 																			</Button>
 																		) : (
 																			<em>
 																				-
 																			</em>
-																		)}
+																		) }
 																	</td>
-																)}
+																) }
 																<td>
-																	{entry.transaction_ids &&
+																	{ entry.transaction_ids &&
 																	entry
 																		.transaction_ids
 																		.length >
 																		0 ? (
 																		<span
-																			style={{
+																			style={ {
 																				color: '#007017',
-																			}}
+																			} }
 																		>
-																			{entry
+																			{ entry
 																				.transaction_ids
 																				.length >
 																			1
@@ -1340,20 +1357,20 @@ const EntriesApp = () => {
 																				: __(
 																						'Yes',
 																						'fair-payments-connector'
-																				  )}
+																				  ) }
 																		</span>
 																	) : (
 																		<span
-																			style={{
+																			style={ {
 																				color: '#996800',
-																			}}
+																			} }
 																		>
-																			{__(
+																			{ __(
 																				'No',
 																				'fair-payments-connector'
-																			)}
+																			) }
 																		</span>
-																	)}
+																	) }
 																</td>
 																<td
 																	title={
@@ -1361,14 +1378,14 @@ const EntriesApp = () => {
 																		''
 																	}
 																>
-																	{entry.imported_at || (
+																	{ entry.imported_at || (
 																		<em>
 																			-
 																		</em>
-																	)}
+																	) }
 																</td>
 																<td>
-																	{isChild ? (
+																	{ isChild ? (
 																		<HStack
 																			spacing={
 																				1
@@ -1377,16 +1394,16 @@ const EntriesApp = () => {
 																			<Button
 																				variant="secondary"
 																				size="small"
-																				onClick={() =>
+																				onClick={ () =>
 																					handleSplit(
 																						entry.parent
 																					)
 																				}
 																			>
-																				{__(
+																				{ __(
 																					'Edit Split',
 																					'fair-payments-connector'
-																				)}
+																				) }
 																			</Button>
 																		</HStack>
 																	) : isTransfer ? (
@@ -1398,31 +1415,31 @@ const EntriesApp = () => {
 																			<Button
 																				variant="secondary"
 																				size="small"
-																				onClick={() =>
+																				onClick={ () =>
 																					handleEditTransfer(
 																						entry
 																					)
 																				}
 																			>
-																				{__(
+																				{ __(
 																					'Edit',
 																					'fair-payments-connector'
-																				)}
+																				) }
 																			</Button>
 																			<Button
 																				variant="tertiary"
 																				size="small"
 																				isDestructive
-																				onClick={() =>
+																				onClick={ () =>
 																					handleDelete(
 																						entry.id
 																					)
 																				}
 																			>
-																				{__(
+																				{ __(
 																					'Delete',
 																					'fair-payments-connector'
-																				)}
+																				) }
 																			</Button>
 																		</HStack>
 																	) : (
@@ -1434,7 +1451,7 @@ const EntriesApp = () => {
 																			<Button
 																				variant="secondary"
 																				size="small"
-																				onClick={() =>
+																				onClick={ () =>
 																					handleEdit(
 																						entry
 																					)
@@ -1443,43 +1460,43 @@ const EntriesApp = () => {
 																					isSplit
 																				}
 																			>
-																				{__(
+																				{ __(
 																					'Edit',
 																					'fair-payments-connector'
-																				)}
+																				) }
 																			</Button>
-																			{isSplit ? (
+																			{ isSplit ? (
 																				<Button
 																					variant="tertiary"
 																					size="small"
-																					onClick={() =>
+																					onClick={ () =>
 																						handleSplit(
 																							entry
 																						)
 																					}
 																				>
-																					{__(
+																					{ __(
 																						'Edit Split',
 																						'fair-payments-connector'
-																					)}
+																					) }
 																				</Button>
 																			) : (
 																				<Button
 																					variant="tertiary"
 																					size="small"
-																					onClick={() =>
+																					onClick={ () =>
 																						handleSplit(
 																							entry
 																						)
 																					}
 																				>
-																					{__(
+																					{ __(
 																						'Split',
 																						'fair-payments-connector'
-																					)}
+																					) }
 																				</Button>
-																			)}
-																			{entry.transaction_ids &&
+																			) }
+																			{ entry.transaction_ids &&
 																			entry
 																				.transaction_ids
 																				.length >
@@ -1487,38 +1504,38 @@ const EntriesApp = () => {
 																				<Button
 																					variant="tertiary"
 																					size="small"
-																					onClick={() =>
+																					onClick={ () =>
 																						handleUnmatch(
 																							entry.id
 																						)
 																					}
 																				>
-																					{__(
+																					{ __(
 																						'Unmatch',
 																						'fair-payments-connector'
-																					)}
+																					) }
 																				</Button>
 																			) : (
 																				<Button
 																					variant="tertiary"
 																					size="small"
-																					onClick={() =>
+																					onClick={ () =>
 																						handleMatch(
 																							entry
 																						)
 																					}
 																				>
-																					{__(
+																					{ __(
 																						'Match',
 																						'fair-payments-connector'
-																					)}
+																					) }
 																				</Button>
-																			)}
+																			) }
 																			<Button
 																				variant="tertiary"
 																				size="small"
 																				isDestructive
-																				onClick={() =>
+																				onClick={ () =>
 																					handleDelete(
 																						entry.id
 																					)
@@ -1527,31 +1544,33 @@ const EntriesApp = () => {
 																					isSplit
 																				}
 																			>
-																				{__(
+																				{ __(
 																					'Delete',
 																					'fair-payments-connector'
-																				)}
+																				) }
 																			</Button>
 																		</HStack>
-																	)}
+																	) }
 																</td>
 															</tr>
-															{isTransfer &&
+															{ isTransfer &&
 																isExpanded &&
 																entry.children &&
 																entry.children.map(
-																	(child) => (
+																	(
+																		child
+																	) => (
 																		<tr
-																			key={`child-${child.id}`}
-																			style={{
+																			key={ `child-${ child.id }` }
+																			style={ {
 																				backgroundColor:
 																					'#f6f7f7',
-																			}}
+																			} }
 																		>
 																			<td></td>
 																			<td>
 																				<span
-																					style={{
+																					style={ {
 																						color:
 																							child.entry_type ===
 																							'cost'
@@ -1559,9 +1578,9 @@ const EntriesApp = () => {
 																								: '#007017',
 																						fontSize:
 																							'13px',
-																					}}
+																					} }
 																				>
-																					{child.entry_type ===
+																					{ child.entry_type ===
 																					'cost'
 																						? __(
 																								'Cost',
@@ -1570,41 +1589,41 @@ const EntriesApp = () => {
 																						: __(
 																								'Income',
 																								'fair-payments-connector'
-																						  )}
+																						  ) }
 																				</span>
 																			</td>
 																			<td
-																				style={{
+																				style={ {
 																					paddingLeft:
 																						'20px',
-																				}}
+																				} }
 																			>
-																				{formatAmount(
+																				{ formatAmount(
 																					child.amount
-																				)}
+																				) }
 																			</td>
 																			<td
-																				style={{
+																				style={ {
 																					color: '#666',
 																					fontSize:
 																						'13px',
-																				}}
+																				} }
 																			>
-																				{child.description || (
+																				{ child.description || (
 																					<em>
 																						-
 																					</em>
-																				)}
+																				) }
 																			</td>
 																			<td>
-																				{getBudgetName(
+																				{ getBudgetName(
 																					child.budget_id
-																				)}
+																				) }
 																			</td>
 
-																			{eventsEnabled && (
+																			{ eventsEnabled && (
 																				<td>
-																					{child.event_url ? (
+																					{ child.event_url ? (
 																						<a
 																							href={
 																								child.event_url
@@ -1614,22 +1633,22 @@ const EntriesApp = () => {
 																							title={
 																								child.event_url
 																							}
-																							style={{
+																							style={ {
 																								fontSize:
 																									'12px',
-																							}}
+																							} }
 																						>
-																							{getEventUrlLabel(
+																							{ getEventUrlLabel(
 																								child.event_url
-																							)}
+																							) }
 																						</a>
 																					) : (
 																						<em>
 																							-
 																						</em>
-																					)}
+																					) }
 																				</td>
-																			)}
+																			) }
 																			<td
 																				colSpan={
 																					3
@@ -1637,52 +1656,54 @@ const EntriesApp = () => {
 																			></td>
 																		</tr>
 																	)
-																)}
-															{isSplit &&
+																) }
+															{ isSplit &&
 																isExpanded &&
 																entry.children.map(
-																	(child) => (
+																	(
+																		child
+																	) => (
 																		<tr
-																			key={`child-${child.id}`}
-																			style={{
+																			key={ `child-${ child.id }` }
+																			style={ {
 																				backgroundColor:
 																					'#f6f7f7',
-																			}}
+																			} }
 																		>
 																			<td></td>
 																			<td></td>
 																			<td
-																				style={{
+																				style={ {
 																					paddingLeft:
 																						'20px',
-																				}}
+																				} }
 																			>
-																				{formatAmount(
+																				{ formatAmount(
 																					child.amount
-																				)}
+																				) }
 																			</td>
 																			<td
-																				style={{
+																				style={ {
 																					color: '#666',
 																					fontSize:
 																						'13px',
-																				}}
+																				} }
 																			>
-																				{child.description || (
+																				{ child.description || (
 																					<em>
 																						-
 																					</em>
-																				)}
+																				) }
 																			</td>
 																			<td>
-																				{getBudgetName(
+																				{ getBudgetName(
 																					child.budget_id
-																				)}
+																				) }
 																			</td>
 
-																			{eventsEnabled && (
+																			{ eventsEnabled && (
 																				<td>
-																					{child.event_url ? (
+																					{ child.event_url ? (
 																						<a
 																							href={
 																								child.event_url
@@ -1692,22 +1713,22 @@ const EntriesApp = () => {
 																							title={
 																								child.event_url
 																							}
-																							style={{
+																							style={ {
 																								fontSize:
 																									'12px',
-																							}}
+																							} }
 																						>
-																							{getEventUrlLabel(
+																							{ getEventUrlLabel(
 																								child.event_url
-																							)}
+																							) }
 																						</a>
 																					) : (
 																						<em>
 																							-
 																						</em>
-																					)}
+																					) }
 																				</td>
-																			)}
+																			) }
 																			<td
 																				colSpan={
 																					3
@@ -1715,33 +1736,35 @@ const EntriesApp = () => {
 																			></td>
 																		</tr>
 																	)
-																)}
+																) }
 														</Fragment>
 													);
-												})}
+												} ) }
 											</tbody>
 										</table>
 									</div>
 
-									{/* Pagination */}
-									{pagination.pages > 1 && (
-										<HStack justify="center" spacing={2}>
+									{ /* Pagination */ }
+									{ pagination.pages > 1 && (
+										<HStack justify="center" spacing={ 2 }>
 											<Button
 												variant="secondary"
-												disabled={pagination.page === 1}
-												onClick={() =>
+												disabled={
+													pagination.page === 1
+												}
+												onClick={ () =>
 													handlePageChange(
 														pagination.page - 1
 													)
 												}
 											>
-												{__(
+												{ __(
 													'Previous',
 													'fair-payments-connector'
-												)}
+												) }
 											</Button>
 											<span>
-												{__(
+												{ __(
 													'Page %1$d of %2$d',
 													'fair-payments-connector'
 												)
@@ -1752,7 +1775,7 @@ const EntriesApp = () => {
 													.replace(
 														'%2$d',
 														pagination.pages
-													)}
+													) }
 											</span>
 											<Button
 												variant="secondary"
@@ -1760,77 +1783,77 @@ const EntriesApp = () => {
 													pagination.page ===
 													pagination.pages
 												}
-												onClick={() =>
+												onClick={ () =>
 													handlePageChange(
 														pagination.page + 1
 													)
 												}
 											>
-												{__(
+												{ __(
 													'Next',
 													'fair-payments-connector'
-												)}
+												) }
 											</Button>
 										</HStack>
-									)}
+									) }
 								</>
-							)}
+							) }
 						</VStack>
 					</CardBody>
 				</Card>
 			</VStack>
 
-			{/* Entry Form Modal */}
-			{isFormOpen && (
+			{ /* Entry Form Modal */ }
+			{ isFormOpen && (
 				<EntryForm
-					entry={editingEntry}
-					budgets={budgets}
-					eventsEnabled={eventsEnabled}
-					tags={tags}
-					onSave={handleFormSave}
-					onCancel={handleFormCancel}
+					entry={ editingEntry }
+					budgets={ budgets }
+					eventsEnabled={ eventsEnabled }
+					tags={ tags }
+					onSave={ handleFormSave }
+					onCancel={ handleFormCancel }
 				/>
-			)}
+			) }
 
-			{/* Match Modal */}
-			{matchingEntry && (
+			{ /* Match Modal */ }
+			{ matchingEntry && (
 				<MatchModal
-					entry={matchingEntry}
-					onMatch={handleMatchComplete}
-					onCancel={handleMatchCancel}
+					entry={ matchingEntry }
+					onMatch={ handleMatchComplete }
+					onCancel={ handleMatchCancel }
 				/>
-			)}
+			) }
 
-			{/* Import Modal */}
-			{isImportOpen && (
+			{ /* Import Modal */ }
+			{ isImportOpen && (
 				<ImportModal
-					onImport={handleImportComplete}
-					onCancel={handleImportCancel}
+					onImport={ handleImportComplete }
+					onCancel={ handleImportCancel }
 				/>
-			)}
+			) }
 
-			{/* Split Modal */}
-			{splittingEntry && (
+			{ /* Split Modal */ }
+			{ splittingEntry && (
 				<SplitModal
-					entry={splittingEntry}
-					budgets={budgets}
-					eventsEnabled={eventsEnabled}
-					onSplit={handleSplitComplete}
-					onCancel={handleSplitCancel}
-					onUnsplit={() => handleUnsplit(splittingEntry.id)}
+					entry={ splittingEntry }
+					budgets={ budgets }
+					eventsEnabled={ eventsEnabled }
+					onSplit={ handleSplitComplete }
+					onCancel={ handleSplitCancel }
+					onUnsplit={ () => handleUnsplit( splittingEntry.id ) }
 				/>
-			)}
+			) }
 
-			{/* Transfer Modal */}
-			{isTransferOpen && (
+			{ /* Transfer Modal */ }
+			{ isTransferOpen && (
 				<TransferModal
-					entry={transferEntry}
-					budgets={budgets}
-					eventsEnabled={eventsEnabled}
-					onSave={handleTransferSave}
-					onCancel={handleTransferCancel}
+					entry={ transferEntry }
+					budgets={ budgets }
+					eventsEnabled={ eventsEnabled }
+					onSave={ handleTransferSave }
+					onCancel={ handleTransferCancel }
 				/>
-			)}
+			) }
 		</div>
 	);
 };

@@ -12,11 +12,11 @@ import TransactionsApp from './TransactionsApp.js';
 /**
  * Initialize the transactions page
  */
-domReady(() => {
+domReady( () => {
 	const root = document.getElementById(
 		'fair-payments-connector-transactions-root'
 	);
-	if (root) {
-		createRoot(root).render(<TransactionsApp />);
+	if ( root ) {
+		createRoot( root ).render( <TransactionsApp /> );
 	}
-});
+} );

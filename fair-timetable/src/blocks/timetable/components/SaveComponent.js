@@ -10,17 +10,17 @@ import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
  * @return {JSX.Element} The save component
  */
 export default function SaveComponent() {
-	const blockProps = useBlockProps.save({
+	const blockProps = useBlockProps.save( {
 		className: 'timetable-container',
-	});
+	} );
 
-	const innerBlocksProps = useInnerBlocksProps.save({
+	const innerBlocksProps = useInnerBlocksProps.save( {
 		className: 'timetable-content',
-	});
+	} );
 
 	return (
-		<div {...blockProps}>
-			<div {...innerBlocksProps} />
+		<div { ...blockProps }>
+			<div { ...innerBlocksProps } />
 		</div>
 	);
 }

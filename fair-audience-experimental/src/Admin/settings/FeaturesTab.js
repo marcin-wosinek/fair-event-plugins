@@ -22,117 +22,119 @@ import apiFetch from '@wordpress/api-fetch';
  * @param {Function} props.onNotice Handler for displaying notices
  * @return {JSX.Element} The Features settings tab
  */
-export default function FeaturesTab({ onNotice }) {
+export default function FeaturesTab( { onNotice } ) {
 	const registry =
 		window.fairAudienceExperimentalSettingsData?.features || {};
-	const [values, setValues] = useState({});
-	const [isLoading, setIsLoading] = useState(true);
-	const [isSaving, setIsSaving] = useState(false);
+	const [ values, setValues ] = useState( {} );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ isSaving, setIsSaving ] = useState( false );
 
-	useEffect(() => {
-		apiFetch({ path: '/wp/v2/settings' })
-			.then((settings) => {
+	useEffect( () => {
+		apiFetch( { path: '/wp/v2/settings' } )
+			.then( ( settings ) => {
 				const stored =
 					settings.fair_audience_experimental_features || {};
 				const next = {};
-				Object.entries(registry).forEach(([key, meta]) => {
-					if (meta.always_on || meta.forced) {
-						next[key] = meta.enabled;
+				Object.entries( registry ).forEach( ( [ key, meta ] ) => {
+					if ( meta.always_on || meta.forced ) {
+						next[ key ] = meta.enabled;
 					} else {
-						next[key] =
-							typeof stored[key] === 'boolean'
-								? stored[key]
+						next[ key ] =
+							typeof stored[ key ] === 'boolean'
+								? stored[ key ]
 								: meta.enabled;
 					}
-				});
-				setValues(next);
-				setIsLoading(false);
-			})
-			.catch(() => {
-				onNotice({
+				} );
+				setValues( next );
+				setIsLoading( false );
+			} )
+			.catch( () => {
+				onNotice( {
 					status: 'error',
 					message: __(
 						'Failed to load features.',
 						'fair-audience-experimental'
 					),
-				});
-				setIsLoading(false);
-			});
+				} );
+				setIsLoading( false );
+			} );
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [onNotice]);
+	}, [ onNotice ] );
 
-	const handleToggle = (key, value) => {
-		setValues({ ...values, [key]: value });
+	const handleToggle = ( key, value ) => {
+		setValues( { ...values, [ key ]: value } );
 	};
 
 	const handleSave = () => {
 		const payload = {};
-		Object.entries(registry).forEach(([key, meta]) => {
-			if (meta.always_on || meta.forced) {
+		Object.entries( registry ).forEach( ( [ key, meta ] ) => {
+			if ( meta.always_on || meta.forced ) {
 				return;
 			}
-			payload[key] = !!values[key];
-		});
+			payload[ key ] = !! values[ key ];
+		} );
 
-		setIsSaving(true);
-		apiFetch({
+		setIsSaving( true );
+		apiFetch( {
 			path: '/wp/v2/settings',
 			method: 'POST',
 			data: { fair_audience_experimental_features: payload },
-		})
-			.then(() => {
-				onNotice({
+		} )
+			.then( () => {
+				onNotice( {
 					status: 'success',
 					message: __(
 						'Features saved. Reload the page to see admin-menu changes.',
 						'fair-audience-experimental'
 					),
-				});
-				setIsSaving(false);
-			})
-			.catch(() => {
-				onNotice({
+				} );
+				setIsSaving( false );
+			} )
+			.catch( () => {
+				onNotice( {
 					status: 'error',
 					message: __(
 						'Failed to save features.',
 						'fair-audience-experimental'
 					),
-				});
-				setIsSaving(false);
-			});
+				} );
+				setIsSaving( false );
+			} );
 	};
 
-	if (isLoading) {
+	if ( isLoading ) {
 		return (
-			<Card style={{ marginTop: '16px' }}>
+			<Card style={ { marginTop: '16px' } }>
 				<CardBody>
 					<p>
-						{__(
+						{ __(
 							'Loading features...',
 							'fair-audience-experimental'
-						)}
+						) }
 					</p>
 				</CardBody>
 			</Card>
 		);
 	}
 
-	const entries = Object.entries(registry);
+	const entries = Object.entries( registry );
 
 	return (
-		<Card style={{ marginTop: '16px' }}>
+		<Card style={ { marginTop: '16px' } }>
 			<CardHeader>
-				<h2>{__('Feature Bundles', 'fair-audience-experimental')}</h2>
+				<h2>
+					{ __( 'Feature Bundles', 'fair-audience-experimental' ) }
+				</h2>
 			</CardHeader>
 			<CardBody>
 				<p className="description">
-					{__(
+					{ __(
 						'Toggle optional experimental feature bundles. Bundles fixed in wp-config (FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL or FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_*) are read-only here.',
 						'fair-audience-experimental'
-					)}
+					) }
 				</p>
 
-				{entries.map(([key, meta]) => {
+				{ entries.map( ( [ key, meta ] ) => {
 					const help = meta.forced
 						? __(
 								'Forced by a wp-config constant — change it there.',
@@ -141,38 +143,40 @@ export default function FeaturesTab({ onNotice }) {
 						: meta.description;
 
 					return (
-						<div key={key} style={{ marginBottom: '1rem' }}>
+						<div key={ key } style={ { marginBottom: '1rem' } }>
 							<ToggleControl
-								label={meta.label}
-								checked={!!values[key]}
-								onChange={(value) => handleToggle(key, value)}
+								label={ meta.label }
+								checked={ !! values[ key ] }
+								onChange={ ( value ) =>
+									handleToggle( key, value )
+								}
 								disabled={
 									isSaving || meta.always_on || meta.forced
 								}
-								help={help}
+								help={ help }
 							/>
 						</div>
 					);
-				})}
+				} ) }
 
-				{entries.some(([, meta]) => meta.forced) && (
-					<Notice status="info" isDismissible={false}>
-						{__(
+				{ entries.some( ( [ , meta ] ) => meta.forced ) && (
+					<Notice status="info" isDismissible={ false }>
+						{ __(
 							'One or more bundles are forced by wp-config and cannot be toggled here.',
 							'fair-audience-experimental'
-						)}
+						) }
 					</Notice>
-				)}
+				) }
 
 				<Button
 					variant="primary"
-					onClick={handleSave}
-					isBusy={isSaving}
-					disabled={isSaving}
+					onClick={ handleSave }
+					isBusy={ isSaving }
+					disabled={ isSaving }
 				>
-					{isSaving
-						? __('Saving...', 'fair-audience-experimental')
-						: __('Save Features', 'fair-audience-experimental')}
+					{ isSaving
+						? __( 'Saving...', 'fair-audience-experimental' )
+						: __( 'Save Features', 'fair-audience-experimental' ) }
 				</Button>
 			</CardBody>
 		</Card>

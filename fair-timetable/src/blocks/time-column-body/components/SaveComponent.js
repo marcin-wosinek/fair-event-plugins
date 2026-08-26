@@ -14,13 +14,13 @@ import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 export default function SaveComponent() {
 	const blockProps = useBlockProps.save();
 
-	const innerBlocksProps = useInnerBlocksProps.save({
+	const innerBlocksProps = useInnerBlocksProps.save( {
 		className: 'time-column-body-content',
-	});
+	} );
 
 	return (
-		<div {...blockProps}>
-			<div {...innerBlocksProps} />
+		<div { ...blockProps }>
+			<div { ...innerBlocksProps } />
 		</div>
 	);
 }

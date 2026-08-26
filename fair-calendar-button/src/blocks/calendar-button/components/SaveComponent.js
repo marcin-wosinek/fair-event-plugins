@@ -11,14 +11,14 @@ import { __ } from '@wordpress/i18n';
  * @param {Object} props.attributes - Block attributes
  * @return {JSX.Element} The save component
  */
-export default function SaveComponent({ attributes }) {
+export default function SaveComponent( { attributes } ) {
 	const blockProps = useBlockProps.save();
 
 	// Add wp-block-buttons class to support button width settings
-	const innerBlocksProps = useInnerBlocksProps.save({
+	const innerBlocksProps = useInnerBlocksProps.save( {
 		...blockProps,
-		className: `${blockProps.className || ''} wp-block-buttons`.trim(),
-	});
+		className: `${ blockProps.className || '' } wp-block-buttons`.trim(),
+	} );
 
-	return <div {...innerBlocksProps} />;
+	return <div { ...innerBlocksProps } />;
 }

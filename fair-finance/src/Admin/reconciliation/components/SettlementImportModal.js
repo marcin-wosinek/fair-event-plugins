@@ -24,123 +24,126 @@ import * as XLSX from 'xlsx';
  */
 import { parseSettlementRows } from '../parseSettlement.js';
 
-const formatAmount = (amount, currency = 'EUR') => {
-	return new Intl.NumberFormat('en-US', {
+const formatAmount = ( amount, currency = 'EUR' ) => {
+	return new Intl.NumberFormat( 'en-US', {
 		style: 'currency',
 		currency: currency || 'EUR',
-	}).format(amount || 0);
+	} ).format( amount || 0 );
 };
 
-const SettlementImportModal = ({ onImport, onCancel }) => {
-	const [isParsing, setIsParsing] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
-	const [isConfirming, setIsConfirming] = useState(false);
-	const [error, setError] = useState(null);
-	const [report, setReport] = useState(null);
-	const [selectedEntryId, setSelectedEntryId] = useState('');
-	const [success, setSuccess] = useState(null);
-	const fileInputRef = useRef(null);
+const SettlementImportModal = ( { onImport, onCancel } ) => {
+	const [ isParsing, setIsParsing ] = useState( false );
+	const [ isLoading, setIsLoading ] = useState( false );
+	const [ isConfirming, setIsConfirming ] = useState( false );
+	const [ error, setError ] = useState( null );
+	const [ report, setReport ] = useState( null );
+	const [ selectedEntryId, setSelectedEntryId ] = useState( '' );
+	const [ success, setSuccess ] = useState( null );
+	const fileInputRef = useRef( null );
 
-	useEffect(() => {
-		if (report?.suggested_entry) {
-			setSelectedEntryId(String(report.suggested_entry.id));
+	useEffect( () => {
+		if ( report?.suggested_entry ) {
+			setSelectedEntryId( String( report.suggested_entry.id ) );
 		} else {
-			setSelectedEntryId('');
+			setSelectedEntryId( '' );
 		}
-	}, [report]);
+	}, [ report ] );
 
-	const readFile = (selectedFile) => {
-		return new Promise((resolve, reject) => {
+	const readFile = ( selectedFile ) => {
+		return new Promise( ( resolve, reject ) => {
 			const reader = new FileReader();
-			reader.onload = (e) => {
+			reader.onload = ( e ) => {
 				try {
-					const data = new Uint8Array(e.target.result);
-					const workbook = XLSX.read(data, { type: 'array' });
-					const sheetName = workbook.SheetNames[0];
-					const sheet = workbook.Sheets[sheetName];
-					const rows = XLSX.utils.sheet_to_json(sheet, {
+					const data = new Uint8Array( e.target.result );
+					const workbook = XLSX.read( data, { type: 'array' } );
+					const sheetName = workbook.SheetNames[ 0 ];
+					const sheet = workbook.Sheets[ sheetName ];
+					const rows = XLSX.utils.sheet_to_json( sheet, {
 						header: 1,
-					});
-					resolve(parseSettlementRows(rows));
-				} catch (err) {
-					reject(err);
+					} );
+					resolve( parseSettlementRows( rows ) );
+				} catch ( err ) {
+					reject( err );
 				}
 			};
 			reader.onerror = () =>
 				reject(
 					new Error(
-						__('Failed to read file.', 'fair-payments-connector')
+						__( 'Failed to read file.', 'fair-payments-connector' )
 					)
 				);
-			reader.readAsArrayBuffer(selectedFile);
-		});
+			reader.readAsArrayBuffer( selectedFile );
+		} );
 	};
 
-	const handleFileChange = async (e) => {
-		const selectedFile = e.target.files[0];
-		if (!selectedFile) {
+	const handleFileChange = async ( e ) => {
+		const selectedFile = e.target.files[ 0 ];
+		if ( ! selectedFile ) {
 			return;
 		}
 
-		setError(null);
-		setSuccess(null);
-		setReport(null);
-		setIsParsing(true);
+		setError( null );
+		setSuccess( null );
+		setReport( null );
+		setIsParsing( true );
 
 		let parsed;
 		try {
-			parsed = await readFile(selectedFile);
-		} catch (err) {
+			parsed = await readFile( selectedFile );
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to parse file.', 'fair-payments-connector')
+					__( 'Failed to parse file.', 'fair-payments-connector' )
 			);
-			setIsParsing(false);
+			setIsParsing( false );
 			return;
 		}
-		setIsParsing(false);
+		setIsParsing( false );
 
-		setIsLoading(true);
+		setIsLoading( true );
 		try {
-			const response = await apiFetch({
+			const response = await apiFetch( {
 				path: '/fair-finance/v1/reconciliation/settlement/preview',
 				method: 'POST',
 				data: parsed,
-			});
-			setReport(response);
-		} catch (err) {
+			} );
+			setReport( response );
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to match settlement.', 'fair-payments-connector')
+					__(
+						'Failed to match settlement.',
+						'fair-payments-connector'
+					)
 			);
 		} finally {
-			setIsLoading(false);
+			setIsLoading( false );
 		}
 	};
 
 	const handleConfirm = async () => {
-		if (!report || !selectedEntryId) {
+		if ( ! report || ! selectedEntryId ) {
 			return;
 		}
 
-		setIsConfirming(true);
-		setError(null);
+		setIsConfirming( true );
+		setError( null );
 		try {
-			await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${selectedEntryId}/match`,
+			await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ selectedEntryId }/match`,
 				method: 'POST',
 				data: { transaction_ids: report.resolved_transaction_ids },
-			});
+			} );
 			setSuccess(
 				__(
 					'Settlement matched successfully.',
 					'fair-payments-connector'
 				)
 			);
-			setTimeout(() => {
+			setTimeout( () => {
 				onImport();
-			}, 1500);
-		} catch (err) {
+			}, 1500 );
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -149,16 +152,16 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 					)
 			);
 		} finally {
-			setIsConfirming(false);
+			setIsConfirming( false );
 		}
 	};
 
 	const entryOptions = report
 		? [
-				...(report.suggested_entry
+				...( report.suggested_entry
 					? [
 							{
-								value: String(report.suggested_entry.id),
+								value: String( report.suggested_entry.id ),
 								label: sprintf(
 									/* translators: 1: amount, 2: date */
 									__(
@@ -173,148 +176,161 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 								),
 							},
 					  ]
-					: []),
-				...report.alternative_entries.map((entry) => ({
-					value: String(entry.id),
+					: [] ),
+				...report.alternative_entries.map( ( entry ) => ( {
+					value: String( entry.id ),
 					label: sprintf(
 						/* translators: 1: amount, 2: date */
-						__('%1$s — %2$s', 'fair-payments-connector'),
-						formatAmount(entry.amount, report.currency),
+						__( '%1$s — %2$s', 'fair-payments-connector' ),
+						formatAmount( entry.amount, report.currency ),
 						entry.entry_date
 					),
-				})),
+				} ) ),
 		  ]
 		: [];
 
 	const selectedEntry =
 		report &&
-		[report.suggested_entry, ...(report.alternative_entries || [])].find(
-			(entry) => entry && String(entry.id) === selectedEntryId
-		);
+		[
+			report.suggested_entry,
+			...( report.alternative_entries || [] ),
+		].find( ( entry ) => entry && String( entry.id ) === selectedEntryId );
 
 	const settlementMatchesEntry =
 		selectedEntry &&
-		Math.abs(selectedEntry.amount - report.settlement_total) <= 0.02;
+		Math.abs( selectedEntry.amount - report.settlement_total ) <= 0.02;
 
 	const feeDiff = report?.fee_reconciliation?.difference ?? 0;
-	const hasFeeDiscrepancy = Math.abs(feeDiff) > 0.01;
+	const hasFeeDiscrepancy = Math.abs( feeDiff ) > 0.01;
 
 	return (
 		<Modal
-			title={__(
+			title={ __(
 				'Import Mollie Settlement CSV',
 				'fair-payments-connector'
-			)}
-			onRequestClose={onCancel}
-			style={{ maxWidth: '720px', width: '100%' }}
+			) }
+			onRequestClose={ onCancel }
+			style={ { maxWidth: '720px', width: '100%' } }
 		>
-			<VStack spacing={4}>
-				{error && (
-					<Notice status="error" isDismissible={false}>
-						{error}
+			<VStack spacing={ 4 }>
+				{ error && (
+					<Notice status="error" isDismissible={ false }>
+						{ error }
 					</Notice>
-				)}
+				) }
 
-				{success && (
-					<Notice status="success" isDismissible={false}>
-						{success}
+				{ success && (
+					<Notice status="success" isDismissible={ false }>
+						{ success }
 					</Notice>
-				)}
+				) }
 
 				<div>
 					<p>
-						{__(
+						{ __(
 							'Select a Mollie settlement export (.csv). Payment rows are matched to transactions by their Mollie payment ID, and the payout is matched to a bank entry.',
 							'fair-payments-connector'
-						)}
+						) }
 					</p>
 					<input
-						ref={fileInputRef}
+						ref={ fileInputRef }
 						type="file"
 						accept=".csv"
-						onChange={handleFileChange}
-						style={{ marginBottom: '8px' }}
+						onChange={ handleFileChange }
+						style={ { marginBottom: '8px' } }
 					/>
 				</div>
 
-				{(isParsing || isLoading) && (
+				{ ( isParsing || isLoading ) && (
 					<HStack justify="center">
 						<Spinner />
 						<span>
-							{isParsing
-								? __('Parsing file…', 'fair-payments-connector')
+							{ isParsing
+								? __(
+										'Parsing file…',
+										'fair-payments-connector'
+								  )
 								: __(
 										'Matching settlement…',
 										'fair-payments-connector'
-								  )}
+								  ) }
 						</span>
 					</HStack>
-				)}
+				) }
 
-				{report && !success && (
+				{ report && ! success && (
 					<div
-						style={{
+						style={ {
 							backgroundColor: '#f0f0f1',
 							padding: '16px',
 							borderRadius: '4px',
-						}}
+						} }
 					>
-						<h4 style={{ marginTop: 0 }}>
-							{sprintf(
+						<h4 style={ { marginTop: 0 } }>
+							{ sprintf(
 								/* translators: %s: settlement reference */
-								__('Settlement %s', 'fair-payments-connector'),
+								__(
+									'Settlement %s',
+									'fair-payments-connector'
+								),
 								report.settlement_reference
-							)}
+							) }
 						</h4>
 						<p>
 							<strong>
-								{__(
+								{ __(
 									'Payments matched:',
 									'fair-payments-connector'
-								)}
-							</strong>{' '}
-							{report.matched.length} / {report.payment_count}
+								) }
+							</strong>{ ' ' }
+							{ report.matched.length } / { report.payment_count }
 						</p>
 						<p>
 							<strong>
-								{__(
+								{ __(
 									'Settlement total:',
 									'fair-payments-connector'
-								)}
-							</strong>{' '}
-							{formatAmount(
+								) }
+							</strong>{ ' ' }
+							{ formatAmount(
 								report.settlement_total,
 								report.currency
-							)}
+							) }
 						</p>
 						<p>
 							<strong>
-								{__('Fees total:', 'fair-payments-connector')}
-							</strong>{' '}
-							{formatAmount(report.fees_total, report.currency)}
-							{hasFeeDiscrepancy && (
-								<span style={{ color: '#d63638' }}>
-									{' '}
-									{sprintf(
+								{ __(
+									'Fees total:',
+									'fair-payments-connector'
+								) }
+							</strong>{ ' ' }
+							{ formatAmount(
+								report.fees_total,
+								report.currency
+							) }
+							{ hasFeeDiscrepancy && (
+								<span style={ { color: '#d63638' } }>
+									{ ' ' }
+									{ sprintf(
 										/* translators: %s: amount difference */
 										__(
 											'(differs from recorded fees by %s)',
 											'fair-payments-connector'
 										),
-										formatAmount(feeDiff, report.currency)
-									)}
+										formatAmount( feeDiff, report.currency )
+									) }
 								</span>
-							)}
+							) }
 						</p>
 
-						<div style={{ marginTop: '16px' }}>
+						<div style={ { marginTop: '16px' } }>
 							<SelectControl
-								label={__(
+								label={ __(
 									'Match to bank entry',
 									'fair-payments-connector'
-								)}
-								value={selectedEntryId}
-								options={[
+								) }
+								value={ selectedEntryId }
+								options={ [
 									{
 										value: '',
 										label: __(
@@ -323,13 +339,16 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 										),
 									},
 									...entryOptions,
-								]}
-								onChange={setSelectedEntryId}
+								] }
+								onChange={ setSelectedEntryId }
 								__nextHasNoMarginBottom
 							/>
-							{selectedEntry && !settlementMatchesEntry && (
-								<Notice status="warning" isDismissible={false}>
-									{sprintf(
+							{ selectedEntry && ! settlementMatchesEntry && (
+								<Notice
+									status="warning"
+									isDismissible={ false }
+								>
+									{ sprintf(
 										/* translators: 1: entry amount, 2: settlement total */
 										__(
 											'Selected entry (%1$s) does not equal the settlement total (%2$s).',
@@ -343,92 +362,92 @@ const SettlementImportModal = ({ onImport, onCancel }) => {
 											report.settlement_total,
 											report.currency
 										)
-									)}
+									) }
 								</Notice>
-							)}
+							) }
 						</div>
 
-						{report.unmatched_csv_rows.length > 0 && (
-							<div style={{ marginTop: '16px' }}>
-								<strong style={{ color: '#d63638' }}>
-									{sprintf(
+						{ report.unmatched_csv_rows.length > 0 && (
+							<div style={ { marginTop: '16px' } }>
+								<strong style={ { color: '#d63638' } }>
+									{ sprintf(
 										/* translators: %d: count */
 										__(
 											'%d payment row(s) had no matching transaction:',
 											'fair-payments-connector'
 										),
 										report.unmatched_csv_rows.length
-									)}
+									) }
 								</strong>
-								<ul style={{ margin: '8px 0' }}>
-									{report.unmatched_csv_rows.map(
-										(row, idx) => (
-											<li key={idx}>
+								<ul style={ { margin: '8px 0' } }>
+									{ report.unmatched_csv_rows.map(
+										( row, idx ) => (
+											<li key={ idx }>
 												<code>
-													{row.mollie_payment_id}
-												</code>{' '}
-												{formatAmount(
+													{ row.mollie_payment_id }
+												</code>{ ' ' }
+												{ formatAmount(
 													row.amount,
 													report.currency
-												)}
+												) }
 											</li>
 										)
-									)}
+									) }
 								</ul>
 							</div>
-						)}
+						) }
 
-						{report.transactions_without_csv.length > 0 && (
-							<div style={{ marginTop: '16px' }}>
-								<strong style={{ color: '#dba617' }}>
-									{sprintf(
+						{ report.transactions_without_csv.length > 0 && (
+							<div style={ { marginTop: '16px' } }>
+								<strong style={ { color: '#dba617' } }>
+									{ sprintf(
 										/* translators: %d: count */
 										__(
 											'%d unmatched transaction(s) in this date window are absent from the CSV:',
 											'fair-payments-connector'
 										),
 										report.transactions_without_csv.length
-									)}
+									) }
 								</strong>
-								<ul style={{ margin: '8px 0' }}>
-									{report.transactions_without_csv.map(
-										(t) => (
-											<li key={t.id}>
+								<ul style={ { margin: '8px 0' } }>
+									{ report.transactions_without_csv.map(
+										( t ) => (
+											<li key={ t.id }>
 												<code>
-													{t.mollie_payment_id}
-												</code>{' '}
-												{formatAmount(
+													{ t.mollie_payment_id }
+												</code>{ ' ' }
+												{ formatAmount(
 													t.amount,
 													t.currency
-												)}
+												) }
 											</li>
 										)
-									)}
+									) }
 								</ul>
 							</div>
-						)}
+						) }
 					</div>
-				)}
+				) }
 
-				<HStack justify="flex-end" spacing={2}>
-					<Button variant="tertiary" onClick={onCancel}>
-						{__('Cancel', 'fair-payments-connector')}
+				<HStack justify="flex-end" spacing={ 2 }>
+					<Button variant="tertiary" onClick={ onCancel }>
+						{ __( 'Cancel', 'fair-payments-connector' ) }
 					</Button>
 					<Button
 						variant="primary"
-						onClick={handleConfirm}
-						isBusy={isConfirming}
+						onClick={ handleConfirm }
+						isBusy={ isConfirming }
 						disabled={
 							isConfirming ||
 							isParsing ||
 							isLoading ||
-							!report ||
-							!selectedEntryId ||
+							! report ||
+							! selectedEntryId ||
 							report.resolved_transaction_ids.length === 0 ||
 							success
 						}
 					>
-						{__('Confirm Match', 'fair-payments-connector')}
+						{ __( 'Confirm Match', 'fair-payments-connector' ) }
 					</Button>
 				</HStack>
 			</VStack>

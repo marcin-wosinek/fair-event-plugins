@@ -42,7 +42,7 @@ const UNIFIED_NAME = 'fair-events/event-signup';
 const QUESTIONS_SLOT_SELECTOR = '.fair-events-event-signup-questions-slot';
 
 // Blocks always allowed in the form content area, regardless of fair-form.
-const BASE_ALLOWED_BLOCKS = ['core/heading', 'core/paragraph', 'core/list'];
+const BASE_ALLOWED_BLOCKS = [ 'core/heading', 'core/paragraph', 'core/list' ];
 
 // Custom question blocks that can additionally be nested once fair-form is
 // active. Mirrors the legacy fair-audience/event-signup block's set, minus
@@ -63,24 +63,24 @@ const FAIR_FORM_ALLOWED_BLOCKS = [
 	'fair-audience/fair-form-conditional',
 ];
 
-registerBlockType(metadata.name, {
+registerBlockType( metadata.name, {
 	...metadata,
-	edit: function Edit({ attributes, setAttributes }) {
+	edit: function Edit( { attributes, setAttributes } ) {
 		const blockProps = useBlockProps();
 
 		// The fair-form question set is only registered when fair-form is
 		// active. Without it, offer no question blocks — there is no
 		// fair-events-owned default question set.
 		const isFairFormActive = useSelect(
-			(select) =>
-				!!select('core/blocks').getBlockType(
+			( select ) =>
+				!! select( 'core/blocks' ).getBlockType(
 					'fair-audience/fair-form-short-text'
 				),
 			[]
 		);
 
 		const allowedBlocks = isFairFormActive
-			? [...BASE_ALLOWED_BLOCKS, ...FAIR_FORM_ALLOWED_BLOCKS]
+			? [ ...BASE_ALLOWED_BLOCKS, ...FAIR_FORM_ALLOWED_BLOCKS ]
 			: BASE_ALLOWED_BLOCKS;
 
 		const {
@@ -102,22 +102,24 @@ registerBlockType(metadata.name, {
 		// (after the REST fetch resolves, and again on every re-render that
 		// changes an SSR attribute), so watch for it with a MutationObserver
 		// rather than assuming it's there on mount.
-		const previewRef = useRef(null);
-		const [slotNode, setSlotNode] = useState(null);
+		const previewRef = useRef( null );
+		const [ slotNode, setSlotNode ] = useState( null );
 
-		useEffect(() => {
+		useEffect( () => {
 			const container = previewRef.current;
-			if (!container) {
+			if ( ! container ) {
 				return;
 			}
 
 			const findSlot = () => {
-				setSlotNode(container.querySelector(QUESTIONS_SLOT_SELECTOR));
+				setSlotNode(
+					container.querySelector( QUESTIONS_SLOT_SELECTOR )
+				);
 			};
 
 			findSlot();
 
-			const observer = new MutationObserver((records) => {
+			const observer = new MutationObserver( ( records ) => {
 				// The portal's own content lands inside the slot node, which
 				// is itself inside the observed subtree, so most mutations
 				// here are just React writing the editable area into place.
@@ -127,85 +129,85 @@ registerBlockType(metadata.name, {
 					QUESTIONS_SLOT_SELECTOR
 				);
 				const isPortalOnlyChange = records.every(
-					(record) =>
-						currentSlot && currentSlot.contains(record.target)
+					( record ) =>
+						currentSlot && currentSlot.contains( record.target )
 				);
-				if (isPortalOnlyChange) {
+				if ( isPortalOnlyChange ) {
 					return;
 				}
 				findSlot();
-			});
-			observer.observe(container, { childList: true, subtree: true });
+			} );
+			observer.observe( container, { childList: true, subtree: true } );
 
 			return () => observer.disconnect();
-		}, []);
+		}, [] );
 
 		const formContent = (
 			<>
 				<div className="fair-events-event-signup-questions-label">
-					{__('Form content', 'fair-events')}
+					{ __( 'Form content', 'fair-events' ) }
 				</div>
-				<div {...innerBlocksProps} />
+				<div { ...innerBlocksProps } />
 			</>
 		);
 
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Form Settings', 'fair-events')}>
+					<PanelBody title={ __( 'Form Settings', 'fair-events' ) }>
 						<TextControl
-							label={__('Submit Button Text', 'fair-events')}
-							value={attributes.submitButtonText}
-							onChange={(value) =>
-								setAttributes({ submitButtonText: value })
+							label={ __( 'Submit Button Text', 'fair-events' ) }
+							value={ attributes.submitButtonText }
+							onChange={ ( value ) =>
+								setAttributes( { submitButtonText: value } )
 							}
 						/>
 						<ToggleControl
-							label={__('Show ticket price', 'fair-events')}
-							checked={attributes.showTicketPrice}
-							onChange={(value) =>
-								setAttributes({ showTicketPrice: value })
+							label={ __( 'Show ticket price', 'fair-events' ) }
+							checked={ attributes.showTicketPrice }
+							onChange={ ( value ) =>
+								setAttributes( { showTicketPrice: value } )
 							}
 						/>
 						<ToggleControl
-							label={__('Show option prices', 'fair-events')}
-							checked={attributes.showOptionPrices}
-							onChange={(value) =>
-								setAttributes({ showOptionPrices: value })
+							label={ __( 'Show option prices', 'fair-events' ) }
+							checked={ attributes.showOptionPrices }
+							onChange={ ( value ) =>
+								setAttributes( { showOptionPrices: value } )
 							}
 						/>
-						{ticketingEnabled &&
+						{ ticketingEnabled &&
 							canManageEvents &&
-							(postEventDateId > 0 ? (
+							( postEventDateId > 0 ? (
 								<ExternalLink
-									href={`${manageEventUrl}&event_date_id=${postEventDateId}&tab=tickets`}
+									href={ `${ manageEventUrl }&event_date_id=${ postEventDateId }&tab=tickets` }
 								>
-									{__('Edit tickets', 'fair-events')}
+									{ __( 'Edit tickets', 'fair-events' ) }
 								</ExternalLink>
 							) : (
 								<p>
-									{__(
+									{ __(
 										'Connect this block to an event date to edit its tickets.',
 										'fair-events'
-									)}
+									) }
 								</p>
-							))}
+							) ) }
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
-					<div ref={previewRef}>
+				<div { ...blockProps }>
+					<div ref={ previewRef }>
 						<ServerSideRender
-							block={UNIFIED_NAME}
-							attributes={{
+							block={ UNIFIED_NAME }
+							attributes={ {
 								...attributes,
 								isEditorPreview: true,
-							}}
+							} }
 						/>
 					</div>
-					{slotNode
-						? createPortal(formContent, slotNode)
-						: formContent}
+					{ slotNode
+						? createPortal( formContent, slotNode )
+						: formContent }
 				</div>
 			</>
 		);
@@ -223,4 +225,4 @@ registerBlockType(metadata.name, {
 			save: () => null,
 		},
 	],
-});
+} );

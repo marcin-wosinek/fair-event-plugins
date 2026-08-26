@@ -23,50 +23,52 @@ import {
 import SettlementImportModal from './components/SettlementImportModal.js';
 import { formatDateOnly } from 'fair-events-shared';
 
-const formatAmount = (amount, currency = 'EUR') => {
-	return new Intl.NumberFormat('en-US', {
+const formatAmount = ( amount, currency = 'EUR' ) => {
+	return new Intl.NumberFormat( 'en-US', {
 		style: 'currency',
 		currency,
-	}).format(amount);
+	} ).format( amount );
 };
 
 const ReconciliationApp = () => {
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [success, setSuccess] = useState(null);
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ success, setSuccess ] = useState( null );
 
-	const [unmatchedEntries, setUnmatchedEntries] = useState([]);
-	const [unmatchedTransactions, setUnmatchedTransactions] = useState([]);
-	const [matchedEntries, setMatchedEntries] = useState([]);
+	const [ unmatchedEntries, setUnmatchedEntries ] = useState( [] );
+	const [ unmatchedTransactions, setUnmatchedTransactions ] = useState( [] );
+	const [ matchedEntries, setMatchedEntries ] = useState( [] );
 
-	const [selectedEntry, setSelectedEntry] = useState(null);
-	const [selectedTransactionIds, setSelectedTransactionIds] = useState([]);
-	const [suggestions, setSuggestions] = useState([]);
-	const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-	const [matching, setMatching] = useState(false);
-	const [descriptionFilter, setDescriptionFilter] = useState(
+	const [ selectedEntry, setSelectedEntry ] = useState( null );
+	const [ selectedTransactionIds, setSelectedTransactionIds ] = useState(
+		[]
+	);
+	const [ suggestions, setSuggestions ] = useState( [] );
+	const [ loadingSuggestions, setLoadingSuggestions ] = useState( false );
+	const [ matching, setMatching ] = useState( false );
+	const [ descriptionFilter, setDescriptionFilter ] = useState(
 		'trf. stichting mollie payments'
 	);
-	const [showSettlementModal, setShowSettlementModal] = useState(false);
+	const [ showSettlementModal, setShowSettlementModal ] = useState( false );
 
-	const filteredUnmatchedEntries = unmatchedEntries.filter((entry) => {
-		if (!descriptionFilter) return true;
-		return (entry.description || '')
+	const filteredUnmatchedEntries = unmatchedEntries.filter( ( entry ) => {
+		if ( ! descriptionFilter ) return true;
+		return ( entry.description || '' )
 			.toLowerCase()
-			.includes(descriptionFilter.toLowerCase());
-	});
+			.includes( descriptionFilter.toLowerCase() );
+	} );
 
-	const loadData = useCallback(async () => {
-		setLoading(true);
-		setError(null);
+	const loadData = useCallback( async () => {
+		setLoading( true );
+		setError( null );
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-finance/v1/reconciliation',
-			});
-			setUnmatchedEntries(data.unmatched_entries);
-			setUnmatchedTransactions(data.unmatched_transactions);
-			setMatchedEntries(data.matched_entries);
-		} catch (err) {
+			} );
+			setUnmatchedEntries( data.unmatched_entries );
+			setUnmatchedTransactions( data.unmatched_transactions );
+			setMatchedEntries( data.matched_entries );
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -75,67 +77,67 @@ const ReconciliationApp = () => {
 					)
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
-	}, []);
+	}, [] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadData();
-	}, [loadData]);
+	}, [ loadData ] );
 
-	const handleSelectEntry = async (entry) => {
-		setSelectedEntry(entry);
-		setSelectedTransactionIds([]);
-		setSuggestions([]);
-		setLoadingSuggestions(true);
+	const handleSelectEntry = async ( entry ) => {
+		setSelectedEntry( entry );
+		setSelectedTransactionIds( [] );
+		setSuggestions( [] );
+		setLoadingSuggestions( true );
 
 		try {
-			const data = await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${entry.id}/suggest-matches`,
-			});
-			setSuggestions(data);
-		} catch (err) {
+			const data = await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ entry.id }/suggest-matches`,
+			} );
+			setSuggestions( data );
+		} catch ( err ) {
 			// Suggestions are optional, don't block on error.
-			setSuggestions([]);
+			setSuggestions( [] );
 		} finally {
-			setLoadingSuggestions(false);
+			setLoadingSuggestions( false );
 		}
 	};
 
-	const handleToggleTransaction = (transactionId) => {
-		setSelectedTransactionIds((prev) =>
-			prev.includes(transactionId)
-				? prev.filter((id) => id !== transactionId)
-				: [...prev, transactionId]
+	const handleToggleTransaction = ( transactionId ) => {
+		setSelectedTransactionIds( ( prev ) =>
+			prev.includes( transactionId )
+				? prev.filter( ( id ) => id !== transactionId )
+				: [ ...prev, transactionId ]
 		);
 	};
 
-	const handleApplySuggestion = (suggestion) => {
-		setSelectedTransactionIds(suggestion.transaction_ids);
+	const handleApplySuggestion = ( suggestion ) => {
+		setSelectedTransactionIds( suggestion.transaction_ids );
 	};
 
 	const handleConfirmMatch = async () => {
-		if (!selectedEntry || selectedTransactionIds.length === 0) return;
+		if ( ! selectedEntry || selectedTransactionIds.length === 0 ) return;
 
-		setMatching(true);
-		setError(null);
+		setMatching( true );
+		setError( null );
 		try {
-			await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${selectedEntry.id}/match`,
+			await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ selectedEntry.id }/match`,
 				method: 'POST',
 				data: { transaction_ids: selectedTransactionIds },
-			});
+			} );
 			setSuccess(
 				__(
 					'Transactions matched successfully.',
 					'fair-payments-connector'
 				)
 			);
-			setSelectedEntry(null);
-			setSelectedTransactionIds([]);
-			setSuggestions([]);
+			setSelectedEntry( null );
+			setSelectedTransactionIds( [] );
+			setSuggestions( [] );
 			await loadData();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -144,18 +146,18 @@ const ReconciliationApp = () => {
 					)
 			);
 		} finally {
-			setMatching(false);
+			setMatching( false );
 		}
 	};
 
-	const handleUnmatchTransaction = async (entryId, transactionId) => {
-		setError(null);
+	const handleUnmatchTransaction = async ( entryId, transactionId ) => {
+		setError( null );
 		try {
-			await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${entryId}/match`,
+			await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ entryId }/match`,
 				method: 'DELETE',
 				data: { transaction_id: transactionId },
-			});
+			} );
 			setSuccess(
 				__(
 					'Transaction unmatched successfully.',
@@ -163,7 +165,7 @@ const ReconciliationApp = () => {
 				)
 			);
 			await loadData();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -174,13 +176,13 @@ const ReconciliationApp = () => {
 		}
 	};
 
-	const handleUnmatchAll = async (entryId) => {
-		setError(null);
+	const handleUnmatchAll = async ( entryId ) => {
+		setError( null );
 		try {
-			await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${entryId}/match`,
+			await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ entryId }/match`,
 				method: 'DELETE',
-			});
+			} );
 			setSuccess(
 				__(
 					'All transactions unmatched successfully.',
@@ -188,7 +190,7 @@ const ReconciliationApp = () => {
 				)
 			);
 			await loadData();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -201,24 +203,24 @@ const ReconciliationApp = () => {
 
 	// Calculate running total of selected transactions.
 	const selectedTotal = unmatchedTransactions
-		.filter((t) => selectedTransactionIds.includes(t.id))
-		.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+		.filter( ( t ) => selectedTransactionIds.includes( t.id ) )
+		.reduce( ( sum, t ) => sum + parseFloat( t.amount ), 0 );
 
 	const selectedNetTotal = unmatchedTransactions
-		.filter((t) => selectedTransactionIds.includes(t.id))
-		.reduce((sum, t) => {
+		.filter( ( t ) => selectedTransactionIds.includes( t.id ) )
+		.reduce( ( sum, t ) => {
 			const net =
-				parseFloat(t.amount) -
-				parseFloat(t.application_fee || 0) -
-				parseFloat(t.mollie_fee || 0);
+				parseFloat( t.amount ) -
+				parseFloat( t.application_fee || 0 ) -
+				parseFloat( t.mollie_fee || 0 );
 			return sum + net;
-		}, 0);
+		}, 0 );
 
-	if (loading) {
+	if ( loading ) {
 		return (
 			<div className="wrap">
-				<h1>{__('Reconciliation', 'fair-payments-connector')}</h1>
-				<div style={{ textAlign: 'center', padding: '40px' }}>
+				<h1>{ __( 'Reconciliation', 'fair-payments-connector' ) }</h1>
+				<div style={ { textAlign: 'center', padding: '40px' } }>
 					<Spinner />
 				</div>
 			</div>
@@ -228,19 +230,19 @@ const ReconciliationApp = () => {
 	return (
 		<div className="wrap">
 			<HStack justify="space-between" alignment="center">
-				<h1>{__('Reconciliation', 'fair-payments-connector')}</h1>
+				<h1>{ __( 'Reconciliation', 'fair-payments-connector' ) }</h1>
 				<Button
 					variant="secondary"
-					onClick={() => setShowSettlementModal(true)}
+					onClick={ () => setShowSettlementModal( true ) }
 				>
-					{__('Import settlement CSV', 'fair-payments-connector')}
+					{ __( 'Import settlement CSV', 'fair-payments-connector' ) }
 				</Button>
 			</HStack>
 
-			{showSettlementModal && (
+			{ showSettlementModal && (
 				<SettlementImportModal
-					onImport={() => {
-						setShowSettlementModal(false);
+					onImport={ () => {
+						setShowSettlementModal( false );
 						setSuccess(
 							__(
 								'Settlement matched successfully.',
@@ -248,40 +250,40 @@ const ReconciliationApp = () => {
 							)
 						);
 						loadData();
-					}}
-					onCancel={() => setShowSettlementModal(false)}
+					} }
+					onCancel={ () => setShowSettlementModal( false ) }
 				/>
-			)}
+			) }
 
-			{error && (
+			{ error && (
 				<Notice
 					status="error"
 					isDismissible
-					onDismiss={() => setError(null)}
+					onDismiss={ () => setError( null ) }
 				>
-					{error}
+					{ error }
 				</Notice>
-			)}
+			) }
 
-			{success && (
+			{ success && (
 				<Notice
 					status="success"
 					isDismissible
-					onDismiss={() => setSuccess(null)}
+					onDismiss={ () => setSuccess( null ) }
 				>
-					{success}
+					{ success }
 				</Notice>
-			)}
+			) }
 
 			<div
-				style={{
+				style={ {
 					display: 'grid',
 					gridTemplateColumns: '1fr 1fr',
 					gap: '20px',
 					marginTop: '20px',
-				}}
+				} }
 			>
-				{/* Left panel: Unmatched Bank Entries */}
+				{ /* Left panel: Unmatched Bank Entries */ }
 				<div>
 					<Panel>
 						<PanelBody
@@ -290,97 +292,101 @@ const ReconciliationApp = () => {
 									'Unmatched Bank Entries',
 									'fair-payments-connector'
 								) +
-								` (${filteredUnmatchedEntries.length}/${unmatchedEntries.length})`
+								` (${ filteredUnmatchedEntries.length }/${ unmatchedEntries.length })`
 							}
-							initialOpen={true}
+							initialOpen={ true }
 						>
 							<TextControl
-								label={__(
+								label={ __(
 									'Filter by description',
 									'fair-payments-connector'
-								)}
-								value={descriptionFilter}
-								onChange={setDescriptionFilter}
-								placeholder={__(
+								) }
+								value={ descriptionFilter }
+								onChange={ setDescriptionFilter }
+								placeholder={ __(
 									'Type to filter…',
 									'fair-payments-connector'
-								)}
+								) }
 							/>
-							{filteredUnmatchedEntries.length === 0 ? (
+							{ filteredUnmatchedEntries.length === 0 ? (
 								<p>
-									{__(
+									{ __(
 										'All bank entries are matched.',
 										'fair-payments-connector'
-									)}
+									) }
 								</p>
 							) : (
 								<table
 									className="wp-list-table widefat fixed striped"
-									style={{ marginTop: 0 }}
+									style={ { marginTop: 0 } }
 								>
 									<thead>
 										<tr>
 											<th>
-												{__(
+												{ __(
 													'Date',
 													'fair-payments-connector'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Amount',
 													'fair-payments-connector'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Type',
 													'fair-payments-connector'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Description',
 													'fair-payments-connector'
-												)}
+												) }
 											</th>
-											<th style={{ width: '80px' }}>
-												{__(
+											<th style={ { width: '80px' } }>
+												{ __(
 													'Action',
 													'fair-payments-connector'
-												)}
+												) }
 											</th>
 										</tr>
 									</thead>
 									<tbody>
-										{filteredUnmatchedEntries.map(
-											(entry) => (
+										{ filteredUnmatchedEntries.map(
+											( entry ) => (
 												<tr
-													key={entry.id}
-													style={{
+													key={ entry.id }
+													style={ {
 														background:
 															selectedEntry?.id ===
 															entry.id
 																? '#e7f5fa'
 																: undefined,
-													}}
+													} }
 												>
-													<td>{entry.entry_date}</td>
 													<td>
-														{formatAmount(
-															entry.amount
-														)}
+														{ entry.entry_date }
 													</td>
-													<td>{entry.entry_type}</td>
 													<td>
-														{entry.description || (
+														{ formatAmount(
+															entry.amount
+														) }
+													</td>
+													<td>
+														{ entry.entry_type }
+													</td>
+													<td>
+														{ entry.description || (
 															<em>
-																{__(
+																{ __(
 																	'No description',
 																	'fair-payments-connector'
-																)}
+																) }
 															</em>
-														)}
+														) }
 													</td>
 													<td>
 														<Button
@@ -391,13 +397,13 @@ const ReconciliationApp = () => {
 																	: 'secondary'
 															}
 															size="small"
-															onClick={() =>
+															onClick={ () =>
 																handleSelectEntry(
 																	entry
 																)
 															}
 														>
-															{selectedEntry?.id ===
+															{ selectedEntry?.id ===
 															entry.id
 																? __(
 																		'Selected',
@@ -406,81 +412,83 @@ const ReconciliationApp = () => {
 																: __(
 																		'Select',
 																		'fair-payments-connector'
-																  )}
+																  ) }
 														</Button>
 													</td>
 												</tr>
 											)
-										)}
+										) }
 									</tbody>
 								</table>
-							)}
+							) }
 						</PanelBody>
 					</Panel>
 				</div>
 
-				{/* Right panel: Transactions for matching */}
+				{ /* Right panel: Transactions for matching */ }
 				<div>
-					{selectedEntry && (
+					{ selectedEntry && (
 						<Panel>
 							<PanelBody
-								title={__(
+								title={ __(
 									'Match Transactions',
 									'fair-payments-connector'
-								)}
-								initialOpen={true}
+								) }
+								initialOpen={ true }
 							>
-								<VStack spacing={4}>
-									{/* Selected entry summary */}
+								<VStack spacing={ 4 }>
+									{ /* Selected entry summary */ }
 									<div
-										style={{
+										style={ {
 											background: '#f0f0f1',
 											padding: '12px',
 											borderRadius: '4px',
-										}}
+										} }
 									>
 										<Text>
 											<strong>
-												{__(
+												{ __(
 													'Matching entry:',
 													'fair-payments-connector'
-												)}
-											</strong>{' '}
-											{formatAmount(selectedEntry.amount)}{' '}
-											({selectedEntry.entry_type}) -{' '}
-											{selectedEntry.entry_date}
-											{selectedEntry.description &&
-												` - ${selectedEntry.description}`}
+												) }
+											</strong>{ ' ' }
+											{ formatAmount(
+												selectedEntry.amount
+											) }{ ' ' }
+											({ selectedEntry.entry_type }) -{ ' ' }
+											{ selectedEntry.entry_date }
+											{ selectedEntry.description &&
+												` - ${ selectedEntry.description }` }
 										</Text>
 									</div>
 
-									{/* Auto-suggest results */}
-									{loadingSuggestions && (
+									{ /* Auto-suggest results */ }
+									{ loadingSuggestions && (
 										<HStack justify="center">
 											<Spinner />
 											<Text>
-												{__(
+												{ __(
 													'Finding suggestions...',
 													'fair-payments-connector'
-												)}
+												) }
 											</Text>
 										</HStack>
-									)}
+									) }
 
-									{!loadingSuggestions &&
+									{ ! loadingSuggestions &&
 										suggestions.length > 0 && (
 											<div>
 												<Text weight="bold">
-													{__(
+													{ __(
 														'Suggestions:',
 														'fair-payments-connector'
-													)}
+													) }
 												</Text>
-												{suggestions.map(
-													(suggestion, idx) => (
+												{ suggestions.map(
+													( suggestion, idx ) => (
 														<div
-															key={idx}
-															style={{
+															key={ idx }
+															style={ {
 																border: '1px solid #ccc',
 																borderRadius:
 																	'4px',
@@ -492,188 +500,190 @@ const ReconciliationApp = () => {
 																	'space-between',
 																alignItems:
 																	'center',
-															}}
+															} }
 														>
 															<Text>
 																{
 																	suggestion
 																		.transaction_ids
 																		.length
-																}{' '}
-																{__(
+																}{ ' ' }
+																{ __(
 																	'transactions',
 																	'fair-payments-connector'
-																)}
-																{' — '}
-																{__(
+																) }
+																{ ' — ' }
+																{ __(
 																	'Net:',
 																	'fair-payments-connector'
-																)}{' '}
-																{formatAmount(
+																) }{ ' ' }
+																{ formatAmount(
 																	suggestion.net_amount
-																)}
-																{' ('}
-																{__(
+																) }
+																{ ' (' }
+																{ __(
 																	'diff:',
 																	'fair-payments-connector'
-																)}{' '}
-																{formatAmount(
+																) }{ ' ' }
+																{ formatAmount(
 																	suggestion.difference
-																)}
-																{')'}
+																) }
+																{ ')' }
 															</Text>
 															<Button
 																variant="secondary"
 																size="small"
-																onClick={() =>
+																onClick={ () =>
 																	handleApplySuggestion(
 																		suggestion
 																	)
 																}
 															>
-																{__(
+																{ __(
 																	'Apply',
 																	'fair-payments-connector'
-																)}
+																) }
 															</Button>
 														</div>
 													)
-												)}
+												) }
 											</div>
-										)}
+										) }
 
-									{/* Running total */}
-									{selectedTransactionIds.length > 0 && (
+									{ /* Running total */ }
+									{ selectedTransactionIds.length > 0 && (
 										<div
-											style={{
+											style={ {
 												background: '#f0f6fc',
 												padding: '12px',
 												borderRadius: '4px',
 												border: '1px solid #c3d9ed',
-											}}
+											} }
 										>
 											<HStack>
-												<VStack spacing={1}>
+												<VStack spacing={ 1 }>
 													<Text>
 														<strong>
-															{__(
+															{ __(
 																'Selected:',
 																'fair-payments-connector'
-															)}
-														</strong>{' '}
+															) }
+														</strong>{ ' ' }
 														{
 															selectedTransactionIds.length
-														}{' '}
-														{__(
+														}{ ' ' }
+														{ __(
 															'transactions',
 															'fair-payments-connector'
-														)}
+														) }
 													</Text>
 													<Text>
 														<strong>
-															{__(
+															{ __(
 																'Gross total:',
 																'fair-payments-connector'
-															)}
-														</strong>{' '}
-														{formatAmount(
+															) }
+														</strong>{ ' ' }
+														{ formatAmount(
 															selectedTotal
-														)}
+														) }
 													</Text>
 													<Text>
 														<strong>
-															{__(
+															{ __(
 																'Net total (after fees):',
 																'fair-payments-connector'
-															)}
-														</strong>{' '}
-														{formatAmount(
+															) }
+														</strong>{ ' ' }
+														{ formatAmount(
 															selectedNetTotal
-														)}
+														) }
 													</Text>
 													<Text>
 														<strong>
-															{__(
+															{ __(
 																'Difference from entry:',
 																'fair-payments-connector'
-															)}
-														</strong>{' '}
-														{formatAmount(
+															) }
+														</strong>{ ' ' }
+														{ formatAmount(
 															selectedNetTotal -
 																selectedEntry.amount
-														)}
+														) }
 													</Text>
 												</VStack>
 												<Button
 													variant="primary"
-													onClick={handleConfirmMatch}
-													disabled={matching}
-													isBusy={matching}
+													onClick={
+														handleConfirmMatch
+													}
+													disabled={ matching }
+													isBusy={ matching }
 												>
-													{__(
+													{ __(
 														'Confirm Match',
 														'fair-payments-connector'
-													)}
+													) }
 												</Button>
 											</HStack>
 										</div>
-									)}
+									) }
 
-									{/* Transaction list with checkboxes */}
-									{unmatchedTransactions.length === 0 ? (
+									{ /* Transaction list with checkboxes */ }
+									{ unmatchedTransactions.length === 0 ? (
 										<p>
-											{__(
+											{ __(
 												'No unmatched transactions found.',
 												'fair-payments-connector'
-											)}
+											) }
 										</p>
 									) : (
 										<table
 											className="wp-list-table widefat fixed striped"
-											style={{ marginTop: 0 }}
+											style={ { marginTop: 0 } }
 										>
 											<thead>
 												<tr>
 													<th
-														style={{
+														style={ {
 															width: '30px',
-														}}
+														} }
 													></th>
 													<th>
-														{__(
+														{ __(
 															'Date',
 															'fair-payments-connector'
-														)}
+														) }
 													</th>
 													<th>
-														{__(
+														{ __(
 															'Amount',
 															'fair-payments-connector'
-														)}
+														) }
 													</th>
 													<th>
-														{__(
+														{ __(
 															'Net',
 															'fair-payments-connector'
-														)}
+														) }
 													</th>
 													<th>
-														{__(
+														{ __(
 															'Description',
 															'fair-payments-connector'
-														)}
+														) }
 													</th>
 													<th>
-														{__(
+														{ __(
 															'Mollie ID',
 															'fair-payments-connector'
-														)}
+														) }
 													</th>
 												</tr>
 											</thead>
 											<tbody>
-												{unmatchedTransactions.map(
-													(t) => {
+												{ unmatchedTransactions.map(
+													( t ) => {
 														const net =
 															parseFloat(
 																t.amount
@@ -687,13 +697,13 @@ const ReconciliationApp = () => {
 																	0
 															);
 														return (
-															<tr key={t.id}>
+															<tr key={ t.id }>
 																<td>
 																	<CheckboxControl
-																		checked={selectedTransactionIds.includes(
+																		checked={ selectedTransactionIds.includes(
 																			t.id
-																		)}
-																		onChange={() =>
+																		) }
+																		onChange={ () =>
 																			handleToggleTransaction(
 																				t.id
 																			)
@@ -702,39 +712,39 @@ const ReconciliationApp = () => {
 																	/>
 																</td>
 																<td>
-																	{formatDateOnly(
+																	{ formatDateOnly(
 																		t.created_at,
 																		'numeric'
-																	)}
+																	) }
 																</td>
 																<td>
-																	{formatAmount(
+																	{ formatAmount(
 																		t.amount,
 																		t.currency
-																	)}
+																	) }
 																</td>
 																<td>
-																	{formatAmount(
+																	{ formatAmount(
 																		net,
 																		t.currency
-																	)}
+																	) }
 																</td>
 																<td>
-																	{t.description || (
+																	{ t.description || (
 																		<em>
-																			{__(
+																			{ __(
 																				'No description',
 																				'fair-payments-connector'
-																			)}
+																			) }
 																		</em>
-																	)}
+																	) }
 																</td>
 																<td>
 																	<code
-																		style={{
+																		style={ {
 																			fontSize:
 																				'11px',
-																		}}
+																		} }
 																	>
 																		{
 																			t.mollie_payment_id
@@ -744,167 +754,167 @@ const ReconciliationApp = () => {
 															</tr>
 														);
 													}
-												)}
+												) }
 											</tbody>
 										</table>
-									)}
+									) }
 								</VStack>
 							</PanelBody>
 						</Panel>
-					)}
+					) }
 
-					{!selectedEntry && (
+					{ ! selectedEntry && (
 						<Panel>
 							<PanelBody
-								title={__(
+								title={ __(
 									'Match Transactions',
 									'fair-payments-connector'
-								)}
-								initialOpen={true}
+								) }
+								initialOpen={ true }
 							>
 								<p>
-									{__(
+									{ __(
 										'Select a bank entry from the left panel to start matching.',
 										'fair-payments-connector'
-									)}
+									) }
 								</p>
 							</PanelBody>
 						</Panel>
-					)}
+					) }
 				</div>
 			</div>
 
-			{/* Matched entries section */}
-			<div style={{ marginTop: '30px' }}>
+			{ /* Matched entries section */ }
+			<div style={ { marginTop: '30px' } }>
 				<Panel>
 					<PanelBody
 						title={
-							__('Matched Entries', 'fair-payments-connector') +
-							` (${matchedEntries.length})`
+							__( 'Matched Entries', 'fair-payments-connector' ) +
+							` (${ matchedEntries.length })`
 						}
-						initialOpen={false}
+						initialOpen={ false }
 					>
-						{matchedEntries.length === 0 ? (
+						{ matchedEntries.length === 0 ? (
 							<p>
-								{__(
+								{ __(
 									'No matched entries yet.',
 									'fair-payments-connector'
-								)}
+								) }
 							</p>
 						) : (
-							matchedEntries.map((entry) => (
+							matchedEntries.map( ( entry ) => (
 								<div
-									key={entry.id}
-									style={{
+									key={ entry.id }
+									style={ {
 										border: '1px solid #ddd',
 										borderRadius: '4px',
 										padding: '12px',
 										marginBottom: '12px',
-									}}
+									} }
 								>
 									<HStack justify="space-between">
-										<VStack spacing={1}>
+										<VStack spacing={ 1 }>
 											<Text weight="bold">
-												{formatAmount(entry.amount)} (
-												{entry.entry_type}) -{' '}
-												{entry.entry_date}
-												{entry.description &&
-													` - ${entry.description}`}
+												{ formatAmount( entry.amount ) }{ ' ' }
+												({ entry.entry_type }) -{ ' ' }
+												{ entry.entry_date }
+												{ entry.description &&
+													` - ${ entry.description }` }
 											</Text>
 											<Text>
-												{entry.transactions?.length ||
-													0}{' '}
-												{__(
+												{ entry.transactions?.length ||
+													0 }{ ' ' }
+												{ __(
 													'matched transactions',
 													'fair-payments-connector'
-												)}
+												) }
 											</Text>
 										</VStack>
 										<Button
 											variant="tertiary"
 											isDestructive
 											size="small"
-											onClick={() =>
-												handleUnmatchAll(entry.id)
+											onClick={ () =>
+												handleUnmatchAll( entry.id )
 											}
 										>
-											{__(
+											{ __(
 												'Unmatch All',
 												'fair-payments-connector'
-											)}
+											) }
 										</Button>
 									</HStack>
 
-									{entry.transactions &&
+									{ entry.transactions &&
 										entry.transactions.length > 0 && (
 											<table
 												className="wp-list-table widefat fixed striped"
-												style={{ marginTop: '8px' }}
+												style={ { marginTop: '8px' } }
 											>
 												<thead>
 													<tr>
 														<th>
-															{__(
+															{ __(
 																'Date',
 																'fair-payments-connector'
-															)}
+															) }
 														</th>
 														<th>
-															{__(
+															{ __(
 																'Amount',
 																'fair-payments-connector'
-															)}
+															) }
 														</th>
 														<th>
-															{__(
+															{ __(
 																'Description',
 																'fair-payments-connector'
-															)}
+															) }
 														</th>
 														<th>
-															{__(
+															{ __(
 																'Mollie ID',
 																'fair-payments-connector'
-															)}
+															) }
 														</th>
 														<th
-															style={{
+															style={ {
 																width: '100px',
-															}}
+															} }
 														>
-															{__(
+															{ __(
 																'Action',
 																'fair-payments-connector'
-															)}
+															) }
 														</th>
 													</tr>
 												</thead>
 												<tbody>
-													{entry.transactions.map(
-														(t) => (
-															<tr key={t.id}>
+													{ entry.transactions.map(
+														( t ) => (
+															<tr key={ t.id }>
 																<td>
-																	{formatDateOnly(
+																	{ formatDateOnly(
 																		t.created_at,
 																		'numeric'
-																	)}
+																	) }
 																</td>
 																<td>
-																	{formatAmount(
+																	{ formatAmount(
 																		t.amount,
 																		t.currency
-																	)}
+																	) }
 																</td>
 																<td>
-																	{t.description ||
-																		''}
+																	{ t.description ||
+																		'' }
 																</td>
 																<td>
 																	<code
-																		style={{
+																		style={ {
 																			fontSize:
 																				'11px',
-																		}}
+																		} }
 																	>
 																		{
 																			t.mollie_payment_id
@@ -916,28 +926,28 @@ const ReconciliationApp = () => {
 																		variant="tertiary"
 																		isDestructive
 																		size="small"
-																		onClick={() =>
+																		onClick={ () =>
 																			handleUnmatchTransaction(
 																				entry.id,
 																				t.id
 																			)
 																		}
 																	>
-																		{__(
+																		{ __(
 																			'Unmatch',
 																			'fair-payments-connector'
-																		)}
+																		) }
 																	</Button>
 																</td>
 															</tr>
 														)
-													)}
+													) }
 												</tbody>
 											</table>
-										)}
+										) }
 								</div>
-							))
-						)}
+							) )
+						) }
 					</PanelBody>
 				</Panel>
 			</div>

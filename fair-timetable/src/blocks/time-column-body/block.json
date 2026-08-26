@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "columns",
 	"description": "A time column body container for organizing time slots",
-	"parent": ["fair-timetable/time-column"],
+	"parent": [ "fair-timetable/time-column" ],
 	"example": {},
 	"supports": {
 		"html": false,

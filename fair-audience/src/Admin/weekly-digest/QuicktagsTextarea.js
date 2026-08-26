@@ -24,65 +24,65 @@ import {
  * @param {Object}   ref                Forwarded ref exposing `getValue()`.
  * @return {JSX.Element} The quicktags-enabled textarea field.
  */
-const QuicktagsTextarea = forwardRef(function QuicktagsTextarea(
+const QuicktagsTextarea = forwardRef( function QuicktagsTextarea(
 	{ id, label, help, defaultValue, disabled },
 	ref
 ) {
-	const textareaRef = useRef(null);
+	const textareaRef = useRef( null );
 
-	useImperativeHandle(ref, () => ({
+	useImperativeHandle( ref, () => ( {
 		getValue: () => textareaRef.current?.value ?? '',
-	}));
+	} ) );
 
-	useEffect(() => {
-		if (window.wp && window.wp.editor) {
-			window.wp.editor.initialize(id, {
+	useEffect( () => {
+		if ( window.wp && window.wp.editor ) {
+			window.wp.editor.initialize( id, {
 				quicktags: true,
 				tinymce: false,
 				mediaButtons: false,
-			});
+			} );
 		}
 
 		return () => {
-			if (window.wp && window.wp.editor) {
-				window.wp.editor.remove(id);
+			if ( window.wp && window.wp.editor ) {
+				window.wp.editor.remove( id );
 			}
 		};
-	}, [id]);
+	}, [ id ] );
 
 	return (
-		<div style={{ marginBottom: '16px' }}>
+		<div style={ { marginBottom: '16px' } }>
 			<label
-				htmlFor={id}
-				style={{
+				htmlFor={ id }
+				style={ {
 					display: 'block',
 					marginBottom: '8px',
 					fontWeight: '600',
-				}}
+				} }
 			>
-				{label}
+				{ label }
 			</label>
 			<textarea
-				ref={textareaRef}
-				id={id}
-				rows={6}
-				style={{ width: '100%' }}
-				defaultValue={defaultValue}
-				disabled={disabled}
+				ref={ textareaRef }
+				id={ id }
+				rows={ 6 }
+				style={ { width: '100%' } }
+				defaultValue={ defaultValue }
+				disabled={ disabled }
 			/>
-			{help && (
+			{ help && (
 				<p
-					style={{
+					style={ {
 						color: '#757575',
 						fontSize: '13px',
 						marginTop: '4px',
-					}}
+					} }
 				>
-					{help}
+					{ help }
 				</p>
-			)}
+			) }
 		</div>
 	);
-});
+} );
 
 export default QuicktagsTextarea;

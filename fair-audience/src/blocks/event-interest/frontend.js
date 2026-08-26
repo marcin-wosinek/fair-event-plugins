@@ -14,28 +14,28 @@ import {
 // matching class.
 const CSS_PREFIX = 'fair-audience-signup';
 
-(function () {
+( function () {
 	'use strict';
 
-	onDomReady(initializeForms);
+	onDomReady( initializeForms );
 
 	function initializeForms() {
 		const forms = document.querySelectorAll(
 			'.fair-audience-event-interest-form'
 		);
-		forms.forEach(setupForm);
+		forms.forEach( setupForm );
 	}
 
-	function setupForm(form) {
-		form.addEventListener('submit', function (e) {
+	function setupForm( form ) {
+		form.addEventListener( 'submit', function ( e ) {
 			e.preventDefault();
-			submitForm(form);
-		});
-		wireNotYouButton(form.querySelector('.fair-audience-not-you'));
+			submitForm( form );
+		} );
+		wireNotYouButton( form.querySelector( '.fair-audience-not-you' ) );
 	}
 
-	function submitForm(form) {
-		const container = form.closest('.fair-audience-event-interest');
+	function submitForm( form ) {
+		const container = form.closest( '.fair-audience-event-interest' );
 		const submitButton = form.querySelector(
 			'.fair-audience-event-interest-submit-button'
 		);
@@ -43,21 +43,21 @@ const CSS_PREFIX = 'fair-audience-signup';
 			'.fair-audience-event-interest-message'
 		);
 
-		const eventId = parseInt(container.dataset.eventId, 10);
+		const eventId = parseInt( container.dataset.eventId, 10 );
 		const successMessage =
 			container.dataset.successMessage ||
-			__('Thanks! Check your inbox for confirmation.', 'fair-audience');
+			__( 'Thanks! Check your inbox for confirmation.', 'fair-audience' );
 
-		const emailInput = form.querySelector('input[name="interest_email"]');
-		const nameInput = form.querySelector('input[name="interest_name"]');
+		const emailInput = form.querySelector( 'input[name="interest_email"]' );
+		const nameInput = form.querySelector( 'input[name="interest_name"]' );
 		const honeypotInput = form.querySelector(
 			'input[name="interest_website"]'
 		);
 
-		if (!emailInput || !emailInput.value.trim()) {
+		if ( ! emailInput || ! emailInput.value.trim() ) {
 			showMessage(
 				messageContainer,
-				__('Please enter your email.', 'fair-audience'),
+				__( 'Please enter your email.', 'fair-audience' ),
 				'error',
 				CSS_PREFIX
 			);
@@ -66,10 +66,10 @@ const CSS_PREFIX = 'fair-audience-signup';
 
 		const restoreButton = setButtonLoading(
 			submitButton,
-			__('Submitting...', 'fair-audience')
+			__( 'Submitting...', 'fair-audience' )
 		);
 
-		apiFetch({
+		apiFetch( {
 			path: '/fair-audience/v1/event-interest',
 			method: 'POST',
 			data: {
@@ -78,8 +78,8 @@ const CSS_PREFIX = 'fair-audience-signup';
 				name: nameInput ? nameInput.value.trim() : '',
 				honeypot: honeypotInput ? honeypotInput.value : '',
 			},
-		})
-			.then(function () {
+		} )
+			.then( function () {
 				showMessage(
 					messageContainer,
 					successMessage,
@@ -87,8 +87,8 @@ const CSS_PREFIX = 'fair-audience-signup';
 					CSS_PREFIX
 				);
 				form.reset();
-			})
-			.catch(function (error) {
+			} )
+			.catch( function ( error ) {
 				const errorMessage = extractErrorMessage(
 					error,
 					__(
@@ -102,9 +102,9 @@ const CSS_PREFIX = 'fair-audience-signup';
 					'error',
 					CSS_PREFIX
 				);
-			})
-			.finally(function () {
+			} )
+			.finally( function () {
 				restoreButton();
-			});
+			} );
 	}
-})();
+} )();

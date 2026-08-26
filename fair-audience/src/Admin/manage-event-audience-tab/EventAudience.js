@@ -19,9 +19,9 @@ import apiFetch from '@wordpress/api-fetch';
 const LABEL_ORDER = { collaborator: 0, signed_up: 1, interested: 2 };
 
 const LABEL_DISPLAY = {
-	collaborator: __('Collaborator', 'fair-audience'),
-	signed_up: __('Signed up', 'fair-audience'),
-	interested: __('Interested', 'fair-audience'),
+	collaborator: __( 'Collaborator', 'fair-audience' ),
+	signed_up: __( 'Signed up', 'fair-audience' ),
+	interested: __( 'Interested', 'fair-audience' ),
 };
 
 // payment_expires_at is stored as UTC via PHP gmdate() in the form
@@ -29,358 +29,366 @@ const LABEL_DISPLAY = {
 // *local* time on most engines, which on non-UTC servers shifts the expiry by
 // the local offset and falsely flags in-progress holds as expired. Normalize
 // to ISO-8601 with a trailing "Z" so it is interpreted as UTC.
-const parsePaymentExpiresAt = (iso) => {
-	if (!iso) return NaN;
+const parsePaymentExpiresAt = ( iso ) => {
+	if ( ! iso ) return NaN;
 	const normalized =
-		typeof iso === 'string' && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(iso)
-			? iso.replace(' ', 'T') + 'Z'
+		typeof iso === 'string' && ! /[zZ]|[+-]\d{2}:?\d{2}$/.test( iso )
+			? iso.replace( ' ', 'T' ) + 'Z'
 			: iso;
-	return new Date(normalized).getTime();
+	return new Date( normalized ).getTime();
 };
 
 // A pending_payment row is "stale" once its hold has lapsed: capacity counters
 // stop including it (matching the registration block) and the row needs admin
 // triage — confirm (cash payment etc.) or cancel.
-const isStalePendingPayment = (p) => {
-	if (!p || p.label !== 'pending_payment') return false;
-	if (!p.payment_expires_at) return true;
-	return parsePaymentExpiresAt(p.payment_expires_at) <= Date.now();
+const isStalePendingPayment = ( p ) => {
+	if ( ! p || p.label !== 'pending_payment' ) return false;
+	if ( ! p.payment_expires_at ) return true;
+	return parsePaymentExpiresAt( p.payment_expires_at ) <= Date.now();
 };
 
 // Whether a participant currently occupies a seat for capacity purposes.
 // Mirrors EventParticipantRepository::count_signups_for_ticket_option in PHP.
-const occupiesSeat = (p) => {
-	if (!p) return false;
-	if (p.label === 'signed_up') return true;
-	if (p.label === 'pending_payment') return !isStalePendingPayment(p);
+const occupiesSeat = ( p ) => {
+	if ( ! p ) return false;
+	if ( p.label === 'signed_up' ) return true;
+	if ( p.label === 'pending_payment' ) return ! isStalePendingPayment( p );
 	return false;
 };
 
-export default function EventAudience({
+export default function EventAudience( {
 	eventId,
 	eventDateId,
 	audienceUrl,
 	eventTitle,
-}) {
-	const [participants, setParticipants] = useState([]);
-	const [loadingParticipants, setLoadingParticipants] = useState(true);
-	const [ticketOptions, setTicketOptions] = useState([]);
-	const [ticketTypes, setTicketTypes] = useState([]);
-	const [siblings, setSiblings] = useState([]);
-	const [formsSummary, setFormsSummary] = useState([]);
-	const [loadingForms, setLoadingForms] = useState(true);
+} ) {
+	const [ participants, setParticipants ] = useState( [] );
+	const [ loadingParticipants, setLoadingParticipants ] = useState( true );
+	const [ ticketOptions, setTicketOptions ] = useState( [] );
+	const [ ticketTypes, setTicketTypes ] = useState( [] );
+	const [ siblings, setSiblings ] = useState( [] );
+	const [ formsSummary, setFormsSummary ] = useState( [] );
+	const [ loadingForms, setLoadingForms ] = useState( true );
 
 	// Filter & sort state
-	const [filterRole, setFilterRole] = useState('all');
-	const [searchText, setSearchText] = useState('');
-	const [sortBy, setSortBy] = useState('role');
-	const [sortOrder, setSortOrder] = useState('asc');
+	const [ filterRole, setFilterRole ] = useState( 'all' );
+	const [ searchText, setSearchText ] = useState( '' );
+	const [ sortBy, setSortBy ] = useState( 'role' );
+	const [ sortOrder, setSortOrder ] = useState( 'asc' );
 
 	// Add participant modal state
-	const [addModalOpen, setAddModalOpen] = useState(false);
-	const [addModalLabel, setAddModalLabel] = useState('signed_up');
-	const [allParticipants, setAllParticipants] = useState([]);
-	const [loadingAllParticipants, setLoadingAllParticipants] = useState(false);
-	const [addSearch, setAddSearch] = useState('');
-	const [selectedToAdd, setSelectedToAdd] = useState(new Set());
-	const [isAdding, setIsAdding] = useState(false);
+	const [ addModalOpen, setAddModalOpen ] = useState( false );
+	const [ addModalLabel, setAddModalLabel ] = useState( 'signed_up' );
+	const [ allParticipants, setAllParticipants ] = useState( [] );
+	const [ loadingAllParticipants, setLoadingAllParticipants ] =
+		useState( false );
+	const [ addSearch, setAddSearch ] = useState( '' );
+	const [ selectedToAdd, setSelectedToAdd ] = useState( new Set() );
+	const [ isAdding, setIsAdding ] = useState( false );
 
 	// Consent modal state: maps participant_id → 'yes' | 'no' | null (null = skip)
-	const [mailingModalOpen, setMailingModalOpen] = useState(false);
-	const [mailingSearch, setMailingSearch] = useState('');
-	const [consentChoices, setConsentChoices] = useState({});
-	const [isRecordingConsent, setIsRecordingConsent] = useState(false);
+	const [ mailingModalOpen, setMailingModalOpen ] = useState( false );
+	const [ mailingSearch, setMailingSearch ] = useState( '' );
+	const [ consentChoices, setConsentChoices ] = useState( {} );
+	const [ isRecordingConsent, setIsRecordingConsent ] = useState( false );
 
 	// Invite groups state
-	const [invitedGroups, setInvitedGroups] = useState([]);
-	const [inviteModalOpen, setInviteModalOpen] = useState(false);
-	const [isSendingInvitations, setIsSendingInvitations] = useState(false);
+	const [ invitedGroups, setInvitedGroups ] = useState( [] );
+	const [ inviteModalOpen, setInviteModalOpen ] = useState( false );
+	const [ isSendingInvitations, setIsSendingInvitations ] = useState( false );
 
 	// Edit options modal state
-	const [editingParticipant, setEditingParticipant] = useState(null);
-	const [editOptionIds, setEditOptionIds] = useState([]);
-	const [editTicketTypeId, setEditTicketTypeId] = useState(null);
-	const [editAdminComment, setEditAdminComment] = useState('');
-	const [editStaleDecision, setEditStaleDecision] = useState(null);
-	const [editLabel, setEditLabel] = useState('signed_up');
-	const [isSavingOptions, setIsSavingOptions] = useState(false);
+	const [ editingParticipant, setEditingParticipant ] = useState( null );
+	const [ editOptionIds, setEditOptionIds ] = useState( [] );
+	const [ editTicketTypeId, setEditTicketTypeId ] = useState( null );
+	const [ editAdminComment, setEditAdminComment ] = useState( '' );
+	const [ editStaleDecision, setEditStaleDecision ] = useState( null );
+	const [ editLabel, setEditLabel ] = useState( 'signed_up' );
+	const [ isSavingOptions, setIsSavingOptions ] = useState( false );
 
 	// Move-to-occurrence modal state
-	const [movingParticipant, setMovingParticipant] = useState(null);
-	const [moveTargetId, setMoveTargetId] = useState('');
-	const [isMoving, setIsMoving] = useState(false);
+	const [ movingParticipant, setMovingParticipant ] = useState( null );
+	const [ moveTargetId, setMoveTargetId ] = useState( '' );
+	const [ isMoving, setIsMoving ] = useState( false );
 
-	const [toast, setToast] = useState(null);
-	const toastTimerRef = useRef(null);
-	const showToast = (message, type = 'success') => {
-		if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-		setToast({ message, type });
-		toastTimerRef.current = setTimeout(() => setToast(null), 3500);
+	const [ toast, setToast ] = useState( null );
+	const toastTimerRef = useRef( null );
+	const showToast = ( message, type = 'success' ) => {
+		if ( toastTimerRef.current ) clearTimeout( toastTimerRef.current );
+		setToast( { message, type } );
+		toastTimerRef.current = setTimeout( () => setToast( null ), 3500 );
 	};
 	useEffect(
 		() => () => {
-			if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+			if ( toastTimerRef.current ) clearTimeout( toastTimerRef.current );
 		},
 		[]
 	);
 
-	useEffect(() => {
-		if (!eventDateId) {
-			setLoadingParticipants(false);
+	useEffect( () => {
+		if ( ! eventDateId ) {
+			setLoadingParticipants( false );
 			return;
 		}
-		apiFetch({
-			path: `/fair-audience/v1/event-dates/${eventDateId}/participants`,
-		})
-			.then((data) => {
-				setParticipants(Array.isArray(data) ? data : []);
-			})
-			.catch(() => {
-				setParticipants([]);
-			})
-			.finally(() => setLoadingParticipants(false));
-	}, [eventDateId]);
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+		} )
+			.then( ( data ) => {
+				setParticipants( Array.isArray( data ) ? data : [] );
+			} )
+			.catch( () => {
+				setParticipants( [] );
+			} )
+			.finally( () => setLoadingParticipants( false ) );
+	}, [ eventDateId ] );
 
-	useEffect(() => {
-		if (!eventDateId) return;
-		apiFetch({
-			path: `/fair-events/v1/event-dates/${eventDateId}/tickets`,
-		})
-			.then((data) => {
+	useEffect( () => {
+		if ( ! eventDateId ) return;
+		apiFetch( {
+			path: `/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+		} )
+			.then( ( data ) => {
 				setTicketOptions(
-					Array.isArray(data?.options) ? data.options : []
+					Array.isArray( data?.options ) ? data.options : []
 				);
 				setTicketTypes(
-					Array.isArray(data?.ticket_types) ? data.ticket_types : []
+					Array.isArray( data?.ticket_types ) ? data.ticket_types : []
 				);
-			})
-			.catch(() => {
-				setTicketOptions([]);
-				setTicketTypes([]);
-			});
-	}, [eventDateId]);
+			} )
+			.catch( () => {
+				setTicketOptions( [] );
+				setTicketTypes( [] );
+			} );
+	}, [ eventDateId ] );
 
-	useEffect(() => {
-		if (!eventDateId) return;
-		apiFetch({
-			path: `/fair-events/v1/event-dates/${eventDateId}/siblings`,
-		})
-			.then((data) => {
-				setSiblings(Array.isArray(data) ? data : []);
-			})
-			.catch(() => {
-				setSiblings([]);
-			});
-	}, [eventDateId]);
+	useEffect( () => {
+		if ( ! eventDateId ) return;
+		apiFetch( {
+			path: `/fair-events/v1/event-dates/${ eventDateId }/siblings`,
+		} )
+			.then( ( data ) => {
+				setSiblings( Array.isArray( data ) ? data : [] );
+			} )
+			.catch( () => {
+				setSiblings( [] );
+			} );
+	}, [ eventDateId ] );
 
-	useEffect(() => {
-		if (!eventDateId) {
-			setLoadingForms(false);
+	useEffect( () => {
+		if ( ! eventDateId ) {
+			setLoadingForms( false );
 			return;
 		}
-		apiFetch({
-			path: `/fair-form/v1/questionnaire-responses/forms-summary?event_date_id=${eventDateId}`,
-		})
-			.then((data) => {
-				setFormsSummary(Array.isArray(data) ? data : []);
-			})
-			.catch(() => {
-				setFormsSummary([]);
-			})
-			.finally(() => setLoadingForms(false));
-	}, [eventDateId]);
+		apiFetch( {
+			path: `/fair-form/v1/questionnaire-responses/forms-summary?event_date_id=${ eventDateId }`,
+		} )
+			.then( ( data ) => {
+				setFormsSummary( Array.isArray( data ) ? data : [] );
+			} )
+			.catch( () => {
+				setFormsSummary( [] );
+			} )
+			.finally( () => setLoadingForms( false ) );
+	}, [ eventDateId ] );
 
-	useEffect(() => {
-		if (!eventDateId) return;
-		Promise.all([
-			apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}/group-permission-rules`,
-			}),
-			apiFetch({ path: '/fair-audience/v1/groups' }),
-		])
-			.then(([rules, groups]) => {
+	useEffect( () => {
+		if ( ! eventDateId ) return;
+		Promise.all( [
+			apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules`,
+			} ),
+			apiFetch( { path: '/fair-audience/v1/groups' } ),
+		] )
+			.then( ( [ rules, groups ] ) => {
 				const invitedIds = new Set(
-					(rules || [])
-						.filter((r) => r.permission_type === 'invited')
-						.map((r) => r.group_id)
+					( rules || [] )
+						.filter( ( r ) => r.permission_type === 'invited' )
+						.map( ( r ) => r.group_id )
 				);
 				setInvitedGroups(
-					(groups || []).filter((g) => invitedIds.has(g.id))
+					( groups || [] ).filter( ( g ) => invitedIds.has( g.id ) )
 				);
-			})
-			.catch(() => setInvitedGroups([]));
-	}, [eventDateId]);
+			} )
+			.catch( () => setInvitedGroups( [] ) );
+	}, [ eventDateId ] );
 
-	const filteredParticipants = useMemo(() => {
+	const filteredParticipants = useMemo( () => {
 		let list = participants;
 
-		if (filterRole !== 'all') {
-			list = list.filter((p) => p.label === filterRole);
+		if ( filterRole !== 'all' ) {
+			list = list.filter( ( p ) => p.label === filterRole );
 		}
 
-		if (searchText) {
+		if ( searchText ) {
 			const term = searchText.toLowerCase();
-			list = list.filter((p) =>
-				(p.participant_name || '').toLowerCase().includes(term)
+			list = list.filter( ( p ) =>
+				( p.participant_name || '' ).toLowerCase().includes( term )
 			);
 		}
 
-		list = [...list].sort((a, b) => {
+		list = [ ...list ].sort( ( a, b ) => {
 			let cmp = 0;
-			if (sortBy === 'role') {
-				cmp = (LABEL_ORDER[a.label] ?? 3) - (LABEL_ORDER[b.label] ?? 3);
-				if (cmp === 0) {
-					cmp = (a.participant_name || '').localeCompare(
+			if ( sortBy === 'role' ) {
+				cmp =
+					( LABEL_ORDER[ a.label ] ?? 3 ) -
+					( LABEL_ORDER[ b.label ] ?? 3 );
+				if ( cmp === 0 ) {
+					cmp = ( a.participant_name || '' ).localeCompare(
 						b.participant_name || ''
 					);
 				}
-			} else if (sortBy === 'ticket_type') {
+			} else if ( sortBy === 'ticket_type' ) {
 				const ttA = a.ticket_type_name || '';
 				const ttB = b.ticket_type_name || '';
-				if (ttA === '' && ttB !== '') {
+				if ( ttA === '' && ttB !== '' ) {
 					cmp = 1; // empty values sort to the end
-				} else if (ttA !== '' && ttB === '') {
+				} else if ( ttA !== '' && ttB === '' ) {
 					cmp = -1;
 				} else {
-					cmp = ttA.localeCompare(ttB);
+					cmp = ttA.localeCompare( ttB );
 				}
-				if (cmp === 0) {
-					cmp = (a.participant_name || '').localeCompare(
+				if ( cmp === 0 ) {
+					cmp = ( a.participant_name || '' ).localeCompare(
 						b.participant_name || ''
 					);
 				}
 			} else {
-				cmp = (a.participant_name || '').localeCompare(
+				cmp = ( a.participant_name || '' ).localeCompare(
 					b.participant_name || ''
 				);
-				if (cmp === 0) {
+				if ( cmp === 0 ) {
 					cmp =
-						(LABEL_ORDER[a.label] ?? 3) -
-						(LABEL_ORDER[b.label] ?? 3);
+						( LABEL_ORDER[ a.label ] ?? 3 ) -
+						( LABEL_ORDER[ b.label ] ?? 3 );
 				}
 			}
 			return sortOrder === 'desc' ? -cmp : cmp;
-		});
+		} );
 
 		return list;
-	}, [participants, filterRole, searchText, sortBy, sortOrder]);
+	}, [ participants, filterRole, searchText, sortBy, sortOrder ] );
 
-	const counts = useMemo(() => {
+	const counts = useMemo( () => {
 		const c = { collaborator: 0, signed_up: 0, interested: 0 };
-		participants.forEach((p) => {
-			if (c[p.label] !== undefined) {
-				c[p.label]++;
+		participants.forEach( ( p ) => {
+			if ( c[ p.label ] !== undefined ) {
+				c[ p.label ]++;
 			}
-		});
+		} );
 		return c;
-	}, [participants]);
+	}, [ participants ] );
 
 	const stalePending = useMemo(
-		() => participants.filter(isStalePendingPayment),
-		[participants]
+		() => participants.filter( isStalePendingPayment ),
+		[ participants ]
 	);
 
 	const otherOccurrences = useMemo(
-		() => siblings.filter((s) => Number(s.id) !== Number(eventDateId)),
-		[siblings, eventDateId]
+		() =>
+			siblings.filter(
+				( s ) => Number( s.id ) !== Number( eventDateId )
+			),
+		[ siblings, eventDateId ]
 	);
 
-	const handleSort = (column) => {
-		if (sortBy === column) {
-			setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+	const handleSort = ( column ) => {
+		if ( sortBy === column ) {
+			setSortOrder( sortOrder === 'asc' ? 'desc' : 'asc' );
 		} else {
-			setSortBy(column);
-			setSortOrder('asc');
+			setSortBy( column );
+			setSortOrder( 'asc' );
 		}
 	};
 
-	const sortIndicator = (column) => {
-		if (sortBy !== column) return '';
+	const sortIndicator = ( column ) => {
+		if ( sortBy !== column ) return '';
 		return sortOrder === 'asc' ? ' \u25B2' : ' \u25BC';
 	};
 
 	const loadParticipants = () => {
-		apiFetch({
-			path: `/fair-audience/v1/event-dates/${eventDateId}/participants`,
-		})
-			.then((data) => {
-				setParticipants(Array.isArray(data) ? data : []);
-			})
-			.catch(() => {
-				setParticipants([]);
-			});
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+		} )
+			.then( ( data ) => {
+				setParticipants( Array.isArray( data ) ? data : [] );
+			} )
+			.catch( () => {
+				setParticipants( [] );
+			} );
 	};
 
 	const handleOpenAddModal = () => {
-		setAddModalOpen(true);
-		setSelectedToAdd(new Set());
-		setAddSearch('');
-		setAddModalLabel('signed_up');
-		setLoadingAllParticipants(true);
-		apiFetch({ path: '/fair-audience/v1/participants?per_page=0' })
-			.then((data) => {
-				setAllParticipants(Array.isArray(data) ? data : []);
-			})
-			.catch(() => {
-				setAllParticipants([]);
-			})
-			.finally(() => setLoadingAllParticipants(false));
+		setAddModalOpen( true );
+		setSelectedToAdd( new Set() );
+		setAddSearch( '' );
+		setAddModalLabel( 'signed_up' );
+		setLoadingAllParticipants( true );
+		apiFetch( { path: '/fair-audience/v1/participants?per_page=0' } )
+			.then( ( data ) => {
+				setAllParticipants( Array.isArray( data ) ? data : [] );
+			} )
+			.catch( () => {
+				setAllParticipants( [] );
+			} )
+			.finally( () => setLoadingAllParticipants( false ) );
 	};
 
 	const handleCloseAddModal = () => {
-		setAddModalOpen(false);
-		setSelectedToAdd(new Set());
-		setAddSearch('');
+		setAddModalOpen( false );
+		setSelectedToAdd( new Set() );
+		setAddSearch( '' );
 	};
 
-	const availableParticipants = useMemo(() => {
-		const existingIds = new Set(participants.map((p) => p.participant_id));
-		return allParticipants.filter((p) => !existingIds.has(p.id));
-	}, [allParticipants, participants]);
+	const availableParticipants = useMemo( () => {
+		const existingIds = new Set(
+			participants.map( ( p ) => p.participant_id )
+		);
+		return allParticipants.filter( ( p ) => ! existingIds.has( p.id ) );
+	}, [ allParticipants, participants ] );
 
-	const filteredAvailableParticipants = useMemo(() => {
-		if (!addSearch) return availableParticipants;
+	const filteredAvailableParticipants = useMemo( () => {
+		if ( ! addSearch ) return availableParticipants;
 		const term = addSearch.toLowerCase();
 		return availableParticipants.filter(
-			(p) =>
-				(p.name || '').toLowerCase().includes(term) ||
-				(p.surname || '').toLowerCase().includes(term) ||
-				(p.email || '').toLowerCase().includes(term)
+			( p ) =>
+				( p.name || '' ).toLowerCase().includes( term ) ||
+				( p.surname || '' ).toLowerCase().includes( term ) ||
+				( p.email || '' ).toLowerCase().includes( term )
 		);
-	}, [availableParticipants, addSearch]);
+	}, [ availableParticipants, addSearch ] );
 
-	const handleToggleParticipantToAdd = (participantId) => {
-		const next = new Set(selectedToAdd);
-		if (next.has(participantId)) {
-			next.delete(participantId);
+	const handleToggleParticipantToAdd = ( participantId ) => {
+		const next = new Set( selectedToAdd );
+		if ( next.has( participantId ) ) {
+			next.delete( participantId );
 		} else {
-			next.add(participantId);
+			next.add( participantId );
 		}
-		setSelectedToAdd(next);
+		setSelectedToAdd( next );
 	};
 
 	const handleBatchAdd = async () => {
-		if (selectedToAdd.size === 0) return;
-		setIsAdding(true);
+		if ( selectedToAdd.size === 0 ) return;
+		setIsAdding( true );
 		try {
-			await apiFetch({
-				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/batch`,
+			await apiFetch( {
+				path: `/fair-audience/v1/event-dates/${ eventDateId }/participants/batch`,
 				method: 'POST',
 				data: {
-					participant_ids: Array.from(selectedToAdd),
+					participant_ids: Array.from( selectedToAdd ),
 					label: addModalLabel,
 				},
-			});
+			} );
 			handleCloseAddModal();
 			loadParticipants();
-		} catch (err) {
+		} catch ( err ) {
 			showToast(
-				__('Error adding participants: ', 'fair-audience') +
+				__( 'Error adding participants: ', 'fair-audience' ) +
 					err.message,
 				'error'
 			);
 		} finally {
-			setIsAdding(false);
+			setIsAdding( false );
 		}
 	};
 
@@ -388,58 +396,58 @@ export default function EventAudience({
 	// Yes (upgrade) is only available for those with an email; No (decline) is
 	// always available so we can record that they were asked and refused.
 	const mailingEligible = useMemo(
-		() => participants.filter((p) => p.email_profile === 'minimal'),
-		[participants]
+		() => participants.filter( ( p ) => p.email_profile === 'minimal' ),
+		[ participants ]
 	);
 
-	const filteredMailingEligible = useMemo(() => {
-		if (!mailingSearch) return mailingEligible;
+	const filteredMailingEligible = useMemo( () => {
+		if ( ! mailingSearch ) return mailingEligible;
 		const term = mailingSearch.toLowerCase();
 		return mailingEligible.filter(
-			(p) =>
-				(p.name || '').toLowerCase().includes(term) ||
-				(p.surname || '').toLowerCase().includes(term) ||
-				(p.participant_email || '').toLowerCase().includes(term)
+			( p ) =>
+				( p.name || '' ).toLowerCase().includes( term ) ||
+				( p.surname || '' ).toLowerCase().includes( term ) ||
+				( p.participant_email || '' ).toLowerCase().includes( term )
 		);
-	}, [mailingEligible, mailingSearch]);
+	}, [ mailingEligible, mailingSearch ] );
 
 	const handleOpenMailingModal = () => {
-		setMailingModalOpen(true);
-		setConsentChoices({});
-		setMailingSearch('');
+		setMailingModalOpen( true );
+		setConsentChoices( {} );
+		setMailingSearch( '' );
 	};
 
 	const handleCloseMailingModal = () => {
-		setMailingModalOpen(false);
-		setConsentChoices({});
-		setMailingSearch('');
+		setMailingModalOpen( false );
+		setConsentChoices( {} );
+		setMailingSearch( '' );
 	};
 
-	const handleConsentChoice = (participantId, choice) => {
-		setConsentChoices((prev) => ({
+	const handleConsentChoice = ( participantId, choice ) => {
+		setConsentChoices( ( prev ) => ( {
 			...prev,
-			[participantId]: prev[participantId] === choice ? null : choice,
-		}));
+			[ participantId ]: prev[ participantId ] === choice ? null : choice,
+		} ) );
 	};
 
 	const handleRecordConsent = async () => {
-		const marketingIds = Object.entries(consentChoices)
-			.filter(([, v]) => v === 'yes')
-			.map(([id]) => parseInt(id, 10));
-		const declinedIds = Object.entries(consentChoices)
-			.filter(([, v]) => v === 'no')
-			.map(([id]) => parseInt(id, 10));
-		if (marketingIds.length === 0 && declinedIds.length === 0) return;
-		setIsRecordingConsent(true);
+		const marketingIds = Object.entries( consentChoices )
+			.filter( ( [ , v ] ) => v === 'yes' )
+			.map( ( [ id ] ) => parseInt( id, 10 ) );
+		const declinedIds = Object.entries( consentChoices )
+			.filter( ( [ , v ] ) => v === 'no' )
+			.map( ( [ id ] ) => parseInt( id, 10 ) );
+		if ( marketingIds.length === 0 && declinedIds.length === 0 ) return;
+		setIsRecordingConsent( true );
 		try {
-			const response = await apiFetch({
-				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/marketing-consent`,
+			const response = await apiFetch( {
+				path: `/fair-audience/v1/event-dates/${ eventDateId }/participants/marketing-consent`,
 				method: 'POST',
 				data: {
 					marketing_ids: marketingIds,
 					declined_ids: declinedIds,
 				},
-			});
+			} );
 			handleCloseMailingModal();
 			loadParticipants();
 			const upgraded = response.upgraded ?? 0;
@@ -460,34 +468,39 @@ export default function EventAudience({
 				),
 				emailFailed > 0 ? 'error' : 'success'
 			);
-		} catch (err) {
+		} catch ( err ) {
 			showToast(
-				__('Error recording consent: ', 'fair-audience') + err.message,
+				__( 'Error recording consent: ', 'fair-audience' ) +
+					err.message,
 				'error'
 			);
 		} finally {
-			setIsRecordingConsent(false);
+			setIsRecordingConsent( false );
 		}
 	};
 
 	const totalInvitees = useMemo(
-		() => invitedGroups.reduce((acc, g) => acc + (g.member_count || 0), 0),
-		[invitedGroups]
+		() =>
+			invitedGroups.reduce(
+				( acc, g ) => acc + ( g.member_count || 0 ),
+				0
+			),
+		[ invitedGroups ]
 	);
 
 	const handleSendInvitations = async () => {
-		if (invitedGroups.length === 0) return;
-		setIsSendingInvitations(true);
+		if ( invitedGroups.length === 0 ) return;
+		setIsSendingInvitations( true );
 		try {
-			const response = await apiFetch({
-				path: `/fair-audience/v1/event-dates/${eventDateId}/event-invitations`,
+			const response = await apiFetch( {
+				path: `/fair-audience/v1/event-dates/${ eventDateId }/event-invitations`,
 				method: 'POST',
-				data: { group_ids: invitedGroups.map((g) => g.id) },
-			});
-			setInviteModalOpen(false);
+				data: { group_ids: invitedGroups.map( ( g ) => g.id ) },
+			} );
+			setInviteModalOpen( false );
 			const sent = response.sent_count ?? 0;
 			const skipped = response.skipped_count ?? 0;
-			const failed = Array.isArray(response.failed)
+			const failed = Array.isArray( response.failed )
 				? response.failed.length
 				: 0;
 			showToast(
@@ -503,25 +516,25 @@ export default function EventAudience({
 				),
 				failed > 0 ? 'error' : 'success'
 			);
-		} catch (err) {
+		} catch ( err ) {
 			showToast(
-				__('Error sending invitations: ', 'fair-audience') +
+				__( 'Error sending invitations: ', 'fair-audience' ) +
 					err.message,
 				'error'
 			);
 		} finally {
-			setIsSendingInvitations(false);
+			setIsSendingInvitations( false );
 		}
 	};
 
-	const handleToggleAttended = (participant, attended) => {
+	const handleToggleAttended = ( participant, attended ) => {
 		// Series-pass rows live on the master event-date; there is no
 		// per-occurrence row here to record attendance against.
-		if (participant.is_series_pass) {
+		if ( participant.is_series_pass ) {
 			return;
 		}
-		setParticipants((current) =>
-			current.map((p) =>
+		setParticipants( ( current ) =>
+			current.map( ( p ) =>
 				p.id === participant.id
 					? {
 							...p,
@@ -533,42 +546,42 @@ export default function EventAudience({
 			)
 		);
 
-		apiFetch({
-			path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${participant.participant_id}`,
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants/${ participant.participant_id }`,
 			method: 'PUT',
 			data: { attended },
-		})
-			.then((response) => {
-				setParticipants((current) =>
-					current.map((p) =>
+		} )
+			.then( ( response ) => {
+				setParticipants( ( current ) =>
+					current.map( ( p ) =>
 						p.id === participant.id
 							? { ...p, attended_at: response.attended_at }
 							: p
 					)
 				);
-			})
-			.catch(() => {
-				setParticipants((current) =>
-					current.map((p) =>
+			} )
+			.catch( () => {
+				setParticipants( ( current ) =>
+					current.map( ( p ) =>
 						p.id === participant.id
 							? { ...p, attended_at: participant.attended_at }
 							: p
 					)
 				);
-			});
+			} );
 	};
 
-	const handleDeleteParticipant = (participant) => {
+	const handleDeleteParticipant = ( participant ) => {
 		// A series pass is held on the master event-date; deleting it from one
 		// occurrence is not supported (and the row isn't on this occurrence).
-		if (participant.is_series_pass) {
+		if ( participant.is_series_pass ) {
 			return;
 		}
 		const baseName =
 			participant.participant_name ||
-			__('this participant', 'fair-audience');
+			__( 'this participant', 'fair-audience' );
 		const nameWithEmail = participant.participant_email
-			? `${baseName} (${participant.participant_email})`
+			? `${ baseName } (${ participant.participant_email })`
 			: baseName;
 		const confirmMessage = sprintf(
 			/* translators: %s: participant name or "name (email)" */
@@ -578,56 +591,58 @@ export default function EventAudience({
 			),
 			nameWithEmail
 		);
-		if (!window.confirm(confirmMessage)) {
+		if ( ! window.confirm( confirmMessage ) ) {
 			return;
 		}
 
 		const previous = participants;
-		setParticipants((list) => list.filter((p) => p.id !== participant.id));
+		setParticipants( ( list ) =>
+			list.filter( ( p ) => p.id !== participant.id )
+		);
 
-		apiFetch({
-			path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${participant.participant_id}`,
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants/${ participant.participant_id }`,
 			method: 'DELETE',
-		}).catch((err) => {
-			setParticipants(previous);
+		} ).catch( ( err ) => {
+			setParticipants( previous );
 			showToast(
-				__('Error deleting registration: ', 'fair-audience') +
-					(err.message || ''),
+				__( 'Error deleting registration: ', 'fair-audience' ) +
+					( err.message || '' ),
 				'error'
 			);
-		});
+		} );
 	};
 
-	const handleOpenEditOptions = (participant) => {
+	const handleOpenEditOptions = ( participant ) => {
 		// Edits apply to the master row; editing from an occurrence is disabled.
-		if (participant.is_series_pass) {
+		if ( participant.is_series_pass ) {
 			return;
 		}
-		setEditingParticipant(participant);
-		const initialIds = Array.isArray(participant.ticket_option_ids)
+		setEditingParticipant( participant );
+		const initialIds = Array.isArray( participant.ticket_option_ids )
 			? participant.ticket_option_ids
 			: [];
 		// Backfill from names for any rows missing an id link.
 		const names = participant.ticket_option_names || [];
 		const namesAsIds = names
-			.map((name) => {
-				const match = ticketOptions.find((o) => o.name === name);
+			.map( ( name ) => {
+				const match = ticketOptions.find( ( o ) => o.name === name );
 				return match ? match.id : null;
-			})
-			.filter((id) => id !== null);
-		setEditOptionIds([...new Set([...initialIds, ...namesAsIds])]);
+			} )
+			.filter( ( id ) => id !== null );
+		setEditOptionIds( [ ...new Set( [ ...initialIds, ...namesAsIds ] ) ] );
 		setEditTicketTypeId(
 			participant.ticket_type_id
-				? Number(participant.ticket_type_id)
+				? Number( participant.ticket_type_id )
 				: null
 		);
-		setEditAdminComment(participant.admin_comment || '');
-		setEditStaleDecision(null);
+		setEditAdminComment( participant.admin_comment || '' );
+		setEditStaleDecision( null );
 		// Only the three editable roles are exposed here. Transient states
 		// such as pending_payment fall back to signed_up — the stale-payment
 		// resolver below takes over when applicable.
 		setEditLabel(
-			['collaborator', 'signed_up', 'interested'].includes(
+			[ 'collaborator', 'signed_up', 'interested' ].includes(
 				participant.label
 			)
 				? participant.label
@@ -635,30 +650,30 @@ export default function EventAudience({
 		);
 	};
 
-	const handleToggleOptionId = (id) => {
-		setEditOptionIds((current) =>
-			current.includes(id)
-				? current.filter((n) => n !== id)
-				: [...current, id]
+	const handleToggleOptionId = ( id ) => {
+		setEditOptionIds( ( current ) =>
+			current.includes( id )
+				? current.filter( ( n ) => n !== id )
+				: [ ...current, id ]
 		);
 	};
 
 	const handleSaveOptions = async () => {
-		if (!editingParticipant) return;
-		setIsSavingOptions(true);
+		if ( ! editingParticipant ) return;
+		setIsSavingOptions( true );
 		try {
 			const data = {
 				ticket_option_ids: editOptionIds,
 				ticket_type_id: editTicketTypeId,
 				admin_comment: editAdminComment,
 			};
-			if (editLabel && editLabel !== editingParticipant.label) {
+			if ( editLabel && editLabel !== editingParticipant.label ) {
 				data.label = editLabel;
 			}
 			const stalenessResolved =
-				isStalePendingPayment(editingParticipant) &&
+				isStalePendingPayment( editingParticipant ) &&
 				editStaleDecision !== null;
-			if (stalenessResolved) {
+			if ( stalenessResolved ) {
 				// Stale-payment resolver overrides any role pick — Confirm /
 				// Cancel signup map to the two terminal states for an
 				// expired hold.
@@ -667,13 +682,13 @@ export default function EventAudience({
 						? 'signed_up'
 						: 'interested';
 			}
-			const response = await apiFetch({
-				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${editingParticipant.participant_id}`,
+			const response = await apiFetch( {
+				path: `/fair-audience/v1/event-dates/${ eventDateId }/participants/${ editingParticipant.participant_id }`,
 				method: 'PUT',
 				data,
-			});
-			setParticipants((current) =>
-				current.map((p) =>
+			} );
+			setParticipants( ( current ) =>
+				current.map( ( p ) =>
 					p.id === editingParticipant.id
 						? {
 								...p,
@@ -689,125 +704,134 @@ export default function EventAudience({
 									p.ticket_type_name,
 								admin_comment:
 									response.admin_comment ?? editAdminComment,
-								...(stalenessResolved
+								...( stalenessResolved
 									? {
 											label: data.label,
 											payment_expires_at: null,
 									  }
 									: data.label
 									? { label: response.label ?? data.label }
-									: {}),
+									: {} ),
 						  }
 						: p
 				)
 			);
-			setEditingParticipant(null);
-			if (stalenessResolved) {
+			setEditingParticipant( null );
+			if ( stalenessResolved ) {
 				showToast(
 					editStaleDecision === 'confirm'
-						? __('Signup confirmed.', 'fair-audience')
+						? __( 'Signup confirmed.', 'fair-audience' )
 						: __(
 								'Expired signup moved to Interested.',
 								'fair-audience'
 						  )
 				);
 			}
-		} catch (err) {
+		} catch ( err ) {
 			showToast(
-				__('Error saving options: ', 'fair-audience') + err.message,
+				__( 'Error saving options: ', 'fair-audience' ) + err.message,
 				'error'
 			);
 		} finally {
-			setIsSavingOptions(false);
+			setIsSavingOptions( false );
 		}
 	};
 
-	const handleOpenMoveModal = (participant) => {
-		if (participant.is_series_pass) {
+	const handleOpenMoveModal = ( participant ) => {
+		if ( participant.is_series_pass ) {
 			return;
 		}
-		setMovingParticipant(participant);
+		setMovingParticipant( participant );
 		setMoveTargetId(
-			otherOccurrences.length > 0 ? String(otherOccurrences[0].id) : ''
+			otherOccurrences.length > 0
+				? String( otherOccurrences[ 0 ].id )
+				: ''
 		);
 	};
 
 	const handleCloseMoveModal = () => {
-		setMovingParticipant(null);
-		setMoveTargetId('');
+		setMovingParticipant( null );
+		setMoveTargetId( '' );
 	};
 
 	const handleMove = async () => {
-		if (!movingParticipant || !moveTargetId) return;
-		setIsMoving(true);
+		if ( ! movingParticipant || ! moveTargetId ) return;
+		setIsMoving( true );
 		try {
-			await apiFetch({
-				path: `/fair-audience/v1/event-dates/${eventDateId}/participants/${movingParticipant.participant_id}/move`,
+			await apiFetch( {
+				path: `/fair-audience/v1/event-dates/${ eventDateId }/participants/${ movingParticipant.participant_id }/move`,
 				method: 'POST',
-				data: { target_event_date_id: Number(moveTargetId) },
-			});
+				data: { target_event_date_id: Number( moveTargetId ) },
+			} );
 			handleCloseMoveModal();
 			loadParticipants();
-			showToast(__('Signup moved successfully.', 'fair-audience'));
-		} catch (err) {
+			showToast( __( 'Signup moved successfully.', 'fair-audience' ) );
+		} catch ( err ) {
 			showToast(
-				__('Error moving signup: ', 'fair-audience') + err.message,
+				__( 'Error moving signup: ', 'fair-audience' ) + err.message,
 				'error'
 			);
 		} finally {
-			setIsMoving(false);
+			setIsMoving( false );
 		}
 	};
 
 	const handlePrintList = () => {
-		const escape = (str) =>
-			String(str ?? '').replace(
+		const escape = ( str ) =>
+			String( str ?? '' ).replace(
 				/[&<>"']/g,
-				(c) =>
-					({
+				( c ) =>
+					( {
 						'&': '&amp;',
 						'<': '&lt;',
 						'>': '&gt;',
 						'"': '&quot;',
 						"'": '&#39;',
-					})[c]
+					} )[ c ]
 			);
 
 		const headerTitle = eventTitle
-			? `${eventTitle}`
-			: __('Event', 'fair-audience');
+			? `${ eventTitle }`
+			: __( 'Event', 'fair-audience' );
 		const dateLabel = new Date().toLocaleDateString();
 
 		const optionLabelById = new Map(
-			ticketOptions.map((o) => [o.id, o.short_name || o.name || ''])
+			ticketOptions.map( ( o ) => [ o.id, o.short_name || o.name || '' ] )
 		);
 		const optionLabelByName = new Map(
-			ticketOptions.map((o) => [o.name, o.short_name || o.name || ''])
+			ticketOptions.map( ( o ) => [
+				o.name,
+				o.short_name || o.name || '',
+			] )
 		);
 
 		// The printed list is the on-site roster: only collaborators and
 		// signed-up (registered) participants. "Interested" and transient
 		// states (e.g. pending_payment) are intentionally excluded.
 		const printParticipants = filteredParticipants.filter(
-			(p) => p.label === 'collaborator' || p.label === 'signed_up'
+			( p ) => p.label === 'collaborator' || p.label === 'signed_up'
 		);
 
 		const rows = printParticipants
-			.map((p, index) => {
-				const name = escape(p.participant_name || '');
-				const role = escape(LABEL_DISPLAY[p.label] || p.label || '');
-				const ticketType = escape(p.ticket_type_name || '');
-				const ids = Array.isArray(p.ticket_option_ids)
+			.map( ( p, index ) => {
+				const name = escape( p.participant_name || '' );
+				const role = escape(
+					LABEL_DISPLAY[ p.label ] || p.label || ''
+				);
+				const ticketType = escape( p.ticket_type_name || '' );
+				const ids = Array.isArray( p.ticket_option_ids )
 					? p.ticket_option_ids
 					: [];
-				const names = Array.isArray(p.ticket_option_names)
+				const names = Array.isArray( p.ticket_option_names )
 					? p.ticket_option_names
 					: [];
 				const labels = ids.length
-					? ids.map((id) => optionLabelById.get(id) || '')
-					: names.map((n) => optionLabelByName.get(n) || n);
-				const activities = escape(labels.filter(Boolean).join(', '));
-				const comment = escape(p.admin_comment || '');
+					? ids.map( ( id ) => optionLabelById.get( id ) || '' )
+					: names.map( ( n ) => optionLabelByName.get( n ) || n );
+				const activities = escape(
+					labels.filter( Boolean ).join( ', ' )
+				);
+				const comment = escape( p.admin_comment || '' );
 				const emailProfileMark =
 					p.email_profile === 'marketing'
 						? '✓'
@@ -816,26 +840,26 @@ export default function EventAudience({
 						: '';
 				return `
 					<tr>
-						<td class="num">${index + 1}</td>
-						<td class="name">${name}</td>
-						<td class="role">${role}</td>
-						<td class="ticket-type">${ticketType}</td>
-						<td class="activities">${activities}</td>
-						<td class="admin-comment">${comment}</td>
+						<td class="num">${ index + 1 }</td>
+						<td class="name">${ name }</td>
+						<td class="role">${ role }</td>
+						<td class="ticket-type">${ ticketType }</td>
+						<td class="activities">${ activities }</td>
+						<td class="admin-comment">${ comment }</td>
 						<td class="checkbox"></td>
-						<td class="checkbox">${emailProfileMark}</td>
+						<td class="checkbox">${ emailProfileMark }</td>
 						<td class="notes"></td>
 					</tr>`;
-			})
-			.join('');
+			} )
+			.join( '' );
 
 		const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>${escape(headerTitle)} — ${escape(
-		__('Participant list', 'fair-audience')
-	)}</title>
+	<title>${ escape( headerTitle ) } — ${ escape(
+		__( 'Participant list', 'fair-audience' )
+	) }</title>
 	<style>
 		* { box-sizing: border-box; }
 		body {
@@ -875,37 +899,37 @@ export default function EventAudience({
 </head>
 <body>
 	<div class="toolbar">
-		<button type="button" onclick="window.print()">${escape(
-			__('Print', 'fair-audience')
-		)}</button>
+		<button type="button" onclick="window.print()">${ escape(
+			__( 'Print', 'fair-audience' )
+		) }</button>
 	</div>
 	<header>
-		<h1>${escape(headerTitle)}</h1>
-		<div class="meta">${escape(__('Participant list', 'fair-audience'))} — ${escape(
-			dateLabel
-		)} (${printParticipants.length})</div>
+		<h1>${ escape( headerTitle ) }</h1>
+		<div class="meta">${ escape(
+			__( 'Participant list', 'fair-audience' )
+		) } — ${ escape( dateLabel ) } (${ printParticipants.length })</div>
 	</header>
 	<table>
 		<thead>
 			<tr>
 				<th class="num">#</th>
-				<th>${escape(__('Name', 'fair-audience'))}</th>
-				<th>${escape(__('Role', 'fair-audience'))}</th>
-				<th>${escape(__('Ticket type', 'fair-audience'))}</th>
-				<th>${escape(__('Activities', 'fair-audience'))}</th>
-				<th>${escape(__('Admin comment', 'fair-audience'))}</th>
-				<th>${escape(__('Present', 'fair-audience'))}</th>
-				<th>${escape(__('Mailing list', 'fair-audience'))}</th>
-				<th>${escape(__('Notes', 'fair-audience'))}</th>
+				<th>${ escape( __( 'Name', 'fair-audience' ) ) }</th>
+				<th>${ escape( __( 'Role', 'fair-audience' ) ) }</th>
+				<th>${ escape( __( 'Ticket type', 'fair-audience' ) ) }</th>
+				<th>${ escape( __( 'Activities', 'fair-audience' ) ) }</th>
+				<th>${ escape( __( 'Admin comment', 'fair-audience' ) ) }</th>
+				<th>${ escape( __( 'Present', 'fair-audience' ) ) }</th>
+				<th>${ escape( __( 'Mailing list', 'fair-audience' ) ) }</th>
+				<th>${ escape( __( 'Notes', 'fair-audience' ) ) }</th>
 			</tr>
 		</thead>
-		<tbody>${rows}</tbody>
+		<tbody>${ rows }</tbody>
 	</table>
 </body>
 </html>`;
 
-		const printWindow = window.open('', '_blank');
-		if (!printWindow) {
+		const printWindow = window.open( '', '_blank' );
+		if ( ! printWindow ) {
 			showToast(
 				__(
 					'Could not open print window. Please allow pop-ups.',
@@ -916,151 +940,157 @@ export default function EventAudience({
 			return;
 		}
 		printWindow.document.open();
-		printWindow.document.write(html);
+		printWindow.document.write( html );
 		printWindow.document.close();
 	};
 
-	const copyToClipboard = async (text, successMessage) => {
+	const copyToClipboard = async ( text, successMessage ) => {
 		try {
-			await navigator.clipboard.writeText(text);
-			showToast(successMessage, 'success');
-		} catch (err) {
+			await navigator.clipboard.writeText( text );
+			showToast( successMessage, 'success' );
+		} catch ( err ) {
 			showToast(
-				__('Error copying to clipboard: ', 'fair-audience') +
+				__( 'Error copying to clipboard: ', 'fair-audience' ) +
 					err.message,
 				'error'
 			);
 		}
 	};
 
-	const participantHasOption = (p, opt) => {
+	const participantHasOption = ( p, opt ) => {
 		const ids = p.ticket_option_ids || [];
 		const names = p.ticket_option_names || [];
-		return ids.includes(opt.id) || names.includes(opt.name);
+		return ids.includes( opt.id ) || names.includes( opt.name );
 	};
 
 	const buildCopyByTicketType = () => {
 		const groups = new Map();
-		filteredParticipants.forEach((p) => {
+		filteredParticipants.forEach( ( p ) => {
 			const key =
-				p.ticket_type_name || __('No ticket type', 'fair-audience');
-			if (!groups.has(key)) groups.set(key, []);
-			groups.get(key).push(p.participant_name || '—');
-		});
-		const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
-			a.localeCompare(b)
+				p.ticket_type_name || __( 'No ticket type', 'fair-audience' );
+			if ( ! groups.has( key ) ) groups.set( key, [] );
+			groups.get( key ).push( p.participant_name || '—' );
+		} );
+		const sortedKeys = Array.from( groups.keys() ).sort( ( a, b ) =>
+			a.localeCompare( b )
 		);
 		return sortedKeys
-			.map((key) => {
+			.map( ( key ) => {
 				const names = groups
-					.get(key)
-					.sort((a, b) => a.localeCompare(b));
-				return `*${key}* (${names.length})\n${names
-					.map((n) => `- ${n}`)
-					.join('\n')}`;
-			})
-			.join('\n\n');
+					.get( key )
+					.sort( ( a, b ) => a.localeCompare( b ) );
+				return `*${ key }* (${ names.length })\n${ names
+					.map( ( n ) => `- ${ n }` )
+					.join( '\n' ) }`;
+			} )
+			.join( '\n\n' );
 	};
 
 	const buildCopyByActivity = () => {
-		if (ticketOptions.length === 0) return '';
+		if ( ticketOptions.length === 0 ) return '';
 		return ticketOptions
-			.map((opt) => {
+			.map( ( opt ) => {
 				const names = filteredParticipants
 					.filter(
-						(p) =>
-							(p.label === 'signed_up' ||
-								p.label === 'collaborator') &&
-							participantHasOption(p, opt)
+						( p ) =>
+							( p.label === 'signed_up' ||
+								p.label === 'collaborator' ) &&
+							participantHasOption( p, opt )
 					)
-					.map((p) => p.participant_name || '—')
-					.sort((a, b) => a.localeCompare(b));
-				return `*${opt.name}* (${names.length})\n${
+					.map( ( p ) => p.participant_name || '—' )
+					.sort( ( a, b ) => a.localeCompare( b ) );
+				return `*${ opt.name }* (${ names.length })\n${
 					names.length > 0
-						? names.map((n) => `- ${n}`).join('\n')
-						: `- ${__('(none)', 'fair-audience')}`
+						? names.map( ( n ) => `- ${ n }` ).join( '\n' )
+						: `- ${ __( '(none)', 'fair-audience' ) }`
 				}`;
-			})
-			.join('\n\n');
+			} )
+			.join( '\n\n' );
 	};
 
 	const buildActivitySummary = () => {
-		if (ticketOptions.length === 0) return '';
+		if ( ticketOptions.length === 0 ) return '';
 		return ticketOptions
-			.map((opt) => {
+			.map( ( opt ) => {
 				const count = filteredParticipants.filter(
-					(p) => participantHasOption(p, opt) && occupiesSeat(p)
+					( p ) => participantHasOption( p, opt ) && occupiesSeat( p )
 				).length;
-				return `- ${opt.name}: ${count}`;
-			})
-			.join('\n');
+				return `- ${ opt.name }: ${ count }`;
+			} )
+			.join( '\n' );
 	};
 
 	const buildCopyByParticipant = () => {
-		const sorted = [...filteredParticipants].sort((a, b) =>
-			(a.participant_name || '').localeCompare(b.participant_name || '')
+		const sorted = [ ...filteredParticipants ].sort( ( a, b ) =>
+			( a.participant_name || '' ).localeCompare(
+				b.participant_name || ''
+			)
 		);
 		return sorted
-			.map((p) => {
-				const lines = [`*${p.participant_name || '—'}*`];
-				if (p.ticket_type_name) lines.push(p.ticket_type_name);
+			.map( ( p ) => {
+				const lines = [ `*${ p.participant_name || '—' }*` ];
+				if ( p.ticket_type_name ) lines.push( p.ticket_type_name );
 				const activities = ticketOptions
-					.filter((opt) => participantHasOption(p, opt))
-					.map((opt) => `- ${opt.name}`);
-				if (activities.length > 0) lines.push(...activities);
-				return lines.join('\n');
-			})
-			.join('\n\n');
+					.filter( ( opt ) => participantHasOption( p, opt ) )
+					.map( ( opt ) => `- ${ opt.name }` );
+				if ( activities.length > 0 ) lines.push( ...activities );
+				return lines.join( '\n' );
+			} )
+			.join( '\n\n' );
 	};
 
-	const formatExpiredAgo = (iso) => {
-		if (!iso) return __('no expiry set', 'fair-audience');
-		const ts = parsePaymentExpiresAt(iso);
-		if (Number.isNaN(ts)) return iso;
+	const formatExpiredAgo = ( iso ) => {
+		if ( ! iso ) return __( 'no expiry set', 'fair-audience' );
+		const ts = parsePaymentExpiresAt( iso );
+		if ( Number.isNaN( ts ) ) return iso;
 		const diffMs = Date.now() - ts;
-		if (diffMs < 0) return new Date(ts).toLocaleString();
-		const minutes = Math.floor(diffMs / 60000);
-		if (minutes < 60) {
+		if ( diffMs < 0 ) return new Date( ts ).toLocaleString();
+		const minutes = Math.floor( diffMs / 60000 );
+		if ( minutes < 60 ) {
 			return sprintf(
 				/* translators: %d: number of minutes */
-				__('expired %d min ago', 'fair-audience'),
+				__( 'expired %d min ago', 'fair-audience' ),
 				minutes
 			);
 		}
-		const hours = Math.floor(minutes / 60);
-		if (hours < 24) {
+		const hours = Math.floor( minutes / 60 );
+		if ( hours < 24 ) {
 			return sprintf(
 				/* translators: %d: number of hours */
-				__('expired %d h ago', 'fair-audience'),
+				__( 'expired %d h ago', 'fair-audience' ),
 				hours
 			);
 		}
-		const days = Math.floor(hours / 24);
+		const days = Math.floor( hours / 24 );
 		return sprintf(
 			/* translators: %d: number of days */
-			__('expired %d d ago', 'fair-audience'),
+			__( 'expired %d d ago', 'fair-audience' ),
 			days
 		);
 	};
 
-	const renderActivitiesForParticipant = (p) => {
+	const renderActivitiesForParticipant = ( p ) => {
 		const ids = p.ticket_option_ids || [];
 		const names = p.ticket_option_names || [];
 		const labels = ticketOptions
-			.filter((opt) => ids.includes(opt.id) || names.includes(opt.name))
-			.map((opt) => opt.short_name || opt.name);
-		return labels.length > 0 ? labels.join(', ') : __('—', 'fair-audience');
+			.filter(
+				( opt ) => ids.includes( opt.id ) || names.includes( opt.name )
+			)
+			.map( ( opt ) => opt.short_name || opt.name );
+		return labels.length > 0
+			? labels.join( ', ' )
+			: __( '—', 'fair-audience' );
 	};
 
 	return (
 		<>
-			{eventId && stalePending.length > 0 && (
-				<Card style={{ marginTop: '16px' }}>
+			{ eventId && stalePending.length > 0 && (
+				<Card style={ { marginTop: '16px' } }>
 					<CardHeader>
 						<h2>
-							{__('Pending review', 'fair-audience')}{' '}
+							{ __( 'Pending review', 'fair-audience' ) }{ ' ' }
 							<span
-								style={{
+								style={ {
 									display: 'inline-block',
 									marginLeft: '8px',
 									padding: '2px 8px',
@@ -1070,100 +1100,115 @@ export default function EventAudience({
 									fontSize: '12px',
 									fontWeight: 600,
 									verticalAlign: 'middle',
-								}}
+								} }
 							>
-								{stalePending.length}
+								{ stalePending.length }
 							</span>
 						</h2>
 					</CardHeader>
 					<CardBody>
-						<p style={{ marginTop: 0 }}>
-							{__(
+						<p style={ { marginTop: 0 } }>
+							{ __(
 								'These signups had a payment hold that expired. They are not counted toward activity capacity until reviewed. Open a row to confirm (e.g. cash payment promised) or cancel.',
 								'fair-audience'
-							)}
+							) }
 						</p>
-						<div style={{ overflowX: 'auto' }}>
+						<div style={ { overflowX: 'auto' } }>
 							<table className="wp-list-table widefat striped">
 								<thead>
 									<tr>
 										<th>
-											{__('Participant', 'fair-audience')}
+											{ __(
+												'Participant',
+												'fair-audience'
+											) }
 										</th>
 										<th>
-											{__('Ticket type', 'fair-audience')}
+											{ __(
+												'Ticket type',
+												'fair-audience'
+											) }
 										</th>
 										<th>
-											{__('Activities', 'fair-audience')}
+											{ __(
+												'Activities',
+												'fair-audience'
+											) }
 										</th>
-										<th>{__('Status', 'fair-audience')}</th>
+										<th>
+											{ __( 'Status', 'fair-audience' ) }
+										</th>
 										<th />
 									</tr>
 								</thead>
 								<tbody>
-									{stalePending.map((p) => (
-										<tr key={p.id}>
-											<td>{p.participant_name || '—'}</td>
+									{ stalePending.map( ( p ) => (
+										<tr key={ p.id }>
 											<td>
-												{p.ticket_type_name ||
-													__('—', 'fair-audience')}
+												{ p.participant_name || '—' }
 											</td>
 											<td>
-												{renderActivitiesForParticipant(
+												{ p.ticket_type_name ||
+													__( '—', 'fair-audience' ) }
+											</td>
+											<td>
+												{ renderActivitiesForParticipant(
 													p
-												)}
+												) }
 											</td>
 											<td>
-												{formatExpiredAgo(
+												{ formatExpiredAgo(
 													p.payment_expires_at
-												)}
+												) }
 											</td>
 											<td>
 												<Button
 													variant="secondary"
-													onClick={() =>
-														handleOpenEditOptions(p)
+													onClick={ () =>
+														handleOpenEditOptions(
+															p
+														)
 													}
 												>
-													{__(
+													{ __(
 														'Review',
 														'fair-audience'
-													)}
+													) }
 												</Button>
 											</td>
 										</tr>
-									))}
+									) ) }
 								</tbody>
 							</table>
 						</div>
 					</CardBody>
 				</Card>
-			)}
+			) }
 
-			{eventId && (
-				<Card style={{ marginTop: '16px' }}>
+			{ eventId && (
+				<Card style={ { marginTop: '16px' } }>
 					<CardHeader>
-						<h2>{__('Participants', 'fair-audience')}</h2>
+						<h2>{ __( 'Participants', 'fair-audience' ) }</h2>
 					</CardHeader>
 					<CardBody>
 						<HStack
-							spacing={3}
+							spacing={ 3 }
 							wrap
 							alignment="left"
-							style={{ marginBottom: '16px' }}
+							style={ { marginBottom: '16px' } }
 						>
 							<span
-								style={{
+								style={ {
 									color: '#757575',
 									fontSize: '13px',
 									fontWeight: 500,
-								}}
+								} }
 							>
-								{__('Copy lists:', 'fair-audience')}
+								{ __( 'Copy lists:', 'fair-audience' ) }
 							</span>
 							<Button
 								variant="secondary"
-								onClick={() =>
+								onClick={ () =>
 									copyToClipboard(
 										buildCopyByTicketType(),
 										__(
@@ -1172,13 +1217,13 @@ export default function EventAudience({
 										)
 									)
 								}
-								disabled={filteredParticipants.length === 0}
+								disabled={ filteredParticipants.length === 0 }
 							>
-								{__('Ticket type', 'fair-audience')}
+								{ __( 'Ticket type', 'fair-audience' ) }
 							</Button>
 							<Button
 								variant="secondary"
-								onClick={() =>
+								onClick={ () =>
 									copyToClipboard(
 										buildCopyByActivity(),
 										__(
@@ -1192,11 +1237,11 @@ export default function EventAudience({
 									ticketOptions.length === 0
 								}
 							>
-								{__('Activity', 'fair-audience')}
+								{ __( 'Activity', 'fair-audience' ) }
 							</Button>
 							<Button
 								variant="secondary"
-								onClick={() =>
+								onClick={ () =>
 									copyToClipboard(
 										buildActivitySummary(),
 										__(
@@ -1210,11 +1255,11 @@ export default function EventAudience({
 									ticketOptions.length === 0
 								}
 							>
-								{__('Activity summary', 'fair-audience')}
+								{ __( 'Activity summary', 'fair-audience' ) }
 							</Button>
 							<Button
 								variant="secondary"
-								onClick={() =>
+								onClick={ () =>
 									copyToClipboard(
 										buildCopyByParticipant(),
 										__(
@@ -1223,75 +1268,84 @@ export default function EventAudience({
 										)
 									)
 								}
-								disabled={filteredParticipants.length === 0}
+								disabled={ filteredParticipants.length === 0 }
 							>
-								{__('Participant', 'fair-audience')}
+								{ __( 'Participant', 'fair-audience' ) }
 							</Button>
 						</HStack>
-						{loadingParticipants ? (
+						{ loadingParticipants ? (
 							<Spinner />
 						) : (
-							<VStack spacing={4} style={{ maxWidth: '100%' }}>
-								<HStack spacing={4} wrap>
+							<VStack
+								spacing={ 4 }
+								style={ { maxWidth: '100%' } }
+							>
+								<HStack spacing={ 4 } wrap>
 									<span>
-										{__('Collaborators:', 'fair-audience')}{' '}
-										<strong>{counts.collaborator}</strong>
+										{ __(
+											'Collaborators:',
+											'fair-audience'
+										) }{ ' ' }
+										<strong>{ counts.collaborator }</strong>
 									</span>
 									<span>
-										{__('Signed up:', 'fair-audience')}{' '}
-										<strong>{counts.signed_up}</strong>
+										{ __( 'Signed up:', 'fair-audience' ) }{ ' ' }
+										<strong>{ counts.signed_up }</strong>
 									</span>
 									<span>
-										{__('Interested:', 'fair-audience')}{' '}
-										<strong>{counts.interested}</strong>
+										{ __( 'Interested:', 'fair-audience' ) }{ ' ' }
+										<strong>{ counts.interested }</strong>
 									</span>
 									<span>
-										{__('Total:', 'fair-audience')}{' '}
-										<strong>{participants.length}</strong>
+										{ __( 'Total:', 'fair-audience' ) }{ ' ' }
+										<strong>{ participants.length }</strong>
 									</span>
-									{stalePending.length > 0 && (
+									{ stalePending.length > 0 && (
 										<span
-											style={{
+											style={ {
 												padding: '2px 8px',
 												borderRadius: '10px',
 												backgroundColor: '#fcf0d6',
 												color: '#8a6914',
 												fontSize: '12px',
 												fontWeight: 600,
-											}}
-											title={__(
+											} }
+											title={ __(
 												'Pending_payment signups whose hold expired. They do not count toward activity capacity until reviewed.',
 												'fair-audience'
-											)}
+											) }
 										>
-											{sprintf(
+											{ sprintf(
 												/* translators: %d: number of stale pending_payment signups */
 												__(
 													'%d stale held',
 													'fair-audience'
 												),
 												stalePending.length
-											)}
+											) }
 										</span>
-									)}
+									) }
 								</HStack>
 
-								<HStack spacing={4} wrap alignment="bottom">
+								<HStack spacing={ 4 } wrap alignment="bottom">
 									<TextControl
-										label={__('Search', 'fair-audience')}
-										value={searchText}
-										onChange={setSearchText}
-										placeholder={__(
+										label={ __(
+											'Search',
+											'fair-audience'
+										) }
+										value={ searchText }
+										onChange={ setSearchText }
+										placeholder={ __(
 											'Filter by name…',
 											'fair-audience'
-										)}
+										) }
 										__nextHasNoMarginBottom
 									/>
 									<SelectControl
-										label={__('Role', 'fair-audience')}
-										value={filterRole}
+										label={ __( 'Role', 'fair-audience' ) }
+										value={ filterRole }
 										__next40pxDefaultSize
-										options={[
+										options={ [
 											{
 												label: __(
 													'All roles',
@@ -1320,132 +1374,136 @@ export default function EventAudience({
 												),
 												value: 'interested',
 											},
-										]}
-										onChange={setFilterRole}
+										] }
+										onChange={ setFilterRole }
 										__nextHasNoMarginBottom
 									/>
 								</HStack>
 
-								{filteredParticipants.length > 0 ? (
+								{ filteredParticipants.length > 0 ? (
 									<div
-										style={{
+										style={ {
 											overflowX: 'auto',
 											width: '100%',
-										}}
+										} }
 									>
 										<table className="wp-list-table widefat striped">
 											<thead>
 												<tr>
 													<th
-														style={{
+														style={ {
 															width: '1%',
 															whiteSpace:
 																'nowrap',
 															textAlign: 'right',
-														}}
+														} }
 													>
 														#
 													</th>
 													<th
-														style={{
+														style={ {
 															cursor: 'pointer',
-														}}
-														onClick={() =>
-															handleSort('name')
+														} }
+														onClick={ () =>
+															handleSort( 'name' )
 														}
 													>
-														{__(
+														{ __(
 															'Name',
 															'fair-audience'
-														)}
-														{sortIndicator('name')}
+														) }
+														{ sortIndicator(
+															'name'
+														) }
 													</th>
 													<th
-														style={{
+														style={ {
 															cursor: 'pointer',
-														}}
-														onClick={() =>
-															handleSort('role')
+														} }
+														onClick={ () =>
+															handleSort( 'role' )
 														}
 													>
-														{__(
+														{ __(
 															'Role',
 															'fair-audience'
-														)}
-														{sortIndicator('role')}
+														) }
+														{ sortIndicator(
+															'role'
+														) }
 													</th>
 													<th
-														style={{
+														style={ {
 															cursor: 'pointer',
-														}}
-														onClick={() =>
+														} }
+														onClick={ () =>
 															handleSort(
 																'ticket_type'
 															)
 														}
 													>
-														{__(
+														{ __(
 															'Ticket type',
 															'fair-audience'
-														)}
-														{sortIndicator(
+														) }
+														{ sortIndicator(
 															'ticket_type'
-														)}
+														) }
 													</th>
-													{ticketOptions.map(
-														(opt) => (
-															<th key={opt.id}>
-																{opt.short_name ||
-																	opt.name}
+													{ ticketOptions.map(
+														( opt ) => (
+															<th key={ opt.id }>
+																{ opt.short_name ||
+																	opt.name }
 															</th>
 														)
-													)}
+													) }
 													<th>
-														{__(
+														{ __(
 															'Shown up',
 															'fair-audience'
-														)}
+														) }
 													</th>
 													<th>
-														{__(
+														{ __(
 															'Actions',
 															'fair-audience'
-														)}
+														) }
 													</th>
 												</tr>
 											</thead>
 											<tbody>
-												{filteredParticipants.map(
-													(p, index) => (
-														<tr key={p.id}>
+												{ filteredParticipants.map(
+													( p, index ) => (
+														<tr key={ p.id }>
 															<td
-																style={{
+																style={ {
 																	textAlign:
 																		'right',
 																	color: '#666',
-																}}
+																} }
 															>
-																{index + 1}
+																{ index + 1 }
 															</td>
 															<td>
-																{p.participant_id ? (
+																{ p.participant_id ? (
 																	<a
-																		href={`admin.php?page=fair-audience-participant-detail&participant_id=${p.participant_id}`}
+																		href={ `admin.php?page=fair-audience-participant-detail&participant_id=${ p.participant_id }` }
 																	>
-																		{p.participant_name ||
-																			'—'}
+																		{ p.participant_name ||
+																			'—' }
 																	</a>
 																) : (
 																	p.participant_name ||
 																	'—'
-																)}
-																{p.is_series_pass && (
+																) }
+																{ p.is_series_pass && (
 																	<span
-																		title={__(
+																		title={ __(
 																			'Holds a whole-series pass. Attendance and edits are managed on the series’ master date.',
 																			'fair-audience'
-																		)}
-																		style={{
+																		) }
+																		style={ {
 																			marginLeft: 6,
 																			padding:
 																				'1px 6px',
@@ -1456,26 +1514,26 @@ export default function EventAudience({
 																			color: '#3730a3',
 																			whiteSpace:
 																				'nowrap',
-																		}}
+																		} }
 																	>
-																		{__(
+																		{ __(
 																			'Series pass',
 																			'fair-audience'
-																		)}
+																		) }
 																	</span>
-																)}
+																) }
 															</td>
 															<td>
-																{LABEL_DISPLAY[
+																{ LABEL_DISPLAY[
 																	p.label
-																] || p.label}
+																] || p.label }
 															</td>
 															<td>
-																{p.ticket_type_name ||
-																	'—'}
+																{ p.ticket_type_name ||
+																	'—' }
 															</td>
-															{ticketOptions.map(
-																(opt) => {
+															{ ticketOptions.map(
+																( opt ) => {
 																	const ids =
 																		p.ticket_option_ids ||
 																		[];
@@ -1494,27 +1552,27 @@ export default function EventAudience({
 																			key={
 																				opt.id
 																			}
-																			style={{
+																			style={ {
 																				textAlign:
 																					'center',
-																			}}
+																			} }
 																		>
-																			{hasOption
+																			{ hasOption
 																				? '✓'
-																				: ''}
+																				: '' }
 																		</td>
 																	);
 																}
-															)}
+															) }
 															<td>
 																<input
 																	type="checkbox"
-																	aria-label={__(
+																	aria-label={ __(
 																		'Shown up',
 																		'fair-audience'
-																	)}
+																	) }
 																	checked={
-																		!!p.attended_at
+																		!! p.attended_at
 																	}
 																	disabled={
 																		p.is_series_pass
@@ -1527,7 +1585,7 @@ export default function EventAudience({
 																			  )
 																			: undefined
 																	}
-																	onChange={(
+																	onChange={ (
 																		e
 																	) =>
 																		handleToggleAttended(
@@ -1540,18 +1598,18 @@ export default function EventAudience({
 																/>
 															</td>
 															<td>
-																{p.is_series_pass ? (
+																{ p.is_series_pass ? (
 																	<span
-																		style={{
+																		style={ {
 																			color: '#666',
 																			fontStyle:
 																				'italic',
-																		}}
+																		} }
 																	>
-																		{__(
+																		{ __(
 																			'Managed on series date',
 																			'fair-audience'
-																		)}
+																		) }
 																	</span>
 																) : (
 																	<HStack
@@ -1560,77 +1618,77 @@ export default function EventAudience({
 																		}
 																		justify="flex-start"
 																	>
-																		{ticketOptions.length >
+																		{ ticketOptions.length >
 																			0 && (
 																			<Button
 																				variant="link"
-																				onClick={() =>
+																				onClick={ () =>
 																					handleOpenEditOptions(
 																						p
 																					)
 																				}
 																			>
-																				{__(
+																				{ __(
 																					'Edit',
 																					'fair-audience'
-																				)}
+																				) }
 																			</Button>
-																		)}
+																		) }
 																		<Button
 																			variant="link"
 																			isDestructive
-																			onClick={() =>
+																			onClick={ () =>
 																				handleDeleteParticipant(
 																					p
 																				)
 																			}
 																		>
-																			{__(
+																			{ __(
 																				'Delete',
 																				'fair-audience'
-																			)}
+																			) }
 																		</Button>
-																		{otherOccurrences.length >
+																		{ otherOccurrences.length >
 																			0 && (
 																			<Button
 																				variant="link"
-																				onClick={() =>
+																				onClick={ () =>
 																					handleOpenMoveModal(
 																						p
 																					)
 																				}
 																			>
-																				{__(
+																				{ __(
 																					'Move',
 																					'fair-audience'
-																				)}
+																				) }
 																			</Button>
-																		)}
+																		) }
 																	</HStack>
-																)}
+																) }
 															</td>
 														</tr>
 													)
-												)}
+												) }
 											</tbody>
-											{ticketOptions.length > 0 && (
+											{ ticketOptions.length > 0 && (
 												<tfoot>
 													<tr>
 														<th />
 														<th
-															colSpan={3}
-															style={{
+															colSpan={ 3 }
+															style={ {
 																textAlign:
 																	'right',
-															}}
+															} }
 														>
-															{__(
+															{ __(
 																'Total',
 																'fair-audience'
-															)}
+															) }
 														</th>
-														{ticketOptions.map(
-															(opt) => {
+														{ ticketOptions.map(
+															( opt ) => {
 																const total =
 																	filteredParticipants.reduce(
 																		(
@@ -1652,12 +1710,12 @@ export default function EventAudience({
 																				);
 																			return (
 																				acc +
-																				(hasOption &&
+																				( hasOption &&
 																				occupiesSeat(
 																					p
 																				)
 																					? 1
-																					: 0)
+																					: 0 )
 																			);
 																		},
 																		0
@@ -1667,31 +1725,33 @@ export default function EventAudience({
 																		key={
 																			opt.id
 																		}
-																		style={{
+																		style={ {
 																			textAlign:
 																				'center',
-																		}}
+																		} }
 																	>
-																		{total}
+																		{
+																			total
+																		}
 																	</th>
 																);
 															}
-														)}
+														) }
 														<th />
 														<th />
 													</tr>
 												</tfoot>
-											)}
+											) }
 										</table>
 									</div>
 								) : (
 									<p
-										style={{
+										style={ {
 											textAlign: 'center',
 											color: '#666',
-										}}
+										} }
 									>
-										{participants.length === 0
+										{ participants.length === 0
 											? __(
 													'No participants yet.',
 													'fair-audience'
@@ -1699,145 +1759,157 @@ export default function EventAudience({
 											: __(
 													'No participants match the current filters.',
 													'fair-audience'
-											  )}
+											  ) }
 									</p>
-								)}
+								) }
 
-								<HStack spacing={3} wrap>
+								<HStack spacing={ 3 } wrap>
 									<Button
 										variant="primary"
-										onClick={handleOpenAddModal}
+										onClick={ handleOpenAddModal }
 									>
-										{__(
+										{ __(
 											'Add Participants',
 											'fair-audience'
-										)}
+										) }
 									</Button>
 									<Button
 										variant="secondary"
-										href={audienceUrl + eventDateId}
+										href={ audienceUrl + eventDateId }
 									>
-										{__(
+										{ __(
 											'Manage Participants',
 											'fair-audience'
-										)}
+										) }
 									</Button>
 									<Button
 										variant="secondary"
-										onClick={handlePrintList}
+										onClick={ handlePrintList }
 										disabled={
 											filteredParticipants.length === 0
 										}
 									>
-										{__('Print list', 'fair-audience')}
+										{ __( 'Print list', 'fair-audience' ) }
 									</Button>
-									{invitedGroups.length > 0 && (
+									{ invitedGroups.length > 0 && (
 										<Button
 											variant="secondary"
-											onClick={() =>
-												setInviteModalOpen(true)
+											onClick={ () =>
+												setInviteModalOpen( true )
 											}
 										>
-											{__(
+											{ __(
 												'Send Invitations',
 												'fair-audience'
-											)}
+											) }
 										</Button>
-									)}
+									) }
 									<Button
 										variant="secondary"
-										onClick={handleOpenMailingModal}
-										disabled={mailingEligible.length === 0}
+										onClick={ handleOpenMailingModal }
+										disabled={
+											mailingEligible.length === 0
+										}
 									>
-										{__(
+										{ __(
 											'Record email consent',
 											'fair-audience'
-										)}
+										) }
 									</Button>
 								</HStack>
 							</VStack>
-						)}
+						) }
 					</CardBody>
 				</Card>
-			)}
+			) }
 
-			<Card style={{ marginTop: '16px' }}>
+			<Card style={ { marginTop: '16px' } }>
 				<CardHeader>
-					<h2>{__('Forms', 'fair-audience')}</h2>
+					<h2>{ __( 'Forms', 'fair-audience' ) }</h2>
 				</CardHeader>
 				<CardBody>
-					{loadingForms ? (
+					{ loadingForms ? (
 						<Spinner />
 					) : formsSummary.length > 0 ? (
-						<div style={{ overflowX: 'auto' }}>
+						<div style={ { overflowX: 'auto' } }>
 							<table className="wp-list-table widefat striped">
 								<thead>
 									<tr>
-										<th>{__('Form', 'fair-audience')}</th>
 										<th>
-											{__('Responses', 'fair-audience')}
+											{ __( 'Form', 'fair-audience' ) }
 										</th>
 										<th>
-											{__('Actions', 'fair-audience')}
+											{ __(
+												'Responses',
+												'fair-audience'
+											) }
+										</th>
+										<th>
+											{ __( 'Actions', 'fair-audience' ) }
 										</th>
 									</tr>
 								</thead>
 								<tbody>
-									{formsSummary.map((form, index) => (
-										<tr key={form.post_id || index}>
+									{ formsSummary.map( ( form, index ) => (
+										<tr key={ form.post_id || index }>
 											<td>
-												{form.post_title ||
+												{ form.post_title ||
 													form.title ||
-													'—'}
+													'—' }
 											</td>
-											<td>{form.submission_count}</td>
+											<td>{ form.submission_count }</td>
 											<td>
 												<Button
 													variant="link"
-													href={`admin.php?page=fair-form-questionnaire-responses&event_date_id=${eventDateId}${
+													href={ `admin.php?page=fair-form-questionnaire-responses&event_date_id=${ eventDateId }${
 														form.post_id
-															? `&post_id=${form.post_id}`
-															: `&title=${encodeURIComponent(
+															? `&post_id=${ form.post_id }`
+															: `&title=${ encodeURIComponent(
 																	form.title
-															  )}`
-													}`}
+															  ) }`
+													}` }
 												>
-													{__(
+													{ __(
 														'View Responses',
 														'fair-audience'
-													)}
+													) }
 												</Button>
 											</td>
 										</tr>
-									))}
+									) ) }
 								</tbody>
 							</table>
 						</div>
 					) : (
-						<p>{__('No form submissions yet.', 'fair-audience')}</p>
-					)}
+						<p>
+							{ __(
+								'No form submissions yet.',
+								'fair-audience'
+							) }
+						</p>
+					) }
 				</CardBody>
 			</Card>
 
-			{inviteModalOpen && (
+			{ inviteModalOpen && (
 				<Modal
-					title={__('Send Invitations', 'fair-audience')}
-					onRequestClose={() => setInviteModalOpen(false)}
-					style={{ maxWidth: '480px', width: '100%' }}
+					title={ __( 'Send Invitations', 'fair-audience' ) }
+					onRequestClose={ () => setInviteModalOpen( false ) }
+					style={ { maxWidth: '480px', width: '100%' } }
 				>
-					<VStack spacing={3}>
-						<p style={{ margin: 0 }}>
-							{__(
+					<VStack spacing={ 3 }>
+						<p style={ { margin: 0 } }>
+							{ __(
 								'Send event invitation emails to members of the following groups? Participants who are already signed up will be skipped.',
 								'fair-audience'
-							)}
+							) }
 						</p>
-						<ul style={{ margin: 0, paddingLeft: '20px' }}>
-							{invitedGroups.map((g) => (
-								<li key={g.id}>
-									<strong>{g.name}</strong>
-									{' — '}
-									{sprintf(
+						<ul style={ { margin: 0, paddingLeft: '20px' } }>
+							{ invitedGroups.map( ( g ) => (
+								<li key={ g.id }>
+									<strong>{ g.name }</strong>
+									{ ' — ' }
+									{ sprintf(
 										/* translators: %d: number of group members */
 										_n(
 											'%d member',
@@ -1846,94 +1918,97 @@ export default function EventAudience({
 											'fair-audience'
 										),
 										g.member_count || 0
-									)}
+									) }
 								</li>
-							))}
+							) ) }
 						</ul>
-						<p style={{ margin: 0 }}>
+						<p style={ { margin: 0 } }>
 							<strong>
-								{sprintf(
+								{ sprintf(
 									/* translators: %d: total number of potential invitees */
 									__(
 										'Total: up to %d invitations',
 										'fair-audience'
 									),
 									totalInvitees
-								)}
+								) }
 							</strong>
 						</p>
 						<HStack
-							spacing={3}
-							style={{ justifyContent: 'flex-end' }}
+							spacing={ 3 }
+							style={ { justifyContent: 'flex-end' } }
 						>
 							<Button
 								variant="secondary"
-								onClick={() => setInviteModalOpen(false)}
-								disabled={isSendingInvitations}
+								onClick={ () => setInviteModalOpen( false ) }
+								disabled={ isSendingInvitations }
 							>
-								{__('Cancel', 'fair-audience')}
+								{ __( 'Cancel', 'fair-audience' ) }
 							</Button>
 							<Button
 								variant="primary"
-								onClick={handleSendInvitations}
-								isBusy={isSendingInvitations}
+								onClick={ handleSendInvitations }
+								isBusy={ isSendingInvitations }
 								disabled={
 									isSendingInvitations || totalInvitees === 0
 								}
 							>
-								{isSendingInvitations
-									? __('Sending…', 'fair-audience')
-									: __('Send Invitations', 'fair-audience')}
+								{ isSendingInvitations
+									? __( 'Sending…', 'fair-audience' )
+									: __(
+											'Send Invitations',
+											'fair-audience'
+									  ) }
 							</Button>
 						</HStack>
 					</VStack>
 				</Modal>
-			)}
+			) }
 
-			{addModalOpen && (
+			{ addModalOpen && (
 				<Modal
-					title={__('Add Participants', 'fair-audience')}
-					onRequestClose={handleCloseAddModal}
-					style={{ maxWidth: '640px', width: '100%' }}
+					title={ __( 'Add Participants', 'fair-audience' ) }
+					onRequestClose={ handleCloseAddModal }
+					style={ { maxWidth: '640px', width: '100%' } }
 				>
-					{loadingAllParticipants ? (
+					{ loadingAllParticipants ? (
 						<Spinner />
 					) : availableParticipants.length === 0 ? (
 						<p>
-							{__(
+							{ __(
 								'All participants are already added to this event.',
 								'fair-audience'
-							)}
+							) }
 						</p>
 					) : (
 						<>
 							<div
-								style={{
+								style={ {
 									display: 'flex',
 									gap: '10px',
 									marginBottom: '10px',
-								}}
+								} }
 							>
 								<input
 									type="text"
-									placeholder={__(
+									placeholder={ __(
 										'Search by name or email…',
 										'fair-audience'
-									)}
-									value={addSearch}
-									onChange={(e) =>
-										setAddSearch(e.target.value)
+									) }
+									value={ addSearch }
+									onChange={ ( e ) =>
+										setAddSearch( e.target.value )
 									}
-									style={{
+									style={ {
 										flex: 1,
 										padding: '8px 12px',
 										border: '1px solid #ddd',
 										borderRadius: '4px',
-									}}
+									} }
 								/>
 								<SelectControl
-									value={addModalLabel}
-									options={[
+									value={ addModalLabel }
+									options={ [
 										{
 											label: __(
 												'Signed up',
@@ -1955,20 +2030,20 @@ export default function EventAudience({
 											),
 											value: 'interested',
 										},
-									]}
-									onChange={setAddModalLabel}
+									] }
+									onChange={ setAddModalLabel }
 									__nextHasNoMarginBottom
 								/>
 							</div>
 
 							<div
-								style={{
+								style={ {
 									marginBottom: '10px',
 									fontSize: '12px',
 									color: '#666',
-								}}
+								} }
 							>
-								{selectedToAdd.size > 0
+								{ selectedToAdd.size > 0
 									? sprintf(
 											/* translators: 1: selected count, 2: shown count */
 											__(
@@ -1985,31 +2060,33 @@ export default function EventAudience({
 												'fair-audience'
 											),
 											filteredAvailableParticipants.length
-									  )}
+									  ) }
 							</div>
 
 							<div
-								style={{
+								style={ {
 									maxHeight: '400px',
 									overflowY: 'auto',
 									border: '1px solid #ddd',
 									borderRadius: '4px',
-								}}
+								} }
 							>
-								{filteredAvailableParticipants.map((p) => (
+								{ filteredAvailableParticipants.map( ( p ) => (
 									<div
-										key={p.id}
-										style={{
+										key={ p.id }
+										style={ {
 											padding: '10px 15px',
 											borderBottom: '1px solid #eee',
 											display: 'flex',
 											alignItems: 'center',
 											gap: '10px',
-										}}
+										} }
 									>
 										<CheckboxControl
-											checked={selectedToAdd.has(p.id)}
-											onChange={() =>
+											checked={ selectedToAdd.has(
+												p.id
+											) }
+											onChange={ () =>
 												handleToggleParticipantToAdd(
 													p.id
 												)
@@ -2018,58 +2095,59 @@ export default function EventAudience({
 										/>
 										<div>
 											<strong>
-												{p.name} {p.surname}
+												{ p.name } { p.surname }
 											</strong>
 											<br />
 											<span
-												style={{
+												style={ {
 													color: '#666',
 													fontSize: '12px',
-												}}
+												} }
 											>
-												{p.email}
+												{ p.email }
 											</span>
 										</div>
 									</div>
-								))}
-								{filteredAvailableParticipants.length === 0 && (
+								) ) }
+								{ filteredAvailableParticipants.length ===
+									0 && (
 									<p
-										style={{
+										style={ {
 											padding: '15px',
 											color: '#666',
-										}}
+										} }
 									>
-										{__(
+										{ __(
 											'No participants match your search.',
 											'fair-audience'
-										)}
+										) }
 									</p>
-								)}
+								) }
 							</div>
 
 							<div
-								style={{
+								style={ {
 									marginTop: '20px',
 									display: 'flex',
 									justifyContent: 'flex-end',
 									gap: '10px',
-								}}
+								} }
 							>
 								<Button
 									variant="secondary"
-									onClick={handleCloseAddModal}
+									onClick={ handleCloseAddModal }
 								>
-									{__('Cancel', 'fair-audience')}
+									{ __( 'Cancel', 'fair-audience' ) }
 								</Button>
 								<Button
 									variant="primary"
-									onClick={handleBatchAdd}
+									onClick={ handleBatchAdd }
 									disabled={
 										selectedToAdd.size === 0 || isAdding
 									}
 								>
-									{isAdding
-										? __('Adding…', 'fair-audience')
+									{ isAdding
+										? __( 'Adding…', 'fair-audience' )
 										: sprintf(
 												/* translators: %d: number of selected participants */
 												__(
@@ -2077,115 +2155,115 @@ export default function EventAudience({
 													'fair-audience'
 												),
 												selectedToAdd.size
-										  )}
+										  ) }
 								</Button>
 							</div>
 						</>
-					)}
+					) }
 				</Modal>
-			)}
+			) }
 
-			{mailingModalOpen && (
+			{ mailingModalOpen && (
 				<Modal
-					title={__('Record email consent', 'fair-audience')}
-					onRequestClose={handleCloseMailingModal}
-					style={{ maxWidth: '640px', width: '100%' }}
+					title={ __( 'Record email consent', 'fair-audience' ) }
+					onRequestClose={ handleCloseMailingModal }
+					style={ { maxWidth: '640px', width: '100%' } }
 				>
-					{mailingEligible.length === 0 ? (
+					{ mailingEligible.length === 0 ? (
 						<p>
-							{__(
+							{ __(
 								'No participants are eligible. People are listed here when they are on the minimal email profile.',
 								'fair-audience'
-							)}
+							) }
 						</p>
 					) : (
 						<>
-							<p style={{ marginTop: 0, color: '#666' }}>
-								{__(
+							<p style={ { marginTop: 0, color: '#666' } }>
+								{ __(
 									'Record each person\'s answer. "Yes" adds them to the mailing list and sends a welcome email. "No" records that they declined — they will not be asked again.',
 									'fair-audience'
-								)}
+								) }
 							</p>
 
 							<div
-								style={{
+								style={ {
 									display: 'flex',
 									gap: '10px',
 									marginBottom: '10px',
 									alignItems: 'center',
-								}}
+								} }
 							>
 								<input
 									type="text"
-									placeholder={__(
+									placeholder={ __(
 										'Search by name or email…',
 										'fair-audience'
-									)}
-									value={mailingSearch}
-									onChange={(e) =>
-										setMailingSearch(e.target.value)
+									) }
+									value={ mailingSearch }
+									onChange={ ( e ) =>
+										setMailingSearch( e.target.value )
 									}
-									style={{
+									style={ {
 										flex: 1,
 										padding: '8px 12px',
 										border: '1px solid #ddd',
 										borderRadius: '4px',
-									}}
+									} }
 								/>
 							</div>
 
 							<div
-								style={{
+								style={ {
 									maxHeight: '400px',
 									overflowY: 'auto',
 									border: '1px solid #ddd',
 									borderRadius: '4px',
-								}}
+								} }
 							>
-								{filteredMailingEligible.map((p) => {
+								{ filteredMailingEligible.map( ( p ) => {
 									const choice =
-										consentChoices[p.participant_id] ??
+										consentChoices[ p.participant_id ] ??
 										null;
-									const hasEmail = !!p.participant_email;
+									const hasEmail = !! p.participant_email;
 									return (
 										<div
-											key={p.participant_id}
-											style={{
+											key={ p.participant_id }
+											style={ {
 												padding: '10px 15px',
 												borderBottom: '1px solid #eee',
 												display: 'flex',
 												alignItems: 'center',
 												justifyContent: 'space-between',
 												gap: '10px',
-											}}
+											} }
 										>
 											<div>
 												<strong>
-													{p.name} {p.surname}
+													{ p.name } { p.surname }
 												</strong>
-												{p.participant_email && (
+												{ p.participant_email && (
 													<>
 														<br />
 														<span
-															style={{
+															style={ {
 																color: '#666',
 																fontSize:
 																	'12px',
-															}}
+															} }
 														>
 															{
 																p.participant_email
 															}
 														</span>
 													</>
-												)}
+												) }
 											</div>
 											<div
-												style={{
+												style={ {
 													display: 'flex',
 													gap: '4px',
 													flexShrink: 0,
-												}}
+												} }
 											>
 												<Button
 													variant={
@@ -2194,15 +2272,15 @@ export default function EventAudience({
 															: 'secondary'
 													}
 													size="small"
-													disabled={!hasEmail}
-													onClick={() =>
+													disabled={ ! hasEmail }
+													onClick={ () =>
 														handleConsentChoice(
 															p.participant_id,
 															'yes'
 														)
 													}
 													title={
-														!hasEmail
+														! hasEmail
 															? __(
 																	'No email — cannot add to mailing list',
 																	'fair-audience'
@@ -2210,7 +2288,10 @@ export default function EventAudience({
 															: undefined
 													}
 												>
-													{__('Yes', 'fair-audience')}
+													{ __(
+														'Yes',
+														'fair-audience'
+													) }
 												</Button>
 												<Button
 													variant={
@@ -2219,105 +2300,111 @@ export default function EventAudience({
 															: 'secondary'
 													}
 													size="small"
-													onClick={() =>
+													onClick={ () =>
 														handleConsentChoice(
 															p.participant_id,
 															'no'
 														)
 													}
 												>
-													{__('No', 'fair-audience')}
+													{ __(
+														'No',
+														'fair-audience'
+													) }
 												</Button>
 											</div>
 										</div>
 									);
-								})}
-								{filteredMailingEligible.length === 0 && (
+								} ) }
+								{ filteredMailingEligible.length === 0 && (
 									<p
-										style={{
+										style={ {
 											padding: '15px',
 											color: '#666',
-										}}
+										} }
 									>
-										{__(
+										{ __(
 											'No participants match your search.',
 											'fair-audience'
-										)}
+										) }
 									</p>
-								)}
+								) }
 							</div>
 
 							<div
-								style={{
+								style={ {
 									marginTop: '20px',
 									display: 'flex',
 									justifyContent: 'flex-end',
 									gap: '10px',
-								}}
+								} }
 							>
 								<Button
 									variant="secondary"
-									onClick={handleCloseMailingModal}
+									onClick={ handleCloseMailingModal }
 								>
-									{__('Cancel', 'fair-audience')}
+									{ __( 'Cancel', 'fair-audience' ) }
 								</Button>
 								<Button
 									variant="primary"
-									onClick={handleRecordConsent}
+									onClick={ handleRecordConsent }
 									disabled={
-										Object.values(consentChoices).every(
-											(v) => v === null
+										Object.values( consentChoices ).every(
+											( v ) => v === null
 										) || isRecordingConsent
 									}
 								>
-									{isRecordingConsent
-										? __('Saving…', 'fair-audience')
-										: __('Save consent', 'fair-audience')}
+									{ isRecordingConsent
+										? __( 'Saving…', 'fair-audience' )
+										: __(
+												'Save consent',
+												'fair-audience'
+										  ) }
 								</Button>
 							</div>
 						</>
-					)}
+					) }
 				</Modal>
-			)}
+			) }
 
-			{editingParticipant && (
+			{ editingParticipant && (
 				<Modal
-					title={sprintf(
+					title={ sprintf(
 						/* translators: %s: participant name */
-						__('Edit options — %s', 'fair-audience'),
+						__( 'Edit options — %s', 'fair-audience' ),
 						editingParticipant.participant_name
-					)}
-					onRequestClose={() => setEditingParticipant(null)}
-					style={{ maxWidth: '480px', width: '100%' }}
+					) }
+					onRequestClose={ () => setEditingParticipant( null ) }
+					style={ { maxWidth: '480px', width: '100%' } }
 				>
-					<VStack spacing={3}>
-						{isStalePendingPayment(editingParticipant) && (
+					<VStack spacing={ 3 }>
+						{ isStalePendingPayment( editingParticipant ) && (
 							<div
-								style={{
+								style={ {
 									padding: '12px',
 									borderRadius: '4px',
 									backgroundColor: '#fcf0d6',
 									border: '1px solid #f0c33c',
-								}}
+								} }
 							>
 								<p
-									style={{
+									style={ {
 										margin: '0 0 8px 0',
 										fontWeight: 600,
-									}}
+									} }
 								>
-									{__(
+									{ __(
 										'Pending payment hold expired',
 										'fair-audience'
-									)}
+									) }
 								</p>
 								<p
-									style={{
+									style={ {
 										margin: '0 0 12px 0',
 										fontSize: '13px',
-									}}
+									} }
 								>
-									{editStaleDecision === 'confirm'
+									{ editStaleDecision === 'confirm'
 										? __(
 												'Will mark as Signed up and count toward activity capacity. Click Save to apply.',
 												'fair-audience'
@@ -2330,16 +2417,16 @@ export default function EventAudience({
 										: __(
 												'Pick how to resolve this expired hold, edit any other fields below, then Save to apply everything in one go.',
 												'fair-audience'
-										  )}
+										  ) }
 								</p>
-								<HStack spacing={2}>
+								<HStack spacing={ 2 }>
 									<Button
 										variant={
 											editStaleDecision === 'confirm'
 												? 'primary'
 												: 'secondary'
 										}
-										onClick={() =>
+										onClick={ () =>
 											setEditStaleDecision(
 												editStaleDecision === 'confirm'
 													? null
@@ -2347,7 +2434,10 @@ export default function EventAudience({
 											)
 										}
 									>
-										{__('Confirm signup', 'fair-audience')}
+										{ __(
+											'Confirm signup',
+											'fair-audience'
+										) }
 									</Button>
 									<Button
 										variant={
@@ -2358,7 +2448,7 @@ export default function EventAudience({
 										isDestructive={
 											editStaleDecision !== 'cancel'
 										}
-										onClick={() =>
+										onClick={ () =>
 											setEditStaleDecision(
 												editStaleDecision === 'cancel'
 													? null
@@ -2366,16 +2456,19 @@ export default function EventAudience({
 											)
 										}
 									>
-										{__('Cancel signup', 'fair-audience')}
+										{ __(
+											'Cancel signup',
+											'fair-audience'
+										) }
 									</Button>
 								</HStack>
 							</div>
-						)}
-						{!isStalePendingPayment(editingParticipant) && (
+						) }
+						{ ! isStalePendingPayment( editingParticipant ) && (
 							<SelectControl
-								label={__('Role', 'fair-audience')}
-								value={editLabel}
-								options={[
+								label={ __( 'Role', 'fair-audience' ) }
+								value={ editLabel }
+								options={ [
 									{
 										label: LABEL_DISPLAY.collaborator,
 										value: 'collaborator',
@@ -2388,136 +2481,144 @@ export default function EventAudience({
 										label: LABEL_DISPLAY.interested,
 										value: 'interested',
 									},
-								]}
-								onChange={(value) => setEditLabel(value)}
+								] }
+								onChange={ ( value ) => setEditLabel( value ) }
 								__nextHasNoMarginBottom
 							/>
-						)}
-						{ticketTypes.length > 0 && (
+						) }
+						{ ticketTypes.length > 0 && (
 							<SelectControl
-								label={__('Ticket type', 'fair-audience')}
+								label={ __( 'Ticket type', 'fair-audience' ) }
 								value={
 									editTicketTypeId === null
 										? ''
-										: String(editTicketTypeId)
+										: String( editTicketTypeId )
 								}
-								options={[
+								options={ [
 									{
-										label: __('— None —', 'fair-audience'),
+										label: __(
+											'— None —',
+											'fair-audience'
+										),
 										value: '',
 									},
-									...ticketTypes.map((tt) => ({
-										label: tt.name || `#${tt.id}`,
-										value: String(tt.id),
-									})),
-								]}
-								onChange={(value) =>
+									...ticketTypes.map( ( tt ) => ( {
+										label: tt.name || `#${ tt.id }`,
+										value: String( tt.id ),
+									} ) ),
+								] }
+								onChange={ ( value ) =>
 									setEditTicketTypeId(
-										value === '' ? null : Number(value)
+										value === '' ? null : Number( value )
 									)
 								}
 								__nextHasNoMarginBottom
 							/>
-						)}
-						{ticketOptions.map((opt) => (
+						) }
+						{ ticketOptions.map( ( opt ) => (
 							<CheckboxControl
-								key={opt.id}
-								label={opt.name}
-								checked={editOptionIds.includes(opt.id)}
-								onChange={() => handleToggleOptionId(opt.id)}
+								key={ opt.id }
+								label={ opt.name }
+								checked={ editOptionIds.includes( opt.id ) }
+								onChange={ () =>
+									handleToggleOptionId( opt.id )
+								}
 								__nextHasNoMarginBottom
 							/>
-						))}
+						) ) }
 						<TextareaControl
-							label={__('Admin comment', 'fair-audience')}
-							help={__(
+							label={ __( 'Admin comment', 'fair-audience' ) }
+							help={ __(
 								'Internal note about this signup (e.g. "pending 10€ payment"). Only visible to admins.',
 								'fair-audience'
-							)}
-							value={editAdminComment}
-							onChange={setEditAdminComment}
-							rows={3}
+							) }
+							value={ editAdminComment }
+							onChange={ setEditAdminComment }
+							rows={ 3 }
 							__nextHasNoMarginBottom
 						/>
 						<HStack
-							spacing={3}
-							style={{ justifyContent: 'flex-end' }}
+							spacing={ 3 }
+							style={ { justifyContent: 'flex-end' } }
 						>
 							<Button
 								variant="secondary"
-								onClick={() => setEditingParticipant(null)}
+								onClick={ () => setEditingParticipant( null ) }
 							>
-								{__('Cancel', 'fair-audience')}
+								{ __( 'Cancel', 'fair-audience' ) }
 							</Button>
 							<Button
 								variant="primary"
-								onClick={handleSaveOptions}
-								disabled={isSavingOptions}
+								onClick={ handleSaveOptions }
+								disabled={ isSavingOptions }
 							>
-								{isSavingOptions
-									? __('Saving…', 'fair-audience')
-									: __('Save', 'fair-audience')}
+								{ isSavingOptions
+									? __( 'Saving…', 'fair-audience' )
+									: __( 'Save', 'fair-audience' ) }
 							</Button>
 						</HStack>
 					</VStack>
 				</Modal>
-			)}
+			) }
 
-			{movingParticipant && (
+			{ movingParticipant && (
 				<Modal
-					title={sprintf(
+					title={ sprintf(
 						/* translators: %s: participant name */
-						__('Move signup — %s', 'fair-audience'),
+						__( 'Move signup — %s', 'fair-audience' ),
 						movingParticipant.participant_name
-					)}
-					onRequestClose={handleCloseMoveModal}
-					style={{ maxWidth: '480px', width: '100%' }}
+					) }
+					onRequestClose={ handleCloseMoveModal }
+					style={ { maxWidth: '480px', width: '100%' } }
 				>
-					<VStack spacing={3}>
+					<VStack spacing={ 3 }>
 						<SelectControl
-							label={__('Move to occurrence', 'fair-audience')}
-							value={moveTargetId}
-							options={otherOccurrences.map((s) => ({
+							label={ __(
+								'Move to occurrence',
+								'fair-audience'
+							) }
+							value={ moveTargetId }
+							options={ otherOccurrences.map( ( s ) => ( {
 								label: new Date(
-									s.start_datetime.replace(' ', 'T')
+									s.start_datetime.replace( ' ', 'T' )
 								).toLocaleString(),
-								value: String(s.id),
-							}))}
-							onChange={setMoveTargetId}
+								value: String( s.id ),
+							} ) ) }
+							onChange={ setMoveTargetId }
 							__nextHasNoMarginBottom
 							__next40pxDefaultSize
 						/>
 						<HStack
-							spacing={3}
-							style={{ justifyContent: 'flex-end' }}
+							spacing={ 3 }
+							style={ { justifyContent: 'flex-end' } }
 						>
 							<Button
 								variant="secondary"
-								onClick={handleCloseMoveModal}
-								disabled={isMoving}
+								onClick={ handleCloseMoveModal }
+								disabled={ isMoving }
 							>
-								{__('Cancel', 'fair-audience')}
+								{ __( 'Cancel', 'fair-audience' ) }
 							</Button>
 							<Button
 								variant="primary"
-								onClick={handleMove}
-								disabled={!moveTargetId || isMoving}
+								onClick={ handleMove }
+								disabled={ ! moveTargetId || isMoving }
 							>
-								{isMoving
-									? __('Moving…', 'fair-audience')
-									: __('Move', 'fair-audience')}
+								{ isMoving
+									? __( 'Moving…', 'fair-audience' )
+									: __( 'Move', 'fair-audience' ) }
 							</Button>
 						</HStack>
 					</VStack>
 				</Modal>
-			)}
+			) }
 
-			{toast && (
+			{ toast && (
 				<div
 					role="status"
 					aria-live="polite"
-					onClick={() => setToast(null)}
-					style={{
+					onClick={ () => setToast( null ) }
+					style={ {
 						position: 'fixed',
 						bottom: '20px',
 						right: '20px',
@@ -2531,11 +2632,11 @@ export default function EventAudience({
 						cursor: 'pointer',
 						backgroundColor:
 							toast.type === 'error' ? '#d63638' : '#00a32a',
-					}}
+					} }
 				>
-					{toast.message}
+					{ toast.message }
 				</div>
-			)}
+			) }
 		</>
 	);
 }

@@ -30,8 +30,9 @@ const UNIT_MINUTES = {
  * @param {string} direction 'before' | 'after'.
  * @return {number} Signed offset in minutes.
  */
-export function toOffsetMinutes(value, unit, direction) {
-	const magnitude = Math.abs(parseInt(value, 10) || 0) * UNIT_MINUTES[unit];
+export function toOffsetMinutes( value, unit, direction ) {
+	const magnitude =
+		Math.abs( parseInt( value, 10 ) || 0 ) * UNIT_MINUTES[ unit ];
 	return direction === 'before' ? -magnitude : magnitude;
 }
 
@@ -42,16 +43,16 @@ export function toOffsetMinutes(value, unit, direction) {
  * @param {number} offsetMinutes Signed offset in minutes.
  * @return {{value: number, unit: string, direction: string}} The triple.
  */
-export function fromOffsetMinutes(offsetMinutes) {
+export function fromOffsetMinutes( offsetMinutes ) {
 	const direction = offsetMinutes < 0 ? 'before' : 'after';
-	const abs = Math.abs(offsetMinutes);
+	const abs = Math.abs( offsetMinutes );
 	let unit = 'minutes';
-	if (abs !== 0 && abs % UNIT_MINUTES.days === 0) {
+	if ( abs !== 0 && abs % UNIT_MINUTES.days === 0 ) {
 		unit = 'days';
-	} else if (abs !== 0 && abs % UNIT_MINUTES.hours === 0) {
+	} else if ( abs !== 0 && abs % UNIT_MINUTES.hours === 0 ) {
 		unit = 'hours';
 	}
-	return { value: abs / UNIT_MINUTES[unit], unit, direction };
+	return { value: abs / UNIT_MINUTES[ unit ], unit, direction };
 }
 
 /**
@@ -63,26 +64,27 @@ export function fromOffsetMinutes(offsetMinutes) {
  * @param {number} offsetMinutes Signed offset in minutes.
  * @return {string} Formatted local datetime, or '' when unavailable.
  */
-export function computeScheduledFor(eventDate, anchorType, offsetMinutes) {
-	if (!eventDate) {
+export function computeScheduledFor( eventDate, anchorType, offsetMinutes ) {
+	if ( ! eventDate ) {
 		return '';
 	}
 	const base =
 		anchorType === 'event_date_end'
 			? eventDate.end_datetime
 			: eventDate.start_datetime;
-	if (!base) {
+	if ( ! base ) {
 		return '';
 	}
-	const dt = new Date(base.replace(' ', 'T'));
-	if (Number.isNaN(dt.getTime())) {
+	const dt = new Date( base.replace( ' ', 'T' ) );
+	if ( Number.isNaN( dt.getTime() ) ) {
 		return '';
 	}
-	dt.setMinutes(dt.getMinutes() + offsetMinutes);
-	const pad = (n) => String(n).padStart(2, '0');
+	dt.setMinutes( dt.getMinutes() + offsetMinutes );
+	const pad = ( n ) => String( n ).padStart( 2, '0' );
 	return (
-		`${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ` +
-		`${pad(dt.getHours())}:${pad(dt.getMinutes())}`
+		`${ dt.getFullYear() }-${ pad( dt.getMonth() + 1 ) }-${ pad(
+			dt.getDate()
+		) } ` + `${ pad( dt.getHours() ) }:${ pad( dt.getMinutes() ) }`
 	);
 }
 
@@ -100,7 +102,7 @@ export function computeScheduledFor(eventDate, anchorType, offsetMinutes) {
  * @param {boolean}  props.disabled    Whether inputs are disabled.
  * @return {JSX.Element} The picker.
  */
-export default function AnchorOffsetPicker({
+export default function AnchorOffsetPicker( {
 	eventDates,
 	anchorType,
 	anchorRefId,
@@ -109,9 +111,9 @@ export default function AnchorOffsetPicker({
 	direction,
 	onChange,
 	disabled,
-}) {
-	const selectedDate = eventDates.find((d) => d.id === anchorRefId);
-	const offsetMinutes = toOffsetMinutes(offsetValue, offsetUnit, direction);
+} ) {
+	const selectedDate = eventDates.find( ( d ) => d.id === anchorRefId );
+	const offsetMinutes = toOffsetMinutes( offsetValue, offsetUnit, direction );
 	const preview = computeScheduledFor(
 		selectedDate,
 		anchorType,
@@ -119,11 +121,11 @@ export default function AnchorOffsetPicker({
 	);
 
 	return (
-		<div style={{ marginBottom: '16px' }}>
+		<div style={ { marginBottom: '16px' } }>
 			<SelectControl
-				label={__('Anchor', 'fair-audience-experimental')}
-				value={anchorType}
-				options={[
+				label={ __( 'Anchor', 'fair-audience-experimental' ) }
+				value={ anchorType }
+				options={ [
 					{
 						label: __(
 							'Event date start',
@@ -138,82 +140,85 @@ export default function AnchorOffsetPicker({
 						),
 						value: 'event_date_end',
 					},
-				]}
-				onChange={(value) => onChange({ anchorType: value })}
-				disabled={disabled}
+				] }
+				onChange={ ( value ) => onChange( { anchorType: value } ) }
+				disabled={ disabled }
 				__nextHasNoMarginBottom
 			/>
 
-			{eventDates.length > 1 && (
+			{ eventDates.length > 1 && (
 				<SelectControl
-					label={__('Which date', 'fair-audience-experimental')}
-					value={String(anchorRefId)}
-					options={eventDates.map((d) => ({
-						label: d.display_label || `#${d.id}`,
-						value: String(d.id),
-					}))}
-					onChange={(value) =>
-						onChange({ anchorRefId: parseInt(value, 10) })
+					label={ __( 'Which date', 'fair-audience-experimental' ) }
+					value={ String( anchorRefId ) }
+					options={ eventDates.map( ( d ) => ( {
+						label: d.display_label || `#${ d.id }`,
+						value: String( d.id ),
+					} ) ) }
+					onChange={ ( value ) =>
+						onChange( { anchorRefId: parseInt( value, 10 ) } )
 					}
-					disabled={disabled}
+					disabled={ disabled }
 					__nextHasNoMarginBottom
 				/>
-			)}
+			) }
 
 			<HStack
 				alignment="flex-end"
-				spacing={3}
-				style={{ marginTop: '8px' }}
+				spacing={ 3 }
+				style={ { marginTop: '8px' } }
 			>
 				<NumberControl
-					label={__('Offset', 'fair-audience-experimental')}
-					min={0}
-					value={offsetValue}
-					onChange={(value) =>
-						onChange({ offsetValue: parseInt(value, 10) || 0 })
+					label={ __( 'Offset', 'fair-audience-experimental' ) }
+					min={ 0 }
+					value={ offsetValue }
+					onChange={ ( value ) =>
+						onChange( { offsetValue: parseInt( value, 10 ) || 0 } )
 					}
-					disabled={disabled}
+					disabled={ disabled }
 					__nextHasNoMarginBottom
 				/>
 				<SelectControl
-					label={__('Unit', 'fair-audience-experimental')}
-					value={offsetUnit}
-					options={[
+					label={ __( 'Unit', 'fair-audience-experimental' ) }
+					value={ offsetUnit }
+					options={ [
 						{
-							label: __('minutes', 'fair-audience-experimental'),
+							label: __(
+								'minutes',
+								'fair-audience-experimental'
+							),
 							value: 'minutes',
 						},
 						{
-							label: __('hours', 'fair-audience-experimental'),
+							label: __( 'hours', 'fair-audience-experimental' ),
 							value: 'hours',
 						},
 						{
-							label: __('days', 'fair-audience-experimental'),
+							label: __( 'days', 'fair-audience-experimental' ),
 							value: 'days',
 						},
-					]}
-					onChange={(value) => onChange({ offsetUnit: value })}
-					disabled={disabled}
+					] }
+					onChange={ ( value ) => onChange( { offsetUnit: value } ) }
+					disabled={ disabled }
 					__nextHasNoMarginBottom
 				/>
 				<RadioControl
-					selected={direction}
-					options={[
+					selected={ direction }
+					options={ [
 						{
-							label: __('before', 'fair-audience-experimental'),
+							label: __( 'before', 'fair-audience-experimental' ),
 							value: 'before',
 						},
 						{
-							label: __('after', 'fair-audience-experimental'),
+							label: __( 'after', 'fair-audience-experimental' ),
 							value: 'after',
 						},
-					]}
-					onChange={(value) => onChange({ direction: value })}
+					] }
+					onChange={ ( value ) => onChange( { direction: value } ) }
 				/>
 			</HStack>
 
-			<p style={{ marginTop: '8px', color: '#666' }}>
-				{preview
+			<p style={ { marginTop: '8px', color: '#666' } }>
+				{ preview
 					? sprintf(
 							/* translators: %s: computed send date/time */
 							__(
@@ -225,7 +230,7 @@ export default function AnchorOffsetPicker({
 					: __(
 							'Send time will be computed from the chosen date.',
 							'fair-audience-experimental'
-					  )}
+					  ) }
 			</p>
 		</div>
 	);

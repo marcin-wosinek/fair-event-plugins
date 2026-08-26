@@ -25,52 +25,52 @@ const DEFAULT_TEMPLATE =
  * @param {Function} props.onNotice Handler for displaying global notices
  * @return {JSX.Element} The Telegram tab
  */
-export default function TelegramTab({ onNotice }) {
-	const [enabled, setEnabled] = useState(false);
-	const [botToken, setBotToken] = useState('');
-	const [chatIds, setChatIds] = useState('');
-	const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
-	const [includePii, setIncludePii] = useState(true);
-	const [isLoading, setIsLoading] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
-	const [isTesting, setIsTesting] = useState(false);
-	const [testResult, setTestResult] = useState(null);
+export default function TelegramTab( { onNotice } ) {
+	const [ enabled, setEnabled ] = useState( false );
+	const [ botToken, setBotToken ] = useState( '' );
+	const [ chatIds, setChatIds ] = useState( '' );
+	const [ template, setTemplate ] = useState( DEFAULT_TEMPLATE );
+	const [ includePii, setIncludePii ] = useState( true );
+	const [ isLoading, setIsLoading ] = useState( false );
+	const [ isSaving, setIsSaving ] = useState( false );
+	const [ isTesting, setIsTesting ] = useState( false );
+	const [ testResult, setTestResult ] = useState( null );
 
-	useEffect(() => {
-		setIsLoading(true);
-		apiFetch({ path: '/wp/v2/settings' })
-			.then((settings) => {
-				setEnabled(!!settings.fair_payment_telegram_enabled);
-				setBotToken(settings.fair_payment_telegram_bot_token || '');
-				setChatIds(settings.fair_payment_telegram_chat_ids || '');
+	useEffect( () => {
+		setIsLoading( true );
+		apiFetch( { path: '/wp/v2/settings' } )
+			.then( ( settings ) => {
+				setEnabled( !! settings.fair_payment_telegram_enabled );
+				setBotToken( settings.fair_payment_telegram_bot_token || '' );
+				setChatIds( settings.fair_payment_telegram_chat_ids || '' );
 				setTemplate(
 					settings.fair_payment_telegram_template || DEFAULT_TEMPLATE
 				);
 				setIncludePii(
 					settings.fair_payment_telegram_include_pii !== false
 				);
-				setIsLoading(false);
-			})
-			.catch((error) => {
+				setIsLoading( false );
+			} )
+			.catch( ( error ) => {
 				console.error(
 					'[Fair Payments Connector Experimental] Failed to load Telegram settings:',
 					error
 				);
-				onNotice({
+				onNotice( {
 					status: 'error',
 					message: __(
 						'Failed to load Telegram settings.',
 						'fair-payments-connector-experimental'
 					),
-				});
-				setIsLoading(false);
-			});
-	}, []);
+				} );
+				setIsLoading( false );
+			} );
+	}, [] );
 
 	const handleSave = () => {
-		setIsSaving(true);
-		setTestResult(null);
-		apiFetch({
+		setIsSaving( true );
+		setTestResult( null );
+		apiFetch( {
 			path: '/wp/v2/settings',
 			method: 'POST',
 			data: {
@@ -80,38 +80,38 @@ export default function TelegramTab({ onNotice }) {
 				fair_payment_telegram_template: template,
 				fair_payment_telegram_include_pii: includePii,
 			},
-		})
-			.then(() => {
-				onNotice({
+		} )
+			.then( () => {
+				onNotice( {
 					status: 'success',
 					message: __(
 						'Telegram settings saved.',
 						'fair-payments-connector-experimental'
 					),
-				});
-				setIsSaving(false);
-			})
-			.catch((error) => {
+				} );
+				setIsSaving( false );
+			} )
+			.catch( ( error ) => {
 				console.error(
 					'[Fair Payments Connector Experimental] Failed to save Telegram settings:',
 					error
 				);
-				onNotice({
+				onNotice( {
 					status: 'error',
 					message:
 						__(
 							'Failed to save Telegram settings: ',
 							'fair-payments-connector-experimental'
-						) + (error.message || 'Unknown error'),
-				});
-				setIsSaving(false);
-			});
+						) + ( error.message || 'Unknown error' ),
+				} );
+				setIsSaving( false );
+			} );
 	};
 
 	const handleTest = () => {
-		setIsTesting(true);
-		setTestResult(null);
-		apiFetch({
+		setIsTesting( true );
+		setTestResult( null );
+		apiFetch( {
 			path: '/fair-payments-connector/v1/telegram/test',
 			method: 'POST',
 			data: {
@@ -120,9 +120,9 @@ export default function TelegramTab({ onNotice }) {
 				template,
 				include_pii: includePii,
 			},
-		})
-			.then((response) => {
-				setTestResult({
+		} )
+			.then( ( response ) => {
+				setTestResult( {
 					status: 'success',
 					message:
 						response.message ||
@@ -130,11 +130,11 @@ export default function TelegramTab({ onNotice }) {
 							'Test message sent.',
 							'fair-payments-connector-experimental'
 						),
-				});
-				setIsTesting(false);
-			})
-			.catch((error) => {
-				setTestResult({
+				} );
+				setIsTesting( false );
+			} )
+			.catch( ( error ) => {
+				setTestResult( {
 					status: 'error',
 					message:
 						error.message ||
@@ -142,20 +142,20 @@ export default function TelegramTab({ onNotice }) {
 							'Test message failed.',
 							'fair-payments-connector-experimental'
 						),
-				});
-				setIsTesting(false);
-			});
+				} );
+				setIsTesting( false );
+			} );
 	};
 
-	if (isLoading) {
+	if ( isLoading ) {
 		return (
 			<Card>
 				<CardBody>
 					<p>
-						{__(
+						{ __(
 							'Loading Telegram settings…',
 							'fair-payments-connector-experimental'
-						)}
+						) }
 					</p>
 				</CardBody>
 			</Card>
@@ -166,131 +166,131 @@ export default function TelegramTab({ onNotice }) {
 		<Card>
 			<CardBody>
 				<h2>
-					{__(
+					{ __(
 						'Telegram Notifications',
 						'fair-payments-connector-experimental'
-					)}
+					) }
 				</h2>
-				<p style={{ color: '#666', marginBottom: '1.5rem' }}>
-					{__(
+				<p style={ { color: '#666', marginBottom: '1.5rem' } }>
+					{ __(
 						'Post a message to a Telegram chat or channel when a transaction is paid.',
 						'fair-payments-connector-experimental'
-					)}
+					) }
 				</p>
 
 				<ToggleControl
 					__nextHasNoMarginBottom
-					label={__(
+					label={ __(
 						'Enable Telegram notifications',
 						'fair-payments-connector-experimental'
-					)}
-					checked={enabled}
-					onChange={setEnabled}
+					) }
+					checked={ enabled }
+					onChange={ setEnabled }
 				/>
 
 				<TextControl
 					__nextHasNoMarginBottom
 					__next40pxDefaultSize
-					label={__(
+					label={ __(
 						'Bot token',
 						'fair-payments-connector-experimental'
-					)}
-					help={__(
+					) }
+					help={ __(
 						'From @BotFather. Stored as plain text in wp_options — anyone with admin access can read it.',
 						'fair-payments-connector-experimental'
-					)}
+					) }
 					type="password"
-					value={botToken}
-					onChange={setBotToken}
+					value={ botToken }
+					onChange={ setBotToken }
 					autoComplete="off"
 				/>
 
 				<TextControl
 					__nextHasNoMarginBottom
 					__next40pxDefaultSize
-					label={__(
+					label={ __(
 						'Chat IDs',
 						'fair-payments-connector-experimental'
-					)}
-					help={__(
+					) }
+					help={ __(
 						'Comma-separated. Use a numeric user/chat/channel ID, or @channelname for public channels.',
 						'fair-payments-connector-experimental'
-					)}
-					value={chatIds}
-					onChange={setChatIds}
+					) }
+					value={ chatIds }
+					onChange={ setChatIds }
 				/>
 
 				<TextareaControl
 					__nextHasNoMarginBottom
-					label={__(
+					label={ __(
 						'Message template',
 						'fair-payments-connector-experimental'
-					)}
-					help={__(
+					) }
+					help={ __(
 						'Placeholders: {test_label}, {site_domain}, {date}, {amount}, {currency}, {transaction_id}, {event_title}, {event_url}, {participant_name}, {participant_url}, {participant_email}, {ticket_label}, {activities}, {discounts}. HTML tags <b>, <i>, <a href> are allowed.',
 						'fair-payments-connector-experimental'
-					)}
-					rows={5}
-					value={template}
-					onChange={setTemplate}
+					) }
+					rows={ 5 }
+					value={ template }
+					onChange={ setTemplate }
 				/>
 
 				<ToggleControl
 					__nextHasNoMarginBottom
-					label={__(
+					label={ __(
 						'Include participant name and email',
 						'fair-payments-connector-experimental'
-					)}
-					help={__(
+					) }
+					help={ __(
 						'Disable to keep PII out of the Telegram channel. {participant_email} renders as empty and {participant_name} is abbreviated (e.g. "Lucianna C.").',
 						'fair-payments-connector-experimental'
-					)}
-					checked={includePii}
-					onChange={setIncludePii}
+					) }
+					checked={ includePii }
+					onChange={ setIncludePii }
 				/>
 
 				<div
-					style={{
+					style={ {
 						marginTop: '1.5rem',
 						display: 'flex',
 						gap: '0.75rem',
-					}}
+					} }
 				>
 					<Button
 						variant="primary"
-						onClick={handleSave}
-						isBusy={isSaving}
-						disabled={isSaving}
+						onClick={ handleSave }
+						isBusy={ isSaving }
+						disabled={ isSaving }
 					>
-						{__(
+						{ __(
 							'Save settings',
 							'fair-payments-connector-experimental'
-						)}
+						) }
 					</Button>
 					<Button
 						variant="secondary"
-						onClick={handleTest}
-						isBusy={isTesting}
-						disabled={isTesting || !botToken || !chatIds}
+						onClick={ handleTest }
+						isBusy={ isTesting }
+						disabled={ isTesting || ! botToken || ! chatIds }
 					>
-						{__(
+						{ __(
 							'Send test message',
 							'fair-payments-connector-experimental'
-						)}
+						) }
 					</Button>
 				</div>
 
-				{testResult && (
-					<div style={{ marginTop: '1rem' }}>
+				{ testResult && (
+					<div style={ { marginTop: '1rem' } }>
 						<Notice
-							status={testResult.status}
-							isDismissible={true}
-							onRemove={() => setTestResult(null)}
+							status={ testResult.status }
+							isDismissible={ true }
+							onRemove={ () => setTestResult( null ) }
 						>
-							{testResult.message}
+							{ testResult.message }
 						</Notice>
 					</div>
-				)}
+				) }
 			</CardBody>
 		</Card>
 	);

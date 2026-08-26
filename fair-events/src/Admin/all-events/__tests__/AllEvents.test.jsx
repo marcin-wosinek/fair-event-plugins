@@ -13,14 +13,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import AllEvents from '../AllEvents.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
-function jsonResponse(data, headers = {}) {
+function jsonResponse( data, headers = {} ) {
 	return {
 		headers: {
-			get: (name) => headers[name.toLowerCase()] ?? null,
+			get: ( name ) => headers[ name.toLowerCase() ] ?? null,
 		},
-		json: () => Promise.resolve(data),
+		json: () => Promise.resolve( data ),
 	};
 }
 
@@ -62,51 +62,53 @@ const masterEvent = {
 	],
 };
 
-beforeEach(() => {
-	apiFetch.mockImplementation(() =>
+beforeEach( () => {
+	apiFetch.mockImplementation( () =>
 		Promise.resolve(
-			jsonResponse([masterEvent], {
+			jsonResponse( [ masterEvent ], {
 				'x-wp-total': '1',
 				'x-wp-totalpages': '1',
-			})
+			} )
 		)
 	);
-});
+} );
 
-afterEach(() => {
+afterEach( () => {
 	jest.restoreAllMocks();
 	jest.clearAllMocks();
-});
+} );
 
-it('renders the series collapsed by default, without its nested dates', async () => {
-	render(<AllEvents />);
+it( 'renders the series collapsed by default, without its nested dates', async () => {
+	render( <AllEvents /> );
 
-	await waitFor(() =>
-		expect(screen.getByText('Summer Workshops')).toBeInTheDocument()
+	await waitFor( () =>
+		expect( screen.getByText( 'Summer Workshops' ) ).toBeInTheDocument()
 	);
 
 	expect(
-		screen.getByRole('button', { name: 'Expand series dates' })
+		screen.getByRole( 'button', { name: 'Expand series dates' } )
 	).toBeInTheDocument();
-	expect(screen.queryByText('(untitled event)')).not.toBeInTheDocument();
-	expect(screen.getAllByRole('row')).toHaveLength(2); // header + master.
-});
+	expect( screen.queryByText( '(untitled event)' ) ).not.toBeInTheDocument();
+	expect( screen.getAllByRole( 'row' ) ).toHaveLength( 2 ); // header + master.
+} );
 
-it('reveals nested date rows when the disclosure button is toggled', async () => {
-	render(<AllEvents />);
+it( 'reveals nested date rows when the disclosure button is toggled', async () => {
+	render( <AllEvents /> );
 
-	await waitFor(() =>
-		expect(screen.getByText('Summer Workshops')).toBeInTheDocument()
+	await waitFor( () =>
+		expect( screen.getByText( 'Summer Workshops' ) ).toBeInTheDocument()
 	);
 
 	fireEvent.click(
-		screen.getByRole('button', { name: 'Expand series dates' })
+		screen.getByRole( 'button', { name: 'Expand series dates' } )
 	);
 
-	await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(4)); // header + master + 2 children.
+	await waitFor( () =>
+		expect( screen.getAllByRole( 'row' ) ).toHaveLength( 4 )
+	); // header + master + 2 children.
 
-	expect(screen.queryByText('(untitled event)')).not.toBeInTheDocument();
+	expect( screen.queryByText( '(untitled event)' ) ).not.toBeInTheDocument();
 	expect(
-		screen.getByRole('button', { name: 'Collapse series dates' })
+		screen.getByRole( 'button', { name: 'Collapse series dates' } )
 	).toBeInTheDocument();
-});
+} );

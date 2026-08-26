@@ -21,28 +21,28 @@ import {
 import ImportTransactionsModal from './components/ImportTransactionsModal.js';
 
 const STATUS_OPTIONS = [
-	{ label: __('All statuses', 'fair-payments-connector'), value: '' },
-	{ label: __('Paid', 'fair-payments-connector'), value: 'paid' },
-	{ label: __('Pending', 'fair-payments-connector'), value: 'pending' },
-	{ label: __('Open', 'fair-payments-connector'), value: 'open' },
-	{ label: __('Failed', 'fair-payments-connector'), value: 'failed' },
-	{ label: __('Canceled', 'fair-payments-connector'), value: 'canceled' },
-	{ label: __('Expired', 'fair-payments-connector'), value: 'expired' },
-	{ label: __('Draft', 'fair-payments-connector'), value: 'draft' },
+	{ label: __( 'All statuses', 'fair-payments-connector' ), value: '' },
+	{ label: __( 'Paid', 'fair-payments-connector' ), value: 'paid' },
+	{ label: __( 'Pending', 'fair-payments-connector' ), value: 'pending' },
+	{ label: __( 'Open', 'fair-payments-connector' ), value: 'open' },
+	{ label: __( 'Failed', 'fair-payments-connector' ), value: 'failed' },
+	{ label: __( 'Canceled', 'fair-payments-connector' ), value: 'canceled' },
+	{ label: __( 'Expired', 'fair-payments-connector' ), value: 'expired' },
+	{ label: __( 'Draft', 'fair-payments-connector' ), value: 'draft' },
 	{
-		label: __('Pending payment', 'fair-payments-connector'),
+		label: __( 'Pending payment', 'fair-payments-connector' ),
 		value: 'pending_payment',
 	},
 ];
 
 const MODE_OPTIONS = [
-	{ label: __('Live', 'fair-payments-connector'), value: 'live' },
-	{ label: __('Test', 'fair-payments-connector'), value: 'test' },
-	{ label: __('All modes', 'fair-payments-connector'), value: '' },
+	{ label: __( 'Live', 'fair-payments-connector' ), value: 'live' },
+	{ label: __( 'Test', 'fair-payments-connector' ), value: 'test' },
+	{ label: __( 'All modes', 'fair-payments-connector' ), value: '' },
 ];
 
-const getStatusStyle = (status) => {
-	switch (status) {
+const getStatusStyle = ( status ) => {
+	switch ( status ) {
 		case 'paid':
 			return { color: '#007017', fontWeight: 'bold' };
 		case 'failed':
@@ -58,58 +58,60 @@ const getStatusStyle = (status) => {
 	}
 };
 
-const getModeStyle = (testmode) => {
+const getModeStyle = ( testmode ) => {
 	return testmode
 		? { color: '#996800', fontWeight: 'bold' }
 		: { color: '#007017', fontWeight: 'bold' };
 };
 
 const TransactionsApp = () => {
-	const [transactions, setTransactions] = useState([]);
-	const [pagination, setPagination] = useState({
+	const [ transactions, setTransactions ] = useState( [] );
+	const [ pagination, setPagination ] = useState( {
 		total: 0,
 		pages: 0,
 		page: 1,
-	});
-	const [filters, setFilters] = useState({
+	} );
+	const [ filters, setFilters ] = useState( {
 		status: 'paid',
 		mode: 'live',
-	});
-	const [sort, setSort] = useState({
+	} );
+	const [ sort, setSort ] = useState( {
 		orderby: 'created_at',
 		order: 'desc',
-	});
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [success, setSuccess] = useState(null);
-	const [selectedTransactions, setSelectedTransactions] = useState(new Set());
-	const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-	const [feeSync, setFeeSync] = useState(null);
+	} );
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ success, setSuccess ] = useState( null );
+	const [ selectedTransactions, setSelectedTransactions ] = useState(
+		new Set()
+	);
+	const [ isImportModalOpen, setIsImportModalOpen ] = useState( false );
+	const [ feeSync, setFeeSync ] = useState( null );
 
-	const loadTransactions = useCallback(async () => {
-		setLoading(true);
-		setError(null);
+	const loadTransactions = useCallback( async () => {
+		setLoading( true );
+		setError( null );
 
 		try {
 			const params = new URLSearchParams();
-			params.append('page', pagination.page);
-			params.append('per_page', 50);
-			if (filters.status) params.append('status', filters.status);
-			if (filters.mode) params.append('mode', filters.mode);
-			params.append('orderby', sort.orderby);
-			params.append('order', sort.order);
+			params.append( 'page', pagination.page );
+			params.append( 'per_page', 50 );
+			if ( filters.status ) params.append( 'status', filters.status );
+			if ( filters.mode ) params.append( 'mode', filters.mode );
+			params.append( 'orderby', sort.orderby );
+			params.append( 'order', sort.order );
 
-			const data = await apiFetch({
-				path: `/fair-payments-connector/v1/transactions?${params.toString()}`,
-			});
+			const data = await apiFetch( {
+				path: `/fair-payments-connector/v1/transactions?${ params.toString() }`,
+			} );
 
-			setTransactions(data.transactions);
-			setPagination((prev) => ({
+			setTransactions( data.transactions );
+			setPagination( ( prev ) => ( {
 				...prev,
 				total: data.total,
 				pages: data.pages,
-			}));
-		} catch (err) {
+			} ) );
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -118,46 +120,48 @@ const TransactionsApp = () => {
 					)
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
-	}, [filters, pagination.page, sort]);
+	}, [ filters, pagination.page, sort ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadTransactions();
-	}, [loadTransactions]);
+	}, [ loadTransactions ] );
 
-	const handleSort = (column) => {
-		setSort((prev) => ({
+	const handleSort = ( column ) => {
+		setSort( ( prev ) => ( {
 			orderby: column,
 			order:
 				prev.orderby === column && prev.order === 'desc'
 					? 'asc'
 					: 'desc',
-		}));
+		} ) );
 	};
 
-	const getSortIndicator = (column) => {
-		if (sort.orderby !== column) return '';
+	const getSortIndicator = ( column ) => {
+		if ( sort.orderby !== column ) return '';
 		return sort.order === 'asc' ? ' \u25B2' : ' \u25BC';
 	};
 
-	const toggleTransactionSelection = (id) => {
-		setSelectedTransactions((prev) => {
-			const next = new Set(prev);
-			if (next.has(id)) {
-				next.delete(id);
+	const toggleTransactionSelection = ( id ) => {
+		setSelectedTransactions( ( prev ) => {
+			const next = new Set( prev );
+			if ( next.has( id ) ) {
+				next.delete( id );
 			} else {
-				next.add(id);
+				next.add( id );
 			}
 			return next;
-		});
+		} );
 	};
 
 	const toggleAllTransactions = () => {
-		if (selectedTransactions.size === transactions.length) {
-			setSelectedTransactions(new Set());
+		if ( selectedTransactions.size === transactions.length ) {
+			setSelectedTransactions( new Set() );
 		} else {
-			setSelectedTransactions(new Set(transactions.map((t) => t.id)));
+			setSelectedTransactions(
+				new Set( transactions.map( ( t ) => t.id ) )
+			);
 		}
 	};
 
@@ -165,8 +169,8 @@ const TransactionsApp = () => {
 		const sourceDomain = window.location.hostname;
 
 		const toExport = transactions
-			.filter((t) => selectedTransactions.has(t.id))
-			.map((t) => ({
+			.filter( ( t ) => selectedTransactions.has( t.id ) )
+			.map( ( t ) => ( {
 				amount: t.amount,
 				currency: t.currency,
 				mollie_fee: t.mollie_fee,
@@ -179,56 +183,56 @@ const TransactionsApp = () => {
 				source_domain: sourceDomain,
 				detail_url: t.event_url || '',
 				event_date_id: t.event_date_id ?? null,
-			}));
+			} ) );
 
-		const blob = new Blob([JSON.stringify(toExport, null, 2)], {
+		const blob = new Blob( [ JSON.stringify( toExport, null, 2 ) ], {
 			type: 'application/json',
-		});
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
+		} );
+		const url = URL.createObjectURL( blob );
+		const a = document.createElement( 'a' );
 		a.href = url;
 		a.download = 'transactions.json';
 		a.click();
-		URL.revokeObjectURL(url);
+		URL.revokeObjectURL( url );
 		setSuccess(
 			// translators: %d is the number of exported transactions
 			__(
 				'%d transaction(s) exported.',
 				'fair-payments-connector'
-			).replace('%d', toExport.length)
+			).replace( '%d', toExport.length )
 		);
 	};
 
-	const handleImported = (message) => {
-		setError(null);
-		setSuccess(message);
-		setIsImportModalOpen(false);
+	const handleImported = ( message ) => {
+		setError( null );
+		setSuccess( message );
+		setIsImportModalOpen( false );
 		loadTransactions();
 	};
 
 	const handleLoadMissingFees = async () => {
-		setError(null);
-		setSuccess(null);
-		setFeeSync({
+		setError( null );
+		setSuccess( null );
+		setFeeSync( {
 			running: true,
 			processed: 0,
 			total: 0,
 			succeeded: 0,
 			failed: 0,
-		});
+		} );
 
 		try {
 			const params = new URLSearchParams();
-			if (filters.mode) params.append('mode', filters.mode);
+			if ( filters.mode ) params.append( 'mode', filters.mode );
 
-			const response = await apiFetch({
-				path: `/fair-payments-connector/v1/transactions/missing-mollie-fee?${params.toString()}`,
-			});
+			const response = await apiFetch( {
+				path: `/fair-payments-connector/v1/transactions/missing-mollie-fee?${ params.toString() }`,
+			} );
 
 			const ids = response.ids || [];
 
-			if (ids.length === 0) {
-				setFeeSync(null);
+			if ( ids.length === 0 ) {
+				setFeeSync( null );
 				setSuccess(
 					__(
 						'No paid transactions are missing Mollie fee data.',
@@ -238,48 +242,48 @@ const TransactionsApp = () => {
 				return;
 			}
 
-			setFeeSync((prev) => ({ ...prev, total: ids.length }));
+			setFeeSync( ( prev ) => ( { ...prev, total: ids.length } ) );
 
 			let succeeded = 0;
 			let failed = 0;
 
-			for (let i = 0; i < ids.length; i++) {
+			for ( let i = 0; i < ids.length; i++ ) {
 				try {
-					const result = await apiFetch({
-						path: `/fair-payments-connector/v1/transactions/${ids[i]}/sync-mollie`,
+					const result = await apiFetch( {
+						path: `/fair-payments-connector/v1/transactions/${ ids[ i ] }/sync-mollie`,
 						method: 'POST',
-					});
-					if (result && result.mollie_fee !== null) {
+					} );
+					if ( result && result.mollie_fee !== null ) {
 						succeeded += 1;
 					} else {
 						failed += 1;
 					}
-				} catch (err) {
+				} catch ( err ) {
 					failed += 1;
 				}
-				setFeeSync({
+				setFeeSync( {
 					running: i + 1 < ids.length,
 					processed: i + 1,
 					total: ids.length,
 					succeeded,
 					failed,
-				});
+				} );
 			}
 
-			setFeeSync(null);
+			setFeeSync( null );
 			setSuccess(
 				/* translators: 1: synced count, 2: failed count, 3: total count */
 				__(
 					'Mollie fee sync complete: %1$d updated, %2$d failed (out of %3$d).',
 					'fair-payments-connector'
 				)
-					.replace('%1$d', succeeded)
-					.replace('%2$d', failed)
-					.replace('%3$d', ids.length)
+					.replace( '%1$d', succeeded )
+					.replace( '%2$d', failed )
+					.replace( '%3$d', ids.length )
 			);
 			loadTransactions();
-		} catch (err) {
-			setFeeSync(null);
+		} catch ( err ) {
+			setFeeSync( null );
 			setError(
 				err.message ||
 					__(
@@ -290,155 +294,167 @@ const TransactionsApp = () => {
 		}
 	};
 
-	const sortableHeader = (column, label) => (
-		<th style={{ cursor: 'pointer' }} onClick={() => handleSort(column)}>
-			{label}
-			{getSortIndicator(column)}
+	const sortableHeader = ( column, label ) => (
+		<th
+			style={ { cursor: 'pointer' } }
+			onClick={ () => handleSort( column ) }
+		>
+			{ label }
+			{ getSortIndicator( column ) }
 		</th>
 	);
 
 	return (
 		<div className="wrap">
-			<h1>{__('Payment Transactions', 'fair-payments-connector')}</h1>
+			<h1>{ __( 'Payment Transactions', 'fair-payments-connector' ) }</h1>
 
 			<Card>
 				<CardHeader>
 					<HStack
 						justify="space-between"
 						wrap
-						style={{ rowGap: '8px' }}
+						style={ { rowGap: '8px' } }
 					>
 						<HStack>
 							<SelectControl
-								label={__('Status', 'fair-payments-connector')}
-								value={filters.status}
-								options={STATUS_OPTIONS}
-								onChange={(value) => {
-									setFilters((prev) => ({
+								label={ __(
+									'Status',
+									'fair-payments-connector'
+								) }
+								value={ filters.status }
+								options={ STATUS_OPTIONS }
+								onChange={ ( value ) => {
+									setFilters( ( prev ) => ( {
 										...prev,
 										status: value,
-									}));
-									setPagination((prev) => ({
+									} ) );
+									setPagination( ( prev ) => ( {
 										...prev,
 										page: 1,
-									}));
-								}}
+									} ) );
+								} }
 								__nextHasNoMarginBottom
 							/>
 							<SelectControl
-								label={__('Mode', 'fair-payments-connector')}
-								value={filters.mode}
-								options={MODE_OPTIONS}
-								onChange={(value) => {
-									setFilters((prev) => ({
+								label={ __(
+									'Mode',
+									'fair-payments-connector'
+								) }
+								value={ filters.mode }
+								options={ MODE_OPTIONS }
+								onChange={ ( value ) => {
+									setFilters( ( prev ) => ( {
 										...prev,
 										mode: value,
-									}));
-									setPagination((prev) => ({
+									} ) );
+									setPagination( ( prev ) => ( {
 										...prev,
 										page: 1,
-									}));
-								}}
+									} ) );
+								} }
 								__nextHasNoMarginBottom
 							/>
 						</HStack>
 						<HStack
-							spacing={2}
-							expanded={false}
+							spacing={ 2 }
+							expanded={ false }
 							wrap
-							style={{ rowGap: '8px' }}
+							style={ { rowGap: '8px' } }
 						>
-							{selectedTransactions.size > 0 && (
+							{ selectedTransactions.size > 0 && (
 								<Button
 									variant="secondary"
-									onClick={handleExport}
-									style={{ flexShrink: 0, width: 'auto' }}
+									onClick={ handleExport }
+									style={ { flexShrink: 0, width: 'auto' } }
 								>
-									{__(
+									{ __(
 										'Export Selected',
 										'fair-payments-connector'
-									)}
+									) }
 								</Button>
-							)}
+							) }
 							<Button
 								variant="secondary"
-								onClick={handleLoadMissingFees}
-								isBusy={!!feeSync?.running}
-								disabled={!!feeSync?.running}
-								style={{
+								onClick={ handleLoadMissingFees }
+								isBusy={ !! feeSync?.running }
+								disabled={ !! feeSync?.running }
+								style={ {
 									whiteSpace: 'nowrap',
 									flexShrink: 0,
 									width: 'auto',
-								}}
+								} }
 							>
-								{feeSync?.running
-									? __('Syncing…', 'fair-payments-connector')
+								{ feeSync?.running
+									? __(
+											'Syncing…',
+											'fair-payments-connector'
+									  )
 									: __(
 											'Load Missing Mollie Fees',
 											'fair-payments-connector'
-									  )}
+									  ) }
 							</Button>
 							<Button
 								variant="secondary"
-								onClick={() => setIsImportModalOpen(true)}
-								style={{ flexShrink: 0, width: 'auto' }}
+								onClick={ () => setIsImportModalOpen( true ) }
+								style={ { flexShrink: 0, width: 'auto' } }
 							>
-								{__('Import', 'fair-payments-connector')}
+								{ __( 'Import', 'fair-payments-connector' ) }
 							</Button>
 						</HStack>
 					</HStack>
 				</CardHeader>
-				<CardBody style={{ overflowX: 'auto' }}>
-					{error && (
+				<CardBody style={ { overflowX: 'auto' } }>
+					{ error && (
 						<Notice
 							status="error"
 							isDismissible
-							onRemove={() => setError(null)}
+							onRemove={ () => setError( null ) }
 						>
-							{error}
+							{ error }
 						</Notice>
-					)}
+					) }
 
-					{success && (
+					{ success && (
 						<Notice
 							status="success"
 							isDismissible
-							onRemove={() => setSuccess(null)}
+							onRemove={ () => setSuccess( null ) }
 						>
-							{success}
+							{ success }
 						</Notice>
-					)}
+					) }
 
-					{feeSync && feeSync.running && (
-						<Notice status="info" isDismissible={false}>
+					{ feeSync && feeSync.running && (
+						<Notice status="info" isDismissible={ false }>
 							{
 								/* translators: 1: processed count, 2: total count, 3: succeeded count, 4: failed count */
 								__(
 									'Syncing Mollie fees: %1$d / %2$d (updated: %3$d, failed: %4$d)',
 									'fair-payments-connector'
 								)
-									.replace('%1$d', feeSync.processed)
-									.replace('%2$d', feeSync.total)
-									.replace('%3$d', feeSync.succeeded)
-									.replace('%4$d', feeSync.failed)
+									.replace( '%1$d', feeSync.processed )
+									.replace( '%2$d', feeSync.total )
+									.replace( '%3$d', feeSync.succeeded )
+									.replace( '%4$d', feeSync.failed )
 							}
 						</Notice>
-					)}
+					) }
 
-					{loading ? (
+					{ loading ? (
 						<Spinner />
 					) : transactions.length === 0 ? (
 						<p>
-							{__(
+							{ __(
 								'No transactions found.',
 								'fair-payments-connector'
-							)}
+							) }
 						</p>
 					) : (
 						<>
 							<table
 								className="wp-list-table widefat striped"
-								style={{ whiteSpace: 'nowrap' }}
+								style={ { whiteSpace: 'nowrap' } }
 							>
 								<thead>
 									<tr>
@@ -449,87 +465,92 @@ const TransactionsApp = () => {
 													selectedTransactions.size ===
 													transactions.length
 												}
-												onChange={toggleAllTransactions}
+												onChange={
+													toggleAllTransactions
+												}
 											/>
 										</td>
-										{sortableHeader(
+										{ sortableHeader(
 											'id',
-											__('ID', 'fair-payments-connector')
-										)}
-										{sortableHeader(
+											__(
+												'ID',
+												'fair-payments-connector'
+											)
+										) }
+										{ sortableHeader(
 											'amount',
 											__(
 												'Amount',
 												'fair-payments-connector'
 											)
-										)}
+										) }
 										<th>
-											{__(
+											{ __(
 												'Mollie Fee',
 												'fair-payments-connector'
-											)}
+											) }
 										</th>
 										<th>
-											{__(
+											{ __(
 												'Integration Fee',
 												'fair-payments-connector'
-											)}
+											) }
 										</th>
-										{sortableHeader(
+										{ sortableHeader(
 											'status',
 											__(
 												'Status',
 												'fair-payments-connector'
 											)
-										)}
+										) }
 										<th>
-											{__(
+											{ __(
 												'Mode',
 												'fair-payments-connector'
-											)}
+											) }
 										</th>
 										<th
-											style={{
+											style={ {
 												maxWidth: '200px',
 												whiteSpace: 'normal',
-											}}
+											} }
 										>
-											{__(
+											{ __(
 												'Description',
 												'fair-payments-connector'
-											)}
+											) }
 										</th>
 										<th>
-											{__(
+											{ __(
 												'Person',
 												'fair-payments-connector'
-											)}
+											) }
 										</th>
 										<th>
-											{__(
+											{ __(
 												'Entry',
 												'fair-payments-connector'
-											)}
+											) }
 										</th>
-										{sortableHeader(
+										{ sortableHeader(
 											'created_at',
 											__(
 												'Date',
 												'fair-payments-connector'
 											)
-										)}
+										) }
 									</tr>
 								</thead>
 								<tbody>
-									{transactions.map((t) => (
-										<tr key={t.id}>
+									{ transactions.map( ( t ) => (
+										<tr key={ t.id }>
 											<th className="check-column">
 												<input
 													type="checkbox"
-													checked={selectedTransactions.has(
+													checked={ selectedTransactions.has(
 														t.id
-													)}
-													onChange={() =>
+													) }
+													onChange={ () =>
 														toggleTransactionSelection(
 															t.id
 														)
@@ -538,50 +559,50 @@ const TransactionsApp = () => {
 											</th>
 											<td>
 												<a
-													href={`admin.php?page=fair-payments-connector-transaction&transaction_id=${t.id}`}
+													href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ t.id }` }
 												>
-													{t.id}
+													{ t.id }
 												</a>
 											</td>
 											<td>
 												<strong>
-													{t.amount.toFixed(2)}
-												</strong>{' '}
-												{t.currency}
+													{ t.amount.toFixed( 2 ) }
+												</strong>{ ' ' }
+												{ t.currency }
 											</td>
 											<td>
-												{t.mollie_fee !== null
-													? `${t.mollie_fee.toFixed(
+												{ t.mollie_fee !== null
+													? `${ t.mollie_fee.toFixed(
 															2
-													  )} ${t.currency}`
-													: '-'}
+													  ) } ${ t.currency }`
+													: '-' }
 											</td>
 											<td>
-												{t.application_fee !== null
-													? `${t.application_fee.toFixed(
+												{ t.application_fee !== null
+													? `${ t.application_fee.toFixed(
 															2
-													  )} ${t.currency}`
-													: '-'}
+													  ) } ${ t.currency }`
+													: '-' }
 											</td>
 											<td>
 												<span
-													style={getStatusStyle(
+													style={ getStatusStyle(
 														t.status
-													)}
+													) }
 												>
-													{t.status
-														.charAt(0)
+													{ t.status
+														.charAt( 0 )
 														.toUpperCase() +
-														t.status.slice(1)}
+														t.status.slice( 1 ) }
 												</span>
 											</td>
 											<td>
 												<span
-													style={getModeStyle(
+													style={ getModeStyle(
 														t.testmode
-													)}
+													) }
 												>
-													{t.testmode
+													{ t.testmode
 														? __(
 																'Test',
 																'fair-payments-connector'
@@ -589,103 +610,107 @@ const TransactionsApp = () => {
 														: __(
 																'Live',
 																'fair-payments-connector'
-														  )}
+														  ) }
 												</span>
 											</td>
 											<td
-												style={{
+												style={ {
 													maxWidth: '200px',
 													whiteSpace: 'normal',
-												}}
+												} }
 											>
-												{t.description}
+												{ t.description }
 											</td>
 											<td>
-												{t.participant ? (
+												{ t.participant ? (
 													<a
 														href={
 															t.participant
 																.admin_url
 														}
 													>
-														{t.participant.name ||
+														{ t.participant.name ||
 															t.participant
 																.email ||
-															`#${t.participant.id}`}
+															`#${ t.participant.id }` }
 													</a>
 												) : (
 													t.user_name || '-'
-												)}
+												) }
 											</td>
 											<td>
-												{t.entry_ids &&
+												{ t.entry_ids &&
 												t.entry_ids.length > 0
 													? t.entry_ids
 															.map(
-																(entryId) =>
-																	`#${entryId}`
+																( entryId ) =>
+																	`#${ entryId }`
 															)
-															.join(', ')
-													: '-'}
+															.join( ', ' )
+													: '-' }
 											</td>
-											<td>{t.created_at}</td>
+											<td>{ t.created_at }</td>
 										</tr>
-									))}
+									) ) }
 								</tbody>
 							</table>
 
-							{pagination.pages > 1 && (
+							{ pagination.pages > 1 && (
 								<HStack
-									style={{
+									style={ {
 										marginTop: '16px',
 										justifyContent: 'center',
-									}}
+									} }
 								>
 									<Button
 										variant="secondary"
-										disabled={pagination.page <= 1}
-										onClick={() =>
-											setPagination((prev) => ({
+										disabled={ pagination.page <= 1 }
+										onClick={ () =>
+											setPagination( ( prev ) => ( {
 												...prev,
 												page: prev.page - 1,
-											}))
+											} ) )
 										}
 									>
-										{__(
+										{ __(
 											'Previous',
 											'fair-payments-connector'
-										)}
+										) }
 									</Button>
 									<span>
-										{pagination.page} / {pagination.pages}
+										{ pagination.page } /{ ' ' }
+										{ pagination.pages }
 									</span>
 									<Button
 										variant="secondary"
 										disabled={
 											pagination.page >= pagination.pages
 										}
-										onClick={() =>
-											setPagination((prev) => ({
+										onClick={ () =>
+											setPagination( ( prev ) => ( {
 												...prev,
 												page: prev.page + 1,
-											}))
+											} ) )
 										}
 									>
-										{__('Next', 'fair-payments-connector')}
+										{ __(
+											'Next',
+											'fair-payments-connector'
+										) }
 									</Button>
 								</HStack>
-							)}
+							) }
 						</>
-					)}
+					) }
 				</CardBody>
 			</Card>
 
-			{isImportModalOpen && (
+			{ isImportModalOpen && (
 				<ImportTransactionsModal
-					onClose={() => setIsImportModalOpen(false)}
-					onImported={handleImported}
+					onClose={ () => setIsImportModalOpen( false ) }
+					onImported={ handleImported }
 				/>
-			)}
+			) }
 		</div>
 	);
 };

@@ -39,27 +39,27 @@ const ALLOWED_BLOCKS = [
 
 // The file-upload question can nest inside a conditional block, so this
 // scans the whole inner-block tree rather than just the top level.
-function hasFileUploadQuestion(blocks) {
-	return (blocks || []).some(
-		(block) =>
+function hasFileUploadQuestion( blocks ) {
+	return ( blocks || [] ).some(
+		( block ) =>
 			block.name === 'fair-audience/fair-form-file-upload' ||
-			hasFileUploadQuestion(block.innerBlocks)
+			hasFileUploadQuestion( block.innerBlocks )
 	);
 }
 
-registerBlockType('fair-audience/event-signup', {
+registerBlockType( 'fair-audience/event-signup', {
 	transforms: {
 		to: [
 			{
 				type: 'block',
-				blocks: [UNIFIED_NAME],
+				blocks: [ UNIFIED_NAME ],
 				// A nested file-upload question would silently lose upload
 				// handling on the unified block (no vetted anonymous-upload
 				// path yet) — withhold the transform in that case. Other
 				// questions survive the transform via innerBlocks below.
-				isMatch: (attributes, block) =>
-					!hasFileUploadQuestion(block.innerBlocks),
-				transform: (attributes, innerBlocks) =>
+				isMatch: ( attributes, block ) =>
+					! hasFileUploadQuestion( block.innerBlocks ),
+				transform: ( attributes, innerBlocks ) =>
 					createBlock(
 						UNIFIED_NAME,
 						{ submitButtonText: attributes.signupButtonText },
@@ -68,12 +68,12 @@ registerBlockType('fair-audience/event-signup', {
 			},
 		],
 	},
-	edit: ({ attributes, setAttributes }) => {
+	edit: ( { attributes, setAttributes } ) => {
 		const { signupButtonText } = attributes;
 
-		const blockProps = useBlockProps({
+		const blockProps = useBlockProps( {
 			className: 'fair-audience-event-signup',
-		});
+		} );
 
 		const innerBlocksProps = useInnerBlocksProps(
 			{ className: 'fair-audience-event-signup-questions' },
@@ -86,65 +86,70 @@ registerBlockType('fair-audience/event-signup', {
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Form Settings', 'fair-audience')}>
+					<PanelBody title={ __( 'Form Settings', 'fair-audience' ) }>
 						<TextControl
-							label={__('Signup Button Text', 'fair-audience')}
-							value={signupButtonText}
-							onChange={(value) =>
-								setAttributes({ signupButtonText: value })
+							label={ __(
+								'Signup Button Text',
+								'fair-audience'
+							) }
+							value={ signupButtonText }
+							onChange={ ( value ) =>
+								setAttributes( { signupButtonText: value } )
 							}
-							placeholder={__('Sign Up', 'fair-audience')}
-							help={__(
+							placeholder={ __( 'Sign Up', 'fair-audience' ) }
+							help={ __(
 								'Button text for authenticated users.',
 								'fair-audience'
-							)}
+							) }
 						/>
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
-					<Notice status="info" isDismissible={false}>
-						{__(
+				<div { ...blockProps }>
+					<Notice status="info" isDismissible={ false }>
+						{ __(
 							'This block has moved to Event Signup (fair-events). Transform it to the new block.',
 							'fair-audience'
-						)}
+						) }
 					</Notice>
 					<div className="fair-audience-event-signup-editor-header">
 						<span className="fair-audience-event-signup-editor-label">
-							{__('Event Signup', 'fair-audience')}
+							{ __( 'Event Signup', 'fair-audience' ) }
 						</span>
 					</div>
 					<div className="fair-audience-event-signup-editor-fields">
 						<div className="fair-audience-event-signup-editor-field">
-							<label>{__('First Name', 'fair-audience')} *</label>
+							<label>
+								{ __( 'First Name', 'fair-audience' ) } *
+							</label>
 							<input type="text" disabled />
 						</div>
 						<div className="fair-audience-event-signup-editor-field">
-							<label>{__('Surname', 'fair-audience')}</label>
+							<label>{ __( 'Surname', 'fair-audience' ) }</label>
 							<input type="text" disabled />
 						</div>
 						<div className="fair-audience-event-signup-editor-field">
-							<label>{__('Email', 'fair-audience')} *</label>
+							<label>{ __( 'Email', 'fair-audience' ) } *</label>
 							<input type="email" disabled />
 						</div>
 					</div>
 					<p className="fair-audience-event-signup-editor-note">
-						{__(
+						{ __(
 							'Ticket types, activity options and pricing are rendered on the published page based on the event.',
 							'fair-audience'
-						)}
+						) }
 					</p>
 					<div className="fair-audience-event-signup-editor-questions-label">
-						{__('Custom questions', 'fair-audience')}
+						{ __( 'Custom questions', 'fair-audience' ) }
 					</div>
-					<div {...innerBlocksProps} />
+					<div { ...innerBlocksProps } />
 					<div className="fair-audience-event-signup-editor-footer">
 						<div className="wp-block-button">
 							<button
 								className="wp-block-button__link wp-element-button"
 								disabled
 							>
-								{__('Register & Sign Up', 'fair-audience')}
+								{ __( 'Register & Sign Up', 'fair-audience' ) }
 							</button>
 						</div>
 					</div>
@@ -165,4 +170,4 @@ registerBlockType('fair-audience/event-signup', {
 			save: () => null,
 		},
 	],
-});
+} );

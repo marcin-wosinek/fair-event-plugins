@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "marker",
 	"description": "An option for select or multiselect questions",
-	"keywords": ["option", "choice"],
+	"keywords": [ "option", "choice" ],
 	"textdomain": "fair-audience",
 	"parent": [
 		"fair-audience/fair-form-select-one",

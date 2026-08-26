@@ -12,9 +12,9 @@ import ReconciliationApp from './ReconciliationApp.js';
 /**
  * Initialize the reconciliation page
  */
-domReady(() => {
-	const root = document.getElementById('fair-finance-reconciliation-root');
-	if (root) {
-		createRoot(root).render(<ReconciliationApp />);
+domReady( () => {
+	const root = document.getElementById( 'fair-finance-reconciliation-root' );
+	if ( root ) {
+		createRoot( root ).render( <ReconciliationApp /> );
 	}
-});
+} );

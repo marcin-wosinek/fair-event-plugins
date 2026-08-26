@@ -4,60 +4,60 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 
-jest.mock('@wordpress/block-editor', () => ({
-	useBlockProps: (props) => props || {},
-	InspectorControls: ({ children }) => children,
-}));
+jest.mock( '@wordpress/block-editor', () => ( {
+	useBlockProps: ( props ) => props || {},
+	InspectorControls: ( { children } ) => children,
+} ) );
 
-jest.mock('@wordpress/components', () => ({
-	PanelBody: ({ children }) => children,
-	TextControl: ({ label, value, onChange, help }) => (
+jest.mock( '@wordpress/components', () => ( {
+	PanelBody: ( { children } ) => children,
+	TextControl: ( { label, value, onChange, help } ) => (
 		<div>
 			<label>
-				{label}
+				{ label }
 				<input
-					value={value}
-					onChange={(e) => onChange(e.target.value)}
+					value={ value }
+					onChange={ ( e ) => onChange( e.target.value ) }
 				/>
 			</label>
-			{help}
+			{ help }
 		</div>
 	),
-	ToggleControl: ({ label, checked, onChange }) => (
+	ToggleControl: ( { label, checked, onChange } ) => (
 		<label>
 			<input
 				type="checkbox"
-				checked={checked}
-				onChange={(e) => onChange(e.target.checked)}
+				checked={ checked }
+				onChange={ ( e ) => onChange( e.target.checked ) }
 			/>
-			{label}
+			{ label }
 		</label>
 	),
-}));
+} ) );
 
-jest.mock('fair-events-shared', () => ({
-	generateQuestionKey: (text) =>
+jest.mock( 'fair-events-shared', () => ( {
+	generateQuestionKey: ( text ) =>
 		text
 			.toLowerCase()
 			.trim()
-			.replace(/[^a-z0-9]+/g, '_')
-			.replace(/^_+|_+$/g, ''),
-}));
+			.replace( /[^a-z0-9]+/g, '_' )
+			.replace( /^_+|_+$/g, '' ),
+} ) );
 
 let capturedSettings;
-jest.mock('@wordpress/blocks', () => ({
-	registerBlockType: (name, settings) => {
+jest.mock( '@wordpress/blocks', () => ( {
+	registerBlockType: ( name, settings ) => {
 		capturedSettings = settings;
 	},
-}));
+} ) );
 
-describe('Fair Form Date & Time Question Edit', () => {
+describe( 'Fair Form Date & Time Question Edit', () => {
 	let Edit;
 
-	beforeAll(() => {
-		require('../editor.js');
+	beforeAll( () => {
+		require( '../editor.js' );
 		Edit = capturedSettings.edit;
-	});
+	} );
 
 	const baseAttributes = {
 		questionText: '',
@@ -66,32 +66,32 @@ describe('Fair Form Date & Time Question Edit', () => {
 		placeholder: '',
 	};
 
-	const renderEdit = (attributes = {}, setAttributes = () => {}) =>
+	const renderEdit = ( attributes = {}, setAttributes = () => {} ) =>
 		render(
 			<Edit
-				attributes={{ ...baseAttributes, ...attributes }}
-				setAttributes={setAttributes}
+				attributes={ { ...baseAttributes, ...attributes } }
+				setAttributes={ setAttributes }
 			/>
 		);
 
-	it('derives the question key from the question text', () => {
+	it( 'derives the question key from the question text', () => {
 		const setAttributes = jest.fn();
-		renderEdit({}, setAttributes);
+		renderEdit( {}, setAttributes );
 
 		const questionTextInput = screen.getByPlaceholderText(
 			'Enter your question...'
 		);
-		fireEvent.change(questionTextInput, {
+		fireEvent.change( questionTextInput, {
 			target: { value: 'Preferred appointment slot' },
-		});
+		} );
 
-		expect(setAttributes).toHaveBeenCalledWith({
+		expect( setAttributes ).toHaveBeenCalledWith( {
 			questionText: 'Preferred appointment slot',
 			questionKey: 'preferred_appointment_slot',
-		});
-	});
+		} );
+	} );
 
-	it('does not override a manually-edited question key', () => {
+	it( 'does not override a manually-edited question key', () => {
 		const setAttributes = jest.fn();
 		renderEdit(
 			{ questionText: 'Appointment', questionKey: 'custom_key' },
@@ -101,50 +101,52 @@ describe('Fair Form Date & Time Question Edit', () => {
 		const questionTextInput = screen.getByPlaceholderText(
 			'Enter your question...'
 		);
-		fireEvent.change(questionTextInput, {
+		fireEvent.change( questionTextInput, {
 			target: { value: 'Appointment updated' },
-		});
+		} );
 
-		expect(setAttributes).toHaveBeenCalledWith({
+		expect( setAttributes ).toHaveBeenCalledWith( {
 			questionText: 'Appointment updated',
-		});
-	});
+		} );
+	} );
 
-	it('renders the Required toggle and Placeholder controls', () => {
+	it( 'renders the Required toggle and Placeholder controls', () => {
 		renderEdit();
 
-		expect(screen.getByLabelText('Required')).toBeInTheDocument();
-		expect(screen.getByLabelText('Placeholder')).toBeInTheDocument();
-		expect(screen.getByLabelText('Question Key')).toBeInTheDocument();
-	});
+		expect( screen.getByLabelText( 'Required' ) ).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Placeholder' ) ).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Question Key' ) ).toBeInTheDocument();
+	} );
 
-	it('renders a disabled native datetime-local input preview', () => {
+	it( 'renders a disabled native datetime-local input preview', () => {
 		renderEdit();
 
-		const preview = document.querySelector('input[type="datetime-local"]');
-		expect(preview).toBeInTheDocument();
-		expect(preview).toBeDisabled();
-	});
+		const preview = document.querySelector(
+			'input[type="datetime-local"]'
+		);
+		expect( preview ).toBeInTheDocument();
+		expect( preview ).toBeDisabled();
+	} );
 
-	it('toggles the required attribute', () => {
+	it( 'toggles the required attribute', () => {
 		const setAttributes = jest.fn();
-		renderEdit({}, setAttributes);
+		renderEdit( {}, setAttributes );
 
-		fireEvent.click(screen.getByLabelText('Required'));
+		fireEvent.click( screen.getByLabelText( 'Required' ) );
 
-		expect(setAttributes).toHaveBeenCalledWith({ required: true });
-	});
+		expect( setAttributes ).toHaveBeenCalledWith( { required: true } );
+	} );
 
-	it('updates the placeholder attribute', () => {
+	it( 'updates the placeholder attribute', () => {
 		const setAttributes = jest.fn();
-		renderEdit({}, setAttributes);
+		renderEdit( {}, setAttributes );
 
-		fireEvent.change(screen.getByLabelText('Placeholder'), {
+		fireEvent.change( screen.getByLabelText( 'Placeholder' ), {
 			target: { value: 'YYYY-MM-DD HH:mm' },
-		});
+		} );
 
-		expect(setAttributes).toHaveBeenCalledWith({
+		expect( setAttributes ).toHaveBeenCalledWith( {
 			placeholder: 'YYYY-MM-DD HH:mm',
-		});
-	});
-});
+		} );
+	} );
+} );

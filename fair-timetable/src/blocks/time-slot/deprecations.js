@@ -26,15 +26,19 @@ const v1 = {
 		},
 	},
 
-	isEligible(attributes) {
+	isEligible( attributes ) {
 		// Force migration for debugging - check if old attributes exist
 		return (
 			attributes &&
-			!!(attributes.title || attributes.startHour || attributes.endHour)
+			!! (
+				attributes.title ||
+				attributes.startHour ||
+				attributes.endHour
+			)
 		);
 	},
 
-	migrate(attributes, innerBlocks) {
+	migrate( attributes, innerBlocks ) {
 		// Convert old attributes and create inner blocks from old content
 		const { title, startHour, endHour } = attributes;
 
@@ -42,18 +46,18 @@ const v1 = {
 		const newInnerBlocks = [];
 
 		// Add title as a heading block if it exists
-		if (title) {
+		if ( title ) {
 			newInnerBlocks.push(
-				createBlock('core/heading', {
+				createBlock( 'core/heading', {
 					content: title,
 					level: 5,
 					className: 'event-title',
-				})
+				} )
 			);
 		}
 
 		// Add any existing inner blocks
-		newInnerBlocks.push(...innerBlocks);
+		newInnerBlocks.push( ...innerBlocks );
 
 		// Return new attributes (preserve startTime/endTime for render.php) and inner blocks
 		return [
@@ -67,16 +71,16 @@ const v1 = {
 
 	save: () => {
 		const blockProps = useBlockProps.save();
-		const innerBlocksProps = useInnerBlocksProps.save({
+		const innerBlocksProps = useInnerBlocksProps.save( {
 			className: 'time-slot-content',
-		});
+		} );
 
 		return (
-			<div {...blockProps}>
-				<div {...innerBlocksProps} />
+			<div { ...blockProps }>
+				<div { ...innerBlocksProps } />
 			</div>
 		);
 	},
 };
 
-export default [v1];
+export default [ v1 ];

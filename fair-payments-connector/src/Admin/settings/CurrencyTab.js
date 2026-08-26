@@ -39,19 +39,19 @@ const SUPPORTED_CURRENCIES = [
  * @param {Function} props.onNotice Handler for displaying notices
  * @return {JSX.Element} The currency tab
  */
-export default function CurrencyTab({ onNotice }) {
-	const [currency, setCurrency] = useState('EUR');
-	const [loading, setLoading] = useState(true);
-	const [isSaving, setIsSaving] = useState(false);
+export default function CurrencyTab( { onNotice } ) {
+	const [ currency, setCurrency ] = useState( 'EUR' );
+	const [ loading, setLoading ] = useState( true );
+	const [ isSaving, setIsSaving ] = useState( false );
 
-	useEffect(() => {
-		apiFetch({ path: '/wp/v2/settings' })
-			.then((settings) => {
-				setCurrency(settings.fair_payment_currency || 'EUR');
-				setLoading(false);
-			})
-			.catch((err) => {
-				onNotice({
+	useEffect( () => {
+		apiFetch( { path: '/wp/v2/settings' } )
+			.then( ( settings ) => {
+				setCurrency( settings.fair_payment_currency || 'EUR' );
+				setLoading( false );
+			} )
+			.catch( ( err ) => {
+				onNotice( {
 					status: 'error',
 					message:
 						err.message ||
@@ -59,24 +59,24 @@ export default function CurrencyTab({ onNotice }) {
 							'Failed to load currency settings.',
 							'fair-payments-connector'
 						),
-				});
-				setLoading(false);
-			});
-	}, []);
+				} );
+				setLoading( false );
+			} );
+	}, [] );
 
 	const handleSave = async () => {
-		setIsSaving(true);
+		setIsSaving( true );
 		try {
-			await saveSettings({ fair_payment_currency: currency });
-			onNotice({
+			await saveSettings( { fair_payment_currency: currency } );
+			onNotice( {
 				status: 'success',
 				message: __(
 					'Currency settings saved.',
 					'fair-payments-connector'
 				),
-			});
-		} catch (err) {
-			onNotice({
+			} );
+		} catch ( err ) {
+			onNotice( {
 				status: 'error',
 				message:
 					err.message ||
@@ -84,44 +84,47 @@ export default function CurrencyTab({ onNotice }) {
 						'Failed to save currency settings.',
 						'fair-payments-connector'
 					),
-			});
+			} );
 		} finally {
-			setIsSaving(false);
+			setIsSaving( false );
 		}
 	};
 
-	if (loading) {
+	if ( loading ) {
 		return <Spinner />;
 	}
 
 	return (
 		<Card>
 			<CardBody>
-				<h2>{__('Default Currency', 'fair-payments-connector')}</h2>
-				<p style={{ color: '#666', marginBottom: '1rem' }}>
-					{__(
+				<h2>{ __( 'Default Currency', 'fair-payments-connector' ) }</h2>
+				<p style={ { color: '#666', marginBottom: '1rem' } }>
+					{ __(
 						'Set the default currency for all new transactions. Existing transaction records are not affected.',
 						'fair-payments-connector'
-					)}
+					) }
 				</p>
 
-				<div style={{ maxWidth: '320px' }}>
+				<div style={ { maxWidth: '320px' } }>
 					<SelectControl
-						label={__('Site currency', 'fair-payments-connector')}
-						value={currency}
-						options={SUPPORTED_CURRENCIES}
-						onChange={setCurrency}
+						label={ __(
+							'Site currency',
+							'fair-payments-connector'
+						) }
+						value={ currency }
+						options={ SUPPORTED_CURRENCIES }
+						onChange={ setCurrency }
 					/>
 				</div>
 
-				<div style={{ marginTop: '16px' }}>
+				<div style={ { marginTop: '16px' } }>
 					<Button
 						variant="primary"
-						onClick={handleSave}
-						isBusy={isSaving}
-						disabled={isSaving}
+						onClick={ handleSave }
+						isBusy={ isSaving }
+						disabled={ isSaving }
 					>
-						{__('Save', 'fair-payments-connector')}
+						{ __( 'Save', 'fair-payments-connector' ) }
 					</Button>
 				</div>
 			</CardBody>

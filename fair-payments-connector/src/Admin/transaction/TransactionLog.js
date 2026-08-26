@@ -12,8 +12,8 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const levelStyle = (level) => {
-	switch (level) {
+const levelStyle = ( level ) => {
+	switch ( level ) {
 		case 'error':
 			return {
 				color: '#d63638',
@@ -46,21 +46,21 @@ const levelStyle = (level) => {
 	}
 };
 
-const TransactionLog = ({ transactionId }) => {
-	const [entries, setEntries] = useState(null);
-	const [error, setError] = useState(null);
-	const [reloading, setReloading] = useState(false);
+const TransactionLog = ( { transactionId } ) => {
+	const [ entries, setEntries ] = useState( null );
+	const [ error, setError ] = useState( null );
+	const [ reloading, setReloading ] = useState( false );
 
 	const load = () => {
-		setReloading(true);
-		setError(null);
-		return apiFetch({
-			path: `/fair-payments-connector/v1/transactions/${transactionId}/log`,
-		})
-			.then((data) => {
-				setEntries(Array.isArray(data) ? data : []);
-			})
-			.catch((err) => {
+		setReloading( true );
+		setError( null );
+		return apiFetch( {
+			path: `/fair-payments-connector/v1/transactions/${ transactionId }/log`,
+		} )
+			.then( ( data ) => {
+				setEntries( Array.isArray( data ) ? data : [] );
+			} )
+			.catch( ( err ) => {
 				setError(
 					err.message ||
 						__(
@@ -68,122 +68,132 @@ const TransactionLog = ({ transactionId }) => {
 							'fair-payments-connector'
 						)
 				);
-			})
-			.finally(() => {
-				setReloading(false);
-			});
+			} )
+			.finally( () => {
+				setReloading( false );
+			} );
 	};
 
-	useEffect(() => {
-		if (!transactionId) {
+	useEffect( () => {
+		if ( ! transactionId ) {
 			return;
 		}
 		load();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [transactionId]);
+	}, [ transactionId ] );
 
 	return (
 		<Card>
 			<CardHeader>
 				<HStack justify="space-between" alignment="center">
-					<Heading level={4}>
-						{__('Event Log', 'fair-payments-connector')}
+					<Heading level={ 4 }>
+						{ __( 'Event Log', 'fair-payments-connector' ) }
 					</Heading>
 					<Button
 						variant="secondary"
 						size="small"
-						onClick={load}
-						isBusy={reloading}
-						disabled={reloading}
+						onClick={ load }
+						isBusy={ reloading }
+						disabled={ reloading }
 					>
-						{__('Refresh', 'fair-payments-connector')}
+						{ __( 'Refresh', 'fair-payments-connector' ) }
 					</Button>
 				</HStack>
 			</CardHeader>
 			<CardBody>
-				{error && (
-					<Notice status="error" isDismissible={false}>
-						{error}
+				{ error && (
+					<Notice status="error" isDismissible={ false }>
+						{ error }
 					</Notice>
-				)}
-				{!error && entries === null && <Spinner />}
-				{!error && Array.isArray(entries) && entries.length === 0 && (
-					<p style={{ margin: 0, color: '#646970' }}>
-						{__(
-							'No log entries for this transaction yet.',
-							'fair-payments-connector'
-						)}
-					</p>
-				)}
-				{!error && Array.isArray(entries) && entries.length > 0 && (
+				) }
+				{ ! error && entries === null && <Spinner /> }
+				{ ! error &&
+					Array.isArray( entries ) &&
+					entries.length === 0 && (
+						<p style={ { margin: 0, color: '#646970' } }>
+							{ __(
+								'No log entries for this transaction yet.',
+								'fair-payments-connector'
+							) }
+						</p>
+					) }
+				{ ! error && Array.isArray( entries ) && entries.length > 0 && (
 					<table className="wp-list-table widefat fixed striped">
 						<thead>
 							<tr>
-								<th style={{ width: '160px' }}>
-									{__('Time', 'fair-payments-connector')}
+								<th style={ { width: '160px' } }>
+									{ __( 'Time', 'fair-payments-connector' ) }
 								</th>
-								<th style={{ width: '70px' }}>
-									{__('Level', 'fair-payments-connector')}
+								<th style={ { width: '70px' } }>
+									{ __( 'Level', 'fair-payments-connector' ) }
 								</th>
-								<th style={{ width: '180px' }}>
-									{__('Event', 'fair-payments-connector')}
+								<th style={ { width: '180px' } }>
+									{ __( 'Event', 'fair-payments-connector' ) }
 								</th>
 								<th>
-									{__('Message', 'fair-payments-connector')}
+									{ __(
+										'Message',
+										'fair-payments-connector'
+									) }
 								</th>
-								<th style={{ width: '110px' }}>
-									{__('Request', 'fair-payments-connector')}
+								<th style={ { width: '110px' } }>
+									{ __(
+										'Request',
+										'fair-payments-connector'
+									) }
 								</th>
 							</tr>
 						</thead>
 						<tbody>
-							{entries.map((entry) => (
-								<tr key={entry.id}>
+							{ entries.map( ( entry ) => (
+								<tr key={ entry.id }>
 									<td
-										style={{
+										style={ {
 											fontFamily: 'monospace',
 											fontSize: '11px',
 											verticalAlign: 'top',
-										}}
+										} }
 									>
-										{entry.created_at}
+										{ entry.created_at }
 									</td>
-									<td style={{ verticalAlign: 'top' }}>
-										<span style={levelStyle(entry.level)}>
-											{entry.level}
+									<td style={ { verticalAlign: 'top' } }>
+										<span
+											style={ levelStyle( entry.level ) }
+										>
+											{ entry.level }
 										</span>
 									</td>
 									<td
-										style={{
+										style={ {
 											fontFamily: 'monospace',
 											fontSize: '12px',
 											verticalAlign: 'top',
-										}}
+										} }
 									>
-										{entry.event}
+										{ entry.event }
 									</td>
-									<td style={{ verticalAlign: 'top' }}>
-										<div>{entry.message || '-'}</div>
-										{entry.context && (
+									<td style={ { verticalAlign: 'top' } }>
+										<div>{ entry.message || '-' }</div>
+										{ entry.context && (
 											<details
-												style={{
+												style={ {
 													marginTop: '4px',
-												}}
+												} }
 											>
 												<summary
-													style={{
+													style={ {
 														cursor: 'pointer',
 														fontSize: '11px',
 														color: '#646970',
-													}}
+													} }
 												>
-													{__(
+													{ __(
 														'Context',
 														'fair-payments-connector'
-													)}
+													) }
 												</summary>
 												<pre
-													style={{
+													style={ {
 														marginTop: '4px',
 														padding: '6px',
 														background: '#f6f7f7',
@@ -191,39 +201,39 @@ const TransactionLog = ({ transactionId }) => {
 														overflowX: 'auto',
 														whiteSpace: 'pre-wrap',
 														wordBreak: 'break-word',
-													}}
+													} }
 												>
-													{typeof entry.context ===
+													{ typeof entry.context ===
 													'string'
 														? entry.context
 														: JSON.stringify(
 																entry.context,
 																null,
 																2
-														  )}
+														  ) }
 												</pre>
 											</details>
-										)}
+										) }
 									</td>
 									<td
-										style={{
+										style={ {
 											fontFamily: 'monospace',
 											fontSize: '10px',
 											color: '#646970',
 											verticalAlign: 'top',
 											wordBreak: 'break-all',
-										}}
-										title={entry.request_id || ''}
+										} }
+										title={ entry.request_id || '' }
 									>
-										{entry.request_id
-											? entry.request_id.substring(0, 8)
-											: '-'}
+										{ entry.request_id
+											? entry.request_id.substring( 0, 8 )
+											: '-' }
 									</td>
 								</tr>
-							))}
+							) ) }
 						</tbody>
 					</table>
-				)}
+				) }
 			</CardBody>
 		</Card>
 	);

@@ -12,11 +12,11 @@ import ApiTokensApp from './ApiTokensApp.js';
 /**
  * Initialize the API tokens page
  */
-domReady(() => {
+domReady( () => {
 	const root = document.getElementById(
 		'fair-payments-connector-api-tokens-root'
 	);
-	if (root) {
-		createRoot(root).render(<ApiTokensApp />);
+	if ( root ) {
+		createRoot( root ).render( <ApiTokensApp /> );
 	}
-});
+} );

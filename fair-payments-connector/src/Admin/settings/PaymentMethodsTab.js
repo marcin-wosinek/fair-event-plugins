@@ -28,15 +28,15 @@ import { saveSettings } from './settings-api.js';
  * @param {Function} props.onNotice Handler for displaying notices
  * @return {JSX.Element} The payment methods tab
  */
-export default function PaymentMethodsTab({ onNotice }) {
-	const [disableNearDate, setDisableNearDate] = useState(false);
-	const [thresholdDays, setThresholdDays] = useState(3);
-	const [loading, setLoading] = useState(true);
-	const [isSaving, setIsSaving] = useState(false);
+export default function PaymentMethodsTab( { onNotice } ) {
+	const [ disableNearDate, setDisableNearDate ] = useState( false );
+	const [ thresholdDays, setThresholdDays ] = useState( 3 );
+	const [ loading, setLoading ] = useState( true );
+	const [ isSaving, setIsSaving ] = useState( false );
 
-	useEffect(() => {
-		apiFetch({ path: '/wp/v2/settings' })
-			.then((settings) => {
+	useEffect( () => {
+		apiFetch( { path: '/wp/v2/settings' } )
+			.then( ( settings ) => {
 				setDisableNearDate(
 					settings.fair_payment_disable_banktransfer_near_date ||
 						false
@@ -45,11 +45,11 @@ export default function PaymentMethodsTab({ onNotice }) {
 					settings.fair_payment_banktransfer_threshold_days,
 					10
 				);
-				setThresholdDays(Number.isFinite(days) ? days : 3);
-				setLoading(false);
-			})
-			.catch((err) => {
-				onNotice({
+				setThresholdDays( Number.isFinite( days ) ? days : 3 );
+				setLoading( false );
+			} )
+			.catch( ( err ) => {
+				onNotice( {
 					status: 'error',
 					message:
 						err.message ||
@@ -57,27 +57,27 @@ export default function PaymentMethodsTab({ onNotice }) {
 							'Failed to load payment method settings.',
 							'fair-payments-connector'
 						),
-				});
-				setLoading(false);
-			});
-	}, []);
+				} );
+				setLoading( false );
+			} );
+	}, [] );
 
 	const handleSave = async () => {
-		setIsSaving(true);
+		setIsSaving( true );
 		try {
-			await saveSettings({
+			await saveSettings( {
 				fair_payment_disable_banktransfer_near_date: disableNearDate,
 				fair_payment_banktransfer_threshold_days: thresholdDays,
-			});
-			onNotice({
+			} );
+			onNotice( {
 				status: 'success',
 				message: __(
 					'Payment method settings saved.',
 					'fair-payments-connector'
 				),
-			});
-		} catch (err) {
-			onNotice({
+			} );
+		} catch ( err ) {
+			onNotice( {
 				status: 'error',
 				message:
 					err.message ||
@@ -85,70 +85,74 @@ export default function PaymentMethodsTab({ onNotice }) {
 						'Failed to save payment method settings.',
 						'fair-payments-connector'
 					),
-			});
+			} );
 		} finally {
-			setIsSaving(false);
+			setIsSaving( false );
 		}
 	};
 
-	if (loading) {
+	if ( loading ) {
 		return <Spinner />;
 	}
 
 	return (
 		<Card>
 			<CardBody>
-				<h2>{__('Bank Transfer (SEPA)', 'fair-payments-connector')}</h2>
-				<p style={{ color: '#666', marginBottom: '1rem' }}>
-					{__(
+				<h2>
+					{ __( 'Bank Transfer (SEPA)', 'fair-payments-connector' ) }
+				</h2>
+				<p style={ { color: '#666', marginBottom: '1rem' } }>
+					{ __(
 						'SEPA bank transfers can take 1–3 working days to settle. Disable this method when the sale is too close to its key date (e.g. event day) to ensure payments clear in time.',
 						'fair-payments-connector'
-					)}
+					) }
 				</p>
 
 				<ToggleControl
 					__nextHasNoMarginBottom
-					label={__(
+					label={ __(
 						'Disable bank transfer near the key date',
 						'fair-payments-connector'
-					)}
-					help={__(
+					) }
+					help={ __(
 						'Hide bank transfer as a payment option when the sale is within the threshold below.',
 						'fair-payments-connector'
-					)}
-					checked={disableNearDate}
-					onChange={setDisableNearDate}
+					) }
+					checked={ disableNearDate }
+					onChange={ setDisableNearDate }
 				/>
 
-				<div style={{ marginTop: '16px', maxWidth: '320px' }}>
+				<div style={ { marginTop: '16px', maxWidth: '320px' } }>
 					<NumberControl
-						label={__(
+						label={ __(
 							'Working-day threshold',
 							'fair-payments-connector'
-						)}
-						help={__(
+						) }
+						help={ __(
 							'Disable bank transfer when fewer than this many working days remain before the key date.',
 							'fair-payments-connector'
-						)}
-						min={0}
-						step={1}
-						value={thresholdDays}
-						onChange={(value) => {
-							const next = parseInt(value, 10);
-							setThresholdDays(Number.isFinite(next) ? next : 0);
-						}}
-						disabled={!disableNearDate}
+						) }
+						min={ 0 }
+						step={ 1 }
+						value={ thresholdDays }
+						onChange={ ( value ) => {
+							const next = parseInt( value, 10 );
+							setThresholdDays(
+								Number.isFinite( next ) ? next : 0
+							);
+						} }
+						disabled={ ! disableNearDate }
 					/>
 				</div>
 
-				<div style={{ marginTop: '16px' }}>
+				<div style={ { marginTop: '16px' } }>
 					<Button
 						variant="primary"
-						onClick={handleSave}
-						isBusy={isSaving}
-						disabled={isSaving}
+						onClick={ handleSave }
+						isBusy={ isSaving }
+						disabled={ isSaving }
 					>
-						{__('Save', 'fair-payments-connector')}
+						{ __( 'Save', 'fair-payments-connector' ) }
 					</Button>
 				</div>
 			</CardBody>

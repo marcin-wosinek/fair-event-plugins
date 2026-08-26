@@ -20,7 +20,7 @@ import { useSelect } from '@wordpress/data';
 import ServerSideRender from '@wordpress/server-side-render';
 import { EventSourceSelector } from 'fair-events-shared';
 
-const EditComponent = ({ attributes, setAttributes }) => {
+const EditComponent = ( { attributes, setAttributes } ) => {
 	const {
 		showNavigation,
 		categories,
@@ -34,154 +34,161 @@ const EditComponent = ({ attributes, setAttributes }) => {
 
 	const blockProps = useBlockProps();
 
-	const allCategories = useSelect((select) => {
-		const cats = select('core').getEntityRecords('taxonomy', 'category', {
-			per_page: -1,
-		});
+	const allCategories = useSelect( ( select ) => {
+		const cats = select( 'core' ).getEntityRecords(
+			'taxonomy',
+			'category',
+			{
+				per_page: -1,
+			}
+		);
 		return cats || [];
-	}, []);
+	}, [] );
 
 	const meaningfulCategories = allCategories.filter(
-		(cat) => cat.slug !== 'uncategorized'
+		( cat ) => cat.slug !== 'uncategorized'
 	);
 	const hasCategories = meaningfulCategories.length > 0;
 
-	const handleCategoryToggle = (categoryId, checked) => {
+	const handleCategoryToggle = ( categoryId, checked ) => {
 		const newCategories = checked
-			? [...categories, categoryId]
-			: categories.filter((id) => id !== categoryId);
-		setAttributes({ categories: newCategories });
+			? [ ...categories, categoryId ]
+			: categories.filter( ( id ) => id !== categoryId );
+		setAttributes( { categories: newCategories } );
 	};
 
 	const hasOldFormat =
 		eventSources.length > 0 &&
-		typeof eventSources[0] === 'object' &&
-		'icalFeed' in eventSources[0];
+		typeof eventSources[ 0 ] === 'object' &&
+		'icalFeed' in eventSources[ 0 ];
 
 	return (
 		<>
 			<InspectorControls>
 				<PanelBody
-					title={__('Week View Settings', 'fair-events')}
-					initialOpen={true}
+					title={ __( 'Week View Settings', 'fair-events' ) }
+					initialOpen={ true }
 				>
 					<ToggleControl
-						label={__('Show Navigation', 'fair-events')}
-						checked={showNavigation}
-						onChange={(value) =>
-							setAttributes({ showNavigation: value })
+						label={ __( 'Show Navigation', 'fair-events' ) }
+						checked={ showNavigation }
+						onChange={ ( value ) =>
+							setAttributes( { showNavigation: value } )
 						}
-						help={__(
+						help={ __(
 							'Display previous/next week navigation',
 							'fair-events'
-						)}
+						) }
 					/>
 
 					<ToggleControl
-						label={__('Show Draft Events', 'fair-events')}
-						checked={showDrafts}
-						onChange={(value) =>
-							setAttributes({ showDrafts: value })
+						label={ __( 'Show Draft Events', 'fair-events' ) }
+						checked={ showDrafts }
+						onChange={ ( value ) =>
+							setAttributes( { showDrafts: value } )
 						}
 					/>
 
 					<ToggleControl
-						label={__('Show Copy Summary Button', 'fair-events')}
-						checked={showCopySummary}
-						onChange={(value) =>
-							setAttributes({ showCopySummary: value })
+						label={ __(
+							'Show Copy Summary Button',
+							'fair-events'
+						) }
+						checked={ showCopySummary }
+						onChange={ ( value ) =>
+							setAttributes( { showCopySummary: value } )
 						}
-						help={__(
+						help={ __(
 							'Displays a button to copy week summary as text',
 							'fair-events'
-						)}
+						) }
 					/>
 
-					<div style={{ marginTop: '16px' }}>
-						<strong>{__('Categories', 'fair-events')}</strong>
-						{!hasCategories ? (
+					<div style={ { marginTop: '16px' } }>
+						<strong>{ __( 'Categories', 'fair-events' ) }</strong>
+						{ ! hasCategories ? (
 							<p
-								style={{
+								style={ {
 									fontStyle: 'italic',
 									color: '#757575',
-								}}
+								} }
 							>
-								{__(
+								{ __(
 									'Define more categories if you want to use category filtering',
 									'fair-events'
-								)}
+								) }
 							</p>
 						) : (
-							allCategories.map((cat) => (
+							allCategories.map( ( cat ) => (
 								<CheckboxControl
-									key={cat.id}
-									label={cat.name}
-									checked={categories.includes(cat.id)}
-									onChange={(checked) =>
-										handleCategoryToggle(cat.id, checked)
+									key={ cat.id }
+									label={ cat.name }
+									checked={ categories.includes( cat.id ) }
+									onChange={ ( checked ) =>
+										handleCategoryToggle( cat.id, checked )
 									}
 								/>
-							))
-						)}
+							) )
+						) }
 					</div>
 				</PanelBody>
 
 				<PanelColorSettings
-					title={__('Colors', 'fair-events')}
-					colorSettings={[
+					title={ __( 'Colors', 'fair-events' ) }
+					colorSettings={ [
 						{
 							value: backgroundColor,
-							onChange: (color) =>
-								setAttributes({
+							onChange: ( color ) =>
+								setAttributes( {
 									backgroundColor: color || 'primary',
-								}),
-							label: __('Event Background', 'fair-events'),
+								} ),
+							label: __( 'Event Background', 'fair-events' ),
 						},
 						{
 							value: textColor,
-							onChange: (color) =>
-								setAttributes({
+							onChange: ( color ) =>
+								setAttributes( {
 									textColor: color || '#ffffff',
-								}),
-							label: __('Event Text', 'fair-events'),
+								} ),
+							label: __( 'Event Text', 'fair-events' ),
 						},
 						{
 							value: headerBackgroundColor,
-							onChange: (color) =>
-								setAttributes({
+							onChange: ( color ) =>
+								setAttributes( {
 									headerBackgroundColor: color || '#f9f9f9',
-								}),
-							label: __('Header Background', 'fair-events'),
+								} ),
+							label: __( 'Header Background', 'fair-events' ),
 						},
-					]}
+					] }
 				/>
 
 				<PanelBody
-					title={__('Event Sources', 'fair-events')}
-					initialOpen={false}
+					title={ __( 'Event Sources', 'fair-events' ) }
+					initialOpen={ false }
 				>
-					{hasOldFormat && (
-						<Notice status="warning" isDismissible={false}>
-							{__(
+					{ hasOldFormat && (
+						<Notice status="warning" isDismissible={ false }>
+							{ __(
 								'Event sources format has changed. Please re-select your event sources.',
 								'fair-events'
-							)}
+							) }
 						</Notice>
-					)}
+					) }
 					<EventSourceSelector
-						selectedSources={eventSources}
-						onChange={(slugs) =>
-							setAttributes({ eventSources: slugs })
+						selectedSources={ eventSources }
+						onChange={ ( slugs ) =>
+							setAttributes( { eventSources: slugs } )
 						}
 						label=""
 					/>
 				</PanelBody>
 			</InspectorControls>
 
-			<div {...blockProps}>
+			<div { ...blockProps }>
 				<ServerSideRender
 					block="fair-events/events-week"
-					attributes={attributes}
+					attributes={ attributes }
 				/>
 			</div>
 		</>

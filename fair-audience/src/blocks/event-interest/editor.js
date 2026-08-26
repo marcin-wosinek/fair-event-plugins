@@ -7,8 +7,8 @@ import { PanelBody, TextControl, TextareaControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
 
-registerBlockType('fair-audience/event-interest', {
-	edit: ({ attributes, setAttributes }) => {
+registerBlockType( 'fair-audience/event-interest', {
+	edit: ( { attributes, setAttributes } ) => {
 		const {
 			submitButtonText,
 			successMessage,
@@ -16,65 +16,68 @@ registerBlockType('fair-audience/event-interest', {
 			emailPlaceholder,
 		} = attributes;
 
-		const blockProps = useBlockProps({
+		const blockProps = useBlockProps( {
 			className: 'fair-audience-event-interest',
-		});
+		} );
 
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Form Settings', 'fair-audience')}>
+					<PanelBody title={ __( 'Form Settings', 'fair-audience' ) }>
 						<TextControl
-							label={__('Submit Button Text', 'fair-audience')}
-							value={submitButtonText}
-							onChange={(value) =>
-								setAttributes({ submitButtonText: value })
+							label={ __(
+								'Submit Button Text',
+								'fair-audience'
+							) }
+							value={ submitButtonText }
+							onChange={ ( value ) =>
+								setAttributes( { submitButtonText: value } )
 							}
-							placeholder={__(
+							placeholder={ __(
 								'Register interest',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<TextareaControl
-							label={__('Success Message', 'fair-audience')}
-							value={successMessage}
-							onChange={(value) =>
-								setAttributes({ successMessage: value })
+							label={ __( 'Success Message', 'fair-audience' ) }
+							value={ successMessage }
+							onChange={ ( value ) =>
+								setAttributes( { successMessage: value } )
 							}
-							placeholder={__(
+							placeholder={ __(
 								'Thanks! Check your inbox for confirmation.',
 								'fair-audience'
-							)}
-							help={__(
+							) }
+							help={ __(
 								'Message shown after the visitor submits the form.',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<TextControl
-							label={__('Email Placeholder', 'fair-audience')}
-							value={emailPlaceholder}
-							onChange={(value) =>
-								setAttributes({ emailPlaceholder: value })
+							label={ __( 'Email Placeholder', 'fair-audience' ) }
+							value={ emailPlaceholder }
+							onChange={ ( value ) =>
+								setAttributes( { emailPlaceholder: value } )
 							}
 						/>
 						<TextControl
-							label={__('Name Placeholder', 'fair-audience')}
-							value={namePlaceholder}
-							onChange={(value) =>
-								setAttributes({ namePlaceholder: value })
+							label={ __( 'Name Placeholder', 'fair-audience' ) }
+							value={ namePlaceholder }
+							onChange={ ( value ) =>
+								setAttributes( { namePlaceholder: value } )
 							}
 						/>
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
+				<div { ...blockProps }>
 					<ServerSideRender
 						block="fair-audience/event-interest"
-						attributes={attributes}
+						attributes={ attributes }
 					/>
 				</div>
 			</>
 		);
 	},
 	save: () => null,
-});
+} );

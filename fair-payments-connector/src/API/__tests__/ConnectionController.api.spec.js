@@ -14,28 +14,30 @@ function adminAuth() {
 	return {
 		Authorization:
 			'Basic ' +
-			Buffer.from(`${ADMIN_USER}:${ADMIN_PASS}`).toString('base64'),
+			Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASS }` ).toString(
+				'base64'
+			),
 	};
 }
 
-test.describe('ConnectionController', () => {
+test.describe( 'ConnectionController', () => {
 	let api;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	test.describe('GET /connection/overview', () => {
-		test('returns 401 for unauthenticated requests', async () => {
-			const res = await api.get(OVERVIEW_ENDPOINT);
-			expect(res.status()).toBe(401);
-		});
+	test.describe( 'GET /connection/overview', () => {
+		test( 'returns 401 for unauthenticated requests', async () => {
+			const res = await api.get( OVERVIEW_ENDPOINT );
+			expect( res.status() ).toBe( 401 );
+		} );
 
-		test('returns a graceful error for an authenticated admin when not connected', async () => {
+		test( 'returns a graceful error for an authenticated admin when not connected', async () => {
 			test.skip(
 				true,
 				'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
@@ -43,12 +45,12 @@ test.describe('ConnectionController', () => {
 			// This suite runs before any spec establishes an OAuth connection, so
 			// the site is expected to be disconnected here. The live-Mollie
 			// success path can't be exercised in CI (no real Mollie creds).
-			const res = await api.get(OVERVIEW_ENDPOINT, {
+			const res = await api.get( OVERVIEW_ENDPOINT, {
 				headers: adminAuth(),
-			});
-			expect(res.status()).toBe(400);
+			} );
+			expect( res.status() ).toBe( 400 );
 			const body = await res.json();
-			expect(body.code).toBe('not_connected');
-		});
-	});
-});
+			expect( body.code ).toBe( 'not_connected' );
+		} );
+	} );
+} );

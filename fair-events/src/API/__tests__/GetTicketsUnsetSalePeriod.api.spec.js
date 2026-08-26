@@ -23,7 +23,9 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
 /**
@@ -35,21 +37,21 @@ async function createEventWithUnsetWindow(
 	{ startDatetime, endDatetime, rrule }
 ) {
 	const data = {
-		title: `Unset sale-period test ${Date.now()}-${Math.random()}`,
+		title: `Unset sale-period test ${ Date.now() }-${ Math.random() }`,
 		start_datetime: startDatetime,
 		end_datetime: endDatetime,
 	};
-	if (rrule) data.rrule = rrule;
+	if ( rrule ) data.rrule = rrule;
 
-	const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+	const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 		headers: adminHeaders,
 		data,
-	});
-	expect(edRes.ok()).toBeTruthy();
-	const eventDateId = (await edRes.json()).id;
+	} );
+	expect( edRes.ok() ).toBeTruthy();
+	const eventDateId = ( await edRes.json() ).id;
 
 	const ticketsRes = await api.put(
-		`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+		`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
 		{
 			headers: adminHeaders,
 			data: {
@@ -82,80 +84,80 @@ async function createEventWithUnsetWindow(
 			},
 		}
 	);
-	expect(ticketsRes.ok()).toBeTruthy();
+	expect( ticketsRes.ok() ).toBeTruthy();
 	const body = await ticketsRes.json();
-	const ticketTypeId = body.ticket_types?.[0]?.id;
-	expect(ticketTypeId).toBeTruthy();
+	const ticketTypeId = body.ticket_types?.[ 0 ]?.id;
+	expect( ticketTypeId ).toBeTruthy();
 	// The stored window really is unset — no eager persistence of a computed date.
-	expect(body.sale_periods?.[0]?.sale_start).toBeFalsy();
-	expect(body.sale_periods?.[0]?.sale_end).toBeFalsy();
+	expect( body.sale_periods?.[ 0 ]?.sale_start ).toBeFalsy();
+	expect( body.sale_periods?.[ 0 ]?.sale_end ).toBeFalsy();
 
 	return { eventDateId, ticketTypeId };
 }
 
-async function purchase(api, eventDateId, ticketTypeId) {
-	return api.post('/wp-json/fair-events/v1/get-tickets', {
+async function purchase( api, eventDateId, ticketTypeId ) {
+	return api.post( '/wp-json/fair-events/v1/get-tickets', {
 		data: {
 			event_date_id: eventDateId,
 			name: 'Unset Window Tester',
-			email: `unset-window-${Date.now()}-${Math.random()}@example.test`,
+			email: `unset-window-${ Date.now() }-${ Math.random() }@example.test`,
 			ticket_type_id: ticketTypeId,
 			quantity: 1,
 		},
-	});
+	} );
 }
 
-test.describe('GetTicketsController — lazy default sale-period resolution', () => {
+test.describe( 'GetTicketsController — lazy default sale-period resolution', () => {
 	let api;
 	const createdEventDateIds = [];
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
-		for (const id of createdEventDateIds) {
-			await api.delete(`/wp-json/fair-events/v1/event-dates/${id}`, {
+	test.afterAll( async () => {
+		for ( const id of createdEventDateIds ) {
+			await api.delete( `/wp-json/fair-events/v1/event-dates/${ id }`, {
 				headers: adminHeaders,
-			});
+			} );
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('single, non-recurring event with an unset window is purchasable', async () => {
+	test( 'single, non-recurring event with an unset window is purchasable', async () => {
 		const { eventDateId, ticketTypeId } = await createEventWithUnsetWindow(
 			api,
 			{
 				// Ends tomorrow, so "today" is well inside the default window
 				// (open start → day after the event).
-				startDatetime: tomorrow(1, '10:00:00'),
-				endDatetime: tomorrow(1, '12:00:00'),
+				startDatetime: tomorrow( 1, '10:00:00' ),
+				endDatetime: tomorrow( 1, '12:00:00' ),
 			}
 		);
-		createdEventDateIds.push(eventDateId);
+		createdEventDateIds.push( eventDateId );
 
-		const res = await purchase(api, eventDateId, ticketTypeId);
-		expect(res.ok()).toBeTruthy();
-	});
+		const res = await purchase( api, eventDateId, ticketTypeId );
+		expect( res.ok() ).toBeTruthy();
+	} );
 
-	test('recurring event with an unset window is purchasable through the day after its last occurrence', async () => {
+	test( 'recurring event with an unset window is purchasable through the day after its last occurrence', async () => {
 		const { eventDateId, ticketTypeId } = await createEventWithUnsetWindow(
 			api,
 			{
-				startDatetime: tomorrow(1, '10:00:00'),
-				endDatetime: tomorrow(1, '12:00:00'),
+				startDatetime: tomorrow( 1, '10:00:00' ),
+				endDatetime: tomorrow( 1, '12:00:00' ),
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			}
 		);
-		createdEventDateIds.push(eventDateId);
+		createdEventDateIds.push( eventDateId );
 
 		// Purchasing against the master row resolves the default from the
 		// series' last (generated) occurrence, not the master's own end.
-		const res = await purchase(api, eventDateId, ticketTypeId);
-		expect(res.ok()).toBeTruthy();
-	});
+		const res = await purchase( api, eventDateId, ticketTypeId );
+		expect( res.ok() ).toBeTruthy();
+	} );
 
-	test('a series entirely in the past with an unset window is unavailable', async () => {
+	test( 'a series entirely in the past with an unset window is unavailable', async () => {
 		const { eventDateId, ticketTypeId } = await createEventWithUnsetWindow(
 			api,
 			{
@@ -164,24 +166,24 @@ test.describe('GetTicketsController — lazy default sale-period resolution', ()
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			}
 		);
-		createdEventDateIds.push(eventDateId);
+		createdEventDateIds.push( eventDateId );
 
-		const res = await purchase(api, eventDateId, ticketTypeId);
-		expect(res.status()).toBe(409);
-		expect(await res.json()).toMatchObject({
+		const res = await purchase( api, eventDateId, ticketTypeId );
+		expect( res.status() ).toBe( 409 );
+		expect( await res.json() ).toMatchObject( {
 			code: 'ticket_type_unavailable',
-		});
-	});
-});
+		} );
+	} );
+} );
 
 /**
  * Formats a datetime `daysAhead` days from now, in 'Y-m-d HH:MM:SS' form.
  */
-function tomorrow(daysAhead, time) {
+function tomorrow( daysAhead, time ) {
 	const d = new Date();
-	d.setDate(d.getDate() + daysAhead);
+	d.setDate( d.getDate() + daysAhead );
 	const y = d.getFullYear();
-	const m = String(d.getMonth() + 1).padStart(2, '0');
-	const day = String(d.getDate()).padStart(2, '0');
-	return `${y}-${m}-${day} ${time}`;
+	const m = String( d.getMonth() + 1 ).padStart( 2, '0' );
+	const day = String( d.getDate() ).padStart( 2, '0' );
+	return `${ y }-${ m }-${ day } ${ time }`;
 }

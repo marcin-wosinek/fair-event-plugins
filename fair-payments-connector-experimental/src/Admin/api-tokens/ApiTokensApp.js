@@ -21,40 +21,43 @@ import {
 const AVAILABLE_SCOPES = [
 	{
 		value: 'transactions:read',
-		label: __('Read transactions', 'fair-payments-connector-experimental'),
+		label: __(
+			'Read transactions',
+			'fair-payments-connector-experimental'
+		),
 	},
 	{
 		value: 'locations:read',
-		label: __('Read locations', 'fair-payments-connector-experimental'),
+		label: __( 'Read locations', 'fair-payments-connector-experimental' ),
 	},
 ];
 
 const ApiTokensApp = () => {
-	const [tokens, setTokens] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [success, setSuccess] = useState(null);
-	const [isFormOpen, setIsFormOpen] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
-	const [label, setLabel] = useState('');
-	const [scopes, setScopes] = useState(['transactions:read']);
-	const [newToken, setNewToken] = useState(null);
-	const [copied, setCopied] = useState(false);
+	const [ tokens, setTokens ] = useState( [] );
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ success, setSuccess ] = useState( null );
+	const [ isFormOpen, setIsFormOpen ] = useState( false );
+	const [ isSaving, setIsSaving ] = useState( false );
+	const [ label, setLabel ] = useState( '' );
+	const [ scopes, setScopes ] = useState( [ 'transactions:read' ] );
+	const [ newToken, setNewToken ] = useState( null );
+	const [ copied, setCopied ] = useState( false );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadTokens();
-	}, []);
+	}, [] );
 
 	const loadTokens = async () => {
-		setLoading(true);
-		setError(null);
+		setLoading( true );
+		setError( null );
 
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-payments-connector/v1/admin/api-tokens',
-			});
-			setTokens(data);
-		} catch (err) {
+			} );
+			setTokens( data );
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -63,42 +66,47 @@ const ApiTokensApp = () => {
 					)
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
 	const handleOpenForm = () => {
-		setLabel('');
-		setScopes(['transactions:read']);
-		setNewToken(null);
-		setCopied(false);
-		setError(null);
-		setIsFormOpen(true);
+		setLabel( '' );
+		setScopes( [ 'transactions:read' ] );
+		setNewToken( null );
+		setCopied( false );
+		setError( null );
+		setIsFormOpen( true );
 	};
 
-	const toggleScope = (scope, checked) => {
-		setScopes((current) =>
-			checked ? [...current, scope] : current.filter((s) => s !== scope)
+	const toggleScope = ( scope, checked ) => {
+		setScopes( ( current ) =>
+			checked
+				? [ ...current, scope ]
+				: current.filter( ( s ) => s !== scope )
 		);
 	};
 
-	const handleCreate = async (e) => {
+	const handleCreate = async ( e ) => {
 		e.preventDefault();
-		setIsSaving(true);
-		setError(null);
+		setIsSaving( true );
+		setError( null );
 
 		try {
-			const response = await apiFetch({
+			const response = await apiFetch( {
 				path: '/fair-payments-connector/v1/admin/api-tokens',
 				method: 'POST',
 				data: { label, scopes },
-			});
-			setNewToken(response.token);
+			} );
+			setNewToken( response.token );
 			setSuccess(
-				__('API token created.', 'fair-payments-connector-experimental')
+				__(
+					'API token created.',
+					'fair-payments-connector-experimental'
+				)
 			);
 			loadTokens();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -107,13 +115,13 @@ const ApiTokensApp = () => {
 					)
 			);
 		} finally {
-			setIsSaving(false);
+			setIsSaving( false );
 		}
 	};
 
-	const handleRevoke = async (id) => {
+	const handleRevoke = async ( id ) => {
 		if (
-			!window.confirm(
+			! window.confirm(
 				__(
 					'Revoke this token? Any site using it will immediately lose access.',
 					'fair-payments-connector-experimental'
@@ -123,19 +131,22 @@ const ApiTokensApp = () => {
 			return;
 		}
 
-		setError(null);
-		setSuccess(null);
+		setError( null );
+		setSuccess( null );
 
 		try {
-			await apiFetch({
-				path: `/fair-payments-connector/v1/admin/api-tokens/${id}`,
+			await apiFetch( {
+				path: `/fair-payments-connector/v1/admin/api-tokens/${ id }`,
 				method: 'DELETE',
-			});
+			} );
 			setSuccess(
-				__('API token revoked.', 'fair-payments-connector-experimental')
+				__(
+					'API token revoked.',
+					'fair-payments-connector-experimental'
+				)
 			);
 			loadTokens();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -147,164 +158,169 @@ const ApiTokensApp = () => {
 	};
 
 	const handleCopy = () => {
-		if (newToken && navigator.clipboard) {
-			navigator.clipboard.writeText(newToken).then(() => {
-				setCopied(true);
-			});
+		if ( newToken && navigator.clipboard ) {
+			navigator.clipboard.writeText( newToken ).then( () => {
+				setCopied( true );
+			} );
 		}
 	};
 
 	const handleCloseForm = () => {
-		setIsFormOpen(false);
-		setNewToken(null);
+		setIsFormOpen( false );
+		setNewToken( null );
 	};
 
 	return (
 		<div className="wrap fair-payments-connector-api-tokens-page">
-			<VStack spacing={4}>
+			<VStack spacing={ 4 }>
 				<Card>
 					<CardHeader>
 						<HStack justify="space-between">
 							<h1>
-								{__(
+								{ __(
 									'API Tokens',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 							</h1>
-							<Button variant="primary" onClick={handleOpenForm}>
-								{__(
+							<Button
+								variant="primary"
+								onClick={ handleOpenForm }
+							>
+								{ __(
 									'Generate Token',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 							</Button>
 						</HStack>
 					</CardHeader>
 					<CardBody>
-						<VStack spacing={4}>
-							<p style={{ color: '#666', margin: 0 }}>
-								{__(
+						<VStack spacing={ 4 }>
+							<p style={ { color: '#666', margin: 0 } }>
+								{ __(
 									"Issue scoped tokens so other sites can read this site's data over the data sharing API.",
 									'fair-payments-connector-experimental'
-								)}
+								) }
 							</p>
 
-							{error && (
+							{ error && (
 								<Notice
 									status="error"
 									isDismissible
-									onRemove={() => setError(null)}
+									onRemove={ () => setError( null ) }
 								>
-									{error}
+									{ error }
 								</Notice>
-							)}
+							) }
 
-							{success && (
+							{ success && (
 								<Notice
 									status="success"
 									isDismissible
-									onRemove={() => setSuccess(null)}
+									onRemove={ () => setSuccess( null ) }
 								>
-									{success}
+									{ success }
 								</Notice>
-							)}
+							) }
 
-							{loading && (
+							{ loading && (
 								<div>
 									<Spinner />
 									<p>
-										{__(
+										{ __(
 											'Loading tokens…',
 											'fair-payments-connector-experimental'
-										)}
+										) }
 									</p>
 								</div>
-							)}
+							) }
 
-							{!loading && tokens.length === 0 && (
+							{ ! loading && tokens.length === 0 && (
 								<p>
-									{__(
+									{ __(
 										'No API tokens yet. Generate one to share data with another site.',
 										'fair-payments-connector-experimental'
-									)}
+									) }
 								</p>
-							)}
+							) }
 
-							{!loading && tokens.length > 0 && (
+							{ ! loading && tokens.length > 0 && (
 								<table className="wp-list-table widefat fixed striped">
 									<thead>
 										<tr>
 											<th>
-												{__(
+												{ __(
 													'Label',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Scopes',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Created',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Last used',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Status',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
-											<th style={{ width: '120px' }}>
-												{__(
+											<th style={ { width: '120px' } }>
+												{ __(
 													'Actions',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 										</tr>
 									</thead>
 									<tbody>
-										{tokens.map((token) => (
-											<tr key={token.id}>
+										{ tokens.map( ( token ) => (
+											<tr key={ token.id }>
 												<td>
 													<strong>
-														{token.label}
+														{ token.label }
 													</strong>
 												</td>
 												<td>
-													{token.scopes.join(', ')}
+													{ token.scopes.join(
+														', '
+													) }
 												</td>
-												<td>{token.created_at}</td>
+												<td>{ token.created_at }</td>
 												<td>
-													{token.last_used_at || (
+													{ token.last_used_at || (
 														<em>
-															{__(
+															{ __(
 																'Never',
 																'fair-payments-connector-experimental'
-															)}
+															) }
 														</em>
-													)}
+													) }
 												</td>
 												<td>
 													<span
-														style={{
+														style={ {
 															color:
 																token.status ===
 																'active'
 																	? '#007017'
 																	: '#d63638',
 															fontWeight: 'bold',
-														}}
+														} }
 													>
-														{token.status ===
+														{ token.status ===
 														'active'
 															? __(
 																	'Active',
@@ -313,40 +329,40 @@ const ApiTokensApp = () => {
 															: __(
 																	'Revoked',
 																	'fair-payments-connector-experimental'
-															  )}
+															  ) }
 													</span>
 												</td>
 												<td>
-													{token.status ===
+													{ token.status ===
 														'active' && (
 														<Button
 															variant="tertiary"
 															size="small"
 															isDestructive
-															onClick={() =>
+															onClick={ () =>
 																handleRevoke(
 																	token.id
 																)
 															}
 														>
-															{__(
+															{ __(
 																'Revoke',
 																'fair-payments-connector-experimental'
-															)}
+															) }
 														</Button>
-													)}
+													) }
 												</td>
 											</tr>
-										))}
+										) ) }
 									</tbody>
 								</table>
-							)}
+							) }
 						</VStack>
 					</CardBody>
 				</Card>
 			</VStack>
 
-			{isFormOpen && (
+			{ isFormOpen && (
 				<Modal
 					title={
 						newToken
@@ -359,33 +375,33 @@ const ApiTokensApp = () => {
 									'fair-payments-connector-experimental'
 							  )
 					}
-					onRequestClose={handleCloseForm}
-					style={{ maxWidth: '500px', width: '100%' }}
+					onRequestClose={ handleCloseForm }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
-					{newToken ? (
-						<VStack spacing={4}>
-							<Notice status="warning" isDismissible={false}>
-								{__(
+					{ newToken ? (
+						<VStack spacing={ 4 }>
+							<Notice status="warning" isDismissible={ false }>
+								{ __(
 									'Copy this token now. For security it will not be shown again.',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 							</Notice>
 							<code
-								style={{
+								style={ {
 									display: 'block',
 									padding: '12px',
 									background: '#f0f0f1',
 									wordBreak: 'break-all',
-								}}
+								} }
 							>
-								{newToken}
+								{ newToken }
 							</code>
-							<HStack justify="flex-end" spacing={2}>
+							<HStack justify="flex-end" spacing={ 2 }>
 								<Button
 									variant="secondary"
-									onClick={handleCopy}
+									onClick={ handleCopy }
 								>
-									{copied
+									{ copied
 										? __(
 												'Copied!',
 												'fair-payments-connector-experimental'
@@ -393,97 +409,97 @@ const ApiTokensApp = () => {
 										: __(
 												'Copy token',
 												'fair-payments-connector-experimental'
-										  )}
+										  ) }
 								</Button>
 								<Button
 									variant="primary"
-									onClick={handleCloseForm}
+									onClick={ handleCloseForm }
 								>
-									{__(
+									{ __(
 										'Done',
 										'fair-payments-connector-experimental'
-									)}
+									) }
 								</Button>
 							</HStack>
 						</VStack>
 					) : (
-						<form onSubmit={handleCreate}>
-							<VStack spacing={4}>
+						<form onSubmit={ handleCreate }>
+							<VStack spacing={ 4 }>
 								<TextControl
-									label={__(
+									label={ __(
 										'Label',
 										'fair-payments-connector-experimental'
-									)}
-									value={label}
-									onChange={setLabel}
-									help={__(
+									) }
+									value={ label }
+									onChange={ setLabel }
+									help={ __(
 										'A name to identify who this token is for, e.g. lamutable.es',
 										'fair-payments-connector-experimental'
-									)}
+									) }
 									required
 								/>
 								<fieldset>
 									<legend
-										style={{
+										style={ {
 											fontWeight: 'bold',
 											marginBottom: '8px',
-										}}
+										} }
 									>
-										{__(
+										{ __(
 											'Scopes',
 											'fair-payments-connector-experimental'
-										)}
+										) }
 									</legend>
-									<VStack spacing={2}>
-										{AVAILABLE_SCOPES.map((scope) => (
+									<VStack spacing={ 2 }>
+										{ AVAILABLE_SCOPES.map( ( scope ) => (
 											<CheckboxControl
-												key={scope.value}
-												label={scope.label}
-												checked={scopes.includes(
+												key={ scope.value }
+												label={ scope.label }
+												checked={ scopes.includes(
 													scope.value
-												)}
-												onChange={(checked) =>
+												) }
+												onChange={ ( checked ) =>
 													toggleScope(
 														scope.value,
 														checked
 													)
 												}
 											/>
-										))}
+										) ) }
 									</VStack>
 								</fieldset>
-								<HStack justify="flex-end" spacing={2}>
+								<HStack justify="flex-end" spacing={ 2 }>
 									<Button
 										variant="tertiary"
-										onClick={handleCloseForm}
-										disabled={isSaving}
+										onClick={ handleCloseForm }
+										disabled={ isSaving }
 									>
-										{__(
+										{ __(
 											'Cancel',
 											'fair-payments-connector-experimental'
-										)}
+										) }
 									</Button>
 									<Button
 										variant="primary"
 										type="submit"
-										isBusy={isSaving}
+										isBusy={ isSaving }
 										disabled={
 											isSaving ||
-											!label ||
+											! label ||
 											scopes.length === 0
 										}
 									>
-										{__(
+										{ __(
 											'Generate',
 											'fair-payments-connector-experimental'
-										)}
+										) }
 									</Button>
 								</HStack>
 							</VStack>
 						</form>
-					)}
+					) }
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 };

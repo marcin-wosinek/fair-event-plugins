@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "calendar-alt",
 	"description": "Display events for the current week in a 7-day grid.",
-	"keywords": ["events", "week", "schedule", "calendar"],
+	"keywords": [ "events", "week", "schedule", "calendar" ],
 	"textdomain": "fair-events",
 	"attributes": {
 		"categories": {
@@ -52,12 +52,12 @@
 	"supports": {
 		"html": false,
 		"anchor": true,
-		"align": ["wide", "full"],
+		"align": [ "wide", "full" ],
 		"interactivity": true
 	},
 	"editorScript": "file:./editor.js",
 	"editorStyle": "file:./editor.css",
-	"style": ["wp-block-button", "file:./style-editor.css"],
+	"style": [ "wp-block-button", "file:./style-editor.css" ],
 	"viewScriptModule": "file:./view.js",
 	"render": "file:./render.php"
 }

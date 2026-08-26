@@ -12,11 +12,11 @@ import SettingsApp from './SettingsApp.js';
 /**
  * Initialize the settings page
  */
-domReady(() => {
+domReady( () => {
 	const root = document.getElementById(
 		'fair-payments-connector-settings-root'
 	);
-	if (root) {
-		createRoot(root).render(<SettingsApp />);
+	if ( root ) {
+		createRoot( root ).render( <SettingsApp /> );
 	}
-});
+} );

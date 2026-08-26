@@ -24,52 +24,54 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
 const VIEWER_CONTEXT_PATH =
 	'/wp-json/fair-events/v1/get-tickets/viewer-context';
 
-test.describe('GetTicketsController — viewer-context', () => {
+test.describe( 'GetTicketsController — viewer-context', () => {
 	let api;
 	let eventDateId;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets viewer-context test ${Date.now()}`,
+				title: `Get-tickets viewer-context test ${ Date.now() }`,
 				status: 'publish',
 			},
-		});
-		expect(postRes.ok()).toBeTruthy();
-		const eventPostId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		const eventPostId = ( await postRes.json() ).id;
 
-		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets viewer-context test ${Date.now()}`,
+				title: `Get-tickets viewer-context test ${ Date.now() }`,
 				link_type: 'post',
 				start_datetime: '2035-06-01 10:00:00',
 				end_datetime: '2035-06-01 12:00:00',
 			},
-		});
-		expect(edRes.ok()).toBeTruthy();
-		eventDateId = (await edRes.json()).id;
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		eventDateId = ( await edRes.json() ).id;
 
 		const linkRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
 			{
 				headers: adminHeaders,
 				data: { event_id: eventPostId },
 			}
 		);
-		expect(linkRes.ok()).toBeTruthy();
+		expect( linkRes.ok() ).toBeTruthy();
 
 		const ticketsRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
 			{
 				headers: adminHeaders,
 				data: {
@@ -101,67 +103,67 @@ test.describe('GetTicketsController — viewer-context', () => {
 				},
 			}
 		);
-		expect(ticketsRes.ok()).toBeTruthy();
-	});
+		expect( ticketsRes.ok() ).toBeTruthy();
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	test('requires event_date_id', async () => {
-		const res = await api.get(VIEWER_CONTEXT_PATH);
-		expect(res.status()).toBe(400);
-	});
+	test( 'requires event_date_id', async () => {
+		const res = await api.get( VIEWER_CONTEXT_PATH );
+		expect( res.status() ).toBe( 400 );
+	} );
 
-	test('an unknown event_date_id 404s', async () => {
-		const res = await api.get(VIEWER_CONTEXT_PATH, {
+	test( 'an unknown event_date_id 404s', async () => {
+		const res = await api.get( VIEWER_CONTEXT_PATH, {
 			params: { event_date_id: 999999999 },
-		});
-		expect(res.status()).toBe(404);
-		expect((await res.json()).code).toBe('invalid_event_date');
-	});
+		} );
+		expect( res.status() ).toBe( 404 );
+		expect( ( await res.json() ).code ).toBe( 'invalid_event_date' );
+	} );
 
-	test('an anonymous caller gets a no-op payload — no fieldsets, no prefill, not signed up', async () => {
-		const res = await api.get(VIEWER_CONTEXT_PATH, {
+	test( 'an anonymous caller gets a no-op payload — no fieldsets, no prefill, not signed up', async () => {
+		const res = await api.get( VIEWER_CONTEXT_PATH, {
 			params: { event_date_id: eventDateId },
-		});
-		expect(res.ok()).toBeTruthy();
+		} );
+		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
 
-		expect(body.viewer_resolved).toBe(false);
-		expect(body.suppress_form).toBe(false);
-		expect(body.ticket_type_fieldset_html).toBeNull();
-		expect(body.ticket_options_fieldset_html).toBeNull();
-		expect(body.before_form_html).toBeNull();
-		expect(body.before_submit_html).toBeNull();
-		expect(body.after_form_html).toBeNull();
-		expect(body.occurrences_signed_up).toEqual([]);
-		expect(body.prefill_name).toBe('');
-		expect(body.prefill_email).toBe('');
-	});
+		expect( body.viewer_resolved ).toBe( false );
+		expect( body.suppress_form ).toBe( false );
+		expect( body.ticket_type_fieldset_html ).toBeNull();
+		expect( body.ticket_options_fieldset_html ).toBeNull();
+		expect( body.before_form_html ).toBeNull();
+		expect( body.before_submit_html ).toBeNull();
+		expect( body.after_form_html ).toBeNull();
+		expect( body.occurrences_signed_up ).toEqual( [] );
+		expect( body.prefill_name ).toBe( '' );
+		expect( body.prefill_email ).toBe( '' );
+	} );
 
-	test('an authenticated admin with no linked participant gets the same no-op payload as an anonymous caller — no enumeration', async () => {
-		const res = await api.get(VIEWER_CONTEXT_PATH, {
+	test( 'an authenticated admin with no linked participant gets the same no-op payload as an anonymous caller — no enumeration', async () => {
+		const res = await api.get( VIEWER_CONTEXT_PATH, {
 			headers: adminHeaders,
 			params: { event_date_id: eventDateId },
-		});
-		expect(res.ok()).toBeTruthy();
+		} );
+		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
 
-		expect(body.viewer_resolved).toBe(false);
-		expect(body.prefill_name).toBe('');
-		expect(body.prefill_email).toBe('');
-	});
+		expect( body.viewer_resolved ).toBe( false );
+		expect( body.prefill_name ).toBe( '' );
+		expect( body.prefill_email ).toBe( '' );
+	} );
 
-	test('display flags round-trip without affecting viewer_resolved', async () => {
-		const res = await api.get(VIEWER_CONTEXT_PATH, {
+	test( 'display flags round-trip without affecting viewer_resolved', async () => {
+		const res = await api.get( VIEWER_CONTEXT_PATH, {
 			params: {
 				event_date_id: eventDateId,
 				show_ticket_price: '0',
 				show_option_prices: '0',
 			},
-		});
-		expect(res.ok()).toBeTruthy();
-		expect((await res.json()).viewer_resolved).toBe(false);
-	});
-});
+		} );
+		expect( res.ok() ).toBeTruthy();
+		expect( ( await res.json() ).viewer_resolved ).toBe( false );
+	} );
+} );

@@ -14,44 +14,48 @@ const servicePath = path.join(
 	__dirname,
 	'../../../Services/QuestionnaireService.php'
 );
-const serviceSource = fs.readFileSync(servicePath, 'utf8');
+const serviceSource = fs.readFileSync( servicePath, 'utf8' );
 
-function extractPhpMap(source) {
+function extractPhpMap( source ) {
 	const match = source.match(
 		/const PHONE_PLACEHOLDERS = array\(([\s\S]*?)\);/
 	);
-	if (!match) {
-		throw new Error('PHONE_PLACEHOLDERS constant not found in PHP source');
+	if ( ! match ) {
+		throw new Error(
+			'PHONE_PLACEHOLDERS constant not found in PHP source'
+		);
 	}
 	const map = {};
 	const entryPattern = /'([^']+)'\s*=>\s*'([^']+)'/g;
 	let entryMatch;
-	while ((entryMatch = entryPattern.exec(match[1])) !== null) {
-		map[entryMatch[1]] = entryMatch[2];
+	while ( ( entryMatch = entryPattern.exec( match[ 1 ] ) ) !== null ) {
+		map[ entryMatch[ 1 ] ] = entryMatch[ 2 ];
 	}
 	return map;
 }
 
-function extractPhpFallback(source) {
-	const match = source.match(/const PHONE_PLACEHOLDER_FALLBACK = '([^']+)';/);
-	if (!match) {
+function extractPhpFallback( source ) {
+	const match = source.match(
+		/const PHONE_PLACEHOLDER_FALLBACK = '([^']+)';/
+	);
+	if ( ! match ) {
 		throw new Error(
 			'PHONE_PLACEHOLDER_FALLBACK constant not found in PHP source'
 		);
 	}
-	return match[1];
+	return match[ 1 ];
 }
 
-describe('PHP/JS phone placeholder parity', () => {
-	it('the PHP PHONE_PLACEHOLDERS map matches the JS PHONE_PLACEHOLDER_BY_TIMEZONE map', () => {
-		expect(extractPhpMap(serviceSource)).toEqual(
+describe( 'PHP/JS phone placeholder parity', () => {
+	it( 'the PHP PHONE_PLACEHOLDERS map matches the JS PHONE_PLACEHOLDER_BY_TIMEZONE map', () => {
+		expect( extractPhpMap( serviceSource ) ).toEqual(
 			PHONE_PLACEHOLDER_BY_TIMEZONE
 		);
-	});
+	} );
 
-	it('the PHP and JS fallback examples match', () => {
-		expect(extractPhpFallback(serviceSource)).toBe(
+	it( 'the PHP and JS fallback examples match', () => {
+		expect( extractPhpFallback( serviceSource ) ).toBe(
 			FALLBACK_PHONE_PLACEHOLDER
 		);
-	});
-});
+	} );
+} );

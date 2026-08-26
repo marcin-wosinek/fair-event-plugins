@@ -20,41 +20,43 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-function uniqueEmail(prefix) {
-	return `${prefix}-${Date.now()}-${Math.floor(
+function uniqueEmail( prefix ) {
+	return `${ prefix }-${ Date.now() }-${ Math.floor(
 		Math.random() * 1e6
-	)}@example.test`;
+	) }@example.test`;
 }
 
-const emailQuestion = (value) => ({
+const emailQuestion = ( value ) => ( {
 	question_key: 'email',
 	question_text: 'Email?',
 	question_type: 'email',
 	answer_value: value,
 	display_order: 0,
-});
+} );
 
-const dateQuestion = (value) => ({
+const dateQuestion = ( value ) => ( {
 	question_key: 'visit_date',
 	question_text: 'Preferred visit date?',
 	question_type: 'date',
 	answer_value: value,
 	display_order: 1,
-});
+} );
 
-const ACCEPT_CASES = ['2026-09-01', '2000-02-29'];
+const ACCEPT_CASES = [ '2026-09-01', '2000-02-29' ];
 
-const REJECT_CASES = ['2026-02-30', 'not-a-date', '2026/09/01'];
+const REJECT_CASES = [ '2026-02-30', 'not-a-date', '2026/09/01' ];
 
-test.describe('FairFormController — Date question validation (#1350)', () => {
+test.describe( 'FairFormController — Date question validation (#1350)', () => {
 	let api;
 	let fairAudienceActive = false;
 	const postId = Date.now();
 
-	async function findSubmissionByEmail(email) {
+	async function findSubmissionByEmail( email ) {
 		const res = await api.get(
 			'/wp-json/fair-form/v1/questionnaire-responses',
 			{
@@ -62,105 +64,109 @@ test.describe('FairFormController — Date question validation (#1350)', () => {
 				params: { post_id: postId, title: 'Fair Form' },
 			}
 		);
-		expect(res.ok()).toBeTruthy();
+		expect( res.ok() ).toBeTruthy();
 		const submissions = await res.json();
-		return submissions.find((s) =>
-			s.answers.some((a) => a.answer_value === email)
+		return submissions.find( ( s ) =>
+			s.answers.some( ( a ) => a.answer_value === email )
 		);
 	}
 
-	async function ensureParticipant(email) {
-		if (!fairAudienceActive) {
+	async function ensureParticipant( email ) {
+		if ( ! fairAudienceActive ) {
 			return;
 		}
-		await api.post('/wp-json/fair-audience/v1/participants', {
+		await api.post( '/wp-json/fair-audience/v1/participants', {
 			headers: adminHeaders,
 			data: { name: 'Date Test', email },
-		});
+		} );
 	}
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const pluginsRes = await api.get('/wp-json/wp/v2/plugins', {
+		const pluginsRes = await api.get( '/wp-json/wp/v2/plugins', {
 			headers: adminHeaders,
-		});
-		if (pluginsRes.ok()) {
+		} );
+		if ( pluginsRes.ok() ) {
 			const plugins = await pluginsRes.json();
 			fairAudienceActive = plugins.some(
-				(p) =>
-					p.plugin?.includes('fair-audience') && p.status === 'active'
+				( p ) =>
+					p.plugin?.includes( 'fair-audience' ) &&
+					p.status === 'active'
 			);
 		}
-	});
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	for (const value of ACCEPT_CASES) {
-		test(`accepts and stores ${JSON.stringify(value)}`, async () => {
-			const email = uniqueEmail('date-accept');
-			await ensureParticipant(email);
+	for ( const value of ACCEPT_CASES ) {
+		test( `accepts and stores ${ JSON.stringify( value ) }`, async () => {
+			const email = uniqueEmail( 'date-accept' );
+			await ensureParticipant( email );
 			const res = await api.post(
 				'/wp-json/fair-form/v1/fair-form-submit',
 				{
 					data: {
 						post_id: postId,
 						questionnaire_answers: [
-							emailQuestion(email),
-							dateQuestion(value),
+							emailQuestion( email ),
+							dateQuestion( value ),
 						],
 					},
 				}
 			);
-			expect(res.ok()).toBeTruthy();
+			expect( res.ok() ).toBeTruthy();
 
-			const submission = await findSubmissionByEmail(email);
-			expect(submission).toBeTruthy();
+			const submission = await findSubmissionByEmail( email );
+			expect( submission ).toBeTruthy();
 			const dateAnswer = submission.answers.find(
-				(a) => a.question_key === 'visit_date'
+				( a ) => a.question_key === 'visit_date'
 			);
-			expect(dateAnswer.answer_value).toBe(value);
-		});
+			expect( dateAnswer.answer_value ).toBe( value );
+		} );
 	}
 
-	test('accepts an empty, non-required date answer', async () => {
-		const email = uniqueEmail('date-empty');
-		await ensureParticipant(email);
-		const res = await api.post('/wp-json/fair-form/v1/fair-form-submit', {
+	test( 'accepts an empty, non-required date answer', async () => {
+		const email = uniqueEmail( 'date-empty' );
+		await ensureParticipant( email );
+		const res = await api.post( '/wp-json/fair-form/v1/fair-form-submit', {
 			data: {
 				post_id: postId,
-				questionnaire_answers: [emailQuestion(email), dateQuestion('')],
+				questionnaire_answers: [
+					emailQuestion( email ),
+					dateQuestion( '' ),
+				],
 			},
-		});
-		expect(res.ok()).toBeTruthy();
+		} );
+		expect( res.ok() ).toBeTruthy();
 
-		const submission = await findSubmissionByEmail(email);
-		expect(submission).toBeTruthy();
+		const submission = await findSubmissionByEmail( email );
+		expect( submission ).toBeTruthy();
 		const dateAnswer = submission.answers.find(
-			(a) => a.question_key === 'visit_date'
+			( a ) => a.question_key === 'visit_date'
 		);
-		expect(dateAnswer.answer_value).toBe('');
-	});
+		expect( dateAnswer.answer_value ).toBe( '' );
+	} );
 
-	for (const value of REJECT_CASES) {
-		test(`rejects ${JSON.stringify(value)}`, async () => {
-			const email = uniqueEmail('date-reject');
+	for ( const value of REJECT_CASES ) {
+		test( `rejects ${ JSON.stringify( value ) }`, async () => {
+			const email = uniqueEmail( 'date-reject' );
 			const res = await api.post(
 				'/wp-json/fair-form/v1/fair-form-submit',
 				{
 					data: {
 						post_id: postId,
 						questionnaire_answers: [
-							emailQuestion(email),
-							dateQuestion(value),
+							emailQuestion( email ),
+							dateQuestion( value ),
 						],
 					},
 				}
 			);
-			expect(res.status()).toBe(400);
-			expect((await res.json()).code).toBe('invalid_date');
-		});
+			expect( res.status() ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe( 'invalid_date' );
+		} );
 	}
-});
+} );

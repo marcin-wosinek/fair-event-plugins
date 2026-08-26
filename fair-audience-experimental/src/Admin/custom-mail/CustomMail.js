@@ -34,50 +34,50 @@ import {
  * @return {JSX.Element} The custom mail page
  */
 export default function CustomMail() {
-	const [mails, setMails] = useState([]);
-	const [eventDates, setEventDates] = useState([]);
-	const [groups, setGroups] = useState([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [isSending, setIsSending] = useState(false);
-	const [notice, setNotice] = useState(null);
+	const [ mails, setMails ] = useState( [] );
+	const [ eventDates, setEventDates ] = useState( [] );
+	const [ groups, setGroups ] = useState( [] );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ isSending, setIsSending ] = useState( false );
+	const [ notice, setNotice ] = useState( null );
 
 	// Form state.
-	const [subject, setSubject] = useState('');
-	const [eventDateId, setEventDateId] = useState('');
-	const [isMarketing, setIsMarketing] = useState(true);
-	const [includeSignedUp, setIncludeSignedUp] = useState(true);
-	const [includeCollaborators, setIncludeCollaborators] = useState(true);
-	const [includeInterested, setIncludeInterested] = useState(false);
-	const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+	const [ subject, setSubject ] = useState( '' );
+	const [ eventDateId, setEventDateId ] = useState( '' );
+	const [ isMarketing, setIsMarketing ] = useState( true );
+	const [ includeSignedUp, setIncludeSignedUp ] = useState( true );
+	const [ includeCollaborators, setIncludeCollaborators ] = useState( true );
+	const [ includeInterested, setIncludeInterested ] = useState( false );
+	const [ selectedGroupIds, setSelectedGroupIds ] = useState( [] );
 
 	// Token link page search state.
-	const [pageSearch, setPageSearch] = useState('');
-	const [pageResults, setPageResults] = useState([]);
-	const [selectedPage, setSelectedPage] = useState(null);
-	const [isSearchingPages, setIsSearchingPages] = useState(false);
+	const [ pageSearch, setPageSearch ] = useState( '' );
+	const [ pageResults, setPageResults ] = useState( [] );
+	const [ selectedPage, setSelectedPage ] = useState( null );
+	const [ isSearchingPages, setIsSearchingPages ] = useState( false );
 
 	// Recipient preview state.
-	const [recipients, setRecipients] = useState([]);
-	const [skippedIds, setSkippedIds] = useState(new Set());
-	const [isLoadingRecipients, setIsLoadingRecipients] = useState(false);
+	const [ recipients, setRecipients ] = useState( [] );
+	const [ skippedIds, setSkippedIds ] = useState( new Set() );
+	const [ isLoadingRecipients, setIsLoadingRecipients ] = useState( false );
 
-	const editorInitialized = useRef(false);
+	const editorInitialized = useRef( false );
 
 	/**
 	 * Load mails and event dates
 	 */
 	const loadData = () => {
-		setIsLoading(true);
-		Promise.all([loadCustomMails(), loadEventDates(), loadGroups()])
-			.then(([mailsData, eventDatesData, groupsData]) => {
-				setMails(mailsData);
-				setEventDates(eventDatesData);
-				setGroups(groupsData);
-				setIsLoading(false);
-			})
-			.catch((error) => {
-				console.error('[Fair Audience] Failed to load data:', error);
-				setNotice({
+		setIsLoading( true );
+		Promise.all( [ loadCustomMails(), loadEventDates(), loadGroups() ] )
+			.then( ( [ mailsData, eventDatesData, groupsData ] ) => {
+				setMails( mailsData );
+				setEventDates( eventDatesData );
+				setGroups( groupsData );
+				setIsLoading( false );
+			} )
+			.catch( ( error ) => {
+				console.error( '[Fair Audience] Failed to load data:', error );
+				setNotice( {
 					status: 'error',
 					message:
 						error.message ||
@@ -85,28 +85,28 @@ export default function CustomMail() {
 							'Failed to load data.',
 							'fair-audience-experimental'
 						),
-				});
-				setIsLoading(false);
-			});
+				} );
+				setIsLoading( false );
+			} );
 	};
 
 	/**
 	 * Load data on mount
 	 */
-	useEffect(() => {
+	useEffect( () => {
 		loadData();
-	}, []);
+	}, [] );
 
 	/**
 	 * Initialize TinyMCE after data loads
 	 */
-	useEffect(() => {
-		if (isLoading || editorInitialized.current) {
+	useEffect( () => {
+		if ( isLoading || editorInitialized.current ) {
 			return;
 		}
 
-		if (window.wp && window.wp.editor) {
-			window.wp.editor.initialize('custom-mail-content', {
+		if ( window.wp && window.wp.editor ) {
+			window.wp.editor.initialize( 'custom-mail-content', {
 				tinymce: {
 					toolbar1:
 						'bold,italic,bullist,numlist,link,unlink,removeformat',
@@ -117,23 +117,23 @@ export default function CustomMail() {
 				},
 				quicktags: true,
 				mediaButtons: false,
-			});
+			} );
 			editorInitialized.current = true;
 		}
 
 		return () => {
-			if (window.wp && window.wp.editor && editorInitialized.current) {
-				window.wp.editor.remove('custom-mail-content');
+			if ( window.wp && window.wp.editor && editorInitialized.current ) {
+				window.wp.editor.remove( 'custom-mail-content' );
 				editorInitialized.current = false;
 			}
 		};
-	}, [isLoading]);
+	}, [ isLoading ] );
 
 	/**
 	 * Fetch recipient preview when criteria change
 	 */
-	useEffect(() => {
-		if (isLoading) {
+	useEffect( () => {
+		if ( isLoading ) {
 			return;
 		}
 
@@ -141,40 +141,40 @@ export default function CustomMail() {
 			is_marketing: isMarketing,
 		};
 
-		if (selectedGroupIds.length > 0) {
+		if ( selectedGroupIds.length > 0 ) {
 			data.group_ids = selectedGroupIds;
 		}
 
-		if (eventDateId) {
-			data.event_date_id = parseInt(eventDateId, 10);
+		if ( eventDateId ) {
+			data.event_date_id = parseInt( eventDateId, 10 );
 
 			const labels = [];
-			if (includeSignedUp) labels.push('signed_up');
-			if (includeCollaborators) labels.push('collaborator');
-			if (includeInterested) labels.push('interested');
+			if ( includeSignedUp ) labels.push( 'signed_up' );
+			if ( includeCollaborators ) labels.push( 'collaborator' );
+			if ( includeInterested ) labels.push( 'interested' );
 			data.labels = labels;
 
-			if (labels.length === 0) {
-				setRecipients([]);
+			if ( labels.length === 0 ) {
+				setRecipients( [] );
 				return;
 			}
 		}
 
-		setIsLoadingRecipients(true);
-		previewRecipients(data)
-			.then((result) => {
-				setRecipients(result);
-				setSkippedIds(new Set());
-				setIsLoadingRecipients(false);
-			})
-			.catch((error) => {
+		setIsLoadingRecipients( true );
+		previewRecipients( data )
+			.then( ( result ) => {
+				setRecipients( result );
+				setSkippedIds( new Set() );
+				setIsLoadingRecipients( false );
+			} )
+			.catch( ( error ) => {
 				console.error(
 					'[Fair Audience] Failed to load recipients:',
 					error
 				);
-				setRecipients([]);
-				setIsLoadingRecipients(false);
-			});
+				setRecipients( [] );
+				setIsLoadingRecipients( false );
+			} );
 	}, [
 		isLoading,
 		eventDateId,
@@ -183,64 +183,64 @@ export default function CustomMail() {
 		includeCollaborators,
 		includeInterested,
 		selectedGroupIds,
-	]);
+	] );
 
 	/**
 	 * Search pages when search term changes
 	 */
-	useEffect(() => {
-		if (pageSearch.length < 2) {
-			setPageResults([]);
+	useEffect( () => {
+		if ( pageSearch.length < 2 ) {
+			setPageResults( [] );
 			return;
 		}
 
-		const timeout = setTimeout(() => {
-			setIsSearchingPages(true);
-			const searchParam = encodeURIComponent(pageSearch);
-			apiFetch({
-				path: `/wp/v2/search?search=${searchParam}&per_page=10&_fields=id,title`,
-			})
-				.then((results) => {
+		const timeout = setTimeout( () => {
+			setIsSearchingPages( true );
+			const searchParam = encodeURIComponent( pageSearch );
+			apiFetch( {
+				path: `/wp/v2/search?search=${ searchParam }&per_page=10&_fields=id,title`,
+			} )
+				.then( ( results ) => {
 					setPageResults(
-						results.map((r) => ({
+						results.map( ( r ) => ( {
 							id: r.id,
 							title: { rendered: r.title },
-						}))
+						} ) )
 					);
-					setIsSearchingPages(false);
-				})
-				.catch(() => {
-					setPageResults([]);
-					setIsSearchingPages(false);
-				});
-		}, 300);
+					setIsSearchingPages( false );
+				} )
+				.catch( () => {
+					setPageResults( [] );
+					setIsSearchingPages( false );
+				} );
+		}, 300 );
 
-		return () => clearTimeout(timeout);
-	}, [pageSearch]);
+		return () => clearTimeout( timeout );
+	}, [ pageSearch ] );
 
 	/**
 	 * Toggle skip for a participant
 	 *
 	 * @param {number} participantId Participant ID
 	 */
-	const toggleGroup = (groupId) => {
-		setSelectedGroupIds((prev) =>
-			prev.includes(groupId)
-				? prev.filter((id) => id !== groupId)
-				: [...prev, groupId]
+	const toggleGroup = ( groupId ) => {
+		setSelectedGroupIds( ( prev ) =>
+			prev.includes( groupId )
+				? prev.filter( ( id ) => id !== groupId )
+				: [ ...prev, groupId ]
 		);
 	};
 
-	const toggleSkip = (participantId) => {
-		setSkippedIds((prev) => {
-			const next = new Set(prev);
-			if (next.has(participantId)) {
-				next.delete(participantId);
+	const toggleSkip = ( participantId ) => {
+		setSkippedIds( ( prev ) => {
+			const next = new Set( prev );
+			if ( next.has( participantId ) ) {
+				next.delete( participantId );
 			} else {
-				next.add(participantId);
+				next.add( participantId );
 			}
 			return next;
-		});
+		} );
 	};
 
 	/**
@@ -249,13 +249,13 @@ export default function CustomMail() {
 	 * @return {string} Editor content
 	 */
 	const getEditorContent = () => {
-		if (window.tinymce) {
-			const editor = window.tinymce.get('custom-mail-content');
-			if (editor) {
+		if ( window.tinymce ) {
+			const editor = window.tinymce.get( 'custom-mail-content' );
+			if ( editor ) {
 				return editor.getContent();
 			}
 		}
-		const textarea = document.getElementById('custom-mail-content');
+		const textarea = document.getElementById( 'custom-mail-content' );
 		return textarea ? textarea.value : '';
 	};
 
@@ -263,15 +263,15 @@ export default function CustomMail() {
 	 * Clear TinyMCE editor content
 	 */
 	const clearEditorContent = () => {
-		if (window.tinymce) {
-			const editor = window.tinymce.get('custom-mail-content');
-			if (editor) {
-				editor.setContent('');
+		if ( window.tinymce ) {
+			const editor = window.tinymce.get( 'custom-mail-content' );
+			if ( editor ) {
+				editor.setContent( '' );
 				return;
 			}
 		}
-		const textarea = document.getElementById('custom-mail-content');
-		if (textarea) {
+		const textarea = document.getElementById( 'custom-mail-content' );
+		if ( textarea ) {
 			textarea.value = '';
 		}
 	};
@@ -281,16 +281,16 @@ export default function CustomMail() {
 	 *
 	 * @param {string} content HTML content to set
 	 */
-	const setEditorContent = (content) => {
-		if (window.tinymce) {
-			const editor = window.tinymce.get('custom-mail-content');
-			if (editor) {
-				editor.setContent(content);
+	const setEditorContent = ( content ) => {
+		if ( window.tinymce ) {
+			const editor = window.tinymce.get( 'custom-mail-content' );
+			if ( editor ) {
+				editor.setContent( content );
 				return;
 			}
 		}
-		const textarea = document.getElementById('custom-mail-content');
-		if (textarea) {
+		const textarea = document.getElementById( 'custom-mail-content' );
+		if ( textarea ) {
 			textarea.value = content;
 		}
 	};
@@ -304,13 +304,13 @@ export default function CustomMail() {
 	 * @param {string} placeholder URL placeholder (e.g. '{photo_upload_url}')
 	 * @param {string} defaultText Default link text when nothing is selected
 	 */
-	const insertPlaceholderLink = (placeholder, defaultText) => {
-		if (window.tinymce) {
-			const editor = window.tinymce.get('custom-mail-content');
-			if (editor) {
-				const selectedText = editor.selection.getContent({
+	const insertPlaceholderLink = ( placeholder, defaultText ) => {
+		if ( window.tinymce ) {
+			const editor = window.tinymce.get( 'custom-mail-content' );
+			if ( editor ) {
+				const selectedText = editor.selection.getContent( {
 					format: 'text',
-				});
+				} );
 				const linkText = selectedText || defaultText;
 				editor.execCommand(
 					'mceInsertContent',
@@ -320,16 +320,16 @@ export default function CustomMail() {
 				return;
 			}
 		}
-		const textarea = document.getElementById('custom-mail-content');
-		if (textarea) {
+		const textarea = document.getElementById( 'custom-mail-content' );
+		if ( textarea ) {
 			const start = textarea.selectionStart;
 			const end = textarea.selectionEnd;
 			const text = textarea.value;
-			const selectedText = text.substring(start, end);
+			const selectedText = text.substring( start, end );
 			const linkText = selectedText || defaultText;
 			const html = '<a href="' + placeholder + '">' + linkText + '</a>';
 			textarea.value =
-				text.substring(0, start) + html + text.substring(end);
+				text.substring( 0, start ) + html + text.substring( end );
 		}
 	};
 
@@ -338,12 +338,14 @@ export default function CustomMail() {
 	 *
 	 * @param {Object} mail Mail record
 	 */
-	const handleDuplicate = (mail) => {
-		setSubject(mail.subject);
-		setEditorContent(mail.content || '');
-		setEventDateId(mail.event_date_id ? String(mail.event_date_id) : '');
-		setIsMarketing(mail.is_marketing);
-		window.scrollTo({ top: 0, behavior: 'smooth' });
+	const handleDuplicate = ( mail ) => {
+		setSubject( mail.subject );
+		setEditorContent( mail.content || '' );
+		setEventDateId(
+			mail.event_date_id ? String( mail.event_date_id ) : ''
+		);
+		setIsMarketing( mail.is_marketing );
+		window.scrollTo( { top: 0, behavior: 'smooth' } );
 	};
 
 	/**
@@ -351,113 +353,113 @@ export default function CustomMail() {
 	 *
 	 * @param {Event} e Form event
 	 */
-	const handleSubmit = (e) => {
+	const handleSubmit = ( e ) => {
 		e.preventDefault();
 
-		if (!subject.trim()) {
-			setNotice({
+		if ( ! subject.trim() ) {
+			setNotice( {
 				status: 'error',
 				message: __(
 					'Please enter a subject.',
 					'fair-audience-experimental'
 				),
-			});
+			} );
 			return;
 		}
 
 		const content = getEditorContent();
-		if (!content || content === '<p></p>' || content === '<br>') {
-			setNotice({
+		if ( ! content || content === '<p></p>' || content === '<br>' ) {
+			setNotice( {
 				status: 'error',
 				message: __(
 					'Please enter content.',
 					'fair-audience-experimental'
 				),
-			});
+			} );
 			return;
 		}
 
-		if (eventDateId) {
+		if ( eventDateId ) {
 			const labels = [];
-			if (includeSignedUp) labels.push('signed_up');
-			if (includeCollaborators) labels.push('collaborator');
-			if (includeInterested) labels.push('interested');
+			if ( includeSignedUp ) labels.push( 'signed_up' );
+			if ( includeCollaborators ) labels.push( 'collaborator' );
+			if ( includeInterested ) labels.push( 'interested' );
 
-			if (labels.length === 0) {
-				setNotice({
+			if ( labels.length === 0 ) {
+				setNotice( {
 					status: 'error',
 					message: __(
 						'Please select at least one audience type.',
 						'fair-audience-experimental'
 					),
-				});
+				} );
 				return;
 			}
 		}
 
-		setIsSending(true);
-		setNotice(null);
+		setIsSending( true );
+		setNotice( null );
 
 		const data = {
 			subject: subject.trim(),
 			content,
 			is_marketing: isMarketing,
-			skip_participant_ids: Array.from(skippedIds),
+			skip_participant_ids: Array.from( skippedIds ),
 		};
 
-		if (selectedGroupIds.length > 0) {
+		if ( selectedGroupIds.length > 0 ) {
 			data.group_ids = selectedGroupIds;
 		}
 
-		if (eventDateId) {
-			data.event_date_id = parseInt(eventDateId, 10);
+		if ( eventDateId ) {
+			data.event_date_id = parseInt( eventDateId, 10 );
 
 			const labels = [];
-			if (includeSignedUp) labels.push('signed_up');
-			if (includeCollaborators) labels.push('collaborator');
-			if (includeInterested) labels.push('interested');
+			if ( includeSignedUp ) labels.push( 'signed_up' );
+			if ( includeCollaborators ) labels.push( 'collaborator' );
+			if ( includeInterested ) labels.push( 'interested' );
 			data.labels = labels;
 		}
 
-		sendCustomMail(data)
-			.then((result) => {
+		sendCustomMail( data )
+			.then( ( result ) => {
 				const message = [];
 				message.push(
-					`${result.sent_count} ${__(
+					`${ result.sent_count } ${ __(
 						'sent',
 						'fair-audience-experimental'
-					)}`
+					) }`
 				);
-				if (result.failed_count > 0) {
+				if ( result.failed_count > 0 ) {
 					message.push(
-						`${result.failed_count} ${__(
+						`${ result.failed_count } ${ __(
 							'failed',
 							'fair-audience-experimental'
-						)}`
+						) }`
 					);
 				}
-				if (result.skipped_count > 0) {
+				if ( result.skipped_count > 0 ) {
 					message.push(
-						`${result.skipped_count} ${__(
+						`${ result.skipped_count } ${ __(
 							'skipped',
 							'fair-audience-experimental'
-						)}`
+						) }`
 					);
 				}
 
-				setNotice({
+				setNotice( {
 					status: 'success',
-					message: message.join(', '),
-				});
-				setSubject('');
+					message: message.join( ', ' ),
+				} );
+				setSubject( '' );
 				clearEditorContent();
-				setEventDateId('');
-				loadCustomMails().then(setMails);
-				setIsSending(false);
-			})
-			.catch((error) => {
-				console.error('[Fair Audience] Failed to send mail:', error);
-				setNotice({
+				setEventDateId( '' );
+				loadCustomMails().then( setMails );
+				setIsSending( false );
+			} )
+			.catch( ( error ) => {
+				console.error( '[Fair Audience] Failed to send mail:', error );
+				setNotice( {
 					status: 'error',
 					message:
 						error.message ||
@@ -465,9 +467,9 @@ export default function CustomMail() {
 							'Failed to send mail.',
 							'fair-audience-experimental'
 						),
-				});
-				setIsSending(false);
-			});
+				} );
+				setIsSending( false );
+			} );
 	};
 
 	/**
@@ -475,9 +477,9 @@ export default function CustomMail() {
 	 *
 	 * @param {number} id Mail ID
 	 */
-	const handleDelete = (id) => {
+	const handleDelete = ( id ) => {
 		if (
-			!confirm(
+			! confirm(
 				__(
 					'Are you sure you want to delete this record?',
 					'fair-audience-experimental'
@@ -487,23 +489,23 @@ export default function CustomMail() {
 			return;
 		}
 
-		deleteCustomMail(id)
-			.then(() => {
-				setNotice({
+		deleteCustomMail( id )
+			.then( () => {
+				setNotice( {
 					status: 'success',
 					message: __(
 						'Record deleted.',
 						'fair-audience-experimental'
 					),
-				});
-				loadCustomMails().then(setMails);
-			})
-			.catch((error) => {
+				} );
+				loadCustomMails().then( setMails );
+			} )
+			.catch( ( error ) => {
 				console.error(
 					'[Fair Audience] Failed to delete record:',
 					error
 				);
-				setNotice({
+				setNotice( {
 					status: 'error',
 					message:
 						error.message ||
@@ -511,8 +513,8 @@ export default function CustomMail() {
 							'Failed to delete record.',
 							'fair-audience-experimental'
 						),
-				});
-			});
+				} );
+			} );
 	};
 
 	/**
@@ -521,23 +523,23 @@ export default function CustomMail() {
 	 * @param {string} dateString Date string
 	 * @return {string} Formatted date
 	 */
-	const formatDate = (dateString) => {
-		if (!dateString) {
+	const formatDate = ( dateString ) => {
+		if ( ! dateString ) {
 			return '-';
 		}
-		return new Date(dateString).toLocaleString();
+		return new Date( dateString ).toLocaleString();
 	};
 
-	if (isLoading) {
+	if ( isLoading ) {
 		return (
 			<div className="wrap">
-				<h1>{__('Custom Mail', 'fair-audience-experimental')}</h1>
+				<h1>{ __( 'Custom Mail', 'fair-audience-experimental' ) }</h1>
 				<div
-					style={{
+					style={ {
 						display: 'flex',
 						justifyContent: 'center',
 						padding: '2rem',
-					}}
+					} }
 				>
 					<Spinner />
 				</div>
@@ -547,57 +549,66 @@ export default function CustomMail() {
 
 	return (
 		<div className="wrap">
-			<h1>{__('Custom Mail', 'fair-audience-experimental')}</h1>
+			<h1>{ __( 'Custom Mail', 'fair-audience-experimental' ) }</h1>
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
+					status={ notice.status }
 					isDismissible
-					onDismiss={() => setNotice(null)}
-					style={{ marginBottom: '1rem' }}
+					onDismiss={ () => setNotice( null ) }
+					style={ { marginBottom: '1rem' } }
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
-			{/* Send Custom Mail Form */}
-			<Card style={{ marginBottom: '2rem' }}>
+			{ /* Send Custom Mail Form */ }
+			<Card style={ { marginBottom: '2rem' } }>
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
-						{__('Send Custom Mail', 'fair-audience-experimental')}
+					<h2 style={ { margin: 0 } }>
+						{ __(
+							'Send Custom Mail',
+							'fair-audience-experimental'
+						) }
 					</h2>
 				</CardHeader>
 				<CardBody>
-					<form onSubmit={handleSubmit}>
+					<form onSubmit={ handleSubmit }>
 						<TextControl
-							label={__('Subject', 'fair-audience-experimental')}
-							value={subject}
-							onChange={setSubject}
-							disabled={isSending}
+							label={ __(
+								'Subject',
+								'fair-audience-experimental'
+							) }
+							value={ subject }
+							onChange={ setSubject }
+							disabled={ isSending }
 						/>
 
-						<div style={{ marginBottom: '16px' }}>
+						<div style={ { marginBottom: '16px' } }>
 							<label
 								htmlFor="custom-mail-content"
-								style={{
+								style={ {
 									display: 'block',
 									marginBottom: '8px',
 									fontWeight: '600',
-								}}
+								} }
 							>
-								{__('Content', 'fair-audience-experimental')}
+								{ __(
+									'Content',
+									'fair-audience-experimental'
+								) }
 							</label>
 							<textarea
 								id="custom-mail-content"
-								rows={10}
-								style={{ width: '100%' }}
-								disabled={isSending}
+								rows={ 10 }
+								style={ { width: '100%' } }
+								disabled={ isSending }
 							/>
-							<div style={{ marginTop: '8px' }}>
+							<div style={ { marginTop: '8px' } }>
 								<Button
 									isSecondary
 									isSmall
-									onClick={() =>
+									onClick={ () =>
 										insertPlaceholderLink(
 											'{photo_upload_url}',
 											__(
@@ -606,17 +617,17 @@ export default function CustomMail() {
 											)
 										)
 									}
-									disabled={isSending}
+									disabled={ isSending }
 								>
-									{__(
+									{ __(
 										'Insert photo upload link',
 										'fair-audience-experimental'
-									)}
+									) }
 								</Button>
 								<Button
 									isSecondary
 									isSmall
-									onClick={() =>
+									onClick={ () =>
 										insertPlaceholderLink(
 											'{event_page_url}',
 											__(
@@ -625,10 +636,10 @@ export default function CustomMail() {
 											)
 										)
 									}
-									disabled={isSending || !eventDateId}
-									style={{ marginLeft: '8px' }}
+									disabled={ isSending || ! eventDateId }
+									style={ { marginLeft: '8px' } }
 									title={
-										!eventDateId
+										! eventDateId
 											? __(
 													'Select an event below to enable this link.',
 													'fair-audience-experimental'
@@ -636,46 +647,46 @@ export default function CustomMail() {
 											: undefined
 									}
 								>
-									{__(
+									{ __(
 										'Insert event page link',
 										'fair-audience-experimental'
-									)}
+									) }
 								</Button>
 								<span
-									style={{
+									style={ {
 										display: 'inline-flex',
 										alignItems: 'center',
 										gap: '4px',
 										marginLeft: '8px',
 										position: 'relative',
-									}}
+									} }
 								>
 									<TextControl
-										placeholder={__(
+										placeholder={ __(
 											'Search page…',
 											'fair-audience-experimental'
-										)}
+										) }
 										value={
 											selectedPage
 												? selectedPage.title.rendered
 												: pageSearch
 										}
-										onChange={(value) => {
-											setPageSearch(value);
-											setSelectedPage(null);
-										}}
-										disabled={isSending}
+										onChange={ ( value ) => {
+											setPageSearch( value );
+											setSelectedPage( null );
+										} }
+										disabled={ isSending }
 										__nextHasNoMarginBottom
-										style={{
+										style={ {
 											width: '180px',
 											marginBottom: 0,
-										}}
+										} }
 									/>
-									{isSearchingPages && <Spinner />}
-									{pageResults.length > 0 &&
-										!selectedPage && (
+									{ isSearchingPages && <Spinner /> }
+									{ pageResults.length > 0 &&
+										! selectedPage && (
 											<ul
-												style={{
+												style={ {
 													position: 'absolute',
 													top: '100%',
 													left: 0,
@@ -691,54 +702,59 @@ export default function CustomMail() {
 													width: '280px',
 													boxShadow:
 														'0 2px 6px rgba(0,0,0,0.15)',
-												}}
+												} }
 											>
-												{pageResults.map((page) => (
+												{ pageResults.map( ( page ) => (
 													<li
-														key={page.id}
-														style={{
+														key={ page.id }
+														style={ {
 															padding: '6px 10px',
 															cursor: 'pointer',
-														}}
-														onMouseDown={() => {
+														} }
+														onMouseDown={ () => {
 															setSelectedPage(
 																page
 															);
-															setPageSearch('');
-															setPageResults([]);
-														}}
+															setPageSearch( '' );
+															setPageResults(
+																[]
+															);
+														} }
 													>
-														{page.title.rendered}
+														{ page.title.rendered }
 													</li>
-												))}
+												) ) }
 											</ul>
-										)}
+										) }
 									<Button
 										isSecondary
 										isSmall
-										onClick={() => {
-											if (selectedPage) {
+										onClick={ () => {
+											if ( selectedPage ) {
 												insertPlaceholderLink(
-													`{token_link_${selectedPage.id}}`,
+													`{token_link_${ selectedPage.id }}`,
 													selectedPage.title.rendered
 												);
 											}
-										}}
-										disabled={isSending || !selectedPage}
+										} }
+										disabled={ isSending || ! selectedPage }
 									>
-										{__(
+										{ __(
 											'Insert token link',
 											'fair-audience-experimental'
-										)}
+										) }
 									</Button>
 								</span>
 							</div>
 						</div>
 
 						<SelectControl
-							label={__('Event', 'fair-audience-experimental')}
-							value={eventDateId}
-							options={[
+							label={ __(
+								'Event',
+								'fair-audience-experimental'
+							) }
+							value={ eventDateId }
+							options={ [
 								{
 									label: __(
 										'-- All audience --',
@@ -746,206 +762,211 @@ export default function CustomMail() {
 									),
 									value: '',
 								},
-								...eventDates.map((ed) => ({
+								...eventDates.map( ( ed ) => ( {
 									label: ed.display_label,
-									value: String(ed.id),
-								})),
-							]}
-							onChange={setEventDateId}
-							disabled={isSending}
+									value: String( ed.id ),
+								} ) ),
+							] }
+							onChange={ setEventDateId }
+							disabled={ isSending }
 						/>
 
-						{eventDateId && (
-							<fieldset style={{ marginBottom: '16px' }}>
+						{ eventDateId && (
+							<fieldset style={ { marginBottom: '16px' } }>
 								<legend
-									style={{
+									style={ {
 										fontWeight: '600',
 										marginBottom: '8px',
-									}}
+									} }
 								>
-									{__(
+									{ __(
 										'Audience',
 										'fair-audience-experimental'
-									)}
+									) }
 								</legend>
 								<CheckboxControl
-									label={__(
+									label={ __(
 										'Participants',
 										'fair-audience-experimental'
-									)}
-									checked={includeSignedUp}
-									onChange={setIncludeSignedUp}
-									disabled={isSending}
+									) }
+									checked={ includeSignedUp }
+									onChange={ setIncludeSignedUp }
+									disabled={ isSending }
 								/>
 								<CheckboxControl
-									label={__(
+									label={ __(
 										'Collaborators',
 										'fair-audience-experimental'
-									)}
-									checked={includeCollaborators}
-									onChange={setIncludeCollaborators}
-									disabled={isSending}
+									) }
+									checked={ includeCollaborators }
+									onChange={ setIncludeCollaborators }
+									disabled={ isSending }
 								/>
 								<CheckboxControl
-									label={__(
+									label={ __(
 										'Interested',
 										'fair-audience-experimental'
-									)}
-									checked={includeInterested}
-									onChange={setIncludeInterested}
-									disabled={isSending}
+									) }
+									checked={ includeInterested }
+									onChange={ setIncludeInterested }
+									disabled={ isSending }
 								/>
 							</fieldset>
-						)}
+						) }
 
 						<CheckboxControl
-							label={__(
+							label={ __(
 								'Marketing',
 								'fair-audience-experimental'
-							)}
-							checked={isMarketing}
-							onChange={setIsMarketing}
-							help={__(
+							) }
+							checked={ isMarketing }
+							onChange={ setIsMarketing }
+							help={ __(
 								'If checked, only sends to participants who consented to marketing communications.',
 								'fair-audience-experimental'
-							)}
-							disabled={isSending}
+							) }
+							disabled={ isSending }
 						/>
 
-						{groups.length > 0 && (
-							<fieldset style={{ marginBottom: '16px' }}>
+						{ groups.length > 0 && (
+							<fieldset style={ { marginBottom: '16px' } }>
 								<legend
-									style={{
+									style={ {
 										fontWeight: '600',
 										marginBottom: '8px',
-									}}
+									} }
 								>
-									{__('Groups', 'fair-audience-experimental')}
+									{ __(
+										'Groups',
+										'fair-audience-experimental'
+									) }
 								</legend>
 								<p
-									style={{
+									style={ {
 										color: '#666',
 										fontSize: '12px',
 										margin: '0 0 8px',
-									}}
+									} }
 								>
-									{__(
+									{ __(
 										'If selected, only sends to members of these groups.',
 										'fair-audience-experimental'
-									)}
+									) }
 								</p>
-								{groups.map((group) => (
+								{ groups.map( ( group ) => (
 									<CheckboxControl
-										key={group.id}
-										label={`${group.name} (${group.member_count})`}
-										checked={selectedGroupIds.includes(
+										key={ group.id }
+										label={ `${ group.name } (${ group.member_count })` }
+										checked={ selectedGroupIds.includes(
 											group.id
-										)}
-										onChange={() => toggleGroup(group.id)}
-										disabled={isSending}
+										) }
+										onChange={ () =>
+											toggleGroup( group.id )
+										}
+										disabled={ isSending }
 									/>
-								))}
+								) ) }
 							</fieldset>
-						)}
+						) }
 
-						{/* Recipient Preview */}
-						{isLoadingRecipients && (
+						{ /* Recipient Preview */ }
+						{ isLoadingRecipients && (
 							<div
-								style={{
+								style={ {
 									display: 'flex',
 									alignItems: 'center',
 									gap: '8px',
 									marginBottom: '16px',
-								}}
+								} }
 							>
 								<Spinner />
 								<span>
-									{__(
+									{ __(
 										'Loading recipients...',
 										'fair-audience-experimental'
-									)}
+									) }
 								</span>
 							</div>
-						)}
+						) }
 
-						{!isLoadingRecipients && recipients.length > 0 && (
-							<div style={{ marginBottom: '16px' }}>
+						{ ! isLoadingRecipients && recipients.length > 0 && (
+							<div style={ { marginBottom: '16px' } }>
 								<p>
 									<strong>
-										{sprintf(
+										{ sprintf(
 											/* translators: %1$d: active recipients count, %2$d: total count, %3$d: skipped count */
 											__(
 												'%1$d recipients (%2$d skipped)',
 												'fair-audience-experimental'
 											),
 											recipients.filter(
-												(r) =>
-													!skippedIds.has(
+												( r ) =>
+													! skippedIds.has(
 														r.participant_id
 													) &&
 													r.has_valid_email &&
-													!r.would_skip_marketing
+													! r.would_skip_marketing
 											).length,
 											recipients.filter(
-												(r) =>
+												( r ) =>
 													skippedIds.has(
 														r.participant_id
 													) ||
-													!r.has_valid_email ||
+													! r.has_valid_email ||
 													r.would_skip_marketing
 											).length
-										)}
+										) }
 									</strong>
 								</p>
 								<table
 									className="wp-list-table widefat fixed striped"
-									style={{ marginTop: '8px' }}
+									style={ { marginTop: '8px' } }
 								>
 									<thead>
 										<tr>
-											<th style={{ width: '60px' }}>
-												{__(
+											<th style={ { width: '60px' } }>
+												{ __(
 													'Skip',
 													'fair-audience-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Name',
 													'fair-audience-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Email',
 													'fair-audience-experimental'
-												)}
+												) }
 											</th>
-											<th style={{ width: '120px' }}>
-												{__(
+											<th style={ { width: '120px' } }>
+												{ __(
 													'Label',
 													'fair-audience-experimental'
-												)}
+												) }
 											</th>
-											<th style={{ width: '100px' }}>
-												{__(
+											<th style={ { width: '100px' } }>
+												{ __(
 													'Status',
 													'fair-audience-experimental'
-												)}
+												) }
 											</th>
 										</tr>
 									</thead>
 									<tbody>
-										{recipients.map((r) => {
+										{ recipients.map( ( r ) => {
 											const isSkipped = skippedIds.has(
 												r.participant_id
 											);
 											const hasIssue =
-												!r.has_valid_email ||
+												! r.has_valid_email ||
 												r.would_skip_marketing;
 											return (
 												<tr
-													key={r.participant_id}
+													key={ r.participant_id }
 													style={
 														isSkipped || hasIssue
 															? {
@@ -957,22 +978,26 @@ export default function CustomMail() {
 													<td>
 														<input
 															type="checkbox"
-															checked={isSkipped}
-															onChange={() =>
+															checked={
+																isSkipped
+															}
+															onChange={ () =>
 																toggleSkip(
 																	r.participant_id
 																)
 															}
-															disabled={isSending}
+															disabled={
+																isSending
+															}
 														/>
 													</td>
 													<td>
-														{r.name} {r.surname}
+														{ r.name } { r.surname }
 													</td>
-													<td>{r.email || '-'}</td>
-													<td>{r.label || '-'}</td>
+													<td>{ r.email || '-' }</td>
+													<td>{ r.label || '-' }</td>
 													<td>
-														{!r.has_valid_email
+														{ ! r.has_valid_email
 															? __(
 																	'No email',
 																	'fair-audience-experimental'
@@ -990,152 +1015,160 @@ export default function CustomMail() {
 															: __(
 																	'Will send',
 																	'fair-audience-experimental'
-															  )}
+															  ) }
 													</td>
 												</tr>
 											);
-										})}
+										} ) }
 									</tbody>
 								</table>
 							</div>
-						)}
+						) }
 
-						{!isLoadingRecipients && recipients.length === 0 && (
+						{ ! isLoadingRecipients && recipients.length === 0 && (
 							<p
-								style={{
+								style={ {
 									color: '#666',
 									marginBottom: '16px',
-								}}
+								} }
 							>
-								{__(
+								{ __(
 									'No matching recipients.',
 									'fair-audience-experimental'
-								)}
+								) }
 							</p>
-						)}
+						) }
 
 						<Button
 							variant="primary"
 							type="submit"
-							disabled={isSending}
-							isBusy={isSending}
+							disabled={ isSending }
+							isBusy={ isSending }
 						>
-							{isSending
-								? __('Sending...', 'fair-audience-experimental')
-								: __('Send Mail', 'fair-audience-experimental')}
+							{ isSending
+								? __(
+										'Sending...',
+										'fair-audience-experimental'
+								  )
+								: __(
+										'Send Mail',
+										'fair-audience-experimental'
+								  ) }
 						</Button>
 					</form>
 				</CardBody>
 			</Card>
 
-			{/* Mail History */}
+			{ /* Mail History */ }
 			<Card>
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
-						{__('Mail History', 'fair-audience-experimental')}
+					<h2 style={ { margin: 0 } }>
+						{ __( 'Mail History', 'fair-audience-experimental' ) }
 					</h2>
 				</CardHeader>
 				<CardBody>
-					{mails.length === 0 ? (
-						<p style={{ color: '#666' }}>
-							{__(
+					{ mails.length === 0 ? (
+						<p style={ { color: '#666' } }>
+							{ __(
 								'No messages sent yet.',
 								'fair-audience-experimental'
-							)}
+							) }
 						</p>
 					) : (
 						<table
 							className="wp-list-table widefat fixed striped"
-							style={{ marginTop: 0 }}
+							style={ { marginTop: 0 } }
 						>
 							<thead>
 								<tr>
-									<th style={{ width: '25%' }}>
-										{__(
+									<th style={ { width: '25%' } }>
+										{ __(
 											'Subject',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
-									<th style={{ width: '20%' }}>
-										{__(
+									<th style={ { width: '20%' } }>
+										{ __(
 											'Event',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
-									<th style={{ width: '8%' }}>
-										{__(
+									<th style={ { width: '8%' } }>
+										{ __(
 											'Sent',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
-									<th style={{ width: '8%' }}>
-										{__(
+									<th style={ { width: '8%' } }>
+										{ __(
 											'Failed',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
-									<th style={{ width: '9%' }}>
-										{__(
+									<th style={ { width: '9%' } }>
+										{ __(
 											'Skipped',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
-									<th style={{ width: '18%' }}>
-										{__(
+									<th style={ { width: '18%' } }>
+										{ __(
 											'Date',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
-									<th style={{ width: '12%' }}>
-										{__(
+									<th style={ { width: '12%' } }>
+										{ __(
 											'Actions',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								{mails.map((mail) => (
-									<tr key={mail.id}>
-										<td>{mail.subject}</td>
-										<td>{mail.event_title || '-'}</td>
-										<td>{mail.sent_count}</td>
-										<td>{mail.failed_count}</td>
-										<td>{mail.skipped_count}</td>
-										<td>{formatDate(mail.created_at)}</td>
+								{ mails.map( ( mail ) => (
+									<tr key={ mail.id }>
+										<td>{ mail.subject }</td>
+										<td>{ mail.event_title || '-' }</td>
+										<td>{ mail.sent_count }</td>
+										<td>{ mail.failed_count }</td>
+										<td>{ mail.skipped_count }</td>
+										<td>
+											{ formatDate( mail.created_at ) }
+										</td>
 										<td>
 											<Button
 												isSmall
-												onClick={() =>
-													handleDuplicate(mail)
+												onClick={ () =>
+													handleDuplicate( mail )
 												}
-												style={{
+												style={ {
 													marginRight: '8px',
-												}}
+												} }
 											>
-												{__(
+												{ __(
 													'Duplicate',
 													'fair-audience-experimental'
-												)}
+												) }
 											</Button>
 											<Button
 												isDestructive
 												isSmall
-												onClick={() =>
-													handleDelete(mail.id)
+												onClick={ () =>
+													handleDelete( mail.id )
 												}
 											>
-												{__(
+												{ __(
 													'Delete',
 													'fair-audience-experimental'
-												)}
+												) }
 											</Button>
 										</td>
 									</tr>
-								))}
+								) ) }
 							</tbody>
 						</table>
-					)}
+					) }
 				</CardBody>
 			</Card>
 		</div>

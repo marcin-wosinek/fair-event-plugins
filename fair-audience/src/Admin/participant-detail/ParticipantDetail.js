@@ -11,93 +11,93 @@ import {
 } from '@wordpress/components';
 import ParticipantEditModal from '../components/ParticipantEditModal.js';
 
-function formatDateTime(dateString) {
-	if (!dateString) {
+function formatDateTime( dateString ) {
+	if ( ! dateString ) {
 		return '';
 	}
-	const date = new Date(dateString + 'Z');
+	const date = new Date( dateString + 'Z' );
 	return date.toLocaleString();
 }
 
-function formatEventDate(dateString) {
-	if (!dateString) {
+function formatEventDate( dateString ) {
+	if ( ! dateString ) {
 		return '—';
 	}
-	const date = new Date(dateString.replace(' ', 'T'));
-	if (Number.isNaN(date.getTime())) {
+	const date = new Date( dateString.replace( ' ', 'T' ) );
+	if ( Number.isNaN( date.getTime() ) ) {
 		return dateString;
 	}
 	return date.toLocaleString();
 }
 
 const LABEL_DISPLAY = {
-	collaborator: __('Collaborator', 'fair-audience'),
-	signed_up: __('Signed up', 'fair-audience'),
-	interested: __('Interested', 'fair-audience'),
+	collaborator: __( 'Collaborator', 'fair-audience' ),
+	signed_up: __( 'Signed up', 'fair-audience' ),
+	interested: __( 'Interested', 'fair-audience' ),
 };
 
 const TRANSACTION_STATUS_DISPLAY = {
-	success: { color: '#00a32a', label: __('Paid', 'fair-audience') },
-	pending: { color: '#dba617', label: __('Pending', 'fair-audience') },
-	failed: { color: '#d63638', label: __('Failed', 'fair-audience') },
+	success: { color: '#00a32a', label: __( 'Paid', 'fair-audience' ) },
+	pending: { color: '#dba617', label: __( 'Pending', 'fair-audience' ) },
+	failed: { color: '#d63638', label: __( 'Failed', 'fair-audience' ) },
 };
 
 const EMAIL_PROFILE_DISPLAY = {
-	minimal: __('Minimal', 'fair-audience'),
-	marketing: __('Marketing', 'fair-audience'),
-	declined: __('No marketing', 'fair-audience'),
+	minimal: __( 'Minimal', 'fair-audience' ),
+	marketing: __( 'Marketing', 'fair-audience' ),
+	declined: __( 'No marketing', 'fair-audience' ),
 };
 
 const STATUS_DISPLAY = {
-	pending: __('Pending', 'fair-audience'),
-	confirmed: __('Confirmed', 'fair-audience'),
+	pending: __( 'Pending', 'fair-audience' ),
+	confirmed: __( 'Confirmed', 'fair-audience' ),
 };
 
 export default function ParticipantDetail() {
-	const urlParams = new URLSearchParams(window.location.search);
-	const participantId = urlParams.get('participant_id');
+	const urlParams = new URLSearchParams( window.location.search );
+	const participantId = urlParams.get( 'participant_id' );
 
-	const [participant, setParticipant] = useState(null);
-	const [activity, setActivity] = useState(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [ participant, setParticipant ] = useState( null );
+	const [ activity, setActivity ] = useState( null );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ isEditModalOpen, setIsEditModalOpen ] = useState( false );
 
-	const loadParticipant = useCallback(() => {
-		if (!participantId) {
-			setIsLoading(false);
-			setError(__('No participant ID provided.', 'fair-audience'));
+	const loadParticipant = useCallback( () => {
+		if ( ! participantId ) {
+			setIsLoading( false );
+			setError( __( 'No participant ID provided.', 'fair-audience' ) );
 			return;
 		}
 
-		Promise.all([
-			apiFetch({
-				path: `/fair-audience/v1/participants/${participantId}`,
-			}),
-			apiFetch({
-				path: `/fair-audience/v1/participants/${participantId}/activity`,
-			}),
-		])
-			.then(([profileData, activityData]) => {
-				setParticipant(profileData);
-				setActivity(activityData);
-			})
-			.catch(() => {
-				setError(__('Participant not found.', 'fair-audience'));
-			})
-			.finally(() => {
-				setIsLoading(false);
-			});
-	}, [participantId]);
+		Promise.all( [
+			apiFetch( {
+				path: `/fair-audience/v1/participants/${ participantId }`,
+			} ),
+			apiFetch( {
+				path: `/fair-audience/v1/participants/${ participantId }/activity`,
+			} ),
+		] )
+			.then( ( [ profileData, activityData ] ) => {
+				setParticipant( profileData );
+				setActivity( activityData );
+			} )
+			.catch( () => {
+				setError( __( 'Participant not found.', 'fair-audience' ) );
+			} )
+			.finally( () => {
+				setIsLoading( false );
+			} );
+	}, [ participantId ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadParticipant();
-	}, [loadParticipant]);
+	}, [ loadParticipant ] );
 
 	const handleDelete = () => {
 		// eslint-disable-next-line no-alert
 		if (
-			!confirm(
+			! confirm(
 				__(
 					'Are you sure you want to delete this participant?',
 					'fair-audience'
@@ -107,21 +107,21 @@ export default function ParticipantDetail() {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/participants/${participantId}`,
+		apiFetch( {
+			path: `/fair-audience/v1/participants/${ participantId }`,
 			method: 'DELETE',
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				window.location.href =
 					'admin.php?page=fair-audience-all-participants';
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-alert
-				alert(__('Error: ', 'fair-audience') + err.message);
-			});
+				alert( __( 'Error: ', 'fair-audience' ) + err.message );
+			} );
 	};
 
-	if (isLoading) {
+	if ( isLoading ) {
 		return (
 			<div className="wrap fair-audience-participant-detail fair-audience-participant-detail--loading">
 				<Spinner />
@@ -129,21 +129,21 @@ export default function ParticipantDetail() {
 		);
 	}
 
-	if (error) {
+	if ( error ) {
 		return (
 			<div className="wrap fair-audience-participant-detail">
-				<Notice status="error" isDismissible={false}>
-					{error}
+				<Notice status="error" isDismissible={ false }>
+					{ error }
 				</Notice>
 			</div>
 		);
 	}
 
-	if (!participant) {
+	if ( ! participant ) {
 		return null;
 	}
 
-	const fullName = `${participant.name || ''} ${
+	const fullName = `${ participant.name || '' } ${
 		participant.surname || ''
 	}`.trim();
 	const events = activity?.events || [];
@@ -153,101 +153,107 @@ export default function ParticipantDetail() {
 		<div className="wrap fair-audience-participant-detail">
 			<p className="fair-audience-participant-detail__back">
 				<a href="admin.php?page=fair-audience-all-participants">
-					&larr; {__('All participants', 'fair-audience')}
+					&larr; { __( 'All participants', 'fair-audience' ) }
 				</a>
 			</p>
 			<div className="fair-audience-participant-detail__header">
-				<h1>{fullName || __('Participant', 'fair-audience')}</h1>
+				<h1>{ fullName || __( 'Participant', 'fair-audience' ) }</h1>
 				<div className="fair-audience-participant-detail__actions">
 					<Button
 						variant="secondary"
-						onClick={() => setIsEditModalOpen(true)}
+						onClick={ () => setIsEditModalOpen( true ) }
 					>
-						{__('Edit participant', 'fair-audience')}
+						{ __( 'Edit participant', 'fair-audience' ) }
 					</Button>
 					<Button
 						variant="secondary"
 						isDestructive
-						onClick={handleDelete}
+						onClick={ handleDelete }
 					>
-						{__('Delete participant', 'fair-audience')}
+						{ __( 'Delete participant', 'fair-audience' ) }
 					</Button>
 				</div>
 			</div>
 
 			<Card className="fair-audience-participant-detail__card">
 				<CardHeader>
-					<h2>{__('Profile', 'fair-audience')}</h2>
+					<h2>{ __( 'Profile', 'fair-audience' ) }</h2>
 				</CardHeader>
 				<CardBody>
 					<table className="widefat striped fair-audience-participant-detail__profile-table">
 						<tbody>
 							<tr>
-								<th>{__('Name', 'fair-audience')}</th>
-								<td>{fullName || '—'}</td>
+								<th>{ __( 'Name', 'fair-audience' ) }</th>
+								<td>{ fullName || '—' }</td>
 							</tr>
 							<tr>
-								<th>{__('Email', 'fair-audience')}</th>
-								<td>{participant.email || '—'}</td>
+								<th>{ __( 'Email', 'fair-audience' ) }</th>
+								<td>{ participant.email || '—' }</td>
 							</tr>
 							<tr>
-								<th>{__('Status', 'fair-audience')}</th>
+								<th>{ __( 'Status', 'fair-audience' ) }</th>
 								<td>
-									{STATUS_DISPLAY[participant.status] ||
+									{ STATUS_DISPLAY[ participant.status ] ||
 										participant.status ||
-										'—'}
+										'—' }
 								</td>
 							</tr>
 							<tr>
-								<th>{__('Email profile', 'fair-audience')}</th>
+								<th>
+									{ __( 'Email profile', 'fair-audience' ) }
+								</th>
 								<td>
-									{EMAIL_PROFILE_DISPLAY[
+									{ EMAIL_PROFILE_DISPLAY[
 										participant.email_profile
 									] ||
 										participant.email_profile ||
-										'—'}
+										'—' }
 								</td>
 							</tr>
 							<tr>
-								<th>{__('Weekly summary', 'fair-audience')}</th>
+								<th>
+									{ __( 'Weekly summary', 'fair-audience' ) }
+								</th>
 								<td>
-									{participant.weekly_summary_opt_out
-										? __('Opted out', 'fair-audience')
-										: __('Subscribed', 'fair-audience')}
+									{ participant.weekly_summary_opt_out
+										? __( 'Opted out', 'fair-audience' )
+										: __( 'Subscribed', 'fair-audience' ) }
 								</td>
 							</tr>
 							<tr>
-								<th>{__('Phone', 'fair-audience')}</th>
-								<td>{participant.phone || '—'}</td>
+								<th>{ __( 'Phone', 'fair-audience' ) }</th>
+								<td>{ participant.phone || '—' }</td>
 							</tr>
 							<tr>
-								<th>{__('Instagram', 'fair-audience')}</th>
+								<th>{ __( 'Instagram', 'fair-audience' ) }</th>
 								<td>
-									{participant.instagram ? (
+									{ participant.instagram ? (
 										<a
-											href={`https://instagram.com/${participant.instagram}`}
+											href={ `https://instagram.com/${ participant.instagram }` }
 											target="_blank"
 											rel="noopener noreferrer"
 										>
-											@{participant.instagram}
+											@{ participant.instagram }
 										</a>
 									) : (
 										'—'
-									)}
+									) }
 								</td>
 							</tr>
 							<tr>
-								<th>{__('WordPress user', 'fair-audience')}</th>
+								<th>
+									{ __( 'WordPress user', 'fair-audience' ) }
+								</th>
 								<td>
-									{participant.wp_user
+									{ participant.wp_user
 										? participant.wp_user.display_name
-										: '—'}
+										: '—' }
 								</td>
 							</tr>
 							<tr>
-								<th>{__('Created', 'fair-audience')}</th>
+								<th>{ __( 'Created', 'fair-audience' ) }</th>
 								<td>
-									{formatDateTime(participant.created_at)}
+									{ formatDateTime( participant.created_at ) }
 								</td>
 							</tr>
 						</tbody>
@@ -258,73 +264,78 @@ export default function ParticipantDetail() {
 			<Card className="fair-audience-participant-detail__card">
 				<CardHeader>
 					<h2>
-						{__('Events', 'fair-audience')} ({events.length})
+						{ __( 'Events', 'fair-audience' ) } ({ events.length })
 					</h2>
 				</CardHeader>
 				<CardBody className="fair-audience-participant-detail__table">
-					{events.length === 0 ? (
-						<p>{__('No events yet.', 'fair-audience')}</p>
+					{ events.length === 0 ? (
+						<p>{ __( 'No events yet.', 'fair-audience' ) }</p>
 					) : (
 						<table className="wp-list-table widefat striped">
 							<thead>
 								<tr>
-									<th>{__('Event', 'fair-audience')}</th>
-									<th>{__('Date', 'fair-audience')}</th>
-									<th>{__('Role', 'fair-audience')}</th>
+									<th>{ __( 'Event', 'fair-audience' ) }</th>
+									<th>{ __( 'Date', 'fair-audience' ) }</th>
+									<th>{ __( 'Role', 'fair-audience' ) }</th>
 									<th>
-										{__('Signed up at', 'fair-audience')}
+										{ __(
+											'Signed up at',
+											'fair-audience'
+										) }
 									</th>
 									<th>
-										{__('Transaction', 'fair-audience')}
+										{ __( 'Transaction', 'fair-audience' ) }
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								{events.map((ev) => {
+								{ events.map( ( ev ) => {
 									const manageUrl = ev.event_date_id
-										? `admin.php?page=fair-events-manage-event&event_date_id=${ev.event_date_id}&tab=audience`
+										? `admin.php?page=fair-events-manage-event&event_date_id=${ ev.event_date_id }&tab=audience`
 										: null;
 									const transactionUrl = ev.transaction_id
-										? `admin.php?page=fair-payments-connector-transaction&transaction_id=${ev.transaction_id}`
+										? `admin.php?page=fair-payments-connector-transaction&transaction_id=${ ev.transaction_id }`
 										: null;
 									return (
-										<tr key={ev.id}>
+										<tr key={ ev.id }>
 											<td>
-												{manageUrl ? (
-													<a href={manageUrl}>
-														{ev.event_title ||
+												{ manageUrl ? (
+													<a href={ manageUrl }>
+														{ ev.event_title ||
 															__(
 																'(untitled)',
 																'fair-audience'
-															)}
+															) }
 													</a>
 												) : (
 													ev.event_title || '—'
-												)}
+												) }
 											</td>
 											<td>
-												{formatEventDate(
+												{ formatEventDate(
 													ev.start_datetime
-												)}
+												) }
 											</td>
 											<td>
-												{LABEL_DISPLAY[ev.label] ||
-													ev.label}
+												{ LABEL_DISPLAY[ ev.label ] ||
+													ev.label }
 											</td>
 											<td>
-												{formatDateTime(ev.created_at)}
+												{ formatDateTime(
+													ev.created_at
+												) }
 											</td>
 											<td>
-												{transactionUrl ? (
+												{ transactionUrl ? (
 													<>
 														<a
 															href={
 																transactionUrl
 															}
 														>
-															{`#${ev.transaction_id}`}
+															{ `#${ ev.transaction_id }` }
 														</a>
-														{ev.transaction_status && (
+														{ ev.transaction_status && (
 															<span
 																title={
 																	TRANSACTION_STATUS_DISPLAY[
@@ -332,7 +343,7 @@ export default function ParticipantDetail() {
 																			.transaction_status
 																	]?.label
 																}
-																style={{
+																style={ {
 																	marginLeft:
 																		'6px',
 																	color: TRANSACTION_STATUS_DISPLAY[
@@ -341,7 +352,7 @@ export default function ParticipantDetail() {
 																	]?.color,
 																	fontWeight:
 																		'bold',
-																}}
+																} }
 															>
 																{
 																	TRANSACTION_STATUS_DISPLAY[
@@ -350,76 +361,86 @@ export default function ParticipantDetail() {
 																	]?.label
 																}
 															</span>
-														)}
+														) }
 													</>
 												) : (
 													'—'
-												)}
+												) }
 											</td>
 										</tr>
 									);
-								})}
+								} ) }
 							</tbody>
 						</table>
-					)}
+					) }
 				</CardBody>
 			</Card>
 
 			<Card className="fair-audience-participant-detail__card">
 				<CardHeader>
 					<h2>
-						{__('Form submissions', 'fair-audience')} (
-						{submissions.length})
+						{ __( 'Form submissions', 'fair-audience' ) } (
+						{ submissions.length })
 					</h2>
 				</CardHeader>
 				<CardBody className="fair-audience-participant-detail__table">
-					{submissions.length === 0 ? (
-						<p>{__('No form submissions yet.', 'fair-audience')}</p>
+					{ submissions.length === 0 ? (
+						<p>
+							{ __(
+								'No form submissions yet.',
+								'fair-audience'
+							) }
+						</p>
 					) : (
 						<table className="wp-list-table widefat striped">
 							<thead>
 								<tr>
-									<th>{__('Form', 'fair-audience')}</th>
-									<th>{__('Page', 'fair-audience')}</th>
-									<th>{__('Event', 'fair-audience')}</th>
+									<th>{ __( 'Form', 'fair-audience' ) }</th>
+									<th>{ __( 'Page', 'fair-audience' ) }</th>
+									<th>{ __( 'Event', 'fair-audience' ) }</th>
 									<th>
-										{__('Submitted at', 'fair-audience')}
+										{ __(
+											'Submitted at',
+											'fair-audience'
+										) }
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								{submissions.map((sub) => {
-									const detailUrl = `admin.php?page=fair-form-submission-detail&submission_id=${sub.id}`;
+								{ submissions.map( ( sub ) => {
+									const detailUrl = `admin.php?page=fair-form-submission-detail&submission_id=${ sub.id }`;
 									return (
-										<tr key={sub.id}>
+										<tr key={ sub.id }>
 											<td>
-												<a href={detailUrl}>
-													{sub.title ||
+												<a href={ detailUrl }>
+													{ sub.title ||
 														__(
 															'Fair Form',
 															'fair-audience'
-														)}
+														) }
 												</a>
 											</td>
-											<td>{sub.page_title || '—'}</td>
-											<td>{sub.event_title || '—'}</td>
+											<td>{ sub.page_title || '—' }</td>
+											<td>{ sub.event_title || '—' }</td>
 											<td>
-												{formatDateTime(sub.created_at)}
+												{ formatDateTime(
+													sub.created_at
+												) }
 											</td>
 										</tr>
 									);
-								})}
+								} ) }
 							</tbody>
 						</table>
-					)}
+					) }
 				</CardBody>
 			</Card>
 
 			<ParticipantEditModal
-				isOpen={isEditModalOpen}
-				participant={participant}
-				onClose={() => setIsEditModalOpen(false)}
-				onSaved={loadParticipant}
+				isOpen={ isEditModalOpen }
+				participant={ participant }
+				onClose={ () => setIsEditModalOpen( false ) }
+				onSaved={ loadParticipant }
 			/>
 		</div>
 	);

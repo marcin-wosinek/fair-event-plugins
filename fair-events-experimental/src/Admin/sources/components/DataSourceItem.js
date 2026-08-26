@@ -15,189 +15,189 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const DataSourceItem = ({ dataSource, onChange, onRemove, index }) => {
-	const [categories, setCategories] = useState([]);
-	const [loadingCategories, setLoadingCategories] = useState(false);
-	const [error, setError] = useState(null);
+const DataSourceItem = ( { dataSource, onChange, onRemove, index } ) => {
+	const [ categories, setCategories ] = useState( [] );
+	const [ loadingCategories, setLoadingCategories ] = useState( false );
+	const [ error, setError ] = useState( null );
 
 	const sourceType = dataSource.source_type || 'categories';
 	const config = dataSource.config || {};
 
-	useEffect(() => {
-		if (sourceType === 'categories') {
+	useEffect( () => {
+		if ( sourceType === 'categories' ) {
 			loadCategories();
 		}
-	}, [sourceType]);
+	}, [ sourceType ] );
 
 	const loadCategories = async () => {
-		setLoadingCategories(true);
-		setError(null);
+		setLoadingCategories( true );
+		setError( null );
 
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-events/v1/sources/categories',
-			});
-			setCategories(data);
-		} catch (err) {
+			} );
+			setCategories( data );
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to load categories.', 'fair-events')
+				err.message || __( 'Failed to load categories.', 'fair-events' )
 			);
 		} finally {
-			setLoadingCategories(false);
+			setLoadingCategories( false );
 		}
 	};
 
-	const handleSourceTypeChange = (newSourceType) => {
-		onChange({
+	const handleSourceTypeChange = ( newSourceType ) => {
+		onChange( {
 			source_type: newSourceType,
 			config: {},
-		});
+		} );
 	};
 
-	const handleConfigChange = (newConfig) => {
-		onChange({
+	const handleConfigChange = ( newConfig ) => {
+		onChange( {
 			source_type: sourceType,
 			config: newConfig,
-		});
+		} );
 	};
 
-	const handleCategoryToggle = (categoryId, checked) => {
+	const handleCategoryToggle = ( categoryId, checked ) => {
 		const currentIds = config.category_ids || [];
 		const newIds = checked
-			? [...currentIds, categoryId]
-			: currentIds.filter((id) => id !== categoryId);
+			? [ ...currentIds, categoryId ]
+			: currentIds.filter( ( id ) => id !== categoryId );
 
-		handleConfigChange({ ...config, category_ids: newIds });
+		handleConfigChange( { ...config, category_ids: newIds } );
 	};
 
-	const handleUrlChange = (url) => {
-		handleConfigChange({ ...config, url });
+	const handleUrlChange = ( url ) => {
+		handleConfigChange( { ...config, url } );
 	};
 
 	const sourceTypeOptions = [
-		{ label: __('Event Categories', 'fair-events'), value: 'categories' },
-		{ label: __('iCal URL', 'fair-events'), value: 'ical_url' },
+		{ label: __( 'Event Categories', 'fair-events' ), value: 'categories' },
+		{ label: __( 'iCal URL', 'fair-events' ), value: 'ical_url' },
 		{
-			label: __('Fair Events API', 'fair-events'),
+			label: __( 'Fair Events API', 'fair-events' ),
 			value: 'fair_events_api',
 		},
 		{
-			label: __('Meetup API (Coming Soon)', 'fair-events'),
+			label: __( 'Meetup API (Coming Soon)', 'fair-events' ),
 			value: 'meetup_api',
 		},
 	];
 
 	const renderConfigFields = () => {
-		if (sourceType === 'categories') {
+		if ( sourceType === 'categories' ) {
 			return (
-				<VStack spacing={2}>
-					<label style={{ fontWeight: 500 }}>
-						{__('Select Event Categories', 'fair-events')}
+				<VStack spacing={ 2 }>
+					<label style={ { fontWeight: 500 } }>
+						{ __( 'Select Event Categories', 'fair-events' ) }
 					</label>
 
-					{error && <Notice status="error">{error}</Notice>}
+					{ error && <Notice status="error">{ error }</Notice> }
 
-					{loadingCategories && (
+					{ loadingCategories && (
 						<div>
 							<Spinner />
-							<span style={{ marginLeft: '8px' }}>
-								{__('Loading categories...', 'fair-events')}
+							<span style={ { marginLeft: '8px' } }>
+								{ __( 'Loading categories...', 'fair-events' ) }
 							</span>
 						</div>
-					)}
+					) }
 
-					{!loadingCategories && categories.length === 0 && (
-						<Notice status="warning" isDismissible={false}>
-							{__(
+					{ ! loadingCategories && categories.length === 0 && (
+						<Notice status="warning" isDismissible={ false }>
+							{ __(
 								'No categories found. Create categories first.',
 								'fair-events'
-							)}
+							) }
 						</Notice>
-					)}
+					) }
 
-					{!loadingCategories && categories.length > 0 && (
+					{ ! loadingCategories && categories.length > 0 && (
 						<div
-							style={{
+							style={ {
 								border: '1px solid #ddd',
 								borderRadius: '4px',
 								padding: '12px',
 								maxHeight: '200px',
 								overflowY: 'auto',
-							}}
+							} }
 						>
-							{categories.map((category) => (
+							{ categories.map( ( category ) => (
 								<CheckboxControl
-									key={category.id}
-									label={category.name}
-									checked={(
+									key={ category.id }
+									label={ category.name }
+									checked={ (
 										config.category_ids || []
-									).includes(category.id)}
-									onChange={(checked) =>
+									).includes( category.id ) }
+									onChange={ ( checked ) =>
 										handleCategoryToggle(
 											category.id,
 											checked
 										)
 									}
 								/>
-							))}
+							) ) }
 						</div>
-					)}
+					) }
 
 					<p className="description">
-						{__(
+						{ __(
 							'Events from these categories will be included in this source.',
 							'fair-events'
-						)}
+						) }
 					</p>
 				</VStack>
 			);
 		}
 
-		if (sourceType === 'ical_url') {
+		if ( sourceType === 'ical_url' ) {
 			return (
-				<VStack spacing={2}>
+				<VStack spacing={ 2 }>
 					<TextControl
-						label={__('iCal Feed URL', 'fair-events')}
+						label={ __( 'iCal Feed URL', 'fair-events' ) }
 						type="url"
-						value={config.url || ''}
-						onChange={handleUrlChange}
+						value={ config.url || '' }
+						onChange={ handleUrlChange }
 						required
 						placeholder="https://example.com/events.ics"
-						help={__(
+						help={ __(
 							'Enter the URL of the iCal feed to import events from.',
 							'fair-events'
-						)}
+						) }
 					/>
 				</VStack>
 			);
 		}
 
-		if (sourceType === 'fair_events_api') {
+		if ( sourceType === 'fair_events_api' ) {
 			return (
-				<VStack spacing={2}>
+				<VStack spacing={ 2 }>
 					<TextControl
-						label={__('Fair Events API URL', 'fair-events')}
+						label={ __( 'Fair Events API URL', 'fair-events' ) }
 						type="url"
-						value={config.url || ''}
-						onChange={handleUrlChange}
+						value={ config.url || '' }
+						onChange={ handleUrlChange }
 						required
 						placeholder="https://example.com/wp-json/fair-events/v1/events"
-						help={__(
+						help={ __(
 							'Enter the JSON API URL from another Fair Events site. Use /wp-json/fair-events/v1/events for all events, or /wp-json/fair-events/v1/sources/{slug}/json for a specific source.',
 							'fair-events'
-						)}
+						) }
 					/>
 				</VStack>
 			);
 		}
 
-		if (sourceType === 'meetup_api') {
+		if ( sourceType === 'meetup_api' ) {
 			return (
-				<Notice status="info" isDismissible={false}>
-					{__(
+				<Notice status="info" isDismissible={ false }>
+					{ __(
 						'Meetup API integration is coming soon.',
 						'fair-events'
-					)}
+					) }
 				</Notice>
 			);
 		}
@@ -207,37 +207,40 @@ const DataSourceItem = ({ dataSource, onChange, onRemove, index }) => {
 
 	return (
 		<div
-			style={{
+			style={ {
 				border: '1px solid #ddd',
 				borderRadius: '4px',
 				padding: '16px',
 				backgroundColor: '#f9f9f9',
-			}}
+			} }
 		>
-			<VStack spacing={3}>
+			<VStack spacing={ 3 }>
 				<HStack justify="space-between" alignment="center">
-					<h4 style={{ margin: 0 }}>
-						{__('Data Source', 'fair-events')} #{index + 1}
+					<h4 style={ { margin: 0 } }>
+						{ __( 'Data Source', 'fair-events' ) } #{ index + 1 }
 					</h4>
 					<Button
 						variant="tertiary"
 						isDestructive
 						size="small"
-						onClick={onRemove}
+						onClick={ onRemove }
 					>
-						{__('Remove', 'fair-events')}
+						{ __( 'Remove', 'fair-events' ) }
 					</Button>
 				</HStack>
 
 				<SelectControl
-					label={__('Source Type', 'fair-events')}
-					value={sourceType}
-					options={sourceTypeOptions}
-					onChange={handleSourceTypeChange}
-					help={__('Select the type of event source.', 'fair-events')}
+					label={ __( 'Source Type', 'fair-events' ) }
+					value={ sourceType }
+					options={ sourceTypeOptions }
+					onChange={ handleSourceTypeChange }
+					help={ __(
+						'Select the type of event source.',
+						'fair-events'
+					) }
 				/>
 
-				{renderConfigFields()}
+				{ renderConfigFields() }
 			</VStack>
 		</div>
 	);

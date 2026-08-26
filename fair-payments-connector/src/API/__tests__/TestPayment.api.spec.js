@@ -14,27 +14,29 @@ function adminAuth() {
 	return {
 		Authorization:
 			'Basic ' +
-			Buffer.from(`${ADMIN_USER}:${ADMIN_PASS}`).toString('base64'),
+			Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASS }` ).toString(
+				'base64'
+			),
 	};
 }
 
-test.describe('Test payment endpoint', () => {
+test.describe( 'Test payment endpoint', () => {
 	let api;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	test('rejects unauthenticated requests with 401', async () => {
-		const res = await api.post(TEST_PAYMENT_ENDPOINT);
-		expect(res.status()).toBe(401);
-	});
+	test( 'rejects unauthenticated requests with 401', async () => {
+		const res = await api.post( TEST_PAYMENT_ENDPOINT );
+		expect( res.status() ).toBe( 401 );
+	} );
 
-	test('returns a graceful error for an authenticated admin when not connected', async () => {
+	test( 'returns a graceful error for an authenticated admin when not connected', async () => {
 		test.skip(
 			true,
 			'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
@@ -42,11 +44,11 @@ test.describe('Test payment endpoint', () => {
 		// This suite runs without an established OAuth connection, so the site is
 		// expected to be disconnected here. The live-Mollie success path can't be
 		// exercised in CI (no real Mollie creds).
-		const res = await api.post(TEST_PAYMENT_ENDPOINT, {
+		const res = await api.post( TEST_PAYMENT_ENDPOINT, {
 			headers: adminAuth(),
-		});
-		expect(res.status()).toBe(400);
+		} );
+		expect( res.status() ).toBe( 400 );
 		const body = await res.json();
-		expect(body.code).toBe('not_connected');
-	});
-});
+		expect( body.code ).toBe( 'not_connected' );
+	} );
+} );

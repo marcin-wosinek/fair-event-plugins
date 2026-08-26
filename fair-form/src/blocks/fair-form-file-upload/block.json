@@ -7,9 +7,9 @@
 	"category": "widgets",
 	"icon": "upload",
 	"description": "A file upload question for Fair Form",
-	"keywords": ["question", "file", "upload", "image"],
+	"keywords": [ "question", "file", "upload", "image" ],
 	"textdomain": "fair-audience",
-	"ancestor": ["fair-audience/fair-form", "fair-audience/event-signup"],
+	"ancestor": [ "fair-audience/fair-form", "fair-audience/event-signup" ],
 	"supports": {
 		"html": false
 	},

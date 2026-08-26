@@ -9,7 +9,7 @@ import apiFetch from '@wordpress/api-fetch';
  * @return {Promise<Object>} Promise resolving to general settings
  */
 export function loadGeneralSettings() {
-	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
+	return apiFetch( { path: '/wp/v2/settings' } ).then( ( settings ) => {
 		return {
 			slug: settings.fair_events_slug || 'fair-events',
 			enabledPostTypes: settings.fair_events_enabled_post_types || [],
@@ -17,7 +17,7 @@ export function loadGeneralSettings() {
 			poweredByBranding:
 				settings.fair_events_powered_by_branding ?? false,
 		};
-	});
+	} );
 }
 
 /**
@@ -28,7 +28,7 @@ export function loadGeneralSettings() {
  * @return {Promise<Object>} Promise resolving to the organizer identity, with a `defaults` key.
  */
 export function loadOrganizerSettings() {
-	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
+	return apiFetch( { path: '/wp/v2/settings' } ).then( ( settings ) => {
 		return {
 			name: '',
 			type: 'Organization',
@@ -49,7 +49,7 @@ export function loadOrganizerSettings() {
 				logoId: settings.site_logo || 0,
 			},
 		};
-	});
+	} );
 }
 
 /**
@@ -58,12 +58,12 @@ export function loadOrganizerSettings() {
  * @param {Object} data Settings data to save
  * @return {Promise<Object>} Promise resolving to saved settings
  */
-export function saveSettings(data) {
-	return apiFetch({
+export function saveSettings( data ) {
+	return apiFetch( {
 		path: '/wp/v2/settings',
 		method: 'POST',
 		data,
-	});
+	} );
 }
 
 /**
@@ -72,12 +72,12 @@ export function saveSettings(data) {
  * @param {number} attachmentId Attachment ID (0 = none).
  * @return {Promise<string>} Promise resolving to the attachment's URL, or an empty string.
  */
-export function loadAttachmentUrl(attachmentId) {
-	if (!attachmentId) {
-		return Promise.resolve('');
+export function loadAttachmentUrl( attachmentId ) {
+	if ( ! attachmentId ) {
+		return Promise.resolve( '' );
 	}
 
-	return apiFetch({ path: `/wp/v2/media/${attachmentId}` })
-		.then((media) => media.source_url || '')
-		.catch(() => '');
+	return apiFetch( { path: `/wp/v2/media/${ attachmentId }` } )
+		.then( ( media ) => media.source_url || '' )
+		.catch( () => '' );
 }

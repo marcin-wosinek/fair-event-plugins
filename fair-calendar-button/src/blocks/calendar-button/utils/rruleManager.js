@@ -10,7 +10,7 @@ import { addDays, addWeeks, parseISO, isValid, isAfter } from 'date-fns';
  */
 export class RRuleManager {
 	constructor() {
-		this.supportedFields = ['FREQ', 'INTERVAL', 'COUNT', 'UNTIL'];
+		this.supportedFields = [ 'FREQ', 'INTERVAL', 'COUNT', 'UNTIL' ];
 	}
 
 	/**
@@ -19,35 +19,35 @@ export class RRuleManager {
 	 * @param {Object} uiState UI state object
 	 * @return {string} RRULE string
 	 */
-	toRRule(uiState) {
-		if (!uiState || !uiState.frequency) {
+	toRRule( uiState ) {
+		if ( ! uiState || ! uiState.frequency ) {
 			return '';
 		}
 
 		const parts = [];
 
 		// Handle frequency - convert BIWEEKLY to WEEKLY with INTERVAL=2
-		if (uiState.frequency === 'BIWEEKLY') {
-			parts.push('FREQ=WEEKLY');
-			parts.push('INTERVAL=2');
+		if ( uiState.frequency === 'BIWEEKLY' ) {
+			parts.push( 'FREQ=WEEKLY' );
+			parts.push( 'INTERVAL=2' );
 		} else {
-			parts.push(`FREQ=${uiState.frequency}`);
-			if (uiState.interval && uiState.interval > 1) {
-				parts.push(`INTERVAL=${uiState.interval}`);
+			parts.push( `FREQ=${ uiState.frequency }` );
+			if ( uiState.interval && uiState.interval > 1 ) {
+				parts.push( `INTERVAL=${ uiState.interval }` );
 			}
 		}
 
 		// Add COUNT or UNTIL (mutually exclusive)
-		if (uiState.count && uiState.count > 0) {
-			parts.push(`COUNT=${uiState.count}`);
-		} else if (uiState.until) {
-			const untilFormatted = this.formatUntilDate(uiState.until);
-			if (untilFormatted) {
-				parts.push(`UNTIL=${untilFormatted}`);
+		if ( uiState.count && uiState.count > 0 ) {
+			parts.push( `COUNT=${ uiState.count }` );
+		} else if ( uiState.until ) {
+			const untilFormatted = this.formatUntilDate( uiState.until );
+			if ( untilFormatted ) {
+				parts.push( `UNTIL=${ untilFormatted }` );
 			}
 		}
 
-		return parts.join(';');
+		return parts.join( ';' );
 	}
 
 	/**
@@ -56,14 +56,14 @@ export class RRuleManager {
 	 * @param {string} dateString Date string in YYYY-MM-DD format
 	 * @return {string} Formatted date for RRULE (YYYYMMDD)
 	 */
-	formatUntilDate(dateString) {
-		if (!dateString || typeof dateString !== 'string') {
+	formatUntilDate( dateString ) {
+		if ( ! dateString || typeof dateString !== 'string' ) {
 			return '';
 		}
 
 		// Remove hyphens and validate format
-		const formatted = dateString.replace(/-/g, '');
-		if (!/^\d{8}$/.test(formatted)) {
+		const formatted = dateString.replace( /-/g, '' );
+		if ( ! /^\d{8}$/.test( formatted ) ) {
 			return '';
 		}
 
@@ -78,17 +78,17 @@ export class RRuleManager {
 	 * @param {number} maxInstances Maximum number of instances to generate (default: 10)
 	 * @return {Array<Date>} Array of Date objects representing event occurrences
 	 */
-	generateEvents(uiState, startDate, maxInstances = 10) {
-		if (!uiState || !uiState.frequency || !startDate) {
+	generateEvents( uiState, startDate, maxInstances = 10 ) {
+		if ( ! uiState || ! uiState.frequency || ! startDate ) {
 			return [];
 		}
 
-		const start = parseISO(startDate);
-		if (!isValid(start)) {
+		const start = parseISO( startDate );
+		if ( ! isValid( start ) ) {
 			return [];
 		}
 
-		const events = [start];
+		const events = [ start ];
 		const frequency =
 			uiState.frequency === 'BIWEEKLY' ? 'WEEKLY' : uiState.frequency;
 		const interval =
@@ -96,26 +96,26 @@ export class RRuleManager {
 
 		// Parse until date if provided
 		let untilDate = null;
-		if (uiState.until) {
-			untilDate = parseISO(uiState.until);
-			if (!isValid(untilDate)) {
+		if ( uiState.until ) {
+			untilDate = parseISO( uiState.until );
+			if ( ! isValid( untilDate ) ) {
 				untilDate = null;
 			}
 		}
 
 		// Determine how many events to generate
 		const targetCount = uiState.count || maxInstances;
-		const limit = Math.min(targetCount, maxInstances);
+		const limit = Math.min( targetCount, maxInstances );
 
 		let currentDate = start;
-		for (let i = 1; i < limit; i++) {
+		for ( let i = 1; i < limit; i++ ) {
 			// Calculate next occurrence based on frequency and interval
-			switch (frequency) {
+			switch ( frequency ) {
 				case 'DAILY':
-					currentDate = addDays(currentDate, interval);
+					currentDate = addDays( currentDate, interval );
 					break;
 				case 'WEEKLY':
-					currentDate = addWeeks(currentDate, interval);
+					currentDate = addWeeks( currentDate, interval );
 					break;
 				default:
 					// Unknown frequency, stop generating
@@ -123,11 +123,11 @@ export class RRuleManager {
 			}
 
 			// Check if we've exceeded the until date
-			if (untilDate && isAfter(currentDate, untilDate)) {
+			if ( untilDate && isAfter( currentDate, untilDate ) ) {
 				break;
 			}
 
-			events.push(currentDate);
+			events.push( currentDate );
 		}
 
 		return events;

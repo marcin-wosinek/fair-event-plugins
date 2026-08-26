@@ -29,13 +29,15 @@ function getCurrentWeek() {
 	const now = new Date();
 	// ISO week is defined by the Thursday of the current week
 	const dayOfWeek = now.getDay() || 7; // Convert Sunday=0 to Sunday=7
-	const thursday = new Date(now);
-	thursday.setDate(now.getDate() + 4 - dayOfWeek);
-	const yearStart = new Date(thursday.getFullYear(), 0, 1);
-	const weekNum = Math.ceil(((thursday - yearStart) / 86400000 + 1) / 7);
+	const thursday = new Date( now );
+	thursday.setDate( now.getDate() + 4 - dayOfWeek );
+	const yearStart = new Date( thursday.getFullYear(), 0, 1 );
+	const weekNum = Math.ceil(
+		( ( thursday - yearStart ) / 86400000 + 1 ) / 7
+	);
 	// ISO year is based on the Thursday, not the current date
 	const isoYear = thursday.getFullYear();
-	return `${isoYear}-W${String(weekNum).padStart(2, '0')}`;
+	return `${ isoYear }-W${ String( weekNum ).padStart( 2, '0' ) }`;
 }
 
 /**
@@ -45,34 +47,36 @@ function getCurrentWeek() {
  * @param {number} offset  Weeks to offset.
  * @return {string} New ISO week string.
  */
-function offsetWeek(weekStr, offset) {
-	const match = weekStr.match(/^(\d{4})-W(\d{2})$/);
-	if (!match) {
+function offsetWeek( weekStr, offset ) {
+	const match = weekStr.match( /^(\d{4})-W(\d{2})$/ );
+	if ( ! match ) {
 		return weekStr;
 	}
 	const date = new Date();
-	date.setFullYear(parseInt(match[1], 10));
+	date.setFullYear( parseInt( match[ 1 ], 10 ) );
 	// Set to Monday of the given ISO week
-	const jan4 = new Date(date.getFullYear(), 0, 4);
+	const jan4 = new Date( date.getFullYear(), 0, 4 );
 	const dayOfWeek = jan4.getDay() || 7;
-	const firstMonday = new Date(jan4);
-	firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
-	const targetDate = new Date(firstMonday);
+	const firstMonday = new Date( jan4 );
+	firstMonday.setDate( jan4.getDate() - dayOfWeek + 1 );
+	const targetDate = new Date( firstMonday );
 	targetDate.setDate(
-		firstMonday.getDate() + (parseInt(match[2], 10) - 1) * 7
+		firstMonday.getDate() + ( parseInt( match[ 2 ], 10 ) - 1 ) * 7
 	);
-	targetDate.setDate(targetDate.getDate() + offset * 7);
+	targetDate.setDate( targetDate.getDate() + offset * 7 );
 
 	// Calculate ISO week of the target date
-	const thursday = new Date(targetDate);
-	thursday.setDate(targetDate.getDate() + (4 - (targetDate.getDay() || 7)));
-	const yearStart = new Date(thursday.getFullYear(), 0, 1);
+	const thursday = new Date( targetDate );
+	thursday.setDate(
+		targetDate.getDate() + ( 4 - ( targetDate.getDay() || 7 ) )
+	);
+	const yearStart = new Date( thursday.getFullYear(), 0, 1 );
 	const weekNo = Math.ceil(
-		((thursday - yearStart) / 86400000 + yearStart.getDay() + 1) / 7
+		( ( thursday - yearStart ) / 86400000 + yearStart.getDay() + 1 ) / 7
 	);
 	// ISO year is based on the Thursday
 	const isoYear = thursday.getFullYear();
-	return `${isoYear}-W${String(weekNo).padStart(2, '0')}`;
+	return `${ isoYear }-W${ String( weekNo ).padStart( 2, '0' ) }`;
 }
 
 /**
@@ -81,61 +85,61 @@ function offsetWeek(weekStr, offset) {
  * @param {Object} data API response data.
  * @return {string} Formatted message text.
  */
-function generateMessage(data) {
-	if (!data || !data.days) {
+function generateMessage( data ) {
+	if ( ! data || ! data.days ) {
 		return '';
 	}
 
 	const { source, week, days } = data;
 
 	// Find the range of days with month name
-	const firstDay = days[0];
-	const lastDay = days[days.length - 1];
+	const firstDay = days[ 0 ];
+	const lastDay = days[ days.length - 1 ];
 
 	let dateRange;
-	if (firstDay.month_name === lastDay.month_name) {
-		dateRange = `${firstDay.day_num}\u2013${lastDay.day_num} de ${firstDay.month_name}`;
+	if ( firstDay.month_name === lastDay.month_name ) {
+		dateRange = `${ firstDay.day_num }\u2013${ lastDay.day_num } de ${ firstDay.month_name }`;
 	} else {
-		dateRange = `${firstDay.day_num} de ${firstDay.month_name}\u2013${lastDay.day_num} de ${lastDay.month_name}`;
+		dateRange = `${ firstDay.day_num } de ${ firstDay.month_name }\u2013${ lastDay.day_num } de ${ lastDay.month_name }`;
 	}
 
 	const sourceName = source.page_url
-		? `${source.name} (${source.page_url})`
+		? `${ source.name } (${ source.page_url })`
 		: source.name;
-	const header = `Agenda de ${sourceName}, ${dateRange}:`;
+	const header = `Agenda de ${ sourceName }, ${ dateRange }:`;
 
-	const lines = [header];
+	const lines = [ header ];
 
-	for (const day of days) {
-		for (const event of day.events) {
+	for ( const day of days ) {
+		for ( const event of day.events ) {
 			let timeStr = '';
-			if (!event.all_day) {
-				if (event.end_time && event.end_time !== event.start_time) {
-					timeStr = `${event.start_time}-${event.end_time}`;
-				} else if (event.start_time) {
+			if ( ! event.all_day ) {
+				if ( event.end_time && event.end_time !== event.start_time ) {
+					timeStr = `${ event.start_time }-${ event.end_time }`;
+				} else if ( event.start_time ) {
 					timeStr = event.start_time;
 				}
 			}
 
 			let dayLabel = day.weekday;
-			if (event.end_weekday) {
-				dayLabel += `\u2014${event.end_weekday}`;
+			if ( event.end_weekday ) {
+				dayLabel += `\u2014${ event.end_weekday }`;
 			}
 
-			const parts = [`* ${dayLabel}`];
-			if (timeStr) {
-				parts[0] += `, ${timeStr}`;
+			const parts = [ `* ${ dayLabel }` ];
+			if ( timeStr ) {
+				parts[ 0 ] += `, ${ timeStr }`;
 			}
-			parts[0] += `, ${event.title}`;
-			if (event.url) {
-				parts[0] += `: ${event.url}`;
+			parts[ 0 ] += `, ${ event.title }`;
+			if ( event.url ) {
+				parts[ 0 ] += `: ${ event.url }`;
 			}
 
-			lines.push(parts[0]);
+			lines.push( parts[ 0 ] );
 		}
 	}
 
-	return lines.join('\n');
+	return lines.join( '\n' );
 }
 
 /**
@@ -144,256 +148,257 @@ function generateMessage(data) {
  * @return {JSX.Element} Weekly schedule page.
  */
 export default function WeeklySchedule() {
-	const [sources, setSources] = useState([]);
-	const [selectedSource, setSelectedSource] = useState('');
-	const [currentWeek, setCurrentWeek] = useState(getCurrentWeek());
-	const [data, setData] = useState(null);
-	const [loading, setLoading] = useState(false);
-	const [sourcesLoading, setSourcesLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [message, setMessage] = useState('');
-	const [copied, setCopied] = useState(false);
-	const [downloading, setDownloading] = useState(false);
-	const [posting, setPosting] = useState(false);
-	const [postSuccess, setPostSuccess] = useState(null);
+	const [ sources, setSources ] = useState( [] );
+	const [ selectedSource, setSelectedSource ] = useState( '' );
+	const [ currentWeek, setCurrentWeek ] = useState( getCurrentWeek() );
+	const [ data, setData ] = useState( null );
+	const [ loading, setLoading ] = useState( false );
+	const [ sourcesLoading, setSourcesLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ message, setMessage ] = useState( '' );
+	const [ copied, setCopied ] = useState( false );
+	const [ downloading, setDownloading ] = useState( false );
+	const [ posting, setPosting ] = useState( false );
+	const [ postSuccess, setPostSuccess ] = useState( null );
 
 	// Fetch event sources on mount.
-	useEffect(() => {
-		apiFetch({ path: '/fair-events/v1/sources?enabled_only=true' })
-			.then((result) => {
-				setSources(result);
-				if (result.length > 0 && !selectedSource) {
-					setSelectedSource(result[0].slug);
+	useEffect( () => {
+		apiFetch( { path: '/fair-events/v1/sources?enabled_only=true' } )
+			.then( ( result ) => {
+				setSources( result );
+				if ( result.length > 0 && ! selectedSource ) {
+					setSelectedSource( result[ 0 ].slug );
 				}
-				setSourcesLoading(false);
-			})
-			.catch(() => {
-				setSourcesLoading(false);
-			});
-	}, []);
+				setSourcesLoading( false );
+			} )
+			.catch( () => {
+				setSourcesLoading( false );
+			} );
+	}, [] );
 
 	// Fetch weekly events when source or week changes.
-	const fetchEvents = useCallback(() => {
-		if (!selectedSource) {
-			setData(null);
-			setMessage('');
+	const fetchEvents = useCallback( () => {
+		if ( ! selectedSource ) {
+			setData( null );
+			setMessage( '' );
 			return;
 		}
 
-		setLoading(true);
-		setError(null);
+		setLoading( true );
+		setError( null );
 
-		apiFetch({
-			path: `/fair-events/v1/weekly-events?source=${encodeURIComponent(
+		apiFetch( {
+			path: `/fair-events/v1/weekly-events?source=${ encodeURIComponent(
 				selectedSource
-			)}&week=${encodeURIComponent(currentWeek)}`,
-		})
-			.then((result) => {
-				setData(result);
-				setMessage(generateMessage(result));
-				setLoading(false);
-			})
-			.catch((err) => {
+			) }&week=${ encodeURIComponent( currentWeek ) }`,
+		} )
+			.then( ( result ) => {
+				setData( result );
+				setMessage( generateMessage( result ) );
+				setLoading( false );
+			} )
+			.catch( ( err ) => {
 				setError(
 					err.message ||
-						__('Failed to fetch events.', 'fair-audience')
+						__( 'Failed to fetch events.', 'fair-audience' )
 				);
-				setLoading(false);
-			});
-	}, [selectedSource, currentWeek]);
+				setLoading( false );
+			} );
+	}, [ selectedSource, currentWeek ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		fetchEvents();
-	}, [fetchEvents]);
+	}, [ fetchEvents ] );
 
 	const handleCopy = () => {
-		navigator.clipboard.writeText(message).then(() => {
-			setCopied(true);
-			setTimeout(() => setCopied(false), 2000);
-		});
+		navigator.clipboard.writeText( message ).then( () => {
+			setCopied( true );
+			setTimeout( () => setCopied( false ), 2000 );
+		} );
 	};
 
 	const handleDownloadImage = async () => {
-		if (!data) {
+		if ( ! data ) {
 			return;
 		}
-		setDownloading(true);
+		setDownloading( true );
 		try {
-			const svg = generateScheduleSvg(data);
-			const blob = await svgToPng(svg);
-			const filename = `schedule-${currentWeek}.png`;
-			downloadBlob(blob, filename);
-		} catch (err) {
+			const svg = generateScheduleSvg( data );
+			const blob = await svgToPng( svg );
+			const filename = `schedule-${ currentWeek }.png`;
+			downloadBlob( blob, filename );
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to generate image.', 'fair-audience')
+				err.message ||
+					__( 'Failed to generate image.', 'fair-audience' )
 			);
 		}
-		setDownloading(false);
+		setDownloading( false );
 	};
 
 	const handlePostToInstagram = async () => {
-		if (!data || !message) {
+		if ( ! data || ! message ) {
 			return;
 		}
-		setPosting(true);
-		setPostSuccess(null);
-		setError(null);
+		setPosting( true );
+		setPostSuccess( null );
+		setError( null );
 		try {
-			const svg = generateScheduleSvg(data);
-			const base64 = await svgToBase64Png(svg);
+			const svg = generateScheduleSvg( data );
+			const base64 = await svgToBase64Png( svg );
 			const { url, attachment_id: attachmentId } =
-				await uploadImageBlob(base64);
-			const result = await createInstagramPost({
+				await uploadImageBlob( base64 );
+			const result = await createInstagramPost( {
 				image_url: url,
 				caption: message,
 				attachment_id: attachmentId,
-			});
-			setPostSuccess(result.post?.permalink || true);
-		} catch (err) {
+			} );
+			setPostSuccess( result.post?.permalink || true );
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to post to Instagram.', 'fair-audience')
+					__( 'Failed to post to Instagram.', 'fair-audience' )
 			);
 		}
-		setPosting(false);
+		setPosting( false );
 	};
 
 	const sourceOptions = [
-		{ label: __('— Select source —', 'fair-audience'), value: '' },
-		...sources.map((s) => ({ label: s.name, value: s.slug })),
+		{ label: __( '— Select source —', 'fair-audience' ), value: '' },
+		...sources.map( ( s ) => ( { label: s.name, value: s.slug } ) ),
 	];
 
 	return (
 		<div className="wrap">
-			<h1>{__('Weekly Schedule', 'fair-audience')}</h1>
+			<h1>{ __( 'Weekly Schedule', 'fair-audience' ) }</h1>
 
 			<div
-				style={{
+				style={ {
 					display: 'flex',
 					alignItems: 'flex-end',
 					gap: '16px',
 					marginBottom: '20px',
 					flexWrap: 'wrap',
-				}}
+				} }
 			>
-				<div style={{ minWidth: '250px' }}>
-					{sourcesLoading ? (
+				<div style={ { minWidth: '250px' } }>
+					{ sourcesLoading ? (
 						<Spinner />
 					) : (
 						<SelectControl
-							label={__('Event Source', 'fair-audience')}
-							value={selectedSource}
-							options={sourceOptions}
-							onChange={setSelectedSource}
+							label={ __( 'Event Source', 'fair-audience' ) }
+							value={ selectedSource }
+							options={ sourceOptions }
+							onChange={ setSelectedSource }
 						/>
-					)}
+					) }
 					<a
 						href="edit.php?post_type=fair_event&page=fair-events-sources"
-						style={{ fontSize: '12px' }}
+						style={ { fontSize: '12px' } }
 					>
-						{__('Manage Event Sources', 'fair-audience')}
+						{ __( 'Manage Event Sources', 'fair-audience' ) }
 					</a>
 				</div>
 
 				<div
-					style={{
+					style={ {
 						display: 'flex',
 						alignItems: 'center',
 						gap: '8px',
-					}}
+					} }
 				>
 					<Button
 						variant="secondary"
-						onClick={() =>
-							setCurrentWeek(offsetWeek(currentWeek, -1))
+						onClick={ () =>
+							setCurrentWeek( offsetWeek( currentWeek, -1 ) )
 						}
-						aria-label={__('Previous week', 'fair-audience')}
+						aria-label={ __( 'Previous week', 'fair-audience' ) }
 					>
 						&larr;
 					</Button>
 					<span
-						style={{
+						style={ {
 							fontWeight: 'bold',
 							minWidth: '100px',
 							textAlign: 'center',
-						}}
+						} }
 					>
-						{currentWeek}
+						{ currentWeek }
 					</span>
 					<Button
 						variant="secondary"
-						onClick={() =>
-							setCurrentWeek(offsetWeek(currentWeek, 1))
+						onClick={ () =>
+							setCurrentWeek( offsetWeek( currentWeek, 1 ) )
 						}
-						aria-label={__('Next week', 'fair-audience')}
+						aria-label={ __( 'Next week', 'fair-audience' ) }
 					>
 						&rarr;
 					</Button>
 					<Button
 						variant="tertiary"
-						onClick={() => setCurrentWeek(getCurrentWeek())}
+						onClick={ () => setCurrentWeek( getCurrentWeek() ) }
 					>
-						{__('Today', 'fair-audience')}
+						{ __( 'Today', 'fair-audience' ) }
 					</Button>
 				</div>
 			</div>
 
-			{error && (
-				<Notice status="error" isDismissible={false}>
-					{error}
+			{ error && (
+				<Notice status="error" isDismissible={ false }>
+					{ error }
 				</Notice>
-			)}
+			) }
 
-			{loading && (
-				<div style={{ textAlign: 'center', padding: '40px' }}>
+			{ loading && (
+				<div style={ { textAlign: 'center', padding: '40px' } }>
 					<Spinner />
 				</div>
-			)}
+			) }
 
-			{!loading && data && (
+			{ ! loading && data && (
 				<>
 					<div
-						style={{
+						style={ {
 							display: 'grid',
 							gridTemplateColumns: 'repeat(7, 1fr)',
 							marginBottom: '24px',
-						}}
+						} }
 					>
-						{data.days.map((day, idx) => (
+						{ data.days.map( ( day, idx ) => (
 							<div
-								key={day.date}
-								style={{
+								key={ day.date }
+								style={ {
 									backgroundColor: '#fff',
 									minHeight: '120px',
 									border: '1px solid #ddd',
 									borderLeft:
 										idx === 0 ? '1px solid #ddd' : 'none',
-								}}
+								} }
 							>
 								<div
-									style={{
+									style={ {
 										padding: '8px',
 										backgroundColor: '#f0f0f0',
 										borderBottom: '1px solid #ddd',
 										fontWeight: 'bold',
 										fontSize: '13px',
-									}}
+									} }
 								>
-									{day.weekday}
+									{ day.weekday }
 									<span
-										style={{
+										style={ {
 											float: 'right',
 											fontWeight: 'normal',
-										}}
+										} }
 									>
-										{day.day_num}
+										{ day.day_num }
 									</span>
 								</div>
-								<div style={{ padding: '4px' }}>
-									{day.events.map((event, idx) => (
+								<div style={ { padding: '4px' } }>
+									{ day.events.map( ( event, idx ) => (
 										<div
-											key={idx}
-											style={{
+											key={ idx }
+											style={ {
 												padding: '4px 6px',
 												marginBottom: '2px',
 												fontSize: '12px',
@@ -403,92 +408,95 @@ export default function WeeklySchedule() {
 												display: 'flex',
 												alignItems: 'center',
 												gap: '4px',
-											}}
+											} }
 										>
 											<span
-												style={{
+												style={ {
 													flex: 1,
 													minWidth: 0,
-												}}
+												} }
 											>
-												{!event.all_day &&
+												{ ! event.all_day &&
 													event.start_time && (
 														<strong
-															style={{
+															style={ {
 																marginRight:
 																	'4px',
-															}}
+															} }
 														>
-															{event.start_time}
+															{ event.start_time }
 														</strong>
-													)}
-												{event.url ? (
+													) }
+												{ event.url ? (
 													<a
-														href={event.url}
+														href={ event.url }
 														target="_blank"
 														rel="noopener noreferrer"
 													>
-														{event.title}
+														{ event.title }
 													</a>
 												) : (
 													event.title
-												)}
+												) }
 											</span>
-											{event.event_date_id &&
+											{ event.event_date_id &&
 												window
 													.fairAudienceWeeklyScheduleData
 													?.participantsUrl && (
 													<a
-														href={`${window.fairAudienceWeeklyScheduleData.participantsUrl}${event.event_date_id}`}
-														title={__(
+														href={ `${ window.fairAudienceWeeklyScheduleData.participantsUrl }${ event.event_date_id }` }
+														title={ __(
 															'View Participants',
 															'fair-audience'
-														)}
-														style={{
+														) }
+														style={ {
 															color: '#2271b1',
 															textDecoration:
 																'none',
 															flexShrink: 0,
-														}}
+														} }
 													>
 														<span className="dashicons dashicons-groups" />
 													</a>
-												)}
+												) }
 										</div>
-									))}
+									) ) }
 								</div>
 							</div>
-						))}
+						) ) }
 					</div>
 
-					<div style={{ maxWidth: '800px' }}>
-						<h2>{__('WhatsApp Message', 'fair-audience')}</h2>
+					<div style={ { maxWidth: '800px' } }>
+						<h2>{ __( 'WhatsApp Message', 'fair-audience' ) }</h2>
 						<textarea
-							value={message}
-							onChange={(e) => setMessage(e.target.value)}
-							rows={Math.max(10, message.split('\n').length + 2)}
-							style={{
+							value={ message }
+							onChange={ ( e ) => setMessage( e.target.value ) }
+							rows={ Math.max(
+								10,
+								message.split( '\n' ).length + 2
+							) }
+							style={ {
 								width: '100%',
 								fontFamily: 'monospace',
 								fontSize: '13px',
 								padding: '12px',
-							}}
+							} }
 						/>
 						<div
-							style={{
+							style={ {
 								marginTop: '8px',
 								display: 'flex',
 								gap: '8px',
 								alignItems: 'center',
-							}}
+							} }
 						>
 							<Button
 								variant="primary"
-								onClick={handlePostToInstagram}
-								isBusy={posting}
-								disabled={posting || !message}
+								onClick={ handlePostToInstagram }
+								isBusy={ posting }
+								disabled={ posting || ! message }
 							>
-								{posting
+								{ posting
 									? __(
 											'Posting to Instagram…',
 											'fair-audience'
@@ -496,53 +504,62 @@ export default function WeeklySchedule() {
 									: __(
 											'Post Schedule to Instagram',
 											'fair-audience'
-									  )}
+									  ) }
 							</Button>
-							<Button variant="secondary" onClick={handleCopy}>
-								{copied
-									? __('Copied!', 'fair-audience')
-									: __('Copy to clipboard', 'fair-audience')}
+							<Button variant="secondary" onClick={ handleCopy }>
+								{ copied
+									? __( 'Copied!', 'fair-audience' )
+									: __(
+											'Copy to clipboard',
+											'fair-audience'
+									  ) }
 							</Button>
 							<Button
 								variant="tertiary"
-								onClick={handleDownloadImage}
-								isBusy={downloading}
-								disabled={downloading}
+								onClick={ handleDownloadImage }
+								isBusy={ downloading }
+								disabled={ downloading }
 							>
-								{downloading
-									? __('Generating…', 'fair-audience')
-									: __('Download Image', 'fair-audience')}
+								{ downloading
+									? __( 'Generating…', 'fair-audience' )
+									: __( 'Download Image', 'fair-audience' ) }
 							</Button>
 						</div>
-						{postSuccess && (
+						{ postSuccess && (
 							<Notice
 								status="success"
 								isDismissible
-								onDismiss={() => setPostSuccess(null)}
-								style={{ marginTop: '12px' }}
+								onDismiss={ () => setPostSuccess( null ) }
+								style={ { marginTop: '12px' } }
 							>
-								{typeof postSuccess === 'string' ? (
+								{ typeof postSuccess === 'string' ? (
 									<>
-										{__(
+										{ __(
 											'Posted to Instagram!',
 											'fair-audience'
-										)}{' '}
+										) }{ ' ' }
 										<a
-											href={postSuccess}
+											href={ postSuccess }
 											target="_blank"
 											rel="noopener noreferrer"
 										>
-											{__('View post', 'fair-audience')}
+											{ __(
+												'View post',
+												'fair-audience'
+											) }
 										</a>
 									</>
 								) : (
-									__('Posted to Instagram!', 'fair-audience')
-								)}
+									__(
+										'Posted to Instagram!',
+										'fair-audience'
+									)
+								) }
 							</Notice>
-						)}
+						) }
 					</div>
 				</>
-			)}
+			) }
 		</div>
 	);
 }

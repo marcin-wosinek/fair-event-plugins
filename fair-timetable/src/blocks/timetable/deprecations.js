@@ -4,7 +4,7 @@
 
 import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 
-console.log('timetable depre...');
+console.log( 'timetable depre...' );
 
 /**
  * Version 0.2.0 deprecation
@@ -31,8 +31,8 @@ const v1 = {
 		},
 	},
 
-	migrate(attributes) {
-		console.log('timetable migrate!', attributes);
+	migrate( attributes ) {
+		console.log( 'timetable migrate!', attributes );
 
 		// Convert old attributes to new format
 		const {
@@ -53,39 +53,43 @@ const v1 = {
 		};
 	},
 
-	isEligible(attributes) {
-		console.log('is eligi, timetable', attributes);
+	isEligible( attributes ) {
+		console.log( 'is eligi, timetable', attributes );
 
 		// Force migration for debugging - check if old attributes exist
 		return (
 			attributes &&
-			!!(attributes.startHour || attributes.endHour || attributes.length)
+			!! (
+				attributes.startHour ||
+				attributes.endHour ||
+				attributes.length
+			)
 		);
 	},
 
-	save: ({ attributes }) => {
-		console.log('timetable save', attributes);
+	save: ( { attributes } ) => {
+		console.log( 'timetable save', attributes );
 
 		const { verticalAlignment } = attributes;
 
-		const blockProps = useBlockProps.save({
+		const blockProps = useBlockProps.save( {
 			className: `timetable-container ${
 				verticalAlignment
-					? `is-vertically-aligned-${verticalAlignment}`
+					? `is-vertically-aligned-${ verticalAlignment }`
 					: ''
 			}`,
-		});
+		} );
 
-		const innerBlocksProps = useInnerBlocksProps.save({
+		const innerBlocksProps = useInnerBlocksProps.save( {
 			className: 'timetable-content',
-		});
+		} );
 
 		return (
-			<div {...blockProps}>
-				<div {...innerBlocksProps} />
+			<div { ...blockProps }>
+				<div { ...innerBlocksProps } />
 			</div>
 		);
 	},
 };
 
-export default [v1];
+export default [ v1 ];

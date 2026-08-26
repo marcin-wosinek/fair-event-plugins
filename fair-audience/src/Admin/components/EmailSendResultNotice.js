@@ -1,8 +1,8 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { Notice } from '@wordpress/components';
 
-export default function EmailSendResultNotice({ result, onDismiss, title }) {
-	if (!result) {
+export default function EmailSendResultNotice( { result, onDismiss, title } ) {
+	if ( ! result ) {
 		return null;
 	}
 
@@ -10,43 +10,43 @@ export default function EmailSendResultNotice({ result, onDismiss, title }) {
 		title ||
 		sprintf(
 			/* translators: %d: number of emails sent */
-			__('Invitations sent to %d participants', 'fair-audience'),
+			__( 'Invitations sent to %d participants', 'fair-audience' ),
 			result.sent_count
 		);
 
 	return (
-		<Notice status="success" isDismissible={true} onRemove={onDismiss}>
+		<Notice status="success" isDismissible={ true } onRemove={ onDismiss }>
 			<p>
-				<strong>{heading}</strong>
+				<strong>{ heading }</strong>
 			</p>
-			{result.skipped_count > 0 && (
+			{ result.skipped_count > 0 && (
 				<p>
-					{sprintf(
+					{ sprintf(
 						/* translators: %d: number of skipped participants */
 						__(
 							'%d skipped (already signed up or opted out of marketing).',
 							'fair-audience'
 						),
 						result.skipped_count
-					)}
+					) }
 				</p>
-			)}
-			{result.failed && result.failed.length > 0 && (
+			) }
+			{ result.failed && result.failed.length > 0 && (
 				<>
-					<p>{__('Failed to send to:', 'fair-audience')}</p>
+					<p>{ __( 'Failed to send to:', 'fair-audience' ) }</p>
 					<ul>
-						{result.failed.map((fail, index) => (
-							<li key={index}>
-								{fail.name || fail.email}
-								{fail.name && fail.email
-									? ` (${fail.email})`
-									: ''}
-								: {fail.reason}
+						{ result.failed.map( ( fail, index ) => (
+							<li key={ index }>
+								{ fail.name || fail.email }
+								{ fail.name && fail.email
+									? ` (${ fail.email })`
+									: '' }
+								: { fail.reason }
 							</li>
-						))}
+						) ) }
 					</ul>
 				</>
-			)}
+			) }
 		</Notice>
 	);
 }

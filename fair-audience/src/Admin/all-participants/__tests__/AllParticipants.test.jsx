@@ -23,7 +23,7 @@ import {
 import apiFetch from '@wordpress/api-fetch';
 import AllParticipants from '../AllParticipants.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 const PARTICIPANTS = [
 	{
@@ -87,27 +87,27 @@ const PARTICIPANTS = [
 const STATS = { total: 4, mailing: 1, pending: 1, declined: 1 };
 
 function mockApiFetch() {
-	apiFetch.mockImplementation(({ path, parse }) => {
+	apiFetch.mockImplementation( ( { path, parse } ) => {
 		if (
-			path.startsWith('/fair-audience/v1/participants') &&
+			path.startsWith( '/fair-audience/v1/participants' ) &&
 			parse === false
 		) {
-			return Promise.resolve({
-				headers: new Map([
-					['X-WP-Total', String(PARTICIPANTS.length)],
-					['X-WP-TotalPages', '1'],
-				]),
-				json: () => Promise.resolve(PARTICIPANTS),
-			});
+			return Promise.resolve( {
+				headers: new Map( [
+					[ 'X-WP-Total', String( PARTICIPANTS.length ) ],
+					[ 'X-WP-TotalPages', '1' ],
+				] ),
+				json: () => Promise.resolve( PARTICIPANTS ),
+			} );
 		}
-		if (path === '/fair-audience/v1/participants/stats') {
-			return Promise.resolve(STATS);
+		if ( path === '/fair-audience/v1/participants/stats' ) {
+			return Promise.resolve( STATS );
 		}
-		if (path === '/fair-audience/v1/groups') {
-			return Promise.resolve([]);
+		if ( path === '/fair-audience/v1/groups' ) {
+			return Promise.resolve( [] );
 		}
-		return Promise.resolve([]);
-	});
+		return Promise.resolve( [] );
+	} );
 }
 
 const mockParticipant = {
@@ -118,220 +118,228 @@ const mockParticipant = {
 	status: 'pending',
 };
 
-function mockList(items) {
-	apiFetch.mockImplementation((opts) => {
-		if (opts.parse === false) {
-			return Promise.resolve({
-				headers: new Map([
-					['X-WP-Total', String(items.length)],
-					['X-WP-TotalPages', '1'],
-				]),
-				json: () => Promise.resolve(items),
-			});
+function mockList( items ) {
+	apiFetch.mockImplementation( ( opts ) => {
+		if ( opts.parse === false ) {
+			return Promise.resolve( {
+				headers: new Map( [
+					[ 'X-WP-Total', String( items.length ) ],
+					[ 'X-WP-TotalPages', '1' ],
+				] ),
+				json: () => Promise.resolve( items ),
+			} );
 		}
-		return Promise.resolve({});
-	});
+		return Promise.resolve( {} );
+	} );
 }
 
-beforeEach(() => {
+beforeEach( () => {
 	window.fairAudienceAllParticipantsData = {
 		participantsUrl: 'admin.php?page=fair-audience&event_date_id=',
 	};
-	jest.spyOn(console, 'error').mockImplementation(() => {});
+	jest.spyOn( console, 'error' ).mockImplementation( () => {} );
 	mockApiFetch();
-});
+} );
 
-afterEach(() => {
+afterEach( () => {
 	jest.restoreAllMocks();
 	jest.clearAllMocks();
-});
+} );
 
-describe('AllParticipants — header action', () => {
-	it('renders Add Participant as a page-title-action outside the card and opens the modal', async () => {
-		render(<AllParticipants />);
+describe( 'AllParticipants — header action', () => {
+	it( 'renders Add Participant as a page-title-action outside the card and opens the modal', async () => {
+		render( <AllParticipants /> );
 
-		await screen.findByText('Jane Doe');
+		await screen.findByText( 'Jane Doe' );
 
-		const addButton = screen.getByRole('button', {
+		const addButton = screen.getByRole( 'button', {
 			name: 'Add Participant',
-		});
-		expect(addButton).toHaveClass('page-title-action');
-		expect(addButton.closest('.components-card')).toBeNull();
+		} );
+		expect( addButton ).toHaveClass( 'page-title-action' );
+		expect( addButton.closest( '.components-card' ) ).toBeNull();
 
-		fireEvent.click(addButton);
-		expect(await screen.findByRole('dialog')).toBeInTheDocument();
-	});
-});
+		fireEvent.click( addButton );
+		expect( await screen.findByRole( 'dialog' ) ).toBeInTheDocument();
+	} );
+} );
 
-describe('AllParticipants — default columns', () => {
-	it('hides Phone/Instagram/Status/Email Profile and shows Mailing', async () => {
-		render(<AllParticipants />);
+describe( 'AllParticipants — default columns', () => {
+	it( 'hides Phone/Instagram/Status/Email Profile and shows Mailing', async () => {
+		render( <AllParticipants /> );
 
-		await screen.findByText('Jane Doe');
+		await screen.findByText( 'Jane Doe' );
 
 		expect(
-			screen.queryByRole('columnheader', { name: 'Phone' })
+			screen.queryByRole( 'columnheader', { name: 'Phone' } )
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('columnheader', { name: 'Instagram' })
+			screen.queryByRole( 'columnheader', { name: 'Instagram' } )
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('columnheader', { name: 'Status' })
+			screen.queryByRole( 'columnheader', { name: 'Status' } )
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('columnheader', { name: 'Email Profile' })
+			screen.queryByRole( 'columnheader', { name: 'Email Profile' } )
 		).not.toBeInTheDocument();
 		expect(
-			screen.getByRole('columnheader', { name: 'Mailing' })
+			screen.getByRole( 'columnheader', { name: 'Mailing' } )
 		).toBeInTheDocument();
-	});
-});
+	} );
+} );
 
-describe('AllParticipants — Mailing column mapping', () => {
-	it('maps email_profile/status combinations to readable labels', async () => {
-		render(<AllParticipants />);
+describe( 'AllParticipants — Mailing column mapping', () => {
+	it( 'maps email_profile/status combinations to readable labels', async () => {
+		render( <AllParticipants /> );
 
-		const janeRow = (await screen.findByText('Jane Doe')).closest('tr');
-		expect(within(janeRow).getByText('Marketing')).toBeInTheDocument();
-
-		const johnRow = screen.getByText('John Roe').closest('tr');
+		const janeRow = ( await screen.findByText( 'Jane Doe' ) ).closest(
+			'tr'
+		);
 		expect(
-			within(johnRow).getByText('Marketing — pending confirmation')
+			within( janeRow ).getByText( 'Marketing' )
 		).toBeInTheDocument();
 
-		const amyRow = screen.getByText('Amy Fox').closest('tr');
-		expect(within(amyRow).getByText('Minimal')).toBeInTheDocument();
+		const johnRow = screen.getByText( 'John Roe' ).closest( 'tr' );
+		expect(
+			within( johnRow ).getByText( 'Marketing — pending confirmation' )
+		).toBeInTheDocument();
 
-		const boRow = screen.getByText('Bo Lee').closest('tr');
-		expect(within(boRow).getByText('No')).toBeInTheDocument();
-	});
-});
+		const amyRow = screen.getByText( 'Amy Fox' ).closest( 'tr' );
+		expect( within( amyRow ).getByText( 'Minimal' ) ).toBeInTheDocument();
 
-describe('AllParticipants — filters preserved', () => {
-	it('still offers profile and status filters despite hidden columns', async () => {
-		render(<AllParticipants />);
+		const boRow = screen.getByText( 'Bo Lee' ).closest( 'tr' );
+		expect( within( boRow ).getByText( 'No' ) ).toBeInTheDocument();
+	} );
+} );
 
-		await screen.findByText('Jane Doe');
+describe( 'AllParticipants — filters preserved', () => {
+	it( 'still offers profile and status filters despite hidden columns', async () => {
+		render( <AllParticipants /> );
 
-		fireEvent.click(screen.getByRole('button', { name: /add filter/i }));
+		await screen.findByText( 'Jane Doe' );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /add filter/i } )
+		);
 
 		expect(
-			screen.getByRole('menuitem', { name: 'Email Profile' })
+			screen.getByRole( 'menuitem', { name: 'Email Profile' } )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole('menuitem', { name: 'Status' })
+			screen.getByRole( 'menuitem', { name: 'Status' } )
 		).toBeInTheDocument();
-	});
-});
+	} );
+} );
 
-describe('AllParticipants — stat tiles (#1054)', () => {
-	it('renders the tile counts from the stats endpoint', async () => {
-		render(<AllParticipants />);
+describe( 'AllParticipants — stat tiles (#1054)', () => {
+	it( 'renders the tile counts from the stats endpoint', async () => {
+		render( <AllParticipants /> );
 
-		await screen.findByText('Jane Doe');
+		await screen.findByText( 'Jane Doe' );
 
-		expect(screen.getByText('Audience total')).toBeInTheDocument();
-		expect(screen.getByText('In the mailing')).toBeInTheDocument();
-		expect(screen.getByText('Pending confirmation')).toBeInTheDocument();
-		expect(screen.getByText('Declined')).toBeInTheDocument();
+		expect( screen.getByText( 'Audience total' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'In the mailing' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Pending confirmation' )
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Declined' ) ).toBeInTheDocument();
 
-		expect(screen.getAllByText('4').length).toBeGreaterThan(0);
-		expect(screen.getAllByText('1').length).toBe(3);
-	});
+		expect( screen.getAllByText( '4' ).length ).toBeGreaterThan( 0 );
+		expect( screen.getAllByText( '1' ).length ).toBe( 3 );
+	} );
 
-	it('clicking the Pending tile filters the participants list by status=pending', async () => {
-		render(<AllParticipants />);
+	it( 'clicking the Pending tile filters the participants list by status=pending', async () => {
+		render( <AllParticipants /> );
 
-		await screen.findByText('Jane Doe');
+		await screen.findByText( 'Jane Doe' );
 		apiFetch.mockClear();
 
 		fireEvent.click(
-			screen.getByText('Pending confirmation').closest('button')
+			screen.getByText( 'Pending confirmation' ).closest( 'button' )
 		);
 
-		await waitFor(() =>
-			expect(apiFetch).toHaveBeenCalledWith(
-				expect.objectContaining({
-					path: expect.stringContaining('status=pending'),
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					path: expect.stringContaining( 'status=pending' ),
 					parse: false,
-				})
+				} )
 			)
 		);
-	});
-});
+	} );
+} );
 
-describe('confirm-then-delete flow (#1056)', () => {
-	it('names the participant and requires confirmation before deleting', async () => {
-		mockList([mockParticipant]);
+describe( 'confirm-then-delete flow (#1056)', () => {
+	it( 'names the participant and requires confirmation before deleting', async () => {
+		mockList( [ mockParticipant ] );
 
-		render(<AllParticipants />);
-		await waitFor(() =>
-			expect(screen.getByText('John Doe')).toBeInTheDocument()
+		render( <AllParticipants /> );
+		await waitFor( () =>
+			expect( screen.getByText( 'John Doe' ) ).toBeInTheDocument()
 		);
 
-		fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
-		fireEvent.click(await screen.findByText('Delete'));
+		fireEvent.click( screen.getByRole( 'button', { name: 'Actions' } ) );
+		fireEvent.click( await screen.findByText( 'Delete' ) );
 
 		expect(
-			screen.getByText('Delete John Doe? This cannot be undone.')
+			screen.getByText( 'Delete John Doe? This cannot be undone.' )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole('button', { name: 'Delete participant' })
+			screen.getByRole( 'button', { name: 'Delete participant' } )
 		).toBeInTheDocument();
-	});
+	} );
 
-	it('fires no DELETE request when cancelled', async () => {
-		mockList([mockParticipant]);
+	it( 'fires no DELETE request when cancelled', async () => {
+		mockList( [ mockParticipant ] );
 
-		render(<AllParticipants />);
-		await waitFor(() =>
-			expect(screen.getByText('John Doe')).toBeInTheDocument()
+		render( <AllParticipants /> );
+		await waitFor( () =>
+			expect( screen.getByText( 'John Doe' ) ).toBeInTheDocument()
 		);
 
-		fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
-		fireEvent.click(await screen.findByText('Delete'));
-		await screen.findByText('Delete John Doe? This cannot be undone.');
-		fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+		fireEvent.click( screen.getByRole( 'button', { name: 'Actions' } ) );
+		fireEvent.click( await screen.findByText( 'Delete' ) );
+		await screen.findByText( 'Delete John Doe? This cannot be undone.' );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
 
-		await waitFor(() =>
+		await waitFor( () =>
 			expect(
-				screen.queryByText('Delete John Doe? This cannot be undone.')
+				screen.queryByText( 'Delete John Doe? This cannot be undone.' )
 			).not.toBeInTheDocument()
 		);
 
-		expect(apiFetch).not.toHaveBeenCalledWith(
-			expect.objectContaining({ method: 'DELETE' })
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( { method: 'DELETE' } )
 		);
-	});
+	} );
 
-	it('fires a DELETE request and reloads when confirmed', async () => {
-		mockList([mockParticipant]);
+	it( 'fires a DELETE request and reloads when confirmed', async () => {
+		mockList( [ mockParticipant ] );
 
-		render(<AllParticipants />);
-		await waitFor(() =>
-			expect(screen.getByText('John Doe')).toBeInTheDocument()
+		render( <AllParticipants /> );
+		await waitFor( () =>
+			expect( screen.getByText( 'John Doe' ) ).toBeInTheDocument()
 		);
 
-		fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
-		fireEvent.click(await screen.findByText('Delete'));
-		await screen.findByText('Delete John Doe? This cannot be undone.');
+		fireEvent.click( screen.getByRole( 'button', { name: 'Actions' } ) );
+		fireEvent.click( await screen.findByText( 'Delete' ) );
+		await screen.findByText( 'Delete John Doe? This cannot be undone.' );
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Delete participant' })
+			screen.getByRole( 'button', { name: 'Delete participant' } )
 		);
 
-		await waitFor(() =>
-			expect(apiFetch).toHaveBeenCalledWith(
-				expect.objectContaining({
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
 					path: '/fair-audience/v1/participants/1',
 					method: 'DELETE',
-				})
+				} )
 			)
 		);
 
-		await waitFor(() =>
+		await waitFor( () =>
 			expect(
-				screen.queryByText('Delete John Doe? This cannot be undone.')
+				screen.queryByText( 'Delete John Doe? This cannot be undone.' )
 			).not.toBeInTheDocument()
 		);
-	});
-});
+	} );
+} );

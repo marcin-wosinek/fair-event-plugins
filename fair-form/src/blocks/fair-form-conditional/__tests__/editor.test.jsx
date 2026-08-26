@@ -5,63 +5,69 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 
 const mockUseSelect = jest.fn();
-jest.mock('@wordpress/data', () => ({
-	useSelect: (...args) => mockUseSelect(...args),
-}));
+jest.mock( '@wordpress/data', () => ( {
+	useSelect: ( ...args ) => mockUseSelect( ...args ),
+} ) );
 
-jest.mock('@wordpress/api-fetch', () => jest.fn());
+jest.mock( '@wordpress/api-fetch', () => jest.fn() );
 // eslint-disable-next-line import/first
 import apiFetch from '@wordpress/api-fetch';
 
-jest.mock('@wordpress/block-editor', () => ({
-	useBlockProps: (props) => props || {},
-	useInnerBlocksProps: (props) => props || {},
-	InspectorControls: ({ children }) => children,
-	InnerBlocks: Object.assign(() => null, {
+jest.mock( '@wordpress/block-editor', () => ( {
+	useBlockProps: ( props ) => props || {},
+	useInnerBlocksProps: ( props ) => props || {},
+	InspectorControls: ( { children } ) => children,
+	InnerBlocks: Object.assign( () => null, {
 		Content: () => null,
 		ButtonBlockAppender: () => null,
-	}),
-}));
+	} ),
+} ) );
 
-jest.mock('@wordpress/components', () => ({
-	PanelBody: ({ children }) => children,
-	SelectControl: ({ label, value, options, onChange }) => (
+jest.mock( '@wordpress/components', () => ( {
+	PanelBody: ( { children } ) => children,
+	SelectControl: ( { label, value, options, onChange } ) => (
 		<label>
-			{label}
-			<select value={value} onChange={(e) => onChange(e.target.value)}>
-				{options.map((opt) => (
-					<option key={opt.value} value={opt.value}>
-						{opt.label}
+			{ label }
+			<select
+				value={ value }
+				onChange={ ( e ) => onChange( e.target.value ) }
+			>
+				{ options.map( ( opt ) => (
+					<option key={ opt.value } value={ opt.value }>
+						{ opt.label }
 					</option>
-				))}
+				) ) }
 			</select>
 		</label>
 	),
-	TextControl: ({ label, value, onChange }) => (
+	TextControl: ( { label, value, onChange } ) => (
 		<label>
-			{label}
-			<input value={value} onChange={(e) => onChange(e.target.value)} />
+			{ label }
+			<input
+				value={ value }
+				onChange={ ( e ) => onChange( e.target.value ) }
+			/>
 		</label>
 	),
-	CheckboxControl: ({ label, checked, onChange }) => (
+	CheckboxControl: ( { label, checked, onChange } ) => (
 		<label>
 			<input
 				type="checkbox"
-				checked={checked}
-				onChange={(e) => onChange(e.target.checked)}
+				checked={ checked }
+				onChange={ ( e ) => onChange( e.target.checked ) }
 			/>
-			{label}
+			{ label }
 		</label>
 	),
-	Notice: ({ children }) => <div role="alert">{children}</div>,
-}));
+	Notice: ( { children } ) => <div role="alert">{ children }</div>,
+} ) );
 
 let capturedSettings;
-jest.mock('@wordpress/blocks', () => ({
-	registerBlockType: (name, settings) => {
+jest.mock( '@wordpress/blocks', () => ( {
+	registerBlockType: ( name, settings ) => {
 		capturedSettings = settings;
 	},
-}));
+} ) );
 
 /**
  * Wire up mockUseSelect so the real formParentId-resolution logic in
@@ -71,36 +77,36 @@ jest.mock('@wordpress/blocks', () => ({
  * @param {Object|null} formBlock Fake parent block ({ name, attributes }), or
  *                                null for a standalone Conditional Section.
  */
-function mockFormParent(formBlock) {
-	mockUseSelect.mockImplementation((callback) =>
-		callback((store) => {
-			if (store !== 'core/block-editor') {
+function mockFormParent( formBlock ) {
+	mockUseSelect.mockImplementation( ( callback ) =>
+		callback( ( store ) => {
+			if ( store !== 'core/block-editor' ) {
 				return {};
 			}
 			return {
-				getBlockParents: () => (formBlock ? ['form-1'] : []),
-				getBlock: (id) => (id === 'form-1' ? formBlock : undefined),
+				getBlockParents: () => ( formBlock ? [ 'form-1' ] : [] ),
+				getBlock: ( id ) => ( id === 'form-1' ? formBlock : undefined ),
 				getBlocks: () => [],
 			};
-		})
+		} )
 	);
 }
 
-describe('Fair Form Conditional Edit', () => {
+describe( 'Fair Form Conditional Edit', () => {
 	let Edit;
 
-	beforeAll(() => {
-		require('../editor.js');
+	beforeAll( () => {
+		require( '../editor.js' );
 		Edit = capturedSettings.edit;
-	});
+	} );
 
-	beforeEach(() => {
+	beforeEach( () => {
 		apiFetch.mockReset();
-	});
+	} );
 
-	afterEach(() => {
+	afterEach( () => {
 		delete window.fairEventsSignupBlock;
-	});
+	} );
 
 	const baseAttributes = {
 		conditionSource: 'question',
@@ -111,148 +117,156 @@ describe('Fair Form Conditional Edit', () => {
 		conditionTicketTypeIds: [],
 	};
 
-	const renderEdit = (attributes = {}, setAttributes = () => {}) =>
+	const renderEdit = ( attributes = {}, setAttributes = () => {} ) =>
 		render(
 			<Edit
-				attributes={{ ...baseAttributes, ...attributes }}
-				setAttributes={setAttributes}
+				attributes={ { ...baseAttributes, ...attributes } }
+				setAttributes={ setAttributes }
 				clientId="conditional-1"
 			/>
 		);
 
-	it('offers "Ticket type" as a condition source when nested in an Event Signup connected via the block attribute', async () => {
-		mockFormParent({
+	it( 'offers "Ticket type" as a condition source when nested in an Event Signup connected via the block attribute', async () => {
+		mockFormParent( {
 			name: 'fair-events/event-signup',
 			attributes: { eventDateId: 42 },
-		});
-		apiFetch.mockResolvedValue({ ticket_types: [] });
+		} );
+		apiFetch.mockResolvedValue( { ticket_types: [] } );
 		renderEdit();
 
-		const select = screen.getByLabelText('Condition source');
+		const select = screen.getByLabelText( 'Condition source' );
 		expect(
-			Array.from(select.querySelectorAll('option')).map((o) => o.value)
-		).toEqual(['question', 'eventOption', 'ticketType']);
+			Array.from( select.querySelectorAll( 'option' ) ).map(
+				( o ) => o.value
+			)
+		).toEqual( [ 'question', 'eventOption', 'ticketType' ] );
 
-		await waitFor(() => expect(apiFetch).toHaveBeenCalled());
-	});
+		await waitFor( () => expect( apiFetch ).toHaveBeenCalled() );
+	} );
 
-	it('offers "Ticket type" resolving the event date from the post context global (the common case, since the block attribute itself is normally 0)', async () => {
+	it( 'offers "Ticket type" resolving the event date from the post context global (the common case, since the block attribute itself is normally 0)', async () => {
 		window.fairEventsSignupBlock = { postEventDateId: 42 };
-		mockFormParent({
+		mockFormParent( {
 			name: 'fair-events/event-signup',
 			attributes: { eventDateId: 0 },
-		});
-		apiFetch.mockResolvedValue({ ticket_types: [] });
+		} );
+		apiFetch.mockResolvedValue( { ticket_types: [] } );
 		renderEdit();
 
-		const select = screen.getByLabelText('Condition source');
+		const select = screen.getByLabelText( 'Condition source' );
 		expect(
-			Array.from(select.querySelectorAll('option')).map((o) => o.value)
-		).toEqual(['question', 'eventOption', 'ticketType']);
+			Array.from( select.querySelectorAll( 'option' ) ).map(
+				( o ) => o.value
+			)
+		).toEqual( [ 'question', 'eventOption', 'ticketType' ] );
 
-		await waitFor(() =>
-			expect(apiFetch).toHaveBeenCalledWith({
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith( {
 				path: '/fair-events/v1/event-dates/42/tickets',
-			})
+			} )
 		);
-	});
+	} );
 
-	it('does not offer "Ticket type" when standalone (not inside a signup form)', () => {
-		mockFormParent(null);
+	it( 'does not offer "Ticket type" when standalone (not inside a signup form)', () => {
+		mockFormParent( null );
 		renderEdit();
 
 		expect(
-			screen.queryByLabelText('Condition source')
+			screen.queryByLabelText( 'Condition source' )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	it('does not offer "Ticket type" when inside an unconnected Event Signup (no attribute, no resolved post event date)', () => {
-		mockFormParent({
+	it( 'does not offer "Ticket type" when inside an unconnected Event Signup (no attribute, no resolved post event date)', () => {
+		mockFormParent( {
 			name: 'fair-events/event-signup',
 			attributes: { eventDateId: 0 },
-		});
+		} );
 		renderEdit();
 
-		const select = screen.getByLabelText('Condition source');
+		const select = screen.getByLabelText( 'Condition source' );
 		expect(
-			Array.from(select.querySelectorAll('option')).map((o) => o.value)
-		).toEqual(['question', 'eventOption']);
-	});
+			Array.from( select.querySelectorAll( 'option' ) ).map(
+				( o ) => o.value
+			)
+		).toEqual( [ 'question', 'eventOption' ] );
+	} );
 
-	it('does not offer "Ticket type" when inside the legacy Event Signup', () => {
-		mockFormParent({
+	it( 'does not offer "Ticket type" when inside the legacy Event Signup', () => {
+		mockFormParent( {
 			name: 'fair-audience/event-signup',
 			attributes: {},
-		});
+		} );
 		renderEdit();
 
-		const select = screen.getByLabelText('Condition source');
+		const select = screen.getByLabelText( 'Condition source' );
 		expect(
-			Array.from(select.querySelectorAll('option')).map((o) => o.value)
-		).toEqual(['question', 'eventOption']);
-	});
+			Array.from( select.querySelectorAll( 'option' ) ).map(
+				( o ) => o.value
+			)
+		).toEqual( [ 'question', 'eventOption' ] );
+	} );
 
-	it('renders fetched ticket types as checkboxes and toggles conditionTicketTypeIds', async () => {
-		mockFormParent({
+	it( 'renders fetched ticket types as checkboxes and toggles conditionTicketTypeIds', async () => {
+		mockFormParent( {
 			name: 'fair-events/event-signup',
 			attributes: { eventDateId: 42 },
-		});
-		apiFetch.mockResolvedValue({
+		} );
+		apiFetch.mockResolvedValue( {
 			ticket_types: [
 				{ id: 1, name: 'Adult' },
 				{ id: 2, name: 'Child' },
 			],
-		});
+		} );
 		const setAttributes = jest.fn();
-		renderEdit({ conditionSource: 'ticketType' }, setAttributes);
+		renderEdit( { conditionSource: 'ticketType' }, setAttributes );
 
-		await waitFor(() =>
-			expect(apiFetch).toHaveBeenCalledWith({
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith( {
 				path: '/fair-events/v1/event-dates/42/tickets',
-			})
+			} )
 		);
 
-		const adultCheckbox = await screen.findByLabelText('Adult');
-		expect(adultCheckbox).not.toBeChecked();
+		const adultCheckbox = await screen.findByLabelText( 'Adult' );
+		expect( adultCheckbox ).not.toBeChecked();
 
 		adultCheckbox.click();
-		expect(setAttributes).toHaveBeenCalledWith({
-			conditionTicketTypeIds: [1],
-		});
-	});
+		expect( setAttributes ).toHaveBeenCalledWith( {
+			conditionTicketTypeIds: [ 1 ],
+		} );
+	} );
 
-	it('shows a warning when a referenced ticket type no longer exists', async () => {
-		mockFormParent({
+	it( 'shows a warning when a referenced ticket type no longer exists', async () => {
+		mockFormParent( {
 			name: 'fair-events/event-signup',
 			attributes: { eventDateId: 42 },
-		});
-		apiFetch.mockResolvedValue({
-			ticket_types: [{ id: 1, name: 'Adult' }],
-		});
-		renderEdit({
+		} );
+		apiFetch.mockResolvedValue( {
+			ticket_types: [ { id: 1, name: 'Adult' } ],
+		} );
+		renderEdit( {
 			conditionSource: 'ticketType',
-			conditionTicketTypeIds: [1, 999],
-		});
+			conditionTicketTypeIds: [ 1, 999 ],
+		} );
 
-		expect(await screen.findByRole('alert')).toHaveTextContent(
+		expect( await screen.findByRole( 'alert' ) ).toHaveTextContent(
 			/no longer exist/
 		);
-	});
+	} );
 
-	it('shows no warning while the referenced ticket types all still exist', async () => {
-		mockFormParent({
+	it( 'shows no warning while the referenced ticket types all still exist', async () => {
+		mockFormParent( {
 			name: 'fair-events/event-signup',
 			attributes: { eventDateId: 42 },
-		});
-		apiFetch.mockResolvedValue({
-			ticket_types: [{ id: 1, name: 'Adult' }],
-		});
-		renderEdit({
+		} );
+		apiFetch.mockResolvedValue( {
+			ticket_types: [ { id: 1, name: 'Adult' } ],
+		} );
+		renderEdit( {
 			conditionSource: 'ticketType',
-			conditionTicketTypeIds: [1],
-		});
+			conditionTicketTypeIds: [ 1 ],
+		} );
 
-		await screen.findByLabelText('Adult');
-		expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-	});
-});
+		await screen.findByLabelText( 'Adult' );
+		expect( screen.queryByRole( 'alert' ) ).not.toBeInTheDocument();
+	} );
+} );

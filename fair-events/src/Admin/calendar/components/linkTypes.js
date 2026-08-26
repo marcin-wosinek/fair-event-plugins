@@ -16,8 +16,8 @@ import { __ } from '@wordpress/i18n';
  * @param {string} linkType 'post', 'instance', 'external', or 'unlinked'.
  * @return {string} Dashicon class name.
  */
-export function getLinkTypeIcon(linkType) {
-	switch (linkType) {
+export function getLinkTypeIcon( linkType ) {
+	switch ( linkType ) {
 		case 'instance':
 			return 'dashicons-update';
 		case 'external':
@@ -40,23 +40,23 @@ export function getLinkTypeVariants() {
 	return [
 		{
 			type: 'post',
-			icon: getLinkTypeIcon('post'),
-			label: __('Public page', 'fair-events'),
+			icon: getLinkTypeIcon( 'post' ),
+			label: __( 'Public page', 'fair-events' ),
 		},
 		{
 			type: 'instance',
-			icon: getLinkTypeIcon('instance'),
-			label: __('Series occurrence', 'fair-events'),
+			icon: getLinkTypeIcon( 'instance' ),
+			label: __( 'Series occurrence', 'fair-events' ),
 		},
 		{
 			type: 'external',
-			icon: getLinkTypeIcon('external'),
-			label: __('External page', 'fair-events'),
+			icon: getLinkTypeIcon( 'external' ),
+			label: __( 'External page', 'fair-events' ),
 		},
 		{
 			type: 'unlinked',
-			icon: getLinkTypeIcon('unlinked'),
-			label: __('No public page yet', 'fair-events'),
+			icon: getLinkTypeIcon( 'unlinked' ),
+			label: __( 'No public page yet', 'fair-events' ),
 		},
 	];
 }

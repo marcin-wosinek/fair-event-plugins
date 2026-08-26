@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "yes",
 	"description": "A single-choice question (select or radio) for Fair Form",
-	"keywords": ["question", "select", "radio", "choice"],
+	"keywords": [ "question", "select", "radio", "choice" ],
 	"textdomain": "fair-audience",
 	"ancestor": [
 		"fair-audience/fair-form",

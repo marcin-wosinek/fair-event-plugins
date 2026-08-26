@@ -13,9 +13,9 @@ import './style.scss';
 /**
  * Initialize the entries page
  */
-domReady(() => {
-	const root = document.getElementById('fair-finance-entries-root');
-	if (root) {
-		createRoot(root).render(<EntriesApp />);
+domReady( () => {
+	const root = document.getElementById( 'fair-finance-entries-root' );
+	if ( root ) {
+		createRoot( root ).render( <EntriesApp /> );
 	}
-});
+} );

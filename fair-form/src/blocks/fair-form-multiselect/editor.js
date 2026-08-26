@@ -11,15 +11,15 @@ import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { autosizeTextarea, generateQuestionKey } from 'fair-events-shared';
 
-const ALLOWED_BLOCKS = ['fair-audience/fair-form-option'];
+const ALLOWED_BLOCKS = [ 'fair-audience/fair-form-option' ];
 
-registerBlockType('fair-audience/fair-form-multiselect', {
+registerBlockType( 'fair-audience/fair-form-multiselect', {
 	transforms: {
 		to: [
 			{
 				type: 'block',
-				blocks: ['fair-audience/fair-form-select-one'],
-				transform: (attributes, innerBlocks) => {
+				blocks: [ 'fair-audience/fair-form-select-one' ],
+				transform: ( attributes, innerBlocks ) => {
 					return createBlock(
 						'fair-audience/fair-form-select-one',
 						{ ...attributes, displayAs: 'select' },
@@ -29,8 +29,8 @@ registerBlockType('fair-audience/fair-form-multiselect', {
 			},
 			{
 				type: 'block',
-				blocks: ['fair-audience/fair-form-radio'],
-				transform: (attributes, innerBlocks) => {
+				blocks: [ 'fair-audience/fair-form-radio' ],
+				transform: ( attributes, innerBlocks ) => {
 					return createBlock(
 						'fair-audience/fair-form-radio',
 						attributes,
@@ -40,23 +40,23 @@ registerBlockType('fair-audience/fair-form-multiselect', {
 			},
 		],
 	},
-	edit: ({ attributes, setAttributes }) => {
+	edit: ( { attributes, setAttributes } ) => {
 		const { questionText, questionKey, required } = attributes;
 
-		const onQuestionTextChange = (value) => {
+		const onQuestionTextChange = ( value ) => {
 			const updates = { questionText: value };
 			if (
-				!questionKey ||
-				questionKey === generateQuestionKey(questionText)
+				! questionKey ||
+				questionKey === generateQuestionKey( questionText )
 			) {
-				updates.questionKey = generateQuestionKey(value);
+				updates.questionKey = generateQuestionKey( value );
 			}
-			setAttributes(updates);
+			setAttributes( updates );
 		};
 
-		const blockProps = useBlockProps({
+		const blockProps = useBlockProps( {
 			className: 'fair-form-question fair-form-question-multiselect',
-		});
+		} );
 
 		const innerBlocksProps = useInnerBlocksProps(
 			{ className: 'fair-form-options-list' },
@@ -69,49 +69,51 @@ registerBlockType('fair-audience/fair-form-multiselect', {
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Question Settings', 'fair-audience')}>
+					<PanelBody
+						title={ __( 'Question Settings', 'fair-audience' ) }
+					>
 						<TextControl
-							label={__('Question Key', 'fair-audience')}
-							value={questionKey}
-							onChange={(value) =>
-								setAttributes({ questionKey: value })
+							label={ __( 'Question Key', 'fair-audience' ) }
+							value={ questionKey }
+							onChange={ ( value ) =>
+								setAttributes( { questionKey: value } )
 							}
-							help={__(
+							help={ __(
 								'A unique identifier for this question. Used internally.',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<ToggleControl
-							label={__('Required', 'fair-audience')}
-							checked={required}
-							onChange={(value) =>
-								setAttributes({ required: value })
+							label={ __( 'Required', 'fair-audience' ) }
+							checked={ required }
+							onChange={ ( value ) =>
+								setAttributes( { required: value } )
 							}
 						/>
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
+				<div { ...blockProps }>
 					<p>
 						<span className="fair-form-question-header">
 							<textarea
-								rows={1}
-								ref={autosizeTextarea}
-								value={questionText}
-								onChange={(e) => {
-									autosizeTextarea(e.target);
-									onQuestionTextChange(e.target.value);
-								}}
-								placeholder={__(
+								rows={ 1 }
+								ref={ autosizeTextarea }
+								value={ questionText }
+								onChange={ ( e ) => {
+									autosizeTextarea( e.target );
+									onQuestionTextChange( e.target.value );
+								} }
+								placeholder={ __(
 									'Enter your question...',
 									'fair-audience'
-								)}
+								) }
 								className="fair-form-question-label-input"
 							/>
-							{required && <span className="required"> *</span>}
+							{ required && <span className="required"> *</span> }
 						</span>
 					</p>
-					<div {...innerBlocksProps} />
+					<div { ...innerBlocksProps } />
 				</div>
 			</>
 		);
@@ -119,4 +121,4 @@ registerBlockType('fair-audience/fair-form-multiselect', {
 	save: () => {
 		return <InnerBlocks.Content />;
 	},
-});
+} );

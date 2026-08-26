@@ -11,7 +11,7 @@ import { render, screen } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import TransactionsApp from '../TransactionsApp.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 const TRANSACTION = {
 	id: 42,
@@ -24,40 +24,40 @@ const TRANSACTION = {
 	description: 'Ticket purchase',
 	participant: null,
 	user_name: 'Jane Doe',
-	entry_ids: [12, 34],
+	entry_ids: [ 12, 34 ],
 	created_at: '2026-07-01',
 };
 
-beforeEach(() => {
-	apiFetch.mockImplementation(() =>
-		Promise.resolve({
-			transactions: [TRANSACTION],
+beforeEach( () => {
+	apiFetch.mockImplementation( () =>
+		Promise.resolve( {
+			transactions: [ TRANSACTION ],
 			total: 1,
 			pages: 1,
-		})
+		} )
 	);
-});
+} );
 
-afterEach(() => {
+afterEach( () => {
 	jest.clearAllMocks();
-});
+} );
 
-describe('TransactionsApp — entry column', () => {
-	it('renders entry ids as plain text, not a link to the retired entries slug', async () => {
-		render(<TransactionsApp />);
+describe( 'TransactionsApp — entry column', () => {
+	it( 'renders entry ids as plain text, not a link to the retired entries slug', async () => {
+		render( <TransactionsApp /> );
 
-		expect(await screen.findByText('#12, #34')).toBeInTheDocument();
+		expect( await screen.findByText( '#12, #34' ) ).toBeInTheDocument();
 		expect(
-			screen.queryByRole('link', { name: /#12|#34/ })
+			screen.queryByRole( 'link', { name: /#12|#34/ } )
 		).not.toBeInTheDocument();
 
 		const staleLink = screen
-			.queryAllByRole('link')
-			.find((l) =>
-				(l.getAttribute('href') || '').includes(
+			.queryAllByRole( 'link' )
+			.find( ( l ) =>
+				( l.getAttribute( 'href' ) || '' ).includes(
 					'fair-payments-connector-entries'
 				)
 			);
-		expect(staleLink).toBeUndefined();
-	});
-});
+		expect( staleLink ).toBeUndefined();
+	} );
+} );

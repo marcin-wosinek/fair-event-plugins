@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
  * Column headers expected in a Mollie settlement export. Matching is
  * case-insensitive and trimmed.
  */
-const REQUIRED_HEADERS = ['id', 'settlement reference', 'amount', 'status'];
+const REQUIRED_HEADERS = [ 'id', 'settlement reference', 'amount', 'status' ];
 
 /**
  * Parse a numeric cell into a Number.
@@ -19,19 +19,19 @@ const REQUIRED_HEADERS = ['id', 'settlement reference', 'amount', 'status'];
  * @param {*} value Raw cell value.
  * @return {number} Parsed number.
  */
-function parseNumber(value) {
-	if (typeof value === 'number') {
-		return Number.isFinite(value) ? value : 0;
+function parseNumber( value ) {
+	if ( typeof value === 'number' ) {
+		return Number.isFinite( value ) ? value : 0;
 	}
-	if (value === null || value === undefined) {
+	if ( value === null || value === undefined ) {
 		return 0;
 	}
-	const cleaned = String(value).replace(/[^0-9.\-]/g, '');
-	if (cleaned === '' || cleaned === '-' || cleaned === '.') {
+	const cleaned = String( value ).replace( /[^0-9.\-]/g, '' );
+	if ( cleaned === '' || cleaned === '-' || cleaned === '.' ) {
 		return 0;
 	}
-	const parsed = parseFloat(cleaned);
-	return Number.isFinite(parsed) ? parsed : 0;
+	const parsed = parseFloat( cleaned );
+	return Number.isFinite( parsed ) ? parsed : 0;
 }
 
 /**
@@ -40,7 +40,7 @@ function parseNumber(value) {
  * @param {*} cell Raw header cell.
  * @return {string} Lowercased, trimmed string.
  */
-function normalizeHeader(cell) {
+function normalizeHeader( cell ) {
 	return typeof cell === 'string' ? cell.trim().toLowerCase() : '';
 }
 
@@ -50,25 +50,25 @@ function normalizeHeader(cell) {
  * @param {Array<Array>} rows Array-of-arrays from XLSX.utils.sheet_to_json.
  * @return {{ headerRowIndex: number, columns: Object }} Header location and index map.
  */
-function findHeader(rows) {
-	for (let i = 0; i < rows.length; i++) {
-		const row = rows[i];
-		if (!Array.isArray(row)) {
+function findHeader( rows ) {
+	for ( let i = 0; i < rows.length; i++ ) {
+		const row = rows[ i ];
+		if ( ! Array.isArray( row ) ) {
 			continue;
 		}
 
-		const normalized = row.map(normalizeHeader);
-		const hasAll = REQUIRED_HEADERS.every((header) =>
-			normalized.includes(header)
+		const normalized = row.map( normalizeHeader );
+		const hasAll = REQUIRED_HEADERS.every( ( header ) =>
+			normalized.includes( header )
 		);
 
-		if (hasAll) {
+		if ( hasAll ) {
 			const columns = {};
-			normalized.forEach((name, index) => {
-				if (name && !(name in columns)) {
-					columns[name] = index;
+			normalized.forEach( ( name, index ) => {
+				if ( name && ! ( name in columns ) ) {
+					columns[ name ] = index;
 				}
-			});
+			} );
 			return { headerRowIndex: i, columns };
 		}
 	}
@@ -87,8 +87,8 @@ function findHeader(rows) {
  * @param {Array<Array>} rows Array-of-arrays from XLSX.utils.sheet_to_json(sheet, { header: 1 }).
  * @return {Object} Parsed settlement: { settlement_reference, currency, payment_rows, fee_rows, settlement_total }.
  */
-export function parseSettlementRows(rows) {
-	if (!Array.isArray(rows) || rows.length === 0) {
+export function parseSettlementRows( rows ) {
+	if ( ! Array.isArray( rows ) || rows.length === 0 ) {
 		throw new Error(
 			__(
 				'The file is empty or could not be read.',
@@ -97,8 +97,8 @@ export function parseSettlementRows(rows) {
 		);
 	}
 
-	const { headerRowIndex, columns } = findHeader(rows);
-	if (headerRowIndex === -1) {
+	const { headerRowIndex, columns } = findHeader( rows );
+	if ( headerRowIndex === -1 ) {
 		throw new Error(
 			__(
 				'This does not look like a Mollie settlement export (missing expected columns).',
@@ -111,8 +111,8 @@ export function parseSettlementRows(rows) {
 	const amountCol = columns.amount;
 	const statusCol = columns.status;
 	const descriptionCol = columns.description;
-	const settlementRefCol = columns['settlement reference'];
-	const settlementAmountCol = columns['settlement amount'];
+	const settlementRefCol = columns[ 'settlement reference' ];
+	const settlementAmountCol = columns[ 'settlement amount' ];
 	const currencyCol = columns.currency;
 
 	const paymentRows = [];
@@ -121,74 +121,74 @@ export function parseSettlementRows(rows) {
 	const currencies = new Set();
 	let settlementTotal = 0;
 
-	for (let i = headerRowIndex + 1; i < rows.length; i++) {
-		const row = rows[i];
-		if (!Array.isArray(row) || row.length === 0) {
+	for ( let i = headerRowIndex + 1; i < rows.length; i++ ) {
+		const row = rows[ i ];
+		if ( ! Array.isArray( row ) || row.length === 0 ) {
 			continue;
 		}
 
 		const id =
-			typeof row[idCol] === 'string'
-				? row[idCol].trim()
-				: row[idCol]
-				? String(row[idCol]).trim()
+			typeof row[ idCol ] === 'string'
+				? row[ idCol ].trim()
+				: row[ idCol ]
+				? String( row[ idCol ] ).trim()
 				: '';
-		const amount = parseNumber(row[amountCol]);
+		const amount = parseNumber( row[ amountCol ] );
 		const status =
-			statusCol !== undefined && row[statusCol] !== undefined
-				? String(row[statusCol]).trim()
+			statusCol !== undefined && row[ statusCol ] !== undefined
+				? String( row[ statusCol ] ).trim()
 				: '';
 		const description =
-			descriptionCol !== undefined && row[descriptionCol] !== undefined
-				? String(row[descriptionCol]).trim()
+			descriptionCol !== undefined && row[ descriptionCol ] !== undefined
+				? String( row[ descriptionCol ] ).trim()
 				: '';
 		const settlementAmount =
 			settlementAmountCol !== undefined
-				? parseNumber(row[settlementAmountCol])
+				? parseNumber( row[ settlementAmountCol ] )
 				: 0;
 
 		const reference =
 			settlementRefCol !== undefined &&
-			row[settlementRefCol] !== undefined
-				? String(row[settlementRefCol]).trim()
+			row[ settlementRefCol ] !== undefined
+				? String( row[ settlementRefCol ] ).trim()
 				: '';
-		if (reference) {
-			references.add(reference);
+		if ( reference ) {
+			references.add( reference );
 		}
 
-		if (currencyCol !== undefined && row[currencyCol] !== undefined) {
-			const currency = String(row[currencyCol]).trim();
-			if (currency) {
-				currencies.add(currency);
+		if ( currencyCol !== undefined && row[ currencyCol ] !== undefined ) {
+			const currency = String( row[ currencyCol ] ).trim();
+			if ( currency ) {
+				currencies.add( currency );
 			}
 		}
 
 		// Skip fully blank rows (no id, no amount, no settlement amount).
-		if (id === '' && amount === 0 && settlementAmount === 0) {
+		if ( id === '' && amount === 0 && settlementAmount === 0 ) {
 			continue;
 		}
 
 		settlementTotal += settlementAmount;
 
-		if (id.startsWith('tr_')) {
-			paymentRows.push({
+		if ( id.startsWith( 'tr_' ) ) {
+			paymentRows.push( {
 				mollie_payment_id: id,
 				amount,
 				status,
 				description,
 				settlement_amount: settlementAmount,
-			});
-		} else if (id === '' && amount !== 0) {
-			feeRows.push({
+			} );
+		} else if ( id === '' && amount !== 0 ) {
+			feeRows.push( {
 				description,
 				amount,
-			});
+			} );
 		}
 		// Other rows (refunds, chargebacks) are not matched here but still
 		// contribute to settlement_total above.
 	}
 
-	if (references.size === 0) {
+	if ( references.size === 0 ) {
 		throw new Error(
 			__(
 				'No settlement reference found in the file.',
@@ -196,7 +196,7 @@ export function parseSettlementRows(rows) {
 			)
 		);
 	}
-	if (references.size > 1) {
+	if ( references.size > 1 ) {
 		throw new Error(
 			__(
 				'The file contains multiple settlement references. Upload one settlement at a time.',
@@ -204,7 +204,7 @@ export function parseSettlementRows(rows) {
 			)
 		);
 	}
-	if (currencies.size > 1) {
+	if ( currencies.size > 1 ) {
 		throw new Error(
 			__(
 				'The file contains multiple currencies. Upload one settlement at a time.',
@@ -213,7 +213,7 @@ export function parseSettlementRows(rows) {
 		);
 	}
 
-	if (paymentRows.length === 0) {
+	if ( paymentRows.length === 0 ) {
 		throw new Error(
 			__(
 				'No payment rows found in the settlement file.',

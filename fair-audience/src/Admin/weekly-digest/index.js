@@ -12,12 +12,12 @@ import WeeklyDigest from './WeeklyDigest.js';
 /**
  * Initialize the weekly digest page
  */
-domReady(() => {
+domReady( () => {
 	const container = document.getElementById(
 		'fair-audience-weekly-digest-root'
 	);
-	if (container) {
-		const root = createRoot(container);
-		root.render(<WeeklyDigest />);
+	if ( container ) {
+		const root = createRoot( container );
+		root.render( <WeeklyDigest /> );
 	}
-});
+} );

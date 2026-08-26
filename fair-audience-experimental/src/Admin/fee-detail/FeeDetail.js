@@ -41,106 +41,106 @@ const DEFAULT_LAYOUTS = {
 };
 
 export default function FeeDetail() {
-	const urlParams = new URLSearchParams(window.location.search);
-	const feeId = urlParams.get('fee_id');
+	const urlParams = new URLSearchParams( window.location.search );
+	const feeId = urlParams.get( 'fee_id' );
 
-	const [fee, setFee] = useState(null);
-	const [payments, setPayments] = useState([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [view, setView] = useState(DEFAULT_VIEW);
+	const [ fee, setFee ] = useState( null );
+	const [ payments, setPayments ] = useState( [] );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ view, setView ] = useState( DEFAULT_VIEW );
 
 	// Adjust amount modal.
-	const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
-	const [adjustingPayment, setAdjustingPayment] = useState(null);
-	const [newAmount, setNewAmount] = useState('');
-	const [adjustReason, setAdjustReason] = useState('');
-	const [isSaving, setIsSaving] = useState(false);
+	const [ isAdjustModalOpen, setIsAdjustModalOpen ] = useState( false );
+	const [ adjustingPayment, setAdjustingPayment ] = useState( null );
+	const [ newAmount, setNewAmount ] = useState( '' );
+	const [ adjustReason, setAdjustReason ] = useState( '' );
+	const [ isSaving, setIsSaving ] = useState( false );
 
 	// Audit log modal.
-	const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
-	const [auditEntries, setAuditEntries] = useState([]);
-	const [auditLoading, setAuditLoading] = useState(false);
+	const [ isAuditModalOpen, setIsAuditModalOpen ] = useState( false );
+	const [ auditEntries, setAuditEntries ] = useState( [] );
+	const [ auditLoading, setAuditLoading ] = useState( false );
 
 	// Transactions modal.
-	const [isTransactionsModalOpen, setIsTransactionsModalOpen] =
-		useState(false);
-	const [transactionEntries, setTransactionEntries] = useState([]);
-	const [transactionsLoading, setTransactionsLoading] = useState(false);
+	const [ isTransactionsModalOpen, setIsTransactionsModalOpen ] =
+		useState( false );
+	const [ transactionEntries, setTransactionEntries ] = useState( [] );
+	const [ transactionsLoading, setTransactionsLoading ] = useState( false );
 
 	// Notice state.
-	const [notice, setNotice] = useState(null);
+	const [ notice, setNotice ] = useState( null );
 
 	// Reminders state.
-	const [isSendingReminders, setIsSendingReminders] = useState(false);
+	const [ isSendingReminders, setIsSendingReminders ] = useState( false );
 
 	// Add participant modal.
-	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-	const [groupMembers, setGroupMembers] = useState([]);
-	const [groupMembersLoading, setGroupMembersLoading] = useState(false);
-	const [addSearch, setAddSearch] = useState('');
-	const [selectedToAdd, setSelectedToAdd] = useState(null);
-	const [addAmount, setAddAmount] = useState('');
-	const [isAddingPayment, setIsAddingPayment] = useState(false);
+	const [ isAddModalOpen, setIsAddModalOpen ] = useState( false );
+	const [ groupMembers, setGroupMembers ] = useState( [] );
+	const [ groupMembersLoading, setGroupMembersLoading ] = useState( false );
+	const [ addSearch, setAddSearch ] = useState( '' );
+	const [ selectedToAdd, setSelectedToAdd ] = useState( null );
+	const [ addAmount, setAddAmount ] = useState( '' );
+	const [ isAddingPayment, setIsAddingPayment ] = useState( false );
 
 	// Transfer modal.
-	const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-	const [transferPayment, setTransferPayment] = useState(null);
-	const [budgets, setBudgets] = useState([]);
-	const [transferData, setTransferData] = useState({
+	const [ isTransferModalOpen, setIsTransferModalOpen ] = useState( false );
+	const [ transferPayment, setTransferPayment ] = useState( null );
+	const [ budgets, setBudgets ] = useState( [] );
+	const [ transferData, setTransferData ] = useState( {
 		amount: '',
 		entry_date: '',
 		description: '',
 		source_budget_id: '',
 		target_budget_id: '',
-	});
-	const [isCreatingTransfer, setIsCreatingTransfer] = useState(false);
+	} );
+	const [ isCreatingTransfer, setIsCreatingTransfer ] = useState( false );
 
-	const loadFee = useCallback(() => {
-		if (!feeId) return;
+	const loadFee = useCallback( () => {
+		if ( ! feeId ) return;
 
-		apiFetch({ path: `/fair-audience/v1/fees/${feeId}` })
-			.then((data) => {
-				setFee(data);
-			})
-			.catch((err) => {
+		apiFetch( { path: `/fair-audience/v1/fees/${ feeId }` } )
+			.then( ( data ) => {
+				setFee( data );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading fee:', err);
-			});
-	}, [feeId]);
+				console.error( 'Error loading fee:', err );
+			} );
+	}, [ feeId ] );
 
-	const loadPayments = useCallback(() => {
-		if (!feeId) return;
+	const loadPayments = useCallback( () => {
+		if ( ! feeId ) return;
 
-		setIsLoading(true);
+		setIsLoading( true );
 
-		apiFetch({ path: `/fair-audience/v1/fees/${feeId}/payments` })
-			.then((data) => {
-				setPayments(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
+		apiFetch( { path: `/fair-audience/v1/fees/${ feeId }/payments` } )
+			.then( ( data ) => {
+				setPayments( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading payments:', err);
-				setIsLoading(false);
-			});
-	}, [feeId]);
+				console.error( 'Error loading payments:', err );
+				setIsLoading( false );
+			} );
+	}, [ feeId ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadFee();
 		loadPayments();
-		apiFetch({ path: '/fair-payments-connector/v1/budgets' })
-			.then((data) => setBudgets(data))
-			.catch(() => {});
-	}, [loadFee, loadPayments]);
+		apiFetch( { path: '/fair-payments-connector/v1/budgets' } )
+			.then( ( data ) => setBudgets( data ) )
+			.catch( () => {} );
+	}, [ loadFee, loadPayments ] );
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
 		() => [
 			{
 				id: 'participant_name',
-				label: __('Name', 'fair-audience'),
-				render: ({ item }) =>
-					`${item.participant_name || ''} ${
+				label: __( 'Name', 'fair-audience' ),
+				render: ( { item } ) =>
+					`${ item.participant_name || '' } ${
 						item.participant_surname || ''
 					}`.trim() || '—',
 				enableSorting: false,
@@ -148,25 +148,25 @@ export default function FeeDetail() {
 			},
 			{
 				id: 'participant_email',
-				label: __('Email', 'fair-audience'),
-				render: ({ item }) => item.participant_email || '—',
+				label: __( 'Email', 'fair-audience' ),
+				render: ( { item } ) => item.participant_email || '—',
 				enableSorting: false,
 			},
 			{
 				id: 'amount',
-				label: __('Amount', 'fair-audience'),
-				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>
-						{parseFloat(item.amount).toFixed(2)}
+				label: __( 'Amount', 'fair-audience' ),
+				render: ( { item } ) => (
+					<div style={ { textAlign: 'right' } }>
+						{ parseFloat( item.amount ).toFixed( 2 ) }
 					</div>
 				),
 				enableSorting: false,
-				getValue: ({ item }) => parseFloat(item.amount),
+				getValue: ( { item } ) => parseFloat( item.amount ),
 			},
 			{
 				id: 'status',
-				label: __('Status', 'fair-audience'),
-				render: ({ item }) => {
+				label: __( 'Status', 'fair-audience' ),
+				render: ( { item } ) => {
 					const colors = {
 						pending: '#dba617',
 						paid: '#00a32a',
@@ -174,12 +174,12 @@ export default function FeeDetail() {
 					};
 					return (
 						<span
-							style={{
-								color: colors[item.status] || '#333',
+							style={ {
+								color: colors[ item.status ] || '#333',
 								fontWeight: 'bold',
-							}}
+							} }
 						>
-							{item.status}
+							{ item.status }
 						</span>
 					);
 				},
@@ -187,14 +187,14 @@ export default function FeeDetail() {
 			},
 			{
 				id: 'paid_at',
-				label: __('Paid At', 'fair-audience'),
-				render: ({ item }) => item.paid_at || '—',
+				label: __( 'Paid At', 'fair-audience' ),
+				render: ( { item } ) => item.paid_at || '—',
 				enableSorting: false,
 			},
 			{
 				id: 'reminder_sent_at',
-				label: __('Reminder Sent', 'fair-audience'),
-				render: ({ item }) => item.reminder_sent_at || '—',
+				label: __( 'Reminder Sent', 'fair-audience' ),
+				render: ( { item } ) => item.reminder_sent_at || '—',
 				enableSorting: false,
 			},
 		],
@@ -202,302 +202,313 @@ export default function FeeDetail() {
 	);
 
 	// Adjust amount.
-	const openAdjustModal = (payment) => {
-		setAdjustingPayment(payment);
-		setNewAmount(payment.amount);
-		setAdjustReason('');
-		setIsAdjustModalOpen(true);
+	const openAdjustModal = ( payment ) => {
+		setAdjustingPayment( payment );
+		setNewAmount( payment.amount );
+		setAdjustReason( '' );
+		setIsAdjustModalOpen( true );
 	};
 
 	const handleAdjustAmount = () => {
-		if (!adjustingPayment || !adjustReason.trim()) return;
+		if ( ! adjustingPayment || ! adjustReason.trim() ) return;
 
-		setIsSaving(true);
+		setIsSaving( true );
 
-		apiFetch({
-			path: `/fair-audience/v1/fees/${feeId}/payments/${adjustingPayment.id}/amount`,
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ feeId }/payments/${ adjustingPayment.id }/amount`,
 			method: 'PUT',
 			data: {
-				amount: parseFloat(newAmount),
+				amount: parseFloat( newAmount ),
 				comment: adjustReason.trim(),
 			},
-		})
-			.then(() => {
-				setIsAdjustModalOpen(false);
-				setAdjustingPayment(null);
+		} )
+			.then( () => {
+				setIsAdjustModalOpen( false );
+				setAdjustingPayment( null );
 				loadPayments();
-				setNotice({
+				setNotice( {
 					status: 'success',
 					message: __(
 						'Amount adjusted successfully.',
 						'fair-audience'
 					),
-				});
-			})
-			.catch((err) => {
+				} );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to adjust amount.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__( 'Failed to adjust amount.', 'fair-audience' ) )
 				);
-			})
-			.finally(() => {
-				setIsSaving(false);
-			});
+			} )
+			.finally( () => {
+				setIsSaving( false );
+			} );
 	};
 
 	// Mark as paid.
-	const handleMarkPaid = (payment) => {
+	const handleMarkPaid = ( payment ) => {
 		// eslint-disable-next-line no-undef
-		if (!confirm(__('Mark this payment as paid?', 'fair-audience'))) {
+		if (
+			! confirm( __( 'Mark this payment as paid?', 'fair-audience' ) )
+		) {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/fees/${feeId}/payments/${payment.id}/mark-paid`,
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ feeId }/payments/${ payment.id }/mark-paid`,
 			method: 'POST',
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				loadPayments();
-				setNotice({
+				setNotice( {
 					status: 'success',
-					message: __('Payment marked as paid.', 'fair-audience'),
-				});
-			})
-			.catch((err) => {
+					message: __( 'Payment marked as paid.', 'fair-audience' ),
+				} );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to mark as paid.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__( 'Failed to mark as paid.', 'fair-audience' ) )
 				);
-			});
+			} );
 	};
 
 	// Cancel payment.
-	const handleCancel = (payment) => {
+	const handleCancel = ( payment ) => {
 		// eslint-disable-next-line no-undef
-		if (!confirm(__('Cancel this payment?', 'fair-audience'))) {
+		if ( ! confirm( __( 'Cancel this payment?', 'fair-audience' ) ) ) {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/fees/${feeId}/payments/${payment.id}/cancel`,
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ feeId }/payments/${ payment.id }/cancel`,
 			method: 'POST',
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				loadPayments();
-				setNotice({
+				setNotice( {
 					status: 'success',
-					message: __('Payment canceled.', 'fair-audience'),
-				});
-			})
-			.catch((err) => {
+					message: __( 'Payment canceled.', 'fair-audience' ),
+				} );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to cancel payment.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__( 'Failed to cancel payment.', 'fair-audience' ) )
 				);
-			});
+			} );
 	};
 
 	// View audit log.
-	const openAuditLog = (payment) => {
-		setAuditLoading(true);
-		setAuditEntries([]);
-		setIsAuditModalOpen(true);
+	const openAuditLog = ( payment ) => {
+		setAuditLoading( true );
+		setAuditEntries( [] );
+		setIsAuditModalOpen( true );
 
-		apiFetch({
-			path: `/fair-audience/v1/fees/${feeId}/payments/${payment.id}/audit-log`,
-		})
-			.then((data) => {
-				setAuditEntries(data);
-				setAuditLoading(false);
-			})
-			.catch((err) => {
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ feeId }/payments/${ payment.id }/audit-log`,
+		} )
+			.then( ( data ) => {
+				setAuditEntries( data );
+				setAuditLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading audit log:', err);
-				setAuditLoading(false);
-			});
+				console.error( 'Error loading audit log:', err );
+				setAuditLoading( false );
+			} );
 	};
 
 	// View payment attempts.
-	const openTransactionsModal = (payment) => {
-		setTransactionsLoading(true);
-		setTransactionEntries([]);
-		setIsTransactionsModalOpen(true);
+	const openTransactionsModal = ( payment ) => {
+		setTransactionsLoading( true );
+		setTransactionEntries( [] );
+		setIsTransactionsModalOpen( true );
 
-		apiFetch({
-			path: `/fair-audience/v1/fees/${feeId}/payments/${payment.id}/transactions`,
-		})
-			.then((data) => {
-				setTransactionEntries(data);
-				setTransactionsLoading(false);
-			})
-			.catch((err) => {
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ feeId }/payments/${ payment.id }/transactions`,
+		} )
+			.then( ( data ) => {
+				setTransactionEntries( data );
+				setTransactionsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading transactions:', err);
-				setTransactionsLoading(false);
-			});
+				console.error( 'Error loading transactions:', err );
+				setTransactionsLoading( false );
+			} );
 	};
 
 	// Copy payment link.
-	const handleCopyPaymentLink = (payment) => {
-		apiFetch({
-			path: `/fair-audience/v1/fees/${feeId}/payments/${payment.id}/payment-url`,
-		})
-			.then((data) => {
-				navigator.clipboard.writeText(data.url).then(() => {
-					setNotice({
+	const handleCopyPaymentLink = ( payment ) => {
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ feeId }/payments/${ payment.id }/payment-url`,
+		} )
+			.then( ( data ) => {
+				navigator.clipboard.writeText( data.url ).then( () => {
+					setNotice( {
 						status: 'success',
 						message: __(
 							'Payment link copied to clipboard.',
 							'fair-audience'
 						),
-					});
-				});
-			})
-			.catch((err) => {
+					} );
+				} );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to get payment link.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__(
+								'Failed to get payment link.',
+								'fair-audience'
+							) )
 				);
-			});
+			} );
 	};
 
 	// Open add-participant modal.
 	const openAddModal = () => {
-		if (!fee || !fee.group_id) return;
+		if ( ! fee || ! fee.group_id ) return;
 
-		setAddSearch('');
-		setSelectedToAdd(null);
-		setAddAmount(fee.amount ? String(fee.amount) : '');
-		setIsAddModalOpen(true);
+		setAddSearch( '' );
+		setSelectedToAdd( null );
+		setAddAmount( fee.amount ? String( fee.amount ) : '' );
+		setIsAddModalOpen( true );
 
-		setGroupMembersLoading(true);
-		apiFetch({
-			path: `/fair-audience/v1/groups/${fee.group_id}/participants`,
-		})
-			.then((data) => {
-				setGroupMembers(data);
-			})
-			.catch(() => {
-				setGroupMembers([]);
-			})
-			.finally(() => {
-				setGroupMembersLoading(false);
-			});
+		setGroupMembersLoading( true );
+		apiFetch( {
+			path: `/fair-audience/v1/groups/${ fee.group_id }/participants`,
+		} )
+			.then( ( data ) => {
+				setGroupMembers( data );
+			} )
+			.catch( () => {
+				setGroupMembers( [] );
+			} )
+			.finally( () => {
+				setGroupMembersLoading( false );
+			} );
 	};
 
 	const handleAddPayment = () => {
-		if (!selectedToAdd) return;
+		if ( ! selectedToAdd ) return;
 
-		setIsAddingPayment(true);
+		setIsAddingPayment( true );
 
-		apiFetch({
-			path: `/fair-audience/v1/fees/${feeId}/payments`,
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ feeId }/payments`,
 			method: 'POST',
 			data: {
 				participant_id: selectedToAdd,
-				amount: parseFloat(addAmount),
+				amount: parseFloat( addAmount ),
 			},
-		})
-			.then(() => {
-				setIsAddModalOpen(false);
-				setSelectedToAdd(null);
+		} )
+			.then( () => {
+				setIsAddModalOpen( false );
+				setSelectedToAdd( null );
 				loadPayments();
-				setNotice({
+				setNotice( {
 					status: 'success',
-					message: __('Participant added to fee.', 'fair-audience'),
-				});
-			})
-			.catch((err) => {
+					message: __( 'Participant added to fee.', 'fair-audience' ),
+				} );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to add participant.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__(
+								'Failed to add participant.',
+								'fair-audience'
+							) )
 				);
-			})
-			.finally(() => {
-				setIsAddingPayment(false);
-			});
+			} )
+			.finally( () => {
+				setIsAddingPayment( false );
+			} );
 	};
 
 	// Transfer creation.
-	const openTransferModal = (payment) => {
-		setTransferPayment(payment);
-		setTransferData({
-			amount: parseFloat(payment.amount).toFixed(2),
-			entry_date: new Date().toISOString().split('T')[0],
+	const openTransferModal = ( payment ) => {
+		setTransferPayment( payment );
+		setTransferData( {
+			amount: parseFloat( payment.amount ).toFixed( 2 ),
+			entry_date: new Date().toISOString().split( 'T' )[ 0 ],
 			description: fee
-				? `${fee.name} — ${payment.participant_name || ''} ${
+				? `${ fee.name } — ${ payment.participant_name || '' } ${
 						payment.participant_surname || ''
 				  }`.trim()
 				: '',
 			source_budget_id: '',
 			target_budget_id: fee?.budget_id ? fee.budget_id.toString() : '',
-		});
-		setIsTransferModalOpen(true);
+		} );
+		setIsTransferModalOpen( true );
 	};
 
 	const handleCreateTransfer = () => {
-		setIsCreatingTransfer(true);
+		setIsCreatingTransfer( true );
 
 		const data = {
-			amount: parseFloat(transferData.amount),
+			amount: parseFloat( transferData.amount ),
 			entry_date: transferData.entry_date,
-			source_budget_id: parseInt(transferData.source_budget_id, 10),
-			target_budget_id: parseInt(transferData.target_budget_id, 10),
+			source_budget_id: parseInt( transferData.source_budget_id, 10 ),
+			target_budget_id: parseInt( transferData.target_budget_id, 10 ),
 			description: transferData.description || null,
 			participant_id: transferPayment.participant_id,
 		};
 
-		apiFetch({
+		apiFetch( {
 			path: '/fair-payments-connector/v1/financial-entries/transfer',
 			method: 'POST',
 			data,
-		})
-			.then(() => {
-				return apiFetch({
-					path: `/fair-audience/v1/fees/${feeId}/payments/${transferPayment.id}/mark-paid`,
+		} )
+			.then( () => {
+				return apiFetch( {
+					path: `/fair-audience/v1/fees/${ feeId }/payments/${ transferPayment.id }/mark-paid`,
 					method: 'POST',
-				});
-			})
-			.then(() => {
-				setIsTransferModalOpen(false);
-				setTransferPayment(null);
+				} );
+			} )
+			.then( () => {
+				setIsTransferModalOpen( false );
+				setTransferPayment( null );
 				loadPayments();
-				setNotice({
+				setNotice( {
 					status: 'success',
 					message: __(
 						'Transfer created and payment marked as paid.',
 						'fair-audience'
 					),
-				});
-			})
-			.catch((err) => {
+				} );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to create transfer.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__(
+								'Failed to create transfer.',
+								'fair-audience'
+							) )
 				);
-			})
-			.finally(() => {
-				setIsCreatingTransfer(false);
-			});
+			} )
+			.finally( () => {
+				setIsCreatingTransfer( false );
+			} );
 	};
 
 	// Send reminders.
 	const handleSendReminders = () => {
 		// eslint-disable-next-line no-undef
 		if (
-			!confirm(
+			! confirm(
 				__(
 					'Send payment reminders to all members with pending payments?',
 					'fair-audience'
@@ -507,44 +518,44 @@ export default function FeeDetail() {
 			return;
 		}
 
-		setIsSendingReminders(true);
+		setIsSendingReminders( true );
 
-		apiFetch({
-			path: `/fair-audience/v1/fees/${feeId}/send-reminders`,
+		apiFetch( {
+			path: `/fair-audience/v1/fees/${ feeId }/send-reminders`,
 			method: 'POST',
-		})
-			.then((results) => {
+		} )
+			.then( ( results ) => {
 				const sentCount = results.sent ? results.sent.length : 0;
 				const failedCount = results.failed ? results.failed.length : 0;
 
-				setNotice({
+				setNotice( {
 					status: failedCount > 0 ? 'warning' : 'success',
-					message: `${sentCount} ${__(
+					message: `${ sentCount } ${ __(
 						'reminders sent',
 						'fair-audience'
-					)}${
+					) }${
 						failedCount > 0
-							? `, ${failedCount} ${__(
+							? `, ${ failedCount } ${ __(
 									'failed',
 									'fair-audience'
-							  )}`
+							  ) }`
 							: ''
 					}`,
-				});
+				} );
 
 				loadPayments();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience') +
-						(err.message ||
-							__('Failed to send reminders.', 'fair-audience'))
+					__( 'Error: ', 'fair-audience' ) +
+						( err.message ||
+							__( 'Failed to send reminders.', 'fair-audience' ) )
 				);
-			})
-			.finally(() => {
-				setIsSendingReminders(false);
-			});
+			} )
+			.finally( () => {
+				setIsSendingReminders( false );
+			} );
 	};
 
 	// Define actions for DataViews.
@@ -552,74 +563,74 @@ export default function FeeDetail() {
 		() => [
 			{
 				id: 'adjust-amount',
-				label: __('Adjust Amount', 'fair-audience'),
+				label: __( 'Adjust Amount', 'fair-audience' ),
 				icon: 'edit',
-				callback: ([item]) => openAdjustModal(item),
+				callback: ( [ item ] ) => openAdjustModal( item ),
 				supportsBulk: false,
 			},
 			{
 				id: 'mark-paid',
-				label: __('Mark as Paid', 'fair-audience'),
+				label: __( 'Mark as Paid', 'fair-audience' ),
 				icon: 'yes-alt',
-				callback: ([item]) => handleMarkPaid(item),
+				callback: ( [ item ] ) => handleMarkPaid( item ),
 				supportsBulk: false,
-				isEligible: (item) => item.status === 'pending',
+				isEligible: ( item ) => item.status === 'pending',
 			},
 			{
 				id: 'cancel',
-				label: __('Cancel', 'fair-audience'),
+				label: __( 'Cancel', 'fair-audience' ),
 				icon: 'dismiss',
-				callback: ([item]) => handleCancel(item),
+				callback: ( [ item ] ) => handleCancel( item ),
 				supportsBulk: false,
-				isEligible: (item) => item.status === 'pending',
+				isEligible: ( item ) => item.status === 'pending',
 			},
 			{
 				id: 'copy-payment-link',
-				label: __('Copy Payment Link', 'fair-audience'),
+				label: __( 'Copy Payment Link', 'fair-audience' ),
 				icon: 'admin-links',
-				callback: ([item]) => handleCopyPaymentLink(item),
+				callback: ( [ item ] ) => handleCopyPaymentLink( item ),
 				supportsBulk: false,
-				isEligible: (item) => item.status === 'pending',
+				isEligible: ( item ) => item.status === 'pending',
 			},
 			{
 				id: 'view-transactions',
-				label: __('View Payment Attempts', 'fair-audience'),
+				label: __( 'View Payment Attempts', 'fair-audience' ),
 				icon: 'money-alt',
-				callback: ([item]) => openTransactionsModal(item),
+				callback: ( [ item ] ) => openTransactionsModal( item ),
 				supportsBulk: false,
-				isEligible: (item) => !!item.transaction_id,
+				isEligible: ( item ) => !! item.transaction_id,
 			},
 			{
 				id: 'create-transfer',
-				label: __('Create Transfer', 'fair-audience'),
+				label: __( 'Create Transfer', 'fair-audience' ),
 				icon: 'money-alt',
-				callback: ([item]) => openTransferModal(item),
+				callback: ( [ item ] ) => openTransferModal( item ),
 				supportsBulk: false,
-				isEligible: (item) => item.status === 'pending',
+				isEligible: ( item ) => item.status === 'pending',
 			},
 			{
 				id: 'audit-log',
-				label: __('View Audit Log', 'fair-audience'),
+				label: __( 'View Audit Log', 'fair-audience' ),
 				icon: 'list-view',
-				callback: ([item]) => openAuditLog(item),
+				callback: ( [ item ] ) => openAuditLog( item ),
 				supportsBulk: false,
 			},
 		],
-		[feeId, fee, budgets]
+		[ feeId, fee, budgets ]
 	);
 
 	const paginationInfo = useMemo(
-		() => ({
+		() => ( {
 			totalItems: payments.length,
 			totalPages: 1,
-		}),
-		[payments]
+		} ),
+		[ payments ]
 	);
 
-	if (!feeId) {
+	if ( ! feeId ) {
 		return (
 			<div className="wrap">
-				<p>{__('No fee ID specified.', 'fair-audience')}</p>
+				<p>{ __( 'No fee ID specified.', 'fair-audience' ) }</p>
 			</div>
 		);
 	}
@@ -628,169 +639,173 @@ export default function FeeDetail() {
 		<div className="wrap">
 			<h1>
 				<a href="admin.php?page=fair-audience-fees">
-					{__('Membership Fees', 'fair-audience')}
+					{ __( 'Membership Fees', 'fair-audience' ) }
 				</a>
-				{' → '}
-				{fee ? fee.name : '...'}
+				{ ' → ' }
+				{ fee ? fee.name : '...' }
 			</h1>
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
-					onRemove={() => setNotice(null)}
+					status={ notice.status }
+					onRemove={ () => setNotice( null ) }
 					isDismissible
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
-			{/* Fee Summary */}
-			{fee && (
-				<Card style={{ marginBottom: '16px' }}>
+			{ /* Fee Summary */ }
+			{ fee && (
+				<Card style={ { marginBottom: '16px' } }>
 					<CardHeader>
-						<h2 style={{ margin: 0 }}>
-							{__('Fee Summary', 'fair-audience')}
+						<h2 style={ { margin: 0 } }>
+							{ __( 'Fee Summary', 'fair-audience' ) }
 						</h2>
 					</CardHeader>
 					<CardBody>
 						<div
-							style={{
+							style={ {
 								display: 'grid',
 								gridTemplateColumns:
 									'repeat(auto-fit, minmax(200px, 1fr))',
 								gap: '16px',
-							}}
+							} }
 						>
 							<div>
-								<strong>{__('Name:', 'fair-audience')}</strong>{' '}
-								{fee.name}
-							</div>
-							<div>
-								<strong>{__('Group:', 'fair-audience')}</strong>{' '}
-								{fee.group_name || '—'}
+								<strong>
+									{ __( 'Name:', 'fair-audience' ) }
+								</strong>{ ' ' }
+								{ fee.name }
 							</div>
 							<div>
 								<strong>
-									{__('Default Amount:', 'fair-audience')}
-								</strong>{' '}
-								{parseFloat(fee.amount).toFixed(2)}{' '}
-								{fee.currency}
+									{ __( 'Group:', 'fair-audience' ) }
+								</strong>{ ' ' }
+								{ fee.group_name || '—' }
 							</div>
 							<div>
 								<strong>
-									{__('Due Date:', 'fair-audience')}
-								</strong>{' '}
-								{fee.due_date || '—'}
+									{ __( 'Default Amount:', 'fair-audience' ) }
+								</strong>{ ' ' }
+								{ parseFloat( fee.amount ).toFixed( 2 ) }{ ' ' }
+								{ fee.currency }
 							</div>
 							<div>
 								<strong>
-									{__('Status:', 'fair-audience')}
-								</strong>{' '}
-								{fee.status}
+									{ __( 'Due Date:', 'fair-audience' ) }
+								</strong>{ ' ' }
+								{ fee.due_date || '—' }
+							</div>
+							<div>
+								<strong>
+									{ __( 'Status:', 'fair-audience' ) }
+								</strong>{ ' ' }
+								{ fee.status }
 							</div>
 						</div>
 					</CardBody>
 				</Card>
-			)}
+			) }
 
-			{/* Payments Table */}
+			{ /* Payments Table */ }
 			<Card>
 				<CardBody>
 					<div
-						style={{
+						style={ {
 							marginBottom: '16px',
 							display: 'flex',
 							gap: '8px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={handleSendReminders}
-							disabled={isSendingReminders}
-							isBusy={isSendingReminders}
+							onClick={ handleSendReminders }
+							disabled={ isSendingReminders }
+							isBusy={ isSendingReminders }
 						>
-							{__('Send Reminders', 'fair-audience')}
+							{ __( 'Send Reminders', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="secondary"
-							onClick={openAddModal}
-							disabled={!fee}
+							onClick={ openAddModal }
+							disabled={ ! fee }
 						>
-							{__('Add Participant', 'fair-audience')}
+							{ __( 'Add Participant', 'fair-audience' ) }
 						</Button>
 					</div>
 
 					<DataViews
-						data={payments}
-						fields={fields}
-						view={view}
-						onChangeView={setView}
-						actions={actions}
-						paginationInfo={paginationInfo}
-						defaultLayouts={DEFAULT_LAYOUTS}
-						isLoading={isLoading}
-						getItemId={(item) => item.id}
+						data={ payments }
+						fields={ fields }
+						view={ view }
+						onChangeView={ setView }
+						actions={ actions }
+						paginationInfo={ paginationInfo }
+						defaultLayouts={ DEFAULT_LAYOUTS }
+						isLoading={ isLoading }
+						getItemId={ ( item ) => item.id }
 					/>
 				</CardBody>
 			</Card>
 
-			{/* Add Participant Modal */}
-			{isAddModalOpen && (
+			{ /* Add Participant Modal */ }
+			{ isAddModalOpen && (
 				<Modal
-					title={__('Add Participant to Fee', 'fair-audience')}
-					onRequestClose={() => setIsAddModalOpen(false)}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Add Participant to Fee', 'fair-audience' ) }
+					onRequestClose={ () => setIsAddModalOpen( false ) }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
-					{(() => {
+					{ ( () => {
 						const existingParticipantIds = payments.map(
-							(p) => p.participant_id
+							( p ) => p.participant_id
 						);
 						const available = groupMembers.filter(
-							(m) => !existingParticipantIds.includes(m.id)
+							( m ) => ! existingParticipantIds.includes( m.id )
 						);
 						const term = addSearch.trim().toLowerCase();
 						const filtered = term
-							? available.filter((p) => {
-									const label = `${p.name || ''} ${
+							? available.filter( ( p ) => {
+									const label = `${ p.name || '' } ${
 										p.surname || ''
-									} ${p.email || ''}`.toLowerCase();
-									return label.includes(term);
-							  })
+									} ${ p.email || '' }`.toLowerCase();
+									return label.includes( term );
+							  } )
 							: available;
 
 						return (
 							<>
 								<SearchControl
-									value={addSearch}
-									onChange={setAddSearch}
-									placeholder={__(
+									value={ addSearch }
+									onChange={ setAddSearch }
+									placeholder={ __(
 										'Search group members...',
 										'fair-audience'
-									)}
+									) }
 								/>
 
 								<div
-									style={{
+									style={ {
 										maxHeight: '280px',
 										overflowY: 'auto',
 										border: '1px solid #ddd',
 										borderRadius: '4px',
 										marginTop: '8px',
 										marginBottom: '16px',
-									}}
+									} }
 								>
-									{groupMembersLoading ? (
+									{ groupMembersLoading ? (
 										<div
-											style={{
+											style={ {
 												padding: '16px',
 												textAlign: 'center',
-											}}
+											} }
 										>
 											<Spinner />
 										</div>
 									) : filtered.length === 0 ? (
-										<p style={{ padding: '12px' }}>
-											{available.length === 0
+										<p style={ { padding: '12px' } }>
+											{ available.length === 0
 												? __(
 														'All group members already have a payment for this fee.',
 														'fair-audience'
@@ -798,22 +813,22 @@ export default function FeeDetail() {
 												: __(
 														'No matches.',
 														'fair-audience'
-												  )}
+												  ) }
 										</p>
 									) : (
-										filtered.map((p) => {
-											const label = `${p.name || ''} ${
+										filtered.map( ( p ) => {
+											const label = `${ p.name || '' } ${
 												p.surname || ''
 											}`.trim();
 											const isSelected =
 												selectedToAdd === p.id;
 											return (
 												<div
-													key={p.id}
-													onClick={() =>
-														setSelectedToAdd(p.id)
+													key={ p.id }
+													onClick={ () =>
+														setSelectedToAdd( p.id )
 													}
-													style={{
+													style={ {
 														padding: '8px 12px',
 														cursor: 'pointer',
 														background: isSelected
@@ -821,160 +836,167 @@ export default function FeeDetail() {
 															: 'transparent',
 														borderBottom:
 															'1px solid #eee',
-													}}
+													} }
 												>
 													<div>
-														{label ||
+														{ label ||
 															__(
 																'(unnamed)',
 																'fair-audience'
-															)}
+															) }
 													</div>
-													{p.email && (
+													{ p.email && (
 														<div
-															style={{
+															style={ {
 																fontSize:
 																	'12px',
 																color: '#666',
-															}}
+															} }
 														>
-															{p.email}
+															{ p.email }
 														</div>
-													)}
+													) }
 												</div>
 											);
-										})
-									)}
+										} )
+									) }
 								</div>
 
 								<TextControl
-									label={__('Amount', 'fair-audience')}
+									label={ __( 'Amount', 'fair-audience' ) }
 									type="number"
-									value={addAmount}
-									onChange={setAddAmount}
+									value={ addAmount }
+									onChange={ setAddAmount }
 									min="0"
 									step="0.01"
 								/>
 
 								<div
-									style={{
+									style={ {
 										display: 'flex',
 										justifyContent: 'flex-end',
 										gap: '8px',
 										marginTop: '16px',
-									}}
+									} }
 								>
 									<Button
 										variant="secondary"
-										onClick={() => setIsAddModalOpen(false)}
+										onClick={ () =>
+											setIsAddModalOpen( false )
+										}
 									>
-										{__('Cancel', 'fair-audience')}
+										{ __( 'Cancel', 'fair-audience' ) }
 									</Button>
 									<Button
 										variant="primary"
-										onClick={handleAddPayment}
+										onClick={ handleAddPayment }
 										disabled={
-											!selectedToAdd ||
+											! selectedToAdd ||
 											isAddingPayment ||
-											!addAmount
+											! addAmount
 										}
-										isBusy={isAddingPayment}
+										isBusy={ isAddingPayment }
 									>
-										{__('Add', 'fair-audience')}
+										{ __( 'Add', 'fair-audience' ) }
 									</Button>
 								</div>
 							</>
 						);
-					})()}
+					} )() }
 				</Modal>
-			)}
+			) }
 
-			{/* Adjust Amount Modal */}
-			{isAdjustModalOpen && adjustingPayment && (
+			{ /* Adjust Amount Modal */ }
+			{ isAdjustModalOpen && adjustingPayment && (
 				<Modal
-					title={__('Adjust Amount', 'fair-audience')}
-					onRequestClose={() => {
-						setIsAdjustModalOpen(false);
-						setAdjustingPayment(null);
-					}}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Adjust Amount', 'fair-audience' ) }
+					onRequestClose={ () => {
+						setIsAdjustModalOpen( false );
+						setAdjustingPayment( null );
+					} }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<p>
-						{__('Current amount:', 'fair-audience')}{' '}
+						{ __( 'Current amount:', 'fair-audience' ) }{ ' ' }
 						<strong>
-							{parseFloat(adjustingPayment.amount).toFixed(2)}
+							{ parseFloat( adjustingPayment.amount ).toFixed(
+								2
+							) }
 						</strong>
 					</p>
 
 					<TextControl
-						label={__('New Amount', 'fair-audience')}
+						label={ __( 'New Amount', 'fair-audience' ) }
 						type="number"
-						value={newAmount}
-						onChange={setNewAmount}
+						value={ newAmount }
+						onChange={ setNewAmount }
 						min="0"
 						step="0.01"
 					/>
 
 					<TextareaControl
-						label={__('Reason (required)', 'fair-audience')}
-						value={adjustReason}
-						onChange={setAdjustReason}
-						placeholder={__(
+						label={ __( 'Reason (required)', 'fair-audience' ) }
+						value={ adjustReason }
+						onChange={ setAdjustReason }
+						placeholder={ __(
 							'Explain why the amount is being adjusted...',
 							'fair-audience'
-						)}
+						) }
 					/>
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => {
-								setIsAdjustModalOpen(false);
-								setAdjustingPayment(null);
-							}}
+							onClick={ () => {
+								setIsAdjustModalOpen( false );
+								setAdjustingPayment( null );
+							} }
 						>
-							{__('Cancel', 'fair-audience')}
+							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleAdjustAmount}
-							disabled={!adjustReason.trim() || isSaving}
-							isBusy={isSaving}
+							onClick={ handleAdjustAmount }
+							disabled={ ! adjustReason.trim() || isSaving }
+							isBusy={ isSaving }
 						>
-							{__('Adjust', 'fair-audience')}
+							{ __( 'Adjust', 'fair-audience' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 
-			{/* Payment Attempts Modal */}
-			{isTransactionsModalOpen && (
+			{ /* Payment Attempts Modal */ }
+			{ isTransactionsModalOpen && (
 				<Modal
-					title={__('Payment Attempts', 'fair-audience')}
-					onRequestClose={() => setIsTransactionsModalOpen(false)}
-					style={{ maxWidth: '640px', width: '100%' }}
+					title={ __( 'Payment Attempts', 'fair-audience' ) }
+					onRequestClose={ () => setIsTransactionsModalOpen( false ) }
+					style={ { maxWidth: '640px', width: '100%' } }
 				>
-					{transactionsLoading ? (
+					{ transactionsLoading ? (
 						<Spinner />
 					) : transactionEntries.length === 0 ? (
 						<p>
-							{__('No payment attempts found.', 'fair-audience')}
+							{ __(
+								'No payment attempts found.',
+								'fair-audience'
+							) }
 						</p>
 					) : (
 						<div
-							style={{
+							style={ {
 								maxHeight: '400px',
 								overflowY: 'auto',
-							}}
+							} }
 						>
-							{transactionEntries.map((entry) => {
+							{ transactionEntries.map( ( entry ) => {
 								const statusColors = {
 									paid: '#00a32a',
 									failed: '#d63638',
@@ -985,130 +1007,135 @@ export default function FeeDetail() {
 								};
 								return (
 									<div
-										key={entry.id}
-										style={{
+										key={ entry.id }
+										style={ {
 											padding: '12px',
 											borderBottom: '1px solid #eee',
-										}}
+										} }
 									>
 										<div
-											style={{
+											style={ {
 												display: 'flex',
 												justifyContent: 'space-between',
 												marginBottom: '4px',
-											}}
+											} }
 										>
 											<span
-												style={{
+												style={ {
 													color:
 														statusColors[
 															entry.status
 														] || '#333',
 													fontWeight: 'bold',
-												}}
+												} }
 											>
-												{entry.status ||
+												{ entry.status ||
 													__(
 														'unknown',
 														'fair-audience'
-													)}
+													) }
 											</span>
 											<span
-												style={{
+												style={ {
 													color: '#666',
 													fontSize: '12px',
-												}}
+												} }
 											>
-												{entry.created_at}
+												{ entry.created_at }
 											</span>
 										</div>
 										<div
-											style={{
+											style={ {
 												fontSize: '13px',
 												color: '#555',
-											}}
+											} }
 										>
-											{__(
+											{ __(
 												'Transaction:',
 												'fair-audience'
-											)}{' '}
-											#{entry.transaction_id}
-											{entry.amount && (
+											) }{ ' ' }
+											#{ entry.transaction_id }
+											{ entry.amount && (
 												<>
-													{' — '}
-													{parseFloat(
+													{ ' — ' }
+													{ parseFloat(
 														entry.amount
-													).toFixed(2)}{' '}
-													{entry.currency ||
+													).toFixed( 2 ) }{ ' ' }
+													{ entry.currency ||
 														window
 															.fairPaymentsConnector
 															?.currency ||
-														'EUR'}
+														'EUR' }
 												</>
-											)}
+											) }
 										</div>
-										{entry.payment_initiated_at && (
+										{ entry.payment_initiated_at && (
 											<div
-												style={{
+												style={ {
 													fontSize: '12px',
 													color: '#888',
 													marginTop: '4px',
-												}}
+												} }
 											>
-												{__(
+												{ __(
 													'Initiated:',
 													'fair-audience'
-												)}{' '}
-												{entry.payment_initiated_at}
+												) }{ ' ' }
+												{ entry.payment_initiated_at }
 											</div>
-										)}
+										) }
 									</div>
 								);
-							})}
+							} ) }
 						</div>
-					)}
+					) }
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setIsTransactionsModalOpen(false)}
+							onClick={ () =>
+								setIsTransactionsModalOpen( false )
+							}
 						>
-							{__('Close', 'fair-audience')}
+							{ __( 'Close', 'fair-audience' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 
-			{/* Create Transfer Modal */}
-			{isTransferModalOpen && transferPayment && (
+			{ /* Create Transfer Modal */ }
+			{ isTransferModalOpen && transferPayment && (
 				<Modal
-					title={__('Create Transfer', 'fair-audience')}
-					onRequestClose={() => {
-						setIsTransferModalOpen(false);
-						setTransferPayment(null);
-					}}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Create Transfer', 'fair-audience' ) }
+					onRequestClose={ () => {
+						setIsTransferModalOpen( false );
+						setTransferPayment( null );
+					} }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<p>
-						{__('Participant:', 'fair-audience')}{' '}
+						{ __( 'Participant:', 'fair-audience' ) }{ ' ' }
 						<strong>
-							{`${transferPayment.participant_name || ''} ${
+							{ `${ transferPayment.participant_name || '' } ${
 								transferPayment.participant_surname || ''
-							}`.trim()}
+							}`.trim() }
 						</strong>
 					</p>
 
 					<TextControl
-						label={__('Amount', 'fair-audience')}
-						value={transferData.amount}
-						onChange={(value) =>
-							setTransferData({ ...transferData, amount: value })
+						label={ __( 'Amount', 'fair-audience' ) }
+						value={ transferData.amount }
+						onChange={ ( value ) =>
+							setTransferData( {
+								...transferData,
+								amount: value,
+							} )
 						}
 						type="number"
 						step="0.01"
@@ -1116,32 +1143,32 @@ export default function FeeDetail() {
 					/>
 
 					<TextControl
-						label={__('Date', 'fair-audience')}
-						value={transferData.entry_date}
-						onChange={(value) =>
-							setTransferData({
+						label={ __( 'Date', 'fair-audience' ) }
+						value={ transferData.entry_date }
+						onChange={ ( value ) =>
+							setTransferData( {
 								...transferData,
 								entry_date: value,
-							})
+							} )
 						}
 						type="date"
 					/>
 
 					<TextareaControl
-						label={__('Description', 'fair-audience')}
-						value={transferData.description}
-						onChange={(value) =>
-							setTransferData({
+						label={ __( 'Description', 'fair-audience' ) }
+						value={ transferData.description }
+						onChange={ ( value ) =>
+							setTransferData( {
 								...transferData,
 								description: value,
-							})
+							} )
 						}
 					/>
 
 					<SelectControl
-						label={__('From Budget (Source)', 'fair-audience')}
-						value={transferData.source_budget_id}
-						options={[
+						label={ __( 'From Budget (Source)', 'fair-audience' ) }
+						value={ transferData.source_budget_id }
+						options={ [
 							{
 								label: __(
 									'-- Select Budget --',
@@ -1149,23 +1176,23 @@ export default function FeeDetail() {
 								),
 								value: '',
 							},
-							...budgets.map((b) => ({
+							...budgets.map( ( b ) => ( {
 								label: b.name,
 								value: b.id.toString(),
-							})),
-						]}
-						onChange={(value) =>
-							setTransferData({
+							} ) ),
+						] }
+						onChange={ ( value ) =>
+							setTransferData( {
 								...transferData,
 								source_budget_id: value,
-							})
+							} )
 						}
 					/>
 
 					<SelectControl
-						label={__('To Budget (Target)', 'fair-audience')}
-						value={transferData.target_budget_id}
-						options={[
+						label={ __( 'To Budget (Target)', 'fair-audience' ) }
+						value={ transferData.target_budget_id }
+						options={ [
 							{
 								label: __(
 									'-- Select Budget --',
@@ -1173,170 +1200,177 @@ export default function FeeDetail() {
 								),
 								value: '',
 							},
-							...budgets.map((b) => ({
+							...budgets.map( ( b ) => ( {
 								label: b.name,
 								value: b.id.toString(),
-							})),
-						]}
-						onChange={(value) =>
-							setTransferData({
+							} ) ),
+						] }
+						onChange={ ( value ) =>
+							setTransferData( {
 								...transferData,
 								target_budget_id: value,
-							})
+							} )
 						}
 					/>
 
-					{transferData.source_budget_id &&
+					{ transferData.source_budget_id &&
 						transferData.target_budget_id &&
 						transferData.source_budget_id ===
 							transferData.target_budget_id && (
-							<Notice status="warning" isDismissible={false}>
-								{__(
+							<Notice status="warning" isDismissible={ false }>
+								{ __(
 									'Source and target budgets must be different.',
 									'fair-audience'
-								)}
+								) }
 							</Notice>
-						)}
+						) }
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => {
-								setIsTransferModalOpen(false);
-								setTransferPayment(null);
-							}}
+							onClick={ () => {
+								setIsTransferModalOpen( false );
+								setTransferPayment( null );
+							} }
 						>
-							{__('Cancel', 'fair-audience')}
+							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleCreateTransfer}
+							onClick={ handleCreateTransfer }
 							disabled={
 								isCreatingTransfer ||
-								!transferData.amount ||
-								!transferData.entry_date ||
-								!transferData.source_budget_id ||
-								!transferData.target_budget_id ||
+								! transferData.amount ||
+								! transferData.entry_date ||
+								! transferData.source_budget_id ||
+								! transferData.target_budget_id ||
 								transferData.source_budget_id ===
 									transferData.target_budget_id
 							}
-							isBusy={isCreatingTransfer}
+							isBusy={ isCreatingTransfer }
 						>
-							{__('Create Transfer', 'fair-audience')}
+							{ __( 'Create Transfer', 'fair-audience' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 
-			{/* Audit Log Modal */}
-			{isAuditModalOpen && (
+			{ /* Audit Log Modal */ }
+			{ isAuditModalOpen && (
 				<Modal
-					title={__('Audit Log', 'fair-audience')}
-					onRequestClose={() => setIsAuditModalOpen(false)}
-					style={{ maxWidth: '640px', width: '100%' }}
+					title={ __( 'Audit Log', 'fair-audience' ) }
+					onRequestClose={ () => setIsAuditModalOpen( false ) }
+					style={ { maxWidth: '640px', width: '100%' } }
 				>
-					{auditLoading ? (
+					{ auditLoading ? (
 						<Spinner />
 					) : auditEntries.length === 0 ? (
 						<p>
-							{__('No audit log entries found.', 'fair-audience')}
+							{ __(
+								'No audit log entries found.',
+								'fair-audience'
+							) }
 						</p>
 					) : (
 						<div
-							style={{
+							style={ {
 								maxHeight: '400px',
 								overflowY: 'auto',
-							}}
+							} }
 						>
-							{auditEntries.map((entry) => (
+							{ auditEntries.map( ( entry ) => (
 								<div
-									key={entry.id}
-									style={{
+									key={ entry.id }
+									style={ {
 										padding: '12px',
 										borderBottom: '1px solid #eee',
-									}}
+									} }
 								>
 									<div
-										style={{
+										style={ {
 											display: 'flex',
 											justifyContent: 'space-between',
 											marginBottom: '4px',
-										}}
+										} }
 									>
 										<strong>
-											{entry.action.replace(/_/g, ' ')}
+											{ entry.action.replace(
+												/_/g,
+												' '
+											) }
 										</strong>
 										<span
-											style={{
+											style={ {
 												color: '#666',
 												fontSize: '12px',
-											}}
+											} }
 										>
-											{entry.created_at}
+											{ entry.created_at }
 										</span>
 									</div>
-									{(entry.old_value || entry.new_value) && (
+									{ ( entry.old_value ||
+										entry.new_value ) && (
 										<div
-											style={{
+											style={ {
 												fontSize: '13px',
 												color: '#555',
-											}}
+											} }
 										>
-											{entry.old_value} →{' '}
-											{entry.new_value}
+											{ entry.old_value } →{ ' ' }
+											{ entry.new_value }
 										</div>
-									)}
-									{entry.comment && (
+									) }
+									{ entry.comment && (
 										<div
-											style={{
+											style={ {
 												fontSize: '13px',
 												fontStyle: 'italic',
 												color: '#555',
 												marginTop: '4px',
-											}}
+											} }
 										>
-											{entry.comment}
+											{ entry.comment }
 										</div>
-									)}
+									) }
 									<div
-										style={{
+										style={ {
 											fontSize: '12px',
 											color: '#888',
 											marginTop: '4px',
-										}}
+										} }
 									>
-										{__('By:', 'fair-audience')}{' '}
-										{entry.performed_by_name ||
-											entry.performed_by}
+										{ __( 'By:', 'fair-audience' ) }{ ' ' }
+										{ entry.performed_by_name ||
+											entry.performed_by }
 									</div>
 								</div>
-							))}
+							) ) }
 						</div>
-					)}
+					) }
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setIsAuditModalOpen(false)}
+							onClick={ () => setIsAuditModalOpen( false ) }
 						>
-							{__('Close', 'fair-audience')}
+							{ __( 'Close', 'fair-audience' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 }

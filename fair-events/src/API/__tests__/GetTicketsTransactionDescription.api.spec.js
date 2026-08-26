@@ -20,29 +20,31 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-test.describe('GetTicketsController — transaction description uses event name', () => {
+test.describe( 'GetTicketsController — transaction description uses event name', () => {
 	let api;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	test('single paid signup transaction description uses the event name', async () => {
-		const eventTitle = `Get-tickets description test ${Date.now()}`;
+	test( 'single paid signup transaction description uses the event name', async () => {
+		const eventTitle = `Get-tickets description test ${ Date.now() }`;
 
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: { title: eventTitle, status: 'publish' },
-		});
-		expect(postRes.ok()).toBeTruthy();
-		const eventPostId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		const eventPostId = ( await postRes.json() ).id;
 
 		try {
 			const edRes = await api.post(
@@ -57,17 +59,17 @@ test.describe('GetTicketsController — transaction description uses event name'
 					},
 				}
 			);
-			expect(edRes.ok()).toBeTruthy();
-			const eventDateId = (await edRes.json()).id;
+			expect( edRes.ok() ).toBeTruthy();
+			const eventDateId = ( await edRes.json() ).id;
 
 			const linkRes = await api.put(
-				`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
 				{ headers: adminHeaders, data: { event_id: eventPostId } }
 			);
-			expect(linkRes.ok()).toBeTruthy();
+			expect( linkRes.ok() ).toBeTruthy();
 
 			const ticketsRes = await api.put(
-				`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
 				{
 					headers: adminHeaders,
 					data: {
@@ -99,10 +101,10 @@ test.describe('GetTicketsController — transaction description uses event name'
 					},
 				}
 			);
-			expect(ticketsRes.ok()).toBeTruthy();
-			const ticketTypeId = (await ticketsRes.json()).ticket_types?.[0]
+			expect( ticketsRes.ok() ).toBeTruthy();
+			const ticketTypeId = ( await ticketsRes.json() ).ticket_types?.[ 0 ]
 				?.id;
-			expect(ticketTypeId).toBeTruthy();
+			expect( ticketTypeId ).toBeTruthy();
 
 			const signupRes = await api.post(
 				'/wp-json/fair-events/v1/get-tickets',
@@ -110,40 +112,42 @@ test.describe('GetTicketsController — transaction description uses event name'
 					data: {
 						event_date_id: eventDateId,
 						name: 'Description Tester',
-						email: `description-test-${Date.now()}@example.test`,
+						email: `description-test-${ Date.now() }@example.test`,
 						ticket_type_id: ticketTypeId,
 						quantity: 1,
 					},
 				}
 			);
-			expect(signupRes.ok()).toBeTruthy();
+			expect( signupRes.ok() ).toBeTruthy();
 			const signupBody = await signupRes.json();
-			expect(signupBody.transaction_id).toBeTruthy();
+			expect( signupBody.transaction_id ).toBeTruthy();
 
 			const transactionRes = await api.get(
-				`/wp-json/fair-payments-connector/v1/transactions/${signupBody.transaction_id}`,
+				`/wp-json/fair-payments-connector/v1/transactions/${ signupBody.transaction_id }`,
 				{ headers: adminHeaders }
 			);
-			expect(transactionRes.ok()).toBeTruthy();
+			expect( transactionRes.ok() ).toBeTruthy();
 			const transaction = await transactionRes.json();
-			expect(transaction.description).toBe(`Ticket for ${eventTitle}`);
+			expect( transaction.description ).toBe(
+				`Ticket for ${ eventTitle }`
+			);
 		} finally {
 			await api.delete(
-				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,
 				{ headers: adminHeaders }
 			);
 		}
-	});
+	} );
 
-	test('multi-instance paid signup transaction description uses the event name, line items stay date/time-based', async () => {
-		const eventTitle = `Get-tickets multi description test ${Date.now()}`;
+	test( 'multi-instance paid signup transaction description uses the event name, line items stay date/time-based', async () => {
+		const eventTitle = `Get-tickets multi description test ${ Date.now() }`;
 
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: { title: eventTitle, status: 'publish' },
-		});
-		expect(postRes.ok()).toBeTruthy();
-		const eventPostId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		const eventPostId = ( await postRes.json() ).id;
 
 		try {
 			const edRes = await api.post(
@@ -159,24 +163,24 @@ test.describe('GetTicketsController — transaction description uses event name'
 					},
 				}
 			);
-			expect(edRes.ok()).toBeTruthy();
+			expect( edRes.ok() ).toBeTruthy();
 			const edBody = await edRes.json();
 			const masterEventDateId = edBody.id;
 
 			const linkRes = await api.put(
-				`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+				`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
 				{ headers: adminHeaders, data: { event_id: eventPostId } }
 			);
-			expect(linkRes.ok()).toBeTruthy();
+			expect( linkRes.ok() ).toBeTruthy();
 
 			const occurrenceIds = [
 				masterEventDateId,
-				...edBody.generated_occurrences.map((o) => o.id),
+				...edBody.generated_occurrences.map( ( o ) => o.id ),
 			].sort();
-			expect(occurrenceIds.length).toBe(3);
+			expect( occurrenceIds.length ).toBe( 3 );
 
 			const ticketsRes = await api.put(
-				`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/tickets`,
+				`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/tickets`,
 				{
 					headers: adminHeaders,
 					data: {
@@ -209,42 +213,44 @@ test.describe('GetTicketsController — transaction description uses event name'
 					},
 				}
 			);
-			expect(ticketsRes.ok()).toBeTruthy();
-			const ticketTypeId = (await ticketsRes.json()).ticket_types?.[0]
+			expect( ticketsRes.ok() ).toBeTruthy();
+			const ticketTypeId = ( await ticketsRes.json() ).ticket_types?.[ 0 ]
 				?.id;
-			expect(ticketTypeId).toBeTruthy();
+			expect( ticketTypeId ).toBeTruthy();
 
 			const signupRes = await api.post(
 				'/wp-json/fair-events/v1/get-tickets',
 				{
 					data: {
 						event_date_id: masterEventDateId,
-						event_date_ids: occurrenceIds.slice(0, 2),
+						event_date_ids: occurrenceIds.slice( 0, 2 ),
 						name: 'Description Tester',
-						email: `description-multi-test-${Date.now()}@example.test`,
+						email: `description-multi-test-${ Date.now() }@example.test`,
 						ticket_type_id: ticketTypeId,
 					},
 				}
 			);
-			expect(signupRes.ok()).toBeTruthy();
+			expect( signupRes.ok() ).toBeTruthy();
 			const signupBody = await signupRes.json();
-			expect(signupBody.transaction_id).toBeTruthy();
+			expect( signupBody.transaction_id ).toBeTruthy();
 
 			const transactionRes = await api.get(
-				`/wp-json/fair-payments-connector/v1/transactions/${signupBody.transaction_id}`,
+				`/wp-json/fair-payments-connector/v1/transactions/${ signupBody.transaction_id }`,
 				{ headers: adminHeaders }
 			);
-			expect(transactionRes.ok()).toBeTruthy();
+			expect( transactionRes.ok() ).toBeTruthy();
 			const transaction = await transactionRes.json();
-			expect(transaction.description).toBe(`Tickets for ${eventTitle}`);
-			for (const item of transaction.line_items || []) {
-				expect(item.name).not.toContain(eventTitle);
+			expect( transaction.description ).toBe(
+				`Tickets for ${ eventTitle }`
+			);
+			for ( const item of transaction.line_items || [] ) {
+				expect( item.name ).not.toContain( eventTitle );
 			}
 		} finally {
 			await api.delete(
-				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,
 				{ headers: adminHeaders }
 			);
 		}
-	});
-});
+	} );
+} );

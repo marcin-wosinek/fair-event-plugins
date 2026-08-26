@@ -6,13 +6,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EditComponent from '../EditComponent.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 // useBlockProps needs the editor's block context, which jsdom doesn't provide;
 // stub it to a plain spread so we can render the component in isolation.
-jest.mock('@wordpress/block-editor', () => ({
-	useBlockProps: () => ({}),
-}));
+jest.mock( '@wordpress/block-editor', () => ( {
+	useBlockProps: () => ( {} ),
+} ) );
 
 // ServerSideRender hits the REST API for a live render; stub it to a marker so
 // we can assert "the preview rendered" without a server.
@@ -30,7 +30,7 @@ const PLACEHOLDER = 'Event Info block is disabled';
 const primaryLinked = {
 	id: 11,
 	event_id: 16,
-	linked_posts: [{ id: 16, is_primary: true }],
+	linked_posts: [ { id: 16, is_primary: true } ],
 };
 
 // An event linked to post 42 only through the junction table (event_id is a
@@ -44,70 +44,74 @@ const junctionLinked = {
 	],
 };
 
-const renderBlock = (postId, postType) =>
-	render(<EditComponent attributes={{}} context={{ postId, postType }} />);
+const renderBlock = ( postId, postType ) =>
+	render(
+		<EditComponent attributes={ {} } context={ { postId, postType } } />
+	);
 
-describe('EventInfo EditComponent', () => {
-	beforeEach(() => {
+describe( 'EventInfo EditComponent', () => {
+	beforeEach( () => {
 		jest.clearAllMocks();
-	});
+	} );
 
-	it('shows the preview for a page linked as the primary event_id', async () => {
-		apiFetch.mockResolvedValue([primaryLinked, junctionLinked]);
+	it( 'shows the preview for a page linked as the primary event_id', async () => {
+		apiFetch.mockResolvedValue( [ primaryLinked, junctionLinked ] );
 
-		renderBlock(16, 'page');
+		renderBlock( 16, 'page' );
 
-		await waitFor(() =>
-			expect(screen.getByTestId('ssr')).toBeInTheDocument()
+		await waitFor( () =>
+			expect( screen.getByTestId( 'ssr' ) ).toBeInTheDocument()
 		);
-		expect(screen.queryByText(PLACEHOLDER, { exact: false })).toBeNull();
-		expect(apiFetch).toHaveBeenCalledWith({
+		expect(
+			screen.queryByText( PLACEHOLDER, { exact: false } )
+		).toBeNull();
+		expect( apiFetch ).toHaveBeenCalledWith( {
 			path: '/fair-events/v1/event-dates?include_linked=true',
-		});
-	});
+		} );
+	} );
 
-	it('shows the preview for a page linked only via the junction table', async () => {
-		apiFetch.mockResolvedValue([primaryLinked, junctionLinked]);
+	it( 'shows the preview for a page linked only via the junction table', async () => {
+		apiFetch.mockResolvedValue( [ primaryLinked, junctionLinked ] );
 
-		renderBlock(42, 'page');
+		renderBlock( 42, 'page' );
 
-		await waitFor(() =>
-			expect(screen.getByTestId('ssr')).toBeInTheDocument()
+		await waitFor( () =>
+			expect( screen.getByTestId( 'ssr' ) ).toBeInTheDocument()
 		);
-	});
+	} );
 
-	it('shows the placeholder when the post is not linked to any event', async () => {
-		apiFetch.mockResolvedValue([primaryLinked, junctionLinked]);
+	it( 'shows the placeholder when the post is not linked to any event', async () => {
+		apiFetch.mockResolvedValue( [ primaryLinked, junctionLinked ] );
 
-		renderBlock(7, 'page');
+		renderBlock( 7, 'page' );
 
-		await waitFor(() =>
+		await waitFor( () =>
 			expect(
-				screen.getByText(PLACEHOLDER, { exact: false })
+				screen.getByText( PLACEHOLDER, { exact: false } )
 			).toBeInTheDocument()
 		);
-		expect(screen.queryByTestId('ssr')).toBeNull();
-	});
+		expect( screen.queryByTestId( 'ssr' ) ).toBeNull();
+	} );
 
-	it('still renders the preview for a linked fair_event post (no regression)', async () => {
-		apiFetch.mockResolvedValue([primaryLinked]);
+	it( 'still renders the preview for a linked fair_event post (no regression)', async () => {
+		apiFetch.mockResolvedValue( [ primaryLinked ] );
 
-		renderBlock(16, 'fair_event');
+		renderBlock( 16, 'fair_event' );
 
-		await waitFor(() =>
-			expect(screen.getByTestId('ssr')).toBeInTheDocument()
+		await waitFor( () =>
+			expect( screen.getByTestId( 'ssr' ) ).toBeInTheDocument()
 		);
-	});
+	} );
 
-	it('shows the placeholder when the lookup fails', async () => {
-		apiFetch.mockRejectedValue(new Error('network'));
+	it( 'shows the placeholder when the lookup fails', async () => {
+		apiFetch.mockRejectedValue( new Error( 'network' ) );
 
-		renderBlock(16, 'page');
+		renderBlock( 16, 'page' );
 
-		await waitFor(() =>
+		await waitFor( () =>
 			expect(
-				screen.getByText(PLACEHOLDER, { exact: false })
+				screen.getByText( PLACEHOLDER, { exact: false } )
 			).toBeInTheDocument()
 		);
-	});
-});
+	} );
+} );

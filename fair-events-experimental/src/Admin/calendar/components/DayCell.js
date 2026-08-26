@@ -19,9 +19,9 @@ const MAX_VISIBLE_EVENTS = 3;
  * @param {string} uid Event uid.
  * @return {string|null} Event post ID or null.
  */
-function getEventPostId(uid) {
-	const match = uid?.match(/^fair_event_(\d+)(?:_\d+)?@/);
-	return match ? match[1] : null;
+function getEventPostId( uid ) {
+	const match = uid?.match( /^fair_event_(\d+)(?:_\d+)?@/ );
+	return match ? match[ 1 ] : null;
 }
 
 /**
@@ -31,9 +31,9 @@ function getEventPostId(uid) {
  * @param {string} uid Event uid.
  * @return {string|null} Event date ID or null.
  */
-function getStandaloneId(uid) {
-	const match = uid?.match(/standalone_(\d+)@/);
-	return match ? match[1] : null;
+function getStandaloneId( uid ) {
+	const match = uid?.match( /standalone_(\d+)@/ );
+	return match ? match[ 1 ] : null;
 }
 
 /**
@@ -42,8 +42,8 @@ function getStandaloneId(uid) {
  * @param {Object} event Event object with uid, url, and occurrence_type.
  * @return {string} 'instance', 'post', 'external', or 'unlinked'.
  */
-function getEventLinkType(event) {
-	if (getEventPostId(event.uid)) {
+function getEventLinkType( event ) {
+	if ( getEventPostId( event.uid ) ) {
 		return event.occurrence_type === 'generated' ? 'instance' : 'post';
 	}
 	return event.url ? 'external' : 'unlinked';
@@ -57,15 +57,15 @@ function getEventLinkType(event) {
  * @param {string} uid Event uid.
  * @return {string|null} Event date ID or null.
  */
-function getEventDateId(uid) {
-	const standaloneMatch = uid?.match(/standalone_(\d+)@/);
-	if (standaloneMatch) {
-		return standaloneMatch[1];
+function getEventDateId( uid ) {
+	const standaloneMatch = uid?.match( /standalone_(\d+)@/ );
+	if ( standaloneMatch ) {
+		return standaloneMatch[ 1 ];
 	}
 
-	const postMatch = uid?.match(/^fair_event_\d+_(\d+)@/);
-	if (postMatch) {
-		return postMatch[1];
+	const postMatch = uid?.match( /^fair_event_\d+_(\d+)@/ );
+	if ( postMatch ) {
+		return postMatch[ 1 ];
 	}
 
 	return null;
@@ -80,20 +80,20 @@ function getEventDateId(uid) {
  * @param {string} manageEventUrl Base URL for managing events.
  * @return {string|null} URL or null.
  */
-function getEventEditUrl(event, manageEventUrl) {
-	const eventDateId = getEventDateId(event.uid);
-	if (eventDateId && manageEventUrl) {
-		return `${manageEventUrl}&event_date_id=${eventDateId}`;
+function getEventEditUrl( event, manageEventUrl ) {
+	const eventDateId = getEventDateId( event.uid );
+	if ( eventDateId && manageEventUrl ) {
+		return `${ manageEventUrl }&event_date_id=${ eventDateId }`;
 	}
 
-	if (event.url) {
+	if ( event.url ) {
 		return event.url;
 	}
 
 	return null;
 }
 
-export default function DayCell({
+export default function DayCell( {
 	date,
 	events,
 	isCurrentMonth,
@@ -101,10 +101,10 @@ export default function DayCell({
 	isPast,
 	onAddEvent,
 	manageEventUrl,
-}) {
+} ) {
 	const dayNumber = date.getDate();
 	const hasEvents = events.length > 0;
-	const visibleEvents = events.slice(0, MAX_VISIBLE_EVENTS);
+	const visibleEvents = events.slice( 0, MAX_VISIBLE_EVENTS );
 	const hiddenCount = events.length - MAX_VISIBLE_EVENTS;
 
 	const cellClasses = [
@@ -114,35 +114,35 @@ export default function DayCell({
 		isPast ? 'past' : '',
 		hasEvents ? 'has-events' : '',
 	]
-		.filter(Boolean)
-		.join(' ');
+		.filter( Boolean )
+		.join( ' ' );
 
-	const handleAddClick = (e) => {
+	const handleAddClick = ( e ) => {
 		e.stopPropagation();
-		onAddEvent(date);
+		onAddEvent( date );
 	};
 
 	return (
-		<div className={cellClasses}>
+		<div className={ cellClasses }>
 			<div className="fair-events-calendar-day-header">
 				<span className="fair-events-calendar-day-number">
-					{dayNumber}
+					{ dayNumber }
 				</span>
-				{onAddEvent && (
+				{ onAddEvent && (
 					<Button
 						className="fair-events-calendar-add-btn"
-						onClick={handleAddClick}
-						label={__('Add event', 'fair-events')}
+						onClick={ handleAddClick }
+						label={ __( 'Add event', 'fair-events' ) }
 						icon="plus"
 						size="small"
 					/>
-				)}
+				) }
 			</div>
-			{hasEvents && (
+			{ hasEvents && (
 				<div className="fair-events-calendar-day-events">
-					{visibleEvents.map((event, index) => {
-						const eventPostId = getEventPostId(event.uid);
-						const linkType = getEventLinkType(event);
+					{ visibleEvents.map( ( event, index ) => {
+						const eventPostId = getEventPostId( event.uid );
+						const linkType = getEventLinkType( event );
 						const linkTypeIcon =
 							linkType === 'post'
 								? 'dashicons-admin-post'
@@ -152,56 +152,61 @@ export default function DayCell({
 								? 'dashicons-admin-links'
 								: 'dashicons-editor-unlink';
 						const categoryNames =
-							event.categories?.map((c) => c.name) || [];
+							event.categories?.map( ( c ) => c.name ) || [];
 						const tooltip = categoryNames.length
-							? `${event.title}\n${categoryNames.join(', ')}`
+							? `${ event.title }\n${ categoryNames.join(
+									', '
+							  ) }`
 							: event.title;
-						const eventUrl = getEventEditUrl(event, manageEventUrl);
+						const eventUrl = getEventEditUrl(
+							event,
+							manageEventUrl
+						);
 						return (
 							<div
-								key={index}
-								className={`fair-events-calendar-event-row link-type-${linkType}`}
+								key={ index }
+								className={ `fair-events-calendar-event-row link-type-${ linkType }` }
 							>
-								{eventUrl ? (
+								{ eventUrl ? (
 									<a
-										href={eventUrl}
+										href={ eventUrl }
 										className="fair-events-calendar-event"
-										title={tooltip}
+										title={ tooltip }
 									>
 										<span
-											className={`dashicons ${linkTypeIcon} fair-events-calendar-event-icon`}
+											className={ `dashicons ${ linkTypeIcon } fair-events-calendar-event-icon` }
 										/>
-										{event.title}
-										{categoryNames.length > 0 && (
+										{ event.title }
+										{ categoryNames.length > 0 && (
 											<span className="fair-events-calendar-event-categories">
-												{categoryNames.join(', ')}
+												{ categoryNames.join( ', ' ) }
 											</span>
-										)}
+										) }
 									</a>
 								) : (
 									<span
 										className="fair-events-calendar-event fair-events-calendar-event-readonly"
-										title={tooltip}
+										title={ tooltip }
 									>
 										<span
-											className={`dashicons ${linkTypeIcon} fair-events-calendar-event-icon`}
+											className={ `dashicons ${ linkTypeIcon } fair-events-calendar-event-icon` }
 										/>
-										{event.title}
-										{categoryNames.length > 0 && (
+										{ event.title }
+										{ categoryNames.length > 0 && (
 											<span className="fair-events-calendar-event-categories">
-												{categoryNames.join(', ')}
+												{ categoryNames.join( ', ' ) }
 											</span>
-										)}
+										) }
 									</span>
-								)}
-								{event.url && (
+								) }
+								{ event.url && (
 									<a
-										href={event.url}
+										href={ event.url }
 										className="fair-events-calendar-destination-link"
-										title={__(
+										title={ __(
 											'Open link destination',
 											'fair-events'
-										)}
+										) }
 										target={
 											linkType === 'external'
 												? '_blank'
@@ -212,25 +217,25 @@ export default function DayCell({
 												? 'noopener noreferrer'
 												: undefined
 										}
-										onClick={(e) => e.stopPropagation()}
+										onClick={ ( e ) => e.stopPropagation() }
 									>
 										<span className="dashicons dashicons-external" />
 									</a>
-								)}
+								) }
 							</div>
 						);
-					})}
-					{hiddenCount > 0 && (
+					} ) }
+					{ hiddenCount > 0 && (
 						<span className="fair-events-calendar-more">
-							{sprintf(
+							{ sprintf(
 								/* translators: %d: number of additional events */
-								__('+%d more', 'fair-events'),
+								__( '+%d more', 'fair-events' ),
 								hiddenCount
-							)}
+							) }
 						</span>
-					)}
+					) }
 				</div>
-			)}
+			) }
 		</div>
 	);
 }

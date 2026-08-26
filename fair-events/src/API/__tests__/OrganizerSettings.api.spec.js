@@ -15,27 +15,29 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const authHeader = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-test.describe('fair_events_organizer setting', () => {
+test.describe( 'fair_events_organizer setting', () => {
 	let api;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		// Reset to empty so later suites see the fallback organizer.
-		await api.post('/wp-json/wp/v2/settings', {
+		await api.post( '/wp-json/wp/v2/settings', {
 			headers: authHeader,
 			data: { fair_events_organizer: {} },
-		});
+		} );
 		await api.dispose();
-	});
+	} );
 
-	test('writes then reads back a sanitized organizer identity', async () => {
-		const res = await api.post('/wp-json/wp/v2/settings', {
+	test( 'writes then reads back a sanitized organizer identity', async () => {
+		const res = await api.post( '/wp-json/wp/v2/settings', {
 			headers: authHeader,
 			data: {
 				fair_events_organizer: {
@@ -44,45 +46,47 @@ test.describe('fair_events_organizer setting', () => {
 					street_address: 'Main St 1',
 					address_locality: 'Madrid',
 					address_country: 'ES',
-					same_as: ['https://example.com/acme', 'not a valid url'],
+					same_as: [ 'https://example.com/acme', 'not a valid url' ],
 					website: 'https://acme.example',
 					contact_email: 'info@example.com',
 					contact_phone: '+34 600 000 000',
 				},
 			},
-		});
+		} );
 
-		expect(res.status()).toBe(200);
+		expect( res.status() ).toBe( 200 );
 		const body = await res.json();
 
-		expect(body.fair_events_organizer.name).toBe('Acme Club');
-		expect(body.fair_events_organizer.type).toBe('SportsClub');
-		expect(body.fair_events_organizer.same_as).toEqual([
+		expect( body.fair_events_organizer.name ).toBe( 'Acme Club' );
+		expect( body.fair_events_organizer.type ).toBe( 'SportsClub' );
+		expect( body.fair_events_organizer.same_as ).toEqual( [
 			'https://example.com/acme',
-		]);
-		expect(body.fair_events_organizer.website).toBe('https://acme.example');
-		expect(body.fair_events_organizer.contact_email).toBe(
+		] );
+		expect( body.fair_events_organizer.website ).toBe(
+			'https://acme.example'
+		);
+		expect( body.fair_events_organizer.contact_email ).toBe(
 			'info@example.com'
 		);
-		expect(body.fair_events_organizer.contact_phone).toBe(
+		expect( body.fair_events_organizer.contact_phone ).toBe(
 			'+34 600 000 000'
 		);
 
-		const read = await api.get('/wp-json/wp/v2/settings', {
+		const read = await api.get( '/wp-json/wp/v2/settings', {
 			headers: authHeader,
-		});
+		} );
 		const readBody = await read.json();
-		expect(readBody.fair_events_organizer.name).toBe('Acme Club');
-		expect(readBody.fair_events_organizer.same_as).toEqual([
+		expect( readBody.fair_events_organizer.name ).toBe( 'Acme Club' );
+		expect( readBody.fair_events_organizer.same_as ).toEqual( [
 			'https://example.com/acme',
-		]);
-		expect(readBody.fair_events_organizer.website).toBe(
+		] );
+		expect( readBody.fair_events_organizer.website ).toBe(
 			'https://acme.example'
 		);
-	});
+	} );
 
-	test('drops a malformed website URL and an invalid contact email', async () => {
-		const res = await api.post('/wp-json/wp/v2/settings', {
+	test( 'drops a malformed website URL and an invalid contact email', async () => {
+		const res = await api.post( '/wp-json/wp/v2/settings', {
 			headers: authHeader,
 			data: {
 				fair_events_organizer: {
@@ -91,22 +95,22 @@ test.describe('fair_events_organizer setting', () => {
 					contact_email: 'not an email',
 				},
 			},
-		});
+		} );
 
-		expect(res.status()).toBe(200);
+		expect( res.status() ).toBe( 200 );
 		const body = await res.json();
 
-		expect(body.fair_events_organizer.website).toBeUndefined();
-		expect(body.fair_events_organizer.contact_email).toBeUndefined();
-	});
+		expect( body.fair_events_organizer.website ).toBeUndefined();
+		expect( body.fair_events_organizer.contact_email ).toBeUndefined();
+	} );
 
-	test('rejects an unauthenticated write', async () => {
-		const anonymousApi = await request.newContext({ baseURL: BASE_URL });
-		const res = await anonymousApi.post('/wp-json/wp/v2/settings', {
+	test( 'rejects an unauthenticated write', async () => {
+		const anonymousApi = await request.newContext( { baseURL: BASE_URL } );
+		const res = await anonymousApi.post( '/wp-json/wp/v2/settings', {
 			data: { fair_events_organizer: { name: 'Should Not Save' } },
-		});
+		} );
 
-		expect(res.status()).toBe(401);
+		expect( res.status() ).toBe( 401 );
 		await anonymousApi.dispose();
-	});
-});
+	} );
+} );

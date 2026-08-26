@@ -12,10 +12,10 @@ import Timeline from './Timeline.js';
 /**
  * Initialize the Timeline page
  */
-domReady(() => {
-	const container = document.getElementById('fair-audience-timeline-root');
-	if (container) {
-		const root = createRoot(container);
-		root.render(<Timeline />);
+domReady( () => {
+	const container = document.getElementById( 'fair-audience-timeline-root' );
+	if ( container ) {
+		const root = createRoot( container );
+		root.render( <Timeline /> );
 	}
-});
+} );

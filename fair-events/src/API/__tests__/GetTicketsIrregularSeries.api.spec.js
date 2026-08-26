@@ -19,10 +19,12 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-test.describe('GetTicketsController — irregular (manual) series whole_series scope', () => {
+test.describe( 'GetTicketsController — irregular (manual) series whole_series scope', () => {
 	let api;
 	let eventPostId;
 	let masterEventDateId;
@@ -30,31 +32,31 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 	let childEventDateId;
 	let ticketTypeId;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets irregular series test ${Date.now()}`,
+				title: `Get-tickets irregular series test ${ Date.now() }`,
 				status: 'publish',
 			},
-		});
-		expect(postRes.ok()).toBeTruthy();
-		eventPostId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		eventPostId = ( await postRes.json() ).id;
 
-		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets irregular series test ${Date.now()}`,
+				title: `Get-tickets irregular series test ${ Date.now() }`,
 				link_type: 'post',
 				start_datetime: '2035-07-01 10:00:00',
 				end_datetime: '2035-07-01 12:00:00',
 				recurrence_mode: 'manual',
-				manual_dates: ['2035-07-01', '2035-07-10', '2035-07-20'],
+				manual_dates: [ '2035-07-01', '2035-07-10', '2035-07-20' ],
 			},
-		});
-		expect(edRes.ok()).toBeTruthy();
+		} );
+		expect( edRes.ok() ).toBeTruthy();
 		const edBody = await edRes.json();
 		masterEventDateId = edBody.id;
 
@@ -62,13 +64,13 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 		// needed to actually link the post (see CalendarFeedController.api.spec.js
 		// for the same quirk).
 		const linkRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
 			{
 				headers: adminHeaders,
 				data: { event_id: eventPostId },
 			}
 		);
-		expect(linkRes.ok()).toBeTruthy();
+		expect( linkRes.ok() ).toBeTruthy();
 
 		// generated_occurrences comes straight off the create response
 		// (master + 2 generated for COUNT=3 / 3 manual dates) — the
@@ -76,14 +78,14 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 		// (a separate pre-existing bug), so deriving from edRes avoids it.
 		occurrenceIds = [
 			masterEventDateId,
-			...edBody.generated_occurrences.map((o) => o.id),
+			...edBody.generated_occurrences.map( ( o ) => o.id ),
 		].sort();
-		expect(occurrenceIds.length).toBe(3);
+		expect( occurrenceIds.length ).toBe( 3 );
 		// A non-first occurrence — the case exercised for whole-series coverage.
-		childEventDateId = occurrenceIds[1];
+		childEventDateId = occurrenceIds[ 1 ];
 
 		const ticketsRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/tickets`,
 			{
 				headers: adminHeaders,
 				data: {
@@ -115,36 +117,36 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 				},
 			}
 		);
-		expect(ticketsRes.ok()).toBeTruthy();
+		expect( ticketsRes.ok() ).toBeTruthy();
 		const ticketsBody = await ticketsRes.json();
-		ticketTypeId = ticketsBody.ticket_types?.[0]?.id;
-		expect(ticketTypeId).toBeTruthy();
-	});
+		ticketTypeId = ticketsBody.ticket_types?.[ 0 ]?.id;
+		expect( ticketTypeId ).toBeTruthy();
+	} );
 
-	test.afterAll(async () => {
-		if (eventPostId) {
+	test.afterAll( async () => {
+		if ( eventPostId ) {
 			await api.delete(
-				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,
 				{ headers: adminHeaders }
 			);
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('whole_series ticket type on a manual master is accepted for a generated occurrence', async () => {
-		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+	test( 'whole_series ticket type on a manual master is accepted for a generated occurrence', async () => {
+		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: childEventDateId,
 				name: 'Irregular Series Tester',
-				email: `irregular-series-${Date.now()}@example.test`,
+				email: `irregular-series-${ Date.now() }@example.test`,
 				ticket_type_id: ticketTypeId,
 				quantity: 1,
 			},
-		});
-		expect(res.ok()).toBeTruthy();
-	});
+		} );
+		expect( res.ok() ).toBeTruthy();
+	} );
 
-	test('the signup persists against the child occurrence, priced from the master', async () => {
+	test( 'the signup persists against the child occurrence, priced from the master', async () => {
 		test.skip(
 			true,
 			'Skipped pending #1409 — whole-series signup is not listed against its child occurrence'
@@ -156,11 +158,13 @@ test.describe('GetTicketsController — irregular (manual) series whole_series s
 				params: { event_date: childEventDateId },
 			}
 		);
-		expect(signupsRes.ok()).toBeTruthy();
+		expect( signupsRes.ok() ).toBeTruthy();
 		const signups = await signupsRes.json();
-		const signup = signups.find((s) => s.ticket_type_id === ticketTypeId);
-		expect(signup).toBeTruthy();
-		expect(parseFloat(signup.amount)).toBe(25);
-		expect(signup.status).toBe('pending_payment');
-	});
-});
+		const signup = signups.find(
+			( s ) => s.ticket_type_id === ticketTypeId
+		);
+		expect( signup ).toBeTruthy();
+		expect( parseFloat( signup.amount ) ).toBe( 25 );
+		expect( signup.status ).toBe( 'pending_payment' );
+	} );
+} );

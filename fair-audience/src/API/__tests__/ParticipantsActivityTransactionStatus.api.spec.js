@@ -25,24 +25,26 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const authHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-function uniqueEmail(prefix) {
-	return `${prefix}+${Date.now()}-${Math.floor(
+function uniqueEmail( prefix ) {
+	return `${ prefix }+${ Date.now() }-${ Math.floor(
 		Math.random() * 1e6
-	)}@example.test`;
+	) }@example.test`;
 }
 
-test.describe('ParticipantsController activity — transaction_status', () => {
+test.describe( 'ParticipantsController activity — transaction_status', () => {
 	let api;
 	let participantId;
 	let eventId;
 	let eventDateId;
 	let fixtureOk = true;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
 		const partRes = await api.post(
 			'/wp-json/fair-audience/v1/participants',
@@ -50,36 +52,36 @@ test.describe('ParticipantsController activity — transaction_status', () => {
 				headers: authHeaders,
 				data: {
 					name: 'Transaction Status Tester',
-					email: uniqueEmail('transaction-status'),
+					email: uniqueEmail( 'transaction-status' ),
 				},
 			}
 		);
-		expect(partRes.ok()).toBeTruthy();
-		participantId = (await partRes.json()).id;
+		expect( partRes.ok() ).toBeTruthy();
+		participantId = ( await partRes.json() ).id;
 
-		const eventRes = await api.post('/wp-json/wp/v2/fair_event', {
+		const eventRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: authHeaders,
 			data: {
-				title: `Transaction Status Event ${Date.now()}`,
+				title: `Transaction Status Event ${ Date.now() }`,
 				status: 'publish',
 			},
-		});
-		expect(eventRes.ok()).toBeTruthy();
-		eventId = (await eventRes.json()).id;
+		} );
+		expect( eventRes.ok() ).toBeTruthy();
+		eventId = ( await eventRes.json() ).id;
 
-		const eventsRes = await api.get('/wp-json/fair-audience/v1/events', {
+		const eventsRes = await api.get( '/wp-json/fair-audience/v1/events', {
 			headers: authHeaders,
 			params: { per_page: 100 },
-		});
-		expect(eventsRes.ok()).toBeTruthy();
-		const match = (await eventsRes.json()).find(
-			(e) => e.event_id === eventId
+		} );
+		expect( eventsRes.ok() ).toBeTruthy();
+		const match = ( await eventsRes.json() ).find(
+			( e ) => e.event_id === eventId
 		);
-		expect(match, 'event-date row for the test event').toBeTruthy();
+		expect( match, 'event-date row for the test event' ).toBeTruthy();
 		eventDateId = match.event_date_id;
 
 		const linkRes = await api.post(
-			`/wp-json/fair-audience/v1/event-dates/${eventDateId}/participants`,
+			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
 			{
 				headers: authHeaders,
 				data: { participant_id: participantId, label: 'signed_up' },
@@ -89,51 +91,51 @@ test.describe('ParticipantsController activity — transaction_status', () => {
 		// captured (not asserted) so every test below can skip with a
 		// reference instead of failing the hook.
 		fixtureOk = linkRes.ok();
-	});
+	} );
 
-	test.afterAll(async () => {
-		if (participantId) {
+	test.afterAll( async () => {
+		if ( participantId ) {
 			await api.delete(
-				`/wp-json/fair-audience/v1/participants/${participantId}`,
+				`/wp-json/fair-audience/v1/participants/${ participantId }`,
 				{ headers: authHeaders }
 			);
 		}
-		if (eventId) {
-			await api.delete(`/wp-json/wp/v2/fair_event/${eventId}`, {
+		if ( eventId ) {
+			await api.delete( `/wp-json/wp/v2/fair_event/${ eventId }`, {
 				headers: authHeaders,
 				params: { force: 'true' },
-			});
+			} );
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('unauthenticated request is rejected', async () => {
+	test( 'unauthenticated request is rejected', async () => {
 		test.skip(
-			!fixtureOk,
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 		const res = await api.get(
-			`/wp-json/fair-audience/v1/participants/${participantId}/activity`
+			`/wp-json/fair-audience/v1/participants/${ participantId }/activity`
 		);
-		expect(res.status()).toBe(401);
-	});
+		expect( res.status() ).toBe( 401 );
+	} );
 
-	test('a signup with no transaction reports null transaction_status', async () => {
+	test( 'a signup with no transaction reports null transaction_status', async () => {
 		test.skip(
-			!fixtureOk,
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 		const res = await api.get(
-			`/wp-json/fair-audience/v1/participants/${participantId}/activity`,
+			`/wp-json/fair-audience/v1/participants/${ participantId }/activity`,
 			{ headers: authHeaders }
 		);
-		expect(res.ok()).toBeTruthy();
+		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
-		expect(Array.isArray(body.events)).toBe(true);
+		expect( Array.isArray( body.events ) ).toBe( true );
 
-		const event = body.events.find((ev) => ev.event_id === eventId);
-		expect(event, 'linked event in the activity response').toBeTruthy();
-		expect(event.transaction_id).toBeNull();
-		expect(event.transaction_status).toBeNull();
-	});
-});
+		const event = body.events.find( ( ev ) => ev.event_id === eventId );
+		expect( event, 'linked event in the activity response' ).toBeTruthy();
+		expect( event.transaction_id ).toBeNull();
+		expect( event.transaction_status ).toBeNull();
+	} );
+} );

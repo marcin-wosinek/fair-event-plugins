@@ -9,11 +9,11 @@ import domReady from '@wordpress/dom-ready';
  */
 import SettingsApp from './SettingsApp.js';
 
-domReady(() => {
+domReady( () => {
 	const root = document.getElementById(
 		'fair-events-experimental-settings-root'
 	);
-	if (root) {
-		createRoot(root).render(<SettingsApp />);
+	if ( root ) {
+		createRoot( root ).render( <SettingsApp /> );
 	}
-});
+} );

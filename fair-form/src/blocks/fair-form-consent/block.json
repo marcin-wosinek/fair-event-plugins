@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "yes-alt",
 	"description": "A single consent checkbox question for Fair Form (e.g. terms and conditions)",
-	"keywords": ["question", "checkbox", "consent", "terms"],
+	"keywords": [ "question", "checkbox", "consent", "terms" ],
 	"textdomain": "fair-audience",
 	"ancestor": [
 		"fair-audience/fair-form",

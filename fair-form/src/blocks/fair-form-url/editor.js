@@ -6,13 +6,13 @@ import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { generateQuestionKey } from 'fair-events-shared';
 
-registerBlockType('fair-audience/fair-form-url', {
+registerBlockType( 'fair-audience/fair-form-url', {
 	transforms: {
 		to: [
 			{
 				type: 'block',
-				blocks: ['fair-audience/fair-form-short-text'],
-				transform: (attributes) => {
+				blocks: [ 'fair-audience/fair-form-short-text' ],
+				transform: ( attributes ) => {
 					return createBlock(
 						'fair-audience/fair-form-short-text',
 						attributes
@@ -21,7 +21,7 @@ registerBlockType('fair-audience/fair-form-url', {
 			},
 		],
 	},
-	edit: ({ attributes, setAttributes }) => {
+	edit: ( { attributes, setAttributes } ) => {
 		const {
 			questionText,
 			questionKey,
@@ -30,89 +30,91 @@ registerBlockType('fair-audience/fair-form-url', {
 			extractEventDetails,
 		} = attributes;
 
-		const onQuestionTextChange = (value) => {
+		const onQuestionTextChange = ( value ) => {
 			const updates = { questionText: value };
 			if (
-				!questionKey ||
-				questionKey === generateQuestionKey(questionText)
+				! questionKey ||
+				questionKey === generateQuestionKey( questionText )
 			) {
-				updates.questionKey = generateQuestionKey(value);
+				updates.questionKey = generateQuestionKey( value );
 			}
-			setAttributes(updates);
+			setAttributes( updates );
 		};
 
-		const blockProps = useBlockProps({
+		const blockProps = useBlockProps( {
 			className: 'fair-form-question fair-form-question-url',
-		});
+		} );
 
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Question Settings', 'fair-audience')}>
+					<PanelBody
+						title={ __( 'Question Settings', 'fair-audience' ) }
+					>
 						<TextControl
-							label={__('Question Key', 'fair-audience')}
-							value={questionKey}
-							onChange={(value) =>
-								setAttributes({ questionKey: value })
+							label={ __( 'Question Key', 'fair-audience' ) }
+							value={ questionKey }
+							onChange={ ( value ) =>
+								setAttributes( { questionKey: value } )
 							}
-							help={__(
+							help={ __(
 								'A unique identifier for this question (e.g. "website"). Used internally.',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<ToggleControl
-							label={__('Required', 'fair-audience')}
-							checked={required}
-							onChange={(value) =>
-								setAttributes({ required: value })
+							label={ __( 'Required', 'fair-audience' ) }
+							checked={ required }
+							onChange={ ( value ) =>
+								setAttributes( { required: value } )
 							}
 						/>
 						<TextControl
-							label={__('Placeholder', 'fair-audience')}
-							value={placeholder}
-							onChange={(value) =>
-								setAttributes({ placeholder: value })
+							label={ __( 'Placeholder', 'fair-audience' ) }
+							value={ placeholder }
+							onChange={ ( value ) =>
+								setAttributes( { placeholder: value } )
 							}
 						/>
 						<ToggleControl
-							label={__(
+							label={ __(
 								'Read event details from the linked page',
 								'fair-audience'
-							)}
-							help={__(
+							) }
+							help={ __(
 								'Once the visitor leaves the field, any event details the link publishes (title, dates, location) are shown right underneath it; nothing is stored.',
 								'fair-audience'
-							)}
-							checked={extractEventDetails}
-							onChange={(value) =>
-								setAttributes({ extractEventDetails: value })
+							) }
+							checked={ extractEventDetails }
+							onChange={ ( value ) =>
+								setAttributes( { extractEventDetails: value } )
 							}
 						/>
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
+				<div { ...blockProps }>
 					<p>
 						<input
 							type="text"
-							value={questionText}
-							onChange={(e) =>
-								onQuestionTextChange(e.target.value)
+							value={ questionText }
+							onChange={ ( e ) =>
+								onQuestionTextChange( e.target.value )
 							}
-							placeholder={__(
+							placeholder={ __(
 								'Enter your question...',
 								'fair-audience'
-							)}
+							) }
 							className="fair-form-question-label-input"
 						/>
-						{required && <span className="required"> *</span>}
+						{ required && <span className="required"> *</span> }
 						<br />
 						<input
 							type="text"
 							disabled
 							placeholder={
 								placeholder ||
-								__('https://example.com', 'fair-audience')
+								__( 'https://example.com', 'fair-audience' )
 							}
 						/>
 					</p>
@@ -123,4 +125,4 @@ registerBlockType('fair-audience/fair-form-url', {
 	save: () => {
 		return null;
 	},
-});
+} );

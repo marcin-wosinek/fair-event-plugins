@@ -23,54 +23,54 @@ import apiFetch from '@wordpress/api-fetch';
 
 const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
 
-const formatAmount = (amount) => {
-	return new Intl.NumberFormat('en-US', {
+const formatAmount = ( amount ) => {
+	return new Intl.NumberFormat( 'en-US', {
 		style: 'currency',
 		currency: siteCurrency,
-	}).format(amount);
+	} ).format( amount );
 };
 
-const computeNetReceived = (tx) => {
-	if (tx.mollie_fee === null || tx.mollie_fee === undefined) {
+const computeNetReceived = ( tx ) => {
+	if ( tx.mollie_fee === null || tx.mollie_fee === undefined ) {
 		return null;
 	}
-	const fees = (tx.mollie_fee || 0) + (tx.application_fee || 0);
-	return (tx.amount || 0) - fees;
+	const fees = ( tx.mollie_fee || 0 ) + ( tx.application_fee || 0 );
+	return ( tx.amount || 0 ) - fees;
 };
 
-const renderParticipant = (tx) => {
+const renderParticipant = ( tx ) => {
 	const participant = tx.participant;
-	if (participant?.name && participant?.admin_url) {
-		return <a href={participant.admin_url}>{participant.name}</a>;
+	if ( participant?.name && participant?.admin_url ) {
+		return <a href={ participant.admin_url }>{ participant.name }</a>;
 	}
-	if (participant?.name) {
+	if ( participant?.name ) {
 		return participant.name;
 	}
-	if (tx.user_name) {
+	if ( tx.user_name ) {
 		return tx.user_name;
 	}
 	return <em>-</em>;
 };
 
-export default function EventFinance({ eventDateId, entriesUrl }) {
-	const [totals, setTotals] = useState(null);
-	const [costEntries, setCostEntries] = useState([]);
-	const [transactions, setTransactions] = useState([]);
-	const [failedTransactions, setFailedTransactions] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
+export default function EventFinance( { eventDateId, entriesUrl } ) {
+	const [ totals, setTotals ] = useState( null );
+	const [ costEntries, setCostEntries ] = useState( [] );
+	const [ transactions, setTransactions ] = useState( [] );
+	const [ failedTransactions, setFailedTransactions ] = useState( [] );
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
 
-	useEffect(() => {
-		if (!eventDateId) {
-			setLoading(false);
+	useEffect( () => {
+		if ( ! eventDateId ) {
+			setLoading( false );
 			return;
 		}
 		loadData();
-	}, [eventDateId]);
+	}, [ eventDateId ] );
 
 	const loadData = async () => {
-		setLoading(true);
-		setError(null);
+		setLoading( true );
+		setError( null );
 
 		try {
 			const [
@@ -80,39 +80,39 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 				failedData,
 				canceledData,
 				expiredData,
-			] = await Promise.all([
-				apiFetch({
-					path: `/fair-finance/v1/financial-entries/totals?event_date_id=${eventDateId}`,
-				}),
-				apiFetch({
-					path: `/fair-finance/v1/financial-entries?event_date_id=${eventDateId}&per_page=10&entry_type=cost`,
-				}),
-				apiFetch({
-					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=paid&mode=live&per_page=100`,
-				}),
-				apiFetch({
-					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=failed&mode=live&per_page=100`,
-				}),
-				apiFetch({
-					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=canceled&mode=live&per_page=100`,
-				}),
-				apiFetch({
-					path: `/fair-payments-connector/v1/transactions?event_date_id=${eventDateId}&status=expired&mode=live&per_page=100`,
-				}),
-			]);
+			] = await Promise.all( [
+				apiFetch( {
+					path: `/fair-finance/v1/financial-entries/totals?event_date_id=${ eventDateId }`,
+				} ),
+				apiFetch( {
+					path: `/fair-finance/v1/financial-entries?event_date_id=${ eventDateId }&per_page=10&entry_type=cost`,
+				} ),
+				apiFetch( {
+					path: `/fair-payments-connector/v1/transactions?event_date_id=${ eventDateId }&status=paid&mode=live&per_page=100`,
+				} ),
+				apiFetch( {
+					path: `/fair-payments-connector/v1/transactions?event_date_id=${ eventDateId }&status=failed&mode=live&per_page=100`,
+				} ),
+				apiFetch( {
+					path: `/fair-payments-connector/v1/transactions?event_date_id=${ eventDateId }&status=canceled&mode=live&per_page=100`,
+				} ),
+				apiFetch( {
+					path: `/fair-payments-connector/v1/transactions?event_date_id=${ eventDateId }&status=expired&mode=live&per_page=100`,
+				} ),
+			] );
 
 			const paidTransactions = transactionsData.transactions || [];
 			const transactionIncome = paidTransactions.reduce(
-				(sum, tx) => sum + (tx.amount || 0),
+				( sum, tx ) => sum + ( tx.amount || 0 ),
 				0
 			);
 			// Sum nets only for transactions where Mollie fee data has been
 			// recorded — partial sums would mislead.
 			let transactionNet = 0;
 			let netComplete = paidTransactions.length > 0;
-			for (const tx of paidTransactions) {
-				const net = computeNetReceived(tx);
-				if (net === null) {
+			for ( const tx of paidTransactions ) {
+				const net = computeNetReceived( tx );
+				if ( net === null ) {
 					netComplete = false;
 				} else {
 					transactionNet += net;
@@ -120,93 +120,93 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 			}
 
 			const failed = [
-				...(failedData.transactions || []),
-				...(canceledData.transactions || []),
-				...(expiredData.transactions || []),
-			].sort((a, b) =>
-				(b.created_at || '').localeCompare(a.created_at || '')
+				...( failedData.transactions || [] ),
+				...( canceledData.transactions || [] ),
+				...( expiredData.transactions || [] ),
+			].sort( ( a, b ) =>
+				( b.created_at || '' ).localeCompare( a.created_at || '' )
 			);
 
 			const totalCost = totalsData.total_cost || 0;
 
-			setTotals({
+			setTotals( {
 				total_cost: totalCost,
 				total_income: transactionIncome,
 				balance: transactionIncome - totalCost,
 				total_net: transactionNet,
 				net_complete: netComplete,
-			});
-			setCostEntries(entriesData.entries || []);
-			setTransactions(paidTransactions);
-			setFailedTransactions(failed);
-		} catch (err) {
+			} );
+			setCostEntries( entriesData.entries || [] );
+			setTransactions( paidTransactions );
+			setFailedTransactions( failed );
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to load financial data.', 'fair-events')
+					__( 'Failed to load financial data.', 'fair-events' )
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
-	const viewAllUrl = `${entriesUrl}&event_date_id=${eventDateId}`;
+	const viewAllUrl = `${ entriesUrl }&event_date_id=${ eventDateId }`;
 
 	return (
-		<Card style={{ marginTop: '16px' }}>
+		<Card style={ { marginTop: '16px' } }>
 			<CardHeader>
-				<h2>{__('Finance', 'fair-events')}</h2>
+				<h2>{ __( 'Finance', 'fair-events' ) }</h2>
 			</CardHeader>
 			<CardBody>
-				{loading && (
-					<div style={{ textAlign: 'center', padding: '20px' }}>
+				{ loading && (
+					<div style={ { textAlign: 'center', padding: '20px' } }>
 						<Spinner />
 					</div>
-				)}
+				) }
 
-				{error && (
+				{ error && (
 					<Notice
 						status="error"
 						isDismissible
-						onRemove={() => setError(null)}
+						onRemove={ () => setError( null ) }
 					>
-						{error}
+						{ error }
 					</Notice>
-				)}
+				) }
 
-				{!loading && !error && (
-					<VStack spacing={4}>
-						{totals && (
+				{ ! loading && ! error && (
+					<VStack spacing={ 4 }>
+						{ totals && (
 							<HStack justify="space-around">
-								<div style={{ textAlign: 'center' }}>
+								<div style={ { textAlign: 'center' } }>
 									<div
-										style={{
+										style={ {
 											fontSize: '24px',
 											fontWeight: 'bold',
 											color: '#d63638',
-										}}
+										} }
 									>
-										{formatAmount(totals.total_cost)}
+										{ formatAmount( totals.total_cost ) }
 									</div>
-									<div style={{ color: '#666' }}>
-										{__('Total Costs', 'fair-events')}
+									<div style={ { color: '#666' } }>
+										{ __( 'Total Costs', 'fair-events' ) }
 									</div>
 								</div>
-								<div style={{ textAlign: 'center' }}>
+								<div style={ { textAlign: 'center' } }>
 									<div
-										style={{
+										style={ {
 											fontSize: '24px',
 											fontWeight: 'bold',
 											color: '#007017',
-										}}
+										} }
 									>
-										{formatAmount(totals.total_income)}
+										{ formatAmount( totals.total_income ) }
 									</div>
-									<div style={{ color: '#666' }}>
-										{__('Total Income', 'fair-events')}
+									<div style={ { color: '#666' } }>
+										{ __( 'Total Income', 'fair-events' ) }
 									</div>
 								</div>
 								<div
-									style={{ textAlign: 'center' }}
+									style={ { textAlign: 'center' } }
 									title={
 										totals.net_complete
 											? __(
@@ -220,299 +220,328 @@ export default function EventFinance({ eventDateId, entriesUrl }) {
 									}
 								>
 									<div
-										style={{
+										style={ {
 											fontSize: '24px',
 											fontWeight: 'bold',
 											color: '#007017',
-										}}
+										} }
 									>
-										{formatAmount(totals.total_net || 0)}
-										{!totals.net_complete && '*'}
+										{ formatAmount(
+											totals.total_net || 0
+										) }
+										{ ! totals.net_complete && '*' }
 									</div>
-									<div style={{ color: '#666' }}>
-										{__('Total Net', 'fair-events')}
+									<div style={ { color: '#666' } }>
+										{ __( 'Total Net', 'fair-events' ) }
 									</div>
 								</div>
-								<div style={{ textAlign: 'center' }}>
+								<div style={ { textAlign: 'center' } }>
 									<div
-										style={{
+										style={ {
 											fontSize: '24px',
 											fontWeight: 'bold',
 											color:
 												totals.balance >= 0
 													? '#007017'
 													: '#d63638',
-										}}
+										} }
 									>
-										{formatAmount(totals.balance)}
+										{ formatAmount( totals.balance ) }
 									</div>
-									<div style={{ color: '#666' }}>
-										{__('Balance', 'fair-events')}
+									<div style={ { color: '#666' } }>
+										{ __( 'Balance', 'fair-events' ) }
 									</div>
 								</div>
 							</HStack>
-						)}
+						) }
 
-						{costEntries.length > 0 && (
-							<div style={{ overflowX: 'auto' }}>
-								<h3 style={{ marginBottom: '8px' }}>
-									{__('Costs', 'fair-events')}
+						{ costEntries.length > 0 && (
+							<div style={ { overflowX: 'auto' } }>
+								<h3 style={ { marginBottom: '8px' } }>
+									{ __( 'Costs', 'fair-events' ) }
 								</h3>
 								<table className="wp-list-table widefat striped">
 									<thead>
 										<tr>
-											<th>{__('Date', 'fair-events')}</th>
 											<th>
-												{__('Amount', 'fair-events')}
+												{ __( 'Date', 'fair-events' ) }
 											</th>
 											<th>
-												{__(
+												{ __(
+													'Amount',
+													'fair-events'
+												) }
+											</th>
+											<th>
+												{ __(
 													'Description',
 													'fair-events'
-												)}
+												) }
 											</th>
 										</tr>
 									</thead>
 									<tbody>
-										{costEntries.map((entry) => (
-											<tr key={entry.id}>
-												<td>{entry.entry_date}</td>
+										{ costEntries.map( ( entry ) => (
+											<tr key={ entry.id }>
+												<td>{ entry.entry_date }</td>
 												<td>
 													<strong
-														style={{
+														style={ {
 															color: '#d63638',
-														}}
+														} }
 													>
-														{formatAmount(
+														{ formatAmount(
 															entry.amount
-														)}
+														) }
 													</strong>
 												</td>
 												<td>
-													{entry.description || (
+													{ entry.description || (
 														<em>-</em>
-													)}
+													) }
 												</td>
 											</tr>
-										))}
+										) ) }
 									</tbody>
 								</table>
 							</div>
-						)}
+						) }
 
-						{transactions.length > 0 && (
-							<div style={{ overflowX: 'auto' }}>
-								<h3 style={{ marginBottom: '8px' }}>
-									{__('Payments', 'fair-events')}
+						{ transactions.length > 0 && (
+							<div style={ { overflowX: 'auto' } }>
+								<h3 style={ { marginBottom: '8px' } }>
+									{ __( 'Payments', 'fair-events' ) }
 								</h3>
 								<table className="wp-list-table widefat striped">
 									<thead>
 										<tr>
-											<th>{__('Date', 'fair-events')}</th>
 											<th>
-												{__('Amount', 'fair-events')}
+												{ __( 'Date', 'fair-events' ) }
+											</th>
+											<th>
+												{ __(
+													'Amount',
+													'fair-events'
+												) }
 											</th>
 											<th
-												title={__(
+												title={ __(
 													'Amount paid minus Mollie and application fees.',
 													'fair-events'
-												)}
+												) }
 											>
-												{__(
+												{ __(
 													'Net received',
 													'fair-events'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Description',
 													'fair-events'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Participant',
 													'fair-events'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Budget entry',
 													'fair-events'
-												)}
+												) }
 											</th>
 										</tr>
 									</thead>
 									<tbody>
-										{transactions.map((tx) => {
-											const net = computeNetReceived(tx);
+										{ transactions.map( ( tx ) => {
+											const net =
+												computeNetReceived( tx );
 											return (
-												<tr key={tx.id}>
+												<tr key={ tx.id }>
 													<td>
-														{tx.created_at
+														{ tx.created_at
 															? tx.created_at.slice(
 																	0,
 																	10
 															  )
-															: '-'}
+															: '-' }
 													</td>
 													<td>
 														<a
-															href={`admin.php?page=fair-payments-connector-transaction&transaction_id=${tx.id}`}
+															href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ tx.id }` }
 														>
 															<strong
-																style={{
+																style={ {
 																	color: '#007017',
-																}}
+																} }
 															>
-																{formatAmount(
+																{ formatAmount(
 																	tx.amount
-																)}
+																) }
 															</strong>
 														</a>
 													</td>
 													<td>
-														{net === null ? (
+														{ net === null ? (
 															<em>-</em>
 														) : (
 															<strong
-																style={{
+																style={ {
 																	color: '#007017',
-																}}
+																} }
 															>
-																{formatAmount(
+																{ formatAmount(
 																	net
-																)}
+																) }
 															</strong>
-														)}
+														) }
 													</td>
 													<td>
-														{tx.description || (
+														{ tx.description || (
 															<em>-</em>
-														)}
+														) }
 													</td>
 													<td>
-														{renderParticipant(tx)}
+														{ renderParticipant(
+															tx
+														) }
 													</td>
 													<td>
-														{tx.entry_ids?.length
+														{ tx.entry_ids?.length
 															? tx.entry_ids
 																	.map(
-																		(id) =>
-																			`#${id}`
+																		(
+																			id
+																		) =>
+																			`#${ id }`
 																	)
-																	.join(', ')
-															: '-'}
+																	.join(
+																		', '
+																	)
+															: '-' }
 													</td>
 												</tr>
 											);
-										})}
+										} ) }
 									</tbody>
 								</table>
 							</div>
-						)}
+						) }
 
-						{failedTransactions.length > 0 && (
-							<div style={{ overflowX: 'auto' }}>
-								<h3 style={{ marginBottom: '8px' }}>
-									{__('Failed Payments', 'fair-events')}
+						{ failedTransactions.length > 0 && (
+							<div style={ { overflowX: 'auto' } }>
+								<h3 style={ { marginBottom: '8px' } }>
+									{ __( 'Failed Payments', 'fair-events' ) }
 								</h3>
 								<table className="wp-list-table widefat striped">
 									<thead>
 										<tr>
-											<th>{__('Date', 'fair-events')}</th>
 											<th>
-												{__('Amount', 'fair-events')}
+												{ __( 'Date', 'fair-events' ) }
 											</th>
 											<th>
-												{__('Status', 'fair-events')}
+												{ __(
+													'Amount',
+													'fair-events'
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
+													'Status',
+													'fair-events'
+												) }
+											</th>
+											<th>
+												{ __(
 													'Description',
 													'fair-events'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Participant',
 													'fair-events'
-												)}
+												) }
 											</th>
 										</tr>
 									</thead>
 									<tbody>
-										{failedTransactions.map((tx) => (
-											<tr key={tx.id}>
+										{ failedTransactions.map( ( tx ) => (
+											<tr key={ tx.id }>
 												<td>
-													{tx.created_at
+													{ tx.created_at
 														? tx.created_at.slice(
 																0,
 																10
 														  )
-														: '-'}
+														: '-' }
 												</td>
 												<td>
 													<a
-														href={`admin.php?page=fair-payments-connector-transaction&transaction_id=${tx.id}`}
+														href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ tx.id }` }
 													>
 														<strong
-															style={{
+															style={ {
 																color: '#d63638',
-															}}
+															} }
 														>
-															{formatAmount(
+															{ formatAmount(
 																tx.amount
-															)}
+															) }
 														</strong>
 													</a>
 												</td>
 												<td>
 													<span
-														style={{
+														style={ {
 															color: '#d63638',
 															fontWeight: 'bold',
-														}}
+														} }
 													>
-														{tx.status}
+														{ tx.status }
 													</span>
 												</td>
 												<td>
-													{tx.description || (
+													{ tx.description || (
 														<em>-</em>
-													)}
+													) }
 												</td>
-												<td>{renderParticipant(tx)}</td>
+												<td>
+													{ renderParticipant( tx ) }
+												</td>
 											</tr>
-										))}
+										) ) }
 									</tbody>
 								</table>
 							</div>
-						)}
+						) }
 
-						{costEntries.length === 0 &&
+						{ costEntries.length === 0 &&
 							transactions.length === 0 &&
 							failedTransactions.length === 0 &&
-							!totals?.total_cost &&
-							!totals?.total_income && (
+							! totals?.total_cost &&
+							! totals?.total_income && (
 								<p
-									style={{
+									style={ {
 										textAlign: 'center',
 										color: '#666',
-									}}
+									} }
 								>
-									{__(
+									{ __(
 										'No financial entries for this event yet.',
 										'fair-events'
-									)}
+									) }
 								</p>
-							)}
+							) }
 
-						<Button variant="secondary" href={viewAllUrl}>
-							{__('View All Entries', 'fair-events')}
+						<Button variant="secondary" href={ viewAllUrl }>
+							{ __( 'View All Entries', 'fair-events' ) }
 						</Button>
 					</VStack>
-				)}
+				) }
 			</CardBody>
 		</Card>
 	);

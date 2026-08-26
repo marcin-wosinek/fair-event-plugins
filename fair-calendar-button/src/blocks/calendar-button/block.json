@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "calendar-alt",
 	"description": "A Gutenberg block for calendar integration",
-	"keywords": ["calendar", "button", "event", "schedule"],
+	"keywords": [ "calendar", "button", "event", "schedule" ],
 	"textdomain": "fair-calendar-button",
 	"supports": {
 		"html": false,
@@ -22,10 +22,10 @@
 			"allowVerticalAlignment": true,
 			"allowOrientation": false
 		},
-		"align": ["wide", "full"],
+		"align": [ "wide", "full" ],
 		"spacing": {
 			"padding": true,
-			"margin": ["top", "bottom"]
+			"margin": [ "top", "bottom" ]
 		}
 	},
 	"attributes": {

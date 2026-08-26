@@ -15,24 +15,24 @@ import {
 import { __ } from '@wordpress/i18n';
 import Cropper from 'react-easy-crop';
 
-export default function ImageCropModal({
+export default function ImageCropModal( {
 	imageUrl,
 	width,
 	height,
 	onCrop,
 	onClose,
-}) {
-	const [crop, setCrop] = useState({ x: 0, y: 0 });
-	const [zoom, setZoom] = useState(1);
-	const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+} ) {
+	const [ crop, setCrop ] = useState( { x: 0, y: 0 } );
+	const [ zoom, setZoom ] = useState( 1 );
+	const [ croppedAreaPixels, setCroppedAreaPixels ] = useState( null );
 
-	const onCropComplete = useCallback((_croppedArea, pixels) => {
-		setCroppedAreaPixels(pixels);
-	}, []);
+	const onCropComplete = useCallback( ( _croppedArea, pixels ) => {
+		setCroppedAreaPixels( pixels );
+	}, [] );
 
 	const handleCrop = () => {
-		if (croppedAreaPixels) {
-			onCrop(croppedAreaPixels);
+		if ( croppedAreaPixels ) {
+			onCrop( croppedAreaPixels );
 		}
 	};
 
@@ -40,44 +40,44 @@ export default function ImageCropModal({
 
 	return (
 		<Modal
-			title={`${__(
+			title={ `${ __(
 				'Crop image',
 				'fair-audience'
-			)} (${width}\u00D7${height})`}
-			onRequestClose={onClose}
+			) } (${ width }\u00D7${ height })` }
+			onRequestClose={ onClose }
 			isFullScreen
 		>
 			<div
-				style={{
+				style={ {
 					position: 'relative',
 					width: '100%',
 					height: 'calc(100vh - 200px)',
-				}}
+				} }
 			>
 				<Cropper
-					image={imageUrl}
-					crop={crop}
-					zoom={zoom}
-					aspect={aspect}
-					onCropChange={setCrop}
-					onZoomChange={setZoom}
-					onCropComplete={onCropComplete}
+					image={ imageUrl }
+					crop={ crop }
+					zoom={ zoom }
+					aspect={ aspect }
+					onCropChange={ setCrop }
+					onZoomChange={ setZoom }
+					onCropComplete={ onCropComplete }
 				/>
 			</div>
 			<HStack
-				spacing={3}
+				spacing={ 3 }
 				justify="flex-end"
-				style={{ marginTop: '16px' }}
+				style={ { marginTop: '16px' } }
 			>
-				<Button variant="tertiary" onClick={onClose}>
-					{__('Cancel', 'fair-audience')}
+				<Button variant="tertiary" onClick={ onClose }>
+					{ __( 'Cancel', 'fair-audience' ) }
 				</Button>
 				<Button
 					variant="primary"
-					onClick={handleCrop}
-					disabled={!croppedAreaPixels}
+					onClick={ handleCrop }
+					disabled={ ! croppedAreaPixels }
 				>
-					{__('Crop', 'fair-audience')}
+					{ __( 'Crop', 'fair-audience' ) }
 				</Button>
 			</HStack>
 		</Modal>

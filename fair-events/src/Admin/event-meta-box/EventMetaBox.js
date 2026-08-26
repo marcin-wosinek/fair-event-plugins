@@ -20,28 +20,28 @@ import LinkOptions from './LinkOptions.js';
  * For fair_event posts: always shows the edit form (event auto-created).
  * For other post types: shows link/create options if unlinked, edit form if linked.
  */
-export default function EventMetaBox({
+export default function EventMetaBox( {
 	postId,
 	postType,
 	eventDateId: initialEventDateId,
 	manageEventUrl: initialManageEventUrl,
-}) {
-	const [eventDateId, setEventDateId] = useState(initialEventDateId || 0);
-	const [manageEventUrl, setManageEventUrl] = useState(
+} ) {
+	const [ eventDateId, setEventDateId ] = useState( initialEventDateId || 0 );
+	const [ manageEventUrl, setManageEventUrl ] = useState(
 		initialManageEventUrl || ''
 	);
-	const [loading, setLoading] = useState(!initialEventDateId);
-	const [error, setError] = useState(null);
+	const [ loading, setLoading ] = useState( ! initialEventDateId );
+	const [ error, setError ] = useState( null );
 
-	const { setEventData } = useDispatch(STORE_NAME);
+	const { setEventData } = useDispatch( STORE_NAME );
 
 	const isFairEvent = postType === 'fair_event';
 	const isLinked = eventDateId > 0;
 
 	// For fair_event posts that don't have an eventDateId yet, poll until auto-create completes.
-	useEffect(() => {
-		if (isLinked || !isFairEvent || !postId) {
-			setLoading(false);
+	useEffect( () => {
+		if ( isLinked || ! isFairEvent || ! postId ) {
+			setLoading( false );
 			return;
 		}
 
@@ -51,24 +51,24 @@ export default function EventMetaBox({
 			try {
 				// The auto-create hook fires on wp_after_insert_post, so the event_date
 				// should exist by the time the editor loads. Try fetching it.
-				const response = await apiFetch({
+				const response = await apiFetch( {
 					path: `/fair-events/v1/event-dates?include_linked=true`,
-				});
+				} );
 
 				const match = response.find(
-					(ed) => ed.event_id === parseInt(postId, 10)
+					( ed ) => ed.event_id === parseInt( postId, 10 )
 				);
-				if (match && !cancelled) {
-					setEventDateId(match.id);
+				if ( match && ! cancelled ) {
+					setEventDateId( match.id );
 					setManageEventUrl(
-						`${window.location.origin}/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${match.id}`
+						`${ window.location.origin }/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ match.id }`
 					);
 				}
 			} catch {
 				// Ignore errors - the event may not be created yet.
 			} finally {
-				if (!cancelled) {
-					setLoading(false);
+				if ( ! cancelled ) {
+					setLoading( false );
 				}
 			}
 		};
@@ -78,66 +78,66 @@ export default function EventMetaBox({
 		return () => {
 			cancelled = true;
 		};
-	}, [postId, isFairEvent, isLinked]);
+	}, [ postId, isFairEvent, isLinked ] );
 
-	const handleEventLinked = (newEventDateId) => {
-		setEventDateId(newEventDateId);
+	const handleEventLinked = ( newEventDateId ) => {
+		setEventDateId( newEventDateId );
 		setManageEventUrl(
-			`${window.location.origin}/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${newEventDateId}`
+			`${ window.location.origin }/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ newEventDateId }`
 		);
 	};
 
-	const [unlinking, setUnlinking] = useState(false);
+	const [ unlinking, setUnlinking ] = useState( false );
 
 	const handleUnlink = async () => {
-		setUnlinking(true);
+		setUnlinking( true );
 		try {
-			await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}/link-post`,
+			await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }/link-post`,
 				method: 'DELETE',
-				data: { post_id: parseInt(postId, 10) },
-			});
-			setEventDateId(0);
-			setManageEventUrl('');
-			setEventData(null);
-		} catch (err) {
+				data: { post_id: parseInt( postId, 10 ) },
+			} );
+			setEventDateId( 0 );
+			setManageEventUrl( '' );
+			setEventData( null );
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to unlink event.', 'fair-events')
+				err.message || __( 'Failed to unlink event.', 'fair-events' )
 			);
 		} finally {
-			setUnlinking(false);
+			setUnlinking( false );
 		}
 	};
 
-	if (loading) {
+	if ( loading ) {
 		return <Spinner />;
 	}
 
-	if (error) {
-		return <p style={{ color: 'red' }}>{error}</p>;
+	if ( error ) {
+		return <p style={ { color: 'red' } }>{ error }</p>;
 	}
 
 	// For fair_event posts or linked posts: show edit form.
-	if (isLinked) {
+	if ( isLinked ) {
 		return (
 			<EventEditForm
-				eventDateId={eventDateId}
-				manageEventUrl={manageEventUrl}
-				postId={postId}
-				postType={postType}
-				onUnlink={!isFairEvent ? handleUnlink : undefined}
-				unlinking={unlinking}
+				eventDateId={ eventDateId }
+				manageEventUrl={ manageEventUrl }
+				postId={ postId }
+				postType={ postType }
+				onUnlink={ ! isFairEvent ? handleUnlink : undefined }
+				unlinking={ unlinking }
 			/>
 		);
 	}
 
 	// For non-fair_event posts that are not linked: show link options.
-	if (!isFairEvent) {
+	if ( ! isFairEvent ) {
 		return (
 			<LinkOptions
-				postId={postId}
-				onEventLinked={handleEventLinked}
-				setError={setError}
+				postId={ postId }
+				onEventLinked={ handleEventLinked }
+				setError={ setError }
 			/>
 		);
 	}
@@ -145,10 +145,10 @@ export default function EventMetaBox({
 	// Fair event post but no event date found (edge case).
 	return (
 		<p>
-			{__(
+			{ __(
 				'No event data found. Please save the post and reload.',
 				'fair-events'
-			)}
+			) }
 		</p>
 	);
 }

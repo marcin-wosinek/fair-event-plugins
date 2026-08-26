@@ -21,62 +21,62 @@ import ServerSideRender from '@wordpress/server-side-render';
  * @param {Object} props.context    - Block context (postId, postType)
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ attributes, context }) {
+export default function EditComponent( { attributes, context } ) {
 	const blockProps = useBlockProps();
 	const { postId } = context;
 
 	// null = still resolving, true/false = resolved linkage.
-	const [linked, setLinked] = useState(null);
+	const [ linked, setLinked ] = useState( null );
 
-	useEffect(() => {
-		if (!postId) {
-			setLinked(false);
+	useEffect( () => {
+		if ( ! postId ) {
+			setLinked( false );
 			return undefined;
 		}
 
 		let cancelled = false;
-		const currentPostId = parseInt(postId, 10);
+		const currentPostId = parseInt( postId, 10 );
 
-		apiFetch({ path: '/fair-events/v1/event-dates?include_linked=true' })
-			.then((eventDates) => {
-				if (cancelled) {
+		apiFetch( { path: '/fair-events/v1/event-dates?include_linked=true' } )
+			.then( ( eventDates ) => {
+				if ( cancelled ) {
 					return;
 				}
-				const isLinked = (eventDates || []).some(
-					(ed) =>
+				const isLinked = ( eventDates || [] ).some(
+					( ed ) =>
 						ed.event_id === currentPostId ||
-						(ed.linked_posts || []).some(
-							(p) => p.id === currentPostId
+						( ed.linked_posts || [] ).some(
+							( p ) => p.id === currentPostId
 						)
 				);
-				setLinked(isLinked);
-			})
-			.catch(() => {
-				if (!cancelled) {
-					setLinked(false);
+				setLinked( isLinked );
+			} )
+			.catch( () => {
+				if ( ! cancelled ) {
+					setLinked( false );
 				}
-			});
+			} );
 
 		return () => {
 			cancelled = true;
 		};
-	}, [postId]);
+	}, [ postId ] );
 
 	return (
-		<div {...blockProps}>
-			{linked === null ? null : linked ? (
+		<div { ...blockProps }>
+			{ linked === null ? null : linked ? (
 				<ServerSideRender
 					block="fair-events/event-info"
-					attributes={attributes}
+					attributes={ attributes }
 				/>
 			) : (
-				<p style={{ fontStyle: 'italic', color: '#999' }}>
-					{__(
+				<p style={ { fontStyle: 'italic', color: '#999' } }>
+					{ __(
 						'Event Info block is disabled — no event is linked to this post.',
 						'fair-events'
-					)}
+					) }
 				</p>
-			)}
+			) }
 		</div>
 	);
 }

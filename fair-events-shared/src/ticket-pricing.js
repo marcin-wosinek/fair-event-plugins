@@ -15,12 +15,15 @@
  * @param {number[]} [params.optionPrices] Selected add-on option prices to sum in.
  * @return {number} The computed total.
  */
-export function computeTicketTotal({
+export function computeTicketTotal( {
 	unitPrice,
 	count = 1,
 	optionPrices = [],
-}) {
-	const optionsTotal = optionPrices.reduce((sum, price) => sum + price, 0);
+} ) {
+	const optionsTotal = optionPrices.reduce(
+		( sum, price ) => sum + price,
+		0
+	);
 	return unitPrice * count + optionsTotal;
 }
 
@@ -30,8 +33,8 @@ export function computeTicketTotal({
  * @param {number} amount Amount to format.
  * @return {string} Formatted amount.
  */
-export function formatPrice(amount) {
-	return amount.toFixed(2);
+export function formatPrice( amount ) {
+	return amount.toFixed( 2 );
 }
 
 /**
@@ -56,8 +59,8 @@ export const CURRENCY_SYMBOLS = {
  * @param {string} currency Currency code, e.g. 'EUR'.
  * @return {string} Display-formatted amount.
  */
-export function formatMoney(amount, currency) {
-	return `${formatPrice(amount)} ${currency}`;
+export function formatMoney( amount, currency ) {
+	return `${ formatPrice( amount ) } ${ currency }`;
 }
 
 /**
@@ -69,16 +72,16 @@ export function formatMoney(amount, currency) {
  * @param {string} currency Currency code, e.g. 'EUR'.
  * @return {string} Inline-formatted amount.
  */
-export function formatMoneyInline(amount, currency) {
-	const entry = CURRENCY_SYMBOLS[currency];
+export function formatMoneyInline( amount, currency ) {
+	const entry = CURRENCY_SYMBOLS[ currency ];
 
-	if (!entry) {
-		return formatMoney(amount, currency);
+	if ( ! entry ) {
+		return formatMoney( amount, currency );
 	}
 
-	const formatted = formatPrice(amount);
+	const formatted = formatPrice( amount );
 
 	return entry.position === 'prefix'
-		? `${entry.symbol}${formatted}`
-		: `${formatted} ${entry.symbol}`;
+		? `${ entry.symbol }${ formatted }`
+		: `${ formatted } ${ entry.symbol }`;
 }

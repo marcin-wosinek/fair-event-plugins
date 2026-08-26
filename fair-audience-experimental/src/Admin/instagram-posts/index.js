@@ -12,12 +12,12 @@ import InstagramPosts from './InstagramPosts.js';
 /**
  * Initialize the Instagram Posts page
  */
-domReady(() => {
+domReady( () => {
 	const container = document.getElementById(
 		'fair-audience-instagram-posts-root'
 	);
-	if (container) {
-		const root = createRoot(container);
-		root.render(<InstagramPosts />);
+	if ( container ) {
+		const root = createRoot( container );
+		root.render( <InstagramPosts /> );
 	}
-});
+} );

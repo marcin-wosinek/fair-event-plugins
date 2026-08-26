@@ -4,61 +4,61 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 
-jest.mock('@wordpress/block-editor', () => ({
-	useBlockProps: (props) => props || {},
-	InspectorControls: ({ children }) => children,
-}));
+jest.mock( '@wordpress/block-editor', () => ( {
+	useBlockProps: ( props ) => props || {},
+	InspectorControls: ( { children } ) => children,
+} ) );
 
-jest.mock('@wordpress/components', () => ({
-	PanelBody: ({ children }) => children,
-	TextControl: ({ label, value, onChange, help }) => (
+jest.mock( '@wordpress/components', () => ( {
+	PanelBody: ( { children } ) => children,
+	TextControl: ( { label, value, onChange, help } ) => (
 		<div>
 			<label>
-				{label}
+				{ label }
 				<input
-					value={value}
-					onChange={(e) => onChange(e.target.value)}
+					value={ value }
+					onChange={ ( e ) => onChange( e.target.value ) }
 				/>
 			</label>
-			{help}
+			{ help }
 		</div>
 	),
-	ToggleControl: ({ label, checked, onChange }) => (
+	ToggleControl: ( { label, checked, onChange } ) => (
 		<label>
 			<input
 				type="checkbox"
-				checked={checked}
-				onChange={(e) => onChange(e.target.checked)}
+				checked={ checked }
+				onChange={ ( e ) => onChange( e.target.checked ) }
 			/>
-			{label}
+			{ label }
 		</label>
 	),
-}));
+} ) );
 
-jest.mock('fair-events-shared', () => ({
-	generateQuestionKey: (text) =>
+jest.mock( 'fair-events-shared', () => ( {
+	generateQuestionKey: ( text ) =>
 		text
 			.toLowerCase()
 			.trim()
-			.replace(/[^a-z0-9]+/g, '_')
-			.replace(/^_+|_+$/g, ''),
-}));
+			.replace( /[^a-z0-9]+/g, '_' )
+			.replace( /^_+|_+$/g, '' ),
+} ) );
 
 let capturedSettings;
-jest.mock('@wordpress/blocks', () => ({
-	registerBlockType: (name, settings) => {
+jest.mock( '@wordpress/blocks', () => ( {
+	registerBlockType: ( name, settings ) => {
 		capturedSettings = settings;
 	},
-	createBlock: (name, attributes) => ({ name, attributes }),
-}));
+	createBlock: ( name, attributes ) => ( { name, attributes } ),
+} ) );
 
-describe('Fair Form URL Question Edit', () => {
+describe( 'Fair Form URL Question Edit', () => {
 	let Edit;
 
-	beforeAll(() => {
-		require('../editor.js');
+	beforeAll( () => {
+		require( '../editor.js' );
 		Edit = capturedSettings.edit;
-	});
+	} );
 
 	const baseAttributes = {
 		questionText: '',
@@ -68,32 +68,32 @@ describe('Fair Form URL Question Edit', () => {
 		extractEventDetails: false,
 	};
 
-	const renderEdit = (attributes = {}, setAttributes = () => {}) =>
+	const renderEdit = ( attributes = {}, setAttributes = () => {} ) =>
 		render(
 			<Edit
-				attributes={{ ...baseAttributes, ...attributes }}
-				setAttributes={setAttributes}
+				attributes={ { ...baseAttributes, ...attributes } }
+				setAttributes={ setAttributes }
 			/>
 		);
 
-	it('derives the question key from the question text', () => {
+	it( 'derives the question key from the question text', () => {
 		const setAttributes = jest.fn();
-		renderEdit({}, setAttributes);
+		renderEdit( {}, setAttributes );
 
 		const questionTextInput = screen.getByPlaceholderText(
 			'Enter your question...'
 		);
-		fireEvent.change(questionTextInput, {
+		fireEvent.change( questionTextInput, {
 			target: { value: 'Portfolio website' },
-		});
+		} );
 
-		expect(setAttributes).toHaveBeenCalledWith({
+		expect( setAttributes ).toHaveBeenCalledWith( {
 			questionText: 'Portfolio website',
 			questionKey: 'portfolio_website',
-		});
-	});
+		} );
+	} );
 
-	it('does not override a manually-edited question key', () => {
+	it( 'does not override a manually-edited question key', () => {
 		const setAttributes = jest.fn();
 		renderEdit(
 			{ questionText: 'Website', questionKey: 'custom_key' },
@@ -103,71 +103,71 @@ describe('Fair Form URL Question Edit', () => {
 		const questionTextInput = screen.getByPlaceholderText(
 			'Enter your question...'
 		);
-		fireEvent.change(questionTextInput, {
+		fireEvent.change( questionTextInput, {
 			target: { value: 'Website updated' },
-		});
+		} );
 
-		expect(setAttributes).toHaveBeenCalledWith({
+		expect( setAttributes ).toHaveBeenCalledWith( {
 			questionText: 'Website updated',
-		});
-	});
+		} );
+	} );
 
-	it('renders the Required toggle and Placeholder controls', () => {
+	it( 'renders the Required toggle and Placeholder controls', () => {
 		renderEdit();
 
-		expect(screen.getByLabelText('Required')).toBeInTheDocument();
-		expect(screen.getByLabelText('Placeholder')).toBeInTheDocument();
-		expect(screen.getByLabelText('Question Key')).toBeInTheDocument();
-	});
+		expect( screen.getByLabelText( 'Required' ) ).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Placeholder' ) ).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Question Key' ) ).toBeInTheDocument();
+	} );
 
-	it('renders the "Read event details from the linked page" toggle, off by default', () => {
+	it( 'renders the "Read event details from the linked page" toggle, off by default', () => {
 		renderEdit();
 
 		const toggle = screen.getByLabelText(
 			'Read event details from the linked page'
 		);
-		expect(toggle).toBeInTheDocument();
-		expect(toggle).not.toBeChecked();
-	});
+		expect( toggle ).toBeInTheDocument();
+		expect( toggle ).not.toBeChecked();
+	} );
 
-	it('toggles the extractEventDetails attribute', () => {
+	it( 'toggles the extractEventDetails attribute', () => {
 		const setAttributes = jest.fn();
-		renderEdit({}, setAttributes);
+		renderEdit( {}, setAttributes );
 
 		fireEvent.click(
-			screen.getByLabelText('Read event details from the linked page')
+			screen.getByLabelText( 'Read event details from the linked page' )
 		);
 
-		expect(setAttributes).toHaveBeenCalledWith({
+		expect( setAttributes ).toHaveBeenCalledWith( {
 			extractEventDetails: true,
-		});
-	});
+		} );
+	} );
 
-	it('toggles the required attribute', () => {
+	it( 'toggles the required attribute', () => {
 		const setAttributes = jest.fn();
-		renderEdit({}, setAttributes);
+		renderEdit( {}, setAttributes );
 
-		fireEvent.click(screen.getByLabelText('Required'));
+		fireEvent.click( screen.getByLabelText( 'Required' ) );
 
-		expect(setAttributes).toHaveBeenCalledWith({ required: true });
-	});
+		expect( setAttributes ).toHaveBeenCalledWith( { required: true } );
+	} );
 
-	it('updates the placeholder attribute', () => {
+	it( 'updates the placeholder attribute', () => {
 		const setAttributes = jest.fn();
-		renderEdit({}, setAttributes);
+		renderEdit( {}, setAttributes );
 
-		fireEvent.change(screen.getByLabelText('Placeholder'), {
+		fireEvent.change( screen.getByLabelText( 'Placeholder' ), {
 			target: { value: 'https://example.com' },
-		});
+		} );
 
-		expect(setAttributes).toHaveBeenCalledWith({
+		expect( setAttributes ).toHaveBeenCalledWith( {
 			placeholder: 'https://example.com',
-		});
-	});
+		} );
+	} );
 
-	it('transforms to short-text, preserving attributes', () => {
-		const transform = capturedSettings.transforms.to.find((t) =>
-			t.blocks.includes('fair-audience/fair-form-short-text')
+	it( 'transforms to short-text, preserving attributes', () => {
+		const transform = capturedSettings.transforms.to.find( ( t ) =>
+			t.blocks.includes( 'fair-audience/fair-form-short-text' )
 		);
 
 		const attributes = {
@@ -177,9 +177,9 @@ describe('Fair Form URL Question Edit', () => {
 			placeholder: 'https://example.com',
 		};
 
-		expect(transform.transform(attributes)).toEqual({
+		expect( transform.transform( attributes ) ).toEqual( {
 			name: 'fair-audience/fair-form-short-text',
 			attributes,
-		});
-	});
-});
+		} );
+	} );
+} );

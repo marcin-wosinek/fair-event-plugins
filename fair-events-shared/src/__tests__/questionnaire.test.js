@@ -13,7 +13,7 @@ import {
 } from '../questionnaire.js';
 import { formatSiteLocalDatetime, formatDateOnly } from '../dateTime.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 const VISIBLE = 'fair-form-conditional-visible';
 
@@ -26,8 +26,8 @@ const VISIBLE = 'fair-form-conditional-visible';
  * @param {boolean} opts.checked    Whether it starts checked.
  * @return {string} The input markup.
  */
-function optionCheckbox({ name, shortName, checked }) {
-	return `<input type="checkbox" name="${name}" value="1" data-option-short-name="${shortName}"${
+function optionCheckbox( { name, shortName, checked } ) {
+	return `<input type="checkbox" name="${ name }" value="1" data-option-short-name="${ shortName }"${
 		checked ? ' checked' : ''
 	} />`;
 }
@@ -41,12 +41,12 @@ function optionCheckbox({ name, shortName, checked }) {
  * @param {string} opts.inner      Inner HTML.
  * @return {string} The section markup.
  */
-function eventOptionSection({
+function eventOptionSection( {
 	shortName = '',
 	operator = 'selected',
 	inner = '',
-}) {
-	return `<div data-fair-form-conditional data-condition-source="eventOption" data-condition-operator="${operator}" data-condition-option-short-name="${shortName}">${inner}</div>`;
+} ) {
+	return `<div data-fair-form-conditional data-condition-source="eventOption" data-condition-operator="${ operator }" data-condition-option-short-name="${ shortName }">${ inner }</div>`;
 }
 
 /**
@@ -55,154 +55,154 @@ function eventOptionSection({
  * @param {string} html Form inner HTML.
  * @return {HTMLFormElement} The form element.
  */
-function buildForm(html) {
-	const form = document.createElement('form');
+function buildForm( html ) {
+	const form = document.createElement( 'form' );
 	form.innerHTML = html;
-	document.body.appendChild(form);
-	evaluateConditionals(form);
+	document.body.appendChild( form );
+	evaluateConditionals( form );
 	return form;
 }
 
-afterEach(() => {
+afterEach( () => {
 	document.body.innerHTML = '';
-});
+} );
 
-describe('evaluateConditionals — eventOption source', () => {
-	it('shows the section when the matching option is selected', () => {
+describe( 'evaluateConditionals — eventOption source', () => {
+	it( 'shows the section when the matching option is selected', () => {
 		const form = buildForm(
-			optionCheckbox({
+			optionCheckbox( {
 				name: 'ticket_option_ids[]',
 				shortName: 'dinner',
 				checked: true,
-			}) +
-				eventOptionSection({
+			} ) +
+				eventOptionSection( {
 					shortName: 'dinner',
 					operator: 'selected',
-				})
+				} )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(true);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( true );
+	} );
 
-	it('hides the section when the matching option is not selected', () => {
+	it( 'hides the section when the matching option is not selected', () => {
 		const form = buildForm(
-			optionCheckbox({
+			optionCheckbox( {
 				name: 'ticket_option_ids[]',
 				shortName: 'dinner',
 				checked: false,
-			}) +
-				eventOptionSection({
+			} ) +
+				eventOptionSection( {
 					shortName: 'dinner',
 					operator: 'selected',
-				})
+				} )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(false);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( false );
+	} );
 
-	it('inverts visibility for the not_selected operator', () => {
+	it( 'inverts visibility for the not_selected operator', () => {
 		const form = buildForm(
-			optionCheckbox({
+			optionCheckbox( {
 				name: 'ticket_option_ids[]',
 				shortName: 'dinner',
 				checked: false,
-			}) +
-				eventOptionSection({
+			} ) +
+				eventOptionSection( {
 					shortName: 'dinner',
 					operator: 'not_selected',
-				})
+				} )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(true);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( true );
+	} );
 
-	it('matches options in the "add activities" fieldset too', () => {
+	it( 'matches options in the "add activities" fieldset too', () => {
 		const form = buildForm(
-			optionCheckbox({
+			optionCheckbox( {
 				name: 'add_option_ids[]',
 				shortName: 'dinner',
 				checked: true,
-			}) +
-				eventOptionSection({
+			} ) +
+				eventOptionSection( {
 					shortName: 'dinner',
 					operator: 'selected',
-				})
+				} )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(true);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( true );
+	} );
 
-	it('hides the section when the short name is empty', () => {
+	it( 'hides the section when the short name is empty', () => {
 		const form = buildForm(
-			optionCheckbox({
+			optionCheckbox( {
 				name: 'ticket_option_ids[]',
 				shortName: 'dinner',
 				checked: true,
-			}) + eventOptionSection({ shortName: '', operator: 'selected' })
+			} ) + eventOptionSection( { shortName: '', operator: 'selected' } )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(false);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( false );
+	} );
 
-	it('keeps an inner section hidden when its parent conditional is hidden, even if its option is selected', () => {
+	it( 'keeps an inner section hidden when its parent conditional is hidden, even if its option is selected', () => {
 		// Outer conditional is keyed on a different, unselected option, so it
 		// stays hidden; the inner one is keyed on a selected option but must
 		// remain hidden because of the hidden ancestor.
 		const form = buildForm(
-			optionCheckbox({
+			optionCheckbox( {
 				name: 'ticket_option_ids[]',
 				shortName: 'breakfast',
 				checked: false,
-			}) +
-				optionCheckbox({
+			} ) +
+				optionCheckbox( {
 					name: 'ticket_option_ids[]',
 					shortName: 'dinner',
 					checked: true,
-				}) +
-				eventOptionSection({
+				} ) +
+				eventOptionSection( {
 					shortName: 'breakfast',
 					operator: 'selected',
-					inner: eventOptionSection({
+					inner: eventOptionSection( {
 						shortName: 'dinner',
 						operator: 'selected',
-					}),
-				})
+					} ),
+				} )
 		);
-		const [outer, inner] = form.querySelectorAll(
+		const [ outer, inner ] = form.querySelectorAll(
 			'[data-fair-form-conditional]'
 		);
-		expect(outer.classList.contains(VISIBLE)).toBe(false);
-		expect(inner.classList.contains(VISIBLE)).toBe(false);
-	});
+		expect( outer.classList.contains( VISIBLE ) ).toBe( false );
+		expect( inner.classList.contains( VISIBLE ) ).toBe( false );
+	} );
 
-	it('shows a nested section when both its option and its ancestor are visible', () => {
+	it( 'shows a nested section when both its option and its ancestor are visible', () => {
 		const form = buildForm(
-			optionCheckbox({
+			optionCheckbox( {
 				name: 'ticket_option_ids[]',
 				shortName: 'breakfast',
 				checked: true,
-			}) +
-				optionCheckbox({
+			} ) +
+				optionCheckbox( {
 					name: 'ticket_option_ids[]',
 					shortName: 'dinner',
 					checked: true,
-				}) +
-				eventOptionSection({
+				} ) +
+				eventOptionSection( {
 					shortName: 'breakfast',
 					operator: 'selected',
-					inner: eventOptionSection({
+					inner: eventOptionSection( {
 						shortName: 'dinner',
 						operator: 'selected',
-					}),
-				})
+					} ),
+				} )
 		);
-		const [outer, inner] = form.querySelectorAll(
+		const [ outer, inner ] = form.querySelectorAll(
 			'[data-fair-form-conditional]'
 		);
-		expect(outer.classList.contains(VISIBLE)).toBe(true);
-		expect(inner.classList.contains(VISIBLE)).toBe(true);
-	});
-});
+		expect( outer.classList.contains( VISIBLE ) ).toBe( true );
+		expect( inner.classList.contains( VISIBLE ) ).toBe( true );
+	} );
+} );
 
 /**
  * Build a ticket type radio as the Event Signup render.php emits it.
@@ -212,8 +212,8 @@ describe('evaluateConditionals — eventOption source', () => {
  * @param {boolean} opts.checked Whether it starts checked.
  * @return {string} The input markup.
  */
-function ticketTypeRadio({ id, checked }) {
-	return `<input type="radio" name="ticket_type_id" value="${id}"${
+function ticketTypeRadio( { id, checked } ) {
+	return `<input type="radio" name="ticket_type_id" value="${ id }"${
 		checked ? ' checked' : ''
 	} />`;
 }
@@ -227,130 +227,130 @@ function ticketTypeRadio({ id, checked }) {
  * @param {string} opts.inner     Inner HTML.
  * @return {string} The section markup.
  */
-function ticketTypeSection({ ids = [], operator = 'selected', inner = '' }) {
-	return `<div data-fair-form-conditional data-condition-source="ticketType" data-condition-operator="${operator}" data-condition-ticket-type-ids='${JSON.stringify(
+function ticketTypeSection( { ids = [], operator = 'selected', inner = '' } ) {
+	return `<div data-fair-form-conditional data-condition-source="ticketType" data-condition-operator="${ operator }" data-condition-ticket-type-ids='${ JSON.stringify(
 		ids
-	)}'>${inner}</div>`;
+	) }'>${ inner }</div>`;
 }
 
-describe('evaluateConditionals — ticketType source', () => {
-	it('shows the section when the matching ticket type is selected', () => {
+describe( 'evaluateConditionals — ticketType source', () => {
+	it( 'shows the section when the matching ticket type is selected', () => {
 		const form = buildForm(
-			ticketTypeRadio({ id: 1, checked: true }) +
-				ticketTypeRadio({ id: 2, checked: false }) +
-				ticketTypeSection({ ids: [1], operator: 'selected' })
+			ticketTypeRadio( { id: 1, checked: true } ) +
+				ticketTypeRadio( { id: 2, checked: false } ) +
+				ticketTypeSection( { ids: [ 1 ], operator: 'selected' } )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(true);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( true );
+	} );
 
-	it('hides the section when a different ticket type is selected', () => {
+	it( 'hides the section when a different ticket type is selected', () => {
 		const form = buildForm(
-			ticketTypeRadio({ id: 1, checked: false }) +
-				ticketTypeRadio({ id: 2, checked: true }) +
-				ticketTypeSection({ ids: [1], operator: 'selected' })
+			ticketTypeRadio( { id: 1, checked: false } ) +
+				ticketTypeRadio( { id: 2, checked: true } ) +
+				ticketTypeSection( { ids: [ 1 ], operator: 'selected' } )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(false);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( false );
+	} );
 
-	it('inverts visibility for the not_selected operator', () => {
+	it( 'inverts visibility for the not_selected operator', () => {
 		const form = buildForm(
-			ticketTypeRadio({ id: 1, checked: false }) +
-				ticketTypeRadio({ id: 2, checked: true }) +
-				ticketTypeSection({ ids: [1], operator: 'not_selected' })
+			ticketTypeRadio( { id: 1, checked: false } ) +
+				ticketTypeRadio( { id: 2, checked: true } ) +
+				ticketTypeSection( { ids: [ 1 ], operator: 'not_selected' } )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(true);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( true );
+	} );
 
-	it('OR-matches when multiple ticket type IDs are referenced', () => {
+	it( 'OR-matches when multiple ticket type IDs are referenced', () => {
 		const form = buildForm(
-			ticketTypeRadio({ id: 1, checked: false }) +
-				ticketTypeRadio({ id: 2, checked: true }) +
-				ticketTypeSection({ ids: [1, 2], operator: 'selected' })
+			ticketTypeRadio( { id: 1, checked: false } ) +
+				ticketTypeRadio( { id: 2, checked: true } ) +
+				ticketTypeSection( { ids: [ 1, 2 ], operator: 'selected' } )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(true);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( true );
+	} );
 
-	it('hides the section when no ticket types are referenced', () => {
+	it( 'hides the section when no ticket types are referenced', () => {
 		const form = buildForm(
-			ticketTypeRadio({ id: 1, checked: true }) +
-				ticketTypeSection({ ids: [], operator: 'selected' })
+			ticketTypeRadio( { id: 1, checked: true } ) +
+				ticketTypeSection( { ids: [], operator: 'selected' } )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(false);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( false );
+	} );
 
-	it('hides the section when no ticket type is selected at all', () => {
+	it( 'hides the section when no ticket type is selected at all', () => {
 		const form = buildForm(
-			ticketTypeRadio({ id: 1, checked: false }) +
-				ticketTypeSection({ ids: [1], operator: 'selected' })
+			ticketTypeRadio( { id: 1, checked: false } ) +
+				ticketTypeSection( { ids: [ 1 ], operator: 'selected' } )
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(false);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( false );
+	} );
 
-	it('keeps an inner section hidden when its parent conditional is hidden, even if its ticket type is selected', () => {
+	it( 'keeps an inner section hidden when its parent conditional is hidden, even if its ticket type is selected', () => {
 		const form = buildForm(
-			ticketTypeRadio({ id: 1, checked: false }) +
-				ticketTypeRadio({ id: 2, checked: true }) +
-				ticketTypeSection({
-					ids: [1],
+			ticketTypeRadio( { id: 1, checked: false } ) +
+				ticketTypeRadio( { id: 2, checked: true } ) +
+				ticketTypeSection( {
+					ids: [ 1 ],
 					operator: 'selected',
-					inner: ticketTypeSection({
-						ids: [2],
+					inner: ticketTypeSection( {
+						ids: [ 2 ],
 						operator: 'selected',
-					}),
-				})
+					} ),
+				} )
 		);
-		const [outer, inner] = form.querySelectorAll(
+		const [ outer, inner ] = form.querySelectorAll(
 			'[data-fair-form-conditional]'
 		);
-		expect(outer.classList.contains(VISIBLE)).toBe(false);
-		expect(inner.classList.contains(VISIBLE)).toBe(false);
-	});
+		expect( outer.classList.contains( VISIBLE ) ).toBe( false );
+		expect( inner.classList.contains( VISIBLE ) ).toBe( false );
+	} );
 
-	it('shows a nested section when both its ticket type and its ancestor are visible', () => {
+	it( 'shows a nested section when both its ticket type and its ancestor are visible', () => {
 		const form = buildForm(
-			ticketTypeRadio({ id: 1, checked: true }) +
-				ticketTypeSection({
-					ids: [1],
+			ticketTypeRadio( { id: 1, checked: true } ) +
+				ticketTypeSection( {
+					ids: [ 1 ],
 					operator: 'selected',
-					inner: ticketTypeSection({
-						ids: [1],
+					inner: ticketTypeSection( {
+						ids: [ 1 ],
 						operator: 'selected',
-					}),
-				})
+					} ),
+				} )
 		);
-		const [outer, inner] = form.querySelectorAll(
+		const [ outer, inner ] = form.querySelectorAll(
 			'[data-fair-form-conditional]'
 		);
-		expect(outer.classList.contains(VISIBLE)).toBe(true);
-		expect(inner.classList.contains(VISIBLE)).toBe(true);
-	});
-});
+		expect( outer.classList.contains( VISIBLE ) ).toBe( true );
+		expect( inner.classList.contains( VISIBLE ) ).toBe( true );
+	} );
+} );
 
-describe('evaluateConditionals — question source (regression)', () => {
-	it('still shows a question-keyed section when its answer matches', () => {
+describe( 'evaluateConditionals — question source (regression)', () => {
+	it( 'still shows a question-keyed section when its answer matches', () => {
 		const form = buildForm(
 			`<div data-fair-form-question data-question-key="color" data-question-type="short_text"><input type="text" value="blue" /></div>` +
 				`<div data-fair-form-conditional data-condition-source="question" data-condition-question-key="color" data-condition-operator="equals" data-condition-value="blue"></div>`
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(true);
-	});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( true );
+	} );
 
-	it('treats a missing conditionSource as the question source', () => {
+	it( 'treats a missing conditionSource as the question source', () => {
 		const form = buildForm(
 			`<div data-fair-form-question data-question-key="color" data-question-type="short_text"><input type="text" value="red" /></div>` +
 				`<div data-fair-form-conditional data-condition-question-key="color" data-condition-operator="equals" data-condition-value="blue"></div>`
 		);
-		const section = form.querySelector('[data-fair-form-conditional]');
-		expect(section.classList.contains(VISIBLE)).toBe(false);
-	});
-});
+		const section = form.querySelector( '[data-fair-form-conditional]' );
+		expect( section.classList.contains( VISIBLE ) ).toBe( false );
+	} );
+} );
 
 /**
  * Build a long-text question wrapped in a conditional section keyed on a
@@ -359,45 +359,45 @@ describe('evaluateConditionals — question source (regression)', () => {
  * @param {string} colorValue The color question's current value.
  * @return {string} The markup.
  */
-function conditionalLongTextQuestion(colorValue) {
+function conditionalLongTextQuestion( colorValue ) {
 	return (
-		`<div data-fair-form-question data-question-key="color" data-question-type="short_text"><input type="text" value="${colorValue}" /></div>` +
+		`<div data-fair-form-question data-question-key="color" data-question-type="short_text"><input type="text" value="${ colorValue }" /></div>` +
 		`<div data-fair-form-conditional data-condition-source="question" data-condition-question-key="color" data-condition-operator="equals" data-condition-value="blue">` +
 		`<div data-fair-form-question data-question-key="details" data-question-type="long_text"><textarea></textarea></div>` +
 		`</div>`
 	);
 }
 
-describe('evaluateConditionals — long-text autosize on reveal', () => {
+describe( 'evaluateConditionals — long-text autosize on reveal', () => {
 	// jsdom performs no real layout, so scrollHeight is always 0 unless mocked.
-	it('autosizes a long-text textarea once its conditional section becomes visible', () => {
-		const form = buildForm(conditionalLongTextQuestion('blue'));
-		const textarea = form.querySelector('textarea');
-		Object.defineProperty(textarea, 'scrollHeight', {
+	it( 'autosizes a long-text textarea once its conditional section becomes visible', () => {
+		const form = buildForm( conditionalLongTextQuestion( 'blue' ) );
+		const textarea = form.querySelector( 'textarea' );
+		Object.defineProperty( textarea, 'scrollHeight', {
 			configurable: true,
 			value: 120,
-		});
+		} );
 
-		evaluateConditionals(form);
+		evaluateConditionals( form );
 
-		expect(textarea.style.height).toBe('120px');
-	});
+		expect( textarea.style.height ).toBe( '120px' );
+	} );
 
-	it('leaves a long-text textarea unsized while its conditional section stays hidden', () => {
-		const form = buildForm(conditionalLongTextQuestion('red'));
-		const textarea = form.querySelector('textarea');
-		Object.defineProperty(textarea, 'scrollHeight', {
+	it( 'leaves a long-text textarea unsized while its conditional section stays hidden', () => {
+		const form = buildForm( conditionalLongTextQuestion( 'red' ) );
+		const textarea = form.querySelector( 'textarea' );
+		Object.defineProperty( textarea, 'scrollHeight', {
 			configurable: true,
 			value: 120,
-		});
+		} );
 
-		evaluateConditionals(form);
+		evaluateConditionals( form );
 
-		expect(textarea.style.height).not.toBe('120px');
-	});
-});
+		expect( textarea.style.height ).not.toBe( '120px' );
+	} );
+} );
 
-function consentQuestion({ checked = false, required = true } = {}) {
+function consentQuestion( { checked = false, required = true } = {} ) {
 	return (
 		`<div data-fair-form-question data-question-key="tos" data-question-text="I accept" data-question-type="checkbox" data-required="${
 			required ? '1' : '0'
@@ -408,60 +408,64 @@ function consentQuestion({ checked = false, required = true } = {}) {
 	);
 }
 
-describe('checkbox question type', () => {
-	describe('getQuestionValue', () => {
-		it('returns "1" when the checkbox is checked', () => {
-			const form = buildForm(consentQuestion({ checked: true }));
-			const questionEl = form.querySelector('[data-fair-form-question]');
-			expect(getQuestionValue(questionEl)).toBe('1');
-		});
-
-		it('returns "0" when the checkbox is unchecked', () => {
-			const form = buildForm(consentQuestion({ checked: false }));
-			const questionEl = form.querySelector('[data-fair-form-question]');
-			expect(getQuestionValue(questionEl)).toBe('0');
-		});
-	});
-
-	describe('collectQuestionAnswers', () => {
-		it('stores "1" for a checked box', () => {
-			const form = buildForm(consentQuestion({ checked: true }));
-			const answers = collectQuestionAnswers(form);
-			expect(answers).toHaveLength(1);
-			expect(answers[0].answer_value).toBe('1');
-		});
-
-		it('stores "0" for an unchecked box, not the input value attribute', () => {
-			const form = buildForm(consentQuestion({ checked: false }));
-			const answers = collectQuestionAnswers(form);
-			expect(answers).toHaveLength(1);
-			expect(answers[0].answer_value).toBe('0');
-		});
-	});
-
-	describe('validateQuestions', () => {
-		it('blocks submission when a required consent box is unchecked', () => {
-			const form = buildForm(
-				consentQuestion({ checked: false, required: true })
+describe( 'checkbox question type', () => {
+	describe( 'getQuestionValue', () => {
+		it( 'returns "1" when the checkbox is checked', () => {
+			const form = buildForm( consentQuestion( { checked: true } ) );
+			const questionEl = form.querySelector(
+				'[data-fair-form-question]'
 			);
-			expect(validateQuestions(form)).toMatch(/I accept/);
-		});
+			expect( getQuestionValue( questionEl ) ).toBe( '1' );
+		} );
 
-		it('passes when a required consent box is checked', () => {
-			const form = buildForm(
-				consentQuestion({ checked: true, required: true })
+		it( 'returns "0" when the checkbox is unchecked', () => {
+			const form = buildForm( consentQuestion( { checked: false } ) );
+			const questionEl = form.querySelector(
+				'[data-fair-form-question]'
 			);
-			expect(validateQuestions(form)).toBeNull();
-		});
+			expect( getQuestionValue( questionEl ) ).toBe( '0' );
+		} );
+	} );
 
-		it('does not require an unchecked box when required is false', () => {
+	describe( 'collectQuestionAnswers', () => {
+		it( 'stores "1" for a checked box', () => {
+			const form = buildForm( consentQuestion( { checked: true } ) );
+			const answers = collectQuestionAnswers( form );
+			expect( answers ).toHaveLength( 1 );
+			expect( answers[ 0 ].answer_value ).toBe( '1' );
+		} );
+
+		it( 'stores "0" for an unchecked box, not the input value attribute', () => {
+			const form = buildForm( consentQuestion( { checked: false } ) );
+			const answers = collectQuestionAnswers( form );
+			expect( answers ).toHaveLength( 1 );
+			expect( answers[ 0 ].answer_value ).toBe( '0' );
+		} );
+	} );
+
+	describe( 'validateQuestions', () => {
+		it( 'blocks submission when a required consent box is unchecked', () => {
 			const form = buildForm(
-				consentQuestion({ checked: false, required: false })
+				consentQuestion( { checked: false, required: true } )
 			);
-			expect(validateQuestions(form)).toBeNull();
-		});
-	});
-});
+			expect( validateQuestions( form ) ).toMatch( /I accept/ );
+		} );
+
+		it( 'passes when a required consent box is checked', () => {
+			const form = buildForm(
+				consentQuestion( { checked: true, required: true } )
+			);
+			expect( validateQuestions( form ) ).toBeNull();
+		} );
+
+		it( 'does not require an unchecked box when required is false', () => {
+			const form = buildForm(
+				consentQuestion( { checked: false, required: false } )
+			);
+			expect( validateQuestions( form ) ).toBeNull();
+		} );
+	} );
+} );
 
 /**
  * Build a phone question as fair-form-phone/render.php emits it.
@@ -469,14 +473,14 @@ describe('checkbox question type', () => {
  * @param {string} value Field value.
  * @return {string} The question markup.
  */
-function phoneQuestion(value) {
+function phoneQuestion( value ) {
 	return (
 		'<div data-fair-form-question data-question-key="mobile" data-question-text="Mobile" data-question-type="phone" data-required="0">' +
-		`<input type="tel" value="${value}" /></div>`
+		`<input type="tel" value="${ value }" /></div>`
 	);
 }
 
-describe('phone question type', () => {
+describe( 'phone question type', () => {
 	// One separator per accept case is enough to prove the class is
 	// accepted anywhere between the leading `+` and the last digit; the
 	// browser pattern and isValidPhoneNumber() must agree on every case.
@@ -500,40 +504,40 @@ describe('phone question type', () => {
 		'+4912345678901234567',
 	];
 
-	const htmlPatternRegex = new RegExp(`^(?:${PHONE_HTML_PATTERN})$`, 'u');
+	const htmlPatternRegex = new RegExp( `^(?:${ PHONE_HTML_PATTERN })$`, 'u' );
 
-	describe.each(ACCEPT)('accepts %j', (value) => {
-		it('via isValidPhoneNumber()', () => {
-			expect(isValidPhoneNumber(value)).toBe(true);
-		});
+	describe.each( ACCEPT )( 'accepts %j', ( value ) => {
+		it( 'via isValidPhoneNumber()', () => {
+			expect( isValidPhoneNumber( value ) ).toBe( true );
+		} );
 
-		it('via the HTML pattern', () => {
-			expect(htmlPatternRegex.test(value)).toBe(true);
-		});
-	});
+		it( 'via the HTML pattern', () => {
+			expect( htmlPatternRegex.test( value ) ).toBe( true );
+		} );
+	} );
 
-	describe.each(REJECT)('rejects %j', (value) => {
-		it('via isValidPhoneNumber()', () => {
-			expect(isValidPhoneNumber(value)).toBe(false);
-		});
+	describe.each( REJECT )( 'rejects %j', ( value ) => {
+		it( 'via isValidPhoneNumber()', () => {
+			expect( isValidPhoneNumber( value ) ).toBe( false );
+		} );
 
-		it('via the HTML pattern', () => {
-			expect(htmlPatternRegex.test(value)).toBe(false);
-		});
-	});
+		it( 'via the HTML pattern', () => {
+			expect( htmlPatternRegex.test( value ) ).toBe( false );
+		} );
+	} );
 
-	describe('validateQuestions', () => {
-		it('passes a phone number with separators', () => {
-			const form = buildForm(phoneQuestion('+49 170 123 45 67'));
-			expect(validateQuestions(form)).toBeNull();
-		});
+	describe( 'validateQuestions', () => {
+		it( 'passes a phone number with separators', () => {
+			const form = buildForm( phoneQuestion( '+49 170 123 45 67' ) );
+			expect( validateQuestions( form ) ).toBeNull();
+		} );
 
-		it('blocks a phone number without a country code', () => {
-			const form = buildForm(phoneQuestion('49 170 1234567'));
-			expect(validateQuestions(form)).toMatch(/Mobile/);
-		});
-	});
-});
+		it( 'blocks a phone number without a country code', () => {
+			const form = buildForm( phoneQuestion( '49 170 1234567' ) );
+			expect( validateQuestions( form ) ).toMatch( /Mobile/ );
+		} );
+	} );
+} );
 
 /**
  * Build a URL question as fair-form-url/render.php emits it.
@@ -542,210 +546,228 @@ describe('phone question type', () => {
  * @param {boolean} extractEventDetails Whether `data-extract-event-details` is set.
  * @return {string} The question markup.
  */
-function urlQuestion(value, extractEventDetails = false) {
+function urlQuestion( value, extractEventDetails = false ) {
 	return (
 		`<div data-fair-form-question data-question-key="website" data-question-text="Website" data-question-type="url" data-required="0" data-extract-event-details="${
 			extractEventDetails ? '1' : '0'
-		}">` + `<input type="text" inputmode="url" value="${value}" /></div>`
+		}">` + `<input type="text" inputmode="url" value="${ value }" /></div>`
 	);
 }
 
-describe('url question type', () => {
-	describe('validateQuestions', () => {
-		it('passes a bare domain (accepted as shorthand for https://)', () => {
-			const form = buildForm(urlQuestion('example.com/my-event'));
-			expect(validateQuestions(form)).toBeNull();
-		});
+describe( 'url question type', () => {
+	describe( 'validateQuestions', () => {
+		it( 'passes a bare domain (accepted as shorthand for https://)', () => {
+			const form = buildForm( urlQuestion( 'example.com/my-event' ) );
+			expect( validateQuestions( form ) ).toBeNull();
+		} );
 
-		it('passes an already-schemed https:// value', () => {
-			const form = buildForm(urlQuestion('https://example.com'));
-			expect(validateQuestions(form)).toBeNull();
-		});
+		it( 'passes an already-schemed https:// value', () => {
+			const form = buildForm( urlQuestion( 'https://example.com' ) );
+			expect( validateQuestions( form ) ).toBeNull();
+		} );
 
-		it('passes an already-schemed http:// value', () => {
-			const form = buildForm(urlQuestion('http://example.com'));
-			expect(validateQuestions(form)).toBeNull();
-		});
+		it( 'passes an already-schemed http:// value', () => {
+			const form = buildForm( urlQuestion( 'http://example.com' ) );
+			expect( validateQuestions( form ) ).toBeNull();
+		} );
 
-		it('passes an empty, non-required value', () => {
-			const form = buildForm(urlQuestion(''));
-			expect(validateQuestions(form)).toBeNull();
-		});
+		it( 'passes an empty, non-required value', () => {
+			const form = buildForm( urlQuestion( '' ) );
+			expect( validateQuestions( form ) ).toBeNull();
+		} );
 
-		it('blocks a javascript: address', () => {
-			const form = buildForm(urlQuestion('javascript:alert(1)'));
-			expect(validateQuestions(form)).toMatch(/Website/);
-		});
+		it( 'blocks a javascript: address', () => {
+			const form = buildForm( urlQuestion( 'javascript:alert(1)' ) );
+			expect( validateQuestions( form ) ).toMatch( /Website/ );
+		} );
 
-		it('blocks free text', () => {
-			const form = buildForm(urlQuestion('just some free text'));
-			expect(validateQuestions(form)).toMatch(/Website/);
-		});
-	});
+		it( 'blocks free text', () => {
+			const form = buildForm( urlQuestion( 'just some free text' ) );
+			expect( validateQuestions( form ) ).toMatch( /Website/ );
+		} );
+	} );
 
-	describe('setupUrlPreviews', () => {
-		beforeEach(() => {
+	describe( 'setupUrlPreviews', () => {
+		beforeEach( () => {
 			apiFetch.mockReset();
-		});
+		} );
 
 		function flushPromises() {
-			return Promise.resolve().then(() => Promise.resolve());
+			return Promise.resolve().then( () => Promise.resolve() );
 		}
 
-		it('fetches a preview on blur and renders it under the field', async () => {
-			apiFetch.mockResolvedValueOnce({
+		it( 'fetches a preview on blur and renders it under the field', async () => {
+			apiFetch.mockResolvedValueOnce( {
 				title: 'Community Picnic',
 				start_datetime: null,
 				end_datetime: null,
 				all_day: false,
 				location: 'Central Park',
-			});
+			} );
 
-			const form = buildForm(urlQuestion('https://example.com', true));
-			setupUrlPreviews(form);
+			const form = buildForm(
+				urlQuestion( 'https://example.com', true )
+			);
+			setupUrlPreviews( form );
 
-			const input = form.querySelector('input');
+			const input = form.querySelector( 'input' );
 			input.value = 'https://example.com';
-			input.dispatchEvent(new Event('blur'));
+			input.dispatchEvent( new Event( 'blur' ) );
 			await flushPromises();
 
-			expect(apiFetch).toHaveBeenCalledWith({
+			expect( apiFetch ).toHaveBeenCalledWith( {
 				path: '/fair-form/v1/url-preview',
 				method: 'POST',
 				data: { url: 'https://example.com' },
-			});
+			} );
 
-			const preview = form.querySelector('.fair-form-url-preview');
-			expect(preview).not.toBeNull();
-			expect(preview.textContent).toContain('Community Picnic');
-			expect(preview.textContent).toContain('Central Park');
-		});
+			const preview = form.querySelector( '.fair-form-url-preview' );
+			expect( preview ).not.toBeNull();
+			expect( preview.textContent ).toContain( 'Community Picnic' );
+			expect( preview.textContent ).toContain( 'Central Park' );
+		} );
 
-		it('renders a formatted start–end range for a dated event, in site-local time', async () => {
-			apiFetch.mockResolvedValueOnce({
+		it( 'renders a formatted start–end range for a dated event, in site-local time', async () => {
+			apiFetch.mockResolvedValueOnce( {
 				title: 'Community Picnic',
 				start_datetime: '2026-09-12 18:00:00',
 				end_datetime: '2026-09-12 20:00:00',
 				all_day: false,
 				location: null,
-			});
+			} );
 
-			const form = buildForm(urlQuestion('https://example.com', true));
-			setupUrlPreviews(form);
+			const form = buildForm(
+				urlQuestion( 'https://example.com', true )
+			);
+			setupUrlPreviews( form );
 
-			const input = form.querySelector('input');
+			const input = form.querySelector( 'input' );
 			input.value = 'https://example.com';
-			input.dispatchEvent(new Event('blur'));
+			input.dispatchEvent( new Event( 'blur' ) );
 			await flushPromises();
 
-			const preview = form.querySelector('.fair-form-url-preview');
-			expect(preview.textContent).toContain(
-				formatSiteLocalDatetime('2026-09-12 18:00:00')
+			const preview = form.querySelector( '.fair-form-url-preview' );
+			expect( preview.textContent ).toContain(
+				formatSiteLocalDatetime( '2026-09-12 18:00:00' )
 			);
-			expect(preview.textContent).toContain(
-				formatSiteLocalDatetime('2026-09-12 20:00:00')
+			expect( preview.textContent ).toContain(
+				formatSiteLocalDatetime( '2026-09-12 20:00:00' )
 			);
-		});
+		} );
 
-		it('renders an all-day date without a time component', async () => {
-			apiFetch.mockResolvedValueOnce({
+		it( 'renders an all-day date without a time component', async () => {
+			apiFetch.mockResolvedValueOnce( {
 				title: 'Community Picnic',
 				start_datetime: '2026-09-12 00:00:00',
 				end_datetime: null,
 				all_day: true,
 				location: null,
-			});
+			} );
 
-			const form = buildForm(urlQuestion('https://example.com', true));
-			setupUrlPreviews(form);
-
-			const input = form.querySelector('input');
-			input.value = 'https://example.com';
-			input.dispatchEvent(new Event('blur'));
-			await flushPromises();
-
-			const preview = form.querySelector('.fair-form-url-preview');
-			expect(preview.textContent).toContain(
-				formatDateOnly('2026-09-12 00:00:00')
+			const form = buildForm(
+				urlQuestion( 'https://example.com', true )
 			);
-		});
+			setupUrlPreviews( form );
 
-		it('does not fetch on blur when the field is empty', async () => {
-			const form = buildForm(urlQuestion('', true));
-			setupUrlPreviews(form);
-
-			const input = form.querySelector('input');
-			input.dispatchEvent(new Event('blur'));
-			await flushPromises();
-
-			expect(apiFetch).not.toHaveBeenCalled();
-		});
-
-		it('does not re-fetch on a second blur with the same value', async () => {
-			apiFetch.mockResolvedValue({ title: 'Community Picnic' });
-
-			const form = buildForm(urlQuestion('https://example.com', true));
-			setupUrlPreviews(form);
-
-			const input = form.querySelector('input');
+			const input = form.querySelector( 'input' );
 			input.value = 'https://example.com';
-			input.dispatchEvent(new Event('blur'));
-			await flushPromises();
-			input.dispatchEvent(new Event('blur'));
+			input.dispatchEvent( new Event( 'blur' ) );
 			await flushPromises();
 
-			expect(apiFetch).toHaveBeenCalledTimes(1);
-		});
+			const preview = form.querySelector( '.fair-form-url-preview' );
+			expect( preview.textContent ).toContain(
+				formatDateOnly( '2026-09-12 00:00:00' )
+			);
+		} );
 
-		it('silently clears any bubble when the preview request fails', async () => {
-			apiFetch.mockResolvedValueOnce({ title: 'Community Picnic' });
+		it( 'does not fetch on blur when the field is empty', async () => {
+			const form = buildForm( urlQuestion( '', true ) );
+			setupUrlPreviews( form );
 
-			const form = buildForm(urlQuestion('https://example.com', true));
-			setupUrlPreviews(form);
+			const input = form.querySelector( 'input' );
+			input.dispatchEvent( new Event( 'blur' ) );
+			await flushPromises();
 
-			const input = form.querySelector('input');
+			expect( apiFetch ).not.toHaveBeenCalled();
+		} );
+
+		it( 'does not re-fetch on a second blur with the same value', async () => {
+			apiFetch.mockResolvedValue( { title: 'Community Picnic' } );
+
+			const form = buildForm(
+				urlQuestion( 'https://example.com', true )
+			);
+			setupUrlPreviews( form );
+
+			const input = form.querySelector( 'input' );
 			input.value = 'https://example.com';
-			input.dispatchEvent(new Event('blur'));
+			input.dispatchEvent( new Event( 'blur' ) );
 			await flushPromises();
-			expect(form.querySelector('.fair-form-url-preview')).not.toBeNull();
+			input.dispatchEvent( new Event( 'blur' ) );
+			await flushPromises();
 
-			apiFetch.mockRejectedValueOnce(new Error('rate limited'));
+			expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		it( 'silently clears any bubble when the preview request fails', async () => {
+			apiFetch.mockResolvedValueOnce( { title: 'Community Picnic' } );
+
+			const form = buildForm(
+				urlQuestion( 'https://example.com', true )
+			);
+			setupUrlPreviews( form );
+
+			const input = form.querySelector( 'input' );
+			input.value = 'https://example.com';
+			input.dispatchEvent( new Event( 'blur' ) );
+			await flushPromises();
+			expect(
+				form.querySelector( '.fair-form-url-preview' )
+			).not.toBeNull();
+
+			apiFetch.mockRejectedValueOnce( new Error( 'rate limited' ) );
 			input.value = 'https://example.com/other-page';
-			input.dispatchEvent(new Event('input'));
-			input.dispatchEvent(new Event('blur'));
+			input.dispatchEvent( new Event( 'input' ) );
+			input.dispatchEvent( new Event( 'blur' ) );
 			await flushPromises();
 
-			expect(form.querySelector('.fair-form-url-preview')).toBeNull();
-		});
+			expect( form.querySelector( '.fair-form-url-preview' ) ).toBeNull();
+		} );
 
-		it('clears an existing bubble immediately on input, before any re-fetch', async () => {
-			apiFetch.mockResolvedValueOnce({ title: 'Community Picnic' });
+		it( 'clears an existing bubble immediately on input, before any re-fetch', async () => {
+			apiFetch.mockResolvedValueOnce( { title: 'Community Picnic' } );
 
-			const form = buildForm(urlQuestion('https://example.com', true));
-			setupUrlPreviews(form);
+			const form = buildForm(
+				urlQuestion( 'https://example.com', true )
+			);
+			setupUrlPreviews( form );
 
-			const input = form.querySelector('input');
+			const input = form.querySelector( 'input' );
 			input.value = 'https://example.com';
-			input.dispatchEvent(new Event('blur'));
+			input.dispatchEvent( new Event( 'blur' ) );
 			await flushPromises();
-			expect(form.querySelector('.fair-form-url-preview')).not.toBeNull();
+			expect(
+				form.querySelector( '.fair-form-url-preview' )
+			).not.toBeNull();
 
 			input.value = 'https://example.com/x';
-			input.dispatchEvent(new Event('input'));
+			input.dispatchEvent( new Event( 'input' ) );
 
-			expect(form.querySelector('.fair-form-url-preview')).toBeNull();
-		});
+			expect( form.querySelector( '.fair-form-url-preview' ) ).toBeNull();
+		} );
 
-		it('does not wire up a preview when extractEventDetails is off', async () => {
-			const form = buildForm(urlQuestion('https://example.com', false));
-			setupUrlPreviews(form);
+		it( 'does not wire up a preview when extractEventDetails is off', async () => {
+			const form = buildForm(
+				urlQuestion( 'https://example.com', false )
+			);
+			setupUrlPreviews( form );
 
-			const input = form.querySelector('input');
+			const input = form.querySelector( 'input' );
 			input.value = 'https://example.com';
-			input.dispatchEvent(new Event('blur'));
+			input.dispatchEvent( new Event( 'blur' ) );
 			await flushPromises();
 
-			expect(apiFetch).not.toHaveBeenCalled();
-		});
-	});
-});
+			expect( apiFetch ).not.toHaveBeenCalled();
+		} );
+	} );
+} );

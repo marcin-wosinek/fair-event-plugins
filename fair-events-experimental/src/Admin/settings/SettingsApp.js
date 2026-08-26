@@ -18,28 +18,28 @@ import FeaturesTab from './FeaturesTab.js';
  * @return {JSX.Element} The Settings app component
  */
 export default function SettingsApp() {
-	const [notice, setNotice] = useState(null);
+	const [ notice, setNotice ] = useState( null );
 
 	return (
 		<div className="wrap fair-events-experimental-settings">
 			<h1>
-				{__(
+				{ __(
 					'Fair Events Experimental Settings',
 					'fair-events-experimental'
-				)}
+				) }
 			</h1>
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
-					isDismissible={true}
-					onRemove={() => setNotice(null)}
+					status={ notice.status }
+					isDismissible={ true }
+					onRemove={ () => setNotice( null ) }
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
-			<FeaturesTab onNotice={setNotice} />
+			<FeaturesTab onNotice={ setNotice } />
 		</div>
 	);
 }

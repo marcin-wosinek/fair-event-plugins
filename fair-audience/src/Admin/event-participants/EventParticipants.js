@@ -26,7 +26,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: ['name', 'role', 'photo_likes', 'questions'],
+	fields: [ 'name', 'role', 'photo_likes', 'questions' ],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -39,14 +39,14 @@ const DEFAULT_LAYOUTS = {
  * @param {Object} answer The answer record.
  * @return {string} Human-readable value.
  */
-function formatAnswerValue(answer) {
-	if (answer.question_type === 'multiselect') {
+function formatAnswerValue( answer ) {
+	if ( answer.question_type === 'multiselect' ) {
 		try {
-			const values = JSON.parse(answer.answer_value);
-			if (Array.isArray(values)) {
-				return values.join(', ');
+			const values = JSON.parse( answer.answer_value );
+			if ( Array.isArray( values ) ) {
+				return values.join( ', ' );
 			}
-		} catch (e) {
+		} catch ( e ) {
 			// Fall through to the raw value.
 		}
 	}
@@ -59,106 +59,110 @@ function formatAnswerValue(answer) {
  * @param {Array} answers Answer records from the REST response.
  * @return {JSX.Element|null} The rendered list, or null when there are none.
  */
-function renderQuestionnaireAnswers(answers) {
-	if (!answers || answers.length === 0) {
+function renderQuestionnaireAnswers( answers ) {
+	if ( ! answers || answers.length === 0 ) {
 		return null;
 	}
 
 	return (
 		<dl
 			className="fair-audience-signup-answers"
-			style={{ margin: 0, fontSize: '12px' }}
+			style={ { margin: 0, fontSize: '12px' } }
 		>
-			{answers.map((answer, index) => (
+			{ answers.map( ( answer, index ) => (
 				<div
-					key={answer.question_key || index}
+					key={ answer.question_key || index }
 					className="fair-audience-signup-answer"
-					style={{ marginBottom: '4px' }}
+					style={ { marginBottom: '4px' } }
 				>
-					<dt style={{ fontWeight: 600 }}>{answer.question_text}</dt>
-					<dd style={{ margin: 0 }}>
-						{answer.file_url ? (
+					<dt style={ { fontWeight: 600 } }>
+						{ answer.question_text }
+					</dt>
+					<dd style={ { margin: 0 } }>
+						{ answer.file_url ? (
 							<a
-								href={answer.file_url}
+								href={ answer.file_url }
 								target="_blank"
 								rel="noreferrer"
 							>
-								{__('View file', 'fair-audience')}
+								{ __( 'View file', 'fair-audience' ) }
 							</a>
 						) : (
-							formatAnswerValue(answer)
-						)}
+							formatAnswerValue( answer )
+						) }
 					</dd>
 				</div>
-			))}
+			) ) }
 		</dl>
 	);
 }
 
 export default function EventParticipants() {
-	const [participants, setParticipants] = useState([]);
-	const [allParticipants, setAllParticipants] = useState([]);
-	const [eventInfo, setEventInfo] = useState(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [addModalLabel, setAddModalLabel] = useState(null);
-	const [selectedToAdd, setSelectedToAdd] = useState(new Set());
-	const [addSearch, setAddSearch] = useState('');
-	const [addGroupFilter, setAddGroupFilter] = useState('');
-	const [isAdding, setIsAdding] = useState(false);
-	const [isRemoving, setIsRemoving] = useState(false);
-	const [isSendingGalleryLinks, setIsSendingGalleryLinks] = useState(false);
-	const [view, setView] = useState(DEFAULT_VIEW);
-	const [selection, setSelection] = useState([]);
-	const [editModalOpen, setEditModalOpen] = useState(false);
-	const [editingParticipant, setEditingParticipant] = useState(null);
-	const [editLabel, setEditLabel] = useState('');
-	const [showInvitationModal, setShowInvitationModal] = useState(false);
-	const [groups, setGroups] = useState([]);
-	const [selectedGroups, setSelectedGroups] = useState(new Set());
-	const [isSendingInvitations, setIsSendingInvitations] = useState(false);
-	const [inviteMode, setInviteMode] = useState('groups'); // 'groups' or 'participants'
-	const [selectedInviteParticipants, setSelectedInviteParticipants] =
-		useState(new Set());
-	const [inviteSearch, setInviteSearch] = useState('');
-	const [gallerySendResult, setGallerySendResult] = useState(null);
-	const [invitationSendResult, setInvitationSendResult] = useState(null);
-	const [showGalleryPreviewModal, setShowGalleryPreviewModal] =
-		useState(false);
-	const [galleryPreviewParticipants, setGalleryPreviewParticipants] =
-		useState([]);
-	const [extraMessages, setExtraMessages] = useState([]);
-	const [disabledExtraMessageIds, setDisabledExtraMessageIds] = useState(
+	const [ participants, setParticipants ] = useState( [] );
+	const [ allParticipants, setAllParticipants ] = useState( [] );
+	const [ eventInfo, setEventInfo ] = useState( null );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ addModalLabel, setAddModalLabel ] = useState( null );
+	const [ selectedToAdd, setSelectedToAdd ] = useState( new Set() );
+	const [ addSearch, setAddSearch ] = useState( '' );
+	const [ addGroupFilter, setAddGroupFilter ] = useState( '' );
+	const [ isAdding, setIsAdding ] = useState( false );
+	const [ isRemoving, setIsRemoving ] = useState( false );
+	const [ isSendingGalleryLinks, setIsSendingGalleryLinks ] =
+		useState( false );
+	const [ view, setView ] = useState( DEFAULT_VIEW );
+	const [ selection, setSelection ] = useState( [] );
+	const [ editModalOpen, setEditModalOpen ] = useState( false );
+	const [ editingParticipant, setEditingParticipant ] = useState( null );
+	const [ editLabel, setEditLabel ] = useState( '' );
+	const [ showInvitationModal, setShowInvitationModal ] = useState( false );
+	const [ groups, setGroups ] = useState( [] );
+	const [ selectedGroups, setSelectedGroups ] = useState( new Set() );
+	const [ isSendingInvitations, setIsSendingInvitations ] = useState( false );
+	const [ inviteMode, setInviteMode ] = useState( 'groups' ); // 'groups' or 'participants'
+	const [ selectedInviteParticipants, setSelectedInviteParticipants ] =
+		useState( new Set() );
+	const [ inviteSearch, setInviteSearch ] = useState( '' );
+	const [ gallerySendResult, setGallerySendResult ] = useState( null );
+	const [ invitationSendResult, setInvitationSendResult ] = useState( null );
+	const [ showGalleryPreviewModal, setShowGalleryPreviewModal ] =
+		useState( false );
+	const [ galleryPreviewParticipants, setGalleryPreviewParticipants ] =
+		useState( [] );
+	const [ extraMessages, setExtraMessages ] = useState( [] );
+	const [ disabledExtraMessageIds, setDisabledExtraMessageIds ] = useState(
 		new Set()
 	);
-	const [isLoadingExtraMessages, setIsLoadingExtraMessages] = useState(false);
+	const [ isLoadingExtraMessages, setIsLoadingExtraMessages ] =
+		useState( false );
 
-	const params = new URLSearchParams(window.location.search);
-	const urlEventDateId = params.get('event_date_id');
-	const legacyEventId = params.get('event_id');
-	const [resolvedEventDateId, setResolvedEventDateId] =
-		useState(urlEventDateId);
+	const params = new URLSearchParams( window.location.search );
+	const urlEventDateId = params.get( 'event_date_id' );
+	const legacyEventId = params.get( 'event_id' );
+	const [ resolvedEventDateId, setResolvedEventDateId ] =
+		useState( urlEventDateId );
 
 	// Step 1: resolve event_date_id if only legacy event_id is provided.
-	useEffect(() => {
-		if (!urlEventDateId && !legacyEventId) {
-			setError(__('No event date ID provided', 'fair-audience'));
-			setIsLoading(false);
+	useEffect( () => {
+		if ( ! urlEventDateId && ! legacyEventId ) {
+			setError( __( 'No event date ID provided', 'fair-audience' ) );
+			setIsLoading( false );
 			return;
 		}
 
-		if (urlEventDateId) {
+		if ( urlEventDateId ) {
 			// Already have event_date_id.
 			return;
 		}
 
 		// Legacy: resolve event_date_id from event_id.
-		apiFetch({
-			path: `/fair-events/v1/event-dates?event_id=${legacyEventId}`,
-		})
-			.then((data) => {
-				if (data && data.length > 0) {
-					setResolvedEventDateId(String(data[0].id));
+		apiFetch( {
+			path: `/fair-events/v1/event-dates?event_id=${ legacyEventId }`,
+		} )
+			.then( ( data ) => {
+				if ( data && data.length > 0 ) {
+					setResolvedEventDateId( String( data[ 0 ].id ) );
 				} else {
 					setError(
 						__(
@@ -166,18 +170,18 @@ export default function EventParticipants() {
 							'fair-audience'
 						)
 					);
-					setIsLoading(false);
+					setIsLoading( false );
 				}
-			})
-			.catch((err) => {
-				setError(err.message);
-				setIsLoading(false);
-			});
-	}, [urlEventDateId, legacyEventId]);
+			} )
+			.catch( ( err ) => {
+				setError( err.message );
+				setIsLoading( false );
+			} );
+	}, [ urlEventDateId, legacyEventId ] );
 
 	// Step 2: load data once event_date_id is resolved.
-	useEffect(() => {
-		if (!resolvedEventDateId) {
+	useEffect( () => {
+		if ( ! resolvedEventDateId ) {
 			return;
 		}
 
@@ -185,139 +189,144 @@ export default function EventParticipants() {
 		loadParticipants();
 		loadAllParticipants();
 		loadGroups();
-	}, [resolvedEventDateId]);
+	}, [ resolvedEventDateId ] );
 
 	const loadEventInfo = () => {
-		apiFetch({
-			path: `/fair-audience/v1/event-dates/${resolvedEventDateId}`,
-		})
-			.then((data) => {
-				setEventInfo(data);
-			})
-			.catch((err) => {
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ resolvedEventDateId }`,
+		} )
+			.then( ( data ) => {
+				setEventInfo( data );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading event info:', err);
-			});
+				console.error( 'Error loading event info:', err );
+			} );
 	};
 
 	const loadParticipants = () => {
-		apiFetch({
-			path: `/fair-audience/v1/event-dates/${resolvedEventDateId}/participants`,
-		})
-			.then((data) => {
-				setParticipants(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
-				setError(err.message);
-				setIsLoading(false);
-			});
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ resolvedEventDateId }/participants`,
+		} )
+			.then( ( data ) => {
+				setParticipants( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
+				setError( err.message );
+				setIsLoading( false );
+			} );
 	};
 
 	const loadAllParticipants = () => {
-		apiFetch({ path: '/fair-audience/v1/participants' })
-			.then((data) => {
-				setAllParticipants(data);
-			})
-			.catch(() => {});
+		apiFetch( { path: '/fair-audience/v1/participants' } )
+			.then( ( data ) => {
+				setAllParticipants( data );
+			} )
+			.catch( () => {} );
 	};
 
 	const loadGroups = () => {
-		apiFetch({ path: '/fair-audience/v1/groups' })
-			.then((data) => {
-				setGroups(data);
-			})
-			.catch(() => {});
+		apiFetch( { path: '/fair-audience/v1/groups' } )
+			.then( ( data ) => {
+				setGroups( data );
+			} )
+			.catch( () => {} );
 	};
 
 	// Get participants not already in this event.
-	const availableParticipants = useMemo(() => {
-		const existingIds = new Set(participants.map((p) => p.participant_id));
-		return allParticipants.filter((p) => !existingIds.has(p.id));
-	}, [allParticipants, participants]);
+	const availableParticipants = useMemo( () => {
+		const existingIds = new Set(
+			participants.map( ( p ) => p.participant_id )
+		);
+		return allParticipants.filter( ( p ) => ! existingIds.has( p.id ) );
+	}, [ allParticipants, participants ] );
 
 	// Filter available participants by search text and group.
-	const filteredAvailableParticipants = useMemo(() => {
+	const filteredAvailableParticipants = useMemo( () => {
 		let filtered = availableParticipants;
 
-		if (addSearch.trim()) {
+		if ( addSearch.trim() ) {
 			const searchLower = addSearch.toLowerCase();
 			filtered = filtered.filter(
-				(p) =>
-					(p.name && p.name.toLowerCase().includes(searchLower)) ||
-					(p.surname &&
-						p.surname.toLowerCase().includes(searchLower)) ||
-					(p.email && p.email.toLowerCase().includes(searchLower))
+				( p ) =>
+					( p.name &&
+						p.name.toLowerCase().includes( searchLower ) ) ||
+					( p.surname &&
+						p.surname.toLowerCase().includes( searchLower ) ) ||
+					( p.email && p.email.toLowerCase().includes( searchLower ) )
 			);
 		}
 
-		if (addGroupFilter) {
-			const groupId = parseInt(addGroupFilter, 10);
+		if ( addGroupFilter ) {
+			const groupId = parseInt( addGroupFilter, 10 );
 			filtered = filtered.filter(
-				(p) => p.groups && p.groups.some((g) => g.id === groupId)
+				( p ) => p.groups && p.groups.some( ( g ) => g.id === groupId )
 			);
 		}
 
 		return filtered;
-	}, [availableParticipants, addSearch, addGroupFilter]);
+	}, [ availableParticipants, addSearch, addGroupFilter ] );
 
-	const handleOpenAddModal = (label) => {
-		setAddModalLabel(label);
-		setSelectedToAdd(new Set());
-		setAddSearch('');
-		setAddGroupFilter('');
+	const handleOpenAddModal = ( label ) => {
+		setAddModalLabel( label );
+		setSelectedToAdd( new Set() );
+		setAddSearch( '' );
+		setAddGroupFilter( '' );
 	};
 
 	const handleCloseAddModal = () => {
-		setAddModalLabel(null);
-		setSelectedToAdd(new Set());
-		setAddSearch('');
-		setAddGroupFilter('');
+		setAddModalLabel( null );
+		setSelectedToAdd( new Set() );
+		setAddSearch( '' );
+		setAddGroupFilter( '' );
 	};
 
-	const handleToggleParticipantToAdd = (participantId) => {
-		const newSelected = new Set(selectedToAdd);
-		if (newSelected.has(participantId)) {
-			newSelected.delete(participantId);
+	const handleToggleParticipantToAdd = ( participantId ) => {
+		const newSelected = new Set( selectedToAdd );
+		if ( newSelected.has( participantId ) ) {
+			newSelected.delete( participantId );
 		} else {
-			newSelected.add(participantId);
+			newSelected.add( participantId );
 		}
-		setSelectedToAdd(newSelected);
+		setSelectedToAdd( newSelected );
 	};
 
 	const handleSelectAllToAdd = () => {
-		const filteredIds = filteredAvailableParticipants.map((p) => p.id);
-		const allSelected = filteredIds.every((id) => selectedToAdd.has(id));
-		if (allSelected) {
-			const newSelected = new Set(selectedToAdd);
-			filteredIds.forEach((id) => newSelected.delete(id));
-			setSelectedToAdd(newSelected);
+		const filteredIds = filteredAvailableParticipants.map( ( p ) => p.id );
+		const allSelected = filteredIds.every( ( id ) =>
+			selectedToAdd.has( id )
+		);
+		if ( allSelected ) {
+			const newSelected = new Set( selectedToAdd );
+			filteredIds.forEach( ( id ) => newSelected.delete( id ) );
+			setSelectedToAdd( newSelected );
 		} else {
-			const newSelected = new Set(selectedToAdd);
-			filteredIds.forEach((id) => newSelected.add(id));
-			setSelectedToAdd(newSelected);
+			const newSelected = new Set( selectedToAdd );
+			filteredIds.forEach( ( id ) => newSelected.add( id ) );
+			setSelectedToAdd( newSelected );
 		}
 	};
 
 	const handleBatchAdd = async () => {
-		if (selectedToAdd.size === 0 || !addModalLabel) {
+		if ( selectedToAdd.size === 0 || ! addModalLabel ) {
 			return;
 		}
 
-		setIsAdding(true);
+		setIsAdding( true );
 
 		try {
-			const batchBasePath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/participants/batch`;
-			const response = await apiFetch({
+			const batchBasePath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/participants/batch`;
+			const response = await apiFetch( {
 				path: batchBasePath,
 				method: 'POST',
 				data: {
-					participant_ids: Array.from(selectedToAdd),
+					participant_ids: Array.from( selectedToAdd ),
 					label: addModalLabel,
 				},
-			});
+			} );
 
-			if (response.added > 0) {
+			if ( response.added > 0 ) {
 				alert(
 					sprintf(
 						/* translators: %d: number of participants */
@@ -333,38 +342,39 @@ export default function EventParticipants() {
 			handleCloseAddModal();
 			loadParticipants();
 			loadEventInfo();
-		} catch (err) {
+		} catch ( err ) {
 			alert(
-				__('Error adding participants: ', 'fair-audience') + err.message
+				__( 'Error adding participants: ', 'fair-audience' ) +
+					err.message
 			);
 		} finally {
-			setIsAdding(false);
+			setIsAdding( false );
 		}
 	};
 
-	const handleUpdateLabel = async (participantId, newLabel) => {
+	const handleUpdateLabel = async ( participantId, newLabel ) => {
 		try {
-			const updatePath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/participants/${participantId}`;
-			await apiFetch({
+			const updatePath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/participants/${ participantId }`;
+			await apiFetch( {
 				path: updatePath,
 				method: 'PUT',
 				data: { label: newLabel },
-			});
+			} );
 			loadParticipants();
 			loadEventInfo();
-			setEditModalOpen(false);
-			setEditingParticipant(null);
-		} catch (err) {
-			alert(__('Error: ', 'fair-audience') + err.message);
+			setEditModalOpen( false );
+			setEditingParticipant( null );
+		} catch ( err ) {
+			alert( __( 'Error: ', 'fair-audience' ) + err.message );
 		}
 	};
 
-	const handleRemove = async (items) => {
-		const participantIds = items.map((item) => item.participant_id);
+	const handleRemove = async ( items ) => {
+		const participantIds = items.map( ( item ) => item.participant_id );
 		const count = participantIds.length;
 
 		if (
-			!confirm(
+			! confirm(
 				sprintf(
 					/* translators: %d: number of participants */
 					__(
@@ -378,173 +388,179 @@ export default function EventParticipants() {
 			return;
 		}
 
-		setIsRemoving(true);
+		setIsRemoving( true );
 
 		try {
-			const removeBasePath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/participants`;
-			if (count === 1) {
-				await apiFetch({
-					path: `${removeBasePath}/${participantIds[0]}`,
+			const removeBasePath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/participants`;
+			if ( count === 1 ) {
+				await apiFetch( {
+					path: `${ removeBasePath }/${ participantIds[ 0 ] }`,
 					method: 'DELETE',
-				});
+				} );
 			} else {
-				await apiFetch({
-					path: `${removeBasePath}/batch`,
+				await apiFetch( {
+					path: `${ removeBasePath }/batch`,
 					method: 'DELETE',
 					data: {
 						participant_ids: participantIds,
 					},
-				});
+				} );
 			}
 
 			loadParticipants();
 			loadEventInfo();
-		} catch (err) {
-			alert(__('Error: ', 'fair-audience') + err.message);
+		} catch ( err ) {
+			alert( __( 'Error: ', 'fair-audience' ) + err.message );
 		} finally {
-			setIsRemoving(false);
+			setIsRemoving( false );
 		}
 	};
 
-	const openGalleryPreviewModal = async (targetParticipants) => {
-		setGalleryPreviewParticipants(targetParticipants);
-		setDisabledExtraMessageIds(new Set());
-		setIsLoadingExtraMessages(true);
-		setShowGalleryPreviewModal(true);
+	const openGalleryPreviewModal = async ( targetParticipants ) => {
+		setGalleryPreviewParticipants( targetParticipants );
+		setDisabledExtraMessageIds( new Set() );
+		setIsLoadingExtraMessages( true );
+		setShowGalleryPreviewModal( true );
 
 		try {
-			const messages = await apiFetch({
+			const messages = await apiFetch( {
 				path: '/fair-audience/v1/extra-messages',
-			});
-			setExtraMessages(messages.filter((m) => m.is_active));
+			} );
+			setExtraMessages( messages.filter( ( m ) => m.is_active ) );
 		} catch {
-			setExtraMessages([]);
+			setExtraMessages( [] );
 		} finally {
-			setIsLoadingExtraMessages(false);
+			setIsLoadingExtraMessages( false );
 		}
 	};
 
-	const handleSendGalleryLink = (items) => {
-		openGalleryPreviewModal(items);
+	const handleSendGalleryLink = ( items ) => {
+		openGalleryPreviewModal( items );
 	};
 
 	const handleSendGalleryLinkButton = () => {
 		// If some participants are selected, send to them; otherwise send to all.
 		const targetParticipants =
 			selection.length > 0
-				? participants.filter((p) =>
-						selection.includes(p.participant_id)
+				? participants.filter( ( p ) =>
+						selection.includes( p.participant_id )
 				  )
 				: participants;
 
-		if (targetParticipants.length === 0) {
+		if ( targetParticipants.length === 0 ) {
 			alert(
-				__('No participants to send gallery links to.', 'fair-audience')
+				__(
+					'No participants to send gallery links to.',
+					'fair-audience'
+				)
 			);
 			return;
 		}
 
-		openGalleryPreviewModal(targetParticipants);
+		openGalleryPreviewModal( targetParticipants );
 	};
 
 	const handleConfirmGalleryLink = async () => {
-		setIsSendingGalleryLinks(true);
+		setIsSendingGalleryLinks( true );
 
 		try {
 			const participantIds = galleryPreviewParticipants.map(
-				(p) => p.participant_id
+				( p ) => p.participant_id
 			);
 
 			const requestData = {
 				participant_ids: participantIds,
-				disabled_extra_message_ids: Array.from(disabledExtraMessageIds),
+				disabled_extra_message_ids: Array.from(
+					disabledExtraMessageIds
+				),
 			};
 
-			const galleryPath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/gallery-invitations`;
-			const response = await apiFetch({
+			const galleryPath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/gallery-invitations`;
+			const response = await apiFetch( {
 				path: galleryPath,
 				method: 'POST',
 				data: requestData,
-			});
+			} );
 
-			setGallerySendResult({
+			setGallerySendResult( {
 				sent_count: response.sent_count,
 				failed: response.failed,
-			});
+			} );
 
-			setShowGalleryPreviewModal(false);
-			setSelection([]);
-		} catch (err) {
+			setShowGalleryPreviewModal( false );
+			setSelection( [] );
+		} catch ( err ) {
 			alert(
-				__('Error sending gallery links: ', 'fair-audience') +
+				__( 'Error sending gallery links: ', 'fair-audience' ) +
 					err.message
 			);
 		} finally {
-			setIsSendingGalleryLinks(false);
+			setIsSendingGalleryLinks( false );
 		}
 	};
 
-	const handleToggleExtraMessage = (messageId) => {
-		const newDisabled = new Set(disabledExtraMessageIds);
-		if (newDisabled.has(messageId)) {
-			newDisabled.delete(messageId);
+	const handleToggleExtraMessage = ( messageId ) => {
+		const newDisabled = new Set( disabledExtraMessageIds );
+		if ( newDisabled.has( messageId ) ) {
+			newDisabled.delete( messageId );
 		} else {
-			newDisabled.add(messageId);
+			newDisabled.add( messageId );
 		}
-		setDisabledExtraMessageIds(newDisabled);
+		setDisabledExtraMessageIds( newDisabled );
 	};
 
-	const handleOpenEditModal = (item) => {
-		setEditingParticipant(item);
-		setEditLabel(item.label);
-		setEditModalOpen(true);
+	const handleOpenEditModal = ( item ) => {
+		setEditingParticipant( item );
+		setEditLabel( item.label );
+		setEditModalOpen( true );
 	};
 
 	const handleCloseEditModal = () => {
-		setEditModalOpen(false);
-		setEditingParticipant(null);
-		setEditLabel('');
+		setEditModalOpen( false );
+		setEditingParticipant( null );
+		setEditLabel( '' );
 	};
 
 	const handleSaveEdit = () => {
-		if (editingParticipant && editLabel) {
-			handleUpdateLabel(editingParticipant.participant_id, editLabel);
+		if ( editingParticipant && editLabel ) {
+			handleUpdateLabel( editingParticipant.participant_id, editLabel );
 		}
 	};
 
-	const handleToggleGroup = (groupId) => {
-		const newSelected = new Set(selectedGroups);
-		if (newSelected.has(groupId)) {
-			newSelected.delete(groupId);
+	const handleToggleGroup = ( groupId ) => {
+		const newSelected = new Set( selectedGroups );
+		if ( newSelected.has( groupId ) ) {
+			newSelected.delete( groupId );
 		} else {
-			newSelected.add(groupId);
+			newSelected.add( groupId );
 		}
-		setSelectedGroups(newSelected);
+		setSelectedGroups( newSelected );
 	};
 
-	const handleToggleInviteParticipant = (participantId) => {
-		const newSelected = new Set(selectedInviteParticipants);
-		if (newSelected.has(participantId)) {
-			newSelected.delete(participantId);
+	const handleToggleInviteParticipant = ( participantId ) => {
+		const newSelected = new Set( selectedInviteParticipants );
+		if ( newSelected.has( participantId ) ) {
+			newSelected.delete( participantId );
 		} else {
-			newSelected.add(participantId);
+			newSelected.add( participantId );
 		}
-		setSelectedInviteParticipants(newSelected);
+		setSelectedInviteParticipants( newSelected );
 	};
 
 	// Filter participants for invitation modal based on search.
-	const filteredInviteParticipants = useMemo(() => {
-		if (!inviteSearch.trim()) {
+	const filteredInviteParticipants = useMemo( () => {
+		if ( ! inviteSearch.trim() ) {
 			return allParticipants;
 		}
 		const searchLower = inviteSearch.toLowerCase();
 		return allParticipants.filter(
-			(p) =>
-				(p.name && p.name.toLowerCase().includes(searchLower)) ||
-				(p.surname && p.surname.toLowerCase().includes(searchLower)) ||
-				(p.email && p.email.toLowerCase().includes(searchLower))
+			( p ) =>
+				( p.name && p.name.toLowerCase().includes( searchLower ) ) ||
+				( p.surname &&
+					p.surname.toLowerCase().includes( searchLower ) ) ||
+				( p.email && p.email.toLowerCase().includes( searchLower ) )
 		);
-	}, [allParticipants, inviteSearch]);
+	}, [ allParticipants, inviteSearch ] );
 
 	const handleSendInvitations = async () => {
 		const hasGroupSelection =
@@ -553,70 +569,71 @@ export default function EventParticipants() {
 			inviteMode === 'participants' &&
 			selectedInviteParticipants.size > 0;
 
-		if (!hasGroupSelection && !hasParticipantSelection) {
+		if ( ! hasGroupSelection && ! hasParticipantSelection ) {
 			return;
 		}
 
-		setIsSendingInvitations(true);
+		setIsSendingInvitations( true );
 
 		try {
 			const requestData =
 				inviteMode === 'groups'
-					? { group_ids: Array.from(selectedGroups) }
+					? { group_ids: Array.from( selectedGroups ) }
 					: {
 							participant_ids: Array.from(
 								selectedInviteParticipants
 							),
 					  };
 
-			const invitationPath = `/fair-audience/v1/event-dates/${resolvedEventDateId}/event-invitations`;
-			const response = await apiFetch({
+			const invitationPath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/event-invitations`;
+			const response = await apiFetch( {
 				path: invitationPath,
 				method: 'POST',
 				data: requestData,
-			});
+			} );
 
-			setInvitationSendResult({
+			setInvitationSendResult( {
 				sent_count: response.sent_count,
 				failed: response.failed,
 				skipped_count: response.skipped_count,
-			});
+			} );
 
-			setShowInvitationModal(false);
-			setSelectedGroups(new Set());
-			setSelectedInviteParticipants(new Set());
-			setInviteSearch('');
-		} catch (err) {
+			setShowInvitationModal( false );
+			setSelectedGroups( new Set() );
+			setSelectedInviteParticipants( new Set() );
+			setInviteSearch( '' );
+		} catch ( err ) {
 			alert(
-				__('Error sending invitations: ', 'fair-audience') + err.message
+				__( 'Error sending invitations: ', 'fair-audience' ) +
+					err.message
 			);
 		} finally {
-			setIsSendingInvitations(false);
+			setIsSendingInvitations( false );
 		}
 	};
 
-	const getLabelTitle = (label) => {
-		switch (label) {
+	const getLabelTitle = ( label ) => {
+		switch ( label ) {
 			case 'collaborator':
-				return __('Add Collaborators', 'fair-audience');
+				return __( 'Add Collaborators', 'fair-audience' );
 			case 'interested':
-				return __('Add Interested', 'fair-audience');
+				return __( 'Add Interested', 'fair-audience' );
 			case 'signed_up':
-				return __('Add Participants', 'fair-audience');
+				return __( 'Add Participants', 'fair-audience' );
 			default:
-				return __('Add', 'fair-audience');
+				return __( 'Add', 'fair-audience' );
 		}
 	};
 
 	// Define fields for DataViews.
-	const formatLabel = (label) => {
-		switch (label) {
+	const formatLabel = ( label ) => {
+		switch ( label ) {
 			case 'signed_up':
-				return __('Signed Up', 'fair-audience');
+				return __( 'Signed Up', 'fair-audience' );
 			case 'collaborator':
-				return __('Collaborator', 'fair-audience');
+				return __( 'Collaborator', 'fair-audience' );
 			case 'interested':
-				return __('Interested', 'fair-audience');
+				return __( 'Interested', 'fair-audience' );
 			default:
 				return label || '';
 		}
@@ -626,39 +643,39 @@ export default function EventParticipants() {
 		() => [
 			{
 				id: 'name',
-				label: __('Name', 'fair-audience'),
-				render: ({ item }) => item.participant_name,
+				label: __( 'Name', 'fair-audience' ),
+				render: ( { item } ) => item.participant_name,
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ({ item }) =>
+				getValue: ( { item } ) =>
 					item.participant_name?.toLowerCase() || '',
 			},
 			{
 				id: 'role',
-				label: __('Role', 'fair-audience'),
-				render: ({ item }) => formatLabel(item.label),
+				label: __( 'Role', 'fair-audience' ),
+				render: ( { item } ) => formatLabel( item.label ),
 				enableSorting: true,
-				getValue: ({ item }) => item.label || '',
+				getValue: ( { item } ) => item.label || '',
 			},
 			{
 				id: 'photo_likes',
-				label: __('Photo Likes', 'fair-audience'),
-				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>
-						{item.photo_likes_received || 0}
+				label: __( 'Photo Likes', 'fair-audience' ),
+				render: ( { item } ) => (
+					<div style={ { textAlign: 'right' } }>
+						{ item.photo_likes_received || 0 }
 					</div>
 				),
 				enableSorting: true,
-				getValue: ({ item }) => item.photo_likes_received || 0,
+				getValue: ( { item } ) => item.photo_likes_received || 0,
 			},
 			{
 				id: 'questions',
-				label: __('Questions', 'fair-audience'),
-				render: ({ item }) =>
-					renderQuestionnaireAnswers(item.questionnaire_answers),
+				label: __( 'Questions', 'fair-audience' ),
+				render: ( { item } ) =>
+					renderQuestionnaireAnswers( item.questionnaire_answers ),
 				enableSorting: false,
-				getValue: ({ item }) =>
-					(item.questionnaire_answers || []).length,
+				getValue: ( { item } ) =>
+					( item.questionnaire_answers || [] ).length,
 			},
 		],
 		[]
@@ -669,52 +686,52 @@ export default function EventParticipants() {
 		() => [
 			{
 				id: 'send_gallery',
-				label: __('Send Photo Link', 'fair-audience'),
+				label: __( 'Send Photo Link', 'fair-audience' ),
 				callback: handleSendGalleryLink,
 				supportsBulk: true,
 			},
 			{
 				id: 'edit',
-				label: __('Edit', 'fair-audience'),
-				callback: ([item]) => handleOpenEditModal(item),
+				label: __( 'Edit', 'fair-audience' ),
+				callback: ( [ item ] ) => handleOpenEditModal( item ),
 			},
 			{
 				id: 'remove',
-				label: __('Remove', 'fair-audience'),
+				label: __( 'Remove', 'fair-audience' ),
 				callback: handleRemove,
 				supportsBulk: true,
 			},
 		],
-		[resolvedEventDateId]
+		[ resolvedEventDateId ]
 	);
 
 	// Pagination info for DataViews (client-side pagination).
 	const paginationInfo = useMemo(
-		() => ({
+		() => ( {
 			totalItems: participants.length,
-			totalPages: Math.ceil(participants.length / view.perPage) || 1,
-		}),
-		[participants.length, view.perPage]
+			totalPages: Math.ceil( participants.length / view.perPage ) || 1,
+		} ),
+		[ participants.length, view.perPage ]
 	);
 
 	// Get date format.
 	const { formats } = getSettings();
 
-	if (isLoading) {
+	if ( isLoading ) {
 		return (
 			<div className="wrap">
-				<h1>{__('Event Participants', 'fair-audience')}</h1>
+				<h1>{ __( 'Event Participants', 'fair-audience' ) }</h1>
 				<Spinner />
 			</div>
 		);
 	}
 
-	if (error) {
+	if ( error ) {
 		return (
 			<div className="wrap">
-				<h1>{__('Event Participants', 'fair-audience')}</h1>
+				<h1>{ __( 'Event Participants', 'fair-audience' ) }</h1>
 				<div className="notice notice-error">
-					<p>{__('Error: ', 'fair-audience') + error}</p>
+					<p>{ __( 'Error: ', 'fair-audience' ) + error }</p>
 				</div>
 			</div>
 		);
@@ -722,158 +739,172 @@ export default function EventParticipants() {
 
 	return (
 		<div className="wrap">
-			<h1>{__('Event Participants', 'fair-audience')}</h1>
+			<h1>{ __( 'Event Participants', 'fair-audience' ) }</h1>
 
 			<EmailSendResultNotice
-				result={gallerySendResult}
-				onDismiss={() => setGallerySendResult(null)}
+				result={ gallerySendResult }
+				onDismiss={ () => setGallerySendResult( null ) }
 			/>
 			<EmailSendResultNotice
-				result={invitationSendResult}
-				onDismiss={() => setInvitationSendResult(null)}
+				result={ invitationSendResult }
+				onDismiss={ () => setInvitationSendResult( null ) }
 			/>
 
 			<Card>
 				<CardHeader>
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'space-between',
 							alignItems: 'center',
 							width: '100%',
 							flexWrap: 'wrap',
 							gap: '10px',
-						}}
+						} }
 					>
 						<div>
-							<h2 style={{ margin: 0 }}>
-								{eventInfo?.title ||
-									__('Event Participants', 'fair-audience')}
+							<h2 style={ { margin: 0 } }>
+								{ eventInfo?.title ||
+									__(
+										'Event Participants',
+										'fair-audience'
+									) }
 							</h2>
 							<div
-								style={{
+								style={ {
 									display: 'flex',
 									gap: '12px',
 									marginTop: '4px',
-								}}
+								} }
 							>
-								{eventInfo?.edit_url && (
-									<a href={eventInfo.edit_url}>
-										{__('Edit Article', 'fair-audience')}
+								{ eventInfo?.edit_url && (
+									<a href={ eventInfo.edit_url }>
+										{ __(
+											'Edit Article',
+											'fair-audience'
+										) }
 									</a>
-								)}
-								{eventInfo?.manage_event_url && (
-									<a href={eventInfo.manage_event_url}>
-										{__('Manage Event', 'fair-audience')}
+								) }
+								{ eventInfo?.manage_event_url && (
+									<a href={ eventInfo.manage_event_url }>
+										{ __(
+											'Manage Event',
+											'fair-audience'
+										) }
 									</a>
-								)}
+								) }
 							</div>
 						</div>
-						{eventInfo && (
+						{ eventInfo && (
 							<div
-								style={{
+								style={ {
 									display: 'flex',
 									gap: '24px',
 									alignItems: 'center',
 									flexWrap: 'wrap',
-								}}
+								} }
 							>
 								<span>
-									{__('Date:', 'fair-audience')}{' '}
-									{eventInfo.event_date
+									{ __( 'Date:', 'fair-audience' ) }{ ' ' }
+									{ eventInfo.event_date
 										? dateI18n(
 												formats.datetime,
 												eventInfo.event_date
 										  )
-										: '—'}
+										: '—' }
 								</span>
 								<span>
-									<a href={eventInfo.gallery_link}>
-										{sprintf(
+									<a href={ eventInfo.gallery_link }>
+										{ sprintf(
 											/* translators: %d: number of photos */
-											__('%d Photos', 'fair-audience'),
+											__( '%d Photos', 'fair-audience' ),
 											eventInfo.gallery_count || 0
-										)}
+										) }
 									</a>
 								</span>
 								<span>
-									{sprintf(
+									{ sprintf(
 										/* translators: %d: number of signed up participants */
-										__('%d Signed Up', 'fair-audience'),
+										__( '%d Signed Up', 'fair-audience' ),
 										eventInfo.signed_up || 0
-									)}
+									) }
 								</span>
 								<span>
-									{sprintf(
+									{ sprintf(
 										/* translators: %d: number of collaborators */
-										__('%d Collaborators', 'fair-audience'),
+										__(
+											'%d Collaborators',
+											'fair-audience'
+										),
 										eventInfo.collaborators || 0
-									)}
+									) }
 								</span>
 							</div>
-						)}
+						) }
 					</div>
 				</CardHeader>
 				<CardBody>
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							gap: '10px',
 							marginBottom: '15px',
 							flexWrap: 'wrap',
-						}}
+						} }
 					>
 						<Button
 							isPrimary
-							onClick={() => handleOpenAddModal('signed_up')}
+							onClick={ () => handleOpenAddModal( 'signed_up' ) }
 						>
-							{__('Add Participants', 'fair-audience')}
+							{ __( 'Add Participants', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="secondary"
-							onClick={() => handleOpenAddModal('collaborator')}
+							onClick={ () =>
+								handleOpenAddModal( 'collaborator' )
+							}
 						>
-							{__('Add Collaborators', 'fair-audience')}
+							{ __( 'Add Collaborators', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="secondary"
-							onClick={() => handleOpenAddModal('interested')}
+							onClick={ () => handleOpenAddModal( 'interested' ) }
 						>
-							{__('Add Interested', 'fair-audience')}
+							{ __( 'Add Interested', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="secondary"
-							onClick={() => setShowInvitationModal(true)}
+							onClick={ () => setShowInvitationModal( true ) }
 						>
-							{__('Send Invitation', 'fair-audience')}
+							{ __( 'Send Invitation', 'fair-audience' ) }
 						</Button>
 					</div>
 
 					<DataViews
-						data={participants}
-						fields={fields}
-						view={view}
-						onChangeView={setView}
-						actions={actions}
-						paginationInfo={paginationInfo}
-						defaultLayouts={DEFAULT_LAYOUTS}
-						isLoading={isLoading || isRemoving}
-						getItemId={(item) => item.participant_id}
-						selection={selection}
-						onChangeSelection={setSelection}
+						data={ participants }
+						fields={ fields }
+						view={ view }
+						onChangeView={ setView }
+						actions={ actions }
+						paginationInfo={ paginationInfo }
+						defaultLayouts={ DEFAULT_LAYOUTS }
+						isLoading={ isLoading || isRemoving }
+						getItemId={ ( item ) => item.participant_id }
+						selection={ selection }
+						onChangeSelection={ setSelection }
 					/>
 
-					<div style={{ marginTop: '15px' }}>
+					<div style={ { marginTop: '15px' } }>
 						<Button
 							variant="secondary"
-							onClick={handleSendGalleryLinkButton}
+							onClick={ handleSendGalleryLinkButton }
 							disabled={
 								isSendingGalleryLinks ||
 								participants.length === 0
 							}
 						>
-							{isSendingGalleryLinks
-								? __('Sending...', 'fair-audience')
+							{ isSendingGalleryLinks
+								? __( 'Sending...', 'fair-audience' )
 								: selection.length > 0
 								? sprintf(
 										/* translators: %d: number of selected participants */
@@ -886,55 +917,55 @@ export default function EventParticipants() {
 								: __(
 										'Send Gallery Link to All',
 										'fair-audience'
-								  )}
+								  ) }
 						</Button>
 					</div>
 				</CardBody>
 			</Card>
 
-			{addModalLabel && (
+			{ addModalLabel && (
 				<Modal
-					title={getLabelTitle(addModalLabel)}
-					onRequestClose={handleCloseAddModal}
-					style={{ maxWidth: '640px', width: '100%' }}
+					title={ getLabelTitle( addModalLabel ) }
+					onRequestClose={ handleCloseAddModal }
+					style={ { maxWidth: '640px', width: '100%' } }
 				>
-					{availableParticipants.length === 0 ? (
+					{ availableParticipants.length === 0 ? (
 						<p>
-							{__(
+							{ __(
 								'All participants are already added to this event.',
 								'fair-audience'
-							)}
+							) }
 						</p>
 					) : (
 						<>
 							<div
-								style={{
+								style={ {
 									display: 'flex',
 									gap: '10px',
 									marginBottom: '10px',
-								}}
+								} }
 							>
 								<input
 									type="text"
-									placeholder={__(
+									placeholder={ __(
 										'Search by name or email...',
 										'fair-audience'
-									)}
-									value={addSearch}
-									onChange={(e) =>
-										setAddSearch(e.target.value)
+									) }
+									value={ addSearch }
+									onChange={ ( e ) =>
+										setAddSearch( e.target.value )
 									}
-									style={{
+									style={ {
 										flex: 1,
 										padding: '8px 12px',
 										border: '1px solid #ddd',
 										borderRadius: '4px',
-									}}
+									} }
 								/>
-								{groups.length > 0 && (
+								{ groups.length > 0 && (
 									<SelectControl
-										value={addGroupFilter}
-										options={[
+										value={ addGroupFilter }
+										options={ [
 											{
 												label: __(
 													'All groups',
@@ -942,32 +973,32 @@ export default function EventParticipants() {
 												),
 												value: '',
 											},
-											...groups.map((g) => ({
+											...groups.map( ( g ) => ( {
 												label: g.name,
-												value: String(g.id),
-											})),
-										]}
-										onChange={setAddGroupFilter}
+												value: String( g.id ),
+											} ) ),
+										] }
+										onChange={ setAddGroupFilter }
 										__nextHasNoMarginBottom
 									/>
-								)}
+								) }
 							</div>
 
 							<div
-								style={{
+								style={ {
 									marginBottom: '10px',
 									display: 'flex',
 									justifyContent: 'space-between',
 									alignItems: 'center',
-								}}
+								} }
 							>
 								<span
-									style={{
+									style={ {
 										fontSize: '12px',
 										color: '#666',
-									}}
+									} }
 								>
-									{selectedToAdd.size > 0
+									{ selectedToAdd.size > 0
 										? sprintf(
 												/* translators: 1: selected count, 2: shown count */
 												__(
@@ -984,44 +1015,47 @@ export default function EventParticipants() {
 													'fair-audience'
 												),
 												filteredAvailableParticipants.length
-										  )}
+										  ) }
 								</span>
 								<Button
 									variant="secondary"
 									isSmall
-									onClick={handleSelectAllToAdd}
+									onClick={ handleSelectAllToAdd }
 								>
-									{filteredAvailableParticipants.length > 0 &&
-									filteredAvailableParticipants.every((p) =>
-										selectedToAdd.has(p.id)
+									{ filteredAvailableParticipants.length >
+										0 &&
+									filteredAvailableParticipants.every(
+										( p ) => selectedToAdd.has( p.id )
 									)
-										? __('Deselect All', 'fair-audience')
-										: __('Select All', 'fair-audience')}
+										? __( 'Deselect All', 'fair-audience' )
+										: __( 'Select All', 'fair-audience' ) }
 								</Button>
 							</div>
 
 							<div
-								style={{
+								style={ {
 									maxHeight: '400px',
 									overflowY: 'auto',
 									border: '1px solid #ddd',
 									borderRadius: '4px',
-								}}
+								} }
 							>
-								{filteredAvailableParticipants.map((p) => (
+								{ filteredAvailableParticipants.map( ( p ) => (
 									<div
-										key={p.id}
-										style={{
+										key={ p.id }
+										style={ {
 											padding: '10px 15px',
 											borderBottom: '1px solid #eee',
 											display: 'flex',
 											alignItems: 'center',
 											gap: '10px',
-										}}
+										} }
 									>
 										<CheckboxControl
-											checked={selectedToAdd.has(p.id)}
-											onChange={() =>
+											checked={ selectedToAdd.has(
+												p.id
+											) }
+											onChange={ () =>
 												handleToggleParticipantToAdd(
 													p.id
 												)
@@ -1029,58 +1063,59 @@ export default function EventParticipants() {
 										/>
 										<div>
 											<strong>
-												{p.name} {p.surname}
+												{ p.name } { p.surname }
 											</strong>
 											<br />
 											<span
-												style={{
+												style={ {
 													color: '#666',
 													fontSize: '12px',
-												}}
+												} }
 											>
-												{p.email}
+												{ p.email }
 											</span>
 										</div>
 									</div>
-								))}
-								{filteredAvailableParticipants.length === 0 && (
+								) ) }
+								{ filteredAvailableParticipants.length ===
+									0 && (
 									<p
-										style={{
+										style={ {
 											padding: '15px',
 											color: '#666',
-										}}
+										} }
 									>
-										{__(
+										{ __(
 											'No participants match your search.',
 											'fair-audience'
-										)}
+										) }
 									</p>
-								)}
+								) }
 							</div>
 
 							<div
-								style={{
+								style={ {
 									marginTop: '20px',
 									display: 'flex',
 									justifyContent: 'flex-end',
 									gap: '10px',
-								}}
+								} }
 							>
 								<Button
 									variant="secondary"
-									onClick={handleCloseAddModal}
+									onClick={ handleCloseAddModal }
 								>
-									{__('Cancel', 'fair-audience')}
+									{ __( 'Cancel', 'fair-audience' ) }
 								</Button>
 								<Button
 									isPrimary
-									onClick={handleBatchAdd}
+									onClick={ handleBatchAdd }
 									disabled={
 										selectedToAdd.size === 0 || isAdding
 									}
 								>
-									{isAdding
-										? __('Adding...', 'fair-audience')
+									{ isAdding
+										? __( 'Adding...', 'fair-audience' )
 										: sprintf(
 												/* translators: %d: number of selected participants */
 												__(
@@ -1088,145 +1123,145 @@ export default function EventParticipants() {
 													'fair-audience'
 												),
 												selectedToAdd.size
-										  )}
+										  ) }
 								</Button>
 							</div>
 						</>
-					)}
+					) }
 				</Modal>
-			)}
+			) }
 
-			{editModalOpen && editingParticipant && (
+			{ editModalOpen && editingParticipant && (
 				<Modal
-					title={__('Edit Participant', 'fair-audience')}
-					onRequestClose={handleCloseEditModal}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Edit Participant', 'fair-audience' ) }
+					onRequestClose={ handleCloseEditModal }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<p>
-						<strong>{editingParticipant.participant_name}</strong>
+						<strong>{ editingParticipant.participant_name }</strong>
 					</p>
 					<SelectControl
-						label={__('Label', 'fair-audience')}
-						value={editLabel}
-						options={[
+						label={ __( 'Label', 'fair-audience' ) }
+						value={ editLabel }
+						options={ [
 							{
-								label: __('Interested', 'fair-audience'),
+								label: __( 'Interested', 'fair-audience' ),
 								value: 'interested',
 							},
 							{
-								label: __('Signed Up', 'fair-audience'),
+								label: __( 'Signed Up', 'fair-audience' ),
 								value: 'signed_up',
 							},
 							{
-								label: __('Collaborator', 'fair-audience'),
+								label: __( 'Collaborator', 'fair-audience' ),
 								value: 'collaborator',
 							},
-						]}
-						onChange={(value) => setEditLabel(value)}
+						] }
+						onChange={ ( value ) => setEditLabel( value ) }
 					/>
 					<div
-						style={{
+						style={ {
 							marginTop: '20px',
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '10px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={handleCloseEditModal}
+							onClick={ handleCloseEditModal }
 						>
-							{__('Cancel', 'fair-audience')}
+							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
-						<Button isPrimary onClick={handleSaveEdit}>
-							{__('Save', 'fair-audience')}
+						<Button isPrimary onClick={ handleSaveEdit }>
+							{ __( 'Save', 'fair-audience' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 
-			{showGalleryPreviewModal && (
+			{ showGalleryPreviewModal && (
 				<Modal
-					title={__('Send Gallery Invitations', 'fair-audience')}
-					onRequestClose={() => setShowGalleryPreviewModal(false)}
-					style={{ maxWidth: '640px', width: '100%' }}
+					title={ __( 'Send Gallery Invitations', 'fair-audience' ) }
+					onRequestClose={ () => setShowGalleryPreviewModal( false ) }
+					style={ { maxWidth: '640px', width: '100%' } }
 				>
 					<p>
-						{sprintf(
+						{ sprintf(
 							/* translators: %d: number of participants */
-							__('Send to %d participant(s)', 'fair-audience'),
+							__( 'Send to %d participant(s)', 'fair-audience' ),
 							galleryPreviewParticipants.length
-						)}
+						) }
 					</p>
 
 					<div
-						style={{
+						style={ {
 							border: '1px solid #ddd',
 							borderRadius: '8px',
 							overflow: 'hidden',
 							marginBottom: '20px',
 							boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-						}}
+						} }
 					>
 						<div
-							style={{
+							style={ {
 								backgroundColor: '#0073aa',
 								color: '#fff',
 								padding: '20px',
 								textAlign: 'center',
 								fontSize: '18px',
 								fontWeight: 'bold',
-							}}
+							} }
 						>
-							{eventInfo?.title || ''}
+							{ eventInfo?.title || '' }
 						</div>
-						<div style={{ padding: '25px 20px' }}>
+						<div style={ { padding: '25px 20px' } }>
 							<p
-								style={{
+								style={ {
 									margin: '0 0 15px 0',
 									fontSize: '14px',
-								}}
+								} }
 							>
-								{sprintf(
+								{ sprintf(
 									/* translators: %s: participant first name */
-									__('Hi %s,', 'fair-audience'),
+									__( 'Hi %s,', 'fair-audience' ),
 									'(...)'
-								)}
+								) }
 							</p>
 							<p
-								style={{
+								style={ {
 									margin: '0 0 15px 0',
 									fontSize: '14px',
-								}}
+								} }
 							>
-								{sprintf(
+								{ sprintf(
 									/* translators: %s: event title */
 									__(
 										'The photos from %s are now available for you to view and like!',
 										'fair-audience'
 									),
 									eventInfo?.title || ''
-								)}
+								) }
 							</p>
 							<p
-								style={{
+								style={ {
 									margin: '0 0 15px 0',
 									fontSize: '14px',
-								}}
+								} }
 							>
-								{__(
+								{ __(
 									'Click the button below to browse the gallery and let us know which photos you like best:',
 									'fair-audience'
-								)}
+								) }
 							</p>
 							<p
-								style={{
+								style={ {
 									textAlign: 'center',
 									margin: '0 0 20px 0',
-								}}
+								} }
 							>
 								<span
-									style={{
+									style={ {
 										display: 'inline-block',
 										backgroundColor: '#0073aa',
 										color: '#fff',
@@ -1234,19 +1269,19 @@ export default function EventParticipants() {
 										borderRadius: '5px',
 										fontWeight: 'bold',
 										fontSize: '14px',
-									}}
+									} }
 								>
-									{__('View Gallery', 'fair-audience')}
+									{ __( 'View Gallery', 'fair-audience' ) }
 								</span>
 							</p>
 
-							{isLoadingExtraMessages ? (
+							{ isLoadingExtraMessages ? (
 								<Spinner />
 							) : (
-								extraMessages.map((msg) => (
+								extraMessages.map( ( msg ) => (
 									<div
-										key={msg.id}
-										style={{
+										key={ msg.id }
+										style={ {
 											marginBottom: '12px',
 											padding: '10px',
 											border: '1px solid #e0e0e0',
@@ -1257,15 +1292,15 @@ export default function EventParticipants() {
 												)
 													? 0.4
 													: 1,
-										}}
+										} }
 									>
 										<div
-											style={{
+											style={ {
 												display: 'flex',
 												alignItems: 'center',
 												justifyContent: 'space-between',
 												marginBottom: '6px',
-											}}
+											} }
 										>
 											<ToggleControl
 												label={
@@ -1277,11 +1312,11 @@ export default function EventParticipants() {
 														  )
 												}
 												checked={
-													!disabledExtraMessageIds.has(
+													! disabledExtraMessageIds.has(
 														msg.id
 													)
 												}
-												onChange={() =>
+												onChange={ () =>
 													handleToggleExtraMessage(
 														msg.id
 													)
@@ -1290,40 +1325,42 @@ export default function EventParticipants() {
 											/>
 										</div>
 										<div
-											style={{
+											style={ {
 												fontSize: '13px',
 												color: '#555',
-											}}
-											dangerouslySetInnerHTML={{
+											} }
+											dangerouslySetInnerHTML={ {
 												__html: msg.content,
-											}}
+											} }
 										/>
 									</div>
-								))
-							)}
+								) )
+							) }
 						</div>
 					</div>
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '10px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setShowGalleryPreviewModal(false)}
+							onClick={ () =>
+								setShowGalleryPreviewModal( false )
+							}
 						>
-							{__('Cancel', 'fair-audience')}
+							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleConfirmGalleryLink}
-							disabled={isSendingGalleryLinks}
+							onClick={ handleConfirmGalleryLink }
+							disabled={ isSendingGalleryLinks }
 						>
-							{isSendingGalleryLinks
-								? __('Sending...', 'fair-audience')
+							{ isSendingGalleryLinks
+								? __( 'Sending...', 'fair-audience' )
 								: sprintf(
 										/* translators: %d: number of participants */
 										__(
@@ -1331,42 +1368,42 @@ export default function EventParticipants() {
 											'fair-audience'
 										),
 										galleryPreviewParticipants.length
-								  )}
+								  ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 
-			{showInvitationModal && (
+			{ showInvitationModal && (
 				<Modal
-					title={__('Send Event Invitations', 'fair-audience')}
-					onRequestClose={() => {
-						setShowInvitationModal(false);
-						setSelectedGroups(new Set());
-						setSelectedInviteParticipants(new Set());
-						setInviteSearch('');
-					}}
-					style={{ maxWidth: '640px', width: '100%' }}
+					title={ __( 'Send Event Invitations', 'fair-audience' ) }
+					onRequestClose={ () => {
+						setShowInvitationModal( false );
+						setSelectedGroups( new Set() );
+						setSelectedInviteParticipants( new Set() );
+						setInviteSearch( '' );
+					} }
+					style={ { maxWidth: '640px', width: '100%' } }
 				>
-					<p style={{ fontSize: '12px', color: '#666' }}>
-						{__(
+					<p style={ { fontSize: '12px', color: '#666' } }>
+						{ __(
 							'Participants already signed up or who opted out of marketing emails will be skipped.',
 							'fair-audience'
-						)}
+						) }
 					</p>
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							gap: '0',
 							marginBottom: '15px',
 							borderBottom: '1px solid #ddd',
-						}}
+						} }
 					>
 						<button
 							type="button"
-							onClick={() => setInviteMode('groups')}
-							style={{
+							onClick={ () => setInviteMode( 'groups' ) }
+							style={ {
 								padding: '10px 20px',
 								border: 'none',
 								background:
@@ -1380,14 +1417,14 @@ export default function EventParticipants() {
 								cursor: 'pointer',
 								fontWeight:
 									inviteMode === 'groups' ? '600' : '400',
-							}}
+							} }
 						>
-							{__('By Group', 'fair-audience')}
+							{ __( 'By Group', 'fair-audience' ) }
 						</button>
 						<button
 							type="button"
-							onClick={() => setInviteMode('participants')}
-							style={{
+							onClick={ () => setInviteMode( 'participants' ) }
+							style={ {
 								padding: '10px 20px',
 								border: 'none',
 								background:
@@ -1403,44 +1440,44 @@ export default function EventParticipants() {
 									inviteMode === 'participants'
 										? '600'
 										: '400',
-							}}
+							} }
 						>
-							{__('By Participant', 'fair-audience')}
+							{ __( 'By Participant', 'fair-audience' ) }
 						</button>
 					</div>
 
-					{inviteMode === 'groups' && (
+					{ inviteMode === 'groups' && (
 						<>
-							{groups.length === 0 ? (
+							{ groups.length === 0 ? (
 								<p>
-									{__(
+									{ __(
 										'No groups available. Create groups first.',
 										'fair-audience'
-									)}
+									) }
 								</p>
 							) : (
 								<div
-									style={{
+									style={ {
 										maxHeight: '300px',
 										overflow: 'auto',
 										marginBottom: '15px',
 										border: '1px solid #ddd',
 										borderRadius: '4px',
-									}}
+									} }
 								>
-									{groups.map((group) => (
+									{ groups.map( ( group ) => (
 										<div
-											key={group.id}
-											style={{
+											key={ group.id }
+											style={ {
 												padding: '10px 15px',
 												borderBottom: '1px solid #eee',
 												display: 'flex',
 												alignItems: 'center',
 												gap: '10px',
-											}}
+											} }
 										>
 											<CheckboxControl
-												label={sprintf(
+												label={ sprintf(
 													/* translators: 1: group name, 2: member count */
 													__(
 														'%1$s (%2$d members)',
@@ -1448,49 +1485,51 @@ export default function EventParticipants() {
 													),
 													group.name,
 													group.member_count || 0
-												)}
-												checked={selectedGroups.has(
+												) }
+												checked={ selectedGroups.has(
 													group.id
-												)}
-												onChange={() =>
-													handleToggleGroup(group.id)
+												) }
+												onChange={ () =>
+													handleToggleGroup(
+														group.id
+													)
 												}
 											/>
 										</div>
-									))}
+									) ) }
 								</div>
-							)}
+							) }
 						</>
-					)}
+					) }
 
-					{inviteMode === 'participants' && (
+					{ inviteMode === 'participants' && (
 						<>
 							<input
 								type="text"
-								placeholder={__(
+								placeholder={ __(
 									'Search by name or email...',
 									'fair-audience'
-								)}
-								value={inviteSearch}
-								onChange={(e) =>
-									setInviteSearch(e.target.value)
+								) }
+								value={ inviteSearch }
+								onChange={ ( e ) =>
+									setInviteSearch( e.target.value )
 								}
-								style={{
+								style={ {
 									width: '100%',
 									padding: '8px 12px',
 									marginBottom: '10px',
 									border: '1px solid #ddd',
 									borderRadius: '4px',
-								}}
+								} }
 							/>
 							<div
-								style={{
+								style={ {
 									marginBottom: '10px',
 									fontSize: '12px',
 									color: '#666',
-								}}
+								} }
 							>
-								{sprintf(
+								{ sprintf(
 									/* translators: 1: selected count, 2: total count */
 									__(
 										'%1$d selected of %2$d participants',
@@ -1498,41 +1537,41 @@ export default function EventParticipants() {
 									),
 									selectedInviteParticipants.size,
 									allParticipants.length
-								)}
+								) }
 							</div>
-							{allParticipants.length === 0 ? (
+							{ allParticipants.length === 0 ? (
 								<p>
-									{__(
+									{ __(
 										'No participants available.',
 										'fair-audience'
-									)}
+									) }
 								</p>
 							) : (
 								<div
-									style={{
+									style={ {
 										maxHeight: '300px',
 										overflow: 'auto',
 										marginBottom: '15px',
 										border: '1px solid #ddd',
 										borderRadius: '4px',
-									}}
+									} }
 								>
-									{filteredInviteParticipants.map((p) => (
+									{ filteredInviteParticipants.map( ( p ) => (
 										<div
-											key={p.id}
-											style={{
+											key={ p.id }
+											style={ {
 												padding: '10px 15px',
 												borderBottom: '1px solid #eee',
 												display: 'flex',
 												alignItems: 'center',
 												gap: '10px',
-											}}
+											} }
 										>
 											<CheckboxControl
-												checked={selectedInviteParticipants.has(
+												checked={ selectedInviteParticipants.has(
 													p.id
-												)}
-												onChange={() =>
+												) }
+												onChange={ () =>
 													handleToggleInviteParticipant(
 														p.id
 													)
@@ -1540,70 +1579,70 @@ export default function EventParticipants() {
 											/>
 											<div>
 												<strong>
-													{p.name} {p.surname}
+													{ p.name } { p.surname }
 												</strong>
 												<br />
 												<span
-													style={{
+													style={ {
 														color: '#666',
 														fontSize: '12px',
-													}}
+													} }
 												>
-													{p.email}
+													{ p.email }
 												</span>
 											</div>
 										</div>
-									))}
-									{filteredInviteParticipants.length ===
+									) ) }
+									{ filteredInviteParticipants.length ===
 										0 && (
 										<p
-											style={{
+											style={ {
 												padding: '15px',
 												color: '#666',
-											}}
+											} }
 										>
-											{__(
+											{ __(
 												'No participants match your search.',
 												'fair-audience'
-											)}
+											) }
 										</p>
-									)}
+									) }
 								</div>
-							)}
+							) }
 						</>
-					)}
+					) }
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '10px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => {
-								setShowInvitationModal(false);
-								setSelectedGroups(new Set());
-								setSelectedInviteParticipants(new Set());
-								setInviteSearch('');
-							}}
+							onClick={ () => {
+								setShowInvitationModal( false );
+								setSelectedGroups( new Set() );
+								setSelectedInviteParticipants( new Set() );
+								setInviteSearch( '' );
+							} }
 						>
-							{__('Cancel', 'fair-audience')}
+							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleSendInvitations}
+							onClick={ handleSendInvitations }
 							disabled={
-								(inviteMode === 'groups' &&
-									selectedGroups.size === 0) ||
-								(inviteMode === 'participants' &&
-									selectedInviteParticipants.size === 0) ||
+								( inviteMode === 'groups' &&
+									selectedGroups.size === 0 ) ||
+								( inviteMode === 'participants' &&
+									selectedInviteParticipants.size === 0 ) ||
 								isSendingInvitations
 							}
 						>
-							{isSendingInvitations
-								? __('Sending...', 'fair-audience')
+							{ isSendingInvitations
+								? __( 'Sending...', 'fair-audience' )
 								: inviteMode === 'participants' &&
 								  selectedInviteParticipants.size > 0
 								? sprintf(
@@ -1614,11 +1653,11 @@ export default function EventParticipants() {
 										),
 										selectedInviteParticipants.size
 								  )
-								: __('Send Invitations', 'fair-audience')}
+								: __( 'Send Invitations', 'fair-audience' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 }

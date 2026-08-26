@@ -3,11 +3,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export default defineConfig({
+export default defineConfig( {
 	testDir: './',
-	testMatch: ['e2e/**/*.spec.js', 'src/API/__tests__/**/*.api.spec.js'],
+	testMatch: [ 'e2e/**/*.spec.js', 'src/API/__tests__/**/*.api.spec.js' ],
 	fullyParallel: false,
-	forbidOnly: !!process.env.CI,
+	forbidOnly: !! process.env.CI,
 	retries: process.env.CI ? 2 : 0,
 	workers: 1,
 	reporter: 'html',
@@ -19,7 +19,7 @@ export default defineConfig({
 	projects: [
 		{
 			name: 'chromium',
-			use: { ...devices['Desktop Chrome'] },
+			use: { ...devices[ 'Desktop Chrome' ] },
 		},
 	],
 	webServer: process.env.CI
@@ -27,7 +27,7 @@ export default defineConfig({
 		: {
 				command: 'docker compose up',
 				url: 'http://localhost:8080',
-				reuseExistingServer: !process.env.CI,
+				reuseExistingServer: ! process.env.CI,
 				timeout: 120 * 1000,
 		  },
-});
+} );

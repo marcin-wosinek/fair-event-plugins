@@ -13,26 +13,26 @@ import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 const v1 = {
 	attributes: {},
 
-	migrate(attributes) {
+	migrate( attributes ) {
 		// No attribute changes needed, just structural cleanup
 		return attributes;
 	},
 
 	save: () => {
-		const blockProps = useBlockProps.save({
+		const blockProps = useBlockProps.save( {
 			className: 'time-column-body-container',
-		});
+		} );
 
-		const innerBlocksProps = useInnerBlocksProps.save({
+		const innerBlocksProps = useInnerBlocksProps.save( {
 			className: 'time-column-body-content',
-		});
+		} );
 
 		return (
-			<div {...blockProps}>
-				<div {...innerBlocksProps} />
+			<div { ...blockProps }>
+				<div { ...innerBlocksProps } />
 			</div>
 		);
 	},
 };
 
-export default [v1];
+export default [ v1 ];

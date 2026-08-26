@@ -67,84 +67,85 @@ export default function ManageEventApp() {
 	// every bundle as off (fail-closed) on a misconfigured page.
 	const enabledFeatures =
 		window.fairEventsManageEventData?.enabledFeatures || {};
-	const galleriesEnabled = !!enabledFeatures.galleries;
-	const ticketingEnabled = !!enabledFeatures.ticketing;
+	const galleriesEnabled = !! enabledFeatures.galleries;
+	const ticketingEnabled = !! enabledFeatures.ticketing;
 
-	const [eventDate, setEventDate] = useState(null);
-	const [loading, setLoading] = useState(true);
-	const [saving, setSaving] = useState(false);
-	const [error, setError] = useState(null);
-	const [success, setSuccess] = useState(null);
-	const [venues, setVenues] = useState([]);
+	const [ eventDate, setEventDate ] = useState( null );
+	const [ loading, setLoading ] = useState( true );
+	const [ saving, setSaving ] = useState( false );
+	const [ error, setError ] = useState( null );
+	const [ success, setSuccess ] = useState( null );
+	const [ venues, setVenues ] = useState( [] );
 
 	// Form state
-	const [title, setTitle] = useState('');
-	const [allDay, setAllDay] = useState(false);
-	const [startDate, setStartDate] = useState('');
-	const [startTime, setStartTime] = useState('');
-	const [endDate, setEndDate] = useState('');
-	const [endTime, setEndTime] = useState('');
-	const [venueId, setVenueId] = useState('');
-	const [address, setAddress] = useState('');
-	const [attendanceMode, setAttendanceMode] = useState('in_person');
-	const [joiningLink, setJoiningLink] = useState('');
-	const [linkType, setLinkType] = useState('none');
-	const [externalUrl, setExternalUrl] = useState('');
-	const [categories, setCategories] = useState([]);
-	const [availableCategories, setAvailableCategories] = useState([]);
-	const [creatingCategories, setCreatingCategories] = useState([]);
+	const [ title, setTitle ] = useState( '' );
+	const [ allDay, setAllDay ] = useState( false );
+	const [ startDate, setStartDate ] = useState( '' );
+	const [ startTime, setStartTime ] = useState( '' );
+	const [ endDate, setEndDate ] = useState( '' );
+	const [ endTime, setEndTime ] = useState( '' );
+	const [ venueId, setVenueId ] = useState( '' );
+	const [ address, setAddress ] = useState( '' );
+	const [ attendanceMode, setAttendanceMode ] = useState( 'in_person' );
+	const [ joiningLink, setJoiningLink ] = useState( '' );
+	const [ linkType, setLinkType ] = useState( 'none' );
+	const [ externalUrl, setExternalUrl ] = useState( '' );
+	const [ categories, setCategories ] = useState( [] );
+	const [ availableCategories, setAvailableCategories ] = useState( [] );
+	const [ creatingCategories, setCreatingCategories ] = useState( [] );
 
-	const [togglingExdate, setTogglingExdate] = useState(null);
-	const [recurrenceImpact, setRecurrenceImpact] = useState(null);
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [seriesModalOpen, setSeriesModalOpen] = useState(false);
-	const [editInstancesModalOpen, setEditInstancesModalOpen] = useState(false);
-	const [endSeriesDialogOpen, setEndSeriesDialogOpen] = useState(false);
-	const [linkModalOpen, setLinkModalOpen] = useState(false);
-	const [linkModalConfirmOpen, setLinkModalConfirmOpen] = useState(false);
+	const [ togglingExdate, setTogglingExdate ] = useState( null );
+	const [ recurrenceImpact, setRecurrenceImpact ] = useState( null );
+	const [ deleteDialogOpen, setDeleteDialogOpen ] = useState( false );
+	const [ seriesModalOpen, setSeriesModalOpen ] = useState( false );
+	const [ editInstancesModalOpen, setEditInstancesModalOpen ] =
+		useState( false );
+	const [ endSeriesDialogOpen, setEndSeriesDialogOpen ] = useState( false );
+	const [ linkModalOpen, setLinkModalOpen ] = useState( false );
+	const [ linkModalConfirmOpen, setLinkModalConfirmOpen ] = useState( false );
 
 	// Dirty-state tracking (#987): snapshot the saved form/ticket state so we
 	// can warn before losing edits and mark which tab holds them.
-	const [detailsSnapshot, setDetailsSnapshot] = useState(null);
-	const detailsJustLoadedRef = useRef(false);
-	const [ticketsDirty, setTicketsDirty] = useState(false);
+	const [ detailsSnapshot, setDetailsSnapshot ] = useState( null );
+	const detailsJustLoadedRef = useRef( false );
+	const [ ticketsDirty, setTicketsDirty ] = useState( false );
 	const handleTicketsDirtyChange = useCallback(
-		(isDirty) => setTicketsDirty(isDirty),
+		( isDirty ) => setTicketsDirty( isDirty ),
 		[]
 	);
 
-	useEffect(() => {
-		if (!eventDateId) {
-			setLoading(false);
-			setError(__('No event date ID specified.', 'fair-events'));
+	useEffect( () => {
+		if ( ! eventDateId ) {
+			setLoading( false );
+			setError( __( 'No event date ID specified.', 'fair-events' ) );
 			return;
 		}
 		loadEventDate();
 		loadVenues();
 		loadCategories();
-	}, []);
+	}, [] );
 
 	const loadEventDate = async () => {
-		setLoading(true);
+		setLoading( true );
 		try {
-			const data = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}`,
-			});
-			setEventDate(data);
-			populateForm(data);
-		} catch (err) {
+			const data = await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }`,
+			} );
+			setEventDate( data );
+			populateForm( data );
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to load event date.', 'fair-events')
+				err.message || __( 'Failed to load event date.', 'fair-events' )
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
 	const loadVenues = async () => {
 		try {
-			const data = await apiFetch({ path: '/fair-events/v1/venues' });
-			setVenues(data);
+			const data = await apiFetch( { path: '/fair-events/v1/venues' } );
+			setVenues( data );
 		} catch {
 			// Venues are optional, ignore errors.
 		}
@@ -152,63 +153,63 @@ export default function ManageEventApp() {
 
 	const loadCategories = async () => {
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-events/v1/sources/categories',
-			});
-			setAvailableCategories(data);
+			} );
+			setAvailableCategories( data );
 		} catch {
 			// Categories are optional, ignore errors.
 		}
 	};
 
-	const createCategory = async (name) => {
+	const createCategory = async ( name ) => {
 		try {
-			const newCategory = await apiFetch({
+			const newCategory = await apiFetch( {
 				path: '/fair-events/v1/sources/categories',
 				method: 'POST',
 				data: { name },
-			});
-			setAvailableCategories((prev) => [...prev, newCategory]);
-			setCategories((prev) => [...prev, newCategory.id]);
-		} catch (err) {
+			} );
+			setAvailableCategories( ( prev ) => [ ...prev, newCategory ] );
+			setCategories( ( prev ) => [ ...prev, newCategory.id ] );
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to create category.', 'fair-events')
+				err.message || __( 'Failed to create category.', 'fair-events' )
 			);
 		} finally {
-			setCreatingCategories((prev) =>
-				prev.filter((pending) => pending !== name)
+			setCreatingCategories( ( prev ) =>
+				prev.filter( ( pending ) => pending !== name )
 			);
 		}
 	};
 
-	const populateForm = (data) => {
+	const populateForm = ( data ) => {
 		detailsJustLoadedRef.current = true;
-		setTitle(data.title || '');
-		setAllDay(data.all_day || false);
-		setLinkType(data.link_type || 'none');
-		setExternalUrl(data.external_url || '');
-		setVenueId(data.venue_id ? String(data.venue_id) : '');
-		setAddress(data.address || '');
-		setAttendanceMode(data.attendance_mode || 'in_person');
-		setJoiningLink(data.joining_link || '');
-		setCategories(data.categories?.map((c) => c.id) || []);
+		setTitle( data.title || '' );
+		setAllDay( data.all_day || false );
+		setLinkType( data.link_type || 'none' );
+		setExternalUrl( data.external_url || '' );
+		setVenueId( data.venue_id ? String( data.venue_id ) : '' );
+		setAddress( data.address || '' );
+		setAttendanceMode( data.attendance_mode || 'in_person' );
+		setJoiningLink( data.joining_link || '' );
+		setCategories( data.categories?.map( ( c ) => c.id ) || [] );
 
-		if (data.start_datetime) {
-			const [sDate, sTime] = data.start_datetime.split(' ');
-			setStartDate(sDate || '');
-			setStartTime(sTime ? sTime.substring(0, 5) : '');
+		if ( data.start_datetime ) {
+			const [ sDate, sTime ] = data.start_datetime.split( ' ' );
+			setStartDate( sDate || '' );
+			setStartTime( sTime ? sTime.substring( 0, 5 ) : '' );
 		}
-		if (data.end_datetime) {
-			const [eDate, eTime] = data.end_datetime.split(' ');
-			setEndDate(eDate || '');
-			setEndTime(eTime ? eTime.substring(0, 5) : '');
+		if ( data.end_datetime ) {
+			const [ eDate, eTime ] = data.end_datetime.split( ' ' );
+			setEndDate( eDate || '' );
+			setEndTime( eTime ? eTime.substring( 0, 5 ) : '' );
 		}
 	};
 
 	// Plain-object snapshot of every Event Details field, used to detect
 	// unsaved edits (#987). Keep in sync with the fields populateForm() sets.
 	const buildDetailsSnapshot = () =>
-		JSON.stringify({
+		JSON.stringify( {
 			title,
 			allDay,
 			startDate,
@@ -221,72 +222,73 @@ export default function ManageEventApp() {
 			joiningLink,
 			linkType,
 			externalUrl,
-			categories: [...categories].sort(),
-		});
+			categories: [ ...categories ].sort(),
+		} );
 
 	// Runs after every render; only commits a new snapshot right after
 	// populateForm() flagged one (initial load or a fresh save/link/unlink),
 	// once all its setState calls have been applied.
-	useEffect(() => {
-		if (detailsJustLoadedRef.current) {
-			setDetailsSnapshot(buildDetailsSnapshot());
+	useEffect( () => {
+		if ( detailsJustLoadedRef.current ) {
+			setDetailsSnapshot( buildDetailsSnapshot() );
 			detailsJustLoadedRef.current = false;
 		}
-	});
+	} );
 
 	const detailsDirty =
 		detailsSnapshot !== null && detailsSnapshot !== buildDetailsSnapshot();
 
 	// Warn before losing unsaved edits on either tab that can be dirty.
-	useEffect(() => {
-		if (!detailsDirty && !ticketsDirty) {
+	useEffect( () => {
+		if ( ! detailsDirty && ! ticketsDirty ) {
 			return;
 		}
-		const handleBeforeUnload = (event) => {
+		const handleBeforeUnload = ( event ) => {
 			event.preventDefault();
 			event.returnValue = '';
 		};
-		window.addEventListener('beforeunload', handleBeforeUnload);
+		window.addEventListener( 'beforeunload', handleBeforeUnload );
 		return () =>
-			window.removeEventListener('beforeunload', handleBeforeUnload);
-	}, [detailsDirty, ticketsDirty]);
+			window.removeEventListener( 'beforeunload', handleBeforeUnload );
+	}, [ detailsDirty, ticketsDirty ] );
 
 	// Duration options
 	const timedDurationOptions = useMemo(
 		() =>
-			new DurationOptions({
-				values: [30, 60, 90, 120, 150, 180, 240, 360, 480],
+			new DurationOptions( {
+				values: [ 30, 60, 90, 120, 150, 180, 240, 360, 480 ],
 				unit: 'minutes',
 				textDomain: 'fair-events',
-			}),
+			} ),
 		[]
 	);
 
 	const allDayDurationOptions = useMemo(
 		() =>
-			new DurationOptions({
-				values: [1, 2, 3, 4, 5, 6, 7],
+			new DurationOptions( {
+				values: [ 1, 2, 3, 4, 5, 6, 7 ],
 				unit: 'days',
 				textDomain: 'fair-events',
-			}),
+			} ),
 		[]
 	);
 
 	const getCurrentDuration = () => {
-		if (allDay) {
-			if (!startDate || !endDate) return 'other';
-			const start = new Date(startDate);
-			const end = new Date(endDate);
+		if ( allDay ) {
+			if ( ! startDate || ! endDate ) return 'other';
+			const start = new Date( startDate );
+			const end = new Date( endDate );
 			const diffDays =
-				Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-			return allDayDurationOptions.getCurrentSelection(diffDays);
+				Math.ceil( ( end - start ) / ( 1000 * 60 * 60 * 24 ) ) + 1;
+			return allDayDurationOptions.getCurrentSelection( diffDays );
 		}
-		if (!startDate || !startTime || !endDate || !endTime) return 'other';
-		const startIso = `${startDate}T${startTime}`;
-		const endIso = `${endDate}T${endTime}`;
-		const minutes = calculateDuration(startIso, endIso);
-		if (minutes === null) return 'other';
-		return timedDurationOptions.getCurrentSelection(minutes);
+		if ( ! startDate || ! startTime || ! endDate || ! endTime )
+			return 'other';
+		const startIso = `${ startDate }T${ startTime }`;
+		const endIso = `${ endDate }T${ endTime }`;
+		const minutes = calculateDuration( startIso, endIso );
+		if ( minutes === null ) return 'other';
+		return timedDurationOptions.getCurrentSelection( minutes );
 	};
 
 	const durationValue = getCurrentDuration();
@@ -295,55 +297,55 @@ export default function ManageEventApp() {
 		? allDayDurationOptions.getDurationOptions()
 		: timedDurationOptions.getDurationOptions();
 
-	const handleDurationChange = (value) => {
-		if (value === 'other' || !startDate) return;
-		if (allDay) {
-			const days = parseInt(value, 10);
-			const start = new Date(startDate);
-			const end = new Date(start);
-			end.setDate(start.getDate() + days - 1);
+	const handleDurationChange = ( value ) => {
+		if ( value === 'other' || ! startDate ) return;
+		if ( allDay ) {
+			const days = parseInt( value, 10 );
+			const start = new Date( startDate );
+			const end = new Date( start );
+			end.setDate( start.getDate() + days - 1 );
 			const year = end.getFullYear();
-			const month = String(end.getMonth() + 1).padStart(2, '0');
-			const day = String(end.getDate()).padStart(2, '0');
-			setEndDate(`${year}-${month}-${day}`);
+			const month = String( end.getMonth() + 1 ).padStart( 2, '0' );
+			const day = String( end.getDate() ).padStart( 2, '0' );
+			setEndDate( `${ year }-${ month }-${ day }` );
 		} else {
-			if (!startTime) return;
-			const minutes = parseInt(value, 10);
-			const start = new Date(`${startDate}T${startTime}`);
-			const end = new Date(start.getTime() + minutes * 60000);
+			if ( ! startTime ) return;
+			const minutes = parseInt( value, 10 );
+			const start = new Date( `${ startDate }T${ startTime }` );
+			const end = new Date( start.getTime() + minutes * 60000 );
 			const year = end.getFullYear();
-			const month = String(end.getMonth() + 1).padStart(2, '0');
-			const day = String(end.getDate()).padStart(2, '0');
-			const hours = String(end.getHours()).padStart(2, '0');
-			const mins = String(end.getMinutes()).padStart(2, '0');
-			setEndDate(`${year}-${month}-${day}`);
-			setEndTime(`${hours}:${mins}`);
+			const month = String( end.getMonth() + 1 ).padStart( 2, '0' );
+			const day = String( end.getDate() ).padStart( 2, '0' );
+			const hours = String( end.getHours() ).padStart( 2, '0' );
+			const mins = String( end.getMinutes() ).padStart( 2, '0' );
+			setEndDate( `${ year }-${ month }-${ day }` );
+			setEndTime( `${ hours }:${ mins }` );
 		}
 	};
 
 	const handleSave = async () => {
-		setSaving(true);
-		setError(null);
-		setSuccess(null);
+		setSaving( true );
+		setError( null );
+		setSuccess( null );
 
 		const startDatetime = allDay
-			? `${startDate} 00:00:00`
-			: `${startDate} ${startTime}:00`;
+			? `${ startDate } 00:00:00`
+			: `${ startDate } ${ startTime }:00`;
 
 		const endDatetime = allDay
-			? `${endDate} 00:00:00`
-			: `${endDate} ${endTime}:00`;
+			? `${ endDate } 00:00:00`
+			: `${ endDate } ${ endTime }:00`;
 
 		try {
-			const updated = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}`,
+			const updated = await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }`,
 				method: 'PUT',
 				data: {
 					title,
 					start_datetime: startDatetime,
 					end_datetime: endDatetime,
 					all_day: allDay,
-					venue_id: venueId ? parseInt(venueId, 10) : null,
+					venue_id: venueId ? parseInt( venueId, 10 ) : null,
 					address,
 					attendance_mode: attendanceMode,
 					joining_link:
@@ -355,18 +357,18 @@ export default function ManageEventApp() {
 					external_url: linkType === 'external' ? externalUrl : null,
 					categories,
 				},
-			});
-			setEventDate(updated);
+			} );
+			setEventDate( updated );
 			setRecurrenceImpact(
 				updated.recurrence_impact
 					? { impact: updated.recurrence_impact, blocked: false }
 					: null
 			);
-			setSuccess(__('Event updated successfully.', 'fair-events'));
-			setDetailsSnapshot(buildDetailsSnapshot());
-		} catch (err) {
+			setSuccess( __( 'Event updated successfully.', 'fair-events' ) );
+			setDetailsSnapshot( buildDetailsSnapshot() );
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to update event.', 'fair-events')
+				err.message || __( 'Failed to update event.', 'fair-events' )
 			);
 			setRecurrenceImpact(
 				err.data?.impact
@@ -374,30 +376,30 @@ export default function ManageEventApp() {
 					: null
 			);
 		} finally {
-			setSaving(false);
+			setSaving( false );
 		}
 	};
 
 	const confirmDelete = async () => {
 		try {
-			await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}`,
+			await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }`,
 				method: 'DELETE',
-			});
+			} );
 			window.location.href = calendarUrl;
-		} catch (err) {
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to delete event.', 'fair-events')
+				err.message || __( 'Failed to delete event.', 'fair-events' )
 			);
 		} finally {
-			setDeleteDialogOpen(false);
+			setDeleteDialogOpen( false );
 		}
 	};
 
-	const deleteConfirmMessage = useMemo(() => {
-		const eventTitle = getEventDisplayTitle(title);
+	const deleteConfirmMessage = useMemo( () => {
+		const eventTitle = getEventDisplayTitle( title );
 
-		if (eventDate?.occurrence_type === 'master') {
+		if ( eventDate?.occurrence_type === 'master' ) {
 			const count = eventDate.generated_occurrences?.length || 0;
 			return sprintf(
 				/* translators: 1: event title, 2: number of occurrences */
@@ -414,45 +416,45 @@ export default function ManageEventApp() {
 
 		return sprintf(
 			/* translators: 1: event title, 2: event date */
-			__('Delete %1$s on %2$s? This cannot be undone.', 'fair-events'),
+			__( 'Delete %1$s on %2$s? This cannot be undone.', 'fair-events' ),
 			eventTitle,
 			eventDate?.start_datetime
-				? formatSiteLocalDatetime(eventDate.start_datetime)
+				? formatSiteLocalDatetime( eventDate.start_datetime )
 				: ''
 		);
-	}, [title, eventDate]);
+	}, [ title, eventDate ] );
 
-	const handleSeriesSaved = (updated) => {
-		setEventDate(updated);
-		setSeriesModalOpen(false);
+	const handleSeriesSaved = ( updated ) => {
+		setEventDate( updated );
+		setSeriesModalOpen( false );
 	};
 
-	const handleSeriesImpact = (impact) => setRecurrenceImpact(impact);
+	const handleSeriesImpact = ( impact ) => setRecurrenceImpact( impact );
 
 	const confirmEndSeries = async () => {
 		try {
-			const updated = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}`,
+			const updated = await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }`,
 				method: 'PUT',
 				data: { rrule: '' },
-			});
-			setEventDate(updated);
+			} );
+			setEventDate( updated );
 			setRecurrenceImpact(
 				updated.recurrence_impact
 					? { impact: updated.recurrence_impact, blocked: false }
 					: null
 			);
-			setSuccess(__('Series ended.', 'fair-events'));
-		} catch (err) {
+			setSuccess( __( 'Series ended.', 'fair-events' ) );
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to end the series.', 'fair-events')
+				err.message || __( 'Failed to end the series.', 'fair-events' )
 			);
 		} finally {
-			setEndSeriesDialogOpen(false);
+			setEndSeriesDialogOpen( false );
 		}
 	};
 
-	const endSeriesConfirmMessage = useMemo(() => {
+	const endSeriesConfirmMessage = useMemo( () => {
 		const count = eventDate?.generated_occurrences?.length || 0;
 		return sprintf(
 			/* translators: %d: number of generated dates that will be removed */
@@ -464,30 +466,30 @@ export default function ManageEventApp() {
 			),
 			count
 		);
-	}, [eventDate]);
+	}, [ eventDate ] );
 
 	const isSeries =
-		!!eventDate?.rrule || eventDate?.recurrence_mode === 'manual';
+		!! eventDate?.rrule || eventDate?.recurrence_mode === 'manual';
 
 	// The latest end_datetime across the event and its generated occurrences —
 	// the anchor for the ticket editor's lazily-resolved default sale end
 	// (day after the last occurrence). Recomputed from eventDate so it tracks
 	// series edits (add/remove/extend occurrences) automatically.
-	const lastOccurrenceDatetime = useMemo(() => {
-		if (!eventDate) return null;
+	const lastOccurrenceDatetime = useMemo( () => {
+		if ( ! eventDate ) return null;
 		const ends = [
 			eventDate.end_datetime,
-			...(eventDate.generated_occurrences || []).map(
-				(o) => o.end_datetime
+			...( eventDate.generated_occurrences || [] ).map(
+				( o ) => o.end_datetime
 			),
-		].filter(Boolean);
-		return ends.length ? ends.sort()[ends.length - 1] : null;
-	}, [eventDate]);
+		].filter( Boolean );
+		return ends.length ? ends.sort()[ ends.length - 1 ] : null;
+	}, [ eventDate ] );
 
-	const seriesSummary = useMemo(() => {
-		if (eventDate?.recurrence_mode === 'manual') {
+	const seriesSummary = useMemo( () => {
+		if ( eventDate?.recurrence_mode === 'manual' ) {
 			const dateCount =
-				(eventDate.generated_occurrences?.length || 0) + 1;
+				( eventDate.generated_occurrences?.length || 0 ) + 1;
 			return sprintf(
 				/* translators: %d: number of dates in the series */
 				_n(
@@ -500,79 +502,83 @@ export default function ManageEventApp() {
 			);
 		}
 
-		if (!eventDate?.rrule) return null;
+		if ( ! eventDate?.rrule ) return null;
 
-		const parsed = parseRRule(eventDate.rrule);
+		const parsed = parseRRule( eventDate.rrule );
 		const freqLabel =
-			RECURRENCE_FREQUENCIES.find((f) => f.value === parsed.frequency)
+			RECURRENCE_FREQUENCIES.find( ( f ) => f.value === parsed.frequency )
 				?.label || parsed.frequency;
-		const dateCount = (eventDate.generated_occurrences?.length || 0) + 1;
+		const dateCount = ( eventDate.generated_occurrences?.length || 0 ) + 1;
 
 		let endLabel = '';
-		if (parsed.endType === 'until' && parsed.until) {
-			endLabel = formatDateOnly(parsed.until, 'short');
+		if ( parsed.endType === 'until' && parsed.until ) {
+			endLabel = formatDateOnly( parsed.until, 'short' );
 		} else {
 			const occurrences = eventDate.generated_occurrences || [];
-			const last = occurrences[occurrences.length - 1];
-			if (last) {
-				endLabel = formatDateOnly(last.start_datetime, 'short');
+			const last = occurrences[ occurrences.length - 1 ];
+			if ( last ) {
+				endLabel = formatDateOnly( last.start_datetime, 'short' );
 			}
 		}
 
 		return endLabel
 			? sprintf(
 					/* translators: 1: frequency label (e.g. Weekly), 2: number of dates, 3: end date */
-					__('Repeats %1$s · %2$d dates · ends %3$s', 'fair-events'),
+					__(
+						'Repeats %1$s · %2$d dates · ends %3$s',
+						'fair-events'
+					),
 					freqLabel,
 					dateCount,
 					endLabel
 			  )
 			: sprintf(
 					/* translators: 1: frequency label (e.g. Weekly), 2: number of dates */
-					__('Repeats %1$s · %2$d dates', 'fair-events'),
+					__( 'Repeats %1$s · %2$d dates', 'fair-events' ),
 					freqLabel,
 					dateCount
 			  );
-	}, [eventDate]);
+	}, [ eventDate ] );
 
-	const handleLinkModalSaved = (updated) => {
-		setEventDate(updated);
-		populateForm(updated);
+	const handleLinkModalSaved = ( updated ) => {
+		setEventDate( updated );
+		populateForm( updated );
 	};
 
 	const handleManageLink = () => {
-		if (detailsDirty) {
-			setLinkModalConfirmOpen(true);
+		if ( detailsDirty ) {
+			setLinkModalConfirmOpen( true );
 			return;
 		}
-		setLinkModalOpen(true);
+		setLinkModalOpen( true );
 	};
 
 	const confirmSaveThenManageLink = async () => {
-		setLinkModalConfirmOpen(false);
+		setLinkModalConfirmOpen( false );
 		await handleSave();
-		setLinkModalOpen(true);
+		setLinkModalOpen( true );
 	};
 
-	const handleToggleExdate = async (date) => {
-		setTogglingExdate(date);
-		setError(null);
+	const handleToggleExdate = async ( date ) => {
+		setTogglingExdate( date );
+		setError( null );
 
 		try {
-			const updated = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventDateId}/toggle-exdate`,
+			const updated = await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }/toggle-exdate`,
 				method: 'POST',
 				data: { date },
-			});
-			setEventDate(updated);
+			} );
+			setEventDate( updated );
 			setRecurrenceImpact(
 				updated.recurrence_impact
 					? { impact: updated.recurrence_impact, blocked: false }
 					: null
 			);
-		} catch (err) {
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to toggle occurrence.', 'fair-events')
+				err.message ||
+					__( 'Failed to toggle occurrence.', 'fair-events' )
 			);
 			setRecurrenceImpact(
 				err.data?.impact
@@ -580,29 +586,29 @@ export default function ManageEventApp() {
 					: null
 			);
 		} finally {
-			setTogglingExdate(null);
+			setTogglingExdate( null );
 		}
 	};
 
 	const venueOptions = [
-		{ label: __('— No venue —', 'fair-events'), value: '' },
-		...venues.map((v) => ({ label: v.name, value: String(v.id) })),
+		{ label: __( '— No venue —', 'fair-events' ), value: '' },
+		...venues.map( ( v ) => ( { label: v.name, value: String( v.id ) } ) ),
 	];
 
-	const urlTab = useMemo(() => {
-		const urlParams = new URLSearchParams(window.location.search);
-		return urlParams.get('tab') || 'event-details';
-	}, []);
+	const urlTab = useMemo( () => {
+		const urlParams = new URLSearchParams( window.location.search );
+		return urlParams.get( 'tab' ) || 'event-details';
+	}, [] );
 
-	const handleTabSelect = useCallback((tabName) => {
-		const url = new URL(window.location.href);
-		if (tabName === 'event-details') {
-			url.searchParams.delete('tab');
+	const handleTabSelect = useCallback( ( tabName ) => {
+		const url = new URL( window.location.href );
+		if ( tabName === 'event-details' ) {
+			url.searchParams.delete( 'tab' );
 		} else {
-			url.searchParams.set('tab', tabName);
+			url.searchParams.set( 'tab', tabName );
 		}
-		window.history.replaceState(null, '', url.toString());
-	}, []);
+		window.history.replaceState( null, '', url.toString() );
+	}, [] );
 
 	const isGeneratedOccurrence = eventDate?.occurrence_type === 'generated';
 
@@ -619,90 +625,90 @@ export default function ManageEventApp() {
 	const builtInTabs = [
 		{
 			name: 'event-details',
-			title: __('Event Details', 'fair-events'),
+			title: __( 'Event Details', 'fair-events' ),
 			order: 10,
 			isVisible: true,
 			render: () => renderEventDetailsTab(),
 		},
 		{
 			name: 'tickets',
-			title: __('Tickets', 'fair-events'),
+			title: __( 'Tickets', 'fair-events' ),
 			order: 20,
 			isVisible: ticketingEnabled,
-			disabled: isGeneratedOccurrence || isLinkOnlyEvent(eventDate),
+			disabled: isGeneratedOccurrence || isLinkOnlyEvent( eventDate ),
 			render: () => (
 				<EventTickets
-					eventDateId={eventDateId}
-					startDatetime={eventDate.start_datetime}
-					endDatetime={eventDate.end_datetime}
-					lastOccurrenceDatetime={lastOccurrenceDatetime}
-					isSeries={isSeries}
-					onDirtyChange={handleTicketsDirtyChange}
+					eventDateId={ eventDateId }
+					startDatetime={ eventDate.start_datetime }
+					endDatetime={ eventDate.end_datetime }
+					lastOccurrenceDatetime={ lastOccurrenceDatetime }
+					isSeries={ isSeries }
+					onDirtyChange={ handleTicketsDirtyChange }
 				/>
 			),
 		},
 		{
 			name: 'signups',
-			title: __('Signups', 'fair-events'),
+			title: __( 'Signups', 'fair-events' ),
 			order: 25,
-			isVisible: !!(ticketingEnabled && !audienceUrl),
-			disabled: isLinkOnlyEvent(eventDate),
-			render: () => <EventSignups eventDateId={eventDateId} />,
+			isVisible: !! ( ticketingEnabled && ! audienceUrl ),
+			disabled: isLinkOnlyEvent( eventDate ),
+			render: () => <EventSignups eventDateId={ eventDateId } />,
 		},
 		{
 			name: 'photos',
-			title: __('Photos', 'fair-events'),
+			title: __( 'Photos', 'fair-events' ),
 			order: 40,
 			isVisible: galleriesEnabled,
-			render: () => <EventPhotos eventDateId={eventDateId} />,
+			render: () => <EventPhotos eventDateId={ eventDateId } />,
 		},
 		{
 			name: 'finance',
-			title: __('Finance', 'fair-events'),
+			title: __( 'Finance', 'fair-events' ),
 			order: 70,
-			isVisible: !!paymentEntriesUrl,
-			disabled: isLinkOnlyEvent(eventDate),
+			isVisible: !! paymentEntriesUrl,
+			disabled: isLinkOnlyEvent( eventDate ),
 			render: () => (
 				<EventFinance
-					eventDateId={eventDateId}
-					entriesUrl={paymentEntriesUrl}
+					eventDateId={ eventDateId }
+					entriesUrl={ paymentEntriesUrl }
 				/>
 			),
 		},
 		{
 			name: 'admin',
-			title: __('Admin', 'fair-events'),
+			title: __( 'Admin', 'fair-events' ),
 			order: 100,
 			isVisible: true,
-			render: (renderCtx) => (
-				<Card style={{ marginTop: '16px' }}>
+			render: ( renderCtx ) => (
+				<Card style={ { marginTop: '16px' } }>
 					<CardHeader>
-						<h2>{__('Event Administration', 'fair-events')}</h2>
+						<h2>{ __( 'Event Administration', 'fair-events' ) }</h2>
 					</CardHeader>
 					<CardBody>
-						<VStack spacing={6}>
-							{applyFilters(
+						<VStack spacing={ 6 }>
+							{ applyFilters(
 								'fairEvents.manageEvent.adminActions',
 								[],
 								renderCtx
-							)}
+							) }
 
-							<VStack spacing={2}>
-								<p style={{ color: '#666' }}>
-									{__(
+							<VStack spacing={ 2 }>
+								<p style={ { color: '#666' } }>
+									{ __(
 										'Permanently delete this event and all associated data. This action cannot be undone.',
 										'fair-events'
-									)}
+									) }
 								</p>
 								<div>
 									<Button
 										variant="tertiary"
 										isDestructive
-										onClick={() =>
-											setDeleteDialogOpen(true)
+										onClick={ () =>
+											setDeleteDialogOpen( true )
 										}
 									>
-										{__('Delete Event', 'fair-events')}
+										{ __( 'Delete Event', 'fair-events' ) }
 									</Button>
 								</div>
 							</VStack>
@@ -718,8 +724,8 @@ export default function ManageEventApp() {
 		builtInTabs,
 		ctx
 	)
-		.filter((t) => t.isVisible)
-		.sort((a, b) => a.order - b.order);
+		.filter( ( t ) => t.isVisible )
+		.sort( ( a, b ) => a.order - b.order );
 
 	// Tabs whose section currently holds unsaved edits get a " •" marker.
 	const dirtyTabNames = {
@@ -728,20 +734,24 @@ export default function ManageEventApp() {
 	};
 
 	// Shape TabPanel expects: { name, title, disabled? }.
-	const tabs = tabDescriptors.map(({ name, title: tabTitle, disabled }) => ({
-		name,
-		title: dirtyTabNames[name] ? `${tabTitle} •` : tabTitle,
-		...(disabled ? { disabled } : {}),
-	}));
+	const tabs = tabDescriptors.map(
+		( { name, title: tabTitle, disabled } ) => ( {
+			name,
+			title: dirtyTabNames[ name ] ? `${ tabTitle } •` : tabTitle,
+			...( disabled ? { disabled } : {} ),
+		} )
+	);
 
-	const initialTab = useMemo(() => {
-		if (tabDescriptors.some((t) => t.name === urlTab && !t.disabled)) {
+	const initialTab = useMemo( () => {
+		if (
+			tabDescriptors.some( ( t ) => t.name === urlTab && ! t.disabled )
+		) {
 			return urlTab;
 		}
 		return 'event-details';
-	}, [tabDescriptors, urlTab]);
+	}, [ tabDescriptors, urlTab ] );
 
-	if (loading) {
+	if ( loading ) {
 		return (
 			<div className="wrap">
 				<Spinner />
@@ -749,18 +759,18 @@ export default function ManageEventApp() {
 		);
 	}
 
-	if (!eventDate) {
+	if ( ! eventDate ) {
 		return (
 			<div className="wrap">
-				<h1>{__('Manage Event', 'fair-events')}</h1>
-				{error && (
-					<Notice status="error" isDismissible={false}>
-						{error}
+				<h1>{ __( 'Manage Event', 'fair-events' ) }</h1>
+				{ error && (
+					<Notice status="error" isDismissible={ false }>
+						{ error }
 					</Notice>
-				)}
+				) }
 				<p>
-					<a href={calendarUrl}>
-						{__('Back to Calendar', 'fair-events')}
+					<a href={ calendarUrl }>
+						{ __( 'Back to Calendar', 'fair-events' ) }
 					</a>
 				</p>
 			</div>
@@ -772,178 +782,192 @@ export default function ManageEventApp() {
 			<div className="fair-events-event-details-grid">
 				<Card className="fair-events-event-details-card">
 					<CardHeader>
-						<h2>{__('Details', 'fair-events')}</h2>
+						<h2>{ __( 'Details', 'fair-events' ) }</h2>
 					</CardHeader>
 					<CardBody>
 						<div className="fair-events-event-details-columns">
-							<VStack spacing={4}>
+							<VStack spacing={ 4 }>
 								<TextControl
-									label={__('Title', 'fair-events')}
-									value={title}
-									onChange={setTitle}
+									label={ __( 'Title', 'fair-events' ) }
+									value={ title }
+									onChange={ setTitle }
 									required
 								/>
 
 								<CheckboxControl
-									label={__('All day', 'fair-events')}
-									checked={allDay}
-									onChange={setAllDay}
+									label={ __( 'All day', 'fair-events' ) }
+									checked={ allDay }
+									onChange={ setAllDay }
 								/>
 
-								{allDay ? (
-									<HStack spacing={4} alignment="top" wrap>
+								{ allDay ? (
+									<HStack spacing={ 4 } alignment="top" wrap>
 										<TextControl
-											label={__(
+											label={ __(
 												'Start date',
 												'fair-events'
-											)}
+											) }
 											type="date"
-											value={startDate}
-											onChange={setStartDate}
+											value={ startDate }
+											onChange={ setStartDate }
 											required
 										/>
 										<TextControl
-											label={__(
+											label={ __(
 												'End date',
 												'fair-events'
-											)}
+											) }
 											type="date"
-											value={endDate}
-											onChange={setEndDate}
+											value={ endDate }
+											onChange={ setEndDate }
 											required
 										/>
 									</HStack>
 								) : (
-									<HStack spacing={4} alignment="top" wrap>
+									<HStack spacing={ 4 } alignment="top" wrap>
 										<TextControl
-											label={__(
+											label={ __(
 												'Start date',
 												'fair-events'
-											)}
+											) }
 											type="date"
-											value={startDate}
-											onChange={setStartDate}
+											value={ startDate }
+											onChange={ setStartDate }
 											required
 										/>
 										<TextControl
-											label={__(
+											label={ __(
 												'Start time',
 												'fair-events'
-											)}
+											) }
 											type="time"
-											value={startTime}
-											onChange={setStartTime}
+											value={ startTime }
+											onChange={ setStartTime }
 											required
 										/>
 										<TextControl
-											label={__(
+											label={ __(
 												'End date',
 												'fair-events'
-											)}
+											) }
 											type="date"
-											value={endDate}
-											onChange={setEndDate}
+											value={ endDate }
+											onChange={ setEndDate }
 											required
 										/>
 										<TextControl
-											label={__(
+											label={ __(
 												'End time',
 												'fair-events'
-											)}
+											) }
 											type="time"
-											value={endTime}
-											onChange={setEndTime}
+											value={ endTime }
+											onChange={ setEndTime }
 											required
 										/>
 									</HStack>
-								)}
+								) }
 
 								<SelectControl
-									label={__('Event length', 'fair-events')}
-									value={String(durationValue)}
-									options={durationOptions.map((opt) => ({
-										label: opt.label,
-										value: String(opt.value),
-									}))}
-									onChange={handleDurationChange}
+									label={ __(
+										'Event length',
+										'fair-events'
+									) }
+									value={ String( durationValue ) }
+									options={ durationOptions.map(
+										( opt ) => ( {
+											label: opt.label,
+											value: String( opt.value ),
+										} )
+									) }
+									onChange={ handleDurationChange }
 								/>
 							</VStack>
 
-							<VStack spacing={4}>
+							<VStack spacing={ 4 }>
 								<FormTokenField
-									label={__('Categories', 'fair-events')}
-									value={[
+									label={ __( 'Categories', 'fair-events' ) }
+									value={ [
 										...categories
-											.map((id) => {
+											.map( ( id ) => {
 												const cat =
 													availableCategories.find(
-														(c) => c.id === id
+														( c ) => c.id === id
 													);
 												return cat ? cat.name : '';
-											})
-											.filter(Boolean),
+											} )
+											.filter( Boolean ),
 										...creatingCategories,
-									]}
-									suggestions={availableCategories.map(
-										(c) => c.name
-									)}
-									onChange={(tokens) => {
+									] }
+									suggestions={ availableCategories.map(
+										( c ) => c.name
+									) }
+									onChange={ ( tokens ) => {
 										const ids = [];
 										const pending = [];
 
-										tokens.forEach((token) => {
+										tokens.forEach( ( token ) => {
 											const cat =
 												availableCategories.find(
-													(c) => c.name === token
+													( c ) => c.name === token
 												);
-											if (cat) {
-												ids.push(cat.id);
+											if ( cat ) {
+												ids.push( cat.id );
 											} else {
-												pending.push(token);
+												pending.push( token );
 											}
-										});
+										} );
 
-										setCategories(ids);
-										setCreatingCategories(pending);
+										setCategories( ids );
+										setCreatingCategories( pending );
 
 										pending
 											.filter(
-												(name) =>
-													!creatingCategories.includes(
+												( name ) =>
+													! creatingCategories.includes(
 														name
 													)
 											)
-											.forEach((name) =>
-												createCategory(name)
+											.forEach( ( name ) =>
+												createCategory( name )
 											);
-									}}
+									} }
 									__experimentalExpandOnFocus
 								/>
 
-								{attendanceMode !== 'online' && (
+								{ attendanceMode !== 'online' && (
 									<>
 										<SelectControl
-											label={__('Venue', 'fair-events')}
-											value={venueId}
-											options={venueOptions}
-											onChange={setVenueId}
+											label={ __(
+												'Venue',
+												'fair-events'
+											) }
+											value={ venueId }
+											options={ venueOptions }
+											onChange={ setVenueId }
 										/>
 										<TextControl
-											label={__('Address', 'fair-events')}
-											value={address}
-											onChange={setAddress}
-											help={__(
+											label={ __(
+												'Address',
+												'fair-events'
+											) }
+											value={ address }
+											onChange={ setAddress }
+											help={ __(
 												'Used as the event location only when no venue is selected above.',
 												'fair-events'
-											)}
+											) }
 										/>
 									</>
-								)}
+								) }
 
 								<SelectControl
-									label={__('Attendance mode', 'fair-events')}
-									value={attendanceMode}
-									options={[
+									label={ __(
+										'Attendance mode',
+										'fair-events'
+									) }
+									value={ attendanceMode }
+									options={ [
 										{
 											label: __(
 												'In person',
@@ -952,100 +976,108 @@ export default function ManageEventApp() {
 											value: 'in_person',
 										},
 										{
-											label: __('Online', 'fair-events'),
+											label: __(
+												'Online',
+												'fair-events'
+											),
 											value: 'online',
 										},
 										{
-											label: __('Hybrid', 'fair-events'),
+											label: __(
+												'Hybrid',
+												'fair-events'
+											),
 											value: 'hybrid',
 										},
-									]}
-									onChange={setAttendanceMode}
+									] }
+									onChange={ setAttendanceMode }
 								/>
 
-								{(attendanceMode === 'online' ||
-									attendanceMode === 'hybrid') && (
+								{ ( attendanceMode === 'online' ||
+									attendanceMode === 'hybrid' ) && (
 									<TextControl
-										label={__(
+										label={ __(
 											'Joining link',
 											'fair-events'
-										)}
-										help={__(
+										) }
+										help={ __(
 											'Shown publicly. Leave empty to link to the event page instead.',
 											'fair-events'
-										)}
+										) }
 										type="url"
-										value={joiningLink}
-										onChange={setJoiningLink}
+										value={ joiningLink }
+										onChange={ setJoiningLink }
 									/>
-								)}
+								) }
 							</VStack>
 						</div>
 					</CardBody>
 				</Card>
 
-				{eventDate.occurrence_type !== 'generated' && (
+				{ eventDate.occurrence_type !== 'generated' && (
 					<Card className="fair-events-event-details-card">
 						<CardHeader>
-							<h2>{__('Recurrence', 'fair-events')}</h2>
+							<h2>{ __( 'Recurrence', 'fair-events' ) }</h2>
 						</CardHeader>
 						<CardBody>
-							<VStack spacing={4}>
+							<VStack spacing={ 4 }>
 								<HStack alignment="center" wrap>
 									<span>
-										{isSeries
+										{ isSeries
 											? seriesSummary
 											: __(
 													'This event happens once.',
 													'fair-events'
-											  )}
+											  ) }
 									</span>
-									{isSeries ? (
+									{ isSeries ? (
 										<>
 											<Button
 												variant="secondary"
-												onClick={() =>
-													setSeriesModalOpen(true)
+												onClick={ () =>
+													setSeriesModalOpen( true )
 												}
 											>
-												{__(
+												{ __(
 													'Edit series',
 													'fair-events'
-												)}
+												) }
 											</Button>
 											<Button
 												variant="tertiary"
 												isDestructive
-												onClick={() =>
-													setEndSeriesDialogOpen(true)
+												onClick={ () =>
+													setEndSeriesDialogOpen(
+														true
+													)
 												}
 											>
-												{__(
+												{ __(
 													'End series',
 													'fair-events'
-												)}
+												) }
 											</Button>
 										</>
 									) : (
 										<Button
 											variant="primary"
-											onClick={() =>
-												setSeriesModalOpen(true)
+											onClick={ () =>
+												setSeriesModalOpen( true )
 											}
 										>
-											{__(
+											{ __(
 												'Turn into a series',
 												'fair-events'
-											)}
+											) }
 										</Button>
-									)}
+									) }
 								</HStack>
 
-								{eventDate.occurrence_type === 'master' &&
-									(eventDate.generated_occurrences?.length >
+								{ eventDate.occurrence_type === 'master' &&
+									( eventDate.generated_occurrences?.length >
 										0 ||
 										eventDate.cancelled_dates?.length >
-											0) && (
+											0 ) && (
 										<RecurrenceCalendar
 											generatedOccurrences={
 												eventDate.generated_occurrences
@@ -1056,55 +1088,57 @@ export default function ManageEventApp() {
 											masterDate={
 												eventDate.start_datetime?.split(
 													' '
-												)[0]
+												)[ 0 ]
 											}
-											manageEventUrl={manageEventUrl}
-											masterEventDateId={eventDateId}
+											manageEventUrl={ manageEventUrl }
+											masterEventDateId={ eventDateId }
 											embedded
 										/>
-									)}
+									) }
 
-								{eventDate.occurrence_type === 'master' &&
-									(eventDate.generated_occurrences?.length >
+								{ eventDate.occurrence_type === 'master' &&
+									( eventDate.generated_occurrences?.length >
 										0 ||
 										eventDate.cancelled_dates?.length >
-											0) && (
+											0 ) && (
 										<Button
 											variant="secondary"
-											onClick={() =>
-												setEditInstancesModalOpen(true)
+											onClick={ () =>
+												setEditInstancesModalOpen(
+													true
+												)
 											}
 										>
-											{__(
+											{ __(
 												'Edit instances',
 												'fair-events'
-											)}
+											) }
 										</Button>
-									)}
+									) }
 							</VStack>
 						</CardBody>
 					</Card>
-				)}
+				) }
 			</div>
 
 			<HStack
-				spacing={2}
-				style={{ marginTop: '16px' }}
+				spacing={ 2 }
+				style={ { marginTop: '16px' } }
 				justify="flex-start"
 			>
 				<Button
 					variant="primary"
-					onClick={handleSave}
-					isBusy={saving}
-					disabled={saving || !title.trim()}
+					onClick={ handleSave }
+					isBusy={ saving }
+					disabled={ saving || ! title.trim() }
 				>
-					{__('Save event details', 'fair-events')}
+					{ __( 'Save event details', 'fair-events' ) }
 				</Button>
-				{!title.trim() && (
-					<span style={{ color: '#d63638' }}>
-						{__('Title is required', 'fair-events')}
+				{ ! title.trim() && (
+					<span style={ { color: '#d63638' } }>
+						{ __( 'Title is required', 'fair-events' ) }
 					</span>
-				)}
+				) }
 			</HStack>
 		</>
 	);
@@ -1112,7 +1146,7 @@ export default function ManageEventApp() {
 	return (
 		<div className="wrap fair-events-manage-event">
 			<style>
-				{`.fair-events-manage-event .components-card > div:first-child { height: auto; }
+				{ `.fair-events-manage-event .components-card > div:first-child { height: auto; }
 .fair-events-manage-event .components-card__body > * { max-width: 600px; }
 .fair-events-manage-event .fair-events-tickets .components-card__body > * { max-width: none; }
 .fair-events-manage-event .fair-events-photos .components-card__body > * { max-width: none; }
@@ -1143,127 +1177,127 @@ export default function ManageEventApp() {
 /* The 1.5px height of the active-tab indicator anti-aliases to a thin
    darker top edge at 1x DPI. Round to 2px so the bar renders crisp. */
 .fair-events-manage-event .components-tab-panel__tabs-item.is-active::after { height: 2px; outline: none; }
-.fair-events-manage-event .fair-events-context-badge { margin-left: 8px; padding: 2px 8px; border-radius: 12px; background: #f0f0f1; font-size: 12px; }`}
+.fair-events-manage-event .fair-events-context-badge { margin-left: 8px; padding: 2px 8px; border-radius: 12px; background: #f0f0f1; font-size: 12px; }` }
 			</style>
 			<h1>
-				{__('Manage Event', 'fair-events')}
-				{': '}
-				{getEventDisplayTitle(title)}
+				{ __( 'Manage Event', 'fair-events' ) }
+				{ ': ' }
+				{ getEventDisplayTitle( title ) }
 			</h1>
 
 			<EventContextHeader
-				eventDate={eventDate}
-				manageEventUrl={manageEventUrl}
-				calendarUrl={calendarUrl}
-				venues={venues}
-				onManageLink={handleManageLink}
+				eventDate={ eventDate }
+				manageEventUrl={ manageEventUrl }
+				calendarUrl={ calendarUrl }
+				venues={ venues }
+				onManageLink={ handleManageLink }
 			/>
 
-			{error && (
+			{ error && (
 				<Notice
 					status="error"
 					isDismissible
-					onRemove={() => setError(null)}
+					onRemove={ () => setError( null ) }
 				>
-					{error}
+					{ error }
 				</Notice>
-			)}
+			) }
 
-			{success && (
+			{ success && (
 				<Notice
 					status="success"
 					isDismissible
-					onRemove={() => setSuccess(null)}
+					onRemove={ () => setSuccess( null ) }
 				>
-					{success}
+					{ success }
 				</Notice>
-			)}
+			) }
 
-			{recurrenceImpact && (
+			{ recurrenceImpact && (
 				<RecurrenceImpactSummary
-					impact={recurrenceImpact.impact}
-					blocked={recurrenceImpact.blocked}
-					onDismiss={() => setRecurrenceImpact(null)}
+					impact={ recurrenceImpact.impact }
+					blocked={ recurrenceImpact.blocked }
+					onDismiss={ () => setRecurrenceImpact( null ) }
 				/>
-			)}
+			) }
 
 			<TabPanel
-				tabs={tabs}
-				initialTabName={initialTab}
-				onSelect={handleTabSelect}
+				tabs={ tabs }
+				initialTabName={ initialTab }
+				onSelect={ handleTabSelect }
 			>
-				{(tab) => {
+				{ ( tab ) => {
 					const descriptor = tabDescriptors.find(
-						(d) => d.name === tab.name
+						( d ) => d.name === tab.name
 					);
-					return descriptor ? descriptor.render(ctx) : null;
-				}}
+					return descriptor ? descriptor.render( ctx ) : null;
+				} }
 			</TabPanel>
 
 			<ConfirmDialog
-				isOpen={deleteDialogOpen}
-				onConfirm={confirmDelete}
-				onCancel={() => setDeleteDialogOpen(false)}
-				confirmButtonText={__('Delete event', 'fair-events')}
-				cancelButtonText={__('Cancel', 'fair-events')}
+				isOpen={ deleteDialogOpen }
+				onConfirm={ confirmDelete }
+				onCancel={ () => setDeleteDialogOpen( false ) }
+				confirmButtonText={ __( 'Delete event', 'fair-events' ) }
+				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
 			>
-				{deleteConfirmMessage}
+				{ deleteConfirmMessage }
 			</ConfirmDialog>
 
 			<ConfirmDialog
-				isOpen={endSeriesDialogOpen}
-				onConfirm={confirmEndSeries}
-				onCancel={() => setEndSeriesDialogOpen(false)}
-				confirmButtonText={__('End series', 'fair-events')}
-				cancelButtonText={__('Cancel', 'fair-events')}
+				isOpen={ endSeriesDialogOpen }
+				onConfirm={ confirmEndSeries }
+				onCancel={ () => setEndSeriesDialogOpen( false ) }
+				confirmButtonText={ __( 'End series', 'fair-events' ) }
+				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
 			>
-				{endSeriesConfirmMessage}
+				{ endSeriesConfirmMessage }
 			</ConfirmDialog>
 
 			<ConfirmDialog
-				isOpen={linkModalConfirmOpen}
-				onConfirm={confirmSaveThenManageLink}
-				onCancel={() => setLinkModalConfirmOpen(false)}
-				confirmButtonText={__('Save and continue', 'fair-events')}
-				cancelButtonText={__('Cancel', 'fair-events')}
+				isOpen={ linkModalConfirmOpen }
+				onConfirm={ confirmSaveThenManageLink }
+				onCancel={ () => setLinkModalConfirmOpen( false ) }
+				confirmButtonText={ __( 'Save and continue', 'fair-events' ) }
+				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
 			>
-				{__(
+				{ __(
 					'You have unsaved changes. Save event details before setting up the link?',
 					'fair-events'
-				)}
+				) }
 			</ConfirmDialog>
 
-			{linkModalOpen && (
+			{ linkModalOpen && (
 				<EventLinkModal
-					eventDateId={eventDateId}
-					eventDate={eventDate}
-					enabledPostTypes={enabledPostTypes}
-					onClose={() => setLinkModalOpen(false)}
-					onSaved={handleLinkModalSaved}
+					eventDateId={ eventDateId }
+					eventDate={ eventDate }
+					enabledPostTypes={ enabledPostTypes }
+					onClose={ () => setLinkModalOpen( false ) }
+					onSaved={ handleLinkModalSaved }
 				/>
-			)}
+			) }
 
-			{seriesModalOpen && (
+			{ seriesModalOpen && (
 				<SeriesModal
-					eventDateId={eventDateId}
-					initialRrule={eventDate.rrule}
-					initialRecurrenceMode={eventDate.recurrence_mode}
-					startDatetime={eventDate.start_datetime}
-					generatedOccurrences={eventDate.generated_occurrences}
-					onClose={() => setSeriesModalOpen(false)}
-					onSaved={handleSeriesSaved}
-					onImpact={handleSeriesImpact}
+					eventDateId={ eventDateId }
+					initialRrule={ eventDate.rrule }
+					initialRecurrenceMode={ eventDate.recurrence_mode }
+					startDatetime={ eventDate.start_datetime }
+					generatedOccurrences={ eventDate.generated_occurrences }
+					onClose={ () => setSeriesModalOpen( false ) }
+					onSaved={ handleSeriesSaved }
+					onImpact={ handleSeriesImpact }
 				/>
-			)}
+			) }
 
-			{editInstancesModalOpen && (
+			{ editInstancesModalOpen && (
 				<EditInstancesModal
-					generatedOccurrences={eventDate.generated_occurrences}
-					togglingExdate={togglingExdate}
-					onToggleExdate={handleToggleExdate}
-					onClose={() => setEditInstancesModalOpen(false)}
+					generatedOccurrences={ eventDate.generated_occurrences }
+					togglingExdate={ togglingExdate }
+					onToggleExdate={ handleToggleExdate }
+					onClose={ () => setEditInstancesModalOpen( false ) }
 				/>
-			)}
+			) }
 		</div>
 	);
 }

@@ -7,14 +7,14 @@
 	"category": "widgets",
 	"icon": "email",
 	"description": "A signup form for your mailing list with email confirmation",
-	"keywords": ["email", "newsletter", "signup", "subscribe", "mailing"],
+	"keywords": [ "email", "newsletter", "signup", "subscribe", "mailing" ],
 	"textdomain": "fair-audience",
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"],
+		"align": [ "wide", "full" ],
 		"spacing": {
 			"padding": true,
-			"margin": ["top", "bottom"]
+			"margin": [ "top", "bottom" ]
 		}
 	},
 	"attributes": {
@@ -48,6 +48,6 @@
 	"editorScript": "file:./editor.js",
 	"viewScript": "file:./frontend.js",
 	"render": "file:./render.php",
-	"style": ["wp-block-button", "file:./style-frontend.css"],
+	"style": [ "wp-block-button", "file:./style-frontend.css" ],
 	"editorStyle": "file:./editor.css"
 }

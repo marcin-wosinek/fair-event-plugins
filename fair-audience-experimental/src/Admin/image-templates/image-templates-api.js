@@ -9,7 +9,7 @@ import apiFetch from '@wordpress/api-fetch';
  * @return {Promise<Array>} Promise resolving to array of templates
  */
 export function loadTemplates() {
-	return apiFetch({ path: '/fair-audience/v1/image-templates' });
+	return apiFetch( { path: '/fair-audience/v1/image-templates' } );
 }
 
 /**
@@ -18,12 +18,12 @@ export function loadTemplates() {
  * @param {number} attachmentId WordPress attachment ID
  * @return {Promise<Object>} Promise resolving to created template
  */
-export function registerTemplate(attachmentId) {
-	return apiFetch({
+export function registerTemplate( attachmentId ) {
+	return apiFetch( {
 		path: '/fair-audience/v1/image-templates',
 		method: 'POST',
 		data: { attachment_id: attachmentId },
-	});
+	} );
 }
 
 /**
@@ -32,11 +32,11 @@ export function registerTemplate(attachmentId) {
  * @param {number} id Template (attachment) ID
  * @return {Promise<Object>} Promise resolving to deletion result
  */
-export function deleteTemplate(id) {
-	return apiFetch({
-		path: `/fair-audience/v1/image-templates/${id}`,
+export function deleteTemplate( id ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/image-templates/${ id }`,
 		method: 'DELETE',
-	});
+	} );
 }
 
 /**
@@ -47,10 +47,10 @@ export function deleteTemplate(id) {
  * @param {Object} images    Object mapping image placeholder names to attachment IDs
  * @return {Promise<Object>} Promise resolving to { svg: "..." }
  */
-export function renderTemplate(id, variables, images) {
-	return apiFetch({
-		path: `/fair-audience/v1/image-templates/${id}/render`,
+export function renderTemplate( id, variables, images ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/image-templates/${ id }/render`,
 		method: 'POST',
 		data: { variables, images },
-	});
+	} );
 }

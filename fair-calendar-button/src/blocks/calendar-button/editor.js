@@ -17,7 +17,7 @@ import './filters/buttonFilter.js';
 /**
  * Register the block
  */
-registerBlockType('fair-calendar-button/calendar-button', {
+registerBlockType( 'fair-calendar-button/calendar-button', {
 	/**
 	 * Block edit function
 	 *
@@ -36,4 +36,4 @@ registerBlockType('fair-calendar-button/calendar-button', {
 	 * @return {JSX.Element} The save component
 	 */
 	save: SaveComponent,
-});
+} );

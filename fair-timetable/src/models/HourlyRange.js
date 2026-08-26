@@ -15,14 +15,16 @@ export class HourlyRange {
 	 * @param {string} timeRange.startTime - Start time in HH:mm format
 	 * @param {string} timeRange.endTime - End time in HH:mm format
 	 */
-	constructor({ startTime, endTime }) {
-		if (!startTime || !endTime) {
-			throw new Error('HourlyRange requires both startTime and endTime');
+	constructor( { startTime, endTime } ) {
+		if ( ! startTime || ! endTime ) {
+			throw new Error(
+				'HourlyRange requires both startTime and endTime'
+			);
 		}
 
 		// Parse to decimal hours
-		this.startHour = parseTime(startTime);
-		this.endHour = parseTime(endTime);
+		this.startHour = parseTime( startTime );
+		this.endHour = parseTime( endTime );
 	}
 
 	/**
@@ -31,7 +33,9 @@ export class HourlyRange {
 	 * @return {string} Time range in "HH:mm - HH:mm" format
 	 */
 	getTimeRangeString() {
-		return `${formatTime(this.startHour)}—${formatTime(this.endHour)}`;
+		return `${ formatTime( this.startHour ) }—${ formatTime(
+			this.endHour
+		) }`;
 	}
 
 	/**
@@ -43,7 +47,7 @@ export class HourlyRange {
 		let duration = this.endHour - this.startHour;
 
 		// Handle negative duration (next day scenario)
-		if (duration < 0) {
+		if ( duration < 0 ) {
 			duration += 24;
 		}
 
@@ -56,7 +60,7 @@ export class HourlyRange {
 	 * @return {string} Start time in HH:mm format
 	 */
 	getStartTime() {
-		return formatTime(this.startHour);
+		return formatTime( this.startHour );
 	}
 
 	/**
@@ -65,7 +69,7 @@ export class HourlyRange {
 	 * @return {string} End time in HH:mm format
 	 */
 	getEndTime() {
-		return formatTime(this.endHour);
+		return formatTime( this.endHour );
 	}
 
 	/**
@@ -73,8 +77,8 @@ export class HourlyRange {
 	 *
 	 * @param {string} newStartTime - New start time in HH:mm format
 	 */
-	setStartTime(newStartTime) {
-		if (!newStartTime || typeof newStartTime !== 'string') {
+	setStartTime( newStartTime ) {
+		if ( ! newStartTime || typeof newStartTime !== 'string' ) {
 			return;
 		}
 
@@ -82,7 +86,7 @@ export class HourlyRange {
 		const currentDuration = this.getDuration();
 
 		// Parse new start time
-		const newStartHour = parseTime(newStartTime);
+		const newStartHour = parseTime( newStartTime );
 
 		// Update start hour and calculate new end hour
 		this.startHour = newStartHour;
@@ -94,8 +98,8 @@ export class HourlyRange {
 	 *
 	 * @param {number} newDuration - New duration in decimal hours
 	 */
-	setDuration(newDuration) {
-		if (typeof newDuration !== 'number' || newDuration < 0) {
+	setDuration( newDuration ) {
+		if ( typeof newDuration !== 'number' || newDuration < 0 ) {
 			return;
 		}
 
@@ -108,13 +112,13 @@ export class HourlyRange {
 	 *
 	 * @param {string} newEndTime - New end time in HH:mm format
 	 */
-	setEndTime(newEndTime) {
-		if (!newEndTime || typeof newEndTime !== 'string') {
+	setEndTime( newEndTime ) {
+		if ( ! newEndTime || typeof newEndTime !== 'string' ) {
 			return;
 		}
 
 		// Parse new end time
-		const newEndHour = parseTime(newEndTime);
+		const newEndHour = parseTime( newEndTime );
 
 		// Update end hour
 		this.endHour = newEndHour;

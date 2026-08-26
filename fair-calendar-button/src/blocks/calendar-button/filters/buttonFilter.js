@@ -15,24 +15,24 @@ import { useSelect, useDispatch } from '@wordpress/data';
  * Higher-order component to customize core/button when inside calendar-button
  */
 const withCalendarButtonCustomization = createHigherOrderComponent(
-	(BlockEdit) => {
-		return (props) => {
+	( BlockEdit ) => {
+		return ( props ) => {
 			const { name, clientId } = props;
 
 			// Only apply to core/button blocks
-			if (name !== 'core/button') {
-				return <BlockEdit {...props} />;
+			if ( name !== 'core/button' ) {
+				return <BlockEdit { ...props } />;
 			}
 
 			// Get parent block info
 			const { parentBlockId, isInsideCalendarButton } = useSelect(
-				(select) => {
+				( select ) => {
 					const { getBlockParents, getBlock } =
-						select('core/block-editor');
-					const parents = getBlockParents(clientId);
-					const immediateParentId = parents[parents.length - 1];
+						select( 'core/block-editor' );
+					const parents = getBlockParents( clientId );
+					const immediateParentId = parents[ parents.length - 1 ];
 					const parentBlock = immediateParentId
-						? getBlock(immediateParentId)
+						? getBlock( immediateParentId )
 						: null;
 
 					return {
@@ -42,47 +42,47 @@ const withCalendarButtonCustomization = createHigherOrderComponent(
 							'fair-calendar-button/calendar-button',
 					};
 				},
-				[clientId]
+				[ clientId ]
 			);
 
-			const { selectBlock } = useDispatch('core/block-editor');
+			const { selectBlock } = useDispatch( 'core/block-editor' );
 
 			// Function to focus parent block
 			const focusParent = () => {
-				if (parentBlockId) {
-					selectBlock(parentBlockId);
+				if ( parentBlockId ) {
+					selectBlock( parentBlockId );
 				}
 			};
 
 			// Only customize if this button is inside a calendar-button
-			if (!isInsideCalendarButton) {
-				return <BlockEdit {...props} />;
+			if ( ! isInsideCalendarButton ) {
+				return <BlockEdit { ...props } />;
 			}
 
 			return (
 				<>
-					{/* Original button edit component */}
-					<BlockEdit {...props} />
+					{ /* Original button edit component */ }
+					<BlockEdit { ...props } />
 
-					{/* Additional Inspector Controls */}
+					{ /* Additional Inspector Controls */ }
 					<InspectorControls>
 						<PanelBody
-							title={__(
+							title={ __(
 								'Calendar Event Details',
 								'fair-calendar-button'
-							)}
-							initialOpen={true}
+							) }
+							initialOpen={ true }
 							icon="calendar-alt"
 						>
 							<Button
 								variant="secondary"
-								onClick={focusParent}
+								onClick={ focusParent }
 								icon="arrow-up-alt"
 							>
-								{__(
+								{ __(
 									'Edit Calendar Event',
 									'fair-calendar-button'
-								)}
+								) }
 							</Button>
 						</PanelBody>
 					</InspectorControls>

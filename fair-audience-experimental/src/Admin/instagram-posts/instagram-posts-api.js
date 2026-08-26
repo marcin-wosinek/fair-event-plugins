@@ -9,12 +9,12 @@ import apiFetch from '@wordpress/api-fetch';
  * @param {string|null} status Optional status filter
  * @return {Promise<Array>} Promise resolving to array of posts
  */
-export function loadInstagramPosts(status = null) {
+export function loadInstagramPosts( status = null ) {
 	let path = '/fair-audience/v1/instagram/posts';
-	if (status) {
-		path += `?status=${encodeURIComponent(status)}`;
+	if ( status ) {
+		path += `?status=${ encodeURIComponent( status ) }`;
 	}
-	return apiFetch({ path });
+	return apiFetch( { path } );
 }
 
 /**
@@ -26,12 +26,12 @@ export function loadInstagramPosts(status = null) {
  * @param {number} [data.attachment_id] Temporary attachment to delete after a successful publish
  * @return {Promise<Object>} Promise resolving to created post
  */
-export function createInstagramPost(data) {
-	return apiFetch({
+export function createInstagramPost( data ) {
+	return apiFetch( {
 		path: '/fair-audience/v1/instagram/posts',
 		method: 'POST',
 		data,
-	});
+	} );
 }
 
 /**
@@ -40,12 +40,12 @@ export function createInstagramPost(data) {
  * @param {number} attachmentId WordPress attachment ID
  * @return {Promise<Object>} Promise resolving to { url: string }
  */
-export function getAttachmentUrl(attachmentId) {
-	return apiFetch({
+export function getAttachmentUrl( attachmentId ) {
+	return apiFetch( {
 		path: '/fair-audience/v1/instagram/upload-image',
 		method: 'POST',
 		data: { attachment_id: attachmentId },
-	});
+	} );
 }
 
 /**
@@ -54,12 +54,12 @@ export function getAttachmentUrl(attachmentId) {
  * @param {string} base64Data Base64-encoded PNG image data (with or without data URI prefix)
  * @return {Promise<Object>} Promise resolving to { url: string, attachment_id: number }
  */
-export function uploadImageBlob(base64Data) {
-	return apiFetch({
+export function uploadImageBlob( base64Data ) {
+	return apiFetch( {
 		path: '/fair-audience/v1/instagram/upload-blob',
 		method: 'POST',
 		data: { image_data: base64Data },
-	});
+	} );
 }
 
 /**
@@ -68,9 +68,9 @@ export function uploadImageBlob(base64Data) {
  * @param {number} id Post ID
  * @return {Promise<Object>} Promise resolving to deletion result
  */
-export function deleteInstagramPost(id) {
-	return apiFetch({
-		path: `/fair-audience/v1/instagram/posts/${id}`,
+export function deleteInstagramPost( id ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/instagram/posts/${ id }`,
 		method: 'DELETE',
-	});
+	} );
 }

@@ -10,7 +10,7 @@ import EditComponent from './components/EditComponent.js';
 /**
  * Register the block
  */
-registerBlockType('fair-events/event-info', {
+registerBlockType( 'fair-events/event-info', {
 	/**
 	 * Block edit function
 	 *
@@ -19,4 +19,4 @@ registerBlockType('fair-events/event-info', {
 	 * @return {JSX.Element} The edit component
 	 */
 	edit: EditComponent,
-});
+} );

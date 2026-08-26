@@ -7,9 +7,9 @@
 	"category": "widgets",
 	"icon": "info-outline",
 	"description": "Display basic event information including dates and venue location.",
-	"keywords": ["event", "info", "date", "venue", "location"],
+	"keywords": [ "event", "info", "date", "venue", "location" ],
 	"textdomain": "fair-events",
-	"usesContext": ["postId", "postType"],
+	"usesContext": [ "postId", "postType" ],
 	"supports": {
 		"html": false,
 		"anchor": true,

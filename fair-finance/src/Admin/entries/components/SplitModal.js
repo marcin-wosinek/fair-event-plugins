@@ -15,63 +15,63 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
-const isUrl = (text) => /^https?:\/\//i.test(text.trim());
+const isUrl = ( text ) => /^https?:\/\//i.test( text.trim() );
 
-const SplitEventUrlField = ({ value, eventDateId, onChange }) => {
-	const [searchTerm, setSearchTerm] = useState('');
-	const [searchResults, setSearchResults] = useState([]);
-	const [isSearching, setIsSearching] = useState(false);
+const SplitEventUrlField = ( { value, eventDateId, onChange } ) => {
+	const [ searchTerm, setSearchTerm ] = useState( '' );
+	const [ searchResults, setSearchResults ] = useState( [] );
+	const [ isSearching, setIsSearching ] = useState( false );
 
-	useEffect(() => {
-		if (searchTerm.length < 2 || isUrl(searchTerm)) {
-			setSearchResults([]);
+	useEffect( () => {
+		if ( searchTerm.length < 2 || isUrl( searchTerm ) ) {
+			setSearchResults( [] );
 			return;
 		}
 
-		const timeout = setTimeout(async () => {
-			setIsSearching(true);
+		const timeout = setTimeout( async () => {
+			setIsSearching( true );
 			try {
 				const params = new URLSearchParams();
-				params.append('search', searchTerm);
-				params.append('per_page', 10);
-				params.append('include_sources', true);
-				const data = await apiFetch({
-					path: `/fair-events/v1/event-dates?${params.toString()}`,
-				});
+				params.append( 'search', searchTerm );
+				params.append( 'per_page', 10 );
+				params.append( 'include_sources', true );
+				const data = await apiFetch( {
+					path: `/fair-events/v1/event-dates?${ params.toString() }`,
+				} );
 				setSearchResults(
-					(Array.isArray(data) ? data : []).filter(
-						(ed) => ed.display_url
+					( Array.isArray( data ) ? data : [] ).filter(
+						( ed ) => ed.display_url
 					)
 				);
 			} catch {
-				setSearchResults([]);
+				setSearchResults( [] );
 			} finally {
-				setIsSearching(false);
+				setIsSearching( false );
 			}
-		}, 300);
+		}, 300 );
 
-		return () => clearTimeout(timeout);
-	}, [searchTerm]);
+		return () => clearTimeout( timeout );
+	}, [ searchTerm ] );
 
-	if (value) {
+	if ( value ) {
 		return (
-			<HStack spacing={2}>
+			<HStack spacing={ 2 }>
 				<span
-					style={{
+					style={ {
 						fontSize: '12px',
 						wordBreak: 'break-all',
 						flex: 1,
-					}}
+					} }
 				>
-					{value}
+					{ value }
 				</span>
 				<Button
 					variant="tertiary"
 					size="small"
 					isDestructive
-					onClick={() => onChange('', null)}
+					onClick={ () => onChange( '', null ) }
 				>
-					{__('Clear', 'fair-payments-connector')}
+					{ __( 'Clear', 'fair-payments-connector' ) }
 				</Button>
 			</HStack>
 		);
@@ -80,103 +80,103 @@ const SplitEventUrlField = ({ value, eventDateId, onChange }) => {
 	return (
 		<div>
 			<TextControl
-				value={searchTerm}
-				onChange={setSearchTerm}
-				placeholder={__(
+				value={ searchTerm }
+				onChange={ setSearchTerm }
+				placeholder={ __(
 					'Search events or paste a URL...',
 					'fair-payments-connector'
-				)}
+				) }
 				autoComplete="off"
 			/>
-			{isUrl(searchTerm) && (
+			{ isUrl( searchTerm ) && (
 				<Button
 					variant="primary"
 					size="compact"
-					style={{ marginBottom: '4px' }}
-					onClick={() => {
-						onChange(searchTerm.trim(), null);
-						setSearchTerm('');
-					}}
+					style={ { marginBottom: '4px' } }
+					onClick={ () => {
+						onChange( searchTerm.trim(), null );
+						setSearchTerm( '' );
+					} }
 				>
-					{__('Use this URL', 'fair-payments-connector')}
+					{ __( 'Use this URL', 'fair-payments-connector' ) }
 				</Button>
-			)}
-			{isSearching && <Spinner />}
-			{searchResults.length > 0 && (
+			) }
+			{ isSearching && <Spinner /> }
+			{ searchResults.length > 0 && (
 				<div
-					style={{
+					style={ {
 						border: '1px solid #ddd',
 						borderRadius: '4px',
 						maxHeight: '150px',
 						overflowY: 'auto',
-					}}
+					} }
 				>
-					{searchResults.map((event) => (
+					{ searchResults.map( ( event ) => (
 						<div
-							key={event.id}
-							style={{
+							key={ event.id }
+							style={ {
 								padding: '6px 10px',
 								cursor: 'pointer',
 								borderBottom: '1px solid #eee',
 								fontSize: '13px',
-							}}
-							onClick={() => {
+							} }
+							onClick={ () => {
 								const isExternalSource = String(
 									event.id
-								).startsWith('source_');
+								).startsWith( 'source_' );
 								onChange(
 									event.display_url,
 									isExternalSource ? null : event.id
 								);
-								setSearchTerm('');
-								setSearchResults([]);
-							}}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
+								setSearchTerm( '' );
+								setSearchResults( [] );
+							} }
+							onKeyDown={ ( e ) => {
+								if ( e.key === 'Enter' ) {
 									const isExternalSource = String(
 										event.id
-									).startsWith('source_');
+									).startsWith( 'source_' );
 									onChange(
 										event.display_url,
 										isExternalSource ? null : event.id
 									);
-									setSearchTerm('');
-									setSearchResults([]);
+									setSearchTerm( '' );
+									setSearchResults( [] );
 								}
-							}}
+							} }
 							role="button"
-							tabIndex={0}
+							tabIndex={ 0 }
 						>
-							<strong>{event.title}</strong>
+							<strong>{ event.title }</strong>
 							<span
-								style={{
+								style={ {
 									marginLeft: '8px',
 									color: '#666',
-								}}
+								} }
 							>
-								{event.start_datetime?.split('T')[0] ||
-									event.start_datetime?.split(' ')[0]}
+								{ event.start_datetime?.split( 'T' )[ 0 ] ||
+									event.start_datetime?.split( ' ' )[ 0 ] }
 							</span>
 						</div>
-					))}
+					) ) }
 				</div>
-			)}
+			) }
 		</div>
 	);
 };
 
-const SplitModal = ({
+const SplitModal = ( {
 	entry,
 	budgets,
 	eventsEnabled,
 	onSplit,
 	onCancel,
 	onUnsplit,
-}) => {
+} ) => {
 	const isEditMode = entry.children && entry.children.length > 0;
-	const [allocations, setAllocations] = useState(
+	const [ allocations, setAllocations ] = useState(
 		isEditMode
-			? entry.children.map((child) => ({
+			? entry.children.map( ( child ) => ( {
 					budget_id: child.budget_id
 						? child.budget_id.toString()
 						: '',
@@ -184,7 +184,7 @@ const SplitModal = ({
 					description: child.description || '',
 					event_url: child.event_url || '',
 					event_date_id: child.event_date_id || null,
-			  }))
+			  } ) )
 			: [
 					{
 						budget_id: '',
@@ -202,27 +202,30 @@ const SplitModal = ({
 					},
 			  ]
 	);
-	const [isSaving, setIsSaving] = useState(false);
-	const [error, setError] = useState(null);
+	const [ isSaving, setIsSaving ] = useState( false );
+	const [ error, setError ] = useState( null );
 
 	const budgetOptions = [
-		{ label: __('-- No Budget --', 'fair-payments-connector'), value: '' },
-		...budgets.map((budget) => ({
+		{
+			label: __( '-- No Budget --', 'fair-payments-connector' ),
+			value: '',
+		},
+		...budgets.map( ( budget ) => ( {
 			label: budget.name,
 			value: budget.id.toString(),
-		})),
+		} ) ),
 	];
 
-	const updateAllocation = (index, key, value) => {
-		setAllocations((prev) => {
-			const updated = [...prev];
-			updated[index] = { ...updated[index], [key]: value };
+	const updateAllocation = ( index, key, value ) => {
+		setAllocations( ( prev ) => {
+			const updated = [ ...prev ];
+			updated[ index ] = { ...updated[ index ], [ key ]: value };
 			return updated;
-		});
+		} );
 	};
 
 	const addRow = () => {
-		setAllocations((prev) => [
+		setAllocations( ( prev ) => [
 			...prev,
 			{
 				budget_id: '',
@@ -231,151 +234,159 @@ const SplitModal = ({
 				event_url: '',
 				event_date_id: null,
 			},
-		]);
+		] );
 	};
 
-	const removeRow = (index) => {
-		setAllocations((prev) => prev.filter((_, i) => i !== index));
+	const removeRow = ( index ) => {
+		setAllocations( ( prev ) => prev.filter( ( _, i ) => i !== index ) );
 	};
 
 	const totalAllocated = allocations.reduce(
-		(sum, a) => sum + (parseFloat(a.amount) || 0),
+		( sum, a ) => sum + ( parseFloat( a.amount ) || 0 ),
 		0
 	);
 	const remaining = entry.amount - totalAllocated;
-	const isBalanced = Math.abs(remaining) < 0.01;
+	const isBalanced = Math.abs( remaining ) < 0.01;
 	const allAmountsNonzero = allocations.every(
-		(a) => !Number.isNaN(parseFloat(a.amount)) && parseFloat(a.amount) !== 0
+		( a ) =>
+			! Number.isNaN( parseFloat( a.amount ) ) &&
+			parseFloat( a.amount ) !== 0
 	);
 
-	const handleSubmit = async (e) => {
+	const handleSubmit = async ( e ) => {
 		e.preventDefault();
-		setIsSaving(true);
-		setError(null);
+		setIsSaving( true );
+		setError( null );
 
 		try {
-			await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${entry.id}/split`,
+			await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ entry.id }/split`,
 				method: isEditMode ? 'PUT' : 'POST',
 				data: {
-					allocations: allocations.map((a) => ({
+					allocations: allocations.map( ( a ) => ( {
 						budget_id: a.budget_id
-							? parseInt(a.budget_id, 10)
+							? parseInt( a.budget_id, 10 )
 							: null,
-						amount: parseFloat(a.amount),
+						amount: parseFloat( a.amount ),
 						description: a.description,
 						event_url: a.event_url || null,
 						event_date_id: a.event_date_id || null,
-					})),
+					} ) ),
 				},
-			});
+			} );
 			onSplit();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to split entry.', 'fair-payments-connector')
+					__( 'Failed to split entry.', 'fair-payments-connector' )
 			);
 		} finally {
-			setIsSaving(false);
+			setIsSaving( false );
 		}
 	};
 
-	const formatAmount = (amount) => {
-		return new Intl.NumberFormat('en-US', {
+	const formatAmount = ( amount ) => {
+		return new Intl.NumberFormat( 'en-US', {
 			style: 'currency',
 			currency: 'EUR',
-		}).format(amount);
+		} ).format( amount );
 	};
 
 	return (
 		<Modal
 			title={
 				isEditMode
-					? __('Edit Split', 'fair-payments-connector')
-					: __('Split Entry', 'fair-payments-connector')
+					? __( 'Edit Split', 'fair-payments-connector' )
+					: __( 'Split Entry', 'fair-payments-connector' )
 			}
-			onRequestClose={onCancel}
-			style={{ maxWidth: '640px', width: '100%' }}
+			onRequestClose={ onCancel }
+			style={ { maxWidth: '640px', width: '100%' } }
 		>
-			<form onSubmit={handleSubmit}>
-				<VStack spacing={4}>
-					{/* Original entry info */}
+			<form onSubmit={ handleSubmit }>
+				<VStack spacing={ 4 }>
+					{ /* Original entry info */ }
 					<div
-						style={{
+						style={ {
 							padding: '12px',
 							background: '#f0f0f1',
 							borderRadius: '4px',
-						}}
+						} }
 					>
-						<HStack spacing={4}>
+						<HStack spacing={ 4 }>
 							<div>
 								<strong>
-									{__('Amount:', 'fair-payments-connector')}
-								</strong>{' '}
-								{formatAmount(entry.amount)}
+									{ __(
+										'Amount:',
+										'fair-payments-connector'
+									) }
+								</strong>{ ' ' }
+								{ formatAmount( entry.amount ) }
 							</div>
 							<div>
 								<strong>
-									{__('Type:', 'fair-payments-connector')}
-								</strong>{' '}
-								{entry.entry_type === 'cost'
-									? __('Cost', 'fair-payments-connector')
-									: __('Income', 'fair-payments-connector')}
+									{ __( 'Type:', 'fair-payments-connector' ) }
+								</strong>{ ' ' }
+								{ entry.entry_type === 'cost'
+									? __( 'Cost', 'fair-payments-connector' )
+									: __(
+											'Income',
+											'fair-payments-connector'
+									  ) }
 							</div>
 							<div>
 								<strong>
-									{__('Date:', 'fair-payments-connector')}
-								</strong>{' '}
-								{entry.entry_date}
+									{ __( 'Date:', 'fair-payments-connector' ) }
+								</strong>{ ' ' }
+								{ entry.entry_date }
 							</div>
 						</HStack>
-						{entry.description && (
-							<div style={{ marginTop: '4px' }}>
+						{ entry.description && (
+							<div style={ { marginTop: '4px' } }>
 								<strong>
-									{__(
+									{ __(
 										'Description:',
 										'fair-payments-connector'
-									)}
-								</strong>{' '}
-								{entry.description}
+									) }
+								</strong>{ ' ' }
+								{ entry.description }
 							</div>
-						)}
+						) }
 					</div>
 
-					{error && (
+					{ error && (
 						<div
 							className="notice notice-error"
-							style={{ margin: 0, padding: '8px' }}
+							style={ { margin: 0, padding: '8px' } }
 						>
-							{error}
+							{ error }
 						</div>
-					)}
+					) }
 
-					{/* Allocation rows */}
-					{allocations.map((allocation, index) => (
+					{ /* Allocation rows */ }
+					{ allocations.map( ( allocation, index ) => (
 						<div
-							key={index}
-							style={{
+							key={ index }
+							style={ {
 								padding: '12px',
 								border: '1px solid #ddd',
 								borderRadius: '4px',
-							}}
+							} }
 						>
-							<HStack spacing={2} alignment="top" wrap>
+							<HStack spacing={ 2 } alignment="top" wrap>
 								<div
-									style={{
+									style={ {
 										flex: 1,
 										minWidth: '150px',
-									}}
+									} }
 								>
 									<SelectControl
-										label={__(
+										label={ __(
 											'Budget',
 											'fair-payments-connector'
-										)}
-										value={allocation.budget_id}
-										options={budgetOptions}
-										onChange={(value) =>
+										) }
+										value={ allocation.budget_id }
+										options={ budgetOptions }
+										onChange={ ( value ) =>
 											updateAllocation(
 												index,
 												'budget_id',
@@ -384,14 +395,14 @@ const SplitModal = ({
 										}
 									/>
 								</div>
-								<div style={{ width: '120px' }}>
+								<div style={ { width: '120px' } }>
 									<TextControl
-										label={__(
+										label={ __(
 											'Amount',
 											'fair-payments-connector'
-										)}
-										value={allocation.amount}
-										onChange={(value) =>
+										) }
+										value={ allocation.amount }
+										onChange={ ( value ) =>
 											updateAllocation(
 												index,
 												'amount',
@@ -403,130 +414,136 @@ const SplitModal = ({
 										required
 									/>
 								</div>
-								{allocations.length > 2 && (
-									<div style={{ paddingTop: '24px' }}>
+								{ allocations.length > 2 && (
+									<div style={ { paddingTop: '24px' } }>
 										<Button
 											variant="tertiary"
 											isDestructive
 											size="small"
-											onClick={() => removeRow(index)}
+											onClick={ () => removeRow( index ) }
 										>
-											{__(
+											{ __(
 												'Remove',
 												'fair-payments-connector'
-											)}
+											) }
 										</Button>
 									</div>
-								)}
+								) }
 							</HStack>
 							<TextareaControl
-								label={__(
+								label={ __(
 									'Description',
 									'fair-payments-connector'
-								)}
-								value={allocation.description}
-								onChange={(value) =>
+								) }
+								value={ allocation.description }
+								onChange={ ( value ) =>
 									updateAllocation(
 										index,
 										'description',
 										value
 									)
 								}
-								rows={2}
+								rows={ 2 }
 							/>
-							{eventsEnabled && (
-								<div style={{ marginTop: '8px' }}>
+							{ eventsEnabled && (
+								<div style={ { marginTop: '8px' } }>
 									<div
-										style={{
+										style={ {
 											marginBottom: '4px',
 											fontWeight: '600',
 											fontSize: '13px',
-										}}
+										} }
 									>
-										{__('Link', 'fair-payments-connector')}
+										{ __(
+											'Link',
+											'fair-payments-connector'
+										) }
 									</div>
 									<SplitEventUrlField
-										value={allocation.event_url}
-										eventDateId={allocation.event_date_id}
-										onChange={(url, dateId) => {
-											setAllocations((prev) => {
-												const updated = [...prev];
-												updated[index] = {
-													...updated[index],
+										value={ allocation.event_url }
+										eventDateId={ allocation.event_date_id }
+										onChange={ ( url, dateId ) => {
+											setAllocations( ( prev ) => {
+												const updated = [ ...prev ];
+												updated[ index ] = {
+													...updated[ index ],
 													event_url: url,
 													event_date_id: dateId,
 												};
 												return updated;
-											});
-										}}
+											} );
+										} }
 									/>
 								</div>
-							)}
+							) }
 						</div>
-					))}
+					) ) }
 
-					<Button variant="secondary" onClick={addRow}>
-						{__('+ Add Row', 'fair-payments-connector')}
+					<Button variant="secondary" onClick={ addRow }>
+						{ __( '+ Add Row', 'fair-payments-connector' ) }
 					</Button>
 
-					{/* Running total */}
+					{ /* Running total */ }
 					<div
-						style={{
+						style={ {
 							padding: '8px 12px',
 							background: isBalanced ? '#edfaef' : '#fcf0f1',
 							borderRadius: '4px',
 							fontWeight: 'bold',
-						}}
+						} }
 					>
-						{__('Allocated:', 'fair-payments-connector')}{' '}
-						{formatAmount(totalAllocated)} /{' '}
-						{formatAmount(entry.amount)}
-						{!isBalanced && (
+						{ __( 'Allocated:', 'fair-payments-connector' ) }{ ' ' }
+						{ formatAmount( totalAllocated ) } /{ ' ' }
+						{ formatAmount( entry.amount ) }
+						{ ! isBalanced && (
 							<span
-								style={{
+								style={ {
 									marginLeft: '12px',
 									color: '#d63638',
-								}}
+								} }
 							>
-								{__('Remaining:', 'fair-payments-connector')}{' '}
-								{formatAmount(remaining)}
+								{ __(
+									'Remaining:',
+									'fair-payments-connector'
+								) }{ ' ' }
+								{ formatAmount( remaining ) }
 							</span>
-						)}
+						) }
 					</div>
 
 					<HStack
-						justify={isEditMode ? 'space-between' : 'flex-end'}
-						spacing={2}
+						justify={ isEditMode ? 'space-between' : 'flex-end' }
+						spacing={ 2 }
 					>
-						{isEditMode && (
+						{ isEditMode && (
 							<Button
 								variant="tertiary"
 								isDestructive
-								onClick={onUnsplit}
-								disabled={isSaving}
+								onClick={ onUnsplit }
+								disabled={ isSaving }
 							>
-								{__('Unsplit', 'fair-payments-connector')}
+								{ __( 'Unsplit', 'fair-payments-connector' ) }
 							</Button>
-						)}
-						<HStack justify="flex-end" spacing={2}>
+						) }
+						<HStack justify="flex-end" spacing={ 2 }>
 							<Button
 								variant="tertiary"
-								onClick={onCancel}
-								disabled={isSaving}
+								onClick={ onCancel }
+								disabled={ isSaving }
 							>
-								{__('Cancel', 'fair-payments-connector')}
+								{ __( 'Cancel', 'fair-payments-connector' ) }
 							</Button>
 							<Button
 								variant="primary"
 								type="submit"
-								isBusy={isSaving}
+								isBusy={ isSaving }
 								disabled={
 									isSaving ||
-									!isBalanced ||
-									!allAmountsNonzero
+									! isBalanced ||
+									! allAmountsNonzero
 								}
 							>
-								{isEditMode
+								{ isEditMode
 									? __(
 											'Update Split',
 											'fair-payments-connector'
@@ -534,7 +551,7 @@ const SplitModal = ({
 									: __(
 											'Split Entry',
 											'fair-payments-connector'
-									  )}
+									  ) }
 							</Button>
 						</HStack>
 					</HStack>

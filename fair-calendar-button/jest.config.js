@@ -2,7 +2,7 @@ export default {
 	preset: '@wordpress/jest-preset-default',
 	testEnvironment: 'jsdom',
 
-	testMatch: ['**/__tests__/**/*.test.js', '**/__tests__/**/*.test.jsx'],
+	testMatch: [ '**/__tests__/**/*.test.js', '**/__tests__/**/*.test.jsx' ],
 
 	setupFilesAfterEnv: [],
 
@@ -24,8 +24,8 @@ export default {
 			'babel-jest',
 			{
 				presets: [
-					['@babel/preset-env', { targets: { node: 'current' } }],
-					['@babel/preset-react', { runtime: 'automatic' }],
+					[ '@babel/preset-env', { targets: { node: 'current' } } ],
+					[ '@babel/preset-react', { runtime: 'automatic' } ],
 				],
 			},
 		],
@@ -40,7 +40,7 @@ export default {
 	],
 
 	coverageDirectory: 'coverage',
-	coverageReporters: ['text', 'lcov', 'html'],
+	coverageReporters: [ 'text', 'lcov', 'html' ],
 
 	moduleNameMapper: {
 		'^@/(.*)$': '<rootDir>/src/$1',

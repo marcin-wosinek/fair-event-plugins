@@ -36,74 +36,74 @@ import {
  * @param {boolean}  props.shouldReload Whether to reload settings (external trigger)
  * @return {JSX.Element} The connection tab
  */
-export default function ConnectionTab({ onNotice, shouldReload }) {
-	const [connected, setConnected] = useState(false);
-	const [mode, setMode] = useState('test');
-	const [organizationId, setOrganizationId] = useState('');
-	const [profileId, setProfileId] = useState('');
-	const [tokenExpires, setTokenExpires] = useState(null);
-	const [isLoading, setIsLoading] = useState(false);
-	const [isRefreshing, setIsRefreshing] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
-	const [overview, setOverview] = useState(null);
-	const [overviewLoading, setOverviewLoading] = useState(false);
-	const [overviewError, setOverviewError] = useState(null);
-	const [isTestingPayment, setIsTestingPayment] = useState(false);
-	const [testCheckoutUrl, setTestCheckoutUrl] = useState(null);
+export default function ConnectionTab( { onNotice, shouldReload } ) {
+	const [ connected, setConnected ] = useState( false );
+	const [ mode, setMode ] = useState( 'test' );
+	const [ organizationId, setOrganizationId ] = useState( '' );
+	const [ profileId, setProfileId ] = useState( '' );
+	const [ tokenExpires, setTokenExpires ] = useState( null );
+	const [ isLoading, setIsLoading ] = useState( false );
+	const [ isRefreshing, setIsRefreshing ] = useState( false );
+	const [ isSaving, setIsSaving ] = useState( false );
+	const [ overview, setOverview ] = useState( null );
+	const [ overviewLoading, setOverviewLoading ] = useState( false );
+	const [ overviewError, setOverviewError ] = useState( null );
+	const [ isTestingPayment, setIsTestingPayment ] = useState( false );
+	const [ testCheckoutUrl, setTestCheckoutUrl ] = useState( null );
 
 	/**
 	 * Load connection settings from API
 	 */
 	const loadSettings = () => {
-		if (isLoading) {
+		if ( isLoading ) {
 			console.log(
 				'[Fair Payments Connector] Skipping loadSettings - already loading'
 			);
 			return;
 		}
 
-		setIsLoading(true);
+		setIsLoading( true );
 
 		loadConnectionSettings()
-			.then((settings) => {
-				setConnected(settings.connected);
-				setMode(settings.mode);
-				setOrganizationId(settings.organizationId);
-				setProfileId(settings.profileId);
-				setTokenExpires(settings.tokenExpires);
-				setIsLoading(false);
-			})
-			.catch((error) => {
+			.then( ( settings ) => {
+				setConnected( settings.connected );
+				setMode( settings.mode );
+				setOrganizationId( settings.organizationId );
+				setProfileId( settings.profileId );
+				setTokenExpires( settings.tokenExpires );
+				setIsLoading( false );
+			} )
+			.catch( ( error ) => {
 				console.error(
 					'[Fair Payments Connector] Failed to load settings:',
 					error
 				);
-				onNotice({
+				onNotice( {
 					status: 'error',
 					message: __(
 						'Failed to load settings.',
 						'fair-payments-connector'
 					),
-				});
-				setIsLoading(false);
-			});
+				} );
+				setIsLoading( false );
+			} );
 	};
 
 	/**
 	 * Load settings on mount
 	 */
-	useEffect(() => {
+	useEffect( () => {
 		loadSettings();
-	}, []);
+	}, [] );
 
 	/**
 	 * Reload settings when shouldReload changes
 	 */
-	useEffect(() => {
-		if (shouldReload) {
+	useEffect( () => {
+		if ( shouldReload ) {
 			loadSettings();
 		}
-	}, [shouldReload]);
+	}, [ shouldReload ] );
 
 	/**
 	 * Load the connected profile name and enabled payment methods.
@@ -111,43 +111,43 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 	 * Re-runs whenever the connection state or active mode changes, since the
 	 * enabled methods differ between test and live mode.
 	 */
-	useEffect(() => {
-		if (!connected) {
-			setOverview(null);
-			setOverviewError(null);
+	useEffect( () => {
+		if ( ! connected ) {
+			setOverview( null );
+			setOverviewError( null );
 			return;
 		}
 
-		setOverviewLoading(true);
-		setOverviewError(null);
+		setOverviewLoading( true );
+		setOverviewError( null );
 
 		loadConnectionOverview()
-			.then((data) => {
-				setOverview(data);
-				setOverviewLoading(false);
-			})
-			.catch((error) => {
+			.then( ( data ) => {
+				setOverview( data );
+				setOverviewLoading( false );
+			} )
+			.catch( ( error ) => {
 				setOverviewError(
 					error.message ||
-						(error.data && error.data.message) ||
+						( error.data && error.data.message ) ||
 						__(
 							'Failed to load payment methods.',
 							'fair-payments-connector'
 						)
 				);
-				setOverviewLoading(false);
-			});
-	}, [connected, mode]);
+				setOverviewLoading( false );
+			} );
+	}, [ connected, mode ] );
 
 	/**
 	 * Handle Connect button click — fetches a CSRF state token first, then redirects.
 	 */
 	const handleConnect = () => {
 		fetchOAuthState()
-			.then((state) => {
-				const siteId = btoa(window.location.hostname);
+			.then( ( state ) => {
+				const siteId = btoa( window.location.hostname );
 				const returnUrl =
-					window.location.href.split('?')[0] +
+					window.location.href.split( '?' )[ 0 ] +
 					'?page=fair-payments-connector-settings';
 				const siteName = document.title;
 				const siteUrl = window.location.origin;
@@ -155,23 +155,23 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 				const authorizeUrl = new URL(
 					'https://fair-event-plugins.com/oauth/authorize'
 				);
-				authorizeUrl.searchParams.set('site_id', siteId);
-				authorizeUrl.searchParams.set('return_url', returnUrl);
-				authorizeUrl.searchParams.set('site_name', siteName);
-				authorizeUrl.searchParams.set('site_url', siteUrl);
-				authorizeUrl.searchParams.set('state', state);
+				authorizeUrl.searchParams.set( 'site_id', siteId );
+				authorizeUrl.searchParams.set( 'return_url', returnUrl );
+				authorizeUrl.searchParams.set( 'site_name', siteName );
+				authorizeUrl.searchParams.set( 'site_url', siteUrl );
+				authorizeUrl.searchParams.set( 'state', state );
 
 				window.location.href = authorizeUrl.toString();
-			})
-			.catch(() => {
-				onNotice({
+			} )
+			.catch( () => {
+				onNotice( {
 					status: 'error',
 					message: __(
 						'Failed to initiate Mollie connection. Please try again.',
 						'fair-payments-connector'
 					),
-				});
-			});
+				} );
+			} );
 	};
 
 	/**
@@ -179,7 +179,7 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 	 */
 	const handleDisconnect = () => {
 		if (
-			!confirm(
+			! confirm(
 				__(
 					'Are you sure you want to disconnect from Mollie? You will need to reconnect to accept payments.',
 					'fair-payments-connector'
@@ -189,30 +189,30 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 			return;
 		}
 
-		setIsSaving(true);
+		setIsSaving( true );
 
 		disconnectOAuth()
-			.then(() => {
+			.then( () => {
 				loadSettings();
-				onNotice({
+				onNotice( {
 					status: 'success',
 					message: __(
 						'Disconnected from Mollie.',
 						'fair-payments-connector'
 					),
-				});
-				setIsSaving(false);
-			})
-			.catch(() => {
-				onNotice({
+				} );
+				setIsSaving( false );
+			} )
+			.catch( () => {
+				onNotice( {
 					status: 'error',
 					message: __(
 						'Failed to disconnect.',
 						'fair-payments-connector'
 					),
-				});
-				setIsSaving(false);
-			});
+				} );
+				setIsSaving( false );
+			} );
 	};
 
 	/**
@@ -220,48 +220,48 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 	 *
 	 * @param {string} newMode New mode value (test/live)
 	 */
-	const handleModeChange = (newMode) => {
-		setIsSaving(true);
+	const handleModeChange = ( newMode ) => {
+		setIsSaving( true );
 
-		saveSettings({
+		saveSettings( {
 			fair_payment_mode: newMode,
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				loadSettings();
-				onNotice({
+				onNotice( {
 					status: 'success',
 					message: sprintf(
 						/* translators: %s: mode name (Test or Live) */
-						__('Switched to %s mode.', 'fair-payments-connector'),
+						__( 'Switched to %s mode.', 'fair-payments-connector' ),
 						newMode === 'test'
-							? __('Test', 'fair-payments-connector')
-							: __('Live', 'fair-payments-connector')
+							? __( 'Test', 'fair-payments-connector' )
+							: __( 'Live', 'fair-payments-connector' )
 					),
-				});
-				setIsSaving(false);
-			})
-			.catch(() => {
-				onNotice({
+				} );
+				setIsSaving( false );
+			} )
+			.catch( () => {
+				onNotice( {
 					status: 'error',
 					message: __(
 						'Failed to change mode.',
 						'fair-payments-connector'
 					),
-				});
-				setIsSaving(false);
-			});
+				} );
+				setIsSaving( false );
+			} );
 	};
 
 	/**
 	 * Handle manual token refresh
 	 */
 	const handleRefreshToken = () => {
-		setIsRefreshing(true);
+		setIsRefreshing( true );
 
 		testConnection()
-			.then((response) => {
+			.then( ( response ) => {
 				loadSettings();
-				onNotice({
+				onNotice( {
 					status: 'success',
 					message:
 						response.message ||
@@ -269,20 +269,20 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 							'Connection refreshed successfully.',
 							'fair-payments-connector'
 						),
-				});
-				setIsRefreshing(false);
-			})
-			.catch((error) => {
+				} );
+				setIsRefreshing( false );
+			} )
+			.catch( ( error ) => {
 				// Log detailed error for troubleshooting
 				console.error(
 					'[Fair Payments Connector] Connection test failed:',
 					error
 				);
-				console.error('[Fair Payments Connector] Error details:', {
+				console.error( '[Fair Payments Connector] Error details:', {
 					message: error.message,
 					code: error.code,
 					data: error.data,
-				});
+				} );
 
 				// Build detailed error message for admin
 				let errorMessage =
@@ -291,28 +291,28 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 						'fair-payments-connector'
 					) + ' ';
 
-				if (error.message) {
+				if ( error.message ) {
 					errorMessage += error.message;
 				}
 
-				if (error.data && error.data.details) {
+				if ( error.data && error.data.details ) {
 					const details = error.data.details;
 					const debugInfo = [];
 
-					if (details.message) {
-						debugInfo.push('Error: ' + details.message);
+					if ( details.message ) {
+						debugInfo.push( 'Error: ' + details.message );
 					}
-					if (details.file && details.line) {
+					if ( details.file && details.line ) {
 						debugInfo.push(
 							'Location: ' + details.file + ':' + details.line
 						);
 					}
-					if (details.code) {
-						debugInfo.push('Code: ' + details.code);
+					if ( details.code ) {
+						debugInfo.push( 'Code: ' + details.code );
 					}
 
-					if (debugInfo.length > 0) {
-						errorMessage += ' (' + debugInfo.join(', ') + ')';
+					if ( debugInfo.length > 0 ) {
+						errorMessage += ' (' + debugInfo.join( ', ' ) + ')';
 					}
 				}
 
@@ -323,12 +323,12 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 						'fair-payments-connector'
 					);
 
-				onNotice({
+				onNotice( {
 					status: 'error',
 					message: errorMessage,
-				});
-				setIsRefreshing(false);
-			});
+				} );
+				setIsRefreshing( false );
+			} );
 	};
 
 	/**
@@ -343,7 +343,7 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 		if (
 			mode === 'live' &&
 			// eslint-disable-next-line no-alert
-			!confirm(
+			! confirm(
 				__(
 					'You are in live mode. This creates a real 1-unit payment with real money and gateway fees. Continue?',
 					'fair-payments-connector'
@@ -353,24 +353,24 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 			return;
 		}
 
-		setIsTestingPayment(true);
-		setTestCheckoutUrl(null);
+		setIsTestingPayment( true );
+		setTestCheckoutUrl( null );
 
 		createTestPayment()
-			.then((response) => {
-				setTestCheckoutUrl(response.checkout_url);
-				window.open(response.checkout_url, '_blank', 'noopener');
-				onNotice({
+			.then( ( response ) => {
+				setTestCheckoutUrl( response.checkout_url );
+				window.open( response.checkout_url, '_blank', 'noopener' );
+				onNotice( {
 					status: 'success',
 					message: __(
 						'Test payment created. Complete or cancel the checkout in the new tab; its status updates automatically.',
 						'fair-payments-connector'
 					),
-				});
-				setIsTestingPayment(false);
-			})
-			.catch((error) => {
-				onNotice({
+				} );
+				setIsTestingPayment( false );
+			} )
+			.catch( ( error ) => {
+				onNotice( {
 					status: 'error',
 					message:
 						error.message ||
@@ -378,20 +378,20 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 							'Failed to create test payment.',
 							'fair-payments-connector'
 						),
-				});
-				setIsTestingPayment(false);
-			});
+				} );
+				setIsTestingPayment( false );
+			} );
 	};
 
-	if (isLoading) {
+	if ( isLoading ) {
 		return (
 			<Card>
 				<CardBody>
 					<p>
-						{__(
+						{ __(
 							'Loading connection settings...',
 							'fair-payments-connector'
-						)}
+						) }
 					</p>
 				</CardBody>
 			</Card>
@@ -403,137 +403,141 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 			<Card>
 				<CardBody>
 					<h2>
-						{__('Mollie Connection', 'fair-payments-connector')}
+						{ __( 'Mollie Connection', 'fair-payments-connector' ) }
 					</h2>
 
-					{!connected ? (
+					{ ! connected ? (
 						<>
 							<p>
-								{__(
+								{ __(
 									'Connect your Mollie account to accept payments. This uses secure OAuth authentication.',
 									'fair-payments-connector'
-								)}
+								) }
 							</p>
-							<Button isPrimary onClick={handleConnect}>
-								{__(
+							<Button isPrimary onClick={ handleConnect }>
+								{ __(
 									'Connect with Mollie',
 									'fair-payments-connector'
-								)}
+								) }
 							</Button>
 						</>
 					) : (
 						<>
-							<Notice status="success" isDismissible={false}>
-								{__(
+							<Notice status="success" isDismissible={ false }>
+								{ __(
 									'Connected to Mollie',
 									'fair-payments-connector'
-								)}
+								) }
 							</Notice>
 
-							{organizationId && (
-								<div style={{ marginTop: '1rem' }}>
+							{ organizationId && (
+								<div style={ { marginTop: '1rem' } }>
 									<p>
 										<strong>
-											{__(
+											{ __(
 												'Organization ID:',
 												'fair-payments-connector'
-											)}
-										</strong>{' '}
-										<code>{organizationId}</code>
+											) }
+										</strong>{ ' ' }
+										<code>{ organizationId }</code>
 									</p>
 								</div>
-							)}
+							) }
 
-							<div style={{ marginTop: '0.5rem' }}>
+							<div style={ { marginTop: '0.5rem' } }>
 								<p>
 									<strong>
-										{__(
+										{ __(
 											'Profile ID:',
 											'fair-payments-connector'
-										)}
-									</strong>{' '}
-									{profileId ? (
-										<code>{profileId}</code>
+										) }
+									</strong>{ ' ' }
+									{ profileId ? (
+										<code>{ profileId }</code>
 									) : (
-										<span style={{ color: '#d63638' }}>
-											{__(
+										<span style={ { color: '#d63638' } }>
+											{ __(
 												'Missing (required for payments)',
 												'fair-payments-connector'
-											)}
+											) }
 										</span>
-									)}
+									) }
 								</p>
-								{!profileId && (
+								{ ! profileId && (
 									<p
-										style={{
+										style={ {
 											fontSize: '0.9em',
 											color: '#d63638',
 											marginTop: '0.5rem',
-										}}
+										} }
 									>
-										{__(
+										{ __(
 											'Please reconnect to Mollie to fetch the profile ID.',
 											'fair-payments-connector'
-										)}
+										) }
 									</p>
-								)}
+								) }
 							</div>
 
-							<div style={{ marginTop: '1rem' }}>
-								{overviewLoading && (
+							<div style={ { marginTop: '1rem' } }>
+								{ overviewLoading && (
 									<p
-										style={{
+										style={ {
 											fontSize: '0.9em',
 											color: '#666',
-										}}
+										} }
 									>
-										{__(
+										{ __(
 											'Loading payment methods…',
 											'fair-payments-connector'
-										)}
+										) }
 									</p>
-								)}
+								) }
 
-								{overviewError && (
+								{ overviewError && (
 									<Notice
 										status="warning"
-										isDismissible={false}
+										isDismissible={ false }
 									>
-										{overviewError}
+										{ overviewError }
 									</Notice>
-								)}
+								) }
 
-								{overview && !overviewLoading && (
+								{ overview && ! overviewLoading && (
 									<>
 										<p>
 											<strong>
-												{__(
+												{ __(
 													'Profile name:',
 													'fair-payments-connector'
-												)}
-											</strong>{' '}
-											{overview.profile_name}
+												) }
+											</strong>{ ' ' }
+											{ overview.profile_name }
 										</p>
 
-										<p style={{ marginBottom: '0.25rem' }}>
+										<p
+											style={ {
+												marginBottom: '0.25rem',
+											} }
+										>
 											<strong>
-												{__(
+												{ __(
 													'Enabled payment methods:',
 													'fair-payments-connector'
-												)}
+												) }
 											</strong>
 										</p>
-										{overview.methods.length > 0 ? (
+										{ overview.methods.length > 0 ? (
 											<ul
-												style={{
+												style={ {
 													listStyle: 'disc',
 													marginLeft: '1.5rem',
-												}}
+												} }
 											>
-												{overview.methods.map(
-													(method) => (
-														<li key={method.id}>
-															{method.image && (
+												{ overview.methods.map(
+													( method ) => (
+														<li key={ method.id }>
+															{ method.image && (
 																<img
 																	src={
 																		method.image
@@ -541,53 +545,55 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 																	alt=""
 																	width="20"
 																	height="20"
-																	style={{
+																	style={ {
 																		verticalAlign:
 																			'middle',
 																		marginRight:
 																			'0.5rem',
-																	}}
+																	} }
 																/>
-															)}
-															{method.description}
+															) }
+															{
+																method.description
+															}
 														</li>
 													)
-												)}
+												) }
 											</ul>
 										) : (
 											<p>
-												{__(
+												{ __(
 													'No payment methods are currently enabled.',
 													'fair-payments-connector'
-												)}
+												) }
 											</p>
-										)}
+										) }
 
 										<p>
 											<a
-												href={overview.manage_url}
+												href={ overview.manage_url }
 												target="_blank"
 												rel="noreferrer"
 											>
-												{__(
+												{ __(
 													'Manage payment methods in Mollie',
 													'fair-payments-connector'
-												)}
+												) }
 											</a>
 										</p>
 									</>
-								)}
+								) }
 							</div>
 
-							{tokenExpires && (
-								<div style={{ marginTop: '0.5rem' }}>
+							{ tokenExpires && (
+								<div style={ { marginTop: '0.5rem' } }>
 									<p
-										style={{
+										style={ {
 											fontSize: '0.9em',
 											color: '#666',
-										}}
+										} }
 									>
-										{sprintf(
+										{ sprintf(
 											/* translators: %s: expiration date */
 											__(
 												'Token expires: %s',
@@ -596,19 +602,19 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 											new Date(
 												tokenExpires * 1000
 											).toLocaleString()
-										)}
+										) }
 									</p>
 								</div>
-							)}
+							) }
 
-							<div style={{ marginTop: '1.5rem' }}>
+							<div style={ { marginTop: '1.5rem' } }>
 								<RadioControl
-									label={__(
+									label={ __(
 										'Mode',
 										'fair-payments-connector'
-									)}
-									selected={mode}
-									options={[
+									) }
+									selected={ mode }
+									options={ [
 										{
 											label: __(
 												'Test Mode',
@@ -623,31 +629,31 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 											),
 											value: 'live',
 										},
-									]}
-									onChange={handleModeChange}
-									disabled={isSaving}
+									] }
+									onChange={ handleModeChange }
+									disabled={ isSaving }
 								/>
 							</div>
 
-							<div style={{ marginTop: '1.5rem' }}>
+							<div style={ { marginTop: '1.5rem' } }>
 								<ButtonGroup>
 									<Button
 										isDestructive
-										onClick={handleDisconnect}
-										disabled={isSaving}
+										onClick={ handleDisconnect }
+										disabled={ isSaving }
 									>
-										{__(
+										{ __(
 											'Disconnect',
 											'fair-payments-connector'
-										)}
+										) }
 									</Button>
 									<Button
 										isSecondary
-										onClick={handleRefreshToken}
-										isBusy={isRefreshing}
-										disabled={isRefreshing}
+										onClick={ handleRefreshToken }
+										isBusy={ isRefreshing }
+										disabled={ isRefreshing }
 									>
-										{isRefreshing
+										{ isRefreshing
 											? __(
 													'Refreshing...',
 													'fair-payments-connector'
@@ -655,28 +661,28 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 											: __(
 													'Refresh Connection',
 													'fair-payments-connector'
-											  )}
+											  ) }
 									</Button>
 								</ButtonGroup>
 							</div>
 						</>
-					)}
+					) }
 				</CardBody>
 			</Card>
 
 			<Card>
 				<CardBody>
-					<h2>{__('Test payment', 'fair-payments-connector')}</h2>
+					<h2>{ __( 'Test payment', 'fair-payments-connector' ) }</h2>
 					<p>
-						{__(
+						{ __(
 							'Make a small payment (one unit of your currency, e.g. €1) to check that checkout and confirmation work from start to finish.',
 							'fair-payments-connector'
-						)}
+						) }
 					</p>
 
-					{connected && (
-						<p style={{ fontSize: '0.9em', color: '#666' }}>
-							{mode === 'live'
+					{ connected && (
+						<p style={ { fontSize: '0.9em', color: '#666' } }>
+							{ mode === 'live'
 								? __(
 										'Live mode: this creates a real payment with real money and gateway fees.',
 										'fair-payments-connector'
@@ -684,54 +690,57 @@ export default function ConnectionTab({ onNotice, shouldReload }) {
 								: __(
 										'Test mode: no real money is charged.',
 										'fair-payments-connector'
-								  )}
+								  ) }
 						</p>
-					)}
+					) }
 
-					{testCheckoutUrl && (
-						<Notice status="success" isDismissible={false}>
-							{__(
+					{ testCheckoutUrl && (
+						<Notice status="success" isDismissible={ false }>
+							{ __(
 								'Test payment created. If the checkout did not open in a new tab, ',
 								'fair-payments-connector'
-							)}
+							) }
 							<a
-								href={testCheckoutUrl}
+								href={ testCheckoutUrl }
 								target="_blank"
 								rel="noreferrer"
 							>
-								{__('open it here.', 'fair-payments-connector')}
+								{ __(
+									'open it here.',
+									'fair-payments-connector'
+								) }
 							</a>
 						</Notice>
-					)}
+					) }
 
-					<div style={{ marginTop: '1rem' }}>
+					<div style={ { marginTop: '1rem' } }>
 						<Button
 							isSecondary
-							onClick={handleTestPayment}
-							isBusy={isTestingPayment}
-							disabled={!connected || isTestingPayment}
+							onClick={ handleTestPayment }
+							isBusy={ isTestingPayment }
+							disabled={ ! connected || isTestingPayment }
 						>
-							{__(
+							{ __(
 								'Create test payment',
 								'fair-payments-connector'
-							)}
+							) }
 						</Button>
 					</div>
 
-					{!connected && (
+					{ ! connected && (
 						<p
-							style={{
+							style={ {
 								fontSize: '0.9em',
 								color: '#666',
 								marginTop: '0.5rem',
-							}}
+							} }
 						>
-							{__(
+							{ __(
 								'Connect Mollie first to run a test payment.',
 								'fair-payments-connector'
-							)}
+							) }
 						</p>
-					)}
+					) }
 				</CardBody>
 			</Card>
 		</>

@@ -19,37 +19,37 @@ import './editor.css';
 
 const UNIFIED_NAME = 'fair-events/event-signup';
 
-registerBlockType(metadata.name, {
+registerBlockType( metadata.name, {
 	...metadata,
 	transforms: {
 		to: [
 			{
 				type: 'block',
-				blocks: [UNIFIED_NAME],
-				transform: (attributes) =>
-					createBlock(UNIFIED_NAME, {
+				blocks: [ UNIFIED_NAME ],
+				transform: ( attributes ) =>
+					createBlock( UNIFIED_NAME, {
 						eventDateId: attributes.eventDateId,
 						submitButtonText: attributes.submitButtonText,
-					}),
+					} ),
 			},
 		],
 	},
-	edit: function Edit({ attributes }) {
+	edit: function Edit( { attributes } ) {
 		const blockProps = useBlockProps();
 
 		return (
-			<div {...blockProps}>
-				<Notice status="info" isDismissible={false}>
-					{__(
+			<div { ...blockProps }>
+				<Notice status="info" isDismissible={ false }>
+					{ __(
 						'This block has moved to Event Signup. Transform it to the new block.',
 						'fair-events'
-					)}
+					) }
 				</Notice>
 				<ServerSideRender
-					block={metadata.name}
-					attributes={attributes}
+					block={ metadata.name }
+					attributes={ attributes }
 				/>
 			</div>
 		);
 	},
-});
+} );

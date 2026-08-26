@@ -19,10 +19,12 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-test.describe('GetTicketsController — admin signups list ticket_type_name', () => {
+test.describe( 'GetTicketsController — admin signups list ticket_type_name', () => {
 	let api;
 	let eventPostId;
 	let eventDateId;
@@ -30,39 +32,39 @@ test.describe('GetTicketsController — admin signups list ticket_type_name', ()
 	let signupEmail;
 	let signupCreated;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets signups list test ${Date.now()}`,
+				title: `Get-tickets signups list test ${ Date.now() }`,
 				status: 'publish',
 			},
-		});
-		expect(postRes.ok()).toBeTruthy();
-		eventPostId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		eventPostId = ( await postRes.json() ).id;
 
-		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets signups list test ${Date.now()}`,
+				title: `Get-tickets signups list test ${ Date.now() }`,
 				link_type: 'post',
 				start_datetime: '2035-06-01 10:00:00',
 				end_datetime: '2035-06-01 12:00:00',
 			},
-		});
-		expect(edRes.ok()).toBeTruthy();
-		eventDateId = (await edRes.json()).id;
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		eventDateId = ( await edRes.json() ).id;
 
 		const linkRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
 			{ headers: adminHeaders, data: { event_id: eventPostId } }
 		);
-		expect(linkRes.ok()).toBeTruthy();
+		expect( linkRes.ok() ).toBeTruthy();
 
 		const ticketsRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
 			{
 				headers: adminHeaders,
 				data: {
@@ -82,12 +84,12 @@ test.describe('GetTicketsController — admin signups list ticket_type_name', ()
 				},
 			}
 		);
-		expect(ticketsRes.ok()).toBeTruthy();
+		expect( ticketsRes.ok() ).toBeTruthy();
 		const ticketsBody = await ticketsRes.json();
-		ticketTypeId = ticketsBody.ticket_types?.[0]?.id;
-		expect(ticketTypeId).toBeTruthy();
+		ticketTypeId = ticketsBody.ticket_types?.[ 0 ]?.id;
+		expect( ticketTypeId ).toBeTruthy();
 
-		signupEmail = `signups-list-${Date.now()}@example.test`;
+		signupEmail = `signups-list-${ Date.now() }@example.test`;
 		const signupRes = await api.post(
 			'/wp-json/fair-events/v1/get-tickets',
 			{
@@ -104,41 +106,41 @@ test.describe('GetTicketsController — admin signups list ticket_type_name', ()
 		// unavailable; captured (not asserted) here so the one test that
 		// depends on it can skip with a reference instead of failing the hook.
 		signupCreated = signupRes.ok();
-	});
+	} );
 
-	test.afterAll(async () => {
-		if (eventPostId) {
+	test.afterAll( async () => {
+		if ( eventPostId ) {
 			await api.delete(
-				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,
 				{ headers: adminHeaders }
 			);
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('a signup with a valid ticket type gets ticket_type_name resolved', async () => {
+	test( 'a signup with a valid ticket type gets ticket_type_name resolved', async () => {
 		test.skip(
-			!signupCreated,
+			! signupCreated,
 			'Skipped pending #1408 — ticket type with sale_periods: [] is rejected as unavailable'
 		);
-		const res = await api.get('/wp-json/fair-events/v1/get-tickets', {
+		const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
 			headers: adminHeaders,
 			params: { event_date: eventDateId },
-		});
-		expect(res.ok()).toBeTruthy();
+		} );
+		expect( res.ok() ).toBeTruthy();
 		const signups = await res.json();
-		const signup = signups.find((s) => s.email === signupEmail);
-		expect(signup).toBeTruthy();
-		expect(signup.ticket_type_name).toBe('General Admission');
-	});
+		const signup = signups.find( ( s ) => s.email === signupEmail );
+		expect( signup ).toBeTruthy();
+		expect( signup.ticket_type_name ).toBe( 'General Admission' );
+	} );
 
-	test('a signup referencing a deleted ticket type gets ticket_type_name null', async () => {
+	test( 'a signup referencing a deleted ticket type gets ticket_type_name null', async () => {
 		test.skip(
-			!signupCreated,
+			! signupCreated,
 			'Skipped pending #1408 — ticket type with sale_periods: [] is rejected as unavailable'
 		);
 		const deleteRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${eventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
 			{
 				headers: adminHeaders,
 				data: {
@@ -149,16 +151,16 @@ test.describe('GetTicketsController — admin signups list ticket_type_name', ()
 				},
 			}
 		);
-		expect(deleteRes.ok()).toBeTruthy();
+		expect( deleteRes.ok() ).toBeTruthy();
 
-		const res = await api.get('/wp-json/fair-events/v1/get-tickets', {
+		const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
 			headers: adminHeaders,
 			params: { event_date: eventDateId },
-		});
-		expect(res.ok()).toBeTruthy();
+		} );
+		expect( res.ok() ).toBeTruthy();
 		const signups = await res.json();
-		const signup = signups.find((s) => s.email === signupEmail);
-		expect(signup).toBeTruthy();
-		expect(signup.ticket_type_name).toBeNull();
-	});
-});
+		const signup = signups.find( ( s ) => s.email === signupEmail );
+		expect( signup ).toBeTruthy();
+		expect( signup.ticket_type_name ).toBeNull();
+	} );
+} );

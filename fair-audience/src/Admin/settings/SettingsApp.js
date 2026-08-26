@@ -21,29 +21,30 @@ import { saveSettings } from './settings-api.js';
  * @return {JSX.Element} The settings app
  */
 export default function SettingsApp() {
-	const [notice, setNotice] = useState(null);
-	const [shouldReloadInstagram, setShouldReloadInstagram] = useState(false);
+	const [ notice, setNotice ] = useState( null );
+	const [ shouldReloadInstagram, setShouldReloadInstagram ] =
+		useState( false );
 
 	/**
 	 * Handle OAuth callback on mount
 	 */
-	useEffect(() => {
-		const params = new URLSearchParams(window.location.search);
-		const accessToken = params.get('instagram_access_token');
-		const userId = params.get('instagram_user_id');
-		const username = params.get('instagram_username');
-		const expiresIn = params.get('instagram_expires_in');
-		const error = params.get('error');
+	useEffect( () => {
+		const params = new URLSearchParams( window.location.search );
+		const accessToken = params.get( 'instagram_access_token' );
+		const userId = params.get( 'instagram_user_id' );
+		const username = params.get( 'instagram_username' );
+		const expiresIn = params.get( 'instagram_expires_in' );
+		const error = params.get( 'error' );
 
 		// Handle OAuth errors.
-		if (error === 'access_denied') {
-			setNotice({
+		if ( error === 'access_denied' ) {
+			setNotice( {
 				status: 'error',
 				message: __(
 					'Authorization cancelled. Please try again.',
 					'fair-audience'
 				),
-			});
+			} );
 			// Clean URL.
 			window.history.replaceState(
 				{},
@@ -54,19 +55,19 @@ export default function SettingsApp() {
 		}
 
 		// Handle successful OAuth callback.
-		if (accessToken && userId) {
+		if ( accessToken && userId ) {
 			const settingsData = {
 				fair_audience_instagram_access_token: accessToken,
 				fair_audience_instagram_user_id: userId,
 				fair_audience_instagram_username: username || '',
 				fair_audience_instagram_token_expires: expiresIn
-					? Math.floor(Date.now() / 1000) + parseInt(expiresIn)
+					? Math.floor( Date.now() / 1000 ) + parseInt( expiresIn )
 					: 0,
 				fair_audience_instagram_connected: true,
 			};
 
-			saveSettings(settingsData)
-				.then(() => {
+			saveSettings( settingsData )
+				.then( () => {
 					// Clean URL (remove tokens from address bar).
 					window.history.replaceState(
 						{},
@@ -76,83 +77,83 @@ export default function SettingsApp() {
 					);
 
 					// Trigger reload in InstagramTab.
-					setShouldReloadInstagram(true);
+					setShouldReloadInstagram( true );
 
-					setNotice({
+					setNotice( {
 						status: 'success',
 						message: __(
 							'Successfully connected to Instagram!',
 							'fair-audience'
 						),
-					});
-				})
-				.catch((err) => {
+					} );
+				} )
+				.catch( ( err ) => {
 					console.error(
 						'[Fair Audience] Failed to save OAuth tokens:',
 						err
 					);
-					setNotice({
+					setNotice( {
 						status: 'error',
 						message:
 							__(
 								'Failed to save OAuth tokens: ',
 								'fair-audience'
-							) + (err.message || 'Unknown error'),
-					});
-				});
+							) + ( err.message || 'Unknown error' ),
+					} );
+				} );
 		}
-	}, []);
+	}, [] );
 
 	/**
 	 * Reset shouldReloadInstagram flag after it's been used
 	 */
-	useEffect(() => {
-		if (shouldReloadInstagram) {
-			setShouldReloadInstagram(false);
+	useEffect( () => {
+		if ( shouldReloadInstagram ) {
+			setShouldReloadInstagram( false );
 		}
-	}, [shouldReloadInstagram]);
+	}, [ shouldReloadInstagram ] );
 
 	return (
 		<div className="wrap">
-			<h1>{__('Fair Audience Settings', 'fair-audience')}</h1>
+			<h1>{ __( 'Fair Audience Settings', 'fair-audience' ) }</h1>
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
-					isDismissible={true}
-					onRemove={() => setNotice(null)}
+					status={ notice.status }
+					isDismissible={ true }
+					onRemove={ () => setNotice( null ) }
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
 			<TabPanel
 				className="fair-audience-settings-tabs"
 				activeClass="active-tab"
-				tabs={[
+				tabs={ [
 					{
 						name: 'instagram',
-						title: __('Instagram', 'fair-audience'),
+						title: __( 'Instagram', 'fair-audience' ),
 					},
 					{
 						name: 'mailing',
-						title: __('Mailing', 'fair-audience'),
+						title: __( 'Mailing', 'fair-audience' ),
 					},
-				]}
+				] }
 			>
-				{(tab) => (
-					<div style={{ marginTop: '1rem' }}>
-						{tab.name === 'instagram' && (
+				{ ( tab ) => (
+					<div style={ { marginTop: '1rem' } }>
+						{ tab.name === 'instagram' && (
 							<InstagramTab
-								onNotice={setNotice}
-								shouldReload={shouldReloadInstagram}
+								onNotice={ setNotice }
+								shouldReload={ shouldReloadInstagram }
 							/>
-						)}
-						{tab.name === 'mailing' && (
-							<MailingTab onNotice={setNotice} />
-						)}
+						) }
+						{ tab.name === 'mailing' && (
+							<MailingTab onNotice={ setNotice } />
+						) }
 					</div>
-				)}
+				) }
 			</TabPanel>
 		</div>
 	);

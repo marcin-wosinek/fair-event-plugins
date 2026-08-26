@@ -17,18 +17,18 @@ export class TimeColumn {
 	 * @param {string} timeRange.endTime - End time in HH:mm format
 	 * @param {Array} timeSlots - Array of time slot objects (optional)
 	 */
-	constructor({ startTime, endTime }, timeSlots = []) {
+	constructor( { startTime, endTime }, timeSlots = [] ) {
 		// Create HourlyRange for the column's time boundaries
-		this.timeRange = new HourlyRange({ startTime, endTime });
+		this.timeRange = new HourlyRange( { startTime, endTime } );
 
 		// Initialize time slots array
-		this.timeSlots = timeSlots.map((slotData) => {
-			if (slotData instanceof TimeSlot) {
+		this.timeSlots = timeSlots.map( ( slotData ) => {
+			if ( slotData instanceof TimeSlot ) {
 				return slotData;
 			}
 			// Create TimeSlot instance with column start time as timetable start
-			return new TimeSlot(slotData, this.timeRange.getStartTime());
-		});
+			return new TimeSlot( slotData, this.timeRange.getStartTime() );
+		} );
 	}
 
 	/**
@@ -92,13 +92,13 @@ export class TimeColumn {
 	 * @return {number} First available hour in decimal format
 	 */
 	getFirstAvailableHour() {
-		if (this.timeSlots.length === 0) {
+		if ( this.timeSlots.length === 0 ) {
 			return this.getStartHour();
 		}
 
 		// Find the latest endHour among all time slots
 		const latestEndHour = Math.max(
-			...this.timeSlots.map((slot) => slot.endHour)
+			...this.timeSlots.map( ( slot ) => slot.endHour )
 		);
 		return latestEndHour;
 	}

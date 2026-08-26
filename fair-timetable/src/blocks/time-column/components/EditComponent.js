@@ -14,9 +14,9 @@ import { __ } from '@wordpress/i18n';
  */
 export default function EditComponent() {
 	// Get context from parent timetable
-	const blockProps = useBlockProps({
+	const blockProps = useBlockProps( {
 		className: 'time-column-container',
-	});
+	} );
 
 	// Locked template with H2 and time-column-body
 	const template = [
@@ -24,11 +24,11 @@ export default function EditComponent() {
 			'core/heading',
 			{
 				level: 2,
-				content: __('Column Title', 'fair-timetable'),
-				placeholder: __('Enter column title...', 'fair-timetable'),
+				content: __( 'Column Title', 'fair-timetable' ),
+				placeholder: __( 'Enter column title...', 'fair-timetable' ),
 			},
 		],
-		['fair-timetable/time-column-body'],
+		[ 'fair-timetable/time-column-body' ],
 	];
 
 	// Template is locked - users cannot add/remove/reorder blocks
@@ -43,8 +43,8 @@ export default function EditComponent() {
 	);
 
 	return (
-		<div {...blockProps}>
-			<div {...innerBlocksProps} />
+		<div { ...blockProps }>
+			<div { ...innerBlocksProps } />
 		</div>
 	);
 }

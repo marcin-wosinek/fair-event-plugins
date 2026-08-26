@@ -23,64 +23,69 @@ import { RECURRENCE_FREQUENCIES, RECURRENCE_END_TYPES } from './recurrence.js';
  * @param {boolean}  [props.hideToggle]         When true, omit the "Repeat this event" checkbox and always show the fields (for hosts like SeriesModal where recurrence is implicitly on).
  * @return {JSX.Element} The RecurrenceControl component.
  */
-export default function RecurrenceControl({
+export default function RecurrenceControl( {
 	value,
 	onChange,
 	hideToggle = false,
-}) {
+} ) {
 	const { enabled, frequency, endType, count, until } = value;
 
-	const update = (changes) => onChange({ ...value, ...changes });
+	const update = ( changes ) => onChange( { ...value, ...changes } );
 
 	return (
-		<VStack spacing={2}>
-			{!hideToggle && (
+		<VStack spacing={ 2 }>
+			{ ! hideToggle && (
 				<CheckboxControl
-					label={__('Repeat this event', 'fair-events')}
-					checked={enabled}
-					onChange={(checked) => update({ enabled: checked })}
+					label={ __( 'Repeat this event', 'fair-events' ) }
+					checked={ enabled }
+					onChange={ ( checked ) => update( { enabled: checked } ) }
 				/>
-			)}
+			) }
 
-			{(hideToggle || enabled) && (
-				<VStack spacing={2}>
+			{ ( hideToggle || enabled ) && (
+				<VStack spacing={ 2 }>
 					<SelectControl
-						label={__('Frequency', 'fair-events')}
-						value={frequency}
-						options={RECURRENCE_FREQUENCIES}
-						onChange={(newFrequency) =>
-							update({ frequency: newFrequency })
+						label={ __( 'Frequency', 'fair-events' ) }
+						value={ frequency }
+						options={ RECURRENCE_FREQUENCIES }
+						onChange={ ( newFrequency ) =>
+							update( { frequency: newFrequency } )
 						}
 					/>
 					<SelectControl
-						label={__('Ends', 'fair-events')}
-						value={endType}
-						options={RECURRENCE_END_TYPES}
-						onChange={(newEndType) =>
-							update({ endType: newEndType })
+						label={ __( 'Ends', 'fair-events' ) }
+						value={ endType }
+						options={ RECURRENCE_END_TYPES }
+						onChange={ ( newEndType ) =>
+							update( { endType: newEndType } )
 						}
 					/>
-					{endType === 'count' && (
+					{ endType === 'count' && (
 						<NumberControl
-							label={__('Number of occurrences', 'fair-events')}
-							value={count}
-							onChange={(val) =>
-								update({ count: parseInt(val, 10) || 1 })
+							label={ __(
+								'Number of occurrences',
+								'fair-events'
+							) }
+							value={ count }
+							onChange={ ( val ) =>
+								update( { count: parseInt( val, 10 ) || 1 } )
 							}
-							min={1}
-							max={365}
+							min={ 1 }
+							max={ 365 }
 						/>
-					)}
-					{endType === 'until' && (
+					) }
+					{ endType === 'until' && (
 						<TextControl
-							label={__('End date', 'fair-events')}
+							label={ __( 'End date', 'fair-events' ) }
 							type="date"
-							value={until}
-							onChange={(newUntil) => update({ until: newUntil })}
+							value={ until }
+							onChange={ ( newUntil ) =>
+								update( { until: newUntil } )
+							}
 						/>
-					)}
+					) }
 				</VStack>
-			)}
+			) }
 		</VStack>
 	);
 }

@@ -9,10 +9,10 @@ import apiFetch from '@wordpress/api-fetch';
  * @return {Promise<Object>} Promise resolving to connection settings
  */
 export function loadConnectionSettings() {
-	console.log('[Fair Payments Connector] Loading connection settings...');
+	console.log( '[Fair Payments Connector] Loading connection settings...' );
 
-	return apiFetch({ path: '/wp/v2/settings' }).then((settings) => {
-		console.log('[Fair Payments Connector] Connection settings loaded');
+	return apiFetch( { path: '/wp/v2/settings' } ).then( ( settings ) => {
+		console.log( '[Fair Payments Connector] Connection settings loaded' );
 		return {
 			connected: settings.fair_payment_mollie_connected || false,
 			mode: settings.fair_payment_mode || 'test',
@@ -20,7 +20,7 @@ export function loadConnectionSettings() {
 			profileId: settings.fair_payment_mollie_profile_id || '',
 			tokenExpires: settings.fair_payment_mollie_token_expires || null,
 		};
-	});
+	} );
 }
 
 /**
@@ -29,20 +29,20 @@ export function loadConnectionSettings() {
  * @param {Object} data Settings data to save
  * @return {Promise<Object>} Promise resolving to saved settings
  */
-export function saveSettings(data) {
+export function saveSettings( data ) {
 	console.log(
 		'[Fair Payments Connector] Saving settings:',
-		Object.keys(data)
+		Object.keys( data )
 	);
 
-	return apiFetch({
+	return apiFetch( {
 		path: '/wp/v2/settings',
 		method: 'POST',
 		data,
-	}).then((response) => {
-		console.log('[Fair Payments Connector] Settings saved successfully');
+	} ).then( ( response ) => {
+		console.log( '[Fair Payments Connector] Settings saved successfully' );
 		return response;
-	});
+	} );
 }
 
 /**
@@ -51,10 +51,10 @@ export function saveSettings(data) {
  * @return {Promise<string>} Promise resolving to the state string
  */
 export function fetchOAuthState() {
-	return apiFetch({
+	return apiFetch( {
 		path: '/fair-payments-connector/v1/oauth/state',
 		method: 'POST',
-	}).then((response) => response.state);
+	} ).then( ( response ) => response.state );
 }
 
 /**
@@ -63,12 +63,12 @@ export function fetchOAuthState() {
  * @param {Object} data Callback payload (state + token fields)
  * @return {Promise<Object>} Promise resolving to the API response
  */
-export function saveOAuthCallback(data) {
-	return apiFetch({
+export function saveOAuthCallback( data ) {
+	return apiFetch( {
 		path: '/fair-payments-connector/v1/oauth/callback',
 		method: 'POST',
 		data,
-	});
+	} );
 }
 
 /**
@@ -77,10 +77,10 @@ export function saveOAuthCallback(data) {
  * @return {Promise<Object>} Promise resolving to the API response
  */
 export function disconnectOAuth() {
-	return apiFetch({
+	return apiFetch( {
 		path: '/fair-payments-connector/v1/oauth/disconnect',
 		method: 'POST',
-	});
+	} );
 }
 
 /**
@@ -89,9 +89,9 @@ export function disconnectOAuth() {
  * @return {Promise<Object>} Promise resolving to the connection overview
  */
 export function loadConnectionOverview() {
-	return apiFetch({
+	return apiFetch( {
 		path: '/fair-payments-connector/v1/connection/overview',
-	});
+	} );
 }
 
 /**
@@ -100,10 +100,10 @@ export function loadConnectionOverview() {
  * @return {Promise<Object>} Promise resolving to { checkout_url, transaction_id, mode, currency }
  */
 export function createTestPayment() {
-	return apiFetch({
+	return apiFetch( {
 		path: '/fair-payments-connector/v1/test-payment',
 		method: 'POST',
-	});
+	} );
 }
 
 /**
@@ -112,16 +112,16 @@ export function createTestPayment() {
  * @return {Promise<Object>} Promise resolving to connection test result
  */
 export function testConnection() {
-	console.log('[Fair Payments Connector] Testing connection...');
+	console.log( '[Fair Payments Connector] Testing connection...' );
 
-	return apiFetch({
+	return apiFetch( {
 		path: '/fair-payments-connector/v1/test-connection',
 		method: 'POST',
-	}).then((response) => {
+	} ).then( ( response ) => {
 		console.log(
 			'[Fair Payments Connector] Connection test successful:',
 			response
 		);
 		return response;
-	});
+	} );
 }

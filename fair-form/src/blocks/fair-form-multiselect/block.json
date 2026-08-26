@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "yes-alt",
 	"description": "A multiple-choice checkbox question for Fair Form",
-	"keywords": ["question", "checkbox", "multiselect", "multiple"],
+	"keywords": [ "question", "checkbox", "multiselect", "multiple" ],
 	"textdomain": "fair-audience",
 	"ancestor": [
 		"fair-audience/fair-form",

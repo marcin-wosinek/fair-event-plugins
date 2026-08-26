@@ -4,38 +4,38 @@
  * @param {string} svgString SVG markup with images already base64-embedded
  * @return {Promise<Blob>} Promise resolving to PNG blob
  */
-export function svgToPng(svgString) {
-	return new Promise((resolve, reject) => {
-		const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
-		const url = URL.createObjectURL(svgBlob);
+export function svgToPng( svgString ) {
+	return new Promise( ( resolve, reject ) => {
+		const svgBlob = new Blob( [ svgString ], { type: 'image/svg+xml' } );
+		const url = URL.createObjectURL( svgBlob );
 
 		const img = new Image();
 		img.onload = () => {
-			const canvas = document.createElement('canvas');
+			const canvas = document.createElement( 'canvas' );
 			canvas.width = img.naturalWidth;
 			canvas.height = img.naturalHeight;
 
-			const ctx = canvas.getContext('2d');
-			ctx.drawImage(img, 0, 0);
+			const ctx = canvas.getContext( '2d' );
+			ctx.drawImage( img, 0, 0 );
 
-			URL.revokeObjectURL(url);
+			URL.revokeObjectURL( url );
 
-			canvas.toBlob((blob) => {
-				if (blob) {
-					resolve(blob);
+			canvas.toBlob( ( blob ) => {
+				if ( blob ) {
+					resolve( blob );
 				} else {
-					reject(new Error('Canvas toBlob returned null'));
+					reject( new Error( 'Canvas toBlob returned null' ) );
 				}
-			}, 'image/png');
+			}, 'image/png' );
 		};
 
 		img.onerror = () => {
-			URL.revokeObjectURL(url);
-			reject(new Error('Failed to load SVG as image'));
+			URL.revokeObjectURL( url );
+			reject( new Error( 'Failed to load SVG as image' ) );
 		};
 
 		img.src = url;
-	});
+	} );
 }
 
 /**
@@ -44,32 +44,32 @@ export function svgToPng(svgString) {
  * @param {string} svgString SVG markup with images already base64-embedded
  * @return {Promise<string>} Promise resolving to base64 data URL (data:image/png;base64,...)
  */
-export function svgToBase64Png(svgString) {
-	return new Promise((resolve, reject) => {
-		const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
-		const url = URL.createObjectURL(svgBlob);
+export function svgToBase64Png( svgString ) {
+	return new Promise( ( resolve, reject ) => {
+		const svgBlob = new Blob( [ svgString ], { type: 'image/svg+xml' } );
+		const url = URL.createObjectURL( svgBlob );
 
 		const img = new Image();
 		img.onload = () => {
-			const canvas = document.createElement('canvas');
+			const canvas = document.createElement( 'canvas' );
 			canvas.width = img.naturalWidth;
 			canvas.height = img.naturalHeight;
 
-			const ctx = canvas.getContext('2d');
-			ctx.drawImage(img, 0, 0);
+			const ctx = canvas.getContext( '2d' );
+			ctx.drawImage( img, 0, 0 );
 
-			URL.revokeObjectURL(url);
+			URL.revokeObjectURL( url );
 
-			resolve(canvas.toDataURL('image/png'));
+			resolve( canvas.toDataURL( 'image/png' ) );
 		};
 
 		img.onerror = () => {
-			URL.revokeObjectURL(url);
-			reject(new Error('Failed to load SVG as image'));
+			URL.revokeObjectURL( url );
+			reject( new Error( 'Failed to load SVG as image' ) );
 		};
 
 		img.src = url;
-	});
+	} );
 }
 
 /**
@@ -78,13 +78,13 @@ export function svgToBase64Png(svgString) {
  * @param {Blob}   blob     The blob to download
  * @param {string} filename Suggested filename
  */
-export function downloadBlob(blob, filename) {
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
+export function downloadBlob( blob, filename ) {
+	const url = URL.createObjectURL( blob );
+	const a = document.createElement( 'a' );
 	a.href = url;
 	a.download = filename;
-	document.body.appendChild(a);
+	document.body.appendChild( a );
 	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+	document.body.removeChild( a );
+	URL.revokeObjectURL( url );
 }

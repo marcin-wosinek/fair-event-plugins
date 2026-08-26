@@ -12,8 +12,8 @@ const XML_ENTITIES = {
 	"'": '&apos;',
 };
 
-function escapeXml(str) {
-	return String(str).replace(/[&<>"']/g, (ch) => XML_ENTITIES[ch]);
+function escapeXml( str ) {
+	return String( str ).replace( /[&<>"']/g, ( ch ) => XML_ENTITIES[ ch ] );
 }
 
 /**
@@ -25,8 +25,8 @@ function escapeXml(str) {
  * @param {Object} data API response with source, week, and days.
  * @return {string} SVG markup string.
  */
-export function generateScheduleSvg(data) {
-	if (!data || !data.days) {
+export function generateScheduleSvg( data ) {
+	if ( ! data || ! data.days ) {
 		return '';
 	}
 
@@ -36,21 +36,21 @@ export function generateScheduleSvg(data) {
 	const PAD = 60;
 
 	// Skip days with no events.
-	const activeDays = days.filter((d) => d.events.length > 0);
+	const activeDays = days.filter( ( d ) => d.events.length > 0 );
 
 	// Date range for the header.
-	const firstDay = days[0];
-	const lastDay = days[days.length - 1];
+	const firstDay = days[ 0 ];
+	const lastDay = days[ days.length - 1 ];
 	let dateRange;
-	if (firstDay.month_name === lastDay.month_name) {
-		dateRange = `${firstDay.day_num}\u2013${lastDay.day_num} de ${firstDay.month_name}`;
+	if ( firstDay.month_name === lastDay.month_name ) {
+		dateRange = `${ firstDay.day_num }\u2013${ lastDay.day_num } de ${ firstDay.month_name }`;
 	} else {
-		dateRange = `${firstDay.day_num} de ${firstDay.month_name}\u2013${lastDay.day_num} de ${lastDay.month_name}`;
+		dateRange = `${ firstDay.day_num } de ${ firstDay.month_name }\u2013${ lastDay.day_num } de ${ lastDay.month_name }`;
 	}
 
 	// Count total items (day headers + events) for layout calculation.
 	let totalItems = 0;
-	for (const day of activeDays) {
+	for ( const day of activeDays ) {
 		totalItems += 1; // day header row
 		totalItems += day.events.length;
 	}
@@ -60,7 +60,9 @@ export function generateScheduleSvg(data) {
 	const BOTTOM_PAD = 40;
 	const available = H - HEADER_BOTTOM - BOTTOM_PAD;
 	const rowH =
-		totalItems > 0 ? Math.min(52, Math.floor(available / totalItems)) : 52;
+		totalItems > 0
+			? Math.min( 52, Math.floor( available / totalItems ) )
+			: 52;
 	const dayFontSize = rowH > 40 ? 28 : rowH > 30 ? 24 : 20;
 	const eventFontSize = rowH > 40 ? 26 : rowH > 30 ? 22 : 18;
 	const dayHeaderGap = rowH > 40 ? 8 : 4;
@@ -68,35 +70,35 @@ export function generateScheduleSvg(data) {
 	const parts = [];
 
 	parts.push(
-		`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`
+		`<svg xmlns="http://www.w3.org/2000/svg" width="${ W }" height="${ H }" viewBox="0 0 ${ W } ${ H }">`
 	);
 
 	// Background gradient.
-	parts.push('<defs>');
-	parts.push(`<linearGradient id="bg" x1="0" y1="0" x2="0" y2="${H}">`);
-	parts.push('<stop offset="0%" stop-color="#1a1a2e"/>');
-	parts.push('<stop offset="100%" stop-color="#16213e"/>');
-	parts.push('</linearGradient>');
-	parts.push('</defs>');
-	parts.push(`<rect width="${W}" height="${H}" fill="url(#bg)"/>`);
+	parts.push( '<defs>' );
+	parts.push( `<linearGradient id="bg" x1="0" y1="0" x2="0" y2="${ H }">` );
+	parts.push( '<stop offset="0%" stop-color="#1a1a2e"/>' );
+	parts.push( '<stop offset="100%" stop-color="#16213e"/>' );
+	parts.push( '</linearGradient>' );
+	parts.push( '</defs>' );
+	parts.push( `<rect width="${ W }" height="${ H }" fill="url(#bg)"/>` );
 
 	// Source name.
 	parts.push(
-		`<text x="${PAD}" y="90" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="bold">${escapeXml(
+		`<text x="${ PAD }" y="90" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="bold">${ escapeXml(
 			source.name
-		)}</text>`
+		) }</text>`
 	);
 
 	// Date range.
 	parts.push(
-		`<text x="${PAD}" y="142" fill="#a0a0c0" font-family="Arial, Helvetica, sans-serif" font-size="32">${escapeXml(
+		`<text x="${ PAD }" y="142" fill="#a0a0c0" font-family="Arial, Helvetica, sans-serif" font-size="32">${ escapeXml(
 			dateRange
-		)}</text>`
+		) }</text>`
 	);
 
 	// Accent line.
 	parts.push(
-		`<rect x="${PAD}" y="162" width="${
+		`<rect x="${ PAD }" y="162" width="${
 			W - PAD * 2
 		}" height="3" fill="#e94560" rx="1.5"/>`
 	);
@@ -104,41 +106,41 @@ export function generateScheduleSvg(data) {
 	// Render events grouped by day.
 	let y = HEADER_BOTTOM;
 
-	for (const day of activeDays) {
+	for ( const day of activeDays ) {
 		// Day header.
 		y += dayHeaderGap;
 		const dayLabelY = y + dayFontSize;
 		parts.push(
-			`<text x="${PAD}" y="${dayLabelY}" fill="#e94560" font-family="Arial, Helvetica, sans-serif" font-size="${dayFontSize}" font-weight="bold">${escapeXml(
+			`<text x="${ PAD }" y="${ dayLabelY }" fill="#e94560" font-family="Arial, Helvetica, sans-serif" font-size="${ dayFontSize }" font-weight="bold">${ escapeXml(
 				day.weekday
-			)} ${escapeXml(String(day.day_num))}</text>`
+			) } ${ escapeXml( String( day.day_num ) ) }</text>`
 		);
 
 		y += rowH;
 
 		// Events for this day.
-		for (const event of day.events) {
+		for ( const event of day.events ) {
 			const textY = y + eventFontSize;
 			const indent = PAD + 20;
 
 			// Build time string or day range for multi-day events.
 			let timeStr = '';
-			if (event.end_weekday) {
-				timeStr = `${day.weekday}\u2014${event.end_weekday}`;
-			} else if (!event.all_day) {
-				if (event.end_time && event.end_time !== event.start_time) {
-					timeStr = `${event.start_time}\u2013${event.end_time}`;
-				} else if (event.start_time) {
+			if ( event.end_weekday ) {
+				timeStr = `${ day.weekday }\u2014${ event.end_weekday }`;
+			} else if ( ! event.all_day ) {
+				if ( event.end_time && event.end_time !== event.start_time ) {
+					timeStr = `${ event.start_time }\u2013${ event.end_time }`;
+				} else if ( event.start_time ) {
 					timeStr = event.start_time;
 				}
 			}
 
 			let titleX = indent;
-			if (timeStr) {
+			if ( timeStr ) {
 				parts.push(
-					`<text x="${indent}" y="${textY}" fill="#8888aa" font-family="Arial, Helvetica, sans-serif" font-size="${eventFontSize}">${escapeXml(
+					`<text x="${ indent }" y="${ textY }" fill="#8888aa" font-family="Arial, Helvetica, sans-serif" font-size="${ eventFontSize }">${ escapeXml(
 						timeStr
-					)}</text>`
+					) }</text>`
 				);
 				titleX = indent + 220;
 			}
@@ -146,16 +148,16 @@ export function generateScheduleSvg(data) {
 			// Title — truncate if it would overflow.
 			const maxTitleW = W - PAD - titleX;
 			const charW = eventFontSize * 0.55;
-			const maxChars = Math.floor(maxTitleW / charW);
+			const maxChars = Math.floor( maxTitleW / charW );
 			let title = event.title;
-			if (title.length > maxChars) {
-				title = title.substring(0, maxChars - 1) + '\u2026';
+			if ( title.length > maxChars ) {
+				title = title.substring( 0, maxChars - 1 ) + '\u2026';
 			}
 
 			parts.push(
-				`<text x="${titleX}" y="${textY}" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="${eventFontSize}">${escapeXml(
+				`<text x="${ titleX }" y="${ textY }" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="${ eventFontSize }">${ escapeXml(
 					title
-				)}</text>`
+				) }</text>`
 			);
 
 			y += rowH;
@@ -163,14 +165,14 @@ export function generateScheduleSvg(data) {
 	}
 
 	// Empty state.
-	if (activeDays.length === 0) {
+	if ( activeDays.length === 0 ) {
 		parts.push(
-			`<text x="${W / 2}" y="${
+			`<text x="${ W / 2 }" y="${
 				H / 2
 			}" fill="#666680" font-family="Arial, Helvetica, sans-serif" font-size="32" text-anchor="middle">No events this week</text>`
 		);
 	}
 
-	parts.push('</svg>');
-	return parts.join('\n');
+	parts.push( '</svg>' );
+	return parts.join( '\n' );
 }

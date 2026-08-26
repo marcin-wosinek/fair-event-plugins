@@ -12,11 +12,11 @@ import ConnectedSitesApp from './ConnectedSitesApp.js';
 /**
  * Initialize the connected sites page
  */
-domReady(() => {
+domReady( () => {
 	const root = document.getElementById(
 		'fair-payments-connector-connected-sites-root'
 	);
-	if (root) {
-		createRoot(root).render(<ConnectedSitesApp />);
+	if ( root ) {
+		createRoot( root ).render( <ConnectedSitesApp /> );
 	}
-});
+} );

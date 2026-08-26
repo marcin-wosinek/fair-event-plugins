@@ -4,119 +4,119 @@ const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const NONCE_ENDPOINT = '/wp-json/fair-payments-connector/v1/nonce';
 const PAYMENTS_ENDPOINT = '/wp-json/fair-payments-connector/v1/payments';
 
-test.describe('PaymentEndpoint — GET /nonce', () => {
+test.describe( 'PaymentEndpoint — GET /nonce', () => {
 	let api;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	test('returns a nonce string', async () => {
-		const res = await api.get(NONCE_ENDPOINT);
-		expect(res.status()).toBe(200);
+	test( 'returns a nonce string', async () => {
+		const res = await api.get( NONCE_ENDPOINT );
+		expect( res.status() ).toBe( 200 );
 		const body = await res.json();
-		expect(typeof body.nonce).toBe('string');
-		expect(body.nonce.length).toBeGreaterThan(0);
-	});
-});
+		expect( typeof body.nonce ).toBe( 'string' );
+		expect( body.nonce.length ).toBeGreaterThan( 0 );
+	} );
+} );
 
-test.describe('PaymentEndpoint — POST /payments security checks', () => {
+test.describe( 'PaymentEndpoint — POST /payments security checks', () => {
 	let api;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	test('returns 400 when nonce param is missing', async () => {
-		const res = await api.post(PAYMENTS_ENDPOINT, {
+	test( 'returns 400 when nonce param is missing', async () => {
+		const res = await api.post( PAYMENTS_ENDPOINT, {
 			data: {
 				amount: '10',
 				currency: 'EUR',
 				block_id: 'some-block-id',
 			},
-		});
-		expect(res.status()).toBe(400);
-	});
+		} );
+		expect( res.status() ).toBe( 400 );
+	} );
 
-	test('returns 403 for an invalid nonce', async () => {
-		const res = await api.post(PAYMENTS_ENDPOINT, {
+	test( 'returns 403 for an invalid nonce', async () => {
+		const res = await api.post( PAYMENTS_ENDPOINT, {
 			data: {
 				amount: '10',
 				currency: 'EUR',
 				block_id: 'some-block-id',
 				nonce: 'invalid_nonce_value',
 			},
-		});
-		expect(res.status()).toBe(403);
+		} );
+		expect( res.status() ).toBe( 403 );
 		const body = await res.json();
-		expect(body.code).toBe('invalid_nonce');
-	});
+		expect( body.code ).toBe( 'invalid_nonce' );
+	} );
 
-	test('returns 400 when block_id param is missing', async () => {
-		const res = await api.post(PAYMENTS_ENDPOINT, {
+	test( 'returns 400 when block_id param is missing', async () => {
+		const res = await api.post( PAYMENTS_ENDPOINT, {
 			data: {
 				amount: '10',
 				currency: 'EUR',
 				nonce: 'some_nonce',
 			},
-		});
-		expect(res.status()).toBe(400);
-	});
+		} );
+		expect( res.status() ).toBe( 400 );
+	} );
 
-	test('returns 403 for a valid nonce but missing post_id', async () => {
-		const nonceRes = await api.get(NONCE_ENDPOINT);
+	test( 'returns 403 for a valid nonce but missing post_id', async () => {
+		const nonceRes = await api.get( NONCE_ENDPOINT );
 		const { nonce } = await nonceRes.json();
 
-		const res = await api.post(PAYMENTS_ENDPOINT, {
+		const res = await api.post( PAYMENTS_ENDPOINT, {
 			data: {
 				amount: '10',
 				currency: 'EUR',
 				block_id: 'non-existent-block-id',
 				nonce,
 			},
-		});
-		expect(res.status()).toBe(403);
+		} );
+		expect( res.status() ).toBe( 403 );
 		const body = await res.json();
-		expect(body.code).toBe('invalid_block');
-	});
-});
+		expect( body.code ).toBe( 'invalid_block' );
+	} );
+} );
 
-test.describe('PaymentEndpoint — GET /payments/:id/status token gating', () => {
+test.describe( 'PaymentEndpoint — GET /payments/:id/status token gating', () => {
 	let api;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
 	// Any caller can enumerate transaction IDs, so a missing transaction and a
 	// token mismatch on a real one must be indistinguishable (both 404) —
 	// see get_transaction_status_permissions_check().
 
-	test('returns 404 for a non-existent transaction id without a token', async () => {
-		const res = await api.get(`${PAYMENTS_ENDPOINT}/999999999/status`);
-		expect(res.status()).toBe(404);
+	test( 'returns 404 for a non-existent transaction id without a token', async () => {
+		const res = await api.get( `${ PAYMENTS_ENDPOINT }/999999999/status` );
+		expect( res.status() ).toBe( 404 );
 		const body = await res.json();
-		expect(body.code).toBe('transaction_not_found');
-	});
+		expect( body.code ).toBe( 'transaction_not_found' );
+	} );
 
-	test('returns 404 for a non-existent transaction id with a token', async () => {
+	test( 'returns 404 for a non-existent transaction id with a token', async () => {
 		const res = await api.get(
-			`${PAYMENTS_ENDPOINT}/999999999/status?token=anything`
+			`${ PAYMENTS_ENDPOINT }/999999999/status?token=anything`
 		);
-		expect(res.status()).toBe(404);
+		expect( res.status() ).toBe( 404 );
 		const body = await res.json();
-		expect(body.code).toBe('transaction_not_found');
-	});
-});
+		expect( body.code ).toBe( 'transaction_not_found' );
+	} );
+} );

@@ -11,8 +11,8 @@ import {
 import { __ } from '@wordpress/i18n';
 import { autosizeTextarea, generateQuestionKey } from 'fair-events-shared';
 
-registerBlockType('fair-audience/fair-form-file-upload', {
-	edit: ({ attributes, setAttributes }) => {
+registerBlockType( 'fair-audience/fair-form-file-upload', {
+	edit: ( { attributes, setAttributes } ) => {
 		const {
 			questionText,
 			questionKey,
@@ -21,92 +21,100 @@ registerBlockType('fair-audience/fair-form-file-upload', {
 			maxFileSize,
 		} = attributes;
 
-		const onQuestionTextChange = (value) => {
+		const onQuestionTextChange = ( value ) => {
 			const updates = { questionText: value };
 			if (
-				!questionKey ||
-				questionKey === generateQuestionKey(questionText)
+				! questionKey ||
+				questionKey === generateQuestionKey( questionText )
 			) {
-				updates.questionKey = generateQuestionKey(value);
+				updates.questionKey = generateQuestionKey( value );
 			}
-			setAttributes(updates);
+			setAttributes( updates );
 		};
 
-		const blockProps = useBlockProps({
+		const blockProps = useBlockProps( {
 			className: 'fair-form-question fair-form-question-file-upload',
-		});
+		} );
 
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Question Settings', 'fair-audience')}>
+					<PanelBody
+						title={ __( 'Question Settings', 'fair-audience' ) }
+					>
 						<TextControl
-							label={__('Question Key', 'fair-audience')}
-							value={questionKey}
-							onChange={(value) =>
-								setAttributes({ questionKey: value })
+							label={ __( 'Question Key', 'fair-audience' ) }
+							value={ questionKey }
+							onChange={ ( value ) =>
+								setAttributes( { questionKey: value } )
 							}
-							help={__(
+							help={ __(
 								'A unique identifier for this question (e.g. "photo_upload"). Used internally.',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<ToggleControl
-							label={__('Required', 'fair-audience')}
-							checked={required}
-							onChange={(value) =>
-								setAttributes({ required: value })
+							label={ __( 'Required', 'fair-audience' ) }
+							checked={ required }
+							onChange={ ( value ) =>
+								setAttributes( { required: value } )
 							}
 						/>
 						<TextControl
-							label={__('Accepted File Types', 'fair-audience')}
-							value={acceptedTypes}
-							onChange={(value) =>
-								setAttributes({ acceptedTypes: value })
+							label={ __(
+								'Accepted File Types',
+								'fair-audience'
+							) }
+							value={ acceptedTypes }
+							onChange={ ( value ) =>
+								setAttributes( { acceptedTypes: value } )
 							}
-							help={__(
+							help={ __(
 								'MIME types or extensions (e.g. "image/*", ".pdf,.doc", "image/png,image/jpeg").',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<NumberControl
-							label={__('Max File Size (MB)', 'fair-audience')}
-							value={maxFileSize}
-							onChange={(value) =>
-								setAttributes({
-									maxFileSize: parseInt(value, 10) || 5,
-								})
+							label={ __(
+								'Max File Size (MB)',
+								'fair-audience'
+							) }
+							value={ maxFileSize }
+							onChange={ ( value ) =>
+								setAttributes( {
+									maxFileSize: parseInt( value, 10 ) || 5,
+								} )
 							}
-							min={1}
-							max={100}
+							min={ 1 }
+							max={ 100 }
 						/>
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
+				<div { ...blockProps }>
 					<p>
 						<span className="fair-form-question-header">
 							<textarea
-								rows={1}
-								ref={autosizeTextarea}
-								value={questionText}
-								onChange={(e) => {
-									autosizeTextarea(e.target);
-									onQuestionTextChange(e.target.value);
-								}}
-								placeholder={__(
+								rows={ 1 }
+								ref={ autosizeTextarea }
+								value={ questionText }
+								onChange={ ( e ) => {
+									autosizeTextarea( e.target );
+									onQuestionTextChange( e.target.value );
+								} }
+								placeholder={ __(
 									'Enter your question...',
 									'fair-audience'
-								)}
+								) }
 								className="fair-form-question-label-input"
 							/>
-							{required && <span className="required"> *</span>}
+							{ required && <span className="required"> *</span> }
 						</span>
 						<br />
 						<input type="file" disabled />
 						<span className="fair-form-file-upload-help">
-							{__('Max file size:', 'fair-audience')}{' '}
-							{maxFileSize} MB
+							{ __( 'Max file size:', 'fair-audience' ) }{ ' ' }
+							{ maxFileSize } MB
 						</span>
 					</p>
 				</div>
@@ -116,4 +124,4 @@ registerBlockType('fair-audience/fair-form-file-upload', {
 	save: () => {
 		return null;
 	},
-});
+} );

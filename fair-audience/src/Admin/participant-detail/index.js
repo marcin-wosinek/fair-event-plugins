@@ -5,6 +5,6 @@ import './style.css';
 const rootElement = document.getElementById(
 	'fair-audience-participant-detail-root'
 );
-if (rootElement) {
-	createRoot(rootElement).render(<ParticipantDetail />);
+if ( rootElement ) {
+	createRoot( rootElement ).render( <ParticipantDetail /> );
 }

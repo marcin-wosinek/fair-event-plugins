@@ -10,7 +10,7 @@ import { Card, CardBody, Icon } from '@wordpress/components';
  * @param {string} type Event type.
  * @return {string} Dashicon name.
  */
-function getIcon(type) {
+function getIcon( type ) {
 	const icons = {
 		signup: 'groups',
 		form_submission: 'forms',
@@ -22,7 +22,7 @@ function getIcon(type) {
 		poll: 'chart-bar',
 		new_participant: 'admin-users',
 	};
-	return icons[type] || 'marker';
+	return icons[ type ] || 'marker';
 }
 
 /**
@@ -31,7 +31,7 @@ function getIcon(type) {
  * @param {string} type Event type.
  * @return {string} CSS color.
  */
-function getTypeColor(type) {
+function getTypeColor( type ) {
 	const colors = {
 		signup: '#007cba',
 		form_submission: '#9b59b6',
@@ -43,7 +43,7 @@ function getTypeColor(type) {
 		poll: '#3498db',
 		new_participant: '#2ecc71',
 	};
-	return colors[type] || '#999';
+	return colors[ type ] || '#999';
 }
 
 /**
@@ -52,31 +52,31 @@ function getTypeColor(type) {
  * @param {string} dateString Date string from the API.
  * @return {string} Relative time string.
  */
-function getRelativeTime(dateString) {
-	const date = new Date(dateString + 'Z');
+function getRelativeTime( dateString ) {
+	const date = new Date( dateString + 'Z' );
 	const now = new Date();
 	const diffMs = now - date;
-	const diffMinutes = Math.floor(diffMs / 60000);
-	const diffHours = Math.floor(diffMs / 3600000);
-	const diffDays = Math.floor(diffMs / 86400000);
+	const diffMinutes = Math.floor( diffMs / 60000 );
+	const diffHours = Math.floor( diffMs / 3600000 );
+	const diffDays = Math.floor( diffMs / 86400000 );
 
-	if (diffMinutes < 1) {
-		return __('just now', 'fair-audience');
+	if ( diffMinutes < 1 ) {
+		return __( 'just now', 'fair-audience' );
 	}
-	if (diffMinutes < 60) {
+	if ( diffMinutes < 60 ) {
 		return diffMinutes === 1
-			? __('1 minute ago', 'fair-audience')
-			: `${diffMinutes} ${__('minutes ago', 'fair-audience')}`;
+			? __( '1 minute ago', 'fair-audience' )
+			: `${ diffMinutes } ${ __( 'minutes ago', 'fair-audience' ) }`;
 	}
-	if (diffHours < 24) {
+	if ( diffHours < 24 ) {
 		return diffHours === 1
-			? __('1 hour ago', 'fair-audience')
-			: `${diffHours} ${__('hours ago', 'fair-audience')}`;
+			? __( '1 hour ago', 'fair-audience' )
+			: `${ diffHours } ${ __( 'hours ago', 'fair-audience' ) }`;
 	}
-	if (diffDays < 30) {
+	if ( diffDays < 30 ) {
 		return diffDays === 1
-			? __('yesterday', 'fair-audience')
-			: `${diffDays} ${__('days ago', 'fair-audience')}`;
+			? __( 'yesterday', 'fair-audience' )
+			: `${ diffDays } ${ __( 'days ago', 'fair-audience' ) }`;
 	}
 
 	return date.toLocaleDateString();
@@ -89,7 +89,7 @@ function getRelativeTime(dateString) {
  * @param {Object} props.item Timeline item with submission details.
  * @return {JSX.Element} Submission summary with link.
  */
-function FormSubmissionContent({ item }) {
+function FormSubmissionContent( { item } ) {
 	const {
 		submission_id: submissionId,
 		participant_id: participantId,
@@ -99,42 +99,44 @@ function FormSubmissionContent({ item }) {
 		post_url: postUrl,
 	} = item.details;
 
-	const submissionUrl = `admin.php?page=fair-form-submission-detail&submission_id=${submissionId}`;
+	const submissionUrl = `admin.php?page=fair-form-submission-detail&submission_id=${ submissionId }`;
 	const participantUrl = participantId
-		? `admin.php?page=fair-audience-participant-detail&participant_id=${participantId}`
+		? `admin.php?page=fair-audience-participant-detail&participant_id=${ participantId }`
 		: null;
 
 	const nameNode = participantUrl ? (
-		<a href={participantUrl}>{participantName}</a>
+		<a href={ participantUrl }>{ participantName }</a>
 	) : (
 		participantName
 	);
 
 	const pageNode =
 		pageTitle && postUrl ? (
-			<a href={postUrl} target="_blank" rel="noopener noreferrer">
-				{pageTitle}
+			<a href={ postUrl } target="_blank" rel="noopener noreferrer">
+				{ pageTitle }
 			</a>
 		) : (
 			pageTitle
 		);
 
 	return (
-		<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
-			{pageTitle ? (
+		<div style={ { fontSize: '13px', lineHeight: '1.5' } }>
+			{ pageTitle ? (
 				<>
-					{nameNode} {__('submitted', 'fair-audience')} &quot;
-					{formName}&quot; {__('on', 'fair-audience')} &quot;
-					{pageNode}&quot;
+					{ nameNode } { __( 'submitted', 'fair-audience' ) } &quot;
+					{ formName }&quot; { __( 'on', 'fair-audience' ) } &quot;
+					{ pageNode }&quot;
 				</>
 			) : (
 				<>
-					{nameNode} {__('submitted', 'fair-audience')} &quot;
-					{formName}&quot;
+					{ nameNode } { __( 'submitted', 'fair-audience' ) } &quot;
+					{ formName }&quot;
 				</>
-			)}
-			{' — '}
-			<a href={submissionUrl}>{__('View answers', 'fair-audience')}</a>
+			) }
+			{ ' — ' }
+			<a href={ submissionUrl }>
+				{ __( 'View answers', 'fair-audience' ) }
+			</a>
 		</div>
 	);
 }
@@ -146,7 +148,7 @@ function FormSubmissionContent({ item }) {
  * @param {Object} props.item Timeline item with participant details.
  * @return {JSX.Element} Participant summary with linked name.
  */
-function NewParticipantContent({ item }) {
+function NewParticipantContent( { item } ) {
 	const {
 		participant_id: participantId,
 		name,
@@ -154,45 +156,45 @@ function NewParticipantContent({ item }) {
 		count = 0,
 	} = item.details;
 
-	if (Array.isArray(participants) && participants.length > 1) {
+	if ( Array.isArray( participants ) && participants.length > 1 ) {
 		return (
-			<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
-				{__('New participants:', 'fair-audience')}{' '}
-				{participants.map((p, index) => (
-					<span key={p.participant_id}>
-						{index > 0 && ', '}
-						{p.participant_id ? (
+			<div style={ { fontSize: '13px', lineHeight: '1.5' } }>
+				{ __( 'New participants:', 'fair-audience' ) }{ ' ' }
+				{ participants.map( ( p, index ) => (
+					<span key={ p.participant_id }>
+						{ index > 0 && ', ' }
+						{ p.participant_id ? (
 							<a
-								href={`admin.php?page=fair-audience-participant-detail&participant_id=${p.participant_id}`}
+								href={ `admin.php?page=fair-audience-participant-detail&participant_id=${ p.participant_id }` }
 							>
-								{p.name}
+								{ p.name }
 							</a>
 						) : (
 							p.name
-						)}
+						) }
 					</span>
-				))}
+				) ) }
 			</div>
 		);
 	}
 
 	const displayName = name || item.summary;
 
-	if (!participantId) {
+	if ( ! participantId ) {
 		return (
-			<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
-				{item.summary}
+			<div style={ { fontSize: '13px', lineHeight: '1.5' } }>
+				{ item.summary }
 			</div>
 		);
 	}
 
-	const participantUrl = `admin.php?page=fair-audience-participant-detail&participant_id=${participantId}`;
+	const participantUrl = `admin.php?page=fair-audience-participant-detail&participant_id=${ participantId }`;
 
 	return (
-		<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
-			{__('New participant:', 'fair-audience')}{' '}
-			<a href={participantUrl}>{displayName}</a>
-			{count > 1 && ` (${count})`}
+		<div style={ { fontSize: '13px', lineHeight: '1.5' } }>
+			{ __( 'New participant:', 'fair-audience' ) }{ ' ' }
+			<a href={ participantUrl }>{ displayName }</a>
+			{ count > 1 && ` (${ count })` }
 		</div>
 	);
 }
@@ -204,24 +206,26 @@ function NewParticipantContent({ item }) {
  * @param {Object} props.item Timeline item with fee details.
  * @return {JSX.Element} Fee summary.
  */
-function FeeContent({ item }) {
+function FeeContent( { item } ) {
 	const { details } = item;
-	const feeUrl = `admin.php?page=fair-audience-fee-detail&fee_id=${details.fee_id}`;
+	const feeUrl = `admin.php?page=fair-audience-fee-detail&fee_id=${ details.fee_id }`;
 
 	return (
-		<div style={{ fontSize: '13px', lineHeight: '1.6' }}>
+		<div style={ { fontSize: '13px', lineHeight: '1.6' } }>
 			<div>
-				{__('Created membership fee', 'fair-audience')}{' '}
-				<a href={feeUrl}>
-					<strong>{details.fee_name}</strong>
+				{ __( 'Created membership fee', 'fair-audience' ) }{ ' ' }
+				<a href={ feeUrl }>
+					<strong>{ details.fee_name }</strong>
 				</a>
-				. {__('Total amount:', 'fair-audience')}{' '}
-				{Number(details.total_amount).toFixed(2)} {details.currency}.
+				. { __( 'Total amount:', 'fair-audience' ) }{ ' ' }
+				{ Number( details.total_amount ).toFixed( 2 ) }{ ' ' }
+				{ details.currency }.
 			</div>
 			<div>
-				{__('Already paid:', 'fair-audience')}{' '}
-				{Number(details.total_paid).toFixed(2)} {details.currency}.{' '}
-				{__('Pending:', 'fair-audience')} {details.pending_text}
+				{ __( 'Already paid:', 'fair-audience' ) }{ ' ' }
+				{ Number( details.total_paid ).toFixed( 2 ) }{ ' ' }
+				{ details.currency }. { __( 'Pending:', 'fair-audience' ) }{ ' ' }
+				{ details.pending_text }
 			</div>
 		</div>
 	);
@@ -234,7 +238,7 @@ function FeeContent({ item }) {
  * @param {Object} props.item Timeline item with grouped payments details.
  * @return {JSX.Element} Summary of payments made on a single day.
  */
-function FeePaymentsDayContent({ item }) {
+function FeePaymentsDayContent( { item } ) {
 	const {
 		day,
 		currency,
@@ -244,47 +248,48 @@ function FeePaymentsDayContent({ item }) {
 	} = item.details;
 
 	return (
-		<div style={{ fontSize: '13px', lineHeight: '1.6' }}>
+		<div style={ { fontSize: '13px', lineHeight: '1.6' } }>
 			<div>
 				<strong>
-					{count}{' '}
-					{count === 1
-						? __('fee payment on', 'fair-audience')
-						: __('fee payments on', 'fair-audience')}{' '}
-					{day}
+					{ count }{ ' ' }
+					{ count === 1
+						? __( 'fee payment on', 'fair-audience' )
+						: __( 'fee payments on', 'fair-audience' ) }{ ' ' }
+					{ day }
 				</strong>
-				{' — '}
-				{__('total:', 'fair-audience')} {Number(totalAmount).toFixed(2)}{' '}
-				{currency}
+				{ ' — ' }
+				{ __( 'total:', 'fair-audience' ) }{ ' ' }
+				{ Number( totalAmount ).toFixed( 2 ) } { currency }
 			</div>
-			<ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
-				{participants.map((payment) => {
+			<ul style={ { margin: '4px 0 0 18px', padding: 0 } }>
+				{ participants.map( ( payment ) => {
 					const participantUrl = payment.participant_id
-						? `admin.php?page=fair-audience-participant-detail&participant_id=${payment.participant_id}`
+						? `admin.php?page=fair-audience-participant-detail&participant_id=${ payment.participant_id }`
 						: null;
 					const feeUrl = payment.fee_id
-						? `admin.php?page=fair-audience-fee-detail&fee_id=${payment.fee_id}`
+						? `admin.php?page=fair-audience-fee-detail&fee_id=${ payment.fee_id }`
 						: null;
 
 					return (
-						<li key={payment.payment_id}>
-							{participantUrl ? (
-								<a href={participantUrl}>{payment.name}</a>
+						<li key={ payment.payment_id }>
+							{ participantUrl ? (
+								<a href={ participantUrl }>{ payment.name }</a>
 							) : (
 								payment.name
-							)}
-							{' — '}
-							{Number(payment.amount).toFixed(2)} {currency}
-							{payment.fee_name && feeUrl && (
+							) }
+							{ ' — ' }
+							{ Number( payment.amount ).toFixed( 2 ) }{ ' ' }
+							{ currency }
+							{ payment.fee_name && feeUrl && (
 								<>
-									{' ('}
-									<a href={feeUrl}>{payment.fee_name}</a>
-									{')'}
+									{ ' (' }
+									<a href={ feeUrl }>{ payment.fee_name }</a>
+									{ ')' }
 								</>
-							)}
+							) }
 						</li>
 					);
-				})}
+				} ) }
 			</ul>
 		</div>
 	);
@@ -297,7 +302,7 @@ function FeePaymentsDayContent({ item }) {
  * @param {Object} props.item Timeline item with grouped ticket sales details.
  * @return {JSX.Element} Summary of ticket sales made on a single day.
  */
-function TicketSalesDayContent({ item }) {
+function TicketSalesDayContent( { item } ) {
 	const {
 		day,
 		currency,
@@ -307,80 +312,80 @@ function TicketSalesDayContent({ item }) {
 	} = item.details;
 
 	return (
-		<div style={{ fontSize: '13px', lineHeight: '1.6' }}>
+		<div style={ { fontSize: '13px', lineHeight: '1.6' } }>
 			<div>
 				<strong>
-					{count}{' '}
-					{count === 1
-						? __('ticket sale on', 'fair-audience')
-						: __('ticket sales on', 'fair-audience')}{' '}
-					{day}
+					{ count }{ ' ' }
+					{ count === 1
+						? __( 'ticket sale on', 'fair-audience' )
+						: __( 'ticket sales on', 'fair-audience' ) }{ ' ' }
+					{ day }
 				</strong>
-				{' — '}
-				{__('total:', 'fair-audience')} {Number(totalAmount).toFixed(2)}{' '}
-				{currency}
+				{ ' — ' }
+				{ __( 'total:', 'fair-audience' ) }{ ' ' }
+				{ Number( totalAmount ).toFixed( 2 ) } { currency }
 			</div>
-			<ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
-				{tickets.map((ticket) => {
+			<ul style={ { margin: '4px 0 0 18px', padding: 0 } }>
+				{ tickets.map( ( ticket ) => {
 					const participantUrl = ticket.participant_id
-						? `admin.php?page=fair-audience-participant-detail&participant_id=${ticket.participant_id}`
+						? `admin.php?page=fair-audience-participant-detail&participant_id=${ ticket.participant_id }`
 						: null;
 					const eventUrl =
 						ticket.event_date_id && ticket.post_id
-							? `admin.php?page=fair-events-manage-event&event_date_id=${ticket.event_date_id}`
+							? `admin.php?page=fair-events-manage-event&event_date_id=${ ticket.event_date_id }`
 							: null;
 					const transactionUrl = ticket.transaction_id
-						? `admin.php?page=fair-payments-connector-transaction&transaction_id=${ticket.transaction_id}`
+						? `admin.php?page=fair-payments-connector-transaction&transaction_id=${ ticket.transaction_id }`
 						: null;
-					const amountText = `${Number(ticket.amount).toFixed(
+					const amountText = `${ Number( ticket.amount ).toFixed(
 						2
-					)} ${currency}`;
+					) } ${ currency }`;
 
 					return (
-						<li key={ticket.transaction_id}>
-							{participantUrl ? (
-								<a href={participantUrl}>{ticket.name}</a>
+						<li key={ ticket.transaction_id }>
+							{ participantUrl ? (
+								<a href={ participantUrl }>{ ticket.name }</a>
 							) : (
 								ticket.name
-							)}
-							{' — '}
-							{transactionUrl ? (
-								<a href={transactionUrl}>{amountText}</a>
+							) }
+							{ ' — ' }
+							{ transactionUrl ? (
+								<a href={ transactionUrl }>{ amountText }</a>
 							) : (
 								amountText
-							)}
-							{ticket.event_title && (
+							) }
+							{ ticket.event_title && (
 								<>
-									{' ('}
-									{eventUrl ? (
-										<a href={eventUrl}>
-											{ticket.event_title}
+									{ ' (' }
+									{ eventUrl ? (
+										<a href={ eventUrl }>
+											{ ticket.event_title }
 										</a>
 									) : (
 										ticket.event_title
-									)}
-									{')'}
+									) }
+									{ ')' }
 								</>
-							)}
-							{ticket.testmode && (
+							) }
+							{ ticket.testmode && (
 								<>
-									{' '}
+									{ ' ' }
 									<span
-										style={{
+										style={ {
 											fontSize: '11px',
 											color: '#757575',
 											border: '1px solid #bdbdbd',
 											borderRadius: '3px',
 											padding: '0 3px',
-										}}
+										} }
 									>
-										{__('Test', 'fair-audience')}
+										{ __( 'Test', 'fair-audience' ) }
 									</span>
 								</>
-							)}
+							) }
 						</li>
 					);
-				})}
+				} ) }
 			</ul>
 		</div>
 	);
@@ -393,19 +398,19 @@ function TicketSalesDayContent({ item }) {
  * @param {Object} props.item Timeline item with signup details.
  * @return {JSX.Element} Signup summary linked to the event audience tab.
  */
-function SignupContent({ item }) {
+function SignupContent( { item } ) {
 	const eventDateId = item.details?.event_date_id;
 	const audienceUrl = eventDateId
-		? `admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}&tab=audience`
+		? `admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=audience`
 		: null;
 
 	return (
-		<div style={{ fontSize: '13px', lineHeight: '1.5' }}>
-			{audienceUrl ? (
-				<a href={audienceUrl}>{item.summary}</a>
+		<div style={ { fontSize: '13px', lineHeight: '1.5' } }>
+			{ audienceUrl ? (
+				<a href={ audienceUrl }>{ item.summary }</a>
 			) : (
 				item.summary
-			)}
+			) }
 		</div>
 	);
 }
@@ -417,26 +422,26 @@ function SignupContent({ item }) {
  * @param {Object} props.item Timeline item from API.
  * @return {JSX.Element} Timeline item.
  */
-export default function TimelineItem({ item }) {
-	const iconColor = getTypeColor(item.type);
+export default function TimelineItem( { item } ) {
+	const iconColor = getTypeColor( item.type );
 
 	return (
 		<Card
 			size="small"
-			style={{
+			style={ {
 				marginBottom: '8px',
-			}}
+			} }
 		>
 			<CardBody>
 				<div
-					style={{
+					style={ {
 						display: 'flex',
 						alignItems: 'flex-start',
 						gap: '12px',
-					}}
+					} }
 				>
 					<div
-						style={{
+						style={ {
 							backgroundColor: iconColor,
 							borderRadius: '50%',
 							width: '32px',
@@ -445,45 +450,45 @@ export default function TimelineItem({ item }) {
 							alignItems: 'center',
 							justifyContent: 'center',
 							flexShrink: 0,
-						}}
+						} }
 					>
 						<Icon
-							icon={getIcon(item.type)}
-							size={18}
-							style={{ color: '#fff' }}
+							icon={ getIcon( item.type ) }
+							size={ 18 }
+							style={ { color: '#fff' } }
 						/>
 					</div>
-					<div style={{ flex: 1, minWidth: 0 }}>
-						{item.type === 'fee' ? (
-							<FeeContent item={item} />
+					<div style={ { flex: 1, minWidth: 0 } }>
+						{ item.type === 'fee' ? (
+							<FeeContent item={ item } />
 						) : item.type === 'fee_payments_day' ? (
-							<FeePaymentsDayContent item={item} />
+							<FeePaymentsDayContent item={ item } />
 						) : item.type === 'ticket_sales_day' ? (
-							<TicketSalesDayContent item={item} />
+							<TicketSalesDayContent item={ item } />
 						) : item.type === 'form_submission' ? (
-							<FormSubmissionContent item={item} />
+							<FormSubmissionContent item={ item } />
 						) : item.type === 'new_participant' ? (
-							<NewParticipantContent item={item} />
+							<NewParticipantContent item={ item } />
 						) : item.type === 'signup' ? (
-							<SignupContent item={item} />
+							<SignupContent item={ item } />
 						) : (
 							<div
-								style={{
+								style={ {
 									fontSize: '13px',
 									lineHeight: '1.5',
-								}}
+								} }
 							>
-								{item.summary}
+								{ item.summary }
 							</div>
-						)}
+						) }
 						<div
-							style={{
+							style={ {
 								fontSize: '12px',
 								color: '#757575',
 								marginTop: '2px',
-							}}
+							} }
 						>
-							{getRelativeTime(item.created_at)}
+							{ getRelativeTime( item.created_at ) }
 						</div>
 					</div>
 				</div>

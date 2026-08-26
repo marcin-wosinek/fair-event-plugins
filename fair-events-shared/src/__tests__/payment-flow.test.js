@@ -1,118 +1,122 @@
 import apiFetch from '@wordpress/api-fetch';
 import { renderPaymentError, pollPaymentStatus } from '../payment-flow.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
-describe('pollPaymentStatus', () => {
-	beforeEach(() => {
+describe( 'pollPaymentStatus', () => {
+	beforeEach( () => {
 		jest.useFakeTimers();
 		apiFetch.mockReset();
-	});
+	} );
 
-	afterEach(() => {
+	afterEach( () => {
 		jest.useRealTimers();
-	});
+	} );
 
-	test('calls onConfirmed once lifecycle_status is confirmed', async () => {
-		apiFetch.mockResolvedValueOnce({ lifecycle_status: 'confirmed' });
+	test( 'calls onConfirmed once lifecycle_status is confirmed', async () => {
+		apiFetch.mockResolvedValueOnce( { lifecycle_status: 'confirmed' } );
 		const onConfirmed = jest.fn();
 
-		pollPaymentStatus({
+		pollPaymentStatus( {
 			path: '/fair-events/v1/get-tickets/payment-state',
 			onConfirmed,
-		});
+		} );
 		await flushPromises();
 
-		expect(onConfirmed).toHaveBeenCalledWith({
+		expect( onConfirmed ).toHaveBeenCalledWith( {
 			lifecycle_status: 'confirmed',
-		});
-	});
+		} );
+	} );
 
-	test('calls onFailed once lifecycle_status is failed', async () => {
-		apiFetch.mockResolvedValueOnce({ lifecycle_status: 'failed' });
+	test( 'calls onFailed once lifecycle_status is failed', async () => {
+		apiFetch.mockResolvedValueOnce( { lifecycle_status: 'failed' } );
 		const onFailed = jest.fn();
 
-		pollPaymentStatus({ path: '/some/path', onFailed });
+		pollPaymentStatus( { path: '/some/path', onFailed } );
 		await flushPromises();
 
-		expect(onFailed).toHaveBeenCalledWith({ lifecycle_status: 'failed' });
-	});
+		expect( onFailed ).toHaveBeenCalledWith( {
+			lifecycle_status: 'failed',
+		} );
+	} );
 
-	test('calls onProcessing and schedules another tick while still in progress', async () => {
-		apiFetch.mockResolvedValue({
+	test( 'calls onProcessing and schedules another tick while still in progress', async () => {
+		apiFetch.mockResolvedValue( {
 			lifecycle_status: 'processing',
 			state: 'resume',
-		});
+		} );
 		const onProcessing = jest.fn();
 
-		pollPaymentStatus({
+		pollPaymentStatus( {
 			path: '/some/path',
 			onProcessing,
 			intervalMs: 1000,
-		});
+		} );
 		await flushPromises();
 
-		expect(onProcessing).toHaveBeenCalledWith({
+		expect( onProcessing ).toHaveBeenCalledWith( {
 			lifecycle_status: 'processing',
 			state: 'resume',
-		});
-		expect(apiFetch).toHaveBeenCalledTimes(1);
+		} );
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
 
-		jest.advanceTimersByTime(1000);
+		jest.advanceTimersByTime( 1000 );
 		await flushPromises();
 
-		expect(apiFetch).toHaveBeenCalledTimes(2);
-	});
+		expect( apiFetch ).toHaveBeenCalledTimes( 2 );
+	} );
 
-	test('stops after maxAttempts ticks', async () => {
-		apiFetch.mockResolvedValue({ lifecycle_status: 'processing' });
+	test( 'stops after maxAttempts ticks', async () => {
+		apiFetch.mockResolvedValue( { lifecycle_status: 'processing' } );
 
-		pollPaymentStatus({
+		pollPaymentStatus( {
 			path: '/some/path',
 			maxAttempts: 1,
 			intervalMs: 1000,
-		});
+		} );
 		await flushPromises();
 
-		expect(apiFetch).toHaveBeenCalledTimes(1);
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
 
-		jest.advanceTimersByTime(1000);
+		jest.advanceTimersByTime( 1000 );
 		await flushPromises();
 
 		// maxAttempts reached on the first tick — no second call is scheduled.
-		expect(apiFetch).toHaveBeenCalledTimes(1);
-	});
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+	} );
 
-	test('stops silently on a fetch error', async () => {
-		apiFetch.mockRejectedValueOnce(new Error('network error'));
+	test( 'stops silently on a fetch error', async () => {
+		apiFetch.mockRejectedValueOnce( new Error( 'network error' ) );
 
-		expect(() => pollPaymentStatus({ path: '/some/path' })).not.toThrow();
+		expect( () =>
+			pollPaymentStatus( { path: '/some/path' } )
+		).not.toThrow();
 		await flushPromises();
 
-		jest.advanceTimersByTime(10000);
-		expect(apiFetch).toHaveBeenCalledTimes(1);
-	});
+		jest.advanceTimersByTime( 10000 );
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+	} );
 
 	function flushPromises() {
-		return Promise.resolve().then(() => Promise.resolve());
+		return Promise.resolve().then( () => Promise.resolve() );
 	}
-});
+} );
 
-describe('renderPaymentError', () => {
+describe( 'renderPaymentError', () => {
 	let container;
 
-	beforeEach(() => {
+	beforeEach( () => {
 		jest.useFakeTimers();
-		container = document.createElement('div');
+		container = document.createElement( 'div' );
 		container.className = 'fair-payments-connector-error';
-	});
+	} );
 
-	afterEach(() => {
+	afterEach( () => {
 		jest.useRealTimers();
-	});
+	} );
 
-	test('no-ops when container is null', () => {
-		expect(() =>
+	test( 'no-ops when container is null', () => {
+		expect( () =>
 			renderPaymentError(
 				null,
 				{},
@@ -120,9 +124,9 @@ describe('renderPaymentError', () => {
 				'fair-payments-connector'
 			)
 		).not.toThrow();
-	});
+	} );
 
-	test('shows the generic message and no admin block for a plain error', () => {
+	test( 'shows the generic message and no admin block for a plain error', () => {
 		const error = { message: 'The payment could not be started.' };
 
 		renderPaymentError(
@@ -132,8 +136,8 @@ describe('renderPaymentError', () => {
 			'fair-payments-connector'
 		);
 
-		expect(container.style.display).toBe('block');
-		expect(container.textContent).toContain(
+		expect( container.style.display ).toBe( 'block' );
+		expect( container.textContent ).toContain(
 			'The payment could not be started.'
 		);
 		expect(
@@ -146,9 +150,9 @@ describe('renderPaymentError', () => {
 				'.fair-payments-connector-message-admin-links'
 			)
 		).toBeNull();
-	});
+	} );
 
-	test('preserves the container original class so callers can re-query it', () => {
+	test( 'preserves the container original class so callers can re-query it', () => {
 		renderPaymentError(
 			container,
 			{ message: 'Failed' },
@@ -157,11 +161,11 @@ describe('renderPaymentError', () => {
 		);
 
 		expect(
-			container.classList.contains('fair-payments-connector-error')
-		).toBe(true);
-	});
+			container.classList.contains( 'fair-payments-connector-error' )
+		).toBe( true );
+	} );
 
-	test('renders the interpreted cause and links when error.data.admin is present', () => {
+	test( 'renders the interpreted cause and links when error.data.admin is present', () => {
 		const error = {
 			message: 'The payment could not be started.',
 			data: {
@@ -195,23 +199,23 @@ describe('renderPaymentError', () => {
 		const causeEl = container.querySelector(
 			'.fair-payments-connector-message-admin-cause'
 		);
-		expect(causeEl).not.toBeNull();
-		expect(causeEl.textContent).toBe(
+		expect( causeEl ).not.toBeNull();
+		expect( causeEl.textContent ).toBe(
 			'The connected Mollie profile has no suitable payment method enabled.'
 		);
 
 		const links = container.querySelectorAll(
 			'.fair-payments-connector-message-admin-links a'
 		);
-		expect(links).toHaveLength(3);
-		expect(links[0].textContent).toBe('Payment settings');
-		expect(links[0].getAttribute('href')).toBe(
+		expect( links ).toHaveLength( 3 );
+		expect( links[ 0 ].textContent ).toBe( 'Payment settings' );
+		expect( links[ 0 ].getAttribute( 'href' ) ).toBe(
 			'https://example.test/wp-admin/admin.php?page=fair-payments-connector-settings'
 		);
-		expect(links[2].textContent).toBe('Mollie dashboard');
-	});
+		expect( links[ 2 ].textContent ).toBe( 'Mollie dashboard' );
+	} );
 
-	test('does not auto-hide when admin detail is present', () => {
+	test( 'does not auto-hide when admin detail is present', () => {
 		const error = {
 			message: 'The payment could not be started.',
 			data: { admin: { cause: 'Cause', links: [] } },
@@ -223,24 +227,24 @@ describe('renderPaymentError', () => {
 			'Default message',
 			'fair-payments-connector'
 		);
-		jest.advanceTimersByTime(10000);
+		jest.advanceTimersByTime( 10000 );
 
-		expect(container.style.display).toBe('block');
-	});
+		expect( container.style.display ).toBe( 'block' );
+	} );
 
-	test('auto-hides after 8s when there is no admin detail', () => {
+	test( 'auto-hides after 8s when there is no admin detail', () => {
 		renderPaymentError(
 			container,
 			{ message: 'Failed' },
 			'Default message',
 			'fair-payments-connector'
 		);
-		jest.advanceTimersByTime(8000);
+		jest.advanceTimersByTime( 8000 );
 
-		expect(container.style.display).toBe('none');
-	});
+		expect( container.style.display ).toBe( 'none' );
+	} );
 
-	test('clears previously rendered content on re-render', () => {
+	test( 'clears previously rendered content on re-render', () => {
 		renderPaymentError(
 			container,
 			{
@@ -257,12 +261,12 @@ describe('renderPaymentError', () => {
 			'fair-payments-connector'
 		);
 
-		expect(container.textContent).toContain('Second failure');
-		expect(container.textContent).not.toContain('First cause');
+		expect( container.textContent ).toContain( 'Second failure' );
+		expect( container.textContent ).not.toContain( 'First cause' );
 		expect(
 			container.querySelector(
 				'.fair-payments-connector-message-admin-cause'
 			)
 		).toBeNull();
-	});
-});
+	} );
+} );

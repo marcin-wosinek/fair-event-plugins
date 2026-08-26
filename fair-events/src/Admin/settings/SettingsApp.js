@@ -20,83 +20,85 @@ import OrganizerTab from './OrganizerTab.js';
  * @return {JSX.Element} The Settings app component
  */
 export default function SettingsApp() {
-	const [notice, setNotice] = useState(null);
+	const [ notice, setNotice ] = useState( null );
 
 	const tabs = useMemo(
 		() => [
 			{
 				name: 'general',
-				title: __('General', 'fair-events'),
+				title: __( 'General', 'fair-events' ),
 			},
 			{
 				name: 'features',
-				title: __('Features', 'fair-events'),
+				title: __( 'Features', 'fair-events' ),
 			},
 			{
 				name: 'organizer',
-				title: __('Organizer', 'fair-events'),
+				title: __( 'Organizer', 'fair-events' ),
 			},
 		],
 		[]
 	);
 
-	const initialTab = useMemo(() => {
-		const urlTab = new URLSearchParams(window.location.search).get('tab');
-		if (tabs.some((t) => t.name === urlTab)) {
+	const initialTab = useMemo( () => {
+		const urlTab = new URLSearchParams( window.location.search ).get(
+			'tab'
+		);
+		if ( tabs.some( ( t ) => t.name === urlTab ) ) {
 			return urlTab;
 		}
 		return 'general';
-	}, [tabs]);
+	}, [ tabs ] );
 
-	const handleTabSelect = useCallback((tabName) => {
-		const url = new URL(window.location.href);
-		if (tabName === 'general') {
-			url.searchParams.delete('tab');
+	const handleTabSelect = useCallback( ( tabName ) => {
+		const url = new URL( window.location.href );
+		if ( tabName === 'general' ) {
+			url.searchParams.delete( 'tab' );
 		} else {
-			url.searchParams.set('tab', tabName);
+			url.searchParams.set( 'tab', tabName );
 		}
-		window.history.replaceState(null, '', url.toString());
-	}, []);
+		window.history.replaceState( null, '', url.toString() );
+	}, [] );
 
 	return (
 		<div className="wrap fair-events-settings">
 			<style>
-				{`/* The 1.5px height of the active-tab indicator anti-aliases to a thin
+				{ `/* The 1.5px height of the active-tab indicator anti-aliases to a thin
    darker top edge at 1x DPI. Round to 2px so the bar renders crisp. */
-.fair-events-settings .components-tab-panel__tabs-item.is-active::after { height: 2px; outline: none; }`}
+.fair-events-settings .components-tab-panel__tabs-item.is-active::after { height: 2px; outline: none; }` }
 			</style>
-			<h1>{__('Fair Events Settings', 'fair-events')}</h1>
+			<h1>{ __( 'Fair Events Settings', 'fair-events' ) }</h1>
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
-					isDismissible={true}
-					onRemove={() => setNotice(null)}
+					status={ notice.status }
+					isDismissible={ true }
+					onRemove={ () => setNotice( null ) }
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
 			<TabPanel
 				className="fair-events-settings-tabs"
 				activeClass="active-tab"
-				initialTabName={initialTab}
-				onSelect={handleTabSelect}
-				tabs={tabs}
+				initialTabName={ initialTab }
+				onSelect={ handleTabSelect }
+				tabs={ tabs }
 			>
-				{(tab) => (
-					<div style={{ marginTop: '1rem' }}>
-						{tab.name === 'general' && (
-							<GeneralTab onNotice={setNotice} />
-						)}
-						{tab.name === 'features' && (
-							<FeaturesTab onNotice={setNotice} />
-						)}
-						{tab.name === 'organizer' && (
-							<OrganizerTab onNotice={setNotice} />
-						)}
+				{ ( tab ) => (
+					<div style={ { marginTop: '1rem' } }>
+						{ tab.name === 'general' && (
+							<GeneralTab onNotice={ setNotice } />
+						) }
+						{ tab.name === 'features' && (
+							<FeaturesTab onNotice={ setNotice } />
+						) }
+						{ tab.name === 'organizer' && (
+							<OrganizerTab onNotice={ setNotice } />
+						) }
 					</div>
-				)}
+				) }
 			</TabPanel>
 		</div>
 	);

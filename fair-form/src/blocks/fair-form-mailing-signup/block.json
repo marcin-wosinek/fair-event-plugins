@@ -7,7 +7,13 @@
 	"category": "widgets",
 	"icon": "email",
 	"description": "Add mailing list signup with category preferences to a Fair Form",
-	"keywords": ["mailing", "newsletter", "signup", "subscribe", "categories"],
+	"keywords": [
+		"mailing",
+		"newsletter",
+		"signup",
+		"subscribe",
+		"categories"
+	],
 	"textdomain": "fair-audience",
 	"parent": [
 		"fair-audience/fair-form",

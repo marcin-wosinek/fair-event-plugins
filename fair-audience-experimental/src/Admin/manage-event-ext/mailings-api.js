@@ -16,10 +16,10 @@ import apiFetch from '@wordpress/api-fetch';
  * @param {number} eventDateId Event date ID.
  * @return {Promise<Array>} Promise resolving to the message list.
  */
-export function loadScheduledMessages(eventDateId) {
-	return apiFetch({
-		path: `/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages`,
-	});
+export function loadScheduledMessages( eventDateId ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/event-dates/${ eventDateId }/scheduled-messages`,
+	} );
 }
 
 /**
@@ -29,12 +29,12 @@ export function loadScheduledMessages(eventDateId) {
  * @param {Object} data        Message payload.
  * @return {Promise<Object>} Promise resolving to the created message.
  */
-export function createScheduledMessage(eventDateId, data) {
-	return apiFetch({
-		path: `/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages`,
+export function createScheduledMessage( eventDateId, data ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/event-dates/${ eventDateId }/scheduled-messages`,
 		method: 'POST',
 		data,
-	});
+	} );
 }
 
 /**
@@ -44,12 +44,12 @@ export function createScheduledMessage(eventDateId, data) {
  * @param {Object} data Message payload.
  * @return {Promise<Object>} Promise resolving to the updated message.
  */
-export function updateScheduledMessage(id, data) {
-	return apiFetch({
-		path: `/fair-audience/v1/scheduled-messages/${id}`,
+export function updateScheduledMessage( id, data ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/scheduled-messages/${ id }`,
 		method: 'PUT',
 		data,
-	});
+	} );
 }
 
 /**
@@ -58,11 +58,11 @@ export function updateScheduledMessage(id, data) {
  * @param {number} id Message ID.
  * @return {Promise<Object>} Promise resolving to the canceled message.
  */
-export function cancelScheduledMessage(id) {
-	return apiFetch({
-		path: `/fair-audience/v1/scheduled-messages/${id}`,
+export function cancelScheduledMessage( id ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/scheduled-messages/${ id }`,
 		method: 'DELETE',
-	});
+	} );
 }
 
 /**
@@ -71,11 +71,11 @@ export function cancelScheduledMessage(id) {
  * @param {number} id Message ID.
  * @return {Promise<Array>} Promise resolving to the recipient list.
  */
-export function previewRecipients(id) {
-	return apiFetch({
-		path: `/fair-audience/v1/scheduled-messages/${id}/preview-recipients`,
+export function previewRecipients( id ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/scheduled-messages/${ id }/preview-recipients`,
 		method: 'POST',
-	});
+	} );
 }
 
 /**
@@ -85,12 +85,12 @@ export function previewRecipients(id) {
  * @param {Object} recipientsFilter Filter: { labels, group_ids, is_marketing }.
  * @return {Promise<Array>} Promise resolving to the recipient list.
  */
-export function previewDraftRecipients(eventDateId, recipientsFilter) {
-	return apiFetch({
-		path: `/fair-audience/v1/event-dates/${eventDateId}/scheduled-messages/preview-recipients`,
+export function previewDraftRecipients( eventDateId, recipientsFilter ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/event-dates/${ eventDateId }/scheduled-messages/preview-recipients`,
 		method: 'POST',
 		data: { recipients_filter: recipientsFilter },
-	});
+	} );
 }
 
 /**
@@ -99,5 +99,5 @@ export function previewDraftRecipients(eventDateId, recipientsFilter) {
  * @return {Promise<Array>} Promise resolving to the group list.
  */
 export function loadGroups() {
-	return apiFetch({ path: '/fair-audience/v1/custom-mail/groups' });
+	return apiFetch( { path: '/fair-audience/v1/custom-mail/groups' } );
 }

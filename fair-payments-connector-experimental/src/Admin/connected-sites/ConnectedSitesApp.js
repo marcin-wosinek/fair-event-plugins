@@ -19,46 +19,46 @@ import {
 
 const STATUS_LABELS = {
 	connected: {
-		text: __('Connected', 'fair-payments-connector-experimental'),
+		text: __( 'Connected', 'fair-payments-connector-experimental' ),
 		color: '#007017',
 	},
 	error: {
-		text: __('Error', 'fair-payments-connector-experimental'),
+		text: __( 'Error', 'fair-payments-connector-experimental' ),
 		color: '#d63638',
 	},
 	unverified: {
-		text: __('Unverified', 'fair-payments-connector-experimental'),
+		text: __( 'Unverified', 'fair-payments-connector-experimental' ),
 		color: '#946800',
 	},
 };
 
 const ConnectedSitesApp = () => {
-	const [sites, setSites] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [success, setSuccess] = useState(null);
-	const [isFormOpen, setIsFormOpen] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
-	const [editingId, setEditingId] = useState(null);
-	const [testingId, setTestingId] = useState(null);
-	const [label, setLabel] = useState('');
-	const [baseUrl, setBaseUrl] = useState('');
-	const [token, setToken] = useState('');
+	const [ sites, setSites ] = useState( [] );
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ success, setSuccess ] = useState( null );
+	const [ isFormOpen, setIsFormOpen ] = useState( false );
+	const [ isSaving, setIsSaving ] = useState( false );
+	const [ editingId, setEditingId ] = useState( null );
+	const [ testingId, setTestingId ] = useState( null );
+	const [ label, setLabel ] = useState( '' );
+	const [ baseUrl, setBaseUrl ] = useState( '' );
+	const [ token, setToken ] = useState( '' );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadSites();
-	}, []);
+	}, [] );
 
 	const loadSites = async () => {
-		setLoading(true);
-		setError(null);
+		setLoading( true );
+		setError( null );
 
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-payments-connector/v1/admin/connected-sites',
-			});
-			setSites(data);
-		} catch (err) {
+			} );
+			setSites( data );
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -67,49 +67,49 @@ const ConnectedSitesApp = () => {
 					)
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
 	const handleOpenAdd = () => {
-		setEditingId(null);
-		setLabel('');
-		setBaseUrl('');
-		setToken('');
-		setError(null);
-		setIsFormOpen(true);
+		setEditingId( null );
+		setLabel( '' );
+		setBaseUrl( '' );
+		setToken( '' );
+		setError( null );
+		setIsFormOpen( true );
 	};
 
-	const handleOpenEdit = (site) => {
-		setEditingId(site.id);
-		setLabel(site.label);
-		setBaseUrl(site.base_url);
-		setToken('');
-		setError(null);
-		setIsFormOpen(true);
+	const handleOpenEdit = ( site ) => {
+		setEditingId( site.id );
+		setLabel( site.label );
+		setBaseUrl( site.base_url );
+		setToken( '' );
+		setError( null );
+		setIsFormOpen( true );
 	};
 
 	const handleCloseForm = () => {
-		setIsFormOpen(false);
-		setEditingId(null);
+		setIsFormOpen( false );
+		setEditingId( null );
 	};
 
-	const handleSave = async (e) => {
+	const handleSave = async ( e ) => {
 		e.preventDefault();
-		setIsSaving(true);
-		setError(null);
+		setIsSaving( true );
+		setError( null );
 
 		try {
-			if (editingId) {
+			if ( editingId ) {
 				const data = { label, base_url: baseUrl };
-				if (token) {
+				if ( token ) {
 					data.token = token;
 				}
-				await apiFetch({
-					path: `/fair-payments-connector/v1/admin/connected-sites/${editingId}`,
+				await apiFetch( {
+					path: `/fair-payments-connector/v1/admin/connected-sites/${ editingId }`,
 					method: 'PUT',
 					data,
-				});
+				} );
 				setSuccess(
 					__(
 						'Connected site updated.',
@@ -117,11 +117,11 @@ const ConnectedSitesApp = () => {
 					)
 				);
 			} else {
-				await apiFetch({
+				await apiFetch( {
 					path: '/fair-payments-connector/v1/admin/connected-sites',
 					method: 'POST',
 					data: { label, base_url: baseUrl, token },
-				});
+				} );
 				setSuccess(
 					__(
 						'Connected site added.',
@@ -131,7 +131,7 @@ const ConnectedSitesApp = () => {
 			}
 			handleCloseForm();
 			loadSites();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -140,24 +140,24 @@ const ConnectedSitesApp = () => {
 					)
 			);
 		} finally {
-			setIsSaving(false);
+			setIsSaving( false );
 		}
 	};
 
-	const handleTest = async (id) => {
-		setTestingId(id);
-		setError(null);
-		setSuccess(null);
+	const handleTest = async ( id ) => {
+		setTestingId( id );
+		setError( null );
+		setSuccess( null );
 
 		try {
-			const result = await apiFetch({
-				path: `/fair-payments-connector/v1/admin/connected-sites/${id}/test`,
+			const result = await apiFetch( {
+				path: `/fair-payments-connector/v1/admin/connected-sites/${ id }/test`,
 				method: 'POST',
-			});
+			} );
 			const scopes =
 				result.scopes && result.scopes.length
-					? result.scopes.join(', ')
-					: __('no scopes', 'fair-payments-connector-experimental');
+					? result.scopes.join( ', ' )
+					: __( 'no scopes', 'fair-payments-connector-experimental' );
 			setSuccess(
 				__(
 					'Connection succeeded. Granted scopes: ',
@@ -165,7 +165,7 @@ const ConnectedSitesApp = () => {
 				) + scopes
 			);
 			loadSites();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -175,13 +175,13 @@ const ConnectedSitesApp = () => {
 			);
 			loadSites();
 		} finally {
-			setTestingId(null);
+			setTestingId( null );
 		}
 	};
 
-	const handleRemove = async (id) => {
+	const handleRemove = async ( id ) => {
 		if (
-			!window.confirm(
+			! window.confirm(
 				__(
 					'Remove this connected site? Stored token will be deleted.',
 					'fair-payments-connector-experimental'
@@ -191,14 +191,14 @@ const ConnectedSitesApp = () => {
 			return;
 		}
 
-		setError(null);
-		setSuccess(null);
+		setError( null );
+		setSuccess( null );
 
 		try {
-			await apiFetch({
-				path: `/fair-payments-connector/v1/admin/connected-sites/${id}`,
+			await apiFetch( {
+				path: `/fair-payments-connector/v1/admin/connected-sites/${ id }`,
 				method: 'DELETE',
-			});
+			} );
 			setSuccess(
 				__(
 					'Connected site removed.',
@@ -206,7 +206,7 @@ const ConnectedSitesApp = () => {
 				)
 			);
 			loadSites();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -217,159 +217,161 @@ const ConnectedSitesApp = () => {
 		}
 	};
 
-	const renderStatus = (status) => {
-		const meta = STATUS_LABELS[status] || STATUS_LABELS.unverified;
+	const renderStatus = ( status ) => {
+		const meta = STATUS_LABELS[ status ] || STATUS_LABELS.unverified;
 		return (
-			<span style={{ color: meta.color, fontWeight: 'bold' }}>
-				{meta.text}
+			<span style={ { color: meta.color, fontWeight: 'bold' } }>
+				{ meta.text }
 			</span>
 		);
 	};
 
 	return (
 		<div className="wrap fair-payments-connector-connected-sites-page">
-			<VStack spacing={4}>
+			<VStack spacing={ 4 }>
 				<Card>
 					<CardHeader>
 						<HStack justify="space-between">
 							<h1>
-								{__(
+								{ __(
 									'Connected Sites',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 							</h1>
-							<Button variant="primary" onClick={handleOpenAdd}>
-								{__(
+							<Button variant="primary" onClick={ handleOpenAdd }>
+								{ __(
 									'Add Site',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 							</Button>
 						</HStack>
 					</CardHeader>
 					<CardBody>
-						<VStack spacing={4}>
-							<p style={{ color: '#666', margin: 0 }}>
-								{__(
+						<VStack spacing={ 4 }>
+							<p style={ { color: '#666', margin: 0 } }>
+								{ __(
 									'Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page.',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 							</p>
 
-							{error && (
+							{ error && (
 								<Notice
 									status="error"
 									isDismissible
-									onRemove={() => setError(null)}
+									onRemove={ () => setError( null ) }
 								>
-									{error}
+									{ error }
 								</Notice>
-							)}
+							) }
 
-							{success && (
+							{ success && (
 								<Notice
 									status="success"
 									isDismissible
-									onRemove={() => setSuccess(null)}
+									onRemove={ () => setSuccess( null ) }
 								>
-									{success}
+									{ success }
 								</Notice>
-							)}
+							) }
 
-							{loading && (
+							{ loading && (
 								<div>
 									<Spinner />
 									<p>
-										{__(
+										{ __(
 											'Loading sites…',
 											'fair-payments-connector-experimental'
-										)}
+										) }
 									</p>
 								</div>
-							)}
+							) }
 
-							{!loading && sites.length === 0 && (
+							{ ! loading && sites.length === 0 && (
 								<p>
-									{__(
+									{ __(
 										'No connected sites yet. Add one to pull data from another site.',
 										'fair-payments-connector-experimental'
-									)}
+									) }
 								</p>
-							)}
+							) }
 
-							{!loading && sites.length > 0 && (
+							{ ! loading && sites.length > 0 && (
 								<table className="wp-list-table widefat fixed striped">
 									<thead>
 										<tr>
 											<th>
-												{__(
+												{ __(
 													'Label',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Base URL',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Scopes',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Status',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 											<th>
-												{__(
+												{ __(
 													'Last sync',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
-											<th style={{ width: '220px' }}>
-												{__(
+											<th style={ { width: '220px' } }>
+												{ __(
 													'Actions',
 													'fair-payments-connector-experimental'
-												)}
+												) }
 											</th>
 										</tr>
 									</thead>
 									<tbody>
-										{sites.map((site) => (
-											<tr key={site.id}>
+										{ sites.map( ( site ) => (
+											<tr key={ site.id }>
 												<td>
 													<strong>
-														{site.label}
+														{ site.label }
 													</strong>
 												</td>
-												<td>{site.base_url}</td>
+												<td>{ site.base_url }</td>
 												<td>
-													{site.scopes.length ? (
-														site.scopes.join(', ')
+													{ site.scopes.length ? (
+														site.scopes.join( ', ' )
 													) : (
 														<em>—</em>
-													)}
+													) }
 												</td>
 												<td>
-													{renderStatus(site.status)}
+													{ renderStatus(
+														site.status
+													) }
 												</td>
 												<td>
-													{site.last_sync_at || (
+													{ site.last_sync_at || (
 														<em>
-															{__(
+															{ __(
 																'Never',
 																'fair-payments-connector-experimental'
-															)}
+															) }
 														</em>
-													)}
+													) }
 												</td>
 												<td>
 													<HStack
-														spacing={1}
+														spacing={ 1 }
 														justify="flex-start"
 													>
 														<Button
@@ -383,59 +385,59 @@ const ConnectedSitesApp = () => {
 																testingId !==
 																null
 															}
-															onClick={() =>
+															onClick={ () =>
 																handleTest(
 																	site.id
 																)
 															}
 														>
-															{__(
+															{ __(
 																'Test',
 																'fair-payments-connector-experimental'
-															)}
+															) }
 														</Button>
 														<Button
 															variant="tertiary"
 															size="small"
-															onClick={() =>
+															onClick={ () =>
 																handleOpenEdit(
 																	site
 																)
 															}
 														>
-															{__(
+															{ __(
 																'Edit',
 																'fair-payments-connector-experimental'
-															)}
+															) }
 														</Button>
 														<Button
 															variant="tertiary"
 															size="small"
 															isDestructive
-															onClick={() =>
+															onClick={ () =>
 																handleRemove(
 																	site.id
 																)
 															}
 														>
-															{__(
+															{ __(
 																'Remove',
 																'fair-payments-connector-experimental'
-															)}
+															) }
 														</Button>
 													</HStack>
 												</td>
 											</tr>
-										))}
+										) ) }
 									</tbody>
 								</table>
-							)}
+							) }
 						</VStack>
 					</CardBody>
 				</Card>
 			</VStack>
 
-			{isFormOpen && (
+			{ isFormOpen && (
 				<Modal
 					title={
 						editingId
@@ -448,46 +450,46 @@ const ConnectedSitesApp = () => {
 									'fair-payments-connector-experimental'
 							  )
 					}
-					onRequestClose={handleCloseForm}
-					style={{ maxWidth: '500px', width: '100%' }}
+					onRequestClose={ handleCloseForm }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
-					<form onSubmit={handleSave}>
-						<VStack spacing={4}>
+					<form onSubmit={ handleSave }>
+						<VStack spacing={ 4 }>
 							<TextControl
-								label={__(
+								label={ __(
 									'Label',
 									'fair-payments-connector-experimental'
-								)}
-								value={label}
-								onChange={setLabel}
-								help={__(
+								) }
+								value={ label }
+								onChange={ setLabel }
+								help={ __(
 									'A name to identify this site, e.g. acroyoga-club.es',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 								required
 							/>
 							<TextControl
-								label={__(
+								label={ __(
 									'Base URL',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 								type="url"
-								value={baseUrl}
-								onChange={setBaseUrl}
-								help={__(
+								value={ baseUrl }
+								onChange={ setBaseUrl }
+								help={ __(
 									'The other site’s address, e.g. https://acroyoga-club.es',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 								required
 							/>
 							<TextControl
-								label={__(
+								label={ __(
 									'Token',
 									'fair-payments-connector-experimental'
-								)}
+								) }
 								type="password"
-								value={token}
-								onChange={setToken}
+								value={ token }
+								onChange={ setToken }
 								help={
 									editingId
 										? __(
@@ -499,31 +501,31 @@ const ConnectedSitesApp = () => {
 												'fair-payments-connector-experimental'
 										  )
 								}
-								required={!editingId}
+								required={ ! editingId }
 							/>
-							<HStack justify="flex-end" spacing={2}>
+							<HStack justify="flex-end" spacing={ 2 }>
 								<Button
 									variant="tertiary"
-									onClick={handleCloseForm}
-									disabled={isSaving}
+									onClick={ handleCloseForm }
+									disabled={ isSaving }
 								>
-									{__(
+									{ __(
 										'Cancel',
 										'fair-payments-connector-experimental'
-									)}
+									) }
 								</Button>
 								<Button
 									variant="primary"
 									type="submit"
-									isBusy={isSaving}
+									isBusy={ isSaving }
 									disabled={
 										isSaving ||
-										!label ||
-										!baseUrl ||
-										(!editingId && !token)
+										! label ||
+										! baseUrl ||
+										( ! editingId && ! token )
 									}
 								>
-									{editingId
+									{ editingId
 										? __(
 												'Save',
 												'fair-payments-connector-experimental'
@@ -531,13 +533,13 @@ const ConnectedSitesApp = () => {
 										: __(
 												'Add Site',
 												'fair-payments-connector-experimental'
-										  )}
+										  ) }
 								</Button>
 							</HStack>
 						</VStack>
 					</form>
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 };

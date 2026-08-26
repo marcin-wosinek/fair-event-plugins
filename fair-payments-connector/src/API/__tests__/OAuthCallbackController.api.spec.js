@@ -17,7 +17,9 @@ function adminAuth() {
 	return {
 		Authorization:
 			'Basic ' +
-			Buffer.from(`${ADMIN_USER}:${ADMIN_PASS}`).toString('base64'),
+			Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASS }` ).toString(
+				'base64'
+			),
 	};
 }
 
@@ -30,203 +32,207 @@ const VALID_TOKENS = {
 	test_mode: true,
 };
 
-test.describe('OAuthCallbackController', () => {
+test.describe( 'OAuthCallbackController', () => {
 	let api;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	test.describe('POST /oauth/state', () => {
-		test('returns 401 for unauthenticated requests', async () => {
-			const res = await api.post(STATE_ENDPOINT);
-			expect(res.status()).toBe(401);
-		});
+	test.describe( 'POST /oauth/state', () => {
+		test( 'returns 401 for unauthenticated requests', async () => {
+			const res = await api.post( STATE_ENDPOINT );
+			expect( res.status() ).toBe( 401 );
+		} );
 
-		test('returns a state string for an authenticated admin', async () => {
-			const res = await api.post(STATE_ENDPOINT, {
+		test( 'returns a state string for an authenticated admin', async () => {
+			const res = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
-			});
-			expect(res.status()).toBe(200);
+			} );
+			expect( res.status() ).toBe( 200 );
 			const body = await res.json();
-			expect(typeof body.state).toBe('string');
-			expect(body.state.length).toBeGreaterThan(0);
-		});
-	});
+			expect( typeof body.state ).toBe( 'string' );
+			expect( body.state.length ).toBeGreaterThan( 0 );
+		} );
+	} );
 
-	test.describe('POST /oauth/callback', () => {
-		test('returns 401 for unauthenticated requests', async () => {
-			const res = await api.post(CALLBACK_ENDPOINT, {
+	test.describe( 'POST /oauth/callback', () => {
+		test( 'returns 401 for unauthenticated requests', async () => {
+			const res = await api.post( CALLBACK_ENDPOINT, {
 				data: { state: 'x', ...VALID_TOKENS },
-			});
-			expect(res.status()).toBe(401);
-		});
+			} );
+			expect( res.status() ).toBe( 401 );
+		} );
 
-		test('returns 403 when state is missing', async () => {
-			const res = await api.post(CALLBACK_ENDPOINT, {
+		test( 'returns 403 when state is missing', async () => {
+			const res = await api.post( CALLBACK_ENDPOINT, {
 				headers: adminAuth(),
 				data: VALID_TOKENS,
-			});
-			expect(res.status()).toBe(400); // missing required param
-		});
+			} );
+			expect( res.status() ).toBe( 400 ); // missing required param
+		} );
 
-		test('returns 403 when state does not match the stored transient', async () => {
-			const res = await api.post(CALLBACK_ENDPOINT, {
+		test( 'returns 403 when state does not match the stored transient', async () => {
+			const res = await api.post( CALLBACK_ENDPOINT, {
 				headers: adminAuth(),
 				data: { state: 'wrong_state', ...VALID_TOKENS },
-			});
-			expect(res.status()).toBe(403);
+			} );
+			expect( res.status() ).toBe( 403 );
 			const body = await res.json();
-			expect(body.code).toBe('invalid_oauth_state');
-		});
+			expect( body.code ).toBe( 'invalid_oauth_state' );
+		} );
 
-		test('saves credentials and returns success when state is valid', async () => {
+		test( 'saves credentials and returns success when state is valid', async () => {
 			// Step 1: get a real state token
-			const stateRes = await api.post(STATE_ENDPOINT, {
+			const stateRes = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
-			});
-			expect(stateRes.status()).toBe(200);
+			} );
+			expect( stateRes.status() ).toBe( 200 );
 			const { state } = await stateRes.json();
 
 			// Step 2: complete callback with that state
-			const callbackRes = await api.post(CALLBACK_ENDPOINT, {
+			const callbackRes = await api.post( CALLBACK_ENDPOINT, {
 				headers: adminAuth(),
 				data: { state, ...VALID_TOKENS },
-			});
-			expect(callbackRes.status()).toBe(200);
+			} );
+			expect( callbackRes.status() ).toBe( 200 );
 			const body = await callbackRes.json();
-			expect(body.success).toBe(true);
-		});
+			expect( body.success ).toBe( true );
+		} );
 
-		test('rejects a replayed state (single-use)', async () => {
+		test( 'rejects a replayed state (single-use)', async () => {
 			// Step 1: generate state
-			const stateRes = await api.post(STATE_ENDPOINT, {
+			const stateRes = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
-			});
+			} );
 			const { state } = await stateRes.json();
 
 			// Step 2: first use — should succeed
-			const first = await api.post(CALLBACK_ENDPOINT, {
+			const first = await api.post( CALLBACK_ENDPOINT, {
 				headers: adminAuth(),
 				data: { state, ...VALID_TOKENS },
-			});
-			expect(first.status()).toBe(200);
+			} );
+			expect( first.status() ).toBe( 200 );
 
 			// Step 3: replay — must be rejected
-			const second = await api.post(CALLBACK_ENDPOINT, {
+			const second = await api.post( CALLBACK_ENDPOINT, {
 				headers: adminAuth(),
 				data: { state, ...VALID_TOKENS },
-			});
-			expect(second.status()).toBe(403);
+			} );
+			expect( second.status() ).toBe( 403 );
 			const body = await second.json();
-			expect(body.code).toBe('invalid_oauth_state');
-		});
-	});
+			expect( body.code ).toBe( 'invalid_oauth_state' );
+		} );
+	} );
 
-	test.describe('GET/POST /wp/v2/settings — token write-only (#859)', () => {
-		test('GET does not include the OAuth token values', async () => {
+	test.describe( 'GET/POST /wp/v2/settings — token write-only (#859)', () => {
+		test( 'GET does not include the OAuth token values', async () => {
 			// Ensure tokens are populated first, via a normal callback.
-			const stateRes = await api.post(STATE_ENDPOINT, {
+			const stateRes = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
-			});
+			} );
 			const { state } = await stateRes.json();
-			const callbackRes = await api.post(CALLBACK_ENDPOINT, {
+			const callbackRes = await api.post( CALLBACK_ENDPOINT, {
 				headers: adminAuth(),
 				data: { state, ...VALID_TOKENS },
-			});
-			expect(callbackRes.status()).toBe(200);
+			} );
+			expect( callbackRes.status() ).toBe( 200 );
 
-			const res = await api.get(SETTINGS_ENDPOINT, {
+			const res = await api.get( SETTINGS_ENDPOINT, {
 				headers: adminAuth(),
-			});
-			expect(res.status()).toBe(200);
+			} );
+			expect( res.status() ).toBe( 200 );
 			const body = await res.json();
-			expect(body).not.toHaveProperty('fair_payment_mollie_access_token');
-			expect(body).not.toHaveProperty(
+			expect( body ).not.toHaveProperty(
+				'fair_payment_mollie_access_token'
+			);
+			expect( body ).not.toHaveProperty(
 				'fair_payment_mollie_refresh_token'
 			);
-		});
+		} );
 
-		test('POST carrying token keys is accepted but ignores them', async () => {
-			const res = await api.post(SETTINGS_ENDPOINT, {
+		test( 'POST carrying token keys is accepted but ignores them', async () => {
+			const res = await api.post( SETTINGS_ENDPOINT, {
 				headers: adminAuth(),
 				data: {
 					fair_payment_mollie_access_token: 'attacker_supplied',
 					fair_payment_mollie_refresh_token: 'attacker_supplied',
 				},
-			});
-			expect(res.status()).toBe(200);
+			} );
+			expect( res.status() ).toBe( 200 );
 			const body = await res.json();
-			expect(body).not.toHaveProperty('fair_payment_mollie_access_token');
-			expect(body).not.toHaveProperty(
+			expect( body ).not.toHaveProperty(
+				'fair_payment_mollie_access_token'
+			);
+			expect( body ).not.toHaveProperty(
 				'fair_payment_mollie_refresh_token'
 			);
-		});
-	});
+		} );
+	} );
 
-	test.describe('GET/POST /wp/v2/settings — Mollie API keys removed (#1317)', () => {
-		test('GET does not include the retired API key settings', async () => {
-			const res = await api.get(SETTINGS_ENDPOINT, {
+	test.describe( 'GET/POST /wp/v2/settings — Mollie API keys removed (#1317)', () => {
+		test( 'GET does not include the retired API key settings', async () => {
+			const res = await api.get( SETTINGS_ENDPOINT, {
 				headers: adminAuth(),
-			});
-			expect(res.status()).toBe(200);
+			} );
+			expect( res.status() ).toBe( 200 );
 			const body = await res.json();
-			expect(body).not.toHaveProperty('fair_payment_test_api_key');
-			expect(body).not.toHaveProperty('fair_payment_live_api_key');
-		});
+			expect( body ).not.toHaveProperty( 'fair_payment_test_api_key' );
+			expect( body ).not.toHaveProperty( 'fair_payment_live_api_key' );
+		} );
 
-		test('POST carrying the retired API key settings is accepted but ignores them', async () => {
-			const res = await api.post(SETTINGS_ENDPOINT, {
+		test( 'POST carrying the retired API key settings is accepted but ignores them', async () => {
+			const res = await api.post( SETTINGS_ENDPOINT, {
 				headers: adminAuth(),
 				data: {
 					fair_payment_test_api_key: 'test_attacker_supplied',
 					fair_payment_live_api_key: 'live_attacker_supplied',
 				},
-			});
-			expect(res.status()).toBe(200);
+			} );
+			expect( res.status() ).toBe( 200 );
 			const body = await res.json();
-			expect(body).not.toHaveProperty('fair_payment_test_api_key');
-			expect(body).not.toHaveProperty('fair_payment_live_api_key');
-		});
-	});
+			expect( body ).not.toHaveProperty( 'fair_payment_test_api_key' );
+			expect( body ).not.toHaveProperty( 'fair_payment_live_api_key' );
+		} );
+	} );
 
-	test.describe('POST /oauth/disconnect', () => {
-		test('returns 401 for unauthenticated requests', async () => {
-			const res = await api.post(DISCONNECT_ENDPOINT);
-			expect(res.status()).toBe(401);
-		});
+	test.describe( 'POST /oauth/disconnect', () => {
+		test( 'returns 401 for unauthenticated requests', async () => {
+			const res = await api.post( DISCONNECT_ENDPOINT );
+			expect( res.status() ).toBe( 401 );
+		} );
 
-		test('clears the connection and returns 200 for an admin', async () => {
+		test( 'clears the connection and returns 200 for an admin', async () => {
 			test.skip(
 				true,
 				'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
 			);
 			// Connect first so there is something to disconnect.
-			const stateRes = await api.post(STATE_ENDPOINT, {
+			const stateRes = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
-			});
+			} );
 			const { state } = await stateRes.json();
-			await api.post(CALLBACK_ENDPOINT, {
+			await api.post( CALLBACK_ENDPOINT, {
 				headers: adminAuth(),
 				data: { state, ...VALID_TOKENS },
-			});
+			} );
 
-			const res = await api.post(DISCONNECT_ENDPOINT, {
+			const res = await api.post( DISCONNECT_ENDPOINT, {
 				headers: adminAuth(),
-			});
-			expect(res.status()).toBe(200);
+			} );
+			expect( res.status() ).toBe( 200 );
 			const body = await res.json();
-			expect(body.success).toBe(true);
+			expect( body.success ).toBe( true );
 
-			const settingsRes = await api.get(SETTINGS_ENDPOINT, {
+			const settingsRes = await api.get( SETTINGS_ENDPOINT, {
 				headers: adminAuth(),
-			});
+			} );
 			const settings = await settingsRes.json();
-			expect(settings.fair_payment_mollie_connected).toBe(false);
-		});
-	});
-});
+			expect( settings.fair_payment_mollie_connected ).toBe( false );
+		} );
+	} );
+} );

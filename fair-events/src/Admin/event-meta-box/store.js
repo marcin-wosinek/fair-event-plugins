@@ -13,51 +13,51 @@ const DEFAULT_STATE = {
 };
 
 const actions = {
-	setEventData(eventData) {
+	setEventData( eventData ) {
 		return { type: 'SET_EVENT_DATA', eventData };
 	},
-	updateEventField(field, value) {
+	updateEventField( field, value ) {
 		return { type: 'UPDATE_EVENT_FIELD', field, value };
 	},
-	setLoading(loading) {
+	setLoading( loading ) {
 		return { type: 'SET_LOADING', loading };
 	},
-	setSaving(saving) {
+	setSaving( saving ) {
 		return { type: 'SET_SAVING', saving };
 	},
-	setError(error) {
+	setError( error ) {
 		return { type: 'SET_ERROR', error };
 	},
 };
 
 const selectors = {
-	getEventData(state) {
+	getEventData( state ) {
 		return state.eventData;
 	},
-	getEventField(state, field) {
-		return state.eventData ? state.eventData[field] : undefined;
+	getEventField( state, field ) {
+		return state.eventData ? state.eventData[ field ] : undefined;
 	},
-	isLoading(state) {
+	isLoading( state ) {
 		return state.loading;
 	},
-	isSaving(state) {
+	isSaving( state ) {
 		return state.saving;
 	},
-	getError(state) {
+	getError( state ) {
 		return state.error;
 	},
 };
 
-function reducer(state = DEFAULT_STATE, action) {
-	switch (action.type) {
+function reducer( state = DEFAULT_STATE, action ) {
+	switch ( action.type ) {
 		case 'SET_EVENT_DATA':
 			return { ...state, eventData: action.eventData };
 		case 'UPDATE_EVENT_FIELD':
 			return {
 				...state,
 				eventData: state.eventData
-					? { ...state.eventData, [action.field]: action.value }
-					: { [action.field]: action.value },
+					? { ...state.eventData, [ action.field ]: action.value }
+					: { [ action.field ]: action.value },
 			};
 		case 'SET_LOADING':
 			return { ...state, loading: action.loading };
@@ -70,13 +70,13 @@ function reducer(state = DEFAULT_STATE, action) {
 	}
 }
 
-const store = createReduxStore(STORE_NAME, {
+const store = createReduxStore( STORE_NAME, {
 	reducer,
 	actions,
 	selectors,
-});
+} );
 
-register(store);
+register( store );
 
 export default store;
 export { STORE_NAME };

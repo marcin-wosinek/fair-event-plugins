@@ -15,7 +15,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventSignups from '../EventSignups.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 const signups = [
 	{
@@ -61,16 +61,16 @@ function mockObjectUrlAndClick() {
 	let clickedFilename = null;
 	let capturedText = null;
 	const OriginalBlob = global.Blob;
-	global.Blob = jest.fn(function (parts, options) {
-		capturedText = parts.join('');
-		return new OriginalBlob(parts, options);
-	});
-	global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
+	global.Blob = jest.fn( function ( parts, options ) {
+		capturedText = parts.join( '' );
+		return new OriginalBlob( parts, options );
+	} );
+	global.URL.createObjectURL = jest.fn( () => 'blob:mock-url' );
 	global.URL.revokeObjectURL = jest.fn();
 	const originalClick = HTMLAnchorElement.prototype.click;
-	HTMLAnchorElement.prototype.click = jest.fn(function () {
+	HTMLAnchorElement.prototype.click = jest.fn( function () {
 		clickedFilename = this.download;
-	});
+	} );
 	return {
 		getFilename: () => clickedFilename,
 		getText: () => capturedText,
@@ -81,127 +81,137 @@ function mockObjectUrlAndClick() {
 	};
 }
 
-async function renderSignups(data = signups) {
-	apiFetch.mockResolvedValue(data);
-	render(<EventSignups eventDateId={42} />);
-	if (data.length > 0) {
-		await waitFor(() =>
-			expect(screen.getByText(data[0].name)).toBeInTheDocument()
+async function renderSignups( data = signups ) {
+	apiFetch.mockResolvedValue( data );
+	render( <EventSignups eventDateId={ 42 } /> );
+	if ( data.length > 0 ) {
+		await waitFor( () =>
+			expect( screen.getByText( data[ 0 ].name ) ).toBeInTheDocument()
 		);
 	} else {
-		await waitFor(() =>
-			expect(screen.getByText('No signups yet.')).toBeInTheDocument()
+		await waitFor( () =>
+			expect( screen.getByText( 'No signups yet.' ) ).toBeInTheDocument()
 		);
 	}
 }
 
-afterEach(() => {
+afterEach( () => {
 	jest.clearAllMocks();
-});
+} );
 
-describe('EventSignups — CSV export (#1171)', () => {
-	it('renders a Download CSV button', async () => {
+describe( 'EventSignups — CSV export (#1171)', () => {
+	it( 'renders a Download CSV button', async () => {
 		await renderSignups();
 		expect(
-			screen.getByRole('button', { name: 'Download CSV' })
+			screen.getByRole( 'button', { name: 'Download CSV' } )
 		).toBeInTheDocument();
-	});
+	} );
 
-	it('downloads a CSV with a header row and one row per displayed signup', async () => {
+	it( 'downloads a CSV with a header row and one row per displayed signup', async () => {
 		await renderSignups();
 		const mock = mockObjectUrlAndClick();
 
-		fireEvent.click(screen.getByRole('button', { name: 'Download CSV' }));
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Download CSV' } )
+		);
 
 		const text = mock.getText();
-		const lines = text.split('\r\n');
-		expect(lines[0]).toBe(
+		const lines = text.split( '\r\n' );
+		expect( lines[ 0 ] ).toBe(
 			'email,name,ticket_type,quantity,amount,status,mailing_opt_in,date'
 		);
-		expect(lines).toHaveLength(3);
-		expect(lines[1]).toBe(
+		expect( lines ).toHaveLength( 3 );
+		expect( lines[ 1 ] ).toBe(
 			'ada@example.com,Ada Lovelace,General,1,20.00,paid,yes,2026-07-20 10:00:00'
 		);
-		expect(mock.getFilename()).toBe('signups-event-42.csv');
+		expect( mock.getFilename() ).toBe( 'signups-event-42.csv' );
 
 		mock.restore();
-	});
+	} );
 
-	it('quotes a name containing a comma', async () => {
-		await renderSignups();
-		const mock = mockObjectUrlAndClick();
-
-		fireEvent.click(screen.getByRole('button', { name: 'Download CSV' }));
-
-		const text = mock.getText();
-		expect(text).toContain('"Bob, Jr."');
-
-		mock.restore();
-	});
-
-	it('narrows the table and the export to mailing opt-ins when the filter is on', async () => {
+	it( 'quotes a name containing a comma', async () => {
 		await renderSignups();
 		const mock = mockObjectUrlAndClick();
 
 		fireEvent.click(
-			screen.getByRole('checkbox', { name: 'Mailing opt-ins only' })
+			screen.getByRole( 'button', { name: 'Download CSV' } )
 		);
-
-		expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
-		expect(screen.queryByText('Bob, Jr.')).not.toBeInTheDocument();
-
-		fireEvent.click(screen.getByRole('button', { name: 'Download CSV' }));
 
 		const text = mock.getText();
-		const lines = text.split('\r\n');
-		expect(lines).toHaveLength(2);
-		expect(lines[1]).toContain('ada@example.com');
+		expect( text ).toContain( '"Bob, Jr."' );
 
 		mock.restore();
-	});
+	} );
 
-	it('disables the button and explains why when there are no signups at all', async () => {
-		await renderSignups([]);
-
-		const button = screen.getByRole('button', { name: 'Download CSV' });
-		expect(button).toBeDisabled();
-		expect(screen.getByText('No signups yet.')).toBeInTheDocument();
-	});
-
-	it('shows the ticket type name, not its id, in the table and the CSV', async () => {
+	it( 'narrows the table and the export to mailing opt-ins when the filter is on', async () => {
 		await renderSignups();
-		expect(screen.getAllByText('General')).toHaveLength(2);
-		expect(screen.queryByText('3')).not.toBeInTheDocument();
-
 		const mock = mockObjectUrlAndClick();
-		fireEvent.click(screen.getByRole('button', { name: 'Download CSV' }));
-		expect(mock.getText()).toContain(',General,');
-		mock.restore();
-	});
-
-	it('falls back to an em dash when the ticket type is missing or deleted', async () => {
-		await renderSignups([signupWithMissingTicketType]);
-		expect(screen.getByText('—')).toBeInTheDocument();
-
-		const mock = mockObjectUrlAndClick();
-		fireEvent.click(screen.getByRole('button', { name: 'Download CSV' }));
-		expect(mock.getText()).toContain(',—,');
-		mock.restore();
-	});
-
-	it('disables the button when the mailing filter matches nothing', async () => {
-		await renderSignups([signups[1]]);
 
 		fireEvent.click(
-			screen.getByRole('checkbox', { name: 'Mailing opt-ins only' })
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
 		);
 
-		const button = screen.getByRole('button', { name: 'Download CSV' });
-		expect(button).toBeDisabled();
+		expect( screen.getByText( 'Ada Lovelace' ) ).toBeInTheDocument();
+		expect( screen.queryByText( 'Bob, Jr.' ) ).not.toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Download CSV' } )
+		);
+
+		const text = mock.getText();
+		const lines = text.split( '\r\n' );
+		expect( lines ).toHaveLength( 2 );
+		expect( lines[ 1 ] ).toContain( 'ada@example.com' );
+
+		mock.restore();
+	} );
+
+	it( 'disables the button and explains why when there are no signups at all', async () => {
+		await renderSignups( [] );
+
+		const button = screen.getByRole( 'button', { name: 'Download CSV' } );
+		expect( button ).toBeDisabled();
+		expect( screen.getByText( 'No signups yet.' ) ).toBeInTheDocument();
+	} );
+
+	it( 'shows the ticket type name, not its id, in the table and the CSV', async () => {
+		await renderSignups();
+		expect( screen.getAllByText( 'General' ) ).toHaveLength( 2 );
+		expect( screen.queryByText( '3' ) ).not.toBeInTheDocument();
+
+		const mock = mockObjectUrlAndClick();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Download CSV' } )
+		);
+		expect( mock.getText() ).toContain( ',General,' );
+		mock.restore();
+	} );
+
+	it( 'falls back to an em dash when the ticket type is missing or deleted', async () => {
+		await renderSignups( [ signupWithMissingTicketType ] );
+		expect( screen.getByText( '—' ) ).toBeInTheDocument();
+
+		const mock = mockObjectUrlAndClick();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Download CSV' } )
+		);
+		expect( mock.getText() ).toContain( ',—,' );
+		mock.restore();
+	} );
+
+	it( 'disables the button when the mailing filter matches nothing', async () => {
+		await renderSignups( [ signups[ 1 ] ] );
+
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+		);
+
+		const button = screen.getByRole( 'button', { name: 'Download CSV' } );
+		expect( button ).toBeDisabled();
 		expect(
 			screen.getByText(
 				'Nothing to export — no signups match the current filter.'
 			)
 		).toBeInTheDocument();
-	});
-});
+	} );
+} );

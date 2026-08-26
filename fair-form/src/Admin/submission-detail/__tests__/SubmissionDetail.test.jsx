@@ -12,7 +12,7 @@ import { render, screen } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import SubmissionDetail from '../SubmissionDetail.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 const SUBMISSION = {
 	id: 117,
@@ -33,34 +33,34 @@ const SUBMISSION = {
 	],
 };
 
-beforeEach(() => {
+beforeEach( () => {
 	window.history.pushState(
 		{},
 		'',
 		'/wp-admin/admin.php?page=fair-form-submission-detail&submission_id=117'
 	);
-	apiFetch.mockResolvedValue(SUBMISSION);
-});
+	apiFetch.mockResolvedValue( SUBMISSION );
+} );
 
-afterEach(() => {
+afterEach( () => {
 	jest.restoreAllMocks();
 	jest.clearAllMocks();
-});
+} );
 
-describe('SubmissionDetail', () => {
-	it('renders the root with the wrap and page classes, and both tables', async () => {
-		const { container } = render(<SubmissionDetail />);
+describe( 'SubmissionDetail', () => {
+	it( 'renders the root with the wrap and page classes, and both tables', async () => {
+		const { container } = render( <SubmissionDetail /> );
 
-		await screen.findByText('Google');
+		await screen.findByText( 'Google' );
 
 		const root = container.querySelector(
 			'.wrap.fair-form-submission-detail'
 		);
-		expect(root).toBeInTheDocument();
+		expect( root ).toBeInTheDocument();
 
 		expect(
-			screen.getByRole('columnheader', { name: 'Question' })
+			screen.getByRole( 'columnheader', { name: 'Question' } )
 		).toBeInTheDocument();
-		expect(screen.getByText('Submitted by')).toBeInTheDocument();
-	});
-});
+		expect( screen.getByText( 'Submitted by' ) ).toBeInTheDocument();
+	} );
+} );

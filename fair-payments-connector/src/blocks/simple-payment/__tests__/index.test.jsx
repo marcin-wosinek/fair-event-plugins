@@ -5,35 +5,38 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 
 const mockSelect = jest.fn();
-jest.mock('@wordpress/data', () => ({
-	select: (...args) => mockSelect(...args),
-}));
+jest.mock( '@wordpress/data', () => ( {
+	select: ( ...args ) => mockSelect( ...args ),
+} ) );
 
-jest.mock('@wordpress/block-editor', () => ({
-	useBlockProps: (props) => props || {},
-}));
+jest.mock( '@wordpress/block-editor', () => ( {
+	useBlockProps: ( props ) => props || {},
+} ) );
 
-jest.mock('@wordpress/components', () => ({
-	Notice: ({ children }) => <div role="alert">{children}</div>,
-	TextControl: ({ label, value, onChange }) => (
+jest.mock( '@wordpress/components', () => ( {
+	Notice: ( { children } ) => <div role="alert">{ children }</div>,
+	TextControl: ( { label, value, onChange } ) => (
 		<label>
-			{label}
-			<input value={value} onChange={(e) => onChange(e.target.value)} />
+			{ label }
+			<input
+				value={ value }
+				onChange={ ( e ) => onChange( e.target.value ) }
+			/>
 		</label>
 	),
-}));
+} ) );
 
 let mockUuidCounter = 0;
-jest.mock('fair-events-shared', () => ({
-	generateUuid: () => `generated-uuid-${++mockUuidCounter}`,
-}));
+jest.mock( 'fair-events-shared', () => ( {
+	generateUuid: () => `generated-uuid-${ ++mockUuidCounter }`,
+} ) );
 
 let capturedSettings;
-jest.mock('@wordpress/blocks', () => ({
-	registerBlockType: (name, settings) => {
+jest.mock( '@wordpress/blocks', () => ( {
+	registerBlockType: ( name, settings ) => {
 		capturedSettings = settings;
 	},
-}));
+} ) );
 
 /**
  * Wire up mockSelect so the imperative `select('core/block-editor')` calls
@@ -41,37 +44,39 @@ jest.mock('@wordpress/blocks', () => ({
  *
  * @param {Array} blocks Fake blocks: `{ clientId, name, blockId }`.
  */
-function mockBlockEditorStore(blocks) {
-	mockSelect.mockImplementation((store) => {
-		if (store !== 'core/block-editor') {
+function mockBlockEditorStore( blocks ) {
+	mockSelect.mockImplementation( ( store ) => {
+		if ( store !== 'core/block-editor' ) {
 			return {};
 		}
 		return {
-			getClientIdsWithDescendants: () => blocks.map((b) => b.clientId),
-			getBlockName: (clientId) =>
-				blocks.find((b) => b.clientId === clientId)?.name,
-			getBlockAttributes: (clientId) => ({
-				blockId: blocks.find((b) => b.clientId === clientId)?.blockId,
-			}),
+			getClientIdsWithDescendants: () =>
+				blocks.map( ( b ) => b.clientId ),
+			getBlockName: ( clientId ) =>
+				blocks.find( ( b ) => b.clientId === clientId )?.name,
+			getBlockAttributes: ( clientId ) => ( {
+				blockId: blocks.find( ( b ) => b.clientId === clientId )
+					?.blockId,
+			} ),
 		};
-	});
+	} );
 }
 
-describe('Simple Payment Edit', () => {
+describe( 'Simple Payment Edit', () => {
 	let Edit;
 
-	beforeAll(() => {
-		require('../index.js');
+	beforeAll( () => {
+		require( '../index.js' );
 		Edit = capturedSettings.edit;
-	});
+	} );
 
-	beforeEach(() => {
+	beforeEach( () => {
 		mockUuidCounter = 0;
-	});
+	} );
 
-	afterEach(() => {
+	afterEach( () => {
 		delete window.fairPaymentsConnector;
-	});
+	} );
 
 	const baseAttributes = {
 		blockId: '',
@@ -87,33 +92,33 @@ describe('Simple Payment Edit', () => {
 	) =>
 		render(
 			<Edit
-				attributes={{ ...baseAttributes, ...attributes }}
-				setAttributes={setAttributes}
-				clientId={clientId}
+				attributes={ { ...baseAttributes, ...attributes } }
+				setAttributes={ setAttributes }
+				clientId={ clientId }
 			/>
 		);
 
-	it('assigns a fresh id and shows the missing-id notice when blockId is empty', () => {
-		mockBlockEditorStore([
+	it( 'assigns a fresh id and shows the missing-id notice when blockId is empty', () => {
+		mockBlockEditorStore( [
 			{
 				clientId: 'block-1',
 				name: 'fair-payment/simple-payment',
 				blockId: '',
 			},
-		]);
+		] );
 		const setAttributes = jest.fn();
-		renderEdit({ blockId: '' }, setAttributes);
+		renderEdit( { blockId: '' }, setAttributes );
 
-		expect(setAttributes).toHaveBeenCalledWith({
+		expect( setAttributes ).toHaveBeenCalledWith( {
 			blockId: 'generated-uuid-1',
-		});
-		expect(screen.getByRole('alert')).toHaveTextContent(
+		} );
+		expect( screen.getByRole( 'alert' ) ).toHaveTextContent(
 			/missing an identifier/
 		);
-	});
+	} );
 
-	it('reassigns the id and shows the duplicate notice when an earlier block already owns it', () => {
-		mockBlockEditorStore([
+	it( 'reassigns the id and shows the duplicate notice when an earlier block already owns it', () => {
+		mockBlockEditorStore( [
 			{
 				clientId: 'block-1',
 				name: 'fair-payment/simple-payment',
@@ -124,37 +129,37 @@ describe('Simple Payment Edit', () => {
 				name: 'fair-payment/simple-payment',
 				blockId: 'shared-id',
 			},
-		]);
+		] );
 		const setAttributes = jest.fn();
-		renderEdit({ blockId: 'shared-id' }, setAttributes, 'block-2');
+		renderEdit( { blockId: 'shared-id' }, setAttributes, 'block-2' );
 
-		expect(setAttributes).toHaveBeenCalledWith({
+		expect( setAttributes ).toHaveBeenCalledWith( {
 			blockId: 'generated-uuid-1',
-		});
-		expect(screen.getByRole('alert')).toHaveTextContent(
+		} );
+		expect( screen.getByRole( 'alert' ) ).toHaveTextContent(
 			/shared its identifier/
 		);
-	});
+	} );
 
-	it('leaves an already-unique id untouched and shows no notice', () => {
-		mockBlockEditorStore([
+	it( 'leaves an already-unique id untouched and shows no notice', () => {
+		mockBlockEditorStore( [
 			{
 				clientId: 'block-1',
 				name: 'fair-payment/simple-payment',
 				blockId: 'unique-id',
 			},
-		]);
+		] );
 		const setAttributes = jest.fn();
-		renderEdit({ blockId: 'unique-id' }, setAttributes, 'block-1');
+		renderEdit( { blockId: 'unique-id' }, setAttributes, 'block-1' );
 
-		expect(setAttributes).not.toHaveBeenCalledWith(
-			expect.objectContaining({ blockId: expect.anything() })
+		expect( setAttributes ).not.toHaveBeenCalledWith(
+			expect.objectContaining( { blockId: expect.anything() } )
 		);
-		expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-	});
+		expect( screen.queryByRole( 'alert' ) ).not.toBeInTheDocument();
+	} );
 
-	it('does not treat an earlier block with a different id as a duplicate', () => {
-		mockBlockEditorStore([
+	it( 'does not treat an earlier block with a different id as a duplicate', () => {
+		mockBlockEditorStore( [
 			{
 				clientId: 'block-1',
 				name: 'fair-payment/simple-payment',
@@ -165,13 +170,13 @@ describe('Simple Payment Edit', () => {
 				name: 'fair-payment/simple-payment',
 				blockId: 'my-id',
 			},
-		]);
+		] );
 		const setAttributes = jest.fn();
-		renderEdit({ blockId: 'my-id' }, setAttributes, 'block-2');
+		renderEdit( { blockId: 'my-id' }, setAttributes, 'block-2' );
 
-		expect(setAttributes).not.toHaveBeenCalledWith(
-			expect.objectContaining({ blockId: expect.anything() })
+		expect( setAttributes ).not.toHaveBeenCalledWith(
+			expect.objectContaining( { blockId: expect.anything() } )
 		);
-		expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-	});
-});
+		expect( screen.queryByRole( 'alert' ) ).not.toBeInTheDocument();
+	} );
+} );

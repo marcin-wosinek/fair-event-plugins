@@ -17,8 +17,8 @@ const { audienceUrl = '' } = window.fairEventsManageEventData || {};
 addFilter(
 	'fairEvents.manageEvent.tabs',
 	'fair-audience/audience-tab',
-	(tabs, { eventDate, eventDateId, eventTitle }) => {
-		if (!audienceUrl) {
+	( tabs, { eventDate, eventDateId, eventTitle } ) => {
+		if ( ! audienceUrl ) {
 			return tabs;
 		}
 
@@ -26,16 +26,16 @@ addFilter(
 			...tabs,
 			{
 				name: 'audience',
-				title: __('Audience', 'fair-audience'),
+				title: __( 'Audience', 'fair-audience' ),
 				order: 50,
 				isVisible: true,
-				disabled: isLinkOnlyEvent(eventDate),
+				disabled: isLinkOnlyEvent( eventDate ),
 				render: () => (
 					<EventAudience
-						eventId={eventDate.event_id}
-						eventDateId={eventDateId}
-						audienceUrl={audienceUrl}
-						eventTitle={eventTitle}
+						eventId={ eventDate.event_id }
+						eventDateId={ eventDateId }
+						audienceUrl={ audienceUrl }
+						eventTitle={ eventTitle }
 					/>
 				),
 			},

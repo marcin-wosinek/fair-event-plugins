@@ -29,13 +29,13 @@ import {
 import QuicktagsTextarea from './QuicktagsTextarea.js';
 
 const WEEKDAY_LABELS = [
-	__('Monday', 'fair-audience'),
-	__('Tuesday', 'fair-audience'),
-	__('Wednesday', 'fair-audience'),
-	__('Thursday', 'fair-audience'),
-	__('Friday', 'fair-audience'),
-	__('Saturday', 'fair-audience'),
-	__('Sunday', 'fair-audience'),
+	__( 'Monday', 'fair-audience' ),
+	__( 'Tuesday', 'fair-audience' ),
+	__( 'Wednesday', 'fair-audience' ),
+	__( 'Thursday', 'fair-audience' ),
+	__( 'Friday', 'fair-audience' ),
+	__( 'Saturday', 'fair-audience' ),
+	__( 'Sunday', 'fair-audience' ),
 ];
 
 /**
@@ -46,48 +46,48 @@ const WEEKDAY_LABELS = [
  * @return {JSX.Element} The weekly digest page
  */
 export default function WeeklyDigest() {
-	const [loading, setLoading] = useState(true);
-	const [saving, setSaving] = useState(false);
-	const [previewing, setPreviewing] = useState(false);
-	const [sendingTest, setSendingTest] = useState(false);
-	const [notice, setNotice] = useState(null);
-	const [config, setConfig] = useState(null);
-	const [lastSentWeek, setLastSentWeek] = useState('');
-	const [lastRunResult, setLastRunResult] = useState(null);
-	const [nextSend, setNextSend] = useState('');
-	const [sources, setSources] = useState([]);
-	const [preview, setPreview] = useState(null);
-	const introRef = useRef(null);
-	const outroRef = useRef(null);
+	const [ loading, setLoading ] = useState( true );
+	const [ saving, setSaving ] = useState( false );
+	const [ previewing, setPreviewing ] = useState( false );
+	const [ sendingTest, setSendingTest ] = useState( false );
+	const [ notice, setNotice ] = useState( null );
+	const [ config, setConfig ] = useState( null );
+	const [ lastSentWeek, setLastSentWeek ] = useState( '' );
+	const [ lastRunResult, setLastRunResult ] = useState( null );
+	const [ nextSend, setNextSend ] = useState( '' );
+	const [ sources, setSources ] = useState( [] );
+	const [ preview, setPreview ] = useState( null );
+	const introRef = useRef( null );
+	const outroRef = useRef( null );
 
-	useEffect(() => {
-		Promise.all([getDigestConfig(), getDigestSources()])
-			.then(([digest, sourceList]) => {
-				setConfig(digest.config);
-				setLastSentWeek(digest.last_sent_week);
-				setLastRunResult(digest.last_run_result);
-				setNextSend(digest.next_send);
-				setSources(sourceList);
-			})
-			.catch((err) => {
-				setNotice({
+	useEffect( () => {
+		Promise.all( [ getDigestConfig(), getDigestSources() ] )
+			.then( ( [ digest, sourceList ] ) => {
+				setConfig( digest.config );
+				setLastSentWeek( digest.last_sent_week );
+				setLastRunResult( digest.last_run_result );
+				setNextSend( digest.next_send );
+				setSources( sourceList );
+			} )
+			.catch( ( err ) => {
+				setNotice( {
 					status: 'error',
 					message:
 						__(
 							'Failed to load the weekly digest: ',
 							'fair-audience'
-						) + (err.message || 'Unknown error'),
-				});
-			})
-			.finally(() => setLoading(false));
-	}, []);
+						) + ( err.message || 'Unknown error' ),
+				} );
+			} )
+			.finally( () => setLoading( false ) );
+	}, [] );
 
-	const updateField = (field, value) => {
-		setConfig((prev) => ({ ...prev, [field]: value }));
+	const updateField = ( field, value ) => {
+		setConfig( ( prev ) => ( { ...prev, [ field ]: value } ) );
 	};
 
 	const handleSave = () => {
-		setSaving(true);
+		setSaving( true );
 		const updatedConfig = {
 			...config,
 			intro: introRef.current
@@ -97,310 +97,331 @@ export default function WeeklyDigest() {
 				? outroRef.current.getValue()
 				: config.outro,
 		};
-		saveDigestConfig(updatedConfig)
-			.then((response) => {
-				setConfig(response.config);
+		saveDigestConfig( updatedConfig )
+			.then( ( response ) => {
+				setConfig( response.config );
 				return getDigestConfig();
-			})
-			.then((digest) => {
-				setLastSentWeek(digest.last_sent_week);
-				setNextSend(digest.next_send);
-				setNotice({
+			} )
+			.then( ( digest ) => {
+				setLastSentWeek( digest.last_sent_week );
+				setNextSend( digest.next_send );
+				setNotice( {
 					status: 'success',
 					message: __(
 						'Weekly digest settings saved.',
 						'fair-audience'
 					),
-				});
-			})
-			.catch((err) => {
-				setNotice({
+				} );
+			} )
+			.catch( ( err ) => {
+				setNotice( {
 					status: 'error',
 					message:
-						__('Failed to save: ', 'fair-audience') +
-						(err.message || 'Unknown error'),
-				});
-			})
-			.finally(() => setSaving(false));
+						__( 'Failed to save: ', 'fair-audience' ) +
+						( err.message || 'Unknown error' ),
+				} );
+			} )
+			.finally( () => setSaving( false ) );
 	};
 
 	const handlePreview = () => {
-		setPreviewing(true);
-		setPreview(null);
+		setPreviewing( true );
+		setPreview( null );
 		previewDigest()
-			.then((result) => setPreview(result))
-			.catch((err) => {
-				setNotice({
+			.then( ( result ) => setPreview( result ) )
+			.catch( ( err ) => {
+				setNotice( {
 					status: 'error',
 					message:
-						__('Failed to build the preview: ', 'fair-audience') +
-						(err.message || 'Unknown error'),
-				});
-			})
-			.finally(() => setPreviewing(false));
+						__( 'Failed to build the preview: ', 'fair-audience' ) +
+						( err.message || 'Unknown error' ),
+				} );
+			} )
+			.finally( () => setPreviewing( false ) );
 	};
 
 	const handleSendTest = () => {
-		setSendingTest(true);
+		setSendingTest( true );
 		sendTestDigest()
-			.then((result) => {
-				setNotice({
+			.then( ( result ) => {
+				setNotice( {
 					status: 'success',
 					message: sprintf(
 						/* translators: %s: email address the test digest was sent to */
-						__('Test digest sent to %s.', 'fair-audience'),
+						__( 'Test digest sent to %s.', 'fair-audience' ),
 						result.sent_to
 					),
-				});
-			})
-			.catch((err) => {
-				setNotice({
+				} );
+			} )
+			.catch( ( err ) => {
+				setNotice( {
 					status: 'error',
 					message:
 						__(
 							'Failed to send the test digest: ',
 							'fair-audience'
-						) + (err.message || 'Unknown error'),
-				});
-			})
-			.finally(() => setSendingTest(false));
+						) + ( err.message || 'Unknown error' ),
+				} );
+			} )
+			.finally( () => setSendingTest( false ) );
 	};
 
-	if (loading || !config) {
+	if ( loading || ! config ) {
 		return (
 			<div className="wrap">
-				<h1>{__('Weekly Digest', 'fair-audience')}</h1>
+				<h1>{ __( 'Weekly Digest', 'fair-audience' ) }</h1>
 				<Spinner />
 			</div>
 		);
 	}
 
 	const sourceOptions = [
-		{ value: '', label: __('Select a source…', 'fair-audience') },
-		...sources.map((source) => ({
+		{ value: '', label: __( 'Select a source…', 'fair-audience' ) },
+		...sources.map( ( source ) => ( {
 			value: source.slug,
 			label: source.name,
-		})),
+		} ) ),
 	];
 
-	const dayOptions = WEEKDAY_LABELS.map((label, index) => ({
-		value: String(index + 1),
+	const dayOptions = WEEKDAY_LABELS.map( ( label, index ) => ( {
+		value: String( index + 1 ),
 		label,
-	}));
+	} ) );
 
 	return (
 		<div className="wrap">
-			<h1>{__('Weekly Digest', 'fair-audience')}</h1>
+			<h1>{ __( 'Weekly Digest', 'fair-audience' ) }</h1>
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
-					isDismissible={true}
-					onRemove={() => setNotice(null)}
+					status={ notice.status }
+					isDismissible={ true }
+					onRemove={ () => setNotice( null ) }
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
-			<Card style={{ marginTop: '1rem' }}>
+			<Card style={ { marginTop: '1rem' } }>
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
-						{__('Settings', 'fair-audience')}
+					<h2 style={ { margin: 0 } }>
+						{ __( 'Settings', 'fair-audience' ) }
 					</h2>
 				</CardHeader>
 				<CardBody>
 					<ToggleControl
-						label={__('Send the weekly digest', 'fair-audience')}
-						help={__(
+						label={ __(
+							'Send the weekly digest',
+							'fair-audience'
+						) }
+						help={ __(
 							'When enabled, an email with this week’s events is sent automatically on the day and time below.',
 							'fair-audience'
-						)}
-						checked={config.enabled}
-						onChange={(value) => updateField('enabled', value)}
+						) }
+						checked={ config.enabled }
+						onChange={ ( value ) =>
+							updateField( 'enabled', value )
+						}
 					/>
 
 					<SelectControl
-						label={__('Event source', 'fair-audience')}
-						value={config.source_slug}
-						options={sourceOptions}
-						onChange={(value) => updateField('source_slug', value)}
+						label={ __( 'Event source', 'fair-audience' ) }
+						value={ config.source_slug }
+						options={ sourceOptions }
+						onChange={ ( value ) =>
+							updateField( 'source_slug', value )
+						}
 					/>
 
 					<SelectControl
-						label={__('Day of week', 'fair-audience')}
-						value={String(config.day_of_week)}
-						options={dayOptions}
-						onChange={(value) =>
-							updateField('day_of_week', parseInt(value, 10))
+						label={ __( 'Day of week', 'fair-audience' ) }
+						value={ String( config.day_of_week ) }
+						options={ dayOptions }
+						onChange={ ( value ) =>
+							updateField( 'day_of_week', parseInt( value, 10 ) )
 						}
 					/>
 
 					<TextControl
-						label={__('Time of day', 'fair-audience')}
+						label={ __( 'Time of day', 'fair-audience' ) }
 						type="time"
-						value={config.time_of_day}
-						onChange={(value) => updateField('time_of_day', value)}
+						value={ config.time_of_day }
+						onChange={ ( value ) =>
+							updateField( 'time_of_day', value )
+						}
 					/>
 
 					<SelectControl
-						label={__('Which week to include', 'fair-audience')}
-						value={config.week_scope}
-						options={[
+						label={ __( 'Which week to include', 'fair-audience' ) }
+						value={ config.week_scope }
+						options={ [
 							{
 								value: 'current',
-								label: __('Current week', 'fair-audience'),
+								label: __( 'Current week', 'fair-audience' ),
 							},
 							{
 								value: 'next',
-								label: __('Next week', 'fair-audience'),
+								label: __( 'Next week', 'fair-audience' ),
 							},
-						]}
-						onChange={(value) => updateField('week_scope', value)}
+						] }
+						onChange={ ( value ) =>
+							updateField( 'week_scope', value )
+						}
 					/>
 
 					<ToggleControl
-						label={__(
+						label={ __(
 							'Skip sending when the week has no events',
 							'fair-audience'
-						)}
-						checked={config.skip_empty}
-						onChange={(value) => updateField('skip_empty', value)}
+						) }
+						checked={ config.skip_empty }
+						onChange={ ( value ) =>
+							updateField( 'skip_empty', value )
+						}
 					/>
 
 					<TextControl
-						label={__('Subject', 'fair-audience')}
-						help={__(
+						label={ __( 'Subject', 'fair-audience' ) }
+						help={ __(
 							'Use {week_start} and {week_end} to insert the week’s dates.',
 							'fair-audience'
-						)}
-						value={config.subject}
-						onChange={(value) => updateField('subject', value)}
+						) }
+						value={ config.subject }
+						onChange={ ( value ) =>
+							updateField( 'subject', value )
+						}
 					/>
 
 					<QuicktagsTextarea
-						ref={introRef}
+						ref={ introRef }
 						id="fair-audience-digest-intro"
-						label={__('Intro text', 'fair-audience')}
-						help={__(
+						label={ __( 'Intro text', 'fair-audience' ) }
+						help={ __(
 							'Optional HTML shown above the list of events.',
 							'fair-audience'
-						)}
-						defaultValue={config.intro}
+						) }
+						defaultValue={ config.intro }
 					/>
 
 					<QuicktagsTextarea
-						ref={outroRef}
+						ref={ outroRef }
 						id="fair-audience-digest-outro"
-						label={__('Outro text', 'fair-audience')}
-						help={__(
+						label={ __( 'Outro text', 'fair-audience' ) }
+						help={ __(
 							'Optional HTML shown below the list of events.',
 							'fair-audience'
-						)}
-						defaultValue={config.outro}
+						) }
+						defaultValue={ config.outro }
 					/>
 
 					<Button
 						variant="primary"
-						onClick={handleSave}
-						isBusy={saving}
-						disabled={saving}
+						onClick={ handleSave }
+						isBusy={ saving }
+						disabled={ saving }
 					>
-						{__('Save settings', 'fair-audience')}
+						{ __( 'Save settings', 'fair-audience' ) }
 					</Button>
 				</CardBody>
 			</Card>
 
-			<Card style={{ marginTop: '1rem' }}>
+			<Card style={ { marginTop: '1rem' } }>
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
-						{__('Last run', 'fair-audience')}
+					<h2 style={ { margin: 0 } }>
+						{ __( 'Last run', 'fair-audience' ) }
 					</h2>
 				</CardHeader>
 				<CardBody>
-					{!lastSentWeek && !lastRunResult?.timestamp ? (
+					{ ! lastSentWeek && ! lastRunResult?.timestamp ? (
 						<p>
-							{__('The digest has not run yet.', 'fair-audience')}
+							{ __(
+								'The digest has not run yet.',
+								'fair-audience'
+							) }
 						</p>
 					) : (
 						<p>
-							{sprintf(
+							{ sprintf(
 								/* translators: 1: ISO week that was last sent, 2: result status (sent, failed, or skipped) */
 								__(
 									'Last sent for week %1$s — %2$s',
 									'fair-audience'
 								),
-								lastSentWeek || __('n/a', 'fair-audience'),
+								lastSentWeek || __( 'n/a', 'fair-audience' ),
 								lastRunResult?.status ||
-									__('unknown', 'fair-audience')
-							)}
+									__( 'unknown', 'fair-audience' )
+							) }
 						</p>
-					)}
-					{config.enabled && nextSend && (
+					) }
+					{ config.enabled && nextSend && (
 						<p>
-							{sprintf(
+							{ sprintf(
 								/* translators: %s: date and time the next digest is scheduled to send */
-								__('Next digest: %s', 'fair-audience'),
-								dateI18n('l, F j H:i', nextSend)
-							)}
+								__( 'Next digest: %s', 'fair-audience' ),
+								dateI18n( 'l, F j H:i', nextSend )
+							) }
 						</p>
-					)}
+					) }
 				</CardBody>
 			</Card>
 
-			<Card style={{ marginTop: '1rem' }}>
+			<Card style={ { marginTop: '1rem' } }>
 				<CardHeader>
-					<h2 style={{ margin: 0 }}>
-						{__('Preview & test', 'fair-audience')}
+					<h2 style={ { margin: 0 } }>
+						{ __( 'Preview & test', 'fair-audience' ) }
 					</h2>
 				</CardHeader>
 				<CardBody>
 					<Button
 						variant="secondary"
-						onClick={handlePreview}
-						isBusy={previewing}
-						disabled={previewing}
-						style={{ marginRight: '8px' }}
+						onClick={ handlePreview }
+						isBusy={ previewing }
+						disabled={ previewing }
+						style={ { marginRight: '8px' } }
 					>
-						{__('Preview', 'fair-audience')}
+						{ __( 'Preview', 'fair-audience' ) }
 					</Button>
 
 					<Button
 						variant="secondary"
-						onClick={handleSendTest}
-						isBusy={sendingTest}
-						disabled={sendingTest}
+						onClick={ handleSendTest }
+						isBusy={ sendingTest }
+						disabled={ sendingTest }
 					>
-						{__('Send test to me', 'fair-audience')}
+						{ __( 'Send test to me', 'fair-audience' ) }
 					</Button>
 
-					{preview && (
-						<div style={{ marginTop: '16px' }}>
-							{preview.empty && (
-								<Notice status="warning" isDismissible={false}>
-									{__(
+					{ preview && (
+						<div style={ { marginTop: '16px' } }>
+							{ preview.empty && (
+								<Notice
+									status="warning"
+									isDismissible={ false }
+								>
+									{ __(
 										'The selected week has no events.',
 										'fair-audience'
-									)}
+									) }
 								</Notice>
-							)}
+							) }
 							<p>
 								<strong>
-									{__('Subject:', 'fair-audience')}
-								</strong>{' '}
-								{preview.subject}
+									{ __( 'Subject:', 'fair-audience' ) }
+								</strong>{ ' ' }
+								{ preview.subject }
 							</p>
 							<div
-								style={{
+								style={ {
 									border: '1px solid #ddd',
 									padding: '16px',
 									background: '#fff',
-								}}
-								dangerouslySetInnerHTML={{
+								} }
+								dangerouslySetInnerHTML={ {
 									__html: preview.html,
-								}}
+								} }
 							/>
 						</div>
-					)}
+					) }
 				</CardBody>
 			</Card>
 		</div>

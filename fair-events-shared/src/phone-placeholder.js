@@ -43,9 +43,9 @@ export const FALLBACK_PHONE_PLACEHOLDER = '+49 170 1234567';
  * @param {string|null|undefined} timezoneString A WP timezone string (e.g. "Europe/Madrid"), or a raw UTC offset / empty value.
  * @return {string} The mapped example, or the fallback.
  */
-export function getPhonePlaceholderForTimezone(timezoneString) {
+export function getPhonePlaceholderForTimezone( timezoneString ) {
 	return (
-		PHONE_PLACEHOLDER_BY_TIMEZONE[timezoneString] ||
+		PHONE_PLACEHOLDER_BY_TIMEZONE[ timezoneString ] ||
 		FALLBACK_PHONE_PLACEHOLDER
 	);
 }
@@ -57,7 +57,7 @@ export function getPhonePlaceholderForTimezone(timezoneString) {
  * @return {string} The mapped example, or the fallback.
  */
 export function getSitePhonePlaceholder() {
-	return getPhonePlaceholderForTimezone(getSettings().timezone.string);
+	return getPhonePlaceholderForTimezone( getSettings().timezone.string );
 }
 
 /**
@@ -68,7 +68,7 @@ export function getSitePhonePlaceholder() {
  * @param {string|null|undefined}  timezoneString  A WP timezone string, passed through to {@link getPhonePlaceholderForTimezone}.
  * @return {string} The placeholder to display.
  */
-export function resolvePhonePlaceholder(attributeValue, timezoneString) {
-	const trimmed = (attributeValue || '').trim();
-	return trimmed || getPhonePlaceholderForTimezone(timezoneString);
+export function resolvePhonePlaceholder( attributeValue, timezoneString ) {
+	const trimmed = ( attributeValue || '' ).trim();
+	return trimmed || getPhonePlaceholderForTimezone( timezoneString );
 }

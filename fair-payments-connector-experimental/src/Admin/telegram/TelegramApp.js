@@ -16,28 +16,28 @@ import TelegramTab from './TelegramTab.js';
  * @return {JSX.Element} The Telegram settings page
  */
 export default function TelegramApp() {
-	const [notice, setNotice] = useState(null);
+	const [ notice, setNotice ] = useState( null );
 
 	return (
 		<div className="wrap">
 			<h1>
-				{__(
+				{ __(
 					'Telegram Notifications',
 					'fair-payments-connector-experimental'
-				)}
+				) }
 			</h1>
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
-					isDismissible={true}
-					onRemove={() => setNotice(null)}
+					status={ notice.status }
+					isDismissible={ true }
+					onRemove={ () => setNotice( null ) }
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
-			<TelegramTab onNotice={setNotice} />
+			<TelegramTab onNotice={ setNotice } />
 		</div>
 	);
 }

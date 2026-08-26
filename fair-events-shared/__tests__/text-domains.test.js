@@ -2,19 +2,19 @@ import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { config } from '../../scripts/translation/config.js';
 
-const sharedSrcDir = join(__dirname, '..', 'src');
+const sharedSrcDir = join( __dirname, '..', 'src' );
 
-function listJsFiles(dir) {
+function listJsFiles( dir ) {
 	let files = [];
-	for (const entry of readdirSync(dir)) {
-		if (entry === '__tests__') {
+	for ( const entry of readdirSync( dir ) ) {
+		if ( entry === '__tests__' ) {
 			continue;
 		}
-		const fullPath = join(dir, entry);
-		if (statSync(fullPath).isDirectory()) {
-			files = files.concat(listJsFiles(fullPath));
-		} else if (entry.endsWith('.js')) {
-			files.push(fullPath);
+		const fullPath = join( dir, entry );
+		if ( statSync( fullPath ).isDirectory() ) {
+			files = files.concat( listJsFiles( fullPath ) );
+		} else if ( entry.endsWith( '.js' ) ) {
+			files.push( fullPath );
 		}
 	}
 	return files;
@@ -27,27 +27,27 @@ function listJsFiles(dir) {
 const TRANSLATION_CALL =
 	/\b__\(\s*(['"`])(?:\\.|(?!\1).)*\1\s*,\s*(['"`])((?:\\.|(?!\2).)*)\2\s*\)/g;
 
-describe('fair-events-shared text domains', () => {
-	test('every literal text domain used in shared source belongs to a known plugin', () => {
+describe( 'fair-events-shared text domains', () => {
+	test( 'every literal text domain used in shared source belongs to a known plugin', () => {
 		const allowedDomains = new Set(
-			config.plugins.map((plugin) => plugin.textDomain)
+			config.plugins.map( ( plugin ) => plugin.textDomain )
 		);
 		const foundDomains = new Map();
 
-		for (const file of listJsFiles(sharedSrcDir)) {
-			const contents = readFileSync(file, 'utf8');
-			for (const match of contents.matchAll(TRANSLATION_CALL)) {
-				const domain = match[3];
-				if (!foundDomains.has(domain)) {
-					foundDomains.set(domain, file);
+		for ( const file of listJsFiles( sharedSrcDir ) ) {
+			const contents = readFileSync( file, 'utf8' );
+			for ( const match of contents.matchAll( TRANSLATION_CALL ) ) {
+				const domain = match[ 3 ];
+				if ( ! foundDomains.has( domain ) ) {
+					foundDomains.set( domain, file );
 				}
 			}
 		}
 
-		const unknownDomains = [...foundDomains.entries()].filter(
-			([domain]) => !allowedDomains.has(domain)
+		const unknownDomains = [ ...foundDomains.entries() ].filter(
+			( [ domain ] ) => ! allowedDomains.has( domain )
 		);
 
-		expect(unknownDomains).toEqual([]);
-	});
-});
+		expect( unknownDomains ).toEqual( [] );
+	} );
+} );

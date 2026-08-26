@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "admin-links",
 	"description": "A URL input question with built-in web-address validation for Fair Form",
-	"keywords": ["question", "url", "link", "website"],
+	"keywords": [ "question", "url", "link", "website" ],
 	"textdomain": "fair-audience",
 	"ancestor": [
 		"fair-audience/fair-form",

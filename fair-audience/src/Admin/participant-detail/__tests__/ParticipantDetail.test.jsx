@@ -13,7 +13,7 @@ import { render, screen } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import ParticipantDetail from '../ParticipantDetail.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 const PARTICIPANT = {
 	id: 144,
@@ -53,52 +53,54 @@ const ACTIVITY = {
 	],
 };
 
-beforeEach(() => {
+beforeEach( () => {
 	window.history.pushState(
 		{},
 		'',
 		'/wp-admin/admin.php?page=fair-audience-participant-detail&participant_id=144'
 	);
-	apiFetch.mockImplementation(({ path }) => {
-		if (path.endsWith('/activity')) {
-			return Promise.resolve(ACTIVITY);
+	apiFetch.mockImplementation( ( { path } ) => {
+		if ( path.endsWith( '/activity' ) ) {
+			return Promise.resolve( ACTIVITY );
 		}
-		return Promise.resolve(PARTICIPANT);
-	});
-});
+		return Promise.resolve( PARTICIPANT );
+	} );
+} );
 
-afterEach(() => {
+afterEach( () => {
 	jest.restoreAllMocks();
 	jest.clearAllMocks();
-});
+} );
 
-describe('ParticipantDetail', () => {
-	it('renders the root with the wrap and page classes, and both activity tables', async () => {
-		const { container } = render(<ParticipantDetail />);
+describe( 'ParticipantDetail', () => {
+	it( 'renders the root with the wrap and page classes, and both activity tables', async () => {
+		const { container } = render( <ParticipantDetail /> );
 
-		await screen.findAllByText('Jane Doe');
+		await screen.findAllByText( 'Jane Doe' );
 
 		const root = container.querySelector(
 			'.wrap.fair-audience-participant-detail'
 		);
-		expect(root).toBeInTheDocument();
+		expect( root ).toBeInTheDocument();
 
 		const tables = container.querySelectorAll(
 			'.fair-audience-participant-detail__table'
 		);
-		expect(tables).toHaveLength(2);
+		expect( tables ).toHaveLength( 2 );
 
 		const cards = container.querySelectorAll(
 			'.fair-audience-participant-detail__card'
 		);
-		expect(cards).toHaveLength(3);
+		expect( cards ).toHaveLength( 3 );
 
 		expect(
-			container.querySelector('.fair-audience-participant-detail__back')
+			container.querySelector( '.fair-audience-participant-detail__back' )
 		).toBeInTheDocument();
 
-		expect(screen.getByText('jane@example.com')).toBeInTheDocument();
-		expect(screen.getAllByText('Spring Meetup').length).toBeGreaterThan(0);
-		expect(screen.getByText('Signup form')).toBeInTheDocument();
-	});
-});
+		expect( screen.getByText( 'jane@example.com' ) ).toBeInTheDocument();
+		expect( screen.getAllByText( 'Spring Meetup' ).length ).toBeGreaterThan(
+			0
+		);
+		expect( screen.getByText( 'Signup form' ) ).toBeInTheDocument();
+	} );
+} );

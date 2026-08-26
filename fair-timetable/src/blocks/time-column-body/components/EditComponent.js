@@ -22,29 +22,29 @@ import { formatTime } from '@utils/timeUtils.js';
  * @param {Object}   props.context       - Block context from parent
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent({ context, clientId }) {
-	const { insertBlock } = useDispatch('core/block-editor');
+export default function EditComponent( { context, clientId } ) {
+	const { insertBlock } = useDispatch( 'core/block-editor' );
 
 	// Get context from parent timetable and use as defaults
-	const contextStartTime = context['fair-timetable/startTime'] || '09:00';
-	const contextEndTime = context['fair-timetable/endTime'] || '17:00';
+	const contextStartTime = context[ 'fair-timetable/startTime' ] || '09:00';
+	const contextEndTime = context[ 'fair-timetable/endTime' ] || '17:00';
 
 	// Get inner blocks (time slots) data
 	const innerBlocks = useSelect(
-		(select) => {
-			return select('core/block-editor').getBlocks(clientId);
+		( select ) => {
+			return select( 'core/block-editor' ).getBlocks( clientId );
 		},
-		[clientId]
+		[ clientId ]
 	);
 
 	// Extract time slot data from inner blocks
 	const timeSlots = innerBlocks
-		.filter((block) => block.name === 'fair-timetable/time-slot')
-		.map((block) => ({
+		.filter( ( block ) => block.name === 'fair-timetable/time-slot' )
+		.map( ( block ) => ( {
 			startTime: block.attributes.startTime,
 			endTime: block.attributes.endTime,
 			...block.attributes,
-		}));
+		} ) );
 
 	// Initialize TimeColumn with effective time range and time slots
 	const timeColumn = new TimeColumn(
@@ -55,29 +55,29 @@ export default function EditComponent({ context, clientId }) {
 		timeSlots
 	);
 
-	const blockProps = useBlockProps({
+	const blockProps = useBlockProps( {
 		className: 'time-column-body-container',
-	});
+	} );
 
 	// Template for allowed inner blocks (only time-slot blocks)
-	const allowedBlocks = ['fair-timetable/time-slot'];
+	const allowedBlocks = [ 'fair-timetable/time-slot' ];
 
 	// Custom appender function that uses first available hour
 	const customAppender = () => {
-		console.log('Adding new time slot at first available hour');
+		console.log( 'Adding new time slot at first available hour' );
 		const firstAvailableHour = timeColumn.getFirstAvailableHour();
 
-		const newBlock = createBlock('fair-timetable/time-slot', {
-			startTime: formatTime(firstAvailableHour),
+		const newBlock = createBlock( 'fair-timetable/time-slot', {
+			startTime: formatTime( firstAvailableHour ),
 			endTime: formatTime(
 				Math.min(
 					timeColumn.getFirstAvailableHour() + 1,
 					timeColumn.getEndHour()
 				)
 			),
-		});
+		} );
 
-		insertBlock(newBlock, undefined, clientId);
+		insertBlock( newBlock, undefined, clientId );
 	};
 
 	// Initial template - only shows if no blocks exist
@@ -118,8 +118,8 @@ export default function EditComponent({ context, clientId }) {
 			renderAppender: hasSpaceForNewSlot
 				? () => (
 						<ButtonBlockAppender
-							rootClientId={clientId}
-							onSelect={customAppender}
+							rootClientId={ clientId }
+							onSelect={ customAppender }
 							className="block-list-appender__toggle"
 						/>
 				  )
@@ -128,8 +128,8 @@ export default function EditComponent({ context, clientId }) {
 	);
 
 	return (
-		<div {...blockProps}>
-			<div {...innerBlocksProps} />
+		<div { ...blockProps }>
+			<div { ...innerBlocksProps } />
 		</div>
 	);
 }

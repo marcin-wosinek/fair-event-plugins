@@ -17,45 +17,47 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-test.describe('PublicEventsController — recurring post-linked occurrences', () => {
+test.describe( 'PublicEventsController — recurring post-linked occurrences', () => {
 	let api;
 	let eventPostId;
 	let occurrenceIds;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: {
-				title: `Public feed recurring post-link test ${Date.now()}`,
+				title: `Public feed recurring post-link test ${ Date.now() }`,
 				status: 'publish',
 			},
-		});
-		expect(postRes.ok()).toBeTruthy();
-		eventPostId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		eventPostId = ( await postRes.json() ).id;
 
-		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				title: `Public feed recurring post-link test ${Date.now()}`,
+				title: `Public feed recurring post-link test ${ Date.now() }`,
 				link_type: 'post',
 				start_datetime: '2035-07-01 10:00:00',
 				end_datetime: '2035-07-01 12:00:00',
 			},
-		});
-		expect(edRes.ok()).toBeTruthy();
-		const masterId = (await edRes.json()).id;
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		const masterId = ( await edRes.json() ).id;
 
 		// Link to the post and set the rrule in one PUT — this is the update
 		// path that actually regenerates occurrences (see
 		// EventDatesController::update_item()); the create endpoint doesn't
 		// wire event_id through.
 		const linkRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${masterId}`,
+			`/wp-json/fair-events/v1/event-dates/${ masterId }`,
 			{
 				headers: adminHeaders,
 				data: {
@@ -64,160 +66,162 @@ test.describe('PublicEventsController — recurring post-linked occurrences', ()
 				},
 			}
 		);
-		expect(linkRes.ok()).toBeTruthy();
+		expect( linkRes.ok() ).toBeTruthy();
 		const linkBody = await linkRes.json();
-		expect(linkBody.generated_occurrences.length).toBe(2);
+		expect( linkBody.generated_occurrences.length ).toBe( 2 );
 
 		occurrenceIds = [
 			masterId,
-			...linkBody.generated_occurrences.map((o) => o.id),
-		].sort((a, b) => a - b);
-	});
+			...linkBody.generated_occurrences.map( ( o ) => o.id ),
+		].sort( ( a, b ) => a - b );
+	} );
 
-	test.afterAll(async () => {
-		if (eventPostId) {
+	test.afterAll( async () => {
+		if ( eventPostId ) {
 			await api.delete(
-				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,
 				{ headers: adminHeaders }
 			);
 		}
-	});
+	} );
 
-	test('generated occurrences get a non-empty, resolvable url', async () => {
+	test( 'generated occurrences get a non-empty, resolvable url', async () => {
 		const res = await api.get(
 			'/wp-json/fair-events/v1/events?start_date=2035-07-01&end_date=2035-07-31&per_page=500'
 		);
-		expect(res.ok()).toBeTruthy();
+		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
 
-		const eventsForOccurrences = occurrenceIds.map((occurrenceId) =>
-			body.events.find((e) => e.event_date_id === occurrenceId)
+		const eventsForOccurrences = occurrenceIds.map( ( occurrenceId ) =>
+			body.events.find( ( e ) => e.event_date_id === occurrenceId )
 		);
 
-		for (const event of eventsForOccurrences) {
-			expect(event).toBeTruthy();
-			expect(event.url).toBeTruthy();
-			expect(event.uid.startsWith('fair_event_')).toBe(true);
+		for ( const event of eventsForOccurrences ) {
+			expect( event ).toBeTruthy();
+			expect( event.url ).toBeTruthy();
+			expect( event.uid.startsWith( 'fair_event_' ) ).toBe( true );
 
 			// Canonical URL form: only generated occurrences get the
 			// `?event_date=` disambiguator, carrying a Y-m-d date (not the
 			// numeric event_date id — see OccurrenceDateParam); the master
 			// occurrence uses the plain permalink (see
 			// EventDates::get_display_url()).
-			if ('generated' === event.occurrence_type) {
-				expect(event.url).toMatch(/event_date=\d{4}-\d{2}-\d{2}/);
+			if ( 'generated' === event.occurrence_type ) {
+				expect( event.url ).toMatch( /event_date=\d{4}-\d{2}-\d{2}/ );
 			} else {
-				expect(event.url).not.toContain('event_date=');
+				expect( event.url ).not.toContain( 'event_date=' );
 			}
 		}
-	});
+	} );
 
-	test('feed url matches the resolver display_url for each occurrence', async () => {
+	test( 'feed url matches the resolver display_url for each occurrence', async () => {
 		const feedRes = await api.get(
 			'/wp-json/fair-events/v1/events?start_date=2035-07-01&end_date=2035-07-31&per_page=500'
 		);
-		expect(feedRes.ok()).toBeTruthy();
+		expect( feedRes.ok() ).toBeTruthy();
 		const feedBody = await feedRes.json();
 
-		for (const occurrenceId of occurrenceIds) {
+		for ( const occurrenceId of occurrenceIds ) {
 			const edRes = await api.get(
-				`/wp-json/fair-events/v1/event-dates/${occurrenceId}`,
+				`/wp-json/fair-events/v1/event-dates/${ occurrenceId }`,
 				{ headers: adminHeaders }
 			);
-			expect(edRes.ok()).toBeTruthy();
+			expect( edRes.ok() ).toBeTruthy();
 			const eventDate = await edRes.json();
 
 			const feedEvent = feedBody.events.find(
-				(e) => e.event_date_id === occurrenceId
+				( e ) => e.event_date_id === occurrenceId
 			);
 
-			expect(feedEvent).toBeTruthy();
-			expect(feedEvent.url).toBe(eventDate.display_url);
+			expect( feedEvent ).toBeTruthy();
+			expect( feedEvent.url ).toBe( eventDate.display_url );
 		}
-	});
-});
+	} );
+} );
 
-test.describe('PublicEventsController — standalone events', () => {
+test.describe( 'PublicEventsController — standalone events', () => {
 	let api;
 	let eventDateId;
 	let categoryId;
 	let otherCategoryId;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const categoryRes = await api.post('/wp-json/wp/v2/categories', {
+		const categoryRes = await api.post( '/wp-json/wp/v2/categories', {
 			headers: adminHeaders,
-			data: { name: `Public feed standalone test ${Date.now()}` },
-		});
-		expect(categoryRes.ok()).toBeTruthy();
-		categoryId = (await categoryRes.json()).id;
+			data: { name: `Public feed standalone test ${ Date.now() }` },
+		} );
+		expect( categoryRes.ok() ).toBeTruthy();
+		categoryId = ( await categoryRes.json() ).id;
 
-		const otherCategoryRes = await api.post('/wp-json/wp/v2/categories', {
+		const otherCategoryRes = await api.post( '/wp-json/wp/v2/categories', {
 			headers: adminHeaders,
-			data: { name: `Public feed standalone unused ${Date.now()}` },
-		});
-		expect(otherCategoryRes.ok()).toBeTruthy();
-		otherCategoryId = (await otherCategoryRes.json()).id;
+			data: { name: `Public feed standalone unused ${ Date.now() }` },
+		} );
+		expect( otherCategoryRes.ok() ).toBeTruthy();
+		otherCategoryId = ( await otherCategoryRes.json() ).id;
 
-		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				title: `Public feed standalone test ${Date.now()}`,
+				title: `Public feed standalone test ${ Date.now() }`,
 				start_datetime: '2035-08-01 10:00:00',
 				end_datetime: '2035-08-01 12:00:00',
 				link_type: 'external',
 				external_url: 'https://example.com/standalone-test',
-				categories: [categoryId],
+				categories: [ categoryId ],
 			},
-		});
-		expect(edRes.ok()).toBeTruthy();
-		eventDateId = (await edRes.json()).id;
-	});
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		eventDateId = ( await edRes.json() ).id;
+	} );
 
-	test.afterAll(async () => {
-		if (eventDateId) {
+	test.afterAll( async () => {
+		if ( eventDateId ) {
 			await api.delete(
-				`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
 				{ headers: adminHeaders }
 			);
 		}
-		if (categoryId) {
+		if ( categoryId ) {
 			await api.delete(
-				`/wp-json/wp/v2/categories/${categoryId}?force=true`,
+				`/wp-json/wp/v2/categories/${ categoryId }?force=true`,
 				{ headers: adminHeaders }
 			);
 		}
-		if (otherCategoryId) {
+		if ( otherCategoryId ) {
 			await api.delete(
-				`/wp-json/wp/v2/categories/${otherCategoryId}?force=true`,
+				`/wp-json/wp/v2/categories/${ otherCategoryId }?force=true`,
 				{ headers: adminHeaders }
 			);
 		}
-	});
+	} );
 
-	test('standalone external event carries its url, categories, and uid through the feed', async () => {
+	test( 'standalone external event carries its url, categories, and uid through the feed', async () => {
 		const res = await api.get(
 			'/wp-json/fair-events/v1/events?start_date=2035-08-01&end_date=2035-08-31&per_page=500'
 		);
-		expect(res.ok()).toBeTruthy();
+		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
 
-		const event = body.events.find((e) => e.event_date_id === eventDateId);
+		const event = body.events.find(
+			( e ) => e.event_date_id === eventDateId
+		);
 
-		expect(event).toBeTruthy();
-		expect(event.uid.startsWith('standalone_')).toBe(true);
-		expect(event.url).toBe('https://example.com/standalone-test');
-		expect(event.categories.map((c) => c.id)).toContain(categoryId);
+		expect( event ).toBeTruthy();
+		expect( event.uid.startsWith( 'standalone_' ) ).toBe( true );
+		expect( event.url ).toBe( 'https://example.com/standalone-test' );
+		expect( event.categories.map( ( c ) => c.id ) ).toContain( categoryId );
 
 		const edRes = await api.get(
-			`/wp-json/fair-events/v1/event-dates/${eventDateId}`,
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
 			{ headers: adminHeaders }
 		);
-		expect(edRes.ok()).toBeTruthy();
+		expect( edRes.ok() ).toBeTruthy();
 		const eventDate = await edRes.json();
-		expect(event.url).toBe(eventDate.display_url);
-	});
+		expect( event.url ).toBe( eventDate.display_url );
+	} );
 
 	// This event was created without an explicit attendance_mode, but
 	// EventDatesController::create_item() defaults that to 'in_person' on
@@ -232,146 +236,150 @@ test.describe('PublicEventsController — standalone events', () => {
 	// never clears it back to NULL). That legacy-only path is verified via
 	// a one-off WP-CLI eval-file check instead (TESTING.md's "Manual
 	// Integration Checks" recipe) rather than here.
-	test('external-link event with the default attendance mode is not mislabeled online', async () => {
+	test( 'external-link event with the default attendance mode is not mislabeled online', async () => {
 		const res = await api.get(
 			'/wp-json/fair-events/v1/events?start_date=2035-08-01&end_date=2035-08-31&per_page=500'
 		);
-		expect(res.ok()).toBeTruthy();
+		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
 
-		const event = body.events.find((e) => e.event_date_id === eventDateId);
+		const event = body.events.find(
+			( e ) => e.event_date_id === eventDateId
+		);
 
-		expect(event).toBeTruthy();
-		expect(event).not.toHaveProperty('location');
-	});
+		expect( event ).toBeTruthy();
+		expect( event ).not.toHaveProperty( 'location' );
+	} );
 
-	test('categories filter narrows the feed to matching standalone events', async () => {
+	test( 'categories filter narrows the feed to matching standalone events', async () => {
 		const category = await (
-			await api.get(`/wp-json/wp/v2/categories/${categoryId}`, {
+			await api.get( `/wp-json/wp/v2/categories/${ categoryId }`, {
 				headers: adminHeaders,
-			})
+			} )
 		).json();
 
 		const matchingRes = await api.get(
-			`/wp-json/fair-events/v1/events?start_date=2035-08-01&end_date=2035-08-31&categories=${category.slug}&per_page=500`
+			`/wp-json/fair-events/v1/events?start_date=2035-08-01&end_date=2035-08-31&categories=${ category.slug }&per_page=500`
 		);
-		expect(matchingRes.ok()).toBeTruthy();
+		expect( matchingRes.ok() ).toBeTruthy();
 		const matchingBody = await matchingRes.json();
 		expect(
-			matchingBody.events.some((e) => e.event_date_id === eventDateId)
-		).toBe(true);
+			matchingBody.events.some( ( e ) => e.event_date_id === eventDateId )
+		).toBe( true );
 
 		const otherCategory = await (
-			await api.get(`/wp-json/wp/v2/categories/${otherCategoryId}`, {
+			await api.get( `/wp-json/wp/v2/categories/${ otherCategoryId }`, {
 				headers: adminHeaders,
-			})
+			} )
 		).json();
 
 		const nonMatchingRes = await api.get(
-			`/wp-json/fair-events/v1/events?start_date=2035-08-01&end_date=2035-08-31&categories=${otherCategory.slug}&per_page=500`
+			`/wp-json/fair-events/v1/events?start_date=2035-08-01&end_date=2035-08-31&categories=${ otherCategory.slug }&per_page=500`
 		);
-		expect(nonMatchingRes.ok()).toBeTruthy();
+		expect( nonMatchingRes.ok() ).toBeTruthy();
 		const nonMatchingBody = await nonMatchingRes.json();
 		expect(
-			nonMatchingBody.events.some((e) => e.event_date_id === eventDateId)
-		).toBe(false);
-	});
-});
+			nonMatchingBody.events.some(
+				( e ) => e.event_date_id === eventDateId
+			)
+		).toBe( false );
+	} );
+} );
 
-test.describe('PublicEventsController — location field', () => {
+test.describe( 'PublicEventsController — location field', () => {
 	let api;
 	let addressEventDateId;
 	let noLocationEventDateId;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
 		const addressRes = await api.post(
 			'/wp-json/fair-events/v1/event-dates',
 			{
 				headers: adminHeaders,
 				data: {
-					title: `Public feed address test ${Date.now()}`,
+					title: `Public feed address test ${ Date.now() }`,
 					start_datetime: '2035-08-10 10:00:00',
 					end_datetime: '2035-08-10 12:00:00',
 					link_type: 'none',
 				},
 			}
 		);
-		expect(addressRes.ok()).toBeTruthy();
-		addressEventDateId = (await addressRes.json()).id;
+		expect( addressRes.ok() ).toBeTruthy();
+		addressEventDateId = ( await addressRes.json() ).id;
 
 		// The create endpoint doesn't wire `address` through — a PUT is
 		// needed, same quirk as `event_id` (see the recurring-occurrences
 		// test above).
 		const addressUpdateRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${addressEventDateId}`,
+			`/wp-json/fair-events/v1/event-dates/${ addressEventDateId }`,
 			{
 				headers: adminHeaders,
 				data: { address: 'Calle X 1, Madrid' },
 			}
 		);
-		expect(addressUpdateRes.ok()).toBeTruthy();
+		expect( addressUpdateRes.ok() ).toBeTruthy();
 
 		const noLocationRes = await api.post(
 			'/wp-json/fair-events/v1/event-dates',
 			{
 				headers: adminHeaders,
 				data: {
-					title: `Public feed no-location test ${Date.now()}`,
+					title: `Public feed no-location test ${ Date.now() }`,
 					start_datetime: '2035-08-11 10:00:00',
 					end_datetime: '2035-08-11 12:00:00',
 					link_type: 'none',
 				},
 			}
 		);
-		expect(noLocationRes.ok()).toBeTruthy();
-		noLocationEventDateId = (await noLocationRes.json()).id;
-	});
+		expect( noLocationRes.ok() ).toBeTruthy();
+		noLocationEventDateId = ( await noLocationRes.json() ).id;
+	} );
 
-	test.afterAll(async () => {
-		if (addressEventDateId) {
+	test.afterAll( async () => {
+		if ( addressEventDateId ) {
 			await api.delete(
-				`/wp-json/fair-events/v1/event-dates/${addressEventDateId}`,
+				`/wp-json/fair-events/v1/event-dates/${ addressEventDateId }`,
 				{ headers: adminHeaders }
 			);
 		}
-		if (noLocationEventDateId) {
+		if ( noLocationEventDateId ) {
 			await api.delete(
-				`/wp-json/fair-events/v1/event-dates/${noLocationEventDateId}`,
+				`/wp-json/fair-events/v1/event-dates/${ noLocationEventDateId }`,
 				{ headers: adminHeaders }
 			);
 		}
-	});
+	} );
 
-	test('free-text address resolves to a location object', async () => {
+	test( 'free-text address resolves to a location object', async () => {
 		const res = await api.get(
 			'/wp-json/fair-events/v1/events?start_date=2035-08-10&end_date=2035-08-10&per_page=500'
 		);
-		expect(res.ok()).toBeTruthy();
+		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
 
 		const event = body.events.find(
-			(e) => e.event_date_id === addressEventDateId
+			( e ) => e.event_date_id === addressEventDateId
 		);
-		expect(event).toBeTruthy();
-		expect(event.location).toEqual({
+		expect( event ).toBeTruthy();
+		expect( event.location ).toEqual( {
 			mode: 'in_person',
 			address: 'Calle X 1, Madrid',
-		});
-	});
+		} );
+	} );
 
-	test('event with no location omits the field entirely', async () => {
+	test( 'event with no location omits the field entirely', async () => {
 		const res = await api.get(
 			'/wp-json/fair-events/v1/events?start_date=2035-08-11&end_date=2035-08-11&per_page=500'
 		);
-		expect(res.ok()).toBeTruthy();
+		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
 
 		const event = body.events.find(
-			(e) => e.event_date_id === noLocationEventDateId
+			( e ) => e.event_date_id === noLocationEventDateId
 		);
-		expect(event).toBeTruthy();
-		expect(event).not.toHaveProperty('location');
-	});
-});
+		expect( event ).toBeTruthy();
+		expect( event ).not.toHaveProperty( 'location' );
+	} );
+} );

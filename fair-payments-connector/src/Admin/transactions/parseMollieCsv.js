@@ -4,40 +4,40 @@
  * @param {string} text Raw CSV file contents.
  * @return {Array<Object>} Parsed transactions keyed by mollie_payment_id.
  */
-export const parseMollieCsv = (text) => {
-	const lines = text.split('\n').filter((line) => line.trim());
-	if (lines.length < 2) {
+export const parseMollieCsv = ( text ) => {
+	const lines = text.split( '\n' ).filter( ( line ) => line.trim() );
+	if ( lines.length < 2 ) {
 		return [];
 	}
 
-	const parseRow = (line) => {
+	const parseRow = ( line ) => {
 		const values = [];
 		let current = '';
 		let inQuotes = false;
-		for (let i = 0; i < line.length; i++) {
-			const ch = line[i];
-			if (ch === '"') {
-				inQuotes = !inQuotes;
-			} else if (ch === ',' && !inQuotes) {
-				values.push(current);
+		for ( let i = 0; i < line.length; i++ ) {
+			const ch = line[ i ];
+			if ( ch === '"' ) {
+				inQuotes = ! inQuotes;
+			} else if ( ch === ',' && ! inQuotes ) {
+				values.push( current );
 				current = '';
 			} else {
 				current += ch;
 			}
 		}
-		values.push(current);
+		values.push( current );
 		return values;
 	};
 
-	const headers = parseRow(lines[0]);
-	const idxId = headers.indexOf('ID');
-	const idxAmount = headers.indexOf('Amount');
-	const idxCurrency = headers.indexOf('Currency');
-	const idxStatus = headers.indexOf('Status');
-	const idxDescription = headers.indexOf('Description');
-	const idxDate = headers.indexOf('Date');
+	const headers = parseRow( lines[ 0 ] );
+	const idxId = headers.indexOf( 'ID' );
+	const idxAmount = headers.indexOf( 'Amount' );
+	const idxCurrency = headers.indexOf( 'Currency' );
+	const idxStatus = headers.indexOf( 'Status' );
+	const idxDescription = headers.indexOf( 'Description' );
+	const idxDate = headers.indexOf( 'Date' );
 
-	if (idxId === -1) {
+	if ( idxId === -1 ) {
 		return [];
 	}
 
@@ -53,19 +53,19 @@ export const parseMollieCsv = (text) => {
 	};
 
 	return lines
-		.slice(1)
-		.map((line) => {
-			const values = parseRow(line);
-			const rawStatus = (values[idxStatus] || '').toLowerCase();
+		.slice( 1 )
+		.map( ( line ) => {
+			const values = parseRow( line );
+			const rawStatus = ( values[ idxStatus ] || '' ).toLowerCase();
 			return {
-				mollie_payment_id: values[idxId] || '',
-				amount: parseFloat(values[idxAmount]) || 0,
-				currency: values[idxCurrency] || 'EUR',
-				status: mollieStatusMap[rawStatus] || rawStatus,
+				mollie_payment_id: values[ idxId ] || '',
+				amount: parseFloat( values[ idxAmount ] ) || 0,
+				currency: values[ idxCurrency ] || 'EUR',
+				status: mollieStatusMap[ rawStatus ] || rawStatus,
 				description:
-					idxDescription !== -1 ? values[idxDescription] || '' : '',
-				created_at: idxDate !== -1 ? values[idxDate] || '' : '',
+					idxDescription !== -1 ? values[ idxDescription ] || '' : '',
+				created_at: idxDate !== -1 ? values[ idxDate ] || '' : '',
 			};
-		})
-		.filter((t) => t.mollie_payment_id);
+		} )
+		.filter( ( t ) => t.mollie_payment_id );
 };

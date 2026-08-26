@@ -16,25 +16,28 @@ import NotificationsTab from './NotificationsTab.js';
  * @return {JSX.Element} The Notifications settings page
  */
 export default function NotificationsApp() {
-	const [notice, setNotice] = useState(null);
+	const [ notice, setNotice ] = useState( null );
 
 	return (
 		<div className="wrap">
 			<h1>
-				{__('Notifications', 'fair-payments-connector-experimental')}
+				{ __(
+					'Notifications',
+					'fair-payments-connector-experimental'
+				) }
 			</h1>
 
-			{notice && (
+			{ notice && (
 				<Notice
-					status={notice.status}
-					isDismissible={true}
-					onRemove={() => setNotice(null)}
+					status={ notice.status }
+					isDismissible={ true }
+					onRemove={ () => setNotice( null ) }
 				>
-					{notice.message}
+					{ notice.message }
 				</Notice>
-			)}
+			) }
 
-			<NotificationsTab onNotice={setNotice} />
+			<NotificationsTab onNotice={ setNotice } />
 		</div>
 	);
 }

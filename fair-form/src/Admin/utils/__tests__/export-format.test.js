@@ -9,10 +9,10 @@ import { buildBulkExportText } from '../export-format.js';
 const photoColumn = {
 	id: 'question_photo',
 	label: 'Photo',
-	getAnswer: ({ item }) =>
-		item.answers.find((a) => a.question_key === 'photo'),
-	getValue: ({ item }) => {
-		const answer = item.answers.find((a) => a.question_key === 'photo');
+	getAnswer: ( { item } ) =>
+		item.answers.find( ( a ) => a.question_key === 'photo' ),
+	getValue: ( { item } ) => {
+		const answer = item.answers.find( ( a ) => a.question_key === 'photo' );
 		return answer?.file_url || answer?.answer_value || '';
 	},
 };
@@ -20,10 +20,10 @@ const photoColumn = {
 const textColumn = {
 	id: 'question_text',
 	label: 'Comment',
-	getAnswer: ({ item }) =>
-		item.answers.find((a) => a.question_key === 'text'),
-	getValue: ({ item }) => {
-		const answer = item.answers.find((a) => a.question_key === 'text');
+	getAnswer: ( { item } ) =>
+		item.answers.find( ( a ) => a.question_key === 'text' ),
+	getValue: ( { item } ) => {
+		const answer = item.answers.find( ( a ) => a.question_key === 'text' );
 		return answer?.answer_value || '';
 	},
 };
@@ -66,65 +66,67 @@ const FILE_RESPONSE = {
 	],
 };
 
-describe('buildBulkExportText — markdown', () => {
-	it('embeds an image file answer as a Markdown image, not a bare ID', () => {
-		const result = buildBulkExportText({
-			responses: [IMAGE_RESPONSE],
-			columns: [photoColumn, textColumn],
+describe( 'buildBulkExportText — markdown', () => {
+	it( 'embeds an image file answer as a Markdown image, not a bare ID', () => {
+		const result = buildBulkExportText( {
+			responses: [ IMAGE_RESPONSE ],
+			columns: [ photoColumn, textColumn ],
 			format: 'markdown',
-		});
+		} );
 
-		expect(result).toContain(
+		expect( result ).toContain(
 			'![Photo](https://example.com/wp-content/uploads/photo.jpg)'
 		);
-		expect(result).not.toContain('**Photo:** 42');
-	});
+		expect( result ).not.toContain( '**Photo:** 42' );
+	} );
 
-	it('renders a non-image file answer as a Markdown link, not a bare ID', () => {
-		const result = buildBulkExportText({
-			responses: [FILE_RESPONSE],
-			columns: [photoColumn],
+	it( 'renders a non-image file answer as a Markdown link, not a bare ID', () => {
+		const result = buildBulkExportText( {
+			responses: [ FILE_RESPONSE ],
+			columns: [ photoColumn ],
 			format: 'markdown',
-		});
+		} );
 
-		expect(result).toContain(
+		expect( result ).toContain(
 			'[Photo](https://example.com/wp-content/uploads/doc.pdf)'
 		);
-		expect(result).not.toContain('**Photo:** 43');
-	});
+		expect( result ).not.toContain( '**Photo:** 43' );
+	} );
 
-	it('leaves a normal text answer unaffected', () => {
-		const result = buildBulkExportText({
-			responses: [IMAGE_RESPONSE],
-			columns: [textColumn],
+	it( 'leaves a normal text answer unaffected', () => {
+		const result = buildBulkExportText( {
+			responses: [ IMAGE_RESPONSE ],
+			columns: [ textColumn ],
 			format: 'markdown',
-		});
+		} );
 
-		expect(result).toContain('**Comment:** Looking forward to it');
-	});
-});
+		expect( result ).toContain( '**Comment:** Looking forward to it' );
+	} );
+} );
 
-describe('buildBulkExportText — csv / oneline', () => {
-	it('uses the file URL instead of the bare attachment ID in CSV', () => {
-		const result = buildBulkExportText({
-			responses: [IMAGE_RESPONSE],
-			columns: [photoColumn],
+describe( 'buildBulkExportText — csv / oneline', () => {
+	it( 'uses the file URL instead of the bare attachment ID in CSV', () => {
+		const result = buildBulkExportText( {
+			responses: [ IMAGE_RESPONSE ],
+			columns: [ photoColumn ],
 			format: 'csv',
-		});
+		} );
 
-		expect(result).toContain(
+		expect( result ).toContain(
 			'https://example.com/wp-content/uploads/photo.jpg'
 		);
-		expect(result).not.toContain('\n42');
-	});
+		expect( result ).not.toContain( '\n42' );
+	} );
 
-	it('uses the file URL instead of the bare attachment ID in one-line-per-person', () => {
-		const result = buildBulkExportText({
-			responses: [IMAGE_RESPONSE],
-			columns: [photoColumn],
+	it( 'uses the file URL instead of the bare attachment ID in one-line-per-person', () => {
+		const result = buildBulkExportText( {
+			responses: [ IMAGE_RESPONSE ],
+			columns: [ photoColumn ],
 			format: 'oneline',
-		});
+		} );
 
-		expect(result).toBe('https://example.com/wp-content/uploads/photo.jpg');
-	});
-});
+		expect( result ).toBe(
+			'https://example.com/wp-content/uploads/photo.jpg'
+		);
+	} );
+} );

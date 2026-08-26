@@ -30,8 +30,12 @@ const VIEWPORT = { width: 1200, height: 900 };
 const EN_CONTENT = {
 	title: 'Conference Schedule Demo',
 	blockSearchTerm: 'timetable',
-	columns: ['Main Stage', 'Workshop Room', 'Networking Lounge'],
-	sessions: ['Opening Keynote', 'Hands-on Workshop', 'Coffee & Connections'],
+	columns: [ 'Main Stage', 'Workshop Room', 'Networking Lounge' ],
+	sessions: [
+		'Opening Keynote',
+		'Hands-on Workshop',
+		'Coffee & Connections',
+	],
 };
 
 const ES_CONTENT = {
@@ -40,7 +44,11 @@ const ES_CONTENT = {
 	// languages/fair-timetable-es_ES.po), so the inserter search needs the
 	// translated term too.
 	blockSearchTerm: 'horario',
-	columns: ['Escenario principal', 'Sala de talleres', 'Zona de networking'],
+	columns: [
+		'Escenario principal',
+		'Sala de talleres',
+		'Zona de networking',
+	],
 	sessions: [
 		'Conferencia de apertura',
 		'Taller práctico',
@@ -60,67 +68,67 @@ const ES_CONTENT = {
  *                                  www-data uid doesn't match the WordPress
  *                                  image's file ownership.
  */
-function wpCli(args, { asRoot = false } = {}) {
-	const dockerArgs = ['compose', '-f', '../compose.yml', 'exec', '-T'];
-	if (asRoot) {
-		dockerArgs.push('-u', 'root');
+function wpCli( args, { asRoot = false } = {} ) {
+	const dockerArgs = [ 'compose', '-f', '../compose.yml', 'exec', '-T' ];
+	if ( asRoot ) {
+		dockerArgs.push( '-u', 'root' );
 	}
-	dockerArgs.push('wpcli', 'wp', ...args);
-	if (asRoot) {
-		dockerArgs.push('--allow-root');
+	dockerArgs.push( 'wpcli', 'wp', ...args );
+	if ( asRoot ) {
+		dockerArgs.push( '--allow-root' );
 	}
-	execFileSync('docker', dockerArgs, { stdio: 'inherit' });
+	execFileSync( 'docker', dockerArgs, { stdio: 'inherit' } );
 }
 
 /**
  * Run @wordpress/api-fetch from inside an admin page so the request is
  * authenticated and nonce'd automatically.
  */
-async function apiFetch(page, options) {
-	const result = await page.evaluate(async (opts) => {
+async function apiFetch( page, options ) {
+	const result = await page.evaluate( async ( opts ) => {
 		try {
 			// eslint-disable-next-line no-undef
-			const res = await wp.apiFetch(opts);
+			const res = await wp.apiFetch( opts );
 			return { ok: true, data: res };
-		} catch (err) {
+		} catch ( err ) {
 			return {
 				ok: false,
 				error: {
 					message: err && err.message,
 					code: err && err.code,
 					data: err && err.data,
-					raw: JSON.stringify(err),
+					raw: JSON.stringify( err ),
 				},
 			};
 		}
-	}, options);
-	if (!result.ok) {
+	}, options );
+	if ( ! result.ok ) {
 		throw new Error(
-			`apiFetch ${options.method || 'GET'} ${
+			`apiFetch ${ options.method || 'GET' } ${
 				options.path
-			} failed: ${JSON.stringify(result.error)}`
+			} failed: ${ JSON.stringify( result.error ) }`
 		);
 	}
 	return result.data;
 }
 
-async function login(page) {
-	await page.goto('/wp-admin');
-	if (page.url().includes('wp-login.php')) {
-		await page.fill('#user_login', WP_ADMIN_USER);
-		await page.fill('#user_pass', WP_ADMIN_PASS);
-		await page.click('#wp-submit');
+async function login( page ) {
+	await page.goto( '/wp-admin' );
+	if ( page.url().includes( 'wp-login.php' ) ) {
+		await page.fill( '#user_login', WP_ADMIN_USER );
+		await page.fill( '#user_pass', WP_ADMIN_PASS );
+		await page.click( '#wp-submit' );
 	}
-	await page.waitForSelector('#wpadminbar');
+	await page.waitForSelector( '#wpadminbar' );
 }
 
-function logout(page) {
+function logout( page ) {
 	return page.context().clearCookies();
 }
 
 /** Hide noisy admin chrome (core-update banner, WP-CLI debug notices). */
-async function hideAdminChrome(page) {
-	await page.addStyleTag({
+async function hideAdminChrome( page ) {
+	await page.addStyleTag( {
 		content: `
 			.update-nag,
 			.notice,
@@ -129,21 +137,21 @@ async function hideAdminChrome(page) {
 			div.error,
 			div.updated { display: none !important; }
 		`,
-	});
+	} );
 }
 
 /** Delete any leftover demo post from a prior run so re-runs stay deterministic. */
-async function deleteExistingDemoPost(page, title) {
-	const existing = await apiFetch(page, {
-		path: `/wp/v2/posts?search=${encodeURIComponent(
+async function deleteExistingDemoPost( page, title ) {
+	const existing = await apiFetch( page, {
+		path: `/wp/v2/posts?search=${ encodeURIComponent(
 			title
-		)}&status=any&per_page=20`,
-	});
-	for (const p of existing) {
-		await apiFetch(page, {
-			path: `/wp/v2/posts/${p.id}?force=true`,
+		) }&status=any&per_page=20`,
+	} );
+	for ( const p of existing ) {
+		await apiFetch( page, {
+			path: `/wp/v2/posts/${ p.id }?force=true`,
 			method: 'DELETE',
-		}).catch(() => {});
+		} ).catch( () => {} );
 	}
 }
 
@@ -154,36 +162,36 @@ async function deleteExistingDemoPost(page, title) {
  * @param {import('@playwright/test').Page} page
  * @param {{title: string, columns: string[], sessions: string[]}} content
  */
-async function buildDemoPost(page, content) {
-	await deleteExistingDemoPost(page, content.title);
+async function buildDemoPost( page, content ) {
+	await deleteExistingDemoPost( page, content.title );
 
-	await page.goto('/wp-admin/post-new.php');
-	await page.waitForFunction(() => window.wp && window.wp.apiFetch);
+	await page.goto( '/wp-admin/post-new.php' );
+	await page.waitForFunction( () => window.wp && window.wp.apiFetch );
 
-	const editorFrame = page.frameLocator('[name="editor-canvas"]');
-	await editorFrame.locator('.block-editor-iframe__body').waitFor();
-	await page.waitForTimeout(2000);
+	const editorFrame = page.frameLocator( '[name="editor-canvas"]' );
+	await editorFrame.locator( '.block-editor-iframe__body' ).waitFor();
+	await page.waitForTimeout( 2000 );
 
 	// Dismiss the "Welcome to the block editor" guide if it shows up. It
 	// appears on a fresh admin session (e.g. local runs) but is already
 	// dismissed via user meta on CI. Escape closes it regardless of locale.
-	const modalOverlay = page.locator('.components-modal__screen-overlay');
+	const modalOverlay = page.locator( '.components-modal__screen-overlay' );
 	if (
 		await modalOverlay
 			.first()
 			.isVisible()
-			.catch(() => false)
+			.catch( () => false )
 	) {
-		await page.keyboard.press('Escape');
-		await modalOverlay.first().waitFor({ state: 'detached' });
+		await page.keyboard.press( 'Escape' );
+		await modalOverlay.first().waitFor( { state: 'detached' } );
 	}
 
 	// Title. Uses the stable class name rather than the accessible name,
 	// which is locale-dependent (e.g. "Escribe un título" under es_ES).
 	await editorFrame
-		.locator('.editor-post-title__input, .wp-block-post-title')
+		.locator( '.editor-post-title__input, .wp-block-post-title' )
 		.first()
-		.fill(content.title);
+		.fill( content.title );
 
 	// Add Timetable Container block via the main inserter. Selectors use
 	// stable class names rather than accessible names/text, which are
@@ -191,7 +199,7 @@ async function buildDemoPost(page, content) {
 	// The block-types-list item carries a stable per-block class
 	// (`editor-block-list-item-{name}`) derived from the block name, so it's
 	// safe to target directly regardless of locale.
-	await page.locator('.editor-document-tools__inserter-toggle').click();
+	await page.locator( '.editor-document-tools__inserter-toggle' ).click();
 	await page.fill(
 		'.block-editor-inserter__search input',
 		content.blockSearchTerm
@@ -203,44 +211,44 @@ async function buildDemoPost(page, content) {
 	await timetableInserterItem.click();
 
 	// Wait for timetable container to be inserted in the iframe.
-	await editorFrame.locator('.wp-block-fair-timetable-timetable').waitFor();
+	await editorFrame.locator( '.wp-block-fair-timetable-timetable' ).waitFor();
 
 	// Close the block inserter panel before editing further. Escape doesn't
 	// reliably reach it once focus has moved into the block canvas iframe
 	// after insertion, so toggle the same button that opened it instead.
-	const inserterSearch = page.locator('.block-editor-inserter__search');
-	if (await inserterSearch.isVisible().catch(() => false)) {
-		await page.locator('.editor-document-tools__inserter-toggle').click();
+	const inserterSearch = page.locator( '.block-editor-inserter__search' );
+	if ( await inserterSearch.isVisible().catch( () => false ) ) {
+		await page.locator( '.editor-document-tools__inserter-toggle' ).click();
 	}
-	await page.waitForTimeout(500);
+	await page.waitForTimeout( 500 );
 
 	// Fill each column's title.
-	const columnHeadings = editorFrame.locator('.time-column-container h2');
-	for (let i = 0; i < content.columns.length; i++) {
-		await columnHeadings.nth(i).fill(content.columns[i]);
+	const columnHeadings = editorFrame.locator( '.time-column-container h2' );
+	for ( let i = 0; i < content.columns.length; i++ ) {
+		await columnHeadings.nth( i ).fill( content.columns[ i ] );
 	}
 
 	// Fill each session's title (one time slot per column, in column order).
-	const sessionHeadings = editorFrame.locator('.time-slot-container h3');
-	for (let i = 0; i < content.sessions.length; i++) {
-		await sessionHeadings.nth(i).fill(content.sessions[i]);
+	const sessionHeadings = editorFrame.locator( '.time-slot-container h3' );
+	for ( let i = 0; i < content.sessions.length; i++ ) {
+		await sessionHeadings.nth( i ).fill( content.sessions[ i ] );
 	}
 
 	// Edit the first time-slot to start at 10:15, 1.5h long. Click the
 	// time-annotation (not the heading inside it) to select the Time Slot
 	// block itself rather than its nested Heading block.
 	const firstTimeSlot = editorFrame
-		.locator('.wp-block-fair-timetable-time-slot')
+		.locator( '.wp-block-fair-timetable-time-slot' )
 		.first();
-	await firstTimeSlot.locator('.time-annotation').click({ force: true });
-	await page.waitForTimeout(1000);
+	await firstTimeSlot.locator( '.time-annotation' ).click( { force: true } );
+	await page.waitForTimeout( 1000 );
 
 	const startTimeInput = page.locator(
 		'input.components-text-control__input[placeholder="09:00"]'
 	);
-	await startTimeInput.fill('10:15');
-	await page.selectOption('select.components-select-control__input', '1.5');
-	await page.waitForTimeout(500); // Allow time for re-render.
+	await startTimeInput.fill( '10:15' );
+	await page.selectOption( 'select.components-select-control__input', '1.5' );
+	await page.waitForTimeout( 500 ); // Allow time for re-render.
 }
 
 /**
@@ -250,75 +258,75 @@ async function buildDemoPost(page, content) {
  * @param {import('@playwright/test').Page} page
  * @param {string} suffix WordPress.org localized-asset suffix, e.g. '' or '-es_ES'.
  */
-async function captureScreenshots(page, suffix) {
+async function captureScreenshots( page, suffix ) {
 	// ---------- 1. Editor screenshot ----------
 
-	await hideAdminChrome(page);
-	await page.screenshot({
-		path: `assets/screenshot-1${suffix}.png`,
+	await hideAdminChrome( page );
+	await page.screenshot( {
+		path: `assets/screenshot-1${ suffix }.png`,
 		fullPage: false,
-	});
+	} );
 
 	// Publish. Selectors use stable class names rather than accessible
 	// names/text (e.g. "Publish" → "Publicar", "View Post" → "Ver la
 	// entrada" under es_ES).
-	await page.locator('.editor-post-publish-button__button').click();
-	await page.waitForTimeout(1000);
+	await page.locator( '.editor-post-publish-button__button' ).click();
+	await page.waitForTimeout( 1000 );
 	const finalPublishButton = page.locator(
 		'.editor-post-publish-panel__header-publish-button .editor-post-publish-button__button'
 	);
-	if (await finalPublishButton.isVisible()) {
+	if ( await finalPublishButton.isVisible() ) {
 		await finalPublishButton.click();
 	}
 
 	const viewLink = page.locator(
 		'.post-publish-panel__postpublish-buttons a.is-primary'
 	);
-	await expect(viewLink).toBeVisible({ timeout: 15_000 });
-	const postUrl = await viewLink.getAttribute('href');
+	await expect( viewLink ).toBeVisible( { timeout: 15_000 } );
+	const postUrl = await viewLink.getAttribute( 'href' );
 
 	// ---------- 2. Frontend screenshot (logged out) ----------
 
-	await logout(page);
-	await page.goto(postUrl);
-	await page.waitForLoadState('networkidle');
-	await page.waitForTimeout(800);
-	await page.screenshot({
-		path: `assets/screenshot-2${suffix}.png`,
+	await logout( page );
+	await page.goto( postUrl );
+	await page.waitForLoadState( 'networkidle' );
+	await page.waitForTimeout( 800 );
+	await page.screenshot( {
+		path: `assets/screenshot-2${ suffix }.png`,
 		fullPage: false,
-	});
+	} );
 }
 
-test.describe('WordPress.org screenshots for Fair Timetable', () => {
-	test('Generates bilingual (en + es_ES) editor + frontend screenshots from a demo timetable', async ({
+test.describe( 'WordPress.org screenshots for Fair Timetable', () => {
+	test( 'Generates bilingual (en + es_ES) editor + frontend screenshots from a demo timetable', async ( {
 		page,
-	}) => {
-		test.setTimeout(300_000);
+	} ) => {
+		test.setTimeout( 300_000 );
 
-		wpCli(['language', 'core', 'install', 'es_ES'], { asRoot: true });
-		wpCli([
+		wpCli( [ 'language', 'core', 'install', 'es_ES' ], { asRoot: true } );
+		wpCli( [
 			'option',
 			'update',
 			'fair_timetable_features',
-			JSON.stringify({ 'bundled-translations': true }),
+			JSON.stringify( { 'bundled-translations': true } ),
 			'--format=json',
-		]);
+		] );
 
 		try {
-			await page.setViewportSize(VIEWPORT);
+			await page.setViewportSize( VIEWPORT );
 
 			// ---------- English pass ----------
-			await login(page);
-			await buildDemoPost(page, EN_CONTENT);
-			await captureScreenshots(page, '');
+			await login( page );
+			await buildDemoPost( page, EN_CONTENT );
+			await captureScreenshots( page, '' );
 
 			// ---------- Spanish pass ----------
-			wpCli(['site', 'switch-language', 'es_ES']);
-			await login(page);
-			await buildDemoPost(page, ES_CONTENT);
-			await captureScreenshots(page, '-es_ES');
+			wpCli( [ 'site', 'switch-language', 'es_ES' ] );
+			await login( page );
+			await buildDemoPost( page, ES_CONTENT );
+			await captureScreenshots( page, '-es_ES' );
 		} finally {
-			wpCli(['site', 'switch-language', 'en_US']);
+			wpCli( [ 'site', 'switch-language', 'en_US' ] );
 		}
-	});
-});
+	} );
+} );

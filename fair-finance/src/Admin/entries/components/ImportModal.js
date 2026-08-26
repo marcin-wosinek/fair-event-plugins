@@ -18,64 +18,66 @@ import {
  */
 import * as XLSX from 'xlsx';
 
-const ImportModal = ({ onImport, onCancel }) => {
-	const [file, setFile] = useState(null);
-	const [parsedEntries, setParsedEntries] = useState([]);
-	const [isLoading, setIsLoading] = useState(false);
-	const [isParsing, setIsParsing] = useState(false);
-	const [error, setError] = useState(null);
-	const [result, setResult] = useState(null);
-	const fileInputRef = useRef(null);
+const ImportModal = ( { onImport, onCancel } ) => {
+	const [ file, setFile ] = useState( null );
+	const [ parsedEntries, setParsedEntries ] = useState( [] );
+	const [ isLoading, setIsLoading ] = useState( false );
+	const [ isParsing, setIsParsing ] = useState( false );
+	const [ error, setError ] = useState( null );
+	const [ result, setResult ] = useState( null );
+	const fileInputRef = useRef( null );
 
-	const handleFileChange = async (e) => {
-		const selectedFile = e.target.files[0];
-		if (!selectedFile) {
+	const handleFileChange = async ( e ) => {
+		const selectedFile = e.target.files[ 0 ];
+		if ( ! selectedFile ) {
 			return;
 		}
 
-		setFile(selectedFile);
-		setError(null);
-		setResult(null);
-		setParsedEntries([]);
-		setIsParsing(true);
+		setFile( selectedFile );
+		setError( null );
+		setResult( null );
+		setParsedEntries( [] );
+		setIsParsing( true );
 
 		try {
-			const entries = await parseExcelFile(selectedFile);
-			setParsedEntries(entries);
-		} catch (err) {
+			const entries = await parseExcelFile( selectedFile );
+			setParsedEntries( entries );
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to parse file.', 'fair-payments-connector')
+					__( 'Failed to parse file.', 'fair-payments-connector' )
 			);
 		} finally {
-			setIsParsing(false);
+			setIsParsing( false );
 		}
 	};
 
-	const parseExcelFile = (file) => {
-		return new Promise((resolve, reject) => {
+	const parseExcelFile = ( file ) => {
+		return new Promise( ( resolve, reject ) => {
 			const reader = new FileReader();
 
-			reader.onload = (e) => {
+			reader.onload = ( e ) => {
 				try {
-					const data = new Uint8Array(e.target.result);
-					const workbook = XLSX.read(data, { type: 'array' });
-					const sheetName = workbook.SheetNames[0];
-					const sheet = workbook.Sheets[sheetName];
-					const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+					const data = new Uint8Array( e.target.result );
+					const workbook = XLSX.read( data, { type: 'array' } );
+					const sheetName = workbook.SheetNames[ 0 ];
+					const sheet = workbook.Sheets[ sheetName ];
+					const rows = XLSX.utils.sheet_to_json( sheet, {
+						header: 1,
+					} );
 
 					// Find the header row (contains date column in Spanish or Catalan)
 					let headerRowIndex = -1;
-					for (let i = 0; i < rows.length; i++) {
+					for ( let i = 0; i < rows.length; i++ ) {
 						if (
-							rows[i] &&
-							rows[i].some(
-								(cell) =>
+							rows[ i ] &&
+							rows[ i ].some(
+								( cell ) =>
 									typeof cell === 'string' &&
-									(cell.toLowerCase().includes('fecha') ||
+									( cell.toLowerCase().includes( 'fecha' ) ||
 										cell
 											.toLowerCase()
-											.includes('data de l'))
+											.includes( 'data de l' ) )
 							)
 						) {
 							headerRowIndex = i;
@@ -83,7 +85,7 @@ const ImportModal = ({ onImport, onCancel }) => {
 						}
 					}
 
-					if (headerRowIndex === -1) {
+					if ( headerRowIndex === -1 ) {
 						reject(
 							new Error(
 								__(
@@ -97,44 +99,44 @@ const ImportModal = ({ onImport, onCancel }) => {
 
 					// Parse data rows
 					const entries = [];
-					for (let i = headerRowIndex + 1; i < rows.length; i++) {
-						const row = rows[i];
+					for ( let i = headerRowIndex + 1; i < rows.length; i++ ) {
+						const row = rows[ i ];
 						if (
-							!row ||
+							! row ||
 							row.length < 4 ||
-							typeof row[0] !== 'number'
+							typeof row[ 0 ] !== 'number'
 						) {
 							continue;
 						}
 
 						// Convert Excel date serial to JS date
-						const excelDate = row[0];
+						const excelDate = row[ 0 ];
 						const date = new Date(
-							(excelDate - 25569) * 86400 * 1000
+							( excelDate - 25569 ) * 86400 * 1000
 						);
-						const dateStr = date.toISOString().split('T')[0];
+						const dateStr = date.toISOString().split( 'T' )[ 0 ];
 
-						const description = row[2] || '';
-						const amount = parseFloat(row[3]) || 0;
-						const nroApunte = row[5] || i; // Use row index as fallback
+						const description = row[ 2 ] || '';
+						const amount = parseFloat( row[ 3 ] ) || 0;
+						const nroApunte = row[ 5 ] || i; // Use row index as fallback
 
 						// Determine entry type based on amount sign
 						const entryType = amount < 0 ? 'cost' : 'income';
-						const absAmount = Math.abs(amount);
+						const absAmount = Math.abs( amount );
 
 						// Create unique external reference
-						const externalReference = `import_${dateStr}_${nroApunte}_${amount}`;
+						const externalReference = `import_${ dateStr }_${ nroApunte }_${ amount }`;
 
-						entries.push({
+						entries.push( {
 							entry_date: dateStr,
 							description: description,
 							amount: absAmount,
 							entry_type: entryType,
 							external_reference: externalReference,
-						});
+						} );
 					}
 
-					if (entries.length === 0) {
+					if ( entries.length === 0 ) {
 						reject(
 							new Error(
 								__(
@@ -146,282 +148,302 @@ const ImportModal = ({ onImport, onCancel }) => {
 						return;
 					}
 
-					resolve(entries);
-				} catch (err) {
-					reject(err);
+					resolve( entries );
+				} catch ( err ) {
+					reject( err );
 				}
 			};
 
 			reader.onerror = () => {
 				reject(
 					new Error(
-						__('Failed to read file.', 'fair-payments-connector')
+						__( 'Failed to read file.', 'fair-payments-connector' )
 					)
 				);
 			};
 
-			reader.readAsArrayBuffer(file);
-		});
+			reader.readAsArrayBuffer( file );
+		} );
 	};
 
 	const handleImport = async () => {
-		if (parsedEntries.length === 0) {
+		if ( parsedEntries.length === 0 ) {
 			return;
 		}
 
-		setIsLoading(true);
-		setError(null);
-		setResult(null);
+		setIsLoading( true );
+		setError( null );
+		setResult( null );
 
 		try {
-			const response = await apiFetch({
+			const response = await apiFetch( {
 				path: '/fair-finance/v1/financial-entries/import',
 				method: 'POST',
 				data: {
 					entries: parsedEntries,
 					import_source: file?.name || null,
 				},
-			});
+			} );
 
-			setResult(response);
+			setResult( response );
 
-			if (response.imported > 0) {
+			if ( response.imported > 0 ) {
 				// Notify parent to refresh data
-				setTimeout(() => {
+				setTimeout( () => {
 					onImport();
-				}, 2000);
+				}, 2000 );
 			}
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
-					__('Failed to import entries.', 'fair-payments-connector')
+					__( 'Failed to import entries.', 'fair-payments-connector' )
 			);
 		} finally {
-			setIsLoading(false);
+			setIsLoading( false );
 		}
 	};
 
-	const formatAmount = (amount) => {
-		return new Intl.NumberFormat('en-US', {
+	const formatAmount = ( amount ) => {
+		return new Intl.NumberFormat( 'en-US', {
 			style: 'currency',
 			currency: 'EUR',
-		}).format(amount);
+		} ).format( amount );
 	};
 
-	const costEntries = parsedEntries.filter((e) => e.entry_type === 'cost');
-	const incomeEntries = parsedEntries.filter(
-		(e) => e.entry_type === 'income'
+	const costEntries = parsedEntries.filter(
+		( e ) => e.entry_type === 'cost'
 	);
-	const totalCosts = costEntries.reduce((sum, e) => sum + e.amount, 0);
-	const totalIncome = incomeEntries.reduce((sum, e) => sum + e.amount, 0);
+	const incomeEntries = parsedEntries.filter(
+		( e ) => e.entry_type === 'income'
+	);
+	const totalCosts = costEntries.reduce( ( sum, e ) => sum + e.amount, 0 );
+	const totalIncome = incomeEntries.reduce( ( sum, e ) => sum + e.amount, 0 );
 
 	return (
 		<Modal
-			title={__('Import Financial Entries', 'fair-payments-connector')}
-			onRequestClose={onCancel}
-			style={{ maxWidth: '640px', width: '100%' }}
+			title={ __(
+				'Import Financial Entries',
+				'fair-payments-connector'
+			) }
+			onRequestClose={ onCancel }
+			style={ { maxWidth: '640px', width: '100%' } }
 		>
-			<VStack spacing={4}>
-				{error && (
-					<Notice status="error" isDismissible={false}>
-						{error}
+			<VStack spacing={ 4 }>
+				{ error && (
+					<Notice status="error" isDismissible={ false }>
+						{ error }
 					</Notice>
-				)}
+				) }
 
-				{result && (
+				{ result && (
 					<Notice
-						status={result.imported > 0 ? 'success' : 'warning'}
-						isDismissible={false}
+						status={ result.imported > 0 ? 'success' : 'warning' }
+						isDismissible={ false }
 					>
-						{result.message}
+						{ result.message }
 					</Notice>
-				)}
+				) }
 
 				<div>
 					<p>
-						{__(
+						{ __(
 							'Select an Excel file (.xlsx) to import financial entries. The file should have columns for date, description, and amount.',
 							'fair-payments-connector'
-						)}
+						) }
 					</p>
 					<p>
 						<strong>
-							{__(
+							{ __(
 								'Note: Duplicate entries will be automatically skipped.',
 								'fair-payments-connector'
-							)}
+							) }
 						</strong>
 					</p>
 				</div>
 
 				<div>
 					<input
-						ref={fileInputRef}
+						ref={ fileInputRef }
 						type="file"
 						accept=".xlsx,.xls"
-						onChange={handleFileChange}
-						style={{ marginBottom: '16px' }}
+						onChange={ handleFileChange }
+						style={ { marginBottom: '16px' } }
 					/>
 				</div>
 
-				{isParsing && (
+				{ isParsing && (
 					<HStack justify="center">
 						<Spinner />
 						<span>
-							{__('Parsing file...', 'fair-payments-connector')}
+							{ __(
+								'Parsing file...',
+								'fair-payments-connector'
+							) }
 						</span>
 					</HStack>
-				)}
+				) }
 
-				{parsedEntries.length > 0 && !result && (
+				{ parsedEntries.length > 0 && ! result && (
 					<div
-						style={{
+						style={ {
 							backgroundColor: '#f0f0f1',
 							padding: '16px',
 							borderRadius: '4px',
-						}}
+						} }
 					>
-						<h4 style={{ marginTop: 0 }}>
-							{__('Preview', 'fair-payments-connector')}
+						<h4 style={ { marginTop: 0 } }>
+							{ __( 'Preview', 'fair-payments-connector' ) }
 						</h4>
 						<p>
 							<strong>
-								{__(
+								{ __(
 									'Total entries:',
 									'fair-payments-connector'
-								)}
-							</strong>{' '}
-							{parsedEntries.length}
+								) }
+							</strong>{ ' ' }
+							{ parsedEntries.length }
 						</p>
 						<p>
 							<strong>
-								{__('Costs:', 'fair-payments-connector')}
-							</strong>{' '}
-							{costEntries.length} ({formatAmount(totalCosts)})
+								{ __( 'Costs:', 'fair-payments-connector' ) }
+							</strong>{ ' ' }
+							{ costEntries.length } (
+							{ formatAmount( totalCosts ) })
 						</p>
 						<p>
 							<strong>
-								{__('Income:', 'fair-payments-connector')}
-							</strong>{' '}
-							{incomeEntries.length} ({formatAmount(totalIncome)})
+								{ __( 'Income:', 'fair-payments-connector' ) }
+							</strong>{ ' ' }
+							{ incomeEntries.length } (
+							{ formatAmount( totalIncome ) })
 						</p>
 						<p>
 							<strong>
-								{__('Balance:', 'fair-payments-connector')}
-							</strong>{' '}
+								{ __( 'Balance:', 'fair-payments-connector' ) }
+							</strong>{ ' ' }
 							<span
-								style={{
+								style={ {
 									color:
 										totalIncome - totalCosts >= 0
 											? '#007017'
 											: '#d63638',
-								}}
+								} }
 							>
-								{formatAmount(totalIncome - totalCosts)}
+								{ formatAmount( totalIncome - totalCosts ) }
 							</span>
 						</p>
 
-						{parsedEntries.length <= 10 && (
-							<div style={{ marginTop: '16px' }}>
+						{ parsedEntries.length <= 10 && (
+							<div style={ { marginTop: '16px' } }>
 								<strong>
-									{__(
+									{ __(
 										'Entries to import:',
 										'fair-payments-connector'
-									)}
+									) }
 								</strong>
 								<table
-									style={{
+									style={ {
 										width: '100%',
 										marginTop: '8px',
 										fontSize: '12px',
-									}}
+									} }
 								>
 									<thead>
 										<tr>
-											<th style={{ textAlign: 'left' }}>
-												{__(
+											<th style={ { textAlign: 'left' } }>
+												{ __(
 													'Date',
 													'fair-payments-connector'
-												)}
+												) }
 											</th>
-											<th style={{ textAlign: 'left' }}>
-												{__(
+											<th style={ { textAlign: 'left' } }>
+												{ __(
 													'Type',
 													'fair-payments-connector'
-												)}
+												) }
 											</th>
-											<th style={{ textAlign: 'right' }}>
-												{__(
+											<th
+												style={ { textAlign: 'right' } }
+											>
+												{ __(
 													'Amount',
 													'fair-payments-connector'
-												)}
+												) }
 											</th>
-											<th style={{ textAlign: 'left' }}>
-												{__(
+											<th style={ { textAlign: 'left' } }>
+												{ __(
 													'Description',
 													'fair-payments-connector'
-												)}
+												) }
 											</th>
 										</tr>
 									</thead>
 									<tbody>
-										{parsedEntries.map((entry, index) => (
-											<tr key={index}>
-												<td>{entry.entry_date}</td>
-												<td
-													style={{
-														color:
-															entry.entry_type ===
-															'cost'
-																? '#d63638'
-																: '#007017',
-													}}
-												>
-													{entry.entry_type === 'cost'
-														? __(
-																'Cost',
-																'fair-payments-connector'
-														  )
-														: __(
-																'Income',
-																'fair-payments-connector'
-														  )}
-												</td>
-												<td
-													style={{
-														textAlign: 'right',
-													}}
-												>
-													{formatAmount(entry.amount)}
-												</td>
-												<td
-													style={{
-														maxWidth: '150px',
-														overflow: 'hidden',
-														textOverflow:
-															'ellipsis',
-														whiteSpace: 'nowrap',
-													}}
-												>
-													{entry.description}
-												</td>
-											</tr>
-										))}
+										{ parsedEntries.map(
+											( entry, index ) => (
+												<tr key={ index }>
+													<td>
+														{ entry.entry_date }
+													</td>
+													<td
+														style={ {
+															color:
+																entry.entry_type ===
+																'cost'
+																	? '#d63638'
+																	: '#007017',
+														} }
+													>
+														{ entry.entry_type ===
+														'cost'
+															? __(
+																	'Cost',
+																	'fair-payments-connector'
+															  )
+															: __(
+																	'Income',
+																	'fair-payments-connector'
+															  ) }
+													</td>
+													<td
+														style={ {
+															textAlign: 'right',
+														} }
+													>
+														{ formatAmount(
+															entry.amount
+														) }
+													</td>
+													<td
+														style={ {
+															maxWidth: '150px',
+															overflow: 'hidden',
+															textOverflow:
+																'ellipsis',
+															whiteSpace:
+																'nowrap',
+														} }
+													>
+														{ entry.description }
+													</td>
+												</tr>
+											)
+										) }
 									</tbody>
 								</table>
 							</div>
-						)}
+						) }
 					</div>
-				)}
+				) }
 
-				<HStack justify="flex-end" spacing={2}>
-					<Button variant="tertiary" onClick={onCancel}>
-						{__('Cancel', 'fair-payments-connector')}
+				<HStack justify="flex-end" spacing={ 2 }>
+					<Button variant="tertiary" onClick={ onCancel }>
+						{ __( 'Cancel', 'fair-payments-connector' ) }
 					</Button>
 					<Button
 						variant="primary"
-						onClick={handleImport}
-						isBusy={isLoading}
+						onClick={ handleImport }
+						isBusy={ isLoading }
 						disabled={
 							isLoading ||
 							isParsing ||
@@ -429,7 +451,7 @@ const ImportModal = ({ onImport, onCancel }) => {
 							result
 						}
 					>
-						{__('Import', 'fair-payments-connector')}
+						{ __( 'Import', 'fair-payments-connector' ) }
 					</Button>
 				</HStack>
 			</VStack>

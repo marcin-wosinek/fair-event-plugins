@@ -9,8 +9,8 @@ import './view.css';
 import './editor.css';
 
 // Register the block
-wp.blocks.registerBlockType('fair-timetable/time-column-body', {
+wp.blocks.registerBlockType( 'fair-timetable/time-column-body', {
 	edit: EditComponent,
 	save: SaveComponent,
 	deprecated: deprecations,
-});
+} );

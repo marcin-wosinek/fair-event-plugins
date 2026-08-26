@@ -14,26 +14,26 @@ import { store, getContext } from '@wordpress/interactivity';
  * @param {string} text Text to copy.
  * @return {boolean} Whether the copy succeeded.
  */
-function fallbackCopy(text) {
-	const textarea = document.createElement('textarea');
+function fallbackCopy( text ) {
+	const textarea = document.createElement( 'textarea' );
 	textarea.value = text;
 	textarea.style.position = 'fixed';
 	textarea.style.opacity = '0';
-	document.body.appendChild(textarea);
+	document.body.appendChild( textarea );
 	textarea.focus();
 	textarea.select();
 
 	let success = false;
 	try {
-		success = document.execCommand('copy');
+		success = document.execCommand( 'copy' );
 	} finally {
-		document.body.removeChild(textarea);
+		document.body.removeChild( textarea );
 	}
 
 	return success;
 }
 
-store('fair-events/copy-summary', {
+store( 'fair-events/copy-summary', {
 	state: {
 		get label() {
 			const context = getContext();
@@ -45,31 +45,31 @@ store('fair-events/copy-summary', {
 			const context = getContext();
 			const summary = context.summary;
 
-			if (!summary) {
+			if ( ! summary ) {
 				return;
 			}
 
 			let success = false;
 
-			if (navigator.clipboard) {
+			if ( navigator.clipboard ) {
 				try {
-					yield navigator.clipboard.writeText(summary);
+					yield navigator.clipboard.writeText( summary );
 					success = true;
-				} catch (e) {
-					success = fallbackCopy(summary);
+				} catch ( e ) {
+					success = fallbackCopy( summary );
 				}
 			} else {
-				success = fallbackCopy(summary);
+				success = fallbackCopy( summary );
 			}
 
-			if (!success) {
+			if ( ! success ) {
 				return;
 			}
 
 			context.copied = true;
-			setTimeout(() => {
+			setTimeout( () => {
 				context.copied = false;
-			}, 2000);
+			}, 2000 );
 		},
 	},
-});
+} );

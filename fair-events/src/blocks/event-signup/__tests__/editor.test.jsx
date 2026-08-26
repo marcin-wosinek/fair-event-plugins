@@ -20,199 +20,204 @@ import { render, screen, fireEvent } from '@testing-library/react';
 // that also emits the questions slot render.php puts in preview markup, so
 // the portal logic has somewhere to land. Captures its props so tests can
 // assert on the attributes sent to the REST renderer.
-const mockServerSideRender = jest.fn(() => (
+const mockServerSideRender = jest.fn( () => (
 	<div data-testid="ssr">
 		<div className="fair-events-event-signup-questions-slot" />
 	</div>
-));
+) );
 jest.mock(
 	'@wordpress/server-side-render',
-	() => (props) => mockServerSideRender(props),
+	() => ( props ) => mockServerSideRender( props ),
 	{ virtual: true }
 );
 
 const mockUseSelect = jest.fn();
-jest.mock('@wordpress/data', () => {
+jest.mock( '@wordpress/data', () => {
 	const stub = () => stub;
 	return new Proxy(
-		{ useSelect: (...args) => mockUseSelect(...args) },
+		{ useSelect: ( ...args ) => mockUseSelect( ...args ) },
 		{
-			get(target, prop) {
-				if (prop in target) return target[prop];
+			get( target, prop ) {
+				if ( prop in target ) return target[ prop ];
 				return stub;
 			},
 		}
 	);
-});
+} );
 
 // useBlockProps/useInnerBlocksProps need the editor's block context, which
 // jsdom doesn't provide; stub them to plain markers so we can assert on the
 // questions region without a full editor.
-const mockUseInnerBlocksProps = jest.fn(() => ({
+const mockUseInnerBlocksProps = jest.fn( () => ( {
 	'data-testid': 'inner-blocks',
-}));
-jest.mock('@wordpress/block-editor', () => ({
-	useBlockProps: () => ({}),
-	useInnerBlocksProps: (...args) => mockUseInnerBlocksProps(...args),
-	InspectorControls: ({ children }) => children,
-	InnerBlocks: Object.assign(() => null, {
+} ) );
+jest.mock( '@wordpress/block-editor', () => ( {
+	useBlockProps: () => ( {} ),
+	useInnerBlocksProps: ( ...args ) => mockUseInnerBlocksProps( ...args ),
+	InspectorControls: ( { children } ) => children,
+	InnerBlocks: Object.assign( () => null, {
 		Content: () => null,
 		ButtonBlockAppender: () => null,
-	}),
-}));
+	} ),
+} ) );
 
-jest.mock('@wordpress/components', () => ({
-	PanelBody: ({ children }) => children,
+jest.mock( '@wordpress/components', () => ( {
+	PanelBody: ( { children } ) => children,
 	TextControl: () => null,
-	ToggleControl: ({ label, checked, onChange }) => (
+	ToggleControl: ( { label, checked, onChange } ) => (
 		<label>
 			<input
 				type="checkbox"
-				checked={checked}
-				onChange={(e) => onChange(e.target.checked)}
+				checked={ checked }
+				onChange={ ( e ) => onChange( e.target.checked ) }
 			/>
-			{label}
+			{ label }
 		</label>
 	),
-	ExternalLink: ({ href, children }) => <a href={href}>{children}</a>,
-}));
+	ExternalLink: ( { href, children } ) => <a href={ href }>{ children }</a>,
+} ) );
 
 // Capture the block settings passed to registerBlockType so the edit
 // function can be rendered directly, without a live block registry.
 let capturedSettings;
-jest.mock('@wordpress/blocks', () => ({
-	registerBlockType: (name, settings) => {
+jest.mock( '@wordpress/blocks', () => ( {
+	registerBlockType: ( name, settings ) => {
 		capturedSettings = settings;
 	},
-}));
+} ) );
 
-describe('Event Signup EditComponent', () => {
+describe( 'Event Signup EditComponent', () => {
 	let Edit;
 
-	beforeAll(() => {
-		require('../editor.js');
+	beforeAll( () => {
+		require( '../editor.js' );
 		Edit = capturedSettings.edit;
-	});
+	} );
 
 	const renderEdit = (
 		isFairFormActive,
 		attributes = {},
 		setAttributes = () => {}
 	) => {
-		mockUseSelect.mockReturnValue(isFairFormActive);
+		mockUseSelect.mockReturnValue( isFairFormActive );
 		return render(
 			<Edit
-				attributes={{
+				attributes={ {
 					submitButtonText: 'Get Tickets',
 					showTicketPrice: true,
 					showOptionPrices: true,
 					...attributes,
-				}}
-				setAttributes={setAttributes}
+				} }
+				setAttributes={ setAttributes }
 			/>
 		);
 	};
 
-	afterEach(() => {
+	afterEach( () => {
 		delete window.fairEventsSignupBlock;
-	});
+	} );
 
-	it('always shows the form content region, fair-form active or not', () => {
-		const { unmount } = renderEdit(true);
+	it( 'always shows the form content region, fair-form active or not', () => {
+		const { unmount } = renderEdit( true );
 
-		expect(screen.getByTestId('ssr')).toBeInTheDocument();
-		expect(screen.getByTestId('inner-blocks')).toBeInTheDocument();
-		expect(screen.getByText('Form content')).toBeInTheDocument();
+		expect( screen.getByTestId( 'ssr' ) ).toBeInTheDocument();
+		expect( screen.getByTestId( 'inner-blocks' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Form content' ) ).toBeInTheDocument();
 		unmount();
 
-		renderEdit(false);
+		renderEdit( false );
 
-		expect(screen.getByTestId('ssr')).toBeInTheDocument();
-		expect(screen.getByTestId('inner-blocks')).toBeInTheDocument();
-		expect(screen.getByText('Form content')).toBeInTheDocument();
-	});
+		expect( screen.getByTestId( 'ssr' ) ).toBeInTheDocument();
+		expect( screen.getByTestId( 'inner-blocks' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Form content' ) ).toBeInTheDocument();
+	} );
 
-	it('portals the form content area into the SSR-rendered questions slot', () => {
-		renderEdit(false);
+	it( 'portals the form content area into the SSR-rendered questions slot', () => {
+		renderEdit( false );
 
 		const slot = document.querySelector(
 			'.fair-events-event-signup-questions-slot'
 		);
-		expect(slot).toContainElement(screen.getByTestId('inner-blocks'));
-		expect(slot).toContainElement(screen.getByText('Form content'));
-	});
+		expect( slot ).toContainElement( screen.getByTestId( 'inner-blocks' ) );
+		expect( slot ).toContainElement( screen.getByText( 'Form content' ) );
+	} );
 
-	it('flags the SSR preview as an editor preview so render.php emits a slot', () => {
-		renderEdit(false);
+	it( 'flags the SSR preview as an editor preview so render.php emits a slot', () => {
+		renderEdit( false );
 
-		const [{ attributes }] = mockServerSideRender.mock.calls.at(-1);
-		expect(attributes.isEditorPreview).toBe(true);
-	});
+		const [ { attributes } ] = mockServerSideRender.mock.calls.at( -1 );
+		expect( attributes.isEditorPreview ).toBe( true );
+	} );
 
-	it('always ServerSideRenders the unified block itself, never a delegated one (#1245)', () => {
-		renderEdit(true);
-		const [firstProps] = mockServerSideRender.mock.calls.at(-1);
-		expect(firstProps.block).toBe('fair-events/event-signup');
+	it( 'always ServerSideRenders the unified block itself, never a delegated one (#1245)', () => {
+		renderEdit( true );
+		const [ firstProps ] = mockServerSideRender.mock.calls.at( -1 );
+		expect( firstProps.block ).toBe( 'fair-events/event-signup' );
 
-		renderEdit(false);
-		const [secondProps] = mockServerSideRender.mock.calls.at(-1);
-		expect(secondProps.block).toBe('fair-events/event-signup');
-	});
+		renderEdit( false );
+		const [ secondProps ] = mockServerSideRender.mock.calls.at( -1 );
+		expect( secondProps.block ).toBe( 'fair-events/event-signup' );
+	} );
 
-	it('only offers the fair-form question blocks once fair-form is active', () => {
-		const { unmount } = renderEdit(false);
-		const [, inactiveOptions] = mockUseInnerBlocksProps.mock.calls.at(-1);
-		expect(inactiveOptions.allowedBlocks).toEqual([
+	it( 'only offers the fair-form question blocks once fair-form is active', () => {
+		const { unmount } = renderEdit( false );
+		const [ , inactiveOptions ] =
+			mockUseInnerBlocksProps.mock.calls.at( -1 );
+		expect( inactiveOptions.allowedBlocks ).toEqual( [
 			'core/heading',
 			'core/paragraph',
 			'core/list',
-		]);
+		] );
 		unmount();
 
-		renderEdit(true);
-		const [, activeOptions] = mockUseInnerBlocksProps.mock.calls.at(-1);
-		expect(activeOptions.allowedBlocks).toEqual(
-			expect.arrayContaining([
+		renderEdit( true );
+		const [ , activeOptions ] = mockUseInnerBlocksProps.mock.calls.at( -1 );
+		expect( activeOptions.allowedBlocks ).toEqual(
+			expect.arrayContaining( [
 				'core/heading',
 				'fair-audience/fair-form-short-text',
 				'fair-audience/fair-form-conditional',
-			])
+			] )
 		);
-	});
+	} );
 
-	describe('price toggles', () => {
-		it('shows both toggles checked by default', () => {
-			renderEdit(false);
+	describe( 'price toggles', () => {
+		it( 'shows both toggles checked by default', () => {
+			renderEdit( false );
 
-			expect(screen.getByLabelText('Show ticket price')).toBeChecked();
-			expect(screen.getByLabelText('Show option prices')).toBeChecked();
-		});
+			expect(
+				screen.getByLabelText( 'Show ticket price' )
+			).toBeChecked();
+			expect(
+				screen.getByLabelText( 'Show option prices' )
+			).toBeChecked();
+		} );
 
-		it('toggles the showTicketPrice attribute', () => {
+		it( 'toggles the showTicketPrice attribute', () => {
 			const setAttributes = jest.fn();
-			renderEdit(false, {}, setAttributes);
+			renderEdit( false, {}, setAttributes );
 
-			fireEvent.click(screen.getByLabelText('Show ticket price'));
+			fireEvent.click( screen.getByLabelText( 'Show ticket price' ) );
 
-			expect(setAttributes).toHaveBeenCalledWith({
+			expect( setAttributes ).toHaveBeenCalledWith( {
 				showTicketPrice: false,
-			});
-		});
+			} );
+		} );
 
-		it('toggles the showOptionPrices attribute', () => {
+		it( 'toggles the showOptionPrices attribute', () => {
 			const setAttributes = jest.fn();
-			renderEdit(false, {}, setAttributes);
+			renderEdit( false, {}, setAttributes );
 
-			fireEvent.click(screen.getByLabelText('Show option prices'));
+			fireEvent.click( screen.getByLabelText( 'Show option prices' ) );
 
-			expect(setAttributes).toHaveBeenCalledWith({
+			expect( setAttributes ).toHaveBeenCalledWith( {
 				showOptionPrices: false,
-			});
-		});
-	});
+			} );
+		} );
+	} );
 
-	describe('ticket-editor link', () => {
-		it('shows the edit-tickets link when ticketing is enabled, the user can manage events, and an event date resolved', () => {
+	describe( 'ticket-editor link', () => {
+		it( 'shows the edit-tickets link when ticketing is enabled, the user can manage events, and an event date resolved', () => {
 			window.fairEventsSignupBlock = {
 				postEventDateId: 42,
 				manageEventUrl:
@@ -220,16 +225,16 @@ describe('Event Signup EditComponent', () => {
 				ticketingEnabled: true,
 				canManageEvents: true,
 			};
-			renderEdit(false);
+			renderEdit( false );
 
-			const link = screen.getByText('Edit tickets');
-			expect(link).toHaveAttribute(
+			const link = screen.getByText( 'Edit tickets' );
+			expect( link ).toHaveAttribute(
 				'href',
 				'http://example.test/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=42&tab=tickets'
 			);
-		});
+		} );
 
-		it('shows a hint instead of the link when no event date resolved', () => {
+		it( 'shows a hint instead of the link when no event date resolved', () => {
 			window.fairEventsSignupBlock = {
 				postEventDateId: 0,
 				manageEventUrl:
@@ -237,17 +242,19 @@ describe('Event Signup EditComponent', () => {
 				ticketingEnabled: true,
 				canManageEvents: true,
 			};
-			renderEdit(false);
+			renderEdit( false );
 
 			expect(
 				screen.getByText(
 					'Connect this block to an event date to edit its tickets.'
 				)
 			).toBeInTheDocument();
-			expect(screen.queryByText('Edit tickets')).not.toBeInTheDocument();
-		});
+			expect(
+				screen.queryByText( 'Edit tickets' )
+			).not.toBeInTheDocument();
+		} );
 
-		it('renders nothing when ticketing is disabled', () => {
+		it( 'renders nothing when ticketing is disabled', () => {
 			window.fairEventsSignupBlock = {
 				postEventDateId: 42,
 				manageEventUrl:
@@ -255,17 +262,19 @@ describe('Event Signup EditComponent', () => {
 				ticketingEnabled: false,
 				canManageEvents: true,
 			};
-			renderEdit(false);
+			renderEdit( false );
 
-			expect(screen.queryByText('Edit tickets')).not.toBeInTheDocument();
+			expect(
+				screen.queryByText( 'Edit tickets' )
+			).not.toBeInTheDocument();
 			expect(
 				screen.queryByText(
 					'Connect this block to an event date to edit its tickets.'
 				)
 			).not.toBeInTheDocument();
-		});
+		} );
 
-		it('renders nothing when the user cannot manage events', () => {
+		it( 'renders nothing when the user cannot manage events', () => {
 			window.fairEventsSignupBlock = {
 				postEventDateId: 42,
 				manageEventUrl:
@@ -273,14 +282,16 @@ describe('Event Signup EditComponent', () => {
 				ticketingEnabled: true,
 				canManageEvents: false,
 			};
-			renderEdit(false);
+			renderEdit( false );
 
-			expect(screen.queryByText('Edit tickets')).not.toBeInTheDocument();
+			expect(
+				screen.queryByText( 'Edit tickets' )
+			).not.toBeInTheDocument();
 			expect(
 				screen.queryByText(
 					'Connect this block to an event date to edit its tickets.'
 				)
 			).not.toBeInTheDocument();
-		});
-	});
-});
+		} );
+	} );
+} );

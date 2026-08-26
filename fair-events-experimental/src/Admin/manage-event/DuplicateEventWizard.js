@@ -41,236 +41,238 @@ import {
 import { EventTickets } from 'fair-events';
 import { adjustTicketDates } from './adjustTicketDates.js';
 
-export default function DuplicateEventWizard({
+export default function DuplicateEventWizard( {
 	sourceEventDate,
 	sourceEventDateId,
 	audienceUrl,
 	onCancel,
 	manageEventUrl,
 	enabledFeatures,
-}) {
+} ) {
 	// Event details state - pre-populated from source
-	const [title, setTitle] = useState(
-		(sourceEventDate.title || '') + ' (Copy)'
+	const [ title, setTitle ] = useState(
+		( sourceEventDate.title || '' ) + ' (Copy)'
 	);
-	const [allDay, setAllDay] = useState(sourceEventDate.all_day || false);
-	const [startDate, setStartDate] = useState('');
-	const [startTime, setStartTime] = useState('');
-	const [endDate, setEndDate] = useState('');
-	const [endTime, setEndTime] = useState('');
-	const [venueId, setVenueId] = useState(
-		sourceEventDate.venue_id ? String(sourceEventDate.venue_id) : ''
+	const [ allDay, setAllDay ] = useState( sourceEventDate.all_day || false );
+	const [ startDate, setStartDate ] = useState( '' );
+	const [ startTime, setStartTime ] = useState( '' );
+	const [ endDate, setEndDate ] = useState( '' );
+	const [ endTime, setEndTime ] = useState( '' );
+	const [ venueId, setVenueId ] = useState(
+		sourceEventDate.venue_id ? String( sourceEventDate.venue_id ) : ''
 	);
-	const [categories, setCategories] = useState(
-		sourceEventDate.categories?.map((c) => c.id) || []
+	const [ categories, setCategories ] = useState(
+		sourceEventDate.categories?.map( ( c ) => c.id ) || []
 	);
-	const [recurrence, setRecurrence] = useState({
+	const [ recurrence, setRecurrence ] = useState( {
 		enabled: false,
 		frequency: 'weekly',
 		endType: 'count',
 		count: 10,
 		until: '',
-	});
+	} );
 
 	// Links state
-	const [linksOption, setLinksOption] = useState('clone');
+	const [ linksOption, setLinksOption ] = useState( 'clone' );
 
 	// Tickets state
-	const [ticketInitialData, setTicketInitialData] = useState(null);
-	const [loadingTickets, setLoadingTickets] = useState(true);
-	const [ticketsDirty, setTicketsDirty] = useState(false);
-	const ticketDataRef = useRef(null);
+	const [ ticketInitialData, setTicketInitialData ] = useState( null );
+	const [ loadingTickets, setLoadingTickets ] = useState( true );
+	const [ ticketsDirty, setTicketsDirty ] = useState( false );
+	const ticketDataRef = useRef( null );
 	const handleTicketsDirtyChange = useCallback(
-		(isDirty) => setTicketsDirty(isDirty),
+		( isDirty ) => setTicketsDirty( isDirty ),
 		[]
 	);
 
 	// Audience state
-	const [collaborators, setCollaborators] = useState([]);
-	const [selectedCollaborators, setSelectedCollaborators] = useState({});
-	const [loadingCollaborators, setLoadingCollaborators] = useState(false);
+	const [ collaborators, setCollaborators ] = useState( [] );
+	const [ selectedCollaborators, setSelectedCollaborators ] = useState( {} );
+	const [ loadingCollaborators, setLoadingCollaborators ] = useState( false );
 
 	// Group rules state
-	const [sourcePricingRules, setSourcePricingRules] = useState([]);
-	const [sourcePermissionRules, setSourcePermissionRules] = useState([]);
-	const [selectedGroupRules, setSelectedGroupRules] = useState({});
-	const [loadingGroupRules, setLoadingGroupRules] = useState(false);
+	const [ sourcePricingRules, setSourcePricingRules ] = useState( [] );
+	const [ sourcePermissionRules, setSourcePermissionRules ] = useState( [] );
+	const [ selectedGroupRules, setSelectedGroupRules ] = useState( {} );
+	const [ loadingGroupRules, setLoadingGroupRules ] = useState( false );
 
 	// Step navigation
-	const [activeStep, setActiveStep] = useState(0);
+	const [ activeStep, setActiveStep ] = useState( 0 );
 
 	// UI state
-	const [venues, setVenues] = useState([]);
-	const [availableCategories, setAvailableCategories] = useState([]);
-	const [creating, setCreating] = useState(false);
-	const [progress, setProgress] = useState('');
-	const [error, setError] = useState(null);
-	const [completedSteps, setCompletedSteps] = useState([]);
-	const [failedStep, setFailedStep] = useState(null);
-	const [newEventDateId, setNewEventDateId] = useState(null);
+	const [ venues, setVenues ] = useState( [] );
+	const [ availableCategories, setAvailableCategories ] = useState( [] );
+	const [ creating, setCreating ] = useState( false );
+	const [ progress, setProgress ] = useState( '' );
+	const [ error, setError ] = useState( null );
+	const [ completedSteps, setCompletedSteps ] = useState( [] );
+	const [ failedStep, setFailedStep ] = useState( null );
+	const [ newEventDateId, setNewEventDateId ] = useState( null );
 
 	// Initialize dates shifted +7 days
-	useEffect(() => {
-		if (sourceEventDate.start_datetime) {
-			const [sDate, sTime] = sourceEventDate.start_datetime.split(' ');
-			const shiftedStart = shiftDate(sDate, 7);
-			setStartDate(shiftedStart);
-			setStartTime(sTime ? sTime.substring(0, 5) : '');
+	useEffect( () => {
+		if ( sourceEventDate.start_datetime ) {
+			const [ sDate, sTime ] =
+				sourceEventDate.start_datetime.split( ' ' );
+			const shiftedStart = shiftDate( sDate, 7 );
+			setStartDate( shiftedStart );
+			setStartTime( sTime ? sTime.substring( 0, 5 ) : '' );
 		}
-		if (sourceEventDate.end_datetime) {
-			const [eDate, eTime] = sourceEventDate.end_datetime.split(' ');
-			const shiftedEnd = shiftDate(eDate, 7);
-			setEndDate(shiftedEnd);
-			setEndTime(eTime ? eTime.substring(0, 5) : '');
+		if ( sourceEventDate.end_datetime ) {
+			const [ eDate, eTime ] = sourceEventDate.end_datetime.split( ' ' );
+			const shiftedEnd = shiftDate( eDate, 7 );
+			setEndDate( shiftedEnd );
+			setEndTime( eTime ? eTime.substring( 0, 5 ) : '' );
 		}
 
 		// Parse recurrence from source
-		if (sourceEventDate.rrule) {
-			setRecurrence({
+		if ( sourceEventDate.rrule ) {
+			setRecurrence( {
 				enabled: true,
-				...parseRRule(sourceEventDate.rrule),
-			});
+				...parseRRule( sourceEventDate.rrule ),
+			} );
 		}
-	}, [sourceEventDate]);
+	}, [ sourceEventDate ] );
 
 	// Load venues and categories
-	useEffect(() => {
-		apiFetch({ path: '/fair-events/v1/venues' })
-			.then(setVenues)
-			.catch(() => {});
-		apiFetch({ path: '/fair-events/v1/sources/categories' })
-			.then(setAvailableCategories)
-			.catch(() => {});
-	}, []);
+	useEffect( () => {
+		apiFetch( { path: '/fair-events/v1/venues' } )
+			.then( setVenues )
+			.catch( () => {} );
+		apiFetch( { path: '/fair-events/v1/sources/categories' } )
+			.then( setAvailableCategories )
+			.catch( () => {} );
+	}, [] );
 
 	// Load tickets from source and adjust dates
-	useEffect(() => {
-		setLoadingTickets(true);
-		apiFetch({
-			path: `/fair-events/v1/event-dates/${sourceEventDateId}/tickets`,
-		})
-			.then((data) => {
+	useEffect( () => {
+		setLoadingTickets( true );
+		apiFetch( {
+			path: `/fair-events/v1/event-dates/${ sourceEventDateId }/tickets`,
+		} )
+			.then( ( data ) => {
 				const adjustedPeriods = adjustTicketDates(
 					data.sale_periods || [],
 					sourceEventDate.start_datetime,
 					getNewStartDatetime()
 				);
-				setTicketInitialData({
+				setTicketInitialData( {
 					...data,
 					sale_periods: adjustedPeriods,
-				});
-			})
-			.catch(() => {
-				setTicketInitialData(null);
-			})
-			.finally(() => setLoadingTickets(false));
-	}, [sourceEventDateId]);
+				} );
+			} )
+			.catch( () => {
+				setTicketInitialData( null );
+			} )
+			.finally( () => setLoadingTickets( false ) );
+	}, [ sourceEventDateId ] );
 
 	// Load collaborators from source
-	useEffect(() => {
-		if (!audienceUrl || !sourceEventDateId) return;
-		setLoadingCollaborators(true);
-		apiFetch({
-			path: `/fair-audience/v1/event-dates/${sourceEventDateId}/participants`,
-		})
-			.then((data) => {
-				const collabs = (Array.isArray(data) ? data : []).filter(
-					(p) => p.label === 'collaborator'
+	useEffect( () => {
+		if ( ! audienceUrl || ! sourceEventDateId ) return;
+		setLoadingCollaborators( true );
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ sourceEventDateId }/participants`,
+		} )
+			.then( ( data ) => {
+				const collabs = ( Array.isArray( data ) ? data : [] ).filter(
+					( p ) => p.label === 'collaborator'
 				);
-				setCollaborators(collabs);
+				setCollaborators( collabs );
 				const selected = {};
-				collabs.forEach((c) => {
-					selected[c.id] = true;
-				});
-				setSelectedCollaborators(selected);
-			})
-			.catch(() => {
-				setCollaborators([]);
-			})
-			.finally(() => setLoadingCollaborators(false));
-	}, [audienceUrl, sourceEventDateId]);
+				collabs.forEach( ( c ) => {
+					selected[ c.id ] = true;
+				} );
+				setSelectedCollaborators( selected );
+			} )
+			.catch( () => {
+				setCollaborators( [] );
+			} )
+			.finally( () => setLoadingCollaborators( false ) );
+	}, [ audienceUrl, sourceEventDateId ] );
 
 	// Load group rules from source
-	useEffect(() => {
-		if (!audienceUrl || !sourceEventDateId) return;
-		setLoadingGroupRules(true);
-		Promise.all([
-			apiFetch({
-				path: `/fair-events/v1/event-dates/${sourceEventDateId}/group-pricing-rules`,
-			}).catch(() => []),
-			apiFetch({
-				path: `/fair-events/v1/event-dates/${sourceEventDateId}/group-permission-rules`,
-			}).catch(() => []),
-		])
-			.then(([pricing, permissions]) => {
-				const pricingArr = Array.isArray(pricing) ? pricing : [];
-				const permissionsArr = Array.isArray(permissions)
+	useEffect( () => {
+		if ( ! audienceUrl || ! sourceEventDateId ) return;
+		setLoadingGroupRules( true );
+		Promise.all( [
+			apiFetch( {
+				path: `/fair-events/v1/event-dates/${ sourceEventDateId }/group-pricing-rules`,
+			} ).catch( () => [] ),
+			apiFetch( {
+				path: `/fair-events/v1/event-dates/${ sourceEventDateId }/group-permission-rules`,
+			} ).catch( () => [] ),
+		] )
+			.then( ( [ pricing, permissions ] ) => {
+				const pricingArr = Array.isArray( pricing ) ? pricing : [];
+				const permissionsArr = Array.isArray( permissions )
 					? permissions
 					: [];
-				setSourcePricingRules(pricingArr);
-				setSourcePermissionRules(permissionsArr);
+				setSourcePricingRules( pricingArr );
+				setSourcePermissionRules( permissionsArr );
 				const selected = {};
-				pricingArr.forEach((r) => {
-					selected[r.group_id] = true;
-				});
-				permissionsArr.forEach((r) => {
-					selected[r.group_id] = true;
-				});
-				setSelectedGroupRules(selected);
-			})
-			.finally(() => setLoadingGroupRules(false));
-	}, [audienceUrl, sourceEventDateId]);
+				pricingArr.forEach( ( r ) => {
+					selected[ r.group_id ] = true;
+				} );
+				permissionsArr.forEach( ( r ) => {
+					selected[ r.group_id ] = true;
+				} );
+				setSelectedGroupRules( selected );
+			} )
+			.finally( () => setLoadingGroupRules( false ) );
+	}, [ audienceUrl, sourceEventDateId ] );
 
 	// Warn before losing unsaved ticket edits, mirroring ManageEventApp.js.
-	useEffect(() => {
-		if (!ticketsDirty) {
+	useEffect( () => {
+		if ( ! ticketsDirty ) {
 			return;
 		}
-		const handleBeforeUnload = (event) => {
+		const handleBeforeUnload = ( event ) => {
 			event.preventDefault();
 			event.returnValue = '';
 		};
-		window.addEventListener('beforeunload', handleBeforeUnload);
+		window.addEventListener( 'beforeunload', handleBeforeUnload );
 		return () =>
-			window.removeEventListener('beforeunload', handleBeforeUnload);
-	}, [ticketsDirty]);
+			window.removeEventListener( 'beforeunload', handleBeforeUnload );
+	}, [ ticketsDirty ] );
 
 	// Duration helpers
 	const timedDurationOptions = useMemo(
 		() =>
-			new DurationOptions({
-				values: [30, 60, 90, 120, 150, 180, 240, 360, 480],
+			new DurationOptions( {
+				values: [ 30, 60, 90, 120, 150, 180, 240, 360, 480 ],
 				unit: 'minutes',
 				textDomain: 'fair-events-experimental',
-			}),
+			} ),
 		[]
 	);
 
 	const allDayDurationOptions = useMemo(
 		() =>
-			new DurationOptions({
-				values: [1, 2, 3, 4, 5, 6, 7],
+			new DurationOptions( {
+				values: [ 1, 2, 3, 4, 5, 6, 7 ],
 				unit: 'days',
 				textDomain: 'fair-events-experimental',
-			}),
+			} ),
 		[]
 	);
 
 	const getCurrentDuration = () => {
-		if (allDay) {
-			if (!startDate || !endDate) return 'other';
-			const start = new Date(startDate);
-			const end = new Date(endDate);
+		if ( allDay ) {
+			if ( ! startDate || ! endDate ) return 'other';
+			const start = new Date( startDate );
+			const end = new Date( endDate );
 			const diffDays =
-				Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-			return allDayDurationOptions.getCurrentSelection(diffDays);
+				Math.ceil( ( end - start ) / ( 1000 * 60 * 60 * 24 ) ) + 1;
+			return allDayDurationOptions.getCurrentSelection( diffDays );
 		}
-		if (!startDate || !startTime || !endDate || !endTime) return 'other';
-		const startIso = `${startDate}T${startTime}`;
-		const endIso = `${endDate}T${endTime}`;
-		const minutes = calculateDuration(startIso, endIso);
-		if (minutes === null) return 'other';
-		return timedDurationOptions.getCurrentSelection(minutes);
+		if ( ! startDate || ! startTime || ! endDate || ! endTime )
+			return 'other';
+		const startIso = `${ startDate }T${ startTime }`;
+		const endIso = `${ endDate }T${ endTime }`;
+		const minutes = calculateDuration( startIso, endIso );
+		if ( minutes === null ) return 'other';
+		return timedDurationOptions.getCurrentSelection( minutes );
 	};
 
 	const durationValue = getCurrentDuration();
@@ -278,79 +280,80 @@ export default function DuplicateEventWizard({
 		? allDayDurationOptions.getDurationOptions()
 		: timedDurationOptions.getDurationOptions();
 
-	const handleDurationChange = (value) => {
-		if (value === 'other' || !startDate) return;
-		if (allDay) {
-			const days = parseInt(value, 10);
-			const start = new Date(startDate);
-			const end = new Date(start);
-			end.setDate(start.getDate() + days - 1);
-			setEndDate(formatDate(end));
+	const handleDurationChange = ( value ) => {
+		if ( value === 'other' || ! startDate ) return;
+		if ( allDay ) {
+			const days = parseInt( value, 10 );
+			const start = new Date( startDate );
+			const end = new Date( start );
+			end.setDate( start.getDate() + days - 1 );
+			setEndDate( formatDate( end ) );
 		} else {
-			if (!startTime) return;
-			const minutes = parseInt(value, 10);
-			const start = new Date(`${startDate}T${startTime}`);
-			const end = new Date(start.getTime() + minutes * 60000);
-			setEndDate(formatDate(end));
+			if ( ! startTime ) return;
+			const minutes = parseInt( value, 10 );
+			const start = new Date( `${ startDate }T${ startTime }` );
+			const end = new Date( start.getTime() + minutes * 60000 );
+			setEndDate( formatDate( end ) );
 			setEndTime(
-				`${String(end.getHours()).padStart(2, '0')}:${String(
+				`${ String( end.getHours() ).padStart( 2, '0' ) }:${ String(
 					end.getMinutes()
-				).padStart(2, '0')}`
+				).padStart( 2, '0' ) }`
 			);
 		}
 	};
 
 	// Shift end by the same delta the user applied to start, so the event
 	// length is preserved when the user moves the start of a duplicate.
-	const handleStartDateChange = (newStartDate) => {
-		if (startDate && endDate && newStartDate) {
-			const oldStart = new Date(startDate);
-			const nextStart = new Date(newStartDate);
+	const handleStartDateChange = ( newStartDate ) => {
+		if ( startDate && endDate && newStartDate ) {
+			const oldStart = new Date( startDate );
+			const nextStart = new Date( newStartDate );
 			const deltaDays = Math.round(
-				(nextStart - oldStart) / (1000 * 60 * 60 * 24)
+				( nextStart - oldStart ) / ( 1000 * 60 * 60 * 24 )
 			);
-			if (deltaDays !== 0) {
-				const nextEnd = new Date(endDate);
-				nextEnd.setDate(nextEnd.getDate() + deltaDays);
-				setEndDate(formatDate(nextEnd));
+			if ( deltaDays !== 0 ) {
+				const nextEnd = new Date( endDate );
+				nextEnd.setDate( nextEnd.getDate() + deltaDays );
+				setEndDate( formatDate( nextEnd ) );
 			}
 		}
-		setStartDate(newStartDate);
+		setStartDate( newStartDate );
 	};
 
-	const handleStartTimeChange = (newStartTime) => {
-		if (startDate && startTime && endDate && endTime && newStartTime) {
-			const oldStart = new Date(`${startDate}T${startTime}`);
-			const nextStart = new Date(`${startDate}T${newStartTime}`);
+	const handleStartTimeChange = ( newStartTime ) => {
+		if ( startDate && startTime && endDate && endTime && newStartTime ) {
+			const oldStart = new Date( `${ startDate }T${ startTime }` );
+			const nextStart = new Date( `${ startDate }T${ newStartTime }` );
 			const deltaMs = nextStart - oldStart;
-			if (deltaMs !== 0) {
-				const oldEnd = new Date(`${endDate}T${endTime}`);
-				const nextEnd = new Date(oldEnd.getTime() + deltaMs);
-				setEndDate(formatDate(nextEnd));
+			if ( deltaMs !== 0 ) {
+				const oldEnd = new Date( `${ endDate }T${ endTime }` );
+				const nextEnd = new Date( oldEnd.getTime() + deltaMs );
+				setEndDate( formatDate( nextEnd ) );
 				setEndTime(
-					`${String(nextEnd.getHours()).padStart(2, '0')}:${String(
-						nextEnd.getMinutes()
-					).padStart(2, '0')}`
+					`${ String( nextEnd.getHours() ).padStart(
+						2,
+						'0'
+					) }:${ String( nextEnd.getMinutes() ).padStart( 2, '0' ) }`
 				);
 			}
 		}
-		setStartTime(newStartTime);
+		setStartTime( newStartTime );
 	};
 
 	const venueOptions = [
-		{ label: __('— No venue —', 'fair-events-experimental'), value: '' },
-		...venues.map((v) => ({ label: v.name, value: String(v.id) })),
+		{ label: __( '— No venue —', 'fair-events-experimental' ), value: '' },
+		...venues.map( ( v ) => ( { label: v.name, value: String( v.id ) } ) ),
 	];
 
 	// Build new start datetime string
 	const getNewStartDatetime = () => {
-		if (allDay) return `${startDate} 00:00:00`;
-		return `${startDate} ${startTime}:00`;
+		if ( allDay ) return `${ startDate } 00:00:00`;
+		return `${ startDate } ${ startTime }:00`;
 	};
 
 	const getNewEndDatetime = () => {
-		if (allDay) return `${endDate} 00:00:00`;
-		return `${endDate} ${endTime}:00`;
+		if ( allDay ) return `${ endDate } 00:00:00`;
+		return `${ endDate } ${ endTime }:00`;
 	};
 
 	// Recurrence is decided in step 1 and can be changed before the Tickets
@@ -363,29 +366,29 @@ export default function DuplicateEventWizard({
 	// last occurrence's date. The new event doesn't exist yet (no server-side
 	// generated_occurrences), so expand the rrule client-side the same way the
 	// server would — capped identically — to find it.
-	const lastOccurrenceDatetime = useMemo(() => {
-		if (!recurrence.enabled || !startDate) return getNewEndDatetime();
-		const rrule = buildRRule(recurrence);
-		if (!rrule) return getNewEndDatetime();
-		const preview = expandRRulePreview(rrule, getNewStartDatetime());
+	const lastOccurrenceDatetime = useMemo( () => {
+		if ( ! recurrence.enabled || ! startDate ) return getNewEndDatetime();
+		const rrule = buildRRule( recurrence );
+		if ( ! rrule ) return getNewEndDatetime();
+		const preview = expandRRulePreview( rrule, getNewStartDatetime() );
 		return preview.lastDate || getNewEndDatetime();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [recurrence, startDate, startTime]);
+	}, [ recurrence, startDate, startTime ] );
 
 	// Creation sequence
 	const handleCreate = async () => {
-		setCreating(true);
-		setError(null);
-		setCompletedSteps([]);
-		setFailedStep(null);
+		setCreating( true );
+		setError( null );
+		setCompletedSteps( [] );
+		setFailedStep( null );
 
 		let createdEventDateId = null;
 		let createdEventId = null;
 
 		try {
 			// Step 1: Create event
-			setProgress(__('Creating event…', 'fair-events-experimental'));
-			const newEvent = await apiFetch({
+			setProgress( __( 'Creating event…', 'fair-events-experimental' ) );
+			const newEvent = await apiFetch( {
 				path: '/fair-events/v1/event-dates',
 				method: 'POST',
 				data: {
@@ -393,142 +396,148 @@ export default function DuplicateEventWizard({
 					start_datetime: getNewStartDatetime(),
 					end_datetime: getNewEndDatetime(),
 					all_day: allDay,
-					venue_id: venueId ? parseInt(venueId, 10) : null,
-					rrule: buildRRule(recurrence),
+					venue_id: venueId ? parseInt( venueId, 10 ) : null,
+					rrule: buildRRule( recurrence ),
 					categories,
 				},
-			});
+			} );
 			createdEventDateId = newEvent.id;
-			setNewEventDateId(createdEventDateId);
-			setCompletedSteps((prev) => [...prev, 'create']);
+			setNewEventDateId( createdEventDateId );
+			setCompletedSteps( ( prev ) => [ ...prev, 'create' ] );
 
 			// Step 2: Handle links
 			const linkedPosts = sourceEventDate.linked_posts || [];
-			if (linksOption === 'clone' && linkedPosts.length > 0) {
-				setProgress(__('Cloning posts…', 'fair-events-experimental'));
-				const cloneResult = await apiFetch({
-					path: `/fair-events/v1/event-dates/${createdEventDateId}/clone-posts`,
+			if ( linksOption === 'clone' && linkedPosts.length > 0 ) {
+				setProgress(
+					__( 'Cloning posts…', 'fair-events-experimental' )
+				);
+				const cloneResult = await apiFetch( {
+					path: `/fair-events/v1/event-dates/${ createdEventDateId }/clone-posts`,
 					method: 'POST',
 					data: {
 						source_event_date_id: sourceEventDateId,
 					},
-				});
+				} );
 				createdEventId = cloneResult.event_id;
 			}
-			setCompletedSteps((prev) => [...prev, 'links']);
+			setCompletedSteps( ( prev ) => [ ...prev, 'links' ] );
 
 			// Step 4: Save tickets
 			const currentTickets = ticketDataRef.current?.();
-			if (currentTickets && hasTicketData(currentTickets)) {
-				setProgress(__('Saving tickets…', 'fair-events-experimental'));
-				await apiFetch({
-					path: `/fair-events/v1/event-dates/${createdEventDateId}/tickets`,
+			if ( currentTickets && hasTicketData( currentTickets ) ) {
+				setProgress(
+					__( 'Saving tickets…', 'fair-events-experimental' )
+				);
+				await apiFetch( {
+					path: `/fair-events/v1/event-dates/${ createdEventDateId }/tickets`,
 					method: 'PUT',
 					data: currentTickets,
-				});
+				} );
 			}
-			setCompletedSteps((prev) => [...prev, 'tickets']);
+			setCompletedSteps( ( prev ) => [ ...prev, 'tickets' ] );
 
 			// Step 5: Add collaborators
-			const selectedIds = Object.entries(selectedCollaborators)
-				.filter(([, checked]) => checked)
-				.map(([id]) => parseInt(id, 10));
+			const selectedIds = Object.entries( selectedCollaborators )
+				.filter( ( [ , checked ] ) => checked )
+				.map( ( [ id ] ) => parseInt( id, 10 ) );
 
-			if (audienceUrl && selectedIds.length > 0) {
+			if ( audienceUrl && selectedIds.length > 0 ) {
 				setProgress(
-					__('Adding collaborators…', 'fair-events-experimental')
+					__( 'Adding collaborators…', 'fair-events-experimental' )
 				);
 
 				// We need an event_id (WP post) to add participants.
 				// If links option was "reuse" or "clone", we should have one.
 				// If "empty", create a draft post and link it first.
 				let eventId = createdEventId;
-				if (!eventId) {
+				if ( ! eventId ) {
 					// Fetch the created event to check if it has an event_id
-					const freshEvent = await apiFetch({
-						path: `/fair-events/v1/event-dates/${createdEventDateId}`,
-					});
+					const freshEvent = await apiFetch( {
+						path: `/fair-events/v1/event-dates/${ createdEventDateId }`,
+					} );
 					eventId = freshEvent.event_id;
 				}
 
-				if (!eventId) {
+				if ( ! eventId ) {
 					// Create a minimal draft post
-					const newPost = await apiFetch({
+					const newPost = await apiFetch( {
 						path: '/wp/v2/fair_event',
 						method: 'POST',
 						data: {
 							title,
 							status: 'draft',
 						},
-					});
+					} );
 					eventId = newPost.id;
 					// Link it to the event date
-					await apiFetch({
-						path: `/fair-events/v1/event-dates/${createdEventDateId}/link-post`,
+					await apiFetch( {
+						path: `/fair-events/v1/event-dates/${ createdEventDateId }/link-post`,
 						method: 'POST',
 						data: { post_id: eventId },
-					});
+					} );
 				}
 
-				await apiFetch({
-					path: `/fair-audience/v1/event-dates/${createdEventDateId}/participants/batch`,
+				await apiFetch( {
+					path: `/fair-audience/v1/event-dates/${ createdEventDateId }/participants/batch`,
 					method: 'POST',
 					data: {
 						participant_ids: selectedIds,
 						label: 'collaborator',
 					},
-				});
+				} );
 			}
-			setCompletedSteps((prev) => [...prev, 'collaborators']);
+			setCompletedSteps( ( prev ) => [ ...prev, 'collaborators' ] );
 
 			// Step 6: Copy group rules
-			const selectedGroupIds = Object.entries(selectedGroupRules)
-				.filter(([, checked]) => checked)
-				.map(([id]) => parseInt(id, 10));
+			const selectedGroupIds = Object.entries( selectedGroupRules )
+				.filter( ( [ , checked ] ) => checked )
+				.map( ( [ id ] ) => parseInt( id, 10 ) );
 
-			if (selectedGroupIds.length > 0) {
+			if ( selectedGroupIds.length > 0 ) {
 				setProgress(
-					__('Copying group rules…', 'fair-events-experimental')
+					__( 'Copying group rules…', 'fair-events-experimental' )
 				);
 
-				const pricingToCopy = sourcePricingRules.filter((r) =>
-					selectedGroupIds.includes(r.group_id)
+				const pricingToCopy = sourcePricingRules.filter( ( r ) =>
+					selectedGroupIds.includes( r.group_id )
 				);
-				const permissionsToCopy = sourcePermissionRules.filter((r) =>
-					selectedGroupIds.includes(r.group_id)
+				const permissionsToCopy = sourcePermissionRules.filter( ( r ) =>
+					selectedGroupIds.includes( r.group_id )
 				);
 
-				for (const rule of pricingToCopy) {
-					await apiFetch({
-						path: `/fair-events/v1/event-dates/${createdEventDateId}/group-pricing-rules`,
+				for ( const rule of pricingToCopy ) {
+					await apiFetch( {
+						path: `/fair-events/v1/event-dates/${ createdEventDateId }/group-pricing-rules`,
 						method: 'POST',
 						data: {
 							group_id: rule.group_id,
 							discount_type: rule.discount_type,
 							discount_value: rule.discount_value,
 						},
-					});
+					} );
 				}
 
-				for (const rule of permissionsToCopy) {
-					await apiFetch({
-						path: `/fair-events/v1/event-dates/${createdEventDateId}/group-permission-rules`,
+				for ( const rule of permissionsToCopy ) {
+					await apiFetch( {
+						path: `/fair-events/v1/event-dates/${ createdEventDateId }/group-permission-rules`,
 						method: 'POST',
 						data: {
 							group_id: rule.group_id,
 							permission_type: rule.permission_type,
 						},
-					});
+					} );
 				}
 			}
-			setCompletedSteps((prev) => [...prev, 'group-rules']);
+			setCompletedSteps( ( prev ) => [ ...prev, 'group-rules' ] );
 
 			// Success - redirect
-			setProgress(__('Done! Redirecting…', 'fair-events-experimental'));
-			window.location.href = `${manageEventUrl}&event_date_id=${createdEventDateId}`;
-		} catch (err) {
-			const currentStep = getNextStep(completedSteps);
-			setFailedStep(currentStep);
+			setProgress(
+				__( 'Done! Redirecting…', 'fair-events-experimental' )
+			);
+			window.location.href = `${ manageEventUrl }&event_date_id=${ createdEventDateId }`;
+		} catch ( err ) {
+			const currentStep = getNextStep( completedSteps );
+			setFailedStep( currentStep );
 			setError(
 				err.message ||
 					__(
@@ -536,50 +545,55 @@ export default function DuplicateEventWizard({
 						'fair-events-experimental'
 					)
 			);
-			setCreating(false);
+			setCreating( false );
 		}
 	};
 
 	const linkedPosts = sourceEventDate.linked_posts || [];
 
-	const steps = useMemo(() => {
+	const steps = useMemo( () => {
 		const s = [
 			{
 				name: 'event-details',
-				title: __('Event Details', 'fair-events-experimental'),
+				title: __( 'Event Details', 'fair-events-experimental' ),
 			},
 		];
-		if (linkedPosts.length > 0) {
-			s.push({
+		if ( linkedPosts.length > 0 ) {
+			s.push( {
 				name: 'links',
-				title: __('Links', 'fair-events-experimental'),
-			});
+				title: __( 'Links', 'fair-events-experimental' ),
+			} );
 		}
-		if (enabledFeatures?.ticketing) {
-			s.push({
+		if ( enabledFeatures?.ticketing ) {
+			s.push( {
 				name: 'tickets',
-				title: __('Tickets', 'fair-events-experimental'),
-			});
+				title: __( 'Tickets', 'fair-events-experimental' ),
+			} );
 		}
-		if (audienceUrl && sourceEventDateId) {
-			s.push({
+		if ( audienceUrl && sourceEventDateId ) {
+			s.push( {
 				name: 'audience',
-				title: __('Audience', 'fair-events-experimental'),
-			});
-			s.push({
+				title: __( 'Audience', 'fair-events-experimental' ),
+			} );
+			s.push( {
 				name: 'group-rules',
-				title: __('Group Rules', 'fair-events-experimental'),
-			});
+				title: __( 'Group Rules', 'fair-events-experimental' ),
+			} );
 		}
 		return s;
-	}, [audienceUrl, enabledFeatures, linkedPosts.length, sourceEventDateId]);
+	}, [
+		audienceUrl,
+		enabledFeatures,
+		linkedPosts.length,
+		sourceEventDateId,
+	] );
 
 	const isLastStep = activeStep === steps.length - 1;
-	const currentStep = steps[activeStep];
+	const currentStep = steps[ activeStep ];
 
 	const renderCurrentStep = () => {
-		if (!currentStep) return null;
-		switch (currentStep.name) {
+		if ( ! currentStep ) return null;
+		switch ( currentStep.name ) {
 			case 'event-details':
 				return renderEventDetailsTab();
 			case 'links':
@@ -598,228 +612,241 @@ export default function DuplicateEventWizard({
 	return (
 		<div className="wrap fair-events-manage-event">
 			<style>
-				{`.fair-events-manage-event .components-card > div:first-child { height: auto; }
+				{ `.fair-events-manage-event .components-card > div:first-child { height: auto; }
 .fair-events-manage-event .components-card__body > * { max-width: 600px; }
-.fair-events-manage-event .fair-events-tickets .components-card__body > * { max-width: none; }`}
+.fair-events-manage-event .fair-events-tickets .components-card__body > * { max-width: none; }` }
 			</style>
 			<h1>
-				{__('Duplicate Event', 'fair-events-experimental')}
-				{sourceEventDate.title && `: ${sourceEventDate.title}`}
+				{ __( 'Duplicate Event', 'fair-events-experimental' ) }
+				{ sourceEventDate.title && `: ${ sourceEventDate.title }` }
 			</h1>
 
-			{error && (
+			{ error && (
 				<Notice
 					status="error"
 					isDismissible
-					onRemove={() => setError(null)}
+					onRemove={ () => setError( null ) }
 				>
-					{error}
-					{newEventDateId && (
+					{ error }
+					{ newEventDateId && (
 						<p>
 							<a
-								href={`${manageEventUrl}&event_date_id=${newEventDateId}`}
+								href={ `${ manageEventUrl }&event_date_id=${ newEventDateId }` }
 							>
-								{__(
+								{ __(
 									'View partially created event',
 									'fair-events-experimental'
-								)}
+								) }
 							</a>
 						</p>
-					)}
+					) }
 				</Notice>
-			)}
+			) }
 
-			{creating && (
-				<Notice status="info" isDismissible={false}>
-					<HStack spacing={2}>
+			{ creating && (
+				<Notice status="info" isDismissible={ false }>
+					<HStack spacing={ 2 }>
 						<Spinner />
-						<span>{progress}</span>
+						<span>{ progress }</span>
 					</HStack>
 				</Notice>
-			)}
+			) }
 
-			{!creating && (
+			{ ! creating && (
 				<>
-					<p style={{ color: '#666' }}>
-						{`${__('Step', 'fair-events-experimental')} ${
+					<p style={ { color: '#666' } }>
+						{ `${ __( 'Step', 'fair-events-experimental' ) } ${
 							activeStep + 1
-						} / ${steps.length}: ${currentStep?.title}`}
+						} / ${ steps.length }: ${ currentStep?.title }` }
 					</p>
-					{renderCurrentStep()}
+					{ renderCurrentStep() }
 				</>
-			)}
+			) }
 
-			{!creating && (
-				<HStack spacing={2} style={{ marginTop: '16px' }}>
-					{activeStep > 0 && (
+			{ ! creating && (
+				<HStack spacing={ 2 } style={ { marginTop: '16px' } }>
+					{ activeStep > 0 && (
 						<Button
 							variant="secondary"
-							onClick={() => setActiveStep((s) => s - 1)}
+							onClick={ () => setActiveStep( ( s ) => s - 1 ) }
 						>
-							{__('Back', 'fair-events-experimental')}
+							{ __( 'Back', 'fair-events-experimental' ) }
 						</Button>
-					)}
-					{!isLastStep && (
+					) }
+					{ ! isLastStep && (
 						<Button
 							variant="primary"
-							onClick={() => setActiveStep((s) => s + 1)}
-							disabled={!title || !startDate}
+							onClick={ () => setActiveStep( ( s ) => s + 1 ) }
+							disabled={ ! title || ! startDate }
 						>
-							{__('Next', 'fair-events-experimental')}
+							{ __( 'Next', 'fair-events-experimental' ) }
 						</Button>
-					)}
-					{isLastStep && (
+					) }
+					{ isLastStep && (
 						<Button
 							variant="primary"
-							onClick={handleCreate}
-							disabled={!title || !startDate}
+							onClick={ handleCreate }
+							disabled={ ! title || ! startDate }
 						>
-							{__('Create Duplicate', 'fair-events-experimental')}
+							{ __(
+								'Create Duplicate',
+								'fair-events-experimental'
+							) }
 						</Button>
-					)}
-					<Button variant="tertiary" onClick={onCancel}>
-						{__('Cancel', 'fair-events-experimental')}
+					) }
+					<Button variant="tertiary" onClick={ onCancel }>
+						{ __( 'Cancel', 'fair-events-experimental' ) }
 					</Button>
 				</HStack>
-			)}
+			) }
 		</div>
 	);
 
 	function renderEventDetailsTab() {
 		return (
-			<Card style={{ marginTop: '16px' }}>
+			<Card style={ { marginTop: '16px' } }>
 				<CardHeader>
-					<h2>{__('Event Details', 'fair-events-experimental')}</h2>
+					<h2>
+						{ __( 'Event Details', 'fair-events-experimental' ) }
+					</h2>
 				</CardHeader>
 				<CardBody>
-					<VStack spacing={4}>
+					<VStack spacing={ 4 }>
 						<TextControl
-							label={__('Title', 'fair-events-experimental')}
-							value={title}
-							onChange={setTitle}
+							label={ __( 'Title', 'fair-events-experimental' ) }
+							value={ title }
+							onChange={ setTitle }
 							required
 						/>
 
 						<CheckboxControl
-							label={__('All day', 'fair-events-experimental')}
-							checked={allDay}
-							onChange={setAllDay}
+							label={ __(
+								'All day',
+								'fair-events-experimental'
+							) }
+							checked={ allDay }
+							onChange={ setAllDay }
 						/>
 
-						{allDay ? (
-							<HStack spacing={4} alignment="top" wrap>
+						{ allDay ? (
+							<HStack spacing={ 4 } alignment="top" wrap>
 								<TextControl
-									label={__(
+									label={ __(
 										'Start date',
 										'fair-events-experimental'
-									)}
+									) }
 									type="date"
-									value={startDate}
-									onChange={handleStartDateChange}
+									value={ startDate }
+									onChange={ handleStartDateChange }
 									required
 								/>
 								<TextControl
-									label={__(
+									label={ __(
 										'End date',
 										'fair-events-experimental'
-									)}
+									) }
 									type="date"
-									value={endDate}
-									onChange={setEndDate}
+									value={ endDate }
+									onChange={ setEndDate }
 									required
 								/>
 							</HStack>
 						) : (
-							<HStack spacing={4} alignment="top" wrap>
+							<HStack spacing={ 4 } alignment="top" wrap>
 								<TextControl
-									label={__(
+									label={ __(
 										'Start date',
 										'fair-events-experimental'
-									)}
+									) }
 									type="date"
-									value={startDate}
-									onChange={handleStartDateChange}
+									value={ startDate }
+									onChange={ handleStartDateChange }
 									required
 								/>
 								<TextControl
-									label={__(
+									label={ __(
 										'Start time',
 										'fair-events-experimental'
-									)}
+									) }
 									type="time"
-									value={startTime}
-									onChange={handleStartTimeChange}
+									value={ startTime }
+									onChange={ handleStartTimeChange }
 									required
 								/>
 								<TextControl
-									label={__(
+									label={ __(
 										'End date',
 										'fair-events-experimental'
-									)}
+									) }
 									type="date"
-									value={endDate}
-									onChange={setEndDate}
+									value={ endDate }
+									onChange={ setEndDate }
 									required
 								/>
 								<TextControl
-									label={__(
+									label={ __(
 										'End time',
 										'fair-events-experimental'
-									)}
+									) }
 									type="time"
-									value={endTime}
-									onChange={setEndTime}
+									value={ endTime }
+									onChange={ setEndTime }
 									required
 								/>
 							</HStack>
-						)}
+						) }
 
 						<SelectControl
-							label={__(
+							label={ __(
 								'Event length',
 								'fair-events-experimental'
-							)}
-							value={String(durationValue)}
-							options={durationOptions.map((opt) => ({
+							) }
+							value={ String( durationValue ) }
+							options={ durationOptions.map( ( opt ) => ( {
 								label: opt.label,
-								value: String(opt.value),
-							}))}
-							onChange={handleDurationChange}
+								value: String( opt.value ),
+							} ) ) }
+							onChange={ handleDurationChange }
 						/>
 
 						<SelectControl
-							label={__('Venue', 'fair-events-experimental')}
-							value={venueId}
-							options={venueOptions}
-							onChange={setVenueId}
+							label={ __( 'Venue', 'fair-events-experimental' ) }
+							value={ venueId }
+							options={ venueOptions }
+							onChange={ setVenueId }
 						/>
 
 						<FormTokenField
-							label={__('Categories', 'fair-events-experimental')}
-							value={categories.map((id) => {
+							label={ __(
+								'Categories',
+								'fair-events-experimental'
+							) }
+							value={ categories.map( ( id ) => {
 								const cat = availableCategories.find(
-									(c) => c.id === id
+									( c ) => c.id === id
 								);
 								return cat ? cat.name : '';
-							})}
-							suggestions={availableCategories.map((c) => c.name)}
-							onChange={(tokens) => {
+							} ) }
+							suggestions={ availableCategories.map(
+								( c ) => c.name
+							) }
+							onChange={ ( tokens ) => {
 								const ids = tokens
-									.map((token) => {
+									.map( ( token ) => {
 										const cat = availableCategories.find(
-											(c) => c.name === token
+											( c ) => c.name === token
 										);
 										return cat ? cat.id : null;
-									})
-									.filter(Boolean);
-								setCategories(ids);
-							}}
+									} )
+									.filter( Boolean );
+								setCategories( ids );
+							} }
 							__experimentalExpandOnFocus
 						/>
 
 						<RecurrenceControl
-							value={recurrence}
-							onChange={setRecurrence}
+							value={ recurrence }
+							onChange={ setRecurrence }
 						/>
 					</VStack>
 				</CardBody>
@@ -829,19 +856,21 @@ export default function DuplicateEventWizard({
 
 	function renderLinksTab() {
 		return (
-			<Card style={{ marginTop: '16px' }}>
+			<Card style={ { marginTop: '16px' } }>
 				<CardHeader>
-					<h2>{__('Linked Posts', 'fair-events-experimental')}</h2>
+					<h2>
+						{ __( 'Linked Posts', 'fair-events-experimental' ) }
+					</h2>
 				</CardHeader>
 				<CardBody>
-					<VStack spacing={4}>
+					<VStack spacing={ 4 }>
 						<RadioControl
-							label={__(
+							label={ __(
 								'How to handle linked posts',
 								'fair-events-experimental'
-							)}
-							selected={linksOption}
-							options={[
+							) }
+							selected={ linksOption }
+							options={ [
 								{
 									label: __(
 										'Clone linked posts — create draft copies',
@@ -856,42 +885,42 @@ export default function DuplicateEventWizard({
 									),
 									value: 'empty',
 								},
-							]}
-							onChange={setLinksOption}
+							] }
+							onChange={ setLinksOption }
 						/>
 
-						{linkedPosts.length > 0 && (
-							<VStack spacing={2}>
-								<h3 style={{ margin: 0 }}>
-									{__(
+						{ linkedPosts.length > 0 && (
+							<VStack spacing={ 2 }>
+								<h3 style={ { margin: 0 } }>
+									{ __(
 										'Source event linked posts:',
 										'fair-events-experimental'
-									)}
+									) }
 								</h3>
-								{linkedPosts.map((lp) => (
-									<HStack key={lp.id} spacing={3}>
+								{ linkedPosts.map( ( lp ) => (
+									<HStack key={ lp.id } spacing={ 3 }>
 										<span>
-											<strong>{lp.title}</strong> (
-											{lp.status})
-											{lp.is_primary && (
+											<strong>{ lp.title }</strong> (
+											{ lp.status })
+											{ lp.is_primary && (
 												<span
-													style={{
+													style={ {
 														marginLeft: '4px',
 														color: '#007cba',
 														fontSize: '12px',
-													}}
+													} }
 												>
-													{__(
+													{ __(
 														'Primary',
 														'fair-events-experimental'
-													)}
+													) }
 												</span>
-											)}
+											) }
 										</span>
 									</HStack>
-								))}
+								) ) }
 							</VStack>
-						)}
+						) }
 					</VStack>
 				</CardBody>
 			</Card>
@@ -899,150 +928,158 @@ export default function DuplicateEventWizard({
 	}
 
 	function renderTicketsTab() {
-		if (loadingTickets) {
+		if ( loadingTickets ) {
 			return <Spinner />;
 		}
 
 		return (
 			<EventTickets
-				initialData={ticketInitialData}
-				onDataRef={ticketDataRef}
-				startDatetime={getNewStartDatetime()}
-				lastOccurrenceDatetime={lastOccurrenceDatetime}
-				isSeries={isSeries}
-				onDirtyChange={handleTicketsDirtyChange}
+				initialData={ ticketInitialData }
+				onDataRef={ ticketDataRef }
+				startDatetime={ getNewStartDatetime() }
+				lastOccurrenceDatetime={ lastOccurrenceDatetime }
+				isSeries={ isSeries }
+				onDirtyChange={ handleTicketsDirtyChange }
 			/>
 		);
 	}
 
 	function renderGroupRulesTab() {
-		if (loadingGroupRules) {
+		if ( loadingGroupRules ) {
 			return <Spinner />;
 		}
 
 		const groupIds = new Set();
-		sourcePricingRules.forEach((r) => groupIds.add(r.group_id));
-		sourcePermissionRules.forEach((r) => groupIds.add(r.group_id));
+		sourcePricingRules.forEach( ( r ) => groupIds.add( r.group_id ) );
+		sourcePermissionRules.forEach( ( r ) => groupIds.add( r.group_id ) );
 
-		if (groupIds.size === 0) {
+		if ( groupIds.size === 0 ) {
 			return (
-				<Card style={{ marginTop: '16px' }}>
+				<Card style={ { marginTop: '16px' } }>
 					<CardBody>
 						<p>
-							{__(
+							{ __(
 								'No group rules found on source event.',
 								'fair-events-experimental'
-							)}
+							) }
 						</p>
 					</CardBody>
 				</Card>
 			);
 		}
 
-		const permissionLabel = (type) => {
-			switch (type) {
+		const permissionLabel = ( type ) => {
+			switch ( type ) {
 				case 'invited':
-					return __('Invited', 'fair-events-experimental');
+					return __( 'Invited', 'fair-events-experimental' );
 				case 'view_signups':
-					return __('View signups', 'fair-events-experimental');
+					return __( 'View signups', 'fair-events-experimental' );
 				case 'manage_signups':
-					return __('Manage signups', 'fair-events-experimental');
+					return __( 'Manage signups', 'fair-events-experimental' );
 				default:
 					return type;
 			}
 		};
 
-		const formatDiscount = (type, value) => {
-			if (type === 'percentage') {
-				return `${value}%`;
+		const formatDiscount = ( type, value ) => {
+			if ( type === 'percentage' ) {
+				return `${ value }%`;
 			}
-			return new Intl.NumberFormat('en-US', {
+			return new Intl.NumberFormat( 'en-US', {
 				style: 'currency',
 				currency: 'EUR',
-			}).format(value);
+			} ).format( value );
 		};
 
 		return (
-			<Card style={{ marginTop: '16px' }}>
+			<Card style={ { marginTop: '16px' } }>
 				<CardHeader>
-					<h2>{__('Group Rules', 'fair-events-experimental')}</h2>
+					<h2>{ __( 'Group Rules', 'fair-events-experimental' ) }</h2>
 				</CardHeader>
 				<CardBody>
-					<VStack spacing={3}>
-						<p style={{ color: '#666' }}>
-							{__(
+					<VStack spacing={ 3 }>
+						<p style={ { color: '#666' } }>
+							{ __(
 								'Select which groups to copy rules for.',
 								'fair-events-experimental'
-							)}
+							) }
 						</p>
-						{Array.from(groupIds).map((groupId) => {
+						{ Array.from( groupIds ).map( ( groupId ) => {
 							const pricing = sourcePricingRules.find(
-								(r) => r.group_id === groupId
+								( r ) => r.group_id === groupId
 							);
 							const permissions = sourcePermissionRules.filter(
-								(r) => r.group_id === groupId
+								( r ) => r.group_id === groupId
 							);
 							const groupName =
 								pricing?.group_name ||
-								permissions[0]?.group_name ||
-								`Group #${groupId}`;
+								permissions[ 0 ]?.group_name ||
+								`Group #${ groupId }`;
 
 							return (
-								<Card key={groupId}>
+								<Card key={ groupId }>
 									<CardBody>
 										<CheckboxControl
-											label={groupName}
+											label={ groupName }
 											checked={
-												!!selectedGroupRules[groupId]
+												!! selectedGroupRules[ groupId ]
 											}
-											onChange={(checked) => {
+											onChange={ ( checked ) => {
 												setSelectedGroupRules(
-													(prev) => ({
+													( prev ) => ( {
 														...prev,
-														[groupId]: checked,
-													})
+														[ groupId ]: checked,
+													} )
 												);
-											}}
+											} }
 										/>
 										<div
-											style={{
+											style={ {
 												marginLeft: '24px',
 												color: '#666',
 												fontSize: '13px',
-											}}
+											} }
 										>
-											{pricing && (
-												<p style={{ margin: '4px 0' }}>
-													{__(
+											{ pricing && (
+												<p
+													style={ {
+														margin: '4px 0',
+													} }
+												>
+													{ __(
 														'Discount:',
 														'fair-events-experimental'
-													)}{' '}
-													{formatDiscount(
+													) }{ ' ' }
+													{ formatDiscount(
 														pricing.discount_type,
 														pricing.discount_value
-													)}
+													) }
 												</p>
-											)}
-											{permissions.length > 0 && (
-												<p style={{ margin: '4px 0' }}>
-													{__(
+											) }
+											{ permissions.length > 0 && (
+												<p
+													style={ {
+														margin: '4px 0',
+													} }
+												>
+													{ __(
 														'Permissions:',
 														'fair-events-experimental'
-													)}{' '}
-													{permissions
-														.map((p) =>
+													) }{ ' ' }
+													{ permissions
+														.map( ( p ) =>
 															permissionLabel(
 																p.permission_type
 															)
 														)
-														.join(', ')}
+														.join( ', ' ) }
 												</p>
-											)}
+											) }
 										</div>
 									</CardBody>
 								</Card>
 							);
-						})}
+						} ) }
 					</VStack>
 				</CardBody>
 			</Card>
@@ -1050,19 +1087,19 @@ export default function DuplicateEventWizard({
 	}
 
 	function renderAudienceTab() {
-		if (loadingCollaborators) {
+		if ( loadingCollaborators ) {
 			return <Spinner />;
 		}
 
-		if (collaborators.length === 0) {
+		if ( collaborators.length === 0 ) {
 			return (
-				<Card style={{ marginTop: '16px' }}>
+				<Card style={ { marginTop: '16px' } }>
 					<CardBody>
 						<p>
-							{__(
+							{ __(
 								'No collaborators found on source event.',
 								'fair-events-experimental'
-							)}
+							) }
 						</p>
 					</CardBody>
 				</Card>
@@ -1070,33 +1107,37 @@ export default function DuplicateEventWizard({
 		}
 
 		return (
-			<Card style={{ marginTop: '16px' }}>
+			<Card style={ { marginTop: '16px' } }>
 				<CardHeader>
-					<h2>{__('Collaborators', 'fair-events-experimental')}</h2>
+					<h2>
+						{ __( 'Collaborators', 'fair-events-experimental' ) }
+					</h2>
 				</CardHeader>
 				<CardBody>
-					<VStack spacing={3}>
-						<p style={{ color: '#666' }}>
-							{__(
+					<VStack spacing={ 3 }>
+						<p style={ { color: '#666' } }>
+							{ __(
 								'Select which collaborators to copy to the new event.',
 								'fair-events-experimental'
-							)}
+							) }
 						</p>
-						{collaborators.map((collab) => (
+						{ collaborators.map( ( collab ) => (
 							<CheckboxControl
-								key={collab.id}
-								label={collab.name || collab.email || collab.id}
-								checked={
-									selectedCollaborators[collab.id] || false
+								key={ collab.id }
+								label={
+									collab.name || collab.email || collab.id
 								}
-								onChange={(checked) => {
-									setSelectedCollaborators((prev) => ({
+								checked={
+									selectedCollaborators[ collab.id ] || false
+								}
+								onChange={ ( checked ) => {
+									setSelectedCollaborators( ( prev ) => ( {
 										...prev,
-										[collab.id]: checked,
-									}));
-								}}
+										[ collab.id ]: checked,
+									} ) );
+								} }
 							/>
-						))}
+						) ) }
 					</VStack>
 				</CardBody>
 			</Card>
@@ -1104,27 +1145,27 @@ export default function DuplicateEventWizard({
 	}
 }
 
-function shiftDate(dateStr, days) {
-	const date = new Date(dateStr);
-	date.setDate(date.getDate() + days);
-	return formatDate(date);
+function shiftDate( dateStr, days ) {
+	const date = new Date( dateStr );
+	date.setDate( date.getDate() + days );
+	return formatDate( date );
 }
 
-function formatDate(date) {
+function formatDate( date ) {
 	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, '0');
-	const day = String(date.getDate()).padStart(2, '0');
-	return `${year}-${month}-${day}`;
+	const month = String( date.getMonth() + 1 ).padStart( 2, '0' );
+	const day = String( date.getDate() ).padStart( 2, '0' );
+	return `${ year }-${ month }-${ day }`;
 }
 
-function hasTicketData(data) {
+function hasTicketData( data ) {
 	return (
-		(data.ticket_types && data.ticket_types.length > 0) ||
-		(data.sale_periods && data.sale_periods.length > 0)
+		( data.ticket_types && data.ticket_types.length > 0 ) ||
+		( data.sale_periods && data.sale_periods.length > 0 )
 	);
 }
 
-function getNextStep(completedSteps) {
+function getNextStep( completedSteps ) {
 	const allSteps = [
 		'create',
 		'links',
@@ -1132,8 +1173,8 @@ function getNextStep(completedSteps) {
 		'collaborators',
 		'group-rules',
 	];
-	for (const step of allSteps) {
-		if (!completedSteps.includes(step)) return step;
+	for ( const step of allSteps ) {
+		if ( ! completedSteps.includes( step ) ) return step;
 	}
 	return 'unknown';
 }

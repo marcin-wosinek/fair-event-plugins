@@ -4,30 +4,30 @@ import apiFetch from '@wordpress/api-fetch';
 import { Button, Card, CardBody, Spinner } from '@wordpress/components';
 
 export default function ExtraMessagesList() {
-	const [messages, setMessages] = useState([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState(null);
+	const [ messages, setMessages ] = useState( [] );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadMessages();
-	}, []);
+	}, [] );
 
 	const loadMessages = () => {
-		setIsLoading(true);
-		apiFetch({ path: '/fair-audience/v1/extra-messages' })
-			.then((data) => {
-				setMessages(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
-				setError(err.message);
-				setIsLoading(false);
-			});
+		setIsLoading( true );
+		apiFetch( { path: '/fair-audience/v1/extra-messages' } )
+			.then( ( data ) => {
+				setMessages( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
+				setError( err.message );
+				setIsLoading( false );
+			} );
 	};
 
-	const handleDelete = (id) => {
+	const handleDelete = ( id ) => {
 		if (
-			!confirm(
+			! confirm(
 				__(
 					'Are you sure you want to delete this extra message?',
 					'fair-audience-experimental'
@@ -37,62 +37,66 @@ export default function ExtraMessagesList() {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/extra-messages/${id}`,
+		apiFetch( {
+			path: `/fair-audience/v1/extra-messages/${ id }`,
 			method: 'DELETE',
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				loadMessages();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				alert(
-					__('Error: ', 'fair-audience-experimental') + err.message
+					__( 'Error: ', 'fair-audience-experimental' ) + err.message
 				);
-			});
+			} );
 	};
 
-	const handleToggleActive = (msg) => {
-		apiFetch({
-			path: `/fair-audience/v1/extra-messages/${msg.id}`,
+	const handleToggleActive = ( msg ) => {
+		apiFetch( {
+			path: `/fair-audience/v1/extra-messages/${ msg.id }`,
 			method: 'PUT',
 			data: {
 				content: msg.content,
-				is_active: !msg.is_active,
+				is_active: ! msg.is_active,
 				category_id: msg.category_id,
 			},
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				loadMessages();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				alert(
-					__('Error: ', 'fair-audience-experimental') + err.message
+					__( 'Error: ', 'fair-audience-experimental' ) + err.message
 				);
-			});
+			} );
 	};
 
-	const truncateContent = (content, maxLength = 80) => {
-		if (content.length <= maxLength) {
+	const truncateContent = ( content, maxLength = 80 ) => {
+		if ( content.length <= maxLength ) {
 			return content;
 		}
-		return content.substring(0, maxLength) + '...';
+		return content.substring( 0, maxLength ) + '...';
 	};
 
-	if (isLoading) {
+	if ( isLoading ) {
 		return (
 			<div className="wrap">
-				<h1>{__('Extra Messages', 'fair-audience-experimental')}</h1>
+				<h1>
+					{ __( 'Extra Messages', 'fair-audience-experimental' ) }
+				</h1>
 				<Spinner />
 			</div>
 		);
 	}
 
-	if (error) {
+	if ( error ) {
 		return (
 			<div className="wrap">
-				<h1>{__('Extra Messages', 'fair-audience-experimental')}</h1>
+				<h1>
+					{ __( 'Extra Messages', 'fair-audience-experimental' ) }
+				</h1>
 				<div className="notice notice-error">
-					<p>{error}</p>
+					<p>{ error }</p>
 				</div>
 			</div>
 		);
@@ -101,64 +105,66 @@ export default function ExtraMessagesList() {
 	return (
 		<div className="wrap">
 			<h1 className="wp-heading-inline">
-				{__('Extra Messages', 'fair-audience-experimental')}
+				{ __( 'Extra Messages', 'fair-audience-experimental' ) }
 			</h1>
 			<a
 				href="admin.php?page=fair-audience-edit-extra-message"
 				className="page-title-action"
 			>
-				{__('Add New', 'fair-audience-experimental')}
+				{ __( 'Add New', 'fair-audience-experimental' ) }
 			</a>
 
-			<Card style={{ marginTop: '20px' }}>
+			<Card style={ { marginTop: '20px' } }>
 				<CardBody>
-					{messages.length === 0 ? (
+					{ messages.length === 0 ? (
 						<p>
-							{__(
+							{ __(
 								'No extra messages found. Create your first extra message to get started.',
 								'fair-audience-experimental'
-							)}
+							) }
 						</p>
 					) : (
 						<table className="wp-list-table widefat fixed striped">
 							<thead>
 								<tr>
 									<th>
-										{__(
+										{ __(
 											'Content',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
 									<th>
-										{__(
+										{ __(
 											'Category',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
 									<th>
-										{__(
+										{ __(
 											'Status',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
 									<th>
-										{__(
+										{ __(
 											'Actions',
 											'fair-audience-experimental'
-										)}
+										) }
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								{messages.map((msg) => (
-									<tr key={msg.id}>
-										<td>{truncateContent(msg.content)}</td>
+								{ messages.map( ( msg ) => (
+									<tr key={ msg.id }>
 										<td>
-											{msg.category_name ||
+											{ truncateContent( msg.content ) }
+										</td>
+										<td>
+											{ msg.category_name ||
 												__(
 													'All',
 													'fair-audience-experimental'
-												)}
+												) }
 										</td>
 										<td>
 											<Button
@@ -168,11 +174,11 @@ export default function ExtraMessagesList() {
 														? 'primary'
 														: 'secondary'
 												}
-												onClick={() =>
-													handleToggleActive(msg)
+												onClick={ () =>
+													handleToggleActive( msg )
 												}
 											>
-												{msg.is_active
+												{ msg.is_active
 													? __(
 															'Active',
 															'fair-audience-experimental'
@@ -180,40 +186,40 @@ export default function ExtraMessagesList() {
 													: __(
 															'Inactive',
 															'fair-audience-experimental'
-													  )}
+													  ) }
 											</Button>
 										</td>
 										<td>
 											<Button
 												isLink
-												href={`admin.php?page=fair-audience-edit-extra-message&message_id=${msg.id}`}
+												href={ `admin.php?page=fair-audience-edit-extra-message&message_id=${ msg.id }` }
 											>
-												{__(
+												{ __(
 													'Edit',
 													'fair-audience-experimental'
-												)}
+												) }
 											</Button>
-											{' | '}
+											{ ' | ' }
 											<Button
 												isLink
-												onClick={() =>
-													handleDelete(msg.id)
+												onClick={ () =>
+													handleDelete( msg.id )
 												}
-												style={{
+												style={ {
 													color: '#b32d2e',
-												}}
+												} }
 											>
-												{__(
+												{ __(
 													'Delete',
 													'fair-audience-experimental'
-												)}
+												) }
 											</Button>
 										</td>
 									</tr>
-								))}
+								) ) }
 							</tbody>
 						</table>
-					)}
+					) }
 				</CardBody>
 			</Card>
 		</div>

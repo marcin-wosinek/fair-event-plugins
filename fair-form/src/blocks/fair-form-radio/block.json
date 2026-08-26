@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "button",
 	"description": "A single-choice radio button question for Fair Form",
-	"keywords": ["question", "radio", "choice", "button"],
+	"keywords": [ "question", "radio", "choice", "button" ],
 	"textdomain": "fair-audience",
 	"ancestor": [
 		"fair-audience/fair-form",

@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "editor-textcolor",
 	"description": "A short text input question for Fair Form",
-	"keywords": ["question", "text", "input"],
+	"keywords": [ "question", "text", "input" ],
 	"textdomain": "fair-audience",
 	"ancestor": [
 		"fair-audience/fair-form",

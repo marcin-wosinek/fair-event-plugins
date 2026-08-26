@@ -12,21 +12,21 @@ import { dateI18n, getSettings } from '@wordpress/date';
  * @param {string} endTime   End datetime string (ISO format)
  * @return {number|null} Duration in minutes, or null if invalid
  */
-export const calculateDuration = (startTime, endTime) => {
-	if (!startTime || !endTime) {
+export const calculateDuration = ( startTime, endTime ) => {
+	if ( ! startTime || ! endTime ) {
 		return null;
 	}
 
 	try {
-		const startDate = parseISO(startTime);
-		const endDate = parseISO(endTime);
+		const startDate = parseISO( startTime );
+		const endDate = parseISO( endTime );
 
-		if (!isValid(startDate) || !isValid(endDate)) {
+		if ( ! isValid( startDate ) || ! isValid( endDate ) ) {
 			return null;
 		}
 
-		return differenceInMinutes(endDate, startDate);
-	} catch (error) {
+		return differenceInMinutes( endDate, startDate );
+	} catch ( error ) {
 		return null;
 	}
 };
@@ -38,8 +38,8 @@ export const calculateDuration = (startTime, endTime) => {
  * @param {string} fallback Fallback text to display if date is empty (default: '-')
  * @return {string} Formatted date or fallback text
  */
-export const formatDateOrFallback = (dateValue, fallback = '-') => {
-	if (!dateValue || dateValue === '') {
+export const formatDateOrFallback = ( dateValue, fallback = '-' ) => {
+	if ( ! dateValue || dateValue === '' ) {
 		return fallback;
 	}
 	return dateValue;
@@ -54,9 +54,13 @@ export const formatDateOrFallback = (dateValue, fallback = '-') => {
  * @param {string} datetime Naive datetime string, e.g. "2026-09-01 10:00:00".
  * @return {string} Formatted date/time in the site's format.
  */
-export function formatSiteLocalDatetime(datetime) {
+export function formatSiteLocalDatetime( datetime ) {
 	const { formats } = getSettings();
-	return dateI18n(formats.datetime, `${datetime.replace(' ', 'T')}Z`, true);
+	return dateI18n(
+		formats.datetime,
+		`${ datetime.replace( ' ', 'T' ) }Z`,
+		true
+	);
 }
 
 /**
@@ -67,20 +71,20 @@ export function formatSiteLocalDatetime(datetime) {
  * @param {string} datetime Naive datetime string, e.g. "2026-09-01 10:00:00".
  * @return {string} Formatted time in the site's format.
  */
-export function formatSiteLocalTime(datetime) {
+export function formatSiteLocalTime( datetime ) {
 	const { formats } = getSettings();
-	return dateI18n(formats.time, `${datetime.replace(' ', 'T')}Z`, true);
+	return dateI18n( formats.time, `${ datetime.replace( ' ', 'T' ) }Z`, true );
 }
 
 // Naive site-local parsing shared by formatDateOnly/formatMonthLabel: slices
 // off any time component and re-parses at local midnight so no timezone
 // re-conversion happens (see UI_GUIDELINES.md "Dates and times"). `Date`
 // inputs (e.g. from MiniCalendar's month grid) pass through unchanged.
-function toLocalDate(value) {
-	if (value instanceof Date) return value;
-	if (!value) return null;
-	const [datePart] = String(value).split(/[ T]/);
-	return new Date(`${datePart}T00:00:00`);
+function toLocalDate( value ) {
+	if ( value instanceof Date ) return value;
+	if ( ! value ) return null;
+	const [ datePart ] = String( value ).split( /[ T]/ );
+	return new Date( `${ datePart }T00:00:00` );
 }
 
 const DATE_ONLY_STYLES = {
@@ -99,10 +103,10 @@ const DATE_ONLY_STYLES = {
  * @param {string} [style] One of 'long' | 'medium' | 'short' | 'numeric'.
  * @return {string} Formatted date, or '' if value is empty.
  */
-export function formatDateOnly(value, style = 'medium') {
-	const date = toLocalDate(value);
-	if (!date) return '';
-	return date.toLocaleDateString(undefined, DATE_ONLY_STYLES[style]);
+export function formatDateOnly( value, style = 'medium' ) {
+	const date = toLocalDate( value );
+	if ( ! date ) return '';
+	return date.toLocaleDateString( undefined, DATE_ONLY_STYLES[ style ] );
 }
 
 /**
@@ -111,11 +115,11 @@ export function formatDateOnly(value, style = 'medium') {
  * @param {string|Date|null|undefined} value Date-only/datetime string, or a Date object.
  * @return {string} Formatted "Month YYYY" label, or '' if value is empty.
  */
-export function formatMonthLabel(value) {
-	const date = toLocalDate(value);
-	if (!date) return '';
-	return date.toLocaleDateString(undefined, {
+export function formatMonthLabel( value ) {
+	const date = toLocalDate( value );
+	if ( ! date ) return '';
+	return date.toLocaleDateString( undefined, {
 		month: 'long',
 		year: 'numeric',
-	});
+	} );
 }

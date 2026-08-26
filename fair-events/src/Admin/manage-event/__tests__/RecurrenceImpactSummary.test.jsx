@@ -20,14 +20,14 @@ const baseImpact = {
 	removed: [],
 };
 
-it('renders nothing when impact is null', () => {
+it( 'renders nothing when impact is null', () => {
 	const { container } = render(
-		<RecurrenceImpactSummary impact={null} blocked={false} />
+		<RecurrenceImpactSummary impact={ null } blocked={ false } />
 	);
-	expect(container).toBeEmptyDOMElement();
-});
+	expect( container ).toBeEmptyDOMElement();
+} );
 
-it('renders nothing when blocked and no problematic removals', () => {
+it( 'renders nothing when blocked and no problematic removals', () => {
 	const impact = {
 		...baseImpact,
 		removed: [
@@ -40,12 +40,12 @@ it('renders nothing when blocked and no problematic removals', () => {
 		],
 	};
 	const { container } = render(
-		<RecurrenceImpactSummary impact={impact} blocked={true} />
+		<RecurrenceImpactSummary impact={ impact } blocked={ true } />
 	);
-	expect(container).toBeEmptyDOMElement();
-});
+	expect( container ).toBeEmptyDOMElement();
+} );
 
-it('blocked=true: shows occurrences with dependents', () => {
+it( 'blocked=true: shows occurrences with dependents', () => {
 	const impact = {
 		...baseImpact,
 		removed: [
@@ -57,17 +57,17 @@ it('blocked=true: shows occurrences with dependents', () => {
 			},
 		],
 	};
-	render(<RecurrenceImpactSummary impact={impact} blocked={true} />);
+	render( <RecurrenceImpactSummary impact={ impact } blocked={ true } /> );
 
 	expect(
-		screen.getByText(/This change cannot be applied/i, { selector: 'p' })
+		screen.getByText( /This change cannot be applied/i, { selector: 'p' } )
 	).toBeInTheDocument();
 	expect(
-		screen.getByText(/3 dependent\(s\)/i, { selector: 'li' })
+		screen.getByText( /3 dependent\(s\)/i, { selector: 'li' } )
 	).toBeInTheDocument();
-});
+} );
 
-it('blocked=true: shows past occurrences', () => {
+it( 'blocked=true: shows past occurrences', () => {
 	const impact = {
 		...baseImpact,
 		removed: [
@@ -79,26 +79,26 @@ it('blocked=true: shows past occurrences', () => {
 			},
 		],
 	};
-	render(<RecurrenceImpactSummary impact={impact} blocked={true} />);
+	render( <RecurrenceImpactSummary impact={ impact } blocked={ true } /> );
 
 	expect(
-		screen.getByText(/This change cannot be applied/i, { selector: 'p' })
+		screen.getByText( /This change cannot be applied/i, { selector: 'p' } )
 	).toBeInTheDocument();
 	expect(
-		screen.getByText(/in the past/i, { selector: 'li' })
+		screen.getByText( /in the past/i, { selector: 'li' } )
 	).toBeInTheDocument();
-});
+} );
 
-it('blocked=false with no changes renders nothing', () => {
+it( 'blocked=false with no changes renders nothing', () => {
 	const { container } = render(
-		<RecurrenceImpactSummary impact={baseImpact} blocked={false} />
+		<RecurrenceImpactSummary impact={ baseImpact } blocked={ false } />
 	);
-	expect(container).toBeEmptyDOMElement();
-});
+	expect( container ).toBeEmptyDOMElement();
+} );
 
-it('blocked=false: shows shifted/added/removed counts', () => {
+it( 'blocked=false: shows shifted/added/removed counts', () => {
 	const impact = {
-		unchanged: [{ id: 1, start_datetime: '2026-07-01 18:00:00' }],
+		unchanged: [ { id: 1, start_datetime: '2026-07-01 18:00:00' } ],
 		shifted: [
 			{
 				id: 2,
@@ -108,22 +108,22 @@ it('blocked=false: shows shifted/added/removed counts', () => {
 				dependents: 1,
 			},
 		],
-		added: [{ start_datetime: '2026-09-01 18:00:00' }],
+		added: [ { start_datetime: '2026-09-01 18:00:00' } ],
 		removed: [],
 	};
 	const { container } = render(
-		<RecurrenceImpactSummary impact={impact} blocked={false} />
+		<RecurrenceImpactSummary impact={ impact } blocked={ false } />
 	);
 
 	// Scope to the notice content div to avoid the a11y-speak region duplicate.
-	const content = container.querySelector('.components-notice__content');
-	expect(content).not.toBeNull();
-	expect(content.textContent).toMatch(/Recurrence updated/i);
-	expect(content.textContent).toMatch(/1 shifted/i);
-	expect(content.textContent).toMatch(/1 added/i);
-});
+	const content = container.querySelector( '.components-notice__content' );
+	expect( content ).not.toBeNull();
+	expect( content.textContent ).toMatch( /Recurrence updated/i );
+	expect( content.textContent ).toMatch( /1 shifted/i );
+	expect( content.textContent ).toMatch( /1 added/i );
+} );
 
-it('calls onDismiss when the notice is dismissed', () => {
+it( 'calls onDismiss when the notice is dismissed', () => {
 	const onDismiss = jest.fn();
 	const impact = {
 		...baseImpact,
@@ -138,14 +138,14 @@ it('calls onDismiss when the notice is dismissed', () => {
 	};
 	render(
 		<RecurrenceImpactSummary
-			impact={impact}
-			blocked={true}
-			onDismiss={onDismiss}
+			impact={ impact }
+			blocked={ true }
+			onDismiss={ onDismiss }
 		/>
 	);
 
 	// WP Notice dismiss button has aria-label="Close".
-	const dismissButton = screen.getByRole('button', { name: /close/i });
-	fireEvent.click(dismissButton);
-	expect(onDismiss).toHaveBeenCalledTimes(1);
-});
+	const dismissButton = screen.getByRole( 'button', { name: /close/i } );
+	fireEvent.click( dismissButton );
+	expect( onDismiss ).toHaveBeenCalledTimes( 1 );
+} );

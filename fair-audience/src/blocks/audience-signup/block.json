@@ -7,14 +7,14 @@
 	"category": "widgets",
 	"icon": "admin-users",
 	"description": "A standalone signup form for audience member registration",
-	"keywords": ["signup", "register", "audience", "member"],
+	"keywords": [ "signup", "register", "audience", "member" ],
 	"textdomain": "fair-audience",
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"],
+		"align": [ "wide", "full" ],
 		"spacing": {
 			"padding": true,
-			"margin": ["top", "bottom"]
+			"margin": [ "top", "bottom" ]
 		}
 	},
 	"attributes": {
@@ -46,6 +46,6 @@
 	"editorScript": "file:./editor.js",
 	"viewScript": "file:./frontend.js",
 	"render": "file:./render.php",
-	"style": ["wp-block-button", "file:./style-frontend.css"],
+	"style": [ "wp-block-button", "file:./style-frontend.css" ],
 	"editorStyle": "file:./editor.css"
 }

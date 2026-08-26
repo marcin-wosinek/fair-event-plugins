@@ -17,13 +17,13 @@ export class TimeSlot {
 	 * @param {string} timeRange.endTime - End time in HH:mm format
 	 * @param {string} timetableStartTime - Timetable start time in HH:mm format
 	 */
-	constructor({ startTime, endTime }, timetableStartTime = '09:00') {
+	constructor( { startTime, endTime }, timetableStartTime = '09:00' ) {
 		// Create HourlyRange for the time slot
-		this.timeRange = new HourlyRange({ startTime, endTime });
+		this.timeRange = new HourlyRange( { startTime, endTime } );
 
 		// Store timetable start time as decimal hours
 		this.timetableStartTime = timetableStartTime;
-		this.timetableStartHour = parseTime(timetableStartTime);
+		this.timetableStartHour = parseTime( timetableStartTime );
 	}
 
 	/**
@@ -85,8 +85,8 @@ export class TimeSlot {
 	 *
 	 * @param {string} newStartTime - New start time in HH:mm format
 	 */
-	setStartTime(newStartTime) {
-		this.timeRange.setStartTime(newStartTime);
+	setStartTime( newStartTime ) {
+		this.timeRange.setStartTime( newStartTime );
 	}
 
 	/**
@@ -94,8 +94,8 @@ export class TimeSlot {
 	 *
 	 * @param {number} newDuration - New duration in decimal hours
 	 */
-	setDuration(newDuration) {
-		this.timeRange.setDuration(newDuration);
+	setDuration( newDuration ) {
+		this.timeRange.setDuration( newDuration );
 	}
 
 	/**
@@ -103,8 +103,8 @@ export class TimeSlot {
 	 *
 	 * @param {string} newEndTime - New end time in HH:mm format
 	 */
-	setEndTime(newEndTime) {
-		this.timeRange.setEndTime(newEndTime);
+	setEndTime( newEndTime ) {
+		this.timeRange.setEndTime( newEndTime );
 	}
 
 	/**
@@ -116,7 +116,7 @@ export class TimeSlot {
 		let timeFromStart = this.timeRange.startHour - this.timetableStartHour;
 
 		// If slot start is before timetable start, add 24 hours (next day)
-		if (timeFromStart < 0) {
+		if ( timeFromStart < 0 ) {
 			timeFromStart += 24;
 		}
 
@@ -128,8 +128,8 @@ export class TimeSlot {
 	 *
 	 * @param {string} newTimetableStartTime - New timetable start time in HH:mm format
 	 */
-	setTimetableStartTime(newTimetableStartTime) {
+	setTimetableStartTime( newTimetableStartTime ) {
 		this.timetableStartTime = newTimetableStartTime;
-		this.timetableStartHour = parseTime(newTimetableStartTime);
+		this.timetableStartHour = parseTime( newTimetableStartTime );
 	}
 }

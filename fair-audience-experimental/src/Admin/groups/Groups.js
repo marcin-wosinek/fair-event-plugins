@@ -28,7 +28,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: ['name', 'description', 'member_count'],
+	fields: [ 'name', 'description', 'member_count' ],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -36,214 +36,216 @@ const DEFAULT_LAYOUTS = {
 };
 
 export default function Groups() {
-	const [groups, setGroups] = useState([]);
-	const [totalItems, setTotalItems] = useState(0);
-	const [isLoading, setIsLoading] = useState(true);
-	const [view, setView] = useState(DEFAULT_VIEW);
+	const [ groups, setGroups ] = useState( [] );
+	const [ totalItems, setTotalItems ] = useState( 0 );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ view, setView ] = useState( DEFAULT_VIEW );
 
 	// Create/Edit modal state.
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-	const [editingGroup, setEditingGroup] = useState(null);
-	const [groupName, setGroupName] = useState('');
-	const [groupDescription, setGroupDescription] = useState('');
-	const [isSaving, setIsSaving] = useState(false);
+	const [ isEditModalOpen, setIsEditModalOpen ] = useState( false );
+	const [ editingGroup, setEditingGroup ] = useState( null );
+	const [ groupName, setGroupName ] = useState( '' );
+	const [ groupDescription, setGroupDescription ] = useState( '' );
+	const [ isSaving, setIsSaving ] = useState( false );
 
 	// Duplicate modal state.
-	const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
-	const [duplicatingGroup, setDuplicatingGroup] = useState(null);
-	const [duplicateName, setDuplicateName] = useState('');
-	const [isDuplicating, setIsDuplicating] = useState(false);
+	const [ isDuplicateModalOpen, setIsDuplicateModalOpen ] = useState( false );
+	const [ duplicatingGroup, setDuplicatingGroup ] = useState( null );
+	const [ duplicateName, setDuplicateName ] = useState( '' );
+	const [ isDuplicating, setIsDuplicating ] = useState( false );
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
 		() => [
 			{
 				id: 'name',
-				label: __('Name', 'fair-audience-experimental'),
-				render: ({ item }) => (
-					<a href={`${GROUP_DETAIL_URL}${item.id}`}>{item.name}</a>
+				label: __( 'Name', 'fair-audience-experimental' ),
+				render: ( { item } ) => (
+					<a href={ `${ GROUP_DETAIL_URL }${ item.id }` }>
+						{ item.name }
+					</a>
 				),
 				enableSorting: true,
 				enableHiding: false,
 			},
 			{
 				id: 'description',
-				label: __('Description', 'fair-audience-experimental'),
-				render: ({ item }) => item.description || '—',
+				label: __( 'Description', 'fair-audience-experimental' ),
+				render: ( { item } ) => item.description || '—',
 				enableSorting: false,
 			},
 			{
 				id: 'member_count',
-				label: __('Members', 'fair-audience-experimental'),
-				render: ({ item }) => (
-					<div style={{ textAlign: 'right' }}>
-						{item.member_count}
+				label: __( 'Members', 'fair-audience-experimental' ),
+				render: ( { item } ) => (
+					<div style={ { textAlign: 'right' } }>
+						{ item.member_count }
 					</div>
 				),
 				enableSorting: true,
-				getValue: ({ item }) => item.member_count,
+				getValue: ( { item } ) => item.member_count,
 			},
 		],
 		[]
 	);
 
 	// Convert view state to API query params.
-	const queryArgs = useMemo(() => {
+	const queryArgs = useMemo( () => {
 		const params = new URLSearchParams();
 
-		if (view.sort?.field) {
-			params.append('orderby', view.sort.field);
-			params.append('order', view.sort.direction || 'asc');
+		if ( view.sort?.field ) {
+			params.append( 'orderby', view.sort.field );
+			params.append( 'order', view.sort.direction || 'asc' );
 		}
 
 		return params.toString();
-	}, [view]);
+	}, [ view ] );
 
-	const loadGroups = useCallback(() => {
-		setIsLoading(true);
+	const loadGroups = useCallback( () => {
+		setIsLoading( true );
 
 		const path = `/fair-audience/v1/groups${
 			queryArgs ? '?' + queryArgs : ''
 		}`;
 
-		apiFetch({ path, parse: false })
-			.then((response) => {
+		apiFetch( { path, parse: false } )
+			.then( ( response ) => {
 				const total = parseInt(
-					response.headers.get('X-WP-Total') || '0',
+					response.headers.get( 'X-WP-Total' ) || '0',
 					10
 				);
-				setTotalItems(total);
+				setTotalItems( total );
 				return response.json();
-			})
-			.then((data) => {
-				setGroups(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
+			} )
+			.then( ( data ) => {
+				setGroups( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading groups:', err);
-				setIsLoading(false);
-			});
-	}, [queryArgs]);
+				console.error( 'Error loading groups:', err );
+				setIsLoading( false );
+			} );
+	}, [ queryArgs ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadGroups();
-	}, [loadGroups]);
+	}, [ loadGroups ] );
 
 	// Open create modal.
 	const openCreateModal = () => {
-		setEditingGroup(null);
-		setGroupName('');
-		setGroupDescription('');
-		setIsEditModalOpen(true);
+		setEditingGroup( null );
+		setGroupName( '' );
+		setGroupDescription( '' );
+		setIsEditModalOpen( true );
 	};
 
 	// Open edit modal.
-	const openEditModal = (group) => {
-		setEditingGroup(group);
-		setGroupName(group.name);
-		setGroupDescription(group.description || '');
-		setIsEditModalOpen(true);
+	const openEditModal = ( group ) => {
+		setEditingGroup( group );
+		setGroupName( group.name );
+		setGroupDescription( group.description || '' );
+		setIsEditModalOpen( true );
 	};
 
 	// Handle save group.
 	const handleSaveGroup = () => {
-		if (!groupName.trim()) {
+		if ( ! groupName.trim() ) {
 			return;
 		}
 
-		setIsSaving(true);
+		setIsSaving( true );
 
 		const request = editingGroup
-			? apiFetch({
-					path: `/fair-audience/v1/groups/${editingGroup.id}`,
+			? apiFetch( {
+					path: `/fair-audience/v1/groups/${ editingGroup.id }`,
 					method: 'PUT',
 					data: {
 						name: groupName.trim(),
 						description: groupDescription.trim(),
 					},
-			  })
-			: apiFetch({
+			  } )
+			: apiFetch( {
 					path: '/fair-audience/v1/groups',
 					method: 'POST',
 					data: {
 						name: groupName.trim(),
 						description: groupDescription.trim(),
 					},
-			  });
+			  } );
 
 		request
-			.then(() => {
-				setIsEditModalOpen(false);
+			.then( () => {
+				setIsEditModalOpen( false );
 				loadGroups();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience-experimental') +
-						(err.message ||
+					__( 'Error: ', 'fair-audience-experimental' ) +
+						( err.message ||
 							__(
 								'Failed to save group.',
 								'fair-audience-experimental'
-							))
+							) )
 				);
-			})
-			.finally(() => {
-				setIsSaving(false);
-			});
+			} )
+			.finally( () => {
+				setIsSaving( false );
+			} );
 	};
 
 	// Open duplicate modal.
-	const openDuplicateModal = (group) => {
-		setDuplicatingGroup(group);
+	const openDuplicateModal = ( group ) => {
+		setDuplicatingGroup( group );
 		setDuplicateName(
 			sprintf(
 				/* translators: %s: original group name */
-				__('%s (copy)', 'fair-audience-experimental'),
+				__( '%s (copy)', 'fair-audience-experimental' ),
 				group.name
 			)
 		);
-		setIsDuplicateModalOpen(true);
+		setIsDuplicateModalOpen( true );
 	};
 
 	// Handle duplicate group submission.
 	const handleDuplicateGroup = () => {
-		if (!duplicateName.trim()) {
+		if ( ! duplicateName.trim() ) {
 			return;
 		}
 
-		setIsDuplicating(true);
+		setIsDuplicating( true );
 
-		apiFetch({
-			path: `/fair-audience/v1/groups/${duplicatingGroup.id}/duplicate`,
+		apiFetch( {
+			path: `/fair-audience/v1/groups/${ duplicatingGroup.id }/duplicate`,
 			method: 'POST',
 			data: { name: duplicateName.trim() },
-		})
-			.then(() => {
-				setIsDuplicateModalOpen(false);
+		} )
+			.then( () => {
+				setIsDuplicateModalOpen( false );
 				loadGroups();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience-experimental') +
-						(err.message ||
+					__( 'Error: ', 'fair-audience-experimental' ) +
+						( err.message ||
 							__(
 								'Failed to duplicate group.',
 								'fair-audience-experimental'
-							))
+							) )
 				);
-			})
-			.finally(() => {
-				setIsDuplicating(false);
-			});
+			} )
+			.finally( () => {
+				setIsDuplicating( false );
+			} );
 	};
 
 	// Handle delete group.
-	const handleDeleteGroup = (group) => {
+	const handleDeleteGroup = ( group ) => {
 		// eslint-disable-next-line no-undef
 		if (
-			!confirm(
+			! confirm(
 				__(
 					'Are you sure you want to delete this group?',
 					'fair-audience-experimental'
@@ -253,24 +255,24 @@ export default function Groups() {
 			return;
 		}
 
-		apiFetch({
-			path: `/fair-audience/v1/groups/${group.id}`,
+		apiFetch( {
+			path: `/fair-audience/v1/groups/${ group.id }`,
 			method: 'DELETE',
-		})
-			.then(() => {
+		} )
+			.then( () => {
 				loadGroups();
-			})
-			.catch((err) => {
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__('Error: ', 'fair-audience-experimental') +
-						(err.message ||
+					__( 'Error: ', 'fair-audience-experimental' ) +
+						( err.message ||
 							__(
 								'Failed to delete group.',
 								'fair-audience-experimental'
-							))
+							) )
 				);
-			});
+			} );
 	};
 
 	// Define actions for DataViews.
@@ -278,32 +280,32 @@ export default function Groups() {
 		() => [
 			{
 				id: 'view',
-				label: __('View', 'fair-audience-experimental'),
+				label: __( 'View', 'fair-audience-experimental' ),
 				icon: 'visibility',
-				callback: ([item]) => {
-					window.location.href = `${GROUP_DETAIL_URL}${item.id}`;
+				callback: ( [ item ] ) => {
+					window.location.href = `${ GROUP_DETAIL_URL }${ item.id }`;
 				},
 				supportsBulk: false,
 			},
 			{
 				id: 'edit',
-				label: __('Edit', 'fair-audience-experimental'),
+				label: __( 'Edit', 'fair-audience-experimental' ),
 				icon: 'edit',
-				callback: ([item]) => openEditModal(item),
+				callback: ( [ item ] ) => openEditModal( item ),
 				supportsBulk: false,
 			},
 			{
 				id: 'duplicate',
-				label: __('Duplicate', 'fair-audience-experimental'),
+				label: __( 'Duplicate', 'fair-audience-experimental' ),
 				icon: 'admin-page',
-				callback: ([item]) => openDuplicateModal(item),
+				callback: ( [ item ] ) => openDuplicateModal( item ),
 				supportsBulk: false,
 			},
 			{
 				id: 'delete',
-				label: __('Delete', 'fair-audience-experimental'),
+				label: __( 'Delete', 'fair-audience-experimental' ),
 				icon: 'trash',
-				callback: ([item]) => handleDeleteGroup(item),
+				callback: ( [ item ] ) => handleDeleteGroup( item ),
 				supportsBulk: false,
 			},
 		],
@@ -311,143 +313,152 @@ export default function Groups() {
 	);
 
 	const paginationInfo = useMemo(
-		() => ({
+		() => ( {
 			totalItems,
 			totalPages: 1,
-		}),
-		[totalItems]
+		} ),
+		[ totalItems ]
 	);
 
 	return (
 		<div className="wrap">
-			<h1>{__('Groups', 'fair-audience-experimental')}</h1>
+			<h1>{ __( 'Groups', 'fair-audience-experimental' ) }</h1>
 
 			<Card>
 				<CardBody>
-					<div style={{ marginBottom: '16px' }}>
-						<Button variant="primary" onClick={openCreateModal}>
-							{__('Create Group', 'fair-audience-experimental')}
+					<div style={ { marginBottom: '16px' } }>
+						<Button variant="primary" onClick={ openCreateModal }>
+							{ __(
+								'Create Group',
+								'fair-audience-experimental'
+							) }
 						</Button>
 					</div>
 
 					<DataViews
-						data={groups}
-						fields={fields}
-						view={view}
-						onChangeView={setView}
-						actions={actions}
-						paginationInfo={paginationInfo}
-						defaultLayouts={DEFAULT_LAYOUTS}
-						isLoading={isLoading}
-						getItemId={(item) => item.id}
+						data={ groups }
+						fields={ fields }
+						view={ view }
+						onChangeView={ setView }
+						actions={ actions }
+						paginationInfo={ paginationInfo }
+						defaultLayouts={ DEFAULT_LAYOUTS }
+						isLoading={ isLoading }
+						getItemId={ ( item ) => item.id }
 					/>
 				</CardBody>
 			</Card>
 
-			{/* Create/Edit Group Modal */}
-			{isEditModalOpen && (
+			{ /* Create/Edit Group Modal */ }
+			{ isEditModalOpen && (
 				<Modal
 					title={
 						editingGroup
-							? __('Edit Group', 'fair-audience-experimental')
-							: __('Create Group', 'fair-audience-experimental')
+							? __( 'Edit Group', 'fair-audience-experimental' )
+							: __( 'Create Group', 'fair-audience-experimental' )
 					}
-					onRequestClose={() => setIsEditModalOpen(false)}
-					style={{ maxWidth: '500px', width: '100%' }}
+					onRequestClose={ () => setIsEditModalOpen( false ) }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<TextControl
-						label={__('Name', 'fair-audience-experimental')}
-						value={groupName}
-						onChange={setGroupName}
-						placeholder={__(
+						label={ __( 'Name', 'fair-audience-experimental' ) }
+						value={ groupName }
+						onChange={ setGroupName }
+						placeholder={ __(
 							'Enter group name...',
 							'fair-audience-experimental'
-						)}
+						) }
 					/>
 
 					<TextareaControl
-						label={__('Description', 'fair-audience-experimental')}
-						value={groupDescription}
-						onChange={setGroupDescription}
-						placeholder={__(
+						label={ __(
+							'Description',
+							'fair-audience-experimental'
+						) }
+						value={ groupDescription }
+						onChange={ setGroupDescription }
+						placeholder={ __(
 							'Enter group description (optional)...',
 							'fair-audience-experimental'
-						)}
+						) }
 					/>
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setIsEditModalOpen(false)}
+							onClick={ () => setIsEditModalOpen( false ) }
 						>
-							{__('Cancel', 'fair-audience-experimental')}
+							{ __( 'Cancel', 'fair-audience-experimental' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleSaveGroup}
-							disabled={!groupName.trim() || isSaving}
-							isBusy={isSaving}
+							onClick={ handleSaveGroup }
+							disabled={ ! groupName.trim() || isSaving }
+							isBusy={ isSaving }
 						>
-							{editingGroup
-								? __('Update', 'fair-audience-experimental')
-								: __('Create', 'fair-audience-experimental')}
+							{ editingGroup
+								? __( 'Update', 'fair-audience-experimental' )
+								: __( 'Create', 'fair-audience-experimental' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 
-			{/* Duplicate Group Modal */}
-			{isDuplicateModalOpen && (
+			{ /* Duplicate Group Modal */ }
+			{ isDuplicateModalOpen && (
 				<Modal
-					title={__('Duplicate Group', 'fair-audience-experimental')}
-					onRequestClose={() => setIsDuplicateModalOpen(false)}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __(
+						'Duplicate Group',
+						'fair-audience-experimental'
+					) }
+					onRequestClose={ () => setIsDuplicateModalOpen( false ) }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<TextControl
-						label={__(
+						label={ __(
 							'New group name',
 							'fair-audience-experimental'
-						)}
-						value={duplicateName}
-						onChange={setDuplicateName}
-						placeholder={__(
+						) }
+						value={ duplicateName }
+						onChange={ setDuplicateName }
+						placeholder={ __(
 							'Enter group name...',
 							'fair-audience-experimental'
-						)}
+						) }
 					/>
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setIsDuplicateModalOpen(false)}
+							onClick={ () => setIsDuplicateModalOpen( false ) }
 						>
-							{__('Cancel', 'fair-audience-experimental')}
+							{ __( 'Cancel', 'fair-audience-experimental' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleDuplicateGroup}
-							disabled={!duplicateName.trim() || isDuplicating}
-							isBusy={isDuplicating}
+							onClick={ handleDuplicateGroup }
+							disabled={ ! duplicateName.trim() || isDuplicating }
+							isBusy={ isDuplicating }
 						>
-							{__('Duplicate', 'fair-audience-experimental')}
+							{ __( 'Duplicate', 'fair-audience-experimental' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 }

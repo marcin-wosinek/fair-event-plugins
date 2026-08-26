@@ -21,19 +21,19 @@ import apiFetch from '@wordpress/api-fetch';
 const TOKEN_CHIPS = [
 	{
 		token: '{participant_name}',
-		label: __('Name', 'fair-audience-experimental'),
+		label: __( 'Name', 'fair-audience-experimental' ),
 	},
 	{
 		token: '{event_name}',
-		label: __('Event name', 'fair-audience-experimental'),
+		label: __( 'Event name', 'fair-audience-experimental' ),
 	},
 	{
 		token: '{event_date}',
-		label: __('Event date', 'fair-audience-experimental'),
+		label: __( 'Event date', 'fair-audience-experimental' ),
 	},
 	{
 		token: '{unsubscribe_link}',
-		label: __('Unsubscribe', 'fair-audience-experimental'),
+		label: __( 'Unsubscribe', 'fair-audience-experimental' ),
 	},
 ];
 
@@ -46,34 +46,34 @@ const TOKEN_CHIPS = [
  * @param {boolean}  props.disabled Whether inputs are disabled.
  * @return {JSX.Element} The editor.
  */
-export default function MailBodyEditor({ value, onChange, disabled }) {
-	const textareaRef = useRef(null);
-	const [pageSearch, setPageSearch] = useState('');
-	const [pageResults, setPageResults] = useState([]);
-	const [selectedPage, setSelectedPage] = useState(null);
-	const [isSearching, setIsSearching] = useState(false);
+export default function MailBodyEditor( { value, onChange, disabled } ) {
+	const textareaRef = useRef( null );
+	const [ pageSearch, setPageSearch ] = useState( '' );
+	const [ pageResults, setPageResults ] = useState( [] );
+	const [ selectedPage, setSelectedPage ] = useState( null );
+	const [ isSearching, setIsSearching ] = useState( false );
 
 	/**
 	 * Insert a snippet at the caret (or replace the selection) of the textarea.
 	 *
 	 * @param {string} snippet Text/HTML to insert.
 	 */
-	const insertAtCursor = (snippet) => {
+	const insertAtCursor = ( snippet ) => {
 		const el = textareaRef.current;
-		if (!el) {
-			onChange(`${value}${snippet}`);
+		if ( ! el ) {
+			onChange( `${ value }${ snippet }` );
 			return;
 		}
 		const start = el.selectionStart ?? value.length;
 		const end = el.selectionEnd ?? value.length;
-		const next = value.slice(0, start) + snippet + value.slice(end);
-		onChange(next);
+		const next = value.slice( 0, start ) + snippet + value.slice( end );
+		onChange( next );
 		// Restore caret after the inserted snippet on the next tick.
-		requestAnimationFrame(() => {
+		requestAnimationFrame( () => {
 			el.focus();
 			const caret = start + snippet.length;
-			el.setSelectionRange(caret, caret);
-		});
+			el.setSelectionRange( caret, caret );
+		} );
 	};
 
 	/**
@@ -82,16 +82,16 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 	 * @param {string} placeholder Href placeholder, e.g. '{photo_upload_url}'.
 	 * @param {string} defaultText Link text when nothing is selected.
 	 */
-	const insertPlaceholderLink = (placeholder, defaultText) => {
+	const insertPlaceholderLink = ( placeholder, defaultText ) => {
 		const el = textareaRef.current;
 		let linkText = defaultText;
-		if (el) {
-			const selected = value.slice(el.selectionStart, el.selectionEnd);
-			if (selected) {
+		if ( el ) {
+			const selected = value.slice( el.selectionStart, el.selectionEnd );
+			if ( selected ) {
 				linkText = selected;
 			}
 		}
-		insertAtCursor(`<a href="${placeholder}">${linkText}</a>`);
+		insertAtCursor( `<a href="${ placeholder }">${ linkText }</a>` );
 	};
 
 	/**
@@ -99,112 +99,118 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 	 *
 	 * @param {string} term Search term.
 	 */
-	const searchPages = (term) => {
-		setPageSearch(term);
-		setSelectedPage(null);
-		if (!term || term.length < 2) {
-			setPageResults([]);
+	const searchPages = ( term ) => {
+		setPageSearch( term );
+		setSelectedPage( null );
+		if ( ! term || term.length < 2 ) {
+			setPageResults( [] );
 			return;
 		}
-		setIsSearching(true);
-		apiFetch({
-			path: `/wp/v2/pages?search=${encodeURIComponent(
+		setIsSearching( true );
+		apiFetch( {
+			path: `/wp/v2/pages?search=${ encodeURIComponent(
 				term
-			)}&per_page=5&_fields=id,title`,
-		})
-			.then((results) => setPageResults(results || []))
-			.catch(() => setPageResults([]))
-			.finally(() => setIsSearching(false));
+			) }&per_page=5&_fields=id,title`,
+		} )
+			.then( ( results ) => setPageResults( results || [] ) )
+			.catch( () => setPageResults( [] ) )
+			.finally( () => setIsSearching( false ) );
 	};
 
 	return (
-		<div style={{ marginBottom: '16px' }}>
+		<div style={ { marginBottom: '16px' } }>
 			<label
 				htmlFor="fair-events-mail-body"
-				style={{
+				style={ {
 					display: 'block',
 					marginBottom: '8px',
 					fontWeight: '600',
-				}}
+				} }
 			>
-				{__('Body', 'fair-audience-experimental')}
+				{ __( 'Body', 'fair-audience-experimental' ) }
 			</label>
 			<textarea
 				id="fair-events-mail-body"
-				ref={textareaRef}
-				rows={10}
-				style={{ width: '100%' }}
-				value={value}
-				onChange={(e) => onChange(e.target.value)}
-				disabled={disabled}
+				ref={ textareaRef }
+				rows={ 10 }
+				style={ { width: '100%' } }
+				value={ value }
+				onChange={ ( e ) => onChange( e.target.value ) }
+				disabled={ disabled }
 			/>
 
 			<div
-				style={{
+				style={ {
 					marginTop: '8px',
 					display: 'flex',
 					flexWrap: 'wrap',
 					alignItems: 'center',
 					gap: '8px',
-				}}
+				} }
 			>
 				<Button
 					variant="secondary"
 					isSmall
-					onClick={() =>
+					onClick={ () =>
 						insertPlaceholderLink(
 							'{photo_upload_url}',
-							__('Upload photos', 'fair-audience-experimental')
+							__( 'Upload photos', 'fair-audience-experimental' )
 						)
 					}
-					disabled={disabled}
+					disabled={ disabled }
 				>
-					{__(
+					{ __(
 						'Insert photo upload link',
 						'fair-audience-experimental'
-					)}
+					) }
 				</Button>
 				<Button
 					variant="secondary"
 					isSmall
-					onClick={() =>
+					onClick={ () =>
 						insertPlaceholderLink(
 							'{event_page_url}',
-							__('Open event page', 'fair-audience-experimental')
+							__(
+								'Open event page',
+								'fair-audience-experimental'
+							)
 						)
 					}
-					disabled={disabled}
+					disabled={ disabled }
 				>
-					{__('Insert event page link', 'fair-audience-experimental')}
+					{ __(
+						'Insert event page link',
+						'fair-audience-experimental'
+					) }
 				</Button>
 
 				<span
-					style={{
+					style={ {
 						display: 'inline-flex',
 						alignItems: 'center',
 						gap: '4px',
 						position: 'relative',
-					}}
+					} }
 				>
 					<TextControl
-						placeholder={__(
+						placeholder={ __(
 							'Search page…',
 							'fair-audience-experimental'
-						)}
+						) }
 						value={
 							selectedPage
 								? selectedPage.title.rendered
 								: pageSearch
 						}
-						onChange={searchPages}
-						disabled={disabled}
+						onChange={ searchPages }
+						disabled={ disabled }
 						__nextHasNoMarginBottom
-						style={{ width: '180px', marginBottom: 0 }}
+						style={ { width: '180px', marginBottom: 0 } }
 					/>
-					{isSearching && <Spinner />}
-					{pageResults.length > 0 && !selectedPage && (
+					{ isSearching && <Spinner /> }
+					{ pageResults.length > 0 && ! selectedPage && (
 						<ul
-							style={{
+							style={ {
 								position: 'absolute',
 								top: '100%',
 								left: 0,
@@ -219,67 +225,70 @@ export default function MailBodyEditor({ value, onChange, disabled }) {
 								overflow: 'auto',
 								width: '280px',
 								boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-							}}
+							} }
 						>
-							{pageResults.map((page) => (
+							{ pageResults.map( ( page ) => (
 								<li
-									key={page.id}
-									style={{
+									key={ page.id }
+									style={ {
 										padding: '6px 10px',
 										cursor: 'pointer',
-									}}
-									onMouseDown={() => {
-										setSelectedPage(page);
-										setPageSearch('');
-										setPageResults([]);
-									}}
+									} }
+									onMouseDown={ () => {
+										setSelectedPage( page );
+										setPageSearch( '' );
+										setPageResults( [] );
+									} }
 								>
-									{page.title.rendered}
+									{ page.title.rendered }
 								</li>
-							))}
+							) ) }
 						</ul>
-					)}
+					) }
 					<Button
 						variant="secondary"
 						isSmall
-						onClick={() => {
-							if (selectedPage) {
+						onClick={ () => {
+							if ( selectedPage ) {
 								insertPlaceholderLink(
-									`{token_link_${selectedPage.id}}`,
+									`{token_link_${ selectedPage.id }}`,
 									selectedPage.title.rendered
 								);
 							}
-						}}
-						disabled={disabled || !selectedPage}
+						} }
+						disabled={ disabled || ! selectedPage }
 					>
-						{__('Insert token link', 'fair-audience-experimental')}
+						{ __(
+							'Insert token link',
+							'fair-audience-experimental'
+						) }
 					</Button>
 				</span>
 			</div>
 
 			<div
-				style={{
+				style={ {
 					marginTop: '8px',
 					display: 'flex',
 					flexWrap: 'wrap',
 					alignItems: 'center',
 					gap: '6px',
-				}}
+				} }
 			>
-				<span style={{ color: '#666', fontSize: '12px' }}>
-					{__('Insert token:', 'fair-audience-experimental')}
+				<span style={ { color: '#666', fontSize: '12px' } }>
+					{ __( 'Insert token:', 'fair-audience-experimental' ) }
 				</span>
-				{TOKEN_CHIPS.map((chip) => (
+				{ TOKEN_CHIPS.map( ( chip ) => (
 					<Button
-						key={chip.token}
+						key={ chip.token }
 						variant="tertiary"
 						isSmall
-						onClick={() => insertAtCursor(chip.token)}
-						disabled={disabled}
+						onClick={ () => insertAtCursor( chip.token ) }
+						disabled={ disabled }
 					>
-						{chip.label}
+						{ chip.label }
 					</Button>
-				))}
+				) ) }
 			</div>
 		</div>
 	);

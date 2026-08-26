@@ -16,13 +16,13 @@ const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
  *     temporarily unavailable, not shown with unpriced/selectable types.
  */
 
-async function apiFetch(page, options) {
-	const result = await page.evaluate(async (opts) => {
+async function apiFetch( page, options ) {
+	const result = await page.evaluate( async ( opts ) => {
 		try {
 			// eslint-disable-next-line no-undef
-			const res = await wp.apiFetch(opts);
+			const res = await wp.apiFetch( opts );
 			return { ok: true, data: res };
-		} catch (err) {
+		} catch ( err ) {
 			return {
 				ok: false,
 				error: {
@@ -32,25 +32,25 @@ async function apiFetch(page, options) {
 				},
 			};
 		}
-	}, options);
-	if (!result.ok) {
+	}, options );
+	if ( ! result.ok ) {
 		throw new Error(
-			`apiFetch ${options.method || 'GET'} ${
+			`apiFetch ${ options.method || 'GET' } ${
 				options.path
-			} failed: ${JSON.stringify(result.error)}`
+			} failed: ${ JSON.stringify( result.error ) }`
 		);
 	}
 	return result.data;
 }
 
-async function login(page) {
-	await page.goto('/wp-admin');
-	if (page.url().includes('wp-login.php')) {
-		await page.fill('#user_login', WP_ADMIN_USER);
-		await page.fill('#user_pass', WP_ADMIN_PASS);
-		await page.click('#wp-submit');
+async function login( page ) {
+	await page.goto( '/wp-admin' );
+	if ( page.url().includes( 'wp-login.php' ) ) {
+		await page.fill( '#user_login', WP_ADMIN_USER );
+		await page.fill( '#user_pass', WP_ADMIN_PASS );
+		await page.click( '#wp-submit' );
 	}
-	await page.waitForSelector('#wpadminbar');
+	await page.waitForSelector( '#wpadminbar' );
 }
 
 /**
@@ -59,17 +59,17 @@ async function login(page) {
  * Returns the created resource ids for cleanup, plus a ready-to-use
  * visitor Page loaded on the signup page.
  */
-async function setUpSignupPage(adminPage, browser, label, ticketsPayload) {
-	const eventPost = await apiFetch(adminPage, {
+async function setUpSignupPage( adminPage, browser, label, ticketsPayload ) {
+	const eventPost = await apiFetch( adminPage, {
 		path: '/wp/v2/fair_event',
 		method: 'POST',
 		data: {
-			title: `${label} ${Date.now()}`,
+			title: `${ label } ${ Date.now() }`,
 			status: 'publish',
 		},
-	});
+	} );
 
-	const eventDate = await apiFetch(adminPage, {
+	const eventDate = await apiFetch( adminPage, {
 		path: '/fair-events/v1/event-dates',
 		method: 'POST',
 		data: {
@@ -78,33 +78,33 @@ async function setUpSignupPage(adminPage, browser, label, ticketsPayload) {
 			start_datetime: '2036-01-01 10:00:00',
 			end_datetime: '2036-01-01 12:00:00',
 		},
-	});
+	} );
 
-	await apiFetch(adminPage, {
-		path: `/fair-events/v1/event-dates/${eventDate.id}`,
+	await apiFetch( adminPage, {
+		path: `/fair-events/v1/event-dates/${ eventDate.id }`,
 		method: 'PUT',
 		data: { event_id: eventPost.id },
-	});
+	} );
 
-	await apiFetch(adminPage, {
-		path: `/fair-events/v1/event-dates/${eventDate.id}/tickets`,
+	await apiFetch( adminPage, {
+		path: `/fair-events/v1/event-dates/${ eventDate.id }/tickets`,
 		method: 'PUT',
 		data: ticketsPayload,
-	});
+	} );
 
-	const signupPage = await apiFetch(adminPage, {
+	const signupPage = await apiFetch( adminPage, {
 		path: '/wp/v2/pages',
 		method: 'POST',
 		data: {
-			title: `${label} page ${Date.now()}`,
+			title: `${ label } page ${ Date.now() }`,
 			status: 'publish',
-			content: `<!-- wp:fair-events/event-signup {"eventDateId":${eventDate.id}} /-->`,
+			content: `<!-- wp:fair-events/event-signup {"eventDateId":${ eventDate.id }} /-->`,
 		},
-	});
+	} );
 
 	const visitorContext = await browser.newContext();
 	const visitorPage = await visitorContext.newPage();
-	await visitorPage.goto(`/?page_id=${signupPage.id}`);
+	await visitorPage.goto( `/?page_id=${ signupPage.id }` );
 
 	return {
 		eventPostId: eventPost.id,
@@ -115,43 +115,47 @@ async function setUpSignupPage(adminPage, browser, label, ticketsPayload) {
 	};
 }
 
-async function cleanUp(adminPage, resources) {
+async function cleanUp( adminPage, resources ) {
 	await resources.visitorContext.close();
-	await apiFetch(adminPage, {
-		path: `/wp/v2/pages/${resources.signupPageId}`,
+	await apiFetch( adminPage, {
+		path: `/wp/v2/pages/${ resources.signupPageId }`,
 		method: 'DELETE',
 		data: { force: true },
-	}).catch(() => {});
-	await apiFetch(adminPage, {
-		path: `/wp/v2/fair_event/${resources.eventPostId}`,
+	} ).catch( () => {} );
+	await apiFetch( adminPage, {
+		path: `/wp/v2/fair_event/${ resources.eventPostId }`,
 		method: 'DELETE',
 		data: { force: true },
-	}).catch(() => {});
-	await apiFetch(adminPage, {
-		path: `/fair-events/v1/event-dates/${resources.eventDateId}`,
+	} ).catch( () => {} );
+	await apiFetch( adminPage, {
+		path: `/fair-events/v1/event-dates/${ resources.eventDateId }`,
 		method: 'DELETE',
-	}).catch(() => {});
+	} ).catch( () => {} );
 }
 
-test.describe('Event Signup — hide ticket types outside their active sale period', () => {
+test.describe( 'Event Signup — hide ticket types outside their active sale period', () => {
 	let adminContext;
 	let adminPage;
 
-	test.beforeAll(async ({ browser }) => {
+	test.beforeAll( async ( { browser } ) => {
 		adminContext = await browser.newContext();
 		adminPage = await adminContext.newPage();
-		await login(adminPage);
-		await adminPage.goto('/wp-admin/admin.php?page=fair-events-all-events');
-		await adminPage.waitForFunction(() => window.wp && window.wp.apiFetch);
-	});
+		await login( adminPage );
+		await adminPage.goto(
+			'/wp-admin/admin.php?page=fair-events-all-events'
+		);
+		await adminPage.waitForFunction(
+			() => window.wp && window.wp.apiFetch
+		);
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await adminContext.close();
-	});
+	} );
 
-	test('all configured types priced for the active period are all shown', async ({
+	test( 'all configured types priced for the active period are all shown', async ( {
 		browser,
-	}) => {
+	} ) => {
 		const resources = await setUpSignupPage(
 			adminPage,
 			browser,
@@ -197,20 +201,20 @@ test.describe('Event Signup — hide ticket types outside their active sale peri
 			const fieldset = resources.visitorPage.locator(
 				'.fair-events-ticket-fieldset'
 			);
-			await expect(fieldset).toBeVisible();
+			await expect( fieldset ).toBeVisible();
 			await expect(
-				fieldset.locator('.fair-events-ticket-option')
-			).toHaveCount(2);
-			await expect(fieldset).toContainText('Early bird');
-			await expect(fieldset).toContainText('Regular');
+				fieldset.locator( '.fair-events-ticket-option' )
+			).toHaveCount( 2 );
+			await expect( fieldset ).toContainText( 'Early bird' );
+			await expect( fieldset ).toContainText( 'Regular' );
 		} finally {
-			await cleanUp(adminPage, resources);
+			await cleanUp( adminPage, resources );
 		}
-	});
+	} );
 
-	test('only the type priced for the active period is shown', async ({
+	test( 'only the type priced for the active period is shown', async ( {
 		browser,
-	}) => {
+	} ) => {
 		const resources = await setUpSignupPage(
 			adminPage,
 			browser,
@@ -262,20 +266,20 @@ test.describe('Event Signup — hide ticket types outside their active sale peri
 			const fieldset = resources.visitorPage.locator(
 				'.fair-events-ticket-fieldset'
 			);
-			await expect(fieldset).toBeVisible();
+			await expect( fieldset ).toBeVisible();
 			await expect(
-				fieldset.locator('.fair-events-ticket-option')
-			).toHaveCount(1);
-			await expect(fieldset).toContainText('Regular');
-			await expect(fieldset).not.toContainText('Early bird');
+				fieldset.locator( '.fair-events-ticket-option' )
+			).toHaveCount( 1 );
+			await expect( fieldset ).toContainText( 'Regular' );
+			await expect( fieldset ).not.toContainText( 'Early bird' );
 		} finally {
-			await cleanUp(adminPage, resources);
+			await cleanUp( adminPage, resources );
 		}
-	});
+	} );
 
-	test('no active sale period hides the ticket-type section and blocks signup', async ({
+	test( 'no active sale period hides the ticket-type section and blocks signup', async ( {
 		browser,
-	}) => {
+	} ) => {
 		const resources = await setUpSignupPage(
 			adminPage,
 			browser,
@@ -300,15 +304,15 @@ test.describe('Event Signup — hide ticket types outside their active sale peri
 
 		try {
 			await expect(
-				resources.visitorPage.locator('.fair-events-get-tickets-form')
-			).toHaveCount(0);
+				resources.visitorPage.locator( '.fair-events-get-tickets-form' )
+			).toHaveCount( 0 );
 			await expect(
 				resources.visitorPage.locator(
 					'.message-container.message-error'
 				)
-			).toContainText('Ticket sales are temporarily unavailable');
+			).toContainText( 'Ticket sales are temporarily unavailable' );
 		} finally {
-			await cleanUp(adminPage, resources);
+			await cleanUp( adminPage, resources );
 		}
-	});
-});
+	} );
+} );

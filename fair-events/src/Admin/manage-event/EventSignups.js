@@ -38,11 +38,11 @@ const CSV_COLUMNS = [
  * @param {*} value
  * @return {string} Escaped field
  */
-function escapeCsvField(value) {
+function escapeCsvField( value ) {
 	const stringValue =
-		value === null || value === undefined ? '' : String(value);
-	if (/[",\r\n]/.test(stringValue)) {
-		return `"${stringValue.replace(/"/g, '""')}"`;
+		value === null || value === undefined ? '' : String( value );
+	if ( /[",\r\n]/.test( stringValue ) ) {
+		return `"${ stringValue.replace( /"/g, '""' ) }"`;
 	}
 	return stringValue;
 }
@@ -53,9 +53,9 @@ function escapeCsvField(value) {
  * @param {Array} rows
  * @return {string} CSV text
  */
-function buildSignupsCsv(rows) {
-	const lines = [CSV_COLUMNS.join(',')];
-	rows.forEach((s) => {
+function buildSignupsCsv( rows ) {
+	const lines = [ CSV_COLUMNS.join( ',' ) ];
+	rows.forEach( ( s ) => {
 		const row = [
 			s.email,
 			s.name,
@@ -66,9 +66,9 @@ function buildSignupsCsv(rows) {
 			s.mailing_opt_in ? 'yes' : 'no',
 			s.created_at,
 		];
-		lines.push(row.map(escapeCsvField).join(','));
-	});
-	return lines.join('\r\n');
+		lines.push( row.map( escapeCsvField ).join( ',' ) );
+	} );
+	return lines.join( '\r\n' );
 }
 
 /**
@@ -77,198 +77,202 @@ function buildSignupsCsv(rows) {
  * @param {string} text
  * @param {string} filename
  */
-function downloadTextFile(text, filename) {
-	const blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
-	const url = URL.createObjectURL(blob);
-	const link = document.createElement('a');
+function downloadTextFile( text, filename ) {
+	const blob = new Blob( [ text ], { type: 'text/csv;charset=utf-8' } );
+	const url = URL.createObjectURL( blob );
+	const link = document.createElement( 'a' );
 	link.href = url;
 	link.download = filename;
 	link.click();
-	URL.revokeObjectURL(url);
+	URL.revokeObjectURL( url );
 }
 
-export default function EventSignups({ eventDateId }) {
-	const [signups, setSignups] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [mailingOnly, setMailingOnly] = useState(false);
+export default function EventSignups( { eventDateId } ) {
+	const [ signups, setSignups ] = useState( [] );
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ mailingOnly, setMailingOnly ] = useState( false );
 
-	useEffect(() => {
-		if (!eventDateId) {
-			setLoading(false);
+	useEffect( () => {
+		if ( ! eventDateId ) {
+			setLoading( false );
 			return;
 		}
-		apiFetch({
-			path: `/fair-events/v1/get-tickets?event_date=${eventDateId}`,
-		})
-			.then((data) => {
-				setSignups(data);
-				setLoading(false);
-			})
-			.catch((err) => {
+		apiFetch( {
+			path: `/fair-events/v1/get-tickets?event_date=${ eventDateId }`,
+		} )
+			.then( ( data ) => {
+				setSignups( data );
+				setLoading( false );
+			} )
+			.catch( ( err ) => {
 				setError(
-					err.message || __('Failed to load signups.', 'fair-events')
+					err.message ||
+						__( 'Failed to load signups.', 'fair-events' )
 				);
-				setLoading(false);
-			});
-	}, [eventDateId]);
+				setLoading( false );
+			} );
+	}, [ eventDateId ] );
 
-	if (loading) {
+	if ( loading ) {
 		return <Spinner />;
 	}
 
-	if (error) {
-		return <Notice status="error">{error}</Notice>;
+	if ( error ) {
+		return <Notice status="error">{ error }</Notice>;
 	}
 
 	const headers = [
-		__('Name', 'fair-events'),
-		__('Email', 'fair-events'),
-		__('Ticket Type', 'fair-events'),
-		__('Qty', 'fair-events'),
-		__('Amount', 'fair-events'),
-		__('Status', 'fair-events'),
-		__('Mailing', 'fair-events'),
-		__('Date', 'fair-events'),
+		__( 'Name', 'fair-events' ),
+		__( 'Email', 'fair-events' ),
+		__( 'Ticket Type', 'fair-events' ),
+		__( 'Qty', 'fair-events' ),
+		__( 'Amount', 'fair-events' ),
+		__( 'Status', 'fair-events' ),
+		__( 'Mailing', 'fair-events' ),
+		__( 'Date', 'fair-events' ),
 	];
 
 	const visibleSignups = mailingOnly
-		? signups.filter((s) => s.mailing_opt_in)
+		? signups.filter( ( s ) => s.mailing_opt_in )
 		: signups;
 
 	const handleDownloadCsv = () => {
-		const csv = buildSignupsCsv(visibleSignups);
-		downloadTextFile(csv, `signups-event-${eventDateId}.csv`);
+		const csv = buildSignupsCsv( visibleSignups );
+		downloadTextFile( csv, `signups-event-${ eventDateId }.csv` );
 	};
 
 	return (
-		<Card style={{ marginTop: '16px' }}>
+		<Card style={ { marginTop: '16px' } }>
 			<CardHeader>
-				<h2>{__('Ticket Signups', 'fair-events')}</h2>
-				<Flex justify="flex-end" gap={2}>
+				<h2>{ __( 'Ticket Signups', 'fair-events' ) }</h2>
+				<Flex justify="flex-end" gap={ 2 }>
 					<FlexItem>
 						<ToggleControl
 							__nextHasNoMarginBottom
-							label={__('Mailing opt-ins only', 'fair-events')}
-							checked={mailingOnly}
-							onChange={setMailingOnly}
+							label={ __(
+								'Mailing opt-ins only',
+								'fair-events'
+							) }
+							checked={ mailingOnly }
+							onChange={ setMailingOnly }
 						/>
 					</FlexItem>
 					<FlexItem>
 						<Button
 							variant="secondary"
-							onClick={handleDownloadCsv}
-							disabled={visibleSignups.length === 0}
+							onClick={ handleDownloadCsv }
+							disabled={ visibleSignups.length === 0 }
 						>
-							{__('Download CSV', 'fair-events')}
+							{ __( 'Download CSV', 'fair-events' ) }
 						</Button>
 					</FlexItem>
 				</Flex>
 			</CardHeader>
 			<CardBody>
-				{visibleSignups.length === 0 ? (
+				{ visibleSignups.length === 0 ? (
 					<p>
-						{signups.length === 0
-							? __('No signups yet.', 'fair-events')
+						{ signups.length === 0
+							? __( 'No signups yet.', 'fair-events' )
 							: __(
 									'Nothing to export — no signups match the current filter.',
 									'fair-events'
-							  )}
+							  ) }
 					</p>
 				) : (
 					<table
-						style={{ width: '100%', borderCollapse: 'collapse' }}
+						style={ { width: '100%', borderCollapse: 'collapse' } }
 					>
 						<thead>
 							<tr>
-								{headers.map((h) => (
+								{ headers.map( ( h ) => (
 									<th
-										key={h}
-										style={{
+										key={ h }
+										style={ {
 											textAlign: 'left',
 											padding: '8px',
 											borderBottom: '1px solid #ddd',
-										}}
+										} }
 									>
-										{h}
+										{ h }
 									</th>
-								))}
+								) ) }
 							</tr>
 						</thead>
 						<tbody>
-							{visibleSignups.map((s) => (
-								<tr key={s.id}>
+							{ visibleSignups.map( ( s ) => (
+								<tr key={ s.id }>
 									<td
-										style={{
+										style={ {
 											padding: '8px',
 											borderBottom: '1px solid #eee',
-										}}
+										} }
 									>
-										{s.name}
+										{ s.name }
 									</td>
 									<td
-										style={{
+										style={ {
 											padding: '8px',
 											borderBottom: '1px solid #eee',
-										}}
+										} }
 									>
-										{s.email}
+										{ s.email }
 									</td>
 									<td
-										style={{
+										style={ {
 											padding: '8px',
 											borderBottom: '1px solid #eee',
-										}}
+										} }
 									>
-										{s.ticket_type_name || '—'}
+										{ s.ticket_type_name || '—' }
 									</td>
 									<td
-										style={{
+										style={ {
 											padding: '8px',
 											borderBottom: '1px solid #eee',
-										}}
+										} }
 									>
-										{s.quantity}
+										{ s.quantity }
 									</td>
 									<td
-										style={{
+										style={ {
 											padding: '8px',
 											borderBottom: '1px solid #eee',
-										}}
+										} }
 									>
-										{s.amount}
+										{ s.amount }
 									</td>
 									<td
-										style={{
+										style={ {
 											padding: '8px',
 											borderBottom: '1px solid #eee',
-										}}
+										} }
 									>
-										{s.status}
+										{ s.status }
 									</td>
 									<td
-										style={{
+										style={ {
 											padding: '8px',
 											borderBottom: '1px solid #eee',
-										}}
+										} }
 									>
-										{s.mailing_opt_in
-											? __('Yes', 'fair-events')
-											: __('No', 'fair-events')}
+										{ s.mailing_opt_in
+											? __( 'Yes', 'fair-events' )
+											: __( 'No', 'fair-events' ) }
 									</td>
 									<td
-										style={{
+										style={ {
 											padding: '8px',
 											borderBottom: '1px solid #eee',
-										}}
+										} }
 									>
-										{s.created_at}
+										{ s.created_at }
 									</td>
 								</tr>
-							))}
+							) ) }
 						</tbody>
 					</table>
-				)}
+				) }
 			</CardBody>
 		</Card>
 	);

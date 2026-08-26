@@ -31,30 +31,32 @@ import {
 const CSS_PREFIX = 'fair-audience-signup';
 const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 
-(function () {
+( function () {
 	'use strict';
 
-	onDomReady(function () {
+	onDomReady( function () {
 		restoreScrollPosition();
 		initializeEventSignup();
-	});
+	} );
 
 	/**
 	 * Initialize all event signup blocks on the page
 	 */
 	function initializeEventSignup() {
-		const blocks = document.querySelectorAll('.fair-audience-event-signup');
+		const blocks = document.querySelectorAll(
+			'.fair-audience-event-signup'
+		);
 
-		blocks.forEach(function (block) {
-			initializeBlock(block);
-		});
+		blocks.forEach( function ( block ) {
+			initializeBlock( block );
+		} );
 	}
 
 	/**
 	 * Initialize a single event signup block
 	 * @param {HTMLElement} block The block element
 	 */
-	function initializeBlock(block) {
+	function initializeBlock( block ) {
 		const state = block.dataset.state;
 		const isSignedUp = block.dataset.isSignedUp === 'true';
 		const hasPicker = block.dataset.hasOccurrencePicker === 'true';
@@ -64,16 +66,16 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		const retryContainer = block.querySelector(
 			'.fair-audience-signup-retry'
 		);
-		if (retryContainer) {
+		if ( retryContainer ) {
 			const retryButton = retryContainer.querySelector(
 				'.fair-audience-signup-retry-button'
 			);
-			if (retryButton) {
-				retryButton.addEventListener('click', function () {
-					submitRetryPayment(retryContainer, this);
-				});
+			if ( retryButton ) {
+				retryButton.addEventListener( 'click', function () {
+					submitRetryPayment( retryContainer, this );
+				} );
 			}
-			wireCancelPendingPayment(block, retryContainer);
+			wireCancelPendingPayment( block, retryContainer );
 			return;
 		}
 
@@ -83,8 +85,8 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		const resumeContainer = block.querySelector(
 			'.fair-audience-signup-resume'
 		);
-		if (resumeContainer) {
-			wireCancelPendingPayment(block, resumeContainer);
+		if ( resumeContainer ) {
+			wireCancelPendingPayment( block, resumeContainer );
 			return;
 		}
 
@@ -93,16 +95,18 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		const pendingContainer = block.querySelector(
 			'.fair-audience-signup-pending'
 		);
-		if (pendingContainer) {
-			startPendingPoll(pendingContainer);
+		if ( pendingContainer ) {
+			startPendingPoll( pendingContainer );
 			return;
 		}
 
 		// Return-from-Mollie paid UI: surface a thank-you popup so the user
 		// can't miss that the payment went through, then bail.
-		const paidContainer = block.querySelector('.fair-audience-signup-paid');
-		if (paidContainer) {
-			showThankYouPopup(readPaidAmount(paidContainer));
+		const paidContainer = block.querySelector(
+			'.fair-audience-signup-paid'
+		);
+		if ( paidContainer ) {
+			showThankYouPopup( readPaidAmount( paidContainer ) );
 			return;
 		}
 
@@ -110,33 +114,33 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		const unsignupButtons = block.querySelectorAll(
 			'.fair-audience-unsignup-button'
 		);
-		unsignupButtons.forEach(function (btn) {
-			btn.addEventListener('click', function () {
-				submitUnsignup(block, this);
-			});
-		});
+		unsignupButtons.forEach( function ( btn ) {
+			btn.addEventListener( 'click', function () {
+				submitUnsignup( block, this );
+			} );
+		} );
 
 		// Wire the "add activities" section (issue #611) for signed-up viewers.
 		// No-op when the section isn't rendered (nothing left to add).
-		wireAddActivities(block);
+		wireAddActivities( block );
 
 		// When a recurrence picker is present, the user can switch between
 		// signed-up and not-signed-up occurrences inline — initialise the
 		// authenticated form even if the default selection is signed up.
-		if (isSignedUp && !hasPicker) {
+		if ( isSignedUp && ! hasPicker ) {
 			return;
 		}
 
 		// Always wire the picker so it stays interactive (also for anonymous).
-		if (hasPicker) {
-			initializeOccurrencePicker(block);
+		if ( hasPicker ) {
+			initializeOccurrencePicker( block );
 		}
 
 		// Initialize based on state
-		if (state === 'anonymous') {
-			initializeAnonymousBlock(block);
-		} else if (state === 'with_token' || state === 'linked') {
-			initializeAuthenticatedBlock(block);
+		if ( state === 'anonymous' ) {
+			initializeAnonymousBlock( block );
+		} else if ( state === 'with_token' || state === 'linked' ) {
+			initializeAuthenticatedBlock( block );
 		}
 	}
 
@@ -148,15 +152,15 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * server-rendered default selection.
 	 * @param {HTMLElement} block The block element
 	 */
-	function initializeOccurrencePicker(block) {
+	function initializeOccurrencePicker( block ) {
 		const select = block.querySelector(
 			'.fair-audience-occurrence-picker select[name="event_date_id"]'
 		);
-		if (!select) return;
-		select.addEventListener('change', function () {
-			const option = this.options[this.selectedIndex];
-			navigateToOccurrence(option ? option.dataset.eventDate : '');
-		});
+		if ( ! select ) return;
+		select.addEventListener( 'change', function () {
+			const option = this.options[ this.selectedIndex ];
+			navigateToOccurrence( option ? option.dataset.eventDate : '' );
+		} );
 	}
 
 	/**
@@ -167,22 +171,22 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * viewer back to the top of the page.
 	 * @param {string} eventDate Selected occurrence date (Y-m-d)
 	 */
-	function navigateToOccurrence(eventDate) {
-		if (!eventDate) return;
-		const url = new URL(window.location.href);
-		url.searchParams.set('event_date', eventDate);
-		sessionStorage.setItem(SCROLL_RESTORE_KEY, String(window.scrollY));
-		window.location.assign(url.toString());
+	function navigateToOccurrence( eventDate ) {
+		if ( ! eventDate ) return;
+		const url = new URL( window.location.href );
+		url.searchParams.set( 'event_date', eventDate );
+		sessionStorage.setItem( SCROLL_RESTORE_KEY, String( window.scrollY ) );
+		window.location.assign( url.toString() );
 	}
 
 	/**
 	 * Restore the scroll position stashed by navigateToOccurrence(), if any.
 	 */
 	function restoreScrollPosition() {
-		const saved = sessionStorage.getItem(SCROLL_RESTORE_KEY);
-		if (saved === null) return;
-		sessionStorage.removeItem(SCROLL_RESTORE_KEY);
-		window.scrollTo(0, parseInt(saved, 10) || 0);
+		const saved = sessionStorage.getItem( SCROLL_RESTORE_KEY );
+		if ( saved === null ) return;
+		sessionStorage.removeItem( SCROLL_RESTORE_KEY );
+		window.scrollTo( 0, parseInt( saved, 10 ) || 0 );
 	}
 
 	/**
@@ -190,8 +194,8 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @return {HTMLInputElement|null} The checked ticket_type_id radio.
 	 */
-	function getSelectedTicketType(block) {
-		return block.querySelector('input[name="ticket_type_id"]:checked');
+	function getSelectedTicketType( block ) {
+		return block.querySelector( 'input[name="ticket_type_id"]:checked' );
 	}
 
 	/**
@@ -199,10 +203,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @return {boolean} True when the multi-occurrence checkbox picker applies.
 	 */
-	function isMultipleInstancesSelected(block) {
-		const selected = getSelectedTicketType(block);
+	function isMultipleInstancesSelected( block ) {
+		const selected = getSelectedTicketType( block );
 		return (
-			!!selected &&
+			!! selected &&
 			selected.dataset.recurrenceScope === 'multiple_instances'
 		);
 	}
@@ -212,10 +216,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @return {boolean} True when the pass covers every occurrence in the series.
 	 */
-	function isWholeSeriesSelected(block) {
-		const selected = getSelectedTicketType(block);
+	function isWholeSeriesSelected( block ) {
+		const selected = getSelectedTicketType( block );
 		return (
-			!!selected && selected.dataset.recurrenceScope === 'whole_series'
+			!! selected && selected.dataset.recurrenceScope === 'whole_series'
 		);
 	}
 
@@ -224,9 +228,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @return {number} Count of checked event_date_ids[] checkboxes.
 	 */
-	function getCheckedInstanceCount(block) {
-		return block.querySelectorAll('input[name="event_date_ids[]"]:checked')
-			.length;
+	function getCheckedInstanceCount( block ) {
+		return block.querySelectorAll(
+			'input[name="event_date_ids[]"]:checked'
+		).length;
 	}
 
 	/**
@@ -234,10 +239,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @return {number} The configured minimum_instances (0 = none).
 	 */
-	function getInstanceMinimum(block) {
-		const selected = getSelectedTicketType(block);
+	function getInstanceMinimum( block ) {
+		const selected = getSelectedTicketType( block );
 		return selected
-			? parseInt(selected.dataset.minInstances || '0', 10)
+			? parseInt( selected.dataset.minInstances || '0', 10 )
 			: 0;
 	}
 
@@ -257,28 +262,28 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * picker rendered).
 	 * @param {HTMLElement} block The block element
 	 */
-	function updateInstancePickerVisibility(block) {
-		const multipleInstances = isMultipleInstancesSelected(block);
-		const wholeSeries = isWholeSeriesSelected(block);
+	function updateInstancePickerVisibility( block ) {
+		const multipleInstances = isMultipleInstancesSelected( block );
+		const wholeSeries = isWholeSeriesSelected( block );
 
 		const instancePicker = block.querySelector(
 			'.fair-audience-instance-picker'
 		);
-		if (instancePicker) {
+		if ( instancePicker ) {
 			instancePicker.style.display = multipleInstances ? '' : 'none';
-			if (!multipleInstances) {
+			if ( ! multipleInstances ) {
 				instancePicker
-					.querySelectorAll('input[type="checkbox"]')
-					.forEach(function (cb) {
+					.querySelectorAll( 'input[type="checkbox"]' )
+					.forEach( function ( cb ) {
 						cb.checked = false;
-					});
+					} );
 			}
 		}
 
 		const occurrencePicker = block.querySelector(
 			'.fair-audience-occurrence-picker'
 		);
-		if (occurrencePicker) {
+		if ( occurrencePicker ) {
 			occurrencePicker.style.display =
 				multipleInstances || wholeSeries ? 'none' : '';
 		}
@@ -289,21 +294,21 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * buyer checks/unchecks occurrences or switches ticket type.
 	 * @param {HTMLElement} block The block element
 	 */
-	function updateInstancePickerHint(block) {
+	function updateInstancePickerHint( block ) {
 		const instancePicker = block.querySelector(
 			'.fair-audience-instance-picker'
 		);
-		if (!instancePicker || !isMultipleInstancesSelected(block)) {
+		if ( ! instancePicker || ! isMultipleInstancesSelected( block ) ) {
 			return;
 		}
 
-		const min = getInstanceMinimum(block);
-		const checked = getCheckedInstanceCount(block);
+		const min = getInstanceMinimum( block );
+		const checked = getCheckedInstanceCount( block );
 
 		const hint = instancePicker.querySelector(
 			'.fair-audience-instance-picker-hint'
 		);
-		if (hint) {
+		if ( hint ) {
 			hint.textContent =
 				min > 0
 					? sprintf(
@@ -319,24 +324,24 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					: '';
 		}
 
-		const selected = getSelectedTicketType(block);
+		const selected = getSelectedTicketType( block );
 		const price = selected
-			? parseFloat(selected.dataset.ticketPrice || 0)
+			? parseFloat( selected.dataset.ticketPrice || 0 )
 			: 0;
 		const totalEl = instancePicker.querySelector(
 			'.fair-audience-instance-picker-total'
 		);
-		if (totalEl) {
+		if ( totalEl ) {
 			totalEl.textContent =
 				checked > 0
 					? sprintf(
 							/* translators: %s: formatted total price */
-							__('Total: %s', 'fair-audience'),
+							__( 'Total: %s', 'fair-audience' ),
 							formatMoney(
-								computeTicketTotal({
+								computeTicketTotal( {
 									unitPrice: price,
 									count: checked,
-								}),
+								} ),
 								block.dataset.currency
 							)
 					  )
@@ -352,8 +357,8 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @return {number} The effective minimum (0 when no minimum applies)
 	 */
-	function getEffectiveMinimum(block) {
-		const globalMin = parseInt(block.dataset.minActivities || '0', 10);
+	function getEffectiveMinimum( block ) {
+		const globalMin = parseInt( block.dataset.minActivities || '0', 10 );
 
 		// A selected ticket type can raise the requirement; a value below the
 		// global is ignored because we take the max.
@@ -361,14 +366,14 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			'input[name="ticket_type_id"]:checked'
 		);
 		const typeMin = selectedTicketType
-			? parseInt(selectedTicketType.dataset.minActivities || '0', 10)
+			? parseInt( selectedTicketType.dataset.minActivities || '0', 10 )
 			: 0;
 
 		const optionCount = block.querySelectorAll(
 			'input[name="ticket_option_ids[]"]'
 		).length;
 
-		return Math.min(Math.max(globalMin, typeMin), optionCount);
+		return Math.min( Math.max( globalMin, typeMin ), optionCount );
 	}
 
 	/**
@@ -377,15 +382,15 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * when the block has no minimum configured.
 	 * @param {HTMLElement} block The block element
 	 */
-	function updateMinActivitiesGate(block) {
-		const effectiveMin = getEffectiveMinimum(block);
+	function updateMinActivitiesGate( block ) {
+		const effectiveMin = getEffectiveMinimum( block );
 
 		// Keep the hint paragraph in sync with the effective minimum.
 		const hint = block.querySelector(
 			'.fair-audience-ticket-options-min-hint'
 		);
-		if (hint) {
-			if (effectiveMin > 0) {
+		if ( hint ) {
+			if ( effectiveMin > 0 ) {
 				hint.textContent = sprintf(
 					/* translators: %d: minimum number of activities required */
 					_n(
@@ -409,19 +414,19 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		// A 'multiple_instances' ticket type gates on its own occurrence
 		// minimum (at least 1 chosen occurrence, or more if configured),
 		// independent of the activities-minimum gate above.
-		const multiInstanceActive = isMultipleInstancesSelected(block);
+		const multiInstanceActive = isMultipleInstancesSelected( block );
 		const instanceMin = multiInstanceActive
-			? Math.max(1, getInstanceMinimum(block))
+			? Math.max( 1, getInstanceMinimum( block ) )
 			: 0;
 		const meetsInstanceMin =
-			!multiInstanceActive ||
-			getCheckedInstanceCount(block) >= instanceMin;
+			! multiInstanceActive ||
+			getCheckedInstanceCount( block ) >= instanceMin;
 
-		if (!effectiveMin) {
-			buttons.forEach(function (btn) {
-				btn.disabled = !meetsInstanceMin;
-				btn.classList.toggle('is-disabled', !meetsInstanceMin);
-			});
+		if ( ! effectiveMin ) {
+			buttons.forEach( function ( btn ) {
+				btn.disabled = ! meetsInstanceMin;
+				btn.classList.toggle( 'is-disabled', ! meetsInstanceMin );
+			} );
 			return;
 		}
 
@@ -430,10 +435,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		).length;
 		const meetsMin = checkedCount >= effectiveMin && meetsInstanceMin;
 
-		buttons.forEach(function (btn) {
-			btn.disabled = !meetsMin;
-			btn.classList.toggle('is-disabled', !meetsMin);
-		});
+		buttons.forEach( function ( btn ) {
+			btn.disabled = ! meetsMin;
+			btn.classList.toggle( 'is-disabled', ! meetsMin );
+		} );
 	}
 
 	/**
@@ -441,13 +446,13 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * No-op when no base price is configured on the block.
 	 * @param {HTMLElement} block The block element
 	 */
-	function updateButtonTotal(block) {
+	function updateButtonTotal( block ) {
 		const basePriceStr = block.dataset.basePrice;
-		if (basePriceStr === '' || basePriceStr === undefined) {
+		if ( basePriceStr === '' || basePriceStr === undefined ) {
 			return;
 		}
 
-		let basePrice = parseFloat(basePriceStr);
+		let basePrice = parseFloat( basePriceStr );
 
 		const selectedTicketType = block.querySelector(
 			'input[name="ticket_type_id"]:checked'
@@ -456,33 +461,35 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			selectedTicketType &&
 			selectedTicketType.dataset.ticketPrice !== ''
 		) {
-			basePrice = parseFloat(selectedTicketType.dataset.ticketPrice || 0);
+			basePrice = parseFloat(
+				selectedTicketType.dataset.ticketPrice || 0
+			);
 		}
 
 		let instanceCount = 1;
-		if (isMultipleInstancesSelected(block)) {
-			const instanceMin = Math.max(1, getInstanceMinimum(block));
-			instanceCount = getCheckedInstanceCount(block);
-			if (instanceCount < instanceMin) {
+		if ( isMultipleInstancesSelected( block ) ) {
+			const instanceMin = Math.max( 1, getInstanceMinimum( block ) );
+			instanceCount = getCheckedInstanceCount( block );
+			if ( instanceCount < instanceMin ) {
 				// Not enough occurrences chosen yet — show the bare action label
 				// until the selection is valid, same treatment as the
 				// below-minimum-activities case below.
 				const signupBaseText =
 					block.dataset.signupBaseText ||
-					__('Sign Up', 'fair-audience');
+					__( 'Sign Up', 'fair-audience' );
 				const registerBaseText =
 					block.dataset.registerBaseText ||
-					__('Register & Sign Up', 'fair-audience');
+					__( 'Register & Sign Up', 'fair-audience' );
 				const signupBtnBare = block.querySelector(
 					'.fair-audience-signup-button'
 				);
-				if (signupBtnBare) {
+				if ( signupBtnBare ) {
 					signupBtnBare.textContent = signupBaseText;
 				}
 				const submitBtnBare = block.querySelector(
 					'.fair-audience-signup-submit-button'
 				);
-				if (submitBtnBare) {
+				if ( submitBtnBare ) {
 					submitBtnBare.textContent = registerBaseText;
 				}
 				return;
@@ -493,60 +500,63 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			'input[name="ticket_option_ids[]"]:checked'
 		);
 		const optionPrices = [];
-		checkedOptions.forEach(function (input) {
-			optionPrices.push(parseFloat(input.dataset.optionPrice || 0));
-		});
+		checkedOptions.forEach( function ( input ) {
+			optionPrices.push( parseFloat( input.dataset.optionPrice || 0 ) );
+		} );
 
-		const total = computeTicketTotal({
+		const total = computeTicketTotal( {
 			unitPrice: basePrice,
 			count: instanceCount,
 			optionPrices,
-		});
+		} );
 		const signupBaseText =
-			block.dataset.signupBaseText || __('Sign Up', 'fair-audience');
+			block.dataset.signupBaseText || __( 'Sign Up', 'fair-audience' );
 		const registerBaseText =
 			block.dataset.registerBaseText ||
-			__('Register & Sign Up', 'fair-audience');
+			__( 'Register & Sign Up', 'fair-audience' );
 
 		// Below the minimum-activities requirement the button is disabled and
 		// the price is meaningless, so show only the bare action label until the
 		// selection is valid (issue #644).
-		const effectiveMin = getEffectiveMinimum(block);
-		if (effectiveMin > 0 && checkedOptions.length < effectiveMin) {
+		const effectiveMin = getEffectiveMinimum( block );
+		if ( effectiveMin > 0 && checkedOptions.length < effectiveMin ) {
 			const signupBtnBare = block.querySelector(
 				'.fair-audience-signup-button'
 			);
-			if (signupBtnBare) {
+			if ( signupBtnBare ) {
 				signupBtnBare.textContent = signupBaseText;
 			}
 			const submitBtnBare = block.querySelector(
 				'.fair-audience-signup-submit-button'
 			);
-			if (submitBtnBare) {
+			if ( submitBtnBare ) {
 				submitBtnBare.textContent = registerBaseText;
 			}
 			return;
 		}
 
 		let signupText, registerText;
-		if (total > 0) {
-			const formatted = formatMoneyInline(total, block.dataset.currency);
+		if ( total > 0 ) {
+			const formatted = formatMoneyInline(
+				total,
+				block.dataset.currency
+			);
 			signupText = signupBaseText + ' \u2014 ' + formatted;
 			registerText = registerBaseText + ' \u2014 ' + formatted;
 		} else {
-			signupText = __('Sign up for free', 'fair-audience');
-			registerText = __('Register for free', 'fair-audience');
+			signupText = __( 'Sign up for free', 'fair-audience' );
+			registerText = __( 'Register for free', 'fair-audience' );
 		}
 
-		const signupBtn = block.querySelector('.fair-audience-signup-button');
-		if (signupBtn) {
+		const signupBtn = block.querySelector( '.fair-audience-signup-button' );
+		if ( signupBtn ) {
 			signupBtn.textContent = signupText;
 		}
 
 		const submitBtn = block.querySelector(
 			'.fair-audience-signup-submit-button'
 		);
-		if (submitBtn) {
+		if ( submitBtn ) {
 			submitBtn.textContent = registerText;
 		}
 	}
@@ -558,15 +568,15 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * No-op when the block has no add-on tags (feature-inactive events).
 	 * @param {HTMLElement} block The block element
 	 */
-	function updateOptionAddons(block) {
+	function updateOptionAddons( block ) {
 		// Scope to the signup options fieldset so the separate "add activities"
 		// fieldset (for already-signed-up viewers) is never touched.
-		const fieldset = block.querySelector('.fair-audience-ticket-options');
-		if (!fieldset) {
+		const fieldset = block.querySelector( '.fair-audience-ticket-options' );
+		if ( ! fieldset ) {
 			return;
 		}
 
-		const effectiveMin = getEffectiveMinimum(block);
+		const effectiveMin = getEffectiveMinimum( block );
 		const checkedCount = fieldset.querySelectorAll(
 			'input[name="ticket_option_ids[]"]:checked'
 		).length;
@@ -575,16 +585,16 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		const optionInputs = fieldset.querySelectorAll(
 			'input[name="ticket_option_ids[]"]'
 		);
-		optionInputs.forEach(function (input) {
-			const label = input.closest('label');
+		optionInputs.forEach( function ( input ) {
+			const label = input.closest( 'label' );
 			const addon = label
-				? label.querySelector('.fair-audience-ticket-option-addon')
+				? label.querySelector( '.fair-audience-ticket-option-addon' )
 				: null;
-			if (!addon) {
+			if ( ! addon ) {
 				return;
 			}
-			addon.style.display = meetsMin && !input.checked ? '' : 'none';
-		});
+			addon.style.display = meetsMin && ! input.checked ? '' : 'none';
+		} );
 	}
 
 	/**
@@ -595,11 +605,11 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * free. No-op when the block has no sliding-scale picker.
 	 * @param {HTMLElement} block The block element
 	 */
-	function initializeSlidingScalePicker(block) {
+	function initializeSlidingScalePicker( block ) {
 		const picker = block.querySelector(
 			'.fair-audience-sliding-scale-picker'
 		);
-		if (!picker) {
+		if ( ! picker ) {
 			return;
 		}
 
@@ -609,40 +619,40 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		const number = picker.querySelector(
 			'.fair-audience-sliding-scale-number'
 		);
-		if (!range || !number) {
+		if ( ! range || ! number ) {
 			return;
 		}
 
-		const syncFrom = function (source, target) {
+		const syncFrom = function ( source, target ) {
 			target.value = source.value;
 			block.dataset.basePrice = source.value;
-			updateButtonTotal(block);
+			updateButtonTotal( block );
 		};
 
-		range.addEventListener('input', function () {
-			syncFrom(range, number);
-		});
-		number.addEventListener('input', function () {
-			syncFrom(number, range);
-		});
+		range.addEventListener( 'input', function () {
+			syncFrom( range, number );
+		} );
+		number.addEventListener( 'input', function () {
+			syncFrom( number, range );
+		} );
 		// Clamp only once the user finishes editing so intermediate keystrokes
 		// (e.g. typing "5" on the way to "50") aren't fought by the browser.
-		number.addEventListener('change', function () {
-			const min = parseFloat(number.min);
-			const max = parseFloat(number.max);
-			let value = parseFloat(number.value);
-			if (isNaN(value)) {
-				value = parseFloat(number.defaultValue) || min || 0;
+		number.addEventListener( 'change', function () {
+			const min = parseFloat( number.min );
+			const max = parseFloat( number.max );
+			let value = parseFloat( number.value );
+			if ( isNaN( value ) ) {
+				value = parseFloat( number.defaultValue ) || min || 0;
 			}
-			if (!isNaN(min) && value < min) {
+			if ( ! isNaN( min ) && value < min ) {
 				value = min;
 			}
-			if (!isNaN(max) && value > max) {
+			if ( ! isNaN( max ) && value > max ) {
 				value = max;
 			}
 			number.value = value;
-			syncFrom(number, range);
-		});
+			syncFrom( number, range );
+		} );
 
 		block.dataset.basePrice = number.value;
 	}
@@ -652,103 +662,103 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * stays in sync as the user checks/unchecks options.
 	 * @param {HTMLElement} block The block element
 	 */
-	function initializeOptionTotals(block) {
+	function initializeOptionTotals( block ) {
 		const ticketTypeRadios = block.querySelectorAll(
 			'input[name="ticket_type_id"]'
 		);
-		ticketTypeRadios.forEach(function (radio) {
-			radio.addEventListener('change', function () {
-				updateInstancePickerVisibility(block);
-				updateInstancePickerHint(block);
-				updateButtonTotal(block);
-				updateMinActivitiesGate(block);
-				updateOptionAddons(block);
-			});
-		});
+		ticketTypeRadios.forEach( function ( radio ) {
+			radio.addEventListener( 'change', function () {
+				updateInstancePickerVisibility( block );
+				updateInstancePickerHint( block );
+				updateButtonTotal( block );
+				updateMinActivitiesGate( block );
+				updateOptionAddons( block );
+			} );
+		} );
 
 		const optionCheckboxes = block.querySelectorAll(
 			'input[name="ticket_option_ids[]"]'
 		);
-		optionCheckboxes.forEach(function (checkbox) {
-			checkbox.addEventListener('change', function () {
-				updateButtonTotal(block);
-				updateMinActivitiesGate(block);
-				updateOptionAddons(block);
-			});
-		});
+		optionCheckboxes.forEach( function ( checkbox ) {
+			checkbox.addEventListener( 'change', function () {
+				updateButtonTotal( block );
+				updateMinActivitiesGate( block );
+				updateOptionAddons( block );
+			} );
+		} );
 
 		const instanceCheckboxes = block.querySelectorAll(
 			'input[name="event_date_ids[]"]'
 		);
-		instanceCheckboxes.forEach(function (checkbox) {
-			checkbox.addEventListener('change', function () {
-				updateInstancePickerHint(block);
-				updateButtonTotal(block);
-				updateMinActivitiesGate(block);
-			});
-		});
+		instanceCheckboxes.forEach( function ( checkbox ) {
+			checkbox.addEventListener( 'change', function () {
+				updateInstancePickerHint( block );
+				updateButtonTotal( block );
+				updateMinActivitiesGate( block );
+			} );
+		} );
 
-		initializeSlidingScalePicker(block);
-		updateInstancePickerVisibility(block);
-		updateInstancePickerHint(block);
-		updateButtonTotal(block);
-		updateMinActivitiesGate(block);
-		updateOptionAddons(block);
+		initializeSlidingScalePicker( block );
+		updateInstancePickerVisibility( block );
+		updateInstancePickerHint( block );
+		updateButtonTotal( block );
+		updateMinActivitiesGate( block );
+		updateOptionAddons( block );
 	}
 
 	/**
 	 * Initialize anonymous block with tabs and forms
 	 * @param {HTMLElement} block The block element
 	 */
-	function initializeAnonymousBlock(block) {
+	function initializeAnonymousBlock( block ) {
 		// Setup tab switching
-		const tabs = block.querySelectorAll('.fair-audience-signup-tab');
-		const tabContents = block.querySelectorAll('[data-tab-content]');
+		const tabs = block.querySelectorAll( '.fair-audience-signup-tab' );
+		const tabContents = block.querySelectorAll( '[data-tab-content]' );
 
-		tabs.forEach(function (tab) {
-			tab.addEventListener('click', function () {
+		tabs.forEach( function ( tab ) {
+			tab.addEventListener( 'click', function () {
 				const targetTab = this.dataset.tab;
 
 				// Update active tab
-				tabs.forEach((t) => t.classList.remove('active'));
-				this.classList.add('active');
+				tabs.forEach( ( t ) => t.classList.remove( 'active' ) );
+				this.classList.add( 'active' );
 
 				// Show/hide content
-				tabContents.forEach(function (content) {
-					if (content.dataset.tabContent === targetTab) {
+				tabContents.forEach( function ( content ) {
+					if ( content.dataset.tabContent === targetTab ) {
 						content.style.display = 'block';
 					} else {
 						content.style.display = 'none';
 					}
-				});
-			});
-		});
+				} );
+			} );
+		} );
 
-		initializeOptionTotals(block);
+		initializeOptionTotals( block );
 
-		wireNotYouButton(block.querySelector('.fair-audience-not-you'));
+		wireNotYouButton( block.querySelector( '.fair-audience-not-you' ) );
 
 		// Setup registration form
 		const registerForm = block.querySelector(
 			'.fair-audience-signup-register'
 		);
-		if (registerForm) {
-			setupQuestionnaire(registerForm);
-			registerForm.addEventListener('submit', function (e) {
+		if ( registerForm ) {
+			setupQuestionnaire( registerForm );
+			registerForm.addEventListener( 'submit', function ( e ) {
 				e.preventDefault();
-				submitRegistration(block, registerForm);
-			});
+				submitRegistration( block, registerForm );
+			} );
 		}
 
 		// Setup request link form
 		const requestLinkForm = block.querySelector(
 			'.fair-audience-signup-request-link'
 		);
-		if (requestLinkForm) {
-			requestLinkForm.addEventListener('submit', function (e) {
+		if ( requestLinkForm ) {
+			requestLinkForm.addEventListener( 'submit', function ( e ) {
 				e.preventDefault();
-				submitRequestLink(block, requestLinkForm);
-			});
+				submitRequestLink( block, requestLinkForm );
+			} );
 		}
 	}
 
@@ -756,24 +766,24 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * Initialize authenticated block (token or linked user)
 	 * @param {HTMLElement} block The block element
 	 */
-	function initializeAuthenticatedBlock(block) {
-		initializeOptionTotals(block);
+	function initializeAuthenticatedBlock( block ) {
+		initializeOptionTotals( block );
 
 		const signupAction = block.querySelector(
 			'.fair-audience-signup-action-signup'
 		);
-		if (signupAction) {
-			setupQuestionnaire(signupAction);
+		if ( signupAction ) {
+			setupQuestionnaire( signupAction );
 		}
 
 		const signupButton = block.querySelector(
 			'.fair-audience-signup-button'
 		);
 
-		if (signupButton) {
-			signupButton.addEventListener('click', function () {
-				submitSignup(block, this);
-			});
+		if ( signupButton ) {
+			signupButton.addEventListener( 'click', function () {
+				submitSignup( block, this );
+			} );
 		}
 
 		// Resume link (issue #1004): a previous anonymous submit with this
@@ -781,9 +791,9 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		// matching participant. Restore it so the visitor doesn't retype
 		// everything, then let them hit the (already-wired) sign up button.
 		const resumeToken = block.dataset.resumeToken || '';
-		if (resumeToken) {
-			block.scrollIntoView({ behavior: 'smooth', block: 'start' });
-			resumeStashedSignup(block, resumeToken);
+		if ( resumeToken ) {
+			block.scrollIntoView( { behavior: 'smooth', block: 'start' } );
+			resumeStashedSignup( block, resumeToken );
 		}
 	}
 
@@ -796,26 +806,26 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block       The block element
 	 * @param {string}      resumeToken The resume token from the URL
 	 */
-	function resumeStashedSignup(block, resumeToken) {
+	function resumeStashedSignup( block, resumeToken ) {
 		const token = block.dataset.participantToken || '';
 		const messageContainer = block.querySelector(
 			'.fair-audience-signup-message'
 		);
 
-		apiFetch({
+		apiFetch( {
 			path:
 				'/fair-audience/v1/event-signup/resume' +
 				'?participant_token=' +
-				encodeURIComponent(token) +
+				encodeURIComponent( token ) +
 				'&resume=' +
-				encodeURIComponent(resumeToken),
+				encodeURIComponent( resumeToken ),
 			method: 'GET',
-		})
-			.then(function (response) {
-				if (!response.success || !response.payload) {
+		} )
+			.then( function ( response ) {
+				if ( ! response.success || ! response.payload ) {
 					return;
 				}
-				applyResumePayload(block, response.payload);
+				applyResumePayload( block, response.payload );
 				showMessage(
 					messageContainer,
 					__(
@@ -825,11 +835,11 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					'info',
 					CSS_PREFIX
 				);
-			})
-			.catch(function () {
+			} )
+			.catch( function () {
 				// Expired/already-used resume link: fall back silently to the
 				// plain (already rendered) signup form.
-			});
+			} );
 	}
 
 	/**
@@ -837,44 +847,44 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block   The block element
 	 * @param {Object}      payload Stashed submission data
 	 */
-	function applyResumePayload(block, payload) {
-		if (payload.ticket_type_id) {
+	function applyResumePayload( block, payload ) {
+		if ( payload.ticket_type_id ) {
 			const ticketTypeInput = block.querySelector(
 				'input[name="ticket_type_id"][value="' +
 					payload.ticket_type_id +
 					'"]'
 			);
-			if (ticketTypeInput) {
+			if ( ticketTypeInput ) {
 				ticketTypeInput.checked = true;
 				ticketTypeInput.dispatchEvent(
-					new Event('change', { bubbles: true })
+					new Event( 'change', { bubbles: true } )
 				);
 			}
 		}
 
-		(payload.ticket_option_ids || []).forEach(function (optionId) {
+		( payload.ticket_option_ids || [] ).forEach( function ( optionId ) {
 			const optionInput = block.querySelector(
 				'input[name="ticket_option_ids[]"][value="' + optionId + '"]'
 			);
-			if (optionInput) {
+			if ( optionInput ) {
 				optionInput.checked = true;
 				optionInput.dispatchEvent(
-					new Event('change', { bubbles: true })
+					new Event( 'change', { bubbles: true } )
 				);
 			}
-		});
+		} );
 
-		(payload.event_date_ids || []).forEach(function (eventDateId) {
+		( payload.event_date_ids || [] ).forEach( function ( eventDateId ) {
 			const instanceInput = block.querySelector(
 				'input[name="event_date_ids[]"][value="' + eventDateId + '"]'
 			);
-			if (instanceInput) {
+			if ( instanceInput ) {
 				instanceInput.checked = true;
 				instanceInput.dispatchEvent(
-					new Event('change', { bubbles: true })
+					new Event( 'change', { bubbles: true } )
 				);
 			}
-		});
+		} );
 
 		if (
 			payload.chosen_amount !== null &&
@@ -883,17 +893,18 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			const chosenAmountInput = block.querySelector(
 				'.fair-audience-sliding-scale-number'
 			);
-			if (chosenAmountInput) {
+			if ( chosenAmountInput ) {
 				chosenAmountInput.value = payload.chosen_amount;
 				chosenAmountInput.dispatchEvent(
-					new Event('input', { bubbles: true })
+					new Event( 'input', { bubbles: true } )
 				);
 			}
 		}
 
 		const questionScope =
-			block.querySelector('.fair-audience-signup-action-signup') || block;
-		applyQuestionAnswers(questionScope, payload.questionnaire_answers);
+			block.querySelector( '.fair-audience-signup-action-signup' ) ||
+			block;
+		applyQuestionAnswers( questionScope, payload.questionnaire_answers );
 	}
 
 	/**
@@ -908,8 +919,13 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} scope               Element containing the question blocks.
 	 * @return {Object} apiFetch options.
 	 */
-	function buildSignupFetch(path, requestData, questionnaireAnswers, scope) {
-		if (!hasFileUploads(scope)) {
+	function buildSignupFetch(
+		path,
+		requestData,
+		questionnaireAnswers,
+		scope
+	) {
+		if ( ! hasFileUploads( scope ) ) {
 			return {
 				path,
 				method: 'POST',
@@ -921,21 +937,21 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		}
 
 		const formData = new FormData();
-		Object.keys(requestData).forEach(function (key) {
-			const value = requestData[key];
-			if (Array.isArray(value)) {
-				value.forEach((v) => formData.append(key + '[]', v));
-			} else if (typeof value === 'boolean') {
-				formData.append(key, value ? '1' : '0');
-			} else if (value !== null && value !== undefined) {
-				formData.append(key, value);
+		Object.keys( requestData ).forEach( function ( key ) {
+			const value = requestData[ key ];
+			if ( Array.isArray( value ) ) {
+				value.forEach( ( v ) => formData.append( key + '[]', v ) );
+			} else if ( typeof value === 'boolean' ) {
+				formData.append( key, value ? '1' : '0' );
+			} else if ( value !== null && value !== undefined ) {
+				formData.append( key, value );
 			}
-		});
+		} );
 		formData.append(
 			'questionnaire_answers',
-			JSON.stringify(questionnaireAnswers)
+			JSON.stringify( questionnaireAnswers )
 		);
-		appendQuestionFiles(scope, formData);
+		appendQuestionFiles( scope, formData );
 
 		return { path, method: 'POST', body: formData };
 	}
@@ -945,10 +961,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @param {HTMLElement} form The form element
 	 */
-	function submitRegistration(block, form) {
-		const eventId = parseInt(block.dataset.eventId, 10);
+	function submitRegistration( block, form ) {
+		const eventId = parseInt( block.dataset.eventId, 10 );
 		const eventDateId = block.dataset.eventDateId
-			? parseInt(block.dataset.eventDateId, 10)
+			? parseInt( block.dataset.eventDateId, 10 )
 			: null;
 		const messageContainer = form.querySelector(
 			'.fair-audience-signup-message'
@@ -964,28 +980,30 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			);
 
 		// Get form data
-		const nameInput = form.querySelector('input[name="signup_name"]');
-		const surnameInput = form.querySelector('input[name="signup_surname"]');
-		const emailInput = form.querySelector('input[name="signup_email"]');
+		const nameInput = form.querySelector( 'input[name="signup_name"]' );
+		const surnameInput = form.querySelector(
+			'input[name="signup_surname"]'
+		);
+		const emailInput = form.querySelector( 'input[name="signup_email"]' );
 		const keepInformedInput = form.querySelector(
 			'input[name="signup_keep_informed"]'
 		);
 
 		// Validate
-		if (!nameInput || !nameInput.value.trim()) {
+		if ( ! nameInput || ! nameInput.value.trim() ) {
 			showMessage(
 				messageContainer,
-				__('Please enter your first name.', 'fair-audience'),
+				__( 'Please enter your first name.', 'fair-audience' ),
 				'error',
 				CSS_PREFIX
 			);
 			return;
 		}
 
-		if (!emailInput || !emailInput.value.trim()) {
+		if ( ! emailInput || ! emailInput.value.trim() ) {
 			showMessage(
 				messageContainer,
-				__('Please enter your email.', 'fair-audience'),
+				__( 'Please enter your email.', 'fair-audience' ),
 				'error',
 				CSS_PREFIX
 			);
@@ -993,9 +1011,9 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		}
 
 		// Validate custom question blocks (required/phone/file constraints).
-		const questionError = validateQuestions(form);
-		if (questionError) {
-			showMessage(messageContainer, questionError, 'error', CSS_PREFIX);
+		const questionError = validateQuestions( form );
+		if ( questionError ) {
+			showMessage( messageContainer, questionError, 'error', CSS_PREFIX );
 			return;
 		}
 
@@ -1010,15 +1028,15 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 				: false,
 		};
 
-		if (eventDateId) {
+		if ( eventDateId ) {
 			requestData.event_date_id = eventDateId;
 		}
 
 		const ticketTypeInput = form.querySelector(
 			'input[name="ticket_type_id"]:checked'
 		);
-		if (ticketTypeInput) {
-			requestData.ticket_type_id = parseInt(ticketTypeInput.value, 10);
+		if ( ticketTypeInput ) {
+			requestData.ticket_type_id = parseInt( ticketTypeInput.value, 10 );
 		}
 
 		if (
@@ -1028,34 +1046,34 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			const instanceInputs = form.querySelectorAll(
 				'input[name="event_date_ids[]"]:checked'
 			);
-			requestData.event_date_ids = Array.from(instanceInputs).map((i) =>
-				parseInt(i.value, 10)
+			requestData.event_date_ids = Array.from( instanceInputs ).map(
+				( i ) => parseInt( i.value, 10 )
 			);
 		}
 
 		const optionInputs = form.querySelectorAll(
 			'input[name="ticket_option_ids[]"]:checked'
 		);
-		if (optionInputs.length > 0) {
-			requestData.ticket_option_ids = Array.from(optionInputs).map((i) =>
-				parseInt(i.value, 10)
+		if ( optionInputs.length > 0 ) {
+			requestData.ticket_option_ids = Array.from( optionInputs ).map(
+				( i ) => parseInt( i.value, 10 )
 			);
 		}
 
 		const chosenAmountInput = form.querySelector(
 			'.fair-audience-sliding-scale-number'
 		);
-		if (chosenAmountInput) {
-			requestData.chosen_amount = parseFloat(chosenAmountInput.value);
+		if ( chosenAmountInput ) {
+			requestData.chosen_amount = parseFloat( chosenAmountInput.value );
 		}
 
 		// Collect custom question answers.
-		const questionnaireAnswers = collectQuestionAnswers(form);
+		const questionnaireAnswers = collectQuestionAnswers( form );
 
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
 			submitButton,
-			__('Submitting...', 'fair-audience')
+			__( 'Submitting...', 'fair-audience' )
 		);
 
 		// Submit to API
@@ -1067,8 +1085,8 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 				form
 			)
 		)
-			.then(function (response) {
-				if (response.success) {
+			.then( function ( response ) {
+				if ( response.success ) {
 					// Paid signup: redirect to Mollie checkout.
 					if (
 						response.status === 'payment_required' &&
@@ -1077,7 +1095,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						showMessage(
 							messageContainer,
 							response.message ||
-								__('Redirecting to payment…', 'fair-audience'),
+								__(
+									'Redirecting to payment…',
+									'fair-audience'
+								),
 							'success',
 							CSS_PREFIX
 						);
@@ -1089,7 +1110,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					// link instead of creating a signup. Surface the message,
 					// leave the form so a typo'd email can be corrected, and
 					// don't flip into the success UI.
-					if (response.status === 'email_recognized') {
+					if ( response.status === 'email_recognized' ) {
 						showMessage(
 							messageContainer,
 							response.message ||
@@ -1117,7 +1138,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					// Reload when the picker is in play so the next render
 					// reflects the just-signed-up date and re-defaults the
 					// picker.
-					if (block.dataset.hasOccurrencePicker === 'true') {
+					if ( block.dataset.hasOccurrencePicker === 'true' ) {
 						window.location.reload();
 						return;
 					}
@@ -1127,12 +1148,12 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					const tabs = block.querySelector(
 						'.fair-audience-signup-tabs'
 					);
-					if (tabs) {
+					if ( tabs ) {
 						tabs.style.display = 'none';
 					}
 
 					// Create success element
-					const successEl = document.createElement('div');
+					const successEl = document.createElement( 'div' );
 					successEl.className =
 						'fair-audience-signup-status fair-audience-signup-status-success';
 					successEl.innerHTML =
@@ -1143,15 +1164,18 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						) +
 						'</p>';
 					block
-						.querySelector('.fair-audience-signup-anonymous')
-						.appendChild(successEl);
+						.querySelector( '.fair-audience-signup-anonymous' )
+						.appendChild( successEl );
 				}
-			})
-			.catch(function (error) {
-				console.error('Event signup error:', error);
+			} )
+			.catch( function ( error ) {
+				console.error( 'Event signup error:', error );
 				const errorMessage = extractErrorMessage(
 					error,
-					__('Failed to sign up. Please try again.', 'fair-audience')
+					__(
+						'Failed to sign up. Please try again.',
+						'fair-audience'
+					)
 				);
 				renderPaymentError(
 					messageContainer,
@@ -1159,11 +1183,11 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					errorMessage,
 					CSS_PREFIX
 				);
-				showNotification(errorMessage, 'error');
-			})
-			.finally(function () {
+				showNotification( errorMessage, 'error' );
+			} )
+			.finally( function () {
 				restoreButton();
-			});
+			} );
 	}
 
 	/**
@@ -1171,10 +1195,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @param {HTMLElement} form The form element
 	 */
-	function submitRequestLink(block, form) {
-		const eventId = parseInt(block.dataset.eventId, 10);
+	function submitRequestLink( block, form ) {
+		const eventId = parseInt( block.dataset.eventId, 10 );
 		const eventDateId = block.dataset.eventDateId
-			? parseInt(block.dataset.eventDateId, 10)
+			? parseInt( block.dataset.eventDateId, 10 )
 			: null;
 		const messageContainer = form.querySelector(
 			'.fair-audience-signup-message'
@@ -1184,12 +1208,12 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		);
 
 		// Get email
-		const emailInput = form.querySelector('input[name="link_email"]');
+		const emailInput = form.querySelector( 'input[name="link_email"]' );
 
-		if (!emailInput || !emailInput.value.trim()) {
+		if ( ! emailInput || ! emailInput.value.trim() ) {
 			showMessage(
 				messageContainer,
-				__('Please enter your email.', 'fair-audience'),
+				__( 'Please enter your email.', 'fair-audience' ),
 				'error',
 				CSS_PREFIX
 			);
@@ -1202,36 +1226,36 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			email: emailInput.value.trim(),
 		};
 
-		if (eventDateId) {
+		if ( eventDateId ) {
 			requestData.event_date_id = eventDateId;
 		}
 
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
 			submitButton,
-			__('Sending...', 'fair-audience')
+			__( 'Sending...', 'fair-audience' )
 		);
 
 		// Submit to API
-		apiFetch({
+		apiFetch( {
 			path: '/fair-audience/v1/event-signup/request-link',
 			method: 'POST',
 			data: requestData,
-		})
-			.then(function (response) {
-				if (response.success) {
+		} )
+			.then( function ( response ) {
+				if ( response.success ) {
 					showMessage(
 						messageContainer,
 						response.message,
 						'success',
 						CSS_PREFIX
 					);
-					showNotification(response.message, 'success');
+					showNotification( response.message, 'success' );
 					form.reset();
 				}
-			})
-			.catch(function (error) {
-				console.error('Request link error:', error);
+			} )
+			.catch( function ( error ) {
+				console.error( 'Request link error:', error );
 				const errorMessage = extractErrorMessage(
 					error,
 					__(
@@ -1245,11 +1269,11 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					'error',
 					CSS_PREFIX
 				);
-				showNotification(errorMessage, 'error');
-			})
-			.finally(function () {
+				showNotification( errorMessage, 'error' );
+			} )
+			.finally( function () {
 				restoreButton();
-			});
+			} );
 	}
 
 	/**
@@ -1257,10 +1281,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @param {HTMLElement} button The signup button
 	 */
-	function submitSignup(block, button) {
-		const eventId = parseInt(block.dataset.eventId, 10);
+	function submitSignup( block, button ) {
+		const eventId = parseInt( block.dataset.eventId, 10 );
 		const eventDateId = block.dataset.eventDateId
-			? parseInt(block.dataset.eventDateId, 10)
+			? parseInt( block.dataset.eventDateId, 10 )
 			: null;
 		const token = block.dataset.participantToken || '';
 		const messageContainer = block.querySelector(
@@ -1278,19 +1302,19 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			event_id: eventId,
 		};
 
-		if (eventDateId) {
+		if ( eventDateId ) {
 			requestData.event_date_id = eventDateId;
 		}
 
-		if (token) {
+		if ( token ) {
 			requestData.participant_token = token;
 		}
 
 		const ticketTypeInput = block.querySelector(
 			'input[name="ticket_type_id"]:checked'
 		);
-		if (ticketTypeInput) {
-			requestData.ticket_type_id = parseInt(ticketTypeInput.value, 10);
+		if ( ticketTypeInput ) {
+			requestData.ticket_type_id = parseInt( ticketTypeInput.value, 10 );
 		}
 
 		if (
@@ -1300,44 +1324,45 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			const instanceInputs = block.querySelectorAll(
 				'input[name="event_date_ids[]"]:checked'
 			);
-			requestData.event_date_ids = Array.from(instanceInputs).map((i) =>
-				parseInt(i.value, 10)
+			requestData.event_date_ids = Array.from( instanceInputs ).map(
+				( i ) => parseInt( i.value, 10 )
 			);
 		}
 
 		const optionInputs = block.querySelectorAll(
 			'input[name="ticket_option_ids[]"]:checked'
 		);
-		if (optionInputs.length > 0) {
-			requestData.ticket_option_ids = Array.from(optionInputs).map((i) =>
-				parseInt(i.value, 10)
+		if ( optionInputs.length > 0 ) {
+			requestData.ticket_option_ids = Array.from( optionInputs ).map(
+				( i ) => parseInt( i.value, 10 )
 			);
 		}
 
 		const chosenAmountInput = block.querySelector(
 			'.fair-audience-sliding-scale-number'
 		);
-		if (chosenAmountInput) {
-			requestData.chosen_amount = parseFloat(chosenAmountInput.value);
+		if ( chosenAmountInput ) {
+			requestData.chosen_amount = parseFloat( chosenAmountInput.value );
 		}
 
 		// Custom questions live inside the signup action container.
 		const questionScope =
-			block.querySelector('.fair-audience-signup-action-signup') || block;
+			block.querySelector( '.fair-audience-signup-action-signup' ) ||
+			block;
 
 		// Validate custom question blocks (required/phone/file constraints).
-		const questionError = validateQuestions(questionScope);
-		if (questionError) {
-			showMessage(messageContainer, questionError, 'error', CSS_PREFIX);
+		const questionError = validateQuestions( questionScope );
+		if ( questionError ) {
+			showMessage( messageContainer, questionError, 'error', CSS_PREFIX );
 			return;
 		}
 
-		const questionnaireAnswers = collectQuestionAnswers(questionScope);
+		const questionnaireAnswers = collectQuestionAnswers( questionScope );
 
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
 			button,
-			__('Signing up...', 'fair-audience')
+			__( 'Signing up...', 'fair-audience' )
 		);
 
 		// Submit to API
@@ -1349,8 +1374,8 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 				questionScope
 			)
 		)
-			.then(function (response) {
-				if (response.success) {
+			.then( function ( response ) {
+				if ( response.success ) {
 					// Paid signup: redirect to Mollie checkout.
 					if (
 						response.status === 'payment_required' &&
@@ -1359,7 +1384,10 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						showMessage(
 							messageContainer,
 							response.message ||
-								__('Redirecting to payment…', 'fair-audience'),
+								__(
+									'Redirecting to payment…',
+									'fair-audience'
+								),
 							'success',
 							CSS_PREFIX
 						);
@@ -1382,7 +1410,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					// just-signed-up date and re-default the picker is a full
 					// reload — otherwise we'd have to keep the picker in sync
 					// with arbitrary follow-up actions.
-					if (block.dataset.hasOccurrencePicker === 'true') {
+					if ( block.dataset.hasOccurrencePicker === 'true' ) {
 						window.location.reload();
 						return;
 					}
@@ -1396,7 +1424,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 							'.fair-audience-signup-linked-form'
 						);
 
-					if (formContainer) {
+					if ( formContainer ) {
 						formContainer.innerHTML =
 							'<div class="fair-audience-signup-status fair-audience-signup-status-success">' +
 							'<p>' +
@@ -1408,7 +1436,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 							'</div>' +
 							'<div class="wp-block-button fair-audience-unsignup-button-wrap">' +
 							'<button type="button" class="wp-block-button__link wp-element-button fair-audience-unsignup-button is-style-outline">' +
-							__('Cancel signup', 'fair-audience') +
+							__( 'Cancel signup', 'fair-audience' ) +
 							'</button>' +
 							'</div>' +
 							'<div class="fair-audience-signup-message" style="display: none;"></div>';
@@ -1417,17 +1445,20 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						const newUnsignupBtn = formContainer.querySelector(
 							'.fair-audience-unsignup-button'
 						);
-						newUnsignupBtn.addEventListener('click', function () {
-							submitUnsignup(block, this);
-						});
+						newUnsignupBtn.addEventListener( 'click', function () {
+							submitUnsignup( block, this );
+						} );
 					}
 				}
-			})
-			.catch(function (error) {
-				console.error('Signup error:', error);
+			} )
+			.catch( function ( error ) {
+				console.error( 'Signup error:', error );
 				const errorMessage = extractErrorMessage(
 					error,
-					__('Failed to sign up. Please try again.', 'fair-audience')
+					__(
+						'Failed to sign up. Please try again.',
+						'fair-audience'
+					)
 				);
 				renderPaymentError(
 					messageContainer,
@@ -1435,11 +1466,11 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					errorMessage,
 					CSS_PREFIX
 				);
-				showNotification(errorMessage, 'error');
-			})
-			.finally(function () {
+				showNotification( errorMessage, 'error' );
+			} )
+			.finally( function () {
 				restoreButton();
-			});
+			} );
 	}
 
 	/**
@@ -1448,47 +1479,49 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * No-op when the section isn't present.
 	 * @param {HTMLElement} block The block element
 	 */
-	function wireAddActivities(block) {
-		const section = block.querySelector('.fair-audience-add-activities');
-		if (!section) {
+	function wireAddActivities( block ) {
+		const section = block.querySelector( '.fair-audience-add-activities' );
+		if ( ! section ) {
 			return;
 		}
 		const button = section.querySelector(
 			'.fair-audience-add-activities-button'
 		);
-		if (!button) {
+		if ( ! button ) {
 			return;
 		}
 		const checkboxes = section.querySelectorAll(
 			'input[name="add_option_ids[]"]'
 		);
 
-		const baseText = __('Add activities', 'fair-audience');
+		const baseText = __( 'Add activities', 'fair-audience' );
 		const updateButton = function () {
 			const optionPrices = [];
 			let anyChecked = false;
-			checkboxes.forEach(function (cb) {
-				if (cb.checked) {
+			checkboxes.forEach( function ( cb ) {
+				if ( cb.checked ) {
 					anyChecked = true;
-					optionPrices.push(parseFloat(cb.dataset.optionPrice || 0));
+					optionPrices.push(
+						parseFloat( cb.dataset.optionPrice || 0 )
+					);
 				}
-			});
-			const total = computeTicketTotal({ unitPrice: 0, optionPrices });
-			button.disabled = !anyChecked;
+			} );
+			const total = computeTicketTotal( { unitPrice: 0, optionPrices } );
+			button.disabled = ! anyChecked;
 			button.textContent =
 				total > 0
 					? baseText +
 					  ' — ' +
-					  formatMoneyInline(total, block.dataset.currency)
+					  formatMoneyInline( total, block.dataset.currency )
 					: baseText;
 		};
 
-		checkboxes.forEach(function (cb) {
-			cb.addEventListener('change', updateButton);
-		});
-		button.addEventListener('click', function () {
-			submitAddActivities(block, this);
-		});
+		checkboxes.forEach( function ( cb ) {
+			cb.addEventListener( 'change', updateButton );
+		} );
+		button.addEventListener( 'click', function () {
+			submitAddActivities( block, this );
+		} );
 
 		updateButton();
 	}
@@ -1499,13 +1532,13 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @param {HTMLElement} button The add-activities button
 	 */
-	function submitAddActivities(block, button) {
-		const eventId = parseInt(block.dataset.eventId, 10);
+	function submitAddActivities( block, button ) {
+		const eventId = parseInt( block.dataset.eventId, 10 );
 		const eventDateId = block.dataset.eventDateId
-			? parseInt(block.dataset.eventDateId, 10)
+			? parseInt( block.dataset.eventDateId, 10 )
 			: null;
 		const token = block.dataset.participantToken || '';
-		const section = block.querySelector('.fair-audience-add-activities');
+		const section = block.querySelector( '.fair-audience-add-activities' );
 		const messageContainer = block.querySelector(
 			'.fair-audience-signup-message'
 		);
@@ -1513,34 +1546,34 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 		const checked = section.querySelectorAll(
 			'input[name="add_option_ids[]"]:checked'
 		);
-		if (checked.length === 0) {
+		if ( checked.length === 0 ) {
 			return;
 		}
 
 		const requestData = {
 			event_id: eventId,
-			ticket_option_ids: Array.from(checked).map((i) =>
-				parseInt(i.value, 10)
+			ticket_option_ids: Array.from( checked ).map( ( i ) =>
+				parseInt( i.value, 10 )
 			),
 		};
-		if (eventDateId) {
+		if ( eventDateId ) {
 			requestData.event_date_id = eventDateId;
 		}
-		if (token) {
+		if ( token ) {
 			requestData.participant_token = token;
 		}
 
 		const restoreButton = setButtonLoading(
 			button,
-			__('Adding…', 'fair-audience')
+			__( 'Adding…', 'fair-audience' )
 		);
 
-		apiFetch({
+		apiFetch( {
 			path: '/fair-audience/v1/event-signup/add-activities',
 			method: 'POST',
 			data: requestData,
-		})
-			.then(function (response) {
+		} )
+			.then( function ( response ) {
 				// Paid add: redirect to Mollie checkout for the delta.
 				if (
 					response &&
@@ -1550,7 +1583,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					window.location = response.checkout_url;
 					return;
 				}
-				if (response && response.success) {
+				if ( response && response.success ) {
 					showNotification(
 						response.message ||
 							__(
@@ -1564,9 +1597,9 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					return;
 				}
 				restoreButton();
-			})
-			.catch(function (error) {
-				console.error('Add activities error:', error);
+			} )
+			.catch( function ( error ) {
+				console.error( 'Add activities error:', error );
 				const errorMessage = extractErrorMessage(
 					error,
 					__(
@@ -1574,7 +1607,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						'fair-audience'
 					)
 				);
-				if (messageContainer) {
+				if ( messageContainer ) {
 					showMessage(
 						messageContainer,
 						errorMessage,
@@ -1582,9 +1615,9 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						CSS_PREFIX
 					);
 				}
-				showNotification(errorMessage, 'error');
+				showNotification( errorMessage, 'error' );
 				restoreButton();
-			});
+			} );
 	}
 
 	/**
@@ -1592,21 +1625,21 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block The block element
 	 * @param {HTMLElement} button The unsignup button
 	 */
-	function submitUnsignup(block, button) {
-		const eventId = parseInt(block.dataset.eventId, 10);
+	function submitUnsignup( block, button ) {
+		const eventId = parseInt( block.dataset.eventId, 10 );
 		const eventDateId = block.dataset.eventDateId
-			? parseInt(block.dataset.eventDateId, 10)
+			? parseInt( block.dataset.eventDateId, 10 )
 			: null;
 		const token = block.dataset.participantToken || '';
 		const state = block.dataset.state;
 
 		const container =
-			block.querySelector('.fair-audience-signup-signed-up') ||
-			block.querySelector('.fair-audience-signup-token-form') ||
-			block.querySelector('.fair-audience-signup-linked-form');
+			block.querySelector( '.fair-audience-signup-signed-up' ) ||
+			block.querySelector( '.fair-audience-signup-token-form' ) ||
+			block.querySelector( '.fair-audience-signup-linked-form' );
 
 		const messageContainer = container
-			? container.querySelector('.fair-audience-signup-message')
+			? container.querySelector( '.fair-audience-signup-message' )
 			: null;
 
 		// Build request data
@@ -1614,27 +1647,27 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			event_id: eventId,
 		};
 
-		if (eventDateId) {
+		if ( eventDateId ) {
 			requestData.event_date_id = eventDateId;
 		}
 
-		if (token) {
+		if ( token ) {
 			requestData.participant_token = token;
 		}
 
 		// Disable button and show loading state
 		const restoreButton = setButtonLoading(
 			button,
-			__('Cancelling...', 'fair-audience')
+			__( 'Cancelling...', 'fair-audience' )
 		);
 
-		apiFetch({
+		apiFetch( {
 			path: '/fair-audience/v1/event-signup',
 			method: 'DELETE',
 			data: requestData,
-		})
-			.then(function (response) {
-				if (response.success) {
+		} )
+			.then( function ( response ) {
+				if ( response.success ) {
 					showNotification(
 						response.message ||
 							__(
@@ -1647,7 +1680,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					// Picker present: rerender from server so the cancelled
 					// date moves back to "available" and the default selection
 					// updates.
-					if (block.dataset.hasOccurrencePicker === 'true') {
+					if ( block.dataset.hasOccurrencePicker === 'true' ) {
 						window.location.reload();
 						return;
 					}
@@ -1661,7 +1694,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						: '';
 
 					// Replace with signup form
-					if (container) {
+					if ( container ) {
 						const nameHtml = participantName
 							? '<strong class="fair-audience-signup-greeting-name">' +
 							  participantName +
@@ -1671,7 +1704,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 							? __(
 									'Hi %s! You can sign up for this event.',
 									'fair-audience'
-							  ).replace('%s', nameHtml)
+							  ).replace( '%s', nameHtml )
 							: __(
 									'You can sign up for this event.',
 									'fair-audience'
@@ -1689,7 +1722,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 							'</p>' +
 							'<div class="wp-block-button">' +
 							'<button type="button" class="wp-block-button__link wp-element-button fair-audience-signup-button" data-action="signup">' +
-							__('Sign Up', 'fair-audience') +
+							__( 'Sign Up', 'fair-audience' ) +
 							'</button>' +
 							'</div>' +
 							'<div class="fair-audience-signup-message" style="display: none;"></div>';
@@ -1698,14 +1731,14 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						const newSignupBtn = container.querySelector(
 							'.fair-audience-signup-button'
 						);
-						newSignupBtn.addEventListener('click', function () {
-							submitSignup(block, this);
-						});
+						newSignupBtn.addEventListener( 'click', function () {
+							submitSignup( block, this );
+						} );
 					}
 				}
-			})
-			.catch(function (error) {
-				console.error('Unsignup error:', error);
+			} )
+			.catch( function ( error ) {
+				console.error( 'Unsignup error:', error );
 				const errorMessage = extractErrorMessage(
 					error,
 					__(
@@ -1713,7 +1746,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						'fair-audience'
 					)
 				);
-				if (messageContainer) {
+				if ( messageContainer ) {
 					showMessage(
 						messageContainer,
 						errorMessage,
@@ -1721,11 +1754,11 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						CSS_PREFIX
 					);
 				}
-				showNotification(errorMessage, 'error');
-			})
-			.finally(function () {
+				showNotification( errorMessage, 'error' );
+			} )
+			.finally( function () {
 				restoreButton();
-			});
+			} );
 	}
 
 	/**
@@ -1736,9 +1769,9 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * if the bank takes longer than that.
 	 * @param {HTMLElement} container The pending container element
 	 */
-	function startPendingPoll(container) {
-		const transactionId = parseInt(container.dataset.transactionId, 10);
-		if (!transactionId) {
+	function startPendingPoll( container ) {
+		const transactionId = parseInt( container.dataset.transactionId, 10 );
+		if ( ! transactionId ) {
 			return;
 		}
 
@@ -1748,14 +1781,14 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 
 		const tick = function () {
 			attempts += 1;
-			apiFetch({
-				path: `/fair-payments-connector/v1/payments/${transactionId}/status`,
+			apiFetch( {
+				path: `/fair-payments-connector/v1/payments/${ transactionId }/status`,
 				method: 'GET',
-			})
-				.then(function (response) {
+			} )
+				.then( function ( response ) {
 					const status = response && response.status;
-					if (status === 'paid' || status === 'completed') {
-						swapPendingToPaid(container, response);
+					if ( status === 'paid' || status === 'completed' ) {
+						swapPendingToPaid( container, response );
 						return;
 					}
 					if (
@@ -1763,23 +1796,23 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 						status === 'canceled' ||
 						status === 'expired'
 					) {
-						swapPendingToTerminal(container);
+						swapPendingToTerminal( container );
 						return;
 					}
-					if (attempts < MAX_ATTEMPTS) {
-						setTimeout(tick, POLL_INTERVAL_MS);
+					if ( attempts < MAX_ATTEMPTS ) {
+						setTimeout( tick, POLL_INTERVAL_MS );
 					}
-				})
-				.catch(function () {
+				} )
+				.catch( function () {
 					// Swallow polling errors silently; we'll try again on the
 					// next tick, and the user can always refresh.
-					if (attempts < MAX_ATTEMPTS) {
-						setTimeout(tick, POLL_INTERVAL_MS);
+					if ( attempts < MAX_ATTEMPTS ) {
+						setTimeout( tick, POLL_INTERVAL_MS );
 					}
-				});
+				} );
 		};
 
-		setTimeout(tick, POLL_INTERVAL_MS);
+		setTimeout( tick, POLL_INTERVAL_MS );
 	}
 
 	/**
@@ -1787,33 +1820,37 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} container The pending container element
 	 * @param {Object} transaction Transaction status response
 	 */
-	function swapPendingToPaid(container, transaction) {
+	function swapPendingToPaid( container, transaction ) {
 		const amount =
 			transaction && transaction.amount
-				? `${transaction.amount} ${transaction.currency || ''}`.trim()
+				? `${ transaction.amount } ${
+						transaction.currency || ''
+				  }`.trim()
 				: '';
 
-		container.classList.remove('fair-audience-signup-pending');
-		container.classList.add('fair-audience-signup-paid');
+		container.classList.remove( 'fair-audience-signup-pending' );
+		container.classList.add( 'fair-audience-signup-paid' );
 
 		container.innerHTML = '';
 		container.appendChild(
-			createElement('div', 'fair-audience-signup-paid-icon', '✓', {
+			createElement( 'div', 'fair-audience-signup-paid-icon', '✓', {
 				'aria-hidden': 'true',
-			})
+			} )
 		);
 		container.appendChild(
 			createElement(
 				'h2',
 				'fair-audience-signup-paid-heading',
-				__('Payment confirmed', 'fair-audience')
+				__( 'Payment confirmed', 'fair-audience' )
 			)
 		);
 		container.appendChild(
 			createElement(
 				'p',
 				'fair-audience-signup-paid-amount',
-				amount ? __('Amount paid:', 'fair-audience') + ' ' + amount : ''
+				amount
+					? __( 'Amount paid:', 'fair-audience' ) + ' ' + amount
+					: ''
 			)
 		);
 		container.appendChild(
@@ -1827,7 +1864,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			)
 		);
 
-		showThankYouPopup(amount);
+		showThankYouPopup( amount );
 	}
 
 	/**
@@ -1835,8 +1872,8 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * pointing the user back to the event page so they can retry.
 	 * @param {HTMLElement} container The pending container element
 	 */
-	function swapPendingToTerminal(container) {
-		container.classList.remove('fair-audience-signup-pending');
+	function swapPendingToTerminal( container ) {
+		container.classList.remove( 'fair-audience-signup-pending' );
 		container.innerHTML = '';
 		const message = createElement(
 			'p',
@@ -1846,7 +1883,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 				'fair-audience'
 			)
 		);
-		container.appendChild(message);
+		container.appendChild( message );
 	}
 
 	/**
@@ -1857,16 +1894,16 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {Object} attrs Optional attributes
 	 * @return {HTMLElement} The created element
 	 */
-	function createElement(tag, className, text, attrs) {
-		const el = document.createElement(tag);
+	function createElement( tag, className, text, attrs ) {
+		const el = document.createElement( tag );
 		el.className = className;
-		if (text) {
+		if ( text ) {
 			el.textContent = text;
 		}
-		if (attrs) {
-			Object.keys(attrs).forEach(function (key) {
-				el.setAttribute(key, attrs[key]);
-			});
+		if ( attrs ) {
+			Object.keys( attrs ).forEach( function ( key ) {
+				el.setAttribute( key, attrs[ key ] );
+			} );
 		}
 		return el;
 	}
@@ -1877,18 +1914,18 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} container Paid container element
 	 * @return {string} Amount text including currency, or empty when absent
 	 */
-	function readPaidAmount(container) {
+	function readPaidAmount( container ) {
 		const amountEl = container.querySelector(
 			'.fair-audience-signup-paid-amount'
 		);
-		if (!amountEl) {
+		if ( ! amountEl ) {
 			return '';
 		}
 		// "Amount paid: 10,00 EUR" → "10,00 EUR". Robust to translation: take
 		// everything after the last colon.
-		const text = (amountEl.textContent || '').trim();
-		const idx = text.lastIndexOf(':');
-		return idx >= 0 ? text.slice(idx + 1).trim() : text;
+		const text = ( amountEl.textContent || '' ).trim();
+		const idx = text.lastIndexOf( ':' );
+		return idx >= 0 ? text.slice( idx + 1 ).trim() : text;
 	}
 
 	/**
@@ -1897,8 +1934,8 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * removes any doubt that the purchase went through.
 	 * @param {string} amount Optional formatted amount with currency.
 	 */
-	function showThankYouPopup(amount) {
-		if (window.__fairAudienceThankYouShown) {
+	function showThankYouPopup( amount ) {
+		if ( window.__fairAudienceThankYouShown ) {
 			return;
 		}
 		window.__fairAudienceThankYouShown = true;
@@ -1910,32 +1947,32 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			{ role: 'dialog', 'aria-modal': 'true' }
 		);
 
-		const card = createElement('div', 'fair-audience-thank-you-card');
+		const card = createElement( 'div', 'fair-audience-thank-you-card' );
 		card.appendChild(
-			createElement('div', 'fair-audience-thank-you-icon', '✓', {
+			createElement( 'div', 'fair-audience-thank-you-icon', '✓', {
 				'aria-hidden': 'true',
-			})
+			} )
 		);
 		card.appendChild(
 			createElement(
 				'h2',
 				'fair-audience-thank-you-heading',
-				__('Thank you!', 'fair-audience')
+				__( 'Thank you!', 'fair-audience' )
 			)
 		);
 		card.appendChild(
 			createElement(
 				'p',
 				'fair-audience-thank-you-message',
-				__('Your payment was confirmed.', 'fair-audience')
+				__( 'Your payment was confirmed.', 'fair-audience' )
 			)
 		);
-		if (amount) {
+		if ( amount ) {
 			card.appendChild(
 				createElement(
 					'p',
 					'fair-audience-thank-you-amount',
-					__('Amount paid:', 'fair-audience') + ' ' + amount
+					__( 'Amount paid:', 'fair-audience' ) + ' ' + amount
 				)
 			);
 		}
@@ -1943,36 +1980,36 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 			createElement(
 				'p',
 				'fair-audience-thank-you-email',
-				__('A confirmation email is on its way.', 'fair-audience')
+				__( 'A confirmation email is on its way.', 'fair-audience' )
 			)
 		);
 
-		const dismissButton = document.createElement('button');
+		const dismissButton = document.createElement( 'button' );
 		dismissButton.type = 'button';
 		dismissButton.className =
 			'wp-block-button__link wp-element-button fair-audience-thank-you-dismiss';
-		dismissButton.textContent = __('Got it', 'fair-audience');
-		card.appendChild(dismissButton);
+		dismissButton.textContent = __( 'Got it', 'fair-audience' );
+		card.appendChild( dismissButton );
 
-		overlay.appendChild(card);
-		document.body.appendChild(overlay);
+		overlay.appendChild( card );
+		document.body.appendChild( overlay );
 
 		const close = function () {
 			overlay.remove();
-			document.removeEventListener('keydown', onKeydown);
+			document.removeEventListener( 'keydown', onKeydown );
 		};
-		const onKeydown = function (e) {
-			if (e.key === 'Escape') {
+		const onKeydown = function ( e ) {
+			if ( e.key === 'Escape' ) {
 				close();
 			}
 		};
-		dismissButton.addEventListener('click', close);
-		overlay.addEventListener('click', function (e) {
-			if (e.target === overlay) {
+		dismissButton.addEventListener( 'click', close );
+		overlay.addEventListener( 'click', function ( e ) {
+			if ( e.target === overlay ) {
 				close();
 			}
-		});
-		document.addEventListener('keydown', onKeydown);
+		} );
+		document.addEventListener( 'keydown', onKeydown );
 
 		dismissButton.focus();
 	}
@@ -1982,9 +2019,9 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} container The retry container element
 	 * @param {HTMLElement} button The retry button
 	 */
-	function submitRetryPayment(container, button) {
-		const transactionId = parseInt(container.dataset.transactionId, 10);
-		if (!transactionId) {
+	function submitRetryPayment( container, button ) {
+		const transactionId = parseInt( container.dataset.transactionId, 10 );
+		if ( ! transactionId ) {
 			return;
 		}
 		const signature = container.dataset.signature || '';
@@ -1994,20 +2031,20 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 
 		const restoreButton = setButtonLoading(
 			button,
-			__('Redirecting…', 'fair-audience')
+			__( 'Redirecting…', 'fair-audience' )
 		);
 
 		const requestData = { transaction_id: transactionId };
-		if (signature) {
+		if ( signature ) {
 			requestData.signature = signature;
 		}
 
-		apiFetch({
+		apiFetch( {
 			path: '/fair-audience/v1/event-signup/retry-payment',
 			method: 'POST',
 			data: requestData,
-		})
-			.then(function (response) {
+		} )
+			.then( function ( response ) {
 				if (
 					response &&
 					response.status === 'payment_required' &&
@@ -2016,7 +2053,7 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					window.location = response.checkout_url;
 					return;
 				}
-				if (response && response.status === 'already_signed_up') {
+				if ( response && response.status === 'already_signed_up' ) {
 					showMessage(
 						messageContainer,
 						response.message,
@@ -2032,14 +2069,14 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 				);
 				showMessage(
 					messageContainer,
-					(response && response.message) || fallback,
+					( response && response.message ) || fallback,
 					'error',
 					CSS_PREFIX
 				);
 				restoreButton();
-			})
-			.catch(function (error) {
-				console.error('Retry payment error:', error);
+			} )
+			.catch( function ( error ) {
+				console.error( 'Retry payment error:', error );
 				const errorMessage = extractErrorMessage(
 					error,
 					__(
@@ -2053,9 +2090,9 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 					'error',
 					CSS_PREFIX
 				);
-				showNotification(errorMessage, 'error');
+				showNotification( errorMessage, 'error' );
 				restoreButton();
-			});
+			} );
 	}
 
 	/**
@@ -2067,43 +2104,43 @@ const SCROLL_RESTORE_KEY = 'fairAudienceOccurrenceScrollY';
 	 * @param {HTMLElement} block     The signup block element
 	 * @param {HTMLElement} container The resume/retry callback container
 	 */
-	function wireCancelPendingPayment(block, container) {
+	function wireCancelPendingPayment( block, container ) {
 		const cancelLink = container.querySelector(
 			'.fair-audience-signup-resume-cancel a, .fair-audience-signup-retry-cancel a'
 		);
-		if (!cancelLink) {
+		if ( ! cancelLink ) {
 			return;
 		}
 
-		cancelLink.addEventListener('click', function (event) {
+		cancelLink.addEventListener( 'click', function ( event ) {
 			event.preventDefault();
 
-			const eventId = parseInt(block.dataset.eventId, 10);
+			const eventId = parseInt( block.dataset.eventId, 10 );
 			const eventDateId = block.dataset.eventDateId
-				? parseInt(block.dataset.eventDateId, 10)
+				? parseInt( block.dataset.eventDateId, 10 )
 				: null;
 			const token = block.dataset.participantToken || '';
 			const destination = cancelLink.href;
 
 			const requestData = { event_id: eventId };
-			if (eventDateId) {
+			if ( eventDateId ) {
 				requestData.event_date_id = eventDateId;
 			}
-			if (token) {
+			if ( token ) {
 				requestData.participant_token = token;
 			}
 
-			apiFetch({
+			apiFetch( {
 				path: '/fair-audience/v1/event-signup',
 				method: 'DELETE',
 				data: requestData,
-			})
-				.catch(function (error) {
-					console.error('Cancel pending payment error:', error);
-				})
-				.finally(function () {
+			} )
+				.catch( function ( error ) {
+					console.error( 'Cancel pending payment error:', error );
+				} )
+				.finally( function () {
 					window.location = destination;
-				});
-		});
+				} );
+		} );
 	}
-})();
+} )();

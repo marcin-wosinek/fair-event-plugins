@@ -11,7 +11,7 @@ import './style.scss';
 /**
  * Register the block
  */
-registerBlockType('fair-events/events-list', {
+registerBlockType( 'fair-events/events-list', {
 	/**
 	 * Block edit function
 	 *
@@ -21,4 +21,4 @@ registerBlockType('fair-events/events-list', {
 	 * @return {JSX.Element} The edit component
 	 */
 	edit: EditComponent,
-});
+} );

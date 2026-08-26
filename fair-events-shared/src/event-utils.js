@@ -16,7 +16,7 @@ import { __ } from '@wordpress/i18n';
  * @param {Object|undefined} eventDate The event date object (or ctx.eventDate).
  * @return {boolean} True when the event's link type is `external`.
  */
-export const isLinkOnlyEvent = (eventDate) =>
+export const isLinkOnlyEvent = ( eventDate ) =>
 	eventDate?.link_type === 'external';
 
 /**
@@ -25,7 +25,7 @@ export const isLinkOnlyEvent = (eventDate) =>
  * @param {string|null|undefined} title Raw event title.
  * @return {string} The trimmed title, or a "(untitled event)" fallback.
  */
-export const getEventDisplayTitle = (title) =>
+export const getEventDisplayTitle = ( title ) =>
 	title && title.trim()
 		? title.trim()
-		: __('(untitled event)', 'fair-events');
+		: __( '(untitled event)', 'fair-events' );

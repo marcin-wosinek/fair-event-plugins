@@ -21,69 +21,69 @@ const generatedOccurrences = [
 ];
 
 // Matches the aria-label built in RecurrenceCalendar's MiniMonth.
-function fullDateLabel(dateStr) {
-	return formatDateOnly(dateStr, 'long');
+function fullDateLabel( dateStr ) {
+	return formatDateOnly( dateStr, 'long' );
 }
 
-it('renders active occurrences as navigable links with a full-date aria-label', () => {
+it( 'renders active occurrences as navigable links with a full-date aria-label', () => {
 	render(
 		<RecurrenceCalendar
-			generatedOccurrences={generatedOccurrences}
-			cancelledDates={['2026-07-15']}
+			generatedOccurrences={ generatedOccurrences }
+			cancelledDates={ [ '2026-07-15' ] }
 			masterDate="2026-07-01"
 			manageEventUrl="http://example.com/manage"
-			masterEventDateId={1}
+			masterEventDateId={ 1 }
 			embedded
 		/>
 	);
 
-	const activeLink = screen.getByRole('link', {
-		name: fullDateLabel('2026-07-08'),
-	});
-	expect(activeLink).toHaveAttribute(
+	const activeLink = screen.getByRole( 'link', {
+		name: fullDateLabel( '2026-07-08' ),
+	} );
+	expect( activeLink ).toHaveAttribute(
 		'href',
 		'http://example.com/manage&event_date_id=2'
 	);
-});
+} );
 
-it('renders cancelled occurrences as navigable links to their own event_date_id', () => {
+it( 'renders cancelled occurrences as navigable links to their own event_date_id', () => {
 	render(
 		<RecurrenceCalendar
-			generatedOccurrences={generatedOccurrences}
-			cancelledDates={['2026-07-15']}
+			generatedOccurrences={ generatedOccurrences }
+			cancelledDates={ [ '2026-07-15' ] }
 			masterDate="2026-07-01"
 			manageEventUrl="http://example.com/manage"
-			masterEventDateId={1}
+			masterEventDateId={ 1 }
 			embedded
 		/>
 	);
 
-	const cancelledLink = screen.getByRole('link', {
-		name: fullDateLabel('2026-07-15'),
-	});
-	expect(cancelledLink).toHaveAttribute(
+	const cancelledLink = screen.getByRole( 'link', {
+		name: fullDateLabel( '2026-07-15' ),
+	} );
+	expect( cancelledLink ).toHaveAttribute(
 		'href',
 		'http://example.com/manage&event_date_id=3'
 	);
-});
+} );
 
-it('links the master cell to the master event_date_id', () => {
+it( 'links the master cell to the master event_date_id', () => {
 	render(
 		<RecurrenceCalendar
-			generatedOccurrences={generatedOccurrences}
-			cancelledDates={['2026-07-15']}
+			generatedOccurrences={ generatedOccurrences }
+			cancelledDates={ [ '2026-07-15' ] }
 			masterDate="2026-07-01"
 			manageEventUrl="http://example.com/manage"
-			masterEventDateId={1}
+			masterEventDateId={ 1 }
 			embedded
 		/>
 	);
 
-	const masterLink = screen.getByRole('link', {
-		name: fullDateLabel('2026-07-01'),
-	});
-	expect(masterLink).toHaveAttribute(
+	const masterLink = screen.getByRole( 'link', {
+		name: fullDateLabel( '2026-07-01' ),
+	} );
+	expect( masterLink ).toHaveAttribute(
 		'href',
 		'http://example.com/manage&event_date_id=1'
 	);
-});
+} );

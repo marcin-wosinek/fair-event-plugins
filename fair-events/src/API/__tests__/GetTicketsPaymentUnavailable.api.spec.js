@@ -22,16 +22,18 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-function uniqueEmail(prefix) {
-	return `${prefix}-${Date.now()}-${Math.floor(
+function uniqueEmail( prefix ) {
+	return `${ prefix }-${ Date.now() }-${ Math.floor(
 		Math.random() * 1e6
-	)}@example.test`;
+	) }@example.test`;
 }
 
-test.describe('GetTicketsController — payments unavailable (fail closed)', () => {
+test.describe( 'GetTicketsController — payments unavailable (fail closed)', () => {
 	let api;
 	let eventPostId;
 	let masterEventDateId;
@@ -42,39 +44,39 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 
 	// Count signup rows for an event date via the admin GET route, so a
 	// rejection can be proven to have written nothing.
-	async function countSignups(eventDateId) {
-		const res = await api.get('/wp-json/fair-events/v1/get-tickets', {
+	async function countSignups( eventDateId ) {
+		const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
 			headers: adminHeaders,
 			params: { event_date: eventDateId },
-		});
-		expect(res.ok()).toBeTruthy();
-		return (await res.json()).length;
+		} );
+		expect( res.ok() ).toBeTruthy();
+		return ( await res.json() ).length;
 	}
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets payments-unavailable test ${Date.now()}`,
+				title: `Get-tickets payments-unavailable test ${ Date.now() }`,
 				status: 'publish',
 			},
-		});
-		expect(postRes.ok()).toBeTruthy();
-		eventPostId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		eventPostId = ( await postRes.json() ).id;
 
-		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets payments-unavailable test ${Date.now()}`,
+				title: `Get-tickets payments-unavailable test ${ Date.now() }`,
 				link_type: 'post',
 				start_datetime: '2035-05-01 10:00:00',
 				end_datetime: '2035-05-01 12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			},
-		});
-		expect(edRes.ok()).toBeTruthy();
+		} );
+		expect( edRes.ok() ).toBeTruthy();
 		const edBody = await edRes.json();
 		masterEventDateId = edBody.id;
 
@@ -82,13 +84,13 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 		// needed to actually link the post (see CalendarFeedController.api.spec.js
 		// for the same quirk).
 		const linkRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
 			{
 				headers: adminHeaders,
 				data: { event_id: eventPostId },
 			}
 		);
-		expect(linkRes.ok()).toBeTruthy();
+		expect( linkRes.ok() ).toBeTruthy();
 
 		// generated_occurrences comes straight off the create response
 		// (master + 2 generated for COUNT=3 / 3 manual dates) — the
@@ -96,9 +98,9 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 		// (a separate pre-existing bug), so deriving from edRes avoids it.
 		occurrenceIds = [
 			masterEventDateId,
-			...edBody.generated_occurrences.map((o) => o.id),
+			...edBody.generated_occurrences.map( ( o ) => o.id ),
 		].sort();
-		expect(occurrenceIds.length).toBe(3);
+		expect( occurrenceIds.length ).toBe( 3 );
 
 		// Three priced ticket types — one per purchase path — plus an
 		// always-on sale period so each price resolves server-side.
@@ -109,7 +111,7 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 			group_ids: [],
 		};
 		const ticketsRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/tickets`,
 			{
 				headers: adminHeaders,
 				data: {
@@ -159,104 +161,104 @@ test.describe('GetTicketsController — payments unavailable (fail closed)', () 
 				},
 			}
 		);
-		expect(ticketsRes.ok()).toBeTruthy();
-		const types = (await ticketsRes.json()).ticket_types || [];
+		expect( ticketsRes.ok() ).toBeTruthy();
+		const types = ( await ticketsRes.json() ).ticket_types || [];
 		singleTypeId = types.find(
-			(t) => t.recurrence_scope === 'single_instance'
+			( t ) => t.recurrence_scope === 'single_instance'
 		)?.id;
 		seriesTypeId = types.find(
-			(t) => t.recurrence_scope === 'whole_series'
+			( t ) => t.recurrence_scope === 'whole_series'
 		)?.id;
 		multiTypeId = types.find(
-			(t) => t.recurrence_scope === 'multiple_instances'
+			( t ) => t.recurrence_scope === 'multiple_instances'
 		)?.id;
-		expect(singleTypeId).toBeTruthy();
-		expect(seriesTypeId).toBeTruthy();
-		expect(multiTypeId).toBeTruthy();
-	});
+		expect( singleTypeId ).toBeTruthy();
+		expect( seriesTypeId ).toBeTruthy();
+		expect( multiTypeId ).toBeTruthy();
+	} );
 
-	test.afterAll(async () => {
-		if (eventPostId) {
+	test.afterAll( async () => {
+		if ( eventPostId ) {
 			await api.delete(
-				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,
 				{ headers: adminHeaders }
 			);
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('a paid single-instance signup is rejected 503 and writes nothing', async () => {
+	test( 'a paid single-instance signup is rejected 503 and writes nothing', async () => {
 		test.skip(
 			true,
 			'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
 		);
-		const before = await countSignups(masterEventDateId);
-		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+		const before = await countSignups( masterEventDateId );
+		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: masterEventDateId,
 				name: 'Single Tester',
-				email: uniqueEmail('single'),
+				email: uniqueEmail( 'single' ),
 				ticket_type_id: singleTypeId,
 				quantity: 1,
 			},
-		});
-		expect(res.status()).toBe(503);
-		expect((await res.json()).code).toBe('payment_unavailable');
-		expect(await countSignups(masterEventDateId)).toBe(before);
-	});
+		} );
+		expect( res.status() ).toBe( 503 );
+		expect( ( await res.json() ).code ).toBe( 'payment_unavailable' );
+		expect( await countSignups( masterEventDateId ) ).toBe( before );
+	} );
 
-	test('a paid whole-series signup is rejected 503 and writes nothing', async () => {
+	test( 'a paid whole-series signup is rejected 503 and writes nothing', async () => {
 		test.skip(
 			true,
 			'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
 		);
-		const before = await countSignups(masterEventDateId);
-		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+		const before = await countSignups( masterEventDateId );
+		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: masterEventDateId,
 				name: 'Series Tester',
-				email: uniqueEmail('series'),
+				email: uniqueEmail( 'series' ),
 				ticket_type_id: seriesTypeId,
 				quantity: 1,
 			},
-		});
-		expect(res.status()).toBe(503);
-		expect((await res.json()).code).toBe('payment_unavailable');
-		expect(await countSignups(masterEventDateId)).toBe(before);
-	});
+		} );
+		expect( res.status() ).toBe( 503 );
+		expect( ( await res.json() ).code ).toBe( 'payment_unavailable' );
+		expect( await countSignups( masterEventDateId ) ).toBe( before );
+	} );
 
-	test('a paid multiple-instances signup is rejected 503 and writes nothing', async () => {
+	test( 'a paid multiple-instances signup is rejected 503 and writes nothing', async () => {
 		test.skip(
 			true,
 			'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
 		);
-		const chosen = [occurrenceIds[0], occurrenceIds[1]];
-		const before = await Promise.all(chosen.map(countSignups));
-		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+		const chosen = [ occurrenceIds[ 0 ], occurrenceIds[ 1 ] ];
+		const before = await Promise.all( chosen.map( countSignups ) );
+		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: masterEventDateId,
 				name: 'Multi Tester',
-				email: uniqueEmail('multi'),
+				email: uniqueEmail( 'multi' ),
 				ticket_type_id: multiTypeId,
 				event_date_ids: chosen,
 			},
-		});
-		expect(res.status()).toBe(503);
-		expect((await res.json()).code).toBe('payment_unavailable');
-		const after = await Promise.all(chosen.map(countSignups));
-		expect(after).toEqual(before);
-	});
+		} );
+		expect( res.status() ).toBe( 503 );
+		expect( ( await res.json() ).code ).toBe( 'payment_unavailable' );
+		const after = await Promise.all( chosen.map( countSignups ) );
+		expect( after ).toEqual( before );
+	} );
 
-	test('a free signup on the same event still confirms', async () => {
+	test( 'a free signup on the same event still confirms', async () => {
 		// No ticket type → amount 0 → free path, unaffected by the guard.
-		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: masterEventDateId,
 				name: 'Free Tester',
-				email: uniqueEmail('free'),
+				email: uniqueEmail( 'free' ),
 			},
-		});
-		expect(res.ok()).toBeTruthy();
-		expect((await res.json()).status).toBe('confirmed');
-	});
-});
+		} );
+		expect( res.ok() ).toBeTruthy();
+		expect( ( await res.json() ).status ).toBe( 'confirmed' );
+	} );
+} );

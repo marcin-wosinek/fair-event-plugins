@@ -9,7 +9,7 @@ import apiFetch from '@wordpress/api-fetch';
  * @return {Promise<Array>} Promise resolving to array of messages
  */
 export function loadCustomMails() {
-	return apiFetch({ path: '/fair-audience/v1/custom-mail' });
+	return apiFetch( { path: '/fair-audience/v1/custom-mail' } );
 }
 
 /**
@@ -22,12 +22,12 @@ export function loadCustomMails() {
  * @param {boolean} data.is_marketing  Whether to filter by marketing consent
  * @return {Promise<Object>} Promise resolving to send results
  */
-export function sendCustomMail(data) {
-	return apiFetch({
+export function sendCustomMail( data ) {
+	return apiFetch( {
 		path: '/fair-audience/v1/custom-mail',
 		method: 'POST',
 		data,
-	});
+	} );
 }
 
 /**
@@ -36,7 +36,7 @@ export function sendCustomMail(data) {
  * @return {Promise<Array>} Promise resolving to array of event dates
  */
 export function loadEventDates() {
-	return apiFetch({ path: '/fair-audience/v1/custom-mail/events' });
+	return apiFetch( { path: '/fair-audience/v1/custom-mail/events' } );
 }
 
 /**
@@ -45,7 +45,7 @@ export function loadEventDates() {
  * @return {Promise<Array>} Promise resolving to array of groups
  */
 export function loadGroups() {
-	return apiFetch({ path: '/fair-audience/v1/custom-mail/groups' });
+	return apiFetch( { path: '/fair-audience/v1/custom-mail/groups' } );
 }
 
 /**
@@ -57,12 +57,12 @@ export function loadGroups() {
  * @param {Array}   data.labels        Labels to include
  * @return {Promise<Array>} Promise resolving to array of recipients
  */
-export function previewRecipients(data) {
-	return apiFetch({
+export function previewRecipients( data ) {
+	return apiFetch( {
 		path: '/fair-audience/v1/custom-mail/preview',
 		method: 'POST',
 		data,
-	});
+	} );
 }
 
 /**
@@ -71,9 +71,9 @@ export function previewRecipients(data) {
  * @param {number} id Message ID
  * @return {Promise<Object>} Promise resolving to deletion result
  */
-export function deleteCustomMail(id) {
-	return apiFetch({
-		path: `/fair-audience/v1/custom-mail/${id}`,
+export function deleteCustomMail( id ) {
+	return apiFetch( {
+		path: `/fair-audience/v1/custom-mail/${ id }`,
 		method: 'DELETE',
-	});
+	} );
 }

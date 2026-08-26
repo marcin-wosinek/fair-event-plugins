@@ -10,12 +10,12 @@ dotenv.config();
  * Locally: Tests start Docker WordPress instance automatically
  * @see https://playwright.dev/docs/test-configuration
  */
-export default defineConfig({
+export default defineConfig( {
 	testDir: './e2e',
 	/* Run tests in files in parallel */
 	fullyParallel: false,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
-	forbidOnly: !!process.env.CI,
+	forbidOnly: !! process.env.CI,
 	/* Retry on CI only */
 	retries: process.env.CI ? 2 : 0,
 	/* Opt out of parallel tests on CI. */
@@ -41,7 +41,7 @@ export default defineConfig({
 	projects: [
 		{
 			name: 'chromium',
-			use: { ...devices['Desktop Chrome'] },
+			use: { ...devices[ 'Desktop Chrome' ] },
 		},
 	],
 
@@ -51,7 +51,7 @@ export default defineConfig({
 		: {
 				command: 'docker compose up',
 				url: 'http://localhost:8080',
-				reuseExistingServer: !process.env.CI,
+				reuseExistingServer: ! process.env.CI,
 				timeout: 120 * 1000, // 2 minutes
 		  },
-});
+} );

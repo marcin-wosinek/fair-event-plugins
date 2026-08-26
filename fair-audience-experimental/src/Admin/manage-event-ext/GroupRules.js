@@ -24,99 +24,98 @@ import {
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
-const PERMISSION_TYPES = ['invited', 'view_signups', 'manage_signups'];
+const PERMISSION_TYPES = [ 'invited', 'view_signups', 'manage_signups' ];
 
 const discountTypeOptions = [
 	{
-		label: __('Percentage (%)', 'fair-audience-experimental'),
+		label: __( 'Percentage (%)', 'fair-audience-experimental' ),
 		value: 'percentage',
 	},
 	{
-		label: __('Fixed amount', 'fair-audience-experimental'),
+		label: __( 'Fixed amount', 'fair-audience-experimental' ),
 		value: 'amount',
 	},
 ];
 
 const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
 
-const formatDiscount = (type, value) => {
-	if (type === 'percentage') {
-		return `${value}%`;
+const formatDiscount = ( type, value ) => {
+	if ( type === 'percentage' ) {
+		return `${ value }%`;
 	}
-	return new Intl.NumberFormat('en-US', {
+	return new Intl.NumberFormat( 'en-US', {
 		style: 'currency',
 		currency: siteCurrency,
-	}).format(value);
+	} ).format( value );
 };
 
-const permissionLabel = (type) => {
-	switch (type) {
+const permissionLabel = ( type ) => {
+	switch ( type ) {
 		case 'invited':
-			return __('Invited', 'fair-audience-experimental');
+			return __( 'Invited', 'fair-audience-experimental' );
 		case 'view_signups':
-			return __('View signups', 'fair-audience-experimental');
+			return __( 'View signups', 'fair-audience-experimental' );
 		case 'manage_signups':
-			return __('Manage signups', 'fair-audience-experimental');
+			return __( 'Manage signups', 'fair-audience-experimental' );
 		default:
 			return type;
 	}
 };
 
-export default function GroupRules({ eventDateId }) {
-	const [pricingRules, setPricingRules] = useState([]);
-	const [permissionRules, setPermissionRules] = useState([]);
-	const [groups, setGroups] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [success, setSuccess] = useState(null);
+export default function GroupRules( { eventDateId } ) {
+	const [ pricingRules, setPricingRules ] = useState( [] );
+	const [ permissionRules, setPermissionRules ] = useState( [] );
+	const [ groups, setGroups ] = useState( [] );
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ success, setSuccess ] = useState( null );
 
 	// Add form state
-	const [selectedGroupId, setSelectedGroupId] = useState('');
-	const [discountType, setDiscountType] = useState('percentage');
-	const [discountValue, setDiscountValue] = useState('');
-	const [addPermissions, setAddPermissions] = useState({
+	const [ selectedGroupId, setSelectedGroupId ] = useState( '' );
+	const [ discountType, setDiscountType ] = useState( 'percentage' );
+	const [ discountValue, setDiscountValue ] = useState( '' );
+	const [ addPermissions, setAddPermissions ] = useState( {
 		view_signups: false,
 		manage_signups: false,
-	});
-	const [adding, setAdding] = useState(false);
+	} );
+	const [ adding, setAdding ] = useState( false );
 
 	// Edit state
-	const [editingGroupId, setEditingGroupId] = useState(null);
-	const [editDiscountType, setEditDiscountType] = useState('percentage');
-	const [editDiscountValue, setEditDiscountValue] = useState('');
-	const [saving, setSaving] = useState(false);
+	const [ editingGroupId, setEditingGroupId ] = useState( null );
+	const [ editDiscountType, setEditDiscountType ] = useState( 'percentage' );
+	const [ editDiscountValue, setEditDiscountValue ] = useState( '' );
+	const [ saving, setSaving ] = useState( false );
 
-	useEffect(() => {
-		if (!eventDateId) {
-			setLoading(false);
+	useEffect( () => {
+		if ( ! eventDateId ) {
+			setLoading( false );
 			return;
 		}
 		loadData();
-	}, [eventDateId]);
+	}, [ eventDateId ] );
 
 	const loadData = async () => {
-		setLoading(true);
-		setError(null);
+		setLoading( true );
+		setError( null );
 
 		try {
-			const [pricingData, permissionData, groupsData] = await Promise.all(
-				[
-					apiFetch({
-						path: `/fair-events/v1/event-dates/${eventDateId}/group-pricing-rules`,
-					}),
-					apiFetch({
-						path: `/fair-events/v1/event-dates/${eventDateId}/group-permission-rules`,
-					}),
-					apiFetch({
+			const [ pricingData, permissionData, groupsData ] =
+				await Promise.all( [
+					apiFetch( {
+						path: `/fair-events/v1/event-dates/${ eventDateId }/group-pricing-rules`,
+					} ),
+					apiFetch( {
+						path: `/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules`,
+					} ),
+					apiFetch( {
 						path: '/fair-audience/v1/groups',
-					}),
-				]
-			);
+					} ),
+				] );
 
-			setPricingRules(pricingData);
-			setPermissionRules(permissionData);
-			setGroups(groupsData);
-		} catch (err) {
+			setPricingRules( pricingData );
+			setPermissionRules( permissionData );
+			setGroups( groupsData );
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -125,7 +124,7 @@ export default function GroupRules({ eventDateId }) {
 					)
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
@@ -133,78 +132,84 @@ export default function GroupRules({ eventDateId }) {
 	const groupsWithRules = [];
 	const groupIdsWithRules = new Set();
 
-	pricingRules.forEach((pr) => groupIdsWithRules.add(pr.group_id));
-	permissionRules.forEach((pr) => groupIdsWithRules.add(pr.group_id));
+	pricingRules.forEach( ( pr ) => groupIdsWithRules.add( pr.group_id ) );
+	permissionRules.forEach( ( pr ) => groupIdsWithRules.add( pr.group_id ) );
 
-	groupIdsWithRules.forEach((groupId) => {
-		const group = groups.find((g) => g.id === groupId);
-		const pricing = pricingRules.find((r) => r.group_id === groupId);
+	groupIdsWithRules.forEach( ( groupId ) => {
+		const group = groups.find( ( g ) => g.id === groupId );
+		const pricing = pricingRules.find( ( r ) => r.group_id === groupId );
 		const permissions = permissionRules.filter(
-			(r) => r.group_id === groupId
+			( r ) => r.group_id === groupId
 		);
 
-		groupsWithRules.push({
+		groupsWithRules.push( {
 			groupId,
 			groupName:
-				group?.name || pricing?.group_name || `Group #${groupId}`,
+				group?.name || pricing?.group_name || `Group #${ groupId }`,
 			pricing,
 			permissions,
-		});
-	});
+		} );
+	} );
 
-	const availableGroups = groups.filter((g) => !groupIdsWithRules.has(g.id));
+	const availableGroups = groups.filter(
+		( g ) => ! groupIdsWithRules.has( g.id )
+	);
 
 	const handleAdd = async () => {
-		if (!selectedGroupId) return;
+		if ( ! selectedGroupId ) return;
 
-		const hasDiscount = discountValue && parseFloat(discountValue) > 0;
-		const selectedPerms = PERMISSION_TYPES.filter((p) => addPermissions[p]);
+		const hasDiscount = discountValue && parseFloat( discountValue ) > 0;
+		const selectedPerms = PERMISSION_TYPES.filter(
+			( p ) => addPermissions[ p ]
+		);
 
-		if (!hasDiscount && selectedPerms.length === 0) return;
+		if ( ! hasDiscount && selectedPerms.length === 0 ) return;
 
-		setAdding(true);
-		setError(null);
-		setSuccess(null);
+		setAdding( true );
+		setError( null );
+		setSuccess( null );
 
 		try {
 			const promises = [];
 
-			if (hasDiscount) {
+			if ( hasDiscount ) {
 				promises.push(
-					apiFetch({
-						path: `/fair-events/v1/event-dates/${eventDateId}/group-pricing-rules`,
+					apiFetch( {
+						path: `/fair-events/v1/event-dates/${ eventDateId }/group-pricing-rules`,
 						method: 'POST',
 						data: {
-							group_id: parseInt(selectedGroupId, 10),
+							group_id: parseInt( selectedGroupId, 10 ),
 							discount_type: discountType,
-							discount_value: parseFloat(discountValue),
+							discount_value: parseFloat( discountValue ),
 						},
-					})
+					} )
 				);
 			}
 
-			for (const perm of selectedPerms) {
+			for ( const perm of selectedPerms ) {
 				promises.push(
-					apiFetch({
-						path: `/fair-events/v1/event-dates/${eventDateId}/group-permission-rules`,
+					apiFetch( {
+						path: `/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules`,
 						method: 'POST',
 						data: {
-							group_id: parseInt(selectedGroupId, 10),
+							group_id: parseInt( selectedGroupId, 10 ),
 							permission_type: perm,
 						},
-					})
+					} )
 				);
 			}
 
-			await Promise.all(promises);
+			await Promise.all( promises );
 			await loadData();
 
-			setSelectedGroupId('');
-			setDiscountValue('');
-			setDiscountType('percentage');
-			setAddPermissions({ view_signups: false, manage_signups: false });
-			setSuccess(__('Group rules added.', 'fair-audience-experimental'));
-		} catch (err) {
+			setSelectedGroupId( '' );
+			setDiscountValue( '' );
+			setDiscountType( 'percentage' );
+			setAddPermissions( { view_signups: false, manage_signups: false } );
+			setSuccess(
+				__( 'Group rules added.', 'fair-audience-experimental' )
+			);
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -213,69 +218,69 @@ export default function GroupRules({ eventDateId }) {
 					)
 			);
 		} finally {
-			setAdding(false);
+			setAdding( false );
 		}
 	};
 
-	const handleStartEdit = (groupEntry) => {
-		setEditingGroupId(groupEntry.groupId);
-		if (groupEntry.pricing) {
-			setEditDiscountType(groupEntry.pricing.discount_type);
-			setEditDiscountValue(String(groupEntry.pricing.discount_value));
+	const handleStartEdit = ( groupEntry ) => {
+		setEditingGroupId( groupEntry.groupId );
+		if ( groupEntry.pricing ) {
+			setEditDiscountType( groupEntry.pricing.discount_type );
+			setEditDiscountValue( String( groupEntry.pricing.discount_value ) );
 		} else {
-			setEditDiscountType('percentage');
-			setEditDiscountValue('');
+			setEditDiscountType( 'percentage' );
+			setEditDiscountValue( '' );
 		}
 	};
 
 	const handleCancelEdit = () => {
-		setEditingGroupId(null);
+		setEditingGroupId( null );
 	};
 
-	const handleSaveEdit = async (groupEntry) => {
-		setSaving(true);
-		setError(null);
-		setSuccess(null);
+	const handleSaveEdit = async ( groupEntry ) => {
+		setSaving( true );
+		setError( null );
+		setSuccess( null );
 
 		try {
 			const hasNewDiscount =
-				editDiscountValue && parseFloat(editDiscountValue) > 0;
+				editDiscountValue && parseFloat( editDiscountValue ) > 0;
 
-			if (groupEntry.pricing && hasNewDiscount) {
+			if ( groupEntry.pricing && hasNewDiscount ) {
 				// Update existing pricing rule
-				await apiFetch({
-					path: `/fair-events/v1/event-dates/${eventDateId}/group-pricing-rules/${groupEntry.pricing.id}`,
+				await apiFetch( {
+					path: `/fair-events/v1/event-dates/${ eventDateId }/group-pricing-rules/${ groupEntry.pricing.id }`,
 					method: 'PUT',
 					data: {
 						discount_type: editDiscountType,
-						discount_value: parseFloat(editDiscountValue),
+						discount_value: parseFloat( editDiscountValue ),
 					},
-				});
-			} else if (groupEntry.pricing && !hasNewDiscount) {
+				} );
+			} else if ( groupEntry.pricing && ! hasNewDiscount ) {
 				// Remove pricing rule
-				await apiFetch({
-					path: `/fair-events/v1/event-dates/${eventDateId}/group-pricing-rules/${groupEntry.pricing.id}`,
+				await apiFetch( {
+					path: `/fair-events/v1/event-dates/${ eventDateId }/group-pricing-rules/${ groupEntry.pricing.id }`,
 					method: 'DELETE',
-				});
-			} else if (!groupEntry.pricing && hasNewDiscount) {
+				} );
+			} else if ( ! groupEntry.pricing && hasNewDiscount ) {
 				// Create new pricing rule
-				await apiFetch({
-					path: `/fair-events/v1/event-dates/${eventDateId}/group-pricing-rules`,
+				await apiFetch( {
+					path: `/fair-events/v1/event-dates/${ eventDateId }/group-pricing-rules`,
 					method: 'POST',
 					data: {
 						group_id: groupEntry.groupId,
 						discount_type: editDiscountType,
-						discount_value: parseFloat(editDiscountValue),
+						discount_value: parseFloat( editDiscountValue ),
 					},
-				});
+				} );
 			}
 
 			await loadData();
-			setEditingGroupId(null);
+			setEditingGroupId( null );
 			setSuccess(
-				__('Group rules updated.', 'fair-audience-experimental')
+				__( 'Group rules updated.', 'fair-audience-experimental' )
 			);
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -284,35 +289,35 @@ export default function GroupRules({ eventDateId }) {
 					)
 			);
 		} finally {
-			setSaving(false);
+			setSaving( false );
 		}
 	};
 
-	const handleTogglePermission = async (groupId, permType, currentRule) => {
-		setError(null);
-		setSuccess(null);
+	const handleTogglePermission = async ( groupId, permType, currentRule ) => {
+		setError( null );
+		setSuccess( null );
 
 		try {
-			if (currentRule) {
+			if ( currentRule ) {
 				// Delete permission
-				await apiFetch({
-					path: `/fair-events/v1/event-dates/${eventDateId}/group-permission-rules/${currentRule.id}`,
+				await apiFetch( {
+					path: `/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules/${ currentRule.id }`,
 					method: 'DELETE',
-				});
+				} );
 			} else {
 				// Create permission
-				await apiFetch({
-					path: `/fair-events/v1/event-dates/${eventDateId}/group-permission-rules`,
+				await apiFetch( {
+					path: `/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules`,
 					method: 'POST',
 					data: {
 						group_id: groupId,
 						permission_type: permType,
 					},
-				});
+				} );
 			}
 
 			await loadData();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -323,9 +328,9 @@ export default function GroupRules({ eventDateId }) {
 		}
 	};
 
-	const handleRemoveGroup = async (groupEntry) => {
+	const handleRemoveGroup = async ( groupEntry ) => {
 		if (
-			!window.confirm(
+			! window.confirm(
 				__(
 					'Are you sure you want to remove all rules for this group?',
 					'fair-audience-experimental'
@@ -335,36 +340,36 @@ export default function GroupRules({ eventDateId }) {
 			return;
 		}
 
-		setError(null);
-		setSuccess(null);
+		setError( null );
+		setSuccess( null );
 
 		try {
 			const promises = [];
 
-			if (groupEntry.pricing) {
+			if ( groupEntry.pricing ) {
 				promises.push(
-					apiFetch({
-						path: `/fair-events/v1/event-dates/${eventDateId}/group-pricing-rules/${groupEntry.pricing.id}`,
+					apiFetch( {
+						path: `/fair-events/v1/event-dates/${ eventDateId }/group-pricing-rules/${ groupEntry.pricing.id }`,
 						method: 'DELETE',
-					})
+					} )
 				);
 			}
 
-			for (const perm of groupEntry.permissions) {
+			for ( const perm of groupEntry.permissions ) {
 				promises.push(
-					apiFetch({
-						path: `/fair-events/v1/event-dates/${eventDateId}/group-permission-rules/${perm.id}`,
+					apiFetch( {
+						path: `/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules/${ perm.id }`,
 						method: 'DELETE',
-					})
+					} )
 				);
 			}
 
-			await Promise.all(promises);
+			await Promise.all( promises );
 			await loadData();
 			setSuccess(
-				__('Group rules removed.', 'fair-audience-experimental')
+				__( 'Group rules removed.', 'fair-audience-experimental' )
 			);
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -376,66 +381,66 @@ export default function GroupRules({ eventDateId }) {
 	};
 
 	return (
-		<Card style={{ marginTop: '16px' }}>
+		<Card style={ { marginTop: '16px' } }>
 			<CardHeader>
-				<h2>{__('Group Rules', 'fair-audience-experimental')}</h2>
+				<h2>{ __( 'Group Rules', 'fair-audience-experimental' ) }</h2>
 			</CardHeader>
 			<CardBody>
-				<VStack spacing={4}>
-					{error && (
+				<VStack spacing={ 4 }>
+					{ error && (
 						<Notice
 							status="error"
 							isDismissible
-							onRemove={() => setError(null)}
+							onRemove={ () => setError( null ) }
 						>
-							{error}
+							{ error }
 						</Notice>
-					)}
+					) }
 
-					{success && (
+					{ success && (
 						<Notice
 							status="success"
 							isDismissible
-							onRemove={() => setSuccess(null)}
+							onRemove={ () => setSuccess( null ) }
 						>
-							{success}
+							{ success }
 						</Notice>
-					)}
+					) }
 
-					{loading && (
-						<div style={{ textAlign: 'center', padding: '20px' }}>
+					{ loading && (
+						<div style={ { textAlign: 'center', padding: '20px' } }>
 							<Spinner />
 						</div>
-					)}
+					) }
 
-					{!loading && (
+					{ ! loading && (
 						<>
-							{groupsWithRules.length > 0 &&
-								groupsWithRules.map((entry) => (
-									<Card key={entry.groupId}>
+							{ groupsWithRules.length > 0 &&
+								groupsWithRules.map( ( entry ) => (
+									<Card key={ entry.groupId }>
 										<CardBody>
-											{editingGroupId ===
+											{ editingGroupId ===
 											entry.groupId ? (
-												<VStack spacing={3}>
+												<VStack spacing={ 3 }>
 													<HStack alignment="center">
 														<h3
-															style={{
+															style={ {
 																margin: 0,
-															}}
+															} }
 														>
-															{entry.groupName}
+															{ entry.groupName }
 														</h3>
 													</HStack>
 													<HStack
-														spacing={4}
+														spacing={ 4 }
 														alignment="top"
 														wrap
 													>
 														<SelectControl
-															label={__(
+															label={ __(
 																'Discount Type',
 																'fair-audience-experimental'
-															)}
+															) }
 															value={
 																editDiscountType
 															}
@@ -448,10 +453,10 @@ export default function GroupRules({ eventDateId }) {
 															__nextHasNoMarginBottom
 														/>
 														<TextControl
-															label={__(
+															label={ __(
 																'Discount Value',
 																'fair-audience-experimental'
-															)}
+															) }
 															type="number"
 															value={
 																editDiscountValue
@@ -461,29 +466,29 @@ export default function GroupRules({ eventDateId }) {
 															}
 															min="0"
 															step="0.01"
-															placeholder={__(
+															placeholder={ __(
 																'0 = no discount',
 																'fair-audience-experimental'
-															)}
+															) }
 															__nextHasNoMarginBottom
 														/>
 													</HStack>
-													<HStack spacing={2}>
+													<HStack spacing={ 2 }>
 														<Button
 															variant="primary"
 															size="small"
-															onClick={() =>
+															onClick={ () =>
 																handleSaveEdit(
 																	entry
 																)
 															}
-															isBusy={saving}
-															disabled={saving}
+															isBusy={ saving }
+															disabled={ saving }
 														>
-															{__(
+															{ __(
 																'Save',
 																'fair-audience-experimental'
-															)}
+															) }
 														</Button>
 														<Button
 															variant="tertiary"
@@ -492,79 +497,79 @@ export default function GroupRules({ eventDateId }) {
 																handleCancelEdit
 															}
 														>
-															{__(
+															{ __(
 																'Cancel',
 																'fair-audience-experimental'
-															)}
+															) }
 														</Button>
 													</HStack>
 												</VStack>
 											) : (
-												<VStack spacing={2}>
+												<VStack spacing={ 2 }>
 													<HStack alignment="center">
 														<h3
-															style={{
+															style={ {
 																margin: 0,
-															}}
+															} }
 														>
-															{entry.groupName}
+															{ entry.groupName }
 														</h3>
-														<HStack spacing={2}>
+														<HStack spacing={ 2 }>
 															<Button
 																variant="secondary"
 																size="small"
-																onClick={() =>
+																onClick={ () =>
 																	handleStartEdit(
 																		entry
 																	)
 																}
 															>
-																{__(
+																{ __(
 																	'Edit',
 																	'fair-audience-experimental'
-																)}
+																) }
 															</Button>
 															<Button
 																variant="tertiary"
 																size="small"
 																isDestructive
-																onClick={() =>
+																onClick={ () =>
 																	handleRemoveGroup(
 																		entry
 																	)
 																}
 															>
-																{__(
+																{ __(
 																	'Remove',
 																	'fair-audience-experimental'
-																)}
+																) }
 															</Button>
 														</HStack>
 													</HStack>
-													{entry.pricing && (
+													{ entry.pricing && (
 														<p
-															style={{
+															style={ {
 																margin: 0,
-															}}
+															} }
 														>
-															{__(
+															{ __(
 																'Discount:',
 																'fair-audience-experimental'
-															)}{' '}
-															{formatDiscount(
+															) }{ ' ' }
+															{ formatDiscount(
 																entry.pricing
 																	.discount_type,
 																entry.pricing
 																	.discount_value
-															)}
+															) }
 														</p>
-													)}
-													<HStack spacing={4} wrap>
-														{PERMISSION_TYPES.map(
-															(permType) => {
+													) }
+													<HStack spacing={ 4 } wrap>
+														{ PERMISSION_TYPES.map(
+															( permType ) => {
 																const rule =
 																	entry.permissions.find(
-																		(p) =>
+																		( p ) =>
 																			p.permission_type ===
 																			permType
 																	);
@@ -573,13 +578,13 @@ export default function GroupRules({ eventDateId }) {
 																		key={
 																			permType
 																		}
-																		label={permissionLabel(
+																		label={ permissionLabel(
 																			permType
-																		)}
+																		) }
 																		checked={
-																			!!rule
+																			!! rule
 																		}
-																		onChange={() =>
+																		onChange={ () =>
 																			handleTogglePermission(
 																				entry.groupId,
 																				permType,
@@ -590,43 +595,43 @@ export default function GroupRules({ eventDateId }) {
 																	/>
 																);
 															}
-														)}
+														) }
 													</HStack>
 												</VStack>
-											)}
+											) }
 										</CardBody>
 									</Card>
-								))}
+								) ) }
 
-							{groupsWithRules.length === 0 && (
+							{ groupsWithRules.length === 0 && (
 								<p
-									style={{
+									style={ {
 										textAlign: 'center',
 										color: '#666',
-									}}
+									} }
 								>
-									{__(
+									{ __(
 										'No group rules yet. Add one below.',
 										'fair-audience-experimental'
-									)}
+									) }
 								</p>
-							)}
+							) }
 
-							{availableGroups.length > 0 && (
-								<VStack spacing={3}>
-									<h3 style={{ margin: 0 }}>
-										{__(
+							{ availableGroups.length > 0 && (
+								<VStack spacing={ 3 }>
+									<h3 style={ { margin: 0 } }>
+										{ __(
 											'Add Group',
 											'fair-audience-experimental'
-										)}
+										) }
 									</h3>
 									<SelectControl
-										label={__(
+										label={ __(
 											'Group',
 											'fair-audience-experimental'
-										)}
-										value={selectedGroupId}
-										options={[
+										) }
+										value={ selectedGroupId }
+										options={ [
 											{
 												label: __(
 													'Select a group...',
@@ -634,31 +639,31 @@ export default function GroupRules({ eventDateId }) {
 												),
 												value: '',
 											},
-											...availableGroups.map((g) => ({
+											...availableGroups.map( ( g ) => ( {
 												label: g.name,
-												value: String(g.id),
-											})),
-										]}
-										onChange={setSelectedGroupId}
+												value: String( g.id ),
+											} ) ),
+										] }
+										onChange={ setSelectedGroupId }
 									/>
-									<HStack spacing={4} alignment="top" wrap>
+									<HStack spacing={ 4 } alignment="top" wrap>
 										<SelectControl
-											label={__(
+											label={ __(
 												'Discount Type',
 												'fair-audience-experimental'
-											)}
-											value={discountType}
-											options={discountTypeOptions}
-											onChange={setDiscountType}
+											) }
+											value={ discountType }
+											options={ discountTypeOptions }
+											onChange={ setDiscountType }
 										/>
 										<TextControl
-											label={__(
+											label={ __(
 												'Discount Value',
 												'fair-audience-experimental'
-											)}
+											) }
 											type="number"
-											value={discountValue}
-											onChange={setDiscountValue}
+											value={ discountValue }
+											onChange={ setDiscountValue }
 											min="0"
 											step="0.01"
 											placeholder={
@@ -674,58 +679,66 @@ export default function GroupRules({ eventDateId }) {
 											}
 										/>
 									</HStack>
-									<HStack spacing={4} wrap>
-										{PERMISSION_TYPES.map((permType) => (
-											<CheckboxControl
-												key={permType}
-												label={permissionLabel(
-													permType
-												)}
-												checked={
-													addPermissions[permType]
-												}
-												onChange={(checked) =>
-													setAddPermissions({
-														...addPermissions,
-														[permType]: checked,
-													})
-												}
-												__nextHasNoMarginBottom
-											/>
-										))}
+									<HStack spacing={ 4 } wrap>
+										{ PERMISSION_TYPES.map(
+											( permType ) => (
+												<CheckboxControl
+													key={ permType }
+													label={ permissionLabel(
+														permType
+													) }
+													checked={
+														addPermissions[
+															permType
+														]
+													}
+													onChange={ ( checked ) =>
+														setAddPermissions( {
+															...addPermissions,
+															[ permType ]:
+																checked,
+														} )
+													}
+													__nextHasNoMarginBottom
+												/>
+											)
+										) }
 									</HStack>
 									<Button
 										variant="primary"
-										onClick={handleAdd}
-										isBusy={adding}
+										onClick={ handleAdd }
+										isBusy={ adding }
 										disabled={
 											adding ||
-											!selectedGroupId ||
-											(!discountValue &&
-												!PERMISSION_TYPES.some(
-													(p) => addPermissions[p]
-												))
+											! selectedGroupId ||
+											( ! discountValue &&
+												! PERMISSION_TYPES.some(
+													( p ) => addPermissions[ p ]
+												) )
 										}
 									>
-										{__(
+										{ __(
 											'Add',
 											'fair-audience-experimental'
-										)}
+										) }
 									</Button>
 								</VStack>
-							)}
+							) }
 
-							{availableGroups.length === 0 &&
+							{ availableGroups.length === 0 &&
 								groups.length > 0 && (
-									<Notice status="info" isDismissible={false}>
-										{__(
+									<Notice
+										status="info"
+										isDismissible={ false }
+									>
+										{ __(
 											'All groups already have rules for this event.',
 											'fair-audience-experimental'
-										)}
+										) }
 									</Notice>
-								)}
+								) }
 						</>
-					)}
+					) }
 				</VStack>
 			</CardBody>
 		</Card>

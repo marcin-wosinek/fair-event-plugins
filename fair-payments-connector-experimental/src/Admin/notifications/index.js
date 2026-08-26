@@ -9,11 +9,11 @@ import { createRoot } from '@wordpress/element';
  */
 import NotificationsApp from './NotificationsApp.js';
 
-domReady(() => {
+domReady( () => {
 	const root = document.getElementById(
 		'fair-payments-connector-experimental-notifications-root'
 	);
-	if (root) {
-		createRoot(root).render(<NotificationsApp />);
+	if ( root ) {
+		createRoot( root ).render( <NotificationsApp /> );
 	}
-});
+} );

@@ -13,9 +13,9 @@ import './style.scss';
 /**
  * Initialize the budgets page
  */
-domReady(() => {
-	const root = document.getElementById('fair-finance-budgets-root');
-	if (root) {
-		createRoot(root).render(<BudgetsApp />);
+domReady( () => {
+	const root = document.getElementById( 'fair-finance-budgets-root' );
+	if ( root ) {
+		createRoot( root ).render( <BudgetsApp /> );
 	}
-});
+} );

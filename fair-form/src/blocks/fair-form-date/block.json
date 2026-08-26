@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "calendar-alt",
 	"description": "A date input question using the browser's native date picker for Fair Form",
-	"keywords": ["question", "date", "input"],
+	"keywords": [ "question", "date", "input" ],
 	"textdomain": "fair-audience",
 	"ancestor": [
 		"fair-audience/fair-form",

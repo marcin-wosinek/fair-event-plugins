@@ -1,7 +1,7 @@
 export default {
 	preset: '@wordpress/jest-preset-default',
 	testEnvironment: 'jsdom',
-	testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
+	testMatch: [ '**/__tests__/**/*.js', '**/?(*.)+(spec|test).js' ],
 	testPathIgnorePatterns: [
 		'/node_modules/',
 		'/vendor/',
@@ -20,7 +20,7 @@ export default {
 		'!**/e2e/**',
 	],
 	coverageDirectory: 'coverage',
-	coverageReporters: ['text', 'lcov', 'html'],
+	coverageReporters: [ 'text', 'lcov', 'html' ],
 	setupFilesAfterEnv: [],
 	transform: {
 		'^.+\\.m?[jt]sx?$': [
@@ -35,7 +35,7 @@ export default {
 							},
 						},
 					],
-					['@babel/preset-react', { runtime: 'automatic' }],
+					[ '@babel/preset-react', { runtime: 'automatic' } ],
 				],
 			},
 		],

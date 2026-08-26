@@ -16,8 +16,8 @@ import { useSelect } from '@wordpress/data';
 import { store as coreStore } from '@wordpress/core-data';
 import ServerSideRender from '@wordpress/server-side-render';
 
-registerBlockType('fair-audience/mailing-signup', {
-	edit: ({ attributes, setAttributes }) => {
+registerBlockType( 'fair-audience/mailing-signup', {
+	edit: ( { attributes, setAttributes } ) => {
 		const {
 			submitButtonText,
 			successMessage,
@@ -26,110 +26,113 @@ registerBlockType('fair-audience/mailing-signup', {
 			preselectedCategoryIds,
 		} = attributes;
 
-		const blockProps = useBlockProps({
+		const blockProps = useBlockProps( {
 			className: 'fair-audience-mailing-signup',
-		});
+		} );
 
 		const { categories, isLoading } = useSelect(
-			(select) => {
-				if (!showCategories) {
+			( select ) => {
+				if ( ! showCategories ) {
 					return { categories: [], isLoading: false };
 				}
 				const query = { per_page: 100, hide_empty: false };
 				return {
 					categories:
-						select(coreStore).getEntityRecords(
+						select( coreStore ).getEntityRecords(
 							'taxonomy',
 							'category',
 							query
 						) || [],
-					isLoading: select(coreStore).isResolving(
+					isLoading: select( coreStore ).isResolving(
 						'getEntityRecords',
-						['taxonomy', 'category', query]
+						[ 'taxonomy', 'category', query ]
 					),
 				};
 			},
-			[showCategories]
+			[ showCategories ]
 		);
 
-		const toggleCategoryId = (id, list, attr) => {
-			const updated = list.includes(id)
-				? list.filter((cid) => cid !== id)
-				: [...list, id];
-			setAttributes({ [attr]: updated });
+		const toggleCategoryId = ( id, list, attr ) => {
+			const updated = list.includes( id )
+				? list.filter( ( cid ) => cid !== id )
+				: [ ...list, id ];
+			setAttributes( { [ attr ]: updated } );
 		};
 
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Form Settings', 'fair-audience')}>
+					<PanelBody title={ __( 'Form Settings', 'fair-audience' ) }>
 						<TextControl
-							label={__('Submit Button Text', 'fair-audience')}
-							value={submitButtonText}
-							onChange={(value) =>
-								setAttributes({ submitButtonText: value })
+							label={ __(
+								'Submit Button Text',
+								'fair-audience'
+							) }
+							value={ submitButtonText }
+							onChange={ ( value ) =>
+								setAttributes( { submitButtonText: value } )
 							}
-							placeholder={__('Subscribe', 'fair-audience')}
+							placeholder={ __( 'Subscribe', 'fair-audience' ) }
 						/>
 						<TextareaControl
-							label={__('Success Message', 'fair-audience')}
-							value={successMessage}
-							onChange={(value) =>
-								setAttributes({ successMessage: value })
+							label={ __( 'Success Message', 'fair-audience' ) }
+							value={ successMessage }
+							onChange={ ( value ) =>
+								setAttributes( { successMessage: value } )
 							}
-							placeholder={__(
+							placeholder={ __(
 								'Please check your email to confirm your subscription.',
 								'fair-audience'
-							)}
-							help={__(
+							) }
+							help={ __(
 								'Message shown after successful signup.',
 								'fair-audience'
-							)}
+							) }
 						/>
 					</PanelBody>
 					<PanelBody
-						title={__('Category Preferences', 'fair-audience')}
+						title={ __( 'Category Preferences', 'fair-audience' ) }
 					>
 						<ToggleControl
-							label={__(
+							label={ __(
 								'Show category preferences',
 								'fair-audience'
-							)}
-							checked={showCategories}
-							onChange={(value) =>
-								setAttributes({ showCategories: value })
+							) }
+							checked={ showCategories }
+							onChange={ ( value ) =>
+								setAttributes( { showCategories: value } )
 							}
-							help={__(
+							help={ __(
 								'Let subscribers choose which categories of content they want to receive.',
 								'fair-audience'
-							)}
+							) }
 						/>
-						{showCategories && isLoading && <Spinner />}
-						{showCategories &&
-							!isLoading &&
+						{ showCategories && isLoading && <Spinner /> }
+						{ showCategories &&
+							! isLoading &&
 							categories.length > 0 && (
 								<>
 									<p className="components-base-control__help">
-										{__(
+										{ __(
 											'Select which categories to show in the form. If none are selected, all categories will be shown.',
 											'fair-audience'
-										)}
+										) }
 									</p>
 									<fieldset className="fair-audience-category-fieldset">
 										<legend className="components-base-control__label">
-											{__(
+											{ __(
 												'Available categories',
 												'fair-audience'
-											)}
+											) }
 										</legend>
-										{categories.map((cat) => (
+										{ categories.map( ( cat ) => (
 											<CheckboxControl
-												key={cat.id}
-												label={cat.name}
-												checked={categoryIds.includes(
+												key={ cat.id }
+												label={ cat.name }
+												checked={ categoryIds.includes(
 													cat.id
-												)}
-												onChange={() =>
+												) }
+												onChange={ () =>
 													toggleCategoryId(
 														cat.id,
 														categoryIds,
@@ -137,34 +140,36 @@ registerBlockType('fair-audience/mailing-signup', {
 													)
 												}
 											/>
-										))}
+										) ) }
 									</fieldset>
 									<fieldset className="fair-audience-category-fieldset">
 										<legend className="components-base-control__label">
-											{__(
+											{ __(
 												'Preselected categories',
 												'fair-audience'
-											)}
+											) }
 										</legend>
 										<p className="components-base-control__help">
-											{__(
+											{ __(
 												'Categories checked by default when the form loads.',
 												'fair-audience'
-											)}
+											) }
 										</p>
-										{(categoryIds.length > 0
-											? categories.filter((cat) =>
-													categoryIds.includes(cat.id)
+										{ ( categoryIds.length > 0
+											? categories.filter( ( cat ) =>
+													categoryIds.includes(
+														cat.id
+													)
 											  )
 											: categories
-										).map((cat) => (
+										).map( ( cat ) => (
 											<CheckboxControl
-												key={cat.id}
-												label={cat.name}
-												checked={preselectedCategoryIds.includes(
+												key={ cat.id }
+												label={ cat.name }
+												checked={ preselectedCategoryIds.includes(
 													cat.id
-												)}
-												onChange={() =>
+												) }
+												onChange={ () =>
 													toggleCategoryId(
 														cat.id,
 														preselectedCategoryIds,
@@ -172,17 +177,17 @@ registerBlockType('fair-audience/mailing-signup', {
 													)
 												}
 											/>
-										))}
+										) ) }
 									</fieldset>
 								</>
-							)}
+							) }
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
+				<div { ...blockProps }>
 					<ServerSideRender
 						block="fair-audience/mailing-signup"
-						attributes={attributes}
+						attributes={ attributes }
 					/>
 				</div>
 			</>
@@ -191,4 +196,4 @@ registerBlockType('fair-audience/mailing-signup', {
 	save: () => {
 		return null; // Dynamic block, rendered via PHP
 	},
-});
+} );

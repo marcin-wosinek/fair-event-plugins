@@ -4,8 +4,8 @@
  * @package FairMembership
  */
 
-describe('Fair Membership Plugin', () => {
-	test('should be a test placeholder', () => {
-		expect(true).toBe(true);
-	});
-});
+describe( 'Fair Membership Plugin', () => {
+	test( 'should be a test placeholder', () => {
+		expect( true ).toBe( true );
+	} );
+} );

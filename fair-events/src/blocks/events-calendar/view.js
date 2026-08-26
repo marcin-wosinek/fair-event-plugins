@@ -15,26 +15,26 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
  * @param {string} text Text to copy.
  * @return {boolean} Whether the copy succeeded.
  */
-function fallbackCopy(text) {
-	const textarea = document.createElement('textarea');
+function fallbackCopy( text ) {
+	const textarea = document.createElement( 'textarea' );
 	textarea.value = text;
 	textarea.style.position = 'fixed';
 	textarea.style.opacity = '0';
-	document.body.appendChild(textarea);
+	document.body.appendChild( textarea );
 	textarea.focus();
 	textarea.select();
 
 	let success = false;
 	try {
-		success = document.execCommand('copy');
+		success = document.execCommand( 'copy' );
 	} finally {
-		document.body.removeChild(textarea);
+		document.body.removeChild( textarea );
 	}
 
 	return success;
 }
 
-store('fair-events/calendar-subscribe', {
+store( 'fair-events/calendar-subscribe', {
 	state: {
 		get label() {
 			const context = getContext();
@@ -42,33 +42,33 @@ store('fair-events/calendar-subscribe', {
 		},
 		get isOpen() {
 			const context = getContext();
-			return !!context.isOpen;
+			return !! context.isOpen;
 		},
 	},
 	actions: {
 		toggle() {
 			const context = getContext();
-			context.isOpen = !context.isOpen;
+			context.isOpen = ! context.isOpen;
 		},
 		close() {
 			const context = getContext();
 			context.isOpen = false;
 		},
-		handleOutsideClick(event) {
+		handleOutsideClick( event ) {
 			const context = getContext();
-			if (!context.isOpen) {
+			if ( ! context.isOpen ) {
 				return;
 			}
 
 			const { ref } = getElement();
-			if (ref.contains(event.target)) {
+			if ( ref.contains( event.target ) ) {
 				return;
 			}
 
 			context.isOpen = false;
 		},
-		handleKeydown(event) {
-			if (event.key !== 'Escape') {
+		handleKeydown( event ) {
+			if ( event.key !== 'Escape' ) {
 				return;
 			}
 
@@ -79,31 +79,31 @@ store('fair-events/calendar-subscribe', {
 			const context = getContext();
 			const feedUrl = context.feedUrl;
 
-			if (!feedUrl) {
+			if ( ! feedUrl ) {
 				return;
 			}
 
 			let success = false;
 
-			if (navigator.clipboard) {
+			if ( navigator.clipboard ) {
 				try {
-					yield navigator.clipboard.writeText(feedUrl);
+					yield navigator.clipboard.writeText( feedUrl );
 					success = true;
-				} catch (e) {
-					success = fallbackCopy(feedUrl);
+				} catch ( e ) {
+					success = fallbackCopy( feedUrl );
 				}
 			} else {
-				success = fallbackCopy(feedUrl);
+				success = fallbackCopy( feedUrl );
 			}
 
-			if (!success) {
+			if ( ! success ) {
 				return;
 			}
 
 			context.copied = true;
-			setTimeout(() => {
+			setTimeout( () => {
 				context.copied = false;
-			}, 2000);
+			}, 2000 );
 		},
 	},
-});
+} );

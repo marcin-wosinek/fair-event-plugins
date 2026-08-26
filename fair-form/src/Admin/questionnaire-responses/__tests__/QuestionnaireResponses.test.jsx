@@ -13,7 +13,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import QuestionnaireResponses from '../QuestionnaireResponses.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 const STANDALONE_RESPONSES = [
 	{
@@ -57,169 +57,173 @@ const LINKED_RESPONSES = [
 	},
 ];
 
-function mockResponses(responses) {
-	apiFetch.mockImplementation(({ path }) => {
-		if (path.startsWith('/fair-form/v1/questionnaire-responses')) {
-			return Promise.resolve(responses);
+function mockResponses( responses ) {
+	apiFetch.mockImplementation( ( { path } ) => {
+		if ( path.startsWith( '/fair-form/v1/questionnaire-responses' ) ) {
+			return Promise.resolve( responses );
 		}
-		if (path.startsWith('/fair-audience/v1/groups')) {
-			return Promise.resolve([]);
+		if ( path.startsWith( '/fair-audience/v1/groups' ) ) {
+			return Promise.resolve( [] );
 		}
-		return Promise.resolve([]);
-	});
+		return Promise.resolve( [] );
+	} );
 }
 
-beforeEach(() => {
-	jest.spyOn(console, 'error').mockImplementation(() => {});
-});
+beforeEach( () => {
+	jest.spyOn( console, 'error' ).mockImplementation( () => {} );
+} );
 
-afterEach(() => {
+afterEach( () => {
 	jest.restoreAllMocks();
 	jest.clearAllMocks();
-});
+} );
 
-describe('QuestionnaireResponses — standalone (no participant link)', () => {
-	it('hides participant columns, hides the group button, and links the date to the detail view', async () => {
-		mockResponses(STANDALONE_RESPONSES);
+describe( 'QuestionnaireResponses — standalone (no participant link)', () => {
+	it( 'hides participant columns, hides the group button, and links the date to the detail view', async () => {
+		mockResponses( STANDALONE_RESPONSES );
 
-		render(<QuestionnaireResponses />);
+		render( <QuestionnaireResponses /> );
 
-		await screen.findByText('Google');
+		await screen.findByText( 'Google' );
 
 		expect(
-			screen.queryByRole('columnheader', { name: 'Email' })
+			screen.queryByRole( 'columnheader', { name: 'Email' } )
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('columnheader', { name: 'Status' })
+			screen.queryByRole( 'columnheader', { name: 'Status' } )
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('columnheader', { name: 'Mailing' })
+			screen.queryByRole( 'columnheader', { name: 'Mailing' } )
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('columnheader', {
+			screen.queryByRole( 'columnheader', {
 				name: 'Subscribed Categories',
-			})
+			} )
 		).not.toBeInTheDocument();
 
 		expect(
-			screen.queryByRole('button', {
+			screen.queryByRole( 'button', {
 				name: 'Add participants to group',
-			})
+			} )
 		).not.toBeInTheDocument();
 
-		const dateLink = screen.getByRole('link', {
-			name: new Date('2026-01-15 10:00:00Z').toLocaleString(),
-		});
-		expect(dateLink).toHaveAttribute(
+		const dateLink = screen.getByRole( 'link', {
+			name: new Date( '2026-01-15 10:00:00Z' ).toLocaleString(),
+		} );
+		expect( dateLink ).toHaveAttribute(
 			'href',
 			'admin.php?page=fair-form-submission-detail&submission_id=1'
 		);
-	});
-});
+	} );
+} );
 
-describe('QuestionnaireResponses — linked to participants', () => {
-	it('shows participant columns and the group button', async () => {
-		mockResponses(LINKED_RESPONSES);
+describe( 'QuestionnaireResponses — linked to participants', () => {
+	it( 'shows participant columns and the group button', async () => {
+		mockResponses( LINKED_RESPONSES );
 
-		render(<QuestionnaireResponses />);
+		render( <QuestionnaireResponses /> );
 
-		await screen.findByText('Friend');
-
-		expect(
-			screen.getByRole('columnheader', { name: 'Email' })
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole('columnheader', { name: 'Status' })
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole('columnheader', { name: 'Mailing' })
-		).toBeInTheDocument();
+		await screen.findByText( 'Friend' );
 
 		expect(
-			screen.getByRole('button', { name: 'Add participants to group' })
+			screen.getByRole( 'columnheader', { name: 'Email' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'columnheader', { name: 'Status' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'columnheader', { name: 'Mailing' } )
 		).toBeInTheDocument();
 
-		const nameLink = screen.getByRole('link', { name: 'Jane Doe' });
-		expect(nameLink).toHaveAttribute(
+		expect(
+			screen.getByRole( 'button', { name: 'Add participants to group' } )
+		).toBeInTheDocument();
+
+		const nameLink = screen.getByRole( 'link', { name: 'Jane Doe' } );
+		expect( nameLink ).toHaveAttribute(
 			'href',
 			'admin.php?page=fair-audience-participant-detail&participant_id=7'
 		);
-	});
-});
+	} );
+} );
 
-describe('QuestionnaireResponses — row actions', () => {
-	it('offers a View action that navigates to the submission detail page', async () => {
-		mockResponses(STANDALONE_RESPONSES);
+describe( 'QuestionnaireResponses — row actions', () => {
+	it( 'offers a View action that navigates to the submission detail page', async () => {
+		mockResponses( STANDALONE_RESPONSES );
 
-		render(<QuestionnaireResponses />);
-		const row = (await screen.findByText('Google')).closest('tr');
+		render( <QuestionnaireResponses /> );
+		const row = ( await screen.findByText( 'Google' ) ).closest( 'tr' );
 
-		fireEvent.click(within(row).getByRole('button', { name: 'Actions' }));
-
-		expect(
-			await screen.findByRole('menuitem', { name: 'View' })
-		).toBeInTheDocument();
-	});
-});
-
-describe('QuestionnaireResponses — empty state', () => {
-	it('renders without throwing when there are no responses', async () => {
-		mockResponses([]);
-
-		render(<QuestionnaireResponses />);
-
-		expect(await screen.findByText('No results')).toBeInTheDocument();
-	});
-});
-
-describe('QuestionnaireResponses — Markdown export (#1422)', () => {
-	it('headings link submissions to their participant, dates get the long label/format, and every field is blank-line separated', async () => {
-		mockResponses([...LINKED_RESPONSES, ...STANDALONE_RESPONSES]);
-		const writeText = jest.fn(() => Promise.resolve());
-		Object.assign(navigator, { clipboard: { writeText } });
-
-		render(<QuestionnaireResponses />);
-		await screen.findByText('Friend');
-
-		fireEvent.click(screen.getByRole('button', { name: 'Export' }));
 		fireEvent.click(
-			await screen.findByRole('button', { name: 'Copy to clipboard' })
+			within( row ).getByRole( 'button', { name: 'Actions' } )
 		);
 
-		await screen.findByText('Message copied to clipboard.');
+		expect(
+			await screen.findByRole( 'menuitem', { name: 'View' } )
+		).toBeInTheDocument();
+	} );
+} );
 
-		const message = writeText.mock.calls[0][0];
+describe( 'QuestionnaireResponses — empty state', () => {
+	it( 'renders without throwing when there are no responses', async () => {
+		mockResponses( [] );
+
+		render( <QuestionnaireResponses /> );
+
+		expect( await screen.findByText( 'No results' ) ).toBeInTheDocument();
+	} );
+} );
+
+describe( 'QuestionnaireResponses — Markdown export (#1422)', () => {
+	it( 'headings link submissions to their participant, dates get the long label/format, and every field is blank-line separated', async () => {
+		mockResponses( [ ...LINKED_RESPONSES, ...STANDALONE_RESPONSES ] );
+		const writeText = jest.fn( () => Promise.resolve() );
+		Object.assign( navigator, { clipboard: { writeText } } );
+
+		render( <QuestionnaireResponses /> );
+		await screen.findByText( 'Friend' );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Export' } ) );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Copy to clipboard' } )
+		);
+
+		await screen.findByText( 'Message copied to clipboard.' );
+
+		const message = writeText.mock.calls[ 0 ][ 0 ];
 
 		// (a) participant-linked submission: heading, no duplicate Name line.
-		expect(message).toContain('## Jane Doe');
-		expect(message).not.toContain('**Name:** Jane Doe');
+		expect( message ).toContain( '## Jane Doe' );
+		expect( message ).not.toContain( '**Name:** Jane Doe' );
 
 		// (b) submission without a participant link: no heading.
-		expect(message).not.toContain('## #1');
+		expect( message ).not.toContain( '## #1' );
 
 		// (c) date line uses the long label, no seconds.
-		expect(message).toContain('**Submission date:**');
-		expect(message).not.toContain('**Date:**');
-		expect(message).not.toMatch(
+		expect( message ).toContain( '**Submission date:**' );
+		expect( message ).not.toContain( '**Date:**' );
+		expect( message ).not.toMatch(
 			/\*\*Submission date:\*\*[^\n]*\d{2}:\d{2}:\d{2}/
 		);
 
 		// (d) every field is followed by a blank line.
-		const linkedBlock = message.split('\n\n---\n\n')[0];
-		expect(linkedBlock.split('\n\n').length).toBeGreaterThan(1);
-	});
-});
+		const linkedBlock = message.split( '\n\n---\n\n' )[ 0 ];
+		expect( linkedBlock.split( '\n\n' ).length ).toBeGreaterThan( 1 );
+	} );
+} );
 
-describe('QuestionnaireResponses — table containment', () => {
-	it('scopes the DataViews table in a scrollable CardBody so a wide table cannot drag the page sideways', async () => {
-		mockResponses(STANDALONE_RESPONSES);
+describe( 'QuestionnaireResponses — table containment', () => {
+	it( 'scopes the DataViews table in a scrollable CardBody so a wide table cannot drag the page sideways', async () => {
+		mockResponses( STANDALONE_RESPONSES );
 
-		const { container } = render(<QuestionnaireResponses />);
+		const { container } = render( <QuestionnaireResponses /> );
 
-		await screen.findByText('Google');
+		await screen.findByText( 'Google' );
 
 		expect(
-			container.querySelector('.fair-form-questionnaire-responses__table')
+			container.querySelector(
+				'.fair-form-questionnaire-responses__table'
+			)
 		).toBeInTheDocument();
-	});
-});
+	} );
+} );

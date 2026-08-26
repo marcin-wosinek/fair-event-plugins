@@ -14,33 +14,33 @@ import {
 } from '@wordpress/components';
 import { formatDateOnly } from 'fair-events-shared';
 
-const MatchModal = ({ entry, onMatch, onCancel }) => {
-	const [transactions, setTransactions] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [matching, setMatching] = useState(false);
-	const [error, setError] = useState(null);
-	const [searchTerm, setSearchTerm] = useState('');
+const MatchModal = ( { entry, onMatch, onCancel } ) => {
+	const [ transactions, setTransactions ] = useState( [] );
+	const [ loading, setLoading ] = useState( true );
+	const [ matching, setMatching ] = useState( false );
+	const [ error, setError ] = useState( null );
+	const [ searchTerm, setSearchTerm ] = useState( '' );
 
-	useEffect(() => {
+	useEffect( () => {
 		loadTransactions();
-	}, [entry]);
+	}, [ entry ] );
 
 	const loadTransactions = async () => {
-		setLoading(true);
-		setError(null);
+		setLoading( true );
+		setError( null );
 
 		try {
 			// Search for transactions matching the entry amount
 			const params = new URLSearchParams();
-			if (entry.amount) {
-				params.append('amount', entry.amount);
+			if ( entry.amount ) {
+				params.append( 'amount', entry.amount );
 			}
 
-			const data = await apiFetch({
-				path: `/fair-finance/v1/transactions/search?${params.toString()}`,
-			});
-			setTransactions(data);
-		} catch (err) {
+			const data = await apiFetch( {
+				path: `/fair-finance/v1/transactions/search?${ params.toString() }`,
+			} );
+			setTransactions( data );
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -49,28 +49,28 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 					)
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
 	const handleSearch = async () => {
-		setLoading(true);
-		setError(null);
+		setLoading( true );
+		setError( null );
 
 		try {
 			const params = new URLSearchParams();
-			if (searchTerm) {
-				params.append('search', searchTerm);
+			if ( searchTerm ) {
+				params.append( 'search', searchTerm );
 			}
-			if (entry.amount) {
-				params.append('amount', entry.amount);
+			if ( entry.amount ) {
+				params.append( 'amount', entry.amount );
 			}
 
-			const data = await apiFetch({
-				path: `/fair-finance/v1/transactions/search?${params.toString()}`,
-			});
-			setTransactions(data);
-		} catch (err) {
+			const data = await apiFetch( {
+				path: `/fair-finance/v1/transactions/search?${ params.toString() }`,
+			} );
+			setTransactions( data );
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -79,25 +79,25 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 					)
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
-	const handleMatch = async (transactionId) => {
-		setMatching(true);
-		setError(null);
+	const handleMatch = async ( transactionId ) => {
+		setMatching( true );
+		setError( null );
 
 		try {
-			await apiFetch({
-				path: `/fair-finance/v1/financial-entries/${entry.id}/match`,
+			await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/${ entry.id }/match`,
 				method: 'POST',
 				data: {
 					transaction_id: transactionId,
-					transaction_ids: [transactionId],
+					transaction_ids: [ transactionId ],
 				},
-			});
+			} );
 			onMatch();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
 					__(
@@ -105,178 +105,189 @@ const MatchModal = ({ entry, onMatch, onCancel }) => {
 						'fair-payments-connector'
 					)
 			);
-			setMatching(false);
+			setMatching( false );
 		}
 	};
 
-	const formatAmount = (amount, currency = 'EUR') => {
-		return new Intl.NumberFormat('en-US', {
+	const formatAmount = ( amount, currency = 'EUR' ) => {
+		return new Intl.NumberFormat( 'en-US', {
 			style: 'currency',
 			currency,
-		}).format(amount);
+		} ).format( amount );
 	};
 
 	return (
 		<Modal
-			title={__('Match to Transaction', 'fair-payments-connector')}
-			onRequestClose={onCancel}
-			style={{ maxWidth: '640px', width: '100%' }}
+			title={ __( 'Match to Transaction', 'fair-payments-connector' ) }
+			onRequestClose={ onCancel }
+			style={ { maxWidth: '640px', width: '100%' } }
 		>
-			<VStack spacing={4}>
+			<VStack spacing={ 4 }>
 				<div
-					style={{
+					style={ {
 						background: '#f0f0f1',
 						padding: '12px',
 						borderRadius: '4px',
-					}}
+					} }
 				>
-					<p style={{ margin: 0 }}>
+					<p style={ { margin: 0 } }>
 						<strong>
-							{__('Entry:', 'fair-payments-connector')}
-						</strong>{' '}
-						{formatAmount(entry.amount)} ({entry.entry_type}) -{' '}
-						{entry.entry_date}
-						{entry.description && ` - ${entry.description}`}
+							{ __( 'Entry:', 'fair-payments-connector' ) }
+						</strong>{ ' ' }
+						{ formatAmount( entry.amount ) } ({ entry.entry_type })
+						- { entry.entry_date }
+						{ entry.description && ` - ${ entry.description }` }
 					</p>
 				</div>
 
 				<HStack>
 					<TextControl
-						label={__('Search', 'fair-payments-connector')}
-						value={searchTerm}
-						onChange={setSearchTerm}
-						placeholder={__(
+						label={ __( 'Search', 'fair-payments-connector' ) }
+						value={ searchTerm }
+						onChange={ setSearchTerm }
+						placeholder={ __(
 							'Search by description or Mollie ID...',
 							'fair-payments-connector'
-						)}
-						style={{ flex: 1 }}
+						) }
+						style={ { flex: 1 } }
 					/>
 					<Button
 						variant="secondary"
-						onClick={handleSearch}
-						disabled={loading}
-						style={{ marginTop: '24px' }}
+						onClick={ handleSearch }
+						disabled={ loading }
+						style={ { marginTop: '24px' } }
 					>
-						{__('Search', 'fair-payments-connector')}
+						{ __( 'Search', 'fair-payments-connector' ) }
 					</Button>
 				</HStack>
 
-				{error && (
+				{ error && (
 					<div
 						className="notice notice-error"
-						style={{ margin: 0, padding: '8px' }}
+						style={ { margin: 0, padding: '8px' } }
 					>
-						{error}
+						{ error }
 					</div>
-				)}
+				) }
 
-				{loading && (
-					<div style={{ textAlign: 'center', padding: '20px' }}>
+				{ loading && (
+					<div style={ { textAlign: 'center', padding: '20px' } }>
 						<Spinner />
 						<p>
-							{__(
+							{ __(
 								'Loading transactions...',
 								'fair-payments-connector'
-							)}
+							) }
 						</p>
 					</div>
-				)}
+				) }
 
-				{!loading && transactions.length === 0 && (
-					<div style={{ textAlign: 'center', padding: '20px' }}>
+				{ ! loading && transactions.length === 0 && (
+					<div style={ { textAlign: 'center', padding: '20px' } }>
 						<p>
-							{__(
+							{ __(
 								'No matching transactions found. Try adjusting your search.',
 								'fair-payments-connector'
-							)}
+							) }
 						</p>
 					</div>
-				)}
+				) }
 
-				{!loading && transactions.length > 0 && (
+				{ ! loading && transactions.length > 0 && (
 					<table
 						className="wp-list-table widefat fixed striped"
-						style={{ marginTop: 0 }}
+						style={ { marginTop: 0 } }
 					>
 						<thead>
 							<tr>
-								<th>{__('Date', 'fair-payments-connector')}</th>
 								<th>
-									{__('Amount', 'fair-payments-connector')}
+									{ __( 'Date', 'fair-payments-connector' ) }
 								</th>
 								<th>
-									{__(
+									{ __(
+										'Amount',
+										'fair-payments-connector'
+									) }
+								</th>
+								<th>
+									{ __(
 										'Description',
 										'fair-payments-connector'
-									)}
+									) }
 								</th>
 								<th>
-									{__('Mollie ID', 'fair-payments-connector')}
+									{ __(
+										'Mollie ID',
+										'fair-payments-connector'
+									) }
 								</th>
-								<th style={{ width: '100px' }}>
-									{__('Action', 'fair-payments-connector')}
+								<th style={ { width: '100px' } }>
+									{ __(
+										'Action',
+										'fair-payments-connector'
+									) }
 								</th>
 							</tr>
 						</thead>
 						<tbody>
-							{transactions.map((transaction) => (
-								<tr key={transaction.id}>
+							{ transactions.map( ( transaction ) => (
+								<tr key={ transaction.id }>
 									<td>
-										{formatDateOnly(
+										{ formatDateOnly(
 											transaction.created_at,
 											'numeric'
-										)}
+										) }
 									</td>
 									<td>
-										{formatAmount(
+										{ formatAmount(
 											transaction.amount,
 											transaction.currency
-										)}
+										) }
 									</td>
 									<td>
-										{transaction.description || (
+										{ transaction.description || (
 											<em>
-												{__(
+												{ __(
 													'No description',
 													'fair-payments-connector'
-												)}
+												) }
 											</em>
-										)}
+										) }
 									</td>
 									<td>
-										<code style={{ fontSize: '11px' }}>
-											{transaction.mollie_payment_id}
+										<code style={ { fontSize: '11px' } }>
+											{ transaction.mollie_payment_id }
 										</code>
 									</td>
 									<td>
 										<Button
 											variant="primary"
 											size="small"
-											onClick={() =>
-												handleMatch(transaction.id)
+											onClick={ () =>
+												handleMatch( transaction.id )
 											}
-											disabled={matching}
-											isBusy={matching}
+											disabled={ matching }
+											isBusy={ matching }
 										>
-											{__(
+											{ __(
 												'Match',
 												'fair-payments-connector'
-											)}
+											) }
 										</Button>
 									</td>
 								</tr>
-							))}
+							) ) }
 						</tbody>
 					</table>
-				)}
+				) }
 
 				<HStack justify="flex-end">
 					<Button
 						variant="tertiary"
-						onClick={onCancel}
-						disabled={matching}
+						onClick={ onCancel }
+						disabled={ matching }
 					>
-						{__('Cancel', 'fair-payments-connector')}
+						{ __( 'Cancel', 'fair-payments-connector' ) }
 					</Button>
 				</HStack>
 			</VStack>

@@ -19,74 +19,78 @@ const generatedOccurrences = [
 ];
 
 // Matches the date formatting in EditInstancesModal.
-function instanceDateLabel(dateStr) {
-	return formatDateOnly(dateStr, 'long');
+function instanceDateLabel( dateStr ) {
+	return formatDateOnly( dateStr, 'long' );
 }
 
-it('lists occurrences with Cancel / Restore actions', () => {
+it( 'lists occurrences with Cancel / Restore actions', () => {
 	render(
 		<EditInstancesModal
-			generatedOccurrences={generatedOccurrences}
-			togglingExdate={null}
-			onToggleExdate={() => {}}
-			onClose={() => {}}
+			generatedOccurrences={ generatedOccurrences }
+			togglingExdate={ null }
+			onToggleExdate={ () => {} }
+			onClose={ () => {} }
 		/>
 	);
 
 	expect(
-		screen.getByText(instanceDateLabel('2026-07-08'), { exact: false })
+		screen.getByText( instanceDateLabel( '2026-07-08' ), { exact: false } )
 	).toBeInTheDocument();
 	expect(
-		screen.getByText(instanceDateLabel('2026-07-15'), { exact: false })
+		screen.getByText( instanceDateLabel( '2026-07-15' ), { exact: false } )
 	).toBeInTheDocument();
-	expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-	expect(screen.getByRole('button', { name: 'Restore' })).toBeInTheDocument();
-});
+	expect(
+		screen.getByRole( 'button', { name: 'Cancel' } )
+	).toBeInTheDocument();
+	expect(
+		screen.getByRole( 'button', { name: 'Restore' } )
+	).toBeInTheDocument();
+} );
 
-it('calls onToggleExdate with the date when Cancel is clicked', () => {
+it( 'calls onToggleExdate with the date when Cancel is clicked', () => {
 	const onToggleExdate = jest.fn();
 	render(
 		<EditInstancesModal
-			generatedOccurrences={generatedOccurrences}
-			togglingExdate={null}
-			onToggleExdate={onToggleExdate}
-			onClose={() => {}}
+			generatedOccurrences={ generatedOccurrences }
+			togglingExdate={ null }
+			onToggleExdate={ onToggleExdate }
+			onClose={ () => {} }
 		/>
 	);
 
-	fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-	expect(onToggleExdate).toHaveBeenCalledWith('2026-07-08');
-});
+	fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
+	expect( onToggleExdate ).toHaveBeenCalledWith( '2026-07-08' );
+} );
 
-it('calls onToggleExdate with the date when Restore is clicked', () => {
+it( 'calls onToggleExdate with the date when Restore is clicked', () => {
 	const onToggleExdate = jest.fn();
 	render(
 		<EditInstancesModal
-			generatedOccurrences={generatedOccurrences}
-			togglingExdate={null}
-			onToggleExdate={onToggleExdate}
-			onClose={() => {}}
+			generatedOccurrences={ generatedOccurrences }
+			togglingExdate={ null }
+			onToggleExdate={ onToggleExdate }
+			onClose={ () => {} }
 		/>
 	);
 
-	fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
-	expect(onToggleExdate).toHaveBeenCalledWith('2026-07-15');
-});
+	fireEvent.click( screen.getByRole( 'button', { name: 'Restore' } ) );
+	expect( onToggleExdate ).toHaveBeenCalledWith( '2026-07-15' );
+} );
 
-it('calls onClose when Close is clicked', () => {
+it( 'calls onClose when Close is clicked', () => {
 	const onClose = jest.fn();
 	render(
 		<EditInstancesModal
-			generatedOccurrences={generatedOccurrences}
-			togglingExdate={null}
-			onToggleExdate={() => {}}
-			onClose={onClose}
+			generatedOccurrences={ generatedOccurrences }
+			togglingExdate={ null }
+			onToggleExdate={ () => {} }
+			onClose={ onClose }
 		/>
 	);
 
 	// The WP Modal chrome also renders its own "Close" dismiss button, so
 	// disambiguate by taking the last one (our footer button).
-	const closeButtons = screen.getAllByRole('button', { name: 'Close' });
-	fireEvent.click(closeButtons[closeButtons.length - 1]);
-	expect(onClose).toHaveBeenCalled();
-});
+	const closeButtons = screen.getAllByRole( 'button', { name: 'Close' } );
+	fireEvent.click( closeButtons[ closeButtons.length - 1 ] );
+	expect( onClose ).toHaveBeenCalled();
+} );

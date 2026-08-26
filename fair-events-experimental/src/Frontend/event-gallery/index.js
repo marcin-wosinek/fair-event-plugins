@@ -21,8 +21,8 @@ import './style.css';
  * @param {Object} props - Component props
  * @param {boolean} props.filled - Whether heart is filled
  */
-function HeartIcon({ filled }) {
-	if (filled) {
+function HeartIcon( { filled } ) {
+	if ( filled ) {
 		return (
 			<svg
 				viewBox="0 0 24 24"
@@ -75,7 +75,7 @@ function CloseIcon() {
  * @param {Object} props - Component props
  * @param {string} props.direction - Arrow direction ('left' or 'right')
  */
-function ArrowIcon({ direction }) {
+function ArrowIcon( { direction } ) {
 	return (
 		<svg
 			viewBox="0 0 24 24"
@@ -86,11 +86,11 @@ function ArrowIcon({ direction }) {
 			height="32"
 			aria-hidden="true"
 		>
-			{direction === 'left' ? (
+			{ direction === 'left' ? (
 				<path d="M15 18l-6-6 6-6" />
 			) : (
 				<path d="M9 18l6-6-6-6" />
-			)}
+			) }
 		</svg>
 	);
 }
@@ -109,7 +109,7 @@ function ArrowIcon({ direction }) {
  * @param {boolean} props.userLiked - Whether user has liked
  * @param {Function} props.onLikeToggle - Like toggle handler
  */
-function Lightbox({
+function Lightbox( {
 	photo,
 	onClose,
 	onPrev,
@@ -119,39 +119,41 @@ function Lightbox({
 	likeCount,
 	userLiked,
 	onLikeToggle,
-}) {
-	const lightboxRef = useRef(null);
-	const [isToggling, setIsToggling] = useState(false);
+} ) {
+	const lightboxRef = useRef( null );
+	const [ isToggling, setIsToggling ] = useState( false );
 
 	// Handle keyboard navigation.
-	useEffect(() => {
-		const handleKeyDown = (e) => {
-			switch (e.key) {
+	useEffect( () => {
+		const handleKeyDown = ( e ) => {
+			switch ( e.key ) {
 				case 'Escape':
 					onClose();
 					break;
 				case 'ArrowLeft':
-					if (hasPrev) onPrev();
+					if ( hasPrev ) onPrev();
 					break;
 				case 'ArrowRight':
-					if (hasNext) onNext();
+					if ( hasNext ) onNext();
 					break;
 				case ' ':
 					e.preventDefault();
-					if (!isToggling) {
-						setIsToggling(true);
-						onLikeToggle(photo.id).then(() => setIsToggling(false));
+					if ( ! isToggling ) {
+						setIsToggling( true );
+						onLikeToggle( photo.id ).then( () =>
+							setIsToggling( false )
+						);
 					}
 					break;
 			}
 		};
 
-		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener( 'keydown', handleKeyDown );
 		// Prevent body scroll when lightbox is open.
 		document.body.style.overflow = 'hidden';
 
 		return () => {
-			document.removeEventListener('keydown', handleKeyDown);
+			document.removeEventListener( 'keydown', handleKeyDown );
 			document.body.style.overflow = '';
 		};
 	}, [
@@ -163,82 +165,82 @@ function Lightbox({
 		onLikeToggle,
 		photo.id,
 		isToggling,
-	]);
+	] );
 
 	// Close on backdrop click.
-	const handleBackdropClick = (e) => {
-		if (e.target === lightboxRef.current) {
+	const handleBackdropClick = ( e ) => {
+		if ( e.target === lightboxRef.current ) {
 			onClose();
 		}
 	};
 
 	const handleLikeClick = async () => {
-		if (isToggling) return;
+		if ( isToggling ) return;
 
-		setIsToggling(true);
-		await onLikeToggle(photo.id);
-		setIsToggling(false);
+		setIsToggling( true );
+		await onLikeToggle( photo.id );
+		setIsToggling( false );
 	};
 
 	return (
 		<div
 			className="fe-lightbox"
-			ref={lightboxRef}
-			onClick={handleBackdropClick}
+			ref={ lightboxRef }
+			onClick={ handleBackdropClick }
 			role="dialog"
 			aria-modal="true"
-			aria-label={__('Photo viewer', 'fair-events')}
+			aria-label={ __( 'Photo viewer', 'fair-events' ) }
 		>
 			<button
 				className="fe-lightbox__close"
-				onClick={onClose}
-				aria-label={__('Close', 'fair-events')}
+				onClick={ onClose }
+				aria-label={ __( 'Close', 'fair-events' ) }
 			>
 				<CloseIcon />
 			</button>
 
-			{hasPrev && (
+			{ hasPrev && (
 				<button
 					className="fe-lightbox__nav fe-lightbox__nav--prev"
-					onClick={onPrev}
-					aria-label={__('Previous photo', 'fair-events')}
+					onClick={ onPrev }
+					aria-label={ __( 'Previous photo', 'fair-events' ) }
 				>
 					<ArrowIcon direction="left" />
 				</button>
-			)}
+			) }
 
 			<div className="fe-lightbox__content">
 				<img
-					src={photo.sizes?.full || photo.url}
-					alt={photo.alt_text || photo.title}
+					src={ photo.sizes?.full || photo.url }
+					alt={ photo.alt_text || photo.title }
 					className="fe-lightbox__image"
 				/>
 			</div>
 
-			{hasNext && (
+			{ hasNext && (
 				<button
 					className="fe-lightbox__nav fe-lightbox__nav--next"
-					onClick={onNext}
-					aria-label={__('Next photo', 'fair-events')}
+					onClick={ onNext }
+					aria-label={ __( 'Next photo', 'fair-events' ) }
 				>
 					<ArrowIcon direction="right" />
 				</button>
-			)}
+			) }
 
 			<button
-				className={`fe-lightbox__like-btn ${
+				className={ `fe-lightbox__like-btn ${
 					userLiked ? 'fe-lightbox__like-btn--liked' : ''
-				}`}
-				onClick={handleLikeClick}
-				disabled={isToggling}
+				}` }
+				onClick={ handleLikeClick }
+				disabled={ isToggling }
 				aria-label={
 					userLiked
-						? __('Unlike this photo', 'fair-events')
-						: __('Like this photo', 'fair-events')
+						? __( 'Unlike this photo', 'fair-events' )
+						: __( 'Like this photo', 'fair-events' )
 				}
 			>
-				<HeartIcon filled={userLiked} />
-				<span className="fe-lightbox__like-count">{likeCount}</span>
+				<HeartIcon filled={ userLiked } />
+				<span className="fe-lightbox__like-count">{ likeCount }</span>
 			</button>
 		</div>
 	);
@@ -248,8 +250,8 @@ function Lightbox({
  * Read photo ID from URL hash (#photo-123).
  */
 function getPhotoIdFromHash() {
-	const match = window.location.hash.match(/^#photo-(\d+)$/);
-	return match ? parseInt(match[1], 10) : null;
+	const match = window.location.hash.match( /^#photo-(\d+)$/ );
+	return match ? parseInt( match[ 1 ], 10 ) : null;
 }
 
 /**
@@ -273,50 +275,54 @@ function clearPhotoHash() {
  * @param {Function} props.onLikeToggle - Like toggle handler
  * @param {Function} props.onImageClick - Image click handler
  */
-function PhotoCard({
+function PhotoCard( {
 	photo,
 	likeCount,
 	userLiked,
 	onLikeToggle,
 	onImageClick,
-}) {
-	const [isToggling, setIsToggling] = useState(false);
+} ) {
+	const [ isToggling, setIsToggling ] = useState( false );
 
 	const handleLikeClick = async () => {
-		if (isToggling) return;
+		if ( isToggling ) return;
 
-		setIsToggling(true);
-		await onLikeToggle(photo.id);
-		setIsToggling(false);
+		setIsToggling( true );
+		await onLikeToggle( photo.id );
+		setIsToggling( false );
 	};
 
 	return (
 		<div className="fe-gallery-card">
 			<button
 				className="fe-gallery-card__image-wrapper"
-				onClick={onImageClick}
-				aria-label={__('View photo fullscreen', 'fair-events')}
+				onClick={ onImageClick }
+				aria-label={ __( 'View photo fullscreen', 'fair-events' ) }
 			>
 				<img
-					src={photo.sizes?.large || photo.sizes?.medium || photo.url}
-					alt={photo.alt_text || photo.title}
+					src={
+						photo.sizes?.large || photo.sizes?.medium || photo.url
+					}
+					alt={ photo.alt_text || photo.title }
 					loading="lazy"
 				/>
 			</button>
 			<button
-				className={`fe-gallery-card__like-btn ${
+				className={ `fe-gallery-card__like-btn ${
 					userLiked ? 'fe-gallery-card__like-btn--liked' : ''
-				}`}
-				onClick={handleLikeClick}
-				disabled={isToggling}
+				}` }
+				onClick={ handleLikeClick }
+				disabled={ isToggling }
 				aria-label={
 					userLiked
-						? __('Unlike this photo', 'fair-events')
-						: __('Like this photo', 'fair-events')
+						? __( 'Unlike this photo', 'fair-events' )
+						: __( 'Like this photo', 'fair-events' )
 				}
 			>
-				<HeartIcon filled={userLiked} />
-				<span className="fe-gallery-card__like-count">{likeCount}</span>
+				<HeartIcon filled={ userLiked } />
+				<span className="fe-gallery-card__like-count">
+					{ likeCount }
+				</span>
 			</button>
 		</div>
 	);
@@ -326,15 +332,15 @@ function PhotoCard({
  * Gallery component
  */
 function Gallery() {
-	const [photos, setPhotos] = useState([]);
-	const [likeCounts, setLikeCounts] = useState({});
-	const [userLikes, setUserLikes] = useState({});
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [lightboxIndex, setLightboxIndex] = useState(null);
+	const [ photos, setPhotos ] = useState( [] );
+	const [ likeCounts, setLikeCounts ] = useState( {} );
+	const [ userLikes, setUserLikes ] = useState( {} );
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ lightboxIndex, setLightboxIndex ] = useState( null );
 
 	// Get event info from the root element.
-	const root = document.getElementById('fair-events-gallery-root');
+	const root = document.getElementById( 'fair-events-gallery-root' );
 	const eventId = root?.dataset?.eventDateId;
 	const eventTitle = root?.dataset?.eventTitle;
 	const eventUrl = root?.dataset?.eventUrl;
@@ -343,226 +349,237 @@ function Gallery() {
 		root?.dataset?.participantId || window.fairEventsGallery?.participantId;
 
 	// Fetch photos on mount.
-	useEffect(() => {
-		if (!eventId) {
-			setError(__('Event ID not found.', 'fair-events'));
-			setLoading(false);
+	useEffect( () => {
+		if ( ! eventId ) {
+			setError( __( 'Event ID not found.', 'fair-events' ) );
+			setLoading( false );
 			return;
 		}
 
 		fetchPhotos();
-	}, [eventId]);
+	}, [ eventId ] );
 
 	const fetchPhotos = async () => {
 		try {
-			setLoading(true);
-			setError(null);
+			setLoading( true );
+			setError( null );
 
-			const response = await apiFetch({
-				path: `/fair-events/v1/event-dates/${eventId}/gallery`,
-			});
+			const response = await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventId }/gallery`,
+			} );
 
-			setPhotos(response);
+			setPhotos( response );
 
 			// Fetch like counts for all photos.
-			if (response.length > 0) {
-				await fetchLikeCounts(response.map((p) => p.id));
+			if ( response.length > 0 ) {
+				await fetchLikeCounts( response.map( ( p ) => p.id ) );
 			}
-		} catch (err) {
-			console.error('Failed to fetch photos:', err);
+		} catch ( err ) {
+			console.error( 'Failed to fetch photos:', err );
 			setError(
-				err.message || __('Failed to load photos.', 'fair-events')
+				err.message || __( 'Failed to load photos.', 'fair-events' )
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
-	const fetchLikeCounts = async (photoIds) => {
+	const fetchLikeCounts = async ( photoIds ) => {
 		const counts = {};
 		const likes = {};
 
 		// Fetch like info for each photo.
 		await Promise.all(
-			photoIds.map(async (id) => {
+			photoIds.map( async ( id ) => {
 				try {
 					// Build path with participant_id if available.
-					let path = `/fair-events/v1/photos/${id}/likes`;
-					if (participantId) {
-						path += `?participant_id=${participantId}`;
+					let path = `/fair-events/v1/photos/${ id }/likes`;
+					if ( participantId ) {
+						path += `?participant_id=${ participantId }`;
 					}
-					const response = await apiFetch({ path });
-					counts[id] = response.count || 0;
-					likes[id] = response.user_liked || false;
-				} catch (err) {
-					counts[id] = 0;
-					likes[id] = false;
+					const response = await apiFetch( { path } );
+					counts[ id ] = response.count || 0;
+					likes[ id ] = response.user_liked || false;
+				} catch ( err ) {
+					counts[ id ] = 0;
+					likes[ id ] = false;
 				}
-			})
+			} )
 		);
 
-		setLikeCounts(counts);
-		setUserLikes(likes);
+		setLikeCounts( counts );
+		setUserLikes( likes );
 	};
 
 	const handleLikeToggle = useCallback(
-		async (photoId) => {
-			const currentlyLiked = userLikes[photoId];
+		async ( photoId ) => {
+			const currentlyLiked = userLikes[ photoId ];
 
 			// Optimistic update.
-			setUserLikes((prev) => ({
+			setUserLikes( ( prev ) => ( {
 				...prev,
-				[photoId]: !currentlyLiked,
-			}));
-			setLikeCounts((prev) => ({
+				[ photoId ]: ! currentlyLiked,
+			} ) );
+			setLikeCounts( ( prev ) => ( {
 				...prev,
-				[photoId]: prev[photoId] + (currentlyLiked ? -1 : 1),
-			}));
+				[ photoId ]: prev[ photoId ] + ( currentlyLiked ? -1 : 1 ),
+			} ) );
 
 			try {
 				// Build request data with participant_id if available.
 				const requestData = participantId
-					? { participant_id: parseInt(participantId, 10) }
+					? { participant_id: parseInt( participantId, 10 ) }
 					: {};
 
-				if (currentlyLiked) {
-					await apiFetch({
-						path: `/fair-events/v1/photos/${photoId}/likes`,
+				if ( currentlyLiked ) {
+					await apiFetch( {
+						path: `/fair-events/v1/photos/${ photoId }/likes`,
 						method: 'DELETE',
 						data: requestData,
-					});
+					} );
 				} else {
-					await apiFetch({
-						path: `/fair-events/v1/photos/${photoId}/likes`,
+					await apiFetch( {
+						path: `/fair-events/v1/photos/${ photoId }/likes`,
 						method: 'POST',
 						data: requestData,
-					});
+					} );
 				}
-			} catch (err) {
+			} catch ( err ) {
 				// Revert on error.
-				console.error('Like toggle failed:', err);
-				setUserLikes((prev) => ({
+				console.error( 'Like toggle failed:', err );
+				setUserLikes( ( prev ) => ( {
 					...prev,
-					[photoId]: currentlyLiked,
-				}));
-				setLikeCounts((prev) => ({
+					[ photoId ]: currentlyLiked,
+				} ) );
+				setLikeCounts( ( prev ) => ( {
 					...prev,
-					[photoId]: prev[photoId] + (currentlyLiked ? 1 : -1),
-				}));
+					[ photoId ]: prev[ photoId ] + ( currentlyLiked ? 1 : -1 ),
+				} ) );
 			}
 		},
-		[userLikes, participantId]
+		[ userLikes, participantId ]
 	);
 
-	const lightboxPushed = useRef(false);
+	const lightboxPushed = useRef( false );
 
 	// Open lightbox from URL hash after photos load.
-	useEffect(() => {
-		if (photos.length === 0) return;
+	useEffect( () => {
+		if ( photos.length === 0 ) return;
 		const photoId = getPhotoIdFromHash();
-		if (photoId !== null) {
-			const index = photos.findIndex((p) => p.id === photoId);
-			if (index !== -1) {
-				setLightboxIndex(index);
+		if ( photoId !== null ) {
+			const index = photos.findIndex( ( p ) => p.id === photoId );
+			if ( index !== -1 ) {
+				setLightboxIndex( index );
 			}
 		}
-	}, [photos]);
+	}, [ photos ] );
 
 	// Handle browser back/forward.
-	useEffect(() => {
+	useEffect( () => {
 		const handlePopState = () => {
 			const photoId = getPhotoIdFromHash();
-			if (photoId !== null && photos.length > 0) {
-				const index = photos.findIndex((p) => p.id === photoId);
-				setLightboxIndex(index !== -1 ? index : null);
+			if ( photoId !== null && photos.length > 0 ) {
+				const index = photos.findIndex( ( p ) => p.id === photoId );
+				setLightboxIndex( index !== -1 ? index : null );
 			} else {
-				setLightboxIndex(null);
+				setLightboxIndex( null );
 			}
 			lightboxPushed.current = false;
 		};
 
-		window.addEventListener('popstate', handlePopState);
-		return () => window.removeEventListener('popstate', handlePopState);
-	}, [photos]);
+		window.addEventListener( 'popstate', handlePopState );
+		return () => window.removeEventListener( 'popstate', handlePopState );
+	}, [ photos ] );
 
 	// Lightbox handlers.
 	const openLightbox = useCallback(
-		(index) => {
-			setLightboxIndex(index);
-			history.pushState(null, '', `#photo-${photos[index].id}`);
+		( index ) => {
+			setLightboxIndex( index );
+			history.pushState( null, '', `#photo-${ photos[ index ].id }` );
 			lightboxPushed.current = true;
 		},
-		[photos]
+		[ photos ]
 	);
 
-	const closeLightbox = useCallback(() => {
-		setLightboxIndex(null);
-		if (lightboxPushed.current) {
+	const closeLightbox = useCallback( () => {
+		setLightboxIndex( null );
+		if ( lightboxPushed.current ) {
 			lightboxPushed.current = false;
 			history.back();
 		} else {
 			clearPhotoHash();
 		}
-	}, []);
+	}, [] );
 
-	const goToPrevPhoto = useCallback(() => {
-		setLightboxIndex((prev) => {
+	const goToPrevPhoto = useCallback( () => {
+		setLightboxIndex( ( prev ) => {
 			const next = prev > 0 ? prev - 1 : prev;
-			if (next !== prev) {
-				history.replaceState(null, '', `#photo-${photos[next].id}`);
+			if ( next !== prev ) {
+				history.replaceState(
+					null,
+					'',
+					`#photo-${ photos[ next ].id }`
+				);
 			}
 			return next;
-		});
-	}, [photos]);
+		} );
+	}, [ photos ] );
 
-	const goToNextPhoto = useCallback(() => {
-		setLightboxIndex((prev) => {
+	const goToNextPhoto = useCallback( () => {
+		setLightboxIndex( ( prev ) => {
 			const next = prev < photos.length - 1 ? prev + 1 : prev;
-			if (next !== prev) {
-				history.replaceState(null, '', `#photo-${photos[next].id}`);
+			if ( next !== prev ) {
+				history.replaceState(
+					null,
+					'',
+					`#photo-${ photos[ next ].id }`
+				);
 			}
 			return next;
-		});
-	}, [photos]);
+		} );
+	}, [ photos ] );
 
-	if (loading) {
+	if ( loading ) {
 		return (
 			<div className="fe-gallery">
 				<header className="fe-gallery__header">
 					<h1 className="fe-gallery__title">
-						<a href={eventUrl}>{eventTitle}</a>
+						<a href={ eventUrl }>{ eventTitle }</a>
 					</h1>
 				</header>
 				<div className="fe-gallery__loading">
-					{__('Loading...', 'fair-events')}
+					{ __( 'Loading...', 'fair-events' ) }
 				</div>
 			</div>
 		);
 	}
 
-	if (error) {
+	if ( error ) {
 		return (
 			<div className="fe-gallery">
 				<header className="fe-gallery__header">
 					<h1 className="fe-gallery__title">
-						<a href={eventUrl}>{eventTitle}</a>
+						<a href={ eventUrl }>{ eventTitle }</a>
 					</h1>
 				</header>
-				<div className="fe-gallery__error">{error}</div>
+				<div className="fe-gallery__error">{ error }</div>
 			</div>
 		);
 	}
 
-	if (photos.length === 0) {
+	if ( photos.length === 0 ) {
 		return (
 			<div className="fe-gallery">
 				<header className="fe-gallery__header">
 					<h1 className="fe-gallery__title">
-						<a href={eventUrl}>{eventTitle}</a>
+						<a href={ eventUrl }>{ eventTitle }</a>
 					</h1>
 				</header>
 				<div className="fe-gallery__empty">
-					{__('No photos available for this event.', 'fair-events')}
+					{ __(
+						'No photos available for this event.',
+						'fair-events'
+					) }
 				</div>
 			</div>
 		);
@@ -572,40 +589,42 @@ function Gallery() {
 		<div className="fe-gallery">
 			<header className="fe-gallery__header">
 				<h1 className="fe-gallery__title">
-					<a href={eventUrl}>{eventTitle}</a>
+					<a href={ eventUrl }>{ eventTitle }</a>
 				</h1>
 			</header>
 			<div className="fe-gallery__grid">
-				{photos.map((photo, index) => (
+				{ photos.map( ( photo, index ) => (
 					<PhotoCard
-						key={photo.id}
-						photo={photo}
-						likeCount={likeCounts[photo.id] || 0}
-						userLiked={userLikes[photo.id] || false}
-						onLikeToggle={handleLikeToggle}
-						onImageClick={() => openLightbox(index)}
+						key={ photo.id }
+						photo={ photo }
+						likeCount={ likeCounts[ photo.id ] || 0 }
+						userLiked={ userLikes[ photo.id ] || false }
+						onLikeToggle={ handleLikeToggle }
+						onImageClick={ () => openLightbox( index ) }
 					/>
-				))}
+				) ) }
 			</div>
-			{lightboxIndex !== null && (
+			{ lightboxIndex !== null && (
 				<Lightbox
-					photo={photos[lightboxIndex]}
-					onClose={closeLightbox}
-					onPrev={goToPrevPhoto}
-					onNext={goToNextPhoto}
-					hasPrev={lightboxIndex > 0}
-					hasNext={lightboxIndex < photos.length - 1}
-					likeCount={likeCounts[photos[lightboxIndex].id] || 0}
-					userLiked={userLikes[photos[lightboxIndex].id] || false}
-					onLikeToggle={handleLikeToggle}
+					photo={ photos[ lightboxIndex ] }
+					onClose={ closeLightbox }
+					onPrev={ goToPrevPhoto }
+					onNext={ goToNextPhoto }
+					hasPrev={ lightboxIndex > 0 }
+					hasNext={ lightboxIndex < photos.length - 1 }
+					likeCount={ likeCounts[ photos[ lightboxIndex ].id ] || 0 }
+					userLiked={
+						userLikes[ photos[ lightboxIndex ].id ] || false
+					}
+					onLikeToggle={ handleLikeToggle }
 				/>
-			)}
+			) }
 		</div>
 	);
 }
 
 // Mount the gallery.
-const root = document.getElementById('fair-events-gallery-root');
-if (root) {
-	render(<Gallery />, root);
+const root = document.getElementById( 'fair-events-gallery-root' );
+if ( root ) {
+	render( <Gallery />, root );
 }

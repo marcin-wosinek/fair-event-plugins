@@ -6,69 +6,71 @@ import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { autosizeTextarea, generateQuestionKey } from 'fair-events-shared';
 
-registerBlockType('fair-audience/fair-form-consent', {
-	edit: ({ attributes, setAttributes }) => {
+registerBlockType( 'fair-audience/fair-form-consent', {
+	edit: ( { attributes, setAttributes } ) => {
 		const { questionText, questionKey, required } = attributes;
 
-		const onQuestionTextChange = (value) => {
+		const onQuestionTextChange = ( value ) => {
 			const updates = { questionText: value };
 			if (
-				!questionKey ||
-				questionKey === generateQuestionKey(questionText)
+				! questionKey ||
+				questionKey === generateQuestionKey( questionText )
 			) {
-				updates.questionKey = generateQuestionKey(value);
+				updates.questionKey = generateQuestionKey( value );
 			}
-			setAttributes(updates);
+			setAttributes( updates );
 		};
 
-		const blockProps = useBlockProps({
+		const blockProps = useBlockProps( {
 			className: 'fair-form-question fair-form-question-consent',
-		});
+		} );
 
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={__('Question Settings', 'fair-audience')}>
+					<PanelBody
+						title={ __( 'Question Settings', 'fair-audience' ) }
+					>
 						<TextControl
-							label={__('Question Key', 'fair-audience')}
-							value={questionKey}
-							onChange={(value) =>
-								setAttributes({ questionKey: value })
+							label={ __( 'Question Key', 'fair-audience' ) }
+							value={ questionKey }
+							onChange={ ( value ) =>
+								setAttributes( { questionKey: value } )
 							}
-							help={__(
+							help={ __(
 								'A unique identifier for this question (e.g. "favorite_color"). Used internally.',
 								'fair-audience'
-							)}
+							) }
 						/>
 						<ToggleControl
-							label={__('Required', 'fair-audience')}
-							checked={required}
-							onChange={(value) =>
-								setAttributes({ required: value })
+							label={ __( 'Required', 'fair-audience' ) }
+							checked={ required }
+							onChange={ ( value ) =>
+								setAttributes( { required: value } )
 							}
 						/>
 					</PanelBody>
 				</InspectorControls>
 
-				<div {...blockProps}>
+				<div { ...blockProps }>
 					<p>
 						<input type="checkbox" disabled />
 						<span className="fair-form-question-header">
 							<textarea
-								rows={1}
-								ref={autosizeTextarea}
-								value={questionText}
-								onChange={(e) => {
-									autosizeTextarea(e.target);
-									onQuestionTextChange(e.target.value);
-								}}
-								placeholder={__(
+								rows={ 1 }
+								ref={ autosizeTextarea }
+								value={ questionText }
+								onChange={ ( e ) => {
+									autosizeTextarea( e.target );
+									onQuestionTextChange( e.target.value );
+								} }
+								placeholder={ __(
 									'I have read and accept the terms and conditions',
 									'fair-audience'
-								)}
+								) }
 								className="fair-form-question-label-input"
 							/>
-							{required && <span className="required"> *</span>}
+							{ required && <span className="required"> *</span> }
 						</span>
 					</p>
 				</div>
@@ -78,4 +80,4 @@ registerBlockType('fair-audience/fair-form-consent', {
 	save: () => {
 		return null;
 	},
-});
+} );

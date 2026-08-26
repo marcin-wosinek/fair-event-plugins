@@ -7,7 +7,7 @@ import RecurrenceControl from '../RecurrenceControl.js';
 
 // jsdom has no layout engine; @wordpress/components' VStack/HStack use
 // matchMedia for responsive spacing, which jsdom doesn't implement.
-beforeAll(() => {
+beforeAll( () => {
 	window.matchMedia =
 		window.matchMedia ||
 		function () {
@@ -17,7 +17,7 @@ beforeAll(() => {
 				removeListener: () => {},
 			};
 		};
-});
+} );
 
 const baseValue = {
 	enabled: false,
@@ -27,73 +27,83 @@ const baseValue = {
 	until: '',
 };
 
-describe('RecurrenceControl', () => {
-	test('hides Frequency/Ends controls when disabled', () => {
-		render(<RecurrenceControl value={baseValue} onChange={jest.fn()} />);
+describe( 'RecurrenceControl', () => {
+	test( 'hides Frequency/Ends controls when disabled', () => {
+		render(
+			<RecurrenceControl value={ baseValue } onChange={ jest.fn() } />
+		);
 		expect(
-			screen.queryByRole('combobox', { name: 'Frequency' })
+			screen.queryByRole( 'combobox', { name: 'Frequency' } )
 		).not.toBeInTheDocument();
-	});
+	} );
 
-	test('shows Frequency/Ends controls when enabled', () => {
+	test( 'shows Frequency/Ends controls when enabled', () => {
 		render(
 			<RecurrenceControl
-				value={{ ...baseValue, enabled: true }}
-				onChange={jest.fn()}
+				value={ { ...baseValue, enabled: true } }
+				onChange={ jest.fn() }
 			/>
 		);
 		expect(
-			screen.getByRole('combobox', { name: 'Frequency' })
+			screen.getByRole( 'combobox', { name: 'Frequency' } )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole('combobox', { name: 'Ends' })
+			screen.getByRole( 'combobox', { name: 'Ends' } )
 		).toBeInTheDocument();
-	});
+	} );
 
-	test('toggling the checkbox emits enabled:true with the rest of the value', () => {
+	test( 'toggling the checkbox emits enabled:true with the rest of the value', () => {
 		const onChange = jest.fn();
-		render(<RecurrenceControl value={baseValue} onChange={onChange} />);
+		render(
+			<RecurrenceControl value={ baseValue } onChange={ onChange } />
+		);
 		fireEvent.click(
-			screen.getByRole('checkbox', { name: 'Repeat this event' })
+			screen.getByRole( 'checkbox', { name: 'Repeat this event' } )
 		);
-		expect(onChange).toHaveBeenCalledWith({ ...baseValue, enabled: true });
-	});
+		expect( onChange ).toHaveBeenCalledWith( {
+			...baseValue,
+			enabled: true,
+		} );
+	} );
 
-	test('shows the count field when endType is count, and the date field when until', () => {
+	test( 'shows the count field when endType is count, and the date field when until', () => {
 		render(
 			<RecurrenceControl
-				value={{ ...baseValue, enabled: true, endType: 'count' }}
-				onChange={jest.fn()}
+				value={ { ...baseValue, enabled: true, endType: 'count' } }
+				onChange={ jest.fn() }
 			/>
 		);
 		expect(
-			screen.getByRole('spinbutton', { name: 'Number of occurrences' })
+			screen.getByRole( 'spinbutton', { name: 'Number of occurrences' } )
 		).toBeInTheDocument();
 
 		render(
 			<RecurrenceControl
-				value={{ ...baseValue, enabled: true, endType: 'until' }}
-				onChange={jest.fn()}
+				value={ { ...baseValue, enabled: true, endType: 'until' } }
+				onChange={ jest.fn() }
 			/>
 		);
-		expect(screen.getByLabelText('End date')).toBeInTheDocument();
-	});
+		expect( screen.getByLabelText( 'End date' ) ).toBeInTheDocument();
+	} );
 
-	test('changing frequency emits the merged value', () => {
+	test( 'changing frequency emits the merged value', () => {
 		const onChange = jest.fn();
 		render(
 			<RecurrenceControl
-				value={{ ...baseValue, enabled: true }}
-				onChange={onChange}
+				value={ { ...baseValue, enabled: true } }
+				onChange={ onChange }
 			/>
 		);
-		fireEvent.change(screen.getByRole('combobox', { name: 'Frequency' }), {
-			target: { value: 'monthly' },
-		});
-		expect(onChange).toHaveBeenCalledWith({
+		fireEvent.change(
+			screen.getByRole( 'combobox', { name: 'Frequency' } ),
+			{
+				target: { value: 'monthly' },
+			}
+		);
+		expect( onChange ).toHaveBeenCalledWith( {
 			...baseValue,
 			enabled: true,
 			frequency: 'monthly',
-		});
-	});
-});
+		} );
+	} );
+} );

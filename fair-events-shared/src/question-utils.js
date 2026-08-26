@@ -34,15 +34,15 @@ export const FAIR_FORM_QUESTION_BLOCK_NAMES = [
  * @param {string} text Question text.
  * @return {string} Generated key.
  */
-export function generateQuestionKey(text) {
-	if (!text) {
+export function generateQuestionKey( text ) {
+	if ( ! text ) {
 		return '';
 	}
 
 	return text
 		.toLowerCase()
-		.replace(/[^a-z0-9\s]/g, '')
+		.replace( /[^a-z0-9\s]/g, '' )
 		.trim()
-		.replace(/\s+/g, '_')
-		.substring(0, 100);
+		.replace( /\s+/g, '_' )
+		.substring( 0, 100 );
 }

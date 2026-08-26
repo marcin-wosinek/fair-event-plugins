@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "table-col-before",
 	"description": "A time column with header and body for organizing timetable content",
-	"parent": ["fair-timetable/timetable"],
+	"parent": [ "fair-timetable/timetable" ],
 	"example": {},
 	"supports": {
 		"html": false,

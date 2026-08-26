@@ -26,57 +26,61 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const authHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-function uniqueEmail(prefix) {
-	return `${prefix}+${Date.now()}-${Math.floor(
+function uniqueEmail( prefix ) {
+	return `${ prefix }+${ Date.now() }-${ Math.floor(
 		Math.random() * 1e6
-	)}@example.test`;
+	) }@example.test`;
 }
 
-async function createEventWithDates(api, title) {
-	const res = await api.post('/wp-json/wp/v2/fair_event', {
+async function createEventWithDates( api, title ) {
+	const res = await api.post( '/wp-json/wp/v2/fair_event', {
 		headers: authHeaders,
 		data: { title, status: 'publish' },
-	});
-	expect(res.ok()).toBeTruthy();
-	const eventId = (await res.json()).id;
+	} );
+	expect( res.ok() ).toBeTruthy();
+	const eventId = ( await res.json() ).id;
 
-	const eventsRes = await api.get('/wp-json/fair-audience/v1/events', {
+	const eventsRes = await api.get( '/wp-json/fair-audience/v1/events', {
 		headers: authHeaders,
 		params: { per_page: 100 },
-	});
-	expect(eventsRes.ok()).toBeTruthy();
-	const match = (await eventsRes.json()).find((e) => e.event_id === eventId);
-	expect(match, 'event-date row for test event').toBeTruthy();
+	} );
+	expect( eventsRes.ok() ).toBeTruthy();
+	const match = ( await eventsRes.json() ).find(
+		( e ) => e.event_id === eventId
+	);
+	expect( match, 'event-date row for test event' ).toBeTruthy();
 	return { eventId, eventDateId: match.event_date_id };
 }
 
-async function deleteEvent(api, eventId) {
-	if (!eventId) return;
-	await api.delete(`/wp-json/wp/v2/fair_event/${eventId}`, {
+async function deleteEvent( api, eventId ) {
+	if ( ! eventId ) return;
+	await api.delete( `/wp-json/wp/v2/fair_event/${ eventId }`, {
 		headers: authHeaders,
 		params: { force: 'true' },
-	});
+	} );
 }
 
-test.describe('Base signup pricing — ticket-type price', () => {
+test.describe( 'Base signup pricing — ticket-type price', () => {
 	let api;
 	let event;
 	let paidTypeId;
 	let freeTypeId;
 	let fixtureOk = true;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 		event = await createEventWithDates(
 			api,
-			`Base Pricing Ticket Type Test ${Date.now()}`
+			`Base Pricing Ticket Type Test ${ Date.now() }`
 		);
 
 		const ticketsRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${event.eventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ event.eventDateId }/tickets`,
 			{
 				headers: authHeaders,
 				data: {
@@ -116,55 +120,55 @@ test.describe('Base signup pricing — ticket-type price', () => {
 		// captured (not asserted) so every test below can skip with a
 		// reference instead of failing the hook.
 		fixtureOk = ticketsRes.ok();
-		if (!fixtureOk) {
+		if ( ! fixtureOk ) {
 			return;
 		}
-		const types = (await ticketsRes.json()).ticket_types || [];
-		paidTypeId = types.find((t) => t.name === 'Paid tier')?.id;
-		freeTypeId = types.find((t) => t.name === 'Free tier')?.id;
-		expect(paidTypeId).toBeTruthy();
-		expect(freeTypeId).toBeTruthy();
-	});
+		const types = ( await ticketsRes.json() ).ticket_types || [];
+		paidTypeId = types.find( ( t ) => t.name === 'Paid tier' )?.id;
+		freeTypeId = types.find( ( t ) => t.name === 'Free tier' )?.id;
+		expect( paidTypeId ).toBeTruthy();
+		expect( freeTypeId ).toBeTruthy();
+	} );
 
-	test.afterAll(async () => {
-		await deleteEvent(api, event?.eventId);
+	test.afterAll( async () => {
+		await deleteEvent( api, event?.eventId );
 		await api.dispose();
-	});
+	} );
 
-	test('a priced ticket-type signup is rejected 503 and writes nothing', async () => {
+	test( 'a priced ticket-type signup is rejected 503 and writes nothing', async () => {
 		test.skip(
-			!fixtureOk,
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
-		const res = await api.post('/wp-json/fair-audience/v1/event-signup', {
+		const res = await api.post( '/wp-json/fair-audience/v1/event-signup', {
 			headers: authHeaders,
 			data: {
 				event_id: event.eventId,
 				event_date_id: event.eventDateId,
 				ticket_type_id: paidTypeId,
-				email: uniqueEmail('base-pricing-paid'),
+				email: uniqueEmail( 'base-pricing-paid' ),
 			},
-		});
-		expect(res.status()).toBe(503);
-		expect((await res.json()).code).toBe('payment_unavailable');
-	});
+		} );
+		expect( res.status() ).toBe( 503 );
+		expect( ( await res.json() ).code ).toBe( 'payment_unavailable' );
+	} );
 
-	test('a ticket type with no price row (0) still confirms', async () => {
+	test( 'a ticket type with no price row (0) still confirms', async () => {
 		test.skip(
-			!fixtureOk,
+			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
-		const res = await api.post('/wp-json/fair-audience/v1/event-signup', {
+		const res = await api.post( '/wp-json/fair-audience/v1/event-signup', {
 			headers: authHeaders,
 			data: {
 				event_id: event.eventId,
 				event_date_id: event.eventDateId,
 				ticket_type_id: freeTypeId,
 			},
-		});
-		expect(res.ok(), await res.text()).toBeTruthy();
-		expect((await res.json()).status).toMatch(
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		expect( ( await res.json() ).status ).toMatch(
 			/^(signed_up|already_signed_up)$/
 		);
-	});
-});
+	} );
+} );

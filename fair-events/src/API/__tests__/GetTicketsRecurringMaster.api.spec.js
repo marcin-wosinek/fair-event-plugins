@@ -20,10 +20,12 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const adminHeaders = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-test.describe('GetTicketsController — recurring series master pivot', () => {
+test.describe( 'GetTicketsController — recurring series master pivot', () => {
 	let api;
 	let eventPostId;
 	let masterEventDateId;
@@ -31,30 +33,30 @@ test.describe('GetTicketsController — recurring series master pivot', () => {
 	let childEventDateId;
 	let ticketTypeId;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const postRes = await api.post('/wp-json/wp/v2/fair_event', {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets recurring master test ${Date.now()}`,
+				title: `Get-tickets recurring master test ${ Date.now() }`,
 				status: 'publish',
 			},
-		});
-		expect(postRes.ok()).toBeTruthy();
-		eventPostId = (await postRes.json()).id;
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		eventPostId = ( await postRes.json() ).id;
 
-		const edRes = await api.post('/wp-json/fair-events/v1/event-dates', {
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
 			headers: adminHeaders,
 			data: {
-				title: `Get-tickets recurring master test ${Date.now()}`,
+				title: `Get-tickets recurring master test ${ Date.now() }`,
 				link_type: 'post',
 				start_datetime: '2035-06-01 10:00:00',
 				end_datetime: '2035-06-01 12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			},
-		});
-		expect(edRes.ok()).toBeTruthy();
+		} );
+		expect( edRes.ok() ).toBeTruthy();
 		const edBody = await edRes.json();
 		masterEventDateId = edBody.id;
 
@@ -62,13 +64,13 @@ test.describe('GetTicketsController — recurring series master pivot', () => {
 		// needed to actually link the post (see CalendarFeedController.api.spec.js
 		// for the same quirk).
 		const linkRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
 			{
 				headers: adminHeaders,
 				data: { event_id: eventPostId },
 			}
 		);
-		expect(linkRes.ok()).toBeTruthy();
+		expect( linkRes.ok() ).toBeTruthy();
 
 		// generated_occurrences comes straight off the create response
 		// (master + 2 generated for COUNT=3 / 3 manual dates) — the
@@ -76,14 +78,14 @@ test.describe('GetTicketsController — recurring series master pivot', () => {
 		// (a separate pre-existing bug), so deriving from edRes avoids it.
 		occurrenceIds = [
 			masterEventDateId,
-			...edBody.generated_occurrences.map((o) => o.id),
+			...edBody.generated_occurrences.map( ( o ) => o.id ),
 		].sort();
-		expect(occurrenceIds.length).toBe(3);
+		expect( occurrenceIds.length ).toBe( 3 );
 		// A non-first occurrence — the case that was previously broken.
-		childEventDateId = occurrenceIds[1];
+		childEventDateId = occurrenceIds[ 1 ];
 
 		const ticketsRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${masterEventDateId}/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/tickets`,
 			{
 				headers: adminHeaders,
 				data: {
@@ -115,37 +117,37 @@ test.describe('GetTicketsController — recurring series master pivot', () => {
 				},
 			}
 		);
-		expect(ticketsRes.ok()).toBeTruthy();
+		expect( ticketsRes.ok() ).toBeTruthy();
 		const ticketsBody = await ticketsRes.json();
-		ticketTypeId = ticketsBody.ticket_types?.[0]?.id;
-		expect(ticketTypeId).toBeTruthy();
-	});
+		ticketTypeId = ticketsBody.ticket_types?.[ 0 ]?.id;
+		expect( ticketTypeId ).toBeTruthy();
+	} );
 
-	test.afterAll(async () => {
-		if (eventPostId) {
+	test.afterAll( async () => {
+		if ( eventPostId ) {
 			await api.delete(
-				`/wp-json/wp/v2/fair_event/${eventPostId}?force=true`,
+				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,
 				{ headers: adminHeaders }
 			);
 		}
 		await api.dispose();
-	});
+	} );
 
-	test('master-owned ticket type is accepted for a child occurrence and priced', async () => {
-		const res = await api.post('/wp-json/fair-events/v1/get-tickets', {
+	test( 'master-owned ticket type is accepted for a child occurrence and priced', async () => {
+		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: childEventDateId,
 				name: 'Recurring Master Tester',
-				email: `recurring-master-${Date.now()}@example.test`,
+				email: `recurring-master-${ Date.now() }@example.test`,
 				ticket_type_id: ticketTypeId,
 				quantity: 1,
 			},
-		});
+		} );
 		// Today's bug returns 400 invalid_ticket_type here — must succeed instead.
-		expect(res.ok()).toBeTruthy();
-	});
+		expect( res.ok() ).toBeTruthy();
+	} );
 
-	test('the signup persists against the child occurrence, priced from the master, not the master row', async () => {
+	test( 'the signup persists against the child occurrence, priced from the master, not the master row', async () => {
 		test.skip(
 			true,
 			'Skipped pending #1409 — whole-series signup is not listed against its child occurrence'
@@ -157,13 +159,15 @@ test.describe('GetTicketsController — recurring series master pivot', () => {
 				params: { event_date: childEventDateId },
 			}
 		);
-		expect(signupsRes.ok()).toBeTruthy();
+		expect( signupsRes.ok() ).toBeTruthy();
 		const signups = await signupsRes.json();
-		const signup = signups.find((s) => s.ticket_type_id === ticketTypeId);
-		expect(signup).toBeTruthy();
+		const signup = signups.find(
+			( s ) => s.ticket_type_id === ticketTypeId
+		);
+		expect( signup ).toBeTruthy();
 		// Server-resolved amount confirms the price lookup pivoted to the master.
-		expect(parseFloat(signup.amount)).toBe(12.5);
-		expect(signup.status).toBe('pending_payment');
+		expect( parseFloat( signup.amount ) ).toBe( 12.5 );
+		expect( signup.status ).toBe( 'pending_payment' );
 
 		const masterSignupsRes = await api.get(
 			'/wp-json/fair-events/v1/get-tickets',
@@ -172,10 +176,10 @@ test.describe('GetTicketsController — recurring series master pivot', () => {
 				params: { event_date: masterEventDateId },
 			}
 		);
-		expect(masterSignupsRes.ok()).toBeTruthy();
+		expect( masterSignupsRes.ok() ).toBeTruthy();
 		const masterSignups = await masterSignupsRes.json();
 		expect(
-			masterSignups.some((s) => s.ticket_type_id === ticketTypeId)
+			masterSignups.some( ( s ) => s.ticket_type_id === ticketTypeId )
 		).toBeFalsy();
-	});
-});
+	} );
+} );

@@ -33,17 +33,17 @@ import {
  * @param {string}   options.type     MIME type filter
  * @param {Function} options.onSelect Callback receiving the selected attachment
  */
-function openMediaPicker({ title, button, type, onSelect }) {
-	const frame = wp.media({
+function openMediaPicker( { title, button, type, onSelect } ) {
+	const frame = wp.media( {
 		title,
 		button: { text: button },
 		library: { type },
 		multiple: false,
-	});
-	frame.on('select', () => {
-		const attachment = frame.state().get('selection').first().toJSON();
-		onSelect(attachment);
-	});
+	} );
+	frame.on( 'select', () => {
+		const attachment = frame.state().get( 'selection' ).first().toJSON();
+		onSelect( attachment );
+	} );
 	frame.open();
 }
 
@@ -54,15 +54,15 @@ function openMediaPicker({ title, button, type, onSelect }) {
  * @param {string} value Entry value.
  * @return {boolean} True when the entry doesn't block saving.
  */
-function isValidLink(value) {
-	if ('' === value.trim()) {
+function isValidLink( value ) {
+	if ( '' === value.trim() ) {
 		return true;
 	}
 
 	try {
-		const url = new URL(value);
+		const url = new URL( value );
 		return 'http:' === url.protocol || 'https:' === url.protocol;
-	} catch (e) {
+	} catch ( e ) {
 		return false;
 	}
 }
@@ -78,110 +78,112 @@ function isValidLink(value) {
  * @param {Function} props.onNotice Handler for displaying notices
  * @return {JSX.Element} The Organizer settings tab
  */
-export default function OrganizerTab({ onNotice }) {
-	const [organizer, setOrganizer] = useState(null);
-	const [defaults, setDefaults] = useState({
+export default function OrganizerTab( { onNotice } ) {
+	const [ organizer, setOrganizer ] = useState( null );
+	const [ defaults, setDefaults ] = useState( {
 		name: '',
 		website: '',
 		logoId: 0,
-	});
-	const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
-	const [isLoading, setIsLoading] = useState(true);
-	const [isSaving, setIsSaving] = useState(false);
-	const [removeLogoDialogOpen, setRemoveLogoDialogOpen] = useState(false);
+	} );
+	const [ logoPreviewUrl, setLogoPreviewUrl ] = useState( '' );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ isSaving, setIsSaving ] = useState( false );
+	const [ removeLogoDialogOpen, setRemoveLogoDialogOpen ] = useState( false );
 
-	const applySettings = (settings) => {
+	const applySettings = ( settings ) => {
 		const { defaults: siteDefaults, ...organizerData } = settings;
-		setOrganizer(organizerData);
-		setDefaults(siteDefaults);
+		setOrganizer( organizerData );
+		setDefaults( siteDefaults );
 	};
 
-	useEffect(() => {
+	useEffect( () => {
 		loadOrganizerSettings()
-			.then((settings) => {
-				applySettings(settings);
-				setIsLoading(false);
-			})
-			.catch(() => {
-				onNotice({
+			.then( ( settings ) => {
+				applySettings( settings );
+				setIsLoading( false );
+			} )
+			.catch( () => {
+				onNotice( {
 					status: 'error',
 					message: __(
 						'Failed to load organizer settings.',
 						'fair-events'
 					),
-				});
-				setIsLoading(false);
-			});
-	}, [onNotice]);
+				} );
+				setIsLoading( false );
+			} );
+	}, [ onNotice ] );
 
-	useEffect(() => {
-		if (!organizer) {
+	useEffect( () => {
+		if ( ! organizer ) {
 			return;
 		}
 
 		const effectiveLogoId = organizer.logo_id || defaults.logoId;
-		loadAttachmentUrl(effectiveLogoId).then(setLogoPreviewUrl);
+		loadAttachmentUrl( effectiveLogoId ).then( setLogoPreviewUrl );
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [organizer && organizer.logo_id, defaults.logoId]);
+	}, [ organizer && organizer.logo_id, defaults.logoId ] );
 
-	const updateField = (field, value) => {
-		setOrganizer({ ...organizer, [field]: value });
+	const updateField = ( field, value ) => {
+		setOrganizer( { ...organizer, [ field ]: value } );
 	};
 
-	const updateLink = (index, value) => {
-		const sameAs = [...organizer.same_as];
-		sameAs[index] = value;
-		updateField('same_as', sameAs);
+	const updateLink = ( index, value ) => {
+		const sameAs = [ ...organizer.same_as ];
+		sameAs[ index ] = value;
+		updateField( 'same_as', sameAs );
 	};
 
 	const addLink = () => {
-		updateField('same_as', [...organizer.same_as, '']);
+		updateField( 'same_as', [ ...organizer.same_as, '' ] );
 	};
 
-	const removeLink = (index) => {
+	const removeLink = ( index ) => {
 		updateField(
 			'same_as',
-			organizer.same_as.filter((_, i) => i !== index)
+			organizer.same_as.filter( ( _, i ) => i !== index )
 		);
 	};
 
 	const hasInvalidLink =
-		organizer && organizer.same_as.some((url) => !isValidLink(url));
-	const hasInvalidWebsite = organizer && !isValidLink(organizer.website);
+		organizer && organizer.same_as.some( ( url ) => ! isValidLink( url ) );
+	const hasInvalidWebsite = organizer && ! isValidLink( organizer.website );
 
 	const handleSave = () => {
-		setIsSaving(true);
+		setIsSaving( true );
 
-		saveSettings({ fair_events_organizer: organizer })
-			.then(() => loadOrganizerSettings())
-			.then((settings) => {
-				applySettings(settings);
-				onNotice({
+		saveSettings( { fair_events_organizer: organizer } )
+			.then( () => loadOrganizerSettings() )
+			.then( ( settings ) => {
+				applySettings( settings );
+				onNotice( {
 					status: 'success',
 					message: __(
 						'Organizer settings saved successfully.',
 						'fair-events'
 					),
-				});
-				setIsSaving(false);
-			})
-			.catch(() => {
-				onNotice({
+				} );
+				setIsSaving( false );
+			} )
+			.catch( () => {
+				onNotice( {
 					status: 'error',
 					message: __(
 						'Failed to save organizer settings.',
 						'fair-events'
 					),
-				});
-				setIsSaving(false);
-			});
+				} );
+				setIsSaving( false );
+			} );
 	};
 
-	if (isLoading || !organizer) {
+	if ( isLoading || ! organizer ) {
 		return (
-			<Card style={{ marginTop: '16px' }}>
+			<Card style={ { marginTop: '16px' } }>
 				<CardBody>
-					<p>{__('Loading organizer settings...', 'fair-events')}</p>
+					<p>
+						{ __( 'Loading organizer settings...', 'fair-events' ) }
+					</p>
 				</CardBody>
 			</Card>
 		);
@@ -189,37 +191,41 @@ export default function OrganizerTab({ onNotice }) {
 
 	return (
 		<form
-			onSubmit={(e) => {
+			onSubmit={ ( e ) => {
 				e.preventDefault();
 				handleSave();
-			}}
+			} }
 		>
-			<VStack spacing={4} style={{ marginTop: '16px' }}>
+			<VStack spacing={ 4 } style={ { marginTop: '16px' } }>
 				<Card>
 					<CardHeader>
-						<h2>{__('Identity', 'fair-events')}</h2>
+						<h2>{ __( 'Identity', 'fair-events' ) }</h2>
 					</CardHeader>
 					<CardBody>
 						<p className="description">
-							{__(
+							{ __(
 								"This identity is used to build a sitewide Schema.org Organization block and to identify the event organizer, taking the place of the site name and home URL. Everything here is optional; leave it blank to keep today's behaviour.",
 								'fair-events'
-							)}
+							) }
 						</p>
 						<TextControl
-							label={__('Name', 'fair-events')}
-							placeholder={defaults.name}
-							value={organizer.name}
-							onChange={(value) => updateField('name', value)}
-							disabled={isSaving}
+							label={ __( 'Name', 'fair-events' ) }
+							placeholder={ defaults.name }
+							value={ organizer.name }
+							onChange={ ( value ) =>
+								updateField( 'name', value )
+							}
+							disabled={ isSaving }
 						/>
 						<TextControl
 							type="url"
-							label={__('Website', 'fair-events')}
-							placeholder={defaults.website}
-							value={organizer.website}
-							onChange={(value) => updateField('website', value)}
-							disabled={isSaving}
+							label={ __( 'Website', 'fair-events' ) }
+							placeholder={ defaults.website }
+							value={ organizer.website }
+							onChange={ ( value ) =>
+								updateField( 'website', value )
+							}
+							disabled={ isSaving }
 							help={
 								hasInvalidWebsite
 									? __(
@@ -234,47 +240,49 @@ export default function OrganizerTab({ onNotice }) {
 						/>
 						<SelectControl
 							__next40pxDefaultSize
-							label={__('Organization type', 'fair-events')}
-							value={organizer.type}
-							options={[
+							label={ __( 'Organization type', 'fair-events' ) }
+							value={ organizer.type }
+							options={ [
 								{
-									label: __('Organization', 'fair-events'),
+									label: __( 'Organization', 'fair-events' ),
 									value: 'Organization',
 								},
 								{
-									label: __('Sports club', 'fair-events'),
+									label: __( 'Sports club', 'fair-events' ),
 									value: 'SportsClub',
 								},
-							]}
-							onChange={(value) => updateField('type', value)}
-							disabled={isSaving}
+							] }
+							onChange={ ( value ) =>
+								updateField( 'type', value )
+							}
+							disabled={ isSaving }
 						/>
 
-						<div style={{ marginTop: '1rem' }}>
+						<div style={ { marginTop: '1rem' } }>
 							<p
-								style={{
+								style={ {
 									marginBottom: '0.5rem',
 									fontWeight: 500,
-								}}
+								} }
 							>
-								{__('Logo', 'fair-events')}
+								{ __( 'Logo', 'fair-events' ) }
 							</p>
 							<HStack alignment="left">
-								{logoPreviewUrl && (
+								{ logoPreviewUrl && (
 									<img
-										src={logoPreviewUrl}
+										src={ logoPreviewUrl }
 										alt=""
-										style={{
+										style={ {
 											maxWidth: '80px',
 											maxHeight: '80px',
 											objectFit: 'contain',
-										}}
+										} }
 									/>
-								)}
+								) }
 								<Button
 									variant="secondary"
-									onClick={() =>
-										openMediaPicker({
+									onClick={ () =>
+										openMediaPicker( {
 											title: __(
 												'Select logo',
 												'fair-events'
@@ -284,7 +292,7 @@ export default function OrganizerTab({ onNotice }) {
 												'fair-events'
 											),
 											type: 'image',
-											onSelect(attachment) {
+											onSelect( attachment ) {
 												updateField(
 													'logo_id',
 													attachment.id
@@ -293,30 +301,30 @@ export default function OrganizerTab({ onNotice }) {
 													attachment.url
 												);
 											},
-										})
+										} )
 									}
-									disabled={isSaving}
+									disabled={ isSaving }
 								>
-									{__('Change image', 'fair-events')}
+									{ __( 'Change image', 'fair-events' ) }
 								</Button>
-								{!!organizer.logo_id && (
+								{ !! organizer.logo_id && (
 									<Button
 										variant="tertiary"
 										isDestructive
-										onClick={() =>
-											setRemoveLogoDialogOpen(true)
+										onClick={ () =>
+											setRemoveLogoDialogOpen( true )
 										}
-										disabled={isSaving}
+										disabled={ isSaving }
 									>
-										{__('Remove', 'fair-events')}
+										{ __( 'Remove', 'fair-events' ) }
 									</Button>
-								)}
+								) }
 							</HStack>
 							<p className="description">
-								{__(
+								{ __(
 									"Falls back to the site's logo when not overridden.",
 									'fair-events'
-								)}
+								) }
 							</p>
 						</div>
 					</CardBody>
@@ -324,86 +332,88 @@ export default function OrganizerTab({ onNotice }) {
 
 				<Card>
 					<CardHeader>
-						<h2>{__('Address', 'fair-events')}</h2>
+						<h2>{ __( 'Address', 'fair-events' ) }</h2>
 					</CardHeader>
 					<CardBody>
 						<TextControl
-							label={__('Street address', 'fair-events')}
-							value={organizer.street_address}
-							onChange={(value) =>
-								updateField('street_address', value)
+							label={ __( 'Street address', 'fair-events' ) }
+							value={ organizer.street_address }
+							onChange={ ( value ) =>
+								updateField( 'street_address', value )
 							}
-							disabled={isSaving}
+							disabled={ isSaving }
 						/>
 						<TextControl
-							label={__('City', 'fair-events')}
-							value={organizer.address_locality}
-							onChange={(value) =>
-								updateField('address_locality', value)
+							label={ __( 'City', 'fair-events' ) }
+							value={ organizer.address_locality }
+							onChange={ ( value ) =>
+								updateField( 'address_locality', value )
 							}
-							disabled={isSaving}
+							disabled={ isSaving }
 						/>
 						<TextControl
-							label={__('Region', 'fair-events')}
-							value={organizer.address_region}
-							onChange={(value) =>
-								updateField('address_region', value)
+							label={ __( 'Region', 'fair-events' ) }
+							value={ organizer.address_region }
+							onChange={ ( value ) =>
+								updateField( 'address_region', value )
 							}
-							disabled={isSaving}
+							disabled={ isSaving }
 						/>
 						<TextControl
-							label={__('Postal code', 'fair-events')}
-							value={organizer.postal_code}
-							onChange={(value) =>
-								updateField('postal_code', value)
+							label={ __( 'Postal code', 'fair-events' ) }
+							value={ organizer.postal_code }
+							onChange={ ( value ) =>
+								updateField( 'postal_code', value )
 							}
-							disabled={isSaving}
+							disabled={ isSaving }
 						/>
 						<TextControl
-							label={__('Country', 'fair-events')}
-							help={__(
+							label={ __( 'Country', 'fair-events' ) }
+							help={ __(
 								'Use a two-letter code, e.g. ES.',
 								'fair-events'
-							)}
-							value={organizer.address_country}
-							onChange={(value) =>
-								updateField('address_country', value)
+							) }
+							value={ organizer.address_country }
+							onChange={ ( value ) =>
+								updateField( 'address_country', value )
 							}
-							disabled={isSaving}
+							disabled={ isSaving }
 						/>
 					</CardBody>
 				</Card>
 
 				<Card>
 					<CardHeader>
-						<h2>{__('Social & profile links', 'fair-events')}</h2>
+						<h2>
+							{ __( 'Social & profile links', 'fair-events' ) }
+						</h2>
 					</CardHeader>
 					<CardBody>
 						<p className="description">
-							{__(
+							{ __(
 								'Links to social media profiles or other pages that identify the organization (Instagram, Facebook, etc.).',
 								'fair-events'
-							)}
+							) }
 						</p>
 
-						<VStack spacing={2}>
-							{organizer.same_as.map((url, index) => {
-								const invalid = !isValidLink(url);
+						<VStack spacing={ 2 }>
+							{ organizer.same_as.map( ( url, index ) => {
+								const invalid = ! isValidLink( url );
 								return (
 									// eslint-disable-next-line react/no-array-index-key
-									<HStack key={index} alignment="top">
+									<HStack key={ index } alignment="top">
 										<TextControl
 											type="url"
-											label={__(
+											label={ __(
 												'Profile URL',
 												'fair-events'
-											)}
+											) }
 											hideLabelFromVision
-											value={url}
-											onChange={(value) =>
-												updateLink(index, value)
+											value={ url }
+											onChange={ ( value ) =>
+												updateLink( index, value )
 											}
-											disabled={isSaving}
+											disabled={ isSaving }
 											help={
 												invalid
 													? __(
@@ -421,55 +431,57 @@ export default function OrganizerTab({ onNotice }) {
 										<Button
 											variant="tertiary"
 											isDestructive
-											onClick={() => removeLink(index)}
-											disabled={isSaving}
+											onClick={ () =>
+												removeLink( index )
+											}
+											disabled={ isSaving }
 										>
-											{__('Remove', 'fair-events')}
+											{ __( 'Remove', 'fair-events' ) }
 										</Button>
 									</HStack>
 								);
-							})}
+							} ) }
 						</VStack>
 
 						<Button
 							variant="secondary"
-							onClick={addLink}
-							disabled={isSaving}
-							style={{ marginTop: '0.5rem' }}
+							onClick={ addLink }
+							disabled={ isSaving }
+							style={ { marginTop: '0.5rem' } }
 						>
-							{__('Add link', 'fair-events')}
+							{ __( 'Add link', 'fair-events' ) }
 						</Button>
 					</CardBody>
 				</Card>
 
 				<Card>
 					<CardHeader>
-						<h2>{__('Contact point', 'fair-events')}</h2>
+						<h2>{ __( 'Contact point', 'fair-events' ) }</h2>
 					</CardHeader>
 					<CardBody>
 						<p className="description">
-							{__(
+							{ __(
 								'Optional contact details for the organization, shown alongside its structured data.',
 								'fair-events'
-							)}
+							) }
 						</p>
 						<TextControl
 							type="email"
-							label={__('Contact email', 'fair-events')}
-							value={organizer.contact_email}
-							onChange={(value) =>
-								updateField('contact_email', value)
+							label={ __( 'Contact email', 'fair-events' ) }
+							value={ organizer.contact_email }
+							onChange={ ( value ) =>
+								updateField( 'contact_email', value )
 							}
-							disabled={isSaving}
+							disabled={ isSaving }
 						/>
 						<TextControl
 							type="tel"
-							label={__('Contact phone', 'fair-events')}
-							value={organizer.contact_phone}
-							onChange={(value) =>
-								updateField('contact_phone', value)
+							label={ __( 'Contact phone', 'fair-events' ) }
+							value={ organizer.contact_phone }
+							onChange={ ( value ) =>
+								updateField( 'contact_phone', value )
 							}
-							disabled={isSaving}
+							disabled={ isSaving }
 						/>
 					</CardBody>
 				</Card>
@@ -478,36 +490,36 @@ export default function OrganizerTab({ onNotice }) {
 					<Button
 						variant="primary"
 						type="submit"
-						isBusy={isSaving}
+						isBusy={ isSaving }
 						disabled={
 							isSaving || hasInvalidLink || hasInvalidWebsite
 						}
 					>
-						{isSaving
-							? __('Saving...', 'fair-events')
-							: __('Save organizer', 'fair-events')}
+						{ isSaving
+							? __( 'Saving...', 'fair-events' )
+							: __( 'Save organizer', 'fair-events' ) }
 					</Button>
-					{(hasInvalidLink || hasInvalidWebsite) && (
+					{ ( hasInvalidLink || hasInvalidWebsite ) && (
 						<p className="description">
-							{__(
+							{ __(
 								'Fix the invalid link(s) above before saving.',
 								'fair-events'
-							)}
+							) }
 						</p>
-					)}
+					) }
 				</div>
 			</VStack>
 			<ConfirmDialog
-				isOpen={removeLogoDialogOpen}
-				onConfirm={() => {
-					updateField('logo_id', 0);
-					setRemoveLogoDialogOpen(false);
-				}}
-				onCancel={() => setRemoveLogoDialogOpen(false)}
-				confirmButtonText={__('Remove logo', 'fair-events')}
-				cancelButtonText={__('Cancel', 'fair-events')}
+				isOpen={ removeLogoDialogOpen }
+				onConfirm={ () => {
+					updateField( 'logo_id', 0 );
+					setRemoveLogoDialogOpen( false );
+				} }
+				onCancel={ () => setRemoveLogoDialogOpen( false ) }
+				confirmButtonText={ __( 'Remove logo', 'fair-events' ) }
+				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
 			>
-				{__('Remove organizer logo?', 'fair-events')}
+				{ __( 'Remove organizer logo?', 'fair-events' ) }
 			</ConfirmDialog>
 		</form>
 	);

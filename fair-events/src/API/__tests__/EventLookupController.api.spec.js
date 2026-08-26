@@ -14,31 +14,33 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const authHeader = {
 	Authorization:
 		'Basic ' +
-		Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
+			'base64'
+		),
 };
 
-test.describe('EventLookupController', () => {
+test.describe( 'EventLookupController', () => {
 	let api;
 
-	test.beforeAll(async () => {
-		api = await request.newContext({ baseURL: BASE_URL });
-	});
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
 
-	test.afterAll(async () => {
+	test.afterAll( async () => {
 		await api.dispose();
-	});
+	} );
 
-	test('rejects a non-http(s) URL', async () => {
-		const res = await api.post('/wp-json/fair-events/v1/lookup-url', {
+	test( 'rejects a non-http(s) URL', async () => {
+		const res = await api.post( '/wp-json/fair-events/v1/lookup-url', {
 			headers: authHeader,
 			data: { url: 'ftp://example.com/event' },
-		});
+		} );
 
-		expect(res.status()).toBe(400);
-	});
+		expect( res.status() ).toBe( 400 );
+	} );
 
-	test('rejects requests without permission', async () => {
-		const anonymousApi = await request.newContext({ baseURL: BASE_URL });
+	test( 'rejects requests without permission', async () => {
+		const anonymousApi = await request.newContext( { baseURL: BASE_URL } );
 		const res = await anonymousApi.post(
 			'/wp-json/fair-events/v1/lookup-url',
 			{
@@ -46,20 +48,20 @@ test.describe('EventLookupController', () => {
 			}
 		);
 
-		expect([401, 403]).toContain(res.status());
+		expect( [ 401, 403 ] ).toContain( res.status() );
 		await anonymousApi.dispose();
-	});
+	} );
 
-	test('fetches and extracts metadata from a known page', async () => {
-		const res = await api.post('/wp-json/fair-events/v1/lookup-url', {
+	test( 'fetches and extracts metadata from a known page', async () => {
+		const res = await api.post( '/wp-json/fair-events/v1/lookup-url', {
 			headers: authHeader,
 			data: { url: 'https://example.com' },
-		});
+		} );
 
-		expect(res.status()).toBe(200);
+		expect( res.status() ).toBe( 200 );
 		const body = await res.json();
 
-		expect(body.title).toBeTruthy();
-		expect(body).toHaveProperty('found');
-	});
-});
+		expect( body.title ).toBeTruthy();
+		expect( body ).toHaveProperty( 'found' );
+	} );
+} );

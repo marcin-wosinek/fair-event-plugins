@@ -12,24 +12,24 @@ import { useSelect } from '@wordpress/data';
  * @param {string} clientId The client ID of the current block
  * @return {Object} Parent calendar-button attributes or empty object
  */
-export function useParentEventData(clientId) {
+export function useParentEventData( clientId ) {
 	return useSelect(
-		(select) => {
-			const { getBlockParents, getBlock } = select('core/block-editor');
+		( select ) => {
+			const { getBlockParents, getBlock } = select( 'core/block-editor' );
 
-			if (!clientId) {
+			if ( ! clientId ) {
 				return {};
 			}
 
-			const parents = getBlockParents(clientId);
+			const parents = getBlockParents( clientId );
 
-			if (!parents || parents.length === 0) {
+			if ( ! parents || parents.length === 0 ) {
 				return {};
 			}
 
 			// Find the calendar-button parent by traversing up the hierarchy
-			for (const parentId of parents) {
-				const parentBlock = getBlock(parentId);
+			for ( const parentId of parents ) {
+				const parentBlock = getBlock( parentId );
 				if (
 					parentBlock?.name === 'fair-calendar-button/calendar-button'
 				) {
@@ -39,6 +39,6 @@ export function useParentEventData(clientId) {
 
 			return {};
 		},
-		[clientId]
+		[ clientId ]
 	);
 }

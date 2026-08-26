@@ -9,8 +9,8 @@ import './view.css';
 import './editor.css';
 
 // Register the block
-wp.blocks.registerBlockType('fair-timetable/time-slot', {
+wp.blocks.registerBlockType( 'fair-timetable/time-slot', {
 	edit: EditComponent,
 	save: SaveComponent,
 	deprecated: deprecations,
-});
+} );

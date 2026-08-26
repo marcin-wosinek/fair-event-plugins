@@ -9,11 +9,11 @@ import { createRoot } from '@wordpress/element';
  */
 import FeeDashboardApp from './FeeDashboardApp.js';
 
-domReady(() => {
+domReady( () => {
 	const root = document.getElementById(
 		'fair-payments-connector-fee-dashboard-root'
 	);
-	if (root) {
-		createRoot(root).render(<FeeDashboardApp />);
+	if ( root ) {
+		createRoot( root ).render( <FeeDashboardApp /> );
 	}
-});
+} );

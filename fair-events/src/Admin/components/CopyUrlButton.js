@@ -19,41 +19,41 @@ import { copy, check } from '@wordpress/icons';
  * @param {Function} props.onError   Callback on failed copy
  * @return {JSX.Element} The copy URL button
  */
-export default function CopyUrlButton({
+export default function CopyUrlButton( {
 	url,
-	label = __('Copy URL', 'fair-events'),
-	tooltip = __('Copy URL to clipboard', 'fair-events'),
+	label = __( 'Copy URL', 'fair-events' ),
+	tooltip = __( 'Copy URL to clipboard', 'fair-events' ),
 	variant = 'secondary',
 	size = 'small',
 	onSuccess,
 	onError,
-}) {
-	const [copied, setCopied] = useState(false);
+} ) {
+	const [ copied, setCopied ] = useState( false );
 
 	const handleCopy = async () => {
 		try {
-			await navigator.clipboard.writeText(url);
-			setCopied(true);
-			setTimeout(() => setCopied(false), 2000);
-			if (onSuccess) {
+			await navigator.clipboard.writeText( url );
+			setCopied( true );
+			setTimeout( () => setCopied( false ), 2000 );
+			if ( onSuccess ) {
 				onSuccess();
 			}
-		} catch (err) {
-			if (onError) {
+		} catch ( err ) {
+			if ( onError ) {
 				onError();
 			}
 		}
 	};
 
 	return (
-		<Tooltip text={tooltip}>
+		<Tooltip text={ tooltip }>
 			<Button
-				variant={variant}
-				size={size}
-				icon={copied ? check : copy}
-				onClick={handleCopy}
+				variant={ variant }
+				size={ size }
+				icon={ copied ? check : copy }
+				onClick={ handleCopy }
 			>
-				{copied ? __('Copied!', 'fair-events') : label}
+				{ copied ? __( 'Copied!', 'fair-events' ) : label }
 			</Button>
 		</Tooltip>
 	);

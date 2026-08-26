@@ -35,11 +35,11 @@ const VENUE_FIELDS = [
  * @param {string} value Raw coordinate value.
  * @return {string} Normalized value.
  */
-export function normalizeDecimalSeparator(value) {
-	if (!value || value.includes('.') || !value.includes(',')) {
+export function normalizeDecimalSeparator( value ) {
+	if ( ! value || value.includes( '.' ) || ! value.includes( ',' ) ) {
 		return value;
 	}
-	return value.replace(',', '.');
+	return value.replace( ',', '.' );
 }
 
 /**
@@ -51,12 +51,12 @@ export function normalizeDecimalSeparator(value) {
  * @param {string} value Raw latitude field value.
  * @return {{latitude: string, longitude: string}|null} The split pair, or null.
  */
-export function splitCoordinatePair(value) {
-	const match = value.match(/^(-?\d+(?:\.\d+)?)\s*,\s+(-?\d+(?:\.\d+)?)$/);
-	if (!match) {
+export function splitCoordinatePair( value ) {
+	const match = value.match( /^(-?\d+(?:\.\d+)?)\s*,\s+(-?\d+(?:\.\d+)?)$/ );
+	if ( ! match ) {
 		return null;
 	}
-	return { latitude: match[1], longitude: match[2] };
+	return { latitude: match[ 1 ], longitude: match[ 2 ] };
 }
 
 /**
@@ -67,37 +67,37 @@ export function splitCoordinatePair(value) {
  * @param {string} longitude Raw longitude field value.
  * @return {string|null} Translated error message, or null when valid.
  */
-export function getCoordinateError(latitude, longitude) {
-	const lat = normalizeDecimalSeparator((latitude || '').trim());
-	const lng = normalizeDecimalSeparator((longitude || '').trim());
+export function getCoordinateError( latitude, longitude ) {
+	const lat = normalizeDecimalSeparator( ( latitude || '' ).trim() );
+	const lng = normalizeDecimalSeparator( ( longitude || '' ).trim() );
 
-	if (!lat && !lng) {
+	if ( ! lat && ! lng ) {
 		return null;
 	}
 
-	if (!lat || !lng) {
+	if ( ! lat || ! lng ) {
 		return __(
 			'Enter both latitude and longitude, or leave both blank.',
 			'fair-events'
 		);
 	}
 
-	if (Number.isNaN(Number(lat)) || Number.isNaN(Number(lng))) {
+	if ( Number.isNaN( Number( lat ) ) || Number.isNaN( Number( lng ) ) ) {
 		return __(
 			'Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204.',
 			'fair-events'
 		);
 	}
 
-	if (Number(lat) < -90 || Number(lat) > 90) {
-		return __('Latitude must be between -90 and 90.', 'fair-events');
+	if ( Number( lat ) < -90 || Number( lat ) > 90 ) {
+		return __( 'Latitude must be between -90 and 90.', 'fair-events' );
 	}
 
-	if (Number(lng) < -180 || Number(lng) > 180) {
-		return __('Longitude must be between -180 and 180.', 'fair-events');
+	if ( Number( lng ) < -180 || Number( lng ) > 180 ) {
+		return __( 'Longitude must be between -180 and 180.', 'fair-events' );
 	}
 
-	if (lat.length > 20 || lng.length > 20) {
+	if ( lat.length > 20 || lng.length > 20 ) {
 		return __(
 			'Latitude and longitude must be 20 characters or fewer.',
 			'fair-events'
@@ -108,13 +108,13 @@ export function getCoordinateError(latitude, longitude) {
 }
 
 const VenuesApp = () => {
-	const [venues, setVenues] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [success, setSuccess] = useState(null);
-	const [isFormOpen, setIsFormOpen] = useState(false);
-	const [editingVenue, setEditingVenue] = useState(null);
-	const [formData, setFormData] = useState({
+	const [ venues, setVenues ] = useState( [] );
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+	const [ success, setSuccess ] = useState( null );
+	const [ isFormOpen, setIsFormOpen ] = useState( false );
+	const [ editingVenue, setEditingVenue ] = useState( null );
+	const [ formData, setFormData ] = useState( {
 		name: '',
 		address: '',
 		latitude: '',
@@ -122,41 +122,41 @@ const VenuesApp = () => {
 		facebook_page_link: '',
 		instagram_handle: '',
 		website_url: '',
-	});
-	const [isSaving, setIsSaving] = useState(false);
-	const [selectedVenues, setSelectedVenues] = useState(new Set());
-	const [isImporting, setIsImporting] = useState(false);
+	} );
+	const [ isSaving, setIsSaving ] = useState( false );
+	const [ selectedVenues, setSelectedVenues ] = useState( new Set() );
+	const [ isImporting, setIsImporting ] = useState( false );
 
 	const coordinateError = getCoordinateError(
 		formData.latitude,
 		formData.longitude
 	);
 
-	useEffect(() => {
+	useEffect( () => {
 		loadVenues();
-	}, []);
+	}, [] );
 
 	const loadVenues = async () => {
-		setLoading(true);
-		setError(null);
+		setLoading( true );
+		setError( null );
 
 		try {
-			const data = await apiFetch({
+			const data = await apiFetch( {
 				path: '/fair-events/v1/venues',
-			});
-			setVenues(data);
-		} catch (err) {
+			} );
+			setVenues( data );
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to load venues.', 'fair-events')
+				err.message || __( 'Failed to load venues.', 'fair-events' )
 			);
 		} finally {
-			setLoading(false);
+			setLoading( false );
 		}
 	};
 
 	const handleCreate = () => {
-		setEditingVenue(null);
-		setFormData({
+		setEditingVenue( null );
+		setFormData( {
 			name: '',
 			address: '',
 			latitude: '',
@@ -164,13 +164,13 @@ const VenuesApp = () => {
 			facebook_page_link: '',
 			instagram_handle: '',
 			website_url: '',
-		});
-		setIsFormOpen(true);
+		} );
+		setIsFormOpen( true );
 	};
 
-	const handleEdit = (venue) => {
-		setEditingVenue(venue);
-		setFormData({
+	const handleEdit = ( venue ) => {
+		setEditingVenue( venue );
+		setFormData( {
 			name: venue.name,
 			address: venue.address || '',
 			latitude: venue.latitude || '',
@@ -178,161 +178,168 @@ const VenuesApp = () => {
 			facebook_page_link: venue.facebook_page_link || '',
 			instagram_handle: venue.instagram_handle || '',
 			website_url: venue.website_url || '',
-		});
-		setIsFormOpen(true);
+		} );
+		setIsFormOpen( true );
 	};
 
-	const handleDelete = async (id) => {
+	const handleDelete = async ( id ) => {
 		if (
-			!window.confirm(
-				__('Are you sure you want to delete this venue?', 'fair-events')
+			! window.confirm(
+				__(
+					'Are you sure you want to delete this venue?',
+					'fair-events'
+				)
 			)
 		) {
 			return;
 		}
 
-		setError(null);
-		setSuccess(null);
+		setError( null );
+		setSuccess( null );
 
 		try {
-			await apiFetch({
-				path: `/fair-events/v1/venues/${id}`,
+			await apiFetch( {
+				path: `/fair-events/v1/venues/${ id }`,
 				method: 'DELETE',
-			});
-			setSuccess(__('Venue deleted successfully.', 'fair-events'));
+			} );
+			setSuccess( __( 'Venue deleted successfully.', 'fair-events' ) );
 			loadVenues();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to delete venue.', 'fair-events')
+				err.message || __( 'Failed to delete venue.', 'fair-events' )
 			);
 		}
 	};
 
-	const handleFormSubmit = async (e) => {
+	const handleFormSubmit = async ( e ) => {
 		e.preventDefault();
-		setIsSaving(true);
-		setError(null);
+		setIsSaving( true );
+		setError( null );
 
 		try {
-			if (editingVenue) {
-				await apiFetch({
-					path: `/fair-events/v1/venues/${editingVenue.id}`,
+			if ( editingVenue ) {
+				await apiFetch( {
+					path: `/fair-events/v1/venues/${ editingVenue.id }`,
 					method: 'PUT',
 					data: formData,
-				});
-				setSuccess(__('Venue updated successfully.', 'fair-events'));
+				} );
+				setSuccess(
+					__( 'Venue updated successfully.', 'fair-events' )
+				);
 			} else {
-				await apiFetch({
+				await apiFetch( {
 					path: '/fair-events/v1/venues',
 					method: 'POST',
 					data: formData,
-				});
-				setSuccess(__('Venue created successfully.', 'fair-events'));
+				} );
+				setSuccess(
+					__( 'Venue created successfully.', 'fair-events' )
+				);
 			}
-			setIsFormOpen(false);
-			setEditingVenue(null);
+			setIsFormOpen( false );
+			setEditingVenue( null );
 			loadVenues();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
 				err.message ||
-					(editingVenue
-						? __('Failed to update venue.', 'fair-events')
-						: __('Failed to create venue.', 'fair-events'))
+					( editingVenue
+						? __( 'Failed to update venue.', 'fair-events' )
+						: __( 'Failed to create venue.', 'fair-events' ) )
 			);
 		} finally {
-			setIsSaving(false);
+			setIsSaving( false );
 		}
 	};
 
-	const handleLatitudeChange = (value) => {
-		if (!formData.longitude) {
-			const pair = splitCoordinatePair(value.trim());
-			if (pair) {
-				setFormData({
+	const handleLatitudeChange = ( value ) => {
+		if ( ! formData.longitude ) {
+			const pair = splitCoordinatePair( value.trim() );
+			if ( pair ) {
+				setFormData( {
 					...formData,
 					latitude: pair.latitude,
 					longitude: pair.longitude,
-				});
+				} );
 				return;
 			}
 		}
-		setFormData({ ...formData, latitude: value });
+		setFormData( { ...formData, latitude: value } );
 	};
 
 	const handleFormCancel = () => {
-		setIsFormOpen(false);
-		setEditingVenue(null);
+		setIsFormOpen( false );
+		setEditingVenue( null );
 	};
 
-	const toggleVenueSelection = (id) => {
-		setSelectedVenues((prev) => {
-			const next = new Set(prev);
-			if (next.has(id)) {
-				next.delete(id);
+	const toggleVenueSelection = ( id ) => {
+		setSelectedVenues( ( prev ) => {
+			const next = new Set( prev );
+			if ( next.has( id ) ) {
+				next.delete( id );
 			} else {
-				next.add(id);
+				next.add( id );
 			}
 			return next;
-		});
+		} );
 	};
 
 	const toggleAllVenues = () => {
-		if (selectedVenues.size === venues.length) {
-			setSelectedVenues(new Set());
+		if ( selectedVenues.size === venues.length ) {
+			setSelectedVenues( new Set() );
 		} else {
-			setSelectedVenues(new Set(venues.map((v) => v.id)));
+			setSelectedVenues( new Set( venues.map( ( v ) => v.id ) ) );
 		}
 	};
 
 	const handleExport = () => {
 		const venuesToExport = venues
-			.filter((v) => selectedVenues.has(v.id))
-			.map((v) => {
+			.filter( ( v ) => selectedVenues.has( v.id ) )
+			.map( ( v ) => {
 				const exported = {};
-				VENUE_FIELDS.forEach((field) => {
-					if (v[field]) {
-						exported[field] = v[field];
+				VENUE_FIELDS.forEach( ( field ) => {
+					if ( v[ field ] ) {
+						exported[ field ] = v[ field ];
 					}
-				});
+				} );
 				return exported;
-			});
+			} );
 
-		const blob = new Blob([JSON.stringify(venuesToExport, null, 2)], {
+		const blob = new Blob( [ JSON.stringify( venuesToExport, null, 2 ) ], {
 			type: 'application/json',
-		});
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
+		} );
+		const url = URL.createObjectURL( blob );
+		const a = document.createElement( 'a' );
 		a.href = url;
 		a.download = 'venues.json';
 		a.click();
-		URL.revokeObjectURL(url);
+		URL.revokeObjectURL( url );
 		setSuccess(
 			// translators: %d is the number of exported venues
-			__('%d venue(s) exported.', 'fair-events').replace(
+			__( '%d venue(s) exported.', 'fair-events' ).replace(
 				'%d',
 				venuesToExport.length
 			)
 		);
 	};
 
-	const handleImport = async (e) => {
-		const file = e.target.files[0];
-		if (!file) {
+	const handleImport = async ( e ) => {
+		const file = e.target.files[ 0 ];
+		if ( ! file ) {
 			return;
 		}
 
 		// Reset the input so the same file can be re-selected
 		e.target.value = '';
 
-		setIsImporting(true);
-		setError(null);
-		setSuccess(null);
+		setIsImporting( true );
+		setError( null );
+		setSuccess( null );
 
 		try {
 			const text = await file.text();
-			const importedVenues = JSON.parse(text);
+			const importedVenues = JSON.parse( text );
 
-			if (!Array.isArray(importedVenues)) {
+			if ( ! Array.isArray( importedVenues ) ) {
 				throw new Error(
 					__(
 						'Invalid file format. Expected a JSON array.',
@@ -343,28 +350,28 @@ const VenuesApp = () => {
 
 			let created = 0;
 			const skippedCoordinates = [];
-			for (const venue of importedVenues) {
-				if (!venue.name) {
+			for ( const venue of importedVenues ) {
+				if ( ! venue.name ) {
 					continue;
 				}
 				const data = {};
-				VENUE_FIELDS.forEach((field) => {
-					if (venue[field]) {
-						data[field] = venue[field];
+				VENUE_FIELDS.forEach( ( field ) => {
+					if ( venue[ field ] ) {
+						data[ field ] = venue[ field ];
 					}
-				});
+				} );
 
-				if (getCoordinateError(data.latitude, data.longitude)) {
+				if ( getCoordinateError( data.latitude, data.longitude ) ) {
 					delete data.latitude;
 					delete data.longitude;
-					skippedCoordinates.push(venue.name);
+					skippedCoordinates.push( venue.name );
 				}
 
-				await apiFetch({
+				await apiFetch( {
 					path: '/fair-events/v1/venues',
 					method: 'POST',
 					data,
-				});
+				} );
 				created++;
 			}
 
@@ -378,105 +385,112 @@ const VenuesApp = () => {
 				),
 				created
 			);
-			if (skippedCoordinates.length > 0) {
-				message += ` ${sprintf(
+			if ( skippedCoordinates.length > 0 ) {
+				message += ` ${ sprintf(
 					/* translators: %s is a comma-separated list of venue names */
 					__(
 						'Imported without coordinates (invalid): %s',
 						'fair-events'
 					),
-					skippedCoordinates.join(', ')
-				)}`;
+					skippedCoordinates.join( ', ' )
+				) }`;
 			}
-			setSuccess(message);
+			setSuccess( message );
 			loadVenues();
-		} catch (err) {
+		} catch ( err ) {
 			setError(
-				err.message || __('Failed to import venues.', 'fair-events')
+				err.message || __( 'Failed to import venues.', 'fair-events' )
 			);
 		} finally {
-			setIsImporting(false);
+			setIsImporting( false );
 		}
 	};
 
 	return (
 		<div className="wrap fair-events-venues">
-			<h1>{__('Venues', 'fair-events')}</h1>
+			<h1>{ __( 'Venues', 'fair-events' ) }</h1>
 
-			{error && (
+			{ error && (
 				<Notice
 					status="error"
 					isDismissible
-					onRemove={() => setError(null)}
+					onRemove={ () => setError( null ) }
 				>
-					{error}
+					{ error }
 				</Notice>
-			)}
+			) }
 
-			{success && (
+			{ success && (
 				<Notice
 					status="success"
 					isDismissible
-					onRemove={() => setSuccess(null)}
+					onRemove={ () => setSuccess( null ) }
 				>
-					{success}
+					{ success }
 				</Notice>
-			)}
+			) }
 
-			<Card style={{ marginTop: '16px' }}>
+			<Card style={ { marginTop: '16px' } }>
 				<CardHeader>
-					<h2>{__('All Venues', 'fair-events')}</h2>
-					<HStack spacing={2} expanded={false}>
-						{selectedVenues.size > 0 && (
-							<Button variant="secondary" onClick={handleExport}>
-								{__('Export Selected', 'fair-events')}
+					<h2>{ __( 'All Venues', 'fair-events' ) }</h2>
+					<HStack spacing={ 2 } expanded={ false }>
+						{ selectedVenues.size > 0 && (
+							<Button
+								variant="secondary"
+								onClick={ handleExport }
+							>
+								{ __( 'Export Selected', 'fair-events' ) }
 							</Button>
-						)}
+						) }
 						<Button
 							variant="secondary"
-							onClick={() =>
+							onClick={ () =>
 								document
-									.getElementById('fair-events-venue-import')
+									.getElementById(
+										'fair-events-venue-import'
+									)
 									.click()
 							}
-							isBusy={isImporting}
-							disabled={isImporting}
+							isBusy={ isImporting }
+							disabled={ isImporting }
 						>
-							{__('Import', 'fair-events')}
+							{ __( 'Import', 'fair-events' ) }
 						</Button>
 						<input
 							id="fair-events-venue-import"
 							type="file"
 							accept=".json"
-							style={{ display: 'none' }}
-							onChange={handleImport}
+							style={ { display: 'none' } }
+							onChange={ handleImport }
 						/>
-						<Button variant="primary" onClick={handleCreate}>
-							{__('Add New Venue', 'fair-events')}
+						<Button variant="primary" onClick={ handleCreate }>
+							{ __( 'Add New Venue', 'fair-events' ) }
 						</Button>
 					</HStack>
 				</CardHeader>
 				<CardBody>
-					<VStack spacing={4}>
-						{loading && (
+					<VStack spacing={ 4 }>
+						{ loading && (
 							<div className="venues-loading">
 								<Spinner />
-								<p>{__('Loading venues...', 'fair-events')}</p>
-							</div>
-						)}
-
-						{!loading && venues.length === 0 && (
-							<div className="venues-empty">
 								<p>
-									{__(
-										'No venues found. Create your first venue to get started.',
-										'fair-events'
-									)}
+									{ __( 'Loading venues...', 'fair-events' ) }
 								</p>
 							</div>
-						)}
+						) }
 
-						{!loading && venues.length > 0 && (
+						{ ! loading && venues.length === 0 && (
+							<div className="venues-empty">
+								<p>
+									{ __(
+										'No venues found. Create your first venue to get started.',
+										'fair-events'
+									) }
+								</p>
+							</div>
+						) }
+
+						{ ! loading && venues.length > 0 && (
 							<table className="wp-list-table widefat fixed striped">
 								<thead>
 									<tr>
@@ -487,24 +501,28 @@ const VenuesApp = () => {
 													selectedVenues.size ===
 													venues.length
 												}
-												onChange={toggleAllVenues}
+												onChange={ toggleAllVenues }
 											/>
 										</td>
-										<th>{__('Name', 'fair-events')}</th>
-										<th>{__('Address', 'fair-events')}</th>
-										<th>{__('Actions', 'fair-events')}</th>
+										<th>{ __( 'Name', 'fair-events' ) }</th>
+										<th>
+											{ __( 'Address', 'fair-events' ) }
+										</th>
+										<th>
+											{ __( 'Actions', 'fair-events' ) }
+										</th>
 									</tr>
 								</thead>
 								<tbody>
-									{venues.map((venue) => (
-										<tr key={venue.id}>
+									{ venues.map( ( venue ) => (
+										<tr key={ venue.id }>
 											<th className="check-column">
 												<input
 													type="checkbox"
-													checked={selectedVenues.has(
+													checked={ selectedVenues.has(
 														venue.id
-													)}
-													onChange={() =>
+													) }
+													onChange={ () =>
 														toggleVenueSelection(
 															venue.id
 														)
@@ -512,106 +530,109 @@ const VenuesApp = () => {
 												/>
 											</th>
 											<td>
-												<strong>{venue.name}</strong>
+												<strong>{ venue.name }</strong>
 											</td>
 											<td>
-												{venue.address || (
+												{ venue.address || (
 													<em>
-														{__(
+														{ __(
 															'No address',
 															'fair-events'
-														)}
+														) }
 													</em>
-												)}
+												) }
 											</td>
 											<td>
-												<HStack spacing={2}>
+												<HStack spacing={ 2 }>
 													<Button
 														variant="secondary"
 														size="small"
-														onClick={() =>
-															handleEdit(venue)
+														onClick={ () =>
+															handleEdit( venue )
 														}
 													>
-														{__(
+														{ __(
 															'Edit',
 															'fair-events'
-														)}
+														) }
 													</Button>
 													<Button
 														variant="tertiary"
 														size="small"
 														isDestructive
-														onClick={() =>
+														onClick={ () =>
 															handleDelete(
 																venue.id
 															)
 														}
 													>
-														{__(
+														{ __(
 															'Delete',
 															'fair-events'
-														)}
+														) }
 													</Button>
 												</HStack>
 											</td>
 										</tr>
-									))}
+									) ) }
 								</tbody>
 							</table>
-						)}
+						) }
 					</VStack>
 				</CardBody>
 			</Card>
 
-			{isFormOpen && (
+			{ isFormOpen && (
 				<Modal
 					title={
 						editingVenue
-							? __('Edit Venue', 'fair-events')
-							: __('Add New Venue', 'fair-events')
+							? __( 'Edit Venue', 'fair-events' )
+							: __( 'Add New Venue', 'fair-events' )
 					}
-					onRequestClose={handleFormCancel}
-					style={{ maxWidth: '500px', width: '100%' }}
+					onRequestClose={ handleFormCancel }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
-					<form onSubmit={handleFormSubmit}>
-						<VStack spacing={4}>
+					<form onSubmit={ handleFormSubmit }>
+						<VStack spacing={ 4 }>
 							<TextControl
-								label={__('Name', 'fair-events')}
-								value={formData.name}
-								onChange={(value) =>
-									setFormData({ ...formData, name: value })
+								label={ __( 'Name', 'fair-events' ) }
+								value={ formData.name }
+								onChange={ ( value ) =>
+									setFormData( { ...formData, name: value } )
 								}
 								required
 							/>
 							<TextareaControl
-								label={__('Address', 'fair-events')}
-								value={formData.address}
-								onChange={(value) =>
-									setFormData({
+								label={ __( 'Address', 'fair-events' ) }
+								value={ formData.address }
+								onChange={ ( value ) =>
+									setFormData( {
 										...formData,
 										address: value,
-									})
+									} )
 								}
-								help={__(
+								help={ __(
 									'Full address of the venue',
 									'fair-events'
-								)}
+								) }
 							/>
-							{formData.address &&
-								!formData.latitude &&
-								!formData.longitude && (
-									<Notice status="info" isDismissible={false}>
-										{__(
+							{ formData.address &&
+								! formData.latitude &&
+								! formData.longitude && (
+									<Notice
+										status="info"
+										isDismissible={ false }
+									>
+										{ __(
 											'A map link will be generated from the address, but it may not point to an exact location. Add latitude and longitude coordinates for a precise pin.',
 											'fair-events'
-										)}
+										) }
 									</Notice>
-								)}
+								) }
 							<TextControl
-								label={__('Latitude', 'fair-events')}
-								value={formData.latitude}
-								onChange={handleLatitudeChange}
+								label={ __( 'Latitude', 'fair-events' ) }
+								value={ formData.latitude }
+								onChange={ handleLatitudeChange }
 								help={
 									coordinateError ||
 									__(
@@ -624,13 +645,13 @@ const VenuesApp = () => {
 								}
 							/>
 							<TextControl
-								label={__('Longitude', 'fair-events')}
-								value={formData.longitude}
-								onChange={(value) =>
-									setFormData({
+								label={ __( 'Longitude', 'fair-events' ) }
+								value={ formData.longitude }
+								onChange={ ( value ) =>
+									setFormData( {
 										...formData,
 										longitude: value,
-									})
+									} )
 								}
 								help={
 									coordinateError ||
@@ -644,73 +665,82 @@ const VenuesApp = () => {
 								}
 							/>
 							<TextControl
-								label={__('Facebook Page Link', 'fair-events')}
-								value={formData.facebook_page_link}
-								onChange={(value) =>
-									setFormData({
+								label={ __(
+									'Facebook Page Link',
+									'fair-events'
+								) }
+								value={ formData.facebook_page_link }
+								onChange={ ( value ) =>
+									setFormData( {
 										...formData,
 										facebook_page_link: value,
-									})
+									} )
 								}
 								type="url"
-								help={__('URL to Facebook page', 'fair-events')}
+								help={ __(
+									'URL to Facebook page',
+									'fair-events'
+								) }
 							/>
 							<TextControl
-								label={__('Instagram Handle', 'fair-events')}
-								value={formData.instagram_handle}
-								onChange={(value) =>
-									setFormData({
+								label={ __(
+									'Instagram Handle',
+									'fair-events'
+								) }
+								value={ formData.instagram_handle }
+								onChange={ ( value ) =>
+									setFormData( {
 										...formData,
 										instagram_handle: value,
-									})
+									} )
 								}
-								help={__(
+								help={ __(
 									'Instagram username without @ (e.g., venue_name)',
 									'fair-events'
-								)}
+								) }
 							/>
 							<TextControl
-								label={__('Website URL', 'fair-events')}
-								value={formData.website_url}
-								onChange={(value) =>
-									setFormData({
+								label={ __( 'Website URL', 'fair-events' ) }
+								value={ formData.website_url }
+								onChange={ ( value ) =>
+									setFormData( {
 										...formData,
 										website_url: value,
-									})
+									} )
 								}
 								type="url"
-								help={__(
+								help={ __(
 									'Website URL of the venue',
 									'fair-events'
-								)}
+								) }
 							/>
-							<HStack justify="flex-end" spacing={2}>
+							<HStack justify="flex-end" spacing={ 2 }>
 								<Button
 									variant="tertiary"
-									onClick={handleFormCancel}
-									disabled={isSaving}
+									onClick={ handleFormCancel }
+									disabled={ isSaving }
 								>
-									{__('Cancel', 'fair-events')}
+									{ __( 'Cancel', 'fair-events' ) }
 								</Button>
 								<Button
 									variant="primary"
 									type="submit"
-									isBusy={isSaving}
+									isBusy={ isSaving }
 									disabled={
 										isSaving ||
-										!formData.name ||
-										!!coordinateError
+										! formData.name ||
+										!! coordinateError
 									}
 								>
-									{editingVenue
-										? __('Update Venue', 'fair-events')
-										: __('Create Venue', 'fair-events')}
+									{ editingVenue
+										? __( 'Update Venue', 'fair-events' )
+										: __( 'Create Venue', 'fair-events' ) }
 								</Button>
 							</HStack>
 						</VStack>
 					</form>
 				</Modal>
-			)}
+			) }
 		</div>
 	);
 };

@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "email",
 	"description": "An email input question with built-in format validation for Fair Form",
-	"keywords": ["question", "email", "input"],
+	"keywords": [ "question", "email", "input" ],
 	"textdomain": "fair-audience",
 	"ancestor": [
 		"fair-audience/fair-form",

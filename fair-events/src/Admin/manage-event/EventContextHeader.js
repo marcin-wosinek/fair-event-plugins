@@ -28,23 +28,23 @@ import {
  * @param {Array}       props.venues         Venues loaded for the site (id, name).
  * @param {Function}    [props.onManageLink] Called to open the link-target popup. Omitted → no link actions render (read-only contexts).
  */
-export default function EventContextHeader({
+export default function EventContextHeader( {
 	eventDate,
 	manageEventUrl,
 	calendarUrl,
 	venues = [],
 	onManageLink,
-}) {
-	if (!eventDate) return null;
+} ) {
+	if ( ! eventDate ) return null;
 
 	const dateLine = eventDate.start_datetime
-		? formatSiteLocalDatetime(eventDate.start_datetime)
+		? formatSiteLocalDatetime( eventDate.start_datetime )
 		: '—';
 	const timeRangeLine = eventDate.end_datetime
-		? `${dateLine} – ${formatSiteLocalTime(eventDate.end_datetime)}`
+		? `${ dateLine } – ${ formatSiteLocalTime( eventDate.end_datetime ) }`
 		: dateLine;
 
-	const venue = venues.find((v) => v.id === eventDate.venue_id);
+	const venue = venues.find( ( v ) => v.id === eventDate.venue_id );
 	const venueLine = venue?.name || eventDate.address || null;
 
 	const linkedPosts = eventDate.linked_posts || [];
@@ -58,90 +58,91 @@ export default function EventContextHeader({
 	// mirrors get_display_url(): external URL first, then any linked post.
 	let linkState;
 	let primaryPost = null;
-	if (eventDate.link_type === 'external' && eventDate.external_url) {
+	if ( eventDate.link_type === 'external' && eventDate.external_url ) {
 		linkState = 'external';
-	} else if (linkedPosts.length > 0) {
+	} else if ( linkedPosts.length > 0 ) {
 		linkState = 'post';
-		primaryPost = linkedPosts.find((lp) => lp.is_primary) || linkedPosts[0];
+		primaryPost =
+			linkedPosts.find( ( lp ) => lp.is_primary ) || linkedPosts[ 0 ];
 	} else {
 		linkState = 'none';
 	}
 
 	let linkChip;
-	if (linkState === 'post') {
+	if ( linkState === 'post' ) {
 		linkChip = {
 			label: sprintf(
 				/* translators: %s: title of the linked post/page */
-				__('Public page: %s', 'fair-events'),
+				__( 'Public page: %s', 'fair-events' ),
 				primaryPost.title
 			),
 			className: 'fair-events-context-badge is-linked',
 		};
-	} else if (linkState === 'external') {
+	} else if ( linkState === 'external' ) {
 		linkChip = {
 			label: sprintf(
 				/* translators: %s: external URL the event links to */
-				__('External page: %s', 'fair-events'),
+				__( 'External page: %s', 'fair-events' ),
 				eventDate.external_url
 			),
 			className: 'fair-events-context-badge',
 		};
 	} else {
 		linkChip = {
-			label: __('No public page yet', 'fair-events'),
+			label: __( 'No public page yet', 'fair-events' ),
 			className: 'fair-events-context-badge',
 		};
 	}
 
 	let linkActions = null;
-	if (linkState === 'post') {
+	if ( linkState === 'post' ) {
 		linkActions = (
-			<HStack spacing={2} alignment="left" wrap>
-				{eventDate.display_url && (
+			<HStack spacing={ 2 } alignment="left" wrap>
+				{ eventDate.display_url && (
 					<Button
 						variant="secondary"
-						href={eventDate.display_url}
+						href={ eventDate.display_url }
 						target="_blank"
 						rel="noreferrer"
 					>
-						{__('View public page', 'fair-events')}
+						{ __( 'View public page', 'fair-events' ) }
 					</Button>
-				)}
-				{primaryPost?.edit_url && (
-					<Button variant="secondary" href={primaryPost.edit_url}>
-						{__('Edit page', 'fair-events')}
+				) }
+				{ primaryPost?.edit_url && (
+					<Button variant="secondary" href={ primaryPost.edit_url }>
+						{ __( 'Edit page', 'fair-events' ) }
 					</Button>
-				)}
-				{onManageLink && (
-					<Button variant="tertiary" onClick={onManageLink}>
-						{__('Change link', 'fair-events')}
+				) }
+				{ onManageLink && (
+					<Button variant="tertiary" onClick={ onManageLink }>
+						{ __( 'Change link', 'fair-events' ) }
 					</Button>
-				)}
+				) }
 			</HStack>
 		);
-	} else if (linkState === 'external') {
+	} else if ( linkState === 'external' ) {
 		linkActions = (
-			<HStack spacing={2} alignment="left" wrap>
+			<HStack spacing={ 2 } alignment="left" wrap>
 				<Button
 					variant="secondary"
-					href={eventDate.external_url}
+					href={ eventDate.external_url }
 					target="_blank"
 					rel="noreferrer"
 				>
-					{__('Open link', 'fair-events')}
+					{ __( 'Open link', 'fair-events' ) }
 				</Button>
-				{onManageLink && (
-					<Button variant="tertiary" onClick={onManageLink}>
-						{__('Change link', 'fair-events')}
+				{ onManageLink && (
+					<Button variant="tertiary" onClick={ onManageLink }>
+						{ __( 'Change link', 'fair-events' ) }
 					</Button>
-				)}
+				) }
 			</HStack>
 		);
-	} else if (onManageLink) {
+	} else if ( onManageLink ) {
 		linkActions = (
-			<HStack spacing={2} alignment="left" wrap>
-				<Button variant="primary" onClick={onManageLink}>
-					{__('Set up event page…', 'fair-events')}
+			<HStack spacing={ 2 } alignment="left" wrap>
+				<Button variant="primary" onClick={ onManageLink }>
+					{ __( 'Set up event page…', 'fair-events' ) }
 				</Button>
 			</HStack>
 		);
@@ -149,32 +150,32 @@ export default function EventContextHeader({
 
 	const isMaster = eventDate.occurrence_type === 'master';
 	const isGenerated =
-		eventDate.occurrence_type === 'generated' && !!eventDate.master;
+		eventDate.occurrence_type === 'generated' && !! eventDate.master;
 
 	const masterUrl = isGenerated
-		? `${manageEventUrl}&event_date_id=${eventDate.master.id}`
+		? `${ manageEventUrl }&event_date_id=${ eventDate.master.id }`
 		: null;
 
 	const seriesCount = isMaster
-		? 1 + (eventDate.generated_occurrences?.length || 0)
+		? 1 + ( eventDate.generated_occurrences?.length || 0 )
 		: 0;
 
-	const eventTitle = getEventDisplayTitle(eventDate.title);
+	const eventTitle = getEventDisplayTitle( eventDate.title );
 
-	let calendarLinkLabel = __('Calendar', 'fair-events');
+	let calendarLinkLabel = __( 'Calendar', 'fair-events' );
 	let calendarHref = calendarUrl;
-	if (calendarUrl && eventDate.start_datetime) {
-		const month = eventDate.start_datetime.slice(0, 7);
-		calendarHref = `${calendarUrl}&month=${month}`;
+	if ( calendarUrl && eventDate.start_datetime ) {
+		const month = eventDate.start_datetime.slice( 0, 7 );
+		calendarHref = `${ calendarUrl }&month=${ month }`;
 		const { formats } = getSettings();
 		const monthLabel = dateI18n(
 			formats.month || 'F Y',
-			`${eventDate.start_datetime.replace(' ', 'T')}Z`,
+			`${ eventDate.start_datetime.replace( ' ', 'T' ) }Z`,
 			true
 		);
 		calendarLinkLabel = sprintf(
 			/* translators: %s: month and year, e.g. "July 2026" */
-			__('Calendar · %s', 'fair-events'),
+			__( 'Calendar · %s', 'fair-events' ),
 			monthLabel
 		);
 	}
@@ -184,14 +185,14 @@ export default function EventContextHeader({
 	return (
 		<div
 			className="fair-events-context-header"
-			style={{
+			style={ {
 				margin: '8px 0 16px',
 				borderLeft: '3px solid #2271b1',
 				paddingLeft: '12px',
-			}}
+			} }
 		>
-			<nav aria-label={__('Breadcrumb', 'fair-events')}>
-				{createInterpolateElement(
+			<nav aria-label={ __( 'Breadcrumb', 'fair-events' ) }>
+				{ createInterpolateElement(
 					sprintf(
 						/* translators: 1: calendar link label (wrapped in <calendarlink> tags), 2: event title — breadcrumb trail after "Fair Events ›" */
 						__(
@@ -203,32 +204,32 @@ export default function EventContextHeader({
 					),
 					{
 						calendarlink: calendarHref ? (
-							<a href={calendarHref} />
+							<a href={ calendarHref } />
 						) : (
 							<span />
 						),
 					}
-				)}
+				) }
 			</nav>
-			<p style={{ margin: '4px 0' }}>
-				{timeRangeLine}
-				{venueLine && ` · ${venueLine}`}
+			<p style={ { margin: '4px 0' } }>
+				{ timeRangeLine }
+				{ venueLine && ` · ${ venueLine }` }
 			</p>
-			<p style={{ margin: '0 0 4px' }}>
-				<span className={linkChip.className}>{linkChip.label}</span>
-				{eventDate.attendance_mode === 'online' && (
+			<p style={ { margin: '0 0 4px' } }>
+				<span className={ linkChip.className }>{ linkChip.label }</span>
+				{ eventDate.attendance_mode === 'online' && (
 					<span className="fair-events-context-badge">
-						{__('Online event', 'fair-events')}
+						{ __( 'Online event', 'fair-events' ) }
 					</span>
-				)}
-				{eventDate.attendance_mode === 'hybrid' && (
+				) }
+				{ eventDate.attendance_mode === 'hybrid' && (
 					<span className="fair-events-context-badge">
-						{__('Hybrid event', 'fair-events')}
+						{ __( 'Hybrid event', 'fair-events' ) }
 					</span>
-				)}
-				{isMaster && (
+				) }
+				{ isMaster && (
 					<span className="fair-events-context-badge">
-						{sprintf(
+						{ sprintf(
 							/* translators: %d: number of dates in the recurring series */
 							_n(
 								'Recurring series — %d date',
@@ -237,43 +238,46 @@ export default function EventContextHeader({
 								'fair-events'
 							),
 							seriesCount
-						)}
+						) }
 					</span>
-				)}
-				{isGenerated && (
+				) }
+				{ isGenerated && (
 					<span className="fair-events-context-badge">
-						{sprintf(
+						{ sprintf(
 							/* translators: 1: master event title, 2: occurrence date */
-							__('Occurrence of %1$s on %2$s —', 'fair-events'),
+							__( 'Occurrence of %1$s on %2$s —', 'fair-events' ),
 							eventDate.master.title,
 							dateLine
-						)}{' '}
-						<a href={masterUrl}>
-							{__('view series', 'fair-events')}
+						) }{ ' ' }
+						<a href={ masterUrl }>
+							{ __( 'view series', 'fair-events' ) }
 						</a>
 					</span>
-				)}
-				{categories.map((category) => (
+				) }
+				{ categories.map( ( category ) => (
 					<span
-						key={category.id}
+						key={ category.id }
 						className="fair-events-context-badge"
 					>
-						{category.name}
+						{ category.name }
 					</span>
-				))}
+				) ) }
 			</p>
-			{linkActions && (
-				<div style={{ margin: '0 0 4px' }}>{linkActions}</div>
-			)}
-			{isGenerated && (
-				<p style={{ margin: 0 }}>
-					{__('Tickets are managed on the series —', 'fair-events')}{' '}
-					<a href={masterUrl}>
-						{__('open the master event', 'fair-events')}
+			{ linkActions && (
+				<div style={ { margin: '0 0 4px' } }>{ linkActions }</div>
+			) }
+			{ isGenerated && (
+				<p style={ { margin: 0 } }>
+					{ __(
+						'Tickets are managed on the series —',
+						'fair-events'
+					) }{ ' ' }
+					<a href={ masterUrl }>
+						{ __( 'open the master event', 'fair-events' ) }
 					</a>
 					.
 				</p>
-			)}
+			) }
 		</div>
 	);
 }

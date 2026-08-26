@@ -20,22 +20,22 @@ import apiFetch from '@wordpress/api-fetch';
 import { formatDateOnly } from 'fair-events-shared';
 import SeriesModal from '../SeriesModal.js';
 
-jest.mock('@wordpress/api-fetch');
+jest.mock( '@wordpress/api-fetch' );
 
 // Matches the full-date aria-label MiniCalendar builds by default.
-function fullDateLabel(dateStr) {
-	return formatDateOnly(dateStr, 'long');
+function fullDateLabel( dateStr ) {
+	return formatDateOnly( dateStr, 'long' );
 }
 
-beforeEach(() => {
+beforeEach( () => {
 	// The Regular schedule tab renders RecurrenceControl, which uses
 	// @wordpress/components' deprecated 36px default SelectControl/
 	// NumberControl size, and TabPanel (ariakit) commits its tab ids in a
 	// post-mount effect — both emit console noise unrelated to what these
 	// tests exercise. Matches the suppression convention in
 	// ManageEventApp.test.jsx.
-	jest.spyOn(console, 'warn').mockImplementation(() => {});
-	jest.spyOn(console, 'error').mockImplementation(() => {});
+	jest.spyOn( console, 'warn' ).mockImplementation( () => {} );
+	jest.spyOn( console, 'error' ).mockImplementation( () => {} );
 
 	// jsdom has no layout engine; @wordpress/components' HStack/Button use
 	// matchMedia for responsive spacing, which jsdom doesn't implement.
@@ -48,30 +48,30 @@ beforeEach(() => {
 				removeListener: () => {},
 			};
 		};
-});
+} );
 
-afterEach(() => {
+afterEach( () => {
 	jest.restoreAllMocks();
-});
+} );
 
 // TabPanel (ariakit) sets up its tab ids in an effect after mount; flushing a
 // tick via waitFor keeps that update wrapped in act() before we interact.
-async function renderModal(props) {
-	const utils = render(<SeriesModal {...props} />);
-	await waitFor(() =>
+async function renderModal( props ) {
+	const utils = render( <SeriesModal { ...props } /> );
+	await waitFor( () =>
 		expect(
-			screen.getByRole('tab', { name: 'Regular schedule' })
+			screen.getByRole( 'tab', { name: 'Regular schedule' } )
 		).toBeInTheDocument()
 	);
 	return utils;
 }
 
 function openIrregularTab() {
-	fireEvent.click(screen.getByRole('tab', { name: 'Irregular series' }));
+	fireEvent.click( screen.getByRole( 'tab', { name: 'Irregular series' } ) );
 }
 
-it('Regular tab shows a display-only calendar and a compact dates summary', async () => {
-	await renderModal({
+it( 'Regular tab shows a display-only calendar and a compact dates summary', async () => {
+	await renderModal( {
 		eventDateId: 1,
 		initialRrule: null,
 		initialRecurrenceMode: null,
@@ -80,20 +80,24 @@ it('Regular tab shows a display-only calendar and a compact dates summary', asyn
 		onClose: () => {},
 		onSaved: () => {},
 		onImpact: () => {},
-	});
+	} );
 
 	// Default recurrence is weekly, 10 occurrences (DEFAULT_RECURRENCE).
-	expect(screen.getByText('July 2026')).toBeInTheDocument();
-	expect(screen.getByText(/10 dates, until/)).toBeInTheDocument();
+	expect( screen.getByText( 'July 2026' ) ).toBeInTheDocument();
+	expect( screen.getByText( /10 dates, until/ ) ).toBeInTheDocument();
 
 	// Display-only: no toggle buttons in the calendar (aria-pressed is only
 	// used by the Irregular tab's picker).
-	expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
-	expect(screen.queryAllByRole('button', { pressed: false })).toHaveLength(0);
-});
+	expect( screen.queryAllByRole( 'button', { pressed: true } ) ).toHaveLength(
+		0
+	);
+	expect(
+		screen.queryAllByRole( 'button', { pressed: false } )
+	).toHaveLength( 0 );
+} );
 
-it('seeds the calendar selection from existing generated occurrences when editing a manual series', async () => {
-	await renderModal({
+it( 'seeds the calendar selection from existing generated occurrences when editing a manual series', async () => {
+	await renderModal( {
 		eventDateId: 1,
 		initialRrule: null,
 		initialRecurrenceMode: 'manual',
@@ -105,31 +109,31 @@ it('seeds the calendar selection from existing generated occurrences when editin
 		onClose: () => {},
 		onSaved: () => {},
 		onImpact: () => {},
-	});
+	} );
 
 	openIrregularTab();
 
-	const masterButton = screen.getByRole('button', {
-		name: fullDateLabel('2026-07-01'),
-	});
-	expect(masterButton).toBeDisabled();
-	expect(masterButton).toHaveAttribute('aria-pressed', 'true');
+	const masterButton = screen.getByRole( 'button', {
+		name: fullDateLabel( '2026-07-01' ),
+	} );
+	expect( masterButton ).toBeDisabled();
+	expect( masterButton ).toHaveAttribute( 'aria-pressed', 'true' );
 
 	expect(
-		screen.getByRole('button', { name: fullDateLabel('2026-07-08') })
-	).toHaveAttribute('aria-pressed', 'true');
+		screen.getByRole( 'button', { name: fullDateLabel( '2026-07-08' ) } )
+	).toHaveAttribute( 'aria-pressed', 'true' );
 	expect(
-		screen.getByRole('button', { name: fullDateLabel('2026-07-20') })
-	).toHaveAttribute('aria-pressed', 'true');
+		screen.getByRole( 'button', { name: fullDateLabel( '2026-07-20' ) } )
+	).toHaveAttribute( 'aria-pressed', 'true' );
 	expect(
-		screen.getByRole('button', { name: fullDateLabel('2026-07-15') })
-	).toHaveAttribute('aria-pressed', 'false');
+		screen.getByRole( 'button', { name: fullDateLabel( '2026-07-15' ) } )
+	).toHaveAttribute( 'aria-pressed', 'false' );
 
-	expect(screen.getByText('3 dates selected')).toBeInTheDocument();
-});
+	expect( screen.getByText( '3 dates selected' ) ).toBeInTheDocument();
+} );
 
-it('clicking an unselected day adds it and clicking it again removes it, keeping the master date fixed', async () => {
-	await renderModal({
+it( 'clicking an unselected day adds it and clicking it again removes it, keeping the master date fixed', async () => {
+	await renderModal( {
 		eventDateId: 1,
 		initialRrule: null,
 		initialRecurrenceMode: null,
@@ -138,42 +142,42 @@ it('clicking an unselected day adds it and clicking it again removes it, keeping
 		onClose: () => {},
 		onSaved: () => {},
 		onImpact: () => {},
-	});
+	} );
 
 	openIrregularTab();
 
-	const masterButton = screen.getByRole('button', {
-		name: fullDateLabel('2026-07-01'),
-	});
-	expect(masterButton).toBeDisabled();
-	expect(screen.getByText('1 dates selected')).toBeInTheDocument();
+	const masterButton = screen.getByRole( 'button', {
+		name: fullDateLabel( '2026-07-01' ),
+	} );
+	expect( masterButton ).toBeDisabled();
+	expect( screen.getByText( '1 dates selected' ) ).toBeInTheDocument();
 
-	fireEvent.click(masterButton);
-	expect(screen.getByText('1 dates selected')).toBeInTheDocument();
+	fireEvent.click( masterButton );
+	expect( screen.getByText( '1 dates selected' ) ).toBeInTheDocument();
 
-	const dayButton = screen.getByRole('button', {
-		name: fullDateLabel('2026-07-05'),
-	});
-	expect(dayButton).toHaveAttribute('aria-pressed', 'false');
+	const dayButton = screen.getByRole( 'button', {
+		name: fullDateLabel( '2026-07-05' ),
+	} );
+	expect( dayButton ).toHaveAttribute( 'aria-pressed', 'false' );
 
-	fireEvent.click(dayButton);
-	expect(dayButton).toHaveAttribute('aria-pressed', 'true');
-	expect(screen.getByText('2 dates selected')).toBeInTheDocument();
+	fireEvent.click( dayButton );
+	expect( dayButton ).toHaveAttribute( 'aria-pressed', 'true' );
+	expect( screen.getByText( '2 dates selected' ) ).toBeInTheDocument();
 
-	fireEvent.click(dayButton);
-	expect(dayButton).toHaveAttribute('aria-pressed', 'false');
-	expect(screen.getByText('1 dates selected')).toBeInTheDocument();
-});
+	fireEvent.click( dayButton );
+	expect( dayButton ).toHaveAttribute( 'aria-pressed', 'false' );
+	expect( screen.getByText( '1 dates selected' ) ).toBeInTheDocument();
+} );
 
-it('sends recurrence_mode + manual_dates on confirm from the Irregular tab', async () => {
-	apiFetch.mockResolvedValue({
+it( 'sends recurrence_mode + manual_dates on confirm from the Irregular tab', async () => {
+	apiFetch.mockResolvedValue( {
 		recurrence_mode: 'manual',
 		generated_occurrences: [],
-	});
+	} );
 
 	const onSaved = jest.fn();
 
-	await renderModal({
+	await renderModal( {
 		eventDateId: 7,
 		initialRrule: null,
 		initialRecurrenceMode: null,
@@ -182,25 +186,25 @@ it('sends recurrence_mode + manual_dates on confirm from the Irregular tab', asy
 		onClose: () => {},
 		onSaved,
 		onImpact: () => {},
-	});
+	} );
 
 	openIrregularTab();
 	fireEvent.click(
-		screen.getByRole('button', { name: fullDateLabel('2026-07-15') })
+		screen.getByRole( 'button', { name: fullDateLabel( '2026-07-15' ) } )
 	);
 
-	fireEvent.click(screen.getByRole('button', { name: /Create series/ }));
+	fireEvent.click( screen.getByRole( 'button', { name: /Create series/ } ) );
 
-	await waitFor(() => expect(onSaved).toHaveBeenCalled());
+	await waitFor( () => expect( onSaved ).toHaveBeenCalled() );
 
-	expect(apiFetch).toHaveBeenCalledWith(
-		expect.objectContaining({
+	expect( apiFetch ).toHaveBeenCalledWith(
+		expect.objectContaining( {
 			path: '/fair-events/v1/event-dates/7',
 			method: 'PUT',
 			data: {
 				recurrence_mode: 'manual',
-				manual_dates: ['2026-07-01', '2026-07-15'],
+				manual_dates: [ '2026-07-01', '2026-07-15' ],
 			},
-		})
+		} )
 	);
-});
+} );

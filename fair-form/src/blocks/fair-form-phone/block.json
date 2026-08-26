@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "phone",
 	"description": "A phone number input question with enforced country code for Fair Form",
-	"keywords": ["question", "phone", "tel"],
+	"keywords": [ "question", "phone", "tel" ],
 	"textdomain": "fair-audience",
 	"ancestor": [
 		"fair-audience/fair-form",

@@ -48,84 +48,87 @@ const DEFAULT_LAYOUTS = {
 };
 
 export default function AllParticipants() {
-	const [participants, setParticipants] = useState([]);
-	const [totalItems, setTotalItems] = useState(0);
-	const [totalPages, setTotalPages] = useState(0);
-	const [isLoading, setIsLoading] = useState(true);
-	const [stats, setStats] = useState(null);
-	const [view, setView] = useState(DEFAULT_VIEW);
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [editingParticipant, setEditingParticipant] = useState(null);
+	const [ participants, setParticipants ] = useState( [] );
+	const [ totalItems, setTotalItems ] = useState( 0 );
+	const [ totalPages, setTotalPages ] = useState( 0 );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ stats, setStats ] = useState( null );
+	const [ view, setView ] = useState( DEFAULT_VIEW );
+	const [ isModalOpen, setIsModalOpen ] = useState( false );
+	const [ editingParticipant, setEditingParticipant ] = useState( null );
 
 	// Feedback state.
-	const [deleteItems, setDeleteItems] = useState(null);
-	const [resendResult, setResendResult] = useState(null);
-	const [snackbar, setSnackbar] = useState(null);
-	const [errorMessage, setErrorMessage] = useState(null);
+	const [ deleteItems, setDeleteItems ] = useState( null );
+	const [ resendResult, setResendResult ] = useState( null );
+	const [ snackbar, setSnackbar ] = useState( null );
+	const [ errorMessage, setErrorMessage ] = useState( null );
 
 	// Events popover state.
-	const [eventsPopover, setEventsPopover] = useState(null);
-	const [popoverEvents, setPopoverEvents] = useState([]);
-	const [popoverLoading, setPopoverLoading] = useState(false);
+	const [ eventsPopover, setEventsPopover ] = useState( null );
+	const [ popoverEvents, setPopoverEvents ] = useState( [] );
+	const [ popoverLoading, setPopoverLoading ] = useState( false );
 
-	const showEventsPopover = useCallback((participantId, label, anchorRef) => {
-		setEventsPopover({ participantId, label, anchorRef });
-		setPopoverLoading(true);
-		setPopoverEvents([]);
+	const showEventsPopover = useCallback(
+		( participantId, label, anchorRef ) => {
+			setEventsPopover( { participantId, label, anchorRef } );
+			setPopoverLoading( true );
+			setPopoverEvents( [] );
 
-		apiFetch({
-			path: `/fair-audience/v1/participants/${participantId}/events?label=${label}`,
-		})
-			.then((data) => {
-				setPopoverEvents(data);
-				setPopoverLoading(false);
-			})
-			.catch(() => {
-				setPopoverLoading(false);
-			});
-	}, []);
+			apiFetch( {
+				path: `/fair-audience/v1/participants/${ participantId }/events?label=${ label }`,
+			} )
+				.then( ( data ) => {
+					setPopoverEvents( data );
+					setPopoverLoading( false );
+				} )
+				.catch( () => {
+					setPopoverLoading( false );
+				} );
+		},
+		[]
+	);
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
 		() => [
 			{
 				id: 'name',
-				label: __('Name', 'fair-audience'),
-				render: ({ item }) => (
+				label: __( 'Name', 'fair-audience' ),
+				render: ( { item } ) => (
 					<a
-						href={`admin.php?page=fair-audience-participant-detail&participant_id=${item.id}`}
+						href={ `admin.php?page=fair-audience-participant-detail&participant_id=${ item.id }` }
 					>
-						{`${item.name} ${item.surname}`}
+						{ `${ item.name } ${ item.surname }` }
 					</a>
 				),
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ({ item }) =>
-					`${item.surname}, ${item.name}`.toLowerCase(),
+				getValue: ( { item } ) =>
+					`${ item.surname }, ${ item.name }`.toLowerCase(),
 			},
 			{
 				id: 'email',
-				label: __('Email', 'fair-audience'),
-				render: ({ item }) => item.email || '—',
+				label: __( 'Email', 'fair-audience' ),
+				render: ( { item } ) => item.email || '—',
 				enableSorting: true,
 			},
 			{
 				id: 'mailing',
-				label: __('Mailing', 'fair-audience'),
-				render: ({ item }) => {
-					if ('marketing' === item.email_profile) {
+				label: __( 'Mailing', 'fair-audience' ),
+				render: ( { item } ) => {
+					if ( 'marketing' === item.email_profile ) {
 						return 'pending' === item.status
 							? __(
 									'Marketing — pending confirmation',
 									'fair-audience'
 							  )
-							: __('Marketing', 'fair-audience');
+							: __( 'Marketing', 'fair-audience' );
 					}
-					if ('minimal' === item.email_profile) {
-						return __('Minimal', 'fair-audience');
+					if ( 'minimal' === item.email_profile ) {
+						return __( 'Minimal', 'fair-audience' );
 					}
-					if ('declined' === item.email_profile) {
-						return __('No', 'fair-audience');
+					if ( 'declined' === item.email_profile ) {
+						return __( 'No', 'fair-audience' );
 					}
 					return item.email_profile || '—';
 				},
@@ -133,21 +136,21 @@ export default function AllParticipants() {
 			},
 			{
 				id: 'phone',
-				label: __('Phone', 'fair-audience'),
-				render: ({ item }) => item.phone || '—',
+				label: __( 'Phone', 'fair-audience' ),
+				render: ( { item } ) => item.phone || '—',
 				enableSorting: false,
 			},
 			{
 				id: 'instagram',
-				label: __('Instagram', 'fair-audience'),
-				render: ({ item }) =>
+				label: __( 'Instagram', 'fair-audience' ),
+				render: ( { item } ) =>
 					item.instagram ? (
 						<a
-							href={`https://instagram.com/${item.instagram}`}
+							href={ `https://instagram.com/${ item.instagram }` }
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							@{item.instagram}
+							@{ item.instagram }
 						</a>
 					) : (
 						'—'
@@ -156,76 +159,77 @@ export default function AllParticipants() {
 			},
 			{
 				id: 'email_profile',
-				label: __('Email Profile', 'fair-audience'),
-				render: ({ item }) => {
+				label: __( 'Email Profile', 'fair-audience' ),
+				render: ( { item } ) => {
 					const labels = {
-						minimal: __('Minimal', 'fair-audience'),
-						marketing: __('Marketing', 'fair-audience'),
-						declined: __('No', 'fair-audience'),
+						minimal: __( 'Minimal', 'fair-audience' ),
+						marketing: __( 'Marketing', 'fair-audience' ),
+						declined: __( 'No', 'fair-audience' ),
 					};
-					return labels[item.email_profile] || item.email_profile;
+					return labels[ item.email_profile ] || item.email_profile;
 				},
 				elements: [
 					{
 						value: 'minimal',
-						label: __('Minimal', 'fair-audience'),
+						label: __( 'Minimal', 'fair-audience' ),
 					},
 					{
 						value: 'marketing',
-						label: __('Marketing', 'fair-audience'),
+						label: __( 'Marketing', 'fair-audience' ),
 					},
 					{
 						value: 'declined',
-						label: __('No', 'fair-audience'),
+						label: __( 'No', 'fair-audience' ),
 					},
 				],
 				filterBy: {
-					operators: ['is'],
+					operators: [ 'is' ],
 				},
 				enableSorting: true,
 			},
 			{
 				id: 'status',
-				label: __('Status', 'fair-audience'),
-				render: ({ item }) => {
+				label: __( 'Status', 'fair-audience' ),
+				render: ( { item } ) => {
 					const labels = {
-						pending: __('Pending', 'fair-audience'),
-						confirmed: __('Confirmed', 'fair-audience'),
+						pending: __( 'Pending', 'fair-audience' ),
+						confirmed: __( 'Confirmed', 'fair-audience' ),
 					};
-					return labels[item.status] || item.status;
+					return labels[ item.status ] || item.status;
 				},
 				elements: [
 					{
 						value: 'pending',
-						label: __('Pending', 'fair-audience'),
+						label: __( 'Pending', 'fair-audience' ),
 					},
 					{
 						value: 'confirmed',
-						label: __('Confirmed', 'fair-audience'),
+						label: __( 'Confirmed', 'fair-audience' ),
 					},
 				],
 				filterBy: {
-					operators: ['is'],
+					operators: [ 'is' ],
 				},
 				enableSorting: true,
 			},
 			{
 				id: 'groups',
-				label: __('Groups', 'fair-audience'),
-				render: ({ item }) => {
-					if (!item.groups || item.groups.length === 0) {
+				label: __( 'Groups', 'fair-audience' ),
+				render: ( { item } ) => {
+					if ( ! item.groups || item.groups.length === 0 ) {
 						return '—';
 					}
-					return item.groups.map((g) => g.name).join(', ');
+					return item.groups.map( ( g ) => g.name ).join( ', ' );
 				},
 				enableSorting: true,
-				getValue: ({ item }) => (item.groups ? item.groups.length : 0),
+				getValue: ( { item } ) =>
+					item.groups ? item.groups.length : 0,
 			},
 			{
 				id: 'wp_user',
-				label: __('WordPress User', 'fair-audience'),
-				render: ({ item }) => {
-					if (!item.wp_user) {
+				label: __( 'WordPress User', 'fair-audience' ),
+				render: ( { item } ) => {
+					if ( ! item.wp_user ) {
 						return '—';
 					}
 					const hasEmailMismatch =
@@ -235,18 +239,18 @@ export default function AllParticipants() {
 							item.wp_user.email.toLowerCase();
 					return (
 						<span className="fair-audience-wp-user">
-							{item.wp_user.display_name}
-							{hasEmailMismatch && (
+							{ item.wp_user.display_name }
+							{ hasEmailMismatch && (
 								<span
 									className="fair-audience-wp-user__mismatch"
-									title={__(
+									title={ __(
 										'Email addresses do not match',
 										'fair-audience'
-									)}
+									) }
 								>
-									<Icon icon={caution} size={16} />
+									<Icon icon={ caution } size={ 16 } />
 								</span>
-							)}
+							) }
 						</span>
 					);
 				},
@@ -254,13 +258,13 @@ export default function AllParticipants() {
 			},
 			{
 				id: 'events_signed_up',
-				label: __('Events Signed Up', 'fair-audience'),
-				render: ({ item }) => (
+				label: __( 'Events Signed Up', 'fair-audience' ),
+				render: ( { item } ) => (
 					<div className="fair-audience-count-cell">
-						{item.events_signed_up > 0 ? (
+						{ item.events_signed_up > 0 ? (
 							<Button
 								variant="link"
-								onClick={(e) =>
+								onClick={ ( e ) =>
 									showEventsPopover(
 										item.id,
 										'signed_up',
@@ -268,25 +272,25 @@ export default function AllParticipants() {
 									)
 								}
 							>
-								{item.events_signed_up}
+								{ item.events_signed_up }
 							</Button>
 						) : (
 							'0'
-						)}
+						) }
 					</div>
 				),
 				enableSorting: true,
-				getValue: ({ item }) => item.events_signed_up || 0,
+				getValue: ( { item } ) => item.events_signed_up || 0,
 			},
 			{
 				id: 'events_collaborated',
-				label: __('Events Collaborated', 'fair-audience'),
-				render: ({ item }) => (
+				label: __( 'Events Collaborated', 'fair-audience' ),
+				render: ( { item } ) => (
 					<div className="fair-audience-count-cell">
-						{item.events_collaborated > 0 ? (
+						{ item.events_collaborated > 0 ? (
 							<Button
 								variant="link"
-								onClick={(e) =>
+								onClick={ ( e ) =>
 									showEventsPopover(
 										item.id,
 										'collaborator',
@@ -294,150 +298,152 @@ export default function AllParticipants() {
 									)
 								}
 							>
-								{item.events_collaborated}
+								{ item.events_collaborated }
 							</Button>
 						) : (
 							'0'
-						)}
+						) }
 					</div>
 				),
 				enableSorting: true,
-				getValue: ({ item }) => item.events_collaborated || 0,
+				getValue: ( { item } ) => item.events_collaborated || 0,
 			},
 		],
-		[showEventsPopover]
+		[ showEventsPopover ]
 	);
 
 	// Convert view state to API query params.
-	const queryArgs = useMemo(() => {
+	const queryArgs = useMemo( () => {
 		const params = new URLSearchParams();
 
-		if (view.search) {
-			params.append('search', view.search);
+		if ( view.search ) {
+			params.append( 'search', view.search );
 		}
 
-		if (view.sort?.field) {
+		if ( view.sort?.field ) {
 			// Map 'name' field to 'surname' for backend sorting.
 			const orderby =
 				view.sort.field === 'name' ? 'surname' : view.sort.field;
-			params.append('orderby', orderby);
-			params.append('order', view.sort.direction || 'asc');
+			params.append( 'orderby', orderby );
+			params.append( 'order', view.sort.direction || 'asc' );
 		}
 
 		// Process filters.
-		view.filters?.forEach((filter) => {
-			if (filter.operator === 'is' && filter.value) {
-				params.append(filter.field, filter.value);
+		view.filters?.forEach( ( filter ) => {
+			if ( filter.operator === 'is' && filter.value ) {
+				params.append( filter.field, filter.value );
 			}
-		});
+		} );
 
 		// Pagination.
-		if (view.perPage) {
-			params.append('per_page', view.perPage);
+		if ( view.perPage ) {
+			params.append( 'per_page', view.perPage );
 		}
-		if (view.page) {
-			params.append('page', view.page);
+		if ( view.page ) {
+			params.append( 'page', view.page );
 		}
 
 		return params.toString();
-	}, [view]);
+	}, [ view ] );
 
-	const loadParticipants = useCallback(() => {
-		setIsLoading(true);
+	const loadParticipants = useCallback( () => {
+		setIsLoading( true );
 
 		const path = `/fair-audience/v1/participants${
 			queryArgs ? '?' + queryArgs : ''
 		}`;
 
-		apiFetch({ path, parse: false })
-			.then((response) => {
+		apiFetch( { path, parse: false } )
+			.then( ( response ) => {
 				const total = parseInt(
-					response.headers.get('X-WP-Total') || '0',
+					response.headers.get( 'X-WP-Total' ) || '0',
 					10
 				);
 				const pages = parseInt(
-					response.headers.get('X-WP-TotalPages') || '1',
+					response.headers.get( 'X-WP-TotalPages' ) || '1',
 					10
 				);
-				setTotalItems(total);
-				setTotalPages(pages);
+				setTotalItems( total );
+				setTotalPages( pages );
 				return response.json();
-			})
-			.then((data) => {
-				setParticipants(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
+			} )
+			.then( ( data ) => {
+				setParticipants( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading participants:', err);
-				setIsLoading(false);
-			});
-	}, [queryArgs]);
+				console.error( 'Error loading participants:', err );
+				setIsLoading( false );
+			} );
+	}, [ queryArgs ] );
 
-	const loadStats = useCallback(() => {
-		apiFetch({ path: '/fair-audience/v1/participants/stats' })
-			.then(setStats)
-			.catch((err) => {
+	const loadStats = useCallback( () => {
+		apiFetch( { path: '/fair-audience/v1/participants/stats' } )
+			.then( setStats )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading participant stats:', err);
-			});
-	}, []);
+				console.error( 'Error loading participant stats:', err );
+			} );
+	}, [] );
 
-	const refresh = useCallback(() => {
+	const refresh = useCallback( () => {
 		loadParticipants();
 		loadStats();
-	}, [loadParticipants, loadStats]);
+	}, [ loadParticipants, loadStats ] );
 
-	useEffect(() => {
+	useEffect( () => {
 		refresh();
-	}, [refresh]);
+	}, [ refresh ] );
 
 	const openAddModal = () => {
-		setEditingParticipant(null);
-		setIsModalOpen(true);
+		setEditingParticipant( null );
+		setIsModalOpen( true );
 	};
 
-	const openEditModal = (participant) => {
-		setEditingParticipant(participant);
-		setIsModalOpen(true);
+	const openEditModal = ( participant ) => {
+		setEditingParticipant( participant );
+		setIsModalOpen( true );
 	};
 
-	const handleDelete = (items) => {
-		setDeleteItems(items);
+	const handleDelete = ( items ) => {
+		setDeleteItems( items );
 	};
 
 	const confirmDelete = () => {
 		const items = deleteItems;
 
 		Promise.all(
-			items.map((item) =>
-				apiFetch({
-					path: `/fair-audience/v1/participants/${item.id}`,
+			items.map( ( item ) =>
+				apiFetch( {
+					path: `/fair-audience/v1/participants/${ item.id }`,
 					method: 'DELETE',
-				})
+				} )
 			)
 		)
-			.then(() => {
+			.then( () => {
 				refresh();
-			})
-			.catch((err) => {
-				setErrorMessage(__('Error: ', 'fair-audience') + err.message);
-			})
-			.finally(() => {
-				setDeleteItems(null);
-			});
+			} )
+			.catch( ( err ) => {
+				setErrorMessage(
+					__( 'Error: ', 'fair-audience' ) + err.message
+				);
+			} )
+			.finally( () => {
+				setDeleteItems( null );
+			} );
 	};
 
-	const deleteConfirmMessage = useMemo(() => {
-		if (!deleteItems) {
+	const deleteConfirmMessage = useMemo( () => {
+		if ( ! deleteItems ) {
 			return '';
 		}
 
-		if (deleteItems.length === 1) {
+		if ( deleteItems.length === 1 ) {
 			return sprintf(
 				/* translators: %s: participant name and surname */
-				__('Delete %s? This cannot be undone.', 'fair-audience'),
-				`${deleteItems[0].name} ${deleteItems[0].surname}`
+				__( 'Delete %s? This cannot be undone.', 'fair-audience' ),
+				`${ deleteItems[ 0 ].name } ${ deleteItems[ 0 ].surname }`
 			);
 		}
 
@@ -451,32 +457,32 @@ export default function AllParticipants() {
 			),
 			deleteItems.length
 		);
-	}, [deleteItems]);
+	}, [ deleteItems ] );
 
 	// Define actions for DataViews.
 	const actions = useMemo(
 		() => [
 			{
 				id: 'edit',
-				label: __('Edit', 'fair-audience'),
+				label: __( 'Edit', 'fair-audience' ),
 				icon: 'edit',
-				callback: ([item]) => openEditModal(item),
+				callback: ( [ item ] ) => openEditModal( item ),
 				supportsBulk: false,
 			},
 			{
 				id: 'copy-subscription-link',
-				label: __('Copy subscription link', 'fair-audience'),
+				label: __( 'Copy subscription link', 'fair-audience' ),
 				icon: link,
-				callback: async ([item]) => {
+				callback: async ( [ item ] ) => {
 					try {
-						const response = await apiFetch({
-							path: `/fair-audience/v1/participants/${item.id}/subscription-url`,
-						});
-						await navigator.clipboard.writeText(response.url);
-						setSnackbar(__('Link copied.', 'fair-audience'));
-					} catch (err) {
+						const response = await apiFetch( {
+							path: `/fair-audience/v1/participants/${ item.id }/subscription-url`,
+						} );
+						await navigator.clipboard.writeText( response.url );
+						setSnackbar( __( 'Link copied.', 'fair-audience' ) );
+					} catch ( err ) {
 						setErrorMessage(
-							__('Error: ', 'fair-audience') + err.message
+							__( 'Error: ', 'fair-audience' ) + err.message
 						);
 					}
 				},
@@ -484,62 +490,69 @@ export default function AllParticipants() {
 			},
 			{
 				id: 'resend-mailing-confirmation',
-				label: __('Resend mailing confirmation email', 'fair-audience'),
+				label: __(
+					'Resend mailing confirmation email',
+					'fair-audience'
+				),
 				icon: send,
-				isEligible: (item) => 'pending' === item.status,
-				callback: async (items) => {
+				isEligible: ( item ) => 'pending' === item.status,
+				callback: async ( items ) => {
 					const results = await Promise.all(
-						items.map((item) =>
-							apiFetch({
-								path: `/fair-audience/v1/participants/${item.id}/resend-mailing-confirmation`,
+						items.map( ( item ) =>
+							apiFetch( {
+								path: `/fair-audience/v1/participants/${ item.id }/resend-mailing-confirmation`,
 								method: 'POST',
-							})
-								.then(() => ({ ok: true, item }))
-								.catch((err) => ({ ok: false, item, err }))
+							} )
+								.then( () => ( { ok: true, item } ) )
+								.catch( ( err ) => ( {
+									ok: false,
+									item,
+									err,
+								} ) )
 						)
 					);
 
-					const failures = results.filter((r) => !r.ok);
-					setResendResult({
+					const failures = results.filter( ( r ) => ! r.ok );
+					setResendResult( {
 						sent_count: results.length - failures.length,
-						failed: failures.map((r) => ({
-							name: `${r.item.name} ${r.item.surname}`,
+						failed: failures.map( ( r ) => ( {
+							name: `${ r.item.name } ${ r.item.surname }`,
 							reason: r.err?.message,
-						})),
-					});
+						} ) ),
+					} );
 				},
 				supportsBulk: true,
 			},
 			{
 				id: 'delete',
-				label: __('Delete', 'fair-audience'),
+				label: __( 'Delete', 'fair-audience' ),
 				icon: 'trash',
 				callback: handleDelete,
 				supportsBulk: true,
 			},
 		],
-		[loadParticipants]
+		[ loadParticipants ]
 	);
 
 	const paginationInfo = useMemo(
-		() => ({
+		() => ( {
 			totalItems,
 			totalPages,
-		}),
-		[totalItems, totalPages]
+		} ),
+		[ totalItems, totalPages ]
 	);
 
 	const statTiles = useMemo(
 		() => [
 			{
 				id: 'total',
-				label: __('Audience total', 'fair-audience'),
+				label: __( 'Audience total', 'fair-audience' ),
 				value: stats?.total,
 				filters: [],
 			},
 			{
 				id: 'mailing',
-				label: __('In the mailing', 'fair-audience'),
+				label: __( 'In the mailing', 'fair-audience' ),
 				value: stats?.mailing,
 				filters: [
 					{
@@ -552,7 +565,7 @@ export default function AllParticipants() {
 			},
 			{
 				id: 'pending',
-				label: __('Pending confirmation', 'fair-audience'),
+				label: __( 'Pending confirmation', 'fair-audience' ),
 				value: stats?.pending,
 				filters: [
 					{ field: 'status', operator: 'is', value: 'pending' },
@@ -560,7 +573,7 @@ export default function AllParticipants() {
 			},
 			{
 				id: 'declined',
-				label: __('Declined', 'fair-audience'),
+				label: __( 'Declined', 'fair-audience' ),
 				value: stats?.declined,
 				filters: [
 					{
@@ -571,24 +584,24 @@ export default function AllParticipants() {
 				],
 			},
 		],
-		[stats]
+		[ stats ]
 	);
 
-	const filterByTile = useCallback((filters) => {
-		setView((v) => ({ ...v, filters, page: 1 }));
-	}, []);
+	const filterByTile = useCallback( ( filters ) => {
+		setView( ( v ) => ( { ...v, filters, page: 1 } ) );
+	}, [] );
 
 	// The tile whose filters exactly match the current view filters, so the
 	// active scope is visible in the tile row ("Audience total" when
 	// unfiltered).
-	const activeTileId = useMemo(() => {
+	const activeTileId = useMemo( () => {
 		const current = view.filters || [];
 		const active = statTiles.find(
-			(tile) =>
+			( tile ) =>
 				tile.filters.length === current.length &&
-				tile.filters.every((tileFilter) =>
+				tile.filters.every( ( tileFilter ) =>
 					current.some(
-						(viewFilter) =>
+						( viewFilter ) =>
 							viewFilter.field === tileFilter.field &&
 							viewFilter.operator === tileFilter.operator &&
 							viewFilter.value === tileFilter.value
@@ -596,10 +609,10 @@ export default function AllParticipants() {
 				)
 		);
 		return active ? active.id : null;
-	}, [statTiles, view.filters]);
+	}, [ statTiles, view.filters ] );
 
-	const resendResultTitle = useMemo(() => {
-		if (!resendResult) {
+	const resendResultTitle = useMemo( () => {
+		if ( ! resendResult ) {
 			return '';
 		}
 
@@ -613,35 +626,35 @@ export default function AllParticipants() {
 			),
 			resendResult.sent_count
 		);
-	}, [resendResult]);
+	}, [ resendResult ] );
 
 	return (
 		<div className="wrap">
 			<h1 className="wp-heading-inline">
-				{__('All Participants', 'fair-audience')}
+				{ __( 'All Participants', 'fair-audience' ) }
 			</h1>
 			<button
 				type="button"
 				className="page-title-action"
-				onClick={openAddModal}
+				onClick={ openAddModal }
 			>
-				{__('Add Participant', 'fair-audience')}
+				{ __( 'Add Participant', 'fair-audience' ) }
 			</button>
 			<hr className="wp-header-end" />
 
 			<VStack
-				spacing={4}
+				spacing={ 4 }
 				className="fair-audience-all-participants__content"
 			>
 				<Grid
 					templateColumns="repeat(auto-fit, minmax(180px, 1fr))"
-					gap={3}
+					gap={ 3 }
 				>
-					{statTiles.map((tile) => {
+					{ statTiles.map( ( tile ) => {
 						const isActive = activeTileId === tile.id;
 						return (
 							<Card
-								key={tile.id}
+								key={ tile.id }
 								size="small"
 								className={
 									isActive
@@ -653,118 +666,120 @@ export default function AllParticipants() {
 									as="button"
 									type="button"
 									className="fair-audience-stat-tile__button"
-									aria-pressed={isActive}
-									onClick={() => filterByTile(tile.filters)}
+									aria-pressed={ isActive }
+									onClick={ () =>
+										filterByTile( tile.filters )
+									}
 								>
 									<Text
-										size={24}
-										weight={600}
+										size={ 24 }
+										weight={ 600 }
 										as="div"
 										className="fair-audience-stat-tile__value"
 									>
-										{stats ? tile.value : '—'}
+										{ stats ? tile.value : '—' }
 									</Text>
 									<Text as="div" variant="muted">
-										{tile.label}
+										{ tile.label }
 									</Text>
 								</CardBody>
 							</Card>
 						);
-					})}
+					} ) }
 				</Grid>
 
-				{errorMessage && (
+				{ errorMessage && (
 					<Notice
 						status="error"
-						isDismissible={true}
-						onRemove={() => setErrorMessage(null)}
+						isDismissible={ true }
+						onRemove={ () => setErrorMessage( null ) }
 					>
-						{errorMessage}
+						{ errorMessage }
 					</Notice>
-				)}
+				) }
 
 				<EmailSendResultNotice
-					result={resendResult}
-					title={resendResultTitle}
-					onDismiss={() => setResendResult(null)}
+					result={ resendResult }
+					title={ resendResultTitle }
+					onDismiss={ () => setResendResult( null ) }
 				/>
 
 				<Card>
 					<CardBody className="fair-audience-all-participants__table">
 						<DataViews
-							data={participants}
-							fields={fields}
-							view={view}
-							onChangeView={setView}
-							actions={actions}
-							paginationInfo={paginationInfo}
-							defaultLayouts={DEFAULT_LAYOUTS}
-							isLoading={isLoading}
-							getItemId={(item) => item.id}
+							data={ participants }
+							fields={ fields }
+							view={ view }
+							onChangeView={ setView }
+							actions={ actions }
+							paginationInfo={ paginationInfo }
+							defaultLayouts={ DEFAULT_LAYOUTS }
+							isLoading={ isLoading }
+							getItemId={ ( item ) => item.id }
 						/>
 					</CardBody>
 				</Card>
 			</VStack>
 
-			{eventsPopover && (
+			{ eventsPopover && (
 				<Popover
-					anchor={eventsPopover.anchorRef}
-					onClose={() => setEventsPopover(null)}
+					anchor={ eventsPopover.anchorRef }
+					onClose={ () => setEventsPopover( null ) }
 					placement="bottom-start"
 				>
 					<div className="fair-audience-events-popover">
-						{popoverLoading ? (
+						{ popoverLoading ? (
 							<Spinner />
 						) : popoverEvents.length === 0 ? (
 							<Text as="p">
-								{__('No events found.', 'fair-audience')}
+								{ __( 'No events found.', 'fair-audience' ) }
 							</Text>
 						) : (
 							<ItemGroup size="small">
-								{popoverEvents.map((event) => (
+								{ popoverEvents.map( ( event ) => (
 									<Item
-										key={event.event_id}
+										key={ event.event_id }
 										as="a"
-										href={`${window.fairAudienceAllParticipantsData?.participantsUrl}${event.event_date_id}`}
+										href={ `${ window.fairAudienceAllParticipantsData?.participantsUrl }${ event.event_date_id }` }
 									>
-										{event.title}
+										{ event.title }
 									</Item>
-								))}
+								) ) }
 							</ItemGroup>
-						)}
+						) }
 					</div>
 				</Popover>
-			)}
+			) }
 
 			<ParticipantEditModal
-				isOpen={isModalOpen}
-				participant={editingParticipant}
-				onClose={() => setIsModalOpen(false)}
-				onSaved={refresh}
+				isOpen={ isModalOpen }
+				participant={ editingParticipant }
+				onClose={ () => setIsModalOpen( false ) }
+				onSaved={ refresh }
 			/>
 
 			<ConfirmDialog
-				isOpen={deleteItems !== null}
-				onConfirm={confirmDelete}
-				onCancel={() => setDeleteItems(null)}
-				confirmButtonText={_n(
+				isOpen={ deleteItems !== null }
+				onConfirm={ confirmDelete }
+				onCancel={ () => setDeleteItems( null ) }
+				confirmButtonText={ _n(
 					'Delete participant',
 					'Delete participants',
 					deleteItems?.length || 0,
 					'fair-audience'
-				)}
-				cancelButtonText={__('Cancel', 'fair-audience')}
+				) }
+				cancelButtonText={ __( 'Cancel', 'fair-audience' ) }
 			>
-				{deleteConfirmMessage}
+				{ deleteConfirmMessage }
 			</ConfirmDialog>
 
-			{snackbar && (
+			{ snackbar && (
 				<div className="fair-audience-all-participants__snackbar">
-					<Snackbar onRemove={() => setSnackbar(null)}>
-						{snackbar}
+					<Snackbar onRemove={ () => setSnackbar( null ) }>
+						{ snackbar }
 					</Snackbar>
 				</div>
-			)}
+			) }
 		</div>
 	);
 }

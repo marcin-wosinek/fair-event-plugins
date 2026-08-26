@@ -5,6 +5,6 @@ import './style.css';
 const rootElement = document.getElementById(
 	'fair-form-questionnaire-responses-root'
 );
-if (rootElement) {
-	createRoot(rootElement).render(<QuestionnaireResponses />);
+if ( rootElement ) {
+	createRoot( rootElement ).render( <QuestionnaireResponses /> );
 }

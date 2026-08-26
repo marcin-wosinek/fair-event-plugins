@@ -36,103 +36,105 @@ const DEFAULT_LAYOUTS = {
 };
 
 export default function QuestionnaireResponses() {
-	const [responses, setResponses] = useState([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [view, setView] = useState(DEFAULT_VIEW);
+	const [ responses, setResponses ] = useState( [] );
+	const [ isLoading, setIsLoading ] = useState( true );
+	const [ view, setView ] = useState( DEFAULT_VIEW );
 
 	// WhatsApp message modal state.
-	const [isWaModalOpen, setIsWaModalOpen] = useState(false);
-	const [waColumnMode, setWaColumnMode] = useState('all');
-	const [waSelectedColumns, setWaSelectedColumns] = useState([]);
-	const [waFormat, setWaFormat] = useState('markdown');
-	const [waFeedback, setWaFeedback] = useState(null);
+	const [ isWaModalOpen, setIsWaModalOpen ] = useState( false );
+	const [ waColumnMode, setWaColumnMode ] = useState( 'all' );
+	const [ waSelectedColumns, setWaSelectedColumns ] = useState( [] );
+	const [ waFormat, setWaFormat ] = useState( 'markdown' );
+	const [ waFeedback, setWaFeedback ] = useState( null );
 
 	// Delete confirmation state.
-	const [deleteItem, setDeleteItem] = useState(null);
-	const [errorMessage, setErrorMessage] = useState(null);
+	const [ deleteItem, setDeleteItem ] = useState( null );
+	const [ errorMessage, setErrorMessage ] = useState( null );
 
 	// Add-to-group modal state.
-	const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
-	const [groupMode, setGroupMode] = useState('existing');
-	const [availableGroups, setAvailableGroups] = useState([]);
-	const [groupsLoading, setGroupsLoading] = useState(false);
-	const [selectedGroupId, setSelectedGroupId] = useState('');
-	const [newGroupName, setNewGroupName] = useState('');
-	const [newGroupDescription, setNewGroupDescription] = useState('');
-	const [isSubmittingGroup, setIsSubmittingGroup] = useState(false);
-	const [groupFeedback, setGroupFeedback] = useState(null);
+	const [ isGroupModalOpen, setIsGroupModalOpen ] = useState( false );
+	const [ groupMode, setGroupMode ] = useState( 'existing' );
+	const [ availableGroups, setAvailableGroups ] = useState( [] );
+	const [ groupsLoading, setGroupsLoading ] = useState( false );
+	const [ selectedGroupId, setSelectedGroupId ] = useState( '' );
+	const [ newGroupName, setNewGroupName ] = useState( '' );
+	const [ newGroupDescription, setNewGroupDescription ] = useState( '' );
+	const [ isSubmittingGroup, setIsSubmittingGroup ] = useState( false );
+	const [ groupFeedback, setGroupFeedback ] = useState( null );
 
-	const params = new URLSearchParams(window.location.search);
-	const eventDateId = params.get('event_date_id');
-	const postId = params.get('post_id');
-	const formId = params.get('form_id');
-	const title = params.get('title');
+	const params = new URLSearchParams( window.location.search );
+	const eventDateId = params.get( 'event_date_id' );
+	const postId = params.get( 'post_id' );
+	const formId = params.get( 'form_id' );
+	const title = params.get( 'title' );
 
-	useEffect(() => {
+	useEffect( () => {
 		const parts = [];
-		if (eventDateId) {
-			parts.push(`event_date_id=${eventDateId}`);
+		if ( eventDateId ) {
+			parts.push( `event_date_id=${ eventDateId }` );
 		}
-		if (postId) {
-			parts.push(`post_id=${postId}`);
+		if ( postId ) {
+			parts.push( `post_id=${ postId }` );
 		}
-		if (formId) {
-			parts.push(`form_id=${encodeURIComponent(formId)}`);
+		if ( formId ) {
+			parts.push( `form_id=${ encodeURIComponent( formId ) }` );
 		}
-		if (title) {
-			parts.push(`title=${encodeURIComponent(title)}`);
+		if ( title ) {
+			parts.push( `title=${ encodeURIComponent( title ) }` );
 		}
 
 		const apiPath = `/fair-form/v1/questionnaire-responses${
-			parts.length ? '?' + parts.join('&') : ''
+			parts.length ? '?' + parts.join( '&' ) : ''
 		}`;
 
-		setIsLoading(true);
-		apiFetch({
+		setIsLoading( true );
+		apiFetch( {
 			path: apiPath,
-		})
-			.then((data) => {
-				setResponses(data);
-				setIsLoading(false);
-			})
-			.catch((err) => {
+		} )
+			.then( ( data ) => {
+				setResponses( data );
+				setIsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading questionnaire responses:', err);
-				setIsLoading(false);
-			});
-	}, [eventDateId, postId, formId]);
+				console.error( 'Error loading questionnaire responses:', err );
+				setIsLoading( false );
+			} );
+	}, [ eventDateId, postId, formId ] );
 
 	// Derive dynamic question columns from all responses.
-	const questionColumns = useMemo(() => {
+	const questionColumns = useMemo( () => {
 		const seen = new Map();
-		responses.forEach((response) => {
-			(response.answers || []).forEach((answer) => {
-				if (!seen.has(answer.question_key)) {
-					seen.set(answer.question_key, {
+		responses.forEach( ( response ) => {
+			( response.answers || [] ).forEach( ( answer ) => {
+				if ( ! seen.has( answer.question_key ) ) {
+					seen.set( answer.question_key, {
 						text: answer.question_text,
 						type: answer.question_type,
-					});
+					} );
 				}
-			});
-		});
-		return Array.from(seen.entries()).map(([key, { text, type }]) => ({
-			key,
-			text,
-			type,
-		}));
-	}, [responses]);
+			} );
+		} );
+		return Array.from( seen.entries() ).map(
+			( [ key, { text, type } ] ) => ( {
+				key,
+				text,
+				type,
+			} )
+		);
+	}, [ responses ] );
 
 	// Unique participant IDs from responses (skip null/0).
-	const uniqueParticipantIds = useMemo(() => {
+	const uniqueParticipantIds = useMemo( () => {
 		const ids = new Set();
-		responses.forEach((response) => {
-			const pid = parseInt(response.participant_id, 10);
-			if (pid > 0) {
-				ids.add(pid);
+		responses.forEach( ( response ) => {
+			const pid = parseInt( response.participant_id, 10 );
+			if ( pid > 0 ) {
+				ids.add( pid );
 			}
-		});
-		return Array.from(ids);
-	}, [responses]);
+		} );
+		return Array.from( ids );
+	}, [ responses ] );
 
 	// Whether any loaded response carries a participant link — drives the
 	// participant columns, the group button and the export picker so they
@@ -140,21 +142,21 @@ export default function QuestionnaireResponses() {
 	const hasParticipantData = uniqueParticipantIds.length > 0;
 
 	// Build fields for DataViews.
-	const fields = useMemo(() => {
+	const fields = useMemo( () => {
 		const participantFields = [
 			{
 				id: 'participant_name',
-				label: __('Name', 'fair-form'),
+				label: __( 'Name', 'fair-form' ),
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ({ item }) => item.participant_name || '',
-				render: ({ item }) =>
+				getValue: ( { item } ) => item.participant_name || '',
+				render: ( { item } ) =>
 					item.participant_id ? (
 						// TODO(phase-3): retarget to fair-form participant detail once it exists.
 						<a
-							href={`admin.php?page=fair-audience-participant-detail&participant_id=${item.participant_id}`}
+							href={ `admin.php?page=fair-audience-participant-detail&participant_id=${ item.participant_id }` }
 						>
-							{item.participant_name || ''}
+							{ item.participant_name || '' }
 						</a>
 					) : (
 						item.participant_name || ''
@@ -162,230 +164,238 @@ export default function QuestionnaireResponses() {
 			},
 			{
 				id: 'participant_email',
-				label: __('Email', 'fair-form'),
+				label: __( 'Email', 'fair-form' ),
 				enableSorting: true,
-				getValue: ({ item }) => item.participant_email || '',
+				getValue: ( { item } ) => item.participant_email || '',
 			},
 			{
 				id: 'participant_status',
-				label: __('Status', 'fair-form'),
+				label: __( 'Status', 'fair-form' ),
 				enableSorting: true,
-				getValue: ({ item }) => item.participant_status || '',
-				render: ({ item }) => {
+				getValue: ( { item } ) => item.participant_status || '',
+				render: ( { item } ) => {
 					const labels = {
-						pending: __('Pending', 'fair-form'),
-						confirmed: __('Confirmed', 'fair-form'),
+						pending: __( 'Pending', 'fair-form' ),
+						confirmed: __( 'Confirmed', 'fair-form' ),
 					};
 					return (
-						labels[item.participant_status] ||
+						labels[ item.participant_status ] ||
 						item.participant_status ||
 						'—'
 					);
 				},
 				elements: [
-					{ value: 'pending', label: __('Pending', 'fair-form') },
+					{ value: 'pending', label: __( 'Pending', 'fair-form' ) },
 					{
 						value: 'confirmed',
-						label: __('Confirmed', 'fair-form'),
+						label: __( 'Confirmed', 'fair-form' ),
 					},
 				],
-				filterBy: { operators: ['is'] },
+				filterBy: { operators: [ 'is' ] },
 			},
 			{
 				id: 'participant_mailing',
-				label: __('Mailing', 'fair-form'),
+				label: __( 'Mailing', 'fair-form' ),
 				enableSorting: true,
-				getValue: ({ item }) => item.participant_mailing || '',
-				render: ({ item }) => {
+				getValue: ( { item } ) => item.participant_mailing || '',
+				render: ( { item } ) => {
 					const labels = {
-						minimal: __('Minimal', 'fair-form'),
-						marketing: __('Marketing', 'fair-form'),
+						minimal: __( 'Minimal', 'fair-form' ),
+						marketing: __( 'Marketing', 'fair-form' ),
 					};
 					return (
-						labels[item.participant_mailing] ||
+						labels[ item.participant_mailing ] ||
 						item.participant_mailing ||
 						'—'
 					);
 				},
 				elements: [
-					{ value: 'minimal', label: __('Minimal', 'fair-form') },
+					{ value: 'minimal', label: __( 'Minimal', 'fair-form' ) },
 					{
 						value: 'marketing',
-						label: __('Marketing', 'fair-form'),
+						label: __( 'Marketing', 'fair-form' ),
 					},
 				],
-				filterBy: { operators: ['is'] },
+				filterBy: { operators: [ 'is' ] },
 			},
 			{
 				id: 'participant_categories',
-				label: __('Subscribed Categories', 'fair-form'),
+				label: __( 'Subscribed Categories', 'fair-form' ),
 				enableSorting: false,
-				getValue: ({ item }) =>
-					(item.participant_categories || [])
-						.map((c) => c.name)
-						.join(', '),
-				render: ({ item }) => {
+				getValue: ( { item } ) =>
+					( item.participant_categories || [] )
+						.map( ( c ) => c.name )
+						.join( ', ' ),
+				render: ( { item } ) => {
 					const cats = item.participant_categories || [];
-					if (cats.length === 0) {
+					if ( cats.length === 0 ) {
 						return '—';
 					}
-					return cats.map((c) => c.name).join(', ');
+					return cats.map( ( c ) => c.name ).join( ', ' );
 				},
 			},
 		];
 
 		const createdAtField = {
 			id: 'created_at',
-			label: __('Date', 'fair-form'),
+			label: __( 'Date', 'fair-form' ),
 			enableSorting: true,
 			// Hideable only when it isn't the primary column.
 			enableHiding: hasParticipantData,
-			getValue: ({ item }) => item.created_at || '',
-			render: ({ item }) => (
+			getValue: ( { item } ) => item.created_at || '',
+			render: ( { item } ) => (
 				<a
-					href={`admin.php?page=fair-form-submission-detail&submission_id=${item.id}`}
+					href={ `admin.php?page=fair-form-submission-detail&submission_id=${ item.id }` }
 				>
-					{formatDate(item.created_at) || '—'}
+					{ formatDate( item.created_at ) || '—' }
 				</a>
 			),
 		};
 
-		const dynamicFields = questionColumns.map((col) => ({
-			id: `question_${col.key}`,
+		const dynamicFields = questionColumns.map( ( col ) => ( {
+			id: `question_${ col.key }`,
 			label: col.text,
 			enableSorting: false,
-			getAnswer: ({ item }) =>
-				(item.answers || []).find((a) => a.question_key === col.key),
-			getValue: ({ item }) => {
-				const answer = (item.answers || []).find(
-					(a) => a.question_key === col.key
+			getAnswer: ( { item } ) =>
+				( item.answers || [] ).find(
+					( a ) => a.question_key === col.key
+				),
+			getValue: ( { item } ) => {
+				const answer = ( item.answers || [] ).find(
+					( a ) => a.question_key === col.key
 				);
-				if (col.type === 'file_upload') {
+				if ( col.type === 'file_upload' ) {
 					return answer?.file_url || answer?.answer_value || '';
 				}
 				return answer ? answer.answer_value : '';
 			},
-			...(col.type === 'file_upload' && {
-				render: ({ item }) => {
-					const answer = (item.answers || []).find(
-						(a) => a.question_key === col.key
+			...( col.type === 'file_upload' && {
+				render: ( { item } ) => {
+					const answer = ( item.answers || [] ).find(
+						( a ) => a.question_key === col.key
 					);
-					if (!answer?.file_url) {
+					if ( ! answer?.file_url ) {
 						return answer?.answer_value || '';
 					}
 					const label = answer.is_image
-						? __('Photo', 'fair-form')
-						: __('File', 'fair-form');
+						? __( 'Photo', 'fair-form' )
+						: __( 'File', 'fair-form' );
 					return (
 						<a
-							href={answer.file_url}
+							href={ answer.file_url }
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							{label}
+							{ label }
 						</a>
 					);
 				},
-			}),
-			...(col.type === 'url' && {
-				render: ({ item }) => {
-					const answer = (item.answers || []).find(
-						(a) => a.question_key === col.key
+			} ),
+			...( col.type === 'url' && {
+				render: ( { item } ) => {
+					const answer = ( item.answers || [] ).find(
+						( a ) => a.question_key === col.key
 					);
 					const value = answer ? answer.answer_value : '';
-					if (!value || !/^https?:\/\//.test(value)) {
+					if ( ! value || ! /^https?:\/\//.test( value ) ) {
 						return value || '';
 					}
 					return (
 						<span>
 							<a
-								href={value}
+								href={ value }
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								{value}
+								{ value }
 							</a>
 						</span>
 					);
 				},
-			}),
-			...(col.type === 'date' && {
-				render: ({ item }) => {
-					const answer = (item.answers || []).find(
-						(a) => a.question_key === col.key
+			} ),
+			...( col.type === 'date' && {
+				render: ( { item } ) => {
+					const answer = ( item.answers || [] ).find(
+						( a ) => a.question_key === col.key
 					);
-					return formatDateOnly(answer?.answer_value) || '';
+					return formatDateOnly( answer?.answer_value ) || '';
 				},
-			}),
-			...(col.type === 'datetime' && {
-				render: ({ item }) => {
-					const answer = (item.answers || []).find(
-						(a) => a.question_key === col.key
+			} ),
+			...( col.type === 'datetime' && {
+				render: ( { item } ) => {
+					const answer = ( item.answers || [] ).find(
+						( a ) => a.question_key === col.key
 					);
 					return answer?.answer_value
-						? formatSiteLocalDatetime(answer.answer_value)
+						? formatSiteLocalDatetime( answer.answer_value )
 						: '';
 				},
-			}),
-		}));
+			} ),
+		} ) );
 
 		return [
-			...(hasParticipantData ? participantFields : []),
+			...( hasParticipantData ? participantFields : [] ),
 			createdAtField,
 			...dynamicFields,
 		];
-	}, [questionColumns, hasParticipantData]);
+	}, [ questionColumns, hasParticipantData ] );
 
 	// Reconcile the persisted view.fields against the current data-derived
 	// field set: keep the user's order/selection for fields that still exist,
 	// and append any newly-available fields (e.g. once responses load, or
 	// once participant columns appear) instead of losing them.
-	const viewWithFields = useMemo(() => {
-		const ids = fields.map((f) => f.id);
-		const selected = (view.fields || []).filter((id) => ids.includes(id));
-		const missing = ids.filter((id) => !(view.fields || []).includes(id));
+	const viewWithFields = useMemo( () => {
+		const ids = fields.map( ( f ) => f.id );
+		const selected = ( view.fields || [] ).filter( ( id ) =>
+			ids.includes( id )
+		);
+		const missing = ids.filter(
+			( id ) => ! ( view.fields || [] ).includes( id )
+		);
 		return {
 			...view,
-			fields: view.fields ? [...selected, ...missing] : ids,
+			fields: view.fields ? [ ...selected, ...missing ] : ids,
 		};
-	}, [view, fields]);
+	}, [ view, fields ] );
 
 	const paginationInfo = useMemo(
-		() => ({
+		() => ( {
 			totalItems: responses.length,
-			totalPages: Math.ceil(responses.length / (view.perPage || 25)),
-		}),
-		[responses.length, view.perPage]
+			totalPages: Math.ceil( responses.length / ( view.perPage || 25 ) ),
+		} ),
+		[ responses.length, view.perPage ]
 	);
 
-	const handleDelete = (item) => {
-		setDeleteItem(item);
+	const handleDelete = ( item ) => {
+		setDeleteItem( item );
 	};
 
 	const confirmDelete = () => {
 		const item = deleteItem;
 
-		apiFetch({
-			path: `/fair-form/v1/questionnaire-responses/${item.id}`,
+		apiFetch( {
+			path: `/fair-form/v1/questionnaire-responses/${ item.id }`,
 			method: 'DELETE',
-		})
-			.then(() => {
-				setResponses((prev) => prev.filter((r) => r.id !== item.id));
-			})
-			.catch((err) => {
-				setErrorMessage(
-					__('Error: ', 'fair-form') +
-						(err.message ||
-							__('Failed to delete response.', 'fair-form'))
+		} )
+			.then( () => {
+				setResponses( ( prev ) =>
+					prev.filter( ( r ) => r.id !== item.id )
 				);
-			})
-			.finally(() => {
-				setDeleteItem(null);
-			});
+			} )
+			.catch( ( err ) => {
+				setErrorMessage(
+					__( 'Error: ', 'fair-form' ) +
+						( err.message ||
+							__( 'Failed to delete response.', 'fair-form' ) )
+				);
+			} )
+			.finally( () => {
+				setDeleteItem( null );
+			} );
 	};
 
-	const deleteConfirmMessage = useMemo(() => {
-		if (!deleteItem) {
+	const deleteConfirmMessage = useMemo( () => {
+		if ( ! deleteItem ) {
 			return '';
 		}
 
@@ -395,26 +405,26 @@ export default function QuestionnaireResponses() {
 				'Delete the response from %s? This cannot be undone.',
 				'fair-form'
 			),
-			deleteItem.participant_name || formatDate(deleteItem.created_at)
+			deleteItem.participant_name || formatDate( deleteItem.created_at )
 		);
-	}, [deleteItem]);
+	}, [ deleteItem ] );
 
 	const actions = useMemo(
 		() => [
 			{
 				id: 'view',
-				label: __('View', 'fair-form'),
+				label: __( 'View', 'fair-form' ),
 				icon: 'visibility',
-				callback: ([item]) => {
-					window.location.href = `admin.php?page=fair-form-submission-detail&submission_id=${item.id}`;
+				callback: ( [ item ] ) => {
+					window.location.href = `admin.php?page=fair-form-submission-detail&submission_id=${ item.id }`;
 				},
 				supportsBulk: false,
 			},
 			{
 				id: 'delete',
-				label: __('Delete', 'fair-form'),
+				label: __( 'Delete', 'fair-form' ),
 				icon: 'trash',
-				callback: ([item]) => handleDelete(item),
+				callback: ( [ item ] ) => handleDelete( item ),
 				supportsBulk: false,
 			},
 		],
@@ -422,74 +432,74 @@ export default function QuestionnaireResponses() {
 	);
 
 	const openGroupModal = () => {
-		setGroupMode('existing');
-		setSelectedGroupId('');
-		setNewGroupName('');
-		setNewGroupDescription('');
-		setGroupFeedback(null);
-		setIsGroupModalOpen(true);
+		setGroupMode( 'existing' );
+		setSelectedGroupId( '' );
+		setNewGroupName( '' );
+		setNewGroupDescription( '' );
+		setGroupFeedback( null );
+		setIsGroupModalOpen( true );
 
-		setGroupsLoading(true);
-		apiFetch({
+		setGroupsLoading( true );
+		apiFetch( {
 			path: '/fair-audience/v1/groups?orderby=name&order=asc',
-		})
-			.then((data) => {
-				setAvailableGroups(data);
-				setGroupsLoading(false);
-			})
-			.catch((err) => {
+		} )
+			.then( ( data ) => {
+				setAvailableGroups( data );
+				setGroupsLoading( false );
+			} )
+			.catch( ( err ) => {
 				// eslint-disable-next-line no-console
-				console.error('Error loading groups:', err);
-				setGroupsLoading(false);
-			});
+				console.error( 'Error loading groups:', err );
+				setGroupsLoading( false );
+			} );
 	};
 
-	const addParticipantsToGroup = (groupId) => {
-		const promises = uniqueParticipantIds.map((participantId) =>
-			apiFetch({
-				path: `/fair-audience/v1/groups/${groupId}/participants`,
+	const addParticipantsToGroup = ( groupId ) => {
+		const promises = uniqueParticipantIds.map( ( participantId ) =>
+			apiFetch( {
+				path: `/fair-audience/v1/groups/${ groupId }/participants`,
 				method: 'POST',
 				data: { participant_id: participantId },
-			})
-				.then(() => ({ added: true }))
-				.catch((err) => {
-					if (err.code === 'already_member') {
+			} )
+				.then( () => ( { added: true } ) )
+				.catch( ( err ) => {
+					if ( err.code === 'already_member' ) {
 						return { added: false };
 					}
 					throw err;
-				})
+				} )
 		);
 
-		return Promise.all(promises).then((results) => ({
-			added: results.filter((r) => r.added).length,
-			skipped: results.filter((r) => !r.added).length,
-		}));
+		return Promise.all( promises ).then( ( results ) => ( {
+			added: results.filter( ( r ) => r.added ).length,
+			skipped: results.filter( ( r ) => ! r.added ).length,
+		} ) );
 	};
 
 	const handleSubmitGroup = () => {
-		if (uniqueParticipantIds.length === 0) {
+		if ( uniqueParticipantIds.length === 0 ) {
 			return;
 		}
 
-		setIsSubmittingGroup(true);
-		setGroupFeedback(null);
+		setIsSubmittingGroup( true );
+		setGroupFeedback( null );
 
 		const resolveGroup =
 			groupMode === 'new'
-				? apiFetch({
+				? apiFetch( {
 						path: '/fair-audience/v1/groups',
 						method: 'POST',
 						data: {
 							name: newGroupName.trim(),
 							description: newGroupDescription.trim(),
 						},
-				  }).then((group) => group.id)
-				: Promise.resolve(parseInt(selectedGroupId, 10));
+				  } ).then( ( group ) => group.id )
+				: Promise.resolve( parseInt( selectedGroupId, 10 ) );
 
 		resolveGroup
-			.then((groupId) => addParticipantsToGroup(groupId))
-			.then(({ added, skipped }) => {
-				setGroupFeedback({
+			.then( ( groupId ) => addParticipantsToGroup( groupId ) )
+			.then( ( { added, skipped } ) => {
+				setGroupFeedback( {
 					status: 'success',
 					message: sprintf(
 						// translators: 1: number added, 2: number already in group
@@ -500,77 +510,82 @@ export default function QuestionnaireResponses() {
 						added,
 						skipped
 					),
-				});
-			})
-			.catch((err) => {
-				setGroupFeedback({
+				} );
+			} )
+			.catch( ( err ) => {
+				setGroupFeedback( {
 					status: 'error',
 					message:
 						err.message ||
-						__('Failed to add participants to group.', 'fair-form'),
-				});
-			})
-			.finally(() => {
-				setIsSubmittingGroup(false);
-			});
+						__(
+							'Failed to add participants to group.',
+							'fair-form'
+						),
+				} );
+			} )
+			.finally( () => {
+				setIsSubmittingGroup( false );
+			} );
 	};
 
 	const canSubmitGroup =
 		uniqueParticipantIds.length > 0 &&
-		!isSubmittingGroup &&
-		((groupMode === 'existing' && selectedGroupId) ||
-			(groupMode === 'new' && newGroupName.trim()));
+		! isSubmittingGroup &&
+		( ( groupMode === 'existing' && selectedGroupId ) ||
+			( groupMode === 'new' && newGroupName.trim() ) );
 
 	const openWaModal = () => {
-		setWaColumnMode('all');
-		setWaSelectedColumns(fields.map((f) => f.id));
-		setWaFormat('markdown');
-		setWaFeedback(null);
-		setIsWaModalOpen(true);
+		setWaColumnMode( 'all' );
+		setWaSelectedColumns( fields.map( ( f ) => f.id ) );
+		setWaFormat( 'markdown' );
+		setWaFeedback( null );
+		setIsWaModalOpen( true );
 	};
 
-	const toggleWaColumn = (id) => {
-		setWaSelectedColumns((prev) =>
-			prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+	const toggleWaColumn = ( id ) => {
+		setWaSelectedColumns( ( prev ) =>
+			prev.includes( id )
+				? prev.filter( ( c ) => c !== id )
+				: [ ...prev, id ]
 		);
 	};
 
-	const activeWaColumns = useMemo(() => {
-		if (waColumnMode === 'all') {
+	const activeWaColumns = useMemo( () => {
+		if ( waColumnMode === 'all' ) {
 			return fields;
 		}
-		return fields.filter((f) => waSelectedColumns.includes(f.id));
-	}, [waColumnMode, waSelectedColumns, fields]);
+		return fields.filter( ( f ) => waSelectedColumns.includes( f.id ) );
+	}, [ waColumnMode, waSelectedColumns, fields ] );
 
 	const buildWaMessage = () =>
-		buildBulkExportText({
+		buildBulkExportText( {
 			responses,
 			columns: activeWaColumns,
 			format: waFormat,
-		});
+		} );
 
 	const copyWaMessage = () => {
-		if (!navigator.clipboard) {
-			setWaFeedback({
+		if ( ! navigator.clipboard ) {
+			setWaFeedback( {
 				status: 'error',
-				message: __('Clipboard not available.', 'fair-form'),
-			});
+				message: __( 'Clipboard not available.', 'fair-form' ),
+			} );
 			return;
 		}
 		navigator.clipboard
-			.writeText(buildWaMessage())
-			.then(() => {
-				setWaFeedback({
+			.writeText( buildWaMessage() )
+			.then( () => {
+				setWaFeedback( {
 					status: 'success',
-					message: __('Message copied to clipboard.', 'fair-form'),
-				});
-			})
-			.catch(() => {
-				setWaFeedback({
+					message: __( 'Message copied to clipboard.', 'fair-form' ),
+				} );
+			} )
+			.catch( () => {
+				setWaFeedback( {
 					status: 'error',
-					message: __('Failed to copy.', 'fair-form'),
-				});
-			});
+					message: __( 'Failed to copy.', 'fair-form' ),
+				} );
+			} );
 	};
 
 	const downloadWaCsv = () => {
@@ -578,304 +593,309 @@ export default function QuestionnaireResponses() {
 
 		// BOM for UTF-8 Excel compatibility.
 		const bom = '﻿';
-		const blob = new Blob([bom + csvContent], {
+		const blob = new Blob( [ bom + csvContent ], {
 			type: 'text/csv;charset=utf-8;',
-		});
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
+		} );
+		const url = URL.createObjectURL( blob );
+		const link = document.createElement( 'a' );
 		link.href = url;
 		const contextId = eventDateId || postId || formId || 'all';
-		link.download = `questionnaire-responses-${contextId}.csv`;
+		link.download = `questionnaire-responses-${ contextId }.csv`;
 		link.click();
-		URL.revokeObjectURL(url);
+		URL.revokeObjectURL( url );
 	};
 
 	return (
 		<div className="wrap fair-form-questionnaire-responses-page">
-			<h1>{__('Questionnaire Responses', 'fair-form')}</h1>
+			<h1>{ __( 'Questionnaire Responses', 'fair-form' ) }</h1>
 
 			<p>
 				<a href="admin.php?page=fair-form">
-					&larr; {__('Back to Answers Overview', 'fair-form')}
+					&larr; { __( 'Back to Answers Overview', 'fair-form' ) }
 				</a>
-				{eventDateId && (
+				{ eventDateId && (
 					<>
-						{' | '}
+						{ ' | ' }
 						<a
-							href={`admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}`}
+							href={ `admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }` }
 						>
-							{__('Event edit page', 'fair-form')}
+							{ __( 'Event edit page', 'fair-form' ) }
 						</a>
 					</>
-				)}
-				{postId && (
+				) }
+				{ postId && (
 					<>
-						{' | '}
-						<a href={`post.php?post=${postId}&action=edit`}>
-							{__('Post entry', 'fair-form')}
+						{ ' | ' }
+						<a href={ `post.php?post=${ postId }&action=edit` }>
+							{ __( 'Post entry', 'fair-form' ) }
 						</a>
 					</>
-				)}
+				) }
 			</p>
 
 			<div className="fair-form-questionnaire-responses__actions">
-				{hasParticipantData && (
-					<Button variant="primary" onClick={openGroupModal}>
-						{__('Add participants to group', 'fair-form')}
+				{ hasParticipantData && (
+					<Button variant="primary" onClick={ openGroupModal }>
+						{ __( 'Add participants to group', 'fair-form' ) }
 					</Button>
-				)}
+				) }
 				<Button
 					variant="secondary"
-					onClick={openWaModal}
-					disabled={responses.length === 0}
+					onClick={ openWaModal }
+					disabled={ responses.length === 0 }
 				>
-					{__('Export', 'fair-form')}
+					{ __( 'Export', 'fair-form' ) }
 				</Button>
 			</div>
 
-			{errorMessage && (
+			{ errorMessage && (
 				<Notice
 					status="error"
-					isDismissible={true}
-					onRemove={() => setErrorMessage(null)}
+					isDismissible={ true }
+					onRemove={ () => setErrorMessage( null ) }
 				>
-					{errorMessage}
+					{ errorMessage }
 				</Notice>
-			)}
+			) }
 
 			<ConfirmDialog
-				isOpen={deleteItem !== null}
-				onConfirm={confirmDelete}
-				onCancel={() => setDeleteItem(null)}
-				confirmButtonText={__('Delete response', 'fair-form')}
-				cancelButtonText={__('Cancel', 'fair-form')}
+				isOpen={ deleteItem !== null }
+				onConfirm={ confirmDelete }
+				onCancel={ () => setDeleteItem( null ) }
+				confirmButtonText={ __( 'Delete response', 'fair-form' ) }
+				cancelButtonText={ __( 'Cancel', 'fair-form' ) }
 			>
-				{deleteConfirmMessage}
+				{ deleteConfirmMessage }
 			</ConfirmDialog>
 
-			{isGroupModalOpen && (
+			{ isGroupModalOpen && (
 				<Modal
-					title={__('Add participants to group', 'fair-form')}
-					onRequestClose={() => setIsGroupModalOpen(false)}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Add participants to group', 'fair-form' ) }
+					onRequestClose={ () => setIsGroupModalOpen( false ) }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<p>
-						{sprintf(
+						{ sprintf(
 							// translators: %d: number of unique participants
 							__(
 								'%d unique participant(s) will be added.',
 								'fair-form'
 							),
 							uniqueParticipantIds.length
-						)}
+						) }
 					</p>
 
 					<RadioControl
-						label={__('Target group', 'fair-form')}
-						selected={groupMode}
-						options={[
+						label={ __( 'Target group', 'fair-form' ) }
+						selected={ groupMode }
+						options={ [
 							{
-								label: __('Use existing group', 'fair-form'),
+								label: __( 'Use existing group', 'fair-form' ),
 								value: 'existing',
 							},
 							{
-								label: __('Create new group', 'fair-form'),
+								label: __( 'Create new group', 'fair-form' ),
 								value: 'new',
 							},
-						]}
-						onChange={setGroupMode}
+						] }
+						onChange={ setGroupMode }
 					/>
 
-					{groupMode === 'existing' && (
+					{ groupMode === 'existing' && (
 						<SelectControl
-							label={__('Group', 'fair-form')}
-							value={selectedGroupId}
-							onChange={setSelectedGroupId}
-							options={[
+							label={ __( 'Group', 'fair-form' ) }
+							value={ selectedGroupId }
+							onChange={ setSelectedGroupId }
+							options={ [
 								{
 									label: groupsLoading
-										? __('Loading...', 'fair-form')
-										: __('— Select a group —', 'fair-form'),
+										? __( 'Loading...', 'fair-form' )
+										: __(
+												'— Select a group —',
+												'fair-form'
+										  ),
 									value: '',
 								},
-								...availableGroups.map((group) => ({
-									label: `${group.name} (${group.member_count})`,
-									value: String(group.id),
-								})),
-							]}
-							disabled={groupsLoading}
+								...availableGroups.map( ( group ) => ( {
+									label: `${ group.name } (${ group.member_count })`,
+									value: String( group.id ),
+								} ) ),
+							] }
+							disabled={ groupsLoading }
 						/>
-					)}
+					) }
 
-					{groupMode === 'new' && (
+					{ groupMode === 'new' && (
 						<>
 							<TextControl
-								label={__('Name', 'fair-form')}
-								value={newGroupName}
-								onChange={setNewGroupName}
-								placeholder={__(
+								label={ __( 'Name', 'fair-form' ) }
+								value={ newGroupName }
+								onChange={ setNewGroupName }
+								placeholder={ __(
 									'Enter group name...',
 									'fair-form'
-								)}
+								) }
 							/>
 							<TextareaControl
-								label={__('Description', 'fair-form')}
-								value={newGroupDescription}
-								onChange={setNewGroupDescription}
-								placeholder={__(
+								label={ __( 'Description', 'fair-form' ) }
+								value={ newGroupDescription }
+								onChange={ setNewGroupDescription }
+								placeholder={ __(
 									'Enter group description (optional)...',
 									'fair-form'
-								)}
+								) }
 							/>
 						</>
-					)}
+					) }
 
-					{groupFeedback && (
+					{ groupFeedback && (
 						<Notice
-							status={groupFeedback.status}
-							isDismissible={false}
+							status={ groupFeedback.status }
+							isDismissible={ false }
 						>
-							{groupFeedback.message}
+							{ groupFeedback.message }
 						</Notice>
-					)}
+					) }
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setIsGroupModalOpen(false)}
+							onClick={ () => setIsGroupModalOpen( false ) }
 						>
-							{__('Close', 'fair-form')}
+							{ __( 'Close', 'fair-form' ) }
 						</Button>
 						<Button
 							variant="primary"
-							onClick={handleSubmitGroup}
-							disabled={!canSubmitGroup}
-							isBusy={isSubmittingGroup}
+							onClick={ handleSubmitGroup }
+							disabled={ ! canSubmitGroup }
+							isBusy={ isSubmittingGroup }
 						>
-							{groupMode === 'new'
-								? __('Create group and add', 'fair-form')
-								: __('Add to group', 'fair-form')}
+							{ groupMode === 'new'
+								? __( 'Create group and add', 'fair-form' )
+								: __( 'Add to group', 'fair-form' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 
-			{isWaModalOpen && (
+			{ isWaModalOpen && (
 				<Modal
-					title={__('Export', 'fair-form')}
-					onRequestClose={() => setIsWaModalOpen(false)}
-					style={{ maxWidth: '500px', width: '100%' }}
+					title={ __( 'Export', 'fair-form' ) }
+					onRequestClose={ () => setIsWaModalOpen( false ) }
+					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<RadioControl
-						label={__('Columns', 'fair-form')}
-						selected={waColumnMode}
-						options={[
+						label={ __( 'Columns', 'fair-form' ) }
+						selected={ waColumnMode }
+						options={ [
 							{
-								label: __('All columns', 'fair-form'),
+								label: __( 'All columns', 'fair-form' ),
 								value: 'all',
 							},
 							{
-								label: __('Handpicked columns', 'fair-form'),
+								label: __( 'Handpicked columns', 'fair-form' ),
 								value: 'pick',
 							},
-						]}
-						onChange={setWaColumnMode}
+						] }
+						onChange={ setWaColumnMode }
 					/>
 
-					{waColumnMode === 'pick' && (
-						<div style={{ marginBottom: '16px' }}>
-							{fields.map((field) => (
+					{ waColumnMode === 'pick' && (
+						<div style={ { marginBottom: '16px' } }>
+							{ fields.map( ( field ) => (
 								<CheckboxControl
-									key={field.id}
-									label={field.label}
-									checked={waSelectedColumns.includes(
+									key={ field.id }
+									label={ field.label }
+									checked={ waSelectedColumns.includes(
 										field.id
-									)}
-									onChange={() => toggleWaColumn(field.id)}
+									) }
+									onChange={ () =>
+										toggleWaColumn( field.id )
+									}
 								/>
-							))}
+							) ) }
 						</div>
-					)}
+					) }
 
 					<RadioControl
-						label={__('Format', 'fair-form')}
-						selected={waFormat}
-						options={[
+						label={ __( 'Format', 'fair-form' ) }
+						selected={ waFormat }
+						options={ [
 							{
-								label: __('Markdown', 'fair-form'),
+								label: __( 'Markdown', 'fair-form' ),
 								value: 'markdown',
 							},
-							{ label: __('CSV', 'fair-form'), value: 'csv' },
+							{ label: __( 'CSV', 'fair-form' ), value: 'csv' },
 							{
-								label: __('One line per person', 'fair-form'),
+								label: __( 'One line per person', 'fair-form' ),
 								value: 'oneline',
 							},
-						]}
-						onChange={setWaFormat}
+						] }
+						onChange={ setWaFormat }
 					/>
 
-					{waFeedback && (
+					{ waFeedback && (
 						<Notice
-							status={waFeedback.status}
-							isDismissible={false}
+							status={ waFeedback.status }
+							isDismissible={ false }
 						>
-							{waFeedback.message}
+							{ waFeedback.message }
 						</Notice>
-					)}
+					) }
 
 					<div
-						style={{
+						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
 							gap: '8px',
 							marginTop: '16px',
-						}}
+						} }
 					>
 						<Button
 							variant="secondary"
-							onClick={() => setIsWaModalOpen(false)}
+							onClick={ () => setIsWaModalOpen( false ) }
 						>
-							{__('Close', 'fair-form')}
+							{ __( 'Close', 'fair-form' ) }
 						</Button>
-						{waFormat === 'csv' && (
+						{ waFormat === 'csv' && (
 							<Button
 								variant="secondary"
-								onClick={downloadWaCsv}
-								disabled={activeWaColumns.length === 0}
+								onClick={ downloadWaCsv }
+								disabled={ activeWaColumns.length === 0 }
 							>
-								{__('Download CSV', 'fair-form')}
+								{ __( 'Download CSV', 'fair-form' ) }
 							</Button>
-						)}
+						) }
 						<Button
 							variant="primary"
-							onClick={copyWaMessage}
-							disabled={activeWaColumns.length === 0}
+							onClick={ copyWaMessage }
+							disabled={ activeWaColumns.length === 0 }
 						>
-							{__('Copy to clipboard', 'fair-form')}
+							{ __( 'Copy to clipboard', 'fair-form' ) }
 						</Button>
 					</div>
 				</Modal>
-			)}
+			) }
 
 			<Card>
 				<CardBody className="fair-form-questionnaire-responses__table">
 					<DataViews
-						data={responses}
-						fields={fields}
-						view={viewWithFields}
-						onChangeView={setView}
-						actions={actions}
-						paginationInfo={paginationInfo}
-						defaultLayouts={DEFAULT_LAYOUTS}
-						isLoading={isLoading}
-						getItemId={(item) => item.id}
+						data={ responses }
+						fields={ fields }
+						view={ viewWithFields }
+						onChangeView={ setView }
+						actions={ actions }
+						paginationInfo={ paginationInfo }
+						defaultLayouts={ DEFAULT_LAYOUTS }
+						isLoading={ isLoading }
+						getItemId={ ( item ) => item.id }
 					/>
 				</CardBody>
 			</Card>
