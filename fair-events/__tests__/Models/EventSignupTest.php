@@ -47,7 +47,7 @@ class EventSignupTest extends TestCase {
 	}
 
 	/**
-	 * Cleanup retains rows before expiry and deletes them at/after expiry.
+	 * Cleanup retains rows and expires them once at/after the UTC boundary.
 	 */
 	public function test_cleanup_uses_utc_and_includes_exact_expiry_boundary(): void {
 		$now   = gmdate( 'Y-m-d H:i:s' );
@@ -77,12 +77,14 @@ class EventSignupTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( 2, EventSignup::delete_expired_pending() );
+		$this->assertSame( 2, EventSignup::expire_pending() );
 		$this->assertStringContainsString( 'payment_expires_at <= %s', $GLOBALS['wpdb']->last_prepared['query'] );
 		$this->assertSame( gmdate( 'Y-m-d H:i:s' ), $GLOBALS['wpdb']->last_prepared['args'][1] );
 		$this->assertNotNull( EventSignup::get_by_id( 1 ) );
-		$this->assertNull( EventSignup::get_by_id( 2 ) );
-		$this->assertNull( EventSignup::get_by_id( 3 ) );
+		$this->assertSame( 'expired', EventSignup::get_by_id( 2 )->status );
+		$this->assertSame( 'expired', EventSignup::get_by_id( 3 )->status );
+		$this->assertNull( EventSignup::get_by_id( 2 )->payment_expires_at );
+		$this->assertSame( 0, EventSignup::expire_pending() );
 	}
 
 	/**
@@ -122,6 +124,76 @@ class EventSignupTest extends TestCase {
 		$this->assertSame( 'jane@example.test', $confirmed->email );
 		$this->assertSame( '{"accessibility":"Front row"}', $confirmed->answers );
 		$this->assertCount( 1, $GLOBALS['_fair_test_actions']['fair_events_signup_confirmed'] );
+	}
+
+	/**
+	 * Retried terminal notifications do not re-dispatch lifecycle actions.
+	 */
+	public function test_payment_notifications_are_idempotent_and_expiry_is_terminal_for_failures(): void {
+		$transaction = (object) array(
+			'id'       => 40,
+			'metadata' => wp_json_encode(
+				array(
+					'source'    => 'fair-events-get-tickets',
+					'signup_id' => 10,
+				)
+			),
+		);
+		$GLOBALS['wpdb']->seed_row(
+			'wp_fair_events_signups',
+			10,
+			(object) array(
+				'id'                 => 10,
+				'status'             => 'expired',
+				'transaction_id'     => 40,
+				'payment_expires_at' => null,
+			)
+		);
+		$GLOBALS['_fair_test_actions'] = array();
+
+		PaymentHooks::handle_payment_failed( (object) array(), $transaction );
+		$this->assertSame( 'expired', EventSignup::get_by_id( 10 )->status );
+		$this->assertArrayNotHasKey( 'fair_events_signup_payment_failed', $GLOBALS['_fair_test_actions'] );
+
+		PaymentHooks::handle_payment_paid( (object) array(), $transaction );
+		PaymentHooks::handle_payment_paid( (object) array(), $transaction );
+		$this->assertSame( 'confirmed', EventSignup::get_by_id( 10 )->status );
+		$this->assertCount( 1, $GLOBALS['_fair_test_actions']['fair_events_signup_confirmed'] );
+	}
+
+	/**
+	 * Multi-instance rows transition together and failed retries dispatch once.
+	 */
+	public function test_multi_instance_and_failure_transitions_are_idempotent(): void {
+		foreach ( array( 10, 11 ) as $signup_id ) {
+			$GLOBALS['wpdb']->seed_row(
+				'wp_fair_events_signups',
+				$signup_id,
+				(object) array(
+					'id'                 => $signup_id,
+					'status'             => 'pending_payment',
+					'transaction_id'     => 40,
+					'payment_expires_at' => gmdate( 'Y-m-d H:i:s', time() + 60 ),
+				)
+			);
+		}
+		$transaction                   = (object) array(
+			'id'       => 40,
+			'metadata' => wp_json_encode(
+				array(
+					'source'     => 'fair-events-get-tickets',
+					'signup_ids' => array( 10, 11 ),
+				)
+			),
+		);
+		$GLOBALS['_fair_test_actions'] = array();
+
+		PaymentHooks::handle_payment_failed( (object) array(), $transaction );
+		PaymentHooks::handle_payment_failed( (object) array(), $transaction );
+
+		$this->assertSame( 'failed', EventSignup::get_by_id( 10 )->status );
+		$this->assertSame( 'failed', EventSignup::get_by_id( 11 )->status );
+		$this->assertCount( 2, $GLOBALS['_fair_test_actions']['fair_events_signup_payment_failed'] );
 	}
 
 	/**

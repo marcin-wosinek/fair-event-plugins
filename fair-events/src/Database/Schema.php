@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.28.0';
+	const DB_VERSION = '3.29.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -493,6 +493,7 @@ class Schema {
 			transaction_id BIGINT UNSIGNED DEFAULT NULL,
 			payment_expires_at DATETIME DEFAULT NULL,
 			participant_id BIGINT UNSIGNED DEFAULT NULL,
+			over_capacity TINYINT(1) NOT NULL DEFAULT 0,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_event_date_id (event_date_id),

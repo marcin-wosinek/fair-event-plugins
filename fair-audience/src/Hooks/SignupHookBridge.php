@@ -763,13 +763,63 @@ class SignupHookBridge {
 			(int) $signup->participant_id
 		);
 
-		if ( ! $event_participant || 'pending_payment' !== $event_participant->label ) {
+		$already_signed_up = $event_participant && 'signed_up' === $event_participant->label;
+
+		$metadata   = isset( $transaction->metadata ) && is_string( $transaction->metadata )
+			? json_decode( $transaction->metadata, true )
+			: (array) ( $transaction->metadata ?? array() );
+		$option_ids = isset( $metadata['ticket_option_ids'] ) && is_array( $metadata['ticket_option_ids'] )
+			? array_map( 'intval', $metadata['ticket_option_ids'] )
+			: array();
+
+		if ( ! $already_signed_up
+			&& self::late_confirmation_exceeds_capacity( $signup, $option_ids, $event_participant_repository )
+			&& class_exists( \FairEvents\Models\EventSignup::class )
+			&& method_exists( \FairEvents\Models\EventSignup::class, 'mark_over_capacity' )
+		) {
+			\FairEvents\Models\EventSignup::mark_over_capacity( (int) $signup->id );
+		}
+
+		if ( ! $event_participant ) {
+			$event_date = class_exists( \FairEvents\Models\EventDates::class )
+				? \FairEvents\Models\EventDates::get_by_id( (int) $signup->event_date_id )
+				: null;
+			if ( ! $event_date ) {
+				return;
+			}
+			$event_participant_repository->add_participant_to_event(
+				(int) $event_date->get_resolved_event_id(),
+				(int) $signup->participant_id,
+				'signed_up',
+				(int) $signup->event_date_id
+			);
+			$event_participant = $event_participant_repository->get_by_event_date_and_participant(
+				(int) $signup->event_date_id,
+				(int) $signup->participant_id
+			);
+		}
+
+		if ( ! $event_participant ) {
 			return;
 		}
 
-		$event_participant->label              = 'signed_up';
-		$event_participant->payment_expires_at = null;
-		$event_participant->save();
+		if ( ! $already_signed_up ) {
+			$event_participant->label              = 'signed_up';
+			$event_participant->payment_expires_at = null;
+			$event_participant->ticket_type_id     = ! empty( $signup->ticket_type_id ) ? (int) $signup->ticket_type_id : null;
+			$event_participant->save();
+		}
+
+		if ( ! empty( $option_ids ) && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+			$options = array();
+			foreach ( $option_ids as $option_id ) {
+				$option = \FairEventsExperimental\Models\TicketOption::get_by_id( $option_id );
+				if ( $option ) {
+					$options[] = $option;
+				}
+			}
+			$event_participant_repository->add_options( (int) $event_participant->id, $options );
+		}
 
 		$ledger = new EventParticipantTransactionRepository();
 		$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
@@ -778,6 +828,47 @@ class SignupHookBridge {
 		// a paid signup only reaches "confirmed" here, so this is the sole
 		// place a base-route paid signup's confirmation email gets sent.
 		\FairAudience\Hooks\PaymentHooks::send_signup_confirmation_email( $event_participant, $transaction );
+	}
+
+	/**
+	 * Check whether restoring an elapsed hold would exceed configured capacity.
+	 *
+	 * @param object                     $signup     Historical signup row.
+	 * @param int[]                      $option_ids Selected activity IDs.
+	 * @param EventParticipantRepository $repository Capacity repository.
+	 * @return bool
+	 */
+	private static function late_confirmation_exceeds_capacity( $signup, array $option_ids, EventParticipantRepository $repository ) {
+		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $signup->event_date_id );
+			if ( $event_date && null !== $event_date->capacity
+				&& $repository->count_active_for_event_date( (int) $signup->event_date_id ) >= (int) $event_date->capacity
+			) {
+				return true;
+			}
+		}
+
+		if ( ! empty( $signup->ticket_type_id ) && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_type = \FairEvents\Models\TicketType::get_by_id( (int) $signup->ticket_type_id );
+			if ( $ticket_type && null !== $ticket_type->capacity
+				&& $repository->count_signups_for_ticket_type( (int) $signup->ticket_type_id ) >= (int) $ticket_type->capacity
+			) {
+				return true;
+			}
+		}
+
+		if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+			foreach ( $option_ids as $option_id ) {
+				$option = \FairEventsExperimental\Models\TicketOption::get_by_id( $option_id );
+				if ( $option && null !== $option->capacity
+					&& $repository->count_signups_for_ticket_option( $option_id ) >= (int) $option->capacity
+				) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -820,6 +911,7 @@ class SignupHookBridge {
 		// (e.g. this runs from fair-audience's own upgrade path before
 		// fair-events applies its 3.24.0 migration). Skip quietly — the
 		// fair-events migration fires this same action once the column exists.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$column_exists = $wpdb->get_results(
 			$wpdb->prepare(
 				'SHOW COLUMNS FROM %i LIKE %s',

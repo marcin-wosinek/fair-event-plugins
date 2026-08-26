@@ -81,7 +81,7 @@ class Installer {
 		$sql = Schema::get_signups_table_sql();
 		dbDelta( $sql );
 
-		// Run migration if upgrading from pre-1.0.0
+		// Run migration if upgrading from pre-1.0.0.
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
 		}
@@ -302,7 +302,11 @@ class Installer {
 			self::migrate_to_3_28_0();
 		}
 
-		// Update database version
+		if ( version_compare( $current_version, '3.29.0', '<' ) ) {
+			self::migrate_to_3_29_0();
+		}
+
+		// Update database version.
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
 
@@ -325,7 +329,7 @@ class Installer {
 		if ( self::needs_upgrade() ) {
 			$current_version = Schema::get_db_version();
 
-			// Run migrations
+			// Run migrations.
 			if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 				self::migrate_to_1_0_0();
 			}
@@ -486,7 +490,11 @@ class Installer {
 				self::migrate_to_3_28_0();
 			}
 
-			// Install/update tables
+			if ( version_compare( $current_version, '3.29.0', '<' ) ) {
+				self::migrate_to_3_29_0();
+			}
+
+			// Install/update tables.
 			self::install();
 		}
 	}
@@ -506,7 +514,7 @@ class Installer {
 	 * @return void
 	 */
 	private static function migrate_from_postmeta() {
-		// Get all fair_event posts
+		// Get all fair_event posts.
 		$events = get_posts(
 			array(
 				'post_type'      => 'fair_event',
@@ -519,20 +527,20 @@ class Installer {
 		$skipped  = 0;
 
 		foreach ( $events as $event ) {
-			// Check if already migrated
+			// Check if already migrated.
 			$existing = self::check_event_dates_exists( $event->ID );
 			if ( $existing ) {
 				++$skipped;
 				continue;
 			}
 
-			// Read from postmeta
+			// Read from postmeta.
 			$start   = get_post_meta( $event->ID, 'event_start', true );
 			$end     = get_post_meta( $event->ID, 'event_end', true );
 			$all_day = get_post_meta( $event->ID, 'event_all_day', true );
 
 			if ( $start ) {
-				// Insert directly into table (don't use EventDates model to avoid circular dependency during migration)
+				// Insert directly into table (don't use EventDates model to avoid circular dependency during migration).
 				self::insert_event_date( $event->ID, $start, $end, $all_day );
 				++$migrated;
 			}
@@ -2150,6 +2158,25 @@ class Installer {
 			$wpdb->query(
 				$wpdb->prepare(
 					'ALTER TABLE %i ADD COLUMN joining_link VARCHAR(500) DEFAULT NULL AFTER attendance_mode',
+					$table_name
+				)
+			);
+		}
+	}
+
+	/**
+	 * Migrate to version 3.29.0 - Track paid signups confirmed over capacity.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_29_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_events_signups';
+		if ( ! self::column_exists( $table_name, 'over_capacity' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN over_capacity TINYINT(1) NOT NULL DEFAULT 0 AFTER participant_id',
 					$table_name
 				)
 			);

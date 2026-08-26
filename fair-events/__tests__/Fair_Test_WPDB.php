@@ -87,6 +87,9 @@ class Fair_Test_WPDB {
 	 * @return array{table: string|null, id: int|null} Captured lookup key.
 	 */
 	public function prepare( $query, ...$args ) {
+		if ( 1 === count( $args ) && is_array( $args[0] ) ) {
+			$args = $args[0];
+		}
 		$this->last_prepared = array(
 			'query' => $query,
 			'args'  => $args,
@@ -122,24 +125,39 @@ class Fair_Test_WPDB {
 	}
 
 	/**
-	 * Execute the pending-signup cleanup against seeded rows.
+	 * Execute conditional signup status transitions against seeded rows.
 	 *
 	 * @param array $prepared Prepared query capture.
 	 * @return int Deleted row count.
 	 */
 	public function query( $prepared ) {
 		$table   = $prepared['args'][0];
-		$now     = $prepared['args'][1];
-		$deleted = 0;
+		$updated = 0;
+
+		if ( str_contains( $prepared['query'], 'WHERE id = %d AND status' ) ) {
+			$target  = $prepared['args'][1];
+			$id      = (int) $prepared['args'][2];
+			$allowed = array_slice( $prepared['args'], 3 );
+			$row     = $this->rows[ $table ][ $id ] ?? null;
+			if ( $row && in_array( $row->status, $allowed, true ) ) {
+				$row->status             = $target;
+				$row->payment_expires_at = null;
+				return 1;
+			}
+			return 0;
+		}
+
+		$now = $prepared['args'][1];
 
 		foreach ( $this->rows[ $table ] ?? array() as $id => $row ) {
 			if ( 'pending_payment' === $row->status && null !== $row->payment_expires_at && $row->payment_expires_at <= $now ) {
-				unset( $this->rows[ $table ][ $id ] );
-				++$deleted;
+				$row->status             = 'expired';
+				$row->payment_expires_at = null;
+				++$updated;
 			}
 		}
 
-		return $deleted;
+		return $updated;
 	}
 
 	/**
