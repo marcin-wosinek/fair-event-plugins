@@ -193,12 +193,13 @@ if ( ! function_exists( 'current_time' ) ) {
 
 if ( ! function_exists( 'wp_timezone' ) ) {
 	/**
-	 * Stub of WordPress wp_timezone(), always UTC in tests.
+	 * Stub of WordPress wp_timezone(), overridable for timezone-sensitive tests.
 	 *
 	 * @return DateTimeZone
 	 */
 	function wp_timezone() {
-		return new DateTimeZone( 'UTC' );
+		$timezone = isset( $GLOBALS['_fair_test_timezone'] ) ? $GLOBALS['_fair_test_timezone'] : 'UTC';
+		return new DateTimeZone( $timezone );
 	}
 }
 

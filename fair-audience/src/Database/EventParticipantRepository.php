@@ -316,7 +316,7 @@ class EventParticipantRepository {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
-		$now        = current_time( 'mysql' );
+		$now        = gmdate( 'Y-m-d H:i:s' );
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
@@ -349,7 +349,7 @@ class EventParticipantRepository {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
-		$now        = current_time( 'mysql' );
+		$now        = gmdate( 'Y-m-d H:i:s' );
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
@@ -387,7 +387,7 @@ class EventParticipantRepository {
 
 		$participants_table = $this->get_table_name();
 		$options_table      = $wpdb->prefix . 'fair_audience_event_participant_options';
-		$now                = current_time( 'mysql' );
+		$now                = gmdate( 'Y-m-d H:i:s' );
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
@@ -607,7 +607,7 @@ class EventParticipantRepository {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
-		$now        = current_time( 'mysql' );
+		$now        = gmdate( 'Y-m-d H:i:s' );
 
 		$candidates = $wpdb->get_results(
 			$wpdb->prepare(
@@ -668,7 +668,7 @@ class EventParticipantRepository {
 		global $wpdb;
 
 		$options_table = $wpdb->prefix . 'fair_audience_event_participant_options';
-		$now           = current_time( 'mysql' );
+		$now           = gmdate( 'Y-m-d H:i:s' );
 
 		$deleted = $wpdb->query(
 			$wpdb->prepare(

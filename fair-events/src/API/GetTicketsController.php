@@ -1392,7 +1392,7 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 		if ( 'pending_payment' !== $signup->status
 			|| empty( $signup->payment_expires_at )
-			|| strtotime( $signup->payment_expires_at ) <= time()
+			|| strtotime( $signup->payment_expires_at . ' UTC' ) <= time()
 		) {
 			return null;
 		}
@@ -1493,7 +1493,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// oversell, so it's refused rather than silently recreating the hold.
 		$within_hold = false;
 		foreach ( $signup_rows as $row ) {
-			if ( $row->payment_expires_at && strtotime( $row->payment_expires_at ) > time() ) {
+			if ( $row->payment_expires_at && strtotime( $row->payment_expires_at . ' UTC' ) > time() ) {
 				$within_hold = true;
 				break;
 			}

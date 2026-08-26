@@ -293,9 +293,9 @@ class EventSignup {
 
 		return (int) $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM %i WHERE status = 'pending_payment' AND payment_expires_at IS NOT NULL AND payment_expires_at < %s",
+				"DELETE FROM %i WHERE status = 'pending_payment' AND payment_expires_at IS NOT NULL AND payment_expires_at <= %s",
 				$table,
-				current_time( 'mysql' )
+				gmdate( 'Y-m-d H:i:s' )
 			)
 		);
 	}

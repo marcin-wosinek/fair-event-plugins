@@ -39,6 +39,20 @@ class Fair_Test_WPDB {
 	private $cols = array();
 
 	/**
+	 * Most recent prepared query and arguments.
+	 *
+	 * @var array{query: string, args: array}|null
+	 */
+	public $last_prepared = null;
+
+	/**
+	 * Most recent update payload.
+	 *
+	 * @var array|null
+	 */
+	public $last_update = null;
+
+	/**
 	 * Seed a row so get_row() resolves it for the given table + id.
 	 *
 	 * @param string $table Table name, including prefix (e.g. 'wp_fair_events_signups').
@@ -72,11 +86,60 @@ class Fair_Test_WPDB {
 	 * @param mixed  ...$args Values for the placeholders — [0] table, [1] id.
 	 * @return array{table: string|null, id: int|null} Captured lookup key.
 	 */
-	public function prepare( $query, ...$args ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- query text is irrelevant, only the table/id args matter.
+	public function prepare( $query, ...$args ) {
+		$this->last_prepared = array(
+			'query' => $query,
+			'args'  => $args,
+		);
+
 		return array(
 			'table' => $args[0] ?? null,
 			'id'    => isset( $args[1] ) ? (int) $args[1] : null,
+			'query' => $query,
+			'args'  => $args,
 		);
+	}
+
+	/**
+	 * Capture an update and apply it to a seeded row.
+	 *
+	 * @param string $table Table name.
+	 * @param array  $data  Updated columns.
+	 * @param array  $where Row selector.
+	 * @return int Always one affected row.
+	 */
+	public function update( $table, $data, $where ) {
+		$this->last_update = compact( 'table', 'data', 'where' );
+		$id                = (int) ( $where['id'] ?? 0 );
+
+		if ( isset( $this->rows[ $table ][ $id ] ) ) {
+			foreach ( $data as $key => $value ) {
+				$this->rows[ $table ][ $id ]->{$key} = $value;
+			}
+		}
+
+		return 1;
+	}
+
+	/**
+	 * Execute the pending-signup cleanup against seeded rows.
+	 *
+	 * @param array $prepared Prepared query capture.
+	 * @return int Deleted row count.
+	 */
+	public function query( $prepared ) {
+		$table   = $prepared['args'][0];
+		$now     = $prepared['args'][1];
+		$deleted = 0;
+
+		foreach ( $this->rows[ $table ] ?? array() as $id => $row ) {
+			if ( 'pending_payment' === $row->status && null !== $row->payment_expires_at && $row->payment_expires_at <= $now ) {
+				unset( $this->rows[ $table ][ $id ] );
+				++$deleted;
+			}
+		}
+
+		return $deleted;
 	}
 
 	/**
