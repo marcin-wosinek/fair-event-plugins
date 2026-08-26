@@ -140,6 +140,64 @@ class EventSignup {
 	}
 
 	/**
+	 * Confirm a signup only while it is awaiting payment or locally expired.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return bool True when the row transitioned.
+	 */
+	public static function confirm_paid( int $signup_id ) {
+		return self::transition_status( $signup_id, 'confirmed', array( 'pending_payment', 'expired' ) );
+	}
+
+	/**
+	 * Fail a signup only while it is still awaiting payment.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return bool True when the row transitioned.
+	 */
+	public static function fail_pending( int $signup_id ) {
+		return self::transition_status( $signup_id, 'failed', array( 'pending_payment' ) );
+	}
+
+	/**
+	 * Atomically transition a signup from one of the allowed statuses.
+	 *
+	 * @param int      $signup_id     Signup row ID.
+	 * @param string   $target_status New status.
+	 * @param string[] $from_statuses Allowed current statuses.
+	 * @return bool True when the row transitioned.
+	 */
+	private static function transition_status( int $signup_id, string $target_status, array $from_statuses ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'fair_events_signups';
+		if ( 2 === count( $from_statuses ) ) {
+			$updated = $wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i SET status = %s, payment_expires_at = NULL WHERE id = %d AND status IN (%s, %s)',
+					$table,
+					$target_status,
+					$signup_id,
+					$from_statuses[0],
+					$from_statuses[1]
+				)
+			);
+		} else {
+			$updated = $wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i SET status = %s, payment_expires_at = NULL WHERE id = %d AND status = %s',
+					$table,
+					$target_status,
+					$signup_id,
+					$from_statuses[0]
+				)
+			);
+		}
+
+		return 1 === (int) $updated;
+	}
+
+	/**
 	 * Store transaction ID and payment expiry on a signup row.
 	 *
 	 * @param int $signup_id      Signup row ID.
@@ -224,11 +282,23 @@ class EventSignup {
 
 		// 'multiple_instances' purchases store one signup row ID per chosen occurrence.
 		if ( ! empty( $metadata['signup_ids'] ) && is_array( $metadata['signup_ids'] ) ) {
-			return array_map( 'intval', $metadata['signup_ids'] );
+			$signup_ids = array_map( 'intval', $metadata['signup_ids'] );
+			return array_values(
+				array_filter(
+					$signup_ids,
+					static function ( $signup_id ) use ( $transaction ) {
+						$signup = self::get_by_id( $signup_id );
+						return $signup && (int) $signup->transaction_id === (int) $transaction->id;
+					}
+				)
+			);
 		}
 
 		if ( ! empty( $metadata['signup_id'] ) ) {
-			return array( (int) $metadata['signup_id'] );
+			$signup = self::get_by_id( (int) $metadata['signup_id'] );
+			return $signup && (int) $signup->transaction_id === (int) $transaction->id
+				? array( (int) $signup->id )
+				: array();
 		}
 
 		// Fall back to lookup by transaction_id.
@@ -282,21 +352,62 @@ class EventSignup {
 	}
 
 	/**
-	 * Delete stale pending_payment rows past their expiry.
+	 * Expire stale pending-payment rows without deleting reconciliation data.
 	 *
-	 * @return int Number of rows deleted.
+	 * @return int Number of rows transitioned.
 	 */
-	public static function delete_expired_pending() {
+	public static function expire_pending() {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'fair_events_signups';
 
 		return (int) $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM %i WHERE status = 'pending_payment' AND payment_expires_at IS NOT NULL AND payment_expires_at <= %s",
+				"UPDATE %i SET status = 'expired', payment_expires_at = NULL WHERE status = 'pending_payment' AND payment_expires_at IS NOT NULL AND payment_expires_at <= %s",
 				$table,
 				gmdate( 'Y-m-d H:i:s' )
 			)
+		);
+	}
+
+	/**
+	 * Mark a confirmed signup for administrator capacity reconciliation.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return bool
+	 */
+	public static function mark_over_capacity( int $signup_id ) {
+		global $wpdb;
+
+		return (bool) $wpdb->update(
+			$wpdb->prefix . 'fair_events_signups',
+			array( 'over_capacity' => 1 ),
+			array( 'id' => $signup_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+	}
+
+	/**
+	 * Scrub signup-owned personal data linked to a participant.
+	 *
+	 * @param int $participant_id Participant ID.
+	 * @return int Number of rows anonymized.
+	 */
+	public static function anonymize_by_participant_id( int $participant_id ) {
+		global $wpdb;
+
+		return (int) $wpdb->update(
+			$wpdb->prefix . 'fair_events_signups',
+			array(
+				'name'           => '',
+				'email'          => '',
+				'mailing_opt_in' => 0,
+				'participant_id' => null,
+			),
+			array( 'participant_id' => $participant_id ),
+			array( '%s', '%s', '%d', '%d' ),
+			array( '%d' )
 		);
 	}
 }

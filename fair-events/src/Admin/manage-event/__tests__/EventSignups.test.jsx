@@ -27,6 +27,7 @@ const signups = [
 		quantity: 1,
 		amount: '20.00',
 		status: 'paid',
+		transaction_id: 501,
 		mailing_opt_in: true,
 		created_at: '2026-07-20 10:00:00',
 	},
@@ -39,6 +40,7 @@ const signups = [
 		quantity: 2,
 		amount: '40.00',
 		status: 'paid',
+		transaction_id: 502,
 		mailing_opt_in: false,
 		created_at: '2026-07-21 10:00:00',
 	},
@@ -53,6 +55,7 @@ const signupWithMissingTicketType = {
 	quantity: 1,
 	amount: '0.00',
 	status: 'confirmed',
+	transaction_id: null,
 	mailing_opt_in: false,
 	created_at: '2026-07-22 10:00:00',
 };
@@ -97,6 +100,7 @@ async function renderSignups( data = signups ) {
 
 afterEach( () => {
 	jest.clearAllMocks();
+	delete window.fairPaymentsConnector;
 } );
 
 describe( 'EventSignups — CSV export (#1171)', () => {
@@ -118,15 +122,35 @@ describe( 'EventSignups — CSV export (#1171)', () => {
 		const text = mock.getText();
 		const lines = text.split( '\r\n' );
 		expect( lines[ 0 ] ).toBe(
-			'email,name,ticket_type,quantity,amount,status,mailing_opt_in,date'
+			'email,name,ticket_type,quantity,amount,status,transaction_id,mailing_opt_in,date'
 		);
 		expect( lines ).toHaveLength( 3 );
 		expect( lines[ 1 ] ).toBe(
-			'ada@example.com,Ada Lovelace,General,1,20.00,paid,yes,2026-07-20 10:00:00'
+			'ada@example.com,Ada Lovelace,General,1,20.00,paid,501,yes,2026-07-20 10:00:00'
 		);
 		expect( mock.getFilename() ).toBe( 'signups-event-42.csv' );
 
 		mock.restore();
+	} );
+
+	it( 'distinguishes expired and confirmed over-capacity signups', async () => {
+		await renderSignups( [
+			{ ...signups[ 0 ], status: 'expired' },
+			{ ...signups[ 1 ], status: 'confirmed', over_capacity: 1 },
+		] );
+		expect( screen.getByText( 'Expired' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Confirmed — over capacity' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'links transaction references only when the connector is active', async () => {
+		window.fairPaymentsConnector = { connectorActive: true };
+		await renderSignups( [ signups[ 0 ] ] );
+		expect( screen.getByRole( 'link', { name: '501' } ) ).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-payments-connector-transaction&transaction_id=501'
+		);
 	} );
 
 	it( 'quotes a name containing a comma', async () => {
@@ -189,7 +213,7 @@ describe( 'EventSignups — CSV export (#1171)', () => {
 
 	it( 'falls back to an em dash when the ticket type is missing or deleted', async () => {
 		await renderSignups( [ signupWithMissingTicketType ] );
-		expect( screen.getByText( '—' ) ).toBeInTheDocument();
+		expect( screen.getAllByText( '—' ) ).not.toHaveLength( 0 );
 
 		const mock = mockObjectUrlAndClick();
 		fireEvent.click(

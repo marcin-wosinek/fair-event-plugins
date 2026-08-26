@@ -28,6 +28,7 @@ const CSV_COLUMNS = [
 	'quantity',
 	'amount',
 	'status',
+	'transaction_id',
 	'mailing_opt_in',
 	'date',
 ];
@@ -63,6 +64,7 @@ function buildSignupsCsv( rows ) {
 			s.quantity,
 			s.amount,
 			s.status,
+			s.transaction_id,
 			s.mailing_opt_in ? 'yes' : 'no',
 			s.created_at,
 		];
@@ -88,6 +90,7 @@ function downloadTextFile( text, filename ) {
 }
 
 export default function EventSignups( { eventDateId } ) {
+	const connectorActive = !! window.fairPaymentsConnector?.connectorActive;
 	const [ signups, setSignups ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
@@ -129,6 +132,7 @@ export default function EventSignups( { eventDateId } ) {
 		__( 'Qty', 'fair-events' ),
 		__( 'Amount', 'fair-events' ),
 		__( 'Status', 'fair-events' ),
+		__( 'Transaction', 'fair-events' ),
 		__( 'Mailing', 'fair-events' ),
 		__( 'Date', 'fair-events' ),
 	];
@@ -248,7 +252,34 @@ export default function EventSignups( { eventDateId } ) {
 											borderBottom: '1px solid #eee',
 										} }
 									>
-										{ s.status }
+										{ s.status === 'confirmed' &&
+										s.over_capacity
+											? __(
+													'Confirmed — over capacity',
+													'fair-events'
+											  )
+											: s.status === 'confirmed'
+											? __( 'Confirmed', 'fair-events' )
+											: s.status === 'expired'
+											? __( 'Expired', 'fair-events' )
+											: s.status }
+									</td>
+									<td
+										style={ {
+											padding: '8px',
+											borderBottom: '1px solid #eee',
+										} }
+									>
+										{ s.transaction_id &&
+										connectorActive ? (
+											<a
+												href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ s.transaction_id }` }
+											>
+												{ s.transaction_id }
+											</a>
+										) : (
+											s.transaction_id || '—'
+										) }
 									</td>
 									<td
 										style={ {

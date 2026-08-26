@@ -46,7 +46,9 @@ class PaymentHooks {
 	 */
 	public static function handle_payment_paid( $payment, $transaction ) {
 		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
-			\FairEvents\Models\EventSignup::update_status( $signup_id, 'confirmed' );
+			if ( ! \FairEvents\Models\EventSignup::confirm_paid( $signup_id ) ) {
+				continue;
+			}
 
 			$signup = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
 			if ( $signup ) {
@@ -70,7 +72,9 @@ class PaymentHooks {
 	 */
 	public static function handle_payment_failed( $payment, $transaction ) {
 		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
-			\FairEvents\Models\EventSignup::update_status( $signup_id, 'failed' );
+			if ( ! \FairEvents\Models\EventSignup::fail_pending( $signup_id ) ) {
+				continue;
+			}
 
 			$signup = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
 			if ( $signup ) {
@@ -86,12 +90,12 @@ class PaymentHooks {
 	}
 
 	/**
-	 * Remove expired pending_payment rows.
+	 * Retain and mark expired pending-payment rows.
 	 *
 	 * @return void
 	 */
 	public static function cleanup_expired_signups() {
-		\FairEvents\Models\EventSignup::delete_expired_pending();
+		\FairEvents\Models\EventSignup::expire_pending();
 	}
 
 	/**

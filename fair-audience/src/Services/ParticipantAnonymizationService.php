@@ -56,6 +56,11 @@ class ParticipantAnonymizationService {
 		if ( class_exists( GroupParticipantRepository::class ) ) {
 			( new GroupParticipantRepository() )->delete_by_participant( $id );
 		}
+		if ( class_exists( '\\FairEvents\\Models\\EventSignup' )
+			&& method_exists( '\\FairEvents\\Models\\EventSignup', 'anonymize_by_participant_id' )
+		) {
+			\FairEvents\Models\EventSignup::anonymize_by_participant_id( (int) $id );
+		}
 
 		return true;
 	}
