@@ -47,6 +47,17 @@ class EventSignupTest extends TestCase {
 	}
 
 	/**
+	 * A retry reopens the signup hold while assigning the replacement transaction.
+	 */
+	public function test_retry_transaction_resets_signup_to_pending_payment(): void {
+		EventSignup::update_transaction( 10, 21, 'pending_payment' );
+
+		$this->assertSame( 21, $GLOBALS['wpdb']->last_update['data']['transaction_id'] );
+		$this->assertSame( 'pending_payment', $GLOBALS['wpdb']->last_update['data']['status'] );
+		$this->assertSame( array( '%d', '%s', '%s' ), $GLOBALS['wpdb']->last_update['formats'] );
+	}
+
+	/**
 	 * Cleanup retains rows and expires them once at/after the UTC boundary.
 	 */
 	public function test_cleanup_uses_utc_and_includes_exact_expiry_boundary(): void {
@@ -193,6 +204,8 @@ class EventSignupTest extends TestCase {
 
 		$this->assertSame( 'failed', EventSignup::get_by_id( 10 )->status );
 		$this->assertSame( 'failed', EventSignup::get_by_id( 11 )->status );
+		$this->assertNotNull( EventSignup::get_by_id( 10 )->payment_expires_at );
+		$this->assertNotNull( EventSignup::get_by_id( 11 )->payment_expires_at );
 		$this->assertCount( 2, $GLOBALS['_fair_test_actions']['fair_events_signup_payment_failed'] );
 	}
 

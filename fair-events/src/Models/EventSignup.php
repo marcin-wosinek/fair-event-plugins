@@ -156,7 +156,19 @@ class EventSignup {
 	 * @return bool True when the row transitioned.
 	 */
 	public static function fail_pending( int $signup_id ) {
-		return self::transition_status( $signup_id, 'failed', array( 'pending_payment' ) );
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'fair_events_signups';
+
+		return 1 === (int) $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s WHERE id = %d AND status = %s',
+				$table,
+				'failed',
+				$signup_id,
+				'pending_payment'
+			)
+		);
 	}
 
 	/**
@@ -200,24 +212,32 @@ class EventSignup {
 	/**
 	 * Store transaction ID and payment expiry on a signup row.
 	 *
-	 * @param int $signup_id      Signup row ID.
-	 * @param int $transaction_id Transaction ID.
+	 * @param int         $signup_id      Signup row ID.
+	 * @param int         $transaction_id Transaction ID.
+	 * @param string|null $status         Optional status to set atomically with the new transaction.
 	 * @return bool
 	 */
-	public static function update_transaction( int $signup_id, int $transaction_id ) {
+	public static function update_transaction( int $signup_id, int $transaction_id, ?string $status = null ) {
 		global $wpdb;
 
 		$table      = $wpdb->prefix . 'fair_events_signups';
 		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
+		$data       = array(
+			'transaction_id'     => $transaction_id,
+			'payment_expires_at' => $expires_at,
+		);
+		$formats    = array( '%d', '%s' );
+
+		if ( null !== $status ) {
+			$data['status'] = $status;
+			$formats[]      = '%s';
+		}
 
 		return (bool) $wpdb->update(
 			$table,
-			array(
-				'transaction_id'     => $transaction_id,
-				'payment_expires_at' => $expires_at,
-			),
+			$data,
 			array( 'id' => $signup_id ),
-			array( '%d', '%s' ),
+			$formats,
 			array( '%d' )
 		);
 	}
