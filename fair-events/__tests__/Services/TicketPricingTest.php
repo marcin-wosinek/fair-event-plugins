@@ -79,6 +79,33 @@ class TicketPricingTest extends TestCase {
 	}
 
 	/**
+	 * Manual disabling takes precedence over active pricing.
+	 */
+	public function test_filter_removes_manually_disabled_type() {
+		$type           = $this->ticket_type( 1 );
+		$type->disabled = true;
+		$this->assertSame( array(), TicketPricing::filter_purchasable_types( array( $type ), array( 1 => 10.0 ), array( 1 ), '2026-01-01 12:00:00' ) );
+	}
+
+	/**
+	 * The scheduled disable boundary is no longer available.
+	 */
+	public function test_filter_removes_type_at_disable_at_boundary() {
+		$type             = $this->ticket_type( 1 );
+		$type->disable_at = '2026-01-01 12:00:00';
+		$this->assertSame( array(), TicketPricing::filter_purchasable_types( array( $type ), array( 1 => 10.0 ), array( 1 ), '2026-01-01 12:00:00' ) );
+	}
+
+	/**
+	 * A future scheduled disable time remains available.
+	 */
+	public function test_filter_keeps_type_before_disable_at() {
+		$type             = $this->ticket_type( 1 );
+		$type->disable_at = '2026-01-01 12:00:01';
+		$this->assertSame( array( $type ), TicketPricing::filter_purchasable_types( array( $type ), array( 1 => 10.0 ), array( 1 ), '2026-01-01 12:00:00' ) );
+	}
+
+	/**
 	 * The fallback never jumps ahead to a period that hasn't started yet.
 	 */
 	public function test_continues_fallback_only_applies_to_last_period_after_its_own_start() {
