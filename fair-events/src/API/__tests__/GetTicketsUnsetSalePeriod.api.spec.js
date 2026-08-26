@@ -10,9 +10,8 @@
  *   - single, non-recurring event with an unset window is purchasable.
  *   - recurring event with an unset window is purchasable through the
  *     day after its last (generated) occurrence.
- *   - a series entirely in the past with an unset window is still
- *     purchasable (the existing continues-fallback semantics), never an
- *     inverted/empty range.
+ *   - a series entirely in the past with an unset window is unavailable
+ *     after its lazily computed end.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -156,7 +155,7 @@ test.describe('GetTicketsController — lazy default sale-period resolution', ()
 		expect(res.ok()).toBeTruthy();
 	});
 
-	test('a series entirely in the past with an unset window is still purchasable, never inverted', async () => {
+	test('a series entirely in the past with an unset window is unavailable', async () => {
 		const { eventDateId, ticketTypeId } = await createEventWithUnsetWindow(
 			api,
 			{
@@ -168,7 +167,10 @@ test.describe('GetTicketsController — lazy default sale-period resolution', ()
 		createdEventDateIds.push(eventDateId);
 
 		const res = await purchase(api, eventDateId, ticketTypeId);
-		expect(res.ok()).toBeTruthy();
+		expect(res.status()).toBe(409);
+		expect(await res.json()).toMatchObject({
+			code: 'ticket_type_unavailable',
+		});
 	});
 });
 
