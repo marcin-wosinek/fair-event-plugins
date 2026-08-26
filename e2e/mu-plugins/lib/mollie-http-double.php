@@ -112,6 +112,7 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 	private function canned_response( string $method, string $path, array $payload ) {
 		// Create payment: POST /v2/payments
 		if ( 'POST' === $method && \preg_match( '#/payments/?$#', $path ) ) {
+			\update_option( 'fair_e2e_mollie_last_create_payload', $payload, false );
 			return $this->payment_response( $payload, 'open' );
 		}
 

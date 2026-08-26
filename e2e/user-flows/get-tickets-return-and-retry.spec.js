@@ -91,5 +91,7 @@ test.describe('get-tickets block: return and retry', () => {
 		expect(state.signups[0].email).toBe(email);
 		expect(state.signups[0].status).toBe('confirmed');
 		expect(state.signups[0].transaction_status).toBe('paid');
+		expect(state.mollie_payload.metadata.email).toBe(email);
+		expect(state.mollie_payload.metadata.retry_of_transaction_id).toBeTruthy();
 	});
 });

@@ -59,9 +59,10 @@ test.describe('multiple_instances ticket type purchase (new buyer)', () => {
 		await form
 			.locator('input[name="name"]')
 			.fill(`E2E Multi Instance ${stamp}`);
+		const email = `multi-instance-${stamp}@example.test`;
 		await form
 			.locator('input[name="email"]')
-			.fill(`multi-instance-${stamp}@example.test`);
+			.fill(email);
 
 		// Submit → create-signup REST call. Via the Mollie double, the
 		// checkout URL points back at the callback with the transaction id.
@@ -85,5 +86,13 @@ test.describe('multiple_instances ticket type purchase (new buyer)', () => {
 		// occurrences (30.00), matching what the buyer was shown and agreed
 		// to pay — not a single occurrence's price (10.00).
 		expect(tx.amount).toBe(Number(expectedTotal));
+
+		const state = runScript(
+			'get-tickets-state.php',
+			'E2E_GT_STATE',
+			String(event.occurrenceIds[0])
+		);
+		expect(state.mollie_payload.metadata.email).toBe(email);
+		expect(state.mollie_payload.metadata.signup_ids).toHaveLength(3);
 	});
 });
