@@ -40,9 +40,6 @@ class TicketPricing {
 	 * day after the event/series' last occurrence, computed fresh on every
 	 * call so it automatically tracks series changes.
 	 *
-	 * Sale periods always chain: when no period matches, falls back to the
-	 * last period whose start is already in the past.
-	 *
 	 * @param int $event_date_id Event date ID.
 	 * @return TicketSalePeriod|null Active period or null.
 	 */
@@ -53,7 +50,7 @@ class TicketPricing {
 		$default_end  = self::compute_default_sale_end( EventDates::get_last_occurrence_end( $event_date_id ) );
 		$sale_periods = self::apply_default_window( $sale_periods, $default_end );
 
-		return self::pick_active_period( $sale_periods, $now, true );
+		return self::pick_active_period( $sale_periods, $now, false );
 	}
 
 	/**
@@ -170,7 +167,7 @@ class TicketPricing {
 	 */
 	public static function resolve_unit_price( $ticket_type_id ) {
 		$ticket_type = TicketType::get_by_id( $ticket_type_id );
-		if ( ! $ticket_type ) {
+		if ( ! $ticket_type || ! self::is_ticket_type_enabled( $ticket_type ) ) {
 			return null;
 		}
 
@@ -294,7 +291,7 @@ class TicketPricing {
 	}
 
 	/**
-	 * Keep only the ticket types actually purchasable right now under the
+	 * Keep only enabled ticket types actually purchasable right now under the
 	 * currently active sale period. A type is purchasable when it either has
 	 * a resolved price for the active period ($price_by_type_id), or has
 	 * never had a price row for any period at all ($priced_type_ids) — free
@@ -308,13 +305,19 @@ class TicketPricing {
 	 * @param object[] $ticket_types     Ticket type objects.
 	 * @param float[]  $price_by_type_id Ticket-type ID => resolved price for the active period.
 	 * @param int[]    $priced_type_ids  Ticket-type IDs with a price row for at least one period.
+	 * @param string   $now              Current site datetime for deterministic tests. Defaults to current_time( 'mysql' ).
 	 * @return object[] Purchasable ticket types, re-indexed.
 	 */
-	public static function filter_purchasable_types( array $ticket_types, array $price_by_type_id, array $priced_type_ids = array() ) {
+	public static function filter_purchasable_types( array $ticket_types, array $price_by_type_id, array $priced_type_ids = array(), $now = null ) {
+		$now = $now ?? current_time( 'mysql' );
+
 		return array_values(
 			array_filter(
 				$ticket_types,
-				function ( $ticket_type ) use ( $price_by_type_id, $priced_type_ids ) {
+				function ( $ticket_type ) use ( $price_by_type_id, $priced_type_ids, $now ) {
+					if ( ! self::is_ticket_type_enabled( $ticket_type, $now ) ) {
+						return false;
+					}
 					$id = (int) $ticket_type->id;
 					if ( array_key_exists( $id, $price_by_type_id ) ) {
 						return true;
@@ -323,5 +326,19 @@ class TicketPricing {
 				}
 			)
 		);
+	}
+
+	/**
+	 * Check the ticket type's manual and scheduled enabled state.
+	 *
+	 * @param object $ticket_type Ticket type object.
+	 * @param string $now         Current site datetime. Defaults to current_time( 'mysql' ).
+	 * @return bool Whether the type remains enabled.
+	 */
+	public static function is_ticket_type_enabled( $ticket_type, $now = null ) {
+		$now = $now ?? current_time( 'mysql' );
+
+		return empty( $ticket_type->disabled )
+			&& ( empty( $ticket_type->disable_at ) || $ticket_type->disable_at > $now );
 	}
 }

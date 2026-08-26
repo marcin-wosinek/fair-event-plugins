@@ -382,7 +382,7 @@ class GetTicketsController extends WP_REST_Controller {
 					array( 'status' => 400 )
 				);
 			}
-			if ( $ticket_type->disabled || ( $ticket_type->disable_at && strtotime( $ticket_type->disable_at ) <= time() ) ) {
+			if ( ! \FairEvents\Services\TicketPricing::is_ticket_type_enabled( $ticket_type ) ) {
 				return new WP_Error(
 					'ticket_type_disabled',
 					__( 'This ticket type is no longer available.', 'fair-events' ),
@@ -460,7 +460,7 @@ class GetTicketsController extends WP_REST_Controller {
 		$signup_id = \FairEvents\Models\EventSignup::save(
 			array(
 				'event_date_id'  => $event_date_id,
-				'ticket_type_id' => $ticket_type_id ?: null,
+				'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
 				'name'           => $name,
 				'email'          => $email,
 				'quantity'       => $quantity,
@@ -538,7 +538,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'      => $currency,
 				'description'   => $description,
 				'event_date_id' => $event_date_id,
-				'user_id'       => $user_id ?: null,
+				'user_id'       => $user_id ? $user_id : null,
 				'metadata'      => array(
 					'source'        => 'fair-events-get-tickets',
 					'event_date_id' => $event_date_id,
@@ -670,19 +670,12 @@ class GetTicketsController extends WP_REST_Controller {
 		$price_by_type_id   = array();
 		$priced_type_ids    = array();
 		$active_sale_period = null;
-		if ( class_exists( \FairEvents\Services\TicketPricing::class ) && class_exists( \FairEvents\Models\TicketPrice::class ) ) {
-			$active_sale_period = \FairEvents\Services\TicketPricing::resolve_active_sale_period( $pricing_event_date_id );
-			if ( $active_sale_period ) {
-				$prices = \FairEvents\Models\TicketPrice::get_all_by_event_date_id( $pricing_event_date_id );
-				foreach ( $prices as $price ) {
-					$priced_type_ids[ (int) $price->ticket_type_id ] = true;
-					if ( (int) $price->sale_period_id === (int) $active_sale_period->id ) {
-						$price_by_type_id[ (int) $price->ticket_type_id ] = (float) $price->price;
-					}
-				}
-			}
+		if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
+			$resolved_prices    = \FairEvents\Services\TicketPricing::resolve_unit_prices_for_event_date( $pricing_event_date_id );
+			$active_sale_period = $resolved_prices['active_period'];
+			$price_by_type_id   = $resolved_prices['price_by_type_id'];
+			$priced_type_ids    = $resolved_prices['priced_type_ids'];
 		}
-		$priced_type_ids = array_keys( $priced_type_ids );
 
 		// A ticket type with no price row for the active sale period, but
 		// priced for some other period, isn't purchasable right now — drop
@@ -799,7 +792,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// IDs already present in the page's DOM.
 		$form_id = 'fair-events-get-tickets-viewer-' . $event_date_id;
 
-		if ( ! $suppress_form ) {
+		if ( ! $suppress_form && ! empty( $context['ticket_types'] ) ) {
 			$response['ticket_type_fieldset_html']    = \FairEvents\Services\SignupFieldsetRenderer::ticket_type_fieldset(
 				$context['ticket_types'],
 				$context['price_by_type_id'],
@@ -1153,7 +1146,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'      => $currency,
 				'description'   => $description,
 				'event_date_id' => $series_master_id,
-				'user_id'       => $user_id ?: null,
+				'user_id'       => $user_id ? $user_id : null,
 				'metadata'      => array(
 					'source'        => 'fair-events-get-tickets',
 					'event_date_id' => $series_master_id,
