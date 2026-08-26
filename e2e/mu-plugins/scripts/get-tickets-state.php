@@ -26,14 +26,17 @@ if ( ! $event_date_id ) {
 
 $signups_table      = $wpdb->prefix . 'fair_events_signups';
 $transactions_table = $wpdb->prefix . 'fair_payment_transactions';
+$payment_logs_table = $wpdb->prefix . 'fair_payment_log';
 $captured_mail      = get_option( 'fair_e2e_captured_mail', array() );
+$mollie_payload     = get_option( 'fair_e2e_mollie_last_create_payload', array() );
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off state dump for the spec, no cache to honour.
 $rows = $wpdb->get_results(
 	$wpdb->prepare( 'SELECT * FROM %i WHERE event_date_id = %d ORDER BY id ASC', $signups_table, $event_date_id )
 );
 
-$signups = array();
+$signups      = array();
+$payment_logs = array();
 foreach ( $rows as $row ) {
 	$mail = array();
 	foreach ( $captured_mail as $captured ) {
@@ -67,10 +70,24 @@ foreach ( $rows as $row ) {
 			$entry['transaction_testmode'] = (bool) $tx->testmode;
 			$entry['mollie_payment_id']    = (string) $tx->mollie_payment_id;
 		}
+
+		$payment_logs = array_merge(
+			$payment_logs,
+			$wpdb->get_results(
+				$wpdb->prepare( 'SELECT message, context FROM %i WHERE transaction_id = %d ORDER BY id ASC', $payment_logs_table, (int) $row->transaction_id ),
+				ARRAY_A
+			)
+		);
 	}
 
 	$signups[] = $entry;
 }
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-echo 'E2E_GT_STATE:' . wp_json_encode( array( 'signups' => $signups ) ) . "\n";
+echo 'E2E_GT_STATE:' . wp_json_encode(
+	array(
+		'signups'        => $signups,
+		'mollie_payload' => $mollie_payload,
+		'payment_logs'   => $payment_logs,
+	)
+) . "\n";

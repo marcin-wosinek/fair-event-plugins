@@ -104,6 +104,12 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 		expect(state.signups[0].amount).toBe(event.price);
 		expect(state.signups[0].mollie_payment_id).toBeTruthy();
 		expect(state.signups[0].mail).toHaveLength(0);
+		expect(state.mollie_payload.metadata.email).toBe(email);
+		expect(state.mollie_payload.metadata).not.toHaveProperty('user_id');
+		expect(state.mollie_payload.metadata).not.toHaveProperty(
+			'participant_id'
+		);
+		expect(JSON.stringify(state.payment_logs)).not.toContain(email);
 
 		// The buyer's bank has now confirmed the payment. Simulate Mollie's
 		// webhook call (production path): the handler fetches the payment

@@ -539,10 +539,12 @@ class GetTicketsController extends WP_REST_Controller {
 				'description'   => $description,
 				'event_date_id' => $event_date_id,
 				'user_id'       => $user_id ? $user_id : null,
+				'email'         => $email,
 				'metadata'      => array(
 					'source'        => 'fair-events-get-tickets',
 					'event_date_id' => $event_date_id,
 					'signup_id'     => $signup_id,
+					'email'         => $email,
 				),
 			)
 		);
@@ -1147,10 +1149,12 @@ class GetTicketsController extends WP_REST_Controller {
 				'description'   => $description,
 				'event_date_id' => $series_master_id,
 				'user_id'       => $user_id ? $user_id : null,
+				'email'         => $email,
 				'metadata'      => array(
 					'source'        => 'fair-events-get-tickets',
 					'event_date_id' => $series_master_id,
 					'signup_ids'    => $signup_ids,
+					'email'         => $email,
 				),
 			)
 		);
@@ -1488,6 +1492,11 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
+		$buyer_email = $this->resolve_retry_buyer_email( $signup_rows );
+		if ( is_wp_error( $buyer_email ) ) {
+			return $buyer_email;
+		}
+
 		// The cleanup cron releases the hold (and the seats it reserves)
 		// once payment_expires_at elapses — retrying past that point could
 		// oversell, so it's refused rather than silently recreating the hold.
@@ -1549,11 +1558,13 @@ class GetTicketsController extends WP_REST_Controller {
 				'description'   => $transaction->description,
 				'event_date_id' => $event_date_id,
 				'user_id'       => $user_id ? $user_id : null,
+				'email'         => $buyer_email,
 				'metadata'      => array(
 					'source'                  => 'fair-events-get-tickets',
 					'event_date_id'           => $event_date_id,
 					'signup_ids'              => $new_signup_ids,
 					'retry_of_transaction_id' => (int) $transaction->id,
+					'email'                   => $buyer_email,
 				),
 			)
 		);
@@ -1597,6 +1608,38 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'       => $transaction->currency,
 			)
 		);
+	}
+
+	/**
+	 * Resolve one validated buyer email across every signup in a retry.
+	 *
+	 * @param object[] $signup_rows Signup rows linked to the transaction.
+	 * @return string|WP_Error Validated email or a safe retry-context error.
+	 */
+	private function resolve_retry_buyer_email( $signup_rows ) {
+		$emails = array();
+		foreach ( $signup_rows as $row ) {
+			$email = sanitize_email( (string) ( $row->email ?? '' ) );
+			if ( ! is_email( $email ) || $email !== (string) $row->email ) {
+				return new WP_Error(
+					'invalid_retry_state',
+					__( 'This payment is missing context needed to retry.', 'fair-events' ),
+					array( 'status' => 409 )
+				);
+			}
+			$emails[] = $email;
+		}
+
+		$emails = array_values( array_unique( $emails ) );
+		if ( 1 !== count( $emails ) ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'This payment is missing context needed to retry.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return $emails[0];
 	}
 
 	/**

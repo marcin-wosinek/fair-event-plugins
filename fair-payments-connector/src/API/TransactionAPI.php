@@ -181,6 +181,8 @@ class TransactionAPI {
 		}
 
 		// 4. Prepare payment arguments.
+		$metadata = self::prepare_payment_metadata( $transaction, $transaction_id );
+
 		$payment_args = array(
 			'amount'          => $transaction->amount,
 			'currency'        => $transaction->currency,
@@ -196,13 +198,7 @@ class TransactionAPI {
 			'webhook_url'     => isset( $args['webhook_url'] )
 				? $args['webhook_url']
 				: rest_url( 'fair-payments-connector/v1/webhook' ),
-			'metadata'        => array_merge(
-				! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array(),
-				array(
-					'transaction_id' => $transaction_id,
-					'participant_id' => ! empty( $transaction->participant_id ) ? (int) $transaction->participant_id : null,
-				)
-			),
+			'metadata'        => $metadata,
 			'disable_methods' => self::resolve_disabled_methods( $transaction ),
 		);
 
@@ -278,6 +274,29 @@ class TransactionAPI {
 			'mollie_payment_id' => $mollie_payment['mollie_payment_id'],
 			'status'            => $mollie_payment['status'],
 		);
+	}
+
+	/**
+	 * Build the provider metadata from the locally persisted transaction.
+	 *
+	 * Local ownership data stays on the transaction record. Provider metadata
+	 * contains only reconciliation references and a resolved participant ID.
+	 *
+	 * @param object $transaction    Transaction record.
+	 * @param int    $transaction_id Transaction ID.
+	 * @return array
+	 */
+	private static function prepare_payment_metadata( $transaction, $transaction_id ) {
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		$metadata = is_array( $metadata ) ? $metadata : array();
+
+		unset( $metadata['user_id'], $metadata['participant_id'] );
+		$metadata['transaction_id'] = (int) $transaction_id;
+		if ( ! empty( $transaction->participant_id ) && (int) $transaction->participant_id > 0 ) {
+			$metadata['participant_id'] = (int) $transaction->participant_id;
+		}
+
+		return $metadata;
 	}
 
 	/**
