@@ -104,6 +104,20 @@ test.describe( 'ScheduledMessagesController', () => {
 			`Scheduled Mail Test ${ Date.now() }`
 		);
 		eventDateId = await resolveEventDateId( api, eventId );
+		const dateEventResponse = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{
+				headers: authHeaders,
+				data: {
+					start_datetime: '2035-06-01 10:00:00',
+					end_datetime: '2035-06-01 12:00:00',
+				},
+			}
+		);
+		expect(
+			dateEventResponse.ok(),
+			await dateEventResponse.text()
+		).toBeTruthy();
 
 		signedUpId = await createParticipant( api, {
 			name: 'Signed Up',

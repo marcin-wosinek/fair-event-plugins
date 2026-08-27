@@ -120,7 +120,7 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 		$ids        = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT id FROM {$table_name} WHERE event_id = %d ORDER BY start_datetime", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT id FROM {$table_name} WHERE event_id = %d AND start_datetime IS NOT NULL ORDER BY start_datetime", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$event_id
 			)
 		);

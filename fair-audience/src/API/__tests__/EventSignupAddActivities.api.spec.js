@@ -272,7 +272,7 @@ test.describe( 'EventSignupController add-activities', () => {
 		expect( ( await res.json() ).code ).toBe( 'no_new_activities' );
 	} );
 
-	test( 'adding a priced activity is rejected with 503 payment_unavailable (no payment connector configured)', async () => {
+	test( 'adding a priced activity starts payment when available', async () => {
 		test.skip(
 			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
@@ -287,11 +287,18 @@ test.describe( 'EventSignupController add-activities', () => {
 				},
 			}
 		);
-		expect( res.status() ).toBe( 503 );
-		expect( ( await res.json() ).code ).toBe( 'payment_unavailable' );
+		const body = await res.json();
+		const paymentUnavailable = res.status() === 503;
+		if ( paymentUnavailable ) {
+			expect( body.code ).toBe( 'payment_unavailable' );
+		} else {
+			expect( res.status(), JSON.stringify( body ) ).toBe( 200 );
+			expect( body.status ).toBe( 'payment_required' );
+			expect( body.amount ).toBe( 20 );
+		}
 
-		// The rejected attempt must not have left a hold on the option: it
-		// should still be offered as addable.
+		// An available connector reserves the activity while payment is pending;
+		// without one, the rejected attempt must leave no reservation.
 		const listRes = await api.get(
 			`/wp-json/fair-audience/v1/event-dates/${ signedUpEvent.eventDateId }/participants`,
 			{ headers: authHeaders }
@@ -301,6 +308,10 @@ test.describe( 'EventSignupController add-activities', () => {
 			( p ) => p.participant_id === participantId
 		);
 		expect( row ).toBeTruthy();
-		expect( row.ticket_option_ids ).not.toContain( paidOptionId );
+		if ( paymentUnavailable ) {
+			expect( row.ticket_option_ids ).not.toContain( paidOptionId );
+		} else {
+			expect( row.ticket_option_ids ).toContain( paidOptionId );
+		}
 	} );
 } );

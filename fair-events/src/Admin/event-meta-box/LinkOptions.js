@@ -14,10 +14,15 @@ import apiFetch from '@wordpress/api-fetch';
 /**
  * LinkOptions component
  *
- * Shows "Create New Event" and "Link Existing Event" options
- * for non-fair_event posts that aren't yet linked to an event.
+ * Shows "Create New Event" and "Link Existing Event" options for posts that
+ * aren't yet linked to an event.
  */
-export default function LinkOptions( { postId, onEventLinked, setError } ) {
+export default function LinkOptions( {
+	postId,
+	postType,
+	onEventLinked,
+	setError,
+} ) {
 	const [ allEvents, setAllEvents ] = useState( [] );
 	const [ selectedEventDateId, setSelectedEventDateId ] = useState( '' );
 	const [ creating, setCreating ] = useState( false );
@@ -32,6 +37,16 @@ export default function LinkOptions( { postId, onEventLinked, setError } ) {
 	const handleCreateNew = async () => {
 		setCreating( true );
 		try {
+			if ( postType === 'fair_event' ) {
+				const eventDate = await apiFetch( {
+					path: '/fair-events/v1/event-dates/ensure-for-post',
+					method: 'POST',
+					data: { post_id: parseInt( postId, 10 ) },
+				} );
+				onEventLinked( eventDate.id );
+				return;
+			}
+
 			const postTitle =
 				document.getElementById( 'title' )?.value ||
 				__( 'Untitled Event', 'fair-events' );
@@ -108,6 +123,7 @@ export default function LinkOptions( { postId, onEventLinked, setError } ) {
 			return { label, value: String( event.id ) };
 		} ),
 	];
+	const busy = creating || linking;
 
 	return (
 		<VStack spacing={ 3 }>
@@ -115,7 +131,7 @@ export default function LinkOptions( { postId, onEventLinked, setError } ) {
 				variant="primary"
 				onClick={ handleCreateNew }
 				isBusy={ creating }
-				disabled={ creating }
+				disabled={ busy }
 				style={ {
 					width: '100%',
 					justifyContent: 'center',
@@ -139,6 +155,7 @@ export default function LinkOptions( { postId, onEventLinked, setError } ) {
 				value={ selectedEventDateId }
 				options={ eventOptions }
 				onChange={ setSelectedEventDateId }
+				disabled={ busy }
 			/>
 
 			{ selectedEventDateId && (
@@ -146,7 +163,7 @@ export default function LinkOptions( { postId, onEventLinked, setError } ) {
 					variant="secondary"
 					onClick={ handleLinkExisting }
 					isBusy={ linking }
-					disabled={ linking }
+					disabled={ busy }
 					style={ {
 						width: '100%',
 						justifyContent: 'center',

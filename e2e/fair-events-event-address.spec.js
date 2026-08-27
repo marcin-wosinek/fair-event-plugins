@@ -22,6 +22,9 @@ test('single event: address renders with no venue set', async ({
 	seedEvent,
 }) => {
 	const address = 'Calle Mayor 1, Madrid';
+	// seedEvent creates the post first (triggering its undated placeholder),
+	// then adds the configured future occurrence carrying this address. The
+	// public render must resolve the configured occurrence, not the placeholder.
 	const event = seedEvent('address', { address });
 
 	await page.goto(event.pageUrl);

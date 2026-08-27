@@ -191,7 +191,7 @@ test.describe( 'Selectable activities in the unified Event Signup form (#1243)',
 		expect( ( await res.json() ).code ).toBe( 'invalid_ticket_option' );
 	} );
 
-	test( 'a paid activity is charged into the signup amount (503 without a payment connector proves it)', async () => {
+	test( 'a paid activity is charged into the signup amount', async () => {
 		test.skip(
 			! experimentalActive,
 			'fair-events-experimental not active'
@@ -209,8 +209,14 @@ test.describe( 'Selectable activities in the unified Event Signup form (#1243)',
 				ticket_option_ids: [ paidOptionId ],
 			},
 		} );
-		expect( res.status() ).toBe( 503 );
-		expect( ( await res.json() ).code ).toBe( 'payment_unavailable' );
+		const body = await res.json();
+		if ( res.status() === 503 ) {
+			expect( body.code ).toBe( 'payment_unavailable' );
+		} else {
+			expect( res.status(), JSON.stringify( body ) ).toBe( 200 );
+			expect( body.status ).toBe( 'payment_required' );
+			expect( body.amount ).toBe( 15 );
+		}
 	} );
 
 	test( 'a free activity confirms immediately, then a capacity-1 activity 409s ticket_option_full for the next buyer', async () => {

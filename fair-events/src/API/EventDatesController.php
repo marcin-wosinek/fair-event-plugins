@@ -12,6 +12,7 @@ defined( 'WPINC' ) || die;
 use FairEvents\Models\EventDates;
 use FairEvents\Services\RecurrenceService;
 use FairEvents\Services\PostTranslationLinks;
+use FairEvents\Services\EventDateForPost;
 use FairEvents\Database\EventPhotoRepository;
 use FairEvents\Database\EventSourceRepository;
 use FairEvents\Database\PhotoLikeRepository;
@@ -45,6 +46,28 @@ class EventDatesController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
+		// POST /fair-events/v1/event-dates/ensure-for-post.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/ensure-for-post',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'ensure_for_post' ),
+					'permission_callback' => array( $this, 'ensure_for_post_permissions_check' ),
+					'args'                => array(
+						'post_id' => array(
+							'description'       => __( 'Post ID that should have event data.', 'fair-events' ),
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+							'minimum'           => 1,
+						),
+					),
+				),
+			)
+		);
+
 		// GET, POST /fair-events/v1/event-dates.
 		register_rest_route(
 			$this->namespace,
@@ -667,6 +690,64 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $items, 200 );
+	}
+
+	/**
+	 * Check whether the current user may ensure event data for a post.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return bool|WP_Error Permission result.
+	 */
+	public function ensure_for_post_permissions_check( $request ) {
+		$post_id = absint( $request->get_param( 'post_id' ) );
+		$post    = get_post( $post_id );
+
+		if ( ! $post ) {
+			return new WP_Error(
+				'rest_post_not_found',
+				__( 'Post not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! in_array( $post->post_type, Settings::get_enabled_post_types(), true ) ) {
+			return new WP_Error(
+				'rest_invalid_post_type',
+				__( 'The specified post type is not enabled.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to edit this post.', 'fair-events' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Ensure a post has an event-date record.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object.
+	 */
+	public function ensure_for_post( $request ) {
+		$post_id    = absint( $request->get_param( 'post_id' ) );
+		$event_date = EventDateForPost::ensure( $post_id );
+
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'rest_event_date_creation_failed',
+				__( 'Failed to create event data.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import { Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
@@ -32,13 +32,14 @@ export default function EventMetaBox( {
 	);
 	const [ loading, setLoading ] = useState( ! initialEventDateId );
 	const [ error, setError ] = useState( null );
+	const resolutionVersion = useRef( 0 );
 
 	const { setEventData } = useDispatch( STORE_NAME );
 
 	const isFairEvent = postType === 'fair_event';
 	const isLinked = eventDateId > 0;
 
-	// For fair_event posts that don't have an eventDateId yet, poll until auto-create completes.
+	// Give automatic creation a short window to finish before showing recovery actions.
 	useEffect( () => {
 		if ( isLinked || ! isFairEvent || ! postId ) {
 			setLoading( false );
@@ -46,42 +47,64 @@ export default function EventMetaBox( {
 		}
 
 		let cancelled = false;
+		let timerId;
+		const requestVersion = resolutionVersion.current;
+		const maxAttempts = 3;
 
-		const checkForEventDate = async () => {
+		const checkForEventDate = async ( attempt = 1 ) => {
 			try {
-				// The auto-create hook fires on wp_after_insert_post, so the event_date
-				// should exist by the time the editor loads. Try fetching it.
 				const response = await apiFetch( {
-					path: `/fair-events/v1/event-dates?include_linked=true`,
+					path: `/fair-events/v1/event-dates?event_id=${ parseInt(
+						postId,
+						10
+					) }`,
 				} );
 
-				const match = response.find(
-					( ed ) => ed.event_id === parseInt( postId, 10 )
-				);
-				if ( match && ! cancelled ) {
+				const match = response[ 0 ];
+				if (
+					match &&
+					! cancelled &&
+					requestVersion === resolutionVersion.current
+				) {
+					resolutionVersion.current += 1;
 					setEventDateId( match.id );
 					setManageEventUrl(
 						`${ window.location.origin }/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ match.id }`
 					);
+					setLoading( false );
+					return;
 				}
 			} catch {
 				// Ignore errors - the event may not be created yet.
-			} finally {
-				if ( ! cancelled ) {
-					setLoading( false );
-				}
 			}
+
+			if ( cancelled || requestVersion !== resolutionVersion.current ) {
+				return;
+			}
+
+			if ( attempt < maxAttempts ) {
+				timerId = window.setTimeout(
+					() => checkForEventDate( attempt + 1 ),
+					500
+				);
+				return;
+			}
+
+			setLoading( false );
 		};
 
 		checkForEventDate();
 
 		return () => {
 			cancelled = true;
+			window.clearTimeout( timerId );
 		};
 	}, [ postId, isFairEvent, isLinked ] );
 
 	const handleEventLinked = ( newEventDateId ) => {
+		resolutionVersion.current += 1;
 		setEventDateId( newEventDateId );
+		setLoading( false );
 		setManageEventUrl(
 			`${ window.location.origin }/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ newEventDateId }`
 		);
@@ -131,24 +154,12 @@ export default function EventMetaBox( {
 		);
 	}
 
-	// For non-fair_event posts that are not linked: show link options.
-	if ( ! isFairEvent ) {
-		return (
-			<LinkOptions
-				postId={ postId }
-				onEventLinked={ handleEventLinked }
-				setError={ setError }
-			/>
-		);
-	}
-
-	// Fair event post but no event date found (edge case).
 	return (
-		<p>
-			{ __(
-				'No event data found. Please save the post and reload.',
-				'fair-events'
-			) }
-		</p>
+		<LinkOptions
+			postId={ postId }
+			postType={ postType }
+			onEventLinked={ handleEventLinked }
+			setError={ setError }
+		/>
 	);
 }

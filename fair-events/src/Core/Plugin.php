@@ -342,20 +342,7 @@ class Plugin {
 			return;
 		}
 
-		// Guard: don't create if an event_date already exists for this post.
-		$existing = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
-		if ( $existing ) {
-			return;
-		}
-
-		// Create a minimal event_dates row.
-		\FairEvents\Models\EventDates::save( $post_id, null, null, false );
-
-		// Also add to junction table.
-		$event_date = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
-		if ( $event_date ) {
-			\FairEvents\Models\EventDates::add_linked_post( $event_date->id, $post_id );
-		}
+		\FairEvents\Services\EventDateForPost::ensure( $post_id );
 	}
 
 	/**

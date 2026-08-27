@@ -306,6 +306,10 @@ class Installer {
 			self::migrate_to_3_29_0();
 		}
 
+		if ( version_compare( $current_version, '3.30.0', '<' ) ) {
+			self::migrate_to_3_30_0();
+		}
+
 		// Update database version.
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -492,6 +496,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.29.0', '<' ) ) {
 				self::migrate_to_3_29_0();
+			}
+
+			if ( version_compare( $current_version, '3.30.0', '<' ) ) {
+				self::migrate_to_3_30_0();
 			}
 
 			// Install/update tables.
@@ -2181,6 +2189,23 @@ class Installer {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Migrate to version 3.30.0 - Allow undated event placeholders.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_30_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+		$wpdb->query(
+			$wpdb->prepare(
+				'ALTER TABLE %i MODIFY start_datetime DATETIME DEFAULT NULL',
+				$table_name
+			)
+		);
 	}
 
 	/**

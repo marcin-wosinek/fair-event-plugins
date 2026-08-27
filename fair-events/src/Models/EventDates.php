@@ -166,10 +166,12 @@ class EventDates {
 
 		// Fast path: direct event_id lookup (primary post). Restricted to
 		// single/master rows so the lookup always resolves to the series'
-		// primary date, never to a generated occurrence within it.
+		// primary date, never to a generated occurrence within it. Prefer a
+		// configured occurrence over an undated row ensured while the post was
+		// being created.
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') LIMIT 1",
+				"SELECT * FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') ORDER BY start_datetime IS NULL ASC, id ASC LIMIT 1",
 				$table_name,
 				$event_id
 			)
@@ -184,7 +186,7 @@ class EventDates {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT ed.* FROM %i ed JOIN %i edp ON ed.id = edp.event_date_id WHERE edp.post_id = %d LIMIT 1',
+				'SELECT ed.* FROM %i ed JOIN %i edp ON ed.id = edp.event_date_id WHERE edp.post_id = %d ORDER BY ed.start_datetime IS NULL ASC, ed.id ASC LIMIT 1',
 				$table_name,
 				$posts_table,
 				$event_id
@@ -383,7 +385,7 @@ class EventDates {
 		// Check if a master or single occurrence exists.
 		$existing = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') LIMIT 1",
+				"SELECT * FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') ORDER BY start_datetime IS NULL ASC, id ASC LIMIT 1",
 				$table_name,
 				$event_id
 			)
@@ -534,7 +536,7 @@ class EventDates {
 
 		$rrule = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT rrule FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') LIMIT 1",
+				"SELECT rrule FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') ORDER BY start_datetime IS NULL ASC, id ASC LIMIT 1",
 				$table_name,
 				$event_id
 			)

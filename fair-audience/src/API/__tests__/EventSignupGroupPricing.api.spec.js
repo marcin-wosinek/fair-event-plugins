@@ -299,7 +299,7 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 		await member.dispose();
 	} );
 
-	test( 'a 100% group discount confirms free for a member, but 503s for a non-member', async () => {
+	test( 'a 100% group discount confirms free only for a member', async () => {
 		test.skip(
 			! groupsActive,
 			'fair-events-experimental / fair-audience-experimental not active'
@@ -309,9 +309,8 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
 
-		// Non-member: full price applies, and the dev stack has no payment
-		// connector configured, so the priced signup is rejected — proving the
-		// discount didn't apply to a non-member.
+		// Non-member: full price applies. Depending on payment configuration,
+		// this either starts payment or reports that payment is unavailable.
 		const anon = await request.newContext( { baseURL: BASE_URL } );
 		const nonMemberRes = await anon.post(
 			'/wp-json/fair-events/v1/get-tickets',
@@ -324,10 +323,17 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 				},
 			}
 		);
-		expect( nonMemberRes.status() ).toBe( 503 );
-		expect( ( await nonMemberRes.json() ).code ).toBe(
-			'payment_unavailable'
-		);
+		const nonMemberBody = await nonMemberRes.json();
+		if ( nonMemberRes.status() === 503 ) {
+			expect( nonMemberBody.code ).toBe( 'payment_unavailable' );
+		} else {
+			expect(
+				nonMemberRes.status(),
+				JSON.stringify( nonMemberBody )
+			).toBe( 200 );
+			expect( nonMemberBody.status ).toBe( 'payment_required' );
+			expect( nonMemberBody.amount ).toBe( 25 );
+		}
 		await anon.dispose();
 
 		// Member: the 100% rule brings the price to 0, so the free path

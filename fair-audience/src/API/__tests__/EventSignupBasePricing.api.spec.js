@@ -68,12 +68,34 @@ async function deleteEvent( api, eventId ) {
 test.describe( 'Base signup pricing — ticket-type price', () => {
 	let api;
 	let event;
+	let participantId;
 	let paidTypeId;
 	let freeTypeId;
 	let fixtureOk = true;
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
+		const meRes = await api.get( '/wp-json/wp/v2/users/me', {
+			headers: authHeaders,
+		} );
+		expect( meRes.ok() ).toBeTruthy();
+		const adminUserId = ( await meRes.json() ).id;
+		const participantRes = await api.post(
+			'/wp-json/fair-audience/v1/participants',
+			{
+				headers: authHeaders,
+				data: {
+					name: 'Base Pricing Tester',
+					email: uniqueEmail( 'base-pricing-participant' ),
+					wp_user_id: adminUserId,
+				},
+			}
+		);
+		expect(
+			participantRes.ok(),
+			'admin must not be pre-linked to a participant'
+		).toBeTruthy();
+		participantId = ( await participantRes.json() ).id;
 		event = await createEventWithDates(
 			api,
 			`Base Pricing Ticket Type Test ${ Date.now() }`
@@ -131,11 +153,17 @@ test.describe( 'Base signup pricing — ticket-type price', () => {
 	} );
 
 	test.afterAll( async () => {
+		if ( participantId ) {
+			await api.delete(
+				`/wp-json/fair-audience/v1/participants/${ participantId }`,
+				{ headers: authHeaders }
+			);
+		}
 		await deleteEvent( api, event?.eventId );
 		await api.dispose();
 	} );
 
-	test( 'a priced ticket-type signup is rejected 503 and writes nothing', async () => {
+	test( 'a priced ticket-type signup requires payment', async () => {
 		test.skip(
 			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
@@ -149,8 +177,14 @@ test.describe( 'Base signup pricing — ticket-type price', () => {
 				email: uniqueEmail( 'base-pricing-paid' ),
 			},
 		} );
-		expect( res.status() ).toBe( 503 );
-		expect( ( await res.json() ).code ).toBe( 'payment_unavailable' );
+		const body = await res.json();
+		if ( res.status() === 503 ) {
+			expect( body.code ).toBe( 'payment_unavailable' );
+		} else {
+			expect( res.status(), JSON.stringify( body ) ).toBe( 200 );
+			expect( body.status ).toBe( 'payment_required' );
+			expect( body.amount ).toBe( 18 );
+		}
 	} );
 
 	test( 'a ticket type with no price row (0) still confirms', async () => {
