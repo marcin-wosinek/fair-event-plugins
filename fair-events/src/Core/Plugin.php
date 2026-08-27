@@ -60,6 +60,7 @@ class Plugin {
 		$this->load_post_cleanup();
 		$this->load_auto_create_event();
 		$this->load_title_sync();
+		\FairEvents\Services\PostTranslationLinks::init();
 		$this->load_shared_settings_page();
 
 		// Shared REST API endpoints (block renderer).

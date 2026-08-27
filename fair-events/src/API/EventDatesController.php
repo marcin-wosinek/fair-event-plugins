@@ -11,6 +11,7 @@ defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
 use FairEvents\Services\RecurrenceService;
+use FairEvents\Services\PostTranslationLinks;
 use FairEvents\Database\EventPhotoRepository;
 use FairEvents\Database\EventSourceRepository;
 use FairEvents\Database\PhotoLikeRepository;
@@ -989,18 +990,26 @@ class EventDatesController extends WP_REST_Controller {
 			$update_data['event_id'] = $new_event_id;
 			$newly_linked            = $new_event_id && ! $existing->event_id;
 
-			// Keep junction table in sync.
 			if ( $new_event_id ) {
-				EventDates::add_linked_post( $id, $new_event_id );
+				if ( $existing->event_id && $new_event_id !== (int) $existing->event_id ) {
+					PostTranslationLinks::unlink_group( $existing, $existing->event_id );
+					$existing = EventDates::get_by_id( $id );
+				}
+				PostTranslationLinks::link_group( $existing, $new_event_id );
+				EventDates::update_by_id( $id, array( 'event_id' => $new_event_id ) );
+				if ( 'master' === $existing->occurrence_type ) {
+					$this->propagate_event_id_to_children( $id, $new_event_id );
+				}
+			} elseif ( $existing->event_id ) {
+				PostTranslationLinks::unlink_group( $existing, $existing->event_id );
 			}
-			if ( $existing->event_id && ( ! $new_event_id || $new_event_id !== $existing->event_id ) ) {
-				EventDates::remove_linked_post( $id, $existing->event_id );
-			}
+			$linked_after_sync       = EventDates::get_by_id( $id );
+			$update_data['event_id'] = $linked_after_sync->event_id;
 		}
 
 		$rrule = $request->get_param( 'rrule' );
 		if ( null !== $rrule ) {
-			$update_data['rrule'] = $rrule ?: null;
+			$update_data['rrule'] = $rrule ? $rrule : null;
 		}
 
 		if ( ! empty( $update_data ) ) {
@@ -1039,7 +1048,7 @@ class EventDatesController extends WP_REST_Controller {
 			$dates_changed = ( null !== $new_start && $new_start !== $existing->start_datetime )
 				|| ( null !== $new_end && $new_end !== $existing->end_datetime );
 
-			$dates_changed_on_recurring = $dates_changed && ( $existing->occurrence_type === 'master' || $rrule_changed );
+			$dates_changed_on_recurring = $dates_changed && ( 'master' === $existing->occurrence_type || $rrule_changed );
 
 			if ( 'manual' === $existing->recurrence_mode && ! $rrule_changed && $dates_changed_on_recurring ) {
 				// A manual (hand-picked-dates) master's own start/end changed via a
@@ -1267,22 +1276,7 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		// Link the event date to the post.
-		EventDates::update_by_id(
-			$id,
-			array(
-				'event_id'  => $post_id,
-				'link_type' => 'post',
-			)
-		);
-
-		// Add to junction table.
-		EventDates::add_linked_post( $id, $post_id );
-
-		// Propagate the new link to any already-generated occurrences.
-		if ( 'master' === $event_date->occurrence_type ) {
-			$this->propagate_event_id_to_children( $id, $post_id );
-		}
+		PostTranslationLinks::link_group( $event_date, $post_id );
 
 		// Copy standalone categories to the new post.
 		$standalone_cat_ids = $this->get_standalone_category_ids( $id );
@@ -1331,41 +1325,7 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		// Generated occurrences store links on the master event date.
-		$link_event_date = $event_date;
-		if ( 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
-			$master = EventDates::get_by_id( $event_date->master_id );
-			if ( $master ) {
-				$link_event_date = $master;
-			}
-		}
-
-		// If the post is already linked to a different event, detach it from
-		// there first so it can be relinked here (e.g. a translated duplicate
-		// event page that auto-created its own, still-empty event date). The
-		// old event date row is not deleted — it's left unlinked, same as any
-		// manually-unlinked event.
-		$existing = EventDates::get_by_event_id( $post_id );
-		if ( $existing && (int) $existing->id !== $link_event_date->id ) {
-			$this->detach_post_from_event( $existing, $post_id );
-		}
-
-		// Add to junction table.
-		EventDates::add_linked_post( $link_event_date->id, $post_id );
-
-		// If this is the first linked post (no primary set), set as primary.
-		if ( ! $link_event_date->event_id ) {
-			EventDates::update_by_id(
-				$link_event_date->id,
-				array(
-					'event_id'  => $post_id,
-					'link_type' => 'post',
-				)
-			);
-			if ( 'master' === $link_event_date->occurrence_type ) {
-				$this->propagate_event_id_to_children( $link_event_date->id, $post_id );
-			}
-		}
+		PostTranslationLinks::link_group( $event_date, $post_id );
 
 		$event_date = EventDates::get_by_id( $id );
 
@@ -1392,16 +1352,7 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		// Generated occurrences store links on the master event date.
-		$link_event_date = $event_date;
-		if ( 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
-			$master = EventDates::get_by_id( $event_date->master_id );
-			if ( $master ) {
-				$link_event_date = $master;
-			}
-		}
-
-		$this->detach_post_from_event( $link_event_date, $post_id );
+		PostTranslationLinks::unlink_group( $event_date, $post_id );
 
 		// Return the originally requested event date (occurrence, not master).
 		$event_date = EventDates::get_by_id( $id );

@@ -28,6 +28,51 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Test-only Polylang translation groups. Singleton unless an option maps the
+ * post ID to a language => post-ID array.
+ *
+ * @param int $post_id Post ID.
+ * @return array Translation map.
+ */
+function pll_get_post_translations( $post_id ) {
+	$groups = get_option( 'fair_e2e_polylang_groups', array() );
+	return isset( $groups[ $post_id ] ) && is_array( $groups[ $post_id ] )
+		? $groups[ $post_id ]
+		: array( 'current' => (int) $post_id );
+}
+
+add_action(
+	'rest_api_init',
+	static function () {
+		register_rest_route(
+			'fair-e2e/v1',
+			'/polylang-groups',
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$groups = $request->get_param( 'groups' );
+					update_option( 'fair_e2e_polylang_groups', is_array( $groups ) ? $groups : array(), false );
+					if ( $request->has_param( 'enabled_post_types' ) ) {
+						$enabled_post_types = $request->get_param( 'enabled_post_types' );
+						update_option( 'fair_events_enabled_post_types', is_array( $enabled_post_types ) ? $enabled_post_types : array(), false );
+					}
+
+					$saved_post_id = absint( $request->get_param( 'saved_post_id' ) );
+					if ( $saved_post_id ) {
+						do_action( 'pll_save_post', $saved_post_id );
+					}
+
+					return rest_ensure_response( array( 'updated' => true ) );
+				},
+			)
+		);
+	}
+);
+
 /*
  * 0. Force fair-form's bundled-translations flag from an option, so specs can
  *    exercise the central Fair Event Plugins settings screen's "locked by a

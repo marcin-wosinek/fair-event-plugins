@@ -11,9 +11,23 @@
  * @package FairEvents
  */
 
-$GLOBALS['_fair_pll_current_language'] = null;
-$GLOBALS['_fair_pll_translated_posts'] = array();
-$GLOBALS['_fair_pll_get_post_calls']   = array();
+$GLOBALS['_fair_pll_current_language']   = null;
+$GLOBALS['_fair_pll_translated_posts']   = array();
+$GLOBALS['_fair_pll_get_post_calls']     = array();
+$GLOBALS['_fair_pll_translation_groups'] = array();
+$GLOBALS['_fair_pll_posts']              = array();
+
+if ( ! function_exists( 'get_post' ) ) {
+	/**
+	 * Minimal get_post() stub for Polylang synchronization tests.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return object|null Configured post.
+	 */
+	function get_post( $post_id ) {
+		return $GLOBALS['_fair_pll_posts'][ (int) $post_id ] ?? null;
+	}
+}
 
 if ( ! function_exists( 'pll_current_language' ) ) {
 	/**
@@ -24,6 +38,18 @@ if ( ! function_exists( 'pll_current_language' ) ) {
 	 */
 	function pll_current_language() {
 		return $GLOBALS['_fair_pll_current_language'];
+	}
+}
+
+if ( ! function_exists( 'pll_get_post_translations' ) ) {
+	/**
+	 * Stub for Polylang's translation-group resolver.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return mixed Configured translation result.
+	 */
+	function pll_get_post_translations( $post_id ) {
+		return $GLOBALS['_fair_pll_translation_groups'][ (int) $post_id ] ?? array( 'current' => (int) $post_id );
 	}
 }
 
