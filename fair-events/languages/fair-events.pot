@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T13:53:18+00:00\n"
+"POT-Creation-Date: 2026-08-27T06:10:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -303,10 +303,10 @@ msgstr ""
 #: src/API/EventDatesController.php:1320
 #: src/API/EventDatesController.php:1390
 #: src/API/EventDatesController.php:1496
-#: src/API/GetTicketsController.php:343
-#: src/API/GetTicketsController.php:352
-#: src/API/GetTicketsController.php:625
-#: src/API/GetTicketsController.php:634
+#: src/API/GetTicketsController.php:360
+#: src/API/GetTicketsController.php:369
+#: src/API/GetTicketsController.php:642
+#: src/API/GetTicketsController.php:651
 #: src/API/TicketsController.php:117
 #: src/API/TicketsController.php:138
 #: src/API/TicketsController.php:288
@@ -354,73 +354,73 @@ msgstr ""
 msgid "You do not have permission to look up event pages."
 msgstr ""
 
-#: src/API/GetTicketsController.php:298
+#: src/API/GetTicketsController.php:315
 msgid "Thank you!"
 msgstr ""
 
-#: src/API/GetTicketsController.php:317
+#: src/API/GetTicketsController.php:334
 msgid "Too many requests. Please try again later."
 msgstr ""
 
-#: src/API/GetTicketsController.php:381
-#: src/API/GetTicketsController.php:997
+#: src/API/GetTicketsController.php:398
+#: src/API/GetTicketsController.php:1014
 msgid "Invalid ticket type."
 msgstr ""
 
-#: src/API/GetTicketsController.php:388
+#: src/API/GetTicketsController.php:405
 msgid "This ticket type is no longer available."
 msgstr ""
 
-#: src/API/GetTicketsController.php:418
-#: src/API/GetTicketsController.php:1039
+#: src/API/GetTicketsController.php:435
+#: src/API/GetTicketsController.php:1056
 msgid "This ticket type is not currently on sale."
 msgstr ""
 
-#: src/API/GetTicketsController.php:452
-#: src/API/GetTicketsController.php:1052
-#: src/API/GetTicketsController.php:1521
+#: src/API/GetTicketsController.php:469
+#: src/API/GetTicketsController.php:1069
+#: src/API/GetTicketsController.php:1576
 msgid "Paid tickets are not available because online payments are not configured."
 msgstr ""
 
-#: src/API/GetTicketsController.php:476
-#: src/API/GetTicketsController.php:1076
+#: src/API/GetTicketsController.php:493
+#: src/API/GetTicketsController.php:1093
 msgid "Failed to save signup. Please try again."
 msgstr ""
 
-#: src/API/GetTicketsController.php:495
-#: src/API/GetTicketsController.php:1105
+#: src/API/GetTicketsController.php:512
+#: src/API/GetTicketsController.php:1122
 #: src/blocks/event-signup/frontend.js:1431
 msgid "You have successfully registered! A confirmation email is on its way."
 msgstr ""
 
 #. translators: %s: event name
 #. translators: %s: occurrence date/time label
-#: src/API/GetTicketsController.php:508
-#: src/API/GetTicketsController.php:1136
+#: src/API/GetTicketsController.php:525
+#: src/API/GetTicketsController.php:1153
 #, php-format
 msgid "Ticket for %s"
 msgstr ""
 
 #. translators: %d: event date ID
-#: src/API/GetTicketsController.php:513
+#: src/API/GetTicketsController.php:530
 #, php-format
 msgid "Ticket for event #%d"
 msgstr ""
 
-#: src/API/GetTicketsController.php:921
+#: src/API/GetTicketsController.php:938
 msgid "Event Signup"
 msgstr ""
 
-#: src/API/GetTicketsController.php:985
+#: src/API/GetTicketsController.php:1002
 msgid "Please select at least one occurrence."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1008
+#: src/API/GetTicketsController.php:1025
 msgid "One of the selected occurrences is not valid for this ticket."
 msgstr ""
 
 #. translators: %d: minimum number of occurrences required
-#: src/API/GetTicketsController.php:1021
+#: src/API/GetTicketsController.php:1038
 #: src/blocks/event-signup/frontend.js:726
 #: src/blocks/event-signup/frontend.js:1257
 #, php-format,js-format
@@ -430,47 +430,56 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: event name
-#: src/API/GetTicketsController.php:1119
+#: src/API/GetTicketsController.php:1136
 #, php-format
 msgid "Tickets for %s"
 msgstr ""
 
 #. translators: %d: event date ID
-#: src/API/GetTicketsController.php:1124
+#: src/API/GetTicketsController.php:1141
 #, php-format
 msgid "Tickets for event #%d"
 msgstr ""
 
-#: src/API/GetTicketsController.php:1327
-#: src/API/GetTicketsController.php:1420
-#: src/API/GetTicketsController.php:1452
-#: src/API/GetTicketsController.php:1658
+#: src/API/GetTicketsController.php:1334
+msgid "Signup not found."
+msgstr ""
+
+#: src/API/GetTicketsController.php:1342
+#: src/Admin/manage-event/EventSignups.js:170
+msgid "Failed to delete signup."
+msgstr ""
+
+#: src/API/GetTicketsController.php:1382
+#: src/API/GetTicketsController.php:1475
+#: src/API/GetTicketsController.php:1507
+#: src/API/GetTicketsController.php:1713
 msgid "Transaction not found."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1461
+#: src/API/GetTicketsController.php:1516
 msgid "This payment cannot be retried."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1470
+#: src/API/GetTicketsController.php:1525
 msgid "This payment is not retriable from this endpoint."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1490
-#: src/API/GetTicketsController.php:1626
-#: src/API/GetTicketsController.php:1637
+#: src/API/GetTicketsController.php:1545
+#: src/API/GetTicketsController.php:1681
+#: src/API/GetTicketsController.php:1692
 msgid "This payment is missing context needed to retry."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1513
+#: src/API/GetTicketsController.php:1568
 msgid "This payment session has expired. Please start over."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1530
+#: src/API/GetTicketsController.php:1585
 msgid "Original line items could not be loaded."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1667
+#: src/API/GetTicketsController.php:1722
 msgid "This payment is not manageable from this endpoint."
 msgstr ""
 
@@ -1296,7 +1305,7 @@ msgid "Series date"
 msgstr ""
 
 #: src/Admin/all-events/AllEvents.js:85
-#: src/Admin/manage-event/EventSignups.js:129
+#: src/Admin/manage-event/EventSignups.js:132
 #: src/Admin/manage-event/EventTickets.js:1075
 #: src/Admin/manage-event/EventTickets.js:2022
 #: src/Admin/manage-event/EventTickets.js:2070
@@ -1330,7 +1339,7 @@ msgstr ""
 #: src/Admin/manage-event/EventFinance.js:267
 #: src/Admin/manage-event/EventFinance.js:319
 #: src/Admin/manage-event/EventFinance.js:443
-#: src/Admin/manage-event/EventSignups.js:137
+#: src/Admin/manage-event/EventSignups.js:140
 msgid "Date"
 msgstr ""
 
@@ -1571,6 +1580,7 @@ msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:584
 #: src/Admin/manage-event/EditInstancesModal.js:75
+#: src/Admin/manage-event/EventSignups.js:362
 #: src/Admin/manage-event/EventTickets.js:2453
 #: src/Admin/manage-event/ManageEventApp.js:1242
 #: src/Admin/manage-event/ManageEventApp.js:1252
@@ -1804,7 +1814,7 @@ msgstr ""
 #: src/Admin/manage-event/EventFinance.js:270
 #: src/Admin/manage-event/EventFinance.js:322
 #: src/Admin/manage-event/EventFinance.js:446
-#: src/Admin/manage-event/EventSignups.js:133
+#: src/Admin/manage-event/EventSignups.js:136
 msgid "Amount"
 msgstr ""
 
@@ -1840,7 +1850,7 @@ msgid "Failed Payments"
 msgstr ""
 
 #: src/Admin/manage-event/EventFinance.js:452
-#: src/Admin/manage-event/EventSignups.js:134
+#: src/Admin/manage-event/EventSignups.js:137
 msgid "Status"
 msgstr ""
 
@@ -1999,69 +2009,93 @@ msgstr ""
 msgid "Add New Photos"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:114
+#: src/Admin/manage-event/EventSignups.js:117
 msgid "Failed to load signups."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:130
+#: src/Admin/manage-event/EventSignups.js:133
 msgid "Email"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:131
+#: src/Admin/manage-event/EventSignups.js:134
 #: src/Admin/manage-event/EventTickets.js:1405
 msgid "Ticket Type"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:132
+#: src/Admin/manage-event/EventSignups.js:135
 msgid "Qty"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:135
+#: src/Admin/manage-event/EventSignups.js:138
 msgid "Transaction"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:136
+#: src/Admin/manage-event/EventSignups.js:139
 msgid "Mailing"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:152
-msgid "Ticket Signups"
-msgstr ""
-
-#: src/Admin/manage-event/EventSignups.js:157
-msgid "Mailing opt-ins only"
-msgstr ""
-
-#: src/Admin/manage-event/EventSignups.js:171
-msgid "Download CSV"
+#: src/Admin/manage-event/EventSignups.js:141
+#: src/Admin/venues/VenuesApp.js:512
+msgid "Actions"
 msgstr ""
 
 #: src/Admin/manage-event/EventSignups.js:180
+msgid "Ticket Signups"
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:185
+msgid "Mailing opt-ins only"
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:199
+msgid "Download CSV"
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:213
 msgid "No signups yet."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:181
+#: src/Admin/manage-event/EventSignups.js:214
 msgid "Nothing to export — no signups match the current filter."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:257
+#: src/Admin/manage-event/EventSignups.js:290
 msgid "Confirmed — over capacity"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:262
+#: src/Admin/manage-event/EventSignups.js:295
 msgid "Confirmed"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:264
+#: src/Admin/manage-event/EventSignups.js:297
 msgid "Expired"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:291
+#: src/Admin/manage-event/EventSignups.js:324
 msgid "Yes"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:292
+#: src/Admin/manage-event/EventSignups.js:325
 msgid "No"
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:348
+#: src/Admin/venues/VenuesApp.js:569
+msgid "Delete"
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:361
+msgid "Delete signup"
+msgstr ""
+
+#. translators: 1: signup name, 2: signup email, 3: payment status
+#: src/Admin/manage-event/EventSignups.js:369
+#, js-format
+msgid "Delete the signup for %1$s (%2$s)? Its current payment status is %3$s."
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:379
+msgid "This deletion is permanent. It removes only the local signup record and does not refund or cancel any payment-provider transaction."
 msgstr ""
 
 #: src/Admin/manage-event/EventTickets.js:203
@@ -3151,16 +3185,8 @@ msgstr ""
 msgid "No venues found. Create your first venue to get started."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:512
-msgid "Actions"
-msgstr ""
-
 #: src/Admin/venues/VenuesApp.js:538
 msgid "No address"
-msgstr ""
-
-#: src/Admin/venues/VenuesApp.js:569
-msgid "Delete"
 msgstr ""
 
 #: src/Admin/venues/VenuesApp.js:589

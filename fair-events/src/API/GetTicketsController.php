@@ -161,6 +161,23 @@ class GetTicketsController extends WP_REST_Controller {
 			)
 		);
 
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)',
+			array(
+				'methods'             => WP_REST_Server::DELETABLE,
+				'callback'            => array( $this, 'delete_item' ),
+				'permission_callback' => array( $this, 'admin_permissions_check' ),
+				'args'                => array(
+					'id' => array(
+						'type'              => 'integer',
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					),
+				),
+			)
+		);
+
 		// GET /fair-events/v1/get-tickets/viewer-context — request-time-only
 		// per-viewer personalization (restricted tiers, discounted prices,
 		// prefill, signed-up state) for the cache-safe baseline render's
@@ -1296,6 +1313,44 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response( $signups );
+	}
+
+	/**
+	 * Delete one signup by its exact row ID (admin).
+	 *
+	 * This removes only the local signup. It intentionally does not touch a
+	 * companion participant record or payment-provider transaction.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function delete_item( $request ) {
+		$id     = (int) $request->get_param( 'id' );
+		$signup = \FairEvents\Models\EventSignup::get_by_id( $id );
+
+		if ( ! $signup ) {
+			return new WP_Error(
+				'rest_signup_not_found',
+				__( 'Signup not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! \FairEvents\Models\EventSignup::delete( $id ) ) {
+			return new WP_Error(
+				'rest_signup_delete_failed',
+				__( 'Failed to delete signup.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'deleted' => true,
+				'signup'  => $signup,
+			),
+			200
+		);
 	}
 
 	/**
