@@ -164,6 +164,116 @@ test.describe( 'EventDatesController — standalone category copy on first link'
 	} );
 } );
 
+test.describe( 'EventDatesController — Polylang link synchronization', () => {
+	let api;
+	let eventDateId;
+	const postIds = [];
+
+	const configureGroup = async ( ids, savedPostId = 0 ) => {
+		const group = Object.fromEntries(
+			ids.map( ( id, index ) => [ `lang-${ index }`, id ] )
+		);
+		const groups = Object.fromEntries( ids.map( ( id ) => [ id, group ] ) );
+		const response = await api.put(
+			'/wp-json/fair-e2e/v1/polylang-groups',
+			{
+				headers: adminHeaders,
+				data: {
+					groups,
+					saved_post_id: savedPostId,
+					enabled_post_types: ids.length ? [ 'page' ] : [],
+				},
+			}
+		);
+		expect( response.ok() ).toBeTruthy();
+	};
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		for ( const language of [ 'English', 'French', 'Spanish' ] ) {
+			const response = await api.post( '/wp-json/wp/v2/pages', {
+				headers: adminHeaders,
+				data: {
+					title: `Polylang ${ language } ${ Date.now() }`,
+					status: 'publish',
+				},
+			} );
+			expect( response.ok() ).toBeTruthy();
+			postIds.push( ( await response.json() ).id );
+		}
+
+		const response = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Polylang target ${ Date.now() }`,
+					start_datetime: '2038-01-01 10:00:00',
+				},
+			}
+		);
+		expect( response.ok() ).toBeTruthy();
+		eventDateId = ( await response.json() ).id;
+		await configureGroup( postIds );
+	} );
+
+	test.afterAll( async () => {
+		await configureGroup( [] );
+		if ( eventDateId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		for ( const postId of postIds ) {
+			await api.delete( `/wp-json/wp/v2/pages/${ postId }?force=true`, {
+				headers: adminHeaders,
+			} );
+		}
+	} );
+
+	test( 'explicit link and unlink apply to the complete group', async () => {
+		const linkResponse = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/link-post`,
+			{ headers: adminHeaders, data: { post_id: postIds[ 1 ] } }
+		);
+		expect( linkResponse.ok() ).toBeTruthy();
+		const linked = await linkResponse.json();
+		expect( linked.event_id ).toBe( postIds[ 1 ] );
+		expect( linked.linked_posts.map( ( post ) => post.id ).sort() ).toEqual(
+			[ ...postIds ].sort()
+		);
+
+		const unlinkResponse = await api.delete(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/link-post`,
+			{ headers: adminHeaders, data: { post_id: postIds[ 0 ] } }
+		);
+		expect( unlinkResponse.ok() ).toBeTruthy();
+		const unlinked = await unlinkResponse.json();
+		expect( unlinked.event_id ).toBeNull();
+		expect( unlinked.linked_posts ).toEqual( [] );
+	} );
+
+	test( 'pll_save_post adds a new translation to the established event', async () => {
+		await configureGroup( postIds.slice( 0, 2 ) );
+		await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/link-post`,
+			{ headers: adminHeaders, data: { post_id: postIds[ 0 ] } }
+		);
+
+		await configureGroup( postIds, postIds[ 2 ] );
+		const response = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{ headers: adminHeaders }
+		);
+		const eventDate = await response.json();
+		expect( eventDate.event_id ).toBe( postIds[ 0 ] );
+		expect(
+			eventDate.linked_posts.map( ( post ) => post.id ).sort()
+		).toEqual( [ ...postIds ].sort() );
+	} );
+} );
+
 test.describe( 'EventDatesController — link_post detach-then-link (#1429)', () => {
 	let api;
 	let postA;
