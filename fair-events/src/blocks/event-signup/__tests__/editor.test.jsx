@@ -117,6 +117,10 @@ describe( 'Event Signup EditComponent', () => {
 		delete window.fairEventsSignupBlock;
 	} );
 
+	it( 'exposes core HTML anchor support', () => {
+		expect( capturedSettings.supports.anchor ).toBe( true );
+	} );
+
 	it( 'always shows the form content region, fair-form active or not', () => {
 		const { unmount } = renderEdit( true );
 
