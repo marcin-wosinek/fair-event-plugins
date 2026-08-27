@@ -286,21 +286,7 @@ test.describe( 'Recurrence-scope ticket types — signup semantics', () => {
 			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
-		// First create a second participant to attempt the signup.
-		const secondParticipantRes = await api.post(
-			'/wp-json/fair-audience/v1/participants',
-			{
-				headers: authHeaders,
-				data: {
-					name: 'Second Tester',
-					email: uniqueEmail( 'second-scope' ),
-					// No wp_user_id — anonymous participant, call via admin auth below.
-				},
-			}
-		);
-		expect( secondParticipantRes.ok() ).toBeTruthy();
-		const secondParticipantId = ( await secondParticipantRes.json() ).id;
-
+		let secondParticipantId;
 		try {
 			// The whole_series ticket type for eventA has capacity=1, already consumed above.
 			// Use a fresh event with a capacity-1 whole_series ticket so the test is
@@ -330,32 +316,34 @@ test.describe( 'Recurrence-scope ticket types — signup semantics', () => {
 			);
 			expect( firstRes.ok() ).toBeTruthy();
 
-			// Second signup with a fresh participant should be rejected (409 sold out).
+			// The public registration route supplies a genuinely distinct identity.
+			const secondEmail = uniqueEmail( 'second-scope' );
 			const secondRes = await api.post(
-				'/wp-json/fair-audience/v1/event-signup',
+				'/wp-json/fair-audience/v1/event-signup/register',
 				{
-					// We need another user to trigger via token or admin route.
-					// Use admin auth but with the second participant via direct DB path — not
-					// possible via REST alone. Instead verify through the admin endpoint that
-					// seats = 1 = capacity and the sold-out check in validate_ticket_type_capacity.
-					// We POST directly from another admin user context; in real setup this
-					// participant would use a token. Since we only have one admin user, we
-					// verify the capacity count instead.
-					headers: authHeaders,
 					data: {
 						event_id: capEvent.eventId,
 						event_date_id: capEvent.masterEventDateId,
 						ticket_type_id: capTtId,
+						name: 'Second Scope Tester',
+						email: secondEmail,
 					},
 				}
 			);
-			// Admin is the same participant as the first signer — expect already_signed_up (200).
-			// The key assertion is that capacity is not exceeded (no second distinct row can be created
-			// via the same admin creds, which is already_signed_up, not a new row).
 			const secondBody = await secondRes.json();
-			expect( secondBody.status ).toMatch(
-				/^(already_signed_up|ticket_type_sold_out)$/
+			expect( secondRes.status(), JSON.stringify( secondBody ) ).toBe(
+				409
 			);
+			expect( secondBody.code ).toBe( 'ticket_type_sold_out' );
+
+			const participantsRes = await api.get(
+				'/wp-json/fair-audience/v1/participants',
+				{ headers: authHeaders }
+			);
+			const secondParticipant = ( await participantsRes.json() ).find(
+				( candidate ) => candidate.email === secondEmail
+			);
+			secondParticipantId = secondParticipant?.id;
 
 			// Cleanup capacity-test event.
 			await api.delete(

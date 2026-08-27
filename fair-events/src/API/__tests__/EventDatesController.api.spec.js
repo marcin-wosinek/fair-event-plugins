@@ -22,6 +22,161 @@ const adminHeaders = {
 		),
 };
 
+test.describe( 'EventDatesController — ensure event date for post', () => {
+	let api;
+	const postIds = [];
+	const eventDateIds = [];
+	let subscriberId;
+	let subscriberHeaders;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		await api.put( '/wp-json/fair-e2e/v1/polylang-groups', {
+			headers: adminHeaders,
+			data: { groups: {}, enabled_post_types: [] },
+		} );
+		const userLogin = `event-recovery-${ Date.now() }`;
+		const userResponse = await api.post( '/wp-json/wp/v2/users', {
+			headers: adminHeaders,
+			data: {
+				username: userLogin,
+				email: `${ userLogin }@example.com`,
+				password: 'Test-password-1460!',
+				roles: [ 'subscriber' ],
+			},
+		} );
+		expect( userResponse.ok() ).toBeTruthy();
+		subscriberId = ( await userResponse.json() ).id;
+		subscriberHeaders = {
+			Authorization:
+				'Basic ' +
+				Buffer.from( `${ userLogin }:Test-password-1460!` ).toString(
+					'base64'
+				),
+		};
+	} );
+
+	test.afterAll( async () => {
+		for ( const eventDateId of [ ...new Set( eventDateIds ) ] ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		for ( const postId of postIds ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{
+					headers: adminHeaders,
+				}
+			);
+		}
+		if ( subscriberId ) {
+			await api.delete(
+				`/wp-json/wp/v2/users/${ subscriberId }?force=true&reassign=1`,
+				{ headers: adminHeaders }
+			);
+		}
+		await api.dispose();
+	} );
+
+	const createEventPostWithoutEventDate = async () => {
+		const postResponse = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: `Recovery ${ Date.now() }`, status: 'draft' },
+		} );
+		expect( postResponse.ok() ).toBeTruthy();
+		const postId = ( await postResponse.json() ).id;
+		postIds.push( postId );
+
+		const lookupResponse = await api.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${ postId }`,
+			{ headers: adminHeaders }
+		);
+		const existing = await lookupResponse.json();
+		if ( existing[ 0 ] ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ existing[ 0 ].id }`,
+				{ headers: adminHeaders }
+			);
+		}
+		return postId;
+	};
+
+	test( 'creates once and repeated and concurrent requests converge', async () => {
+		const postId = await createEventPostWithoutEventDate();
+		const ensure = () =>
+			api.post( '/wp-json/fair-events/v1/event-dates/ensure-for-post', {
+				headers: adminHeaders,
+				data: { post_id: postId },
+			} );
+
+		const first = await ensure();
+		expect( first.ok(), await first.text() ).toBeTruthy();
+		const firstBody = await first.json();
+		const firstId = firstBody.id;
+		eventDateIds.push( firstId );
+		expect( firstBody.start_datetime ).toBeNull();
+		expect( firstBody.end_datetime ).toBeNull();
+
+		const repeated = await ensure();
+		expect( ( await repeated.json() ).id ).toBe( firstId );
+
+		const concurrent = await Promise.all( [
+			ensure(),
+			ensure(),
+			ensure(),
+		] );
+		const concurrentIds = await Promise.all(
+			concurrent.map( async ( response ) => ( await response.json() ).id )
+		);
+		expect( concurrentIds ).toEqual( [ firstId, firstId, firstId ] );
+
+		const lookup = await api.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${ postId }`,
+			{ headers: adminHeaders }
+		);
+		const linkedDates = await lookup.json();
+		expect( linkedDates.map( ( eventDate ) => eventDate.id ) ).toEqual( [
+			firstId,
+		] );
+		expect( linkedDates[ 0 ].start_datetime ).toBeNull();
+		expect( linkedDates[ 0 ].end_datetime ).toBeNull();
+	} );
+
+	test( 'rejects missing posts, invalid post types, and insufficient permission', async () => {
+		const missing = await api.post(
+			'/wp-json/fair-events/v1/event-dates/ensure-for-post',
+			{ headers: adminHeaders, data: { post_id: 999999999 } }
+		);
+		expect( missing.status() ).toBe( 404 );
+
+		const pageResponse = await api.post( '/wp-json/wp/v2/posts', {
+			headers: adminHeaders,
+			data: {
+				title: `Invalid recovery ${ Date.now() }`,
+				status: 'draft',
+			},
+		} );
+		const pageId = ( await pageResponse.json() ).id;
+		const invalid = await api.post(
+			'/wp-json/fair-events/v1/event-dates/ensure-for-post',
+			{ headers: adminHeaders, data: { post_id: pageId } }
+		);
+		expect( invalid.status() ).toBe( 400 );
+		await api.delete( `/wp-json/wp/v2/posts/${ pageId }?force=true`, {
+			headers: adminHeaders,
+		} );
+
+		const postId = await createEventPostWithoutEventDate();
+		const forbidden = await api.post(
+			'/wp-json/fair-events/v1/event-dates/ensure-for-post',
+			{ headers: subscriberHeaders, data: { post_id: postId } }
+		);
+		expect( forbidden.status() ).toBe( 403 );
+	} );
+} );
+
 test.describe( 'EventDatesController — standalone category copy on first link', () => {
 	let api;
 	let categoryId;
