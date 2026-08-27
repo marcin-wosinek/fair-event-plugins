@@ -239,3 +239,89 @@ describe( 'EventSignups — CSV export (#1171)', () => {
 		).toBeInTheDocument();
 	} );
 } );
+
+describe( 'EventSignups — delete signup (#1464)', () => {
+	it( 'opens the confirmation dialog for the selected row with its full scope', async () => {
+		await renderSignups();
+
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Delete' } )[ 1 ]
+		);
+
+		expect( screen.getByRole( 'dialog' ) ).toHaveTextContent( 'Bob, Jr.' );
+		expect( screen.getByRole( 'dialog' ) ).toHaveTextContent(
+			'bob@example.com'
+		);
+		expect( screen.getByRole( 'dialog' ) ).toHaveTextContent( 'paid' );
+		expect( screen.getByRole( 'dialog' ) ).toHaveTextContent(
+			'This deletion is permanent.'
+		);
+		expect( screen.getByRole( 'dialog' ) ).toHaveTextContent(
+			'does not refund or cancel any payment-provider transaction'
+		);
+	} );
+
+	it( 'cancels without deleting or changing the list', async () => {
+		await renderSignups();
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
+		);
+		fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( screen.getByText( 'Ada Lovelace' ) ).toBeInTheDocument();
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'deletes the exact signup and removes only its row after success', async () => {
+		apiFetch
+			.mockResolvedValueOnce( signups )
+			.mockResolvedValueOnce( { deleted: true, signup: signups[ 0 ] } );
+		render( <EventSignups eventDateId={ 42 } /> );
+		await screen.findByText( 'Ada Lovelace' );
+
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
+		);
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Delete signup' } )
+		);
+
+		await waitFor( () =>
+			expect(
+				screen.queryByText( 'Ada Lovelace' )
+			).not.toBeInTheDocument()
+		);
+		expect( screen.getByText( 'Bob, Jr.' ) ).toBeInTheDocument();
+		expect( apiFetch ).toHaveBeenLastCalledWith( {
+			path: '/fair-events/v1/get-tickets/1',
+			method: 'DELETE',
+		} );
+	} );
+
+	it( 'preserves the row and shows a persistent error when deletion fails', async () => {
+		apiFetch
+			.mockResolvedValueOnce( signups )
+			.mockRejectedValueOnce( { message: 'Database refused deletion.' } );
+		render( <EventSignups eventDateId={ 42 } /> );
+		await screen.findByText( 'Ada Lovelace' );
+
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
+		);
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Delete signup' } )
+		);
+
+		await waitFor( () =>
+			expect(
+				document.querySelector( '.components-notice__content' )
+			).toHaveTextContent( 'Database refused deletion.' )
+		);
+		expect( screen.getByText( 'Ada Lovelace' ) ).toBeInTheDocument();
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect(
+			document.querySelector( '.components-notice' )
+		).not.toHaveClass( 'is-dismissible' );
+	} );
+} );

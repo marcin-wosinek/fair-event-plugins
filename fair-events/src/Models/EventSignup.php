@@ -68,6 +68,24 @@ class EventSignup {
 	}
 
 	/**
+	 * Delete a single signup row by its exact ID.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return bool True when the row was deleted.
+	 */
+	public static function delete( int $signup_id ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'fair_events_signups';
+
+		return 1 === $wpdb->delete(
+			$table,
+			array( 'id' => $signup_id ),
+			array( '%d' )
+		);
+	}
+
+	/**
 	 * Link a signup row to a fair-audience Participant.
 	 *
 	 * @param int $signup_id      Signup row ID.

@@ -1,7 +1,7 @@
 /**
  * Event Signups Component
  *
- * Read-only list of get-tickets signups for an event date.
+ * List and manage get-tickets signups for an event date.
  *
  * @package FairEvents
  */
@@ -17,8 +17,9 @@ import {
 	ToggleControl,
 	Flex,
 	FlexItem,
+	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 const CSV_COLUMNS = [
@@ -95,6 +96,8 @@ export default function EventSignups( { eventDateId } ) {
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ mailingOnly, setMailingOnly ] = useState( false );
+	const [ selectedSignup, setSelectedSignup ] = useState( null );
+	const [ deleteError, setDeleteError ] = useState( null );
 
 	useEffect( () => {
 		if ( ! eventDateId ) {
@@ -135,6 +138,7 @@ export default function EventSignups( { eventDateId } ) {
 		__( 'Transaction', 'fair-events' ),
 		__( 'Mailing', 'fair-events' ),
 		__( 'Date', 'fair-events' ),
+		__( 'Actions', 'fair-events' ),
 	];
 
 	const visibleSignups = mailingOnly
@@ -144,6 +148,30 @@ export default function EventSignups( { eventDateId } ) {
 	const handleDownloadCsv = () => {
 		const csv = buildSignupsCsv( visibleSignups );
 		downloadTextFile( csv, `signups-event-${ eventDateId }.csv` );
+	};
+
+	const handleDelete = async () => {
+		if ( ! selectedSignup ) {
+			return;
+		}
+
+		const signupId = selectedSignup.id;
+		setDeleteError( null );
+		try {
+			await apiFetch( {
+				path: `/fair-events/v1/get-tickets/${ signupId }`,
+				method: 'DELETE',
+			} );
+			setSignups( ( current ) =>
+				current.filter( ( signup ) => signup.id !== signupId )
+			);
+		} catch ( err ) {
+			setDeleteError(
+				err.message || __( 'Failed to delete signup.', 'fair-events' )
+			);
+		} finally {
+			setSelectedSignup( null );
+		}
 	};
 
 	return (
@@ -174,6 +202,11 @@ export default function EventSignups( { eventDateId } ) {
 				</Flex>
 			</CardHeader>
 			<CardBody>
+				{ deleteError && (
+					<Notice status="error" isDismissible={ false }>
+						{ deleteError }
+					</Notice>
+				) }
 				{ visibleSignups.length === 0 ? (
 					<p>
 						{ signups.length === 0
@@ -299,12 +332,58 @@ export default function EventSignups( { eventDateId } ) {
 									>
 										{ s.created_at }
 									</td>
+									<td
+										style={ {
+											padding: '8px',
+											borderBottom: '1px solid #eee',
+										} }
+									>
+										<Button
+											variant="link"
+											isDestructive
+											onClick={ () =>
+												setSelectedSignup( s )
+											}
+										>
+											{ __( 'Delete', 'fair-events' ) }
+										</Button>
+									</td>
 								</tr>
 							) ) }
 						</tbody>
 					</table>
 				) }
 			</CardBody>
+			<ConfirmDialog
+				isOpen={ !! selectedSignup }
+				onConfirm={ handleDelete }
+				onCancel={ () => setSelectedSignup( null ) }
+				confirmButtonText={ __( 'Delete signup', 'fair-events' ) }
+				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
+			>
+				{ selectedSignup && (
+					<>
+						<p>
+							{ sprintf(
+								/* translators: 1: signup name, 2: signup email, 3: payment status */
+								__(
+									'Delete the signup for %1$s (%2$s)? Its current payment status is %3$s.',
+									'fair-events'
+								),
+								selectedSignup.name,
+								selectedSignup.email,
+								selectedSignup.status
+							) }
+						</p>
+						<p>
+							{ __(
+								'This deletion is permanent. It removes only the local signup record and does not refund or cancel any payment-provider transaction.',
+								'fair-events'
+							) }
+						</p>
+					</>
+				) }
+			</ConfirmDialog>
 		</Card>
 	);
 }
