@@ -326,7 +326,13 @@ $today = current_time( 'Y-m-d' );
 // Subscription feed links (webcal:// + copyable https:// fallback).
 $subscribe_urls = fair_events_build_subscribe_urls( is_array( $categories ) ? $categories : array() );
 
-$wrapper_attributes = array( 'class' => 'wp-block-fair-events-events-calendar' );
+$wrapper_attributes = array(
+	'class'                     => 'wp-block-fair-events-events-calendar',
+	'data-wp-interactive'       => 'fair-events/calendar-subscribe',
+	'data-wp-router-region'     => $scroll_anchor_id,
+	'data-wp-class--is-loading' => 'state.isLoading',
+	'data-wp-bind--aria-busy'   => 'state.isLoading',
+);
 if ( empty( $attributes['anchor'] ) ) {
 	// No custom anchor set — fall back to the fixed scroll-target id so
 	// get_block_wrapper_attributes()'s own anchor-support merge (which
@@ -334,23 +340,38 @@ if ( empty( $attributes['anchor'] ) ) {
 	$wrapper_attributes['id'] = $scroll_anchor_id;
 }
 ?>
-<div <?php echo wp_kses_post( get_block_wrapper_attributes( $wrapper_attributes ) ); ?>>
+<div
+	<?php echo wp_kses_post( get_block_wrapper_attributes( $wrapper_attributes ) ); ?>
+	<?php
+	echo wp_interactivity_data_wp_context( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- self-escaping (JSON-encodes and esc_attr()'s internally).
+		array(
+			'isLoading' => false,
+		)
+	);
+	?>
+>
 	<?php if ( $show_navigation ) : ?>
 	<div class="fair-events-navigation" style="--fair-events-header-bg: <?php echo esc_attr( $header_bg_value ); ?>">
 		<div class="wp-block-button is-style-outline">
-			<a href="<?php echo esc_url( $prev_url ); ?>" class="nav-prev wp-block-button__link wp-element-button">
+			<a href="<?php echo esc_url( $prev_url ); ?>" class="nav-prev wp-block-button__link wp-element-button" data-wp-on--click="actions.navigatePeriod" data-wp-bind--aria-disabled="state.isLoading">
 				<?php esc_html_e( 'Previous', 'fair-events' ); ?>
 			</a>
 		</div>
-		<h2 class="navigation-title">
+		<h2 class="navigation-title" tabindex="-1">
 			<?php echo esc_html( date_i18n( 'F Y', $first_day_of_month_ts ) ); ?>
 		</h2>
 		<div class="wp-block-button is-style-outline">
-			<a href="<?php echo esc_url( $next_url ); ?>" class="nav-next wp-block-button__link wp-element-button">
+			<a href="<?php echo esc_url( $next_url ); ?>" class="nav-next wp-block-button__link wp-element-button" data-wp-on--click="actions.navigatePeriod" data-wp-bind--aria-disabled="state.isLoading">
 				<?php esc_html_e( 'Next', 'fair-events' ); ?>
 			</a>
 		</div>
 	</div>
+	<div class="fair-events-navigation-loading" role="status" aria-live="polite" data-wp-bind--hidden="!state.isLoading">
+		<?php esc_html_e( 'Loading calendar…', 'fair-events' ); ?>
+	</div>
+	<span class="screen-reader-text" role="status" aria-live="polite" aria-atomic="true">
+		<?php echo esc_html( date_i18n( 'F Y', $first_day_of_month_ts ) ); ?>
+	</span>
 	<?php endif; ?>
 
 	<div class="calendar-grid" role="grid" aria-label="<?php echo esc_attr( date_i18n( 'F Y', $first_day_of_month_ts ) ); ?>">
@@ -561,10 +582,10 @@ if ( empty( $attributes['anchor'] ) ) {
 	<?php endif; ?>
 
 	<?php echo wp_kses_post( \FairEvents\Services\Branding::block_html() ); ?>
-</div>
 <?php if ( null !== $item_list ) : ?>
 	<script type="application/ld+json">
 	<?php echo wp_json_encode( $item_list, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ); ?>
 
 	</script>
 <?php endif; ?>
+</div>

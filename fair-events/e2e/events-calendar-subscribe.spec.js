@@ -94,6 +94,13 @@ test.describe( 'Events Calendar — Subscribe dropdown', () => {
 		await page.goto(
 			calendarPage.link || `/?page_id=${ calendarPage.id }`
 		);
+		const initialHeading = await page
+			.locator( '.navigation-title' )
+			.textContent();
+		await page.locator( '.nav-next' ).click();
+		await expect( page.locator( '.navigation-title' ) ).not.toHaveText(
+			initialHeading.trim()
+		);
 
 		const trigger = page.locator( '.fair-events-subscribe-trigger' );
 		await expect( trigger ).toBeVisible();
