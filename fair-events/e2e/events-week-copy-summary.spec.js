@@ -86,6 +86,16 @@ test.describe( 'Events Week — Copy summary (Interactivity API)', () => {
 		} );
 
 		await page.goto( weekPage.link || `/?page_id=${ weekPage.id }` );
+		const initialHeading = await page
+			.locator( '.navigation-title' )
+			.textContent();
+		await page.locator( '.nav-next' ).click();
+		await expect( page.locator( '.navigation-title' ) ).not.toHaveText(
+			initialHeading.trim()
+		);
+		const updatedHeading = (
+			await page.locator( '.navigation-title' ).textContent()
+		).trim();
 
 		const button = page.locator( '.fair-events-copy-summary-btn' );
 		await expect( button ).toHaveText( 'Copy summary' );
@@ -97,6 +107,7 @@ test.describe( 'Events Week — Copy summary (Interactivity API)', () => {
 			navigator.clipboard.readText()
 		);
 		expect( clipboardText ).toContain( 'Copy Summary Week' );
+		expect( clipboardText ).toContain( updatedHeading );
 
 		await expect( button ).toHaveText( 'Copy summary', { timeout: 3000 } );
 

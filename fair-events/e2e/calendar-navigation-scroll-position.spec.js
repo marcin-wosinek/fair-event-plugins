@@ -3,37 +3,17 @@ import { test, expect } from '@playwright/test';
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
 
-/**
- * Verifies (#1425) that clicking next/previous on the calendar month view and
- * the week view lands the browser back on the block instead of resetting
- * scroll to the top of the page, and that the URL still carries the
- * month/year (or week) selection so it stays bookmarkable.
- */
-
 async function apiFetch( page, options ) {
 	const result = await page.evaluate( async ( opts ) => {
 		try {
 			// eslint-disable-next-line no-undef
-			const res = await wp.apiFetch( opts );
-			return { ok: true, data: res };
-		} catch ( err ) {
-			return {
-				ok: false,
-				error: {
-					message: err && err.message,
-					code: err && err.code,
-					data: err && err.data,
-					raw: JSON.stringify( err ),
-				},
-			};
+			return { ok: true, data: await wp.apiFetch( opts ) };
+		} catch ( error ) {
+			return { ok: false, error: error.message };
 		}
 	}, options );
 	if ( ! result.ok ) {
-		throw new Error(
-			`apiFetch ${ options.method || 'GET' } ${
-				options.path
-			} failed: ${ JSON.stringify( result.error ) }`
-		);
+		throw new Error( result.error );
 	}
 	return result.data;
 }
@@ -48,139 +28,148 @@ async function login( page ) {
 	await page.waitForSelector( '#wpadminbar' );
 }
 
-async function createPage( page, title, content ) {
-	const priorPages = await apiFetch( page, {
-		path: `/wp/v2/pages?search=${ encodeURIComponent(
-			title
-		) }&per_page=20`,
-	} );
-	for ( const p of priorPages ) {
-		await apiFetch( page, {
-			path: `/wp/v2/pages/${ p.id }?force=true`,
-			method: 'DELETE',
-		} ).catch( () => {} );
-	}
-
-	return apiFetch( page, {
-		path: '/wp/v2/pages',
-		method: 'POST',
-		data: { title, status: 'publish', content },
-	} );
-}
-
-// Enough leading filler that the block isn't already at the top of the page,
-// so a scroll-to-top regression is actually observable.
 const FILLER =
-	'<!-- wp:paragraph -->\n<p>Filler paragraph to push the block below the fold.</p>\n<!-- /wp:paragraph -->\n'.repeat(
+	'<!-- wp:paragraph --><p>Navigation fixture filler.</p><!-- /wp:paragraph -->'.repeat(
 		40
 	);
 
-const viewports = [
-	{ name: 'desktop', size: { width: 1200, height: 900 } },
-	{ name: 'mobile', size: { width: 375, height: 667 } },
+const cases = [
+	{
+		name: 'month',
+		block: 'events-calendar',
+		id: 'fair-events-calendar',
+		param: 'calendar_month',
+		gridCell: '.calendar-day[data-date]',
+	},
+	{
+		name: 'week',
+		block: 'events-week',
+		id: 'fair-events-week',
+		param: 'week_view',
+		gridCell: '.week-day[data-date]',
+	},
 ];
 
-test.describe( 'Calendar navigation keeps scroll position (#1425)', () => {
-	for ( const { name, size } of viewports ) {
-		test( `month view: next keeps the calendar in view (${ name })`, async ( {
+test.describe( 'Calendar client-side navigation', () => {
+	for ( const fixture of cases ) {
+		test( `${ fixture.name } view navigates, restores history, and remains accessible`, async ( {
 			page,
+			browser,
 		} ) => {
-			test.setTimeout( 60_000 );
-			await page.setViewportSize( size );
+			test.setTimeout( 90_000 );
 			await login( page );
 			await page.goto(
 				'/wp-admin/admin.php?page=fair-events-all-events'
 			);
-			await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+			await page.waitForFunction( () => window.wp?.apiFetch );
+			const testPage = await apiFetch( page, {
+				path: '/wp/v2/pages',
+				method: 'POST',
+				data: {
+					title: `Client Navigation ${ fixture.name }`,
+					status: 'publish',
+					content:
+						FILLER +
+						`<!-- wp:fair-events/${ fixture.block } {"anchor":"${ fixture.id }-fixture","categories":[1],"eventSources":["fixture-source"],"showDrafts":true,"showCopySummary":true} /-->`,
+				},
+			} );
+			const pageUrl = testPage.link || `/?page_id=${ testPage.id }`;
+			await page.goto( pageUrl );
 
-			const testPage = await createPage(
-				page,
-				`Scroll Position Calendar ${ name }`,
-				FILLER + '<!-- wp:fair-events/events-calendar /-->'
+			const region = page.locator( `#${ fixture.id }-fixture` );
+			await expect( region ).toHaveAttribute(
+				'data-wp-router-region',
+				`${ fixture.id }-fixture`
 			);
-
-			await page.goto( testPage.link || `/?page_id=${ testPage.id }` );
-
-			const block = page.locator( '#fair-events-calendar' );
-			await expect( block ).toBeVisible();
-			await block.scrollIntoViewIfNeeded();
-			// Nudge off the exact top edge so a scroll-to-top regression is
-			// distinguishable from "already there".
+			await region.scrollIntoViewIfNeeded();
 			await page.evaluate( () => window.scrollBy( 0, -100 ) );
+			const initialScroll = await page.evaluate( () => window.scrollY );
+			const initialHeading = (
+				await region.locator( '.navigation-title' ).textContent()
+			).trim();
+			const initialDate = await region
+				.locator( fixture.gridCell )
+				.first()
+				.getAttribute( 'data-date' );
+			await page.evaluate( () => {
+				window.__fairNavigationDocument = document;
+			} );
 
-			await page.locator( '.nav-next' ).click();
-			await page.waitForLoadState( 'load' );
+			await page.route( '**/*', async ( route ) => {
+				if (
+					route.request().resourceType() === 'document' &&
+					route.request().url().includes( fixture.param )
+				) {
+					await new Promise( ( resolve ) =>
+						setTimeout( resolve, 500 )
+					);
+				}
+				await route.continue();
+			} );
 
-			// Bookmarkable URL: the month/year selection is still encoded.
-			const afterUrl = new URL( page.url() );
-			expect( afterUrl.hash ).toBe( '#fair-events-calendar' );
+			await region.locator( '.nav-next' ).click();
+			await expect( region ).toHaveAttribute( 'aria-busy', 'true' );
+			await expect(
+				region.locator( '.fair-events-navigation-loading' )
+			).toBeVisible();
+			await expect(
+				region.locator( '.navigation-title' )
+			).not.toHaveText( initialHeading );
 			expect(
-				afterUrl.searchParams.get( 'calendar_month' )
+				await page.evaluate(
+					() => window.__fairNavigationDocument === document
+				)
+			).toBe( true );
+			const secondHeading = (
+				await region.locator( '.navigation-title' ).textContent()
+			).trim();
+			const secondDate = await region
+				.locator( fixture.gridCell )
+				.first()
+				.getAttribute( 'data-date' );
+			expect( secondDate ).not.toBe( initialDate );
+			expect(
+				new URL( page.url() ).searchParams.get( fixture.param )
 			).toBeTruthy();
-			expect( afterUrl.searchParams.get( 'calendar_year' ) ).toBeTruthy();
-
-			// The reload lands on the block instead of resetting to the top.
-			const scrollY = await page.evaluate( () => window.scrollY );
-			expect( scrollY ).toBeGreaterThan( 100 );
-			const box = await block.boundingBox();
-			expect( box ).not.toBeNull();
-			expect( box.y ).toBeGreaterThan( -50 );
-			expect( box.y ).toBeLessThan( size.height / 2 );
-
-			// Cleanup.
-			await apiFetch( page, {
-				path: `/wp/v2/pages/${ testPage.id }?force=true`,
-				method: 'DELETE',
-			} ).catch( () => {} );
-		} );
-
-		test( `week view: next keeps the week grid in view (${ name })`, async ( {
-			page,
-		} ) => {
-			test.setTimeout( 60_000 );
-			await page.setViewportSize( size );
-			await login( page );
-			await page.goto(
-				'/wp-admin/admin.php?page=fair-events-all-events'
+			expect( await page.evaluate( () => window.scrollY ) ).toBeCloseTo(
+				initialScroll,
+				-1
 			);
-			await page.waitForFunction( () => window.wp && window.wp.apiFetch );
-
-			const testPage = await createPage(
-				page,
-				`Scroll Position Week ${ name }`,
-				FILLER + '<!-- wp:fair-events/events-week /-->'
+			await expect( region.locator( '.navigation-title' ) ).toBeFocused();
+			await expect( region.locator( '.nav-prev' ) ).toHaveAttribute(
+				'href',
+				new RegExp( fixture.param )
 			);
 
-			await page.goto( testPage.link || `/?page_id=${ testPage.id }` );
-
-			const block = page.locator( '#fair-events-week' );
-			await expect( block ).toBeVisible();
-			await block.scrollIntoViewIfNeeded();
-			await page.evaluate( () => window.scrollBy( 0, -100 ) );
-
-			const beforeWeek = new URL( page.url() ).searchParams.get(
-				'week_view'
+			await region.locator( '.nav-next' ).click();
+			await expect(
+				region.locator( '.navigation-title' )
+			).not.toHaveText( secondHeading );
+			const thirdHeading = (
+				await region.locator( '.navigation-title' ).textContent()
+			).trim();
+			await page.goBack();
+			await expect( region.locator( '.navigation-title' ) ).toHaveText(
+				secondHeading
+			);
+			await page.goForward();
+			await expect( region.locator( '.navigation-title' ) ).toHaveText(
+				thirdHeading
 			);
 
-			await page.locator( '.nav-next' ).click();
-			await page.waitForLoadState( 'load' );
+			const noJsContext = await browser.newContext( {
+				javaScriptEnabled: false,
+			} );
+			const noJsPage = await noJsContext.newPage();
+			await noJsPage.goto( pageUrl );
+			await noJsPage
+				.locator( `#${ fixture.id }-fixture .nav-next` )
+				.click();
+			await expect( noJsPage ).toHaveURL(
+				new RegExp( `${ fixture.param }=.*#${ fixture.id }-fixture` )
+			);
+			await noJsContext.close();
 
-			// Bookmarkable URL: the week selection is still encoded, and changed.
-			const afterUrl = new URL( page.url() );
-			expect( afterUrl.hash ).toBe( '#fair-events-week' );
-			const afterWeek = afterUrl.searchParams.get( 'week_view' );
-			expect( afterWeek ).toBeTruthy();
-			expect( afterWeek ).not.toBe( beforeWeek );
-
-			// The reload lands on the block instead of resetting to the top.
-			const scrollY = await page.evaluate( () => window.scrollY );
-			expect( scrollY ).toBeGreaterThan( 100 );
-			const box = await block.boundingBox();
-			expect( box ).not.toBeNull();
-			expect( box.y ).toBeGreaterThan( -50 );
-			expect( box.y ).toBeLessThan( size.height / 2 );
-
-			// Cleanup.
 			await apiFetch( page, {
 				path: `/wp/v2/pages/${ testPage.id }?force=true`,
 				method: 'DELETE',
