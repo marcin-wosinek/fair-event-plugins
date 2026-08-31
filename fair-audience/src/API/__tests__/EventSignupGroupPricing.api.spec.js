@@ -16,8 +16,9 @@
  * payment_unavailable (mirroring the trick EventSignupBasePricing's and
  * EventSignupSlidingScale's specs use).
  *
- * Skips gracefully when fair-events-experimental / fair-audience-experimental
- * aren't both active, since group pricing/restrictions live there.
+ * Fair Audience Experimental supplies group administration and discount rules;
+ * ticket restrictions themselves remain available with Fair Events
+ * Experimental inactive.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -106,6 +107,7 @@ async function identifyAsNewParticipant(
 test.describe( 'Group-based pricing and group-restricted tiers', () => {
 	let api;
 	let groupsActive = false;
+	let originalEventsExperimentalStatus;
 	let event;
 	let groupId;
 	let restrictedTypeId;
@@ -125,9 +127,18 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 				plugins.some(
 					( p ) => p.plugin?.includes( slug ) && p.status === 'active'
 				);
-			groupsActive =
-				active( 'fair-events-experimental' ) &&
-				active( 'fair-audience-experimental' );
+			groupsActive = active( 'fair-audience-experimental' );
+			const eventsExperimental = plugins.find( ( plugin ) =>
+				plugin.plugin?.includes( 'fair-events-experimental' )
+			);
+			originalEventsExperimentalStatus = eventsExperimental?.status;
+			if ( eventsExperimental?.status === 'active' ) {
+				const deactivateRes = await api.put(
+					`/wp-json/wp/v2/plugins/${ eventsExperimental.plugin }`,
+					{ headers: authHeaders, data: { status: 'inactive' } }
+				);
+				expect( deactivateRes.ok() ).toBeTruthy();
+			}
 		}
 		if ( ! groupsActive ) {
 			return;
@@ -205,21 +216,6 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 		expect( restrictedTypeId ).toBeTruthy();
 		expect( openTypeId ).toBeTruthy();
 		expect( discountedTypeId ).toBeTruthy();
-
-		// A 100% rule on the priced tier: proves the discount is applied
-		// server-side without needing a payment provider configured.
-		const ruleRes = await api.post(
-			`/wp-json/fair-events/v1/event-dates/${ event.eventDateId }/group-pricing-rules`,
-			{
-				headers: authHeaders,
-				data: {
-					group_id: groupId,
-					discount_type: 'percentage',
-					discount_value: 100,
-				},
-			}
-		);
-		expect( ruleRes.ok(), await ruleRes.text() ).toBeTruthy();
 	} );
 
 	test.afterAll( async () => {
@@ -234,13 +230,22 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 				);
 			}
 		}
+		if ( originalEventsExperimentalStatus ) {
+			await api.put(
+				'/wp-json/wp/v2/plugins/fair-events-experimental/fair-events-experimental',
+				{
+					headers: authHeaders,
+					data: { status: originalEventsExperimentalStatus },
+				}
+			);
+		}
 		await api.dispose();
 	} );
 
 	test( 'a restricted ticket type rejects a non-member with 403 ticket_type_restricted', async () => {
 		test.skip(
 			! groupsActive,
-			'fair-events-experimental / fair-audience-experimental not active'
+			'fair-audience-experimental groups bundle not active'
 		);
 		test.skip(
 			! fixtureOk,
@@ -264,7 +269,7 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 	test( 'a group member can buy the restricted ticket type', async () => {
 		test.skip(
 			! groupsActive,
-			'fair-events-experimental / fair-audience-experimental not active'
+			'fair-audience-experimental groups bundle not active'
 		);
 		test.skip(
 			! fixtureOk,
@@ -302,12 +307,30 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 	test( 'a 100% group discount confirms free only for a member', async () => {
 		test.skip(
 			! groupsActive,
-			'fair-events-experimental / fair-audience-experimental not active'
+			'fair-audience-experimental groups bundle not active'
 		);
 		test.skip(
 			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
 		);
+
+		const activateRes = await api.put(
+			'/wp-json/wp/v2/plugins/fair-events-experimental/fair-events-experimental',
+			{ headers: authHeaders, data: { status: 'active' } }
+		);
+		expect( activateRes.ok() ).toBeTruthy();
+		const ruleRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ event.eventDateId }/group-pricing-rules`,
+			{
+				headers: authHeaders,
+				data: {
+					group_id: groupId,
+					discount_type: 'percentage',
+					discount_value: 100,
+				},
+			}
+		);
+		expect( ruleRes.ok(), await ruleRes.text() ).toBeTruthy();
 
 		// Non-member: full price applies. Depending on payment configuration,
 		// this either starts payment or reports that payment is unavailable.

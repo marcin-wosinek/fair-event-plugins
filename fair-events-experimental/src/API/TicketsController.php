@@ -17,7 +17,7 @@ use FairEvents\Models\TicketPrice;
 use FairEventsExperimental\Models\TicketOption;
 use FairEventsExperimental\Models\TicketOptionCollaborator;
 use FairEventsExperimental\Models\TicketOptionPrice;
-use FairEventsExperimental\Models\TicketTypeGroupRestriction;
+use FairEvents\Models\TicketTypeGroupRestriction;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;

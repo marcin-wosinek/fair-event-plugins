@@ -7,6 +7,8 @@
 
 namespace FairEvents\API;
 
+use FairEvents\Models\TicketTypeGroupRestriction;
+
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
@@ -315,9 +317,7 @@ class TicketsController extends WP_REST_Controller {
 
 		$existing_types = TicketType::get_all_by_event_date_id( $event_date_id );
 		foreach ( $existing_types as $type ) {
-			if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
-				\FairEventsExperimental\Models\TicketTypeGroupRestriction::delete_by_ticket_type_id( $type->id );
-			}
+			TicketTypeGroupRestriction::delete_by_ticket_type_id( $type->id );
 			TicketType::delete( $type->id );
 		}
 
@@ -349,10 +349,10 @@ class TicketsController extends WP_REST_Controller {
 			if ( $new_id ) {
 				$type_ids_by_index[ $index ] = (int) $new_id;
 
-				$group_ids = isset( $item['group_ids'] ) && is_array( $item['group_ids'] ) ? array_map( 'absint', $item['group_ids'] ) : array();
-				if ( ! empty( $group_ids ) && class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
-					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
-				}
+				$group_ids = isset( $item['group_ids'] ) && is_array( $item['group_ids'] )
+					? array_values( array_unique( array_filter( array_map( 'absint', $item['group_ids'] ) ) ) )
+					: array();
+				TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
 			}
 		}
 
@@ -497,9 +497,7 @@ class TicketsController extends WP_REST_Controller {
 					continue;
 				}
 				TicketPrice::delete_by_ticket_type_id( $eid );
-				if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
-					\FairEventsExperimental\Models\TicketTypeGroupRestriction::delete_by_ticket_type_id( $eid );
-				}
+				TicketTypeGroupRestriction::delete_by_ticket_type_id( $eid );
 				TicketType::delete( $eid );
 			}
 		}
@@ -520,7 +518,9 @@ class TicketsController extends WP_REST_Controller {
 				: 'single_instance';
 			$minimum_instances  = isset( $item['minimum_instances'] ) ? absint( $item['minimum_instances'] ) : 0;
 			$sort_order         = $index;
-			$group_ids          = isset( $item['group_ids'] ) && is_array( $item['group_ids'] ) ? array_map( 'absint', $item['group_ids'] ) : array();
+			$group_ids          = isset( $item['group_ids'] ) && is_array( $item['group_ids'] )
+				? array_values( array_unique( array_filter( array_map( 'absint', $item['group_ids'] ) ) ) )
+				: array();
 
 			if ( ! empty( $item['id'] ) && in_array( (int) $item['id'], $existing_ids, true ) ) {
 				$id_map[ $index ] = (int) $item['id'];
@@ -540,14 +540,12 @@ class TicketsController extends WP_REST_Controller {
 					$update['recurrence_scope'] = $recurrence_scope;
 				}
 				TicketType::update( (int) $item['id'], $update );
-				if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
-					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
-				}
+				TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 			} else {
 				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
 				$id_map[ $index ] = (int) $new_id;
-				if ( $new_id && ! empty( $group_ids ) && class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
-					\FairEventsExperimental\Models\TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
+				if ( $new_id ) {
+					TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
 				}
 			}
 		}
@@ -647,9 +645,7 @@ class TicketsController extends WP_REST_Controller {
 			? \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $event_date_id )
 			: array();
 
-		$restrictions = class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class )
-			? \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $event_date_id )
-			: array();
+		$restrictions = TicketTypeGroupRestriction::get_all_by_event_date_id( $event_date_id );
 
 		$collaborators = class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class )
 			? \FairEventsExperimental\Models\TicketOptionCollaborator::get_all_by_event_date_id( $event_date_id )

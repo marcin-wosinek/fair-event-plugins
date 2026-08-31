@@ -85,12 +85,12 @@ class GroupSignupPricing {
 			return null;
 		}
 
-		if ( ! class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class )
+		if ( ! class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class )
 			|| ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
 			return null;
 		}
 
-		$allowed_group_ids = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_group_ids_by_ticket_type_id( $ticket_type_id );
+		$allowed_group_ids = \FairEvents\Models\TicketTypeGroupRestriction::get_group_ids_by_ticket_type_id( $ticket_type_id );
 		if ( empty( $allowed_group_ids ) ) {
 			return null;
 		}
