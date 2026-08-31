@@ -1,5 +1,11 @@
 # fair-payments-connector
 
+## 2.0.1
+
+### Patch Changes
+
+-   70445e4: Include the validated ticket buyer email in Mollie metadata while omitting unresolved participant and local user identifiers.
+
 ## 2.0.0
 
 ### Major Changes

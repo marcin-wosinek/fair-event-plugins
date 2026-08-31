@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.13.1
+
+### Patch Changes
+
+-   121db5a: Keep paid signup holds active for their full duration regardless of the WordPress site timezone.
+-   0c2aaad: Retain expired paid signups for reconciliation, safely process late payment notifications, and scrub retained signup details during participant anonymization.
+-   c43db89: Fix paid-transaction Telegram/email notifications missing event, ticket, activities, discounts, and even the participant name when a transaction's `participant_id` never resolved at creation time — enrichment now uses the payment ledger to fill in event/ticket data and falls back to the ledger's participant for the name, instead of silently skipping everything.
+-   af12d06: Make Telegram/email payment notifications describe the purchased item — membership-fee payments now show the group and fee name instead of empty ticket/activity/discount lines, and any line whose value can't be resolved (including the event link) is omitted rather than rendered blank.
+
 ## 1.13.0
 
 ### Minor Changes

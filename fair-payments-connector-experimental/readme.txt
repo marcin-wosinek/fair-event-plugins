@@ -4,7 +4,7 @@ Tags: payments, mollie, telegram
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 0.3.1
+Stable tag: 0.3.2
 License: Private
 License URI: https://fair-event-plugins.com
 
@@ -21,6 +21,12 @@ This plugin houses features that are under active development and not yet ready 
 * Telegram Notifications — send payment notifications to Telegram chats
 
 == Changelog ==
+
+## 0.3.2
+
+### Patch Changes
+
+-   af12d06: Make Telegram/email payment notifications describe the purchased item — membership-fee payments now show the group and fee name instead of empty ticket/activity/discount lines, and any line whose value can't be resolved (including the event link) is omitted rather than rendered blank.
 
 ## 0.3.1
 

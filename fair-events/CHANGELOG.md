@@ -1,5 +1,23 @@
 # fair-events
 
+## 1.15.0
+
+### Minor Changes
+
+-   6f47529: Navigate calendar months and weeks in place while preserving bookmarkable URLs, browser history, accessibility feedback, and no-JavaScript fallback links.
+-   7133cd9: Add an admin action to permanently delete an individual local signup without affecting related signups or payment-provider transactions.
+
+### Patch Changes
+
+-   70445e4: Include the validated ticket buyer email in Mollie metadata while omitting unresolved participant and local user identifiers.
+-   fd97ee2: Synchronize event post links across Polylang translation groups.
+-   121db5a: Keep paid signup holds active for their full duration regardless of the WordPress site timezone.
+-   3366b0b: Recover missing event details in the new-event editor without requiring a save or reload.
+-   0c2aaad: Retain expired paid signups for reconciliation, safely process late payment notifications, and scrub retained signup details during participant anonymization.
+-   5ce3559: Hide disabled and out-of-window ticket types from event signup.
+-   2a0e856: Add HTML anchor support to the Event Signup block.
+-   8d83293: Ticket purchase transaction descriptions now use the event's name (e.g. "Ticket for Dance connection") instead of its raw numeric ID (e.g. "Ticket for event #43"), matching the format other transaction types already use. Applies to both single-occurrence and recurring/multi-instance signups; falls back to the previous numeric format for event dates with no linked post. Existing transactions are unaffected.
+
 ## 1.14.0
 
 ### Minor Changes
