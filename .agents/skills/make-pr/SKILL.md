@@ -1,6 +1,6 @@
 ---
 name: make-pr
-description: Implement a Fair Event Plugins GitHub issue or a specific issue comment on a topic branch, verify it, and open a pull request.
+description: Implement a Fair Event Plugins GitHub issue or a specific issue comment on a topic branch, verify it, and open a pull request. Use for requests to implement or make a PR from a ticket.
 ---
 
 # Implement a ticket and open a PR

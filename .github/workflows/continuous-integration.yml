@@ -141,6 +141,9 @@ jobs:
             - name: Lint guideline docs
               run: npm run lint:docs
 
+            - name: Validate agent workflows
+              run: npm run validate:agent-workflows
+
             - name: Run unit tests
               run: |
                   npm test

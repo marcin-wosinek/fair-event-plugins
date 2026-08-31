@@ -1,6 +1,6 @@
 ---
 name: translate
-description: Inspect and run this repository's WordPress translation workflow for a requested plugin and locale.
+description: Inspect and run this repository's WordPress translation workflow for a requested plugin and locale. Use for translation, locale, or catalog work.
 ---
 
 # Translate a plugin
