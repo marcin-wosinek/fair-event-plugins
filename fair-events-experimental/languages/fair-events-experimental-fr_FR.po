@@ -85,15 +85,15 @@ msgstr "Copier l'événement"
 #: src/Admin/AdminPages.php:143
 #: src/Admin/AdminPages.php:149
 #: src/Admin/manage-event-ext/index.js:67
-#: src/Admin/manage-event/DuplicateEventWizard.js:606
+#: src/Admin/manage-event/DuplicateEventWizard.js:620
 msgid "Duplicate Event"
 msgstr "Dupliquer l'événement"
 
 #: src/Admin/AdminPages.php:153
 #: src/Admin/AdminPages.php:154
 #: src/Admin/AdminPages.php:160
-#: src/Admin/manage-event-ext/index.js:88
-#: src/Admin/manage-event/MergeEventWizard.js:429
+#: src/Admin/manage-event-ext/index.js:91
+#: src/Admin/manage-event/MergeEventWizard.js:454
 msgid "Merge Event"
 msgstr "Fusionner l'événement"
 
@@ -170,8 +170,8 @@ msgstr "Bascules de fonctionnalités par bundle pour les fonctionnalités expér
 msgid "Failed to load event."
 msgstr "Échec du chargement de l'événement."
 
-#: src/Admin/duplicate-event/index.js:48
-#: src/Admin/merge-event/index.js:48
+#: src/Admin/duplicate-event/index.js:52
+#: src/Admin/merge-event/index.js:52
 msgid "Event not found."
 msgstr "Événement non trouvé."
 
@@ -189,218 +189,218 @@ msgstr "Participants confirmés uniquement (inscrits). %d exclus (paiement en at
 msgid "People per activity"
 msgstr "Personnes par activité"
 
-#: src/Admin/event-statistics/EventStatistics.js:195
+#: src/Admin/event-statistics/EventStatistics.js:198
 msgid "No activities recorded for confirmed participants."
 msgstr "Aucune activité enregistrée pour les participants confirmés."
 
-#: src/Admin/event-statistics/EventStatistics.js:216
-#: src/Admin/event-statistics/EventStatistics.js:249
+#: src/Admin/event-statistics/EventStatistics.js:223
+#: src/Admin/event-statistics/EventStatistics.js:262
 msgid "People"
 msgstr "Personnes"
 
-#: src/Admin/event-statistics/EventStatistics.js:225
+#: src/Admin/event-statistics/EventStatistics.js:235
 msgid "Activities per person"
 msgstr "Activités par personne"
 
-#: src/Admin/event-statistics/EventStatistics.js:237
+#: src/Admin/event-statistics/EventStatistics.js:250
 msgid "Activities"
 msgstr "Activités"
 
-#: src/Admin/event-statistics/EventStatistics.js:257
+#: src/Admin/event-statistics/EventStatistics.js:270
 msgid "Sales lead time"
 msgstr "Délai de vente"
 
-#: src/Admin/event-statistics/EventStatistics.js:261
+#: src/Admin/event-statistics/EventStatistics.js:274
 msgid "Lead time is unavailable (missing event date or signup timestamps)."
 msgstr "Le délai est indisponible (date d'événement ou horodatages d'inscription manquants)."
 
-#: src/Admin/event-statistics/EventStatistics.js:278
+#: src/Admin/event-statistics/EventStatistics.js:291
 msgid "Days before event"
 msgstr "Jours avant l'événement"
 
-#: src/Admin/event-statistics/EventStatistics.js:290
-#: src/Admin/manage-event/DuplicateEventWizard.js:561
+#: src/Admin/event-statistics/EventStatistics.js:303
+#: src/Admin/manage-event/DuplicateEventWizard.js:570
 msgid "Tickets"
 msgstr "Billets"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:341
+#: src/Admin/manage-event/DuplicateEventWizard.js:344
 msgid "— No venue —"
 msgstr "— Aucun lieu —"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:387
+#: src/Admin/manage-event/DuplicateEventWizard.js:390
 msgid "Creating event…"
 msgstr "Création de l'événement…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:408
+#: src/Admin/manage-event/DuplicateEventWizard.js:412
 msgid "Cloning posts…"
 msgstr "Clonage des articles…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:423
+#: src/Admin/manage-event/DuplicateEventWizard.js:429
 msgid "Saving tickets…"
 msgstr "Enregistrement des billets…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:439
+#: src/Admin/manage-event/DuplicateEventWizard.js:446
 msgid "Adding collaborators…"
 msgstr "Ajout de collaborateurs…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:491
+#: src/Admin/manage-event/DuplicateEventWizard.js:498
 msgid "Copying group rules…"
 msgstr "Copie des règles de groupe…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:527
+#: src/Admin/manage-event/DuplicateEventWizard.js:535
 msgid "Done! Redirecting…"
 msgstr "Terminé ! Redirection…"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:534
+#: src/Admin/manage-event/DuplicateEventWizard.js:543
 msgid "Failed to create duplicate event."
 msgstr "Échec de la création de l'événement en double."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:549
-#: src/Admin/manage-event/DuplicateEventWizard.js:692
+#: src/Admin/manage-event/DuplicateEventWizard.js:558
+#: src/Admin/manage-event/DuplicateEventWizard.js:710
 msgid "Event Details"
 msgstr "Détails de l'événement"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:555
+#: src/Admin/manage-event/DuplicateEventWizard.js:564
 msgid "Links"
 msgstr "Liens"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:567
+#: src/Admin/manage-event/DuplicateEventWizard.js:576
 msgid "Audience"
 msgstr "Audience"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:571
-#: src/Admin/manage-event/DuplicateEventWizard.js:968
+#: src/Admin/manage-event/DuplicateEventWizard.js:580
+#: src/Admin/manage-event/DuplicateEventWizard.js:997
 msgid "Group Rules"
 msgstr "Règles de groupe"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:622
+#: src/Admin/manage-event/DuplicateEventWizard.js:636
 msgid "View partially created event"
 msgstr "Afficher l'événement partiellement créé"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:644
-#: src/Admin/manage-event/MergeEventWizard.js:455
+#: src/Admin/manage-event/DuplicateEventWizard.js:658
+#: src/Admin/manage-event/MergeEventWizard.js:480
 msgid "Step"
 msgstr "Étape"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:659
-#: src/Admin/manage-event/MergeEventWizard.js:470
+#: src/Admin/manage-event/DuplicateEventWizard.js:673
+#: src/Admin/manage-event/MergeEventWizard.js:495
 msgid "Back"
 msgstr "Retour"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:668
-#: src/Admin/manage-event/MergeEventWizard.js:479
-#: src/Admin/manage-event/MergeEventWizard.js:488
+#: src/Admin/manage-event/DuplicateEventWizard.js:682
+#: src/Admin/manage-event/MergeEventWizard.js:504
+#: src/Admin/manage-event/MergeEventWizard.js:513
 msgid "Next"
 msgstr "Suivant"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:677
+#: src/Admin/manage-event/DuplicateEventWizard.js:691
 msgid "Create Duplicate"
 msgstr "Créer un doublon"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:681
-#: src/Admin/manage-event/MergeEventWizard.js:492
+#: src/Admin/manage-event/DuplicateEventWizard.js:698
+#: src/Admin/manage-event/MergeEventWizard.js:517
 msgid "Cancel"
 msgstr "Annuler"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:697
+#: src/Admin/manage-event/DuplicateEventWizard.js:716
 msgid "Title"
 msgstr "Titre"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:704
+#: src/Admin/manage-event/DuplicateEventWizard.js:723
 msgid "All day"
 msgstr "Toute la journée"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:712
-#: src/Admin/manage-event/DuplicateEventWizard.js:735
+#: src/Admin/manage-event/DuplicateEventWizard.js:734
+#: src/Admin/manage-event/DuplicateEventWizard.js:757
 msgid "Start date"
 msgstr "Date de début"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:722
-#: src/Admin/manage-event/DuplicateEventWizard.js:755
+#: src/Admin/manage-event/DuplicateEventWizard.js:744
+#: src/Admin/manage-event/DuplicateEventWizard.js:777
 msgid "End date"
 msgstr "Date de fin"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:745
+#: src/Admin/manage-event/DuplicateEventWizard.js:767
 msgid "Start time"
 msgstr "Heure de début"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:765
+#: src/Admin/manage-event/DuplicateEventWizard.js:787
 msgid "End time"
 msgstr "Heure de fin"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:778
+#: src/Admin/manage-event/DuplicateEventWizard.js:800
 msgid "Event length"
 msgstr "Durée de l'événement"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:791
+#: src/Admin/manage-event/DuplicateEventWizard.js:813
 msgid "Venue"
 msgstr "Lieu"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:798
+#: src/Admin/manage-event/DuplicateEventWizard.js:820
 msgid "Categories"
 msgstr "Catégories"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:834
+#: src/Admin/manage-event/DuplicateEventWizard.js:862
 msgid "Linked Posts"
 msgstr "Articles liés"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:839
+#: src/Admin/manage-event/DuplicateEventWizard.js:868
 msgid "How to handle linked posts"
 msgstr "Comment gérer les articles liés"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:846
+#: src/Admin/manage-event/DuplicateEventWizard.js:875
 msgid "Clone linked posts — create draft copies"
 msgstr "Cloner les articles liés — créer des brouillons"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:853
+#: src/Admin/manage-event/DuplicateEventWizard.js:882
 msgid "Leave empty — no links"
 msgstr "Laisser vide — aucun lien"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:866
+#: src/Admin/manage-event/DuplicateEventWizard.js:895
 msgid "Source event linked posts:"
 msgstr "Articles liés de l'événement source :"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:884
+#: src/Admin/manage-event/DuplicateEventWizard.js:913
 msgid "Primary"
 msgstr "Principal"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:932
+#: src/Admin/manage-event/DuplicateEventWizard.js:961
 msgid "No group rules found on source event."
 msgstr "Aucune règle de groupe trouvée sur l'événement source."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:945
+#: src/Admin/manage-event/DuplicateEventWizard.js:974
 msgid "Invited"
 msgstr "Invité"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:947
+#: src/Admin/manage-event/DuplicateEventWizard.js:976
 msgid "View signups"
 msgstr "Afficher les inscriptions"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:949
+#: src/Admin/manage-event/DuplicateEventWizard.js:978
 msgid "Manage signups"
 msgstr "Gérer les inscriptions"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:973
+#: src/Admin/manage-event/DuplicateEventWizard.js:1002
 msgid "Select which groups to copy rules for."
 msgstr "Sélectionnez les groupes pour lesquels copier les règles."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1016
+#: src/Admin/manage-event/DuplicateEventWizard.js:1049
 msgid "Discount:"
 msgstr "Remise :"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1028
+#: src/Admin/manage-event/DuplicateEventWizard.js:1065
 msgid "Permissions:"
 msgstr "Permissions :"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1062
+#: src/Admin/manage-event/DuplicateEventWizard.js:1099
 msgid "No collaborators found on source event."
 msgstr "Aucun collaborateur trouvé sur l'événement source."
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1075
+#: src/Admin/manage-event/DuplicateEventWizard.js:1113
 msgid "Collaborators"
 msgstr "Collaborateurs"
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:1080
+#: src/Admin/manage-event/DuplicateEventWizard.js:1119
 msgid "Select which collaborators to copy to the new event."
 msgstr "Sélectionnez les collaborateurs à copier vers le nouvel événement."
 
@@ -428,116 +428,116 @@ msgstr "Supprimer"
 msgid "Skip"
 msgstr "Ignorer"
 
-#: src/Admin/manage-event/MergeEventWizard.js:116
+#: src/Admin/manage-event/MergeEventWizard.js:119
 msgid "Failed to load preview."
 msgstr "Échec du chargement de l'aperçu."
 
-#: src/Admin/manage-event/MergeEventWizard.js:131
+#: src/Admin/manage-event/MergeEventWizard.js:134
 msgid "Merging events..."
 msgstr "Fusion des événements en cours..."
 
-#: src/Admin/manage-event/MergeEventWizard.js:143
+#: src/Admin/manage-event/MergeEventWizard.js:147
 msgid "Done! Redirecting..."
 msgstr "Terminé ! Redirection en cours..."
 
-#: src/Admin/manage-event/MergeEventWizard.js:148
+#: src/Admin/manage-event/MergeEventWizard.js:153
 msgid "Failed to merge events."
 msgstr "Échec de la fusion des événements."
 
-#: src/Admin/manage-event/MergeEventWizard.js:161
+#: src/Admin/manage-event/MergeEventWizard.js:167
 msgid "Select Target Event"
 msgstr "Sélectionner l'événement cible"
 
-#: src/Admin/manage-event/MergeEventWizard.js:166
+#: src/Admin/manage-event/MergeEventWizard.js:173
 msgid "Search for the event date you want to merge this event into. All data from the current event (source) will be moved to the target."
 msgstr "Recherchez la date de l'événement dans lequel vous souhaitez fusionner cet événement. Toutes les données de l'événement actuel (source) seront déplacées vers la cible."
 
-#: src/Admin/manage-event/MergeEventWizard.js:172
+#: src/Admin/manage-event/MergeEventWizard.js:179
 msgid "Search events by title"
 msgstr "Rechercher les événements par titre"
 
-#: src/Admin/manage-event/MergeEventWizard.js:178
+#: src/Admin/manage-event/MergeEventWizard.js:185
 msgid "Start typing to search..."
 msgstr "Commencez à taper pour rechercher..."
 
-#: src/Admin/manage-event/MergeEventWizard.js:186
+#: src/Admin/manage-event/MergeEventWizard.js:193
 msgid "Select target event"
 msgstr "Sélectionner l'événement cible"
 
-#: src/Admin/manage-event/MergeEventWizard.js:193
+#: src/Admin/manage-event/MergeEventWizard.js:200
 msgid "Select..."
 msgstr "Sélectionner..."
 
-#: src/Admin/manage-event/MergeEventWizard.js:202
-#: src/Admin/manage-event/MergeEventWizard.js:218
-#: src/Admin/manage-event/MergeEventWizard.js:346
-#: src/Admin/manage-event/MergeEventWizard.js:354
+#: src/Admin/manage-event/MergeEventWizard.js:209
+#: src/Admin/manage-event/MergeEventWizard.js:225
+#: src/Admin/manage-event/MergeEventWizard.js:359
+#: src/Admin/manage-event/MergeEventWizard.js:370
 msgid "(No title)"
 msgstr "(Sans titre)"
 
-#: src/Admin/manage-event/MergeEventWizard.js:215
-#: src/Admin/manage-event/MergeEventWizard.js:351
+#: src/Admin/manage-event/MergeEventWizard.js:222
+#: src/Admin/manage-event/MergeEventWizard.js:367
 msgid "Target:"
 msgstr "Cible :"
 
-#: src/Admin/manage-event/MergeEventWizard.js:246
-#: src/Admin/manage-event/MergeEventWizard.js:402
+#: src/Admin/manage-event/MergeEventWizard.js:253
+#: src/Admin/manage-event/MergeEventWizard.js:427
 msgid "Review & Configure"
 msgstr "Vérifier et configurer"
 
-#: src/Admin/manage-event/MergeEventWizard.js:252
+#: src/Admin/manage-event/MergeEventWizard.js:262
 msgid "Review the linked data counts and choose what to do with each type."
 msgstr "Vérifiez les nombres de données liées et choisissez ce qu'il faut faire avec chaque type."
 
-#: src/Admin/manage-event/MergeEventWizard.js:265
+#: src/Admin/manage-event/MergeEventWizard.js:275
 msgid "Data Type"
 msgstr "Type de données"
 
-#: src/Admin/manage-event/MergeEventWizard.js:271
+#: src/Admin/manage-event/MergeEventWizard.js:281
 msgid "Source"
 msgstr "Source"
 
-#: src/Admin/manage-event/MergeEventWizard.js:277
+#: src/Admin/manage-event/MergeEventWizard.js:287
 msgid "Target"
 msgstr "Cible"
 
-#: src/Admin/manage-event/MergeEventWizard.js:283
+#: src/Admin/manage-event/MergeEventWizard.js:293
 msgid "Action"
 msgstr "Action"
 
-#: src/Admin/manage-event/MergeEventWizard.js:321
+#: src/Admin/manage-event/MergeEventWizard.js:334
 msgid "Delete source event after merge"
 msgstr "Supprimer l'événement source après la fusion"
 
-#: src/Admin/manage-event/MergeEventWizard.js:337
+#: src/Admin/manage-event/MergeEventWizard.js:350
 msgid "Confirm Merge"
 msgstr "Confirmer la fusion"
 
-#: src/Admin/manage-event/MergeEventWizard.js:343
+#: src/Admin/manage-event/MergeEventWizard.js:356
 msgid "Source:"
 msgstr "Source :"
 
-#: src/Admin/manage-event/MergeEventWizard.js:366
+#: src/Admin/manage-event/MergeEventWizard.js:385
 msgid "item"
 msgstr "élément"
 
-#: src/Admin/manage-event/MergeEventWizard.js:367
+#: src/Admin/manage-event/MergeEventWizard.js:386
 msgid "items"
 msgstr "éléments"
 
-#: src/Admin/manage-event/MergeEventWizard.js:374
+#: src/Admin/manage-event/MergeEventWizard.js:396
 msgid "The source event date will be deleted after merge."
 msgstr "La date de l'événement source sera supprimée après la fusion."
 
-#: src/Admin/manage-event/MergeEventWizard.js:387
+#: src/Admin/manage-event/MergeEventWizard.js:409
 msgid "Execute Merge"
 msgstr "Exécuter la fusion"
 
-#: src/Admin/manage-event/MergeEventWizard.js:398
+#: src/Admin/manage-event/MergeEventWizard.js:423
 msgid "Select Target"
 msgstr "Sélectionner la cible"
 
-#: src/Admin/manage-event/MergeEventWizard.js:404
+#: src/Admin/manage-event/MergeEventWizard.js:429
 msgid "Confirm"
 msgstr "Confirmer"
 
@@ -557,27 +557,27 @@ msgstr "Impossible d'enregistrer les fonctionnalités."
 msgid "Loading features..."
 msgstr "Chargement des fonctionnalités..."
 
-#: src/Admin/settings/FeaturesTab.js:120
+#: src/Admin/settings/FeaturesTab.js:123
 msgid "Feature Bundles"
 msgstr "Lots de fonctionnalités"
 
-#: src/Admin/settings/FeaturesTab.js:124
+#: src/Admin/settings/FeaturesTab.js:127
 msgid "Toggle optional experimental feature bundles. Bundles fixed in wp-config (FAIR_EVENTS_EXPERIMENTAL_INTERNAL or FAIR_EVENTS_EXPERIMENTAL_FEATURE_*) are read-only here."
 msgstr "Activez ou désactivez les lots de fonctionnalités expérimentales optionnels. Les lots fixés dans wp-config (FAIR_EVENTS_EXPERIMENTAL_INTERNAL ou FAIR_EVENTS_EXPERIMENTAL_FEATURE_*) sont en lecture seule ici."
 
-#: src/Admin/settings/FeaturesTab.js:132
+#: src/Admin/settings/FeaturesTab.js:135
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là-bas."
 
-#: src/Admin/settings/FeaturesTab.js:155
+#: src/Admin/settings/FeaturesTab.js:160
 msgid "One or more bundles are forced by wp-config and cannot be toggled here."
 msgstr "Un ou plusieurs lots sont forcés par wp-config et ne peuvent pas être basculés ici."
 
-#: src/Admin/settings/FeaturesTab.js:169
+#: src/Admin/settings/FeaturesTab.js:174
 msgid "Saving..."
 msgstr "Enregistrement..."
 
-#: src/Admin/settings/FeaturesTab.js:170
+#: src/Admin/settings/FeaturesTab.js:175
 msgid "Save Features"
 msgstr "Enregistrer les fonctionnalités"
 
@@ -593,7 +593,7 @@ msgstr "Statistiques"
 msgid "Create a copy of this event with the same details, links, and settings."
 msgstr "Créez une copie de cet événement avec les mêmes détails, liens et paramètres."
 
-#: src/Admin/manage-event-ext/index.js:78
+#: src/Admin/manage-event-ext/index.js:81
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr "Fusionnez cet événement avec une autre date d'événement, en déplaçant ou en nettoyant toutes les données liées."
 
@@ -605,4 +605,3 @@ msgstr "Billets, tarification de groupe/règles de permission. Nécessite fair-a
 #: fair-events-experimental.php
 msgid "Activates advanced feature bundles for Fair Events (galleries, sources, ticketing, event-tools, migration). Requires fair-events."
 msgstr "Active les packs de fonctionnalités avancées pour Fair Events (galeries, sources, billetterie, outils d'événement, migration). Nécessite fair-events."
-

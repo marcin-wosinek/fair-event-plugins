@@ -58,8 +58,8 @@ msgstr "Activité"
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
 #: src/Core/Features.php:198
-#: src/Admin/custom-mail/CustomMail.js:781
-#: src/Admin/manage-event-ext/EventMailings.js:51
+#: src/Admin/custom-mail/CustomMail.js:797
+#: src/Admin/manage-event-ext/EventMailings.js:54
 msgid "Collaborators"
 msgstr "Collaborateurs"
 
@@ -110,8 +110,8 @@ msgstr "Calendrier hebdomadaire"
 #: src/Admin/AdminPages.php:189
 #: src/Admin/AdminPages.php:190
 #: src/Core/Features.php:194
-#: src/Admin/custom-mail/CustomMail.js:823
-#: src/Admin/groups/Groups.js:323
+#: src/Admin/custom-mail/CustomMail.js:839
+#: src/Admin/groups/Groups.js:325
 #: src/Admin/manage-event-ext/index.js:32
 msgid "Groups"
 msgstr "Groupes"
@@ -124,16 +124,16 @@ msgstr "Détail du groupe"
 
 #: src/Admin/AdminPages.php:212
 #: src/Admin/AdminPages.php:213
-#: src/Admin/custom-mail/CustomMail.js:534
-#: src/Admin/custom-mail/CustomMail.js:550
+#: src/Admin/custom-mail/CustomMail.js:536
+#: src/Admin/custom-mail/CustomMail.js:552
 msgid "Custom Mail"
 msgstr "E-mail personnalisé"
 
 #: src/Admin/AdminPages.php:221
 #: src/Admin/AdminPages.php:222
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:84
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:93
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:104
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:85
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:96
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:108
 msgid "Extra Messages"
 msgstr "Messages supplémentaires"
 
@@ -141,7 +141,7 @@ msgstr "Messages supplémentaires"
 #: src/Admin/AdminPages.php:231
 #: src/Admin/AdminPages.php:237
 #: src/Admin/edit-extra-message/EditExtraMessage.js:152
-#: src/Admin/edit-extra-message/EditExtraMessage.js:167
+#: src/Admin/edit-extra-message/EditExtraMessage.js:170
 msgid "Edit Extra Message"
 msgstr "Modifier le message supplémentaire"
 
@@ -201,12 +201,12 @@ msgid "All selected photos will be attributed to this author."
 msgstr "Toutes les photos sélectionnées seront attribuées à cet auteur."
 
 #: src/Admin/MediaBatchActions.php:257
-#: src/Admin/edit-extra-message/EditExtraMessage.js:262
-#: src/Admin/group-detail/GroupDetail.js:485
-#: src/Admin/groups/Groups.js:390
-#: src/Admin/groups/Groups.js:438
-#: src/Admin/manage-event-ext/EventMailings.js:671
-#: src/Admin/manage-event-ext/GroupRules.js:495
+#: src/Admin/edit-extra-message/EditExtraMessage.js:272
+#: src/Admin/group-detail/GroupDetail.js:501
+#: src/Admin/groups/Groups.js:398
+#: src/Admin/groups/Groups.js:449
+#: src/Admin/manage-event-ext/EventMailings.js:693
+#: src/Admin/manage-event-ext/GroupRules.js:500
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -264,8 +264,8 @@ msgstr "Étiqueter les personnes :"
 #: src/Admin/MediaLibraryHooks.php:482
 #: src/Admin/MediaLibraryHooks.php:520
 #: src/Admin/MediaLibraryHooks.php:755
-#: src/Admin/edit-extra-message/EditExtraMessage.js:252
-#: src/Admin/settings/FeaturesTab.js:174
+#: src/Admin/edit-extra-message/EditExtraMessage.js:262
+#: src/Admin/settings/FeaturesTab.js:178
 msgid "Saving..."
 msgstr "Enregistrement..."
 
@@ -488,7 +488,7 @@ msgstr "Vous n'avez pas la permission de consulter les statistiques d'invitation
 #: src/API/GroupsController.php:441
 #: src/API/GroupsController.php:465
 #: src/API/GroupsController.php:520
-#: src/Admin/group-detail/GroupDetail.js:59
+#: src/Admin/group-detail/GroupDetail.js:62
 msgid "Group not found."
 msgstr "Groupe introuvable."
 
@@ -519,7 +519,7 @@ msgid "Group updated successfully."
 msgstr "Groupe mis à jour avec succès."
 
 #: src/API/GroupsController.php:351
-#: src/Admin/groups/Groups.js:268
+#: src/Admin/groups/Groups.js:270
 msgid "Failed to delete group."
 msgstr "Échec de la suppression du groupe."
 
@@ -529,13 +529,13 @@ msgstr "Groupe supprimé avec succès."
 
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
-#: src/Admin/groups/Groups.js:202
+#: src/Admin/groups/Groups.js:204
 #, php-format,js-format
 msgid "%s (copy)"
 msgstr "%s (copie)"
 
 #: src/API/GroupsController.php:410
-#: src/Admin/groups/Groups.js:231
+#: src/Admin/groups/Groups.js:233
 msgid "Failed to duplicate group."
 msgstr "Échec de la duplication du groupe."
 
@@ -1166,11 +1166,11 @@ msgid "Register your profile information."
 msgstr "Enregistrez vos informations de profil."
 
 #: templates/collaborator-profile.php:290
-#: src/Admin/custom-mail/CustomMail.js:913
-#: src/Admin/group-detail/GroupDetail.js:314
-#: src/Admin/group-detail/GroupDetail.js:454
+#: src/Admin/custom-mail/CustomMail.js:934
+#: src/Admin/group-detail/GroupDetail.js:327
+#: src/Admin/group-detail/GroupDetail.js:467
 #: src/Admin/groups/Groups.js:62
-#: src/Admin/groups/Groups.js:359
+#: src/Admin/groups/Groups.js:364
 #: src/Admin/manage-event-ext/MailBodyEditor.js:24
 msgid "Name"
 msgstr "Nom"
@@ -1180,8 +1180,8 @@ msgid "Surname"
 msgstr "Prénom"
 
 #: templates/collaborator-profile.php:318
-#: src/Admin/custom-mail/CustomMail.js:919
-#: src/Admin/group-detail/GroupDetail.js:320
+#: src/Admin/custom-mail/CustomMail.js:940
+#: src/Admin/group-detail/GroupDetail.js:333
 msgid "Email"
 msgstr "E-mail"
 
@@ -1292,219 +1292,219 @@ msgstr "Échec de l'envoi à :"
 msgid "Failed to load data."
 msgstr "Échec du chargement des données."
 
-#: src/Admin/custom-mail/CustomMail.js:360
-#: src/Admin/manage-event-ext/EventMailings.js:238
+#: src/Admin/custom-mail/CustomMail.js:362
+#: src/Admin/manage-event-ext/EventMailings.js:244
 msgid "Please enter a subject."
 msgstr "Veuillez entrer un sujet."
 
-#: src/Admin/custom-mail/CustomMail.js:372
+#: src/Admin/custom-mail/CustomMail.js:374
 msgid "Please enter content."
 msgstr "Veuillez entrer du contenu."
 
-#: src/Admin/custom-mail/CustomMail.js:389
+#: src/Admin/custom-mail/CustomMail.js:391
 msgid "Please select at least one audience type."
 msgstr "Veuillez sélectionner au moins un type d'audience."
 
-#: src/Admin/custom-mail/CustomMail.js:426
+#: src/Admin/custom-mail/CustomMail.js:428
 msgid "sent"
 msgstr "envoyé"
 
-#: src/Admin/custom-mail/CustomMail.js:433
+#: src/Admin/custom-mail/CustomMail.js:435
 msgid "failed"
 msgstr "échoué"
 
-#: src/Admin/custom-mail/CustomMail.js:441
+#: src/Admin/custom-mail/CustomMail.js:443
 msgid "skipped"
 msgstr "ignoré"
 
-#: src/Admin/custom-mail/CustomMail.js:464
+#: src/Admin/custom-mail/CustomMail.js:466
 msgid "Failed to send mail."
 msgstr "Échec de l'envoi du courrier."
 
-#: src/Admin/custom-mail/CustomMail.js:481
+#: src/Admin/custom-mail/CustomMail.js:483
 msgid "Are you sure you want to delete this record?"
 msgstr "Êtes-vous sûr de vouloir supprimer cet enregistrement ?"
 
-#: src/Admin/custom-mail/CustomMail.js:494
+#: src/Admin/custom-mail/CustomMail.js:496
 msgid "Record deleted."
 msgstr "Enregistrement supprimé."
 
-#: src/Admin/custom-mail/CustomMail.js:510
+#: src/Admin/custom-mail/CustomMail.js:512
 msgid "Failed to delete record."
 msgstr "Échec de la suppression de l'enregistrement."
 
-#: src/Admin/custom-mail/CustomMail.js:567
+#: src/Admin/custom-mail/CustomMail.js:569
 msgid "Send Custom Mail"
 msgstr "Envoyer un courrier personnalisé"
 
-#: src/Admin/custom-mail/CustomMail.js:573
-#: src/Admin/custom-mail/CustomMail.js:1054
-#: src/Admin/manage-event-ext/EventMailings.js:387
+#: src/Admin/custom-mail/CustomMail.js:578
+#: src/Admin/custom-mail/CustomMail.js:1085
+#: src/Admin/manage-event-ext/EventMailings.js:393
 msgid "Subject"
 msgstr "Sujet"
 
-#: src/Admin/custom-mail/CustomMail.js:588
-#: src/Admin/edit-extra-message/EditExtraMessage.js:195
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:127
+#: src/Admin/custom-mail/CustomMail.js:596
+#: src/Admin/edit-extra-message/EditExtraMessage.js:201
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:131
 msgid "Content"
 msgstr "Contenu"
 
-#: src/Admin/custom-mail/CustomMail.js:603
+#: src/Admin/custom-mail/CustomMail.js:614
 #: src/Admin/manage-event-ext/MailBodyEditor.js:157
 msgid "Upload photos"
 msgstr "Télécharger des photos"
 
-#: src/Admin/custom-mail/CustomMail.js:611
+#: src/Admin/custom-mail/CustomMail.js:622
 #: src/Admin/manage-event-ext/MailBodyEditor.js:162
 msgid "Insert photo upload link"
 msgstr "Insérer le lien de téléchargement de photo"
 
-#: src/Admin/custom-mail/CustomMail.js:622
+#: src/Admin/custom-mail/CustomMail.js:633
 #: src/Admin/manage-event-ext/MailBodyEditor.js:173
 msgid "Open event page"
 msgstr "Ouvrir la page d'événement"
 
-#: src/Admin/custom-mail/CustomMail.js:632
+#: src/Admin/custom-mail/CustomMail.js:643
 msgid "Select an event below to enable this link."
 msgstr "Sélectionnez un événement ci-dessous pour activer ce lien."
 
-#: src/Admin/custom-mail/CustomMail.js:639
-#: src/Admin/manage-event-ext/MailBodyEditor.js:178
+#: src/Admin/custom-mail/CustomMail.js:650
+#: src/Admin/manage-event-ext/MailBodyEditor.js:181
 msgid "Insert event page link"
 msgstr "Insérer le lien de la page d'événement"
 
-#: src/Admin/custom-mail/CustomMail.js:654
-#: src/Admin/manage-event-ext/MailBodyEditor.js:190
+#: src/Admin/custom-mail/CustomMail.js:665
+#: src/Admin/manage-event-ext/MailBodyEditor.js:196
 msgid "Search page…"
 msgstr "Rechercher une page…"
 
-#: src/Admin/custom-mail/CustomMail.js:729
-#: src/Admin/manage-event-ext/MailBodyEditor.js:255
+#: src/Admin/custom-mail/CustomMail.js:742
+#: src/Admin/manage-event-ext/MailBodyEditor.js:261
 msgid "Insert token link"
 msgstr "Insérer un lien de jeton"
 
-#: src/Admin/custom-mail/CustomMail.js:739
-#: src/Admin/custom-mail/CustomMail.js:1060
+#: src/Admin/custom-mail/CustomMail.js:752
+#: src/Admin/custom-mail/CustomMail.js:1091
 msgid "Event"
 msgstr "Événement"
 
-#: src/Admin/custom-mail/CustomMail.js:743
+#: src/Admin/custom-mail/CustomMail.js:759
 msgid "-- All audience --"
 msgstr "-- Tous les publics --"
 
-#: src/Admin/custom-mail/CustomMail.js:766
+#: src/Admin/custom-mail/CustomMail.js:782
 msgid "Audience"
 msgstr "Public"
 
-#: src/Admin/custom-mail/CustomMail.js:772
+#: src/Admin/custom-mail/CustomMail.js:788
 msgid "Participants"
 msgstr "Participants"
 
-#: src/Admin/custom-mail/CustomMail.js:790
-#: src/Admin/manage-event-ext/EventMailings.js:47
+#: src/Admin/custom-mail/CustomMail.js:806
+#: src/Admin/manage-event-ext/EventMailings.js:50
 msgid "Interested"
 msgstr "Intéressés"
 
-#: src/Admin/custom-mail/CustomMail.js:802
+#: src/Admin/custom-mail/CustomMail.js:818
 msgid "Marketing"
 msgstr "Marketing"
 
-#: src/Admin/custom-mail/CustomMail.js:808
+#: src/Admin/custom-mail/CustomMail.js:824
 msgid "If checked, only sends to participants who consented to marketing communications."
 msgstr "Si coché, envoie uniquement aux participants qui ont consenti aux communications marketing."
 
-#: src/Admin/custom-mail/CustomMail.js:832
+#: src/Admin/custom-mail/CustomMail.js:851
 msgid "If selected, only sends to members of these groups."
 msgstr "Si sélectionné, envoie uniquement aux membres de ces groupes."
 
-#: src/Admin/custom-mail/CustomMail.js:863
+#: src/Admin/custom-mail/CustomMail.js:884
 msgid "Loading recipients..."
 msgstr "Chargement des destinataires..."
 
 #. translators: %1$d: active recipients count, %2$d: total count, %3$d: skipped count
-#: src/Admin/custom-mail/CustomMail.js:877
+#: src/Admin/custom-mail/CustomMail.js:898
 #, js-format
 msgid "%1$d recipients (%2$d skipped)"
 msgstr "%1$d destinataires (%2$d ignorés)"
 
-#: src/Admin/custom-mail/CustomMail.js:907
+#: src/Admin/custom-mail/CustomMail.js:928
 msgid "Skip"
 msgstr "Ignorer"
 
-#: src/Admin/custom-mail/CustomMail.js:925
+#: src/Admin/custom-mail/CustomMail.js:946
 msgid "Label"
 msgstr "Étiquette"
 
-#: src/Admin/custom-mail/CustomMail.js:931
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:139
+#: src/Admin/custom-mail/CustomMail.js:952
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:143
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/custom-mail/CustomMail.js:976
+#: src/Admin/custom-mail/CustomMail.js:1001
 msgid "No email"
 msgstr "Pas d'e-mail"
 
-#: src/Admin/custom-mail/CustomMail.js:981
+#: src/Admin/custom-mail/CustomMail.js:1006
 msgid "No marketing"
 msgstr "Pas de marketing"
 
-#: src/Admin/custom-mail/CustomMail.js:986
-#: src/Admin/custom-mail/CustomMail.js:1078
+#: src/Admin/custom-mail/CustomMail.js:1011
+#: src/Admin/custom-mail/CustomMail.js:1109
 msgid "Skipped"
 msgstr "Ignoré"
 
-#: src/Admin/custom-mail/CustomMail.js:990
+#: src/Admin/custom-mail/CustomMail.js:1015
 msgid "Will send"
 msgstr "Sera envoyé"
 
-#: src/Admin/custom-mail/CustomMail.js:1010
+#: src/Admin/custom-mail/CustomMail.js:1035
 msgid "No matching recipients."
 msgstr "Aucun destinataire correspondant."
 
-#: src/Admin/custom-mail/CustomMail.js:1024
+#: src/Admin/custom-mail/CustomMail.js:1049
 msgid "Sending..."
 msgstr "Envoi en cours..."
 
-#: src/Admin/custom-mail/CustomMail.js:1025
+#: src/Admin/custom-mail/CustomMail.js:1053
 msgid "Send Mail"
 msgstr "Envoyer un e-mail"
 
-#: src/Admin/custom-mail/CustomMail.js:1035
+#: src/Admin/custom-mail/CustomMail.js:1066
 msgid "Mail History"
 msgstr "Historique des e-mails"
 
-#: src/Admin/custom-mail/CustomMail.js:1041
+#: src/Admin/custom-mail/CustomMail.js:1072
 msgid "No messages sent yet."
 msgstr "Aucun message envoyé pour le moment."
 
-#: src/Admin/custom-mail/CustomMail.js:1066
+#: src/Admin/custom-mail/CustomMail.js:1097
 msgid "Sent"
 msgstr "Envoyé"
 
-#: src/Admin/custom-mail/CustomMail.js:1072
+#: src/Admin/custom-mail/CustomMail.js:1103
 msgid "Failed"
 msgstr "Échoué"
 
-#: src/Admin/custom-mail/CustomMail.js:1084
+#: src/Admin/custom-mail/CustomMail.js:1115
 msgid "Date"
 msgstr "Date"
 
-#: src/Admin/custom-mail/CustomMail.js:1090
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:145
-#: src/Admin/group-detail/GroupDetail.js:326
+#: src/Admin/custom-mail/CustomMail.js:1121
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:149
+#: src/Admin/group-detail/GroupDetail.js:339
 msgid "Actions"
 msgstr "Actions"
 
-#: src/Admin/custom-mail/CustomMail.js:1116
-#: src/Admin/groups/Groups.js:297
-#: src/Admin/groups/Groups.js:446
-#: src/Admin/manage-event-ext/EventMailings.js:700
+#: src/Admin/custom-mail/CustomMail.js:1149
+#: src/Admin/groups/Groups.js:299
+#: src/Admin/groups/Groups.js:457
+#: src/Admin/manage-event-ext/EventMailings.js:722
 msgid "Duplicate"
 msgstr "Dupliquer"
 
-#: src/Admin/custom-mail/CustomMail.js:1128
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:206
-#: src/Admin/groups/Groups.js:304
+#: src/Admin/custom-mail/CustomMail.js:1161
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:212
+#: src/Admin/groups/Groups.js:306
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -1512,38 +1512,38 @@ msgstr "Supprimer"
 msgid "Please enter message content."
 msgstr "Veuillez entrer le contenu du message."
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:153
-#: src/Admin/edit-extra-message/EditExtraMessage.js:168
+#: src/Admin/edit-extra-message/EditExtraMessage.js:156
+#: src/Admin/edit-extra-message/EditExtraMessage.js:171
 msgid "Add New Extra Message"
 msgstr "Ajouter un nouveau message supplémentaire"
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:206
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:133
+#: src/Admin/edit-extra-message/EditExtraMessage.js:212
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:137
 msgid "Category"
 msgstr "Catégorie"
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:210
+#: src/Admin/edit-extra-message/EditExtraMessage.js:216
 msgid "All categories"
 msgstr "Toutes les catégories"
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:227
+#: src/Admin/edit-extra-message/EditExtraMessage.js:233
 msgid "Limit this message to events in a specific category, or leave as \"All categories\" for all events."
 msgstr "Limitez ce message aux événements d'une catégorie spécifique, ou laissez \"Toutes les catégories\" pour tous les événements."
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:236
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:176
+#: src/Admin/edit-extra-message/EditExtraMessage.js:242
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:182
 msgid "Active"
 msgstr "Actif"
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:241
+#: src/Admin/edit-extra-message/EditExtraMessage.js:247
 msgid "Active messages are appended to system emails."
 msgstr "Les messages actifs sont ajoutés aux e-mails système."
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:254
+#: src/Admin/edit-extra-message/EditExtraMessage.js:264
 msgid "Update Message"
 msgstr "Mettre à jour le message"
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:255
+#: src/Admin/edit-extra-message/EditExtraMessage.js:265
 msgid "Create Message"
 msgstr "Créer un message"
 
@@ -1553,350 +1553,350 @@ msgstr "Êtes-vous sûr de vouloir supprimer ce message supplémentaire ?"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:49
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:69
-#: src/Admin/group-detail/GroupDetail.js:155
-#: src/Admin/group-detail/GroupDetail.js:191
-#: src/Admin/group-detail/GroupDetail.js:231
-#: src/Admin/groups/Groups.js:183
-#: src/Admin/groups/Groups.js:229
-#: src/Admin/groups/Groups.js:266
+#: src/Admin/group-detail/GroupDetail.js:161
+#: src/Admin/group-detail/GroupDetail.js:197
+#: src/Admin/group-detail/GroupDetail.js:237
+#: src/Admin/groups/Groups.js:185
+#: src/Admin/groups/Groups.js:231
+#: src/Admin/groups/Groups.js:268
 msgid "Error: "
 msgstr "Erreur : "
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:110
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:114
 msgid "Add New"
 msgstr "Ajouter nouveau"
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:117
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:121
 msgid "No extra messages found. Create your first extra message to get started."
 msgstr "Aucun message supplémentaire trouvé. Créez votre premier message supplémentaire pour commencer."
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:158
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:164
 msgid "All"
 msgstr "Tous"
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:180
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:186
 msgid "Inactive"
 msgstr "Inactif"
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:191
-#: src/Admin/group-detail/GroupDetail.js:285
-#: src/Admin/groups/Groups.js:290
-#: src/Admin/manage-event-ext/EventMailings.js:658
-#: src/Admin/manage-event-ext/GroupRules.js:522
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:197
+#: src/Admin/group-detail/GroupDetail.js:298
+#: src/Admin/groups/Groups.js:292
+#: src/Admin/manage-event-ext/EventMailings.js:680
+#: src/Admin/manage-event-ext/GroupRules.js:527
 msgid "Edit"
 msgstr "Modifier"
 
-#: src/Admin/group-detail/GroupDetail.js:49
+#: src/Admin/group-detail/GroupDetail.js:50
 msgid "No group ID provided."
 msgstr "Aucun ID de groupe fourni."
 
-#: src/Admin/group-detail/GroupDetail.js:193
-#: src/Admin/groups/Groups.js:185
+#: src/Admin/group-detail/GroupDetail.js:199
+#: src/Admin/groups/Groups.js:187
 msgid "Failed to save group."
 msgstr "Échec de l'enregistrement du groupe."
 
-#: src/Admin/group-detail/GroupDetail.js:212
+#: src/Admin/group-detail/GroupDetail.js:218
 msgid "Remove this participant from the group?"
 msgstr "Supprimer ce participant du groupe ?"
 
-#: src/Admin/group-detail/GroupDetail.js:249
-#: src/Admin/group-detail/GroupDetail.js:272
+#: src/Admin/group-detail/GroupDetail.js:255
+#: src/Admin/group-detail/GroupDetail.js:281
 msgid "← Back to Groups"
 msgstr "← Retour aux groupes"
 
-#: src/Admin/group-detail/GroupDetail.js:295
-#: src/Admin/groups/Groups.js:77
+#: src/Admin/group-detail/GroupDetail.js:308
+#: src/Admin/groups/Groups.js:79
 msgid "Members"
 msgstr "Membres"
 
-#: src/Admin/group-detail/GroupDetail.js:304
+#: src/Admin/group-detail/GroupDetail.js:317
 msgid "No members in this group."
 msgstr "Aucun membre dans ce groupe."
 
-#: src/Admin/group-detail/GroupDetail.js:344
+#: src/Admin/group-detail/GroupDetail.js:357
 msgid "(unnamed)"
 msgstr "(sans nom)"
 
-#: src/Admin/group-detail/GroupDetail.js:361
-#: src/Admin/manage-event-ext/GroupRules.js:537
+#: src/Admin/group-detail/GroupDetail.js:374
+#: src/Admin/manage-event-ext/GroupRules.js:542
 msgid "Remove"
 msgstr "Supprimer"
 
-#: src/Admin/group-detail/GroupDetail.js:379
+#: src/Admin/group-detail/GroupDetail.js:392
 msgid "Add Members"
 msgstr "Ajouter des membres"
 
-#: src/Admin/group-detail/GroupDetail.js:386
+#: src/Admin/group-detail/GroupDetail.js:399
 msgid "Search participants..."
 msgstr "Rechercher des participants..."
 
-#: src/Admin/group-detail/GroupDetail.js:405
+#: src/Admin/group-detail/GroupDetail.js:418
 msgid "No participants available to add."
 msgstr "Aucun participant disponible à ajouter."
 
-#: src/Admin/group-detail/GroupDetail.js:442
+#: src/Admin/group-detail/GroupDetail.js:455
 msgid "Add Selected"
 msgstr "Ajouter la sélection"
 
-#: src/Admin/group-detail/GroupDetail.js:449
-#: src/Admin/groups/Groups.js:352
+#: src/Admin/group-detail/GroupDetail.js:462
+#: src/Admin/groups/Groups.js:357
 msgid "Edit Group"
 msgstr "Modifier le groupe"
 
-#: src/Admin/group-detail/GroupDetail.js:457
-#: src/Admin/groups/Groups.js:362
-#: src/Admin/groups/Groups.js:420
+#: src/Admin/group-detail/GroupDetail.js:470
+#: src/Admin/groups/Groups.js:367
+#: src/Admin/groups/Groups.js:431
 msgid "Enter group name..."
 msgstr "Entrez le nom du groupe..."
 
-#: src/Admin/group-detail/GroupDetail.js:464
-#: src/Admin/groups/Groups.js:71
-#: src/Admin/groups/Groups.js:369
+#: src/Admin/group-detail/GroupDetail.js:477
+#: src/Admin/groups/Groups.js:73
+#: src/Admin/groups/Groups.js:374
 msgid "Description"
 msgstr "Description"
 
-#: src/Admin/group-detail/GroupDetail.js:467
-#: src/Admin/groups/Groups.js:372
+#: src/Admin/group-detail/GroupDetail.js:483
+#: src/Admin/groups/Groups.js:380
 msgid "Enter group description (optional)..."
 msgstr "Entrez la description du groupe (facultatif)..."
 
-#: src/Admin/group-detail/GroupDetail.js:493
-#: src/Admin/groups/Groups.js:399
+#: src/Admin/group-detail/GroupDetail.js:509
+#: src/Admin/groups/Groups.js:407
 msgid "Update"
 msgstr "Mettre à jour"
 
-#: src/Admin/groups/Groups.js:247
+#: src/Admin/groups/Groups.js:249
 msgid "Are you sure you want to delete this group?"
 msgstr "Êtes-vous sûr de vouloir supprimer ce groupe ?"
 
-#: src/Admin/groups/Groups.js:281
-#: src/Admin/manage-event-ext/EventMailings.js:688
+#: src/Admin/groups/Groups.js:283
+#: src/Admin/manage-event-ext/EventMailings.js:710
 msgid "View"
 msgstr "Afficher"
 
-#: src/Admin/groups/Groups.js:329
-#: src/Admin/groups/Groups.js:353
+#: src/Admin/groups/Groups.js:331
+#: src/Admin/groups/Groups.js:358
 msgid "Create Group"
 msgstr "Créer un groupe"
 
-#: src/Admin/groups/Groups.js:400
+#: src/Admin/groups/Groups.js:408
 msgid "Create"
 msgstr "Créer"
 
-#: src/Admin/groups/Groups.js:409
+#: src/Admin/groups/Groups.js:417
 msgid "Duplicate Group"
 msgstr "Dupliquer le groupe"
 
-#: src/Admin/groups/Groups.js:414
+#: src/Admin/groups/Groups.js:425
 msgid "New group name"
 msgstr "Nouveau nom du groupe"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:124
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:126
 msgid "Anchor"
 msgstr "Ancre"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:128
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:130
 msgid "Event date start"
 msgstr "Date de début de l'événement"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:135
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:137
 msgid "Event date end"
 msgstr "Date de fin de l'événement"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:149
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:151
 msgid "Which date"
 msgstr "Quelle date"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:169
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:171
 msgid "Offset"
 msgstr "Décalage"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:179
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:181
 msgid "Unit"
 msgstr "Unité"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:183
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:185
 msgid "minutes"
 msgstr "minutes"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:187
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:192
 msgid "hours"
 msgstr "heures"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:191
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:196
 msgid "days"
 msgstr "jours"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:203
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:208
 msgid "before"
 msgstr "avant"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:207
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:212
 msgid "after"
 msgstr "après"
 
 #. translators: %s: computed send date/time
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:219
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:224
 #, js-format
 msgid "Will send around: %s"
 msgstr "Sera envoyé environ : %s"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:225
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:230
 msgid "Send time will be computed from the chosen date."
 msgstr "L'heure d'envoi sera calculée à partir de la date choisie."
 
-#: src/Admin/manage-event-ext/GroupRules.js:483
+#: src/Admin/manage-event-ext/GroupRules.js:488
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src/Admin/manage-event-ext/EventMailings.js:44
+#: src/Admin/manage-event-ext/EventMailings.js:46
 msgid "Registered"
 msgstr "Enregistré"
 
-#: src/Admin/manage-event-ext/EventMailings.js:152
+#: src/Admin/manage-event-ext/EventMailings.js:155
 msgid "Could not load mailings."
 msgstr "Impossible de charger les envois."
 
-#: src/Admin/manage-event-ext/EventMailings.js:248
+#: src/Admin/manage-event-ext/EventMailings.js:254
 msgid "Please enter a body."
 msgstr "Veuillez entrer un corps de message."
 
-#: src/Admin/manage-event-ext/EventMailings.js:258
+#: src/Admin/manage-event-ext/EventMailings.js:264
 msgid "Please select at least one recipient type."
 msgstr "Veuillez sélectionner au moins un type de destinataire."
 
-#: src/Admin/manage-event-ext/EventMailings.js:291
+#: src/Admin/manage-event-ext/EventMailings.js:297
 msgid "Mailing updated."
 msgstr "Envoi mis à jour."
 
-#: src/Admin/manage-event-ext/EventMailings.js:292
+#: src/Admin/manage-event-ext/EventMailings.js:298
 msgid "Mailing scheduled."
 msgstr "Envoi programmé."
 
-#: src/Admin/manage-event-ext/EventMailings.js:304
+#: src/Admin/manage-event-ext/EventMailings.js:310
 msgid "Could not save the mailing."
 msgstr "Impossible d'enregistrer l'envoi."
 
-#: src/Admin/manage-event-ext/EventMailings.js:321
+#: src/Admin/manage-event-ext/EventMailings.js:327
 msgid "Mailing canceled."
 msgstr "Envoi annulé."
 
-#: src/Admin/manage-event-ext/EventMailings.js:330
+#: src/Admin/manage-event-ext/EventMailings.js:336
 msgid "Could not cancel the mailing."
 msgstr "Impossible d'annuler l'envoi."
 
-#: src/Admin/manage-event-ext/EventMailings.js:374
+#: src/Admin/manage-event-ext/EventMailings.js:380
 msgid "Edit scheduled mailing"
 msgstr "Modifier l'envoi programmé"
 
-#: src/Admin/manage-event-ext/EventMailings.js:378
+#: src/Admin/manage-event-ext/EventMailings.js:384
 msgid "Schedule new mailing"
 msgstr "Programmer un nouvel envoi"
 
-#: src/Admin/manage-event-ext/EventMailings.js:413
+#: src/Admin/manage-event-ext/EventMailings.js:426
 msgid "Recipients"
 msgstr "Destinataires"
 
-#: src/Admin/manage-event-ext/EventMailings.js:436
+#: src/Admin/manage-event-ext/EventMailings.js:452
 msgid "Limit to groups (optional)"
 msgstr "Limiter aux groupes (optionnel)"
 
-#: src/Admin/manage-event-ext/EventMailings.js:455
+#: src/Admin/manage-event-ext/EventMailings.js:475
 msgid "Marketing email (respect opt-out)"
 msgstr "E-mail marketing (respecter les désinscriptions)"
 
-#: src/Admin/manage-event-ext/EventMailings.js:469
+#: src/Admin/manage-event-ext/EventMailings.js:489
 msgid "Recipient count unavailable."
 msgstr "Nombre de destinataires indisponible."
 
 #. translators: %d: recipient count
-#: src/Admin/manage-event-ext/EventMailings.js:475
+#: src/Admin/manage-event-ext/EventMailings.js:495
 #, js-format
 msgid "%d recipient(s) match right now."
 msgstr "%d destinataire(s) correspond(ent) en ce moment."
 
-#: src/Admin/manage-event-ext/EventMailings.js:489
+#: src/Admin/manage-event-ext/EventMailings.js:509
 msgid "Hide list"
 msgstr "Masquer la liste"
 
-#: src/Admin/manage-event-ext/EventMailings.js:493
+#: src/Admin/manage-event-ext/EventMailings.js:513
 msgid "View list"
 msgstr "Afficher la liste"
 
-#: src/Admin/manage-event-ext/EventMailings.js:515
+#: src/Admin/manage-event-ext/EventMailings.js:535
 msgid "no email"
 msgstr "pas d'e-mail"
 
-#: src/Admin/manage-event-ext/EventMailings.js:521
+#: src/Admin/manage-event-ext/EventMailings.js:541
 msgid "will skip (opted out)"
 msgstr "sera ignoré (opt-out)"
 
-#: src/Admin/manage-event-ext/EventMailings.js:532
+#: src/Admin/manage-event-ext/EventMailings.js:552
 msgid "Scheduled mailings send automatically at the computed time. There is no per-send skip list or immediate send here — use the Custom Mail page for ad-hoc sends."
 msgstr "Les envois programmés sont envoyés automatiquement à l'heure calculée. Il n'y a pas de liste d'exclusion par envoi ou d'envoi immédiat ici — utilisez la page Courrier personnalisé pour les envois ad hoc."
 
-#: src/Admin/manage-event-ext/EventMailings.js:546
+#: src/Admin/manage-event-ext/EventMailings.js:566
 msgid "Update mailing"
 msgstr "Mettre à jour l'envoi"
 
-#: src/Admin/manage-event-ext/EventMailings.js:550
+#: src/Admin/manage-event-ext/EventMailings.js:570
 msgid "Schedule mailing"
 msgstr "Programmer l'envoi"
 
-#: src/Admin/manage-event-ext/EventMailings.js:561
+#: src/Admin/manage-event-ext/EventMailings.js:581
 msgid "Cancel edit"
 msgstr "Annuler la modification"
 
-#: src/Admin/manage-event-ext/EventMailings.js:576
+#: src/Admin/manage-event-ext/EventMailings.js:596
 msgid "Scheduled & past mailings"
 msgstr "Envois programmés et passés"
 
-#: src/Admin/manage-event-ext/EventMailings.js:585
+#: src/Admin/manage-event-ext/EventMailings.js:605
 msgid "No mailings yet."
 msgstr "Aucun envoi pour le moment."
 
 #. translators: %s: send date/time
-#: src/Admin/manage-event-ext/EventMailings.js:623
+#: src/Admin/manage-event-ext/EventMailings.js:643
 #, js-format
 msgid "Sends: %s"
 msgstr "Envois : %s"
 
-#: src/Admin/manage-event-ext/EventMailings.js:629
+#: src/Admin/manage-event-ext/EventMailings.js:649
 msgid "Send time pending"
 msgstr "Heure d'envoi en attente"
 
 #. translators: 1: sent, 2: failed, 3: skipped
-#: src/Admin/manage-event-ext/EventMailings.js:636
+#: src/Admin/manage-event-ext/EventMailings.js:656
 #, js-format
 msgid " · sent %1$d, failed %2$d, skipped %3$d"
 msgstr " · envoyés %1$d, échoués %2$d, ignorés %3$d"
 
-#: src/Admin/manage-event-ext/EventMailings.js:716
+#: src/Admin/manage-event-ext/EventMailings.js:738
 msgid "Cancel mailing?"
 msgstr "Annuler l'envoi ?"
 
 #. translators: %s: mailing subject
-#: src/Admin/manage-event-ext/EventMailings.js:722
+#: src/Admin/manage-event-ext/EventMailings.js:747
 #, js-format
 msgid "Cancel the scheduled mailing \"%s\"? It will not be sent."
 msgstr "Annuler l'envoi programmé « %s » ? Il ne sera pas envoyé."
 
-#: src/Admin/manage-event-ext/EventMailings.js:734
+#: src/Admin/manage-event-ext/EventMailings.js:759
 msgid "Keep it"
 msgstr "Le conserver"
 
-#: src/Admin/manage-event-ext/EventMailings.js:741
+#: src/Admin/manage-event-ext/EventMailings.js:766
 msgid "Cancel mailing"
 msgstr "Annuler l'envoi"
 
 #. translators: 1: status, 2: send time
-#: src/Admin/manage-event-ext/EventMailings.js:755
+#: src/Admin/manage-event-ext/EventMailings.js:783
 #, js-format
 msgid "Status: %1$s · %2$s"
 msgstr "Statut : %1$s · %2$s"
 
 #. translators: 1: sent, 2: failed, 3: skipped
-#: src/Admin/manage-event-ext/EventMailings.js:769
+#: src/Admin/manage-event-ext/EventMailings.js:797
 #, js-format
 msgid "Sent %1$d · failed %2$d · skipped %3$d"
 msgstr "Envoyés %1$d · échoués %2$d · ignorés %3$d"
@@ -1921,93 +1921,93 @@ msgstr "Afficher les inscriptions"
 msgid "Manage signups"
 msgstr "Gérer les inscriptions"
 
-#: src/Admin/manage-event-ext/GroupRules.js:122
+#: src/Admin/manage-event-ext/GroupRules.js:121
 msgid "Failed to load group rules."
 msgstr "Échec du chargement des règles de groupe."
 
-#: src/Admin/manage-event-ext/GroupRules.js:206
+#: src/Admin/manage-event-ext/GroupRules.js:210
 msgid "Group rules added."
 msgstr "Règles de groupe ajoutées."
 
-#: src/Admin/manage-event-ext/GroupRules.js:210
+#: src/Admin/manage-event-ext/GroupRules.js:215
 msgid "Failed to add group rules."
 msgstr "Échec de l'ajout des règles de groupe."
 
-#: src/Admin/manage-event-ext/GroupRules.js:276
+#: src/Admin/manage-event-ext/GroupRules.js:281
 msgid "Group rules updated."
 msgstr "Règles de groupe mises à jour."
 
-#: src/Admin/manage-event-ext/GroupRules.js:281
+#: src/Admin/manage-event-ext/GroupRules.js:286
 msgid "Failed to update group rules."
 msgstr "Échec de la mise à jour des règles de groupe."
 
-#: src/Admin/manage-event-ext/GroupRules.js:318
+#: src/Admin/manage-event-ext/GroupRules.js:323
 msgid "Failed to update permission."
 msgstr "Échec de la mise à jour de la permission."
 
-#: src/Admin/manage-event-ext/GroupRules.js:329
+#: src/Admin/manage-event-ext/GroupRules.js:334
 msgid "Are you sure you want to remove all rules for this group?"
 msgstr "Êtes-vous sûr de vouloir supprimer toutes les règles pour ce groupe ?"
 
-#: src/Admin/manage-event-ext/GroupRules.js:365
+#: src/Admin/manage-event-ext/GroupRules.js:370
 msgid "Group rules removed."
 msgstr "Règles de groupe supprimées."
 
-#: src/Admin/manage-event-ext/GroupRules.js:370
+#: src/Admin/manage-event-ext/GroupRules.js:375
 msgid "Failed to remove group rules."
 msgstr "Échec de la suppression des règles de groupe."
 
-#: src/Admin/manage-event-ext/GroupRules.js:381
+#: src/Admin/manage-event-ext/GroupRules.js:386
 msgid "Group Rules"
 msgstr "Règles de groupe"
 
-#: src/Admin/manage-event-ext/GroupRules.js:435
-#: src/Admin/manage-event-ext/GroupRules.js:646
+#: src/Admin/manage-event-ext/GroupRules.js:440
+#: src/Admin/manage-event-ext/GroupRules.js:651
 msgid "Discount Type"
 msgstr "Type de réduction"
 
-#: src/Admin/manage-event-ext/GroupRules.js:451
-#: src/Admin/manage-event-ext/GroupRules.js:655
+#: src/Admin/manage-event-ext/GroupRules.js:456
+#: src/Admin/manage-event-ext/GroupRules.js:660
 msgid "Discount Value"
 msgstr "Valeur de réduction"
 
-#: src/Admin/manage-event-ext/GroupRules.js:464
+#: src/Admin/manage-event-ext/GroupRules.js:469
 msgid "0 = no discount"
 msgstr "0 = pas de réduction"
 
-#: src/Admin/manage-event-ext/GroupRules.js:550
+#: src/Admin/manage-event-ext/GroupRules.js:555
 msgid "Discount:"
 msgstr "Réduction :"
 
-#: src/Admin/manage-event-ext/GroupRules.js:608
+#: src/Admin/manage-event-ext/GroupRules.js:613
 msgid "No group rules yet. Add one below."
 msgstr "Aucune règle de groupe pour le moment. Ajoutez-en une ci-dessous."
 
-#: src/Admin/manage-event-ext/GroupRules.js:618
+#: src/Admin/manage-event-ext/GroupRules.js:623
 msgid "Add Group"
 msgstr "Ajouter un groupe"
 
-#: src/Admin/manage-event-ext/GroupRules.js:624
+#: src/Admin/manage-event-ext/GroupRules.js:629
 msgid "Group"
 msgstr "Groupe"
 
-#: src/Admin/manage-event-ext/GroupRules.js:631
+#: src/Admin/manage-event-ext/GroupRules.js:636
 msgid "Select a group..."
 msgstr "Sélectionner un groupe..."
 
-#: src/Admin/manage-event-ext/GroupRules.js:666
+#: src/Admin/manage-event-ext/GroupRules.js:671
 msgid "e.g. 10"
 msgstr "p. ex. 10"
 
-#: src/Admin/manage-event-ext/GroupRules.js:670
+#: src/Admin/manage-event-ext/GroupRules.js:675
 msgid "e.g. 5.00"
 msgstr "p. ex. 5,00"
 
-#: src/Admin/manage-event-ext/GroupRules.js:710
+#: src/Admin/manage-event-ext/GroupRules.js:720
 msgid "Add"
 msgstr "Ajouter"
 
-#: src/Admin/manage-event-ext/GroupRules.js:721
+#: src/Admin/manage-event-ext/GroupRules.js:734
 msgid "All groups already have rules for this event."
 msgstr "Tous les groupes ont déjà des règles pour cet événement."
 
@@ -2031,7 +2031,7 @@ msgstr "Se désabonner"
 msgid "Body"
 msgstr "Corps"
 
-#: src/Admin/manage-event-ext/MailBodyEditor.js:270
+#: src/Admin/manage-event-ext/MailBodyEditor.js:279
 msgid "Insert token:"
 msgstr "Insérer un jeton :"
 
@@ -2051,23 +2051,23 @@ msgstr "Impossible d'enregistrer les fonctionnalités."
 msgid "Loading features..."
 msgstr "Chargement des fonctionnalités..."
 
-#: src/Admin/settings/FeaturesTab.js:125
+#: src/Admin/settings/FeaturesTab.js:126
 msgid "Feature Bundles"
 msgstr "Bundles de fonctionnalités"
 
-#: src/Admin/settings/FeaturesTab.js:129
+#: src/Admin/settings/FeaturesTab.js:131
 msgid "Toggle optional experimental feature bundles. Bundles fixed in wp-config (FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL or FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_*) are read-only here."
 msgstr "Basculez les bundles de fonctionnalités expérimentales optionnels. Les bundles fixés dans wp-config (FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL ou FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_*) sont en lecture seule ici."
 
-#: src/Admin/settings/FeaturesTab.js:137
+#: src/Admin/settings/FeaturesTab.js:139
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là-bas."
 
-#: src/Admin/settings/FeaturesTab.js:160
+#: src/Admin/settings/FeaturesTab.js:164
 msgid "One or more bundles are forced by wp-config and cannot be toggled here."
 msgstr "Un ou plusieurs bundles sont forcés par wp-config et ne peuvent pas être basculés ici."
 
-#: src/Admin/settings/FeaturesTab.js:175
+#: src/Admin/settings/FeaturesTab.js:179
 msgid "Save Features"
 msgstr "Enregistrer les fonctionnalités"
 

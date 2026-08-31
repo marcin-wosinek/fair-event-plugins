@@ -72,52 +72,52 @@ msgstr "Entrez le titre de la colonne..."
 msgid "Event Title"
 msgstr "Titre de l'événement"
 
-#: src/blocks/time-slot/components/EditComponent.js:178
+#: src/blocks/time-slot/components/EditComponent.js:179
 msgid "Time Slot Settings"
 msgstr "Paramètres de la tranche horaire"
 
-#: src/blocks/time-slot/components/EditComponent.js:180
-#: src/blocks/timetable/components/EditComponent.js:179
+#: src/blocks/time-slot/components/EditComponent.js:182
+#: src/blocks/timetable/components/EditComponent.js:188
 msgid "Start Time"
 msgstr "Heure de début"
 
-#: src/blocks/time-slot/components/EditComponent.js:192
-#: src/blocks/timetable/components/EditComponent.js:192
+#: src/blocks/time-slot/components/EditComponent.js:194
+#: src/blocks/timetable/components/EditComponent.js:201
 msgid "Start time in HH:MM format (24-hour)"
 msgstr "Heure de début au format HH:MM (24 heures)"
 
-#: src/blocks/time-slot/components/EditComponent.js:198
-#: src/blocks/timetable/components/EditComponent.js:198
+#: src/blocks/time-slot/components/EditComponent.js:200
+#: src/blocks/timetable/components/EditComponent.js:207
 msgid "Length"
 msgstr "Durée"
 
-#: src/blocks/time-slot/components/EditComponent.js:202
+#: src/blocks/time-slot/components/EditComponent.js:204
 msgid "Duration of the time slot"
 msgstr "Durée de la tranche horaire"
 
-#: src/blocks/time-slot/components/EditComponent.js:205
-#: src/blocks/timetable/components/EditComponent.js:208
+#: src/blocks/time-slot/components/EditComponent.js:210
+#: src/blocks/timetable/components/EditComponent.js:217
 msgid "End Time"
 msgstr "Heure de fin"
 
-#: src/blocks/time-slot/components/EditComponent.js:215
-#: src/blocks/timetable/components/EditComponent.js:219
+#: src/blocks/time-slot/components/EditComponent.js:220
+#: src/blocks/timetable/components/EditComponent.js:228
 msgid "End time in HH:MM format. If before start time, assumes next day."
 msgstr "Heure de fin au format HH:MM. Si antérieure à l'heure de début, suppose le jour suivant."
 
-#: src/blocks/timetable/components/EditComponent.js:177
+#: src/blocks/timetable/components/EditComponent.js:185
 msgid "Timetable Settings"
 msgstr "Paramètres du calendrier"
 
-#: src/blocks/timetable/components/EditComponent.js:202
+#: src/blocks/timetable/components/EditComponent.js:211
 msgid "Duration of the timetable in hours"
 msgstr "Durée du calendrier en heures"
 
-#: src/blocks/timetable/components/EditComponent.js:225
+#: src/blocks/timetable/components/EditComponent.js:234
 msgid "Hour Height"
 msgstr "Hauteur de l'heure"
 
-#: src/blocks/timetable/components/EditComponent.js:231
+#: src/blocks/timetable/components/EditComponent.js:240
 msgid "Visual height multiplier for each hour (2-8)"
 msgstr "Multiplicateur de hauteur visuelle pour chaque heure (2-8)"
 

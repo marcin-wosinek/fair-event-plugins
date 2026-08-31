@@ -40,7 +40,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:35
 #: src/Admin/AdminPages.php:36
-#: src/Admin/api-tokens/ApiTokensApp.js:169
+#: src/Admin/api-tokens/ApiTokensApp.js:180
 msgid "API Tokens"
 msgstr "Tokeny API"
 
@@ -73,7 +73,7 @@ msgid "At least one valid scope is required."
 msgstr "Wymagany jest co najmniej jeden prawidłowy zakres."
 
 #: src/API/ApiTokensController.php:147
-#: src/Admin/api-tokens/ApiTokensApp.js:104
+#: src/Admin/api-tokens/ApiTokensApp.js:112
 msgid "Failed to create API token."
 msgstr "Nie udało się utworzyć tokenu API."
 
@@ -193,128 +193,128 @@ msgstr "Konfiguracja tras powiadomień"
 msgid "Read transactions"
 msgstr "Odczyt transakcji"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:28
+#: src/Admin/api-tokens/ApiTokensApp.js:31
 msgid "Read locations"
 msgstr "Odczyt lokalizacji"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:60
+#: src/Admin/api-tokens/ApiTokensApp.js:63
 msgid "Failed to load API tokens."
 msgstr "Nie udało się załadować tokenów API."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:98
+#: src/Admin/api-tokens/ApiTokensApp.js:103
 msgid "API token created."
 msgstr "Token API utworzony."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:117
+#: src/Admin/api-tokens/ApiTokensApp.js:125
 msgid "Revoke this token? Any site using it will immediately lose access."
 msgstr "Odwołać ten token? Każda witryna go używająca natychmiast utraci dostęp."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:135
+#: src/Admin/api-tokens/ApiTokensApp.js:143
 msgid "API token revoked."
 msgstr "Token API odwołany."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:141
+#: src/Admin/api-tokens/ApiTokensApp.js:152
 msgid "Failed to revoke API token."
 msgstr "Nie udało się odwołać tokenu API."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:175
+#: src/Admin/api-tokens/ApiTokensApp.js:189
 msgid "Generate Token"
 msgstr "Generuj token"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:185
+#: src/Admin/api-tokens/ApiTokensApp.js:199
 msgid "Issue scoped tokens so other sites can read this site's data over the data sharing API."
 msgstr "Wydawaj tokeny o ograniczonym zakresie, aby inne witryny mogły odczytywać dane tej witryny za pośrednictwem API udostępniania danych."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:215
+#: src/Admin/api-tokens/ApiTokensApp.js:229
 msgid "Loading tokens…"
 msgstr "Ładowanie tokenów…"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:225
+#: src/Admin/api-tokens/ApiTokensApp.js:239
 msgid "No API tokens yet. Generate one to share data with another site."
 msgstr "Brak tokenów API. Wygeneruj jeden, aby udostępnić dane innej witrynie."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:237
-#: src/Admin/api-tokens/ApiTokensApp.js:413
+#: src/Admin/api-tokens/ApiTokensApp.js:251
+#: src/Admin/api-tokens/ApiTokensApp.js:429
 #: src/Admin/connected-sites/ConnectedSitesApp.js:304
-#: src/Admin/connected-sites/ConnectedSitesApp.js:457
+#: src/Admin/connected-sites/ConnectedSitesApp.js:459
 msgid "Label"
 msgstr "Etykieta"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:243
-#: src/Admin/api-tokens/ApiTokensApp.js:432
+#: src/Admin/api-tokens/ApiTokensApp.js:257
+#: src/Admin/api-tokens/ApiTokensApp.js:448
 #: src/Admin/connected-sites/ConnectedSitesApp.js:316
 msgid "Scopes"
 msgstr "Zakresy"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:249
+#: src/Admin/api-tokens/ApiTokensApp.js:263
 msgid "Created"
 msgstr "Utworzono"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:255
+#: src/Admin/api-tokens/ApiTokensApp.js:269
 msgid "Last used"
 msgstr "Ostatnio używane"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:261
+#: src/Admin/api-tokens/ApiTokensApp.js:275
 #: src/Admin/connected-sites/ConnectedSitesApp.js:322
 msgid "Status"
 msgstr "Status"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:267
+#: src/Admin/api-tokens/ApiTokensApp.js:281
 #: src/Admin/connected-sites/ConnectedSitesApp.js:334
 msgid "Actions"
 msgstr "Akcje"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:289
-#: src/Admin/connected-sites/ConnectedSitesApp.js:363
+#: src/Admin/api-tokens/ApiTokensApp.js:305
+#: src/Admin/connected-sites/ConnectedSitesApp.js:365
 msgid "Never"
 msgstr "Nigdy"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:309
+#: src/Admin/api-tokens/ApiTokensApp.js:325
 msgid "Active"
 msgstr "Aktywny"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:313
+#: src/Admin/api-tokens/ApiTokensApp.js:329
 msgid "Revoked"
 msgstr "Odwołany"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:332
+#: src/Admin/api-tokens/ApiTokensApp.js:348
 msgid "Revoke"
 msgstr "Odwołaj"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:353
+#: src/Admin/api-tokens/ApiTokensApp.js:369
 msgid "Token created"
 msgstr "Token utworzony"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:357
+#: src/Admin/api-tokens/ApiTokensApp.js:373
 msgid "Generate API Token"
 msgstr "Generuj token API"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:368
+#: src/Admin/api-tokens/ApiTokensApp.js:384
 msgid "Copy this token now. For security it will not be shown again."
 msgstr "Skopiuj ten token teraz. Ze względów bezpieczeństwa nie będzie już wyświetlany."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:389
+#: src/Admin/api-tokens/ApiTokensApp.js:405
 msgid "Copied!"
 msgstr "Skopiowano!"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:393
+#: src/Admin/api-tokens/ApiTokensApp.js:409
 msgid "Copy token"
 msgstr "Kopiuj token"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:402
+#: src/Admin/api-tokens/ApiTokensApp.js:418
 msgid "Done"
 msgstr "Gotowe"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:419
+#: src/Admin/api-tokens/ApiTokensApp.js:435
 msgid "A name to identify who this token is for, e.g. lamutable.es"
 msgstr "Nazwa do identyfikacji, dla kogo jest ten token, np. lamutable.es"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:461
-#: src/Admin/connected-sites/ConnectedSitesApp.js:510
+#: src/Admin/api-tokens/ApiTokensApp.js:477
+#: src/Admin/connected-sites/ConnectedSitesApp.js:512
 msgid "Cancel"
 msgstr "Anuluj"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:476
+#: src/Admin/api-tokens/ApiTokensApp.js:492
 msgid "Generate"
 msgstr "Generuj"
 
@@ -371,7 +371,7 @@ msgid "Failed to remove connected site."
 msgstr "Nie udało się usunąć połączonej witryny."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:242
-#: src/Admin/connected-sites/ConnectedSitesApp.js:531
+#: src/Admin/connected-sites/ConnectedSitesApp.js:533
 msgid "Add Site"
 msgstr "Dodaj witrynę"
 
@@ -388,7 +388,7 @@ msgid "No connected sites yet. Add one to pull data from another site."
 msgstr "Brak jeszcze połączonych witryn. Dodaj jedną, aby pobierać dane z innej witryny."
 
 #: src/Admin/connected-sites/ConnectedSitesApp.js:310
-#: src/Admin/connected-sites/ConnectedSitesApp.js:470
+#: src/Admin/connected-sites/ConnectedSitesApp.js:472
 msgid "Base URL"
 msgstr "Podstawowy adres URL"
 
@@ -396,48 +396,48 @@ msgstr "Podstawowy adres URL"
 msgid "Last sync"
 msgstr "Ostatnia synchronizacja"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:392
+#: src/Admin/connected-sites/ConnectedSitesApp.js:394
 msgid "Test"
 msgstr "Test"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:406
+#: src/Admin/connected-sites/ConnectedSitesApp.js:408
 msgid "Edit"
 msgstr "Edytuj"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:421
+#: src/Admin/connected-sites/ConnectedSitesApp.js:423
 #: src/Admin/notifications/NotificationsTab.js:228
 msgid "Remove"
 msgstr "Usuń"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:442
+#: src/Admin/connected-sites/ConnectedSitesApp.js:444
 msgid "Edit Connected Site"
 msgstr "Edytuj połączoną witrynę"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:446
+#: src/Admin/connected-sites/ConnectedSitesApp.js:448
 msgid "Add Connected Site"
 msgstr "Dodaj połączoną witrynę"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:463
+#: src/Admin/connected-sites/ConnectedSitesApp.js:465
 msgid "A name to identify this site, e.g. acroyoga-club.es"
 msgstr "Nazwa identyfikująca tę witrynę, np. acroyoga-club.es"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:477
+#: src/Admin/connected-sites/ConnectedSitesApp.js:479
 msgid "The other site’s address, e.g. https://acroyoga-club.es"
 msgstr "Adres innej witryny, np. https://acroyoga-club.es"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:484
+#: src/Admin/connected-sites/ConnectedSitesApp.js:486
 msgid "Token"
 msgstr "Token"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:493
+#: src/Admin/connected-sites/ConnectedSitesApp.js:495
 msgid "Leave blank to keep the existing token."
 msgstr "Pozostaw puste, aby zachować istniejący token."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:497
+#: src/Admin/connected-sites/ConnectedSitesApp.js:499
 msgid "Paste the token from the other site’s API Tokens page."
 msgstr "Wklej token ze strony API Tokens innej witryny."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:527
+#: src/Admin/connected-sites/ConnectedSitesApp.js:529
 msgid "Save"
 msgstr "Zapisz"
 
@@ -501,57 +501,57 @@ msgstr "Dołącz PII"
 msgid "Name & email in messages."
 msgstr "Imię i e-mail w wiadomościach."
 
-#: src/Admin/notifications/NotificationsTab.js:236
+#: src/Admin/notifications/NotificationsTab.js:239
 msgid "Send test"
 msgstr "Wyślij test"
 
-#: src/Admin/notifications/NotificationsTab.js:287
+#: src/Admin/notifications/NotificationsTab.js:290
 msgid "Failed to load notification settings."
 msgstr "Nie udało się załadować ustawień powiadomień."
 
-#: src/Admin/notifications/NotificationsTab.js:309
+#: src/Admin/notifications/NotificationsTab.js:312
 msgid "Notification settings saved."
 msgstr "Ustawienia powiadomień zostały zapisane."
 
-#: src/Admin/notifications/NotificationsTab.js:324
+#: src/Admin/notifications/NotificationsTab.js:327
 msgid "Failed to save notification settings: "
 msgstr "Nie udało się zapisać ustawień powiadomień: "
 
-#: src/Admin/notifications/NotificationsTab.js:350
+#: src/Admin/notifications/NotificationsTab.js:353
 msgid "Loading notification settings…"
 msgstr "Ładowanie ustawień powiadomień…"
 
-#: src/Admin/notifications/NotificationsTab.js:365
+#: src/Admin/notifications/NotificationsTab.js:368
 msgid "Telegram Bot Token"
 msgstr "Token bota Telegram"
 
-#: src/Admin/notifications/NotificationsTab.js:371
+#: src/Admin/notifications/NotificationsTab.js:374
 msgid "Required for any Telegram notification routes."
 msgstr "Wymagane dla wszystkich tras powiadomień Telegram."
 
-#: src/Admin/notifications/NotificationsTab.js:379
+#: src/Admin/notifications/NotificationsTab.js:382
 #: src/Admin/telegram/TelegramTab.js:194
 msgid "Bot token"
 msgstr "Token bota"
 
-#: src/Admin/notifications/NotificationsTab.js:383
+#: src/Admin/notifications/NotificationsTab.js:386
 #: src/Admin/telegram/TelegramTab.js:198
 msgid "From @BotFather. Stored as plain text in wp_options — anyone with admin access can read it."
 msgstr "Od @BotFather. Przechowywane jako zwykły tekst w wp_options — każdy z dostępem administratora może go przeczytać."
 
-#: src/Admin/notifications/NotificationsTab.js:396
+#: src/Admin/notifications/NotificationsTab.js:399
 msgid "Notification Routes"
 msgstr "Trasy powiadomień"
 
-#: src/Admin/notifications/NotificationsTab.js:402
+#: src/Admin/notifications/NotificationsTab.js:405
 msgid "Each route sends a notification on a transaction paid event. Immediate routes fire at once; digest routes batch transactions into a single periodic message."
 msgstr "Każda trasa wysyła powiadomienie w przypadku zdarzenia opłaconej transakcji. Trasy natychmiastowe uruchamiają się od razu; trasy zbiorczych partii transakcji w jedną okresową wiadomość."
 
-#: src/Admin/notifications/NotificationsTab.js:420
+#: src/Admin/notifications/NotificationsTab.js:425
 msgid "Add route"
 msgstr "Dodaj trasę"
 
-#: src/Admin/notifications/NotificationsTab.js:428
+#: src/Admin/notifications/NotificationsTab.js:436
 #: src/Admin/telegram/TelegramTab.js:265
 msgid "Save settings"
 msgstr "Zapisz ustawienia"

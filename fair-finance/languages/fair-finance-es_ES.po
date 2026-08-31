@@ -471,31 +471,31 @@ msgstr "Ingresos frente a gastos por etiqueta"
 msgid "Tag chart"
 msgstr "Gráfico de etiquetas"
 
-#: src/Admin/entries/components/TagChart.js:79
+#: src/Admin/entries/components/TagChart.js:81
 msgid "cost"
 msgstr "gasto"
 
-#: src/Admin/entries/components/TagChart.js:97
+#: src/Admin/entries/components/TagChart.js:100
 msgid "income"
 msgstr "ingreso"
 
-#: src/Admin/entries/components/TagChart.js:131
+#: src/Admin/entries/components/TagChart.js:134
 msgid "Cost"
 msgstr "Coste"
 
-#: src/Admin/entries/components/TagChart.js:147
+#: src/Admin/entries/components/TagChart.js:150
 msgid "Income"
 msgstr "Ingresos"
 
 #: src/Admin/entries/components/TagField.js:23
-#: src/Admin/entries/EntriesApp.js:828
+#: src/Admin/entries/EntriesApp.js:840
 msgid "Tag"
 msgstr "Etiqueta"
 
-#: src/Admin/entries/components/TagField.js:31
+#: src/Admin/entries/components/TagField.js:33
 msgid "e.g. venue, catering, travel"
 msgstr "p. ej. lugar, catering, viajes"
 
-#: src/Admin/entries/EntriesApp.js:832
+#: src/Admin/entries/EntriesApp.js:844
 msgid "All Tags"
 msgstr "Todas las etiquetas"

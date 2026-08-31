@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T13:01:15+00:00\n"
+"POT-Creation-Date: 2026-08-28T15:56:54+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -122,187 +122,209 @@ msgstr ""
 msgid "Category name is required."
 msgstr ""
 
-#: src/API/EventDatesController.php:78
-#: src/API/EventDatesController.php:95
-#: src/API/EventDatesController.php:216
+#: src/API/EventDatesController.php:60
+msgid "Post ID that should have event data."
+msgstr ""
+
+#: src/API/EventDatesController.php:101
+#: src/API/EventDatesController.php:118
+#: src/API/EventDatesController.php:239
 msgid "Unique identifier for the event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:114
+#: src/API/EventDatesController.php:137
 msgid "Event date ID to link to."
 msgstr ""
 
-#: src/API/EventDatesController.php:118
+#: src/API/EventDatesController.php:141
 msgid "Post type for the new post."
 msgstr ""
 
-#: src/API/EventDatesController.php:123
+#: src/API/EventDatesController.php:146
 msgid "Status for the new post."
 msgstr ""
 
-#: src/API/EventDatesController.php:143
-#: src/API/EventDatesController.php:167
+#: src/API/EventDatesController.php:166
+#: src/API/EventDatesController.php:190
 #: src/API/TicketsController.php:53
 #: src/API/TicketsController.php:65
 #: src/API/TicketsController.php:84
 msgid "Event date ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:147
+#: src/API/EventDatesController.php:170
 msgid "Post ID to link."
 msgstr ""
 
-#: src/API/EventDatesController.php:171
+#: src/API/EventDatesController.php:194
 msgid "Post ID to unlink."
 msgstr ""
 
-#: src/API/EventDatesController.php:191
+#: src/API/EventDatesController.php:214
 msgid "Master event date ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:195
+#: src/API/EventDatesController.php:218
 msgid "Date to toggle (Y-m-d format)."
 msgstr ""
 
-#: src/API/EventDatesController.php:235
+#: src/API/EventDatesController.php:258
 msgid "Comma-separated list of event date IDs."
 msgstr ""
 
-#: src/API/EventDatesController.php:256
+#: src/API/EventDatesController.php:279
 msgid "Current page of the collection."
 msgstr ""
 
-#: src/API/EventDatesController.php:262
+#: src/API/EventDatesController.php:285
 msgid "Maximum number of items per page."
 msgstr ""
 
-#: src/API/EventDatesController.php:269
+#: src/API/EventDatesController.php:292
 msgid "Sort collection by field."
 msgstr ""
 
-#: src/API/EventDatesController.php:275
+#: src/API/EventDatesController.php:298
 msgid "Order sort attribute ascending or descending."
 msgstr ""
 
-#: src/API/EventDatesController.php:281
+#: src/API/EventDatesController.php:304
 msgid "Limit results to those matching a string."
 msgstr ""
 
-#: src/API/EventDatesController.php:286
+#: src/API/EventDatesController.php:309
 msgid "Filter by link type."
 msgstr ""
 
-#: src/API/EventDatesController.php:291
+#: src/API/EventDatesController.php:314
 msgid "Filter by occurrence type."
 msgstr ""
 
-#: src/API/EventDatesController.php:309
+#: src/API/EventDatesController.php:332
 msgid "Event title."
 msgstr ""
 
-#: src/API/EventDatesController.php:315
+#: src/API/EventDatesController.php:338
 msgid "Start date/time (Y-m-d H:i:s format)."
 msgstr ""
 
-#: src/API/EventDatesController.php:321
+#: src/API/EventDatesController.php:344
 msgid "End date/time (Y-m-d H:i:s format)."
 msgstr ""
 
-#: src/API/EventDatesController.php:327
+#: src/API/EventDatesController.php:350
 msgid "Whether this is an all-day event."
 msgstr ""
 
-#: src/API/EventDatesController.php:333
+#: src/API/EventDatesController.php:356
 msgid "Venue ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:338
+#: src/API/EventDatesController.php:361
 msgid "Free-text address, used as a fallback when no venue is selected."
 msgstr ""
 
-#: src/API/EventDatesController.php:344
+#: src/API/EventDatesController.php:367
 msgid "Link type (post, external, none)."
 msgstr ""
 
-#: src/API/EventDatesController.php:351
+#: src/API/EventDatesController.php:374
 msgid "External URL for the event."
 msgstr ""
 
-#: src/API/EventDatesController.php:357
+#: src/API/EventDatesController.php:380
 msgid "Attendance mode (in_person, online, hybrid)."
 msgstr ""
 
-#: src/API/EventDatesController.php:364
+#: src/API/EventDatesController.php:387
 msgid "Public joining URL for online/hybrid events. Falls back to the event page URL when empty."
 msgstr ""
 
-#: src/API/EventDatesController.php:371
+#: src/API/EventDatesController.php:394
 msgid "Recurrence rule in RRULE format."
 msgstr ""
 
-#: src/API/EventDatesController.php:377
+#: src/API/EventDatesController.php:400
 msgid "Recurrence shape: none (single date), rule (RRULE-based), or manual (hand-picked dates)."
 msgstr ""
 
-#: src/API/EventDatesController.php:383
+#: src/API/EventDatesController.php:406
 msgid "Hand-picked occurrence dates (Y-m-d) for a manual-mode series. The earliest date becomes the master."
 msgstr ""
 
-#: src/API/EventDatesController.php:393
+#: src/API/EventDatesController.php:416
 msgid "Category term IDs."
 msgstr ""
 
-#: src/API/EventDatesController.php:416
+#: src/API/EventDatesController.php:439
 msgid "Linked post ID."
 msgstr ""
 
-#: src/API/EventDatesController.php:440
+#: src/API/EventDatesController.php:463
 msgid "manual_dates must be an array of Y-m-d dates."
 msgstr ""
 
 #. translators: %d: maximum allowed occurrence count.
-#: src/API/EventDatesController.php:450
+#: src/API/EventDatesController.php:473
 #, php-format
 msgid "A series can have at most %d dates."
 msgstr ""
 
-#: src/API/EventDatesController.php:462
+#: src/API/EventDatesController.php:485
 msgid "Each manual date must be in Y-m-d format."
 msgstr ""
 
-#: src/API/EventDatesController.php:471
+#: src/API/EventDatesController.php:494
 msgid "Each manual date must be a valid calendar date."
 msgstr ""
 
-#: src/API/EventDatesController.php:479
+#: src/API/EventDatesController.php:502
 msgid "Manual dates must not contain duplicates — only one occurrence per day is supported."
 msgstr ""
 
-#: src/API/EventDatesController.php:506
+#: src/API/EventDatesController.php:529
 msgid "The joining link must be a valid URL."
 msgstr ""
 
-#: src/API/EventDatesController.php:534
-#: src/API/EventDatesController.php:936
+#: src/API/EventDatesController.php:557
+#: src/API/EventDatesController.php:1017
 msgid "Event title is required."
 msgstr ""
 
-#: src/API/EventDatesController.php:542
+#: src/API/EventDatesController.php:565
 msgid "Start date/time is required."
 msgstr ""
 
-#: src/API/EventDatesController.php:563
+#: src/API/EventDatesController.php:586
 msgid "Failed to create event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:831
-#: src/API/EventDatesController.php:856
-#: src/API/EventDatesController.php:922
-#: src/API/EventDatesController.php:1206
-#: src/API/EventDatesController.php:1246
-#: src/API/EventDatesController.php:1314
-#: src/API/EventDatesController.php:1350
-#: src/API/EventDatesController.php:1447
+#: src/API/EventDatesController.php:708
+#: src/API/EventDatesController.php:1404
+msgid "Post not found."
+msgstr ""
+
+#: src/API/EventDatesController.php:716
+#: src/API/EventDatesController.php:1337
+msgid "The specified post type is not enabled."
+msgstr ""
+
+#: src/API/EventDatesController.php:724
+msgid "You do not have permission to edit this post."
+msgstr ""
+
+#: src/API/EventDatesController.php:745
+msgid "Failed to create event data."
+msgstr ""
+
+#: src/API/EventDatesController.php:912
+#: src/API/EventDatesController.php:937
+#: src/API/EventDatesController.php:1003
+#: src/API/EventDatesController.php:1287
+#: src/API/EventDatesController.php:1327
+#: src/API/EventDatesController.php:1395
+#: src/API/EventDatesController.php:1431
+#: src/API/EventDatesController.php:1528
 #: src/API/GetTicketsController.php:360
 #: src/API/GetTicketsController.php:369
 #: src/API/GetTicketsController.php:642
@@ -313,36 +335,28 @@ msgstr ""
 msgid "Event date not found."
 msgstr ""
 
-#: src/API/EventDatesController.php:1021
+#: src/API/EventDatesController.php:1102
 msgid "Failed to update event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:1216
+#: src/API/EventDatesController.php:1297
 msgid "Failed to delete event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:1256
-msgid "The specified post type is not enabled."
-msgstr ""
-
-#: src/API/EventDatesController.php:1264
-#: src/Admin/event-meta-box/LinkOptions.js:37
+#: src/API/EventDatesController.php:1345
+#: src/Admin/event-meta-box/LinkOptions.js:52
 msgid "Untitled Event"
 msgstr ""
 
-#: src/API/EventDatesController.php:1323
-msgid "Post not found."
-msgstr ""
-
-#: src/API/EventDatesController.php:1455
+#: src/API/EventDatesController.php:1536
 msgid "Dates can only be cancelled on master events."
 msgstr ""
 
-#: src/API/EventDatesController.php:1465
+#: src/API/EventDatesController.php:1546
 msgid "Cannot cancel the master event date."
 msgstr ""
 
-#: src/API/EventDatesController.php:1487
+#: src/API/EventDatesController.php:1568
 msgid "Invalid date."
 msgstr ""
 
@@ -1433,7 +1447,7 @@ msgid "Event created, but linking the post failed."
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:234
-#: src/Admin/event-meta-box/LinkOptions.js:65
+#: src/Admin/event-meta-box/LinkOptions.js:80
 msgid "Failed to create event."
 msgstr ""
 
@@ -1654,35 +1668,31 @@ msgstr ""
 msgid "Unlink from event"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventMetaBox.js:105
+#: src/Admin/event-meta-box/EventMetaBox.js:128
 msgid "Failed to unlink event."
 msgstr ""
 
-#: src/Admin/event-meta-box/EventMetaBox.js:148
-msgid "No event data found. Please save the post and reload."
-msgstr ""
-
-#: src/Admin/event-meta-box/LinkOptions.js:85
+#: src/Admin/event-meta-box/LinkOptions.js:100
 msgid "Failed to link event."
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:93
+#: src/Admin/event-meta-box/LinkOptions.js:108
 msgid "Select an event..."
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:124
+#: src/Admin/event-meta-box/LinkOptions.js:140
 msgid "Create New Event"
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:134
+#: src/Admin/event-meta-box/LinkOptions.js:150
 msgid "or"
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:138
+#: src/Admin/event-meta-box/LinkOptions.js:154
 msgid "Link Existing Event"
 msgstr ""
 
-#: src/Admin/event-meta-box/LinkOptions.js:155
+#: src/Admin/event-meta-box/LinkOptions.js:172
 msgid "Link Event"
 msgstr ""
 

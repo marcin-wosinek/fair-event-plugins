@@ -471,31 +471,31 @@ msgstr "Revenu vs. Dépense par étiquette"
 msgid "Tag chart"
 msgstr "Graphique d'étiquette"
 
-#: src/Admin/entries/components/TagChart.js:79
+#: src/Admin/entries/components/TagChart.js:81
 msgid "cost"
 msgstr "coût"
 
-#: src/Admin/entries/components/TagChart.js:97
+#: src/Admin/entries/components/TagChart.js:100
 msgid "income"
 msgstr "revenu"
 
-#: src/Admin/entries/components/TagChart.js:131
+#: src/Admin/entries/components/TagChart.js:134
 msgid "Cost"
 msgstr "Coût"
 
-#: src/Admin/entries/components/TagChart.js:147
+#: src/Admin/entries/components/TagChart.js:150
 msgid "Income"
 msgstr "Revenu"
 
 #: src/Admin/entries/components/TagField.js:23
-#: src/Admin/entries/EntriesApp.js:828
+#: src/Admin/entries/EntriesApp.js:840
 msgid "Tag"
 msgstr "Étiquette"
 
-#: src/Admin/entries/components/TagField.js:31
+#: src/Admin/entries/components/TagField.js:33
 msgid "e.g. venue, catering, travel"
 msgstr "p. ex. lieu, restauration, transport"
 
-#: src/Admin/entries/EntriesApp.js:832
+#: src/Admin/entries/EntriesApp.js:844
 msgid "All Tags"
 msgstr "Toutes les étiquettes"
