@@ -1015,7 +1015,7 @@ export default function EventAudience( {
 				const count = filteredParticipants.filter(
 					( p ) => participantHasOption( p, opt ) && occupiesSeat( p )
 				).length;
-				return `- ${ opt.name }: ${ count }`;
+				return `- ${ opt.short_name || opt.name }: ${ count }`;
 			} )
 			.join( '\n' );
 	};
