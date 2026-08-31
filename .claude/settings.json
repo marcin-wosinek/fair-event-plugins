@@ -9,7 +9,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-generated-files.sh\""
+						"command": "node \"$CLAUDE_PROJECT_DIR/scripts/agent-hook.mjs\" claude guard"
 					}
 				]
 			}
@@ -20,7 +20,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-edited-file.sh\""
+						"command": "node \"$CLAUDE_PROJECT_DIR/scripts/agent-hook.mjs\" claude format"
 					}
 				]
 			}

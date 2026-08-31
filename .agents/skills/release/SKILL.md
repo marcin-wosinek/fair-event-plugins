@@ -1,6 +1,6 @@
 ---
 name: release
-description: Add a Changesets release entry for one or more Fair Event Plugins workspaces without publishing or versioning packages.
+description: Add a Changesets release entry for one or more Fair Event Plugins workspaces without publishing or versioning packages. Use for release-note or changeset requests.
 ---
 
 # Add a changeset

@@ -1,11 +1,11 @@
 ---
 name: plan-ticket
-description: Ground a Fair Event Plugins GitHub issue in the current codebase, resolve implementation decisions with the user, and post an approved implementation-plan comment.
+description: Ground a Fair Event Plugins GitHub issue in the current codebase, resolve implementation decisions with the user, and post an approved implementation-plan comment. Use for requests to plan a ticket or issue.
 ---
 
 # Plan a ticket
 
-Read the issue and all discussion. Ground the proposal in the repository as it exists now: identify concrete paths, current patterns, constraints, and the closest sibling implementation. Read the applicable reference documents listed in `AGENTS.md` before drafting.
+Resolve an issue number or URL, then read the issue and all discussion. Ground the proposal in the repository as it exists now: identify concrete paths, current patterns, constraints, and the closest sibling implementation. Read the applicable reference documents listed in `AGENTS.md` before drafting.
 
 Structure the plan in implementable layers such as access/URL, frontend, backend, data, and tests. Re-check the ticket's open questions against the code, drop questions already resolved by current behavior, and add newly discovered forks. Recommend an option and explain the alternative for each real fork.
 

@@ -1,6 +1,6 @@
 ---
 name: new-plugin
-description: Scaffold a new plugin in the Fair Event Plugins monorepo and update all required workspace, CI, deployment, compose, version-sync, and changelog integration points.
+description: Scaffold a new plugin in the Fair Event Plugins monorepo and update all required workspace, CI, deployment, compose, version-sync, and changelog integration points. Use for requests to add or scaffold a plugin.
 ---
 
 # Add a plugin

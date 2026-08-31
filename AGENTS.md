@@ -8,13 +8,35 @@ organization with fair pricing models. It is a monorepo. npm workspaces:
 shared `fair-events-shared` package. The list in the root `package.json` is
 authoritative.
 
-## Ticket Workflow
+## Agent Workflows
+
+The seven agent workflows have one canonical definition under
+`.agents/skills/<name>/SKILL.md`. Codex discovers those skills directly and
+invokes them with `$<name>`. Claude Code preserves the matching `/<name>` slash
+commands through thin files in `.claude/commands/`; each adapter passes
+`$ARGUMENTS` to the canonical skill and contains no workflow policy of its own.
+
+| Workflow | Claude Code | Codex | Canonical definition |
+| --- | --- | --- | --- |
+| `write-ticket` | `/write-ticket` | `$write-ticket` | `.agents/skills/write-ticket/SKILL.md` |
+| `plan-ticket` | `/plan-ticket` | `$plan-ticket` | `.agents/skills/plan-ticket/SKILL.md` |
+| `make-pr` | `/make-pr` | `$make-pr` | `.agents/skills/make-pr/SKILL.md` |
+| `pr` | `/pr` | `$pr` | `.agents/skills/pr/SKILL.md` |
+| `release` | `/release` | `$release` | `.agents/skills/release/SKILL.md` |
+| `translate` | `/translate` | `$translate` | `.agents/skills/translate/SKILL.md` |
+| `new-plugin` | `/new-plugin` | `$new-plugin` | `.agents/skills/new-plugin/SKILL.md` |
+
+The repository uses `scripts/agent-hook.mjs` for generated-file protection and
+per-file formatting. Hook registration and payload parsing remain specific to
+each platform in `.claude/settings.json` and `.codex/hooks.json`; the guard and
+formatting rules are shared. Run `npm run validate:agent-workflows` locally to
+check workflow parity, adapters, hook wiring, portable configuration, and the
+focused fixtures.
+
+### Ticket workflow
 
 Most work flows through three workflows, each consuming the previous one's
-output: `write-ticket` → `plan-ticket` → `make-pr`. Claude Code exposes these
-through `.claude/commands/`; Codex exposes them as repository skills under
-`.agents/skills/` (invoke them as `$write-ticket`, `$plan-ticket`, and
-`$make-pr`).
+output: `write-ticket` → `plan-ticket` → `make-pr`.
 
 1. **`write-ticket`** files a GitHub issue with no code references (behaviour
    only) — see [TICKETS.md](./TICKETS.md). It carries an **Open questions**
@@ -89,9 +111,9 @@ vendor/bin/phpcbf        # Auto-fix
 
 ## Formatting & Build
 
--   **Formatting is automatic.** A PostToolUse hook (`.claude/hooks/format-edited-file.sh`
-    for Claude Code, `.codex/hooks/format-edited-file.sh` for Codex) runs
-    `wp-scripts format` (JS/CSS/JSON) or `phpcbf` (PHP) on each file you edit.
+-   **Formatting is automatic.** Platform PostToolUse hooks call the shared
+    `scripts/agent-hook.mjs` runner, which runs `wp-scripts format`
+    (JS/CSS/JSON) or `phpcbf` (PHP) on each file you edit.
     Do **not** run `npm run format` manually after edits.
 -   **Before committing**, run `npm run format` in the affected plugin to catch
     any files touched outside the hook (manual shell edits, generated files, or

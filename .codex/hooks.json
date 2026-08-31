@@ -6,7 +6,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"$(git rev-parse --show-toplevel)/.codex/hooks/guard-generated-files.sh\""
+						"command": "node \"$(git rev-parse --show-toplevel)/scripts/agent-hook.mjs\" codex guard"
 					}
 				]
 			}
@@ -17,7 +17,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"$(git rev-parse --show-toplevel)/.codex/hooks/format-edited-file.sh\""
+						"command": "node \"$(git rev-parse --show-toplevel)/scripts/agent-hook.mjs\" codex format"
 					}
 				]
 			}
