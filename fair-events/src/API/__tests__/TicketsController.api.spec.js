@@ -25,6 +25,129 @@ const adminHeaders = {
 		),
 };
 
+const FAIR_EVENTS_EXPERIMENTAL_PLUGIN =
+	'fair-events-experimental/fair-events-experimental';
+
+test.describe( 'TicketsController — stable group restrictions', () => {
+	let api;
+	let eventDateId;
+	let originalExperimentalStatus;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const pluginsRes = await api.get( '/wp-json/wp/v2/plugins', {
+			headers: adminHeaders,
+		} );
+		expect( pluginsRes.ok() ).toBeTruthy();
+		const experimental = ( await pluginsRes.json() ).find(
+			( plugin ) => plugin.plugin === FAIR_EVENTS_EXPERIMENTAL_PLUGIN
+		);
+		expect( experimental ).toBeTruthy();
+		originalExperimentalStatus = experimental.status;
+		if ( originalExperimentalStatus !== 'inactive' ) {
+			const deactivateRes = await api.put(
+				`/wp-json/wp/v2/plugins/${ FAIR_EVENTS_EXPERIMENTAL_PLUGIN }`,
+				{ headers: adminHeaders, data: { status: 'inactive' } }
+			);
+			expect( deactivateRes.ok() ).toBeTruthy();
+		}
+
+		const eventRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Stable restriction ${ Date.now() }`,
+					start_datetime: '2037-01-01 10:00:00',
+					end_datetime: '2037-01-01 12:00:00',
+				},
+			}
+		);
+		expect( eventRes.ok() ).toBeTruthy();
+		eventDateId = ( await eventRes.json() ).id;
+	} );
+
+	test.afterAll( async () => {
+		if ( eventDateId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		if ( originalExperimentalStatus !== 'inactive' ) {
+			await api.put(
+				`/wp-json/wp/v2/plugins/${ FAIR_EVENTS_EXPERIMENTAL_PLUGIN }`,
+				{
+					headers: adminHeaders,
+					data: { status: originalExperimentalStatus },
+				}
+			);
+		}
+		await api.dispose();
+	} );
+
+	test( 'persists, retrieves, and clears group IDs without the experimental plugin', async () => {
+		const saveRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [
+						{
+							name: 'Members',
+							recurrence_scope: 'single_instance',
+							group_ids: [ 123, 456 ],
+						},
+					],
+					sale_periods: [],
+					prices: [],
+					settings: {},
+				},
+			}
+		);
+		expect( saveRes.ok(), await saveRes.text() ).toBeTruthy();
+		const ticketTypeId = ( await saveRes.json() ).ticket_types[ 0 ].id;
+
+		const loadRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{ headers: adminHeaders }
+		);
+		expect( loadRes.ok() ).toBeTruthy();
+		expect( ( await loadRes.json() ).ticket_types[ 0 ].group_ids ).toEqual(
+			[ 123, 456 ]
+		);
+
+		const clearRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [
+						{
+							id: ticketTypeId,
+							name: 'Members',
+							recurrence_scope: 'single_instance',
+							group_ids: [],
+						},
+					],
+					sale_periods: [],
+					prices: [],
+					settings: {},
+				},
+			}
+		);
+		expect( clearRes.ok(), await clearRes.text() ).toBeTruthy();
+
+		const clearedLoadRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{ headers: adminHeaders }
+		);
+		expect(
+			( await clearedLoadRes.json() ).ticket_types[ 0 ].group_ids
+		).toEqual( [] );
+	} );
+} );
+
 test.describe( 'TicketsController — recurrence_scope preserved when type has sales', () => {
 	let api;
 	let eventDateId;

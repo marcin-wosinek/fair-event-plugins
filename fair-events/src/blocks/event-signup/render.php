@@ -165,8 +165,8 @@ if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
 // restricted tiers are re-added at request time by the
 // fair_events_signup_viewer_context filter, resolved by the
 // GET .../viewer-context endpoint frontend.js hydrates after load.
-if ( ! empty( $ticket_types ) && class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
-	$restrictions_map = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
+if ( ! empty( $ticket_types ) ) {
+	$restrictions_map = \FairEvents\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
 	if ( ! empty( $restrictions_map ) ) {
 		$ticket_types = array_values(
 			array_filter(

@@ -87,8 +87,8 @@ class SignupHookBridge {
 		if ( ! empty( $context['ticket_types'] ) ) {
 			$pricing_event_date_id = (int) $context['pricing_event_date_id'];
 
-			if ( class_exists( \FairEventsExperimental\Models\TicketTypeGroupRestriction::class ) ) {
-				$restrictions_map = \FairEventsExperimental\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
+			if ( class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
+				$restrictions_map = \FairEvents\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
 
 				if ( ! empty( $restrictions_map ) ) {
 					$member_group_ids = array();
