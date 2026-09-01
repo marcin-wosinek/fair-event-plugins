@@ -70,6 +70,45 @@ add_action(
 				},
 			)
 		);
+
+		register_rest_route(
+			'fair-e2e/v1',
+			'/repair-recurrence-status',
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					global $wpdb;
+
+					$invalid_id   = absint( $request->get_param( 'invalid_id' ) );
+					$cancelled_id = absint( $request->get_param( 'cancelled_id' ) );
+					$table_name   = $wpdb->prefix . 'fair_event_dates';
+
+					$wpdb->query(
+						$wpdb->prepare(
+							'UPDATE %i SET status = %s WHERE id = %d AND occurrence_type = %s',
+							$table_name,
+							'',
+							$invalid_id,
+							'generated'
+						)
+					);
+					\FairEvents\Database\Schema::update_db_version( '3.30.0' );
+					\FairEvents\Database\Installer::maybe_upgrade();
+
+					return rest_ensure_response(
+						array(
+							'invalid_id'       => $invalid_id,
+							'invalid_status'   => $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM %i WHERE id = %d', $table_name, $invalid_id ) ),
+							'cancelled_id'     => $cancelled_id,
+							'cancelled_status' => $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM %i WHERE id = %d', $table_name, $cancelled_id ) ),
+						)
+					);
+				},
+			)
+		);
 	}
 );
 

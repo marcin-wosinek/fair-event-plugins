@@ -879,13 +879,39 @@ test.describe( 'EventDatesController — recurrence reconciliation', () => {
 		);
 	} );
 
+	test( 'new and regenerated occurrences always have supported statuses', async ( {
+		request: req,
+	} ) => {
+		const localApi = req;
+		const created = await createRecurringEvent(
+			localApi,
+			'FREQ=WEEKLY;COUNT=3'
+		);
+		expect(
+			created.generated_occurrences.every(
+				( occurrence ) => occurrence.status === 'active'
+			)
+		).toBe( true );
+
+		const extendRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
+			{
+				headers: adminHeaders,
+				data: { rrule: 'FREQ=WEEKLY;COUNT=5' },
+			}
+		);
+		expect( extendRes.ok() ).toBeTruthy();
+		const extended = await getMaster( localApi, masterEventDateId );
+		expect(
+			extended.generated_occurrences.every( ( occurrence ) =>
+				[ 'active', 'cancelled' ].includes( occurrence.status )
+			)
+		).toBe( true );
+	} );
+
 	test( 'shortening RRULE soft-cancels removed occurrences instead of deleting them', async ( {
 		request: req,
 	} ) => {
-		test.skip(
-			true,
-			'Skipped pending #1406 — removed occurrence status is left blank instead of active/cancelled'
-		);
 		const localApi = req;
 		await createRecurringEvent( localApi, 'FREQ=WEEKLY;COUNT=4' );
 
@@ -925,6 +951,73 @@ test.describe( 'EventDatesController — recurrence reconciliation', () => {
 		cancelledIds.forEach( ( id ) =>
 			expect( after.cancelled_dates.length ).toBeGreaterThan( 0 )
 		);
+	} );
+
+	test( 'database upgrade repairs invalid generated rows in place and republishes them', async ( {
+		request: req,
+	} ) => {
+		const localApi = req;
+		const created = await createRecurringEvent(
+			localApi,
+			'FREQ=WEEKLY;COUNT=4'
+		);
+		const linkRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
+			{ headers: adminHeaders, data: { event_id: eventPostId } }
+		);
+		expect( linkRes.ok() ).toBeTruthy();
+
+		const invalidOccurrence = created.generated_occurrences[ 0 ];
+		const cancelledOccurrence = created.generated_occurrences[ 1 ];
+		const cancelledDate =
+			cancelledOccurrence.start_datetime.split( ' ' )[ 0 ];
+		const cancelRes = await localApi.post(
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/toggle-exdate`,
+			{ headers: adminHeaders, data: { date: cancelledDate } }
+		);
+		expect( cancelRes.ok() ).toBeTruthy();
+
+		const repairRes = await localApi.put(
+			'/wp-json/fair-e2e/v1/repair-recurrence-status',
+			{
+				headers: adminHeaders,
+				data: {
+					invalid_id: invalidOccurrence.id,
+					cancelled_id: cancelledOccurrence.id,
+				},
+			}
+		);
+		expect( repairRes.ok(), await repairRes.text() ).toBeTruthy();
+		const repair = await repairRes.json();
+		expect( repair.invalid_id ).toBe( invalidOccurrence.id );
+		expect( repair.invalid_status ).toBe( 'active' );
+		expect( repair.cancelled_id ).toBe( cancelledOccurrence.id );
+		expect( repair.cancelled_status ).toBe( 'cancelled' );
+
+		const adminRes = await localApi.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${ eventPostId }`,
+			{ headers: adminHeaders }
+		);
+		expect( adminRes.ok() ).toBeTruthy();
+		const adminDates = await adminRes.json();
+		const adminById = Object.fromEntries(
+			adminDates.map( ( eventDate ) => [ eventDate.id, eventDate ] )
+		);
+		expect( adminById[ invalidOccurrence.id ].status ).toBe( 'active' );
+		expect( adminById[ cancelledOccurrence.id ].status ).toBe(
+			'cancelled'
+		);
+		const feedRes = await localApi.get(
+			'/wp-json/fair-events/v1/events?start_date=2035-03-01&end_date=2035-03-31&per_page=500'
+		);
+		expect( feedRes.ok() ).toBeTruthy();
+		const feed = await feedRes.json();
+		expect( feed.events.map( ( event ) => event.event_date_id ) ).toContain(
+			invalidOccurrence.id
+		);
+		expect(
+			feed.events.map( ( event ) => event.event_date_id )
+		).not.toContain( cancelledOccurrence.id );
 	} );
 
 	test( 'master time-of-day edit propagates to generated children', async ( {

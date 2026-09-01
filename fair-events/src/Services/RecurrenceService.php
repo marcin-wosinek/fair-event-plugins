@@ -495,9 +495,9 @@ class RecurrenceService {
 				if ( array_key_exists( 'event_id', $master_props ) ) {
 					$update['event_id'] = $master_props['event_id'];
 				}
-				// Restore on regrow: a previously soft-cancelled anchor that's
-				// back in the desired set becomes active again.
-				if ( 'cancelled' === $row->status ) {
+				// Every desired anchor must be active. This restores soft-cancelled
+				// rows on regrow and repairs any unsupported legacy status.
+				if ( 'active' !== $row->status ) {
 					$update['status'] = 'active';
 				}
 				EventDates::update_by_id( $row->id, $update );

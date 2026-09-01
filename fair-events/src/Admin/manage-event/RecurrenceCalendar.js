@@ -60,7 +60,7 @@ export default function RecurrenceCalendar( {
 		const occ = occurrenceByDate[ dateStr ];
 		const isCancelled =
 			occ?.status === 'cancelled' || cancelledSet.has( dateStr );
-		const isOccurrence = !! occ && ! isCancelled;
+		const isOccurrence = occ?.status === 'active';
 		const isMaster = dateStr === masterDate;
 
 		if ( ! isMaster && ! isOccurrence && ! isCancelled ) {
@@ -101,11 +101,15 @@ export default function RecurrenceCalendar( {
 			};
 		}
 
-		return {
-			...common,
-			href: `${ manageEventUrl }&event_date_id=${ occ.id }`,
-			tooltip: __( 'Open this occurrence', 'fair-events' ),
-		};
+		if ( isOccurrence || isCancelled ) {
+			return {
+				...common,
+				href: `${ manageEventUrl }&event_date_id=${ occ.id }`,
+				tooltip: __( 'Open this occurrence', 'fair-events' ),
+			};
+		}
+
+		return common;
 	};
 
 	const calendarBody = (

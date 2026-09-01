@@ -310,6 +310,10 @@ class Installer {
 			self::migrate_to_3_30_0();
 		}
 
+		if ( version_compare( $current_version, '3.31.0', '<' ) ) {
+			self::migrate_to_3_31_0();
+		}
+
 		// Update database version.
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -500,6 +504,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.30.0', '<' ) ) {
 				self::migrate_to_3_30_0();
+			}
+
+			if ( version_compare( $current_version, '3.31.0', '<' ) ) {
+				self::migrate_to_3_31_0();
 			}
 
 			// Install/update tables.
@@ -2204,6 +2212,27 @@ class Installer {
 			$wpdb->prepare(
 				'ALTER TABLE %i MODIFY start_datetime DATETIME DEFAULT NULL',
 				$table_name
+			)
+		);
+	}
+
+	/**
+	 * Migrate to version 3.31.0 - Repair unsupported generated statuses.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_31_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s WHERE occurrence_type = %s AND (status IS NULL OR status NOT IN (%s, %s))',
+				$table_name,
+				'active',
+				'generated',
+				'active',
+				'cancelled'
 			)
 		);
 	}
