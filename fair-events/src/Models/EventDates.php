@@ -340,6 +340,7 @@ class EventDates {
 	 */
 	public static function save_occurrence( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $master_id = null, $recurrence_anchor = null, $status = 'active' ) {
 		global $wpdb;
+		$status = in_array( $status, array( 'active', 'cancelled' ), true ) ? $status : 'active';
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
@@ -1163,6 +1164,9 @@ class EventDates {
 	 */
 	public static function create_standalone_occurrence( $data ) {
 		global $wpdb;
+		$status = isset( $data['status'] ) && in_array( $data['status'], array( 'active', 'cancelled' ), true )
+			? $data['status']
+			: 'active';
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
@@ -1182,10 +1186,10 @@ class EventDates {
 			'venue_id'          => $data['venue_id'] ?? null,
 			'address'           => $data['address'] ?? null,
 			'recurrence_anchor' => $data['recurrence_anchor'] ?? null,
-			'status'            => $data['status'] ?? 'active',
+			'status'            => $status,
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 

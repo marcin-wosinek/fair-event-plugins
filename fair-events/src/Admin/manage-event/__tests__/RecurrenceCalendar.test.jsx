@@ -18,6 +18,7 @@ import RecurrenceCalendar from '../RecurrenceCalendar.js';
 const generatedOccurrences = [
 	{ id: 2, start_datetime: '2026-07-08 18:00:00', status: 'active' },
 	{ id: 3, start_datetime: '2026-07-15 18:00:00', status: 'cancelled' },
+	{ id: 4, start_datetime: '2026-07-22 18:00:00', status: '' },
 ];
 
 // Matches the aria-label built in RecurrenceCalendar's MiniMonth.
@@ -86,4 +87,26 @@ it( 'links the master cell to the master event_date_id', () => {
 		'href',
 		'http://example.com/manage&event_date_id=1'
 	);
+} );
+
+it( 'does not present an unsupported status as an active occurrence', () => {
+	render(
+		<RecurrenceCalendar
+			generatedOccurrences={ generatedOccurrences }
+			cancelledDates={ [ '2026-07-15' ] }
+			masterDate="2026-07-01"
+			manageEventUrl="http://example.com/manage"
+			masterEventDateId={ 1 }
+			embedded
+		/>
+	);
+
+	expect(
+		screen.queryByRole( 'link', {
+			name: fullDateLabel( '2026-07-22' ),
+		} )
+	).not.toBeInTheDocument();
+	expect( screen.getByText( '22' ) ).not.toHaveStyle( {
+		background: '#4ab866',
+	} );
 } );
