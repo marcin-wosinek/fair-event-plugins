@@ -11,7 +11,7 @@
  * @var string   $content    Block default content.
  * @var WP_Block $block      Block instance.
  *
- * phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+ * phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound, WordPress.WP.GlobalVariablesOverride.Prohibited
  */
 
 defined( 'WPINC' ) || die;
@@ -21,10 +21,19 @@ use FairEvents\Helpers\EventSchema;
 use FairEvents\Helpers\WeekViewParam;
 use FairEvents\Services\EventFeedProvider;
 use FairEvents\Services\EventTranslation;
+use FairEvents\Services\EventsWeekSummaryFormatter;
 use FairEvents\Settings\Settings;
 
 // Helper functions — guarded so they compose safely with weekly-schedule on the same page.
 if ( ! function_exists( 'fair_events_get_week_boundaries' ) ) {
+	/**
+	 * Calculate the configured seven-day week boundaries.
+	 *
+	 * @param int $year          ISO week-numbering year.
+	 * @param int $week          ISO week number.
+	 * @param int $start_of_week First weekday, from Sunday (0) to Saturday (6).
+	 * @return array Week start and end dates.
+	 */
 	function fair_events_get_week_boundaries( $year, $week, $start_of_week ) {
 		$date = new DateTime();
 		$date->setISODate( $year, $week );
@@ -45,6 +54,14 @@ if ( ! function_exists( 'fair_events_get_week_boundaries' ) ) {
 }
 
 if ( ! function_exists( 'fair_events_offset_week' ) ) {
+	/**
+	 * Offset an ISO week by a number of weeks.
+	 *
+	 * @param int $year   ISO week-numbering year.
+	 * @param int $week   ISO week number.
+	 * @param int $offset Number of weeks to offset.
+	 * @return array Offset ISO year and week.
+	 */
 	function fair_events_offset_week( $year, $week, $offset ) {
 		$date = new DateTime();
 		$date->setISODate( $year, $week );
@@ -197,26 +214,10 @@ $next_url = add_query_arg( 'week_view', WeekViewParam::format( $next['year'], $n
 // Build copy summary text.
 $summary_text = '';
 if ( $show_copy_summary ) {
-	$page_title    = get_the_title( get_queried_object_id() );
-	$page_url      = get_permalink( get_queried_object_id() );
-	$page_label    = $page_url ? $page_title . ' (' . $page_url . ')' : $page_title;
-	$summary_lines = array( $page_label . ', ' . $nav_title . ':' );
-
-	foreach ( $days as $day ) {
-		foreach ( $day['events'] as $ev ) {
-			$line = '* ' . $day['weekday'];
-			if ( ! $ev['all_day'] && ! empty( $ev['start_time'] ) ) {
-				$line .= ', ' . $ev['start_time'];
-			}
-			$line .= ', ' . $ev['title'];
-			if ( ! empty( $ev['permalink'] ) ) {
-				$line .= ': ' . $ev['permalink'];
-			}
-			$summary_lines[] = $line;
-		}
-	}
-
-	$summary_text = implode( "\n", $summary_lines );
+	$page_title   = get_the_title( get_queried_object_id() );
+	$page_url     = get_permalink( get_queried_object_id() );
+	$page_label   = $page_url ? $page_title . ' (' . $page_url . ')' : $page_title;
+	$summary_text = EventsWeekSummaryFormatter::format( $occurrences, $week_start, $week_end, $page_label, $nav_title );
 }
 
 $wrapper_attributes = array(
