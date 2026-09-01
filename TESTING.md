@@ -589,7 +589,7 @@ npm test
 
 # Run specific test type across all plugins
 npm run test:js             # All Jest tests
-npm run test:e2e            # All E2E tests
+npm run test:e2e            # Repository-root e2e/ suite only
 npm run test:api            # All API tests
 
 # Run tests for specific plugin
@@ -607,7 +607,7 @@ Each plugin should define these scripts:
 		"test": "npm-run-all test:js test:php",
 		"test:js": "jest",
 		"test:php": "vendor/bin/phpunit",
-		"test:e2e": "playwright test e2e/",
+		"test:e2e": "node ../scripts/workspace-e2e-runner.mjs",
 		"test:api": "playwright test src/API/__tests__/"
 	}
 }
@@ -617,6 +617,11 @@ Each plugin should define these scripts:
 `test:e2e` and `test:api` need a live WordPress instance and must stay opt-in,
 not swept into the plain `npm test` run. Omit `test:php` from the list (and
 the script) entirely on a plugin with no PHP suite.
+
+The shared workspace E2E runner defaults Playwright discovery to `e2e/`, so API
+specs cannot be discovered accidentally. When a `*.spec.js` path is forwarded,
+that path replaces the default discovery filter while the remaining Playwright
+options keep their original order.
 
 ## Notes and Best Practices
 
@@ -679,32 +684,77 @@ their own configs.
 
 ### Running E2E locally
 
-A clean clone needs only `docker` + `node`:
+A clean clone needs Docker, Node.js, and the configured Playwright Chromium
+browser. Run the complete repository-root `e2e/` suite with one command:
 
 ```bash
-npm run test:e2e:setup      # build assets, install composer deps, boot wp-env, set permalinks
-npm run test:e2e            # run the Playwright specs against :8889
-npm run test:e2e:teardown   # stop wp-env
+npm run test:e2e:local
 ```
 
-The dev stack on 8080 can keep running the whole time. `npm test` runs only unit
-tests — E2E is opt-in via the scripts above.
+The lifecycle runner validates Chromium, builds the workspaces, installs
+production Composer dependencies, starts the isolated `wp-env` tests instance,
+configures permalinks, waits for WordPress, runs Playwright, and stops the
+environment after success, failure, an interactive exit, or an interrupt. It
+supplies `CI=1`, `WP_BASE_URL=http://localhost:8889`, `WP_ADMIN_USER=admin`,
+and both password variables (`WP_ADMIN_PASS=password` and
+`WP_ADMIN_PASSWORD=password`). The regular development stack on `:8080` is
+neither started nor required and can keep running independently.
 
-Interactive / headed runs for development (the opposite of the default
-headless run):
+Scope a run to a workspace that defines `test:e2e`, or forward a spec path and
+Playwright options in their original order:
 
 ```bash
-npm run test:e2e:headed     # run with a visible browser window
-npm run test:e2e:ui         # Playwright UI mode: pick, watch, and step through tests
+npm run test:e2e:local -- --workspace=fair-events
+npm run test:e2e:local -- e2e/smoke.spec.js --grep "admin login"
+npm run test:e2e:local -- --workspace=fair-events -- e2e/events-week.spec.js --project=chromium
 ```
 
-Useful extras:
+The currently eligible workspaces are `fair-audience`, `fair-events`,
+`fair-timetable`, and `fair-calendar-button`. The latter two are not mounted by
+the shared `.wp-env.json`, so their suites will fail clearly when they require
+their plugins; this command does not silently change test provisioning.
+
+Interactive options use the same owned lifecycle. Exiting normally or with
+Ctrl+C stops only the environment started by that invocation:
 
 ```bash
-npm run test:e2e -- --debug         # Playwright Inspector (step debugger)
-npx wp-env run tests-cli wp ...     # WP-CLI against the tests instance
-WP_BASE_URL=http://localhost:8889 npm run test:e2e   # override base URL
+npm run test:e2e:local -- --headed
+npm run test:e2e:local -- --debug
+npm run test:e2e:local -- --ui
 ```
+
+For faster repeated runs, prepare the isolated environment explicitly and opt
+into reuse:
+
+```bash
+npm run test:e2e:setup
+npm run test:e2e:local -- --reuse
+npm run test:e2e:local -- --reuse --workspace=fair-events -- e2e/events-week.spec.js
+npm run test:e2e:teardown
+```
+
+Reuse is never inferred. An owned run rejects an already-running tests instance
+with guidance; `--reuse` skips builds, Composer installation, startup,
+permalink configuration, and cleanup, checks WordPress readiness, and never
+stops the existing environment. The raw `test:e2e`, `test:e2e:setup`, and
+`test:e2e:teardown` commands remain available for explicitly managed sessions
+and CI migration compatibility.
+
+Failure messages identify the lifecycle phase:
+
+-   **Browser validation:** run `npx playwright install chromium`. Browser
+    launch or host-library errors appear during E2E execution with Playwright's
+    own remediation.
+-   **Preparation or readiness:** inspect the build, Composer, Docker, `wp-env`,
+    or WP-CLI output printed immediately before the failure.
+-   **E2E execution:** a browser launch, assertion, or reporter failure returns
+    Playwright's status; owned cleanup still runs.
+-   **Cleanup:** the runner reports the failed stop separately. Cleanup becomes
+    the command status only when no earlier phase failed.
+
+`npm test` remains unit-only. WordPress.org `screenshots` and localized
+screenshot-generation scripts remain separate because they use locale assets
+and the regular development stack rather than this behavioral E2E lifecycle.
 
 ### Adding a new E2E test
 

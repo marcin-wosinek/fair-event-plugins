@@ -27,7 +27,7 @@
 		"test:js": "jest",
 		"test:php": "vendor/bin/phpunit",
 		"test:api": "playwright test src/API/__tests__/",
-		"test:e2e": "playwright test",
+		"test:e2e": "node ../scripts/workspace-e2e-runner.mjs",
 		"screenshots": "playwright test e2e/wordpress-org.spec.js",
 		"screenshots:es": "SCREENSHOT_LOCALE=es_ES playwright test e2e/wordpress-org.spec.js",
 		"playwright:run": "playwright test --headed",

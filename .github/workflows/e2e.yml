@@ -15,8 +15,14 @@ on:
             - 'fair-form/**'
             - 'fair-platform/**'
             - 'fair-events-shared/**'
+            - 'fair-timetable/**'
+            - 'fair-calendar-button/**'
             - 'e2e/**'
             - 'playwright.config.js'
+            - 'package.json'
+            - 'scripts/api-test-runner.mjs'
+            - 'scripts/workspace-e2e-runner.mjs'
+            - 'scripts/__tests__/api-test-runner.test.mjs'
             - '.wp-env.json'
             - '.github/workflows/e2e.yml'
     pull_request:
@@ -30,8 +36,14 @@ on:
             - 'fair-form/**'
             - 'fair-platform/**'
             - 'fair-events-shared/**'
+            - 'fair-timetable/**'
+            - 'fair-calendar-button/**'
             - 'e2e/**'
             - 'playwright.config.js'
+            - 'package.json'
+            - 'scripts/api-test-runner.mjs'
+            - 'scripts/workspace-e2e-runner.mjs'
+            - 'scripts/__tests__/api-test-runner.test.mjs'
             - '.wp-env.json'
             - '.github/workflows/e2e.yml'
 
@@ -143,15 +155,11 @@ jobs:
               if: steps.docker-cache.outputs.cache-hit != 'true'
               run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts phpmyadmin -o /tmp/docker-images.tar
 
-            - name: Boot isolated WordPress env
-              run: npm run test:e2e:setup
+            - name: Test lifecycle runner
+              run: node --test scripts/__tests__/api-test-runner.test.mjs
 
-            - name: Run E2E tests
-              run: npm run test:e2e
-
-            - name: Tear down WordPress env
-              if: always()
-              run: npm run test:e2e:teardown
+            - name: Prepare environment and run E2E tests
+              run: npm run test:e2e:local
 
             - name: Upload Playwright report
               if: failure()
