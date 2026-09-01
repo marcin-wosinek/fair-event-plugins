@@ -11,6 +11,8 @@ on:
             - '**/playwright.config.js'
             - '.wp-env.json'
             - 'package.json'
+            - 'scripts/api-test-runner.mjs'
+            - 'scripts/__tests__/api-test-runner.test.mjs'
             - 'e2e/mu-plugins/**'
             - '.github/workflows/api-tests.yml'
     pull_request:
@@ -20,6 +22,8 @@ on:
             - '**/playwright.config.js'
             - '.wp-env.json'
             - 'package.json'
+            - 'scripts/api-test-runner.mjs'
+            - 'scripts/__tests__/api-test-runner.test.mjs'
             - 'e2e/mu-plugins/**'
             - '.github/workflows/api-tests.yml'
 
@@ -119,15 +123,11 @@ jobs:
               if: steps.docker-cache.outputs.cache-hit != 'true'
               run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts phpmyadmin -o /tmp/docker-images.tar
 
-            - name: Boot isolated WordPress env
-              run: npm run test:e2e:setup
+            - name: Test API lifecycle runner
+              run: node --test scripts/__tests__/api-test-runner.test.mjs
 
-            - name: Run API tests
-              run: WP_BASE_URL=http://localhost:8889 WP_ADMIN_PASS=password npm run test:api
-
-            - name: Tear down WordPress env
-              if: always()
-              run: npm run test:e2e:teardown
+            - name: Prepare environment and run API tests
+              run: npm run test:api:local
 
             - name: Upload Playwright report
               if: failure()

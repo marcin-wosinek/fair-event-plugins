@@ -147,18 +147,20 @@ fair-{plugin-name}/
 
 -   Tests real HTTP requests
 -   Includes WordPress nonce authentication
--   Tests against running WordPress (localhost:8080)
+-   Tests against an isolated WordPress test instance (localhost:8889)
 -   No PHP test suite setup required
 
 #### CI
 
 `.github/workflows/api-tests.yml` runs on PRs touching `**/src/API/**`,
-`**/playwright.config.js`, `.wp-env.json`, `package.json`, or `e2e/mu-plugins/**`.
-It boots the same isolated `@wordpress/env` `tests` instance as the E2E job
-(`npm run test:e2e:setup`, port **8889**) and runs `npm run test:api` from the
-repo root, which fans out to every workspace's `test:api` script. It reuses
-the E2E job's provisioning but skips the Chromium install/cache step — API
-specs authenticate via `request.newContext()` and never open a browser page.
+`**/playwright.config.js`, `.wp-env.json`, `package.json`, the API lifecycle
+runner and its tests, or `e2e/mu-plugins/**`. CI uses the same
+`npm run test:api:local` lifecycle as local development. The command builds all
+workspaces, installs production Composer dependencies, starts the isolated
+`@wordpress/env` `tests` instance on port **8889**, configures permalinks,
+checks that WordPress is ready, runs every workspace's `test:api` script, and
+stops only the environment it started. API specs use Playwright's
+`request.newContext()` and never open a browser page.
 
 Specs authenticate with Basic Auth using the real admin login password
 (`WP_ADMIN_USER`/`WP_ADMIN_PASSWORD`, default `admin`/`password`; one spec
@@ -168,15 +170,49 @@ of [WP-API/Basic-Auth](https://github.com/WP-API/Basic-Auth), test-only,
 mounted only into the wp-env `tests` instance) adds the `determine_current_user`
 handler that accepts it.
 
-To reproduce a CI API failure locally:
+For a complete CI-equivalent local run:
 
 ```bash
-npm run test:e2e:setup      # boot the tests instance on :8889 (shared with E2E)
-WP_BASE_URL=http://localhost:8889 WP_ADMIN_PASS=password npm run test:api
+npm run test:api:local
+```
+
+Scope the owned lifecycle to one workspace, and optionally forward Playwright
+arguments after `--`:
+
+```bash
+npm run test:api:local -- --workspace=fair-events
+npm run test:api:local -- --workspace=fair-events -- GetTickets.api.spec.js --grep "returns tickets"
+```
+
+The default command refuses to reuse an already-running test environment. This
+ensures cleanup never stops services started by another command. For faster
+reruns, explicitly prepare the isolated test instance, then use either the raw
+test command or the lifecycle runner's reuse mode:
+
+```bash
+npm run test:e2e:setup
+
+# Fast raw reruns; supply the test URL and credentials explicitly.
+CI=1 WP_BASE_URL=http://localhost:8889 WP_ADMIN_USER=admin WP_ADMIN_PASS=password WP_ADMIN_PASSWORD=password npm run test:api --workspace=fair-events
+
+# Or retain automatic URL/credential defaults and readiness checks.
+npm run test:api:local -- --reuse --workspace=fair-events
+
 npm run test:e2e:teardown
 ```
 
-Or scope to one plugin: `WP_BASE_URL=http://localhost:8889 WP_ADMIN_PASS=password npm run test:api --workspace=fair-events`.
+The runner supplies both `WP_ADMIN_PASS` and `WP_ADMIN_PASSWORD` because current
+API specs use both names. The **8889** test instance is independent of the
+regular Docker Compose development stack on **8080**; the development stack is
+not started or required.
+
+Troubleshoot by the last visible phase heading. Failures during preparation
+come from workspace builds or Composer installation. Startup failures come
+from `wp-env`/Docker, while readiness failures indicate WordPress did not become
+usable or permalink configuration failed. Once `Running API tests` appears, a
+non-zero result is a Playwright suite or assertion failure. On success, test
+failure, `SIGINT`, or `SIGTERM`, an owned run enters the cleanup phase and
+stops its isolated environment.
 
 ### E2E Tests
 
