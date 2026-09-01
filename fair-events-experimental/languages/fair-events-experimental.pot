@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T15:57:00+00:00\n"
+"POT-Creation-Date: 2026-09-01T13:08:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: fair-events-experimental.php
-msgid "Activates advanced feature bundles for Fair Events (galleries, sources, ticketing, event-tools, migration). Requires fair-events."
+msgid "Activates advanced feature bundles for Fair Events, including galleries, sources, ticketing, duplicate and merge tools, and migration. Requires fair-events."
 msgstr ""
 
 #. Author of the plugin
@@ -84,31 +84,17 @@ msgstr ""
 #: src/Admin/AdminPages.php:127
 #: src/Admin/AdminPages.php:128
 #: src/Admin/AdminPages.php:134
-msgid "Copy Event"
-msgstr ""
-
-#: src/Admin/AdminPages.php:142
-#: src/Admin/AdminPages.php:143
-#: src/Admin/AdminPages.php:149
 #: src/Admin/manage-event-ext/index.js:67
 #: src/Admin/manage-event/DuplicateEventWizard.js:620
 msgid "Duplicate Event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:153
-#: src/Admin/AdminPages.php:154
-#: src/Admin/AdminPages.php:160
+#: src/Admin/AdminPages.php:138
+#: src/Admin/AdminPages.php:139
+#: src/Admin/AdminPages.php:145
 #: src/Admin/manage-event-ext/index.js:91
 #: src/Admin/manage-event/MergeEventWizard.js:454
 msgid "Merge Event"
-msgstr ""
-
-#: src/Admin/AdminPages.php:512
-msgid "Copy"
-msgstr ""
-
-#: src/Admin/AdminPages.php:515
-msgid "Copy this event"
 msgstr ""
 
 #: src/Core/Features.php:148
@@ -140,7 +126,7 @@ msgid "Event tools"
 msgstr ""
 
 #: src/Core/Features.php:161
-msgid "Event duplication, merge, and admin-bar Copy button."
+msgid "Advanced event duplication and merge tools."
 msgstr ""
 
 #: src/Core/Features.php:164

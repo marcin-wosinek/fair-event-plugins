@@ -3,7 +3,7 @@
  * Admin Pages for Fair Events Experimental
  *
  * Registers the experimental feature admin pages (migration, sources,
- * copy, settings) as submenus under the fair-events-calendar menu.
+ * settings) as submenus under the fair-events-calendar menu.
  * Page rendering and JS assets are delegated to the fair-events plugin; only
  * the settings page uses assets from this plugin's own build directory.
  *
@@ -120,23 +120,8 @@ class AdminPages {
 			$this->set_hidden_page_title( $this->page_hooks['fair-events-event-statistics'], __( 'Event Statistics', 'fair-events-experimental' ) );
 		}
 
-		// Copy Event page — `event-tools` bundle (hidden).
+		// Advanced event pages — `event-tools` bundle (hidden).
 		if ( \FairEventsExperimental\Core\Features::is_enabled( 'event-tools' ) ) {
-			$this->page_hooks['fair-events-copy'] = add_submenu_page(
-				'',
-				__( 'Copy Event', 'fair-events-experimental' ),
-				__( 'Copy Event', 'fair-events-experimental' ),
-				'edit_posts',
-				'fair-events-copy',
-				array( $this, 'render_copy_event_page' )
-			);
-
-			$this->set_hidden_page_title( $this->page_hooks['fair-events-copy'], __( 'Copy Event', 'fair-events-experimental' ) );
-
-			add_action( 'load-' . $this->page_hooks['fair-events-copy'], array( $this, 'handle_copy_event_submission' ) );
-
-			add_action( 'admin_bar_menu', array( $this, 'add_copy_button_to_admin_bar' ), 100 );
-
 			$this->page_hooks['fair-events-duplicate-event'] = add_submenu_page(
 				'',
 				__( 'Duplicate Event', 'fair-events-experimental' ),
@@ -435,86 +420,5 @@ class AdminPages {
 		?>
 		<div id="fair-events-merge-event-root"></div>
 		<?php
-	}
-
-	/**
-	 * Handle copy event form submission
-	 *
-	 * @return void
-	 */
-	public function handle_copy_event_submission() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( ! isset( $_POST['copy_event_submit'] ) ) {
-			return;
-		}
-
-		$copy_page = new \FairEventsExperimental\Admin\CopyEventPage();
-		$copy_page->handle_submission();
-	}
-
-	/**
-	 * Render copy event page
-	 *
-	 * @return void
-	 */
-	public function render_copy_event_page() {
-		$copy_page = new \FairEventsExperimental\Admin\CopyEventPage();
-		$copy_page->render();
-	}
-
-	/**
-	 * Add Copy button to admin bar on event edit pages
-	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar The admin bar object.
-	 * @return void
-	 */
-	public function add_copy_button_to_admin_bar( $wp_admin_bar ) {
-		if ( ! is_admin() ) {
-			return;
-		}
-
-		if ( ! post_type_exists( 'fair_event' ) ) {
-			return;
-		}
-
-		$screen = get_current_screen();
-		if ( ! $screen || 'fair_event' !== $screen->post_type || 'post' !== $screen->base ) {
-			return;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
-		if ( ! $post_id ) {
-			return;
-		}
-
-		$post = get_post( $post_id );
-		if ( ! $post || 'fair_event' !== $post->post_type ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			return;
-		}
-
-		$copy_url = add_query_arg(
-			array(
-				'page'     => 'fair-events-copy',
-				'event_id' => $post_id,
-				'_wpnonce' => wp_create_nonce( 'copy_fair_event_' . $post_id ),
-			),
-			admin_url( 'admin.php' )
-		);
-
-		$wp_admin_bar->add_node(
-			array(
-				'id'    => 'copy-event',
-				'title' => __( 'Copy', 'fair-events-experimental' ),
-				'href'  => $copy_url,
-				'meta'  => array(
-					'title' => __( 'Copy this event', 'fair-events-experimental' ),
-				),
-			)
-		);
 	}
 }

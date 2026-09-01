@@ -484,7 +484,7 @@ class Event {
 		}
 
 		// Only show Copy action for fair_event post type
-		if ( self::POST_TYPE === $post->post_type ) {
+		if ( self::POST_TYPE === $post->post_type && current_user_can( 'edit_post', $post->ID ) ) {
 			$copy_url        = wp_nonce_url(
 				admin_url( 'admin.php?page=fair-events-copy&event_id=' . $post->ID ),
 				'copy_fair_event_' . $post->ID

@@ -71,6 +71,7 @@ class AdminPages {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'pre_get_posts', array( $this, 'filter_upcoming_events' ) );
 		add_filter( 'views_edit-fair_event', array( $this, 'add_upcoming_view_link' ) );
+		add_action( 'admin_bar_menu', array( $this, 'add_copy_button_to_admin_bar' ), 100 );
 	}
 
 	/**
@@ -152,6 +153,86 @@ class AdminPages {
 
 		// Manage Event hidden-page title (always on; the page itself is core).
 		$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-event'], __( 'Manage Event', 'fair-events' ) );
+
+		// Copy Event page (hidden from menu, accessed via event actions).
+		$this->page_hooks['fair-events-copy'] = add_submenu_page(
+			'',
+			__( 'Copy Event', 'fair-events' ),
+			__( 'Copy Event', 'fair-events' ),
+			'edit_posts',
+			'fair-events-copy',
+			array( $this, 'render_copy_event_page' )
+		);
+
+		$this->set_hidden_page_title( $this->page_hooks['fair-events-copy'], __( 'Copy Event', 'fair-events' ) );
+		add_action( 'load-' . $this->page_hooks['fair-events-copy'], array( $this, 'handle_copy_event_submission' ) );
+	}
+
+	/**
+	 * Handle copy event form submission.
+	 *
+	 * @return void
+	 */
+	public function handle_copy_event_submission() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( ! isset( $_POST['copy_event_submit'] ) ) {
+			return;
+		}
+
+		$copy_page = new CopyEventPage();
+		$copy_page->handle_submission();
+	}
+
+	/**
+	 * Render the copy event page.
+	 *
+	 * @return void
+	 */
+	public function render_copy_event_page() {
+		$copy_page = new CopyEventPage();
+		$copy_page->render();
+	}
+
+	/**
+	 * Add Copy to the admin bar on an editable event's edit screen.
+	 *
+	 * @param \WP_Admin_Bar $wp_admin_bar The admin bar object.
+	 * @return void
+	 */
+	public function add_copy_button_to_admin_bar( $wp_admin_bar ) {
+		if ( ! is_admin() || ! post_type_exists( 'fair_event' ) ) {
+			return;
+		}
+
+		$screen = get_current_screen();
+		if ( ! $screen || 'fair_event' !== $screen->post_type || 'post' !== $screen->base ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+		$post    = $post_id ? get_post( $post_id ) : null;
+		if ( ! $post || 'fair_event' !== $post->post_type || ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		$copy_url = add_query_arg(
+			array(
+				'page'     => 'fair-events-copy',
+				'event_id' => $post_id,
+				'_wpnonce' => wp_create_nonce( 'copy_fair_event_' . $post_id ),
+			),
+			admin_url( 'admin.php' )
+		);
+
+		$wp_admin_bar->add_node(
+			array(
+				'id'    => 'copy-event',
+				'title' => __( 'Copy', 'fair-events' ),
+				'href'  => $copy_url,
+				'meta'  => array( 'title' => __( 'Copy this event', 'fair-events' ) ),
+			)
+		);
 	}
 
 	/**

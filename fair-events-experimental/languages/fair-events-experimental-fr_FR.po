@@ -78,32 +78,18 @@ msgstr "Statistiques d'événements"
 #: src/Admin/AdminPages.php:127
 #: src/Admin/AdminPages.php:128
 #: src/Admin/AdminPages.php:134
-msgid "Copy Event"
-msgstr "Copier l'événement"
-
-#: src/Admin/AdminPages.php:142
-#: src/Admin/AdminPages.php:143
-#: src/Admin/AdminPages.php:149
 #: src/Admin/manage-event-ext/index.js:67
 #: src/Admin/manage-event/DuplicateEventWizard.js:620
 msgid "Duplicate Event"
 msgstr "Dupliquer l'événement"
 
-#: src/Admin/AdminPages.php:153
-#: src/Admin/AdminPages.php:154
-#: src/Admin/AdminPages.php:160
+#: src/Admin/AdminPages.php:138
+#: src/Admin/AdminPages.php:139
+#: src/Admin/AdminPages.php:145
 #: src/Admin/manage-event-ext/index.js:91
 #: src/Admin/manage-event/MergeEventWizard.js:454
 msgid "Merge Event"
 msgstr "Fusionner l'événement"
-
-#: src/Admin/AdminPages.php:512
-msgid "Copy"
-msgstr "Copier"
-
-#: src/Admin/AdminPages.php:515
-msgid "Copy this event"
-msgstr "Copier cet événement"
 
 #: src/Core/Features.php:148
 msgid "Galleries"
@@ -128,10 +114,6 @@ msgstr "Billetterie"
 #: src/Core/Features.php:160
 msgid "Event tools"
 msgstr "Outils d'événement"
-
-#: src/Core/Features.php:161
-msgid "Event duplication, merge, and admin-bar Copy button."
-msgstr "Duplication d'événement, fusion et bouton Copier de la barre d'administration."
 
 #: src/Core/Features.php:164
 msgid "Migration"
@@ -603,5 +585,9 @@ msgstr "Billets, tarification de groupe/règles de permission. Nécessite fair-a
 
 #. Description of the plugin
 #: fair-events-experimental.php
-msgid "Activates advanced feature bundles for Fair Events (galleries, sources, ticketing, event-tools, migration). Requires fair-events."
-msgstr "Active les packs de fonctionnalités avancées pour Fair Events (galeries, sources, billetterie, outils d'événement, migration). Nécessite fair-events."
+msgid "Activates advanced feature bundles for Fair Events, including galleries, sources, ticketing, duplicate and merge tools, and migration. Requires fair-events."
+msgstr ""
+
+#: src/Core/Features.php:161
+msgid "Advanced event duplication and merge tools."
+msgstr ""

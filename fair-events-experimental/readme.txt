@@ -8,7 +8,7 @@ Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Activates advanced feature bundles for Fair Events: galleries, sources, ticketing, event-tools, migration.
+Activates advanced feature bundles for Fair Events: galleries, sources, ticketing, duplicate and merge tools, migration.
 
 == Description ==
 
@@ -17,7 +17,7 @@ This plugin is a companion to Fair Events. It activates five advanced feature bu
 * **Galleries** — Per-event photo galleries, photo likes/downloads, image exports.
 * **Event sources & feeds** — External event sources, iCal/JSON feeds, event proposals.
 * **Ticketing** — Tickets, group pricing/permission rules, invitations.
-* **Event tools** — Event duplication, merge, and admin-bar Copy button.
+* **Event tools** — Advanced event duplication and merge tools.
 * **Migration** — One-time post → event migration tooling.
 
 Requires Fair Events to be active.
