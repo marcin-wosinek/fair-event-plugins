@@ -2,13 +2,17 @@
 /* eslint-disable no-console */
 
 import { spawn } from 'node:child_process';
+import { access } from 'node:fs/promises';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+
+import { chromium } from '@playwright/test';
 
 const SIGNAL_EXIT_CODES = { SIGINT: 130, SIGTERM: 143 };
 
 export function parseArguments(args) {
 	let reuse = false;
+	let suite = 'api';
 	let workspace;
 	const forwarded = [];
 
@@ -16,6 +20,8 @@ export function parseArguments(args) {
 		const argument = args[index];
 		if (argument === '--reuse') {
 			reuse = true;
+		} else if (argument.startsWith('--suite=')) {
+			suite = argument.slice('--suite='.length);
 		} else if (argument === '--workspace') {
 			workspace = args[++index];
 		} else if (argument.startsWith('--workspace=')) {
@@ -31,26 +37,35 @@ export function parseArguments(args) {
 	) {
 		throw new Error('The --workspace option requires a value.');
 	}
+	if (!['api', 'e2e'].includes(suite)) {
+		throw new Error('The --suite option must be either "api" or "e2e".');
+	}
 
-	return { reuse, workspace, forwarded };
+	return { reuse, suite, workspace, forwarded };
 }
 
-export async function loadApiWorkspaces(rootDirectory) {
+export async function loadWorkspaces(rootDirectory) {
 	const rootPackage = JSON.parse(
 		await readFile(`${rootDirectory}/package.json`, 'utf8')
 	);
-	const apiWorkspaces = [];
+	const suiteWorkspaces = { api: [], e2e: [] };
 
 	for (const workspace of rootPackage.workspaces) {
 		const workspacePackage = JSON.parse(
 			await readFile(`${rootDirectory}/${workspace}/package.json`, 'utf8')
 		);
-		if (workspacePackage.scripts?.['test:api']) {
-			apiWorkspaces.push(workspace);
+		for (const suite of Object.keys(suiteWorkspaces)) {
+			if (workspacePackage.scripts?.[`test:${suite}`]) {
+				suiteWorkspaces[suite].push(workspace);
+			}
 		}
 	}
 
-	return { workspaces: rootPackage.workspaces, apiWorkspaces };
+	return { workspaces: rootPackage.workspaces, suiteWorkspaces };
+}
+
+export async function validateChromium() {
+	await access(chromium.executablePath());
 }
 
 export function createProcessExecutor({ cwd, env }) {
@@ -93,26 +108,30 @@ function phase(message, logger) {
 	logger(`\n==> ${message}`);
 }
 
-export async function runApiTests({
+export async function runTests({
 	options,
 	executor,
 	workspaceConfig,
+	browserValidator = validateChromium,
 	logger = console.log,
 	signalSource = process,
 }) {
 	if (
 		options.workspace &&
 		(!workspaceConfig.workspaces.includes(options.workspace) ||
-			!workspaceConfig.apiWorkspaces.includes(options.workspace))
+			!workspaceConfig.suiteWorkspaces[options.suite].includes(
+				options.workspace
+			))
 	) {
 		logger(
-			`Workspace "${options.workspace}" does not define a test:api script.`
+			`Workspace "${options.workspace}" does not define a test:${options.suite} script.`
 		);
 		return 2;
 	}
 
 	let ownsEnvironment = false;
 	let interruptedSignal;
+	let primaryResult;
 	const onSignal = (signal) => {
 		interruptedSignal ??= signal;
 		executor.terminate(signal);
@@ -123,6 +142,18 @@ export async function runApiTests({
 	signalSource.on('SIGTERM', onSigterm);
 
 	try {
+		if (options.suite === 'e2e') {
+			phase('Validating Chromium browser dependency', logger);
+			try {
+				await browserValidator();
+			} catch {
+				logger(
+					'Chromium is not installed for this Playwright version. Run `npx playwright install chromium` and retry.'
+				);
+				return 2;
+			}
+		}
+
 		if (!options.reuse) {
 			const status = await executor.run(
 				'npx',
@@ -169,9 +200,10 @@ export async function runApiTests({
 			);
 		}
 
-		phase('Configuring and checking WordPress readiness', logger);
-		for (const args of [
-			[
+		phase('Checking WordPress readiness', logger);
+		const readinessCommands = [];
+		if (!options.reuse) {
+			readinessCommands.push([
 				'wp-env',
 				'run',
 				'tests-cli',
@@ -180,36 +212,59 @@ export async function runApiTests({
 				'structure',
 				'/%postname%/',
 				'--hard',
-			],
-			['wp-env', 'run', 'tests-cli', 'wp', 'core', 'is-installed'],
-		]) {
+			]);
+		}
+		readinessCommands.push([
+			'wp-env',
+			'run',
+			'tests-cli',
+			'wp',
+			'core',
+			'is-installed',
+		]);
+		for (const args of readinessCommands) {
 			const result = await executor.run('npx', args);
 			if (result.code !== 0) {
-				return result.code;
+				primaryResult = result.code;
+				return primaryResult;
 			}
 		}
 
-		phase('Running API tests', logger);
-		const testArgs = ['run', 'test:api'];
+		phase(
+			options.suite === 'api' ? 'Running API tests' : 'Running E2E tests',
+			logger
+		);
+		const testArgs = ['run', `test:${options.suite}`];
 		if (options.workspace) {
 			testArgs.push(`--workspace=${options.workspace}`);
 		}
 		if (options.forwarded.length) {
 			testArgs.push('--', ...options.forwarded);
 		}
-		return (await executor.run('npm', testArgs)).code;
+		primaryResult = (await executor.run('npm', testArgs)).code;
+		return primaryResult;
 	} finally {
 		signalSource.off('SIGINT', onSigint);
 		signalSource.off('SIGTERM', onSigterm);
 		if (ownsEnvironment) {
 			phase('Stopping owned WordPress test environment', logger);
-			await executor.run('npx', ['wp-env', 'stop']);
+			const cleanup = await executor.run('npx', ['wp-env', 'stop']);
+			if (cleanup.code !== 0) {
+				logger(
+					`Cleanup failed with exit status ${cleanup.code}; the isolated environment may still be running.`
+				);
+				if (!primaryResult && !interruptedSignal) {
+					return cleanup.code;
+				}
+			}
 		}
 		if (interruptedSignal) {
 			return SIGNAL_EXIT_CODES[interruptedSignal];
 		}
 	}
 }
+
+export const runApiTests = runTests;
 
 async function main() {
 	let options;
@@ -224,7 +279,7 @@ async function main() {
 		/\/$/,
 		''
 	);
-	const workspaceConfig = await loadApiWorkspaces(rootDirectory);
+	const workspaceConfig = await loadWorkspaces(rootDirectory);
 	const env = {
 		...process.env,
 		CI: '1',
@@ -233,7 +288,7 @@ async function main() {
 		WP_ADMIN_PASS: 'password',
 		WP_ADMIN_PASSWORD: 'password',
 	};
-	process.exitCode = await runApiTests({
+	process.exitCode = await runTests({
 		options,
 		executor: createProcessExecutor({ cwd: rootDirectory, env }),
 		workspaceConfig,

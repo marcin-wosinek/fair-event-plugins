@@ -20,6 +20,7 @@
 		"test:api": "npm run test:api --workspaces --if-present",
 		"test:api:local": "node scripts/api-test-runner.mjs",
 		"test:e2e": "playwright test --config=playwright.config.js",
+		"test:e2e:local": "node scripts/api-test-runner.mjs --suite=e2e",
 		"test:e2e:headed": "playwright test --config=playwright.config.js --headed",
 		"test:e2e:ui": "playwright test --config=playwright.config.js --ui",
 		"test:e2e:setup": "npm run build && npm run composer:install:prod && wp-env start && wp-env run tests-cli wp rewrite structure '/%postname%/' --hard",

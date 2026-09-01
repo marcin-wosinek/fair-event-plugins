@@ -3,10 +3,14 @@ import { EventEmitter } from 'node:events';
 import test from 'node:test';
 
 import { parseArguments, runApiTests } from '../api-test-runner.mjs';
+import { playwrightArguments } from '../workspace-e2e-runner.mjs';
 
 const workspaceConfig = {
-	workspaces: ['fair-events', 'fair-events-shared'],
-	apiWorkspaces: ['fair-events'],
+	workspaces: ['fair-events', 'fair-timetable', 'fair-events-shared'],
+	suiteWorkspaces: {
+		api: ['fair-events'],
+		e2e: ['fair-events', 'fair-timetable'],
+	},
 };
 
 function createExecutor(responses = {}, onRun) {
@@ -29,7 +33,13 @@ function createExecutor(responses = {}, onRun) {
 }
 
 function makeOptions(overrides = {}) {
-	return { reuse: false, workspace: undefined, forwarded: [], ...overrides };
+	return {
+		reuse: false,
+		suite: 'api',
+		workspace: undefined,
+		forwarded: [],
+		...overrides,
+	};
 }
 
 function stoppedStatus() {
@@ -44,7 +54,8 @@ function stoppedStatus() {
 async function run(
 	executor,
 	runOptions = makeOptions(),
-	signalSource = new EventEmitter()
+	signalSource = new EventEmitter(),
+	browserValidator = async () => {}
 ) {
 	return runApiTests({
 		options: runOptions,
@@ -52,6 +63,7 @@ async function run(
 		workspaceConfig,
 		logger() {},
 		signalSource,
+		browserValidator,
 	});
 }
 
@@ -110,12 +122,18 @@ test('interrupt terminates the active child, cleans up, and returns signal statu
 	]) {
 		const signalSource = new EventEmitter();
 		let emitted = false;
-		const executor = createExecutor(stoppedStatus(), (call) => {
-			if (call.args.join(' ') === 'run test:api' && !emitted) {
-				emitted = true;
-				signalSource.emit(signal);
+		const executor = createExecutor(
+			{
+				...stoppedStatus(),
+				'npx wp-env stop': { code: 31 },
+			},
+			(call) => {
+				if (call.args.join(' ') === 'run test:api' && !emitted) {
+					emitted = true;
+					signalSource.emit(signal);
+				}
 			}
-		});
+		);
 		assert.equal(
 			await run(executor, makeOptions(), signalSource),
 			exitCode
@@ -141,11 +159,7 @@ test('reuse skips status, build, startup, and teardown', async () => {
 	assert.equal(await run(executor, makeOptions({ reuse: true })), 0);
 	assert.deepEqual(
 		executor.calls.map((call) => call.args.join(' ')),
-		[
-			'wp-env run tests-cli wp rewrite structure /%postname%/ --hard',
-			'wp-env run tests-cli wp core is-installed',
-			'run test:api',
-		]
+		['wp-env run tests-cli wp core is-installed', 'run test:api']
 	);
 });
 
@@ -177,4 +191,112 @@ test('invalid and non-API workspaces fail before provisioning', async () => {
 		assert.equal(await run(executor, makeOptions({ workspace })), 2);
 		assert.equal(executor.calls.length, 0);
 	}
+});
+
+test('owned root E2E mode validates Chromium and runs only the root suite', async () => {
+	const executor = createExecutor(stoppedStatus());
+	let browserChecks = 0;
+	assert.equal(
+		await run(
+			executor,
+			makeOptions({ suite: 'e2e' }),
+			new EventEmitter(),
+			async () => {
+				browserChecks++;
+			}
+		),
+		0
+	);
+	assert.equal(browserChecks, 1);
+	assert.equal(
+		executor.calls.filter((call) => call.args[1] === 'test:e2e').length,
+		1
+	);
+	assert.deepEqual(executor.calls.at(-2).args, ['run', 'test:e2e']);
+});
+
+test('workspace E2E mode forwards specs and Playwright options unchanged', async () => {
+	const executor = createExecutor();
+	const parsed = parseArguments([
+		'--suite=e2e',
+		'--reuse',
+		'--workspace=fair-events',
+		'--',
+		'e2e/example.spec.js',
+		'--headed',
+		'--grep',
+		'checkout',
+	]);
+	assert.equal(await run(executor, parsed), 0);
+	assert.deepEqual(executor.calls.at(-1).args, [
+		'run',
+		'test:e2e',
+		'--workspace=fair-events',
+		'--',
+		'e2e/example.spec.js',
+		'--headed',
+		'--grep',
+		'checkout',
+	]);
+});
+
+test('workspace E2E defaults to e2e discovery but a spec replaces that filter', () => {
+	assert.deepEqual(playwrightArguments(['--headed']), [
+		'test',
+		'e2e/',
+		'--headed',
+	]);
+	assert.deepEqual(
+		playwrightArguments(['e2e/example.spec.js', '--grep', 'checkout']),
+		['test', 'e2e/example.spec.js', '--grep', 'checkout']
+	);
+});
+
+test('missing Chromium fails before environment inspection or startup', async () => {
+	const executor = createExecutor(stoppedStatus());
+	assert.equal(
+		await run(
+			executor,
+			makeOptions({ suite: 'e2e' }),
+			new EventEmitter(),
+			async () => {
+				throw new Error('missing');
+			}
+		),
+		2
+	);
+	assert.equal(executor.calls.length, 0);
+});
+
+test('invalid E2E workspace fails before browser validation and provisioning', async () => {
+	const executor = createExecutor();
+	let browserChecks = 0;
+	assert.equal(
+		await run(
+			executor,
+			makeOptions({ suite: 'e2e', workspace: 'fair-events-shared' }),
+			new EventEmitter(),
+			async () => {
+				browserChecks++;
+			}
+		),
+		2
+	);
+	assert.equal(browserChecks, 0);
+	assert.equal(executor.calls.length, 0);
+});
+
+test('cleanup failure wins only after a successful E2E run', async () => {
+	const success = createExecutor({
+		...stoppedStatus(),
+		'npx wp-env stop': { code: 31 },
+	});
+	assert.equal(await run(success, makeOptions({ suite: 'e2e' })), 31);
+
+	const failure = createExecutor({
+		...stoppedStatus(),
+		'npm run test:e2e': { code: 29 },
+		'npx wp-env stop': { code: 31 },
+	});
+	assert.equal(await run(failure, makeOptions({ suite: 'e2e' })), 29);
 });

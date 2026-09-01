@@ -22,7 +22,7 @@
 		"updatepo": "wp i18n update-po languages/fair-calendar-button.pot languages/",
 		"test": "jest",
 		"test:js": "jest",
-		"test:e2e": "playwright test",
+		"test:e2e": "node ../scripts/workspace-e2e-runner.mjs",
 		"screenshots": "playwright test e2e/wordpress-org.spec.js",
 		"playwright:run": "playwright test --headed",
 		"playwright:up": "playwright test --headed --ui",

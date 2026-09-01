@@ -24,7 +24,7 @@
 		"test": "npm-run-all test:js test:php",
 		"test:js": "jest",
 		"test:php": "vendor/bin/phpunit",
-		"test:e2e": "playwright test",
+		"test:e2e": "node ../scripts/workspace-e2e-runner.mjs",
 		"test:api": "playwright test src/API/__tests__/",
 		"playwright:run": "playwright test --headed",
 		"playwright:up": "playwright test --headed --ui",
