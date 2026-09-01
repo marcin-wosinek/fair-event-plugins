@@ -29,8 +29,8 @@ test.describe( 'GetTicketsController — admin signups list ticket_type_name', (
 	let eventPostId;
 	let eventDateId;
 	let ticketTypeId;
-	let signupEmail;
-	let signupCreated;
+	let signupEmails;
+	let signupIds = [];
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
@@ -78,8 +78,20 @@ test.describe( 'GetTicketsController — admin signups list ticket_type_name', (
 							group_ids: [],
 						},
 					],
-					sale_periods: [],
-					prices: [],
+					sale_periods: [
+						{
+							name: 'Always available',
+							sale_start: '2020-01-01 00:00:00',
+							sale_end: '2099-01-01 00:00:00',
+						},
+					],
+					prices: [
+						{
+							ticket_type_index: 0,
+							sale_period_index: 0,
+							price: 0,
+						},
+					],
 					settings: {},
 				},
 			}
@@ -89,26 +101,42 @@ test.describe( 'GetTicketsController — admin signups list ticket_type_name', (
 		ticketTypeId = ticketsBody.ticket_types?.[ 0 ]?.id;
 		expect( ticketTypeId ).toBeTruthy();
 
-		signupEmail = `signups-list-${ Date.now() }@example.test`;
-		const signupRes = await api.post(
-			'/wp-json/fair-events/v1/get-tickets',
-			{
-				data: {
-					event_date_id: eventDateId,
-					name: 'Signups List Tester',
-					email: signupEmail,
-					ticket_type_id: ticketTypeId,
-					quantity: 1,
-				},
-			}
+		signupEmails = {
+			checked: `signups-list-checked-${ Date.now() }@example.test`,
+			unchecked: `signups-list-unchecked-${ Date.now() }@example.test`,
+		};
+		const signupResponses = await Promise.all(
+			Object.entries( signupEmails ).map( ( [ consent, email ] ) =>
+				api.post( '/wp-json/fair-events/v1/get-tickets', {
+					data: {
+						event_date_id: eventDateId,
+						name: `Signups List ${ consent } Tester`,
+						email,
+						ticket_type_id: ticketTypeId,
+						quantity: 1,
+						mailing_opt_in: consent === 'checked',
+					},
+				} )
+			)
 		);
-		// #1408 — a ticket type with sale_periods: [] is currently rejected as
-		// unavailable; captured (not asserted) here so the one test that
-		// depends on it can skip with a reference instead of failing the hook.
-		signupCreated = signupRes.ok();
+		expect(
+			signupResponses.every( ( response ) => response.ok() )
+		).toBeTruthy();
 	} );
 
 	test.afterAll( async () => {
+		for ( const signupId of signupIds ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/get-tickets/${ signupId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		if ( eventDateId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
 		if ( eventPostId ) {
 			await api.delete(
 				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,
@@ -119,26 +147,40 @@ test.describe( 'GetTicketsController — admin signups list ticket_type_name', (
 	} );
 
 	test( 'a signup with a valid ticket type gets ticket_type_name resolved', async () => {
-		test.skip(
-			! signupCreated,
-			'Skipped pending #1408 — ticket type with sale_periods: [] is rejected as unavailable'
-		);
 		const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
 			headers: adminHeaders,
 			params: { event_date: eventDateId },
 		} );
 		expect( res.ok() ).toBeTruthy();
 		const signups = await res.json();
-		const signup = signups.find( ( s ) => s.email === signupEmail );
+		const signup = signups.find(
+			( s ) => s.email === signupEmails.checked
+		);
 		expect( signup ).toBeTruthy();
+		signupIds = signups.map( ( item ) => item.id );
 		expect( signup.ticket_type_name ).toBe( 'General Admission' );
 	} );
 
-	test( 'a signup referencing a deleted ticket type gets ticket_type_name null', async () => {
-		test.skip(
-			! signupCreated,
-			'Skipped pending #1408 — ticket type with sale_periods: [] is rejected as unavailable'
+	test( 'mailing consent persists and is serialized as explicit booleans', async () => {
+		const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
+			headers: adminHeaders,
+			params: { event_date: eventDateId },
+		} );
+		expect( res.ok() ).toBeTruthy();
+		const signups = await res.json();
+		const checked = signups.find(
+			( signup ) => signup.email === signupEmails.checked
 		);
+		const unchecked = signups.find(
+			( signup ) => signup.email === signupEmails.unchecked
+		);
+
+		expect( checked?.mailing_opt_in ).toBe( true );
+		expect( unchecked?.mailing_opt_in ).toBe( false );
+		signupIds = signups.map( ( signup ) => signup.id );
+	} );
+
+	test( 'a signup referencing a deleted ticket type gets ticket_type_name null', async () => {
 		const deleteRes = await api.put(
 			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
 			{
@@ -159,7 +201,9 @@ test.describe( 'GetTicketsController — admin signups list ticket_type_name', (
 		} );
 		expect( res.ok() ).toBeTruthy();
 		const signups = await res.json();
-		const signup = signups.find( ( s ) => s.email === signupEmail );
+		const signup = signups.find(
+			( s ) => s.email === signupEmails.checked
+		);
 		expect( signup ).toBeTruthy();
 		expect( signup.ticket_type_name ).toBeNull();
 	} );
