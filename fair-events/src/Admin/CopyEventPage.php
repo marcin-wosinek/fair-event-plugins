@@ -2,10 +2,10 @@
 /**
  * Copy Event Admin Page
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
-namespace FairEventsExperimental\Admin;
+namespace FairEvents\Admin;
 
 defined( 'ABSPATH' ) || die;
 
@@ -27,10 +27,6 @@ class CopyEventPage {
 	 */
 	public function handle_submission() {
 		// Check permissions.
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_die( esc_html__( 'You do not have permission to create events.', 'fair-events' ) );
-		}
-
 		// Verify nonce.
 		if ( ! isset( $_POST['copy_event_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['copy_event_nonce'] ) ), 'copy_fair_event_submit' ) ) {
 			wp_die( esc_html__( 'Security check failed. Please try again.', 'fair-events' ) );
@@ -46,6 +42,10 @@ class CopyEventPage {
 		$original_post = get_post( $event_id );
 		if ( ! $original_post || Event::POST_TYPE !== $original_post->post_type ) {
 			wp_die( esc_html__( 'Event not found.', 'fair-events' ) );
+		}
+
+		if ( ! current_user_can( 'edit_post', $event_id ) ) {
+			wp_die( esc_html__( 'You do not have permission to copy this event.', 'fair-events' ) );
 		}
 
 		// Get form data.
@@ -77,7 +77,7 @@ class CopyEventPage {
 			'post_author'  => get_current_user_id(),
 		);
 
-		$new_post_id = wp_insert_post( $new_post_data );
+		$new_post_id = wp_insert_post( $new_post_data, true );
 
 		if ( is_wp_error( $new_post_id ) ) {
 			wp_die( esc_html__( 'Failed to create new event.', 'fair-events' ) );
@@ -138,10 +138,6 @@ class CopyEventPage {
 	 */
 	public function render() {
 		// Check permissions.
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_die( esc_html__( 'You do not have permission to copy events.', 'fair-events' ) );
-		}
-
 		// Get and validate event ID.
 		$event_id = isset( $_GET['event_id'] ) ? absint( $_GET['event_id'] ) : 0;
 		if ( ! $event_id ) {
@@ -157,6 +153,10 @@ class CopyEventPage {
 		$original_post = get_post( $event_id );
 		if ( ! $original_post || Event::POST_TYPE !== $original_post->post_type ) {
 			wp_die( esc_html__( 'Event not found.', 'fair-events' ) );
+		}
+
+		if ( ! current_user_can( 'edit_post', $event_id ) ) {
+			wp_die( esc_html__( 'You do not have permission to copy this event.', 'fair-events' ) );
 		}
 
 		// Render the form.
@@ -267,7 +267,7 @@ class CopyEventPage {
 				$duration_seconds = $end_dt->getTimestamp() - $start_dt->getTimestamp();
 			}
 
-			// Calculate default custom date (2 weeks from original start)
+			// Calculate default custom date (2 weeks from original start).
 			$two_weeks_later = clone $start_dt;
 			$two_weeks_later->modify( '+14 days' );
 			$default_custom_date = $two_weeks_later->format( 'Y-m-d' );

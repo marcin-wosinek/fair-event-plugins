@@ -63,7 +63,7 @@ class Features {
 			),
 			'event-tools'         => array(
 				'label'       => 'Event tools',
-				'description' => 'Event duplication, merge, and admin-bar Copy button.',
+				'description' => 'Advanced event duplication and merge tools.',
 				'default'     => true,
 			),
 			'migration'           => array(
@@ -158,7 +158,7 @@ class Features {
 			),
 			'event-tools'         => array(
 				'label'       => __( 'Event tools', 'fair-events-experimental' ),
-				'description' => __( 'Event duplication, merge, and admin-bar Copy button.', 'fair-events-experimental' ),
+				'description' => __( 'Advanced event duplication and merge tools.', 'fair-events-experimental' ),
 			),
 			'migration'           => array(
 				'label'       => __( 'Migration', 'fair-events-experimental' ),
