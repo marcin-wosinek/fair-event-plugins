@@ -108,6 +108,7 @@ test.describe( 'Events Week — Copy summary (Interactivity API)', () => {
 		);
 		expect( clipboardText ).toContain( 'Copy Summary Week' );
 		expect( clipboardText ).toContain( updatedHeading );
+		expect( clipboardText.split( '\n' )[ 0 ] ).toContain( updatedHeading );
 
 		await expect( button ).toHaveText( 'Copy summary', { timeout: 3000 } );
 
