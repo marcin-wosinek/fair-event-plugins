@@ -709,10 +709,10 @@ npm run test:e2e:local -- e2e/smoke.spec.js --grep "admin login"
 npm run test:e2e:local -- --workspace=fair-events -- e2e/events-week.spec.js --project=chromium
 ```
 
-The currently eligible workspaces are `fair-audience`, `fair-events`,
-`fair-timetable`, and `fair-calendar-button`. The latter two are not mounted by
-the shared `.wp-env.json`, so their suites will fail clearly when they require
-their plugins; this command does not silently change test provisioning.
+Workspace eligibility comes from the root `package.json` and requires a
+`test:e2e` script. Screenshot-oriented workspaces that are not mounted by the
+shared `.wp-env.json` will fail clearly when they require their plugins; this
+command does not silently change test provisioning.
 
 Interactive options use the same owned lifecycle. Exiting normally or with
 Ctrl+C stops only the environment started by that invocation:
