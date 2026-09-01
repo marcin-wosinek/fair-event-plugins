@@ -1310,6 +1310,9 @@ class GetTicketsController extends WP_REST_Controller {
 			$signup->ticket_type_name = $signup->ticket_type_id && isset( $ticket_type_names[ (int) $signup->ticket_type_id ] )
 				? $ticket_type_names[ (int) $signup->ticket_type_id ]
 				: null;
+			$signup->mailing_opt_in   = true === $signup->mailing_opt_in
+				|| 1 === $signup->mailing_opt_in
+				|| '1' === $signup->mailing_opt_in;
 		}
 
 		return rest_ensure_response( $signups );

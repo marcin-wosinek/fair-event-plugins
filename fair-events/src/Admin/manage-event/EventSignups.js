@@ -35,6 +35,16 @@ const CSV_COLUMNS = [
 ];
 
 /**
+ * Whether a signup contains an explicit mailing opt-in value.
+ *
+ * @param {*} value Consent value returned by the API.
+ * @return {boolean} Whether the signup opted in
+ */
+function isMailingOptIn( value ) {
+	return value === true || value === 1 || value === '1';
+}
+
+/**
  * Escape a single CSV field per RFC 4180.
  *
  * @param {*} value
@@ -66,7 +76,7 @@ function buildSignupsCsv( rows ) {
 			s.amount,
 			s.status,
 			s.transaction_id,
-			s.mailing_opt_in ? 'yes' : 'no',
+			isMailingOptIn( s.mailing_opt_in ) ? 'yes' : 'no',
 			s.created_at,
 		];
 		lines.push( row.map( escapeCsvField ).join( ',' ) );
@@ -142,7 +152,7 @@ export default function EventSignups( { eventDateId } ) {
 	];
 
 	const visibleSignups = mailingOnly
-		? signups.filter( ( s ) => s.mailing_opt_in )
+		? signups.filter( ( s ) => isMailingOptIn( s.mailing_opt_in ) )
 		: signups;
 
 	const handleDownloadCsv = () => {
@@ -320,7 +330,7 @@ export default function EventSignups( { eventDateId } ) {
 											borderBottom: '1px solid #eee',
 										} }
 									>
-										{ s.mailing_opt_in
+										{ isMailingOptIn( s.mailing_opt_in )
 											? __( 'Yes', 'fair-events' )
 											: __( 'No', 'fair-events' ) }
 									</td>

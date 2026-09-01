@@ -240,6 +240,69 @@ describe( 'EventSignups — CSV export (#1171)', () => {
 	} );
 } );
 
+describe( 'EventSignups — mailing consent normalization (#1492)', () => {
+	const consentCases = [
+		{ value: false, label: 'boolean false', optedIn: false },
+		{ value: 0, label: 'numeric zero', optedIn: false },
+		{ value: '0', label: 'database zero', optedIn: false },
+		{ value: true, label: 'boolean true', optedIn: true },
+		{ value: 1, label: 'numeric one', optedIn: true },
+		{ value: '1', label: 'database one', optedIn: true },
+	];
+
+	it.each( consentCases )(
+		'displays and exports $label explicitly',
+		async ( { value, optedIn } ) => {
+			const signup = {
+				...signups[ 0 ],
+				mailing_opt_in: value,
+			};
+			await renderSignups( [ signup ] );
+			expect(
+				screen.getByText( optedIn ? 'Yes' : 'No' )
+			).toBeInTheDocument();
+
+			const mock = mockObjectUrlAndClick();
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Download CSV' } )
+			);
+			expect( mock.getText() ).toContain(
+				`,${ optedIn ? 'yes' : 'no' },`
+			);
+			mock.restore();
+		}
+	);
+
+	it( 'filters explicit opt-ins independently of payment status', async () => {
+		const rows = consentCases.map( ( consent, index ) => ( {
+			...signups[ index % signups.length ],
+			id: index + 10,
+			name: `${ consent.optedIn ? 'Opted in' : 'Opted out' } ${ index }`,
+			email: `consent-${ index }@example.com`,
+			status: [ 'confirmed', 'pending_payment', 'failed', 'expired' ][
+				index % 4
+			],
+			mailing_opt_in: consent.value,
+		} ) );
+		await renderSignups( rows );
+
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+		);
+
+		consentCases.forEach( ( consent, index ) => {
+			const name = `${
+				consent.optedIn ? 'Opted in' : 'Opted out'
+			} ${ index }`;
+			if ( consent.optedIn ) {
+				expect( screen.getByText( name ) ).toBeInTheDocument();
+			} else {
+				expect( screen.queryByText( name ) ).not.toBeInTheDocument();
+			}
+		} );
+	} );
+} );
+
 describe( 'EventSignups — delete signup (#1464)', () => {
 	it( 'opens the confirmation dialog for the selected row with its full scope', async () => {
 		await renderSignups();
