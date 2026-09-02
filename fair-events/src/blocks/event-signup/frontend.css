@@ -88,6 +88,15 @@
 	padding: 0 4px;
 }
 
+.fair-events-get-tickets-form .fair-events-sale-period-context {
+	margin: 0 0 8px;
+	color: #50575e;
+	font-size: 0.9em;
+	font-weight: normal;
+	overflow-wrap: anywhere;
+	white-space: normal;
+}
+
 .fair-events-get-tickets-discount-note {
 	font-size: 0.875em;
 	color: #2e7d32;

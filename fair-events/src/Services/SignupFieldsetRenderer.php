@@ -68,12 +68,13 @@ class SignupFieldsetRenderer {
 	 * @param object[]    $ticket_types         Ticket type objects for this event date.
 	 * @param float[]     $price_by_type_id     Ticket-type ID => resolved price.
 	 * @param object|null $active_sale_period   Active sale period row, or null.
+	 * @param int         $sale_period_count    Number of configured sale periods.
 	 * @param bool        $show_ticket_price    Whether to show the price in each option's label.
 	 * @param bool        $payments_unavailable Whether online payments can't be collected right now.
 	 * @param string      $form_id              Unique prefix for input/label IDs.
 	 * @return string HTML, or '' when there are no ticket types.
 	 */
-	public static function ticket_type_fieldset( array $ticket_types, array $price_by_type_id, $active_sale_period, $show_ticket_price, $payments_unavailable, $form_id ) {
+	public static function ticket_type_fieldset( array $ticket_types, array $price_by_type_id, $active_sale_period, $sale_period_count, $show_ticket_price, $payments_unavailable, $form_id ) {
 		if ( empty( $ticket_types ) ) {
 			return '';
 		}
@@ -85,6 +86,17 @@ class SignupFieldsetRenderer {
 		<div class="form-row">
 			<fieldset class="fair-events-ticket-fieldset">
 				<legend class="form-label"><?php esc_html_e( 'Choose ticket type', 'fair-events' ); ?></legend>
+				<?php if ( $active_sale_period && $sale_period_count > 1 ) : ?>
+					<p class="fair-events-sale-period-context">
+						<?php
+						printf(
+							/* translators: %s: active ticket sale period name. */
+							esc_html__( 'You’re seeing %s prices.', 'fair-events' ),
+							esc_html( $active_sale_period->name )
+						);
+						?>
+					</p>
+				<?php endif; ?>
 				<?php foreach ( $ticket_types as $ticket_type ) : ?>
 					<?php
 					$type_id          = (int) $ticket_type->id;

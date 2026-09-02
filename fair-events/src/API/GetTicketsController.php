@@ -689,9 +689,11 @@ class GetTicketsController extends WP_REST_Controller {
 		$price_by_type_id   = array();
 		$priced_type_ids    = array();
 		$active_sale_period = null;
+		$sale_period_count  = 0;
 		if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
 			$resolved_prices    = \FairEvents\Services\TicketPricing::resolve_unit_prices_for_event_date( $pricing_event_date_id );
 			$active_sale_period = $resolved_prices['active_period'];
+			$sale_period_count  = $resolved_prices['sale_period_count'];
 			$price_by_type_id   = $resolved_prices['price_by_type_id'];
 			$priced_type_ids    = $resolved_prices['priced_type_ids'];
 		}
@@ -766,6 +768,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'ticket_types'           => $ticket_types,
 				'price_by_type_id'       => $price_by_type_id,
 				'active_sale_period'     => $active_sale_period,
+				'sale_period_count'      => $sale_period_count,
 				'occurrences_for_picker' => $occurrences_for_picker,
 				'ticket_options'         => $ticket_options,
 				'minimum_activities'     => $minimum_activities,
@@ -816,6 +819,7 @@ class GetTicketsController extends WP_REST_Controller {
 				$context['ticket_types'],
 				$context['price_by_type_id'],
 				$context['active_sale_period'],
+				(int) $context['sale_period_count'],
 				$show_ticket_price,
 				$payments_unavailable,
 				$form_id
