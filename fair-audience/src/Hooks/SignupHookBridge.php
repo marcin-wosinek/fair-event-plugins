@@ -344,15 +344,17 @@ class SignupHookBridge {
 			echo '</ul></div>';
 		}
 
-		// A date switcher that navigates via the existing ?event_date= param
-		// (fair-events' render.php already resolves it) rather than
-		// re-pivoting client-side, mirroring the legacy picker's own
-		// behaviour — no client-side re-evaluation of a server-side decision.
+		// Resolve destinations from each occurrence model rather than the
+		// current request URL: this markup is commonly rendered by the
+		// viewer-context REST endpoint, which must never become a navigation
+		// target.
 		$occurrences = $context['occurrences_for_picker'] ?? array();
 		if ( count( $occurrences ) > 1 ) {
-			echo '<ul class="fair-events-signed-up-switch-date">';
+			$options = array();
 			foreach ( $occurrences as $occ_row ) {
-				if ( (int) $occ_row['id'] === $event_date_id ) {
+				$occurrence = \FairEvents\Models\EventDates::get_by_id( (int) $occ_row['id'] );
+				$public_url = $occurrence ? $occurrence->get_event_page_url() : null;
+				if ( ! $public_url ) {
 					continue;
 				}
 				$occ_label = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
@@ -361,11 +363,23 @@ class SignupHookBridge {
 				if ( ! empty( $occ_row['signed_up'] ) ) {
 					$occ_label .= ' — ' . __( 'already signed up', 'fair-audience' );
 				}
-				$date_param = gmdate( 'Y-m-d', strtotime( $occ_row['start_datetime'] ) );
-				$link       = add_query_arg( 'event_date', $date_param );
-				echo '<li><a href="' . esc_url( $link ) . '">' . esc_html( $occ_label ) . '</a></li>';
+				$options[] = array(
+					'id'       => (int) $occ_row['id'],
+					'label'    => $occ_label,
+					'url'      => $public_url,
+					'selected' => (int) $occ_row['id'] === $event_date_id,
+				);
 			}
-			echo '</ul>';
+			if ( count( $options ) > 1 ) {
+				$select_id = 'fair-events-signed-up-occurrence-' . $event_date_id;
+				echo '<div class="form-row fair-events-signed-up-occurrence-picker">';
+				echo '<label for="' . esc_attr( $select_id ) . '" class="form-label">' . esc_html__( 'Choose a date', 'fair-audience' ) . '</label>';
+				echo '<select id="' . esc_attr( $select_id ) . '" class="form-input fair-events-occurrence-select fair-events-signed-up-occurrence-select">';
+				foreach ( $options as $option ) {
+					echo '<option value="' . esc_attr( (string) $option['id'] ) . '" data-event-url="' . esc_url( $option['url'] ) . '"' . ( $option['selected'] ? ' selected' : '' ) . '>' . esc_html( $option['label'] ) . '</option>';
+				}
+				echo '</select></div>';
+			}
 		}
 
 		echo '<div class="wp-block-button">';
@@ -681,27 +695,29 @@ class SignupHookBridge {
 		$ticket_type_id               = ! empty( $ticket_selection['ticket_type_id'] ) ? (int) $ticket_selection['ticket_type_id'] : null;
 
 		$existing             = $event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant->id );
-		$stamp_payment        = false;
+		$stamp_metadata       = false;
 		$event_participant_id = $existing ? (int) $existing->id : 0;
 
 		if ( $existing ) {
 			if ( 'signed_up' !== $existing->label ) {
 				$event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, $label );
-				$stamp_payment = (bool) $transaction_id;
+				$stamp_metadata = true;
 			}
 		} else {
 			$event_participant_id = (int) $event_participant_repository->add_participant_to_event( $event_id, $participant->id, $label, $event_date_id );
-			$stamp_payment        = (bool) $transaction_id;
+			$stamp_metadata       = true;
 		}
 
-		// Only stamp payment metadata when this call created the junction row
+		// Only stamp ticket/payment metadata when this call created the junction row
 		// or upgraded it from a non-signed_up label, so a later signed_up
 		// relationship never gets clobbered by an unrelated purchase.
-		if ( $stamp_payment ) {
+		if ( $stamp_metadata ) {
 			$relationship = $event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant->id );
 			if ( $relationship ) {
-				$relationship->ticket_type_id     = $ticket_type_id;
-				$relationship->payment_expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
+				$relationship->ticket_type_id = $ticket_type_id;
+				if ( $transaction_id ) {
+					$relationship->payment_expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
+				}
 				$relationship->save();
 
 				// Record the ledger link at creation time, not just on webhook

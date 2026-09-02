@@ -86,8 +86,10 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 				link_type: 'post',
 				start_datetime: '2036-01-01 10:00:00',
 				end_datetime: '2036-01-01 12:00:00',
+				rrule: 'FREQ=WEEKLY;COUNT=10',
 			},
 		} );
+		const generatedOccurrence = eventDate.generated_occurrences[ 0 ];
 
 		try {
 			await apiFetch( adminPage, {
@@ -95,8 +97,15 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 				method: 'PUT',
 				data: { event_id: eventPost.id },
 			} );
-
 			await apiFetch( adminPage, {
+				path: `/wp/v2/fair_event/${ eventPost.id }`,
+				method: 'PUT',
+				data: {
+					content: `<!-- wp:fair-events/event-signup {"eventDateId":${ eventDate.id }} /-->`,
+				},
+			} );
+
+			const ticketSettings = await apiFetch( adminPage, {
 				path: `/fair-events/v1/event-dates/${ eventDate.id }/tickets`,
 				method: 'PUT',
 				data: {
@@ -104,6 +113,14 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 						{
 							name: 'Free entry',
 							recurrence_scope: 'single_instance',
+							capacity: null,
+							minimum_activities: 0,
+							disable_at: null,
+							group_ids: [],
+						},
+						{
+							name: 'All dates',
+							recurrence_scope: 'whole_series',
 							capacity: null,
 							minimum_activities: 0,
 							disable_at: null,
@@ -120,6 +137,11 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 					prices: [
 						{
 							ticket_type_index: 0,
+							sale_period_index: 0,
+							price: 0,
+						},
+						{
+							ticket_type_index: 1,
 							sale_period_index: 0,
 							price: 0,
 						},
@@ -182,6 +204,57 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 				visitorPage.locator( '.fair-events-signed-up-card' )
 			).toContainText( 'You are signed up for this date.' );
 
+			const occurrenceSelector = visitorPage.locator(
+				'.fair-events-signed-up-occurrence-select'
+			);
+			await expect( occurrenceSelector ).toBeVisible();
+			await expect( occurrenceSelector.locator( 'option' ) ).toHaveCount(
+				10
+			);
+			await expect( occurrenceSelector ).toHaveValue(
+				String( eventDate.id )
+			);
+			await expect(
+				occurrenceSelector.locator(
+					`option[value="${ eventDate.id }"]`
+				)
+			).toContainText( 'already signed up' );
+			const destinations = await occurrenceSelector
+				.locator( 'option' )
+				.evaluateAll( ( options ) =>
+					options.map( ( option ) => option.dataset.eventUrl )
+				);
+			expect(
+				destinations.every( ( url ) => url.startsWith( 'http' ) )
+			).toBe( true );
+			expect(
+				destinations.every( ( url ) => ! url.includes( '/wp-json/' ) )
+			).toBe( true );
+			if ( process.env.CAPTURE_1516_SCREENSHOTS ) {
+				for ( const [ name, width, height ] of [
+					[ 'desktop', 1280, 900 ],
+					[ 'tablet', 768, 1024 ],
+					[ 'mobile', 375, 812 ],
+				] ) {
+					await visitorPage.setViewportSize( { width, height } );
+					await visitorPage.screenshot( {
+						path: `after-event-signup-${ name }.png`,
+						fullPage: true,
+					} );
+				}
+			}
+
+			await occurrenceSelector.selectOption(
+				String( generatedOccurrence.id )
+			);
+			await expect( visitorPage ).toHaveURL( /event_date=2036-01-08/ );
+			await expect(
+				visitorPage.locator( '.fair-events-get-tickets-form' )
+			).toBeVisible();
+			await expect(
+				visitorPage.locator( '.fair-events-signed-up-card' )
+			).toHaveCount( 0 );
+
 			// Context C: a second, unrelated visitor loading the exact same
 			// page (same cached markup) must never see the first visitor's
 			// signed-up state or identity — the core of #1300's guarantee.
@@ -203,6 +276,36 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 			).toHaveValue( '' );
 
 			await strangerContext.close();
+
+			// A whole-series signup covers every upcoming occurrence, so every
+			// selector option carries the registered-state suffix.
+			const seriesContext = await browser.newContext();
+			const seriesPage = await seriesContext.newPage();
+			await seriesPage.goto( `/?page_id=${ signupPage.id }` );
+			await seriesPage.waitForFunction( () => window.wp?.apiFetch );
+			const wholeSeriesTicket = ticketSettings.ticket_types.find(
+				( ticketType ) => ticketType.recurrence_scope === 'whole_series'
+			);
+			await apiFetch( seriesPage, {
+				path: '/fair-events/v1/get-tickets',
+				method: 'POST',
+				data: {
+					event_date_id: eventDate.id,
+					name: 'Grace Hopper',
+					email: `grace-e2e-${ Date.now() }@example.test`,
+					ticket_type_id: wholeSeriesTicket.id,
+					quantity: 1,
+				},
+			} );
+			await seriesPage.reload();
+			const seriesOptions = seriesPage.locator(
+				'.fair-events-signed-up-occurrence-select option'
+			);
+			await expect( seriesOptions ).toHaveCount( 10 );
+			await expect(
+				seriesOptions.filter( { hasText: 'already signed up' } )
+			).toHaveCount( 10 );
+			await seriesContext.close();
 			await visitorContext.close();
 			await apiFetch( adminPage, {
 				path: `/wp/v2/pages/${ signupPage.id }`,

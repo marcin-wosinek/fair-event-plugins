@@ -255,6 +255,60 @@ describe( 'Event Signup frontend.js — viewer-context hydration', () => {
 		).not.toBeNull();
 	} );
 
+	test( 'wires a personalized registered-card selector to its public occurrence URL', async () => {
+		const block = buildBlock();
+		let destination = '';
+		const click = jest
+			.spyOn( window.HTMLAnchorElement.prototype, 'click' )
+			.mockImplementation( function () {
+				destination = this.href;
+			} );
+
+		apiFetch.mockResolvedValue( {
+			...noopResponse(),
+			viewer_resolved: true,
+			suppress_form: true,
+			before_form_html:
+				'<div class="fair-events-signed-up-card"><select class="fair-events-occurrence-select fair-events-signed-up-occurrence-select"><option data-event-url="https://example.test/events/series/?event_date=2036-01-08">8 Jan</option></select></div>',
+		} );
+
+		initialize();
+		await Promise.resolve();
+		await Promise.resolve();
+
+		block
+			.querySelector( '.fair-events-signed-up-occurrence-select' )
+			.dispatchEvent( new window.Event( 'change', { bubbles: true } ) );
+
+		expect( destination ).toBe(
+			'https://example.test/events/series/?event_date=2036-01-08'
+		);
+		click.mockRestore();
+	} );
+
+	test( 'does not add navigation behavior to the normal signup occurrence selector', async () => {
+		const block = buildBlock();
+		const form = block.querySelector( '.fair-events-get-tickets-form' );
+		form.insertAdjacentHTML(
+			'afterbegin',
+			'<select name="event_date_id_single" class="fair-events-occurrence-select"><option data-event-url="https://example.test/wrong">8 Jan</option></select>'
+		);
+		const click = jest
+			.spyOn( window.HTMLAnchorElement.prototype, 'click' )
+			.mockImplementation( () => {} );
+		apiFetch.mockResolvedValue( noopResponse() );
+
+		initialize();
+		await Promise.resolve();
+		await Promise.resolve();
+		form.querySelector(
+			'select[name="event_date_id_single"]'
+		).dispatchEvent( new window.Event( 'change', { bubbles: true } ) );
+
+		expect( click ).not.toHaveBeenCalled();
+		click.mockRestore();
+	} );
+
 	test( 're-enables the submit button after a timeout even if the fetch never resolves', () => {
 		jest.useFakeTimers();
 		const block = buildBlock();

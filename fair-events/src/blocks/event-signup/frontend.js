@@ -64,6 +64,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				const block = companion.closest( '.fair-events-get-tickets' );
 				wireAddActivities( block );
 				wireCancelSignup( block );
+				wireSignedUpOccurrenceSelector( block );
 			} );
 
 		// Per-viewer personalization (#1300): the markup above is the
@@ -343,6 +344,32 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 		wireAddActivities( block );
 		wireCancelSignup( block );
+		wireSignedUpOccurrenceSelector( block );
+	}
+
+	/**
+	 * Navigate a registered viewer between public recurring-event pages.
+	 * This deliberately targets only the selector inside the signed-up card;
+	 * the form's event_date_id_single selector still changes signup state.
+	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper.
+	 */
+	function wireSignedUpOccurrenceSelector( block ) {
+		const select = block
+			? block.querySelector( '.fair-events-signed-up-occurrence-select' )
+			: null;
+		if ( ! select || select.dataset.navigationWired === 'true' ) {
+			return;
+		}
+		select.dataset.navigationWired = 'true';
+		select.addEventListener( 'change', function () {
+			const option = select.options[ select.selectedIndex ];
+			const destination = option ? option.dataset.eventUrl : '';
+			if ( destination ) {
+				const link = document.createElement( 'a' );
+				link.href = destination;
+				link.click();
+			}
+		} );
 	}
 
 	/**
