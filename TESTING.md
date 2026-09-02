@@ -5,13 +5,13 @@ isolated WordPress lifecycle for tests that need a live site.
 
 ## Choosing a test type
 
-| Test type | Runner | Location | Use for |
-| --- | --- | --- | --- |
-| JavaScript unit | Jest | `src/**/__tests__/*.test.js` | Pure utilities, transformations, and business logic |
-| React component | Jest + React Testing Library | `src/**/__tests__/*.test.jsx` | Rendering, interaction, and component state |
-| PHP unit | PHPUnit | `__tests__/**/*Test.php` | Pure PHP and isolated integration boundaries |
-| REST API | Playwright request API | `src/API/__tests__/*.api.spec.js` | Live WordPress routes, permissions, validation, and responses |
-| End to end | Playwright browser | `e2e/**/*.spec.js` | Complete browser workflows and feature integration |
+| Test type       | Runner                       | Location                          | Use for                                                       |
+| --------------- | ---------------------------- | --------------------------------- | ------------------------------------------------------------- |
+| JavaScript unit | Jest                         | `src/**/__tests__/*.test.js`      | Pure utilities, transformations, and business logic           |
+| React component | Jest + React Testing Library | `src/**/__tests__/*.test.jsx`     | Rendering, interaction, and component state                   |
+| PHP unit        | PHPUnit                      | `__tests__/**/*Test.php`          | Pure PHP and isolated integration boundaries                  |
+| REST API        | Playwright request API       | `src/API/__tests__/*.api.spec.js` | Live WordPress routes, permissions, validation, and responses |
+| End to end      | Playwright browser           | `e2e/**/*.spec.js`                | Complete browser workflows and feature integration            |
 
 Screenshot generation, Plugin Check reporting, and temporary WP-CLI checks are
 supporting workflows rather than additional test types.
@@ -38,6 +38,7 @@ Run the unit suites from the repository root:
 ```bash
 npm test
 npm run test:js
+npm run test:tooling
 npm run test:js --workspace=fair-events
 ```
 
@@ -54,6 +55,10 @@ Jest configurations should discover `**/__tests__/**/*.test.js` and
 `svn/`, `e2e/`, and `.api.spec.js` files. Collect JavaScript coverage from
 `src/`, excluding test, entry-point, dependency, and generated files. Aim for
 70% or better coverage for new code where that measure is meaningful.
+
+Repository-level Node utilities use the built-in Node test runner under
+`scripts/__tests__/*.test.mjs`; `npm test` includes them through
+`test:tooling`.
 
 ## PHP unit tests
 
@@ -90,10 +95,10 @@ REST API and behavioral E2E tests use the same lifecycle runner and an isolated
 start, wait for WordPress readiness, run the selected suite, and stop the
 instance after success, failure, or interruption.
 
-| Environment | Tool | Port |
-| --- | --- | --- |
-| Regular development | `docker compose up` | 8080 |
-| Isolated API/E2E tests | `@wordpress/env` | **8889** |
+| Environment            | Tool                | Port     |
+| ---------------------- | ------------------- | -------- |
+| Regular development    | `docker compose up` | 8080     |
+| Isolated API/E2E tests | `@wordpress/env`    | **8889** |
 
 The runner supplies `CI=1`, `WP_BASE_URL=http://localhost:8889`,
 `WP_ADMIN_USER=admin`, `WP_ADMIN_PASS=password`, and
@@ -107,11 +112,15 @@ the instance and pass `--reuse`; reused runs check readiness but skip builds,
 Composer installation, provisioning, and cleanup.
 
 ```bash
-npm run test:e2e:setup
+npm run test:wp-env:start
 npm run test:api:local -- --reuse --workspace=fair-events
 npm run test:e2e:local -- --reuse e2e/smoke.spec.js
-npm run test:e2e:teardown
+npm run test:wp-env:stop
 ```
+
+Use `test:e2e:setup` only when the isolated instance also needs a full
+workspace build, production Composer install, and permalink provisioning.
+For an already-built tree, `test:wp-env:start` avoids repeating that work.
 
 The raw `test:api` and `test:e2e` scripts remain available for CI and advanced
 debugging with a manually managed environment. Prefer the `:local` commands for
@@ -262,7 +271,14 @@ npm run screenshot -- "/wp-admin/admin.php?page=fair-finance-budgets" mobile bud
 Dimensions may be `desktop`, `tablet`, `mobile`, or `WIDTHxHEIGHT`. Options
 include `--viewport`, `--wait <ms>`, `--wait-for <selector>`, `--no-login`,
 `--upload imgbb`, and `--expiry <seconds>`. The file is written relative to the
-current directory. Override `WP_BASE_URL` to target another prepared instance.
+current directory.
+
+The helper defaults to the regular Docker development site at `:8080`. Set
+`WP_SCREENSHOT_BASE_URL`, `WP_SCREENSHOT_USER`, and
+`WP_SCREENSHOT_PASSWORD` in the gitignored `.env` when that site uses custom
+login details. `WP_BASE_URL` and `WP_ADMIN_*` remain legacy fallbacks, but the
+dedicated names avoid accidentally sharing browser-login credentials with API
+tests that use a different environment and authentication model.
 
 For PR embedding, add `--upload imgbb` and set `IMGBB_API_KEY` in the gitignored
 repository `.env`. The command retains the local PNG and prints a public URL
