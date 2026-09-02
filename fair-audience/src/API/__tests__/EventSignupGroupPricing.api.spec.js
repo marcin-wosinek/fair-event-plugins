@@ -6,13 +6,14 @@
  * the charged price — server-side, so a crafted request can't buy a
  * restricted tier or skip a discount.
  *
- * Viewer identity comes from a free signup on the event's unrestricted tier,
- * which sets the fair_audience_session cookie via SignupHookBridge — the
+ * Viewer identity comes from a free signup on a separate identity event,
+ * which sets the fair_audience_session cookie via SignupHookBridge without
+ * making the viewer an existing ticket holder for the event under test. The
  * Playwright request context retains that cookie for subsequent requests,
  * the same way a browser would. A 100% discount rule is used to exercise the
- * paid path without a payment connector configured on the dev stack: it
- * proves the discount is applied server-side because a member's signup
- * confirms free while a non-member's identical request 503s
+ * paid path without a payment connector configured on the dev stack: it proves
+ * the discount is applied server-side because a member's signup confirms free
+ * while a non-member's identical request 503s
  * payment_unavailable (mirroring the trick EventSignupBasePricing's and
  * EventSignupSlidingScale's specs use).
  *
@@ -109,9 +110,10 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 	let groupsActive = false;
 	let originalEventsExperimentalStatus;
 	let event;
+	let identityEvent;
 	let groupId;
 	let restrictedTypeId;
-	let openTypeId;
+	let identityOpenTypeId;
 	let discountedTypeId;
 	let fixtureOk = true;
 
@@ -148,6 +150,44 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 			api,
 			`Group Pricing Test ${ Date.now() }`
 		);
+		identityEvent = await createEventWithDates(
+			api,
+			`Group Pricing Identity Test ${ Date.now() }`
+		);
+
+		const identityTicketsRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ identityEvent.eventDateId }/tickets`,
+			{
+				headers: authHeaders,
+				data: {
+					ticket_types: [
+						{
+							name: 'Identity',
+							capacity: null,
+							sort_order: 0,
+							recurrence_scope: 'single_instance',
+						},
+					],
+					sale_periods: [
+						{
+							name: 'Always on',
+							sale_start: '2020-01-01 00:00:00',
+							sale_end: '2099-01-01 00:00:00',
+						},
+					],
+					prices: [],
+					settings: {},
+				},
+			}
+		);
+		expect(
+			identityTicketsRes.ok(),
+			await identityTicketsRes.text()
+		).toBeTruthy();
+		identityOpenTypeId = (
+			( await identityTicketsRes.json() ).ticket_types || []
+		).find( ( ticketType ) => ticketType.name === 'Identity' )?.id;
+		expect( identityOpenTypeId ).toBeTruthy();
 
 		const groupRes = await api.post( '/wp-json/fair-audience/v1/groups', {
 			headers: authHeaders,
@@ -209,18 +249,17 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 		}
 		const types = ( await ticketsRes.json() ).ticket_types || [];
 		restrictedTypeId = types.find( ( t ) => t.name === 'Members Only' )?.id;
-		openTypeId = types.find( ( t ) => t.name === 'Open' )?.id;
 		discountedTypeId = types.find(
 			( t ) => t.name === 'Priced For Discount'
 		)?.id;
 		expect( restrictedTypeId ).toBeTruthy();
-		expect( openTypeId ).toBeTruthy();
 		expect( discountedTypeId ).toBeTruthy();
 	} );
 
 	test.afterAll( async () => {
 		if ( groupsActive ) {
 			await deleteEvent( api, event?.eventId );
+			await deleteEvent( api, identityEvent?.eventId );
 			if ( groupId ) {
 				await api.delete(
 					`/wp-json/fair-audience/v1/groups/${ groupId }`,
@@ -280,8 +319,8 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 		const { participantId, email } = await identifyAsNewParticipant(
 			member,
 			api,
-			event,
-			openTypeId
+			identityEvent,
+			identityOpenTypeId
 		);
 
 		const addRes = await api.post(
@@ -366,8 +405,8 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 		const { participantId, email } = await identifyAsNewParticipant(
 			member,
 			api,
-			event,
-			openTypeId
+			identityEvent,
+			identityOpenTypeId
 		);
 
 		const addRes = await api.post(

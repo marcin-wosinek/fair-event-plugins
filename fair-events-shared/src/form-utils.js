@@ -15,9 +15,13 @@ import { __ } from '@wordpress/i18n';
  * DELETE endpoint to let the server clear it, then reload so render.php
  * re-runs without pre-fill data.
  *
- * @param {HTMLElement|null} button The button element to wire up. No-op when null.
+ * @param {HTMLElement|null} button     The button element to wire up. No-op when null.
+ * @param {Function}         reloadPage Page reload callback, injectable for tests.
  */
-export function wireNotYouButton( button ) {
+export function wireNotYouButton(
+	button,
+	reloadPage = () => window.location.reload()
+) {
 	if ( ! button ) {
 		return;
 	}
@@ -29,14 +33,20 @@ export function wireNotYouButton( button ) {
 				method: 'DELETE',
 			} );
 		} catch ( e ) {
-			// Best-effort: the cookie may not have been set at all (e.g.
-			// because the visitor is browsing without it but a parent has
-			// the same form). Reload anyway so the form renders blank.
+			button.disabled = false;
+			showNotification(
+				extractErrorMessage(
+					e,
+					__(
+						'We could not clear the remembered identity. Please try again.',
+						'fair-audience'
+					)
+				),
+				'error'
+			);
+			return;
 		}
-		// Strip any URL token so the reload doesn't re-prefill.
-		const url = new URL( window.location );
-		url.searchParams.delete( 'participant_token' );
-		window.location.replace( url.toString() );
+		reloadPage();
 	} );
 }
 

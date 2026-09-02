@@ -23,25 +23,50 @@ defined( 'WPINC' ) || die;
 class GroupSignupPricing {
 
 	/**
-	 * Resolve the viewer's fair-audience Participant from the session cookie
-	 * or the logged-in WordPress user — the same identity lookup
+	 * Resolve the viewer's fair-audience Participant from the logged-in
+	 * WordPress user or, as a fallback, the session cookie — the same identity lookup
 	 * SignupHookBridge::enrich_render_context() already performs for pre-fill.
 	 *
 	 * @return \FairAudience\Models\Participant|null Participant, or null when anonymous/unknown.
 	 */
 	public static function resolve_viewer_participant() {
+		$identity = self::resolve_viewer_identity();
+		return $identity['participant'];
+	}
+
+	/**
+	 * Resolve the viewer participant together with the identity source.
+	 *
+	 * A signed-in WordPress account is authoritative even when the browser also
+	 * carries a synchronized audience-session cookie.
+	 *
+	 * @return array{participant: \FairAudience\Models\Participant|null, source: string|null}
+	 */
+	public static function resolve_viewer_identity() {
 		$participant_repository = new ParticipantRepository();
+
+		if ( get_current_user_id() ) {
+			$participant = $participant_repository->get_by_user_id( get_current_user_id() );
+			if ( $participant ) {
+				return array(
+					'participant' => $participant,
+					'source'      => 'wordpress_user',
+				);
+			}
+		}
 
 		$participant_id = AudienceSession::get_participant_id();
 		if ( $participant_id ) {
-			return $participant_repository->get_by_id( $participant_id );
+			return array(
+				'participant' => $participant_repository->get_by_id( $participant_id ),
+				'source'      => 'audience_session',
+			);
 		}
 
-		if ( get_current_user_id() ) {
-			return $participant_repository->get_by_user_id( get_current_user_id() );
-		}
-
-		return null;
+		return array(
+			'participant' => null,
+			'source'      => null,
+		);
 	}
 
 	/**

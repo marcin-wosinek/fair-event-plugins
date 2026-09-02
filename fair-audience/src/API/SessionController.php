@@ -40,6 +40,9 @@ class SessionController extends WP_REST_Controller {
 	 */
 	public function register_routes() {
 		// DELETE /fair-audience/v1/session — clear the cookie.
+		// This route is intentionally public: the HttpOnly cookie is the only
+		// state it clears, so an anonymous browser must be able to forget its own
+		// identity without mutating any participant or signup record.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,

@@ -441,7 +441,7 @@ msgstr "Utworzona"
 #: src/blocks/event-interest/frontend.js:69
 #: src/blocks/event-signup/frontend.js:1076
 #: src/blocks/mailing-signup/frontend.js:127
-#: ../fair-events-shared/src/form-utils.js:126
+#: ../fair-events-shared/src/form-utils.js:136
 msgid "Submitting..."
 msgstr "Wysyłanie..."
 
@@ -1956,7 +1956,7 @@ msgid "You have been removed from this event."
 msgstr "Zostałeś usunięty z tego wydarzenia."
 
 #: src/blocks/event-signup/render.php:1285
-#: src/Hooks/SignupHookBridge.php:373
+#: src/Hooks/SignupHookBridge.php:389
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2459
 #: src/blocks/event-signup/frontend.js:1439
 msgid "Cancel signup"
@@ -1978,7 +1978,8 @@ msgstr "Nie znaleziono daty wydarzenia dla tego wydarzenia"
 #: src/blocks/event-interest/render.php:161
 #: src/blocks/event-signup/render.php:1365
 #: src/blocks/mailing-signup/render.php:156
-#: src/Hooks/SignupHookBridge.php:401
+#: src/Hooks/SignupHookBridge.php:395
+#: src/Hooks/SignupHookBridge.php:423
 msgid "Not you? Start fresh"
 msgstr "To nie ty? Zacznij od nowa"
 
@@ -2077,7 +2078,7 @@ msgstr "Wyświetl plik"
 msgid "Failed to update attendance."
 msgstr "Nie udało się zaktualizować frekwencji."
 
-#: src/Services/GroupSignupPricing.php:113
+#: src/Services/GroupSignupPricing.php:138
 msgid "This ticket type is not available for your account."
 msgstr "Ten typ biletu nie jest dostępny dla Twojego konta."
 
@@ -2121,7 +2122,7 @@ msgstr "Wybierz typ biletu"
 #: src/blocks/event-signup/render.php:765
 #: src/blocks/event-signup/render.php:853
 #: src/blocks/event-signup/render.php:915
-#: src/Hooks/SignupHookBridge.php:575
+#: src/Hooks/SignupHookBridge.php:597
 msgid "free"
 msgstr "bezpłatnie"
 
@@ -2354,11 +2355,12 @@ msgstr "wyprzedane"
 
 #: src/blocks/event-signup/render.php:858
 #: src/blocks/event-signup/render.php:919
-#: src/Hooks/SignupHookBridge.php:578
+#: src/Hooks/SignupHookBridge.php:600
 msgid "full"
 msgstr "pełne"
 
 #: src/blocks/event-signup/render.php:960
+#: src/Hooks/SignupHookBridge.php:378
 msgid "Choose a date"
 msgstr "Wybierz datę"
 
@@ -2446,7 +2448,7 @@ msgid "Payment status: %s"
 msgstr "Status płatności: %s"
 
 #: src/blocks/event-signup/render.php:1259
-#: src/Hooks/SignupHookBridge.php:326
+#: src/Hooks/SignupHookBridge.php:328
 msgid "You are signed up for this date."
 msgstr "Jesteś zarejestrowany na ten termin."
 
@@ -2620,8 +2622,8 @@ msgstr "Strona internetowa"
 
 #: src/blocks/event-signup/render.php:907
 #: src/blocks/event-signup/render.php:937
-#: src/Hooks/SignupHookBridge.php:557
-#: src/Hooks/SignupHookBridge.php:595
+#: src/Hooks/SignupHookBridge.php:579
+#: src/Hooks/SignupHookBridge.php:617
 #: src/blocks/event-signup/frontend.js:1497
 msgid "Add activities"
 msgstr "Dodaj aktywności"
@@ -2634,14 +2636,14 @@ msgstr "Cześć %s! Oto Twoja rejestracja na to wydarzenie."
 
 #. translators: %s: ticket type name
 #: src/blocks/event-signup/render.php:1266
-#: src/Hooks/SignupHookBridge.php:333
+#: src/Hooks/SignupHookBridge.php:335
 #, php-format
 msgid "Your ticket: %s"
 msgstr "Twój bilet: %s"
 
 #: src/blocks/event-signup/render.php:1274
-#: src/Hooks/SignupHookBridge.php:340
-#: src/Hooks/SignupHookBridge.php:560
+#: src/Hooks/SignupHookBridge.php:342
+#: src/Hooks/SignupHookBridge.php:582
 msgid "Your activities:"
 msgstr "Twoje aktywności:"
 
@@ -2815,7 +2817,7 @@ msgstr "Ten typ biletu nie jest już dostępny. Proszę wybrać inną opcję."
 
 #. translators: 1: discount percentage, 2: group name
 #: src/blocks/event-signup/render.php:726
-#: src/Services/GroupSignupPricing.php:146
+#: src/Services/GroupSignupPricing.php:171
 #, php-format
 msgid "%1$s%% discount applied (%2$s)"
 msgstr "%1$s%% rabatu zastosowano (%2$s)"
@@ -2905,7 +2907,7 @@ msgid "Choose occurrences"
 msgstr "Wybierz wystąpienia"
 
 #: src/blocks/event-signup/render.php:1033
-#: src/Hooks/SignupHookBridge.php:362
+#: src/Hooks/SignupHookBridge.php:366
 msgid "already signed up"
 msgstr "już zapisany"
 
@@ -3721,7 +3723,7 @@ msgstr "%1$s — %2$s"
 
 #. translators: 1: discount amount, 2: group name
 #: src/blocks/event-signup/render.php:733
-#: src/Services/GroupSignupPricing.php:154
+#: src/Services/GroupSignupPricing.php:179
 #, php-format
 msgid "%1$s discount applied (%2$s)"
 msgstr "Zastosowana zniżka %1$s (%2$s)"
@@ -3742,7 +3744,7 @@ msgstr "Razem: %s"
 msgid "Translations"
 msgstr "Tłumaczenia"
 
-#: src/Hooks/SignupHookBridge.php:274
+#: src/Hooks/SignupHookBridge.php:276
 msgid "You already have a ticket for this date."
 msgstr "Masz już bilet na tę datę."
 
@@ -3786,3 +3788,7 @@ msgstr "Wprowadź prawidłową datę dla: %s"
 #: ../fair-events-shared/src/questionnaire.js:604
 msgid "Please enter a valid date and time for: %s"
 msgstr "Wprowadź prawidłową datę i godzinę dla: %s"
+
+#: ../fair-events-shared/src/form-utils.js:40
+msgid "We could not clear the remembered identity. Please try again."
+msgstr ""

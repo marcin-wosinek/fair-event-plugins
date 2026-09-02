@@ -255,6 +255,25 @@ describe( 'Event Signup frontend.js — viewer-context hydration', () => {
 		).not.toBeNull();
 	} );
 
+	test( 'wires start fresh after hydration swaps in a signed-up companion card', async () => {
+		const block = buildBlock();
+
+		apiFetch.mockResolvedValue( {
+			...noopResponse(),
+			viewer_resolved: true,
+			suppress_form: true,
+			before_form_html:
+				'<div class="fair-events-signed-up-card"><button class="fair-events-not-you-button">Not you? Start fresh</button></div>',
+		} );
+
+		initialize();
+		await Promise.resolve();
+		await Promise.resolve();
+
+		const button = block.querySelector( '.fair-events-not-you-button' );
+		expect( wireNotYouButton ).toHaveBeenCalledWith( button );
+	} );
+
 	test( 'wires a personalized registered-card selector to its public occurrence URL', async () => {
 		const block = buildBlock();
 		let destination = '';

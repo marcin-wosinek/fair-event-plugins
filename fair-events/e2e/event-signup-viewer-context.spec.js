@@ -203,6 +203,62 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 			await expect(
 				visitorPage.locator( '.fair-events-signed-up-card' )
 			).toContainText( 'You are signed up for this date.' );
+			await expect(
+				visitorPage.locator( '.fair-events-cancel-signup-button' )
+			).toBeVisible();
+			await expect(
+				visitorPage.locator( '.fair-events-not-you-button' )
+			).toBeVisible();
+
+			// A failed session reset must retain the signed-up state and make the
+			// action usable again instead of navigating to a misleading blank form.
+			const resetPage = await visitorContext.newPage();
+			await resetPage.route( '**/*', ( route ) => {
+				if (
+					route.request().url().includes( 'fair-audience/v1/session' )
+				) {
+					return route.fulfill( {
+						status: 500,
+						contentType: 'application/json',
+						body: JSON.stringify( {
+							message: 'Session service unavailable',
+						} ),
+					} );
+				}
+				return route.continue();
+			} );
+			await resetPage.goto( `/?page_id=${ signupPage.id }` );
+			const resetButton = resetPage.locator(
+				'.fair-events-not-you-button'
+			);
+			await expect( resetButton ).toBeVisible();
+			await resetButton.click();
+			await expect(
+				resetPage.locator( '.fair-audience-notification-error' )
+			).toBeVisible();
+			await expect( resetButton ).toBeEnabled();
+			await expect(
+				resetPage.locator( '.fair-events-signed-up-card' )
+			).toBeVisible();
+
+			await resetPage.unroute( '**/*' );
+			await resetButton.click();
+			await expect(
+				resetPage.locator( '.fair-events-get-tickets-form' )
+			).toBeVisible();
+			await expect(
+				resetPage.locator( '.fair-events-signed-up-card' )
+			).toHaveCount( 0 );
+
+			const retainedSignups = await apiFetch( adminPage, {
+				path: `/fair-audience/v1/event-dates/${ eventDate.id }/participants`,
+			} );
+			expect(
+				retainedSignups.some(
+					( signup ) => signup.label === 'signed_up'
+				)
+			).toBe( true );
+			await resetPage.close();
 
 			const occurrenceSelector = visitorPage.locator(
 				'.fair-events-signed-up-occurrence-select'
@@ -276,6 +332,50 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 			).toHaveValue( '' );
 
 			await strangerContext.close();
+
+			// A WordPress-account identity is stronger than the synchronized
+			// audience cookie and must never expose the start-fresh action.
+			await adminPage.goto( `/?page_id=${ signupPage.id }` );
+			const adminUser = await apiFetch( adminPage, {
+				path: '/wp/v2/users/me',
+			} );
+			const adminEmail = `admin-viewer-${ Date.now() }@example.test`;
+			const adminForm = adminPage.locator(
+				'.fair-events-get-tickets-form'
+			);
+			await expect( adminForm ).toBeVisible();
+			await adminForm
+				.locator( 'input[name="name"]' )
+				.fill( 'Admin Viewer' );
+			await adminForm.locator( 'input[name="email"]' ).fill( adminEmail );
+			await adminForm.locator( 'button[type="submit"]' ).click();
+			await expect(
+				adminPage.locator( '.fair-events-get-tickets-message-success' )
+			).toBeVisible();
+			const participants = await apiFetch( adminPage, {
+				path: '/fair-audience/v1/participants',
+			} );
+			const adminParticipant = participants.find(
+				( participant ) => participant.email === adminEmail
+			);
+			expect( adminParticipant ).toBeTruthy();
+			await apiFetch( adminPage, {
+				path: `/fair-audience/v1/participants/${ adminParticipant.id }`,
+				method: 'PUT',
+				data: { ...adminParticipant, wp_user_id: adminUser.id },
+			} );
+			await adminPage.reload();
+			await expect(
+				adminPage.locator( '.fair-events-signed-up-card' )
+			).toBeVisible();
+			await expect(
+				adminPage.locator( '.fair-events-not-you-button' )
+			).toHaveCount( 0 );
+			await apiFetch( adminPage, {
+				path: `/fair-audience/v1/participants/${ adminParticipant.id }`,
+				method: 'PUT',
+				data: { ...adminParticipant, wp_user_id: null },
+			} );
 
 			// A whole-series signup covers every upcoming occurrence, so every
 			// selector option carries the registered-state suffix.

@@ -181,8 +181,8 @@ test.describe( 'GetTicketsController — admin signups list ticket_type_name', (
 	} );
 
 	test( 'a signup referencing a deleted ticket type gets ticket_type_name null', async () => {
-		const deleteRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+		const deleteRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets/import`,
 			{
 				headers: adminHeaders,
 				data: {

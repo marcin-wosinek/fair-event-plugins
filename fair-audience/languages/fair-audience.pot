@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Audience 1.13.0\n"
+"Project-Id-Version: Fair Audience 1.13.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-audience\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T15:56:52+00:00\n"
+"POT-Creation-Date: 2026-09-02T12:21:56+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -689,7 +689,8 @@ msgstr ""
 #: src/blocks/event-interest/render.php:161
 #: src/blocks/event-signup/render.php:1365
 #: src/blocks/mailing-signup/render.php:156
-#: src/Hooks/SignupHookBridge.php:401
+#: src/Hooks/SignupHookBridge.php:395
+#: src/Hooks/SignupHookBridge.php:423
 msgid "Not you? Start fresh"
 msgstr ""
 
@@ -756,14 +757,14 @@ msgstr ""
 
 #. translators: 1: discount percentage, 2: group name
 #: src/blocks/event-signup/render.php:726
-#: src/Services/GroupSignupPricing.php:146
+#: src/Services/GroupSignupPricing.php:171
 #, php-format
 msgid "%1$s%% discount applied (%2$s)"
 msgstr ""
 
 #. translators: 1: discount amount, 2: group name
 #: src/blocks/event-signup/render.php:733
-#: src/Services/GroupSignupPricing.php:154
+#: src/Services/GroupSignupPricing.php:179
 #, php-format
 msgid "%1$s discount applied (%2$s)"
 msgstr ""
@@ -775,7 +776,7 @@ msgstr ""
 #: src/blocks/event-signup/render.php:765
 #: src/blocks/event-signup/render.php:853
 #: src/blocks/event-signup/render.php:915
-#: src/Hooks/SignupHookBridge.php:575
+#: src/Hooks/SignupHookBridge.php:597
 msgid "free"
 msgstr ""
 
@@ -795,7 +796,7 @@ msgstr ""
 
 #: src/blocks/event-signup/render.php:858
 #: src/blocks/event-signup/render.php:919
-#: src/Hooks/SignupHookBridge.php:578
+#: src/Hooks/SignupHookBridge.php:600
 msgid "full"
 msgstr ""
 
@@ -807,13 +808,14 @@ msgstr ""
 
 #: src/blocks/event-signup/render.php:907
 #: src/blocks/event-signup/render.php:937
-#: src/Hooks/SignupHookBridge.php:557
-#: src/Hooks/SignupHookBridge.php:595
+#: src/Hooks/SignupHookBridge.php:579
+#: src/Hooks/SignupHookBridge.php:617
 #: src/blocks/event-signup/frontend.js:1497
 msgid "Add activities"
 msgstr ""
 
 #: src/blocks/event-signup/render.php:960
+#: src/Hooks/SignupHookBridge.php:378
 msgid "Choose a date"
 msgstr ""
 
@@ -831,7 +833,7 @@ msgid "Choose occurrences"
 msgstr ""
 
 #: src/blocks/event-signup/render.php:1033
-#: src/Hooks/SignupHookBridge.php:362
+#: src/Hooks/SignupHookBridge.php:366
 msgid "already signed up"
 msgstr ""
 
@@ -940,25 +942,25 @@ msgid "Online payment is not available for this event at the moment. Please cont
 msgstr ""
 
 #: src/blocks/event-signup/render.php:1259
-#: src/Hooks/SignupHookBridge.php:326
+#: src/Hooks/SignupHookBridge.php:328
 msgid "You are signed up for this date."
 msgstr ""
 
 #. translators: %s: ticket type name
 #: src/blocks/event-signup/render.php:1266
-#: src/Hooks/SignupHookBridge.php:333
+#: src/Hooks/SignupHookBridge.php:335
 #, php-format
 msgid "Your ticket: %s"
 msgstr ""
 
 #: src/blocks/event-signup/render.php:1274
-#: src/Hooks/SignupHookBridge.php:340
-#: src/Hooks/SignupHookBridge.php:560
+#: src/Hooks/SignupHookBridge.php:342
+#: src/Hooks/SignupHookBridge.php:582
 msgid "Your activities:"
 msgstr ""
 
 #: src/blocks/event-signup/render.php:1285
-#: src/Hooks/SignupHookBridge.php:373
+#: src/Hooks/SignupHookBridge.php:389
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2459
 #: src/blocks/event-signup/frontend.js:1439
 msgid "Cancel signup"
@@ -1072,7 +1074,7 @@ msgstr ""
 msgid "Reverted to minimal: marketing subscription was never confirmed within a week."
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:274
+#: src/Hooks/SignupHookBridge.php:276
 msgid "You already have a ticket for this date."
 msgstr ""
 
@@ -1599,7 +1601,7 @@ msgstr ""
 msgid "Manage your subscription or unsubscribe"
 msgstr ""
 
-#: src/Services/GroupSignupPricing.php:113
+#: src/Services/GroupSignupPricing.php:138
 msgid "This ticket type is not available for your account."
 msgstr ""
 
@@ -3375,7 +3377,7 @@ msgstr ""
 #: src/blocks/event-interest/frontend.js:69
 #: src/blocks/event-signup/frontend.js:1076
 #: src/blocks/mailing-signup/frontend.js:127
-#: ../fair-events-shared/src/form-utils.js:126
+#: ../fair-events-shared/src/form-utils.js:136
 msgid "Submitting..."
 msgstr ""
 
@@ -3751,6 +3753,10 @@ msgstr ""
 #: src/blocks/signups-list/block.json
 msgctxt "block keyword"
 msgid "list"
+msgstr ""
+
+#: ../fair-events-shared/src/form-utils.js:40
+msgid "We could not clear the remembered identity. Please try again."
 msgstr ""
 
 #: ../fair-events-shared/src/questionnaire.js:469

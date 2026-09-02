@@ -69,8 +69,10 @@ class SignupHookBridge {
 	 * @return array Filtered context.
 	 */
 	public static function enrich_render_context( $context ) {
-		$participant    = GroupSignupPricing::resolve_viewer_participant();
-		$participant_id = $participant ? (int) $participant->id : null;
+		$identity                          = GroupSignupPricing::resolve_viewer_identity();
+		$participant                       = $identity['participant'];
+		$participant_id                    = $participant ? (int) $participant->id : null;
+		$context['viewer_identity_source'] = $participant ? $identity['source'] : null;
 
 		// Signals the endpoint that a viewer was actually recognised, so it
 		// renders the personalized fragments — true whenever prefill applies,
@@ -388,6 +390,12 @@ class SignupHookBridge {
 		echo '</button>';
 		echo '</div>';
 
+		if ( 'audience_session' === ( $context['viewer_identity_source'] ?? null ) ) {
+			echo '<button type="button" class="fair-events-not-you-button">'
+				. esc_html__( 'Not you? Start fresh', 'fair-audience' )
+				. '</button>';
+		}
+
 		echo '</div>';
 	}
 
@@ -407,7 +415,7 @@ class SignupHookBridge {
 		if ( ! empty( $context['suppress_form'] ) || empty( $context['prefill_email'] ) ) {
 			return;
 		}
-		if ( ! AudienceSession::get_participant_id() ) {
+		if ( 'audience_session' !== ( $context['viewer_identity_source'] ?? null ) ) {
 			return;
 		}
 
