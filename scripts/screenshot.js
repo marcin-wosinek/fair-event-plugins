@@ -5,9 +5,10 @@
  *
  * Logs into the running WordPress instance and saves a screenshot of any
  * admin (or public) page at a named viewport. Reuses the E2E conventions:
- * the base URL comes from `WP_BASE_URL` and credentials from
- * `WP_ADMIN_USER` / `WP_ADMIN_PASSWORD` (defaults: the wp-env dev instance
- * on :8888, admin / password — same as e2e/smoke.spec.js).
+ * the base URL and credentials come from `WP_SCREENSHOT_BASE_URL`,
+ * `WP_SCREENSHOT_USER`, and `WP_SCREENSHOT_PASSWORD` (defaults: the regular
+ * Docker development site on :8080, admin / password). The shared WP_BASE_URL
+ * and WP_ADMIN_* names remain backward-compatible fallbacks.
  *
  * Runs headless. The screenshot is written relative to the current working
  * directory, so it lands in whatever folder you invoke the script from.
@@ -37,7 +38,7 @@
  *
  * Examples:
  *   node scripts/screenshot.js "/wp-admin/admin.php?page=fair-finance-budgets" mobile budgets-mobile.png
- *   WP_BASE_URL=http://localhost:8889 node scripts/screenshot.js "/" desktop home.png --no-login
+ *   WP_SCREENSHOT_BASE_URL=http://localhost:8889 node scripts/screenshot.js "/" desktop home.png --no-login
  *   node scripts/screenshot.js "/" desktop home.png --no-login --upload imgbb
  */
 
@@ -49,13 +50,17 @@ import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load config (WP_BASE_URL, credentials) from the repo's .env regardless of
-// the current working directory, so the helper works when run from anywhere.
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
-
-const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8888';
-const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
+export function resolveScreenshotConfig(env) {
+	return {
+		baseUrl:
+			env.WP_SCREENSHOT_BASE_URL ||
+			env.WP_BASE_URL ||
+			'http://localhost:8080',
+		adminUser: env.WP_SCREENSHOT_USER || env.WP_ADMIN_USER || 'admin',
+		adminPassword:
+			env.WP_SCREENSHOT_PASSWORD || env.WP_ADMIN_PASSWORD || 'password',
+	};
+}
 
 /** Named viewport presets. deviceScaleFactor keeps small viewports crisp. */
 const PRESETS = {
@@ -239,21 +244,25 @@ function usage(message) {
 	process.exit(1);
 }
 
-async function login(page) {
-	await page.goto(`${BASE_URL}/wp-login.php`, { waitUntil: 'load' });
+async function login(page, config) {
+	await page.goto(`${config.baseUrl}/wp-login.php`, { waitUntil: 'load' });
 
 	// Already authenticated — wp-login redirects straight to the dashboard.
 	if (!(await page.locator('#user_login').count())) {
 		return;
 	}
 
-	await page.fill('#user_login', ADMIN_USER);
-	await page.fill('#user_pass', ADMIN_PASSWORD);
+	await page.fill('#user_login', config.adminUser);
+	await page.fill('#user_pass', config.adminPassword);
 	await page.click('#wp-submit');
 	await page.waitForURL(/\/wp-admin\/?/, { timeout: 30000 });
 }
 
 async function main() {
+	// Load screenshot-only configuration from the repository .env regardless
+	// of the caller's working directory. Imports used by unit tests stay pure.
+	dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+	const config = resolveScreenshotConfig(process.env);
 	const { positional, opts } = parseArgs(process.argv.slice(2));
 	const [pagePath, dimensions, filename] = positional;
 
@@ -279,7 +288,7 @@ async function main() {
 	const outFile = path.resolve(process.cwd(), filename);
 	const url = pagePath.startsWith('http')
 		? pagePath
-		: `${BASE_URL}${pagePath.startsWith('/') ? '' : '/'}${pagePath}`;
+		: `${config.baseUrl}${pagePath.startsWith('/') ? '' : '/'}${pagePath}`;
 
 	const browser = await chromium.launch({ headless: true });
 	try {
@@ -290,7 +299,7 @@ async function main() {
 		const page = await context.newPage();
 
 		if (opts.login) {
-			await login(page);
+			await login(page, config);
 		}
 
 		await page.goto(url, { waitUntil: 'networkidle' }).catch(async () => {
@@ -320,7 +329,9 @@ async function main() {
 	}
 }
 
-main().catch((err) => {
-	console.error(err);
-	process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+	main().catch((err) => {
+		console.error(err);
+		process.exit(1);
+	});
+}
