@@ -62,6 +62,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			.querySelectorAll( '.fair-events-get-tickets-companion' )
 			.forEach( function ( companion ) {
 				const block = companion.closest( '.fair-events-get-tickets' );
+				wireNotYouButton(
+					companion.querySelector( '.fair-events-not-you-button' )
+				);
 				wireAddActivities( block );
 				wireCancelSignup( block );
 				wireSignedUpOccurrenceSelector( block );
@@ -342,6 +345,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		}
 		form.replaceWith( companion );
 
+		wireNotYouButton(
+			companion.querySelector( '.fair-events-not-you-button' )
+		);
 		wireAddActivities( block );
 		wireCancelSignup( block );
 		wireSignedUpOccurrenceSelector( block );

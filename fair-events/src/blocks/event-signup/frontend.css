@@ -279,6 +279,23 @@
 	padding: 12px 16px;
 }
 
+.fair-events-signed-up-card .fair-events-not-you-button {
+	display: block;
+	margin-top: 12px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: currentColor;
+	font: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.fair-events-signed-up-card .fair-events-not-you-button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
 .fair-events-get-tickets-callback {
 	padding: 16px 20px;
 	border-radius: 4px;
