@@ -44,13 +44,41 @@ class TicketPricing {
 	 * @return TicketSalePeriod|null Active period or null.
 	 */
 	public static function resolve_active_sale_period( $event_date_id ) {
+		$period_context = self::resolve_sale_period_context( $event_date_id );
+
+		return $period_context['active_period'];
+	}
+
+	/**
+	 * Resolve the active period and configured-period count from one query.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array{active_period: TicketSalePeriod|null, sale_period_count: int}
+	 */
+	private static function resolve_sale_period_context( $event_date_id ) {
 		$now          = current_time( 'mysql' );
 		$sale_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
-
 		$default_end  = self::compute_default_sale_end( EventDates::get_last_occurrence_end( $event_date_id ) );
+
+		return self::resolve_sale_period_context_from_periods( $sale_periods, $now, $default_end );
+	}
+
+	/**
+	 * Resolve a sale-period context from already-fetched periods.
+	 *
+	 * @param object[]    $sale_periods Configured sale periods.
+	 * @param string      $now          Current site datetime.
+	 * @param string|null $default_end  Lazy default sale end.
+	 * @return array{active_period: object|null, sale_period_count: int}
+	 */
+	public static function resolve_sale_period_context_from_periods( array $sale_periods, $now, $default_end ) {
+		$period_count = count( $sale_periods );
 		$sale_periods = self::apply_default_window( $sale_periods, $default_end );
 
-		return self::pick_active_period( $sale_periods, $now, false );
+		return array(
+			'active_period'     => self::pick_active_period( $sale_periods, $now, false ),
+			'sale_period_count' => $period_count,
+		);
 	}
 
 	/**
@@ -220,6 +248,7 @@ class TicketPricing {
 	 * @param int $event_date_id Event date ID.
 	 * @return array{
 	 *     active_period: TicketSalePeriod|null,
+	 *     sale_period_count: int,
 	 *     price_by_type_id: float[],
 	 *     priced_type_ids: int[]
 	 * } `price_by_type_id` covers only types with a price row for the
@@ -228,12 +257,14 @@ class TicketPricing {
 	 *   free by convention" check.
 	 */
 	public static function resolve_unit_prices_for_event_date( $event_date_id ) {
-		$active_period = self::resolve_active_sale_period( $event_date_id );
+		$period_context = self::resolve_sale_period_context( $event_date_id );
+		$active_period  = $period_context['active_period'];
 		if ( ! $active_period ) {
 			return array(
-				'active_period'    => null,
-				'price_by_type_id' => array(),
-				'priced_type_ids'  => array(),
+				'active_period'     => null,
+				'sale_period_count' => $period_context['sale_period_count'],
+				'price_by_type_id'  => array(),
+				'priced_type_ids'   => array(),
 			);
 		}
 
@@ -247,9 +278,10 @@ class TicketPricing {
 		}
 
 		return array(
-			'active_period'    => $active_period,
-			'price_by_type_id' => $price_by_type_id,
-			'priced_type_ids'  => array_keys( $priced_type_id_set ),
+			'active_period'     => $active_period,
+			'sale_period_count' => $period_context['sale_period_count'],
+			'price_by_type_id'  => $price_by_type_id,
+			'priced_type_ids'   => array_keys( $priced_type_id_set ),
 		);
 	}
 

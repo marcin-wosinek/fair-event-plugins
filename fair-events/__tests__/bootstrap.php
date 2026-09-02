@@ -571,6 +571,31 @@ if ( ! function_exists( 'esc_html' ) ) {
 	}
 }
 
+if ( ! function_exists( 'esc_html_e' ) ) {
+	/**
+	 * Stub of WordPress esc_html_e().
+	 *
+	 * @param string $text   Text to translate/escape.
+	 * @param string $domain Text domain (unused).
+	 * @return void
+	 */
+	function esc_html_e( $text, $domain = 'default' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		echo esc_html( $text );
+	}
+}
+
+if ( ! function_exists( 'esc_attr' ) ) {
+	/**
+	 * Stub of WordPress esc_attr().
+	 *
+	 * @param string $text Attribute value to escape.
+	 * @return string HTML-escaped attribute value.
+	 */
+	function esc_attr( $text ) {
+		return htmlspecialchars( (string) $text, ENT_QUOTES );
+	}
+}
+
 if ( ! function_exists( 'wp_specialchars_decode' ) ) {
 	/**
 	 * Stub of WordPress wp_specialchars_decode() — delegates to htmlspecialchars_decode().

@@ -228,9 +228,11 @@ $has_instance_picker = $has_multiple_instances_type && ! empty( $occurrences_for
 $price_by_type_id   = array();
 $priced_type_ids    = array();
 $active_sale_period = null;
+$sale_period_count  = 0;
 if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
 	$resolved_prices    = \FairEvents\Services\TicketPricing::resolve_unit_prices_for_event_date( $pricing_event_date_id );
 	$active_sale_period = $resolved_prices['active_period'];
+	$sale_period_count  = $resolved_prices['sale_period_count'];
 	$price_by_type_id   = $resolved_prices['price_by_type_id'];
 	$priced_type_ids    = $resolved_prices['priced_type_ids'];
 }
@@ -296,7 +298,7 @@ if ( ! empty( $ticket_options ) && class_exists( \FairEvents\Models\EventDateSet
  * REST_API_BACKEND.md for the documented shape and consumers.
  *
  * @param array    $context    Render context (event_date_id, pricing_event_date_id, ticket_types,
- *                              price_by_type_id, active_sale_period, occurrences_for_picker,
+ *                              price_by_type_id, active_sale_period, sale_period_count, occurrences_for_picker,
  *                              ticket_options, minimum_activities,
  *                              callback_status, callback_tx_id, callback_token, callback_state,
  *                              callback_source, prefill_name, prefill_email, submit_button_text,
@@ -314,6 +316,7 @@ $context = apply_filters(
 		'ticket_types'           => $ticket_types,
 		'price_by_type_id'       => $price_by_type_id,
 		'active_sale_period'     => $active_sale_period,
+		'sale_period_count'      => $sale_period_count,
 		'occurrences_for_picker' => $occurrences_for_picker,
 		// Activity add-ons and their minimum-selection requirement. A companion
 		// plugin (fair-audience) overrides 'price'/'is_full' with participant-
@@ -352,6 +355,7 @@ $event_date_id          = (int) $context['event_date_id'];
 $ticket_types           = $context['ticket_types'];
 $price_by_type_id       = $context['price_by_type_id'];
 $active_sale_period     = $context['active_sale_period'];
+$sale_period_count      = (int) $context['sale_period_count'];
 $occurrences_for_picker = $context['occurrences_for_picker'];
 $ticket_options         = $context['ticket_options'];
 $minimum_activities     = $context['minimum_activities'];
@@ -614,6 +618,7 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 			$ticket_types,
 			$price_by_type_id,
 			$active_sale_period,
+			$sale_period_count,
 			$show_ticket_price,
 			$payments_unavailable,
 			$form_id

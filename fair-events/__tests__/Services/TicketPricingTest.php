@@ -38,6 +38,33 @@ class TicketPricingTest extends TestCase {
 	}
 
 	/**
+	 * Period context preserves both the selected period and configured count.
+	 */
+	public function test_sale_period_context_returns_active_period_and_count() {
+		$past   = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$active = $this->period( '2026-02-01 00:00:00', '2026-03-01 00:00:00' );
+
+		$context = TicketPricing::resolve_sale_period_context_from_periods(
+			array( $past, $active ),
+			'2026-02-15 00:00:00',
+			null
+		);
+
+		$this->assertEquals( $active, $context['active_period'] );
+		$this->assertSame( 2, $context['sale_period_count'] );
+	}
+
+	/**
+	 * Empty period context exposes a zero count and no active period.
+	 */
+	public function test_sale_period_context_is_empty_when_unconfigured() {
+		$context = TicketPricing::resolve_sale_period_context_from_periods( array(), '2026-02-15 00:00:00', null );
+
+		$this->assertNull( $context['active_period'] );
+		$this->assertSame( 0, $context['sale_period_count'] );
+	}
+
+	/**
 	 * Now falls inside a period's range.
 	 */
 	public function test_period_containing_now_is_active() {
