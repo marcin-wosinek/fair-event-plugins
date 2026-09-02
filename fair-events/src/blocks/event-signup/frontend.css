@@ -1,8 +1,10 @@
-.fair-events-get-tickets-form .form-row {
+.fair-events-get-tickets-form .form-row,
+.fair-events-signed-up-card .form-row {
 	margin-bottom: 16px;
 }
 
-.fair-events-get-tickets-form .form-label {
+.fair-events-get-tickets-form .form-label,
+.fair-events-signed-up-card .form-label {
 	display: block;
 	font-weight: 600;
 	margin-bottom: 4px;
@@ -13,7 +15,8 @@
 	margin-left: 2px;
 }
 
-.fair-events-get-tickets-form .form-input {
+.fair-events-get-tickets-form .form-input,
+.fair-events-signed-up-card .form-input {
 	width: 100%;
 	max-width: 400px;
 	padding: 14px 16px;
@@ -25,7 +28,8 @@
 	transition: border-color 0.2s ease;
 }
 
-.fair-events-get-tickets-form .form-input:focus {
+.fair-events-get-tickets-form .form-input:focus,
+.fair-events-signed-up-card .form-input:focus {
 	outline: none;
 	border-color: #0073aa;
 	box-shadow: 0 0 0 1px #0073aa;
@@ -273,11 +277,6 @@
 	border: 1px solid #ccc;
 	border-radius: 4px;
 	padding: 12px 16px;
-}
-
-.fair-events-signed-up-switch-date {
-	margin: 8px 0;
-	padding-left: 20px;
 }
 
 .fair-events-get-tickets-callback {
