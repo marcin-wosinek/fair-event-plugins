@@ -296,6 +296,36 @@
 	cursor: not-allowed;
 }
 
+.fair-events-signed-up-card .fair-events-cancel-signup-button {
+	color: #fff;
+	background-color: #b32d2e;
+	border: 1px solid #b32d2e;
+}
+
+.fair-events-signed-up-card .fair-events-cancel-signup-button:hover {
+	color: #fff;
+	background-color: #8a2424;
+	border-color: #8a2424;
+}
+
+.fair-events-signed-up-card .fair-events-cancel-signup-button:active {
+	color: #fff;
+	background-color: #691b1b;
+	border-color: #691b1b;
+}
+
+.fair-events-signed-up-card .fair-events-cancel-signup-button:focus-visible {
+	outline: 3px solid #1d2327;
+	outline-offset: 2px;
+}
+
+.fair-events-signed-up-card .fair-events-cancel-signup-button:disabled {
+	color: #50575e;
+	background-color: #f0f0f1;
+	border-color: #8c8f94;
+	cursor: not-allowed;
+}
+
 .fair-events-get-tickets-callback {
 	padding: 16px 20px;
 	border-radius: 4px;
