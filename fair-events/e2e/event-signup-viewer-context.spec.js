@@ -55,10 +55,50 @@ async function login( page ) {
 	await page.waitForSelector( '#wpadminbar' );
 }
 
+function parseRgb( color ) {
+	const channels = color.match( /[\d.]+/g );
+	if ( ! channels || channels.length < 3 ) {
+		throw new Error( `Unsupported computed color: ${ color }` );
+	}
+	return channels.slice( 0, 3 ).map( Number );
+}
+
+function relativeLuminance( color ) {
+	const channels = parseRgb( color ).map( ( channel ) => {
+		const value = channel / 255;
+		return value <= 0.04045
+			? value / 12.92
+			: ( ( value + 0.055 ) / 1.055 ) ** 2.4;
+	} );
+	return (
+		0.2126 * channels[ 0 ] + 0.7152 * channels[ 1 ] + 0.0722 * channels[ 2 ]
+	);
+}
+
+async function expectButtonContrast( button, expectedBackground ) {
+	const colors = await button.evaluate( ( element ) => {
+		const styles = window.getComputedStyle( element );
+		return {
+			foreground: styles.color,
+			background: styles.backgroundColor,
+		};
+	} );
+	const foreground = relativeLuminance( colors.foreground );
+	const background = relativeLuminance( colors.background );
+	const ratio =
+		( Math.max( foreground, background ) + 0.05 ) /
+		( Math.min( foreground, background ) + 0.05 );
+	expect( ratio ).toBeGreaterThanOrEqual( 4.5 );
+	if ( expectedBackground ) {
+		expect( colors.background ).toBe( expectedBackground );
+	}
+}
+
 test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration', () => {
 	test( 'a viewer who signs up sees their own state on reload; a fresh viewer on the same page never does', async ( {
 		browser,
 	} ) => {
+		test.setTimeout( 60_000 );
 		const adminContext = await browser.newContext();
 		const adminPage = await adminContext.newPage();
 		await login( adminPage );
@@ -260,6 +300,44 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 			).toBe( true );
 			await resetPage.close();
 
+			const cancelButton = visitorPage.getByRole( 'button', {
+				name: 'Cancel signup',
+			} );
+			await expect( cancelButton ).toBeVisible();
+			await expect( cancelButton ).toHaveText( 'Cancel signup' );
+			await visitorPage.mouse.move( 0, 0 );
+			await expectButtonContrast( cancelButton, 'rgb(179, 45, 46)' );
+
+			await cancelButton.hover();
+			await expectButtonContrast( cancelButton, 'rgb(138, 36, 36)' );
+
+			await cancelButton.focus();
+			await expectButtonContrast( cancelButton );
+			const focusIndicator = await cancelButton.evaluate( ( element ) => {
+				const styles = window.getComputedStyle( element );
+				return {
+					style: styles.outlineStyle,
+					width: Number.parseFloat( styles.outlineWidth ),
+				};
+			} );
+			expect( focusIndicator.style ).not.toBe( 'none' );
+			expect( focusIndicator.width ).toBeGreaterThanOrEqual( 2 );
+
+			await cancelButton.hover();
+			await visitorPage.mouse.down();
+			await expectButtonContrast( cancelButton, 'rgb(105, 27, 27)' );
+			await visitorPage.mouse.move( 0, 0 );
+			await visitorPage.mouse.up();
+
+			await cancelButton.evaluate( ( element ) => {
+				element.disabled = true;
+			} );
+			await expect( cancelButton ).toBeDisabled();
+			await expectButtonContrast( cancelButton, 'rgb(240, 240, 241)' );
+			await cancelButton.evaluate( ( element ) => {
+				element.disabled = false;
+			} );
+
 			const occurrenceSelector = visitorPage.locator(
 				'.fair-events-signed-up-occurrence-select'
 			);
@@ -307,6 +385,14 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 			await expect(
 				visitorPage.locator( '.fair-events-get-tickets-form' )
 			).toBeVisible();
+			const unrelatedSignupButton = visitorPage
+				.locator( '.fair-events-get-tickets-form' )
+				.getByRole( 'button', { name: 'Get Tickets' } );
+			await expect( unrelatedSignupButton ).toBeVisible();
+			await expect( unrelatedSignupButton ).not.toHaveCSS(
+				'background-color',
+				'rgb(179, 45, 46)'
+			);
 			await expect(
 				visitorPage.locator( '.fair-events-signed-up-card' )
 			).toHaveCount( 0 );

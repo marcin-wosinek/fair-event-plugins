@@ -385,7 +385,7 @@ class SignupHookBridge {
 		}
 
 		echo '<div class="wp-block-button">';
-		echo '<button type="button" class="wp-block-button__link wp-element-button fair-events-cancel-signup-button is-style-outline">';
+		echo '<button type="button" class="wp-block-button__link wp-element-button fair-events-cancel-signup-button">';
 		echo esc_html__( 'Cancel signup', 'fair-audience' );
 		echo '</button>';
 		echo '</div>';
