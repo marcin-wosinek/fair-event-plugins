@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.1
-Stable tag: 1.13.1
+Stable tag: 1.14.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,20 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.14.0
+
+### Minor Changes
+
+-   04cce70: Add per-ticket extension selection controls with authoritative minimum and maximum enforcement in the signup interface and API.
+
+### Patch Changes
+
+-   41cdb3c: Replace registered attendees' recurring-date link lists with compact selectors that navigate to the correct public occurrence.
+-   f45f69a: Keep the event signup cancellation button legible in every interaction state.
+-   cd96441: Let cookie-recognized visitors safely forget the remembered identity from an existing signup without cancelling it.
+-   47b9041: Persist and enforce audience-group ticket restrictions without requiring Fair Events Experimental.
+-   68a2a52: Use configured activity short names in copied activity summaries, falling back to full names when needed.
 
 ## 1.13.1
 
