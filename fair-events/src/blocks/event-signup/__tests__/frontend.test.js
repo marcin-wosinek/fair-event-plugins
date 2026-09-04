@@ -85,6 +85,73 @@ beforeEach( () => {
 	wireNotYouButton.mockClear();
 } );
 
+describe( 'Event Signup frontend.js — ticket extension rules (#1521)', () => {
+	function buildRulesBlock() {
+		const block = buildBlock();
+		const form = block.querySelector( 'form' );
+		form.querySelector( '.fair-events-ticket-fieldset' ).innerHTML = `
+			<label><input type="radio" name="ticket_type_id" value="1" data-activities-enabled="1" data-min-activities="1" data-max-activities="2" data-recurrence-scope="single_instance" checked>Pick activities</label>
+			<label><input type="radio" name="ticket_type_id" value="2" data-activities-enabled="0" data-min-activities="0" data-max-activities="" data-recurrence-scope="single_instance">Full pass</label>
+			<label><input type="radio" name="ticket_type_id" value="3" data-activities-enabled="1" data-min-activities="0" data-max-activities="1" data-recurrence-scope="single_instance">One activity</label>`;
+		form.querySelector( '.form-submit' ).insertAdjacentHTML(
+			'beforebegin',
+			`<div class="form-row"><fieldset class="fair-events-ticket-options">
+				<p class="fair-events-ticket-options-min-hint"></p>
+				<p class="fair-events-ticket-options-max-hint"></p>
+				<p class="fair-events-ticket-options-unavailable"></p>
+				<label><input type="checkbox" name="ticket_option_ids[]" value="10" data-option-price="5"></label>
+				<label><input type="checkbox" name="ticket_option_ids[]" value="11" data-option-price="7"></label>
+				<label><input type="checkbox" name="ticket_option_ids[]" value="12" data-option-price="9"></label>
+				<p class="fair-events-ticket-options-total"></p>
+			</fieldset></div>`
+		);
+		apiFetch.mockResolvedValue( noopResponse() );
+		initialize();
+		return { block, form };
+	}
+
+	test( 'switching to a disabled type hides and clears extensions', () => {
+		const { form } = buildRulesBlock();
+		const choices = form.querySelectorAll(
+			'input[name="ticket_option_ids[]"]'
+		);
+		choices[ 0 ].click();
+		form.querySelector( 'input[value="2"]' ).click();
+		expect( choices[ 0 ].checked ).toBe( false );
+		expect(
+			form
+				.querySelector( '.fair-events-ticket-options' )
+				.closest( '.form-row' ).style.display
+		).toBe( 'none' );
+	} );
+
+	test( 'reaching the maximum disables unchecked extensions with an explanation', () => {
+		const { form } = buildRulesBlock();
+		const choices = form.querySelectorAll(
+			'input[name="ticket_option_ids[]"]'
+		);
+		choices[ 0 ].click();
+		choices[ 1 ].click();
+		expect( choices[ 2 ].disabled ).toBe( true );
+		expect(
+			form.querySelector( '.fair-events-ticket-options-max-hint' )
+				.textContent
+		).toBe( 'You can select at most 2 extensions.' );
+	} );
+
+	test( 'switching to a lower maximum keeps the earliest selection', () => {
+		const { form } = buildRulesBlock();
+		const choices = form.querySelectorAll(
+			'input[name="ticket_option_ids[]"]'
+		);
+		choices[ 0 ].click();
+		choices[ 1 ].click();
+		form.querySelector( 'input[value="3"]' ).click();
+		expect( choices[ 0 ].checked ).toBe( true );
+		expect( choices[ 1 ].checked ).toBe( false );
+	} );
+} );
+
 describe( 'Event Signup frontend.js — viewer-context hydration', () => {
 	test( 'fetches viewer-context with the event date and display flags, disabling submit until it resolves', async () => {
 		const block = buildBlock( { eventDateId: 42 } );

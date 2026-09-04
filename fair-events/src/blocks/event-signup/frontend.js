@@ -801,10 +801,8 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	}
 
 	/**
-	 * Compute the effective minimum number of activities: the event-date
-	 * global baseline, possibly raised by the selected ticket type, capped at
-	 * the number of options available so the requirement is never impossible
-	 * to satisfy.
+	 * Compute the selected ticket type's authoritative activity minimum. The
+	 * event-wide setting is only the fallback when no type is selected.
 	 * @param {HTMLFormElement} form The get-tickets form.
 	 * @return {number} The effective minimum (0 when no minimum applies).
 	 */
@@ -814,11 +812,24 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const typeMin = selectedTicketType
 			? parseInt( selectedTicketType.dataset.minActivities || '0', 10 )
 			: 0;
-		const optionCount = form.querySelectorAll(
-			'input[name="ticket_option_ids[]"]'
-		).length;
+		return selectedTicketType ? typeMin : globalMin;
+	}
 
-		return Math.min( Math.max( globalMin, typeMin ), optionCount );
+	function activitiesEnabled( form ) {
+		const selected = getSelectedTicketTypeOption( form );
+		return (
+			! selected ||
+			( selected.dataset.activitiesEnabled !== '0' &&
+				selected.dataset.recurrenceScope !== 'multiple_instances' )
+		);
+	}
+
+	function getEffectiveActivityMaximum( form ) {
+		const selected = getSelectedTicketTypeOption( form );
+		if ( ! selected || selected.dataset.maxActivities === '' ) {
+			return null;
+		}
+		return parseInt( selected.dataset.maxActivities, 10 );
 	}
 
 	/**
@@ -829,10 +840,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 * @return {boolean} True when the requirement is satisfied.
 	 */
 	function meetsActivityMinimum( form ) {
-		if (
-			! hasActivityOptions( form ) ||
-			isMultipleInstancesSelected( form )
-		) {
+		if ( ! hasActivityOptions( form ) || ! activitiesEnabled( form ) ) {
 			return true;
 		}
 		const effectiveMin = getEffectiveActivityMinimum( form );
@@ -900,8 +908,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 	/**
 	 * Toggle the activities (ticket options) fieldset based on the selected
-	 * ticket type ('multiple_instances' ignores activities, mirroring the
-	 * legacy form), and keep its minimum hint, per-option add-on price tags,
+	 * ticket type, and keep its selection bounds, per-option add-on price tags,
 	 * and live total in sync.
 	 * @param {HTMLFormElement} form The get-tickets form.
 	 */
@@ -912,7 +919,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		}
 		const row = fieldset.closest( '.form-row' ) || fieldset;
 
-		const hidden = isMultipleInstancesSelected( form );
+		const hidden = ! activitiesEnabled( form );
 		row.style.display = hidden ? 'none' : '';
 		if ( hidden ) {
 			fieldset
@@ -923,9 +930,25 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		}
 
 		const effectiveMin = getEffectiveActivityMinimum( form );
-		const checkedOptions = fieldset.querySelectorAll(
+		const effectiveMax = getEffectiveActivityMaximum( form );
+		let checkedOptions = fieldset.querySelectorAll(
 			'input[name="ticket_option_ids[]"]:checked'
 		);
+		if ( effectiveMax !== null && checkedOptions.length > effectiveMax ) {
+			Array.from( checkedOptions )
+				.slice( effectiveMax )
+				.forEach( ( input ) => {
+					input.checked = false;
+				} );
+			checkedOptions = fieldset.querySelectorAll(
+				'input[name="ticket_option_ids[]"]:checked'
+			);
+		}
+
+		const selectableCount = fieldset.querySelectorAll(
+			'label:not(.fair-events-ticket-option-full) input[name="ticket_option_ids[]"]'
+		).length;
+		const impossible = ! hidden && effectiveMin > selectableCount;
 
 		const hint = fieldset.querySelector(
 			'.fair-events-ticket-options-min-hint'
@@ -947,12 +970,51 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				hint.style.display = 'none';
 			}
 		}
+		const maxHint = fieldset.querySelector(
+			'.fair-events-ticket-options-max-hint'
+		);
+		const maximumReached =
+			! hidden &&
+			effectiveMax !== null &&
+			checkedOptions.length >= effectiveMax;
+		if ( maxHint ) {
+			maxHint.textContent = maximumReached
+				? sprintf(
+						/* translators: %d: maximum number of activities allowed */
+						_n(
+							'You can select at most %d extension.',
+							'You can select at most %d extensions.',
+							effectiveMax,
+							'fair-events'
+						),
+						effectiveMax
+				  )
+				: '';
+			maxHint.style.display = maximumReached ? '' : 'none';
+		}
+		const unavailable = fieldset.querySelector(
+			'.fair-events-ticket-options-unavailable'
+		);
+		if ( unavailable ) {
+			unavailable.style.display = impossible ? '' : 'none';
+		}
+
+		fieldset
+			.querySelectorAll( 'input[name="ticket_option_ids[]"]' )
+			.forEach( function ( input ) {
+				const permanentlyFull = input
+					.closest( 'label' )
+					?.classList.contains( 'fair-events-ticket-option-full' );
+				input.disabled =
+					permanentlyFull || ( maximumReached && ! input.checked );
+			} );
 
 		// Reveal the per-option "(+price)" add-on tag on unchecked options once
 		// the minimum is met (or there is none), so the checkbox list doesn't
 		// show a price twice.
 		const meetsMin =
-			effectiveMin === 0 || checkedOptions.length >= effectiveMin;
+			! impossible &&
+			( effectiveMin === 0 || checkedOptions.length >= effectiveMin );
 		fieldset
 			.querySelectorAll( 'input[name="ticket_option_ids[]"]' )
 			.forEach( function ( input ) {

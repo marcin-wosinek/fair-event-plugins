@@ -38,6 +38,8 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		\FairEvents\Database\Installer::maybe_upgrade();
+
 		// Default: rely on WordPress.org language packs. The `bundled-translations`
 		// feature flag opts into loading the .mo files we ship in `languages/`,
 		// which is useful while a locale is below the WP.org publish threshold.

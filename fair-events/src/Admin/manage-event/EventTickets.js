@@ -149,7 +149,16 @@ export default function EventTickets( {
 				data.end_datetime.split( ' ' )[ 0 ].split( 'T' )[ 0 ]
 			);
 		}
-		setTicketTypes( data.ticket_types || [] );
+		setTicketTypes(
+			( data.ticket_types || [] ).map( ( type ) => ( {
+				...type,
+				activities_enabled:
+					type.recurrence_scope === 'multiple_instances'
+						? false
+						: type.activities_enabled !== false,
+				maximum_activities: type.maximum_activities ?? null,
+			} ) )
+		);
 		setSalePeriods(
 			( data.sale_periods || [] ).map( ( p ) => ( {
 				...p,
@@ -266,6 +275,8 @@ export default function EventTickets( {
 						? t.capacity
 						: null,
 				minimum_activities: t.minimum_activities || 0,
+				activities_enabled: t.activities_enabled !== false,
+				maximum_activities: t.maximum_activities ?? null,
 				disable_at: t.disable_at || null,
 				recurrence_scope: t.recurrence_scope || 'single_instance',
 				minimum_instances: t.minimum_instances || 0,
@@ -401,7 +412,9 @@ export default function EventTickets( {
 			{
 				name: '',
 				capacity: null,
-				minimum_activities: 0,
+				activities_enabled: scope !== 'multiple_instances',
+				minimum_activities: settings.minimum_activities || 0,
+				maximum_activities: null,
 				disable_at: null,
 				recurrence_scope: scope,
 				minimum_instances: 0,
@@ -853,6 +866,45 @@ export default function EventTickets( {
 	const dirty =
 		snapshot !== null && snapshot !== JSON.stringify( buildSavePayload() );
 
+	const activityRuleErrors = ticketTypes.map( ( type ) => {
+		if (
+			! type.activities_enabled ||
+			type.recurrence_scope === 'multiple_instances'
+		) {
+			return '';
+		}
+		const minimum = Number( type.minimum_activities ?? 0 );
+		const hasMaximum =
+			type.maximum_activities !== null &&
+			type.maximum_activities !== undefined &&
+			type.maximum_activities !== '';
+		const maximum = hasMaximum ? Number( type.maximum_activities ) : null;
+		if (
+			! Number.isInteger( minimum ) ||
+			minimum < 0 ||
+			( hasMaximum && ( ! Number.isInteger( maximum ) || maximum < 0 ) )
+		) {
+			return __(
+				'Minimum and maximum selections must be whole numbers of zero or more.',
+				'fair-events'
+			);
+		}
+		if ( hasMaximum && maximum < minimum ) {
+			return __(
+				'Maximum selections cannot be lower than minimum selections.',
+				'fair-events'
+			);
+		}
+		if ( minimum > options.length ) {
+			return __(
+				'Minimum selections cannot exceed the number of configured extensions.',
+				'fair-events'
+			);
+		}
+		return '';
+	} );
+	const hasActivityRuleErrors = activityRuleErrors.some( Boolean );
+
 	useEffect( () => {
 		if ( onDirtyChange ) {
 			onDirtyChange( dirty );
@@ -860,6 +912,15 @@ export default function EventTickets( {
 	}, [ dirty, onDirtyChange ] );
 
 	const handleSave = async () => {
+		if ( hasActivityRuleErrors ) {
+			setError(
+				__(
+					'Fix the extension selection rules before saving.',
+					'fair-events'
+				)
+			);
+			return;
+		}
 		setSaving( true );
 		setError( null );
 		setSuccess( null );
@@ -956,7 +1017,7 @@ export default function EventTickets( {
 					variant="primary"
 					onClick={ handleSave }
 					isBusy={ saving }
-					disabled={ saving }
+					disabled={ saving || hasActivityRuleErrors }
 				>
 					{ __( 'Save tickets', 'fair-events' ) }
 				</Button>
@@ -1423,15 +1484,12 @@ export default function EventTickets( {
 													) }
 												</th>
 											) }
-											{ settings.show_ticket_type_minimum_activities &&
-												options.length > 0 && (
-													<th>
-														{ __(
-															'Min. add-ons',
-															'fair-events'
-														) }
-													</th>
+											<th>
+												{ __(
+													'Extensions',
+													'fair-events'
 												) }
+											</th>
 											{ settings.show_ticket_type_end_date && (
 												<th>
 													{ __(
@@ -1615,42 +1673,124 @@ export default function EventTickets( {
 														/>
 													</td>
 												) }
-												{ settings.show_ticket_type_minimum_activities &&
-													options.length > 0 && (
-														<td>
+												<td
+													style={ {
+														minWidth: '220px',
+													} }
+												>
+													<VStack spacing={ 2 }>
+														<CheckboxControl
+															label={ __(
+																'Enable extensions',
+																'fair-events'
+															) }
+															checked={
+																type.activities_enabled !==
+																	false &&
+																type.recurrence_scope !==
+																	'multiple_instances'
+															}
+															disabled={
+																type.recurrence_scope ===
+																'multiple_instances'
+															}
+															onChange={ (
+																value
+															) =>
+																updateTicketType(
+																	tIndex,
+																	'activities_enabled',
+																	value
+																)
+															}
+															__nextHasNoMarginBottom
+														/>
+														<HStack
+															alignment="top"
+															spacing={ 2 }
+														>
 															<TextControl
+																label={ __(
+																	'Minimum selections',
+																	'fair-events'
+																) }
 																type="number"
 																min="0"
-																placeholder="0"
+																step="1"
 																value={ String(
-																	type.minimum_activities ||
+																	type.minimum_activities ??
 																		0
 																) }
+																disabled={
+																	type.activities_enabled ===
+																		false ||
+																	type.recurrence_scope ===
+																		'multiple_instances'
+																}
 																onChange={ (
-																	v
+																	value
 																) =>
 																	updateTicketType(
 																		tIndex,
 																		'minimum_activities',
-																		v !== ''
-																			? Math.max(
-																					0,
-																					parseInt(
-																						v,
-																						10
-																					) ||
-																						0
-																			  )
-																			: 0
+																		value
 																	)
 																}
-																help={ __(
-																	'Only raises the event-wide minimum add-ons for this ticket type. Leave 0 to inherit.',
+															/>
+															<TextControl
+																label={ __(
+																	'Maximum selections',
 																	'fair-events'
 																) }
+																type="number"
+																min="0"
+																step="1"
+																placeholder={ __(
+																	'Unlimited',
+																	'fair-events'
+																) }
+																value={
+																	type.maximum_activities ??
+																	''
+																}
+																disabled={
+																	type.activities_enabled ===
+																		false ||
+																	type.recurrence_scope ===
+																		'multiple_instances'
+																}
+																onChange={ (
+																	value
+																) =>
+																	updateTicketType(
+																		tIndex,
+																		'maximum_activities',
+																		value ===
+																			''
+																			? null
+																			: value
+																	)
+																}
 															/>
-														</td>
-													) }
+														</HStack>
+														{ activityRuleErrors[
+															tIndex
+														] && (
+															<p
+																style={ {
+																	color: '#b32d2e',
+																	margin: 0,
+																} }
+															>
+																{
+																	activityRuleErrors[
+																		tIndex
+																	]
+																}
+															</p>
+														) }
+													</VStack>
+												</td>
 												{ settings.show_ticket_type_end_date && (
 													<td>
 														<TextControl
@@ -1923,10 +2063,7 @@ export default function EventTickets( {
 														? 1
 														: 0 ) +
 													( hasGroups ? 1 : 0 ) +
-													( settings.show_ticket_type_minimum_activities &&
-													options.length > 0
-														? 1
-														: 0 ) +
+													1 +
 													( settings.show_ticket_type_end_date
 														? 1
 														: 0 )
@@ -2386,26 +2523,6 @@ export default function EventTickets( {
 								) }
 								checked={ effectiveMultiple }
 								onChange={ handleToggleMultiplePeriods }
-							/>
-							<CheckboxControl
-								label={ __(
-									'Per-ticket-type minimum add-ons',
-									'fair-events'
-								) }
-								help={ __(
-									'Show a Min. add-ons input on each ticket type to require more add-ons than the event-wide minimum (it only ever raises it). When off, every ticket type uses the event-wide minimum.',
-									'fair-events'
-								) }
-								checked={
-									settings.show_ticket_type_minimum_activities
-								}
-								onChange={ ( value ) =>
-									setSettings( ( prev ) => ( {
-										...prev,
-										show_ticket_type_minimum_activities:
-											value,
-									} ) )
-								}
 							/>
 							<CheckboxControl
 								label={ __(

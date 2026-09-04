@@ -80,6 +80,71 @@ function renderTickets( extraProps = {} ) {
 	return { onSaveRef, container };
 }
 
+describe( 'EventTickets — extension selection rules (#1521)', () => {
+	it( 'renders enabled, minimum, and maximum controls for every ticket type', () => {
+		renderTickets( { initialData: initialDataWithTicketType } );
+		expect(
+			screen.getByRole( 'checkbox', { name: 'Enable extensions' } )
+		).toBeChecked();
+		expect( screen.getByLabelText( 'Minimum selections' ) ).toHaveValue(
+			0
+		);
+		expect( screen.getByLabelText( 'Maximum selections' ) ).toHaveValue(
+			null
+		);
+	} );
+
+	it( 'retains values while disabling their inputs', () => {
+		renderTickets( {
+			initialData: {
+				...initialDataWithTicketType,
+				ticket_types: [
+					{
+						...initialDataWithTicketType.ticket_types[ 0 ],
+						activities_enabled: true,
+						minimum_activities: 1,
+						maximum_activities: 2,
+					},
+				],
+				options: [ { name: 'One' }, { name: 'Two' } ],
+			},
+		} );
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Enable extensions' } )
+		);
+		expect( screen.getByLabelText( 'Minimum selections' ) ).toBeDisabled();
+		expect( screen.getByLabelText( 'Minimum selections' ) ).toHaveValue(
+			1
+		);
+		expect( screen.getByLabelText( 'Maximum selections' ) ).toHaveValue(
+			2
+		);
+	} );
+
+	it( 'prevents saving a maximum below the minimum', () => {
+		renderTickets( {
+			initialData: {
+				...initialDataWithTicketType,
+				options: [ { name: 'One' }, { name: 'Two' } ],
+			},
+		} );
+		fireEvent.change( screen.getByLabelText( 'Minimum selections' ), {
+			target: { value: '2' },
+		} );
+		fireEvent.change( screen.getByLabelText( 'Maximum selections' ), {
+			target: { value: '1' },
+		} );
+		expect(
+			screen.getByText(
+				'Maximum selections cannot be lower than minimum selections.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Save tickets' } )
+		).toBeDisabled();
+	} );
+} );
+
 describe( 'EventTickets — empty state (no ticket types) (#1199)', () => {
 	it( 'renders the full editor with zero ticket types', () => {
 		renderTickets( { initialData: emptyInitialData } );
@@ -485,7 +550,9 @@ describe( 'EventTickets — disable/enable when has_sales', () => {
 		expect(
 			screen.queryByRole( 'button', { name: /Remove/i } )
 		).not.toBeInTheDocument();
-		expect( screen.getByRole( 'checkbox' ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'checkbox', { name: 'Enabled' } )
+		).toBeInTheDocument();
 	} );
 
 	it( 'shows disabled label when ticket type is disabled', () => {
@@ -515,7 +582,7 @@ describe( 'EventTickets — disable/enable when has_sales', () => {
 		const { onSaveRef } = renderTickets( {
 			initialData: initialDataWithSoldTicketType,
 		} );
-		const toggle = screen.getByRole( 'checkbox' );
+		const toggle = screen.getByRole( 'checkbox', { name: 'Enabled' } );
 		fireEvent.click( toggle );
 
 		let savedPayload = null;

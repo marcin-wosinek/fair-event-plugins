@@ -314,6 +314,10 @@ class Installer {
 			self::migrate_to_3_31_0();
 		}
 
+		if ( version_compare( $current_version, '3.32.0', '<' ) ) {
+			self::migrate_to_3_32_0();
+		}
+
 		// Update database version.
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -508,6 +512,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.31.0', '<' ) ) {
 				self::migrate_to_3_31_0();
+			}
+
+			if ( version_compare( $current_version, '3.32.0', '<' ) ) {
+				self::migrate_to_3_32_0();
 			}
 
 			// Install/update tables.
@@ -2233,6 +2241,54 @@ class Installer {
 				'generated',
 				'active',
 				'cancelled'
+			)
+		);
+	}
+
+	/**
+	 * Migrate to version 3.32.0 - Add per-ticket activity selection rules.
+	 *
+	 * Existing rows materialize their previous effective minimum (the larger
+	 * of the type and event-date values), remain enabled, and have no maximum.
+	 * Multiple-instance types remain activity-disabled.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_32_0() {
+		global $wpdb;
+
+		$types_table    = $wpdb->prefix . 'fair_events_ticket_types';
+		$settings_table = $wpdb->prefix . 'fair_events_event_date_settings';
+
+		if ( ! self::column_exists( $types_table, 'activities_enabled' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN activities_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER capacity',
+					$types_table
+				)
+			);
+		}
+
+		if ( ! self::column_exists( $types_table, 'maximum_activities' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN maximum_activities INT UNSIGNED DEFAULT NULL AFTER minimum_activities',
+					$types_table
+				)
+			);
+		}
+
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i AS tt
+				LEFT JOIN %i AS s ON s.event_date_id = tt.event_date_id AND s.setting_key = %s
+				SET tt.minimum_activities = GREATEST(tt.minimum_activities, CAST(COALESCE(s.setting_value, '0') AS UNSIGNED)),
+					tt.activities_enabled = CASE WHEN tt.recurrence_scope = %s THEN 0 ELSE 1 END,
+					tt.maximum_activities = NULL",
+				$types_table,
+				$settings_table,
+				'minimum_activities',
+				'multiple_instances'
 			)
 		);
 	}

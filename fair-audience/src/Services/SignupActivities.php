@@ -22,6 +22,27 @@ defined( 'WPINC' ) || die;
  * is inactive.
  */
 class SignupActivities {
+	/**
+	 * Resolve the complete activity rule for a selected ticket type.
+	 *
+	 * @param int         $global_min  Type-less event minimum.
+	 * @param object|null $ticket_type Selected ticket type, if any.
+	 * @return array{enabled: bool, minimum: int, maximum: int|null}
+	 */
+	public static function selection_rule( $global_min, $ticket_type = null ) {
+		if ( ! $ticket_type ) {
+			return array(
+				'enabled' => true,
+				'minimum' => max( 0, (int) $global_min ),
+				'maximum' => null,
+			);
+		}
+		return array(
+			'enabled' => ! empty( $ticket_type->activities_enabled ) && 'multiple_instances' !== ( $ticket_type->recurrence_scope ?? '' ),
+			'minimum' => max( 0, (int) ( $ticket_type->minimum_activities ?? 0 ) ),
+			'maximum' => isset( $ticket_type->maximum_activities ) ? max( 0, (int) $ticket_type->maximum_activities ) : null,
+		);
+	}
 
 	/**
 	 * Compute the effective minimum number of activities a buyer must select:
@@ -163,8 +184,8 @@ class SignupActivities {
 	}
 
 	/**
-	 * Resolve the effective minimum for a signup request: the event-date
-	 * global setting, possibly raised by the given ticket type.
+	 * Resolve the effective minimum for a signup request. A selected ticket
+	 * type is authoritative; the event-date value is only the type-less fallback.
 	 *
 	 * @param int $pricing_event_date_id Event date the activity catalogue/settings belong to.
 	 * @param int $ticket_type_id        Selected ticket type ID, or 0 for none.
@@ -172,19 +193,19 @@ class SignupActivities {
 	 * @return int Effective minimum.
 	 */
 	public static function effective_minimum_for_selection( $pricing_event_date_id, $ticket_type_id, $option_count ) {
+		unset( $option_count ); // Retained for backward-compatible callers of this public helper.
 		$global_min = class_exists( \FairEvents\Models\EventDateSetting::class )
 			? (int) \FairEvents\Models\EventDateSetting::get( $pricing_event_date_id, 'minimum_activities' )
 			: 0;
 
-		$type_min = 0;
 		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
 			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 			if ( $ticket_type ) {
-				$type_min = (int) $ticket_type->minimum_activities;
+				return (int) $ticket_type->minimum_activities;
 			}
 		}
 
-		return self::effective_minimum( $option_count, $global_min, $type_min );
+		return (int) $global_min;
 	}
 
 	/**
@@ -217,7 +238,50 @@ class SignupActivities {
 			$available_by_id[ (int) $option->id ] = $option;
 		}
 
-		$repository = new EventParticipantRepository();
+		$repository       = new EventParticipantRepository();
+		$selectable_count = 0;
+		foreach ( $available as $option ) {
+			if ( ! self::is_full( $option, $repository ) ) {
+				++$selectable_count;
+			}
+		}
+
+		$ticket_type = $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class )
+			? \FairEvents\Models\TicketType::get_by_id( $ticket_type_id )
+			: null;
+		$global_min  = class_exists( \FairEvents\Models\EventDateSetting::class )
+			? (int) \FairEvents\Models\EventDateSetting::get( $pricing_event_date_id, 'minimum_activities' )
+			: 0;
+		$rule        = self::selection_rule( $global_min, $ticket_type );
+		$enabled     = $rule['enabled'];
+		$minimum     = $rule['minimum'];
+		$maximum     = $rule['maximum'];
+
+		if ( ! $enabled && ! empty( $ticket_option_ids ) ) {
+			return new WP_Error(
+				'activities_disabled',
+				__( 'Extensions are not available for the selected ticket type.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+		if ( $enabled && $minimum > $selectable_count ) {
+			return new WP_Error(
+				'activity_minimum_unavailable',
+				__( 'Signup is unavailable because too few extensions can currently be selected.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+		if ( $enabled && null !== $maximum && count( $ticket_option_ids ) > $maximum ) {
+			return new WP_Error(
+				'maximum_activities_exceeded',
+				sprintf(
+					/* translators: %d: maximum number of extensions allowed */
+					_n( 'Please select no more than %d extension.', 'Please select no more than %d extensions.', $maximum, 'fair-audience' ),
+					$maximum
+				),
+				array( 'status' => 400 )
+			);
+		}
 
 		foreach ( $ticket_option_ids as $option_id ) {
 			$option = $available_by_id[ (int) $option_id ] ?? null;
@@ -241,8 +305,7 @@ class SignupActivities {
 			}
 		}
 
-		$minimum = self::effective_minimum_for_selection( $pricing_event_date_id, $ticket_type_id, count( $available ) );
-		if ( count( $ticket_option_ids ) < $minimum ) {
+		if ( $enabled && count( $ticket_option_ids ) < $minimum ) {
 			return new WP_Error(
 				'minimum_activities_not_met',
 				sprintf(

@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.31.0';
+	const DB_VERSION = '3.32.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -257,7 +257,9 @@ class Schema {
 			event_date_id BIGINT UNSIGNED NOT NULL,
 			name VARCHAR(255) NOT NULL,
 			capacity INT UNSIGNED DEFAULT NULL,
+			activities_enabled TINYINT(1) NOT NULL DEFAULT 1,
 			minimum_activities INT UNSIGNED NOT NULL DEFAULT 0,
+			maximum_activities INT UNSIGNED DEFAULT NULL,
 			disable_at DATETIME DEFAULT NULL,
 			recurrence_scope ENUM('single_instance','whole_series','multiple_instances') NOT NULL DEFAULT 'single_instance',
 			minimum_instances INT UNSIGNED NOT NULL DEFAULT 0,

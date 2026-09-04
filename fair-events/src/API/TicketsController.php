@@ -142,7 +142,11 @@ class TicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$body = $request->get_json_params();
+		$body        = $request->get_json_params();
+		$rules_error = $this->validate_activity_rules( $body['ticket_types'] ?? array(), $body['options'] ?? array() );
+		if ( is_wp_error( $rules_error ) ) {
+			return $rules_error;
+		}
 
 		// 1. Update capacity on event_dates row.
 		$event_date_updates = array();
@@ -300,6 +304,10 @@ class TicketsController extends WP_REST_Controller {
 				array( 'status' => 400 )
 			);
 		}
+		$rules_error = $this->validate_activity_rules( $body['ticket_types'] ?? array(), $body['options'] ?? array() );
+		if ( is_wp_error( $rules_error ) ) {
+			return $rules_error;
+		}
 
 		// 1. Update capacity on event_dates row.
 		$event_date_updates = array();
@@ -344,8 +352,12 @@ class TicketsController extends WP_REST_Controller {
 				? $item['recurrence_scope']
 				: 'single_instance';
 			$minimum_instances  = isset( $item['minimum_instances'] ) ? absint( $item['minimum_instances'] ) : 0;
+			$activities_enabled = ( ! array_key_exists( 'activities_enabled', $item ) || ! empty( $item['activities_enabled'] ) ) && 'multiple_instances' !== $recurrence_scope;
+			$maximum_activities = array_key_exists( 'maximum_activities', $item ) && null !== $item['maximum_activities'] && '' !== $item['maximum_activities']
+				? absint( $item['maximum_activities'] )
+				: null;
 
-			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
+			$new_id = TicketType::create( $event_date_id, $name, $capacity, $index, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances, $activities_enabled, $maximum_activities );
 			if ( $new_id ) {
 				$type_ids_by_index[ $index ] = (int) $new_id;
 
@@ -517,6 +529,10 @@ class TicketsController extends WP_REST_Controller {
 				? $item['recurrence_scope']
 				: 'single_instance';
 			$minimum_instances  = isset( $item['minimum_instances'] ) ? absint( $item['minimum_instances'] ) : 0;
+			$activities_enabled = ( ! array_key_exists( 'activities_enabled', $item ) || ! empty( $item['activities_enabled'] ) ) && 'multiple_instances' !== $recurrence_scope;
+			$maximum_activities = array_key_exists( 'maximum_activities', $item ) && null !== $item['maximum_activities'] && '' !== $item['maximum_activities']
+				? absint( $item['maximum_activities'] )
+				: null;
 			$sort_order         = $index;
 			$group_ids          = isset( $item['group_ids'] ) && is_array( $item['group_ids'] )
 				? array_values( array_unique( array_filter( array_map( 'absint', $item['group_ids'] ) ) ) )
@@ -531,6 +547,8 @@ class TicketsController extends WP_REST_Controller {
 					'name'               => $name,
 					'capacity'           => $capacity,
 					'minimum_activities' => $minimum_activities,
+					'activities_enabled' => $activities_enabled,
+					'maximum_activities' => $maximum_activities,
 					'minimum_instances'  => $minimum_instances,
 					'disable_at'         => $disable_at,
 					'disabled'           => ! empty( $item['disabled'] ),
@@ -542,7 +560,7 @@ class TicketsController extends WP_REST_Controller {
 				TicketType::update( (int) $item['id'], $update );
 				TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 			} else {
-				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances );
+				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances, $activities_enabled, $maximum_activities );
 				$id_map[ $index ] = (int) $new_id;
 				if ( $new_id ) {
 					TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );
@@ -550,6 +568,47 @@ class TicketsController extends WP_REST_Controller {
 			}
 		}
 		return $id_map;
+	}
+
+	/**
+	 * Validate per-ticket activity selection rules before mutating storage.
+	 *
+	 * @param array $ticket_types Incoming ticket types.
+	 * @param array $options      Incoming configured activities.
+	 * @return true|WP_Error True when valid, otherwise a REST error.
+	 */
+	private function validate_activity_rules( $ticket_types, $options ) {
+		$option_count = is_array( $options ) ? count( array_filter( $options, fn( $option ) => ! empty( $option['name'] ) ) ) : 0;
+		foreach ( (array) $ticket_types as $item ) {
+			if ( ( array_key_exists( 'activities_enabled', $item ) && empty( $item['activities_enabled'] ) ) || 'multiple_instances' === ( $item['recurrence_scope'] ?? '' ) ) {
+				continue;
+			}
+			$minimum     = $this->parse_non_negative_integer( $item['minimum_activities'] ?? 0 );
+			$has_maximum = array_key_exists( 'maximum_activities', $item ) && null !== $item['maximum_activities'] && '' !== $item['maximum_activities'];
+			$maximum     = $has_maximum
+				? $this->parse_non_negative_integer( $item['maximum_activities'] )
+				: null;
+			if ( null === $minimum || ( $has_maximum && null === $maximum ) ) {
+				return new WP_Error( 'rest_invalid_activity_rules', __( 'Minimum and maximum selections must be whole numbers of zero or more.', 'fair-events' ), array( 'status' => 400 ) );
+			}
+			if ( null !== $maximum && $maximum < $minimum ) {
+				return new WP_Error( 'rest_invalid_activity_rules', __( 'Maximum selections cannot be lower than minimum selections.', 'fair-events' ), array( 'status' => 400 ) );
+			}
+			if ( $minimum > $option_count ) {
+				return new WP_Error( 'rest_invalid_activity_rules', __( 'Minimum selections cannot exceed the number of configured extensions.', 'fair-events' ), array( 'status' => 400 ) );
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Parse a non-negative whole number.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return int|null Parsed integer, or null when invalid.
+	 */
+	private function parse_non_negative_integer( $value ) {
+		return is_numeric( $value ) && (float) (int) $value === (float) $value && 0 <= (int) $value ? (int) $value : null;
 	}
 
 	/**

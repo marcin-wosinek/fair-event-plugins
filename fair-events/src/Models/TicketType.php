@@ -45,14 +45,25 @@ class TicketType {
 	public $capacity;
 
 	/**
-	 * Minimum activities this ticket type requires (0 = inherit event-date global).
+	 * Whether activity selection is available for this type.
 	 *
-	 * Only ever raises the event-date-wide minimum; a value below the global is
-	 * ignored at enforcement time.
+	 * @var bool
+	 */
+	public $activities_enabled = true;
+
+	/**
+	 * Minimum activities this ticket type requires.
 	 *
 	 * @var int
 	 */
 	public $minimum_activities = 0;
+
+	/**
+	 * Maximum activities this type permits (null = unlimited).
+	 *
+	 * @var int|null
+	 */
+	public $maximum_activities;
 
 	/**
 	 * Date/time after which this ticket type is no longer available (null = no end date)
@@ -182,20 +193,25 @@ class TicketType {
 	 * @param string      $name               Name.
 	 * @param int|null    $capacity           Capacity (null = no limit).
 	 * @param int         $sort_order         Sort order.
-	 * @param int         $minimum_activities Minimum activities this type requires (0 = inherit global).
+	 * @param int         $minimum_activities Minimum activities this type requires.
 	 * @param string|null $disable_at         Date/time after which this ticket type is unavailable (null = no end date).
 	 * @param string      $recurrence_scope   'single_instance', 'whole_series', or 'multiple_instances'.
 	 * @param bool        $disabled           Whether this ticket type is manually disabled.
 	 * @param int         $minimum_instances  Minimum occurrences a buyer must choose when scope is 'multiple_instances'.
+	 * @param bool        $activities_enabled Whether activity selection is enabled.
+	 * @param int|null    $maximum_activities Maximum activities (null = unlimited).
 	 * @return int|false The ticket type ID on success, false on failure.
 	 */
-	public static function create( $event_date_id, $name, $capacity, $sort_order, $minimum_activities = 0, $disable_at = null, $recurrence_scope = 'single_instance', $disabled = false, $minimum_instances = 0 ) {
+	public static function create( $event_date_id, $name, $capacity, $sort_order, $minimum_activities = 0, $disable_at = null, $recurrence_scope = 'single_instance', $disabled = false, $minimum_instances = 0, $activities_enabled = true, $maximum_activities = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
 
 		if ( ! in_array( $recurrence_scope, self::RECURRENCE_SCOPES, true ) ) {
 			$recurrence_scope = 'single_instance';
+		}
+		if ( 'multiple_instances' === $recurrence_scope ) {
+			$activities_enabled = false;
 		}
 
 		$result = $wpdb->insert(
@@ -204,14 +220,16 @@ class TicketType {
 				'event_date_id'      => $event_date_id,
 				'name'               => $name,
 				'capacity'           => $capacity,
+				'activities_enabled' => $activities_enabled ? 1 : 0,
 				'minimum_activities' => max( 0, (int) $minimum_activities ),
+				'maximum_activities' => null === $maximum_activities ? null : max( 0, (int) $maximum_activities ),
 				'disable_at'         => $disable_at,
 				'recurrence_scope'   => $recurrence_scope,
 				'minimum_instances'  => max( 0, (int) $minimum_instances ),
 				'disabled'           => $disabled ? 1 : 0,
 				'sort_order'         => $sort_order,
 			),
-			array( '%d', '%s', '%d', '%d', '%s', '%s', '%d', '%d', '%d' )
+			array( '%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%d' )
 		);
 
 		if ( $result ) {
@@ -248,6 +266,16 @@ class TicketType {
 
 		if ( array_key_exists( 'minimum_activities', $data ) ) {
 			$update_data['minimum_activities'] = max( 0, (int) $data['minimum_activities'] );
+			$update_format[]                   = '%d';
+		}
+
+		if ( array_key_exists( 'activities_enabled', $data ) ) {
+			$update_data['activities_enabled'] = $data['activities_enabled'] ? 1 : 0;
+			$update_format[]                   = '%d';
+		}
+
+		if ( array_key_exists( 'maximum_activities', $data ) ) {
+			$update_data['maximum_activities'] = null === $data['maximum_activities'] ? null : max( 0, (int) $data['maximum_activities'] );
 			$update_format[]                   = '%d';
 		}
 
@@ -346,7 +374,9 @@ class TicketType {
 		$item->event_date_id      = (int) $row->event_date_id;
 		$item->name               = $row->name;
 		$item->capacity           = null !== $row->capacity ? (int) $row->capacity : null;
+		$item->activities_enabled = ! isset( $row->activities_enabled ) || ! empty( $row->activities_enabled );
 		$item->minimum_activities = isset( $row->minimum_activities ) ? (int) $row->minimum_activities : 0;
+		$item->maximum_activities = isset( $row->maximum_activities ) ? (int) $row->maximum_activities : null;
 		$item->disable_at         = $row->disable_at ?? null;
 		$raw_scope                = $row->recurrence_scope ?? 'single_instance';
 		$item->recurrence_scope   = in_array( $raw_scope, self::RECURRENCE_SCOPES, true ) ? $raw_scope : 'single_instance';
@@ -388,7 +418,9 @@ class TicketType {
 			'event_date_id'      => $this->event_date_id,
 			'name'               => $this->name,
 			'capacity'           => $this->capacity,
+			'activities_enabled' => (bool) $this->activities_enabled,
 			'minimum_activities' => $this->minimum_activities,
+			'maximum_activities' => $this->maximum_activities,
 			'disable_at'         => $this->disable_at,
 			'recurrence_scope'   => $this->recurrence_scope,
 			'minimum_instances'  => $this->minimum_instances,

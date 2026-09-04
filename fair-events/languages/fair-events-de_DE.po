@@ -15,7 +15,7 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: fair-events.php
-#: src/Core/Plugin.php:102
+#: src/Core/Plugin.php:104
 #: src/Patterns/Patterns.php:35
 msgid "Fair Events"
 msgstr "Fair Events"
@@ -382,7 +382,7 @@ msgstr "Titel"
 #: src/Admin/calendar/components/QuickEventModal.js:584
 #: src/Admin/manage-event/EditInstancesModal.js:75
 #: src/Admin/manage-event/EventSignups.js:372
-#: src/Admin/manage-event/EventTickets.js:2453
+#: src/Admin/manage-event/EventTickets.js:2498
 #: src/Admin/manage-event/ManageEventApp.js:1242
 #: src/Admin/manage-event/ManageEventApp.js:1252
 #: src/Admin/manage-event/ManageEventApp.js:1262
@@ -491,9 +491,9 @@ msgstr "Diese Quelle ist deaktiviert."
 msgid "Date & Time"
 msgstr "Datum & Zeit"
 
-#: src/Admin/manage-event/EventTickets.js:1237
-#: src/Admin/manage-event/EventTickets.js:1906
-#: src/Admin/manage-event/EventTickets.js:2315
+#: src/Admin/manage-event/EventTickets.js:1266
+#: src/Admin/manage-event/EventTickets.js:1991
+#: src/Admin/manage-event/EventTickets.js:2381
 #: src/Admin/manage-event/PhotoDetail.js:183
 #: src/Admin/settings/OrganizerTab.js:319
 #: src/Admin/settings/OrganizerTab.js:439
@@ -502,9 +502,9 @@ msgstr "Entfernen"
 
 #: src/Admin/all-events/AllEvents.js:85
 #: src/Admin/manage-event/EventSignups.js:142
-#: src/Admin/manage-event/EventTickets.js:1075
-#: src/Admin/manage-event/EventTickets.js:2022
-#: src/Admin/manage-event/EventTickets.js:2070
+#: src/Admin/manage-event/EventTickets.js:1104
+#: src/Admin/manage-event/EventTickets.js:2101
+#: src/Admin/manage-event/EventTickets.js:2141
 #: src/Admin/settings/OrganizerTab.js:212
 #: src/Admin/venues/VenuesApp.js:507
 #: src/Admin/venues/VenuesApp.js:598
@@ -830,7 +830,7 @@ msgstr "Fehler beim Erstellen des Ereignisdatums."
 #: src/API/GetTicketsController.php:651
 #: src/API/TicketsController.php:119
 #: src/API/TicketsController.php:140
-#: src/API/TicketsController.php:290
+#: src/API/TicketsController.php:294
 msgid "Event date not found."
 msgstr "Ereignisdatum nicht gefunden."
 
@@ -970,7 +970,7 @@ msgstr "Startdatum"
 #: src/Admin/calendar/components/QuickEventModal.js:367
 #: src/Admin/calendar/components/QuickEventModal.js:403
 #: src/Admin/event-meta-box/EventEditForm.js:372
-#: src/Admin/manage-event/EventTickets.js:1437
+#: src/Admin/manage-event/EventTickets.js:1453
 #: src/Admin/manage-event/ManageEventApp.js:816
 #: src/Admin/manage-event/ManageEventApp.js:849
 #: ../fair-events-shared/src/RecurrenceControl.js:79
@@ -1440,7 +1440,7 @@ msgstr "Datum zum Umschalten (Format Y-m-d)."
 msgid "Request context. Use \"edit\" to include events linked to non-published posts (requires edit_posts capability)."
 msgstr "Anfragekontexte. Verwenden Sie \"edit\", um Ereignisse einzubeziehen, die mit unveröffentlichten Beiträgen verknüpft sind (erfordert edit_posts-Berechtigung)."
 
-#: src/Admin/manage-event/EventTickets.js:1349
+#: src/Admin/manage-event/EventTickets.js:1368
 #: src/Admin/manage-event/ManageEventApp.js:635
 msgid "Tickets"
 msgstr "Tickets"
@@ -1525,65 +1525,66 @@ msgstr "Neue Fotos hinzufügen"
 msgid "Failed to load tickets."
 msgstr "Fehler beim Laden von Tickets."
 
-#: src/Admin/manage-event/EventTickets.js:875
+#: src/Admin/manage-event/EventTickets.js:912
 msgid "Tickets saved successfully."
 msgstr "Tickets erfolgreich gespeichert."
 
-#: src/Admin/manage-event/EventTickets.js:878
+#: src/Admin/manage-event/EventTickets.js:915
 msgid "Failed to save tickets."
 msgstr "Fehler beim Speichern von Tickets."
 
 #: src/Admin/manage-event/EventSignups.js:144
-#: src/Admin/manage-event/EventTickets.js:1405
+#: src/Admin/manage-event/EventTickets.js:1424
 msgid "Ticket Type"
 msgstr "Tickettyp"
 
-#: src/Admin/manage-event/EventTickets.js:1484
+#: src/Admin/manage-event/EventTickets.js:1495
 msgid "(unnamed)"
 msgstr "(unbenannt)"
 
-#: src/Admin/manage-event/EventTickets.js:1389
+#: src/Admin/manage-event/EventTickets.js:1408
 msgid "Total capacity"
 msgstr "Gesamtkapazität"
 
-#: src/Admin/manage-event/EventTickets.js:1394
+#: src/Admin/manage-event/EventTickets.js:1413
 msgid "Leave empty for unlimited capacity."
 msgstr "Lassen Sie das Feld leer für unbegrenzte Kapazität."
 
-#: src/Admin/manage-event/EventTickets.js:1959
+#: src/Admin/manage-event/EventTickets.js:2041
 msgid "+ Add Ticket Type"
 msgstr "+ Tickettyp hinzufügen"
 
-#: src/Admin/manage-event/EventTickets.js:1412
-#: src/Admin/manage-event/EventTickets.js:2038
+#: src/Admin/manage-event/EventTickets.js:1431
+#: src/Admin/manage-event/EventTickets.js:2114
 msgid "Capacity"
 msgstr "Kapazität"
 
-#: src/Admin/manage-event/EventTickets.js:1147
+#: src/Admin/manage-event/EventTickets.js:1176
 msgid "Period name"
 msgstr "Zeitraumname"
 
-#: src/Admin/manage-event/EventTickets.js:1081
-#: src/Admin/manage-event/EventTickets.js:1271
+#: src/Admin/manage-event/EventTickets.js:1110
+#: src/Admin/manage-event/EventTickets.js:1297
 msgid "From"
 msgstr "Von"
 
-#: src/Admin/manage-event/EventTickets.js:1087
-#: src/Admin/manage-event/EventTickets.js:1290
+#: src/Admin/manage-event/EventTickets.js:1116
+#: src/Admin/manage-event/EventTickets.js:1312
 msgid "Until"
 msgstr "Bis"
 
-#: src/Admin/manage-event/EventTickets.js:1507
+#: src/Admin/manage-event/EventTickets.js:1516
 msgid "Type name"
 msgstr "Typname"
 
-#: src/Admin/manage-event/EventTickets.js:1542
-#: src/Admin/manage-event/EventTickets.js:2197
+#: src/Admin/manage-event/EventTickets.js:1549
+#: src/Admin/manage-event/EventTickets.js:1695
+#: src/Admin/manage-event/EventTickets.js:2265
 msgid "Unlimited"
 msgstr "Unbegrenzt"
 
-#: src/Admin/manage-event/EventTickets.js:1488
-#: src/Admin/manage-event/EventTickets.js:1840
+#: src/Admin/manage-event/EventTickets.js:1499
+#: src/Admin/manage-event/EventTickets.js:1925
 msgid "Price"
 msgstr "Preis"
 
@@ -1591,7 +1592,7 @@ msgstr "Preis"
 msgid "Failed to toggle occurrence."
 msgstr "Fehler beim Umschalten des Vorkommens."
 
-#: src/Admin/manage-event/EventTickets.js:1420
+#: src/Admin/manage-event/EventTickets.js:1439
 msgid "Groups"
 msgstr "Gruppen"
 
@@ -1666,55 +1667,55 @@ msgstr "Zahlungen"
 msgid "Participant"
 msgstr "Teilnehmer"
 
-#: src/Admin/manage-event/EventTickets.js:323
+#: src/Admin/manage-event/EventTickets.js:321
 msgid "Failed to export ticket configuration."
 msgstr "Fehler beim Exportieren der Ticketkonfiguration."
 
-#: src/Admin/manage-event/EventTickets.js:336
+#: src/Admin/manage-event/EventTickets.js:331
 msgid "Importing will replace all current ticket types, sale periods, prices, and settings for this event. Continue?"
 msgstr "Der Import ersetzt alle aktuellen Tickettypen, Verkaufszeiträume, Preise und Einstellungen für dieses Event. Fortfahren?"
 
-#: src/Admin/manage-event/EventTickets.js:360
+#: src/Admin/manage-event/EventTickets.js:355
 msgid "Invalid file format. Expected a fair-events-tickets export."
 msgstr "Ungültiges Dateiformat. Ein fair-events-tickets-Export wird erwartet."
 
-#: src/Admin/manage-event/EventTickets.js:375
+#: src/Admin/manage-event/EventTickets.js:370
 msgid "Ticket configuration imported successfully."
 msgstr "Ticketkonfiguration erfolgreich importiert."
 
-#: src/Admin/manage-event/EventTickets.js:383
+#: src/Admin/manage-event/EventTickets.js:378
 msgid "Failed to import ticket configuration."
 msgstr "Fehler beim Importieren der Ticketkonfiguration."
 
-#: src/Admin/manage-event/EventTickets.js:1363
+#: src/Admin/manage-event/EventTickets.js:1382
 msgid "Export ticket settings"
 msgstr "Ticketeinstellungen exportieren"
 
-#: src/Admin/manage-event/EventTickets.js:1376
+#: src/Admin/manage-event/EventTickets.js:1395
 msgid "Import ticket settings"
 msgstr "Ticketeinstellungen importieren"
 
-#: src/Admin/manage-event/EventTickets.js:1611
+#: src/Admin/manage-event/EventTickets.js:1618
 msgid "All participants"
 msgstr "Alle Teilnehmer"
 
-#: src/Admin/manage-event/EventTickets.js:2362
+#: src/Admin/manage-event/EventTickets.js:2427
 msgid "Per-ticket-type capacity"
 msgstr "Kapazität pro Tickettyp"
 
-#: src/Admin/manage-event/EventTickets.js:2366
+#: src/Admin/manage-event/EventTickets.js:2431
 msgid "Show a Capacity input on each ticket type to cap how many can be sold of that type."
 msgstr "Zeige ein Kapazitätsfeld für jeden Tickettyp an, um zu begrenzen, wie viele von diesem Typ verkauft werden können."
 
-#: src/Admin/manage-event/EventTickets.js:2379
+#: src/Admin/manage-event/EventTickets.js:2444
 msgid "Multiple pricing periods"
 msgstr "Mehrere Preisphasen"
 
-#: src/Admin/manage-event/EventTickets.js:2383
+#: src/Admin/manage-event/EventTickets.js:2448
 msgid "Enable time-based pricing with multiple sale periods (e.g. early bird, regular, late). When off, a single flat price applies for the whole sale window."
 msgstr "Aktiviere zeitbasierte Preisgestaltung mit mehreren Verkaufsphasen (z. B. Early Bird, regulär, Last Minute). Wenn deaktiviert, gilt ein einheitlicher Preis für das gesamte Verkaufsfenster."
 
-#: src/Admin/manage-event/EventTickets.js:2348
+#: src/Admin/manage-event/EventTickets.js:2413
 msgid "+ Add Option"
 msgstr "+ Option hinzufügen"
 
@@ -1722,13 +1723,13 @@ msgstr "+ Option hinzufügen"
 msgid "View Entry"
 msgstr "Eintrag anzeigen"
 
-#: src/Admin/manage-event/EventTickets.js:1805
+#: src/Admin/manage-event/EventTickets.js:1890
 msgid "Available"
 msgstr "Verfügbar"
 
-#: src/Admin/manage-event/EventTickets.js:463
-#: src/Admin/manage-event/EventTickets.js:1015
-#: src/Admin/manage-event/EventTickets.js:1034
+#: src/Admin/manage-event/EventTickets.js:458
+#: src/Admin/manage-event/EventTickets.js:1051
+#: src/Admin/manage-event/EventTickets.js:1067
 msgid "—"
 msgstr "—"
 
@@ -1736,32 +1737,32 @@ msgstr "—"
 msgid "Failed Payments"
 msgstr "Fehlgeschlagene Zahlungen"
 
-#: src/Admin/manage-event/EventTickets.js:974
+#: src/Admin/manage-event/EventTickets.js:1011
 msgid "Sale Periods"
 msgstr "Verkaufszeiträume"
 
-#: src/Admin/manage-event/EventTickets.js:982
+#: src/Admin/manage-event/EventTickets.js:1019
 msgid "Sale start at:"
 msgstr "Verkauf beginnt um:"
 
-#: src/Admin/manage-event/EventTickets.js:1020
+#: src/Admin/manage-event/EventTickets.js:1056
 msgid "Sale end at:"
 msgstr "Verkauf endet um:"
 
-#: src/Admin/manage-event/EventTickets.js:1256
+#: src/Admin/manage-event/EventTickets.js:1285
 msgid "+ Add Period"
 msgstr "+ Zeitraum hinzufügen"
 
-#: src/Admin/manage-event/EventTickets.js:2106
-#: src/Admin/manage-event/EventTickets.js:2111
+#: src/Admin/manage-event/EventTickets.js:2176
+#: src/Admin/manage-event/EventTickets.js:2181
 msgid "Short name"
 msgstr "Kurzname"
 
-#: src/Admin/manage-event/EventTickets.js:2044
+#: src/Admin/manage-event/EventTickets.js:2120
 msgid "Collaborator(s)"
 msgstr "Mitarbeiter"
 
-#: src/Admin/manage-event/EventTickets.js:2291
+#: src/Admin/manage-event/EventTickets.js:2357
 msgid "Add participants"
 msgstr "Teilnehmer hinzufügen"
 
@@ -1789,7 +1790,7 @@ msgstr "Gezahlter Betrag minus Mollie- und Anwendungsgebühren."
 msgid "Net received"
 msgstr "Netto erhalten"
 
-#: src/Admin/manage-event/EventTickets.js:560
+#: src/Admin/manage-event/EventTickets.js:553
 msgid "Add sale periods first."
 msgstr "Fügen Sie zuerst Verkaufszeiträume hinzu."
 
@@ -1833,7 +1834,7 @@ msgstr "Funktionen werden geladen..."
 msgid "Toggle optional feature bundles. Bundles fixed in wp-config (FAIR_EVENTS_INTERNAL or FAIR_EVENTS_FEATURE_*) are read-only here."
 msgstr "Optionale Funktionspakete umschalten. Pakete, die in wp-config festgelegt sind (FAIR_EVENTS_INTERNAL oder FAIR_EVENTS_FEATURE_*), sind hier schreibgeschützt."
 
-#: src/Core/Plugin.php:106
+#: src/Core/Plugin.php:108
 #: src/Admin/settings/FeaturesTab.js:143
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Erzwungen durch eine wp-config-Konstante — ändern Sie sie dort."
@@ -1879,15 +1880,15 @@ msgid "Bundled translations"
 msgstr "Gebündelte Übersetzungen"
 
 #: src/Core/Features.php:186
-#: src/Core/Plugin.php:103
+#: src/Core/Plugin.php:105
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Laden Sie .mo/.json-Dateien, die mit dem Plugin geliefert werden, anstatt sich auf WordPress.org-Sprachpakete zu verlassen. Nützlich, wenn ein Gebietsschema unter der 90%-Schwelle auf translate.wordpress.org liegt oder für laufende Zeichenketten."
 
-#: src/Admin/manage-event/EventTickets.js:2411
+#: src/Admin/manage-event/EventTickets.js:2456
 msgid "Per-ticket-type end date"
 msgstr "Enddatum pro Tickettyp"
 
-#: src/Admin/manage-event/EventTickets.js:2415
+#: src/Admin/manage-event/EventTickets.js:2460
 msgid "Show a date/time input on each ticket type to stop selling it after a fixed date, regardless of remaining capacity."
 msgstr "Zeigen Sie auf jedem Tickettyp eine Datums-/Uhrzeiteingabe an, um den Verkauf nach einem festen Datum zu beenden, unabhängig von der verbleibenden Kapazität."
 
@@ -1906,7 +1907,7 @@ msgid "Powered by %s"
 msgstr "Powered by %s"
 
 #. translators: %s: currency code
-#: src/Admin/manage-event/EventTickets.js:2030
+#: src/Admin/manage-event/EventTickets.js:2106
 #, js-format
 msgid "Price (%s)"
 msgstr "Preis (%s)"
@@ -1994,7 +1995,7 @@ msgstr "Eines der ausgewählten Vorkommen ist für dieses Ticket ungültig."
 #. translators: %d: minimum number of occurrences required
 #: src/API/GetTicketsController.php:1042
 #: src/blocks/event-signup/frontend.js:744
-#: src/blocks/event-signup/frontend.js:1268
+#: src/blocks/event-signup/frontend.js:1333
 #, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
@@ -2015,7 +2016,7 @@ msgstr "Tickets für Veranstaltung #%d"
 msgid "Ticket for %s"
 msgstr "Ticket für %s"
 
-#: src/API/TicketsController.php:299
+#: src/API/TicketsController.php:303
 msgid "Invalid import payload."
 msgstr "Ungültige Importdaten."
 
@@ -2075,78 +2076,78 @@ msgstr "Ja"
 msgid "No"
 msgstr "Nein"
 
-#: src/Admin/manage-event/EventTickets.js:688
+#: src/Admin/manage-event/EventTickets.js:679
 msgid "Advance ticket"
 msgstr "Vorverkaufsticket"
 
-#: src/Admin/manage-event/EventTickets.js:694
+#: src/Admin/manage-event/EventTickets.js:685
 msgid "Day of event"
 msgstr "Veranstaltungstag"
 
-#: src/Admin/manage-event/EventTickets.js:1687
-#: src/Admin/manage-event/EventTickets.js:1719
+#: src/Admin/manage-event/EventTickets.js:1774
+#: src/Admin/manage-event/EventTickets.js:1806
 msgid "Whole series"
 msgstr "Gesamte Serie"
 
-#: src/Admin/manage-event/EventTickets.js:1693
-#: src/Admin/manage-event/EventTickets.js:1726
+#: src/Admin/manage-event/EventTickets.js:1780
+#: src/Admin/manage-event/EventTickets.js:1813
 msgid "Multiple instances"
 msgstr "Mehrere Instanzen"
 
-#: src/Admin/manage-event/EventTickets.js:1697
-#: src/Admin/manage-event/EventTickets.js:1712
+#: src/Admin/manage-event/EventTickets.js:1784
+#: src/Admin/manage-event/EventTickets.js:1799
 msgid "This instance"
 msgstr "Diese Instanz"
 
 #. translators: %s: formatted date
-#: src/Admin/manage-event/EventTickets.js:1009
+#: src/Admin/manage-event/EventTickets.js:1045
 #, js-format
 msgid "From %s"
 msgstr "Von %s"
 
 #. translators: %s: formatted date
-#: src/Admin/manage-event/EventTickets.js:1038
+#: src/Admin/manage-event/EventTickets.js:1071
 #, js-format
 msgid "until %s"
 msgstr "bis %s"
 
-#: src/Admin/manage-event/EventTickets.js:1445
+#: src/Admin/manage-event/EventTickets.js:1461
 msgid "Scope"
 msgstr "Umfang"
 
-#: src/Admin/manage-event/EventTickets.js:1530
+#: src/Admin/manage-event/EventTickets.js:1537
 msgid "Disabled — no longer on sale"
 msgstr "Deaktiviert — nicht mehr im Verkauf"
 
-#: src/Admin/manage-event/EventTickets.js:1749
+#: src/Admin/manage-event/EventTickets.js:1836
 msgid "Minimum instances"
 msgstr "Mindestanzahl von Instanzen"
 
-#: src/Admin/manage-event/EventTickets.js:1875
+#: src/Admin/manage-event/EventTickets.js:1960
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-#: src/Admin/manage-event/EventTickets.js:1879
+#: src/Admin/manage-event/EventTickets.js:1964
 msgid "Enabled"
 msgstr "Aktiviert"
 
-#: src/Admin/manage-event/EventTickets.js:2466
+#: src/Admin/manage-event/EventTickets.js:2511
 msgid "Choose ticket scope"
 msgstr "Ticketumfang wählen"
 
-#: src/Admin/manage-event/EventTickets.js:2474
+#: src/Admin/manage-event/EventTickets.js:2519
 msgid "This instance — a separate ticket is needed for each date"
 msgstr "Diese Instanz — für jedes Datum wird ein separates Ticket benötigt"
 
-#: src/Admin/manage-event/EventTickets.js:2481
+#: src/Admin/manage-event/EventTickets.js:2526
 msgid "Whole series — one purchase covers every occurrence"
 msgstr "Gesamte Serie — ein Kauf deckt jedes Vorkommen ab"
 
-#: src/Admin/manage-event/EventTickets.js:2488
+#: src/Admin/manage-event/EventTickets.js:2533
 msgid "Multiple instances — buyer picks several occurrences"
 msgstr "Mehrere Instanzen — Käufer wählt mehrere Vorkommen"
 
-#: src/Admin/manage-event/EventTickets.js:2503
+#: src/Admin/manage-event/EventTickets.js:2548
 msgid "Add ticket type"
 msgstr "Tickettyp hinzufügen"
 
@@ -2192,28 +2193,28 @@ msgstr "%d entfernt"
 msgid "Recurrence updated: %s."
 msgstr "Wiederholung aktualisiert: %s."
 
-#: src/blocks/event-signup/frontend.js:1232
+#: src/blocks/event-signup/frontend.js:1297
 msgid "Please fill in all required fields."
 msgstr "Bitte füllen Sie alle erforderlichen Felder aus."
 
-#: src/blocks/event-signup/frontend.js:1245
+#: src/blocks/event-signup/frontend.js:1310
 msgid "Please enter a valid email address."
 msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein."
 
-#: src/blocks/event-signup/frontend.js:1288
+#: src/blocks/event-signup/frontend.js:1353
 msgid "Quantity must be between 1 and 10."
 msgstr "Die Menge muss zwischen 1 und 10 liegen."
 
-#: src/blocks/event-signup/frontend.js:1413
+#: src/blocks/event-signup/frontend.js:1478
 msgid "Processing…"
 msgstr "Wird verarbeitet…"
 
-#: src/blocks/event-signup/frontend.js:1414
+#: src/blocks/event-signup/frontend.js:1479
 msgid "Failed to submit. Please try again."
 msgstr "Übermittlung fehlgeschlagen. Bitte versuchen Sie es erneut."
 
 #. translators: 1: formatted date, 2: number of days
-#: src/Admin/manage-event/EventTickets.js:998
+#: src/Admin/manage-event/EventTickets.js:1034
 #, js-format
 msgid "From %1$s (%2$d day before event)"
 msgid_plural "From %1$s (%2$d days before event)"
@@ -2221,7 +2222,7 @@ msgstr[0] "Von %1$s (%2$d Tag vor dem Event)"
 msgstr[1] "Von %1$s (%2$d Tage vor dem Event)"
 
 #. translators: %d: sale period number
-#: src/Admin/manage-event/EventTickets.js:577
+#: src/Admin/manage-event/EventTickets.js:570
 #: src/Admin/manage-event/SalePeriodsCalendar.js:41
 #, js-format
 msgid "Period %d"
@@ -2294,51 +2295,35 @@ msgstr "Tickets werden in der Serie verwaltet —"
 msgid "open the master event"
 msgstr "Hauptveranstaltung öffnen"
 
-#: src/Admin/manage-event/EventTickets.js:961
+#: src/Admin/manage-event/EventTickets.js:998
 msgid "Save tickets"
 msgstr "Tickets speichern"
 
-#: src/Admin/manage-event/EventTickets.js:1429
-msgid "Min. add-ons"
-msgstr "Min. Add-ons"
-
-#: src/Admin/manage-event/EventTickets.js:1647
-msgid "Only raises the event-wide minimum add-ons for this ticket type. Leave 0 to inherit."
-msgstr "Erhöht nur die ereignisweite Mindestanzahl von Add-ons für diesen Tickettyp. Auf 0 setzen, um zu erben."
-
-#: src/Admin/manage-event/EventTickets.js:1977
+#: src/Admin/manage-event/EventTickets.js:2059
 msgid "Add-ons"
 msgstr "Add-ons"
 
-#: src/Admin/manage-event/EventTickets.js:1982
+#: src/Admin/manage-event/EventTickets.js:2064
 msgid "Minimum number of add-ons"
 msgstr "Mindestanzahl von Add-ons"
 
-#: src/Admin/manage-event/EventTickets.js:1986
+#: src/Admin/manage-event/EventTickets.js:2068
 msgid "Participants must select at least this many add-ons to sign up. Set to 0 to disable."
 msgstr "Teilnehmer müssen mindestens diese Anzahl von Add-ons auswählen, um sich anzumelden. Auf 0 setzen, um zu deaktivieren."
 
-#: src/Admin/manage-event/EventTickets.js:2011
+#: src/Admin/manage-event/EventTickets.js:2090
 msgid "Add selectable add-ons (checkboxes) shown to participants at signup. Each add-on has its own price added on top of the base price."
 msgstr "Fügen Sie wählbare Add-ons (Kontrollkästchen) hinzu, die den Teilnehmern bei der Anmeldung angezeigt werden. Jedes Add-on hat seinen eigenen Preis, der zum Basispreis hinzukommt."
 
-#: src/Admin/manage-event/EventTickets.js:2075
+#: src/Admin/manage-event/EventTickets.js:2146
 msgid "Add-on name"
 msgstr "Add-on-Name"
 
-#: src/Admin/manage-event/EventTickets.js:2391
-msgid "Per-ticket-type minimum add-ons"
-msgstr "Pro-Tickettyp-Mindest-Add-ons"
-
-#: src/Admin/manage-event/EventTickets.js:2395
-msgid "Show a Min. add-ons input on each ticket type to require more add-ons than the event-wide minimum (it only ever raises it). When off, every ticket type uses the event-wide minimum."
-msgstr "Zeigen Sie eine Eingabe für Min. Add-ons für jeden Tickettyp an, um mehr Add-ons als das ereignisweite Minimum zu erfordern (es erhöht es nur). Wenn deaktiviert, verwendet jeder Tickettyp das ereignisweite Minimum."
-
-#: src/Admin/manage-event/EventTickets.js:2428
+#: src/Admin/manage-event/EventTickets.js:2473
 msgid "Price add-ons per sale period"
 msgstr "Add-ons pro Verkaufszeitraum preislich festlegen"
 
-#: src/Admin/manage-event/EventTickets.js:2432
+#: src/Admin/manage-event/EventTickets.js:2477
 msgid "Price every add-on per sale period instead of a single flat price. The Pricing column in the add-ons table becomes one input per sale period. Requires sale periods to be defined."
 msgstr "Legen Sie den Preis für jedes Add-on pro Verkaufszeitraum fest, anstatt einen einzigen Pauschalpreis zu verwenden. Die Spalte \"Preisgestaltung\" in der Add-ons-Tabelle wird zu einer Eingabe pro Verkaufszeitraum. Erfordert, dass Verkaufszeiträume definiert sind."
 
@@ -2407,16 +2392,16 @@ msgstr "Ungültiges Datum."
 msgid "Event source not found."
 msgstr "Ereignisquelle nicht gefunden."
 
-#: src/Admin/manage-event/EventTickets.js:936
+#: src/Admin/manage-event/EventTickets.js:973
 msgid "Set up Mollie"
 msgstr "Mollie einrichten"
 
-#: src/Admin/manage-event/EventTickets.js:1352
+#: src/Admin/manage-event/EventTickets.js:1371
 msgid "More actions"
 msgstr "Weitere Aktionen"
 
 #: src/Admin/calendar/components/QuickEventModal.js:446
-#: src/Admin/manage-event/EventTickets.js:2357
+#: src/Admin/manage-event/EventTickets.js:2422
 msgid "More options"
 msgstr "Weitere Optionen"
 
@@ -2541,12 +2526,12 @@ msgstr "Fair Events › <calendarlink>%1$s</calendarlink> › %2$s"
 msgid "View public page"
 msgstr "Öffentliche Seite anzeigen"
 
-#: src/Admin/manage-event/EventTickets.js:2452
+#: src/Admin/manage-event/EventTickets.js:2497
 msgid "Merge periods"
 msgstr "Zeiträume zusammenführen"
 
 #. translators: %d: number of sale periods being merged
-#: src/Admin/manage-event/EventTickets.js:2457
+#: src/Admin/manage-event/EventTickets.js:2502
 #, js-format
 msgid "Merge to one sale window? Prices for the other %d periods will be discarded."
 msgstr "Zu einem Verkaufsfenster zusammenführen? Preise für die anderen %d Zeiträume werden verworfen."
@@ -2735,16 +2720,16 @@ msgstr "Ticketverkäufe vorübergehend nicht verfügbar"
 msgid "Choose a date"
 msgstr "Datum wählen"
 
-#: src/Admin/manage-event/EventTickets.js:941
+#: src/Admin/manage-event/EventTickets.js:978
 msgid "Paid tickets won't be sold until Mollie payments are configured."
 msgstr "Bezahlte Tickets werden erst verkauft, wenn Mollie-Zahlungen konfiguriert sind."
 
-#: src/Admin/manage-event/EventTickets.js:948
+#: src/Admin/manage-event/EventTickets.js:985
 msgid "Paid tickets need the Fair Payments Connector plugin. Install and activate it to sell tickets."
 msgstr "Bezahlte Tickets benötigen das Fair Payments Connector Plugin. Installieren und aktivieren Sie es, um Tickets zu verkaufen."
 
 #. translators: %s: formatted date
-#: src/Admin/manage-event/EventTickets.js:1048
+#: src/Admin/manage-event/EventTickets.js:1079
 #, js-format
 msgid "until %s (default)"
 msgstr "bis %s (Standard)"
@@ -2753,7 +2738,7 @@ msgstr "bis %s (Standard)"
 msgid "Form content"
 msgstr "Formularinhalt"
 
-#: src/Admin/manage-event/EventTickets.js:1946
+#: src/Admin/manage-event/EventTickets.js:2028
 msgid "No ticket types yet. Add one to start selling tickets for this event."
 msgstr "Noch keine Tickettypen vorhanden. Fügen Sie einen hinzu, um mit dem Verkauf von Tickets für diese Veranstaltung zu beginnen."
 
@@ -2900,12 +2885,12 @@ msgstr "CSV herunterladen"
 msgid "Nothing to export — no signups match the current filter."
 msgstr "Nichts zum Exportieren — keine Anmeldungen entsprechen dem aktuellen Filter."
 
-#: src/Admin/manage-event/EventTickets.js:1219
-#: src/Admin/manage-event/EventTickets.js:1333
+#: src/Admin/manage-event/EventTickets.js:1248
+#: src/Admin/manage-event/EventTickets.js:1352
 msgid "Reset to automatic"
 msgstr "Auf automatisch zurücksetzen"
 
-#: src/Admin/manage-event/EventTickets.js:1306
+#: src/Admin/manage-event/EventTickets.js:1325
 msgid "Until the day after the last occurrence."
 msgstr "Bis zum Tag nach dem letzten Vorkommen."
 
@@ -3090,7 +3075,7 @@ msgstr "Organisator"
 
 #. translators: %s: formatted total price
 #: src/blocks/event-signup/frontend.js:763
-#: src/blocks/event-signup/frontend.js:971
+#: src/blocks/event-signup/frontend.js:1036
 #, js-format
 msgid "Total: %s"
 msgstr "Gesamt: %s"
@@ -3196,7 +3181,7 @@ msgstr "Ihre Zahlung ist fehlgeschlagen."
 msgid "Retry payment"
 msgstr "Zahlung erneut versuchen"
 
-#: src/Core/Plugin.php:97
+#: src/Core/Plugin.php:99
 msgid "Translations"
 msgstr "Übersetzungen"
 
@@ -3217,14 +3202,14 @@ msgstr "Wird weitergeleitet…"
 msgid "Could not start the retry. Please try again."
 msgstr "Wiederholung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
 
-#: src/Services/SignupFieldsetRenderer.php:177
+#: src/Services/SignupFieldsetRenderer.php:175
 msgid "Select activities"
 msgstr "Aktivitäten auswählen"
 
 #. translators: %d: minimum number of activities required
-#: src/Services/SignupFieldsetRenderer.php:183
-#: src/blocks/event-signup/frontend.js:919
-#: src/blocks/event-signup/frontend.js:1303
+#: src/Services/SignupFieldsetRenderer.php:180
+#: src/blocks/event-signup/frontend.js:945
+#: src/blocks/event-signup/frontend.js:1368
 #, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
@@ -3289,31 +3274,31 @@ msgstr "Kontakttelefon"
 msgid "Fix the invalid link(s) above before saving."
 msgstr "Bitte beheben Sie die ungültigen Link(s) oben, bevor Sie speichern."
 
-#: src/blocks/event-signup/frontend.js:1003
+#: src/blocks/event-signup/frontend.js:1068
 msgid "Add activities"
 msgstr "Aktivitäten hinzufügen"
 
-#: src/blocks/event-signup/frontend.js:1071
+#: src/blocks/event-signup/frontend.js:1136
 msgid "Adding…"
 msgstr "Wird hinzugefügt…"
 
-#: src/blocks/event-signup/frontend.js:1092
+#: src/blocks/event-signup/frontend.js:1157
 msgid "Your activities have been added!"
 msgstr "Ihre Aktivitäten wurden hinzugefügt!"
 
-#: src/blocks/event-signup/frontend.js:1108
+#: src/blocks/event-signup/frontend.js:1173
 msgid "Failed to add activities. Please try again."
 msgstr "Aktivitäten konnten nicht hinzugefügt werden. Bitte versuchen Sie es erneut."
 
-#: src/blocks/event-signup/frontend.js:1177
+#: src/blocks/event-signup/frontend.js:1242
 msgid "Cancelling…"
 msgstr "Wird abgebrochen…"
 
-#: src/blocks/event-signup/frontend.js:1188
+#: src/blocks/event-signup/frontend.js:1253
 msgid "Your signup has been cancelled."
 msgstr "Ihre Anmeldung wurde abgebrochen."
 
-#: src/blocks/event-signup/frontend.js:1198
+#: src/blocks/event-signup/frontend.js:1263
 msgid "Failed to cancel signup. Please try again."
 msgstr "Anmeldung konnte nicht abgebrochen werden. Bitte versuchen Sie es erneut."
 
@@ -3336,7 +3321,7 @@ msgstr "Dieser Tickettyp ist derzeit nicht im Verkauf."
 
 #: src/API/GetTicketsController.php:512
 #: src/API/GetTicketsController.php:1126
-#: src/blocks/event-signup/frontend.js:1430
+#: src/blocks/event-signup/frontend.js:1495
 msgid "You have successfully registered! A confirmation email is on its way."
 msgstr "Sie haben sich erfolgreich registriert! Eine Bestätigungsemail ist unterwegs."
 
@@ -3913,3 +3898,50 @@ msgstr ""
 #, php-format
 msgid "You’re seeing %s prices."
 msgstr "Du siehst die Preise für %s."
+
+#: src/API/TicketsController.php:592
+#: src/Admin/manage-event/EventTickets.js:863
+msgid "Minimum and maximum selections must be whole numbers of zero or more."
+msgstr ""
+
+#: src/API/TicketsController.php:595
+#: src/Admin/manage-event/EventTickets.js:869
+msgid "Maximum selections cannot be lower than minimum selections."
+msgstr ""
+
+#: src/API/TicketsController.php:598
+#: src/Admin/manage-event/EventTickets.js:875
+msgid "Minimum selections cannot exceed the number of configured extensions."
+msgstr ""
+
+#: src/Services/SignupFieldsetRenderer.php:196
+msgid "Signup is unavailable because too few extensions can currently be selected."
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:893
+msgid "Fix the extension selection rules before saving."
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:1446
+msgid "Extensions"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:1632
+msgid "Enable extensions"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:1660
+msgid "Minimum selections"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:1688
+msgid "Maximum selections"
+msgstr ""
+
+#. translators: %d: maximum number of activities allowed
+#: src/blocks/event-signup/frontend.js:969
+#, js-format
+msgid "You can select at most %d extension."
+msgid_plural "You can select at most %d extensions."
+msgstr[0] ""
+msgstr[1] ""
