@@ -1,5 +1,23 @@
 # fair-events
 
+## 1.16.0
+
+### Minor Changes
+
+-   faf5f85: Show the active sale period beside ticket prices when an event has multiple pricing periods.
+-   04cce70: Add per-ticket extension selection controls with authoritative minimum and maximum enforcement in the signup interface and API.
+
+### Patch Changes
+
+-   f12c183: Repair malformed recurring event dates so active occurrences return to admin and public calendars.
+-   14dd888: Interpret mailing consent as opted in only when the signup explicitly records consent.
+-   bca9fd4: Combine multi-day events into one ranged line in copied weekly summaries.
+-   41cdb3c: Replace registered attendees' recurring-date link lists with compact selectors that navigate to the correct public occurrence.
+-   d3f3bee: Make the basic event Copy flow available without Fair Events Experimental while keeping advanced Duplicate and Merge tools experimental.
+-   f45f69a: Keep the event signup cancellation button legible in every interaction state.
+-   cd96441: Let cookie-recognized visitors safely forget the remembered identity from an existing signup without cancelling it.
+-   47b9041: Persist and enforce audience-group ticket restrictions without requiring Fair Events Experimental.
+
 ## 1.15.0
 
 ### Minor Changes

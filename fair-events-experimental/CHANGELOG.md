@@ -1,5 +1,23 @@
 # fair-events-experimental
 
+## 1.6.1
+
+### Patch Changes
+
+-   d3f3bee: Make the basic event Copy flow available without Fair Events Experimental while keeping advanced Duplicate and Merge tools experimental.
+-   47b9041: Persist and enforce audience-group ticket restrictions without requiring Fair Events Experimental.
+-   Updated dependencies [f12c183]
+-   Updated dependencies [faf5f85]
+-   Updated dependencies [14dd888]
+-   Updated dependencies [04cce70]
+-   Updated dependencies [bca9fd4]
+-   Updated dependencies [41cdb3c]
+-   Updated dependencies [d3f3bee]
+-   Updated dependencies [f45f69a]
+-   Updated dependencies [cd96441]
+-   Updated dependencies [47b9041]
+    -   fair-events@1.16.0
+
 ## 1.6.0
 
 ### Minor Changes
