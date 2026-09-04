@@ -1553,14 +1553,27 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		$minimum = (int) \FairEvents\Models\EventDateSetting::get( $lookup_id, 'minimum_activities' );
+		$maximum = null;
+		$enabled = true;
 
-		// A ticket type can raise the requirement above the event-date global
-		// (issue #625). A per-type value below the global is ignored via max().
 		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
 			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
 			if ( $ticket_type ) {
-				$minimum = max( $minimum, (int) $ticket_type->minimum_activities );
+				$enabled = $ticket_type->activities_enabled && ! $ticket_type->is_multiple_instances();
+				$minimum = (int) $ticket_type->minimum_activities;
+				$maximum = $ticket_type->maximum_activities;
 			}
+		}
+
+		if ( ! $enabled ) {
+			if ( empty( $option_items ) ) {
+				return null;
+			}
+			return new WP_Error( 'activities_disabled', __( 'Extensions are not available for the selected ticket type.', 'fair-audience' ), array( 'status' => 400 ) );
+		}
+
+		if ( null !== $maximum && count( $option_items ) > $maximum ) {
+			return new WP_Error( 'maximum_activities_exceeded', __( 'Too many extensions were selected for this ticket type.', 'fair-audience' ), array( 'status' => 400 ) );
 		}
 
 		if ( $minimum <= 0 ) {

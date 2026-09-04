@@ -28,6 +28,105 @@ const adminHeaders = {
 const FAIR_EVENTS_EXPERIMENTAL_PLUGIN =
 	'fair-events-experimental/fair-events-experimental';
 
+test.describe( 'TicketsController — extension rule validation (#1521)', () => {
+	let api;
+	let eventDateId;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const eventRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Extension rules ${ Date.now() }`,
+					start_datetime: '2038-01-01 10:00:00',
+					end_datetime: '2038-01-01 12:00:00',
+				},
+			}
+		);
+		expect( eventRes.ok() ).toBeTruthy();
+		eventDateId = ( await eventRes.json() ).id;
+	} );
+
+	test.afterAll( async () => {
+		if ( eventDateId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		await api.dispose();
+	} );
+
+	const payload = ( overrides ) => ( {
+		ticket_types: [
+			{
+				name: 'Pick activities',
+				activities_enabled: true,
+				minimum_activities: 1,
+				maximum_activities: 2,
+				recurrence_scope: 'single_instance',
+				...overrides,
+			},
+		],
+		options: [ { name: 'Workshop' }, { name: 'Show' } ],
+		sale_periods: [],
+		prices: [],
+		settings: {},
+	} );
+
+	test( 'persists enabled, minimum, and nullable maximum fields', async () => {
+		const response = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{ headers: adminHeaders, data: payload( {} ) }
+		);
+		const body = await response.json();
+		expect( response.ok(), JSON.stringify( body ) ).toBeTruthy();
+		const type = body.ticket_types[ 0 ];
+		expect( type, JSON.stringify( body ) ).toBeTruthy();
+		expect( type ).toMatchObject( {
+			activities_enabled: true,
+			minimum_activities: 1,
+			maximum_activities: 2,
+		} );
+	} );
+
+	test( 'rejects maximum below minimum before changing storage', async () => {
+		const response = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: payload( {
+					minimum_activities: 2,
+					maximum_activities: 1,
+				} ),
+			}
+		);
+		expect( response.status() ).toBe( 400 );
+		expect( ( await response.json() ).code ).toBe(
+			'rest_invalid_activity_rules'
+		);
+	} );
+
+	test( 'rejects a minimum above the configured extension count', async () => {
+		const response = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets/import`,
+			{
+				headers: adminHeaders,
+				data: payload( {
+					minimum_activities: 3,
+					maximum_activities: null,
+				} ),
+			}
+		);
+		expect( response.status() ).toBe( 400 );
+		expect( ( await response.json() ).code ).toBe(
+			'rest_invalid_activity_rules'
+		);
+	} );
+} );
+
 test.describe( 'TicketsController — stable group restrictions', () => {
 	let api;
 	let eventDateId;

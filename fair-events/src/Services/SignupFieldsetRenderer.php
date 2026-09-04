@@ -121,6 +121,8 @@ class SignupFieldsetRenderer {
 							data-recurrence-scope="<?php echo esc_attr( $ticket_type->recurrence_scope ); ?>"
 							data-min-instances="<?php echo esc_attr( (string) $ticket_type->minimum_instances ); ?>"
 							data-min-activities="<?php echo esc_attr( (string) $ticket_type->minimum_activities ); ?>"
+							data-activities-enabled="<?php echo ! isset( $ticket_type->activities_enabled ) || $ticket_type->activities_enabled ? '1' : '0'; ?>"
+							data-max-activities="<?php echo esc_attr( ! isset( $ticket_type->maximum_activities ) ? '' : (string) $ticket_type->maximum_activities ); ?>"
 							<?php echo $type_unavailable ? 'disabled' : ''; ?>
 							<?php echo $type_id === $first_enabled_type_id ? 'checked' : ''; ?>
 						/>
@@ -152,31 +154,26 @@ class SignupFieldsetRenderer {
 
 		$first_enabled_type_id = self::resolve_first_enabled_type_id( $ticket_types, $price_by_type_id, $payments_unavailable );
 
-		$any_ticket_type_min = 0;
-		foreach ( $ticket_types as $tt_for_min ) {
-			$any_ticket_type_min = max( $any_ticket_type_min, (int) $tt_for_min->minimum_activities );
-		}
-
-		$preselected_type_min = 0;
+		$preselected_type = null;
 		if ( ! empty( $first_enabled_type_id ) ) {
 			foreach ( $ticket_types as $tt_preselected ) {
 				if ( (int) $tt_preselected->id === $first_enabled_type_id ) {
-					$preselected_type_min = (int) $tt_preselected->minimum_activities;
+					$preselected_type = $tt_preselected;
 					break;
 				}
 			}
 		}
 
-		$options_feature_active = ( $minimum_activities > 0 || $any_ticket_type_min > 0 );
-		$initial_min_activities = min( count( $ticket_options ), max( $minimum_activities, $preselected_type_min ) );
+		$initial_enabled        = ! $preselected_type || ( ( ! isset( $preselected_type->activities_enabled ) || $preselected_type->activities_enabled ) && 'multiple_instances' !== ( $preselected_type->recurrence_scope ?? '' ) );
+		$initial_min_activities = $preselected_type ? (int) $preselected_type->minimum_activities : (int) $minimum_activities;
+		$initial_impossible     = $initial_enabled && $initial_min_activities > count( array_filter( $ticket_options, fn( $option ) => empty( $option['is_full'] ) ) );
 
 		ob_start();
 		?>
-		<div class="form-row">
+		<div class="form-row"<?php echo $initial_enabled ? '' : ' style="display: none;"'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static literal. ?>>
 			<fieldset class="fair-events-ticket-options">
 				<legend class="form-label"><?php esc_html_e( 'Select activities', 'fair-events' ); ?></legend>
-				<?php if ( $options_feature_active ) : ?>
-					<?php
+				<?php
 					$hint_text = $initial_min_activities > 0
 						? sprintf(
 							/* translators: %d: minimum number of activities required */
@@ -190,11 +187,14 @@ class SignupFieldsetRenderer {
 						)
 						: '';
 					$hint_style = $initial_min_activities > 0 ? '' : ' style="display: none;"';
-					?>
+				?>
 					<p class="fair-events-ticket-options-min-hint"<?php echo $hint_style; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static literal. ?>>
 						<?php echo esc_html( $hint_text ); ?>
 					</p>
-				<?php endif; ?>
+				<p class="fair-events-ticket-options-max-hint" style="display: none;"></p>
+				<p class="fair-events-ticket-options-unavailable"<?php echo $initial_impossible ? '' : ' style="display: none;"'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static literal. ?>>
+					<?php esc_html_e( 'Signup is unavailable because too few extensions can currently be selected.', 'fair-events' ); ?>
+				</p>
 				<?php foreach ( $ticket_options as $opt ) : ?>
 					<?php
 					$opt_label   = $opt['name'];

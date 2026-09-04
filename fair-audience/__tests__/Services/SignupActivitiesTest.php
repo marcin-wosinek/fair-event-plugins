@@ -17,6 +17,36 @@ use FairAudience\Services\SignupActivities;
  * `discount_value`) are used instead of the concrete experimental class.
  */
 class SignupActivitiesTest extends TestCase {
+	/** Ticket-specific values replace the global fallback. */
+	public function test_ticket_rule_is_authoritative_and_preserves_unlimited_maximum() {
+		$type                     = new \stdClass();
+		$type->activities_enabled = true;
+		$type->recurrence_scope   = 'single_instance';
+		$type->minimum_activities = 1;
+		$type->maximum_activities = null;
+		$this->assertSame(
+			array(
+				'enabled' => true,
+				'minimum' => 1,
+				'maximum' => null,
+			),
+			SignupActivities::selection_rule( 3, $type )
+		);
+	}
+
+	/** Disabled and multi-instance types never allow activity selection. */
+	public function test_disabled_and_multiple_instance_types_disable_activities() {
+		$type                     = new \stdClass();
+		$type->activities_enabled = false;
+		$type->recurrence_scope   = 'single_instance';
+		$type->minimum_activities = 2;
+		$type->maximum_activities = 4;
+		$this->assertFalse( SignupActivities::selection_rule( 0, $type )['enabled'] );
+
+		$type->activities_enabled = true;
+		$type->recurrence_scope   = 'multiple_instances';
+		$this->assertFalse( SignupActivities::selection_rule( 0, $type )['enabled'] );
+	}
 
 	/**
 	 * Build a discount rule stub.
