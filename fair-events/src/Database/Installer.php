@@ -318,6 +318,10 @@ class Installer {
 			self::migrate_to_3_32_0();
 		}
 
+		if ( version_compare( $current_version, '3.33.0', '<' ) ) {
+			self::migrate_to_3_33_0();
+		}
+
 		// Update database version.
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -516,6 +520,10 @@ class Installer {
 
 			if ( version_compare( $current_version, '3.32.0', '<' ) ) {
 				self::migrate_to_3_32_0();
+			}
+
+			if ( version_compare( $current_version, '3.33.0', '<' ) ) {
+				self::migrate_to_3_33_0();
 			}
 
 			// Install/update tables.
@@ -2289,6 +2297,28 @@ class Installer {
 				$settings_table,
 				'minimum_activities',
 				'multiple_instances'
+			)
+		);
+	}
+
+	/**
+	 * Migrate to version 3.33.0 - Clear unreliable capacity warnings.
+	 *
+	 * Every existing warning was produced by the confirmation reconciliation
+	 * introduced in 3.29.0, before active reservations were distinguished from
+	 * late payments. Historical capacity cannot be reconstructed reliably.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_33_0() {
+		global $wpdb;
+
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET over_capacity = %d WHERE over_capacity = %d',
+				$wpdb->prefix . 'fair_events_signups',
+				0,
+				1
 			)
 		);
 	}
