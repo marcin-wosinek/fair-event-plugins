@@ -2266,9 +2266,11 @@ class EmailService {
 			if ( $event_date ) {
 				$event_url = (string) $event_date->get_display_url();
 
-				$timestamp = strtotime( $event_date->start_datetime );
-				if ( false !== $timestamp ) {
-					$event_date_display = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
+				if ( method_exists( \FairEvents\Helpers\DateHelper::class, 'format_local_datetime' ) ) {
+					$event_date_display = \FairEvents\Helpers\DateHelper::format_local_datetime(
+						$event_date->start_datetime,
+						get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
+					);
 				}
 			}
 		}

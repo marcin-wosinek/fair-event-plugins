@@ -7,6 +7,7 @@
 
 namespace FairEvents\Services;
 
+use FairEvents\Helpers\DateHelper;
 use FairEventsShared\Money;
 use FairEventsShared\Notifications\SignupConfirmationEmail;
 
@@ -45,10 +46,10 @@ class EmailService {
 
 			$event_url = (string) $event_date->get_display_url();
 
-			$timestamp = strtotime( $event_date->start_datetime );
-			if ( false !== $timestamp ) {
-				$event_date_display = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
-			}
+			$event_date_display = DateHelper::format_local_datetime(
+				$event_date->start_datetime,
+				get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
+			);
 		}
 
 		$ticket_type_name = '';
@@ -134,10 +135,10 @@ class EmailService {
 				$inline_link_url = $display_url;
 			}
 
-			$timestamp = strtotime( $event_date->start_datetime );
-			if ( false !== $timestamp ) {
-				$event_date_display = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
-			}
+			$event_date_display = DateHelper::format_local_datetime(
+				$event_date->start_datetime,
+				get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
+			);
 		}
 
 		$ticket_type_name = '';
