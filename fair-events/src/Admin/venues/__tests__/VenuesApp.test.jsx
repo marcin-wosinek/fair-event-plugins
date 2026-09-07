@@ -2,7 +2,13 @@
  * @jest-environment jsdom
  */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import {
+	render,
+	screen,
+	waitFor,
+	fireEvent,
+	act,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import VenuesApp from '../VenuesApp.js';
 
@@ -62,7 +68,7 @@ test( 'filling only latitude shows an inline error and disables save', async () 
 
 	expect(
 		screen.getAllByText( /Enter both latitude and longitude/i )
-	).toHaveLength( 2 );
+	).toHaveLength( 3 );
 	expect( saveButton() ).toBeDisabled();
 } );
 
@@ -81,7 +87,7 @@ test( 'an out-of-range latitude shows an inline error and disables save', async 
 
 	expect(
 		screen.getAllByText( /Latitude must be between -90 and 90/i )
-	).toHaveLength( 2 );
+	).toHaveLength( 3 );
 	expect( saveButton() ).toBeDisabled();
 } );
 
@@ -98,7 +104,7 @@ test( 'a non-numeric coordinate shows an inline error and disables save', async 
 		target: { value: '0' },
 	} );
 
-	expect( screen.getAllByText( /must be numbers/i ) ).toHaveLength( 2 );
+	expect( screen.getAllByText( /must be numbers/i ) ).toHaveLength( 3 );
 	expect( saveButton() ).toBeDisabled();
 } );
 
@@ -145,9 +151,164 @@ test( 'opening a venue with pre-existing invalid coordinates shows the error imm
 	await waitFor( () =>
 		expect(
 			screen.getAllByText( /Latitude must be between -90 and 90/i )
-		).toHaveLength( 2 )
+		).toHaveLength( 3 )
 	);
 	expect(
 		screen.getByRole( 'button', { name: /Update Venue/i } )
 	).toBeDisabled();
+} );
+
+test( 'renders usable venue map URLs as accessible secure new-tab links', async () => {
+	apiFetch.mockResolvedValue( [
+		{
+			...existingVenue,
+			name: 'Coordinate Venue',
+			maps_url: 'https://www.google.com/maps/search/?api=1&query=0%2C0',
+		},
+		{
+			...existingVenue,
+			id: 2,
+			name: 'Address Venue',
+			maps_url:
+				'https://www.google.com/maps/search/?api=1&query=Gran%20Via',
+		},
+		{ ...existingVenue, id: 3, name: 'No Map Venue', maps_url: null },
+	] );
+
+	render( <VenuesApp /> );
+
+	const coordinateLink = await screen.findByRole( 'link', {
+		name: /Coordinate Venue.*opens in a new tab/i,
+	} );
+	expect( coordinateLink ).toHaveAttribute( 'target', '_blank' );
+	expect( coordinateLink ).toHaveAttribute( 'rel', 'noopener noreferrer' );
+	expect(
+		screen.getByRole( 'link', { name: /Address Venue.*new tab/i } )
+	).toHaveAttribute( 'href', expect.stringContaining( 'Gran%20Via' ) );
+	expect(
+		screen.queryByRole( 'link', { name: /No Map Venue/i } )
+	).not.toBeInTheDocument();
+} );
+
+test( 'updates the preview from unsaved values and gives coordinates precedence', async () => {
+	apiFetch.mockImplementation( ( options ) => {
+		if ( options.path === '/fair-events/v1/venues/maps-url' ) {
+			const query = options.data.latitude
+				? `${ options.data.latitude }%2C${ options.data.longitude }`
+				: encodeURIComponent( options.data.address );
+			return Promise.resolve( {
+				maps_url: `https://www.google.com/maps/search/?api=1&query=${ query }`,
+			} );
+		}
+		return Promise.resolve( [] );
+	} );
+
+	await openCreateForm();
+	const testLink = () =>
+		screen.getByRole( 'link', { name: 'Test Google Maps link' } );
+
+	fireEvent.change( screen.getByLabelText( 'Address' ), {
+		target: { value: 'Unsaved address' },
+	} );
+	await waitFor( () =>
+		expect( testLink() ).toHaveAttribute(
+			'href',
+			expect.stringContaining( 'Unsaved%20address' )
+		)
+	);
+
+	fireEvent.change( screen.getByLabelText( 'Latitude' ), {
+		target: { value: '0' },
+	} );
+	fireEvent.change( screen.getByLabelText( 'Longitude' ), {
+		target: { value: '0' },
+	} );
+	await waitFor( () =>
+		expect( testLink() ).toHaveAttribute(
+			'href',
+			expect.stringContaining( '0%2C0' )
+		)
+	);
+	expect( testLink() ).toHaveAttribute( 'target', '_blank' );
+	expect( testLink() ).toHaveAttribute( 'rel', 'noopener noreferrer' );
+} );
+
+test( 'explains empty, incomplete, invalid, and loading preview states', async () => {
+	let resolvePreview;
+	apiFetch.mockImplementation( ( options ) => {
+		if ( options.path === '/fair-events/v1/venues/maps-url' ) {
+			return new Promise( ( resolve ) => {
+				resolvePreview = resolve;
+			} );
+		}
+		return Promise.resolve( [] );
+	} );
+
+	await openCreateForm();
+	expect(
+		screen.getByText( /Enter an address or coordinates to test/i )
+	).toBeInTheDocument();
+
+	fireEvent.change( screen.getByLabelText( 'Latitude' ), {
+		target: { value: '39' },
+	} );
+	expect(
+		screen.getAllByText( /Enter both latitude and longitude/i )
+	).toHaveLength( 3 );
+
+	fireEvent.change( screen.getByLabelText( 'Longitude' ), {
+		target: { value: '200' },
+	} );
+	expect( screen.getAllByText( /Longitude must be between/i ) ).toHaveLength(
+		3
+	);
+
+	fireEvent.change( screen.getByLabelText( 'Longitude' ), {
+		target: { value: '0' },
+	} );
+	await waitFor( () =>
+		expect(
+			screen.getByText( /Generating the Google Maps link/i )
+		).toBeInTheDocument()
+	);
+	await waitFor( () =>
+		expect( resolvePreview ).toEqual( expect.any( Function ) )
+	);
+	expect(
+		screen.getByRole( 'button', { name: 'Test Google Maps link' } )
+	).toBeDisabled();
+	await act( async () => {
+		resolvePreview( { maps_url: 'https://example.com/maps' } );
+	} );
+} );
+
+test( 'ignores a stale preview response', async () => {
+	const pending = [];
+	apiFetch.mockImplementation( ( options ) => {
+		if ( options.path === '/fair-events/v1/venues/maps-url' ) {
+			return new Promise( ( resolve ) => pending.push( resolve ) );
+		}
+		return Promise.resolve( [] );
+	} );
+
+	await openCreateForm();
+	fireEvent.change( screen.getByLabelText( 'Address' ), {
+		target: { value: 'First address' },
+	} );
+	await waitFor( () => expect( pending ).toHaveLength( 1 ) );
+	fireEvent.change( screen.getByLabelText( 'Address' ), {
+		target: { value: 'Second address' },
+	} );
+	await waitFor( () => expect( pending ).toHaveLength( 2 ) );
+
+	pending[ 1 ]( { maps_url: 'https://example.com/second' } );
+	await waitFor( () =>
+		expect(
+			screen.getByRole( 'link', { name: 'Test Google Maps link' } )
+		).toHaveAttribute( 'href', 'https://example.com/second' )
+	);
+	pending[ 0 ]( { maps_url: 'https://example.com/first' } );
+	expect(
+		screen.getByRole( 'link', { name: 'Test Google Maps link' } )
+	).toHaveAttribute( 'href', 'https://example.com/second' );
 } );

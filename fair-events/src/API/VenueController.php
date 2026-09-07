@@ -34,6 +34,18 @@ class VenueController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
+		// POST /fair-events/v1/venues/maps-url — Preview a Google Maps URL.
+		register_rest_route(
+			$this->namespace,
+			'/venues/maps-url',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'preview_maps_url' ),
+				'permission_callback' => array( $this, 'preview_maps_url_permissions_check' ),
+				'args'                => $this->get_location_args(),
+			)
+		);
+
 		// GET /fair-events/v1/venues — Get all venues.
 		// POST /fair-events/v1/venues — Create venue.
 		register_rest_route(
@@ -99,49 +111,97 @@ class VenueController extends WP_REST_Controller {
 	 * @return array Arguments definition.
 	 */
 	private function get_create_update_args() {
-		return array(
-			'name'               => array(
-				'description'       => __( 'Venue name.', 'fair-events' ),
-				'type'              => 'string',
-				'required'          => true,
-				'sanitize_callback' => 'sanitize_text_field',
+		return array_merge(
+			array(
+				'name' => array(
+					'description'       => __( 'Venue name.', 'fair-events' ),
+					'type'              => 'string',
+					'required'          => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
 			),
-			'address'            => array(
+			$this->get_location_args(),
+			array(
+				'facebook_page_link' => array(
+					'description'       => __( 'Facebook page URL.', 'fair-events' ),
+					'type'              => 'string',
+					'required'          => false,
+					'sanitize_callback' => 'esc_url_raw',
+				),
+				'instagram_handle'   => array(
+					'description'       => __( 'Instagram handle (without @).', 'fair-events' ),
+					'type'              => 'string',
+					'required'          => false,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+				'website_url'        => array(
+					'description'       => __( 'Website URL.', 'fair-events' ),
+					'type'              => 'string',
+					'required'          => false,
+					'sanitize_callback' => 'esc_url_raw',
+				),
+			)
+		);
+	}
+
+	/**
+	 * Get location arguments shared by venue writes and map previews.
+	 *
+	 * @return array Arguments definition.
+	 */
+	private function get_location_args() {
+		return array(
+			'address'   => array(
 				'description'       => __( 'Venue address.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_textarea_field',
 			),
-			'latitude'           => array(
+			'latitude'  => array(
 				'description'       => __( 'Latitude coordinate.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'longitude'          => array(
+			'longitude' => array(
 				'description'       => __( 'Longitude coordinate.', 'fair-events' ),
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'facebook_page_link' => array(
-				'description'       => __( 'Facebook page URL.', 'fair-events' ),
-				'type'              => 'string',
-				'required'          => false,
-				'sanitize_callback' => 'esc_url_raw',
+		);
+	}
+
+	/**
+	 * Preview a Google Maps URL without saving a venue.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object or validation error.
+	 */
+	public function preview_maps_url( $request ) {
+		$address     = $request->get_param( 'address' );
+		$coordinates = Venue::validate_coordinates(
+			$request->get_param( 'latitude' ),
+			$request->get_param( 'longitude' )
+		);
+
+		if ( ! $coordinates['valid'] ) {
+			return new WP_Error(
+				'rest_invalid_coordinates',
+				$coordinates['message'],
+				array( 'status' => 400 )
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'maps_url' => Venue::build_maps_url(
+					$coordinates['latitude'],
+					$coordinates['longitude'],
+					$address
+				),
 			),
-			'instagram_handle'   => array(
-				'description'       => __( 'Instagram handle (without @).', 'fair-events' ),
-				'type'              => 'string',
-				'required'          => false,
-				'sanitize_callback' => 'sanitize_text_field',
-			),
-			'website_url'        => array(
-				'description'       => __( 'Website URL.', 'fair-events' ),
-				'type'              => 'string',
-				'required'          => false,
-				'sanitize_callback' => 'esc_url_raw',
-			),
+			200
 		);
 	}
 
@@ -381,6 +441,16 @@ class VenueController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function delete_item_permissions_check( $request ) {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Check permissions for previewing a map URL.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return bool True if user has permission.
+	 */
+	public function preview_maps_url_permissions_check( $request ) {
 		return current_user_can( 'manage_options' );
 	}
 }

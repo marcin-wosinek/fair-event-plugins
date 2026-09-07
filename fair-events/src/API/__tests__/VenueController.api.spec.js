@@ -195,4 +195,96 @@ test.describe( 'VenueController', () => {
 			headers: authHeader,
 		} );
 	} );
+
+	test.describe( 'map URL preview', () => {
+		test( 'previews normalized coordinates with precedence over address', async () => {
+			const res = await api.post(
+				'/wp-json/fair-events/v1/venues/maps-url',
+				{
+					headers: authHeader,
+					data: {
+						address: 'Fallback Address',
+						latitude: '39,48',
+						longitude: '-0,36',
+					},
+				}
+			);
+
+			expect( res.ok() ).toBeTruthy();
+			expect( await res.json() ).toEqual( {
+				maps_url:
+					'https://www.google.com/maps/search/?api=1&query=39.48%2C-0.36',
+			} );
+		} );
+
+		test( 'previews an encoded address and returns null for empty input', async () => {
+			const addressRes = await api.post(
+				'/wp-json/fair-events/v1/venues/maps-url',
+				{
+					headers: authHeader,
+					data: { address: 'Gran Via 1, Valencia' },
+				}
+			);
+			expect( await addressRes.json() ).toEqual( {
+				maps_url:
+					'https://www.google.com/maps/search/?api=1&query=Gran%20Via%201%2C%20Valencia',
+			} );
+
+			const emptyRes = await api.post(
+				'/wp-json/fair-events/v1/venues/maps-url',
+				{ headers: authHeader, data: {} }
+			);
+			expect( await emptyRes.json() ).toEqual( { maps_url: null } );
+		} );
+
+		test( 'rejects incomplete and invalid coordinates', async () => {
+			for ( const data of [
+				{ address: 'Fallback', latitude: '39', longitude: '' },
+				{ address: 'Fallback', latitude: '91', longitude: '0' },
+			] ) {
+				const res = await api.post(
+					'/wp-json/fair-events/v1/venues/maps-url',
+					{ headers: authHeader, data }
+				);
+				expect( res.status() ).toBe( 400 );
+				expect( ( await res.json() ).code ).toBe(
+					'rest_invalid_coordinates'
+				);
+			}
+		} );
+
+		test( 'requires manage_options', async () => {
+			const res = await api.post(
+				'/wp-json/fair-events/v1/venues/maps-url',
+				{ data: { address: 'Gran Via 1' } }
+			);
+			expect( res.status() ).toBe( 401 );
+		} );
+
+		test( 'matches saved venue serialization for identical inputs', async () => {
+			const data = {
+				address: 'Fallback Address',
+				latitude: '0',
+				longitude: '0',
+			};
+			const previewRes = await api.post(
+				'/wp-json/fair-events/v1/venues/maps-url',
+				{ headers: authHeader, data }
+			);
+			const createRes = await api.post(
+				'/wp-json/fair-events/v1/venues',
+				{
+					headers: authHeader,
+					data: { name: `Preview parity ${ Date.now() }`, ...data },
+				}
+			);
+			const preview = await previewRes.json();
+			const venue = await createRes.json();
+			await api.delete( `/wp-json/fair-events/v1/venues/${ venue.id }`, {
+				headers: authHeader,
+			} );
+
+			expect( preview.maps_url ).toBe( venue.maps_url );
+		} );
+	} );
 } );

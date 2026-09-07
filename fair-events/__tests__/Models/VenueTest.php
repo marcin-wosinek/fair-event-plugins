@@ -15,6 +15,7 @@ use FairEvents\Models\Venue;
  * Database-backed lookups are exercised via API integration tests.
  */
 class VenueTest extends TestCase {
+ // phpcs:disable Squiz.Commenting.FunctionComment.Missing
 
 	public function test_lat_lng_produces_coordinate_query() {
 		$url = Venue::build_maps_url( '39.4878023', '-0.3613204', null );
@@ -41,10 +42,26 @@ class VenueTest extends TestCase {
 		$this->assertNull( Venue::build_maps_url( '', '', '' ) );
 	}
 
-	public function test_partial_coordinates_fall_back_to_address() {
+	public function test_partial_coordinates_return_null_even_with_address() {
 		$url = Venue::build_maps_url( '39.4878023', '', 'Fallback Address' );
-		$this->assertNotNull( $url );
-		$this->assertStringContainsString( 'Fallback', rawurldecode( $url ) );
+		$this->assertNull( $url );
+		$this->assertNull( Venue::build_maps_url( '', '-0.3613204', 'Fallback Address' ) );
+	}
+
+	public function test_invalid_coordinates_return_null_even_with_address() {
+		$this->assertNull( Venue::build_maps_url( '91', '0', 'Fallback Address' ) );
+		$this->assertNull( Venue::build_maps_url( 'not-a-number', '0', 'Fallback Address' ) );
+	}
+
+	public function test_decimal_comma_coordinates_are_normalized_in_url() {
+		$url = Venue::build_maps_url( '39,48', '-0,36', null );
+		$this->assertStringContainsString( 'query=39.48%2C-0.36', $url );
+	}
+
+	public function test_zero_coordinates_produce_coordinate_query() {
+		$url = Venue::build_maps_url( '0', '0', 'Fallback Address' );
+		$this->assertStringContainsString( 'query=0%2C0', $url );
+		$this->assertStringNotContainsString( 'Fallback', $url );
 	}
 
 	public function test_both_coordinates_empty_is_valid() {
