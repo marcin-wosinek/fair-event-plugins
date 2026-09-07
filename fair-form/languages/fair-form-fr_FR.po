@@ -574,4 +574,3 @@ msgstr "Photo"
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:282
 msgid "File"
 msgstr "Fichier"
-

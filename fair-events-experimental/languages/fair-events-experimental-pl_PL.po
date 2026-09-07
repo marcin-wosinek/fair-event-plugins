@@ -586,8 +586,9 @@ msgstr "Bilety, zasady cenowe/uprawnień dla grup. Wymaga fair-audience."
 #. Description of the plugin
 #: fair-events-experimental.php
 msgid "Activates advanced feature bundles for Fair Events, including galleries, sources, ticketing, duplicate and merge tools, and migration. Requires fair-events."
-msgstr ""
+msgstr "Włącza zaawansowane pakiety funkcji dla Fair Events, w tym galerie, źródła, sprzedaż biletów, narzędzia duplikowania i scalania oraz migrację. Wymaga fair-events."
 
 #: src/Core/Features.php:161
 msgid "Advanced event duplication and merge tools."
-msgstr ""
+msgstr "Zaawansowane narzędzia do duplikowania i scalania wydarzeń."
+
