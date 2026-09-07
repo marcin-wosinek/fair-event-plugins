@@ -414,6 +414,27 @@ class AdminPages {
 				'siteToday'        => wp_date( 'Y-m-d' ),
 			);
 
+			$event_date = $event_date_id ? \FairEvents\Models\EventDates::get_by_id( $event_date_id ) : null;
+			if ( $event_date ) {
+				$copy_event_id = $event_date->event_id;
+				if ( ! $copy_event_id && 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
+					$master_event  = \FairEvents\Models\EventDates::get_by_id( $event_date->master_id );
+					$copy_event_id = $master_event ? $master_event->event_id : null;
+				}
+
+				$copy_event = $copy_event_id ? get_post( $copy_event_id ) : null;
+				if ( $copy_event && 'fair_event' === $copy_event->post_type && current_user_can( 'edit_post', $copy_event_id ) ) {
+					$localized_data['copyEventUrl'] = add_query_arg(
+						array(
+							'page'     => 'fair-events-copy',
+							'event_id' => $copy_event_id,
+							'_wpnonce' => wp_create_nonce( 'copy_fair_event_' . $copy_event_id ),
+						),
+						admin_url( 'admin.php' )
+					);
+				}
+			}
+
 			// Audience-dependent URLs require both the sibling plugin AND the
 			// ticketing bundle.
 			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {

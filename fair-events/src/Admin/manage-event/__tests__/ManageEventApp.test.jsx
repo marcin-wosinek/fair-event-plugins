@@ -141,6 +141,66 @@ it( 'renders extra admin actions registered via addFilter', async () => {
 	removeFilter( 'fairEvents.manageEvent.adminActions', NAMESPACE );
 } );
 
+describe( 'copy event action (#1517)', () => {
+	it( 'links to the authorized copy URL and keeps delete separate', async () => {
+		window.fairEventsManageEventData.copyEventUrl =
+			'http://example.com/wp-admin/admin.php?page=fair-events-copy&event_id=42&_wpnonce=test';
+
+		render( <ManageEventApp /> );
+
+		const copyAction = await screen.findByRole( 'link', {
+			name: 'Copy event',
+		} );
+		expect( copyAction ).toHaveAttribute(
+			'href',
+			window.fairEventsManageEventData.copyEventUrl
+		);
+		expect(
+			screen.getByText(
+				'Open copy options with this event selected as the source.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Delete Event' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /Permanently delete this event/ ).parentElement
+		).toHaveStyle( { borderTop: '1px solid #dcdcde' } );
+	} );
+
+	it( 'does not render the action without an authorized copy URL', async () => {
+		render( <ManageEventApp /> );
+
+		await screen.findByRole( 'tab', { name: 'Admin' } );
+		expect(
+			screen.queryByRole( 'link', { name: 'Copy event' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'explains that a generated occurrence copies its recurring event', async () => {
+		window.fairEventsManageEventData.copyEventUrl =
+			'http://example.com/copy-event';
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				return Promise.resolve( {
+					...mockEventDate,
+					occurrence_type: 'generated',
+					master: { id: 10, title: 'Recurring source' },
+				} );
+			}
+			return Promise.resolve( [] );
+		} );
+
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByText(
+				'Open copy options for the underlying recurring event, not only this date.'
+			)
+		).toBeInTheDocument();
+	} );
+} );
+
 it( 'disables Tickets and Finance tabs for external-URL events', async () => {
 	window.history.replaceState( {}, '', '?tab=tickets' );
 	window.fairEventsManageEventData = {

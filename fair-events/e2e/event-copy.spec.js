@@ -355,3 +355,125 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 		);
 	}
 } );
+
+test( 'opens copy options from managed events and recurring occurrences', async ( {
+	page,
+} ) => {
+	test.setTimeout( 300_000 );
+	await login( page );
+	await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+	await page.waitForFunction( () => window.wp?.apiFetch );
+
+	const suffix = Date.now();
+	const source = (
+		await apiFetch( page, {
+			path: '/wp/v2/fair_event',
+			method: 'POST',
+			data: {
+				title: `Managed copy source ${ suffix }`,
+				status: 'publish',
+			},
+		} )
+	).data;
+	const sourceDate = (
+		await apiFetch( page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: source.title.rendered,
+				start_datetime: '2036-04-10 18:30:00',
+				end_datetime: '2036-04-10 21:00:00',
+				all_day: false,
+				link_type: 'post',
+				rrule: 'FREQ=WEEKLY;COUNT=2',
+			},
+		} )
+	).data;
+	await apiFetch( page, {
+		path: `/fair-events/v1/event-dates/${ sourceDate.id }`,
+		method: 'PUT',
+		data: { event_id: source.id },
+	} );
+	const linkedSeries = (
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ sourceDate.id }`,
+		} )
+	).data;
+	const generatedOccurrence = linkedSeries.generated_occurrences[ 0 ];
+	const calendarOnlyDate = (
+		await apiFetch( page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: `Calendar only ${ suffix }`,
+				start_datetime: '2036-06-10 18:30:00',
+				end_datetime: '2036-06-10 21:00:00',
+				all_day: false,
+				link_type: 'none',
+			},
+		} )
+	).data;
+
+	try {
+		for ( const eventDateId of [ sourceDate.id, generatedOccurrence.id ] ) {
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=admin`,
+				{ waitUntil: 'domcontentloaded' }
+			);
+			const copyAction = page.getByRole( 'link', {
+				name: 'Copy event',
+			} );
+			await expect( copyAction ).toBeVisible();
+			if ( eventDateId === generatedOccurrence.id ) {
+				await expect(
+					page.getByText(
+						'Open copy options for the underlying recurring event, not only this date.'
+					)
+				).toBeVisible();
+			}
+			const copyUrl = await copyAction.getAttribute( 'href' );
+			await page.goto( copyUrl, { waitUntil: 'domcontentloaded' } );
+			await expect( page ).toHaveURL( /page=fair-events-copy/ );
+			await expect( page.locator( 'h1' ) ).toContainText(
+				source.title.rendered
+			);
+		}
+
+		await page.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ calendarOnlyDate.id }&tab=admin`,
+			{ waitUntil: 'domcontentloaded' }
+		);
+		await expect(
+			page.getByRole( 'link', { name: 'Copy event' } )
+		).toHaveCount( 0 );
+	} finally {
+		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events', {
+			waitUntil: 'domcontentloaded',
+		} );
+		await page.waitForFunction( () => window.wp?.apiFetch );
+		await apiFetch(
+			page,
+			{
+				path: `/fair-events/v1/event-dates/${ calendarOnlyDate.id }`,
+				method: 'DELETE',
+			},
+			false
+		);
+		await apiFetch(
+			page,
+			{
+				path: `/fair-events/v1/event-dates/${ sourceDate.id }`,
+				method: 'DELETE',
+			},
+			false
+		);
+		await apiFetch(
+			page,
+			{
+				path: `/wp/v2/fair_event/${ source.id }?force=true`,
+				method: 'DELETE',
+			},
+			false
+		);
+	}
+} );
