@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -126,6 +126,10 @@ const VenuesApp = () => {
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ selectedVenues, setSelectedVenues ] = useState( new Set() );
 	const [ isImporting, setIsImporting ] = useState( false );
+	const [ mapsPreviewUrl, setMapsPreviewUrl ] = useState( null );
+	const [ isMapsPreviewLoading, setIsMapsPreviewLoading ] = useState( false );
+	const [ mapsPreviewError, setMapsPreviewError ] = useState( null );
+	const mapsPreviewRequest = useRef( 0 );
 
 	const coordinateError = getCoordinateError(
 		formData.latitude,
@@ -135,6 +139,62 @@ const VenuesApp = () => {
 	useEffect( () => {
 		loadVenues();
 	}, [] );
+
+	useEffect( () => {
+		if ( ! isFormOpen ) {
+			return undefined;
+		}
+
+		const address = formData.address.trim();
+		const latitude = formData.latitude.trim();
+		const longitude = formData.longitude.trim();
+		const hasLocation = !! ( address || latitude || longitude );
+		const requestId = ++mapsPreviewRequest.current;
+
+		setMapsPreviewUrl( null );
+		setMapsPreviewError( null );
+
+		if ( ! hasLocation || coordinateError ) {
+			setIsMapsPreviewLoading( false );
+			return undefined;
+		}
+
+		setIsMapsPreviewLoading( true );
+		const timeout = setTimeout( async () => {
+			try {
+				const response = await apiFetch( {
+					path: '/fair-events/v1/venues/maps-url',
+					method: 'POST',
+					data: { address, latitude, longitude },
+				} );
+				if ( requestId === mapsPreviewRequest.current ) {
+					setMapsPreviewUrl( response.maps_url );
+				}
+			} catch ( err ) {
+				if ( requestId === mapsPreviewRequest.current ) {
+					setMapsPreviewError(
+						err.message ||
+							__(
+								'The Google Maps link could not be generated.',
+								'fair-events'
+							)
+					);
+				}
+			} finally {
+				if ( requestId === mapsPreviewRequest.current ) {
+					setIsMapsPreviewLoading( false );
+				}
+			}
+		}, 350 );
+
+		return () => clearTimeout( timeout );
+	}, [
+		isFormOpen,
+		formData.address,
+		formData.latitude,
+		formData.longitude,
+		coordinateError,
+	] );
 
 	const loadVenues = async () => {
 		setLoading( true );
@@ -530,7 +590,29 @@ const VenuesApp = () => {
 												/>
 											</th>
 											<td>
-												<strong>{ venue.name }</strong>
+												<strong>
+													{ venue.maps_url ? (
+														<a
+															href={
+																venue.maps_url
+															}
+															target="_blank"
+															rel="noopener noreferrer"
+															aria-label={ sprintf(
+																/* translators: %s is the venue name. */
+																__(
+																	'%s — open in Google Maps (opens in a new tab)',
+																	'fair-events'
+																),
+																venue.name
+															) }
+														>
+															{ venue.name }
+														</a>
+													) : (
+														venue.name
+													) }
+												</strong>
 											</td>
 											<td>
 												{ venue.address || (
@@ -644,6 +726,54 @@ const VenuesApp = () => {
 									coordinateError ? 'has-error' : undefined
 								}
 							/>
+							<div>
+								<Button
+									variant="secondary"
+									href={ mapsPreviewUrl || undefined }
+									target={
+										mapsPreviewUrl ? '_blank' : undefined
+									}
+									rel={
+										mapsPreviewUrl
+											? 'noopener noreferrer'
+											: undefined
+									}
+									disabled={
+										! mapsPreviewUrl || isMapsPreviewLoading
+									}
+									isBusy={ isMapsPreviewLoading }
+								>
+									{ __(
+										'Test Google Maps link',
+										'fair-events'
+									) }
+								</Button>
+								<p className="description" aria-live="polite">
+									{ isMapsPreviewLoading
+										? __(
+												'Generating the Google Maps link…',
+												'fair-events'
+										  )
+										: coordinateError ||
+										  mapsPreviewError ||
+										  ( ! formData.address.trim() &&
+										  ! formData.latitude.trim() &&
+										  ! formData.longitude.trim()
+												? __(
+														'Enter an address or coordinates to test the Google Maps link.',
+														'fair-events'
+												  )
+												: mapsPreviewUrl
+												? __(
+														'The link uses the current unsaved location values.',
+														'fair-events'
+												  )
+												: __(
+														'A Google Maps link is not available for these values.',
+														'fair-events'
+												  ) ) }
+								</p>
+							</div>
 							<TextControl
 								label={ __( 'Longitude', 'fair-events' ) }
 								value={ formData.longitude }

@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Events 1.15.0\n"
+"Project-Id-Version: Fair Events 1.16.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-07T03:00:36+00:00\n"
+"POT-Creation-Date: 2026-09-07T04:15:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -70,7 +70,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:127
 #: src/Admin/AdminPages.php:128
 #: src/Core/Features.php:181
-#: src/Admin/venues/VenuesApp.js:411
+#: src/Admin/venues/VenuesApp.js:471
 msgid "Venues"
 msgstr ""
 
@@ -240,7 +240,7 @@ msgstr ""
 #: src/Admin/manage-event/ManageEventApp.js:1262
 #: src/Admin/manage-event/SeriesModal.js:396
 #: src/Admin/settings/OrganizerTab.js:520
-#: src/Admin/venues/VenuesApp.js:723
+#: src/Admin/venues/VenuesApp.js:853
 msgid "Cancel"
 msgstr ""
 
@@ -684,62 +684,62 @@ msgstr ""
 msgid "Minimum selections cannot exceed the number of configured extensions."
 msgstr ""
 
-#: src/API/VenueController.php:70
-#: src/API/VenueController.php:87
+#: src/API/VenueController.php:82
+#: src/API/VenueController.php:99
 msgid "Unique identifier for the venue."
 msgstr ""
 
-#: src/API/VenueController.php:104
+#: src/API/VenueController.php:117
 msgid "Venue name."
 msgstr ""
 
-#: src/API/VenueController.php:110
-msgid "Venue address."
-msgstr ""
-
-#: src/API/VenueController.php:116
-msgid "Latitude coordinate."
-msgstr ""
-
-#: src/API/VenueController.php:122
-msgid "Longitude coordinate."
-msgstr ""
-
-#: src/API/VenueController.php:128
+#: src/API/VenueController.php:126
 msgid "Facebook page URL."
 msgstr ""
 
-#: src/API/VenueController.php:134
+#: src/API/VenueController.php:132
 msgid "Instagram handle (without @)."
 msgstr ""
 
-#: src/API/VenueController.php:140
+#: src/API/VenueController.php:138
 msgid "Website URL."
 msgstr ""
 
-#: src/API/VenueController.php:180
-#: src/API/VenueController.php:258
-#: src/API/VenueController.php:311
+#: src/API/VenueController.php:155
+msgid "Venue address."
+msgstr ""
+
+#: src/API/VenueController.php:161
+msgid "Latitude coordinate."
+msgstr ""
+
+#: src/API/VenueController.php:167
+msgid "Longitude coordinate."
+msgstr ""
+
+#: src/API/VenueController.php:240
+#: src/API/VenueController.php:318
+#: src/API/VenueController.php:371
 msgid "Venue not found."
 msgstr ""
 
-#: src/API/VenueController.php:206
 #: src/API/VenueController.php:266
+#: src/API/VenueController.php:326
 msgid "Venue name is required."
 msgstr ""
 
-#: src/API/VenueController.php:227
-#: src/Admin/venues/VenuesApp.js:247
+#: src/API/VenueController.php:287
+#: src/Admin/venues/VenuesApp.js:307
 msgid "Failed to create venue."
 msgstr ""
 
-#: src/API/VenueController.php:287
-#: src/Admin/venues/VenuesApp.js:246
+#: src/API/VenueController.php:347
+#: src/Admin/venues/VenuesApp.js:306
 msgid "Failed to update venue."
 msgstr ""
 
-#: src/API/VenueController.php:321
-#: src/Admin/venues/VenuesApp.js:209
+#: src/API/VenueController.php:381
+#: src/Admin/venues/VenuesApp.js:269
 msgid "Failed to delete venue."
 msgstr ""
 
@@ -1090,27 +1090,27 @@ msgid_plural "Review Event's Photos (%d photos)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Models/Venue.php:396
+#: src/Models/Venue.php:398
 #: src/Admin/venues/VenuesApp.js:79
 msgid "Enter both latitude and longitude, or leave both blank."
 msgstr ""
 
-#: src/Models/Venue.php:404
+#: src/Models/Venue.php:406
 #: src/Admin/venues/VenuesApp.js:86
 msgid "Latitude and longitude must be numbers, e.g. 39.4878023, -0.3613204."
 msgstr ""
 
-#: src/Models/Venue.php:412
+#: src/Models/Venue.php:414
 #: src/Admin/venues/VenuesApp.js:93
 msgid "Latitude must be between -90 and 90."
 msgstr ""
 
-#: src/Models/Venue.php:420
+#: src/Models/Venue.php:422
 #: src/Admin/venues/VenuesApp.js:97
 msgid "Longitude must be between -180 and 180."
 msgstr ""
 
-#: src/Models/Venue.php:428
+#: src/Models/Venue.php:430
 #: src/Admin/venues/VenuesApp.js:101
 msgid "Latitude and longitude must be 20 characters or fewer."
 msgstr ""
@@ -1478,8 +1478,8 @@ msgstr ""
 #: src/Admin/manage-event/EventTickets.js:2159
 #: src/Admin/manage-event/EventTickets.js:2207
 #: src/Admin/settings/OrganizerTab.js:212
-#: src/Admin/venues/VenuesApp.js:507
-#: src/Admin/venues/VenuesApp.js:598
+#: src/Admin/venues/VenuesApp.js:567
+#: src/Admin/venues/VenuesApp.js:680
 msgid "Name"
 msgstr ""
 
@@ -1524,7 +1524,7 @@ msgid "Type"
 msgstr ""
 
 #: src/Admin/all-events/AllEvents.js:340
-#: src/Admin/venues/VenuesApp.js:554
+#: src/Admin/venues/VenuesApp.js:636
 msgid "Edit"
 msgstr ""
 
@@ -1777,8 +1777,8 @@ msgstr ""
 #: src/Admin/event-meta-box/EventEditForm.js:395
 #: src/Admin/manage-event/ManageEventApp.js:950
 #: src/Admin/settings/OrganizerTab.js:335
-#: src/Admin/venues/VenuesApp.js:509
-#: src/Admin/venues/VenuesApp.js:606
+#: src/Admin/venues/VenuesApp.js:569
+#: src/Admin/venues/VenuesApp.js:688
 msgid "Address"
 msgstr ""
 
@@ -2181,7 +2181,7 @@ msgid "Mailing"
 msgstr ""
 
 #: src/Admin/manage-event/EventSignups.js:151
-#: src/Admin/venues/VenuesApp.js:512
+#: src/Admin/venues/VenuesApp.js:572
 msgid "Actions"
 msgstr ""
 
@@ -2226,7 +2226,7 @@ msgid "No"
 msgstr ""
 
 #: src/Admin/manage-event/EventSignups.js:358
-#: src/Admin/venues/VenuesApp.js:569
+#: src/Admin/venues/VenuesApp.js:651
 msgid "Delete"
 msgstr ""
 
@@ -3263,38 +3263,42 @@ msgstr ""
 msgid "Organizer"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:150
+#: src/Admin/venues/VenuesApp.js:177
+msgid "The Google Maps link could not be generated."
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:210
 msgid "Failed to load venues."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:188
+#: src/Admin/venues/VenuesApp.js:248
 msgid "Are you sure you want to delete this venue?"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:205
+#: src/Admin/venues/VenuesApp.js:265
 msgid "Venue deleted successfully."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:227
+#: src/Admin/venues/VenuesApp.js:287
 msgid "Venue updated successfully."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:236
+#: src/Admin/venues/VenuesApp.js:296
 msgid "Venue created successfully."
 msgstr ""
 
 #. translators: %d is the number of exported venues
-#: src/Admin/venues/VenuesApp.js:318
+#: src/Admin/venues/VenuesApp.js:378
 #, js-format
 msgid "%d venue(s) exported."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:344
+#: src/Admin/venues/VenuesApp.js:404
 msgid "Invalid file format. Expected a JSON array."
 msgstr ""
 
 #. translators: %d is the number of imported venues
-#: src/Admin/venues/VenuesApp.js:380
+#: src/Admin/venues/VenuesApp.js:440
 #, js-format
 msgid "%d venue imported."
 msgid_plural "%d venues imported."
@@ -3302,101 +3306,127 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s is a comma-separated list of venue names
-#: src/Admin/venues/VenuesApp.js:391
+#: src/Admin/venues/VenuesApp.js:451
 #, js-format
 msgid "Imported without coordinates (invalid): %s"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:402
+#: src/Admin/venues/VenuesApp.js:462
 msgid "Failed to import venues."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:435
+#: src/Admin/venues/VenuesApp.js:495
 msgid "All Venues"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:442
+#: src/Admin/venues/VenuesApp.js:502
 msgid "Export Selected"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:457
+#: src/Admin/venues/VenuesApp.js:517
 msgid "Import"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:467
-#: src/Admin/venues/VenuesApp.js:590
+#: src/Admin/venues/VenuesApp.js:527
+#: src/Admin/venues/VenuesApp.js:672
 msgid "Add New Venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:477
+#: src/Admin/venues/VenuesApp.js:537
 msgid "Loading venues..."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:485
+#: src/Admin/venues/VenuesApp.js:545
 msgid "No venues found. Create your first venue to get started."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:538
+#. translators: %s is the venue name.
+#: src/Admin/venues/VenuesApp.js:603
+#, js-format
+msgid "%s — open in Google Maps (opens in a new tab)"
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:620
 msgid "No address"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:589
+#: src/Admin/venues/VenuesApp.js:671
 msgid "Edit Venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:614
+#: src/Admin/venues/VenuesApp.js:696
 msgid "Full address of the venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:626
+#: src/Admin/venues/VenuesApp.js:708
 msgid "A map link will be generated from the address, but it may not point to an exact location. Add latitude and longitude coordinates for a precise pin."
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:633
+#: src/Admin/venues/VenuesApp.js:715
 msgid "Latitude"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:638
+#: src/Admin/venues/VenuesApp.js:720
 msgid "Latitude coordinate (e.g., 39.4878023)"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:648
+#: src/Admin/venues/VenuesApp.js:746
+msgid "Test Google Maps link"
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:753
+msgid "Generating the Google Maps link…"
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:762
+msgid "Enter an address or coordinates to test the Google Maps link."
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:767
+msgid "The link uses the current unsaved location values."
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:771
+msgid "A Google Maps link is not available for these values."
+msgstr ""
+
+#: src/Admin/venues/VenuesApp.js:778
 msgid "Longitude"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:658
+#: src/Admin/venues/VenuesApp.js:788
 msgid "Longitude coordinate (e.g., -0.3613204)"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:668
+#: src/Admin/venues/VenuesApp.js:798
 msgid "Facebook Page Link"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:680
+#: src/Admin/venues/VenuesApp.js:810
 msgid "URL to Facebook page"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:686
+#: src/Admin/venues/VenuesApp.js:816
 msgid "Instagram Handle"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:697
+#: src/Admin/venues/VenuesApp.js:827
 msgid "Instagram username without @ (e.g., venue_name)"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:703
+#: src/Admin/venues/VenuesApp.js:833
 msgid "Website URL"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:712
+#: src/Admin/venues/VenuesApp.js:842
 msgid "Website URL of the venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:736
+#: src/Admin/venues/VenuesApp.js:866
 msgid "Update Venue"
 msgstr ""
 
-#: src/Admin/venues/VenuesApp.js:737
+#: src/Admin/venues/VenuesApp.js:867
 msgid "Create Venue"
 msgstr ""
 

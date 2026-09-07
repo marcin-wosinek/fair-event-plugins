@@ -296,11 +296,6 @@ class Venue {
 	}
 
 	/**
-	 * Convert venue to array
-	 *
-	 * @return array Venue data as array.
-	 */
-	/**
 	 * Build a Google Maps search URL from coordinates or address.
 	 *
 	 * Uses the keyless /maps/search/ scheme so no API key is required.
@@ -311,12 +306,19 @@ class Venue {
 	 * @return string|null URL or null when no location data is available.
 	 */
 	public static function build_maps_url( $latitude, $longitude, $address ) {
-		if ( ! empty( $latitude ) && ! empty( $longitude ) ) {
-			$query = rawurlencode( $latitude . ',' . $longitude );
+		$coordinates = self::validate_coordinates( $latitude, $longitude );
+
+		if ( ! $coordinates['valid'] ) {
+			return null;
+		}
+
+		if ( null !== $coordinates['latitude'] && null !== $coordinates['longitude'] ) {
+			$query = rawurlencode( $coordinates['latitude'] . ',' . $coordinates['longitude'] );
 			return 'https://www.google.com/maps/search/?api=1&query=' . $query;
 		}
 
-		if ( ! empty( $address ) ) {
+		$address = null === $address ? '' : trim( (string) $address );
+		if ( '' !== $address ) {
 			return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $address );
 		}
 
@@ -436,6 +438,11 @@ class Venue {
 		);
 	}
 
+	/**
+	 * Convert venue to array.
+	 *
+	 * @return array Venue data as array.
+	 */
 	public function to_array() {
 		return array(
 			'id'                 => $this->id,
