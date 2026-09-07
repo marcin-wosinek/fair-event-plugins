@@ -45,6 +45,23 @@ class DateHelper {
 	}
 
 	/**
+	 * Format a site-local naive datetime for localized display.
+	 *
+	 * @param string $datetime Naive 'Y-m-d H:i:s' in site-local time.
+	 * @param string $format   WordPress date/time format.
+	 * @return string Localized datetime, or empty string on failure.
+	 */
+	public static function format_local_datetime( $datetime, $format ) {
+		$timestamp = self::local_to_timestamp( $datetime );
+
+		if ( false === $timestamp ) {
+			return '';
+		}
+
+		return wp_date( $format, $timestamp );
+	}
+
+	/**
 	 * Convert a site-local naive datetime to an ISO 8601 string in the site's timezone.
 	 *
 	 * @param string $datetime Naive 'Y-m-d H:i:s' in site-local time.

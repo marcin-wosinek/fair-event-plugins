@@ -11,9 +11,70 @@ use PHPUnit\Framework\TestCase;
 use FairEvents\Helpers\DateHelper;
 
 /**
- * Unit tests for local_to_iso8601() and local_to_datetime().
+ * Unit tests for DateHelper's site-local conversions and formatting.
  */
 class DateHelperTest extends TestCase {
+
+	/**
+	 * Localized display preserves a summer site-local wall-clock time.
+	 *
+	 * @return void
+	 */
+	public function test_format_local_datetime_preserves_summer_time() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+
+		$display = DateHelper::format_local_datetime( '2025-06-15 19:30:00', 'd/m/Y H:i' );
+
+		$this->assertSame( '15/06/2025 19:30', $display );
+	}
+
+	/**
+	 * Localized display uses the named timezone's winter offset.
+	 *
+	 * @return void
+	 */
+	public function test_format_local_datetime_preserves_winter_time() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+
+		$display = DateHelper::format_local_datetime( '2025-01-15 19:30:00', 'F j, Y g:i a P' );
+
+		$this->assertSame( 'January 15, 2025 7:30 pm +01:00', $display );
+	}
+
+	/**
+	 * Localized display supports a fixed-offset WordPress timezone.
+	 *
+	 * @return void
+	 */
+	public function test_format_local_datetime_supports_fixed_offset() {
+		$GLOBALS['_fair_test_timezone'] = '+05:00';
+
+		$display = DateHelper::format_local_datetime( '2025-06-15 19:30:00', 'Y-m-d H:i P' );
+
+		$this->assertSame( '2025-06-15 19:30 +05:00', $display );
+	}
+
+	/**
+	 * Localized display introduces no offset for UTC sites.
+	 *
+	 * @return void
+	 */
+	public function test_format_local_datetime_preserves_utc_time() {
+		$GLOBALS['_fair_test_timezone'] = 'UTC';
+
+		$display = DateHelper::format_local_datetime( '2025-06-15 19:30:00', 'Y-m-d H:i P' );
+
+		$this->assertSame( '2025-06-15 19:30 +00:00', $display );
+	}
+
+	/**
+	 * Invalid datetimes produce no display value.
+	 *
+	 * @return void
+	 */
+	public function test_format_local_datetime_rejects_invalid_datetime() {
+		$this->assertSame( '', DateHelper::format_local_datetime( 'not-a-date', 'd/m/Y H:i' ) );
+	}
 
 	/**
 	 * Reset the timezone stub after each test.
