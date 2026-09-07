@@ -63,6 +63,7 @@ export default function ManageEventApp() {
 	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
+	const copyEventUrl = window.fairEventsManageEventData?.copyEventUrl || '';
 	// Per-bundle feature gates from the PHP registry. Empty object → treat
 	// every bundle as off (fail-closed) on a misconfigured page.
 	const enabledFeatures =
@@ -687,13 +688,47 @@ export default function ManageEventApp() {
 					</CardHeader>
 					<CardBody>
 						<VStack spacing={ 6 }>
+							{ copyEventUrl && (
+								<VStack spacing={ 2 }>
+									<p style={ { color: '#666' } }>
+										{ eventDate.occurrence_type ===
+										'generated'
+											? __(
+													'Open copy options for the underlying recurring event, not only this date.',
+													'fair-events'
+											  )
+											: __(
+													'Open copy options with this event selected as the source.',
+													'fair-events'
+											  ) }
+									</p>
+									<div>
+										<Button
+											variant="secondary"
+											href={ copyEventUrl }
+										>
+											{ __(
+												'Copy event',
+												'fair-events'
+											) }
+										</Button>
+									</div>
+								</VStack>
+							) }
+
 							{ applyFilters(
 								'fairEvents.manageEvent.adminActions',
 								[],
 								renderCtx
 							) }
 
-							<VStack spacing={ 2 }>
+							<VStack
+								spacing={ 2 }
+								style={ {
+									borderTop: '1px solid #dcdcde',
+									paddingTop: '24px',
+								} }
+							>
 								<p style={ { color: '#666' } }>
 									{ __(
 										'Permanently delete this event and all associated data. This action cannot be undone.',
