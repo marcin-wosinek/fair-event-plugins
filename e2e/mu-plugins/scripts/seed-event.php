@@ -86,6 +86,9 @@ $recurring          = isset( $overrides['recurring'] ) && $overrides['recurring'
 $create_venue       = isset( $overrides['createVenue'] ) && $overrides['createVenue'];
 $venue_name         = isset( $overrides['venueName'] ) ? (string) $overrides['venueName'] : 'Test Hall';
 $venue_address      = isset( $overrides['venueAddress'] ) ? (string) $overrides['venueAddress'] : 'Calle Venue 1';
+$event_capacity     = array_key_exists( 'eventCapacity', $overrides ) ? (int) $overrides['eventCapacity'] : null;
+$ticket_capacity    = array_key_exists( 'ticketCapacity', $overrides ) ? (int) $overrides['ticketCapacity'] : null;
+$option_capacity    = array_key_exists( 'optionCapacity', $overrides ) ? (int) $overrides['optionCapacity'] : null;
 $ticket_type_id     = 0;
 $option_ids         = array();
 $occurrence_ids     = array();
@@ -185,6 +188,16 @@ if ( 'three-ticket-scopes' === $flavour ) {
 } else {
 	$event_date_id = fair_e2e_add_date( $event_id );
 }
+if ( null !== $event_capacity ) {
+	global $wpdb;
+	$wpdb->update(
+		$wpdb->prefix . 'fair_event_dates',
+		array( 'capacity' => $event_capacity ),
+		array( 'id' => $event_date_id ),
+		array( '%d' ),
+		array( '%d' )
+	);
+}
 // 'address' scenarios never touch the signup path — skip the sale period.
 $sale_period_id = 'address' === $flavour ? 0 : fair_e2e_add_sale_period( $event_date_id );
 
@@ -218,7 +231,7 @@ switch ( $flavour ) {
 		// Override {"fullOptionIndex":N} pre-fills that option's capacity to 0
 		// (already full, no seed signup needed) for full-option render specs.
 		$full_option_index = isset( $overrides['fullOptionIndex'] ) ? (int) $overrides['fullOptionIndex'] : -1;
-		$ticket_type_id    = fair_e2e_add_ticket_type( $event_date_id, 'General Admission', null );
+		$ticket_type_id    = fair_e2e_add_ticket_type( $event_date_id, 'General Admission', $ticket_capacity );
 		fair_e2e_add_price( $ticket_type_id, $sale_period_id, $price, null );
 		foreach ( array_values( $option_names ) as $index => $name ) {
 			$option_ids[] = fair_e2e_add_option(
@@ -227,7 +240,7 @@ switch ( $flavour ) {
 				$option_price,
 				substr( (string) $name, 0, 12 ),
 				$index,
-				$index === $full_option_index ? 0 : null
+				$index === $full_option_index ? 0 : $option_capacity
 			);
 		}
 		if ( $minimum_activities > 0 ) {

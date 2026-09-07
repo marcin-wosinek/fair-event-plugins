@@ -32,6 +32,8 @@ defined( 'WPINC' ) || die;
  * fair-audience/v1 and are unaffected by this bridge.
  */
 class SignupHookBridge {
+	// Named locks intentionally use direct, non-cacheable database calls.
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery
 
 	/**
 	 * Initialize hooks.
@@ -796,28 +798,65 @@ class SignupHookBridge {
 			? array_map( 'intval', $metadata['ticket_option_ids'] )
 			: array();
 
-		if ( ! $already_signed_up
-			&& self::late_confirmation_exceeds_capacity( $signup, $option_ids, $event_participant_repository )
-			&& class_exists( \FairEvents\Models\EventSignup::class )
-			&& method_exists( \FairEvents\Models\EventSignup::class, 'mark_over_capacity' )
-		) {
-			\FairEvents\Models\EventSignup::mark_over_capacity( (int) $signup->id );
-		}
+		if ( ! $already_signed_up && ! self::is_active_reservation( $event_participant ) ) {
+			global $wpdb;
 
-		if ( ! $event_participant ) {
-			$event_date = class_exists( \FairEvents\Models\EventDates::class )
-				? \FairEvents\Models\EventDates::get_by_id( (int) $signup->event_date_id )
-				: null;
-			if ( ! $event_date ) {
+			$lock_name = 'fair_audience_confirmation_' . (int) $signup->event_date_id;
+			$locked    = (int) $wpdb->get_var(
+				$wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock_name, 5 )
+			);
+
+			// The Fair Events signup is already confirmed. Leave the audience
+			// relationship unresolved so a repeated notification can retry safely;
+			// an unlocked capacity read could assign the wrong warning.
+			if ( 1 !== $locked ) {
 				return;
 			}
-			$event_participant_repository->add_participant_to_event(
-				(int) $event_date->get_resolved_event_id(),
-				(int) $signup->participant_id,
-				'signed_up',
-				(int) $signup->event_date_id
-			);
-			$event_participant = $event_participant_repository->get_by_event_date_and_participant(
+
+			try {
+				// Another callback may have completed this relationship while this
+				// request waited for the per-event-date lock.
+				$event_participant = $event_participant_repository->get_by_event_date_and_participant(
+					(int) $signup->event_date_id,
+					(int) $signup->participant_id
+				);
+				$already_signed_up = $event_participant && 'signed_up' === $event_participant->label;
+
+				if ( ! $already_signed_up ) {
+					if ( self::late_confirmation_exceeds_capacity( $signup, $option_ids, $event_participant_repository )
+						&& class_exists( \FairEvents\Models\EventSignup::class )
+						&& method_exists( \FairEvents\Models\EventSignup::class, 'mark_over_capacity' )
+					) {
+						\FairEvents\Models\EventSignup::mark_over_capacity( (int) $signup->id );
+					}
+				}
+
+				self::complete_confirmation( $signup, $transaction, $event_participant, $option_ids, $event_participant_repository );
+			} finally {
+				$wpdb->get_var(
+					$wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name )
+				);
+			}
+			return;
+		}
+
+		self::complete_confirmation( $signup, $transaction, $event_participant, $option_ids, $event_participant_repository );
+	}
+
+	/**
+	 * Persist the participant, activities, ledger link, and notification.
+	 *
+	 * @param object                     $signup            Confirmed signup row.
+	 * @param object                     $transaction       Payment transaction.
+	 * @param object|null                $event_participant Existing relationship.
+	 * @param int[]                      $option_ids        Selected activity IDs.
+	 * @param EventParticipantRepository $repository        Participant repository.
+	 * @return void
+	 */
+	private static function complete_confirmation( $signup, $transaction, $event_participant, array $option_ids, EventParticipantRepository $repository ) {
+		if ( ! $event_participant || 'signed_up' !== $event_participant->label ) {
+			self::confirm_event_participant( $signup, $event_participant, $repository );
+			$event_participant = $repository->get_by_event_date_and_participant(
 				(int) $signup->event_date_id,
 				(int) $signup->participant_id
 			);
@@ -825,13 +864,6 @@ class SignupHookBridge {
 
 		if ( ! $event_participant ) {
 			return;
-		}
-
-		if ( ! $already_signed_up ) {
-			$event_participant->label              = 'signed_up';
-			$event_participant->payment_expires_at = null;
-			$event_participant->ticket_type_id     = ! empty( $signup->ticket_type_id ) ? (int) $signup->ticket_type_id : null;
-			$event_participant->save();
 		}
 
 		if ( ! empty( $option_ids ) && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
@@ -842,7 +874,7 @@ class SignupHookBridge {
 					$options[] = $option;
 				}
 			}
-			$event_participant_repository->add_options( (int) $event_participant->id, $options );
+			$repository->add_options( (int) $event_participant->id, $options );
 		}
 
 		$ledger = new EventParticipantTransactionRepository();
@@ -852,6 +884,57 @@ class SignupHookBridge {
 		// a paid signup only reaches "confirmed" here, so this is the sole
 		// place a base-route paid signup's confirmation email gets sent.
 		\FairAudience\Hooks\PaymentHooks::send_signup_confirmation_email( $event_participant, $transaction );
+	}
+
+	/**
+	 * Convert an unresolved relationship to signed_up.
+	 *
+	 * @param object                     $signup            Confirmed signup row.
+	 * @param object|null                $event_participant Existing relationship.
+	 * @param EventParticipantRepository $repository        Participant repository.
+	 * @return void
+	 */
+	private static function confirm_event_participant( $signup, $event_participant, EventParticipantRepository $repository ) {
+		if ( ! $event_participant ) {
+			$event_date = class_exists( \FairEvents\Models\EventDates::class )
+				? \FairEvents\Models\EventDates::get_by_id( (int) $signup->event_date_id )
+				: null;
+			if ( ! $event_date ) {
+				return;
+			}
+			$repository->add_participant_to_event(
+				(int) $event_date->get_resolved_event_id(),
+				(int) $signup->participant_id,
+				'signed_up',
+				(int) $signup->event_date_id
+			);
+			$event_participant = $repository->get_by_event_date_and_participant(
+				(int) $signup->event_date_id,
+				(int) $signup->participant_id
+			);
+		}
+
+		if ( ! $event_participant ) {
+			return;
+		}
+
+		$event_participant->label              = 'signed_up';
+		$event_participant->payment_expires_at = null;
+		$event_participant->ticket_type_id     = ! empty( $signup->ticket_type_id ) ? (int) $signup->ticket_type_id : null;
+		$event_participant->save();
+	}
+
+	/**
+	 * Whether a relationship still owns its UTC payment reservation.
+	 *
+	 * @param object|null $event_participant Relationship row.
+	 * @return bool
+	 */
+	private static function is_active_reservation( $event_participant ) {
+		return $event_participant
+			&& 'pending_payment' === $event_participant->label
+			&& ! empty( $event_participant->payment_expires_at )
+			&& strtotime( $event_participant->payment_expires_at . ' UTC' ) > time();
 	}
 
 	/**

@@ -33,8 +33,10 @@ if ( ! $participant ) {
 	return;
 }
 
-$label      = null;
-$option_ids = array();
+$label        = null;
+$option_ids   = array();
+$signup       = null;
+$ledger_count = 0;
 if ( $event_date_id ) {
 	$event_participant_repository = new EventParticipantRepository();
 	$event_participant            = $event_participant_repository->get_by_event_date_and_participant(
@@ -44,7 +46,24 @@ if ( $event_date_id ) {
 	$label                        = $event_participant ? $event_participant->label : null;
 	if ( $event_participant ) {
 		$option_ids = $event_participant_repository->get_option_ids_for_event_participant( (int) $event_participant->id );
+		global $wpdb;
+		$ledger_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE event_participant_id = %d',
+				$wpdb->prefix . 'fair_audience_event_participant_transactions',
+				(int) $event_participant->id
+			)
+		);
 	}
+	global $wpdb;
+	$signup = $wpdb->get_row(
+		$wpdb->prepare(
+			'SELECT id, over_capacity, transaction_id FROM %i WHERE event_date_id = %d AND participant_id = %d ORDER BY id DESC LIMIT 1',
+			$wpdb->prefix . 'fair_events_signups',
+			$event_date_id,
+			(int) $participant->id
+		)
+	);
 }
 
 // Mail addressed to this buyer, captured by fair-e2e-support.php.
@@ -62,11 +81,14 @@ foreach ( get_option( 'fair_e2e_captured_mail', array() ) as $entry ) {
 
 echo 'E2E_STATE:' . wp_json_encode(
 	array(
-		'found'         => true,
-		'email_profile' => $participant->email_profile,
-		'status'        => $participant->status,
-		'label'         => $label,
-		'option_ids'    => $option_ids,
-		'mail'          => $mail,
+		'found'          => true,
+		'email_profile'  => $participant->email_profile,
+		'status'         => $participant->status,
+		'label'          => $label,
+		'option_ids'     => $option_ids,
+		'over_capacity'  => $signup ? (int) $signup->over_capacity : null,
+		'transaction_id' => $signup && $signup->transaction_id ? (int) $signup->transaction_id : null,
+		'ledger_count'   => $ledger_count,
+		'mail'           => $mail,
 	)
 ) . "\n";
