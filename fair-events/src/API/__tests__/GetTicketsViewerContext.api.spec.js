@@ -131,6 +131,7 @@ test.describe( 'GetTicketsController — viewer-context', () => {
 		const body = await res.json();
 
 		expect( body.viewer_resolved ).toBe( false );
+		expect( body.token_identity_validated ).toBe( false );
 		expect( body.suppress_form ).toBe( false );
 		expect( body.ticket_type_fieldset_html ).toBeNull();
 		expect( body.ticket_options_fieldset_html ).toBeNull();
@@ -138,6 +139,22 @@ test.describe( 'GetTicketsController — viewer-context', () => {
 		expect( body.before_submit_html ).toBeNull();
 		expect( body.after_form_html ).toBeNull();
 		expect( body.occurrences_signed_up ).toEqual( [] );
+		expect( body.prefill_name ).toBe( '' );
+		expect( body.prefill_email ).toBe( '' );
+	} );
+
+	test( 'a malformed participant token resolves to the anonymous no-op payload', async () => {
+		const res = await api.get( VIEWER_CONTEXT_PATH, {
+			params: {
+				event_date_id: eventDateId,
+				participant_token: 'not-a-valid-token',
+			},
+		} );
+		expect( res.ok() ).toBeTruthy();
+		const body = await res.json();
+
+		expect( body.viewer_resolved ).toBe( false );
+		expect( body.token_identity_validated ).toBe( false );
 		expect( body.prefill_name ).toBe( '' );
 		expect( body.prefill_email ).toBe( '' );
 	} );

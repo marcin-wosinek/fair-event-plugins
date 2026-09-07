@@ -593,18 +593,17 @@ sub-route) expose:
     `fair_events_signup_viewer_context` filter below instead.
 -   **`fair_events_signup_viewer_context` filter** — resolved at request time
     by `GetTicketsController::get_viewer_context()`
-    (`GET fair-events/v1/get-tickets/viewer-context?event_date_id=…`,
-    `permission_callback: __return_true` — safe because the route carries no
-    identity parameter; the viewer is resolved purely server-side from the
-    session cookie/login, same as the public
-    `/fair-audience/v1/event-signup/status` endpoint), never by the render a
+    (`GET fair-events/v1/get-tickets/viewer-context?event_date_id=…`, with an
+    optional sanitized `participant_token`), never by the render a
     full-page cache stores. frontend.js calls this endpoint after load for
     every page view — cached or not — and patches the response into the DOM,
     so the visible result never depends on who the page happened to be
     rendered for. The endpoint rebuilds the same-shaped context as
     `fair_events_signup_render_context` above, but *unfiltered* (including
     group-restricted tiers), plus a `viewer_resolved` key (`false` by
-    default). A companion plugin sets `viewer_resolved = true` whenever it
+    default), the optional request token, and
+    `token_identity_validated` (`false` by default). A companion plugin
+    validates the token server-side and sets `viewer_resolved = true` whenever it
     recognises the viewer (fair-audience's
     `SignupHookBridge::enrich_render_context()` — the same method, now
     hooked to this filter instead) and overrides `ticket_types`/
@@ -621,7 +620,9 @@ sub-route) expose:
     `ticket_options_fieldset_html` (the two fieldsets, HTML or `null`),
     `before_form_html` / `before_submit_html` / `after_form_html` (the three
     render-slot actions' captured output, HTML or `null`),
-    `occurrences_signed_up` (event_date_ids), `prefill_name`, `prefill_email`.
+    `occurrences_signed_up` (event_date_ids), `prefill_name`, `prefill_email`,
+    and the non-secret `token_identity_validated` boolean. The token itself and
+    participant ID are never returned.
     frontend.js swaps the `<form>` for a `fair-events-get-tickets-companion`
     wrapper client-side when `suppress_form` is true (mirroring what the base
     render used to do server-side), instead of patching the fieldsets.
@@ -652,7 +653,7 @@ sub-route) expose:
     runs this immediately after the event date is validated, before ticket-type
     or options validation, so it covers the single-, `multiple_instances`- and
     no-ticket-type paths alike:
-    `apply_filters( 'fair_events_signup_precheck_error', null, $event_date_id, $email, $ticket_type_id )`.
+    `apply_filters( 'fair_events_signup_precheck_error', null, $event_date_id, $email, $ticket_type_id, $participant_token )`.
     Returning a `WP_Error` rejects the signup. fair-audience scopes this to a
     duplicate *ticket* purchase only: when the request carries a
     `$ticket_type_id` and the recognised viewer already holds a `signed_up`
@@ -666,7 +667,7 @@ sub-route) expose:
     multiplicity below. `null` (the default) allows the signup to proceed.
 -   **`fair_events_signup_ticket_type_error` filter** — `GetTicketsController::create_signup()`
     runs this right after a submitted ticket type is validated and confirmed
-    not disabled: `apply_filters( 'fair_events_signup_ticket_type_error', null, $ticket_type_id, $event_date_id )`.
+    not disabled: `apply_filters( 'fair_events_signup_ticket_type_error', null, $ticket_type_id, $event_date_id, $participant_token )`.
     Returning a `WP_Error` rejects the signup with that error (fair-audience
     returns a 403 `ticket_type_restricted` when the ticket type is
     group-restricted and the viewer isn't a member); returning `null` (the
@@ -674,7 +675,7 @@ sub-route) expose:
     single- or `multiple_instances` path dispatches, so it covers both.
 -   **`fair_events_signup_unit_price` filter** — runs immediately after
     `TicketPricing::resolve_unit_price()` in both `create_signup()` and
-    `create_multi_instance_signup()`: `apply_filters( 'fair_events_signup_unit_price', $unit_price, $ticket_type_id, $event_date_id )`.
+    `create_multi_instance_signup()`: `apply_filters( 'fair_events_signup_unit_price', $unit_price, $ticket_type_id, $event_date_id, $participant_token )`.
     A companion plugin uses this to apply participant-specific discounts (e.g.
     a group pricing rule) on top of the base price; `$unit_price` is `null`
     when no active sale period configures one, which a filter callback should
@@ -686,7 +687,7 @@ sub-route) expose:
     runs this once, unconditionally (outside the `if ( $ticket_type_id )`
     block, so a global minimum-activities requirement still applies to a
     signup with no ticket type):
-    `apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, $config_event_date_id, $ticket_type_id )`,
+    `apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, $config_event_date_id, $ticket_type_id, $participant_token )`,
     where `$ticket_option_ids` is the sanitized (deduped, capped at 50)
     submitted array and `$config_event_date_id` is the series-master-resolved
     event date the ticket-type validation above already computed. Returning a
@@ -697,7 +698,7 @@ sub-route) expose:
     `null` (the default) allows the signup to proceed.
 -   **`fair_events_signup_option_line_items` filter** — runs immediately
     after the filter above, once validation passed:
-    `apply_filters( 'fair_events_signup_option_line_items', array(), $ticket_option_ids, $config_event_date_id )`.
+    `apply_filters( 'fair_events_signup_option_line_items', array(), $ticket_option_ids, $config_event_date_id, $participant_token )`.
     A companion plugin resolves each selected option to a priced line item
     (`[ 'name', 'quantity', 'amount' ]`, participant discounts applied);
     `create_signup()` sums them into `$amount` and appends them to the paid
@@ -706,7 +707,7 @@ sub-route) expose:
     forced to 1 server-side (and client-side) whenever any activity is
     selected, since activities attach to a single `EventParticipant` row.
 -   **`fair_events_signup_created` action** — fires
-    `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id )`
+    `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token )`
     after a signup row is persisted through the base create path (once per
     row for multi-occurrence signups; `$transaction_id` is `null` on the free
     path). `$ticket_selection` carries `'ticket_type_id'`, `'quantity'`,
@@ -739,15 +740,15 @@ unified-signup submission fatal'd):
 | Hook                                  | args passed | `add_filter`/`add_action` call            |
 | -------------------------------------- | :---------: | ------------------------------------------ |
 | `fair_events_signup_viewer_context`    | 1           | `add_filter( ..., 10, 1 )`                 |
-| `fair_events_signup_precheck_error`    | 4           | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_signup_precheck_error`    | 5           | `add_filter( ..., 10, 5 )`                 |
 | `fair_events_signup_render_before_form` | 1          | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_before_submit` | 1        | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_after_form` | 1           | `add_action( ..., 10, 1 )`                 |
-| `fair_events_signup_ticket_type_error` | 3           | `add_filter( ..., 10, 2 )` or `3`          |
-| `fair_events_signup_unit_price`        | 3           | `add_filter( ..., 10, 2 )` or `3`          |
-| `fair_events_signup_options_error`     | 4           | `add_filter( ..., 10, 4 )`                 |
-| `fair_events_signup_option_line_items` | 3           | `add_filter( ..., 10, 3 )`                 |
-| `fair_events_signup_created`           | 6           | `add_action( ..., 10, 6 )`                 |
+| `fair_events_signup_ticket_type_error` | 4           | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_signup_unit_price`        | 4           | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_signup_options_error`     | 5           | `add_filter( ..., 10, 4 )` or `5`          |
+| `fair_events_signup_option_line_items` | 4           | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_signup_created`           | 7           | `add_action( ..., 10, 7 )`                 |
 | `fair_events_signup_confirmed`         | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_signup_payment_failed`    | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_backfill_signup_participant_ids` | 0    | `add_action( ... )` (default, no args)     |
@@ -769,10 +770,14 @@ hooks `fair_events_signup_options_error` / `fair_events_signup_option_line_items
 `fair-audience/src/Services/SignupActivities.php`, mirroring
 `GroupSignupPricing.php` from #1242) and, once `link_participant()` creates or
 finds the `EventParticipant` row, attaches the selected `ticket_option_ids`
-via `EventParticipantRepository::add_options()`. `participant_token` URL login
-and the "I have an account" / request-link prompt still go through
-`fair-audience/v1`'s own routes (deferred to a follow-up ticket at the #1245
-cutover) — everything else (identity pre-fill, cancel/resignup, per-occurrence
+via `EventParticipantRepository::add_options()`. The unified block reads a
+`participant_token` from the page URL and sends it only through uncached REST
+requests. fair-audience validates it before making that identity authoritative
+for hydration, restriction checks, pricing, and linkage, and refreshes the
+audience session. Invalid supplied tokens resolve anonymously rather than
+falling back to another browser identity. The "I have an account" /
+request-link prompt still goes through `fair-audience/v1`'s own routes —
+everything else (identity pre-fill, cancel/resignup, per-occurrence
 signup status, whole-series passes) is bridged through this contract, no
 parallel template.
 

@@ -42,16 +42,16 @@ class SignupHookBridge {
 	 */
 	public static function init() {
 		add_filter( 'fair_events_signup_viewer_context', array( static::class, 'enrich_render_context' ), 10, 1 );
-		add_filter( 'fair_events_signup_precheck_error', array( static::class, 'filter_precheck_error' ), 10, 4 );
+		add_filter( 'fair_events_signup_precheck_error', array( static::class, 'filter_precheck_error' ), 10, 5 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_signed_up_card' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_not_you' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
-		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 2 );
-		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 2 );
+		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 4 );
+		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 4 );
 		add_filter( 'fair_events_signup_options_error', array( static::class, 'filter_options_error' ), 10, 4 );
-		add_filter( 'fair_events_signup_option_line_items', array( static::class, 'filter_option_line_items' ), 10, 3 );
+		add_filter( 'fair_events_signup_option_line_items', array( static::class, 'filter_option_line_items' ), 10, 4 );
 		add_action( 'fair_events_signup_render_after_form', array( static::class, 'render_add_activities' ), 10, 1 );
-		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 6 );
+		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 7 );
 		add_action( 'fair_events_signup_confirmed', array( static::class, 'handle_signup_confirmed' ), 10, 2 );
 		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
 		add_action( 'fair_events_backfill_signup_participant_ids', array( static::class, 'backfill_signup_participant_ids' ) );
@@ -71,7 +71,8 @@ class SignupHookBridge {
 	 * @return array Filtered context.
 	 */
 	public static function enrich_render_context( $context ) {
-		$identity                          = GroupSignupPricing::resolve_viewer_identity();
+		$participant_token                 = (string) ( $context['participant_token'] ?? '' );
+		$identity                          = GroupSignupPricing::resolve_viewer_identity( $participant_token );
 		$participant                       = $identity['participant'];
 		$participant_id                    = $participant ? (int) $participant->id : null;
 		$context['viewer_identity_source'] = $participant ? $identity['source'] : null;
@@ -79,7 +80,8 @@ class SignupHookBridge {
 		// Signals the endpoint that a viewer was actually recognised, so it
 		// renders the personalized fragments — true whenever prefill applies,
 		// even when nothing else about ticket types/pricing changed.
-		$context['viewer_resolved'] = (bool) $participant;
+		$context['viewer_resolved']          = (bool) $participant;
+		$context['token_identity_validated'] = $participant && 'participant_token' === $identity['source'];
 
 		if ( $participant ) {
 			$context['prefill_name']  = trim( $participant->name . ' ' . $participant->surname );
@@ -243,11 +245,12 @@ class SignupHookBridge {
 	 *
 	 * @param WP_Error|null $error          Prior filter result — passed through unchanged if already an error.
 	 * @param int           $event_date_id  Event-date ID the signup targets.
-	 * @param string        $email          Submitted email (unused — the viewer is resolved by session/login).
+	 * @param string        $email          Submitted email (unused — the viewer is resolved by trusted identity).
 	 * @param int           $ticket_type_id Submitted ticket type ID (unused).
+	 * @param string        $participant_token Optional request token.
 	 * @return \WP_Error|null
 	 */
-	public static function filter_precheck_error( $error, $event_date_id, $email, $ticket_type_id ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- viewer is resolved by session/login, not the submitted email; required by the hook signature.
+	public static function filter_precheck_error( $error, $event_date_id, $email, $ticket_type_id, $participant_token = '' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- viewer is resolved by trusted identity, not the submitted email; required by the hook signature.
 		if ( is_wp_error( $error ) ) {
 			return $error;
 		}
@@ -264,7 +267,7 @@ class SignupHookBridge {
 			return $error;
 		}
 
-		$participant = GroupSignupPricing::resolve_viewer_participant();
+		$participant = GroupSignupPricing::resolve_viewer_participant( $participant_token );
 		if ( ! $participant ) {
 			return $error;
 		}
@@ -461,14 +464,16 @@ class SignupHookBridge {
 	 *
 	 * @param WP_Error|null $error          Prior filter result — passed through unchanged if already an error.
 	 * @param int           $ticket_type_id Ticket type ID.
+	 * @param int           $event_date_id Event date ID (unused).
+	 * @param string        $participant_token Optional request token.
 	 * @return \WP_Error|null
 	 */
-	public static function filter_ticket_type_error( $error, $ticket_type_id ) {
+	public static function filter_ticket_type_error( $error, $ticket_type_id, $event_date_id = 0, $participant_token = '' ) {
 		if ( is_wp_error( $error ) ) {
 			return $error;
 		}
 
-		$participant = GroupSignupPricing::resolve_viewer_participant();
+		$participant = GroupSignupPricing::resolve_viewer_participant( $participant_token );
 		return GroupSignupPricing::restriction_error( $ticket_type_id, $participant ? (int) $participant->id : null );
 	}
 
@@ -478,14 +483,16 @@ class SignupHookBridge {
 	 *
 	 * @param float|null $unit_price     Base unit price, or null when not purchasable.
 	 * @param int        $ticket_type_id Ticket type ID.
+	 * @param int        $event_date_id Event date ID (unused).
+	 * @param string     $participant_token Optional request token.
 	 * @return float|null
 	 */
-	public static function filter_unit_price( $unit_price, $ticket_type_id ) {
+	public static function filter_unit_price( $unit_price, $ticket_type_id, $event_date_id = 0, $participant_token = '' ) {
 		if ( null === $unit_price ) {
 			return $unit_price;
 		}
 
-		$participant    = GroupSignupPricing::resolve_viewer_participant();
+		$participant    = GroupSignupPricing::resolve_viewer_participant( $participant_token );
 		$participant_id = $participant ? (int) $participant->id : null;
 
 		$resolved = SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type_id, $participant_id );
@@ -520,17 +527,18 @@ class SignupHookBridge {
 	 * the viewer's best group discount rule. Hooked on
 	 * fair_events_signup_option_line_items.
 	 *
-	 * @param array $line_items            Prior filter result (empty by default).
-	 * @param int[] $ticket_option_ids     Submitted option IDs.
-	 * @param int   $pricing_event_date_id Event date the activity catalogue belongs to.
+	 * @param array  $line_items            Prior filter result (empty by default).
+	 * @param int[]  $ticket_option_ids     Submitted option IDs.
+	 * @param int    $pricing_event_date_id Event date the activity catalogue belongs to.
+	 * @param string $participant_token Optional request token.
 	 * @return array[]
 	 */
-	public static function filter_option_line_items( $line_items, $ticket_option_ids, $pricing_event_date_id ) {
+	public static function filter_option_line_items( $line_items, $ticket_option_ids, $pricing_event_date_id, $participant_token = '' ) {
 		if ( empty( $ticket_option_ids ) ) {
 			return $line_items;
 		}
 
-		$participant    = GroupSignupPricing::resolve_viewer_participant();
+		$participant    = GroupSignupPricing::resolve_viewer_participant( $participant_token );
 		$participant_id = $participant ? (int) $participant->id : null;
 
 		return array_merge(
@@ -637,9 +645,10 @@ class SignupHookBridge {
 	 * @param array    $ticket_selection Ticket selection ('ticket_type_id', 'quantity',
 	 *                                   'ticket_option_ids'/'event_date_ids', 'mailing_opt_in').
 	 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
+	 * @param string   $participant_token Optional request token.
 	 * @return void
 	 */
-	public static function link_participant( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id ) {
+	public static function link_participant( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token = '' ) {
 		if ( empty( $email ) || ! is_email( $email ) ) {
 			return;
 		}
@@ -659,9 +668,12 @@ class SignupHookBridge {
 		}
 
 		$participant_repository = new ParticipantRepository();
-		$participant            = $participant_repository->get_by_email( $email );
-		$mailing_opt_in         = ! empty( $ticket_selection['mailing_opt_in'] );
-		$is_new_participant     = false;
+		$participant            = GroupSignupPricing::resolve_viewer_participant( $participant_token );
+		if ( ! $participant ) {
+			$participant = $participant_repository->get_by_email( $email );
+		}
+		$mailing_opt_in     = ! empty( $ticket_selection['mailing_opt_in'] );
+		$is_new_participant = false;
 
 		if ( ! $participant ) {
 			$participant = new Participant();
