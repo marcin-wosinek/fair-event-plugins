@@ -114,6 +114,12 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const timeoutId = setTimeout( release, VIEWER_CONTEXT_TIMEOUT );
 
 		const params = new URLSearchParams( { event_date_id: eventDateId } );
+		const pageToken = new URL( window.location.href ).searchParams.get(
+			'participant_token'
+		);
+		if ( pageToken ) {
+			params.set( 'participant_token', pageToken );
+		}
 		if ( block.dataset.showTicketPrice !== undefined ) {
 			params.set( 'show_ticket_price', block.dataset.showTicketPrice );
 		}
@@ -146,6 +152,14 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	function applyViewerContext( block, form, response ) {
 		if ( ! response || ! response.viewer_resolved ) {
 			return;
+		}
+		if ( response.token_identity_validated ) {
+			form?.setAttribute(
+				'data-participant-token',
+				new URL( window.location.href ).searchParams.get(
+					'participant_token'
+				) || ''
+			);
 		}
 
 		if ( response.suppress_form ) {
@@ -1489,6 +1503,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		data._honeypot = honeypotField ? honeypotField.value : '';
 
 		data.questionnaire_answers = collectQuestionAnswers( form );
+		if ( form.dataset.participantToken ) {
+			data.participant_token = form.dataset.participantToken;
+		}
 
 		return data;
 	}

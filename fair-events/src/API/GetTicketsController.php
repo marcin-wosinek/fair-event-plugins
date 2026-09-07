@@ -107,6 +107,12 @@ class GetTicketsController extends WP_REST_Controller {
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
 						),
+						'participant_token'     => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 						// Chosen occurrence IDs for 'multiple_instances' ticket types.
 						// Capped so a crafted request can't force an unbounded number
 						// of line items / DB rows per submission.
@@ -183,10 +189,9 @@ class GetTicketsController extends WP_REST_Controller {
 		// prefill, signed-up state) for the cache-safe baseline render's
 		// occurrence, resolved outside the base render so a full-page cache
 		// never stores another viewer's tiers, prices, or details (#1300).
-		// permission_callback: __return_true is safe here — the route takes
-		// no identity parameter at all; the viewer is resolved purely
-		// server-side from the session cookie/login, exactly like the
-		// existing public /fair-audience/v1/event-signup/status endpoint.
+		// permission_callback: __return_true is safe here — the optional
+		// participant token is HMAC-validated by the companion before it can
+		// affect any response data; anonymous callers receive the no-op payload.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/viewer-context',
@@ -214,6 +219,12 @@ class GetTicketsController extends WP_REST_Controller {
 						'required'          => false,
 						'default'           => true,
 						'sanitize_callback' => 'rest_sanitize_boolean',
+					),
+					'participant_token'  => array(
+						'type'              => 'string',
+						'required'          => false,
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
 			)
@@ -317,12 +328,13 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$event_date_id  = $request->get_param( 'event_date_id' );
-		$name           = $request->get_param( 'name' );
-		$email          = $request->get_param( 'email' );
-		$ticket_type_id = $request->get_param( 'ticket_type_id' );
-		$quantity       = max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) );
-		$mailing_opt_in = (bool) $request->get_param( 'mailing_opt_in' );
+		$event_date_id     = $request->get_param( 'event_date_id' );
+		$name              = $request->get_param( 'name' );
+		$email             = $request->get_param( 'email' );
+		$ticket_type_id    = $request->get_param( 'ticket_type_id' );
+		$quantity          = max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) );
+		$mailing_opt_in    = (bool) $request->get_param( 'mailing_opt_in' );
+		$participant_token = (string) $request->get_param( 'participant_token' );
 
 		// Server-side rate limit by IP and by email. The IP ceiling is loose
 		// enough that a shared-NAT venue's fourth signup that hour doesn't
@@ -376,7 +388,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// guard, for instance. Runs before ticket-type/options validation so
 		// it covers the single-, multiple-instances- and no-ticket-type paths
 		// alike. See REST_API_BACKEND.md.
-		$precheck_error = apply_filters( 'fair_events_signup_precheck_error', null, (int) $event_date_id, $email, (int) $ticket_type_id );
+		$precheck_error = apply_filters( 'fair_events_signup_precheck_error', null, (int) $event_date_id, $email, (int) $ticket_type_id, $participant_token );
 		if ( is_wp_error( $precheck_error ) ) {
 			return $precheck_error;
 		}
@@ -411,7 +423,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// ticket type to specific groups. Applies to both the single- and
 			// multiple_instances paths below, since this runs before either
 			// dispatches. See REST_API_BACKEND.md.
-			$restriction_error = apply_filters( 'fair_events_signup_ticket_type_error', null, (int) $ticket_type_id, (int) $event_date_id );
+			$restriction_error = apply_filters( 'fair_events_signup_ticket_type_error', null, (int) $ticket_type_id, (int) $event_date_id, $participant_token );
 			if ( is_wp_error( $restriction_error ) ) {
 				return $restriction_error;
 			}
@@ -428,7 +440,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// The filter is the extension point a companion plugin uses to apply
 			// participant-specific discounts on top of this base price.
 			$unit_price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type_id );
-			$unit_price = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type_id, (int) $event_date_id );
+			$unit_price = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type_id, (int) $event_date_id, $participant_token );
 			if ( null === $unit_price ) {
 				return new WP_Error(
 					'ticket_type_unavailable',
@@ -443,7 +455,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// activities (ticket options) alongside a signup. Runs unconditionally
 		// — even a signup with no ticket type can carry a minimum-activities
 		// requirement. See REST_API_BACKEND.md.
-		$options_error = apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, (int) $config_event_date_id, (int) $ticket_type_id );
+		$options_error = apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, (int) $config_event_date_id, (int) $ticket_type_id, $participant_token );
 		if ( is_wp_error( $options_error ) ) {
 			return $options_error;
 		}
@@ -451,7 +463,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// fair-audience resolves discounted per-activity prices; summed here
 		// into $amount and kept as separate line items (below) so the finance
 		// ledger names what was bought instead of folding it into the ticket line.
-		$option_line_items = apply_filters( 'fair_events_signup_option_line_items', array(), $ticket_option_ids, (int) $config_event_date_id );
+		$option_line_items = apply_filters( 'fair_events_signup_option_line_items', array(), $ticket_option_ids, (int) $config_event_date_id, $participant_token );
 		$ticket_amount     = $amount;
 		foreach ( $option_line_items as $item ) {
 			$amount += (float) $item['quantity'] * (float) $item['amount'];
@@ -504,7 +516,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		// Free path.
 		if ( $amount <= 0 ) {
-			$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, null );
+			$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, null, $participant_token );
 			$this->persist_questionnaire_answers( $signup_id, $event_date_id, $questionnaire_answers );
 			return rest_ensure_response(
 				array(
@@ -572,7 +584,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
 
-		$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, (int) $transaction_id );
+		$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, (int) $transaction_id, $participant_token );
 		$this->persist_questionnaire_answers( $signup_id, $event_date_id, $questionnaire_answers );
 
 		// Load the freshly created transaction so its access token can be attached
@@ -763,19 +775,21 @@ class GetTicketsController extends WP_REST_Controller {
 		$context = apply_filters(
 			'fair_events_signup_viewer_context',
 			array(
-				'event_date_id'          => $event_date_id,
-				'pricing_event_date_id'  => $pricing_event_date_id,
-				'ticket_types'           => $ticket_types,
-				'price_by_type_id'       => $price_by_type_id,
-				'active_sale_period'     => $active_sale_period,
-				'sale_period_count'      => $sale_period_count,
-				'occurrences_for_picker' => $occurrences_for_picker,
-				'ticket_options'         => $ticket_options,
-				'minimum_activities'     => $minimum_activities,
-				'prefill_name'           => '',
-				'prefill_email'          => '',
-				'suppress_form'          => false,
-				'viewer_resolved'        => false,
+				'event_date_id'            => $event_date_id,
+				'pricing_event_date_id'    => $pricing_event_date_id,
+				'ticket_types'             => $ticket_types,
+				'price_by_type_id'         => $price_by_type_id,
+				'active_sale_period'       => $active_sale_period,
+				'sale_period_count'        => $sale_period_count,
+				'occurrences_for_picker'   => $occurrences_for_picker,
+				'ticket_options'           => $ticket_options,
+				'minimum_activities'       => $minimum_activities,
+				'prefill_name'             => '',
+				'prefill_email'            => '',
+				'suppress_form'            => false,
+				'viewer_resolved'          => false,
+				'participant_token'        => (string) $request->get_param( 'participant_token' ),
+				'token_identity_validated' => false,
 			)
 		);
 
@@ -791,6 +805,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		$response = array(
 			'viewer_resolved'              => $viewer_resolved,
+			'token_identity_validated'     => ! empty( $context['token_identity_validated'] ),
 			'suppress_form'                => $suppress_form,
 			'ticket_type_fieldset_html'    => null,
 			'ticket_options_fieldset_html' => null,
@@ -867,9 +882,10 @@ class GetTicketsController extends WP_REST_Controller {
 	 *                                   'ticket_option_ids' (or 'event_date_ids' for
 	 *                                   'multiple_instances' types), and 'mailing_opt_in'.
 	 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
+	 * @param string   $participant_token Optional companion credential.
 	 * @return void
 	 */
-	private function fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id ) {
+	private function fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token = '' ) {
 		/**
 		 * Fires after a signup row is persisted through the base create path.
 		 *
@@ -879,8 +895,9 @@ class GetTicketsController extends WP_REST_Controller {
 		 * @param string   $email            Buyer email.
 		 * @param array    $ticket_selection Ticket selection details.
 		 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
+		 * @param string   $participant_token Optional companion credential.
 		 */
-		do_action( 'fair_events_signup_created', $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id );
+		do_action( 'fair_events_signup_created', $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token );
 	}
 
 	/**
@@ -1052,8 +1069,9 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		// Resolve the per-instance price from the active sale period (server-side; client amount is ignored).
-		$unit_price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type->id );
-		$unit_price = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type->id, (int) $series_page_id );
+		$unit_price        = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type->id );
+		$participant_token = (string) $request->get_param( 'participant_token' );
+		$unit_price        = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type->id, (int) $series_page_id, $participant_token );
 		if ( null === $unit_price ) {
 			return new WP_Error(
 				'ticket_type_unavailable',
@@ -1117,7 +1135,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// Free path.
 		if ( $total_amount <= 0 ) {
 			foreach ( $signup_ids as $index => $signup_id ) {
-				$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, null );
+				$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, null, $participant_token );
 				$this->persist_questionnaire_answers( $signup_id, $occurrence_ids[ $index ], $questionnaire_answers );
 			}
 			return rest_ensure_response(
@@ -1186,7 +1204,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		foreach ( $signup_ids as $index => $signup_id ) {
 			\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
-			$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, (int) $transaction_id );
+			$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, (int) $transaction_id, $participant_token );
 			$this->persist_questionnaire_answers( $signup_id, $occurrence_ids[ $index ], $questionnaire_answers );
 		}
 

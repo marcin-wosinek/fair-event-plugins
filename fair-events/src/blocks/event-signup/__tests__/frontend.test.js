@@ -9,7 +9,7 @@
  * helpers' own behavior (covered by their own unit tests).
  */
 import apiFetch from '@wordpress/api-fetch';
-import { wireNotYouButton } from 'fair-events-shared';
+import { initiatePayment, wireNotYouButton } from 'fair-events-shared';
 
 jest.mock( '@wordpress/api-fetch', () => jest.fn() );
 jest.mock( 'fair-events-shared', () => ( {
@@ -77,12 +77,14 @@ function noopResponse() {
 		occurrences_signed_up: [],
 		prefill_name: '',
 		prefill_email: '',
+		token_identity_validated: false,
 	};
 }
 
 beforeEach( () => {
 	apiFetch.mockReset();
 	wireNotYouButton.mockClear();
+	initiatePayment.mockClear();
 } );
 
 describe( 'Event Signup frontend.js — ticket extension rules (#1521)', () => {
@@ -180,6 +182,81 @@ describe( 'Event Signup frontend.js — viewer-context hydration', () => {
 		await Promise.resolve();
 
 		expect( submitButton.disabled ).toBe( false );
+	} );
+
+	test( 'adds a page participant token to viewer-context hydration', () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/?participant_token=signed-token'
+		);
+		buildBlock();
+		apiFetch.mockResolvedValue( noopResponse() );
+
+		initialize();
+
+		expect( apiFetch.mock.calls[ 0 ][ 0 ].path ).toContain(
+			'participant_token=signed-token'
+		);
+		window.history.replaceState( {}, '', '/' );
+	} );
+
+	test( 'carries a server-validated page token into signup submission', async () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/?participant_token=signed-token'
+		);
+		const block = buildBlock();
+		apiFetch.mockResolvedValue( {
+			...noopResponse(),
+			viewer_resolved: true,
+			token_identity_validated: true,
+		} );
+
+		initialize();
+		await Promise.resolve();
+		await Promise.resolve();
+		block.querySelector( 'input[name="name"]' ).value = 'Ada';
+		block.querySelector( 'input[name="email"]' ).value = 'ada@example.test';
+		block.querySelector( 'form' ).dispatchEvent(
+			new window.Event( 'submit', {
+				bubbles: true,
+				cancelable: true,
+			} )
+		);
+
+		expect(
+			initiatePayment.mock.calls[ 0 ][ 0 ].data.participant_token
+		).toBe( 'signed-token' );
+		window.history.replaceState( {}, '', '/' );
+	} );
+
+	test( 'does not trust an unresolved page token for signup submission', async () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/?participant_token=invalid-token'
+		);
+		const block = buildBlock();
+		apiFetch.mockResolvedValue( noopResponse() );
+
+		initialize();
+		await Promise.resolve();
+		await Promise.resolve();
+		block.querySelector( 'input[name="name"]' ).value = 'Ada';
+		block.querySelector( 'input[name="email"]' ).value = 'ada@example.test';
+		block.querySelector( 'form' ).dispatchEvent(
+			new window.Event( 'submit', {
+				bubbles: true,
+				cancelable: true,
+			} )
+		);
+
+		expect(
+			initiatePayment.mock.calls[ 0 ][ 0 ].data.participant_token
+		).toBeUndefined();
+		window.history.replaceState( {}, '', '/' );
 	} );
 
 	test( 'anonymous (viewer_resolved: false) response leaves the baseline markup untouched', async () => {

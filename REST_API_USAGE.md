@@ -132,6 +132,14 @@ await apiFetch({
 });
 ```
 
+### Request-scoped credentials on cacheable pages
+
+When a personalized link opens a page that may be full-page cached, read its
+credential from `window.location` and send it through an uncached REST request.
+Do not embed the credential or viewer-specific state in server-rendered block
+markup. Carry the credential into later mutations only after the hydration
+response explicitly confirms that the server validated it.
+
 ### 7. When NOT to Use apiFetch()
 
 Only use raw `fetch()` for **non-WordPress REST APIs**:
