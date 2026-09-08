@@ -505,6 +505,15 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 				);
 				?>
 			</p>
+			<div class="wp-block-button fair-events-get-tickets-callback-status-retry" style="display: none;">
+				<button type="button" class="wp-block-button__link wp-element-button fair-events-get-tickets-callback-status-retry-button">
+					<?php esc_html_e( 'Check payment status again', 'fair-events' ); ?>
+				</button>
+			</div>
+			<p class="fair-events-get-tickets-callback-cancel">
+				<a href="#" class="fair-events-get-tickets-callback-cancel-link"><?php esc_html_e( 'Cancel and start over', 'fair-events' ); ?></a>
+			</p>
+			<div class="fair-events-get-tickets-callback-message message-container" role="alert" style="display: none;"></div>
 		</div>
 	<?php elseif ( 'resume' === $signup_state['state'] ) : ?>
 		<div class="fair-events-get-tickets-callback fair-events-get-tickets-callback-resume"
@@ -531,6 +540,7 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 			<p class="fair-events-get-tickets-callback-cancel">
 				<a href="#" class="fair-events-get-tickets-callback-cancel-link"><?php esc_html_e( 'Cancel and start over', 'fair-events' ); ?></a>
 			</p>
+			<div class="fair-events-get-tickets-callback-message message-container" role="alert" style="display: none;"></div>
 		</div>
 	<?php elseif ( 'retry' === $signup_state['state'] ) : ?>
 		<div class="fair-events-get-tickets-callback fair-events-get-tickets-callback-retry"

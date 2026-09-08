@@ -68,15 +68,20 @@ describe( 'pollPaymentStatus', () => {
 
 	test( 'stops after maxAttempts ticks', async () => {
 		apiFetch.mockResolvedValue( { lifecycle_status: 'processing' } );
+		const onExhausted = jest.fn();
 
 		pollPaymentStatus( {
 			path: '/some/path',
 			maxAttempts: 1,
 			intervalMs: 1000,
+			onExhausted,
 		} );
 		await flushPromises();
 
 		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+		expect( onExhausted ).toHaveBeenCalledWith( {
+			lifecycle_status: 'processing',
+		} );
 
 		jest.advanceTimersByTime( 1000 );
 		await flushPromises();
@@ -85,13 +90,15 @@ describe( 'pollPaymentStatus', () => {
 		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
 	} );
 
-	test( 'stops silently on a fetch error', async () => {
+	test( 'reports a fetch error and stops polling', async () => {
 		apiFetch.mockRejectedValueOnce( new Error( 'network error' ) );
+		const onError = jest.fn();
 
 		expect( () =>
-			pollPaymentStatus( { path: '/some/path' } )
+			pollPaymentStatus( { path: '/some/path', onError } )
 		).not.toThrow();
 		await flushPromises();
+		expect( onError ).toHaveBeenCalledWith( new Error( 'network error' ) );
 
 		jest.advanceTimersByTime( 10000 );
 		expect( apiFetch ).toHaveBeenCalledTimes( 1 );

@@ -117,4 +117,85 @@ test.describe('get-tickets block: abandon and restart', () => {
 		expect(abandoned.status).toBe('failed');
 		expect(fresh.status).toBe('confirmed');
 	});
+
+	test('a processing payment can be canceled and restarted', async ({
+		page,
+		seedEvent,
+	}) => {
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'pending');
+		const event = seedEvent('paid', { block: 'get-tickets' });
+		const stamp = Date.now();
+		const processingEmail = `get-tickets.processing.${stamp}@example.test`;
+
+		await page.goto(event.pageUrl);
+		const form = page.locator('.fair-events-get-tickets-form');
+		await form.locator('input[name="name"]').fill(`Processing ${stamp}`);
+		await form.locator('input[name="email"]').fill(processingEmail);
+		await form
+			.locator(
+				`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
+			)
+			.check();
+		await form.locator('button[type="submit"]').click();
+
+		const processingCard = page.locator(
+			'.fair-events-get-tickets-callback-processing'
+		);
+		await expect(processingCard).toBeVisible({ timeout: 30000 });
+		await expect(
+			processingCard.getByRole('link', { name: 'Cancel and start over' })
+		).toBeVisible();
+		expect(
+			new URL(page.url()).searchParams.get('transaction_id')
+		).toBeTruthy();
+		if (process.env.PR_SCREENSHOTS === '1') {
+			const viewports = {
+				desktop: { width: 1280, height: 900 },
+				tablet: { width: 768, height: 1024 },
+				mobile: { width: 375, height: 812 },
+			};
+			for (const [name, viewport] of Object.entries(viewports)) {
+				await page.setViewportSize(viewport);
+				await page.addStyleTag({
+					content:
+						'.fair-events-get-tickets-callback-cancel,.fair-events-get-tickets-callback-message,.fair-events-get-tickets-callback-status-retry{display:none!important}',
+				});
+				await processingCard.screenshot({
+					path: `before-processing-${name}.png`,
+				});
+				await page
+					.locator('style')
+					.last()
+					.evaluate((style) => style.remove());
+				await processingCard.screenshot({
+					path: `after-processing-${name}.png`,
+				});
+			}
+		}
+
+		await processingCard
+			.getByRole('link', { name: 'Cancel and start over' })
+			.click();
+		await expect(page.locator('.fair-events-get-tickets-form')).toBeVisible(
+			{
+				timeout: 15000,
+			}
+		);
+		const cleanedUrl = new URL(page.url());
+		expect(cleanedUrl.searchParams.has('fair_payment_callback')).toBe(
+			false
+		);
+		expect(cleanedUrl.searchParams.has('transaction_id')).toBe(false);
+		expect(cleanedUrl.searchParams.has('token')).toBe(false);
+
+		const state = runScript(
+			'get-tickets-state.php',
+			'E2E_GT_STATE',
+			String(event.eventDateId)
+		);
+		const canceled = state.signups.find(
+			(signup) => signup.email === processingEmail
+		);
+		expect(canceled.status).toBe('failed');
+	});
 });
