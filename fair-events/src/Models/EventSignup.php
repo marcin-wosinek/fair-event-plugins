@@ -363,9 +363,12 @@ class EventSignup {
 				'status'             => 'failed',
 				'payment_expires_at' => null,
 			),
-			array( 'id' => $signup_id ),
+			array(
+				'id'     => $signup_id,
+				'status' => 'pending_payment',
+			),
 			array( '%s', '%s' ),
-			array( '%d' )
+			array( '%d', '%s' )
 		);
 	}
 

@@ -1750,8 +1750,77 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		$signup_ids = \FairEvents\Models\EventSignup::resolve_signup_ids_from_transaction( $transaction );
+		if ( empty( $signup_ids ) ) {
+			return new WP_Error(
+				'invalid_cancel_state',
+				__( 'This payment could not be cancelled safely. Please try again.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		if ( ! empty( $transaction->mollie_payment_id )
+			&& method_exists( \FairPaymentsConnector\API\TransactionAPI::class, 'sync_transaction_status' )
+		) {
+			$synced = \FairPaymentsConnector\API\TransactionAPI::sync_transaction_status( (int) $transaction->id, true );
+			if ( ! $synced || is_wp_error( $synced ) ) {
+				return new WP_Error(
+					'payment_status_unavailable',
+					__( 'We could not verify the payment status. Please try again.', 'fair-events' ),
+					array( 'status' => 502 )
+				);
+			}
+			$transaction = $synced;
+		}
+
+		if ( 'paid' === (string) $transaction->status ) {
+			$signup_rows               = \FairEvents\Models\EventSignup::get_all_by_transaction_id( (int) $transaction->id );
+			$state                     = \FairEvents\Services\SignupPaymentState::resolve_for_transaction( $transaction, $signup_rows, false );
+			$state['lifecycle_status'] = 'confirmed';
+			\FairEvents\Services\SignupPaymentSession::clear();
+			return rest_ensure_response( $state );
+		}
+
+		if ( ! in_array( (string) $transaction->status, array( 'pending_payment', 'pending', 'open' ), true ) ) {
+			return new WP_Error(
+				'invalid_cancel_state',
+				__( 'This payment could not be cancelled safely. Please try again.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		foreach ( $signup_ids as $signup_id ) {
 			\FairEvents\Models\EventSignup::cancel_pending( $signup_id );
+		}
+
+		$transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( (int) $transaction->id );
+		$signup_rows = \FairEvents\Models\EventSignup::get_all_by_transaction_id( (int) $transaction->id );
+		if ( 'paid' === (string) ( $transaction->status ?? '' )
+			|| array_filter(
+				$signup_rows,
+				static function ( $row ) {
+					return 'confirmed' === (string) $row->status;
+				}
+			)
+		) {
+			$state                     = \FairEvents\Services\SignupPaymentState::resolve_for_transaction( $transaction, $signup_rows, false );
+			$state['state']            = 'confirmed';
+			$state['lifecycle_status'] = 'confirmed';
+			\FairEvents\Services\SignupPaymentSession::clear();
+			return rest_ensure_response( $state );
+		}
+
+		$unreleased = array_filter(
+			$signup_rows,
+			static function ( $row ) {
+				return 'failed' !== (string) $row->status || null !== $row->payment_expires_at;
+			}
+		);
+		if ( count( $signup_rows ) !== count( $signup_ids ) || ! empty( $unreleased ) ) {
+			return new WP_Error(
+				'invalid_cancel_state',
+				__( 'This payment could not be cancelled safely. Please try again.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
 		}
 
 		\FairEvents\Services\SignupPaymentSession::clear();

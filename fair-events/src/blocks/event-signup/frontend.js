@@ -425,20 +425,64 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			return;
 		}
 
-		pollPaymentStatus( {
-			path: `${ PAYMENT_STATE_PATH }${ paymentStateQuery( container ) }`,
-			onConfirmed: ( response ) =>
-				swapToConfirmedCard( container, response ),
-			onFailed: () => window.location.reload(),
-			onProcessing: ( response ) => {
-				if (
-					response.state === 'resume' ||
-					response.state === 'retry'
-				) {
-					window.location.reload();
-				}
-			},
-		} );
+		wireCancelLink( container );
+		const retry = container.querySelector(
+			'.fair-events-get-tickets-callback-status-retry-button'
+		);
+		const retryWrapper = container.querySelector(
+			'.fair-events-get-tickets-callback-status-retry'
+		);
+		const status = container.querySelector(
+			'.fair-events-get-tickets-callback-status'
+		);
+		let polling = false;
+
+		const showRecovery = ( message ) => {
+			polling = false;
+			status.textContent = message;
+			retryWrapper.style.display = '';
+			retry.disabled = false;
+		};
+		const startPolling = () => {
+			if ( polling ) {
+				return;
+			}
+			polling = true;
+			retry.disabled = true;
+			retryWrapper.style.display = 'none';
+			pollPaymentStatus( {
+				path: `${ PAYMENT_STATE_PATH }${ paymentStateQuery(
+					container
+				) }`,
+				onConfirmed: ( response ) =>
+					swapToConfirmedCard( container, response ),
+				onFailed: () => window.location.reload(),
+				onProcessing: ( response ) => {
+					if (
+						response.state === 'resume' ||
+						response.state === 'retry'
+					) {
+						window.location.reload();
+					}
+				},
+				onExhausted: () =>
+					showRecovery(
+						__(
+							'Payment confirmation is taking longer than expected. You can check again or cancel and start over.',
+							'fair-events'
+						)
+					),
+				onError: () =>
+					showRecovery(
+						__(
+							'We could not check your payment status. Please check again or cancel and start over.',
+							'fair-events'
+						)
+					),
+			} );
+		};
+		retry.addEventListener( 'click', startPolling );
+		startPolling();
 	}
 
 	/**
@@ -546,8 +590,19 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			return;
 		}
 
+		let cancelling = false;
 		link.addEventListener( 'click', function ( event ) {
 			event.preventDefault();
+			if ( cancelling ) {
+				return;
+			}
+			cancelling = true;
+			const originalText = link.textContent;
+			link.textContent = __( 'Cancelling…', 'fair-events' );
+			link.setAttribute( 'aria-disabled', 'true' );
+			const messageContainer = container.querySelector(
+				'.fair-events-get-tickets-callback-message'
+			);
 
 			apiFetch( {
 				path: '/fair-events/v1/get-tickets/cancel-payment',
@@ -560,15 +615,33 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 					token: container.dataset.token || '',
 				},
 			} )
-				.catch( function ( error ) {
-					console.error( 'Cancel payment error:', error );
-				} )
-				.finally( function () {
+				.then( function ( response ) {
+					if ( response.state === 'confirmed' ) {
+						swapToConfirmedCard( container, response );
+						return;
+					}
 					const url = new URL( window.location.href );
 					url.searchParams.delete( 'fair_payment_callback' );
 					url.searchParams.delete( 'transaction_id' );
 					url.searchParams.delete( 'token' );
 					window.location.href = url.toString();
+				} )
+				.catch( function ( error ) {
+					cancelling = false;
+					link.textContent = originalText;
+					link.removeAttribute( 'aria-disabled' );
+					showMessage(
+						messageContainer,
+						extractErrorMessage(
+							error,
+							__(
+								'Could not cancel this payment. Please try again.',
+								'fair-events'
+							)
+						),
+						'error',
+						CSS_PREFIX
+					);
 				} );
 		} );
 	}

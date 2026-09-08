@@ -9,7 +9,12 @@
  * helpers' own behavior (covered by their own unit tests).
  */
 import apiFetch from '@wordpress/api-fetch';
-import { initiatePayment, wireNotYouButton } from 'fair-events-shared';
+import {
+	initiatePayment,
+	pollPaymentStatus,
+	showMessage,
+	wireNotYouButton,
+} from 'fair-events-shared';
 
 jest.mock( '@wordpress/api-fetch', () => jest.fn() );
 jest.mock( 'fair-events-shared', () => ( {
@@ -85,6 +90,99 @@ beforeEach( () => {
 	apiFetch.mockReset();
 	wireNotYouButton.mockClear();
 	initiatePayment.mockClear();
+	pollPaymentStatus.mockClear();
+	showMessage.mockClear();
+} );
+
+describe( 'Event Signup frontend.js — processing payment recovery', () => {
+	function buildProcessingCard() {
+		document.body.innerHTML = `
+			<div class="fair-events-get-tickets-callback fair-events-get-tickets-callback-processing" data-transaction-id="77" data-token="owner-token">
+				<p class="fair-events-get-tickets-callback-status">Checking</p>
+				<div class="fair-events-get-tickets-callback-status-retry" style="display:none"><button class="fair-events-get-tickets-callback-status-retry-button">Check payment status again</button></div>
+				<a href="#" class="fair-events-get-tickets-callback-cancel-link">Cancel and start over</a>
+				<div class="fair-events-get-tickets-callback-message"></div>
+			</div>`;
+		initialize();
+		return document.querySelector(
+			'.fair-events-get-tickets-callback-processing'
+		);
+	}
+
+	test( 'keeps cancellation usable while polling and offers retry after exhaustion', () => {
+		const card = buildProcessingCard();
+		expect( pollPaymentStatus ).toHaveBeenCalledTimes( 1 );
+		expect(
+			card.querySelector(
+				'.fair-events-get-tickets-callback-cancel-link'
+			)
+		).not.toBeNull();
+
+		pollPaymentStatus.mock.calls[ 0 ][ 0 ].onExhausted();
+		const retry = card.querySelector(
+			'.fair-events-get-tickets-callback-status-retry-button'
+		);
+		expect( retry.parentElement.style.display ).toBe( '' );
+		retry.click();
+		expect( pollPaymentStatus ).toHaveBeenCalledTimes( 2 );
+	} );
+
+	test( 'offers status retry after a request error without calling it a failed payment', () => {
+		const card = buildProcessingCard();
+		pollPaymentStatus.mock.calls[ 0 ][ 0 ].onError();
+		expect(
+			card.querySelector( '.fair-events-get-tickets-callback-status' )
+				.textContent
+		).toContain( 'could not check your payment status' );
+		expect(
+			card.querySelector(
+				'.fair-events-get-tickets-callback-status-retry-button'
+			).disabled
+		).toBe( false );
+	} );
+
+	test( 'disables duplicate cancellation and restores the action after failure', async () => {
+		let rejectCancel;
+		apiFetch.mockReturnValue(
+			new Promise( ( _resolve, reject ) => {
+				rejectCancel = reject;
+			} )
+		);
+		const card = buildProcessingCard();
+		const cancel = card.querySelector(
+			'.fair-events-get-tickets-callback-cancel-link'
+		);
+		cancel.click();
+		cancel.click();
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+		expect( cancel.textContent ).toBe( 'Cancelling…' );
+		expect( cancel.getAttribute( 'aria-disabled' ) ).toBe( 'true' );
+
+		rejectCancel( new Error( 'Try later' ) );
+		await Promise.resolve();
+		await Promise.resolve();
+		expect( cancel.textContent ).toBe( 'Cancel and start over' );
+		expect( cancel.hasAttribute( 'aria-disabled' ) ).toBe( false );
+		expect( showMessage ).toHaveBeenCalled();
+	} );
+
+	test( 'renders confirmation when payment wins the cancellation race', async () => {
+		apiFetch.mockResolvedValue( {
+			state: 'confirmed',
+			amount: 12,
+			currency: 'EUR',
+		} );
+		const card = buildProcessingCard();
+		card.querySelector(
+			'.fair-events-get-tickets-callback-cancel-link'
+		).click();
+		await Promise.resolve();
+		await Promise.resolve();
+		expect( card.classList ).toContain(
+			'fair-events-get-tickets-callback-confirmed'
+		);
+		expect( card.textContent ).toContain( 'Payment confirmed' );
+	} );
 } );
 
 describe( 'Event Signup frontend.js — ticket extension rules (#1521)', () => {

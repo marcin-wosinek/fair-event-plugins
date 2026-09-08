@@ -83,6 +83,8 @@ export async function initiatePayment( {
  * @param {Function} [args.onConfirmed]  Called with the response once `lifecycle_status` is `confirmed`.
  * @param {Function} [args.onFailed]     Called with the response once `lifecycle_status` is `failed`.
  * @param {Function} [args.onProcessing] Called with the response on each poll while still in progress.
+ * @param {Function} [args.onExhausted]  Called after the final unresolved response.
+ * @param {Function} [args.onError]      Called when a status request fails.
  * @param {number}   [args.maxAttempts]  Stop polling after this many ticks.
  * @param {number}   [args.intervalMs]   Delay between ticks.
  */
@@ -91,13 +93,19 @@ export function pollPaymentStatus( {
 	onConfirmed,
 	onFailed,
 	onProcessing,
+	onExhausted,
+	onError,
 	maxAttempts = MAX_ATTEMPTS,
 	intervalMs = POLL_INTERVAL_MS,
 } ) {
+	let stopped = false;
 	poll( 0 );
+	return function stopPolling() {
+		stopped = true;
+	};
 
 	function poll( attempt ) {
-		if ( attempt >= maxAttempts ) {
+		if ( stopped || attempt >= maxAttempts ) {
 			return;
 		}
 
@@ -121,12 +129,21 @@ export function pollPaymentStatus( {
 					onProcessing( response );
 				}
 
+				if ( attempt + 1 >= maxAttempts ) {
+					if ( onExhausted ) {
+						onExhausted( response );
+					}
+					return;
+				}
+
 				setTimeout( function () {
 					poll( attempt + 1 );
 				}, intervalMs );
 			} )
-			.catch( function () {
-				// Ignore polling errors — stop polling silently.
+			.catch( function ( error ) {
+				if ( onError ) {
+					onError( error );
+				}
 			} );
 	}
 }
