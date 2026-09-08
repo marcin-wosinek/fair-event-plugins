@@ -21,7 +21,10 @@ import {
 	within,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import EventTickets from '../EventTickets.js';
+import EventTickets, {
+	exclusiveEndToInclusiveDate,
+	inclusiveEndToExclusiveDate,
+} from '../EventTickets.js';
 import { salePeriodColor } from '../SalePeriodsCalendar.js';
 
 jest.mock( '@wordpress/api-fetch' );
@@ -35,6 +38,20 @@ beforeEach( () => {
 	// participants, group-pricing-rules) so they don't fire async state updates
 	// outside act() after assertions complete.
 	apiFetch.mockImplementation( () => new Promise( () => {} ) );
+} );
+
+describe( 'sale-period calendar date conversion (#1500)', () => {
+	it( 'crosses month, year, and DST boundaries without shifting', () => {
+		expect( exclusiveEndToInclusiveDate( '2026-09-01' ) ).toBe(
+			'2026-08-31'
+		);
+		expect( inclusiveEndToExclusiveDate( '2026-12-31' ) ).toBe(
+			'2027-01-01'
+		);
+		expect( inclusiveEndToExclusiveDate( '2026-03-29' ) ).toBe(
+			'2026-03-30'
+		);
+	} );
 } );
 
 afterEach( () => {
@@ -1063,7 +1080,7 @@ describe( 'EventTickets — unset sale window shows the resolved default (#1189)
 			screen.getByRole( 'button', { name: /Sale Periods/i } )
 		);
 
-		expect( screen.getByText( /until .*September/ ) ).toBeInTheDocument();
+		expect( screen.getByText( /until .*August/ ) ).toBeInTheDocument();
 		expect( screen.queryByText( /\(default\)/ ) ).not.toBeInTheDocument();
 	} );
 } );
@@ -1165,9 +1182,9 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 		const dateInputs = container.querySelectorAll( 'input[type="date"]' );
 		const lastUntilInput = dateInputs[ dateInputs.length - 1 ];
 		expect( lastUntilInput.value ).toBe( '' );
-		// Placeholder is anchored to the series' last occurrence (Aug 22/23
-		// depending on local TZ rounding), not the master's own day (Aug 02).
-		expect( lastUntilInput.placeholder ).toMatch( /^2026-08-2[23]$/ );
+		// The inclusive placeholder is the series' final occurrence day, not
+		// the following exclusive boundary or the master's own day.
+		expect( lastUntilInput.placeholder ).toBe( '2026-08-22' );
 	} );
 
 	it( 'merging periods restores an unset (automatic) end', () => {

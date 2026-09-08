@@ -12,7 +12,9 @@
  */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import SalePeriodsCalendar from '../SalePeriodsCalendar.js';
+import SalePeriodsCalendar, {
+	salePeriodIndexForDate,
+} from '../SalePeriodsCalendar.js';
 
 const twoNamedPeriods = [
 	{
@@ -87,4 +89,13 @@ it( 'renders day cells as plain, non-operable cells rather than buttons', () => 
 		/>
 	);
 	expect( screen.queryByRole( 'button' ) ).not.toBeInTheDocument();
+} );
+
+it( 'assigns every adjacent boundary date to exactly one period', () => {
+	expect( salePeriodIndexForDate( twoNamedPeriods, '2026-08-14' ) ).toBe( 0 );
+	expect( salePeriodIndexForDate( twoNamedPeriods, '2026-08-15' ) ).toBe( 1 );
+	expect( salePeriodIndexForDate( twoNamedPeriods, '2026-08-31' ) ).toBe( 1 );
+	expect( salePeriodIndexForDate( twoNamedPeriods, '2026-09-01' ) ).toBe(
+		-1
+	);
 } );
