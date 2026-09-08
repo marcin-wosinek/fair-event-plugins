@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Events Experimental 1.6.0\n"
+"Project-Id-Version: Fair Events Experimental 1.6.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events-experimental\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-07T03:00:42+00:00\n"
+"POT-Creation-Date: 2026-09-08T12:31:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -171,52 +171,59 @@ msgstr ""
 msgid "Event not found."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:169
-msgid "No confirmed participants yet. Statistics appear once people sign up."
+#: src/Admin/event-statistics/EventStatistics.js:114
+msgid "Event sales statistics could not be loaded."
+msgstr ""
+
+#. translators: %d: confirmed sales total.
+#: src/Admin/event-statistics/EventStatistics.js:168
+#, js-format
+msgid "%d sale"
+msgid_plural "%d sales"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: calendar days until the event.
+#: src/Admin/event-statistics/EventStatistics.js:181
+#, js-format
+msgid "%d day until the event"
+msgid_plural "%d days until the event"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/event-statistics/EventStatistics.js:196
+msgid "Cumulative sales"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:217
+msgid "Sales"
 msgstr ""
 
 #. translators: %d: number of excluded participant rows.
-#: src/Admin/event-statistics/EventStatistics.js:182
+#: src/Admin/event-statistics/EventStatistics.js:235
 #, js-format
 msgid "Confirmed participants only (signed up). %d excluded (pending payment, interested, collaborators)."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:191
+#: src/Admin/event-statistics/EventStatistics.js:244
 msgid "People per activity"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:198
+#: src/Admin/event-statistics/EventStatistics.js:251
 msgid "No activities recorded for confirmed participants."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:223
-#: src/Admin/event-statistics/EventStatistics.js:262
+#: src/Admin/event-statistics/EventStatistics.js:276
+#: src/Admin/event-statistics/EventStatistics.js:315
 msgid "People"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:235
+#: src/Admin/event-statistics/EventStatistics.js:288
 msgid "Activities per person"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:250
-msgid "Activities"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:270
-msgid "Sales lead time"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:274
-msgid "Lead time is unavailable (missing event date or signup timestamps)."
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:291
-msgid "Days before event"
-msgstr ""
-
 #: src/Admin/event-statistics/EventStatistics.js:303
-#: src/Admin/manage-event/DuplicateEventWizard.js:570
-msgid "Tickets"
+msgid "Activities"
 msgstr ""
 
 #: src/Admin/manage-event-ext/index.js:35
@@ -270,6 +277,10 @@ msgstr ""
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:564
 msgid "Links"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:570
+msgid "Tickets"
 msgstr ""
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:576

@@ -85,6 +85,30 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Get the minimal confirmed-sale fields for an event date.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array[] Rows containing participant, ticket type, and creation date.
+	 */
+	public function get_confirmed_sales_rows( $event_date_id ) {
+		global $wpdb;
+
+		$table_name = $this->get_table_name();
+
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT participant_id, ticket_type_id, created_at
+				 FROM %i
+				 WHERE event_date_id = %d AND label = 'signed_up'
+				 ORDER BY created_at ASC",
+				$table_name,
+				$event_date_id
+			),
+			ARRAY_A
+		);
+	}
+
+	/**
 	 * Get all events for a participant.
 	 *
 	 * @param int $participant_id Participant ID.

@@ -156,6 +156,12 @@ class Plugin {
 		$event_participants_controller = new \FairAudience\API\EventParticipantsController();
 		$event_participants_controller->register_routes();
 
+		$event_statistics_controller = new \FairAudience\API\EventStatisticsController();
+		$event_statistics_controller->register_routes();
+
+		$event_statistics_controller = new \FairAudience\API\EventStatisticsController();
+		$event_statistics_controller->register_routes();
+
 		$mailing_signup_controller = new \FairAudience\API\MailingSignupController();
 		$mailing_signup_controller->register_routes();
 

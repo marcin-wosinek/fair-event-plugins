@@ -7,7 +7,6 @@ import apiFetch from '@wordpress/api-fetch';
 import EventStatistics, {
 	peoplePerActivity,
 	activityCountDistribution,
-	salesLeadTime,
 } from '../EventStatistics.js';
 
 jest.mock( '@wordpress/api-fetch' );
@@ -21,7 +20,9 @@ jest.mock( 'recharts', () => {
 	return {
 		ResponsiveContainer: Passthrough,
 		BarChart: Passthrough,
+		AreaChart: Passthrough,
 		Bar: Empty,
+		Area: Empty,
 		XAxis: Empty,
 		YAxis: Empty,
 		Tooltip: Empty,
@@ -102,63 +103,25 @@ describe( 'activityCountDistribution', () => {
 	} );
 } );
 
-describe( 'salesLeadTime', () => {
-	const eventDate = '2026-06-15 00:00:00';
-
-	it( 'buckets confirmed tickets by whole days before the event, desc', () => {
-		const participants = [
-			signedUp( { created_at: '2026-06-01 00:00:00' } ), // 14 days out
-			signedUp( { created_at: '2026-06-14 00:00:00' } ), // 1 day out
-			signedUp( { created_at: '2026-06-14 12:00:00' } ), // 0 days out
-		];
-		expect( salesLeadTime( participants, eventDate ) ).toEqual( [
-			{ daysOut: 14, count: 1 },
-			{ daysOut: 13, count: 0 },
-			{ daysOut: 12, count: 0 },
-			{ daysOut: 11, count: 0 },
-			{ daysOut: 10, count: 0 },
-			{ daysOut: 9, count: 0 },
-			{ daysOut: 8, count: 0 },
-			{ daysOut: 7, count: 0 },
-			{ daysOut: 6, count: 0 },
-			{ daysOut: 5, count: 0 },
-			{ daysOut: 4, count: 0 },
-			{ daysOut: 3, count: 0 },
-			{ daysOut: 2, count: 0 },
-			{ daysOut: 1, count: 1 },
-			{ daysOut: 0, count: 1 },
-		] );
-	} );
-
-	it( 'ignores rows with missing/unparseable created_at', () => {
-		const participants = [
-			signedUp( { created_at: null } ),
-			signedUp( { created_at: '2026-06-14 00:00:00' } ), // 1 day out
-		];
-		expect( salesLeadTime( participants, eventDate ) ).toEqual( [
-			{ daysOut: 1, count: 1 },
-			{ daysOut: 0, count: 0 },
-		] );
-	} );
-
-	it( 'returns [] when the event date is missing', () => {
-		expect(
-			salesLeadTime( [ signedUp( { created_at: eventDate } ) ], null )
-		).toEqual( [] );
-	} );
-} );
-
 describe( 'EventStatistics component', () => {
 	beforeEach( () => {
 		jest.resetAllMocks();
 	} );
 
-	function mockApi( participants, eventDate = '2026-06-15 00:00:00' ) {
+	function mockApi( participants, statistics = {} ) {
 		apiFetch.mockImplementation( ( opts ) => {
 			if ( opts.path.endsWith( '/participants' ) ) {
 				return Promise.resolve( participants );
 			}
-			return Promise.resolve( { event_date: eventDate } );
+			return Promise.resolve( {
+				total_sales: 1,
+				days_until_start: 5,
+				series: [
+					{ date: '2026-06-14', label: '1 day before', total: 0 },
+					{ date: '2026-06-15', label: 'Day of event', total: 1 },
+				],
+				...statistics,
+			} );
 		} );
 	}
 
@@ -167,7 +130,6 @@ describe( 'EventStatistics component', () => {
 			signedUp( {
 				ticket_option_ids: [ 1 ],
 				ticket_option_names: [ 'Yoga' ],
-				created_at: '2026-06-10 00:00:00',
 			} ),
 			// Excluded rows: not signed_up.
 			{ label: 'pending_payment', ticket_option_ids: [ 1 ] },
@@ -184,7 +146,14 @@ describe( 'EventStatistics component', () => {
 		expect(
 			screen.getByText( 'Activities per person' )
 		).toBeInTheDocument();
-		expect( screen.getByText( 'Sales lead time' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Cumulative sales' ) ).toBeInTheDocument();
+		expect( screen.getByText( '1 sale' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( '5 days until the event' )
+		).toBeInTheDocument();
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-audience/v1/event-dates/42/statistics',
+		} );
 		// 2 of the 3 rows are excluded (pending_payment + interested).
 		// getAllByText: WordPress Notice mirrors its text into an a11y live region.
 		expect( screen.getAllByText( /2 excluded/ ).length ).toBeGreaterThan(
@@ -192,18 +161,41 @@ describe( 'EventStatistics component', () => {
 		);
 	} );
 
-	it( 'shows an empty-state when there are no confirmed participants', async () => {
-		mockApi( [ { label: 'interested', ticket_option_ids: [] } ] );
+	it( 'renders zero sales while retaining the activity charts', async () => {
+		mockApi( [ { label: 'interested', ticket_option_ids: [] } ], {
+			total_sales: 0,
+			days_until_start: null,
+			series: [ { date: '2026-06-15', label: 'Day of event', total: 0 } ],
+		} );
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		await waitFor( () =>
+			expect( screen.getByText( '0 sales' ) ).toBeInTheDocument()
+		);
+		expect( screen.getByText( 'People per activity' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Activities per person' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( /until the event/ )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'shows statistics failures independently', async () => {
+		apiFetch.mockImplementation( ( opts ) =>
+			opts.path.endsWith( '/participants' )
+				? Promise.resolve( [ signedUp( {} ) ] )
+				: Promise.reject( new Error( 'Statistics unavailable' ) )
+		);
 
 		render( <EventStatistics eventDateId={ 42 } /> );
 
 		await waitFor( () =>
 			expect(
-				screen.getAllByText( /No confirmed participants yet/ ).length
+				screen.getAllByText( 'Statistics unavailable' ).length
 			).toBeGreaterThan( 0 )
 		);
-		expect(
-			screen.queryByText( 'People per activity' )
-		).not.toBeInTheDocument();
+		expect( screen.getByText( 'People per activity' ) ).toBeInTheDocument();
 	} );
 } );
