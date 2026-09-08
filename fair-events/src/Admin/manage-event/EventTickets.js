@@ -35,6 +35,28 @@ import { moreVertical } from '@wordpress/icons';
 import apiFetch from '@wordpress/api-fetch';
 import SalePeriodsCalendar, { salePeriodColor } from './SalePeriodsCalendar.js';
 
+const shiftCalendarDate = ( dateStr, days ) => {
+	if ( ! dateStr ) return '';
+	const [ year, month, day ] = dateStr
+		.split( ' ' )[ 0 ]
+		.split( 'T' )[ 0 ]
+		.split( '-' )
+		.map( Number );
+	const date = new Date( year, month - 1, day );
+	date.setDate( date.getDate() + days );
+	return [ date.getFullYear(), date.getMonth() + 1, date.getDate() ]
+		.map( ( part, index ) =>
+			index === 0 ? String( part ) : String( part ).padStart( 2, '0' )
+		)
+		.join( '-' );
+};
+
+export const exclusiveEndToInclusiveDate = ( dateStr ) =>
+	shiftCalendarDate( dateStr, -1 );
+
+export const inclusiveEndToExclusiveDate = ( dateStr ) =>
+	shiftCalendarDate( dateStr, 1 );
+
 export default function EventTickets( {
 	eventDateId,
 	onSaveRef,
@@ -456,10 +478,7 @@ export default function EventTickets( {
 		window.fairEventsManageEventData?.siteToday || '';
 
 	const dayAfterDate = ( dateStr ) => {
-		if ( ! dateStr ) return '';
-		const d = new Date( dateStr + 'T00:00:00' );
-		d.setDate( d.getDate() + 1 );
-		return d.toISOString().slice( 0, 10 );
+		return shiftCalendarDate( dateStr, 1 );
 	};
 
 	// The day after the event/series' last occurrence — the lazily-resolved
@@ -1101,7 +1120,9 @@ export default function EventTickets( {
 															'fair-events'
 														),
 														formatSaleDateLabel(
-															end
+															exclusiveEndToInclusiveDate(
+																end
+															)
 														)
 												  )
 												: sprintf(
@@ -1111,7 +1132,9 @@ export default function EventTickets( {
 															'fair-events'
 														),
 														formatSaleDateLabel(
-															end
+															exclusiveEndToInclusiveDate(
+																end
+															)
 														)
 												  );
 										} )() }
@@ -1172,12 +1195,15 @@ export default function EventTickets( {
 																: period.sale_start ||
 																  '';
 														const untilValue =
-															period.sale_end ||
-															'';
+															exclusiveEndToInclusiveDate(
+																period.sale_end
+															);
 														const untilPlaceholder =
 															isLast &&
 															! period.sale_end
-																? defaultSaleEnd()
+																? exclusiveEndToInclusiveDate(
+																		defaultSaleEnd()
+																  )
 																: undefined;
 
 														return (
@@ -1259,7 +1285,9 @@ export default function EventTickets( {
 																			updateSalePeriod(
 																				pIndex,
 																				'sale_end',
-																				v
+																				inclusiveEndToExclusiveDate(
+																					v
+																				)
 																			)
 																		}
 																		__nextHasNoMarginBottom
@@ -1353,19 +1381,21 @@ export default function EventTickets( {
 												'fair-events'
 											) }
 											type="date"
-											value={
-												salePeriods[ 0 ].sale_end || ''
-											}
+											value={ exclusiveEndToInclusiveDate(
+												salePeriods[ 0 ].sale_end
+											) }
 											placeholder={
 												salePeriods[ 0 ].sale_end
 													? undefined
-													: defaultSaleEnd()
+													: exclusiveEndToInclusiveDate(
+															defaultSaleEnd()
+													  )
 											}
 											help={
 												! salePeriods[ 0 ].sale_end &&
 												defaultSaleEnd()
 													? __(
-															'Until the day after the last occurrence.',
+															'Includes the complete day of the last occurrence.',
 															'fair-events'
 													  )
 													: undefined
@@ -1374,7 +1404,9 @@ export default function EventTickets( {
 												updateSalePeriod(
 													0,
 													'sale_end',
-													v
+													inclusiveEndToExclusiveDate(
+														v
+													)
 												)
 											}
 											__nextHasNoMarginBottom
@@ -1520,9 +1552,13 @@ export default function EventTickets( {
 														: period.sale_start ||
 														  '';
 													const untilValue = isLast
-														? period.sale_end ||
-														  defaultSaleEnd()
-														: period.sale_end || '';
+														? exclusiveEndToInclusiveDate(
+																period.sale_end ||
+																	defaultSaleEnd()
+														  )
+														: exclusiveEndToInclusiveDate(
+																period.sale_end
+														  );
 													const dateTooltip = `${
 														fromValue || '?'
 													} → ${ untilValue || '?' }`;

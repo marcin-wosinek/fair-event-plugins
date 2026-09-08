@@ -27,6 +27,12 @@ export function salePeriodColor( index ) {
 	return SALE_PERIOD_COLORS[ index % SALE_PERIOD_COLORS.length ];
 }
 
+export function salePeriodIndexForDate( periods, dateStr ) {
+	return periods.findIndex(
+		( period ) => period.sale_start <= dateStr && dateStr < period.sale_end
+	);
+}
+
 // Deliberately distinct from MiniCalendar's built-in "today" border
 // (`2px solid #1e1e1e`) so the event-day marker never blends into it when
 // the event happens to be today.
@@ -46,7 +52,7 @@ function periodLabel( period, index ) {
 
 /**
  * @param {Object}  props
- * @param {Array}   props.salePeriods Chained sale periods (`sale_start`/`sale_end`/`name`, Y-m-d strings); consecutive periods share a boundary.
+ * @param {Array}   props.salePeriods Chained sale periods using canonical inclusive starts and exclusive ends (`sale_start`/`sale_end`/`name`, Y-m-d strings). The editor presents each exclusive end as the preceding inclusive “Until” day.
  * @param {string}  [props.eventDay]  Event start date (Y-m-d) for the event-day marker.
  * @param {boolean} [props.embedded]  Card-less render for placement inside an existing panel.
  */
@@ -80,13 +86,8 @@ export default function SalePeriodsCalendar( {
 	// (including the last), matching how updateSalePeriod() chains one
 	// period's end into the next one's start — a day never falls in two
 	// periods at once.
-	const periodIndexForDate = ( dateStr ) =>
-		periods.findIndex(
-			( p ) => p.sale_start <= dateStr && dateStr < p.sale_end
-		);
-
 	const dayProps = ( dateStr ) => {
-		const periodIndex = periodIndexForDate( dateStr );
+		const periodIndex = salePeriodIndexForDate( periods, dateStr );
 		const isEventDay = dateStr === eventDay;
 
 		let tooltip;
