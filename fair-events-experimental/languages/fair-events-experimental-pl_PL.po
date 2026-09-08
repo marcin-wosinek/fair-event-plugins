@@ -157,50 +157,33 @@ msgstr "Nie udało się załadować zdarzenia."
 msgid "Event not found."
 msgstr "Zdarzenie nie znalezione."
 
-#: src/Admin/event-statistics/EventStatistics.js:169
-msgid "No confirmed participants yet. Statistics appear once people sign up."
-msgstr "Brak potwierdzonych uczestników. Statystyki pojawią się, gdy ludzie się zarejestrują."
-
 #. translators: %d: number of excluded participant rows.
-#: src/Admin/event-statistics/EventStatistics.js:182
+#: src/Admin/event-statistics/EventStatistics.js:235
 #, js-format
 msgid "Confirmed participants only (signed up). %d excluded (pending payment, interested, collaborators)."
 msgstr "Tylko potwierdzeni uczestnicy (zarejestrowani). %d wykluczonych (oczekujące płatności, zainteresowani, współpracownicy)."
 
-#: src/Admin/event-statistics/EventStatistics.js:191
+#: src/Admin/event-statistics/EventStatistics.js:244
 msgid "People per activity"
 msgstr "Osoby na działalność"
 
-#: src/Admin/event-statistics/EventStatistics.js:198
+#: src/Admin/event-statistics/EventStatistics.js:251
 msgid "No activities recorded for confirmed participants."
 msgstr "Brak zarejestrowanych działań dla potwierdzonych uczestników."
 
-#: src/Admin/event-statistics/EventStatistics.js:223
-#: src/Admin/event-statistics/EventStatistics.js:262
+#: src/Admin/event-statistics/EventStatistics.js:276
+#: src/Admin/event-statistics/EventStatistics.js:315
 msgid "People"
 msgstr "Osoby"
 
-#: src/Admin/event-statistics/EventStatistics.js:235
+#: src/Admin/event-statistics/EventStatistics.js:288
 msgid "Activities per person"
 msgstr "Działania na osobę"
 
-#: src/Admin/event-statistics/EventStatistics.js:250
+#: src/Admin/event-statistics/EventStatistics.js:303
 msgid "Activities"
 msgstr "Działania"
 
-#: src/Admin/event-statistics/EventStatistics.js:270
-msgid "Sales lead time"
-msgstr "Czas sprzedaży"
-
-#: src/Admin/event-statistics/EventStatistics.js:274
-msgid "Lead time is unavailable (missing event date or signup timestamps)."
-msgstr "Czas sprzedaży jest niedostępny (brakuje daty zdarzenia lub znaczników czasu rejestracji)."
-
-#: src/Admin/event-statistics/EventStatistics.js:291
-msgid "Days before event"
-msgstr "Dni przed wydarzeniem"
-
-#: src/Admin/event-statistics/EventStatistics.js:303
 #: src/Admin/manage-event/DuplicateEventWizard.js:570
 msgid "Tickets"
 msgstr "Bilety"
@@ -592,3 +575,30 @@ msgstr "Włącza zaawansowane pakiety funkcji dla Fair Events, w tym galerie, ź
 msgid "Advanced event duplication and merge tools."
 msgstr "Zaawansowane narzędzia do duplikowania i scalania wydarzeń."
 
+#: src/Admin/event-statistics/EventStatistics.js:114
+msgid "Event sales statistics could not be loaded."
+msgstr ""
+
+#. translators: %d: confirmed sales total.
+#: src/Admin/event-statistics/EventStatistics.js:168
+#, js-format
+msgid "%d sale"
+msgid_plural "%d sales"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: calendar days until the event.
+#: src/Admin/event-statistics/EventStatistics.js:181
+#, js-format
+msgid "%d day until the event"
+msgid_plural "%d days until the event"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/event-statistics/EventStatistics.js:196
+msgid "Cumulative sales"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:217
+msgid "Sales"
+msgstr ""

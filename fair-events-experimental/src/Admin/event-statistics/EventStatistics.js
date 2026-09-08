@@ -6,27 +6,21 @@ import {
 	Notice,
 	Spinner,
 } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	ResponsiveContainer,
 	BarChart,
 	Bar,
+	AreaChart,
+	Area,
 	XAxis,
 	YAxis,
 	Tooltip,
 	CartesianGrid,
 } from 'recharts';
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 const BAR_COLOR = '#3858e9'; // WordPress admin blue.
-
-// WordPress stores datetimes as "YYYY-MM-DD HH:MM:SS"; Safari/strict parsers
-// reject the space, so normalise it to an ISO-ish "T" before constructing Date.
-function parseDate( value ) {
-	if ( ! value ) return NaN;
-	return new Date( String( value ).replace( ' ', 'T' ) ).getTime();
-}
 
 // People per activity: one row per distinct ticket option, counting how many
 // confirmed participants picked it. ticket_option_ids / ticket_option_names are
@@ -72,31 +66,6 @@ export function activityCountDistribution( participants ) {
 	return result;
 }
 
-// Sales lead time: confirmed tickets bucketed per day by how many days before
-// the event they were created. Returned furthest-out first (descending daysOut)
-// with a continuous day range so the axis reads as a timeline toward the event.
-export function salesLeadTime( participants, eventDate ) {
-	const eventTime = parseDate( eventDate );
-	if ( Number.isNaN( eventTime ) ) return [];
-	const buckets = new Map();
-	participants.forEach( ( p ) => {
-		const createdTime = parseDate( p.created_at );
-		if ( Number.isNaN( createdTime ) ) return;
-		const daysOut = Math.max(
-			0,
-			Math.floor( ( eventTime - createdTime ) / MS_PER_DAY )
-		);
-		buckets.set( daysOut, ( buckets.get( daysOut ) || 0 ) + 1 );
-	} );
-	if ( ! buckets.size ) return [];
-	const max = Math.max( ...buckets.keys() );
-	const result = [];
-	for ( let d = max; d >= 0; d-- ) {
-		result.push( { daysOut: d, count: buckets.get( d ) || 0 } );
-	}
-	return result;
-}
-
 function ChartCard( { title, children } ) {
 	return (
 		<Card style={ { marginTop: '16px' } }>
@@ -110,30 +79,45 @@ function ChartCard( { title, children } ) {
 
 export default function EventStatistics( { eventDateId } ) {
 	const [ participants, setParticipants ] = useState( [] );
-	const [ eventDate, setEventDate ] = useState( null );
-	const [ loading, setLoading ] = useState( true );
+	const [ participantLoading, setParticipantLoading ] = useState( true );
+	const [ statistics, setStatistics ] = useState( null );
+	const [ statisticsLoading, setStatisticsLoading ] = useState( true );
+	const [ statisticsError, setStatisticsError ] = useState( '' );
 
 	useEffect( () => {
 		if ( ! eventDateId ) {
-			setLoading( false );
+			setParticipantLoading( false );
+			setStatisticsLoading( false );
 			return;
 		}
-		setLoading( true );
-		Promise.all( [
-			apiFetch( {
-				path: `/fair-audience/v1/event-dates/${ eventDateId }/participants`,
-			} ).catch( () => [] ),
-			apiFetch( {
-				path: `/fair-audience/v1/event-dates/${ eventDateId }`,
-			} ).catch( () => null ),
-		] )
-			.then( ( [ participantData, eventInfo ] ) => {
+		setParticipantLoading( true );
+		setStatisticsLoading( true );
+		setStatisticsError( '' );
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+		} )
+			.then( ( participantData ) => {
 				setParticipants(
 					Array.isArray( participantData ) ? participantData : []
 				);
-				setEventDate( eventInfo?.event_date || null );
 			} )
-			.finally( () => setLoading( false ) );
+			.catch( () => setParticipants( [] ) )
+			.finally( () => setParticipantLoading( false ) );
+
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/statistics`,
+		} )
+			.then( setStatistics )
+			.catch( ( error ) =>
+				setStatisticsError(
+					error?.message ||
+						__(
+							'Event sales statistics could not be loaded.',
+							'fair-events-experimental'
+						)
+				)
+			)
+			.finally( () => setStatisticsLoading( false ) );
 	}, [ eventDateId ] );
 
 	const confirmed = useMemo(
@@ -150,12 +134,7 @@ export default function EventStatistics( { eventDateId } ) {
 		() => activityCountDistribution( confirmed ),
 		[ confirmed ]
 	);
-	const leadTimeData = useMemo(
-		() => salesLeadTime( confirmed, eventDate ),
-		[ confirmed, eventDate ]
-	);
-
-	if ( loading ) {
+	if ( participantLoading && statisticsLoading ) {
 		return (
 			<div style={ { padding: '24px', textAlign: 'center' } }>
 				<Spinner />
@@ -163,19 +142,93 @@ export default function EventStatistics( { eventDateId } ) {
 		);
 	}
 
-	if ( confirmed.length === 0 ) {
-		return (
-			<Notice status="info" isDismissible={ false }>
-				{ __(
-					'No confirmed participants yet. Statistics appear once people sign up.',
-					'fair-events-experimental'
-				) }
-			</Notice>
-		);
-	}
-
 	return (
 		<div>
+			{ statisticsLoading && <Spinner /> }
+			{ statisticsError && (
+				<Notice status="error" isDismissible={ false }>
+					{ statisticsError }
+				</Notice>
+			) }
+			{ statistics && (
+				<>
+					<Card>
+						<CardBody>
+							<div
+								style={ {
+									display: 'flex',
+									flexWrap: 'wrap',
+									gap: '24px',
+									alignItems: 'baseline',
+								} }
+							>
+								<strong style={ { fontSize: '24px' } }>
+									{ sprintf(
+										/* translators: %d: confirmed sales total. */
+										_n(
+											'%d sale',
+											'%d sales',
+											statistics.total_sales,
+											'fair-events-experimental'
+										),
+										statistics.total_sales
+									) }
+								</strong>
+								{ statistics.days_until_start !== null && (
+									<span>
+										{ sprintf(
+											/* translators: %d: calendar days until the event. */
+											_n(
+												'%d day until the event',
+												'%d days until the event',
+												statistics.days_until_start,
+												'fair-events-experimental'
+											),
+											statistics.days_until_start
+										) }
+									</span>
+								) }
+							</div>
+						</CardBody>
+					</Card>
+
+					<ChartCard
+						title={ __(
+							'Cumulative sales',
+							'fair-events-experimental'
+						) }
+					>
+						<ResponsiveContainer width="100%" height={ 280 }>
+							<AreaChart
+								data={ statistics.series }
+								margin={ { left: 8, right: 24 } }
+							>
+								<CartesianGrid strokeDasharray="3 3" />
+								<XAxis
+									dataKey="label"
+									interval="preserveStartEnd"
+									minTickGap={ 48 }
+								/>
+								<YAxis allowDecimals={ false } />
+								<Tooltip />
+								<Area
+									type="monotone"
+									dataKey="total"
+									name={ __(
+										'Sales',
+										'fair-events-experimental'
+									) }
+									stroke={ BAR_COLOR }
+									fill={ BAR_COLOR }
+									fillOpacity={ 0.18 }
+								/>
+							</AreaChart>
+						</ResponsiveContainer>
+					</ChartCard>
+				</>
+			) }
+
+			{ participantLoading && <Spinner /> }
 			<Notice status="info" isDismissible={ false }>
 				{ sprintf(
 					/* translators: %d: number of excluded participant rows. */
@@ -264,51 +317,6 @@ export default function EventStatistics( { eventDateId } ) {
 						/>
 					</BarChart>
 				</ResponsiveContainer>
-			</ChartCard>
-
-			<ChartCard
-				title={ __( 'Sales lead time', 'fair-events-experimental' ) }
-			>
-				{ leadTimeData.length === 0 ? (
-					<p>
-						{ __(
-							'Lead time is unavailable (missing event date or signup timestamps).',
-							'fair-events-experimental'
-						) }
-					</p>
-				) : (
-					<ResponsiveContainer width="100%" height={ 280 }>
-						<BarChart
-							data={ leadTimeData }
-							margin={ { left: 8, right: 24 } }
-						>
-							<CartesianGrid strokeDasharray="3 3" />
-							<XAxis
-								dataKey="daysOut"
-								allowDecimals={ false }
-								reversed
-								label={ {
-									value: __(
-										'Days before event',
-										'fair-events-experimental'
-									),
-									position: 'insideBottom',
-									offset: -4,
-								} }
-							/>
-							<YAxis allowDecimals={ false } />
-							<Tooltip />
-							<Bar
-								dataKey="count"
-								name={ __(
-									'Tickets',
-									'fair-events-experimental'
-								) }
-								fill={ BAR_COLOR }
-							/>
-						</BarChart>
-					</ResponsiveContainer>
-				) }
 			</ChartCard>
 		</div>
 	);
