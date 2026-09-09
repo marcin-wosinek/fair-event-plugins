@@ -202,7 +202,7 @@ export default function AllEvents() {
 						return (
 							<a href={ item.post.edit_url }>
 								{ item.post.title }{ ' ' }
-								<small>({ item.post.status })</small>
+								<small>({ item.post.status_label })</small>
 							</a>
 						);
 					}

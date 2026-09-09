@@ -77,7 +77,7 @@ msgstr "Ver evento"
 
 #: src/Admin/AdminPages.php:117
 #: src/Admin/AdminPages.php:118
-#: src/Admin/all-events/AllEvents.js:360
+#: src/Admin/all-events/AllEvents.js:368
 #: src/blocks/events-list/components/EditComponent.js:107
 msgid "All Events"
 msgstr "Todos los eventos"
@@ -161,7 +161,7 @@ msgstr "Detalles del evento"
 msgid "Start Date & Time"
 msgstr "Fecha y hora de inicio"
 
-#: src/Admin/CopyEventPage.php:359
+#: src/Admin/CopyEventPage.php:369
 #: src/blocks/event-proposal/render.php:139
 msgid "Location"
 msgstr "Ubicación"
@@ -250,7 +250,7 @@ msgstr "Eventos en curso"
 msgid "Filter events by time relative to now"
 msgstr "Filtrar eventos por tiempo relativo al presente"
 
-#: src/Admin/CopyEventPage.php:371
+#: src/Admin/CopyEventPage.php:381
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:177
 #: src/Admin/calendar/components/QuickEventModal.js:451
@@ -366,19 +366,19 @@ msgstr "Fair Event: Fecha de inicio"
 msgid "Fair Event: End Date"
 msgstr "Fair Event: Fecha de fin"
 
-#: src/Admin/CopyEventPage.php:58
+#: src/Admin/CopyEventPage.php:59
 #: src/API/EventDatesController.php:557
 #: src/API/EventDatesController.php:1017
 msgid "Event title is required."
 msgstr "El título del evento es obligatorio."
 
-#: src/Admin/CopyEventPage.php:344
+#: src/Admin/CopyEventPage.php:354
 #: src/Admin/calendar/components/QuickEventModal.js:341
 #: src/Admin/manage-event/ManageEventApp.js:826
 msgid "Title"
 msgstr "Título"
 
-#: src/Admin/CopyEventPage.php:395
+#: src/Admin/CopyEventPage.php:405
 #: src/Admin/calendar/components/QuickEventModal.js:584
 #: src/Admin/manage-event/EditInstancesModal.js:75
 #: src/Admin/manage-event/EventSignups.js:372
@@ -398,6 +398,7 @@ msgstr "Duración del evento"
 
 #: src/Admin/AdminPages.php:231
 #: src/PostTypes/Event.php:495
+#: src/Admin/all-events/AllEvents.js:348
 msgid "Copy"
 msgstr "Copiar"
 
@@ -3790,7 +3791,7 @@ msgstr "Esta eliminación es permanente. Solo elimina el registro de inscripció
 #: src/Admin/AdminPages.php:160
 #: src/Admin/AdminPages.php:161
 #: src/Admin/AdminPages.php:167
-#: src/Admin/CopyEventPage.php:285
+#: src/Admin/CopyEventPage.php:295
 msgid "Copy Event"
 msgstr "Copiar evento"
 
@@ -3798,92 +3799,92 @@ msgstr "Copiar evento"
 msgid "Copy this event"
 msgstr "Copiar este evento"
 
-#: src/Admin/CopyEventPage.php:32
-#: src/Admin/CopyEventPage.php:149
+#: src/Admin/CopyEventPage.php:33
+#: src/Admin/CopyEventPage.php:161
 msgid "Security check failed. Please try again."
 msgstr "La comprobación de seguridad ha fallado. Por favor, inténtalo de nuevo."
 
-#: src/Admin/CopyEventPage.php:38
-#: src/Admin/CopyEventPage.php:144
+#: src/Admin/CopyEventPage.php:39
+#: src/Admin/CopyEventPage.php:156
 msgid "Invalid event ID."
 msgstr "ID de evento no válido."
 
-#: src/Admin/CopyEventPage.php:44
-#: src/Admin/CopyEventPage.php:155
+#: src/Admin/CopyEventPage.php:45
+#: src/Admin/CopyEventPage.php:167
 msgid "Event not found."
 msgstr "No se ha encontrado el evento."
 
-#: src/Admin/CopyEventPage.php:48
-#: src/Admin/CopyEventPage.php:159
+#: src/Admin/CopyEventPage.php:49
+#: src/Admin/CopyEventPage.php:171
 msgid "You do not have permission to copy this event."
 msgstr "No tienes permiso para copiar este evento."
 
-#: src/Admin/CopyEventPage.php:64
+#: src/Admin/CopyEventPage.php:65
 msgid "Could not retrieve event dates."
 msgstr "No se han podido recuperar las fechas del evento."
 
-#: src/Admin/CopyEventPage.php:83
+#: src/Admin/CopyEventPage.php:84
 msgid "Failed to create new event."
 msgstr "No se ha podido crear el nuevo evento."
 
-#: src/Admin/CopyEventPage.php:194
+#: src/Admin/CopyEventPage.php:203
 msgid "Custom date is required."
 msgstr "La fecha personalizada es obligatoria."
 
-#: src/Admin/CopyEventPage.php:212
+#: src/Admin/CopyEventPage.php:222
 msgid "Invalid date option selected."
 msgstr "Opción de fecha seleccionada no válida."
 
-#: src/Admin/CopyEventPage.php:294
+#: src/Admin/CopyEventPage.php:304
 msgid "New Event Title"
 msgstr "Nuevo título del evento"
 
-#: src/Admin/CopyEventPage.php:301
-#: src/Admin/CopyEventPage.php:345
+#: src/Admin/CopyEventPage.php:311
+#: src/Admin/CopyEventPage.php:355
 msgid "(Copy)"
 msgstr "(Copia)"
 
-#: src/Admin/CopyEventPage.php:310
+#: src/Admin/CopyEventPage.php:320
 msgid "Event Date"
 msgstr "Fecha del evento"
 
-#: src/Admin/CopyEventPage.php:316
+#: src/Admin/CopyEventPage.php:326
 msgid "A week later"
 msgstr "Una semana después"
 
-#: src/Admin/CopyEventPage.php:320
+#: src/Admin/CopyEventPage.php:330
 msgid "Custom date"
 msgstr "Fecha personalizada"
 
-#: src/Admin/CopyEventPage.php:333
+#: src/Admin/CopyEventPage.php:343
 msgid "Select the new start date. The event duration and time will be preserved."
 msgstr "Selecciona la nueva fecha de inicio. La duración y la hora del evento se conservarán."
 
-#: src/Admin/CopyEventPage.php:341
+#: src/Admin/CopyEventPage.php:351
 msgid "What Will Be Created"
 msgstr "Qué se creará"
 
-#: src/Admin/CopyEventPage.php:348
+#: src/Admin/CopyEventPage.php:358
 msgid "Start Date"
 msgstr "Fecha de inicio"
 
-#: src/Admin/CopyEventPage.php:353
+#: src/Admin/CopyEventPage.php:363
 msgid "Duration"
 msgstr "Duración"
 
-#: src/Admin/CopyEventPage.php:365
+#: src/Admin/CopyEventPage.php:375
 msgid "Featured Image"
 msgstr "Imagen destacada"
 
-#: src/Admin/CopyEventPage.php:377
+#: src/Admin/CopyEventPage.php:387
 msgid "Tags"
 msgstr "Etiquetas"
 
-#: src/Admin/CopyEventPage.php:383
+#: src/Admin/CopyEventPage.php:393
 msgid "The new event will be created as a draft. All event details will be copied from the original event."
 msgstr "El nuevo evento se creará como borrador. Todos los detalles del evento se copiarán del evento original."
 
-#: src/Admin/CopyEventPage.php:392
+#: src/Admin/CopyEventPage.php:402
 msgid "Create Copy"
 msgstr "Crear copia"
 
@@ -4014,4 +4015,12 @@ msgstr ""
 
 #: src/blocks/event-signup/frontend.js:637
 msgid "Could not cancel this payment. Please try again."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:97
+msgid "The event copy could not be completed. Please try again."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:109
+msgid "The event was not copied because its ticket configuration could not be duplicated. Please try again."
 msgstr ""
