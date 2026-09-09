@@ -343,6 +343,14 @@ export default function AllEvents() {
 					window.location.href = `${ manageEventUrl }&event_date_id=${ item.id }`;
 				},
 			},
+			{
+				id: 'copy',
+				label: __( 'Copy', 'fair-events' ),
+				isEligible: ( item ) => Boolean( item.copy_url ),
+				callback: ( [ item ] ) => {
+					window.location.href = item.copy_url;
+				},
+			},
 		],
 		[]
 	);

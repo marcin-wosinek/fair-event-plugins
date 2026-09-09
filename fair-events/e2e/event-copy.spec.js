@@ -84,6 +84,80 @@ async function createCopy( page, eventId, title, customDate = null ) {
 	return Number( new URL( redirect ).searchParams.get( 'post' ) );
 }
 
+test( 'starts the copy workflow from the All Events row action', async ( {
+	page,
+} ) => {
+	await login( page );
+	await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+	await page.waitForFunction( () => window.wp?.apiFetch );
+
+	const suffix = Date.now();
+	const source = (
+		await apiFetch( page, {
+			path: '/wp/v2/fair_event',
+			method: 'POST',
+			data: {
+				title: `All Events copy source ${ suffix }`,
+				status: 'publish',
+			},
+		} )
+	).data;
+	const sourceDate = (
+		await apiFetch( page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: source.title.rendered,
+				start_datetime: '2039-03-26 18:30:00',
+				link_type: 'post',
+			},
+		} )
+	).data;
+
+	try {
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ sourceDate.id }`,
+			method: 'PUT',
+			data: { event_id: source.id },
+		} );
+		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+		await page
+			.getByRole( 'searchbox', { name: 'Search' } )
+			.fill( source.title.rendered );
+		const sourceRow = page.getByRole( 'row', {
+			name: new RegExp( source.title.rendered ),
+		} );
+		await expect( sourceRow ).toBeVisible();
+		await sourceRow.getByRole( 'button', { name: 'Actions' } ).click();
+		await page.getByRole( 'menuitem', { name: 'Copy' } ).click();
+		await expect( page ).toHaveURL(
+			new RegExp( `page=fair-events-copy.*event_id=${ source.id }` )
+		);
+		await expect( page.locator( 'h1' ) ).toContainText(
+			source.title.rendered
+		);
+	} finally {
+		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+		await page.waitForFunction( () => window.wp?.apiFetch );
+		await apiFetch(
+			page,
+			{
+				path: `/fair-events/v1/event-dates/${ sourceDate.id }`,
+				method: 'DELETE',
+			},
+			false
+		);
+		await apiFetch(
+			page,
+			{
+				path: `/wp/v2/fair_event/${ source.id }?force=true`,
+				method: 'DELETE',
+			},
+			false
+		);
+	}
+} );
+
 test( 'copies events without Experimental and keeps advanced tools isolated', async ( {
 	browser,
 	page,

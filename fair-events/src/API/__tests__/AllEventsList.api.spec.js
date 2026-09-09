@@ -27,6 +27,7 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 	let masterEventDateId;
 	let generatedIds;
 	let singleEventDateId;
+	let sourceEventId;
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
@@ -49,6 +50,21 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 		masterEventDateId = masterBody.id;
 		generatedIds = masterBody.generated_occurrences.map( ( o ) => o.id );
 		expect( generatedIds.length ).toBe( 2 );
+
+		const sourceRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: `Copy source ${ Date.now() }`, status: 'publish' },
+		} );
+		expect( sourceRes.ok() ).toBeTruthy();
+		sourceEventId = ( await sourceRes.json() ).id;
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
+			{
+				headers: adminHeaders,
+				data: { event_id: sourceEventId },
+			}
+		);
+		expect( linkRes.ok() ).toBeTruthy();
 
 		const singleRes = await api.post(
 			'/wp-json/fair-events/v1/event-dates',
@@ -77,6 +93,12 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 				{ headers: adminHeaders }
 			);
 		}
+		if ( sourceEventId ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ sourceEventId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
 		await api.dispose();
 	} );
 
@@ -102,6 +124,20 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 		).toBeLessThan(
 			new Date( master.children[ 1 ].start_datetime ).getTime()
 		);
+		expect( master.copy_url ).toMatch(
+			new RegExp(
+				`/wp-admin/admin\\.php\\?page=fair-events-copy&event_id=${ sourceEventId }&_wpnonce=[^&]+`
+			)
+		);
+		master.children.forEach( ( child ) => {
+			expect( child.copy_url ).toMatch(
+				new RegExp( `event_id=${ sourceEventId }&_wpnonce=[^&]+` )
+			);
+		} );
+		const calendarOnly = body.find(
+			( item ) => item.id === singleEventDateId
+		);
+		expect( calendarOnly.copy_url ).toBeUndefined();
 	} );
 
 	test( 'X-WP-Total counts top-level rows only', async () => {
