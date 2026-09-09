@@ -9,7 +9,13 @@
  *   - Nested date rows show their date, not "(untitled event)".
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import AllEvents from '../AllEvents.js';
 
@@ -49,6 +55,7 @@ const masterEvent = {
 			master_id: 1,
 			status: 'active',
 			categories: [],
+			copy_url: '#series-source-url',
 		},
 		{
 			id: 3,
@@ -62,7 +69,19 @@ const masterEvent = {
 	],
 };
 
+const copyableEvent = {
+	id: 10,
+	title: 'Copyable Event',
+	start_datetime: '2037-03-01 10:00:00',
+	occurrence_type: 'single',
+	master_id: null,
+	status: 'active',
+	categories: [],
+	copy_url: '#exact-server-url',
+};
+
 beforeEach( () => {
+	window.CSS.supports = jest.fn( () => false );
 	apiFetch.mockImplementation( () =>
 		Promise.resolve(
 			jsonResponse( [ masterEvent ], {
@@ -111,4 +130,47 @@ it( 'reveals nested date rows when the disclosure button is toggled', async () =
 	expect(
 		screen.getByRole( 'button', { name: 'Collapse series dates' } )
 	).toBeInTheDocument();
+} );
+
+it( 'shows Copy only for eligible rows and navigates to the server URL', async () => {
+	apiFetch.mockResolvedValue(
+		jsonResponse( [ copyableEvent, masterEvent ], {
+			'x-wp-total': '2',
+			'x-wp-totalpages': '1',
+		} )
+	);
+
+	render( <AllEvents /> );
+	await screen.findByText( 'Copyable Event' );
+
+	const copyableRow = screen.getByRole( 'row', { name: /Copyable Event/ } );
+	expect(
+		within(
+			screen.getByRole( 'row', { name: /Summer Workshops/ } )
+		).queryByRole( 'button', { name: 'Actions' } )
+	).not.toBeInTheDocument();
+	fireEvent.click(
+		within( copyableRow ).getByRole( 'button', { name: 'Actions' } )
+	);
+	const copyAction = await screen.findByRole( 'menuitem', { name: 'Copy' } );
+	expect( copyAction ).toBeInTheDocument();
+	fireEvent.click( copyAction );
+	expect( window.location.href ).toContain( '#exact-server-url' );
+} );
+
+it( 'uses the series source URL for an expanded generated occurrence', async () => {
+	render( <AllEvents /> );
+	await screen.findByText( 'Summer Workshops' );
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Expand series dates' } )
+	);
+
+	const generatedRow = screen
+		.getAllByRole( 'row' )
+		.find( ( row ) => row.textContent.includes( 'Series date' ) );
+	fireEvent.click(
+		within( generatedRow ).getByRole( 'button', { name: 'Actions' } )
+	);
+	fireEvent.click( await screen.findByRole( 'menuitem', { name: 'Copy' } ) );
+	expect( window.location.href ).toContain( '#series-source-url' );
 } );
