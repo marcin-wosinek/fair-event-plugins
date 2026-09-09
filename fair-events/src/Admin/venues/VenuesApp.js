@@ -312,16 +312,16 @@ const VenuesApp = () => {
 	};
 
 	const handleLatitudeChange = ( value ) => {
-		if ( ! formData.longitude ) {
-			const pair = splitCoordinatePair( value.trim() );
-			if ( pair ) {
-				setFormData( {
-					...formData,
-					latitude: pair.latitude,
-					longitude: pair.longitude,
-				} );
-				return;
-			}
+		const pair = splitCoordinatePair( value.trim() );
+		if ( pair ) {
+			setMapsPreviewUrl( null );
+			setMapsPreviewError( null );
+			setFormData( {
+				...formData,
+				latitude: pair.latitude,
+				longitude: pair.longitude,
+			} );
+			return;
 		}
 		setFormData( { ...formData, latitude: value } );
 	};
@@ -718,7 +718,27 @@ const VenuesApp = () => {
 								help={
 									coordinateError ||
 									__(
-										'Latitude coordinate (e.g., 39.4878023)',
+										'Latitude coordinate (e.g., 39.4878023). You can also paste a latitude, longitude pair.',
+										'fair-events'
+									)
+								}
+								className={
+									coordinateError ? 'has-error' : undefined
+								}
+							/>
+							<TextControl
+								label={ __( 'Longitude', 'fair-events' ) }
+								value={ formData.longitude }
+								onChange={ ( value ) =>
+									setFormData( {
+										...formData,
+										longitude: value,
+									} )
+								}
+								help={
+									coordinateError ||
+									__(
+										'Longitude coordinate (e.g., -0.3613204)',
 										'fair-events'
 									)
 								}
@@ -774,26 +794,6 @@ const VenuesApp = () => {
 												  ) ) }
 								</p>
 							</div>
-							<TextControl
-								label={ __( 'Longitude', 'fair-events' ) }
-								value={ formData.longitude }
-								onChange={ ( value ) =>
-									setFormData( {
-										...formData,
-										longitude: value,
-									} )
-								}
-								help={
-									coordinateError ||
-									__(
-										'Longitude coordinate (e.g., -0.3613204)',
-										'fair-events'
-									)
-								}
-								className={
-									coordinateError ? 'has-error' : undefined
-								}
-							/>
 							<TextControl
 								label={ __(
 									'Facebook Page Link',

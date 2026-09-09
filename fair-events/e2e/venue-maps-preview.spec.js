@@ -50,11 +50,18 @@ test( 'venue table and unsaved dialog values expose Google Maps links', async ( 
 			'href',
 			/Unsaved%20map%20address$/
 		);
-		await page.getByLabel( 'Latitude' ).fill( '39.48' );
-		await page.getByLabel( 'Longitude' ).fill( '-0.36' );
+		await page
+			.getByLabel( 'Latitude' )
+			.fill( '39.48696092635874, -0.364167730043781' );
+		await expect( page.getByLabel( 'Latitude' ) ).toHaveValue(
+			'39.48696092635874'
+		);
+		await expect( page.getByLabel( 'Longitude' ) ).toHaveValue(
+			'-0.364167730043781'
+		);
 		await expect( previewLink ).toHaveAttribute(
 			'href',
-			/query=39.48%2C-0.36$/
+			/query=39.48696092635874%2C-0.364167730043781$/
 		);
 	} finally {
 		await page.evaluate(
