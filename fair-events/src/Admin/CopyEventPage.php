@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || die;
 
 use FairEvents\Models\EventDates;
 use FairEvents\PostTypes\Event;
+use FairEvents\Services\EventTicketConfigurationCopier;
 
 /**
  * Copy Event Page Class
@@ -84,26 +85,37 @@ class CopyEventPage {
 		}
 
 		// Copy event dates to custom table.
-		EventDates::save(
+		$dates_saved     = EventDates::save(
 			$new_post_id,
 			$new_dates['start'],
 			$new_dates['end'],
 			$original_dates->all_day
 		);
+		$new_event_dates = $dates_saved ? EventDates::get_by_event_id( $new_post_id ) : null;
+		if ( ! $new_event_dates ) {
+			wp_delete_post( $new_post_id, true );
+			wp_die( esc_html__( 'The event copy could not be completed. Please try again.', 'fair-events' ) );
+		}
+
+		$timezone       = wp_timezone();
+		$original_start = new \DateTimeImmutable( str_replace( 'T', ' ', $original_dates->start_datetime ), $timezone );
+		$copied_start   = new \DateTimeImmutable( str_replace( 'T', ' ', $new_dates['start'] ), $timezone );
+		$date_shift     = $original_start->diff( $copied_start );
+		$copier         = new EventTicketConfigurationCopier();
+
+		if ( ! $copier->copy( $original_dates->id, $new_event_dates->id, $date_shift ) ) {
+			EventDates::delete_by_event_id( $new_post_id );
+			wp_delete_post( $new_post_id, true );
+			wp_die( esc_html__( 'The event was not copied because its ticket configuration could not be duplicated. Please try again.', 'fair-events' ) );
+		}
 
 		// Copy venue from custom table.
 		if ( $original_dates->venue_id ) {
-			$new_event_dates = EventDates::get_by_event_id( $new_post_id );
-			if ( $new_event_dates ) {
-				EventDates::update_by_id( $new_event_dates->id, array( 'venue_id' => $original_dates->venue_id ) );
-			}
+			EventDates::update_by_id( $new_event_dates->id, array( 'venue_id' => $original_dates->venue_id ) );
 		}
 
 		// Add to junction table.
-		$new_event_dates = EventDates::get_by_event_id( $new_post_id );
-		if ( $new_event_dates ) {
-			EventDates::add_linked_post( $new_event_dates->id, $new_post_id );
-		}
+		EventDates::add_linked_post( $new_event_dates->id, $new_post_id );
 
 		// Copy location post meta (legacy, used by CalendarButtonHooks).
 		$location = get_post_meta( $event_id, 'event_location', true );
@@ -172,14 +184,11 @@ class CopyEventPage {
 	 * @return array Array with 'start' and 'end' datetime strings.
 	 */
 	private function calculate_new_dates( $original_dates, $date_option, $custom_date ) {
-		$original_start = new \DateTime( $original_dates->start_datetime );
-		$original_end   = $original_dates->end_datetime ? new \DateTime( $original_dates->end_datetime ) : null;
+		$timezone       = wp_timezone();
+		$original_start = new \DateTime( str_replace( 'T', ' ', $original_dates->start_datetime ), $timezone );
+		$original_end   = $original_dates->end_datetime ? new \DateTime( str_replace( 'T', ' ', $original_dates->end_datetime ), $timezone ) : null;
 
-		// Calculate duration in seconds.
-		$duration = 0;
-		if ( $original_end ) {
-			$duration = $original_end->getTimestamp() - $original_start->getTimestamp();
-		}
+		$duration = $original_end ? $original_start->diff( $original_end ) : null;
 
 		$new_start = clone $original_start;
 
@@ -195,15 +204,16 @@ class CopyEventPage {
 				}
 
 				// Parse custom date.
-				$custom_datetime = new \DateTime( $custom_date );
+				$custom_datetime = new \DateTime( $custom_date, $timezone );
 
 				// If all-day event, use date only.
 				if ( $original_dates->all_day ) {
-					$new_start = new \DateTime( $custom_datetime->format( 'Y-m-d' ) );
+					$new_start = new \DateTime( $custom_datetime->format( 'Y-m-d' ), $timezone );
 				} else {
 					// For timed events, preserve the time of day.
 					$new_start = new \DateTime(
-						$custom_datetime->format( 'Y-m-d' ) . ' ' . $original_start->format( 'H:i:s' )
+						$custom_datetime->format( 'Y-m-d' ) . ' ' . $original_start->format( 'H:i:s' ),
+						$timezone
 					);
 				}
 				break;
@@ -214,9 +224,9 @@ class CopyEventPage {
 
 		// Calculate new end date by adding duration.
 		$new_end = null;
-		if ( $original_end ) {
+		if ( $duration ) {
 			$new_end = clone $new_start;
-			$new_end->modify( '+' . $duration . ' seconds' );
+			$new_end->add( $duration );
 		}
 
 		// Format dates for storage.

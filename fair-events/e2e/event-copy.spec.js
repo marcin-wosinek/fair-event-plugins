@@ -165,8 +165,8 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 			method: 'POST',
 			data: {
 				title: source.title.rendered,
-				start_datetime: '2036-04-10 18:30:00',
-				end_datetime: '2036-04-10 21:00:00',
+				start_datetime: '2036-03-26 18:30:00',
+				end_datetime: '2036-03-26 21:00:00',
 				all_day: false,
 				venue_id: venue.id,
 				link_type: 'post',
@@ -178,6 +178,96 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 		method: 'PUT',
 		data: { event_id: source.id },
 	} );
+	const originalSettings = (
+		await apiFetch( page, { path: '/wp/v2/settings?context=edit' } )
+	).data;
+	await apiFetch( page, {
+		path: '/wp/v2/settings',
+		method: 'POST',
+		data: { timezone: 'Europe/Madrid' },
+	} );
+	let sourceTickets = (
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ sourceDate.id }/tickets`,
+			method: 'PUT',
+			data: {
+				capacity: 120,
+				settings: {
+					show_ticket_type_capacity: true,
+					multiple_pricing_periods: true,
+					minimum_activities: 1,
+				},
+				ticket_types: [
+					{
+						name: 'General',
+						capacity: 80,
+						activities_enabled: false,
+						minimum_activities: 0,
+						maximum_activities: 2,
+						disable_at: '2036-03-25 18:30:00',
+						recurrence_scope: 'single_instance',
+						disabled: true,
+					},
+					{
+						name: 'Supporter',
+						capacity: null,
+						recurrence_scope: 'single_instance',
+					},
+				],
+				sale_periods: [
+					{
+						name: 'Early',
+						sale_start: '2036-03-20 09:00:00',
+						sale_end: '2036-03-25 23:00:00',
+					},
+					{
+						name: 'Open start',
+						sale_start: null,
+						sale_end: '2036-03-26 18:30:00',
+					},
+				],
+				prices: [
+					{
+						ticket_type_index: 0,
+						sale_period_index: 0,
+						price: 15.5,
+						capacity: 40,
+					},
+					{
+						ticket_type_index: 1,
+						sale_period_index: 1,
+						price: 25,
+						capacity: null,
+					},
+				],
+				options: [],
+			},
+		} )
+	).data;
+	sourceTickets = (
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ sourceDate.id }/tickets`,
+			method: 'PUT',
+			data: {
+				...sourceTickets,
+				ticket_types: sourceTickets.ticket_types.map(
+					( type, index ) => ( {
+						...type,
+						disabled: 0 === index,
+					} )
+				),
+				prices: sourceTickets.prices.map( ( price ) => ( {
+					...price,
+					ticket_type_index: sourceTickets.ticket_types.findIndex(
+						( type ) => type.id === price.ticket_type_id
+					),
+					sale_period_index: sourceTickets.sale_periods.findIndex(
+						( period ) => period.id === price.sale_period_id
+					),
+				} ) ),
+			},
+		} )
+	).data;
 
 	const copiedIds = [];
 	let restrictedUser;
@@ -205,6 +295,11 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 					path: `/fair-events/v1/event-dates?event_id=${ copiedId }&include_linked=true`,
 				} )
 			).data;
+			const copiedTickets = (
+				await apiFetch( page, {
+					path: `/fair-events/v1/event-dates/${ copiedDates[ 0 ].id }/tickets`,
+				} )
+			).data;
 			expect( copied.status ).toBe( 'draft' );
 			expect( copied.content.raw ).toBe( 'Copy source content' );
 			expect( copied.excerpt.raw ).toBe( 'Copy source excerpt' );
@@ -216,12 +311,76 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 			expect( copiedDates[ 0 ].venue_id ).toBe( venue.id );
 			expect( copiedDates[ 0 ].all_day ).toBe( false );
 			expect( copiedDates[ 0 ].end_datetime ).toBe(
-				0 === index ? '2036-04-17 21:00:00' : '2036-05-20 21:00:00'
+				0 === index ? '2036-04-02 21:00:00' : '2036-05-20 21:00:00'
 			);
 			expect( copiedDates[ 0 ].start_datetime ).toBe(
-				0 === index ? '2036-04-17 18:30:00' : '2036-05-20 18:30:00'
+				0 === index ? '2036-04-02 18:30:00' : '2036-05-20 18:30:00'
+			);
+			expect( copiedTickets.capacity ).toBe( 120 );
+			expect( copiedTickets.settings ).toMatchObject(
+				sourceTickets.settings
+			);
+			expect( copiedTickets.ticket_types ).toHaveLength( 2 );
+			expect( copiedTickets.sale_periods ).toHaveLength( 2 );
+			expect( copiedTickets.prices ).toHaveLength( 2 );
+			expect( copiedTickets.ticket_types[ 0 ] ).toMatchObject( {
+				name: 'General',
+				capacity: 80,
+				activities_enabled: false,
+				maximum_activities: 2,
+				disabled: true,
+			} );
+			expect( copiedTickets.ticket_types[ 0 ].id ).not.toBe(
+				sourceTickets.ticket_types[ 0 ].id
+			);
+			expect( copiedTickets.sale_periods[ 0 ].id ).not.toBe(
+				sourceTickets.sale_periods[ 0 ].id
+			);
+			expect( copiedTickets.prices[ 0 ].id ).not.toBe(
+				sourceTickets.prices[ 0 ].id
+			);
+			expect( copiedTickets.sale_periods[ 1 ].sale_start ).toBeNull();
+			expect( copiedTickets.ticket_types[ 0 ].disable_at ).toBe(
+				0 === index ? '2036-04-01 18:30:00' : '2036-05-19 18:30:00'
+			);
+			expect( copiedTickets.sale_periods[ 0 ].sale_start ).toBe(
+				0 === index ? '2036-03-27 09:00:00' : '2036-05-14 09:00:00'
 			);
 		}
+
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ sourceDate.id }/tickets`,
+			method: 'PUT',
+			data: {
+				...sourceTickets,
+				ticket_types: sourceTickets.ticket_types.map(
+					( type, index ) => ( {
+						...type,
+						name: 0 === index ? 'Changed source' : type.name,
+					} )
+				),
+				prices: sourceTickets.prices.map( ( price ) => ( {
+					...price,
+					ticket_type_index: sourceTickets.ticket_types.findIndex(
+						( type ) => type.id === price.ticket_type_id
+					),
+					sale_period_index: sourceTickets.sale_periods.findIndex(
+						( period ) => period.id === price.sale_period_id
+					),
+				} ) ),
+			},
+		} );
+		const firstCopyDates = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates?event_id=${ copiedIds[ 0 ] }&include_linked=true`,
+			} )
+		).data;
+		const unchangedCopy = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ firstCopyDates[ 0 ].id }/tickets`,
+			} )
+		).data;
+		expect( unchangedCopy.ticket_types[ 0 ].name ).toBe( 'General' );
 
 		await page.goto( '/wp-admin/edit.php?post_type=fair_event' );
 		const copyUrl = await page
@@ -346,6 +505,160 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 			page,
 			{
 				path: `/wp/v2/media/${ media.id }?force=true`,
+				method: 'DELETE',
+			},
+			false
+		);
+		await setPluginStatus( page, originalExperimentalStatus ).catch(
+			() => {}
+		);
+		await apiFetch(
+			page,
+			{
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: {
+					timezone: originalSettings.timezone,
+					gmt_offset: originalSettings.gmt_offset,
+				},
+			},
+			false
+		);
+	}
+} );
+
+test( 'copies Experimental ticket options and period prices', async ( {
+	page,
+} ) => {
+	test.setTimeout( 300_000 );
+	await login( page );
+	await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+	await page.waitForFunction( () => window.wp?.apiFetch );
+	const plugins = ( await apiFetch( page, { path: '/wp/v2/plugins' } ) ).data;
+	const experimental = plugins.find(
+		( plugin ) => plugin.plugin === EXPERIMENTAL_PLUGIN
+	);
+	const originalExperimentalStatus = experimental.status;
+	await setPluginStatus( page, 'active' );
+
+	const suffix = Date.now();
+	const source = (
+		await apiFetch( page, {
+			path: '/wp/v2/fair_event',
+			method: 'POST',
+			data: {
+				title: `Option copy source ${ suffix }`,
+				status: 'publish',
+			},
+		} )
+	).data;
+	const sourceDate = (
+		await apiFetch( page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: source.title.rendered,
+				start_datetime: '2038-06-01 18:00:00',
+				end_datetime: '2038-06-01 20:00:00',
+			},
+		} )
+	).data;
+	await apiFetch( page, {
+		path: `/fair-events/v1/event-dates/${ sourceDate.id }`,
+		method: 'PUT',
+		data: { event_id: source.id },
+	} );
+	const sourceTickets = (
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ sourceDate.id }/tickets`,
+			method: 'PUT',
+			data: {
+				ticket_types: [],
+				sale_periods: [
+					{
+						name: 'Summer',
+						sale_start: '2038-05-01 10:00:00',
+						sale_end: null,
+					},
+				],
+				prices: [],
+				settings: { activity_period_pricing: true },
+				options: [
+					{
+						name: 'Workshop',
+						short_name: 'WS',
+						price: 12,
+						capacity: 18,
+						derive_price_from_sale_period: true,
+						collaborator_ids: [],
+						period_prices: [ { sale_period_index: 0, price: 9.5 } ],
+					},
+				],
+			},
+		} )
+	).data;
+	let copiedId;
+	try {
+		copiedId = await createCopy(
+			page,
+			source.id,
+			`Option week copy ${ suffix }`
+		);
+		const copiedDates = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates?event_id=${ copiedId }&include_linked=true`,
+			} )
+		).data;
+		const copiedTickets = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ copiedDates[ 0 ].id }/tickets`,
+			} )
+		).data;
+		expect( copiedTickets.options ).toHaveLength( 1 );
+		expect( copiedTickets.options[ 0 ] ).toMatchObject( {
+			name: 'Workshop',
+			short_name: 'WS',
+			price: 12,
+			capacity: 18,
+			derive_price_from_sale_period: true,
+			collaborator_ids: [],
+		} );
+		expect( copiedTickets.options[ 0 ].id ).not.toBe(
+			sourceTickets.options[ 0 ].id
+		);
+		expect( copiedTickets.options[ 0 ].period_prices ).toEqual( [
+			{
+				sale_period_id: copiedTickets.sale_periods[ 0 ].id,
+				price: 9.5,
+			},
+		] );
+		expect( copiedTickets.sale_periods[ 0 ].sale_start ).toBe(
+			'2038-05-08 10:00:00'
+		);
+		expect( copiedTickets.sale_periods[ 0 ].sale_end ).toBeNull();
+	} finally {
+		if ( copiedId ) {
+			await apiFetch(
+				page,
+				{
+					path: `/wp/v2/fair_event/${ copiedId }?force=true`,
+					method: 'DELETE',
+				},
+				false
+			);
+		}
+		await apiFetch(
+			page,
+			{
+				path: `/wp/v2/fair_event/${ source.id }?force=true`,
+				method: 'DELETE',
+			},
+			false
+		);
+		await apiFetch(
+			page,
+			{
+				path: `/fair-events/v1/event-dates/${ sourceDate.id }`,
 				method: 'DELETE',
 			},
 			false
