@@ -144,6 +144,41 @@ describe( 'EventSignups — CSV export (#1171)', () => {
 		).toBeInTheDocument();
 	} );
 
+	it.each( [ false, 0, '0' ] )(
+		'displays Confirmed for a cleared over-capacity flag (%p)',
+		async ( overCapacity ) => {
+			await renderSignups( [
+				{
+					...signups[ 0 ],
+					status: 'confirmed',
+					over_capacity: overCapacity,
+				},
+			] );
+
+			expect( screen.getByText( 'Confirmed' ) ).toBeInTheDocument();
+			expect(
+				screen.queryByText( 'Confirmed — over capacity' )
+			).not.toBeInTheDocument();
+		}
+	);
+
+	it.each( [ true, 1, '1' ] )(
+		'displays the warning for an enabled over-capacity flag (%p)',
+		async ( overCapacity ) => {
+			await renderSignups( [
+				{
+					...signups[ 0 ],
+					status: 'confirmed',
+					over_capacity: overCapacity,
+				},
+			] );
+
+			expect(
+				screen.getByText( 'Confirmed — over capacity' )
+			).toBeInTheDocument();
+		}
+	);
+
 	it( 'links transaction references only when the connector is active', async () => {
 		window.fairPaymentsConnector = { connectorActive: true };
 		await renderSignups( [ signups[ 0 ] ] );

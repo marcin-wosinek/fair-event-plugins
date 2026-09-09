@@ -180,6 +180,52 @@ test.describe( 'GetTicketsController — admin signups list ticket_type_name', (
 		signupIds = signups.map( ( signup ) => signup.id );
 	} );
 
+	test( 'over-capacity values are serialized as explicit booleans', async () => {
+		const initialRes = await api.get(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				headers: adminHeaders,
+				params: { event_date: eventDateId },
+			}
+		);
+		expect( initialRes.ok() ).toBeTruthy();
+		const initialSignups = await initialRes.json();
+		const cleared = initialSignups.find(
+			( signup ) => signup.email === signupEmails.unchecked
+		);
+		const enabled = initialSignups.find(
+			( signup ) => signup.email === signupEmails.checked
+		);
+		expect( cleared ).toBeTruthy();
+		expect( enabled ).toBeTruthy();
+
+		const enableRes = await api.put(
+			'/wp-json/fair-e2e/v1/mark-signup-over-capacity',
+			{
+				headers: adminHeaders,
+				data: { signup_id: enabled.id },
+			}
+		);
+		expect( enableRes.ok() ).toBeTruthy();
+
+		const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
+			headers: adminHeaders,
+			params: { event_date: eventDateId },
+		} );
+		expect( res.ok() ).toBeTruthy();
+		const signups = await res.json();
+
+		expect(
+			signups.find( ( signup ) => signup.id === cleared.id )
+				?.over_capacity
+		).toBe( false );
+		expect(
+			signups.find( ( signup ) => signup.id === enabled.id )
+				?.over_capacity
+		).toBe( true );
+		signupIds = signups.map( ( signup ) => signup.id );
+	} );
+
 	test( 'a signup referencing a deleted ticket type gets ticket_type_name null', async () => {
 		const deleteRes = await api.post(
 			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets/import`,

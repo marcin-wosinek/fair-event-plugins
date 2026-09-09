@@ -45,6 +45,16 @@ function isMailingOptIn( value ) {
 }
 
 /**
+ * Whether a signup contains an explicit over-capacity flag.
+ *
+ * @param {*} value Flag value returned by the API.
+ * @return {boolean} Whether the signup exceeds capacity
+ */
+function isOverCapacity( value ) {
+	return value === true || value === 1 || value === '1';
+}
+
+/**
  * Escape a single CSV field per RFC 4180.
  *
  * @param {*} value
@@ -296,7 +306,7 @@ export default function EventSignups( { eventDateId } ) {
 										} }
 									>
 										{ s.status === 'confirmed' &&
-										s.over_capacity
+										isOverCapacity( s.over_capacity )
 											? __(
 													'Confirmed — over capacity',
 													'fair-events'
