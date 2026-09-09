@@ -486,7 +486,7 @@ class Transaction {
 				'mollie_payment_id'    => $mollie_payment_id,
 				'checkout_url'         => $checkout_url,
 				'status'               => 'pending_payment',
-				'payment_initiated_at' => current_time( 'mysql' ),
+				'payment_initiated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $transaction_id ),
 			array( '%s', '%s', '%s', '%s' ),
