@@ -119,6 +119,47 @@ test( 'pasting a "lat, lng" pair into latitude splits it across both fields', as
 	expect( screen.getByLabelText( 'Longitude' ) ).toHaveValue( '-0.3613204' );
 } );
 
+test( 'pasting a high-precision pair replaces both existing coordinates', async () => {
+	apiFetch.mockResolvedValue( [
+		{
+			...existingVenue,
+			latitude: '39.48',
+			longitude: '-0.36',
+		},
+	] );
+
+	render( <VenuesApp /> );
+	await screen.findByText( 'Existing Venue' );
+	fireEvent.click( screen.getByRole( 'button', { name: /Edit/i } ) );
+	fireEvent.change( screen.getByLabelText( 'Latitude' ), {
+		target: { value: '39.48696092635874, -0.364167730043781' },
+	} );
+
+	expect( screen.getByLabelText( 'Latitude' ) ).toHaveValue(
+		'39.48696092635874'
+	);
+	expect( screen.getByLabelText( 'Longitude' ) ).toHaveValue(
+		'-0.364167730043781'
+	);
+	expect(
+		screen.queryByText( /must be between|must be numbers|Enter both/i )
+	).not.toBeInTheDocument();
+} );
+
+test.each( [ '39.48,-0.36', '39,48, -0,36', 'coordinates unavailable' ] )(
+	'does not silently split ambiguous or malformed latitude input: %s',
+	async ( value ) => {
+		await openCreateForm();
+
+		fireEvent.change( screen.getByLabelText( 'Latitude' ), {
+			target: { value },
+		} );
+
+		expect( screen.getByLabelText( 'Latitude' ) ).toHaveValue( value );
+		expect( screen.getByLabelText( 'Longitude' ) ).toHaveValue( '' );
+	}
+);
+
 test( 'a decimal comma is accepted (no inline error)', async () => {
 	await openCreateForm();
 
@@ -231,6 +272,40 @@ test( 'updates the preview from unsaved values and gives coordinates precedence'
 	);
 	expect( testLink() ).toHaveAttribute( 'target', '_blank' );
 	expect( testLink() ).toHaveAttribute( 'rel', 'noopener noreferrer' );
+} );
+
+test( 'places the preview after both fields and uses a pasted pair', async () => {
+	apiFetch.mockImplementation( ( options ) => {
+		if ( options.path === '/fair-events/v1/venues/maps-url' ) {
+			return Promise.resolve( {
+				maps_url: `https://www.google.com/maps/search/?api=1&query=${ options.data.latitude }%2C${ options.data.longitude }`,
+			} );
+		}
+		return Promise.resolve( [] );
+	} );
+
+	await openCreateForm();
+	const longitude = screen.getByLabelText( 'Longitude' );
+	const previewButton = screen.getByRole( 'button', {
+		name: 'Test Google Maps link',
+	} );
+	expect(
+		longitude.compareDocumentPosition( previewButton ) &
+			Node.DOCUMENT_POSITION_FOLLOWING
+	).toBeTruthy();
+
+	fireEvent.change( screen.getByLabelText( 'Latitude' ), {
+		target: { value: '39.48696092635874, -0.364167730043781' },
+	} );
+
+	await waitFor( () =>
+		expect(
+			screen.getByRole( 'link', { name: 'Test Google Maps link' } )
+		).toHaveAttribute(
+			'href',
+			'https://www.google.com/maps/search/?api=1&query=39.48696092635874%2C-0.364167730043781'
+		)
+	);
 } );
 
 test( 'explains empty, incomplete, invalid, and loading preview states', async () => {
