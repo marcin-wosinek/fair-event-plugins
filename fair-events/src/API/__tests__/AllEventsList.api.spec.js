@@ -117,6 +117,8 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 
 		const master = body.find( ( item ) => item.id === masterEventDateId );
 		expect( master.occurrence_type ).toBe( 'master' );
+		expect( master.post.status ).toBe( 'publish' );
+		expect( master.post.status_label ).toBe( 'Published' );
 		expect( master.children_count ).toBe( 2 );
 		expect( master.children.map( ( c ) => c.id ) ).toEqual( generatedIds );
 		expect(

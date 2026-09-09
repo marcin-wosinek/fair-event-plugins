@@ -80,6 +80,42 @@ const copyableEvent = {
 	copy_url: '#exact-server-url',
 };
 
+const linkedEvents = [
+	{
+		...copyableEvent,
+		id: 20,
+		title: 'Published Event',
+		post: {
+			title: 'Published Post',
+			status: 'publish',
+			status_label: 'Published',
+			edit_url: '#published-edit-url',
+		},
+	},
+	{
+		...copyableEvent,
+		id: 21,
+		title: 'Pending Event',
+		post: {
+			title: 'Pending Post',
+			status: 'pending',
+			status_label: 'Localized pending review',
+			edit_url: '#pending-edit-url',
+		},
+	},
+	{
+		...copyableEvent,
+		id: 22,
+		title: 'Custom Event',
+		post: {
+			title: 'Custom Post',
+			status: 'needs_review-soon',
+			status_label: 'Needs Review Soon',
+			edit_url: '#custom-edit-url',
+		},
+	},
+];
+
 beforeEach( () => {
 	window.CSS.supports = jest.fn( () => false );
 	apiFetch.mockImplementation( () =>
@@ -173,4 +209,24 @@ it( 'uses the series source URL for an expanded generated occurrence', async () 
 	);
 	fireEvent.click( await screen.findByRole( 'menuitem', { name: 'Copy' } ) );
 	expect( window.location.href ).toContain( '#series-source-url' );
+} );
+
+it( 'shows human-readable linked-post statuses while preserving edit links', async () => {
+	apiFetch.mockResolvedValue(
+		jsonResponse( linkedEvents, {
+			'x-wp-total': '3',
+			'x-wp-totalpages': '1',
+		} )
+	);
+
+	render( <AllEvents /> );
+
+	expect( await screen.findByText( '(Published)' ) ).toBeInTheDocument();
+	expect(
+		screen.getByText( '(Localized pending review)' )
+	).toBeInTheDocument();
+	expect( screen.getByText( '(Needs Review Soon)' ) ).toBeInTheDocument();
+	expect(
+		screen.getByRole( 'link', { name: 'Published Post (Published)' } )
+	).toHaveAttribute( 'href', '#published-edit-url' );
 } );

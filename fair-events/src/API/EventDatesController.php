@@ -1764,11 +1764,21 @@ class EventDatesController extends WP_REST_Controller {
 		if ( $result->event_id ) {
 			$post = get_post( (int) $result->event_id );
 			if ( $post ) {
+				$status_object = get_post_status_object( $post->post_status );
+				$status_label  = $status_object && is_string( $status_object->label )
+					? trim( $status_object->label )
+					: '';
+
+				if ( '' === $status_label ) {
+					$status_label = ucwords( preg_replace( '/[-_]+/', ' ', $post->post_status ) );
+				}
+
 				$data['post'] = array(
-					'id'       => $post->ID,
-					'title'    => $post->post_title,
-					'status'   => $post->post_status,
-					'edit_url' => get_edit_post_link( $post->ID, 'raw' ),
+					'id'           => $post->ID,
+					'title'        => $post->post_title,
+					'status'       => $post->post_status,
+					'status_label' => $status_label,
+					'edit_url'     => get_edit_post_link( $post->ID, 'raw' ),
 				);
 			}
 		}
