@@ -109,6 +109,24 @@ add_action(
 				},
 			)
 		);
+
+		register_rest_route(
+			'fair-e2e/v1',
+			'/mark-signup-over-capacity',
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$updated = \FairEvents\Models\EventSignup::mark_over_capacity(
+						absint( $request->get_param( 'signup_id' ) )
+					);
+
+					return rest_ensure_response( array( 'updated' => $updated ) );
+				},
+			)
+		);
 	}
 );
 

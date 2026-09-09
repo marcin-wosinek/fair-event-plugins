@@ -1335,6 +1335,9 @@ class GetTicketsController extends WP_REST_Controller {
 			$signup->mailing_opt_in   = true === $signup->mailing_opt_in
 				|| 1 === $signup->mailing_opt_in
 				|| '1' === $signup->mailing_opt_in;
+			$signup->over_capacity    = true === $signup->over_capacity
+				|| 1 === $signup->over_capacity
+				|| '1' === $signup->over_capacity;
 		}
 
 		return rest_ensure_response( $signups );
