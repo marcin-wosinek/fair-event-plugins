@@ -13,7 +13,6 @@ import {
 	SelectControl,
 	TextControl,
 	CheckboxControl,
-	Notice,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';
@@ -166,27 +165,48 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 			? [ ...SOURCE_OPTIONS, TICKET_TYPE_SOURCE_OPTION ]
 			: SOURCE_OPTIONS;
 
-		// Ticket types for the active event date, fetched only while the
-		// ticket-type source is available. `null` means "not loaded yet".
-		const [ ticketTypes, setTicketTypes ] = useState( null );
+		// Keep request outcomes distinct so only an authoritative success for
+		// the active event date can validate and clean the stored selection.
+		const [ ticketTypeResult, setTicketTypeResult ] = useState( {
+			status: 'loading',
+			eventDateId: 0,
+			ticketTypes: [],
+		} );
 
 		useEffect( () => {
 			if ( ! canUseTicketType ) {
-				setTicketTypes( null );
+				setTicketTypeResult( {
+					status: 'loading',
+					eventDateId: 0,
+					ticketTypes: [],
+				} );
 				return;
 			}
 			let cancelled = false;
+			setTicketTypeResult( {
+				status: 'loading',
+				eventDateId,
+				ticketTypes: [],
+			} );
 			apiFetch( {
 				path: `/fair-events/v1/event-dates/${ eventDateId }/tickets`,
 			} )
 				.then( ( response ) => {
 					if ( ! cancelled ) {
-						setTicketTypes( response.ticket_types || [] );
+						setTicketTypeResult( {
+							status: 'success',
+							eventDateId,
+							ticketTypes: response.ticket_types || [],
+						} );
 					}
 				} )
 				.catch( () => {
 					if ( ! cancelled ) {
-						setTicketTypes( [] );
+						setTicketTypeResult( {
+							status: 'failed',
+							eventDateId,
+							ticketTypes: [],
+						} );
 					}
 				} );
 			return () => {
@@ -194,12 +214,40 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 			};
 		}, [ canUseTicketType, eventDateId ] );
 
-		const staleTicketTypeIds =
-			ticketTypes !== null
-				? conditionTicketTypeIds.filter(
-						( id ) => ! ticketTypes.some( ( tt ) => tt.id === id )
-				  )
-				: [];
+		const hasCurrentTicketTypes =
+			ticketTypeResult.status === 'success' &&
+			ticketTypeResult.eventDateId === eventDateId;
+		const ticketTypes = hasCurrentTicketTypes
+			? ticketTypeResult.ticketTypes
+			: [];
+		const validatedTicketTypeIds = hasCurrentTicketTypes
+			? conditionTicketTypeIds.filter( ( id ) =>
+					ticketTypes.some( ( ticketType ) => ticketType.id === id )
+			  )
+			: conditionTicketTypeIds;
+
+		useEffect( () => {
+			if ( conditionSource !== 'ticketType' || ! hasCurrentTicketTypes ) {
+				return;
+			}
+			const selectionChanged =
+				validatedTicketTypeIds.length !==
+					conditionTicketTypeIds.length ||
+				validatedTicketTypeIds.some(
+					( id, index ) => id !== conditionTicketTypeIds[ index ]
+				);
+			if ( selectionChanged ) {
+				setAttributes( {
+					conditionTicketTypeIds: validatedTicketTypeIds,
+				} );
+			}
+		}, [
+			conditionSource,
+			conditionTicketTypeIds,
+			hasCurrentTicketTypes,
+			setAttributes,
+			validatedTicketTypeIds,
+		] );
 
 		const questionSelectOptions = [
 			{
@@ -227,7 +275,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 		const isConfigured = isEventOption
 			? !! conditionOptionShortName
 			: isTicketType
-			? conditionTicketTypeIds.length > 0
+			? validatedTicketTypeIds.length > 0
 			: !! conditionQuestionKey;
 
 		let conditionLabel;
@@ -240,7 +288,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 					: __( 'is selected', 'fair-audience' )
 			}`;
 		} else if ( isTicketType ) {
-			const names = conditionTicketTypeIds
+			const names = validatedTicketTypeIds
 				.map(
 					( id ) => ticketTypes?.find( ( tt ) => tt.id === id )?.name
 				)
@@ -248,7 +296,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 			conditionLabel = `${
 				names.length > 0
 					? names.join( ', ' )
-					: conditionTicketTypeIds.join( ', ' )
+					: validatedTicketTypeIds.join( ', ' )
 			} ${
 				selectedOperator === 'not_selected'
 					? __( 'is not selected', 'fair-audience' )
@@ -370,17 +418,6 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 										} )
 									}
 								/>
-								{ staleTicketTypeIds.length > 0 && (
-									<Notice
-										status="warning"
-										isDismissible={ false }
-									>
-										{ __(
-											'One or more referenced ticket types no longer exist and will be ignored.',
-											'fair-audience'
-										) }
-									</Notice>
-								) }
 							</>
 						) : (
 							<>
