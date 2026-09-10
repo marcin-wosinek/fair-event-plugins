@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect, useMemo } from '@wordpress/element';
+import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
 import {
 	Button,
 	Spinner,
@@ -52,6 +52,7 @@ export default function EventEditForm( {
 	const [ success, setSuccess ] = useState( null );
 	const [ venues, setVenues ] = useState( [] );
 	const [ recurrenceImpact, setRecurrenceImpact ] = useState( null );
+	const formRevision = useRef( 0 );
 
 	// Form state.
 	const [ allDay, setAllDay ] = useState( false );
@@ -182,6 +183,17 @@ export default function EventEditForm( {
 		? allDayDurationOptions.getDurationOptions()
 		: timedDurationOptions.getDurationOptions();
 
+	const markFormChanged = () => {
+		formRevision.current += 1;
+		setError( null );
+		setSuccess( null );
+	};
+
+	const updateField = ( setter ) => ( value ) => {
+		markFormChanged();
+		setter( value );
+	};
+
 	const handleDurationChange = ( value ) => {
 		if ( value === 'other' || ! startDate ) return;
 		if ( allDay ) {
@@ -192,6 +204,7 @@ export default function EventEditForm( {
 			const year = end.getFullYear();
 			const month = String( end.getMonth() + 1 ).padStart( 2, '0' );
 			const day = String( end.getDate() ).padStart( 2, '0' );
+			markFormChanged();
 			setEndDate( `${ year }-${ month }-${ day }` );
 		} else {
 			if ( ! startTime ) return;
@@ -203,6 +216,7 @@ export default function EventEditForm( {
 			const day = String( end.getDate() ).padStart( 2, '0' );
 			const hours = String( end.getHours() ).padStart( 2, '0' );
 			const mins = String( end.getMinutes() ).padStart( 2, '0' );
+			markFormChanged();
 			setEndDate( `${ year }-${ month }-${ day }` );
 			setEndTime( `${ hours }:${ mins }` );
 		}
@@ -212,6 +226,7 @@ export default function EventEditForm( {
 		setSaving( true );
 		setError( null );
 		setSuccess( null );
+		const savedRevision = formRevision.current;
 
 		const startDatetime = allDay
 			? `${ startDate } 00:00:00`
@@ -243,11 +258,15 @@ export default function EventEditForm( {
 					? { impact: updated.recurrence_impact, blocked: false }
 					: null
 			);
-			setSuccess( __( 'Event saved.', 'fair-events' ) );
+			if ( formRevision.current === savedRevision ) {
+				setSuccess( __( 'Event saved.', 'fair-events' ) );
+			}
 		} catch ( err ) {
-			setError(
-				err.message || __( 'Failed to save event.', 'fair-events' )
-			);
+			if ( formRevision.current === savedRevision ) {
+				setError(
+					err.message || __( 'Failed to save event.', 'fair-events' )
+				);
+			}
 			setRecurrenceImpact(
 				err.data?.impact
 					? { impact: err.data.impact, blocked: true }
@@ -308,26 +327,6 @@ export default function EventEditForm( {
 
 	return (
 		<VStack spacing={ 3 }>
-			{ error && (
-				<Notice
-					status="error"
-					isDismissible
-					onRemove={ () => setError( null ) }
-				>
-					{ error }
-				</Notice>
-			) }
-
-			{ success && (
-				<Notice
-					status="success"
-					isDismissible
-					onRemove={ () => setSuccess( null ) }
-				>
-					{ success }
-				</Notice>
-			) }
-
 			{ recurrenceImpact && (
 				<RecurrenceImpactSummary
 					impact={ recurrenceImpact.impact }
@@ -339,14 +338,14 @@ export default function EventEditForm( {
 			<CheckboxControl
 				label={ __( 'All day', 'fair-events' ) }
 				checked={ allDay }
-				onChange={ setAllDay }
+				onChange={ updateField( setAllDay ) }
 			/>
 
 			<TextControl
 				label={ __( 'Start date', 'fair-events' ) }
 				type="date"
 				value={ startDate }
-				onChange={ setStartDate }
+				onChange={ updateField( setStartDate ) }
 			/>
 
 			{ ! allDay && (
@@ -354,7 +353,7 @@ export default function EventEditForm( {
 					label={ __( 'Start time', 'fair-events' ) }
 					type="time"
 					value={ startTime }
-					onChange={ setStartTime }
+					onChange={ updateField( setStartTime ) }
 				/>
 			) }
 
@@ -372,7 +371,7 @@ export default function EventEditForm( {
 				label={ __( 'End date', 'fair-events' ) }
 				type="date"
 				value={ endDate }
-				onChange={ setEndDate }
+				onChange={ updateField( setEndDate ) }
 			/>
 
 			{ ! allDay && (
@@ -380,7 +379,7 @@ export default function EventEditForm( {
 					label={ __( 'End time', 'fair-events' ) }
 					type="time"
 					value={ endTime }
-					onChange={ setEndTime }
+					onChange={ updateField( setEndTime ) }
 				/>
 			) }
 
@@ -388,13 +387,13 @@ export default function EventEditForm( {
 				label={ __( 'Venue', 'fair-events' ) }
 				value={ venueId }
 				options={ venueOptions }
-				onChange={ setVenueId }
+				onChange={ updateField( setVenueId ) }
 			/>
 
 			<TextControl
 				label={ __( 'Address', 'fair-events' ) }
 				value={ address }
-				onChange={ setAddress }
+				onChange={ updateField( setAddress ) }
 				help={ __(
 					'Used as the event location only when no venue is selected above.',
 					'fair-events'
@@ -403,41 +402,63 @@ export default function EventEditForm( {
 
 			<RecurrenceControl
 				value={ recurrence }
-				onChange={ setRecurrence }
+				onChange={ updateField( setRecurrence ) }
 			/>
 
-			<div
-				style={ {
-					display: 'flex',
-					gap: '8px',
-					flexWrap: 'wrap',
-				} }
-			>
-				<Button
-					variant="primary"
-					onClick={ handleSave }
-					isBusy={ saving }
-					disabled={ saving || unlinking }
-				>
-					{ __( 'Save Event', 'fair-events' ) }
-				</Button>
-				{ manageEventUrl && (
-					<Button variant="secondary" href={ manageEventUrl }>
-						{ __( 'Edit Full Details', 'fair-events' ) }
-					</Button>
+			<VStack className="fair-events-event-save-actions" spacing={ 2 }>
+				{ error && (
+					<Notice
+						status="error"
+						isDismissible
+						onRemove={ () => setError( null ) }
+					>
+						{ error }
+					</Notice>
 				) }
-				{ onUnlink && (
+
+				{ success && (
+					<Notice
+						status="success"
+						isDismissible
+						onRemove={ () => setSuccess( null ) }
+					>
+						{ success }
+					</Notice>
+				) }
+
+				<div
+					style={ {
+						display: 'flex',
+						gap: '8px',
+						flexWrap: 'wrap',
+					} }
+				>
 					<Button
-						variant="tertiary"
-						isDestructive
-						onClick={ onUnlink }
-						isBusy={ unlinking }
+						variant="primary"
+						onClick={ handleSave }
+						isBusy={ saving }
 						disabled={ saving || unlinking }
 					>
-						{ __( 'Unlink from event', 'fair-events' ) }
+						{ __( 'Save Event', 'fair-events' ) }
 					</Button>
-				) }
-			</div>
+					{ manageEventUrl && (
+						<Button variant="secondary" href={ manageEventUrl }>
+							{ __( 'Edit Full Details', 'fair-events' ) }
+						</Button>
+					) }
+					{ onUnlink && (
+						<Button
+							variant="tertiary"
+							isDestructive
+							onClick={ onUnlink }
+							isBusy={ unlinking }
+							disabled={ saving || unlinking }
+						>
+							{ __( 'Unlink from event', 'fair-events' ) }
+						</Button>
+					) }
+				</div>
+			</VStack>
 		</VStack>
 	);
 }
