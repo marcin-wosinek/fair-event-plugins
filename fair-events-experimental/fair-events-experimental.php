@@ -23,6 +23,14 @@ defined( 'ABSPATH' ) || die;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+register_deactivation_hook(
+	__FILE__,
+	static function () {
+		wp_clear_scheduled_hook( \FairEventsExperimental\Meta\Conversions::DELIVERY_HOOK );
+		wp_clear_scheduled_hook( \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK );
+	}
+);
+
 // Defer bootstrap to plugins_loaded so fair-events (loaded alphabetically after
 // fair-events-experimental) has already been included and FAIR_EVENTS_VERSION is defined.
 add_action(

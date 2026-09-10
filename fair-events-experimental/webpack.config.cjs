@@ -53,6 +53,10 @@ module.exports = {
       process.cwd(),
       "src/Frontend/event-gallery/index.js",
     ),
+    "frontend/meta-attribution": path.resolve(
+      process.cwd(),
+      "src/Frontend/meta-attribution.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,

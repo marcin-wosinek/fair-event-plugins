@@ -9,6 +9,7 @@ import { Notice } from '@wordpress/components';
  * Internal dependencies
  */
 import FeaturesTab from './FeaturesTab.js';
+import MetaConversions from './MetaConversions.js';
 
 /**
  * Settings App Component for Fair Events Experimental.
@@ -40,6 +41,9 @@ export default function SettingsApp() {
 			) }
 
 			<FeaturesTab onNotice={ setNotice } />
+			{ window.fairEventsExperimentalSettingsData?.features?.[
+				'meta-conversions'
+			]?.enabled && <MetaConversions onNotice={ setNotice } /> }
 		</div>
 	);
 }

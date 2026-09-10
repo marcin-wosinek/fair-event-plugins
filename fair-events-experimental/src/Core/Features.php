@@ -3,16 +3,16 @@
  * Feature flag registry for Fair Events Experimental.
  *
  * Manages the advanced bundles moved out of fair-events:
- * galleries, sources, ticketing, event-tools, migration, mailings.
- * All default to true — installing this plugin signals intent to use the full
- * internal feature set.
+ * galleries, sources, ticketing, event-tools, migration, mailings, and Meta
+ * conversions. Existing internal bundles default on; processing integrations
+ * that require explicit consent and credentials default off.
  *
  * Resolution order (first match wins):
  *   1. Per-feature constant `FAIR_EVENTS_EXPERIMENTAL_FEATURE_<UPPER>`
  *   2. Master switch `FAIR_EVENTS_EXPERIMENTAL_INTERNAL` (true → all bundles on)
  *   3. `fair_events_experimental_feature_enabled` filter
  *   4. Stored option `fair_events_experimental_features`
- *   5. Hardcoded default (true for all bundles)
+ *   5. Hardcoded bundle default
  *
  * @package FairEventsExperimental
  */
@@ -80,6 +80,11 @@ class Features {
 				'label'       => 'Mailings',
 				'description' => 'Scheduled email mailings for event attendees. Requires fair-audience.',
 				'default'     => true,
+			),
+			'meta-conversions'    => array(
+				'label'       => 'Meta Conversions',
+				'description' => 'Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials.',
+				'default'     => false,
 			),
 		);
 	}
@@ -171,6 +176,10 @@ class Features {
 			'mailings'            => array(
 				'label'       => __( 'Mailings', 'fair-events-experimental' ),
 				'description' => __( 'Scheduled email mailings for event attendees. Requires fair-audience.', 'fair-events-experimental' ),
+			),
+			'meta-conversions'    => array(
+				'label'       => __( 'Meta Conversions', 'fair-events-experimental' ),
+				'description' => __( 'Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials.', 'fair-events-experimental' ),
 			),
 		);
 
