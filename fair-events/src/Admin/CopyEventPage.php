@@ -10,8 +10,7 @@ namespace FairEvents\Admin;
 defined( 'ABSPATH' ) || die;
 
 use FairEvents\Models\EventDates;
-use FairEvents\PostTypes\Event;
-use FairEvents\Services\EventTicketConfigurationCopier;
+use FairEvents\Services\EventCopyService;
 
 /**
  * Copy Event Page Class
@@ -27,26 +26,17 @@ class CopyEventPage {
 	 * @return void
 	 */
 	public function handle_submission() {
-		// Check permissions.
-		// Verify nonce.
-		if ( ! isset( $_POST['copy_event_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['copy_event_nonce'] ) ), 'copy_fair_event_submit' ) ) {
+		$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
+		if ( ! $event_date_id ) {
+			wp_die( esc_html__( 'A valid event date is required.', 'fair-events' ) );
+		}
+		if ( ! isset( $_POST['copy_event_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['copy_event_nonce'] ) ), 'copy_fair_event_submit_' . $event_date_id ) ) {
 			wp_die( esc_html__( 'Security check failed. Please try again.', 'fair-events' ) );
 		}
 
-		// Get and validate event ID.
-		$event_id = isset( $_GET['event_id'] ) ? absint( $_GET['event_id'] ) : 0;
-		if ( ! $event_id ) {
-			wp_die( esc_html__( 'Invalid event ID.', 'fair-events' ) );
-		}
-
-		// Get original event.
-		$original_post = get_post( $event_id );
-		if ( ! $original_post || Event::POST_TYPE !== $original_post->post_type ) {
-			wp_die( esc_html__( 'Event not found.', 'fair-events' ) );
-		}
-
-		if ( ! current_user_can( 'edit_post', $event_id ) ) {
-			wp_die( esc_html__( 'You do not have permission to copy this event.', 'fair-events' ) );
+		$source = EventCopyService::resolve_source( $event_date_id );
+		if ( is_wp_error( $source ) ) {
+			wp_die( esc_html( $source->get_error_message() ) );
 		}
 
 		// Get form data.
@@ -59,87 +49,17 @@ class CopyEventPage {
 			wp_die( esc_html__( 'Event title is required.', 'fair-events' ) );
 		}
 
-		// Get original event dates.
-		$original_dates = EventDates::get_by_event_id( $event_id );
-		if ( ! $original_dates ) {
-			wp_die( esc_html__( 'Could not retrieve event dates.', 'fair-events' ) );
-		}
-
 		// Calculate new dates based on selected option.
-		$new_dates = $this->calculate_new_dates( $original_dates, $date_option, $custom_date );
-
-		// Create new post.
-		$new_post_data = array(
-			'post_title'   => $new_title,
-			'post_content' => $original_post->post_content,
-			'post_excerpt' => $original_post->post_excerpt,
-			'post_type'    => Event::POST_TYPE,
-			'post_status'  => 'draft',
-			'post_author'  => get_current_user_id(),
-		);
-
-		$new_post_id = wp_insert_post( $new_post_data, true );
-
-		if ( is_wp_error( $new_post_id ) ) {
-			wp_die( esc_html__( 'Failed to create new event.', 'fair-events' ) );
+		$new_dates = $this->calculate_new_dates( $source['master'], $date_option, $custom_date );
+		$result    = ( new EventCopyService() )->copy( $source, $new_title, $new_dates['start'], $new_dates['end'] );
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ) );
 		}
 
-		// Copy event dates to custom table.
-		$dates_saved     = EventDates::save(
-			$new_post_id,
-			$new_dates['start'],
-			$new_dates['end'],
-			$original_dates->all_day
-		);
-		$new_event_dates = $dates_saved ? EventDates::get_by_event_id( $new_post_id ) : null;
-		if ( ! $new_event_dates ) {
-			wp_delete_post( $new_post_id, true );
-			wp_die( esc_html__( 'The event copy could not be completed. Please try again.', 'fair-events' ) );
-		}
-
-		$timezone       = wp_timezone();
-		$original_start = new \DateTimeImmutable( str_replace( 'T', ' ', $original_dates->start_datetime ), $timezone );
-		$copied_start   = new \DateTimeImmutable( str_replace( 'T', ' ', $new_dates['start'] ), $timezone );
-		$date_shift     = $original_start->diff( $copied_start );
-		$copier         = new EventTicketConfigurationCopier();
-
-		if ( ! $copier->copy( $original_dates->id, $new_event_dates->id, $date_shift ) ) {
-			EventDates::delete_by_event_id( $new_post_id );
-			wp_delete_post( $new_post_id, true );
-			wp_die( esc_html__( 'The event was not copied because its ticket configuration could not be duplicated. Please try again.', 'fair-events' ) );
-		}
-
-		// Copy venue from custom table.
-		if ( $original_dates->venue_id ) {
-			EventDates::update_by_id( $new_event_dates->id, array( 'venue_id' => $original_dates->venue_id ) );
-		}
-
-		// Add to junction table.
-		EventDates::add_linked_post( $new_event_dates->id, $new_post_id );
-
-		// Copy location post meta (legacy, used by CalendarButtonHooks).
-		$location = get_post_meta( $event_id, 'event_location', true );
-		if ( $location ) {
-			update_post_meta( $new_post_id, 'event_location', $location );
-		}
-
-		// Copy featured image.
-		$thumbnail_id = get_post_thumbnail_id( $event_id );
-		if ( $thumbnail_id ) {
-			set_post_thumbnail( $new_post_id, $thumbnail_id );
-		}
-
-		// Copy taxonomies (categories & tags).
-		$taxonomies = get_object_taxonomies( Event::POST_TYPE );
-		foreach ( $taxonomies as $taxonomy ) {
-			$terms = wp_get_object_terms( $event_id, $taxonomy, array( 'fields' => 'ids' ) );
-			if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
-				wp_set_object_terms( $new_post_id, $terms, $taxonomy );
-			}
-		}
-
-		// Redirect to edit new event.
-		wp_safe_redirect( admin_url( 'post.php?action=edit&post=' . $new_post_id ) );
+		$redirect = $result['post_id']
+			? get_edit_post_link( $result['post_id'], 'raw' )
+			: admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $result['event_date_id'] );
+		wp_safe_redirect( $redirect );
 		exit;
 	}
 
@@ -149,30 +69,22 @@ class CopyEventPage {
 	 * @return void
 	 */
 	public function render() {
-		// Check permissions.
-		// Get and validate event ID.
-		$event_id = isset( $_GET['event_id'] ) ? absint( $_GET['event_id'] ) : 0;
-		if ( ! $event_id ) {
-			wp_die( esc_html__( 'Invalid event ID.', 'fair-events' ) );
+		$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
+		if ( ! $event_date_id ) {
+			wp_die( esc_html__( 'A valid event date is required.', 'fair-events' ) );
 		}
 
 		// Verify nonce.
-		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'copy_fair_event_' . $event_id ) ) {
+		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'copy_fair_event_' . $event_date_id ) ) {
 			wp_die( esc_html__( 'Security check failed. Please try again.', 'fair-events' ) );
 		}
 
-		// Get original event.
-		$original_post = get_post( $event_id );
-		if ( ! $original_post || Event::POST_TYPE !== $original_post->post_type ) {
-			wp_die( esc_html__( 'Event not found.', 'fair-events' ) );
+		$source = EventCopyService::resolve_source( $event_date_id );
+		if ( is_wp_error( $source ) ) {
+			wp_die( esc_html( $source->get_error_message() ) );
 		}
 
-		if ( ! current_user_can( 'edit_post', $event_id ) ) {
-			wp_die( esc_html__( 'You do not have permission to copy this event.', 'fair-events' ) );
-		}
-
-		// Render the form.
-		$this->render_form( $event_id, $original_post );
+		$this->render_form( $source );
 	}
 
 	/**
@@ -243,23 +155,27 @@ class CopyEventPage {
 	/**
 	 * Render the copy event form
 	 *
-	 * @param int      $event_id      Event ID.
-	 * @param \WP_Post $original_post Original post object.
+	 * @param array $source Resolved event source.
 	 * @return void
 	 */
-	private function render_form( $event_id, $original_post ) {
-		// Get event data.
-		$event_dates = EventDates::get_by_event_id( $event_id );
-		$location    = get_post_meta( $event_id, 'event_location', true );
+	private function render_form( $source ) {
+		$event_dates   = $source['master'];
+		$original_post = $source['post'];
+		$event_id      = $original_post ? $original_post->ID : 0;
+		$title         = $original_post ? $original_post->post_title : $event_dates->title;
+		$location      = $event_id ? get_post_meta( $event_id, 'event_location', true ) : $event_dates->address;
+		$source_url    = $event_id
+			? get_edit_post_link( $event_id, 'raw' )
+			: admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_dates->id );
 
 		// Get featured image.
-		$thumbnail_id  = get_post_thumbnail_id( $event_id );
+		$thumbnail_id  = $event_id && post_type_supports( $original_post->post_type, 'thumbnail' ) ? get_post_thumbnail_id( $event_id ) : 0;
 		$thumbnail_url = $thumbnail_id ? get_the_post_thumbnail_url( $event_id, 'thumbnail' ) : '';
 		$thumbnail_alt = $thumbnail_id ? get_post_meta( $thumbnail_id, '_wp_attachment_image_alt', true ) : '';
 
 		// Get categories and tags.
-		$categories      = wp_get_post_terms( $event_id, 'category', array( 'fields' => 'names' ) );
-		$tags            = wp_get_post_terms( $event_id, 'post_tag', array( 'fields' => 'names' ) );
+		$categories      = $event_id && is_object_in_taxonomy( $original_post->post_type, 'category' ) ? wp_get_post_terms( $event_id, 'category', array( 'fields' => 'names' ) ) : array();
+		$tags            = $event_id && is_object_in_taxonomy( $original_post->post_type, 'post_tag' ) ? wp_get_post_terms( $event_id, 'post_tag', array( 'fields' => 'names' ) ) : array();
 		$categories_list = ! is_wp_error( $categories ) && ! empty( $categories ) ? implode( ', ', $categories ) : '';
 		$tags_list       = ! is_wp_error( $tags ) && ! empty( $tags ) ? implode( ', ', $tags ) : '';
 
@@ -292,11 +208,11 @@ class CopyEventPage {
 		}
 		?>
 		<div class="wrap">
-		<h1><?php esc_html_e( 'Copy Event', 'fair-events' ); ?>: <a href="<?php echo esc_url( admin_url( 'post.php?post=' . $event_id . '&action=edit' ) ); ?>"><?php echo esc_html( $original_post->post_title ); ?></a>
+		<h1><?php esc_html_e( 'Copy Event', 'fair-events' ); ?>: <a href="<?php echo esc_url( $source_url ); ?>"><?php echo esc_html( $title ); ?></a>
 </h1>
 
 			<form method="post" action="">
-				<?php wp_nonce_field( 'copy_fair_event_submit', 'copy_event_nonce' ); ?>
+				<?php wp_nonce_field( 'copy_fair_event_submit_' . $event_dates->id, 'copy_event_nonce' ); ?>
 
 				<table class="form-table">
 					<tr>
@@ -308,7 +224,7 @@ class CopyEventPage {
 								type="text"
 								id="event_title"
 								name="event_title"
-								value="<?php echo esc_attr( $original_post->post_title . ' ' . __( '(Copy)', 'fair-events' ) ); ?>"
+								value="<?php echo esc_attr( $title . ' ' . __( '(Copy)', 'fair-events' ) ); ?>"
 								class="regular-text"
 								required
 							/>
@@ -352,7 +268,7 @@ class CopyEventPage {
 					<table class="form-table">
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Title', 'fair-events' ); ?></th>
-							<td><strong id="summary-title"><?php echo esc_html( $original_post->post_title . ' ' . __( '(Copy)', 'fair-events' ) ); ?></strong></td>
+							<td><strong id="summary-title"><?php echo esc_html( $title . ' ' . __( '(Copy)', 'fair-events' ) ); ?></strong></td>
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Start Date', 'fair-events' ); ?></th>
@@ -390,7 +306,7 @@ class CopyEventPage {
 						<?php endif; ?>
 					</table>
 					<p class="description">
-						<?php esc_html_e( 'The new event will be created as a draft. All event details will be copied from the original event.', 'fair-events' ); ?>
+					<?php echo esc_html( $event_id ? __( 'The copied post will be created as a draft with its reusable event details.', 'fair-events' ) : __( 'A new calendar-only event will be created with its reusable event details.', 'fair-events' ) ); ?>
 					</p>
 
 				<p class="submit">
@@ -401,7 +317,7 @@ class CopyEventPage {
 						class="button button-primary"
 						value="<?php esc_attr_e( 'Create Copy', 'fair-events' ); ?>"
 					/>
-					<a href="<?php echo esc_url( post_type_exists( 'fair_event' ) ? admin_url( 'edit.php?post_type=fair_event' ) : admin_url( 'admin.php?page=fair-events-all-events' ) ); ?>" class="button">
+					<a href="<?php echo esc_url( $source_url ); ?>" class="button">
 						<?php esc_html_e( 'Cancel', 'fair-events' ); ?>
 					</a>
 				</p>

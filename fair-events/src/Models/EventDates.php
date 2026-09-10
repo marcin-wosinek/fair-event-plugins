@@ -990,8 +990,9 @@ class EventDates {
 	public static function delete_by_id( $id ) {
 		global $wpdb;
 
-		$table_name  = $wpdb->prefix . 'fair_event_dates';
-		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
+		$table_name     = $wpdb->prefix . 'fair_event_dates';
+		$posts_table    = $wpdb->prefix . 'fair_event_date_posts';
+		$category_table = $wpdb->prefix . 'fair_event_date_categories';
 
 		// Cascade-delete generated occurrences pointing at this row, so masters
 		// don't leave orphaned children behind.
@@ -1000,6 +1001,11 @@ class EventDates {
 		// Clean up junction table entries.
 		$wpdb->delete(
 			$posts_table,
+			array( 'event_date_id' => $id ),
+			array( '%d' )
+		);
+		$wpdb->delete(
+			$category_table,
 			array( 'event_date_id' => $id ),
 			array( '%d' )
 		);
@@ -1220,6 +1226,40 @@ class EventDates {
 		);
 
 		return array_map( 'intval', $term_ids );
+	}
+
+	/**
+	 * Replace category relationships for an event date.
+	 *
+	 * @param int   $event_date_id Event date ID.
+	 * @param int[] $term_ids      Category term IDs.
+	 * @return bool True when every relationship was stored.
+	 */
+	public static function set_category_ids( $event_date_id, $term_ids ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_date_categories';
+		if ( false === $wpdb->delete( $table_name, array( 'event_date_id' => $event_date_id ), array( '%d' ) ) ) {
+			return false;
+		}
+
+		foreach ( array_unique( array_map( 'absint', $term_ids ) ) as $term_id ) {
+			if ( ! $term_id ) {
+				continue;
+			}
+			if ( false === $wpdb->insert(
+				$table_name,
+				array(
+					'event_date_id' => $event_date_id,
+					'term_id'       => $term_id,
+				),
+				array( '%d', '%d' )
+			) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**

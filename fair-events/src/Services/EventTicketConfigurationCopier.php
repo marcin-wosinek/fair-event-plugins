@@ -24,6 +24,39 @@ use FairEvents\Models\TicketTypeGroupRestriction;
 class EventTicketConfigurationCopier {
 
 	/**
+	 * Delete reusable ticket configuration created for an event date.
+	 *
+	 * @param int $event_date_id Event-date ID.
+	 * @return void
+	 */
+	public function cleanup( $event_date_id ) {
+		$option_class       = \FairEventsExperimental\Models\TicketOption::class;
+		$collaborator_class = \FairEventsExperimental\Models\TicketOptionCollaborator::class;
+		$price_class        = \FairEventsExperimental\Models\TicketOptionPrice::class;
+
+		if ( class_exists( $option_class ) ) {
+			$options = $option_class::get_all_by_event_date_id( $event_date_id );
+			if ( class_exists( $price_class ) && method_exists( $price_class, 'delete_by_event_date_id' ) ) {
+				$price_class::delete_by_event_date_id( $event_date_id );
+			}
+			if ( class_exists( $collaborator_class ) ) {
+				foreach ( $options as $option ) {
+					$collaborator_class::delete_by_option_id( $option->id );
+				}
+			}
+			$option_class::delete_by_event_date_id( $event_date_id );
+		}
+
+		TicketPrice::delete_by_event_date_id( $event_date_id );
+		foreach ( TicketType::get_all_by_event_date_id( $event_date_id ) as $type ) {
+			TicketTypeGroupRestriction::sync_for_ticket_type( $type->id, array() );
+		}
+		TicketSalePeriod::delete_by_event_date_id( $event_date_id );
+		TicketType::delete_by_event_date_id( $event_date_id );
+		EventDateSetting::delete_by_event_date_id( $event_date_id );
+	}
+
+	/**
 	 * Copy the complete reusable ticket configuration.
 	 *
 	 * @param int           $source_event_date_id      Source event date ID.

@@ -7,6 +7,9 @@
 
 namespace FairEvents\Admin;
 
+use FairEvents\Models\EventDates;
+use FairEvents\Services\EventCopyService;
+use FairEvents\Settings\Settings;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -200,30 +203,27 @@ class AdminPages {
 	 * @return void
 	 */
 	public function add_copy_button_to_admin_bar( $wp_admin_bar ) {
-		if ( ! is_admin() || ! post_type_exists( 'fair_event' ) ) {
+		if ( ! is_admin() ) {
 			return;
 		}
 
 		$screen = get_current_screen();
-		if ( ! $screen || 'fair_event' !== $screen->post_type || 'post' !== $screen->base ) {
+		if ( ! $screen || 'post' !== $screen->base || ! in_array( $screen->post_type, Settings::get_enabled_post_types(), true ) ) {
 			return;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
 		$post    = $post_id ? get_post( $post_id ) : null;
-		if ( ! $post || 'fair_event' !== $post->post_type || ! current_user_can( 'edit_post', $post_id ) ) {
+		if ( ! $post ) {
 			return;
 		}
 
-		$copy_url = add_query_arg(
-			array(
-				'page'     => 'fair-events-copy',
-				'event_id' => $post_id,
-				'_wpnonce' => wp_create_nonce( 'copy_fair_event_' . $post_id ),
-			),
-			admin_url( 'admin.php' )
-		);
+		$event_date = EventDates::get_by_event_id( $post_id );
+		$copy_url   = $event_date ? EventCopyService::get_copy_url( $event_date->id ) : null;
+		if ( ! $copy_url ) {
+			return;
+		}
 
 		$wp_admin_bar->add_node(
 			array(
@@ -414,25 +414,9 @@ class AdminPages {
 				'siteToday'        => wp_date( 'Y-m-d' ),
 			);
 
-			$event_date = $event_date_id ? \FairEvents\Models\EventDates::get_by_id( $event_date_id ) : null;
-			if ( $event_date ) {
-				$copy_event_id = $event_date->event_id;
-				if ( ! $copy_event_id && 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
-					$master_event  = \FairEvents\Models\EventDates::get_by_id( $event_date->master_id );
-					$copy_event_id = $master_event ? $master_event->event_id : null;
-				}
-
-				$copy_event = $copy_event_id ? get_post( $copy_event_id ) : null;
-				if ( $copy_event && 'fair_event' === $copy_event->post_type && current_user_can( 'edit_post', $copy_event_id ) ) {
-					$localized_data['copyEventUrl'] = add_query_arg(
-						array(
-							'page'     => 'fair-events-copy',
-							'event_id' => $copy_event_id,
-							'_wpnonce' => wp_create_nonce( 'copy_fair_event_' . $copy_event_id ),
-						),
-						admin_url( 'admin.php' )
-					);
-				}
+			$copy_url = $event_date_id ? EventCopyService::get_copy_url( $event_date_id ) : null;
+			if ( $copy_url ) {
+				$localized_data['copyEventUrl'] = $copy_url;
 			}
 
 			// Audience-dependent URLs require both the sibling plugin AND the

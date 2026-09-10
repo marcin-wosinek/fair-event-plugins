@@ -7,6 +7,9 @@
 
 namespace FairEvents\PostTypes;
 
+use FairEvents\Models\EventDates;
+use FairEvents\Services\EventCopyService;
+
 use FairEvents\Settings\Settings;
 
 defined( 'WPINC' ) || die;
@@ -333,6 +336,7 @@ class Event {
 
 		add_action( 'pre_get_posts', array( __CLASS__, 'handle_column_sorting' ) );
 		add_filter( 'post_row_actions', array( __CLASS__, 'add_rsvp_row_action' ), 10, 2 );
+		add_filter( 'page_row_actions', array( __CLASS__, 'add_rsvp_row_action' ), 10, 2 );
 	}
 
 	/**
@@ -483,12 +487,9 @@ class Event {
 			return $actions;
 		}
 
-		// Only show Copy action for fair_event post type
-		if ( self::POST_TYPE === $post->post_type && current_user_can( 'edit_post', $post->ID ) ) {
-			$copy_url        = wp_nonce_url(
-				admin_url( 'admin.php?page=fair-events-copy&event_id=' . $post->ID ),
-				'copy_fair_event_' . $post->ID
-			);
+		$event_date = EventDates::get_by_event_id( $post->ID );
+		$copy_url   = $event_date ? EventCopyService::get_copy_url( $event_date->id ) : null;
+		if ( $copy_url ) {
 			$actions['copy'] = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( $copy_url ),
