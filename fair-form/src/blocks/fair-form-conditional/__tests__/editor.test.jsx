@@ -59,7 +59,6 @@ jest.mock( '@wordpress/components', () => ( {
 			{ label }
 		</label>
 	),
-	Notice: ( { children } ) => <div role="alert">{ children }</div>,
 } ) );
 
 let capturedSettings;
@@ -235,25 +234,37 @@ describe( 'Fair Form Conditional Edit', () => {
 		} );
 	} );
 
-	it( 'shows a warning when a referenced ticket type no longer exists', async () => {
+	it( 'removes stale ticket types while preserving valid IDs in their stored order', async () => {
 		mockFormParent( {
 			name: 'fair-events/event-signup',
 			attributes: { eventDateId: 42 },
 		} );
 		apiFetch.mockResolvedValue( {
-			ticket_types: [ { id: 1, name: 'Adult' } ],
+			ticket_types: [
+				{ id: 1, name: 'Adult' },
+				{ id: 2, name: 'Child' },
+			],
 		} );
-		renderEdit( {
-			conditionSource: 'ticketType',
-			conditionTicketTypeIds: [ 1, 999 ],
-		} );
-
-		expect( await screen.findByRole( 'alert' ) ).toHaveTextContent(
-			/no longer exist/
+		const setAttributes = jest.fn();
+		renderEdit(
+			{
+				conditionSource: 'ticketType',
+				conditionTicketTypeIds: [ 2, 999, 1 ],
+			},
+			setAttributes
 		);
+
+		await waitFor( () =>
+			expect( setAttributes ).toHaveBeenCalledWith( {
+				conditionTicketTypeIds: [ 2, 1 ],
+			} )
+		);
+		expect(
+			screen.getByText( /Child, Adult is selected/ )
+		).toBeInTheDocument();
 	} );
 
-	it( 'shows no warning while the referenced ticket types all still exist', async () => {
+	it( 'clears an entirely stale selection and displays no condition', async () => {
 		mockFormParent( {
 			name: 'fair-events/event-signup',
 			attributes: { eventDateId: 42 },
@@ -261,12 +272,100 @@ describe( 'Fair Form Conditional Edit', () => {
 		apiFetch.mockResolvedValue( {
 			ticket_types: [ { id: 1, name: 'Adult' } ],
 		} );
-		renderEdit( {
-			conditionSource: 'ticketType',
-			conditionTicketTypeIds: [ 1 ],
+		const setAttributes = jest.fn();
+		renderEdit(
+			{
+				conditionSource: 'ticketType',
+				conditionTicketTypeIds: [ 999 ],
+			},
+			setAttributes
+		);
+
+		await waitFor( () =>
+			expect( setAttributes ).toHaveBeenCalledWith( {
+				conditionTicketTypeIds: [],
+			} )
+		);
+		expect( screen.getByText( 'No condition set' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'No condition set' ).closest( 'div' )
+		).toHaveClass( 'fair-form-conditional-editor--unconfigured' );
+	} );
+
+	it( 'leaves configured ticket types unchanged when loading fails', async () => {
+		mockFormParent( {
+			name: 'fair-events/event-signup',
+			attributes: { eventDateId: 42 },
 		} );
+		apiFetch.mockRejectedValue( new Error( 'Request failed' ) );
+		const setAttributes = jest.fn();
+		renderEdit(
+			{
+				conditionSource: 'ticketType',
+				conditionTicketTypeIds: [ 999 ],
+			},
+			setAttributes
+		);
+
+		await waitFor( () => expect( apiFetch ).toHaveBeenCalled() );
+		await waitFor( () => expect( setAttributes ).not.toHaveBeenCalled() );
+		expect( screen.getByText( /999 is selected/ ) ).toBeInTheDocument();
+	} );
+
+	it( 'does not update an already-valid selection', async () => {
+		mockFormParent( {
+			name: 'fair-events/event-signup',
+			attributes: { eventDateId: 42 },
+		} );
+		apiFetch.mockResolvedValue( {
+			ticket_types: [ { id: 1, name: 'Adult' } ],
+		} );
+		const setAttributes = jest.fn();
+		renderEdit(
+			{
+				conditionSource: 'ticketType',
+				conditionTicketTypeIds: [ 1 ],
+			},
+			setAttributes
+		);
 
 		await screen.findByLabelText( 'Adult' );
-		expect( screen.queryByRole( 'alert' ) ).not.toBeInTheDocument();
+		expect( setAttributes ).not.toHaveBeenCalled();
+	} );
+
+	it( 'does not repeat cleanup after receiving the cleaned attributes', async () => {
+		mockFormParent( {
+			name: 'fair-events/event-signup',
+			attributes: { eventDateId: 42 },
+		} );
+		apiFetch.mockResolvedValue( {
+			ticket_types: [ { id: 1, name: 'Adult' } ],
+		} );
+		const setAttributes = jest.fn();
+		const { rerender } = renderEdit(
+			{
+				conditionSource: 'ticketType',
+				conditionTicketTypeIds: [ 1, 999 ],
+			},
+			setAttributes
+		);
+
+		await waitFor( () =>
+			expect( setAttributes ).toHaveBeenCalledTimes( 1 )
+		);
+		rerender(
+			<Edit
+				attributes={ {
+					...baseAttributes,
+					conditionSource: 'ticketType',
+					conditionTicketTypeIds: [ 1 ],
+				} }
+				setAttributes={ setAttributes }
+				clientId="conditional-1"
+			/>
+		);
+
+		await screen.findByLabelText( 'Adult' );
+		expect( setAttributes ).toHaveBeenCalledTimes( 1 );
 	} );
 } );
