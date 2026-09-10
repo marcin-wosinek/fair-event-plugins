@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-10T04:48:26+00:00\n"
+"POT-Creation-Date: 2026-09-10T18:15:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -96,7 +96,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:163
 #: src/Admin/AdminPages.php:164
 #: src/Admin/AdminPages.php:170
-#: src/Admin/CopyEventPage.php:211
+#: src/Admin/CopyEventPage.php:239
 msgid "Copy Event"
 msgstr ""
 
@@ -115,82 +115,112 @@ msgid "Upcoming"
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:31
-#: src/Admin/CopyEventPage.php:74
+#: src/Admin/CopyEventPage.php:76
 msgid "A valid event date is required."
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:34
-#: src/Admin/CopyEventPage.php:79
+#: src/Admin/CopyEventPage.php:81
 msgid "Security check failed. Please try again."
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:49
+#: src/Admin/CopyEventPage.php:51
 #: src/API/EventDatesController.php:558
 #: src/API/EventDatesController.php:1018
 msgid "Event title is required."
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:115
+#: src/Admin/CopyEventPage.php:110
+msgid "Enter valid start and end times."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:130
 msgid "Custom date is required."
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:134
+#: src/Admin/CopyEventPage.php:136
+msgid "Enter a valid custom date."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:142
 msgid "Invalid date option selected."
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:220
+#: src/Admin/CopyEventPage.php:158
+msgid "End date and time must be after the start date and time."
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:248
 msgid "New Event Title"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:227
-#: src/Admin/CopyEventPage.php:271
+#: src/Admin/CopyEventPage.php:255
+#: src/Admin/CopyEventPage.php:309
 msgid "(Copy)"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:236
+#: src/Admin/CopyEventPage.php:264
 msgid "Event Date"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:242
+#: src/Admin/CopyEventPage.php:270
 msgid "A week later"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:246
+#: src/Admin/CopyEventPage.php:274
 msgid "Custom date"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:259
-msgid "Select the new start date. The event duration and time will be preserved."
+#: src/Admin/CopyEventPage.php:287
+msgid "Select the new start date. The event day span will be preserved."
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:267
+#: src/Admin/CopyEventPage.php:294
+#: src/Admin/calendar/components/QuickEventModal.js:391
+#: src/Admin/event-meta-box/EventEditForm.js:354
+#: src/Admin/manage-event/ManageEventApp.js:874
+msgid "Start time"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:298
+#: src/Admin/calendar/components/QuickEventModal.js:413
+#: src/Admin/event-meta-box/EventEditForm.js:380
+#: src/Admin/manage-event/ManageEventApp.js:894
+msgid "End time"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:305
 msgid "What Will Be Created"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:270
+#: src/Admin/CopyEventPage.php:308
 #: src/Admin/calendar/components/QuickEventModal.js:341
 #: src/Admin/manage-event/ManageEventApp.js:826
 msgid "Title"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:274
+#: src/Admin/CopyEventPage.php:312
 msgid "Start Date"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:279
+#: src/Admin/CopyEventPage.php:317
+msgid "End Date"
+msgstr ""
+
+#: src/Admin/CopyEventPage.php:323
 msgid "Duration"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:285
+#: src/Admin/CopyEventPage.php:329
 #: src/blocks/event-proposal/render.php:139
 msgid "Location"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:291
+#: src/Admin/CopyEventPage.php:335
 msgid "Featured Image"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:297
+#: src/Admin/CopyEventPage.php:341
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:177
 #: src/Admin/calendar/components/QuickEventModal.js:451
@@ -201,23 +231,23 @@ msgstr ""
 msgid "Categories"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:303
+#: src/Admin/CopyEventPage.php:347
 msgid "Tags"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:309
+#: src/Admin/CopyEventPage.php:353
 msgid "The copied post will be created as a draft with its reusable event details."
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:309
+#: src/Admin/CopyEventPage.php:353
 msgid "A new calendar-only event will be created with its reusable event details."
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:318
+#: src/Admin/CopyEventPage.php:362
 msgid "Create Copy"
 msgstr ""
 
-#: src/Admin/CopyEventPage.php:321
+#: src/Admin/CopyEventPage.php:365
 #: src/Admin/calendar/components/QuickEventModal.js:584
 #: src/Admin/manage-event/EditInstancesModal.js:75
 #: src/Admin/manage-event/EventSignups.js:382
@@ -454,10 +484,10 @@ msgstr ""
 #: src/API/EventDatesController.php:1396
 #: src/API/EventDatesController.php:1432
 #: src/API/EventDatesController.php:1529
-#: src/API/GetTicketsController.php:372
-#: src/API/GetTicketsController.php:381
-#: src/API/GetTicketsController.php:654
-#: src/API/GetTicketsController.php:663
+#: src/API/GetTicketsController.php:404
+#: src/API/GetTicketsController.php:413
+#: src/API/GetTicketsController.php:689
+#: src/API/GetTicketsController.php:698
 #: src/API/TicketsController.php:119
 #: src/API/TicketsController.php:140
 #: src/API/TicketsController.php:294
@@ -497,73 +527,73 @@ msgstr ""
 msgid "You do not have permission to look up event pages."
 msgstr ""
 
-#: src/API/GetTicketsController.php:326
+#: src/API/GetTicketsController.php:357
 msgid "Thank you!"
 msgstr ""
 
-#: src/API/GetTicketsController.php:346
+#: src/API/GetTicketsController.php:378
 msgid "Too many requests. Please try again later."
 msgstr ""
 
-#: src/API/GetTicketsController.php:410
-#: src/API/GetTicketsController.php:1035
+#: src/API/GetTicketsController.php:442
+#: src/API/GetTicketsController.php:1071
 msgid "Invalid ticket type."
 msgstr ""
 
-#: src/API/GetTicketsController.php:417
+#: src/API/GetTicketsController.php:449
 msgid "This ticket type is no longer available."
 msgstr ""
 
-#: src/API/GetTicketsController.php:447
-#: src/API/GetTicketsController.php:1078
+#: src/API/GetTicketsController.php:479
+#: src/API/GetTicketsController.php:1114
 msgid "This ticket type is not currently on sale."
 msgstr ""
 
-#: src/API/GetTicketsController.php:481
-#: src/API/GetTicketsController.php:1091
-#: src/API/GetTicketsController.php:1604
+#: src/API/GetTicketsController.php:513
+#: src/API/GetTicketsController.php:1127
+#: src/API/GetTicketsController.php:1643
 msgid "Paid tickets are not available because online payments are not configured."
 msgstr ""
 
-#: src/API/GetTicketsController.php:505
-#: src/API/GetTicketsController.php:1115
+#: src/API/GetTicketsController.php:537
+#: src/API/GetTicketsController.php:1151
 msgid "Failed to save signup. Please try again."
 msgstr ""
 
-#: src/API/GetTicketsController.php:524
-#: src/API/GetTicketsController.php:1144
-#: src/blocks/event-signup/frontend.js:1616
+#: src/API/GetTicketsController.php:556
+#: src/API/GetTicketsController.php:1180
+#: src/blocks/event-signup/frontend.js:1619
 msgid "You have successfully registered! A confirmation email is on its way."
 msgstr ""
 
 #. translators: %s: event name
 #. translators: %s: occurrence date/time label
-#: src/API/GetTicketsController.php:537
-#: src/API/GetTicketsController.php:1175
+#: src/API/GetTicketsController.php:569
+#: src/API/GetTicketsController.php:1211
 #, php-format
 msgid "Ticket for %s"
 msgstr ""
 
 #. translators: %d: event date ID
-#: src/API/GetTicketsController.php:542
+#: src/API/GetTicketsController.php:574
 #, php-format
 msgid "Ticket for event #%d"
 msgstr ""
 
-#: src/API/GetTicketsController.php:959
+#: src/API/GetTicketsController.php:994
 msgid "Event Signup"
 msgstr ""
 
-#: src/API/GetTicketsController.php:1023
+#: src/API/GetTicketsController.php:1059
 msgid "Please select at least one occurrence."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1046
+#: src/API/GetTicketsController.php:1082
 msgid "One of the selected occurrences is not valid for this ticket."
 msgstr ""
 
 #. translators: %d: minimum number of occurrences required
-#: src/API/GetTicketsController.php:1059
+#: src/API/GetTicketsController.php:1095
 #: src/blocks/event-signup/frontend.js:846
 #: src/blocks/event-signup/frontend.js:1439
 #, php-format,js-format
@@ -573,66 +603,66 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: event name
-#: src/API/GetTicketsController.php:1158
+#: src/API/GetTicketsController.php:1194
 #, php-format
 msgid "Tickets for %s"
 msgstr ""
 
 #. translators: %d: event date ID
-#: src/API/GetTicketsController.php:1163
+#: src/API/GetTicketsController.php:1199
 #, php-format
 msgid "Tickets for event #%d"
 msgstr ""
 
-#: src/API/GetTicketsController.php:1362
+#: src/API/GetTicketsController.php:1401
 msgid "Signup not found."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1370
+#: src/API/GetTicketsController.php:1409
 #: src/Admin/manage-event/EventSignups.js:190
 msgid "Failed to delete signup."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1410
-#: src/API/GetTicketsController.php:1503
-#: src/API/GetTicketsController.php:1535
-#: src/API/GetTicketsController.php:1741
+#: src/API/GetTicketsController.php:1449
+#: src/API/GetTicketsController.php:1542
+#: src/API/GetTicketsController.php:1574
+#: src/API/GetTicketsController.php:1786
 msgid "Transaction not found."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1544
+#: src/API/GetTicketsController.php:1583
 msgid "This payment cannot be retried."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1553
+#: src/API/GetTicketsController.php:1592
 msgid "This payment is not retriable from this endpoint."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1573
-#: src/API/GetTicketsController.php:1709
-#: src/API/GetTicketsController.php:1720
+#: src/API/GetTicketsController.php:1612
+#: src/API/GetTicketsController.php:1754
+#: src/API/GetTicketsController.php:1765
 msgid "This payment is missing context needed to retry."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1596
+#: src/API/GetTicketsController.php:1635
 msgid "This payment session has expired. Please start over."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1613
+#: src/API/GetTicketsController.php:1652
 msgid "Original line items could not be loaded."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1750
+#: src/API/GetTicketsController.php:1795
 msgid "This payment is not manageable from this endpoint."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1759
-#: src/API/GetTicketsController.php:1789
-#: src/API/GetTicketsController.php:1824
+#: src/API/GetTicketsController.php:1804
+#: src/API/GetTicketsController.php:1834
+#: src/API/GetTicketsController.php:1869
 msgid "This payment could not be cancelled safely. Please try again."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1771
+#: src/API/GetTicketsController.php:1816
 msgid "We could not verify the payment status. Please try again."
 msgstr ""
 
@@ -1406,7 +1436,7 @@ msgstr ""
 msgid "You do not have permission to copy calendar events."
 msgstr ""
 
-#: src/Services/EventCopyService.php:202
+#: src/Services/EventCopyService.php:205
 msgid "The event copy could not be completed, and any partial copy was removed. Please try again."
 msgstr ""
 
@@ -1704,18 +1734,6 @@ msgstr ""
 #: src/Admin/manage-event/ManageEventApp.js:884
 #: ../fair-events-shared/src/RecurrenceControl.js:79
 msgid "End date"
-msgstr ""
-
-#: src/Admin/calendar/components/QuickEventModal.js:391
-#: src/Admin/event-meta-box/EventEditForm.js:354
-#: src/Admin/manage-event/ManageEventApp.js:874
-msgid "Start time"
-msgstr ""
-
-#: src/Admin/calendar/components/QuickEventModal.js:413
-#: src/Admin/event-meta-box/EventEditForm.js:380
-#: src/Admin/manage-event/ManageEventApp.js:894
-msgid "End time"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:427
@@ -3675,11 +3693,11 @@ msgstr ""
 msgid "Quantity must be between 1 and 10."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:1599
+#: src/blocks/event-signup/frontend.js:1602
 msgid "Processing…"
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:1600
+#: src/blocks/event-signup/frontend.js:1603
 msgid "Failed to submit. Please try again."
 msgstr ""
 
