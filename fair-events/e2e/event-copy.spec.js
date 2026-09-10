@@ -49,16 +49,7 @@ async function setPluginStatus( page, status ) {
 	} );
 }
 
-async function createCopy( page, eventId, title, customDate = null ) {
-	await page.goto( `/wp-admin/edit.php?post_type=fair_event`, {
-		waitUntil: 'domcontentloaded',
-	} );
-	const row = page.locator( `#post-${ eventId }` );
-	await expect( row ).toBeVisible();
-	await row.hover();
-	const copyAction = row.locator( '.row-actions .copy a' );
-	await expect( copyAction ).toBeVisible();
-	const copyUrl = await copyAction.getAttribute( 'href' );
+async function submitCopy( page, copyUrl, title, customDate = null ) {
 	const copyScreen = await page.request.get( copyUrl );
 	expect( copyScreen.ok() ).toBe( true );
 	const copyScreenHtml = await copyScreen.text();
@@ -79,10 +70,204 @@ async function createCopy( page, eventId, title, customDate = null ) {
 		},
 	} );
 	expect( response.status() ).toBe( 302 );
-	const redirect = response.headers().location;
-	expect( redirect ).toMatch( /\/wp-admin\/post\.php\?action=edit&post=\d+/ );
-	return Number( new URL( redirect ).searchParams.get( 'post' ) );
+	return response.headers().location;
 }
+
+async function createCopy( page, eventId, title, customDate = null ) {
+	await page.goto( `/wp-admin/edit.php?post_type=fair_event`, {
+		waitUntil: 'domcontentloaded',
+	} );
+	const row = page.locator( `#post-${ eventId }` );
+	await expect( row ).toBeVisible();
+	await row.hover();
+	const copyAction = row.locator( '.row-actions .copy a' );
+	await expect( copyAction ).toBeVisible();
+	const copyUrl = await copyAction.getAttribute( 'href' );
+	const redirect = await submitCopy( page, copyUrl, title, customDate );
+	const redirectUrl = new URL( redirect );
+	expect( redirectUrl.pathname ).toBe( '/wp-admin/post.php' );
+	expect( redirectUrl.searchParams.get( 'action' ) ).toBe( 'edit' );
+	expect( Number( redirectUrl.searchParams.get( 'post' ) ) ).toBeGreaterThan(
+		0
+	);
+	return Number( redirectUrl.searchParams.get( 'post' ) );
+}
+
+test( 'copies an enabled page and a calendar-only event in place', async ( {
+	page,
+} ) => {
+	test.setTimeout( 300_000 );
+	await login( page );
+	await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+	await page.waitForFunction( () => window.wp?.apiFetch );
+
+	const suffix = Date.now();
+	const settings = (
+		await apiFetch( page, { path: '/wp/v2/settings?context=edit' } )
+	).data;
+	let sourcePage;
+	let sourcePageDate;
+	let copiedPageId;
+	let calendarDate;
+	let copiedCalendarDateId;
+
+	try {
+		await apiFetch( page, {
+			path: '/wp/v2/settings',
+			method: 'POST',
+			data: { fair_events_enabled_post_types: [ 'page' ] },
+		} );
+		sourcePage = (
+			await apiFetch( page, {
+				path: '/wp/v2/pages',
+				method: 'POST',
+				data: {
+					title: `Page copy source ${ suffix }`,
+					content: 'Page copy content',
+					excerpt: 'Page copy excerpt',
+					status: 'publish',
+				},
+			} )
+		).data;
+		sourcePageDate = (
+			await apiFetch( page, {
+				path: '/fair-events/v1/event-dates',
+				method: 'POST',
+				data: {
+					title: sourcePage.title.rendered,
+					start_datetime: '2040-02-01 10:00:00',
+					end_datetime: '2040-02-01 12:00:00',
+					link_type: 'post',
+				},
+			} )
+		).data;
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ sourcePageDate.id }`,
+			method: 'PUT',
+			data: { event_id: sourcePage.id },
+		} );
+
+		await page.goto( '/wp-admin/edit.php?post_type=page' );
+		const pageRow = page.locator( `#post-${ sourcePage.id }` );
+		await pageRow.hover();
+		const pageCopyUrl = await pageRow
+			.locator( '.row-actions .copy a' )
+			.getAttribute( 'href' );
+		expect( pageCopyUrl ).toContain(
+			`event_date_id=${ sourcePageDate.id }`
+		);
+		await page.goto(
+			`/wp-admin/post.php?action=edit&post=${ sourcePage.id }`
+		);
+		await expect(
+			page.locator( '#wp-admin-bar-copy-event > a' )
+		).toHaveAttribute( 'href', pageCopyUrl );
+		const pageRedirect = await submitCopy(
+			page,
+			pageCopyUrl,
+			`Copied page ${ suffix }`
+		);
+		copiedPageId = Number(
+			new URL( pageRedirect ).searchParams.get( 'post' )
+		);
+		const copiedPage = (
+			await apiFetch( page, {
+				path: `/wp/v2/pages/${ copiedPageId }?context=edit`,
+			} )
+		).data;
+		expect( copiedPage.status ).toBe( 'draft' );
+		expect( copiedPage.content.raw ).toBe( 'Page copy content' );
+
+		calendarDate = (
+			await apiFetch( page, {
+				path: '/fair-events/v1/event-dates',
+				method: 'POST',
+				data: {
+					title: `Calendar copy source ${ suffix }`,
+					start_datetime: '2040-03-01 09:00:00',
+					end_datetime: '2040-03-01 11:30:00',
+					link_type: 'none',
+					attendance_mode: 'online',
+					joining_link: 'https://example.com/join',
+				},
+			} )
+		).data;
+		await page.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ calendarDate.id }&tab=admin`
+		);
+		const calendarCopyUrl = await page
+			.getByRole( 'link', { name: 'Copy event' } )
+			.getAttribute( 'href' );
+		const calendarRedirect = await submitCopy(
+			page,
+			calendarCopyUrl,
+			`Copied calendar event ${ suffix }`,
+			'2040-04-10'
+		);
+		copiedCalendarDateId = Number(
+			new URL( calendarRedirect ).searchParams.get( 'event_date_id' )
+		);
+		expect( copiedCalendarDateId ).toBeGreaterThan( 0 );
+		const copiedCalendar = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ copiedCalendarDateId }`,
+			} )
+		).data;
+		expect( copiedCalendar.event_id ).toBeNull();
+		expect( copiedCalendar.title ).toBe(
+			`Copied calendar event ${ suffix }`
+		);
+		expect( copiedCalendar.start_datetime ).toBe( '2040-04-10 09:00:00' );
+		expect( copiedCalendar.end_datetime ).toBe( '2040-04-10 11:30:00' );
+		expect( copiedCalendar.attendance_mode ).toBe( 'online' );
+		expect( copiedCalendar.joining_link ).toBe(
+			'https://example.com/join'
+		);
+	} finally {
+		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+		await page.waitForFunction( () => window.wp?.apiFetch );
+		for ( const id of [
+			copiedCalendarDateId,
+			calendarDate?.id,
+			sourcePageDate?.id,
+		] ) {
+			if ( id ) {
+				await apiFetch(
+					page,
+					{
+						path: `/fair-events/v1/event-dates/${ id }`,
+						method: 'DELETE',
+					},
+					false
+				);
+			}
+		}
+		for ( const id of [ copiedPageId, sourcePage?.id ] ) {
+			if ( id ) {
+				await apiFetch(
+					page,
+					{
+						path: `/wp/v2/pages/${ id }?force=true`,
+						method: 'DELETE',
+					},
+					false
+				);
+			}
+		}
+		await apiFetch(
+			page,
+			{
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: {
+					fair_events_enabled_post_types:
+						settings.fair_events_enabled_post_types,
+				},
+			},
+			false
+		);
+	}
+} );
 
 test( 'starts the copy workflow from the All Events row action', async ( {
 	page,
@@ -131,7 +316,9 @@ test( 'starts the copy workflow from the All Events row action', async ( {
 		await sourceRow.getByRole( 'button', { name: 'Actions' } ).click();
 		await page.getByRole( 'menuitem', { name: 'Copy' } ).click();
 		await expect( page ).toHaveURL(
-			new RegExp( `page=fair-events-copy.*event_id=${ source.id }` )
+			new RegExp(
+				`page=fair-events-copy.*event_date_id=${ sourceDate.id }`
+			)
 		);
 		await expect( page.locator( 'h1' ) ).toContainText(
 			source.title.rendered
@@ -830,9 +1017,14 @@ test( 'opens copy options from managed events and recurring occurrences', async 
 			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ calendarOnlyDate.id }&tab=admin`,
 			{ waitUntil: 'domcontentloaded' }
 		);
-		await expect(
-			page.getByRole( 'link', { name: 'Copy event' } )
-		).toHaveCount( 0 );
+		const calendarCopyAction = page.getByRole( 'link', {
+			name: 'Copy event',
+		} );
+		await expect( calendarCopyAction ).toBeVisible();
+		await expect( calendarCopyAction ).toHaveAttribute(
+			'href',
+			new RegExp( `event_date_id=${ calendarOnlyDate.id }` )
+		);
 	} finally {
 		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events', {
 			waitUntil: 'domcontentloaded',

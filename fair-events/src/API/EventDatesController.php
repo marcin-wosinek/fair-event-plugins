@@ -10,6 +10,7 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Services\EventCopyService;
 use FairEvents\Services\RecurrenceService;
 use FairEvents\Services\PostTranslationLinks;
 use FairEvents\Services\EventDateForPost;
@@ -1783,22 +1784,9 @@ class EventDatesController extends WP_REST_Controller {
 			}
 		}
 
-		$copy_event_id = $result->event_id ? (int) $result->event_id : 0;
-		if ( ! $copy_event_id && 'generated' === $result->occurrence_type && $result->master_id ) {
-			$master        = EventDates::get_by_id( (int) $result->master_id );
-			$copy_event_id = $master && $master->event_id ? (int) $master->event_id : 0;
-		}
-
-		$copy_event = $copy_event_id ? get_post( $copy_event_id ) : null;
-		if ( $copy_event && 'fair_event' === $copy_event->post_type && current_user_can( 'edit_post', $copy_event_id ) ) {
-			$data['copy_url'] = add_query_arg(
-				array(
-					'page'     => 'fair-events-copy',
-					'event_id' => $copy_event_id,
-					'_wpnonce' => wp_create_nonce( 'copy_fair_event_' . $copy_event_id ),
-				),
-				admin_url( 'admin.php' )
-			);
+		$copy_url = EventCopyService::get_copy_url( $result->id );
+		if ( $copy_url ) {
+			$data['copy_url'] = $copy_url;
 		}
 
 		return $data;

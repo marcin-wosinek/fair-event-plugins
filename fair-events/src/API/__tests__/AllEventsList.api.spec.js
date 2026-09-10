@@ -128,18 +128,22 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 		);
 		expect( master.copy_url ).toMatch(
 			new RegExp(
-				`/wp-admin/admin\\.php\\?page=fair-events-copy&event_id=${ sourceEventId }&_wpnonce=[^&]+`
+				`/wp-admin/admin\\.php\\?page=fair-events-copy&event_date_id=${ masterEventDateId }&_wpnonce=[^&]+`
 			)
 		);
 		master.children.forEach( ( child ) => {
 			expect( child.copy_url ).toMatch(
-				new RegExp( `event_id=${ sourceEventId }&_wpnonce=[^&]+` )
+				new RegExp(
+					`event_date_id=${ masterEventDateId }&_wpnonce=[^&]+`
+				)
 			);
 		} );
 		const calendarOnly = body.find(
 			( item ) => item.id === singleEventDateId
 		);
-		expect( calendarOnly.copy_url ).toBeUndefined();
+		expect( calendarOnly.copy_url ).toMatch(
+			new RegExp( `event_date_id=${ singleEventDateId }&_wpnonce=[^&]+` )
+		);
 	} );
 
 	test( 'X-WP-Total counts top-level rows only', async () => {
