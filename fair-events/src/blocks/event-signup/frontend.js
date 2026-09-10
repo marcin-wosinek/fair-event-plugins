@@ -1579,6 +1579,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		if ( form.dataset.participantToken ) {
 			data.participant_token = form.dataset.participantToken;
 		}
+		if ( typeof window.fairEventsMetaAttribution === 'function' ) {
+			Object.assign( data, window.fairEventsMetaAttribution() );
+		}
 
 		return data;
 	}

@@ -12,6 +12,8 @@ Activates advanced feature bundles for Fair Events: galleries, sources, ticketin
 
 == Description ==
 
+When the optional Meta Conversions feature is enabled, the plugin processes consented Meta browser identifiers (`_fbp` and `_fbc`), the checkout source URL, purchase value, currency, and transaction identifier to report checkout and completed-purchase measurements to Meta Platforms, Inc. Delivery is asynchronous. Identifiers are cleared after delivery reaches a terminal result, and all delivery rows are deleted after 90 days. The feature requires marketing consent and administrator-supplied Meta credentials; its external service terms and privacy policy apply.
+
 This plugin is a companion to Fair Events. It activates five advanced feature bundles that are excluded from the public Fair Events build:
 
 * **Galleries** — Per-event photo galleries, photo likes/downloads, image exports.

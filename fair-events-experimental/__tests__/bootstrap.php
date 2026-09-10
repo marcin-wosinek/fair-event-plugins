@@ -13,6 +13,13 @@ if ( ! defined( 'WPINC' ) ) {
 	define( 'WPINC', 'wp-includes' );
 }
 
+if ( ! function_exists( 'home_url' ) ) {
+	/** Return a stable test site URL. */
+	function home_url() {
+		return 'https://example.test/';
+	}
+}
+
 if ( ! function_exists( '__' ) ) {
 	/**
 	 * Stub for WordPress' translation function — returns the text unchanged.

@@ -107,6 +107,23 @@ class GetTicketsController extends WP_REST_Controller {
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
 						),
+						'marketing_consent'     => array(
+							'type'              => 'boolean',
+							'required'          => false,
+							'default'           => false,
+							'sanitize_callback' => 'rest_sanitize_boolean',
+						),
+						'meta_fbp'              => $this->meta_identifier_argument(),
+						'meta_fbc'              => $this->meta_identifier_argument(),
+						'meta_source_url'       => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'esc_url_raw',
+							'validate_callback' => static function ( $value ) {
+								return '' === $value || (bool) wp_http_validate_url( $value );
+							},
+						),
 						'participant_token'     => array(
 							'type'              => 'string',
 							'required'          => false,
@@ -269,16 +286,30 @@ class GetTicketsController extends WP_REST_Controller {
 				'callback'            => array( $this, 'retry_payment' ),
 				'permission_callback' => array( $this, 'signup_payment_permissions_check' ),
 				'args'                => array(
-					'transaction_id' => array(
+					'transaction_id'    => array(
 						'type'              => 'integer',
 						'required'          => true,
 						'sanitize_callback' => 'absint',
 					),
-					'token'          => array(
+					'token'             => array(
 						'type'              => 'string',
 						'required'          => false,
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'marketing_consent' => array(
+						'type'              => 'boolean',
+						'required'          => false,
+						'default'           => false,
+						'sanitize_callback' => 'rest_sanitize_boolean',
+					),
+					'meta_fbp'          => $this->meta_identifier_argument(),
+					'meta_fbc'          => $this->meta_identifier_argument(),
+					'meta_source_url'   => array(
+						'type'              => 'string',
+						'required'          => false,
+						'default'           => '',
+						'sanitize_callback' => 'esc_url_raw',
 					),
 				),
 			)
@@ -335,6 +366,7 @@ class GetTicketsController extends WP_REST_Controller {
 		$quantity          = max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) );
 		$mailing_opt_in    = (bool) $request->get_param( 'mailing_opt_in' );
 		$participant_token = (string) $request->get_param( 'participant_token' );
+		$meta_attribution  = $this->get_meta_attribution( $request );
 
 		// Server-side rate limit by IP and by email. The IP ceiling is loose
 		// enough that a shared-NAT venue's fourth signup that hour doesn't
@@ -569,11 +601,14 @@ class GetTicketsController extends WP_REST_Controller {
 				'event_date_id' => $event_date_id,
 				'user_id'       => $user_id ? $user_id : null,
 				'email'         => $email,
-				'metadata'      => array(
-					'source'        => 'fair-events-get-tickets',
-					'event_date_id' => $event_date_id,
-					'signup_id'     => $signup_id,
-					'email'         => $email,
+				'metadata'      => array_merge(
+					array(
+						'source'        => 'fair-events-get-tickets',
+						'event_date_id' => $event_date_id,
+						'signup_id'     => $signup_id,
+						'email'         => $email,
+					),
+					$meta_attribution
 				),
 			)
 		);
@@ -1013,9 +1048,10 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function create_multi_instance_signup( $request, $ticket_type, $series_page_id, $name, $email, $mailing_opt_in, $questionnaire_answers = array() ) {
-		$raw_ids = $request->get_param( 'event_date_ids' ) ?? array();
-		$raw_ids = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
-		$raw_ids = array_filter( $raw_ids );
+		$meta_attribution = $this->get_meta_attribution( $request );
+		$raw_ids          = $request->get_param( 'event_date_ids' ) ?? array();
+		$raw_ids          = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
+		$raw_ids          = array_filter( $raw_ids );
 
 		if ( empty( $raw_ids ) ) {
 			return new WP_Error(
@@ -1189,11 +1225,14 @@ class GetTicketsController extends WP_REST_Controller {
 				'event_date_id' => $series_master_id,
 				'user_id'       => $user_id ? $user_id : null,
 				'email'         => $email,
-				'metadata'      => array(
-					'source'        => 'fair-events-get-tickets',
-					'event_date_id' => $series_master_id,
-					'signup_ids'    => $signup_ids,
-					'email'         => $email,
+				'metadata'      => array_merge(
+					array(
+						'source'        => 'fair-events-get-tickets',
+						'event_date_id' => $series_master_id,
+						'signup_ids'    => $signup_ids,
+						'email'         => $email,
+					),
+					$meta_attribution
 				),
 			)
 		);
@@ -1642,12 +1681,18 @@ class GetTicketsController extends WP_REST_Controller {
 				'event_date_id' => $event_date_id,
 				'user_id'       => $user_id ? $user_id : null,
 				'email'         => $buyer_email,
-				'metadata'      => array(
-					'source'                  => 'fair-events-get-tickets',
-					'event_date_id'           => $event_date_id,
-					'signup_ids'              => $new_signup_ids,
-					'retry_of_transaction_id' => (int) $transaction->id,
-					'email'                   => $buyer_email,
+				'metadata'      => array_merge(
+					array(
+						'source'                  => 'fair-events-get-tickets',
+						'event_date_id'           => $event_date_id,
+						'signup_ids'              => $new_signup_ids,
+						'retry_of_transaction_id' => (int) $transaction->id,
+						'email'                   => $buyer_email,
+					),
+					array_intersect_key(
+						$metadata,
+						array_flip( array( 'meta_fbp', 'meta_fbc', 'meta_source_url', 'meta_consent' ) )
+					)
 				),
 			)
 		);
@@ -1887,5 +1932,54 @@ class GetTicketsController extends WP_REST_Controller {
 			$email_count = (int) get_transient( $email_key );
 			set_transient( $email_key, $email_count + 1, self::RATE_LIMIT_WINDOW );
 		}
+	}
+
+	/**
+	 * Build a REST argument for a Meta browser identifier.
+	 *
+	 * @return array
+	 */
+	private function meta_identifier_argument() {
+		return array(
+			'type'              => 'string',
+			'required'          => false,
+			'default'           => '',
+			'sanitize_callback' => 'sanitize_text_field',
+			'validate_callback' => static function ( $value ) {
+				return '' === $value || (bool) preg_match( '/^fb\.1\.\d{10,16}\.[A-Za-z0-9_-]{1,128}$/', $value );
+			},
+		);
+	}
+
+	/**
+	 * Keep attribution only when the browser asserted current marketing consent.
+	 * The experimental frontend obtains that assertion from wp_has_consent() and
+	 * fails closed when the consent API is absent.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array<string,string|bool>
+	 */
+	private function get_meta_attribution( $request ) {
+		if ( true !== (bool) $request->get_param( 'marketing_consent' ) ) {
+			return array();
+		}
+
+		$fbp = (string) $request->get_param( 'meta_fbp' );
+		$fbc = (string) $request->get_param( 'meta_fbc' );
+		if ( '' === $fbp && '' === $fbc ) {
+			return array();
+		}
+
+		return array_filter(
+			array(
+				'meta_consent'    => true,
+				'meta_fbp'        => $fbp,
+				'meta_fbc'        => $fbc,
+				'meta_source_url' => (string) $request->get_param( 'meta_source_url' ),
+			),
+			static function ( $value ) {
+				return '' !== $value;
+			}
+		);
 	}
 }

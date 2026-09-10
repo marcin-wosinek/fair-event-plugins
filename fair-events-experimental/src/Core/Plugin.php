@@ -52,6 +52,7 @@ class Plugin {
 		$this->load_settings();
 		$this->load_rest_api();
 		$this->load_frontend();
+		$this->load_meta_conversions();
 
 		// Merge experimental feature states into the manage-event enabledFeatures map
 		// so the React UI can show galleries/ticketing tabs when active.
@@ -187,9 +188,9 @@ class Plugin {
 						'attachment',
 						'fair_event',
 						array(
-							'get_callback' => function ( $object ) {
+							'get_callback' => function ( $attachment ) {
 								$repository  = new \FairEvents\Database\EventPhotoRepository();
-								$event_photo = $repository->get_event_for_attachment( $object['id'] );
+								$event_photo = $repository->get_event_for_attachment( $attachment['id'] );
 
 								if ( ! $event_photo || ! $event_photo->event_date_id ) {
 									return null;
@@ -275,6 +276,37 @@ class Plugin {
 	private function load_frontend() {
 		if ( Features::is_enabled( 'galleries' ) ) {
 			\FairEvents\Frontend\EventGalleryPage::init();
+		}
+	}
+
+	/** Load the opt-in Meta integration when its connector dependency exists. */
+	private function load_meta_conversions() {
+		if ( ! Features::is_enabled( 'meta-conversions' ) || ! class_exists( \FairPaymentsConnector\Models\Transaction::class ) ) {
+			return;
+		}
+
+		if ( '1' !== (string) get_option( 'fair_events_experimental_meta_db_version', '' ) ) {
+			\FairEventsExperimental\Meta\Outbox::install();
+		}
+		$service = new \FairEventsExperimental\Meta\Conversions();
+		$service->init();
+		add_action(
+			'rest_api_init',
+			static function () {
+				( new \FairEventsExperimental\API\MetaConversionsController() )->register_routes();
+			}
+		);
+		add_action(
+			'wp_enqueue_scripts',
+			static function () {
+				if ( is_singular() && has_block( 'fair-events/event-signup', get_queried_object() ) ) {
+					$asset = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/frontend/meta-attribution.asset.php';
+					wp_enqueue_script( 'fair-events-experimental-meta-attribution', FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/frontend/meta-attribution.js', $asset['dependencies'], $asset['version'], true );
+				}
+			}
+		);
+		if ( ! wp_next_scheduled( \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK ) ) {
+			wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK );
 		}
 	}
 
