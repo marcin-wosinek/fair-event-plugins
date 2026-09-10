@@ -49,7 +49,14 @@ async function setPluginStatus( page, status ) {
 	} );
 }
 
-async function submitCopy( page, copyUrl, title, customDate = null ) {
+async function submitCopy(
+	page,
+	copyUrl,
+	title,
+	customDate = null,
+	startTime = null,
+	endTime = null
+) {
 	const copyScreen = await page.request.get( copyUrl );
 	expect( copyScreen.ok() ).toBe( true );
 	const copyScreenHtml = await copyScreen.text();
@@ -58,6 +65,12 @@ async function submitCopy( page, copyUrl, title, customDate = null ) {
 		/name="copy_event_nonce" value="([^"]+)"/
 	)?.[ 1 ];
 	expect( submissionNonce ).toBeTruthy();
+	const defaultStartTime = copyScreenHtml.match(
+		/name="start_time" value="([^"]*)"/
+	)?.[ 1 ];
+	const defaultEndTime = copyScreenHtml.match(
+		/name="end_time" value="([^"]*)"/
+	)?.[ 1 ];
 
 	const response = await page.request.post( copyUrl, {
 		maxRedirects: 0,
@@ -67,13 +80,22 @@ async function submitCopy( page, copyUrl, title, customDate = null ) {
 			event_title: title,
 			date_option: customDate ? 'custom' : 'week',
 			custom_date: customDate || '',
+			start_time: startTime ?? defaultStartTime ?? '',
+			end_time: endTime ?? defaultEndTime ?? '',
 		},
 	} );
 	expect( response.status() ).toBe( 302 );
 	return response.headers().location;
 }
 
-async function createCopy( page, eventId, title, customDate = null ) {
+async function createCopy(
+	page,
+	eventId,
+	title,
+	customDate = null,
+	startTime = null,
+	endTime = null
+) {
 	await page.goto( `/wp-admin/edit.php?post_type=fair_event`, {
 		waitUntil: 'domcontentloaded',
 	} );
@@ -83,7 +105,14 @@ async function createCopy( page, eventId, title, customDate = null ) {
 	const copyAction = row.locator( '.row-actions .copy a' );
 	await expect( copyAction ).toBeVisible();
 	const copyUrl = await copyAction.getAttribute( 'href' );
-	const redirect = await submitCopy( page, copyUrl, title, customDate );
+	const redirect = await submitCopy(
+		page,
+		copyUrl,
+		title,
+		customDate,
+		startTime,
+		endTime
+	);
 	const redirectUrl = new URL( redirect );
 	expect( redirectUrl.pathname ).toBe( '/wp-admin/post.php' );
 	expect( redirectUrl.searchParams.get( 'action' ) ).toBe( 'edit' );
@@ -165,7 +194,10 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 		const pageRedirect = await submitCopy(
 			page,
 			pageCopyUrl,
-			`Copied page ${ suffix }`
+			`Copied page ${ suffix }`,
+			null,
+			'08:15',
+			'13:45'
 		);
 		copiedPageId = Number(
 			new URL( pageRedirect ).searchParams.get( 'post' )
@@ -177,6 +209,17 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 		).data;
 		expect( copiedPage.status ).toBe( 'draft' );
 		expect( copiedPage.content.raw ).toBe( 'Page copy content' );
+		const copiedPageDates = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates?event_id=${ copiedPageId }&include_linked=true`,
+			} )
+		).data;
+		expect( copiedPageDates[ 0 ].start_datetime ).toBe(
+			'2040-02-08 08:15:00'
+		);
+		expect( copiedPageDates[ 0 ].end_datetime ).toBe(
+			'2040-02-08 13:45:00'
+		);
 
 		calendarDate = (
 			await apiFetch( page, {
@@ -266,6 +309,152 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 			},
 			false
 		);
+	}
+} );
+
+test( 'edits copied times and keeps all-day copies date-only', async ( {
+	page,
+} ) => {
+	test.setTimeout( 300_000 );
+	await login( page );
+	await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+	await page.waitForFunction( () => window.wp?.apiFetch );
+	const suffix = Date.now();
+	const ids = [];
+
+	try {
+		const timed = (
+			await apiFetch( page, {
+				path: '/fair-events/v1/event-dates',
+				method: 'POST',
+				data: {
+					title: `Timed copy source ${ suffix }`,
+					start_datetime: '2041-05-10 22:30:00',
+					end_datetime: '2041-05-12 01:15:00',
+					all_day: false,
+					link_type: 'none',
+				},
+			} )
+		).data;
+		ids.push( timed.id );
+		await page.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ timed.id }&tab=admin`
+		);
+		const timedCopyUrl = await page
+			.getByRole( 'link', { name: 'Copy event' } )
+			.getAttribute( 'href' );
+		await page.goto( timedCopyUrl );
+		await expect( page.getByLabel( 'Start time' ) ).toHaveValue( '22:30' );
+		await expect( page.getByLabel( 'End time' ) ).toHaveValue( '01:15' );
+		await page.getByLabel( 'Start time' ).fill( '20:45' );
+		await page.getByLabel( 'End time' ).fill( '02:30' );
+		await page.getByLabel( 'Custom date' ).check();
+		await page.locator( '#custom_date' ).fill( '2041-06-20' );
+		await expect( page.locator( '#summary-start-date' ) ).toContainText(
+			'June 20, 2041 at 8:45 PM'
+		);
+		await expect( page.locator( '#summary-end-date' ) ).toContainText(
+			'June 22, 2041 at 2:30 AM'
+		);
+		await page.getByRole( 'button', { name: 'Create Copy' } ).click();
+		await expect( page ).toHaveURL( /fair-events-manage-event/ );
+		const timedCopyId = Number(
+			new URL( page.url() ).searchParams.get( 'event_date_id' )
+		);
+		ids.push( timedCopyId );
+		const timedCopy = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ timedCopyId }`,
+			} )
+		).data;
+		expect( timedCopy.start_datetime ).toBe( '2041-06-20 20:45:00' );
+		expect( timedCopy.end_datetime ).toBe( '2041-06-22 02:30:00' );
+
+		const copyScreenHtml = await (
+			await page.request.get( timedCopyUrl )
+		).text();
+		const nonce = copyScreenHtml.match(
+			/name="copy_event_nonce" value="([^"]+)"/
+		)?.[ 1 ];
+		const beforeInvalid = (
+			await apiFetch( page, { path: '/fair-events/v1/event-dates' } )
+		).data.map( ( { id } ) => id );
+		const invalid = await page.request.post( timedCopyUrl, {
+			form: {
+				copy_event_submit: 'Create Copy',
+				copy_event_nonce: nonce,
+				event_title: `Invalid time ${ suffix }`,
+				date_option: 'week',
+				start_time: '25:00',
+				end_time: '',
+			},
+		} );
+		expect( invalid.status() ).toBe( 500 );
+		expect( await invalid.text() ).toContain(
+			'Enter valid start and end times.'
+		);
+		expect(
+			(
+				await apiFetch( page, { path: '/fair-events/v1/event-dates' } )
+			).data.map( ( { id } ) => id )
+		).toEqual( beforeInvalid );
+
+		const allDay = (
+			await apiFetch( page, {
+				path: '/fair-events/v1/event-dates',
+				method: 'POST',
+				data: {
+					title: `All-day copy source ${ suffix }`,
+					start_datetime: '2041-07-01',
+					end_datetime: '2041-07-03',
+					all_day: true,
+					link_type: 'none',
+				},
+			} )
+		).data;
+		ids.push( allDay.id );
+		await page.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ allDay.id }&tab=admin`
+		);
+		const allDayCopyUrl = await page
+			.getByRole( 'link', { name: 'Copy event' } )
+			.getAttribute( 'href' );
+		await page.goto( allDayCopyUrl );
+		await expect( page.locator( '#start_time' ) ).toHaveCount( 0 );
+		await expect( page.locator( '#end_time' ) ).toHaveCount( 0 );
+		const redirect = await submitCopy(
+			page,
+			allDayCopyUrl,
+			`All-day copy ${ suffix }`,
+			null,
+			'12:34',
+			'13:45'
+		);
+		const allDayCopyId = Number(
+			new URL( redirect ).searchParams.get( 'event_date_id' )
+		);
+		ids.push( allDayCopyId );
+		const allDayCopy = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ allDayCopyId }`,
+			} )
+		).data;
+		expect( allDayCopy.all_day ).toBe( true );
+		expect( allDayCopy.start_datetime ).toBe( '2041-07-08 00:00:00' );
+		expect( allDayCopy.end_datetime ).toBe( '2041-07-10 00:00:00' );
+	} finally {
+		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+		await page.waitForFunction( () => window.wp?.apiFetch );
+		for ( const id of ids ) {
+			await apiFetch(
+				page,
+				{
+					path: `/fair-events/v1/event-dates/${ id }`,
+					method: 'DELETE',
+				},
+				false
+			);
+		}
 	}
 } );
 
