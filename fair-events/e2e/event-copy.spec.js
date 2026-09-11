@@ -718,6 +718,31 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 			},
 		} )
 	).data;
+	const unavailableTicketTypeId =
+		Math.max( ...sourceTickets.ticket_types.map( ( type ) => type.id ) ) +
+		1000000;
+	const sourceConditionalAttributes = {
+		conditionSource: 'ticketType',
+		conditionOperator: 'not_selected',
+		conditionTicketTypeIds: [
+			sourceTickets.ticket_types[ 1 ].id,
+			unavailableTicketTypeId,
+			sourceTickets.ticket_types[ 0 ].id,
+		],
+	};
+	await apiFetch( page, {
+		path: `/wp/v2/fair_event/${ source.id }`,
+		method: 'POST',
+		data: {
+			content: `<!-- wp:fair-events/event-signup -->
+<!-- wp:fair-audience/fair-form-conditional ${ JSON.stringify(
+				sourceConditionalAttributes
+			) } -->
+<!-- wp:paragraph --><p>Nested conditional content</p><!-- /wp:paragraph -->
+<!-- /wp:fair-audience/fair-form-conditional -->
+<!-- /wp:fair-events/event-signup -->`,
+		},
+	} );
 
 	const copiedIds = [];
 	let restrictedUser;
@@ -751,7 +776,9 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 				} )
 			).data;
 			expect( copied.status ).toBe( 'draft' );
-			expect( copied.content.raw ).toBe( 'Copy source content' );
+			expect( copied.content.raw ).toContain(
+				'Nested conditional content'
+			);
 			expect( copied.excerpt.raw ).toBe( 'Copy source excerpt' );
 			expect( copied.featured_media ).toBe( media.id );
 			expect( copied.categories ).toContain( category.id );
@@ -796,6 +823,37 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 			expect( copiedTickets.sale_periods[ 0 ].sale_start ).toBe(
 				0 === index ? '2036-03-27 09:00:00' : '2036-05-14 09:00:00'
 			);
+
+			await page.goto(
+				`/wp-admin/post.php?action=edit&post=${ copiedId }`
+			);
+			await page.waitForFunction( () => window.wp?.blocks );
+			const copiedBlocks = await page.evaluate( ( content ) => {
+				// eslint-disable-next-line no-undef
+				return wp.blocks.parse( content );
+			}, copied.content.raw );
+			const copiedConditional = copiedBlocks[ 0 ].innerBlocks[ 0 ];
+			expect( copiedConditional.name ).toBe(
+				'fair-audience/fair-form-conditional'
+			);
+			expect( copiedConditional.attributes ).toMatchObject( {
+				conditionSource: sourceConditionalAttributes.conditionSource,
+				conditionOperator:
+					sourceConditionalAttributes.conditionOperator,
+				conditionTicketTypeIds: [
+					copiedTickets.ticket_types[ 1 ].id,
+					copiedTickets.ticket_types[ 0 ].id,
+				],
+			} );
+			expect(
+				copiedConditional.innerBlocks[ 0 ].attributes.content
+			).toBe( 'Nested conditional content' );
+
+			await expect(
+				page
+					.frameLocator( '[name="editor-canvas"]' )
+					.getByText( 'Supporter, General is not selected' )
+			).toBeVisible();
 		}
 
 		await apiFetch( page, {

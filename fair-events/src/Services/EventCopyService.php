@@ -191,8 +191,12 @@ class EventCopyService {
 			$copied_start = new \DateTimeImmutable( str_replace( 'T', ' ', $new_start ), wp_timezone() );
 			$date_shift   = $source_start->diff( $copied_start );
 			$copier       = new EventTicketConfigurationCopier();
-			if ( ! $copier->copy( $master->id, $new_event_date_id, $date_shift ) ) {
+			$copy_result  = $copier->copy( $master->id, $new_event_date_id, $date_shift );
+			if ( false === $copy_result ) {
 				throw new \RuntimeException( 'configuration' );
+			}
+			if ( $new_post_id && ! $this->remap_ticket_type_conditions( $new_post_id, $copy_result['ticket_type_id_map'] ) ) {
+				throw new \RuntimeException( 'post-content' );
 			}
 			$this->assert_checkpoint( 'configuration_cloning' );
 
@@ -204,6 +208,71 @@ class EventCopyService {
 			$this->cleanup( $new_event_date_id, $new_post_id );
 			return new \WP_Error( 'event_copy_failed', __( 'The event copy could not be completed, and any partial copy was removed. Please try again.', 'fair-events' ) );
 		}
+	}
+
+	/**
+	 * Remap ticket-type references stored in copied Conditional Sections.
+	 *
+	 * @param int             $post_id  Copied post ID.
+	 * @param array<int, int> $type_map Old-to-new ticket type ID map.
+	 * @return bool Whether the content was left consistent.
+	 */
+	private function remap_ticket_type_conditions( $post_id, $type_map ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return false;
+		}
+
+		$blocks  = parse_blocks( $post->post_content );
+		$changed = $this->remap_ticket_type_ids_in_blocks( $blocks, $type_map );
+		if ( ! $changed ) {
+			return true;
+		}
+
+		$result = wp_update_post(
+			array(
+				'ID'           => $post_id,
+				'post_content' => serialize_blocks( $blocks ),
+			),
+			true
+		);
+
+		return ! is_wp_error( $result ) && 0 !== $result;
+	}
+
+	/**
+	 * Recursively remap ticket-type IDs in parsed blocks.
+	 *
+	 * @param array           $blocks   Parsed blocks, updated by reference.
+	 * @param array<int, int> $type_map Old-to-new ticket type ID map.
+	 * @return bool Whether any block attributes changed.
+	 */
+	private function remap_ticket_type_ids_in_blocks( &$blocks, $type_map ) {
+		$changed = false;
+
+		foreach ( $blocks as &$block ) {
+			if ( 'fair-audience/fair-form-conditional' === $block['blockName'] && isset( $block['attrs']['conditionTicketTypeIds'] ) && is_array( $block['attrs']['conditionTicketTypeIds'] ) ) {
+				$remapped = array();
+				foreach ( $block['attrs']['conditionTicketTypeIds'] as $source_id ) {
+					$source_id = (int) $source_id;
+					if ( isset( $type_map[ $source_id ] ) ) {
+						$remapped[] = $type_map[ $source_id ];
+					}
+				}
+
+				if ( $remapped !== $block['attrs']['conditionTicketTypeIds'] ) {
+					$block['attrs']['conditionTicketTypeIds'] = $remapped;
+					$changed                                  = true;
+				}
+			}
+
+			if ( ! empty( $block['innerBlocks'] ) && $this->remap_ticket_type_ids_in_blocks( $block['innerBlocks'], $type_map ) ) {
+				$changed = true;
+			}
+		}
+		unset( $block );
+
+		return $changed;
 	}
 
 	/**
