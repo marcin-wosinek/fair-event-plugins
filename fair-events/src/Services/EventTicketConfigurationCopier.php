@@ -62,7 +62,7 @@ class EventTicketConfigurationCopier {
 	 * @param int           $source_event_date_id      Source event date ID.
 	 * @param int           $destination_event_date_id Destination event date ID.
 	 * @param \DateInterval $date_shift                Site-local shift from source to destination.
-	 * @return bool Whether the copy completed consistently.
+	 * @return array{ticket_type_id_map: array<int, int>}|false Copy result, or false on failure.
 	 * @throws \RuntimeException Internally when any related record cannot be copied.
 	 */
 	public function copy( $source_event_date_id, $destination_event_date_id, $date_shift ) {
@@ -92,7 +92,7 @@ class EventTicketConfigurationCopier {
 			$this->copy_experimental_options( $source_event_date_id, $destination_event_date_id, $sale_period_map );
 
 			$wpdb->query( 'COMMIT' );
-			return true;
+			return array( 'ticket_type_id_map' => $type_map );
 		} catch ( \Throwable $error ) {
 			$wpdb->query( 'ROLLBACK' );
 			return false;
