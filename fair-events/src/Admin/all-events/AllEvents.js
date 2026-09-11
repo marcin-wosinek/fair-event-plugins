@@ -338,7 +338,6 @@ export default function AllEvents() {
 			{
 				id: 'edit',
 				label: __( 'Edit', 'fair-events' ),
-				isPrimary: true,
 				callback: ( [ item ] ) => {
 					window.location.href = `${ manageEventUrl }&event_date_id=${ item.id }`;
 				},

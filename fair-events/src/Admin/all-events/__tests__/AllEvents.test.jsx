@@ -17,9 +17,14 @@ import {
 	within,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import AllEvents from '../AllEvents.js';
 
 jest.mock( '@wordpress/api-fetch' );
+
+window.fairEventsAllEventsData = {
+	manageEventUrl: '#manage-event?',
+};
+
+const AllEvents = require( '../AllEvents.js' ).default;
 
 function jsonResponse( data, headers = {} ) {
 	return {
@@ -168,7 +173,7 @@ it( 'reveals nested date rows when the disclosure button is toggled', async () =
 	).toBeInTheDocument();
 } );
 
-it( 'shows Copy only for eligible rows and navigates to the server URL', async () => {
+it( 'keeps Edit and Copy in the actions menu for eligible rows', async () => {
 	apiFetch.mockResolvedValue(
 		jsonResponse( [ copyableEvent, masterEvent ], {
 			'x-wp-total': '2',
@@ -181,16 +186,67 @@ it( 'shows Copy only for eligible rows and navigates to the server URL', async (
 
 	const copyableRow = screen.getByRole( 'row', { name: /Copyable Event/ } );
 	expect(
-		within(
-			screen.getByRole( 'row', { name: /Summer Workshops/ } )
-		).queryByRole( 'button', { name: 'Actions' } )
+		within( copyableRow ).queryByRole( 'button', { name: 'Edit' } )
 	).not.toBeInTheDocument();
+
 	fireEvent.click(
 		within( copyableRow ).getByRole( 'button', { name: 'Actions' } )
 	);
-	const copyAction = await screen.findByRole( 'menuitem', { name: 'Copy' } );
-	expect( copyAction ).toBeInTheDocument();
-	fireEvent.click( copyAction );
+
+	expect( screen.getAllByRole( 'menuitem', { name: 'Edit' } ) ).toHaveLength(
+		1
+	);
+	expect(
+		screen.getByRole( 'menuitem', { name: 'Copy' } )
+	).toBeInTheDocument();
+
+	fireEvent.click( screen.getByRole( 'menuitem', { name: 'Edit' } ) );
+	expect( window.location.href ).toContain( 'event_date_id=10' );
+} );
+
+it( 'shows Edit without Copy in the actions menu for ineligible rows', async () => {
+	apiFetch.mockResolvedValue(
+		jsonResponse( [ masterEvent ], {
+			'x-wp-total': '1',
+			'x-wp-totalpages': '1',
+		} )
+	);
+
+	render( <AllEvents /> );
+	await screen.findByText( 'Summer Workshops' );
+
+	const masterRow = screen.getByRole( 'row', { name: /Summer Workshops/ } );
+	expect(
+		within( masterRow ).queryByRole( 'button', { name: 'Edit' } )
+	).not.toBeInTheDocument();
+	fireEvent.click(
+		within( masterRow ).getByRole( 'button', { name: 'Actions' } )
+	);
+
+	expect( screen.getAllByRole( 'menuitem', { name: 'Edit' } ) ).toHaveLength(
+		1
+	);
+	expect(
+		screen.queryByRole( 'menuitem', { name: 'Copy' } )
+	).not.toBeInTheDocument();
+} );
+
+it( 'navigates to the server-provided Copy URL', async () => {
+	apiFetch.mockResolvedValue(
+		jsonResponse( [ copyableEvent ], {
+			'x-wp-total': '1',
+			'x-wp-totalpages': '1',
+		} )
+	);
+
+	render( <AllEvents /> );
+	await screen.findByText( 'Copyable Event' );
+
+	const copyableRow = screen.getByRole( 'row', { name: /Copyable Event/ } );
+	fireEvent.click(
+		within( copyableRow ).getByRole( 'button', { name: 'Actions' } )
+	);
+	fireEvent.click( await screen.findByRole( 'menuitem', { name: 'Copy' } ) );
 	expect( window.location.href ).toContain( '#exact-server-url' );
 } );
 
