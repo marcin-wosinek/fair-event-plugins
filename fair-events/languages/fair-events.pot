@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-10T18:15:04+00:00\n"
+"POT-Creation-Date: 2026-09-11T06:15:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -177,14 +177,14 @@ msgstr ""
 
 #: src/Admin/CopyEventPage.php:294
 #: src/Admin/calendar/components/QuickEventModal.js:391
-#: src/Admin/event-meta-box/EventEditForm.js:354
+#: src/Admin/event-meta-box/EventEditForm.js:353
 #: src/Admin/manage-event/ManageEventApp.js:874
 msgid "Start time"
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:298
 #: src/Admin/calendar/components/QuickEventModal.js:413
-#: src/Admin/event-meta-box/EventEditForm.js:380
+#: src/Admin/event-meta-box/EventEditForm.js:379
 #: src/Admin/manage-event/ManageEventApp.js:894
 msgid "End time"
 msgstr ""
@@ -1669,7 +1669,7 @@ msgid "Failed to create event."
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:242
-#: src/Admin/event-meta-box/EventEditForm.js:301
+#: src/Admin/event-meta-box/EventEditForm.js:320
 #: src/Admin/manage-event/ManageEventApp.js:595
 msgid "— No venue —"
 msgstr ""
@@ -1713,14 +1713,14 @@ msgid "location"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:349
-#: src/Admin/event-meta-box/EventEditForm.js:340
+#: src/Admin/event-meta-box/EventEditForm.js:339
 #: src/Admin/manage-event/ManageEventApp.js:833
 msgid "All day"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:357
 #: src/Admin/calendar/components/QuickEventModal.js:381
-#: src/Admin/event-meta-box/EventEditForm.js:346
+#: src/Admin/event-meta-box/EventEditForm.js:345
 #: src/Admin/manage-event/ManageEventApp.js:841
 #: src/Admin/manage-event/ManageEventApp.js:864
 msgid "Start date"
@@ -1728,7 +1728,7 @@ msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:367
 #: src/Admin/calendar/components/QuickEventModal.js:403
-#: src/Admin/event-meta-box/EventEditForm.js:372
+#: src/Admin/event-meta-box/EventEditForm.js:371
 #: src/Admin/manage-event/EventTickets.js:1527
 #: src/Admin/manage-event/ManageEventApp.js:851
 #: src/Admin/manage-event/ManageEventApp.js:884
@@ -1737,7 +1737,7 @@ msgid "End date"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:427
-#: src/Admin/event-meta-box/EventEditForm.js:388
+#: src/Admin/event-meta-box/EventEditForm.js:387
 #: src/Admin/manage-event/ManageEventApp.js:976
 msgid "Venue"
 msgstr ""
@@ -1813,24 +1813,24 @@ msgstr ""
 msgid "Copied!"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:95
+#: src/Admin/event-meta-box/EventEditForm.js:96
 msgid "Failed to load event data."
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:246
+#: src/Admin/event-meta-box/EventEditForm.js:262
 msgid "Event saved."
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:249
+#: src/Admin/event-meta-box/EventEditForm.js:267
 msgid "Failed to save event."
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:362
+#: src/Admin/event-meta-box/EventEditForm.js:361
 #: src/Admin/manage-event/ManageEventApp.js:907
 msgid "Event length"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:395
+#: src/Admin/event-meta-box/EventEditForm.js:394
 #: src/Admin/manage-event/ManageEventApp.js:985
 #: src/Admin/settings/OrganizerTab.js:335
 #: src/Admin/venues/VenuesApp.js:569
@@ -1838,20 +1838,20 @@ msgstr ""
 msgid "Address"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:398
+#: src/Admin/event-meta-box/EventEditForm.js:397
 #: src/Admin/manage-event/ManageEventApp.js:991
 msgid "Used as the event location only when no venue is selected above."
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:422
+#: src/Admin/event-meta-box/EventEditForm.js:442
 msgid "Save Event"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:426
+#: src/Admin/event-meta-box/EventEditForm.js:446
 msgid "Edit Full Details"
 msgstr ""
 
-#: src/Admin/event-meta-box/EventEditForm.js:437
+#: src/Admin/event-meta-box/EventEditForm.js:457
 msgid "Unlink from event"
 msgstr ""
 

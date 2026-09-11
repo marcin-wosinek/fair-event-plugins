@@ -33,7 +33,7 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: fair-events-experimental.php:37
+#: fair-events-experimental.php:45
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr "Fair Events Experimental nécessite que le plugin Fair Events soit actif."
 
@@ -91,55 +91,55 @@ msgstr "Dupliquer l'événement"
 msgid "Merge Event"
 msgstr "Fusionner l'événement"
 
-#: src/Core/Features.php:148
+#: src/Core/Features.php:153
 msgid "Galleries"
 msgstr "Galeries"
 
-#: src/Core/Features.php:149
+#: src/Core/Features.php:154
 msgid "Per-event photo galleries, photo likes/downloads, image exports, media library hooks."
 msgstr "Galeries de photos par événement, j'aime/téléchargements de photos, exports d'images, crochets de bibliothèque médias."
 
-#: src/Core/Features.php:152
+#: src/Core/Features.php:157
 msgid "Event sources & feeds"
 msgstr "Sources d'événements et flux"
 
-#: src/Core/Features.php:153
+#: src/Core/Features.php:158
 msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
 msgstr "Sources d'événements externes, importation Facebook, flux iCal/JSON, propositions d'événements, calendrier hebdomadaire."
 
-#: src/Core/Features.php:156
+#: src/Core/Features.php:161
 msgid "Ticketing"
 msgstr "Billetterie"
 
-#: src/Core/Features.php:160
+#: src/Core/Features.php:165
 msgid "Event tools"
 msgstr "Outils d'événement"
 
-#: src/Core/Features.php:164
+#: src/Core/Features.php:169
 msgid "Migration"
 msgstr "Migration"
 
-#: src/Core/Features.php:165
+#: src/Core/Features.php:170
 msgid "One-time post → event migration tooling."
 msgstr "Outil de migration ponctuelle article → événement."
 
-#: src/Core/Features.php:168
+#: src/Core/Features.php:173
 msgid "Audience statistics"
 msgstr "Statistiques d'audience"
 
-#: src/Core/Features.php:169
+#: src/Core/Features.php:174
 msgid "Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience."
 msgstr "Graphiques de statistiques par événement (répartition des activités, délai de vente). Nécessite fair-audience."
 
-#: src/Core/Features.php:172
+#: src/Core/Features.php:177
 msgid "Mailings"
 msgstr "Envois"
 
-#: src/Core/Features.php:173
+#: src/Core/Features.php:178
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr "Envois d'emails programmés pour les participants à l'événement. Nécessite fair-audience."
 
-#: src/Core/Plugin.php:206
+#: src/Core/Plugin.php:207
 msgid "Event associated with this image"
 msgstr "Événement associé à cette image"
 
@@ -546,7 +546,7 @@ msgstr "Enregistrement..."
 msgid "Save Features"
 msgstr "Enregistrer les fonctionnalités"
 
-#: src/Admin/settings/SettingsApp.js:26
+#: src/Admin/settings/SettingsApp.js:27
 msgid "Fair Events Experimental Settings"
 msgstr "Paramètres expérimentaux Fair Events"
 
@@ -562,7 +562,7 @@ msgstr "Créez une copie de cet événement avec les mêmes détails, liens et p
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr "Fusionnez cet événement avec une autre date d'événement, en déplaçant ou en nettoyant toutes les données liées."
 
-#: src/Core/Features.php:157
+#: src/Core/Features.php:162
 msgid "Tickets, group pricing/permission rules. Requires fair-audience."
 msgstr "Billets, tarification de groupe/règles de permission. Nécessite fair-audience."
 
@@ -571,34 +571,121 @@ msgstr "Billets, tarification de groupe/règles de permission. Nécessite fair-a
 msgid "Activates advanced feature bundles for Fair Events, including galleries, sources, ticketing, duplicate and merge tools, and migration. Requires fair-events."
 msgstr "Active les packs de fonctionnalités avancées pour Fair Events, y compris les galeries, les sources, la billetterie, les outils de duplication et de fusion, et la migration. Nécessite fair-events."
 
-#: src/Core/Features.php:161
+#: src/Core/Features.php:166
 msgid "Advanced event duplication and merge tools."
 msgstr "Outils avancés de duplication et de fusion d'événements."
 
 #: src/Admin/event-statistics/EventStatistics.js:114
 msgid "Event sales statistics could not be loaded."
-msgstr ""
+msgstr "Les statistiques de ventes d'événement n'ont pas pu être chargées."
 
 #. translators: %d: confirmed sales total.
 #: src/Admin/event-statistics/EventStatistics.js:168
 #, js-format
 msgid "%d sale"
 msgid_plural "%d sales"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d vente"
+msgstr[1] "%d ventes"
 
 #. translators: %d: calendar days until the event.
 #: src/Admin/event-statistics/EventStatistics.js:181
 #, js-format
 msgid "%d day until the event"
 msgid_plural "%d days until the event"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d jour jusqu'à l'événement"
+msgstr[1] "%d jours jusqu'à l'événement"
 
 #: src/Admin/event-statistics/EventStatistics.js:196
 msgid "Cumulative sales"
-msgstr ""
+msgstr "Ventes cumulées"
 
 #: src/Admin/event-statistics/EventStatistics.js:217
 msgid "Sales"
-msgstr ""
+msgstr "Ventes"
+
+#: src/API/MetaConversionsController.php:123
+#: src/Admin/settings/MetaConversions.js:101
+msgid "Meta rejected the test event. Check the configuration and try again."
+msgstr "Meta a rejeté l'événement de test. Vérifiez la configuration et réessayez."
+
+#: src/Core/Features.php:181
+#: src/Admin/settings/MetaConversions.js:113
+msgid "Meta Conversions"
+msgstr "Conversions Meta"
+
+#: src/Core/Features.php:182
+msgid "Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials."
+msgstr "Mesure de paiement et d'achat côté serveur Meta avec consentement. Nécessite Fair Payments Connector et des identifiants explicites."
+
+#: src/Admin/settings/MetaConversions.js:26
+msgid "Failed to load Meta Conversions settings."
+msgstr "Échec du chargement des paramètres Conversions Meta."
+
+#: src/Admin/settings/MetaConversions.js:36
+msgid "Loading Meta Conversions settings…"
+msgstr "Chargement des paramètres Conversions Meta…"
+
+#: src/Admin/settings/MetaConversions.js:61
+msgid "Meta Conversions settings saved."
+msgstr "Paramètres Conversions Meta enregistrés."
+
+#: src/Admin/settings/MetaConversions.js:69
+msgid "Failed to save Meta Conversions settings."
+msgstr "Échec de l'enregistrement des paramètres Conversions Meta."
+
+#: src/Admin/settings/MetaConversions.js:93
+msgid "Meta accepted the test event."
+msgstr "Meta a accepté l'événement de test."
+
+#: src/Admin/settings/MetaConversions.js:118
+msgid "Send consented checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days."
+msgstr "Envoyer les mesures de paiement et d'achat consenties à Meta. Les identifiants correspondants sont supprimés à la fin de la livraison et les enregistrements sont supprimés après 90 jours."
+
+#: src/Admin/settings/MetaConversions.js:124
+msgid "Dataset / Pixel ID"
+msgstr "Ensemble de données / ID de pixel"
+
+#: src/Admin/settings/MetaConversions.js:137
+msgid "Replace access token"
+msgstr "Remplacer le jeton d'accès"
+
+#: src/Admin/settings/MetaConversions.js:141
+msgid "Access token"
+msgstr "Jeton d'accès"
+
+#: src/Admin/settings/MetaConversions.js:145
+msgid "A token is configured. Leave this empty to keep it."
+msgstr "Un jeton est configuré. Laissez ce champ vide pour le conserver."
+
+#: src/Admin/settings/MetaConversions.js:149
+msgid "The token is write-only and will not be shown again."
+msgstr "Le jeton est en écriture seule et ne sera pas affiché à nouveau."
+
+#: src/Admin/settings/MetaConversions.js:164
+#: src/Admin/settings/MetaConversions.js:237
+msgid "Clear access token"
+msgstr "Effacer le jeton d'accès"
+
+#: src/Admin/settings/MetaConversions.js:171
+msgid "Test Events code"
+msgstr "Code des événements de test"
+
+#: src/Admin/settings/MetaConversions.js:187
+msgid "Save Meta settings"
+msgstr "Enregistrer les paramètres Meta"
+
+#: src/Admin/settings/MetaConversions.js:197
+msgid "Send test event"
+msgstr "Envoyer un événement de test"
+
+#: src/Admin/settings/MetaConversions.js:202
+msgid "Configure the dataset ID, access token, and Test Events code before sending a test event."
+msgstr "Configurez l'ID du dataset, le jeton d'accès et le code des événements de test avant d'envoyer un événement de test."
+
+#: src/Admin/settings/MetaConversions.js:209
+msgid "Recent delivery outcomes"
+msgstr "Résultats de livraison récents"
+
+#: src/Admin/settings/MetaConversions.js:242
+msgid "Clear the Meta access token? Conversion delivery will stop until a new token is saved."
+msgstr "Effacer le jeton d'accès Meta ? La livraison des conversions s'arrêtera jusqu'à ce qu'un nouveau jeton soit enregistré."

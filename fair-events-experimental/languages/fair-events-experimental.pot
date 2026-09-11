@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-08T12:31:59+00:00\n"
+"POT-Creation-Date: 2026-09-11T06:15:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -39,7 +39,7 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: fair-events-experimental.php:37
+#: fair-events-experimental.php:45
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr ""
 
@@ -97,63 +97,77 @@ msgstr ""
 msgid "Merge Event"
 msgstr ""
 
-#: src/Core/Features.php:148
-msgid "Galleries"
-msgstr ""
-
-#: src/Core/Features.php:149
-msgid "Per-event photo galleries, photo likes/downloads, image exports, media library hooks."
-msgstr ""
-
-#: src/Core/Features.php:152
-msgid "Event sources & feeds"
+#: src/API/MetaConversionsController.php:123
+#: src/Admin/settings/MetaConversions.js:101
+msgid "Meta rejected the test event. Check the configuration and try again."
 msgstr ""
 
 #: src/Core/Features.php:153
-msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
+msgid "Galleries"
 msgstr ""
 
-#: src/Core/Features.php:156
-msgid "Ticketing"
+#: src/Core/Features.php:154
+msgid "Per-event photo galleries, photo likes/downloads, image exports, media library hooks."
 msgstr ""
 
 #: src/Core/Features.php:157
-msgid "Tickets, group pricing/permission rules. Requires fair-audience."
+msgid "Event sources & feeds"
 msgstr ""
 
-#: src/Core/Features.php:160
-msgid "Event tools"
+#: src/Core/Features.php:158
+msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
 msgstr ""
 
 #: src/Core/Features.php:161
-msgid "Advanced event duplication and merge tools."
+msgid "Ticketing"
 msgstr ""
 
-#: src/Core/Features.php:164
-msgid "Migration"
+#: src/Core/Features.php:162
+msgid "Tickets, group pricing/permission rules. Requires fair-audience."
 msgstr ""
 
 #: src/Core/Features.php:165
-msgid "One-time post → event migration tooling."
+msgid "Event tools"
 msgstr ""
 
-#: src/Core/Features.php:168
-msgid "Audience statistics"
+#: src/Core/Features.php:166
+msgid "Advanced event duplication and merge tools."
 msgstr ""
 
 #: src/Core/Features.php:169
-msgid "Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience."
+msgid "Migration"
 msgstr ""
 
-#: src/Core/Features.php:172
-msgid "Mailings"
+#: src/Core/Features.php:170
+msgid "One-time post → event migration tooling."
 msgstr ""
 
 #: src/Core/Features.php:173
+msgid "Audience statistics"
+msgstr ""
+
+#: src/Core/Features.php:174
+msgid "Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience."
+msgstr ""
+
+#: src/Core/Features.php:177
+msgid "Mailings"
+msgstr ""
+
+#: src/Core/Features.php:178
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr ""
 
-#: src/Core/Plugin.php:206
+#: src/Core/Features.php:181
+#: src/Admin/settings/MetaConversions.js:113
+msgid "Meta Conversions"
+msgstr ""
+
+#: src/Core/Features.php:182
+msgid "Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials."
+msgstr ""
+
+#: src/Core/Plugin.php:207
 msgid "Event associated with this image"
 msgstr ""
 
@@ -600,6 +614,79 @@ msgstr ""
 msgid "Save Features"
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:26
+#: src/Admin/settings/MetaConversions.js:26
+msgid "Failed to load Meta Conversions settings."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:36
+msgid "Loading Meta Conversions settings…"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:61
+msgid "Meta Conversions settings saved."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:69
+msgid "Failed to save Meta Conversions settings."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:93
+msgid "Meta accepted the test event."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:118
+msgid "Send consented checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:124
+msgid "Dataset / Pixel ID"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:137
+msgid "Replace access token"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:141
+msgid "Access token"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:145
+msgid "A token is configured. Leave this empty to keep it."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:149
+msgid "The token is write-only and will not be shown again."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:164
+#: src/Admin/settings/MetaConversions.js:237
+msgid "Clear access token"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:171
+msgid "Test Events code"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:187
+msgid "Save Meta settings"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:197
+msgid "Send test event"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:202
+msgid "Configure the dataset ID, access token, and Test Events code before sending a test event."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:209
+msgid "Recent delivery outcomes"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:242
+msgid "Clear the Meta access token? Conversion delivery will stop until a new token is saved."
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:27
 msgid "Fair Events Experimental Settings"
 msgstr ""

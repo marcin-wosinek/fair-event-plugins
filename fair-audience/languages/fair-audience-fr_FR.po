@@ -316,7 +316,7 @@ msgstr "Une petite question à propos de %s"
 #: src/Services/EmailService.php:2984
 #: src/Services/EmailService.php:3078
 #: src/Admin/event-participants/EventParticipants.js:1227
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s,"
 msgstr "Bonjour %s,"
 
@@ -574,7 +574,7 @@ msgstr "Les photos de %s sont prêtes !"
 #. translators: %s: event title
 #: src/Services/EmailService.php:455
 #: src/Admin/event-participants/EventParticipants.js:1239
-#, php-format,js-format
+#, php-format, js-format
 msgid "The photos from %s are now available for you to view and like!"
 msgstr "Les photos de %s sont maintenant disponibles pour que vous puissiez les consulter et les aimer !"
 
@@ -987,7 +987,7 @@ msgstr "Bonjour %s ! Cliquez sur le bouton ci-dessous pour vous inscrire à cet 
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:1226
 #: src/blocks/event-signup/frontend.js:1704
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "Bonjour %s ! Vous pouvez vous inscrire à cet événement."
 
@@ -2297,7 +2297,7 @@ msgstr "Ce type de billet est épuisé. Veuillez choisir une autre option."
 #: src/blocks/event-signup/render.php:827
 #: src/Services/SignupActivities.php:313
 #: src/blocks/event-signup/frontend.js:396
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Veuillez sélectionner au moins %d activité pour vous inscrire."
@@ -2873,7 +2873,7 @@ msgstr "L'une des occurrences sélectionnées n'est pas valide pour ce billet."
 #. translators: %d: minimum number of occurrences required
 #: src/API/EventSignupController.php:851
 #: src/blocks/event-signup/frontend.js:316
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Veuillez sélectionner au moins %d occurrence."
@@ -3662,7 +3662,6 @@ msgstr "Revenu à minimal : l'abonnement marketing n'a jamais été confirmé da
 msgid "Opted out of the weekly summary."
 msgstr "Désinscrit du résumé hebdomadaire."
 
-#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Services/WeeklyDigestRenderer.php:165
 #: src/Services/WeeklyDigestRenderer.php:175
@@ -3810,30 +3809,30 @@ msgstr[1] "Veuillez sélectionner au maximum %d extensions."
 
 #: src/API/EventStatisticsController.php:81
 msgid "You must be logged in."
-msgstr ""
+msgstr "Vous devez être connecté."
 
 #: src/API/EventStatisticsController.php:84
 msgid "You do not have permission to view event statistics."
-msgstr ""
+msgstr "Vous n'avez pas la permission de consulter les statistiques de l'événement."
 
 #: src/API/EventStatisticsController.php:105
 msgid "The event start date is invalid."
-msgstr ""
+msgstr "La date de début de l'événement est invalide."
 
 #. translators: %d: number of calendar days before the event.
 #: src/API/EventStatisticsController.php:203
 #, php-format
 msgid "%d day before the event"
 msgid_plural "%d days before the event"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d jour avant l'événement"
+msgstr[1] "%d jours avant l'événement"
 
 #: src/API/EventStatisticsController.php:208
 msgid "Day of the event"
-msgstr ""
+msgstr "Jour de l'événement"
 
 #. translators: %s: ordinal event-day number, for example 1st or 2nd.
 #: src/API/EventStatisticsController.php:213
 #, php-format
 msgid "%s day of the event"
-msgstr ""
+msgstr "%s jour de l'événement"
