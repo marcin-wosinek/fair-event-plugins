@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.1
-Stable tag: 1.14.0
+Stable tag: 1.15.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,20 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.15.0
+
+### Minor Changes
+
+-   8e78b19: Add server-backed cumulative event sales statistics and a responsive sales summary chart.
+-   8c56f63: Recognize participant-token links throughout the unified Event Signup flow, including personalized hydration, authoritative pricing and eligibility, and participant linkage.
+
+### Patch Changes
+
+-   adf8ba3: Prevent active payment reservations from being flagged over capacity, serialize genuinely late confirmations, and clear unreliable historical warnings during upgrade.
+-   2971a6b: Preserve site-local event times when formatting signup emails.
+-   Updated dependencies [a96d4f1]
+    -   fair-events-shared@0.6.1
 
 ## 1.14.0
 
