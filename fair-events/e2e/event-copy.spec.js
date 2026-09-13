@@ -131,6 +131,8 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 	await page.waitForFunction( () => window.wp?.apiFetch );
 
 	const suffix = Date.now();
+	const pageExternalUrl = `https://example.com/page-copy-${ suffix }`;
+	const calendarExternalUrl = `https://example.com/calendar-copy-${ suffix }`;
 	const settings = (
 		await apiFetch( page, { path: '/wp/v2/settings?context=edit' } )
 	).data;
@@ -166,14 +168,19 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 					title: sourcePage.title.rendered,
 					start_datetime: '2040-02-01 10:00:00',
 					end_datetime: '2040-02-01 12:00:00',
-					link_type: 'post',
+					link_type: 'external',
+					external_url: pageExternalUrl,
 				},
 			} )
 		).data;
 		await apiFetch( page, {
 			path: `/fair-events/v1/event-dates/${ sourcePageDate.id }`,
 			method: 'PUT',
-			data: { event_id: sourcePage.id },
+			data: {
+				event_id: sourcePage.id,
+				link_type: 'external',
+				external_url: pageExternalUrl,
+			},
 		} );
 
 		await page.goto( '/wp-admin/edit.php?post_type=page' );
@@ -220,6 +227,8 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 		expect( copiedPageDates[ 0 ].end_datetime ).toBe(
 			'2040-02-08 13:45:00'
 		);
+		expect( copiedPageDates[ 0 ].link_type ).toBe( 'external' );
+		expect( copiedPageDates[ 0 ].external_url ).toBe( pageExternalUrl );
 
 		calendarDate = (
 			await apiFetch( page, {
@@ -229,14 +238,22 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 					title: `Calendar copy source ${ suffix }`,
 					start_datetime: '2040-03-01 09:00:00',
 					end_datetime: '2040-03-01 11:30:00',
-					link_type: 'none',
+					link_type: 'external',
+					external_url: calendarExternalUrl,
 					attendance_mode: 'online',
 					joining_link: 'https://example.com/join',
+					rrule: 'FREQ=WEEKLY;COUNT=2',
 				},
 			} )
 		).data;
+		calendarDate = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ calendarDate.id }`,
+			} )
+		).data;
+		const generatedOccurrence = calendarDate.generated_occurrences[ 0 ];
 		await page.goto(
-			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ calendarDate.id }&tab=admin`
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ generatedOccurrence.id }&tab=admin`
 		);
 		const calendarCopyUrl = await page
 			.getByRole( 'link', { name: 'Copy event' } )
@@ -263,9 +280,31 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 		expect( copiedCalendar.start_datetime ).toBe( '2040-04-10 09:00:00' );
 		expect( copiedCalendar.end_datetime ).toBe( '2040-04-10 11:30:00' );
 		expect( copiedCalendar.attendance_mode ).toBe( 'online' );
+		expect( copiedCalendar.link_type ).toBe( 'external' );
+		expect( copiedCalendar.external_url ).toBe( calendarExternalUrl );
 		expect( copiedCalendar.joining_link ).toBe(
 			'https://example.com/join'
 		);
+
+		await page.goto(
+			`/wp-admin/admin.php?page=fair-events-calendar&month=2040-04`
+		);
+		const copiedCalendarRows = page.locator(
+			'.fair-events-calendar-event-row',
+			{
+				hasText: `Copied calendar event ${ suffix }`,
+			}
+		);
+		await expect( copiedCalendarRows ).toHaveCount( 2 );
+		const destinationLinks = copiedCalendarRows.locator(
+			'.fair-events-calendar-destination-link'
+		);
+		await expect( destinationLinks ).toHaveCount( 2 );
+		expect(
+			await destinationLinks.evaluateAll( ( links ) =>
+				links.map( ( link ) => link.href )
+			)
+		).toEqual( [ calendarExternalUrl, calendarExternalUrl ] );
 	} finally {
 		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
 		await page.waitForFunction( () => window.wp?.apiFetch );
