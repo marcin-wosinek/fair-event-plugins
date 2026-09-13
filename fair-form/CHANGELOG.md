@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.3
+
+### Patch Changes
+
+-   0ffebaf: Remove unavailable ticket types from Conditional Section conditions after they load successfully in the editor.
+-   Updated dependencies [a96d4f1]
+    -   fair-events-shared@0.6.1
+
 ## 1.4.2
 
 ### Patch Changes

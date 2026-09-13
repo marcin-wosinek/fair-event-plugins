@@ -1,5 +1,35 @@
 # fair-events-experimental
 
+## 1.7.0
+
+### Minor Changes
+
+-   a6fc9d8: Add opt-in, consent-gated Meta Conversions API reporting for ticket checkout and confirmed live purchases, with write-only credentials, asynchronous delivery, bounded retries, sanitized diagnostics, and 90-day retention.
+-   8e78b19: Add server-backed cumulative event sales statistics and a responsive sales summary chart.
+
+### Patch Changes
+
+-   Updated dependencies [a6fc9d8]
+-   Updated dependencies [68a8253]
+-   Updated dependencies [71b5b84]
+-   Updated dependencies [82845f8]
+-   Updated dependencies [5336197]
+-   Updated dependencies [448d0e2]
+-   Updated dependencies [a96d4f1]
+-   Updated dependencies [40b0d52]
+-   Updated dependencies [3d41a7c]
+-   Updated dependencies [c95e170]
+-   Updated dependencies [b3a74fa]
+-   Updated dependencies [8c56f63]
+-   Updated dependencies [66ae888]
+-   Updated dependencies [adf8ba3]
+-   Updated dependencies [f8a2b3a]
+-   Updated dependencies [2971a6b]
+-   Updated dependencies [ac04ebc]
+-   Updated dependencies [6aec874]
+    -   fair-events@1.17.0
+    -   fair-events-shared@0.6.1
+
 ## 1.6.1
 
 ### Patch Changes

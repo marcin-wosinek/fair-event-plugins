@@ -1,5 +1,13 @@
 # fair-payments-connector
 
+## 2.0.2
+
+### Patch Changes
+
+-   21bb8d8: Store newly initiated payment timestamps in UTC so transaction times display consistently in the configured site timezone.
+-   Updated dependencies [a96d4f1]
+    -   fair-events-shared@0.6.1
+
 ## 2.0.1
 
 ### Patch Changes

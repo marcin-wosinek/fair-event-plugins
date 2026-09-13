@@ -1,5 +1,11 @@
 # fair-events-shared
 
+## 0.6.1
+
+### Patch Changes
+
+-   a96d4f1: Keep payment recovery actions available while event signup confirmation is delayed or cannot be checked.
+
 ## 0.6.0
 
 ### Minor Changes
