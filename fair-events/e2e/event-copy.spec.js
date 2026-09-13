@@ -1303,3 +1303,90 @@ test( 'opens copy options from managed events and recurring occurrences', async 
 		);
 	}
 } );
+
+test( 'preserves an external destination when copying a recurring occurrence', async ( {
+	page,
+} ) => {
+	test.setTimeout( 300_000 );
+	await login( page );
+	await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+	await page.waitForFunction( () => window.wp?.apiFetch );
+
+	const suffix = Date.now();
+	const externalUrl = `https://example.com/events/${ suffix }`;
+	const joiningLink = `https://example.com/join/${ suffix }`;
+	let source;
+	let copiedEventDateId;
+
+	try {
+		source = (
+			await apiFetch( page, {
+				path: '/fair-events/v1/event-dates',
+				method: 'POST',
+				data: {
+					title: `External copy source ${ suffix }`,
+					start_datetime: '2037-04-10 18:30:00',
+					end_datetime: '2037-04-10 21:00:00',
+					link_type: 'external',
+					external_url: externalUrl,
+					attendance_mode: 'hybrid',
+					joining_link: joiningLink,
+					rrule: 'FREQ=WEEKLY;COUNT=2',
+				},
+			} )
+		).data;
+		const generatedOccurrence = source.generated_occurrences[ 0 ];
+
+		await page.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ generatedOccurrence.id }&tab=admin`,
+			{ waitUntil: 'domcontentloaded' }
+		);
+		const copyUrl = await page
+			.getByRole( 'link', { name: 'Copy event' } )
+			.getAttribute( 'href' );
+		const redirect = await submitCopy(
+			page,
+			copyUrl,
+			`External copy ${ suffix }`,
+			'2037-05-08'
+		);
+		copiedEventDateId = Number(
+			new URL( redirect ).searchParams.get( 'event_date_id' )
+		);
+
+		const copied = (
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ copiedEventDateId }`,
+			} )
+		).data;
+		expect( copied.link_type ).toBe( 'external' );
+		expect( copied.external_url ).toBe( externalUrl );
+		expect( copied.joining_link ).toBe( joiningLink );
+
+		await page.goto(
+			'/wp-admin/admin.php?page=fair-events-calendar&month=2037-05',
+			{ waitUntil: 'domcontentloaded' }
+		);
+		const copiedRow = page
+			.locator( '.fair-events-calendar-event-row' )
+			.filter( { hasText: `External copy ${ suffix }` } )
+			.first();
+		await expect( copiedRow ).toHaveClass( /link-type-external/ );
+		await expect(
+			copiedRow.locator( '.fair-events-calendar-destination-link' )
+		).toHaveAttribute( 'href', externalUrl );
+	} finally {
+		for ( const id of [ copiedEventDateId, source?.id ] ) {
+			if ( id ) {
+				await apiFetch(
+					page,
+					{
+						path: `/fair-events/v1/event-dates/${ id }`,
+						method: 'DELETE',
+					},
+					false
+				);
+			}
+		}
+	}
+} );
