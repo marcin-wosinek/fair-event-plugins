@@ -113,7 +113,7 @@ msgstr "Pago de %1$s %2$s"
 #: src/API/TransactionAPI.php:165
 #: src/API/TransactionsController.php:305
 #: src/API/TransactionsController.php:325
-#: src/API/TransactionsController.php:635
+#: src/API/TransactionsController.php:639
 #: src/Models/Transaction.php:563
 msgid "Transaction not found."
 msgstr "Transacción no encontrada."
@@ -328,7 +328,7 @@ msgstr "Umbral de días laborales para desactivar transferencia bancaria"
 msgid "Per-bundle feature toggles"
 msgstr "Alternadores de funciones por paquete"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:565
+#: src/Admin/transactions/components/ImportTransactionsModal.js:615
 msgid "Label"
 msgstr "Etiqueta"
 
@@ -337,13 +337,13 @@ msgid "Created"
 msgstr "Creado"
 
 #: src/Admin/transaction/TransactionPage.js:755
-#: src/Admin/transactions/components/ImportTransactionsModal.js:568
+#: src/Admin/transactions/components/ImportTransactionsModal.js:618
 #: src/Admin/transactions/TransactionsApp.js:320
 #: src/Admin/transactions/TransactionsApp.js:501
 msgid "Status"
 msgstr "Estado"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:571
+#: src/Admin/transactions/components/ImportTransactionsModal.js:621
 msgid "Actions"
 msgstr "Acciones"
 
@@ -352,22 +352,22 @@ msgstr "Acciones"
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:74
+#: src/Admin/transactions/components/ImportTransactionsModal.js:77
 msgid "Failed to load connected sites."
 msgstr "Error al cargar los sitios conectados."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:277
+#: src/Admin/transactions/components/ImportTransactionsModal.js:318
 msgid "Connected Sites"
 msgstr "Sitios conectados"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:546
+#: src/Admin/transactions/components/ImportTransactionsModal.js:596
 msgid "Loading sites…"
 msgstr "Cargando sitios…"
 
 #: src/Admin/settings/ConnectionTab.js:237
 #: src/Admin/transaction/TransactionPage.js:727
-#: src/Admin/transactions/components/ImportTransactionsModal.js:328
-#: src/Admin/transactions/components/ImportTransactionsModal.js:435
+#: src/Admin/transactions/components/ImportTransactionsModal.js:369
+#: src/Admin/transactions/components/ImportTransactionsModal.js:485
 #: src/Admin/transactions/TransactionsApp.js:40
 #: src/Admin/transactions/TransactionsApp.js:606
 msgid "Test"
@@ -440,8 +440,8 @@ msgstr "Cambiado a modo %s."
 
 #: src/Admin/settings/ConnectionTab.js:238
 #: src/Admin/transaction/TransactionPage.js:731
-#: src/Admin/transactions/components/ImportTransactionsModal.js:335
-#: src/Admin/transactions/components/ImportTransactionsModal.js:436
+#: src/Admin/transactions/components/ImportTransactionsModal.js:376
+#: src/Admin/transactions/components/ImportTransactionsModal.js:486
 #: src/Admin/transactions/TransactionsApp.js:39
 #: src/Admin/transactions/TransactionsApp.js:610
 msgid "Live"
@@ -503,7 +503,7 @@ msgstr "El token caduca: %s"
 
 #: src/Admin/settings/ConnectionTab.js:612
 #: src/Admin/transaction/TransactionPage.js:708
-#: src/Admin/transactions/components/ImportTransactionsModal.js:324
+#: src/Admin/transactions/components/ImportTransactionsModal.js:365
 #: src/Admin/transactions/TransactionsApp.js:339
 #: src/Admin/transactions/TransactionsApp.js:507
 msgid "Mode"
@@ -787,58 +787,58 @@ msgstr "URL de webhook"
 msgid "Checkout URL"
 msgstr "URL de pago"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:110
+#: src/Admin/transactions/components/ImportTransactionsModal.js:151
 msgid "Invalid file format. Expected a JSON array."
 msgstr "Formato de archivo no válido. Se esperaba un array JSON."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:122
+#: src/Admin/transactions/components/ImportTransactionsModal.js:163
 msgid "No valid transactions found in the file."
 msgstr "No se encontraron transacciones válidas en el archivo."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:139
+#: src/Admin/transactions/components/ImportTransactionsModal.js:180
 msgid "Failed to import transactions."
 msgstr "Error al importar transacciones."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:163
+#: src/Admin/transactions/components/ImportTransactionsModal.js:204
 msgid "Failed to import transactions from the connected site."
 msgstr "Error al importar transacciones del sitio conectado."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:255
+#: src/Admin/transactions/components/ImportTransactionsModal.js:296
 msgid "Where do you want to import transactions from?"
 msgstr "¿De dónde quieres importar transacciones?"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:286
+#: src/Admin/transactions/components/ImportTransactionsModal.js:327
 msgid "From File"
 msgstr "Desde archivo"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:501
+#: src/Admin/transactions/components/ImportTransactionsModal.js:551
 msgid "Select a JSON file exported from another site, or a Mollie payments CSV export."
 msgstr "Selecciona un archivo JSON exportado desde otro sitio o una exportación CSV de pagos de Mollie."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:517
+#: src/Admin/transactions/components/ImportTransactionsModal.js:567
 msgid "Importing…"
 msgstr "Importando…"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:493
-#: src/Admin/transactions/components/ImportTransactionsModal.js:527
-#: src/Admin/transactions/components/ImportTransactionsModal.js:625
+#: src/Admin/transactions/components/ImportTransactionsModal.js:543
+#: src/Admin/transactions/components/ImportTransactionsModal.js:577
+#: src/Admin/transactions/components/ImportTransactionsModal.js:675
 msgid "Back"
 msgstr "Atrás"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:536
+#: src/Admin/transactions/components/ImportTransactionsModal.js:586
 msgid "Pull transactions from a registered connected site. Existing transactions are matched by payment ID and updated rather than duplicated."
 msgstr "Extrae transacciones de un sitio conectado registrado. Las transacciones existentes se cotejan por ID de pago y se actualizan en lugar de duplicarse."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:553
+#: src/Admin/transactions/components/ImportTransactionsModal.js:603
 msgid "No connected sites yet. Add one on the Connected Sites page first."
 msgstr "Aún no hay sitios conectados. Añade uno primero en la página de sitios conectados."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:607
+#: src/Admin/transactions/components/ImportTransactionsModal.js:657
 #: src/Admin/transactions/TransactionsApp.js:402
 msgid "Import"
 msgstr "Importar"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:633
+#: src/Admin/transactions/components/ImportTransactionsModal.js:683
 msgid "Import Transactions"
 msgstr "Importar transacciones"
 
@@ -1200,82 +1200,86 @@ msgstr "Este bloque compartió su identificador con otro bloque de pago simple e
 
 #: src/API/TransactionsController.php:480
 #: src/Payment/MolliePaymentHandler.php:485
-#: src/Admin/transactions/components/ImportTransactionsModal.js:201
+#: src/Admin/transactions/components/ImportTransactionsModal.js:242
 msgid "Mollie payments could not be loaded. Please try again."
 msgstr ""
 
-#: src/API/TransactionsController.php:498
-#: src/Admin/transactions/components/ImportTransactionsModal.js:296
+#: src/API/TransactionsController.php:502
+#: src/Admin/transactions/components/ImportTransactionsModal.js:337
 msgid "Connect Mollie before importing payments."
 msgstr ""
 
-#: src/API/TransactionsController.php:530
+#: src/API/TransactionsController.php:534
 msgid "This payment could not be imported."
 msgstr ""
 
 #. translators: 1: imported count, 2: skipped count, 3: failed count.
-#: src/API/TransactionsController.php:536
+#: src/API/TransactionsController.php:540
 #, php-format
 msgid "Imported %1$d, skipped %2$d, and failed %3$d payment(s)."
 msgstr ""
 
-#: src/API/TransactionsController.php:563
+#: src/API/TransactionsController.php:567
 msgid "Choose a valid date range of no more than 90 days."
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:242
+#: src/Admin/transactions/components/ImportTransactionsModal.js:283
 msgid "The selected Mollie payments could not be imported."
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:268
+#: src/Admin/transactions/components/ImportTransactionsModal.js:309
 msgid "Import from Mollie"
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:301
+#: src/Admin/transactions/components/ImportTransactionsModal.js:342
 msgid "Open Mollie settings"
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:310
+#: src/Admin/transactions/components/ImportTransactionsModal.js:351
 msgid "Show paid Mollie payments created during this period. A search can cover up to 90 days."
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:345
+#: src/Admin/transactions/components/ImportTransactionsModal.js:395
 msgid "Start date"
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:354
+#: src/Admin/transactions/components/ImportTransactionsModal.js:404
 msgid "End date"
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:368
+#: src/Admin/transactions/components/ImportTransactionsModal.js:418
 msgid "Find payments"
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:374
+#: src/Admin/transactions/components/ImportTransactionsModal.js:424
 msgid "Loading Mollie payments…"
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:386
+#: src/Admin/transactions/components/ImportTransactionsModal.js:436
 msgid "No paid Mollie payments match these filters."
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:440
+#: src/Admin/transactions/components/ImportTransactionsModal.js:490
 msgid "Already imported"
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:454
+#: src/Admin/transactions/components/ImportTransactionsModal.js:504
 msgid "Load more"
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:459
+#: src/Admin/transactions/components/ImportTransactionsModal.js:509
 msgid "More payments are available. Load another bounded page to continue."
 msgstr ""
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:481
+#: src/Admin/transactions/components/ImportTransactionsModal.js:531
 msgid "Import selected payments"
 msgstr ""
 
 #: src/API/TransactionsController.php:435
 #: src/API/TransactionsController.php:493
 msgid "Choose live or test mode."
+msgstr ""
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:387
+msgid "Checking the current mode…"
 msgstr ""
