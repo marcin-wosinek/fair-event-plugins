@@ -28,11 +28,55 @@ use Mollie\Api\Http\Requests\GetProfileRequest;
 use Mollie\Api\Resources\Payment;
 use Mollie\Api\Resources\MethodCollection;
 use Mollie\Api\Resources\Profile;
+use Mollie\Api\Resources\PaymentCollection;
+use Mollie\Api\Http\Requests\GetPaginatedPaymentsRequest;
 
 /**
  * Unit tests for MolliePaymentHandler's test/live mode handling.
  */
 class MolliePaymentHandlerTest extends TestCase {
+
+	/** Listing sends a bounded cursor, limit, descending sort, and test mode. */
+	public function test_list_payments_uses_bounded_test_mode_page() {
+		$mollie  = MollieApiClient::fake(
+			array(
+				GetPaginatedPaymentsRequest::class => MockResponse::list( PaymentCollection::class )->create(),
+			)
+		);
+		$handler = new MolliePaymentHandler( $mollie );
+		$handler->list_payments( 'tr_cursor', 25, true );
+		$request = $this->sent_request( $mollie, GetPaginatedPaymentsRequest::class );
+		$uri     = (string) $request->createPsrRequest()->getUri();
+		$this->assertTrue( $request->getTestmode() );
+		$this->assertStringContainsString( 'from=tr_cursor', $uri );
+		$this->assertStringContainsString( 'limit=25', $uri );
+		$this->assertStringContainsString( 'sort=desc', $uri );
+	}
+
+	/** Mapping keeps the gateway values and preserves its UTC timestamp. */
+	public function test_map_payment_for_import_normalizes_supported_fields() {
+		$payment = (object) array(
+			'id'             => 'tr_manual',
+			'amount'         => (object) array(
+				'value'    => '12.50',
+				'currency' => 'EUR',
+			),
+			'status'         => 'paid',
+			'description'    => 'Manual payment',
+			'mode'           => 'test',
+			'createdAt'      => '2026-09-14T10:30:00+00:00',
+			'applicationFee' => (object) array( 'amount' => (object) array( 'value' => '0.50' ) ),
+		);
+		$handler = new MolliePaymentHandler( MollieApiClient::fake() );
+		$mapped  = $handler->map_payment_for_import( $payment, false );
+		$this->assertSame( 'tr_manual', $mapped['mollie_payment_id'] );
+		$this->assertSame( 12.5, $mapped['amount'] );
+		$this->assertSame( 'EUR', $mapped['currency'] );
+		$this->assertTrue( $mapped['testmode'] );
+		$this->assertSame( '2026-09-14 10:30:00', $mapped['created_at'] );
+		$this->assertSame( 0.5, $mapped['application_fee'] );
+		$this->assertNull( $mapped['mollie_fee'] );
+	}
 
 	/**
 	 * Reset shared test state before each test.

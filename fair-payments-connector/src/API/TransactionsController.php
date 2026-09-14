@@ -12,6 +12,7 @@ defined( 'WPINC' ) || die;
 use FairPaymentsConnector\Models\Transaction;
 use FairPaymentsConnector\Models\LineItem;
 use FairPaymentsConnector\Models\EntryTransaction;
+use FairPaymentsConnector\Payment\MolliePaymentHandler;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -105,6 +106,39 @@ class TransactionsController extends WP_REST_Controller {
 							'type'     => 'array',
 							'required' => true,
 						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/transactions/mollie',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_mollie_payments' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => $this->get_mollie_args(),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'import_mollie_payments' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array_merge(
+						$this->get_mollie_args(),
+						array(
+							'payment_ids' => array(
+								'type'     => 'array',
+								'required' => true,
+								'minItems' => 1,
+								'maxItems' => 50,
+								'items'    => array(
+									'type'    => 'string',
+									'pattern' => '^tr_[A-Za-z0-9]+$',
+								),
+							),
+						)
 					),
 				),
 			)
@@ -387,6 +421,188 @@ class TransactionsController extends WP_REST_Controller {
 				),
 			),
 			200
+		);
+	}
+
+	/**
+	 * List eligible Mollie payments.
+	 *
+	 * @param WP_REST_Request $request Full request data.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_mollie_payments( $request ) {
+		if ( ! in_array( $request['mode'], array( 'live', 'test' ), true ) ) {
+			return new WP_Error( 'invalid_mode', __( 'Choose live or test mode.', 'fair-payments-connector' ), array( 'status' => 400 ) );
+		}
+		if ( ! MolliePaymentHandler::is_configured() ) {
+			return new WP_REST_Response( $this->mollie_connection_state(), 200 );
+		}
+
+		$date_error = $this->validate_mollie_dates( $request );
+		if ( is_wp_error( $date_error ) ) {
+			return $date_error;
+		}
+
+		try {
+			$handler = new MolliePaymentHandler();
+			$page    = $handler->list_payments( $request['from'], (int) $request['limit'], 'test' === $request['mode'] );
+			$rows    = array();
+			$oldest  = false;
+			$last_id = null;
+			foreach ( $page as $payment ) {
+				$last_id = $payment->id;
+				// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+				$created = strtotime( $payment->createdAt );
+				if ( $created < strtotime( $request['start_date'] . ' 00:00:00 UTC' ) ) {
+					$oldest = true;
+					break;
+				}
+				if ( 'paid' !== $payment->status || $created > strtotime( $request['end_date'] . ' 23:59:59 UTC' ) ) {
+					continue;
+				}
+				$row                     = $handler->map_payment_for_import( $payment );
+				$row['already_imported'] = (bool) Transaction::get_by_mollie_id( $payment->id );
+				$rows[]                  = $row;
+			}
+			$next = ( ! $oldest && $page->hasNext() ) ? $last_id : null;
+			return new WP_REST_Response(
+				array_merge(
+					$this->mollie_connection_state(),
+					array(
+						'payments'      => $rows,
+						'next'          => $next,
+						'limit_reached' => (bool) $next,
+					)
+				),
+				200
+			);
+		} catch ( \Exception $e ) {
+			return new WP_Error( 'mollie_api_error', __( 'Mollie payments could not be loaded. Please try again.', 'fair-payments-connector' ), array( 'status' => 502 ) );
+		}
+	}
+
+	/**
+	 * Import selected payments after re-fetching them from Mollie.
+	 *
+	 * @param WP_REST_Request $request Full request data.
+	 * @return WP_REST_Response|WP_Error
+	 * @throws \Exception When the Mollie client cannot be initialized.
+	 */
+	public function import_mollie_payments( $request ) {
+		if ( ! in_array( $request['mode'], array( 'live', 'test' ), true ) ) {
+			return new WP_Error( 'invalid_mode', __( 'Choose live or test mode.', 'fair-payments-connector' ), array( 'status' => 400 ) );
+		}
+		$date_error = $this->validate_mollie_dates( $request );
+		if ( is_wp_error( $date_error ) ) {
+			return $date_error;
+		}
+		if ( ! MolliePaymentHandler::is_configured() ) {
+			return new WP_Error(
+				'mollie_not_connected',
+				__( 'Connect Mollie before importing payments.', 'fair-payments-connector' ),
+				array(
+					'status'       => 400,
+					'settings_url' => $this->mollie_connection_state()['settings_url'],
+				)
+			);
+		}
+		$handler = new MolliePaymentHandler();
+		$result  = array(
+			'imported' => 0,
+			'skipped'  => 0,
+			'failed'   => 0,
+			'failures' => array(),
+		);
+		foreach ( array_unique( $request['payment_ids'] ) as $payment_id ) {
+			try {
+				$payment = $handler->get_payment( $payment_id, array( 'testmode' => 'test' === $request['mode'] ) );
+				if ( 'paid' !== $payment->status || $payment->mode !== $request['mode'] ) {
+					throw new \Exception( 'ineligible' );
+				}
+				$state = Transaction::import_mollie_create_only( $handler->map_payment_for_import( $payment ) );
+				if ( 'created' === $state ) {
+					++$result['imported'];
+				} elseif ( 'existing' === $state ) {
+					++$result['skipped'];
+				} else {
+					throw new \Exception( 'insert_failed' );
+				}
+			} catch ( \Exception $e ) {
+				++$result['failed'];
+				$result['failures'][] = array(
+					'payment_id' => $payment_id,
+					'message'    => __( 'This payment could not be imported.', 'fair-payments-connector' ),
+				);
+			}
+		}
+		$result['message'] = sprintf(
+			/* translators: 1: imported count, 2: skipped count, 3: failed count. */
+			__( 'Imported %1$d, skipped %2$d, and failed %3$d payment(s).', 'fair-payments-connector' ),
+			$result['imported'],
+			$result['skipped'],
+			$result['failed']
+		);
+		return new WP_REST_Response( $result, 200 );
+	}
+
+	/** Return safe Mollie connection details for the browser. */
+	private function mollie_connection_state() {
+		return array(
+			'connected'    => MolliePaymentHandler::is_configured(),
+			'default_mode' => get_option( 'fair_payment_mode', 'test' ),
+			'settings_url' => add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) ),
+		);
+	}
+
+	/**
+	 * Validate the bounded date range.
+	 *
+	 * @param WP_REST_Request $request Full request data.
+	 * @return true|WP_Error
+	 */
+	private function validate_mollie_dates( $request ) {
+		$start = strtotime( $request['start_date'] . ' 00:00:00 UTC' );
+		$end   = strtotime( $request['end_date'] . ' 23:59:59 UTC' );
+		if ( false === $start || false === $end || $start > $end || ( $end - $start ) > 90 * DAY_IN_SECONDS ) {
+			return new WP_Error( 'invalid_date_range', __( 'Choose a valid date range of no more than 90 days.', 'fair-payments-connector' ), array( 'status' => 400 ) );
+		}
+		return true;
+	}
+
+	/** Return the shared Mollie route arguments. */
+	private function get_mollie_args() {
+		return array(
+			'mode'       => array(
+				'type'              => 'string',
+				'required'          => true,
+				'enum'              => array( 'live', 'test' ),
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'start_date' => array(
+				'type'              => 'string',
+				'required'          => true,
+				'format'            => 'date',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'end_date'   => array(
+				'type'              => 'string',
+				'required'          => true,
+				'format'            => 'date',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'from'       => array(
+				'type'              => 'string',
+				'default'           => '',
+				'pattern'           => '^(|tr_[A-Za-z0-9]+)$',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'limit'      => array(
+				'type'              => 'integer',
+				'default'           => 25,
+				'minimum'           => 1,
+				'maximum'           => 50,
+				'sanitize_callback' => 'absint',
+			),
 		);
 	}
 

@@ -104,8 +104,10 @@ class AdminPages {
 				'fair-payments-connector-transactions',
 				'fairPaymentTransactions',
 				array(
-					'organizationId' => get_option( 'fair_payment_organization_id', '' ),
-					'testMode'       => 'test' === get_option( 'fair_payment_mode', 'test' ),
+					'organizationId'    => get_option( 'fair_payment_organization_id', '' ),
+					'testMode'          => 'test' === get_option( 'fair_payment_mode', 'test' ),
+					'mollieConnected'   => (bool) get_option( 'fair_payment_mollie_connected', false ),
+					'mollieSettingsUrl' => add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) ),
 				)
 			);
 			return;
