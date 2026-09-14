@@ -97,7 +97,7 @@ class EventParticipantRepository {
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT participant_id, ticket_type_id, created_at
+				"SELECT id, participant_id, ticket_type_id, created_at
 				 FROM %i
 				 WHERE event_date_id = %d AND label = 'signed_up'
 				 ORDER BY created_at ASC",

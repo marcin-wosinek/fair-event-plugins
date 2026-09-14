@@ -259,6 +259,7 @@ class AdminPages {
 			case 'fair-events-event-statistics':
 				$asset_file = include $exp_dir . 'build/admin/event-statistics/index.asset.php';
 				wp_enqueue_script( 'fair-events-event-statistics', $exp_url . 'build/admin/event-statistics/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_enqueue_style( 'fair-events-event-statistics', $exp_url . 'build/admin/event-statistics/style-index.css', array( 'wp-components' ), $asset_file['version'] );
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
 				wp_localize_script(

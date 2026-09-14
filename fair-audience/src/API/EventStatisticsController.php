@@ -10,6 +10,8 @@ namespace FairAudience\API;
 use DateInterval;
 use DateTimeImmutable;
 use FairAudience\Database\EventParticipantRepository;
+use FairAudience\Database\EventParticipantTransactionRepository;
+use FairEventsShared\Money;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
@@ -44,9 +46,17 @@ class EventStatisticsController extends WP_REST_Controller {
 	 */
 	private $event_participant_repo;
 
+	/**
+	 * Participant transaction repository.
+	 *
+	 * @var EventParticipantTransactionRepository
+	 */
+	private $transaction_repo;
+
 	/** Constructor. */
 	public function __construct() {
 		$this->event_participant_repo = new EventParticipantRepository();
+		$this->transaction_repo       = new EventParticipantTransactionRepository();
 	}
 
 	/** Register the route. */
@@ -112,8 +122,27 @@ class EventStatisticsController extends WP_REST_Controller {
 		$today        = new DateTimeImmutable( 'today', $timezone );
 		$recorded_end = $today < $end ? $today : $end;
 
-		$rows        = $this->get_qualifying_sales_rows( $event_date );
-		$daily_sales = array();
+		$rows                = $this->get_qualifying_sales_rows( $event_date );
+		$currency            = Money::site_currency();
+		$transactions        = $this->transaction_repo->get_paid_statistics_transactions( wp_list_pluck( $rows, 'id' ) );
+		$daily_amounts       = array();
+		$excluded_currencies = array();
+		$total_sales_amount  = 0.0;
+		foreach ( $transactions as $transaction ) {
+			if ( strtoupper( (string) $transaction['currency'] ) !== $currency ) {
+				$excluded_currencies[] = strtoupper( (string) $transaction['currency'] );
+				continue;
+			}
+			$amount = (float) $transaction['amount'] * ( 'refund' === $transaction['kind'] ? -1 : 1 );
+			$date   = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $transaction['created_at'], $timezone );
+			if ( $date ) {
+				$key                   = $date->format( 'Y-m-d' );
+				$daily_amounts[ $key ] = ( $daily_amounts[ $key ] ?? 0.0 ) + $amount;
+			}
+			$total_sales_amount += $amount;
+		}
+		$excluded_currencies = array_values( array_unique( $excluded_currencies ) );
+		$daily_sales         = array();
 		foreach ( $rows as $row ) {
 			$date = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $row['created_at'], $timezone );
 			if ( $date ) {
@@ -126,38 +155,57 @@ class EventStatisticsController extends WP_REST_Controller {
 		if ( $window_start > $recorded_end ) {
 			$window_start = $recorded_end;
 		}
-		$cumulative = 0;
+		$cumulative        = 0;
+		$cumulative_amount = 0.0;
 		foreach ( $daily_sales as $date => $count ) {
 			if ( $date < $window_start->format( 'Y-m-d' ) ) {
 				$cumulative += $count;
 			}
 		}
+		foreach ( $daily_amounts as $date => $amount ) {
+			if ( $date < $window_start->format( 'Y-m-d' ) ) {
+				$cumulative_amount += $amount;
+			}
+		}
 
-		$series = array();
-		$cursor = $window_start;
+		$series        = array();
+		$amount_series = array();
+		$cursor        = $window_start;
 		while ( $cursor <= $end ) {
 			$key = $cursor->format( 'Y-m-d' );
 			if ( $cursor < $recorded_end ) {
-				$cumulative += $daily_sales[ $key ] ?? 0;
+				$cumulative        += $daily_sales[ $key ] ?? 0;
+				$cumulative_amount += $daily_amounts[ $key ] ?? 0.0;
 			} elseif ( $key === $recorded_end->format( 'Y-m-d' ) ) {
 				// Fold all remaining confirmations into the final visible point.
-				$cumulative = count( $rows );
+				$cumulative        = count( $rows );
+				$cumulative_amount = $total_sales_amount;
 			}
-			$series[] = array(
+			$label           = $this->get_point_label( $cursor, $start, $end );
+			$series[]        = array(
 				'date'  => $key,
-				'label' => $this->get_point_label( $cursor, $start, $end ),
+				'label' => $label,
 				'total' => $cursor <= $recorded_end ? $cumulative : null,
 			);
-			$cursor   = $cursor->add( new DateInterval( 'P1D' ) );
+			$amount_series[] = array(
+				'date'   => $key,
+				'label'  => $label,
+				'amount' => $cursor <= $recorded_end ? $cumulative_amount : null,
+			);
+			$cursor          = $cursor->add( new DateInterval( 'P1D' ) );
 		}
 
 		return new WP_REST_Response(
 			array(
-				'total_sales'      => count( $rows ),
-				'start_date'       => $start->format( 'Y-m-d' ),
-				'end_date'         => $end->format( 'Y-m-d' ),
-				'days_until_start' => $today < $start ? (int) $today->diff( $start )->format( '%a' ) : null,
-				'series'           => $series,
+				'total_sales'         => count( $rows ),
+				'currency'            => $currency,
+				'total_sales_amount'  => $total_sales_amount,
+				'amount_series'       => $amount_series,
+				'excluded_currencies' => $excluded_currencies,
+				'start_date'          => $start->format( 'Y-m-d' ),
+				'end_date'            => $end->format( 'Y-m-d' ),
+				'days_until_start'    => $today < $start ? (int) $today->diff( $start )->format( '%a' ) : null,
+				'series'              => $series,
 			)
 		);
 	}

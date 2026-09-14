@@ -22,7 +22,10 @@ jest.mock( 'recharts', () => {
 		</div>
 	);
 	const Area = ( props ) => (
-		<div data-testid="sales-area" data-props={ JSON.stringify( props ) } />
+		<div
+			data-testid={ `${ props.dataKey }-area` }
+			data-props={ JSON.stringify( props ) }
+		/>
 	);
 	const ReferenceLine = ( props ) => (
 		<div
@@ -130,10 +133,17 @@ describe( 'EventStatistics component', () => {
 			}
 			return Promise.resolve( {
 				total_sales: 1,
+				currency: 'EUR',
+				total_sales_amount: 12.5,
+				excluded_currencies: [],
 				days_until_start: 5,
 				series: [
 					{ date: '2026-06-14', label: '1 day before', total: 0 },
 					{ date: '2026-06-15', label: 'Day of event', total: 1 },
+				],
+				amount_series: [
+					{ date: '2026-06-14', label: '1 day before', amount: 0 },
+					{ date: '2026-06-15', label: 'Day of event', amount: 12.5 },
 				],
 				...statistics,
 			} );
@@ -162,7 +172,11 @@ describe( 'EventStatistics component', () => {
 			screen.getByText( 'Activities per person' )
 		).toBeInTheDocument();
 		expect( screen.getByText( 'Cumulative sales' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Cumulative sales amount' )
+		).toBeInTheDocument();
 		expect( screen.getByText( '1 sale' ) ).toBeInTheDocument();
+		expect( screen.getByText( /€\s?12[.,]50/ ) ).toBeInTheDocument();
 		expect(
 			screen.getByText( '5 days until the event' )
 		).toBeInTheDocument();
@@ -179,8 +193,12 @@ describe( 'EventStatistics component', () => {
 	it( 'renders zero sales while retaining the activity charts', async () => {
 		mockApi( [ { label: 'interested', ticket_option_ids: [] } ], {
 			total_sales: 0,
+			total_sales_amount: 0,
 			days_until_start: null,
 			series: [ { date: '2026-06-15', label: 'Day of event', total: 0 } ],
+			amount_series: [
+				{ date: '2026-06-15', label: 'Day of event', amount: 0 },
+			],
 		} );
 
 		render( <EventStatistics eventDateId={ 42 } /> );
@@ -216,16 +234,17 @@ describe( 'EventStatistics component', () => {
 
 		render( <EventStatistics eventDateId={ 42 } /> );
 
-		const chart = await screen.findByTestId( 'area-chart' );
+		const chart = ( await screen.findAllByTestId( 'area-chart' ) )[ 0 ];
 		const chartSeries = JSON.parse( chart.dataset.series );
 		expect( chartSeries ).toEqual( series );
 		expect( chartSeries.at( -1 ).date ).toBe( '2026-06-16' );
 		expect(
-			JSON.parse( screen.getByTestId( 'sales-area' ).dataset.props )
+			JSON.parse( screen.getByTestId( 'total-area' ).dataset.props )
 		).toMatchObject( { dataKey: 'total' } );
 		expect(
 			JSON.parse(
-				screen.getByTestId( 'future-reference-line' ).dataset.props
+				screen.getAllByTestId( 'future-reference-line' )[ 0 ].dataset
+					.props
 			)
 		).toMatchObject( {
 			segment: [
@@ -247,10 +266,37 @@ describe( 'EventStatistics component', () => {
 
 		render( <EventStatistics eventDateId={ 42 } /> );
 
-		await screen.findByTestId( 'area-chart' );
+		await screen.findAllByTestId( 'area-chart' );
 		expect(
 			screen.queryByTestId( 'future-reference-line' )
 		).not.toBeInTheDocument();
+	} );
+
+	it( 'renders the amount series, zero, and currency warning', async () => {
+		const amountSeries = [
+			{ date: '2026-06-14', label: '1 day before', amount: 0 },
+			{ date: '2026-06-15', label: 'Day of event', amount: null },
+		];
+		mockApi( [], {
+			total_sales_amount: 0,
+			amount_series: amountSeries,
+			excluded_currencies: [ 'USD' ],
+		} );
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		expect( await screen.findByText( /€\s?0[.,]00/ ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( /different currencies: USD/ )
+		).toBeInTheDocument();
+		expect(
+			JSON.parse( screen.getByTestId( 'amount-area' ).dataset.props )
+		).toMatchObject( { dataKey: 'amount', name: 'Net sales amount' } );
+		expect(
+			JSON.parse(
+				screen.getAllByTestId( 'area-chart' )[ 1 ].dataset.series
+			)
+		).toEqual( amountSeries );
 	} );
 
 	it( 'shows statistics failures independently', async () => {
