@@ -270,8 +270,8 @@ npm run screenshot -- "/wp-admin/admin.php?page=fair-finance-budgets" mobile bud
 
 Dimensions may be `desktop`, `tablet`, `mobile`, or `WIDTHxHEIGHT`. Options
 include `--viewport`, `--wait <ms>`, `--wait-for <selector>`, `--no-login`,
-`--upload imgbb`, and `--expiry <seconds>`. The file is written relative to the
-current directory.
+`--upload <imgbb|github>`, `--issue <number>`, and `--expiry <seconds>`. The
+file is written relative to the current directory.
 
 The helper defaults to the regular Docker development site at `:8080`. Set
 `WP_SCREENSHOT_BASE_URL`, `WP_SCREENSHOT_USER`, and
@@ -280,15 +280,24 @@ login details. `WP_BASE_URL` and `WP_ADMIN_*` remain legacy fallbacks, but the
 dedicated names avoid accidentally sharing browser-login credentials with API
 tests that use a different environment and authentication model.
 
-For PR embedding, add `--upload imgbb` and set `IMGBB_API_KEY` in the gitignored
-repository `.env`. The command retains the local PNG and prints a public URL
-and Markdown snippet. Uploads expire after 30 days by default; imgbb accepts
-60–15552000 seconds, while `0` disables expiry.
+For PR embedding, add `--upload github --issue <n>` (the ticket the
+screenshot belongs to). The command shells out to the already-authenticated
+`gh` CLI — no new API key — and publishes the PNG to the repo's long-lived
+`pr-assets` branch at `pr-assets/<n>/<filename>`, retaining the local file
+and printing the resulting `raw.githubusercontent.com` URL and Markdown
+snippet. Re-running the same command for the same path looks up and replaces
+the existing file instead of failing. See [COMMIT_GUIDE.md](./COMMIT_GUIDE.md)
+for the full responsive-UI PR workflow.
 
-> **Public exposure, synthetic data only.** Anyone with an imgbb URL can view
-> the image, and GitHub caches it. Never upload participant names, email
-> addresses, finance data, or other real data. Use `pr-assets/<n>` with an
-> authenticated raw embed, or a manual GitHub attachment, when appropriate.
+`--upload imgbb` (needs `IMGBB_API_KEY` in the gitignored repository `.env`)
+remains available as an alternative public host; uploads expire after 30 days
+by default, and imgbb accepts 60–15552000 seconds, while `0` disables expiry.
+
+> **Public exposure, synthetic data only.** This repository is public, so
+> both `pr-assets` raw URLs and imgbb links are visible to anyone with the
+> link, and GitHub caches them. Never upload participant names, email
+> addresses, finance data, or other real data — capture from a local
+> dev/demo instance only.
 
 ### Plugin Check reporting
 
