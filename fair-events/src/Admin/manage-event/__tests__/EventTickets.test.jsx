@@ -163,6 +163,11 @@ describe( 'EventTickets — extension selection rules (#1521)', () => {
 } );
 
 describe( 'EventTickets — empty state (no ticket types) (#1199)', () => {
+	it( 'renders the Prices section heading', () => {
+		renderTickets( { initialData: emptyInitialData } );
+		expect( screen.getByText( 'Prices' ).tagName ).toBe( 'STRONG' );
+	} );
+
 	it( 'renders the full editor with zero ticket types', () => {
 		renderTickets( { initialData: emptyInitialData } );
 		expect( screen.getByText( 'Ticket Type' ) ).toBeInTheDocument();

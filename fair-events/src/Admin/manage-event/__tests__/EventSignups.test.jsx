@@ -104,6 +104,13 @@ afterEach( () => {
 } );
 
 describe( 'EventSignups — CSV export (#1171)', () => {
+	it( 'renders the List section heading', async () => {
+		await renderSignups();
+		expect(
+			screen.getByRole( 'heading', { name: 'List' } )
+		).toBeInTheDocument();
+	} );
+
 	it( 'renders a Download CSV button', async () => {
 		await renderSignups();
 		expect(

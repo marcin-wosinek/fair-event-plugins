@@ -234,7 +234,7 @@ describe( 'Event Signup EditComponent', () => {
 			const link = screen.getByText( 'Edit tickets' );
 			expect( link ).toHaveAttribute(
 				'href',
-				'http://example.test/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=42&tab=tickets'
+				'http://example.test/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=42&tab=prices'
 			);
 		} );
 

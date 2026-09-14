@@ -197,7 +197,7 @@ export default function EventSignups( { eventDateId } ) {
 	return (
 		<Card style={ { marginTop: '16px' } }>
 			<CardHeader>
-				<h2>{ __( 'Ticket Signups', 'fair-events' ) }</h2>
+				<h2>{ __( 'List', 'fair-events' ) }</h2>
 				<Flex justify="flex-end" gap={ 2 }>
 					<FlexItem>
 						<ToggleControl

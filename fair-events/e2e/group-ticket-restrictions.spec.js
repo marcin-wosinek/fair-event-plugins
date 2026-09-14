@@ -185,7 +185,7 @@ test( 'organizer restrictions survive reload and control public availability', a
 		signupPageId = signupPage.id;
 
 		await adminPage.goto(
-			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=tickets`
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=prices`
 		);
 		const memberRow = adminPage.getByRole( 'row' ).filter( {
 			has: adminPage.locator( 'input[value="Members Only"]' ),

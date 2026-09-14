@@ -146,7 +146,7 @@ test( 'mailing consent survives signup, display, and filtering', async ( {
 		await page.goto(
 			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDate.id }`
 		);
-		await page.getByRole( 'tab', { name: 'Signups' } ).click();
+		await page.getByRole( 'tab', { name: 'List' } ).click();
 		const uncheckedRow = page.locator( 'tr', { hasText: uncheckedEmail } );
 		const checkedRow = page.locator( 'tr', { hasText: checkedEmail } );
 		await expect( uncheckedRow ).toContainText( 'No' );
