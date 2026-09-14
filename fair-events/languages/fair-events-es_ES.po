@@ -49,54 +49,16 @@ msgstr "Cuadrícula de eventos"
 msgid "Display events in a grid layout with images using Query Loop"
 msgstr "Mostrar eventos en una cuadrícula con imágenes mediante el bucle de consulta"
 
-#: src/PostTypes/Event.php:53
-msgctxt "Post type general name"
-msgid "Events"
-msgstr "Eventos"
-
-#: src/PostTypes/Event.php:54
-msgctxt "Post type singular name"
-msgid "Event"
-msgstr "Evento"
-
 #: src/PostTypes/Event.php:58
 msgid "Add New"
 msgstr "Añadir nuevo"
 
-#: src/PostTypes/Event.php:60
-msgid "New Event"
-msgstr "Nuevo evento"
-
-#: src/PostTypes/Event.php:61
-msgid "Edit Event"
-msgstr "Editar evento"
-
-#: src/PostTypes/Event.php:62
-msgid "View Event"
-msgstr "Ver evento"
-
 #: src/Admin/AdminPages.php:120
 #: src/Admin/AdminPages.php:121
-#: src/Admin/all-events/AllEvents.js:367
+#: src/Admin/all-events/AllEvents.js:411
 #: src/blocks/events-list/components/EditComponent.js:107
 msgid "All Events"
 msgstr "Todos los eventos"
-
-#: src/PostTypes/Event.php:64
-msgid "Search Events"
-msgstr "Buscar eventos"
-
-#: src/PostTypes/Event.php:65
-msgid "Parent Events:"
-msgstr "Eventos principales:"
-
-#: src/PostTypes/Event.php:66
-msgid "No events found."
-msgstr "No se encontraron eventos."
-
-#: src/PostTypes/Event.php:67
-msgid "No events found in Trash."
-msgstr "No se encontraron eventos en la papelera."
 
 #: src/PostTypes/Event.php:68
 msgctxt "Overrides the \"Featured Image\" phrase"
@@ -118,11 +80,6 @@ msgctxt "Overrides the \"Use as featured image\" phrase"
 msgid "Use as event image"
 msgstr "Usar como imagen del evento"
 
-#: src/PostTypes/Event.php:72
-msgctxt "The post type archive label"
-msgid "Event archives"
-msgstr "Archivos de eventos"
-
 #: src/PostTypes/Event.php:73
 msgctxt "Overrides the \"Insert into post\" phrase"
 msgid "Insert into event"
@@ -132,21 +89,6 @@ msgstr "Insertar en evento"
 msgctxt "Overrides the \"Uploaded to this post\" phrase"
 msgid "Uploaded to this event"
 msgstr "Subido a este evento"
-
-#: src/PostTypes/Event.php:75
-msgctxt "Screen reader text for the filter links"
-msgid "Filter events list"
-msgstr "Filtrar lista de eventos"
-
-#: src/PostTypes/Event.php:76
-msgctxt "Screen reader text for the pagination"
-msgid "Events list navigation"
-msgstr "Navegación de lista de eventos"
-
-#: src/PostTypes/Event.php:77
-msgctxt "Screen reader text for the items list"
-msgid "Events list"
-msgstr "Lista de eventos"
 
 #: src/PostTypes/Event.php:124
 msgid "Event location"
@@ -163,6 +105,7 @@ msgstr "Fecha y hora de inicio"
 
 #: src/Admin/CopyEventPage.php:329
 #: src/blocks/event-proposal/render.php:139
+#: src/Admin/all-events/AllEvents.js:198
 msgid "Location"
 msgstr "Ubicación"
 
@@ -170,15 +113,15 @@ msgstr "Ubicación"
 msgid "URL slug for events"
 msgstr "Slug de la URL para los eventos"
 
-#: src/Admin/settings/GeneralTab.js:78
+#: src/Admin/settings/GeneralTab.js:75
 msgid "Failed to load settings."
 msgstr "Error al cargar la ajustes."
 
-#: src/Admin/settings/GeneralTab.js:131
+#: src/Admin/settings/GeneralTab.js:128
 msgid "Settings saved successfully."
 msgstr "Los ajustes se han guardado correctamente."
 
-#: src/Admin/settings/GeneralTab.js:141
+#: src/Admin/settings/GeneralTab.js:135
 msgid "Failed to save settings."
 msgstr "Error al guardar la ajustes."
 
@@ -187,22 +130,22 @@ msgstr "Error al guardar la ajustes."
 msgid "Loading..."
 msgstr "Cargando..."
 
-#: src/Admin/settings/GeneralTab.js:167
-#: src/Admin/settings/GeneralTab.js:171
+#: src/Admin/settings/GeneralTab.js:161
+#: src/Admin/settings/GeneralTab.js:165
 msgid "Event URL Slug"
 msgstr "Slug de la URL del evento"
 
-#: src/Admin/settings/GeneralTab.js:173
+#: src/Admin/settings/GeneralTab.js:167
 msgid "The URL slug used for event permalinks (e.g., /fair-events/event-name)"
 msgstr "El slug de la URL usada para los enlaces permanentes de eventos (p. ej. /fair-events/nombre-evento)"
 
 #: src/Admin/settings/FeaturesTab.js:182
-#: src/Admin/settings/GeneralTab.js:319
+#: src/Admin/settings/GeneralTab.js:309
 #: src/Admin/settings/OrganizerTab.js:499
 msgid "Saving..."
 msgstr "Guardando..."
 
-#: src/Admin/settings/GeneralTab.js:320
+#: src/Admin/settings/GeneralTab.js:310
 msgid "Save Settings"
 msgstr "Guardar ajustes"
 
@@ -252,7 +195,7 @@ msgstr "Filtrar eventos por tiempo relativo al presente"
 
 #: src/Admin/CopyEventPage.php:341
 #: src/blocks/event-proposal/render.php:156
-#: src/Admin/all-events/AllEvents.js:177
+#: src/Admin/all-events/AllEvents.js:218
 #: src/Admin/calendar/components/QuickEventModal.js:451
 #: src/Admin/manage-event/ManageEventApp.js:937
 #: src/blocks/events-calendar/components/EditComponent.js:138
@@ -335,11 +278,6 @@ msgstr "Marcin Wosinek"
 msgid "https://github.com/marcin-wosinek"
 msgstr "https://github.com/marcin-wosinek"
 
-#: src/PostTypes/Event.php:57
-msgctxt "Add New on Toolbar"
-msgid "Event"
-msgstr "Evento"
-
 #: src/blocks/events-list/block.json
 msgctxt "block title"
 msgid "Events List"
@@ -367,8 +305,8 @@ msgid "Fair Event: End Date"
 msgstr "Fair Event: Fecha de fin"
 
 #: src/Admin/CopyEventPage.php:51
-#: src/API/EventDatesController.php:558
-#: src/API/EventDatesController.php:1018
+#: src/API/EventDatesController.php:582
+#: src/API/EventDatesController.php:1042
 msgid "Event title is required."
 msgstr "El título del evento es obligatorio."
 
@@ -398,7 +336,7 @@ msgstr "Duración del evento"
 
 #: src/Admin/AdminPages.php:231
 #: src/PostTypes/Event.php:496
-#: src/Admin/all-events/AllEvents.js:347
+#: src/Admin/all-events/AllEvents.js:391
 msgid "Copy"
 msgstr "Copiar"
 
@@ -501,7 +439,7 @@ msgstr "Fecha y hora"
 msgid "Remove"
 msgstr "Eliminar"
 
-#: src/Admin/all-events/AllEvents.js:85
+#: src/Admin/all-events/AllEvents.js:106
 #: src/Admin/manage-event/EventSignups.js:152
 #: src/Admin/manage-event/EventTickets.js:1159
 #: src/Admin/manage-event/EventTickets.js:2195
@@ -521,7 +459,7 @@ msgstr "Estado"
 msgid "Copy URL"
 msgstr "Copiar URL"
 
-#: src/Admin/all-events/AllEvents.js:340
+#: src/Admin/all-events/AllEvents.js:384
 #: src/Admin/venues/VenuesApp.js:636
 msgid "Edit"
 msgstr "Editar"
@@ -769,62 +707,62 @@ msgstr "ID de entrada para desvincular."
 msgid "Comma-separated list of event date IDs."
 msgstr "Lista separada por comas de IDs de fechas de eventos."
 
-#: src/API/EventDatesController.php:333
+#: src/API/EventDatesController.php:357
 msgid "Event title."
 msgstr "Título del evento."
 
-#: src/API/EventDatesController.php:339
+#: src/API/EventDatesController.php:363
 msgid "Start date/time (Y-m-d H:i:s format)."
 msgstr "Fecha/hora de inicio (formato Y-m-d H:i:s)."
 
-#: src/API/EventDatesController.php:345
+#: src/API/EventDatesController.php:369
 msgid "End date/time (Y-m-d H:i:s format)."
 msgstr "Fecha/hora de finalización (formato Y-m-d H:i:s)."
 
-#: src/API/EventDatesController.php:351
+#: src/API/EventDatesController.php:375
 msgid "Whether this is an all-day event."
 msgstr "Si se trata de un evento de todo el día."
 
-#: src/API/EventDatesController.php:357
+#: src/API/EventDatesController.php:381
 msgid "Venue ID."
 msgstr "ID del lugar."
 
-#: src/API/EventDatesController.php:368
+#: src/API/EventDatesController.php:392
 msgid "Link type (post, external, none)."
 msgstr "Tipo de enlace (post, externo, ninguno)."
 
-#: src/API/EventDatesController.php:375
+#: src/API/EventDatesController.php:399
 msgid "External URL for the event."
 msgstr "URL externa para el evento."
 
-#: src/API/EventDatesController.php:440
+#: src/API/EventDatesController.php:464
 msgid "Linked post ID."
 msgstr "ID de post vinculado."
 
-#: src/API/EventDatesController.php:395
+#: src/API/EventDatesController.php:419
 msgid "Recurrence rule in RRULE format."
 msgstr "Regla de recurrencia en formato RRULE."
 
-#: src/API/EventDatesController.php:417
+#: src/API/EventDatesController.php:441
 msgid "Category term IDs."
 msgstr "IDs de términos de categoría."
 
-#: src/API/EventDatesController.php:566
+#: src/API/EventDatesController.php:590
 msgid "Start date/time is required."
 msgstr "La fecha/hora de inicio es obligatoria."
 
-#: src/API/EventDatesController.php:587
+#: src/API/EventDatesController.php:611
 msgid "Failed to create event date."
 msgstr "Error al crear la fecha del evento."
 
-#: src/API/EventDatesController.php:913
-#: src/API/EventDatesController.php:938
-#: src/API/EventDatesController.php:1004
-#: src/API/EventDatesController.php:1288
-#: src/API/EventDatesController.php:1328
-#: src/API/EventDatesController.php:1396
-#: src/API/EventDatesController.php:1432
-#: src/API/EventDatesController.php:1529
+#: src/API/EventDatesController.php:937
+#: src/API/EventDatesController.php:962
+#: src/API/EventDatesController.php:1028
+#: src/API/EventDatesController.php:1312
+#: src/API/EventDatesController.php:1352
+#: src/API/EventDatesController.php:1420
+#: src/API/EventDatesController.php:1456
+#: src/API/EventDatesController.php:1553
 #: src/API/GetTicketsController.php:404
 #: src/API/GetTicketsController.php:413
 #: src/API/GetTicketsController.php:689
@@ -835,26 +773,26 @@ msgstr "Error al crear la fecha del evento."
 msgid "Event date not found."
 msgstr "Fecha del evento no encontrada."
 
-#: src/API/EventDatesController.php:1103
+#: src/API/EventDatesController.php:1127
 msgid "Failed to update event date."
 msgstr "Error al actualizar la fecha del evento."
 
-#: src/API/EventDatesController.php:1298
+#: src/API/EventDatesController.php:1322
 msgid "Failed to delete event date."
 msgstr "Error al eliminar la fecha del evento."
 
-#: src/API/EventDatesController.php:717
-#: src/API/EventDatesController.php:1338
+#: src/API/EventDatesController.php:741
+#: src/API/EventDatesController.php:1362
 msgid "The specified post type is not enabled."
 msgstr "El tipo de contenido especificado no está activado."
 
-#: src/API/EventDatesController.php:1346
+#: src/API/EventDatesController.php:1370
 #: src/Admin/event-meta-box/LinkOptions.js:52
 msgid "Untitled Event"
 msgstr "Evento sin título"
 
-#: src/API/EventDatesController.php:709
-#: src/API/EventDatesController.php:1405
+#: src/API/EventDatesController.php:733
+#: src/API/EventDatesController.php:1429
 msgid "Post not found."
 msgstr "Post no encontrado."
 
@@ -1093,7 +1031,7 @@ msgstr "Ingresos totales"
 msgid "Balance"
 msgstr "Saldo"
 
-#: src/Admin/all-events/AllEvents.js:165
+#: src/Admin/all-events/AllEvents.js:186
 #: src/Admin/manage-event/EventFinance.js:267
 #: src/Admin/manage-event/EventFinance.js:319
 #: src/Admin/manage-event/EventFinance.js:443
@@ -1101,7 +1039,7 @@ msgstr "Saldo"
 msgid "Date"
 msgstr "Fecha"
 
-#: src/Admin/all-events/AllEvents.js:226
+#: src/Admin/all-events/AllEvents.js:267
 msgid "Type"
 msgstr "Tipo"
 
@@ -1231,39 +1169,39 @@ msgstr "Eliminar evento"
 msgid "Details"
 msgstr "Detalles"
 
-#: src/Admin/settings/GeneralTab.js:151
+#: src/Admin/settings/GeneralTab.js:145
 msgid "Loading settings..."
 msgstr "Cargando los ajustes..."
 
-#: src/Admin/settings/GeneralTab.js:186
+#: src/Admin/settings/GeneralTab.js:180
 msgid "Enabled Post Types"
 msgstr "Tipos de publicación habilitados"
 
-#: src/Admin/settings/GeneralTab.js:233
+#: src/Admin/settings/GeneralTab.js:225
 msgid "Events API"
 msgstr "API de eventos"
 
-#: src/Admin/settings/GeneralTab.js:237
+#: src/Admin/settings/GeneralTab.js:229
 msgid "Share your events with other Fair Events sites using the public JSON API."
 msgstr "Comparte tus eventos con otros sitios de Fair Events usando la API JSON pública."
 
-#: src/Admin/settings/GeneralTab.js:245
+#: src/Admin/settings/GeneralTab.js:237
 msgid "Events API URL:"
 msgstr "URL de la API de eventos:"
 
-#: src/Admin/settings/GeneralTab.js:258
+#: src/Admin/settings/GeneralTab.js:250
 msgid "Copy API URL"
 msgstr "Copiar URL de API"
 
-#: src/Admin/settings/GeneralTab.js:259
+#: src/Admin/settings/GeneralTab.js:251
 msgid "Copy Events API URL to clipboard"
 msgstr "Copiar URL de la API de eventos al portapapeles"
 
-#: src/Admin/settings/GeneralTab.js:269
+#: src/Admin/settings/GeneralTab.js:261
 msgid "Open Events API"
 msgstr "Abrir API de eventos"
 
-#: src/Admin/settings/GeneralTab.js:274
+#: src/Admin/settings/GeneralTab.js:266
 msgid "Optional parameters: start_date, end_date (Y-m-d format), categories (comma-separated slugs), per_page, page."
 msgstr "Parámetros opcionales: start_date, end_date (formato Y-m-d), categories (slugs separados por comas), per_page, page."
 
@@ -1403,14 +1341,6 @@ msgstr "Anualmente"
 msgid "Next: %s"
 msgstr "Siguiente: %s"
 
-#: src/PostTypes/Event.php:59
-msgid "Add New Event Post"
-msgstr "Añadir nueva entrada de evento"
-
-#: src/PostTypes/Event.php:63
-msgid "Event Posts"
-msgstr "Entradas de evento"
-
 #: src/Admin/all-events/AllEvents.js:16
 msgid "External"
 msgstr "Externo"
@@ -1423,11 +1353,11 @@ msgstr "Nada"
 msgid "Master"
 msgstr "Principal"
 
-#: src/Admin/all-events/AllEvents.js:188
+#: src/Admin/all-events/AllEvents.js:229
 msgid "Link Type"
 msgstr "Tipo de enlace"
 
-#: src/Admin/all-events/AllEvents.js:199
+#: src/Admin/all-events/AllEvents.js:240
 msgid "Linked Post / URL"
 msgstr "Entrada/URL enlazada"
 
@@ -1642,7 +1572,7 @@ msgstr "No se encontraron participantes."
 msgid "Active"
 msgstr "Activo"
 
-#: src/Admin/all-events/AllEvents.js:99
+#: src/Admin/all-events/AllEvents.js:120
 #: src/Admin/manage-event/EditInstancesModal.js:64
 #: src/Admin/manage-event/RecurrenceCalendar.js:172
 msgid "Cancelled"
@@ -1845,21 +1775,17 @@ msgstr "Uno o más paquetes están forzados por wp-config y no se pueden alterna
 msgid "Save Features"
 msgstr "Guardar funciones"
 
-#: src/Admin/settings/GeneralTab.js:105
+#: src/Admin/settings/GeneralTab.js:102
 msgid "Select at least one post type, or enable the Events post type."
 msgstr "Selecciona al menos un tipo de contenido o habilita el tipo de contenido Eventos."
 
-#: src/Admin/settings/GeneralTab.js:190
+#: src/Admin/settings/GeneralTab.js:184
 msgid "Select which post types can have event data (dates, location)."
 msgstr "Selecciona qué tipos de contenido pueden tener datos de eventos (fechas, ubicación)."
 
-#: src/Admin/settings/GeneralTab.js:197
+#: src/Admin/settings/GeneralTab.js:191
 msgid "Use the Events post type"
 msgstr "Usar el tipo de contenido Eventos"
-
-#: src/Admin/settings/GeneralTab.js:205
-msgid "Register the dedicated Events post type. Turn off to attach events only to the post types selected below."
-msgstr "Registra el tipo de contenido Eventos dedicado. Desactívalo para adjuntar eventos solo a los tipos de contenido seleccionados a continuación."
 
 #: src/Admin/settings/SettingsApp.js:33
 msgid "Features"
@@ -1910,15 +1836,15 @@ msgstr "Funciona con %s"
 msgid "Price (%s)"
 msgstr "Precio (%s)"
 
-#: src/Admin/settings/GeneralTab.js:284
+#: src/Admin/settings/GeneralTab.js:276
 msgid "Branding"
 msgstr "Marca"
 
-#: src/Admin/settings/GeneralTab.js:288
+#: src/Admin/settings/GeneralTab.js:280
 msgid "Show 'Powered by Fair Event Plugins'"
 msgstr "Mostrar «Funciona con Fair Event Plugins»"
 
-#: src/Admin/settings/GeneralTab.js:296
+#: src/Admin/settings/GeneralTab.js:286
 msgid "Adds a subtle attribution line under public signup forms and at the bottom of participant emails. Off by default."
 msgstr "Añade una línea de atribución sutil bajo los formularios de registro públicos y al pie de los correos de participantes. Desactivado por defecto."
 
@@ -2366,15 +2292,15 @@ msgstr "En ningún lugar — mostrar solo los detalles"
 msgid "Delete event"
 msgstr "Borrar evento"
 
-#: src/API/EventDatesController.php:1537
+#: src/API/EventDatesController.php:1561
 msgid "Dates can only be cancelled on master events."
 msgstr "Las fechas solo se pueden cancelar en eventos maestros."
 
-#: src/API/EventDatesController.php:1547
+#: src/API/EventDatesController.php:1571
 msgid "Cannot cancel the master event date."
 msgstr "No se puede excluir la fecha del evento maestro."
 
-#: src/API/EventDatesController.php:1569
+#: src/API/EventDatesController.php:1593
 msgid "Invalid date."
 msgstr "Fecha no válida."
 
@@ -2400,33 +2326,33 @@ msgstr "Más opciones"
 msgid "Complete event system for the block editor: recurring events, responsive calendar blocks, and built-in ticket signup."
 msgstr "Sistema completo de eventos para el editor de bloques: eventos recurrentes, bloques de calendario responsivos y registro de entradas integrado."
 
-#: src/API/EventDatesController.php:401
+#: src/API/EventDatesController.php:425
 msgid "Recurrence shape: none (single date), rule (RRULE-based), or manual (hand-picked dates)."
 msgstr "Forma de recurrencia: ninguna (fecha única), regla (basada en RRULE) o manual (fechas seleccionadas manualmente)."
 
-#: src/API/EventDatesController.php:407
+#: src/API/EventDatesController.php:431
 msgid "Hand-picked occurrence dates (Y-m-d) for a manual-mode series. The earliest date becomes the master."
 msgstr "Fechas de ocurrencia seleccionadas manualmente (Y-m-d) para una serie en modo manual. La fecha más antigua se convierte en la principal."
 
-#: src/API/EventDatesController.php:464
+#: src/API/EventDatesController.php:488
 msgid "manual_dates must be an array of Y-m-d dates."
 msgstr "manual_dates debe ser un array de fechas en formato Y-m-d."
 
 #. translators: %d: maximum allowed occurrence count.
-#: src/API/EventDatesController.php:474
+#: src/API/EventDatesController.php:498
 #, php-format
 msgid "A series can have at most %d dates."
 msgstr "Una serie puede tener como máximo %d fechas."
 
-#: src/API/EventDatesController.php:486
+#: src/API/EventDatesController.php:510
 msgid "Each manual date must be in Y-m-d format."
 msgstr "Cada fecha manual debe estar en formato Y-m-d."
 
-#: src/API/EventDatesController.php:495
+#: src/API/EventDatesController.php:519
 msgid "Each manual date must be a valid calendar date."
 msgstr "Cada fecha manual debe ser una fecha de calendario válida."
 
-#: src/API/EventDatesController.php:503
+#: src/API/EventDatesController.php:527
 msgid "Manual dates must not contain duplicates — only one occurrence per day is supported."
 msgstr "Las fechas manuales no deben contener duplicados — solo se admite una ocurrencia por día."
 
@@ -2635,7 +2561,7 @@ msgstr "Cada fecha solo se puede usar una vez — elimina el duplicado antes de 
 msgid "Master date — edit it from Event Details"
 msgstr "Fecha principal — edítala desde Detalles del evento"
 
-#: src/Admin/settings/GeneralTab.js:303
+#: src/Admin/settings/GeneralTab.js:293
 msgid "The Events Calendar and Events Week View blocks follow the \"Week Starts On\" setting under Settings → General."
 msgstr "Los bloques Calendario de eventos y Vista de semana de eventos siguen la configuración «Semana comienza el» en Ajustes → General."
 
@@ -2768,16 +2694,16 @@ msgstr "URL de la página del evento a buscar."
 msgid "You do not have permission to look up event pages."
 msgstr "No tienes permiso para buscar páginas de eventos."
 
-#: src/Admin/all-events/AllEvents.js:126
+#: src/Admin/all-events/AllEvents.js:147
 msgid "Collapse series dates"
 msgstr "Contraer fechas de la serie"
 
-#: src/Admin/all-events/AllEvents.js:130
+#: src/Admin/all-events/AllEvents.js:151
 msgid "Expand series dates"
 msgstr "Expandir fechas de la serie"
 
 #. translators: %d: number of dates in the series.
-#: src/Admin/all-events/AllEvents.js:144
+#: src/Admin/all-events/AllEvents.js:165
 #, js-format
 msgid "(%d dates)"
 msgstr "(%d fechas)"
@@ -3290,15 +3216,15 @@ msgstr "Tu inscripción ha sido cancelada."
 msgid "Failed to cancel signup. Please try again."
 msgstr "Error al cancelar la inscripción. Por favor, inténtalo de nuevo."
 
-#: src/API/EventDatesController.php:381
+#: src/API/EventDatesController.php:405
 msgid "Attendance mode (in_person, online, hybrid)."
 msgstr "Modo de asistencia (presencial, en línea, híbrido)."
 
-#: src/API/EventDatesController.php:388
+#: src/API/EventDatesController.php:412
 msgid "Public joining URL for online/hybrid events. Falls back to the event page URL when empty."
 msgstr "URL pública para unirse a eventos en línea o híbridos. Se usa la URL de la página del evento si está vacía."
 
-#: src/API/EventDatesController.php:530
+#: src/API/EventDatesController.php:554
 msgid "The joining link must be a valid URL."
 msgstr "El enlace para unirse debe ser una URL válida."
 
@@ -3467,7 +3393,7 @@ msgstr "Fondo del encabezado"
 msgid "Venues"
 msgstr "Lugares"
 
-#: src/API/EventDatesController.php:362
+#: src/API/EventDatesController.php:386
 msgid "Free-text address, used as a fallback when no venue is selected."
 msgstr "Dirección de texto libre, utilizada como alternativa cuando no hay ningún lugar seleccionado."
 
@@ -3741,11 +3667,11 @@ msgstr "Caducado"
 msgid "Post ID that should have event data."
 msgstr "ID de entrada que debe contener datos del evento."
 
-#: src/API/EventDatesController.php:725
+#: src/API/EventDatesController.php:749
 msgid "You do not have permission to edit this post."
 msgstr "No tienes permiso para editar esta entrada."
 
-#: src/API/EventDatesController.php:746
+#: src/API/EventDatesController.php:770
 msgid "Failed to create event data."
 msgstr "No se pudieron crear los datos del evento."
 
@@ -4053,3 +3979,91 @@ msgstr ""
 #: src/Admin/manage-event/ManageEventApp.js:649
 msgid "Prices"
 msgstr ""
+
+#: src/API/EventDatesController.php:320
+msgid "Filter by venue ID, or \"none\" for events with no venue."
+msgstr ""
+
+#: src/API/EventDatesController.php:344
+msgid "venue_id must be \"none\" or a numeric venue ID."
+msgstr ""
+
+#: src/PostTypes/Event.php:53
+msgctxt "Post type general name"
+msgid "Event Pages"
+msgstr "Páginas de evento"
+
+#: src/PostTypes/Event.php:54
+msgctxt "Post type singular name"
+msgid "Event Page"
+msgstr "Página de evento"
+
+#: src/PostTypes/Event.php:57
+msgctxt "Add New on Toolbar"
+msgid "Event Page"
+msgstr "Página de evento"
+
+#: src/PostTypes/Event.php:59
+msgid "Add New Event Page"
+msgstr "Añadir nueva página de evento"
+
+#: src/PostTypes/Event.php:60
+msgid "New Event Page"
+msgstr "Nueva página de evento"
+
+#: src/PostTypes/Event.php:61
+msgid "Edit Event Page"
+msgstr "Editar página de evento"
+
+#: src/PostTypes/Event.php:62
+msgid "View Event Page"
+msgstr "Ver página de evento"
+
+#: src/PostTypes/Event.php:63
+msgid "Event Pages"
+msgstr "Páginas de evento"
+
+#: src/PostTypes/Event.php:64
+msgid "Search Event Pages"
+msgstr "Buscar páginas de evento"
+
+#: src/PostTypes/Event.php:65
+msgid "Parent Event Pages:"
+msgstr "Páginas de evento superiores:"
+
+#: src/PostTypes/Event.php:66
+msgid "No event pages found."
+msgstr "No se encontraron páginas de evento."
+
+#: src/PostTypes/Event.php:67
+msgid "No event pages found in Trash."
+msgstr "No se encontraron páginas de evento en la papelera."
+
+#: src/PostTypes/Event.php:72
+msgctxt "The post type archive label"
+msgid "Event page archives"
+msgstr "Archivo de páginas de evento"
+
+#: src/PostTypes/Event.php:75
+msgctxt "Screen reader text for the filter links"
+msgid "Filter event pages list"
+msgstr "Filtrar lista de páginas de evento"
+
+#: src/PostTypes/Event.php:76
+msgctxt "Screen reader text for the pagination"
+msgid "Event pages list navigation"
+msgstr "Navegación de la lista de páginas de evento"
+
+#: src/PostTypes/Event.php:77
+msgctxt "Screen reader text for the items list"
+msgid "Event pages list"
+msgstr "Lista de páginas de evento"
+
+#: src/Admin/all-events/AllEvents.js:85
+#: src/Admin/all-events/AllEvents.js:201
+msgid "No location"
+msgstr ""
+
+#: src/Admin/settings/GeneralTab.js:197
+msgid "Register the dedicated Events post type, whose entries are the event pages describing your events. Turn off to attach event data only to the post types selected below."
+msgstr "Registra el tipo de contenido Eventos dedicado, cuyo contenido son las páginas de evento que describen tus eventos. Desactívalo para asociar los datos de evento solo a los tipos de contenido seleccionados a continuación."

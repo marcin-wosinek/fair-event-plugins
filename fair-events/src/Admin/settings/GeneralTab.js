@@ -203,7 +203,7 @@ export default function GeneralTab( { onNotice } ) {
 								setRegisterPostType( value )
 							}
 							help={ __(
-								'Register the dedicated Events post type. Turn off to attach events only to the post types selected below.',
+								'Register the dedicated Events post type, whose entries are the event pages describing your events. Turn off to attach event data only to the post types selected below.',
 								'fair-events'
 							) }
 							disabled={ isSaving }
