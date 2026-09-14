@@ -266,38 +266,64 @@ test.describe( 'EventStatisticsController', () => {
 		expect( response.status() ).toBe( 404 );
 	} );
 
-	test( 'ends an upcoming series on the website-local current day', async () => {
+	test( 'keeps an upcoming event horizon with null future totals', async () => {
 		const body = await getStatistics( occurrences.upcoming.eventDateId );
 		expect( body.start_date ).toBe( addDays( today, 10 ) );
 		expect( body.end_date ).toBe( addDays( today, 10 ) );
 		expect( body.series[ 0 ].date ).toBe( addDays( today, -17 ) );
 		expect( body.series[ 0 ].total ).toBe( 1 );
-		expect( body.series.at( -1 ) ).toMatchObject( {
+		const lastRecorded = body.series.findLast(
+			( point ) => typeof point.total === 'number'
+		);
+		expect( lastRecorded ).toMatchObject( {
 			date: today,
 			total: 2,
 		} );
-		expect( body.series.at( -1 ).label ).toContain( '10 days before' );
+		expect( lastRecorded.label ).toContain( '10 days before' );
+		expect( body.series.at( -1 ) ).toMatchObject( {
+			date: addDays( today, 10 ),
+			label: 'Day of the event',
+			total: null,
+		} );
 		expect( body.total_sales ).toBe( 2 );
-		expect( body.series.at( -1 ).total ).toBe( body.total_sales );
-		expect( body.series.every( ( point ) => point.date <= today ) ).toBe(
-			true
-		);
+		expect( lastRecorded.total ).toBe( body.total_sales );
+		expect(
+			body.series
+				.filter( ( point ) => point.date > today )
+				.every( ( point ) => point.total === null )
+		).toBe( true );
 	} );
 
-	test( 'returns one empty today point for an event outside the window', async () => {
+	test( 'starts a far-future range today and ends on the event day', async () => {
 		const body = await getStatistics( occurrences.farFuture.eventDateId );
 		expect( body.total_sales ).toBe( 0 );
-		expect( body.series ).toEqual( [
-			{ date: today, label: '40 days before the event', total: 0 },
-		] );
+		expect( body.series[ 0 ] ).toEqual( {
+			date: today,
+			label: '40 days before the event',
+			total: 0,
+		} );
+		expect( body.series.at( -1 ) ).toEqual( {
+			date: addDays( today, 40 ),
+			label: 'Day of the event',
+			total: null,
+		} );
+		expect( body.series ).toHaveLength( 41 );
 	} );
 
-	test( 'ends an ongoing multi-day event on today', async () => {
+	test( 'keeps remaining ongoing event days as null points', async () => {
 		const body = await getStatistics( occurrences.ongoing.eventDateId );
 		expect( body.end_date ).toBe( addDays( today, 2 ) );
-		expect( body.series.at( -1 ).date ).toBe( today );
-		expect( body.series.at( -1 ).label ).toContain( '3rd day' );
-		expect( body.series.at( -1 ).total ).toBe( body.total_sales );
+		const lastRecorded = body.series.findLast(
+			( point ) => typeof point.total === 'number'
+		);
+		expect( lastRecorded.date ).toBe( today );
+		expect( lastRecorded.label ).toContain( '3rd day' );
+		expect( lastRecorded.total ).toBe( body.total_sales );
+		expect( body.series.at( -1 ) ).toMatchObject( {
+			date: addDays( today, 2 ),
+			label: '5th day of the event',
+			total: null,
+		} );
 	} );
 
 	test( 'keeps a completed event through its configured final day', async () => {
@@ -311,6 +337,9 @@ test.describe( 'EventStatisticsController', () => {
 	test( 'counts only signed-up rows and preserves the final total', async () => {
 		const body = await getStatistics( occurrences.qualifying.eventDateId );
 		expect( body.total_sales ).toBe( 1 );
-		expect( body.series.at( -1 ).total ).toBe( body.total_sales );
+		expect(
+			body.series.findLast( ( point ) => typeof point.total === 'number' )
+				.total
+		).toBe( body.total_sales );
 	} );
 } );

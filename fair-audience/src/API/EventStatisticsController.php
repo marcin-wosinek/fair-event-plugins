@@ -109,8 +109,8 @@ class EventStatisticsController extends WP_REST_Controller {
 		if ( ! $end || $end < $start ) {
 			$end = $start;
 		}
-		$today      = new DateTimeImmutable( 'today', $timezone );
-		$series_end = $today < $end ? $today : $end;
+		$today        = new DateTimeImmutable( 'today', $timezone );
+		$recorded_end = $today < $end ? $today : $end;
 
 		$rows        = $this->get_qualifying_sales_rows( $event_date );
 		$daily_sales = array();
@@ -123,8 +123,8 @@ class EventStatisticsController extends WP_REST_Controller {
 		}
 
 		$window_start = $start->sub( new DateInterval( 'P27D' ) );
-		if ( $window_start > $series_end ) {
-			$window_start = $series_end;
+		if ( $window_start > $recorded_end ) {
+			$window_start = $recorded_end;
 		}
 		$cumulative = 0;
 		foreach ( $daily_sales as $date => $count ) {
@@ -135,18 +135,18 @@ class EventStatisticsController extends WP_REST_Controller {
 
 		$series = array();
 		$cursor = $window_start;
-		while ( $cursor <= $series_end ) {
+		while ( $cursor <= $end ) {
 			$key = $cursor->format( 'Y-m-d' );
-			if ( $cursor < $series_end ) {
+			if ( $cursor < $recorded_end ) {
 				$cumulative += $daily_sales[ $key ] ?? 0;
-			} else {
+			} elseif ( $key === $recorded_end->format( 'Y-m-d' ) ) {
 				// Fold all remaining confirmations into the final visible point.
 				$cumulative = count( $rows );
 			}
 			$series[] = array(
 				'date'  => $key,
 				'label' => $this->get_point_label( $cursor, $start, $end ),
-				'total' => $cumulative,
+				'total' => $cursor <= $recorded_end ? $cumulative : null,
 			);
 			$cursor   = $cursor->add( new DateInterval( 'P1D' ) );
 		}

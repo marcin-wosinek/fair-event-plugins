@@ -18,6 +18,7 @@ import {
 	YAxis,
 	Tooltip,
 	CartesianGrid,
+	ReferenceLine,
 } from 'recharts';
 
 const BAR_COLOR = '#3858e9'; // WordPress admin blue.
@@ -134,6 +135,32 @@ export default function EventStatistics( { eventDateId } ) {
 		() => activityCountDistribution( confirmed ),
 		[ confirmed ]
 	);
+	const futureHorizon = useMemo( () => {
+		const series = statistics?.series;
+		if ( ! Array.isArray( series ) || series.length < 2 ) {
+			return null;
+		}
+		let recordedIndex = series.length - 1;
+		while (
+			recordedIndex >= 0 &&
+			typeof series[ recordedIndex ].total !== 'number'
+		) {
+			recordedIndex--;
+		}
+		if ( recordedIndex < 0 || recordedIndex === series.length - 1 ) {
+			return null;
+		}
+		return [
+			{
+				x: series[ recordedIndex ].label,
+				y: series[ recordedIndex ].total,
+			},
+			{
+				x: series.at( -1 ).label,
+				y: series[ recordedIndex ].total,
+			},
+		];
+	}, [ statistics ] );
 	if ( participantLoading && statisticsLoading ) {
 		return (
 			<div style={ { padding: '24px', textAlign: 'center' } }>
@@ -222,6 +249,13 @@ export default function EventStatistics( { eventDateId } ) {
 									fill={ BAR_COLOR }
 									fillOpacity={ 0.18 }
 								/>
+								{ futureHorizon && (
+									<ReferenceLine
+										segment={ futureHorizon }
+										stroke={ BAR_COLOR }
+										strokeDasharray="5 5"
+									/>
+								) }
 							</AreaChart>
 						</ResponsiveContainer>
 					</ChartCard>

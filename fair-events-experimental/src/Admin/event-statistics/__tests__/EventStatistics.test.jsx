@@ -21,13 +21,23 @@ jest.mock( 'recharts', () => {
 			{ children }
 		</div>
 	);
+	const Area = ( props ) => (
+		<div data-testid="sales-area" data-props={ JSON.stringify( props ) } />
+	);
+	const ReferenceLine = ( props ) => (
+		<div
+			data-testid="future-reference-line"
+			data-props={ JSON.stringify( props ) }
+		/>
+	);
 	const Empty = () => null;
 	return {
 		ResponsiveContainer: Passthrough,
 		BarChart: Passthrough,
 		AreaChart,
 		Bar: Empty,
-		Area: Empty,
+		Area,
+		ReferenceLine,
 		XAxis: Empty,
 		YAxis: Empty,
 		Tooltip: Empty,
@@ -187,26 +197,60 @@ describe( 'EventStatistics component', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'passes the shortened API series to the cumulative chart unchanged', async () => {
-		const shortenedSeries = [
+	it( 'renders future points with a dashed horizon after the solid area', async () => {
+		const series = [
 			{ date: '2026-06-12', label: '4 days before the event', total: 1 },
 			{ date: '2026-06-13', label: '3 days before the event', total: 2 },
+			{
+				date: '2026-06-14',
+				label: '2 days before the event',
+				total: null,
+			},
+			{ date: '2026-06-16', label: 'Day of the event', total: null },
 		];
 		mockApi( [], {
 			total_sales: 2,
 			days_until_start: 3,
-			series: shortenedSeries,
+			series,
 		} );
 
 		render( <EventStatistics eventDateId={ 42 } /> );
 
 		const chart = await screen.findByTestId( 'area-chart' );
 		const chartSeries = JSON.parse( chart.dataset.series );
-		expect( chartSeries ).toEqual( shortenedSeries );
-		expect( chartSeries.at( -1 ).date ).toBe( '2026-06-13' );
+		expect( chartSeries ).toEqual( series );
+		expect( chartSeries.at( -1 ).date ).toBe( '2026-06-16' );
 		expect(
-			chartSeries.some( ( point ) => point.date === '2026-06-16' )
-		).toBe( false );
+			JSON.parse( screen.getByTestId( 'sales-area' ).dataset.props )
+		).toMatchObject( { dataKey: 'total' } );
+		expect(
+			JSON.parse(
+				screen.getByTestId( 'future-reference-line' ).dataset.props
+			)
+		).toMatchObject( {
+			segment: [
+				{ x: '3 days before the event', y: 2 },
+				{ x: 'Day of the event', y: 2 },
+			],
+			strokeDasharray: '5 5',
+		} );
+	} );
+
+	it( 'omits the dashed horizon for a completed series', async () => {
+		mockApi( [], {
+			days_until_start: null,
+			series: [
+				{ date: '2026-06-15', label: '1st day', total: 1 },
+				{ date: '2026-06-16', label: '2nd day', total: 2 },
+			],
+		} );
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		await screen.findByTestId( 'area-chart' );
+		expect(
+			screen.queryByTestId( 'future-reference-line' )
+		).not.toBeInTheDocument();
 	} );
 
 	it( 'shows statistics failures independently', async () => {
