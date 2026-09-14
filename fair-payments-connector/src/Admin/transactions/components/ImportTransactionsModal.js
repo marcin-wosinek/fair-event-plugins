@@ -20,6 +20,7 @@ import {
  * Internal dependencies
  */
 import { parseMollieCsv } from '../parseMollieCsv.js';
+import { loadConnectionSettings } from '../../settings/settings-api.js';
 
 const STATUS_COLORS = {
 	connected: '#007017',
@@ -51,6 +52,8 @@ const ImportTransactionsModal = ( { onClose, onImported } ) => {
 	const [ endDate, setEndDate ] = useState( dateValue( today ) );
 	const [ mollieCursor, setMollieCursor ] = useState( null );
 	const [ loadingMollie, setLoadingMollie ] = useState( false );
+	const [ loadingMollieConnection, setLoadingMollieConnection ] =
+		useState( false );
 	const [ mollieResult, setMollieResult ] = useState( null );
 	const fileInputRef = useRef( null );
 
@@ -82,6 +85,44 @@ const ImportTransactionsModal = ( { onClose, onImported } ) => {
 		};
 
 		loadSites();
+	}, [ view ] );
+
+	// The Mode default is localized once at admin-page load, which goes stale
+	// if the site's configured Mollie mode changes afterwards. Refetch it
+	// fresh each time this source opens so the control never shows a mode
+	// the site no longer uses.
+	useEffect( () => {
+		if ( view !== 'mollie' ) {
+			return;
+		}
+
+		let isCurrent = true;
+		setLoadingMollieConnection( true );
+
+		loadConnectionSettings()
+			.then( ( settings ) => {
+				if ( ! isCurrent ) {
+					return;
+				}
+				setMollieState( ( current ) => ( {
+					...current,
+					connected: settings.connected,
+				} ) );
+				setMollieMode( settings.mode === 'live' ? 'live' : 'test' );
+			} )
+			.catch( () => {
+				// Keep the page-load-time optimistic value when the fresh
+				// connection check fails.
+			} )
+			.finally( () => {
+				if ( isCurrent ) {
+					setLoadingMollieConnection( false );
+				}
+			} );
+
+		return () => {
+			isCurrent = false;
+		};
 	}, [ view ] );
 
 	const handleFileChange = async ( e ) => {
@@ -340,6 +381,15 @@ const ImportTransactionsModal = ( { onClose, onImported } ) => {
 								},
 							] }
 							onChange={ setMollieMode }
+							disabled={ loadingMollieConnection }
+							help={
+								loadingMollieConnection
+									? __(
+											'Checking the current mode…',
+											'fair-payments-connector'
+									  )
+									: undefined
+							}
 						/>
 						<TextControl
 							label={ __(

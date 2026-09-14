@@ -27,8 +27,12 @@ it( 'offers the Mollie import source', () => {
 	).toBeInTheDocument();
 } );
 
-it( 'shows actionable setup guidance when Mollie is disconnected', () => {
+it( 'shows actionable setup guidance when Mollie is disconnected', async () => {
 	window.fairPaymentTransactions.mollieConnected = false;
+	apiFetch.mockResolvedValueOnce( {
+		fair_payment_mollie_connected: false,
+		fair_payment_mode: 'test',
+	} );
 	render(
 		<ImportTransactionsModal
 			onClose={ jest.fn() }
@@ -47,10 +51,80 @@ it( 'shows actionable setup guidance when Mollie is disconnected', () => {
 		'href',
 		'/wp-admin/admin.php?page=fair-payments-connector-settings'
 	);
+	await waitFor( () =>
+		expect( apiFetch ).toHaveBeenCalledWith(
+			expect.objectContaining( { path: '/wp/v2/settings' } )
+		)
+	);
+	expect( console ).toHaveLogged();
+} );
+
+it( 'refreshes the Mollie mode from the server when the source opens, even if the page loaded as test mode', async () => {
+	window.fairPaymentTransactions.testMode = true;
+	apiFetch.mockResolvedValueOnce( {
+		fair_payment_mollie_connected: true,
+		fair_payment_mode: 'live',
+	} );
+	render(
+		<ImportTransactionsModal
+			onClose={ jest.fn() }
+			onImported={ jest.fn() }
+		/>
+	);
+
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Import from Mollie' } )
+	);
+
+	// Optimistic first paint keeps the page-load-time value...
+	expect( screen.getByLabelText( 'Mode' ) ).toHaveValue( 'test' );
+	expect( apiFetch ).toHaveBeenCalledWith(
+		expect.objectContaining( { path: '/wp/v2/settings' } )
+	);
+	// ...then the fresh fetch overwrites it, with no user interaction.
+	await waitFor( () =>
+		expect( screen.getByLabelText( 'Mode' ) ).toHaveValue( 'live' )
+	);
+	expect( console ).toHaveLogged();
+} );
+
+it( 'disables the Mode control while the fresh connection check is pending', async () => {
+	let resolveSettings;
+	apiFetch.mockImplementationOnce(
+		() =>
+			new Promise( ( resolve ) => {
+				resolveSettings = resolve;
+			} )
+	);
+	render(
+		<ImportTransactionsModal
+			onClose={ jest.fn() }
+			onImported={ jest.fn() }
+		/>
+	);
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Import from Mollie' } )
+	);
+
+	expect( screen.getByLabelText( 'Mode' ) ).toBeDisabled();
+
+	resolveSettings( {
+		fair_payment_mollie_connected: true,
+		fair_payment_mode: 'test',
+	} );
+
+	await waitFor( () =>
+		expect( screen.getByLabelText( 'Mode' ) ).not.toBeDisabled()
+	);
+	expect( console ).toHaveLogged();
 } );
 
 it( 'loads, selects, and imports eligible payments while disabling existing rows', async () => {
 	apiFetch
+		.mockResolvedValueOnce( {
+			fair_payment_mollie_connected: true,
+			fair_payment_mode: 'test',
+		} )
 		.mockResolvedValueOnce( {
 			connected: true,
 			default_mode: 'test',
@@ -113,14 +187,20 @@ it( 'loads, selects, and imports eligible payments while disabling existing rows
 	expect(
 		( await screen.findAllByText( /Imported 1, skipped 0/ ) ).length
 	).toBeGreaterThan( 0 );
+	expect( console ).toHaveLogged();
 } );
 
 it( 'shows empty, API error, and partial-failure feedback', async () => {
-	apiFetch.mockResolvedValueOnce( {
-		connected: true,
-		payments: [],
-		next: null,
-	} );
+	apiFetch
+		.mockResolvedValueOnce( {
+			fair_payment_mollie_connected: true,
+			fair_payment_mode: 'test',
+		} )
+		.mockResolvedValueOnce( {
+			connected: true,
+			payments: [],
+			next: null,
+		} );
 	const { unmount } = render(
 		<ImportTransactionsModal
 			onClose={ jest.fn() }
@@ -136,9 +216,15 @@ it( 'shows empty, API error, and partial-failure feedback', async () => {
 			'No paid Mollie payments match these filters.'
 		)
 	).toBeInTheDocument();
+	expect( console ).toHaveLogged();
 	unmount();
 
-	apiFetch.mockRejectedValueOnce( new Error( 'Mollie unavailable' ) );
+	apiFetch
+		.mockResolvedValueOnce( {
+			fair_payment_mollie_connected: true,
+			fair_payment_mode: 'test',
+		} )
+		.mockRejectedValueOnce( new Error( 'Mollie unavailable' ) );
 	render(
 		<ImportTransactionsModal
 			onClose={ jest.fn() }
@@ -152,4 +238,5 @@ it( 'shows empty, API error, and partial-failure feedback', async () => {
 	expect(
 		( await screen.findAllByText( 'Mollie unavailable' ) ).length
 	).toBeGreaterThan( 0 );
+	expect( console ).toHaveLogged();
 } );
