@@ -97,7 +97,7 @@ msgstr "Zobacz wydarzenie"
 
 #: src/Admin/AdminPages.php:120
 #: src/Admin/AdminPages.php:121
-#: src/Admin/all-events/AllEvents.js:368
+#: src/Admin/all-events/AllEvents.js:367
 #: src/blocks/events-list/components/EditComponent.js:107
 msgid "All Events"
 msgstr "Wszystkie wydarzenia"
@@ -173,7 +173,7 @@ msgid "Event location"
 msgstr "Miejsce wydarzenia"
 
 #: src/PostTypes/Event.php:221
-#: src/Admin/manage-event/ManageEventApp.js:629
+#: src/Admin/manage-event/ManageEventApp.js:642
 msgid "Event Details"
 msgstr "Szczegóły wydarzenia"
 
@@ -274,7 +274,7 @@ msgstr "Filtruj wydarzenia według czasu względem teraźniejszości"
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:177
 #: src/Admin/calendar/components/QuickEventModal.js:451
-#: src/Admin/manage-event/ManageEventApp.js:924
+#: src/Admin/manage-event/ManageEventApp.js:937
 #: src/blocks/events-calendar/components/EditComponent.js:138
 #: src/blocks/events-list/components/EditComponent.js:132
 #: src/blocks/events-week/components/EditComponent.js:108
@@ -374,7 +374,7 @@ msgstr "Tytuł wydarzenia jest wymagany."
 
 #: src/Admin/CopyEventPage.php:308
 #: src/Admin/calendar/components/QuickEventModal.js:341
-#: src/Admin/manage-event/ManageEventApp.js:826
+#: src/Admin/manage-event/ManageEventApp.js:839
 msgid "Title"
 msgstr "Tytuł"
 
@@ -383,9 +383,9 @@ msgstr "Tytuł"
 #: src/Admin/manage-event/EditInstancesModal.js:75
 #: src/Admin/manage-event/EventSignups.js:382
 #: src/Admin/manage-event/EventTickets.js:2606
-#: src/Admin/manage-event/ManageEventApp.js:1277
-#: src/Admin/manage-event/ManageEventApp.js:1287
-#: src/Admin/manage-event/ManageEventApp.js:1297
+#: src/Admin/manage-event/ManageEventApp.js:1290
+#: src/Admin/manage-event/ManageEventApp.js:1300
+#: src/Admin/manage-event/ManageEventApp.js:1310
 #: src/Admin/manage-event/SeriesModal.js:396
 #: src/Admin/settings/OrganizerTab.js:520
 #: src/Admin/venues/VenuesApp.js:853
@@ -398,7 +398,7 @@ msgstr "Czas trwania wydarzenia"
 
 #: src/Admin/AdminPages.php:231
 #: src/PostTypes/Event.php:496
-#: src/Admin/all-events/AllEvents.js:348
+#: src/Admin/all-events/AllEvents.js:347
 msgid "Copy"
 msgstr "Kopiuj"
 
@@ -726,8 +726,8 @@ msgstr "Kalendarz"
 #: src/Admin/AdminPages.php:158
 #: src/Hooks/AdminBarHooks.php:59
 #: src/Admin/calendar/CalendarApp.js:197
-#: src/Admin/manage-event/ManageEventApp.js:800
-#: src/Admin/manage-event/ManageEventApp.js:1218
+#: src/Admin/manage-event/ManageEventApp.js:813
+#: src/Admin/manage-event/ManageEventApp.js:1231
 msgid "Manage Event"
 msgstr "Zarządzaj zdarzeniem"
 
@@ -957,15 +957,15 @@ msgstr "Szybkie dodanie zdarzenia"
 
 #: src/Admin/calendar/components/QuickEventModal.js:349
 #: src/Admin/event-meta-box/EventEditForm.js:339
-#: src/Admin/manage-event/ManageEventApp.js:833
+#: src/Admin/manage-event/ManageEventApp.js:846
 msgid "All day"
 msgstr "Cały dzień"
 
 #: src/Admin/calendar/components/QuickEventModal.js:357
 #: src/Admin/calendar/components/QuickEventModal.js:381
 #: src/Admin/event-meta-box/EventEditForm.js:345
-#: src/Admin/manage-event/ManageEventApp.js:841
-#: src/Admin/manage-event/ManageEventApp.js:864
+#: src/Admin/manage-event/ManageEventApp.js:854
+#: src/Admin/manage-event/ManageEventApp.js:877
 msgid "Start date"
 msgstr "Data rozpoczęcia"
 
@@ -973,8 +973,8 @@ msgstr "Data rozpoczęcia"
 #: src/Admin/calendar/components/QuickEventModal.js:403
 #: src/Admin/event-meta-box/EventEditForm.js:371
 #: src/Admin/manage-event/EventTickets.js:1527
-#: src/Admin/manage-event/ManageEventApp.js:851
-#: src/Admin/manage-event/ManageEventApp.js:884
+#: src/Admin/manage-event/ManageEventApp.js:864
+#: src/Admin/manage-event/ManageEventApp.js:897
 #: ../fair-events-shared/src/RecurrenceControl.js:79
 msgid "End date"
 msgstr "Data zakończenia"
@@ -982,20 +982,20 @@ msgstr "Data zakończenia"
 #: src/Admin/CopyEventPage.php:294
 #: src/Admin/calendar/components/QuickEventModal.js:391
 #: src/Admin/event-meta-box/EventEditForm.js:353
-#: src/Admin/manage-event/ManageEventApp.js:874
+#: src/Admin/manage-event/ManageEventApp.js:887
 msgid "Start time"
 msgstr "Godzina rozpoczęcia"
 
 #: src/Admin/CopyEventPage.php:298
 #: src/Admin/calendar/components/QuickEventModal.js:413
 #: src/Admin/event-meta-box/EventEditForm.js:379
-#: src/Admin/manage-event/ManageEventApp.js:894
+#: src/Admin/manage-event/ManageEventApp.js:907
 msgid "End time"
 msgstr "Godzina zakończenia"
 
 #: src/Admin/calendar/components/QuickEventModal.js:427
 #: src/Admin/event-meta-box/EventEditForm.js:387
-#: src/Admin/manage-event/ManageEventApp.js:976
+#: src/Admin/manage-event/ManageEventApp.js:989
 msgid "Venue"
 msgstr "Miejsce"
 
@@ -1024,7 +1024,7 @@ msgid "Failed to save event."
 msgstr "Nie udało się zapisać zdarzenia."
 
 #: src/Admin/event-meta-box/EventEditForm.js:361
-#: src/Admin/manage-event/ManageEventApp.js:907
+#: src/Admin/manage-event/ManageEventApp.js:920
 msgid "Event length"
 msgstr "Długość zdarzenia"
 
@@ -1159,7 +1159,7 @@ msgstr "Nie udało się odłączyć wpisu."
 msgid "Failed to link post."
 msgstr "Nie udało się połączyć wpisu."
 
-#: src/Admin/manage-event/ManageEventApp.js:808
+#: src/Admin/manage-event/ManageEventApp.js:821
 msgid "Back to Calendar"
 msgstr "Powrót do kalendarza"
 
@@ -1224,11 +1224,11 @@ msgstr "Wybierz..."
 msgid "Link Post"
 msgstr "Połącz post"
 
-#: src/Admin/manage-event/ManageEventApp.js:746
+#: src/Admin/manage-event/ManageEventApp.js:759
 msgid "Delete Event"
 msgstr "Usuń wydarzenie"
 
-#: src/Admin/manage-event/ManageEventApp.js:820
+#: src/Admin/manage-event/ManageEventApp.js:833
 msgid "Details"
 msgstr "Szczegóły"
 
@@ -1273,7 +1273,7 @@ msgid "General"
 msgstr "Ogólne"
 
 #: src/Admin/event-meta-box/EventEditForm.js:394
-#: src/Admin/manage-event/ManageEventApp.js:985
+#: src/Admin/manage-event/ManageEventApp.js:998
 #: src/Admin/settings/OrganizerTab.js:335
 #: src/Admin/venues/VenuesApp.js:569
 #: src/Admin/venues/VenuesApp.js:688
@@ -1360,37 +1360,37 @@ msgstr "Filtruj według typu wystąpienia."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:66
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d days"
 msgstr "Co %d dni"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:73
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every 2 weeks on %s"
 msgstr "Co 2 tygodnie w %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:77
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Co %1$d tygodni w %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:80
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %s"
 msgstr "Co %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:85
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d months"
 msgstr "Co %d miesięcy"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:92
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d years"
 msgstr "Co %d lat"
 
@@ -1400,7 +1400,7 @@ msgstr "Rocznie"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:167
-#, php-format, js-format
+#, php-format,js-format
 msgid "Next: %s"
 msgstr "Następnie: %s"
 
@@ -1444,13 +1444,8 @@ msgstr "Data do przełączenia (format Y-m-d)."
 msgid "Request context. Use \"edit\" to include events linked to non-published posts (requires edit_posts capability)."
 msgstr "Kontekst żądania. Użyj \"edit\", aby uwzględnić wydarzenia powiązane z nieopublikowanymi postami (wymaga możliwości edit_posts)."
 
-#: src/Admin/manage-event/EventTickets.js:1442
-#: src/Admin/manage-event/ManageEventApp.js:636
-msgid "Tickets"
-msgstr "Bilety"
-
 #: src/Admin/manage-event/EventFinance.js:157
-#: src/Admin/manage-event/ManageEventApp.js:668
+#: src/Admin/manage-event/ManageEventApp.js:681
 msgid "Finance"
 msgstr "Finanse"
 
@@ -1464,7 +1459,7 @@ msgstr "Bez tagu"
 
 #: src/Admin/manage-event/EventPhotos.js:341
 #: src/Admin/manage-event/EventPhotos.js:359
-#: src/Admin/manage-event/ManageEventApp.js:661
+#: src/Admin/manage-event/ManageEventApp.js:674
 msgid "Photos"
 msgstr "Zdjęcia"
 
@@ -1600,15 +1595,15 @@ msgstr "Nie udało się przełączyć wystąpienia."
 msgid "Groups"
 msgstr "Grupy"
 
-#: src/Admin/manage-event/ManageEventApp.js:681
+#: src/Admin/manage-event/ManageEventApp.js:694
 msgid "Admin"
 msgstr "Administrator"
 
-#: src/Admin/manage-event/ManageEventApp.js:687
+#: src/Admin/manage-event/ManageEventApp.js:700
 msgid "Event Administration"
 msgstr "Administracja Wydarzeniem"
 
-#: src/Admin/manage-event/ManageEventApp.js:733
+#: src/Admin/manage-event/ManageEventApp.js:746
 msgid "Permanently delete this event and all associated data. This action cannot be undone."
 msgstr "Trwale usuń to wydarzenie i wszystkie powiązane dane. Tej czynności nie można cofnąć."
 
@@ -1871,7 +1866,7 @@ msgstr "Zarejestruj dedykowany typ wpisu Wydarzenia. Wyłącz, aby dołączać w
 msgid "Features"
 msgstr "Funkcje"
 
-#: src/Admin/manage-event/ManageEventApp.js:1055
+#: src/Admin/manage-event/ManageEventApp.js:1068
 msgid "Recurrence"
 msgstr "Powtarzanie"
 
@@ -2000,7 +1995,7 @@ msgstr "Jedno z wybranych zdarzeń nie jest ważne dla tego biletu."
 #: src/API/GetTicketsController.php:1095
 #: src/blocks/event-signup/frontend.js:846
 #: src/blocks/event-signup/frontend.js:1439
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Proszę wybrać co najmniej %d wystąpienie."
@@ -2013,6 +2008,7 @@ msgstr[2] "Proszę wybrać co najmniej %d wystąpień."
 msgid "Tickets for event #%d"
 msgstr "Bilety do wydarzenia #%d"
 
+#. translators: %s: event name
 #. translators: %s: occurrence date/time label
 #: src/API/GetTicketsController.php:569
 #: src/API/GetTicketsController.php:1211
@@ -2063,10 +2059,6 @@ msgstr "Ilość"
 #: src/Admin/manage-event/EventSignups.js:159
 msgid "Mailing"
 msgstr "Mailing"
-
-#: src/Admin/manage-event/EventSignups.js:200
-msgid "Ticket Signups"
-msgstr "Rejestracje biletów"
 
 #: src/Admin/manage-event/EventSignups.js:233
 msgid "No signups yet."
@@ -2154,10 +2146,6 @@ msgstr "Wiele wystąpień — kupujący wybiera kilka dat"
 #: src/Admin/manage-event/EventTickets.js:2656
 msgid "Add ticket type"
 msgstr "Dodaj typ biletu"
-
-#: src/Admin/manage-event/ManageEventApp.js:653
-msgid "Signups"
-msgstr "Rejestracje"
 
 #: src/Admin/manage-event/RecurrenceImpactSummary.js:45
 msgid "This change cannot be applied:"
@@ -2353,11 +2341,11 @@ msgstr[2] "Usunąć %1$s i jego %2$d wystąpień? Tej czynności nie można cofn
 msgid "Delete %1$s on %2$s? This cannot be undone."
 msgstr "Usunąć %1$s na %2$s? Nie można tego cofnąć."
 
-#: src/Admin/manage-event/ManageEventApp.js:1170
+#: src/Admin/manage-event/ManageEventApp.js:1183
 msgid "Save event details"
 msgstr "Zapisz szczegóły imprezy"
 
-#: src/Admin/manage-event/ManageEventApp.js:1174
+#: src/Admin/manage-event/ManageEventApp.js:1187
 msgid "Title is required"
 msgstr "Tytuł jest wymagany"
 
@@ -2380,7 +2368,7 @@ msgstr "Zewnętrzna strona internetowa"
 msgid "Nowhere — show details only"
 msgstr "Nigdzie — pokaż tylko szczegóły"
 
-#: src/Admin/manage-event/ManageEventApp.js:1276
+#: src/Admin/manage-event/ManageEventApp.js:1289
 msgid "Delete event"
 msgstr "Usuń wydarzenie"
 
@@ -2485,7 +2473,7 @@ msgid "Link to"
 msgstr "Połącz z"
 
 #: src/Admin/manage-event/EditInstancesModal.js:40
-#: src/Admin/manage-event/ManageEventApp.js:1147
+#: src/Admin/manage-event/ManageEventApp.js:1160
 msgid "Edit instances"
 msgstr "Edytuj instancje"
 
@@ -2582,21 +2570,21 @@ msgstr "Powtarza się %1$s · %2$d dat · kończy się %3$s"
 msgid "Repeats %1$s · %2$d dates"
 msgstr "Powtarza się %1$s · %2$d dat"
 
-#: src/Admin/manage-event/ManageEventApp.js:1063
+#: src/Admin/manage-event/ManageEventApp.js:1076
 msgid "This event happens once."
 msgstr "To zdarzenie odbywa się raz."
 
-#: src/Admin/manage-event/ManageEventApp.js:1076
+#: src/Admin/manage-event/ManageEventApp.js:1089
 #: src/Admin/manage-event/SeriesModal.js:264
 msgid "Edit series"
 msgstr "Edytuj serię"
 
-#: src/Admin/manage-event/ManageEventApp.js:1090
-#: src/Admin/manage-event/ManageEventApp.js:1286
+#: src/Admin/manage-event/ManageEventApp.js:1103
+#: src/Admin/manage-event/ManageEventApp.js:1299
 msgid "End series"
 msgstr "Zakończ serię"
 
-#: src/Admin/manage-event/ManageEventApp.js:1103
+#: src/Admin/manage-event/ManageEventApp.js:1116
 #: src/Admin/manage-event/SeriesModal.js:265
 msgid "Turn into a series"
 msgstr "Zamień na serię"
@@ -2900,11 +2888,11 @@ msgstr "Nic do wyeksportowania — żadne rejestracje nie pasują do bieżącego
 msgid "Reset to automatic"
 msgstr "Przywróć do automatycznego"
 
-#: src/Admin/manage-event/ManageEventApp.js:1296
+#: src/Admin/manage-event/ManageEventApp.js:1309
 msgid "Save and continue"
 msgstr "Zapisz i kontynuuj"
 
-#: src/Admin/manage-event/ManageEventApp.js:1299
+#: src/Admin/manage-event/ManageEventApp.js:1312
 msgid "You have unsaved changes. Save event details before setting up the link?"
 msgstr "Masz niezapisane zmiany. Zapisać szczegóły zdarzenia przed skonfigurowaniem linku?"
 
@@ -3217,7 +3205,7 @@ msgstr "Wybierz zajęcia"
 #: src/Services/SignupFieldsetRenderer.php:180
 #: src/blocks/event-signup/frontend.js:1047
 #: src/blocks/event-signup/frontend.js:1479
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Wybierz co najmniej %d aktywność, aby się zarejestrować."
@@ -3436,27 +3424,27 @@ msgstr "+%s"
 msgid "-%s"
 msgstr "-%s"
 
-#: src/Admin/manage-event/ManageEventApp.js:1000
+#: src/Admin/manage-event/ManageEventApp.js:1013
 msgid "Attendance mode"
 msgstr "Tryb uczestnictwa"
 
-#: src/Admin/manage-event/ManageEventApp.js:1007
+#: src/Admin/manage-event/ManageEventApp.js:1020
 msgid "In person"
 msgstr "Osobiście"
 
-#: src/Admin/manage-event/ManageEventApp.js:1014
+#: src/Admin/manage-event/ManageEventApp.js:1027
 msgid "Online"
 msgstr "Online"
 
-#: src/Admin/manage-event/ManageEventApp.js:1021
+#: src/Admin/manage-event/ManageEventApp.js:1034
 msgid "Hybrid"
 msgstr "Hybrydowy"
 
-#: src/Admin/manage-event/ManageEventApp.js:1034
+#: src/Admin/manage-event/ManageEventApp.js:1047
 msgid "Joining link"
 msgstr "Odnośnik do dołączenia"
 
-#: src/Admin/manage-event/ManageEventApp.js:1038
+#: src/Admin/manage-event/ManageEventApp.js:1051
 msgid "Shown publicly. Leave empty to link to the event page instead."
 msgstr "Wyświetlane publicznie. Pozostaw puste, aby zamiast tego połączyć się ze stroną wydarzenia."
 
@@ -3581,7 +3569,7 @@ msgid "Latitude and longitude must be 20 characters or fewer."
 msgstr "Szerokość i długość geograficzna muszą mieć 20 znaków lub mniej."
 
 #: src/Admin/event-meta-box/EventEditForm.js:397
-#: src/Admin/manage-event/ManageEventApp.js:991
+#: src/Admin/manage-event/ManageEventApp.js:1004
 msgid "Used as the event location only when no venue is selected above."
 msgstr "Używane jako lokalizacja wydarzenia tylko wtedy, gdy żadne miejsce nie jest wybrane powyżej."
 
@@ -3922,15 +3910,15 @@ msgstr[0] "Możesz wybrać co najwyżej %d rozszerzenie."
 msgstr[1] "Możesz wybrać co najwyżej %d rozszerzenia."
 msgstr[2] "Możesz wybrać co najwyżej %d rozszerzeń."
 
-#: src/Admin/manage-event/ManageEventApp.js:696
+#: src/Admin/manage-event/ManageEventApp.js:709
 msgid "Open copy options for the underlying recurring event, not only this date."
 msgstr "Otwórz opcje kopiowania dla podstawowego wydarzenia cyklicznego, nie tylko dla tej daty."
 
-#: src/Admin/manage-event/ManageEventApp.js:700
+#: src/Admin/manage-event/ManageEventApp.js:713
 msgid "Open copy options with this event selected as the source."
 msgstr "Otwórz opcje kopiowania z tym wydarzeniem wybranym jako źródło."
 
-#: src/Admin/manage-event/ManageEventApp.js:710
+#: src/Admin/manage-event/ManageEventApp.js:723
 msgid "Copy event"
 msgstr "Kopiuj wydarzenie"
 
@@ -4063,6 +4051,16 @@ msgstr "To wydarzenie w kalendarzu ma niespójny link do wpisu i nie można go s
 msgid "You do not have permission to copy calendar events."
 msgstr "Nie posiadasz uprawnienia do kopiowania wydarzeń w kalendarzu."
 
-#: src/Services/EventCopyService.php:205
+#: src/Services/EventCopyService.php:209
 msgid "The event copy could not be completed, and any partial copy was removed. Please try again."
 msgstr "Nie można było ukończyć kopii wydarzenia, a każda częściowa kopia została usunięta. Spróbuj ponownie."
+
+#: src/Admin/manage-event/EventSignups.js:200
+#: src/Admin/manage-event/ManageEventApp.js:666
+msgid "List"
+msgstr ""
+
+#: src/Admin/manage-event/EventTickets.js:1442
+#: src/Admin/manage-event/ManageEventApp.js:649
+msgid "Prices"
+msgstr ""

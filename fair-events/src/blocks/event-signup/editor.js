@@ -180,7 +180,7 @@ registerBlockType( metadata.name, {
 							canManageEvents &&
 							( postEventDateId > 0 ? (
 								<ExternalLink
-									href={ `${ manageEventUrl }&event_date_id=${ postEventDateId }&tab=tickets` }
+									href={ `${ manageEventUrl }&event_date_id=${ postEventDateId }&tab=prices` }
 								>
 									{ __( 'Edit tickets', 'fair-events' ) }
 								</ExternalLink>

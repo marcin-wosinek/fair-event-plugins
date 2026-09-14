@@ -19,7 +19,13 @@ jest.mock( '@wordpress/api-fetch' );
 
 jest.mock( '../EventTickets.js', () => {
 	return function MockEventTickets( { isSeries } ) {
-		return <div>isSeries: { String( isSeries ) }</div>;
+		return <div>Prices content; isSeries: { String( isSeries ) }</div>;
+	};
+} );
+
+jest.mock( '../EventSignups.js', () => {
+	return function MockEventSignups() {
+		return <div>List content</div>;
 	};
 } );
 
@@ -201,7 +207,7 @@ describe( 'copy event action (#1517)', () => {
 	} );
 } );
 
-it( 'disables Tickets and Finance tabs for external-URL events', async () => {
+it( 'disables Prices and Finance tabs for external-URL events', async () => {
 	window.history.replaceState( {}, '', '?tab=tickets' );
 	window.fairEventsManageEventData = {
 		eventDateId: '1',
@@ -222,13 +228,13 @@ it( 'disables Tickets and Finance tabs for external-URL events', async () => {
 	} );
 
 	render( <ManageEventApp /> );
-	// Tickets tab is disabled, so the initial tab falls back to Event Details.
+	// Prices tab is disabled, so the initial tab falls back to Event Details.
 	await waitFor( () =>
 		expect(
 			screen.getByRole( 'tab', { name: 'Event Details' } )
 		).toBeInTheDocument()
 	);
-	expect( screen.getByRole( 'tab', { name: 'Tickets' } ) ).toHaveAttribute(
+	expect( screen.getByRole( 'tab', { name: 'Prices' } ) ).toHaveAttribute(
 		'aria-disabled',
 		'true'
 	);
@@ -238,7 +244,7 @@ it( 'disables Tickets and Finance tabs for external-URL events', async () => {
 	);
 } );
 
-it( 'keeps Tickets and Finance tabs enabled for post-linked events', async () => {
+it( 'keeps Prices and Finance tabs enabled for post-linked events', async () => {
 	window.history.replaceState( {}, '', '?tab=admin' );
 	window.fairEventsManageEventData = {
 		eventDateId: '1',
@@ -261,16 +267,17 @@ it( 'keeps Tickets and Finance tabs enabled for post-linked events', async () =>
 			screen.getByRole( 'tab', { name: 'Admin' } )
 		).toBeInTheDocument()
 	);
-	expect(
-		screen.getByRole( 'tab', { name: 'Tickets' } )
-	).not.toHaveAttribute( 'aria-disabled', 'true' );
+	expect( screen.getByRole( 'tab', { name: 'Prices' } ) ).not.toHaveAttribute(
+		'aria-disabled',
+		'true'
+	);
 	expect(
 		screen.getByRole( 'tab', { name: 'Finance' } )
 	).not.toHaveAttribute( 'aria-disabled', 'true' );
 } );
 
 it( 'passes isSeries=true to EventTickets for an irregular (manual) series (#1158)', async () => {
-	window.history.replaceState( {}, '', '?tab=tickets' );
+	window.history.replaceState( {}, '', '?tab=prices' );
 	window.fairEventsManageEventData = {
 		eventDateId: '1',
 		calendarUrl: 'http://example.com/calendar',
@@ -292,7 +299,51 @@ it( 'passes isSeries=true to EventTickets for an irregular (manual) series (#115
 
 	render( <ManageEventApp /> );
 	await waitFor( () =>
-		expect( screen.getByText( 'isSeries: true' ) ).toBeInTheDocument()
+		expect( screen.getByText( /isSeries: true/ ) ).toBeInTheDocument()
+	);
+} );
+
+describe( 'Prices and List tab routing (#1590)', () => {
+	beforeEach( () => {
+		window.fairEventsManageEventData.enabledFeatures = { ticketing: true };
+	} );
+
+	it( 'renders the renamed tab labels and writes canonical URL values', async () => {
+		render( <ManageEventApp /> );
+
+		const pricesTab = await screen.findByRole( 'tab', { name: 'Prices' } );
+		const listTab = screen.getByRole( 'tab', { name: 'List' } );
+		fireEvent.click( pricesTab );
+		expect( window.location.search ).toBe( '?tab=prices' );
+		fireEvent.click( listTab );
+		expect( window.location.search ).toBe( '?tab=list' );
+	} );
+
+	it.each( [
+		[ 'prices', 'Prices content' ],
+		[ 'list', 'List content' ],
+	] )( 'opens the %s canonical tab directly', async ( tab, content ) => {
+		window.history.replaceState( {}, '', `?tab=${ tab }` );
+		render( <ManageEventApp /> );
+		expect(
+			await screen.findByText( new RegExp( content ) )
+		).toBeInTheDocument();
+	} );
+
+	it.each( [
+		[ 'tickets', 'prices', 'Prices content' ],
+		[ 'signups', 'list', 'List content' ],
+	] )(
+		'opens legacy tab %s and normalizes it to %s',
+		async ( legacyTab, canonicalTab, content ) => {
+			window.history.replaceState( {}, '', `?tab=${ legacyTab }` );
+			render( <ManageEventApp /> );
+
+			expect(
+				await screen.findByText( new RegExp( content ) )
+			).toBeInTheDocument();
+			expect( window.location.search ).toBe( `?tab=${ canonicalTab }` );
+		}
 	);
 } );
 

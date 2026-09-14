@@ -1439,7 +1439,7 @@ export default function EventTickets( {
 
 			<Card>
 				<CardHeader>
-					<strong>{ __( 'Tickets', 'fair-events' ) }</strong>
+					<strong>{ __( 'Prices', 'fair-events' ) }</strong>
 					<DropdownMenu
 						icon={ moreVertical }
 						label={ __( 'More actions', 'fair-events' ) }

@@ -598,7 +598,20 @@ export default function ManageEventApp() {
 
 	const urlTab = useMemo( () => {
 		const urlParams = new URLSearchParams( window.location.search );
-		return urlParams.get( 'tab' ) || 'event-details';
+		const requestedTab = urlParams.get( 'tab' ) || 'event-details';
+		const legacyTabAliases = {
+			tickets: 'prices',
+			signups: 'list',
+		};
+		const canonicalTab = legacyTabAliases[ requestedTab ] || requestedTab;
+
+		if ( canonicalTab !== requestedTab ) {
+			const url = new URL( window.location.href );
+			url.searchParams.set( 'tab', canonicalTab );
+			window.history.replaceState( null, '', url.toString() );
+		}
+
+		return canonicalTab;
 	}, [] );
 
 	const handleTabSelect = useCallback( ( tabName ) => {
@@ -632,8 +645,8 @@ export default function ManageEventApp() {
 			render: () => renderEventDetailsTab(),
 		},
 		{
-			name: 'tickets',
-			title: __( 'Tickets', 'fair-events' ),
+			name: 'prices',
+			title: __( 'Prices', 'fair-events' ),
 			order: 20,
 			isVisible: ticketingEnabled,
 			disabled: isGeneratedOccurrence || isLinkOnlyEvent( eventDate ),
@@ -649,8 +662,8 @@ export default function ManageEventApp() {
 			),
 		},
 		{
-			name: 'signups',
-			title: __( 'Signups', 'fair-events' ),
+			name: 'list',
+			title: __( 'List', 'fair-events' ),
 			order: 25,
 			isVisible: !! ( ticketingEnabled && ! audienceUrl ),
 			disabled: isLinkOnlyEvent( eventDate ),
@@ -765,7 +778,7 @@ export default function ManageEventApp() {
 	// Tabs whose section currently holds unsaved edits get a " •" marker.
 	const dirtyTabNames = {
 		'event-details': detailsDirty,
-		tickets: ticketsDirty,
+		prices: ticketsDirty,
 	};
 
 	// Shape TabPanel expects: { name, title, disabled? }.
