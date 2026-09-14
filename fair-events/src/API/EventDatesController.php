@@ -316,9 +316,33 @@ class EventDatesController extends WP_REST_Controller {
 							'type'        => 'string',
 							'enum'        => array( 'single', 'master', 'generated' ),
 						),
+						'venue_id'        => array(
+							'description'       => __( 'Filter by venue ID, or "none" for events with no venue.', 'fair-events' ),
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+							'validate_callback' => array( $this, 'validate_venue_filter' ),
+						),
 					),
 				),
 			)
+		);
+	}
+
+	/**
+	 * Validate the venue_id filter param for get_all_items
+	 *
+	 * @param string $value Submitted value.
+	 * @return bool|WP_Error True when valid, WP_Error otherwise.
+	 */
+	public function validate_venue_filter( $value ) {
+		if ( '' === $value || 'none' === $value || ctype_digit( (string) $value ) ) {
+			return true;
+		}
+
+		return new WP_Error(
+			'rest_invalid_venue_id',
+			__( 'venue_id must be "none" or a numeric venue ID.', 'fair-events' ),
+			array( 'status' => 400 )
 		);
 	}
 
@@ -1641,6 +1665,16 @@ class EventDatesController extends WP_REST_Controller {
 			// Top level only: generated series dates ride along with their
 			// master row (attached below) rather than appearing standalone.
 			$where_clauses[] = "occurrence_type IN ('single', 'master')";
+		}
+
+		$venue_filter = $request->get_param( 'venue_id' );
+		if ( ! empty( $venue_filter ) ) {
+			if ( 'none' === $venue_filter ) {
+				$where_clauses[] = '( venue_id IS NULL OR venue_id = 0 )';
+			} else {
+				$where_clauses[] = 'venue_id = %d';
+				$where_values[]  = (int) $venue_filter;
+			}
 		}
 
 		$where_sql = '';

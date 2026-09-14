@@ -121,15 +121,30 @@ const linkedEvents = [
 	},
 ];
 
+const venues = [
+	{ id: 5, name: 'Community Hall' },
+	{ id: 6, name: 'Garden Pavilion' },
+];
+
+// The list request uses `parse: false` and returns the header/json shell from
+// jsonResponse(); the venues request expects a plain array. Route each mocked
+// call by path so overriding the list response in a test never breaks venues.
+function mockEventsResponse( listResponse ) {
+	apiFetch.mockImplementation( ( { path } ) => {
+		if ( path && path.startsWith( '/fair-events/v1/venues' ) ) {
+			return Promise.resolve( venues );
+		}
+		return Promise.resolve( listResponse );
+	} );
+}
+
 beforeEach( () => {
 	window.CSS.supports = jest.fn( () => false );
-	apiFetch.mockImplementation( () =>
-		Promise.resolve(
-			jsonResponse( [ masterEvent ], {
-				'x-wp-total': '1',
-				'x-wp-totalpages': '1',
-			} )
-		)
+	mockEventsResponse(
+		jsonResponse( [ masterEvent ], {
+			'x-wp-total': '1',
+			'x-wp-totalpages': '1',
+		} )
 	);
 } );
 
@@ -174,7 +189,7 @@ it( 'reveals nested date rows when the disclosure button is toggled', async () =
 } );
 
 it( 'keeps Edit and Copy in the actions menu for eligible rows', async () => {
-	apiFetch.mockResolvedValue(
+	mockEventsResponse(
 		jsonResponse( [ copyableEvent, masterEvent ], {
 			'x-wp-total': '2',
 			'x-wp-totalpages': '1',
@@ -205,7 +220,7 @@ it( 'keeps Edit and Copy in the actions menu for eligible rows', async () => {
 } );
 
 it( 'shows Edit without Copy in the actions menu for ineligible rows', async () => {
-	apiFetch.mockResolvedValue(
+	mockEventsResponse(
 		jsonResponse( [ masterEvent ], {
 			'x-wp-total': '1',
 			'x-wp-totalpages': '1',
@@ -232,7 +247,7 @@ it( 'shows Edit without Copy in the actions menu for ineligible rows', async () 
 } );
 
 it( 'navigates to the server-provided Copy URL', async () => {
-	apiFetch.mockResolvedValue(
+	mockEventsResponse(
 		jsonResponse( [ copyableEvent ], {
 			'x-wp-total': '1',
 			'x-wp-totalpages': '1',
@@ -268,7 +283,7 @@ it( 'uses the series source URL for an expanded generated occurrence', async () 
 } );
 
 it( 'shows human-readable linked-post statuses while preserving edit links', async () => {
-	apiFetch.mockResolvedValue(
+	mockEventsResponse(
 		jsonResponse( linkedEvents, {
 			'x-wp-total': '3',
 			'x-wp-totalpages': '1',
@@ -285,4 +300,54 @@ it( 'shows human-readable linked-post statuses while preserving edit links', asy
 	expect(
 		screen.getByRole( 'link', { name: 'Published Post (Published)' } )
 	).toHaveAttribute( 'href', '#published-edit-url' );
+} );
+
+it( 'renders the venue name and a "No location" fallback in the Location column', async () => {
+	const venueEvent = {
+		...copyableEvent,
+		id: 30,
+		title: 'Venue Event',
+		venue_id: 5,
+	};
+	mockEventsResponse(
+		jsonResponse( [ venueEvent, masterEvent ], {
+			'x-wp-total': '2',
+			'x-wp-totalpages': '1',
+		} )
+	);
+
+	render( <AllEvents /> );
+	await screen.findByText( 'Venue Event' );
+
+	const venueRow = screen.getByRole( 'row', { name: /Venue Event/ } );
+	expect(
+		within( venueRow ).getByText( 'Community Hall' )
+	).toBeInTheDocument();
+
+	const masterRow = screen.getByRole( 'row', { name: /Summer Workshops/ } );
+	expect(
+		within( masterRow ).getByText( 'No location' )
+	).toBeInTheDocument();
+} );
+
+it( 'requests events for the selected venue when the Location filter is used', async () => {
+	render( <AllEvents /> );
+	await screen.findByText( 'Summer Workshops' );
+
+	fireEvent.click( screen.getByRole( 'button', { name: 'Add filter' } ) );
+	fireEvent.click(
+		await screen.findByRole( 'menuitem', { name: 'Location' } )
+	);
+	fireEvent.click(
+		await screen.findByRole( 'option', { name: 'Community Hall' } )
+	);
+
+	await waitFor( () => {
+		const venueRequest = apiFetch.mock.calls.find(
+			( [ request ] ) =>
+				request.path.includes( '/event-dates/all' ) &&
+				request.path.includes( 'venue_id=5' )
+		);
+		expect( venueRequest ).toBeTruthy();
+	} );
 } );

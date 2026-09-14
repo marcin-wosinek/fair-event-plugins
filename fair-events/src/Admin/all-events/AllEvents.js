@@ -37,6 +37,7 @@ const DEFAULT_VIEW = {
 	fields: [
 		'title',
 		'start_datetime',
+		'venue_id',
 		'categories',
 		'link_type',
 		'linked_post',
@@ -65,6 +66,26 @@ export default function AllEvents() {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ view, setView ] = useState( DEFAULT_VIEW );
 	const [ expanded, setExpanded ] = useState( () => new Set() );
+	const [ venues, setVenues ] = useState( [] );
+
+	useEffect( () => {
+		apiFetch( { path: '/fair-events/v1/venues' } )
+			.then( ( data ) => setVenues( data ) )
+			.catch( () => {
+				// Venues are optional for the filter; leave it empty on failure.
+			} );
+	}, [] );
+
+	const venueOptions = useMemo(
+		() => [
+			...venues.map( ( venue ) => ( {
+				value: String( venue.id ),
+				label: venue.name,
+			} ) ),
+			{ value: 'none', label: __( 'No location', 'fair-events' ) },
+		],
+		[ venues ]
+	);
 
 	const toggleExpanded = useCallback( ( masterId ) => {
 		setExpanded( ( prev ) => {
@@ -173,6 +194,26 @@ export default function AllEvents() {
 				getValue: ( { item } ) => item.start_datetime || '',
 			},
 			{
+				id: 'venue_id',
+				label: __( 'Location', 'fair-events' ),
+				render: ( { item } ) => {
+					if ( ! item.venue_id ) {
+						return __( 'No location', 'fair-events' );
+					}
+					const venue = venues.find(
+						( v ) => v.id === item.venue_id
+					);
+					return venue ? venue.name : '—';
+				},
+				enableSorting: false,
+				getValue: ( { item } ) =>
+					item.venue_id ? String( item.venue_id ) : 'none',
+				elements: venueOptions,
+				filterBy: {
+					operators: [ 'is' ],
+				},
+			},
+			{
 				id: 'categories',
 				label: __( 'Categories', 'fair-events' ),
 				render: ( { item } ) => {
@@ -234,7 +275,7 @@ export default function AllEvents() {
 				},
 			},
 		],
-		[ expanded, toggleExpanded ]
+		[ expanded, toggleExpanded, venues, venueOptions ]
 	);
 
 	const queryArgs = useMemo( () => {
@@ -264,6 +305,9 @@ export default function AllEvents() {
 				}
 				if ( filter.field === 'occurrence_type' && filter.value ) {
 					params.append( 'occurrence_type', filter.value );
+				}
+				if ( filter.field === 'venue_id' && filter.value ) {
+					params.append( 'venue_id', filter.value );
 				}
 			}
 		}
