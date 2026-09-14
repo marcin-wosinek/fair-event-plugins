@@ -139,7 +139,7 @@ msgstr "Envois"
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr "Envois d'emails programmés pour les participants à l'événement. Nécessite fair-audience."
 
-#: src/Core/Plugin.php:207
+#: src/Core/Plugin.php:213
 msgid "Event associated with this image"
 msgstr "Événement associé à cette image"
 
@@ -158,29 +158,29 @@ msgid "Event not found."
 msgstr "Événement non trouvé."
 
 #. translators: %d: number of excluded participant rows.
-#: src/Admin/event-statistics/EventStatistics.js:235
+#: src/Admin/event-statistics/EventStatistics.js:315
 #, js-format
 msgid "Confirmed participants only (signed up). %d excluded (pending payment, interested, collaborators)."
 msgstr "Participants confirmés uniquement (inscrits). %d exclus (paiement en attente, intéressés, collaborateurs)."
 
-#: src/Admin/event-statistics/EventStatistics.js:244
+#: src/Admin/event-statistics/EventStatistics.js:324
 msgid "People per activity"
 msgstr "Personnes par activité"
 
-#: src/Admin/event-statistics/EventStatistics.js:251
+#: src/Admin/event-statistics/EventStatistics.js:331
 msgid "No activities recorded for confirmed participants."
 msgstr "Aucune activité enregistrée pour les participants confirmés."
 
-#: src/Admin/event-statistics/EventStatistics.js:276
-#: src/Admin/event-statistics/EventStatistics.js:315
+#: src/Admin/event-statistics/EventStatistics.js:356
+#: src/Admin/event-statistics/EventStatistics.js:395
 msgid "People"
 msgstr "Personnes"
 
-#: src/Admin/event-statistics/EventStatistics.js:288
+#: src/Admin/event-statistics/EventStatistics.js:368
 msgid "Activities per person"
 msgstr "Activités par personne"
 
-#: src/Admin/event-statistics/EventStatistics.js:303
+#: src/Admin/event-statistics/EventStatistics.js:383
 msgid "Activities"
 msgstr "Activités"
 
@@ -575,12 +575,12 @@ msgstr "Active les packs de fonctionnalités avancées pour Fair Events, y compr
 msgid "Advanced event duplication and merge tools."
 msgstr "Outils avancés de duplication et de fusion d'événements."
 
-#: src/Admin/event-statistics/EventStatistics.js:114
+#: src/Admin/event-statistics/EventStatistics.js:175
 msgid "Event sales statistics could not be loaded."
 msgstr "Les statistiques de ventes d'événement n'ont pas pu être chargées."
 
 #. translators: %d: confirmed sales total.
-#: src/Admin/event-statistics/EventStatistics.js:168
+#: src/Admin/event-statistics/EventStatistics.js:243
 #, js-format
 msgid "%d sale"
 msgid_plural "%d sales"
@@ -588,28 +588,28 @@ msgstr[0] "%d vente"
 msgstr[1] "%d ventes"
 
 #. translators: %d: calendar days until the event.
-#: src/Admin/event-statistics/EventStatistics.js:181
+#: src/Admin/event-statistics/EventStatistics.js:261
 #, js-format
 msgid "%d day until the event"
 msgid_plural "%d days until the event"
 msgstr[0] "%d jour jusqu'à l'événement"
 msgstr[1] "%d jours jusqu'à l'événement"
 
-#: src/Admin/event-statistics/EventStatistics.js:196
+#: src/Admin/event-statistics/EventStatistics.js:277
 msgid "Cumulative sales"
 msgstr "Ventes cumulées"
 
-#: src/Admin/event-statistics/EventStatistics.js:217
+#: src/Admin/event-statistics/EventStatistics.js:285
 msgid "Sales"
 msgstr "Ventes"
 
 #: src/API/MetaConversionsController.php:123
-#: src/Admin/settings/MetaConversions.js:101
+#: src/Admin/settings/MetaConversions.js:109
 msgid "Meta rejected the test event. Check the configuration and try again."
 msgstr "Meta a rejeté l'événement de test. Vérifiez la configuration et réessayez."
 
 #: src/Core/Features.php:181
-#: src/Admin/settings/MetaConversions.js:113
+#: src/Admin/settings/MetaConversions.js:120
 msgid "Meta Conversions"
 msgstr "Conversions Meta"
 
@@ -617,52 +617,52 @@ msgstr "Conversions Meta"
 msgid "Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials."
 msgstr "Mesure de paiement et d'achat côté serveur Meta avec consentement. Nécessite Fair Payments Connector et des identifiants explicites."
 
-#: src/Admin/settings/MetaConversions.js:26
+#: src/Admin/settings/MetaConversions.js:32
 msgid "Failed to load Meta Conversions settings."
 msgstr "Échec du chargement des paramètres Conversions Meta."
 
-#: src/Admin/settings/MetaConversions.js:36
+#: src/Admin/settings/MetaConversions.js:44
 msgid "Loading Meta Conversions settings…"
 msgstr "Chargement des paramètres Conversions Meta…"
 
-#: src/Admin/settings/MetaConversions.js:61
+#: src/Admin/settings/MetaConversions.js:69
 msgid "Meta Conversions settings saved."
 msgstr "Paramètres Conversions Meta enregistrés."
 
-#: src/Admin/settings/MetaConversions.js:69
+#: src/Admin/settings/MetaConversions.js:77
 msgid "Failed to save Meta Conversions settings."
 msgstr "Échec de l'enregistrement des paramètres Conversions Meta."
 
-#: src/Admin/settings/MetaConversions.js:93
+#: src/Admin/settings/MetaConversions.js:101
 msgid "Meta accepted the test event."
 msgstr "Meta a accepté l'événement de test."
 
-#: src/Admin/settings/MetaConversions.js:118
+#: src/Admin/settings/MetaConversions.js:124
 msgid "Send consented checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days."
 msgstr "Envoyer les mesures de paiement et d'achat consenties à Meta. Les identifiants correspondants sont supprimés à la fin de la livraison et les enregistrements sont supprimés après 90 jours."
 
-#: src/Admin/settings/MetaConversions.js:124
+#: src/Admin/settings/MetaConversions.js:130
 msgid "Dataset / Pixel ID"
 msgstr "Ensemble de données / ID de pixel"
 
-#: src/Admin/settings/MetaConversions.js:137
+#: src/Admin/settings/MetaConversions.js:140
 msgid "Replace access token"
 msgstr "Remplacer le jeton d'accès"
 
-#: src/Admin/settings/MetaConversions.js:141
+#: src/Admin/settings/MetaConversions.js:144
 msgid "Access token"
 msgstr "Jeton d'accès"
 
-#: src/Admin/settings/MetaConversions.js:145
+#: src/Admin/settings/MetaConversions.js:148
 msgid "A token is configured. Leave this empty to keep it."
 msgstr "Un jeton est configuré. Laissez ce champ vide pour le conserver."
 
-#: src/Admin/settings/MetaConversions.js:149
+#: src/Admin/settings/MetaConversions.js:152
 msgid "The token is write-only and will not be shown again."
 msgstr "Le jeton est en écriture seule et ne sera pas affiché à nouveau."
 
-#: src/Admin/settings/MetaConversions.js:164
-#: src/Admin/settings/MetaConversions.js:237
+#: src/Admin/settings/MetaConversions.js:167
+#: src/Admin/settings/MetaConversions.js:227
 msgid "Clear access token"
 msgstr "Effacer le jeton d'accès"
 
@@ -670,22 +670,44 @@ msgstr "Effacer le jeton d'accès"
 msgid "Test Events code"
 msgstr "Code des événements de test"
 
-#: src/Admin/settings/MetaConversions.js:187
+#: src/Admin/settings/MetaConversions.js:184
 msgid "Save Meta settings"
 msgstr "Enregistrer les paramètres Meta"
 
-#: src/Admin/settings/MetaConversions.js:197
+#: src/Admin/settings/MetaConversions.js:191
 msgid "Send test event"
 msgstr "Envoyer un événement de test"
 
-#: src/Admin/settings/MetaConversions.js:202
+#: src/Admin/settings/MetaConversions.js:196
 msgid "Configure the dataset ID, access token, and Test Events code before sending a test event."
 msgstr "Configurez l'ID du dataset, le jeton d'accès et le code des événements de test avant d'envoyer un événement de test."
 
-#: src/Admin/settings/MetaConversions.js:209
+#: src/Admin/settings/MetaConversions.js:203
 msgid "Recent delivery outcomes"
 msgstr "Résultats de livraison récents"
 
-#: src/Admin/settings/MetaConversions.js:242
+#: src/Admin/settings/MetaConversions.js:232
 msgid "Clear the Meta access token? Conversion delivery will stop until a new token is saved."
 msgstr "Effacer le jeton d'accès Meta ? La livraison des conversions s'arrêtera jusqu'à ce qu'un nouveau jeton soit enregistré."
+
+#. translators: %s: comma-separated currency codes excluded from event revenue.
+#: src/Admin/event-statistics/EventStatistics.js:229
+#, js-format
+msgid "Some payments were excluded because they use different currencies: %s."
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:292
+msgid "Cumulative sales amount"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:300
+msgid "Net sales amount"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:17
+msgid "Test"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:18
+msgid "Live"
+msgstr ""

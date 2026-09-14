@@ -291,7 +291,7 @@ class Plugin {
 			return;
 		}
 
-		if ( '1' !== (string) get_option( 'fair_events_experimental_meta_db_version', '' ) ) {
+		if ( '2' !== (string) get_option( 'fair_events_experimental_meta_db_version', '' ) ) {
 			\FairEventsExperimental\Meta\Outbox::install();
 		}
 		$service = new \FairEventsExperimental\Meta\Conversions();
