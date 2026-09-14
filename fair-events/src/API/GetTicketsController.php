@@ -174,10 +174,16 @@ class GetTicketsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => array( $this, 'admin_permissions_check' ),
 					'args'                => array(
-						'event_date' => array(
+						'event_date'      => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
+						),
+						'include_answers' => array(
+							'type'              => 'boolean',
+							'required'          => false,
+							'default'           => false,
+							'sanitize_callback' => 'rest_sanitize_boolean',
 						),
 					),
 				),
@@ -1379,7 +1385,97 @@ class GetTicketsController extends WP_REST_Controller {
 				|| '1' === $signup->over_capacity;
 		}
 
+		if ( $request->get_param( 'include_answers' ) ) {
+			$this->attach_signup_answers( $signups, $event_date_id );
+		}
+
 		return rest_ensure_response( $signups );
+	}
+
+	/**
+	 * Attach Fair Form answers to each signup row, in place, for the
+	 * "include_answers" export flow. Answers are matched on
+	 * (participant_id, event_date_id) against the signup-origin submission —
+	 * the one persist_questionnaire_answers() wrote for this signup, which
+	 * carries an empty form_id (a standalone Fair Form block submission
+	 * always sets one). Leaves `answers` unset when fair-form isn't active,
+	 * so the frontend can treat "no answers anywhere" and "plugin inactive"
+	 * the same way; sets it to an empty array for a signup that has no
+	 * matching submission (anonymous, or no fair-form data).
+	 *
+	 * @param array $signups       Signup rows from get_all_by_event_date_id(), mutated in place.
+	 * @param int   $event_date_id Event-date ID the signups belong to.
+	 * @return void
+	 */
+	private function attach_signup_answers( $signups, $event_date_id ) {
+		if ( ! class_exists( \FairForm\Database\QuestionnaireSubmissionRepository::class )
+			|| ! class_exists( \FairForm\Database\QuestionnaireAnswerRepository::class ) ) {
+			return;
+		}
+
+		$submission_repo = new \FairForm\Database\QuestionnaireSubmissionRepository();
+		$answer_repo     = new \FairForm\Database\QuestionnaireAnswerRepository();
+
+		$submissions = $submission_repo->get_by_filters( array( 'event_date_id' => $event_date_id ) );
+
+		// Signup-origin submissions only (empty form_id); indexed by
+		// participant_id, first-wins — get_by_filters() already orders by
+		// created_at DESC, so the latest submission survives.
+		$submission_by_participant = array();
+		foreach ( $submissions as $submission ) {
+			if ( ! empty( $submission->form_id ) ) {
+				continue;
+			}
+			$participant_id = (int) $submission->participant_id;
+			if ( ! $participant_id || isset( $submission_by_participant[ $participant_id ] ) ) {
+				continue;
+			}
+			$submission_by_participant[ $participant_id ] = $submission;
+		}
+
+		foreach ( $signups as $signup ) {
+			$participant_id = ! empty( $signup->participant_id ) ? (int) $signup->participant_id : 0;
+			$submission     = $participant_id && isset( $submission_by_participant[ $participant_id ] )
+				? $submission_by_participant[ $participant_id ]
+				: null;
+
+			if ( ! $submission ) {
+				$signup->answers = array();
+				continue;
+			}
+
+			$answers         = $answer_repo->get_by_submission( $submission->id );
+			$signup->answers = array_map( array( $this, 'format_signup_answer' ), $answers );
+		}
+	}
+
+	/**
+	 * Format one Fair Form answer for the signup export response, matching
+	 * QuestionnaireResponsesController's shape (question_key, question_text,
+	 * question_type, answer_value, plus file_url/is_image for file_upload).
+	 *
+	 * @param \FairForm\Models\QuestionnaireAnswer $answer Answer model.
+	 * @return array
+	 */
+	private function format_signup_answer( $answer ) {
+		$answer_item = array(
+			'question_key'  => $answer->question_key,
+			'question_text' => $answer->question_text,
+			'question_type' => $answer->question_type,
+			'answer_value'  => $answer->answer_value,
+		);
+
+		if ( 'file_upload' === $answer->question_type && is_numeric( $answer->answer_value ) ) {
+			$attachment_id  = (int) $answer->answer_value;
+			$attachment_url = wp_get_attachment_url( $attachment_id );
+			if ( $attachment_url ) {
+				$answer_item['file_url'] = $attachment_url;
+				$mime                    = get_post_mime_type( $attachment_id );
+				$answer_item['is_image'] = $mime && 0 === strpos( $mime, 'image/' );
+			}
+		}
+
+		return $answer_item;
 	}
 
 	/**
