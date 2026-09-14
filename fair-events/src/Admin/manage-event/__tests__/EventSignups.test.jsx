@@ -1,14 +1,16 @@
 /**
  * @jest-environment jsdom
  *
- * Component tests for the signups-tab CSV export (#1171).
+ * Component tests for the Signups tab (#1568 replaces the fixed-column CSV
+ * download with the "Export" popup — see SignupExportModal.test.jsx for its
+ * own coverage).
  *
  * Exercises:
- *   - Download CSV button renders and produces a CSV matching what's shown.
- *   - Mailing opt-ins filter narrows the table rows and the exported CSV.
- *   - Comma-containing values are quoted per RFC 4180.
+ *   - The list renders and the Export button opens the popup.
+ *   - Mailing opt-ins filter narrows the table rows (and, transitively, what
+ *     the export popup receives).
  *   - Empty state (no signups, or a filter matching nothing) disables the
- *     button instead of allowing a header-only download.
+ *     Export button instead of opening an empty popup.
  */
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -60,30 +62,6 @@ const signupWithMissingTicketType = {
 	created_at: '2026-07-22 10:00:00',
 };
 
-function mockObjectUrlAndClick() {
-	let clickedFilename = null;
-	let capturedText = null;
-	const OriginalBlob = global.Blob;
-	global.Blob = jest.fn( function ( parts, options ) {
-		capturedText = parts.join( '' );
-		return new OriginalBlob( parts, options );
-	} );
-	global.URL.createObjectURL = jest.fn( () => 'blob:mock-url' );
-	global.URL.revokeObjectURL = jest.fn();
-	const originalClick = HTMLAnchorElement.prototype.click;
-	HTMLAnchorElement.prototype.click = jest.fn( function () {
-		clickedFilename = this.download;
-	} );
-	return {
-		getFilename: () => clickedFilename,
-		getText: () => capturedText,
-		restore: () => {
-			HTMLAnchorElement.prototype.click = originalClick;
-			global.Blob = OriginalBlob;
-		},
-	};
-}
-
 async function renderSignups( data = signups ) {
 	apiFetch.mockResolvedValue( data );
 	render( <EventSignups eventDateId={ 42 } /> );
@@ -103,7 +81,7 @@ afterEach( () => {
 	delete window.fairPaymentsConnector;
 } );
 
-describe( 'EventSignups — CSV export (#1171)', () => {
+describe( 'EventSignups — list and Export button (#1568)', () => {
 	it( 'renders the List section heading', async () => {
 		await renderSignups();
 		expect(
@@ -111,33 +89,25 @@ describe( 'EventSignups — CSV export (#1171)', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'renders a Download CSV button', async () => {
+	it( 'renders an Export button in place of Download CSV', async () => {
 		await renderSignups();
 		expect(
-			screen.getByRole( 'button', { name: 'Download CSV' } )
+			screen.getByRole( 'button', { name: 'Export' } )
 		).toBeInTheDocument();
 	} );
 
-	it( 'downloads a CSV with a header row and one row per displayed signup', async () => {
+	it( 'opens the export popup, scoped to the currently visible signups', async () => {
 		await renderSignups();
-		const mock = mockObjectUrlAndClick();
-
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Download CSV' } )
+		// Second apiFetch call is SignupExportModal's include_answers fetch.
+		apiFetch.mockResolvedValueOnce(
+			signups.map( ( s ) => ( { ...s, answers: [] } ) )
 		);
 
-		const text = mock.getText();
-		const lines = text.split( '\r\n' );
-		expect( lines[ 0 ] ).toBe(
-			'email,name,ticket_type,quantity,amount,status,transaction_id,mailing_opt_in,date'
-		);
-		expect( lines ).toHaveLength( 3 );
-		expect( lines[ 1 ] ).toBe(
-			'ada@example.com,Ada Lovelace,General,1,20.00,paid,501,yes,2026-07-20 10:00:00'
-		);
-		expect( mock.getFilename() ).toBe( 'signups-event-42.csv' );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Export' } ) );
 
-		mock.restore();
+		expect(
+			await screen.findByRole( 'dialog', { name: 'Export' } )
+		).toBeInTheDocument();
 	} );
 
 	it( 'distinguishes expired and confirmed over-capacity signups', async () => {
@@ -195,23 +165,8 @@ describe( 'EventSignups — CSV export (#1171)', () => {
 		);
 	} );
 
-	it( 'quotes a name containing a comma', async () => {
+	it( 'narrows the table to mailing opt-ins when the filter is on', async () => {
 		await renderSignups();
-		const mock = mockObjectUrlAndClick();
-
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Download CSV' } )
-		);
-
-		const text = mock.getText();
-		expect( text ).toContain( '"Bob, Jr."' );
-
-		mock.restore();
-	} );
-
-	it( 'narrows the table and the export to mailing opt-ins when the filter is on', async () => {
-		await renderSignups();
-		const mock = mockObjectUrlAndClick();
 
 		fireEvent.click(
 			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
@@ -219,50 +174,25 @@ describe( 'EventSignups — CSV export (#1171)', () => {
 
 		expect( screen.getByText( 'Ada Lovelace' ) ).toBeInTheDocument();
 		expect( screen.queryByText( 'Bob, Jr.' ) ).not.toBeInTheDocument();
-
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Download CSV' } )
-		);
-
-		const text = mock.getText();
-		const lines = text.split( '\r\n' );
-		expect( lines ).toHaveLength( 2 );
-		expect( lines[ 1 ] ).toContain( 'ada@example.com' );
-
-		mock.restore();
 	} );
 
 	it( 'disables the button and explains why when there are no signups at all', async () => {
 		await renderSignups( [] );
 
-		const button = screen.getByRole( 'button', { name: 'Download CSV' } );
+		const button = screen.getByRole( 'button', { name: 'Export' } );
 		expect( button ).toBeDisabled();
 		expect( screen.getByText( 'No signups yet.' ) ).toBeInTheDocument();
 	} );
 
-	it( 'shows the ticket type name, not its id, in the table and the CSV', async () => {
+	it( 'shows the ticket type name, not its id, in the table', async () => {
 		await renderSignups();
 		expect( screen.getAllByText( 'General' ) ).toHaveLength( 2 );
 		expect( screen.queryByText( '3' ) ).not.toBeInTheDocument();
-
-		const mock = mockObjectUrlAndClick();
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Download CSV' } )
-		);
-		expect( mock.getText() ).toContain( ',General,' );
-		mock.restore();
 	} );
 
 	it( 'falls back to an em dash when the ticket type is missing or deleted', async () => {
 		await renderSignups( [ signupWithMissingTicketType ] );
 		expect( screen.getAllByText( '—' ) ).not.toHaveLength( 0 );
-
-		const mock = mockObjectUrlAndClick();
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Download CSV' } )
-		);
-		expect( mock.getText() ).toContain( ',—,' );
-		mock.restore();
 	} );
 
 	it( 'disables the button when the mailing filter matches nothing', async () => {
@@ -272,7 +202,7 @@ describe( 'EventSignups — CSV export (#1171)', () => {
 			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
 		);
 
-		const button = screen.getByRole( 'button', { name: 'Download CSV' } );
+		const button = screen.getByRole( 'button', { name: 'Export' } );
 		expect( button ).toBeDisabled();
 		expect(
 			screen.getByText(
@@ -293,7 +223,7 @@ describe( 'EventSignups — mailing consent normalization (#1492)', () => {
 	];
 
 	it.each( consentCases )(
-		'displays and exports $label explicitly',
+		'displays $label explicitly',
 		async ( { value, optedIn } ) => {
 			const signup = {
 				...signups[ 0 ],
@@ -303,15 +233,6 @@ describe( 'EventSignups — mailing consent normalization (#1492)', () => {
 			expect(
 				screen.getByText( optedIn ? 'Yes' : 'No' )
 			).toBeInTheDocument();
-
-			const mock = mockObjectUrlAndClick();
-			fireEvent.click(
-				screen.getByRole( 'button', { name: 'Download CSV' } )
-			);
-			expect( mock.getText() ).toContain(
-				`,${ optedIn ? 'yes' : 'no' },`
-			);
-			mock.restore();
 		}
 	);
 

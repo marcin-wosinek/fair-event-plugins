@@ -21,18 +21,7 @@ import {
 } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-
-const CSV_COLUMNS = [
-	'email',
-	'name',
-	'ticket_type',
-	'quantity',
-	'amount',
-	'status',
-	'transaction_id',
-	'mailing_opt_in',
-	'date',
-];
+import SignupExportModal from './SignupExportModal.js';
 
 /**
  * Whether a signup contains an explicit mailing opt-in value.
@@ -40,7 +29,7 @@ const CSV_COLUMNS = [
  * @param {*} value Consent value returned by the API.
  * @return {boolean} Whether the signup opted in
  */
-function isMailingOptIn( value ) {
+export function isMailingOptIn( value ) {
 	return value === true || value === 1 || value === '1';
 }
 
@@ -54,62 +43,6 @@ function isOverCapacity( value ) {
 	return value === true || value === 1 || value === '1';
 }
 
-/**
- * Escape a single CSV field per RFC 4180.
- *
- * @param {*} value
- * @return {string} Escaped field
- */
-function escapeCsvField( value ) {
-	const stringValue =
-		value === null || value === undefined ? '' : String( value );
-	if ( /[",\r\n]/.test( stringValue ) ) {
-		return `"${ stringValue.replace( /"/g, '""' ) }"`;
-	}
-	return stringValue;
-}
-
-/**
- * Build the MailerLite-friendly CSV text for the given signups.
- *
- * @param {Array} rows
- * @return {string} CSV text
- */
-function buildSignupsCsv( rows ) {
-	const lines = [ CSV_COLUMNS.join( ',' ) ];
-	rows.forEach( ( s ) => {
-		const row = [
-			s.email,
-			s.name,
-			s.ticket_type_name || '—',
-			s.quantity,
-			s.amount,
-			s.status,
-			s.transaction_id,
-			isMailingOptIn( s.mailing_opt_in ) ? 'yes' : 'no',
-			s.created_at,
-		];
-		lines.push( row.map( escapeCsvField ).join( ',' ) );
-	} );
-	return lines.join( '\r\n' );
-}
-
-/**
- * Trigger a client-side download of the given text as a file.
- *
- * @param {string} text
- * @param {string} filename
- */
-function downloadTextFile( text, filename ) {
-	const blob = new Blob( [ text ], { type: 'text/csv;charset=utf-8' } );
-	const url = URL.createObjectURL( blob );
-	const link = document.createElement( 'a' );
-	link.href = url;
-	link.download = filename;
-	link.click();
-	URL.revokeObjectURL( url );
-}
-
 export default function EventSignups( { eventDateId } ) {
 	const connectorActive = !! window.fairPaymentsConnector?.connectorActive;
 	const [ signups, setSignups ] = useState( [] );
@@ -118,6 +51,7 @@ export default function EventSignups( { eventDateId } ) {
 	const [ mailingOnly, setMailingOnly ] = useState( false );
 	const [ selectedSignup, setSelectedSignup ] = useState( null );
 	const [ deleteError, setDeleteError ] = useState( null );
+	const [ isExportModalOpen, setIsExportModalOpen ] = useState( false );
 
 	useEffect( () => {
 		if ( ! eventDateId ) {
@@ -165,11 +99,6 @@ export default function EventSignups( { eventDateId } ) {
 		? signups.filter( ( s ) => isMailingOptIn( s.mailing_opt_in ) )
 		: signups;
 
-	const handleDownloadCsv = () => {
-		const csv = buildSignupsCsv( visibleSignups );
-		downloadTextFile( csv, `signups-event-${ eventDateId }.csv` );
-	};
-
 	const handleDelete = async () => {
 		if ( ! selectedSignup ) {
 			return;
@@ -213,10 +142,10 @@ export default function EventSignups( { eventDateId } ) {
 					<FlexItem>
 						<Button
 							variant="secondary"
-							onClick={ handleDownloadCsv }
+							onClick={ () => setIsExportModalOpen( true ) }
 							disabled={ visibleSignups.length === 0 }
 						>
-							{ __( 'Download CSV', 'fair-events' ) }
+							{ __( 'Export', 'fair-events' ) }
 						</Button>
 					</FlexItem>
 				</Flex>
@@ -404,6 +333,13 @@ export default function EventSignups( { eventDateId } ) {
 					</>
 				) }
 			</ConfirmDialog>
+			{ isExportModalOpen && (
+				<SignupExportModal
+					eventDateId={ eventDateId }
+					rows={ visibleSignups }
+					onClose={ () => setIsExportModalOpen( false ) }
+				/>
+			) }
 		</Card>
 	);
 }
