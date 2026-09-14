@@ -16,11 +16,16 @@ jest.mock( '@wordpress/api-fetch' );
 // chart primitives so the test can focus on our headings, notice, and states.
 jest.mock( 'recharts', () => {
 	const Passthrough = ( { children } ) => <div>{ children }</div>;
+	const AreaChart = ( { children, data } ) => (
+		<div data-testid="area-chart" data-series={ JSON.stringify( data ) }>
+			{ children }
+		</div>
+	);
 	const Empty = () => null;
 	return {
 		ResponsiveContainer: Passthrough,
 		BarChart: Passthrough,
-		AreaChart: Passthrough,
+		AreaChart,
 		Bar: Empty,
 		Area: Empty,
 		XAxis: Empty,
@@ -180,6 +185,28 @@ describe( 'EventStatistics component', () => {
 		expect(
 			screen.queryByText( /until the event/ )
 		).not.toBeInTheDocument();
+	} );
+
+	it( 'passes the shortened API series to the cumulative chart unchanged', async () => {
+		const shortenedSeries = [
+			{ date: '2026-06-12', label: '4 days before the event', total: 1 },
+			{ date: '2026-06-13', label: '3 days before the event', total: 2 },
+		];
+		mockApi( [], {
+			total_sales: 2,
+			days_until_start: 3,
+			series: shortenedSeries,
+		} );
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		const chart = await screen.findByTestId( 'area-chart' );
+		const chartSeries = JSON.parse( chart.dataset.series );
+		expect( chartSeries ).toEqual( shortenedSeries );
+		expect( chartSeries.at( -1 ).date ).toBe( '2026-06-13' );
+		expect(
+			chartSeries.some( ( point ) => point.date === '2026-06-16' )
+		).toBe( false );
 	} );
 
 	it( 'shows statistics failures independently', async () => {
