@@ -55,7 +55,7 @@ class Conversions {
 	public function payment_paid( $payment, $transaction ) {
 		unset( $payment );
 		$fresh = \FairPaymentsConnector\Models\Transaction::get_by_id( (int) $transaction->id );
-		if ( ! $fresh || 0 !== (int) $fresh->testmode || 'paid' !== (string) $fresh->status ) {
+		if ( ! $fresh || 'paid' !== (string) $fresh->status ) {
 			return;
 		}
 		$this->enqueue_transaction( $fresh, 'Purchase' );
@@ -63,9 +63,37 @@ class Conversions {
 
 	/** @param object $transaction Transaction. @param string $event_name Event name. @return bool */
 	public function enqueue_transaction( $transaction, $event_name ) {
-		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
-		if ( ! self::configured() || 0 !== (int) $transaction->testmode || ! is_array( $metadata ) || 'fair-events-get-tickets' !== ( $metadata['source'] ?? '' ) || empty( $metadata['meta_consent'] ) || ( empty( $metadata['meta_fbp'] ) && empty( $metadata['meta_fbc'] ) ) ) {
+		if ( ! self::configured() ) {
 			return false;
+		}
+		$event = self::build_event( $transaction, $event_name );
+		if ( ! $event ) {
+			return false;
+		}
+		$inserted = ( new Outbox() )->enqueue( $event );
+		if ( $inserted && ! wp_next_scheduled( self::DELIVERY_HOOK ) ) {
+			wp_schedule_single_event( time() + 1, self::DELIVERY_HOOK );
+		}
+		return $inserted;
+	}
+
+	/**
+	 * Build the outbox row for an eligible transaction, independent of Meta
+	 * configuration or persistence — a pure transformation so eligibility and
+	 * payload shape can be unit tested without a database.
+	 *
+	 * Eligibility: the transaction must originate from the unified checkout
+	 * (`fair-events-get-tickets`), carry current marketing consent, and carry
+	 * at least one valid Meta browser identifier. Payment mode (test/live) is
+	 * captured from the transaction but never gates eligibility — both modes
+	 * report to Meta Test Events so admins can verify checkout end to end.
+	 *
+	 * @param object $transaction Transaction. @param string $event_name Event name. @return array|null
+	 */
+	public static function build_event( $transaction, $event_name ) {
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		if ( ! is_array( $metadata ) || 'fair-events-get-tickets' !== ( $metadata['source'] ?? '' ) || empty( $metadata['meta_consent'] ) || ( empty( $metadata['meta_fbp'] ) && empty( $metadata['meta_fbc'] ) ) ) {
+			return null;
 		}
 		$time  = 'InitiateCheckout' === $event_name && ! empty( $transaction->payment_initiated_at ) ? strtotime( $transaction->payment_initiated_at . ' UTC' ) : strtotime( $transaction->updated_at . ' UTC' );
 		$event = array(
@@ -77,17 +105,19 @@ class Conversions {
 			'value'          => (float) $transaction->amount,
 			'currency'       => strtoupper( sanitize_key( $transaction->currency ) ),
 			'order_id'       => 'Purchase' === $event_name ? (string) $transaction->id : '',
+			'payment_mode'   => self::payment_mode( $transaction ),
 			'fbp'            => self::valid_identifier( $metadata['meta_fbp'] ?? '' ) ? $metadata['meta_fbp'] : '',
 			'fbc'            => self::valid_identifier( $metadata['meta_fbc'] ?? '' ) ? $metadata['meta_fbc'] : '',
 		);
 		if ( '' === $event['fbp'] && '' === $event['fbc'] ) {
-			return false;
+			return null;
 		}
-		$inserted = ( new Outbox() )->enqueue( $event );
-		if ( $inserted && ! wp_next_scheduled( self::DELIVERY_HOOK ) ) {
-			wp_schedule_single_event( time() + 1, self::DELIVERY_HOOK );
-		}
-		return $inserted;
+		return $event;
+	}
+
+	/** @param object $transaction Transaction. @return string 'test' or 'live'. */
+	public static function payment_mode( $transaction ) {
+		return 0 === (int) $transaction->testmode ? 'live' : 'test';
 	}
 
 	/** @param int $transaction_id Transaction ID. @param string $event_name Event name. @return string */
@@ -109,8 +139,9 @@ class Conversions {
 			)
 		);
 		$custom    = array(
-			'value'    => (float) $row->value,
-			'currency' => $row->currency,
+			'value'        => (float) $row->value,
+			'currency'     => $row->currency,
+			'payment_mode' => $row->payment_mode,
 		);
 		if ( '' !== $row->order_id ) {
 			$custom['order_id'] = $row->order_id;
@@ -126,12 +157,25 @@ class Conversions {
 		);
 	}
 
-	/** Deliver queued rows without affecting payment state. */
+	/**
+	 * Deliver queued rows without affecting payment state. Every event — test
+	 * mode and live mode alike — is sent once with the currently configured
+	 * Test Events code (see class doc block for why: single-delivery Test
+	 * Events visibility, not a production/test duplicate). A row claimed
+	 * after the code was removed fails closed with a configuration error
+	 * rather than delivering without one.
+	 */
 	public function deliver_due() {
-		$outbox = new Outbox();
-		$row    = $outbox->claim_due();
+		$outbox    = new Outbox();
+		$test_code = (string) get_option( self::TEST_CODE_OPTION, '' );
+		$row       = $outbox->claim_due();
 		while ( $row ) {
-			$result = $this->send_payload( self::payload_for( $row ) );
+			if ( '' === $test_code ) {
+				$outbox->finish( (int) $row->id, 'configuration_error', 'missing_test_event_code', 'configuration' );
+				$row = $outbox->claim_due();
+				continue;
+			}
+			$result = $this->send_payload( self::payload_for( $row ), $test_code );
 			if ( $result['accepted'] ) {
 				$outbox->finish( (int) $row->id, 'accepted' );
 			} elseif ( $result['temporary'] ) {

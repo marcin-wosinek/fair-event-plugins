@@ -6,7 +6,7 @@
  *              Never shipped to production and never mounted by the dev
  *              `docker compose` stack.
  *
- * It does four things, all confined to the test environment:
+ * It does five things, all confined to the test environment:
  *
  *   1. Captures outgoing mail into the `fair_e2e_captured_mail` option instead
  *      of sending it, so specs can assert on subject/recipient/body and no real
@@ -22,6 +22,10 @@
  *   4. Bypasses GetTicketsController's per-IP rate limit, which a full API/E2E
  *      test run exhausts well before it finishes (every spec run shares one
  *      source IP).
+ *   5. Pre-declares a fake Meta Conversions API transport (see
+ *      lib/meta-http-double.php) so fair-events-experimental's delivery
+ *      outbox always talks to a canned "accepted" response instead of the
+ *      real graph.facebook.com.
  *
  * @package FairEventsE2E
  */
@@ -234,3 +238,14 @@ add_filter(
 	10,
 	2
 );
+
+/*
+ * 5. Intercept the Meta Conversions API transport.
+ *
+ * Unlike the Mollie double, this doesn't need an early plugins_loaded hook —
+ * `pre_http_request` is a plain filter with no SDK class to shadow, so
+ * requiring it directly is enough as long as it happens before any request
+ * fires (fair-events-experimental's outbox delivery always runs later, on a
+ * scheduled hook).
+ */
+require_once __DIR__ . '/lib/meta-http-double.php';

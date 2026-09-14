@@ -12,6 +12,12 @@ import {
 
 const PATH = '/fair-events-experimental/v1/meta-conversions';
 
+function paymentModeLabel( mode ) {
+	return 'test' === mode
+		? __( 'Test', 'fair-events-experimental' )
+		: __( 'Live', 'fair-events-experimental' );
+}
+
 export default function MetaConversions( { onNotice } ) {
 	const [ config, setConfig ] = useState( null );
 	const [ token, setToken ] = useState( '' );
@@ -29,7 +35,9 @@ export default function MetaConversions( { onNotice } ) {
 					),
 				} )
 			);
-	useEffect( load, [] );
+	useEffect( () => {
+		load();
+	}, [] );
 	if ( ! config ) {
 		return (
 			<p>
@@ -225,7 +233,8 @@ export default function MetaConversions( { onNotice } ) {
 						( outcome, index ) => (
 							<li key={ `${ outcome.updated_at }-${ index }` }>
 								{ outcome.event_name }: { outcome.state } (
-								{ outcome.attempt_count })
+								{ outcome.attempt_count }) —{ ' ' }
+								{ paymentModeLabel( outcome.payment_mode ) }
 							</li>
 						)
 					) }

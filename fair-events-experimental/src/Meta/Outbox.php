@@ -21,7 +21,11 @@ class Outbox {
 		return $wpdb->prefix . self::TABLE_SUFFIX;
 	}
 
-	/** Install or upgrade the table. */
+	/**
+	 * Install or upgrade the table. `payment_mode` defaults every pre-existing
+	 * row to 'live' — the prior version could only ever enqueue live
+	 * transactions, so that default is also the historically correct value.
+	 */
 	public static function install() {
 		global $wpdb;
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -38,6 +42,7 @@ class Outbox {
 				value decimal(12,2) NOT NULL,
 				currency char(3) NOT NULL,
 				order_id varchar(64) NOT NULL DEFAULT '',
+				payment_mode varchar(4) NOT NULL DEFAULT 'live',
 				fbp varchar(180) DEFAULT NULL,
 				fbc varchar(180) DEFAULT NULL,
 				state varchar(32) NOT NULL DEFAULT 'pending',
@@ -54,7 +59,7 @@ class Outbox {
 				KEY retention (updated_at)
 			) {$charset};"
 		);
-		update_option( 'fair_events_experimental_meta_db_version', '1' );
+		update_option( 'fair_events_experimental_meta_db_version', '2' );
 	}
 
 	/** @param array $event Event data. @return bool */
@@ -63,7 +68,7 @@ class Outbox {
 		$now    = current_time( 'mysql', true );
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				'INSERT IGNORE INTO %i (transaction_id,event_name,event_id,event_time,source_url,value,currency,order_id,fbp,fbc,state,next_attempt_at,created_at,updated_at) VALUES (%d,%s,%s,%d,%s,%f,%s,%s,%s,%s,%s,%s,%s,%s)',
+				'INSERT IGNORE INTO %i (transaction_id,event_name,event_id,event_time,source_url,value,currency,order_id,payment_mode,fbp,fbc,state,next_attempt_at,created_at,updated_at) VALUES (%d,%s,%s,%d,%s,%f,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
 				self::table_name(),
 				$event['transaction_id'],
 				$event['event_name'],
@@ -73,6 +78,7 @@ class Outbox {
 				$event['value'],
 				$event['currency'],
 				$event['order_id'],
+				$event['payment_mode'],
 				$event['fbp'],
 				$event['fbc'],
 				'pending',
@@ -152,7 +158,7 @@ class Outbox {
 		global $wpdb;
 		$table  = self::table_name();
 		$counts = $wpdb->get_results( $wpdb->prepare( 'SELECT state, COUNT(*) AS total FROM %i GROUP BY state', $table ), OBJECT_K );
-		$recent = $wpdb->get_results( $wpdb->prepare( 'SELECT event_name,state,result_category,attempt_count,meta_error_code,meta_error_type,updated_at FROM %i ORDER BY updated_at DESC LIMIT 20', $table ), ARRAY_A );
+		$recent = $wpdb->get_results( $wpdb->prepare( 'SELECT event_name,state,result_category,attempt_count,meta_error_code,meta_error_type,payment_mode,updated_at FROM %i ORDER BY updated_at DESC LIMIT 20', $table ), ARRAY_A );
 		return array(
 			'counts' => array_map( static fn( $row ) => (int) $row->total, $counts ? $counts : array() ),
 			'recent' => $recent ? $recent : array(),
