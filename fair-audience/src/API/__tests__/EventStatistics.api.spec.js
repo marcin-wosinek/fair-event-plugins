@@ -62,6 +62,42 @@ function setParticipantCreatedAt( eventDateId, participantId, createdAt ) {
 	return JSON.parse( match[ 1 ] );
 }
 
+function addTransaction(
+	relationshipId,
+	amount,
+	currency,
+	status,
+	kind,
+	date,
+	transactionId = 0
+) {
+	const output = execFileSync(
+		'npx',
+		[
+			'wp-env',
+			'run',
+			'tests-cli',
+			'wp',
+			'eval-file',
+			'wp-content/mu-plugins/scripts/seed-event-statistics-transaction.php',
+			String( relationshipId ),
+			String( amount ),
+			currency,
+			status,
+			kind,
+			`${ date } 12:00:00`,
+			String( transactionId ),
+		],
+		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
+	);
+	const match = output.match( /E2E_EVENT_STATISTICS_TRANSACTION:(\{.*\})/ );
+	if ( ! match )
+		throw new Error(
+			`Expected transaction fixture output, got:\n${ output }`
+		);
+	return JSON.parse( match[ 1 ] ).transactionId;
+}
+
 test.describe( 'EventStatisticsController', () => {
 	let api;
 	let anonymousApi;
@@ -134,6 +170,7 @@ test.describe( 'EventStatisticsController', () => {
 			}
 		);
 		expect( relationship.ok() ).toBeTruthy();
+		const relationshipData = await relationship.json();
 		if ( createdAt ) {
 			const result = setParticipantCreatedAt(
 				eventDateId,
@@ -142,6 +179,7 @@ test.describe( 'EventStatisticsController', () => {
 			);
 			expect( result.updated ).toBe( 1 );
 		}
+		return relationshipData.id;
 	}
 
 	async function getStatistics( eventDateId ) {
@@ -180,12 +218,12 @@ test.describe( 'EventStatisticsController', () => {
 		occurrences.completed = await createOccurrence( 'completed', -5, -3 );
 		occurrences.qualifying = await createOccurrence( 'qualifying', 12 );
 
-		await addParticipant(
+		occurrences.upcoming.firstRelationshipId = await addParticipant(
 			occurrences.upcoming.eventDateId,
 			'signed_up',
 			addDays( today, -20 )
 		);
-		await addParticipant(
+		occurrences.upcoming.secondRelationshipId = await addParticipant(
 			occurrences.upcoming.eventDateId,
 			'signed_up',
 			today
@@ -206,6 +244,82 @@ test.describe( 'EventStatisticsController', () => {
 		expect( user.ok() ).toBeTruthy();
 		subscriberApi = await request.newContext( { baseURL: BASE_URL } );
 		subscriberHeaders = await login( subscriberApi, username, password );
+	} );
+
+	test( 'aggregates payment history and excludes inconsistent currencies', async () => {
+		const first = occurrences.upcoming.firstRelationshipId;
+		const second = occurrences.upcoming.secondRelationshipId;
+		const sharedCharge = addTransaction(
+			first,
+			10,
+			'EUR',
+			'paid',
+			'charge',
+			addDays( today, -25 )
+		);
+		addTransaction(
+			first,
+			7.5,
+			'EUR',
+			'paid',
+			'charge',
+			addDays( today, -5 )
+		);
+		addTransaction(
+			first,
+			2.5,
+			'EUR',
+			'paid',
+			'refund',
+			addDays( today, -2 )
+		);
+		addTransaction(
+			first,
+			99,
+			'EUR',
+			'failed',
+			'charge',
+			addDays( today, -1 )
+		);
+		addTransaction( first, 30, 'USD', 'paid', 'charge', today );
+		addTransaction(
+			second,
+			10,
+			'EUR',
+			'paid',
+			'charge',
+			addDays( today, -25 ),
+			sharedCharge
+		);
+
+		const body = await getStatistics( occurrences.upcoming.eventDateId );
+		expect( body.currency ).toBe( 'EUR' );
+		expect( body.total_sales ).toBe( 2 );
+		expect( body.total_sales_amount ).toBe( 15 );
+		expect( body.excluded_currencies ).toEqual( [ 'USD' ] );
+		expect( body.amount_series.map( ( point ) => point.date ) ).toEqual(
+			body.series.map( ( point ) => point.date )
+		);
+		expect( body.amount_series.map( ( point ) => point.label ) ).toEqual(
+			body.series.map( ( point ) => point.label )
+		);
+		expect( body.amount_series[ 0 ].amount ).toBe( 10 );
+		expect(
+			body.amount_series.find(
+				( point ) => point.date === addDays( today, -5 )
+			).amount
+		).toBe( 17.5 );
+		expect(
+			body.amount_series.find(
+				( point ) => point.date === addDays( today, -2 )
+			).amount
+		).toBe( 15 );
+		expect(
+			body.amount_series.findLast(
+				( point ) => typeof point.amount === 'number'
+			).amount
+		).toBe( body.total_sales_amount );
+		expect( body.amount_series.at( -1 ).amount ).toBeNull();
 	} );
 
 	test.afterAll( async () => {

@@ -8,6 +8,7 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import './style.css';
 import {
 	ResponsiveContainer,
 	BarChart,
@@ -69,12 +70,71 @@ export function activityCountDistribution( participants ) {
 
 function ChartCard( { title, children } ) {
 	return (
-		<Card style={ { marginTop: '16px' } }>
+		<Card className="fair-event-statistics__chart-card">
 			<CardHeader>
 				<h3 style={ { margin: 0 } }>{ title }</h3>
 			</CardHeader>
 			<CardBody>{ children }</CardBody>
 		</Card>
+	);
+}
+
+function getFutureHorizon( series, dataKey ) {
+	if ( ! Array.isArray( series ) || series.length < 2 ) return null;
+	let recordedIndex = series.length - 1;
+	while (
+		recordedIndex >= 0 &&
+		typeof series[ recordedIndex ][ dataKey ] !== 'number'
+	) {
+		recordedIndex--;
+	}
+	if ( recordedIndex < 0 || recordedIndex === series.length - 1 ) return null;
+	return [
+		{
+			x: series[ recordedIndex ].label,
+			y: series[ recordedIndex ][ dataKey ],
+		},
+		{
+			x: series.at( -1 ).label,
+			y: series[ recordedIndex ][ dataKey ],
+		},
+	];
+}
+
+function CumulativeChart( { series, dataKey, name, valueFormatter } ) {
+	const futureHorizon = getFutureHorizon( series, dataKey );
+	return (
+		<ResponsiveContainer width="100%" height={ 280 }>
+			<AreaChart data={ series } margin={ { left: 8, right: 24 } }>
+				<CartesianGrid strokeDasharray="3 3" />
+				<XAxis
+					dataKey="label"
+					interval="preserveStartEnd"
+					minTickGap={ 48 }
+				/>
+				<YAxis
+					allowDecimals={ dataKey !== 'total' }
+					tickFormatter={ valueFormatter }
+				/>
+				<Tooltip formatter={ valueFormatter } filterNull />
+				<Area
+					type="monotone"
+					dataKey={ dataKey }
+					name={ name }
+					stroke={ BAR_COLOR }
+					fill={ BAR_COLOR }
+					fillOpacity={ 0.18 }
+					connectNulls={ false }
+				/>
+				{ futureHorizon && (
+					<ReferenceLine
+						segment={ futureHorizon }
+						stroke={ BAR_COLOR }
+						strokeDasharray="5 5"
+					/>
+				) }
+			</AreaChart>
+		</ResponsiveContainer>
 	);
 }
 
@@ -135,32 +195,15 @@ export default function EventStatistics( { eventDateId } ) {
 		() => activityCountDistribution( confirmed ),
 		[ confirmed ]
 	);
-	const futureHorizon = useMemo( () => {
-		const series = statistics?.series;
-		if ( ! Array.isArray( series ) || series.length < 2 ) {
-			return null;
-		}
-		let recordedIndex = series.length - 1;
-		while (
-			recordedIndex >= 0 &&
-			typeof series[ recordedIndex ].total !== 'number'
-		) {
-			recordedIndex--;
-		}
-		if ( recordedIndex < 0 || recordedIndex === series.length - 1 ) {
-			return null;
-		}
-		return [
-			{
-				x: series[ recordedIndex ].label,
-				y: series[ recordedIndex ].total,
-			},
-			{
-				x: series.at( -1 ).label,
-				y: series[ recordedIndex ].total,
-			},
-		];
-	}, [ statistics ] );
+	const currencyFormatter = useMemo(
+		() =>
+			new Intl.NumberFormat( undefined, {
+				style: 'currency',
+				currency: statistics?.currency || 'EUR',
+			} ),
+		[ statistics?.currency ]
+	);
+	const formatCurrency = ( value ) => currencyFormatter.format( value );
 	if ( participantLoading && statisticsLoading ) {
 		return (
 			<div style={ { padding: '24px', textAlign: 'center' } }>
@@ -179,16 +222,21 @@ export default function EventStatistics( { eventDateId } ) {
 			) }
 			{ statistics && (
 				<>
+					{ statistics.excluded_currencies?.length > 0 && (
+						<Notice status="warning" isDismissible={ false }>
+							{ sprintf(
+								/* translators: %s: comma-separated currency codes excluded from event revenue. */
+								__(
+									'Some payments were excluded because they use different currencies: %s.',
+									'fair-events-experimental'
+								),
+								statistics.excluded_currencies.join( ', ' )
+							) }
+						</Notice>
+					) }
 					<Card>
 						<CardBody>
-							<div
-								style={ {
-									display: 'flex',
-									flexWrap: 'wrap',
-									gap: '24px',
-									alignItems: 'baseline',
-								} }
-							>
+							<div className="fair-event-statistics__summary">
 								<strong style={ { fontSize: '24px' } }>
 									{ sprintf(
 										/* translators: %d: confirmed sales total. */
@@ -199,6 +247,11 @@ export default function EventStatistics( { eventDateId } ) {
 											'fair-events-experimental'
 										),
 										statistics.total_sales
+									) }
+								</strong>
+								<strong style={ { fontSize: '24px' } }>
+									{ formatCurrency(
+										statistics.total_sales_amount
 									) }
 								</strong>
 								{ statistics.days_until_start !== null && (
@@ -219,46 +272,39 @@ export default function EventStatistics( { eventDateId } ) {
 						</CardBody>
 					</Card>
 
-					<ChartCard
-						title={ __(
-							'Cumulative sales',
-							'fair-events-experimental'
-						) }
-					>
-						<ResponsiveContainer width="100%" height={ 280 }>
-							<AreaChart
-								data={ statistics.series }
-								margin={ { left: 8, right: 24 } }
-							>
-								<CartesianGrid strokeDasharray="3 3" />
-								<XAxis
-									dataKey="label"
-									interval="preserveStartEnd"
-									minTickGap={ 48 }
-								/>
-								<YAxis allowDecimals={ false } />
-								<Tooltip />
-								<Area
-									type="monotone"
-									dataKey="total"
-									name={ __(
-										'Sales',
-										'fair-events-experimental'
-									) }
-									stroke={ BAR_COLOR }
-									fill={ BAR_COLOR }
-									fillOpacity={ 0.18 }
-								/>
-								{ futureHorizon && (
-									<ReferenceLine
-										segment={ futureHorizon }
-										stroke={ BAR_COLOR }
-										strokeDasharray="5 5"
-									/>
+					<div className="fair-event-statistics__sales-charts">
+						<ChartCard
+							title={ __(
+								'Cumulative sales',
+								'fair-events-experimental'
+							) }
+						>
+							<CumulativeChart
+								series={ statistics.series }
+								dataKey="total"
+								name={ __(
+									'Sales',
+									'fair-events-experimental'
 								) }
-							</AreaChart>
-						</ResponsiveContainer>
-					</ChartCard>
+							/>
+						</ChartCard>
+						<ChartCard
+							title={ __(
+								'Cumulative sales amount',
+								'fair-events-experimental'
+							) }
+						>
+							<CumulativeChart
+								series={ statistics.amount_series }
+								dataKey="amount"
+								name={ __(
+									'Net sales amount',
+									'fair-events-experimental'
+								) }
+								valueFormatter={ formatCurrency }
+							/>
+						</ChartCard>
+					</div>
 				</>
 			) }
 

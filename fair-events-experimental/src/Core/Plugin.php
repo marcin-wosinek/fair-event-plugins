@@ -108,6 +108,12 @@ class Plugin {
 			$asset_file['version'],
 			true
 		);
+		wp_enqueue_style(
+			'fair-events-experimental-event-statistics',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/event-statistics/style-index.css',
+			array( 'wp-components' ),
+			$asset_file['version']
+		);
 
 		wp_set_script_translations( 'fair-events-experimental-manage-event-ext', 'fair-events-experimental', Features::script_translations_path() );
 	}

@@ -1,0 +1,32 @@
+.fair-event-statistics__summary {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+	align-items: baseline;
+}
+
+.fair-event-statistics__sales-charts {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+	margin-top: 16px;
+}
+
+.fair-event-statistics__chart-card {
+	min-width: 0;
+	margin-top: 16px;
+}
+
+.fair-event-statistics__sales-charts .fair-event-statistics__chart-card {
+	margin-top: 0;
+}
+
+@media (max-width: 782px) {
+	.fair-event-statistics__sales-charts {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.fair-event-statistics__summary {
+		gap: 12px 20px;
+	}
+}

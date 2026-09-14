@@ -24,6 +24,48 @@ defined( 'WPINC' ) || die;
 class EventParticipantTransactionRepository {
 
 	/**
+	 * Get paid transaction history for registrations in one batched query.
+	 *
+	 * Duplicate ledger links for a shared transaction are collapsed by
+	 * transaction ID and kind. Returns an empty result when the payment table is
+	 * unavailable so event statistics remain usable without payment history.
+	 *
+	 * @param int[] $event_participant_ids Event participant relationship IDs.
+	 * @return array[] Transaction amount, currency, kind, and effective date.
+	 */
+	public function get_paid_statistics_transactions( $event_participant_ids ) {
+		global $wpdb;
+
+		$event_participant_ids = array_values( array_unique( array_filter( array_map( 'intval', $event_participant_ids ) ) ) );
+		if ( empty( $event_participant_ids ) ) {
+			return array();
+		}
+
+		$transactions_table = $wpdb->prefix . 'fair_payment_transactions';
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $transactions_table ) ) ) !== $transactions_table ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $event_participant_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $placeholders contains only generated integer placeholders.
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT l.transaction_id, l.kind, MIN(l.created_at) AS created_at,
+					t.amount, t.currency
+				 FROM %i l
+				 INNER JOIN %i t ON l.transaction_id = t.id
+				 WHERE l.event_participant_id IN ($placeholders) AND t.status = 'paid'
+				 GROUP BY l.transaction_id, l.kind, t.amount, t.currency
+				 ORDER BY created_at ASC",
+				array_merge( array( $this->get_table_name(), $transactions_table ), $event_participant_ids )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+	}
+
+	/**
 	 * Get table name.
 	 *
 	 * @return string Table name.
