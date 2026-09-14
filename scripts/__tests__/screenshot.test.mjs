@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { resolveScreenshotConfig } from '../screenshot.js';
+import {
+	parseArgs,
+	resolveScreenshotConfig,
+	validateUploadOptions,
+} from '../screenshot.js';
 
 test('screenshot config defaults to the regular Docker development site', () => {
 	assert.deepEqual(resolveScreenshotConfig({}), {
@@ -42,4 +46,44 @@ test('legacy test variables remain supported as fallbacks', () => {
 			adminPassword: 'legacy-password',
 		}
 	);
+});
+
+test('parseArgs captures --issue alongside --upload', () => {
+	const { opts } = parseArgs(['--upload', 'github', '--issue', '1554']);
+
+	assert.equal(opts.upload, 'github');
+	assert.equal(opts.issue, '1554');
+});
+
+test('parseArgs defaults --issue to null', () => {
+	const { opts } = parseArgs([]);
+
+	assert.equal(opts.issue, null);
+});
+
+test('validateUploadOptions rejects an unknown upload target', () => {
+	const message = validateUploadOptions({ upload: 'dropbox', issue: null });
+
+	assert.match(message, /unknown --upload target "dropbox"/);
+});
+
+test('validateUploadOptions requires --issue for the github target', () => {
+	const message = validateUploadOptions({ upload: 'github', issue: null });
+
+	assert.match(message, /--issue <number>/);
+});
+
+test('validateUploadOptions accepts the github target with an issue number', () => {
+	assert.equal(
+		validateUploadOptions({ upload: 'github', issue: '1554' }),
+		null
+	);
+});
+
+test('validateUploadOptions accepts imgbb without an issue number', () => {
+	assert.equal(validateUploadOptions({ upload: 'imgbb', issue: null }), null);
+});
+
+test('validateUploadOptions accepts no upload target at all', () => {
+	assert.equal(validateUploadOptions({ upload: null, issue: null }), null);
 });

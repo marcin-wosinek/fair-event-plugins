@@ -28,25 +28,35 @@
  *   --wait-for <sel>    Wait for a CSS selector before capturing
  *   --no-login          Skip the wp-login step (for public pages)
  *   --upload <target>   After saving, upload the PNG and print a public URL +
- *                       markdown snippet. Currently supports `imgbb` (needs
- *                       IMGBB_API_KEY in .env). Opt-in: the local file is
- *                       always written; upload is in addition to it. imgbb is
- *                       PUBLIC — synthetic/demo data only.
+ *                       markdown snippet. Supports `imgbb` (needs
+ *                       IMGBB_API_KEY in .env) and `github` (publishes to the
+ *                       repo's `pr-assets` branch via the already-authenticated
+ *                       `gh` CLI — no new key needed, but requires --issue).
+ *                       Opt-in: the local file is always written; upload is
+ *                       in addition to it. Both targets are PUBLIC —
+ *                       synthetic/demo data only.
+ *   --issue <number>    Issue number the screenshot belongs to. Required with
+ *                       `--upload github`; determines the `pr-assets/<issue>/`
+ *                       path.
  *   --expiry <seconds>  Upload TTL for hosts that support it (default 2592000
  *                       = 30 days; 0 keeps it indefinitely). imgbb accepts
- *                       60–15552000.
+ *                       60–15552000. Ignored by `github`, which keeps files
+ *                       indefinitely.
  *
  * Examples:
  *   node scripts/screenshot.js "/wp-admin/admin.php?page=fair-finance-budgets" mobile budgets-mobile.png
  *   WP_SCREENSHOT_BASE_URL=http://localhost:8889 node scripts/screenshot.js "/" desktop home.png --no-login
  *   node scripts/screenshot.js "/" desktop home.png --no-login --upload imgbb
+ *   node scripts/screenshot.js "/wp-admin/" desktop before-desktop.png --upload github --issue 1554
  */
 
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { chromium } from '@playwright/test';
 import dotenv from 'dotenv';
+import { publishScreenshot } from './pr-assets.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -83,10 +93,11 @@ const DEFAULT_EXPIRY = 2592000;
  * keys, which is why this replaces the imgur design from #653.
  *
  * @param {Buffer} buffer PNG bytes.
- * @param {number} expiry Seconds until imgbb deletes it (0 = keep forever).
+ * @param {object} options
+ * @param {number} options.expiry Seconds until imgbb deletes it (0 = keep forever).
  * @returns {Promise<string>} The public `i.ibb.co` link.
  */
-async function uploadToImgbb(buffer, expiry) {
+async function uploadToImgbb(buffer, { expiry }) {
 	const apiKey = process.env.IMGBB_API_KEY;
 	if (!apiKey) {
 		throw new Error(
@@ -127,13 +138,63 @@ async function uploadToImgbb(buffer, expiry) {
 }
 
 /**
+ * Publish a PNG buffer to the shared `pr-assets` branch and return the raw,
+ * repository-hosted URL that renders it in a PR description with no
+ * authentication (the repo is public — see COMMIT_GUIDE.md). Resolves the
+ * current repository slug via `gh repo view` and hands the actual upload to
+ * `publishScreenshot()` in `scripts/pr-assets.mjs`, which shells out to
+ * `gh api` — no new dependency or secret, reusing the already-authenticated
+ * `gh` CLI session.
+ *
+ * @param {Buffer} buffer PNG bytes.
+ * @param {object} options
+ * @param {number|string} options.issue Issue number the screenshot belongs to.
+ * @param {string} options.filename Output filename, e.g. `before-desktop.png`.
+ * @returns {Promise<string>} The public `raw.githubusercontent.com` link.
+ */
+async function uploadToGithub(buffer, { issue, filename }) {
+	const repo = execFileSync(
+		'gh',
+		['repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner'],
+		{ encoding: 'utf8' }
+	).trim();
+
+	const result = await publishScreenshot({ repo, issue, filename, buffer });
+	return result.rawUrl;
+}
+
+/**
  * Swappable upload targets. A future durable/private host (S3, Cloudinary)
  * slots in here behind `--upload <target>` without touching the CLI. `public`
  * gates the exposure warning.
  */
 const UPLOADERS = {
 	imgbb: { label: 'imgbb', public: true, upload: uploadToImgbb },
+	github: {
+		label: 'GitHub (pr-assets branch)',
+		public: true,
+		upload: uploadToGithub,
+	},
 };
+
+/**
+ * Validate a parsed `--upload`/`--issue` combination before any capture
+ * happens, so a typo or a missing `--issue` fails fast instead of after a
+ * full screenshot. Returns an error message, or `null` when valid.
+ */
+export function validateUploadOptions(opts) {
+	if (opts.upload && !UPLOADERS[opts.upload]) {
+		return `unknown --upload target "${
+			opts.upload
+		}". Supported: ${Object.keys(UPLOADERS).join(', ')}`;
+	}
+
+	if (opts.upload === 'github' && !opts.issue) {
+		return '--upload github requires --issue <number> (the ticket the screenshot belongs to).';
+	}
+
+	return null;
+}
 
 /**
  * Read the just-written PNG, hand it to the selected uploader, and print the
@@ -141,7 +202,7 @@ const UPLOADERS = {
  * or upload failure — the caller turns that into a non-zero exit, but the
  * local PNG is already on disk by then.
  */
-async function uploadScreenshot(target, outFile, expiry) {
+async function uploadScreenshot(target, outFile, opts) {
 	const uploader = UPLOADERS[target];
 	if (!uploader) {
 		throw new Error(
@@ -156,19 +217,24 @@ async function uploadScreenshot(target, outFile, expiry) {
 			`\n⚠️  Uploading to ${uploader.label}, a PUBLIC host: anyone with the ` +
 				'link can view it and GitHub caches it. Upload synthetic/demo data ' +
 				'only — admin captures can leak participant names, emails, or finance ' +
-				'figures. For real-data pages keep using the pr-assets branch.\n'
+				'figures.\n'
 		);
 	}
 
 	const buffer = await readFile(outFile);
-	const link = await uploader.upload(buffer, expiry);
+	const filename = path.basename(outFile);
+	const link = await uploader.upload(buffer, {
+		expiry: opts.expiry,
+		issue: opts.issue,
+		filename,
+	});
 	const alt = path.basename(outFile, path.extname(outFile));
 
 	console.log(`Uploaded: ${link}`);
 	console.log(`Markdown:  ![${alt}](${link})`);
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
 	const positional = [];
 	const opts = {
 		fullPage: true,
@@ -177,6 +243,7 @@ function parseArgs(argv) {
 		login: true,
 		upload: null,
 		expiry: DEFAULT_EXPIRY,
+		issue: null,
 	};
 
 	for (let i = 0; i < argv.length; i++) {
@@ -199,6 +266,9 @@ function parseArgs(argv) {
 				break;
 			case '--expiry':
 				opts.expiry = Number(argv[++i]);
+				break;
+			case '--issue':
+				opts.issue = argv[++i];
 				break;
 			default:
 				positional.push(arg);
@@ -239,7 +309,7 @@ function usage(message) {
 			'  options: --viewport, --wait <ms>, --wait-for <selector>, --no-login,\n' +
 			`           --upload <${Object.keys(UPLOADERS).join(
 				' | '
-			)}>, --expiry <seconds>`
+			)}>, --issue <number>, --expiry <seconds>`
 	);
 	process.exit(1);
 }
@@ -275,14 +345,12 @@ async function main() {
 		usage(`unknown dimensions "${dimensions}"`);
 	}
 
-	// Validate the upload target before launching the browser so a typo fails
-	// fast instead of after a full capture.
-	if (opts.upload && !UPLOADERS[opts.upload]) {
-		usage(
-			`unknown --upload target "${opts.upload}". Supported: ${Object.keys(
-				UPLOADERS
-			).join(', ')}`
-		);
+	// Validate the upload target (and, for github, --issue) before launching
+	// the browser so a typo or missing flag fails fast instead of after a
+	// full capture.
+	const uploadError = validateUploadOptions(opts);
+	if (uploadError) {
+		usage(uploadError);
 	}
 
 	const outFile = path.resolve(process.cwd(), filename);
@@ -325,7 +393,7 @@ async function main() {
 	// Upload last, with the browser already closed and the PNG on disk: an
 	// upload failure exits non-zero but never costs the local file.
 	if (opts.upload) {
-		await uploadScreenshot(opts.upload, outFile, opts.expiry);
+		await uploadScreenshot(opts.upload, outFile, opts);
 	}
 }
 
