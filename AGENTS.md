@@ -1,12 +1,8 @@
 ## Project Overview
 
 This is a WordPress plugin collection called "Fair Event Plugins" for event
-organization with fair pricing models. It is a monorepo. npm workspaces:
-`fair-events`, `fair-audience`, `fair-timetable`, `fair-payments-connector`,
-`fair-finance`, `fair-form`, `fair-platform`, the feature-flag companions
-`fair-events-experimental` and `fair-payments-connector-experimental`, and the
-shared `fair-events-shared` package. The list in the root `package.json` is
-authoritative.
+organization with fair pricing models. It is a monorepo of npm workspaces; the
+list in the root `package.json` is authoritative.
 
 ## Agent Workflows
 
@@ -15,16 +11,6 @@ The seven agent workflows have one canonical definition under
 invokes them with `$<name>`. Claude Code preserves the matching `/<name>` slash
 commands through thin files in `.claude/commands/`; each adapter passes
 `$ARGUMENTS` to the canonical skill and contains no workflow policy of its own.
-
-| Workflow | Claude Code | Codex | Canonical definition |
-| --- | --- | --- | --- |
-| `write-ticket` | `/write-ticket` | `$write-ticket` | `.agents/skills/write-ticket/SKILL.md` |
-| `plan-ticket` | `/plan-ticket` | `$plan-ticket` | `.agents/skills/plan-ticket/SKILL.md` |
-| `make-pr` | `/make-pr` | `$make-pr` | `.agents/skills/make-pr/SKILL.md` |
-| `pr` | `/pr` | `$pr` | `.agents/skills/pr/SKILL.md` |
-| `release` | `/release` | `$release` | `.agents/skills/release/SKILL.md` |
-| `translate` | `/translate` | `$translate` | `.agents/skills/translate/SKILL.md` |
-| `new-plugin` | `/new-plugin` | `$new-plugin` | `.agents/skills/new-plugin/SKILL.md` |
 
 The repository uses `scripts/agent-hook.mjs` for generated-file protection and
 per-file formatting. Hook registration and payload parsing remain specific to
@@ -89,24 +75,15 @@ guessing which ones matter.
 | Translation tooling (`npm run translation:*`)                   | [TRANSLATIONS.md](./TRANSLATIONS.md)                           |
 | Webpack config                                                  | [WEBPACK_CONFIG.md](./WEBPACK_CONFIG.md)                       |
 | Block creation                                                  | [BLOCK_CREATION.md](./BLOCK_CREATION.md)                       |
-| Fair Form question blocks (field types)                        | [FAIR_FORM_QUESTION_BLOCKS.md](./FAIR_FORM_QUESTION_BLOCKS.md) |
+| Fair Form question blocks (field types)                         | [FAIR_FORM_QUESTION_BLOCKS.md](./FAIR_FORM_QUESTION_BLOCKS.md) |
 | Deployment / releases                                           | [DEPLOYMENT.md](./DEPLOYMENT.md), [RELEASES.md](./RELEASES.md) |
 
 ## Development Commands
 
 ```bash
-# Per-plugin frontend (cd into the plugin first)
-npm run start            # Dev server with hot reload
-npm run build            # Build production assets
-
 # WordPress environment
 docker compose up                                   # WP :8080, MySQL, phpMyAdmin :8081
 docker compose --profile cli run wpcli wp --help    # WP-CLI
-
-# PHP quality (per plugin or from root)
-composer install
-vendor/bin/phpcs         # Sniff
-vendor/bin/phpcbf        # Auto-fix
 ```
 
 ## Formatting & Build
@@ -121,8 +98,6 @@ vendor/bin/phpcbf        # Auto-fix
 -   **Build is not automatic** (it is slow). After changing JS/CSS, run
     `npm run build` in the affected plugin so generated assets land before
     committing.
--   Formatters ignore `**/svn/`, `**/build/`, `**/vendor/`, `**/node_modules/`
-    (see `.prettierignore` and `phpcs.xml`).
 
 ## Definition of Done
 
@@ -220,30 +195,9 @@ deferred loading because the event may already have fired. Example:
 
 ### Testing — see [TESTING.md](./TESTING.md)
 
--   Unit: `src/**/__tests__/*.test.js` (Jest). Component: `*.test.jsx` (Jest +
-    RTL). API: `src/API/__tests__/*.api.spec.js` (Playwright). E2E:
-    `e2e/**/*.spec.js` (Playwright).
--   Run: `npm test` (all), `npm run test:js`, `npm run test:api`, `npm run test:e2e`.
 -   To verify live-WordPress behavior (rendered block output, hook side-effects,
     DB/repo calls) without a permanent test, use the **WP-CLI `eval-file` manual
     check** recipe in [TESTING.md](./TESTING.md#manual-integration-checks-wp-cli-eval-file).
     Copy a `.tmp-` script into a mounted plugin dir, run it via the `wpcli`
     service, then delete it. **Use absolute paths — never `cd … && cp/rm`**, which
     forces an approval prompt every run.
-
-## Shared Package: fair-events-shared
-
-Private workspace package of shared JS utilities used across the Fair Event
-plugins. To consume: add
-`"fair-events-shared": "*"` to the plugin's `dependencies`, export the utility
-from `fair-events-shared/src/index.js`, and import it
-`from 'fair-events-shared'`. Uses ES modules; tested with Jest + Babel.
-
-## Adding a New Plugin
-
-Follow [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md). Root files to update:
-`package.json` (workspaces + scripts),
-`.github/workflows/continuous-integration.yml` (vendor cache),
-`.github/workflows/deploy-to-environment.yml` (deploy list, if applicable),
-`compose.yml` (volume mounts), `scripts/sync-wp-versions.js`,
-`scripts/sync-changelog.js`.
