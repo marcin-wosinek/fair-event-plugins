@@ -64,6 +64,17 @@ const getModeStyle = ( testmode ) => {
 		: { color: '#007017', fontWeight: 'bold' };
 };
 
+const FEE_SYNC_BATCH_SIZE = 10;
+
+/** Split an array into consecutive chunks of at most `size` items. */
+const chunk = ( items, size ) => {
+	const chunks = [];
+	for ( let i = 0; i < items.length; i += size ) {
+		chunks.push( items.slice( i, i + size ) );
+	}
+	return chunks;
+};
+
 const TransactionsApp = () => {
 	const [ transactions, setTransactions ] = useState( [] );
 	const [ pagination, setPagination ] = useState( {
@@ -244,26 +255,30 @@ const TransactionsApp = () => {
 
 			setFeeSync( ( prev ) => ( { ...prev, total: ids.length } ) );
 
+			const batches = chunk( ids, FEE_SYNC_BATCH_SIZE );
+			let processed = 0;
 			let succeeded = 0;
 			let failed = 0;
 
-			for ( let i = 0; i < ids.length; i++ ) {
+			for ( let i = 0; i < batches.length; i++ ) {
+				const batch = batches[ i ];
 				try {
 					const result = await apiFetch( {
-						path: `/fair-payments-connector/v1/transactions/${ ids[ i ] }/sync-mollie`,
+						path: '/fair-payments-connector/v1/transactions/sync-mollie-batch',
 						method: 'POST',
+						data: { ids: batch },
 					} );
-					if ( result && result.mollie_fee !== null ) {
-						succeeded += 1;
-					} else {
-						failed += 1;
-					}
+					succeeded += result?.updated ?? 0;
+					failed += result?.failed ?? 0;
 				} catch ( err ) {
-					failed += 1;
+					// A batch request that fails entirely counts every id in it as
+					// failed so accounting stays accurate, and the loop continues.
+					failed += batch.length;
 				}
+				processed += batch.length;
 				setFeeSync( {
-					running: i + 1 < ids.length,
-					processed: i + 1,
+					running: i + 1 < batches.length,
+					processed,
 					total: ids.length,
 					succeeded,
 					failed,

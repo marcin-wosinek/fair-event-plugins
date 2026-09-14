@@ -278,6 +278,104 @@ test.describe( 'Transaction — Mollie import', () => {
 	} );
 } );
 
+test.describe( 'Transaction — batch Mollie fee sync', () => {
+	let api;
+	const endpoint =
+		'/wp-json/fair-payments-connector/v1/transactions/sync-mollie-batch';
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
+
+	test.afterAll( async () => {
+		await api.dispose();
+	} );
+
+	test( 'requires an authenticated administrator', async () => {
+		const res = await api.post( endpoint, {
+			data: { ids: [ 1 ] },
+		} );
+		expect( res.status() ).toBe( 401 );
+	} );
+
+	test( 'rejects an empty or missing ids array', async () => {
+		const missing = await api.post( endpoint, {
+			headers: adminAuth(),
+			data: {},
+		} );
+		expect( missing.status() ).toBe( 400 );
+
+		const empty = await api.post( endpoint, {
+			headers: adminAuth(),
+			data: { ids: [] },
+		} );
+		expect( empty.status() ).toBe( 400 );
+	} );
+
+	test( 'tallies processed/updated/failed across a mixed batch', async () => {
+		// The Mollie HTTP double used in this environment always returns an
+		// empty balance-transaction list, so a forced sync can never *find* a
+		// fee — it can only leave an already-stored one untouched. Seed one
+		// transaction with a pre-set fee (sync leaves it in place: "updated")
+		// and one without (sync finds nothing to set: "failed"), then add a
+		// nonexistent transaction id ("failed": not found).
+		const suffix = Date.now();
+		const withFeeId = `tr_batch_has_fee_${ suffix }`;
+		const noFeeId = `tr_batch_no_fee_${ suffix }`;
+
+		const importRes = await api.post( IMPORT_ENDPOINT, {
+			headers: adminAuth(),
+			data: {
+				transactions: [
+					{
+						mollie_payment_id: withFeeId,
+						amount: 10.0,
+						currency: 'EUR',
+						status: 'paid',
+						mollie_fee: 0.29,
+						testmode: true,
+					},
+					{
+						mollie_payment_id: noFeeId,
+						amount: 10.0,
+						currency: 'EUR',
+						status: 'paid',
+						testmode: true,
+					},
+				],
+			},
+		} );
+		expect( importRes.status() ).toBe( 200 );
+
+		const listRes = await api.get( TRANSACTIONS_ENDPOINT, {
+			headers: adminAuth(),
+			params: { per_page: 100, mode: 'test' },
+		} );
+		expect( listRes.status() ).toBe( 200 );
+		const { transactions } = await listRes.json();
+		const withFeeTxn = transactions.find(
+			( t ) => t.mollie_payment_id === withFeeId
+		);
+		const noFeeTxn = transactions.find(
+			( t ) => t.mollie_payment_id === noFeeId
+		);
+		expect( withFeeTxn ).toBeDefined();
+		expect( noFeeTxn ).toBeDefined();
+
+		const bogusId = 999999999;
+		const res = await api.post( endpoint, {
+			headers: adminAuth(),
+			data: { ids: [ withFeeTxn.id, noFeeTxn.id, bogusId ] },
+		} );
+		expect( res.status() ).toBe( 200 );
+		expect( await res.json() ).toEqual( {
+			processed: 3,
+			updated: 1,
+			failed: 2,
+		} );
+	} );
+} );
+
 test.describe( 'Transaction — payment timestamp storage and presentation', () => {
 	let api;
 	let fixture;

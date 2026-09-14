@@ -182,6 +182,46 @@ class TransactionsController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/transactions/sync-mollie-batch',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'sync_mollie_batch' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'ids' => array(
+							'type'              => 'array',
+							'required'          => true,
+							'minItems'          => 1,
+							'maxItems'          => 25,
+							'items'             => array(
+								'type' => 'integer',
+							),
+							// WP_REST_Request::has_valid_params() only runs a
+							// validate_callback when one is explicitly set — the
+							// minItems/maxItems/items schema above is otherwise
+							// never enforced, so validate the bounds here too.
+							'validate_callback' => function ( $ids ) {
+								if ( ! is_array( $ids ) || count( $ids ) < 1 || count( $ids ) > 25 ) {
+									return new WP_Error(
+										'invalid_ids',
+										__( 'Provide between 1 and 25 transaction ids.', 'fair-payments-connector' ),
+										array( 'status' => 400 )
+									);
+								}
+								return true;
+							},
+							'sanitize_callback' => function ( $ids ) {
+								return array_map( 'absint', (array) $ids );
+							},
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -647,6 +687,42 @@ class TransactionsController extends WP_REST_Controller {
 		}
 
 		return new WP_REST_Response( $this->prepare_transaction_response( $result ), 200 );
+	}
+
+	/**
+	 * Force a Mollie sync for a batch of transactions.
+	 *
+	 * Every id is attempted independently: one failure never stops the rest
+	 * of the batch. A per-id outcome is data, not a request error, so this
+	 * always returns 200 with the tallied counts.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response
+	 */
+	public function sync_mollie_batch( $request ) {
+		$ids = array_unique( (array) $request->get_param( 'ids' ) );
+
+		$updated = 0;
+		$failed  = 0;
+
+		foreach ( $ids as $id ) {
+			$result = TransactionAPI::sync_transaction_status( (int) $id, true );
+
+			if ( $result && ! is_wp_error( $result ) && null !== $result->mollie_fee ) {
+				++$updated;
+			} else {
+				++$failed;
+			}
+		}
+
+		return new WP_REST_Response(
+			array(
+				'processed' => count( $ids ),
+				'updated'   => $updated,
+				'failed'    => $failed,
+			),
+			200
+		);
 	}
 
 	/**
