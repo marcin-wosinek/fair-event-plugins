@@ -7,7 +7,7 @@
  * points at the retired `fair-payments-connector-entries` slug.
  */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import TransactionsApp from '../TransactionsApp.js';
 
@@ -59,5 +59,108 @@ describe( 'TransactionsApp — entry column', () => {
 				)
 			);
 		expect( staleLink ).toBeUndefined();
+	} );
+} );
+
+describe( 'TransactionsApp — batch Mollie fee sync (#1555)', () => {
+	it( 'chunks ids into batches, tallies cumulative progress, continues past a fully failed batch, and refreshes once at the end', async () => {
+		const ids = Array.from( { length: 25 }, ( _, i ) => i + 1 );
+		const batchRequests = [];
+		const deferredBatches = [];
+
+		apiFetch.mockImplementation( ( options ) => {
+			if (
+				options.path.startsWith(
+					'/fair-payments-connector/v1/transactions/missing-mollie-fee'
+				)
+			) {
+				return Promise.resolve( { ids } );
+			}
+			if (
+				options.path ===
+				'/fair-payments-connector/v1/transactions/sync-mollie-batch'
+			) {
+				batchRequests.push( options.data.ids );
+				let resolve, reject;
+				const promise = new Promise( ( res, rej ) => {
+					resolve = res;
+					reject = rej;
+				} );
+				deferredBatches.push( { resolve, reject } );
+				return promise;
+			}
+			return Promise.resolve( {
+				transactions: [ TRANSACTION ],
+				total: 1,
+				pages: 1,
+			} );
+		} );
+
+		render( <TransactionsApp /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', {
+				name: 'Load Missing Mollie Fees',
+			} )
+		);
+
+		// The accessibility live region echoes notice text alongside the
+		// visible Notice, so scope matches to the rendered notice itself.
+		const noticeText = ( text ) =>
+			screen.getByText(
+				( content, element ) =>
+					content === text &&
+					element?.className === 'components-notice__content'
+			);
+
+		// First batch: 10 ids, 9 updated / 1 failed.
+		await waitFor( () => expect( deferredBatches ).toHaveLength( 1 ) );
+		expect( batchRequests[ 0 ] ).toHaveLength( 10 );
+		deferredBatches[ 0 ].resolve( {
+			processed: 10,
+			updated: 9,
+			failed: 1,
+		} );
+		await waitFor( () =>
+			expect(
+				noticeText(
+					'Syncing Mollie fees: 10 / 25 (updated: 9, failed: 1)'
+				)
+			).toBeInTheDocument()
+		);
+
+		// Second batch: 10 ids, the request itself fails — every id in it
+		// counts as failed, and the loop still moves on to the third batch.
+		await waitFor( () => expect( deferredBatches ).toHaveLength( 2 ) );
+		expect( batchRequests[ 1 ] ).toHaveLength( 10 );
+		deferredBatches[ 1 ].reject( new Error( 'network error' ) );
+		await waitFor( () =>
+			expect(
+				noticeText(
+					'Syncing Mollie fees: 20 / 25 (updated: 9, failed: 11)'
+				)
+			).toBeInTheDocument()
+		);
+
+		// Third batch: the remaining 5 ids, 4 updated / 1 failed.
+		await waitFor( () => expect( deferredBatches ).toHaveLength( 3 ) );
+		expect( batchRequests[ 2 ] ).toHaveLength( 5 );
+		deferredBatches[ 2 ].resolve( { processed: 5, updated: 4, failed: 1 } );
+
+		await waitFor( () =>
+			expect(
+				noticeText(
+					'Mollie fee sync complete: 13 updated, 12 failed (out of 25).'
+				)
+			).toBeInTheDocument()
+		);
+
+		const listCalls = apiFetch.mock.calls.filter( ( [ options ] ) =>
+			options.path.startsWith(
+				'/fair-payments-connector/v1/transactions?'
+			)
+		);
+		// Initial mount load, plus exactly one refresh once every batch settled.
+		expect( listCalls ).toHaveLength( 2 );
 	} );
 } );
