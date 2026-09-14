@@ -446,7 +446,9 @@ class MolliePaymentHandler {
 	 */
 	public function get_payment( $mollie_payment_id, $options = array() ) {
 		try {
-			return $this->mollie->payments->get( $mollie_payment_id, $options );
+			$testmode = ! empty( $options['testmode'] );
+			unset( $options['testmode'] );
+			return $this->mollie->payments->get( $mollie_payment_id, $options, $testmode );
 		} catch ( ApiException $e ) {
 			throw new \Exception(
 				esc_html(
@@ -458,6 +460,86 @@ class MolliePaymentHandler {
 				)
 			);
 		}
+	}
+
+	/**
+	 * List a bounded page of payments, newest first.
+	 *
+	 * @param string|null $from Cursor payment identifier.
+	 * @param int         $limit Page size.
+	 * @param bool        $testmode Whether to query test payments.
+	 * @return \Mollie\Api\Resources\PaymentCollection
+	 * @throws \Exception If Mollie cannot return the page.
+	 */
+	public function list_payments( $from, $limit, $testmode ) {
+		try {
+			return $this->mollie->payments->page(
+				$from ? $from : null,
+				$limit,
+				array(
+					'testmode' => (bool) $testmode,
+					'sort'     => 'desc',
+				)
+			);
+		} catch ( ApiException $e ) {
+			throw new \Exception( esc_html__( 'Mollie payments could not be loaded. Please try again.', 'fair-payments-connector' ) );
+		}
+	}
+
+	/**
+	 * Convert a Mollie payment into fields supported by the local transaction table.
+	 *
+	 * @param object $payment Mollie payment resource.
+	 * @param bool   $include_fee Whether to attempt a balance-transaction fee lookup.
+	 * @return array
+	 */
+	public function map_payment_for_import( $payment, $include_fee = true ) {
+		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+		$application_fee = isset( $payment->applicationFee->amount->value )
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+			? (float) $payment->applicationFee->amount->value
+			: null;
+		$mollie_fee = $include_fee ? $this->find_processing_fee( $payment->id, 'test' === $payment->mode, $application_fee ) : null;
+
+		return array(
+			'mollie_payment_id' => (string) $payment->id,
+			'amount'            => (float) $payment->amount->value,
+			'currency'          => (string) $payment->amount->currency,
+			'status'            => (string) $payment->status,
+			'description'       => (string) ( $payment->description ?? '' ),
+			'testmode'          => 'test' === $payment->mode,
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
+			'created_at'        => gmdate( 'Y-m-d H:i:s', strtotime( $payment->createdAt ) ),
+			'application_fee'   => $application_fee,
+			'mollie_fee'        => $mollie_fee,
+		);
+	}
+
+	/**
+	 * Best-effort processing-fee lookup.
+	 *
+	 * @param string     $payment_id Mollie payment identifier.
+	 * @param bool       $testmode Whether to query test data.
+	 * @param float|null $application_fee Application fee already included in deductions.
+	 * @return float|null
+	 */
+	private function find_processing_fee( $payment_id, $testmode, $application_fee ) {
+		try {
+			$scanned = 0;
+			foreach ( $this->iterate_primary_balance_transactions( $testmode ) as $transaction ) {
+				++$scanned;
+				if ( isset( $transaction->context->paymentId ) && $payment_id === $transaction->context->paymentId && isset( $transaction->deductions->value ) ) {
+					return max( 0, round( abs( (float) $transaction->deductions->value ) - (float) $application_fee, 2 ) );
+				}
+				if ( $scanned >= 200 ) {
+					break;
+				}
+			}
+		} catch ( \Exception $e ) {
+			return null;
+		}
+
+		return null;
 	}
 
 	/**

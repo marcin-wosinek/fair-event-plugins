@@ -180,6 +180,51 @@ class Transaction {
 	}
 
 	/**
+	 * Import a Mollie payment without changing an existing local transaction.
+	 *
+	 * @param array $data Normalized Mollie payment data.
+	 * @return string 'created', 'existing', or 'failed'.
+	 */
+	public static function import_mollie_create_only( $data ) {
+		global $wpdb;
+		$table_name = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
+		$payment_id = isset( $data['mollie_payment_id'] ) ? (string) $data['mollie_payment_id'] : '';
+
+		if ( '' === $payment_id ) {
+			return 'failed';
+		}
+
+		if ( self::get_by_mollie_id( $payment_id ) ) {
+			return 'existing';
+		}
+
+		$row = array(
+			'mollie_payment_id' => $payment_id,
+			'post_id'           => null,
+			'event_date_id'     => null,
+			'user_id'           => null,
+			'participant_id'    => null,
+			'amount'            => (float) $data['amount'],
+			'currency'          => (string) $data['currency'],
+			'mollie_fee'        => $data['mollie_fee'],
+			'application_fee'   => $data['application_fee'],
+			'status'            => (string) $data['status'],
+			'testmode'          => ! empty( $data['testmode'] ) ? 1 : 0,
+			'description'       => (string) $data['description'],
+			'metadata'          => '',
+			'created_at'        => (string) $data['created_at'],
+		);
+
+		$inserted = $wpdb->insert(
+			$table_name,
+			$row,
+			array( '%s', '%d', '%d', '%d', '%d', '%f', '%s', '%f', '%f', '%s', '%d', '%s', '%s', '%s' )
+		);
+
+		return $inserted ? 'created' : 'failed';
+	}
+
+	/**
 	 * Update specific fields on a transaction by ID.
 	 *
 	 * @param int   $transaction_id Transaction ID.

@@ -191,6 +191,93 @@ test.describe( 'Transaction — fee cap enforcement', () => {
 	} );
 } );
 
+test.describe( 'Transaction — Mollie import', () => {
+	let api;
+	const endpoint = '/wp-json/fair-payments-connector/v1/transactions/mollie';
+	const today = new Date();
+	const start = new Date( today );
+	start.setDate( today.getDate() - 30 );
+	const date = ( value ) => value.toISOString().slice( 0, 10 );
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
+
+	test.afterAll( async () => {
+		await api.dispose();
+	} );
+
+	test( 'requires an authenticated administrator', async () => {
+		const res = await api.get( endpoint, {
+			params: {
+				mode: 'test',
+				start_date: date( start ),
+				end_date: date( today ),
+			},
+		} );
+		expect( res.status() ).toBe( 401 );
+	} );
+
+	test( 'validates mode and bounded date range', async () => {
+		const invalidMode = await api.get( endpoint, {
+			headers: adminAuth(),
+			params: {
+				mode: 'sandbox',
+				start_date: date( start ),
+				end_date: date( today ),
+			},
+		} );
+		expect( invalidMode.status() ).toBe( 400 );
+
+		const old = new Date( today );
+		old.setDate( today.getDate() - 91 );
+		const invalidRange = await api.get( endpoint, {
+			headers: adminAuth(),
+			params: {
+				mode: 'test',
+				start_date: date( old ),
+				end_date: date( today ),
+			},
+		} );
+		expect( invalidRange.status() ).toBe( 400 );
+	} );
+
+	test( 'maps paid payments and skips a duplicate without overwriting it', async () => {
+		const params = {
+			mode: 'test',
+			start_date: date( start ),
+			end_date: date( today ),
+		};
+		const list = await api.get( endpoint, {
+			headers: adminAuth(),
+			params,
+		} );
+		expect( list.status() ).toBe( 200 );
+		const listed = await list.json();
+		expect( listed.payments[ 0 ] ).toEqual(
+			expect.objectContaining( {
+				mollie_payment_id: 'tr_e2emanualimport',
+				status: 'paid',
+				testmode: true,
+			} )
+		);
+
+		const first = await api.post( endpoint, {
+			headers: adminAuth(),
+			data: { ...params, payment_ids: [ 'tr_e2emanualimport' ] },
+		} );
+		expect( first.status() ).toBe( 200 );
+		const second = await api.post( endpoint, {
+			headers: adminAuth(),
+			data: { ...params, payment_ids: [ 'tr_e2emanualimport' ] },
+		} );
+		expect( second.status() ).toBe( 200 );
+		expect( await second.json() ).toEqual(
+			expect.objectContaining( { imported: 0, skipped: 1, failed: 0 } )
+		);
+	} );
+} );
+
 test.describe( 'Transaction — payment timestamp storage and presentation', () => {
 	let api;
 	let fixture;

@@ -83,10 +83,12 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 		$data = $this->canned_response( $method, $path, $payload );
 		$json = \wp_json_encode( $data );
 
-		$fc           = $pending_request->getFactoryCollection();
+		$fc = $pending_request->getFactoryCollection();
+		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie SDK field.
 		$psr_response = $fc->responseFactory
 			->createResponse( 200 )
 			->withHeader( 'Content-Type', 'application/json' )
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie SDK field.
 			->withBody( $fc->streamFactory->createStream( $json ) );
 
 		return new Response( $psr_response, $psr_request, $pending_request );
@@ -110,10 +112,27 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 	 * @return array|\stdClass
 	 */
 	private function canned_response( string $method, string $path, array $payload ) {
-		// Create payment: POST /v2/payments
+		// Create payment: POST /v2/payments.
 		if ( 'POST' === $method && \preg_match( '#/payments/?$#', $path ) ) {
 			\update_option( 'fair_e2e_mollie_last_create_payload', $payload, false );
 			return $this->payment_response( $payload, 'open' );
+		}
+
+		// Bounded payment listing used by the admin Mollie import flow.
+		if ( 'GET' === $method && \preg_match( '#/payments/?$#', $path ) ) {
+			$payment           = $this->payment_response( array( 'description' => 'E2E manual Mollie payment' ), 'paid', 'tr_e2emanualimport' );
+			$payment['amount'] = array(
+				'currency' => 'EUR',
+				'value'    => '17.50',
+			);
+			return array(
+				'count'     => 1,
+				'_embedded' => array( 'payments' => array( $payment ) ),
+				'_links'    => array(
+					'next'     => null,
+					'previous' => null,
+				),
+			);
 		}
 
 		// Get single payment: GET /v2/payments/{id}. Status is settable via
@@ -121,10 +140,23 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 		// (default "paid" keeps every pre-existing spec's assumption intact).
 		if ( \preg_match( '#/payments/([^/]+)$#', $path, $m ) ) {
 			$status = (string) \get_option( 'fair_e2e_mollie_get_status', 'paid' );
+			if ( 'tr_e2emanualimport' === $m[1] ) {
+				return $this->payment_response(
+					array(
+						'description' => 'E2E manual Mollie payment',
+						'amount'      => array(
+							'currency' => 'EUR',
+							'value'    => '17.50',
+						),
+					),
+					'paid',
+					$m[1]
+				);
+			}
 			return $this->payment_response( array(), $status, $m[1] );
 		}
 
-		// Payment methods allowlist lookup: GET /v2/methods
+		// Payment methods allowlist lookup: GET /v2/methods.
 		if ( \preg_match( '#/methods#', $path ) ) {
 			return array(
 				'count'     => 0,
