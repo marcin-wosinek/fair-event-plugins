@@ -91,10 +91,11 @@ class MetaConversionsController extends WP_REST_Controller {
 		unset( $request );
 		return rest_ensure_response(
 			array(
-				'dataset_id'       => (string) get_option( Conversions::DATASET_OPTION, '' ),
-				'token_configured' => '' !== (string) get_option( Conversions::TOKEN_OPTION, '' ),
-				'test_event_code'  => (string) get_option( Conversions::TEST_CODE_OPTION, '' ),
-				'diagnostics'      => ( new Outbox() )->diagnostics(),
+				'dataset_id'            => (string) get_option( Conversions::DATASET_OPTION, '' ),
+				'token_configured'      => '' !== (string) get_option( Conversions::TOKEN_OPTION, '' ),
+				'test_event_code'       => (string) get_option( Conversions::TEST_CODE_OPTION, '' ),
+				'diagnostics'           => ( new Outbox() )->diagnostics(),
+				'consent_api_available' => function_exists( 'wp_has_consent' ),
 			)
 		);
 	}

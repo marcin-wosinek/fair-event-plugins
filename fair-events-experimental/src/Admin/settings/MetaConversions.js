@@ -7,6 +7,8 @@ import {
 	CardBody,
 	CardHeader,
 	ConfirmDialog,
+	ExternalLink,
+	Notice,
 	TextControl,
 } from '@wordpress/components';
 
@@ -128,6 +130,30 @@ export default function MetaConversions( { onNotice } ) {
 						'fair-events-experimental'
 					) }
 				</p>
+				{ ! config.consent_api_available && (
+					<Notice status="warning" isDismissible={ false }>
+						<p>
+							{ __(
+								'Live checkout and purchase tracking will stay inactive until the WP Consent API is available. An existing consent banner is not enough on its own — it also needs to report marketing-consent decisions through that API.',
+								'fair-events-experimental'
+							) }
+						</p>
+						<p>
+							{ __(
+								'The WP Consent API is an interoperability layer, not a replacement for your consent banner: installing it does not by itself establish valid consent, and it does not affect synthetic Test Events below.',
+								'fair-events-experimental'
+							) }
+						</p>
+						<p>
+							<ExternalLink href="https://wordpress.org/plugins/wp-consent-api/">
+								{ __(
+									'Get the WP Consent API plugin',
+									'fair-events-experimental'
+								) }
+							</ExternalLink>
+						</p>
+					</Notice>
+				) }
 				<TextControl
 					label={ __(
 						'Dataset / Pixel ID',
