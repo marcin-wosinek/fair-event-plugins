@@ -15,6 +15,7 @@ import {
 	Button,
 	Spinner,
 	Notice,
+	SelectControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
@@ -60,6 +61,15 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 
+	// Budget link (#1608): which fair-finance budget this event's payments
+	// should preselect during reconciliation. '' means "no budget".
+	const [ budgets, setBudgets ] = useState( [] );
+	const [ budgetId, setBudgetId ] = useState( '' );
+	const [ savedBudgetId, setSavedBudgetId ] = useState( '' );
+	const [ budgetSaving, setBudgetSaving ] = useState( false );
+	const [ budgetError, setBudgetError ] = useState( null );
+	const [ budgetSuccess, setBudgetSuccess ] = useState( null );
+
 	useEffect( () => {
 		if ( ! eventDateId ) {
 			setLoading( false );
@@ -80,6 +90,8 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 				failedData,
 				canceledData,
 				expiredData,
+				budgetsData,
+				eventBudgetData,
 			] = await Promise.all( [
 				apiFetch( {
 					path: `/fair-finance/v1/financial-entries/totals?event_date_id=${ eventDateId }`,
@@ -98,6 +110,10 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 				} ),
 				apiFetch( {
 					path: `/fair-payments-connector/v1/transactions?event_date_id=${ eventDateId }&status=expired&mode=live&per_page=100`,
+				} ),
+				apiFetch( { path: '/fair-finance/v1/budgets' } ),
+				apiFetch( {
+					path: `/fair-events/v1/event-dates/${ eventDateId }/budget`,
 				} ),
 			] );
 
@@ -139,6 +155,13 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 			setCostEntries( entriesData.entries || [] );
 			setTransactions( paidTransactions );
 			setFailedTransactions( failed );
+
+			setBudgets( budgetsData || [] );
+			const currentBudgetId = eventBudgetData?.budget_id
+				? String( eventBudgetData.budget_id )
+				: '';
+			setBudgetId( currentBudgetId );
+			setSavedBudgetId( currentBudgetId );
 		} catch ( err ) {
 			setError(
 				err.message ||
@@ -149,400 +172,522 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 		}
 	};
 
+	const handleSaveBudget = async () => {
+		setBudgetSaving( true );
+		setBudgetError( null );
+		setBudgetSuccess( null );
+
+		try {
+			const updated = await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }/budget`,
+				method: 'PUT',
+				data: { budget_id: budgetId ? parseInt( budgetId, 10 ) : null },
+			} );
+			const newBudgetId = updated.budget_id
+				? String( updated.budget_id )
+				: '';
+			setBudgetId( newBudgetId );
+			setSavedBudgetId( newBudgetId );
+			setBudgetSuccess( __( 'Budget updated.', 'fair-events' ) );
+		} catch ( err ) {
+			setBudgetError(
+				err.message || __( 'Failed to update budget.', 'fair-events' )
+			);
+		} finally {
+			setBudgetSaving( false );
+		}
+	};
+
 	const viewAllUrl = `${ entriesUrl }&event_date_id=${ eventDateId }`;
 
 	return (
-		<Card style={ { marginTop: '16px' } }>
-			<CardHeader>
-				<h2>{ __( 'Finance', 'fair-events' ) }</h2>
-			</CardHeader>
-			<CardBody>
-				{ loading && (
-					<div style={ { textAlign: 'center', padding: '20px' } }>
-						<Spinner />
-					</div>
-				) }
+		<>
+			<Card>
+				<CardHeader>
+					<h2>{ __( 'Budget', 'fair-events' ) }</h2>
+				</CardHeader>
+				<CardBody>
+					{ budgetError && (
+						<Notice
+							status="error"
+							isDismissible
+							onRemove={ () => setBudgetError( null ) }
+						>
+							{ budgetError }
+						</Notice>
+					) }
 
-				{ error && (
-					<Notice
-						status="error"
-						isDismissible
-						onRemove={ () => setError( null ) }
-					>
-						{ error }
-					</Notice>
-				) }
+					{ budgetSuccess && (
+						<Notice
+							status="success"
+							isDismissible
+							onRemove={ () => setBudgetSuccess( null ) }
+						>
+							{ budgetSuccess }
+						</Notice>
+					) }
 
-				{ ! loading && ! error && (
 					<VStack spacing={ 4 }>
-						{ totals && (
-							<HStack justify="space-around">
-								<div style={ { textAlign: 'center' } }>
-									<div
-										style={ {
-											fontSize: '24px',
-											fontWeight: 'bold',
-											color: '#d63638',
-										} }
-									>
-										{ formatAmount( totals.total_cost ) }
-									</div>
-									<div style={ { color: '#666' } }>
-										{ __( 'Total Costs', 'fair-events' ) }
-									</div>
-								</div>
-								<div style={ { textAlign: 'center' } }>
-									<div
-										style={ {
-											fontSize: '24px',
-											fontWeight: 'bold',
-											color: '#007017',
-										} }
-									>
-										{ formatAmount( totals.total_income ) }
-									</div>
-									<div style={ { color: '#666' } }>
-										{ __( 'Total Income', 'fair-events' ) }
-									</div>
-								</div>
-								<div
-									style={ { textAlign: 'center' } }
-									title={
-										totals.net_complete
-											? __(
-													'Sum of online payments after Mollie and application fees.',
-													'fair-events'
-											  )
-											: __(
-													'Sum of online payments after fees, excluding transactions whose fee data has not been recorded yet.',
-													'fair-events'
-											  )
-									}
-								>
-									<div
-										style={ {
-											fontSize: '24px',
-											fontWeight: 'bold',
-											color: '#007017',
-										} }
-									>
-										{ formatAmount(
-											totals.total_net || 0
-										) }
-										{ ! totals.net_complete && '*' }
-									</div>
-									<div style={ { color: '#666' } }>
-										{ __( 'Total Net', 'fair-events' ) }
-									</div>
-								</div>
-								<div style={ { textAlign: 'center' } }>
-									<div
-										style={ {
-											fontSize: '24px',
-											fontWeight: 'bold',
-											color:
-												totals.balance >= 0
-													? '#007017'
-													: '#d63638',
-										} }
-									>
-										{ formatAmount( totals.balance ) }
-									</div>
-									<div style={ { color: '#666' } }>
-										{ __( 'Balance', 'fair-events' ) }
-									</div>
-								</div>
-							</HStack>
-						) }
+						<SelectControl
+							label={ __( 'Budget', 'fair-events' ) }
+							help={ __(
+								'Reconciliation splits preselect this budget for payments linked to this event.',
+								'fair-events'
+							) }
+							value={ budgetId }
+							options={ [
+								{
+									label: __( 'No budget', 'fair-events' ),
+									value: '',
+								},
+								...budgets.map( ( budget ) => ( {
+									label: budget.name,
+									value: String( budget.id ),
+								} ) ),
+							] }
+							onChange={ setBudgetId }
+							disabled={ loading }
+						/>
+						<HStack justify="flex-start">
+							<Button
+								variant="primary"
+								onClick={ handleSaveBudget }
+								isBusy={ budgetSaving }
+								disabled={
+									budgetSaving ||
+									loading ||
+									budgetId === savedBudgetId
+								}
+							>
+								{ __( 'Save budget', 'fair-events' ) }
+							</Button>
+						</HStack>
+					</VStack>
+				</CardBody>
+			</Card>
 
-						{ costEntries.length > 0 && (
-							<div style={ { overflowX: 'auto' } }>
-								<h3 style={ { marginBottom: '8px' } }>
-									{ __( 'Costs', 'fair-events' ) }
-								</h3>
-								<table className="wp-list-table widefat striped">
-									<thead>
-										<tr>
-											<th>
-												{ __( 'Date', 'fair-events' ) }
-											</th>
-											<th>
-												{ __(
-													'Amount',
-													'fair-events'
-												) }
-											</th>
-											<th>
-												{ __(
-													'Description',
-													'fair-events'
-												) }
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{ costEntries.map( ( entry ) => (
-											<tr key={ entry.id }>
-												<td>{ entry.entry_date }</td>
-												<td>
-													<strong
-														style={ {
-															color: '#d63638',
-														} }
-													>
-														{ formatAmount(
-															entry.amount
-														) }
-													</strong>
-												</td>
-												<td>
-													{ entry.description || (
-														<em>-</em>
+			<Card style={ { marginTop: '16px' } }>
+				<CardHeader>
+					<h2>{ __( 'Finance', 'fair-events' ) }</h2>
+				</CardHeader>
+				<CardBody>
+					{ loading && (
+						<div style={ { textAlign: 'center', padding: '20px' } }>
+							<Spinner />
+						</div>
+					) }
+
+					{ error && (
+						<Notice
+							status="error"
+							isDismissible
+							onRemove={ () => setError( null ) }
+						>
+							{ error }
+						</Notice>
+					) }
+
+					{ ! loading && ! error && (
+						<VStack spacing={ 4 }>
+							{ totals && (
+								<HStack justify="space-around">
+									<div style={ { textAlign: 'center' } }>
+										<div
+											style={ {
+												fontSize: '24px',
+												fontWeight: 'bold',
+												color: '#d63638',
+											} }
+										>
+											{ formatAmount(
+												totals.total_cost
+											) }
+										</div>
+										<div style={ { color: '#666' } }>
+											{ __(
+												'Total Costs',
+												'fair-events'
+											) }
+										</div>
+									</div>
+									<div style={ { textAlign: 'center' } }>
+										<div
+											style={ {
+												fontSize: '24px',
+												fontWeight: 'bold',
+												color: '#007017',
+											} }
+										>
+											{ formatAmount(
+												totals.total_income
+											) }
+										</div>
+										<div style={ { color: '#666' } }>
+											{ __(
+												'Total Income',
+												'fair-events'
+											) }
+										</div>
+									</div>
+									<div
+										style={ { textAlign: 'center' } }
+										title={
+											totals.net_complete
+												? __(
+														'Sum of online payments after Mollie and application fees.',
+														'fair-events'
+												  )
+												: __(
+														'Sum of online payments after fees, excluding transactions whose fee data has not been recorded yet.',
+														'fair-events'
+												  )
+										}
+									>
+										<div
+											style={ {
+												fontSize: '24px',
+												fontWeight: 'bold',
+												color: '#007017',
+											} }
+										>
+											{ formatAmount(
+												totals.total_net || 0
+											) }
+											{ ! totals.net_complete && '*' }
+										</div>
+										<div style={ { color: '#666' } }>
+											{ __( 'Total Net', 'fair-events' ) }
+										</div>
+									</div>
+									<div style={ { textAlign: 'center' } }>
+										<div
+											style={ {
+												fontSize: '24px',
+												fontWeight: 'bold',
+												color:
+													totals.balance >= 0
+														? '#007017'
+														: '#d63638',
+											} }
+										>
+											{ formatAmount( totals.balance ) }
+										</div>
+										<div style={ { color: '#666' } }>
+											{ __( 'Balance', 'fair-events' ) }
+										</div>
+									</div>
+								</HStack>
+							) }
+
+							{ costEntries.length > 0 && (
+								<div style={ { overflowX: 'auto' } }>
+									<h3 style={ { marginBottom: '8px' } }>
+										{ __( 'Costs', 'fair-events' ) }
+									</h3>
+									<table className="wp-list-table widefat striped">
+										<thead>
+											<tr>
+												<th>
+													{ __(
+														'Date',
+														'fair-events'
 													) }
-												</td>
+												</th>
+												<th>
+													{ __(
+														'Amount',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Description',
+														'fair-events'
+													) }
+												</th>
 											</tr>
-										) ) }
-									</tbody>
-								</table>
-							</div>
-						) }
-
-						{ transactions.length > 0 && (
-							<div style={ { overflowX: 'auto' } }>
-								<h3 style={ { marginBottom: '8px' } }>
-									{ __( 'Payments', 'fair-events' ) }
-								</h3>
-								<table className="wp-list-table widefat striped">
-									<thead>
-										<tr>
-											<th>
-												{ __( 'Date', 'fair-events' ) }
-											</th>
-											<th>
-												{ __(
-													'Amount',
-													'fair-events'
-												) }
-											</th>
-											<th
-												title={ __(
-													'Amount paid minus Mollie and application fees.',
-													'fair-events'
-												) }
-											>
-												{ __(
-													'Net received',
-													'fair-events'
-												) }
-											</th>
-											<th>
-												{ __(
-													'Description',
-													'fair-events'
-												) }
-											</th>
-											<th>
-												{ __(
-													'Participant',
-													'fair-events'
-												) }
-											</th>
-											<th>
-												{ __(
-													'Budget entry',
-													'fair-events'
-												) }
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{ transactions.map( ( tx ) => {
-											const net =
-												computeNetReceived( tx );
-											return (
-												<tr key={ tx.id }>
+										</thead>
+										<tbody>
+											{ costEntries.map( ( entry ) => (
+												<tr key={ entry.id }>
 													<td>
-														{ tx.created_at
-															? tx.created_at.slice(
-																	0,
-																	10
-															  )
-															: '-' }
+														{ entry.entry_date }
 													</td>
 													<td>
-														<a
-															href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ tx.id }` }
-														>
-															<strong
-																style={ {
-																	color: '#007017',
-																} }
-															>
-																{ formatAmount(
-																	tx.amount
-																) }
-															</strong>
-														</a>
-													</td>
-													<td>
-														{ net === null ? (
-															<em>-</em>
-														) : (
-															<strong
-																style={ {
-																	color: '#007017',
-																} }
-															>
-																{ formatAmount(
-																	net
-																) }
-															</strong>
-														) }
-													</td>
-													<td>
-														{ tx.description || (
-															<em>-</em>
-														) }
-													</td>
-													<td>
-														{ renderParticipant(
-															tx
-														) }
-													</td>
-													<td>
-														{ tx.entry_ids?.length
-															? tx.entry_ids
-																	.map(
-																		(
-																			id
-																		) =>
-																			`#${ id }`
-																	)
-																	.join(
-																		', '
-																	)
-															: '-' }
-													</td>
-												</tr>
-											);
-										} ) }
-									</tbody>
-								</table>
-							</div>
-						) }
-
-						{ failedTransactions.length > 0 && (
-							<div style={ { overflowX: 'auto' } }>
-								<h3 style={ { marginBottom: '8px' } }>
-									{ __( 'Failed Payments', 'fair-events' ) }
-								</h3>
-								<table className="wp-list-table widefat striped">
-									<thead>
-										<tr>
-											<th>
-												{ __( 'Date', 'fair-events' ) }
-											</th>
-											<th>
-												{ __(
-													'Amount',
-													'fair-events'
-												) }
-											</th>
-											<th>
-												{ __(
-													'Status',
-													'fair-events'
-												) }
-											</th>
-											<th>
-												{ __(
-													'Description',
-													'fair-events'
-												) }
-											</th>
-											<th>
-												{ __(
-													'Participant',
-													'fair-events'
-												) }
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{ failedTransactions.map( ( tx ) => (
-											<tr key={ tx.id }>
-												<td>
-													{ tx.created_at
-														? tx.created_at.slice(
-																0,
-																10
-														  )
-														: '-' }
-												</td>
-												<td>
-													<a
-														href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ tx.id }` }
-													>
 														<strong
 															style={ {
 																color: '#d63638',
 															} }
 														>
 															{ formatAmount(
-																tx.amount
+																entry.amount
 															) }
 														</strong>
-													</a>
-												</td>
-												<td>
-													<span
-														style={ {
-															color: '#d63638',
-															fontWeight: 'bold',
-														} }
-													>
-														{ tx.status }
-													</span>
-												</td>
-												<td>
-													{ tx.description || (
-														<em>-</em>
-													) }
-												</td>
-												<td>
-													{ renderParticipant( tx ) }
-												</td>
-											</tr>
-										) ) }
-									</tbody>
-								</table>
-							</div>
-						) }
-
-						{ costEntries.length === 0 &&
-							transactions.length === 0 &&
-							failedTransactions.length === 0 &&
-							! totals?.total_cost &&
-							! totals?.total_income && (
-								<p
-									style={ {
-										textAlign: 'center',
-										color: '#666',
-									} }
-								>
-									{ __(
-										'No financial entries for this event yet.',
-										'fair-events'
-									) }
-								</p>
+													</td>
+													<td>
+														{ entry.description || (
+															<em>-</em>
+														) }
+													</td>
+												</tr>
+											) ) }
+										</tbody>
+									</table>
+								</div>
 							) }
 
-						<Button variant="secondary" href={ viewAllUrl }>
-							{ __( 'View All Entries', 'fair-events' ) }
-						</Button>
-					</VStack>
-				) }
-			</CardBody>
-		</Card>
+							{ transactions.length > 0 && (
+								<div style={ { overflowX: 'auto' } }>
+									<h3 style={ { marginBottom: '8px' } }>
+										{ __( 'Payments', 'fair-events' ) }
+									</h3>
+									<table className="wp-list-table widefat striped">
+										<thead>
+											<tr>
+												<th>
+													{ __(
+														'Date',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Amount',
+														'fair-events'
+													) }
+												</th>
+												<th
+													title={ __(
+														'Amount paid minus Mollie and application fees.',
+														'fair-events'
+													) }
+												>
+													{ __(
+														'Net received',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Description',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Participant',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Budget entry',
+														'fair-events'
+													) }
+												</th>
+											</tr>
+										</thead>
+										<tbody>
+											{ transactions.map( ( tx ) => {
+												const net =
+													computeNetReceived( tx );
+												return (
+													<tr key={ tx.id }>
+														<td>
+															{ tx.created_at
+																? tx.created_at.slice(
+																		0,
+																		10
+																  )
+																: '-' }
+														</td>
+														<td>
+															<a
+																href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ tx.id }` }
+															>
+																<strong
+																	style={ {
+																		color: '#007017',
+																	} }
+																>
+																	{ formatAmount(
+																		tx.amount
+																	) }
+																</strong>
+															</a>
+														</td>
+														<td>
+															{ net === null ? (
+																<em>-</em>
+															) : (
+																<strong
+																	style={ {
+																		color: '#007017',
+																	} }
+																>
+																	{ formatAmount(
+																		net
+																	) }
+																</strong>
+															) }
+														</td>
+														<td>
+															{ tx.description || (
+																<em>-</em>
+															) }
+														</td>
+														<td>
+															{ renderParticipant(
+																tx
+															) }
+														</td>
+														<td>
+															{ tx.entry_ids
+																?.length
+																? tx.entry_ids
+																		.map(
+																			(
+																				id
+																			) =>
+																				`#${ id }`
+																		)
+																		.join(
+																			', '
+																		)
+																: '-' }
+														</td>
+													</tr>
+												);
+											} ) }
+										</tbody>
+									</table>
+								</div>
+							) }
+
+							{ failedTransactions.length > 0 && (
+								<div style={ { overflowX: 'auto' } }>
+									<h3 style={ { marginBottom: '8px' } }>
+										{ __(
+											'Failed Payments',
+											'fair-events'
+										) }
+									</h3>
+									<table className="wp-list-table widefat striped">
+										<thead>
+											<tr>
+												<th>
+													{ __(
+														'Date',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Amount',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Status',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Description',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Participant',
+														'fair-events'
+													) }
+												</th>
+											</tr>
+										</thead>
+										<tbody>
+											{ failedTransactions.map(
+												( tx ) => (
+													<tr key={ tx.id }>
+														<td>
+															{ tx.created_at
+																? tx.created_at.slice(
+																		0,
+																		10
+																  )
+																: '-' }
+														</td>
+														<td>
+															<a
+																href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ tx.id }` }
+															>
+																<strong
+																	style={ {
+																		color: '#d63638',
+																	} }
+																>
+																	{ formatAmount(
+																		tx.amount
+																	) }
+																</strong>
+															</a>
+														</td>
+														<td>
+															<span
+																style={ {
+																	color: '#d63638',
+																	fontWeight:
+																		'bold',
+																} }
+															>
+																{ tx.status }
+															</span>
+														</td>
+														<td>
+															{ tx.description || (
+																<em>-</em>
+															) }
+														</td>
+														<td>
+															{ renderParticipant(
+																tx
+															) }
+														</td>
+													</tr>
+												)
+											) }
+										</tbody>
+									</table>
+								</div>
+							) }
+
+							{ costEntries.length === 0 &&
+								transactions.length === 0 &&
+								failedTransactions.length === 0 &&
+								! totals?.total_cost &&
+								! totals?.total_income && (
+									<p
+										style={ {
+											textAlign: 'center',
+											color: '#666',
+										} }
+									>
+										{ __(
+											'No financial entries for this event yet.',
+											'fair-events'
+										) }
+									</p>
+								) }
+
+							<Button variant="secondary" href={ viewAllUrl }>
+								{ __( 'View All Entries', 'fair-events' ) }
+							</Button>
+						</VStack>
+					) }
+				</CardBody>
+			</Card>
+		</>
 	);
 }

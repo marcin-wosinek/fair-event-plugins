@@ -11,6 +11,7 @@ defined( 'WPINC' ) || die;
 
 use FairPaymentsConnector\Models\EntryTransaction;
 use FairFinance\Models\FinancialEntry;
+use FairFinance\Services\EventBudgetResolver;
 use FairPaymentsConnector\Models\Transaction;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -1005,7 +1006,9 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		// Verify all transactions exist.
+		// Verify all transactions exist, keeping the loaded objects so the
+		// allocation-building below doesn't fetch each one a second time.
+		$transactions_by_id = array();
 		foreach ( $ids_to_match as $tid ) {
 			$transaction = Transaction::get_by_id( $tid );
 			if ( ! $transaction ) {
@@ -1016,6 +1019,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					array( 'status' => 404 )
 				);
 			}
+			$transactions_by_id[ $tid ] = $transaction;
 		}
 
 		$success = FinancialEntry::match_transactions( $id, $ids_to_match );
@@ -1032,12 +1036,10 @@ class FinancialEntryController extends WP_REST_Controller {
 		// user can later assign budgets per transaction. Only do this when the
 		// entry isn't already split and there are at least two transactions.
 		if ( count( $ids_to_match ) >= 2 && ! FinancialEntry::has_children( $id ) ) {
-			$allocations = array();
+			$budget_resolver = new EventBudgetResolver();
+			$allocations     = array();
 			foreach ( $ids_to_match as $tid ) {
-				$transaction = Transaction::get_by_id( $tid );
-				if ( ! $transaction ) {
-					continue;
-				}
+				$transaction = $transactions_by_id[ $tid ];
 
 				$net = (float) $transaction->amount
 					- (float) ( $transaction->application_fee ?? 0 )
@@ -1048,7 +1050,11 @@ class FinancialEntryController extends WP_REST_Controller {
 				$allocations[] = array(
 					'amount'        => $net,
 					'description'   => $transaction->description ?? '',
-					'budget_id'     => null,
+					// Each allocation's payment resolves through its event link
+					// to that event's linked budget (null when either is
+					// missing), so a stable event→budget mapping doesn't have
+					// to be re-picked line by line.
+					'budget_id'     => $budget_resolver->resolve( $link['event_date_id'] ),
 					'event_url'     => $link['event_url'],
 					'event_date_id' => $link['event_date_id'],
 				);
@@ -1058,25 +1064,36 @@ class FinancialEntryController extends WP_REST_Controller {
 				FinancialEntry::split_entry( $id, $allocations );
 			}
 		} elseif ( 1 === count( $ids_to_match ) && empty( $entry->event_url ) ) {
-			// Single-transaction match: seed entry's link from the transaction
-			// if the user hasn't already set one.
-			$transaction = Transaction::get_by_id( $ids_to_match[0] );
-			if ( $transaction ) {
-				$link = self::get_transaction_link( $transaction );
-				if ( '' !== $link['event_url'] || null !== $link['event_date_id'] ) {
-					global $wpdb;
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- writing a back-link onto our own table; no caching layer.
-					$wpdb->update(
-						\FairFinance\Database\Schema::get_financial_entries_table_name(),
-						array(
-							'event_url'     => '' !== $link['event_url'] ? $link['event_url'] : null,
-							'event_date_id' => $link['event_date_id'],
-						),
-						array( 'id' => $id ),
-						array( '%s', '%d' ),
-						array( '%d' )
-					);
+			// Single-transaction match: seed entry's link (and, if the entry
+			// has no budget yet, the linked event's budget) from the
+			// transaction, without touching a link or budget already set.
+			$transaction = $transactions_by_id[ $ids_to_match[0] ];
+			$link        = self::get_transaction_link( $transaction );
+
+			if ( '' !== $link['event_url'] || null !== $link['event_date_id'] ) {
+				$update_data   = array(
+					'event_url'     => '' !== $link['event_url'] ? $link['event_url'] : null,
+					'event_date_id' => $link['event_date_id'],
+				);
+				$update_format = array( '%s', '%d' );
+
+				if ( empty( $entry->budget_id ) ) {
+					$resolved_budget_id = ( new EventBudgetResolver() )->resolve( $link['event_date_id'] );
+					if ( $resolved_budget_id ) {
+						$update_data['budget_id'] = $resolved_budget_id;
+						$update_format[]          = '%d';
+					}
 				}
+
+				global $wpdb;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- writing a back-link onto our own table; no caching layer.
+				$wpdb->update(
+					\FairFinance\Database\Schema::get_financial_entries_table_name(),
+					$update_data,
+					array( 'id' => $id ),
+					$update_format,
+					array( '%d' )
+				);
 			}
 		}
 

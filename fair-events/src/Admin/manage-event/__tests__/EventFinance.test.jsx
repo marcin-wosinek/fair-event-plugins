@@ -10,7 +10,7 @@
  * reduced to a cost-only annotation table.
  */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventFinance from '../EventFinance.js';
 
@@ -44,17 +44,31 @@ const costEntry = {
 	description: 'Venue rental',
 };
 
+const budgetA = { id: 3, name: 'Summer camp' };
+const budgetB = { id: 7, name: 'General fund' };
+
 function mockApiFetchByPath( {
 	totals = { total_income: 0, total_cost: 0, balance: 0 },
 	costEntries = [],
 	paidTransactions = [],
+	budgets = [],
+	eventBudgetId = null,
 } = {} ) {
-	apiFetch.mockImplementation( ( { path } ) => {
+	apiFetch.mockImplementation( ( { path, method, data } ) => {
 		if ( path.startsWith( '/fair-finance/v1/financial-entries/totals' ) ) {
 			return Promise.resolve( totals );
 		}
 		if ( path.startsWith( '/fair-finance/v1/financial-entries' ) ) {
 			return Promise.resolve( { entries: costEntries } );
+		}
+		if ( path === '/fair-finance/v1/budgets' ) {
+			return Promise.resolve( budgets );
+		}
+		if ( /\/fair-events\/v1\/event-dates\/\d+\/budget$/.test( path ) ) {
+			if ( 'PUT' === method ) {
+				return Promise.resolve( { budget_id: data.budget_id } );
+			}
+			return Promise.resolve( { budget_id: eventBudgetId } );
 		}
 		if ( path.includes( 'status=paid' ) ) {
 			return Promise.resolve( { transactions: paidTransactions } );
@@ -162,5 +176,124 @@ describe( 'EventFinance — transaction table is the income source of truth (#13
 
 		// 45 - 0.79 mollie fee - 0 application fee = 44.21
 		expect( statValue( 'Total Net' ) ).toBe( '€44.21' );
+	} );
+} );
+
+describe( 'EventFinance — event budget link (#1608)', () => {
+	it( 'lists "No budget" plus every available budget, with no budget selected by default', async () => {
+		mockApiFetchByPath( { budgets: [ budgetA, budgetB ] } );
+
+		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+
+		await screen.findByText( 'General fund' );
+
+		const select = screen.getByLabelText( 'Budget' );
+		const optionLabels = Array.from( select.options ).map(
+			( option ) => option.text
+		);
+		expect( optionLabels ).toEqual( [
+			'No budget',
+			'Summer camp',
+			'General fund',
+		] );
+		expect( select.value ).toBe( '' );
+	} );
+
+	it( 'shows the event’s stored budget as the selected option', async () => {
+		mockApiFetchByPath( {
+			budgets: [ budgetA, budgetB ],
+			eventBudgetId: budgetB.id,
+		} );
+
+		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+
+		await waitFor( () =>
+			expect( screen.getByLabelText( 'Budget' ) ).toHaveValue(
+				String( budgetB.id )
+			)
+		);
+	} );
+
+	it( 'saves the selected budget to the event-budget endpoint', async () => {
+		mockApiFetchByPath( { budgets: [ budgetA, budgetB ] } );
+
+		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+
+		await screen.findByText( 'Summer camp' );
+
+		fireEvent.change( screen.getByLabelText( 'Budget' ), {
+			target: { value: String( budgetA.id ) },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save budget' } )
+		);
+
+		await waitFor( () =>
+			expect(
+				screen.getByText( 'Budget updated.', {
+					selector: '.components-notice__content',
+				} )
+			).toBeInTheDocument()
+		);
+
+		const putCall = apiFetch.mock.calls.find(
+			( call ) => 'PUT' === call[ 0 ].method
+		);
+		expect( putCall[ 0 ] ).toMatchObject( {
+			path: '/fair-events/v1/event-dates/42/budget',
+			data: { budget_id: budgetA.id },
+		} );
+	} );
+
+	it( 'clears the budget by saving "No budget" as null', async () => {
+		mockApiFetchByPath( {
+			budgets: [ budgetA ],
+			eventBudgetId: budgetA.id,
+		} );
+
+		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+
+		await waitFor( () =>
+			expect( screen.getByLabelText( 'Budget' ) ).toHaveValue(
+				String( budgetA.id )
+			)
+		);
+
+		fireEvent.change( screen.getByLabelText( 'Budget' ), {
+			target: { value: '' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save budget' } )
+		);
+
+		await waitFor( () => {
+			const putCall = apiFetch.mock.calls.find(
+				( call ) => 'PUT' === call[ 0 ].method
+			);
+			expect( putCall[ 0 ].data ).toEqual( { budget_id: null } );
+		} );
+	} );
+
+	it( 'disables Save budget until the selection changes', async () => {
+		mockApiFetchByPath( {
+			budgets: [ budgetA ],
+			eventBudgetId: budgetA.id,
+		} );
+
+		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+
+		await waitFor( () =>
+			expect(
+				screen.getByRole( 'button', { name: 'Save budget' } )
+			).toBeDisabled()
+		);
+
+		fireEvent.change( screen.getByLabelText( 'Budget' ), {
+			target: { value: '' },
+		} );
+
+		expect(
+			screen.getByRole( 'button', { name: 'Save budget' } )
+		).toBeEnabled();
 	} );
 } );

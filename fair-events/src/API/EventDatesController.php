@@ -10,6 +10,7 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Services\EventBudget;
 use FairEvents\Services\EventCopyService;
 use FairEvents\Services\RecurrenceService;
 use FairEvents\Services\PostTranslationLinks;
@@ -220,6 +221,49 @@ class EventDatesController extends WP_REST_Controller {
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
+		// GET, PUT /fair-events/v1/event-dates/{id}/budget - Read/update the linked finance budget.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<id>\d+)/budget',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_budget' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Unique identifier for the event date.', 'fair-events' ),
+							'type'        => 'integer',
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_budget' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id'        => array(
+							'description' => __( 'Unique identifier for the event date.', 'fair-events' ),
+							'type'        => 'integer',
+						),
+						'budget_id' => array(
+							'description'       => __( 'Fair Finance budget ID to link, or null to clear.', 'fair-events' ),
+							// Not `required`: WP core's required-param check treats an
+							// explicit JSON `null` the same as "missing" and 400s, so a
+							// clear request (`{ budget_id: null }`) would be rejected.
+							// Absent and explicit null both mean "clear" here, so a
+							// default covers the absent case too.
+							'type'              => array( 'integer', 'null' ),
+							'default'           => null,
+							'validate_callback' => function ( $value ) {
+								return null === $value || ( is_numeric( $value ) && (int) $value > 0 );
+							},
 						),
 					),
 				),
@@ -1624,6 +1668,97 @@ class EventDatesController extends WP_REST_Controller {
 		$updated = EventDates::get_by_id( $id );
 
 		return new WP_REST_Response( $this->prepare_event_date( $updated ), 200 );
+	}
+
+	/**
+	 * Get the finance budget linked to an event date.
+	 *
+	 * Applies to the whole event: a generated occurrence reports the same
+	 * budget as its master (see EventBudget::get_budget_id()).
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function get_budget( $request ) {
+		$id         = (int) $request->get_param( 'id' );
+		$event_date = EventDates::get_by_id( $id );
+
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'rest_event_date_not_found',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! class_exists( '\FairFinance\Core\Plugin' ) ) {
+			return new WP_Error(
+				'rest_fair_finance_required',
+				__( 'The Fair Finance plugin is required to manage a budget link.', 'fair-events' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		return new WP_REST_Response(
+			array( 'budget_id' => EventBudget::get_budget_id( $id ) ),
+			200
+		);
+	}
+
+	/**
+	 * Update (or clear) the finance budget linked to an event date.
+	 *
+	 * Applies to the whole event: EventBudget resolves through the event's
+	 * shared linked post, so every occurrence of a series inherits the
+	 * change. Financial entries already assigned to a budget are untouched.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function update_budget( $request ) {
+		$id        = (int) $request->get_param( 'id' );
+		$budget_id = $request->get_param( 'budget_id' );
+
+		$event_date = EventDates::get_by_id( $id );
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'rest_event_date_not_found',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! class_exists( '\FairFinance\Core\Plugin' ) ) {
+			return new WP_Error(
+				'rest_fair_finance_required',
+				__( 'The Fair Finance plugin is required to manage a budget link.', 'fair-events' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		if ( null !== $budget_id ) {
+			$budget_id = (int) $budget_id;
+			if ( ! class_exists( '\FairFinance\Models\Budget' ) || ! \FairFinance\Models\Budget::get_by_id( $budget_id ) ) {
+				return new WP_Error(
+					'rest_budget_not_found',
+					__( 'Budget not found.', 'fair-events' ),
+					array( 'status' => 404 )
+				);
+			}
+		}
+
+		if ( ! EventBudget::set_budget_id( $id, $budget_id ) ) {
+			return new WP_Error(
+				'rest_event_not_linked',
+				__( 'This event has no linked page, so it cannot store a budget.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return new WP_REST_Response(
+			array( 'budget_id' => EventBudget::get_budget_id( $id ) ),
+			200
+		);
 	}
 
 	/**

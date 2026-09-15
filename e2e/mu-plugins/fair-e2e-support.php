@@ -131,6 +131,75 @@ add_action(
 				},
 			)
 		);
+
+		// Insert a fair-payments-connector transaction row directly, with a
+		// real local event_date_id in its own column (not just metadata) —
+		// the shape a genuine ticket purchase produces once paid, which the
+		// import/webhook-driven creation paths in this test environment
+		// can't reach (see TESTING.md's manual-check note for the Mollie
+		// double being e2e-only). Lets fair-finance's reconciliation specs
+		// exercise real budget resolution without a live Mollie payment.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/test-transactions',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'permission_callback' => static function () {
+						return current_user_can( 'manage_options' );
+					},
+					'callback'            => static function ( WP_REST_Request $request ) {
+						if ( ! class_exists( '\FairPaymentsConnector\Database\Schema' ) ) {
+							return new WP_Error(
+								'fair_payments_connector_required',
+								'fair-payments-connector must be active.',
+								array( 'status' => 503 )
+							);
+						}
+
+						global $wpdb;
+						$table = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
+
+						$event_date_id = $request->get_param( 'event_date_id' );
+
+						$inserted = $wpdb->insert(
+							$table,
+							array(
+								'mollie_payment_id' => 'tr_e2e_' . wp_generate_password( 20, false ),
+								'event_date_id'     => $event_date_id ? absint( $event_date_id ) : null,
+								'amount'            => (float) $request->get_param( 'amount' ),
+								'application_fee'   => $request->has_param( 'application_fee' ) ? (float) $request->get_param( 'application_fee' ) : null,
+								'mollie_fee'        => $request->has_param( 'mollie_fee' ) ? (float) $request->get_param( 'mollie_fee' ) : null,
+								'status'            => $request->get_param( 'status' ) ? sanitize_text_field( $request->get_param( 'status' ) ) : 'paid',
+								'testmode'          => 0,
+								'description'       => sanitize_text_field( (string) $request->get_param( 'description' ) ),
+							),
+							array( '%s', '%d', '%f', '%f', '%f', '%s', '%d', '%s' )
+						);
+
+						if ( ! $inserted ) {
+							return new WP_Error( 'insert_failed', 'Could not insert test transaction.', array( 'status' => 500 ) );
+						}
+
+						return rest_ensure_response( array( 'id' => $wpdb->insert_id ) );
+					},
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'permission_callback' => static function () {
+						return current_user_can( 'manage_options' );
+					},
+					'callback'            => static function ( WP_REST_Request $request ) {
+						global $wpdb;
+						$table = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
+
+						$wpdb->delete( $table, array( 'id' => absint( $request->get_param( 'id' ) ) ), array( '%d' ) );
+
+						return rest_ensure_response( array( 'deleted' => true ) );
+					},
+				),
+			)
+		);
 	}
 );
 
