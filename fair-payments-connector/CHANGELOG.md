@@ -1,5 +1,16 @@
 # fair-payments-connector
 
+## 2.1.0
+
+### Minor Changes
+
+-   a619b61: Add a responsive administrator flow for selecting and importing paid transactions directly from the connected Mollie account.
+-   1cda6dd: Add an optional Budget selector to each Connected Site, so a transaction imported from that site retains a durable link to its local id. During reconciliation, an unmatched imported transaction now shows its source site's configured budget, and the administrator can review, change, or clear that proposal before confirming a match — an existing budget assignment is always preserved, and no budget is proposed when selected transactions resolve to different sites. Removing a Connected Site or its linked budget never breaks existing data; both simply resolve to no budget going forward.
+
+### Patch Changes
+
+-   38d61eb: Import missing Mollie transaction fee data in batches of 10 instead of one request per transaction, so large fee synchronizations are faster and less vulnerable to interrupted connections.
+
 ## 2.0.2
 
 ### Patch Changes

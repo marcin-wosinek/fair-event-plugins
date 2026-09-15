@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.1
-Stable tag: 1.15.0
+Stable tag: 1.16.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,18 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.16.0
+
+### Minor Changes
+
+-   dde767a: Add net paid sales totals and cumulative revenue charts to event statistics, including refund timing, transaction deduplication, and currency-mismatch warnings.
+
+### Patch Changes
+
+-   a1c2dd7: Stop cumulative event sales statistics at the current website-local day instead of extending into the future.
+-   d0dd54a: Keep cumulative sales charts anchored to the event date while distinguishing recorded sales from the future event horizon.
+-   452cc30: Consolidate ticket sale-period and ticket-type availability into a single `TicketAvailability` service in fair-events, always evaluated in the WordPress site timezone. Fixes two boundary inconsistencies found while consolidating: event JSON-LD offers now respect a ticket type's scheduled end date (previously only manual disabling was checked), and the fair-audience signup form's purchase validation now also rejects a manually disabled ticket type (previously only its scheduled end date), matching what the signup form already hides.
 
 ## 1.15.0
 

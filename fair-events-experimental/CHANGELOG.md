@@ -1,5 +1,26 @@
 # fair-events-experimental
 
+## 1.8.0
+
+### Minor Changes
+
+-   dde767a: Add net paid sales totals and cumulative revenue charts to event statistics, including refund timing, transaction deduplication, and currency-mismatch warnings.
+-   fefc867: Report both test-mode and live-mode checkouts/purchases to Meta Test Events (using the configured Test Events code), tagging each delivered event with its payment mode so administrators can distinguish test traffic from live sales in delivery diagnostics.
+-   06c470f: Warn on the Meta Conversions settings screen when the WP Consent API is unavailable, since live checkout and purchase tracking cannot capture attribution without it. The warning links to the WP Consent API plugin and clears automatically once the API is available; synthetic Test Events remain unaffected.
+
+### Patch Changes
+
+-   d0dd54a: Keep cumulative sales charts anchored to the event date while distinguishing recorded sales from the future event horizon.
+-   Updated dependencies [d4bea94]
+-   Updated dependencies [0a5131a]
+-   Updated dependencies [7362ce4]
+-   Updated dependencies [7318848]
+-   Updated dependencies [aa0b8ef]
+-   Updated dependencies [2f0d149]
+-   Updated dependencies [452cc30]
+-   Updated dependencies [1323dfa]
+    -   fair-events@1.18.0
+
 ## 1.7.0
 
 ### Minor Changes
