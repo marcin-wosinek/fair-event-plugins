@@ -408,8 +408,11 @@ if ( $pricing_event_date_id && class_exists( \FairEvents\Models\TicketType::clas
 	}
 
 	foreach ( $raw_types as $tt ) {
-		// Hide ticket types whose end date has passed or that have been manually disabled.
-		if ( $tt->disabled || ( $tt->disable_at && strtotime( $tt->disable_at ) <= time() ) ) {
+		// Hide ticket types that have been manually disabled or whose
+		// scheduled end date has passed, using the WordPress site timezone —
+		// the same decision EventSignupController's submission validation
+		// makes, so a type never displays here only to be rejected there.
+		if ( ! \FairAudience\Services\TicketAvailabilityResolver::is_ticket_type_enabled( $tt ) ) {
 			continue;
 		}
 

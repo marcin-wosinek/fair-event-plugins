@@ -7,181 +7,31 @@
 
 namespace FairEvents\Services;
 
-use FairEvents\Models\EventDates;
 use FairEvents\Models\TicketPrice;
-use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketType;
 
 defined( 'WPINC' ) || die;
 
 /**
- * Resolves ticket sale periods and prices for a ticket type. Single source
- * of truth shared by the fair-events get-tickets purchase paths and the
- * fair-events-experimental / fair-audience event-signup pricing service.
+ * Resolves ticket prices for a ticket type. Single source of truth shared by
+ * the fair-events get-tickets purchase paths and the fair-events-experimental
+ * / fair-audience event-signup pricing service.
+ *
+ * Time-based sale-period and ticket-type-enabled decisions delegate to
+ * {@see TicketAvailability}, the shared availability authority — this class
+ * stays responsible for price-row lookup, free-ticket classification, and
+ * pricing hooks.
  */
 class TicketPricing {
 
 	/**
-	 * Sentinel used as the effective sale_start for a period whose start is
-	 * unset, so it always compares as "already started" against any real
-	 * datetime string without special-casing the comparison in pick_active_period().
-	 */
-	const OPEN_START_SENTINEL = '0000-01-01 00:00:00';
-
-	/**
 	 * Resolve the currently active sale period for an event date.
 	 *
-	 * Periods use a half-open day range [sale_start, sale_end) in the site
-	 * timezone: sale_start is the first day on sale (00:00:00 site time) and
-	 * sale_end is the first day no longer on sale (00:00:00 site time).
-	 *
-	 * A period with an unset sale_start/sale_end is not "closed" — it
-	 * resolves lazily: an open start (always on sale) and/or an end of the
-	 * day after the event/series' last occurrence, computed fresh on every
-	 * call so it automatically tracks series changes.
-	 *
 	 * @param int $event_date_id Event date ID.
-	 * @return TicketSalePeriod|null Active period or null.
+	 * @return \FairEvents\Models\TicketSalePeriod|null Active period or null.
 	 */
 	public static function resolve_active_sale_period( $event_date_id ) {
-		$period_context = self::resolve_sale_period_context( $event_date_id );
-
-		return $period_context['active_period'];
-	}
-
-	/**
-	 * Resolve the active period and configured-period count from one query.
-	 *
-	 * @param int $event_date_id Event date ID.
-	 * @return array{active_period: TicketSalePeriod|null, sale_period_count: int}
-	 */
-	private static function resolve_sale_period_context( $event_date_id ) {
-		$now          = current_time( 'mysql' );
-		$sale_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
-		$default_end  = self::compute_default_sale_end( EventDates::get_last_occurrence_end( $event_date_id ) );
-
-		return self::resolve_sale_period_context_from_periods( $sale_periods, $now, $default_end );
-	}
-
-	/**
-	 * Resolve a sale-period context from already-fetched periods.
-	 *
-	 * @param object[]    $sale_periods Configured sale periods.
-	 * @param string      $now          Current site datetime.
-	 * @param string|null $default_end  Lazy default sale end.
-	 * @return array{active_period: object|null, sale_period_count: int}
-	 */
-	public static function resolve_sale_period_context_from_periods( array $sale_periods, $now, $default_end ) {
-		$period_count = count( $sale_periods );
-		$sale_periods = self::apply_default_window( $sale_periods, $default_end );
-
-		return array(
-			'active_period'     => self::pick_active_period( $sale_periods, $now, false ),
-			'sale_period_count' => $period_count,
-		);
-	}
-
-	/**
-	 * Compute the lazy default sale_end: the day after the last occurrence,
-	 * at 00:00:00 site time, preserving the half-open [start, end) range so
-	 * the final day stays purchasable.
-	 *
-	 * @param string|null $last_occurrence_end Latest end_datetime across the event/series ('Y-m-d H:i:s'), or null.
-	 * @return string|null Default sale_end ('Y-m-d H:i:s'), or null when there's no occurrence to anchor to.
-	 */
-	public static function compute_default_sale_end( $last_occurrence_end ) {
-		if ( empty( $last_occurrence_end ) ) {
-			return null;
-		}
-
-		$date = new \DateTime( $last_occurrence_end, wp_timezone() );
-		$date->setTime( 0, 0, 0 );
-		$date->modify( '+1 day' );
-
-		return $date->format( 'Y-m-d H:i:s' );
-	}
-
-	/**
-	 * Substitute the lazy default for any period with an unset sale_start
-	 * and/or sale_end, without mutating the originals. Pure → unit-testable
-	 * without a database.
-	 *
-	 * An unset sale_start becomes open (always already started). An unset
-	 * sale_end becomes $default_end when one is available; otherwise it's
-	 * left unset (pick_active_period() then never matches it as current, but
-	 * the continues-fallback can still select it, same as any closed period).
-	 *
-	 * @param object[]    $periods     Sale periods with sale_start/sale_end strings, in sort order.
-	 * @param string|null $default_end Lazy default sale_end ('Y-m-d H:i:s'), or null.
-	 * @return object[] Periods with unset windows resolved; explicit values untouched.
-	 */
-	public static function apply_default_window( $periods, $default_end ) {
-		$resolved = array();
-
-		foreach ( $periods as $period ) {
-			$resolved_period = clone $period;
-
-			if ( empty( $resolved_period->sale_start ) ) {
-				$resolved_period->sale_start = self::OPEN_START_SENTINEL;
-			}
-
-			if ( empty( $resolved_period->sale_end ) && $default_end ) {
-				$resolved_period->sale_end = $default_end;
-			}
-
-			$resolved[] = $resolved_period;
-		}
-
-		return $resolved;
-	}
-
-	/**
-	 * Pure period-selection math, split out from resolve_active_sale_period()
-	 * for unit testing without a database.
-	 *
-	 * @param object[] $periods   Sale periods with sale_start/sale_end strings, in sort order.
-	 * @param string   $now       Current datetime string ('Y-m-d H:i:s'), comparable lexically.
-	 * @param bool     $continues Whether the continues_pricing_period fallback is enabled.
-	 * @return object|null Active period, the fallback period, or null.
-	 */
-	public static function pick_active_period( $periods, $now, $continues ) {
-		$active_period = null;
-		$last_index    = count( $periods ) - 1;
-
-		foreach ( $periods as $index => $period ) {
-			// Half-open interval: sale_start <= now < sale_end.
-			if ( $period->sale_start <= $now && $period->sale_end > $now ) {
-				return $period;
-			}
-			if ( $continues && $index === $last_index && $period->sale_start <= $now ) {
-				$active_period = $period;
-			}
-		}
-
-		return $active_period;
-	}
-
-	/**
-	 * Pick the earliest period that hasn't started yet, for callers wanting a
-	 * "sales open soon" fallback when nothing is active right now (e.g. a
-	 * search crawl hitting the page before a sale window opens). Pure,
-	 * DB-free — split out for unit testing without a database, mirroring
-	 * pick_active_period().
-	 *
-	 * @param object[] $periods Sale periods with sale_start strings, post apply_default_window().
-	 * @param string   $now     Current datetime string ('Y-m-d H:i:s'), comparable lexically.
-	 * @return object|null Earliest not-yet-started period, or null when every period has already started.
-	 */
-	public static function pick_upcoming_period( $periods, $now ) {
-		$upcoming = null;
-
-		foreach ( $periods as $period ) {
-			if ( $period->sale_start > $now && ( ! $upcoming || $period->sale_start < $upcoming->sale_start ) ) {
-				$upcoming = $period;
-			}
-		}
-
-		return $upcoming;
+		return TicketAvailability::resolve_active_sale_period( $event_date_id );
 	}
 
 	/**
@@ -257,7 +107,7 @@ class TicketPricing {
 	 *   free by convention" check.
 	 */
 	public static function resolve_unit_prices_for_event_date( $event_date_id ) {
-		$period_context = self::resolve_sale_period_context( $event_date_id );
+		$period_context = TicketAvailability::resolve_sale_period_context( $event_date_id );
 		$active_period  = $period_context['active_period'];
 		if ( ! $active_period ) {
 			return array(
@@ -368,9 +218,6 @@ class TicketPricing {
 	 * @return bool Whether the type remains enabled.
 	 */
 	public static function is_ticket_type_enabled( $ticket_type, $now = null ) {
-		$now = $now ?? current_time( 'mysql' );
-
-		return empty( $ticket_type->disabled )
-			&& ( empty( $ticket_type->disable_at ) || $ticket_type->disable_at > $now );
+		return TicketAvailability::is_ticket_type_enabled( $ticket_type, $now );
 	}
 }

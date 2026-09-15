@@ -689,10 +689,10 @@ class EventSignupController extends WP_REST_Controller {
 			return $capacity_error;
 		}
 
-		// Reject expired ticket types server-side.
-		$disable_at_error = $this->validate_ticket_type_disable_at( $ticket_type_id );
-		if ( is_wp_error( $disable_at_error ) ) {
-			return $disable_at_error;
+		// Reject disabled/expired ticket types server-side.
+		$availability_error = $this->validate_ticket_type_enabled( $ticket_type_id );
+		if ( is_wp_error( $availability_error ) ) {
+			return $availability_error;
 		}
 
 		// Check if already signed up.
@@ -891,9 +891,9 @@ class EventSignupController extends WP_REST_Controller {
 			return $capacity_error;
 		}
 
-		$disable_at_error = $this->validate_ticket_type_disable_at( $ticket_type->id );
-		if ( is_wp_error( $disable_at_error ) ) {
-			return $disable_at_error;
+		$availability_error = $this->validate_ticket_type_enabled( $ticket_type->id );
+		if ( is_wp_error( $availability_error ) ) {
+			return $availability_error;
 		}
 
 		// Recompute the per-instance price server-side; never trust a client amount.
@@ -1444,22 +1444,28 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Reject purchases of ticket types whose end date has passed.
+	 * Reject purchases of ticket types that are manually disabled or whose
+	 * scheduled end date has passed, using the WordPress site timezone via
+	 * TicketAvailabilityResolver — the same decision the signup form's
+	 * display filtering makes, so a stale page or crafted request can never
+	 * purchase a type the form itself would no longer show (issue #1581).
+	 * Previously checked only the scheduled disable_at boundary (and against
+	 * PHP server time, not site time); manual disabling now rejects too.
 	 *
 	 * @param int|null $ticket_type_id Ticket type ID.
-	 * @return WP_Error|null WP_Error if expired, null if valid.
+	 * @return WP_Error|null WP_Error if disabled/expired, null if valid.
 	 */
-	private function validate_ticket_type_disable_at( $ticket_type_id ) {
+	private function validate_ticket_type_enabled( $ticket_type_id ) {
 		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketType::class ) ) {
 			return null;
 		}
 
 		$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
-		if ( ! $ticket_type || ! $ticket_type->disable_at ) {
+		if ( ! $ticket_type ) {
 			return null;
 		}
 
-		if ( strtotime( $ticket_type->disable_at ) <= time() ) {
+		if ( ! \FairAudience\Services\TicketAvailabilityResolver::is_ticket_type_enabled( $ticket_type ) ) {
 			return new WP_Error(
 				'ticket_type_disabled',
 				__( 'This ticket type is no longer available. Please pick another option.', 'fair-audience' ),
@@ -2889,10 +2895,10 @@ class EventSignupController extends WP_REST_Controller {
 			return $capacity_error;
 		}
 
-		// Reject expired ticket types server-side.
-		$disable_at_error = $this->validate_ticket_type_disable_at( $ticket_type_id );
-		if ( is_wp_error( $disable_at_error ) ) {
-			return $disable_at_error;
+		// Reject disabled/expired ticket types server-side.
+		$availability_error = $this->validate_ticket_type_enabled( $ticket_type_id );
+		if ( is_wp_error( $availability_error ) ) {
+			return $availability_error;
 		}
 
 		// Paid path takes over when a positive price resolves for this participant.
