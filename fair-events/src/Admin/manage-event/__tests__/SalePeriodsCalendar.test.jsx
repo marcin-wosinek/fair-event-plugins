@@ -91,6 +91,32 @@ it( 'renders day cells as plain, non-operable cells rather than buttons', () => 
 	expect( screen.queryByRole( 'button' ) ).not.toBeInTheDocument();
 } );
 
+it( 'marks a period with an automatically-resolved outer boundary in the legend (#1582)', () => {
+	render(
+		<SalePeriodsCalendar
+			salePeriods={ [
+				{
+					id: 1,
+					name: 'Open start',
+					sale_start: '2026-08-01',
+					sale_end: '2026-08-15',
+					isAutomaticStart: true,
+				},
+				{
+					id: 2,
+					name: 'Regular',
+					sale_start: '2026-08-15',
+					sale_end: '2026-09-01',
+				},
+			] }
+			eventDay="2026-08-20"
+			embedded
+		/>
+	);
+	expect( screen.getByText( 'Open start (automatic)' ) ).toBeInTheDocument();
+	expect( screen.getByText( 'Regular' ) ).toBeInTheDocument();
+} );
+
 it( 'assigns every adjacent boundary date to exactly one period', () => {
 	expect( salePeriodIndexForDate( twoNamedPeriods, '2026-08-14' ) ).toBe( 0 );
 	expect( salePeriodIndexForDate( twoNamedPeriods, '2026-08-15' ) ).toBe( 1 );

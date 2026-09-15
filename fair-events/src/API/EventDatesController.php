@@ -2011,6 +2011,7 @@ class EventDatesController extends WP_REST_Controller {
 					return array(
 						'id'             => $occ->id,
 						'start_datetime' => $occ->start_datetime,
+						'end_datetime'   => $occ->end_datetime,
 						'title'          => $occ->title,
 						'status'         => $occ->status,
 					);

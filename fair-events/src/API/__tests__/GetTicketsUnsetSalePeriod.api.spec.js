@@ -157,6 +157,62 @@ test.describe( 'GetTicketsController — lazy default sale-period resolution', (
 		expect( res.ok() ).toBeTruthy();
 	} );
 
+	test( 'an event with no end_datetime resolves the default sale end from its own start date (#1582)', async () => {
+		// No end_datetime at all — EventDates::get_last_occurrence_boundary()
+		// must fall back to the event's own start_datetime rather than
+		// leaving the automatic window unresolved.
+		const eventRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `No end datetime ${ Date.now() }-${ Math.random() }`,
+					start_datetime: tomorrow( 1, '10:00:00' ),
+				},
+			}
+		);
+		expect( eventRes.ok() ).toBeTruthy();
+		const eventDateId = ( await eventRes.json() ).id;
+		createdEventDateIds.push( eventDateId );
+
+		const ticketsRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [
+						{
+							name: 'General admission',
+							capacity: null,
+							minimum_activities: 0,
+							disable_at: null,
+							recurrence_scope: 'single_instance',
+							group_ids: [],
+						},
+					],
+					sale_periods: [
+						{ name: '', sale_start: '', sale_end: '' },
+					],
+					prices: [
+						{
+							ticket_type_index: 0,
+							sale_period_index: 0,
+							price: 9,
+						},
+					],
+					settings: {},
+				},
+			}
+		);
+		expect( ticketsRes.ok() ).toBeTruthy();
+		const ticketTypeId = ( await ticketsRes.json() ).ticket_types?.[ 0 ]
+			?.id;
+		expect( ticketTypeId ).toBeTruthy();
+
+		const res = await purchase( api, eventDateId, ticketTypeId );
+		expect( res.ok() ).toBeTruthy();
+	} );
+
 	test( 'a series entirely in the past with an unset window is unavailable', async () => {
 		const { eventDateId, ticketTypeId } = await createEventWithUnsetWindow(
 			api,

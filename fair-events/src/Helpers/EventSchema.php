@@ -24,14 +24,6 @@ defined( 'WPINC' ) || die;
 class EventSchema {
 
 	/**
-	 * Sentinel used as the effective sale_end for a JSON-LD offer period
-	 * whose end couldn't be resolved to a real default (no last-occurrence
-	 * anchor available), so it compares as "never closes" rather than being
-	 * mistaken for already-closed by pick_active_period()'s half-open check.
-	 */
-	const OPEN_END_SENTINEL = '9999-12-31 23:59:59';
-
-	/**
 	 * Build the full Schema.org Event object for a single event page.
 	 *
 	 * @param EventDates  $event_date Event date object.
@@ -323,13 +315,18 @@ class EventSchema {
 	 * yields nothing and is never advertised as free.
 	 *
 	 * Sale-period resolution reuses TicketAvailability's pure primitives —
-	 * the same "lazy" null-window resolution the purchase form
-	 * (event-signup/render.php, get-tickets) relies on — so a period left
-	 * open-ended isn't mistaken for closed just because it has no explicit
-	 * sale_end. Unlike the purchase form, the active-period lookup here does
-	 * *not* use the `continues` fallback: JSON-LD must show no offer once a
-	 * sale has genuinely closed, even though the purchase form itself keeps
-	 * such an event purchasable (see EventSchema #1381 decision).
+	 * the same position-aware lazy-boundary resolution the purchase form
+	 * (event-signup/render.php, get-tickets) relies on: a missing first
+	 * start resolves to today (while still before its end) and a missing
+	 * last end resolves to the day after the event/series' final active
+	 * occurrence. When neither the event nor its series has a usable date to
+	 * anchor that default, the window stays unresolved and no offer is
+	 * shown — an event with no discoverable schedule must never be
+	 * advertised as having an unlimited sale window. Unlike the purchase
+	 * form, the active-period lookup here does *not* use the `continues`
+	 * fallback: JSON-LD must show no offer once a sale has genuinely closed,
+	 * even though the purchase form itself keeps such an event purchasable
+	 * (see EventSchema #1381 decision).
 	 *
 	 * Everything is behind class_exists() guards since a fair-events-only
 	 * site (without ticketing) must not fatal.
@@ -362,21 +359,8 @@ class EventSchema {
 		$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $pricing_event_date_id );
 
 		$now         = current_time( 'mysql' );
-		$default_end = TicketAvailability::compute_default_sale_end( EventDates::get_last_occurrence_end( $pricing_event_date_id ) );
-		$periods     = TicketAvailability::apply_default_window( $sale_periods, $default_end );
-
-		// A sale_end that's still unresolved after apply_default_window() (no
-		// default was available — e.g. the event/series itself has no
-		// end_datetime to anchor one) is not "closed"; it's the same lazy,
-		// still-open state as any other unset end. The purchase flow never
-		// notices this because its continues=true fallback ignores sale_end
-		// entirely, but JSON-LD's continues=false pick below does check it —
-		// substitute a far-future sentinel so it isn't mistaken for closed.
-		foreach ( $periods as $period ) {
-			if ( empty( $period->sale_end ) ) {
-				$period->sale_end = self::OPEN_END_SENTINEL;
-			}
-		}
+		$default_end = TicketAvailability::compute_default_sale_end( EventDates::get_last_occurrence_boundary( $pricing_event_date_id ) );
+		$periods     = TicketAvailability::resolve_periods( $sale_periods, $now, $default_end );
 
 		// continues = false: a genuinely closed sale (no lazy fallback) must
 		// show no offer in structured data, unlike the purchase form.

@@ -1688,3 +1688,85 @@ describe( 'EventTickets — controlled mode without eventDateId (Duplicate Event
 		).toBeInTheDocument();
 	} );
 } );
+
+describe( 'EventTickets — automatic first start from site-local today (#1582)', () => {
+	const originalManageEventData = window.fairEventsManageEventData;
+
+	afterEach( () => {
+		window.fairEventsManageEventData = originalManageEventData;
+	} );
+
+	const initialDataWithUnsetStart = {
+		...initialDataWithTicketType,
+		sale_periods: [
+			{ id: 901, name: '', sale_start: '', sale_end: '2026-08-01' },
+		],
+		prices: [ { ticket_type_id: 1, sale_period_id: 901, price: '10' } ],
+	};
+
+	it( "shows the first period's missing start as today while today precedes its end", () => {
+		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
+		renderTickets( { initialData: initialDataWithUnsetStart } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+
+		expect(
+			screen.getByText( /From .*July.*\(default\)/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows "—" once today reaches the period\'s end — an expired period never reactivates', () => {
+		window.fairEventsManageEventData = { siteToday: '2026-08-01' };
+		renderTickets( { initialData: initialDataWithUnsetStart } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+
+		expect( screen.getByText( '—' ) ).toBeInTheDocument();
+	} );
+
+	it( 'shows the resolved date as the "From" field placeholder without freezing a value', () => {
+		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
+		renderTickets( { initialData: initialDataWithUnsetStart } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+
+		const fromInput = screen.getByLabelText( 'From' );
+		expect( fromInput.value ).toBe( '' );
+		expect( fromInput.placeholder ).toBe( '2026-07-15' );
+	} );
+
+	it( 'warns when the event has no usable schedule to resolve an automatic end', () => {
+		const { container } = renderTickets( {
+			initialData: {
+				...initialDataWithTicketType,
+				sale_periods: [
+					{
+						id: 902,
+						name: '',
+						sale_start: '2026-01-01',
+						sale_end: '',
+					},
+				],
+				prices: [
+					{ ticket_type_id: 1, sale_period_id: 902, price: '10' },
+				],
+			},
+			// No startDatetime/endDatetime/lastOccurrenceDatetime supplied —
+			// nothing to anchor a default end to.
+		} );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+
+		expect(
+			within( container ).getByText( /no usable schedule/i )
+		).toBeInTheDocument();
+	} );
+} );

@@ -44,6 +44,7 @@ import {
 } from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
 import EventTickets from './EventTickets.js';
+import { resolveFinalOccurrenceDatetime } from './salePeriodBoundaries.js';
 import EventPhotos from './EventPhotos.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
 import RecurrenceImpactSummary from './RecurrenceImpactSummary.js';
@@ -472,20 +473,17 @@ export default function ManageEventApp() {
 	const isSeries =
 		!! eventDate?.rrule || eventDate?.recurrence_mode === 'manual';
 
-	// The latest end_datetime across the event and its generated occurrences —
-	// the anchor for the ticket editor's lazily-resolved default sale end
-	// (day after the last occurrence). Recomputed from eventDate so it tracks
-	// series edits (add/remove/extend occurrences) automatically.
-	const lastOccurrenceDatetime = useMemo( () => {
-		if ( ! eventDate ) return null;
-		const ends = [
-			eventDate.end_datetime,
-			...( eventDate.generated_occurrences || [] ).map(
-				( o ) => o.end_datetime
-			),
-		].filter( Boolean );
-		return ends.length ? ends.sort()[ ends.length - 1 ] : null;
-	}, [ eventDate ] );
+	// The event/series' final active occurrence's own end_datetime — or, when
+	// that occurrence has no end set, its start_datetime instead — mirroring
+	// EventDates::get_last_occurrence_boundary() so the ticket editor's
+	// lazily-resolved default sale end (day after the last occurrence) agrees
+	// with runtime availability even when an occurrence never had an end
+	// date. Recomputed from eventDate so it tracks series edits (add/remove/
+	// extend occurrences, cancellations) automatically.
+	const lastOccurrenceDatetime = useMemo(
+		() => resolveFinalOccurrenceDatetime( eventDate ),
+		[ eventDate ]
+	);
 
 	const seriesSummary = useMemo( () => {
 		if ( eventDate?.recurrence_mode === 'manual' ) {
