@@ -10,7 +10,9 @@ namespace FairFinance\API;
 defined( 'WPINC' ) || die;
 
 use FairPaymentsConnector\Models\EntryTransaction;
+use FairFinance\Models\Budget;
 use FairFinance\Models\FinancialEntry;
+use FairFinance\Services\ConnectedSiteBudgetResolver;
 use FairFinance\Services\EventBudgetResolver;
 use FairPaymentsConnector\Models\Transaction;
 use WP_REST_Controller;
@@ -221,6 +223,15 @@ class FinancialEntryController extends WP_REST_Controller {
 							'description' => __( 'Array of transaction IDs to match.', 'fair-finance' ),
 							'type'        => 'array',
 							'items'       => array( 'type' => 'integer' ),
+						),
+						// Not `required`, and no `default`, so an explicit
+						// null (administrator reviewed and chose "no budget")
+						// is distinguishable from the key being absent
+						// (fall back to automatic resolution) via
+						// WP_REST_Request::has_param().
+						'budget_id'       => array(
+							'description' => __( 'Administrator-reviewed budget to apply to the match, or null for no budget.', 'fair-finance' ),
+							'type'        => array( 'integer', 'null' ),
 						),
 					),
 				),
@@ -992,6 +1003,25 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
+		// has_param(), not get_param(), so the administrator explicitly
+		// reviewing and clearing the proposal (an explicit null) is
+		// distinguishable from the field being absent entirely (fall back to
+		// the automatic per-transaction resolvers below).
+		$has_reviewed_budget = $request->has_param( 'budget_id' );
+		$reviewed_budget_id  = null;
+		if ( $has_reviewed_budget ) {
+			$raw                = $request->get_param( 'budget_id' );
+			$reviewed_budget_id = ( null !== $raw && '' !== $raw ) ? (int) $raw : null;
+
+			if ( $reviewed_budget_id && ! Budget::get_by_id( $reviewed_budget_id ) ) {
+				return new WP_Error(
+					'rest_invalid_budget',
+					__( 'Budget not found.', 'fair-finance' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
 		// Build list of transaction IDs to match.
 		$ids_to_match = array();
 		if ( ! empty( $transaction_ids ) && is_array( $transaction_ids ) ) {
@@ -1050,11 +1080,13 @@ class FinancialEntryController extends WP_REST_Controller {
 				$allocations[] = array(
 					'amount'        => $net,
 					'description'   => $transaction->description ?? '',
-					// Each allocation's payment resolves through its event link
-					// to that event's linked budget (null when either is
-					// missing), so a stable event→budget mapping doesn't have
-					// to be re-picked line by line.
-					'budget_id'     => $budget_resolver->resolve( $link['event_date_id'] ),
+					// An administrator-reviewed budget (typically because
+					// every selected transaction shares one Connected Site)
+					// applies uniformly to every generated allocation;
+					// otherwise each allocation resolves independently
+					// through its own event link (null when either is
+					// missing), unchanged from before this feature existed.
+					'budget_id'     => $has_reviewed_budget ? $reviewed_budget_id : $budget_resolver->resolve( $link['event_date_id'] ),
 					'event_url'     => $link['event_url'],
 					'event_date_id' => $link['event_date_id'],
 				);
@@ -1063,28 +1095,38 @@ class FinancialEntryController extends WP_REST_Controller {
 			if ( count( $allocations ) >= 2 ) {
 				FinancialEntry::split_entry( $id, $allocations );
 			}
-		} elseif ( 1 === count( $ids_to_match ) && empty( $entry->event_url ) ) {
-			// Single-transaction match: seed entry's link (and, if the entry
-			// has no budget yet, the linked event's budget) from the
-			// transaction, without touching a link or budget already set.
+		} elseif ( 1 === count( $ids_to_match ) ) {
+			// Single-transaction match: seed entry's link (if it doesn't
+			// already have one) and, only while the entry is still
+			// unbudgeted, its budget — from the reviewed selection when the
+			// administrator made one, otherwise from the transaction's event
+			// link, exactly as before this feature existed. An entry that
+			// already has a budget, or a link, keeps it untouched.
 			$transaction = $transactions_by_id[ $ids_to_match[0] ];
 			$link        = self::get_transaction_link( $transaction );
 
-			if ( '' !== $link['event_url'] || null !== $link['event_date_id'] ) {
-				$update_data   = array(
-					'event_url'     => '' !== $link['event_url'] ? $link['event_url'] : null,
-					'event_date_id' => $link['event_date_id'],
-				);
-				$update_format = array( '%s', '%d' );
+			$update_data   = array();
+			$update_format = array();
 
-				if ( empty( $entry->budget_id ) ) {
-					$resolved_budget_id = ( new EventBudgetResolver() )->resolve( $link['event_date_id'] );
-					if ( $resolved_budget_id ) {
-						$update_data['budget_id'] = $resolved_budget_id;
-						$update_format[]          = '%d';
-					}
+			if ( empty( $entry->event_url ) && ( '' !== $link['event_url'] || null !== $link['event_date_id'] ) ) {
+				$update_data['event_url']     = '' !== $link['event_url'] ? $link['event_url'] : null;
+				$update_data['event_date_id'] = $link['event_date_id'];
+				$update_format[]              = '%s';
+				$update_format[]              = '%d';
+			}
+
+			if ( empty( $entry->budget_id ) ) {
+				$budget_to_apply = $has_reviewed_budget
+					? $reviewed_budget_id
+					: ( new EventBudgetResolver() )->resolve( $link['event_date_id'] );
+
+				if ( $budget_to_apply ) {
+					$update_data['budget_id'] = $budget_to_apply;
+					$update_format[]          = '%d';
 				}
+			}
 
+			if ( ! empty( $update_data ) ) {
 				global $wpdb;
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- writing a back-link onto our own table; no caching layer.
 				$wpdb->update(
@@ -1139,6 +1181,24 @@ class FinancialEntryController extends WP_REST_Controller {
 			'event_url'     => $event_url,
 			'event_date_id' => $event_date_id,
 		);
+	}
+
+	/**
+	 * Read the importing Connected Site's local id from transaction metadata.
+	 *
+	 * @param object $transaction Transaction row.
+	 * @return int|null
+	 */
+	private static function get_transaction_connected_site_id( $transaction ) {
+		if ( empty( $transaction->metadata ) ) {
+			return null;
+		}
+
+		$meta = json_decode( (string) $transaction->metadata, true );
+
+		return is_array( $meta ) && ! empty( $meta['connected_site_id'] )
+			? (int) $meta['connected_site_id']
+			: null;
 	}
 
 	/**
@@ -2056,6 +2116,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 		$unmatched_transactions = array();
+		$site_budget_resolver   = new ConnectedSiteBudgetResolver();
 		foreach ( $all_transactions as $t ) {
 			if ( ! EntryTransaction::is_transaction_matched( $t->id ) ) {
 				$t_date = substr( $t->created_at, 0, 10 );
@@ -2065,6 +2126,7 @@ class FinancialEntryController extends WP_REST_Controller {
 				if ( $date_to && $t_date > $date_to ) {
 					continue;
 				}
+				$connected_site_id        = self::get_transaction_connected_site_id( $t );
 				$unmatched_transactions[] = array(
 					'id'                => (int) $t->id,
 					'mollie_payment_id' => $t->mollie_payment_id,
@@ -2075,6 +2137,14 @@ class FinancialEntryController extends WP_REST_Controller {
 					'status'            => $t->status,
 					'description'       => $t->description,
 					'created_at'        => $t->created_at,
+					// Source attribution + its resolved budget, so the admin
+					// UI can propose a budget for a selected group without a
+					// second round trip, and can show why (or why not) one is
+					// proposed. Never null out on other transaction fields
+					// above: both remain null for local/legacy/unattributed
+					// transactions.
+					'connected_site_id' => $connected_site_id,
+					'source_budget_id'  => $site_budget_resolver->resolve( $connected_site_id ),
 				);
 			}
 		}

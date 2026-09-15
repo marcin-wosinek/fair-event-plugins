@@ -36,16 +36,23 @@ class ConnectedSitesController extends WP_REST_Controller {
 	 */
 	public function register_routes() {
 		$args = array(
-			'label'    => array(
+			'label'     => array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'base_url' => array(
+			'base_url'  => array(
 				'type'              => 'string',
 				'sanitize_callback' => 'esc_url_raw',
 			),
-			'token'    => array(
+			'token'     => array(
 				'type' => 'string',
+			),
+			// Not `required`, and no `default`, so an explicit null (clear
+			// the association) is distinguishable from the key being absent
+			// (leave it untouched) via WP_REST_Request::has_param().
+			'budget_id' => array(
+				'description' => __( 'Linked Fair Finance budget id, or null to clear the association.', 'fair-payments-connector-experimental' ),
+				'type'        => array( 'integer', 'null' ),
 			),
 		);
 
@@ -141,9 +148,10 @@ class ConnectedSitesController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
-		$label    = (string) $request->get_param( 'label' );
-		$base_url = (string) $request->get_param( 'base_url' );
-		$token    = (string) $request->get_param( 'token' );
+		$label     = (string) $request->get_param( 'label' );
+		$base_url  = (string) $request->get_param( 'base_url' );
+		$token     = (string) $request->get_param( 'token' );
+		$budget_id = $request->get_param( 'budget_id' );
 
 		if ( '' === trim( $label ) || '' === trim( $base_url ) || '' === trim( $token ) ) {
 			return new WP_Error(
@@ -153,11 +161,16 @@ class ConnectedSitesController extends WP_REST_Controller {
 			);
 		}
 
+		if ( ! empty( $budget_id ) && ! self::budget_exists( $budget_id ) ) {
+			return $this->invalid_budget();
+		}
+
 		$record = ConnectedSite::create(
 			array(
-				'label'    => $label,
-				'base_url' => $base_url,
-				'token'    => $token,
+				'label'     => $label,
+				'base_url'  => $base_url,
+				'token'     => $token,
+				'budget_id' => $budget_id,
 			)
 		);
 
@@ -186,6 +199,13 @@ class ConnectedSitesController extends WP_REST_Controller {
 		}
 		if ( null !== $request->get_param( 'token' ) ) {
 			$data['token'] = (string) $request->get_param( 'token' );
+		}
+		if ( $request->has_param( 'budget_id' ) ) {
+			$budget_id = $request->get_param( 'budget_id' );
+			if ( ! empty( $budget_id ) && ! self::budget_exists( $budget_id ) ) {
+				return $this->invalid_budget();
+			}
+			$data['budget_id'] = $budget_id;
 		}
 
 		$record = ConnectedSite::update( $id, $data );
@@ -366,6 +386,11 @@ class ConnectedSitesController extends WP_REST_Controller {
 						'event_date_id'     => $transaction['event_date_id'] ?? null,
 						'detail_url'        => $transaction['event_url'] ?? '',
 						'source_domain'     => $source_domain,
+						// The exact local Connected Site id, not the mutable
+						// label/URL/domain above: identity used to resolve a
+						// reconciliation budget must survive a site being
+						// renamed or re-pointed at a different URL.
+						'connected_site_id' => $id,
 					)
 				);
 
@@ -412,6 +437,37 @@ class ConnectedSitesController extends WP_REST_Controller {
 			'rest_connected_site_not_found',
 			__( 'Connected site not found.', 'fair-payments-connector-experimental' ),
 			array( 'status' => 404 )
+		);
+	}
+
+	/**
+	 * Whether a budget id identifies an existing Fair Finance budget.
+	 *
+	 * When Fair Finance isn't active there is nothing to validate against;
+	 * the id is accepted and simply resolves to no budget everywhere it's
+	 * read until Fair Finance (and the referenced budget) exist.
+	 *
+	 * @param int $budget_id Budget id.
+	 * @return bool
+	 */
+	private static function budget_exists( $budget_id ) {
+		if ( ! class_exists( '\FairFinance\Models\Budget' ) ) {
+			return true;
+		}
+
+		return (bool) \FairFinance\Models\Budget::get_by_id( (int) $budget_id );
+	}
+
+	/**
+	 * Standard error for a budget id that doesn't identify an existing budget.
+	 *
+	 * @return WP_Error
+	 */
+	private function invalid_budget() {
+		return new WP_Error(
+			'rest_invalid_budget',
+			__( 'Budget not found.', 'fair-payments-connector-experimental' ),
+			array( 'status' => 400 )
 		);
 	}
 }

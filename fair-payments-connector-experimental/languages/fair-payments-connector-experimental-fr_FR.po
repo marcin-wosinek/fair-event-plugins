@@ -46,7 +46,7 @@ msgstr "Jetons API"
 
 #: src/Admin/AdminPages.php:45
 #: src/Admin/AdminPages.php:46
-#: src/Admin/connected-sites/ConnectedSitesApp.js:236
+#: src/Admin/connected-sites/ConnectedSitesApp.js:300
 msgid "Connected Sites"
 msgstr "Sites connectés"
 
@@ -81,35 +81,35 @@ msgstr "Impossible de créer le jeton API."
 msgid "API token not found."
 msgstr "Jeton API non trouvé."
 
-#: src/API/ConnectedSitesController.php:151
+#: src/API/ConnectedSitesController.php:159
 msgid "Label, base URL and token are all required."
 msgstr "Le libellé, l'URL de base et le jeton sont tous obligatoires."
 
-#: src/API/ConnectedSitesController.php:245
-#: src/API/ConnectedSitesController.php:326
+#: src/API/ConnectedSitesController.php:265
+#: src/API/ConnectedSitesController.php:346
 msgid "Could not reach the remote site."
 msgstr "Impossible d'accéder au site distant."
 
-#: src/API/ConnectedSitesController.php:257
+#: src/API/ConnectedSitesController.php:277
 msgid "The remote site rejected the token."
 msgstr "Le site distant a rejeté le jeton."
 
-#: src/API/ConnectedSitesController.php:258
-#: src/API/ConnectedSitesController.php:339
+#: src/API/ConnectedSitesController.php:278
+#: src/API/ConnectedSitesController.php:359
 msgid "The remote site returned an unexpected response."
 msgstr "Le site distant a renvoyé une réponse inattendue."
 
-#: src/API/ConnectedSitesController.php:338
+#: src/API/ConnectedSitesController.php:358
 msgid "The remote site rejected the token, or it lacks the transactions:read scope."
 msgstr "Le site distant a rejeté le jeton, ou il n'a pas la portée transactions:read."
 
 #. translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label
-#: src/API/ConnectedSitesController.php:394
+#: src/API/ConnectedSitesController.php:419
 #, php-format
 msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s."
 msgstr "Importé %1$d nouveau(x), mis à jour %2$d, ignoré %3$d transaction(s) de %4$s."
 
-#: src/API/ConnectedSitesController.php:413
+#: src/API/ConnectedSitesController.php:438
 msgid "Connected site not found."
 msgstr "Site connecté non trouvé."
 
@@ -235,14 +235,14 @@ msgstr "Aucun jeton API pour le moment. Générez-en un pour partager des donné
 
 #: src/Admin/api-tokens/ApiTokensApp.js:251
 #: src/Admin/api-tokens/ApiTokensApp.js:429
-#: src/Admin/connected-sites/ConnectedSitesApp.js:304
-#: src/Admin/connected-sites/ConnectedSitesApp.js:459
+#: src/Admin/connected-sites/ConnectedSitesApp.js:368
+#: src/Admin/connected-sites/ConnectedSitesApp.js:534
 msgid "Label"
 msgstr "Étiquette"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:257
 #: src/Admin/api-tokens/ApiTokensApp.js:448
-#: src/Admin/connected-sites/ConnectedSitesApp.js:316
+#: src/Admin/connected-sites/ConnectedSitesApp.js:380
 msgid "Scopes"
 msgstr "Portées"
 
@@ -255,17 +255,17 @@ msgid "Last used"
 msgstr "Dernière utilisation"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:275
-#: src/Admin/connected-sites/ConnectedSitesApp.js:322
+#: src/Admin/connected-sites/ConnectedSitesApp.js:392
 msgid "Status"
 msgstr "Statut"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:281
-#: src/Admin/connected-sites/ConnectedSitesApp.js:334
+#: src/Admin/connected-sites/ConnectedSitesApp.js:404
 msgid "Actions"
 msgstr "Actions"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:305
-#: src/Admin/connected-sites/ConnectedSitesApp.js:365
+#: src/Admin/connected-sites/ConnectedSitesApp.js:440
 msgid "Never"
 msgstr "Jamais"
 
@@ -310,7 +310,7 @@ msgid "A name to identify who this token is for, e.g. lamutable.es"
 msgstr "Un nom pour identifier à qui ce jeton est destiné, par exemple lamutable.es"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:477
-#: src/Admin/connected-sites/ConnectedSitesApp.js:512
+#: src/Admin/connected-sites/ConnectedSitesApp.js:622
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -318,126 +318,126 @@ msgstr "Annuler"
 msgid "Generate"
 msgstr "Générer"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:22
+#: src/Admin/connected-sites/ConnectedSitesApp.js:23
 msgid "Connected"
 msgstr "Connecté"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:26
+#: src/Admin/connected-sites/ConnectedSitesApp.js:27
 msgid "Error"
 msgstr "Erreur"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:30
+#: src/Admin/connected-sites/ConnectedSitesApp.js:31
 msgid "Unverified"
 msgstr "Non vérifié"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:64
+#: src/Admin/connected-sites/ConnectedSitesApp.js:94
 msgid "Failed to load connected sites."
 msgstr "Impossible de charger les sites connectés."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:114
+#: src/Admin/connected-sites/ConnectedSitesApp.js:150
 msgid "Connected site updated."
 msgstr "Site connecté mis à jour."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:126
+#: src/Admin/connected-sites/ConnectedSitesApp.js:167
 msgid "Connected site added."
 msgstr "Site connecté ajouté."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:137
+#: src/Admin/connected-sites/ConnectedSitesApp.js:178
 msgid "Failed to save connected site."
 msgstr "Impossible d'enregistrer le site connecté."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:160
+#: src/Admin/connected-sites/ConnectedSitesApp.js:201
 msgid "no scopes"
 msgstr "aucune portée"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:162
+#: src/Admin/connected-sites/ConnectedSitesApp.js:203
 msgid "Connection succeeded. Granted scopes: "
 msgstr "Connexion réussie. Portées accordées : "
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:171
+#: src/Admin/connected-sites/ConnectedSitesApp.js:212
 msgid "Connection test failed."
 msgstr "Échec du test de connexion."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:185
+#: src/Admin/connected-sites/ConnectedSitesApp.js:226
 msgid "Remove this connected site? Stored token will be deleted."
 msgstr "Supprimer ce site connecté ? Le jeton stocké sera supprimé."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:203
+#: src/Admin/connected-sites/ConnectedSitesApp.js:244
 msgid "Connected site removed."
 msgstr "Site connecté supprimé."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:212
+#: src/Admin/connected-sites/ConnectedSitesApp.js:253
 msgid "Failed to remove connected site."
 msgstr "Impossible de supprimer le site connecté."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:242
-#: src/Admin/connected-sites/ConnectedSitesApp.js:533
+#: src/Admin/connected-sites/ConnectedSitesApp.js:306
+#: src/Admin/connected-sites/ConnectedSitesApp.js:643
 msgid "Add Site"
 msgstr "Ajouter un site"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:252
+#: src/Admin/connected-sites/ConnectedSitesApp.js:316
 msgid "Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page."
 msgstr "Enregistrez les autres sites à partir desquels ce site récupère des données. Collez un jeton généré sur la page Jetons API de l'autre site."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:282
+#: src/Admin/connected-sites/ConnectedSitesApp.js:346
 msgid "Loading sites…"
 msgstr "Chargement des sites…"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:292
+#: src/Admin/connected-sites/ConnectedSitesApp.js:356
 msgid "No connected sites yet. Add one to pull data from another site."
 msgstr "Aucun site connecté pour le moment. Ajoutez-en un pour récupérer des données d'un autre site."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:310
-#: src/Admin/connected-sites/ConnectedSitesApp.js:472
+#: src/Admin/connected-sites/ConnectedSitesApp.js:374
+#: src/Admin/connected-sites/ConnectedSitesApp.js:547
 msgid "Base URL"
 msgstr "URL de base"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:328
+#: src/Admin/connected-sites/ConnectedSitesApp.js:398
 msgid "Last sync"
 msgstr "Dernière synchronisation"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:394
+#: src/Admin/connected-sites/ConnectedSitesApp.js:469
 msgid "Test"
 msgstr "Tester"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:408
+#: src/Admin/connected-sites/ConnectedSitesApp.js:483
 msgid "Edit"
 msgstr "Modifier"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:423
+#: src/Admin/connected-sites/ConnectedSitesApp.js:498
 #: src/Admin/notifications/NotificationsTab.js:228
 msgid "Remove"
 msgstr "Supprimer"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:444
+#: src/Admin/connected-sites/ConnectedSitesApp.js:519
 msgid "Edit Connected Site"
 msgstr "Modifier le site connecté"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:448
+#: src/Admin/connected-sites/ConnectedSitesApp.js:523
 msgid "Add Connected Site"
 msgstr "Ajouter un site connecté"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:465
+#: src/Admin/connected-sites/ConnectedSitesApp.js:540
 msgid "A name to identify this site, e.g. acroyoga-club.es"
 msgstr "Un nom pour identifier ce site, par exemple acroyoga-club.es"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:479
+#: src/Admin/connected-sites/ConnectedSitesApp.js:554
 msgid "The other site’s address, e.g. https://acroyoga-club.es"
 msgstr "L'adresse de l'autre site, par exemple https://acroyoga-club.es"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:486
+#: src/Admin/connected-sites/ConnectedSitesApp.js:561
 msgid "Token"
 msgstr "Jeton"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:495
+#: src/Admin/connected-sites/ConnectedSitesApp.js:570
 msgid "Leave blank to keep the existing token."
 msgstr "Laissez vide pour conserver le jeton existant."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:499
+#: src/Admin/connected-sites/ConnectedSitesApp.js:574
 msgid "Paste the token from the other site’s API Tokens page."
 msgstr "Collez le jeton de la page Jetons API de l'autre site."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:529
+#: src/Admin/connected-sites/ConnectedSitesApp.js:639
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -620,3 +620,37 @@ msgstr "Désactiver pour garder les données personnelles hors du canal Telegram
 #: src/Admin/telegram/TelegramTab.js:276
 msgid "Send test message"
 msgstr "Envoyer un message de test"
+
+#: src/API/ConnectedSitesController.php:54
+msgid "Linked Fair Finance budget id, or null to clear the association."
+msgstr ""
+
+#: src/API/ConnectedSitesController.php:469
+msgid "Budget not found."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:69
+msgid "Budgets are unavailable."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:276
+#: src/Admin/connected-sites/ConnectedSitesApp.js:597
+msgid "No budget"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:287
+msgid "Unlinked"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:386
+#: src/Admin/connected-sites/ConnectedSitesApp.js:590
+msgid "Budget"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:583
+msgid "Budgets are unavailable right now; the site can still be saved without one."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:609
+msgid "Reconciliation proposes this budget for transactions imported from this site."
+msgstr ""

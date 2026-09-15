@@ -59,6 +59,9 @@ class Plugin {
 		$digest = new \FairPaymentsConnectorExperimental\Hooks\DigestHooks();
 		$digest->init();
 
+		$budget_hooks = new \FairPaymentsConnectorExperimental\Hooks\BudgetHooks();
+		$budget_hooks->init();
+
 		$settings = new \FairPaymentsConnectorExperimental\Settings\Settings();
 		$settings->init();
 

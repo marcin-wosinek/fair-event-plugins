@@ -140,6 +140,13 @@ class Transaction {
 		if ( isset( $data['event_date_id'] ) && null !== $data['event_date_id'] ) {
 			$metadata['source_event_date_id'] = (int) $data['event_date_id'];
 		}
+		if ( ! empty( $data['connected_site_id'] ) ) {
+			// Immutable local id of the Connected Site this payment was
+			// imported from, kept separate from source_domain/detail_url
+			// above (both mutable) so reconciliation can attribute a stable
+			// source budget even if the site is later relabeled or moved.
+			$metadata['connected_site_id'] = (int) $data['connected_site_id'];
+		}
 
 		$row = array(
 			'amount'          => isset( $data['amount'] ) ? (float) $data['amount'] : 0,
