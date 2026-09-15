@@ -1,5 +1,21 @@
 # fair-events
 
+## 1.18.0
+
+### Minor Changes
+
+-   0a5131a: Sale periods no longer require explicit outer boundaries. A first sale period with no start date is available from today while today is still before its end; a last sale period with no end date stays available through the complete final day of the event or recurring series. Interior sale periods still require explicit, chained boundaries, and an invalid sequence is rejected before it's saved.
+-   7362ce4: Add a budget selector to the Manage Event Finance tab, applying to the whole event/series. When Fair Finance pre-generates a reconciliation split for a settlement transfer, or matches a bank entry to a single transaction, each allocation now preselects the budget linked to its payment's event (falling back to no budget when the event has none, is unlinked, or its budget was deleted). Organisers can still override any preselected budget before saving.
+-   aa0b8ef: Replace the Signups tab's "Download CSV" button with a configurable "Export" popup: pick all columns or handpick them, choose Markdown/CSV/one-line output, and optionally include Fair Form answers collected during signup as individually selectable columns.
+-   2f0d149: Add a Location filter to the All Events admin screen, with a matching Location column, so staff can narrow the list to events at one venue or with no venue set.
+
+### Patch Changes
+
+-   d4bea94: Rename the Manage Event ticket and signup sections to Prices and List while preserving legacy admin links.
+-   7318848: Rename the dedicated Events post type's labels to "Event Page" / "Event Pages" throughout the admin (submenu, list table, search, Add New/Edit screens) so it stops colliding with "Event" meaning the dated, ticketed object. The frontend admin bar on a published event page now shows distinct "Manage Event" and "Edit Event Page" links. Translated for de_DE, es_ES, fr_FR, and pl_PL.
+-   452cc30: Consolidate ticket sale-period and ticket-type availability into a single `TicketAvailability` service in fair-events, always evaluated in the WordPress site timezone. Fixes two boundary inconsistencies found while consolidating: event JSON-LD offers now respect a ticket type's scheduled end date (previously only manual disabling was checked), and the fair-audience signup form's purchase validation now also rejects a manually disabled ticket type (previously only its scheduled end date), matching what the signup form already hides.
+-   1323dfa: Fix the All Events Location filter menu collapsing to an unreadably narrow popover.
+
 ## 1.17.0
 
 ### Minor Changes
