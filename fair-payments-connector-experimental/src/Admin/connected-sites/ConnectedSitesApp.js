@@ -13,6 +13,7 @@ import {
 	Notice,
 	Modal,
 	TextControl,
+	SelectControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
@@ -44,10 +45,39 @@ const ConnectedSitesApp = () => {
 	const [ label, setLabel ] = useState( '' );
 	const [ baseUrl, setBaseUrl ] = useState( '' );
 	const [ token, setToken ] = useState( '' );
+	const [ budgetId, setBudgetId ] = useState( '' );
+	const [ budgets, setBudgets ] = useState( [] );
+	const [ budgetsError, setBudgetsError ] = useState( null );
 
 	useEffect( () => {
 		loadSites();
+		loadBudgets();
 	}, [] );
+
+	// Fair Finance is an optional dependency: when it (or its budgets
+	// endpoint) is unavailable, sites remain fully usable — the Budget
+	// selector is simply hidden rather than blocking the page.
+	const loadBudgets = async () => {
+		try {
+			const data = await apiFetch( { path: '/fair-finance/v1/budgets' } );
+			setBudgets( data || [] );
+			setBudgetsError( null );
+		} catch ( err ) {
+			setBudgets( [] );
+			setBudgetsError(
+				err.message ||
+					__(
+						'Budgets are unavailable.',
+						'fair-payments-connector-experimental'
+					)
+			);
+		}
+	};
+
+	const budgetName = ( id ) => {
+		const budget = budgets.find( ( b ) => b.id === id );
+		return budget ? budget.name : null;
+	};
 
 	const loadSites = async () => {
 		setLoading( true );
@@ -76,6 +106,7 @@ const ConnectedSitesApp = () => {
 		setLabel( '' );
 		setBaseUrl( '' );
 		setToken( '' );
+		setBudgetId( '' );
 		setError( null );
 		setIsFormOpen( true );
 	};
@@ -85,6 +116,7 @@ const ConnectedSitesApp = () => {
 		setLabel( site.label );
 		setBaseUrl( site.base_url );
 		setToken( '' );
+		setBudgetId( site.budget_id ? String( site.budget_id ) : '' );
 		setError( null );
 		setIsFormOpen( true );
 	};
@@ -101,7 +133,11 @@ const ConnectedSitesApp = () => {
 
 		try {
 			if ( editingId ) {
-				const data = { label, base_url: baseUrl };
+				const data = {
+					label,
+					base_url: baseUrl,
+					budget_id: budgetId ? parseInt( budgetId, 10 ) : null,
+				};
 				if ( token ) {
 					data.token = token;
 				}
@@ -120,7 +156,12 @@ const ConnectedSitesApp = () => {
 				await apiFetch( {
 					path: '/fair-payments-connector/v1/admin/connected-sites',
 					method: 'POST',
-					data: { label, base_url: baseUrl, token },
+					data: {
+						label,
+						base_url: baseUrl,
+						token,
+						budget_id: budgetId ? parseInt( budgetId, 10 ) : null,
+					},
 				} );
 				setSuccess(
 					__(
@@ -226,6 +267,29 @@ const ConnectedSitesApp = () => {
 		);
 	};
 
+	// A budget_id that doesn't resolve to a known budget (deleted, or
+	// budgets failed to load) reads as unlinked rather than showing a raw id.
+	const renderBudget = ( budgetIdValue ) => {
+		if ( ! budgetIdValue ) {
+			return (
+				<em>
+					{ __(
+						'No budget',
+						'fair-payments-connector-experimental'
+					) }
+				</em>
+			);
+		}
+		const name = budgetName( budgetIdValue );
+		return (
+			name || (
+				<em>
+					{ __( 'Unlinked', 'fair-payments-connector-experimental' ) }
+				</em>
+			)
+		);
+	};
+
 	return (
 		<div className="wrap fair-payments-connector-connected-sites-page">
 			<VStack spacing={ 4 }>
@@ -320,6 +384,12 @@ const ConnectedSitesApp = () => {
 											</th>
 											<th>
 												{ __(
+													'Budget',
+													'fair-payments-connector-experimental'
+												) }
+											</th>
+											<th>
+												{ __(
 													'Status',
 													'fair-payments-connector-experimental'
 												) }
@@ -352,6 +422,11 @@ const ConnectedSitesApp = () => {
 														site.scopes.join( ', ' )
 													) : (
 														<em>—</em>
+													) }
+												</td>
+												<td>
+													{ renderBudget(
+														site.budget_id
 													) }
 												</td>
 												<td>
@@ -503,6 +578,41 @@ const ConnectedSitesApp = () => {
 								}
 								required={ ! editingId }
 							/>
+							{ budgetsError ? (
+								<p style={ { color: '#666' } }>
+									{ __(
+										'Budgets are unavailable right now; the site can still be saved without one.',
+										'fair-payments-connector-experimental'
+									) }
+								</p>
+							) : (
+								<SelectControl
+									label={ __(
+										'Budget',
+										'fair-payments-connector-experimental'
+									) }
+									value={ budgetId }
+									options={ [
+										{
+											label: __(
+												'No budget',
+												'fair-payments-connector-experimental'
+											),
+											value: '',
+										},
+										...budgets.map( ( budget ) => ( {
+											label: budget.name,
+											value: String( budget.id ),
+										} ) ),
+									] }
+									onChange={ setBudgetId }
+									help={ __(
+										'Reconciliation proposes this budget for transactions imported from this site.',
+										'fair-payments-connector-experimental'
+									) }
+									__nextHasNoMarginBottom
+								/>
+							) }
 							<HStack justify="flex-end" spacing={ 2 }>
 								<Button
 									variant="tertiary"

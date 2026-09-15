@@ -160,7 +160,15 @@ add_action(
 						global $wpdb;
 						$table = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
 
-						$event_date_id = $request->get_param( 'event_date_id' );
+						$event_date_id     = $request->get_param( 'event_date_id' );
+						$connected_site_id = $request->get_param( 'connected_site_id' );
+
+						// A Connected Site import writes this to metadata, not
+						// a real column (see Transaction::import()); mirror
+						// that here so fair-finance's Connected Site budget
+						// resolution specs can exercise real reconciliation
+						// lookups without a live remote import.
+						$metadata = $connected_site_id ? wp_json_encode( array( 'connected_site_id' => absint( $connected_site_id ) ) ) : '';
 
 						$inserted = $wpdb->insert(
 							$table,
@@ -173,8 +181,9 @@ add_action(
 								'status'            => $request->get_param( 'status' ) ? sanitize_text_field( $request->get_param( 'status' ) ) : 'paid',
 								'testmode'          => 0,
 								'description'       => sanitize_text_field( (string) $request->get_param( 'description' ) ),
+								'metadata'          => $metadata,
 							),
-							array( '%s', '%d', '%f', '%f', '%f', '%s', '%d', '%s' )
+							array( '%s', '%d', '%f', '%f', '%f', '%s', '%d', '%s', '%s' )
 						);
 
 						if ( ! $inserted ) {

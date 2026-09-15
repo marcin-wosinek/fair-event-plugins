@@ -216,6 +216,13 @@ class Budget {
 			array( '%d' )
 		);
 
+		if ( false !== $result ) {
+			// Lets other plugins (e.g. fair-payments-connector-experimental's
+			// Connected Site budget links) clear their own references without
+			// this model needing to know they exist.
+			do_action( 'fair_finance_budget_deleted', (int) $id );
+		}
+
 		return false !== $result;
 	}
 

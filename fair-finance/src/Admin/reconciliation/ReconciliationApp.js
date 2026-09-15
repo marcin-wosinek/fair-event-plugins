@@ -15,6 +15,7 @@ import {
 	__experimentalHStack as HStack,
 	__experimentalText as Text,
 	TextControl,
+	SelectControl,
 } from '@wordpress/components';
 
 /**
@@ -50,6 +51,58 @@ const ReconciliationApp = () => {
 		'trf. stichting mollie payments'
 	);
 	const [ showSettlementModal, setShowSettlementModal ] = useState( false );
+
+	const [ budgets, setBudgets ] = useState( [] );
+	// '' means "no budget"; kept as a string throughout so it maps directly
+	// to SelectControl's value.
+	const [ selectedBudgetId, setSelectedBudgetId ] = useState( '' );
+	// Once the administrator picks a budget explicitly, their choice sticks
+	// even as the selection changes further — only re-selecting a different
+	// entry resets it back to automatic.
+	const [ budgetOverridden, setBudgetOverridden ] = useState( false );
+
+	useEffect( () => {
+		apiFetch( { path: '/fair-finance/v1/budgets' } )
+			.then( ( data ) => setBudgets( data || [] ) )
+			.catch( () => setBudgets( [] ) );
+	}, [] );
+
+	// Recompute the proposed budget whenever the transaction selection
+	// changes, unless the entry already has a budget (nothing to propose —
+	// it's preserved) or the administrator already overrode the proposal.
+	useEffect( () => {
+		if ( ! selectedEntry || selectedEntry.budget_id || budgetOverridden ) {
+			return;
+		}
+
+		const selectedTx = unmatchedTransactions.filter( ( t ) =>
+			selectedTransactionIds.includes( t.id )
+		);
+		const sourceBudgetIds = selectedTx.map(
+			( t ) => t.source_budget_id ?? null
+		);
+		const proposal =
+			sourceBudgetIds.length > 0 &&
+			sourceBudgetIds.every(
+				( budgetIdValue ) =>
+					null !== budgetIdValue &&
+					budgetIdValue === sourceBudgetIds[ 0 ]
+			)
+				? String( sourceBudgetIds[ 0 ] )
+				: '';
+
+		setSelectedBudgetId( proposal );
+	}, [
+		selectedTransactionIds,
+		unmatchedTransactions,
+		selectedEntry,
+		budgetOverridden,
+	] );
+
+	const handleBudgetChange = ( value ) => {
+		setSelectedBudgetId( value );
+		setBudgetOverridden( true );
+	};
 
 	const filteredUnmatchedEntries = unmatchedEntries.filter( ( entry ) => {
 		if ( ! descriptionFilter ) return true;
@@ -89,6 +142,8 @@ const ReconciliationApp = () => {
 		setSelectedEntry( entry );
 		setSelectedTransactionIds( [] );
 		setSuggestions( [] );
+		setBudgetOverridden( false );
+		setSelectedBudgetId( entry.budget_id ? String( entry.budget_id ) : '' );
 		setLoadingSuggestions( true );
 
 		try {
@@ -125,7 +180,12 @@ const ReconciliationApp = () => {
 			await apiFetch( {
 				path: `/fair-finance/v1/financial-entries/${ selectedEntry.id }/match`,
 				method: 'POST',
-				data: { transaction_ids: selectedTransactionIds },
+				data: {
+					transaction_ids: selectedTransactionIds,
+					budget_id: selectedBudgetId
+						? parseInt( selectedBudgetId, 10 )
+						: null,
+				},
 			} );
 			setSuccess(
 				__(
@@ -136,6 +196,8 @@ const ReconciliationApp = () => {
 			setSelectedEntry( null );
 			setSelectedTransactionIds( [] );
 			setSuggestions( [] );
+			setSelectedBudgetId( '' );
+			setBudgetOverridden( false );
 			await loadData();
 		} catch ( err ) {
 			setError(
@@ -612,19 +674,67 @@ const ReconciliationApp = () => {
 														) }
 													</Text>
 												</VStack>
-												<Button
-													variant="primary"
-													onClick={
-														handleConfirmMatch
-													}
-													disabled={ matching }
-													isBusy={ matching }
-												>
-													{ __(
-														'Confirm Match',
-														'fair-payments-connector'
-													) }
-												</Button>
+												<VStack spacing={ 2 }>
+													<SelectControl
+														label={ __(
+															'Budget',
+															'fair-payments-connector'
+														) }
+														value={
+															selectedBudgetId
+														}
+														disabled={ Boolean(
+															selectedEntry.budget_id
+														) }
+														options={ [
+															{
+																label: __(
+																	'No budget',
+																	'fair-payments-connector'
+																),
+																value: '',
+															},
+															...budgets.map(
+																(
+																	budget
+																) => ( {
+																	label: budget.name,
+																	value: String(
+																		budget.id
+																	),
+																} )
+															),
+														] }
+														onChange={
+															handleBudgetChange
+														}
+														help={
+															selectedEntry.budget_id
+																? __(
+																		'This entry already has a budget; matching keeps it.',
+																		'fair-payments-connector'
+																  )
+																: __(
+																		'Proposed from the selected transactions’ source; change it if needed.',
+																		'fair-payments-connector'
+																  )
+														}
+														__nextHasNoMarginBottom
+													/>
+													<Button
+														variant="primary"
+														onClick={
+															handleConfirmMatch
+														}
+														disabled={ matching }
+														isBusy={ matching }
+													>
+														{ __(
+															'Confirm Match',
+															'fair-payments-connector'
+														) }
+													</Button>
+												</VStack>
 											</HStack>
 										</div>
 									) }

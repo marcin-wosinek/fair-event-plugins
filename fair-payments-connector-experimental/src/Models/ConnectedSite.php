@@ -26,6 +26,18 @@ class ConnectedSite {
 	const OPTION = 'fair_payment_connected_sites';
 
 	/**
+	 * Option name holding the next id to assign to a new connected site.
+	 *
+	 * Kept independent of the current record set so deleting the
+	 * highest-numbered site can never cause its id to be reused by a site
+	 * created afterwards (transactions already attributed to the deleted id
+	 * must never resolve to an unrelated new site).
+	 *
+	 * @var string
+	 */
+	const NEXT_ID_OPTION = 'fair_payment_connected_sites_next_id';
+
+	/**
 	 * Read the raw array of records from the option.
 	 *
 	 * @return array[] Array of associative records.
@@ -83,22 +95,19 @@ class ConnectedSite {
 	/**
 	 * Create a new connected site.
 	 *
-	 * @param array $data Input with label, base_url, token.
+	 * @param array $data Input with label, base_url, token, and an optional
+	 *                    budget_id linking this site to a Fair Finance budget.
 	 * @return array The created record.
 	 */
 	public static function create( array $data ) {
 		$sites = self::read();
 
-		$next_id = 1;
-		foreach ( $sites as $site ) {
-			$next_id = max( $next_id, (int) $site['id'] + 1 );
-		}
-
 		$record = array(
-			'id'           => $next_id,
+			'id'           => self::allocate_next_id(),
 			'label'        => sanitize_text_field( $data['label'] ?? '' ),
 			'base_url'     => esc_url_raw( $data['base_url'] ?? '' ),
 			'token'        => trim( (string) ( $data['token'] ?? '' ) ),
+			'budget_id'    => ! empty( $data['budget_id'] ) ? (int) $data['budget_id'] : null,
 			'scopes'       => array(),
 			'status'       => 'unverified',
 			'created_at'   => current_time( 'mysql', true ),
@@ -112,10 +121,35 @@ class ConnectedSite {
 	}
 
 	/**
+	 * Allocate the next connected-site id from the persistent counter.
+	 *
+	 * The first call after this counter is introduced seeds it from the
+	 * highest id already on record, so existing sites keep their ids.
+	 *
+	 * @return int
+	 */
+	private static function allocate_next_id() {
+		$next_id = (int) get_option( self::NEXT_ID_OPTION, 0 );
+
+		if ( $next_id < 1 ) {
+			$next_id = 1;
+			foreach ( self::read() as $site ) {
+				$next_id = max( $next_id, (int) $site['id'] + 1 );
+			}
+		}
+
+		update_option( self::NEXT_ID_OPTION, $next_id + 1 );
+
+		return $next_id;
+	}
+
+	/**
 	 * Update an existing connected site.
 	 *
 	 * Only label, base_url and a non-empty token are merged; an empty token
-	 * leaves the stored token untouched.
+	 * leaves the stored token untouched. budget_id is merged whenever the key
+	 * is present at all (including an explicit null), so callers can clear
+	 * the association without also having to resend label/base_url/token.
 	 *
 	 * @param int   $id   Site id.
 	 * @param array $data Fields to update.
@@ -139,6 +173,9 @@ class ConnectedSite {
 			if ( ! empty( $data['token'] ) ) {
 				$site['token'] = trim( (string) $data['token'] );
 			}
+			if ( array_key_exists( 'budget_id', $data ) ) {
+				$site['budget_id'] = ! empty( $data['budget_id'] ) ? (int) $data['budget_id'] : null;
+			}
 
 			$sites[ $index ] = $site;
 			$updated         = $site;
@@ -150,6 +187,57 @@ class ConnectedSite {
 		}
 
 		return $updated;
+	}
+
+	/**
+	 * Clear the budget association on every site linked to a given budget.
+	 *
+	 * Called when that budget is deleted (see Hooks\BudgetHooks), so no site
+	 * keeps pointing at a budget that no longer exists.
+	 *
+	 * @param int $budget_id Deleted budget id.
+	 * @return void
+	 */
+	public static function clear_budget_id( $budget_id ) {
+		$sites   = self::read();
+		$changed = false;
+
+		foreach ( $sites as $index => $site ) {
+			if ( ! empty( $site['budget_id'] ) && (int) $site['budget_id'] === (int) $budget_id ) {
+				$sites[ $index ]['budget_id'] = null;
+				$changed                      = true;
+			}
+		}
+
+		if ( $changed ) {
+			self::write( $sites );
+		}
+	}
+
+	/**
+	 * Resolve a connected site's budget id, validated against Fair Finance.
+	 *
+	 * Resolves to no budget when the site or its association is unset, the
+	 * linked budget has been deleted, or Fair Finance is inactive — a stale
+	 * or dangling id is never exposed as if it were still valid.
+	 *
+	 * @param int $id Site id.
+	 * @return int|null
+	 */
+	public static function get_budget_id( $id ) {
+		$record = self::get_by_id( $id );
+
+		if ( ! $record || empty( $record['budget_id'] ) ) {
+			return null;
+		}
+
+		if ( ! class_exists( '\FairFinance\Models\Budget' ) ) {
+			return null;
+		}
+
+		$budget_id = (int) $record['budget_id'];
+
+		return \FairFinance\Models\Budget::get_by_id( $budget_id ) ? $budget_id : null;
 	}
 
 	/**
@@ -237,6 +325,7 @@ class ConnectedSite {
 			'id'           => (int) $record['id'],
 			'label'        => $record['label'] ?? '',
 			'base_url'     => $record['base_url'] ?? '',
+			'budget_id'    => ! empty( $record['budget_id'] ) ? (int) $record['budget_id'] : null,
 			'scopes'       => isset( $record['scopes'] ) && is_array( $record['scopes'] ) ? $record['scopes'] : array(),
 			'status'       => $record['status'] ?? 'unverified',
 			'created_at'   => $record['created_at'] ?? '',
