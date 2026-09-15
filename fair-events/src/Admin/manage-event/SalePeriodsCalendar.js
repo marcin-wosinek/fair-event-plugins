@@ -39,20 +39,31 @@ export function salePeriodIndexForDate( periods, dateStr ) {
 const EVENT_DAY_BORDER = '3px solid #f0b849';
 
 // The period's name, or "Period N" when unnamed — matches the legend wording.
+// A period whose outer boundary was inferred rather than explicitly set
+// (`isAutomaticStart`/`isAutomaticEnd`, see salePeriodBoundaries.js) is
+// marked so the legend never presents a lazily-resolved date as if it were
+// stored configuration.
 function periodLabel( period, index ) {
-	return (
+	const name =
 		period.name ||
 		sprintf(
 			/* translators: %d: sale period number */
 			__( 'Period %d', 'fair-events' ),
 			index + 1
-		)
-	);
+		);
+
+	return period.isAutomaticStart || period.isAutomaticEnd
+		? sprintf(
+				/* translators: %s: sale period name */
+				__( '%s (automatic)', 'fair-events' ),
+				name
+		  )
+		: name;
 }
 
 /**
  * @param {Object}  props
- * @param {Array}   props.salePeriods Chained sale periods using canonical inclusive starts and exclusive ends (`sale_start`/`sale_end`/`name`, Y-m-d strings). The editor presents each exclusive end as the preceding inclusive “Until” day.
+ * @param {Array}   props.salePeriods Chained sale periods using canonical inclusive starts and exclusive ends (`sale_start`/`sale_end`/`name`, Y-m-d strings) — pass already-resolved effective boundaries (see salePeriodBoundaries.js) rather than raw stored values so an automatic outer boundary still renders instead of hiding the calendar. Each period may also carry `isAutomaticStart`/`isAutomaticEnd` to flag an inferred boundary in the legend.
  * @param {string}  [props.eventDay]  Event start date (Y-m-d) for the event-day marker.
  * @param {boolean} [props.embedded]  Card-less render for placement inside an existing panel.
  */

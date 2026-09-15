@@ -705,26 +705,26 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 				],
 				sale_periods: [
 					{
-						name: 'Early',
-						sale_start: '2036-03-20 09:00:00',
+						name: 'Open start',
+						sale_start: null,
 						sale_end: '2036-03-25 23:00:00',
 					},
 					{
-						name: 'Open start',
-						sale_start: null,
+						name: 'Late',
+						sale_start: '2036-03-25 23:00:00',
 						sale_end: '2036-03-26 18:30:00',
 					},
 				],
 				prices: [
 					{
 						ticket_type_index: 0,
-						sale_period_index: 0,
+						sale_period_index: 1,
 						price: 15.5,
 						capacity: 40,
 					},
 					{
 						ticket_type_index: 1,
-						sale_period_index: 1,
+						sale_period_index: 0,
 						price: 25,
 						capacity: null,
 					},
@@ -855,12 +855,12 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 			expect( copiedTickets.prices[ 0 ].id ).not.toBe(
 				sourceTickets.prices[ 0 ].id
 			);
-			expect( copiedTickets.sale_periods[ 1 ].sale_start ).toBeNull();
+			expect( copiedTickets.sale_periods[ 0 ].sale_start ).toBeNull();
 			expect( copiedTickets.ticket_types[ 0 ].disable_at ).toBe(
 				0 === index ? '2036-04-01 18:30:00' : '2036-05-19 18:30:00'
 			);
-			expect( copiedTickets.sale_periods[ 0 ].sale_start ).toBe(
-				0 === index ? '2036-03-27 09:00:00' : '2036-05-14 09:00:00'
+			expect( copiedTickets.sale_periods[ 1 ].sale_start ).toBe(
+				0 === index ? '2036-04-01 23:00:00' : '2036-05-19 23:00:00'
 			);
 
 			await page.goto(

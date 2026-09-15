@@ -195,43 +195,103 @@ class TicketAvailabilityTest extends TestCase {
 	}
 
 	/**
-	 * An unset sale_end substitutes the computed default.
+	 * The last (and only) period's unset sale_end substitutes the computed
+	 * default.
 	 */
-	public function test_apply_default_window_substitutes_unset_end() {
+	public function test_resolve_periods_substitutes_unset_end_on_last_period() {
 		$period   = $this->period( '2026-01-01 00:00:00', null );
-		$resolved = TicketAvailability::apply_default_window( array( $period ), '2026-03-01 00:00:00' );
+		$resolved = TicketAvailability::resolve_periods( array( $period ), '2026-01-15 00:00:00', '2026-03-01 00:00:00' );
 		$this->assertSame( '2026-03-01 00:00:00', $resolved[0]->sale_end );
-		// The original period object is untouched — apply_default_window clones.
+		// The original period object is untouched — resolve_periods clones.
 		$this->assertNull( $period->sale_end );
 	}
 
 	/**
-	 * An unset sale_start becomes open (always already started).
+	 * The first (and only) period's unset sale_start resolves to today, while
+	 * today still precedes its (explicit) end.
 	 */
-	public function test_apply_default_window_unset_start_is_open() {
+	public function test_resolve_periods_unset_start_resolves_to_today_before_end() {
 		$period   = $this->period( '', '2026-06-01 00:00:00' );
-		$resolved = TicketAvailability::apply_default_window( array( $period ), null );
-		$this->assertSame( TicketAvailability::OPEN_START_SENTINEL, $resolved[0]->sale_start );
+		$resolved = TicketAvailability::resolve_periods( array( $period ), '2026-01-15 09:30:00', null );
+		$this->assertSame( '2026-01-15 00:00:00', $resolved[0]->sale_start );
+	}
+
+	/**
+	 * Once today reaches (or passes) the period's end, an unset start no
+	 * longer resolves — an expired period never reactivates via a historical
+	 * "always started" sentinel.
+	 */
+	public function test_resolve_periods_unset_start_stays_unresolved_after_end() {
+		$period   = $this->period( '', '2026-06-01 00:00:00' );
+		$resolved = TicketAvailability::resolve_periods( array( $period ), '2026-06-01 00:00:00', null );
+		$this->assertNull( $resolved[0]->sale_start );
 	}
 
 	/**
 	 * Explicit sale_start/sale_end values are left untouched.
 	 */
-	public function test_apply_default_window_leaves_explicit_values_untouched() {
+	public function test_resolve_periods_leaves_explicit_values_untouched() {
 		$period   = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
-		$resolved = TicketAvailability::apply_default_window( array( $period ), '2026-09-01 00:00:00' );
+		$resolved = TicketAvailability::resolve_periods( array( $period ), '2026-01-15 00:00:00', '2026-09-01 00:00:00' );
 		$this->assertSame( '2026-01-01 00:00:00', $resolved[0]->sale_start );
 		$this->assertSame( '2026-02-01 00:00:00', $resolved[0]->sale_end );
 	}
 
 	/**
 	 * With no default end available (e.g. the event/series has no occurrences),
-	 * an unset sale_end is left unset rather than substituting a bogus value.
+	 * an unset sale_end is left unset rather than substituting a bogus value —
+	 * and since the end can't resolve, the unset start can't infer either.
 	 */
-	public function test_apply_default_window_without_default_end_leaves_end_unset() {
-		$period   = $this->period( '2026-01-01 00:00:00', null );
-		$resolved = TicketAvailability::apply_default_window( array( $period ), null );
+	public function test_resolve_periods_without_default_end_leaves_end_and_start_unset() {
+		$period   = $this->period( '', null );
+		$resolved = TicketAvailability::resolve_periods( array( $period ), '2026-01-15 00:00:00', null );
 		$this->assertNull( $resolved[0]->sale_end );
+		$this->assertNull( $resolved[0]->sale_start );
+	}
+
+	/**
+	 * Only the first period may infer a missing start — an interior period's
+	 * unset start is left unresolved rather than silently opened up.
+	 */
+	public function test_resolve_periods_interior_missing_start_stays_unresolved() {
+		$first    = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$interior = $this->period( '', '2026-03-01 00:00:00' );
+		$last     = $this->period( '2026-03-01 00:00:00', '2026-04-01 00:00:00' );
+
+		$resolved = TicketAvailability::resolve_periods( array( $first, $interior, $last ), '2026-02-15 00:00:00', null );
+
+		$this->assertNull( $resolved[1]->sale_start );
+	}
+
+	/**
+	 * Only the last period may infer a missing end — an interior period's
+	 * unset end is left unresolved rather than substituting the series default.
+	 */
+	public function test_resolve_periods_interior_missing_end_stays_unresolved() {
+		$first    = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$interior = $this->period( '2026-02-01 00:00:00', null );
+		$last     = $this->period( '2026-03-01 00:00:00', '2026-04-01 00:00:00' );
+
+		$resolved = TicketAvailability::resolve_periods( array( $first, $interior, $last ), '2026-02-15 00:00:00', '2026-05-01 00:00:00' );
+
+		$this->assertNull( $resolved[1]->sale_end );
+	}
+
+	/**
+	 * A multi-period sequence resolves only its first period's start and
+	 * last period's end; the middle period's explicit boundaries pass through.
+	 */
+	public function test_resolve_periods_only_resolves_outer_boundaries() {
+		$first  = $this->period( '', '2026-02-01 00:00:00' );
+		$middle = $this->period( '2026-02-01 00:00:00', '2026-03-01 00:00:00' );
+		$last   = $this->period( '2026-03-01 00:00:00', null );
+
+		$resolved = TicketAvailability::resolve_periods( array( $first, $middle, $last ), '2026-01-10 00:00:00', '2026-04-01 00:00:00' );
+
+		$this->assertSame( '2026-01-10 00:00:00', $resolved[0]->sale_start );
+		$this->assertSame( '2026-02-01 00:00:00', $resolved[1]->sale_start );
+		$this->assertSame( '2026-03-01 00:00:00', $resolved[1]->sale_end );
+		$this->assertSame( '2026-04-01 00:00:00', $resolved[2]->sale_end );
 	}
 
 	/**
@@ -253,17 +313,49 @@ class TicketAvailabilityTest extends TestCase {
 	}
 
 	/**
-	 * End-to-end: an unset window resolves through pick_active_period() as
-	 * purchasable up through the day after the last occurrence — never
-	 * "closed" just because nothing was ever stored.
+	 * End-to-end: a single period with an unset window resolves through
+	 * pick_active_period() as purchasable from today up through the day
+	 * after the last occurrence — never "closed" just because nothing was
+	 * ever stored.
 	 */
 	public function test_unset_window_resolves_purchasable_through_default_end() {
 		$period      = $this->period( null, null );
 		$default_end = TicketAvailability::compute_default_sale_end( '2026-06-15 18:30:00' );
-		$resolved    = TicketAvailability::apply_default_window( array( $period ), $default_end );
+		$resolved    = TicketAvailability::resolve_periods( array( $period ), '2026-06-15 12:00:00', $default_end );
 		$this->assertSame( $resolved[0], TicketAvailability::pick_active_period( $resolved, '2026-06-15 12:00:00', true ) );
 		// The final day (day after the occurrence) is no longer on sale — half-open range.
-		$this->assertNull( TicketAvailability::pick_active_period( $resolved, '2026-06-16 00:00:00', false ) );
+		$resolved_next_day = TicketAvailability::resolve_periods( array( $period ), '2026-06-16 00:00:00', $default_end );
+		$this->assertNull( TicketAvailability::pick_active_period( $resolved_next_day, '2026-06-16 00:00:00', false ) );
+	}
+
+	/**
+	 * pick_active_period() never selects a period with an unresolved
+	 * boundary — the sentinel-free unresolved state must stay inert even if
+	 * a caller forgets to filter it out first.
+	 */
+	public function test_pick_active_period_skips_unresolved_boundaries() {
+		$unresolved_start = $this->period( null, '2026-06-01 00:00:00' );
+		$unresolved_end   = $this->period( '2026-01-01 00:00:00', null );
+		$this->assertNull( TicketAvailability::pick_active_period( array( $unresolved_start ), '2026-03-01 00:00:00', false ) );
+		$this->assertNull( TicketAvailability::pick_active_period( array( $unresolved_end ), '2026-03-01 00:00:00', false ) );
+	}
+
+	/**
+	 * The continues fallback never selects the last period when its own
+	 * start is unresolved — no historical sentinel means it can't compare
+	 * as "already started".
+	 */
+	public function test_continues_fallback_skips_unresolved_last_start() {
+		$period = $this->period( null, null );
+		$this->assertNull( TicketAvailability::pick_active_period( array( $period ), '2026-03-01 00:00:00', true ) );
+	}
+
+	/**
+	 * pick_upcoming_period() never selects a period with an unresolved start.
+	 */
+	public function test_pick_upcoming_period_skips_unresolved_start() {
+		$period = $this->period( null, '2026-06-01 00:00:00' );
+		$this->assertNull( TicketAvailability::pick_upcoming_period( array( $period ), '2026-01-01 00:00:00' ) );
 	}
 
 	/**

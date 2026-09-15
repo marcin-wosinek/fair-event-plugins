@@ -34,6 +34,10 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { moreVertical } from '@wordpress/icons';
 import apiFetch from '@wordpress/api-fetch';
 import SalePeriodsCalendar, { salePeriodColor } from './SalePeriodsCalendar.js';
+import {
+	resolveEffectiveSalePeriods,
+	hasUsableSalePeriodRange,
+} from './salePeriodBoundaries.js';
 
 const shiftCalendarDate = ( dateStr, days ) => {
 	if ( ! dateStr ) return '';
@@ -972,6 +976,30 @@ export default function EventTickets( {
 	// both.
 	const controlledMode = !! onDataRef;
 
+	// Display-only effective boundaries: an unset first start resolves to
+	// site-local today (while still before its end) and an unset last end
+	// resolves to the day after the event/series' final active occurrence —
+	// mirroring TicketAvailability::resolve_periods() on the backend so the
+	// editor never shows a different "automatic" window than what's actually
+	// on sale. Recomputed on every render rather than memoized — the period
+	// list is small and several of its own inputs (siteToday, the resolved
+	// default end) already change on most renders anyway.
+	const resolvedSalePeriods = resolveEffectiveSalePeriods(
+		salePeriods,
+		getSiteToday(),
+		defaultSaleEnd() || null
+	);
+	const firstResolvedPeriod = resolvedSalePeriods[ 0 ];
+	const lastResolvedPeriod =
+		resolvedSalePeriods[ resolvedSalePeriods.length - 1 ];
+	// The last period's end can only stay unresolved when the event/series
+	// itself has no usable schedule to anchor a default — surface that as an
+	// actionable warning rather than a silent "—".
+	const missingScheduleWarning =
+		!! lastResolvedPeriod &&
+		! lastResolvedPeriod.sale_end &&
+		! lastResolvedPeriod.effectiveEnd;
+
 	if ( loading ) {
 		return (
 			<Card style={ { marginTop: '16px' } }>
@@ -1066,18 +1094,23 @@ export default function EventTickets( {
 										</strong>{ ' ' }
 										{ ( () => {
 											const start =
-												salePeriods[ 0 ].sale_start;
+												firstResolvedPeriod.effectiveStart;
+											if ( ! start ) {
+												return __( '—', 'fair-events' );
+											}
 											const days =
 												daysBeforeEvent( start );
 											const label =
 												formatSaleDateLabel( start );
-											return start
-												? days !== null
+											if (
+												firstResolvedPeriod.isAutomaticStart
+											) {
+												return days !== null
 													? sprintf(
 															/* translators: 1: formatted date, 2: number of days */
 															_n(
-																'From %1$s (%2$d day before event)',
-																'From %1$s (%2$d days before event)',
+																'From %1$s (%2$d day before event, default)',
+																'From %1$s (%2$d days before event, default)',
 																days,
 																'fair-events'
 															),
@@ -1087,12 +1120,32 @@ export default function EventTickets( {
 													: sprintf(
 															/* translators: %s: formatted date */
 															__(
-																'From %s',
+																'From %s (default)',
 																'fair-events'
 															),
 															label
-													  )
-												: __( '—', 'fair-events' );
+													  );
+											}
+											return days !== null
+												? sprintf(
+														/* translators: 1: formatted date, 2: number of days */
+														_n(
+															'From %1$s (%2$d day before event)',
+															'From %1$s (%2$d days before event)',
+															days,
+															'fair-events'
+														),
+														label,
+														days
+												  )
+												: sprintf(
+														/* translators: %s: formatted date */
+														__(
+															'From %s',
+															'fair-events'
+														),
+														label
+												  );
 										} )() }
 									</div>
 									<div>
@@ -1103,51 +1156,64 @@ export default function EventTickets( {
 											) }
 										</strong>{ ' ' }
 										{ ( () => {
-											const last =
-												salePeriods[
-													salePeriods.length - 1
-												];
 											const end =
-												last.sale_end ||
-												defaultSaleEnd();
+												lastResolvedPeriod.effectiveEnd;
 											if ( ! end )
 												return __( '—', 'fair-events' );
-											return last.sale_end
+											const label = formatSaleDateLabel(
+												exclusiveEndToInclusiveDate(
+													end
+												)
+											);
+											return lastResolvedPeriod.isAutomaticEnd
 												? sprintf(
-														/* translators: %s: formatted date */
-														__(
-															'until %s',
-															'fair-events'
-														),
-														formatSaleDateLabel(
-															exclusiveEndToInclusiveDate(
-																end
-															)
-														)
-												  )
-												: sprintf(
 														/* translators: %s: formatted date */
 														__(
 															'until %s (default)',
 															'fair-events'
 														),
-														formatSaleDateLabel(
-															exclusiveEndToInclusiveDate(
-																end
-															)
-														)
+														label
+												  )
+												: sprintf(
+														/* translators: %s: formatted date */
+														__(
+															'until %s',
+															'fair-events'
+														),
+														label
 												  );
 										} )() }
 									</div>
 								</HStack>
 							) }
-							{ effectiveMultiple && salePeriods.length > 0 && (
-								<SalePeriodsCalendar
-									salePeriods={ salePeriods }
-									eventDay={ eventDay }
-									embedded
-								/>
+							{ missingScheduleWarning && (
+								<Notice
+									status="warning"
+									isDismissible={ false }
+								>
+									{ __(
+										'This event has no usable schedule to automatically end ticket sales — set an explicit sale end date.',
+										'fair-events'
+									) }
+								</Notice>
 							) }
+							{ effectiveMultiple &&
+								hasUsableSalePeriodRange(
+									resolvedSalePeriods
+								) && (
+									<SalePeriodsCalendar
+										salePeriods={ resolvedSalePeriods.map(
+											( period ) => ( {
+												...period,
+												sale_start:
+													period.effectiveStart,
+												sale_end: period.effectiveEnd,
+											} )
+										) }
+										eventDay={ eventDay }
+										embedded
+									/>
+								) }
 							{ effectiveMultiple ? (
 								<VStack spacing={ 3 }>
 									<div style={ { overflowX: 'auto' } }>
@@ -1205,6 +1271,13 @@ export default function EventTickets( {
 																		defaultSaleEnd()
 																  )
 																: undefined;
+														const fromPlaceholder =
+															isFirst &&
+															! period.sale_start
+																? resolvedSalePeriods[ 0 ]
+																		.effectiveStart ||
+																  undefined
+																: undefined;
 
 														return (
 															<tr
@@ -1257,6 +1330,9 @@ export default function EventTickets( {
 																		value={
 																			fromValue ||
 																			''
+																		}
+																		placeholder={
+																			fromPlaceholder
 																		}
 																		onChange={ (
 																			v
@@ -1365,6 +1441,21 @@ export default function EventTickets( {
 											value={
 												salePeriods[ 0 ].sale_start ||
 												''
+											}
+											placeholder={
+												salePeriods[ 0 ].sale_start
+													? undefined
+													: firstResolvedPeriod.effectiveStart ||
+													  undefined
+											}
+											help={
+												! salePeriods[ 0 ].sale_start &&
+												firstResolvedPeriod.effectiveStart
+													? __(
+															'Automatically starts today while still before the sale end.',
+															'fair-events'
+													  )
+													: undefined
 											}
 											onChange={ ( v ) =>
 												updateSalePeriod(
@@ -1549,12 +1640,15 @@ export default function EventTickets( {
 														? salePeriods[
 																pIndex - 1
 														  ]?.sale_end || ''
-														: period.sale_start ||
+														: resolvedSalePeriods[
+																pIndex
+														  ].effectiveStart ||
 														  '';
 													const untilValue = isLast
 														? exclusiveEndToInclusiveDate(
-																period.sale_end ||
-																	defaultSaleEnd()
+																resolvedSalePeriods[
+																	pIndex
+																].effectiveEnd
 														  )
 														: exclusiveEndToInclusiveDate(
 																period.sale_end

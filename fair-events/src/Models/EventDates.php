@@ -1506,30 +1506,42 @@ class EventDates {
 	}
 
 	/**
-	 * Get the latest end_datetime across an event date row and its active
-	 * generated occurrences.
+	 * Resolve the boundary that anchors the lazy default ticket sale-period
+	 * end: the final active occurrence's own end_datetime, or — when that
+	 * occurrence has no end set — its start_datetime instead, so an event
+	 * with a start but no end still gets a usable default rather than none
+	 * at all (issue #1582).
 	 *
-	 * Used to resolve the lazy default ticket sale-period end (day after the
-	 * last occurrence) for a single event as well as recurring series: a
-	 * single/master row with no generated children just returns its own end.
+	 * The "final active occurrence" is the row with the latest
+	 * start_datetime among the event date's own row and its active
+	 * ('active' status) generated children — a single/master row with no
+	 * generated children just resolves from itself.
 	 *
 	 * @param int $event_date_id Event date ID (master or single row).
-	 * @return string|null Latest end_datetime ('Y-m-d H:i:s'), or null if the row doesn't exist.
+	 * @return string|null End or start boundary ('Y-m-d H:i:s'), or null when the row doesn't exist or has no usable date.
 	 */
-	public static function get_last_occurrence_end( $event_date_id ) {
+	public static function get_last_occurrence_boundary( $event_date_id ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
-		return $wpdb->get_var(
+		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT MAX(end_datetime) FROM %i
+				"SELECT start_datetime, end_datetime FROM %i
 				WHERE id = %d
-				OR ( master_id = %d AND status = 'active' )",
+				OR ( master_id = %d AND status = 'active' )
+				ORDER BY start_datetime DESC
+				LIMIT 1",
 				$table_name,
 				$event_date_id,
 				$event_date_id
 			)
 		);
+
+		if ( ! $row ) {
+			return null;
+		}
+
+		return ! empty( $row->end_datetime ) ? $row->end_datetime : $row->start_datetime;
 	}
 }

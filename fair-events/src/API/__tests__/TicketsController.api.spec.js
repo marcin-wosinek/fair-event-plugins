@@ -127,6 +127,263 @@ test.describe( 'TicketsController — extension rule validation (#1521)', () => 
 	} );
 } );
 
+test.describe( 'TicketsController — sale period boundary validation (#1582)', () => {
+	let api;
+	let eventDateId;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const eventRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Sale period validation ${ Date.now() }`,
+					start_datetime: '2039-01-01 10:00:00',
+					end_datetime: '2039-01-01 12:00:00',
+				},
+			}
+		);
+		expect( eventRes.ok() ).toBeTruthy();
+		eventDateId = ( await eventRes.json() ).id;
+	} );
+
+	test.afterAll( async () => {
+		if ( eventDateId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		await api.dispose();
+	} );
+
+	const basePayload = ( sale_periods ) => ( {
+		ticket_types: [
+			{ name: 'General', recurrence_scope: 'single_instance' },
+		],
+		sale_periods,
+		prices: [],
+		options: [],
+		settings: {},
+	} );
+
+	test( 'accepts an open start on the first period and an open end on the last', async () => {
+		const response = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: basePayload( [
+					{
+						name: 'Open',
+						sale_start: null,
+						sale_end: '2039-01-01 00:00:00',
+					},
+					{
+						name: 'Regular',
+						sale_start: '2039-01-01 00:00:00',
+						sale_end: null,
+					},
+				] ),
+			}
+		);
+		const body = await response.json();
+		expect( response.ok(), JSON.stringify( body ) ).toBeTruthy();
+		expect( body.sale_periods[ 0 ].sale_start ).toBeNull();
+		expect( body.sale_periods[ 1 ].sale_end ).toBeNull();
+	} );
+
+	test( 'rejects a missing start on an interior/last period on update', async () => {
+		const response = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: basePayload( [
+					{
+						name: 'First',
+						sale_start: '2039-01-01 00:00:00',
+						sale_end: '2039-02-01 00:00:00',
+					},
+					{
+						name: 'Last',
+						sale_start: null,
+						sale_end: null,
+					},
+				] ),
+			}
+		);
+		expect( response.status() ).toBe( 400 );
+		expect( ( await response.json() ).code ).toBe(
+			'rest_invalid_sale_period'
+		);
+	} );
+
+	test( 'rejects a missing end on a non-last period on update', async () => {
+		const response = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: basePayload( [
+					{
+						name: 'First',
+						sale_start: null,
+						sale_end: null,
+					},
+					{
+						name: 'Last',
+						sale_start: '2039-02-01 00:00:00',
+						sale_end: null,
+					},
+				] ),
+			}
+		);
+		expect( response.status() ).toBe( 400 );
+		expect( ( await response.json() ).code ).toBe(
+			'rest_invalid_sale_period'
+		);
+	} );
+
+	test( 'rejects adjacent periods that do not share the same boundary', async () => {
+		const response = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: basePayload( [
+					{
+						name: 'First',
+						sale_start: '2039-01-01 00:00:00',
+						sale_end: '2039-02-01 00:00:00',
+					},
+					{
+						name: 'Last',
+						sale_start: '2039-03-01 00:00:00',
+						sale_end: null,
+					},
+				] ),
+			}
+		);
+		expect( response.status() ).toBe( 400 );
+		expect( ( await response.json() ).code ).toBe(
+			'rest_invalid_sale_period'
+		);
+	} );
+
+	test( 'rejects a period that ends before it starts', async () => {
+		const response = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: basePayload( [
+					{
+						name: 'Backwards',
+						sale_start: '2039-02-01 00:00:00',
+						sale_end: '2039-01-01 00:00:00',
+					},
+				] ),
+			}
+		);
+		expect( response.status() ).toBe( 400 );
+		expect( ( await response.json() ).code ).toBe(
+			'rest_invalid_sale_period'
+		);
+	} );
+
+	test( 'a rejected update leaves the previously-stored periods untouched', async () => {
+		const seedRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: basePayload( [
+					{
+						name: 'Kept',
+						sale_start: '2039-01-01 00:00:00',
+						sale_end: null,
+					},
+				] ),
+			}
+		);
+		expect( seedRes.ok() ).toBeTruthy();
+
+		const invalidRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: basePayload( [
+					{
+						name: 'First',
+						sale_start: null,
+						sale_end: null,
+					},
+					{
+						name: 'Last',
+						sale_start: '2039-05-01 00:00:00',
+						sale_end: null,
+					},
+				] ),
+			}
+		);
+		expect( invalidRes.status() ).toBe( 400 );
+
+		const getRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{ headers: adminHeaders }
+		);
+		const body = await getRes.json();
+		expect( body.sale_periods ).toHaveLength( 1 );
+		expect( body.sale_periods[ 0 ].name ).toBe( 'Kept' );
+	} );
+
+	test( 'rejects the same malformed sequence on import before existing data is replaced', async () => {
+		const seedRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets/import`,
+			{
+				headers: adminHeaders,
+				data: {
+					...basePayload( [
+						{
+							name: 'Kept via import',
+							sale_start: '2039-01-01 00:00:00',
+							sale_end: null,
+						},
+					] ),
+				},
+			}
+		);
+		expect( seedRes.ok() ).toBeTruthy();
+
+		const invalidRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets/import`,
+			{
+				headers: adminHeaders,
+				data: basePayload( [
+					{
+						name: 'Interior missing end',
+						sale_start: null,
+						sale_end: null,
+					},
+					{
+						name: 'Last',
+						sale_start: '2039-06-01 00:00:00',
+						sale_end: null,
+					},
+				] ),
+			}
+		);
+		expect( invalidRes.status() ).toBe( 400 );
+		expect( ( await invalidRes.json() ).code ).toBe(
+			'rest_invalid_sale_period'
+		);
+
+		const getRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{ headers: adminHeaders }
+		);
+		const body = await getRes.json();
+		expect( body.sale_periods ).toHaveLength( 1 );
+		expect( body.sale_periods[ 0 ].name ).toBe( 'Kept via import' );
+	} );
+} );
+
 test.describe( 'TicketsController — stable group restrictions', () => {
 	let api;
 	let eventDateId;

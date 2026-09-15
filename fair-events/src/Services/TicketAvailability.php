@@ -26,13 +26,6 @@ defined( 'WPINC' ) || die;
 class TicketAvailability {
 
 	/**
-	 * Sentinel used as the effective sale_start for a period whose start is
-	 * unset, so it always compares as "already started" against any real
-	 * datetime string without special-casing the comparison in pick_active_period().
-	 */
-	const OPEN_START_SENTINEL = '0000-01-01 00:00:00';
-
-	/**
 	 * Check the ticket type's manual and scheduled enabled state. The single
 	 * decision every consumer (signup display, purchase validation, event
 	 * metadata) must reuse instead of comparing `disabled`/`disable_at`
@@ -71,31 +64,43 @@ class TicketAvailability {
 	}
 
 	/**
-	 * Substitute the lazy default for any period with an unset sale_start
-	 * and/or sale_end, without mutating the originals. Pure → unit-testable
-	 * without a database.
+	 * Resolve each period's effective sale_start/sale_end according to its
+	 * position in the sequence, without mutating the originals. Pure →
+	 * unit-testable without a database.
 	 *
-	 * An unset sale_start becomes open (always already started). An unset
-	 * sale_end becomes $default_end when one is available; otherwise it's
-	 * left unset (pick_active_period() then never matches it as current, but
-	 * the continues-fallback can still select it, same as any closed period).
+	 * Only the first period may infer a missing start: it becomes the
+	 * current site-local calendar day at midnight, and only while that day
+	 * precedes the period's effective end — an already-elapsed period never
+	 * reactivates. Only the last period may infer a missing end: it becomes
+	 * $default_end when one is available. A missing boundary anywhere else
+	 * (an interior period, or a first/last period with nothing to infer
+	 * from) is left null so pick_active_period()/pick_upcoming_period()
+	 * never select it — no historical sentinel is used, so an expired or
+	 * misconfigured period can never look active.
 	 *
 	 * @param object[]    $periods     Sale periods with sale_start/sale_end strings, in sort order.
-	 * @param string|null $default_end Lazy default sale_end ('Y-m-d H:i:s'), or null.
-	 * @return object[] Periods with unset windows resolved; explicit values untouched.
+	 * @param string      $now         Current site datetime ('Y-m-d H:i:s'), comparable lexically.
+	 * @param string|null $default_end Lazy default sale_end for the last period ('Y-m-d H:i:s'), or null.
+	 * @return object[] Periods with resolvable boundaries filled in; explicit values untouched, unresolved ones null.
 	 */
-	public static function apply_default_window( $periods, $default_end ) {
-		$resolved = array();
+	public static function resolve_periods( $periods, $now, $default_end ) {
+		$resolved   = array();
+		$last_index = count( $periods ) - 1;
+		$today      = substr( $now, 0, 10 ) . ' 00:00:00';
 
-		foreach ( $periods as $period ) {
+		foreach ( $periods as $index => $period ) {
 			$resolved_period = clone $period;
 
-			if ( empty( $resolved_period->sale_start ) ) {
-				$resolved_period->sale_start = self::OPEN_START_SENTINEL;
+			if ( empty( $resolved_period->sale_end ) ) {
+				$resolved_period->sale_end = ( $index === $last_index ) ? $default_end : null;
 			}
 
-			if ( empty( $resolved_period->sale_end ) && $default_end ) {
-				$resolved_period->sale_end = $default_end;
+			if ( empty( $resolved_period->sale_start ) ) {
+				$can_infer_start = 0 === $index
+					&& ! empty( $resolved_period->sale_end )
+					&& $today < $resolved_period->sale_end;
+
+				$resolved_period->sale_start = $can_infer_start ? $today : null;
 			}
 
 			$resolved[] = $resolved_period;
@@ -108,26 +113,32 @@ class TicketAvailability {
 	 * Pure period-selection math, split out from resolve_active_sale_period()
 	 * for unit testing without a database.
 	 *
-	 * @param object[] $periods   Sale periods with sale_start/sale_end strings, in sort order.
+	 * @param object[] $periods   Sale periods with sale_start/sale_end strings, post resolve_periods().
 	 * @param string   $now       Current datetime string ('Y-m-d H:i:s'), comparable lexically.
 	 * @param bool     $continues Whether the continues_pricing_period fallback is enabled.
 	 * @return object|null Active period, the fallback period, or null.
 	 */
 	public static function pick_active_period( $periods, $now, $continues ) {
-		$active_period = null;
-		$last_index    = count( $periods ) - 1;
+		$last_index = count( $periods ) - 1;
 
-		foreach ( $periods as $index => $period ) {
+		foreach ( $periods as $period ) {
+			if ( empty( $period->sale_start ) || empty( $period->sale_end ) ) {
+				continue;
+			}
 			// Half-open interval: sale_start <= now < sale_end.
 			if ( $period->sale_start <= $now && $period->sale_end > $now ) {
 				return $period;
 			}
-			if ( $continues && $index === $last_index && $period->sale_start <= $now ) {
-				$active_period = $period;
+		}
+
+		if ( $continues && $last_index >= 0 ) {
+			$last_period = $periods[ $last_index ];
+			if ( ! empty( $last_period->sale_start ) && $last_period->sale_start <= $now ) {
+				return $last_period;
 			}
 		}
 
-		return $active_period;
+		return null;
 	}
 
 	/**
@@ -137,7 +148,7 @@ class TicketAvailability {
 	 * DB-free — split out for unit testing without a database, mirroring
 	 * pick_active_period().
 	 *
-	 * @param object[] $periods Sale periods with sale_start strings, post apply_default_window().
+	 * @param object[] $periods Sale periods with sale_start strings, post resolve_periods().
 	 * @param string   $now     Current datetime string ('Y-m-d H:i:s'), comparable lexically.
 	 * @return object|null Earliest not-yet-started period, or null when every period has already started.
 	 */
@@ -145,6 +156,9 @@ class TicketAvailability {
 		$upcoming = null;
 
 		foreach ( $periods as $period ) {
+			if ( empty( $period->sale_start ) ) {
+				continue;
+			}
 			if ( $period->sale_start > $now && ( ! $upcoming || $period->sale_start < $upcoming->sale_start ) ) {
 				$upcoming = $period;
 			}
@@ -166,7 +180,7 @@ class TicketAvailability {
 	 */
 	public static function resolve_period_context_from_periods( array $periods, $now, $default_end, $continues = false ) {
 		$period_count     = count( $periods );
-		$resolved_periods = self::apply_default_window( $periods, $default_end );
+		$resolved_periods = self::resolve_periods( $periods, $now, $default_end );
 
 		return array(
 			'active_period'     => self::pick_active_period( $resolved_periods, $now, $continues ),
@@ -183,10 +197,12 @@ class TicketAvailability {
 	 * timezone: sale_start is the first day on sale (00:00:00 site time) and
 	 * sale_end is the first day no longer on sale (00:00:00 site time).
 	 *
-	 * A period with an unset sale_start/sale_end is not "closed" — it
-	 * resolves lazily: an open start (always on sale) and/or an end of the
-	 * day after the event/series' last occurrence, computed fresh on every
-	 * call so it automatically tracks series changes.
+	 * A period with an unset sale_start/sale_end is not necessarily "closed"
+	 * — the first period's start and the last period's end resolve lazily
+	 * (today's site-local date, and the day after the event/series' final
+	 * active occurrence, respectively), computed fresh on every call so they
+	 * automatically track series changes. An unset boundary anywhere else
+	 * stays unresolved and is never selected as active.
 	 *
 	 * @param int  $event_date_id Event date ID.
 	 * @param bool $continues     Whether the continues_pricing_period fallback is enabled.
@@ -195,7 +211,7 @@ class TicketAvailability {
 	public static function resolve_sale_period_context( $event_date_id, $continues = false ) {
 		$now          = current_time( 'mysql' );
 		$sale_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
-		$default_end  = self::compute_default_sale_end( EventDates::get_last_occurrence_end( $event_date_id ) );
+		$default_end  = self::compute_default_sale_end( EventDates::get_last_occurrence_boundary( $event_date_id ) );
 
 		return self::resolve_period_context_from_periods( $sale_periods, $now, $default_end, $continues );
 	}

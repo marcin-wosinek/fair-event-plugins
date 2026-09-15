@@ -147,6 +147,10 @@ class TicketsController extends WP_REST_Controller {
 		if ( is_wp_error( $rules_error ) ) {
 			return $rules_error;
 		}
+		$periods_error = $this->validate_sale_periods( $body['sale_periods'] ?? array() );
+		if ( is_wp_error( $periods_error ) ) {
+			return $periods_error;
+		}
 
 		// 1. Update capacity on event_dates row.
 		$event_date_updates = array();
@@ -307,6 +311,10 @@ class TicketsController extends WP_REST_Controller {
 		$rules_error = $this->validate_activity_rules( $body['ticket_types'] ?? array(), $body['options'] ?? array() );
 		if ( is_wp_error( $rules_error ) ) {
 			return $rules_error;
+		}
+		$periods_error = $this->validate_sale_periods( $body['sale_periods'] ?? array() );
+		if ( is_wp_error( $periods_error ) ) {
+			return $periods_error;
 		}
 
 		// 1. Update capacity on event_dates row.
@@ -609,6 +617,73 @@ class TicketsController extends WP_REST_Controller {
 	 */
 	private function parse_non_negative_integer( $value ) {
 		return is_numeric( $value ) && (float) (int) $value === (float) $value && 0 <= (int) $value ? (int) $value : null;
+	}
+
+	/**
+	 * Validate an incoming sale-period sequence before either the normal
+	 * update or import workflow mutates any storage (issue #1582).
+	 *
+	 * The admin editor always chains a period's start to the previous
+	 * period's end, so a well-formed sequence never triggers these checks —
+	 * they exist to reject a malformed import or a direct REST client
+	 * payload the editor itself would never produce:
+	 *
+	 * - Only the first period may leave its start unset.
+	 * - Only the last period may leave its end unset.
+	 * - Adjacent periods must share the same explicit boundary (no gap or
+	 *   overlap).
+	 * - Every period with both boundaries set must end after it starts.
+	 *
+	 * @param array $incoming_periods Incoming sale periods from the request, in order.
+	 * @return true|WP_Error True when valid, otherwise a 400 REST error.
+	 */
+	private function validate_sale_periods( $incoming_periods ) {
+		$incoming_periods = is_array( $incoming_periods ) ? array_values( $incoming_periods ) : array();
+		$count            = count( $incoming_periods );
+		$previous_end     = null;
+
+		foreach ( $incoming_periods as $index => $item ) {
+			$is_first   = 0 === $index;
+			$is_last    = $index === $count - 1;
+			$sale_start = ! empty( $item['sale_start'] ) ? $item['sale_start'] : null;
+			$sale_end   = ! empty( $item['sale_end'] ) ? $item['sale_end'] : null;
+
+			if ( ! $is_first && null === $sale_start ) {
+				return new WP_Error(
+					'rest_invalid_sale_period',
+					__( 'Only the first sale period may leave its start date open.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			if ( ! $is_last && null === $sale_end ) {
+				return new WP_Error(
+					'rest_invalid_sale_period',
+					__( 'Only the last sale period may leave its end date open.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			if ( null !== $previous_end && null !== $sale_start && $previous_end !== $sale_start ) {
+				return new WP_Error(
+					'rest_invalid_sale_period',
+					__( 'Sale periods must connect without a gap or overlap.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			if ( null !== $sale_start && null !== $sale_end && $sale_start >= $sale_end ) {
+				return new WP_Error(
+					'rest_invalid_sale_period',
+					__( 'Each sale period must end after it starts.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$previous_end = $sale_end;
+		}
+
+		return true;
 	}
 
 	/**
