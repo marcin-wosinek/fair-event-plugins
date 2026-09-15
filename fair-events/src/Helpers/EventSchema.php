@@ -13,7 +13,7 @@
 namespace FairEvents\Helpers;
 
 use FairEvents\Models\EventDates;
-use FairEvents\Services\TicketPricing;
+use FairEvents\Services\TicketAvailability;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -322,8 +322,8 @@ class EventSchema {
 	 * marked `isAccessibleForFree`. A paid type whose sale window has closed
 	 * yields nothing and is never advertised as free.
 	 *
-	 * Sale-period resolution reuses TicketPricing's pure primitives — the
-	 * same "lazy" null-window resolution the purchase form
+	 * Sale-period resolution reuses TicketAvailability's pure primitives —
+	 * the same "lazy" null-window resolution the purchase form
 	 * (event-signup/render.php, get-tickets) relies on — so a period left
 	 * open-ended isn't mistaken for closed just because it has no explicit
 	 * sale_end. Unlike the purchase form, the active-period lookup here does
@@ -362,8 +362,8 @@ class EventSchema {
 		$sale_periods = \FairEvents\Models\TicketSalePeriod::get_all_by_event_date_id( $pricing_event_date_id );
 
 		$now         = current_time( 'mysql' );
-		$default_end = TicketPricing::compute_default_sale_end( EventDates::get_last_occurrence_end( $pricing_event_date_id ) );
-		$periods     = TicketPricing::apply_default_window( $sale_periods, $default_end );
+		$default_end = TicketAvailability::compute_default_sale_end( EventDates::get_last_occurrence_end( $pricing_event_date_id ) );
+		$periods     = TicketAvailability::apply_default_window( $sale_periods, $default_end );
 
 		// A sale_end that's still unresolved after apply_default_window() (no
 		// default was available — e.g. the event/series itself has no
@@ -380,8 +380,8 @@ class EventSchema {
 
 		// continues = false: a genuinely closed sale (no lazy fallback) must
 		// show no offer in structured data, unlike the purchase form.
-		$active_period   = TicketPricing::pick_active_period( $periods, $now, false );
-		$upcoming_period = TicketPricing::pick_upcoming_period( $periods, $now );
+		$active_period   = TicketAvailability::pick_active_period( $periods, $now, false );
+		$upcoming_period = TicketAvailability::pick_upcoming_period( $periods, $now );
 
 		// Search crawls happen outside the sale window: fall back to the
 		// nearest upcoming period's price so `offers` isn't empty just
@@ -418,28 +418,33 @@ class EventSchema {
 			$paid_type_ids,
 			$valid_from,
 			Money::site_currency(),
-			get_permalink( $post_id )
+			get_permalink( $post_id ),
+			$now
 		);
 	}
 
 	/**
 	 * Pure, DB-free per-type Offer builder, split out from get_jsonld_offers()
-	 * for unit testing without a database — mirrors how TicketPricing itself
-	 * splits DB fetching from pure, unit-tested math.
+	 * for unit testing without a database — mirrors how TicketAvailability
+	 * itself splits DB fetching from pure, unit-tested math.
 	 *
-	 * @param object[]    $ticket_types     TicketType objects (id, name, disabled).
+	 * @param object[]    $ticket_types     TicketType objects (id, name, disabled, disable_at).
 	 * @param float[]     $price_by_type_id Ticket-type ID => price for the selected window.
 	 * @param bool[]      $paid_type_ids    Ticket-type ID => true for types with a positive price in *any* period.
 	 * @param string|null $valid_from    ISO 8601 `validFrom` for an upcoming (not yet active) window, or null.
 	 * @param string      $currency         Site currency code.
 	 * @param string      $permalink        Event permalink, used as the offer URL.
+	 * @param string|null $now              Current site datetime for scheduled disabling; defaults to current_time( 'mysql' ).
 	 * @return array Offer objects, one per purchasable type; disabled or closed-sale types are omitted.
 	 */
-	public static function build_offers_for_types( array $ticket_types, array $price_by_type_id, array $paid_type_ids, $valid_from, $currency, $permalink ) {
+	public static function build_offers_for_types( array $ticket_types, array $price_by_type_id, array $paid_type_ids, $valid_from, $currency, $permalink, $now = null ) {
 		$offers = array();
 
 		foreach ( $ticket_types as $ticket_type ) {
-			if ( $ticket_type->disabled ) {
+			// Scheduled disabling must keep an expired ticket type out of
+			// structured data just like manual disabling — a search engine
+			// must never be told a lapsed offer is still in stock.
+			if ( ! TicketAvailability::is_ticket_type_enabled( $ticket_type, $now ) ) {
 				continue;
 			}
 

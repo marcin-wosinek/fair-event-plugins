@@ -361,16 +361,18 @@ class EventSchemaTest extends TestCase {
 	/**
 	 * Build a minimal ticket type stub.
 	 *
-	 * @param int    $id       Ticket type ID.
-	 * @param string $name     Ticket type name.
-	 * @param bool   $disabled Whether the type is manually disabled.
-	 * @return object Anonymous ticket type object exposing id/name/disabled.
+	 * @param int         $id         Ticket type ID.
+	 * @param string      $name       Ticket type name.
+	 * @param bool        $disabled   Whether the type is manually disabled.
+	 * @param string|null $disable_at Scheduled disable datetime, or null.
+	 * @return object Anonymous ticket type object exposing id/name/disabled/disable_at.
 	 */
-	private function ticket_type( $id, $name, $disabled = false ) {
+	private function ticket_type( $id, $name, $disabled = false, $disable_at = null ) {
 		return (object) array(
-			'id'       => $id,
-			'name'     => $name,
-			'disabled' => $disabled,
+			'id'         => $id,
+			'name'       => $name,
+			'disabled'   => $disabled,
+			'disable_at' => $disable_at,
 		);
 	}
 
@@ -493,6 +495,48 @@ class EventSchemaTest extends TestCase {
 		);
 
 		$this->assertSame( '2026-09-01T00:00:00+00:00', $offers[0]['validFrom'] );
+	}
+
+	/**
+	 * A scheduled disable boundary already reached keeps a paid type out of
+	 * structured data, just like manual disabling — the existing
+	 * inconsistency issue #1581 fixes: build_offers_for_types() previously
+	 * checked only `disabled`, never `disable_at`.
+	 *
+	 * @return void
+	 */
+	public function test_build_offers_for_types_skips_type_past_disable_at() {
+		$offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, 'Single class', false, '2026-01-01 12:00:00' ) ),
+			array( 1 => 15.0 ),
+			array( 1 => true ),
+			null,
+			'EUR',
+			'https://example.com/event',
+			'2026-01-01 12:00:00'
+		);
+
+		$this->assertSame( array(), $offers );
+	}
+
+	/**
+	 * A scheduled disable boundary still in the future keeps the type in
+	 * structured data.
+	 *
+	 * @return void
+	 */
+	public function test_build_offers_for_types_keeps_type_before_disable_at() {
+		$offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, 'Single class', false, '2026-01-01 12:00:01' ) ),
+			array( 1 => 15.0 ),
+			array( 1 => true ),
+			null,
+			'EUR',
+			'https://example.com/event',
+			'2026-01-01 12:00:00'
+		);
+
+		$this->assertCount( 1, $offers );
 	}
 
 	/**
