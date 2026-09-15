@@ -1,0 +1,19 @@
+/**
+ * All Events admin page styles.
+ *
+ * DataViews renders its filter summary popover (Location, Link Type, Type)
+ * through a document-level portal, outside this page's React root. The page
+ * loads `wp-components` but not the bundled `@wordpress/dataviews`
+ * stylesheet, so the popover collapses to its shortest content width instead
+ * of the package's own 230–250px. Restore just that sizing rule, scoped to
+ * this admin screen's body class rather than importing the full DataViews
+ * stylesheet (which would pull in unrelated toolbar/table/pagination rules).
+ */
+
+.fair-events_page_fair-events-all-events
+	.dataviews-filters__summary-popover
+	.components-popover__content {
+	width: 100%;
+	min-width: 230px;
+	max-width: min(250px, calc(100vw - 32px));
+}

@@ -345,6 +345,19 @@ class AdminPages {
 			);
 
 			wp_enqueue_style( 'wp-components' );
+
+			// Enqueue the page's stylesheet when one was emitted by the build.
+			$style_file_path = FAIR_EVENTS_PLUGIN_DIR . 'build/admin/all-events/style-index.css';
+
+			if ( file_exists( $style_file_path ) ) {
+				wp_enqueue_style(
+					'fair-events-all-events',
+					FAIR_EVENTS_PLUGIN_URL . 'build/admin/all-events/style-index.css',
+					array( 'wp-components' ),
+					$asset_file['version']
+				);
+			}
+
 			return;
 		}
 
