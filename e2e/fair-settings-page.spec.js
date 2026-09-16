@@ -19,10 +19,29 @@
  * Run: `npm run test:e2e -- fair-settings-page`.
  */
 
-import { test, expect } from '@playwright/test';
-import { wpCli, loginAsAdmin } from './support/wp-cli.js';
+import { test, expect, request } from '@playwright/test';
+import {
+	wpCli,
+	loginAsAdmin,
+	ADMIN_USER,
+	ADMIN_PASSWORD,
+} from './support/wp-cli.js';
 
 const PAGE_URL = '/wp-admin/options-general.php?page=fair-event-plugins';
+
+/**
+ * Basic-auth headers for the REST API. Used with a fresh, cookie-less
+ * request context — WordPress's cookie-auth path takes over and demands an
+ * X-WP-Nonce whenever the browser's own login cookies are present (as they
+ * are on `page.request` after loginAsAdmin), so this can't reuse `page`.
+ */
+function adminAuth() {
+	return {
+		Authorization:
+			'Basic ' +
+			Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString('base64'),
+	};
+}
 
 /** Plugin label → its option name, for every plugin mounted in wp-env. */
 const ROWS = {
@@ -171,6 +190,106 @@ test.describe('Fair Event Plugins — central settings screen', () => {
 		} finally {
 			wpCli('plugin activate fair-form');
 		}
+	});
+
+	test('toggling the Fair Payments Connector row without a reason is rejected', async ({
+		page,
+	}) => {
+		wpCli('option delete fair_payment_features', { allowFailure: true });
+
+		await loginAsAdmin(page);
+		await page.goto(PAGE_URL);
+
+		const row = page
+			.locator('tr')
+			.filter({ hasText: 'Fair Payments Connector' });
+		await expect(
+			row.getByText('Changing this requires a reason below.')
+		).toBeVisible();
+		await row.locator('input[type="checkbox"]').check();
+
+		await page
+			.locator('form')
+			.getByRole('button', { name: 'Save Changes' })
+			.click();
+
+		await expect(
+			page.getByText(
+				'A reason is required to change a setting marked "reason required"',
+				{ exact: false }
+			)
+		).toBeVisible();
+
+		// Nothing was saved — not even the untouched checkbox state.
+		const stored = getOptionJson('fair_payment_features');
+		expect(stored?.['bundled-translations']).not.toBe(true);
+
+		wpCli('option delete fair_payment_features', { allowFailure: true });
+	});
+
+	test('toggling the Fair Payments Connector row with a reason saves and is recorded in the audit log', async ({
+		page,
+	}) => {
+		test.slow();
+
+		wpCli('option delete fair_payment_features', { allowFailure: true });
+
+		await loginAsAdmin(page);
+		await page.goto(PAGE_URL);
+
+		const row = page
+			.locator('tr')
+			.filter({ hasText: 'Fair Payments Connector' });
+		await row.locator('input[type="checkbox"]').check();
+		await page
+			.getByLabel('Reason for this change')
+			.fill('Trying the bundled translations for a launch.');
+
+		const [redirectedResponse] = await Promise.all([
+			page.waitForResponse(
+				(response) =>
+					response.request().method() === 'GET' &&
+					/[?&]settings-updated=true\b/.test(response.url())
+			),
+			page
+				.locator('form')
+				.getByRole('button', { name: 'Save Changes' })
+				.click(),
+		]);
+		expect(redirectedResponse.ok()).toBeTruthy();
+		await expect(page.getByText('Settings saved.')).toBeVisible();
+
+		const stored = getOptionJson('fair_payment_features');
+		expect(stored?.['bundled-translations']).toBe(true);
+
+		// The shared save path fires fair_event_plugins_setting_changed,
+		// which fair-payments-connector's Plugin.php turns into an audit
+		// entry — confirm it landed via its own REST endpoint. A fresh,
+		// cookie-less context is required: with the page's own login
+		// cookies present, WordPress's cookie-auth path demands an
+		// X-WP-Nonce and rejects the request before Basic Auth is checked.
+		const api = await request.newContext({
+			baseURL: new URL(page.url()).origin,
+		});
+		try {
+			const auditRes = await api.get(
+				'/wp-json/fair-payments-connector/v1/audit-log?per_page=5',
+				{ headers: adminAuth() }
+			);
+			expect(auditRes.ok()).toBeTruthy();
+			const audit = await auditRes.json();
+			const entry = audit.items.find(
+				(item) => 'bundled-translations' === item.setting_key
+			);
+			expect(entry).toBeTruthy();
+			expect(entry.reason).toBe(
+				'Trying the bundled translations for a launch.'
+			);
+		} finally {
+			await api.dispose();
+		}
+
+		wpCli('option delete fair_payment_features', { allowFailure: true });
 	});
 
 	test('a value forced by a wp-config constant renders locked and survives a forged POST', async ({

@@ -13,6 +13,21 @@ defined( 'WPINC' ) || die;
  * Settings class for registering plugin settings
  */
 class Settings {
+
+	/**
+	 * Connector settings that must only be changed through
+	 * SettingsWriteController, so every manual change carries a mandatory
+	 * audit reason. Writes to these keys via the generic /wp/v2/settings
+	 * endpoint are silently pinned back to their current value — see
+	 * lock_manual_settings_from_generic_rest_write().
+	 */
+	const MANUALLY_WRITTEN_SETTINGS = array(
+		'fair_payment_mode',
+		'fair_payment_currency',
+		'fair_payment_disable_banktransfer_near_date',
+		'fair_payment_banktransfer_threshold_days',
+	);
+
 	/**
 	 * Initialize settings
 	 *
@@ -28,6 +43,35 @@ class Settings {
 		// write path has no sanitization at all.
 		add_action( 'rest_api_init', array( $this, 'register_feature_settings' ) );
 		add_action( 'admin_init', array( $this, 'register_feature_settings' ) );
+
+		add_action( 'rest_api_init', array( $this, 'lock_manual_settings_from_generic_rest_write' ) );
+	}
+
+	/**
+	 * Preempt WP_REST_Settings_Controller::update_item() for the
+	 * manually-written connector settings, so that route can't be used to
+	 * bypass SettingsWriteController's mandatory audit reason.
+	 *
+	 * WP_REST_Settings_Controller writes via a direct update_option() call —
+	 * it never runs a setting's register_setting() sanitize_callback through
+	 * sanitize_option(), so that hook can't intercept the write. Returning
+	 * true from `rest_pre_update_setting` is core's own extension point for
+	 * exactly this: "handled, skip the default update_option() call". GET is
+	 * unaffected, and plain update_option() calls (used by
+	 * SettingsWriteController and OAuthCallbackController) never go through
+	 * this filter either.
+	 *
+	 * @return void
+	 */
+	public function lock_manual_settings_from_generic_rest_write() {
+		add_filter(
+			'rest_pre_update_setting',
+			function ( $updated, $name ) {
+				return in_array( $name, self::MANUALLY_WRITTEN_SETTINGS, true ) ? true : $updated;
+			},
+			10,
+			2
+		);
 	}
 
 	/**

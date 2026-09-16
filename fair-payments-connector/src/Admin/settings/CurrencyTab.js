@@ -15,7 +15,8 @@ import apiFetch from '@wordpress/api-fetch';
 /**
  * Internal dependencies
  */
-import { saveSettings } from './settings-api.js';
+import { saveConnectorSettings } from './settings-api.js';
+import ReasonField from './ReasonField.js';
 
 const SUPPORTED_CURRENCIES = [
 	{ label: 'EUR — Euro', value: 'EUR' },
@@ -43,6 +44,7 @@ export default function CurrencyTab( { onNotice } ) {
 	const [ currency, setCurrency ] = useState( 'EUR' );
 	const [ loading, setLoading ] = useState( true );
 	const [ isSaving, setIsSaving ] = useState( false );
+	const [ reason, setReason ] = useState( '' );
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/settings' } )
@@ -67,7 +69,11 @@ export default function CurrencyTab( { onNotice } ) {
 	const handleSave = async () => {
 		setIsSaving( true );
 		try {
-			await saveSettings( { fair_payment_currency: currency } );
+			await saveConnectorSettings(
+				{ fair_payment_currency: currency },
+				reason
+			);
+			setReason( '' );
 			onNotice( {
 				status: 'success',
 				message: __(
@@ -117,12 +123,14 @@ export default function CurrencyTab( { onNotice } ) {
 					/>
 				</div>
 
+				<ReasonField value={ reason } onChange={ setReason } />
+
 				<div style={ { marginTop: '16px' } }>
 					<Button
 						variant="primary"
 						onClick={ handleSave }
 						isBusy={ isSaving }
-						disabled={ isSaving }
+						disabled={ isSaving || ! reason.trim() }
 					>
 						{ __( 'Save', 'fair-payments-connector' ) }
 					</Button>

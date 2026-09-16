@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Payment;
 
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Exceptions\ApiException;
+use FairPaymentsConnector\AuditLog\AuditLogger;
 use FairPaymentsConnector\Database\PaymentLogRepository;
 use FairEventsShared\Money;
 
@@ -97,7 +98,7 @@ class MolliePaymentHandler {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[Fair Payments Connector] Token refresh failed: No refresh token found in database' );
 			}
-			update_option( 'fair_payment_mollie_connected', false );
+			$this->mark_connection_lost( __( 'Mollie connection lost: no refresh token was stored.', 'fair-payments-connector' ) );
 			return false;
 		}
 
@@ -129,22 +130,22 @@ class MolliePaymentHandler {
 		}
 
 		if ( empty( $body['success'] ) ) {
-			update_option( 'fair_payment_mollie_connected', false );
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				$error_message = isset( $body['message'] ) ? $body['message'] : 'Unknown error';
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[Fair Payments Connector] Token refresh failed: Server returned success=false - ' . $error_message );
 			}
+			$this->mark_connection_lost( __( 'Mollie connection lost: the token refresh request was rejected.', 'fair-payments-connector' ) );
 			return false;
 		}
 
 		// Verify required keys exist in response (nested under data.data).
 		if ( ! isset( $body['data']['data']['access_token'] ) || ! isset( $body['data']['data']['expires_in'] ) ) {
-			update_option( 'fair_payment_mollie_connected', false );
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[Fair Payments Connector] Token refresh failed: Missing required fields in response' );
 			}
+			$this->mark_connection_lost( __( 'Mollie connection lost: the token refresh response was malformed.', 'fair-payments-connector' ) );
 			return false;
 		}
 
@@ -153,7 +154,30 @@ class MolliePaymentHandler {
 		update_option( 'fair_payment_mollie_access_token', $new_token );
 		update_option( 'fair_payment_mollie_token_expires', time() + $expires_in );
 
+		AuditLogger::record_system_action(
+			'mollie_token_refreshed',
+			__( 'Mollie access token refreshed automatically before expiry.', 'fair-payments-connector' )
+		);
+
 		return $new_token;
+	}
+
+	/**
+	 * Mark the site as disconnected and, if it was actually connected a
+	 * moment ago, record the loss to the audit log. Guarding on the prior
+	 * state keeps this from writing a fresh entry on every failed API call
+	 * while the site is already known to be disconnected.
+	 *
+	 * @param string $reason Generated reason describing why the connection was lost.
+	 * @return void
+	 */
+	private function mark_connection_lost( $reason ) {
+		$was_connected = (bool) get_option( 'fair_payment_mollie_connected', false );
+		update_option( 'fair_payment_mollie_connected', false );
+
+		if ( $was_connected ) {
+			AuditLogger::record_system_action( 'mollie_connection_lost', $reason );
+		}
 	}
 
 	/**

@@ -6,6 +6,7 @@ const CALLBACK_ENDPOINT = '/wp-json/fair-payments-connector/v1/oauth/callback';
 const DISCONNECT_ENDPOINT =
 	'/wp-json/fair-payments-connector/v1/oauth/disconnect';
 const SETTINGS_ENDPOINT = '/wp-json/wp/v2/settings';
+const AUDIT_LOG_ENDPOINT = '/wp-json/fair-payments-connector/v1/audit-log';
 
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -45,13 +46,31 @@ test.describe( 'OAuthCallbackController', () => {
 
 	test.describe( 'POST /oauth/state', () => {
 		test( 'returns 401 for unauthenticated requests', async () => {
-			const res = await api.post( STATE_ENDPOINT );
+			const res = await api.post( STATE_ENDPOINT, {
+				data: { reason: 'Connecting Mollie.' },
+			} );
 			expect( res.status() ).toBe( 401 );
+		} );
+
+		test( 'returns 400 when the reason is missing', async () => {
+			const res = await api.post( STATE_ENDPOINT, {
+				headers: adminAuth(),
+			} );
+			expect( res.status() ).toBe( 400 );
+		} );
+
+		test( 'returns 400 when the reason is blank', async () => {
+			const res = await api.post( STATE_ENDPOINT, {
+				headers: adminAuth(),
+				data: { reason: '   ' },
+			} );
+			expect( res.status() ).toBe( 400 );
 		} );
 
 		test( 'returns a state string for an authenticated admin', async () => {
 			const res = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
+				data: { reason: 'Connecting Mollie.' },
 			} );
 			expect( res.status() ).toBe( 200 );
 			const body = await res.json();
@@ -86,10 +105,11 @@ test.describe( 'OAuthCallbackController', () => {
 			expect( body.code ).toBe( 'invalid_oauth_state' );
 		} );
 
-		test( 'saves credentials and returns success when state is valid', async () => {
-			// Step 1: get a real state token
+		test( 'saves credentials, records an audit entry, and returns success when state is valid', async () => {
+			// Step 1: get a real state token, bound to this reason.
 			const stateRes = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
+				data: { reason: 'Connecting Mollie for the first time.' },
 			} );
 			expect( stateRes.status() ).toBe( 200 );
 			const { state } = await stateRes.json();
@@ -102,12 +122,30 @@ test.describe( 'OAuthCallbackController', () => {
 			expect( callbackRes.status() ).toBe( 200 );
 			const body = await callbackRes.json();
 			expect( body.success ).toBe( true );
+
+			// Step 3: the connection action is in the audit log with the
+			// reason bound at step 1 — not one the client could resupply.
+			const auditRes = await api.get( AUDIT_LOG_ENDPOINT, {
+				headers: adminAuth(),
+			} );
+			expect( auditRes.status() ).toBe( 200 );
+			const audit = await auditRes.json();
+			const entry = audit.items.find(
+				( item ) =>
+					'mollie_connected' === item.action ||
+					'mollie_reconnected' === item.action
+			);
+			expect( entry ).toBeTruthy();
+			expect( entry.reason ).toBe(
+				'Connecting Mollie for the first time.'
+			);
 		} );
 
 		test( 'rejects a replayed state (single-use)', async () => {
 			// Step 1: generate state
 			const stateRes = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
+				data: { reason: 'Connecting Mollie.' },
 			} );
 			const { state } = await stateRes.json();
 
@@ -134,6 +172,7 @@ test.describe( 'OAuthCallbackController', () => {
 			// Ensure tokens are populated first, via a normal callback.
 			const stateRes = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
+				data: { reason: 'Connecting Mollie.' },
 			} );
 			const { state } = await stateRes.json();
 			const callbackRes = await api.post( CALLBACK_ENDPOINT, {
@@ -202,11 +241,20 @@ test.describe( 'OAuthCallbackController', () => {
 
 	test.describe( 'POST /oauth/disconnect', () => {
 		test( 'returns 401 for unauthenticated requests', async () => {
-			const res = await api.post( DISCONNECT_ENDPOINT );
+			const res = await api.post( DISCONNECT_ENDPOINT, {
+				data: { reason: 'Disconnecting.' },
+			} );
 			expect( res.status() ).toBe( 401 );
 		} );
 
-		test( 'clears the connection and returns 200 for an admin', async () => {
+		test( 'returns 400 when the reason is missing', async () => {
+			const res = await api.post( DISCONNECT_ENDPOINT, {
+				headers: adminAuth(),
+			} );
+			expect( res.status() ).toBe( 400 );
+		} );
+
+		test( 'clears the connection, records an audit entry, and returns 200 for an admin', async () => {
 			test.skip(
 				true,
 				'Skipped pending #1405 — the shared e2e test env forces a connected Mollie state'
@@ -214,6 +262,7 @@ test.describe( 'OAuthCallbackController', () => {
 			// Connect first so there is something to disconnect.
 			const stateRes = await api.post( STATE_ENDPOINT, {
 				headers: adminAuth(),
+				data: { reason: 'Connecting Mollie.' },
 			} );
 			const { state } = await stateRes.json();
 			await api.post( CALLBACK_ENDPOINT, {
@@ -223,6 +272,7 @@ test.describe( 'OAuthCallbackController', () => {
 
 			const res = await api.post( DISCONNECT_ENDPOINT, {
 				headers: adminAuth(),
+				data: { reason: 'Retiring this Mollie account.' },
 			} );
 			expect( res.status() ).toBe( 200 );
 			const body = await res.json();

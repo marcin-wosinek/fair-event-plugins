@@ -161,6 +161,20 @@ if ( ! function_exists( 'get_current_user_id' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_userdata' ) ) {
+	/**
+	 * Stub of WordPress get_userdata() backed by $GLOBALS['_fair_test_users'],
+	 * a map of user ID => object with display_name/user_login.
+	 *
+	 * @param int $user_id User ID.
+	 * @return object|false
+	 */
+	function get_userdata( $user_id ) {
+		$users = isset( $GLOBALS['_fair_test_users'] ) ? $GLOBALS['_fair_test_users'] : array();
+		return isset( $users[ $user_id ] ) ? $users[ $user_id ] : false;
+	}
+}
+
 if ( ! function_exists( 'wp_generate_uuid4' ) ) {
 	/**
 	 * Stub of WordPress wp_generate_uuid4().
