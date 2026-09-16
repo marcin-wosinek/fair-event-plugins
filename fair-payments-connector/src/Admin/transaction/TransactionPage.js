@@ -16,7 +16,15 @@ import {
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
+import { formatSiteLocalDatetime } from 'fair-events-shared';
 import TransactionLog from './TransactionLog.js';
+
+// A recurring master never appears as a selectable result on its own — only
+// its individually generated occurrences (children) are valid links.
+const flattenOccurrences = ( items ) =>
+	items.flatMap( ( item ) =>
+		'master' === item.occurrence_type ? item.children || [] : [ item ]
+	);
 
 const organizationId = window.fairPaymentTransactions?.organizationId || '';
 
@@ -373,6 +381,260 @@ const ParticipantField = ( { participant, participantId, onSave } ) => {
 	);
 };
 
+const EventField = ( { event, eventDateId, onSave } ) => {
+	const [ editing, setEditing ] = useState( false );
+	const [ search, setSearch ] = useState( '' );
+	const [ results, setResults ] = useState( [] );
+	const [ searching, setSearching ] = useState( false );
+	const [ searchError, setSearchError ] = useState( null );
+	const [ saving, setSaving ] = useState( false );
+	const debounceRef = useRef( null );
+
+	useEffect( () => {
+		if ( ! editing || search.length < 2 ) {
+			setResults( [] );
+			setSearchError( null );
+			return;
+		}
+
+		clearTimeout( debounceRef.current );
+		debounceRef.current = setTimeout( () => {
+			setSearching( true );
+			setSearchError( null );
+			apiFetch( {
+				path: `/fair-events/v1/event-dates/all?search=${ encodeURIComponent(
+					search
+				) }&per_page=10`,
+			} )
+				.then( ( response ) => {
+					setResults(
+						flattenOccurrences(
+							Array.isArray( response ) ? response : []
+						)
+					);
+				} )
+				.catch( () => {
+					setResults( [] );
+					setSearchError(
+						__(
+							'Search failed. Please try again.',
+							'fair-payments-connector'
+						)
+					);
+				} )
+				.finally( () => {
+					setSearching( false );
+				} );
+		}, 300 );
+
+		return () => clearTimeout( debounceRef.current );
+	}, [ search, editing ] );
+
+	const handleSelect = ( selected ) => {
+		setSaving( true );
+		onSave( 'event_date_id', selected.id )
+			.then( () => {
+				setEditing( false );
+				setSearch( '' );
+				setResults( [] );
+			} )
+			.catch( () => {
+				// Failure is already surfaced by onSave's own error Notice.
+			} )
+			.finally( () => {
+				setSaving( false );
+			} );
+	};
+
+	const handleClear = () => {
+		setSaving( true );
+		onSave( 'event_date_id', 0 )
+			.then( () => {
+				setEditing( false );
+				setSearch( '' );
+				setResults( [] );
+			} )
+			.catch( () => {
+				// Failure is already surfaced by onSave's own error Notice.
+			} )
+			.finally( () => {
+				setSaving( false );
+			} );
+	};
+
+	const handleCancel = () => {
+		setEditing( false );
+		setSearch( '' );
+		setResults( [] );
+		setSearchError( null );
+	};
+
+	if ( editing ) {
+		return (
+			<DetailRow label={ __( 'Event', 'fair-payments-connector' ) }>
+				<div style={ { position: 'relative' } }>
+					<HStack spacing={ 2 } alignment="center" wrap>
+						<TextControl
+							value={ search }
+							onChange={ setSearch }
+							placeholder={ __(
+								'Search by event title…',
+								'fair-payments-connector'
+							) }
+							style={ { width: '250px', margin: 0 } }
+							__nextHasNoMarginBottom
+						/>
+						{ eventDateId > 0 && (
+							<Button
+								variant="tertiary"
+								size="small"
+								isDestructive
+								onClick={ handleClear }
+								disabled={ saving }
+							>
+								{ __( 'Remove', 'fair-payments-connector' ) }
+							</Button>
+						) }
+						<Button
+							variant="tertiary"
+							size="small"
+							onClick={ handleCancel }
+							disabled={ saving }
+						>
+							{ __( 'Cancel', 'fair-payments-connector' ) }
+						</Button>
+					</HStack>
+					{ searchError && (
+						<Notice
+							status="error"
+							isDismissible={ false }
+							style={ { marginTop: '8px' } }
+						>
+							{ searchError }
+						</Notice>
+					) }
+					{ ( results.length > 0 || searching ) && (
+						<div
+							style={ {
+								position: 'absolute',
+								top: '100%',
+								left: 0,
+								zIndex: 100,
+								background: '#fff',
+								border: '1px solid #ccc',
+								borderRadius: '4px',
+								boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+								width: '350px',
+								maxHeight: '250px',
+								overflowY: 'auto',
+							} }
+						>
+							{ searching && (
+								<div style={ { padding: '8px 12px' } }>
+									<Spinner />
+								</div>
+							) }
+							{ ! searching && 0 === results.length && (
+								<div
+									style={ {
+										padding: '8px 12px',
+										color: '#646970',
+									} }
+								>
+									{ __(
+										'No matching events.',
+										'fair-payments-connector'
+									) }
+								</div>
+							) }
+							{ results.map( ( occurrence ) => (
+								<button
+									key={ occurrence.id }
+									type="button"
+									onClick={ () => handleSelect( occurrence ) }
+									disabled={ saving }
+									style={ {
+										display: 'block',
+										width: '100%',
+										textAlign: 'left',
+										padding: '8px 12px',
+										border: 'none',
+										background: saving
+											? '#f0f0f0'
+											: 'transparent',
+										cursor: saving ? 'default' : 'pointer',
+										borderBottom: '1px solid #f0f0f0',
+									} }
+									onMouseEnter={ ( e ) => {
+										if ( ! saving )
+											e.currentTarget.style.background =
+												'#f0f6fc';
+									} }
+									onMouseLeave={ ( e ) => {
+										if ( ! saving )
+											e.currentTarget.style.background =
+												'transparent';
+									} }
+								>
+									<strong>{ occurrence.title }</strong>
+									{ occurrence.start_datetime && (
+										<span
+											style={ {
+												color: '#646970',
+												marginLeft: '8px',
+											} }
+										>
+											{ formatSiteLocalDatetime(
+												occurrence.start_datetime
+											) }
+										</span>
+									) }
+								</button>
+							) ) }
+						</div>
+					) }
+				</div>
+			</DetailRow>
+		);
+	}
+
+	return (
+		<DetailRow label={ __( 'Event', 'fair-payments-connector' ) }>
+			<HStack spacing={ 2 } alignment="center">
+				<span>
+					{ event ? (
+						<a href={ event.manage_url }>
+							{ event.title }
+							{ event.start_datetime && (
+								<>
+									{ ' — ' }
+									{ formatSiteLocalDatetime(
+										event.start_datetime
+									) }
+								</>
+							) }
+						</a>
+					) : eventDateId ? (
+						`#${ eventDateId }`
+					) : (
+						'-'
+					) }
+				</span>
+				<Button
+					variant="tertiary"
+					size="small"
+					onClick={ () => setEditing( true ) }
+					style={ { minWidth: 'auto' } }
+				>
+					{ eventDateId
+						? __( 'Edit', 'fair-payments-connector' )
+						: __( 'Add', 'fair-payments-connector' ) }
+				</Button>
+			</HStack>
+		</DetailRow>
+	);
+};
+
 const PersonPostCard = ( { transaction: t, onUpdate, transactionId } ) => {
 	const [ error, setError ] = useState( null );
 
@@ -399,7 +661,7 @@ const PersonPostCard = ( { transaction: t, onUpdate, transactionId } ) => {
 		<Card>
 			<CardHeader>
 				<Heading level={ 4 }>
-					{ __( 'Person & Post', 'fair-payments-connector' ) }
+					{ __( 'Person, Post & Event', 'fair-payments-connector' ) }
 				</Heading>
 			</CardHeader>
 			{ error && (
@@ -453,6 +715,11 @@ const PersonPostCard = ( { transaction: t, onUpdate, transactionId } ) => {
 								)
 							}
 							fieldName="post_id"
+							onSave={ handleSave }
+						/>
+						<EventField
+							event={ t.event }
+							eventDateId={ t.event_date_id }
 							onSave={ handleSave }
 						/>
 					</tbody>
