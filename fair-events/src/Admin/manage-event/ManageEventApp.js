@@ -153,16 +153,41 @@ export default function ManageEventApp() {
 		}
 	};
 
+	// Request every configured Polylang language (as the calendar category
+	// picker does, see CategorySelector.js) so an organizer can select
+	// same-named categories from different languages, and merge by ID rather
+	// than replace so a category the event already carries never disappears
+	// from the option list just because a later fetch omitted it.
+	const mergeCategories = ( incoming ) =>
+		setAvailableCategories( ( prev ) => {
+			const byId = new Map( prev.map( ( c ) => [ c.id, c ] ) );
+			incoming.forEach( ( c ) => byId.set( c.id, c ) );
+			return Array.from( byId.values() );
+		} );
+
 	const loadCategories = async () => {
 		try {
 			const data = await apiFetch( {
-				path: '/fair-events/v1/sources/categories',
+				path: '/fair-events/v1/sources/categories?all_languages=true',
 			} );
-			setAvailableCategories( data );
+			mergeCategories( data );
 		} catch {
 			// Categories are optional, ignore errors.
 		}
 	};
+
+	// Distinguishes same-named categories from different languages (#1636).
+	// Categories without language metadata (non-Polylang sites, or a term
+	// Polylang has no language for) fall back to the plain name.
+	const getCategoryLabel = ( category ) =>
+		category.language
+			? sprintf(
+					/* translators: 1: category name, 2: language name */
+					__( '%1$s — %2$s', 'fair-events' ),
+					category.name,
+					category.language
+			  )
+			: category.name;
 
 	const createCategory = async ( name ) => {
 		try {
@@ -171,7 +196,7 @@ export default function ManageEventApp() {
 				method: 'POST',
 				data: { name },
 			} );
-			setAvailableCategories( ( prev ) => [ ...prev, newCategory ] );
+			mergeCategories( [ newCategory ] );
 			setCategories( ( prev ) => [ ...prev, newCategory.id ] );
 		} catch ( err ) {
 			setError(
@@ -195,6 +220,7 @@ export default function ManageEventApp() {
 		setAttendanceMode( data.attendance_mode || 'in_person' );
 		setJoiningLink( data.joining_link || '' );
 		setCategories( data.categories?.map( ( c ) => c.id ) || [] );
+		mergeCategories( data.categories || [] );
 
 		if ( data.start_datetime ) {
 			const [ sDate, sTime ] = data.start_datetime.split( ' ' );
@@ -940,13 +966,15 @@ export default function ManageEventApp() {
 													availableCategories.find(
 														( c ) => c.id === id
 													);
-												return cat ? cat.name : '';
+												return cat
+													? getCategoryLabel( cat )
+													: '';
 											} )
 											.filter( Boolean ),
 										...creatingCategories,
 									] }
 									suggestions={ availableCategories.map(
-										( c ) => c.name
+										getCategoryLabel
 									) }
 									onChange={ ( tokens ) => {
 										const ids = [];
@@ -955,7 +983,10 @@ export default function ManageEventApp() {
 										tokens.forEach( ( token ) => {
 											const cat =
 												availableCategories.find(
-													( c ) => c.name === token
+													( c ) =>
+														getCategoryLabel(
+															c
+														) === token
 												);
 											if ( cat ) {
 												ids.push( cat.id );

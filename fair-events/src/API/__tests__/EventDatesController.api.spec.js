@@ -319,6 +319,125 @@ test.describe( 'EventDatesController — standalone category copy on first link'
 	} );
 } );
 
+test.describe( 'EventDatesController — categories from multiple languages (#1636)', () => {
+	let api;
+	let postId;
+	let eventDateId;
+	const categoryIds = [];
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+
+		// Two same-named categories, mirroring same-topic terms Polylang
+		// would keep as separate terms per language.
+		for ( let i = 0; i < 2; i++ ) {
+			const catRes = await api.post( '/wp-json/wp/v2/categories', {
+				headers: adminHeaders,
+				data: { name: `Bart ${ Date.now() }-${ i }` },
+			} );
+			expect( catRes.ok() ).toBeTruthy();
+			categoryIds.push( ( await catRes.json() ).id );
+		}
+
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Multilingual categories ${ Date.now() }`,
+				status: 'publish',
+			},
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		postId = ( await postRes.json() ).id;
+
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Multilingual event ${ Date.now() }`,
+				start_datetime: '2031-01-01 10:00:00',
+				end_datetime: '2031-01-01 12:00:00',
+				event_id: postId,
+				categories: categoryIds,
+			},
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		eventDateId = ( await edRes.json() ).id;
+	} );
+
+	test.afterAll( async () => {
+		if ( eventDateId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		if ( postId ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{
+					headers: adminHeaders,
+				}
+			);
+		}
+		for ( const categoryId of categoryIds ) {
+			await api.delete(
+				`/wp-json/wp/v2/categories/${ categoryId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+	} );
+
+	test( 'saving retains every selected category and reopening shows the same set', async () => {
+		const res = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{ headers: adminHeaders }
+		);
+		expect( res.ok() ).toBeTruthy();
+		const body = await res.json();
+		expect( body.categories.map( ( c ) => c.id ).sort() ).toEqual(
+			[ ...categoryIds ].sort()
+		);
+	} );
+
+	test( 'saving an unrelated field preserves categories from every selected id', async () => {
+		const res = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{
+				headers: adminHeaders,
+				data: { title: `Renamed ${ Date.now() }` },
+			}
+		);
+		expect( res.ok() ).toBeTruthy();
+		const body = await res.json();
+		expect( body.categories.map( ( c ) => c.id ).sort() ).toEqual(
+			[ ...categoryIds ].sort()
+		);
+	} );
+
+	test( 'explicitly removing one category persists the removal without affecting the other', async () => {
+		const res = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{
+				headers: adminHeaders,
+				data: { categories: [ categoryIds[ 0 ] ] },
+			}
+		);
+		expect( res.ok() ).toBeTruthy();
+		const body = await res.json();
+		expect( body.categories.map( ( c ) => c.id ) ).toEqual( [
+			categoryIds[ 0 ],
+		] );
+
+		const reload = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{ headers: adminHeaders }
+		);
+		const reloadBody = await reload.json();
+		expect( reloadBody.categories.map( ( c ) => c.id ) ).toEqual( [
+			categoryIds[ 0 ],
+		] );
+	} );
+} );
+
 test.describe( 'EventDatesController — Polylang link synchronization', () => {
 	let api;
 	let eventDateId;
