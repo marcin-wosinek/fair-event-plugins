@@ -387,6 +387,21 @@ export default function ManageEventApp() {
 				},
 			} );
 			setEventDate( updated );
+			const savedIds = new Set(
+				( updated.categories || [] ).map( ( category ) => category.id )
+			);
+			if (
+				categories.length !== savedIds.size ||
+				categories.some( ( id ) => ! savedIds.has( id ) )
+			) {
+				setError(
+					__(
+						'Some selected categories were not saved. Please try again.',
+						'fair-events'
+					)
+				);
+				return;
+			}
 			setRecurrenceImpact(
 				updated.recurrence_impact
 					? { impact: updated.recurrence_impact, blocked: false }

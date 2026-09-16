@@ -65,9 +65,47 @@ function pll_get_term_language( $term_id, $field = 'slug' ) {
 	return $languages[ $term_id ][ $field ];
 }
 
+// Reproduce Polylang's set_object_terms cleanup for a configured post.
+add_action(
+	'set_object_terms',
+	static function ( $post_id, $terms, $tt_ids, $taxonomy ) {
+		$fixture = get_option( 'fair_e2e_category_assignment', array() );
+		if ( 'category' !== $taxonomy || (int) ( $fixture['post_id'] ?? 0 ) !== (int) $post_id ) {
+			return;
+		}
+		$allowed = array_map( 'intval', $fixture['allowed_ids'] ?? array() );
+		$remove  = array_diff( array_map( 'intval', (array) $terms ), $allowed );
+		if ( $remove ) {
+			wp_remove_object_terms( $post_id, $remove, 'category' );
+		}
+	},
+	10,
+	4
+);
+
 add_action(
 	'rest_api_init',
 	static function () {
+		register_rest_route(
+			'fair-e2e/v1',
+			'/category-assignment',
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' ); },
+				'callback'            => static function ( WP_REST_Request $request ) {
+					update_option(
+						'fair_e2e_category_assignment',
+						array(
+							'post_id'     => absint( $request->get_param( 'post_id' ) ),
+							'allowed_ids' => array_map( 'absint', (array) $request->get_param( 'allowed_ids' ) ),
+						),
+						false
+					);
+					return rest_ensure_response( array( 'updated' => true ) );
+				},
+			)
+		);
 		register_rest_route(
 			'fair-e2e/v1',
 			'/polylang-groups',

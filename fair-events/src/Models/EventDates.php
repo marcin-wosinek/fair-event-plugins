@@ -31,6 +31,13 @@ class EventDates {
 	public $event_id;
 
 	/**
+	 * Whether the junction table contains the complete saved selection.
+	 *
+	 * @var bool
+	 */
+	public $category_selection_saved = false;
+
+	/**
 	 * Start datetime
 	 *
 	 * @var string
@@ -207,26 +214,27 @@ class EventDates {
 	 * @return EventDates Hydrated EventDates object.
 	 */
 	private static function hydrate( $result ) {
-		$event_dates                    = new self();
-		$event_dates->id                = (int) $result->id;
-		$event_dates->event_id          = $result->event_id ? (int) $result->event_id : null;
-		$event_dates->start_datetime    = $result->start_datetime;
-		$event_dates->end_datetime      = $result->end_datetime;
-		$event_dates->all_day           = (bool) $result->all_day;
-		$event_dates->occurrence_type   = $result->occurrence_type ?? 'single';
-		$event_dates->master_id         = $result->master_id ? (int) $result->master_id : null;
-		$event_dates->rrule             = $result->rrule ?? null;
-		$event_dates->status            = $result->status ?? 'active';
-		$event_dates->recurrence_mode   = $result->recurrence_mode ?? 'none';
-		$event_dates->venue_id          = isset( $result->venue_id ) ? (int) $result->venue_id : null;
-		$event_dates->title             = $result->title ?? null;
-		$event_dates->external_url      = $result->external_url ?? null;
-		$event_dates->link_type         = $result->link_type ?? null;
-		$event_dates->attendance_mode   = $result->attendance_mode ?? null;
-		$event_dates->joining_link      = $result->joining_link ?? null;
-		$event_dates->capacity          = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
-		$event_dates->address           = isset( $result->address ) ? $result->address : null;
-		$event_dates->recurrence_anchor = $result->recurrence_anchor ?? null;
+		$event_dates                           = new self();
+		$event_dates->id                       = (int) $result->id;
+		$event_dates->event_id                 = $result->event_id ? (int) $result->event_id : null;
+		$event_dates->category_selection_saved = ! empty( $result->category_selection_saved );
+		$event_dates->start_datetime           = $result->start_datetime;
+		$event_dates->end_datetime             = $result->end_datetime;
+		$event_dates->all_day                  = (bool) $result->all_day;
+		$event_dates->occurrence_type          = $result->occurrence_type ?? 'single';
+		$event_dates->master_id                = $result->master_id ? (int) $result->master_id : null;
+		$event_dates->rrule                    = $result->rrule ?? null;
+		$event_dates->status                   = $result->status ?? 'active';
+		$event_dates->recurrence_mode          = $result->recurrence_mode ?? 'none';
+		$event_dates->venue_id                 = isset( $result->venue_id ) ? (int) $result->venue_id : null;
+		$event_dates->title                    = $result->title ?? null;
+		$event_dates->external_url             = $result->external_url ?? null;
+		$event_dates->link_type                = $result->link_type ?? null;
+		$event_dates->attendance_mode          = $result->attendance_mode ?? null;
+		$event_dates->joining_link             = $result->joining_link ?? null;
+		$event_dates->capacity                 = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
+		$event_dates->address                  = isset( $result->address ) ? $result->address : null;
+		$event_dates->recurrence_anchor        = $result->recurrence_anchor ?? null;
 
 		self::resolve_instance( $event_dates );
 
@@ -322,7 +330,7 @@ class EventDates {
 			array( '%d', '%s' )
 		);
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -419,7 +427,7 @@ class EventDates {
 				array( '%d' )
 			);
 
-			if ( $result !== false ) {
+			if ( false !== $result ) {
 				return (int) $existing->id;
 			}
 			return false;
@@ -476,7 +484,7 @@ class EventDates {
 			$result = $wpdb->insert( $table_name, $data, $format );
 		}
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -497,7 +505,7 @@ class EventDates {
 			array( '%d' )
 		);
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 
@@ -521,7 +529,7 @@ class EventDates {
 			array( '%d' )
 		);
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -543,7 +551,7 @@ class EventDates {
 			)
 		);
 
-		return $rrule ?: null;
+		return $rrule ? $rrule : null;
 	}
 
 	/**
@@ -570,7 +578,7 @@ class EventDates {
 		);
 
 		// If no row was updated (e.g., no master/single row exists yet), we need to handle that.
-		if ( $result === 0 ) {
+		if ( 0 === $result ) {
 			// Check if any master/single row exists.
 			$existing = $wpdb->get_var(
 				$wpdb->prepare(
@@ -581,10 +589,10 @@ class EventDates {
 			);
 
 			// If a row exists but wasn't updated (value unchanged), that's OK.
-			return $existing > 0;
+			return 0 < $existing;
 		}
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -799,7 +807,7 @@ class EventDates {
 	 */
 	private static function inherited_select_sql() {
 		return 'SELECT ed.id, ed.event_id, ed.start_datetime, ed.end_datetime, ed.all_day, ed.occurrence_type,
-			ed.master_id, ed.rrule, ed.recurrence_anchor, ed.status, ed.recurrence_mode, ed.created_at, ed.updated_at,
+			ed.master_id, ed.rrule, ed.recurrence_anchor, ed.status, ed.recurrence_mode, ed.category_selection_saved, ed.created_at, ed.updated_at,
 			COALESCE( ed.title, m.title ) AS title,
 			COALESCE( ed.venue_id, m.venue_id ) AS venue_id,
 			COALESCE( ed.address, m.address ) AS address,
@@ -975,7 +983,7 @@ class EventDates {
 			do_action( 'fair_events_event_date_updated', (int) $id );
 		}
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -1028,7 +1036,7 @@ class EventDates {
 			do_action( 'fair_events_event_date_deleted', (int) $id );
 		}
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -1157,7 +1165,7 @@ class EventDates {
 			array( '%d', '%s' )
 		);
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -1207,25 +1215,49 @@ class EventDates {
 	}
 
 	/**
-	 * Get category term IDs for a standalone event date from the junction table
+	 * Get the complete category selection for an event date.
 	 *
 	 * @param int $event_date_id Event date ID.
 	 * @return int[] Array of term IDs.
 	 */
 	public static function get_category_ids( $event_date_id ) {
 		global $wpdb;
-
+		$event_date = self::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return array();
+		}
 		$table_name = $wpdb->prefix . 'fair_event_date_categories';
-
-		$term_ids = $wpdb->get_col(
+		$term_ids   = $wpdb->get_col(
 			$wpdb->prepare(
 				'SELECT term_id FROM %i WHERE event_date_id = %d',
 				$table_name,
 				$event_date_id
 			)
 		);
+		if ( $event_date->category_selection_saved || ! empty( $term_ids ) ) {
+			return array_map( 'intval', $term_ids );
+		}
+		if ( ! $event_date->category_selection_saved ) {
+			if ( $event_date->master_id ) {
+				return self::get_category_ids( $event_date->master_id );
+			}
+			if ( $event_date->event_id ) {
+				$term_ids = wp_get_post_terms(
+					$event_date->event_id,
+					'category',
+					array(
+						'fields' => 'ids',
+						'lang'   => '',
+					)
+				);
+				if ( ! is_wp_error( $term_ids ) ) {
+					self::set_category_ids( $event_date_id, $term_ids );
+					return array_map( 'intval', $term_ids );
+				}
+			}
+		}
 
-		return array_map( 'intval', $term_ids );
+		return array();
 	}
 
 	/**
@@ -1257,6 +1289,11 @@ class EventDates {
 			) ) {
 				return false;
 			}
+		}
+
+		$dates_table = $wpdb->prefix . 'fair_event_dates';
+		if ( false === $wpdb->update( $dates_table, array( 'category_selection_saved' => 1 ), array( 'id' => $event_date_id ), array( '%d' ), array( '%d' ) ) ) {
+			return false;
 		}
 
 		return true;
@@ -1306,7 +1343,7 @@ class EventDates {
 			)
 		);
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -1330,7 +1367,7 @@ class EventDates {
 			array( '%d', '%d' )
 		);
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -1352,7 +1389,7 @@ class EventDates {
 			array( '%d' )
 		);
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 
@@ -1485,6 +1522,12 @@ class EventDates {
 		return array_map( array( __CLASS__, 'hydrate' ), $results );
 	}
 
+	/**
+	 * Get an event date by ID.
+	 *
+	 * @param int $id Event date ID.
+	 * @return EventDates|null Event date or null when missing.
+	 */
 	public static function get_by_id( $id ) {
 		global $wpdb;
 

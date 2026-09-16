@@ -1136,6 +1136,9 @@ class EventDatesController extends WP_REST_Controller {
 
 		$event_id = $request->get_param( 'event_id' );
 		if ( null !== $event_id ) {
+			if ( $existing->event_id ) {
+				EventDates::get_category_ids( $id );
+			}
 			$new_event_id            = $event_id ? absint( $event_id ) : null;
 			$update_data['event_id'] = $new_event_id;
 			$newly_linked            = $new_event_id && ! $existing->event_id;
@@ -1256,30 +1259,11 @@ class EventDatesController extends WP_REST_Controller {
 				$this->propagate_event_id_to_children( $id, $update_data['event_id'] );
 			}
 
-			// When linking a standalone event to a post, copy categories to post taxonomy.
+			// Keep the complete selection in the junction table when linking.
 			if ( $newly_linked ) {
 				$standalone_cat_ids = $this->get_standalone_category_ids( $id );
 				if ( ! empty( $standalone_cat_ids ) ) {
 					wp_set_post_terms( $effective_event_id, $standalone_cat_ids, 'category' );
-					$this->set_standalone_categories( $id, array() );
-				}
-			}
-
-			// When unlinking a post-linked event, copy categories to junction table.
-			$newly_unlinked = isset( $update_data['event_id'] ) && ! $update_data['event_id'] && $existing->event_id;
-			if ( $newly_unlinked ) {
-				// Explicit empty 'lang' disables Polylang's automatic
-				// current-language filtering, matching CategoriesController's
-				// all_languages mode (#1636) — every category selected in the
-				// editor must copy over, not only the ones in the current
-				// admin language.
-				$terms   = wp_get_post_terms( $existing->event_id, 'category', array( 'lang' => '' ) );
-				$cat_ids = array();
-				if ( ! is_wp_error( $terms ) ) {
-					$cat_ids = wp_list_pluck( $terms, 'term_id' );
-				}
-				if ( ! empty( $cat_ids ) ) {
-					$this->set_standalone_categories( $id, $cat_ids );
 				}
 			}
 		}
@@ -1318,16 +1302,15 @@ class EventDatesController extends WP_REST_Controller {
 		if ( is_array( $categories ) ) {
 			// Re-fetch to get latest state after potential link changes.
 			$current = EventDates::get_by_id( $id );
+			$this->set_standalone_categories( $id, $categories );
 			if ( $current->event_id ) {
 				wp_set_post_terms( $current->event_id, $categories, 'category' );
-			} else {
-				$this->set_standalone_categories( $id, $categories );
 			}
 		}
 
 		// Propagate categories to generated occurrences for standalone master events.
 		$current_for_propagation = EventDates::get_by_id( $id );
-		if ( 'master' === $current_for_propagation->occurrence_type && ! $current_for_propagation->event_id ) {
+		if ( 'master' === $current_for_propagation->occurrence_type ) {
 			$master_cat_ids = $this->get_standalone_category_ids( $id );
 			$generated      = EventDates::get_generated_by_master_id( $id, true );
 			foreach ( $generated as $occ ) {
@@ -1433,11 +1416,10 @@ class EventDatesController extends WP_REST_Controller {
 
 		PostTranslationLinks::link_group( $event_date, $post_id );
 
-		// Copy standalone categories to the new post.
+		// Copy categories to the new post while retaining the complete selection.
 		$standalone_cat_ids = $this->get_standalone_category_ids( $id );
 		if ( ! empty( $standalone_cat_ids ) ) {
 			wp_set_post_terms( $post_id, $standalone_cat_ids, 'category' );
-			$this->set_standalone_categories( $id, array() );
 		}
 
 		$edit_url = get_edit_post_link( $post_id, 'raw' );
@@ -1480,7 +1462,11 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
+		$selected_categories = EventDates::get_category_ids( $id );
 		PostTranslationLinks::link_group( $event_date, $post_id );
+		if ( ! empty( $selected_categories ) ) {
+			wp_set_post_terms( $post_id, $selected_categories, 'category' );
+		}
 
 		$event_date = EventDates::get_by_id( $id );
 
@@ -1507,6 +1493,7 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
+		EventDates::get_category_ids( $id );
 		PostTranslationLinks::unlink_group( $event_date, $post_id );
 
 		// Return the originally requested event date (occurrence, not master).
@@ -2105,28 +2092,6 @@ class EventDatesController extends WP_REST_Controller {
 	 * @return array Array of category objects with id, name, slug.
 	 */
 	private function get_event_date_categories( $event_date ) {
-		if ( $event_date->event_id ) {
-			// Explicit empty 'lang' disables Polylang's automatic
-			// current-language filtering (#1636) — the editor needs every
-			// category the post carries, not only the current admin
-			// language's, or a save immediately after load would drop the
-			// rest.
-			$terms = wp_get_post_terms( $event_date->event_id, 'category', array( 'lang' => '' ) );
-			if ( is_wp_error( $terms ) ) {
-				return array();
-			}
-			return array_map(
-				function ( $term ) {
-					return array(
-						'id'   => $term->term_id,
-						'name' => $term->name,
-						'slug' => $term->slug,
-					);
-				},
-				$terms
-			);
-		}
-
 		return $this->get_standalone_categories( $event_date->id );
 	}
 
@@ -2163,19 +2128,7 @@ class EventDatesController extends WP_REST_Controller {
 	 * @return array Array of term IDs.
 	 */
 	private function get_standalone_category_ids( $event_date_id ) {
-		global $wpdb;
-
-		$table_name = $wpdb->prefix . 'fair_event_date_categories';
-
-		$term_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				'SELECT term_id FROM %i WHERE event_date_id = %d',
-				$table_name,
-				$event_date_id
-			)
-		);
-
-		return array_map( 'intval', $term_ids );
+		return EventDates::get_category_ids( $event_date_id );
 	}
 
 	/**
@@ -2186,28 +2139,7 @@ class EventDatesController extends WP_REST_Controller {
 	 * @return void
 	 */
 	private function set_standalone_categories( $event_date_id, $category_ids ) {
-		global $wpdb;
-
-		$table_name = $wpdb->prefix . 'fair_event_date_categories';
-
-		// Delete existing rows.
-		$wpdb->delete(
-			$table_name,
-			array( 'event_date_id' => $event_date_id ),
-			array( '%d' )
-		);
-
-		// Insert new rows.
-		foreach ( $category_ids as $term_id ) {
-			$wpdb->insert(
-				$table_name,
-				array(
-					'event_date_id' => $event_date_id,
-					'term_id'       => (int) $term_id,
-				),
-				array( '%d', '%d' )
-			);
-		}
+		EventDates::set_category_ids( $event_date_id, $category_ids );
 	}
 
 	/**
