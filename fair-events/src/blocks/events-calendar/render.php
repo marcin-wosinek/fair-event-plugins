@@ -307,6 +307,11 @@ $next_url = add_query_arg(
 	)
 ) . '#' . $scroll_anchor_id;
 
+// "Manage events" shortcut to the admin calendar, shown only to users who
+// can edit events — the same capability required by the admin page itself.
+$can_manage_events = current_user_can( 'edit_posts' );
+$manage_events_url = admin_url( 'admin.php?page=fair-events-calendar&month=' . $current_year . '-' . $current_month );
+
 // Generate localized weekday labels using WordPress date formatting
 // Start from the configured start_of_week (0 = Sunday, 1 = Monday)
 $weekdays = array();
@@ -352,18 +357,29 @@ if ( empty( $attributes['anchor'] ) ) {
 >
 	<?php if ( $show_navigation ) : ?>
 	<div class="fair-events-navigation" style="--fair-events-header-bg: <?php echo esc_attr( $header_bg_value ); ?>">
-		<div class="wp-block-button is-style-outline">
-			<a href="<?php echo esc_url( $prev_url ); ?>" class="nav-prev wp-block-button__link wp-element-button" data-wp-on--click="actions.navigatePeriod" data-wp-bind--aria-disabled="state.isLoading">
-				<?php esc_html_e( 'Previous', 'fair-events' ); ?>
-			</a>
+		<div class="fair-events-navigation-side">
+			<div class="wp-block-button is-style-outline">
+				<a href="<?php echo esc_url( $prev_url ); ?>" class="nav-prev wp-block-button__link wp-element-button" data-wp-on--click="actions.navigatePeriod" data-wp-bind--aria-disabled="state.isLoading">
+					<?php esc_html_e( 'Previous', 'fair-events' ); ?>
+				</a>
+			</div>
 		</div>
 		<h2 class="navigation-title" tabindex="-1">
 			<?php echo esc_html( date_i18n( 'F Y', $first_day_of_month_ts ) ); ?>
 		</h2>
-		<div class="wp-block-button is-style-outline">
-			<a href="<?php echo esc_url( $next_url ); ?>" class="nav-next wp-block-button__link wp-element-button" data-wp-on--click="actions.navigatePeriod" data-wp-bind--aria-disabled="state.isLoading">
-				<?php esc_html_e( 'Next', 'fair-events' ); ?>
-			</a>
+		<div class="fair-events-navigation-side">
+			<div class="wp-block-button is-style-outline">
+				<a href="<?php echo esc_url( $next_url ); ?>" class="nav-next wp-block-button__link wp-element-button" data-wp-on--click="actions.navigatePeriod" data-wp-bind--aria-disabled="state.isLoading">
+					<?php esc_html_e( 'Next', 'fair-events' ); ?>
+				</a>
+			</div>
+			<?php if ( $can_manage_events ) : ?>
+			<div class="wp-block-button is-style-outline">
+				<a href="<?php echo esc_url( $manage_events_url ); ?>" class="fair-events-manage-link wp-block-button__link wp-element-button">
+					<?php esc_html_e( 'Manage events', 'fair-events' ); ?>
+				</a>
+			</div>
+			<?php endif; ?>
 		</div>
 	</div>
 	<div class="fair-events-navigation-loading" role="status" aria-live="polite" data-wp-bind--hidden="!state.isLoading">

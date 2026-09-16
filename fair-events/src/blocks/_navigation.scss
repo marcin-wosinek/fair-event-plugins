@@ -32,10 +32,30 @@ $fair-events-today-bg-color: #e7f5ff;
 			white-space: nowrap;
 		}
 
+		// Groups controls on one side of the navigation bar (e.g. the
+		// "Manage events" shortcut next to the events-calendar Next button)
+		// without changing events-week's flat three-child layout.
+		.fair-events-navigation-side {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			flex-wrap: wrap;
+		}
+
+		.fair-events-manage-link {
+			white-space: nowrap;
+
+			&:focus-visible {
+				outline: 2px solid currentColor;
+				outline-offset: 2px;
+			}
+		}
+
 		// Tablet: tighten button padding/font-size
 		@media (max-width: 768px) {
 			.nav-prev,
-			.nav-next {
+			.nav-next,
+			.fair-events-manage-link {
 				padding: 0.375rem 0.75rem;
 				font-size: 0.875rem;
 			}
@@ -53,8 +73,18 @@ $fair-events-today-bg-color: #e7f5ff;
 			}
 
 			.nav-prev,
-			.nav-next {
+			.nav-next,
+			.fair-events-manage-link {
 				width: 100%;
+			}
+
+			.fair-events-navigation-side {
+				flex-direction: column;
+				width: 100%;
+
+				.wp-block-button {
+					width: 100%;
+				}
 			}
 		}
 	}
