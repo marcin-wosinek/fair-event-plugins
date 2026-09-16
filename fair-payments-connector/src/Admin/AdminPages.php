@@ -24,7 +24,6 @@ class AdminPages {
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
-		add_action( 'admin_notices', array( $this, 'render_test_mode_notice' ) );
 		add_filter( 'plugin_action_links_fair-payments-connector/fair-payments-connector.php', array( $this, 'add_plugin_action_links' ) );
 	}
 
@@ -144,49 +143,6 @@ class AdminPages {
 			);
 			return;
 		}
-	}
-
-	/**
-	 * Render a non-dismissible warning notice on all admin pages when in test mode.
-	 *
-	 * @return void
-	 */
-	public function render_test_mode_notice() {
-		if ( 'test' !== get_option( 'fair_payment_mode', 'test' ) ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		$settings_url = add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) );
-
-		if ( MolliePaymentHandler::is_configured() ) {
-			/* translators: %s: link to settings page */
-			$message = __( 'Fair Payment is in <strong>Test mode</strong> — no real payments are being processed. <a href="%s">Switch to Live mode</a>.', 'fair-payments-connector' );
-		} else {
-			/* translators: %s: link to settings page */
-			$message = __( 'Fair Payment is <strong>not set up</strong> — no payments can be processed yet. <a href="%s">Set up Mollie</a>.', 'fair-payments-connector' );
-		}
-		$notice_message = sprintf(
-			wp_kses(
-				$message,
-				array(
-					'strong' => array(),
-					'a'      => array( 'href' => array() ),
-				)
-			),
-			esc_url( $settings_url )
-		);
-
-		wp_admin_notice(
-			$notice_message,
-			array(
-				'type'        => 'warning',
-				'dismissible' => false,
-			)
-		);
 	}
 
 	/**

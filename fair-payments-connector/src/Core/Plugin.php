@@ -64,6 +64,7 @@ class Plugin {
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_api_key_removed_notice();
+		$this->load_payment_setup_notice();
 		$this->load_shared_settings_page();
 	}
 
@@ -202,6 +203,20 @@ class Plugin {
 	private function load_api_key_removed_notice() {
 		if ( is_admin() ) {
 			$notice = new \FairPaymentsConnector\Admin\ApiKeyRemovedNotice();
+			$notice->init();
+		}
+	}
+
+	/**
+	 * Load and initialize the payment setup notice, shown across every
+	 * active Fair Event Plugins admin page while the connector is not fully
+	 * ready to process real payments.
+	 *
+	 * @return void
+	 */
+	private function load_payment_setup_notice() {
+		if ( is_admin() ) {
+			$notice = new \FairPaymentsConnector\Admin\PaymentSetupNotice();
 			$notice->init();
 		}
 	}

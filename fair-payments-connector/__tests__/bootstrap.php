@@ -242,6 +242,90 @@ if ( ! function_exists( 'number_format_i18n' ) ) {
 	}
 }
 
+if ( ! function_exists( 'is_admin' ) ) {
+	/**
+	 * Stub of WordPress is_admin() backed by $GLOBALS['_fair_test_is_admin'].
+	 * Defaults to true since these tests exercise admin-only code.
+	 *
+	 * @return bool
+	 */
+	function is_admin() {
+		return ! isset( $GLOBALS['_fair_test_is_admin'] ) || ! empty( $GLOBALS['_fair_test_is_admin'] );
+	}
+}
+
+if ( ! function_exists( 'add_query_arg' ) ) {
+	/**
+	 * Stub of WordPress add_query_arg() for the single key/value/url form.
+	 *
+	 * @param string $key   Query arg name.
+	 * @param string $value Query arg value.
+	 * @param string $url   Base URL.
+	 * @return string
+	 */
+	function add_query_arg( $key, $value, $url ) {
+		$separator = false === strpos( $url, '?' ) ? '?' : '&';
+		return $url . $separator . rawurlencode( $key ) . '=' . rawurlencode( $value );
+	}
+}
+
+if ( ! function_exists( 'esc_url' ) ) {
+	/**
+	 * Stub of WordPress esc_url().
+	 *
+	 * @param string $url Raw URL.
+	 * @return string Escaped URL.
+	 */
+	function esc_url( $url ) {
+		return htmlspecialchars( (string) $url, ENT_QUOTES );
+	}
+}
+
+if ( ! function_exists( 'wp_kses' ) ) {
+	/**
+	 * Stub of WordPress wp_kses() — no-op, since tests only need the
+	 * translatable string with its placeholder intact, not real sanitization.
+	 *
+	 * @param string $content      Content to filter.
+	 * @param array  $allowed_html Allowed HTML elements (unused).
+	 * @return string
+	 */
+	function wp_kses( $content, $allowed_html ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		return $content;
+	}
+}
+
+if ( ! function_exists( 'wp_admin_notice' ) ) {
+	/**
+	 * Stub of WordPress wp_admin_notice() backed by
+	 * $GLOBALS['_fair_test_admin_notices'], so tests can assert on the
+	 * rendered message and args instead of parsing echoed markup.
+	 *
+	 * @param string $message Notice message (already escaped by the caller).
+	 * @param array  $args    Notice args (type, dismissible, etc.).
+	 * @return void
+	 */
+	function wp_admin_notice( $message, $args = array() ) {
+		$GLOBALS['_fair_test_admin_notices'][] = array(
+			'message' => $message,
+			'args'    => $args,
+		);
+	}
+}
+
+if ( ! function_exists( 'get_current_screen' ) ) {
+	/**
+	 * Stub of WordPress get_current_screen() backed by
+	 * $GLOBALS['_fair_test_current_screen'] (an object with a `post_type`
+	 * property, or null when no screen is set).
+	 *
+	 * @return object|null
+	 */
+	function get_current_screen() {
+		return isset( $GLOBALS['_fair_test_current_screen'] ) ? $GLOBALS['_fair_test_current_screen'] : null;
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WPDB.php';
 
 // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
