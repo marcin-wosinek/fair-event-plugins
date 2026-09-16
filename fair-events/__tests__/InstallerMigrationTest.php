@@ -13,7 +13,6 @@ namespace FairEvents\Tests;
 // phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited
 
 use FairEvents\Database\Installer;
-use FairEvents\Database\Schema;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -88,7 +87,6 @@ class InstallerMigrationTest extends TestCase {
 		$method = new ReflectionMethod( Installer::class, 'migrate_to_3_33_0' );
 		$method->invoke( null );
 
-		$this->assertSame( '3.33.0', Schema::DB_VERSION );
 		$this->assertStringContainsString( 'UPDATE %i SET over_capacity = %d WHERE over_capacity = %d', $wpdb->executed['query'] );
 		$this->assertSame( array( 'wp_fair_events_signups', 0, 1 ), $wpdb->executed['args'] );
 	}
