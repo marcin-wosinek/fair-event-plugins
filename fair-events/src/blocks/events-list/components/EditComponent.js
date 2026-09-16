@@ -2,15 +2,12 @@
  * WordPress dependencies
  */
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import {
-	PanelBody,
-	SelectControl,
-	CheckboxControl,
-} from '@wordpress/components';
+import { PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
 import { EventSourceSelector } from 'fair-events-shared';
+import CategorySelector from '../../components/CategorySelector.js';
 
 /**
  * Edit component for Events List block
@@ -24,17 +21,6 @@ export default function EditComponent( { attributes, setAttributes } ) {
 	const { timeFilter, categories, displayPattern, eventSources } = attributes;
 
 	const blockProps = useBlockProps();
-
-	const allCategories = useSelect( ( select ) => {
-		const cats = select( 'core' ).getEntityRecords(
-			'taxonomy',
-			'category',
-			{
-				per_page: -1,
-			}
-		);
-		return cats || [];
-	}, [] );
 
 	const fairEventsPatterns = useSelect( ( select ) => {
 		const patterns = select( 'core' ).getBlockPatterns?.() || [];
@@ -68,18 +54,6 @@ export default function EditComponent( { attributes, setAttributes } ) {
 			value: 'wp_block:' + pattern.id,
 		} ) ),
 	];
-
-	const meaningfulCategories = allCategories.filter(
-		( cat ) => cat.slug !== 'uncategorized'
-	);
-	const hasCategories = meaningfulCategories.length > 0;
-
-	const handleCategoryToggle = ( categoryId, checked ) => {
-		const newCategories = checked
-			? [ ...categories, categoryId ]
-			: categories.filter( ( id ) => id !== categoryId );
-		setAttributes( { categories: newCategories } );
-	};
 
 	return (
 		<>
@@ -128,40 +102,12 @@ export default function EditComponent( { attributes, setAttributes } ) {
 							'fair-events'
 						) }
 					/>
-					<div style={ { marginTop: '16px' } }>
-						<strong>{ __( 'Categories', 'fair-events' ) }</strong>
-						{ ! hasCategories ? (
-							<p
-								style={ {
-									fontStyle: 'italic',
-									color: '#757575',
-								} }
-							>
-								{ __(
-									'Define more categories if you want to use category filtering',
-									'fair-events'
-								) }
-							</p>
-						) : (
-							<>
-								{ allCategories.map( ( cat ) => (
-									<CheckboxControl
-										key={ cat.id }
-										label={ cat.name }
-										checked={ categories.includes(
-											cat.id
-										) }
-										onChange={ ( checked ) =>
-											handleCategoryToggle(
-												cat.id,
-												checked
-											)
-										}
-									/>
-								) ) }
-							</>
-						) }
-					</div>
+					<CategorySelector
+						selectedCategories={ categories }
+						onChange={ ( ids ) =>
+							setAttributes( { categories: ids } )
+						}
+					/>
 				</PanelBody>
 
 				<PanelBody

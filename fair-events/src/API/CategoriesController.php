@@ -33,8 +33,8 @@ class CategoriesController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
-		// GET /fair-events/v1/sources/categories - Get available categories
-		// POST /fair-events/v1/sources/categories - Create category
+		// GET /fair-events/v1/sources/categories - Get available categories.
+		// POST /fair-events/v1/sources/categories - Create category.
 		register_rest_route(
 			$this->namespace,
 			'/sources/categories',
@@ -43,6 +43,14 @@ class CategoriesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'all_languages' => array(
+							'description'       => __( 'Whether to include categories from every configured Polylang language.', 'fair-events' ),
+							'type'              => 'boolean',
+							'default'           => false,
+							'sanitize_callback' => 'rest_sanitize_boolean',
+						),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -67,26 +75,45 @@ class CategoriesController extends WP_REST_Controller {
 	 * @return WP_REST_Response Response object.
 	 */
 	public function get_items( $request ) {
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'category',
-				'hide_empty' => false,
-				'orderby'    => 'name',
-				'order'      => 'ASC',
-			)
+		$all_languages    = (bool) $request->get_param( 'all_languages' );
+		$include_language = $all_languages && function_exists( 'pll_get_term_language' );
+
+		$args = array(
+			'taxonomy'   => 'category',
+			'hide_empty' => false,
+			'orderby'    => 'name',
+			'order'      => 'ASC',
 		);
+
+		if ( $include_language ) {
+			// Explicit empty 'lang' disables Polylang's automatic filtering
+			// for this query, so terms from every configured language come
+			// back instead of only the current one.
+			$args['lang'] = '';
+		}
+
+		$categories = get_terms( $args );
 
 		if ( is_wp_error( $categories ) ) {
 			return new WP_REST_Response( array(), 200 );
 		}
 
 		$formatted = array_map(
-			function ( $category ) {
-				return array(
+			function ( $category ) use ( $include_language ) {
+				$item = array(
 					'id'   => $category->term_id,
 					'name' => $category->name,
 					'slug' => $category->slug,
 				);
+
+				if ( $include_language ) {
+					$language = pll_get_term_language( $category->term_id, 'name' );
+					if ( $language ) {
+						$item['language'] = $language;
+					}
+				}
+
+				return $item;
 			},
 			$categories
 		);
@@ -152,7 +179,7 @@ class CategoriesController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function get_items_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'edit_posts' );
 	}
 
 	/**

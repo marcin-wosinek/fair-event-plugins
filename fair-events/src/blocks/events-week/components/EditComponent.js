@@ -10,15 +10,10 @@ import {
 	InspectorControls,
 	PanelColorSettings,
 } from '@wordpress/block-editor';
-import {
-	PanelBody,
-	ToggleControl,
-	CheckboxControl,
-	Notice,
-} from '@wordpress/components';
-import { useSelect } from '@wordpress/data';
+import { PanelBody, ToggleControl, Notice } from '@wordpress/components';
 import ServerSideRender from '@wordpress/server-side-render';
 import { EventSourceSelector } from 'fair-events-shared';
+import CategorySelector from '../../components/CategorySelector.js';
 
 const EditComponent = ( { attributes, setAttributes } ) => {
 	const {
@@ -33,29 +28,6 @@ const EditComponent = ( { attributes, setAttributes } ) => {
 	} = attributes;
 
 	const blockProps = useBlockProps();
-
-	const allCategories = useSelect( ( select ) => {
-		const cats = select( 'core' ).getEntityRecords(
-			'taxonomy',
-			'category',
-			{
-				per_page: -1,
-			}
-		);
-		return cats || [];
-	}, [] );
-
-	const meaningfulCategories = allCategories.filter(
-		( cat ) => cat.slug !== 'uncategorized'
-	);
-	const hasCategories = meaningfulCategories.length > 0;
-
-	const handleCategoryToggle = ( categoryId, checked ) => {
-		const newCategories = checked
-			? [ ...categories, categoryId ]
-			: categories.filter( ( id ) => id !== categoryId );
-		setAttributes( { categories: newCategories } );
-	};
 
 	const hasOldFormat =
 		eventSources.length > 0 &&
@@ -104,33 +76,12 @@ const EditComponent = ( { attributes, setAttributes } ) => {
 						) }
 					/>
 
-					<div style={ { marginTop: '16px' } }>
-						<strong>{ __( 'Categories', 'fair-events' ) }</strong>
-						{ ! hasCategories ? (
-							<p
-								style={ {
-									fontStyle: 'italic',
-									color: '#757575',
-								} }
-							>
-								{ __(
-									'Define more categories if you want to use category filtering',
-									'fair-events'
-								) }
-							</p>
-						) : (
-							allCategories.map( ( cat ) => (
-								<CheckboxControl
-									key={ cat.id }
-									label={ cat.name }
-									checked={ categories.includes( cat.id ) }
-									onChange={ ( checked ) =>
-										handleCategoryToggle( cat.id, checked )
-									}
-								/>
-							) )
-						) }
-					</div>
+					<CategorySelector
+						selectedCategories={ categories }
+						onChange={ ( ids ) =>
+							setAttributes( { categories: ids } )
+						}
+					/>
 				</PanelBody>
 
 				<PanelColorSettings

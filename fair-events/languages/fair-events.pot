@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-16T04:03:36+00:00\n"
+"POT-Creation-Date: 2026-09-16T05:17:30+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -63,7 +63,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:120
 #: src/Admin/AdminPages.php:121
 #: src/Admin/all-events/AllEvents.js:411
-#: src/blocks/events-list/components/EditComponent.js:107
+#: src/blocks/events-list/components/EditComponent.js:78
 msgid "All Events"
 msgstr ""
 
@@ -226,9 +226,7 @@ msgstr ""
 #: src/Admin/all-events/AllEvents.js:218
 #: src/Admin/calendar/components/QuickEventModal.js:451
 #: src/Admin/manage-event/ManageEventApp.js:935
-#: src/blocks/events-calendar/components/EditComponent.js:138
-#: src/blocks/events-list/components/EditComponent.js:132
-#: src/blocks/events-week/components/EditComponent.js:108
+#: src/blocks/components/CategorySelector.js:60
 msgid "Categories"
 msgstr ""
 
@@ -279,11 +277,15 @@ msgstr ""
 msgid "Filter by category slugs (comma-separated)."
 msgstr ""
 
-#: src/API/CategoriesController.php:53
+#: src/API/CategoriesController.php:48
+msgid "Whether to include categories from every configured Polylang language."
+msgstr ""
+
+#: src/API/CategoriesController.php:61
 msgid "Name of the category to create."
 msgstr ""
 
-#: src/API/CategoriesController.php:109
+#: src/API/CategoriesController.php:136
 msgid "Category name is required."
 msgstr ""
 
@@ -3687,6 +3689,20 @@ msgstr ""
 msgid "Download ICS"
 msgstr ""
 
+#: src/blocks/components/CategorySelector.js:41
+msgid "Failed to load categories."
+msgstr ""
+
+#: src/blocks/components/CategorySelector.js:69
+msgid "Define more categories if you want to use category filtering"
+msgstr ""
+
+#. translators: 1: category name, 2: language name
+#: src/blocks/components/CategorySelector.js:85
+#, js-format
+msgid "%1$s — %2$s"
+msgstr ""
+
 #: src/blocks/event-dates/components/EditComponent.js:205
 msgid "No event dates set. Add dates in the Event Details panel."
 msgstr ""
@@ -3873,143 +3889,137 @@ msgstr ""
 msgid "Failed to submit. Please try again."
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:85
+#: src/blocks/events-calendar/components/EditComponent.js:62
 msgid "Calendar Settings"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:89
+#: src/blocks/events-calendar/components/EditComponent.js:66
 msgid "Event Display Pattern"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:95
+#: src/blocks/events-calendar/components/EditComponent.js:72
 msgid "Choose how events are displayed in calendar cells"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:102
-#: src/blocks/events-week/components/EditComponent.js:73
+#: src/blocks/events-calendar/components/EditComponent.js:79
+#: src/blocks/events-week/components/EditComponent.js:45
 msgid "Show Navigation"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:107
+#: src/blocks/events-calendar/components/EditComponent.js:84
 msgid "Display previous/next month navigation"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:114
-#: src/blocks/events-week/components/EditComponent.js:85
+#: src/blocks/events-calendar/components/EditComponent.js:91
+#: src/blocks/events-week/components/EditComponent.js:57
 msgid "Show Draft Events"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:119
+#: src/blocks/events-calendar/components/EditComponent.js:96
 msgid "Display draft events in the calendar"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:126
+#: src/blocks/events-calendar/components/EditComponent.js:103
 msgid "Show Subscribe Link"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:131
+#: src/blocks/events-calendar/components/EditComponent.js:108
 msgid "Displays a link to subscribe to this calendar in an external calendar app"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:146
-#: src/blocks/events-list/components/EditComponent.js:140
-#: src/blocks/events-week/components/EditComponent.js:116
-msgid "Define more categories if you want to use category filtering"
-msgstr ""
-
-#: src/blocks/events-calendar/components/EditComponent.js:174
-#: src/blocks/events-week/components/EditComponent.js:137
+#: src/blocks/events-calendar/components/EditComponent.js:121
+#: src/blocks/events-week/components/EditComponent.js:83
 msgid "Colors"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:182
-#: src/blocks/events-week/components/EditComponent.js:145
+#: src/blocks/events-calendar/components/EditComponent.js:129
+#: src/blocks/events-week/components/EditComponent.js:91
 msgid "Event Background"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:190
-#: src/blocks/events-week/components/EditComponent.js:153
+#: src/blocks/events-calendar/components/EditComponent.js:137
+#: src/blocks/events-week/components/EditComponent.js:99
 msgid "Event Text"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:198
-#: src/blocks/events-week/components/EditComponent.js:161
+#: src/blocks/events-calendar/components/EditComponent.js:145
+#: src/blocks/events-week/components/EditComponent.js:107
 msgid "Header Background"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:210
+#: src/blocks/events-calendar/components/EditComponent.js:157
 msgid "Draft events will appear as outlined buttons using these colors."
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:219
-#: src/blocks/events-list/components/EditComponent.js:168
-#: src/blocks/events-week/components/EditComponent.js:167
+#: src/blocks/events-calendar/components/EditComponent.js:166
+#: src/blocks/events-list/components/EditComponent.js:109
+#: src/blocks/events-week/components/EditComponent.js:113
 #: ../fair-events-shared/src/EventSourceSelector.js:24
 msgid "Event Sources"
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:223
+#: src/blocks/events-calendar/components/EditComponent.js:170
 msgid "Select event sources to display in the calendar."
 msgstr ""
 
-#: src/blocks/events-calendar/components/EditComponent.js:231
-#: src/blocks/events-week/components/EditComponent.js:172
+#: src/blocks/events-calendar/components/EditComponent.js:178
+#: src/blocks/events-week/components/EditComponent.js:118
 msgid "Event sources format has changed. Please re-select your event sources."
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:66
+#: src/blocks/events-list/components/EditComponent.js:52
 msgid "Untitled Pattern"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:88
+#: src/blocks/events-list/components/EditComponent.js:60
 msgid "Events List Settings"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:91
+#: src/blocks/events-list/components/EditComponent.js:62
 msgid "Display Pattern"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:97
+#: src/blocks/events-list/components/EditComponent.js:68
 msgid "Choose a pattern for displaying events"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:103
+#: src/blocks/events-list/components/EditComponent.js:74
 msgid "Time Filter"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:111
+#: src/blocks/events-list/components/EditComponent.js:82
 msgid "Upcoming Events"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:115
+#: src/blocks/events-list/components/EditComponent.js:86
 msgid "Past Events"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:119
+#: src/blocks/events-list/components/EditComponent.js:90
 msgid "Ongoing Events"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:126
+#: src/blocks/events-list/components/EditComponent.js:97
 msgid "Filter events by time relative to now"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:172
+#: src/blocks/events-list/components/EditComponent.js:113
 msgid "Select event sources to display in the list."
 msgstr ""
 
-#: src/blocks/events-week/components/EditComponent.js:69
+#: src/blocks/events-week/components/EditComponent.js:41
 msgid "Week View Settings"
 msgstr ""
 
-#: src/blocks/events-week/components/EditComponent.js:78
+#: src/blocks/events-week/components/EditComponent.js:50
 msgid "Display previous/next week navigation"
 msgstr ""
 
-#: src/blocks/events-week/components/EditComponent.js:93
+#: src/blocks/events-week/components/EditComponent.js:65
 msgid "Show Copy Summary Button"
 msgstr ""
 
-#: src/blocks/events-week/components/EditComponent.js:101
+#: src/blocks/events-week/components/EditComponent.js:70
 msgid "Displays a button to copy week summary as text"
 msgstr ""
 
