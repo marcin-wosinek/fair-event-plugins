@@ -11,6 +11,7 @@ import { Notice, TabPanel } from '@wordpress/components';
 import ConnectionTab from './ConnectionTab';
 import CurrencyTab from './CurrencyTab.js';
 import PaymentMethodsTab from './PaymentMethodsTab.js';
+import AuditLogTab from './AuditLogTab.js';
 import { saveOAuthCallback } from './settings-api';
 
 /**
@@ -196,6 +197,10 @@ export default function SettingsApp() {
 						name: 'currency',
 						title: __( 'Currency', 'fair-payments-connector' ),
 					},
+					{
+						name: 'audit-log',
+						title: __( 'Audit Log', 'fair-payments-connector' ),
+					},
 				] }
 				onSelect={ handleTabSelect }
 			>
@@ -213,6 +218,7 @@ export default function SettingsApp() {
 						{ tab.name === 'currency' && (
 							<CurrencyTab onNotice={ setNotice } />
 						) }
+						{ tab.name === 'audit-log' && <AuditLogTab /> }
 					</div>
 				) }
 			</TabPanel>

@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnector\API;
 
+use FairPaymentsConnector\AuditLog\AuditLogger;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -14,7 +16,10 @@ defined( 'WPINC' ) || die;
  *
  * Two-step CSRF protection: the client fetches a short-lived state token before
  * redirecting to Mollie, then POSTs it back on return so we can verify it
- * server-side before writing any credentials.
+ * server-side before writing any credentials. The audit reason is supplied
+ * once, when the state token is requested, and bound to that same
+ * transient — the callback trusts the reason it stored server-side, never
+ * one resent by the client at callback time.
  */
 class OAuthCallbackController extends \WP_REST_Controller {
 
@@ -33,6 +38,14 @@ class OAuthCallbackController extends \WP_REST_Controller {
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
+				'args'                => array(
+					'reason' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_textarea_field',
+						'validate_callback' => array( $this, 'validate_reason' ),
+					),
+				),
 			)
 		);
 
@@ -93,18 +106,45 @@ class OAuthCallbackController extends \WP_REST_Controller {
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
+				'args'                => array(
+					'reason' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_textarea_field',
+						'validate_callback' => array( $this, 'validate_reason' ),
+					),
+				),
 			)
 		);
 	}
 
 	/**
-	 * Generate a one-time OAuth state token and store it in a user-scoped transient.
+	 * Reject an empty/whitespace-only reason.
 	 *
+	 * @param mixed $value Raw param value.
+	 * @return bool
+	 */
+	public function validate_reason( $value ) {
+		return is_string( $value ) && '' !== trim( $value );
+	}
+
+	/**
+	 * Generate a one-time OAuth state token and store it, with the reason for
+	 * this authorization attempt, in a user-scoped transient.
+	 *
+	 * @param \WP_REST_Request $request Incoming request.
 	 * @return \WP_REST_Response
 	 */
-	public function generate_state() {
+	public function generate_state( \WP_REST_Request $request ) {
 		$state = wp_generate_password( 32, false );
-		set_transient( $this->state_transient_key(), $state, 5 * MINUTE_IN_SECONDS );
+		set_transient(
+			$this->state_transient_key(),
+			array(
+				'state'  => $state,
+				'reason' => trim( (string) $request->get_param( 'reason' ) ),
+			),
+			5 * MINUTE_IN_SECONDS
+		);
 		return new \WP_REST_Response( array( 'state' => $state ), 200 );
 	}
 
@@ -121,7 +161,7 @@ class OAuthCallbackController extends \WP_REST_Controller {
 		// Single-use: delete before any branching to prevent replay.
 		delete_transient( $this->state_transient_key() );
 
-		if ( false === $expected || ! hash_equals( $expected, $state ) ) {
+		if ( ! is_array( $expected ) || empty( $expected['state'] ) || ! hash_equals( $expected['state'], $state ) ) {
 			return new \WP_Error(
 				'invalid_oauth_state',
 				__( 'Invalid or expired OAuth state. Please try connecting again.', 'fair-payments-connector' ),
@@ -129,13 +169,40 @@ class OAuthCallbackController extends \WP_REST_Controller {
 			);
 		}
 
+		// An organization ID from a prior connection is our signal that this
+		// is a reconnect rather than a first-ever connection, independent of
+		// the current fair_payment_mollie_connected flag (which is also
+		// false right after a disconnect-then-reconnect).
+		$is_reconnect = (bool) get_option( 'fair_payment_organization_id', '' );
+		$mode         = $request->get_param( 'test_mode' ) ? 'test' : 'live';
+
 		update_option( 'fair_payment_mollie_access_token', $request->get_param( 'access_token' ) );
 		update_option( 'fair_payment_mollie_refresh_token', $request->get_param( 'refresh_token' ) );
 		update_option( 'fair_payment_mollie_token_expires', time() + $request->get_param( 'expires_in' ) );
 		update_option( 'fair_payment_organization_id', $request->get_param( 'organization_id' ) );
 		update_option( 'fair_payment_mollie_profile_id', $request->get_param( 'profile_id' ) );
 		update_option( 'fair_payment_mollie_connected', true );
-		update_option( 'fair_payment_mode', $request->get_param( 'test_mode' ) ? 'test' : 'live' );
+		update_option( 'fair_payment_mode', $mode );
+
+		// Persisting the connection and its audit entry is treated as one
+		// unit — but unlike a simple option write, the Mollie tokens are
+		// already live at this point, and reverting them the way
+		// SettingsWriteController reverts a plain option is riskier than
+		// useful here, so this only fails the request without undoing them.
+		$result = AuditLogger::record_action(
+			$is_reconnect ? 'mollie_reconnected' : 'mollie_connected',
+			$expected['reason'],
+			get_current_user_id(),
+			array( 'mode' => $mode )
+		);
+
+		if ( false === $result ) {
+			return new \WP_Error(
+				'audit_log_failed',
+				__( 'Connected, but the audit entry could not be recorded.', 'fair-payments-connector' ),
+				array( 'status' => 500 )
+			);
+		}
 
 		return new \WP_REST_Response( array( 'success' => true ), 200 );
 	}
@@ -147,15 +214,28 @@ class OAuthCallbackController extends \WP_REST_Controller {
 	 * so /wp/v2/settings can no longer clear them — this is the only write
 	 * path for disconnecting.
 	 *
-	 * @return \WP_REST_Response
+	 * @param \WP_REST_Request $request Incoming request.
+	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public function handle_disconnect() {
+	public function handle_disconnect( \WP_REST_Request $request ) {
+		$reason = trim( (string) $request->get_param( 'reason' ) );
+
 		delete_option( 'fair_payment_mollie_access_token' );
 		delete_option( 'fair_payment_mollie_refresh_token' );
 		update_option( 'fair_payment_mollie_token_expires', 0 );
 		update_option( 'fair_payment_mollie_connected', false );
 		delete_transient( 'fair_payment_connection_overview_test' );
 		delete_transient( 'fair_payment_connection_overview_live' );
+
+		$result = AuditLogger::record_action( 'mollie_disconnected', $reason, get_current_user_id() );
+
+		if ( false === $result ) {
+			return new \WP_Error(
+				'audit_log_failed',
+				__( 'Disconnected, but the audit entry could not be recorded.', 'fair-payments-connector' ),
+				array( 'status' => 500 )
+			);
+		}
 
 		return new \WP_REST_Response( array( 'success' => true ), 200 );
 	}

@@ -84,6 +84,30 @@ class Plugin {
 		}
 
 		add_filter( 'fair_event_plugins_settings_fields', array( $this, 'register_shared_settings_fields' ) );
+
+		// The shared screen fires this once per changed field, across every
+		// plugin registered on it — filter to our own option so we only
+		// audit our own row, not e.g. fair-form's.
+		add_action( 'fair_event_plugins_setting_changed', array( $this, 'record_shared_setting_change' ), 10, 5 );
+	}
+
+	/**
+	 * Record an audit entry for a change made through the shared Settings →
+	 * Fair Event Plugins screen, when it belongs to this plugin.
+	 *
+	 * @param string $option    Option name the change was written to.
+	 * @param string $key       Key within that option.
+	 * @param mixed  $old_value Previous value.
+	 * @param mixed  $new_value New value.
+	 * @param string $reason    Administrator-supplied reason.
+	 * @return void
+	 */
+	public function record_shared_setting_change( $option, $key, $old_value, $new_value, $reason ) {
+		if ( Features::OPTION !== $option ) {
+			return;
+		}
+
+		\FairPaymentsConnector\AuditLog\AuditLogger::record_setting_change( $key, $old_value, $new_value, $reason, get_current_user_id() );
 	}
 
 	/**
@@ -94,17 +118,18 @@ class Plugin {
 	 */
 	public function register_shared_settings_fields( $fields ) {
 		$fields[] = array(
-			'section'       => 'translations',
-			'section_title' => __( 'Translations', 'fair-payments-connector' ),
-			'id'            => 'fair-payments-connector/bundled-translations',
-			'type'          => 'checkbox',
-			'option'        => Features::OPTION,
-			'key'           => 'bundled-translations',
-			'label'         => __( 'Fair Payments Connector', 'fair-payments-connector' ),
-			'description'   => __( 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.', 'fair-payments-connector' ),
-			'value'         => Features::is_enabled( 'bundled-translations' ),
-			'locked'        => Features::is_forced( 'bundled-translations' ),
-			'locked_note'   => __( 'Forced by a wp-config constant — change it there.', 'fair-payments-connector' ),
+			'section'         => 'translations',
+			'section_title'   => __( 'Translations', 'fair-payments-connector' ),
+			'id'              => 'fair-payments-connector/bundled-translations',
+			'type'            => 'checkbox',
+			'option'          => Features::OPTION,
+			'key'             => 'bundled-translations',
+			'label'           => __( 'Fair Payments Connector', 'fair-payments-connector' ),
+			'description'     => __( 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.', 'fair-payments-connector' ),
+			'value'           => Features::is_enabled( 'bundled-translations' ),
+			'locked'          => Features::is_forced( 'bundled-translations' ),
+			'locked_note'     => __( 'Forced by a wp-config constant — change it there.', 'fair-payments-connector' ),
+			'requires_reason' => true,
 		);
 		return $fields;
 	}

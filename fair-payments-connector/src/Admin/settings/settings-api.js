@@ -46,14 +46,49 @@ export function saveSettings( data ) {
 }
 
 /**
- * Generate and retrieve a one-time OAuth state token from the server.
+ * Save connector settings that require an audit reason (mode, currency,
+ * bank-transfer threshold). The generic /wp/v2/settings endpoint no longer
+ * accepts writes to these keys — see Settings::MANUALLY_WRITTEN_SETTINGS.
  *
+ * @param {Object} settings Setting key/value pairs to change.
+ * @param {string} reason   Non-empty reason, recorded to the audit log.
+ * @return {Promise<Object>} Promise resolving to the saved settings
+ */
+export function saveConnectorSettings( settings, reason ) {
+	return apiFetch( {
+		path: '/fair-payments-connector/v1/settings',
+		method: 'POST',
+		data: { settings, reason },
+	} );
+}
+
+/**
+ * Load a page of the settings/connection audit log, newest first.
+ *
+ * @param {Object} args          Pagination
+ * @param {number} args.page     1-based page number
+ * @param {number} args.perPage  Page size
+ * @return {Promise<Object>} Promise resolving to { items, total, pages, page }
+ */
+export function loadAuditLog( { page = 1, perPage = 20 } = {} ) {
+	return apiFetch( {
+		path: `/fair-payments-connector/v1/audit-log?page=${ page }&per_page=${ perPage }`,
+	} );
+}
+
+/**
+ * Generate and retrieve a one-time OAuth state token from the server, bound
+ * to the reason for this authorization attempt.
+ *
+ * @param {string} reason Non-empty reason, recorded to the audit log once the
+ *                        connection succeeds.
  * @return {Promise<string>} Promise resolving to the state string
  */
-export function fetchOAuthState() {
+export function fetchOAuthState( reason ) {
 	return apiFetch( {
 		path: '/fair-payments-connector/v1/oauth/state',
 		method: 'POST',
+		data: { reason },
 	} ).then( ( response ) => response.state );
 }
 
@@ -74,12 +109,14 @@ export function saveOAuthCallback( data ) {
 /**
  * Disconnect from Mollie: server clears the stored OAuth credentials.
  *
+ * @param {string} reason Non-empty reason, recorded to the audit log.
  * @return {Promise<Object>} Promise resolving to the API response
  */
-export function disconnectOAuth() {
+export function disconnectOAuth( reason ) {
 	return apiFetch( {
 		path: '/fair-payments-connector/v1/oauth/disconnect',
 		method: 'POST',
+		data: { reason },
 	} );
 }
 

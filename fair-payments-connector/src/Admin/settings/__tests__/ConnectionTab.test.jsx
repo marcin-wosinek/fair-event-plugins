@@ -1,11 +1,18 @@
 /**
- * Component tests for the connection overview section (#1208).
+ * Component tests for the connection overview section (#1208) and the
+ * mandatory audit reason on connect/reconnect/disconnect/mode-change (#1575).
  *
  * Exercises:
  *   - Connected: profile name, enabled methods, and the "manage in Mollie" link render.
  *   - Disconnected: none of the overview section renders.
  *   - Error: the overview section shows a warning while the rest of the
  *     connected controls (mode switch, disconnect) still render.
+ *   - Connect: the button stays disabled until a reason is entered, and the
+ *     reason is sent when requesting the OAuth state.
+ *   - Mode change: a Save button only appears once the mode actually differs
+ *     and stays disabled until a reason is entered.
+ *   - Disconnect: the confirm dialog blocks on an empty reason and posts the
+ *     reason to oauth/disconnect (not /wp/v2/settings) on confirm.
  */
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -127,10 +134,108 @@ describe( 'ConnectionTab — connection overview', () => {
 	} );
 } );
 
-describe( 'ConnectionTab — disconnect', () => {
-	it( 'calls the oauth/disconnect endpoint, not /wp/v2/settings, on confirm', async () => {
+describe( 'ConnectionTab — connect requires a reason', () => {
+	it( 'keeps Connect disabled until a reason is entered, then sends it with the state request', async () => {
+		apiFetch.mockImplementation( ( { path } ) => {
+			if ( path === '/wp/v2/settings' ) {
+				return Promise.resolve( {
+					fair_payment_mollie_connected: false,
+				} );
+			}
+			if ( path === '/fair-payments-connector/v1/oauth/state' ) {
+				return Promise.resolve( { state: 'test-state' } );
+			}
+			return Promise.resolve( {} );
+		} );
+
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+
+		const connectButton = await screen.findByRole( 'button', {
+			name: 'Connect with Mollie',
+		} );
+		expect( connectButton ).toBeDisabled();
+
+		fireEvent.change( screen.getByLabelText( /Reason for connecting/i ), {
+			target: { value: 'Setting up payments for the first time.' },
+		} );
+		expect( connectButton ).toBeEnabled();
+
+		// jsdom has no real navigation; only assert the state request itself.
+		fireEvent.click( connectButton );
+
+		await waitFor( () => {
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					path: '/fair-payments-connector/v1/oauth/state',
+					method: 'POST',
+					data: {
+						reason: 'Setting up payments for the first time.',
+					},
+				} )
+			);
+		} );
+
+		expect( console ).toHaveLogged();
+		// jsdom doesn't implement real navigation; the component's
+		// window.location.href assignment after a successful state fetch
+		// logs this as an expected limitation of the test environment.
+		expect( console ).toHaveErrored();
+	} );
+} );
+
+describe( 'ConnectionTab — mode change requires a reason', () => {
+	it( 'only shows Save mode once the mode differs, and requires a reason', async () => {
 		mockApiFetchFor( { connected: true, overview: OVERVIEW } );
-		jest.spyOn( window, 'confirm' ).mockReturnValue( true );
+
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+
+		expect(
+			screen.queryByRole( 'button', { name: 'Save mode' } )
+		).not.toBeInTheDocument();
+
+		fireEvent.click(
+			await screen.findByRole( 'radio', { name: 'Live Mode' } )
+		);
+
+		const saveModeButton = await screen.findByRole( 'button', {
+			name: 'Save mode',
+		} );
+		expect( saveModeButton ).toBeDisabled();
+
+		fireEvent.change(
+			screen.getByLabelText( /Reason for the mode change/i ),
+			{
+				target: { value: 'Going live for the launch event.' },
+			}
+		);
+		expect( saveModeButton ).toBeEnabled();
+
+		fireEvent.click( saveModeButton );
+
+		await waitFor( () => {
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					path: '/fair-payments-connector/v1/settings',
+					method: 'POST',
+					data: {
+						settings: { fair_payment_mode: 'live' },
+						reason: 'Going live for the launch event.',
+					},
+				} )
+			);
+		} );
+
+		expect( console ).toHaveLogged();
+	} );
+} );
+
+describe( 'ConnectionTab — disconnect', () => {
+	it( 'blocks on an empty reason, then posts the reason to oauth/disconnect (not /wp/v2/settings) on confirm', async () => {
+		mockApiFetchFor( { connected: true, overview: OVERVIEW } );
 
 		render(
 			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
@@ -141,12 +246,49 @@ describe( 'ConnectionTab — disconnect', () => {
 		} );
 		fireEvent.click( disconnectButton );
 
+		const dialogConfirmButtons = await screen.findAllByRole( 'button', {
+			name: 'Disconnect',
+		} );
+		const confirmButton =
+			dialogConfirmButtons[ dialogConfirmButtons.length - 1 ];
+
+		// Confirming with no reason must not call the API — it should
+		// surface an inline validation error and keep the dialog open.
+		fireEvent.click( confirmButton );
+		expect(
+			await screen.findByText( 'A reason is required to disconnect.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: '/fair-payments-connector/v1/oauth/disconnect',
+			} )
+		);
+
+		fireEvent.change(
+			screen.getByLabelText( /Reason for disconnecting/i ),
+			{
+				target: { value: 'Retiring this Mollie account.' },
+			}
+		);
+		fireEvent.click( confirmButton );
+
 		await waitFor( () => {
 			expect( apiFetch ).toHaveBeenCalledWith(
 				expect.objectContaining( {
 					path: '/fair-payments-connector/v1/oauth/disconnect',
 					method: 'POST',
+					data: { reason: 'Retiring this Mollie account.' },
 				} )
+			);
+		} );
+
+		// Disconnecting reloads settings — wait for that GET so its
+		// console.log calls have already happened before asserting on them.
+		await waitFor( () => {
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( { path: '/wp/v2/settings' } )
 			);
 		} );
 
@@ -157,7 +299,6 @@ describe( 'ConnectionTab — disconnect', () => {
 			} )
 		);
 
-		window.confirm.mockRestore();
 		expect( console ).toHaveLogged();
 	} );
 } );

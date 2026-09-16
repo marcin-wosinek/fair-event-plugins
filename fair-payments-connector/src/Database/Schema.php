@@ -86,6 +86,16 @@ class Schema {
 	}
 
 	/**
+	 * Get the table name for the settings/connection audit log
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_audit_log_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_audit_log';
+	}
+
+	/**
 	 * Create database tables
 	 *
 	 * @return void
@@ -143,6 +153,9 @@ class Schema {
 		// Create API tokens table.
 		self::create_api_tokens_table();
 
+		// Create audit log table.
+		self::create_audit_log_table();
+
 		// Run migrations if needed.
 		self::migrate_to_v2();
 		self::migrate_to_v3();
@@ -166,9 +179,10 @@ class Schema {
 		self::migrate_to_v21();
 		self::migrate_to_v22();
 		self::migrate_to_v23();
+		self::migrate_to_v24();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '23.0' );
+		update_option( 'fair_payment_db_version', '24.0' );
 	}
 
 	/**
@@ -287,6 +301,49 @@ class Schema {
 			PRIMARY KEY  (id),
 			UNIQUE KEY token_hash (token_hash),
 			KEY revoked_at (revoked_at)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create the settings/connection audit log table
+	 *
+	 * Records administrator-facing setting changes and Mollie connection
+	 * actions (connect/reconnect/disconnect, token refresh, connection loss).
+	 * Old/new values are only retained for an explicit allowlist of safe
+	 * setting keys — see AuditLogger::SAFE_SETTING_KEYS; every other value is
+	 * stored as NULL with is_protected=1 so credentials can never be
+	 * recovered from this table. actor_display_name/actor_login are a
+	 * point-in-time snapshot (not a live join to wp_users) so an entry stays
+	 * readable after the acting user is deleted.
+	 *
+	 * @return void
+	 */
+	public static function create_audit_log_table() {
+		global $wpdb;
+
+		$table_name      = self::get_audit_log_table_name();
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			action varchar(50) NOT NULL,
+			setting_key varchar(100) DEFAULT NULL,
+			old_value text DEFAULT NULL,
+			new_value text DEFAULT NULL,
+			is_protected tinyint(1) NOT NULL DEFAULT 0,
+			actor_user_id bigint(20) UNSIGNED DEFAULT NULL,
+			actor_display_name varchar(250) DEFAULT NULL,
+			actor_login varchar(60) DEFAULT NULL,
+			reason text NOT NULL,
+			context longtext DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY created_at (created_at),
+			KEY action (action),
+			KEY actor_user_id (actor_user_id)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -1206,6 +1263,21 @@ class Schema {
 	}
 
 	/**
+	 * Migrate database from v23.0 to v24.0
+	 *
+	 * Adds the settings/connection audit log table (#1575).
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v24() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '24.0', '<' ) ) {
+			self::create_audit_log_table();
+		}
+	}
+
+	/**
 	 * Drop database tables (used for uninstall)
 	 *
 	 * @return void
@@ -1220,6 +1292,10 @@ class Schema {
 		$entry_transactions_table = self::get_entry_transactions_table_name();
 		$log_table                = self::get_log_table_name();
 		$api_tokens_table         = self::get_api_tokens_table_name();
+		$audit_log_table          = self::get_audit_log_table_name();
+
+		// Drop audit log table (standalone, no FK references).
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $audit_log_table ) );
 
 		// Drop API tokens table (standalone, no FK references).
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $api_tokens_table ) );
