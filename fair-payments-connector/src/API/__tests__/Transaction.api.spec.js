@@ -587,3 +587,116 @@ test.describe( 'Transaction — event link', () => {
 		expect( body.event ).toBeNull();
 	} );
 } );
+
+test.describe( 'Transaction — deletion (#1618)', () => {
+	let api;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
+
+	test.afterAll( async () => {
+		await api.dispose();
+	} );
+
+	async function importTestTransaction() {
+		const mollie_payment_id = `tr_delete_test_${ Date.now() }_${ Math.random()
+			.toString( 36 )
+			.slice( 2 ) }`;
+		const importRes = await api.post( IMPORT_ENDPOINT, {
+			headers: adminAuth(),
+			data: {
+				transactions: [
+					{
+						mollie_payment_id,
+						amount: 5.0,
+						currency: 'EUR',
+						status: 'paid',
+						testmode: true,
+					},
+				],
+			},
+		} );
+		expect( importRes.status() ).toBe( 200 );
+
+		const listRes = await api.get( TRANSACTIONS_ENDPOINT, {
+			headers: adminAuth(),
+			params: { per_page: 100, mode: 'test' },
+		} );
+		expect( listRes.status() ).toBe( 200 );
+		const { transactions } = await listRes.json();
+		const txn = transactions.find(
+			( t ) => t.mollie_payment_id === mollie_payment_id
+		);
+		expect( txn ).toBeDefined();
+		return txn.id;
+	}
+
+	test( 'requires authentication', async () => {
+		const transactionId = await importTestTransaction();
+		const res = await api.delete(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`
+		);
+		expect( res.status() ).toBe( 401 );
+
+		// Cleanup: the unauthenticated attempt above must not have deleted it.
+		const getRes = await api.get(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`,
+			{ headers: adminAuth() }
+		);
+		expect( getRes.status() ).toBe( 200 );
+		await api.delete( `${ TRANSACTIONS_ENDPOINT }/${ transactionId }`, {
+			headers: adminAuth(),
+		} );
+	} );
+
+	test( 'returns 404 for a nonexistent transaction', async () => {
+		const res = await api.delete( `${ TRANSACTIONS_ENDPOINT }/999999999`, {
+			headers: adminAuth(),
+		} );
+		expect( res.status() ).toBe( 404 );
+	} );
+
+	test( 'deletes the local transaction and it no longer appears in list or detail views', async () => {
+		const transactionId = await importTestTransaction();
+
+		const deleteRes = await api.delete(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`,
+			{ headers: adminAuth() }
+		);
+		expect( deleteRes.status() ).toBe( 200 );
+		const body = await deleteRes.json();
+		expect( body ).toEqual( { deleted: true, id: transactionId } );
+
+		const getRes = await api.get(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`,
+			{ headers: adminAuth() }
+		);
+		expect( getRes.status() ).toBe( 404 );
+
+		const listRes = await api.get( TRANSACTIONS_ENDPOINT, {
+			headers: adminAuth(),
+			params: { per_page: 100, mode: 'test' },
+		} );
+		const { transactions } = await listRes.json();
+		expect( transactions.some( ( t ) => t.id === transactionId ) ).toBe(
+			false
+		);
+	} );
+
+	test( 'deleting a transaction twice returns 404 the second time', async () => {
+		const transactionId = await importTestTransaction();
+
+		const firstRes = await api.delete(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`,
+			{ headers: adminAuth() }
+		);
+		expect( firstRes.status() ).toBe( 200 );
+
+		const secondRes = await api.delete(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`,
+			{ headers: adminAuth() }
+		);
+		expect( secondRes.status() ).toBe( 404 );
+	} );
+} );

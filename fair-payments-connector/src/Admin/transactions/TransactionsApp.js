@@ -99,6 +99,32 @@ const TransactionsApp = () => {
 	const [ isImportModalOpen, setIsImportModalOpen ] = useState( false );
 	const [ feeSync, setFeeSync ] = useState( null );
 
+	// One-use success marker set by the transaction detail page after a
+	// deletion redirect; shown once and stripped so a refresh doesn't repeat it.
+	useEffect( () => {
+		const params = new URLSearchParams( window.location.search );
+		if ( ! params.get( 'transaction_deleted' ) ) {
+			return;
+		}
+
+		setSuccess(
+			__(
+				'Transaction deleted. The payment in Mollie or any other external service was not changed.',
+				'fair-payments-connector'
+			)
+		);
+
+		params.delete( 'transaction_deleted' );
+		const query = params.toString();
+		window.history.replaceState(
+			{},
+			'',
+			window.location.pathname +
+				( query ? `?${ query }` : '' ) +
+				window.location.hash
+		);
+	}, [] );
+
 	const loadTransactions = useCallback( async () => {
 		setLoading( true );
 		setError( null );
