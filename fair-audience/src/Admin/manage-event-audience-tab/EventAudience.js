@@ -212,21 +212,11 @@ export default function EventAudience( {
 			.catch( () => setInvitedGroups( [] ) );
 	}, [ eventDateId ] );
 
-	const filteredParticipants = useMemo( () => {
-		let list = participants;
-
-		if ( filterRole !== 'all' ) {
-			list = list.filter( ( p ) => p.label === filterRole );
-		}
-
-		if ( searchText ) {
-			const term = searchText.toLowerCase();
-			list = list.filter( ( p ) =>
-				( p.participant_name || '' ).toLowerCase().includes( term )
-			);
-		}
-
-		list = [ ...list ].sort( ( a, b ) => {
+	// Single ordering shared by the Audience table, the printable list, and the
+	// email-consent modal, so all three walk participants in the same relative
+	// order — each view then applies only its own membership filter on top.
+	const sortedParticipants = useMemo( () => {
+		return [ ...participants ].sort( ( a, b ) => {
 			let cmp = 0;
 			if ( sortBy === 'role' ) {
 				cmp =
@@ -264,9 +254,24 @@ export default function EventAudience( {
 			}
 			return sortOrder === 'desc' ? -cmp : cmp;
 		} );
+	}, [ participants, sortBy, sortOrder ] );
+
+	const filteredParticipants = useMemo( () => {
+		let list = sortedParticipants;
+
+		if ( filterRole !== 'all' ) {
+			list = list.filter( ( p ) => p.label === filterRole );
+		}
+
+		if ( searchText ) {
+			const term = searchText.toLowerCase();
+			list = list.filter( ( p ) =>
+				( p.participant_name || '' ).toLowerCase().includes( term )
+			);
+		}
 
 		return list;
-	}, [ participants, filterRole, searchText, sortBy, sortOrder ] );
+	}, [ sortedParticipants, filterRole, searchText ] );
 
 	const counts = useMemo( () => {
 		const c = { collaborator: 0, signed_up: 0, interested: 0 };
@@ -396,8 +401,9 @@ export default function EventAudience( {
 	// Yes (upgrade) is only available for those with an email; No (decline) is
 	// always available so we can record that they were asked and refused.
 	const mailingEligible = useMemo(
-		() => participants.filter( ( p ) => p.email_profile === 'minimal' ),
-		[ participants ]
+		() =>
+			sortedParticipants.filter( ( p ) => p.email_profile === 'minimal' ),
+		[ sortedParticipants ]
 	);
 
 	const filteredMailingEligible = useMemo( () => {
