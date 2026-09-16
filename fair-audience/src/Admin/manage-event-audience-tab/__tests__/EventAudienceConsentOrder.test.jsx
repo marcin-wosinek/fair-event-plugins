@@ -119,6 +119,16 @@ function rowNames() {
 	);
 }
 
+function rowNumbers() {
+	// The printed-list number is a sibling <span> rendered before each row's
+	// name/email <div>, inside the shared flex wrapper — grab it relative to
+	// each <strong> so this stays in sync with rowNames() ordering.
+	const modal = screen.getByRole( 'dialog' );
+	return Array.from( modal.querySelectorAll( 'strong' ) ).map(
+		( el ) => el.parentElement.parentElement.firstElementChild.textContent
+	);
+}
+
 beforeEach( () => {
 	mockApiFetch();
 	jest.spyOn( console, 'warn' ).mockImplementation( () => {} );
@@ -223,9 +233,12 @@ describe( 'EventAudience — shared participant ordering (#1549)', () => {
 		);
 
 		const modal = screen.getByRole( 'dialog' );
+		// The row's outer <div> (holding the Yes/No buttons) is the one
+		// laid out with `justify-content: space-between`; the name text
+		// itself now sits inside a nested number+name wrapper.
 		const charlieRow = within( modal )
 			.getByText( 'Charlie Doe' )
-			.closest( 'div[style]' );
+			.closest( 'div[style*="space-between"]' );
 		fireEvent.click(
 			within( charlieRow ).getByRole( 'button', { name: 'Yes' } )
 		);
@@ -262,7 +275,7 @@ describe( 'EventAudience — shared participant ordering (#1549)', () => {
 		const modal = screen.getByRole( 'dialog' );
 		const bobRow = within( modal )
 			.getByText( 'Bob Jones' )
-			.closest( 'div[style]' );
+			.closest( 'div[style*="space-between"]' );
 
 		expect(
 			within( bobRow ).getByRole( 'button', { name: 'Yes' } )
@@ -270,5 +283,68 @@ describe( 'EventAudience — shared participant ordering (#1549)', () => {
 		expect(
 			within( bobRow ).getByRole( 'button', { name: 'No' } )
 		).not.toBeDisabled();
+	} );
+
+	it( 'shows the printed-list number beside each participant, with a dash for one absent from the printout', async () => {
+		renderAudience();
+
+		await screen.findByText( 'Charlie Doe' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Record email consent' } )
+		);
+
+		// Printable order (role asc, collaborator/signed_up only): Alice (1),
+		// Charlie (2), Dana (3, marketing — not shown here since she isn't
+		// consent-eligible, leaving a gap at 3). Bob is "interested" so he
+		// never gets a printed number and shows a dash instead.
+		expect( rowNames() ).toEqual( [
+			'Alice Smith',
+			'Charlie Doe',
+			'Bob Jones',
+		] );
+		expect( rowNumbers() ).toEqual( [ '1', '2', '—' ] );
+	} );
+
+	it( 'updates the printed-list numbers when the Audience sort changes', async () => {
+		renderAudience();
+
+		await screen.findByText( 'Charlie Doe' );
+
+		// Toggle the default role-ascending sort to role-descending: printable
+		// order becomes Dana, Charlie, Alice, so their numbers shift too. The
+		// header already carries the default sort's "▲" indicator, so match
+		// loosely instead of the exact "Role" accessible name.
+		fireEvent.click( screen.getByRole( 'columnheader', { name: /Role/ } ) );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Record email consent' } )
+		);
+
+		expect( rowNames() ).toEqual( [
+			'Bob Jones',
+			'Charlie Doe',
+			'Alice Smith',
+		] );
+		expect( rowNumbers() ).toEqual( [ '—', '2', '3' ] );
+	} );
+
+	it( 'keeps printed-list numbers stable when the popup search narrows the list', async () => {
+		renderAudience();
+
+		await screen.findByText( 'Charlie Doe' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Record email consent' } )
+		);
+		expect( rowNumbers() ).toEqual( [ '1', '2', '—' ] );
+
+		fireEvent.change(
+			screen.getByPlaceholderText( 'Search by name or email…' ),
+			{ target: { value: 'a' } }
+		);
+
+		// "Alice" and "Charlie" both contain "a"; their numbers are unchanged
+		// by narrowing the list.
+		expect( rowNames() ).toEqual( [ 'Alice Smith', 'Charlie Doe' ] );
+		expect( rowNumbers() ).toEqual( [ '1', '2' ] );
 	} );
 } );
