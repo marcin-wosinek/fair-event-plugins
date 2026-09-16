@@ -46,6 +46,25 @@ function pll_get_post_translations( $post_id ) {
 		: array( 'current' => (int) $post_id );
 }
 
+/**
+ * Test-only Polylang term-language stub, backing CategoriesController's
+ * multilingual category picker (#1627). Maps a term ID to a language name
+ * via the fair_e2e_polylang_term_languages option (set through the
+ * fair-e2e/v1/term-languages route below); an unmapped term returns false,
+ * matching real Polylang's behaviour for a term with no assigned language.
+ *
+ * @param int    $term_id Term ID.
+ * @param string $field   Language field requested ('name' or 'slug').
+ * @return string|false
+ */
+function pll_get_term_language( $term_id, $field = 'slug' ) {
+	$languages = get_option( 'fair_e2e_polylang_term_languages', array() );
+	if ( ! isset( $languages[ $term_id ][ $field ] ) ) {
+		return false;
+	}
+	return $languages[ $term_id ][ $field ];
+}
+
 add_action(
 	'rest_api_init',
 	static function () {
@@ -69,6 +88,23 @@ add_action(
 					if ( $saved_post_id ) {
 						do_action( 'pll_save_post', $saved_post_id );
 					}
+
+					return rest_ensure_response( array( 'updated' => true ) );
+				},
+			)
+		);
+
+		register_rest_route(
+			'fair-e2e/v1',
+			'/term-languages',
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$languages = $request->get_param( 'languages' );
+					update_option( 'fair_e2e_polylang_term_languages', is_array( $languages ) ? $languages : array(), false );
 
 					return rest_ensure_response( array( 'updated' => true ) );
 				},

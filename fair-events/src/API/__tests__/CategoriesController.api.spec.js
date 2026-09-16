@@ -2,7 +2,10 @@
  * Playwright API tests for CategoriesController.
  *
  * Verifies POST /fair-events/v1/sources/categories creates a category term,
- * is idempotent for an existing name, and enforces the permission check.
+ * is idempotent for an existing name, and enforces the permission check; and
+ * that GET /fair-events/v1/sources/categories supports an all_languages mode
+ * for the multilingual category picker (#1627) using the test-only Polylang
+ * term-language fixture at fair-e2e/v1/term-languages.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -93,5 +96,125 @@ test.describe( 'CategoriesController', () => {
 
 		expect( res.status() ).toBe( 401 );
 		await anonymousApi.dispose();
+	} );
+
+	test.describe( 'GET /sources/categories', () => {
+		let getApi;
+		const getCreatedCategoryIds = [];
+
+		test.beforeAll( async () => {
+			getApi = await request.newContext( { baseURL: BASE_URL } );
+		} );
+
+		test.afterAll( async () => {
+			await getApi.post( '/wp-json/fair-e2e/v1/term-languages', {
+				headers: authHeader,
+				data: { languages: {} },
+			} );
+			for ( const id of getCreatedCategoryIds ) {
+				await getApi.delete(
+					`/wp-json/wp/v2/categories/${ id }?force=true`,
+					{ headers: authHeader }
+				);
+			}
+			await getApi.dispose();
+		} );
+
+		test( 'lists categories without language metadata when all_languages is omitted', async () => {
+			const create = await getApi.post(
+				'/wp-json/fair-events/v1/sources/categories',
+				{
+					headers: authHeader,
+					data: { name: `API Test Category Default ${ Date.now() }` },
+				}
+			);
+			const created = await create.json();
+			getCreatedCategoryIds.push( created.id );
+
+			const res = await getApi.get(
+				'/wp-json/fair-events/v1/sources/categories',
+				{ headers: authHeader }
+			);
+
+			expect( res.status() ).toBe( 200 );
+			const body = await res.json();
+			const item = body.find( ( c ) => c.id === created.id );
+
+			expect( item ).toMatchObject( {
+				id: created.id,
+				name: created.name,
+				slug: created.slug,
+			} );
+			expect( item ).not.toHaveProperty( 'language' );
+		} );
+
+		test( 'rejects unauthenticated requests', async () => {
+			const anonymousApi = await request.newContext( {
+				baseURL: BASE_URL,
+			} );
+			const res = await anonymousApi.get(
+				'/wp-json/fair-events/v1/sources/categories'
+			);
+
+			expect( res.status() ).toBe( 401 );
+			await anonymousApi.dispose();
+		} );
+
+		test( 'includes each language name when all_languages=true and the Polylang fixture is enabled', async () => {
+			const create = await getApi.post(
+				'/wp-json/fair-events/v1/sources/categories',
+				{
+					headers: authHeader,
+					data: { name: `Bart ${ Date.now() }` },
+				}
+			);
+			const created = await create.json();
+			getCreatedCategoryIds.push( created.id );
+
+			await getApi.post( '/wp-json/fair-e2e/v1/term-languages', {
+				headers: authHeader,
+				data: {
+					languages: {
+						[ created.id ]: { slug: 'en', name: 'English' },
+					},
+				},
+			} );
+
+			const res = await getApi.get(
+				'/wp-json/fair-events/v1/sources/categories?all_languages=true',
+				{ headers: authHeader }
+			);
+
+			expect( res.status() ).toBe( 200 );
+			const body = await res.json();
+			const item = body.find( ( c ) => c.id === created.id );
+
+			expect( item.language ).toBe( 'English' );
+		} );
+
+		test( 'omits language metadata for a category the Polylang fixture has no language for', async () => {
+			const create = await getApi.post(
+				'/wp-json/fair-events/v1/sources/categories',
+				{
+					headers: authHeader,
+					data: {
+						name: `API Test Category Unmapped ${ Date.now() }`,
+					},
+				}
+			);
+			const created = await create.json();
+			getCreatedCategoryIds.push( created.id );
+
+			const res = await getApi.get(
+				'/wp-json/fair-events/v1/sources/categories?all_languages=true',
+				{ headers: authHeader }
+			);
+
+			expect( res.status() ).toBe( 200 );
+			const body = await res.json();
+			const item = body.find( ( c ) => c.id === created.id );
+
+			expect( item ).not.toHaveProperty( 'language' );
+		} );
 	} );
 } );
