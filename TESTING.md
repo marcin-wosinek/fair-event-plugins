@@ -122,6 +122,17 @@ Use `test:e2e:setup` only when the isolated instance also needs a full
 workspace build, production Composer install, and permalink provisioning.
 For an already-built tree, `test:wp-env:start` avoids repeating that work.
 
+A `--reuse` instance kept alive across a long session of ad-hoc debugging
+(manual `curl`/API calls, repeated spec runs, fixture creation) accumulates
+stale posts/pages/events that never get cleaned up. That can flake unrelated
+specs that count or list all items of a type, with confusing failures like
+`wp.apiFetch is not a function` or a test timing out well past what the
+assertion itself should take. A plain `test:wp-env:stop` + `test:wp-env:start`
+does **not** clear this — the database volume persists across a restart; only
+`wp-env destroy` resets it. If a full-suite run surfaces failures unrelated to
+the change you're testing, check whether they reproduce in isolation
+(`-- path/to/spec.js`) before treating them as a regression.
+
 The raw `test:api` and `test:e2e` scripts remain available for CI and advanced
 debugging with a manually managed environment. Prefer the `:local` commands for
 normal development.
@@ -209,6 +220,13 @@ To add a root E2E test:
 
 Specs that capture outgoing mail or replace external services use the test-only
 support layer in `e2e/mu-plugins/`. See [`e2e/README.md`](./e2e/README.md).
+
+To save a post/page through the standard Gutenberg editor (as opposed to a
+plugin's own custom admin app), the top-bar button is labeled **"Save"** for
+an already-published item, not "Update" — and the screen has a second,
+unrelated "Save"/"Open save panel" element, so
+`getByRole('button', { name: 'Save', exact: true })` is required to avoid a
+strict-mode violation.
 
 `.github/workflows/e2e.yml` runs the same managed lifecycle on relevant pull
 requests and uploads the HTML report and traces after failures.
