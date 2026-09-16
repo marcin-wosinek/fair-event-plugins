@@ -255,8 +255,9 @@ class EventFeedProvider {
 		if ( is_wp_error( $post_category_ids ) ) {
 			$post_category_ids = array();
 		}
+		$selected_category_ids = EventDates::get_category_ids( $row->id );
 
-		if ( ! empty( $category_ids ) && empty( array_intersect( $post_category_ids, $category_ids ) ) ) {
+		if ( ! empty( $category_ids ) && empty( array_intersect( $selected_category_ids, $category_ids ) ) ) {
 			return null;
 		}
 

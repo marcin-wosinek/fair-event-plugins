@@ -322,6 +322,10 @@ class Installer {
 			self::migrate_to_3_33_0();
 		}
 
+		if ( version_compare( $current_version, '3.34.0', '<' ) ) {
+			self::migrate_to_3_34_0();
+		}
+
 		// Update database version.
 		Schema::update_db_version( Schema::DB_VERSION );
 	}
@@ -2321,6 +2325,28 @@ class Installer {
 				1
 			)
 		);
+	}
+
+	/**
+	 * Track whether a complete category selection has been saved for a date.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_34_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+		$exists     = $wpdb->get_results(
+			$wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table_name, 'category_selection_saved' )
+		);
+		if ( empty( $exists ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN category_selection_saved BOOLEAN NOT NULL DEFAULT 0 AFTER event_id',
+					$table_name
+				)
+			);
+		}
 	}
 
 	/**

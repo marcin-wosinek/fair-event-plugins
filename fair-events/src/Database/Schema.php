@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.33.0';
+	const DB_VERSION = '3.34.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -36,6 +36,7 @@ class Schema {
 		return "CREATE TABLE {$table_name} (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			event_id BIGINT UNSIGNED DEFAULT NULL,
+			category_selection_saved BOOLEAN NOT NULL DEFAULT 0,
 			start_datetime DATETIME DEFAULT NULL,
 			end_datetime DATETIME DEFAULT NULL,
 			all_day BOOLEAN NOT NULL DEFAULT 0,
@@ -176,7 +177,7 @@ class Schema {
 	/**
 	 * Get the SQL for creating the fair_event_date_categories table
 	 *
-	 * Junction table for standalone event date categories.
+	 * Junction table for complete event date category selections.
 	 *
 	 * @return string SQL statement for creating the table.
 	 */

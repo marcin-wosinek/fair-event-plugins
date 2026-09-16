@@ -438,6 +438,143 @@ test.describe( 'EventDatesController — categories from multiple languages (#16
 	} );
 } );
 
+test.describe( 'EventDatesController — Polylang category assignment', () => {
+	let api;
+	let dateId;
+	let postId;
+	const categories = [];
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		for ( let index = 0; index < 4; index++ ) {
+			const response = await api.post( '/wp-json/wp/v2/categories', {
+				headers: adminHeaders,
+				data: { name: `Mixed language ${ index } ${ Date.now() }` },
+			} );
+			expect( response.ok() ).toBeTruthy();
+			categories.push( await response.json() );
+		}
+		const post = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Mixed language post ${ Date.now() }`,
+				status: 'publish',
+			},
+		} );
+		expect( post.ok() ).toBeTruthy();
+		postId = ( await post.json() ).id;
+		const created = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: 'Mixed language event',
+				start_datetime: '2031-01-01 10:00:00',
+			},
+		} );
+		expect( created.ok() ).toBeTruthy();
+		dateId = ( await created.json() ).id;
+		const linked = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ dateId }`,
+			{
+				headers: adminHeaders,
+				data: { event_id: postId },
+			}
+		);
+		expect( linked.ok() ).toBeTruthy();
+		await api.put( '/wp-json/fair-e2e/v1/category-assignment', {
+			headers: adminHeaders,
+			data: {
+				post_id: postId,
+				allowed_ids: categories.slice( 0, 2 ).map( ( c ) => c.id ),
+			},
+		} );
+	} );
+
+	test.afterAll( async () => {
+		await api.put( '/wp-json/fair-e2e/v1/category-assignment', {
+			headers: adminHeaders,
+			data: { post_id: 0, allowed_ids: [] },
+		} );
+		if ( dateId )
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ dateId }`,
+				{
+					headers: adminHeaders,
+				}
+			);
+		if ( postId )
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{
+					headers: adminHeaders,
+				}
+			);
+		for ( const category of categories ) {
+			await api.delete(
+				`/wp-json/wp/v2/categories/${ category.id }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+	} );
+
+	test( 'retains selections across saves, feed filtering, unlink and removal', async () => {
+		const path = `/wp-json/fair-events/v1/event-dates/${ dateId }`;
+		const ids = categories.map( ( category ) => category.id );
+		const save = async ( data ) => {
+			const response = await api.put( path, {
+				headers: adminHeaders,
+				data,
+			} );
+			expect( response.ok() ).toBeTruthy();
+			return response.json();
+		};
+		const read = async () => {
+			const response = await api.get( path, { headers: adminHeaders } );
+			return ( await response.json() ).categories
+				.map( ( category ) => category.id )
+				.sort();
+		};
+		expect(
+			( await save( { categories: ids } ) ).categories
+				.map( ( c ) => c.id )
+				.sort()
+		).toEqual( [ ...ids ].sort() );
+		expect( await read() ).toEqual( [ ...ids ].sort() );
+		const post = await api.get( `/wp-json/wp/v2/fair_event/${ postId }`, {
+			headers: adminHeaders,
+		} );
+		expect( ( await post.json() ).categories ).toEqual( ids.slice( 0, 2 ) );
+		expect(
+			( await save( { title: 'Unrelated edit' } ) ).categories
+				.map( ( c ) => c.id )
+				.sort()
+		).toEqual( [ ...ids ].sort() );
+		const feed = await api.get(
+			`/wp-json/fair-events/v1/events?start_date=2031-01-01&end_date=2031-01-02&categories=${ categories[ 2 ].slug }`
+		);
+		expect( JSON.stringify( await feed.json() ) ).toContain(
+			`"event_date_id":${ dateId }`
+		);
+		expect(
+			( await save( { categories: ids.slice( 0, 3 ) } ) ).categories
+				.map( ( c ) => c.id )
+				.sort()
+		).toEqual( ids.slice( 0, 3 ).sort() );
+		expect( await read() ).toEqual( ids.slice( 0, 3 ).sort() );
+		expect( ( await save( { categories: [] } ) ).categories ).toEqual( [] );
+		await api.put( `/wp-json/wp/v2/fair_event/${ postId }`, {
+			headers: adminHeaders,
+			data: { categories: ids.slice( 0, 2 ) },
+		} );
+		expect( await read() ).toEqual( [] );
+		await save( { categories: ids.slice( 0, 3 ) } );
+		expect(
+			( await save( { event_id: 0 } ) ).categories
+				.map( ( c ) => c.id )
+				.sort()
+		).toEqual( ids.slice( 0, 3 ).sort() );
+	} );
+} );
+
 test.describe( 'EventDatesController — Polylang link synchronization', () => {
 	let api;
 	let eventDateId;

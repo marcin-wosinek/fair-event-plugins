@@ -670,6 +670,33 @@ describe( 'multilingual categories (#1636)', () => {
 		);
 	} );
 
+	it( 'shows an error when the save response drops a selected category', async () => {
+		mockMultilingualCategories();
+		const originalFetch = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( options ) =>
+			options.method === 'PUT'
+				? Promise.resolve( {
+						...multilingualEventDate,
+						categories: multilingualEventDate.categories.slice(
+							0,
+							1
+						),
+				  } )
+				: originalFetch( options )
+		);
+
+		render( <ManageEventApp /> );
+		await screen.findByText( 'Bart — Spanish' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save event details' } )
+		);
+		expect(
+			await screen.findByText(
+				'Some selected categories were not saved. Please try again.'
+			)
+		).toBeInTheDocument();
+	} );
+
 	it( 'removing one category persists only the remaining selection', async () => {
 		mockMultilingualCategories();
 
