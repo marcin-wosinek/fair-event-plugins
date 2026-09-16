@@ -526,7 +526,10 @@ describe( 'create-on-the-fly categories (#992)', () => {
 			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
 				return Promise.resolve( mockEventDate );
 			}
-			if ( opts.path === '/fair-events/v1/sources/categories' ) {
+			if (
+				opts.path &&
+				opts.path.startsWith( '/fair-events/v1/sources/categories' )
+			) {
 				if ( opts.method === 'POST' ) {
 					return Promise.resolve( {
 						id: 5,
@@ -563,6 +566,133 @@ describe( 'create-on-the-fly categories (#992)', () => {
 		);
 
 		expect( await screen.findByText( 'Workshops' ) ).toBeInTheDocument();
+	} );
+} );
+
+describe( 'multilingual categories (#1636)', () => {
+	beforeEach( () => {
+		window.history.replaceState( {}, '', '?tab=event-details' );
+	} );
+
+	const multilingualEventDate = {
+		...mockEventDate,
+		categories: [
+			{ id: 1, name: 'Bart', slug: 'bart' },
+			{ id: 2, name: 'Bart', slug: 'bart-es' },
+		],
+	};
+
+	const mockMultilingualCategories = ( { availableIds = [ 1, 2 ] } = {} ) => {
+		const allCategories = [
+			{ id: 1, name: 'Bart', slug: 'bart', language: 'English' },
+			{ id: 2, name: 'Bart', slug: 'bart-es', language: 'Spanish' },
+		];
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				if ( opts.method === 'PUT' ) {
+					return Promise.resolve( multilingualEventDate );
+				}
+				return Promise.resolve( multilingualEventDate );
+			}
+			if (
+				opts.path &&
+				opts.path.startsWith( '/fair-events/v1/sources/categories' )
+			) {
+				return Promise.resolve(
+					allCategories.filter( ( c ) =>
+						availableIds.includes( c.id )
+					)
+				);
+			}
+			return Promise.resolve( [] );
+		} );
+	};
+
+	it( 'requests every configured language and distinguishes same-named categories', async () => {
+		mockMultilingualCategories();
+
+		render( <ManageEventApp /> );
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					path: '/fair-events/v1/sources/categories?all_languages=true',
+				} )
+			)
+		);
+
+		expect(
+			await screen.findByText( 'Bart — English' )
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Bart — Spanish' ) ).toBeInTheDocument();
+	} );
+
+	it( 'keeps a selected category that the latest fetch omitted', async () => {
+		// Only the English term comes back from sources/categories (e.g. a
+		// slow or partial fetch); the Spanish one is still on the event.
+		mockMultilingualCategories( { availableIds: [ 1 ] } );
+
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByText( 'Bart — English' )
+		).toBeInTheDocument();
+		// The context header also renders a "Bart" category badge, so scope
+		// this check to the token field itself rather than screen.getByText.
+		const tokenLabels = Array.from(
+			document.querySelectorAll(
+				'.components-form-token-field__token-text > [aria-hidden="true"]'
+			)
+		).map( ( el ) => el.textContent );
+		expect( tokenLabels ).toEqual(
+			expect.arrayContaining( [ 'Bart — English', 'Bart' ] )
+		);
+	} );
+
+	it( 'preserves every language on an unrelated save', async () => {
+		mockMultilingualCategories();
+
+		render( <ManageEventApp /> );
+		const titleInput = await screen.findByLabelText( 'Title' );
+		fireEvent.change( titleInput, { target: { value: 'Edited title' } } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save event details' } )
+		);
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					method: 'PUT',
+					data: expect.objectContaining( { categories: [ 1, 2 ] } ),
+				} )
+			)
+		);
+	} );
+
+	it( 'removing one category persists only the remaining selection', async () => {
+		mockMultilingualCategories();
+
+		render( <ManageEventApp /> );
+		await screen.findByText( 'Bart — Spanish' );
+
+		const removeButtons = screen.getAllByRole( 'button', {
+			name: 'Remove item',
+		} );
+		fireEvent.click( removeButtons[ 1 ] );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save event details' } )
+		);
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					method: 'PUT',
+					data: expect.objectContaining( { categories: [ 1 ] } ),
+				} )
+			)
+		);
 	} );
 } );
 

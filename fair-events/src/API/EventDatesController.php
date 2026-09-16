@@ -1268,7 +1268,12 @@ class EventDatesController extends WP_REST_Controller {
 			// When unlinking a post-linked event, copy categories to junction table.
 			$newly_unlinked = isset( $update_data['event_id'] ) && ! $update_data['event_id'] && $existing->event_id;
 			if ( $newly_unlinked ) {
-				$terms   = wp_get_post_terms( $existing->event_id, 'category' );
+				// Explicit empty 'lang' disables Polylang's automatic
+				// current-language filtering, matching CategoriesController's
+				// all_languages mode (#1636) — every category selected in the
+				// editor must copy over, not only the ones in the current
+				// admin language.
+				$terms   = wp_get_post_terms( $existing->event_id, 'category', array( 'lang' => '' ) );
 				$cat_ids = array();
 				if ( ! is_wp_error( $terms ) ) {
 					$cat_ids = wp_list_pluck( $terms, 'term_id' );
@@ -2101,7 +2106,12 @@ class EventDatesController extends WP_REST_Controller {
 	 */
 	private function get_event_date_categories( $event_date ) {
 		if ( $event_date->event_id ) {
-			$terms = wp_get_post_terms( $event_date->event_id, 'category' );
+			// Explicit empty 'lang' disables Polylang's automatic
+			// current-language filtering (#1636) — the editor needs every
+			// category the post carries, not only the current admin
+			// language's, or a save immediately after load would drop the
+			// rest.
+			$terms = wp_get_post_terms( $event_date->event_id, 'category', array( 'lang' => '' ) );
 			if ( is_wp_error( $terms ) ) {
 				return array();
 			}
