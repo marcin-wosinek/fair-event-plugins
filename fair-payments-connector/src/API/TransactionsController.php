@@ -13,6 +13,7 @@ use FairPaymentsConnector\Models\Transaction;
 use FairPaymentsConnector\Models\LineItem;
 use FairPaymentsConnector\Models\EntryTransaction;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
+use FairPaymentsConnector\Services\TransactionDeletionService;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -90,6 +91,18 @@ class TransactionsController extends WP_REST_Controller {
 						),
 						'event_date_id'  => array(
 							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'              => 'integer',
+							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
 					),
@@ -421,6 +434,43 @@ class TransactionsController extends WP_REST_Controller {
 		$transaction = Transaction::get_by_id( (int) $transaction->id );
 
 		return new WP_REST_Response( $this->prepare_transaction_response( $transaction ), 200 );
+	}
+
+	/**
+	 * Permanently delete a local transaction and its owned local data.
+	 *
+	 * Never cancels, refunds, or otherwise modifies the payment in Mollie or
+	 * any other external service — only local WordPress data is removed.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function delete_item( $request ) {
+		$id = (int) $request->get_param( 'id' );
+
+		if ( ! Transaction::get_by_id( $id ) ) {
+			return new WP_Error(
+				'not_found',
+				__( 'Transaction not found.', 'fair-payments-connector' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! TransactionDeletionService::delete( $id ) ) {
+			return new WP_Error(
+				'delete_failed',
+				__( 'Failed to delete the transaction. It has not been changed.', 'fair-payments-connector' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'deleted' => true,
+				'id'      => $id,
+			),
+			200
+		);
 	}
 
 	/**

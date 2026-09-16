@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect, useRef } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
@@ -12,6 +12,7 @@ import {
 	Spinner,
 	Notice,
 	TextControl,
+	__experimentalConfirmDialog as ConfirmDialog,
 	__experimentalHeading as Heading,
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
@@ -735,9 +736,37 @@ const TransactionPage = () => {
 	const [ error, setError ] = useState( null );
 	const [ syncing, setSyncing ] = useState( false );
 	const [ syncNotice, setSyncNotice ] = useState( null );
+	const [ deleting, setDeleting ] = useState( false );
+	const [ deleteError, setDeleteError ] = useState( null );
+	const [ isDeleteDialogOpen, setIsDeleteDialogOpen ] = useState( false );
 
 	const params = new URLSearchParams( window.location.search );
 	const transactionId = params.get( 'transaction_id' );
+
+	const handleDeleteTransaction = () => {
+		setIsDeleteDialogOpen( false );
+		setDeleting( true );
+		setDeleteError( null );
+
+		apiFetch( {
+			path: `/fair-payments-connector/v1/transactions/${ transactionId }`,
+			method: 'DELETE',
+		} )
+			.then( () => {
+				window.location.href =
+					'admin.php?page=fair-payments-connector-transactions&transaction_deleted=1';
+			} )
+			.catch( ( err ) => {
+				setDeleteError(
+					err.message ||
+						__(
+							'Failed to delete transaction.',
+							'fair-payments-connector'
+						)
+				);
+				setDeleting( false );
+			} );
+	};
 
 	const handleSyncMollie = () => {
 		setSyncing( true );
@@ -1281,7 +1310,76 @@ const TransactionPage = () => {
 				</Card>
 
 				<TransactionLog transactionId={ transactionId } />
+
+				<Card>
+					<CardHeader>
+						<Heading level={ 4 }>
+							{ __( 'Danger Zone', 'fair-payments-connector' ) }
+						</Heading>
+					</CardHeader>
+					{ deleteError && (
+						<CardBody style={ { paddingBottom: 0 } }>
+							<Notice
+								status="error"
+								isDismissible
+								onRemove={ () => setDeleteError( null ) }
+							>
+								{ deleteError }
+							</Notice>
+						</CardBody>
+					) }
+					<CardBody>
+						<p>
+							{ __(
+								'Permanently delete this local transaction record. This does not cancel, refund, or delete the payment in Mollie or any other external service.',
+								'fair-payments-connector'
+							) }
+						</p>
+						<Button
+							variant="secondary"
+							isDestructive
+							isBusy={ deleting }
+							disabled={ deleting }
+							onClick={ () => setIsDeleteDialogOpen( true ) }
+						>
+							{ deleting
+								? __( 'Deleting…', 'fair-payments-connector' )
+								: __(
+										'Delete transaction',
+										'fair-payments-connector'
+								  ) }
+						</Button>
+					</CardBody>
+				</Card>
 			</VStack>
+
+			<ConfirmDialog
+				isOpen={ isDeleteDialogOpen }
+				onConfirm={ handleDeleteTransaction }
+				onCancel={ () => setIsDeleteDialogOpen( false ) }
+				confirmButtonText={ __(
+					'Delete transaction',
+					'fair-payments-connector'
+				) }
+				cancelButtonText={ __( 'Cancel', 'fair-payments-connector' ) }
+			>
+				<p>
+					{ sprintf(
+						/* translators: %d is the transaction ID */
+						__(
+							'Permanently delete transaction #%d? This cannot be undone.',
+							'fair-payments-connector'
+						),
+						t.id
+					) }
+				</p>
+				<p>
+					{ __(
+						'Only the local transaction record and its exclusively owned local data are removed. The payment in Mollie or any other external service is not cancelled, refunded, or deleted.',
+						'fair-payments-connector'
+					) }
+				</p>
+			</ConfirmDialog>
 		</div>
 	);
 };

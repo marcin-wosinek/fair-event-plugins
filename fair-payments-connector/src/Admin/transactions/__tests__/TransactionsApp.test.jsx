@@ -164,3 +164,50 @@ describe( 'TransactionsApp — batch Mollie fee sync (#1555)', () => {
 		expect( listCalls ).toHaveLength( 2 );
 	} );
 } );
+
+describe( 'TransactionsApp — post-deletion success notice (#1618)', () => {
+	afterEach( () => {
+		window.history.pushState( {}, '', '/' );
+	} );
+
+	// The accessibility live region echoes notice text alongside the visible
+	// Notice, so scope matches to the rendered notice content itself.
+	const successNoticeContent = () =>
+		screen.queryByText(
+			( content, element ) =>
+				content ===
+					'Transaction deleted. The payment in Mollie or any other external service was not changed.' &&
+				element?.className === 'components-notice__content'
+		);
+
+	it( 'shows a success notice for the one-use marker and strips it from the URL', async () => {
+		window.history.pushState(
+			{},
+			'',
+			'/?page=fair-payments-connector-transactions&transaction_deleted=1'
+		);
+
+		render( <TransactionsApp /> );
+
+		await waitFor( () =>
+			expect( successNoticeContent() ).toBeInTheDocument()
+		);
+
+		expect( window.location.search ).toBe(
+			'?page=fair-payments-connector-transactions'
+		);
+	} );
+
+	it( 'shows no success notice when the marker is absent', async () => {
+		window.history.pushState(
+			{},
+			'',
+			'/?page=fair-payments-connector-transactions'
+		);
+
+		render( <TransactionsApp /> );
+
+		await waitFor( () => expect( apiFetch ).toHaveBeenCalled() );
+		expect( successNoticeContent() ).not.toBeInTheDocument();
+	} );
+} );
