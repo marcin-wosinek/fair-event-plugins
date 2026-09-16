@@ -246,6 +246,7 @@ class Transaction {
 			'participant_id' => '%d',
 			'user_id'        => '%d',
 			'post_id'        => '%d',
+			'event_date_id'  => '%d',
 		);
 
 		$data    = array();

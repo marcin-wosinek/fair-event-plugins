@@ -88,6 +88,10 @@ class TransactionsController extends WP_REST_Controller {
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
 						),
+						'event_date_id'  => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
 					),
 				),
 			)
@@ -382,6 +386,18 @@ class TransactionsController extends WP_REST_Controller {
 		if ( null !== $request->get_param( 'post_id' ) ) {
 			$post_id           = $request->get_param( 'post_id' );
 			$fields['post_id'] = $post_id ? $post_id : null;
+		}
+
+		if ( null !== $request->get_param( 'event_date_id' ) ) {
+			$event_date_id = $request->get_param( 'event_date_id' );
+			if ( $event_date_id && ! apply_filters( 'fair_payment_validate_event_date_id', false, $event_date_id ) ) {
+				return new WP_Error(
+					'invalid_event_date',
+					__( 'The selected event date does not exist.', 'fair-payments-connector' ),
+					array( 'status' => 400 )
+				);
+			}
+			$fields['event_date_id'] = $event_date_id ? $event_date_id : null;
 		}
 
 		if ( empty( $fields ) ) {
@@ -772,11 +788,15 @@ class TransactionsController extends WP_REST_Controller {
 			: null;
 		$participant    = apply_filters( 'fair_payment_prepare_participant', null, $participant_id );
 
+		$event_date_id = $transaction->event_date_id ? (int) $transaction->event_date_id : null;
+		$event         = apply_filters( 'fair_payment_prepare_event', null, $event_date_id );
+
 		$data = array(
 			'id'                   => (int) $transaction->id,
 			'mollie_payment_id'    => $transaction->mollie_payment_id ?? '',
 			'post_id'              => $transaction->post_id ? (int) $transaction->post_id : null,
-			'event_date_id'        => $transaction->event_date_id ? (int) $transaction->event_date_id : null,
+			'event_date_id'        => $event_date_id,
+			'event'                => $event,
 			'post_title'           => $post_title,
 			'user_id'              => $transaction->user_id ? (int) $transaction->user_id : null,
 			'user_name'            => $user_name,

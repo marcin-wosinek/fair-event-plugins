@@ -478,3 +478,112 @@ test.describe( 'Transaction — payment timestamp storage and presentation', () 
 		);
 	} );
 } );
+
+test.describe( 'Transaction — event link', () => {
+	const EVENT_DATES_ENDPOINT = '/wp-json/fair-events/v1/event-dates';
+
+	let api;
+	let eventDateId;
+	let transactionId;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+
+		const eventRes = await api.post( EVENT_DATES_ENDPOINT, {
+			headers: adminAuth(),
+			data: {
+				title: `E2E Event Link Test ${ Date.now() }`,
+				start_datetime: '2027-03-01 10:00:00',
+			},
+		} );
+		expect( eventRes.status() ).toBe( 201 );
+		eventDateId = ( await eventRes.json() ).id;
+
+		const mollie_payment_id = `tr_event_link_${ Date.now() }`;
+		const importRes = await api.post( IMPORT_ENDPOINT, {
+			headers: adminAuth(),
+			data: {
+				transactions: [
+					{
+						mollie_payment_id,
+						amount: 5.0,
+						currency: 'EUR',
+						status: 'paid',
+						testmode: true,
+					},
+				],
+			},
+		} );
+		expect( importRes.status() ).toBe( 200 );
+
+		const listRes = await api.get( TRANSACTIONS_ENDPOINT, {
+			headers: adminAuth(),
+			params: { per_page: 100, mode: 'test' },
+		} );
+		expect( listRes.status() ).toBe( 200 );
+		const { transactions } = await listRes.json();
+		const txn = transactions.find(
+			( t ) => t.mollie_payment_id === mollie_payment_id
+		);
+		expect( txn ).toBeDefined();
+		transactionId = txn.id;
+	} );
+
+	test.afterAll( async () => {
+		if ( eventDateId ) {
+			await api.delete( `${ EVENT_DATES_ENDPOINT }/${ eventDateId }`, {
+				headers: adminAuth(),
+			} );
+		}
+		await api.dispose();
+	} );
+
+	test( 'links a valid occurrence and returns its display summary', async () => {
+		const res = await api.post(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`,
+			{
+				headers: adminAuth(),
+				data: { event_date_id: eventDateId },
+			}
+		);
+		expect( res.status() ).toBe( 200 );
+		const body = await res.json();
+		expect( body.event_date_id ).toBe( eventDateId );
+		expect( body.event ).toEqual(
+			expect.objectContaining( { id: eventDateId } )
+		);
+	} );
+
+	test( 'rejects a nonexistent occurrence without changing the existing value', async () => {
+		const res = await api.post(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`,
+			{
+				headers: adminAuth(),
+				data: { event_date_id: 999999999 },
+			}
+		);
+		expect( res.status() ).toBe( 400 );
+
+		const getRes = await api.get(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`,
+			{ headers: adminAuth() }
+		);
+		expect( getRes.status() ).toBe( 200 );
+		const body = await getRes.json();
+		expect( body.event_date_id ).toBe( eventDateId );
+	} );
+
+	test( 'clears an existing event link', async () => {
+		const res = await api.post(
+			`${ TRANSACTIONS_ENDPOINT }/${ transactionId }`,
+			{
+				headers: adminAuth(),
+				data: { event_date_id: 0 },
+			}
+		);
+		expect( res.status() ).toBe( 200 );
+		const body = await res.json();
+		expect( body.event_date_id ).toBeNull();
+		expect( body.event ).toBeNull();
+	} );
+} );

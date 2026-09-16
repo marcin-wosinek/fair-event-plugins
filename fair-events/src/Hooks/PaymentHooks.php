@@ -25,6 +25,9 @@ class PaymentHooks {
 		add_action( 'fair_payment_paid', array( static::class, 'handle_payment_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_payment_failed' ), 10, 2 );
 
+		add_filter( 'fair_payment_prepare_event', array( static::class, 'prepare_event' ), 10, 2 );
+		add_filter( 'fair_payment_validate_event_date_id', array( static::class, 'validate_event_date_id' ), 10, 2 );
+
 		// Cron to expire stale pending_payment rows.
 		add_action( 'fair_events_cleanup_expired_ticket_signups', array( static::class, 'cleanup_expired_signups' ) );
 		if ( ! wp_next_scheduled( 'fair_events_cleanup_expired_ticket_signups' ) ) {
@@ -96,6 +99,47 @@ class PaymentHooks {
 	 */
 	public static function cleanup_expired_signups() {
 		\FairEvents\Models\EventSignup::expire_pending();
+	}
+
+	/**
+	 * Prepare an event summary for a transaction-view response.
+	 *
+	 * @param array|null $prepared       Current value (null if not yet prepared).
+	 * @param int|null   $event_date_id  Event date ID.
+	 * @return array|null Summary with id, title, start_datetime, manage_url — or null.
+	 */
+	public static function prepare_event( $prepared, $event_date_id ) {
+		if ( null !== $prepared || empty( $event_date_id ) ) {
+			return $prepared;
+		}
+
+		$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id );
+
+		if ( ! $event_date ) {
+			return null;
+		}
+
+		return array(
+			'id'             => (int) $event_date->id,
+			'title'          => $event_date->get_display_title(),
+			'start_datetime' => $event_date->start_datetime,
+			'manage_url'     => admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . (int) $event_date->id ),
+		);
+	}
+
+	/**
+	 * Validate that a submitted event_date_id belongs to a real event date row.
+	 *
+	 * @param bool $valid         Current value (false if not yet validated).
+	 * @param int  $event_date_id Event date ID to validate.
+	 * @return bool
+	 */
+	public static function validate_event_date_id( $valid, $event_date_id ) {
+		if ( $valid ) {
+			return $valid;
+		}
+
+		return (bool) \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id );
 	}
 
 	/**
