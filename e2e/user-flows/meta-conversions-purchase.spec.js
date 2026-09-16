@@ -8,8 +8,8 @@
  * was previously untestable end to end and its outbox stayed permanently
  * empty here. This spec is the first to exercise it live: a consented
  * test-mode purchase must now enqueue and deliver both `InitiateCheckout` and
- * `Purchase`, tagged `payment_mode: "test"`, with the configured Test Events
- * code attached to the outgoing Graph API request.
+ * `Purchase` as production events, tagged `payment_mode: "test"`. A configured
+ * Test Events code must not be attached to these routine Graph API requests.
  *
  * Consent and a valid Meta browser identifier are asserted client-side
  * (fair-events-experimental/src/Frontend/meta-attribution.js reads
@@ -93,7 +93,7 @@ test.describe('Meta Conversions checkout/purchase reporting', () => {
 		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
 	});
 
-	test('a consented test-mode purchase registers InitiateCheckout and Purchase in Meta Test Events', async ({
+	test('a consented test-mode purchase registers production InitiateCheckout and Purchase events', async ({
 		page,
 		seedEvent,
 	}) => {
@@ -152,7 +152,7 @@ test.describe('Meta Conversions checkout/purchase reporting', () => {
 			(request) => request?.data?.[0]?.event_name === 'Purchase'
 		);
 		expect(purchaseRequest).toBeTruthy();
-		expect(purchaseRequest.test_event_code).toBe(TEST_EVENT_CODE);
+		expect(purchaseRequest).not.toHaveProperty('test_event_code');
 		expect(purchaseRequest.data[0].custom_data.payment_mode).toBe('test');
 		expect(purchaseRequest.data[0].custom_data.order_id).toBe(
 			String(signup.transaction_id)
@@ -162,7 +162,7 @@ test.describe('Meta Conversions checkout/purchase reporting', () => {
 			(request) => request?.data?.[0]?.event_name === 'InitiateCheckout'
 		);
 		expect(checkoutRequest).toBeTruthy();
-		expect(checkoutRequest.test_event_code).toBe(TEST_EVENT_CODE);
+		expect(checkoutRequest).not.toHaveProperty('test_event_code');
 	});
 
 	test('a failed payment does not register a Purchase event', async ({

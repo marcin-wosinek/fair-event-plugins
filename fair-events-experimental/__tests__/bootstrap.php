@@ -70,3 +70,110 @@ if ( ! function_exists( 'sanitize_key' ) ) {
 		return preg_replace( '/[^a-z0-9_\-]/', '', $key );
 	}
 }
+
+// Minimal stubs so Conversions::send_payload()/send_test() can be driven
+// black-box, asserting on the outgoing wp_remote_post() request — the
+// third-party HTTP boundary where a stray test_event_code would actually
+// leak into (or be missing from) a request. Tests seed option values via
+// $GLOBALS['_fair_test_options'] and control the simulated Meta response via
+// $GLOBALS['_fair_test_remote_post_response']; every call is recorded in
+// $GLOBALS['_fair_test_remote_post_requests'].
+if ( ! function_exists( 'get_option' ) ) {
+	/**
+	 * Stub of WordPress get_option() backed by $GLOBALS['_fair_test_options'].
+	 *
+	 * @param string $name          Option name.
+	 * @param mixed  $default_value Value returned when the option is unset.
+	 * @return mixed Stored value or the default.
+	 */
+	function get_option( $name, $default_value = false ) {
+		$options = isset( $GLOBALS['_fair_test_options'] ) ? $GLOBALS['_fair_test_options'] : array();
+		return array_key_exists( $name, $options ) ? $options[ $name ] : $default_value;
+	}
+}
+
+if ( ! function_exists( 'update_option' ) ) {
+	/**
+	 * Stub of WordPress update_option() backed by $GLOBALS['_fair_test_options'].
+	 *
+	 * @param string $name  Option name.
+	 * @param mixed  $value Value to store.
+	 * @return true
+	 */
+	function update_option( $name, $value ) {
+		$GLOBALS['_fair_test_options'][ $name ] = $value;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_remote_post' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_post(). Records every call and returns the
+	 * response the test queued, defaulting to an accepted 200.
+	 *
+	 * @param string $url  Request URL.
+	 * @param array  $args Request args.
+	 * @return array|WP_Error
+	 */
+	function wp_remote_post( $url, $args = array() ) {
+		$GLOBALS['_fair_test_remote_post_requests'][] = array(
+			'url'  => $url,
+			'args' => $args,
+		);
+		return isset( $GLOBALS['_fair_test_remote_post_response'] )
+			? $GLOBALS['_fair_test_remote_post_response']
+			: array(
+				'response' => array( 'code' => 200 ),
+				'body'     => '{}',
+			);
+	}
+}
+
+if ( ! function_exists( 'is_wp_error' ) ) {
+	/**
+	 * Stub of WordPress is_wp_error().
+	 *
+	 * @param mixed $thing Value to check.
+	 * @return bool
+	 */
+	function is_wp_error( $thing ) {
+		return $thing instanceof WP_Error;
+	}
+}
+
+if ( ! function_exists( 'wp_remote_retrieve_response_code' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_retrieve_response_code().
+	 *
+	 * @param array $response Response array.
+	 * @return int
+	 */
+	function wp_remote_retrieve_response_code( $response ) {
+		return (int) ( $response['response']['code'] ?? 0 );
+	}
+}
+
+if ( ! function_exists( 'wp_remote_retrieve_body' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_retrieve_body().
+	 *
+	 * @param array $response Response array.
+	 * @return string
+	 */
+	function wp_remote_retrieve_body( $response ) {
+		return (string) ( $response['body'] ?? '' );
+	}
+}
+
+if ( ! function_exists( 'wp_generate_uuid4' ) ) {
+	/**
+	 * Stub of WordPress wp_generate_uuid4().
+	 *
+	 * @return string
+	 */
+	function wp_generate_uuid4() {
+		return 'test-uuid-0000-0000-000000000000';
+	}
+}
+
+require_once __DIR__ . '/Fair_Test_WP_Error.php';
