@@ -273,6 +273,26 @@ export default function EventAudience( {
 		return list;
 	}, [ sortedParticipants, filterRole, searchText ] );
 
+	// The printable roster: collaborators and signed-up participants under the
+	// Audience page's current sort/filter/search. Both the printout and the
+	// consent popup number entries from this same list, so a participant's
+	// number always matches the "#" column on the printout in hand.
+	const printableParticipants = useMemo(
+		() =>
+			filteredParticipants.filter(
+				( p ) => p.label === 'collaborator' || p.label === 'signed_up'
+			),
+		[ filteredParticipants ]
+	);
+
+	const printNumberByParticipantId = useMemo( () => {
+		const map = new Map();
+		printableParticipants.forEach( ( p, index ) => {
+			map.set( p.participant_id, index + 1 );
+		} );
+		return map;
+	}, [ printableParticipants ] );
+
 	const counts = useMemo( () => {
 		const c = { collaborator: 0, signed_up: 0, interested: 0 };
 		participants.forEach( ( p ) => {
@@ -814,9 +834,7 @@ export default function EventAudience( {
 		// The printed list is the on-site roster: only collaborators and
 		// signed-up (registered) participants. "Interested" and transient
 		// states (e.g. pending_payment) are intentionally excluded.
-		const printParticipants = filteredParticipants.filter(
-			( p ) => p.label === 'collaborator' || p.label === 'signed_up'
-		);
+		const printParticipants = printableParticipants;
 
 		const rows = printParticipants
 			.map( ( p, index ) => {
@@ -2231,6 +2249,10 @@ export default function EventAudience( {
 										consentChoices[ p.participant_id ] ??
 										null;
 									const hasEmail = !! p.participant_email;
+									const printNumber =
+										printNumberByParticipantId.get(
+											p.participant_id
+										);
 									return (
 										<div
 											key={ p.participant_id }
@@ -2243,26 +2265,49 @@ export default function EventAudience( {
 												gap: '10px',
 											} }
 										>
-											<div>
-												<strong>
-													{ p.name } { p.surname }
-												</strong>
-												{ p.participant_email && (
-													<>
-														<br />
-														<span
-															style={ {
-																color: '#666',
-																fontSize:
-																	'12px',
-															} }
-														>
-															{
-																p.participant_email
-															}
-														</span>
-													</>
-												) }
+											<div
+												style={ {
+													display: 'flex',
+													alignItems: 'baseline',
+													gap: '8px',
+												} }
+											>
+												<span
+													style={ {
+														color: '#666',
+														fontSize: '12px',
+														minWidth: '20px',
+														textAlign: 'right',
+														flexShrink: 0,
+													} }
+												>
+													{ printNumber ??
+														__(
+															'—',
+															'fair-audience'
+														) }
+												</span>
+												<div>
+													<strong>
+														{ p.name } { p.surname }
+													</strong>
+													{ p.participant_email && (
+														<>
+															<br />
+															<span
+																style={ {
+																	color: '#666',
+																	fontSize:
+																		'12px',
+																} }
+															>
+																{
+																	p.participant_email
+																}
+															</span>
+														</>
+													) }
+												</div>
 											</div>
 											<div
 												style={ {
