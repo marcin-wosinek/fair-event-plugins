@@ -42,11 +42,22 @@ test.describe( 'AuditLogController', () => {
 		} );
 
 		test( 'returns a paginated shape with items newest first', async () => {
-			// Ensure there's at least one entry to page through.
+			// Ensure there's at least one entry to page through. The write
+			// is a no-op (and records nothing) if the value doesn't
+			// actually change, so read the current currency first and post
+			// its opposite rather than assuming a fixed value differs.
+			const current = await (
+				await api.get( '/wp-json/wp/v2/settings', {
+					headers: adminAuth(),
+				} )
+			).json();
+			const nextCurrency =
+				current.fair_payment_currency === 'EUR' ? 'USD' : 'EUR';
+
 			await api.post( SETTINGS_WRITE_ENDPOINT, {
 				headers: adminAuth(),
 				data: {
-					settings: { fair_payment_currency: 'EUR' },
+					settings: { fair_payment_currency: nextCurrency },
 					reason: 'Seed an audit entry for the pagination check.',
 				},
 			} );
