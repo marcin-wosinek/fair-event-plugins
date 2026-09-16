@@ -86,7 +86,8 @@ class Conversions {
 	 * (`fair-events-get-tickets`), carry current marketing consent, and carry
 	 * at least one valid Meta browser identifier. Payment mode (test/live) is
 	 * captured from the transaction but never gates eligibility — both modes
-	 * report to Meta Test Events so admins can verify checkout end to end.
+	 * report as production Meta events, distinguished only by
+	 * `custom_data.payment_mode`, so admins can verify checkout end to end.
 	 *
 	 * @param object $transaction Transaction. @param string $event_name Event name. @return array|null
 	 */
@@ -159,23 +160,17 @@ class Conversions {
 
 	/**
 	 * Deliver queued rows without affecting payment state. Every event — test
-	 * mode and live mode alike — is sent once with the currently configured
-	 * Test Events code (see class doc block for why: single-delivery Test
-	 * Events visibility, not a production/test duplicate). A row claimed
-	 * after the code was removed fails closed with a configuration error
-	 * rather than delivering without one.
+	 * mode and live mode alike — is sent once as a production Meta event, with
+	 * no `test_event_code` attached; `payment_mode` in `custom_data` remains
+	 * the only way to tell the two apart. The configured Test Events code is
+	 * reserved for the explicit administrator-triggered synthetic test in
+	 * {@see send_test()} and never gates or accompanies routine delivery.
 	 */
 	public function deliver_due() {
-		$outbox    = new Outbox();
-		$test_code = (string) get_option( self::TEST_CODE_OPTION, '' );
-		$row       = $outbox->claim_due();
+		$outbox = new Outbox();
+		$row    = $outbox->claim_due();
 		while ( $row ) {
-			if ( '' === $test_code ) {
-				$outbox->finish( (int) $row->id, 'configuration_error', 'missing_test_event_code', 'configuration' );
-				$row = $outbox->claim_due();
-				continue;
-			}
-			$result = $this->send_payload( self::payload_for( $row ), $test_code );
+			$result = $this->send_payload( self::payload_for( $row ) );
 			if ( $result['accepted'] ) {
 				$outbox->finish( (int) $row->id, 'accepted' );
 			} elseif ( $result['temporary'] ) {
