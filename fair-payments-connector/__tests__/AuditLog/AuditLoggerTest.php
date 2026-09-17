@@ -126,6 +126,54 @@ class AuditLoggerTest extends TestCase {
 	}
 
 	/**
+	 * Describe_setting_change() generates a distinct, non-empty description
+	 * for every setting key the connector allows an administrator to change
+	 * manually (#1575), plus a generic fallback for anything else.
+	 */
+	public function test_describe_setting_change_covers_known_keys(): void {
+		$this->assertSame(
+			'Switched to live mode.',
+			AuditLogger::describe_setting_change( 'fair_payment_mode', 'live' )
+		);
+		$this->assertSame(
+			'Switched to test mode.',
+			AuditLogger::describe_setting_change( 'fair_payment_mode', 'test' )
+		);
+		$this->assertSame(
+			'Default currency changed to USD.',
+			AuditLogger::describe_setting_change( 'fair_payment_currency', 'USD' )
+		);
+		$this->assertSame(
+			'Bank transfer restriction near the key date enabled.',
+			AuditLogger::describe_setting_change( 'fair_payment_disable_banktransfer_near_date', true )
+		);
+		$this->assertSame(
+			'Bank transfer restriction near the key date disabled.',
+			AuditLogger::describe_setting_change( 'fair_payment_disable_banktransfer_near_date', false )
+		);
+		$this->assertSame(
+			'Bank transfer threshold changed to 1 working day.',
+			AuditLogger::describe_setting_change( 'fair_payment_banktransfer_threshold_days', 1 )
+		);
+		$this->assertSame(
+			'Bank transfer threshold changed to 5 working days.',
+			AuditLogger::describe_setting_change( 'fair_payment_banktransfer_threshold_days', 5 )
+		);
+		$this->assertSame(
+			'Bundled translations enabled.',
+			AuditLogger::describe_setting_change( 'bundled-translations', true )
+		);
+		$this->assertSame(
+			'Bundled translations disabled.',
+			AuditLogger::describe_setting_change( 'bundled-translations', false )
+		);
+		$this->assertSame(
+			'"some_unknown_key" was changed.',
+			AuditLogger::describe_setting_change( 'some_unknown_key', 'x' )
+		);
+	}
+
+	/**
 	 * Context values are JSON-encoded, and any credential-shaped key is
 	 * dropped as defense in depth even though callers should never pass one.
 	 */

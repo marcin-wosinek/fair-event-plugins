@@ -71,6 +71,21 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+if ( ! function_exists( '_n' ) ) {
+	/**
+	 * Stub of WordPress _n() — returns the singular or plural form untranslated.
+	 *
+	 * @param string $single Singular text.
+	 * @param string $plural Plural text.
+	 * @param int    $number Number to compare against.
+	 * @param string $domain Text domain (unused).
+	 * @return string
+	 */
+	function _n( $single, $plural, $number, $domain = 'default' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		return 1 === (int) $number ? $single : $plural;
+	}
+}
+
 if ( ! function_exists( 'esc_html__' ) ) {
 	/**
 	 * Stub of WordPress esc_html__() — returns the string untranslated.

@@ -16,10 +16,9 @@ defined( 'WPINC' ) || die;
  *
  * Two-step CSRF protection: the client fetches a short-lived state token before
  * redirecting to Mollie, then POSTs it back on return so we can verify it
- * server-side before writing any credentials. The audit reason is supplied
- * once, when the state token is requested, and bound to that same
- * transient — the callback trusts the reason it stored server-side, never
- * one resent by the client at callback time.
+ * server-side before writing any credentials. The audit description is
+ * generated server-side once the callback succeeds (#1575) — administrators
+ * no longer supply a reason for connecting, reconnecting, or disconnecting.
  */
 class OAuthCallbackController extends \WP_REST_Controller {
 
@@ -38,14 +37,6 @@ class OAuthCallbackController extends \WP_REST_Controller {
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
-				'args'                => array(
-					'reason' => array(
-						'required'          => true,
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_textarea_field',
-						'validate_callback' => array( $this, 'validate_reason' ),
-					),
-				),
 			)
 		);
 
@@ -106,45 +97,20 @@ class OAuthCallbackController extends \WP_REST_Controller {
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
-				'args'                => array(
-					'reason' => array(
-						'required'          => true,
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_textarea_field',
-						'validate_callback' => array( $this, 'validate_reason' ),
-					),
-				),
 			)
 		);
 	}
 
 	/**
-	 * Reject an empty/whitespace-only reason.
-	 *
-	 * @param mixed $value Raw param value.
-	 * @return bool
-	 */
-	public function validate_reason( $value ) {
-		return is_string( $value ) && '' !== trim( $value );
-	}
-
-	/**
-	 * Generate a one-time OAuth state token and store it, with the reason for
-	 * this authorization attempt, in a user-scoped transient.
+	 * Generate a one-time OAuth state token and store it in a user-scoped
+	 * transient.
 	 *
 	 * @param \WP_REST_Request $request Incoming request.
 	 * @return \WP_REST_Response
 	 */
 	public function generate_state( \WP_REST_Request $request ) {
 		$state = wp_generate_password( 32, false );
-		set_transient(
-			$this->state_transient_key(),
-			array(
-				'state'  => $state,
-				'reason' => trim( (string) $request->get_param( 'reason' ) ),
-			),
-			5 * MINUTE_IN_SECONDS
-		);
+		set_transient( $this->state_transient_key(), $state, 5 * MINUTE_IN_SECONDS );
 		return new \WP_REST_Response( array( 'state' => $state ), 200 );
 	}
 
@@ -161,7 +127,7 @@ class OAuthCallbackController extends \WP_REST_Controller {
 		// Single-use: delete before any branching to prevent replay.
 		delete_transient( $this->state_transient_key() );
 
-		if ( ! is_array( $expected ) || empty( $expected['state'] ) || ! hash_equals( $expected['state'], $state ) ) {
+		if ( ! is_string( $expected ) || '' === $expected || ! hash_equals( $expected, $state ) ) {
 			return new \WP_Error(
 				'invalid_oauth_state',
 				__( 'Invalid or expired OAuth state. Please try connecting again.', 'fair-payments-connector' ),
@@ -184,6 +150,21 @@ class OAuthCallbackController extends \WP_REST_Controller {
 		update_option( 'fair_payment_mollie_connected', true );
 		update_option( 'fair_payment_mode', $mode );
 
+		$mode_label  = 'live' === $mode
+			? __( 'live', 'fair-payments-connector' )
+			: __( 'test', 'fair-payments-connector' );
+		$description = $is_reconnect
+			? sprintf(
+				/* translators: %s: connection mode (live or test) */
+				__( 'Reconnected to Mollie in %s mode.', 'fair-payments-connector' ),
+				$mode_label
+			)
+			: sprintf(
+				/* translators: %s: connection mode (live or test) */
+				__( 'Connected to Mollie in %s mode.', 'fair-payments-connector' ),
+				$mode_label
+			);
+
 		// Persisting the connection and its audit entry is treated as one
 		// unit — but unlike a simple option write, the Mollie tokens are
 		// already live at this point, and reverting them the way
@@ -191,7 +172,7 @@ class OAuthCallbackController extends \WP_REST_Controller {
 		// useful here, so this only fails the request without undoing them.
 		$result = AuditLogger::record_action(
 			$is_reconnect ? 'mollie_reconnected' : 'mollie_connected',
-			$expected['reason'],
+			$description,
 			get_current_user_id(),
 			array( 'mode' => $mode )
 		);
@@ -218,8 +199,6 @@ class OAuthCallbackController extends \WP_REST_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function handle_disconnect( \WP_REST_Request $request ) {
-		$reason = trim( (string) $request->get_param( 'reason' ) );
-
 		delete_option( 'fair_payment_mollie_access_token' );
 		delete_option( 'fair_payment_mollie_refresh_token' );
 		update_option( 'fair_payment_mollie_token_expires', 0 );
@@ -227,7 +206,8 @@ class OAuthCallbackController extends \WP_REST_Controller {
 		delete_transient( 'fair_payment_connection_overview_test' );
 		delete_transient( 'fair_payment_connection_overview_live' );
 
-		$result = AuditLogger::record_action( 'mollie_disconnected', $reason, get_current_user_id() );
+		$description = __( 'Disconnected from Mollie.', 'fair-payments-connector' );
+		$result      = AuditLogger::record_action( 'mollie_disconnected', $description, get_current_user_id() );
 
 		if ( false === $result ) {
 			return new \WP_Error(

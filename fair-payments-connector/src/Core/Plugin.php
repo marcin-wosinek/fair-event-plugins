@@ -93,21 +93,27 @@ class Plugin {
 
 	/**
 	 * Record an audit entry for a change made through the shared Settings →
-	 * Fair Event Plugins screen, when it belongs to this plugin.
+	 * Fair Event Plugins screen, when it belongs to this plugin. This
+	 * plugin's own field no longer requires a reason (#1575), so the
+	 * shared form's optional reason is ignored in favor of a generated
+	 * description — other plugins' fields that still set
+	 * `requires_reason` are unaffected; the shared form's reason continues
+	 * to reach them as before.
 	 *
 	 * @param string $option    Option name the change was written to.
 	 * @param string $key       Key within that option.
 	 * @param mixed  $old_value Previous value.
 	 * @param mixed  $new_value New value.
-	 * @param string $reason    Administrator-supplied reason.
+	 * @param string $reason    Reason submitted through the shared form, if any (unused here).
 	 * @return void
 	 */
-	public function record_shared_setting_change( $option, $key, $old_value, $new_value, $reason ) {
+	public function record_shared_setting_change( $option, $key, $old_value, $new_value, $reason ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- required by the fair_event_plugins_setting_changed hook signature; this plugin generates its own description instead.
 		if ( Features::OPTION !== $option ) {
 			return;
 		}
 
-		\FairPaymentsConnector\AuditLog\AuditLogger::record_setting_change( $key, $old_value, $new_value, $reason, get_current_user_id() );
+		$description = \FairPaymentsConnector\AuditLog\AuditLogger::describe_setting_change( $key, $new_value );
+		\FairPaymentsConnector\AuditLog\AuditLogger::record_setting_change( $key, $old_value, $new_value, $description, get_current_user_id() );
 	}
 
 	/**
@@ -118,18 +124,17 @@ class Plugin {
 	 */
 	public function register_shared_settings_fields( $fields ) {
 		$fields[] = array(
-			'section'         => 'translations',
-			'section_title'   => __( 'Translations', 'fair-payments-connector' ),
-			'id'              => 'fair-payments-connector/bundled-translations',
-			'type'            => 'checkbox',
-			'option'          => Features::OPTION,
-			'key'             => 'bundled-translations',
-			'label'           => __( 'Fair Payments Connector', 'fair-payments-connector' ),
-			'description'     => __( 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.', 'fair-payments-connector' ),
-			'value'           => Features::is_enabled( 'bundled-translations' ),
-			'locked'          => Features::is_forced( 'bundled-translations' ),
-			'locked_note'     => __( 'Forced by a wp-config constant — change it there.', 'fair-payments-connector' ),
-			'requires_reason' => true,
+			'section'       => 'translations',
+			'section_title' => __( 'Translations', 'fair-payments-connector' ),
+			'id'            => 'fair-payments-connector/bundled-translations',
+			'type'          => 'checkbox',
+			'option'        => Features::OPTION,
+			'key'           => 'bundled-translations',
+			'label'         => __( 'Fair Payments Connector', 'fair-payments-connector' ),
+			'description'   => __( 'Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings.', 'fair-payments-connector' ),
+			'value'         => Features::is_enabled( 'bundled-translations' ),
+			'locked'        => Features::is_forced( 'bundled-translations' ),
+			'locked_note'   => __( 'Forced by a wp-config constant — change it there.', 'fair-payments-connector' ),
 		);
 		return $fields;
 	}

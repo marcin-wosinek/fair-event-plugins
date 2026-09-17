@@ -25,7 +25,6 @@ import {
 	fetchOAuthState,
 	disconnectOAuth,
 } from './settings-api';
-import ReasonField from './ReasonField';
 
 /**
  * Connection Tab Component
@@ -52,13 +51,8 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	const [ overviewError, setOverviewError ] = useState( null );
 	const [ isTestingPayment, setIsTestingPayment ] = useState( false );
 	const [ testCheckoutUrl, setTestCheckoutUrl ] = useState( null );
-	const [ connectReason, setConnectReason ] = useState( '' );
 	const [ pendingMode, setPendingMode ] = useState( 'test' );
-	const [ modeReason, setModeReason ] = useState( '' );
 	const [ isDisconnectDialogOpen, setIsDisconnectDialogOpen ] =
-		useState( false );
-	const [ disconnectReason, setDisconnectReason ] = useState( '' );
-	const [ disconnectReasonError, setDisconnectReasonError ] =
 		useState( false );
 
 	/**
@@ -154,7 +148,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	 * Handle Connect button click — fetches a CSRF state token first, then redirects.
 	 */
 	const handleConnect = () => {
-		fetchOAuthState( connectReason )
+		fetchOAuthState()
 			.then( ( state ) => {
 				const siteId = btoa( window.location.hostname );
 				const returnUrl =
@@ -189,26 +183,17 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	 * Open the disconnect confirmation dialog.
 	 */
 	const handleDisconnect = () => {
-		setDisconnectReason( '' );
-		setDisconnectReasonError( false );
 		setIsDisconnectDialogOpen( true );
 	};
 
 	/**
-	 * Confirm disconnect — blocks (keeping the dialog open) until a reason is
-	 * provided, since ConfirmDialog has no built-in way to disable its own
-	 * confirm button.
+	 * Confirm disconnect.
 	 */
 	const handleConfirmDisconnect = () => {
-		if ( ! disconnectReason.trim() ) {
-			setDisconnectReasonError( true );
-			return;
-		}
-
 		setIsDisconnectDialogOpen( false );
 		setIsSaving( true );
 
-		disconnectOAuth( disconnectReason )
+		disconnectOAuth()
 			.then( () => {
 				loadSettings();
 				onNotice( {
@@ -235,15 +220,14 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	};
 
 	/**
-	 * Save a pending mode change — requires a reason, and only enables its
-	 * Save button once the mode actually differs from what's stored.
+	 * Save a pending mode change — the Save button only appears once the mode
+	 * actually differs from what's stored.
 	 */
 	const handleSaveMode = () => {
 		setIsSaving( true );
 
-		saveConnectorSettings( { fair_payment_mode: pendingMode }, modeReason )
+		saveConnectorSettings( { fair_payment_mode: pendingMode } )
 			.then( () => {
-				setModeReason( '' );
 				loadSettings();
 				onNotice( {
 					status: 'success',
@@ -433,20 +417,8 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 									'fair-payments-connector'
 								) }
 							</p>
-							<ReasonField
-								value={ connectReason }
-								onChange={ setConnectReason }
-								label={ __(
-									'Reason for connecting',
-									'fair-payments-connector'
-								) }
-							/>
 							<div style={ { marginTop: '12px' } }>
-								<Button
-									isPrimary
-									onClick={ handleConnect }
-									disabled={ ! connectReason.trim() }
-								>
+								<Button isPrimary onClick={ handleConnect }>
 									{ __(
 										'Connect with Mollie',
 										'fair-payments-connector'
@@ -667,32 +639,19 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 									disabled={ isSaving }
 								/>
 								{ pendingMode !== mode && (
-									<>
-										<ReasonField
-											value={ modeReason }
-											onChange={ setModeReason }
-											label={ __(
-												'Reason for the mode change',
+									<div style={ { marginTop: '12px' } }>
+										<Button
+											variant="primary"
+											onClick={ handleSaveMode }
+											isBusy={ isSaving }
+											disabled={ isSaving }
+										>
+											{ __(
+												'Save mode',
 												'fair-payments-connector'
 											) }
-										/>
-										<div style={ { marginTop: '12px' } }>
-											<Button
-												variant="primary"
-												onClick={ handleSaveMode }
-												isBusy={ isSaving }
-												disabled={
-													isSaving ||
-													! modeReason.trim()
-												}
-											>
-												{ __(
-													'Save mode',
-													'fair-payments-connector'
-												) }
-											</Button>
-										</div>
-									</>
+										</Button>
+									</div>
 								) }
 							</div>
 
@@ -821,25 +780,6 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 						'fair-payments-connector'
 					) }
 				</p>
-				<ReasonField
-					value={ disconnectReason }
-					onChange={ ( value ) => {
-						setDisconnectReason( value );
-						setDisconnectReasonError( false );
-					} }
-					label={ __(
-						'Reason for disconnecting',
-						'fair-payments-connector'
-					) }
-				/>
-				{ disconnectReasonError && (
-					<Notice status="error" isDismissible={ false }>
-						{ __(
-							'A reason is required to disconnect.',
-							'fair-payments-connector'
-						) }
-					</Notice>
-				) }
 			</ConfirmDialog>
 		</>
 	);

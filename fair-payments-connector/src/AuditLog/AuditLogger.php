@@ -38,13 +38,76 @@ class AuditLogger {
 	);
 
 	/**
+	 * Generate a human-readable description of a manual setting change, for
+	 * the audit log's Reason column. Administrators no longer supply a
+	 * reason for these keys (#1575); this description takes its place, and
+	 * never implies an administrator wrote it. Historical entries recorded
+	 * before #1575, and any manually-typed reason from a plugin that still
+	 * uses the shared settings screen's reason field, are stored and
+	 * displayed exactly as given.
+	 *
+	 * @param string $setting_key Setting/option key.
+	 * @param mixed  $new_value   New value.
+	 * @return string Generated description.
+	 */
+	public static function describe_setting_change( $setting_key, $new_value ) {
+		switch ( $setting_key ) {
+			case 'fair_payment_mode':
+				return 'live' === $new_value
+					? __( 'Switched to live mode.', 'fair-payments-connector' )
+					: __( 'Switched to test mode.', 'fair-payments-connector' );
+
+			case 'fair_payment_currency':
+				return sprintf(
+					/* translators: %s: currency code */
+					__( 'Default currency changed to %s.', 'fair-payments-connector' ),
+					$new_value
+				);
+
+			case 'fair_payment_disable_banktransfer_near_date':
+				return $new_value
+					? __( 'Bank transfer restriction near the key date enabled.', 'fair-payments-connector' )
+					: __( 'Bank transfer restriction near the key date disabled.', 'fair-payments-connector' );
+
+			case 'fair_payment_banktransfer_threshold_days':
+				$days = (int) $new_value;
+				return sprintf(
+					/* translators: %d: number of working days */
+					_n(
+						'Bank transfer threshold changed to %d working day.',
+						'Bank transfer threshold changed to %d working days.',
+						$days,
+						'fair-payments-connector'
+					),
+					$days
+				);
+
+			case 'bundled-translations':
+				return $new_value
+					? __( 'Bundled translations enabled.', 'fair-payments-connector' )
+					: __( 'Bundled translations disabled.', 'fair-payments-connector' );
+
+			default:
+				return sprintf(
+					/* translators: %s: setting key */
+					__( '"%s" was changed.', 'fair-payments-connector' ),
+					$setting_key
+				);
+		}
+	}
+
+	/**
 	 * Record a change to a single setting. No-op if the value did not
 	 * actually change.
 	 *
 	 * @param string   $setting_key   Setting/option key.
 	 * @param mixed    $old_value     Previous value.
 	 * @param mixed    $new_value     New value.
-	 * @param string   $reason        Administrator-supplied reason.
+	 * @param string   $reason        Description recorded to the Reason column —
+	 *                                a generated description for a manual change
+	 *                                (see describe_setting_change()), or an
+	 *                                administrator-supplied reason from a caller
+	 *                                that still collects one.
 	 * @param int|null $actor_user_id Acting user ID, or null for the system.
 	 * @return bool|null True on success, false on storage failure, null when
 	 *                    the value did not change (nothing was written).

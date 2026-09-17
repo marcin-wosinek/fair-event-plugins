@@ -1,10 +1,11 @@
 /**
- * Component tests for the Currency tab's mandatory audit reason (#1575).
+ * Component tests for the Currency tab (#1575: no administrator-supplied
+ * audit reason is collected anymore).
  *
  * Exercises:
- *   - Save is disabled while the reason is empty, even with a changed currency.
- *   - Save is enabled once a reason is entered, and posts the reason to the
- *     reason-required settings-write endpoint (not /wp/v2/settings).
+ *   - Save is enabled as soon as the tab loads.
+ *   - Save posts to the reason-required settings-write endpoint (not
+ *     /wp/v2/settings) with no reason in the payload.
  */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
@@ -26,33 +27,23 @@ afterEach( () => {
 	jest.clearAllMocks();
 } );
 
-describe( 'CurrencyTab — mandatory reason', () => {
-	it( 'keeps Save disabled until a reason is entered', async () => {
+describe( 'CurrencyTab', () => {
+	it( 'Save is enabled as soon as the tab has loaded', async () => {
 		mockApiFetch();
 		render( <CurrencyTab onNotice={ () => {} } /> );
 
 		const saveButton = await screen.findByRole( 'button', {
 			name: 'Save',
 		} );
-		expect( saveButton ).toBeDisabled();
-
-		fireEvent.change( screen.getByLabelText( /Reason for this change/i ), {
-			target: { value: 'Switching to USD pricing.' },
-		} );
-
 		expect( saveButton ).toBeEnabled();
 	} );
 
-	it( 'saves through the reason-required endpoint, not /wp/v2/settings', async () => {
+	it( 'saves through the connector settings endpoint with no reason, not /wp/v2/settings', async () => {
 		mockApiFetch();
 		render( <CurrencyTab onNotice={ () => {} } /> );
 
 		const saveButton = await screen.findByRole( 'button', {
 			name: 'Save',
-		} );
-
-		fireEvent.change( screen.getByLabelText( /Reason for this change/i ), {
-			target: { value: 'Switching to USD pricing.' },
 		} );
 		fireEvent.click( saveButton );
 
@@ -63,7 +54,6 @@ describe( 'CurrencyTab — mandatory reason', () => {
 					method: 'POST',
 					data: {
 						settings: { fair_payment_currency: 'EUR' },
-						reason: 'Switching to USD pricing.',
 					},
 				} )
 			);

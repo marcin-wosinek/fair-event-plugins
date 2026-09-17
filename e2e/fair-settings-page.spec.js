@@ -192,42 +192,7 @@ test.describe('Fair Event Plugins — central settings screen', () => {
 		}
 	});
 
-	test('toggling the Fair Payments Connector row without a reason is rejected', async ({
-		page,
-	}) => {
-		wpCli('option delete fair_payment_features', { allowFailure: true });
-
-		await loginAsAdmin(page);
-		await page.goto(PAGE_URL);
-
-		const row = page
-			.locator('tr')
-			.filter({ hasText: 'Fair Payments Connector' });
-		await expect(
-			row.getByText('Changing this requires a reason below.')
-		).toBeVisible();
-		await row.locator('input[type="checkbox"]').check();
-
-		await page
-			.locator('form')
-			.getByRole('button', { name: 'Save Changes' })
-			.click();
-
-		await expect(
-			page.getByText(
-				'A reason is required to change a setting marked "reason required"',
-				{ exact: false }
-			)
-		).toBeVisible();
-
-		// Nothing was saved — not even the untouched checkbox state.
-		const stored = getOptionJson('fair_payment_features');
-		expect(stored?.['bundled-translations']).not.toBe(true);
-
-		wpCli('option delete fair_payment_features', { allowFailure: true });
-	});
-
-	test('toggling the Fair Payments Connector row with a reason saves and is recorded in the audit log', async ({
+	test('toggling the Fair Payments Connector row without a reason saves and is recorded in the audit log with a generated description', async ({
 		page,
 	}) => {
 		test.slow();
@@ -237,13 +202,16 @@ test.describe('Fair Event Plugins — central settings screen', () => {
 		await loginAsAdmin(page);
 		await page.goto(PAGE_URL);
 
+		// This plugin's row no longer requires a reason (#1575) — the shared
+		// form's optional reason field only appears when some other active
+		// plugin's field still requests one.
 		const row = page
 			.locator('tr')
 			.filter({ hasText: 'Fair Payments Connector' });
+		await expect(
+			row.getByText('Changing this requires a reason below.')
+		).toHaveCount(0);
 		await row.locator('input[type="checkbox"]').check();
-		await page
-			.getByLabel('Reason for this change')
-			.fill('Trying the bundled translations for a launch.');
 
 		const [redirectedResponse] = await Promise.all([
 			page.waitForResponse(
@@ -264,10 +232,11 @@ test.describe('Fair Event Plugins — central settings screen', () => {
 
 		// The shared save path fires fair_event_plugins_setting_changed,
 		// which fair-payments-connector's Plugin.php turns into an audit
-		// entry — confirm it landed via its own REST endpoint. A fresh,
-		// cookie-less context is required: with the page's own login
-		// cookies present, WordPress's cookie-auth path demands an
-		// X-WP-Nonce and rejects the request before Basic Auth is checked.
+		// entry with a server-generated description — confirm it landed via
+		// its own REST endpoint. A fresh, cookie-less context is required:
+		// with the page's own login cookies present, WordPress's
+		// cookie-auth path demands an X-WP-Nonce and rejects the request
+		// before Basic Auth is checked.
 		const api = await request.newContext({
 			baseURL: new URL(page.url()).origin,
 		});
@@ -282,9 +251,7 @@ test.describe('Fair Event Plugins — central settings screen', () => {
 				(item) => 'bundled-translations' === item.setting_key
 			);
 			expect(entry).toBeTruthy();
-			expect(entry.reason).toBe(
-				'Trying the bundled translations for a launch.'
-			);
+			expect(entry.reason).toBe('Bundled translations enabled.');
 		} finally {
 			await api.dispose();
 		}

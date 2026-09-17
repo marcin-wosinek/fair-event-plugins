@@ -1,6 +1,6 @@
 <?php
 /**
- * REST API Controller for reason-required connector settings writes
+ * REST API Controller for the connector's manually-written settings
  *
  * @package FairPaymentsConnector
  */
@@ -20,9 +20,10 @@ use WP_Error;
 /**
  * The only write path for the connector settings listed in
  * Settings::MANUALLY_WRITTEN_SETTINGS (mode, currency, bank-transfer
- * threshold). Every call requires a non-empty reason, which is recorded to
- * the audit log alongside each changed setting. The generic /wp/v2/settings
- * endpoint can no longer write these keys — see
+ * threshold). Each changed setting is recorded to the audit log with a
+ * server-generated description (see AuditLogger::describe_setting_change()) —
+ * administrators no longer supply a reason (#1575). The generic
+ * /wp/v2/settings endpoint can no longer write these keys — see
  * Settings::lock_manual_settings_from_generic_rest_write().
  */
 class SettingsWriteController extends WP_REST_Controller {
@@ -53,12 +54,6 @@ class SettingsWriteController extends WP_REST_Controller {
 							'type'     => 'object',
 							'required' => true,
 						),
-						'reason'   => array(
-							'type'              => 'string',
-							'required'          => true,
-							'sanitize_callback' => 'sanitize_textarea_field',
-							'validate_callback' => array( $this, 'validate_reason' ),
-						),
 					),
 				),
 			)
@@ -72,16 +67,6 @@ class SettingsWriteController extends WP_REST_Controller {
 	 */
 	public function permissions_check() {
 		return current_user_can( 'manage_options' );
-	}
-
-	/**
-	 * Reject an empty/whitespace-only reason.
-	 *
-	 * @param mixed $value Raw param value.
-	 * @return bool
-	 */
-	public function validate_reason( $value ) {
-		return is_string( $value ) && '' !== trim( $value );
 	}
 
 	/**
@@ -121,7 +106,6 @@ class SettingsWriteController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function save_settings( $request ) {
-		$reason   = trim( (string) $request->get_param( 'reason' ) );
 		$settings = $request->get_param( 'settings' );
 
 		if ( ! is_array( $settings ) || empty( $settings ) ) {
@@ -164,7 +148,8 @@ class SettingsWriteController extends WP_REST_Controller {
 			// Persisting the setting and its audit entry is treated as one
 			// unit: if the entry can't be stored, revert the option rather
 			// than report a change as successful with no trail of it.
-			$result = AuditLogger::record_setting_change( $key, $old_value, $new_value, $reason, $actor_id );
+			$description = AuditLogger::describe_setting_change( $key, $new_value );
+			$result      = AuditLogger::record_setting_change( $key, $old_value, $new_value, $description, $actor_id );
 			if ( false === $result ) {
 				update_option( $key, $old_value );
 				return new WP_Error(
