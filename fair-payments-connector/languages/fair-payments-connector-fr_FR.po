@@ -1196,354 +1196,355 @@ msgstr "Ce bloc a partagé son identifiant avec un autre bloc Simple Payment sur
 #: src/Payment/MolliePaymentHandler.php:509
 #: src/Admin/transactions/components/ImportTransactionsModal.js:242
 msgid "Mollie payments could not be loaded. Please try again."
-msgstr ""
+msgstr "Les paiements Mollie n'ont pas pu être chargés. Veuillez réessayer."
 
 #: src/API/TransactionsController.php:608
 #: src/Admin/transactions/components/ImportTransactionsModal.js:337
 msgid "Connect Mollie before importing payments."
-msgstr ""
+msgstr "Connectez Mollie avant d'importer les paiements."
 
 #: src/API/TransactionsController.php:640
 msgid "This payment could not be imported."
-msgstr ""
+msgstr "Ce paiement n'a pas pu être importé."
 
 #. translators: 1: imported count, 2: skipped count, 3: failed count.
 #: src/API/TransactionsController.php:646
 #, php-format
 msgid "Imported %1$d, skipped %2$d, and failed %3$d payment(s)."
-msgstr ""
+msgstr "Importé %1$d, ignoré %2$d et échoué %3$d paiement(s)."
 
 #: src/API/TransactionsController.php:673
 msgid "Choose a valid date range of no more than 90 days."
-msgstr ""
+msgstr "Choisissez une plage de dates valide de 90 jours maximum."
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:283
 msgid "The selected Mollie payments could not be imported."
-msgstr ""
+msgstr "Les paiements Mollie sélectionnés n'ont pas pu être importés."
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:309
 msgid "Import from Mollie"
-msgstr ""
+msgstr "Importer depuis Mollie"
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:342
 msgid "Open Mollie settings"
-msgstr ""
+msgstr "Ouvrir les paramètres Mollie"
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:351
 msgid "Show paid Mollie payments created during this period. A search can cover up to 90 days."
-msgstr ""
+msgstr "Affiche les paiements Mollie payés créés au cours de cette période. Une recherche peut couvrir jusqu'à 90 jours."
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:395
 msgid "Start date"
-msgstr ""
+msgstr "Date de début"
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:404
 msgid "End date"
-msgstr ""
+msgstr "Date de fin"
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:418
 msgid "Find payments"
-msgstr ""
+msgstr "Trouver les paiements"
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:424
 msgid "Loading Mollie payments…"
-msgstr ""
+msgstr "Chargement des paiements Mollie…"
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:436
 msgid "No paid Mollie payments match these filters."
-msgstr ""
+msgstr "Aucun paiement Mollie payé ne correspond à ces filtres."
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:490
 msgid "Already imported"
-msgstr ""
+msgstr "Déjà importé"
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:504
 msgid "Load more"
-msgstr ""
+msgstr "Charger plus"
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:509
 msgid "More payments are available. Load another bounded page to continue."
-msgstr ""
+msgstr "D'autres paiements sont disponibles. Chargez une autre page délimitée pour continuer."
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:531
 msgid "Import selected payments"
-msgstr ""
+msgstr "Importer les paiements sélectionnés"
 
 #: src/API/TransactionsController.php:541
 #: src/API/TransactionsController.php:599
 msgid "Choose live or test mode."
-msgstr ""
+msgstr "Choisissez le mode en direct ou le mode test."
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:387
 msgid "Checking the current mode…"
-msgstr ""
+msgstr "Vérification du mode actuel…"
 
 #: src/API/TransactionsController.php:228
 msgid "Provide between 1 and 25 transaction ids."
-msgstr ""
+msgstr "Fournir entre 1 et 25 identifiants de transaction."
 
 #: src/API/TransactionsController.php:409
 msgid "The selected event date does not exist."
-msgstr ""
+msgstr "La date d'événement sélectionnée n'existe pas."
 
 #: src/Admin/transaction/TransactionPage.js:420
 msgid "Search failed. Please try again."
-msgstr ""
+msgstr "La recherche a échoué. Veuillez réessayer."
 
 #: src/Admin/transaction/TransactionPage.js:481
 msgid "Search by event title…"
-msgstr ""
+msgstr "Rechercher par titre d'événement…"
 
 #: src/Admin/transaction/TransactionPage.js:545
 msgid "No matching events."
-msgstr ""
+msgstr "Aucun événement correspondant."
 
 #: src/Admin/transaction/TransactionPage.js:665
 msgid "Person, Post & Event"
-msgstr ""
+msgstr "Personne, Article et Événement"
 
 #: src/API/TransactionsController.php:462
 msgid "Failed to delete the transaction. It has not been changed."
-msgstr ""
+msgstr "Impossible de supprimer la transaction. Elle n'a pas été modifiée."
 
 #: src/Admin/transaction/TransactionPage.js:762
 msgid "Failed to delete transaction."
-msgstr ""
+msgstr "Impossible de supprimer la transaction."
 
 #: src/Admin/transaction/TransactionPage.js:1317
 msgid "Danger Zone"
-msgstr ""
+msgstr "Zone de danger"
 
 #: src/Admin/transaction/TransactionPage.js:1333
 msgid "Permanently delete this local transaction record. This does not cancel, refund, or delete the payment in Mollie or any other external service."
-msgstr ""
+msgstr "Supprimer définitivement cet enregistrement de transaction local. Cela n'annule pas, ne rembourse pas et ne supprime pas le paiement dans Mollie ou tout autre service externe."
 
 #: src/Admin/transaction/TransactionPage.js:1346
 msgid "Deleting…"
-msgstr ""
+msgstr "Suppression en cours…"
 
 #: src/Admin/transaction/TransactionPage.js:1347
 #: src/Admin/transaction/TransactionPage.js:1360
 msgid "Delete transaction"
-msgstr ""
+msgstr "Supprimer la transaction"
 
 #. translators: %d is the transaction ID
 #: src/Admin/transaction/TransactionPage.js:1369
 #, js-format
 msgid "Permanently delete transaction #%d? This cannot be undone."
-msgstr ""
+msgstr "Supprimer définitivement la transaction n°%d ? Cette action ne peut pas être annulée."
 
 #: src/Admin/transaction/TransactionPage.js:1377
 msgid "Only the local transaction record and its exclusively owned local data are removed. The payment in Mollie or any other external service is not cancelled, refunded, or deleted."
-msgstr ""
+msgstr "Seul l'enregistrement de transaction local et ses données locales exclusivement détenues sont supprimés. Le paiement dans Mollie ou tout autre service externe n'est pas annulé, remboursé ou supprimé."
 
 #: src/Admin/transactions/TransactionsApp.js:111
 msgid "Transaction deleted. The payment in Mollie or any other external service was not changed."
-msgstr ""
+msgstr "Transaction supprimée. Le paiement dans Mollie ou tout autre service externe n'a pas été modifié."
 
 #. translators: %s: link to the Fair Payments Connector settings page
 #: src/Admin/PaymentSetupNotice.php:57
 #, php-format
 msgid "Fair Payments Connector is <strong>not connected to Mollie</strong> — paid flows cannot accept real payments until a Mollie account is connected. <a href=\"%s\">Connect Mollie</a>."
-msgstr ""
+msgstr "Fair Payments Connector n'est <strong>pas connecté à Mollie</strong> — les flux payants ne peuvent pas accepter de vrais paiements tant qu'un compte Mollie n'est pas connecté. <a href=\"%s\">Connecter Mollie</a>."
 
 #. translators: %s: link to the Fair Payments Connector settings page
 #: src/Admin/PaymentSetupNotice.php:60
 #, php-format
 msgid "Fair Payments Connector <strong>setup is incomplete</strong> — paid flows cannot accept real payments until setup is finished. <a href=\"%s\">Finish setup</a>."
-msgstr ""
+msgstr "Fair Payments Connector <strong>la configuration est incomplète</strong> — les flux payants ne peuvent pas accepter de vrais paiements tant que la configuration n'est pas terminée. <a href=\"%s\">Terminer la configuration</a>."
 
 #. translators: %d: WordPress user ID
 #: src/API/AuditLogController.php:123
 #, php-format
 msgid "Deleted user #%d"
-msgstr ""
+msgstr "Utilisateur supprimé n°%d"
 
 #: src/API/AuditLogController.php:124
 msgid "System"
-msgstr ""
+msgstr "Système"
 
 #: src/API/OAuthCallbackController.php:154
 msgid "live"
-msgstr ""
+msgstr "en direct"
 
 #: src/API/OAuthCallbackController.php:155
 msgid "test"
-msgstr ""
+msgstr "test"
 
 #. translators: %s: connection mode (live or test)
 #: src/API/OAuthCallbackController.php:159
 #, php-format
 msgid "Reconnected to Mollie in %s mode."
-msgstr ""
+msgstr "Reconnecté à Mollie en mode %s."
 
 #. translators: %s: connection mode (live or test)
 #: src/API/OAuthCallbackController.php:164
 #, php-format
 msgid "Connected to Mollie in %s mode."
-msgstr ""
+msgstr "Connecté à Mollie en mode %s."
 
 #: src/API/OAuthCallbackController.php:183
 msgid "Connected, but the audit entry could not be recorded."
-msgstr ""
+msgstr "Connecté, mais l'entrée d'audit n'a pas pu être enregistrée."
 
 #: src/API/OAuthCallbackController.php:215
 msgid "Disconnected, but the audit entry could not be recorded."
-msgstr ""
+msgstr "Déconnecté, mais l'entrée d'audit n'a pas pu être enregistrée."
 
 #: src/API/SettingsWriteController.php:114
 msgid "No settings were provided."
-msgstr ""
+msgstr "Aucun paramètre n'a été fourni."
 
 #. translators: %s: rejected setting key
 #: src/API/SettingsWriteController.php:127
 #, php-format
 msgid "\"%s\" is not an editable setting."
-msgstr ""
+msgstr "\"%s\" n'est pas un paramètre modifiable."
 
 #: src/API/SettingsWriteController.php:157
 msgid "The setting change could not be recorded and was not saved. Please try again."
-msgstr ""
+msgstr "La modification du paramètre n'a pas pu être enregistrée et n'a pas été sauvegardée. Veuillez réessayer."
 
 #: src/AuditLog/AuditLogger.php:57
 msgid "Switched to live mode."
-msgstr ""
+msgstr "Basculé en mode live."
 
 #: src/AuditLog/AuditLogger.php:58
 msgid "Switched to test mode."
-msgstr ""
+msgstr "Basculé en mode test."
 
 #. translators: %s: currency code
 #: src/AuditLog/AuditLogger.php:63
 #, php-format
 msgid "Default currency changed to %s."
-msgstr ""
+msgstr "Devise par défaut changée en %s."
 
 #: src/AuditLog/AuditLogger.php:69
 msgid "Bank transfer restriction near the key date enabled."
-msgstr ""
+msgstr "Restriction de virement bancaire près de la date clé activée."
 
 #: src/AuditLog/AuditLogger.php:70
 msgid "Bank transfer restriction near the key date disabled."
-msgstr ""
+msgstr "Restriction de virement bancaire près de la date clé désactivée."
 
 #. translators: %d: number of working days
 #: src/AuditLog/AuditLogger.php:76
 #, php-format
 msgid "Bank transfer threshold changed to %d working day."
 msgid_plural "Bank transfer threshold changed to %d working days."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Seuil de virement bancaire modifié à %d jour ouvrable."
+msgstr[1] "Seuil de virement bancaire modifié à %d jours ouvrables."
 
 #: src/AuditLog/AuditLogger.php:87
 msgid "Bundled translations enabled."
-msgstr ""
+msgstr "Traductions groupées activées."
 
 #: src/AuditLog/AuditLogger.php:88
 msgid "Bundled translations disabled."
-msgstr ""
+msgstr "Traductions groupées désactivées."
 
 #. translators: %s: setting key
 #: src/AuditLog/AuditLogger.php:93
 #, php-format
 msgid "\"%s\" was changed."
-msgstr ""
+msgstr "\"%s\" a été modifié."
 
 #: src/Payment/MolliePaymentHandler.php:101
 msgid "Mollie connection lost: no refresh token was stored."
-msgstr ""
+msgstr "Connexion Mollie perdue : aucun jeton d'actualisation n'a été stocké."
 
 #: src/Payment/MolliePaymentHandler.php:138
 msgid "Mollie connection lost: the token refresh request was rejected."
-msgstr ""
+msgstr "Connexion Mollie perdue : la demande d'actualisation du jeton a été rejetée."
 
 #: src/Payment/MolliePaymentHandler.php:148
 msgid "Mollie connection lost: the token refresh response was malformed."
-msgstr ""
+msgstr "Connexion Mollie perdue : la réponse d'actualisation du jeton était malformée."
 
 #: src/Payment/MolliePaymentHandler.php:159
 msgid "Mollie access token refreshed automatically before expiry."
-msgstr ""
+msgstr "Jeton d'accès Mollie actualisé automatiquement avant expiration."
 
 #: src/Admin/settings/AuditLogTab.js:14
 msgid "Setting changed"
-msgstr ""
+msgstr "Paramètre modifié"
 
 #: src/Admin/settings/AuditLogTab.js:15
 msgid "Mollie connected"
-msgstr ""
+msgstr "Mollie connecté"
 
 #: src/Admin/settings/AuditLogTab.js:16
 msgid "Mollie reconnected"
-msgstr ""
+msgstr "Mollie reconnecté"
 
 #: src/Admin/settings/AuditLogTab.js:17
 msgid "Mollie disconnected"
-msgstr ""
+msgstr "Mollie déconnecté"
 
 #: src/Admin/settings/AuditLogTab.js:18
 msgid "Mollie token refreshed"
-msgstr ""
+msgstr "Jeton Mollie actualisé"
 
 #: src/Admin/settings/AuditLogTab.js:22
 msgid "Mollie connection lost"
-msgstr ""
+msgstr "Connexion Mollie perdue"
 
 #: src/Admin/settings/AuditLogTab.js:46
 msgid "Value changed (not shown)"
-msgstr ""
+msgstr "Valeur modifiée (non affichée)"
 
 #: src/Admin/settings/AuditLogTab.js:87
 msgid "Failed to load the audit log."
-msgstr ""
+msgstr "Impossible de charger le journal d'audit."
 
 #: src/Admin/settings/AuditLogTab.js:103
 #: src/Admin/settings/SettingsApp.js:202
 msgid "Audit Log"
-msgstr ""
+msgstr "Journal d'audit"
 
 #: src/Admin/settings/AuditLogTab.js:105
 msgid "Every manual settings change and Mollie connection action, newest first."
-msgstr ""
+msgstr "Chaque modification manuelle des paramètres et action de connexion Mollie, les plus récentes en premier."
 
 #: src/Admin/settings/AuditLogTab.js:121
 msgid "No changes have been recorded yet."
-msgstr ""
+msgstr "Aucune modification n'a encore été enregistrée."
 
 #: src/Admin/settings/AuditLogTab.js:131
 msgid "When"
-msgstr ""
+msgstr "Quand"
 
 #: src/Admin/settings/AuditLogTab.js:134
 msgid "Action"
-msgstr ""
+msgstr "Action"
 
 #: src/Admin/settings/AuditLogTab.js:140
 msgid "Actor"
-msgstr ""
+msgstr "Acteur"
 
 #: src/Admin/settings/AuditLogTab.js:143
 msgid "Change"
-msgstr ""
+msgstr "Modification"
 
 #: src/Admin/settings/AuditLogTab.js:149
 msgid "Reason"
-msgstr ""
+msgstr "Raison"
 
 #. translators: 1: current page, 2: total pages
 #: src/Admin/settings/AuditLogTab.js:187
 #, js-format
 msgid "Page %1$d of %2$d"
-msgstr ""
+msgstr "Page %1$d sur %2$d"
 
 #: src/Admin/settings/ConnectionTab.js:649
 msgid "Save mode"
-msgstr ""
+msgstr "Mode de sauvegarde"
 
 #: src/Admin/settings/ConnectionTab.js:778
 msgid "Disconnect from Mollie? You will need to reconnect to accept payments."
-msgstr ""
+msgstr "Déconnecter de Mollie ? Vous devrez vous reconnecter pour accepter les paiements."
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:618
 msgid "No enabled connected sites. Enable one on the Connected Sites page first."
-msgstr ""
+msgstr "Aucun site connecté activé. Activez-en un d'abord sur la page Sites connectés."
+
