@@ -1,5 +1,38 @@
 # fair-events-experimental
 
+## 1.8.0
+
+### Minor Changes
+
+-   dde767a: Add net paid sales totals and cumulative revenue charts to event statistics, including refund timing, transaction deduplication, and currency-mismatch warnings.
+-   0938a8f: Show a "Recent test sends" history on the Meta Conversions settings page, so an administrator can see the outcome of each PageView/InitiateCheckout/Purchase test event sent to Meta Test Events even after the toast notice has disappeared.
+-   fefc867: Report both test-mode and live-mode checkouts/purchases to Meta Test Events (using the configured Test Events code), tagging each delivered event with its payment mode so administrators can distinguish test traffic from live sales in delivery diagnostics.
+-   6027ac1: Add separate Meta Test Events buttons for PageView, InitiateCheckout, and Purchase on the Meta Conversions settings screen, so an administrator can verify each event type independently in Meta Test Events. Each button names the event it sent in its success or failure notice, and every button is disabled with an inline explanation until configuration is complete and saved. Synthetic test events never carry a stored transaction or order ID.
+-   06c470f: Warn on the Meta Conversions settings screen when the WP Consent API is unavailable, since live checkout and purchase tracking cannot capture attribution without it. The warning links to the WP Consent API plugin and clears automatically once the API is available; synthetic Test Events remain unaffected.
+
+### Patch Changes
+
+-   23998c9: Meta Conversions now delivers routine checkout and purchase events as production Meta events — no `test_event_code` is attached — for both test-mode and live-mode payments, so real sales are correctly measured instead of being reported only to Meta Test Events. `custom_data.payment_mode` still distinguishes test-mode transactions from live sales. The configured Test Events code is now used exclusively by the explicit "Send test event" diagnostic action; routine delivery no longer requires it to be configured.
+-   4a51db8: Make the Meta Conversions "Recent delivery outcomes" list on the Experimental Settings page useful for troubleshooting: each result now shows a readable status, Test/Live mode, the site-local update time, a labeled attempt count, and a safe failure category/code for retrying or failed deliveries. Summary counts use the same readable labels, and an empty state appears when there are no results yet.
+-   d0dd54a: Keep cumulative sales charts anchored to the event date while distinguishing recorded sales from the future event horizon.
+-   Updated dependencies [19d0333]
+-   Updated dependencies [d4bea94]
+-   Updated dependencies [0a5131a]
+-   Updated dependencies [7362ce4]
+-   Updated dependencies [e3fa379]
+-   Updated dependencies [ac6da68]
+-   Updated dependencies [65b371a]
+-   Updated dependencies [5290dc9]
+-   Updated dependencies [7318848]
+-   Updated dependencies [aa0b8ef]
+-   Updated dependencies [4a91d09]
+-   Updated dependencies [1a49cff]
+-   Updated dependencies [2f0d149]
+-   Updated dependencies [452cc30]
+-   Updated dependencies [1323dfa]
+    -   fair-events-shared@0.6.2
+    -   fair-events@1.18.0
+
 ## 1.7.0
 
 ### Minor Changes
