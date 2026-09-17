@@ -190,6 +190,84 @@ it( 'loads, selects, and imports eligible payments while disabling existing rows
 	expect( console ).toHaveLogged();
 } );
 
+it( 'offers only enabled sites and reports when none are enabled (#1619)', async () => {
+	apiFetch.mockResolvedValueOnce( [
+		{
+			id: 1,
+			label: 'enabled-site.example',
+			status: 'connected',
+			enabled: true,
+		},
+		{
+			id: 2,
+			label: 'disabled-site.example',
+			status: 'connected',
+			enabled: false,
+		},
+	] );
+	render(
+		<ImportTransactionsModal
+			onClose={ jest.fn() }
+			onImported={ jest.fn() }
+		/>
+	);
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Connected Sites' } )
+	);
+
+	expect(
+		await screen.findByText( 'enabled-site.example' )
+	).toBeInTheDocument();
+	expect(
+		screen.queryByText( 'disabled-site.example' )
+	).not.toBeInTheDocument();
+} );
+
+it( 'shows an accurate empty state when connected sites exist but none are enabled (#1619)', async () => {
+	apiFetch.mockResolvedValueOnce( [
+		{
+			id: 1,
+			label: 'disabled-site.example',
+			status: 'connected',
+			enabled: false,
+		},
+	] );
+	render(
+		<ImportTransactionsModal
+			onClose={ jest.fn() }
+			onImported={ jest.fn() }
+		/>
+	);
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Connected Sites' } )
+	);
+
+	expect(
+		await screen.findByText(
+			'No enabled connected sites. Enable one on the Connected Sites page first.'
+		)
+	).toBeInTheDocument();
+} );
+
+it( 'keeps the existing empty state when there are no connected sites at all (#1619)', async () => {
+	apiFetch.mockResolvedValueOnce( [] );
+	render(
+		<ImportTransactionsModal
+			onClose={ jest.fn() }
+			onImported={ jest.fn() }
+		/>
+	);
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Connected Sites' } )
+	);
+
+	expect(
+		await screen.findByText(
+			'No connected sites yet. Add one on the Connected Sites page first.'
+		)
+	).toBeInTheDocument();
+} );
+
 it( 'shows empty, API error, and partial-failure feedback', async () => {
 	apiFetch
 		.mockResolvedValueOnce( {

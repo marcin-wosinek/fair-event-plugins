@@ -110,6 +110,7 @@ class ConnectedSite {
 			'budget_id'    => ! empty( $data['budget_id'] ) ? (int) $data['budget_id'] : null,
 			'scopes'       => array(),
 			'status'       => 'unverified',
+			'enabled'      => true,
 			'created_at'   => current_time( 'mysql', true ),
 			'last_sync_at' => null,
 		);
@@ -150,6 +151,8 @@ class ConnectedSite {
 	 * leaves the stored token untouched. budget_id is merged whenever the key
 	 * is present at all (including an explicit null), so callers can clear
 	 * the association without also having to resend label/base_url/token.
+	 * enabled is merged only when explicitly supplied, so a plain rename
+	 * never flips availability.
 	 *
 	 * @param int   $id   Site id.
 	 * @param array $data Fields to update.
@@ -175,6 +178,9 @@ class ConnectedSite {
 			}
 			if ( array_key_exists( 'budget_id', $data ) ) {
 				$site['budget_id'] = ! empty( $data['budget_id'] ) ? (int) $data['budget_id'] : null;
+			}
+			if ( isset( $data['enabled'] ) ) {
+				$site['enabled'] = (bool) $data['enabled'];
 			}
 
 			$sites[ $index ] = $site;
@@ -310,10 +316,23 @@ class ConnectedSite {
 	}
 
 	/**
+	 * Whether a record is available for use (imports), as opposed to
+	 * temporarily disabled. A record with no stored `enabled` key (created
+	 * before this field existed) reads as enabled.
+	 *
+	 * @param array $record Connected site record.
+	 * @return bool
+	 */
+	public static function is_enabled( array $record ) {
+		return ! isset( $record['enabled'] ) || (bool) $record['enabled'];
+	}
+
+	/**
 	 * Convert a record to a safe array for admin responses.
 	 *
 	 * Never returns the raw token; exposes only whether one is set and a short
-	 * hint (last 4 characters).
+	 * hint (last 4 characters). A record with no stored `enabled` key (created
+	 * before this field existed) reads as enabled.
 	 *
 	 * @param array $record Connected site record.
 	 * @return array
@@ -328,6 +347,7 @@ class ConnectedSite {
 			'budget_id'    => ! empty( $record['budget_id'] ) ? (int) $record['budget_id'] : null,
 			'scopes'       => isset( $record['scopes'] ) && is_array( $record['scopes'] ) ? $record['scopes'] : array(),
 			'status'       => $record['status'] ?? 'unverified',
+			'enabled'      => self::is_enabled( $record ),
 			'created_at'   => $record['created_at'] ?? '',
 			'last_sync_at' => $record['last_sync_at'] ?? null,
 			'has_token'    => '' !== $token,

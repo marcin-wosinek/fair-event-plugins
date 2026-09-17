@@ -42,6 +42,7 @@ const ConnectedSitesApp = () => {
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ editingId, setEditingId ] = useState( null );
 	const [ testingId, setTestingId ] = useState( null );
+	const [ togglingId, setTogglingId ] = useState( null );
 	const [ label, setLabel ] = useState( '' );
 	const [ baseUrl, setBaseUrl ] = useState( '' );
 	const [ token, setToken ] = useState( '' );
@@ -220,6 +221,42 @@ const ConnectedSitesApp = () => {
 		}
 	};
 
+	const handleToggleEnabled = async ( site ) => {
+		setTogglingId( site.id );
+		setError( null );
+		setSuccess( null );
+
+		try {
+			await apiFetch( {
+				path: `/fair-payments-connector/v1/admin/connected-sites/${ site.id }`,
+				method: 'PUT',
+				data: { enabled: ! site.enabled },
+			} );
+			setSuccess(
+				site.enabled
+					? __(
+							'Connected site disabled.',
+							'fair-payments-connector-experimental'
+					  )
+					: __(
+							'Connected site enabled.',
+							'fair-payments-connector-experimental'
+					  )
+			);
+			loadSites();
+		} catch ( err ) {
+			setError(
+				err.message ||
+					__(
+						'Failed to update the connected site.',
+						'fair-payments-connector-experimental'
+					)
+			);
+		} finally {
+			setTogglingId( null );
+		}
+	};
+
 	const handleRemove = async ( id ) => {
 		if (
 			! window.confirm(
@@ -266,6 +303,22 @@ const ConnectedSitesApp = () => {
 			</span>
 		);
 	};
+
+	// Availability (enabled/disabled) is distinct from connection status
+	// (connected/unverified/error) — a disabled site can be in any
+	// connection state, so this renders in its own column.
+	const renderEnabled = ( enabled ) => (
+		<span
+			style={ {
+				color: enabled ? '#007017' : '#646970',
+				fontWeight: 'bold',
+			} }
+		>
+			{ enabled
+				? __( 'Enabled', 'fair-payments-connector-experimental' )
+				: __( 'Disabled', 'fair-payments-connector-experimental' ) }
+		</span>
+	);
 
 	// A budget_id that doesn't resolve to a known budget (deleted, or
 	// budgets failed to load) reads as unlinked rather than showing a raw id.
@@ -396,11 +449,17 @@ const ConnectedSitesApp = () => {
 											</th>
 											<th>
 												{ __(
+													'Enabled',
+													'fair-payments-connector-experimental'
+												) }
+											</th>
+											<th>
+												{ __(
 													'Last sync',
 													'fair-payments-connector-experimental'
 												) }
 											</th>
-											<th style={ { width: '220px' } }>
+											<th style={ { width: '260px' } }>
 												{ __(
 													'Actions',
 													'fair-payments-connector-experimental'
@@ -432,6 +491,11 @@ const ConnectedSitesApp = () => {
 												<td>
 													{ renderStatus(
 														site.status
+													) }
+												</td>
+												<td>
+													{ renderEnabled(
+														site.enabled
 													) }
 												</td>
 												<td>
@@ -484,6 +548,33 @@ const ConnectedSitesApp = () => {
 																'Edit',
 																'fair-payments-connector-experimental'
 															) }
+														</Button>
+														<Button
+															variant="tertiary"
+															size="small"
+															isBusy={
+																togglingId ===
+																site.id
+															}
+															disabled={
+																togglingId !==
+																null
+															}
+															onClick={ () =>
+																handleToggleEnabled(
+																	site
+																)
+															}
+														>
+															{ site.enabled
+																? __(
+																		'Disable',
+																		'fair-payments-connector-experimental'
+																  )
+																: __(
+																		'Enable',
+																		'fair-payments-connector-experimental'
+																  ) }
 														</Button>
 														<Button
 															variant="tertiary"
