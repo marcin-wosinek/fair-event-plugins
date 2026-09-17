@@ -285,6 +285,14 @@ export default function EventAudience( {
 		[ filteredParticipants ]
 	);
 
+	// The Participant copy list is a roster of confirmed registrations, so it
+	// excludes Interested and Collaborator rows under the same search/role
+	// filters as the rest of the tab.
+	const signedUpParticipants = useMemo(
+		() => filteredParticipants.filter( ( p ) => p.label === 'signed_up' ),
+		[ filteredParticipants ]
+	);
+
 	const printNumberByParticipantId = useMemo( () => {
 		const map = new Map();
 		printableParticipants.forEach( ( p, index ) => {
@@ -1045,7 +1053,7 @@ export default function EventAudience( {
 	};
 
 	const buildCopyByParticipant = () => {
-		const sorted = [ ...filteredParticipants ].sort( ( a, b ) =>
+		const sorted = [ ...signedUpParticipants ].sort( ( a, b ) =>
 			( a.participant_name || '' ).localeCompare(
 				b.participant_name || ''
 			)
@@ -1292,7 +1300,7 @@ export default function EventAudience( {
 										)
 									)
 								}
-								disabled={ filteredParticipants.length === 0 }
+								disabled={ signedUpParticipants.length === 0 }
 							>
 								{ __( 'Participant', 'fair-audience' ) }
 							</Button>
