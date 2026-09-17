@@ -6,6 +6,10 @@
  * that GET /fair-events/v1/sources/categories supports an all_languages mode
  * for the multilingual category picker (#1627) using the test-only Polylang
  * term-language fixture at fair-e2e/v1/term-languages.
+ *
+ * Also verifies (#1623) that an editor (who can `edit_posts` but not
+ * `manage_categories`) can read categories but not create them, while a
+ * subscriber is rejected for both.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -21,6 +25,41 @@ const authHeader = {
 			'base64'
 		),
 };
+
+/**
+ * Create a temporary user with the given role and return its id and Basic
+ * auth header, so permission checks can be exercised as that user.
+ *
+ * @param {import('@playwright/test').APIRequestContext} api  Admin-authenticated API context.
+ * @param {string}                                        role WordPress role slug.
+ * @return {Promise<{id: number, headers: Object}>} Created user id and auth headers.
+ */
+async function createTestUser( api, role ) {
+	const userLogin = `category-${ role }-${ Date.now() }`;
+	const password = 'Test-password-1460!';
+	const response = await api.post( '/wp-json/wp/v2/users', {
+		headers: authHeader,
+		data: {
+			username: userLogin,
+			email: `${ userLogin }@example.com`,
+			password,
+			roles: [ role ],
+		},
+	} );
+	expect( response.ok() ).toBeTruthy();
+	const id = ( await response.json() ).id;
+
+	return {
+		id,
+		headers: {
+			Authorization:
+				'Basic ' +
+				Buffer.from( `${ userLogin }:${ password }` ).toString(
+					'base64'
+				),
+		},
+	};
+}
 
 test.describe( 'CategoriesController', () => {
 	let api;
@@ -215,6 +254,85 @@ test.describe( 'CategoriesController', () => {
 			const item = body.find( ( c ) => c.id === created.id );
 
 			expect( item ).not.toHaveProperty( 'language' );
+		} );
+	} );
+
+	test.describe( 'role-based permissions (#1623)', () => {
+		let roleApi;
+		let editor;
+		let subscriber;
+		const roleCreatedCategoryIds = [];
+
+		test.beforeAll( async () => {
+			roleApi = await request.newContext( { baseURL: BASE_URL } );
+			// WordPress core's built-in "editor" role already has
+			// manage_categories, so it can't exercise the edit_posts-yes /
+			// manage_categories-no boundary this ticket cares about.
+			// "contributor" has edit_posts without manage_categories, which
+			// is the actual case the acceptance criteria describe.
+			editor = await createTestUser( roleApi, 'contributor' );
+			subscriber = await createTestUser( roleApi, 'subscriber' );
+		} );
+
+		test.afterAll( async () => {
+			for ( const id of roleCreatedCategoryIds ) {
+				await roleApi.delete(
+					`/wp-json/wp/v2/categories/${ id }?force=true`,
+					{ headers: authHeader }
+				);
+			}
+			for ( const user of [ editor, subscriber ] ) {
+				await roleApi.delete(
+					`/wp-json/wp/v2/users/${ user.id }?force=true&reassign=1`,
+					{ headers: authHeader }
+				);
+			}
+			await roleApi.dispose();
+		} );
+
+		test( 'lets an editor without manage_categories read the category list', async () => {
+			const res = await roleApi.get(
+				'/wp-json/fair-events/v1/sources/categories',
+				{ headers: editor.headers }
+			);
+
+			expect( res.status() ).toBe( 200 );
+		} );
+
+		test( 'rejects a subscriber reading the category list', async () => {
+			const res = await roleApi.get(
+				'/wp-json/fair-events/v1/sources/categories',
+				{ headers: subscriber.headers }
+			);
+
+			expect( res.status() ).toBe( 403 );
+		} );
+
+		test( 'rejects an editor creating a category', async () => {
+			const res = await roleApi.post(
+				'/wp-json/fair-events/v1/sources/categories',
+				{
+					headers: editor.headers,
+					data: { name: `Editor Attempt ${ Date.now() }` },
+				}
+			);
+
+			expect( res.status() ).toBe( 403 );
+		} );
+
+		test( 'still lets an administrator create a category', async () => {
+			const name = `Admin Role Check ${ Date.now() }`;
+			const res = await roleApi.post(
+				'/wp-json/fair-events/v1/sources/categories',
+				{
+					headers: authHeader,
+					data: { name },
+				}
+			);
+
+			expect( res.status() ).toBe( 201 );
+			const body = await res.json();
+			roleCreatedCategoryIds.push( body.id );
 		} );
 	} );
 } );
