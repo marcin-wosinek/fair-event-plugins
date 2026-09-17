@@ -1,5 +1,5 @@
 import apiFetch from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 import {
 	Button,
@@ -8,16 +8,78 @@ import {
 	CardHeader,
 	ConfirmDialog,
 	ExternalLink,
+	Flex,
+	FlexItem,
 	Notice,
 	TextControl,
+	__experimentalVStack as VStack,
 } from '@wordpress/components';
 
 const PATH = '/fair-events-experimental/v1/meta-conversions';
+
+const STATE_LABELS = {
+	pending: __( 'Pending', 'fair-events-experimental' ),
+	sending: __( 'Sending', 'fair-events-experimental' ),
+	retry_pending: __( 'Retrying', 'fair-events-experimental' ),
+	accepted: __( 'Delivered', 'fair-events-experimental' ),
+	configuration_error: __(
+		'Configuration error',
+		'fair-events-experimental'
+	),
+	retries_exhausted: __(
+		'Failed — retries exhausted',
+		'fair-events-experimental'
+	),
+};
+
+const STATE_COLORS = {
+	pending: '#757575',
+	sending: '#757575',
+	retry_pending: '#b26200',
+	accepted: '#00a32a',
+	configuration_error: '#d63638',
+	retries_exhausted: '#d63638',
+};
+
+// Only these states carry a safe failure category/code worth surfacing —
+// a successful delivery has nothing to diagnose.
+const ERROR_DETAIL_STATES = new Set( [
+	'retry_pending',
+	'configuration_error',
+	'retries_exhausted',
+] );
+
+function stateLabel( state ) {
+	return STATE_LABELS[ state ] || state;
+}
 
 function paymentModeLabel( mode ) {
 	return 'test' === mode
 		? __( 'Test', 'fair-events-experimental' )
 		: __( 'Live', 'fair-events-experimental' );
+}
+
+function attemptsLabel( count ) {
+	return sprintf(
+		/* translators: %d: number of delivery attempts made so far */
+		_n( '%d attempt', '%d attempts', count, 'fair-events-experimental' ),
+		count
+	);
+}
+
+/**
+ * Safe failure category/code for a result, or '' when there's none to show.
+ *
+ * @param {Object} outcome A recent delivery outcome from the API.
+ * @return {string} Combined type/code detail, or an empty string.
+ */
+function errorDetail( outcome ) {
+	if ( ! ERROR_DETAIL_STATES.has( outcome.state ) ) {
+		return '';
+	}
+	return [ outcome.meta_error_type, outcome.meta_error_code ]
+		.filter( Boolean )
+		.join( ': ' );
 }
 
 export default function MetaConversions( { onNotice } ) {
@@ -245,26 +307,106 @@ export default function MetaConversions( { onNotice } ) {
 						'fair-events-experimental'
 					) }
 				</h3>
-				<ul>
-					{ Object.entries( config.diagnostics.counts || {} ).map(
-						( [ state, count ] ) => (
-							<li key={ state }>
-								{ state }: { count }
-							</li>
-						)
-					) }
-				</ul>
-				<ul>
-					{ ( config.diagnostics.recent || [] ).map(
-						( outcome, index ) => (
-							<li key={ `${ outcome.updated_at }-${ index }` }>
-								{ outcome.event_name }: { outcome.state } (
-								{ outcome.attempt_count }) —{ ' ' }
-								{ paymentModeLabel( outcome.payment_mode ) }
-							</li>
-						)
-					) }
-				</ul>
+				{ ( config.diagnostics.recent || [] ).length === 0 ? (
+					<p>
+						{ __(
+							'No delivery attempts yet.',
+							'fair-events-experimental'
+						) }
+					</p>
+				) : (
+					<>
+						<ul style={ { marginBottom: '16px' } }>
+							{ Object.entries(
+								config.diagnostics.counts || {}
+							).map( ( [ state, count ] ) => (
+								<li key={ state }>
+									{ stateLabel( state ) }: { count }
+								</li>
+							) ) }
+						</ul>
+						<VStack spacing={ 3 }>
+							{ config.diagnostics.recent.map(
+								( outcome, index ) => {
+									const detail = errorDetail( outcome );
+									return (
+										<div
+											key={ `${ outcome.updated_at }-${ index }` }
+											style={ {
+												borderBottom:
+													'1px solid #e0e0e0',
+												paddingBottom: '8px',
+											} }
+										>
+											<Flex
+												wrap
+												justify="flex-start"
+												gap={ 3 }
+											>
+												<FlexItem>
+													<strong>
+														{ outcome.event_name }
+													</strong>
+												</FlexItem>
+												<FlexItem>
+													<span
+														style={ {
+															color:
+																STATE_COLORS[
+																	outcome
+																		.state
+																] || '#1e1e1e',
+															fontWeight: 600,
+														} }
+													>
+														{ stateLabel(
+															outcome.state
+														) }
+													</span>
+												</FlexItem>
+												<FlexItem>
+													{ paymentModeLabel(
+														outcome.payment_mode
+													) }
+												</FlexItem>
+												<FlexItem>
+													{ outcome.updated_at_local }
+												</FlexItem>
+											</Flex>
+											<Flex
+												wrap
+												justify="flex-start"
+												gap={ 3 }
+												style={ {
+													marginTop: '4px',
+													color: '#757575',
+												} }
+											>
+												<FlexItem>
+													{ attemptsLabel(
+														outcome.attempt_count
+													) }
+												</FlexItem>
+												{ detail && (
+													<FlexItem>
+														{ sprintf(
+															/* translators: %s: safe failure category/code reported by Meta */
+															__(
+																'Error: %s',
+																'fair-events-experimental'
+															),
+															detail
+														) }
+													</FlexItem>
+												) }
+											</Flex>
+										</div>
+									);
+								}
+							) }
+						</VStack>
+					</>
+				) }
 				{ confirming && (
 					<ConfirmDialog
 						onConfirm={ clearToken }

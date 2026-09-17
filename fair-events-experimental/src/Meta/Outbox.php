@@ -161,8 +161,28 @@ class Outbox {
 		$recent = $wpdb->get_results( $wpdb->prepare( 'SELECT event_name,state,result_category,attempt_count,meta_error_code,meta_error_type,payment_mode,updated_at FROM %i ORDER BY updated_at DESC LIMIT 20', $table ), ARRAY_A );
 		return array(
 			'counts' => array_map( static fn( $row ) => (int) $row->total, $counts ? $counts : array() ),
-			'recent' => $recent ? $recent : array(),
+			'recent' => array_map( array( $this, 'with_local_time' ), $recent ? $recent : array() ),
 		);
+	}
+
+	/**
+	 * Add a site-local, formatted display time alongside the raw UTC
+	 * `updated_at` — the raw value stays for ordering/machine use, the
+	 * formatted one respects the site's timezone and date/time settings.
+	 * Also casts `attempt_count`, which `wpdb` otherwise returns as a numeric
+	 * string, breaking JS plural-form selection (`_n()` treats `'1'` as
+	 * plural).
+	 *
+	 * @param array $row Diagnostic row with a UTC `updated_at`.
+	 * @return array
+	 */
+	private function with_local_time( $row ) {
+		$row['attempt_count']    = (int) $row['attempt_count'];
+		$row['updated_at_local'] = wp_date(
+			get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
+			strtotime( $row['updated_at'] . ' UTC' )
+		);
+		return $row;
 	}
 
 	/** Purge all rows older than the retention ceiling. */
