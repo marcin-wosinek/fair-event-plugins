@@ -265,4 +265,61 @@ class ConversionsTest extends TestCase {
 			$this->assertArrayNotHasKey( 'transaction_id', $event );
 		}
 	}
+
+	/** A successfully delivered test event is recorded in the history log. */
+	public function test_send_test_records_an_accepted_history_entry() {
+		$this->configure_credentials();
+		update_option( Conversions::TEST_CODE_OPTION, 'CODE123' );
+		( new Conversions() )->send_test( 'PageView' );
+		$history = Conversions::test_history();
+		$this->assertCount( 1, $history );
+		$this->assertSame( 'PageView', $history[0]['event_name'] );
+		$this->assertTrue( $history[0]['accepted'] );
+	}
+
+	/** A rejected test event is recorded with its safe code/type, never the raw response body. */
+	public function test_send_test_records_a_rejected_history_entry() {
+		$this->configure_credentials();
+		update_option( Conversions::TEST_CODE_OPTION, 'CODE123' );
+		$GLOBALS['_fair_test_remote_post_response'] = array(
+			'response' => array( 'code' => 400 ),
+			'body'     => wp_json_encode(
+				array(
+					'error' => array(
+						'code' => 'oauth_error',
+						'type' => 'OAuthException',
+					),
+				)
+			),
+		);
+		( new Conversions() )->send_test( 'Purchase' );
+		$history = Conversions::test_history();
+		$this->assertCount( 1, $history );
+		$this->assertSame( 'Purchase', $history[0]['event_name'] );
+		$this->assertFalse( $history[0]['accepted'] );
+		$this->assertSame( 'oauth_error', $history[0]['code'] );
+		$this->assertSame( 'oauthexception', $history[0]['type'] );
+		$this->assertArrayNotHasKey( 'access_token', $history[0] );
+		$this->assertArrayNotHasKey( 'dataset_id', $history[0] );
+	}
+
+	/** The history log never grows past its retention limit and stays newest-first. */
+	public function test_send_test_history_trims_to_the_limit() {
+		$this->configure_credentials();
+		update_option( Conversions::TEST_CODE_OPTION, 'CODE123' );
+		$conversions = new Conversions();
+		foreach ( array( 'PageView', 'InitiateCheckout', 'Purchase', 'PageView', 'InitiateCheckout', 'Purchase' ) as $event_name ) {
+			$conversions->send_test( $event_name );
+		}
+		$history = Conversions::test_history();
+		$this->assertCount( Conversions::TEST_LOG_LIMIT, $history );
+		$this->assertSame( 'Purchase', $history[0]['event_name'] );
+	}
+
+	/** The fail-closed missing-code path never calls send_payload(), so it is not recorded in the history log. */
+	public function test_send_test_does_not_record_the_missing_test_code_fail_closed_path() {
+		$this->configure_credentials();
+		( new Conversions() )->send_test( 'Purchase' );
+		$this->assertSame( array(), Conversions::test_history() );
+	}
 }

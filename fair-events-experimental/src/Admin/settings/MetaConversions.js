@@ -97,6 +97,20 @@ function errorDetail( outcome ) {
 		.join( ': ' );
 }
 
+/**
+ * Safe failure category/code for a rejected test-send entry, or '' for an
+ * accepted one — an accepted test has nothing to diagnose.
+ *
+ * @param {Object} entry A recent test-send entry from the API.
+ * @return {string} Combined type/code detail, or an empty string.
+ */
+function testHistoryDetail( entry ) {
+	if ( entry.accepted ) {
+		return '';
+	}
+	return [ entry.type, entry.code ].filter( Boolean ).join( ': ' );
+}
+
 export default function MetaConversions( { onNotice } ) {
 	const [ config, setConfig ] = useState( null );
 	const [ savedConfig, setSavedConfig ] = useState( null );
@@ -215,6 +229,7 @@ export default function MetaConversions( { onNotice } ) {
 				),
 			} );
 		}
+		await load();
 		setSendingEvent( null );
 	};
 	return (
@@ -355,6 +370,85 @@ export default function MetaConversions( { onNotice } ) {
 							'fair-events-experimental'
 						) }
 					</p>
+				) }
+				<h3>
+					{ __( 'Recent test sends', 'fair-events-experimental' ) }
+				</h3>
+				{ ( config.test_history || [] ).length === 0 ? (
+					<p>
+						{ __(
+							'No test events sent yet.',
+							'fair-events-experimental'
+						) }
+					</p>
+				) : (
+					<VStack spacing={ 3 } style={ { marginBottom: '16px' } }>
+						{ config.test_history.map( ( entry, index ) => {
+							const detail = testHistoryDetail( entry );
+							return (
+								<div
+									key={ `${ entry.time }-${ index }` }
+									style={ {
+										borderBottom: '1px solid #e0e0e0',
+										paddingBottom: '8px',
+									} }
+								>
+									<Flex wrap justify="flex-start" gap={ 3 }>
+										<FlexItem>
+											<strong>
+												{ entry.event_name }
+											</strong>
+										</FlexItem>
+										<FlexItem>
+											<span
+												style={ {
+													color: entry.accepted
+														? STATE_COLORS.accepted
+														: STATE_COLORS.configuration_error,
+													fontWeight: 600,
+												} }
+											>
+												{ entry.accepted
+													? __(
+															'Accepted',
+															'fair-events-experimental'
+													  )
+													: __(
+															'Rejected',
+															'fair-events-experimental'
+													  ) }
+											</span>
+										</FlexItem>
+										<FlexItem>
+											{ entry.time_local }
+										</FlexItem>
+									</Flex>
+									{ detail && (
+										<Flex
+											wrap
+											justify="flex-start"
+											gap={ 3 }
+											style={ {
+												marginTop: '4px',
+												color: '#757575',
+											} }
+										>
+											<FlexItem>
+												{ sprintf(
+													/* translators: %s: safe failure category/code reported by Meta */
+													__(
+														'Error: %s',
+														'fair-events-experimental'
+													),
+													detail
+												) }
+											</FlexItem>
+										</Flex>
+									) }
+								</div>
+							);
+						} ) }
+					</VStack>
 				) }
 				<h3>
 					{ __(

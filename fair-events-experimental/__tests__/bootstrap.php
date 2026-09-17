@@ -165,6 +165,21 @@ if ( ! function_exists( 'wp_remote_retrieve_body' ) ) {
 	}
 }
 
+if ( ! function_exists( 'current_time' ) ) {
+	/**
+	 * Stub of WordPress current_time() — returns a fixed UTC timestamp so
+	 * test history assertions are deterministic.
+	 *
+	 * @param string $type Format type ('mysql' or anything else for a Unix timestamp).
+	 * @param bool   $gmt  Unused; the stub always returns UTC.
+	 * @return string|int
+	 */
+	function current_time( $type, $gmt = false ) {
+		unset( $gmt );
+		return 'mysql' === $type ? '2026-01-01 00:00:00' : strtotime( '2026-01-01 00:00:00 UTC' );
+	}
+}
+
 if ( ! function_exists( 'wp_generate_uuid4' ) ) {
 	/**
 	 * Stub of WordPress wp_generate_uuid4().

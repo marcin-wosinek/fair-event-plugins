@@ -103,9 +103,24 @@ class MetaConversionsController extends WP_REST_Controller {
 				'token_configured'      => '' !== (string) get_option( Conversions::TOKEN_OPTION, '' ),
 				'test_event_code'       => (string) get_option( Conversions::TEST_CODE_OPTION, '' ),
 				'diagnostics'           => ( new Outbox() )->diagnostics(),
+				'test_history'          => array_map( array( $this, 'with_local_time' ), Conversions::test_history() ),
 				'consent_api_available' => function_exists( 'wp_has_consent' ),
 			)
 		);
+	}
+
+	/**
+	 * Add a site-local, formatted display time alongside the raw UTC `time`.
+	 *
+	 * @param array $entry Test history entry with a UTC `time`.
+	 * @return array
+	 */
+	private function with_local_time( $entry ) {
+		$entry['time_local'] = wp_date(
+			get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
+			strtotime( $entry['time'] . ' UTC' )
+		);
+		return $entry;
 	}
 
 	/** @param \WP_REST_Request $request Request. @return \WP_REST_Response */

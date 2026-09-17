@@ -17,6 +17,8 @@ class Conversions {
 	public const DATASET_OPTION    = 'fair_events_experimental_meta_dataset_id';
 	public const TOKEN_OPTION      = 'fair_events_experimental_meta_access_token';
 	public const TEST_CODE_OPTION  = 'fair_events_experimental_meta_test_event_code';
+	public const TEST_LOG_OPTION   = 'fair_events_experimental_meta_test_log';
+	public const TEST_LOG_LIMIT    = 5;
 	public const DELIVERY_HOOK     = 'fair_events_experimental_meta_deliver';
 	public const CLEANUP_HOOK      = 'fair_events_experimental_meta_cleanup';
 
@@ -240,7 +242,38 @@ class Conversions {
 				'type'      => 'configuration',
 			);
 		}
-		return $this->send_payload( self::build_test_event( $event_name ), $code );
+		$result = $this->send_payload( self::build_test_event( $event_name ), $code );
+		self::append_test_history( $event_name, $result );
+		return $result;
+	}
+
+	/** @return array Up to {@see TEST_LOG_LIMIT} most recent test-send outcomes, newest first. */
+	public static function test_history() {
+		$history = get_option( self::TEST_LOG_OPTION, array() );
+		return is_array( $history ) ? $history : array();
+	}
+
+	/**
+	 * Record a test-send outcome, trimmed to {@see TEST_LOG_LIMIT} entries. Only
+	 * the safe code/type {@see send_payload()} already computed are stored —
+	 * never the raw Meta response body.
+	 *
+	 * @param string $event_name PageView, InitiateCheckout, or Purchase.
+	 * @param array  $result send_payload() result.
+	 */
+	private static function append_test_history( $event_name, $result ) {
+		$history = self::test_history();
+		array_unshift(
+			$history,
+			array(
+				'event_name' => $event_name,
+				'accepted'   => (bool) $result['accepted'],
+				'code'       => sanitize_key( (string) $result['code'] ),
+				'type'       => sanitize_key( (string) $result['type'] ),
+				'time'       => current_time( 'mysql', true ),
+			)
+		);
+		update_option( self::TEST_LOG_OPTION, array_slice( $history, 0, self::TEST_LOG_LIMIT ), false );
 	}
 
 	/**
