@@ -1,7 +1,8 @@
 /**
- * SettingsWriteController — the reason-required write path for connector
- * settings, and the corresponding lockdown of those same keys on the
- * generic /wp/v2/settings endpoint (#1575).
+ * SettingsWriteController — the connector's only write path for its
+ * manually-written settings, and the corresponding lockdown of those same
+ * keys on the generic /wp/v2/settings endpoint. Administrators no longer
+ * supply an audit reason (#1575) — the server generates one.
  */
 import { test, expect, request } from '@playwright/test';
 
@@ -42,29 +43,9 @@ test.describe( 'SettingsWriteController', () => {
 			const res = await api.post( SETTINGS_WRITE_ENDPOINT, {
 				data: {
 					settings: { fair_payment_currency: 'USD' },
-					reason: 'Switching to USD pricing.',
 				},
 			} );
 			expect( res.status() ).toBe( 401 );
-		} );
-
-		test( 'returns 400 when the reason is missing', async () => {
-			const res = await api.post( SETTINGS_WRITE_ENDPOINT, {
-				headers: adminAuth(),
-				data: { settings: { fair_payment_currency: 'USD' } },
-			} );
-			expect( res.status() ).toBe( 400 );
-		} );
-
-		test( 'returns 400 when the reason is blank', async () => {
-			const res = await api.post( SETTINGS_WRITE_ENDPOINT, {
-				headers: adminAuth(),
-				data: {
-					settings: { fair_payment_currency: 'USD' },
-					reason: '   ',
-				},
-			} );
-			expect( res.status() ).toBe( 400 );
 		} );
 
 		test( 'returns 400 for a setting outside the allowlist', async () => {
@@ -74,7 +55,6 @@ test.describe( 'SettingsWriteController', () => {
 					settings: {
 						fair_payment_mollie_access_token: 'attacker_supplied',
 					},
-					reason: 'Trying to sneak in a credential write.',
 				},
 			} );
 			expect( res.status() ).toBe( 400 );
@@ -82,13 +62,12 @@ test.describe( 'SettingsWriteController', () => {
 			expect( body.code ).toBe( 'invalid_setting' );
 		} );
 
-		test( 'saves an allowlisted setting and records an audit entry with old/new values', async () => {
+		test( 'saves an allowlisted setting with no reason and records an audit entry with old/new values and a generated description', async () => {
 			// Establish a known starting value.
 			await api.post( SETTINGS_WRITE_ENDPOINT, {
 				headers: adminAuth(),
 				data: {
 					settings: { fair_payment_currency: 'EUR' },
-					reason: 'Reset to EUR for this test run.',
 				},
 			} );
 
@@ -96,7 +75,6 @@ test.describe( 'SettingsWriteController', () => {
 				headers: adminAuth(),
 				data: {
 					settings: { fair_payment_currency: 'USD' },
-					reason: 'Switching to USD pricing.',
 				},
 			} );
 			expect( res.status() ).toBe( 200 );
@@ -125,14 +103,13 @@ test.describe( 'SettingsWriteController', () => {
 			expect( entry.is_protected ).toBe( false );
 			expect( entry.old_value ).toBe( 'EUR' );
 			expect( entry.new_value ).toBe( 'USD' );
-			expect( entry.reason ).toBe( 'Switching to USD pricing.' );
+			expect( entry.reason ).toBe( 'Default currency changed to USD.' );
 
 			// Restore EUR so this spec doesn't leak state into other suites.
 			await api.post( SETTINGS_WRITE_ENDPOINT, {
 				headers: adminAuth(),
 				data: {
 					settings: { fair_payment_currency: 'EUR' },
-					reason: 'Restoring the default currency after the test.',
 				},
 			} );
 		} );
@@ -142,7 +119,6 @@ test.describe( 'SettingsWriteController', () => {
 				headers: adminAuth(),
 				data: {
 					settings: { fair_payment_currency: 'EUR' },
-					reason: 'Ensure EUR before the no-op check.',
 				},
 			} );
 
@@ -156,7 +132,6 @@ test.describe( 'SettingsWriteController', () => {
 				headers: adminAuth(),
 				data: {
 					settings: { fair_payment_currency: 'EUR' },
-					reason: 'Saving the same value again.',
 				},
 			} );
 			expect( res.status() ).toBe( 200 );
@@ -177,7 +152,6 @@ test.describe( 'SettingsWriteController', () => {
 				headers: adminAuth(),
 				data: {
 					settings: { fair_payment_currency: 'EUR' },
-					reason: 'Reset to EUR before the lockdown check.',
 				},
 			} );
 

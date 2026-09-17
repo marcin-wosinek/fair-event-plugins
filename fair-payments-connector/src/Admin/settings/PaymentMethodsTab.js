@@ -17,7 +17,6 @@ import apiFetch from '@wordpress/api-fetch';
  * Internal dependencies
  */
 import { saveConnectorSettings } from './settings-api.js';
-import ReasonField from './ReasonField.js';
 
 /**
  * Payment Methods Tab Component
@@ -34,7 +33,6 @@ export default function PaymentMethodsTab( { onNotice } ) {
 	const [ thresholdDays, setThresholdDays ] = useState( 3 );
 	const [ loading, setLoading ] = useState( true );
 	const [ isSaving, setIsSaving ] = useState( false );
-	const [ reason, setReason ] = useState( '' );
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/settings' } )
@@ -67,15 +65,10 @@ export default function PaymentMethodsTab( { onNotice } ) {
 	const handleSave = async () => {
 		setIsSaving( true );
 		try {
-			await saveConnectorSettings(
-				{
-					fair_payment_disable_banktransfer_near_date:
-						disableNearDate,
-					fair_payment_banktransfer_threshold_days: thresholdDays,
-				},
-				reason
-			);
-			setReason( '' );
+			await saveConnectorSettings( {
+				fair_payment_disable_banktransfer_near_date: disableNearDate,
+				fair_payment_banktransfer_threshold_days: thresholdDays,
+			} );
 			onNotice( {
 				status: 'success',
 				message: __(
@@ -152,14 +145,12 @@ export default function PaymentMethodsTab( { onNotice } ) {
 					/>
 				</div>
 
-				<ReasonField value={ reason } onChange={ setReason } />
-
 				<div style={ { marginTop: '16px' } }>
 					<Button
 						variant="primary"
 						onClick={ handleSave }
 						isBusy={ isSaving }
-						disabled={ isSaving || ! reason.trim() }
+						disabled={ isSaving }
 					>
 						{ __( 'Save', 'fair-payments-connector' ) }
 					</Button>
