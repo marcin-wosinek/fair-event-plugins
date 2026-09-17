@@ -2,7 +2,13 @@
  * @jest-environment jsdom
  */
 import '@testing-library/jest-dom';
-import { render, screen, within } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import MetaConversions from '../MetaConversions.js';
 
@@ -208,7 +214,7 @@ describe( 'MetaConversions consent API warning', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'keeps the test-event button available on its own credential rules when the API is unavailable', async () => {
+	it( 'keeps the test-event buttons available on their own credential rules when the API is unavailable', async () => {
 		apiFetch.mockResolvedValue(
 			config( { consent_api_available: false } )
 		);
@@ -219,7 +225,121 @@ describe( 'MetaConversions consent API warning', () => {
 		const scope = within( container );
 
 		expect(
-			await scope.findByRole( 'button', { name: 'Send test event' } )
+			await scope.findByRole( 'button', { name: 'Send PageView test' } )
 		).toBeEnabled();
+	} );
+} );
+
+describe( 'MetaConversions test event buttons', () => {
+	it( 'sends the selected event name and names it in the success notice', async () => {
+		apiFetch.mockResolvedValue( config() );
+		const onNotice = jest.fn();
+
+		render( <MetaConversions onNotice={ onNotice } /> );
+
+		const button = await screen.findByRole( 'button', {
+			name: 'Send InitiateCheckout test',
+		} );
+		apiFetch.mockResolvedValueOnce( {
+			accepted: true,
+			event_name: 'InitiateCheckout',
+		} );
+		fireEvent.click( button );
+
+		await waitFor( () =>
+			expect( onNotice ).toHaveBeenCalledWith( {
+				status: 'success',
+				message: 'Meta accepted the InitiateCheckout test event.',
+			} )
+		);
+		expect( apiFetch ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: '/fair-events-experimental/v1/meta-conversions/test',
+				method: 'POST',
+				data: { event_name: 'InitiateCheckout' },
+			} )
+		);
+	} );
+
+	it( 'names the failed event type in the failure notice', async () => {
+		apiFetch.mockResolvedValue( config() );
+		const onNotice = jest.fn();
+
+		render( <MetaConversions onNotice={ onNotice } /> );
+
+		const button = await screen.findByRole( 'button', {
+			name: 'Send Purchase test',
+		} );
+		apiFetch.mockRejectedValueOnce( new Error( 'rejected' ) );
+		fireEvent.click( button );
+
+		await waitFor( () =>
+			expect( onNotice ).toHaveBeenCalledWith( {
+				status: 'error',
+				message:
+					'Meta rejected the Purchase test event. Check the configuration and try again.',
+			} )
+		);
+	} );
+
+	it( 'disables every test button while missing configuration', async () => {
+		apiFetch.mockResolvedValue( config( { test_event_code: '' } ) );
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByRole( 'button', { name: 'Send PageView test' } )
+		).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Send InitiateCheckout test' } )
+		).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Send Purchase test' } )
+		).toBeDisabled();
+	} );
+
+	it( 'disables every test button and explains when there are unsaved edits', async () => {
+		apiFetch.mockResolvedValue( config() );
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		const datasetField =
+			await screen.findByLabelText( 'Dataset / Pixel ID' );
+		fireEvent.change( datasetField, { target: { value: '456' } } );
+
+		expect(
+			await screen.findByText( /Save your changes before sending/ )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Send PageView test' } )
+		).toBeDisabled();
+	} );
+
+	it( 'disables the other test buttons while one is in flight, preventing duplicate sends', async () => {
+		apiFetch.mockResolvedValue( config() );
+		let resolveTest;
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		const pageViewButton = await screen.findByRole( 'button', {
+			name: 'Send PageView test',
+		} );
+		const purchaseButton = screen.getByRole( 'button', {
+			name: 'Send Purchase test',
+		} );
+		apiFetch.mockImplementationOnce(
+			() =>
+				new Promise( ( resolve ) => {
+					resolveTest = resolve;
+				} )
+		);
+		fireEvent.click( pageViewButton );
+
+		expect(
+			await screen.findByRole( 'button', { name: 'Send PageView test' } )
+		).toBeDisabled();
+		expect( purchaseButton ).toBeDisabled();
+
+		resolveTest( { accepted: true, event_name: 'PageView' } );
+		await waitFor( () => expect( pageViewButton ).not.toBeDisabled() );
 	} );
 } );

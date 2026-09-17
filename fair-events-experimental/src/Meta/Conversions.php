@@ -229,8 +229,8 @@ class Conversions {
 		);
 	}
 
-	/** @return array */
-	public function send_test() {
+	/** @param string $event_name PageView, InitiateCheckout, or Purchase. @return array */
+	public function send_test( $event_name = 'PageView' ) {
 		$code = (string) get_option( self::TEST_CODE_OPTION, '' );
 		if ( '' === $code ) {
 			return array(
@@ -240,8 +240,20 @@ class Conversions {
 				'type'      => 'configuration',
 			);
 		}
+		return $this->send_payload( self::build_test_event( $event_name ), $code );
+	}
+
+	/**
+	 * Build a synthetic event for the administrator-triggered test, identified
+	 * as a test only by the Test Events code {@see send_test()} attaches when
+	 * delivering it — never by a stored transaction or order ID, so a
+	 * `Purchase` test can never be mistaken for a real payment.
+	 *
+	 * @param string $event_name PageView, InitiateCheckout, or Purchase. @return array
+	 */
+	public static function build_test_event( $event_name ) {
 		$event = array(
-			'event_name'       => 'PageView',
+			'event_name'       => $event_name,
 			'event_time'       => time(),
 			'event_id'         => wp_generate_uuid4(),
 			'action_source'    => 'website',
@@ -249,7 +261,13 @@ class Conversions {
 			'user_data'        => array( 'external_id' => array( hash( 'sha256', wp_generate_uuid4() ) ) ),
 			'custom_data'      => array(),
 		);
-		return $this->send_payload( $event, $code );
+		if ( 'InitiateCheckout' === $event_name || 'Purchase' === $event_name ) {
+			$event['custom_data'] = array(
+				'value'    => 1.0,
+				'currency' => 'USD',
+			);
+		}
+		return $event;
 	}
 
 	/** Purge retained delivery rows. */
