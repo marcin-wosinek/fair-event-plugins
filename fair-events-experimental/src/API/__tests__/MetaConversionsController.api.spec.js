@@ -131,6 +131,7 @@ test.describe( 'MetaConversionsController', () => {
 		expect( body ).toHaveProperty( 'token_configured' );
 		expect( body ).toHaveProperty( 'test_event_code' );
 		expect( body ).toHaveProperty( 'diagnostics' );
+		expect( body ).toHaveProperty( 'test_history' );
 		expect( body ).toHaveProperty( 'consent_api_available' );
 	} );
 

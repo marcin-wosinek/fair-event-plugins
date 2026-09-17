@@ -20,7 +20,20 @@ function config( overrides ) {
 		token_configured: true,
 		test_event_code: 'TEST12345',
 		diagnostics: { counts: {}, recent: [] },
+		test_history: [],
 		consent_api_available: true,
+		...overrides,
+	};
+}
+
+function testHistoryEntry( overrides ) {
+	return {
+		event_name: 'Purchase',
+		accepted: true,
+		code: '',
+		type: '',
+		time: '2026-01-01 10:00:00',
+		time_local: 'January 1, 2026 11:00 am',
 		...overrides,
 	};
 }
@@ -341,5 +354,87 @@ describe( 'MetaConversions test event buttons', () => {
 
 		resolveTest( { accepted: true, event_name: 'PageView' } );
 		await waitFor( () => expect( pageViewButton ).not.toBeDisabled() );
+	} );
+} );
+
+describe( 'MetaConversions recent test sends', () => {
+	it( 'shows an accepted test entry with its status and time', async () => {
+		apiFetch.mockResolvedValue(
+			config( { test_history: [ testHistoryEntry() ] } )
+		);
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect( await screen.findByText( 'Purchase' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Accepted' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'January 1, 2026 11:00 am' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows a rejected test entry with its safe failure detail', async () => {
+		apiFetch.mockResolvedValue(
+			config( {
+				test_history: [
+					testHistoryEntry( {
+						accepted: false,
+						type: 'configuration',
+						code: 'missing_test_code',
+					} ),
+				],
+			} )
+		);
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect( await screen.findByText( 'Rejected' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Error: configuration: missing_test_code' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'does not show a failure detail for an accepted test entry', async () => {
+		apiFetch.mockResolvedValue(
+			config( { test_history: [ testHistoryEntry() ] } )
+		);
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		await screen.findByText( 'Accepted' );
+		expect( screen.queryByText( /^Error:/ ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'shows an empty state when no test events have been sent yet', async () => {
+		apiFetch.mockResolvedValue( config() );
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByText( 'No test events sent yet.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'reloads the settings after a test send so the new entry appears', async () => {
+		apiFetch.mockResolvedValue( config() );
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		const button = await screen.findByRole( 'button', {
+			name: 'Send PageView test',
+		} );
+		apiFetch.mockResolvedValueOnce( {
+			accepted: true,
+			event_name: 'PageView',
+		} );
+		apiFetch.mockResolvedValueOnce(
+			config( {
+				test_history: [
+					testHistoryEntry( { event_name: 'PageView' } ),
+				],
+			} )
+		);
+		fireEvent.click( button );
+
+		expect( await screen.findByText( 'Accepted' ) ).toBeInTheDocument();
 	} );
 } );
