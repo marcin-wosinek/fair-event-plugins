@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-16T11:53:49+00:00\n"
+"POT-Creation-Date: 2026-09-17T13:18:05+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -88,8 +88,8 @@ msgstr ""
 #: src/Admin/AdminPages.php:158
 #: src/Hooks/AdminBarHooks.php:59
 #: src/Admin/calendar/CalendarApp.js:197
-#: src/Admin/manage-event/ManageEventApp.js:852
-#: src/Admin/manage-event/ManageEventApp.js:1275
+#: src/Admin/manage-event/ManageEventApp.js:863
+#: src/Admin/manage-event/ManageEventApp.js:1286
 msgid "Manage Event"
 msgstr ""
 
@@ -178,14 +178,14 @@ msgstr ""
 #: src/Admin/CopyEventPage.php:294
 #: src/Admin/calendar/components/QuickEventModal.js:391
 #: src/Admin/event-meta-box/EventEditForm.js:353
-#: src/Admin/manage-event/ManageEventApp.js:926
+#: src/Admin/manage-event/ManageEventApp.js:937
 msgid "Start time"
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:298
 #: src/Admin/calendar/components/QuickEventModal.js:413
 #: src/Admin/event-meta-box/EventEditForm.js:379
-#: src/Admin/manage-event/ManageEventApp.js:946
+#: src/Admin/manage-event/ManageEventApp.js:957
 msgid "End time"
 msgstr ""
 
@@ -195,7 +195,7 @@ msgstr ""
 
 #: src/Admin/CopyEventPage.php:308
 #: src/Admin/calendar/components/QuickEventModal.js:341
-#: src/Admin/manage-event/ManageEventApp.js:878
+#: src/Admin/manage-event/ManageEventApp.js:889
 msgid "Title"
 msgstr ""
 
@@ -225,7 +225,7 @@ msgstr ""
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:218
 #: src/Admin/calendar/components/QuickEventModal.js:451
-#: src/Admin/manage-event/ManageEventApp.js:976
+#: src/Admin/manage-event/ManageEventApp.js:987
 #: src/blocks/components/CategorySelector.js:60
 msgid "Categories"
 msgstr ""
@@ -251,9 +251,9 @@ msgstr ""
 #: src/Admin/manage-event/EditInstancesModal.js:75
 #: src/Admin/manage-event/EventSignups.js:311
 #: src/Admin/manage-event/EventTickets.js:2700
-#: src/Admin/manage-event/ManageEventApp.js:1334
-#: src/Admin/manage-event/ManageEventApp.js:1344
-#: src/Admin/manage-event/ManageEventApp.js:1354
+#: src/Admin/manage-event/ManageEventApp.js:1345
+#: src/Admin/manage-event/ManageEventApp.js:1355
+#: src/Admin/manage-event/ManageEventApp.js:1365
 #: src/Admin/manage-event/SeriesModal.js:396
 #: src/Admin/settings/OrganizerTab.js:520
 #: src/Admin/venues/VenuesApp.js:853
@@ -1358,7 +1358,7 @@ msgid "Event location"
 msgstr ""
 
 #: src/PostTypes/Event.php:221
-#: src/Admin/manage-event/ManageEventApp.js:681
+#: src/Admin/manage-event/ManageEventApp.js:692
 msgid "Event Details"
 msgstr ""
 
@@ -1730,7 +1730,7 @@ msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:242
 #: src/Admin/event-meta-box/EventEditForm.js:320
-#: src/Admin/manage-event/ManageEventApp.js:634
+#: src/Admin/manage-event/ManageEventApp.js:645
 msgid "— No venue —"
 msgstr ""
 
@@ -1774,15 +1774,15 @@ msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:349
 #: src/Admin/event-meta-box/EventEditForm.js:339
-#: src/Admin/manage-event/ManageEventApp.js:885
+#: src/Admin/manage-event/ManageEventApp.js:896
 msgid "All day"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:357
 #: src/Admin/calendar/components/QuickEventModal.js:381
 #: src/Admin/event-meta-box/EventEditForm.js:345
-#: src/Admin/manage-event/ManageEventApp.js:893
-#: src/Admin/manage-event/ManageEventApp.js:916
+#: src/Admin/manage-event/ManageEventApp.js:904
+#: src/Admin/manage-event/ManageEventApp.js:927
 msgid "Start date"
 msgstr ""
 
@@ -1790,15 +1790,15 @@ msgstr ""
 #: src/Admin/calendar/components/QuickEventModal.js:403
 #: src/Admin/event-meta-box/EventEditForm.js:371
 #: src/Admin/manage-event/EventTickets.js:1618
-#: src/Admin/manage-event/ManageEventApp.js:903
-#: src/Admin/manage-event/ManageEventApp.js:936
+#: src/Admin/manage-event/ManageEventApp.js:914
+#: src/Admin/manage-event/ManageEventApp.js:947
 #: ../fair-events-shared/src/RecurrenceControl.js:79
 msgid "End date"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:427
 #: src/Admin/event-meta-box/EventEditForm.js:387
-#: src/Admin/manage-event/ManageEventApp.js:1033
+#: src/Admin/manage-event/ManageEventApp.js:1044
 msgid "Venue"
 msgstr ""
 
@@ -1886,12 +1886,12 @@ msgid "Failed to save event."
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:361
-#: src/Admin/manage-event/ManageEventApp.js:959
+#: src/Admin/manage-event/ManageEventApp.js:970
 msgid "Event length"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:394
-#: src/Admin/manage-event/ManageEventApp.js:1042
+#: src/Admin/manage-event/ManageEventApp.js:1053
 #: src/Admin/settings/OrganizerTab.js:335
 #: src/Admin/venues/VenuesApp.js:569
 #: src/Admin/venues/VenuesApp.js:688
@@ -1899,7 +1899,7 @@ msgid "Address"
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:397
-#: src/Admin/manage-event/ManageEventApp.js:1048
+#: src/Admin/manage-event/ManageEventApp.js:1059
 msgid "Used as the event location only when no venue is selected above."
 msgstr ""
 
@@ -1944,7 +1944,7 @@ msgid "Link Event"
 msgstr ""
 
 #: src/Admin/manage-event/EditInstancesModal.js:40
-#: src/Admin/manage-event/ManageEventApp.js:1204
+#: src/Admin/manage-event/ManageEventApp.js:1215
 msgid "Edit instances"
 msgstr ""
 
@@ -2067,7 +2067,7 @@ msgid "Save budget"
 msgstr ""
 
 #: src/Admin/manage-event/EventFinance.js:271
-#: src/Admin/manage-event/ManageEventApp.js:720
+#: src/Admin/manage-event/ManageEventApp.js:731
 msgid "Finance"
 msgstr ""
 
@@ -2234,7 +2234,7 @@ msgstr ""
 
 #: src/Admin/manage-event/EventPhotos.js:341
 #: src/Admin/manage-event/EventPhotos.js:359
-#: src/Admin/manage-event/ManageEventApp.js:713
+#: src/Admin/manage-event/ManageEventApp.js:724
 msgid "Photos"
 msgstr ""
 
@@ -2334,7 +2334,7 @@ msgid "Actions"
 msgstr ""
 
 #: src/Admin/manage-event/EventSignups.js:129
-#: src/Admin/manage-event/ManageEventApp.js:705
+#: src/Admin/manage-event/ManageEventApp.js:716
 msgid "List"
 msgstr ""
 
@@ -2568,7 +2568,7 @@ msgid "Includes the complete day of the last occurrence."
 msgstr ""
 
 #: src/Admin/manage-event/EventTickets.js:1533
-#: src/Admin/manage-event/ManageEventApp.js:688
+#: src/Admin/manage-event/ManageEventApp.js:699
 msgid "Prices"
 msgstr ""
 
@@ -2801,34 +2801,34 @@ msgid "Failed to load event date."
 msgstr ""
 
 #. translators: 1: category name, 2: language name
-#: src/Admin/manage-event/ManageEventApp.js:186
+#: src/Admin/manage-event/ManageEventApp.js:197
 #: src/blocks/components/CategorySelector.js:85
 #, js-format
 msgid "%1$s — %2$s"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:203
+#: src/Admin/manage-event/ManageEventApp.js:214
 msgid "Failed to create category."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:398
+#: src/Admin/manage-event/ManageEventApp.js:409
 msgid "Some selected categories were not saved. Please try again."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:410
+#: src/Admin/manage-event/ManageEventApp.js:421
 msgid "Event updated successfully."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:414
+#: src/Admin/manage-event/ManageEventApp.js:425
 msgid "Failed to update event."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:435
+#: src/Admin/manage-event/ManageEventApp.js:446
 msgid "Failed to delete event."
 msgstr ""
 
 #. translators: 1: event title, 2: number of occurrences
-#: src/Admin/manage-event/ManageEventApp.js:449
+#: src/Admin/manage-event/ManageEventApp.js:460
 #, js-format
 msgid "Delete %1$s and its %2$d occurrence? This cannot be undone."
 msgid_plural "Delete %1$s and its %2$d occurrences? This cannot be undone."
@@ -2836,21 +2836,21 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: event title, 2: event date
-#: src/Admin/manage-event/ManageEventApp.js:462
+#: src/Admin/manage-event/ManageEventApp.js:473
 #, js-format
 msgid "Delete %1$s on %2$s? This cannot be undone."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:490
+#: src/Admin/manage-event/ManageEventApp.js:501
 msgid "Series ended."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:493
+#: src/Admin/manage-event/ManageEventApp.js:504
 msgid "Failed to end the series."
 msgstr ""
 
 #. translators: %d: number of generated dates that will be removed
-#: src/Admin/manage-event/ManageEventApp.js:504
+#: src/Admin/manage-event/ManageEventApp.js:515
 #, js-format
 msgid "End this series? %d generated date will be removed. This cannot be undone."
 msgid_plural "End this series? %d generated dates will be removed. This cannot be undone."
@@ -2858,7 +2858,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of dates in the series
-#: src/Admin/manage-event/ManageEventApp.js:535
+#: src/Admin/manage-event/ManageEventApp.js:546
 #, js-format
 msgid "Irregular series · %d date"
 msgid_plural "Irregular series · %d dates"
@@ -2866,121 +2866,121 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: frequency label (e.g. Weekly), 2: number of dates, 3: end date
-#: src/Admin/manage-event/ManageEventApp.js:567
+#: src/Admin/manage-event/ManageEventApp.js:578
 #, js-format
 msgid "Repeats %1$s · %2$d dates · ends %3$s"
 msgstr ""
 
 #. translators: 1: frequency label (e.g. Weekly), 2: number of dates
-#: src/Admin/manage-event/ManageEventApp.js:577
+#: src/Admin/manage-event/ManageEventApp.js:588
 #, js-format
 msgid "Repeats %1$s · %2$d dates"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:621
+#: src/Admin/manage-event/ManageEventApp.js:632
 msgid "Failed to toggle occurrence."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:733
+#: src/Admin/manage-event/ManageEventApp.js:744
 msgid "Admin"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:739
+#: src/Admin/manage-event/ManageEventApp.js:750
 msgid "Event Administration"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:748
+#: src/Admin/manage-event/ManageEventApp.js:759
 msgid "Open copy options for the underlying recurring event, not only this date."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:752
+#: src/Admin/manage-event/ManageEventApp.js:763
 msgid "Open copy options with this event selected as the source."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:762
+#: src/Admin/manage-event/ManageEventApp.js:773
 msgid "Copy event"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:785
+#: src/Admin/manage-event/ManageEventApp.js:796
 msgid "Permanently delete this event and all associated data. This action cannot be undone."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:798
+#: src/Admin/manage-event/ManageEventApp.js:809
 msgid "Delete Event"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:860
+#: src/Admin/manage-event/ManageEventApp.js:871
 msgid "Back to Calendar"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:872
+#: src/Admin/manage-event/ManageEventApp.js:883
 msgid "Details"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1057
+#: src/Admin/manage-event/ManageEventApp.js:1068
 msgid "Attendance mode"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1064
+#: src/Admin/manage-event/ManageEventApp.js:1075
 msgid "In person"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1071
+#: src/Admin/manage-event/ManageEventApp.js:1082
 msgid "Online"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1078
+#: src/Admin/manage-event/ManageEventApp.js:1089
 msgid "Hybrid"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1091
+#: src/Admin/manage-event/ManageEventApp.js:1102
 msgid "Joining link"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1095
+#: src/Admin/manage-event/ManageEventApp.js:1106
 msgid "Shown publicly. Leave empty to link to the event page instead."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1112
+#: src/Admin/manage-event/ManageEventApp.js:1123
 msgid "Recurrence"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1120
+#: src/Admin/manage-event/ManageEventApp.js:1131
 msgid "This event happens once."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1133
+#: src/Admin/manage-event/ManageEventApp.js:1144
 #: src/Admin/manage-event/SeriesModal.js:264
 msgid "Edit series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1147
-#: src/Admin/manage-event/ManageEventApp.js:1343
+#: src/Admin/manage-event/ManageEventApp.js:1158
+#: src/Admin/manage-event/ManageEventApp.js:1354
 msgid "End series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1160
+#: src/Admin/manage-event/ManageEventApp.js:1171
 #: src/Admin/manage-event/SeriesModal.js:265
 msgid "Turn into a series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1227
+#: src/Admin/manage-event/ManageEventApp.js:1238
 msgid "Save event details"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1231
+#: src/Admin/manage-event/ManageEventApp.js:1242
 msgid "Title is required"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1333
+#: src/Admin/manage-event/ManageEventApp.js:1344
 msgid "Delete event"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1353
+#: src/Admin/manage-event/ManageEventApp.js:1364
 msgid "Save and continue"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1356
+#: src/Admin/manage-event/ManageEventApp.js:1367
 msgid "You have unsaved changes. Save event details before setting up the link?"
 msgstr ""
 
