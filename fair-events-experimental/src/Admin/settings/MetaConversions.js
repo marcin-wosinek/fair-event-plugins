@@ -1,6 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
+import { Fragment, useEffect, useState } from '@wordpress/element';
 import {
 	Button,
 	Card,
@@ -16,6 +16,21 @@ import {
 } from '@wordpress/components';
 
 const PATH = '/fair-events-experimental/v1/meta-conversions';
+
+const TEST_EVENTS = [
+	{
+		name: 'PageView',
+		label: __( 'Send PageView test', 'fair-events-experimental' ),
+	},
+	{
+		name: 'InitiateCheckout',
+		label: __( 'Send InitiateCheckout test', 'fair-events-experimental' ),
+	},
+	{
+		name: 'Purchase',
+		label: __( 'Send Purchase test', 'fair-events-experimental' ),
+	},
+];
 
 const STATE_LABELS = {
 	pending: __( 'Pending', 'fair-events-experimental' ),
@@ -84,12 +99,17 @@ function errorDetail( outcome ) {
 
 export default function MetaConversions( { onNotice } ) {
 	const [ config, setConfig ] = useState( null );
+	const [ savedConfig, setSavedConfig ] = useState( null );
 	const [ token, setToken ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
+	const [ sendingEvent, setSendingEvent ] = useState( null );
 	const [ confirming, setConfirming ] = useState( false );
 	const load = () =>
 		apiFetch( { path: PATH } )
-			.then( setConfig )
+			.then( ( next ) => {
+				setConfig( next );
+				setSavedConfig( next );
+			} )
 			.catch( () =>
 				onNotice( {
 					status: 'error',
@@ -114,6 +134,11 @@ export default function MetaConversions( { onNotice } ) {
 	}
 	const ready =
 		config.dataset_id && config.token_configured && config.test_event_code;
+	const dirty =
+		'' !== token ||
+		config.dataset_id !== savedConfig.dataset_id ||
+		config.test_event_code !== savedConfig.test_event_code;
+	const testingDisabled = busy || !! sendingEvent || ! ready || dirty;
 	const save = async () => {
 		setBusy( true );
 		try {
@@ -127,6 +152,7 @@ export default function MetaConversions( { onNotice } ) {
 				},
 			} );
 			setConfig( next );
+			setSavedConfig( next );
 			setToken( '' );
 			onNotice( {
 				status: 'success',
@@ -153,30 +179,43 @@ export default function MetaConversions( { onNotice } ) {
 			method: 'DELETE',
 		} );
 		setConfig( next );
+		setSavedConfig( next );
 		setConfirming( false );
 		setBusy( false );
 	};
-	const sendTest = async () => {
-		setBusy( true );
+	const sendTest = async ( eventName ) => {
+		setSendingEvent( eventName );
 		try {
-			await apiFetch( { path: `${ PATH }/test`, method: 'POST' } );
+			await apiFetch( {
+				path: `${ PATH }/test`,
+				method: 'POST',
+				data: { event_name: eventName },
+			} );
 			onNotice( {
 				status: 'success',
-				message: __(
-					'Meta accepted the test event.',
-					'fair-events-experimental'
+				message: sprintf(
+					/* translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase) */
+					__(
+						'Meta accepted the %s test event.',
+						'fair-events-experimental'
+					),
+					eventName
 				),
 			} );
 		} catch {
 			onNotice( {
 				status: 'error',
-				message: __(
-					'Meta rejected the test event. Check the configuration and try again.',
-					'fair-events-experimental'
+				message: sprintf(
+					/* translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase) */
+					__(
+						'Meta rejected the %s test event. Check the configuration and try again.',
+						'fair-events-experimental'
+					),
+					eventName
 				),
 			} );
 		}
-		setBusy( false );
+		setSendingEvent( null );
 	};
 	return (
 		<Card style={ { marginTop: '16px' } }>
@@ -255,7 +294,7 @@ export default function MetaConversions( { onNotice } ) {
 						isDestructive
 						variant="secondary"
 						onClick={ () => setConfirming( true ) }
-						disabled={ busy }
+						disabled={ busy || !! sendingEvent }
 					>
 						{ __(
 							'Clear access token',
@@ -278,25 +317,41 @@ export default function MetaConversions( { onNotice } ) {
 						variant="primary"
 						onClick={ save }
 						isBusy={ busy }
-						disabled={ busy }
+						disabled={ busy || !! sendingEvent }
 					>
 						{ __(
 							'Save Meta settings',
 							'fair-events-experimental'
 						) }
-					</Button>{ ' ' }
-					<Button
-						variant="secondary"
-						onClick={ sendTest }
-						disabled={ busy || ! ready }
-					>
-						{ __( 'Send test event', 'fair-events-experimental' ) }
 					</Button>
+				</p>
+				<p>
+					{ TEST_EVENTS.map( ( { name, label }, index ) => (
+						<Fragment key={ name }>
+							<Button
+								variant="secondary"
+								onClick={ () => sendTest( name ) }
+								isBusy={ sendingEvent === name }
+								disabled={ testingDisabled }
+							>
+								{ label }
+							</Button>
+							{ index < TEST_EVENTS.length - 1 && ' ' }
+						</Fragment>
+					) ) }
 				</p>
 				{ ! ready && (
 					<p className="description">
 						{ __(
 							'Configure the dataset ID, access token, and Test Events code before sending a test event.',
+							'fair-events-experimental'
+						) }
+					</p>
+				) }
+				{ ready && dirty && (
+					<p className="description">
+						{ __(
+							'Save your changes before sending a test event — testing now would use the previously saved configuration, not what you just typed.',
 							'fair-events-experimental'
 						) }
 					</p>

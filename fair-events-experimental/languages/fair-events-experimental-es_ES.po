@@ -603,13 +603,8 @@ msgstr "Ventas acumuladas"
 msgid "Sales"
 msgstr "Ventas"
 
-#: src/API/MetaConversionsController.php:124
-#: src/Admin/settings/MetaConversions.js:173
-msgid "Meta rejected the test event. Check the configuration and try again."
-msgstr "Meta rechazó el evento de prueba. Comprueba la configuración e intenta de nuevo."
-
 #: src/Core/Features.php:181
-#: src/Admin/settings/MetaConversions.js:185
+#: src/Admin/settings/MetaConversions.js:224
 msgid "Meta Conversions"
 msgstr "Meta Conversions"
 
@@ -617,76 +612,68 @@ msgstr "Meta Conversions"
 msgid "Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials."
 msgstr "Medición de compra y pago en el servidor de Meta con consentimiento. Requiere Fair Payments Connector y credenciales explícitas."
 
-#: src/Admin/settings/MetaConversions.js:96
+#: src/Admin/settings/MetaConversions.js:116
 msgid "Failed to load Meta Conversions settings."
 msgstr "No se pudieron cargar los ajustes de Meta Conversions."
 
-#: src/Admin/settings/MetaConversions.js:108
+#: src/Admin/settings/MetaConversions.js:128
 msgid "Loading Meta Conversions settings…"
 msgstr "Cargando ajustes de Meta Conversions…"
 
-#: src/Admin/settings/MetaConversions.js:133
+#: src/Admin/settings/MetaConversions.js:159
 msgid "Meta Conversions settings saved."
 msgstr "Ajustes de Meta Conversions guardados."
 
-#: src/Admin/settings/MetaConversions.js:141
+#: src/Admin/settings/MetaConversions.js:167
 msgid "Failed to save Meta Conversions settings."
 msgstr "No se pudieron guardar los ajustes de Meta Conversions."
 
-#: src/Admin/settings/MetaConversions.js:165
-msgid "Meta accepted the test event."
-msgstr "Meta aceptó el evento de prueba."
-
-#: src/Admin/settings/MetaConversions.js:190
+#: src/Admin/settings/MetaConversions.js:229
 msgid "Send consented checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days."
 msgstr "Envía mediciones de pago y compra consentidas a Meta. Los identificadores coincidentes se eliminan cuando finaliza la entrega y los registros se eliminan después de 90 días."
 
-#: src/Admin/settings/MetaConversions.js:220
+#: src/Admin/settings/MetaConversions.js:259
 msgid "Dataset / Pixel ID"
 msgstr "ID de conjunto de datos / píxel"
 
-#: src/Admin/settings/MetaConversions.js:233
+#: src/Admin/settings/MetaConversions.js:272
 msgid "Replace access token"
 msgstr "Reemplazar token de acceso"
 
-#: src/Admin/settings/MetaConversions.js:237
+#: src/Admin/settings/MetaConversions.js:276
 msgid "Access token"
 msgstr "Token de acceso"
 
-#: src/Admin/settings/MetaConversions.js:241
+#: src/Admin/settings/MetaConversions.js:280
 msgid "A token is configured. Leave this empty to keep it."
 msgstr "Un token está configurado. Déjalo vacío para mantenerlo."
 
-#: src/Admin/settings/MetaConversions.js:245
+#: src/Admin/settings/MetaConversions.js:284
 msgid "The token is write-only and will not be shown again."
 msgstr "El token es de solo escritura y no se mostrará de nuevo."
 
-#: src/Admin/settings/MetaConversions.js:260
-#: src/Admin/settings/MetaConversions.js:414
+#: src/Admin/settings/MetaConversions.js:299
+#: src/Admin/settings/MetaConversions.js:469
 msgid "Clear access token"
 msgstr "Borrar token de acceso"
 
-#: src/Admin/settings/MetaConversions.js:267
+#: src/Admin/settings/MetaConversions.js:306
 msgid "Test Events code"
 msgstr "Código de eventos de prueba"
 
-#: src/Admin/settings/MetaConversions.js:283
+#: src/Admin/settings/MetaConversions.js:322
 msgid "Save Meta settings"
 msgstr "Guardar ajustes de Meta"
 
-#: src/Admin/settings/MetaConversions.js:293
-msgid "Send test event"
-msgstr "Enviar evento de prueba"
-
-#: src/Admin/settings/MetaConversions.js:298
+#: src/Admin/settings/MetaConversions.js:345
 msgid "Configure the dataset ID, access token, and Test Events code before sending a test event."
 msgstr "Configura el ID del conjunto de datos, el token de acceso y el código de eventos de prueba antes de enviar un evento de prueba."
 
-#: src/Admin/settings/MetaConversions.js:305
+#: src/Admin/settings/MetaConversions.js:360
 msgid "Recent delivery outcomes"
 msgstr "Resultados de entrega recientes"
 
-#: src/Admin/settings/MetaConversions.js:419
+#: src/Admin/settings/MetaConversions.js:474
 msgid "Clear the Meta access token? Conversion delivery will stop until a new token is saved."
 msgstr "¿Borrar el token de acceso de Meta? La entrega de conversiones se detendrá hasta que se guarde un nuevo token."
 
@@ -704,64 +691,93 @@ msgstr ""
 msgid "Net sales amount"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:58
+#: src/Admin/settings/MetaConversions.js:73
 msgid "Test"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:59
+#: src/Admin/settings/MetaConversions.js:74
 msgid "Live"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:198
+#: src/Admin/settings/MetaConversions.js:237
 msgid "Live checkout and purchase tracking will stay inactive until the WP Consent API is available. An existing consent banner is not enough on its own — it also needs to report marketing-consent decisions through that API."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:204
+#: src/Admin/settings/MetaConversions.js:243
 msgid "The WP Consent API is an interoperability layer, not a replacement for your consent banner: installing it does not by itself establish valid consent, and it does not affect synthetic Test Events below."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:211
+#: src/Admin/settings/MetaConversions.js:250
 msgid "Get the WP Consent API plugin"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:21
+#: src/Admin/settings/MetaConversions.js:36
 msgid "Pending"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:22
+#: src/Admin/settings/MetaConversions.js:37
 msgid "Sending"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:23
+#: src/Admin/settings/MetaConversions.js:38
 msgid "Retrying"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:24
+#: src/Admin/settings/MetaConversions.js:39
 msgid "Delivered"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:25
+#: src/Admin/settings/MetaConversions.js:40
 msgid "Configuration error"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:29
+#: src/Admin/settings/MetaConversions.js:44
 msgid "Failed — retries exhausted"
 msgstr ""
 
 #. translators: %d: number of delivery attempts made so far
-#: src/Admin/settings/MetaConversions.js:65
+#: src/Admin/settings/MetaConversions.js:80
 #, js-format
 msgid "%d attempt"
 msgid_plural "%d attempts"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/settings/MetaConversions.js:312
+#: src/Admin/settings/MetaConversions.js:367
 msgid "No delivery attempts yet."
 msgstr ""
 
 #. translators: %s: safe failure category/code reported by Meta
-#: src/Admin/settings/MetaConversions.js:394
+#: src/Admin/settings/MetaConversions.js:449
 #, js-format
 msgid "Error: %s"
+msgstr ""
+
+#. translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase)
+#: src/API/MetaConversionsController.php:135
+#: src/Admin/settings/MetaConversions.js:210
+#, php-format,js-format
+msgid "Meta rejected the %s test event. Check the configuration and try again."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:23
+msgid "Send PageView test"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:27
+msgid "Send InitiateCheckout test"
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:31
+msgid "Send Purchase test"
+msgstr ""
+
+#. translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase)
+#: src/Admin/settings/MetaConversions.js:198
+#, js-format
+msgid "Meta accepted the %s test event."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:353
+msgid "Save your changes before sending a test event — testing now would use the previously saved configuration, not what you just typed."
 msgstr ""

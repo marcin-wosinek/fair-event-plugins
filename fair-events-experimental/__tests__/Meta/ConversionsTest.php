@@ -219,12 +219,50 @@ class ConversionsTest extends TestCase {
 		$this->assertSame( 'PageView', $body['data'][0]['event_name'] );
 	}
 
-	/** Without a configured Test Events code, the synthetic test fails closed before any network call. */
+	/** Without a configured Test Events code, the synthetic test fails closed before any network call, regardless of event type. */
 	public function test_send_test_fails_closed_without_a_configured_test_event_code() {
 		$this->configure_credentials();
-		$result = ( new Conversions() )->send_test();
+		$result = ( new Conversions() )->send_test( 'Purchase' );
 		$this->assertFalse( $result['accepted'] );
 		$this->assertSame( 'missing_test_code', $result['code'] );
 		$this->assertSame( array(), $GLOBALS['_fair_test_remote_post_requests'] );
+	}
+
+	/** Each administrator-selectable event type is sent and named correctly. */
+	public function test_send_test_sends_the_selected_event_name() {
+		$this->configure_credentials();
+		update_option( Conversions::TEST_CODE_OPTION, 'CODE123' );
+		foreach ( array( 'PageView', 'InitiateCheckout', 'Purchase' ) as $event_name ) {
+			$GLOBALS['_fair_test_remote_post_requests'] = array();
+			$result                                     = ( new Conversions() )->send_test( $event_name );
+			$this->assertTrue( $result['accepted'] );
+			$body = json_decode( $GLOBALS['_fair_test_remote_post_requests'][0]['args']['body'], true );
+			$this->assertSame( $event_name, $body['data'][0]['event_name'] );
+			$this->assertSame( 'CODE123', $body['test_event_code'] );
+		}
+	}
+
+	/** PageView carries no commerce data. */
+	public function test_build_test_event_omits_commerce_data_for_page_view() {
+		$event = Conversions::build_test_event( 'PageView' );
+		$this->assertSame( array(), $event['custom_data'] );
+	}
+
+	/** InitiateCheckout and Purchase carry a fixed sample value and currency, since Meta expects commerce fields for these event types. */
+	public function test_build_test_event_includes_sample_commerce_data() {
+		foreach ( array( 'InitiateCheckout', 'Purchase' ) as $event_name ) {
+			$event = Conversions::build_test_event( $event_name );
+			$this->assertArrayHasKey( 'value', $event['custom_data'] );
+			$this->assertArrayHasKey( 'currency', $event['custom_data'] );
+		}
+	}
+
+	/** The synthetic test event never references a real transaction or order — only the Test Events code marks it as a test. */
+	public function test_build_test_event_never_includes_an_order_id() {
+		foreach ( array( 'PageView', 'InitiateCheckout', 'Purchase' ) as $event_name ) {
+			$event = Conversions::build_test_event( $event_name );
+			$this->assertArrayNotHasKey( 'order_id', $event['custom_data'] );
+			$this->assertArrayNotHasKey( 'transaction_id', $event );
+		}
 	}
 }

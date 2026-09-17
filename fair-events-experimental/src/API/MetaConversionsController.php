@@ -69,6 +69,14 @@ class MetaConversionsController extends WP_REST_Controller {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'send_test' ),
 				'permission_callback' => array( $this, 'permissions_check' ),
+				'args'                => array(
+					'event_name' => array(
+						'type'              => 'string',
+						'required'          => true,
+						'enum'              => array( 'PageView', 'InitiateCheckout', 'Purchase' ),
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
 			)
 		);
 	}
@@ -115,19 +123,29 @@ class MetaConversionsController extends WP_REST_Controller {
 		delete_option( Conversions::TOKEN_OPTION );
 		return $this->get_item(); }
 
-	/** @return \WP_REST_Response|\WP_Error */
-	public function send_test() {
-		$result = ( new Conversions() )->send_test();
+	/** @param \WP_REST_Request $request Request. @return \WP_REST_Response|\WP_Error */
+	public function send_test( $request ) {
+		$event_name = (string) $request->get_param( 'event_name' );
+		$result     = ( new Conversions() )->send_test( $event_name );
 		if ( ! $result['accepted'] ) {
 			return new \WP_Error(
 				'meta_test_failed',
-				__( 'Meta rejected the test event. Check the configuration and try again.', 'fair-events-experimental' ),
+				sprintf(
+					/* translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase) */
+					__( 'Meta rejected the %s test event. Check the configuration and try again.', 'fair-events-experimental' ),
+					$event_name
+				),
 				array(
 					'status'   => $result['temporary'] ? 503 : 400,
 					'category' => $result['type'],
 					'code'     => $result['code'],
 				)
 			); }
-		return rest_ensure_response( array( 'accepted' => true ) );
+		return rest_ensure_response(
+			array(
+				'accepted'   => true,
+				'event_name' => $event_name,
+			)
+		);
 	}
 }
