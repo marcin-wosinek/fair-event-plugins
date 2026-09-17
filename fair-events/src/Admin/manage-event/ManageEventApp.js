@@ -158,10 +158,21 @@ export default function ManageEventApp() {
 	// same-named categories from different languages, and merge by ID rather
 	// than replace so a category the event already carries never disappears
 	// from the option list just because a later fetch omitted it.
+	//
+	// The saved event's own `categories` field never carries language (only
+	// the all-languages options response does), and the two requests race —
+	// so never let a language-less record overwrite one that already has a
+	// language, regardless of which request lands last (#1636).
 	const mergeCategories = ( incoming ) =>
 		setAvailableCategories( ( prev ) => {
 			const byId = new Map( prev.map( ( c ) => [ c.id, c ] ) );
-			incoming.forEach( ( c ) => byId.set( c.id, c ) );
+			incoming.forEach( ( c ) => {
+				const existing = byId.get( c.id );
+				if ( existing?.language && ! c.language ) {
+					return;
+				}
+				byId.set( c.id, c );
+			} );
 			return Array.from( byId.values() );
 		} );
 

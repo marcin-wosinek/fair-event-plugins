@@ -649,6 +649,40 @@ describe( 'multilingual categories (#1636)', () => {
 		);
 	} );
 
+	it( 'keeps language labels when the saved event resolves after the language-rich options', async () => {
+		// Reproduces #1636's follow-up report: if the saved-event fetch
+		// (whose categories carry no language) lands *after* the
+		// all-languages options fetch, it must not blank out the language
+		// labels the options response already supplied.
+		const allCategories = [
+			{ id: 1, name: 'Bart', slug: 'bart', language: 'English' },
+			{ id: 2, name: 'Bart', slug: 'bart-es', language: 'Spanish' },
+		];
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				return new Promise( ( resolve ) =>
+					setTimeout( () => resolve( multilingualEventDate ), 10 )
+				);
+			}
+			if (
+				opts.path &&
+				opts.path.startsWith( '/fair-events/v1/sources/categories' )
+			) {
+				return Promise.resolve( allCategories );
+			}
+			return Promise.resolve( [] );
+		} );
+
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByText( 'Bart — English' )
+		).toBeInTheDocument();
+		expect(
+			await screen.findByText( 'Bart — Spanish' )
+		).toBeInTheDocument();
+	} );
+
 	it( 'preserves every language on an unrelated save', async () => {
 		mockMultilingualCategories();
 

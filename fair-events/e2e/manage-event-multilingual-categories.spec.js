@@ -96,6 +96,18 @@ test( 'editor retains categories from both languages after save and reopen', asy
 		for ( const cat of cats ) {
 			await expect( page.getByText( cat.name ).first() ).toBeVisible();
 		}
+		// The saved event's own categories carry no language, and race
+		// against the all-languages options fetch; reopening must still show
+		// each token with its language label, not the bare name (#1636).
+		await expect
+			.poll( () =>
+				page
+					.locator(
+						'.components-form-token-field__token-text > [aria-hidden="true"]'
+					)
+					.allTextContents()
+			)
+			.toEqual( expect.arrayContaining( labels ) );
 		const reopened = await api(
 			`/fair-events/v1/event-dates/${ date.id }`
 		);
