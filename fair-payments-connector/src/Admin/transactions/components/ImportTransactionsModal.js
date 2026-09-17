@@ -580,6 +580,10 @@ const ImportTransactionsModal = ( { onClose, onImported } ) => {
 		</VStack>
 	);
 
+	// A disabled site remains a valid import source server-side until it is
+	// re-enabled, but is excluded here so it never appears as a choice.
+	const enabledSites = sites.filter( ( site ) => site.enabled !== false );
+
 	const renderSites = () => (
 		<VStack spacing={ 4 }>
 			<p style={ { margin: 0 } }>
@@ -607,7 +611,18 @@ const ImportTransactionsModal = ( { onClose, onImported } ) => {
 				</p>
 			) }
 
-			{ ! loadingSites && sites.length > 0 && (
+			{ ! loadingSites &&
+				sites.length > 0 &&
+				enabledSites.length === 0 && (
+					<p>
+						{ __(
+							'No enabled connected sites. Enable one on the Connected Sites page first.',
+							'fair-payments-connector'
+						) }
+					</p>
+				) }
+
+			{ ! loadingSites && enabledSites.length > 0 && (
 				<table className="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
@@ -623,7 +638,7 @@ const ImportTransactionsModal = ( { onClose, onImported } ) => {
 						</tr>
 					</thead>
 					<tbody>
-						{ sites.map( ( site ) => (
+						{ enabledSites.map( ( site ) => (
 							<tr key={ site.id }>
 								<td>
 									<strong>{ site.label }</strong>

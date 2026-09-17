@@ -56,6 +56,15 @@ class ConnectedSitesController extends WP_REST_Controller {
 			),
 		);
 
+		// Not `required` and no `default`, so an omitted value leaves the
+		// current setting alone via WP_REST_Request::has_param() — only used
+		// on update; a newly created site is always enabled.
+		$update_args            = $args;
+		$update_args['enabled'] = array(
+			'description' => __( 'Whether the site is available as an import source.', 'fair-payments-connector-experimental' ),
+			'type'        => 'boolean',
+		);
+
 		register_rest_route(
 			$this->namespace,
 			'/admin/connected-sites',
@@ -82,7 +91,7 @@ class ConnectedSitesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => array( $this, 'permissions_check' ),
-					'args'                => $args,
+					'args'                => $update_args,
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
@@ -207,6 +216,9 @@ class ConnectedSitesController extends WP_REST_Controller {
 			}
 			$data['budget_id'] = $budget_id;
 		}
+		if ( $request->has_param( 'enabled' ) ) {
+			$data['enabled'] = (bool) $request->get_param( 'enabled' );
+		}
 
 		$record = ConnectedSite::update( $id, $data );
 
@@ -309,6 +321,14 @@ class ConnectedSitesController extends WP_REST_Controller {
 
 		if ( ! $record ) {
 			return $this->not_found();
+		}
+
+		if ( ! ConnectedSite::is_enabled( $record ) ) {
+			return new WP_Error(
+				'rest_connected_site_disabled',
+				__( 'This connected site is disabled and cannot be used to import transactions.', 'fair-payments-connector-experimental' ),
+				array( 'status' => 403 )
+			);
 		}
 
 		$source_domain = (string) wp_parse_url( $record['base_url'], PHP_URL_HOST );
