@@ -100,8 +100,8 @@ Yes! Events support standard WordPress categories and tags. You can organize you
 2. All Events admin list with linked posts and link types
 3. Manage Event admin page (Details, Recurrence, Link Options cards)
 4. Events Calendar block on a public page
-5. Event Info block on a single event post (date and venue address)
-6. Add to Calendar block on a single event post
+5. Event Info block on an event page (date and venue address)
+6. Add to Calendar block on an event page
 
 == Changelog ==
 
