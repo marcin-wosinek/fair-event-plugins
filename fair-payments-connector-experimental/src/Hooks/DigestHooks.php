@@ -2,8 +2,9 @@
 /**
  * Digest sender hooks for Fair Payments Connector Experimental
  *
- * Registers custom WP-Cron intervals and flushes the notification queue
- * on each tick, grouping rows by route and sending one combined digest.
+ * Registers custom WP-Cron intervals and one recurring event per digest
+ * frequency. Each run claims the queued rows of its frequency, grouped by
+ * route, and sends one combined digest per group.
  *
  * @package FairPaymentsConnectorExperimental
  */
@@ -11,6 +12,7 @@
 namespace FairPaymentsConnectorExperimental\Hooks;
 
 use FairPaymentsConnectorExperimental\Services\DigestBuilder;
+use FairPaymentsConnectorExperimental\Services\NotificationQueue;
 
 defined( 'WPINC' ) || die;
 
@@ -32,6 +34,40 @@ class DigestHooks {
 	);
 
 	/**
+	 * Length in seconds of each frequency's schedule.
+	 */
+	const FREQUENCY_INTERVALS = array(
+		'hourly' => HOUR_IN_SECONDS,
+		'daily'  => DAY_IN_SECONDS,
+		'weekly' => WEEK_IN_SECONDS,
+	);
+
+	/**
+	 * Queue storage.
+	 *
+	 * @var NotificationQueue
+	 */
+	private $queue;
+
+	/**
+	 * Builds a channel for a channel name.
+	 *
+	 * @var callable
+	 */
+	private $channel_factory;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param NotificationQueue|null $queue           Queue storage; defaults to the database-backed queue.
+	 * @param callable|null          $channel_factory Receives a channel name, returns a NotificationChannel or null.
+	 */
+	public function __construct( ?NotificationQueue $queue = null, ?callable $channel_factory = null ) {
+		$this->queue           = $queue ?? new NotificationQueue();
+		$this->channel_factory = $channel_factory ?? array( NotificationHooks::class, 'make_channel' );
+	}
+
+	/**
 	 * Register hooks.
 	 *
 	 * @return void
@@ -40,8 +76,28 @@ class DigestHooks {
 		add_filter( 'cron_schedules', array( $this, 'add_cron_schedules' ) );
 		add_action( self::CRON_HOOK, array( $this, 'flush_due' ) );
 
-		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'fair_payment_digest_hourly', self::CRON_HOOK );
+		$this->schedule_events();
+	}
+
+	/**
+	 * Make sure one recurring event exists per digest frequency.
+	 *
+	 * Each event carries its frequency as its only argument, so the events are
+	 * independent: a missing one is re-created without touching the others.
+	 * The single argument-less hourly event registered by earlier versions,
+	 * which flushed every frequency at once, is removed.
+	 *
+	 * @return void
+	 */
+	public function schedule_events() {
+		if ( false !== wp_next_scheduled( self::CRON_HOOK ) ) {
+			wp_clear_scheduled_hook( self::CRON_HOOK );
+		}
+
+		foreach ( self::FREQUENCY_SCHEDULES as $frequency => $schedule ) {
+			if ( false === wp_next_scheduled( self::CRON_HOOK, array( $frequency ) ) ) {
+				wp_schedule_event( time() + self::FREQUENCY_INTERVALS[ $frequency ], $schedule, self::CRON_HOOK, array( $frequency ) );
+			}
 		}
 	}
 
@@ -74,81 +130,72 @@ class DigestHooks {
 	}
 
 	/**
-	 * Flush unsent queue rows, grouped by route.
+	 * Send the queued digests of one frequency.
 	 *
-	 * Rows are marked sent_at inline. A row without sent_at that was created
-	 * more than STUCK_MINUTES ago is considered orphaned by a previous crash and
-	 * is re-eligible for sending (we detect this by sent_at IS NULL AND
-	 * created_at is older than the threshold — in practice the window is large
-	 * enough that double-send is very unlikely).
+	 * Rows are grouped by route and claimed atomically before sending, so an
+	 * overlapping run cannot include the same sale again. A group is marked sent
+	 * only after its channel reports success; otherwise its rows return to
+	 * `pending` with the attempt recorded and are retried on the next run. A
+	 * claim left in `sending` for over STUCK_MINUTES (a run that died mid-send)
+	 * becomes claimable again.
 	 *
+	 * @param string $frequency Digest frequency: hourly, daily or weekly.
 	 * @return void
 	 */
-	public function flush_due() {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'fair_payment_notification_queue';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
-			$wpdb->prepare( 'SELECT * FROM %i WHERE sent_at IS NULL ORDER BY route_id, created_at', $table )
-		);
-
-		if ( empty( $rows ) ) {
+	public function flush_due( $frequency = '' ) {
+		$frequency = (string) $frequency;
+		if ( ! isset( self::FREQUENCY_SCHEDULES[ $frequency ] ) ) {
 			return;
 		}
 
-		$groups  = array();
-		$builder = new DigestBuilder();
+		$stale_before = gmdate( 'Y-m-d H:i:s', time() - self::STUCK_MINUTES * MINUTE_IN_SECONDS );
 
-		foreach ( $rows as $row ) {
-			$groups[ $row->route_id ][] = $row;
-		}
+		foreach ( $this->queue->due_groups( $frequency, $stale_before ) as $group ) {
+			$token = bin2hex( random_bytes( 16 ) );
+			$rows  = $this->queue->claim_group( $group, $frequency, $stale_before, $token, gmdate( 'Y-m-d H:i:s' ) );
 
-		$routes    = (array) get_option( \FairPaymentsConnectorExperimental\Settings\Settings::ROUTES_OPTION, array() );
-		$route_map = array();
-		foreach ( $routes as $route ) {
-			if ( ! empty( $route['id'] ) ) {
-				$route_map[ $route['id'] ] = $route;
-			}
-		}
-
-		foreach ( $groups as $route_id => $route_rows ) {
-			$route = isset( $route_map[ $route_id ] ) ? $route_map[ $route_id ] : null;
-
-			$channel_name = $route_rows[0]->channel;
-			$destination  = $route_rows[0]->destination;
-
-			if ( $route ) {
-				$channel_name = $route['channel'];
-				$destination  = $route['destination'];
-			}
-
-			$channel = NotificationHooks::make_channel( $channel_name );
-			if ( null === $channel ) {
+			if ( empty( $rows ) ) {
+				// Another run claimed this group first.
 				continue;
 			}
 
-			$text = $builder->build( $route_rows );
-			$channel->send( $destination, $text );
-
-			$ids = array_map(
-				function ( $r ) {
-					return (int) $r->id;
-				},
-				$route_rows
-			);
-
-			$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$wpdb->query(
-				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"UPDATE {$table} SET sent_at = %s WHERE id IN ({$placeholders})",
-					array_merge( array( current_time( 'mysql', true ) ), $ids )
-				)
-			);
+			$this->deliver( $group, $rows, $token );
 		}
+	}
+
+	/**
+	 * Send one claimed group and record the outcome.
+	 *
+	 * Uses the channel and destination captured when the sales were queued, and
+	 * keeps message bodies and recipients out of the stored failure text.
+	 *
+	 * @param object   $group Group with channel and destination.
+	 * @param object[] $rows  Claimed queue rows.
+	 * @param string   $token Claim token.
+	 * @return void
+	 */
+	private function deliver( $group, array $rows, string $token ) {
+		$channel = call_user_func( $this->channel_factory, (string) $group->channel );
+
+		if ( null === $channel ) {
+			$this->queue->release( $token, 'Unknown notification channel.' );
+			return;
+		}
+
+		$error = 'Channel reported a failed send.';
+
+		try {
+			$sent = $channel->send( (string) $group->destination, ( new DigestBuilder() )->build( $rows ) );
+		} catch ( \Throwable $e ) {
+			$sent  = false;
+			$error = 'Send raised ' . get_class( $e ) . '.';
+		}
+
+		if ( true === $sent ) {
+			$this->queue->mark_sent( $token, gmdate( 'Y-m-d H:i:s' ) );
+			return;
+		}
+
+		$this->queue->release( $token, $error );
 	}
 }
