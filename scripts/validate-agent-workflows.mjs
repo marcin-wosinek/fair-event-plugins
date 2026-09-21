@@ -21,6 +21,8 @@ const LEGACY_HOOKS = [
 	'.codex/hooks/format-edited-file.sh',
 ];
 
+const ITERATION_CONFIGURATION_GUARD = 'Never call `updateProjectV2Field`';
+
 function read(root, relative) {
 	return readFileSync(path.join(root, relative), 'utf8');
 }
@@ -86,6 +88,21 @@ export function validateAgentWorkflows(root) {
 	for (const legacyHook of LEGACY_HOOKS) {
 		if (existsSync(path.join(root, legacyHook))) {
 			errors.push(`Legacy hook implementation remains: ${legacyHook}`);
+		}
+	}
+
+	for (const documentationPath of [
+		'.agents/skills/write-ticket/SKILL.md',
+		'TICKETS.md',
+	]) {
+		if (
+			!read(root, documentationPath).includes(
+				ITERATION_CONFIGURATION_GUARD
+			)
+		) {
+			errors.push(
+				`Missing iteration configuration safety guard: ${documentationPath}`
+			);
 		}
 	}
 

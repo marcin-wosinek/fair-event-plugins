@@ -46,6 +46,17 @@ grounding happens at planning time (`/plan-ticket`), not in the ticket.
    gh api graphql -f query='query { user(login: "marcin-wosinek") { projectV2(number: 5) { fields(first: 20) { nodes { ... on ProjectV2IterationField { id configuration { iterations { id title startDate duration } } } } } } } }'
    ```
 
+   Resolve the sprint only from iteration IDs already returned by this
+   read-only query. If the requested current or next iteration is missing,
+   stop and ask the user to create it in the GitHub project settings. Do not
+   attempt to create it as part of ticket writing.
+
+   **Iteration configuration safety:** Never call `updateProjectV2Field` from
+   this workflow, and never create, edit, or delete iterations through
+   GraphQL. The mutation replaces the complete iteration configuration;
+   supplying only the desired iterations deletes omitted current and completed
+   iterations and clears their item assignments.
+
 6. **Create the issue with `gh`, then add it to the sprint.** Write the body
    to a temp file and pass `--body-file` (heredocs preserve the markdown /
    checkboxes cleanly), then add the issue to the project and set its

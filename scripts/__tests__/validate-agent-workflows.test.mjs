@@ -14,7 +14,13 @@ import { validateAgentWorkflows } from '../validate-agent-workflows.mjs';
 
 function fixture() {
 	const root = mkdtempSync(path.join(tmpdir(), 'agent-workflows-'));
-	for (const relative of ['.agents', '.claude', '.codex', 'scripts']) {
+	for (const relative of [
+		'.agents',
+		'.claude',
+		'.codex',
+		'scripts',
+		'TICKETS.md',
+	]) {
 		cpSync(relative, path.join(root, relative), { recursive: true });
 	}
 	return root;
@@ -91,6 +97,23 @@ test('detects mismatched skill frontmatter', () => {
 		assert.match(
 			validateAgentWorkflows(root).join('\n'),
 			/frontmatter name must be pr/
+		);
+	});
+});
+
+test('detects a missing iteration configuration safety guard', () => {
+	withFixture((root) => {
+		const file = path.join(root, '.agents/skills/write-ticket/SKILL.md');
+		writeFileSync(
+			file,
+			readFileSync(file, 'utf8').replace(
+				'Never call `updateProjectV2Field`',
+				'Do not change the iteration configuration'
+			)
+		);
+		assert.match(
+			validateAgentWorkflows(root).join('\n'),
+			/Missing iteration configuration safety guard/
 		);
 	});
 });
