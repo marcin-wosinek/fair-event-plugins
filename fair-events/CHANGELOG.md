@@ -1,5 +1,30 @@
 # fair-events
 
+## 1.18.0
+
+### Minor Changes
+
+-   0a5131a: Sale periods no longer require explicit outer boundaries. A first sale period with no start date is available from today while today is still before its end; a last sale period with no end date stays available through the complete final day of the event or recurring series. Interior sale periods still require explicit, chained boundaries, and an invalid sequence is rejected before it's saved.
+-   7362ce4: Add a budget selector to the Manage Event Finance tab, applying to the whole event/series. When Fair Finance pre-generates a reconciliation split for a settlement transfer, or matches a bank entry to a single transaction, each allocation now preselects the budget linked to its payment's event (falling back to no budget when the event has none, is unlinked, or its budget was deleted). Organisers can still override any preselected budget before saving.
+-   e3fa379: Add an "Event" field to the transaction view so an admin can search for, link, or clear the event date a transaction relates to — including linking a specific occurrence of a recurring event. The link is validated server-side against Fair Events when it's active.
+-   ac6da68: Let the Events Calendar, Events Week, and Events List category picker offer categories from every configured Polylang language, distinguished by an accessible "Name — Language" label, so an editor can include same-named categories from another language in the filter.
+-   aa0b8ef: Replace the Signups tab's "Download CSV" button with a configurable "Export" popup: pick all columns or handpick them, choose Markdown/CSV/one-line output, and optionally include Fair Form answers collected during signup as individually selectable columns.
+-   4a91d09: Add a "Manage events" shortcut to the Events Calendar block's navigation bar, visible only to users who can edit events, linking to the corresponding month on the admin calendar.
+-   2f0d149: Add a Location filter to the All Events admin screen, with a matching Location column, so staff can narrow the list to events at one venue or with no venue set.
+
+### Patch Changes
+
+-   d4bea94: Rename the Manage Event ticket and signup sections to Prices and List while preserving legacy admin links.
+-   65b371a: Fix the Manage Event editor dropping selected categories from other Polylang languages on save. The category picker now loads every configured language and matches tokens by name and language together, so same-named categories in different languages no longer collide or disappear on an unrelated save.
+-   5290dc9: Fix the Manage Event editor showing multilingual categories without their language label after loading. The saved event's category records (which carry no language) could arrive after the all-languages options fetch and overwrite the language metadata already loaded, regardless of which request finished first.
+-   7318848: Rename the dedicated Events post type's labels to "Event Page" / "Event Pages" throughout the admin (submenu, list table, search, Add New/Edit screens) so it stops colliding with "Event" meaning the dated, ticketed object. The frontend admin bar on a published event page now shows distinct "Manage Event" and "Edit Event Page" links. Translated for de_DE, es_ES, fr_FR, and pl_PL.
+-   c894b20: Refresh the WordPress.org screenshot set and store listing captions to match the "Event page" post type naming, replacing stale "Event Posts" imagery and "a single event post" captions.
+-   1a49cff: Keep every selected event category when Polylang adjusts the linked post's terms, including after later edits and category filtering.
+-   452cc30: Consolidate ticket sale-period and ticket-type availability into a single `TicketAvailability` service in fair-events, always evaluated in the WordPress site timezone. Fixes two boundary inconsistencies found while consolidating: event JSON-LD offers now respect a ticket type's scheduled end date (previously only manual disabling was checked), and the fair-audience signup form's purchase validation now also rejects a manually disabled ticket type (previously only its scheduled end date), matching what the signup form already hides.
+-   1323dfa: Fix the All Events Location filter menu collapsing to an unreadably narrow popover.
+-   Updated dependencies [19d0333]
+    -   fair-events-shared@0.6.2
+
 ## 1.17.0
 
 ### Minor Changes

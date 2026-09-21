@@ -1,5 +1,22 @@
 # fair-payments-connector
 
+## 2.1.0
+
+### Minor Changes
+
+-   19d0333: Add an audit log for Fair Payments Connector settings and Mollie connection changes. Every successful manual change — saving the mode, currency, or bank-transfer settings, or connecting, reconnecting, or disconnecting Mollie — is recorded with a server-generated description; automated changes (token refresh, connection loss) are attributed to the system. A new Audit Log tab on the settings page shows the paginated history, redacting protected values such as OAuth tokens. The shared Settings → Fair Event Plugins screen gained an optional per-field `requires_reason` flag and a `fair_event_plugins_setting_changed` action so a plugin can record its own audit entry when its field changes there — both are additive and don't affect plugins that don't use them; this plugin's own bundled-translations row does not use the flag.
+-   28d4fd9: Add a "Delete transaction" action to the transaction detail page so administrators can permanently remove a local transaction record, such as one imported by mistake. Deletion only affects local WordPress data — it never cancels, refunds, or otherwise modifies the corresponding payment in Mollie or any other external service.
+-   a619b61: Add a responsive administrator flow for selecting and importing paid transactions directly from the connected Mollie account.
+-   1cda6dd: Add an optional Budget selector to each Connected Site, so a transaction imported from that site retains a durable link to its local id. During reconciliation, an unmatched imported transaction now shows its source site's configured budget, and the administrator can review, change, or clear that proposal before confirming a match — an existing budget assignment is always preserved, and no budget is proposed when selected transactions resolve to different sites. Removing a Connected Site or its linked budget never breaks existing data; both simply resolve to no budget going forward.
+-   e3fa379: Add an "Event" field to the transaction view so an admin can search for, link, or clear the event date a transaction relates to — including linking a specific occurrence of a recurring event. The link is validated server-side against Fair Events when it's active.
+-   15ff1d1: Show a non-dismissible warning across every active Fair Event Plugins admin page (including the shared Settings → Fair Event Plugins screen and Fair Events post-type screens) when Fair Payments Connector is not ready to process real payments — no Mollie account connected, or setup incomplete (missing profile ID or still in test mode) — linking to the connector's settings page. Replaces the connector's own test-mode-only notice with this single, suite-wide notice path.
+
+### Patch Changes
+
+-   38d61eb: Import missing Mollie transaction fee data in batches of 10 instead of one request per transaction, so large fee synchronizations are faster and less vulnerable to interrupted connections.
+-   Updated dependencies [19d0333]
+    -   fair-events-shared@0.6.2
+
 ## 2.0.2
 
 ### Patch Changes
