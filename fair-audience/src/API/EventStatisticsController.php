@@ -197,6 +197,7 @@ class EventStatisticsController extends WP_REST_Controller {
 
 		return new WP_REST_Response(
 			array(
+				'event_name'          => trim( (string) $event_date->get_display_title() ),
 				'total_sales'         => count( $rows ),
 				'currency'            => $currency,
 				'total_sales_amount'  => $total_sales_amount,

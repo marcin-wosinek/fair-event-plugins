@@ -1,13 +1,27 @@
-import { useState, useEffect, useMemo } from '@wordpress/element';
 import {
+	useState,
+	useEffect,
+	useMemo,
+	useRef,
+	useId,
+} from '@wordpress/element';
+import {
+	Button,
 	Card,
 	CardHeader,
 	CardBody,
 	Notice,
 	Spinner,
 } from '@wordpress/components';
+import { download } from '@wordpress/icons';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { getEventDisplayTitle } from 'fair-events-shared';
+import {
+	EXPORT_IGNORE_ATTRIBUTE,
+	buildChartFilename,
+	downloadElementAsPng,
+} from './exportChartImage.js';
 import './style.css';
 import {
 	ResponsiveContainer,
@@ -68,11 +82,48 @@ export function activityCountDistribution( participants ) {
 	return result;
 }
 
-function ChartCard( { title, children } ) {
+// A chart card. Passing `onDownload` adds the "Download PNG" action and the
+// event-name subtitle, so the exported image stays self-explanatory outside the
+// admin screen.
+function ChartCard( {
+	title,
+	eventName,
+	onDownload,
+	isDownloadDisabled,
+	isDownloading,
+	children,
+} ) {
+	const cardRef = useRef( null );
+	const headingId = useId();
 	return (
-		<Card className="fair-event-statistics__chart-card">
-			<CardHeader>
-				<h3 style={ { margin: 0 } }>{ title }</h3>
+		<Card ref={ cardRef } className="fair-event-statistics__chart-card">
+			<CardHeader className="fair-event-statistics__chart-header">
+				<div className="fair-event-statistics__chart-heading">
+					<h3 id={ headingId } style={ { margin: 0 } }>
+						{ title }
+					</h3>
+					{ onDownload && eventName && (
+						<p className="fair-event-statistics__chart-subtitle">
+							{ eventName }
+						</p>
+					) }
+				</div>
+				{ onDownload && (
+					<Button
+						{ ...{ [ EXPORT_IGNORE_ATTRIBUTE ]: 'true' } }
+						className="fair-event-statistics__download"
+						variant="secondary"
+						size="compact"
+						icon={ download }
+						isBusy={ isDownloading }
+						accessibleWhenDisabled
+						disabled={ isDownloadDisabled }
+						aria-describedby={ headingId }
+						onClick={ () => onDownload( cardRef.current ) }
+					>
+						{ __( 'Download PNG', 'fair-events-experimental' ) }
+					</Button>
+				) }
 			</CardHeader>
 			<CardBody>{ children }</CardBody>
 		</Card>
@@ -138,7 +189,11 @@ function CumulativeChart( { series, dataKey, name, valueFormatter } ) {
 	);
 }
 
-export default function EventStatistics( { eventDateId } ) {
+export default function EventStatistics( { eventDateId, eventTitle } ) {
+	const [ exportingChart, setExportingChart ] = useState( null );
+	const [ exportError, setExportError ] = useState( '' );
+	// Guards against a second activation landing before the busy state renders.
+	const exportInFlight = useRef( false );
 	const [ participants, setParticipants ] = useState( [] );
 	const [ participantLoading, setParticipantLoading ] = useState( true );
 	const [ statistics, setStatistics ] = useState( null );
@@ -204,6 +259,46 @@ export default function EventStatistics( { eventDateId } ) {
 		[ statistics?.currency ]
 	);
 	const formatCurrency = ( value ) => currencyFormatter.format( value );
+
+	// Prefer the live Manage Event title; the standalone Statistics page has
+	// only the value the API returned.
+	const eventName = getEventDisplayTitle(
+		eventTitle?.trim() || statistics?.event_name
+	);
+	const salesChartTitle = __(
+		'Cumulative sales',
+		'fair-events-experimental'
+	);
+	const salesAmountChartTitle = __(
+		'Cumulative sales amount',
+		'fair-events-experimental'
+	);
+
+	const downloadChart = async ( chartTitle, cardElement ) => {
+		if ( exportInFlight.current || ! cardElement ) {
+			return;
+		}
+		exportInFlight.current = true;
+		setExportingChart( chartTitle );
+		setExportError( '' );
+		try {
+			await downloadElementAsPng(
+				cardElement,
+				buildChartFilename( eventName, chartTitle )
+			);
+		} catch ( error ) {
+			setExportError(
+				__(
+					'The chart image could not be downloaded. Please try again.',
+					'fair-events-experimental'
+				)
+			);
+		} finally {
+			exportInFlight.current = false;
+			setExportingChart( null );
+		}
+	};
+
 	if ( participantLoading && statisticsLoading ) {
 		return (
 			<div style={ { padding: '24px', textAlign: 'center' } }>
@@ -272,12 +367,23 @@ export default function EventStatistics( { eventDateId } ) {
 						</CardBody>
 					</Card>
 
+					{ exportError && (
+						<Notice
+							status="error"
+							onRemove={ () => setExportError( '' ) }
+						>
+							{ exportError }
+						</Notice>
+					) }
 					<div className="fair-event-statistics__sales-charts">
 						<ChartCard
-							title={ __(
-								'Cumulative sales',
-								'fair-events-experimental'
-							) }
+							title={ salesChartTitle }
+							eventName={ eventName }
+							onDownload={ ( card ) =>
+								downloadChart( salesChartTitle, card )
+							}
+							isDownloadDisabled={ exportingChart !== null }
+							isDownloading={ exportingChart === salesChartTitle }
 						>
 							<CumulativeChart
 								series={ statistics.series }
@@ -289,10 +395,15 @@ export default function EventStatistics( { eventDateId } ) {
 							/>
 						</ChartCard>
 						<ChartCard
-							title={ __(
-								'Cumulative sales amount',
-								'fair-events-experimental'
-							) }
+							title={ salesAmountChartTitle }
+							eventName={ eventName }
+							onDownload={ ( card ) =>
+								downloadChart( salesAmountChartTitle, card )
+							}
+							isDownloadDisabled={ exportingChart !== null }
+							isDownloading={
+								exportingChart === salesAmountChartTitle
+							}
 						>
 							<CumulativeChart
 								series={ statistics.amount_series }

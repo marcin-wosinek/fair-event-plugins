@@ -360,6 +360,13 @@ test.describe( 'EventStatisticsController', () => {
 		await subscriberApi?.dispose();
 	} );
 
+	test( 'includes the event display name for chart labels', async () => {
+		const body = await getStatistics( occurrences.upcoming.eventDateId );
+		expect( typeof body.event_name ).toBe( 'string' );
+		expect( body.event_name ).toMatch( /^Statistics upcoming/ );
+		expect( body.event_name ).toBe( body.event_name.trim() );
+	} );
+
 	test( 'rejects anonymous and insufficient-capability requests', async () => {
 		const endpoint = `/wp-json/fair-audience/v1/event-dates/${ occurrences.upcoming.eventDateId }/statistics`;
 		expect( ( await anonymousApi.get( endpoint ) ).status() ).toBe( 401 );

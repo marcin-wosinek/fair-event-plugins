@@ -2,14 +2,29 @@
  * @jest-environment jsdom
  */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventStatistics, {
 	peoplePerActivity,
 	activityCountDistribution,
 } from '../EventStatistics.js';
+import { downloadElementAsPng } from '../exportChartImage.js';
 
 jest.mock( '@wordpress/api-fetch' );
+
+// Image generation is covered in exportChartImage.test.js; here we only care
+// which card is captured and under which filename.
+jest.mock( '../exportChartImage.js', () => ( {
+	...jest.requireActual( '../exportChartImage.js' ),
+	downloadElementAsPng: jest.fn(),
+} ) );
 
 // recharts needs ResizeObserver / a sized container that jsdom doesn't provide,
 // and renders SVG internals that aren't this component's concern. Stub the
@@ -314,5 +329,270 @@ describe( 'EventStatistics component', () => {
 			).toBeGreaterThan( 0 )
 		);
 		expect( screen.getByText( 'People per activity' ) ).toBeInTheDocument();
+	} );
+} );
+
+describe( 'EventStatistics chart downloads', () => {
+	const salesResponse = {
+		event_name: 'Summer Retreat',
+		total_sales: 1,
+		currency: 'EUR',
+		total_sales_amount: 12.5,
+		excluded_currencies: [],
+		days_until_start: 5,
+		series: [
+			{ date: '2026-06-14', label: '1 day before', total: 0 },
+			{ date: '2026-06-15', label: 'Day of event', total: 1 },
+		],
+		amount_series: [
+			{ date: '2026-06-14', label: '1 day before', amount: 0 },
+			{ date: '2026-06-15', label: 'Day of event', amount: 12.5 },
+		],
+	};
+
+	beforeEach( () => {
+		jest.resetAllMocks();
+		downloadElementAsPng.mockResolvedValue( undefined );
+	} );
+
+	function mockApi( statistics = {} ) {
+		apiFetch.mockImplementation( ( opts ) =>
+			Promise.resolve(
+				opts.path.endsWith( '/participants' )
+					? [
+							signedUp( {
+								ticket_option_ids: [ 1 ],
+								ticket_option_names: [ 'Yoga' ],
+							} ),
+					  ]
+					: { ...salesResponse, ...statistics }
+			)
+		);
+	}
+
+	const cardFor = ( title ) =>
+		screen
+			.getByRole( 'heading', { name: title } )
+			.closest( '.fair-event-statistics__chart-card' );
+
+	async function renderStatistics( props = {} ) {
+		render( <EventStatistics eventDateId={ 42 } { ...props } /> );
+		await screen.findByText( 'Cumulative sales' );
+	}
+
+	it( 'labels both sales charts with the live event title', async () => {
+		mockApi();
+		await renderStatistics( { eventTitle: 'Live Edited Title' } );
+
+		expect(
+			within( cardFor( 'Cumulative sales' ) ).getByText(
+				'Live Edited Title'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( cardFor( 'Cumulative sales amount' ) ).getByText(
+				'Live Edited Title'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'falls back to the API event name, then to the untitled label', async () => {
+		mockApi();
+		const { unmount } = render( <EventStatistics eventDateId={ 42 } /> );
+		await screen.findByText( 'Cumulative sales' );
+		expect( screen.getAllByText( 'Summer Retreat' ) ).toHaveLength( 2 );
+		unmount();
+
+		mockApi( { event_name: '' } );
+		render( <EventStatistics eventDateId={ 42 } eventTitle="   " /> );
+		await screen.findByText( 'Cumulative sales' );
+		expect( screen.getAllByText( '(untitled event)' ) ).toHaveLength( 2 );
+	} );
+
+	it( 'offers exactly two independent downloads, on the sales charts only', async () => {
+		mockApi();
+		await renderStatistics();
+
+		expect(
+			screen.getAllByRole( 'button', { name: 'Download PNG' } )
+		).toHaveLength( 2 );
+		[ 'Cumulative sales', 'Cumulative sales amount' ].forEach(
+			( title ) => {
+				expect(
+					within( cardFor( title ) ).getAllByRole( 'button', {
+						name: 'Download PNG',
+					} )
+				).toHaveLength( 1 );
+			}
+		);
+		[ 'People per activity', 'Activities per person' ].forEach(
+			( title ) => {
+				const card = cardFor( title );
+				expect(
+					within( card ).queryByRole( 'button' )
+				).not.toBeInTheDocument();
+				expect(
+					within( card ).queryByText( 'Summer Retreat' )
+				).toBeNull();
+			}
+		);
+	} );
+
+	it( 'downloads only the selected card under a safe filename', async () => {
+		mockApi();
+		await renderStatistics( { eventTitle: 'Clase de Cerámica / 2026' } );
+
+		fireEvent.click(
+			within( cardFor( 'Cumulative sales amount' ) ).getByRole(
+				'button',
+				{
+					name: 'Download PNG',
+				}
+			)
+		);
+
+		await waitFor( () =>
+			expect( downloadElementAsPng ).toHaveBeenCalledTimes( 1 )
+		);
+		const [ element, filename ] = downloadElementAsPng.mock.calls[ 0 ];
+		expect( element ).toBe( cardFor( 'Cumulative sales amount' ) );
+		expect( element ).not.toBe( cardFor( 'Cumulative sales' ) );
+		expect( filename ).toBe(
+			'clase-de-ceramica-2026-cumulative-sales-amount.png'
+		);
+
+		fireEvent.click(
+			within( cardFor( 'Cumulative sales' ) ).getByRole( 'button', {
+				name: 'Download PNG',
+			} )
+		);
+		await waitFor( () =>
+			expect( downloadElementAsPng ).toHaveBeenCalledTimes( 2 )
+		);
+		expect( downloadElementAsPng.mock.calls[ 1 ][ 0 ] ).toBe(
+			cardFor( 'Cumulative sales' )
+		);
+		expect( downloadElementAsPng.mock.calls[ 1 ][ 1 ] ).toBe(
+			'clase-de-ceramica-2026-cumulative-sales.png'
+		);
+	} );
+
+	it( 'marks the download control so it is left out of the image', async () => {
+		mockApi();
+		await renderStatistics();
+
+		screen
+			.getAllByRole( 'button', { name: 'Download PNG' } )
+			.forEach( ( button ) => {
+				expect( button ).toHaveAttribute( 'data-chart-export-ignore' );
+			} );
+	} );
+
+	it( 'exports zero-sales charts with their identifying labels', async () => {
+		mockApi( {
+			total_sales: 0,
+			total_sales_amount: 0,
+			days_until_start: null,
+			series: [ { date: '2026-06-15', label: 'Day of event', total: 0 } ],
+			amount_series: [
+				{ date: '2026-06-15', label: 'Day of event', amount: 0 },
+			],
+		} );
+		await renderStatistics();
+
+		const card = cardFor( 'Cumulative sales' );
+		expect(
+			within( card ).getByText( 'Summer Retreat' )
+		).toBeInTheDocument();
+		fireEvent.click(
+			within( card ).getByRole( 'button', { name: 'Download PNG' } )
+		);
+
+		await waitFor( () =>
+			expect( downloadElementAsPng ).toHaveBeenCalledWith(
+				card,
+				'summer-retreat-cumulative-sales.png'
+			)
+		);
+	} );
+
+	it( 'reports a failed export without leaving the page', async () => {
+		mockApi();
+		downloadElementAsPng.mockRejectedValue( new Error( 'canvas tainted' ) );
+		const originalHref = window.location.href;
+		await renderStatistics();
+
+		fireEvent.click(
+			within( cardFor( 'Cumulative sales' ) ).getByRole( 'button', {
+				name: 'Download PNG',
+			} )
+		);
+
+		expect(
+			( await screen.findAllByText( /could not be downloaded/ ) ).length
+		).toBeGreaterThan( 0 );
+		expect( window.location.href ).toBe( originalHref );
+		// The tab stays usable: charts remain and another attempt is possible.
+		expect( screen.getByText( 'People per activity' ) ).toBeInTheDocument();
+		screen
+			.getAllByRole( 'button', { name: 'Download PNG' } )
+			.forEach( ( button ) => expect( button ).not.toBeDisabled() );
+	} );
+
+	it( 'clears the error after a later successful export', async () => {
+		mockApi();
+		downloadElementAsPng.mockRejectedValueOnce(
+			new Error( 'first fails' )
+		);
+		await renderStatistics();
+		const button = within( cardFor( 'Cumulative sales' ) ).getByRole(
+			'button',
+			{ name: 'Download PNG' }
+		);
+
+		fireEvent.click( button );
+		await screen.findAllByText( /could not be downloaded/ );
+
+		fireEvent.click( button );
+		// Query the notice itself: Notice mirrors its text into a persistent
+		// a11y live region that outlives the visible message.
+		await waitFor( () =>
+			expect(
+				document.querySelector( '.components-notice.is-error' )
+			).toBeNull()
+		);
+	} );
+
+	it( 'ignores repeated activation while an export is running', async () => {
+		mockApi();
+		let finishExport;
+		downloadElementAsPng.mockImplementation(
+			() =>
+				new Promise( ( resolve ) => {
+					finishExport = resolve;
+				} )
+		);
+		await renderStatistics();
+		const [ first, second ] = screen.getAllByRole( 'button', {
+			name: 'Download PNG',
+		} );
+
+		fireEvent.click( first );
+		fireEvent.click( first );
+		fireEvent.click( second );
+
+		expect( downloadElementAsPng ).toHaveBeenCalledTimes( 1 );
+		await waitFor( () =>
+			expect( first ).toHaveAttribute( 'aria-disabled' )
+		);
+		expect( second ).toHaveAttribute( 'aria-disabled' );
+
+		await act( async () => finishExport() );
+
+		await waitFor( () =>
+			expect( first ).not.toHaveAttribute( 'aria-disabled', 'true' )
+		);
+		fireEvent.click( second );
+		expect( downloadElementAsPng ).toHaveBeenCalledTimes( 2 );
 	} );
 } );

@@ -78,7 +78,7 @@ msgstr "Statistiques d'événements"
 #: src/Admin/AdminPages.php:127
 #: src/Admin/AdminPages.php:128
 #: src/Admin/AdminPages.php:134
-#: src/Admin/manage-event-ext/index.js:67
+#: src/Admin/manage-event-ext/index.js:70
 #: src/Admin/manage-event/DuplicateEventWizard.js:620
 msgid "Duplicate Event"
 msgstr "Dupliquer l'événement"
@@ -86,7 +86,7 @@ msgstr "Dupliquer l'événement"
 #: src/Admin/AdminPages.php:138
 #: src/Admin/AdminPages.php:139
 #: src/Admin/AdminPages.php:145
-#: src/Admin/manage-event-ext/index.js:91
+#: src/Admin/manage-event-ext/index.js:94
 #: src/Admin/manage-event/MergeEventWizard.js:454
 msgid "Merge Event"
 msgstr "Fusionner l'événement"
@@ -158,29 +158,29 @@ msgid "Event not found."
 msgstr "Événement non trouvé."
 
 #. translators: %d: number of excluded participant rows.
-#: src/Admin/event-statistics/EventStatistics.js:315
+#: src/Admin/event-statistics/EventStatistics.js:426
 #, js-format
 msgid "Confirmed participants only (signed up). %d excluded (pending payment, interested, collaborators)."
 msgstr "Participants confirmés uniquement (inscrits). %d exclus (paiement en attente, intéressés, collaborateurs)."
 
-#: src/Admin/event-statistics/EventStatistics.js:324
+#: src/Admin/event-statistics/EventStatistics.js:435
 msgid "People per activity"
 msgstr "Personnes par activité"
 
-#: src/Admin/event-statistics/EventStatistics.js:331
+#: src/Admin/event-statistics/EventStatistics.js:442
 msgid "No activities recorded for confirmed participants."
 msgstr "Aucune activité enregistrée pour les participants confirmés."
 
-#: src/Admin/event-statistics/EventStatistics.js:356
-#: src/Admin/event-statistics/EventStatistics.js:395
+#: src/Admin/event-statistics/EventStatistics.js:467
+#: src/Admin/event-statistics/EventStatistics.js:506
 msgid "People"
 msgstr "Personnes"
 
-#: src/Admin/event-statistics/EventStatistics.js:368
+#: src/Admin/event-statistics/EventStatistics.js:479
 msgid "Activities per person"
 msgstr "Activités par personne"
 
-#: src/Admin/event-statistics/EventStatistics.js:383
+#: src/Admin/event-statistics/EventStatistics.js:494
 msgid "Activities"
 msgstr "Activités"
 
@@ -554,11 +554,11 @@ msgstr "Paramètres expérimentaux Fair Events"
 msgid "Statistics"
 msgstr "Statistiques"
 
-#: src/Admin/manage-event-ext/index.js:57
+#: src/Admin/manage-event-ext/index.js:60
 msgid "Create a copy of this event with the same details, links, and settings."
 msgstr "Créez une copie de cet événement avec les mêmes détails, liens et paramètres."
 
-#: src/Admin/manage-event-ext/index.js:81
+#: src/Admin/manage-event-ext/index.js:84
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr "Fusionnez cet événement avec une autre date d'événement, en déplaçant ou en nettoyant toutes les données liées."
 
@@ -575,12 +575,12 @@ msgstr "Active les packs de fonctionnalités avancées pour Fair Events, y compr
 msgid "Advanced event duplication and merge tools."
 msgstr "Outils avancés de duplication et de fusion d'événements."
 
-#: src/Admin/event-statistics/EventStatistics.js:175
+#: src/Admin/event-statistics/EventStatistics.js:230
 msgid "Event sales statistics could not be loaded."
 msgstr "Les statistiques de ventes d'événement n'ont pas pu être chargées."
 
 #. translators: %d: confirmed sales total.
-#: src/Admin/event-statistics/EventStatistics.js:243
+#: src/Admin/event-statistics/EventStatistics.js:338
 #, js-format
 msgid "%d sale"
 msgid_plural "%d sales"
@@ -588,18 +588,18 @@ msgstr[0] "%d vente"
 msgstr[1] "%d ventes"
 
 #. translators: %d: calendar days until the event.
-#: src/Admin/event-statistics/EventStatistics.js:261
+#: src/Admin/event-statistics/EventStatistics.js:356
 #, js-format
 msgid "%d day until the event"
 msgid_plural "%d days until the event"
 msgstr[0] "%d jour jusqu'à l'événement"
 msgstr[1] "%d jours jusqu'à l'événement"
 
-#: src/Admin/event-statistics/EventStatistics.js:277
+#: src/Admin/event-statistics/EventStatistics.js:268
 msgid "Cumulative sales"
 msgstr "Ventes cumulées"
 
-#: src/Admin/event-statistics/EventStatistics.js:285
+#: src/Admin/event-statistics/EventStatistics.js:391
 msgid "Sales"
 msgstr "Ventes"
 
@@ -678,16 +678,16 @@ msgid "Clear the Meta access token? Conversion delivery will stop until a new to
 msgstr "Effacer le jeton d'accès Meta ? La livraison des conversions s'arrêtera jusqu'à ce qu'un nouveau jeton soit enregistré."
 
 #. translators: %s: comma-separated currency codes excluded from event revenue.
-#: src/Admin/event-statistics/EventStatistics.js:229
+#: src/Admin/event-statistics/EventStatistics.js:324
 #, js-format
 msgid "Some payments were excluded because they use different currencies: %s."
 msgstr "Certains paiements ont été exclus car ils utilisent des devises différentes : %s."
 
-#: src/Admin/event-statistics/EventStatistics.js:292
+#: src/Admin/event-statistics/EventStatistics.js:272
 msgid "Cumulative sales amount"
 msgstr "Montant cumulatif des ventes"
 
-#: src/Admin/event-statistics/EventStatistics.js:300
+#: src/Admin/event-statistics/EventStatistics.js:411
 msgid "Net sales amount"
 msgstr "Montant net des ventes"
 
@@ -797,4 +797,12 @@ msgstr ""
 
 #: src/Admin/settings/MetaConversions.js:416
 msgid "Rejected"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:124
+msgid "Download PNG"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:291
+msgid "The chart image could not be downloaded. Please try again."
 msgstr ""
