@@ -14,6 +14,7 @@ namespace FairPaymentsConnectorExperimental\Hooks;
 use FairPaymentsConnectorExperimental\Services\TelegramService;
 use FairPaymentsConnectorExperimental\Services\TelegramChannel;
 use FairPaymentsConnectorExperimental\Services\EmailChannel;
+use FairPaymentsConnectorExperimental\Services\NotificationQueue;
 use FairPaymentsConnectorExperimental\Settings\Settings;
 use FairEventsShared\Money;
 
@@ -82,7 +83,7 @@ class NotificationHooks {
 				);
 				wp_schedule_single_event( time(), self::CRON_HOOK, array( $payload ) );
 			} else {
-				$this->queue_row( $route_id, $channel, $destination, $text, $context );
+				$this->queue_row( $route_id, $frequency, $channel, $destination, $text, $context );
 			}
 		}
 	}
@@ -109,33 +110,45 @@ class NotificationHooks {
 	/**
 	 * Insert a queue row for digest delivery.
 	 *
+	 * The route's frequency, channel and destination are captured on the row, so
+	 * later edits to the route only affect future sales.
+	 *
 	 * @param string $route_id    Route ID.
+	 * @param string $frequency   Route frequency (hourly, daily or weekly).
 	 * @param string $channel     Channel name.
 	 * @param string $destination Destination address/ID.
 	 * @param string $text        Pre-rendered message body.
 	 * @param array  $context     Notification context (for amount/currency).
 	 * @return void
 	 */
-	private function queue_row( $route_id, $channel, $destination, $text, array $context ) {
+	private function queue_row( $route_id, $frequency, $channel, $destination, $text, array $context ) {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'fair_payment_notification_queue';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$wpdb->insert(
+		$inserted = $wpdb->insert(
 			$table,
 			array(
 				'route_id'      => $route_id,
+				'frequency'     => $frequency,
 				'channel'       => $channel,
 				'destination'   => $destination,
 				'rendered_text' => $text,
 				'amount'        => isset( $context['amount'] ) ? (string) $context['amount'] : '',
 				'currency'      => isset( $context['currency'] ) ? (string) $context['currency'] : '',
+				'status'        => NotificationQueue::STATUS_PENDING,
 				'created_at'    => current_time( 'mysql', true ),
-				'sent_at'       => null,
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', null )
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
+
+		// A failed insert means the sale is not queued; surface it rather than
+		// letting the route look as if it will be digested.
+		if ( false === $inserted && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Fair Payments Connector Experimental: could not queue a digest sale for route ' . $route_id . ': ' . $wpdb->last_error );
+		}
 	}
 
 	/**

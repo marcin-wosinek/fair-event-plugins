@@ -77,4 +77,24 @@ class DigestBuilderTest extends TestCase {
 		$this->assertStringContainsString( '1 sale', $result );
 		$this->assertStringNotContainsString( '·', $result );
 	}
+
+	/**
+	 * The summary carries the exact count and one total per currency, and every
+	 * transaction body appears exactly once.
+	 */
+	public function test_digest_has_exact_count_totals_and_each_body_once() {
+		$rows = array(
+			$this->row( 'Body A', '10.00', 'EUR' ),
+			$this->row( 'Body B', '5.50', 'EUR' ),
+			$this->row( 'Body C', '20.00', 'USD' ),
+			$this->row( 'Body D', '7.25', 'PLN' ),
+		);
+
+		$result = $this->builder->build( $rows );
+
+		$this->assertStringStartsWith( '4 sales · 15.50 EUR, 20.00 USD, 7.25 PLN', $result );
+		foreach ( array( 'Body A', 'Body B', 'Body C', 'Body D' ) as $body ) {
+			$this->assertSame( 1, substr_count( $result, $body ), $body );
+		}
+	}
 }
