@@ -5,9 +5,11 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 
 jest.mock( '../../event-statistics/EventStatistics.js', () => {
-	return function EventStatisticsMock( { eventDateId } ) {
+	return function EventStatisticsMock( { eventDateId, eventTitle } ) {
 		return (
-			<div data-testid="event-statistics">Stats for { eventDateId }</div>
+			<div data-testid="event-statistics">
+				Stats for { eventDateId }: { eventTitle }
+			</div>
 		);
 	};
 } );
@@ -49,11 +51,16 @@ describe( 'statistics tab registration', () => {
 		expect( statisticsTab ).toBeDefined();
 
 		const originalHref = window.location.href;
-		render( statisticsTab.render( { eventDateId: 42 } ) );
+		render(
+			statisticsTab.render( {
+				eventDateId: 42,
+				eventTitle: 'Summer Retreat',
+			} )
+		);
 
 		expect(
 			await screen.findByTestId( 'event-statistics' )
-		).toHaveTextContent( 'Stats for 42' );
+		).toHaveTextContent( 'Stats for 42: Summer Retreat' );
 		expect( window.location.href ).toBe( originalHref );
 	} );
 } );

@@ -36,8 +36,11 @@ addFilter(
 				order: 60,
 				isVisible: true,
 				disabled: isLinkOnlyEvent( eventDate ),
-				render: ( { eventDateId } ) => (
-					<EventStatistics eventDateId={ eventDateId } />
+				render: ( { eventDateId, eventTitle } ) => (
+					<EventStatistics
+						eventDateId={ eventDateId }
+						eventTitle={ eventTitle }
+					/>
 				),
 			},
 		];

@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Events Experimental 1.7.0\n"
+"Project-Id-Version: Fair Events Experimental 1.8.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events-experimental\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-17T15:15:31+00:00\n"
+"POT-Creation-Date: 2026-09-21T05:02:57+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -84,7 +84,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:127
 #: src/Admin/AdminPages.php:128
 #: src/Admin/AdminPages.php:134
-#: src/Admin/manage-event-ext/index.js:67
+#: src/Admin/manage-event-ext/index.js:70
 #: src/Admin/manage-event/DuplicateEventWizard.js:620
 msgid "Duplicate Event"
 msgstr ""
@@ -92,7 +92,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:138
 #: src/Admin/AdminPages.php:139
 #: src/Admin/AdminPages.php:145
-#: src/Admin/manage-event-ext/index.js:91
+#: src/Admin/manage-event-ext/index.js:94
 #: src/Admin/manage-event/MergeEventWizard.js:454
 msgid "Merge Event"
 msgstr ""
@@ -187,18 +187,34 @@ msgstr ""
 msgid "Event not found."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:175
+#: src/Admin/event-statistics/EventStatistics.js:124
+msgid "Download PNG"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:230
 msgid "Event sales statistics could not be loaded."
 msgstr ""
 
+#: src/Admin/event-statistics/EventStatistics.js:268
+msgid "Cumulative sales"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:272
+msgid "Cumulative sales amount"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:291
+msgid "The chart image could not be downloaded. Please try again."
+msgstr ""
+
 #. translators: %s: comma-separated currency codes excluded from event revenue.
-#: src/Admin/event-statistics/EventStatistics.js:229
+#: src/Admin/event-statistics/EventStatistics.js:324
 #, js-format
 msgid "Some payments were excluded because they use different currencies: %s."
 msgstr ""
 
 #. translators: %d: confirmed sales total.
-#: src/Admin/event-statistics/EventStatistics.js:243
+#: src/Admin/event-statistics/EventStatistics.js:338
 #, js-format
 msgid "%d sale"
 msgid_plural "%d sales"
@@ -206,53 +222,45 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: calendar days until the event.
-#: src/Admin/event-statistics/EventStatistics.js:261
+#: src/Admin/event-statistics/EventStatistics.js:356
 #, js-format
 msgid "%d day until the event"
 msgid_plural "%d days until the event"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/event-statistics/EventStatistics.js:277
-msgid "Cumulative sales"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:285
+#: src/Admin/event-statistics/EventStatistics.js:391
 msgid "Sales"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:292
-msgid "Cumulative sales amount"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:300
+#: src/Admin/event-statistics/EventStatistics.js:411
 msgid "Net sales amount"
 msgstr ""
 
 #. translators: %d: number of excluded participant rows.
-#: src/Admin/event-statistics/EventStatistics.js:315
+#: src/Admin/event-statistics/EventStatistics.js:426
 #, js-format
 msgid "Confirmed participants only (signed up). %d excluded (pending payment, interested, collaborators)."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:324
+#: src/Admin/event-statistics/EventStatistics.js:435
 msgid "People per activity"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:331
+#: src/Admin/event-statistics/EventStatistics.js:442
 msgid "No activities recorded for confirmed participants."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:356
-#: src/Admin/event-statistics/EventStatistics.js:395
+#: src/Admin/event-statistics/EventStatistics.js:467
+#: src/Admin/event-statistics/EventStatistics.js:506
 msgid "People"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:368
+#: src/Admin/event-statistics/EventStatistics.js:479
 msgid "Activities per person"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:383
+#: src/Admin/event-statistics/EventStatistics.js:494
 msgid "Activities"
 msgstr ""
 
@@ -260,11 +268,11 @@ msgstr ""
 msgid "Statistics"
 msgstr ""
 
-#: src/Admin/manage-event-ext/index.js:57
+#: src/Admin/manage-event-ext/index.js:60
 msgid "Create a copy of this event with the same details, links, and settings."
 msgstr ""
 
-#: src/Admin/manage-event-ext/index.js:81
+#: src/Admin/manage-event-ext/index.js:84
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr ""
 
