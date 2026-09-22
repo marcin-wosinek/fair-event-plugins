@@ -14,6 +14,12 @@ domReady( () => {
 	const rootElement = document.getElementById( 'fair-events-venues-root' );
 	if ( rootElement ) {
 		const root = createRoot( rootElement );
-		root.render( <VenuesApp /> );
+		root.render(
+			<VenuesApp
+				canDeleteVenues={
+					!! window.fairEventsVenuesData?.canDeleteVenues
+				}
+			/>
+		);
 	}
 } );
