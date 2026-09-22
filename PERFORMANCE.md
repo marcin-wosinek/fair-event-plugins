@@ -125,6 +125,28 @@ always deletes its fixture pages in a `finally` block — including after a
 thrown error or `SIGINT`/`SIGTERM` — so a failed or interrupted run never
 leaves the instance in a different activation state than it found it in.
 
+### Running it on consistent hardware
+
+A local run's absolute numbers depend on whatever else is running on your
+machine at the time — not just background load, but longer-lived state like
+thermal throttling on a laptop. **`.github/workflows/performance.yml`** runs
+the identical `npm run performance` command on GitHub's hosted runners
+instead, which have a fixed, uniform spec. It is `workflow_dispatch`-only —
+never on push or pull request — consistent with keeping this benchmark
+manually invoked with no CI gate. Trigger it from the Actions tab or:
+
+```bash
+gh workflow run performance.yml -f samples=5
+gh workflow run performance.yml -f samples=10 -f scenario=fair-events
+```
+
+The report is posted to the run's job summary and uploaded as a
+`performance-report` artifact (30-day retention). Hosted runners aren't
+perfectly noise-free either (shared virtualization), but the variance is far
+smaller than laptop-to-laptop or day-to-day laptop load — good enough to
+compare two runs of this workflow against each other, which a personal
+machine's numbers are not.
+
 ## Interpreting the results
 
 -   **Server-side deltas (duration, queries, memory) are the most reliable
