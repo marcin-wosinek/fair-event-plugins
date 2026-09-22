@@ -1,0 +1,7 @@
+---
+'fair-events': minor
+---
+
+Make the Events List block reliably show future events with flexible layouts. Custom patterns (not built with the Query block) can now display every occurrence source — post-linked, standalone, calendar feed (iCal), and external API events — through a shared set of `{{title}}`, `{{url}}`, `{{start}}`, `{{end}}`, `{{date_range}}`, `{{description}}`, `{{location}}`, `{{image}}`, and `{{source_type}}` placeholders, with safe fallbacks for missing titles and URLs. The Display Pattern picker no longer offers calendar/week-only patterns, keeps a deleted or unpublished pattern selection visible instead of silently switching layouts, and warns when a Query Loop pattern (which only supports WordPress-linked events) is combined with selected event sources. The block now shows a distinct message when the selected pattern is unavailable versus when a valid pattern simply has no matching events.
+
+Fixed several correctness bugs in the underlying query: generated recurring occurrences now resolve their master event's linked post, cancelled/inactive event dates are excluded, a single event with several matching occurrences no longer renders as duplicate list items, and a missing end date is treated as equal to the start when deciding "past"/"ongoing" boundaries — previously such an event could never be classified as past. The bundled Event List and Event Grid patterns now also show each event's excerpt, matching their own descriptions.

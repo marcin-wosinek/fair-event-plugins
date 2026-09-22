@@ -44,10 +44,6 @@ msgstr "Ustawienia Fair Events"
 msgid "Settings"
 msgstr "Ustawienia"
 
-#: src/blocks/events-list/render.php:299
-msgid "No events found. Please select a valid display pattern."
-msgstr "Nie znaleziono wydarzeń. Wybierz prawidłowy wzorzec wyświetlania."
-
 #: src/Patterns/Patterns.php:50
 msgid "Event List - With Dates"
 msgstr "Lista wydarzeń - z datami"
@@ -56,13 +52,9 @@ msgstr "Lista wydarzeń - z datami"
 msgid "Display events with title, dates, and excerpt using Query Loop"
 msgstr "Wyświetl wydarzenia z tytułem, datami i fragmentem używając pętli zapytania"
 
-#: src/Patterns/Patterns.php:69
+#: src/Patterns/Patterns.php:70
 msgid "Event Grid"
 msgstr "Siatka wydarzeń"
-
-#: src/Patterns/Patterns.php:70
-msgid "Display events in a grid layout with images using Query Loop"
-msgstr "Wyświetl wydarzenia w układzie siatki ze zdjęciami używając pętli zapytania"
 
 #: src/PostTypes/Event.php:58
 msgid "Add New"
@@ -71,7 +63,7 @@ msgstr "Dodaj nowe"
 #: src/Admin/AdminPages.php:120
 #: src/Admin/AdminPages.php:121
 #: src/Admin/all-events/AllEvents.js:411
-#: src/blocks/events-list/components/EditComponent.js:81
+#: src/blocks/events-list/components/EditComponent.js:124
 msgid "All Events"
 msgstr "Wszystkie wydarzenia"
 
@@ -172,39 +164,35 @@ msgstr "Nie ustawiono dat wydarzenia. Dodaj daty w panelu Szczegóły wydarzenia
 msgid "Event Dates block: Only displays in event post context."
 msgstr "Blok Daty wydarzenia: Wyświetla się tylko w kontekście wpisu wydarzenia."
 
-#: src/blocks/events-list/components/EditComponent.js:52
+#: src/blocks/events-list/components/EditComponent.js:60
 msgid "Untitled Pattern"
 msgstr "Wzorzec bez nazwy"
 
-#: src/blocks/events-list/components/EditComponent.js:62
+#: src/blocks/events-list/components/EditComponent.js:97
 msgid "Events List Settings"
 msgstr "Ustawienia listy wydarzeń"
 
-#: src/blocks/events-list/components/EditComponent.js:65
+#: src/blocks/events-list/components/EditComponent.js:100
 msgid "Display Pattern"
 msgstr "Wzorzec wyświetlania"
 
-#: src/blocks/events-list/components/EditComponent.js:71
-msgid "Choose a pattern for displaying events"
-msgstr "Wybierz wzorzec do wyświetlania wydarzeń"
-
-#: src/blocks/events-list/components/EditComponent.js:77
+#: src/blocks/events-list/components/EditComponent.js:120
 msgid "Time Filter"
 msgstr "Filtr czasu"
 
-#: src/blocks/events-list/components/EditComponent.js:85
+#: src/blocks/events-list/components/EditComponent.js:128
 msgid "Upcoming Events"
 msgstr "Nadchodzące wydarzenia"
 
-#: src/blocks/events-list/components/EditComponent.js:89
+#: src/blocks/events-list/components/EditComponent.js:132
 msgid "Past Events"
 msgstr "Minione wydarzenia"
 
-#: src/blocks/events-list/components/EditComponent.js:93
+#: src/blocks/events-list/components/EditComponent.js:136
 msgid "Ongoing Events"
 msgstr "Trwające wydarzenia"
 
-#: src/blocks/events-list/components/EditComponent.js:100
+#: src/blocks/events-list/components/EditComponent.js:143
 msgid "Filter events by time relative to now"
 msgstr "Filtruj wydarzenia według czasu względem teraźniejszości"
 
@@ -350,11 +338,11 @@ msgstr "Poprzedni"
 msgid "Next"
 msgstr "Następny"
 
-#: src/Patterns/Patterns.php:90
+#: src/Patterns/Patterns.php:92
 msgid "Calendar Event - Simple"
 msgstr "Wydarzenie w kalendarzu - Proste"
 
-#: src/Patterns/Patterns.php:91
+#: src/Patterns/Patterns.php:93
 msgid "Display event title only (compact for calendar cells)"
 msgstr "Wyświetl tylko tytuł wydarzenia (kompaktowy dla komórek kalendarza)"
 
@@ -406,7 +394,7 @@ msgid "grid"
 msgstr "siatka"
 
 #: src/blocks/events-calendar/components/EditComponent.js:168
-#: src/blocks/events-list/components/EditComponent.js:114
+#: src/blocks/events-list/components/EditComponent.js:157
 #: src/blocks/events-week/components/EditComponent.js:118
 #: ../fair-events-shared/src/EventSourceSelector.js:24
 msgid "Event Sources"
@@ -491,7 +479,7 @@ msgstr "Wybierz źródła wydarzeń do wyświetlenia w kalendarzu."
 msgid "Event sources format has changed. Please re-select your event sources."
 msgstr "Format źródeł wydarzeń uległ zmianie. Proszę ponownie wybrać źródła wydarzeń."
 
-#: src/blocks/events-list/components/EditComponent.js:118
+#: src/blocks/events-list/components/EditComponent.js:161
 msgid "Select event sources to display in the list."
 msgstr "Wybierz źródła wydarzeń do wyświetlenia na liście."
 
@@ -541,27 +529,27 @@ msgstr "Wybierz czas trwania..."
 msgid "Event Description"
 msgstr "Opis wydarzenia"
 
-#: src/Patterns/Patterns.php:103
+#: src/Patterns/Patterns.php:105
 msgid "Schedule Event - Simple"
 msgstr "Zaplanuj wydarzenie - Proste"
 
-#: src/Patterns/Patterns.php:104
+#: src/Patterns/Patterns.php:106
 msgid "Display event title only (no time)"
 msgstr "Wyświetl tylko tytuł wydarzenia (bez godziny)"
 
-#: src/Patterns/Patterns.php:118
+#: src/Patterns/Patterns.php:120
 msgid "Schedule Event - With Time"
 msgstr "Zaplanuj wydarzenie - Z godziną"
 
-#: src/Patterns/Patterns.php:119
+#: src/Patterns/Patterns.php:121
 msgid "Display event with start time and title"
 msgstr "Wyświetl wydarzenie z godziną rozpoczęcia i tytułem"
 
-#: src/Patterns/Patterns.php:140
+#: src/Patterns/Patterns.php:142
 msgid "Schedule Event - With Time Range"
 msgstr "Zaplanuj wydarzenie - Z przedziałem czasowym"
 
-#: src/Patterns/Patterns.php:141
+#: src/Patterns/Patterns.php:143
 msgid "Display event with time range and title"
 msgstr "Wyświetl wydarzenie z przedziałem czasowym i tytułem"
 
@@ -2845,6 +2833,7 @@ msgstr "Dzień imprezy"
 msgid "Sale Periods Timeline"
 msgstr "Oś czasu okresów sprzedaży"
 
+#: src/Helpers/OccurrenceFields.php:36
 #: ../fair-events-shared/src/event-utils.js:31
 msgid "(untitled event)"
 msgstr "(bez tytułu – wydarzenie)"
@@ -3366,6 +3355,7 @@ msgstr "Tryb uczestnictwa"
 msgid "In person"
 msgstr "Osobiście"
 
+#: src/Helpers/OccurrenceFields.php:121
 #: src/Admin/manage-event/ManageEventApp.js:1112
 msgid "Online"
 msgstr "Online"
@@ -4324,4 +4314,47 @@ msgstr ""
 #: src/blocks/event-prices/block.json
 msgctxt "block keyword"
 msgid "pricing"
+msgstr ""
+
+#: src/blocks/events-list/render.php:145
+msgid "The selected display pattern is no longer available. Choose a different pattern to display these events."
+msgstr ""
+
+#: src/blocks/events-list/render.php:157
+#: src/blocks/events-list/render.php:162
+msgid "No events found."
+msgstr ""
+
+#: src/Helpers/OccurrenceFields.php:162
+msgid "Event"
+msgstr ""
+
+#: src/Helpers/OccurrenceFields.php:164
+msgid "Standalone event"
+msgstr ""
+
+#: src/Helpers/OccurrenceFields.php:166
+msgid "Calendar feed"
+msgstr ""
+
+#: src/Helpers/OccurrenceFields.php:168
+msgid "External source"
+msgstr ""
+
+#: src/Patterns/Patterns.php:71
+msgid "Display events in a grid layout with images, dates, and excerpt using Query Loop"
+msgstr ""
+
+#. translators: %s: the unavailable pattern's stored name.
+#: src/blocks/events-list/components/EditComponent.js:81
+#, js-format
+msgid "Unavailable pattern (%s)"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:106
+msgid "Query Loop patterns (e.g. Event List, Event Grid) show WordPress-linked events only. A custom pattern (not built with the Query block) can show every event source — standalone, calendar feed, and external."
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:113
+msgid "The selected pattern uses a Query Loop, so it can only show WordPress-linked events. Events from the selected event sources will not appear — choose a custom pattern to show them."
 msgstr ""
