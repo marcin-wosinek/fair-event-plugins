@@ -6,6 +6,7 @@ import {
 	aggregateSamples,
 	buildComparisonMatrix,
 	compareToBaseline,
+	formatJsonReport,
 	formatMarkdownReport,
 	median,
 	parseArguments,
@@ -19,6 +20,7 @@ test('parseArguments defaults and flags', () => {
 		samples: 5,
 		scenario: undefined,
 		outFile: undefined,
+		jsonOut: undefined,
 	});
 	assert.deepEqual(
 		parseArguments([
@@ -26,12 +28,14 @@ test('parseArguments defaults and flags', () => {
 			'--samples=3',
 			'--scenario=fair-events',
 			'--out=report.md',
+			'--json-out=report.json',
 		]),
 		{
 			reuse: true,
 			samples: 3,
 			scenario: 'fair-events',
 			outFile: 'report.md',
+			jsonOut: 'report.json',
 		}
 	);
 });
@@ -229,6 +233,34 @@ test('formatMarkdownReport renders one table per page with deltas', () => {
 	assert.match(report, /\| wordpress-only \|/);
 	assert.match(report, /\| fair-events \| 15\.0 \| \+5\.0 ms \|/);
 	assert.match(report, /Generated: 2026-09-22T00:00:00\.000Z/);
+});
+
+test('formatJsonReport serializes results, comparisons, and the timestamp', () => {
+	const results = [
+		{
+			scenario: 'wordpress-only',
+			page: 'plain',
+			metrics: { durationMs: 10, memoryBytes: 1024, queryCount: 5 },
+			frontend: { requestCount: 2, transferBytes: 200 },
+		},
+		{
+			scenario: 'fair-events',
+			page: 'plain',
+			metrics: { durationMs: 15, memoryBytes: 1200, queryCount: 8 },
+			frontend: { requestCount: 4, transferBytes: 500 },
+		},
+	];
+	const comparisons = compareToBaseline(results, 'wordpress-only');
+	const json = formatJsonReport({
+		results,
+		comparisons,
+		generatedAt: '2026-09-22T00:00:00.000Z',
+	});
+	assert.deepEqual(JSON.parse(json), {
+		generatedAt: '2026-09-22T00:00:00.000Z',
+		results,
+		comparisons,
+	});
 });
 
 function createExecutor(responses = {}, onRun) {

@@ -18,6 +18,11 @@ on:
 jobs:
     performance:
         runs-on: ubuntu-latest
+        # Overrides the workflow-level `contents: read` default: this job
+        # publishes the report to the performance-history branch via the
+        # Contents API (scripts/performance-history.mjs), which needs write.
+        permissions:
+            contents: write
 
         steps:
             - uses: actions/checkout@v6
@@ -130,12 +135,15 @@ jobs:
               if: steps.docker-cache.outputs.cache-hit != 'true'
               run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts phpmyadmin -o /tmp/docker-images.tar
 
-            - name: Test performance runner lifecycle
-              run: node --test scripts/__tests__/performance-runner.test.mjs
+            - name: Test performance tooling
+              run: |
+                  node --test scripts/__tests__/performance-runner.test.mjs
+                  node --test scripts/__tests__/performance-history.test.mjs
+                  node --test scripts/__tests__/pr-assets.test.mjs
 
             - name: Run performance audit
               run: |
-                  ARGS="--samples=${{ inputs.samples }} --out=performance-report.md"
+                  ARGS="--samples=${{ inputs.samples }} --out=performance-report.md --json-out=performance-report.json"
                   if [ -n "${{ inputs.scenario }}" ]; then
                       ARGS="$ARGS --scenario=${{ inputs.scenario }}"
                   fi
@@ -148,11 +156,21 @@ jobs:
                       cat performance-report.md >> "$GITHUB_STEP_SUMMARY"
                   fi
 
+            - name: Publish to performance-history branch
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  if [ -f performance-report.json ]; then
+                      node scripts/performance-history.mjs performance-report.json "${{ github.run_id }}" >> "$GITHUB_STEP_SUMMARY"
+                  fi
+
             - name: Upload performance report
               if: always()
               uses: actions/upload-artifact@v6
               with:
                   name: performance-report
-                  path: performance-report.md
+                  path: |
+                      performance-report.md
+                      performance-report.json
                   retention-days: 30
                   if-no-files-found: ignore

@@ -147,6 +147,29 @@ smaller than laptop-to-laptop or day-to-day laptop load — good enough to
 compare two runs of this workflow against each other, which a personal
 machine's numbers are not.
 
+### History
+
+Every workflow run also publishes its `--json-out` report to the long-lived
+`performance-history` branch — the same pattern this repo already uses for
+responsive-UI screenshots on the `pr-assets` branch (`scripts/pr-assets.mjs`
+via the already-authenticated `gh` CLI, no new secret needed), generalized
+in `scripts/performance-history.mjs` to a second branch. Each run writes two
+files, never a local checkout:
+
+-   `<date>-<run-id>.json` — one immutable entry per run, keyed by the
+    GitHub Actions run id, so it never collides or gets overwritten.
+-   `latest.json` — always replaced, a stable link to the newest report:
+    `https://raw.githubusercontent.com/<owner>/<repo>/performance-history/latest.json`.
+
+This gives a growing, versioned record instead of results disappearing when
+the 30-day workflow artifact expires. It's just an accumulating list of
+snapshots, though — nothing here charts or diffs runs automatically yet; a
+future script could read `performance-history`'s file list and build a trend
+view. The JSON contains only plugin slugs, scenario names, and numeric
+performance figures, so publishing it to this public repo carries the same
+"synthetic data only" posture already documented for `pr-assets` — there's
+nothing further to redact.
+
 ## Interpreting the results
 
 -   **Server-side deltas (duration, queries, memory) are the most reliable
