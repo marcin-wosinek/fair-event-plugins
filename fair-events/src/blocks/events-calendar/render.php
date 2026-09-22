@@ -293,17 +293,27 @@ $scroll_anchor_id = ! empty( $attributes['anchor'] ) ? $attributes['anchor'] : '
 $prev_month_timestamp = strtotime( '-1 month', $first_day_of_month_ts );
 $next_month_timestamp = strtotime( '+1 month', $first_day_of_month_ts );
 
-$prev_url = add_query_arg(
-	array(
-		'calendar_month' => gmdate( 'm', $prev_month_timestamp ),
-		'calendar_year'  => gmdate( 'Y', $prev_month_timestamp ),
+// Explicitly drop week_view: otherwise navigating the calendar keeps
+// carrying the other block's dated selection along, and alternating
+// month/week navigation generates the combined URL permutations this
+// canonical scheme exists to avoid (see DatedViewCanonicalUrl).
+$prev_url = remove_query_arg(
+	'week_view',
+	add_query_arg(
+		array(
+			'calendar_month' => gmdate( 'm', $prev_month_timestamp ),
+			'calendar_year'  => gmdate( 'Y', $prev_month_timestamp ),
+		)
 	)
 ) . '#' . $scroll_anchor_id;
 
-$next_url = add_query_arg(
-	array(
-		'calendar_month' => gmdate( 'm', $next_month_timestamp ),
-		'calendar_year'  => gmdate( 'Y', $next_month_timestamp ),
+$next_url = remove_query_arg(
+	'week_view',
+	add_query_arg(
+		array(
+			'calendar_month' => gmdate( 'm', $next_month_timestamp ),
+			'calendar_year'  => gmdate( 'Y', $next_month_timestamp ),
+		)
 	)
 ) . '#' . $scroll_anchor_id;
 

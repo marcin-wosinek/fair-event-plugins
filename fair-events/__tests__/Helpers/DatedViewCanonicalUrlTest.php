@@ -244,12 +244,13 @@ class DatedViewCanonicalUrlTest extends TestCase {
 	}
 
 	/**
-	 * Both blocks present with in-window, non-default params: both survive
-	 * in the canonical URL.
+	 * Both blocks present with in-window, non-default params: the combined
+	 * selection has no single-view canonical of its own, so it consolidates
+	 * to the plain page URL instead of stacking both params.
 	 *
 	 * @return void
 	 */
-	public function test_both_params_included_when_both_in_window() {
+	public function test_combined_in_window_params_consolidate_to_bare_url() {
 		$calendar = array(
 			'month' => '08',
 			'year'  => '2026',
@@ -269,9 +270,6 @@ class DatedViewCanonicalUrlTest extends TestCase {
 			self::NOW_WEEK
 		);
 
-		$this->assertSame(
-			self::BASE_URL . '?calendar_month=08&calendar_year=2026&week_view=2026-W30',
-			$result
-		);
+		$this->assertSame( self::BASE_URL, $result );
 	}
 }

@@ -149,14 +149,26 @@ class DatedViewCanonicalUrl {
 		?array $week,
 		array $week_now
 	): string {
+		$calendar_indexable = self::calendar_param_is_indexable( $has_calendar_block, $calendar, $calendar_now );
+		$week_indexable     = self::week_param_is_indexable( $has_week_block, $week, $week_now );
+
+		// A request combining a valid monthly and a valid weekly selection
+		// consolidates to the plain page URL: neither dated view alone
+		// describes what this exact URL renders, and indexing every
+		// month/week combination as its own canonical is the crawl-surface
+		// blowup this helper exists to prevent.
+		if ( $calendar_indexable && $week_indexable ) {
+			return $base_url;
+		}
+
 		$url = $base_url;
 
-		if ( self::calendar_param_is_indexable( $has_calendar_block, $calendar, $calendar_now ) ) {
+		if ( $calendar_indexable ) {
 			$url = add_query_arg( 'calendar_month', $calendar['month'], $url );
 			$url = add_query_arg( 'calendar_year', $calendar['year'], $url );
 		}
 
-		if ( self::week_param_is_indexable( $has_week_block, $week, $week_now ) ) {
+		if ( $week_indexable ) {
 			$url = add_query_arg( 'week_view', WeekViewParam::format( $week['year'], $week['week'] ), $url );
 		}
 

@@ -206,10 +206,22 @@ if ( $start_year !== $end_year ) {
 // custom anchor (block's Advanced panel) when one is set.
 $scroll_anchor_id = ! empty( $attributes['anchor'] ) ? $attributes['anchor'] : 'fair-events-week';
 
-$prev     = fair_events_offset_week( $year, $week, -1 );
-$next     = fair_events_offset_week( $year, $week, 1 );
-$prev_url = add_query_arg( 'week_view', WeekViewParam::format( $prev['year'], $prev['week'] ) ) . '#' . $scroll_anchor_id;
-$next_url = add_query_arg( 'week_view', WeekViewParam::format( $next['year'], $next['week'] ) ) . '#' . $scroll_anchor_id;
+$prev = fair_events_offset_week( $year, $week, -1 );
+$next = fair_events_offset_week( $year, $week, 1 );
+
+// Explicitly drop calendar_month/calendar_year: otherwise navigating the
+// week view keeps carrying the other block's dated selection along, and
+// alternating month/week navigation generates the combined URL
+// permutations this canonical scheme exists to avoid (see
+// DatedViewCanonicalUrl).
+$prev_url = remove_query_arg(
+	array( 'calendar_month', 'calendar_year' ),
+	add_query_arg( 'week_view', WeekViewParam::format( $prev['year'], $prev['week'] ) )
+) . '#' . $scroll_anchor_id;
+$next_url = remove_query_arg(
+	array( 'calendar_month', 'calendar_year' ),
+	add_query_arg( 'week_view', WeekViewParam::format( $next['year'], $next['week'] ) )
+) . '#' . $scroll_anchor_id;
 
 // Build copy summary text.
 $summary_text = '';
