@@ -1,0 +1,21 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-events/event-prices",
+	"version": "0.1.0",
+	"title": "Event Prices",
+	"category": "widgets",
+	"icon": "money-alt",
+	"description": "Display an event's public ticket prices from its Prices tab configuration.",
+	"keywords": [ "event", "prices", "tickets", "pricing" ],
+	"textdomain": "fair-events",
+	"usesContext": [ "postId", "postType" ],
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": true
+	},
+	"editorScript": "file:./editor.js",
+	"style": "file:./style-editor.css",
+	"render": "file:./render.php"
+}

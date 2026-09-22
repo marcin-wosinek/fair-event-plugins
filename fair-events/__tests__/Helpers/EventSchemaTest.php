@@ -394,10 +394,6 @@ class EventSchemaTest extends TestCase {
 				1 => 15.0,
 				2 => 40.0,
 			),
-			array(
-				1 => true,
-				2 => true,
-			),
 			null,
 			'EUR',
 			'https://example.com/event'
@@ -411,15 +407,15 @@ class EventSchemaTest extends TestCase {
 	}
 
 	/**
-	 * A free type (no price row anywhere) yields a named, zero-priced offer.
+	 * An explicit zero-priced row yields a named, zero-priced offer — the
+	 * only way a type is advertised as free (issue #1624).
 	 *
 	 * @return void
 	 */
-	public function test_build_offers_for_types_free_type_is_named_and_zero_priced() {
+	public function test_build_offers_for_types_explicit_zero_row_is_named_and_zero_priced() {
 		$offers = EventSchema::build_offers_for_types(
 			array( $this->ticket_type( 1, 'RSVP' ) ),
-			array(),
-			array(),
+			array( 1 => 0.0 ),
 			null,
 			'EUR',
 			'https://example.com/event'
@@ -431,16 +427,16 @@ class EventSchemaTest extends TestCase {
 	}
 
 	/**
-	 * A paid type with no price in the resolved window, but priced elsewhere
-	 * (closed sale), yields no offer for that type.
+	 * A type with no explicit price row for the resolved window is
+	 * unavailable, not free — it yields no offer, whether or not it's priced
+	 * in some other period.
 	 *
 	 * @return void
 	 */
-	public function test_build_offers_for_types_closed_sale_paid_type_yields_no_offer() {
+	public function test_build_offers_for_types_no_row_in_window_yields_no_offer() {
 		$offers = EventSchema::build_offers_for_types(
 			array( $this->ticket_type( 1, 'Single class' ) ),
 			array(),
-			array( 1 => true ),
 			null,
 			'EUR',
 			'https://example.com/event'
@@ -455,7 +451,7 @@ class EventSchemaTest extends TestCase {
 	 * @return void
 	 */
 	public function test_build_offers_for_types_no_types_yields_empty_array() {
-		$offers = EventSchema::build_offers_for_types( array(), array(), array(), null, 'EUR', 'https://example.com/event' );
+		$offers = EventSchema::build_offers_for_types( array(), array(), null, 'EUR', 'https://example.com/event' );
 
 		$this->assertSame( array(), $offers );
 	}
@@ -469,7 +465,6 @@ class EventSchemaTest extends TestCase {
 		$offers = EventSchema::build_offers_for_types(
 			array( $this->ticket_type( 1, 'Single class', true ) ),
 			array( 1 => 15.0 ),
-			array( 1 => true ),
 			null,
 			'EUR',
 			'https://example.com/event'
@@ -488,7 +483,6 @@ class EventSchemaTest extends TestCase {
 		$offers = EventSchema::build_offers_for_types(
 			array( $this->ticket_type( 1, 'Single class' ) ),
 			array( 1 => 15.0 ),
-			array( 1 => true ),
 			'2026-09-01T00:00:00+00:00',
 			'EUR',
 			'https://example.com/event'
@@ -509,7 +503,6 @@ class EventSchemaTest extends TestCase {
 		$offers = EventSchema::build_offers_for_types(
 			array( $this->ticket_type( 1, 'Single class', false, '2026-01-01 12:00:00' ) ),
 			array( 1 => 15.0 ),
-			array( 1 => true ),
 			null,
 			'EUR',
 			'https://example.com/event',
@@ -529,7 +522,6 @@ class EventSchemaTest extends TestCase {
 		$offers = EventSchema::build_offers_for_types(
 			array( $this->ticket_type( 1, 'Single class', false, '2026-01-01 12:00:01' ) ),
 			array( 1 => 15.0 ),
-			array( 1 => true ),
 			null,
 			'EUR',
 			'https://example.com/event',
@@ -549,7 +541,6 @@ class EventSchemaTest extends TestCase {
 		$paid_offers = EventSchema::build_offers_for_types(
 			array( $this->ticket_type( 1, '' ) ),
 			array( 1 => 15.0 ),
-			array( 1 => true ),
 			null,
 			'EUR',
 			'https://example.com/event'
@@ -558,8 +549,7 @@ class EventSchemaTest extends TestCase {
 
 		$free_offers = EventSchema::build_offers_for_types(
 			array( $this->ticket_type( 1, '' ) ),
-			array(),
-			array(),
+			array( 1 => 0.0 ),
 			null,
 			'EUR',
 			'https://example.com/event'

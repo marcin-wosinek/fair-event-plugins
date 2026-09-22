@@ -175,7 +175,13 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 							sale_end: '2099-01-01 00:00:00',
 						},
 					],
-					prices: [],
+					prices: [
+						{
+							ticket_type_index: 0,
+							sale_period_index: 0,
+							price: 0,
+						},
+					],
 					settings: {},
 				},
 			}
@@ -230,6 +236,11 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 						},
 					],
 					prices: [
+						{
+							ticket_type_index: 0,
+							sale_period_index: 0,
+							price: 0,
+						},
 						{
 							ticket_type_index: 2,
 							sale_period_index: 0,

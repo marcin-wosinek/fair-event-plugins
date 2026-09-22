@@ -308,11 +308,11 @@ class EventSchema {
 	/**
 	 * Build Schema.org Offer objects for JSON-LD from the ticketing models.
 	 *
-	 * Priced ticket types yield a paid `Offer`; a genuinely free ticket type
-	 * (enabled, with no positive price in any sale period — the free
-	 * RSVP/signup case) yields a price-"0" `Offer` so the event can be
-	 * marked `isAccessibleForFree`. A paid type whose sale window has closed
-	 * yields nothing and is never advertised as free.
+	 * A type with an explicit price row for the selected window yields an
+	 * `Offer` — price "0" for a stored zero row (advertising the event as
+	 * `isAccessibleForFree`), a positive amount otherwise. A type with no
+	 * explicit row for the selected window is unavailable, not free (issue
+	 * #1624), and yields nothing.
 	 *
 	 * Sale-period resolution reuses TicketAvailability's pure primitives —
 	 * the same position-aware lazy-boundary resolution the purchase form
@@ -383,15 +383,6 @@ class EventSchema {
 			}
 		}
 
-		// Type IDs carrying a positive price in *any* period: paid tickets, even
-		// when the current window has none (sales closed). Never advertised free.
-		$paid_type_ids = array();
-		foreach ( $all_prices as $price ) {
-			if ( (float) $price->price > 0.0 ) {
-				$paid_type_ids[ (int) $price->ticket_type_id ] = true;
-			}
-		}
-
 		$valid_from = ( $selected_period && ! $active_period )
 			? DateHelper::local_to_iso8601( $selected_period->sale_start )
 			: null;
@@ -399,7 +390,6 @@ class EventSchema {
 		return self::build_offers_for_types(
 			$ticket_types,
 			$price_by_type_id,
-			$paid_type_ids,
 			$valid_from,
 			Money::site_currency(),
 			get_permalink( $post_id ),
@@ -414,14 +404,14 @@ class EventSchema {
 	 *
 	 * @param object[]    $ticket_types     TicketType objects (id, name, disabled, disable_at).
 	 * @param float[]     $price_by_type_id Ticket-type ID => price for the selected window.
-	 * @param bool[]      $paid_type_ids    Ticket-type ID => true for types with a positive price in *any* period.
 	 * @param string|null $valid_from    ISO 8601 `validFrom` for an upcoming (not yet active) window, or null.
 	 * @param string      $currency         Site currency code.
 	 * @param string      $permalink        Event permalink, used as the offer URL.
 	 * @param string|null $now              Current site datetime for scheduled disabling; defaults to current_time( 'mysql' ).
-	 * @return array Offer objects, one per purchasable type; disabled or closed-sale types are omitted.
+	 * @return array Offer objects, one per purchasable type; disabled types and
+	 *               types with no explicit price row for the selected window are omitted.
 	 */
-	public static function build_offers_for_types( array $ticket_types, array $price_by_type_id, array $paid_type_ids, $valid_from, $currency, $permalink, $now = null ) {
+	public static function build_offers_for_types( array $ticket_types, array $price_by_type_id, $valid_from, $currency, $permalink, $now = null ) {
 		$offers = array();
 
 		foreach ( $ticket_types as $ticket_type ) {
@@ -434,49 +424,32 @@ class EventSchema {
 
 			$type_id = (int) $ticket_type->id;
 
-			// Priced in the current window (the price may itself be 0).
-			if ( isset( $price_by_type_id[ $type_id ] ) ) {
-				$offer = array(
-					'@type'         => 'Offer',
-					'price'         => (string) $price_by_type_id[ $type_id ],
-					'priceCurrency' => $currency,
-					'availability'  => 'https://schema.org/InStock',
-					'url'           => $permalink,
-				);
-
-				// A blank name (the admin ticket editor doesn't require one)
-				// is omitted rather than serialized as "" — an empty `name`
-				// is itself a structured-data quality issue.
-				if ( '' !== (string) $ticket_type->name ) {
-					$offer['name'] = $ticket_type->name;
-				}
-
-				if ( $valid_from ) {
-					$offer['validFrom'] = $valid_from;
-				}
-
-				$offers[] = $offer;
+			// No explicit price row for the selected window → unavailable, not
+			// free (issue #1624); emit nothing.
+			if ( ! isset( $price_by_type_id[ $type_id ] ) ) {
 				continue;
 			}
 
-			// No price in the current window: a type priced elsewhere is a paid
-			// ticket with sales closed — emit nothing.
-			if ( isset( $paid_type_ids[ $type_id ] ) ) {
-				continue;
-			}
-
-			// Genuinely free ticket type (a free RSVP/signup with no price row):
-			// advertise a price-"0" offer so the event is accessible for free.
+			// Priced in the current window — a stored 0 row is a genuinely free
+			// offer (the site can advertise isAccessibleForFree), any other
+			// value is a paid offer.
 			$offer = array(
 				'@type'         => 'Offer',
-				'price'         => '0',
+				'price'         => (string) $price_by_type_id[ $type_id ],
 				'priceCurrency' => $currency,
 				'availability'  => 'https://schema.org/InStock',
 				'url'           => $permalink,
 			);
 
+			// A blank name (the admin ticket editor doesn't require one)
+			// is omitted rather than serialized as "" — an empty `name`
+			// is itself a structured-data quality issue.
 			if ( '' !== (string) $ticket_type->name ) {
 				$offer['name'] = $ticket_type->name;
+			}
+
+			if ( $valid_from ) {
+				$offer['validFrom'] = $valid_from;
 			}
 
 			$offers[] = $offer;

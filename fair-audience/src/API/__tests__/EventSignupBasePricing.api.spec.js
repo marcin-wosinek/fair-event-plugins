@@ -7,9 +7,10 @@
  *
  * Like GetTicketsPaymentUnavailable's spec, this assumes the dev stack has no
  * payment connector configured: any event with a positive price must be
- * rejected with 503 payment_unavailable, never confirmed for free. A free
- * (price-0) ticket type on the same event must still confirm, proving the
- * guard isn't over-blocking.
+ * rejected with 503 payment_unavailable, never confirmed for free. A ticket
+ * type with an explicit zero-price row on the same event must still confirm,
+ * proving the guard isn't over-blocking. Only an explicit zero row counts as
+ * free — a type with no price row at all is unavailable, not free (#1624).
  *
  * These assertions hold in both plugin configurations (base-only and with
  * fair-events-experimental active) — the resolver falls back correctly
@@ -133,6 +134,11 @@ test.describe( 'Base signup pricing — ticket-type price', () => {
 							sale_period_index: 0,
 							price: 18,
 						},
+						{
+							ticket_type_index: 1,
+							sale_period_index: 0,
+							price: 0,
+						},
 					],
 					settings: {},
 				},
@@ -187,7 +193,7 @@ test.describe( 'Base signup pricing — ticket-type price', () => {
 		}
 	} );
 
-	test( 'a ticket type with no price row (0) still confirms', async () => {
+	test( 'a ticket type with an explicit zero price still confirms', async () => {
 		test.skip(
 			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'

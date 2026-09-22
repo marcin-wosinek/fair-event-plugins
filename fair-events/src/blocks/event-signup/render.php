@@ -226,7 +226,6 @@ $has_instance_picker = $has_multiple_instances_type && ! empty( $occurrences_for
 // uses — so the lazy default window and last-period fallback apply here too
 // instead of a second, divergent evaluation.
 $price_by_type_id   = array();
-$priced_type_ids    = array();
 $active_sale_period = null;
 $sale_period_count  = 0;
 if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
@@ -234,21 +233,20 @@ if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
 	$active_sale_period = $resolved_prices['active_period'];
 	$sale_period_count  = $resolved_prices['sale_period_count'];
 	$price_by_type_id   = $resolved_prices['price_by_type_id'];
-	$priced_type_ids    = $resolved_prices['priced_type_ids'];
 }
 
-// A ticket type with no price row for the active sale period, but priced for
-// some other period, isn't purchasable right now — drop it from the list
-// rather than showing it unpriced and selectable. A type never priced for
-// any period at all is free by convention and stays. When there's no active
-// sale period, nothing is purchasable, so every type is dropped regardless.
-// When every configured type is dropped this way, $ticket_types_hidden_by_sale_period
-// feeds $all_purchases_blocked below so the form shows the same "temporarily
-// unavailable" treatment instead of an empty ticket-type fieldset.
+// A ticket type with no explicit price row for the active sale period isn't
+// purchasable right now — drop it from the list rather than showing it
+// unpriced and selectable. Only a stored zero price counts as free (issue
+// #1624). When there's no active sale period, nothing is purchasable, so
+// every type is dropped regardless. When every configured type is dropped
+// this way, $ticket_types_hidden_by_sale_period feeds $all_purchases_blocked
+// below so the form shows the same "temporarily unavailable" treatment
+// instead of an empty ticket-type fieldset.
 $ticket_types_before_pricing_filter = $ticket_types;
 if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
 	$ticket_types = $active_sale_period
-		? \FairEvents\Services\TicketPricing::filter_purchasable_types( $ticket_types, $price_by_type_id, $priced_type_ids )
+		? \FairEvents\Services\TicketPricing::filter_purchasable_types( $ticket_types, $price_by_type_id )
 		: array();
 }
 $ticket_types_hidden_by_sale_period = ! empty( $ticket_types_before_pricing_filter ) && empty( $ticket_types );
