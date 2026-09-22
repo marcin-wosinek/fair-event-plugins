@@ -224,8 +224,9 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	}
 
 	/**
-	 * Attach a price to a ticket type for a sale period. Its presence is what
-	 * makes a ticket type "paid" (a type with no price row is free).
+	 * Attach a price to a ticket type for a sale period. A price row is what
+	 * makes a ticket type purchasable — pass 0.00 for a free type; a type
+	 * with no price row at all is unavailable, not free (issue #1624).
 	 *
 	 * @param int      $ticket_type_id Ticket type ID.
 	 * @param int      $sale_period_id Sale period ID.

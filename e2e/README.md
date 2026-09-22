@@ -117,7 +117,7 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   `fair_event` (with the event-signup block in its content), an event date, an
   active sale period, and a ticket type in the requested **flavour**. Presets
   compose `lib/event-factory.php`:
-  - `free` — a ticket type with no price row.
+  - `free` — a ticket type with a `TicketPrice` of `0.00`.
   - `paid` — adds a `TicketPrice` (default `25.00`; override `{"price":40}`).
   - `paid-with-options` — `paid` plus `TicketOption` rows (override
     `{"options":["dinner","tshirt"]}`).

@@ -6,7 +6,7 @@
  *   wp eval-file wp-content/mu-plugins/scripts/seed-event.php <flavour> [json-overrides]
  *
  * Flavours (presets composing lib/event-factory.php):
- *   free                 event + date + sale period + a free ticket type (no price row).
+ *   free                 event + date + sale period + a ticket type priced at 0.
  *   paid                 free, plus a TicketPrice (default 25.00; override {"price":N}).
  *   paid-with-options    paid, plus TicketOption rows (override {"options":["dinner",...]}).
  *   capacity-1           paid with a capacity-1 ticket type, for sold-out/waitlist scenarios.
@@ -206,6 +206,9 @@ switch ( $flavour ) {
 		$ticket_type_id = fair_e2e_add_ticket_type( $event_date_id, 'Free Admission', null );
 		$is_paid        = false;
 		$price          = 0.00;
+		// An explicit stored zero price, not merely the absence of a price
+		// row, is what makes a ticket type purchasable/free (issue #1624).
+		fair_e2e_add_price( $ticket_type_id, $sale_period_id, $price, null );
 		break;
 
 	case 'paid':

@@ -35,6 +35,7 @@ class BlockHooks {
 		register_block_type( __DIR__ . '/../../build/blocks/events-calendar' );
 		register_block_type( __DIR__ . '/../../build/blocks/events-week' );
 		register_block_type( __DIR__ . '/../../build/blocks/event-info' );
+		register_block_type( __DIR__ . '/../../build/blocks/event-prices' );
 
 		// `sources` bundle — event-proposal block writes to EventProposalController.
 		if ( \FairEvents\Core\Features::is_enabled( 'sources' ) ) {
@@ -108,6 +109,13 @@ class BlockHooks {
 		// Event info block editor script.
 		wp_set_script_translations(
 			'fair-events-event-info-editor-script',
+			'fair-events',
+			\FairEvents\Core\Features::script_translations_path()
+		);
+
+		// Event prices block editor script.
+		wp_set_script_translations(
+			'fair-events-event-prices-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);

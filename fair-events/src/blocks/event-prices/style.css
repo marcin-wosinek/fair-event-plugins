@@ -1,0 +1,80 @@
+.wp-block-fair-events-event-prices {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 1.5em;
+}
+
+.wp-block-fair-events-event-prices__period {
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 1em 1.25em;
+}
+
+.wp-block-fair-events-event-prices__period-name {
+	margin: 0 0 0.25em;
+	font-size: 1.1em;
+}
+
+.wp-block-fair-events-event-prices__period-dates {
+	margin: 0 0 0.75em;
+	color: #555;
+	font-size: 0.9em;
+}
+
+.wp-block-fair-events-event-prices__list {
+	margin: 0;
+}
+
+.wp-block-fair-events-event-prices__row {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 1em;
+	padding: 0.4em 0;
+	border-top: 1px solid #eee;
+}
+
+.wp-block-fair-events-event-prices__row:first-child {
+	border-top: none;
+}
+
+.wp-block-fair-events-event-prices__name {
+	margin: 0;
+	font-weight: 600;
+}
+
+.wp-block-fair-events-event-prices__price {
+	margin: 0;
+	white-space: nowrap;
+}
+
+.wp-block-fair-events-event-prices__row--unavailable
+	.wp-block-fair-events-event-prices__name,
+.wp-block-fair-events-event-prices__row--unavailable
+	.wp-block-fair-events-event-prices__price {
+	color: #888;
+	font-style: italic;
+	font-weight: normal;
+}
+
+.wp-block-fair-events-event-prices__row--free
+	.wp-block-fair-events-event-prices__price {
+	font-weight: 600;
+}
+
+@media (max-width: 768px) {
+	.wp-block-fair-events-event-prices {
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	}
+}
+
+@media (max-width: 480px) {
+	.wp-block-fair-events-event-prices {
+		grid-template-columns: 1fr;
+	}
+
+	.wp-block-fair-events-event-prices__row {
+		flex-direction: column;
+		gap: 0.15em;
+	}
+}

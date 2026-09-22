@@ -568,7 +568,7 @@ class TicketsController extends WP_REST_Controller {
 				TicketType::update( (int) $item['id'], $update );
 				TicketTypeGroupRestriction::sync_for_ticket_type( (int) $item['id'], $group_ids );
 			} else {
-				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $minimum_activities, $disable_at, $recurrence_scope, false, $minimum_instances, $activities_enabled, $maximum_activities );
+				$new_id           = TicketType::create( $event_date_id, $name, $capacity, $sort_order, $minimum_activities, $disable_at, $recurrence_scope, ! empty( $item['disabled'] ), $minimum_instances, $activities_enabled, $maximum_activities );
 				$id_map[ $index ] = (int) $new_id;
 				if ( $new_id ) {
 					TicketTypeGroupRestriction::sync_for_ticket_type( (int) $new_id, $group_ids );

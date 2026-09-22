@@ -172,8 +172,7 @@ class SignupPriceResolver {
 
 		$base_price_by_type_id = \FairEvents\Services\TicketPricing::base_prices_for_types(
 			$ticket_type_ids,
-			$resolved_prices['price_by_type_id'],
-			$resolved_prices['priced_type_ids']
+			$resolved_prices['price_by_type_id']
 		);
 
 		$resolved = array();

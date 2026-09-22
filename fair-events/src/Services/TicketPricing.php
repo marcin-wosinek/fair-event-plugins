@@ -56,12 +56,11 @@ class TicketPricing {
 
 		$price_row = TicketPrice::get_by_type_and_period( $ticket_type_id, $active_period->id );
 		if ( ! $price_row ) {
-			// No row for this period. A type with no price row for ANY period
-			// was never configured as paid — the admin ticket editor leaves a
-			// blank price cell unsaved, so that's "free" by convention, not
-			// "unpriced". A type priced for other periods but not this one is
-			// a real paid type whose sale window lapsed, so it stays unavailable.
-			return empty( TicketPrice::get_all_by_ticket_type_id( $ticket_type_id ) ) ? 0.0 : null;
+			// No explicit price row for this period → unavailable. Only a
+			// stored zero price counts as free; a blank price cell in the
+			// admin ticket editor is left unsaved and means "not on sale
+			// here", not "free" (issue #1624).
+			return null;
 		}
 
 		/**
@@ -99,12 +98,9 @@ class TicketPricing {
 	 * @return array{
 	 *     active_period: TicketSalePeriod|null,
 	 *     sale_period_count: int,
-	 *     price_by_type_id: float[],
-	 *     priced_type_ids: int[]
-	 * } `price_by_type_id` covers only types with a price row for the
-	 *   active period; `priced_type_ids` lists every type with a price row
-	 *   for *any* period, for filter_purchasable_types()'s "never priced is
-	 *   free by convention" check.
+	 *     price_by_type_id: float[]
+	 * } `price_by_type_id` covers only types with an explicit price row for
+	 *   the active period — the sole purchasability signal (issue #1624).
 	 */
 	public static function resolve_unit_prices_for_event_date( $event_date_id ) {
 		$period_context = TicketAvailability::resolve_sale_period_context( $event_date_id );
@@ -114,14 +110,11 @@ class TicketPricing {
 				'active_period'     => null,
 				'sale_period_count' => $period_context['sale_period_count'],
 				'price_by_type_id'  => array(),
-				'priced_type_ids'   => array(),
 			);
 		}
 
-		$price_by_type_id   = array();
-		$priced_type_id_set = array();
+		$price_by_type_id = array();
 		foreach ( TicketPrice::get_all_by_event_date_id( $event_date_id ) as $price_row ) {
-			$priced_type_id_set[ (int) $price_row->ticket_type_id ] = true;
 			if ( (int) $price_row->sale_period_id === (int) $active_period->id ) {
 				$price_by_type_id[ (int) $price_row->ticket_type_id ] = (float) $price_row->price;
 			}
@@ -131,15 +124,14 @@ class TicketPricing {
 			'active_period'     => $active_period,
 			'sale_period_count' => $period_context['sale_period_count'],
 			'price_by_type_id'  => $price_by_type_id,
-			'priced_type_ids'   => array_keys( $priced_type_id_set ),
 		);
 	}
 
 	/**
 	 * Resolve the base (undiscounted) price for each of the given ticket
-	 * types from the maps resolve_unit_prices_for_event_date() returns.
-	 * Mirrors resolve_unit_price()'s "never priced is free by convention,
-	 * priced elsewhere is unavailable" per-type selection rule as a pure,
+	 * types from the map resolve_unit_prices_for_event_date() returns.
+	 * Mirrors resolve_unit_price()'s "only an explicit price row for the
+	 * active period is purchasable" per-type selection rule as a pure,
 	 * DB-free lookup, so a caller resolving many types reuses one bulk fetch
 	 * instead of calling resolve_unit_price() (and re-querying) once per
 	 * type. Unlike resolve_unit_price(), this does **not** run the price
@@ -151,22 +143,20 @@ class TicketPricing {
 	 *
 	 * @param int[]   $ticket_type_ids  Ticket type IDs to resolve.
 	 * @param float[] $price_by_type_id Ticket-type ID => price for the active period.
-	 * @param int[]   $priced_type_ids  Ticket-type IDs with a price row for at least one period.
-	 * @return float[] Base price, keyed by ticket type ID; a type priced for
-	 *                 other periods but not the active one is omitted (not
-	 *                 purchasable right now), matching resolve_unit_price()'s null.
+	 * @return float[] Base price, keyed by ticket type ID; a type with no
+	 *                 explicit price row for the active period is omitted
+	 *                 (not purchasable right now), matching
+	 *                 resolve_unit_price()'s null.
 	 */
-	public static function base_prices_for_types( array $ticket_type_ids, array $price_by_type_id, array $priced_type_ids ) {
+	public static function base_prices_for_types( array $ticket_type_ids, array $price_by_type_id ) {
 		$base_price_by_type_id = array();
 
 		foreach ( $ticket_type_ids as $ticket_type_id ) {
 			$ticket_type_id = (int) $ticket_type_id;
 			if ( array_key_exists( $ticket_type_id, $price_by_type_id ) ) {
 				$base_price_by_type_id[ $ticket_type_id ] = (float) $price_by_type_id[ $ticket_type_id ];
-			} elseif ( ! in_array( $ticket_type_id, $priced_type_ids, true ) ) {
-				$base_price_by_type_id[ $ticket_type_id ] = 0.0;
 			}
-			// Else: priced for other periods but not the active one → not purchasable, omitted.
+			// Else: no explicit price row for the active period → not purchasable, omitted.
 		}
 
 		return $base_price_by_type_id;
@@ -174,37 +164,29 @@ class TicketPricing {
 
 	/**
 	 * Keep only enabled ticket types actually purchasable right now under the
-	 * currently active sale period. A type is purchasable when it either has
-	 * a resolved price for the active period ($price_by_type_id), or has
-	 * never had a price row for any period at all ($priced_type_ids) — free
-	 * by convention, since the admin ticket editor leaves a blank price cell
-	 * unsaved rather than writing a row. A type priced for other periods but
-	 * not this one is a real paid type whose sale window lapsed, so it's
-	 * dropped. Only call this when a sale period is actually active — the
-	 * caller must drop everything itself when it isn't. Pure, DB-free — the
-	 * caller resolves both maps first.
+	 * currently active sale period. A type is purchasable only when it has an
+	 * explicit price row for the active period ($price_by_type_id) — a blank
+	 * price cell in the admin ticket editor is left unsaved and means "not on
+	 * sale here", not "free" (issue #1624). Only call this when a sale period
+	 * is actually active — the caller must drop everything itself when it
+	 * isn't. Pure, DB-free — the caller resolves the price map first.
 	 *
 	 * @param object[] $ticket_types     Ticket type objects.
 	 * @param float[]  $price_by_type_id Ticket-type ID => resolved price for the active period.
-	 * @param int[]    $priced_type_ids  Ticket-type IDs with a price row for at least one period.
 	 * @param string   $now              Current site datetime for deterministic tests. Defaults to current_time( 'mysql' ).
 	 * @return object[] Purchasable ticket types, re-indexed.
 	 */
-	public static function filter_purchasable_types( array $ticket_types, array $price_by_type_id, array $priced_type_ids = array(), $now = null ) {
+	public static function filter_purchasable_types( array $ticket_types, array $price_by_type_id, $now = null ) {
 		$now = $now ?? current_time( 'mysql' );
 
 		return array_values(
 			array_filter(
 				$ticket_types,
-				function ( $ticket_type ) use ( $price_by_type_id, $priced_type_ids, $now ) {
+				function ( $ticket_type ) use ( $price_by_type_id, $now ) {
 					if ( ! self::is_ticket_type_enabled( $ticket_type, $now ) ) {
 						return false;
 					}
-					$id = (int) $ticket_type->id;
-					if ( array_key_exists( $id, $price_by_type_id ) ) {
-						return true;
-					}
-					return ! in_array( $id, $priced_type_ids, true );
+					return array_key_exists( (int) $ticket_type->id, $price_by_type_id );
 				}
 			)
 		);

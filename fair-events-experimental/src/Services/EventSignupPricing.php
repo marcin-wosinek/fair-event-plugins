@@ -116,7 +116,7 @@ class EventSignupPricing {
 	 * @param int[]    $ticket_type_ids Ticket type IDs to resolve, all belonging to $event_date_id.
 	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
 	 * @return array<int, array{price: float, rule: GroupPricingRule|null}> Keyed by ticket type ID;
-	 *         a type with no active-period price and no price row for any period is omitted
+	 *         a type with no explicit price row for the active period is omitted
 	 *         (not purchasable right now), matching resolve_price_for_ticket_type()'s null.
 	 */
 	public static function resolve_prices_and_rules_for_ticket_types( $event_date_id, array $ticket_type_ids, $participant_id = null ) {
@@ -133,8 +133,7 @@ class EventSignupPricing {
 
 		$base_price_by_type_id = TicketPricing::base_prices_for_types(
 			$ticket_type_ids,
-			$resolved_prices['price_by_type_id'],
-			$resolved_prices['priced_type_ids']
+			$resolved_prices['price_by_type_id']
 		);
 
 		// Mirrors resolve_price_and_rule_for_ticket_type()'s own base price,

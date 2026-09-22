@@ -740,7 +740,6 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		$price_by_type_id   = array();
-		$priced_type_ids    = array();
 		$active_sale_period = null;
 		$sale_period_count  = 0;
 		if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
@@ -748,20 +747,18 @@ class GetTicketsController extends WP_REST_Controller {
 			$active_sale_period = $resolved_prices['active_period'];
 			$sale_period_count  = $resolved_prices['sale_period_count'];
 			$price_by_type_id   = $resolved_prices['price_by_type_id'];
-			$priced_type_ids    = $resolved_prices['priced_type_ids'];
 		}
 
-		// A ticket type with no price row for the active sale period, but
-		// priced for some other period, isn't purchasable right now — drop
-		// it, mirroring render.php. A type never priced for any period is
-		// free by convention and stays; with no active period at all,
-		// nothing is purchasable. Runs before
+		// A ticket type with no explicit price row for the active sale period
+		// isn't purchasable right now — drop it, mirroring render.php. Only a
+		// stored zero price counts as free (issue #1624); with no active
+		// period at all, nothing is purchasable. Runs before
 		// SignupHookBridge::enrich_render_context() (hooked below) re-filters
 		// for group restrictions, so sale-period and group-restriction
 		// filtering compose correctly regardless of order.
 		if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
 			$ticket_types = $active_sale_period
-				? \FairEvents\Services\TicketPricing::filter_purchasable_types( $ticket_types, $price_by_type_id, $priced_type_ids )
+				? \FairEvents\Services\TicketPricing::filter_purchasable_types( $ticket_types, $price_by_type_id )
 				: array();
 		}
 
