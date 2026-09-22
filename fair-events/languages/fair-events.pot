@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-22T08:32:42+00:00\n"
+"POT-Creation-Date: 2026-09-22T09:36:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -63,7 +63,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:120
 #: src/Admin/AdminPages.php:121
 #: src/Admin/all-events/AllEvents.js:411
-#: src/blocks/events-list/components/EditComponent.js:81
+#: src/blocks/events-list/components/EditComponent.js:124
 msgid "All Events"
 msgstr ""
 
@@ -1130,8 +1130,13 @@ msgstr ""
 msgid "Subscribed calendars refresh on your calendar app's own schedule (often hours, not instant)."
 msgstr ""
 
-#: src/blocks/events-list/render.php:299
-msgid "No events found. Please select a valid display pattern."
+#: src/blocks/events-list/render.php:145
+msgid "The selected display pattern is no longer available. Choose a different pattern to display these events."
+msgstr ""
+
+#: src/blocks/events-list/render.php:157
+#: src/blocks/events-list/render.php:162
+msgid "No events found."
 msgstr ""
 
 #: src/blocks/events-week/render.php:349
@@ -1205,6 +1210,32 @@ msgid_plural "Review Event's Photos (%d photos)"
 msgstr[0] ""
 msgstr[1] ""
 
+#: src/Helpers/OccurrenceFields.php:36
+#: ../fair-events-shared/src/event-utils.js:31
+msgid "(untitled event)"
+msgstr ""
+
+#: src/Helpers/OccurrenceFields.php:121
+#: src/Admin/manage-event/ManageEventApp.js:1112
+msgid "Online"
+msgstr ""
+
+#: src/Helpers/OccurrenceFields.php:162
+msgid "Event"
+msgstr ""
+
+#: src/Helpers/OccurrenceFields.php:164
+msgid "Standalone event"
+msgstr ""
+
+#: src/Helpers/OccurrenceFields.php:166
+msgid "Calendar feed"
+msgstr ""
+
+#: src/Helpers/OccurrenceFields.php:168
+msgid "External source"
+msgstr ""
+
 #: src/Models/Venue.php:398
 #: src/Admin/venues/VenuesApp.js:79
 msgid "Enter both latitude and longitude, or leave both blank."
@@ -1238,43 +1269,43 @@ msgstr ""
 msgid "Display events with title, dates, and excerpt using Query Loop"
 msgstr ""
 
-#: src/Patterns/Patterns.php:69
+#: src/Patterns/Patterns.php:70
 msgid "Event Grid"
 msgstr ""
 
-#: src/Patterns/Patterns.php:70
-msgid "Display events in a grid layout with images using Query Loop"
+#: src/Patterns/Patterns.php:71
+msgid "Display events in a grid layout with images, dates, and excerpt using Query Loop"
 msgstr ""
 
-#: src/Patterns/Patterns.php:90
+#: src/Patterns/Patterns.php:92
 msgid "Calendar Event - Simple"
 msgstr ""
 
-#: src/Patterns/Patterns.php:91
+#: src/Patterns/Patterns.php:93
 msgid "Display event title only (compact for calendar cells)"
 msgstr ""
 
-#: src/Patterns/Patterns.php:103
+#: src/Patterns/Patterns.php:105
 msgid "Schedule Event - Simple"
 msgstr ""
 
-#: src/Patterns/Patterns.php:104
+#: src/Patterns/Patterns.php:106
 msgid "Display event title only (no time)"
 msgstr ""
 
-#: src/Patterns/Patterns.php:118
+#: src/Patterns/Patterns.php:120
 msgid "Schedule Event - With Time"
 msgstr ""
 
-#: src/Patterns/Patterns.php:119
+#: src/Patterns/Patterns.php:121
 msgid "Display event with start time and title"
 msgstr ""
 
-#: src/Patterns/Patterns.php:140
+#: src/Patterns/Patterns.php:142
 msgid "Schedule Event - With Time Range"
 msgstr ""
 
-#: src/Patterns/Patterns.php:141
+#: src/Patterns/Patterns.php:143
 msgid "Display event with time range and title"
 msgstr ""
 
@@ -2973,10 +3004,6 @@ msgstr ""
 msgid "In person"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1112
-msgid "Online"
-msgstr ""
-
 #: src/Admin/manage-event/ManageEventApp.js:1119
 msgid "Hybrid"
 msgstr ""
@@ -4001,7 +4028,7 @@ msgid "Draft events will appear as outlined buttons using these colors."
 msgstr ""
 
 #: src/blocks/events-calendar/components/EditComponent.js:168
-#: src/blocks/events-list/components/EditComponent.js:114
+#: src/blocks/events-list/components/EditComponent.js:157
 #: src/blocks/events-week/components/EditComponent.js:118
 #: ../fair-events-shared/src/EventSourceSelector.js:24
 msgid "Event Sources"
@@ -4016,43 +4043,53 @@ msgstr ""
 msgid "Event sources format has changed. Please re-select your event sources."
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:52
+#: src/blocks/events-list/components/EditComponent.js:60
 msgid "Untitled Pattern"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:62
+#. translators: %s: the unavailable pattern's stored name.
+#: src/blocks/events-list/components/EditComponent.js:81
+#, js-format
+msgid "Unavailable pattern (%s)"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:97
 msgid "Events List Settings"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:65
+#: src/blocks/events-list/components/EditComponent.js:100
 msgid "Display Pattern"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:71
-msgid "Choose a pattern for displaying events"
+#: src/blocks/events-list/components/EditComponent.js:106
+msgid "Query Loop patterns (e.g. Event List, Event Grid) show WordPress-linked events only. A custom pattern (not built with the Query block) can show every event source — standalone, calendar feed, and external."
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:77
+#: src/blocks/events-list/components/EditComponent.js:113
+msgid "The selected pattern uses a Query Loop, so it can only show WordPress-linked events. Events from the selected event sources will not appear — choose a custom pattern to show them."
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:120
 msgid "Time Filter"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:85
+#: src/blocks/events-list/components/EditComponent.js:128
 msgid "Upcoming Events"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:89
+#: src/blocks/events-list/components/EditComponent.js:132
 msgid "Past Events"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:93
+#: src/blocks/events-list/components/EditComponent.js:136
 msgid "Ongoing Events"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:100
+#: src/blocks/events-list/components/EditComponent.js:143
 msgid "Filter events by time relative to now"
 msgstr ""
 
-#: src/blocks/events-list/components/EditComponent.js:118
+#: src/blocks/events-list/components/EditComponent.js:161
 msgid "Select event sources to display in the list."
 msgstr ""
 
@@ -4253,10 +4290,6 @@ msgstr ""
 #: src/blocks/get-tickets/block.json
 msgctxt "block description"
 msgid "Legacy signup block. Superseded by Event Signup — transform existing instances to fair-events/event-signup."
-msgstr ""
-
-#: ../fair-events-shared/src/event-utils.js:31
-msgid "(untitled event)"
 msgstr ""
 
 #: ../fair-events-shared/src/EventSourceSelector.js:25
