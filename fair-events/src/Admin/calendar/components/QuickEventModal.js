@@ -29,6 +29,9 @@ import {
 	RecurrenceControl,
 	buildRRule,
 } from 'fair-events-shared';
+import InlineVenueCreator, {
+	ADD_NEW_VENUE_VALUE,
+} from '../../components/InlineVenueCreator.js';
 
 export default function QuickEventModal( { date, onClose, onSuccess } ) {
 	const dateStr = formatLocalDate( date );
@@ -41,6 +44,7 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 	const [ endTime, setEndTime ] = useState( '12:00' );
 	const [ venueId, setVenueId ] = useState( '' );
 	const [ venues, setVenues ] = useState( [] );
+	const [ isCreatingVenue, setIsCreatingVenue ] = useState( false );
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
 
@@ -241,7 +245,25 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 	const venueOptions = [
 		{ label: __( '— No venue —', 'fair-events' ), value: '' },
 		...venues.map( ( v ) => ( { label: v.name, value: String( v.id ) } ) ),
+		{
+			label: __( 'Add new venue', 'fair-events' ),
+			value: ADD_NEW_VENUE_VALUE,
+		},
 	];
+
+	const handleVenueChange = ( value ) => {
+		if ( value === ADD_NEW_VENUE_VALUE ) {
+			setIsCreatingVenue( true );
+			return;
+		}
+		setVenueId( value );
+	};
+
+	const handleVenueCreated = ( venue ) => {
+		setVenues( ( prev ) => [ ...prev, venue ] );
+		setVenueId( String( venue.id ) );
+		setIsCreatingVenue( false );
+	};
 
 	return (
 		<Modal
@@ -427,7 +449,7 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 								label={ __( 'Venue', 'fair-events' ) }
 								value={ venueId }
 								options={ venueOptions }
-								onChange={ setVenueId }
+								onChange={ handleVenueChange }
 								help={
 									fetchedLocation
 										? sprintf(
@@ -441,6 +463,15 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 										: undefined
 								}
 							/>
+
+							{ isCreatingVenue && (
+								<InlineVenueCreator
+									onCreate={ handleVenueCreated }
+									onCancel={ () =>
+										setIsCreatingVenue( false )
+									}
+								/>
+							) }
 
 							<PanelBody
 								title={ __( 'More options', 'fair-events' ) }

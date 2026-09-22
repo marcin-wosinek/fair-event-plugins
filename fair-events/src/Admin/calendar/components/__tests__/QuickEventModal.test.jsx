@@ -4,9 +4,16 @@
  * Tests for QuickEventModal (#976).
  */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import {
+	render,
+	screen,
+	waitFor,
+	fireEvent,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import QuickEventModal from '../QuickEventModal.js';
+import { ADD_NEW_VENUE_VALUE } from '../../../components/InlineVenueCreator.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -29,10 +36,18 @@ const createdEventDate = { id: 99, title: 'Test Event' };
 const venues = [ { id: 5, name: 'The Venue' } ];
 
 let lookupResponse = null;
+let venueCreationResult = { id: 42, name: 'New Venue' };
 
 beforeEach( () => {
 	lookupResponse = null;
-	apiFetch.mockImplementation( ( { path, method } ) => {
+	venueCreationResult = { id: 42, name: 'New Venue' };
+	apiFetch.mockImplementation( ( { path, method, data } ) => {
+		if ( path === '/fair-events/v1/venues' && method === 'POST' ) {
+			if ( venueCreationResult instanceof Error ) {
+				return Promise.reject( venueCreationResult );
+			}
+			return Promise.resolve( { ...venueCreationResult, ...data } );
+		}
 		if ( path === '/fair-events/v1/venues' ) {
 			return Promise.resolve( venues );
 		}
@@ -313,5 +328,212 @@ describe( 'QuickEventModal', () => {
 			).toBeInTheDocument()
 		);
 		expect( screen.getByLabelText( 'Event page URL' ) ).toBeInTheDocument();
+	} );
+} );
+
+describe( 'inline venue creation (#1622)', () => {
+	const openVenueCreator = async () => {
+		await renderModal();
+		fillTitle();
+		const venueSelect = screen.getByLabelText( 'Venue' );
+		fireEvent.change( venueSelect, {
+			target: { value: ADD_NEW_VENUE_VALUE },
+		} );
+		return venueSelect;
+	};
+
+	const getVenueCreator = () =>
+		within( document.querySelector( '.fair-events-inline-venue-creator' ) );
+
+	it( 'shows a trailing "Add new venue" option and opens the inline form', async () => {
+		await renderModal();
+
+		const venueSelect = screen.getByLabelText( 'Venue' );
+		expect(
+			screen.getByRole( 'option', { name: 'Add new venue' } )
+		).toBeInTheDocument();
+
+		fireEvent.change( venueSelect, {
+			target: { value: ADD_NEW_VENUE_VALUE },
+		} );
+
+		expect( screen.getByLabelText( 'Venue name' ) ).toBeInTheDocument();
+	} );
+
+	it( 'requires a venue name before creating', async () => {
+		await openVenueCreator();
+
+		expect(
+			screen.getByText( 'Venue name is required.' )
+		).toBeInTheDocument();
+		expect(
+			getVenueCreator().getByRole( 'button', { name: 'Create venue' } )
+		).toBeDisabled();
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: '/fair-events/v1/venues',
+				method: 'POST',
+			} )
+		);
+	} );
+
+	it( 'cancelling closes the form without creating a venue or losing other fields', async () => {
+		const venueSelect = await openVenueCreator();
+
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'Abandoned Venue' },
+		} );
+		fireEvent.click(
+			getVenueCreator().getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		expect(
+			screen.queryByLabelText( 'Venue name' )
+		).not.toBeInTheDocument();
+		expect( venueSelect ).toHaveValue( '' );
+		expect( screen.getByLabelText( 'Title' ) ).toHaveValue( 'Test Event' );
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: '/fair-events/v1/venues',
+				method: 'POST',
+			} )
+		);
+	} );
+
+	it( 'sends the exact venue-create request', async () => {
+		await openVenueCreator();
+
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'New Venue Name' },
+		} );
+		fireEvent.change( screen.getByLabelText( 'Address' ), {
+			target: { value: '123 Main St' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create venue' } )
+		);
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith( {
+				path: '/fair-events/v1/venues',
+				method: 'POST',
+				data: { name: 'New Venue Name', address: '123 Main St' },
+			} )
+		);
+	} );
+
+	it( 'prevents duplicate submission while creation is in progress', async () => {
+		await openVenueCreator();
+
+		let resolveCreate;
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			if ( path === '/fair-events/v1/venues' && method === 'POST' ) {
+				return new Promise( ( resolve ) => {
+					resolveCreate = resolve;
+				} );
+			}
+			return Promise.resolve( {} );
+		} );
+
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'Slow Venue' },
+		} );
+		const createButton = screen.getByRole( 'button', {
+			name: 'Create venue',
+		} );
+		fireEvent.click( createButton );
+		fireEvent.click( createButton );
+
+		expect(
+			apiFetch.mock.calls.filter(
+				( [ opts ] ) =>
+					opts.path === '/fair-events/v1/venues' &&
+					opts.method === 'POST'
+			)
+		).toHaveLength( 1 );
+
+		resolveCreate( { id: 8, name: 'Slow Venue' } );
+		await waitFor( () =>
+			expect(
+				screen.queryByLabelText( 'Venue name' )
+			).not.toBeInTheDocument()
+		);
+	} );
+
+	it( 'inserts and auto-selects the newly created venue, then closes the form', async () => {
+		const venueSelect = await openVenueCreator();
+
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'New Venue' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create venue' } )
+		);
+
+		await waitFor( () =>
+			expect(
+				screen.queryByLabelText( 'Venue name' )
+			).not.toBeInTheDocument()
+		);
+
+		expect( venueSelect ).toHaveValue( '42' );
+		expect(
+			screen.getByRole( 'option', { name: 'New Venue' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps the entered values and shows an actionable error on failure', async () => {
+		venueCreationResult = new Error( 'Server exploded.' );
+		await openVenueCreator();
+
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'Doomed Venue' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create venue' } )
+		);
+
+		expect(
+			await screen.findByText( 'Server exploded.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Venue name' ) ).toHaveValue(
+			'Doomed Venue'
+		);
+	} );
+
+	it( 'saves the event with the newly created venue selected', async () => {
+		const { onSuccess } = await renderModal();
+		fillTitle();
+
+		fireEvent.change( screen.getByLabelText( 'Venue' ), {
+			target: { value: ADD_NEW_VENUE_VALUE },
+		} );
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'New Venue' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create venue' } )
+		);
+
+		await waitFor( () =>
+			expect(
+				screen.queryByLabelText( 'Venue name' )
+			).not.toBeInTheDocument()
+		);
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+
+		const createCall = apiFetch.mock.calls.find(
+			( [ opts ] ) =>
+				opts.path === '/fair-events/v1/event-dates' &&
+				opts.method === 'POST'
+		);
+		expect( createCall[ 0 ].data.venue_id ).toBe( 42 );
 	} );
 } );
