@@ -13,6 +13,8 @@
 		"./fair-payments-connector-experimental"
 	],
 	"mappings": {
-		"wp-content/mu-plugins": "./e2e/mu-plugins"
+		"wp-content/mu-plugins": "./e2e/mu-plugins",
+		"wp-content/plugins/fair-timetable": "./fair-timetable",
+		"wp-content/plugins/fair-calendar-button": "./fair-calendar-button"
 	}
 }
