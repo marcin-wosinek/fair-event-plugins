@@ -107,7 +107,14 @@ export function getCoordinateError( latitude, longitude ) {
 	return null;
 }
 
-const VenuesApp = () => {
+/**
+ * @param {Object}  props                   Component props.
+ * @param {boolean} [props.canDeleteVenues] Whether the current user may delete
+ *                                           venues. Defaults to false so the
+ *                                           control stays hidden unless the
+ *                                           server explicitly grants it.
+ */
+const VenuesApp = ( { canDeleteVenues = false } ) => {
 	const [ venues, setVenues ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
@@ -638,21 +645,23 @@ const VenuesApp = () => {
 															'fair-events'
 														) }
 													</Button>
-													<Button
-														variant="tertiary"
-														size="small"
-														isDestructive
-														onClick={ () =>
-															handleDelete(
-																venue.id
-															)
-														}
-													>
-														{ __(
-															'Delete',
-															'fair-events'
-														) }
-													</Button>
+													{ canDeleteVenues && (
+														<Button
+															variant="tertiary"
+															size="small"
+															isDestructive
+															onClick={ () =>
+																handleDelete(
+																	venue.id
+																)
+															}
+														>
+															{ __(
+																'Delete',
+																'fair-events'
+															) }
+														</Button>
+													) }
 												</HStack>
 											</td>
 										</tr>

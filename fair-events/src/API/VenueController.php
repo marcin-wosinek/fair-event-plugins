@@ -431,7 +431,9 @@ class VenueController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function update_item_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		// Event editors manage venues alongside events; venues remain shared
+		// records, so any edit_posts user may update any venue.
+		return current_user_can( 'edit_posts' );
 	}
 
 	/**
@@ -451,6 +453,8 @@ class VenueController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function preview_maps_url_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		// Used while creating/editing a venue, so it follows the same
+		// capability as create/update.
+		return current_user_can( 'edit_posts' );
 	}
 }

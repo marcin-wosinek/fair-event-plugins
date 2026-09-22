@@ -124,12 +124,15 @@ class AdminPages {
 			array( $this, 'render_all_events_page' )
 		);
 
-		// Venues page.
+		// Venues page. Event editors manage the venues their events use;
+		// deletion is still gated server-side and in the UI via
+		// current_user_can( 'manage_options' ) (see enqueue_admin_scripts()
+		// and VenueController::delete_item_permissions_check()).
 		$this->page_hooks['fair-events-venues'] = add_submenu_page(
 			$parent,
 			__( 'Venues', 'fair-events' ),
 			__( 'Venues', 'fair-events' ),
-			'manage_options',
+			'edit_posts',
 			'fair-events-venues',
 			array( $this, 'render_venues_page' )
 		);
@@ -371,6 +374,16 @@ class AdminPages {
 				$asset_file['dependencies'],
 				$asset_file['version'],
 				true
+			);
+
+			wp_localize_script(
+				'fair-events-venues',
+				'fairEventsVenuesData',
+				array(
+					// Deletion stays admin-only; the REST API enforces this
+					// independently in VenueController::delete_item_permissions_check().
+					'canDeleteVenues' => current_user_can( 'manage_options' ),
+				)
 			);
 
 			wp_set_script_translations(

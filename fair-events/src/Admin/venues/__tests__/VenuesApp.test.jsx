@@ -199,6 +199,63 @@ test( 'opening a venue with pre-existing invalid coordinates shows the error imm
 	).toBeDisabled();
 } );
 
+describe( 'venue deletion visibility (#1621)', () => {
+	test( 'hides the Delete action for an event editor (canDeleteVenues=false)', async () => {
+		apiFetch.mockResolvedValue( [ existingVenue ] );
+
+		render( <VenuesApp canDeleteVenues={ false } /> );
+
+		await screen.findByText( 'Existing Venue' );
+		expect(
+			screen.getByRole( 'button', { name: /Edit/i } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: /Delete/i } )
+		).not.toBeInTheDocument();
+	} );
+
+	test( 'shows the Delete action for an administrator (canDeleteVenues=true)', async () => {
+		apiFetch.mockResolvedValue( [ existingVenue ] );
+
+		render( <VenuesApp canDeleteVenues /> );
+
+		await screen.findByText( 'Existing Venue' );
+		expect(
+			screen.getByRole( 'button', { name: /Delete/i } )
+		).toBeInTheDocument();
+	} );
+
+	test( 'defaults to hiding the Delete action when the prop is omitted', async () => {
+		apiFetch.mockResolvedValue( [ existingVenue ] );
+
+		render( <VenuesApp /> );
+
+		await screen.findByText( 'Existing Venue' );
+		expect(
+			screen.queryByRole( 'button', { name: /Delete/i } )
+		).not.toBeInTheDocument();
+	} );
+
+	test( 'lets an event editor without delete access still create and edit venues', async () => {
+		apiFetch.mockResolvedValue( [ existingVenue ] );
+
+		render( <VenuesApp canDeleteVenues={ false } /> );
+
+		await screen.findByText( 'Existing Venue' );
+		expect(
+			screen.getByRole( 'button', { name: /Add New Venue/i } )
+		).toBeInTheDocument();
+
+		fireEvent.click( screen.getByRole( 'button', { name: /Edit/i } ) );
+		expect( screen.getByLabelText( 'Name' ) ).toHaveValue(
+			existingVenue.name
+		);
+		expect(
+			screen.getByRole( 'button', { name: /Update Venue/i } )
+		).toBeInTheDocument();
+	} );
+} );
+
 test( 'renders usable venue map URLs as accessible secure new-tab links', async () => {
 	apiFetch.mockResolvedValue( [
 		{

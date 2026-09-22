@@ -3,6 +3,11 @@
  *
  * Verifies that the venues endpoint returns `maps_url` (computed) and does not
  * expose the removed `google_maps_link` field.
+ *
+ * Also verifies (#1621) that an event editor (who can `edit_posts` but not
+ * `manage_options`) can list, create, update, and preview a map link for
+ * venues, but cannot delete one; a subscriber (lacking `edit_posts`) is
+ * rejected for all of those.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -18,6 +23,41 @@ const authHeader = {
 			'base64'
 		),
 };
+
+/**
+ * Create a temporary user with the given role and return its id and Basic
+ * auth header, so permission checks can be exercised as that user.
+ *
+ * @param {import('@playwright/test').APIRequestContext} api  Admin-authenticated API context.
+ * @param {string}                                        role WordPress role slug.
+ * @return {Promise<{id: number, headers: Object}>} Created user id and auth headers.
+ */
+async function createTestUser( api, role ) {
+	const userLogin = `venue-${ role }-${ Date.now() }`;
+	const password = 'Test-password-1460!';
+	const response = await api.post( '/wp-json/wp/v2/users', {
+		headers: authHeader,
+		data: {
+			username: userLogin,
+			email: `${ userLogin }@example.com`,
+			password,
+			roles: [ role ],
+		},
+	} );
+	expect( response.ok() ).toBeTruthy();
+	const id = ( await response.json() ).id;
+
+	return {
+		id,
+		headers: {
+			Authorization:
+				'Basic ' +
+				Buffer.from( `${ userLogin }:${ password }` ).toString(
+					'base64'
+				),
+		},
+	};
+}
 
 test.describe( 'VenueController', () => {
 	let api;
@@ -253,7 +293,7 @@ test.describe( 'VenueController', () => {
 			}
 		} );
 
-		test( 'requires manage_options', async () => {
+		test( 'requires being logged in', async () => {
 			const res = await api.post(
 				'/wp-json/fair-events/v1/venues/maps-url',
 				{ data: { address: 'Gran Via 1' } }
@@ -285,6 +325,174 @@ test.describe( 'VenueController', () => {
 			} );
 
 			expect( preview.maps_url ).toBe( venue.maps_url );
+		} );
+	} );
+
+	test.describe( 'role-based permissions (#1621)', () => {
+		let roleApi;
+		let editor;
+		let subscriber;
+		const roleCreatedVenueIds = [];
+
+		test.beforeAll( async () => {
+			roleApi = await request.newContext( { baseURL: BASE_URL } );
+			// "contributor" has edit_posts without manage_options, which is
+			// the event-editor boundary this ticket cares about.
+			editor = await createTestUser( roleApi, 'contributor' );
+			subscriber = await createTestUser( roleApi, 'subscriber' );
+		} );
+
+		test.afterAll( async () => {
+			for ( const id of roleCreatedVenueIds ) {
+				await roleApi.delete(
+					`/wp-json/fair-events/v1/venues/${ id }`,
+					{
+						headers: authHeader,
+					}
+				);
+			}
+			for ( const user of [ editor, subscriber ] ) {
+				await roleApi.delete(
+					`/wp-json/wp/v2/users/${ user.id }?force=true&reassign=1`,
+					{ headers: authHeader }
+				);
+			}
+			await roleApi.dispose();
+		} );
+
+		test( 'lets an event editor list venues', async () => {
+			const res = await roleApi.get( '/wp-json/fair-events/v1/venues', {
+				headers: editor.headers,
+			} );
+			expect( res.status() ).toBe( 200 );
+		} );
+
+		test( 'lets an event editor create a venue', async () => {
+			const res = await roleApi.post( '/wp-json/fair-events/v1/venues', {
+				headers: editor.headers,
+				data: { name: `Editor Venue ${ Date.now() }` },
+			} );
+			expect( res.status() ).toBe( 201 );
+			const body = await res.json();
+			roleCreatedVenueIds.push( body.id );
+		} );
+
+		test( 'lets an event editor update a venue', async () => {
+			const createRes = await roleApi.post(
+				'/wp-json/fair-events/v1/venues',
+				{
+					headers: authHeader,
+					data: { name: `Editor Update Target ${ Date.now() }` },
+				}
+			);
+			const created = await createRes.json();
+			roleCreatedVenueIds.push( created.id );
+
+			const res = await roleApi.put(
+				`/wp-json/fair-events/v1/venues/${ created.id }`,
+				{
+					headers: editor.headers,
+					data: { name: `Editor Updated Name ${ Date.now() }` },
+				}
+			);
+			expect( res.status() ).toBe( 200 );
+		} );
+
+		test( 'lets an event editor preview a map link', async () => {
+			const res = await roleApi.post(
+				'/wp-json/fair-events/v1/venues/maps-url',
+				{
+					headers: editor.headers,
+					data: { address: 'Gran Via 1, Valencia' },
+				}
+			);
+			expect( res.status() ).toBe( 200 );
+		} );
+
+		test( 'rejects an event editor deleting a venue', async () => {
+			const createRes = await roleApi.post(
+				'/wp-json/fair-events/v1/venues',
+				{
+					headers: authHeader,
+					data: { name: `Editor Delete Target ${ Date.now() }` },
+				}
+			);
+			const created = await createRes.json();
+			roleCreatedVenueIds.push( created.id );
+
+			const res = await roleApi.delete(
+				`/wp-json/fair-events/v1/venues/${ created.id }`,
+				{ headers: editor.headers }
+			);
+			expect( res.status() ).toBe( 403 );
+		} );
+
+		test( 'rejects a subscriber listing, creating, updating, previewing, and deleting venues', async () => {
+			const listRes = await roleApi.get(
+				'/wp-json/fair-events/v1/venues',
+				{ headers: subscriber.headers }
+			);
+			expect( listRes.status() ).toBe( 403 );
+
+			const createRes = await roleApi.post(
+				'/wp-json/fair-events/v1/venues',
+				{
+					headers: subscriber.headers,
+					data: { name: `Subscriber Attempt ${ Date.now() }` },
+				}
+			);
+			expect( createRes.status() ).toBe( 403 );
+
+			const previewRes = await roleApi.post(
+				'/wp-json/fair-events/v1/venues/maps-url',
+				{
+					headers: subscriber.headers,
+					data: { address: 'Gran Via 1, Valencia' },
+				}
+			);
+			expect( previewRes.status() ).toBe( 403 );
+
+			const existingRes = await roleApi.post(
+				'/wp-json/fair-events/v1/venues',
+				{
+					headers: authHeader,
+					data: { name: `Subscriber Target ${ Date.now() }` },
+				}
+			);
+			const existing = await existingRes.json();
+			roleCreatedVenueIds.push( existing.id );
+
+			const updateRes = await roleApi.put(
+				`/wp-json/fair-events/v1/venues/${ existing.id }`,
+				{
+					headers: subscriber.headers,
+					data: { name: `Subscriber Update Attempt ${ Date.now() }` },
+				}
+			);
+			expect( updateRes.status() ).toBe( 403 );
+
+			const deleteRes = await roleApi.delete(
+				`/wp-json/fair-events/v1/venues/${ existing.id }`,
+				{ headers: subscriber.headers }
+			);
+			expect( deleteRes.status() ).toBe( 403 );
+		} );
+
+		test( 'still lets an administrator delete a venue', async () => {
+			const createRes = await roleApi.post(
+				'/wp-json/fair-events/v1/venues',
+				{
+					headers: authHeader,
+					data: { name: `Admin Delete Check ${ Date.now() }` },
+				}
+			);
+			const created = await createRes.json();
+
+			const res = await roleApi.delete(
+				`/wp-json/fair-events/v1/venues/${ created.id }`,
+				{ headers: authHeader }
+			);
+			expect( res.status() ).toBe( 200 );
 		} );
 	} );
 } );
