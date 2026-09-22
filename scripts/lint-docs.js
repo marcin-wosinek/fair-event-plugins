@@ -23,7 +23,6 @@ const BANNED_REFERENCES = [
 	'fair-registration',
 	'fair-user-import',
 	'fair-schedule-blocks',
-	'fair-calendar-button',
 	'fair-team',
 	'php-ci.yml',
 	'deploy-acroyoga.yml',
