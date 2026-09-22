@@ -757,6 +757,100 @@ describe( 'multilingual categories (#1636)', () => {
 	} );
 } );
 
+describe( 'single-event recurrence action (#1343)', () => {
+	beforeEach( () => {
+		window.history.replaceState( {}, '', '?tab=event-details' );
+	} );
+
+	it( 'shows only the Turn into a series button, with no Recurrence card', async () => {
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByRole( 'button', {
+				name: 'Turn into a series',
+			} )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'heading', { name: 'Recurrence' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByText( 'This event happens once.' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'opens the series modal from the standalone button', async () => {
+		render( <ManageEventApp /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', {
+				name: 'Turn into a series',
+			} )
+		);
+
+		expect(
+			screen.getByRole( 'heading', { name: 'Turn into a series' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps the Recurrence card with its summary and controls for a series master', async () => {
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				return Promise.resolve( {
+					...mockEventDate,
+					occurrence_type: 'master',
+					rrule: 'FREQ=WEEKLY',
+					generated_occurrences: [
+						{ id: 2, start_datetime: '2026-07-08 18:00:00' },
+					],
+				} );
+			}
+			return Promise.resolve( [] );
+		} );
+
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByRole( 'heading', { name: 'Recurrence' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Edit series' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'End series' } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', {
+				name: 'Turn into a series',
+			} )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'shows neither the button nor the card for a generated occurrence', async () => {
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				return Promise.resolve( {
+					...mockEventDate,
+					occurrence_type: 'generated',
+					master: { id: 1, title: 'Master Event' },
+				} );
+			}
+			return Promise.resolve( [] );
+		} );
+
+		render( <ManageEventApp /> );
+
+		await screen.findByLabelText( 'Title' );
+		expect(
+			screen.queryByRole( 'button', {
+				name: 'Turn into a series',
+			} )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'heading', { name: 'Recurrence' } )
+		).not.toBeInTheDocument();
+	} );
+} );
+
 describe( 'delete confirmation dialog (#991)', () => {
 	it( 'shows the title and date, and no occurrence count, for a one-off event', async () => {
 		render( <ManageEventApp /> );

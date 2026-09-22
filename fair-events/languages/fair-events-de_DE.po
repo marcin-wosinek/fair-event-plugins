@@ -317,9 +317,9 @@ msgstr "Titel"
 #: src/Admin/manage-event/EditInstancesModal.js:75
 #: src/Admin/manage-event/EventSignups.js:311
 #: src/Admin/manage-event/EventTickets.js:2700
-#: src/Admin/manage-event/ManageEventApp.js:1345
-#: src/Admin/manage-event/ManageEventApp.js:1355
-#: src/Admin/manage-event/ManageEventApp.js:1365
+#: src/Admin/manage-event/ManageEventApp.js:1334
+#: src/Admin/manage-event/ManageEventApp.js:1344
+#: src/Admin/manage-event/ManageEventApp.js:1354
 #: src/Admin/manage-event/SeriesModal.js:396
 #: src/Admin/settings/OrganizerTab.js:520
 #: src/Admin/venues/VenuesApp.js:853
@@ -663,7 +663,7 @@ msgstr "Kalender"
 #: src/Hooks/AdminBarHooks.php:59
 #: src/Admin/calendar/CalendarApp.js:197
 #: src/Admin/manage-event/ManageEventApp.js:863
-#: src/Admin/manage-event/ManageEventApp.js:1286
+#: src/Admin/manage-event/ManageEventApp.js:1275
 msgid "Manage Event"
 msgstr "Veranstaltung verwalten"
 
@@ -1301,37 +1301,37 @@ msgstr "Nach Vorkommen-Typ filtern."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:66
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d days"
 msgstr "Alle %d Tage"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:73
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every 2 weeks on %s"
 msgstr "Alle 2 Wochen am %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:77
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Alle %1$d Wochen am %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:80
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %s"
 msgstr "Jeden %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:85
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d months"
 msgstr "Alle %d Monate"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:92
-#, php-format, js-format
+#, php-format,js-format
 msgid "Every %d years"
 msgstr "Alle %d Jahre"
 
@@ -1341,7 +1341,7 @@ msgstr "Jährlich"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:167
-#, php-format, js-format
+#, php-format,js-format
 msgid "Next: %s"
 msgstr "Nächste: %s"
 
@@ -1796,7 +1796,7 @@ msgstr "Beitragstyp Ereignisse verwenden"
 msgid "Features"
 msgstr "Funktionen"
 
-#: src/Admin/manage-event/ManageEventApp.js:1123
+#: src/Admin/manage-event/ManageEventApp.js:1124
 msgid "Recurrence"
 msgstr "Wiederholung"
 
@@ -1925,7 +1925,7 @@ msgstr "Eines der ausgewählten Vorkommen ist für dieses Ticket ungültig."
 #: src/API/GetTicketsController.php:1101
 #: src/blocks/event-signup/frontend.js:846
 #: src/blocks/event-signup/frontend.js:1439
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Bitte wählen Sie mindestens %d Vorkommen aus."
@@ -1937,6 +1937,7 @@ msgstr[1] "Bitte wählen Sie mindestens %d Vorkommen aus."
 msgid "Tickets for event #%d"
 msgstr "Tickets für Veranstaltung #%d"
 
+#. translators: %s: event name
 #. translators: %s: occurrence date/time label
 #: src/API/GetTicketsController.php:575
 #: src/API/GetTicketsController.php:1217
@@ -2268,11 +2269,11 @@ msgstr[1] "Lösche %1$s und seine %2$d Vorkommen? Dies kann nicht rückgängig g
 msgid "Delete %1$s on %2$s? This cannot be undone."
 msgstr "Löschen Sie %1$s am %2$s? Dies kann nicht rückgängig gemacht werden."
 
-#: src/Admin/manage-event/ManageEventApp.js:1238
+#: src/Admin/manage-event/ManageEventApp.js:1227
 msgid "Save event details"
 msgstr "Ereignisdetails speichern"
 
-#: src/Admin/manage-event/ManageEventApp.js:1242
+#: src/Admin/manage-event/ManageEventApp.js:1231
 msgid "Title is required"
 msgstr "Titel ist erforderlich"
 
@@ -2295,7 +2296,7 @@ msgstr "Eine externe Website"
 msgid "Nowhere — show details only"
 msgstr "Nirgendwo – nur Details anzeigen"
 
-#: src/Admin/manage-event/ManageEventApp.js:1344
+#: src/Admin/manage-event/ManageEventApp.js:1333
 msgid "Delete event"
 msgstr "Ereignis löschen"
 
@@ -2400,7 +2401,7 @@ msgid "Link to"
 msgstr "Verlinken zu"
 
 #: src/Admin/manage-event/EditInstancesModal.js:40
-#: src/Admin/manage-event/ManageEventApp.js:1215
+#: src/Admin/manage-event/ManageEventApp.js:1195
 msgid "Edit instances"
 msgstr "Instanzen bearbeiten"
 
@@ -2496,21 +2497,17 @@ msgstr "Wiederholt sich %1$s · %2$d Termine · endet %3$s"
 msgid "Repeats %1$s · %2$d dates"
 msgstr "Wiederholt sich %1$s · %2$d Termine"
 
-#: src/Admin/manage-event/ManageEventApp.js:1131
-msgid "This event happens once."
-msgstr "Dieses Ereignis findet einmalig statt."
-
-#: src/Admin/manage-event/ManageEventApp.js:1144
+#: src/Admin/manage-event/ManageEventApp.js:1136
 #: src/Admin/manage-event/SeriesModal.js:264
 msgid "Edit series"
 msgstr "Serie bearbeiten"
 
-#: src/Admin/manage-event/ManageEventApp.js:1158
-#: src/Admin/manage-event/ManageEventApp.js:1354
+#: src/Admin/manage-event/ManageEventApp.js:1148
+#: src/Admin/manage-event/ManageEventApp.js:1343
 msgid "End series"
 msgstr "Serie beenden"
 
-#: src/Admin/manage-event/ManageEventApp.js:1171
+#: src/Admin/manage-event/ManageEventApp.js:1210
 #: src/Admin/manage-event/SeriesModal.js:265
 msgid "Turn into a series"
 msgstr "In eine Serie umwandeln"
@@ -2814,11 +2811,11 @@ msgstr "Nichts zum Exportieren — keine Anmeldungen entsprechen dem aktuellen F
 msgid "Reset to automatic"
 msgstr "Auf automatisch zurücksetzen"
 
-#: src/Admin/manage-event/ManageEventApp.js:1364
+#: src/Admin/manage-event/ManageEventApp.js:1353
 msgid "Save and continue"
 msgstr "Speichern und fortfahren"
 
-#: src/Admin/manage-event/ManageEventApp.js:1367
+#: src/Admin/manage-event/ManageEventApp.js:1356
 msgid "You have unsaved changes. Save event details before setting up the link?"
 msgstr "Sie haben ungespeicherte Änderungen. Ereignisdetails speichern, bevor Sie den Link einrichten?"
 
@@ -3131,7 +3128,7 @@ msgstr "Aktivitäten auswählen"
 #: src/Services/SignupFieldsetRenderer.php:180
 #: src/blocks/event-signup/frontend.js:1047
 #: src/blocks/event-signup/frontend.js:1479
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Bitte wählen Sie mindestens %d Aktivität aus, um sich anzumelden."
@@ -4242,4 +4239,3 @@ msgstr "%1$s — %2$s"
 #: src/Admin/manage-event/ManageEventApp.js:409
 msgid "Some selected categories were not saved. Please try again."
 msgstr "Einige ausgewählte Kategorien wurden nicht gespeichert. Bitte versuchen Sie es erneut."
-

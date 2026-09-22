@@ -1117,111 +1117,100 @@ export default function ManageEventApp() {
 					</CardBody>
 				</Card>
 
-				{ eventDate.occurrence_type !== 'generated' && (
-					<Card className="fair-events-event-details-card">
-						<CardHeader>
-							<h2>{ __( 'Recurrence', 'fair-events' ) }</h2>
-						</CardHeader>
-						<CardBody>
-							<VStack spacing={ 4 }>
-								<HStack alignment="center" wrap>
-									<span>
-										{ isSeries
-											? seriesSummary
-											: __(
-													'This event happens once.',
-													'fair-events'
-											  ) }
-									</span>
-									{ isSeries ? (
-										<>
-											<Button
-												variant="secondary"
-												onClick={ () =>
-													setSeriesModalOpen( true )
-												}
-											>
-												{ __(
-													'Edit series',
-													'fair-events'
-												) }
-											</Button>
-											<Button
-												variant="tertiary"
-												isDestructive
-												onClick={ () =>
-													setEndSeriesDialogOpen(
-														true
-													)
-												}
-											>
-												{ __(
-													'End series',
-													'fair-events'
-												) }
-											</Button>
-										</>
-									) : (
+				{ eventDate.occurrence_type !== 'generated' &&
+					( isSeries ? (
+						<Card className="fair-events-event-details-card">
+							<CardHeader>
+								<h2>{ __( 'Recurrence', 'fair-events' ) }</h2>
+							</CardHeader>
+							<CardBody>
+								<VStack spacing={ 4 }>
+									<HStack alignment="center" wrap>
+										<span>{ seriesSummary }</span>
 										<Button
-											variant="primary"
+											variant="secondary"
 											onClick={ () =>
 												setSeriesModalOpen( true )
 											}
 										>
 											{ __(
-												'Turn into a series',
+												'Edit series',
 												'fair-events'
 											) }
 										</Button>
-									) }
-								</HStack>
-
-								{ eventDate.occurrence_type === 'master' &&
-									( eventDate.generated_occurrences?.length >
-										0 ||
-										eventDate.cancelled_dates?.length >
-											0 ) && (
-										<RecurrenceCalendar
-											generatedOccurrences={
-												eventDate.generated_occurrences
-											}
-											cancelledDates={
-												eventDate.cancelled_dates
-											}
-											masterDate={
-												eventDate.start_datetime?.split(
-													' '
-												)[ 0 ]
-											}
-											manageEventUrl={ manageEventUrl }
-											masterEventDateId={ eventDateId }
-											embedded
-										/>
-									) }
-
-								{ eventDate.occurrence_type === 'master' &&
-									( eventDate.generated_occurrences?.length >
-										0 ||
-										eventDate.cancelled_dates?.length >
-											0 ) && (
 										<Button
-											variant="secondary"
+											variant="tertiary"
+											isDestructive
 											onClick={ () =>
-												setEditInstancesModalOpen(
-													true
-												)
+												setEndSeriesDialogOpen( true )
 											}
 										>
 											{ __(
-												'Edit instances',
+												'End series',
 												'fair-events'
 											) }
 										</Button>
-									) }
-							</VStack>
-						</CardBody>
-					</Card>
-				) }
+									</HStack>
+
+									{ eventDate.occurrence_type === 'master' &&
+										( eventDate.generated_occurrences
+											?.length > 0 ||
+											eventDate.cancelled_dates?.length >
+												0 ) && (
+											<RecurrenceCalendar
+												generatedOccurrences={
+													eventDate.generated_occurrences
+												}
+												cancelledDates={
+													eventDate.cancelled_dates
+												}
+												masterDate={
+													eventDate.start_datetime?.split(
+														' '
+													)[ 0 ]
+												}
+												manageEventUrl={
+													manageEventUrl
+												}
+												masterEventDateId={
+													eventDateId
+												}
+												embedded
+											/>
+										) }
+
+									{ eventDate.occurrence_type === 'master' &&
+										( eventDate.generated_occurrences
+											?.length > 0 ||
+											eventDate.cancelled_dates?.length >
+												0 ) && (
+											<Button
+												variant="secondary"
+												onClick={ () =>
+													setEditInstancesModalOpen(
+														true
+													)
+												}
+											>
+												{ __(
+													'Edit instances',
+													'fair-events'
+												) }
+											</Button>
+										) }
+								</VStack>
+							</CardBody>
+						</Card>
+					) : (
+						<div className="fair-events-turn-into-series-row">
+							<Button
+								variant="primary"
+								onClick={ () => setSeriesModalOpen( true ) }
+							>
+								{ __( 'Turn into a series', 'fair-events' ) }
+							</Button>
+						</div>
+					) ) }
 			</div>
 
 			<HStack
