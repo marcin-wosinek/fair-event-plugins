@@ -27,6 +27,7 @@ export function parseArguments(args) {
 	let samples = 5;
 	let scenario;
 	let outFile;
+	let jsonOut;
 
 	for (const argument of args) {
 		if (argument === '--reuse') {
@@ -37,6 +38,8 @@ export function parseArguments(args) {
 			scenario = argument.slice('--scenario='.length);
 		} else if (argument.startsWith('--out=')) {
 			outFile = argument.slice('--out='.length);
+		} else if (argument.startsWith('--json-out=')) {
+			jsonOut = argument.slice('--json-out='.length);
 		} else {
 			throw new Error(`Unknown argument "${argument}".`);
 		}
@@ -46,7 +49,7 @@ export function parseArguments(args) {
 		throw new Error('The --samples option must be a positive integer.');
 	}
 
-	return { reuse, samples, scenario, outFile };
+	return { reuse, samples, scenario, outFile, jsonOut };
 }
 
 /** Parse the docblock header of a WordPress plugin entry file. */
@@ -265,6 +268,19 @@ export function formatMarkdownReport({
 }
 
 /**
+ * Render the measured results and their baseline deltas as JSON, for
+ * scripts/performance-history.mjs and any future comparison tooling — the
+ * markdown report is for reading, this is for parsing.
+ */
+export function formatJsonReport({
+	results,
+	comparisons,
+	generatedAt = new Date().toISOString(),
+}) {
+	return JSON.stringify({ generatedAt, results, comparisons }, null, 2);
+}
+
+/**
  * Run the full audit: provision (unless reused), snapshot and later restore
  * plugin activation state, create and later remove fixture pages, sweep the
  * comparison matrix, and always clean up in `finally` — including on a
@@ -303,7 +319,11 @@ export async function runPerformanceAudit({
 	}
 
 	const wpCli = (args, options) =>
-		executor.run('npx', ['wp-env', 'run', 'tests-cli', 'wp', ...args], options);
+		executor.run(
+			'npx',
+			['wp-env', 'run', 'tests-cli', 'wp', ...args],
+			options
+		);
 
 	try {
 		if (!options.reuse) {
@@ -412,7 +432,11 @@ export async function runPerformanceAudit({
 			}
 
 			phase(`Measuring scenario: ${scenario.name}`);
-			const deactivate = await wpCli(['plugin', 'deactivate', ...allSlugs]);
+			const deactivate = await wpCli([
+				'plugin',
+				'deactivate',
+				...allSlugs,
+			]);
 			if (deactivate.code !== 0) {
 				return { code: deactivate.code };
 			}
@@ -607,6 +631,14 @@ async function main() {
 		if (options.outFile) {
 			await writeFile(options.outFile, report);
 			console.log(`\nReport written to ${options.outFile}`);
+		}
+		if (options.jsonOut) {
+			const json = formatJsonReport({
+				results: outcome.results,
+				comparisons: outcome.comparisons,
+			});
+			await writeFile(options.jsonOut, json);
+			console.log(`JSON report written to ${options.jsonOut}`);
 		}
 	}
 

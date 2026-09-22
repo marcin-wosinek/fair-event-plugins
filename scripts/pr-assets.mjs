@@ -1,15 +1,17 @@
 /**
- * GitHub-hosted PR screenshot storage.
+ * GitHub-hosted long-lived branch storage.
  *
- * Publishes responsive-UI screenshots to a dedicated, long-lived `pr-assets`
- * branch via GitHub's Git Data and Contents APIs, so a pull-request
- * description can embed a stable, repository-hosted image instead of asking
- * a human to upload a local file. One subdirectory per issue keeps
- * concurrent tickets collision-free: `pr-assets/<issue-number>/<filename>`.
+ * `ensureBranch`/`getExistingSha`/`uploadFile` publish a file to a
+ * dedicated, long-lived branch via GitHub's Git Data and Contents APIs,
+ * each accepting a `branch` override (default `pr-assets`). This backs two
+ * consumers: `publishScreenshot` below (responsive-UI screenshots, one
+ * subdirectory per issue: `pr-assets/<issue-number>/<filename>`) and
+ * `scripts/performance-history.mjs` (performance-runner JSON reports, on
+ * the separate `performance-history` branch).
  *
- * The issue number (not the PR number) is the identifier: before-state
- * screenshots are captured before a PR exists, and the eventual PR always
- * closes exactly one issue.
+ * The issue number (not the PR number) is the screenshot identifier:
+ * before-state screenshots are captured before a PR exists, and the
+ * eventual PR always closes exactly one issue.
  *
  * Uploads shell out to the already-authenticated `gh` CLI (`gh api`) rather
  * than a raw `fetch` + token, so no new secret is needed beyond `gh auth
@@ -65,11 +67,16 @@ export function isNotFoundError(error) {
  * @param {object} options
  * @param {string} options.repo `owner/repo`.
  * @param {Function} [options.run] Injected API executor (default `runGhApi`).
+ * @param {string} [options.branch] Branch to ensure (default `pr-assets`).
  * @returns {Promise<{created: boolean}>}
  */
-export async function ensureBranch({ repo, run = runGhApi }) {
+export async function ensureBranch({
+	repo,
+	run = runGhApi,
+	branch = ASSETS_BRANCH,
+}) {
 	try {
-		await run({ path: `repos/${repo}/branches/${ASSETS_BRANCH}` });
+		await run({ path: `repos/${repo}/branches/${branch}` });
 		return { created: false };
 	} catch (error) {
 		if (!isNotFoundError(error)) {
@@ -81,7 +88,7 @@ export async function ensureBranch({ repo, run = runGhApi }) {
 		method: 'POST',
 		path: `repos/${repo}/git/commits`,
 		body: {
-			message: 'Initialize pr-assets branch',
+			message: `Initialize ${branch} branch`,
 			tree: EMPTY_TREE_SHA,
 			parents: [],
 		},
@@ -90,7 +97,7 @@ export async function ensureBranch({ repo, run = runGhApi }) {
 	await run({
 		method: 'POST',
 		path: `repos/${repo}/git/refs`,
-		body: { ref: `refs/heads/${ASSETS_BRANCH}`, sha: commit.sha },
+		body: { ref: `refs/heads/${branch}`, sha: commit.sha },
 	});
 
 	return { created: true };
@@ -105,12 +112,18 @@ export async function ensureBranch({ repo, run = runGhApi }) {
  * @param {string} options.repo `owner/repo`.
  * @param {string} options.path File path within the branch, e.g. `1554/before-desktop.png`.
  * @param {Function} [options.run] Injected API executor.
+ * @param {string} [options.branch] Branch to read from (default `pr-assets`).
  * @returns {Promise<string|null>}
  */
-export async function getExistingSha({ repo, path, run = runGhApi }) {
+export async function getExistingSha({
+	repo,
+	path,
+	run = runGhApi,
+	branch = ASSETS_BRANCH,
+}) {
 	try {
 		const result = await run({
-			path: `repos/${repo}/contents/${path}?ref=${ASSETS_BRANCH}`,
+			path: `repos/${repo}/contents/${path}?ref=${branch}`,
 		});
 		return result?.sha ?? null;
 	} catch (error) {
@@ -134,6 +147,7 @@ export async function getExistingSha({ repo, path, run = runGhApi }) {
  * @param {string|null} [options.sha] Existing blob sha, when replacing.
  * @param {string} [options.message] Commit message.
  * @param {Function} [options.run] Injected API executor.
+ * @param {string} [options.branch] Branch to write to (default `pr-assets`).
  * @returns {Promise<{path: string, sha: string, rawUrl: string}>}
  */
 export async function uploadFile({
@@ -143,11 +157,12 @@ export async function uploadFile({
 	sha = null,
 	message,
 	run = runGhApi,
+	branch = ASSETS_BRANCH,
 }) {
 	const body = {
 		message: message || `Add ${path}`,
 		content: buffer.toString('base64'),
-		branch: ASSETS_BRANCH,
+		branch,
 	};
 	if (sha) {
 		body.sha = sha;
@@ -171,7 +186,7 @@ export async function uploadFile({
 	return {
 		path,
 		sha: contentSha,
-		rawUrl: `https://raw.githubusercontent.com/${repo}/${ASSETS_BRANCH}/${path}`,
+		rawUrl: `https://raw.githubusercontent.com/${repo}/${branch}/${path}`,
 	};
 }
 
