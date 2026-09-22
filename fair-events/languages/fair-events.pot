@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Events 1.17.0\n"
+"Project-Id-Version: Fair Events 1.18.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-17T13:18:05+00:00\n"
+"POT-Creation-Date: 2026-09-22T05:49:32+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -89,7 +89,7 @@ msgstr ""
 #: src/Hooks/AdminBarHooks.php:59
 #: src/Admin/calendar/CalendarApp.js:197
 #: src/Admin/manage-event/ManageEventApp.js:863
-#: src/Admin/manage-event/ManageEventApp.js:1286
+#: src/Admin/manage-event/ManageEventApp.js:1275
 msgid "Manage Event"
 msgstr ""
 
@@ -251,9 +251,9 @@ msgstr ""
 #: src/Admin/manage-event/EditInstancesModal.js:75
 #: src/Admin/manage-event/EventSignups.js:311
 #: src/Admin/manage-event/EventTickets.js:2700
-#: src/Admin/manage-event/ManageEventApp.js:1345
-#: src/Admin/manage-event/ManageEventApp.js:1355
-#: src/Admin/manage-event/ManageEventApp.js:1365
+#: src/Admin/manage-event/ManageEventApp.js:1334
+#: src/Admin/manage-event/ManageEventApp.js:1344
+#: src/Admin/manage-event/ManageEventApp.js:1354
 #: src/Admin/manage-event/SeriesModal.js:396
 #: src/Admin/settings/OrganizerTab.js:520
 #: src/Admin/venues/VenuesApp.js:853
@@ -1944,7 +1944,7 @@ msgid "Link Event"
 msgstr ""
 
 #: src/Admin/manage-event/EditInstancesModal.js:40
-#: src/Admin/manage-event/ManageEventApp.js:1215
+#: src/Admin/manage-event/ManageEventApp.js:1195
 msgid "Edit instances"
 msgstr ""
 
@@ -2941,46 +2941,42 @@ msgstr ""
 msgid "Shown publicly. Leave empty to link to the event page instead."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1123
+#: src/Admin/manage-event/ManageEventApp.js:1124
 msgid "Recurrence"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1131
-msgid "This event happens once."
-msgstr ""
-
-#: src/Admin/manage-event/ManageEventApp.js:1144
+#: src/Admin/manage-event/ManageEventApp.js:1136
 #: src/Admin/manage-event/SeriesModal.js:264
 msgid "Edit series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1158
-#: src/Admin/manage-event/ManageEventApp.js:1354
+#: src/Admin/manage-event/ManageEventApp.js:1148
+#: src/Admin/manage-event/ManageEventApp.js:1343
 msgid "End series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1171
+#: src/Admin/manage-event/ManageEventApp.js:1210
 #: src/Admin/manage-event/SeriesModal.js:265
 msgid "Turn into a series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1238
+#: src/Admin/manage-event/ManageEventApp.js:1227
 msgid "Save event details"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1242
+#: src/Admin/manage-event/ManageEventApp.js:1231
 msgid "Title is required"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1344
+#: src/Admin/manage-event/ManageEventApp.js:1333
 msgid "Delete event"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1364
+#: src/Admin/manage-event/ManageEventApp.js:1353
 msgid "Save and continue"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1367
+#: src/Admin/manage-event/ManageEventApp.js:1356
 msgid "You have unsaved changes. Save event details before setting up the link?"
 msgstr ""
 
