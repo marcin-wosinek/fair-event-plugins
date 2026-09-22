@@ -9,11 +9,18 @@
  *   - A descriptor with isVisible:false is omitted from the tab bar.
  */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import {
+	render,
+	screen,
+	waitFor,
+	fireEvent,
+	within,
+} from '@testing-library/react';
 import { addFilter, removeFilter } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
 import { formatSiteLocalDatetime } from 'fair-events-shared';
 import ManageEventApp from '../ManageEventApp.js';
+import { ADD_NEW_VENUE_VALUE } from '../../components/InlineVenueCreator.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -1031,6 +1038,193 @@ describe( 'per-tab save model (#987)', () => {
 			expect(
 				screen.getByRole( 'tab', { name: 'Event Details' } )
 			).toBeInTheDocument()
+		);
+	} );
+} );
+
+describe( 'inline venue creation (#1622)', () => {
+	beforeEach( () => {
+		window.history.replaceState( {}, '', '?tab=event-details' );
+	} );
+
+	const getVenueCreator = () =>
+		within( document.querySelector( '.fair-events-inline-venue-creator' ) );
+
+	const mockVenueCreation = ( venueCreationResult ) => {
+		apiFetch.mockImplementation( ( opts ) => {
+			const { path, method, data } = opts;
+			if ( path === '/fair-events/v1/venues' && method === 'POST' ) {
+				if ( venueCreationResult instanceof Error ) {
+					return Promise.reject( venueCreationResult );
+				}
+				return Promise.resolve( { ...venueCreationResult, ...data } );
+			}
+			if ( path && path.includes( '/event-dates/' ) ) {
+				if ( method === 'PUT' ) {
+					return Promise.resolve( { ...mockEventDate, ...data } );
+				}
+				return Promise.resolve( mockEventDate );
+			}
+			return Promise.resolve( [] );
+		} );
+	};
+
+	const openVenueCreator = async () => {
+		mockVenueCreation( { id: 42, name: 'New Venue' } );
+		render( <ManageEventApp /> );
+		const venueSelect = await screen.findByLabelText( 'Venue' );
+		fireEvent.change( venueSelect, {
+			target: { value: ADD_NEW_VENUE_VALUE },
+		} );
+		return venueSelect;
+	};
+
+	// The venue creator's own "Address" field and the event's free-text
+	// fallback "Address" field share a label while both are on screen.
+	const getEventAddressField = () =>
+		screen
+			.getAllByLabelText( 'Address' )
+			.find(
+				( el ) => ! el.closest( '.fair-events-inline-venue-creator' )
+			);
+
+	it( 'shows a trailing "Add new venue" option and opens the inline form', async () => {
+		mockVenueCreation( { id: 42, name: 'New Venue' } );
+		render( <ManageEventApp /> );
+
+		const venueSelect = await screen.findByLabelText( 'Venue' );
+		expect(
+			screen.getByRole( 'option', { name: 'Add new venue' } )
+		).toBeInTheDocument();
+
+		fireEvent.change( venueSelect, {
+			target: { value: ADD_NEW_VENUE_VALUE },
+		} );
+
+		expect( screen.getByLabelText( 'Venue name' ) ).toBeInTheDocument();
+	} );
+
+	it( 'preserves unsaved event values when opening and cancelling venue creation', async () => {
+		const venueSelect = await openVenueCreator();
+
+		const titleInput = screen.getByLabelText( 'Title' );
+		fireEvent.change( titleInput, { target: { value: 'Edited title' } } );
+
+		fireEvent.click(
+			getVenueCreator().getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		expect(
+			screen.queryByLabelText( 'Venue name' )
+		).not.toBeInTheDocument();
+		expect( venueSelect ).toHaveValue( '' );
+		expect( titleInput ).toHaveValue( 'Edited title' );
+	} );
+
+	it( 'sends the exact venue-create request', async () => {
+		await openVenueCreator();
+
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'New Venue Name' },
+		} );
+		fireEvent.change( getVenueCreator().getByLabelText( 'Address' ), {
+			target: { value: '123 Main St' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create venue' } )
+		);
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith( {
+				path: '/fair-events/v1/venues',
+				method: 'POST',
+				data: { name: 'New Venue Name', address: '123 Main St' },
+			} )
+		);
+	} );
+
+	it( 'inserts and auto-selects the newly created venue, then closes the form and preserves the address field', async () => {
+		const venueSelect = await openVenueCreator();
+
+		fireEvent.change( getEventAddressField(), {
+			target: { value: 'Fallback address' },
+		} );
+
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'New Venue' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create venue' } )
+		);
+
+		await waitFor( () =>
+			expect(
+				screen.queryByLabelText( 'Venue name' )
+			).not.toBeInTheDocument()
+		);
+
+		expect( venueSelect ).toHaveValue( '42' );
+		expect(
+			screen.getByRole( 'option', { name: 'New Venue' } )
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Address' ) ).toHaveValue(
+			'Fallback address'
+		);
+	} );
+
+	it( 'keeps the entered values and shows an actionable error on failure', async () => {
+		mockVenueCreation( new Error( 'Server exploded.' ) );
+		render( <ManageEventApp /> );
+		const venueSelect = await screen.findByLabelText( 'Venue' );
+		fireEvent.change( venueSelect, {
+			target: { value: ADD_NEW_VENUE_VALUE },
+		} );
+
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'Doomed Venue' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create venue' } )
+		);
+
+		expect(
+			await screen.findByText( 'Server exploded.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Venue name' ) ).toHaveValue(
+			'Doomed Venue'
+		);
+	} );
+
+	it( 'saves the event with the newly created venue selected', async () => {
+		await openVenueCreator();
+
+		fireEvent.change( screen.getByLabelText( 'Venue name' ), {
+			target: { value: 'New Venue' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create venue' } )
+		);
+
+		await waitFor( () =>
+			expect(
+				screen.queryByLabelText( 'Venue name' )
+			).not.toBeInTheDocument()
+		);
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save event details' } )
+		);
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					path: '/fair-events/v1/event-dates/1',
+					method: 'PUT',
+					data: expect.objectContaining( { venue_id: 42 } ),
+				} )
+			)
 		);
 	} );
 } );

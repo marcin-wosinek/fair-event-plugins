@@ -53,6 +53,9 @@ import EditInstancesModal from './EditInstancesModal.js';
 import EventLinkModal from './EventLinkModal.js';
 import EventSignups from './EventSignups.js';
 import EventContextHeader from './EventContextHeader.js';
+import InlineVenueCreator, {
+	ADD_NEW_VENUE_VALUE,
+} from '../components/InlineVenueCreator.js';
 
 export default function ManageEventApp() {
 	const eventDateId = window.fairEventsManageEventData?.eventDateId;
@@ -87,6 +90,7 @@ export default function ManageEventApp() {
 	const [ endDate, setEndDate ] = useState( '' );
 	const [ endTime, setEndTime ] = useState( '' );
 	const [ venueId, setVenueId ] = useState( '' );
+	const [ isCreatingVenue, setIsCreatingVenue ] = useState( false );
 	const [ address, setAddress ] = useState( '' );
 	const [ attendanceMode, setAttendanceMode ] = useState( 'in_person' );
 	const [ joiningLink, setJoiningLink ] = useState( '' );
@@ -644,7 +648,25 @@ export default function ManageEventApp() {
 	const venueOptions = [
 		{ label: __( '— No venue —', 'fair-events' ), value: '' },
 		...venues.map( ( v ) => ( { label: v.name, value: String( v.id ) } ) ),
+		{
+			label: __( 'Add new venue', 'fair-events' ),
+			value: ADD_NEW_VENUE_VALUE,
+		},
 	];
+
+	const handleVenueChange = ( value ) => {
+		if ( value === ADD_NEW_VENUE_VALUE ) {
+			setIsCreatingVenue( true );
+			return;
+		}
+		setVenueId( value );
+	};
+
+	const handleVenueCreated = ( venue ) => {
+		setVenues( ( prev ) => [ ...prev, venue ] );
+		setVenueId( String( venue.id ) );
+		setIsCreatingVenue( false );
+	};
 
 	const urlTab = useMemo( () => {
 		const urlParams = new URLSearchParams( window.location.search );
@@ -1047,8 +1069,16 @@ export default function ManageEventApp() {
 											) }
 											value={ venueId }
 											options={ venueOptions }
-											onChange={ setVenueId }
+											onChange={ handleVenueChange }
 										/>
+										{ isCreatingVenue && (
+											<InlineVenueCreator
+												onCreate={ handleVenueCreated }
+												onCancel={ () =>
+													setIsCreatingVenue( false )
+												}
+											/>
+										) }
 										<TextControl
 											label={ __(
 												'Address',
