@@ -64,7 +64,6 @@ export default function ManageEventApp() {
 		window.fairEventsManageEventData?.manageEventUrl || '';
 	const enabledPostTypes =
 		window.fairEventsManageEventData?.enabledPostTypes || [];
-	const audienceUrl = window.fairEventsManageEventData?.audienceUrl || '';
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
 	const copyEventUrl = window.fairEventsManageEventData?.copyEventUrl || '';
@@ -737,7 +736,7 @@ export default function ManageEventApp() {
 			name: 'list',
 			title: __( 'List', 'fair-events' ),
 			order: 25,
-			isVisible: !! ( ticketingEnabled && ! audienceUrl ),
+			isVisible: ticketingEnabled,
 			disabled: isLinkOnlyEvent( eventDate ),
 			render: () => <EventSignups eventDateId={ eventDateId } />,
 		},

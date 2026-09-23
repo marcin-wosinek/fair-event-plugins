@@ -310,49 +310,158 @@ it( 'passes isSeries=true to EventTickets for an irregular (manual) series (#115
 	);
 } );
 
-describe( 'Prices and List tab routing (#1590)', () => {
-	beforeEach( () => {
-		window.fairEventsManageEventData.enabledFeatures = { ticketing: true };
-	} );
+describe.each( [
+	[
+		'with Fair Audience active',
+		'http://example.com/audience?event_date_id=',
+	],
+	[ 'with Fair Audience inactive', '' ],
+] )(
+	'Prices and List tab routing (#1590, #1672) %s',
+	( _label, audienceUrl ) => {
+		const mockEventDateWith = ( overrides ) => {
+			apiFetch.mockImplementation( ( opts ) => {
+				if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+					return Promise.resolve( {
+						...mockEventDate,
+						...overrides,
+					} );
+				}
+				return Promise.resolve( [] );
+			} );
+		};
 
-	it( 'renders the renamed tab labels and writes canonical URL values', async () => {
-		render( <ManageEventApp /> );
+		beforeEach( () => {
+			window.fairEventsManageEventData.enabledFeatures = {
+				ticketing: true,
+			};
+			window.fairEventsManageEventData.audienceUrl = audienceUrl;
+		} );
 
-		const pricesTab = await screen.findByRole( 'tab', { name: 'Prices' } );
-		const listTab = screen.getByRole( 'tab', { name: 'List' } );
-		fireEvent.click( pricesTab );
-		expect( window.location.search ).toBe( '?tab=prices' );
-		fireEvent.click( listTab );
-		expect( window.location.search ).toBe( '?tab=list' );
-	} );
-
-	it.each( [
-		[ 'prices', 'Prices content' ],
-		[ 'list', 'List content' ],
-	] )( 'opens the %s canonical tab directly', async ( tab, content ) => {
-		window.history.replaceState( {}, '', `?tab=${ tab }` );
-		render( <ManageEventApp /> );
-		expect(
-			await screen.findByText( new RegExp( content ) )
-		).toBeInTheDocument();
-	} );
-
-	it.each( [
-		[ 'tickets', 'prices', 'Prices content' ],
-		[ 'signups', 'list', 'List content' ],
-	] )(
-		'opens legacy tab %s and normalizes it to %s',
-		async ( legacyTab, canonicalTab, content ) => {
-			window.history.replaceState( {}, '', `?tab=${ legacyTab }` );
+		it( 'renders the renamed tab labels and writes canonical URL values', async () => {
 			render( <ManageEventApp /> );
 
+			const pricesTab = await screen.findByRole( 'tab', {
+				name: 'Prices',
+			} );
+			const listTab = screen.getByRole( 'tab', { name: 'List' } );
+			fireEvent.click( pricesTab );
+			expect( window.location.search ).toBe( '?tab=prices' );
+			fireEvent.click( listTab );
+			expect( window.location.search ).toBe( '?tab=list' );
+			expect(
+				await screen.findByText( 'List content' )
+			).toBeInTheDocument();
+		} );
+
+		it.each( [
+			[ 'prices', 'Prices content' ],
+			[ 'list', 'List content' ],
+		] )( 'opens the %s canonical tab directly', async ( tab, content ) => {
+			window.history.replaceState( {}, '', `?tab=${ tab }` );
+			render( <ManageEventApp /> );
 			expect(
 				await screen.findByText( new RegExp( content ) )
 			).toBeInTheDocument();
-			expect( window.location.search ).toBe( `?tab=${ canonicalTab }` );
-		}
-	);
-} );
+		} );
+
+		it.each( [
+			[ 'tickets', 'prices', 'Prices content' ],
+			[ 'signups', 'list', 'List content' ],
+		] )(
+			'opens legacy tab %s and normalizes it to %s',
+			async ( legacyTab, canonicalTab, content ) => {
+				window.history.replaceState( {}, '', `?tab=${ legacyTab }` );
+				render( <ManageEventApp /> );
+
+				expect(
+					await screen.findByText( new RegExp( content ) )
+				).toBeInTheDocument();
+				expect( window.location.search ).toBe(
+					`?tab=${ canonicalTab }`
+				);
+			}
+		);
+
+		it( 'hides List and blocks direct navigation when ticketing is disabled', async () => {
+			window.fairEventsManageEventData.enabledFeatures = {};
+			window.history.replaceState( {}, '', '?tab=list' );
+			render( <ManageEventApp /> );
+
+			expect(
+				await screen.findByRole( 'tab', { name: 'Event Details' } )
+			).toHaveAttribute( 'aria-selected', 'true' );
+			expect(
+				screen.queryByRole( 'tab', { name: 'List' } )
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByText( 'List content' )
+			).not.toBeInTheDocument();
+		} );
+
+		it( 'keeps List disabled for link-only events and falls back on direct navigation', async () => {
+			mockEventDateWith( { link_type: 'external' } );
+			window.history.replaceState( {}, '', '?tab=list' );
+			render( <ManageEventApp /> );
+
+			expect(
+				await screen.findByRole( 'tab', { name: 'Event Details' } )
+			).toHaveAttribute( 'aria-selected', 'true' );
+			expect(
+				screen.getByRole( 'tab', { name: 'List' } )
+			).toHaveAttribute( 'aria-disabled', 'true' );
+			expect(
+				screen.queryByText( 'List content' )
+			).not.toBeInTheDocument();
+		} );
+
+		it( 'keeps List available for generated occurrences', async () => {
+			mockEventDateWith( { occurrence_type: 'generated' } );
+			window.history.replaceState( {}, '', '?tab=list' );
+			render( <ManageEventApp /> );
+
+			expect(
+				await screen.findByText( 'List content' )
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole( 'tab', { name: 'List' } )
+			).not.toHaveAttribute( 'aria-disabled', 'true' );
+		} );
+
+		it( 'shows filter-added tabs alongside List', async () => {
+			const NAMESPACE = 'test/audience-tab-1672';
+			addFilter(
+				'fairEvents.manageEvent.tabs',
+				NAMESPACE,
+				( descriptors ) => [
+					...descriptors,
+					{
+						name: 'audience',
+						title: 'Audience',
+						order: 50,
+						isVisible: true,
+						render: () => <div>Audience content</div>,
+					},
+				]
+			);
+
+			try {
+				render( <ManageEventApp /> );
+				expect(
+					await screen.findByRole( 'tab', { name: 'List' } )
+				).toBeInTheDocument();
+				fireEvent.click(
+					screen.getByRole( 'tab', { name: 'Audience' } )
+				);
+				expect(
+					await screen.findByText( 'Audience content' )
+				).toBeInTheDocument();
+			} finally {
+				removeFilter( 'fairEvents.manageEvent.tabs', NAMESPACE );
+			}
+		} );
+	}
+);
 
 it( 'omits a descriptor with isVisible: false', async () => {
 	const NAMESPACE = 'test/hidden-tab-919';
