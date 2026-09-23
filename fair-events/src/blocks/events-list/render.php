@@ -11,6 +11,7 @@
 
 defined( 'WPINC' ) || die;
 
+use FairEvents\Helpers\EventsListSeries;
 use FairEvents\Helpers\OccurrenceFields;
 use FairEvents\Helpers\PatternResolver;
 use FairEvents\Settings\Settings;
@@ -136,6 +137,10 @@ if ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) {
 	if ( 'past' === $time_filter ) {
 		$occurrences = array_reverse( $occurrences );
 	}
+
+	if ( 'upcoming' === $time_filter ) {
+		$occurrences = EventsListSeries::upcoming( $occurrences, $current_time );
+	}
 }
 ?>
 
@@ -147,10 +152,18 @@ if ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) {
 	<?php elseif ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) : ?>
 		<?php if ( $events_query->have_posts() ) : ?>
 			<?php
+			EventsListSeries::push_context(
+				array(
+					'mode'        => EventsListSeries::MODE_QUERY_LOOP,
+					'time_filter' => $time_filter,
+					'now'         => $current_time,
+				)
+			);
 			$parsed_blocks = parse_blocks( $resolved['content'] );
 			foreach ( $parsed_blocks as $parsed_block ) {
 				echo wp_kses_post( render_block( $parsed_block ) );
 			}
+			EventsListSeries::pop_context();
 			?>
 		<?php else : ?>
 			<p class="no-events">
@@ -203,11 +216,19 @@ if ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) {
 				setup_postdata( $GLOBALS['post'] );
 			}
 
+			EventsListSeries::push_context(
+				array(
+					'mode'        => EventsListSeries::MODE_OCCURRENCE,
+					'time_filter' => $time_filter,
+					'occurrence'  => $occurrence,
+				)
+			);
 			$occurrence_content = OccurrenceFields::render( $occurrence, $resolved['content'] );
 			$parsed_blocks      = parse_blocks( $occurrence_content );
 			foreach ( $parsed_blocks as $parsed_block ) {
 				echo wp_kses_post( render_block( $parsed_block ) );
 			}
+			EventsListSeries::pop_context();
 
 			if ( $is_post_occurrence ) {
 				wp_reset_postdata();

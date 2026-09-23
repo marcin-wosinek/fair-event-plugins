@@ -8,10 +8,12 @@ import { test, expect } from '@playwright/test';
  * Coverage here: post-backed events through the bundled Query Loop patterns
  * (list + grid), a standalone event through a custom per-event pattern
  * (including the untitled/unlinked-title fallbacks), category filtering, the
- * empty state, and the unavailable-pattern state. Recurring/multi-day
- * boundary timing in a non-UTC site timezone and external (iCal/API) source
- * filtering are not covered here — see TESTING.md's WP-CLI eval-file manual
- * check for that class of verification.
+ * empty state, the unavailable-pattern state, and local recurring series
+ * grouped once in the Upcoming view (per-event and bundled Query Loop
+ * layouts, editor preview agreement, several lists on one page).
+ * Boundary timing in a non-UTC site timezone and external (iCal/API) source
+ * filtering are not covered here — see RecurrenceSummaryTest/
+ * EventsListSeriesTest and TESTING.md's WP-CLI eval-file manual check.
  */
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -411,6 +413,194 @@ test.describe( 'Events List block', () => {
 			} ).catch( () => {} );
 			await apiFetch( page, {
 				path: `/fair-events/v1/event-dates/${ nonMatching.id }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/wp/v2/blocks/${ pattern.id }?force=true`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/wp/v2/categories/${ category.id }?force=true`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await cleanupPage( page, listPage );
+		}
+	} );
+
+	test( 'shows a local recurring series once in Upcoming, mixed chronologically with single events', async ( {
+		page,
+	} ) => {
+		test.setTimeout( 120_000 );
+
+		const now = new Date();
+		const iso = ( d ) => d.toISOString().slice( 0, 19 ).replace( 'T', ' ' );
+		const at = ( days, hours = 0 ) =>
+			iso(
+				new Date(
+					now.getTime() +
+						days * 24 * 60 * 60 * 1000 +
+						hours * 60 * 60 * 1000
+				)
+			);
+		const suffix = Date.now();
+
+		// A unique category keeps these fixtures the only matches, regardless
+		// of other specs' leftovers in a shared --reuse instance.
+		const category = await apiFetch( page, {
+			path: '/wp/v2/categories',
+			method: 'POST',
+			data: { name: `Events List Series Category ${ suffix }` },
+		} );
+
+		// Weekly standalone series: +2d, +9d, +16d.
+		const series = await apiFetch( page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: `Weekly Series Fixture ${ suffix }`,
+				start_datetime: at( 2 ),
+				end_datetime: at( 2, 1 ),
+				all_day: false,
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+				categories: [ category.id ],
+			},
+		} );
+
+		// Single event between the series' first and second occurrences.
+		const single = await apiFetch( page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: `Single Fixture ${ suffix }`,
+				start_datetime: at( 3 ),
+				end_datetime: at( 3, 1 ),
+				all_day: false,
+				categories: [ category.id ],
+			},
+		} );
+
+		// Post-backed weekly series for the bundled Query Loop layout.
+		const event = await apiFetch( page, {
+			path: '/wp/v2/fair_event',
+			method: 'POST',
+			data: {
+				title: `Weekly Post Series Fixture ${ suffix }`,
+				status: 'publish',
+				categories: [ category.id ],
+			},
+		} );
+		const ensured = await apiFetch( page, {
+			path: '/fair-events/v1/event-dates/ensure-for-post',
+			method: 'POST',
+			data: { post_id: event.id },
+		} );
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ ensured.id }`,
+			method: 'PUT',
+			data: {
+				start_datetime: at( 4 ),
+				end_datetime: at( 4, 1 ),
+				all_day: false,
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+			},
+		} );
+
+		const pattern = await apiFetch( page, {
+			path: '/wp/v2/blocks',
+			method: 'POST',
+			data: {
+				title: `Events List Series Pattern ${ suffix }`,
+				status: 'publish',
+				content:
+					'<!-- wp:html --><p class="series-fixture">{{title}} | {{date_range}}</p><!-- /wp:html -->',
+			},
+		} );
+
+		const perEventBlock = ( timeFilter ) =>
+			`<!-- wp:fair-events/events-list {"timeFilter":"${ timeFilter }","displayPattern":"wp_block:${ pattern.id }","categories":[${ category.id }],"className":"list-${ timeFilter }"} /-->`;
+
+		// Two differently configured lists on one page must not affect
+		// each other: Upcoming groups the series, All lists every date.
+		const listPage = await apiFetch( page, {
+			path: '/wp/v2/pages',
+			method: 'POST',
+			data: {
+				title: `Events List Series Page ${ suffix }`,
+				status: 'publish',
+				content:
+					perEventBlock( 'upcoming' ) +
+					perEventBlock( 'all' ) +
+					`<!-- wp:fair-events/events-list {"timeFilter":"upcoming","displayPattern":"fair-events/event-list","categories":[${ category.id }],"className":"list-query-loop"} /-->`,
+			},
+		} );
+
+		try {
+			await page.goto( listPage.link );
+
+			const upcomingRows = page.locator(
+				'.list-upcoming .series-fixture'
+			);
+			await expect( upcomingRows ).toHaveCount( 3 );
+			await expect( upcomingRows.nth( 0 ) ).toContainText(
+				`Weekly Series Fixture ${ suffix }`
+			);
+			await expect( upcomingRows.nth( 0 ) ).toContainText(
+				/Weekly on \w+ at \d{2}:\d{2}; next occurrence: /
+			);
+			await expect( upcomingRows.nth( 1 ) ).toContainText(
+				`Single Fixture ${ suffix }`
+			);
+			await expect( upcomingRows.nth( 2 ) ).toContainText(
+				`Weekly Post Series Fixture ${ suffix }`
+			);
+
+			// All is unchanged: one row per occurrence (3 + 1 + 3).
+			await expect(
+				page.locator( '.list-all .series-fixture' )
+			).toHaveCount( 7 );
+
+			// Bundled Query Loop layout: the post appears once, with the
+			// series summary in its dates block.
+			const queryLoop = page.locator( '.list-query-loop' );
+			await expect(
+				queryLoop.getByText( `Weekly Post Series Fixture ${ suffix }` )
+			).toHaveCount( 1 );
+			await expect( queryLoop.locator( '.event-dates' ) ).toContainText(
+				/Weekly on \w+ at \d{2}:\d{2}; next occurrence: /
+			);
+
+			// The editor preview (ServerSideRender) uses the same renderer.
+			const frontendRows = await upcomingRows.allTextContents();
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-events-all-events'
+			);
+			await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+			const preview = await apiFetch( page, {
+				path: `/wp/v2/block-renderer/fair-events/events-list?context=edit&attributes[timeFilter]=upcoming&attributes[displayPattern]=wp_block:${ pattern.id }&attributes[categories][0]=${ category.id }`,
+			} );
+			const previewRows = preview.rendered.match(
+				/class="series-fixture">[^<]*/g
+			);
+			expect(
+				previewRows.map( ( row ) =>
+					row.replace( 'class="series-fixture">', '' )
+				)
+			).toEqual( frontendRows );
+		} finally {
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ series.id }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ single.id }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ ensured.id }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/wp/v2/fair_event/${ event.id }?force=true`,
 				method: 'DELETE',
 			} ).catch( () => {} );
 			await apiFetch( page, {

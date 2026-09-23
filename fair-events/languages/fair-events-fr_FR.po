@@ -192,7 +192,7 @@ msgstr "Événements passés"
 msgid "Ongoing Events"
 msgstr "Événements en cours"
 
-#: src/blocks/events-list/components/EditComponent.js:143
+#: src/blocks/events-list/components/EditComponent.js:149
 msgid "Filter events by time relative to now"
 msgstr "Filtrer les événements par temps relatif à maintenant"
 
@@ -394,7 +394,7 @@ msgid "grid"
 msgstr "grille"
 
 #: src/blocks/events-calendar/components/EditComponent.js:168
-#: src/blocks/events-list/components/EditComponent.js:157
+#: src/blocks/events-list/components/EditComponent.js:164
 #: src/blocks/events-week/components/EditComponent.js:118
 #: ../fair-events-shared/src/EventSourceSelector.js:24
 msgid "Event Sources"
@@ -479,7 +479,7 @@ msgstr "Sélectionnez les sources d'événements à afficher dans le calendrier.
 msgid "Event sources format has changed. Please re-select your event sources."
 msgstr "Le format des sources d'événements a changé. Veuillez resélectionner vos sources d'événements."
 
-#: src/blocks/events-list/components/EditComponent.js:161
+#: src/blocks/events-list/components/EditComponent.js:168
 msgid "Select event sources to display in the list."
 msgstr "Sélectionnez les sources d'événements à afficher dans la liste."
 
@@ -958,6 +958,7 @@ msgid "Event length"
 msgstr "Durée de l'événement"
 
 #: src/blocks/event-info/render.php:68
+#: src/Helpers/RecurrenceSummary.php:125
 #: ../fair-events-shared/src/recurrence.js:12
 msgid "Daily"
 msgstr "Quotidien"
@@ -2825,7 +2826,7 @@ msgstr "Jour de l'événement"
 msgid "Sale Periods Timeline"
 msgstr "Chronologie des périodes de vente"
 
-#: src/Helpers/OccurrenceFields.php:36
+#: src/Helpers/OccurrenceFields.php:43
 #: ../fair-events-shared/src/event-utils.js:31
 msgid "(untitled event)"
 msgstr "(événement sans titre)"
@@ -3346,7 +3347,7 @@ msgstr "Mode de participation"
 msgid "In person"
 msgstr "En personne"
 
-#: src/Helpers/OccurrenceFields.php:121
+#: src/Helpers/OccurrenceFields.php:143
 #: src/Admin/manage-event/ManageEventApp.js:1112
 msgid "Online"
 msgstr "En ligne"
@@ -4304,28 +4305,28 @@ msgctxt "block keyword"
 msgid "pricing"
 msgstr ""
 
-#: src/blocks/events-list/render.php:145
+#: src/blocks/events-list/render.php:150
 msgid "The selected display pattern is no longer available. Choose a different pattern to display these events."
 msgstr ""
 
-#: src/blocks/events-list/render.php:157
-#: src/blocks/events-list/render.php:162
+#: src/blocks/events-list/render.php:170
+#: src/blocks/events-list/render.php:175
 msgid "No events found."
 msgstr ""
 
-#: src/Helpers/OccurrenceFields.php:162
+#: src/Helpers/OccurrenceFields.php:184
 msgid "Event"
 msgstr ""
 
-#: src/Helpers/OccurrenceFields.php:164
+#: src/Helpers/OccurrenceFields.php:186
 msgid "Standalone event"
 msgstr ""
 
-#: src/Helpers/OccurrenceFields.php:166
+#: src/Helpers/OccurrenceFields.php:188
 msgid "Calendar feed"
 msgstr ""
 
-#: src/Helpers/OccurrenceFields.php:168
+#: src/Helpers/OccurrenceFields.php:190
 msgid "External source"
 msgstr ""
 
@@ -4345,4 +4346,133 @@ msgstr ""
 
 #: src/blocks/events-list/components/EditComponent.js:113
 msgid "The selected pattern uses a Query Loop, so it can only show WordPress-linked events. Events from the selected event sources will not appear — choose a custom pattern to show them."
+msgstr ""
+
+#. translators: %s: date (and time) of the next occurrence, e.g. "28 September".
+#: src/Helpers/RecurrenceSummary.php:43
+#, php-format
+msgid "Recurring event; next occurrence: %s"
+msgstr ""
+
+#. translators: 1: regular schedule, e.g. "Weekly on Mondays at 18:00". 2: date (and time) of the next occurrence, e.g. "28 September".
+#: src/Helpers/RecurrenceSummary.php:47
+#, php-format
+msgid "%1$s; next occurrence: %2$s"
+msgstr ""
+
+#. translators: %s: start time, e.g. "18:00".
+#: src/Helpers/RecurrenceSummary.php:128
+#, php-format
+msgid "Daily at %s"
+msgstr ""
+
+#. translators: %d: number of days between occurrences (2 or more).
+#: src/Helpers/RecurrenceSummary.php:133
+#, php-format
+msgid "Every %d day"
+msgid_plural "Every %d days"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: number of days between occurrences (2 or more). 2: start time, e.g. "18:00".
+#: src/Helpers/RecurrenceSummary.php:137
+#, php-format
+msgid "Every %1$d day at %2$s"
+msgid_plural "Every %1$d days at %2$s"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: plural weekday name, e.g. "Mondays".
+#: src/Helpers/RecurrenceSummary.php:153
+#, php-format
+msgid "Weekly on %s"
+msgstr ""
+
+#. translators: 1: plural weekday name, e.g. "Mondays". 2: start time, e.g. "18:00".
+#: src/Helpers/RecurrenceSummary.php:156
+#, php-format
+msgid "Weekly on %1$s at %2$s"
+msgstr ""
+
+#. translators: 1: number of weeks between occurrences (2 or more). 2: plural weekday name, e.g. "Mondays".
+#: src/Helpers/RecurrenceSummary.php:161
+#, php-format
+msgid "Every %1$d week on %2$s"
+msgid_plural "Every %1$d weeks on %2$s"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: number of weeks between occurrences (2 or more). 2: plural weekday name, e.g. "Mondays". 3: start time, e.g. "18:00".
+#: src/Helpers/RecurrenceSummary.php:165
+#, php-format
+msgid "Every %1$d week on %2$s at %3$s"
+msgid_plural "Every %1$d weeks on %2$s at %3$s"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: day of the month, e.g. 15.
+#: src/Helpers/RecurrenceSummary.php:181
+#, php-format
+msgid "Monthly on day %d"
+msgstr ""
+
+#. translators: 1: day of the month, e.g. 15. 2: start time, e.g. "18:00".
+#: src/Helpers/RecurrenceSummary.php:184
+#, php-format
+msgid "Monthly on day %1$d at %2$s"
+msgstr ""
+
+#. translators: 1: number of months between occurrences (2 or more). 2: day of the month, e.g. 15.
+#: src/Helpers/RecurrenceSummary.php:189
+#, php-format
+msgid "Every %1$d month on day %2$d"
+msgid_plural "Every %1$d months on day %2$d"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: number of months between occurrences (2 or more). 2: day of the month, e.g. 15. 3: start time, e.g. "18:00".
+#: src/Helpers/RecurrenceSummary.php:193
+#, php-format
+msgid "Every %1$d month on day %2$d at %3$s"
+msgid_plural "Every %1$d months on day %2$d at %3$s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Helpers/RecurrenceSummary.php:204
+msgctxt "recurring weekday"
+msgid "Mondays"
+msgstr ""
+
+#: src/Helpers/RecurrenceSummary.php:205
+msgctxt "recurring weekday"
+msgid "Tuesdays"
+msgstr ""
+
+#: src/Helpers/RecurrenceSummary.php:206
+msgctxt "recurring weekday"
+msgid "Wednesdays"
+msgstr ""
+
+#: src/Helpers/RecurrenceSummary.php:207
+msgctxt "recurring weekday"
+msgid "Thursdays"
+msgstr ""
+
+#: src/Helpers/RecurrenceSummary.php:208
+msgctxt "recurring weekday"
+msgid "Fridays"
+msgstr ""
+
+#: src/Helpers/RecurrenceSummary.php:209
+msgctxt "recurring weekday"
+msgid "Saturdays"
+msgstr ""
+
+#: src/Helpers/RecurrenceSummary.php:210
+msgctxt "recurring weekday"
+msgid "Sundays"
+msgstr ""
+
+#: src/blocks/events-list/components/EditComponent.js:145
+msgid "Shows events that have not started yet. A recurring series from this site appears once, at its next date, with its schedule. Events from calendar feeds and external sources are listed one date at a time."
 msgstr ""
