@@ -14,6 +14,7 @@ namespace FairEvents\Services;
 use FairEvents\Database\EventSourceRepository;
 use FairEvents\Helpers\DateHelper;
 use FairEvents\Helpers\EventLocation;
+use FairEvents\Helpers\EventsListSeries;
 use FairEvents\Helpers\FairEventsApiParser;
 use FairEvents\Helpers\ICalParser;
 use FairEvents\Models\EventDates;
@@ -34,7 +35,9 @@ defined( 'WPINC' ) || die;
  * raw, possibly-null 'in_person'|'online'|'hybrid' column — as opposed to
  * `location`'s already-defaulted mode — exposed only for source ===
  * 'standalone' so PublicEventsController can tell "never explicitly chosen"
- * apart from an explicit 'in_person').
+ * apart from an explicit 'in_person'), series_id (the master event-date ID
+ * for an occurrence of a local recurring series, null for single rows and
+ * external occurrences — see EventsListSeries).
  *
  * `start`/`end` are naive site-local 'Y-m-d H:i:s' strings — the same form
  * every other internal consumer (EventDates, WeeklyEventsProvider, blocks)
@@ -273,6 +276,7 @@ class EventFeedProvider {
 			'event_date_id'   => (int) $row->id,
 			'event_id'        => (int) $event_id,
 			'occurrence_type' => $row->occurrence_type,
+			'series_id'       => EventsListSeries::series_id_for_row( $row ),
 			'title'           => $row->get_display_title(),
 			'description'     => $description,
 			'start'           => $row->start_datetime,
@@ -308,6 +312,7 @@ class EventFeedProvider {
 			'event_date_id'   => (int) $row->id,
 			'event_id'        => null,
 			'occurrence_type' => $row->occurrence_type,
+			'series_id'       => EventsListSeries::series_id_for_row( $row ),
 			'title'           => $row->get_display_title(),
 			'description'     => '',
 			'start'           => $row->start_datetime,
@@ -441,6 +446,7 @@ class EventFeedProvider {
 			'event_date_id'   => null,
 			'event_id'        => null,
 			'occurrence_type' => 'external',
+			'series_id'       => null,
 			'title'           => $event['summary'] ?? '',
 			'description'     => $event['description'] ?? '',
 			'start'           => $start,

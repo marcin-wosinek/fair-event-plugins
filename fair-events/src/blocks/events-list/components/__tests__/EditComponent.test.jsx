@@ -201,6 +201,31 @@ describe( 'EventsList EditComponent', () => {
 		).toBeNull();
 	} );
 
+	it( 'explains recurring-series grouping for the Upcoming filter', async () => {
+		const { container } = await renderBlock( { timeFilter: 'upcoming' } );
+
+		expect(
+			within( container ).getByText(
+				/A recurring series from this site appears once, at its next date/i
+			)
+		).toBeInTheDocument();
+		expect(
+			within( container ).getByText(
+				/calendar feeds and external sources are listed one date at a time/i
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'omits the recurring-series explanation for other time filters', async () => {
+		const { container } = await renderBlock( { timeFilter: 'past' } );
+
+		expect(
+			within( container ).queryByText(
+				/A recurring series from this site/i
+			)
+		).toBeNull();
+	} );
+
 	it( 'passes the current time filter, categories, and event sources to the preview', async () => {
 		const { container } = await renderBlock( {
 			timeFilter: 'past',

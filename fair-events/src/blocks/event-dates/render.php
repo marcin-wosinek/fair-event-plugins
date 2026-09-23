@@ -11,20 +11,36 @@
 
 defined( 'WPINC' ) || die;
 
-// Get post ID from block context
-$post_id = $block->context['postId'] ?? get_the_ID();
+// Get post ID from block context.
+$event_post_id = $block->context['postId'] ?? get_the_ID();
 
-// Only render if we have a post ID
-if ( ! $post_id ) {
+// Inside an Events List, show the occurrence (or recurring-series summary)
+// the list selected rather than resolving one independently.
+$list_date_text = \FairEvents\Helpers\EventsListSeries::date_text_for_nested_block( (int) $event_post_id );
+
+if ( null !== $list_date_text ) {
+	if ( '' === $list_date_text ) {
+		return '';
+	}
+	?>
+	<div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'event-dates' ) ) ); ?>>
+		<?php echo esc_html( $list_date_text ); ?>
+	</div>
+	<?php
+	return;
+}
+
+// Only render if we have a post ID.
+if ( ! $event_post_id ) {
 	return '';
 }
 
 // Get event data from custom table. Honors ?event_date=<id> so a viewer
 // who picks a specific occurrence from the signup dropdown sees that
 // occurrence's date here too.
-$event_dates = \FairEvents\Helpers\SelectedOccurrence::resolve( $post_id );
+$event_dates = \FairEvents\Helpers\SelectedOccurrence::resolve( $event_post_id );
 
-// Don't render if no event data
+// Don't render if no event data.
 if ( ! $event_dates ) {
 	return '';
 }

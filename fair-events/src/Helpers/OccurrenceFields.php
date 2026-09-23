@@ -21,6 +21,13 @@ defined( 'WPINC' ) || die;
  * empty (rendering unlinked text instead of an empty href), and a missing
  * description, location, or image resolves to an empty string so the
  * surrounding pattern markup renders without that value rather than breaking.
+ *
+ * A grouped recurring-series entry (one carrying `series` metadata, see
+ * EventsListSeries::group()) makes `{{date_range}}` the combined schedule
+ * summary ("Weekly on Mondays at 18:00; next occurrence: 28 September"), so
+ * existing custom layouts pick it up unchanged. `{{recurrence_summary}}`
+ * (schedule only, '' for non-series entries) and `{{next_occurrence}}` (the
+ * selected occurrence's date) let a layout arrange the two parts itself.
  */
 class OccurrenceFields {
 
@@ -38,23 +45,19 @@ class OccurrenceFields {
 		$url = ! empty( $occurrence['url'] ) ? $occurrence['url'] : '';
 
 		return array(
-			'{{title}}'            => esc_html( $title ),
-			'{{title_link_open}}'  => '' !== $url ? '<a href="' . esc_url( $url ) . '">' : '',
-			'{{title_link_close}}' => '' !== $url ? '</a>' : '',
-			'{{url}}'              => esc_url( $url ),
-			'{{start}}'            => self::format_datetime( $occurrence['start'] ?? '' ),
-			'{{end}}'              => self::format_datetime( $occurrence['end'] ?? '' ),
-			'{{date_range}}'       => esc_html(
-				DateRangeFormatter::format(
-					$occurrence['start'] ?? '',
-					$occurrence['end'] ?? '',
-					! empty( $occurrence['all_day'] )
-				)
-			),
-			'{{description}}'      => ! empty( $occurrence['description'] ) ? esc_html( $occurrence['description'] ) : '',
-			'{{location}}'         => esc_html( self::format_location( $occurrence['location'] ?? null ) ),
-			'{{image}}'            => self::format_image( $occurrence ),
-			'{{source_type}}'      => esc_html( self::format_source_label( $occurrence['source'] ?? '' ) ),
+			'{{title}}'              => esc_html( $title ),
+			'{{title_link_open}}'    => '' !== $url ? '<a href="' . esc_url( $url ) . '">' : '',
+			'{{title_link_close}}'   => '' !== $url ? '</a>' : '',
+			'{{url}}'                => esc_url( $url ),
+			'{{start}}'              => self::format_datetime( $occurrence['start'] ?? '' ),
+			'{{end}}'                => self::format_datetime( $occurrence['end'] ?? '' ),
+			'{{date_range}}'         => esc_html( EventsListSeries::date_text( $occurrence ) ),
+			'{{recurrence_summary}}' => ! empty( $occurrence['series'] ) ? esc_html( RecurrenceSummary::format_schedule( $occurrence['series'] ) ) : '',
+			'{{next_occurrence}}'    => esc_html( self::format_next_occurrence( $occurrence ) ),
+			'{{description}}'        => ! empty( $occurrence['description'] ) ? esc_html( $occurrence['description'] ) : '',
+			'{{location}}'           => esc_html( self::format_location( $occurrence['location'] ?? null ) ),
+			'{{image}}'              => self::format_image( $occurrence ),
+			'{{source_type}}'        => esc_html( self::format_source_label( $occurrence['source'] ?? '' ) ),
 		);
 	}
 
@@ -83,6 +86,25 @@ class OccurrenceFields {
 		$format = trim( get_option( 'date_format', 'F j, Y' ) . ' ' . get_option( 'time_format', 'g:i a' ) );
 
 		return esc_html( DateHelper::format_local_datetime( $datetime, $format ) );
+	}
+
+	/**
+	 * The selected occurrence's date: date-only when a series summary already
+	 * states the regular time, otherwise its full date range.
+	 *
+	 * @param array $occurrence Occurrence DTO (optionally with `series`).
+	 * @return string Plain text, or ''.
+	 */
+	private static function format_next_occurrence( array $occurrence ) {
+		if ( ! empty( $occurrence['series'] ) ) {
+			return RecurrenceSummary::format_next( $occurrence['series'], $occurrence );
+		}
+
+		return DateRangeFormatter::format(
+			$occurrence['start'] ?? '',
+			$occurrence['end'] ?? '',
+			! empty( $occurrence['all_day'] )
+		);
 	}
 
 	/**

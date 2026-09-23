@@ -191,4 +191,48 @@ class OccurrenceFieldsTest extends TestCase {
 
 		$this->assertSame( '', $tokens['{{image}}'] );
 	}
+
+	/**
+	 * A grouped recurring-series entry makes {{date_range}} the combined
+	 * summary and fills the separate summary/next-occurrence tokens.
+	 */
+	public function test_series_entry_fills_recurrence_tokens() {
+		$tokens = OccurrenceFields::build_tokens(
+			$this->make_occurrence(
+				array(
+					'start'  => '2040-10-01 18:00:00',
+					'end'    => '2040-10-01 20:00:00',
+					'series' => array(
+						'id'              => 5,
+						'rrule'           => 'FREQ=WEEKLY',
+						'recurrence_mode' => 'rule',
+						'anchor_start'    => '2040-01-02 18:00:00',
+						'all_day'         => false,
+					),
+				)
+			)
+		);
+
+		$this->assertSame( 'Weekly on Mondays at 18:00; next occurrence: 1 October 2040', $tokens['{{date_range}}'] );
+		$this->assertSame( 'Weekly on Mondays at 18:00', $tokens['{{recurrence_summary}}'] );
+		$this->assertSame( '1 October 2040', $tokens['{{next_occurrence}}'] );
+	}
+
+	/**
+	 * A non-series entry leaves the summary empty and keeps its date range.
+	 */
+	public function test_single_entry_has_empty_recurrence_summary() {
+		$tokens = OccurrenceFields::build_tokens(
+			$this->make_occurrence(
+				array(
+					'start' => '2040-10-01 18:00:00',
+					'end'   => '2040-10-01 20:00:00',
+				)
+			)
+		);
+
+		$this->assertSame( '', $tokens['{{recurrence_summary}}'] );
+		$this->assertSame( '18:00—20:00, 1 October 2040', $tokens['{{date_range}}'] );
+		$this->assertSame( '18:00—20:00, 1 October 2040', $tokens['{{next_occurrence}}'] );
+	}
 }

@@ -546,6 +546,35 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+if ( ! function_exists( '_n' ) ) {
+	/**
+	 * Stub of WordPress _n() — English singular/plural selection, untranslated.
+	 *
+	 * @param string $single Singular form.
+	 * @param string $plural Plural form.
+	 * @param int    $number Count deciding the form.
+	 * @param string $domain Text domain (unused).
+	 * @return string
+	 */
+	function _n( $single, $plural, $number, $domain = 'default' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		return 1 === (int) $number ? $single : $plural;
+	}
+}
+
+if ( ! function_exists( '_x' ) ) {
+	/**
+	 * Stub of WordPress _x() — returns the string untranslated.
+	 *
+	 * @param string $text    Text to translate.
+	 * @param string $context Translator context (unused).
+	 * @param string $domain  Text domain (unused).
+	 * @return string
+	 */
+	function _x( $text, $context, $domain = 'default' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		return $text;
+	}
+}
+
 if ( ! function_exists( 'esc_html__' ) ) {
 	/**
 	 * Stub of WordPress esc_html__().
