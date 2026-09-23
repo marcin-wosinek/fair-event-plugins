@@ -62,6 +62,23 @@ if ( ! $schedule['has_prices'] ) {
 	return '';
 }
 
+// Per-block visibility settings, applied after the full schedule (and its
+// resolved period boundaries) is built so hiding entries never shifts dates.
+$schedule = \FairEvents\Services\EventPricingSchedule::filter_schedule(
+	$schedule,
+	$attributes['hiddenTicketTypeIds'] ?? array(),
+	$attributes['hiddenSalePeriodIds'] ?? array()
+);
+
+if ( ! $schedule['has_prices'] ) {
+	if ( $is_editor_preview ) {
+		return '<p class="wp-block-fair-events-event-prices__editor-placeholder">'
+			. esc_html__( 'Event Prices block is empty — every price is hidden in this block\'s settings.', 'fair-events' )
+			. '</p>';
+	}
+	return '';
+}
+
 $currency = class_exists( \FairEventsShared\Money::class ) ? \FairEventsShared\Money::site_currency() : 'EUR';
 
 if ( ! function_exists( 'fair_events_format_sale_period_range' ) ) {

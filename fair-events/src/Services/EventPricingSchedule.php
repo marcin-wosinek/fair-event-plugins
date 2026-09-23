@@ -172,4 +172,90 @@ class EventPricingSchedule {
 			'has_prices' => $has_prices,
 		);
 	}
+
+	/**
+	 * Apply a block's per-instance visibility settings to an already-built
+	 * schedule. Pure and display-only: it never touches signup availability
+	 * or the Prices configuration.
+	 *
+	 * Runs after build_schedule() so period boundaries have already been
+	 * resolved against every configured period — hiding a period never
+	 * shifts the dates shown for its neighbours. IDs that match nothing
+	 * (deleted entries, another event's IDs) are ignored.
+	 *
+	 * @param array $schedule               Output of build_schedule().
+	 * @param mixed $hidden_ticket_type_ids Ticket type IDs to hide.
+	 * @param mixed $hidden_sale_period_ids Sale period IDs to hide.
+	 * @return array{periods: array, has_prices: bool} Same shape as
+	 *   build_schedule(): sections left with no free or priced entry are
+	 *   dropped, and `has_prices` reflects the filtered result.
+	 */
+	public static function filter_schedule( array $schedule, $hidden_ticket_type_ids, $hidden_sale_period_ids ) {
+		$hidden_types   = self::normalize_ids( $hidden_ticket_type_ids );
+		$hidden_periods = self::normalize_ids( $hidden_sale_period_ids );
+
+		$sections = array();
+
+		foreach ( $schedule['periods'] ?? array() as $period ) {
+			if ( isset( $hidden_periods[ (int) $period['id'] ] ) ) {
+				continue;
+			}
+
+			$entries = array_values(
+				array_filter(
+					$period['entries'],
+					function ( $entry ) use ( $hidden_types ) {
+						return ! isset( $hidden_types[ (int) $entry['ticket_type_id'] ] );
+					}
+				)
+			);
+
+			$has_displayable = false;
+			foreach ( $entries as $entry ) {
+				if ( 'unavailable' !== $entry['state'] ) {
+					$has_displayable = true;
+					break;
+				}
+			}
+
+			// Same rule as build_schedule(): an all-"not available" section
+			// would only confuse visitors.
+			if ( ! $has_displayable ) {
+				continue;
+			}
+
+			$period['entries'] = $entries;
+			$sections[]        = $period;
+		}
+
+		return array(
+			'periods'    => $sections,
+			'has_prices' => ! empty( $sections ),
+		);
+	}
+
+	/**
+	 * Normalize a list of IDs from block attributes into a lookup set,
+	 * discarding anything that isn't a positive integer.
+	 *
+	 * @param mixed $ids Raw attribute value.
+	 * @return array<int, true> Set keyed by ID.
+	 */
+	private static function normalize_ids( $ids ) {
+		if ( ! is_array( $ids ) ) {
+			return array();
+		}
+
+		$set = array();
+		foreach ( $ids as $id ) {
+			if ( is_int( $id ) || ( is_string( $id ) && ctype_digit( $id ) ) ) {
+				$id = (int) $id;
+				if ( $id > 0 ) {
+					$set[ $id ] = true;
+				}
+			}
+		}
+
+		return $set;
+	}
 }

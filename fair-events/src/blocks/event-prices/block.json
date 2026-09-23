@@ -9,6 +9,18 @@
 	"description": "Display an event's public ticket prices from its Prices tab configuration.",
 	"keywords": [ "event", "prices", "tickets", "pricing" ],
 	"textdomain": "fair-events",
+	"attributes": {
+		"hiddenTicketTypeIds": {
+			"type": "array",
+			"items": { "type": "integer" },
+			"default": []
+		},
+		"hiddenSalePeriodIds": {
+			"type": "array",
+			"items": { "type": "integer" },
+			"default": []
+		}
+	},
 	"usesContext": [ "postId", "postType" ],
 	"supports": {
 		"html": false,
