@@ -64,4 +64,24 @@ test.describe('Fair Payments Connector admin menu', () => {
 			).toBeAttached({ timeout: 15000 });
 		}
 	});
+
+	test('fee dashboard explains the uncapped 2% fee without a cap meter', async ({
+		page,
+	}) => {
+		await loginAsAdmin(page);
+		await page.goto(
+			'/wp-admin/admin.php?page=fair-payments-connector-fee-dashboard'
+		);
+
+		await expect(
+			page.getByText(
+				'The integration fee is 2% of ticket sales, with no monthly cap. It is waived through 31 December 2026. Mollie processing fees apply separately.'
+			)
+		).toBeVisible();
+		await expect(page.getByText('Integration fees this month')).toBeVisible(
+			{ timeout: 15000 }
+		);
+		await expect(page.getByText('Monthly fee cap')).toHaveCount(0);
+		await expect(page.getByText('Active plan')).toHaveCount(0);
+	});
 });

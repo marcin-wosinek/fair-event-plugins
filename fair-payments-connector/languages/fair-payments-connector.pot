@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Payments Connector 2.0.2\n"
+"Project-Id-Version: Fair Payments Connector 2.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-payments-connector\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-17T13:18:08+00:00\n"
+"POT-Creation-Date: 2026-09-23T06:26:26+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector\n"
@@ -56,7 +56,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:72
 #: src/Admin/AdminPages.php:73
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:104
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:68
 msgid "Fee Dashboard"
 msgstr ""
 
@@ -204,7 +204,7 @@ msgstr ""
 #: src/API/TransactionsController.php:382
 #: src/API/TransactionsController.php:454
 #: src/API/TransactionsController.php:745
-#: src/Models/Transaction.php:571
+#: src/Models/Transaction.php:585
 msgid "Transaction not found."
 msgstr ""
 
@@ -460,12 +460,12 @@ msgstr ""
 msgid "Forced by a wp-config constant — change it there."
 msgstr ""
 
-#: src/Models/Transaction.php:579
+#: src/Models/Transaction.php:593
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr ""
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:589
+#: src/Models/Transaction.php:603
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr ""
@@ -592,32 +592,26 @@ msgstr ""
 msgid "Per-bundle feature toggles"
 msgstr ""
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:78
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:47
 msgid "Failed to load dashboard data."
 msgstr ""
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:113
+#. translators: %d: integration fee percentage
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:78
+#, js-format
+msgid "The integration fee is %d%% of ticket sales, with no monthly cap. It is waived through 31 December 2026. Mollie processing fees apply separately."
+msgstr ""
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:88
 msgid "Test mode — these figures reflect test transactions only."
 msgstr ""
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:139
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:114
 msgid "Total payment volume this month"
 msgstr ""
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:150
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:125
 msgid "Integration fees this month"
-msgstr ""
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:161
-msgid "Monthly fee cap"
-msgstr ""
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:173
-msgid "remaining"
-msgstr ""
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:183
-msgid "Active plan"
 msgstr ""
 
 #: src/Admin/settings/AuditLogTab.js:14

@@ -63,7 +63,7 @@ msgstr "Verbindungstest fehlgeschlagen: %s"
 #: src/API/TransactionsController.php:382
 #: src/API/TransactionsController.php:454
 #: src/API/TransactionsController.php:745
-#: src/Models/Transaction.php:571
+#: src/Models/Transaction.php:585
 msgid "Transaction not found."
 msgstr "Transaktion nicht gefunden."
 
@@ -174,12 +174,12 @@ msgstr "Zahlung wird verarbeitet..."
 msgid "Payment gateway is not configured. Please configure your Mollie API keys."
 msgstr "Payment Gateway ist nicht konfiguriert. Bitte konfigurieren Sie Ihre Mollie API-Schlüssel."
 
-#: src/Models/Transaction.php:579
+#: src/Models/Transaction.php:593
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr "Zahlung wurde bereits für diese Transaktion eingeleitet. Erstellen Sie eine neue Transaktion, um es erneut zu versuchen."
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:589
+#: src/Models/Transaction.php:603
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr "Transaktionsstatus muss \"draft\" sein, um die Zahlung einzuleiten. Aktueller Status: %s"
@@ -914,7 +914,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:72
 #: src/Admin/AdminPages.php:73
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:104
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:68
 msgid "Fee Dashboard"
 msgstr "Gebühren-Dashboard"
 
@@ -943,33 +943,21 @@ msgstr "Laden Sie .mo/.json-Dateien, die mit dem Plugin geliefert werden, anstat
 msgid "Per-bundle feature toggles"
 msgstr "Funktionsumschalter pro Bundle"
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:78
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:47
 msgid "Failed to load dashboard data."
 msgstr "Fehler beim Laden der Dashboard-Daten."
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:113
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:88
 msgid "Test mode — these figures reflect test transactions only."
 msgstr "Testmodus — diese Zahlen spiegeln nur Testtransaktionen wider."
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:139
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:114
 msgid "Total payment volume this month"
 msgstr "Gesamtzahlungsvolumen diesen Monat"
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:150
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:125
 msgid "Integration fees this month"
 msgstr "Integrationgebühren diesen Monat"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:161
-msgid "Monthly fee cap"
-msgstr "Monatliche Gebührengrenze"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:173
-msgid "remaining"
-msgstr "verbleibend"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:183
-msgid "Active plan"
-msgstr "Aktiver Plan"
 
 #: src/Core/Plugin.php:137
 msgid "Forced by a wp-config constant — change it there."
@@ -1548,3 +1536,8 @@ msgstr "Von Mollie trennen? Sie müssen sich erneut verbinden, um Zahlungen zu a
 msgid "No enabled connected sites. Enable one on the Connected Sites page first."
 msgstr "Keine aktivierten verbundenen Websites. Aktivieren Sie zunächst eine auf der Seite \"Verbundene Websites\"."
 
+#. translators: %d: integration fee percentage
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:78
+#, js-format
+msgid "The integration fee is %d%% of ticket sales, with no monthly cap. It is waived through 31 December 2026. Mollie processing fees apply separately."
+msgstr "Die Integrationsgebühr beträgt %d%% der Ticketverkäufe, ohne monatliche Obergrenze. Bis zum 31. Dezember 2026 entfällt sie. Die Bearbeitungsgebühren von Mollie fallen separat an."

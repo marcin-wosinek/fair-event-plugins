@@ -50,7 +50,7 @@ msgstr "Detalle de transacción"
 
 #: src/Admin/AdminPages.php:72
 #: src/Admin/AdminPages.php:73
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:104
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:68
 msgid "Fee Dashboard"
 msgstr "Panel de comisiones"
 
@@ -109,7 +109,7 @@ msgstr "Pago de %1$s %2$s"
 #: src/API/TransactionsController.php:382
 #: src/API/TransactionsController.php:454
 #: src/API/TransactionsController.php:745
-#: src/Models/Transaction.php:571
+#: src/Models/Transaction.php:585
 msgid "Transaction not found."
 msgstr "Transacción no encontrada."
 
@@ -245,12 +245,12 @@ msgstr "Traducciones incluidas"
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de los paquetes de idioma de WordPress.org. Útil cuando una configuración regional está por debajo del umbral del 90 % en translate.wordpress.org o para cadenas en progreso."
 
-#: src/Models/Transaction.php:579
+#: src/Models/Transaction.php:593
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr "El pago ya ha sido iniciado para esta transacción. Crea una nueva transacción para reintentar."
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:589
+#: src/Models/Transaction.php:603
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr "El estado de la transacción debe ser «borrador» para iniciar el pago. Estado actual: %s"
@@ -388,33 +388,21 @@ msgstr "Eliminar"
 msgid "Save"
 msgstr "Guardar"
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:78
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:47
 msgid "Failed to load dashboard data."
 msgstr "No se pudieron cargar los datos del escritorio."
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:113
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:88
 msgid "Test mode — these figures reflect test transactions only."
 msgstr "Modo de prueba — estas cifras reflejan solo transacciones de prueba."
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:139
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:114
 msgid "Total payment volume this month"
 msgstr "Volumen de pago total este mes"
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:150
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:125
 msgid "Integration fees this month"
 msgstr "Comisiones de integración este mes"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:161
-msgid "Monthly fee cap"
-msgstr "Límite de cuota mensual"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:173
-msgid "remaining"
-msgstr "restante"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:183
-msgid "Active plan"
-msgstr "Plan activo"
 
 #: src/Admin/settings/ConnectionTab.js:88
 msgid "Failed to load settings."
@@ -1547,3 +1535,8 @@ msgstr "¿Desconectar de Mollie? Necesitarás reconectarte para aceptar pagos."
 msgid "No enabled connected sites. Enable one on the Connected Sites page first."
 msgstr "No hay sitios conectados habilitados. Habilita uno primero en la página Sitios conectados."
 
+#. translators: %d: integration fee percentage
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:78
+#, js-format
+msgid "The integration fee is %d%% of ticket sales, with no monthly cap. It is waived through 31 December 2026. Mollie processing fees apply separately."
+msgstr "La comisión de integración es del %d%% de las ventas de entradas, sin límite mensual. No se cobra hasta el 31 de diciembre de 2026. Las comisiones de procesamiento de Mollie se aplican por separado."

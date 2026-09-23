@@ -163,6 +163,18 @@ if ( ! function_exists( 'admin_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_timezone' ) ) {
+	/**
+	 * Stub of WordPress wp_timezone() backed by $GLOBALS['_fair_test_timezone']
+	 * (a timezone identifier), defaulting to UTC like a fresh WordPress site.
+	 *
+	 * @return DateTimeZone
+	 */
+	function wp_timezone() {
+		return new DateTimeZone( isset( $GLOBALS['_fair_test_timezone'] ) ? $GLOBALS['_fair_test_timezone'] : 'UTC' );
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WP_Error.php';
 
 if ( ! function_exists( 'get_current_user_id' ) ) {

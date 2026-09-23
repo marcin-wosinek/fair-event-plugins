@@ -14,7 +14,7 @@ Accept Mollie payments and keep the books in WordPress — payment block, itemiz
 
 Fair Payments Connector is the money layer for your WordPress site: it takes payments through Mollie and keeps the records that follow. Drop the Simple Payment block on any page to charge a one-off amount, or pair it with Fair Events to sell tickets — either way, every payment lands as a clean, itemized transaction you can trace from checkout to your bank statement.
 
-**Fair pricing, no subscription:** Install for free — every feature is included, with no premium tier. Instead of charging upfront, a 1% integration fee on ticket sales is collected automatically in the payment flow, capped at €12/month for the whole plugin suite: sell nothing in a month, pay €0; sell for €200, pay €2. If your sales never reach €1,200 in a month, you pay less than the €12 sticker price. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
+**Fair pricing, no subscription:** Install for free — every feature is included, with no premium tier. Instead of charging upfront, a flat 2% integration fee on ticket sales is collected automatically in the payment flow, with no monthly cap: sell nothing, pay €0; sell €200 in tickets, pay €4. The integration fee is waived through 31 December 2026. Mollie's processing fees apply separately. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
 
 **Key Features:**
 
@@ -56,7 +56,7 @@ No. The Simple Payment block works on its own. When Fair Events is active, the p
 
 = What does the plugin cost? =
 
-There is no subscription and no premium tier. A 1% integration fee on ticket sales is collected automatically through the payment flow, capped at €12 per month for the whole plugin suite — in a month without sales you pay nothing. Mollie's own transaction fees apply separately. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
+There is no subscription and no premium tier. A flat 2% integration fee on ticket sales is collected automatically through the payment flow, with no monthly cap — in a month without sales you pay nothing. The integration fee is waived through 31 December 2026. Mollie's own processing fees apply separately. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
 
 = Do I need a Mollie account? =
 

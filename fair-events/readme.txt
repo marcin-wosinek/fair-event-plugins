@@ -16,7 +16,7 @@ Events with recurring dates, a responsive calendar, and built-in ticket signup. 
 
 Fair Events turns WordPress into a complete event system. Create events with real start and end dates, repeat them weekly or on hand-picked dates, show them in a responsive monthly calendar, and let visitors sign up or buy tickets — all with native Gutenberg blocks that inherit your theme's styling.
 
-**Fair pricing, no subscription:** The plugin is free to install and every feature is included — there is no premium version. Publishing events and taking free signups costs nothing, ever. When you sell paid tickets through [Fair Payments Connector](https://wordpress.org/plugins/fair-payments-connector/), a 1% integration fee is collected automatically in the payment flow, capped at €12/month for the whole suite: sell nothing in a month, pay €0; sell for €200, pay €2. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
+**Fair pricing, no subscription:** The plugin is free to install and every feature is included — there is no premium version. Publishing events and taking free signups costs nothing, ever. When you sell paid tickets through [Fair Payments Connector](https://wordpress.org/plugins/fair-payments-connector/), a flat 2% integration fee is collected automatically in the payment flow, with no monthly cap: sell nothing, pay €0; sell €200 in tickets, pay €4. The integration fee is waived through 31 December 2026, and Mollie's processing fees apply separately. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
 
 **Key Features:**
 

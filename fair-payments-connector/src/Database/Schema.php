@@ -446,7 +446,7 @@ class Schema {
 	/**
 	 * Migrate database from v3.0 to v4.0
 	 *
-	 * Adds application_fee column to track application fees (1%) for each transaction.
+	 * Adds application_fee column to track the integration fee for each transaction.
 	 *
 	 * @return void
 	 */
@@ -1187,7 +1187,7 @@ class Schema {
 	 * Migrate database from v21.0 to v22.0
 	 *
 	 * Adds a composite index on (status, testmode, created_at) to the payments table
-	 * so the MonthlyFeeCapService::get_month_total() aggregation query is fully covered
+	 * so the monthly integration-fee aggregation query is fully covered
 	 * by an index rather than falling back to the single-column status key.
 	 *
 	 * @return void
