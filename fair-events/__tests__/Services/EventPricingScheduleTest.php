@@ -274,4 +274,153 @@ class EventPricingScheduleTest extends TestCase {
 		$this->assertSame( array(), $result['periods'] );
 		$this->assertFalse( $result['has_prices'] );
 	}
+
+	/**
+	 * A three-type, three-period schedule (Full Pass / Day Pass / Workshop
+	 * across Early Bird / Regular / Last minute) used by the filter tests.
+	 * Workshop is free in Regular and has no price row in Early Bird.
+	 *
+	 * @return array build_schedule() output.
+	 */
+	private function festival_schedule() {
+		return EventPricingSchedule::build_schedule(
+			array(
+				$this->ticket_type( 1, 'Full Pass' ),
+				$this->ticket_type( 2, 'Day Pass' ),
+				$this->ticket_type( 3, 'Workshop' ),
+			),
+			array(
+				$this->period( 10, 'Early Bird', '2026-01-01 00:00:00', '2026-02-01 00:00:00' ),
+				$this->period( 11, 'Regular', '2026-02-01 00:00:00', '2026-03-01 00:00:00' ),
+				$this->period( 12, 'Last minute', '2026-03-01 00:00:00', '2026-04-01 00:00:00' ),
+			),
+			array(
+				$this->price( 1, 10, 90.0 ),
+				$this->price( 1, 11, 120.0 ),
+				$this->price( 1, 12, 150.0 ),
+				$this->price( 2, 10, 50.0 ),
+				$this->price( 2, 11, 65.0 ),
+				$this->price( 2, 12, 80.0 ),
+				$this->price( 3, 11, 0.0 ),
+				$this->price( 3, 12, 35.0 ),
+			)
+		);
+	}
+
+	/**
+	 * Map a filtered schedule to period ID => list of ticket type IDs.
+	 *
+	 * @param array $schedule Schedule.
+	 * @return array<int, int[]> Shape summary.
+	 */
+	private function shape( array $schedule ) {
+		$shape = array();
+		foreach ( $schedule['periods'] as $period ) {
+			$shape[ $period['id'] ] = array_column( $period['entries'], 'ticket_type_id' );
+		}
+		return $shape;
+	}
+
+	/**
+	 * No exclusions leaves the schedule untouched.
+	 */
+	public function test_filter_without_exclusions_is_identity() {
+		$schedule = $this->festival_schedule();
+
+		$this->assertSame( $schedule, EventPricingSchedule::filter_schedule( $schedule, array(), array() ) );
+	}
+
+	/**
+	 * Hiding a ticket type removes its row from every period.
+	 */
+	public function test_filter_hides_ticket_type_rows() {
+		$result = EventPricingSchedule::filter_schedule( $this->festival_schedule(), array( 2 ), array() );
+
+		$this->assertSame(
+			array(
+				10 => array( 1, 3 ),
+				11 => array( 1, 3 ),
+				12 => array( 1, 3 ),
+			),
+			$this->shape( $result )
+		);
+		$this->assertTrue( $result['has_prices'] );
+	}
+
+	/**
+	 * Hiding a sale period removes its whole section.
+	 */
+	public function test_filter_hides_sale_period_section() {
+		$result = EventPricingSchedule::filter_schedule( $this->festival_schedule(), array(), array( 12 ) );
+
+		$this->assertSame( array( 10, 11 ), array_keys( $this->shape( $result ) ) );
+	}
+
+	/**
+	 * The motivating case: only Full Pass, only Early Bird and Regular. The
+	 * remaining periods keep their resolved dates and prices.
+	 */
+	public function test_filter_combined_keeps_boundaries_and_prices() {
+		$result = EventPricingSchedule::filter_schedule( $this->festival_schedule(), array( 2, 3 ), array( 12 ) );
+
+		$this->assertSame(
+			array(
+				10 => array( 1 ),
+				11 => array( 1 ),
+			),
+			$this->shape( $result )
+		);
+		$this->assertSame( '2026-01-01 00:00:00', $result['periods'][0]['sale_start'] );
+		$this->assertSame( '2026-02-01 00:00:00', $result['periods'][0]['sale_end'] );
+		$this->assertSame( '2026-02-01 00:00:00', $result['periods'][1]['sale_start'] );
+		$this->assertSame( '2026-03-01 00:00:00', $result['periods'][1]['sale_end'] );
+		$this->assertSame( 90.0, $result['periods'][0]['entries'][0]['price'] );
+		$this->assertSame( 120.0, $result['periods'][1]['entries'][0]['price'] );
+	}
+
+	/**
+	 * A section left with only "not available" rows is dropped, while free
+	 * and unavailable states survive filtering unchanged.
+	 */
+	public function test_filter_drops_sections_left_without_prices_and_keeps_states() {
+		// Only Workshop remains: free in Regular, priced in Last minute, no
+		// price row in Early Bird — so Early Bird disappears.
+		$result = EventPricingSchedule::filter_schedule( $this->festival_schedule(), array( 1, 2 ), array() );
+
+		$this->assertSame( array( 11, 12 ), array_keys( $this->shape( $result ) ) );
+		$this->assertSame( 'free', $result['periods'][0]['entries'][0]['state'] );
+		$this->assertNull( $result['periods'][0]['entries'][0]['price'] );
+		$this->assertSame( 'priced', $result['periods'][1]['entries'][0]['state'] );
+
+		// Unavailable rows next to priced ones are preserved.
+		$with_unavailable = EventPricingSchedule::filter_schedule( $this->festival_schedule(), array( 2 ), array() );
+		$this->assertSame( 'unavailable', $with_unavailable['periods'][0]['entries'][1]['state'] );
+	}
+
+	/**
+	 * Hiding everything yields the empty "no prices" schedule.
+	 */
+	public function test_filter_hiding_everything_yields_empty_schedule() {
+		$by_type   = EventPricingSchedule::filter_schedule( $this->festival_schedule(), array( 1, 2, 3 ), array() );
+		$by_period = EventPricingSchedule::filter_schedule( $this->festival_schedule(), array(), array( 10, 11, 12 ) );
+
+		foreach ( array( $by_type, $by_period ) as $result ) {
+			$this->assertSame( array(), $result['periods'] );
+			$this->assertFalse( $result['has_prices'] );
+		}
+	}
+
+	/**
+	 * Stale IDs (deleted entries) and malformed values are ignored; numeric
+	 * strings are accepted.
+	 */
+	public function test_filter_ignores_stale_and_malformed_ids() {
+		$schedule = $this->festival_schedule();
+
+		$this->assertSame( $schedule, EventPricingSchedule::filter_schedule( $schedule, array( 999, -1, 0, 'abc', null, 1.5 ), array( 998 ) ) );
+		$this->assertSame( $schedule, EventPricingSchedule::filter_schedule( $schedule, 'not-an-array', null ) );
+
+		$result = EventPricingSchedule::filter_schedule( $schedule, array( '2', '3' ), array( '12' ) );
+		$this->assertSame( array( 10, 11 ), array_keys( $this->shape( $result ) ) );
+	}
 }
