@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -21,37 +21,6 @@ const formatEur = ( amount ) =>
 		style: 'currency',
 		currency: siteCurrency,
 	} ).format( amount ?? 0 );
-
-const ProgressBar = ( { value, max } ) => {
-	const pct = max > 0 ? Math.min( ( value / max ) * 100, 100 ) : 0;
-	const color = pct >= 100 ? '#d63638' : pct >= 80 ? '#946800' : '#007017';
-
-	return (
-		<div>
-			<div
-				style={ {
-					background: '#ddd',
-					borderRadius: '4px',
-					overflow: 'hidden',
-					height: '12px',
-				} }
-			>
-				<div
-					style={ {
-						width: `${ pct }%`,
-						background: color,
-						height: '100%',
-						transition: 'width 0.3s',
-					} }
-				/>
-			</div>
-			<p style={ { margin: '4px 0 0', color } }>
-				{ formatEur( value ) } / { formatEur( max ) } (
-				{ Math.round( pct ) }%)
-			</p>
-		</div>
-	);
-};
 
 const StatCard = ( { label, children } ) => (
 	<Card>
@@ -91,11 +60,6 @@ const FeeDashboardApp = () => {
 		  } )
 		: '';
 
-	const planEntries = summary?.plan_breakdown
-		? Object.entries( summary.plan_breakdown )
-		: [];
-	const [ basePlan, ...addOns ] = planEntries;
-
 	return (
 		<div className="wrap fair-payments-connector-fee-dashboard-page">
 			<VStack spacing={ 4 }>
@@ -107,6 +71,17 @@ const FeeDashboardApp = () => {
 						<span style={ { color: '#666' } }>{ monthLabel }</span>
 					) }
 				</HStack>
+
+				<p style={ { margin: 0 } }>
+					{ sprintf(
+						/* translators: %d: integration fee percentage */
+						__(
+							'The integration fee is %d%% of ticket sales, with no monthly cap. It is waived through 31 December 2026. Mollie processing fees apply separately.',
+							'fair-payments-connector'
+						),
+						2
+					) }
+				</p>
 
 				{ summary?.testmode && (
 					<Notice status="warning" isDismissible={ false }>
@@ -156,50 +131,6 @@ const FeeDashboardApp = () => {
 								{ formatEur( summary.total_fees ) }
 							</p>
 						</StatCard>
-
-						<StatCard
-							label={ __(
-								'Monthly fee cap',
-								'fair-payments-connector'
-							) }
-						>
-							<VStack spacing={ 2 }>
-								<ProgressBar
-									value={ summary.total_fees }
-									max={ summary.fee_cap }
-								/>
-								<p style={ { margin: 0, color: '#666' } }>
-									{ formatEur( summary.cap_remaining ) }{ ' ' }
-									{ __(
-										'remaining',
-										'fair-payments-connector'
-									) }
-								</p>
-							</VStack>
-						</StatCard>
-
-						{ planEntries.length > 0 && (
-							<StatCard
-								label={ __(
-									'Active plan',
-									'fair-payments-connector'
-								) }
-							>
-								<VStack spacing={ 1 }>
-									{ basePlan && (
-										<p style={ { margin: 0 } }>
-											<strong>{ basePlan[ 0 ] }</strong> (
-											{ formatEur( basePlan[ 1 ] ) })
-										</p>
-									) }
-									{ addOns.map( ( [ slug, price ] ) => (
-										<p key={ slug } style={ { margin: 0 } }>
-											+ { slug } (+{ formatEur( price ) })
-										</p>
-									) ) }
-								</VStack>
-							</StatCard>
-						) }
 					</VStack>
 				) }
 			</VStack>

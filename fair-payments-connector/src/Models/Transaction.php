@@ -9,7 +9,6 @@
 
 namespace FairPaymentsConnector\Models;
 
-use FairPaymentsConnector\Services\MonthlyFeeCapService;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -19,29 +18,52 @@ defined( 'WPINC' ) || die;
  */
 class Transaction {
 	/**
-	 * UTC datetime after which the launch fee waiver ends and the 1% rate resumes.
-	 * Delete this constant (and get_fee_rate()) after 2027-01-01.
+	 * Site-local datetime at which the launch fee waiver ends. Transactions
+	 * created from this moment on, in the WordPress site timezone, pay the
+	 * integration fee.
 	 */
-	private const FEE_WAIVER_END_TS = '2027-01-01 00:00:00';
+	private const FEE_WAIVER_END = '2027-01-01 00:00:00';
 
 	/**
-	 * Returns the current platform fee rate (0.0 during the launch waiver, 0.01 after).
-	 *
-	 * @param int|null $now Unix timestamp to evaluate against; defaults to current site time.
-	 * @return float
+	 * Integration fee rate applied after the waiver, with no monthly cap.
 	 */
-	private static function get_fee_rate( ?int $now = null ): float {
-		$now    = $now ?? current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- site TZ intentional; cutoff is midnight local time.
-		$cutoff = strtotime( self::FEE_WAIVER_END_TS );
-		return $now < $cutoff ? 0.0 : 0.01;
+	private const FEE_RATE = 0.02;
+
+	/**
+	 * Calculate the integration fee for a new transaction.
+	 *
+	 * Returns 0.0 during the launch waiver and 2% of the amount afterwards.
+	 * The cutoff is midnight in the site timezone.
+	 *
+	 * @param float                   $amount   Transaction amount.
+	 * @param \DateTimeInterface|null $now      Moment the transaction is created; defaults to now.
+	 * @param \DateTimeZone|null      $timezone Timezone of the cutoff; defaults to the site timezone.
+	 * @return float|null Fee, or null when the amount is not positive.
+	 */
+	public static function calculate_application_fee( $amount, ?\DateTimeInterface $now = null, ?\DateTimeZone $timezone = null ): ?float {
+		if ( $amount <= 0 ) {
+			return null;
+		}
+
+		$timezone = $timezone ?? wp_timezone();
+		$now      = $now ?? new \DateTimeImmutable( 'now', $timezone );
+		$cutoff   = new \DateTimeImmutable( self::FEE_WAIVER_END, $timezone );
+
+		if ( $now < $cutoff ) {
+			return 0.0;
+		}
+
+		return round( $amount * self::FEE_RATE, 2 );
 	}
+
 	/**
 	 * Create a new transaction record
 	 *
-	 * @param array $data Transaction data.
+	 * @param array                   $data Transaction data.
+	 * @param \DateTimeInterface|null $now  Creation moment used for the fee; defaults to now.
 	 * @return int|false Transaction ID or false on failure.
 	 */
-	public static function create( $data ) {
+	public static function create( $data, ?\DateTimeInterface $now = null ) {
 		global $wpdb;
 		$table_name = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
 
@@ -69,15 +91,7 @@ class Transaction {
 
 		$data = wp_parse_args( $data, $defaults );
 
-		// Calculate application fee (capped at the monthly allowance). Rate is 0 during the launch waiver.
-		$application_fee = null;
-		if ( $data['amount'] > 0 ) {
-			$application_fee = round( $data['amount'] * self::get_fee_rate(), 2 );
-			$remaining       = MonthlyFeeCapService::get_remaining();
-			$application_fee = min( $application_fee, $remaining );
-		}
-
-		$data['application_fee'] = $application_fee;
+		$data['application_fee'] = self::calculate_application_fee( $data['amount'], $now );
 
 		// Convert metadata array to JSON if needed.
 		if ( is_array( $data['metadata'] ) ) {

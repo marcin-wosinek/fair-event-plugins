@@ -46,6 +46,33 @@ function runFixtureScript( action, fixtureKey, timezone = '' ) {
 	return JSON.parse( match[ 1 ] );
 }
 
+function runFeeFixture( timezone ) {
+	const output = execFileSync(
+		'npx',
+		[
+			'wp-env',
+			'run',
+			'tests-cli',
+			'wp',
+			'eval-file',
+			'wp-content/mu-plugins/scripts/transaction-fee-fixture.php',
+			timezone,
+		],
+		{
+			cwd: ROOT_DIRECTORY,
+			encoding: 'utf8',
+			stdio: [ 'ignore', 'pipe', 'pipe' ],
+		}
+	);
+	const match = output.match( /TRANSACTION_FEE_FIXTURE:(\{.*\})/ );
+	if ( ! match ) {
+		throw new Error(
+			`Expected TRANSACTION_FEE_FIXTURE in WP-CLI output, got:\n${ output }`
+		);
+	}
+	return JSON.parse( match[ 1 ] );
+}
+
 function adminAuth() {
 	return {
 		Authorization:
@@ -56,7 +83,7 @@ function adminAuth() {
 	};
 }
 
-test.describe( 'Transaction — fee cap enforcement', () => {
+test.describe( 'Transaction — integration fee', () => {
 	let api;
 
 	test.beforeAll( async () => {
@@ -86,93 +113,48 @@ test.describe( 'Transaction — fee cap enforcement', () => {
 		}
 	} );
 
-	test( 'cap_remaining stays within [0, fee_cap] after seeding transactions below the cap', async () => {
-		// Seed two small transactions (fee €0.10 each) that together stay well below the cap.
-		const seedPayload = [
-			{
-				mollie_payment_id: 'tr_test_cap_seed_a',
-				amount: 10.0,
-				currency: 'EUR',
-				application_fee: 0.1,
-				status: 'paid',
-				testmode: true,
-			},
-			{
-				mollie_payment_id: 'tr_test_cap_seed_b',
-				amount: 10.0,
-				currency: 'EUR',
-				application_fee: 0.1,
-				status: 'paid',
-				testmode: true,
-			},
-		];
-
-		const importRes = await api.post( IMPORT_ENDPOINT, {
-			headers: adminAuth(),
-			data: { transactions: seedPayload },
-		} );
-		expect( importRes.status() ).toBe( 200 );
-
-		const dashRes = await api.get( DASHBOARD_ENDPOINT, {
-			headers: adminAuth(),
-		} );
-		expect( dashRes.status() ).toBe( 200 );
-		const dash = await dashRes.json();
-
-		// cap_remaining must be non-negative and never exceed the configured cap.
-		expect( dash.cap_remaining ).toBeGreaterThanOrEqual( 0 );
-		expect( dash.cap_remaining ).toBeLessThanOrEqual( dash.fee_cap );
+	test( 'transactions created through the model pay nothing before local midnight on 1 January 2027 and 2% from then on', () => {
+		for ( const timezone of [ 'UTC', 'Europe/Madrid' ] ) {
+			const fees = runFeeFixture( timezone );
+			expect( fees ).toEqual( { before: 0, cutoff: 20 } );
+		}
 	} );
 
-	test( 'application_fee is 0 or null on new transactions during the waiver period', async () => {
-		const mollie_payment_id = 'tr_waiver_check_' + Date.now();
+	test( 'imported transactions keep their recorded fees, uncapped in the monthly summary', async () => {
+		const before = await (
+			await api.get( DASHBOARD_ENDPOINT, { headers: adminAuth() } )
+		).json();
+
+		const suffix = Date.now();
+		const smallFeeId = `tr_fee_keep_small_${ suffix }`;
+		const largeFeeId = `tr_fee_keep_large_${ suffix }`;
+		const noFeeId = `tr_fee_keep_none_${ suffix }`;
+
 		const importRes = await api.post( IMPORT_ENDPOINT, {
 			headers: adminAuth(),
 			data: {
 				transactions: [
 					{
-						mollie_payment_id,
+						mollie_payment_id: smallFeeId,
+						amount: 10.0,
+						currency: 'EUR',
+						application_fee: 0.1,
+						status: 'paid',
+						testmode: true,
+					},
+					{
+						// A 2% fee well above the former €12 monthly cap.
+						mollie_payment_id: largeFeeId,
+						amount: 2500.0,
+						currency: 'EUR',
+						application_fee: 50,
+						status: 'paid',
+						testmode: true,
+					},
+					{
+						mollie_payment_id: noFeeId,
 						amount: 100.0,
 						currency: 'EUR',
-						status: 'paid',
-					},
-				],
-			},
-		} );
-		expect( importRes.status() ).toBe( 200 );
-
-		// Retrieve the imported transaction and verify its fee is 0 or null.
-		const listRes = await api.get( TRANSACTIONS_ENDPOINT, {
-			headers: adminAuth(),
-		} );
-		expect( listRes.status() ).toBe( 200 );
-		const { transactions } = await listRes.json();
-		const txn = transactions.find(
-			( t ) => t.mollie_payment_id === mollie_payment_id
-		);
-		expect( txn ).toBeDefined();
-		const fee = txn?.application_fee ?? null;
-		expect( fee == null || fee === 0 || fee === '0.00' ).toBe( true );
-	} );
-
-	test( 'cap_remaining is 0 when seeded fees exhaust the monthly cap', async () => {
-		const dashRes = await api.get( DASHBOARD_ENDPOINT, {
-			headers: adminAuth(),
-		} );
-		expect( dashRes.status() ).toBe( 200 );
-		const { fee_cap } = await dashRes.json();
-
-		// Seed a single transaction whose application_fee equals the full cap,
-		// pushing cap_remaining to 0.
-		const importRes = await api.post( IMPORT_ENDPOINT, {
-			headers: adminAuth(),
-			data: {
-				transactions: [
-					{
-						mollie_payment_id: 'tr_test_cap_exhaust',
-						amount: fee_cap * 100,
-						currency: 'EUR',
-						application_fee: fee_cap,
 						status: 'paid',
 						testmode: true,
 					},
@@ -181,13 +163,29 @@ test.describe( 'Transaction — fee cap enforcement', () => {
 		} );
 		expect( importRes.status() ).toBe( 200 );
 
+		const listRes = await api.get( TRANSACTIONS_ENDPOINT, {
+			headers: adminAuth(),
+			params: { per_page: 100, mode: 'test' },
+		} );
+		expect( listRes.status() ).toBe( 200 );
+		const { transactions } = await listRes.json();
+		const feeOf = ( id ) =>
+			transactions.find( ( t ) => t.mollie_payment_id === id )
+				?.application_fee;
+
+		expect( feeOf( smallFeeId ) ).toBe( 0.1 );
+		expect( feeOf( largeFeeId ) ).toBe( 50 );
+		expect( feeOf( noFeeId ) ).toBeNull();
+
 		const afterRes = await api.get( DASHBOARD_ENDPOINT, {
 			headers: adminAuth(),
 		} );
 		expect( afterRes.status() ).toBe( 200 );
 		const after = await afterRes.json();
 
-		expect( after.cap_remaining ).toBe( 0 );
+		expect( after.total_fees - before.total_fees ).toBeCloseTo( 50.1, 2 );
+		expect( after ).not.toHaveProperty( 'fee_cap' );
+		expect( after ).not.toHaveProperty( 'cap_remaining' );
 	} );
 } );
 

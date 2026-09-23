@@ -12,7 +12,6 @@ namespace FairPaymentsConnector\API;
 defined( 'WPINC' ) || die;
 
 use FairPaymentsConnector\Database\Schema;
-use FairPaymentsConnector\Services\MonthlyFeeCapService;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -86,15 +85,25 @@ class DashboardController extends WP_REST_Controller {
 			)
 		);
 
+		// Integration fees are summed as recorded on each transaction; they are never recalculated here.
+		$total_fees = (float) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT SUM(application_fee) FROM %i WHERE status IN (%s, %s) AND testmode = %d AND created_at BETWEEN %s AND %s',
+				$table,
+				'paid',
+				'pending_payment',
+				$testmode,
+				$month_start,
+				$month_end
+			)
+		);
+
 		return new WP_REST_Response(
 			array(
-				'month'          => $month,
-				'total_volume'   => $total_volume,
-				'total_fees'     => MonthlyFeeCapService::get_month_total(),
-				'fee_cap'        => MonthlyFeeCapService::get_cap(),
-				'cap_remaining'  => MonthlyFeeCapService::get_remaining(),
-				'testmode'       => (bool) $testmode,
-				'plan_breakdown' => MonthlyFeeCapService::plugin_price_map(),
+				'month'        => $month,
+				'total_volume' => $total_volume,
+				'total_fees'   => $total_fees,
+				'testmode'     => (bool) $testmode,
 			),
 			200
 		);

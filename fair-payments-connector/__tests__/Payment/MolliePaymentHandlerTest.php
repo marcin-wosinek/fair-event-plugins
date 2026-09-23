@@ -230,6 +230,42 @@ class MolliePaymentHandlerTest extends TestCase {
 	}
 
 	/**
+	 * The stored integration fee reaches Mollie unchanged — including a 2%
+	 * fee above the former monthly cap — and is the only application fee sent;
+	 * Mollie's own processing fee is not added to it (#1655).
+	 */
+	public function test_create_payment_sends_the_stored_application_fee_unchanged() {
+		$GLOBALS['_fair_test_options']['fair_payment_mollie_connected']  = true;
+		$GLOBALS['_fair_test_options']['fair_payment_mollie_profile_id'] = 'pfl_test123';
+
+		$mollie = MollieApiClient::fake(
+			array(
+				CreatePaymentRequest::class => MockResponse::resource( Payment::class )
+					->with(
+						array(
+							'id'     => 'tr_uncapped_fee',
+							'status' => 'open',
+						)
+					)->create(),
+			)
+		);
+
+		$handler = new MolliePaymentHandler( $mollie );
+		$handler->create_payment(
+			array(
+				'amount'          => '2000.00',
+				'currency'        => 'EUR',
+				'application_fee' => 40.0,
+			)
+		);
+
+		$fee = $this->sent_request( $mollie, CreatePaymentRequest::class )->payload()->get( 'applicationFee' );
+
+		$this->assertSame( '40.00', $fee['amount']['value'] );
+		$this->assertSame( 'EUR', $fee['amount']['currency'] );
+	}
+
+	/**
 	 * The method-allowlist lookup must query with the same testmode as the
 	 * create call — one source of truth for a single checkout attempt.
 	 */
