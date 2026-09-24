@@ -87,21 +87,34 @@ class EventTicket {
 		$signup_id = (int) $signup->id;
 		$quantity  = max( 1, (int) $signup->quantity );
 
-		$removed = (int) $wpdb->query(
-			$wpdb->prepare(
-				'DELETE FROM %i WHERE signup_id = %d AND (unit_position < 1 OR unit_position > %d)',
-				self::table(),
-				$signup_id,
-				$quantity
-			)
+		// Read with a plain SELECT and delete only by primary key. A ranged
+		// DELETE that matches nothing (every new signup) takes an InnoDB gap
+		// lock on idx_signup_unit; two signups saved concurrently then block
+		// each other's unit INSERT and one dies in a deadlock.
+		$units = $wpdb->get_results(
+			$wpdb->prepare( 'SELECT id, unit_position FROM %i WHERE signup_id = %d', self::table(), $signup_id )
 		);
 
-		$existing = array_map(
-			'intval',
-			$wpdb->get_col(
-				$wpdb->prepare( 'SELECT unit_position FROM %i WHERE signup_id = %d', self::table(), $signup_id )
-			)
-		);
+		$existing  = array();
+		$stale_ids = array();
+		foreach ( $units as $unit ) {
+			$position = (int) $unit->unit_position;
+			if ( $position < 1 || $position > $quantity ) {
+				$stale_ids[] = (int) $unit->id;
+			} else {
+				$existing[] = $position;
+			}
+		}
+
+		$removed = 0;
+		if ( $stale_ids ) {
+			$removed = (int) $wpdb->query(
+				$wpdb->prepare(
+					'DELETE FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $stale_ids ), '%d' ) ) . ')',
+					array_merge( array( self::table() ), $stale_ids )
+				)
+			);
+		}
 
 		$participant_id = ! empty( $signup->participant_id ) ? (int) $signup->participant_id : null;
 		$created        = 0;
