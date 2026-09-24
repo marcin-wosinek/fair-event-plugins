@@ -44,13 +44,14 @@ test.describe('Signups tab export with Fair Form answers', () => {
 		page,
 	}) => {
 		const stamp = Date.now();
+		const browserName = `Browser Signup Tester ${stamp}`;
 		const browserEmail = `signup-export-browser-${stamp}@example.test`;
 
 		await page.goto(seed.pageUrl);
 		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form).toBeVisible();
 
-		await form.locator('input[name="name"]').fill('Browser Signup Tester');
+		await form.locator('input[name="name"]').fill(browserName);
 		await form.locator('input[name="email"]').fill(browserEmail);
 		await form
 			.locator('[data-question-key="diet"] input[type="text"]')
@@ -69,8 +70,10 @@ test.describe('Signups tab export with Fair Form answers', () => {
 		);
 
 		await page.getByRole('tab', { name: 'List' }).click();
-		await expect(page.getByText(seed.linkedEmail)).toBeVisible();
-		await expect(page.getByText(browserEmail)).toBeVisible();
+		// The List shows names only; emails appear in the export (#1683).
+		const table = page.getByRole('table');
+		await expect(table).toContainText(seed.linkedName);
+		await expect(table).toContainText(browserName);
 
 		await page.getByRole('button', { name: 'Export' }).click();
 		const dialog = page.getByRole('dialog', { name: 'Export' });
