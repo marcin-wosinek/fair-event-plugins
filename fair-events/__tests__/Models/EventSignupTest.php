@@ -89,8 +89,11 @@ class EventSignupTest extends TestCase {
 		);
 
 		$this->assertSame( 2, EventSignup::expire_pending() );
-		$this->assertStringContainsString( 'payment_expires_at <= %s', $GLOBALS['wpdb']->last_prepared['query'] );
-		$this->assertSame( gmdate( 'Y-m-d H:i:s' ), $GLOBALS['wpdb']->last_prepared['args'][1] );
+		list( $expiry, $ticket_sync ) = $GLOBALS['wpdb']->prepared_log;
+		$this->assertStringContainsString( 'payment_expires_at <= %s', $expiry['query'] );
+		$this->assertSame( gmdate( 'Y-m-d H:i:s' ), $expiry['args'][1] );
+		$this->assertSame( 'wp_fair_events_tickets', $ticket_sync['args'][0] );
+		$this->assertSame( array( 'pending_payment', 'expired' ), array_slice( $ticket_sync['args'], 2 ) );
 		$this->assertNotNull( EventSignup::get_by_id( 1 ) );
 		$this->assertSame( 'expired', EventSignup::get_by_id( 2 )->status );
 		$this->assertSame( 'expired', EventSignup::get_by_id( 3 )->status );

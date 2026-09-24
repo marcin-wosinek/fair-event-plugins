@@ -81,6 +81,10 @@ class Installer {
 		$sql = Schema::get_signups_table_sql();
 		dbDelta( $sql );
 
+		// Version 3.35.0 - Ticket units table (existing signups are backfilled by migrate_to_3_35_0()).
+		$sql = Schema::get_tickets_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0.
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -324,6 +328,10 @@ class Installer {
 
 		if ( version_compare( $current_version, '3.34.0', '<' ) ) {
 			self::migrate_to_3_34_0();
+		}
+
+		if ( version_compare( $current_version, '3.35.0', '<' ) ) {
+			self::migrate_to_3_35_0();
 		}
 
 		// Update database version.
@@ -2347,6 +2355,19 @@ class Installer {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Migrate to version 3.35.0 - Backfill ticket units for existing signups.
+	 *
+	 * The table itself comes from dbDelta. The backfill runs in bounded
+	 * WP-Cron batches tracked separately from the schema version, so large
+	 * installations never do it inside this request.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_35_0() {
+		\FairEvents\Services\TicketBackfill::start();
 	}
 
 	/**

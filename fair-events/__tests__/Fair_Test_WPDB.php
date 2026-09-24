@@ -46,6 +46,13 @@ class Fair_Test_WPDB {
 	public $last_prepared = null;
 
 	/**
+	 * Every prepared query and its arguments, in order.
+	 *
+	 * @var array<int, array{query: string, args: array}>
+	 */
+	public $prepared_log = array();
+
+	/**
 	 * Most recent update payload.
 	 *
 	 * @var array|null
@@ -90,10 +97,11 @@ class Fair_Test_WPDB {
 		if ( 1 === count( $args ) && is_array( $args[0] ) ) {
 			$args = $args[0];
 		}
-		$this->last_prepared = array(
+		$this->last_prepared  = array(
 			'query' => $query,
 			'args'  => $args,
 		);
+		$this->prepared_log[] = $this->last_prepared;
 
 		return array(
 			'table' => $args[0] ?? null,
