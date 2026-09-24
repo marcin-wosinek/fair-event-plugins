@@ -102,7 +102,7 @@ msgid "Event location"
 msgstr "Lieu de l'événement"
 
 #: src/PostTypes/Event.php:221
-#: src/Admin/manage-event/ManageEventApp.js:714
+#: src/Admin/manage-event/ManageEventApp.js:713
 msgid "Event Details"
 msgstr "Détails de l'événement"
 
@@ -200,7 +200,7 @@ msgstr "Filtrer les événements par temps relatif à maintenant"
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:218
 #: src/Admin/calendar/components/QuickEventModal.js:482
-#: src/Admin/manage-event/ManageEventApp.js:1009
+#: src/Admin/manage-event/ManageEventApp.js:1008
 #: src/blocks/components/CategorySelector.js:60
 msgid "Categories"
 msgstr "Catégories"
@@ -297,7 +297,7 @@ msgstr "Le titre de l'événement est obligatoire."
 
 #: src/Admin/CopyEventPage.php:308
 #: src/Admin/calendar/components/QuickEventModal.js:363
-#: src/Admin/manage-event/ManageEventApp.js:911
+#: src/Admin/manage-event/ManageEventApp.js:910
 msgid "Title"
 msgstr "Titre"
 
@@ -305,7 +305,7 @@ msgstr "Titre"
 #: src/Admin/calendar/components/QuickEventModal.js:615
 #: src/Admin/components/InlineVenueCreator.js:95
 #: src/Admin/manage-event/EditInstancesModal.js:75
-#: src/Admin/manage-event/EventSignups.js:311
+#: src/Admin/manage-event/EventSignups.js:456
 #: src/Admin/manage-event/EventTickets.js:2700
 #: src/Admin/manage-event/ManageEventApp.js:1364
 #: src/Admin/manage-event/ManageEventApp.js:1374
@@ -426,7 +426,7 @@ msgid "Remove"
 msgstr "Supprimer"
 
 #: src/Admin/all-events/AllEvents.js:106
-#: src/Admin/manage-event/EventSignups.js:86
+#: src/Admin/manage-event/EventSignups.js:225
 #: src/Admin/manage-event/EventTickets.js:1225
 #: src/Admin/manage-event/EventTickets.js:2289
 #: src/Admin/manage-event/EventTickets.js:2337
@@ -438,7 +438,7 @@ msgid "Name"
 msgstr "Nom"
 
 #: src/Admin/manage-event/EventFinance.js:591
-#: src/Admin/manage-event/EventSignups.js:91
+#: src/Admin/manage-event/EventSignups.js:233
 #: src/Admin/manage-event/SignupExportModal.js:58
 msgid "Status"
 msgstr "Statut"
@@ -652,7 +652,7 @@ msgstr "Calendrier"
 #: src/Admin/AdminPages.php:161
 #: src/Hooks/AdminBarHooks.php:59
 #: src/Admin/calendar/CalendarApp.js:197
-#: src/Admin/manage-event/ManageEventApp.js:885
+#: src/Admin/manage-event/ManageEventApp.js:884
 #: src/Admin/manage-event/ManageEventApp.js:1305
 msgid "Manage Event"
 msgstr "Gérer l'événement"
@@ -876,7 +876,7 @@ msgstr "Échec de la création de l'événement."
 
 #: src/Admin/calendar/components/QuickEventModal.js:246
 #: src/Admin/event-meta-box/EventEditForm.js:320
-#: src/Admin/manage-event/ManageEventApp.js:649
+#: src/Admin/manage-event/ManageEventApp.js:648
 msgid "— No venue —"
 msgstr "— Aucun lieu —"
 
@@ -886,15 +886,15 @@ msgstr "Ajout rapide d'événement"
 
 #: src/Admin/calendar/components/QuickEventModal.js:371
 #: src/Admin/event-meta-box/EventEditForm.js:339
-#: src/Admin/manage-event/ManageEventApp.js:918
+#: src/Admin/manage-event/ManageEventApp.js:917
 msgid "All day"
 msgstr "Toute la journée"
 
 #: src/Admin/calendar/components/QuickEventModal.js:379
 #: src/Admin/calendar/components/QuickEventModal.js:403
 #: src/Admin/event-meta-box/EventEditForm.js:345
-#: src/Admin/manage-event/ManageEventApp.js:926
-#: src/Admin/manage-event/ManageEventApp.js:949
+#: src/Admin/manage-event/ManageEventApp.js:925
+#: src/Admin/manage-event/ManageEventApp.js:948
 msgid "Start date"
 msgstr "Date de début"
 
@@ -902,8 +902,8 @@ msgstr "Date de début"
 #: src/Admin/calendar/components/QuickEventModal.js:425
 #: src/Admin/event-meta-box/EventEditForm.js:371
 #: src/Admin/manage-event/EventTickets.js:1618
-#: src/Admin/manage-event/ManageEventApp.js:936
-#: src/Admin/manage-event/ManageEventApp.js:969
+#: src/Admin/manage-event/ManageEventApp.js:935
+#: src/Admin/manage-event/ManageEventApp.js:968
 #: ../fair-events-shared/src/RecurrenceControl.js:79
 msgid "End date"
 msgstr "Date de fin"
@@ -911,20 +911,20 @@ msgstr "Date de fin"
 #: src/Admin/CopyEventPage.php:294
 #: src/Admin/calendar/components/QuickEventModal.js:413
 #: src/Admin/event-meta-box/EventEditForm.js:353
-#: src/Admin/manage-event/ManageEventApp.js:959
+#: src/Admin/manage-event/ManageEventApp.js:958
 msgid "Start time"
 msgstr "Heure de début"
 
 #: src/Admin/CopyEventPage.php:298
 #: src/Admin/calendar/components/QuickEventModal.js:435
 #: src/Admin/event-meta-box/EventEditForm.js:379
-#: src/Admin/manage-event/ManageEventApp.js:979
+#: src/Admin/manage-event/ManageEventApp.js:978
 msgid "End time"
 msgstr "Heure de fin"
 
 #: src/Admin/calendar/components/QuickEventModal.js:449
 #: src/Admin/event-meta-box/EventEditForm.js:387
-#: src/Admin/manage-event/ManageEventApp.js:1066
+#: src/Admin/manage-event/ManageEventApp.js:1065
 msgid "Venue"
 msgstr "Lieu"
 
@@ -953,7 +953,7 @@ msgid "Failed to save event."
 msgstr "Échec de l'enregistrement de l'événement."
 
 #: src/Admin/event-meta-box/EventEditForm.js:361
-#: src/Admin/manage-event/ManageEventApp.js:992
+#: src/Admin/manage-event/ManageEventApp.js:991
 msgid "Event length"
 msgstr "Durée de l'événement"
 
@@ -1028,7 +1028,7 @@ msgstr "Solde"
 #: src/Admin/manage-event/EventFinance.js:391
 #: src/Admin/manage-event/EventFinance.js:448
 #: src/Admin/manage-event/EventFinance.js:579
-#: src/Admin/manage-event/EventSignups.js:94
+#: src/Admin/manage-event/EventSignups.js:236
 #: src/Admin/manage-event/SignupExportModal.js:74
 msgid "Date"
 msgstr "Date"
@@ -1040,7 +1040,6 @@ msgstr "Type"
 #: src/Admin/manage-event/EventFinance.js:397
 #: src/Admin/manage-event/EventFinance.js:454
 #: src/Admin/manage-event/EventFinance.js:585
-#: src/Admin/manage-event/EventSignups.js:90
 #: src/Admin/manage-event/SignupExportModal.js:53
 msgid "Amount"
 msgstr "Montant"
@@ -1059,23 +1058,23 @@ msgstr "Aucune entrée financière pour cet événement pour le moment."
 msgid "View All Entries"
 msgstr "Afficher toutes les entrées"
 
-#: src/Admin/manage-event/ManageEventApp.js:126
+#: src/Admin/manage-event/ManageEventApp.js:125
 msgid "No event date ID specified."
 msgstr "Aucun ID de date d'événement spécifié."
 
-#: src/Admin/manage-event/ManageEventApp.js:144
+#: src/Admin/manage-event/ManageEventApp.js:143
 msgid "Failed to load event date."
 msgstr "Échec du chargement de la date d'événement."
 
-#: src/Admin/manage-event/ManageEventApp.js:425
+#: src/Admin/manage-event/ManageEventApp.js:424
 msgid "Event updated successfully."
 msgstr "Événement mis à jour avec succès."
 
-#: src/Admin/manage-event/ManageEventApp.js:429
+#: src/Admin/manage-event/ManageEventApp.js:428
 msgid "Failed to update event."
 msgstr "Échec de la mise à jour de l'événement."
 
-#: src/Admin/manage-event/ManageEventApp.js:450
+#: src/Admin/manage-event/ManageEventApp.js:449
 msgid "Failed to delete event."
 msgstr "Échec de la suppression de l'événement."
 
@@ -1091,7 +1090,7 @@ msgstr "Échec de la dissociation de l'article."
 msgid "Failed to link post."
 msgstr "Échec de l'association de l'article."
 
-#: src/Admin/manage-event/ManageEventApp.js:893
+#: src/Admin/manage-event/ManageEventApp.js:892
 msgid "Back to Calendar"
 msgstr "Retour au calendrier"
 
@@ -1156,11 +1155,11 @@ msgstr "Sélectionner..."
 msgid "Link Post"
 msgstr "Lier l'article"
 
-#: src/Admin/manage-event/ManageEventApp.js:831
+#: src/Admin/manage-event/ManageEventApp.js:830
 msgid "Delete Event"
 msgstr "Supprimer l'événement"
 
-#: src/Admin/manage-event/ManageEventApp.js:905
+#: src/Admin/manage-event/ManageEventApp.js:904
 msgid "Details"
 msgstr "Détails"
 
@@ -1206,7 +1205,7 @@ msgstr "Général"
 
 #: src/Admin/components/InlineVenueCreator.js:83
 #: src/Admin/event-meta-box/EventEditForm.js:394
-#: src/Admin/manage-event/ManageEventApp.js:1083
+#: src/Admin/manage-event/ManageEventApp.js:1082
 #: src/Admin/settings/OrganizerTab.js:335
 #: src/Admin/venues/VenuesApp.js:576
 #: src/Admin/venues/VenuesApp.js:697
@@ -1370,7 +1369,7 @@ msgid "Request context. Use \"edit\" to include events linked to non-published p
 msgstr "Contexte de la requête. Utilisez « edit » pour inclure les événements liés aux articles non publiés (nécessite la capacité edit_posts)."
 
 #: src/Admin/manage-event/EventFinance.js:271
-#: src/Admin/manage-event/ManageEventApp.js:753
+#: src/Admin/manage-event/ManageEventApp.js:752
 msgid "Finance"
 msgstr "Finance"
 
@@ -1384,7 +1383,7 @@ msgstr "Non étiqueté"
 
 #: src/Admin/manage-event/EventPhotos.js:341
 #: src/Admin/manage-event/EventPhotos.js:359
-#: src/Admin/manage-event/ManageEventApp.js:746
+#: src/Admin/manage-event/ManageEventApp.js:745
 msgid "Photos"
 msgstr "Photos"
 
@@ -1457,7 +1456,7 @@ msgstr "Billets enregistrés avec succès."
 msgid "Failed to save tickets."
 msgstr "Échec de l'enregistrement des billets."
 
-#: src/Admin/manage-event/EventSignups.js:88
+#: src/Admin/manage-event/EventSignups.js:226
 #: src/Admin/manage-event/EventTickets.js:1589
 #: src/Admin/manage-event/SignupExportModal.js:43
 msgid "Ticket Type"
@@ -1513,7 +1512,7 @@ msgstr "Illimité"
 msgid "Price"
 msgstr "Prix"
 
-#: src/Admin/manage-event/ManageEventApp.js:636
+#: src/Admin/manage-event/ManageEventApp.js:635
 msgid "Failed to toggle occurrence."
 msgstr "Échec du basculement de l'occurrence."
 
@@ -1521,15 +1520,15 @@ msgstr "Échec du basculement de l'occurrence."
 msgid "Groups"
 msgstr "Groupes"
 
-#: src/Admin/manage-event/ManageEventApp.js:766
+#: src/Admin/manage-event/ManageEventApp.js:765
 msgid "Admin"
 msgstr "Admin"
 
-#: src/Admin/manage-event/ManageEventApp.js:772
+#: src/Admin/manage-event/ManageEventApp.js:771
 msgid "Event Administration"
 msgstr "Administration des événements"
 
-#: src/Admin/manage-event/ManageEventApp.js:818
+#: src/Admin/manage-event/ManageEventApp.js:817
 msgid "Permanently delete this event and all associated data. This action cannot be undone."
 msgstr "Supprimez définitivement cet événement et toutes les données associées. Cette action ne peut pas être annulée."
 
@@ -1788,7 +1787,7 @@ msgstr "Utiliser le type de publication Événements"
 msgid "Features"
 msgstr "Fonctionnalités"
 
-#: src/Admin/manage-event/ManageEventApp.js:1154
+#: src/Admin/manage-event/ManageEventApp.js:1153
 msgid "Recurrence"
 msgstr "Récurrence"
 
@@ -1966,33 +1965,28 @@ msgstr "Billetterie"
 msgid "Ticket types, sale periods, and pricing."
 msgstr "Types de billets, périodes de vente et tarification."
 
-#: src/Admin/manage-event/EventSignups.js:71
+#: src/Admin/manage-event/EventSignups.js:178
 msgid "Failed to load signups."
 msgstr "Impossible de charger les inscriptions."
 
-#: src/Admin/manage-event/EventSignups.js:87
 #: src/Admin/manage-event/SignupExportModal.js:33
 msgid "Email"
 msgstr "E-mail"
 
-#: src/Admin/manage-event/EventSignups.js:89
+#: src/Admin/manage-event/EventSignups.js:227
 msgid "Qty"
 msgstr "Qté"
 
-#: src/Admin/manage-event/EventSignups.js:93
+#: src/Admin/manage-event/EventSignups.js:235
 #: src/Admin/manage-event/SignupExportModal.js:68
 msgid "Mailing"
 msgstr "Mailing"
 
-#: src/Admin/manage-event/EventSignups.js:162
-msgid "No signups yet."
-msgstr "Aucune inscription pour le moment."
-
-#: src/Admin/manage-event/EventSignups.js:273
+#: src/Admin/manage-event/EventSignups.js:424
 msgid "Yes"
 msgstr "Oui"
 
-#: src/Admin/manage-event/EventSignups.js:274
+#: src/Admin/manage-event/EventSignups.js:425
 msgid "No"
 msgstr "Non"
 
@@ -2243,12 +2237,12 @@ msgstr "Tarifier les modules complémentaires par période de vente"
 msgid "Price every add-on per sale period instead of a single flat price. The Pricing column in the add-ons table becomes one input per sale period. Requires sale periods to be defined."
 msgstr "Tarifier chaque module complémentaire par période de vente au lieu d'un prix forfaitaire unique. La colonne Tarification du tableau des modules complémentaires devient une entrée par période de vente. Nécessite que les périodes de vente soient définies."
 
-#: src/Admin/manage-event/ManageEventApp.js:218
+#: src/Admin/manage-event/ManageEventApp.js:217
 msgid "Failed to create category."
 msgstr "Impossible de créer la catégorie."
 
 #. translators: 1: event title, 2: number of occurrences
-#: src/Admin/manage-event/ManageEventApp.js:464
+#: src/Admin/manage-event/ManageEventApp.js:463
 #, js-format
 msgid "Delete %1$s and its %2$d occurrence? This cannot be undone."
 msgid_plural "Delete %1$s and its %2$d occurrences? This cannot be undone."
@@ -2256,16 +2250,16 @@ msgstr[0] "Supprimer %1$s et son %2$d occurrence ? Cette action ne peut pas êtr
 msgstr[1] "Supprimer %1$s et ses %2$d occurrences ? Cette action ne peut pas être annulée."
 
 #. translators: 1: event title, 2: event date
-#: src/Admin/manage-event/ManageEventApp.js:477
+#: src/Admin/manage-event/ManageEventApp.js:476
 #, js-format
 msgid "Delete %1$s on %2$s? This cannot be undone."
 msgstr "Supprimer %1$s le %2$s ? Cette action ne peut pas être annulée."
 
-#: src/Admin/manage-event/ManageEventApp.js:1257
+#: src/Admin/manage-event/ManageEventApp.js:1256
 msgid "Save event details"
 msgstr "Enregistrer les détails de l'événement"
 
-#: src/Admin/manage-event/ManageEventApp.js:1261
+#: src/Admin/manage-event/ManageEventApp.js:1260
 msgid "Title is required"
 msgstr "Le titre est requis"
 
@@ -2393,7 +2387,7 @@ msgid "Link to"
 msgstr "Lier à"
 
 #: src/Admin/manage-event/EditInstancesModal.js:40
-#: src/Admin/manage-event/ManageEventApp.js:1225
+#: src/Admin/manage-event/ManageEventApp.js:1224
 msgid "Edit instances"
 msgstr "Modifier les instances"
 
@@ -2453,16 +2447,16 @@ msgstr "Fusionner les périodes"
 msgid "Merge to one sale window? Prices for the other %d periods will be discarded."
 msgstr "Fusionner en une seule fenêtre de vente ? Les prix des %d autres périodes seront supprimés."
 
-#: src/Admin/manage-event/ManageEventApp.js:505
+#: src/Admin/manage-event/ManageEventApp.js:504
 msgid "Series ended."
 msgstr "Série terminée."
 
-#: src/Admin/manage-event/ManageEventApp.js:508
+#: src/Admin/manage-event/ManageEventApp.js:507
 msgid "Failed to end the series."
 msgstr "Impossible de terminer la série."
 
 #. translators: %d: number of generated dates that will be removed
-#: src/Admin/manage-event/ManageEventApp.js:519
+#: src/Admin/manage-event/ManageEventApp.js:518
 #, js-format
 msgid "End this series? %d generated date will be removed. This cannot be undone."
 msgid_plural "End this series? %d generated dates will be removed. This cannot be undone."
@@ -2470,7 +2464,7 @@ msgstr[0] "Terminer cette série ? %d date générée sera supprimée. Cette act
 msgstr[1] "Terminer cette série ? %d dates générées seront supprimées. Cette action ne peut pas être annulée."
 
 #. translators: %d: number of dates in the series
-#: src/Admin/manage-event/ManageEventApp.js:550
+#: src/Admin/manage-event/ManageEventApp.js:549
 #, js-format
 msgid "Irregular series · %d date"
 msgid_plural "Irregular series · %d dates"
@@ -2478,28 +2472,28 @@ msgstr[0] "Série irrégulière · %d date"
 msgstr[1] "Série irrégulière · %d dates"
 
 #. translators: 1: frequency label (e.g. Weekly), 2: number of dates, 3: end date
-#: src/Admin/manage-event/ManageEventApp.js:582
+#: src/Admin/manage-event/ManageEventApp.js:581
 #, js-format
 msgid "Repeats %1$s · %2$d dates · ends %3$s"
 msgstr "Se répète %1$s · %2$d dates · se termine %3$s"
 
 #. translators: 1: frequency label (e.g. Weekly), 2: number of dates
-#: src/Admin/manage-event/ManageEventApp.js:592
+#: src/Admin/manage-event/ManageEventApp.js:591
 #, js-format
 msgid "Repeats %1$s · %2$d dates"
 msgstr "Se répète %1$s · %2$d dates"
 
-#: src/Admin/manage-event/ManageEventApp.js:1166
+#: src/Admin/manage-event/ManageEventApp.js:1165
 #: src/Admin/manage-event/SeriesModal.js:264
 msgid "Edit series"
 msgstr "Modifier la série"
 
-#: src/Admin/manage-event/ManageEventApp.js:1178
+#: src/Admin/manage-event/ManageEventApp.js:1177
 #: src/Admin/manage-event/ManageEventApp.js:1373
 msgid "End series"
 msgstr "Terminer la série"
 
-#: src/Admin/manage-event/ManageEventApp.js:1240
+#: src/Admin/manage-event/ManageEventApp.js:1239
 #: src/Admin/manage-event/SeriesModal.js:265
 msgid "Turn into a series"
 msgstr "Convertir en série"
@@ -2786,17 +2780,13 @@ msgstr "Confirmer"
 msgid "Link Existing Post"
 msgstr "Lier un article existant"
 
-#: src/Admin/manage-event/EventSignups.js:134
+#: src/Admin/manage-event/EventSignups.js:291
 msgid "Mailing opt-ins only"
 msgstr "Inscriptions à la liste de diffusion uniquement"
 
 #: src/Admin/manage-event/SignupExportModal.js:358
 msgid "Download CSV"
 msgstr "Télécharger CSV"
-
-#: src/Admin/manage-event/EventSignups.js:163
-msgid "Nothing to export — no signups match the current filter."
-msgstr "Rien à exporter — aucune inscription ne correspond au filtre actuel."
 
 #: src/Admin/manage-event/EventTickets.js:1384
 #: src/Admin/manage-event/EventTickets.js:1517
@@ -3339,28 +3329,28 @@ msgstr "+%s"
 msgid "-%s"
 msgstr "-%s"
 
-#: src/Admin/manage-event/ManageEventApp.js:1098
+#: src/Admin/manage-event/ManageEventApp.js:1097
 msgid "Attendance mode"
 msgstr "Mode de participation"
 
-#: src/Admin/manage-event/ManageEventApp.js:1105
+#: src/Admin/manage-event/ManageEventApp.js:1104
 msgid "In person"
 msgstr "En personne"
 
 #: src/Helpers/OccurrenceFields.php:143
-#: src/Admin/manage-event/ManageEventApp.js:1112
+#: src/Admin/manage-event/ManageEventApp.js:1111
 msgid "Online"
 msgstr "En ligne"
 
-#: src/Admin/manage-event/ManageEventApp.js:1119
+#: src/Admin/manage-event/ManageEventApp.js:1118
 msgid "Hybrid"
 msgstr "Hybride"
 
-#: src/Admin/manage-event/ManageEventApp.js:1132
+#: src/Admin/manage-event/ManageEventApp.js:1131
 msgid "Joining link"
 msgstr "Lien de connexion"
 
-#: src/Admin/manage-event/ManageEventApp.js:1136
+#: src/Admin/manage-event/ManageEventApp.js:1135
 msgid "Shown publicly. Leave empty to link to the event page instead."
 msgstr "Affiché publiquement. Laissez vide pour créer un lien vers la page de l'événement à la place."
 
@@ -3487,7 +3477,7 @@ msgid "Latitude and longitude must be 20 characters or fewer."
 msgstr "La latitude et la longitude doivent contenir 20 caractères ou moins."
 
 #: src/Admin/event-meta-box/EventEditForm.js:397
-#: src/Admin/manage-event/ManageEventApp.js:1089
+#: src/Admin/manage-event/ManageEventApp.js:1088
 msgid "Used as the event location only when no venue is selected above."
 msgstr "Utilisé comme lieu d'événement uniquement lorsqu'aucun lieu n'est sélectionné ci-dessus."
 
@@ -3572,7 +3562,7 @@ msgstr "Chargement des lieux..."
 msgid "No venues found. Create your first venue to get started."
 msgstr "Aucun lieu trouvé. Créez votre premier lieu pour commencer."
 
-#: src/Admin/manage-event/EventSignups.js:95
+#: src/Admin/manage-event/EventSignups.js:237
 #: src/Admin/venues/VenuesApp.js:579
 msgid "Actions"
 msgstr "Actions"
@@ -3581,7 +3571,7 @@ msgstr "Actions"
 msgid "No address"
 msgstr "Aucune adresse"
 
-#: src/Admin/manage-event/EventSignups.js:297
+#: src/Admin/manage-event/EventSignups.js:438
 #: src/Admin/venues/VenuesApp.js:659
 msgid "Delete"
 msgstr "Supprimer"
@@ -3648,22 +3638,18 @@ msgstr "Créer un lieu"
 msgid "Tickets for %s"
 msgstr "Billets pour %s"
 
-#: src/Admin/manage-event/EventSignups.js:92
+#: src/Admin/manage-event/EventSignups.js:234
 #: src/Admin/manage-event/SignupExportModal.js:63
 msgid "Transaction"
 msgstr "Transaction"
 
-#: src/Admin/manage-event/EventSignups.js:239
+#: src/Admin/manage-event/EventSignups.js:401
 msgid "Confirmed — over capacity"
 msgstr "Confirmé — au-delà de la capacité"
 
-#: src/Admin/manage-event/EventSignups.js:244
+#: src/Admin/manage-event/EventSignups.js:405
 msgid "Confirmed"
 msgstr "Confirmé"
-
-#: src/Admin/manage-event/EventSignups.js:246
-msgid "Expired"
-msgstr "Expiré"
 
 #: src/API/EventDatesController.php:62
 msgid "Post ID that should have event data."
@@ -3682,7 +3668,7 @@ msgid "Signup not found."
 msgstr "Inscription non trouvée."
 
 #: src/API/GetTicketsController.php:1502
-#: src/Admin/manage-event/EventSignups.js:119
+#: src/Admin/manage-event/EventSignups.js:276
 msgid "Failed to delete signup."
 msgstr "Impossible de supprimer l'inscription."
 
@@ -3691,17 +3677,11 @@ msgstr "Impossible de supprimer l'inscription."
 msgid "Loading calendar…"
 msgstr "Chargement du calendrier…"
 
-#: src/Admin/manage-event/EventSignups.js:310
+#: src/Admin/manage-event/EventSignups.js:455
 msgid "Delete signup"
 msgstr "Supprimer l'inscription"
 
-#. translators: 1: signup name, 2: signup email, 3: payment status
-#: src/Admin/manage-event/EventSignups.js:318
-#, js-format
-msgid "Delete the signup for %1$s (%2$s)? Its current payment status is %3$s."
-msgstr "Supprimer l'inscription pour %1$s (%2$s) ? Son statut de paiement actuel est %3$s."
-
-#: src/Admin/manage-event/EventSignups.js:328
+#: src/Admin/manage-event/EventSignups.js:472
 msgid "This deletion is permanent. It removes only the local signup record and does not refund or cancel any payment-provider transaction."
 msgstr "Cette suppression est permanente. Elle supprime uniquement l'enregistrement d'inscription local et ne rembourse ni n'annule aucune transaction du fournisseur de paiement."
 
@@ -3827,15 +3807,15 @@ msgid_plural "You can select at most %d extensions."
 msgstr[0] "Vous pouvez sélectionner au maximum %d extension."
 msgstr[1] "Vous pouvez sélectionner au maximum %d extensions."
 
-#: src/Admin/manage-event/ManageEventApp.js:781
+#: src/Admin/manage-event/ManageEventApp.js:780
 msgid "Open copy options for the underlying recurring event, not only this date."
 msgstr "Ouvrir les options de copie pour l'événement récurrent sous-jacent, pas seulement cette date."
 
-#: src/Admin/manage-event/ManageEventApp.js:785
+#: src/Admin/manage-event/ManageEventApp.js:784
 msgid "Open copy options with this event selected as the source."
 msgstr "Ouvrir les options de copie avec cet événement sélectionné comme source."
 
-#: src/Admin/manage-event/ManageEventApp.js:795
+#: src/Admin/manage-event/ManageEventApp.js:794
 msgid "Copy event"
 msgstr "Copier l'événement"
 
@@ -3972,13 +3952,13 @@ msgstr "Vous n'avez pas la permission de copier les événements du calendrier."
 msgid "The event copy could not be completed, and any partial copy was removed. Please try again."
 msgstr "La copie de l'événement n'a pas pu être complétée, et toute copie partielle a été supprimée. Veuillez réessayer."
 
-#: src/Admin/manage-event/EventSignups.js:129
-#: src/Admin/manage-event/ManageEventApp.js:738
+#: src/Admin/manage-event/EventSignups.js:286
+#: src/Admin/manage-event/ManageEventApp.js:737
 msgid "List"
 msgstr "Liste"
 
 #: src/Admin/manage-event/EventTickets.js:1533
-#: src/Admin/manage-event/ManageEventApp.js:721
+#: src/Admin/manage-event/ManageEventApp.js:720
 msgid "Prices"
 msgstr "Tarifs"
 
@@ -4132,7 +4112,7 @@ msgstr "Aucun budget"
 msgid "Save budget"
 msgstr "Enregistrer le budget"
 
-#: src/Admin/manage-event/EventSignups.js:148
+#: src/Admin/manage-event/EventSignups.js:305
 #: src/Admin/manage-event/SignupExportModal.js:250
 msgid "Export"
 msgstr "Exporter"
@@ -4226,18 +4206,18 @@ msgid "Failed to load categories."
 msgstr "Échec du chargement des catégories."
 
 #. translators: 1: category name, 2: language name
-#: src/Admin/manage-event/ManageEventApp.js:201
+#: src/Admin/manage-event/ManageEventApp.js:200
 #: src/blocks/components/CategorySelector.js:85
 #, js-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
-#: src/Admin/manage-event/ManageEventApp.js:413
+#: src/Admin/manage-event/ManageEventApp.js:412
 msgid "Some selected categories were not saved. Please try again."
 msgstr "Certaines catégories sélectionnées n'ont pas été enregistrées. Veuillez réessayer."
 
 #: src/blocks/event-prices/render.php:37
-#: src/blocks/event-prices/components/EditComponent.js:76
+#: src/blocks/event-prices/components/EditComponent.js:234
 msgid "Event Prices block is disabled — no event is linked to this post."
 msgstr ""
 
@@ -4246,25 +4226,26 @@ msgid "Event Prices block is disabled — no public prices are configured for th
 msgstr ""
 
 #. translators: 1: sale period start date, 2: sale period end date
-#: src/blocks/event-prices/render.php:100
+#: src/blocks/event-prices/render.php:117
 #, php-format
 msgid "%1$s – %2$s"
 msgstr ""
 
-#: src/blocks/event-prices/render.php:119
+#: src/blocks/event-prices/render.php:136
 msgid "Free"
 msgstr ""
 
-#: src/blocks/event-prices/render.php:121
+#: src/blocks/event-prices/render.php:138
 msgid "Not available"
 msgstr ""
 
-#: src/blocks/event-prices/render.php:140
+#: src/blocks/event-prices/render.php:157
+#: src/blocks/event-prices/components/EditComponent.js:214
 msgid "(untitled ticket type)"
 msgstr ""
 
 #: src/Admin/calendar/components/QuickEventModal.js:249
-#: src/Admin/manage-event/ManageEventApp.js:652
+#: src/Admin/manage-event/ManageEventApp.js:651
 msgid "Add new venue"
 msgstr ""
 
@@ -4475,4 +4456,69 @@ msgstr ""
 
 #: src/blocks/events-list/components/EditComponent.js:145
 msgid "Shows events that have not started yet. A recurring series from this site appears once, at its next date, with its schedule. Events from calendar feeds and external sources are listed one date at a time."
+msgstr ""
+
+#: src/blocks/event-prices/render.php:76
+msgid "Event Prices block is empty — every price is hidden in this block's settings."
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:117
+#: src/Admin/manage-event/EventSignups.js:118
+msgid "Selected"
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:128
+#: src/Admin/manage-event/EventSignups.js:129
+msgid "Not selected"
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:139
+#: src/Admin/manage-event/EventSignups.js:140
+msgid "Selection unavailable"
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:318
+msgid "Selected extras are shown only when Fair Audience is active."
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:327
+msgid "No confirmed registrations yet."
+msgstr ""
+
+#: src/Admin/manage-event/EventSignups.js:331
+msgid "Nothing to export — no registrations match the current filter."
+msgstr ""
+
+#. translators: 1: signup name, 2: payment status
+#: src/Admin/manage-event/EventSignups.js:463
+#, js-format
+msgid "Delete the signup for %1$s? Its current payment status is %2$s."
+msgstr ""
+
+#: src/blocks/event-prices/components/EditComponent.js:154
+msgid "Could not load this event’s prices."
+msgstr ""
+
+#: src/blocks/event-prices/components/EditComponent.js:159
+msgid "Try again"
+msgstr ""
+
+#: src/blocks/event-prices/components/EditComponent.js:170
+msgid "Nothing is configured on the Prices tab yet."
+msgstr ""
+
+#: src/blocks/event-prices/components/EditComponent.js:203
+msgid "Ticket types"
+msgstr ""
+
+#: src/blocks/event-prices/components/EditComponent.js:205
+msgid "Choose what this block shows. Hidden entries can still be bought during signup, and other Event Prices blocks are not affected."
+msgstr ""
+
+#: src/blocks/event-prices/components/EditComponent.js:217
+msgid "Sale periods"
+msgstr ""
+
+#: src/blocks/event-prices/components/EditComponent.js:222
+msgid "(untitled sale period)"
 msgstr ""

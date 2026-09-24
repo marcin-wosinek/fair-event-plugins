@@ -1,6 +1,9 @@
 /**
  * E2E: the Manage Event List tab loads existing signups regardless of
- * whether Fair Audience is active (#1672).
+ * whether Fair Audience is active (#1672), numbers confirmed registrations,
+ * keeps email addresses out of the table, and shows each configured extra as
+ * a column — selected/not selected with Fair Audience, unavailable without
+ * it (#1683).
  */
 
 import { test, expect } from '@playwright/test';
@@ -68,6 +71,8 @@ test.describe( 'Manage Event — List tab', () => {
 		name: `List Tab Tester ${ Date.now() }`,
 		email: `manage-event-list-${ Date.now() }@example.test`,
 		ticketType: 'List Tab Admission',
+		selectedExtra: 'List Tab Dinner',
+		otherExtra: 'List Tab Party',
 	};
 
 	test.beforeAll( async ( { browser } ) => {
@@ -147,10 +152,21 @@ test.describe( 'Manage Event — List tab', () => {
 					},
 				],
 				settings: {},
+				options: [
+					{ name: signup.selectedExtra, price: 0 },
+					{ name: signup.otherExtra, price: 0 },
+				],
 			},
 		} );
 		const ticketTypeId = tickets.ticket_types?.[ 0 ]?.id;
 		expect( ticketTypeId ).toBeTruthy();
+		const selectedExtraId = tickets.options?.find(
+			( option ) => option.name === signup.selectedExtra
+		)?.id;
+		expect( selectedExtraId ).toBeTruthy();
+
+		// Extras are recorded by Fair Audience, so sign up while it is active.
+		await setPluginStatus( adminPage, 'active' );
 
 		await apiFetch( adminPage, {
 			path: '/fair-events/v1/get-tickets',
@@ -161,6 +177,7 @@ test.describe( 'Manage Event — List tab', () => {
 				email: signup.email,
 				ticket_type_id: ticketTypeId,
 				quantity: 1,
+				ticket_option_ids: [ selectedExtraId ],
 			},
 		} );
 	} );
@@ -210,10 +227,44 @@ test.describe( 'Manage Event — List tab', () => {
 			).toHaveAttribute( 'aria-selected', 'true' );
 
 			const row = adminPage.getByRole( 'row', {
-				name: new RegExp( signup.email ),
+				name: new RegExp( signup.name ),
 			} );
-			await expect( row ).toContainText( signup.name );
 			await expect( row ).toContainText( signup.ticketType );
+			await expect( row.getByRole( 'cell' ).first() ).toHaveText( '1' );
+			await expect( adminPage.getByRole( 'table' ) ).not.toContainText(
+				signup.email
+			);
+			await expect(
+				adminPage.getByRole( 'columnheader', { name: 'Email' } )
+			).toHaveCount( 0 );
+			await expect(
+				adminPage.getByRole( 'columnheader', { name: 'Amount' } )
+			).toHaveCount( 0 );
+			await expect(
+				adminPage.getByRole( 'columnheader', {
+					name: signup.selectedExtra,
+				} )
+			).toBeVisible();
+			await expect(
+				adminPage.getByRole( 'columnheader', {
+					name: signup.otherExtra,
+				} )
+			).toBeVisible();
+
+			const indicators = row.getByRole( 'img' );
+			if ( audienceStatus === 'active' ) {
+				await expect( indicators ).toHaveCount( 2 );
+				await expect( indicators.nth( 0 ) ).toHaveAccessibleName(
+					'Selected'
+				);
+				await expect( indicators.nth( 1 ) ).toHaveAccessibleName(
+					'Not selected'
+				);
+			} else {
+				await expect(
+					row.getByRole( 'img', { name: 'Selection unavailable' } )
+				).toHaveCount( 2 );
+			}
 
 			const audienceTab = adminPage.getByRole( 'tab', {
 				name: 'Audience',

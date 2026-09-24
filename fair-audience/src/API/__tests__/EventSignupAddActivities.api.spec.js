@@ -251,6 +251,9 @@ test.describe( 'EventSignupController add-activities', () => {
 		);
 		expect( row ).toBeTruthy();
 		expect( row.ticket_option_ids ).toContain( freeOptionId );
+		// #1683 — a free activity is confirmed at once, so views that show only
+		// granted extras (the Fair Events List tab) see it too.
+		expect( row.confirmed_ticket_option_ids ).toContain( freeOptionId );
 	} );
 
 	test( 're-adding the same activity is rejected by the duplicate guard', async () => {
@@ -313,5 +316,9 @@ test.describe( 'EventSignupController add-activities', () => {
 		} else {
 			expect( row.ticket_option_ids ).toContain( paidOptionId );
 		}
+		// #1683 — an unpaid add-on is never reported as confirmed, whether it
+		// is held pending payment or was rejected outright.
+		expect( row.confirmed_ticket_option_ids ).not.toContain( paidOptionId );
+		expect( row.confirmed_ticket_option_ids ).toContain( freeOptionId );
 	} );
 } );

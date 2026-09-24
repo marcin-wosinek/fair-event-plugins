@@ -1271,6 +1271,7 @@ export default function ManageEventApp() {
 .fair-events-manage-event .components-card__body > * { max-width: 600px; }
 .fair-events-manage-event .fair-events-tickets .components-card__body > * { max-width: none; }
 .fair-events-manage-event .fair-events-photos .components-card__body > * { max-width: none; }
+.fair-events-manage-event .fair-events-signups .components-card__body > * { max-width: none; }
 .fair-events-manage-event .fair-events-event-details-card .components-card__body > * { max-width: none; }
 /* Stack the event-details cards vertically, each spanning the full
    available width — matches the Audience tab idiom. */

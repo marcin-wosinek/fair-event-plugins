@@ -407,15 +407,18 @@ class EventParticipantsController extends WP_REST_Controller {
 		}
 
 		// Build participant → ticket option names + IDs lookup from junction table.
-		$participant_option_names = array();
-		$participant_option_ids   = array();
-		$ep_ids                   = array_map( fn( $ep ) => $ep->id, $event_participants );
+		// Confirmed IDs exclude options still held for an unpaid add-on, for
+		// views that must show only what the participant actually has.
+		$participant_option_names         = array();
+		$participant_option_ids           = array();
+		$participant_confirmed_option_ids = array();
+		$ep_ids                           = array_map( fn( $ep ) => $ep->id, $event_participants );
 		if ( ! empty( $ep_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $ep_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$option_rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT event_participant_id, ticket_option_id, ticket_option_name
+					"SELECT event_participant_id, ticket_option_id, ticket_option_name, status
 					FROM {$wpdb->prefix}fair_audience_event_participant_options
 					WHERE event_participant_id IN ($placeholders)",
 					...$ep_ids
@@ -424,14 +427,18 @@ class EventParticipantsController extends WP_REST_Controller {
 			foreach ( $option_rows as $row ) {
 				$ep_id = (int) $row->event_participant_id;
 				if ( ! isset( $participant_option_names[ $ep_id ] ) ) {
-					$participant_option_names[ $ep_id ] = array();
-					$participant_option_ids[ $ep_id ]   = array();
+					$participant_option_names[ $ep_id ]         = array();
+					$participant_option_ids[ $ep_id ]           = array();
+					$participant_confirmed_option_ids[ $ep_id ] = array();
 				}
 				if ( '' !== (string) $row->ticket_option_name ) {
 					$participant_option_names[ $ep_id ][] = $row->ticket_option_name;
 				}
 				if ( $row->ticket_option_id ) {
 					$participant_option_ids[ $ep_id ][] = (int) $row->ticket_option_id;
+					if ( 'confirmed' === $row->status ) {
+						$participant_confirmed_option_ids[ $ep_id ][] = (int) $row->ticket_option_id;
+					}
 				}
 			}
 		}
@@ -459,36 +466,37 @@ class EventParticipantsController extends WP_REST_Controller {
 		$participant_questionnaire = $this->get_signup_answers_by_participant( $event_date_id );
 
 		$items = array_map(
-			function ( $ep ) use ( $likes_data, $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_questionnaire, $event_date_id ) {
+			function ( $ep ) use ( $likes_data, $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_questionnaire, $event_date_id ) {
 				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
 				return array(
-					'id'                    => $ep->id,
-					'participant_id'        => $ep->participant_id,
-					'event_date_id'         => $ep->event_date_id,
+					'id'                          => $ep->id,
+					'participant_id'              => $ep->participant_id,
+					'event_date_id'               => $ep->event_date_id,
 					// A row whose event_date_id differs from the requested occurrence
 					// is a whole-series pass surfaced from the master event-date.
-					'is_series_pass'        => (int) $ep->event_date_id !== (int) $event_date_id,
-					'participant_name'      => $participant ? $participant->name . ' ' . $participant->surname : '',
-					'name'                  => $participant ? $participant->name : '',
-					'surname'               => $participant ? $participant->surname : '',
-					'participant_email'     => $participant ? $participant->email : '',
-					'email_profile'         => $participant ? $participant->email_profile : '',
-					'instagram'             => $participant ? $participant->instagram : '',
-					'label'                 => $ep->label,
-					'ticket_type_id'        => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
-					'ticket_type_name'      => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
+					'is_series_pass'              => (int) $ep->event_date_id !== (int) $event_date_id,
+					'participant_name'            => $participant ? $participant->name . ' ' . $participant->surname : '',
+					'name'                        => $participant ? $participant->name : '',
+					'surname'                     => $participant ? $participant->surname : '',
+					'participant_email'           => $participant ? $participant->email : '',
+					'email_profile'               => $participant ? $participant->email_profile : '',
+					'instagram'                   => $participant ? $participant->instagram : '',
+					'label'                       => $ep->label,
+					'ticket_type_id'              => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
+					'ticket_type_name'            => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
 						? $ticket_type_names[ $ep->ticket_type_id ]
 						: null,
-					'attended_at'           => $ep->attended_at,
-					'created_at'            => $ep->created_at,
-					'payment_expires_at'    => $ep->payment_expires_at,
-					'photo_likes_received'  => isset( $likes_data[ $ep->participant_id ] )
+					'attended_at'                 => $ep->attended_at,
+					'created_at'                  => $ep->created_at,
+					'payment_expires_at'          => $ep->payment_expires_at,
+					'photo_likes_received'        => isset( $likes_data[ $ep->participant_id ] )
 						? (int) $likes_data[ $ep->participant_id ]->likes_count
 						: 0,
-					'ticket_option_names'   => $participant_option_names[ $ep->id ] ?? array(),
-					'ticket_option_ids'     => $participant_option_ids[ $ep->id ] ?? array(),
-					'admin_comment'         => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
-					'questionnaire_answers' => $participant_questionnaire[ $ep->participant_id ] ?? array(),
+					'ticket_option_names'         => $participant_option_names[ $ep->id ] ?? array(),
+					'ticket_option_ids'           => $participant_option_ids[ $ep->id ] ?? array(),
+					'confirmed_ticket_option_ids' => $participant_confirmed_option_ids[ $ep->id ] ?? array(),
+					'admin_comment'               => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
+					'questionnaire_answers'       => $participant_questionnaire[ $ep->participant_id ] ?? array(),
 				);
 			},
 			$event_participants
