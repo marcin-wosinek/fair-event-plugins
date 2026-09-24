@@ -245,7 +245,6 @@ class SignupFieldsetRenderer {
 						</span>
 					</label>
 				<?php endforeach; ?>
-				<p class="fair-events-ticket-options-total"></p>
 			</fieldset>
 		</div>
 		<?php

@@ -47,13 +47,20 @@ test.describe('multiple_instances ticket type purchase (new buyer)', () => {
 				.check();
 		}
 
-		// Frontend total already reflects all 3 chosen occurrences.
+		// The checkout total already reflects all 3 chosen occurrences.
 		const expectedTotal = (
 			event.price * event.occurrenceIds.length
 		).toFixed(2);
+		const checkoutTotal = form.locator(
+			'.fair-events-signup-checkout-total'
+		);
+		await expect(checkoutTotal).toHaveAttribute(
+			'data-amount',
+			expectedTotal
+		);
 		await expect(
-			instancePicker.locator('.fair-events-instance-picker-total')
-		).toHaveText(`Total: ${expectedTotal} EUR`);
+			checkoutTotal.locator('.fair-events-signup-checkout-total-amount')
+		).toHaveText(`${expectedTotal} EUR`);
 
 		const stamp = Date.now();
 		await form

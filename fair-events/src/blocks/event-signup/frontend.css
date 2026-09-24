@@ -3,6 +3,31 @@
 	margin-bottom: 16px;
 }
 
+/* Single checkout total, directly above the submit button. Matches the
+   inputs' 400px column so the amount lines up with the fields above it, and
+   wraps instead of overflowing on narrow screens. */
+.fair-events-get-tickets-form .fair-events-signup-checkout-total {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 4px 16px;
+	max-width: 400px;
+	padding-top: 12px;
+	border-top: 1px solid #ccc;
+	font-size: 1.125em;
+}
+
+.fair-events-get-tickets-form .fair-events-signup-checkout-total-label {
+	font-weight: 600;
+}
+
+.fair-events-get-tickets-form .fair-events-signup-checkout-total-amount {
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	overflow-wrap: anywhere;
+}
+
 .fair-events-get-tickets-form .form-label,
 .fair-events-signed-up-card .form-label {
 	display: block;

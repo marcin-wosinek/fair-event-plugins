@@ -698,7 +698,6 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 					</label>
 				<?php endforeach; ?>
 				<p class="fair-events-instance-picker-hint"></p>
-				<p class="fair-events-instance-picker-total"></p>
 			</div>
 		<?php endif; ?>
 
@@ -789,6 +788,34 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 		 */
 		do_action( 'fair_events_signup_render_before_submit', $context );
 		?>
+
+		<?php
+		// The form's single checkout total, computed for the default state
+		// (first enabled ticket type, quantity 1, no activities or occurrences
+		// checked) so a paid default never paints as zero; frontend.js keeps it
+		// in sync afterwards. .fair-events-signup-checkout-total with its
+		// data-amount/data-currency is a documented tracking contract (see
+		// readme.txt) — don't rename it.
+		$checkout_currency     = \FairEventsShared\Money::site_currency();
+		$checkout_default_type = \FairEvents\Services\SignupFieldsetRenderer::resolve_first_enabled_type_id( $ticket_types, $price_by_type_id, $payments_unavailable );
+		$checkout_total        = 0.0;
+		foreach ( $ticket_types as $ticket_type ) {
+			if ( (int) $ticket_type->id === $checkout_default_type && ! $ticket_type->is_multiple_instances() ) {
+				$checkout_total = max( 0.0, (float) ( $price_by_type_id[ $checkout_default_type ] ?? 0 ) );
+			}
+		}
+		global $wp_locale;
+		?>
+		<div
+			class="form-row fair-events-signup-checkout-total"
+			data-amount="<?php echo esc_attr( \FairEventsShared\Money::format_value( $checkout_total ) ); ?>"
+			data-currency="<?php echo esc_attr( $checkout_currency ); ?>"
+			data-decimal-point="<?php echo esc_attr( $wp_locale->number_format['decimal_point'] ?? '.' ); ?>"
+			data-thousands-sep="<?php echo esc_attr( $wp_locale->number_format['thousands_sep'] ?? ',' ); ?>"
+		>
+			<span class="fair-events-signup-checkout-total-label"><?php esc_html_e( 'Total', 'fair-events' ); ?></span>
+			<span class="fair-events-signup-checkout-total-amount" aria-live="polite" aria-atomic="true"><?php echo esc_html( \FairEventsShared\Money::format_display( $checkout_total, $checkout_currency ) ); ?></span>
+		</div>
 
 		<div class="form-row form-submit">
 			<button type="submit" class="form-button wp-block-button__link wp-element-button">
