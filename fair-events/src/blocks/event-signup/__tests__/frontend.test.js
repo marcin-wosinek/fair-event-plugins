@@ -24,7 +24,11 @@ jest.mock( 'fair-events-shared', () => ( {
 	},
 	initiatePayment: jest.fn( () => Promise.resolve( {} ) ),
 	pollPaymentStatus: jest.fn(),
-	computeTicketTotal: jest.fn( () => 0 ),
+	computeTicketTotal: jest.fn(
+		( { unitPrice, count = 1, optionPrices = [] } ) =>
+			unitPrice * count +
+			optionPrices.reduce( ( sum, price ) => sum + price, 0 )
+	),
 	formatMoney: jest.fn( ( amount ) => String( amount ) ),
 	collectQuestionAnswers: jest.fn( () => ( {} ) ),
 	validateQuestions: jest.fn( () => null ),
@@ -202,7 +206,6 @@ describe( 'Event Signup frontend.js — ticket extension rules (#1521)', () => {
 				<label><input type="checkbox" name="ticket_option_ids[]" value="10" data-option-price="5"></label>
 				<label><input type="checkbox" name="ticket_option_ids[]" value="11" data-option-price="7"></label>
 				<label><input type="checkbox" name="ticket_option_ids[]" value="12" data-option-price="9"></label>
-				<p class="fair-events-ticket-options-total"></p>
 			</fieldset></div>`
 		);
 		apiFetch.mockResolvedValue( noopResponse() );
@@ -591,5 +594,205 @@ describe( 'Event Signup frontend.js — viewer-context hydration', () => {
 		initialize();
 
 		expect( apiFetch ).not.toHaveBeenCalled();
+	} );
+} );
+
+describe( 'Event Signup frontend.js — checkout total (#1666)', () => {
+	function buildTotalBlock( {
+		ticketTypes = '<label><input type="radio" name="ticket_type_id" value="1" data-ticket-price="15.00" data-recurrence-scope="single_instance" checked>General</label>',
+		extraRows = '',
+		decimalPoint = '.',
+		thousandsSep = ',',
+	} = {} ) {
+		document.body.innerHTML = `
+			<div class="fair-events-get-tickets" data-event-date-id="42" data-currency="EUR">
+				<form class="fair-events-get-tickets-form" data-event-date-id="42" data-min-activities="0" data-currency="EUR">
+					<div class="form-row"><fieldset class="fair-events-ticket-fieldset">${ ticketTypes }</fieldset></div>
+					${ extraRows }
+					<div class="form-row fair-events-quantity-row">
+						<input type="number" name="quantity" value="1" min="1" max="10" />
+					</div>
+					<div class="form-row fair-events-signup-checkout-total" data-amount="0.00" data-currency="EUR" data-decimal-point="${ decimalPoint }" data-thousands-sep="${ thousandsSep }">
+						<span class="fair-events-signup-checkout-total-label">Total</span>
+						<span class="fair-events-signup-checkout-total-amount">0.00 EUR</span>
+					</div>
+					<div class="form-row form-submit"><button type="submit">Get Tickets</button></div>
+				</form>
+				<div class="message-container"></div>
+			</div>`;
+		return document.querySelector( 'form' );
+	}
+
+	function readTotal( form ) {
+		const total = form.querySelector(
+			'.fair-events-signup-checkout-total'
+		);
+		return {
+			amount: total.dataset.amount,
+			currency: total.dataset.currency,
+			text: total.querySelector(
+				'.fair-events-signup-checkout-total-amount'
+			).textContent,
+		};
+	}
+
+	function change( input ) {
+		input.dispatchEvent( new window.Event( 'change', { bubbles: true } ) );
+	}
+
+	beforeEach( () => {
+		apiFetch.mockResolvedValue( noopResponse() );
+	} );
+
+	test( 'shows the paid default selection on load', () => {
+		const form = buildTotalBlock();
+		initialize();
+		expect( readTotal( form ) ).toEqual( {
+			amount: '15.00',
+			currency: 'EUR',
+			text: '15.00 EUR',
+		} );
+	} );
+
+	test( 'shows an explicit zero for a free signup with no ticket types', () => {
+		const form = buildTotalBlock( { ticketTypes: '' } );
+		initialize();
+		expect( readTotal( form ) ).toMatchObject( {
+			amount: '0.00',
+			text: '0.00 EUR',
+		} );
+	} );
+
+	test( 'follows the ticket type and quantity', () => {
+		const form = buildTotalBlock( {
+			ticketTypes:
+				'<label><input type="radio" name="ticket_type_id" value="1" data-ticket-price="15.00" data-recurrence-scope="single_instance" checked>General</label>' +
+				'<label><input type="radio" name="ticket_type_id" value="2" data-ticket-price="40.00" data-recurrence-scope="whole_series">Pass</label>',
+		} );
+		initialize();
+
+		const quantity = form.querySelector( 'input[name="quantity"]' );
+		quantity.value = '3';
+		quantity.dispatchEvent(
+			new window.Event( 'input', { bubbles: true } )
+		);
+		expect( readTotal( form ).amount ).toBe( '45.00' );
+
+		const pass = form.querySelector( 'input[value="2"]' );
+		pass.checked = true;
+		change( pass );
+		expect( readTotal( form ) ).toMatchObject( {
+			amount: '120.00',
+			text: '120.00 EUR',
+		} );
+	} );
+
+	test( 'multiplies a multiple-instances price by the checked occurrences', () => {
+		const form = buildTotalBlock( {
+			ticketTypes:
+				'<label><input type="radio" name="ticket_type_id" value="3" data-ticket-price="10.00" data-recurrence-scope="multiple_instances" data-min-instances="0" checked>Pick</label>',
+			extraRows: `<div class="form-row fair-events-instance-picker">
+				<input type="checkbox" name="event_date_ids[]" value="51" />
+				<input type="checkbox" name="event_date_ids[]" value="52" />
+				<p class="fair-events-instance-picker-hint"></p>
+			</div>`,
+		} );
+		initialize();
+		expect( readTotal( form ).amount ).toBe( '0.00' );
+
+		const boxes = form.querySelectorAll( 'input[name="event_date_ids[]"]' );
+		boxes[ 0 ].checked = true;
+		change( boxes[ 0 ] );
+		boxes[ 1 ].checked = true;
+		change( boxes[ 1 ] );
+		expect( readTotal( form ) ).toMatchObject( {
+			amount: '20.00',
+			text: '20.00 EUR',
+		} );
+	} );
+
+	test( 'adds activity prices to the ticket price', () => {
+		const form = buildTotalBlock( {
+			extraRows: `<div class="form-row"><fieldset class="fair-events-ticket-options">
+				<label><input type="checkbox" name="ticket_option_ids[]" value="10" data-option-price="5.50"></label>
+				<label><input type="checkbox" name="ticket_option_ids[]" value="11" data-option-price="7.25"></label>
+			</fieldset></div>`,
+		} );
+		initialize();
+
+		form.querySelectorAll( 'input[name="ticket_option_ids[]"]' ).forEach(
+			( box ) => {
+				box.checked = true;
+				change( box );
+			}
+		);
+		expect( readTotal( form ) ).toMatchObject( {
+			amount: '27.75',
+			text: '27.75 EUR',
+		} );
+	} );
+
+	test( 'floors a total reduced below zero at an explicit zero', () => {
+		const form = buildTotalBlock( {
+			ticketTypes:
+				'<label><input type="radio" name="ticket_type_id" value="1" data-ticket-price="0.00" data-recurrence-scope="single_instance" checked>Free</label>',
+			extraRows: `<div class="form-row"><fieldset class="fair-events-ticket-options">
+				<label><input type="checkbox" name="ticket_option_ids[]" value="10" data-option-price="-5.00"></label>
+			</fieldset></div>`,
+		} );
+		initialize();
+		const box = form.querySelector( 'input[name="ticket_option_ids[]"]' );
+		box.checked = true;
+		change( box );
+		expect( readTotal( form ) ).toMatchObject( {
+			amount: '0.00',
+			text: '0.00 EUR',
+		} );
+	} );
+
+	test( 'applies a hydrated discount and keeps the note ahead of the total', async () => {
+		const form = buildTotalBlock();
+		apiFetch.mockResolvedValue( {
+			...noopResponse(),
+			viewer_resolved: true,
+			ticket_type_fieldset_html:
+				'<div class="form-row"><fieldset class="fair-events-ticket-fieldset">' +
+				'<label><input type="radio" name="ticket_type_id" value="1" data-ticket-price="12.00" data-recurrence-scope="single_instance" checked>General</label>' +
+				'</fieldset></div>',
+			before_submit_html:
+				'<p class="fair-audience-signup-discount-note">20% off</p>',
+		} );
+
+		initialize();
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect( readTotal( form ) ).toMatchObject( {
+			amount: '12.00',
+			text: '12.00 EUR',
+		} );
+		const total = form.querySelector(
+			'.fair-events-signup-checkout-total'
+		);
+		expect( total.nextElementSibling ).toBe(
+			form.querySelector( '.form-submit' )
+		);
+		expect( total.previousElementSibling.textContent ).toContain(
+			'20% off'
+		);
+	} );
+
+	test( 'localizes the visible amount while data-amount stays a plain decimal', () => {
+		const form = buildTotalBlock( {
+			ticketTypes:
+				'<label><input type="radio" name="ticket_type_id" value="1" data-ticket-price="1234.50" data-recurrence-scope="single_instance" checked>VIP</label>',
+			decimalPoint: ',',
+			thousandsSep: '.',
+		} );
+		initialize();
+		expect( readTotal( form ) ).toMatchObject( {
+			amount: '1234.50',
+			text: '1.234,50 EUR',
+		} );
 	} );
 } );

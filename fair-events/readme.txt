@@ -111,3 +111,13 @@ The full changelog is maintained on GitHub:
 == Developer Notes ==
 
 The plugin is open source and contributions are welcome on [GitHub](https://github.com/marcin-wosinek/fair-event-plugins).
+
+= Checkout total for conversion tracking =
+
+The Event Signup form shows one total directly above its submit button. Site-level tracking (for example a Meta event configured in a tag manager) can read the current payable amount from it:
+
+* Selector: `.fair-events-signup-checkout-total`
+* `data-amount`: the total as a dot-separated decimal with two places (e.g. `42.50`), independent of the site language's number format. It is `0.00` for free signups or before a payable choice is made.
+* `data-currency`: the ISO currency code (e.g. `EUR`).
+
+Both attributes update whenever the visitor changes a ticket type, quantity, date, or activity, and always match the visible amount. The plugin itself sends no tracking events. This selector and its attributes are a stable interface and will not be renamed.

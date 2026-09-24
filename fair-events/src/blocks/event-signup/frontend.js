@@ -317,14 +317,18 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		if ( ! html ) {
 			return;
 		}
-		const submitRow = form.querySelector( '.form-submit' );
-		if ( ! submitRow || ! submitRow.parentNode ) {
+		// The checkout total must stay immediately before the submit row, so
+		// the slot lands ahead of it (where render.php fires the hook).
+		const anchor =
+			form.querySelector( '.fair-events-signup-checkout-total' ) ||
+			form.querySelector( '.form-submit' );
+		if ( ! anchor || ! anchor.parentNode ) {
 			return;
 		}
 		const wrapper = document.createElement( 'div' );
 		wrapper.className = 'fair-events-get-tickets-viewer-slot';
 		wrapper.innerHTML = html;
-		submitRow.parentNode.insertBefore( wrapper, submitRow );
+		anchor.parentNode.insertBefore( wrapper, anchor );
 	}
 
 	/**
@@ -662,6 +666,13 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		wireInstancePickerInputs( form );
 		wireTicketOptionInputs( form );
 
+		const quantityField = form.querySelector( 'input[name="quantity"]' );
+		if ( quantityField ) {
+			quantityField.addEventListener( 'input', function () {
+				updateCheckoutTotal( form );
+			} );
+		}
+
 		wireAddActivities( form.closest( '.fair-events-get-tickets' ) );
 		wireNotYouButton( form.querySelector( '.fair-events-not-you-button' ) );
 		setupQuestionnaire( form );
@@ -737,6 +748,94 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		updateInstancePicker( form );
 		updateTicketOptions( form );
 		updateSubmitGate( form );
+		updateCheckoutTotal( form );
+	}
+
+	/**
+	 * Compute the amount currently payable for the form's selections,
+	 * mirroring GetTicketsController's charge: the selected ticket price times
+	 * the checked occurrence count ('multiple_instances') or the submitted
+	 * quantity, plus checked activity prices. Discounts are already baked
+	 * into the hydrated data-ticket-price/data-option-price attributes. A
+	 * total reduced below zero is charged as free, so it floors at 0.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {number} The payable total, rounded to cents.
+	 */
+	function computeCheckoutTotal( form ) {
+		const selected = getSelectedTicketTypeOption( form );
+		const unitPrice = selected
+			? parseFloat( selected.dataset.ticketPrice ) || 0
+			: 0;
+
+		let count;
+		if ( isMultipleInstancesSelected( form ) ) {
+			count = form.querySelectorAll(
+				'input[name="event_date_ids[]"]:checked'
+			).length;
+		} else {
+			const quantityField = form.querySelector(
+				'input[name="quantity"]'
+			);
+			count = quantityField
+				? Math.max(
+						1,
+						Math.min( 10, parseInt( quantityField.value, 10 ) || 1 )
+				  )
+				: 1;
+		}
+
+		const optionPrices = activitiesEnabled( form )
+			? Array.from(
+					form.querySelectorAll(
+						'input[name="ticket_option_ids[]"]:checked'
+					)
+			  ).map( ( input ) => parseFloat( input.dataset.optionPrice ) || 0 )
+			: [];
+
+		const total = computeTicketTotal( { unitPrice, count, optionPrices } );
+		return Math.max( 0, Math.round( total * 100 ) / 100 );
+	}
+
+	/**
+	 * Format an amount with the site locale's separators, matching PHP's
+	 * number_format_i18n( $amount, 2 ) used for the server-rendered total.
+	 * @param {number} amount       Amount to format.
+	 * @param {string} decimalPoint Locale decimal separator.
+	 * @param {string} thousandsSep Locale thousands separator.
+	 * @return {string} Localized amount with two decimals.
+	 */
+	function formatLocalizedAmount( amount, decimalPoint, thousandsSep ) {
+		const [ whole, fraction ] = amount.toFixed( 2 ).split( '.' );
+		const grouped = whole.replace( /\B(?=(\d{3})+(?!\d))/g, thousandsSep );
+		return `${ grouped }${ decimalPoint }${ fraction }`;
+	}
+
+	/**
+	 * Refresh the checkout total's visible amount and its machine-readable
+	 * data-amount from the same computed value, so tracking and the visitor
+	 * never see different numbers.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function updateCheckoutTotal( form ) {
+		const totalEl = form.querySelector(
+			'.fair-events-signup-checkout-total'
+		);
+		if ( ! totalEl ) {
+			return;
+		}
+		const total = computeCheckoutTotal( form );
+		const currency = totalEl.dataset.currency || form.dataset.currency;
+		totalEl.dataset.amount = total.toFixed( 2 );
+		const amountEl = totalEl.querySelector(
+			'.fair-events-signup-checkout-total-amount'
+		);
+		if ( amountEl ) {
+			amountEl.textContent = `${ formatLocalizedAmount(
+				total,
+				totalEl.dataset.decimalPoint || '.',
+				totalEl.dataset.thousandsSep ?? ','
+			) } ${ currency }`;
+		}
 	}
 
 	/**
@@ -830,10 +929,6 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 		const option = getSelectedTicketTypeOption( form );
 		const min = parseInt( option.dataset.minInstances || '0', 10 );
-		const price = parseFloat( option.dataset.ticketPrice || 0 );
-		const checked = instancePicker.querySelectorAll(
-			'input[name="event_date_ids[]"]:checked'
-		).length;
 
 		const hint = instancePicker.querySelector(
 			'.fair-events-instance-picker-hint'
@@ -850,26 +945,6 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 								'fair-events'
 							),
 							min
-					  )
-					: '';
-		}
-
-		const totalEl = instancePicker.querySelector(
-			'.fair-events-instance-picker-total'
-		);
-		if ( totalEl ) {
-			totalEl.textContent =
-				checked > 0
-					? sprintf(
-							/* translators: %s: formatted total price */
-							__( 'Total: %s', 'fair-events' ),
-							formatMoney(
-								computeTicketTotal( {
-									unitPrice: price,
-									count: checked,
-								} ),
-								form.dataset.currency
-							)
 					  )
 					: '';
 		}
@@ -1114,32 +1189,6 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				}
 				addon.style.display = meetsMin && ! input.checked ? '' : 'none';
 			} );
-
-		const totalEl = fieldset.querySelector(
-			'.fair-events-ticket-options-total'
-		);
-		if ( totalEl ) {
-			const selectedTicketType = getSelectedTicketTypeOption( form );
-			const unitPrice = selectedTicketType
-				? parseFloat( selectedTicketType.dataset.ticketPrice || 0 )
-				: 0;
-			const optionPrices = Array.from( checkedOptions ).map( ( input ) =>
-				parseFloat( input.dataset.optionPrice || 0 )
-			);
-			const total = computeTicketTotal( {
-				unitPrice,
-				count: 1,
-				optionPrices,
-			} );
-			totalEl.textContent =
-				! hidden && checkedOptions.length > 0
-					? sprintf(
-							/* translators: %s: formatted total price */
-							__( 'Total: %s', 'fair-events' ),
-							formatMoney( total, form.dataset.currency )
-					  )
-					: '';
-		}
 	}
 
 	/**
