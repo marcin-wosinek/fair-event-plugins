@@ -100,11 +100,12 @@ if ( ! TicketPrice::create( $ticket_type_id, $sale_period_id, 0.0, null ) ) {
 // page while fair-audience stays inactive.
 $participant_id   = wp_rand( 900000000, 999999999 );
 $linked_email     = 'signup-export-linked-' . $stamp . '@example.test';
+$linked_name      = 'Linked Answer Tester ' . $stamp;
 $linked_signup_id = EventSignup::save(
 	array(
 		'event_date_id'  => $event_date_id,
 		'ticket_type_id' => $ticket_type_id,
-		'name'           => 'Linked Answer Tester',
+		'name'           => $linked_name,
 		'email'          => $linked_email,
 		'quantity'       => 1,
 		'amount'         => 0.0,
@@ -147,6 +148,7 @@ echo 'E2E_EXPORT_ANSWERS_SEED:' . wp_json_encode(
 		'ticketTypeId'   => (int) $ticket_type_id,
 		'linkedSignupId' => (int) $linked_signup_id,
 		'linkedEmail'    => $linked_email,
+		'linkedName'     => $linked_name,
 		'submissionId'   => (int) $submission_id,
 	)
 ) . "\n";
