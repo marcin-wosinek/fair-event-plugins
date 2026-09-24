@@ -17,7 +17,8 @@ defined( 'WPINC' ) || die;
 class EventSignup {
 
 	/**
-	 * Save a signup row and return its ID.
+	 * Save a signup row together with one ticket unit per admission and
+	 * return its ID. The signup and its units are written atomically.
 	 *
 	 * @param array $data Keys: event_date_id, ticket_type_id, name, email, quantity, mailing_opt_in, amount, status, participant_id.
 	 * @return int|false Inserted ID or false on failure.
@@ -26,6 +27,8 @@ class EventSignup {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'fair_events_signups';
+
+		$wpdb->query( 'START TRANSACTION' );
 
 		$inserted = $wpdb->insert(
 			$table,
@@ -45,10 +48,21 @@ class EventSignup {
 		);
 
 		if ( ! $inserted ) {
+			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
 
-		return (int) $wpdb->insert_id;
+		$signup_id = (int) $wpdb->insert_id;
+		$signup    = self::get_by_id( $signup_id );
+
+		if ( ! $signup || false === EventTicket::reconcile_signup( $signup ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		return $signup_id;
 	}
 
 	/**
@@ -78,11 +92,22 @@ class EventSignup {
 
 		$table = $wpdb->prefix . 'fair_events_signups';
 
-		return 1 === $wpdb->delete(
+		$wpdb->query( 'START TRANSACTION' );
+
+		$deleted = 1 === $wpdb->delete(
 			$table,
 			array( 'id' => $signup_id ),
 			array( '%d' )
 		);
+
+		if ( ! $deleted || false === EventTicket::delete_by_signup_id( $signup_id ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		return true;
 	}
 
 	/**
@@ -97,13 +122,17 @@ class EventSignup {
 
 		$table = $wpdb->prefix . 'fair_events_signups';
 
-		return (bool) $wpdb->update(
+		$updated = (bool) $wpdb->update(
 			$table,
 			array( 'participant_id' => $participant_id ),
 			array( 'id' => $signup_id ),
 			array( '%d' ),
 			array( '%d' )
 		);
+
+		EventTicket::link_purchaser( $signup_id, $participant_id );
+
+		return $updated;
 	}
 
 	/**
@@ -148,13 +177,19 @@ class EventSignup {
 
 		$table = $wpdb->prefix . 'fair_events_signups';
 
-		return (bool) $wpdb->update(
+		$updated = (bool) $wpdb->update(
 			$table,
 			array( 'status' => $status ),
 			array( 'id' => $signup_id ),
 			array( '%s' ),
 			array( '%d' )
 		);
+
+		if ( $updated ) {
+			EventTicket::sync_status_from_signup( $signup_id );
+		}
+
+		return $updated;
 	}
 
 	/**
@@ -178,7 +213,7 @@ class EventSignup {
 
 		$table = $wpdb->prefix . 'fair_events_signups';
 
-		return 1 === (int) $wpdb->query(
+		$failed = 1 === (int) $wpdb->query(
 			$wpdb->prepare(
 				'UPDATE %i SET status = %s WHERE id = %d AND status = %s',
 				$table,
@@ -187,6 +222,12 @@ class EventSignup {
 				'pending_payment'
 			)
 		);
+
+		if ( $failed ) {
+			EventTicket::sync_status_from_signup( $signup_id );
+		}
+
+		return $failed;
 	}
 
 	/**
@@ -224,7 +265,12 @@ class EventSignup {
 			);
 		}
 
-		return 1 === (int) $updated;
+		$transitioned = 1 === (int) $updated;
+		if ( $transitioned ) {
+			EventTicket::sync_status_from_signup( $signup_id );
+		}
+
+		return $transitioned;
 	}
 
 	/**
@@ -251,13 +297,19 @@ class EventSignup {
 			$formats[]      = '%s';
 		}
 
-		return (bool) $wpdb->update(
+		$updated = (bool) $wpdb->update(
 			$table,
 			$data,
 			array( 'id' => $signup_id ),
 			$formats,
 			array( '%d' )
 		);
+
+		if ( $updated && null !== $status ) {
+			EventTicket::sync_status_from_signup( $signup_id );
+		}
+
+		return $updated;
 	}
 
 	/**
@@ -357,7 +409,7 @@ class EventSignup {
 
 		$table = $wpdb->prefix . 'fair_events_signups';
 
-		return (bool) $wpdb->update(
+		$cancelled = (bool) $wpdb->update(
 			$table,
 			array(
 				'status'             => 'failed',
@@ -370,6 +422,12 @@ class EventSignup {
 			array( '%s', '%s' ),
 			array( '%d', '%s' )
 		);
+
+		if ( $cancelled ) {
+			EventTicket::sync_status_from_signup( $signup_id );
+		}
+
+		return $cancelled;
 	}
 
 	/**
@@ -402,13 +460,19 @@ class EventSignup {
 
 		$table = $wpdb->prefix . 'fair_events_signups';
 
-		return (int) $wpdb->query(
+		$expired = (int) $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE %i SET status = 'expired', payment_expires_at = NULL WHERE status = 'pending_payment' AND payment_expires_at IS NOT NULL AND payment_expires_at <= %s",
 				$table,
 				gmdate( 'Y-m-d H:i:s' )
 			)
 		);
+
+		if ( $expired > 0 ) {
+			EventTicket::sync_expired_signups();
+		}
+
+		return $expired;
 	}
 
 	/**
@@ -437,6 +501,8 @@ class EventSignup {
 	 */
 	public static function anonymize_by_participant_id( int $participant_id ) {
 		global $wpdb;
+
+		EventTicket::anonymize_participant( $participant_id );
 
 		return (int) $wpdb->update(
 			$wpdb->prefix . 'fair_events_signups',

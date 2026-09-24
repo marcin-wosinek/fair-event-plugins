@@ -151,6 +151,9 @@ $deleted['sale_periods'] = (int) $wpdb->query(
 $deleted['get_tickets_signups'] = (int) $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $wpdb->prefix . 'fair_events_signups', $event_date_id )
 );
+$deleted['get_tickets_units']   = (int) $wpdb->query(
+	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $wpdb->prefix . 'fair_events_tickets', $event_date_id )
+);
 
 // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $series_placeholders is a safe list of %d.
 $deleted['transactions'] = (int) $wpdb->query(

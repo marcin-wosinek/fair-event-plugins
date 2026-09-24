@@ -38,6 +38,9 @@ $signups_table      = $wpdb->prefix . 'fair_events_signups';
 $deleted['signups'] = $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $signups_table, $event_date_id )
 );
+$deleted['tickets'] = $wpdb->query(
+	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $wpdb->prefix . 'fair_events_tickets', $event_date_id )
+);
 
 if ( $submission_id ) {
 	( new QuestionnaireAnswerRepository() )->delete_by_submission( $submission_id );

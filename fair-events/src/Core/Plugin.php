@@ -125,6 +125,7 @@ class Plugin {
 		new \FairEvents\Hooks\DatedViewCanonicalUrlHooks();
 		\FairEvents\Hooks\PaymentHooks::init();
 		\FairEvents\Hooks\SignupEmailHooks::init();
+		\FairEvents\Services\TicketBackfill::init();
 	}
 
 	/**

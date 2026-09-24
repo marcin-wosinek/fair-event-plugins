@@ -1010,7 +1010,8 @@ class SignupHookBridge {
 
 	/**
 	 * Backfill participant_id on existing fair_events_signups rows by
-	 * matching their stored email to a fair-audience Participant.
+	 * matching their stored email to a fair-audience Participant, then link
+	 * their ticket units' purchaser and initial holder.
 	 *
 	 * Triggered by fair-events' 3.24.0 migration. Idempotent: only touches
 	 * rows where participant_id IS NULL, matching participants by email in a
@@ -1053,5 +1054,12 @@ class SignupHookBridge {
 				$participants_table
 			)
 		);
+
+		// Carry the newly matched purchasers onto their ticket units.
+		if ( class_exists( \FairEvents\Models\EventTicket::class )
+			&& method_exists( \FairEvents\Models\EventTicket::class, 'sync_participants_from_signups' )
+		) {
+			\FairEvents\Models\EventTicket::sync_participants_from_signups();
+		}
 	}
 }
