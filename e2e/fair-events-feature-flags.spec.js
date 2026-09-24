@@ -40,7 +40,6 @@ function clearExperimentalFeatures() {
 /** Bundle keys mirror FairEventsExperimental\\Core\\Features::registry(). */
 const ALL_BUNDLES_ON = {
 	sources: true,
-	galleries: true,
 	ticketing: true,
 	'event-tools': true,
 	migration: true,
@@ -48,7 +47,6 @@ const ALL_BUNDLES_ON = {
 
 const ALL_BUNDLES_OFF = {
 	sources: false,
-	galleries: false,
 	ticketing: false,
 	'event-tools': false,
 	migration: false,
@@ -85,7 +83,6 @@ const BUNDLE_PAGES = {
  */
 const BUNDLE_PROBE_ROUTES = {
 	sources: '/fair-events/v1/sources',
-	galleries: '/fair-events/v1/event-dates/1/gallery',
 	migration: '/fair-events/v1/migration/post-types',
 	ticketing: '/fair-events/v1/event-dates/1/group-pricing-rules',
 };

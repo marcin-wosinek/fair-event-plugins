@@ -15,10 +15,7 @@ use FairEvents\Services\EventCopyService;
 use FairEvents\Services\RecurrenceService;
 use FairEvents\Services\PostTranslationLinks;
 use FairEvents\Services\EventDateForPost;
-use FairEvents\Database\EventPhotoRepository;
 use FairEvents\Database\EventSourceRepository;
-use FairEvents\Database\PhotoLikeRepository;
-use FairEvents\Frontend\EventGalleryPage;
 use FairEvents\Helpers\FairEventsApiParser;
 use FairEvents\Helpers\ICalParser;
 use FairEvents\Settings\Settings;
@@ -2064,22 +2061,6 @@ class EventDatesController extends WP_REST_Controller {
 					'edit_url' => get_edit_post_link( $post->ID, 'raw' ),
 				);
 			}
-
-			// Add photo gallery info.
-			$photo_repo     = new EventPhotoRepository();
-			$photo_count    = $photo_repo->get_count_by_event_date( $event_date->id );
-			$total_likes    = 0;
-			$attachment_ids = $photo_repo->get_attachment_ids_by_event_date( $event_date->id );
-			if ( ! empty( $attachment_ids ) ) {
-				$like_repo   = new PhotoLikeRepository();
-				$like_counts = $like_repo->get_counts_for_photos( $attachment_ids );
-				$total_likes = array_sum( $like_counts );
-			}
-			$data['gallery'] = array(
-				'photo_count' => $photo_count,
-				'total_likes' => $total_likes,
-				'gallery_url' => EventGalleryPage::get_gallery_url( $event_date->id ),
-			);
 		}
 
 		return $data;

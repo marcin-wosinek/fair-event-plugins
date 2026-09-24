@@ -37,7 +37,7 @@ function clearExperimentalFeatures() {
 const ALL_BUNDLES_ON = {
 	fees: true,
 	polls: true,
-	galleries: true,
+	photos: true,
 	instagram: true,
 	groups: true,
 	collaborators: true,
@@ -53,7 +53,7 @@ const ALL_BUNDLES_ON = {
 const ALL_BUNDLES_OFF = {
 	fees: false,
 	polls: false,
-	galleries: false,
+	photos: false,
 	instagram: false,
 	groups: false,
 	collaborators: false,
@@ -130,7 +130,7 @@ const BUNDLE_PROBE_ROUTES = {
 	groups: '/fair-audience/v1/groups',
 	messaging: '/fair-audience/v1/custom-mail',
 	invitations: '/fair-audience/v1/event-dates/1/event-invitations',
-	galleries: '/fair-audience/v1/gallery-access/validate',
+	photos: '/fair-audience/v1/photos/1/tags',
 };
 
 async function expectRootMounts(page, slug, root) {

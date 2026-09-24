@@ -13,7 +13,7 @@ defined( 'WPINC' ) || die;
  * Constants for email type classification.
  *
  * - MINIMAL: Essential emails related to events the participant attended or requested
- *   (gallery invitations, poll invitations, confirmation emails, signup links)
+ *   (poll invitations, confirmation emails, signup links)
  * - MARKETING: Promotional emails for events the participant hasn't signed up for
  *   (event invitations)
  * - WEEKLY_SUMMARY: The recurring weekly events digest. A subset of marketing

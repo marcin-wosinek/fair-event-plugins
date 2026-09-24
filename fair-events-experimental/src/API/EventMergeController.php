@@ -166,7 +166,6 @@ class EventMergeController extends WP_REST_Controller {
 		$wpdb->query( 'START TRANSACTION' );
 
 		try {
-			$this->process_event_photos( $source_id, $target_id, $actions['event_photos'] ?? 'skip' );
 			$this->process_cross_plugin_table( 'fair_audience_event_participants', $source_id, $target_id, $actions['participants'] ?? 'skip' );
 			$this->process_cross_plugin_table( 'fair_audience_questionnaire_submissions', $source_id, $target_id, $actions['questionnaire_submissions'] ?? 'skip' );
 
@@ -203,7 +202,6 @@ class EventMergeController extends WP_REST_Controller {
 	private function get_linked_data_counts( $event_date_id ) {
 		$counts = array();
 
-		$counts['event_photos']              = $this->count_rows( 'fair_events_event_photos', $event_date_id );
 		$counts['participants']              = $this->count_rows_if_exists( 'fair_audience_event_participants', $event_date_id );
 		$counts['questionnaire_submissions'] = $this->count_rows_if_exists( 'fair_audience_questionnaire_submissions', $event_date_id );
 
@@ -252,45 +250,6 @@ class EventMergeController extends WP_REST_Controller {
 		}
 
 		return $this->count_rows( $table_suffix, $event_date_id );
-	}
-
-	/**
-	 * Process event photos (keyed by event_date_id).
-	 *
-	 * Updates event_date_id to target and clears event_id.
-	 * Skips photos already assigned to the target (UNIQUE attachment_id).
-	 *
-	 * @param int    $source_id Source event date ID.
-	 * @param int    $target_id Target event date ID.
-	 * @param string $action    Action: move, delete, or skip.
-	 * @return void
-	 */
-	private function process_event_photos( $source_id, $target_id, $action ) {
-		global $wpdb;
-
-		if ( 'skip' === $action ) {
-			return;
-		}
-
-		$table_name = $wpdb->prefix . 'fair_events_event_photos';
-
-		if ( 'delete' === $action ) {
-			$wpdb->delete( $table_name, array( 'event_date_id' => $source_id ), array( '%d' ) );
-			return;
-		}
-
-		if ( 'move' === $action ) {
-			$wpdb->update(
-				$table_name,
-				array(
-					'event_date_id' => $target_id,
-					'event_id'      => 0,
-				),
-				array( 'event_date_id' => $source_id ),
-				array( '%d', '%d' ),
-				array( '%d' )
-			);
-		}
 	}
 
 	/**

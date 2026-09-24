@@ -113,13 +113,13 @@ class Plugin {
 	/**
 	 * Initialize hook-only bundles that ride alongside admin pages or REST
 	 * routes registered elsewhere: the media library integration
-	 * (`galleries`), the scheduled-message cron/reschedule hooks
+	 * (`photos`), the scheduled-message cron/reschedule hooks
 	 * (`messaging`), and the stale-attachment cleanup sweep (`instagram`).
 	 *
 	 * @return void
 	 */
 	private function load_hooks() {
-		if ( Features::is_enabled( 'galleries' ) ) {
+		if ( Features::is_enabled( 'photos' ) ) {
 			\FairAudienceExperimental\Admin\MediaLibraryHooks::init();
 			\FairAudienceExperimental\Admin\MediaBatchActions::init();
 		}
@@ -247,15 +247,7 @@ class Plugin {
 			);
 		}
 
-		if ( Features::is_enabled( 'galleries' ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairAudienceExperimental\API\GalleryAccessController();
-					$controller->register_routes();
-				}
-			);
-
+		if ( Features::is_enabled( 'photos' ) ) {
 			add_action(
 				'rest_api_init',
 				function () {
@@ -320,7 +312,7 @@ class Plugin {
 				if ( Features::is_enabled( 'collaborators' ) ) {
 					$vars[] = 'collaborator_profile';
 				}
-				if ( Features::is_enabled( 'galleries' ) ) {
+				if ( Features::is_enabled( 'photos' ) ) {
 					$vars[] = 'photo_upload';
 				}
 				return $vars;
@@ -339,7 +331,7 @@ class Plugin {
 			add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
 		}
 
-		if ( Features::is_enabled( 'galleries' ) ) {
+		if ( Features::is_enabled( 'photos' ) ) {
 			add_action( 'template_redirect', array( $this, 'handle_photo_upload' ) );
 		}
 

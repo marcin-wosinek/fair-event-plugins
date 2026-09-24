@@ -41,18 +41,6 @@ module.exports = {
       process.cwd(),
       "src/Admin/manage-event-ext/index.js",
     ),
-    "admin/event-gallery": path.resolve(
-      process.cwd(),
-      "src/Admin/event-gallery.js",
-    ),
-    "admin/media-library-filter": path.resolve(
-      process.cwd(),
-      "src/Admin/media-library-filter.js",
-    ),
-    "frontend/event-gallery": path.resolve(
-      process.cwd(),
-      "src/Frontend/event-gallery/index.js",
-    ),
     "frontend/meta-attribution": path.resolve(
       process.cwd(),
       "src/Frontend/meta-attribution.js",

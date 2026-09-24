@@ -323,7 +323,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					'orderby'  => array(
 						'type'    => 'string',
 						'default' => 'event_date',
-						'enum'    => array( 'title', 'event_date', 'participants', 'images', 'likes' ),
+						'enum'    => array( 'title', 'event_date', 'participants' ),
 					),
 					'order'    => array(
 						'type'    => 'string',
@@ -443,30 +443,13 @@ class EventParticipantsController extends WP_REST_Controller {
 			}
 		}
 
-		// Get likes received per participant (for photos they authored).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$likes_data = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT pp.participant_id, COUNT(pl.id) as likes_count
-				FROM {$wpdb->prefix}fair_audience_photo_participants pp
-				INNER JOIN {$wpdb->prefix}fair_events_event_photos ep
-					ON pp.attachment_id = ep.attachment_id AND ep.event_id = %d
-				LEFT JOIN {$wpdb->prefix}fair_events_photo_likes pl
-					ON pp.attachment_id = pl.attachment_id
-				WHERE pp.role = 'author'
-				GROUP BY pp.participant_id",
-				$event_id
-			),
-			OBJECT_K
-		);
-
 		// Custom question answers captured during signup (Event Signup block).
 		// Stored as questionnaire submissions keyed by participant + event date,
 		// indexed here so each signup row can carry its answers inline.
 		$participant_questionnaire = $this->get_signup_answers_by_participant( $event_date_id );
 
 		$items = array_map(
-			function ( $ep ) use ( $likes_data, $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_questionnaire, $event_date_id ) {
+			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_questionnaire, $event_date_id ) {
 				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
 				return array(
 					'id'                          => $ep->id,
@@ -489,9 +472,6 @@ class EventParticipantsController extends WP_REST_Controller {
 					'attended_at'                 => $ep->attended_at,
 					'created_at'                  => $ep->created_at,
 					'payment_expires_at'          => $ep->payment_expires_at,
-					'photo_likes_received'        => isset( $likes_data[ $ep->participant_id ] )
-						? (int) $likes_data[ $ep->participant_id ]->likes_count
-						: 0,
 					'ticket_option_names'         => $participant_option_names[ $ep->id ] ?? array(),
 					'ticket_option_ids'           => $participant_option_ids[ $ep->id ] ?? array(),
 					'confirmed_ticket_option_ids' => $participant_confirmed_option_ids[ $ep->id ] ?? array(),
@@ -1307,14 +1287,12 @@ class EventParticipantsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Get all events with participant counts, gallery count, and likes count.
+	 * Get all events with participant counts.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response Response object.
 	 */
 	public function get_events( $request ) {
-		global $wpdb;
-
 		$per_page = $request->get_param( 'per_page' );
 		$page     = $request->get_param( 'page' );
 		$orderby  = $request->get_param( 'orderby' );
@@ -1339,7 +1317,7 @@ class EventParticipantsController extends WP_REST_Controller {
 			$query_args['orderby'] = 'title';
 			$query_args['order']   = $order;
 		} else {
-			// For event_date, participants, images, likes - fetch all and sort in PHP.
+			// For event_date and participants - fetch all and sort in PHP.
 			// We can't use meta_key for event_date as it would exclude events without that meta.
 			$query_args['posts_per_page'] = -1;
 			$query_args['orderby']        = 'date';
@@ -1371,24 +1349,6 @@ class EventParticipantsController extends WP_REST_Controller {
 				$event_date = get_post_meta( $event->ID, 'event_date', true );
 			}
 
-			// Get gallery image count from fair_events_event_photos table.
-			$gallery_count = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}fair_events_event_photos WHERE event_id = %d",
-					$event->ID
-				)
-			);
-
-			// Get likes count for all photos in this event.
-			$likes_count = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}fair_events_photo_likes pl
-					 INNER JOIN {$wpdb->prefix}fair_events_event_photos ep ON pl.attachment_id = ep.attachment_id
-					 WHERE ep.event_id = %d",
-					$event->ID
-				)
-			);
-
 			// Calculate total participants (signed_up + collaborator).
 			$participants = ( $counts['signed_up'] ?? 0 ) + ( $counts['collaborator'] ?? 0 );
 
@@ -1400,19 +1360,12 @@ class EventParticipantsController extends WP_REST_Controller {
 				'event_date'         => $event_date,
 				'participant_counts' => $counts,
 				'participants'       => $participants,
-				'gallery_count'      => $gallery_count,
-				'likes_count'        => $likes_count,
 			);
 		}
 
 		// Handle sorting by computed fields (all except title which uses WP_Query).
 		if ( 'title' !== $orderby ) {
 			$sort_key = $orderby;
-			if ( 'images' === $orderby ) {
-				$sort_key = 'gallery_count';
-			} elseif ( 'likes' === $orderby ) {
-				$sort_key = 'likes_count';
-			}
 
 			usort(
 				$items,
@@ -1453,8 +1406,6 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function get_event( $request ) {
-		global $wpdb;
-
 		$event_date_id = $request->get_param( 'event_date_id' );
 
 		// Resolve event_id from event_date_id.
@@ -1489,15 +1440,6 @@ class EventParticipantsController extends WP_REST_Controller {
 			$event_date = get_post_meta( $event_id, 'event_date', true );
 		}
 
-		// Get gallery image count.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$gallery_count = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}fair_events_event_photos WHERE event_id = %d",
-				$event_id
-			)
-		);
-
 		// Get participant counts by label.
 		$counts = $this->event_participant_repo->get_label_counts_for_event_date( $event_date_id );
 
@@ -1512,8 +1454,6 @@ class EventParticipantsController extends WP_REST_Controller {
 			'link'             => get_permalink( $event_id ),
 			'edit_url'         => get_edit_post_link( $event_id, 'raw' ),
 			'event_date'       => $event_date,
-			'gallery_count'    => $gallery_count,
-			'gallery_link'     => admin_url( "upload.php?mode=list&fair_event_filter={$event_id}" ),
 			'signed_up'        => $signed_up,
 			'collaborators'    => $collaborators,
 			'interested'       => $interested,

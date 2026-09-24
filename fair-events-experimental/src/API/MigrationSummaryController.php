@@ -112,20 +112,12 @@ class MigrationSummaryController extends WP_REST_Controller {
 	 */
 	private function get_table_configs() {
 		return array(
-			'fair_events_event_photos'           => array(
-				'label'             => __( 'Event Photos', 'fair-events' ),
-				'event_id_nullable' => false,
-			),
 			'fair_audience_event_participants'   => array(
 				'label'             => __( 'Event Participants', 'fair-events' ),
 				'event_id_nullable' => false,
 			),
 			'fair_audience_polls'                => array(
 				'label'             => __( 'Polls', 'fair-events' ),
-				'event_id_nullable' => false,
-			),
-			'fair_audience_gallery_access_keys'  => array(
-				'label'             => __( 'Gallery Access Keys', 'fair-events' ),
 				'event_id_nullable' => false,
 			),
 			'fair_audience_custom_mail_messages' => array(

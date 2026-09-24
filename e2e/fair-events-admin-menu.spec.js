@@ -24,7 +24,6 @@ import { wpCli, loginAsAdmin } from './support/wp-cli.js';
  */
 const ALL_EXPERIMENTAL_BUNDLES_ON = {
 	sources: true,
-	galleries: true,
 	ticketing: true,
 	'event-tools': true,
 	migration: true,

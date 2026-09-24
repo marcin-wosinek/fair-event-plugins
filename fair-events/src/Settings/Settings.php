@@ -26,7 +26,7 @@ class Settings {
 		// Toggling CPT registration changes which rewrite rules exist.
 		add_action( 'add_option_fair_events_register_post_type', array( $this, 'flush_rewrite_rules_on_slug_change' ) );
 		add_action( 'update_option_fair_events_register_post_type', array( $this, 'flush_rewrite_rules_on_slug_change' ) );
-		// Feature toggles can register/unregister rewrite rules (galleries).
+		// Feature toggles can register/unregister rewrite rules.
 		add_action( 'add_option_' . \FairEvents\Core\Features::OPTION, array( $this, 'flush_rewrite_rules_on_slug_change' ) );
 		add_action( 'update_option_' . \FairEvents\Core\Features::OPTION, array( $this, 'flush_rewrite_rules_on_slug_change' ) );
 		add_filter( 'rest_pre_update_setting', array( $this, 'handle_empty_slug_via_rest' ), 10, 3 );

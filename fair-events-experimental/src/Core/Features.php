@@ -3,7 +3,7 @@
  * Feature flag registry for Fair Events Experimental.
  *
  * Manages the advanced bundles moved out of fair-events:
- * galleries, sources, ticketing, event-tools, migration, mailings, and Meta
+ * sources, ticketing, event-tools, migration, mailings, and Meta
  * conversions. Existing internal bundles default on; processing integrations
  * that require explicit consent and credentials default off.
  *
@@ -46,11 +46,6 @@ class Features {
 	 */
 	public static function registry() {
 		return array(
-			'galleries'           => array(
-				'label'       => 'Galleries',
-				'description' => 'Per-event photo galleries, photo likes/downloads, image exports, media library hooks.',
-				'default'     => true,
-			),
 			'sources'             => array(
 				'label'       => 'Event sources & feeds',
 				'description' => 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.',
@@ -149,10 +144,6 @@ class Features {
 	public static function all() {
 		$out        = array();
 		$translated = array(
-			'galleries'           => array(
-				'label'       => __( 'Galleries', 'fair-events-experimental' ),
-				'description' => __( 'Per-event photo galleries, photo likes/downloads, image exports, media library hooks.', 'fair-events-experimental' ),
-			),
 			'sources'             => array(
 				'label'       => __( 'Event sources & feeds', 'fair-events-experimental' ),
 				'description' => __( 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.', 'fair-events-experimental' ),
@@ -236,7 +227,7 @@ class Features {
 	}
 
 	/**
-	 * Per-feature constant name (e.g. `galleries` → `FAIR_EVENTS_EXPERIMENTAL_FEATURE_GALLERIES`).
+	 * Per-feature constant name (e.g. `sources` → `FAIR_EVENTS_EXPERIMENTAL_FEATURE_SOURCES`).
 	 *
 	 * @param string $key Bundle key.
 	 * @return string
