@@ -51,11 +51,10 @@ class Plugin {
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_rest_api();
-		$this->load_frontend();
 		$this->load_meta_conversions();
 
 		// Merge experimental feature states into the manage-event enabledFeatures map
-		// so the React UI can show galleries/ticketing tabs when active.
+		// so the React UI can show ticketing tabs when active.
 		add_filter(
 			'fair_events_enabled_features_map',
 			function ( $map ) {
@@ -76,11 +75,6 @@ class Plugin {
 		if ( is_admin() ) {
 			$admin = new \FairEventsExperimental\Admin\AdminPages();
 			$admin->init();
-
-			if ( Features::is_enabled( 'galleries' ) ) {
-				\FairEventsExperimental\Admin\MediaLibraryHooks::init();
-				\FairEventsExperimental\Admin\MediaBatchActions::init();
-			}
 
 			if ( Features::is_enabled( 'audience-statistics' ) || Features::is_enabled( 'event-tools' ) ) {
 				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_ext_assets' ) );
@@ -160,65 +154,6 @@ class Plugin {
 			);
 		}
 
-		if ( Features::is_enabled( 'galleries' ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEventsExperimental\API\EventGalleryEndpoint();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEventsExperimental\API\PhotoLikesController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEventsExperimental\API\PhotoDownloadController();
-					$controller->register_routes();
-				}
-			);
-
-			// Attach event relationship to WP media REST responses so the
-			// media library filter can show which event an image belongs to.
-			add_action(
-				'rest_api_init',
-				function () {
-					register_rest_field(
-						'attachment',
-						'fair_event',
-						array(
-							'get_callback' => function ( $attachment ) {
-								$repository  = new \FairEvents\Database\EventPhotoRepository();
-								$event_photo = $repository->get_event_for_attachment( $attachment['id'] );
-
-								if ( ! $event_photo || ! $event_photo->event_date_id ) {
-									return null;
-								}
-
-								$event_date = \FairEvents\Models\EventDates::get_by_id( $event_photo->event_date_id );
-
-								return $event_date ? array(
-									'event_date_id' => (int) $event_date->id,
-									'title'         => $event_date->title,
-								) : null;
-							},
-							'schema'       => array(
-								'description' => __( 'Event associated with this image', 'fair-events-experimental' ),
-								'type'        => array( 'object', 'null' ),
-							),
-						)
-					);
-				}
-			);
-		}
-
 		if ( Features::is_enabled( 'migration' ) ) {
 			add_action(
 				'rest_api_init',
@@ -271,17 +206,6 @@ class Plugin {
 					$controller->register_routes();
 				}
 			);
-		}
-	}
-
-	/**
-	 * Load frontend pages
-	 *
-	 * @return void
-	 */
-	private function load_frontend() {
-		if ( Features::is_enabled( 'galleries' ) ) {
-			\FairEvents\Frontend\EventGalleryPage::init();
 		}
 	}
 

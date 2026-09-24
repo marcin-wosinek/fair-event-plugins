@@ -259,7 +259,6 @@ class Plugin {
 	 * @return array Modified array of query variables.
 	 */
 	public function add_query_vars( $vars ) {
-		$vars[] = 'gallery_key';
 		$vars[] = 'confirm_email_key';
 		$vars[] = 'participant_token';
 		$vars[] = 'resume';

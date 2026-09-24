@@ -35,10 +35,6 @@ class MediaLibraryHooks {
 		add_filter( 'manage_media_columns', array( __CLASS__, 'add_author_column' ) );
 		add_action( 'manage_media_custom_column', array( __CLASS__, 'display_author_column' ), 10, 2 );
 
-		// Make likes column sortable.
-		add_filter( 'manage_upload_sortable_columns', array( __CLASS__, 'add_sortable_columns' ) );
-		add_action( 'pre_get_posts', array( __CLASS__, 'sort_by_likes' ) );
-
 		// Bulk upload page.
 		add_action( 'post-upload-ui', array( __CLASS__, 'add_bulk_upload_author_selector' ) );
 		add_action( 'post-upload-ui', array( __CLASS__, 'add_bulk_upload_tag_selector' ) );
@@ -271,14 +267,13 @@ class MediaLibraryHooks {
 	}
 
 	/**
-	 * Add author and likes columns to media library list.
+	 * Add author column to media library list.
 	 *
 	 * @param array $columns Columns array.
 	 * @return array Modified columns.
 	 */
 	public static function add_author_column( $columns ) {
 		$columns['fair_photo_author'] = __( 'Photo Author', 'fair-audience-experimental' );
-		$columns['fair_photo_likes']  = __( 'Likes', 'fair-audience-experimental' );
 		return $columns;
 	}
 
@@ -306,80 +301,6 @@ class MediaLibraryHooks {
 			} else {
 				echo '—';
 			}
-		} elseif ( 'fair_photo_likes' === $column_name ) {
-			$likes_count = self::get_likes_count_for_attachment( $post_id );
-			echo esc_html( $likes_count );
-		}
-	}
-
-	/**
-	 * Get the number of likes for an attachment.
-	 *
-	 * @param int $attachment_id Attachment ID.
-	 * @return int Number of likes.
-	 */
-	private static function get_likes_count_for_attachment( $attachment_id ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}fair_events_photo_likes WHERE attachment_id = %d",
-				$attachment_id
-			)
-		);
-
-		return (int) $count;
-	}
-
-	/**
-	 * Add sortable columns for media library.
-	 *
-	 * @param array $columns Sortable columns array.
-	 * @return array Modified sortable columns.
-	 */
-	public static function add_sortable_columns( $columns ) {
-		$columns['fair_photo_likes'] = 'fair_photo_likes';
-		return $columns;
-	}
-
-	/**
-	 * Handle sorting by likes count.
-	 *
-	 * @param WP_Query $query Query object.
-	 */
-	public static function sort_by_likes( $query ) {
-		global $pagenow, $wpdb;
-
-		if ( 'upload.php' !== $pagenow || ! $query->is_main_query() ) {
-			return;
-		}
-
-		$orderby = $query->get( 'orderby' );
-
-		if ( 'fair_photo_likes' !== $orderby ) {
-			return;
-		}
-
-		// Get all attachment IDs with their likes count, sorted.
-		$order = strtoupper( $query->get( 'order' ) ) === 'ASC' ? 'ASC' : 'DESC';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$sorted_ids = $wpdb->get_col(
-			"SELECT p.ID
-			FROM {$wpdb->posts} p
-			LEFT JOIN (
-				SELECT attachment_id, COUNT(*) as likes_count
-				FROM {$wpdb->prefix}fair_events_photo_likes
-				GROUP BY attachment_id
-			) pl ON p.ID = pl.attachment_id
-			WHERE p.post_type = 'attachment'
-			ORDER BY COALESCE(pl.likes_count, 0) {$order}, p.ID DESC"
-		);
-
-		if ( ! empty( $sorted_ids ) ) {
-			$query->set( 'post__in', $sorted_ids );
-			$query->set( 'orderby', 'post__in' );
 		}
 	}
 

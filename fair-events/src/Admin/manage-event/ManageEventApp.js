@@ -45,7 +45,6 @@ import {
 import EventFinance from './EventFinance.js';
 import EventTickets from './EventTickets.js';
 import { resolveFinalOccurrenceDatetime } from './salePeriodBoundaries.js';
-import EventPhotos from './EventPhotos.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
 import RecurrenceImpactSummary from './RecurrenceImpactSummary.js';
 import SeriesModal from './SeriesModal.js';
@@ -71,7 +70,6 @@ export default function ManageEventApp() {
 	// every bundle as off (fail-closed) on a misconfigured page.
 	const enabledFeatures =
 		window.fairEventsManageEventData?.enabledFeatures || {};
-	const galleriesEnabled = !! enabledFeatures.galleries;
 	const ticketingEnabled = !! enabledFeatures.ticketing;
 
 	const [ eventDate, setEventDate ] = useState( null );
@@ -741,13 +739,6 @@ export default function ManageEventApp() {
 			render: () => <EventSignups eventDateId={ eventDateId } />,
 		},
 		{
-			name: 'photos',
-			title: __( 'Photos', 'fair-events' ),
-			order: 40,
-			isVisible: galleriesEnabled,
-			render: () => <EventPhotos eventDateId={ eventDateId } />,
-		},
-		{
 			name: 'finance',
 			title: __( 'Finance', 'fair-events' ),
 			order: 70,
@@ -1270,7 +1261,6 @@ export default function ManageEventApp() {
 				{ `.fair-events-manage-event .components-card > div:first-child { height: auto; }
 .fair-events-manage-event .components-card__body > * { max-width: 600px; }
 .fair-events-manage-event .fair-events-tickets .components-card__body > * { max-width: none; }
-.fair-events-manage-event .fair-events-photos .components-card__body > * { max-width: none; }
 .fair-events-manage-event .fair-events-signups .components-card__body > * { max-width: none; }
 .fair-events-manage-event .fair-events-event-details-card .components-card__body > * { max-width: none; }
 /* Stack the event-details cards vertically, each spanning the full

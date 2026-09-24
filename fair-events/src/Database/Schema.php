@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.35.0';
+	const DB_VERSION = '3.36.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -95,55 +95,6 @@ class Schema {
 			UNIQUE KEY idx_slug (slug),
 			KEY idx_enabled (enabled),
 			KEY idx_created_at (created_at)
-		) ENGINE=InnoDB {$charset_collate};";
-	}
-
-	/**
-	 * Get the SQL for creating the fair_event_photos table
-	 *
-	 * @return string SQL statement for creating the table.
-	 */
-	public static function get_event_photos_table_sql() {
-		global $wpdb;
-
-		$table_name      = $wpdb->prefix . 'fair_events_event_photos';
-		$charset_collate = $wpdb->get_charset_collate();
-
-		return "CREATE TABLE {$table_name} (
-			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			event_id BIGINT UNSIGNED NOT NULL,
-			event_date_id BIGINT UNSIGNED DEFAULT NULL,
-			attachment_id BIGINT UNSIGNED NOT NULL,
-			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			UNIQUE KEY idx_attachment (attachment_id),
-			KEY idx_event_id (event_id),
-			KEY idx_event_date_id (event_date_id)
-		) ENGINE=InnoDB {$charset_collate};";
-	}
-
-	/**
-	 * Get the SQL for creating the fair_events_photo_likes table
-	 *
-	 * @return string SQL statement for creating the table.
-	 */
-	public static function get_photo_likes_table_sql() {
-		global $wpdb;
-
-		$table_name      = $wpdb->prefix . 'fair_events_photo_likes';
-		$charset_collate = $wpdb->get_charset_collate();
-
-		return "CREATE TABLE {$table_name} (
-			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			attachment_id BIGINT UNSIGNED NOT NULL,
-			user_id BIGINT UNSIGNED DEFAULT NULL,
-			participant_id BIGINT UNSIGNED DEFAULT NULL,
-			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			UNIQUE KEY idx_attachment_user (attachment_id, user_id),
-			KEY idx_attachment_id (attachment_id),
-			KEY idx_user_id (user_id),
-			KEY idx_participant_id (participant_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

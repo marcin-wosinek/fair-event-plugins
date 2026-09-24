@@ -127,6 +127,41 @@ Each deployed plugin gets a `.deploy-version` file (written into the extracted p
 
 The CI deploy path remains the canonical/recommended flow — local deploy is an additional, opt-in escape hatch.
 
+## Upgrade notes: event gallery removal (#1675)
+
+Upgrading to fair-events DB version `3.36.0` and fair-audience DB version
+`1.44.0` permanently deletes the retired event gallery's data on the first
+request after deploy:
+
+-   tables `{prefix}fair_events_event_photos`, `{prefix}fair_events_photo_likes`
+    and `{prefix}fair_audience_gallery_access_keys`;
+-   the `fair_events_bulk_upload_event` user meta;
+-   the `galleries` key of `fair_events_experimental_features`, and of
+    `fair_audience_experimental_features` (its value moves to the new
+    `photos` key).
+
+Media attachments and files, `{prefix}fair_audience_photo_participants`
+(photo authors/tags), events and participants are not touched. A site that
+set `FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_GALLERIES` in `wp-config.php` must
+rename it to `FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_PHOTOS`.
+
+**Before deploying to production,** back up the database, at least the
+affected tables and options:
+
+```bash
+wp db export pre-gallery-removal.sql --tables=$(wp db tables '*fair_events_event_photos' '*fair_events_photo_likes' '*fair_audience_gallery_access_keys' '*options' '*usermeta' --format=csv)
+```
+
+The cleanup is retried on every request until it succeeds, and each plugin
+records its new DB version only after its own cleanup succeeded. If it keeps
+failing, check the PHP error log for the `DROP TABLE` error.
+
+**To roll back** (redeploy the previous plugin versions), restore the backup
+with `wp db import pre-gallery-removal.sql`, then set
+`fair_events_db_version` back to `3.35.0` and `fair_audience_db_version` back
+to `1.43.0` if the restored options do not already hold those values, and
+flush permalinks (`wp rewrite flush`) so `/event-gallery/{id}` resolves again.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

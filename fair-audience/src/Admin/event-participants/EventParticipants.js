@@ -7,7 +7,6 @@ import {
 	SelectControl,
 	Spinner,
 	CheckboxControl,
-	ToggleControl,
 	Card,
 	CardHeader,
 	CardBody,
@@ -26,7 +25,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: [ 'name', 'role', 'photo_likes', 'questions' ],
+	fields: [ 'name', 'role', 'questions' ],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -109,8 +108,6 @@ export default function EventParticipants() {
 	const [ addGroupFilter, setAddGroupFilter ] = useState( '' );
 	const [ isAdding, setIsAdding ] = useState( false );
 	const [ isRemoving, setIsRemoving ] = useState( false );
-	const [ isSendingGalleryLinks, setIsSendingGalleryLinks ] =
-		useState( false );
 	const [ view, setView ] = useState( DEFAULT_VIEW );
 	const [ selection, setSelection ] = useState( [] );
 	const [ editModalOpen, setEditModalOpen ] = useState( false );
@@ -124,18 +121,7 @@ export default function EventParticipants() {
 	const [ selectedInviteParticipants, setSelectedInviteParticipants ] =
 		useState( new Set() );
 	const [ inviteSearch, setInviteSearch ] = useState( '' );
-	const [ gallerySendResult, setGallerySendResult ] = useState( null );
 	const [ invitationSendResult, setInvitationSendResult ] = useState( null );
-	const [ showGalleryPreviewModal, setShowGalleryPreviewModal ] =
-		useState( false );
-	const [ galleryPreviewParticipants, setGalleryPreviewParticipants ] =
-		useState( [] );
-	const [ extraMessages, setExtraMessages ] = useState( [] );
-	const [ disabledExtraMessageIds, setDisabledExtraMessageIds ] = useState(
-		new Set()
-	);
-	const [ isLoadingExtraMessages, setIsLoadingExtraMessages ] =
-		useState( false );
 
 	const params = new URLSearchParams( window.location.search );
 	const urlEventDateId = params.get( 'event_date_id' );
@@ -416,99 +402,6 @@ export default function EventParticipants() {
 		}
 	};
 
-	const openGalleryPreviewModal = async ( targetParticipants ) => {
-		setGalleryPreviewParticipants( targetParticipants );
-		setDisabledExtraMessageIds( new Set() );
-		setIsLoadingExtraMessages( true );
-		setShowGalleryPreviewModal( true );
-
-		try {
-			const messages = await apiFetch( {
-				path: '/fair-audience/v1/extra-messages',
-			} );
-			setExtraMessages( messages.filter( ( m ) => m.is_active ) );
-		} catch {
-			setExtraMessages( [] );
-		} finally {
-			setIsLoadingExtraMessages( false );
-		}
-	};
-
-	const handleSendGalleryLink = ( items ) => {
-		openGalleryPreviewModal( items );
-	};
-
-	const handleSendGalleryLinkButton = () => {
-		// If some participants are selected, send to them; otherwise send to all.
-		const targetParticipants =
-			selection.length > 0
-				? participants.filter( ( p ) =>
-						selection.includes( p.participant_id )
-				  )
-				: participants;
-
-		if ( targetParticipants.length === 0 ) {
-			alert(
-				__(
-					'No participants to send gallery links to.',
-					'fair-audience'
-				)
-			);
-			return;
-		}
-
-		openGalleryPreviewModal( targetParticipants );
-	};
-
-	const handleConfirmGalleryLink = async () => {
-		setIsSendingGalleryLinks( true );
-
-		try {
-			const participantIds = galleryPreviewParticipants.map(
-				( p ) => p.participant_id
-			);
-
-			const requestData = {
-				participant_ids: participantIds,
-				disabled_extra_message_ids: Array.from(
-					disabledExtraMessageIds
-				),
-			};
-
-			const galleryPath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/gallery-invitations`;
-			const response = await apiFetch( {
-				path: galleryPath,
-				method: 'POST',
-				data: requestData,
-			} );
-
-			setGallerySendResult( {
-				sent_count: response.sent_count,
-				failed: response.failed,
-			} );
-
-			setShowGalleryPreviewModal( false );
-			setSelection( [] );
-		} catch ( err ) {
-			alert(
-				__( 'Error sending gallery links: ', 'fair-audience' ) +
-					err.message
-			);
-		} finally {
-			setIsSendingGalleryLinks( false );
-		}
-	};
-
-	const handleToggleExtraMessage = ( messageId ) => {
-		const newDisabled = new Set( disabledExtraMessageIds );
-		if ( newDisabled.has( messageId ) ) {
-			newDisabled.delete( messageId );
-		} else {
-			newDisabled.add( messageId );
-		}
-		setDisabledExtraMessageIds( newDisabled );
-	};
-
 	const handleOpenEditModal = ( item ) => {
 		setEditingParticipant( item );
 		setEditLabel( item.label );
@@ -658,17 +551,6 @@ export default function EventParticipants() {
 				getValue: ( { item } ) => item.label || '',
 			},
 			{
-				id: 'photo_likes',
-				label: __( 'Photo Likes', 'fair-audience' ),
-				render: ( { item } ) => (
-					<div style={ { textAlign: 'right' } }>
-						{ item.photo_likes_received || 0 }
-					</div>
-				),
-				enableSorting: true,
-				getValue: ( { item } ) => item.photo_likes_received || 0,
-			},
-			{
 				id: 'questions',
 				label: __( 'Questions', 'fair-audience' ),
 				render: ( { item } ) =>
@@ -684,12 +566,6 @@ export default function EventParticipants() {
 	// Define actions for DataViews.
 	const actions = useMemo(
 		() => [
-			{
-				id: 'send_gallery',
-				label: __( 'Send Photo Link', 'fair-audience' ),
-				callback: handleSendGalleryLink,
-				supportsBulk: true,
-			},
 			{
 				id: 'edit',
 				label: __( 'Edit', 'fair-audience' ),
@@ -741,10 +617,6 @@ export default function EventParticipants() {
 		<div className="wrap">
 			<h1>{ __( 'Event Participants', 'fair-audience' ) }</h1>
 
-			<EmailSendResultNotice
-				result={ gallerySendResult }
-				onDismiss={ () => setGallerySendResult( null ) }
-			/>
 			<EmailSendResultNotice
 				result={ invitationSendResult }
 				onDismiss={ () => setInvitationSendResult( null ) }
@@ -812,15 +684,6 @@ export default function EventParticipants() {
 												eventInfo.event_date
 										  )
 										: '—' }
-								</span>
-								<span>
-									<a href={ eventInfo.gallery_link }>
-										{ sprintf(
-											/* translators: %d: number of photos */
-											__( '%d Photos', 'fair-audience' ),
-											eventInfo.gallery_count || 0
-										) }
-									</a>
 								</span>
 								<span>
 									{ sprintf(
@@ -893,33 +756,6 @@ export default function EventParticipants() {
 						selection={ selection }
 						onChangeSelection={ setSelection }
 					/>
-
-					<div style={ { marginTop: '15px' } }>
-						<Button
-							variant="secondary"
-							onClick={ handleSendGalleryLinkButton }
-							disabled={
-								isSendingGalleryLinks ||
-								participants.length === 0
-							}
-						>
-							{ isSendingGalleryLinks
-								? __( 'Sending...', 'fair-audience' )
-								: selection.length > 0
-								? sprintf(
-										/* translators: %d: number of selected participants */
-										__(
-											'Send Gallery Link to %d Selected',
-											'fair-audience'
-										),
-										selection.length
-								  )
-								: __(
-										'Send Gallery Link to All',
-										'fair-audience'
-								  ) }
-						</Button>
-					</div>
 				</CardBody>
 			</Card>
 
@@ -1175,200 +1011,6 @@ export default function EventParticipants() {
 						</Button>
 						<Button isPrimary onClick={ handleSaveEdit }>
 							{ __( 'Save', 'fair-audience' ) }
-						</Button>
-					</div>
-				</Modal>
-			) }
-
-			{ showGalleryPreviewModal && (
-				<Modal
-					title={ __( 'Send Gallery Invitations', 'fair-audience' ) }
-					onRequestClose={ () => setShowGalleryPreviewModal( false ) }
-					style={ { maxWidth: '640px', width: '100%' } }
-				>
-					<p>
-						{ sprintf(
-							/* translators: %d: number of participants */
-							__( 'Send to %d participant(s)', 'fair-audience' ),
-							galleryPreviewParticipants.length
-						) }
-					</p>
-
-					<div
-						style={ {
-							border: '1px solid #ddd',
-							borderRadius: '8px',
-							overflow: 'hidden',
-							marginBottom: '20px',
-							boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-						} }
-					>
-						<div
-							style={ {
-								backgroundColor: '#0073aa',
-								color: '#fff',
-								padding: '20px',
-								textAlign: 'center',
-								fontSize: '18px',
-								fontWeight: 'bold',
-							} }
-						>
-							{ eventInfo?.title || '' }
-						</div>
-						<div style={ { padding: '25px 20px' } }>
-							<p
-								style={ {
-									margin: '0 0 15px 0',
-									fontSize: '14px',
-								} }
-							>
-								{ sprintf(
-									/* translators: %s: participant first name */
-									__( 'Hi %s,', 'fair-audience' ),
-									'(...)'
-								) }
-							</p>
-							<p
-								style={ {
-									margin: '0 0 15px 0',
-									fontSize: '14px',
-								} }
-							>
-								{ sprintf(
-									/* translators: %s: event title */
-									__(
-										'The photos from %s are now available for you to view and like!',
-										'fair-audience'
-									),
-									eventInfo?.title || ''
-								) }
-							</p>
-							<p
-								style={ {
-									margin: '0 0 15px 0',
-									fontSize: '14px',
-								} }
-							>
-								{ __(
-									'Click the button below to browse the gallery and let us know which photos you like best:',
-									'fair-audience'
-								) }
-							</p>
-							<p
-								style={ {
-									textAlign: 'center',
-									margin: '0 0 20px 0',
-								} }
-							>
-								<span
-									style={ {
-										display: 'inline-block',
-										backgroundColor: '#0073aa',
-										color: '#fff',
-										padding: '10px 24px',
-										borderRadius: '5px',
-										fontWeight: 'bold',
-										fontSize: '14px',
-									} }
-								>
-									{ __( 'View Gallery', 'fair-audience' ) }
-								</span>
-							</p>
-
-							{ isLoadingExtraMessages ? (
-								<Spinner />
-							) : (
-								extraMessages.map( ( msg ) => (
-									<div
-										key={ msg.id }
-										style={ {
-											marginBottom: '12px',
-											padding: '10px',
-											border: '1px solid #e0e0e0',
-											borderRadius: '4px',
-											opacity:
-												disabledExtraMessageIds.has(
-													msg.id
-												)
-													? 0.4
-													: 1,
-										} }
-									>
-										<div
-											style={ {
-												display: 'flex',
-												alignItems: 'center',
-												justifyContent: 'space-between',
-												marginBottom: '6px',
-											} }
-										>
-											<ToggleControl
-												label={
-													msg.category_name
-														? msg.category_name
-														: __(
-																'All categories',
-																'fair-audience'
-														  )
-												}
-												checked={
-													! disabledExtraMessageIds.has(
-														msg.id
-													)
-												}
-												onChange={ () =>
-													handleToggleExtraMessage(
-														msg.id
-													)
-												}
-												__nextHasNoMarginBottom
-											/>
-										</div>
-										<div
-											style={ {
-												fontSize: '13px',
-												color: '#555',
-											} }
-											dangerouslySetInnerHTML={ {
-												__html: msg.content,
-											} }
-										/>
-									</div>
-								) )
-							) }
-						</div>
-					</div>
-
-					<div
-						style={ {
-							display: 'flex',
-							justifyContent: 'flex-end',
-							gap: '10px',
-						} }
-					>
-						<Button
-							variant="secondary"
-							onClick={ () =>
-								setShowGalleryPreviewModal( false )
-							}
-						>
-							{ __( 'Cancel', 'fair-audience' ) }
-						</Button>
-						<Button
-							variant="primary"
-							onClick={ handleConfirmGalleryLink }
-							disabled={ isSendingGalleryLinks }
-						>
-							{ isSendingGalleryLinks
-								? __( 'Sending...', 'fair-audience' )
-								: sprintf(
-										/* translators: %d: number of participants */
-										__(
-											'Send to %d Participant(s)',
-											'fair-audience'
-										),
-										galleryPreviewParticipants.length
-								  ) }
 						</Button>
 					</div>
 				</Modal>

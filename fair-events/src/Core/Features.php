@@ -262,7 +262,7 @@ class Features {
 	}
 
 	/**
-	 * Per-feature constant name (e.g. `galleries` → `FAIR_EVENTS_FEATURE_GALLERIES`).
+	 * Per-feature constant name (e.g. `venues` → `FAIR_EVENTS_FEATURE_VENUES`).
 	 *
 	 * @param string $key Bundle key.
 	 * @return string

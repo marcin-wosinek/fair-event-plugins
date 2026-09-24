@@ -15,7 +15,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: [ 'title', 'event_date', 'participants', 'images', 'likes' ],
+	fields: [ 'title', 'event_date', 'participants' ],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -69,32 +69,6 @@ export default function EventsList() {
 				),
 				enableSorting: true,
 				getValue: ( { item } ) => item.participants || 0,
-			},
-			{
-				id: 'images',
-				label: __( 'Images', 'fair-audience' ),
-				render: ( { item } ) => (
-					<div style={ { textAlign: 'right' } }>
-						<a
-							href={ `upload.php?mode=list&fair_event_filter=${ item.event_id }` }
-						>
-							{ item.gallery_count || 0 }
-						</a>
-					</div>
-				),
-				enableSorting: true,
-				getValue: ( { item } ) => item.gallery_count || 0,
-			},
-			{
-				id: 'likes',
-				label: __( 'Likes', 'fair-audience' ),
-				render: ( { item } ) => (
-					<div style={ { textAlign: 'right' } }>
-						{ item.likes_count || 0 }
-					</div>
-				),
-				enableSorting: true,
-				getValue: ( { item } ) => item.likes_count || 0,
 			},
 		],
 		[]

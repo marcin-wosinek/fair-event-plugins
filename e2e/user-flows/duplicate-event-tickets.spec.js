@@ -53,7 +53,6 @@ test.beforeEach(() => {
 	setExperimentalFeatures({
 		venues: true,
 		sources: true,
-		galleries: true,
 		ticketing: true,
 		'event-tools': true,
 		migration: true,

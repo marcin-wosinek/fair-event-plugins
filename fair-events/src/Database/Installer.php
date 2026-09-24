@@ -32,12 +32,6 @@ class Installer {
 		$sql = Schema::get_event_sources_table_sql();
 		dbDelta( $sql );
 
-		$sql = Schema::get_event_photos_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_photo_likes_table_sql();
-		dbDelta( $sql );
-
 		$sql = Schema::get_event_venues_table_sql();
 		dbDelta( $sql );
 
@@ -90,17 +84,10 @@ class Installer {
 			self::migrate_to_1_0_0();
 		}
 
-		// Run migration if upgrading from pre-1.2.0 (taxonomy to table).
-		if ( version_compare( $current_version, '1.2.0', '<' ) ) {
-			self::migrate_to_1_2_0();
-		}
-
-		// Version 1.3.0 - Photo likes table (no data migration needed, table created by dbDelta).
-
-		// Run migration if upgrading from pre-1.4.0 (add participant_id to photo_likes).
-		if ( version_compare( $current_version, '1.4.0', '<' ) ) {
-			self::migrate_to_1_4_0();
-		}
+		// Versions 1.2.0 (gallery taxonomy to table), 1.3.0 and 1.4.0 (photo
+		// likes) and 2.9.0 (event_date_id on event photos) belonged to the
+		// retired gallery feature. They no longer run, so neither fresh
+		// installs nor old upgrades recreate its data; 3.36.0 drops the tables.
 
 		// Run migration if upgrading from pre-1.5.0 (add recurrence columns to event_dates).
 		if ( version_compare( $current_version, '1.5.0', '<' ) ) {
@@ -162,11 +149,6 @@ class Installer {
 		// Run migration if upgrading from pre-2.7.0 (add exdates to event_dates).
 		if ( version_compare( $current_version, '2.7.0', '<' ) ) {
 			self::migrate_to_2_7_0();
-		}
-
-		// Run migration if upgrading from pre-2.9.0 (add event_date_id to event_photos).
-		if ( version_compare( $current_version, '2.9.0', '<' ) ) {
-			self::migrate_to_2_9_0();
 		}
 
 		// Version 3.0.0 - Event date settings table (no data migration needed, table created by dbDelta).
@@ -334,8 +316,15 @@ class Installer {
 			self::migrate_to_3_35_0();
 		}
 
+		// Only record 3.36.0 once the gallery cleanup succeeded, so a partial
+		// failure is retried by the next maybe_upgrade().
+		$gallery_removed = true;
+		if ( version_compare( $current_version, '3.36.0', '<' ) ) {
+			$gallery_removed = self::migrate_to_3_36_0();
+		}
+
 		// Update database version.
-		Schema::update_db_version( Schema::DB_VERSION );
+		Schema::update_db_version( $gallery_removed ? Schema::DB_VERSION : '3.35.0' );
 	}
 
 	/**
@@ -360,14 +349,6 @@ class Installer {
 			// Run migrations.
 			if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 				self::migrate_to_1_0_0();
-			}
-
-			if ( version_compare( $current_version, '1.2.0', '<' ) ) {
-				self::migrate_to_1_2_0();
-			}
-
-			if ( version_compare( $current_version, '1.4.0', '<' ) ) {
-				self::migrate_to_1_4_0();
 			}
 
 			if ( version_compare( $current_version, '1.5.0', '<' ) ) {
@@ -412,10 +393,6 @@ class Installer {
 
 			if ( version_compare( $current_version, '2.7.0', '<' ) ) {
 				self::migrate_to_2_7_0();
-			}
-
-			if ( version_compare( $current_version, '2.9.0', '<' ) ) {
-				self::migrate_to_2_9_0();
 			}
 
 			if ( version_compare( $current_version, '3.1.0', '<' ) ) {
@@ -636,133 +613,6 @@ class Installer {
 				'all_day'        => $all_day ? 1 : 0,
 			),
 			array( '%d', '%s', '%s', '%d' )
-		);
-	}
-
-	/**
-	 * Migrate to version 1.2.0 - Move event gallery from taxonomy to table.
-	 *
-	 * @return void
-	 */
-	private static function migrate_to_1_2_0() {
-		self::migrate_from_taxonomy();
-	}
-
-	/**
-	 * Migrate event photos from taxonomy to custom table.
-	 *
-	 * @return void
-	 */
-	private static function migrate_from_taxonomy() {
-		global $wpdb;
-
-		$taxonomy   = 'fair_event_gallery';
-		$table_name = $wpdb->prefix . 'fair_events_event_photos';
-
-		// Get all terms in the event gallery taxonomy.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => $taxonomy,
-				'hide_empty' => false,
-			)
-		);
-
-		if ( is_wp_error( $terms ) || empty( $terms ) ) {
-			return;
-		}
-
-		foreach ( $terms as $term ) {
-			// Get event ID from term meta.
-			$event_id = get_term_meta( $term->term_id, 'event_id', true );
-
-			if ( ! $event_id ) {
-				// Try to extract from slug (event-123).
-				if ( preg_match( '/^event-(\d+)$/', $term->slug, $matches ) ) {
-					$event_id = (int) $matches[1];
-				}
-			}
-
-			if ( ! $event_id ) {
-				continue;
-			}
-
-			// Get all attachments in this term.
-			$attachment_ids = get_objects_in_term( $term->term_id, $taxonomy );
-
-			if ( is_wp_error( $attachment_ids ) || empty( $attachment_ids ) ) {
-				continue;
-			}
-
-			foreach ( $attachment_ids as $attachment_id ) {
-				// Check if already migrated.
-				$existing = $wpdb->get_var(
-					$wpdb->prepare(
-						'SELECT COUNT(*) FROM %i WHERE attachment_id = %d',
-						$table_name,
-						$attachment_id
-					)
-				);
-
-				if ( $existing > 0 ) {
-					continue;
-				}
-
-				// Insert into new table.
-				$wpdb->insert(
-					$table_name,
-					array(
-						'event_id'      => $event_id,
-						'attachment_id' => $attachment_id,
-					),
-					array( '%d', '%d' )
-				);
-			}
-		}
-	}
-
-	/**
-	 * Migrate to version 1.4.0 - Add participant_id column to photo_likes table.
-	 *
-	 * @return void
-	 */
-	private static function migrate_to_1_4_0() {
-		global $wpdb;
-
-		$table_name = $wpdb->prefix . 'fair_events_photo_likes';
-
-		// Check if column already exists.
-		$column_exists = $wpdb->get_results(
-			$wpdb->prepare(
-				'SHOW COLUMNS FROM %i LIKE %s',
-				$table_name,
-				$wpdb->esc_like( 'participant_id' )
-			)
-		);
-
-		if ( empty( $column_exists ) ) {
-			// Add participant_id column.
-			$wpdb->query(
-				$wpdb->prepare(
-					'ALTER TABLE %i ADD COLUMN participant_id BIGINT UNSIGNED DEFAULT NULL AFTER user_id',
-					$table_name
-				)
-			);
-
-			// Add index for participant_id.
-			$wpdb->query(
-				$wpdb->prepare(
-					'ALTER TABLE %i ADD KEY idx_participant_id (participant_id)',
-					$table_name
-				)
-			);
-		}
-
-		// Make user_id nullable for existing installations.
-		$wpdb->query(
-			$wpdb->prepare(
-				'ALTER TABLE %i MODIFY COLUMN user_id BIGINT UNSIGNED DEFAULT NULL',
-				$table_name
-			)
 		);
 	}
 
@@ -1273,57 +1123,6 @@ class Installer {
 				)
 			);
 		}
-	}
-
-	/**
-	 * Migrate to version 2.9.0 - Add event_date_id column to event_photos table.
-	 *
-	 * @return void
-	 */
-	private static function migrate_to_2_9_0() {
-		global $wpdb;
-
-		$table_name = $wpdb->prefix . 'fair_events_event_photos';
-
-		// Check if event_date_id column already exists.
-		$column_exists = $wpdb->get_results(
-			$wpdb->prepare(
-				'SHOW COLUMNS FROM %i LIKE %s',
-				$table_name,
-				$wpdb->esc_like( 'event_date_id' )
-			)
-		);
-
-		if ( empty( $column_exists ) ) {
-			// Add event_date_id column.
-			$wpdb->query(
-				$wpdb->prepare(
-					'ALTER TABLE %i ADD COLUMN event_date_id BIGINT UNSIGNED DEFAULT NULL AFTER event_id',
-					$table_name
-				)
-			);
-
-			// Add index for event_date_id.
-			$wpdb->query(
-				$wpdb->prepare(
-					'ALTER TABLE %i ADD KEY idx_event_date_id (event_date_id)',
-					$table_name
-				)
-			);
-		}
-
-		// Backfill event_date_id from fair_event_date_posts junction table.
-		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
-		$wpdb->query(
-			$wpdb->prepare(
-				'UPDATE %i p
-				JOIN %i edp ON edp.post_id = p.event_id
-				SET p.event_date_id = edp.event_date_id
-				WHERE p.event_date_id IS NULL',
-				$table_name,
-				$posts_table
-			)
-		);
 	}
 
 	/**
@@ -2368,6 +2167,15 @@ class Installer {
 	 */
 	private static function migrate_to_3_35_0() {
 		\FairEvents\Services\TicketBackfill::start();
+	}
+
+	/**
+	 * Migrate to version 3.36.0 - Remove the retired gallery feature's data.
+	 *
+	 * @return bool True when every cleanup step succeeded.
+	 */
+	private static function migrate_to_3_36_0() {
+		return GalleryCleanup::run();
 	}
 
 	/**

@@ -258,7 +258,7 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_frontend() {
-		// Gallery frontend is loaded by fair-events-experimental when active.
+		\FairEvents\Frontend\RetiredGalleryLinks::init();
 	}
 
 	/**

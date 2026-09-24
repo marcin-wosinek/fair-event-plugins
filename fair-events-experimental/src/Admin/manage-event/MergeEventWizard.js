@@ -24,7 +24,6 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 const RELATIONSHIP_LABELS = {
-	event_photos: __( 'Event Photos', 'fair-events-experimental' ),
 	participants: __( 'Participants', 'fair-events-experimental' ),
 	questionnaire_submissions: __(
 		'Questionnaire Responses',

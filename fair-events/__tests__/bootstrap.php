@@ -88,6 +88,38 @@ if ( ! function_exists( 'update_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'delete_option' ) ) {
+	/**
+	 * Stub of WordPress delete_option() backed by $GLOBALS['_fair_test_options'].
+	 *
+	 * @param string $name Option name.
+	 * @return bool Whether the option existed.
+	 */
+	function delete_option( $name ) {
+		$existed = isset( $GLOBALS['_fair_test_options'] ) && array_key_exists( $name, $GLOBALS['_fair_test_options'] );
+		unset( $GLOBALS['_fair_test_options'][ $name ] );
+		return $existed;
+	}
+}
+
+if ( ! function_exists( 'delete_metadata' ) ) {
+	/**
+	 * Stub of WordPress delete_metadata(), recording each call in
+	 * $GLOBALS['_fair_test_deleted_metadata'].
+	 *
+	 * @param string $meta_type  Object type.
+	 * @param int    $object_id  Object ID.
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 * @param bool   $delete_all Whether to delete for every object.
+	 * @return bool Always true.
+	 */
+	function delete_metadata( $meta_type, $object_id, $meta_key, $meta_value = '', $delete_all = false ) {
+		$GLOBALS['_fair_test_deleted_metadata'][] = array( $meta_type, $object_id, $meta_key, $meta_value, $delete_all );
+		return true;
+	}
+}
+
 if ( ! function_exists( 'do_action' ) ) {
 	/**
 	 * Stub of WordPress do_action(), recording dispatched hook arguments.

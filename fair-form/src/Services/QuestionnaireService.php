@@ -367,7 +367,7 @@ class QuestionnaireService {
 	 *
 	 * @param WP_REST_Request $request        Request object.
 	 * @param array           $answers        Questionnaire answers to update.
-	 * @param int             $event_date_id  Optional event date ID to link images to.
+	 * @param int             $event_date_id  Unused; kept so existing callers keep their argument order.
 	 * @param int             $participant_id Participant ID to set as photo author.
 	 * @return array|WP_Error Updated answers array or error.
 	 */
@@ -461,14 +461,8 @@ class QuestionnaireService {
 			$attachment_metadata = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
 			wp_update_attachment_metadata( $attachment_id, $attachment_metadata );
 
-			// Link image to event if event_date_id is set and fair-events plugin is active.
-			if ( $event_date_id > 0 && class_exists( '\FairEvents\Database\EventPhotoRepository' ) ) {
-				$photo_repo = new \FairEvents\Database\EventPhotoRepository();
-				$photo_repo->set_event_date( $attachment_id, $event_date_id );
-			}
-
 			// Set participant as photo author (guarded: fair-audience-experimental's
-			// `galleries` bundle may be inactive).
+			// `photos` bundle may be inactive).
 			if ( $participant_id > 0 && class_exists( '\FairAudienceExperimental\Database\PhotoParticipantRepository' ) ) {
 				$photo_participant_repo = new \FairAudienceExperimental\Database\PhotoParticipantRepository();
 				$photo_participant_repo->set_author( $attachment_id, $participant_id );

@@ -112,7 +112,6 @@ class PhotoUploadController extends WP_REST_Controller {
 		}
 
 		$participant_id = $token_data['participant_id'];
-		$event_date_id  = $token_data['event_date_id'];
 
 		// Verify participant exists.
 		$participant_repo = new ParticipantRepository();
@@ -167,7 +166,7 @@ class PhotoUploadController extends WP_REST_Controller {
 				'size'     => is_array( $photos['size'] ) ? $photos['size'][ $i ] : $photos['size'],
 			);
 
-			$result = $this->process_single_file( $single_file, $participant_id, $event_date_id, $photo_participant_repo );
+			$result = $this->process_single_file( $single_file, $participant_id, $photo_participant_repo );
 			if ( is_wp_error( $result ) ) {
 				$errors[] = $result->get_error_message();
 			} else {
@@ -196,11 +195,10 @@ class PhotoUploadController extends WP_REST_Controller {
 	 *
 	 * @param array                      $file                   File data from $_FILES.
 	 * @param int                        $participant_id         Participant ID.
-	 * @param int                        $event_date_id          Event date ID.
 	 * @param PhotoParticipantRepository $photo_participant_repo Photo participant repository.
 	 * @return int|WP_Error Attachment ID on success, WP_Error on failure.
 	 */
-	private function process_single_file( $file, $participant_id, $event_date_id, $photo_participant_repo ) {
+	private function process_single_file( $file, $participant_id, $photo_participant_repo ) {
 		// Validate upload error.
 		if ( UPLOAD_ERR_OK !== $file['error'] ) {
 			return new WP_Error(
@@ -261,12 +259,6 @@ class PhotoUploadController extends WP_REST_Controller {
 		// Generate attachment metadata (thumbnails, etc.).
 		$attachment_metadata = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
 		wp_update_attachment_metadata( $attachment_id, $attachment_metadata );
-
-		// Link image to event if event_date_id is set and fair-events plugin is active.
-		if ( $event_date_id > 0 && class_exists( '\FairEvents\Database\EventPhotoRepository' ) ) {
-			$photo_repo = new \FairEvents\Database\EventPhotoRepository();
-			$photo_repo->set_event_date( $attachment_id, $event_date_id );
-		}
 
 		// Set participant as photo author.
 		$photo_participant_repo->set_author( $attachment_id, $participant_id );
