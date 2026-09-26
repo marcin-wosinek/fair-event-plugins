@@ -605,6 +605,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'      => $currency,
 				'description'   => $description,
 				'event_date_id' => $event_date_id,
+				'post_id'       => $this->resolve_event_post_id( $event_date_id ),
 				'user_id'       => $user_id ? $user_id : null,
 				'email'         => $email,
 				'metadata'      => array_merge(
@@ -1000,6 +1001,32 @@ class GetTicketsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Resolve the event post a purchase's transaction belongs to.
+	 *
+	 * Generated occurrences resolve through their series master, so a
+	 * series purchase links to the series' own event. Dates without a
+	 * linked post (standalone/external) return null and checkout proceeds
+	 * without a post link.
+	 *
+	 * @param int $event_date_id Event-date ID the purchase targets.
+	 * @return int|null Event post ID, or null if the date has no linked post.
+	 */
+	private function resolve_event_post_id( $event_date_id ) {
+		if ( ! $event_date_id || ! class_exists( \FairEvents\Models\EventDates::class ) ) {
+			return null;
+		}
+
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return null;
+		}
+
+		$post_id = (int) $event_date->get_resolved_event_id();
+
+		return $post_id ? $post_id : null;
+	}
+
+	/**
 	 * Resolve the page the buyer should return to after checkout.
 	 *
 	 * This runs inside a REST request, which carries no post context —
@@ -1226,6 +1253,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'      => $currency,
 				'description'   => $description,
 				'event_date_id' => $series_master_id,
+				'post_id'       => $this->resolve_event_post_id( $series_master_id ),
 				'user_id'       => $user_id ? $user_id : null,
 				'email'         => $email,
 				'metadata'      => array_merge(
@@ -1772,6 +1800,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'      => $transaction->currency,
 				'description'   => $transaction->description,
 				'event_date_id' => $event_date_id,
+				'post_id'       => $this->resolve_event_post_id( $event_date_id ),
 				'user_id'       => $user_id ? $user_id : null,
 				'email'         => $buyer_email,
 				'metadata'      => array_merge(

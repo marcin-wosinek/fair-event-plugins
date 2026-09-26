@@ -13,14 +13,16 @@
  * Uses the Mollie double's settable GET status (set-mollie-status.php,
  * #1244 Decisions #8) rather than driving a real checkout, mirroring
  * get-tickets-purchase.spec.js's use of the webhook double for the
- * already-covered straight-through paid path. Runs with fair-audience active
+ * already-covered straight-through paid path. The retry's replacement
+ * transaction must link the event post even when the original predates that
+ * link (#1467). Runs with fair-audience active
  * (the .wp-env.json default, and the only signup path since #1245) — its
  * render-context/render-slot enrichment doesn't touch this anonymous
  * return/retry path, so no deactivation is needed here anymore.
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { runScript } from '../support/wp-cli.js';
+import { runScript, wpCli } from '../support/wp-cli.js';
 
 test.describe('get-tickets block: return and retry', () => {
 	test.afterEach(() => {
@@ -68,6 +70,20 @@ test.describe('get-tickets block: return and retry', () => {
 		expect(state.signups).toHaveLength(1);
 		expect(state.signups[0].status).toBe('failed');
 		expect(state.signups[0].transaction_status).toBe('failed');
+		const originalTransactionId = state.signups[0].transaction_id;
+
+		// Simulate a transaction created before #1467 linked the event post:
+		// the retry must still link its replacement transaction.
+		wpCli(
+			`db query "UPDATE wp_fair_payment_transactions SET post_id = NULL WHERE id = ${originalTransactionId}"`
+		);
+		expect(
+			runScript(
+				'transaction-state.php',
+				'E2E_TX_STATE',
+				String(originalTransactionId)
+			).post_id
+		).toBeNull();
 
 		// The buyer's card works this time.
 		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
@@ -93,5 +109,13 @@ test.describe('get-tickets block: return and retry', () => {
 		expect(state.signups[0].transaction_status).toBe('paid');
 		expect(state.mollie_payload.metadata.email).toBe(email);
 		expect(state.mollie_payload.metadata.retry_of_transaction_id).toBeTruthy();
+
+		const retryTransaction = runScript(
+			'transaction-state.php',
+			'E2E_TX_STATE',
+			String(state.signups[0].transaction_id)
+		);
+		expect(retryTransaction.id).not.toBe(originalTransactionId);
+		expect(retryTransaction.post_id).toBe(event.eventId);
 	});
 });
