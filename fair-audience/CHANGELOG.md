@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.17.0
+
+### Minor Changes
+
+-   1246f44: Remove the event photo gallery. The Photos tab of Manage Event, the public gallery page, photo likes and downloads, gallery access links, the "Send Gallery Link" action, the gallery count on Event Participants and the Images/Likes columns of By Event are gone, together with their REST routes. Old `?gallery_key=`, `?event_gallery_id=` and `/event-gallery/{id}` links now answer 410 Gone without checking the token. On upgrade, the gallery relationship, likes and access key tables are dropped; the cleanup can safely repeat and is retried until it succeeds. Media files, photo authors and tags, participant and questionnaire photo uploads, and event promotional images are kept. In fair-audience-experimental the retained photo upload and attribution features move from the `galleries` bundle to a new `photos` bundle, which inherits the stored choice. See DEPLOYMENT.md for backup and rollback steps.
+
+### Patch Changes
+
+-   afe881c: Add an Event Prices block that displays an event's public ticket prices — enabled ticket types, sale periods, and their formatted prices — directly from the linked event's Prices tab, automatically following the visitor's selected recurring-event occurrence. Free, unavailable, and disabled tickets are shown without implying they can be purchased.
+
+    Ticket pricing across the signup and purchase flows now treats only an explicitly stored zero price as free. A ticket type with no price row at all is unavailable rather than free by convention, matching what the new block (and the Prices tab) shows — closing a gap where a ticket that looked unavailable could previously still be purchased for free at checkout.
+
+-   4d692f4: Record every purchased admission as its own ticket unit. A signup for three tickets now owns three individually identifiable tickets, each with a permanent ID, an unguessable public reference, its event date, ticket type, status, purchaser, and current holder. Ticket status follows the signup through payment, expiry, retry, failure, and checkout cancellation, and deleting a signup removes its tickets. Existing signups, including pending, expired, and failed ones, receive their tickets through a background migration that runs in small batches, can resume after an interruption, never creates duplicates, and finishes only after every signup's tickets match its quantity. When fair-audience matches existing signups to participants by email, their tickets are linked to that participant too, and deleting a participant's data removes the participant from their tickets while keeping the purchase history. Signup data and event participation records are unchanged.
+-   74f0e21: Simplify the Manage Event List tab into a registration roster. It now shows only confirmed registrations (paid or free), numbers them from 1, and adds one column per configured extra showing whether each person holds it. Email addresses and amounts paid are no longer shown in the table or its delete dialog, but remain available in exports, which cover the displayed registrations. Fair Audience's event participants endpoint now also reports `confirmed_ticket_option_ids`, excluding extras still waiting for payment; without Fair Audience the extra columns show that selections are unavailable.
+-   3af47de: Add a "Download PNG" action to the Cumulative sales and Cumulative sales amount charts on the event Statistics tab. Each image includes the event name, the chart title, and the complete chart, and is saved under a filename that identifies both the event and the chart. The event name now also appears as a subtitle on those two charts. The event statistics endpoint returns the event's display name as `event_name`.
+
 ## 1.16.0
 
 ### Minor Changes

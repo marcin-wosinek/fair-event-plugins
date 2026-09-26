@@ -1,5 +1,35 @@
 # fair-events-experimental
 
+## 1.9.0
+
+### Minor Changes
+
+-   1246f44: Remove the event photo gallery. The Photos tab of Manage Event, the public gallery page, photo likes and downloads, gallery access links, the "Send Gallery Link" action, the gallery count on Event Participants and the Images/Likes columns of By Event are gone, together with their REST routes. Old `?gallery_key=`, `?event_gallery_id=` and `/event-gallery/{id}` links now answer 410 Gone without checking the token. On upgrade, the gallery relationship, likes and access key tables are dropped; the cleanup can safely repeat and is retried until it succeeds. Media files, photo authors and tags, participant and questionnaire photo uploads, and event promotional images are kept. In fair-audience-experimental the retained photo upload and attribution features move from the `galleries` bundle to a new `photos` bundle, which inherits the stored choice. See DEPLOYMENT.md for backup and rollback steps.
+-   3af47de: Add a "Download PNG" action to the Cumulative sales and Cumulative sales amount charts on the event Statistics tab. Each image includes the event name, the chart title, and the complete chart, and is saved under a filename that identifies both the event and the chart. The event name now also appears as a subtitle on those two charts. The event statistics endpoint returns the event's display name as `event_name`.
+
+### Patch Changes
+
+-   afe881c: Add an Event Prices block that displays an event's public ticket prices — enabled ticket types, sale periods, and their formatted prices — directly from the linked event's Prices tab, automatically following the visitor's selected recurring-event occurrence. Free, unavailable, and disabled tickets are shown without implying they can be purchased.
+
+    Ticket pricing across the signup and purchase flows now treats only an explicitly stored zero price as free. A ticket type with no price row at all is unavailable rather than free by convention, matching what the new block (and the Prices tab) shows — closing a gap where a ticket that looked unavailable could previously still be purchased for free at checkout.
+
+-   Updated dependencies [9351bf8]
+-   Updated dependencies [c41124a]
+-   Updated dependencies [afe881c]
+-   Updated dependencies [52ab256]
+-   Updated dependencies [3ba3169]
+-   Updated dependencies [67f7bf6]
+-   Updated dependencies [c9df2f7]
+-   Updated dependencies [4d692f4]
+-   Updated dependencies [6d00587]
+-   Updated dependencies [74f0e21]
+-   Updated dependencies [82c3b5c]
+-   Updated dependencies [1246f44]
+-   Updated dependencies [4141d59]
+-   Updated dependencies [ab5c597]
+-   Updated dependencies [cec5507]
+    -   fair-events@1.19.0
+
 ## 1.8.0
 
 ### Minor Changes
