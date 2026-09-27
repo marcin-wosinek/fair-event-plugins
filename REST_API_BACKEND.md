@@ -728,6 +728,16 @@ sub-route) expose:
     confirmation, to send its own paid-signup confirmation email, since the
     free path's `fair_events_signup_created` listener never sees a paid
     signup's confirmation.
+-   **`fair_events_capacity_legacy_admissions` filter** — `TicketCapacity`
+    (`fair-events/src/Services/TicketCapacity.php`) counts event-date and
+    ticket-type capacity from individual ticket units, and runs
+    `apply_filters( 'fair_events_capacity_legacy_admissions', 0, $scope, $id )`
+    (`$scope` is `'event_date'` or `'ticket_type'`) to add active admissions
+    with no `fair_events_signups` row behind them. fair-audience reports its
+    `signed_up` and unexpired `pending_payment` relationships whose
+    participant has no signup for the same event date or ticket type, so
+    older and hand-added admissions keep their places without being counted
+    twice.
 
 **`accepted_args` contract.** Register each hook with `accepted_args` matching
 what the call site above actually passes — not the callback's own parameter
@@ -752,6 +762,7 @@ unified-signup submission fatal'd):
 | `fair_events_signup_confirmed`         | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_signup_payment_failed`    | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_backfill_signup_participant_ids` | 0    | `add_action( ... )` (default, no args)     |
+| `fair_events_capacity_legacy_admissions` | 3          | `add_filter( ..., 10, 3 )`                 |
 
 A registered `accepted_args` may be lower than "args passed" — the callback
 just won't receive the trailing ones — but never lower than the callback's own

@@ -523,19 +523,37 @@ class GetTicketsController extends WP_REST_Controller {
 
 		$this->increment_rate_limit( $email );
 
-		// Persist the signup row.
-		$signup_id = \FairEvents\Models\EventSignup::save(
+		// Check both capacity limits and persist the signup row under the
+		// same row locks, so concurrent buyers can't both take the last
+		// place. A paid signup is saved holding its places until its
+		// payment hold expires.
+		$signup_id = \FairEvents\Services\TicketCapacity::reserve(
 			array(
-				'event_date_id'  => $event_date_id,
-				'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
-				'name'           => $name,
-				'email'          => $email,
-				'quantity'       => $quantity,
-				'mailing_opt_in' => $mailing_opt_in ? 1 : 0,
-				'amount'         => $amount,
-				'status'         => $amount > 0 ? 'pending_payment' : 'confirmed',
-			)
+				array(
+					'event_date_id'  => (int) $event_date_id,
+					'ticket_type_id' => (int) $ticket_type_id,
+					'quantity'       => $quantity,
+				),
+			),
+			static function () use ( $event_date_id, $ticket_type_id, $name, $email, $quantity, $mailing_opt_in, $amount ) {
+				return \FairEvents\Models\EventSignup::save_in_transaction(
+					array(
+						'event_date_id'  => $event_date_id,
+						'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
+						'name'           => $name,
+						'email'          => $email,
+						'quantity'       => $quantity,
+						'mailing_opt_in' => $mailing_opt_in ? 1 : 0,
+						'amount'         => $amount,
+						'status'         => $amount > 0 ? 'pending_payment' : 'confirmed',
+					)
+				);
+			}
 		);
+
+		if ( is_wp_error( $signup_id ) ) {
+			return $signup_id;
+		}
 
 		if ( ! $signup_id ) {
 			return new WP_Error(
@@ -1160,29 +1178,54 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		// Persist one signup row per chosen occurrence (quantity fixed at 1;
-		// instance count is the only multiplier for this scope).
-		$signup_ids = array();
+		// instance count is the only multiplier for this scope). Every row is
+		// checked and written in one locked transaction: each occurrence
+		// needs a place, and the ticket type needs one per occurrence.
+		$demands = array();
 		foreach ( $occurrences as $occ ) {
-			$signup_id = \FairEvents\Models\EventSignup::save(
-				array(
-					'event_date_id'  => (int) $occ->id,
-					'ticket_type_id' => $ticket_type->id,
-					'name'           => $name,
-					'email'          => $email,
-					'quantity'       => 1,
-					'mailing_opt_in' => $mailing_opt_in ? 1 : 0,
-					'amount'         => $unit_price,
-					'status'         => $total_amount > 0 ? 'pending_payment' : 'confirmed',
-				)
+			$demands[] = array(
+				'event_date_id'  => (int) $occ->id,
+				'ticket_type_id' => (int) $ticket_type->id,
+				'quantity'       => 1,
 			);
-			if ( ! $signup_id ) {
-				return new WP_Error(
-					'db_error',
-					__( 'Failed to save signup. Please try again.', 'fair-events' ),
-					array( 'status' => 500 )
-				);
+		}
+
+		$signup_ids = \FairEvents\Services\TicketCapacity::reserve(
+			$demands,
+			static function () use ( $occurrences, $ticket_type, $name, $email, $mailing_opt_in, $unit_price, $total_amount ) {
+				$saved_ids = array();
+				foreach ( $occurrences as $occ ) {
+					$signup_id = \FairEvents\Models\EventSignup::save_in_transaction(
+						array(
+							'event_date_id'  => (int) $occ->id,
+							'ticket_type_id' => $ticket_type->id,
+							'name'           => $name,
+							'email'          => $email,
+							'quantity'       => 1,
+							'mailing_opt_in' => $mailing_opt_in ? 1 : 0,
+							'amount'         => $unit_price,
+							'status'         => $total_amount > 0 ? 'pending_payment' : 'confirmed',
+						)
+					);
+					if ( ! $signup_id ) {
+						return false;
+					}
+					$saved_ids[] = (int) $signup_id;
+				}
+				return $saved_ids;
 			}
-			$signup_ids[] = (int) $signup_id;
+		);
+
+		if ( is_wp_error( $signup_ids ) ) {
+			return $signup_ids;
+		}
+
+		if ( ! $signup_ids ) {
+			return new WP_Error(
+				'db_error',
+				__( 'Failed to save signup. Please try again.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
 		}
 
 		$occurrence_ids   = array_map(
@@ -1764,6 +1807,41 @@ class GetTicketsController extends WP_REST_Controller {
 				__( 'Paid tickets are not available because online payments are not configured.', 'fair-events' ),
 				array( 'status' => 503 )
 			);
+		}
+
+		// A failed payment released its places, which someone else may have
+		// taken since. Take them back only if they are still available.
+		$released_rows = array_values(
+			array_filter(
+				$signup_rows,
+				static function ( $row ) {
+					return ! \FairEvents\Services\TicketCapacity::signup_holds_places( $row );
+				}
+			)
+		);
+		if ( $released_rows ) {
+			$renewed = \FairEvents\Services\TicketCapacity::reserve(
+				array_map( array( \FairEvents\Services\TicketCapacity::class, 'demand_for_signup' ), $released_rows ),
+				static function () use ( $released_rows ) {
+					foreach ( $released_rows as $row ) {
+						if ( ! \FairEvents\Models\EventSignup::renew_hold( (int) $row->id ) ) {
+							return false;
+						}
+					}
+					return true;
+				}
+			);
+
+			if ( is_wp_error( $renewed ) ) {
+				return $renewed;
+			}
+			if ( ! $renewed ) {
+				return new WP_Error(
+					'invalid_retry_state',
+					__( 'This payment cannot be retried.', 'fair-events' ),
+					array( 'status' => 409 )
+				);
+			}
 		}
 
 		$old_line_items = \FairPaymentsConnector\Models\LineItem::get_by_transaction_id( (int) $transaction->id );

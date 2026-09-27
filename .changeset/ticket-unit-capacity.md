@@ -1,0 +1,6 @@
+---
+'fair-events': minor
+'fair-audience': patch
+---
+
+Event and ticket-type capacity is now counted per ticket and enforced when tickets are bought. A purchase of four tickets takes four places, and buyers who ask for more than is left are told how many places or tickets remain. Both limits are checked and the tickets saved together, so buyers purchasing at the same moment can no longer take the same last place. A paid reservation holds its places from the moment it is made until its payment window ends. A failed, cancelled or expired payment frees them. Retrying a failed payment succeeds only if its places are still free. A payment that arrives after its window ended is still honored, and the signup is flagged as over capacity when someone else took the places in the meantime. For recurring events, a ticket for one date or for chosen dates takes a place on each of those dates, and a whole-series pass takes one place on every date from its purchase on. Admissions recorded before individual tickets existed, including participants added by hand in fair-audience, keep their places and are never counted twice. The "has sales" check that protects ticket types from risky edits uses the same count and no longer needs fair-audience.

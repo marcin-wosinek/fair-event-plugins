@@ -147,6 +147,11 @@ class Fair_Test_WPDB {
 	 * @return int Deleted row count.
 	 */
 	public function query( $prepared ) {
+		// Unprepared statements (START TRANSACTION, COMMIT, ROLLBACK).
+		if ( ! is_array( $prepared ) ) {
+			return 0;
+		}
+
 		$table   = $prepared['args'][0];
 		$updated = 0;
 

@@ -393,6 +393,46 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Count active admissions that have no fair-events signup behind them:
+	 * relationships from before ticket units, the retired fair-audience
+	 * purchase route, or an organizer adding a participant by hand. They
+	 * keep occupying capacity next to fair-events' ticket units. A
+	 * relationship whose participant has a signup for the same event date
+	 * or ticket type is already counted there and is skipped, so one
+	 * admission never counts twice.
+	 *
+	 * @param string $scope 'event_date' or 'ticket_type'.
+	 * @param int    $id    Event date ID or ticket type ID.
+	 * @return int
+	 */
+	public function count_admissions_without_signup( $scope, $id ) {
+		global $wpdb;
+
+		$column = 'ticket_type' === $scope ? 'ticket_type_id' : 'event_date_id';
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i AS ep
+				 WHERE ep.%i = %d
+				 AND (
+				     ep.label = 'signed_up'
+				     OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
+				 )
+				 AND NOT EXISTS (
+				     SELECT 1 FROM %i AS s
+				     WHERE s.participant_id = ep.participant_id
+				     AND ( s.event_date_id = ep.event_date_id OR ( ep.ticket_type_id IS NOT NULL AND s.ticket_type_id = ep.ticket_type_id ) )
+				 )",
+				$this->get_table_name(),
+				$column,
+				(int) $id,
+				gmdate( 'Y-m-d H:i:s' ),
+				$wpdb->prefix . 'fair_events_signups'
+			)
+		);
+	}
+
+	/**
 	 * Count active signups reserved for a specific ticket option (activity).
 	 *
 	 * Counts event_participant rows that have an entry in the
