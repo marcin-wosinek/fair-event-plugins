@@ -198,6 +198,17 @@ class Fair_Test_WPDB {
 	}
 
 	/**
+	 * Result sets are never seeded: every multi-row read comes back empty
+	 * (e.g. a signup with no ticket units yet).
+	 *
+	 * @param string $query Query.
+	 * @return array
+	 */
+	public function get_results( $query ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- mirrors wpdb's signature.
+		return array();
+	}
+
+	/**
 	 * Stub of wpdb::get_col() — resolves a prepare()d table/id lookup against
 	 * values seeded via seed_col(), or an empty array when nothing was seeded.
 	 *

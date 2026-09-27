@@ -68,9 +68,11 @@ class PaymentHooks {
 
 	/**
 	 * Confirm a paid signup. The payment is always honored. A signup whose
-	 * hold had already lapsed no longer held its places, so they are
-	 * rechecked under the capacity lock; when they have been taken in the
-	 * meantime the signup is flagged over capacity for the organizer.
+	 * hold had already lapsed no longer held its places, nor the places of
+	 * its tickets' activities, so they are rechecked under the capacity
+	 * lock; when they have been taken in the meantime the signup is flagged
+	 * over capacity for the organizer, and so is each activity that went
+	 * past its limit.
 	 *
 	 * @param int $signup_id Signup row ID.
 	 * @return bool True when the signup transitioned to confirmed.
@@ -85,15 +87,34 @@ class PaymentHooks {
 			return \FairEvents\Models\EventSignup::confirm_paid( $signup_id );
 		}
 
+		$demand = \FairEvents\Services\TicketCapacity::demand_for_signup( $signup );
+
 		return \FairEvents\Services\TicketCapacity::with_capacity_lock(
-			array( \FairEvents\Services\TicketCapacity::demand_for_signup( $signup ) ),
-			static function ( $shortage ) use ( $signup_id ) {
+			array( $demand ),
+			static function ( $shortage ) use ( $signup_id, $demand ) {
+				$shortages = $shortage
+					? \FairEvents\Services\TicketCapacity::find_shortages( \FairEvents\Services\TicketCapacity::places_needed( array( $demand ) ) )
+					: array();
+
 				if ( ! \FairEvents\Models\EventSignup::confirm_paid( $signup_id ) ) {
 					return false;
 				}
 				if ( $shortage ) {
 					\FairEvents\Models\EventSignup::mark_over_capacity( $signup_id );
 				}
+
+				$full_option_ids = array();
+				foreach ( $shortages as $found ) {
+					if ( 'ticket_option' === $found['scope'] ) {
+						$full_option_ids[] = (int) $found['id'];
+					}
+				}
+				if ( $full_option_ids ) {
+					foreach ( \FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup_id ) as $ticket ) {
+						\FairEvents\Models\EventTicketActivity::mark_over_capacity( (int) $ticket->id, $full_option_ids );
+					}
+				}
+
 				return true;
 			}
 		);

@@ -9,6 +9,8 @@ namespace FairEvents\Services;
 
 use FairEvents\Helpers\DateRangeFormatter;
 use FairEvents\Models\EventDates;
+use FairEvents\Models\EventTicket;
+use FairEvents\Models\EventTicketActivity;
 use FairEvents\Models\TicketType;
 use WP_Error;
 
@@ -34,6 +36,17 @@ defined( 'WPINC' ) || die;
  * their places: a signup whose units have not been backfilled yet (counted
  * by its quantity), and a companion plugin's admission with no signup behind
  * it, reported through the `fair_events_capacity_legacy_admissions` filter.
+ *
+ * Activities (#1697): every active ticket selecting an activity takes one of
+ * its places, so sibling tickets of one purchase choosing the same activity
+ * take one place each. A selection is active while its ticket holds its
+ * places (as above) and the selection itself is confirmed or an add-on hold
+ * that has not expired. An activity's limit applies to each occurrence on
+ * its own: a selection counts on its ticket's occurrence, and a whole_series
+ * ticket's selection on every occurrence its ticket covers. Selections a
+ * companion plugin still records per participant, not per ticket, are
+ * reported through the `fair_events_capacity_legacy_activity_selections`
+ * filter.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
@@ -203,6 +216,92 @@ class TicketCapacity {
 	}
 
 	/**
+	 * Count the places an activity (ticket option) has taken on one
+	 * occurrence.
+	 *
+	 * @param int $ticket_option_id Ticket option ID.
+	 * @param int $event_date_id    Occurrence (event date) ID.
+	 * @return int
+	 */
+	public static function count_ticket_option( int $ticket_option_id, int $event_date_id ) {
+		global $wpdb;
+
+		$event_date = self::get_event_date_row( $event_date_id );
+		if ( ! $event_date ) {
+			return 0;
+		}
+
+		$series_ids = self::get_series_ids( self::get_series_master_id( $event_date ) );
+		$now        = gmdate( 'Y-m-d H:i:s' );
+
+		if ( count( $series_ids ) < 2 ) {
+			$selections = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM %i AS ta INNER JOIN %i AS t ON t.id = ta.ticket_id INNER JOIN %i AS s ON s.id = t.signup_id
+					WHERE ta.ticket_option_id = %d AND t.event_date_id = %d
+					AND ( ta.status = 'confirmed' OR ( ta.status = 'pending_payment' AND ta.expires_at > %s ) )
+					AND ( t.status = 'confirmed' OR ( t.status = 'pending_payment' AND s.payment_expires_at > %s ) )",
+					self::ticket_activities_table(),
+					self::tickets_table(),
+					self::signups_table(),
+					$ticket_option_id,
+					$event_date_id,
+					$now,
+					$now
+				)
+			);
+		} else {
+			$selections = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM %i AS ta INNER JOIN %i AS t ON t.id = ta.ticket_id INNER JOIN %i AS s ON s.id = t.signup_id LEFT JOIN %i AS tt ON tt.id = t.ticket_type_id
+					WHERE ta.ticket_option_id = %d
+					AND ( ta.status = 'confirmed' OR ( ta.status = 'pending_payment' AND ta.expires_at > %s ) )
+					AND ( t.status = 'confirmed' OR ( t.status = 'pending_payment' AND s.payment_expires_at > %s ) )
+					AND (
+						( t.event_date_id = %d AND ( tt.recurrence_scope IS NULL OR tt.recurrence_scope <> 'whole_series' ) )
+						OR ( tt.recurrence_scope = 'whole_series' AND s.created_at <= %s AND t.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $series_ids ), '%d' ) ) . ' ) )
+					)',
+					array_merge(
+						array( self::ticket_activities_table(), self::tickets_table(), self::signups_table(), self::ticket_types_table(), $ticket_option_id, $now, $now, $event_date_id, (string) $event_date->start_datetime ),
+						$series_ids
+					)
+				)
+			);
+		}
+
+		/**
+		 * Filters the number of active activity selections on an occurrence
+		 * that are not stored on an individual ticket (e.g. a companion
+		 * plugin's participant-level selections from before activities were
+		 * stored per ticket).
+		 *
+		 * @param int   $count            Selections without a ticket. Default 0.
+		 * @param int   $ticket_option_id Ticket option ID.
+		 * @param int   $event_date_id    Occurrence (event date) ID.
+		 * @param int[] $series_ids       Every event date of the occurrence's series (just the occurrence outside a series).
+		 */
+		$legacy = (int) apply_filters( 'fair_events_capacity_legacy_activity_selections', 0, $ticket_option_id, $event_date_id, count( $series_ids ) < 2 ? array( $event_date_id ) : $series_ids );
+
+		return $selections + max( 0, $legacy );
+	}
+
+	/**
+	 * Places still available in an activity on one occurrence.
+	 *
+	 * @param int $ticket_option_id Ticket option ID.
+	 * @param int $event_date_id    Occurrence (event date) ID.
+	 * @return int|null Remaining places, or null when the activity has no limit.
+	 */
+	public static function remaining_for_ticket_option( int $ticket_option_id, int $event_date_id ) {
+		$option = self::get_ticket_option_rows( array( $ticket_option_id ) )[ $ticket_option_id ] ?? null;
+		if ( ! $option || null === $option->capacity ) {
+			return null;
+		}
+
+		return max( 0, (int) $option->capacity - self::count_ticket_option( $ticket_option_id, $event_date_id ) );
+	}
+
+	/**
 	 * Whether a signup currently holds its places: confirmed, or awaiting
 	 * payment within a running hold.
 	 *
@@ -220,35 +319,52 @@ class TicketCapacity {
 	}
 
 	/**
-	 * Describe what a signup row asks of capacity.
+	 * Describe what a signup row asks of capacity, including the activities
+	 * selected on its tickets that are not cancelled or refunded on their
+	 * own.
 	 *
 	 * @param object $signup Signup row.
-	 * @return array{event_date_id: int, ticket_type_id: int, quantity: int}
+	 * @return array{event_date_id: int, ticket_type_id: int, quantity: int, option_ids: int[]}
 	 */
 	public static function demand_for_signup( $signup ) {
+		$tickets = array_filter(
+			EventTicket::get_by_signup_id( (int) ( $signup->id ?? 0 ) ),
+			static function ( $ticket ) {
+				return ! in_array( (string) $ticket->status, EventTicket::FINAL_UNIT_STATUSES, true );
+			}
+		);
+
 		return array(
 			'event_date_id'  => (int) ( $signup->event_date_id ?? 0 ),
 			'ticket_type_id' => (int) ( $signup->ticket_type_id ?? 0 ),
 			'quantity'       => max( 1, (int) ( $signup->quantity ?? 1 ) ),
+			'option_ids'     => EventTicketActivity::get_active_option_ids( array_map( static fn( $ticket ) => (int) $ticket->id, $tickets ) ),
 		);
 	}
 
 	/**
-	 * Resolve purchase demands into the places each event date and ticket
-	 * type must provide. A whole_series ticket needs a place on every
-	 * upcoming active occurrence of its series.
+	 * Resolve demands into the places each event date, ticket type and
+	 * activity must provide. A whole_series ticket needs a place on every
+	 * upcoming active occurrence of its series, and so does each activity
+	 * it selects.
 	 *
-	 * @param array[] $demands Each: event_date_id, ticket_type_id (0 for none), quantity.
-	 * @return array{event_dates: array<int, int>, ticket_types: array<int, int>} Places needed, keyed by ID.
+	 * A demand's quantity is the number of tickets it adds (0 when it only
+	 * adds activities to existing tickets); option_ids lists one entry per
+	 * activity place, so an activity chosen by two tickets appears twice.
+	 *
+	 * @param array[] $demands Each: event_date_id, ticket_type_id (0 for none), quantity, option_ids (optional).
+	 * @return array{event_dates: array<int, int>, ticket_types: array<int, int>, ticket_options: array<int, array<int, int>>} Places needed, keyed by ID (activities by option ID, then occurrence ID).
 	 */
 	public static function places_needed( array $demands ) {
-		$event_dates  = array();
-		$ticket_types = array();
+		$event_dates    = array();
+		$ticket_types   = array();
+		$ticket_options = array();
 
 		foreach ( $demands as $demand ) {
 			$event_date_id  = (int) ( $demand['event_date_id'] ?? 0 );
 			$ticket_type_id = (int) ( $demand['ticket_type_id'] ?? 0 );
-			$quantity       = max( 1, (int) ( $demand['quantity'] ?? 1 ) );
+			$quantity       = isset( $demand['quantity'] ) ? max( 0, (int) $demand['quantity'] ) : 1;
+			$option_ids     = array_filter( array_map( 'intval', (array) ( $demand['option_ids'] ?? array() ) ) );
 
 			$occupied = $event_date_id ? array( $event_date_id ) : array();
 			if ( $event_date_id && $ticket_type_id ) {
@@ -258,28 +374,52 @@ class TicketCapacity {
 				}
 			}
 
-			foreach ( $occupied as $occupied_id ) {
-				$event_dates[ $occupied_id ] = ( $event_dates[ $occupied_id ] ?? 0 ) + $quantity;
+			if ( $quantity > 0 ) {
+				foreach ( $occupied as $occupied_id ) {
+					$event_dates[ $occupied_id ] = ( $event_dates[ $occupied_id ] ?? 0 ) + $quantity;
+				}
+				if ( $ticket_type_id ) {
+					$ticket_types[ $ticket_type_id ] = ( $ticket_types[ $ticket_type_id ] ?? 0 ) + $quantity;
+				}
 			}
-			if ( $ticket_type_id ) {
-				$ticket_types[ $ticket_type_id ] = ( $ticket_types[ $ticket_type_id ] ?? 0 ) + $quantity;
+
+			foreach ( $option_ids as $option_id ) {
+				foreach ( $occupied as $occupied_id ) {
+					$ticket_options[ $option_id ][ $occupied_id ] = ( $ticket_options[ $option_id ][ $occupied_id ] ?? 0 ) + 1;
+				}
 			}
 		}
 
 		return array(
-			'event_dates'  => $event_dates,
-			'ticket_types' => $ticket_types,
+			'event_dates'    => $event_dates,
+			'ticket_types'   => $ticket_types,
+			'ticket_options' => $ticket_options,
 		);
 	}
 
 	/**
-	 * Find the first event date or ticket type that cannot provide the
-	 * places needed.
+	 * Find the first event date, ticket type or activity that cannot provide
+	 * the places needed.
 	 *
 	 * @param array $needed Result of places_needed().
-	 * @return array{scope: string, id: int, remaining: int}|null Shortage, or null when everything fits.
+	 * @return array{scope: string, id: int, remaining: int, event_date_id?: int}|null Shortage, or null when everything fits.
 	 */
 	public static function find_shortage( array $needed ) {
+		$shortages = self::find_shortages( $needed );
+
+		return $shortages ? $shortages[0] : null;
+	}
+
+	/**
+	 * Find every event date, ticket type and activity occurrence that
+	 * cannot provide the places needed, in that order.
+	 *
+	 * @param array $needed Result of places_needed().
+	 * @return array[] Shortages: scope, id, remaining, and event_date_id for an activity.
+	 */
+	public static function find_shortages( array $needed ) {
+		$shortages = array();
+
 		foreach ( $needed['event_dates'] as $event_date_id => $quantity ) {
 			$event_date = EventDates::get_by_id( $event_date_id );
 			if ( ! $event_date || null === $event_date->capacity ) {
@@ -288,7 +428,7 @@ class TicketCapacity {
 
 			$remaining = (int) $event_date->capacity - self::count_event_date( $event_date_id );
 			if ( $quantity > $remaining ) {
-				return array(
+				$shortages[] = array(
 					'scope'     => 'event_date',
 					'id'        => (int) $event_date_id,
 					'remaining' => max( 0, $remaining ),
@@ -304,7 +444,7 @@ class TicketCapacity {
 
 			$remaining = (int) $ticket_type->capacity - self::count_ticket_type( $ticket_type_id );
 			if ( $quantity > $remaining ) {
-				return array(
+				$shortages[] = array(
 					'scope'     => 'ticket_type',
 					'id'        => (int) $ticket_type_id,
 					'remaining' => max( 0, $remaining ),
@@ -312,12 +452,34 @@ class TicketCapacity {
 			}
 		}
 
-		return null;
+		$needed_options = $needed['ticket_options'] ?? array();
+		$options        = self::get_ticket_option_rows( array_keys( $needed_options ) );
+		foreach ( $needed_options as $option_id => $by_event_date ) {
+			$option = $options[ (int) $option_id ] ?? null;
+			if ( ! $option || null === $option->capacity ) {
+				continue;
+			}
+
+			foreach ( $by_event_date as $event_date_id => $quantity ) {
+				$remaining = (int) $option->capacity - self::count_ticket_option( (int) $option_id, (int) $event_date_id );
+				if ( $quantity > $remaining ) {
+					$shortages[] = array(
+						'scope'         => 'ticket_option',
+						'id'            => (int) $option_id,
+						'event_date_id' => (int) $event_date_id,
+						'remaining'     => max( 0, $remaining ),
+					);
+				}
+			}
+		}
+
+		return $shortages;
 	}
 
 	/**
 	 * Run a write inside one transaction that holds row locks on every
-	 * event date and ticket type the demands touch, so concurrent requests
+	 * event date, ticket type and activity the demands touch, always taken
+	 * in that table order, so concurrent requests
 	 * for the same places run one after another. The callback receives the
 	 * shortage found under the lock (null when everything fits). Returning
 	 * false or a WP_Error rolls back; anything else commits.
@@ -325,7 +487,7 @@ class TicketCapacity {
 	 * Never make an external call (e.g. to a payment provider) inside the
 	 * callback: the locks are held until it returns.
 	 *
-	 * @param array[]  $demands  Each: event_date_id, ticket_type_id, quantity.
+	 * @param array[]  $demands  Each: event_date_id, ticket_type_id, quantity, option_ids.
 	 * @param callable $callback Receives the shortage array or null.
 	 * @return mixed The callback's result.
 	 * @throws \Throwable Re-thrown from the callback after rolling back.
@@ -342,6 +504,7 @@ class TicketCapacity {
 			// snapshot includes every purchase committed before the lock.
 			self::lock_rows( self::event_dates_table(), array_keys( $needed['event_dates'] ) );
 			self::lock_rows( self::ticket_types_table(), array_keys( $needed['ticket_types'] ) );
+			self::lock_rows( self::ticket_options_table(), array_keys( $needed['ticket_options'] ) );
 
 			$result = $callback( self::find_shortage( $needed ) );
 		} catch ( \Throwable $e ) {
@@ -362,12 +525,16 @@ class TicketCapacity {
 	 * Run a write only when every place it needs is still available,
 	 * checked and written under the same locks (see with_capacity_lock()).
 	 *
-	 * @param array[]  $demands Each: event_date_id, ticket_type_id, quantity.
+	 * @param array[]  $demands Each: event_date_id, ticket_type_id, quantity, option_ids.
 	 * @param callable $write   Performs the write; false or WP_Error rolls back.
 	 * @return mixed|WP_Error The write's result, or a 409 error naming what is full.
 	 */
 	public static function reserve( array $demands, callable $write ) {
-		$multiple_dates = count( self::places_needed( $demands )['event_dates'] ) > 1;
+		$needed         = self::places_needed( $demands );
+		$multiple_dates = count( $needed['event_dates'] ) > 1;
+		foreach ( $needed['ticket_options'] as $by_event_date ) {
+			$multiple_dates = $multiple_dates || count( $by_event_date ) > 1;
+		}
 
 		return self::with_capacity_lock(
 			$demands,
@@ -435,6 +602,68 @@ class TicketCapacity {
 	}
 
 	/**
+	 * Project what each limited activity would hold after the activity
+	 * places the demands add, for an administrator's edit or move. The
+	 * demands carry only the places being added, so a selection a ticket
+	 * already holds is never counted twice.
+	 *
+	 * @param array[] $demands Each: event_date_id, ticket_type_id, quantity, option_ids.
+	 * @return array[] Projections (scope 'ticket_option', id, event_date_id, label, taken, capacity, after), limited activities only.
+	 */
+	public static function activity_projections( array $demands ) {
+		$needed      = self::places_needed( $demands )['ticket_options'];
+		$options     = self::get_ticket_option_rows( array_keys( $needed ) );
+		$projections = array();
+
+		foreach ( $needed as $option_id => $by_event_date ) {
+			$option = $options[ (int) $option_id ] ?? null;
+			if ( ! $option || null === $option->capacity ) {
+				continue;
+			}
+
+			foreach ( $by_event_date as $event_date_id => $adding ) {
+				$label = (string) $option->name;
+				if ( count( $by_event_date ) > 1 ) {
+					$event_date = EventDates::get_by_id( (int) $event_date_id );
+					if ( $event_date ) {
+						$label = sprintf(
+							/* translators: 1: activity name, 2: event date and time */
+							__( '%1$s on %2$s', 'fair-events' ),
+							$label,
+							DateRangeFormatter::format( $event_date->start_datetime, $event_date->end_datetime, (bool) $event_date->all_day )
+						);
+					}
+				}
+
+				$taken         = self::count_ticket_option( (int) $option_id, (int) $event_date_id );
+				$projections[] = array(
+					'scope'         => 'ticket_option',
+					'id'            => (int) $option_id,
+					'event_date_id' => (int) $event_date_id,
+					'label'         => $label,
+					'taken'         => $taken,
+					'capacity'      => (int) $option->capacity,
+					'after'         => $taken + (int) $adding,
+				);
+			}
+		}
+
+		return $projections;
+	}
+
+	/**
+	 * Name an activity (ticket option), from the activity catalogue table.
+	 *
+	 * @param int $ticket_option_id Ticket option ID.
+	 * @return string Empty when the activity no longer exists.
+	 */
+	public static function ticket_option_name( int $ticket_option_id ) {
+		$option = self::get_ticket_option_rows( array( $ticket_option_id ) )[ $ticket_option_id ] ?? null;
+
+		return $option ? (string) $option->name : '';
+	}
+
+	/**
 	 * Count the places one signup's units take on an event date or ticket
 	 * type.
 	 *
@@ -474,6 +703,46 @@ class TicketCapacity {
 			'status'    => 409,
 			'remaining' => $remaining,
 		);
+
+		if ( 'ticket_option' === $shortage['scope'] ) {
+			$data['ticket_option_id'] = (int) $shortage['id'];
+			$data['event_date_id']    = (int) ( $shortage['event_date_id'] ?? 0 );
+
+			$option_name = self::ticket_option_name( (int) $shortage['id'] );
+			$event_date  = $name_the_date ? EventDates::get_by_id( (int) ( $shortage['event_date_id'] ?? 0 ) ) : null;
+			if ( $event_date ) {
+				$date_label = DateRangeFormatter::format( $event_date->start_datetime, $event_date->end_datetime, (bool) $event_date->all_day );
+				$message    = 0 === $remaining
+					? sprintf(
+						/* translators: 1: activity name, 2: event date and time */
+						__( '"%1$s" is full on %2$s.', 'fair-events' ),
+						$option_name,
+						$date_label
+					)
+					: sprintf(
+						/* translators: 1: number of places still available, 2: activity name, 3: event date and time */
+						_n( 'Only %1$d place is left in "%2$s" on %3$s.', 'Only %1$d places are left in "%2$s" on %3$s.', $remaining, 'fair-events' ),
+						$remaining,
+						$option_name,
+						$date_label
+					);
+			} else {
+				$message = 0 === $remaining
+					? sprintf(
+						/* translators: %s: activity name */
+						__( '"%s" is full.', 'fair-events' ),
+						$option_name
+					)
+					: sprintf(
+						/* translators: 1: number of places still available, 2: activity name */
+						_n( 'Only %1$d place is left in "%2$s".', 'Only %1$d places are left in "%2$s".', $remaining, 'fair-events' ),
+						$remaining,
+						$option_name
+					);
+			}
+
+			return new WP_Error( 'ticket_option_full', $message, $data );
+		}
 
 		if ( 'ticket_type' === $shortage['scope'] ) {
 			$message = 0 === $remaining
@@ -629,6 +898,35 @@ class TicketCapacity {
 	}
 
 	/**
+	 * Read activities (ticket options) by ID: the columns capacity needs.
+	 *
+	 * @param int[] $ticket_option_ids Ticket option IDs.
+	 * @return array<int, object> Rows (id, name, capacity) keyed by ID.
+	 */
+	private static function get_ticket_option_rows( array $ticket_option_ids ) {
+		global $wpdb;
+
+		$ticket_option_ids = array_values( array_unique( array_filter( array_map( 'intval', $ticket_option_ids ) ) ) );
+		if ( ! $ticket_option_ids ) {
+			return array();
+		}
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id, name, capacity FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $ticket_option_ids ), '%d' ) ) . ')',
+				array_merge( array( self::ticket_options_table() ), $ticket_option_ids )
+			)
+		);
+
+		$by_id = array();
+		foreach ( (array) $rows as $row ) {
+			$by_id[ (int) $row->id ] = $row;
+		}
+
+		return $by_id;
+	}
+
+	/**
 	 * Ticket units table.
 	 *
 	 * @return string
@@ -659,6 +957,28 @@ class TicketCapacity {
 		global $wpdb;
 
 		return $wpdb->prefix . 'fair_events_ticket_types';
+	}
+
+	/**
+	 * Ticket activities table.
+	 *
+	 * @return string
+	 */
+	private static function ticket_activities_table() {
+		global $wpdb;
+
+		return $wpdb->prefix . 'fair_events_ticket_activities';
+	}
+
+	/**
+	 * Activities (ticket options) table.
+	 *
+	 * @return string
+	 */
+	private static function ticket_options_table() {
+		global $wpdb;
+
+		return $wpdb->prefix . 'fair_events_ticket_options';
 	}
 
 	/**

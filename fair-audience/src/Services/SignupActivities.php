@@ -169,17 +169,19 @@ class SignupActivities {
 	}
 
 	/**
-	 * Whether a raw TicketOption is full, based on its configured capacity.
+	 * Whether a raw TicketOption is full on an occurrence, based on its
+	 * configured capacity.
 	 *
-	 * @param object                     $option Raw TicketOption row (needs `id`, `capacity`).
-	 * @param EventParticipantRepository $repository Repository used to count active signups.
+	 * @param object                     $option        Raw TicketOption row (needs `id`, `capacity`).
+	 * @param EventParticipantRepository $repository    Repository used to count active signups.
+	 * @param int                        $event_date_id Occurrence to check; 0 for the option's own event date.
 	 * @return bool True when full.
 	 */
-	public static function is_full( $option, EventParticipantRepository $repository ) {
+	public static function is_full( $option, EventParticipantRepository $repository, $event_date_id = 0 ) {
 		if ( null === $option->capacity ) {
 			return false;
 		}
-		$reserved = $repository->count_signups_for_ticket_option( (int) $option->id );
+		$reserved = $repository->count_signups_for_ticket_option( (int) $option->id, (int) $event_date_id );
 		return self::capacity_reached( $reserved, (int) $option->capacity );
 	}
 
@@ -216,9 +218,12 @@ class SignupActivities {
 	 * @param int[] $ticket_option_ids     Submitted option IDs.
 	 * @param int   $pricing_event_date_id Event date the activity catalogue belongs to.
 	 * @param int   $ticket_type_id        Selected ticket type ID, or 0 for none.
+	 * @param int   $event_date_id         Occurrence whose activity places are checked; 0 for the catalogue's own date.
 	 * @return WP_Error|null 400/409 on failure, null when the selection is valid.
 	 */
-	public static function validate_selection( array $ticket_option_ids, $pricing_event_date_id, $ticket_type_id ) {
+	public static function validate_selection( array $ticket_option_ids, $pricing_event_date_id, $ticket_type_id, $event_date_id = 0 ) {
+		$event_date_id = $event_date_id ? (int) $event_date_id : (int) $pricing_event_date_id;
+
 		if ( ! class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
 			// No activity catalogue active: a non-empty selection can't be valid.
 			if ( empty( $ticket_option_ids ) ) {
@@ -241,7 +246,7 @@ class SignupActivities {
 		$repository       = new EventParticipantRepository();
 		$selectable_count = 0;
 		foreach ( $available as $option ) {
-			if ( ! self::is_full( $option, $repository ) ) {
+			if ( ! self::is_full( $option, $repository, $event_date_id ) ) {
 				++$selectable_count;
 			}
 		}
@@ -292,7 +297,7 @@ class SignupActivities {
 					array( 'status' => 400 )
 				);
 			}
-			if ( self::is_full( $option, $repository ) ) {
+			if ( self::is_full( $option, $repository, $event_date_id ) ) {
 				return new WP_Error(
 					'ticket_option_full',
 					sprintf(
@@ -457,7 +462,7 @@ class SignupActivities {
 			if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
 				$raw_option = \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $option['id'] );
 				if ( $raw_option ) {
-					$is_full = self::is_full( $raw_option, $event_participant_repository );
+					$is_full = self::is_full( $raw_option, $event_participant_repository, (int) $context['event_date_id'] );
 				}
 			}
 			$option['is_full'] = $is_full;

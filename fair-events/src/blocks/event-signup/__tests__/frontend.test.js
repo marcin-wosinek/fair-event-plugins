@@ -796,3 +796,161 @@ describe( 'Event Signup frontend.js — checkout total (#1666)', () => {
 		} );
 	} );
 } );
+
+describe( 'Event Signup frontend.js — activities for each ticket (#1697)', () => {
+	function buildPerTicketBlock( { minActivities = '0' } = {} ) {
+		document.body.innerHTML = `
+			<div class="fair-events-get-tickets" data-event-date-id="42" data-currency="EUR">
+				<form class="fair-events-get-tickets-form" data-event-date-id="42" data-min-activities="0" data-currency="EUR">
+					<div class="form-row"><fieldset class="fair-events-ticket-fieldset">
+						<label><input type="radio" name="ticket_type_id" value="1" data-ticket-price="10.00" data-activities-enabled="1" data-min-activities="${ minActivities }" data-max-activities="" data-recurrence-scope="single_instance" checked>General</label>
+					</fieldset></div>
+					<div class="form-row"><fieldset class="fair-events-ticket-options">
+						<legend>Select activities</legend>
+						<p class="fair-events-ticket-options-min-hint"></p>
+						<p class="fair-events-ticket-options-max-hint"></p>
+						<p class="fair-events-ticket-options-unavailable"></p>
+						<label for="f-opt-10"><input type="checkbox" id="f-opt-10" name="ticket_option_ids[]" value="10" data-option-price="5"></label>
+						<label for="f-opt-11"><input type="checkbox" id="f-opt-11" name="ticket_option_ids[]" value="11" data-option-price="7"></label>
+					</fieldset></div>
+					<div class="form-row fair-events-quantity-row">
+						<input type="number" name="quantity" value="1" min="1" max="10" />
+					</div>
+					<div class="form-row fair-events-signup-checkout-total" data-amount="0.00" data-currency="EUR">
+						<span class="fair-events-signup-checkout-total-amount">0.00 EUR</span>
+					</div>
+					<div class="form-row"><input type="text" name="name" value="Buyer" required /></div>
+					<div class="form-row"><input type="email" name="email" value="buyer@example.test" required /></div>
+					<div class="form-row form-submit"><button type="submit">Get Tickets</button></div>
+				</form>
+				<div class="message-container"></div>
+			</div>`;
+		apiFetch.mockResolvedValue( noopResponse() );
+		initialize();
+		return document.querySelector( 'form' );
+	}
+
+	function setQuantity( form, value ) {
+		const quantity = form.querySelector( 'input[name="quantity"]' );
+		quantity.value = String( value );
+		quantity.dispatchEvent(
+			new window.Event( 'input', { bubbles: true } )
+		);
+	}
+
+	function fieldsets( form ) {
+		return Array.from(
+			form.querySelectorAll( '.fair-events-ticket-options' )
+		);
+	}
+
+	function tick( fieldset, value ) {
+		const box = fieldset.querySelector( `input[value="${ value }"]` );
+		box.checked = true;
+		box.dispatchEvent( new window.Event( 'change', { bubbles: true } ) );
+	}
+
+	test( 'keeps the quantity field and one selection for a single ticket', () => {
+		const form = buildPerTicketBlock();
+		expect(
+			form.querySelector( '.fair-events-quantity-row' ).style.display
+		).toBe( '' );
+		expect( fieldsets( form ) ).toHaveLength( 1 );
+		expect( form.querySelector( 'legend' ).textContent ).toBe(
+			'Select activities'
+		);
+	} );
+
+	test( 'shows an empty, labelled selection for each further ticket', () => {
+		const form = buildPerTicketBlock();
+		tick( fieldsets( form )[ 0 ], 10 );
+		setQuantity( form, 3 );
+
+		const all = fieldsets( form );
+		expect( all ).toHaveLength( 3 );
+		expect(
+			all.map( ( f ) => f.querySelector( 'legend' ).textContent )
+		).toEqual( [
+			'Ticket 1: select activities',
+			'Ticket 2: select activities',
+			'Ticket 3: select activities',
+		] );
+		expect( all[ 1 ].querySelectorAll( 'input:checked' ) ).toHaveLength(
+			0
+		);
+		const copyInput = all[ 2 ].querySelector( 'input[value="11"]' );
+		expect( copyInput.name ).toBe( 'ticket_activities_2[]' );
+		expect(
+			all[ 2 ].querySelector( `label[for="${ copyInput.id }"]` )
+		).not.toBeNull();
+
+		setQuantity( form, 2 );
+		expect( fieldsets( form ) ).toHaveLength( 2 );
+		setQuantity( form, 1 );
+		expect( fieldsets( form ) ).toHaveLength( 1 );
+		expect( form.querySelector( 'legend' ).textContent ).toBe(
+			'Select activities'
+		);
+	} );
+
+	test( 'applies the first ticket’s activities to all tickets only on request', () => {
+		const form = buildPerTicketBlock();
+		setQuantity( form, 2 );
+		tick( fieldsets( form )[ 0 ], 11 );
+		expect(
+			fieldsets( form )[ 1 ].querySelector( 'input[value="11"]' ).checked
+		).toBe( false );
+
+		form.querySelector(
+			'.fair-events-ticket-activities-apply-all'
+		).click();
+		expect(
+			fieldsets( form )[ 1 ].querySelector( 'input[value="11"]' ).checked
+		).toBe( true );
+	} );
+
+	test( 'charges every ticket’s activities and gates each ticket’s minimum', () => {
+		const form = buildPerTicketBlock( { minActivities: '1' } );
+		setQuantity( form, 2 );
+		tick( fieldsets( form )[ 0 ], 10 );
+		const submit = form.querySelector( 'button[type="submit"]' );
+		expect( submit.disabled ).toBe( true );
+
+		tick( fieldsets( form )[ 1 ], 11 );
+		expect( submit.disabled ).toBe( false );
+		expect(
+			form.querySelector( '.fair-events-signup-checkout-total' ).dataset
+				.amount
+		).toBe( '32.00' );
+	} );
+
+	test( 'submits one selection per ticket', () => {
+		const form = buildPerTicketBlock();
+		setQuantity( form, 2 );
+		tick( fieldsets( form )[ 0 ], 10 );
+		tick( fieldsets( form )[ 1 ], 10 );
+		tick( fieldsets( form )[ 1 ], 11 );
+
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+
+		const data = initiatePayment.mock.calls[ 0 ][ 0 ].data;
+		expect( data.quantity ).toBe( 2 );
+		expect( data.ticket_activities ).toEqual( [ [ 10 ], [ 10, 11 ] ] );
+		expect( data.ticket_option_ids ).toBeUndefined();
+	} );
+
+	test( 'submits the flat list for a single ticket', () => {
+		const form = buildPerTicketBlock();
+		tick( fieldsets( form )[ 0 ], 11 );
+
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+
+		const data = initiatePayment.mock.calls[ 0 ][ 0 ].data;
+		expect( data.ticket_option_ids ).toEqual( [ 11 ] );
+		expect( data.ticket_activities ).toBeUndefined();
+	} );
+} );

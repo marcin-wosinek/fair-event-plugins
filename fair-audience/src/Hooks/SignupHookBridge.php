@@ -49,7 +49,7 @@ class SignupHookBridge {
 		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
 		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 4 );
 		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 4 );
-		add_filter( 'fair_events_signup_options_error', array( static::class, 'filter_options_error' ), 10, 4 );
+		add_filter( 'fair_events_signup_options_error', array( static::class, 'filter_options_error' ), 10, 6 );
 		add_filter( 'fair_events_signup_option_line_items', array( static::class, 'filter_option_line_items' ), 10, 4 );
 		add_action( 'fair_events_signup_render_after_form', array( static::class, 'render_add_activities' ), 10, 1 );
 		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 7 );
@@ -57,6 +57,7 @@ class SignupHookBridge {
 		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
 		add_action( 'fair_events_backfill_signup_participant_ids', array( static::class, 'backfill_signup_participant_ids' ) );
 		add_filter( 'fair_events_capacity_legacy_admissions', array( static::class, 'filter_legacy_admissions' ), 10, 3 );
+		add_filter( 'fair_events_capacity_legacy_activity_selections', array( static::class, 'filter_legacy_activity_selections' ), 10, 4 );
 		add_action( 'fair_events_signup_moved', array( static::class, 'handle_signup_moved' ), 10, 2 );
 		add_action( 'fair_events_signup_ticket_type_changed', array( static::class, 'handle_signup_ticket_type_changed' ), 10, 1 );
 	}
@@ -131,6 +132,21 @@ class SignupHookBridge {
 	 */
 	public static function filter_legacy_admissions( $count, $scope, $id ) {
 		return (int) $count + ( new EventParticipantRepository() )->count_admissions_without_signup( (string) $scope, (int) $id );
+	}
+
+	/**
+	 * Add activity selections recorded per participant rather than per
+	 * ticket to fair-events' activity capacity count. Hooked on
+	 * fair_events_capacity_legacy_activity_selections.
+	 *
+	 * @param int   $count            Selections reported so far.
+	 * @param int   $ticket_option_id Ticket option ID.
+	 * @param int   $event_date_id    Occurrence (event date) ID.
+	 * @param int[] $series_ids       Every event date of the occurrence's series.
+	 * @return int
+	 */
+	public static function filter_legacy_activity_selections( $count, $ticket_option_id, $event_date_id, $series_ids = array() ) {
+		return (int) $count + ( new EventParticipantRepository() )->count_participant_scope_selections( (int) $ticket_option_id, (int) $event_date_id, (array) $series_ids );
 	}
 
 	/**
@@ -588,14 +604,16 @@ class SignupHookBridge {
 	 * @param int[]         $ticket_option_ids      Submitted option IDs.
 	 * @param int           $pricing_event_date_id Event date the activity catalogue belongs to.
 	 * @param int           $ticket_type_id         Selected ticket type ID, or 0 for none.
+	 * @param string        $participant_token      Optional request token (unused).
+	 * @param int           $event_date_id          Occurrence the ticket is for, whose activity places are checked; 0 for the catalogue's own date.
 	 * @return \WP_Error|null
 	 */
-	public static function filter_options_error( $error, $ticket_option_ids, $pricing_event_date_id, $ticket_type_id ) {
+	public static function filter_options_error( $error, $ticket_option_ids, $pricing_event_date_id, $ticket_type_id, $participant_token = '', $event_date_id = 0 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundBeforeLastUsed -- required by the hook signature.
 		if ( is_wp_error( $error ) ) {
 			return $error;
 		}
 
-		return SignupActivities::validate_selection( (array) $ticket_option_ids, (int) $pricing_event_date_id, (int) $ticket_type_id );
+		return SignupActivities::validate_selection( (array) $ticket_option_ids, (int) $pricing_event_date_id, (int) $ticket_type_id, (int) $event_date_id );
 	}
 
 	/**
@@ -840,13 +858,12 @@ class SignupHookBridge {
 			}
 		}
 
-		// Attach selected activities on both the free and pending_payment
-		// paths, matching the legacy form. They belong to the ticket this
-		// purchase created (quantity is forced to 1 whenever activities are
-		// selected); the ticket's own status then decides whether they count,
-		// so a failed or lapsed payment releases them with it. Without
-		// per-ticket storage they fall back to the relationship.
-		if ( ! empty( $ticket_selection['ticket_option_ids'] ) && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+		// fair-events stores the activities chosen for each ticket together
+		// with the tickets themselves; the ticket's own status then decides
+		// whether they count, so a failed or lapsed payment releases them
+		// with it. Only a purchase fair-events did not store them for falls
+		// back to attaching them here.
+		if ( empty( $ticket_selection['activities_stored'] ) && ! empty( $ticket_selection['ticket_option_ids'] ) && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
 			$options = array();
 			foreach ( $ticket_selection['ticket_option_ids'] as $option_id ) {
 				$option = \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $option_id );
@@ -921,7 +938,7 @@ class SignupHookBridge {
 				$already_signed_up = $event_participant && 'signed_up' === $event_participant->label;
 
 				if ( ! $already_signed_up ) {
-					if ( self::late_confirmation_exceeds_capacity( $option_ids, $event_participant_repository )
+					if ( self::late_confirmation_exceeds_capacity( $option_ids, (int) $signup->event_date_id, $event_participant_repository )
 						&& class_exists( \FairEvents\Models\EventSignup::class )
 						&& method_exists( \FairEvents\Models\EventSignup::class, 'mark_over_capacity' )
 					) {
@@ -1071,16 +1088,17 @@ class SignupHookBridge {
 	 * capacity. Event and ticket-type capacity are rechecked by fair-events
 	 * itself, from ticket units, before the signup is confirmed.
 	 *
-	 * @param int[]                      $option_ids Selected activity IDs.
-	 * @param EventParticipantRepository $repository Capacity repository.
+	 * @param int[]                      $option_ids    Selected activity IDs.
+	 * @param int                        $event_date_id Occurrence the signup is for.
+	 * @param EventParticipantRepository $repository    Capacity repository.
 	 * @return bool
 	 */
-	private static function late_confirmation_exceeds_capacity( array $option_ids, EventParticipantRepository $repository ) {
+	private static function late_confirmation_exceeds_capacity( array $option_ids, $event_date_id, EventParticipantRepository $repository ) {
 		if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
 			foreach ( $option_ids as $option_id ) {
 				$option = \FairEventsExperimental\Models\TicketOption::get_by_id( $option_id );
 				if ( $option && null !== $option->capacity
-					&& $repository->count_signups_for_ticket_option( $option_id ) >= (int) $option->capacity
+					&& $repository->count_signups_for_ticket_option( $option_id, $event_date_id ) >= (int) $option->capacity
 				) {
 					return true;
 				}

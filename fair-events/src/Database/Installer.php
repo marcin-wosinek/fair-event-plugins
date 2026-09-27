@@ -88,6 +88,10 @@ class Installer {
 		$sql = Schema::get_ticket_activities_table_sql();
 		dbDelta( $sql );
 
+		// Version 3.39.0 - Activity over-capacity flag and activity columns on
+		// the override audit (no data migration needed, applied by dbDelta
+		// through the two statements above).
+
 		// Run migration if upgrading from pre-1.0.0.
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();

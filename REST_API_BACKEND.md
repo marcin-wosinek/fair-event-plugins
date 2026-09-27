@@ -683,37 +683,52 @@ sub-route) expose:
     pre-existing `fair_events_resolve_ticket_price` filter (which is also the
     base price inside `EventSignupPricing::resolve_price_for_ticket_type()` —
     hooking it here would double-discount that path).
+-   **Activities for each ticket** — a purchase of several tickets sends
+    `ticket_activities`, one list of option IDs per ticket in ticket order
+    (up to 100 lists of up to 50 IDs). A single ticket may instead send the
+    flat `ticket_option_ids`. A list count that does not match `quantity`, or
+    `ticket_option_ids` with a quantity above 1, is refused with 400
+    `activity_selection_mismatch`; sending both fields is 400
+    `ambiguous_activity_selection`. One selection is never copied across the
+    quantity, and the quantity is never reduced to fit it.
 -   **`fair_events_signup_options_error` filter** — `GetTicketsController::create_signup()`
-    runs this once, unconditionally (outside the `if ( $ticket_type_id )`
+    runs this unconditionally (outside the `if ( $ticket_type_id )`
     block, so a global minimum-activities requirement still applies to a
-    signup with no ticket type):
-    `apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, $config_event_date_id, $ticket_type_id, $participant_token )`,
-    where `$ticket_option_ids` is the sanitized (deduped, capped at 50)
-    submitted array and `$config_event_date_id` is the series-master-resolved
-    event date the ticket-type validation above already computed. Returning a
+    signup with no ticket type), once for each distinct selection among the
+    purchase's tickets:
+    `apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, $config_event_date_id, $ticket_type_id, $participant_token, $event_date_id )`,
+    where `$ticket_option_ids` is one ticket's sanitized (deduped, capped at
+    50) selection, `$config_event_date_id` is the series-master-resolved
+    event date the ticket-type validation above already computed, and
+    `$event_date_id` is the occurrence bought, whose activity places are
+    checked. Capacity across all of the purchase's tickets is enforced
+    afterwards by `TicketCapacity`, under its lock. Returning a
     `WP_Error` rejects the signup (fair-audience returns 400
     `invalid_ticket_option` for an ID that doesn't belong to the event date,
     409 `ticket_option_full` naming the activity when it has no capacity
     left, or 400 `minimum_activities_not_met` when the selection is short);
     `null` (the default) allows the signup to proceed.
--   **`fair_events_signup_option_line_items` filter** — runs immediately
-    after the filter above, once validation passed:
-    `apply_filters( 'fair_events_signup_option_line_items', array(), $ticket_option_ids, $config_event_date_id, $participant_token )`.
-    A companion plugin resolves each selected option to a priced line item
+-   **`fair_events_signup_option_line_items` filter** — runs after the
+    filter above, once validation passed, once per distinct activity:
+    `apply_filters( 'fair_events_signup_option_line_items', array(), array( $option_id ), $config_event_date_id, $participant_token )`.
+    A companion plugin resolves the option to a priced line item
     (`[ 'name', 'quantity', 'amount' ]`, participant discounts applied);
-    `create_signup()` sums them into `$amount` and appends them to the paid
-    transaction's line items as their own entries — never folded into the
-    ticket line — so the finance ledger names what was bought. Quantity is
-    forced to 1 server-side (and client-side) whenever any activity is
-    selected, since the activities attach to the single ticket the purchase
-    creates.
+    `create_signup()` multiplies its quantity by the number of tickets that
+    selected the activity, sums it into `$amount` and appends it to the paid
+    transaction's line items as its own entry — never folded into the
+    ticket line — so the finance ledger names what was bought. Without a
+    listener for this filter fair-events refuses any activity selection
+    (400 `invalid_ticket_option`) rather than store it unpriced.
 -   **`fair_events_signup_created` action** — fires
     `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token )`
     after a signup row is persisted through the base create path (once per
     row for multi-occurrence signups; `$transaction_id` is `null` on the free
     path). `$ticket_selection` carries `'ticket_type_id'`, `'quantity'`,
-    `'ticket_option_ids'` (or `'event_date_ids'` for `'multiple_instances'`
-    types), and `'mailing_opt_in'` (bool). A companion plugin hooks this to
+    `'ticket_option_ids'` (every activity selected, deduped) and
+    `'ticket_activities'` (one list per ticket), or `'event_date_ids'` for
+    `'multiple_instances'` types, plus `'mailing_opt_in'` (bool) and
+    `'activities_stored'` (true: fair-events already wrote the activities on
+    the tickets, so a listener must not attach them again). A companion plugin hooks this to
     create/link its own participant record, set a session cookie, or send its
     own confirmation email — instead of owning a competing create route.
 -   **`fair_events_signup_confirmed` / `fair_events_signup_payment_failed`
@@ -739,6 +754,13 @@ sub-route) expose:
     participant has no signup for the same event date or ticket type, so
     older and hand-added admissions keep their places without being counted
     twice.
+-   **`fair_events_capacity_legacy_activity_selections` filter** —
+    `TicketCapacity::count_ticket_option()` runs
+    `apply_filters( 'fair_events_capacity_legacy_activity_selections', 0, $ticket_option_id, $event_date_id, $series_ids )`
+    to add active activity selections not stored on a ticket. fair-audience
+    reports participant-level selections not attributed to a ticket, on an
+    active relationship, counted on the relationship's date (on every date
+    of the series for a whole-series pass).
 
 -   **`fair_events_signup_moved` / `fair_events_signup_ticket_type_changed`
     actions** — `GetTicketsController::update_item()` fires one of these
@@ -768,13 +790,14 @@ unified-signup submission fatal'd):
 | `fair_events_signup_render_after_form` | 1           | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_ticket_type_error` | 4           | `add_filter( ..., 10, 4 )`                 |
 | `fair_events_signup_unit_price`        | 4           | `add_filter( ..., 10, 4 )`                 |
-| `fair_events_signup_options_error`     | 5           | `add_filter( ..., 10, 4 )` or `5`          |
+| `fair_events_signup_options_error`     | 6           | `add_filter( ..., 10, 6 )` (4 or more)     |
 | `fair_events_signup_option_line_items` | 4           | `add_filter( ..., 10, 4 )`                 |
 | `fair_events_signup_created`           | 7           | `add_action( ..., 10, 7 )`                 |
 | `fair_events_signup_confirmed`         | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_signup_payment_failed`    | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_backfill_signup_participant_ids` | 0    | `add_action( ... )` (default, no args)     |
 | `fair_events_capacity_legacy_admissions` | 3          | `add_filter( ..., 10, 3 )`                 |
+| `fair_events_capacity_legacy_activity_selections` | 4 | `add_filter( ..., 10, 4 )`                 |
 | `fair_events_signup_moved`             | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_signup_ticket_type_changed` | 2         | `add_action( ..., 10, 1 )` or `2`          |
 
@@ -793,10 +816,9 @@ and (on confirmation) record the charge in its transaction ledger. It also
 hooks `fair_events_signup_options_error` / `fair_events_signup_option_line_items`
 (delegating the actual validation/pricing logic to
 `fair-audience/src/Services/SignupActivities.php`, mirroring
-`GroupSignupPricing.php` from #1242) and, once `link_participant()` creates or
-finds the `EventParticipant` row, attaches the selected `ticket_option_ids`
-to the ticket the purchase created (see "Activities and attendance per
-ticket" below). The unified block reads a
+`GroupSignupPricing.php` from #1242). The selected activities themselves are
+written on the purchase's tickets by fair-events (see "Activities and
+attendance per ticket" below). The unified block reads a
 `participant_token` from the page URL and sends it only through uncached REST
 requests. fair-audience validates it before making that identity authoritative
 for hydration, restriction checks, pricing, and linkage, and refreshes the
@@ -837,8 +859,9 @@ and an add-on hold expiry). fair-events owns the tables and models
 (`EventTicket`, `EventTicketActivity`); fair-audience writes them:
 
 -   **Purchase.** Activities chosen with a get-tickets purchase are confirmed
-    on the ticket it created. The ticket's own status decides whether they
-    count, so a failed or lapsed payment releases them with the ticket.
+    on the ticket they were chosen for, in the same transaction that creates
+    the tickets and checks capacity. The ticket's own status decides whether
+    they count, so a failed or lapsed payment releases them with the ticket.
 -   **Add-ons.** `POST fair-audience/v1/event-signup/add-activities` takes an
     optional `ticket_id`. With one confirmed ticket on the date it is used
     automatically; with several, the request must name one (400
@@ -849,7 +872,13 @@ and an add-on hold expiry). fair-events owns the tables and models
     activities on their relationship, as before.
 -   **Admin.** `PUT fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}`
     (`manage_options`) sets one ticket's `activity_ids` and/or `attended`,
-    returning 404 for a ticket on another event date. Checking in again keeps
+    returning 404 for a ticket on another event date. Only activities the
+    ticket does not already hold need a place; one that would go past its
+    limit is refused with 409 `capacity_exceeded` carrying `projection`
+    (and `projections`), unless `override_reason` is given — then it is
+    saved, flagged (`over_capacity_activity_ids` on the ticket, the signup's
+    `over_capacity`) and recorded in the override audit with action
+    `activity`. Checking in again keeps
     the first time; `attended: false` clears it. The participants list
     returns each participant's `tickets`, and `participant_ticket_option_ids`
     / `attended_at` hold only what is not tied to a ticket.
@@ -858,9 +887,26 @@ and an add-on hold expiry). fair-events owns the tables and models
     the participant held exactly one ticket on that date; the originals are
     kept and marked (`ticket_id` on the option row, `attended_ticket_id` on
     the relationship). Anything else stays at participant scope.
--   **Capacity.** Until #1697, `count_signups_for_ticket_option()` counts each
-    participant once per event date whether they hold the activity through a
-    ticket or at participant scope.
+-   **Capacity (#1697).** `TicketCapacity::count_ticket_option( $option_id, $event_date_id )`
+    counts one place per active ticket selecting the activity on that
+    occurrence — sibling tickets of one purchase take one each — plus
+    unresolved participant-level selections (see
+    `fair_events_capacity_legacy_activity_selections`). A selection is active
+    while its ticket holds its places and the selection is confirmed or an
+    unexpired add-on hold. An activity's limit, configured on the series
+    master, applies to each occurrence separately; a whole-series ticket's
+    selection takes a place on every occurrence it covers.
+    `count_signups_for_ticket_option( $option_id, $event_date_id )` delegates
+    to it. Purchases, add-ons (free and paid, including retries), admin
+    ticket edits, admin moves and late confirmations all check activity
+    places under `TicketCapacity`'s lock, which takes event-date, ticket-type
+    and activity rows in that order. A move to a date where an activity is
+    full returns 409 `capacity_exceeded` with the activity's projection and
+    accepts `override_reason`; a ticket-type change is refused (409
+    `ticket_type_activities_disabled` / `_exceeded` / `_missing`) when a
+    ticket's activities break the new type's rules. A late paid purchase or
+    add-on is honored and flagged over capacity when its places were taken.
+    A failed add-on payment releases that ticket's hold at once.
 
 ## Related Documentation
 

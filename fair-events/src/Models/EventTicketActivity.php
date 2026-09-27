@@ -82,18 +82,107 @@ class EventTicketActivity {
 	}
 
 	/**
+	 * Get the activities that currently take a place on several tickets:
+	 * confirmed, or an add-on hold that has not expired. One entry per
+	 * ticket and activity, so an activity two tickets hold appears twice.
+	 * The tickets' own status is left to the caller.
+	 *
+	 * @param int[] $ticket_ids Ticket IDs.
+	 * @return int[] Ticket option IDs.
+	 */
+	public static function get_active_option_ids( array $ticket_ids ) {
+		$now        = gmdate( 'Y-m-d H:i:s' );
+		$option_ids = array();
+		foreach ( self::get_by_ticket_ids( $ticket_ids ) as $rows ) {
+			foreach ( $rows as $row ) {
+				if ( self::is_active_row( $row, $now ) ) {
+					$option_ids[] = (int) $row->ticket_option_id;
+				}
+			}
+		}
+
+		return $option_ids;
+	}
+
+	/**
+	 * Whether an activity row takes a place: confirmed, or an add-on hold
+	 * that has not expired.
+	 *
+	 * @param object      $row Activity row.
+	 * @param string|null $now UTC datetime to compare holds against; now by default.
+	 * @return bool
+	 */
+	public static function is_active_row( $row, $now = null ) {
+		if ( 'confirmed' === $row->status ) {
+			return true;
+		}
+
+		return 'pending_payment' === $row->status
+			&& ! empty( $row->expires_at )
+			&& (string) $row->expires_at > ( $now ?? gmdate( 'Y-m-d H:i:s' ) );
+	}
+
+	/**
+	 * Flag activities on a ticket as having gone past their activity's
+	 * limit (an administrator's override or a late payment).
+	 *
+	 * @param int   $ticket_id  Ticket ID.
+	 * @param int[] $option_ids Ticket option IDs.
+	 * @return void
+	 */
+	public static function mark_over_capacity( int $ticket_id, array $option_ids ) {
+		global $wpdb;
+
+		$option_ids = array_values( array_unique( array_filter( array_map( 'intval', $option_ids ) ) ) );
+		if ( ! $option_ids ) {
+			return;
+		}
+
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET over_capacity = 1 WHERE ticket_id = %d AND ticket_option_id IN (' . implode( ', ', array_fill( 0, count( $option_ids ), '%d' ) ) . ')',
+				array_merge( array( self::table(), $ticket_id ), $option_ids )
+			)
+		);
+	}
+
+	/**
+	 * Release a ticket's add-on holds for some activities at once, e.g. when
+	 * their payment failed. Confirmed activities are untouched.
+	 *
+	 * @param int   $ticket_id  Ticket ID.
+	 * @param int[] $option_ids Ticket option IDs.
+	 * @return int Rows deleted.
+	 */
+	public static function release_holds( int $ticket_id, array $option_ids ) {
+		global $wpdb;
+
+		$option_ids = array_values( array_unique( array_filter( array_map( 'intval', $option_ids ) ) ) );
+		if ( ! $option_ids ) {
+			return 0;
+		}
+
+		return (int) $wpdb->query(
+			$wpdb->prepare(
+				'DELETE FROM %i WHERE ticket_id = %d AND status = %s AND ticket_option_id IN (' . implode( ', ', array_fill( 0, count( $option_ids ), '%d' ) ) . ')',
+				array_merge( array( self::table(), $ticket_id, 'pending_payment' ), $option_ids )
+			)
+		);
+	}
+
+	/**
 	 * Confirm activities on a ticket: add the missing ones and settle any
 	 * still awaiting payment. Safe to repeat.
 	 *
 	 * @param int   $ticket_id Ticket ID.
 	 * @param array $options   Objects or arrays with `id` and `name`.
-	 * @return void
+	 * @return bool False when a row could not be written.
 	 */
 	public static function confirm( int $ticket_id, array $options ) {
 		global $wpdb;
 
 		foreach ( self::normalize_options( $options ) as $option_id => $option_name ) {
-			$wpdb->query(
+			$written = $wpdb->query(
 				$wpdb->prepare(
 					'INSERT INTO %i (ticket_id, ticket_option_id, ticket_option_name, status, expires_at, created_at) VALUES (%d, %d, %s, %s, NULL, %s)
 					ON DUPLICATE KEY UPDATE ticket_option_name = VALUES(ticket_option_name), status = VALUES(status), expires_at = NULL',
@@ -105,7 +194,12 @@ class EventTicketActivity {
 					current_time( 'mysql' )
 				)
 			);
+			if ( false === $written ) {
+				return false;
+			}
 		}
+
+		return true;
 	}
 
 	/**

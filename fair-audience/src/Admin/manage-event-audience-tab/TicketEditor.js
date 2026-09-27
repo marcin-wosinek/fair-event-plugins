@@ -2,10 +2,12 @@ import { useState } from '@wordpress/element';
 import {
 	Button,
 	CheckboxControl,
+	Notice,
+	TextareaControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 const TICKET_STATUS_DISPLAY = {
@@ -57,6 +59,26 @@ export const ticketLabel = ( ticket, position ) =>
 		: ticketShortLabel( ticket, position );
 
 /**
+ * Sentence describing an activity that a change would take past its limit.
+ *
+ * @param {Object} projection Projection from a 409 capacity_exceeded response.
+ * @return {string} Sentence.
+ */
+export const activityProjectionMessage = ( projection ) =>
+	sprintf(
+		/* translators: 1: activity name, 2: places taken after the change, 3: capacity */
+		_n(
+			'%1$s would have %2$d of %3$d place taken.',
+			'%1$s would have %2$d of %3$d places taken.',
+			Number( projection.capacity ),
+			'fair-audience'
+		),
+		projection.label,
+		Number( projection.after ),
+		Number( projection.capacity )
+	);
+
+/**
  * Edit one ticket's activities and check-in. Saving affects only this
  * ticket; the holder's other tickets keep their own state.
  *
@@ -84,6 +106,10 @@ export default function TicketEditor( {
 	);
 	const [ attended, setAttended ] = useState( !! ticket.attended_at );
 	const [ isSaving, setIsSaving ] = useState( false );
+	// Set when saving would take an activity past its limit: the
+	// administrator can then save anyway by giving a reason.
+	const [ projections, setProjections ] = useState( null );
+	const [ reason, setReason ] = useState( '' );
 
 	const savedIds = ticket.activity_ids || [];
 	const isDirty =
@@ -93,7 +119,10 @@ export default function TicketEditor( {
 
 	const label = ticketLabel( ticket, position );
 
+	const overCapacityIds = ticket.over_capacity_activity_ids || [];
+
 	const toggleActivity = ( id ) => {
+		setProjections( null );
 		setActivityIds( ( current ) =>
 			current.includes( id )
 				? current.filter( ( n ) => n !== id )
@@ -104,14 +133,26 @@ export default function TicketEditor( {
 	const handleSave = async () => {
 		setIsSaving( true );
 		try {
+			const data = { activity_ids: activityIds, attended };
+			if ( projections ) {
+				data.override_reason = reason.trim();
+			}
 			const updated = await apiFetch( {
 				path: `/fair-audience/v1/event-dates/${ eventDateId }/tickets/${ ticket.id }`,
 				method: 'PUT',
-				data: { activity_ids: activityIds, attended },
+				data,
 			} );
+			setProjections( null );
+			setReason( '' );
 			onSaved( updated );
 		} catch ( err ) {
-			onError( err.message || '' );
+			if ( err.code === 'capacity_exceeded' && err.data?.projection ) {
+				setProjections(
+					err.data.projections || [ err.data.projection ]
+				);
+			} else {
+				onError( err.message || '' );
+			}
 		} finally {
 			setIsSaving( false );
 		}
@@ -135,7 +176,18 @@ export default function TicketEditor( {
 				{ ticketOptions.map( ( opt ) => (
 					<CheckboxControl
 						key={ opt.id }
-						label={ opt.name }
+						label={
+							overCapacityIds.includes( opt.id )
+								? sprintf(
+										/* translators: %s: activity name */
+										__(
+											'%s — over capacity',
+											'fair-audience'
+										),
+										opt.name
+								  )
+								: opt.name
+						}
 						checked={ activityIds.includes( opt.id ) }
 						onChange={ () => toggleActivity( opt.id ) }
 						__nextHasNoMarginBottom
@@ -147,6 +199,27 @@ export default function TicketEditor( {
 					onChange={ setAttended }
 					__nextHasNoMarginBottom
 				/>
+				{ projections && (
+					<Notice status="warning" isDismissible={ false }>
+						{ projections.map( ( projection ) => (
+							<p
+								key={ `${ projection.id }-${ projection.event_date_id }` }
+								style={ { margin: '0 0 4px' } }
+							>
+								{ activityProjectionMessage( projection ) }
+							</p>
+						) ) }
+						<TextareaControl
+							label={ __(
+								'Reason for going over capacity',
+								'fair-audience'
+							) }
+							value={ reason }
+							onChange={ setReason }
+							__nextHasNoMarginBottom
+						/>
+					</Notice>
+				) }
 				<HStack style={ { justifyContent: 'flex-end' } }>
 					{ onCancel && (
 						<Button
@@ -160,7 +233,11 @@ export default function TicketEditor( {
 					<Button
 						variant="secondary"
 						onClick={ handleSave }
-						disabled={ isSaving || ! isDirty }
+						disabled={
+							isSaving ||
+							! isDirty ||
+							( !! projections && reason.trim() === '' )
+						}
 						label={ sprintf(
 							/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
 							__( 'Save %s', 'fair-audience' ),
@@ -168,9 +245,11 @@ export default function TicketEditor( {
 						) }
 						showTooltip={ false }
 					>
-						{ isSaving
-							? __( 'Saving…', 'fair-audience' )
-							: __( 'Save ticket', 'fair-audience' ) }
+						{ isSaving && __( 'Saving…', 'fair-audience' ) }
+						{ ! isSaving &&
+							( projections
+								? __( 'Save over capacity', 'fair-audience' )
+								: __( 'Save ticket', 'fair-audience' ) ) }
 					</Button>
 				</HStack>
 				{ ! isDirty && ! isSaving && (

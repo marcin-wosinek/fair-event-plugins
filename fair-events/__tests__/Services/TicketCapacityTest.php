@@ -49,7 +49,8 @@ class TicketCapacityTest extends TestCase {
 	}
 
 	/**
-	 * A signup asks for its quantity on its event date and ticket type.
+	 * A signup asks for its quantity on its event date and ticket type, and
+	 * for its tickets' activities (none without tickets).
 	 */
 	public function test_demand_for_signup_uses_quantity(): void {
 		$this->assertSame(
@@ -57,6 +58,7 @@ class TicketCapacityTest extends TestCase {
 				'event_date_id'  => 5,
 				'ticket_type_id' => 7,
 				'quantity'       => 4,
+				'option_ids'     => array(),
 			),
 			TicketCapacity::demand_for_signup(
 				(object) array(
@@ -72,6 +74,7 @@ class TicketCapacityTest extends TestCase {
 				'event_date_id'  => 5,
 				'ticket_type_id' => 0,
 				'quantity'       => 1,
+				'option_ids'     => array(),
 			),
 			TicketCapacity::demand_for_signup(
 				(object) array(
