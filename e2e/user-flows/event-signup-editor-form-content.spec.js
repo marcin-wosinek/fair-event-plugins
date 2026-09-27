@@ -98,9 +98,13 @@ test.describe('Event Signup block "Form content" area in the editor', () => {
 		);
 		await signupBlock.waitFor();
 
+		// Wait until the Form content area is portaled into the SSR preview's
+		// slot: the portal remounts the appender once the preview fetch
+		// resolves, which would close an inserter opened before that.
 		const questionsArea = signupBlock.locator(
-			'.fair-events-event-signup-questions'
+			'.fair-events-event-signup-questions-slot .fair-events-event-signup-questions'
 		);
+		await questionsArea.waitFor();
 		const appender = questionsArea.locator('.block-list-appender button');
 		await appender.click();
 
