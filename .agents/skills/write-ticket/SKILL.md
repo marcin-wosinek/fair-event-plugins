@@ -16,7 +16,8 @@ Iteration configuration is outside this workflow's authority. If the requested i
 Show the complete title, body, sprint, and labels in chat. Do not create or mutate anything until the user explicitly approves that draft. After approval:
 
 1. Create the issue using a temporary body file and `gh issue create`.
-2. Add it to GitHub Project 5 and set its Iteration field.
-3. Remove the temporary file and report the issue URL.
+2. Read the issue's Project 5 item and Iteration field; project automation may have already added and scheduled it. Add the item or set the Iteration only when the read shows that step is still needed.
+3. Read the project item again and verify the requested iteration before reporting success or failure. If a `gh project` command errors, inspect the actual project state through `gh api graphql` before diagnosing credentials or reporting an incomplete assignment. A failing `gh auth status` alone does not establish that API access is unavailable.
+4. Remove the temporary file and report the issue URL and verified sprint assignment.
 
 Do not add AI attribution.

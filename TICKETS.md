@@ -57,23 +57,38 @@ grounding happens at planning time (`/plan-ticket`), not in the ticket.
    supplying only the desired iterations deletes omitted current and completed
    iterations and clears their item assignments.
 
-6. **Create the issue with `gh`, then add it to the sprint.** Write the body
-   to a temp file and pass `--body-file` (heredocs preserve the markdown /
-   checkboxes cleanly), then add the issue to the project and set its
-   Iteration field to the resolved sprint:
+6. **Create the issue, then verify its sprint.** Write the body to a temp file
+   and pass `--body-file` (heredocs preserve the markdown / checkboxes cleanly).
+   Project automation may add the new issue to Project 5 and assign its
+   Iteration. Read the issue's project items before attempting either write:
 
    ```bash
    cat > /tmp/ticket.md <<'EOF'
    ...body...
    EOF
    gh issue create --title "…" --body-file /tmp/ticket.md
-   ITEM_ID=$(gh project item-add 5 --owner marcin-wosinek --url "<issue-url>" --format json --jq '.id')
-   gh project item-edit --id "$ITEM_ID" \
-     --project-id PVT_kwHOAA-jmM4Bfe4P \
-     --field-id PVTIF_lAHOAA-jmM4Bfe4PzhZxd2o \
-     --iteration-id "<resolved-iteration-id>"
+   gh api graphql -f query='query { repository(owner: "marcin-wosinek", name: "fair-event-plugins") { issue(number: <issue-number>) { projectItems(first: 20) { nodes { id project { id number } fieldValues(first: 30) { nodes { ... on ProjectV2ItemFieldIterationValue { title iterationId } } } } } } } }'
    rm -f /tmp/ticket.md
    ```
+
+   Find the item whose project number is 5. If it already has the requested
+   iteration ID, the assignment is complete. If the item is missing, add it
+   with `gh project item-add 5 --owner marcin-wosinek --url <issue-url>`.
+   If the item exists but its Iteration differs, set only that item's field
+   with `gh project item-edit` using the resolved iteration ID. Re-read the
+   issue's project item after any write and verify its Iteration before
+   reporting the result.
+
+   If a `gh project` command reports an error, re-read the issue's project
+   item before retrying or claiming that assignment failed; automation may
+   have completed the work. In this environment, `gh auth status` can report
+   invalid credentials even when `gh api graphql` succeeds. Diagnose access
+   from the relevant API operation and its readback, not that status alone.
+   If the project CLI remains unusable and the readback shows work remains,
+   use the GraphQL item-level mutations `addProjectV2ItemById` and
+   `updateProjectV2ItemFieldValue` as appropriate. Never use
+   `updateProjectV2Field`, which changes iteration configuration for the
+   entire project.
 
    - Title: imperative, scoped, and names the plugin context where useful
      (e.g. "Add attendee photo-upload page (token-gated via event emails)").
