@@ -15,7 +15,11 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import TicketEditor, { ticketLabel } from './TicketEditor.js';
+import TicketEditor, {
+	ticketLabel,
+	ticketShortLabel,
+	ticketStatusLabel,
+} from './TicketEditor.js';
 
 const LABEL_ORDER = { collaborator: 0, signed_up: 1, interested: 2 };
 
@@ -99,6 +103,21 @@ const withActivities = ( p, tickets, scopeIds, scopeNames ) => {
 const showsParticipantActivities = ( p ) =>
 	! hasTickets( p ) || participantScopeIds( p ).length > 0;
 
+// Participant-level activities of someone who also holds tickets: history
+// recorded before activities were kept per ticket and not attributed to one.
+const hasUnattributedActivities = ( p ) =>
+	hasTickets( p ) &&
+	( participantScopeIds( p ).length > 0 ||
+		participantScopeNames( p ).length > 0 );
+
+// Anything recorded for a ticket holder at participant level: unattributed
+// activities or a check-in not tied to one of their tickets.
+const hasUnattributedHistory = ( p ) =>
+	hasUnattributedActivities( p ) || ( hasTickets( p ) && !! p.attended_at );
+
+const holdsOption = ( ids, names, opt ) =>
+	( ids || [] ).includes( opt.id ) || ( names || [] ).includes( opt.name );
+
 const withTicket = ( p, updatedTicket ) =>
 	withActivities(
 		p,
@@ -158,6 +177,9 @@ export default function EventAudience( {
 	const [ editStaleDecision, setEditStaleDecision ] = useState( null );
 	const [ editLabel, setEditLabel ] = useState( 'signed_up' );
 	const [ isSavingOptions, setIsSavingOptions ] = useState( false );
+
+	// Edit-ticket modal state: { participant, ticket, position } or null.
+	const [ editingTicket, setEditingTicket ] = useState( null );
 
 	// Move-to-occurrence modal state
 	const [ movingParticipant, setMovingParticipant ] = useState( null );
@@ -355,14 +377,63 @@ export default function EventAudience( {
 	}, [ printableParticipants ] );
 
 	const counts = useMemo( () => {
-		const c = { collaborator: 0, signed_up: 0, interested: 0 };
+		const c = {
+			collaborator: 0,
+			signed_up: 0,
+			interested: 0,
+			tickets: 0,
+		};
 		participants.forEach( ( p ) => {
 			if ( c[ p.label ] !== undefined ) {
 				c[ p.label ]++;
 			}
+			c.tickets += ( p.tickets || [] ).length;
 		} );
 		return c;
 	}, [ participants ] );
+
+	// Activity totals for the shown participants. Each ticket counts on its
+	// own, so a purchaser whose two tickets include an activity adds two.
+	// Participant-level activities (signups without tickets, and history not
+	// attributed to a ticket) are totalled separately, never as tickets.
+	const activityTotals = useMemo( () => {
+		const byTicket = {};
+		const byParticipant = {};
+		ticketOptions.forEach( ( opt ) => {
+			byTicket[ opt.id ] = 0;
+			byParticipant[ opt.id ] = 0;
+			filteredParticipants.forEach( ( p ) => {
+				if ( ! occupiesSeat( p ) ) return;
+				( p.tickets || [] ).forEach( ( t ) => {
+					if (
+						holdsOption( t.activity_ids, t.activity_names, opt )
+					) {
+						byTicket[ opt.id ]++;
+					}
+				} );
+				if (
+					holdsOption(
+						participantScopeIds( p ),
+						participantScopeNames( p ),
+						opt
+					)
+				) {
+					byParticipant[ opt.id ]++;
+				}
+			} );
+		} );
+		const hasParticipantLevel = Object.values( byParticipant ).some(
+			( n ) => n > 0
+		);
+		return {
+			byTicket,
+			byParticipant,
+			showTickets:
+				! hasParticipantLevel ||
+				filteredParticipants.some( hasTickets ),
+			showParticipantLevel: hasParticipantLevel,
+		};
+	}, [ ticketOptions, filteredParticipants ] );
 
 	const stalePending = useMemo(
 		() => participants.filter( isStalePendingPayment ),
@@ -695,11 +766,7 @@ export default function EventAudience( {
 				p.id === participant.id ? withTicket( p, updatedTicket ) : p
 			)
 		);
-		setEditingParticipant( ( current ) =>
-			current && current.id === participant.id
-				? withTicket( current, updatedTicket )
-				: current
-		);
+		setEditingTicket( null );
 		showToast( __( 'Ticket saved.', 'fair-audience' ) );
 	};
 
@@ -950,44 +1017,93 @@ export default function EventAudience( {
 		// states (e.g. pending_payment) are intentionally excluded.
 		const printParticipants = printableParticipants;
 
+		const activityLabels = ( ids, names ) => {
+			const labels = ( ids || [] ).length
+				? ids.map( ( id ) => optionLabelById.get( id ) || '' )
+				: ( names || [] ).map(
+						( n ) => optionLabelByName.get( n ) || n
+				  );
+			return labels.filter( Boolean ).join( ', ' );
+		};
+
+		// Each participant gets one row per ticket, sharing the participant
+		// cells (number, name, role, comment, mailing list). Someone without
+		// tickets gets a single row, and activities recorded before tickets
+		// kept them, and not attributed to one, get a row labelled as such.
+		// Each participant is its own <tbody> so a page break never splits
+		// them from their tickets.
 		const rows = printParticipants
 			.map( ( p, index ) => {
-				const name = escape( p.participant_name || '' );
-				const role = escape(
-					LABEL_DISPLAY[ p.label ] || p.label || ''
-				);
-				const ticketType = escape( p.ticket_type_name || '' );
-				const ids = Array.isArray( p.ticket_option_ids )
-					? p.ticket_option_ids
-					: [];
-				const names = Array.isArray( p.ticket_option_names )
-					? p.ticket_option_names
-					: [];
-				const labels = ids.length
-					? ids.map( ( id ) => optionLabelById.get( id ) || '' )
-					: names.map( ( n ) => optionLabelByName.get( n ) || n );
-				const activities = escape(
-					labels.filter( Boolean ).join( ', ' )
-				);
-				const comment = escape( p.admin_comment || '' );
+				const entries = ( p.tickets || [] ).map( ( t, i ) => ( {
+					ticket: ticketShortLabel( t, i + 1 ),
+					ticketType: t.ticket_type_name || '',
+					activities: activityLabels(
+						t.activity_ids,
+						t.activity_names
+					),
+				} ) );
+				if ( ! hasTickets( p ) ) {
+					entries.push( {
+						ticket: '',
+						ticketType: p.ticket_type_name || '',
+						activities: activityLabels(
+							p.ticket_option_ids,
+							p.ticket_option_names
+						),
+					} );
+				} else if ( hasUnattributedActivities( p ) ) {
+					entries.push( {
+						ticket: __( 'Not tied to a ticket', 'fair-audience' ),
+						ticketType: '',
+						activities: activityLabels(
+							participantScopeIds( p ),
+							participantScopeNames( p )
+						),
+						isHistory: true,
+					} );
+				}
+
+				const span = entries.length;
 				const emailProfileMark =
 					p.email_profile === 'marketing'
 						? '✓'
 						: p.email_profile === 'declined'
 						? '✗'
 						: '';
-				return `
-					<tr>
-						<td class="num">${ index + 1 }</td>
-						<td class="name">${ name }</td>
-						<td class="role">${ role }</td>
-						<td class="ticket-type">${ ticketType }</td>
-						<td class="activities">${ activities }</td>
-						<td class="admin-comment">${ comment }</td>
+				const shared = `
+						<td class="num" rowspan="${ span }">${ index + 1 }</td>
+						<td class="name" rowspan="${ span }">${ escape(
+							p.participant_name || ''
+						) }</td>
+						<td class="role" rowspan="${ span }">${ escape(
+							LABEL_DISPLAY[ p.label ] || p.label || ''
+						) }</td>`;
+				const trailing = `
+						<td class="admin-comment" rowspan="${ span }">${ escape(
+							p.admin_comment || ''
+						) }</td>`;
+				const participantEnd = `
+						<td class="checkbox" rowspan="${ span }">${ emailProfileMark }</td>
+						<td class="notes" rowspan="${ span }"></td>`;
+
+				const trs = entries.map( ( entry, i ) => {
+					const own = `
+						<td class="ticket${ entry.isHistory ? ' history' : '' }">${ escape(
+							entry.ticket
+						) }</td>
+						<td class="ticket-type">${ escape( entry.ticketType ) }</td>
+						<td class="activities">${ escape( entry.activities ) }</td>`;
+					return i === 0
+						? `
+					<tr>${ shared }${ own }${ trailing }
+						<td class="checkbox"></td>${ participantEnd }
+					</tr>`
+						: `
+					<tr>${ own }
 						<td class="checkbox"></td>
-						<td class="checkbox">${ emailProfileMark }</td>
-						<td class="notes"></td>
 					</tr>`;
+				} );
+				return `<tbody>${ trs.join( '' ) }</tbody>`;
 			} )
 			.join( '' );
 
@@ -1020,9 +1136,11 @@ export default function EventAudience( {
 		td.checkbox { width: 28px; text-align: center; }
 		td.notes { min-width: 140px; }
 		td.activities, td.admin-comment { width: 14%; }
-		td.role, td.ticket-type { width: 11%; }
-		td.name { width: 15%; font-weight: 600; }
-		tbody tr { page-break-inside: avoid; height: 38px; }
+		td.role, td.ticket-type, td.ticket { width: 10%; }
+		td.ticket.history { font-style: italic; color: #555; }
+		td.name { width: 14%; font-weight: 600; }
+		tbody { page-break-inside: avoid; }
+		tbody tr { height: 38px; }
 		.toolbar { margin-bottom: 12px; }
 		.toolbar button {
 			padding: 6px 12px;
@@ -1053,6 +1171,7 @@ export default function EventAudience( {
 				<th class="num">#</th>
 				<th>${ escape( __( 'Name', 'fair-audience' ) ) }</th>
 				<th>${ escape( __( 'Role', 'fair-audience' ) ) }</th>
+				<th>${ escape( __( 'Ticket', 'fair-audience' ) ) }</th>
 				<th>${ escape( __( 'Ticket type', 'fair-audience' ) ) }</th>
 				<th>${ escape( __( 'Activities', 'fair-audience' ) ) }</th>
 				<th>${ escape( __( 'Admin comment', 'fair-audience' ) ) }</th>
@@ -1061,7 +1180,7 @@ export default function EventAudience( {
 				<th>${ escape( __( 'Notes', 'fair-audience' ) ) }</th>
 			</tr>
 		</thead>
-		<tbody>${ rows }</tbody>
+		${ rows }
 	</table>
 </body>
 </html>`;
@@ -1225,41 +1344,6 @@ export default function EventAudience( {
 		/>
 	);
 
-	// One check-in box per ticket, so arriving guests are checked in one
-	// admission at a time. A check-in recorded before tickets existed and not
-	// tied to one of them stays visible as participant-level history.
-	const renderTicketCheckIns = ( p ) => (
-		<VStack spacing={ 1 }>
-			{ p.tickets.map( ( ticket, index ) => (
-				<CheckboxControl
-					key={ ticket.id }
-					label={ ticket.reference }
-					aria-label={ sprintf(
-						/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
-						__( 'Checked in: %s', 'fair-audience' ),
-						ticketLabel( ticket, index + 1 )
-					) }
-					checked={ !! ticket.attended_at }
-					onChange={ ( checked ) =>
-						handleToggleTicketAttended( p, ticket, checked )
-					}
-					__nextHasNoMarginBottom
-				/>
-			) ) }
-			{ p.attended_at && (
-				<span
-					style={ { color: '#666', fontSize: '12px' } }
-					title={ __(
-						'Recorded for the participant before check-in was kept per ticket, and not linked to a specific ticket.',
-						'fair-audience'
-					) }
-				>
-					{ __( 'Earlier check-in (participant)', 'fair-audience' ) }
-				</span>
-			) }
-		</VStack>
-	);
-
 	const renderActivitiesForParticipant = ( p ) => {
 		const ids = p.ticket_option_ids || [];
 		const names = p.ticket_option_names || [];
@@ -1272,6 +1356,387 @@ export default function EventAudience( {
 			? labels.join( ', ' )
 			: __( '—', 'fair-audience' );
 	};
+
+	// One table cell. `label` names the column for the stacked narrow-screen
+	// layout; cells with nothing to show are hidden there.
+	const cell = ( key, label, content, extraProps = {} ) => {
+		const { className, ...rest } = extraProps;
+		const isEmpty =
+			content === null ||
+			content === undefined ||
+			content === '' ||
+			content === false;
+		const classes = [ className, isEmpty && 'is-empty' ]
+			.filter( Boolean )
+			.join( ' ' );
+		return (
+			<td
+				key={ key }
+				data-colname={ label }
+				className={ classes || undefined }
+				{ ...rest }
+			>
+				{ isEmpty ? null : content }
+			</td>
+		);
+	};
+
+	const activityMark = ( held, pending ) => {
+		if ( ! held ) return null;
+		return pending ? (
+			<span
+				className="fair-audience-audience-table__pending"
+				title={ __( 'Awaiting payment', 'fair-audience' ) }
+			>
+				{ __( '(✓)', 'fair-audience' ) }
+			</span>
+		) : (
+			'✓'
+		);
+	};
+
+	const activityCells = ( ids, names, confirmedIds ) =>
+		ticketOptions.map( ( opt ) => {
+			const held = holdsOption( ids, names, opt );
+			const pending =
+				Array.isArray( confirmedIds ) &&
+				! confirmedIds.includes( opt.id );
+			return cell(
+				`opt-${ opt.id }`,
+				opt.short_name || opt.name,
+				activityMark( held, pending ),
+				{ className: 'is-activity' }
+			);
+		} );
+
+	const renderParticipantActions = ( p ) =>
+		p.is_series_pass ? (
+			<span style={ { color: '#666', fontStyle: 'italic' } }>
+				{ __( 'Managed on series date', 'fair-audience' ) }
+			</span>
+		) : (
+			<HStack spacing={ 2 } justify="flex-start" wrap>
+				{ ticketOptions.length > 0 && (
+					<Button
+						variant="link"
+						onClick={ () => handleOpenEditOptions( p ) }
+					>
+						{ __( 'Edit participant', 'fair-audience' ) }
+					</Button>
+				) }
+				<Button
+					variant="link"
+					isDestructive
+					onClick={ () => handleDeleteParticipant( p ) }
+				>
+					{ __( 'Delete', 'fair-audience' ) }
+				</Button>
+				{ otherOccurrences.length > 0 && (
+					<Button
+						variant="link"
+						onClick={ () => handleOpenMoveModal( p ) }
+					>
+						{ __( 'Move', 'fair-audience' ) }
+					</Button>
+				) }
+			</HStack>
+		);
+
+	const renderParticipantName = ( p ) => (
+		<>
+			{ p.participant_id ? (
+				<a
+					href={ `admin.php?page=fair-audience-participant-detail&participant_id=${ p.participant_id }` }
+				>
+					{ p.participant_name || '—' }
+				</a>
+			) : (
+				p.participant_name || '—'
+			) }
+			{ p.is_series_pass && (
+				<span
+					title={ __(
+						'Holds a whole-series pass. Attendance and edits are managed on the series’ master date.',
+						'fair-audience'
+					) }
+					className="fair-audience-audience-table__badge"
+				>
+					{ __( 'Series pass', 'fair-audience' ) }
+				</span>
+			) }
+			{ hasTickets( p ) && (
+				<span className="fair-audience-audience-table__meta">
+					{ sprintf(
+						/* translators: %d: number of tickets the participant holds */
+						_n(
+							'%d ticket',
+							'%d tickets',
+							p.tickets.length,
+							'fair-audience'
+						),
+						p.tickets.length
+					) }
+				</span>
+			) }
+		</>
+	);
+
+	// Rows for one participant: the participant itself, then one row per
+	// ticket they hold, then any participant-level history not attributed
+	// to a ticket. Participants without tickets keep everything on their
+	// own row.
+	const renderParticipantRows = ( p, index ) => {
+		const withTickets = hasTickets( p );
+		const colName = __( 'Name', 'fair-audience' );
+		const colRole = __( 'Role', 'fair-audience' );
+		const colType = __( 'Ticket type', 'fair-audience' );
+		const colStatus = __( 'Status', 'fair-audience' );
+		const colShownUp = __( 'Shown up', 'fair-audience' );
+		const colActions = __( 'Actions', 'fair-audience' );
+
+		const rows = [
+			<tr
+				key={ `p-${ p.id }` }
+				className="fair-audience-audience-table__participant"
+				data-participant-id={ p.participant_id }
+			>
+				{ cell( 'num', '#', index + 1, {
+					className: 'fair-audience-audience-table__num',
+				} ) }
+				{ cell( 'name', colName, renderParticipantName( p ), {
+					className: 'fair-audience-audience-table__name',
+				} ) }
+				{ cell( 'role', colRole, LABEL_DISPLAY[ p.label ] || p.label ) }
+				{ withTickets
+					? cell( 'type', colType, null )
+					: cell( 'type', colType, p.ticket_type_name || '—' ) }
+				{ withTickets
+					? ticketOptions.map( ( opt ) =>
+							cell( `opt-${ opt.id }`, '', null )
+					  )
+					: activityCells(
+							p.ticket_option_ids,
+							p.ticket_option_names
+					  ) }
+				{ cell( 'status', colStatus, null ) }
+				{ cell(
+					'shown',
+					colShownUp,
+					withTickets ? null : renderParticipantCheckIn( p )
+				) }
+				{ cell( 'actions', colActions, renderParticipantActions( p ) ) }
+			</tr>,
+		];
+
+		( p.tickets || [] ).forEach( ( ticket, ticketIndex ) => {
+			const position = ticketIndex + 1;
+			const fullLabel = ticketLabel( ticket, position );
+			rows.push(
+				<tr
+					key={ `t-${ ticket.id }` }
+					className="fair-audience-audience-table__ticket"
+					data-ticket-id={ ticket.id }
+				>
+					{ cell( 'num', '#', null ) }
+					{ cell(
+						'name',
+						__( 'Ticket', 'fair-audience' ),
+						ticketShortLabel( ticket, position ),
+						{ className: 'fair-audience-audience-table__name' }
+					) }
+					{ cell( 'role', colRole, null ) }
+					{ cell( 'type', colType, ticket.ticket_type_name || '—' ) }
+					{ activityCells(
+						ticket.activity_ids,
+						ticket.activity_names,
+						ticket.confirmed_activity_ids
+					) }
+					{ cell(
+						'status',
+						colStatus,
+						ticketStatusLabel( ticket.status )
+					) }
+					{ cell(
+						'shown',
+						colShownUp,
+						<input
+							type="checkbox"
+							aria-label={ sprintf(
+								/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
+								__( 'Checked in: %s', 'fair-audience' ),
+								fullLabel
+							) }
+							checked={ !! ticket.attended_at }
+							onChange={ ( e ) =>
+								handleToggleTicketAttended(
+									p,
+									ticket,
+									e.target.checked
+								)
+							}
+						/>
+					) }
+					{ cell(
+						'actions',
+						colActions,
+						<Button
+							variant="link"
+							onClick={ () =>
+								setEditingTicket( {
+									participant: p,
+									ticket,
+									position,
+								} )
+							}
+							label={ sprintf(
+								/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
+								__( 'Edit %s', 'fair-audience' ),
+								fullLabel
+							) }
+							showTooltip={ false }
+						>
+							{ __( 'Edit ticket', 'fair-audience' ) }
+						</Button>
+					) }
+				</tr>
+			);
+		} );
+
+		if ( hasUnattributedHistory( p ) ) {
+			rows.push(
+				<tr
+					key={ `h-${ p.id }` }
+					className="fair-audience-audience-table__history"
+				>
+					{ cell( 'num', '#', null ) }
+					{ cell(
+						'name',
+						colName,
+						<span
+							title={ __(
+								'Recorded for the participant before activities and check-in were kept per ticket, and not linked to a specific ticket. Edit it with “Edit participant”.',
+								'fair-audience'
+							) }
+						>
+							{ __( 'Not tied to a ticket', 'fair-audience' ) }
+						</span>,
+						{ className: 'fair-audience-audience-table__name' }
+					) }
+					{ cell( 'role', colRole, null ) }
+					{ cell( 'type', colType, null ) }
+					{ activityCells(
+						participantScopeIds( p ),
+						participantScopeNames( p )
+					) }
+					{ cell( 'status', colStatus, null ) }
+					{ cell(
+						'shown',
+						colShownUp,
+						p.attended_at
+							? __( 'Earlier check-in', 'fair-audience' )
+							: null
+					) }
+					{ cell( 'actions', colActions, null ) }
+				</tr>
+			);
+		}
+
+		return rows;
+	};
+
+	const renderTotalsRow = ( key, label, totals ) => (
+		<tr key={ key }>
+			<th
+				colSpan={ 4 }
+				className="fair-audience-audience-table__total-label"
+			>
+				{ label }
+			</th>
+			{ ticketOptions.map( ( opt ) => (
+				<th
+					key={ opt.id }
+					data-colname={ opt.short_name || opt.name }
+					style={ { textAlign: 'center' } }
+				>
+					{ totals[ opt.id ] }
+				</th>
+			) ) }
+			<th className="is-empty" />
+			<th className="is-empty" />
+			<th className="is-empty" />
+		</tr>
+	);
+
+	const renderAudienceTable = () => (
+		<table className="wp-list-table widefat fair-audience-audience-table">
+			<thead>
+				<tr>
+					<th
+						style={ {
+							width: '1%',
+							whiteSpace: 'nowrap',
+							textAlign: 'right',
+						} }
+					>
+						#
+					</th>
+					<th
+						style={ { cursor: 'pointer' } }
+						onClick={ () => handleSort( 'name' ) }
+					>
+						{ __( 'Name', 'fair-audience' ) }
+						{ sortIndicator( 'name' ) }
+					</th>
+					<th
+						style={ { cursor: 'pointer' } }
+						onClick={ () => handleSort( 'role' ) }
+					>
+						{ __( 'Role', 'fair-audience' ) }
+						{ sortIndicator( 'role' ) }
+					</th>
+					<th
+						style={ { cursor: 'pointer' } }
+						onClick={ () => handleSort( 'ticket_type' ) }
+					>
+						{ __( 'Ticket type', 'fair-audience' ) }
+						{ sortIndicator( 'ticket_type' ) }
+					</th>
+					{ ticketOptions.map( ( opt ) => (
+						<th key={ opt.id } style={ { textAlign: 'center' } }>
+							{ opt.short_name || opt.name }
+						</th>
+					) ) }
+					<th>{ __( 'Status', 'fair-audience' ) }</th>
+					<th>{ __( 'Shown up', 'fair-audience' ) }</th>
+					<th>{ __( 'Actions', 'fair-audience' ) }</th>
+				</tr>
+			</thead>
+			{ filteredParticipants.map( ( p, index ) => (
+				<tbody key={ p.id }>
+					{ renderParticipantRows( p, index ) }
+				</tbody>
+			) ) }
+			{ ticketOptions.length > 0 && (
+				<tfoot>
+					{ activityTotals.showTickets &&
+						renderTotalsRow(
+							'tickets',
+							__( 'Total — tickets', 'fair-audience' ),
+							activityTotals.byTicket
+						) }
+					{ activityTotals.showParticipantLevel &&
+						renderTotalsRow(
+							'participants',
+							__(
+								'Total — not tied to a ticket',
+								'fair-audience'
+							),
+							activityTotals.byParticipant
+						) }
+				</tfoot>
+			) }
+		</table>
+	);
 
 	return (
 		<>
@@ -1488,6 +1953,10 @@ export default function EventAudience( {
 										<strong>{ counts.interested }</strong>
 									</span>
 									<span>
+										{ __( 'Tickets:', 'fair-audience' ) }{ ' ' }
+										<strong>{ counts.tickets }</strong>
+									</span>
+									<span>
 										{ __( 'Total:', 'fair-audience' ) }{ ' ' }
 										<strong>{ participants.length }</strong>
 									</span>
@@ -1578,340 +2047,7 @@ export default function EventAudience( {
 											width: '100%',
 										} }
 									>
-										<table className="wp-list-table widefat striped">
-											<thead>
-												<tr>
-													<th
-														style={ {
-															width: '1%',
-															whiteSpace:
-																'nowrap',
-															textAlign: 'right',
-														} }
-													>
-														#
-													</th>
-													<th
-														style={ {
-															cursor: 'pointer',
-														} }
-														onClick={ () =>
-															handleSort( 'name' )
-														}
-													>
-														{ __(
-															'Name',
-															'fair-audience'
-														) }
-														{ sortIndicator(
-															'name'
-														) }
-													</th>
-													<th
-														style={ {
-															cursor: 'pointer',
-														} }
-														onClick={ () =>
-															handleSort( 'role' )
-														}
-													>
-														{ __(
-															'Role',
-															'fair-audience'
-														) }
-														{ sortIndicator(
-															'role'
-														) }
-													</th>
-													<th
-														style={ {
-															cursor: 'pointer',
-														} }
-														onClick={ () =>
-															handleSort(
-																'ticket_type'
-															)
-														}
-													>
-														{ __(
-															'Ticket type',
-															'fair-audience'
-														) }
-														{ sortIndicator(
-															'ticket_type'
-														) }
-													</th>
-													{ ticketOptions.map(
-														( opt ) => (
-															<th key={ opt.id }>
-																{ opt.short_name ||
-																	opt.name }
-															</th>
-														)
-													) }
-													<th>
-														{ __(
-															'Shown up',
-															'fair-audience'
-														) }
-													</th>
-													<th>
-														{ __(
-															'Actions',
-															'fair-audience'
-														) }
-													</th>
-												</tr>
-											</thead>
-											<tbody>
-												{ filteredParticipants.map(
-													( p, index ) => (
-														<tr key={ p.id }>
-															<td
-																style={ {
-																	textAlign:
-																		'right',
-																	color: '#666',
-																} }
-															>
-																{ index + 1 }
-															</td>
-															<td>
-																{ p.participant_id ? (
-																	<a
-																		href={ `admin.php?page=fair-audience-participant-detail&participant_id=${ p.participant_id }` }
-																	>
-																		{ p.participant_name ||
-																			'—' }
-																	</a>
-																) : (
-																	p.participant_name ||
-																	'—'
-																) }
-																{ p.is_series_pass && (
-																	<span
-																		title={ __(
-																			'Holds a whole-series pass. Attendance and edits are managed on the series’ master date.',
-																			'fair-audience'
-																		) }
-																		style={ {
-																			marginLeft: 6,
-																			padding:
-																				'1px 6px',
-																			fontSize: 11,
-																			borderRadius: 3,
-																			background:
-																				'#e0e7ff',
-																			color: '#3730a3',
-																			whiteSpace:
-																				'nowrap',
-																		} }
-																	>
-																		{ __(
-																			'Series pass',
-																			'fair-audience'
-																		) }
-																	</span>
-																) }
-															</td>
-															<td>
-																{ LABEL_DISPLAY[
-																	p.label
-																] || p.label }
-															</td>
-															<td>
-																{ p.ticket_type_name ||
-																	'—' }
-															</td>
-															{ ticketOptions.map(
-																( opt ) => {
-																	const ids =
-																		p.ticket_option_ids ||
-																		[];
-																	const names =
-																		p.ticket_option_names ||
-																		[];
-																	const hasOption =
-																		ids.includes(
-																			opt.id
-																		) ||
-																		names.includes(
-																			opt.name
-																		);
-																	return (
-																		<td
-																			key={
-																				opt.id
-																			}
-																			style={ {
-																				textAlign:
-																					'center',
-																			} }
-																		>
-																			{ hasOption
-																				? '✓'
-																				: '' }
-																		</td>
-																	);
-																}
-															) }
-															<td>
-																{ hasTickets(
-																	p
-																)
-																	? renderTicketCheckIns(
-																			p
-																	  )
-																	: renderParticipantCheckIn(
-																			p
-																	  ) }
-															</td>
-															<td>
-																{ p.is_series_pass ? (
-																	<span
-																		style={ {
-																			color: '#666',
-																			fontStyle:
-																				'italic',
-																		} }
-																	>
-																		{ __(
-																			'Managed on series date',
-																			'fair-audience'
-																		) }
-																	</span>
-																) : (
-																	<HStack
-																		spacing={
-																			2
-																		}
-																		justify="flex-start"
-																	>
-																		{ ticketOptions.length >
-																			0 && (
-																			<Button
-																				variant="link"
-																				onClick={ () =>
-																					handleOpenEditOptions(
-																						p
-																					)
-																				}
-																			>
-																				{ __(
-																					'Edit',
-																					'fair-audience'
-																				) }
-																			</Button>
-																		) }
-																		<Button
-																			variant="link"
-																			isDestructive
-																			onClick={ () =>
-																				handleDeleteParticipant(
-																					p
-																				)
-																			}
-																		>
-																			{ __(
-																				'Delete',
-																				'fair-audience'
-																			) }
-																		</Button>
-																		{ otherOccurrences.length >
-																			0 && (
-																			<Button
-																				variant="link"
-																				onClick={ () =>
-																					handleOpenMoveModal(
-																						p
-																					)
-																				}
-																			>
-																				{ __(
-																					'Move',
-																					'fair-audience'
-																				) }
-																			</Button>
-																		) }
-																	</HStack>
-																) }
-															</td>
-														</tr>
-													)
-												) }
-											</tbody>
-											{ ticketOptions.length > 0 && (
-												<tfoot>
-													<tr>
-														<th />
-														<th
-															colSpan={ 3 }
-															style={ {
-																textAlign:
-																	'right',
-															} }
-														>
-															{ __(
-																'Total',
-																'fair-audience'
-															) }
-														</th>
-														{ ticketOptions.map(
-															( opt ) => {
-																const total =
-																	filteredParticipants.reduce(
-																		(
-																			acc,
-																			p
-																		) => {
-																			const ids =
-																				p.ticket_option_ids ||
-																				[];
-																			const names =
-																				p.ticket_option_names ||
-																				[];
-																			const hasOption =
-																				ids.includes(
-																					opt.id
-																				) ||
-																				names.includes(
-																					opt.name
-																				);
-																			return (
-																				acc +
-																				( hasOption &&
-																				occupiesSeat(
-																					p
-																				)
-																					? 1
-																					: 0 )
-																			);
-																		},
-																		0
-																	);
-																return (
-																	<th
-																		key={
-																			opt.id
-																		}
-																		style={ {
-																			textAlign:
-																				'center',
-																		} }
-																	>
-																		{
-																			total
-																		}
-																	</th>
-																);
-															}
-														) }
-														<th />
-														<th />
-													</tr>
-												</tfoot>
-											) }
-										</table>
+										{ renderAudienceTable() }
 									</div>
 								) : (
 									<p
@@ -2712,46 +2848,12 @@ export default function EventAudience( {
 							/>
 						) }
 						{ hasTickets( editingParticipant ) && (
-							<VStack spacing={ 2 }>
-								<h3 style={ { margin: 0, fontSize: '14px' } }>
-									{ __( 'Tickets', 'fair-audience' ) }
-								</h3>
-								<p style={ { margin: 0, fontSize: '12px' } }>
-									{ __(
-										'Each ticket keeps its own activities and check-in. Save each ticket separately.',
-										'fair-audience'
-									) }
-								</p>
-								{ editingParticipant.tickets.map(
-									( ticket, index ) => (
-										<TicketEditor
-											key={ ticket.id }
-											ticket={ ticket }
-											position={ index + 1 }
-											ticketOptions={ ticketOptions }
-											eventDateId={ eventDateId }
-											onSaved={ ( updated ) =>
-												handleTicketSaved(
-													editingParticipant,
-													updated
-												)
-											}
-											onError={ ( message ) =>
-												showToast(
-													__(
-														'Error saving ticket: ',
-														'fair-audience'
-													) + message,
-													'error'
-												)
-											}
-										/>
-									)
+							<p style={ { margin: 0, fontSize: '12px' } }>
+								{ __(
+									'Each ticket keeps its own activities and check-in. Edit them with “Edit ticket” on the ticket’s row.',
+									'fair-audience'
 								) }
-								<h3 style={ { margin: 0, fontSize: '14px' } }>
-									{ __( 'Participant', 'fair-audience' ) }
-								</h3>
-							</VStack>
+							</p>
 						) }
 						{ showsParticipantActivities( editingParticipant ) &&
 							hasTickets( editingParticipant ) && (
@@ -2808,6 +2910,39 @@ export default function EventAudience( {
 							</Button>
 						</HStack>
 					</VStack>
+				</Modal>
+			) }
+
+			{ editingTicket && (
+				<Modal
+					title={ sprintf(
+						/* translators: %s: participant name */
+						__( 'Edit ticket — %s', 'fair-audience' ),
+						editingTicket.participant.participant_name
+					) }
+					onRequestClose={ () => setEditingTicket( null ) }
+					style={ { maxWidth: '520px', width: '100%' } }
+				>
+					<TicketEditor
+						ticket={ editingTicket.ticket }
+						position={ editingTicket.position }
+						ticketOptions={ ticketOptions }
+						eventDateId={ eventDateId }
+						onSaved={ ( updated ) =>
+							handleTicketSaved(
+								editingTicket.participant,
+								updated
+							)
+						}
+						onError={ ( message ) =>
+							showToast(
+								__( 'Error saving ticket: ', 'fair-audience' ) +
+									message,
+								'error'
+							)
+						}
+						onCancel={ () => setEditingTicket( null ) }
+					/>
 				</Modal>
 			) }
 

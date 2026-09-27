@@ -1,0 +1,150 @@
+/**
+ * Audience tab — participants grouped with their tickets.
+ *
+ * Each participant is its own <tbody>: the participant row, then one row per
+ * ticket, then any history not attributed to a ticket. On narrow screens the
+ * rows stack into labelled cards so tickets stay readable without sideways
+ * scrolling.
+ */
+
+.fair-audience-audience-table tbody + tbody {
+	border-top: 2px solid #c3c4c7;
+}
+
+.fair-audience-audience-table__participant td {
+	background: #fff;
+}
+
+.fair-audience-audience-table__ticket td,
+.fair-audience-audience-table__history td {
+	background: #f6f7f7;
+	border-top: 1px solid #f0f0f1;
+}
+
+.fair-audience-audience-table__ticket .fair-audience-audience-table__name,
+.fair-audience-audience-table__history .fair-audience-audience-table__name {
+	padding-left: 28px;
+}
+
+.fair-audience-audience-table__history td {
+	color: #50575e;
+	font-style: italic;
+}
+
+.fair-audience-audience-table__num {
+	text-align: right;
+	color: #666;
+}
+
+.fair-audience-audience-table td.is-activity {
+	text-align: center;
+}
+
+.fair-audience-audience-table__pending {
+	color: #8a6914;
+}
+
+.fair-audience-audience-table__badge {
+	margin-left: 6px;
+	padding: 1px 6px;
+	font-size: 11px;
+	border-radius: 3px;
+	background: #e0e7ff;
+	color: #3730a3;
+	white-space: nowrap;
+}
+
+.fair-audience-audience-table__meta {
+	display: block;
+	color: #646970;
+	font-size: 12px;
+}
+
+.fair-audience-audience-table__total-label {
+	text-align: right;
+}
+
+@media screen and (max-width: 782px) {
+	.fair-audience-audience-table thead {
+		display: none;
+	}
+
+	.fair-audience-audience-table,
+	.fair-audience-audience-table tbody,
+	.fair-audience-audience-table tfoot,
+	.fair-audience-audience-table tr {
+		display: block;
+		width: 100%;
+	}
+
+	.fair-audience-audience-table tbody {
+		padding: 8px 0;
+	}
+
+	.fair-audience-audience-table.wp-list-table tr td,
+	.fair-audience-audience-table.wp-list-table tr th {
+		display: flex !important;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+		width: auto !important;
+		padding: 4px 12px !important;
+		text-align: left;
+		border: 0;
+	}
+
+	.fair-audience-audience-table.wp-list-table tr td::before,
+	.fair-audience-audience-table.wp-list-table tr th[data-colname]::before {
+		position: static !important;
+		display: block !important;
+		width: auto !important;
+		content: attr(data-colname) !important;
+		flex-shrink: 0 !important;
+		color: #50575e !important;
+		font-weight: 600 !important;
+		font-style: normal !important;
+	}
+
+	.fair-audience-audience-table.wp-list-table tr td.is-empty,
+	.fair-audience-audience-table.wp-list-table tr th.is-empty,
+	.fair-audience-audience-table.wp-list-table
+		td.fair-audience-audience-table__num {
+		display: none !important;
+	}
+
+	/* The name leads each card; it needs no column label. */
+	.fair-audience-audience-table.wp-list-table
+		td.fair-audience-audience-table__name {
+		display: block !important;
+		font-weight: 600;
+	}
+
+	.fair-audience-audience-table.wp-list-table
+		td.fair-audience-audience-table__name::before {
+		display: none !important;
+	}
+
+	.fair-audience-audience-table__ticket,
+	.fair-audience-audience-table__history {
+		margin: 6px 12px 0 16px;
+		width: auto !important;
+		border-left: 3px solid #c3c4c7;
+		background: #f6f7f7;
+	}
+
+	.fair-audience-audience-table__ticket .fair-audience-audience-table__name,
+	.fair-audience-audience-table__history .fair-audience-audience-table__name {
+		padding-left: 12px !important;
+	}
+
+	.fair-audience-audience-table tfoot tr {
+		padding: 8px 0;
+		border-top: 2px solid #c3c4c7;
+	}
+
+	.fair-audience-audience-table
+		tfoot
+		.fair-audience-audience-table__total-label {
+		display: block !important;
+	}
+}

@@ -14,6 +14,31 @@ const TICKET_STATUS_DISPLAY = {
 };
 
 /**
+ * Display name of a ticket's status.
+ *
+ * @param {string} status Ticket status from the participants endpoint.
+ * @return {string} Label.
+ */
+export const ticketStatusLabel = ( status ) =>
+	TICKET_STATUS_DISPLAY[ status ] || status;
+
+/**
+ * Ticket number and reference, without the ticket type, for rows that
+ * show the type in a column of its own.
+ *
+ * @param {Object} ticket   Ticket from the participants endpoint.
+ * @param {number} position 1-based position among the participant's tickets.
+ * @return {string} Label.
+ */
+export const ticketShortLabel = ( ticket, position ) =>
+	sprintf(
+		/* translators: 1: ticket number among the participant's tickets, 2: short ticket reference */
+		__( 'Ticket %1$d (%2$s)', 'fair-audience' ),
+		position,
+		ticket.reference
+	);
+
+/**
  * Short, human-readable name for one of a participant's tickets.
  *
  * @param {Object} ticket   Ticket from the participants endpoint.
@@ -29,12 +54,7 @@ export const ticketLabel = ( ticket, position ) =>
 				ticket.ticket_type_name,
 				ticket.reference
 		  )
-		: sprintf(
-				/* translators: 1: ticket number among the participant's tickets, 2: short ticket reference */
-				__( 'Ticket %1$d (%2$s)', 'fair-audience' ),
-				position,
-				ticket.reference
-		  );
+		: ticketShortLabel( ticket, position );
 
 /**
  * Edit one ticket's activities and check-in. Saving affects only this
@@ -47,6 +67,7 @@ export const ticketLabel = ( ticket, position ) =>
  * @param {number}   props.eventDateId   Event date the ticket belongs to.
  * @param {Function} props.onSaved       Called with the updated ticket.
  * @param {Function} props.onError       Called with an error message.
+ * @param {Function} [props.onCancel]    Called to close without saving.
  * @return {Element} Ticket editor.
  */
 export default function TicketEditor( {
@@ -56,6 +77,7 @@ export default function TicketEditor( {
 	eventDateId,
 	onSaved,
 	onError,
+	onCancel,
 } ) {
 	const [ activityIds, setActivityIds ] = useState(
 		ticket.activity_ids || []
@@ -108,7 +130,7 @@ export default function TicketEditor( {
 			<VStack spacing={ 2 }>
 				<p style={ { margin: 0, fontWeight: 600 } }>{ label }</p>
 				<p style={ { margin: 0, color: '#666', fontSize: '12px' } }>
-					{ TICKET_STATUS_DISPLAY[ ticket.status ] || ticket.status }
+					{ ticketStatusLabel( ticket.status ) }
 				</p>
 				{ ticketOptions.map( ( opt ) => (
 					<CheckboxControl
@@ -126,6 +148,15 @@ export default function TicketEditor( {
 					__nextHasNoMarginBottom
 				/>
 				<HStack style={ { justifyContent: 'flex-end' } }>
+					{ onCancel && (
+						<Button
+							variant="tertiary"
+							onClick={ onCancel }
+							disabled={ isSaving }
+						>
+							{ __( 'Cancel', 'fair-audience' ) }
+						</Button>
+					) }
 					<Button
 						variant="secondary"
 						onClick={ handleSave }

@@ -1,14 +1,17 @@
 /**
  * @jest-environment jsdom
  *
- * Component tests for per-ticket activities and check-in (#1533).
+ * Component tests for tickets in the Audience tab (#1533, #1530).
  *
  * Exercises:
- *   - A purchaser holding two tickets gets one check-in box per ticket, and
- *     checking one in updates only that ticket.
- *   - The edit modal edits one ticket's activities without touching its
- *     sibling or the participant-level activities.
- *   - A participant-level check-in not tied to a ticket stays visible as such.
+ *   - A purchaser holding two tickets gets one row per ticket under their
+ *     participant row, and checking one in updates only that ticket.
+ *   - "Edit ticket" edits one ticket's activities without touching its
+ *     sibling; "Edit participant" never sends ticket activities.
+ *   - Activity totals count tickets, with participant-level activity
+ *     totalled separately.
+ *   - History not tied to a ticket is shown, and printed, as such.
+ *   - The printed list gives each ticket its own row.
  */
 import '@testing-library/jest-dom';
 import {
@@ -49,9 +52,9 @@ const TICKET_TWO = {
 	ticket_type_name: 'Regular',
 	status: 'confirmed',
 	attended_at: null,
-	activity_ids: [],
-	activity_names: [],
-	confirmed_activity_ids: [],
+	activity_ids: [ 7, 8 ],
+	activity_names: [ 'Morning workshop', 'Evening workshop' ],
+	confirmed_activity_ids: [ 7, 8 ],
 };
 
 const PARTICIPANT = {
@@ -70,9 +73,9 @@ const PARTICIPANT = {
 	attended_at: null,
 	created_at: '2026-01-01 10:00:00',
 	payment_expires_at: null,
-	ticket_option_names: [ 'Morning workshop' ],
-	ticket_option_ids: [ 7 ],
-	confirmed_ticket_option_ids: [ 7 ],
+	ticket_option_names: [ 'Morning workshop', 'Evening workshop' ],
+	ticket_option_ids: [ 7, 8 ],
+	confirmed_ticket_option_ids: [ 7, 8 ],
 	participant_ticket_option_ids: [],
 	participant_ticket_option_names: [],
 	tickets: [ TICKET_ONE, TICKET_TWO ],
@@ -105,7 +108,9 @@ function mockApi( participant = PARTICIPANT ) {
 			} );
 		}
 		if ( path.endsWith( '/participants' ) ) {
-			return Promise.resolve( [ participant ] );
+			return Promise.resolve(
+				Array.isArray( participant ) ? participant : [ participant ]
+			);
 		}
 		if ( path.includes( '/fair-events/v1/event-dates/5/tickets' ) ) {
 			return Promise.resolve( { options: OPTIONS, ticket_types: [] } );
@@ -125,6 +130,48 @@ function renderAudience() {
 	);
 }
 
+// Someone added by hand, without tickets: activities and check-in stay on
+// the participant.
+const WALK_IN = {
+	...PARTICIPANT,
+	id: 2,
+	participant_id: 11,
+	participant_name: 'Sam Walkin',
+	name: 'Sam',
+	surname: 'Walkin',
+	ticket_type_id: null,
+	ticket_type_name: null,
+	ticket_option_names: [ 'Evening workshop' ],
+	ticket_option_ids: [ 8 ],
+	confirmed_ticket_option_ids: [ 8 ],
+	participant_ticket_option_ids: [ 8 ],
+	participant_ticket_option_names: [ 'Evening workshop' ],
+	tickets: [],
+};
+
+// A ticket holder with an activity and a check-in recorded before tickets
+// kept them, not attributed to their ticket.
+const WITH_HISTORY = {
+	...PARTICIPANT,
+	attended_at: '2025-12-01 18:00:00',
+	ticket_option_names: [ 'Morning workshop', 'Evening workshop' ],
+	ticket_option_ids: [ 7, 8 ],
+	participant_ticket_option_ids: [ 8 ],
+	participant_ticket_option_names: [ 'Evening workshop' ],
+	tickets: [ TICKET_ONE ],
+};
+
+function ticketRow( ticketId ) {
+	return document.querySelector( `tr[data-ticket-id="${ ticketId }"]` );
+}
+
+function totalsCells( label ) {
+	const row = screen.getByText( label ).closest( 'tr' );
+	return Array.from( row.querySelectorAll( 'th' ) )
+		.slice( 1, 1 + OPTIONS.length )
+		.map( ( th ) => th.textContent );
+}
+
 function ticketCalls() {
 	return apiFetch.mock.calls
 		.map( ( [ args ] ) => args )
@@ -141,7 +188,45 @@ afterEach( () => {
 	jest.clearAllMocks();
 } );
 
-describe( 'EventAudience — per-ticket check-in and activities', () => {
+describe( 'EventAudience — tickets in the Audience tab', () => {
+	it( 'shows each of a purchaser’s tickets as its own row under the participant', async () => {
+		mockApi();
+		renderAudience();
+
+		await screen.findByText( 'Jane Doe' );
+		expect( screen.getByText( '2 tickets' ) ).toBeInTheDocument();
+
+		const first = ticketRow( 101 );
+		const second = ticketRow( 102 );
+		expect( first ).toHaveTextContent( 'Ticket 1 (AAAA1111)' );
+		expect( second ).toHaveTextContent( 'Ticket 2 (BBBB2222)' );
+		expect( first ).toHaveTextContent( 'Regular' );
+		expect( first ).toHaveTextContent( 'Confirmed' );
+
+		// Ticket and participant actions are separate controls.
+		expect(
+			within( first ).getByRole( 'button', {
+				name: 'Edit Ticket 1 — Regular (AAAA1111)',
+			} )
+		).toBeInTheDocument();
+		expect(
+			within( first ).queryByRole( 'button', {
+				name: 'Edit participant',
+			} )
+		).not.toBeInTheDocument();
+		const participantRow = document.querySelector(
+			'tr[data-participant-id="10"]'
+		);
+		expect(
+			within( participantRow ).getByRole( 'button', {
+				name: 'Edit participant',
+			} )
+		).toBeInTheDocument();
+		expect(
+			within( participantRow ).queryByRole( 'checkbox' )
+		).not.toBeInTheDocument();
+	} );
+
 	it( 'checks in one of two sibling tickets without changing the other', async () => {
 		mockApi();
 		renderAudience();
@@ -165,19 +250,24 @@ describe( 'EventAudience — per-ticket check-in and activities', () => {
 		expect( first ).not.toBeChecked();
 	} );
 
-	it( 'saves one ticket’s activities from the edit modal, leaving its sibling and the participant untouched', async () => {
+	it( 'edits only the selected ticket’s activities', async () => {
 		mockApi();
 		renderAudience();
 
+		await screen.findByText( 'Jane Doe' );
 		fireEvent.click(
-			( await screen.findAllByRole( 'button', { name: 'Edit' } ) )[ 0 ]
+			within( ticketRow( 102 ) ).getByRole( 'button', {
+				name: 'Edit Ticket 2 — Regular (BBBB2222)',
+			} )
 		);
 		const modal = screen.getByRole( 'dialog' );
+		expect(
+			modal.querySelectorAll( '.fair-audience-ticket-editor' )
+		).toHaveLength( 1 );
 
-		const secondEditor = modal.querySelector( '[data-ticket-id="102"]' );
 		fireEvent.click(
-			within( secondEditor ).getByRole( 'checkbox', {
-				name: 'Evening workshop',
+			within( modal ).getByRole( 'checkbox', {
+				name: 'Morning workshop',
 			} )
 		);
 		fireEvent.click(
@@ -192,22 +282,30 @@ describe( 'EventAudience — per-ticket check-in and activities', () => {
 			method: 'PUT',
 			data: { activity_ids: [ 8 ], attended: false },
 		} );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
 
-		// The first ticket keeps its own selection.
-		const firstEditor = modal.querySelector( '[data-ticket-id="101"]' );
-		expect(
-			within( firstEditor ).getByRole( 'checkbox', {
-				name: 'Morning workshop',
-			} )
-		).toBeChecked();
-		expect(
-			within( firstEditor ).getByRole( 'checkbox', {
-				name: 'Evening workshop',
-			} )
-		).not.toBeChecked();
+		// Ticket 2 lost the morning workshop; ticket 1 keeps it.
+		const morning = ( row ) =>
+			row.querySelectorAll( 'td.is-activity' )[ 0 ].textContent;
+		expect( morning( ticketRow( 102 ) ) ).toBe( '' );
+		expect( morning( ticketRow( 101 ) ) ).toBe( '✓' );
+	} );
 
-		// The participant has no activities outside tickets, so saving the
-		// participant sends no activity list that could overwrite them.
+	it( 'never sends ticket activities when saving the participant', async () => {
+		mockApi();
+		renderAudience();
+
+		await screen.findByText( 'Jane Doe' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Edit participant' } )
+		);
+		const modal = screen.getByRole( 'dialog' );
+		expect(
+			modal.querySelector( '.fair-audience-ticket-editor' )
+		).toBeNull();
+
 		fireEvent.click(
 			within( modal ).getByRole( 'button', { name: 'Save participant' } )
 		);
@@ -224,19 +322,110 @@ describe( 'EventAudience — per-ticket check-in and activities', () => {
 				'ticket_option_ids'
 			);
 		} );
+		expect( ticketCalls() ).toHaveLength( 0 );
 	} );
 
-	it( 'labels a check-in not tied to any ticket as participant-level', async () => {
-		mockApi( { ...PARTICIPANT, attended_at: '2025-12-01 18:00:00' } );
+	it( 'counts activities per ticket and totals participant-level ones separately', async () => {
+		mockApi( [ PARTICIPANT, WALK_IN ] );
 		renderAudience();
 
+		await screen.findByText( 'Sam Walkin' );
+		// Morning: tickets 1 and 2. Evening: ticket 2 only.
+		expect( totalsCells( 'Total — tickets' ) ).toEqual( [ '2', '1' ] );
+		// The walk-in's evening workshop is not a ticket selection.
+		expect( totalsCells( 'Total — not tied to a ticket' ) ).toEqual( [
+			'0',
+			'1',
+		] );
+	} );
+
+	it( 'keeps a participant without tickets on a single row with their own check-in', async () => {
+		mockApi( [ PARTICIPANT, WALK_IN ] );
+		renderAudience();
+
+		await screen.findByText( 'Sam Walkin' );
+		const row = document.querySelector( 'tr[data-participant-id="11"]' );
 		expect(
-			await screen.findByText( 'Earlier check-in (participant)' )
+			within( row ).getByRole( 'checkbox', { name: 'Shown up' } )
 		).toBeInTheDocument();
+		expect(
+			row.querySelectorAll( 'td.is-activity' )[ 1 ]
+		).toHaveTextContent( '✓' );
+	} );
+
+	it( 'shows history not tied to a ticket as such', async () => {
+		mockApi( WITH_HISTORY );
+		renderAudience();
+
+		const history = (
+			await screen.findByText( 'Not tied to a ticket' )
+		).closest( 'tr' );
+		expect( history ).toHaveTextContent( 'Earlier check-in' );
+		expect(
+			history.querySelectorAll( 'td.is-activity' )[ 1 ]
+		).toHaveTextContent( '✓' );
+		// The ticket itself holds only its own activity and no check-in.
+		expect(
+			ticketRow( 101 ).querySelectorAll( 'td.is-activity' )[ 1 ]
+		).toHaveTextContent( '' );
 		expect(
 			screen.getByRole( 'checkbox', {
 				name: 'Checked in: Ticket 1 — Regular (AAAA1111)',
 			} )
 		).not.toBeChecked();
+	} );
+
+	it( 'prints one row per ticket, grouped under the participant', async () => {
+		const written = [];
+		jest.spyOn( window, 'open' ).mockReturnValue( {
+			document: {
+				open: jest.fn(),
+				write: ( html ) => written.push( html ),
+				close: jest.fn(),
+			},
+		} );
+		mockApi( [
+			{ ...WITH_HISTORY, tickets: [ TICKET_ONE, TICKET_TWO ] },
+			WALK_IN,
+		] );
+		renderAudience();
+
+		await screen.findByText( 'Sam Walkin' );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Print list' } ) );
+
+		const doc = new DOMParser().parseFromString(
+			written.join( '' ),
+			'text/html'
+		);
+		const groups = doc.querySelectorAll( 'table > tbody' );
+		expect( groups ).toHaveLength( 2 );
+
+		const janeRows = groups[ 0 ].querySelectorAll( 'tr' );
+		// Two tickets plus the activity not tied to either of them.
+		expect( janeRows ).toHaveLength( 3 );
+		expect(
+			groups[ 0 ].querySelector( 'td.name' ).getAttribute( 'rowspan' )
+		).toBe( '3' );
+		const ticketCells = Array.from(
+			groups[ 0 ].querySelectorAll( 'td.ticket' )
+		).map( ( td ) => td.textContent );
+		expect( ticketCells ).toEqual( [
+			'Ticket 1 (AAAA1111)',
+			'Ticket 2 (BBBB2222)',
+			'Not tied to a ticket',
+		] );
+		const activities = Array.from(
+			groups[ 0 ].querySelectorAll( 'td.activities' )
+		).map( ( td ) => td.textContent );
+		expect( activities ).toEqual( [ 'AM', 'AM, PM', 'PM' ] );
+
+		// The participant without tickets keeps one row.
+		expect( groups[ 1 ].querySelectorAll( 'tr' ) ).toHaveLength( 1 );
+		expect( groups[ 1 ].querySelector( 'td.name' ).textContent ).toBe(
+			'Sam Walkin'
+		);
+		expect( groups[ 1 ].querySelector( 'td.activities' ).textContent ).toBe(
+			'PM'
+		);
 	} );
 } );

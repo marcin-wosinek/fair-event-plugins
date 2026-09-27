@@ -1,7 +1,9 @@
 /**
- * E2E: on the Manage Event Audience tab an administrator checks in and edits
- * the activities of one of two tickets held by the same purchaser; the
- * sibling ticket keeps its own state (#1533).
+ * E2E: on the Manage Event Audience tab each of a purchaser's two tickets
+ * gets its own row; an administrator checks in and edits the activities of
+ * one of them while the sibling keeps its own state (#1533, #1530). Totals
+ * and the printed list count tickets, and participant-level history stays
+ * apart from them.
  */
 
 import { test, expect } from '@playwright/test';
@@ -166,21 +168,42 @@ test.describe( 'Manage Event — per-ticket check-in and activities', () => {
 		await adminContext?.close();
 	} );
 
+	// The buyer's group: their participant row, one row per ticket, and any
+	// history not tied to a ticket.
 	const openAudience = async () => {
 		await adminPage.goto(
 			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=audience`
 		);
-		const row = adminPage.getByRole( 'row', { name: new RegExp( buyer ) } );
-		await expect( row ).toBeVisible();
-		return row;
+		const group = adminPage.locator( 'tbody', {
+			has: adminPage.getByRole( 'link', { name: buyer } ),
+		} );
+		await expect( group ).toBeVisible();
+		return group;
 	};
 
+	const totals = async ( label ) => {
+		const row = adminPage.locator( 'tfoot tr', { hasText: label } );
+		return row.locator( 'th[data-colname]' ).allTextContents();
+	};
+
+	test( 'shows each ticket as its own row under the purchaser', async () => {
+		const group = await openAudience();
+		await expect( group.locator( 'tr[data-ticket-id]' ) ).toHaveCount( 2 );
+		await expect( group ).toContainText( '2 tickets' );
+		await expect(
+			group.getByRole( 'button', { name: 'Edit participant' } )
+		).toHaveCount( 1 );
+		await expect(
+			group.getByRole( 'button', { name: /^Edit Ticket \d — / } )
+		).toHaveCount( 2 );
+	} );
+
 	test( 'checks in one of two sibling tickets', async () => {
-		let row = await openAudience();
-		const first = row.getByRole( 'checkbox', {
+		let group = await openAudience();
+		const first = group.getByRole( 'checkbox', {
 			name: /^Checked in: Ticket 1 — Pair admission/,
 		} );
-		const second = row.getByRole( 'checkbox', {
+		const second = group.getByRole( 'checkbox', {
 			name: /^Checked in: Ticket 2 — Pair admission/,
 		} );
 		await expect( first ).not.toBeChecked();
@@ -196,56 +219,126 @@ test.describe( 'Manage Event — per-ticket check-in and activities', () => {
 		await second.check();
 		expect( ( await saved ).ok() ).toBeTruthy();
 
-		row = await openAudience();
+		group = await openAudience();
 		await expect(
-			row.getByRole( 'checkbox', {
+			group.getByRole( 'checkbox', {
 				name: /^Checked in: Ticket 2 — Pair admission/,
 			} )
 		).toBeChecked();
 		await expect(
-			row.getByRole( 'checkbox', {
+			group.getByRole( 'checkbox', {
 				name: /^Checked in: Ticket 1 — Pair admission/,
 			} )
 		).not.toBeChecked();
 	} );
 
 	test( 'edits one ticket’s activities without changing its sibling', async () => {
-		let row = await openAudience();
-		await row.getByRole( 'button', { name: 'Edit' } ).click();
+		let group = await openAudience();
+		await group
+			.getByRole( 'button', { name: /^Edit Ticket 1 — Pair admission/ } )
+			.click();
 
 		let dialog = adminPage.getByRole( 'dialog' );
-		const firstEditor = dialog
-			.locator( '.fair-audience-ticket-editor' )
-			.nth( 0 );
-		await firstEditor
+		await expect(
+			dialog.locator( '.fair-audience-ticket-editor' )
+		).toHaveCount( 1 );
+		await dialog
 			.getByRole( 'checkbox', { name: 'Morning session' } )
 			.check();
 		await dialog
 			.getByRole( 'button', { name: /^Save Ticket 1 — Pair admission/ } )
 			.click();
 		await expect( adminPage.getByText( 'Ticket saved.' ) ).toBeVisible();
-		await dialog.getByRole( 'button', { name: 'Cancel' } ).click();
+		await expect( dialog ).toBeHidden();
 
-		row = await openAudience();
-		await row.getByRole( 'button', { name: 'Edit' } ).click();
+		group = await openAudience();
+		await group
+			.getByRole( 'button', { name: /^Edit Ticket 2 — Pair admission/ } )
+			.click();
 		dialog = adminPage.getByRole( 'dialog' );
-		const editors = dialog.locator( '.fair-audience-ticket-editor' );
 		await expect(
-			editors
-				.nth( 0 )
-				.getByRole( 'checkbox', { name: 'Morning session' } )
-		).toBeChecked();
-		await expect(
-			editors
-				.nth( 1 )
-				.getByRole( 'checkbox', { name: 'Morning session' } )
+			dialog.getByRole( 'checkbox', { name: 'Morning session' } )
 		).not.toBeChecked();
 		// The check-in from the previous test stays on the second ticket only.
 		await expect(
-			editors.nth( 0 ).getByRole( 'checkbox', { name: 'Checked in' } )
-		).not.toBeChecked();
-		await expect(
-			editors.nth( 1 ).getByRole( 'checkbox', { name: 'Checked in' } )
+			dialog.getByRole( 'checkbox', { name: 'Checked in' } )
 		).toBeChecked();
+		await dialog.getByRole( 'button', { name: 'Cancel' } ).click();
+
+		group = await openAudience();
+		await group
+			.getByRole( 'button', { name: /^Edit Ticket 1 — Pair admission/ } )
+			.click();
+		dialog = adminPage.getByRole( 'dialog' );
+		await expect(
+			dialog.getByRole( 'checkbox', { name: 'Morning session' } )
+		).toBeChecked();
+		await expect(
+			dialog.getByRole( 'checkbox', { name: 'Checked in' } )
+		).not.toBeChecked();
+		await dialog.getByRole( 'button', { name: 'Cancel' } ).click();
+
+		// One ticket holds the morning session: the ticket total says one.
+		expect( await totals( 'Total — tickets' ) ).toEqual( [ '1', '0' ] );
+	} );
+
+	test( 'prints one row per ticket under the purchaser', async () => {
+		await openAudience();
+		const [ popup ] = await Promise.all( [
+			adminContext.waitForEvent( 'page' ),
+			adminPage.getByRole( 'button', { name: 'Print list' } ).click(),
+		] );
+		const group = popup.locator( 'tbody', { hasText: buyer } );
+		await expect( group.locator( 'tr' ) ).toHaveCount( 2 );
+		await expect( group.locator( 'td.ticket' ) ).toHaveText( [
+			/^Ticket 1 \(/,
+			/^Ticket 2 \(/,
+		] );
+		await expect( group.locator( 'td.activities' ) ).toHaveText( [
+			'Morning session',
+			'',
+		] );
+		await popup.close();
+	} );
+
+	test( 'shows participant-level history apart from the tickets', async () => {
+		const participants = await apiFetch( adminPage, {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+		} );
+		const holder = participants.find(
+			( p ) => p.participant_name.trim() === buyer
+		);
+		const { options } = await apiFetch( adminPage, {
+			path: `/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+		} );
+		const evening = options.find( ( o ) => o.name === 'Evening session' );
+		// An activity recorded for the participant, not on either ticket.
+		await apiFetch( adminPage, {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants/${ holder.participant_id }`,
+			method: 'PUT',
+			data: { ticket_option_ids: [ evening.id ] },
+		} );
+
+		const group = await openAudience();
+		const history = group.locator( 'tr', {
+			hasText: 'Not tied to a ticket',
+		} );
+		await expect( history ).toBeVisible();
+		await expect( history.locator( 'td.is-activity' ).nth( 1 ) ).toHaveText(
+			'✓'
+		);
+		// Neither ticket gains the evening session.
+		for ( const ticketRow of await group
+			.locator( 'tr[data-ticket-id]' )
+			.all() ) {
+			await expect(
+				ticketRow.locator( 'td.is-activity' ).nth( 1 )
+			).toHaveText( '' );
+		}
+		expect( await totals( 'Total — tickets' ) ).toEqual( [ '1', '0' ] );
+		expect( await totals( 'Total — not tied to a ticket' ) ).toEqual( [
+			'0',
+			'1',
+		] );
 	} );
 } );
