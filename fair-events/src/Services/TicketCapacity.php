@@ -378,6 +378,90 @@ class TicketCapacity {
 	}
 
 	/**
+	 * Project what an event date or ticket type would hold after adding
+	 * places to it, for an administrator's move or ticket-type change.
+	 * The places the edited signup already holds there are left out of
+	 * `taken`, so re-saving a signup where it already is never counts it
+	 * twice.
+	 *
+	 * @param string $scope             'event_date' or 'ticket_type'.
+	 * @param int    $id                Event date ID or ticket type ID.
+	 * @param int    $adding            Places the edit adds.
+	 * @param int    $exclude_signup_id Signup being edited (0 for none).
+	 * @return array{scope: string, id: int, label: string, taken: int, capacity: int|null, after: int}|null Null when the target does not exist.
+	 */
+	public static function projection( string $scope, int $id, int $adding, int $exclude_signup_id = 0 ) {
+		if ( 'ticket_type' === $scope ) {
+			$ticket_type = TicketType::get_by_id( $id );
+			if ( ! $ticket_type ) {
+				return null;
+			}
+			$label    = (string) $ticket_type->name;
+			$capacity = $ticket_type->capacity;
+			$taken    = self::count_ticket_type( $id );
+		} else {
+			$event_date = EventDates::get_by_id( $id );
+			if ( ! $event_date ) {
+				return null;
+			}
+			$label    = DateRangeFormatter::format( $event_date->start_datetime, $event_date->end_datetime, (bool) $event_date->all_day );
+			$capacity = $event_date->capacity;
+			$taken    = self::count_event_date( $id );
+		}
+
+		if ( $exclude_signup_id ) {
+			$taken -= self::count_signup_units( $exclude_signup_id, $scope, $id );
+		}
+		$taken = max( 0, $taken );
+
+		return array(
+			'scope'    => $scope,
+			'id'       => $id,
+			'label'    => $label,
+			'taken'    => $taken,
+			'capacity' => null === $capacity ? null : (int) $capacity,
+			'after'    => $taken + max( 0, $adding ),
+		);
+	}
+
+	/**
+	 * Whether a projection goes past its limit.
+	 *
+	 * @param array $projection Result of projection().
+	 * @return bool
+	 */
+	public static function projection_exceeds( array $projection ) {
+		return null !== $projection['capacity'] && $projection['after'] > $projection['capacity'];
+	}
+
+	/**
+	 * Count the places one signup's units take on an event date or ticket
+	 * type.
+	 *
+	 * @param int    $signup_id Signup row ID.
+	 * @param string $scope     'event_date' or 'ticket_type'.
+	 * @param int    $id        Event date ID or ticket type ID.
+	 * @return int
+	 */
+	private static function count_signup_units( int $signup_id, string $scope, int $id ) {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i AS t INNER JOIN %i AS s ON s.id = t.signup_id
+				WHERE t.signup_id = %d AND t.%i = %d
+				AND ( t.status = 'confirmed' OR ( t.status = 'pending_payment' AND s.payment_expires_at > %s ) )",
+				self::tickets_table(),
+				self::signups_table(),
+				$signup_id,
+				'ticket_type' === $scope ? 'ticket_type_id' : 'event_date_id',
+				$id,
+				gmdate( 'Y-m-d H:i:s' )
+			)
+		);
+	}
+
+	/**
 	 * Build the buyer-facing error for a shortage.
 	 *
 	 * @param array $shortage       Result of find_shortage().

@@ -79,6 +79,10 @@ class Installer {
 		$sql = Schema::get_tickets_table_sql();
 		dbDelta( $sql );
 
+		// Version 3.37.0 - Capacity override audit table (no data migration needed, table created by dbDelta).
+		$sql = Schema::get_capacity_overrides_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0.
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();

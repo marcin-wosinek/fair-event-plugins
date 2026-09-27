@@ -192,6 +192,56 @@ class EventTicket {
 	}
 
 	/**
+	 * Count a signup's units that follow it on a move or type change: every
+	 * unit except those cancelled or refunded on their own.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return int
+	 */
+	public static function count_active_units( int $signup_id ) {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE signup_id = %d AND status NOT IN (%s, %s)',
+				self::table(),
+				$signup_id,
+				self::FINAL_UNIT_STATUSES[0],
+				self::FINAL_UNIT_STATUSES[1]
+			)
+		);
+	}
+
+	/**
+	 * Set event_date_id or ticket_type_id on a signup's units, leaving units
+	 * cancelled or refunded on their own untouched.
+	 *
+	 * @param int    $signup_id Signup row ID.
+	 * @param string $column    'event_date_id' or 'ticket_type_id'.
+	 * @param int    $value     New value.
+	 * @return bool
+	 */
+	public static function set_active_units_column( int $signup_id, string $column, int $value ) {
+		global $wpdb;
+
+		if ( ! in_array( $column, array( 'event_date_id', 'ticket_type_id' ), true ) ) {
+			return false;
+		}
+
+		return false !== $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET %i = %d WHERE signup_id = %d AND status NOT IN (%s, %s)',
+				self::table(),
+				$column,
+				$value,
+				$signup_id,
+				self::FINAL_UNIT_STATUSES[0],
+				self::FINAL_UNIT_STATUSES[1]
+			)
+		);
+	}
+
+	/**
 	 * Copy expiry onto units whose signups were expired in bulk.
 	 *
 	 * @return void

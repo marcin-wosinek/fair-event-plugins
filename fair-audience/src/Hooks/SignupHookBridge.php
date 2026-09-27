@@ -56,6 +56,66 @@ class SignupHookBridge {
 		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
 		add_action( 'fair_events_backfill_signup_participant_ids', array( static::class, 'backfill_signup_participant_ids' ) );
 		add_filter( 'fair_events_capacity_legacy_admissions', array( static::class, 'filter_legacy_admissions' ), 10, 3 );
+		add_action( 'fair_events_signup_moved', array( static::class, 'handle_signup_moved' ), 10, 2 );
+		add_action( 'fair_events_signup_ticket_type_changed', array( static::class, 'handle_signup_ticket_type_changed' ), 10, 1 );
+	}
+
+	/**
+	 * Follow an administrator's move of a signup to another occurrence:
+	 * move the participant's relationship with it, so the Audience tab
+	 * matches the List. A relationship the participant still needs for
+	 * another active signup on the source date stays; one already on the
+	 * target date is kept instead of creating a duplicate. Hooked on
+	 * fair_events_signup_moved.
+	 *
+	 * @param object $signup             Signup row after the move.
+	 * @param int    $from_event_date_id Event date the signup was on.
+	 * @return void
+	 */
+	public static function handle_signup_moved( $signup, $from_event_date_id ) {
+		$participant_id     = (int) ( $signup->participant_id ?? 0 );
+		$from_event_date_id = (int) $from_event_date_id;
+		$to_event_date_id   = (int) $signup->event_date_id;
+
+		if ( ! $participant_id
+			|| \FairEvents\Models\EventSignup::has_other_active_signup( $from_event_date_id, $participant_id, (int) $signup->id )
+		) {
+			return;
+		}
+
+		$repository = new EventParticipantRepository();
+		if ( ! $repository->get_by_event_date_and_participant( $from_event_date_id, $participant_id ) ) {
+			return;
+		}
+
+		if ( $repository->get_by_event_date_and_participant( $to_event_date_id, $participant_id ) ) {
+			$repository->remove_participant_from_event_date( $from_event_date_id, $participant_id );
+			return;
+		}
+
+		$repository->move_to_event_date( $from_event_date_id, $participant_id, $to_event_date_id );
+	}
+
+	/**
+	 * Follow an administrator's ticket-type change on a signup: give the
+	 * participant's relationship on that date the new type, unless another
+	 * active signup of theirs on the date still backs the old one. Hooked on
+	 * fair_events_signup_ticket_type_changed.
+	 *
+	 * @param object $signup Signup row after the change.
+	 * @return void
+	 */
+	public static function handle_signup_ticket_type_changed( $signup ) {
+		$participant_id = (int) ( $signup->participant_id ?? 0 );
+		$event_date_id  = (int) $signup->event_date_id;
+
+		if ( ! $participant_id
+			|| \FairEvents\Models\EventSignup::has_other_active_signup( $event_date_id, $participant_id, (int) $signup->id )
+		) {
+			return;
+		}
+
+		( new EventParticipantRepository() )->update_ticket_type_by_event_date( $event_date_id, $participant_id, (int) $signup->ticket_type_id );
 	}
 
 	/**

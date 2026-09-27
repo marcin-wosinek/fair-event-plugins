@@ -8,7 +8,7 @@
  * @package FairEvents
  */
 
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -24,6 +24,10 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from './SignupExportModal.js';
+import SignupEditModal, {
+	ACTION_MOVE,
+	ACTION_CHANGE_TYPE,
+} from './SignupEditModal.js';
 
 /**
  * Whether a signup contains an explicit mailing opt-in value.
@@ -98,6 +102,73 @@ function headerAlign( header ) {
 	return header.isExtra ? 'center' : 'left';
 }
 
+/**
+ * Status cell of a confirmed signup: flags an over-capacity signup and lets
+ * the administrator see why it went over.
+ *
+ * @param {Object} props        Component props.
+ * @param {Object} props.signup Signup row returned by the API.
+ * @return {Element} Status
+ */
+function SignupStatus( { signup } ) {
+	const [ showDetails, setShowDetails ] = useState( false );
+
+	if ( ! isOverCapacity( signup.over_capacity ) ) {
+		return __( 'Confirmed', 'fair-events' );
+	}
+
+	const overrides = Array.isArray( signup.overrides ) ? signup.overrides : [];
+
+	return (
+		<>
+			<span>{ __( 'Confirmed — over capacity', 'fair-events' ) }</span>{ ' ' }
+			<Button
+				variant="link"
+				aria-expanded={ showDetails }
+				onClick={ () => setShowDetails( ( shown ) => ! shown ) }
+			>
+				{ showDetails
+					? __( 'Hide details', 'fair-events' )
+					: __( 'Details', 'fair-events' ) }
+			</Button>
+			{ showDetails && (
+				<ul style={ { margin: '4px 0 0' } }>
+					{ overrides.length === 0 ? (
+						<li>
+							{ __(
+								'Paid after its hold expired',
+								'fair-events'
+							) }
+						</li>
+					) : (
+						overrides.map( ( override, index ) => (
+							<li key={ index }>
+								{ sprintf(
+									/* translators: 1: what the administrator did, 2: administrator name, 3: date and time, 4: reason given */
+									__(
+										'%1$s by %2$s on %3$s: %4$s',
+										'fair-events'
+									),
+									override.action === ACTION_MOVE
+										? __( 'Moved', 'fair-events' )
+										: __(
+												'Ticket type changed',
+												'fair-events'
+										  ),
+									override.user_display_name ||
+										__( 'unknown user', 'fair-events' ),
+									override.created_at,
+									override.reason
+								) }
+							</li>
+						) )
+					) }
+				</ul>
+			) }
+		</>
+	);
+}
+
 const EXTRA_SELECTED = 'selected';
 const EXTRA_NOT_SELECTED = 'not_selected';
 const EXTRA_UNAVAILABLE = 'unavailable';
@@ -159,8 +230,10 @@ export default function EventSignups( { eventDateId } ) {
 	const [ selectedSignup, setSelectedSignup ] = useState( null );
 	const [ deleteError, setDeleteError ] = useState( null );
 	const [ isExportModalOpen, setIsExportModalOpen ] = useState( false );
+	// { signup, action } while the move / change-type modal is open.
+	const [ editing, setEditing ] = useState( null );
 
-	useEffect( () => {
+	const loadSignups = useCallback( () => {
 		if ( ! eventDateId ) {
 			setLoading( false );
 			return;
@@ -180,6 +253,10 @@ export default function EventSignups( { eventDateId } ) {
 				setLoading( false );
 			} );
 	}, [ eventDateId ] );
+
+	useEffect( () => {
+		loadSignups();
+	}, [ loadSignups ] );
 
 	useEffect( () => {
 		if ( ! eventDateId ) {
@@ -397,15 +474,7 @@ export default function EventSignups( { eventDateId } ) {
 											</td>
 										) ) }
 										<td style={ cellStyle }>
-											{ isOverCapacity( s.over_capacity )
-												? __(
-														'Confirmed — over capacity',
-														'fair-events'
-												  )
-												: __(
-														'Confirmed',
-														'fair-events'
-												  ) }
+											<SignupStatus signup={ s } />
 										</td>
 										<td style={ cellStyle }>
 											{ s.transaction_id &&
@@ -428,18 +497,56 @@ export default function EventSignups( { eventDateId } ) {
 											{ s.created_at }
 										</td>
 										<td style={ cellStyle }>
-											<Button
-												variant="link"
-												isDestructive
-												onClick={ () =>
-													setSelectedSignup( s )
-												}
+											<Flex
+												justify="flex-start"
+												gap={ 3 }
+												wrap
 											>
-												{ __(
-													'Delete',
-													'fair-events'
+												{ s.can_move && (
+													<Button
+														variant="link"
+														onClick={ () =>
+															setEditing( {
+																signup: s,
+																action: ACTION_MOVE,
+															} )
+														}
+													>
+														{ __(
+															'Move',
+															'fair-events'
+														) }
+													</Button>
 												) }
-											</Button>
+												{ !! s.ticket_type_id && (
+													<Button
+														variant="link"
+														onClick={ () =>
+															setEditing( {
+																signup: s,
+																action: ACTION_CHANGE_TYPE,
+															} )
+														}
+													>
+														{ __(
+															'Change ticket type',
+															'fair-events'
+														) }
+													</Button>
+												) }
+												<Button
+													variant="link"
+													isDestructive
+													onClick={ () =>
+														setSelectedSignup( s )
+													}
+												>
+													{ __(
+														'Delete',
+														'fair-events'
+													) }
+												</Button>
+											</Flex>
 										</td>
 									</tr>
 								) ) }
@@ -477,6 +584,17 @@ export default function EventSignups( { eventDateId } ) {
 					</>
 				) }
 			</ConfirmDialog>
+			{ editing && (
+				<SignupEditModal
+					signup={ editing.signup }
+					action={ editing.action }
+					onClose={ () => setEditing( null ) }
+					onSaved={ () => {
+						setEditing( null );
+						loadSignups();
+					} }
+				/>
+			) }
 			{ isExportModalOpen && (
 				<SignupExportModal
 					eventDateId={ eventDateId }

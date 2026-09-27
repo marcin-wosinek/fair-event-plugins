@@ -14,6 +14,8 @@
  *   - Each configured extra gets a column with a selected / not selected /
  *     unavailable indicator; no extras means no extra columns.
  *   - Mailing opt-ins filter, empty states, and delete.
+ *   - Move and Change ticket type, including the over-capacity reason step,
+ *     and the over-capacity details (#1532).
  */
 import '@testing-library/jest-dom';
 import {
@@ -102,18 +104,32 @@ const options = [
  * @param {Array}  config.ticketOptions Options in the tickets response.
  * @param {*}      config.participants Audience roster, or an Error to reject.
  * @param {*}      config.deleteResult DELETE response, or an Error to reject.
+ * @param {Object} config.targets      Targets endpoint response.
+ * @param {Array}  config.putResults   PUT responses in call order; Errors reject.
  */
 function mockApi( {
 	rows = signups,
 	ticketOptions = [],
 	participants = [],
 	deleteResult = { deleted: true },
+	targets = { event_dates: [], ticket_types: [] },
+	putResults = [],
 } = {} ) {
+	const puts = [ ...putResults ];
 	apiFetch.mockImplementation( ( { path, method } ) => {
 		if ( method === 'DELETE' ) {
 			return deleteResult instanceof Error
 				? Promise.reject( deleteResult )
 				: Promise.resolve( deleteResult );
+		}
+		if ( method === 'PUT' ) {
+			const result = puts.shift() ?? { signup: {} };
+			return result instanceof Error
+				? Promise.reject( result )
+				: Promise.resolve( result );
+		}
+		if ( path.endsWith( '/targets' ) ) {
+			return Promise.resolve( targets );
 		}
 		if ( path.includes( 'include_answers=true' ) ) {
 			return Promise.resolve(
@@ -686,5 +702,280 @@ describe( 'EventSignups — delete signup (#1464)', () => {
 		expect(
 			document.querySelector( '.components-notice' )
 		).not.toHaveClass( 'is-dismissible' );
+	} );
+} );
+
+describe( 'EventSignups — move and change ticket type (#1532)', () => {
+	const movable = {
+		...signups[ 0 ],
+		can_move: true,
+		recurrence_scope: 'single_instance',
+	};
+	const wholeSeries = {
+		...signups[ 1 ],
+		can_move: false,
+		recurrence_scope: 'whole_series',
+	};
+	const noType = {
+		...signupWithMissingTicketType,
+		id: 4,
+		name: 'Dora Free',
+		ticket_type_id: null,
+		can_move: true,
+	};
+	const targets = {
+		event_dates: [
+			{ id: 51, label: 'Tue 7 Oct', capacity: 20, remaining: 0 },
+			{ id: 52, label: 'Tue 14 Oct', capacity: 20, remaining: 3 },
+			{ id: 53, label: 'Tue 21 Oct', capacity: null, remaining: null },
+		],
+		ticket_types: [
+			{ id: 61, label: 'Reduced', capacity: 5, remaining: 1 },
+		],
+	};
+
+	function capacityError() {
+		const error = new Error(
+			'Tue 7 Oct would have 21 of 20 places taken.'
+		);
+		error.code = 'capacity_exceeded';
+		error.data = {
+			status: 409,
+			projection: {
+				scope: 'event_date',
+				id: 51,
+				label: 'Tue 7 Oct',
+				taken: 20,
+				capacity: 20,
+				after: 21,
+			},
+		};
+		return error;
+	}
+
+	function actionsOf( name ) {
+		const row = bodyRows().find( ( r ) => within( r ).queryByText( name ) );
+		return within( row )
+			.getAllByRole( 'button' )
+			.map( ( button ) => button.textContent );
+	}
+
+	it( 'offers Move only on series rows that are not whole-series passes, and a type change only with a ticket type', async () => {
+		await renderSignups( { rows: [ movable, wholeSeries, noType ] } );
+
+		expect( actionsOf( 'Ada Lovelace' ) ).toEqual( [
+			'Move',
+			'Change ticket type',
+			'Delete',
+		] );
+		expect( actionsOf( 'Bob, Jr.' ) ).toEqual( [
+			'Change ticket type',
+			'Delete',
+		] );
+		expect( actionsOf( 'Dora Free' ) ).toEqual( [ 'Move', 'Delete' ] );
+	} );
+
+	it( 'labels each target with the places it has left', async () => {
+		await renderSignups( { rows: [ movable ], targets } );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Move' } ) );
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Move Ada Lovelace to another date',
+		} );
+		const select = await within( dialog ).findByLabelText( 'New date' );
+
+		expect(
+			within( select )
+				.getAllByRole( 'option' )
+				.map( ( option ) => option.textContent )
+		).toEqual( [
+			'Choose…',
+			'Tue 7 Oct — Full',
+			'Tue 14 Oct — 3 places left',
+			'Tue 21 Oct',
+		] );
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Move signup' } )
+		).toBeDisabled();
+		expect( within( dialog ).getByText( 'Choose a date.' ) ).toBeVisible();
+	} );
+
+	it( 'moves the signup and reloads the list', async () => {
+		await renderSignups( { rows: [ movable ], targets } );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Move' } ) );
+		const dialog = await screen.findByRole( 'dialog' );
+		fireEvent.change(
+			await within( dialog ).findByLabelText( 'New date' ),
+			{
+				target: { value: '52' },
+			}
+		);
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Move signup' } )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-events/v1/get-tickets/1',
+			method: 'PUT',
+			data: { event_date_id: 52 },
+		} );
+		expect( apiFetch ).toHaveBeenLastCalledWith( {
+			path: '/fair-events/v1/get-tickets?event_date=42',
+		} );
+	} );
+
+	it( 'asks for a reason when the target is full and sends it with the override', async () => {
+		await renderSignups( {
+			rows: [ movable ],
+			targets,
+			putResults: [ capacityError(), { signup: {} } ],
+		} );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Move' } ) );
+		const dialog = await screen.findByRole( 'dialog' );
+		fireEvent.change(
+			await within( dialog ).findByLabelText( 'New date' ),
+			{
+				target: { value: '51' },
+			}
+		);
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Move signup' } )
+		);
+
+		expect(
+			await within( dialog ).findByText(
+				'Tue 7 Oct would have 21 of 20 places taken.'
+			)
+		).toBeInTheDocument();
+		const exceed = within( dialog ).getByRole( 'button', {
+			name: 'Exceed capacity',
+		} );
+		expect( exceed ).toBeDisabled();
+		expect( exceed ).toHaveClass( 'is-destructive' );
+		expect(
+			within( dialog ).getByText( 'Enter a reason to go over capacity.' )
+		).toBeVisible();
+
+		fireEvent.change( within( dialog ).getByLabelText( 'Reason' ), {
+			target: { value: '   ' },
+		} );
+		expect( exceed ).toBeDisabled();
+
+		fireEvent.change( within( dialog ).getByLabelText( 'Reason' ), {
+			target: { value: 'Friend of the organizer' },
+		} );
+		expect( exceed ).toBeEnabled();
+		fireEvent.click( exceed );
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-events/v1/get-tickets/1',
+			method: 'PUT',
+			data: {
+				event_date_id: 51,
+				override_reason: 'Friend of the organizer',
+			},
+		} );
+	} );
+
+	it( 'changes the ticket type and shows other errors in the modal', async () => {
+		await renderSignups( {
+			rows: [ movable ],
+			targets,
+			putResults: [
+				new Error(
+					'The chosen ticket type is not available for this signup.'
+				),
+			],
+		} );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Change ticket type' } )
+		);
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Change ticket type for Ada Lovelace',
+		} );
+		fireEvent.change(
+			await within( dialog ).findByLabelText( 'New ticket type' ),
+			{ target: { value: '61' } }
+		);
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Change ticket type',
+			} )
+		);
+
+		expect(
+			await within( dialog ).findByText(
+				'The chosen ticket type is not available for this signup.'
+			)
+		).toBeInTheDocument();
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-events/v1/get-tickets/1',
+			method: 'PUT',
+			data: { ticket_type_id: 61 },
+		} );
+	} );
+
+	it( 'shows every override behind an over-capacity signup', async () => {
+		await renderSignups( {
+			rows: [
+				{
+					...movable,
+					over_capacity: true,
+					overrides: [
+						{
+							action: 'move',
+							reason: 'Friend of the organizer',
+							user_display_name: 'Admin',
+							created_at: '2026-09-27 10:00:00',
+						},
+						{
+							action: 'change_type',
+							reason: 'Upgrade promised',
+							user_display_name: 'Admin',
+							created_at: '2026-09-27 11:00:00',
+						},
+					],
+				},
+			],
+		} );
+
+		const toggle = screen.getByRole( 'button', { name: 'Details' } );
+		expect( toggle ).toHaveAttribute( 'aria-expanded', 'false' );
+		fireEvent.click( toggle );
+
+		expect(
+			screen.getByText(
+				'Moved by Admin on 2026-09-27 10:00:00: Friend of the organizer'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Ticket type changed by Admin on 2026-09-27 11:00:00: Upgrade promised'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Hide details' } )
+		).toHaveAttribute( 'aria-expanded', 'true' );
+	} );
+
+	it( 'explains a late-payment flag that has no override', async () => {
+		await renderSignups( {
+			rows: [ { ...movable, over_capacity: 1, overrides: [] } ],
+		} );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Details' } ) );
+
+		expect(
+			screen.getByText( 'Paid after its hold expired' )
+		).toBeInTheDocument();
 	} );
 } );

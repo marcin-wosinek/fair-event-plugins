@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.36.0';
+	const DB_VERSION = '3.37.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -493,6 +493,40 @@ class Schema {
 			KEY idx_event_date_id (event_date_id),
 			KEY idx_purchaser_participant_id (purchaser_participant_id),
 			KEY idx_holder_participant_id (holder_participant_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_capacity_overrides table
+	 *
+	 * One row per administrator edit that took a signup past an event-date
+	 * or ticket-type limit, with the reason given. Rows go when their signup
+	 * is deleted.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_capacity_overrides_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_capacity_overrides';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			signup_id BIGINT UNSIGNED NOT NULL,
+			action VARCHAR(20) NOT NULL,
+			from_event_date_id BIGINT UNSIGNED DEFAULT NULL,
+			to_event_date_id BIGINT UNSIGNED DEFAULT NULL,
+			from_ticket_type_id BIGINT UNSIGNED DEFAULT NULL,
+			to_ticket_type_id BIGINT UNSIGNED DEFAULT NULL,
+			ticket_count INT UNSIGNED NOT NULL DEFAULT 0,
+			taken INT UNSIGNED NOT NULL DEFAULT 0,
+			capacity INT UNSIGNED NOT NULL DEFAULT 0,
+			reason TEXT NOT NULL,
+			user_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_signup_id (signup_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

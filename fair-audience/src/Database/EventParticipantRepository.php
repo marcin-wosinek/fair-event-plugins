@@ -278,6 +278,25 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Set the ticket type on an event-participant relationship by event_date_id.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @param int $ticket_type_id New ticket type ID.
+	 * @return bool Success.
+	 */
+	public function update_ticket_type_by_event_date( $event_date_id, $participant_id, $ticket_type_id ) {
+		$relationship = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+
+		if ( ! $relationship ) {
+			return false;
+		}
+
+		$relationship->ticket_type_id = (int) $ticket_type_id;
+		return $relationship->save();
+	}
+
+	/**
 	 * Mark participant as attended (or not) by event_date_id.
 	 *
 	 * Sets attended_at to the current timestamp when $attended is true, or
