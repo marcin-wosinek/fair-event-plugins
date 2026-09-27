@@ -56,7 +56,7 @@ test.describe('Retired event gallery', () => {
 			});
 			expect(state.attachmentExists).toBe(true);
 			expect(state.photoAuthorRows).toBe(1);
-			expect(state.eventsDbVersion).toBe('3.36.0');
+			expect(state.eventsDbVersion).toBe(state.eventsDbTarget);
 			expect(state.audienceDbVersion).toBe('1.44.0');
 			expect(state.eventsFeatures).toEqual([]);
 			expect(state.audienceFeatures).toEqual({ photos: true });
@@ -66,7 +66,7 @@ test.describe('Retired event gallery', () => {
 			wpCli('option update fair_audience_db_version 1.43.0');
 
 			const repeated = readGalleryState(seed.attachmentId);
-			expect(repeated.eventsDbVersion).toBe('3.36.0');
+			expect(repeated.eventsDbVersion).toBe(repeated.eventsDbTarget);
 			expect(repeated.audienceDbVersion).toBe('1.44.0');
 			expect(repeated.attachmentExists).toBe(true);
 			expect(repeated.photoAuthorRows).toBe(1);
