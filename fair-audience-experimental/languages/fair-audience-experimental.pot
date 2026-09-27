@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-17T13:18:13+00:00\n"
+"POT-Creation-Date: 2026-09-27T15:04:17+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience-experimental\n"
@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: fair-audience-experimental.php
-msgid "Activates advanced feature bundles for Fair Audience (fees, polls, galleries, Instagram, groups, collaborators, messaging, image templates, timeline, import, weekly schedule, invitations, manage-event-ext). Requires fair-audience."
+msgid "Activates advanced feature bundles for Fair Audience (fees, polls, photos, Instagram, groups, collaborators, messaging, image templates, timeline, import, weekly schedule, invitations, manage-event-ext). Requires fair-audience."
 msgstr ""
 
 #. Author of the plugin
@@ -192,8 +192,8 @@ msgid "Author"
 msgstr ""
 
 #: src/Admin/MediaBatchActions.php:241
-#: src/Admin/MediaLibraryHooks.php:94
-#: src/Admin/MediaLibraryHooks.php:400
+#: src/Admin/MediaLibraryHooks.php:90
+#: src/Admin/MediaLibraryHooks.php:321
 msgid "— Select Author —"
 msgstr ""
 
@@ -223,76 +223,72 @@ msgid_plural "%1$d photos assigned to \"%2$s\"."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/MediaLibraryHooks.php:106
-#: src/Admin/MediaLibraryHooks.php:280
+#: src/Admin/MediaLibraryHooks.php:102
+#: src/Admin/MediaLibraryHooks.php:276
 msgid "Photo Author"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:114
+#: src/Admin/MediaLibraryHooks.php:110
 msgid "Who took this photo"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:177
-#: src/Admin/MediaLibraryHooks.php:430
+#: src/Admin/MediaLibraryHooks.php:173
+#: src/Admin/MediaLibraryHooks.php:351
 msgid "— Add Person —"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:198
+#: src/Admin/MediaLibraryHooks.php:194
 msgid "Tagged People"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:201
+#: src/Admin/MediaLibraryHooks.php:197
 msgid "People in this photo"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:233
-#: src/Admin/MediaLibraryHooks.php:845
+#: src/Admin/MediaLibraryHooks.php:229
+#: src/Admin/MediaLibraryHooks.php:766
 msgid "All Authors"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:281
-msgid "Likes"
-msgstr ""
-
-#: src/Admin/MediaLibraryHooks.php:397
+#: src/Admin/MediaLibraryHooks.php:318
 msgid "Photo Author:"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:427
+#: src/Admin/MediaLibraryHooks.php:348
 msgid "Tag People:"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:482
-#: src/Admin/MediaLibraryHooks.php:520
-#: src/Admin/MediaLibraryHooks.php:755
+#: src/Admin/MediaLibraryHooks.php:403
+#: src/Admin/MediaLibraryHooks.php:441
+#: src/Admin/MediaLibraryHooks.php:676
 #: src/Admin/edit-extra-message/EditExtraMessage.js:262
 #: src/Admin/settings/FeaturesTab.js:178
 msgid "Saving..."
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:491
-#: src/Admin/MediaLibraryHooks.php:534
-#: src/Admin/MediaLibraryHooks.php:770
+#: src/Admin/MediaLibraryHooks.php:412
+#: src/Admin/MediaLibraryHooks.php:455
+#: src/Admin/MediaLibraryHooks.php:691
 msgid "Saved."
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:496
-#: src/Admin/MediaLibraryHooks.php:536
+#: src/Admin/MediaLibraryHooks.php:417
+#: src/Admin/MediaLibraryHooks.php:457
 msgid "Error saving selection"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:499
-#: src/Admin/MediaLibraryHooks.php:540
+#: src/Admin/MediaLibraryHooks.php:420
+#: src/Admin/MediaLibraryHooks.php:461
 msgid "Error:"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:561
+#: src/Admin/MediaLibraryHooks.php:482
 msgid "Error removing tag"
 msgstr ""
 
-#: src/Admin/MediaLibraryHooks.php:773
-#: src/Admin/MediaLibraryHooks.php:777
-#: src/Admin/MediaLibraryHooks.php:801
+#: src/Admin/MediaLibraryHooks.php:694
+#: src/Admin/MediaLibraryHooks.php:698
+#: src/Admin/MediaLibraryHooks.php:722
 msgid "Error"
 msgstr ""
 
@@ -303,8 +299,6 @@ msgstr ""
 #: src/API/CustomMailController.php:319
 #: src/API/CustomMailController.php:402
 #: src/API/EventInvitationsController.php:132
-#: src/API/GalleryAccessController.php:259
-#: src/API/GalleryAccessController.php:302
 #: src/API/ScheduledMessagesController.php:380
 msgid "Event date not found."
 msgstr ""
@@ -318,8 +312,6 @@ msgid "You do not have permission to send event invitations."
 msgstr ""
 
 #: src/API/EventInvitationsController.php:143
-#: src/API/GalleryAccessController.php:270
-#: src/API/GalleryAccessController.php:313
 msgid "Event not found."
 msgstr ""
 
@@ -474,14 +466,6 @@ msgstr ""
 msgid "Payment not found."
 msgstr ""
 
-#: src/API/GalleryAccessController.php:171
-msgid "You do not have permission to send gallery invitations."
-msgstr ""
-
-#: src/API/GalleryAccessController.php:189
-msgid "You do not have permission to view gallery invitation stats."
-msgstr ""
-
 #: src/API/GroupsController.php:212
 #: src/API/GroupsController.php:287
 #: src/API/GroupsController.php:343
@@ -545,7 +529,7 @@ msgid "Group duplicated successfully."
 msgstr ""
 
 #: src/API/GroupsController.php:474
-#: src/API/PhotoUploadController.php:124
+#: src/API/PhotoUploadController.php:123
 msgid "Participant not found."
 msgstr ""
 
@@ -603,7 +587,7 @@ msgstr ""
 
 #: src/API/ImportController.php:166
 #: src/API/ImportController.php:490
-#: src/API/PhotoUploadController.php:208
+#: src/API/PhotoUploadController.php:206
 msgid "File upload failed."
 msgstr ""
 
@@ -803,19 +787,19 @@ msgstr ""
 msgid "Invalid or expired link."
 msgstr ""
 
-#: src/API/PhotoUploadController.php:139
+#: src/API/PhotoUploadController.php:138
 msgid "No files uploaded."
 msgstr ""
 
-#: src/API/PhotoUploadController.php:216
+#: src/API/PhotoUploadController.php:214
 msgid "File is too large."
 msgstr ""
 
-#: src/API/PhotoUploadController.php:225
+#: src/API/PhotoUploadController.php:223
 msgid "Only image files are allowed (JPEG, PNG, GIF, WebP)."
 msgstr ""
 
-#: src/API/PhotoUploadController.php:257
+#: src/API/PhotoUploadController.php:255
 msgid "Failed to save uploaded file."
 msgstr ""
 
@@ -984,11 +968,11 @@ msgid "Attendee polls and responses."
 msgstr ""
 
 #: src/Core/Features.php:186
-msgid "Galleries"
+msgid "Photos"
 msgstr ""
 
 #: src/Core/Features.php:187
-msgid "Photo participation, gallery access keys, media library hooks."
+msgid "Participant photo uploads, photo authors and tags, media library hooks."
 msgstr ""
 
 #: src/Core/Features.php:190

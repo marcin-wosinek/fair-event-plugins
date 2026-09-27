@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-21T05:02:57+00:00\n"
+"POT-Creation-Date: 2026-09-27T15:04:11+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: fair-events-experimental.php
-msgid "Activates advanced feature bundles for Fair Events, including galleries, sources, ticketing, duplicate and merge tools, and migration. Requires fair-events."
+msgid "Activates advanced feature bundles for Fair Events, including sources, ticketing, duplicate and merge tools, and migration. Requires fair-events."
 msgstr ""
 
 #. Author of the plugin
@@ -93,7 +93,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:139
 #: src/Admin/AdminPages.php:145
 #: src/Admin/manage-event-ext/index.js:94
-#: src/Admin/manage-event/MergeEventWizard.js:454
+#: src/Admin/manage-event/MergeEventWizard.js:453
 msgid "Merge Event"
 msgstr ""
 
@@ -104,73 +104,61 @@ msgstr ""
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr ""
 
-#: src/Core/Features.php:153
-msgid "Galleries"
-msgstr ""
-
-#: src/Core/Features.php:154
-msgid "Per-event photo galleries, photo likes/downloads, image exports, media library hooks."
-msgstr ""
-
-#: src/Core/Features.php:157
+#: src/Core/Features.php:148
 msgid "Event sources & feeds"
 msgstr ""
 
-#: src/Core/Features.php:158
+#: src/Core/Features.php:149
 msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
 msgstr ""
 
-#: src/Core/Features.php:161
+#: src/Core/Features.php:152
 msgid "Ticketing"
 msgstr ""
 
-#: src/Core/Features.php:162
+#: src/Core/Features.php:153
 msgid "Tickets, group pricing/permission rules. Requires fair-audience."
 msgstr ""
 
-#: src/Core/Features.php:165
+#: src/Core/Features.php:156
 msgid "Event tools"
 msgstr ""
 
-#: src/Core/Features.php:166
+#: src/Core/Features.php:157
 msgid "Advanced event duplication and merge tools."
 msgstr ""
 
-#: src/Core/Features.php:169
+#: src/Core/Features.php:160
 msgid "Migration"
 msgstr ""
 
-#: src/Core/Features.php:170
+#: src/Core/Features.php:161
 msgid "One-time post → event migration tooling."
 msgstr ""
 
-#: src/Core/Features.php:173
+#: src/Core/Features.php:164
 msgid "Audience statistics"
 msgstr ""
 
-#: src/Core/Features.php:174
+#: src/Core/Features.php:165
 msgid "Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience."
 msgstr ""
 
-#: src/Core/Features.php:177
+#: src/Core/Features.php:168
 msgid "Mailings"
 msgstr ""
 
-#: src/Core/Features.php:178
+#: src/Core/Features.php:169
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr ""
 
-#: src/Core/Features.php:181
+#: src/Core/Features.php:172
 #: src/Admin/settings/MetaConversions.js:239
 msgid "Meta Conversions"
 msgstr ""
 
-#: src/Core/Features.php:182
+#: src/Core/Features.php:173
 msgid "Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials."
-msgstr ""
-
-#: src/Core/Plugin.php:213
-msgid "Event associated with this image"
 msgstr ""
 
 #: src/Settings/Settings.php:36
@@ -335,18 +323,18 @@ msgid "View partially created event"
 msgstr ""
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:658
-#: src/Admin/manage-event/MergeEventWizard.js:480
+#: src/Admin/manage-event/MergeEventWizard.js:479
 msgid "Step"
 msgstr ""
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:673
-#: src/Admin/manage-event/MergeEventWizard.js:495
+#: src/Admin/manage-event/MergeEventWizard.js:494
 msgid "Back"
 msgstr ""
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:682
-#: src/Admin/manage-event/MergeEventWizard.js:504
-#: src/Admin/manage-event/MergeEventWizard.js:513
+#: src/Admin/manage-event/MergeEventWizard.js:503
+#: src/Admin/manage-event/MergeEventWizard.js:512
 msgid "Next"
 msgstr ""
 
@@ -355,7 +343,7 @@ msgid "Create Duplicate"
 msgstr ""
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:698
-#: src/Admin/manage-event/MergeEventWizard.js:517
+#: src/Admin/manage-event/MergeEventWizard.js:516
 msgid "Cancel"
 msgstr ""
 
@@ -462,139 +450,135 @@ msgid "Select which collaborators to copy to the new event."
 msgstr ""
 
 #: src/Admin/manage-event/MergeEventWizard.js:27
-msgid "Event Photos"
-msgstr ""
-
-#: src/Admin/manage-event/MergeEventWizard.js:28
 msgid "Participants"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:29
+#: src/Admin/manage-event/MergeEventWizard.js:28
 msgid "Questionnaire Responses"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:36
+#: src/Admin/manage-event/MergeEventWizard.js:35
 msgid "Move"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:37
+#: src/Admin/manage-event/MergeEventWizard.js:36
 msgid "Delete"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:38
+#: src/Admin/manage-event/MergeEventWizard.js:37
 msgid "Skip"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:119
+#: src/Admin/manage-event/MergeEventWizard.js:118
 msgid "Failed to load preview."
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:134
+#: src/Admin/manage-event/MergeEventWizard.js:133
 msgid "Merging events..."
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:147
+#: src/Admin/manage-event/MergeEventWizard.js:146
 msgid "Done! Redirecting..."
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:153
+#: src/Admin/manage-event/MergeEventWizard.js:152
 msgid "Failed to merge events."
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:167
+#: src/Admin/manage-event/MergeEventWizard.js:166
 msgid "Select Target Event"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:173
+#: src/Admin/manage-event/MergeEventWizard.js:172
 msgid "Search for the event date you want to merge this event into. All data from the current event (source) will be moved to the target."
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:179
+#: src/Admin/manage-event/MergeEventWizard.js:178
 msgid "Search events by title"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:185
+#: src/Admin/manage-event/MergeEventWizard.js:184
 msgid "Start typing to search..."
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:193
+#: src/Admin/manage-event/MergeEventWizard.js:192
 msgid "Select target event"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:200
+#: src/Admin/manage-event/MergeEventWizard.js:199
 msgid "Select..."
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:209
-#: src/Admin/manage-event/MergeEventWizard.js:225
-#: src/Admin/manage-event/MergeEventWizard.js:359
-#: src/Admin/manage-event/MergeEventWizard.js:370
+#: src/Admin/manage-event/MergeEventWizard.js:208
+#: src/Admin/manage-event/MergeEventWizard.js:224
+#: src/Admin/manage-event/MergeEventWizard.js:358
+#: src/Admin/manage-event/MergeEventWizard.js:369
 msgid "(No title)"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:222
-#: src/Admin/manage-event/MergeEventWizard.js:367
+#: src/Admin/manage-event/MergeEventWizard.js:221
+#: src/Admin/manage-event/MergeEventWizard.js:366
 msgid "Target:"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:253
-#: src/Admin/manage-event/MergeEventWizard.js:427
+#: src/Admin/manage-event/MergeEventWizard.js:252
+#: src/Admin/manage-event/MergeEventWizard.js:426
 msgid "Review & Configure"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:262
+#: src/Admin/manage-event/MergeEventWizard.js:261
 msgid "Review the linked data counts and choose what to do with each type."
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:275
+#: src/Admin/manage-event/MergeEventWizard.js:274
 msgid "Data Type"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:281
+#: src/Admin/manage-event/MergeEventWizard.js:280
 msgid "Source"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:287
+#: src/Admin/manage-event/MergeEventWizard.js:286
 msgid "Target"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:293
+#: src/Admin/manage-event/MergeEventWizard.js:292
 msgid "Action"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:334
+#: src/Admin/manage-event/MergeEventWizard.js:333
 msgid "Delete source event after merge"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:350
+#: src/Admin/manage-event/MergeEventWizard.js:349
 msgid "Confirm Merge"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:356
+#: src/Admin/manage-event/MergeEventWizard.js:355
 msgid "Source:"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:385
+#: src/Admin/manage-event/MergeEventWizard.js:384
 msgid "item"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:386
+#: src/Admin/manage-event/MergeEventWizard.js:385
 msgid "items"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:396
+#: src/Admin/manage-event/MergeEventWizard.js:395
 msgid "The source event date will be deleted after merge."
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:409
+#: src/Admin/manage-event/MergeEventWizard.js:408
 msgid "Execute Merge"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:423
+#: src/Admin/manage-event/MergeEventWizard.js:422
 msgid "Select Target"
 msgstr ""
 
-#: src/Admin/manage-event/MergeEventWizard.js:429
+#: src/Admin/manage-event/MergeEventWizard.js:428
 msgid "Confirm"
 msgstr ""
 

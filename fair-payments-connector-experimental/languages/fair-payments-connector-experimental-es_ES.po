@@ -159,15 +159,15 @@ msgstr "El mensaje de prueba de Telegram falló para todos los ID de chat."
 msgid "Telegram test message sent."
 msgstr "Mensaje de prueba de Telegram enviado."
 
-#: src/Hooks/DigestHooks.php:58
+#: src/Hooks/DigestHooks.php:114
 msgid "Every hour (fair-payments digest)"
 msgstr "Cada hora (resumen de fair-payments)"
 
-#: src/Hooks/DigestHooks.php:64
+#: src/Hooks/DigestHooks.php:120
 msgid "Every day (fair-payments digest)"
 msgstr "Cada día (resumen de fair-payments)"
 
-#: src/Hooks/DigestHooks.php:70
+#: src/Hooks/DigestHooks.php:126
 msgid "Every week (fair-payments digest)"
 msgstr "Cada semana (resumen de fair-payments)"
 
@@ -688,4 +688,3 @@ msgstr "Deshabilitar"
 #: src/Admin/connected-sites/ConnectedSitesApp.js:574
 msgid "Enable"
 msgstr "Habilitar"
-

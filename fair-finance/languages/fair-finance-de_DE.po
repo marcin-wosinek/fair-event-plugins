@@ -504,4 +504,3 @@ msgstr "Alle Tags"
 #: src/API/FinancialEntryController.php:233
 msgid "Administrator-reviewed budget to apply to the match, or null for no budget."
 msgstr "Von Administrator überprüftes Budget für die Zuordnung oder null für kein Budget."
-

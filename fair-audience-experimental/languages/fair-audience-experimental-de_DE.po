@@ -10,6 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2026-07-09T11:21:45+00:00\n"
 "PO-Revision-Date: 2026-07-09 00:00+0000\n"
 "Language: de_DE\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience-experimental\n"
 
@@ -22,11 +23,6 @@ msgstr "Fair Audience Experimental"
 #: fair-audience-experimental.php
 msgid "https://github.com/marcin-wosinek/fair-event-plugins"
 msgstr ""
-
-#. Description of the plugin
-#: fair-audience-experimental.php
-msgid "Activates advanced feature bundles for Fair Audience (fees, polls, galleries, Instagram, groups, collaborators, messaging, image templates, timeline, import, weekly schedule, invitations, manage-event-ext). Requires fair-audience."
-msgstr "Aktiviert erweiterte Funktionspakete für Fair Audience (Gebühren, Umfragen, Galerien, Instagram, Gruppen, Mitarbeiter, Messaging, Bildvorlagen, Zeitleiste, Import, Wochenplan, Einladungen, manage-event-ext). Erfordert fair-audience."
 
 #. Author of the plugin
 #: fair-audience-experimental.php
@@ -191,8 +187,8 @@ msgid "Author"
 msgstr "Autor"
 
 #: src/Admin/MediaBatchActions.php:241
-#: src/Admin/MediaLibraryHooks.php:94
-#: src/Admin/MediaLibraryHooks.php:400
+#: src/Admin/MediaLibraryHooks.php:90
+#: src/Admin/MediaLibraryHooks.php:321
 msgid "— Select Author —"
 msgstr "— Autor auswählen —"
 
@@ -222,76 +218,72 @@ msgid_plural "%1$d photos assigned to \"%2$s\"."
 msgstr[0] "%1$d Foto zu \"%2$s\" zugewiesen."
 msgstr[1] "%1$d Fotos zu \"%2$s\" zugewiesen."
 
-#: src/Admin/MediaLibraryHooks.php:106
-#: src/Admin/MediaLibraryHooks.php:280
+#: src/Admin/MediaLibraryHooks.php:102
+#: src/Admin/MediaLibraryHooks.php:276
 msgid "Photo Author"
 msgstr "Fotograf"
 
-#: src/Admin/MediaLibraryHooks.php:114
+#: src/Admin/MediaLibraryHooks.php:110
 msgid "Who took this photo"
 msgstr "Wer hat dieses Foto gemacht"
 
-#: src/Admin/MediaLibraryHooks.php:177
-#: src/Admin/MediaLibraryHooks.php:430
+#: src/Admin/MediaLibraryHooks.php:173
+#: src/Admin/MediaLibraryHooks.php:351
 msgid "— Add Person —"
 msgstr "— Person hinzufügen —"
 
-#: src/Admin/MediaLibraryHooks.php:198
+#: src/Admin/MediaLibraryHooks.php:194
 msgid "Tagged People"
 msgstr "Markierte Personen"
 
-#: src/Admin/MediaLibraryHooks.php:201
+#: src/Admin/MediaLibraryHooks.php:197
 msgid "People in this photo"
 msgstr "Personen auf diesem Foto"
 
-#: src/Admin/MediaLibraryHooks.php:233
-#: src/Admin/MediaLibraryHooks.php:845
+#: src/Admin/MediaLibraryHooks.php:229
+#: src/Admin/MediaLibraryHooks.php:766
 msgid "All Authors"
 msgstr "Alle Autoren"
 
-#: src/Admin/MediaLibraryHooks.php:281
-msgid "Likes"
-msgstr "Likes"
-
-#: src/Admin/MediaLibraryHooks.php:397
+#: src/Admin/MediaLibraryHooks.php:318
 msgid "Photo Author:"
 msgstr "Fotograf:"
 
-#: src/Admin/MediaLibraryHooks.php:427
+#: src/Admin/MediaLibraryHooks.php:348
 msgid "Tag People:"
 msgstr "Personen markieren:"
 
-#: src/Admin/MediaLibraryHooks.php:482
-#: src/Admin/MediaLibraryHooks.php:520
-#: src/Admin/MediaLibraryHooks.php:755
+#: src/Admin/MediaLibraryHooks.php:403
+#: src/Admin/MediaLibraryHooks.php:441
+#: src/Admin/MediaLibraryHooks.php:676
 #: src/Admin/edit-extra-message/EditExtraMessage.js:262
 #: src/Admin/settings/FeaturesTab.js:178
 msgid "Saving..."
 msgstr "Wird gespeichert..."
 
-#: src/Admin/MediaLibraryHooks.php:491
-#: src/Admin/MediaLibraryHooks.php:534
-#: src/Admin/MediaLibraryHooks.php:770
+#: src/Admin/MediaLibraryHooks.php:412
+#: src/Admin/MediaLibraryHooks.php:455
+#: src/Admin/MediaLibraryHooks.php:691
 msgid "Saved."
 msgstr "Gespeichert."
 
-#: src/Admin/MediaLibraryHooks.php:496
-#: src/Admin/MediaLibraryHooks.php:536
+#: src/Admin/MediaLibraryHooks.php:417
+#: src/Admin/MediaLibraryHooks.php:457
 msgid "Error saving selection"
 msgstr "Fehler beim Speichern der Auswahl"
 
-#: src/Admin/MediaLibraryHooks.php:499
-#: src/Admin/MediaLibraryHooks.php:540
+#: src/Admin/MediaLibraryHooks.php:420
+#: src/Admin/MediaLibraryHooks.php:461
 msgid "Error:"
 msgstr "Fehler:"
 
-#: src/Admin/MediaLibraryHooks.php:561
+#: src/Admin/MediaLibraryHooks.php:482
 msgid "Error removing tag"
 msgstr "Fehler beim Entfernen des Tags"
 
-#: src/Admin/MediaLibraryHooks.php:773
-#: src/Admin/MediaLibraryHooks.php:777
-#: src/Admin/MediaLibraryHooks.php:801
+#: src/Admin/MediaLibraryHooks.php:694
+#: src/Admin/MediaLibraryHooks.php:698
+#: src/Admin/MediaLibraryHooks.php:722
 msgid "Error"
 msgstr "Fehler"
 
@@ -302,8 +294,6 @@ msgstr "Sie haben keine Berechtigung, benutzerdefinierte E-Mails zu verwalten."
 #: src/API/CustomMailController.php:319
 #: src/API/CustomMailController.php:402
 #: src/API/EventInvitationsController.php:132
-#: src/API/GalleryAccessController.php:259
-#: src/API/GalleryAccessController.php:302
 #: src/API/ScheduledMessagesController.php:380
 msgid "Event date not found."
 msgstr "Ereignisdatum nicht gefunden."
@@ -317,8 +307,6 @@ msgid "You do not have permission to send event invitations."
 msgstr "Sie haben keine Berechtigung, Ereigniseinladungen zu versenden."
 
 #: src/API/EventInvitationsController.php:143
-#: src/API/GalleryAccessController.php:270
-#: src/API/GalleryAccessController.php:313
 msgid "Event not found."
 msgstr "Ereignis nicht gefunden."
 
@@ -473,14 +461,6 @@ msgstr "Zahlung storniert."
 msgid "Payment not found."
 msgstr "Zahlung nicht gefunden."
 
-#: src/API/GalleryAccessController.php:171
-msgid "You do not have permission to send gallery invitations."
-msgstr "Sie haben keine Berechtigung, Galerie-Einladungen zu versenden."
-
-#: src/API/GalleryAccessController.php:189
-msgid "You do not have permission to view gallery invitation stats."
-msgstr "Sie haben keine Berechtigung, Statistiken zu Galerie-Einladungen anzuzeigen."
-
 #: src/API/GroupsController.php:212
 #: src/API/GroupsController.php:287
 #: src/API/GroupsController.php:343
@@ -530,7 +510,7 @@ msgstr "Gruppe erfolgreich gelöscht."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:204
-#, php-format,js-format
+#, php-format, js-format
 msgid "%s (copy)"
 msgstr "%s (Kopie)"
 
@@ -544,7 +524,7 @@ msgid "Group duplicated successfully."
 msgstr "Gruppe erfolgreich dupliziert."
 
 #: src/API/GroupsController.php:474
-#: src/API/PhotoUploadController.php:124
+#: src/API/PhotoUploadController.php:123
 msgid "Participant not found."
 msgstr "Teilnehmer nicht gefunden."
 
@@ -602,7 +582,7 @@ msgstr "Ungültige Ereignis-ID angegeben."
 
 #: src/API/ImportController.php:166
 #: src/API/ImportController.php:490
-#: src/API/PhotoUploadController.php:208
+#: src/API/PhotoUploadController.php:206
 msgid "File upload failed."
 msgstr "Datei-Upload fehlgeschlagen."
 
@@ -802,19 +782,19 @@ msgstr "Fehler beim Markieren des Teilnehmers."
 msgid "Invalid or expired link."
 msgstr "Ungültiger oder abgelaufener Link."
 
-#: src/API/PhotoUploadController.php:139
+#: src/API/PhotoUploadController.php:138
 msgid "No files uploaded."
 msgstr "Keine Dateien hochgeladen."
 
-#: src/API/PhotoUploadController.php:216
+#: src/API/PhotoUploadController.php:214
 msgid "File is too large."
 msgstr "Datei ist zu groß."
 
-#: src/API/PhotoUploadController.php:225
+#: src/API/PhotoUploadController.php:223
 msgid "Only image files are allowed (JPEG, PNG, GIF, WebP)."
 msgstr "Nur Bilddateien sind zulässig (JPEG, PNG, GIF, WebP)."
 
-#: src/API/PhotoUploadController.php:257
+#: src/API/PhotoUploadController.php:255
 msgid "Failed to save uploaded file."
 msgstr "Hochgeladene Datei konnte nicht gespeichert werden."
 
@@ -981,14 +961,6 @@ msgstr "Veranstaltungsgebühren, Gebührenzahlungen, Gebührenprüfprotokoll."
 #: src/Core/Features.php:183
 msgid "Attendee polls and responses."
 msgstr "Umfragen und Antworten von Teilnehmern."
-
-#: src/Core/Features.php:186
-msgid "Galleries"
-msgstr "Galerien"
-
-#: src/Core/Features.php:187
-msgid "Photo participation, gallery access keys, media library hooks."
-msgstr "Fotobeteiligung, Galerienzugriffschlüssel, Medienbibliotheks-Hooks."
 
 #: src/Core/Features.php:190
 #: templates/collaborator-profile.php:331
@@ -2074,3 +2046,17 @@ msgstr "Funktionen speichern"
 #: src/Admin/settings/SettingsApp.js:26
 msgid "Fair Audience Experimental Settings"
 msgstr "Fair Audience Experimentelle Einstellungen"
+
+#. Description of the plugin
+#: fair-audience-experimental.php
+msgid "Activates advanced feature bundles for Fair Audience (fees, polls, photos, Instagram, groups, collaborators, messaging, image templates, timeline, import, weekly schedule, invitations, manage-event-ext). Requires fair-audience."
+msgstr "Aktiviert erweiterte Feature-Bundles für Fair Audience (Gebühren, Umfragen, Fotos, Instagram, Gruppen, Mitarbeiter, Messaging, Bildvorlagen, Zeitleiste, Import, Wochenplan, Einladungen, manage-event-ext). Erfordert fair-audience."
+
+#: src/Core/Features.php:186
+msgid "Photos"
+msgstr "Fotos"
+
+#: src/Core/Features.php:187
+msgid "Participant photo uploads, photo authors and tags, media library hooks."
+msgstr "Teilnehmer-Foto-Uploads, Fotoautoren und Tags, Media-Library-Hooks."
+

@@ -504,4 +504,3 @@ msgstr "Toutes les étiquettes"
 #: src/API/FinancialEntryController.php:233
 msgid "Administrator-reviewed budget to apply to the match, or null for no budget."
 msgstr "Budget examiné par l'administrateur à appliquer à la correspondance, ou null pour aucun budget."
-

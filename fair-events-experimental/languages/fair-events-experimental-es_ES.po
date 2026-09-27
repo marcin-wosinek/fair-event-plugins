@@ -10,6 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2026-06-25T10:53:23+00:00\n"
 "PO-Revision-Date: 2026-06-25 00:00+0000\n"
 "Language: es_ES\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
 
@@ -87,61 +88,49 @@ msgstr "Duplicar evento"
 #: src/Admin/AdminPages.php:139
 #: src/Admin/AdminPages.php:145
 #: src/Admin/manage-event-ext/index.js:94
-#: src/Admin/manage-event/MergeEventWizard.js:454
+#: src/Admin/manage-event/MergeEventWizard.js:453
 msgid "Merge Event"
 msgstr "Fusionar evento"
 
-#: src/Core/Features.php:153
-msgid "Galleries"
-msgstr "Galerías"
-
-#: src/Core/Features.php:154
-msgid "Per-event photo galleries, photo likes/downloads, image exports, media library hooks."
-msgstr "Galerías de fotos por evento, me gusta/descargas de fotos, exportación de imágenes, hooks de biblioteca de medios."
-
-#: src/Core/Features.php:157
+#: src/Core/Features.php:148
 msgid "Event sources & feeds"
 msgstr "Fuentes y feeds de eventos"
 
-#: src/Core/Features.php:158
+#: src/Core/Features.php:149
 msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
 msgstr "Fuentes de eventos externos, importación de Facebook, feeds iCal/JSON, propuestas de eventos, programación semanal."
 
-#: src/Core/Features.php:161
+#: src/Core/Features.php:152
 msgid "Ticketing"
 msgstr "Venta de entradas"
 
-#: src/Core/Features.php:165
+#: src/Core/Features.php:156
 msgid "Event tools"
 msgstr "Herramientas de eventos"
 
-#: src/Core/Features.php:169
+#: src/Core/Features.php:160
 msgid "Migration"
 msgstr "Migración"
 
-#: src/Core/Features.php:170
+#: src/Core/Features.php:161
 msgid "One-time post → event migration tooling."
 msgstr "Herramienta de migración de entradas a eventos de una sola vez."
 
-#: src/Core/Features.php:173
+#: src/Core/Features.php:164
 msgid "Audience statistics"
 msgstr "Estadísticas de audiencia"
 
-#: src/Core/Features.php:174
+#: src/Core/Features.php:165
 msgid "Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience."
 msgstr "Gráficos de estadísticas por evento (desglose de actividad, tiempo de venta). Requiere fair-audience."
 
-#: src/Core/Features.php:177
+#: src/Core/Features.php:168
 msgid "Mailings"
 msgstr "Envíos de correo"
 
-#: src/Core/Features.php:178
+#: src/Core/Features.php:169
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr "Envíos de correo electrónico programados para asistentes al evento. Requiere fair-audience."
-
-#: src/Core/Plugin.php:213
-msgid "Event associated with this image"
-msgstr "Evento asociado con esta imagen"
 
 #: src/Settings/Settings.php:36
 msgid "Per-bundle feature toggles for experimental features"
@@ -243,18 +232,18 @@ msgid "View partially created event"
 msgstr "Ver evento parcialmente creado"
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:658
-#: src/Admin/manage-event/MergeEventWizard.js:480
+#: src/Admin/manage-event/MergeEventWizard.js:479
 msgid "Step"
 msgstr "Paso"
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:673
-#: src/Admin/manage-event/MergeEventWizard.js:495
+#: src/Admin/manage-event/MergeEventWizard.js:494
 msgid "Back"
 msgstr "Atrás"
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:682
-#: src/Admin/manage-event/MergeEventWizard.js:504
-#: src/Admin/manage-event/MergeEventWizard.js:513
+#: src/Admin/manage-event/MergeEventWizard.js:503
+#: src/Admin/manage-event/MergeEventWizard.js:512
 msgid "Next"
 msgstr "Siguiente"
 
@@ -263,7 +252,7 @@ msgid "Create Duplicate"
 msgstr "Crear duplicado"
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:698
-#: src/Admin/manage-event/MergeEventWizard.js:517
+#: src/Admin/manage-event/MergeEventWizard.js:516
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -370,139 +359,135 @@ msgid "Select which collaborators to copy to the new event."
 msgstr "Selecciona qué colaboradores deseas copiar al nuevo evento."
 
 #: src/Admin/manage-event/MergeEventWizard.js:27
-msgid "Event Photos"
-msgstr "Fotos del evento"
-
-#: src/Admin/manage-event/MergeEventWizard.js:28
 msgid "Participants"
 msgstr "Participantes"
 
-#: src/Admin/manage-event/MergeEventWizard.js:29
+#: src/Admin/manage-event/MergeEventWizard.js:28
 msgid "Questionnaire Responses"
 msgstr "Respuestas del cuestionario"
 
-#: src/Admin/manage-event/MergeEventWizard.js:36
+#: src/Admin/manage-event/MergeEventWizard.js:35
 msgid "Move"
 msgstr "Mover"
 
-#: src/Admin/manage-event/MergeEventWizard.js:37
+#: src/Admin/manage-event/MergeEventWizard.js:36
 msgid "Delete"
 msgstr "Eliminar"
 
-#: src/Admin/manage-event/MergeEventWizard.js:38
+#: src/Admin/manage-event/MergeEventWizard.js:37
 msgid "Skip"
 msgstr "Omitir"
 
-#: src/Admin/manage-event/MergeEventWizard.js:119
+#: src/Admin/manage-event/MergeEventWizard.js:118
 msgid "Failed to load preview."
 msgstr "No se pudo cargar la vista previa."
 
-#: src/Admin/manage-event/MergeEventWizard.js:134
+#: src/Admin/manage-event/MergeEventWizard.js:133
 msgid "Merging events..."
 msgstr "Fusionando eventos..."
 
-#: src/Admin/manage-event/MergeEventWizard.js:147
+#: src/Admin/manage-event/MergeEventWizard.js:146
 msgid "Done! Redirecting..."
 msgstr "¡Listo! Redirigiendo..."
 
-#: src/Admin/manage-event/MergeEventWizard.js:153
+#: src/Admin/manage-event/MergeEventWizard.js:152
 msgid "Failed to merge events."
 msgstr "No se pudieron fusionar los eventos."
 
-#: src/Admin/manage-event/MergeEventWizard.js:167
+#: src/Admin/manage-event/MergeEventWizard.js:166
 msgid "Select Target Event"
 msgstr "Selecciona el evento de destino"
 
-#: src/Admin/manage-event/MergeEventWizard.js:173
+#: src/Admin/manage-event/MergeEventWizard.js:172
 msgid "Search for the event date you want to merge this event into. All data from the current event (source) will be moved to the target."
 msgstr "Busca la fecha del evento en el que deseas fusionar este evento. Todos los datos del evento actual (origen) se moverán al destino."
 
-#: src/Admin/manage-event/MergeEventWizard.js:179
+#: src/Admin/manage-event/MergeEventWizard.js:178
 msgid "Search events by title"
 msgstr "Buscar eventos por título"
 
-#: src/Admin/manage-event/MergeEventWizard.js:185
+#: src/Admin/manage-event/MergeEventWizard.js:184
 msgid "Start typing to search..."
 msgstr "Empieza a escribir para buscar..."
 
-#: src/Admin/manage-event/MergeEventWizard.js:193
+#: src/Admin/manage-event/MergeEventWizard.js:192
 msgid "Select target event"
 msgstr "Selecciona el evento de destino"
 
-#: src/Admin/manage-event/MergeEventWizard.js:200
+#: src/Admin/manage-event/MergeEventWizard.js:199
 msgid "Select..."
 msgstr "Selecciona..."
 
-#: src/Admin/manage-event/MergeEventWizard.js:209
-#: src/Admin/manage-event/MergeEventWizard.js:225
-#: src/Admin/manage-event/MergeEventWizard.js:359
-#: src/Admin/manage-event/MergeEventWizard.js:370
+#: src/Admin/manage-event/MergeEventWizard.js:208
+#: src/Admin/manage-event/MergeEventWizard.js:224
+#: src/Admin/manage-event/MergeEventWizard.js:358
+#: src/Admin/manage-event/MergeEventWizard.js:369
 msgid "(No title)"
 msgstr "(Sin título)"
 
-#: src/Admin/manage-event/MergeEventWizard.js:222
-#: src/Admin/manage-event/MergeEventWizard.js:367
+#: src/Admin/manage-event/MergeEventWizard.js:221
+#: src/Admin/manage-event/MergeEventWizard.js:366
 msgid "Target:"
 msgstr "Destino:"
 
-#: src/Admin/manage-event/MergeEventWizard.js:253
-#: src/Admin/manage-event/MergeEventWizard.js:427
+#: src/Admin/manage-event/MergeEventWizard.js:252
+#: src/Admin/manage-event/MergeEventWizard.js:426
 msgid "Review & Configure"
 msgstr "Revisar y configurar"
 
-#: src/Admin/manage-event/MergeEventWizard.js:262
+#: src/Admin/manage-event/MergeEventWizard.js:261
 msgid "Review the linked data counts and choose what to do with each type."
 msgstr "Revisa los recuentos de datos vinculados y elige qué hacer con cada tipo."
 
-#: src/Admin/manage-event/MergeEventWizard.js:275
+#: src/Admin/manage-event/MergeEventWizard.js:274
 msgid "Data Type"
 msgstr "Tipo de dato"
 
-#: src/Admin/manage-event/MergeEventWizard.js:281
+#: src/Admin/manage-event/MergeEventWizard.js:280
 msgid "Source"
 msgstr "Origen"
 
-#: src/Admin/manage-event/MergeEventWizard.js:287
+#: src/Admin/manage-event/MergeEventWizard.js:286
 msgid "Target"
 msgstr "Destino"
 
-#: src/Admin/manage-event/MergeEventWizard.js:293
+#: src/Admin/manage-event/MergeEventWizard.js:292
 msgid "Action"
 msgstr "Acción"
 
-#: src/Admin/manage-event/MergeEventWizard.js:334
+#: src/Admin/manage-event/MergeEventWizard.js:333
 msgid "Delete source event after merge"
 msgstr "Eliminar evento de origen después de fusionar"
 
-#: src/Admin/manage-event/MergeEventWizard.js:350
+#: src/Admin/manage-event/MergeEventWizard.js:349
 msgid "Confirm Merge"
 msgstr "Confirmar fusión"
 
-#: src/Admin/manage-event/MergeEventWizard.js:356
+#: src/Admin/manage-event/MergeEventWizard.js:355
 msgid "Source:"
 msgstr "Origen:"
 
-#: src/Admin/manage-event/MergeEventWizard.js:385
+#: src/Admin/manage-event/MergeEventWizard.js:384
 msgid "item"
 msgstr "elemento"
 
-#: src/Admin/manage-event/MergeEventWizard.js:386
+#: src/Admin/manage-event/MergeEventWizard.js:385
 msgid "items"
 msgstr "elementos"
 
-#: src/Admin/manage-event/MergeEventWizard.js:396
+#: src/Admin/manage-event/MergeEventWizard.js:395
 msgid "The source event date will be deleted after merge."
 msgstr "La fecha del evento de origen se eliminará después de fusionar."
 
-#: src/Admin/manage-event/MergeEventWizard.js:409
+#: src/Admin/manage-event/MergeEventWizard.js:408
 msgid "Execute Merge"
 msgstr "Ejecutar fusión"
 
-#: src/Admin/manage-event/MergeEventWizard.js:423
+#: src/Admin/manage-event/MergeEventWizard.js:422
 msgid "Select Target"
 msgstr "Seleccionar destino"
 
-#: src/Admin/manage-event/MergeEventWizard.js:429
+#: src/Admin/manage-event/MergeEventWizard.js:428
 msgid "Confirm"
 msgstr "Confirmar"
 
@@ -562,16 +547,11 @@ msgstr "Crea una copia de este evento con los mismos detalles, enlaces y ajustes
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr "Fusiona este evento con otra fecha de evento, moviendo o limpiando todos los datos vinculados."
 
-#: src/Core/Features.php:162
+#: src/Core/Features.php:153
 msgid "Tickets, group pricing/permission rules. Requires fair-audience."
 msgstr "Entradas, reglas de precios de grupo/permisos. Requiere fair-audience."
 
-#. Description of the plugin
-#: fair-events-experimental.php
-msgid "Activates advanced feature bundles for Fair Events, including galleries, sources, ticketing, duplicate and merge tools, and migration. Requires fair-events."
-msgstr "Activa paquetes de funciones avanzadas para Fair Events, incluyendo galerías, fuentes, venta de entradas, herramientas de duplicación y fusión, y migración. Requiere fair-events."
-
-#: src/Core/Features.php:166
+#: src/Core/Features.php:157
 msgid "Advanced event duplication and merge tools."
 msgstr "Herramientas avanzadas de duplicación y fusión de eventos."
 
@@ -603,12 +583,12 @@ msgstr "Ventas acumuladas"
 msgid "Sales"
 msgstr "Ventas"
 
-#: src/Core/Features.php:181
+#: src/Core/Features.php:172
 #: src/Admin/settings/MetaConversions.js:239
 msgid "Meta Conversions"
 msgstr "Meta Conversions"
 
-#: src/Core/Features.php:182
+#: src/Core/Features.php:173
 msgid "Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials."
 msgstr "Medición de compra y pago en el servidor de Meta con consentimiento. Requiere Fair Payments Connector y credenciales explícitas."
 
@@ -757,7 +737,7 @@ msgstr "Error: %s"
 #. translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase)
 #: src/API/MetaConversionsController.php:150
 #: src/Admin/settings/MetaConversions.js:224
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta rechazó el evento de prueba %s. Comprueba la configuración e intenta de nuevo."
 
@@ -785,24 +765,30 @@ msgstr "Guarda tus cambios antes de enviar un evento de prueba — hacer una pru
 
 #: src/Admin/settings/MetaConversions.js:375
 msgid "Recent test sends"
-msgstr ""
+msgstr "Envíos de prueba recientes"
 
 #: src/Admin/settings/MetaConversions.js:379
 msgid "No test events sent yet."
-msgstr ""
+msgstr "Aún no se han enviado eventos de prueba."
 
 #: src/Admin/settings/MetaConversions.js:412
 msgid "Accepted"
-msgstr ""
+msgstr "Aceptado"
 
 #: src/Admin/settings/MetaConversions.js:416
 msgid "Rejected"
-msgstr ""
+msgstr "Rechazado"
 
 #: src/Admin/event-statistics/EventStatistics.js:124
 msgid "Download PNG"
-msgstr ""
+msgstr "Descargar PNG"
 
 #: src/Admin/event-statistics/EventStatistics.js:291
 msgid "The chart image could not be downloaded. Please try again."
-msgstr ""
+msgstr "No se pudo descargar la imagen del gráfico. Por favor, inténtalo de nuevo."
+
+#. Description of the plugin
+#: fair-events-experimental.php
+msgid "Activates advanced feature bundles for Fair Events, including sources, ticketing, duplicate and merge tools, and migration. Requires fair-events."
+msgstr "Activa paquetes de funciones avanzadas para Fair Events, incluyendo fuentes, venta de entradas, herramientas de duplicación y fusión, y migración. Requiere fair-events."
+

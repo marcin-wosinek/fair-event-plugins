@@ -10,6 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2026-06-17T14:13:54+00:00\n"
 "PO-Revision-Date: 2026-06-17 16:26+0200\n"
 "Language: es_ES\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.9\n"
 "X-Domain: fair-payments-connector\n"
 
