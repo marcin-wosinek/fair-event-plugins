@@ -33,6 +33,22 @@ async function routeIsRegistered(request, path) {
 	return body?.code !== 'rest_no_route';
 }
 
+/**
+ * Whether a dotted version is at least the given one. fair-audience keeps no
+ * single DB version target, so the gallery step (1.44.0) counts as recorded
+ * once the stored version reaches it, whatever later upgrades add.
+ */
+function versionAtLeast(version, minimum) {
+	const a = String(version).split('.').map(Number);
+	const b = minimum.split('.').map(Number);
+	for (let i = 0; i < Math.max(a.length, b.length); i++) {
+		if ((a[i] || 0) !== (b[i] || 0)) {
+			return (a[i] || 0) > (b[i] || 0);
+		}
+	}
+	return true;
+}
+
 /** Any wp-cli call boots WordPress, which runs the pending upgrades. */
 function readGalleryState(attachmentId) {
 	return runScript(
@@ -57,7 +73,7 @@ test.describe('Retired event gallery', () => {
 			expect(state.attachmentExists).toBe(true);
 			expect(state.photoAuthorRows).toBe(1);
 			expect(state.eventsDbVersion).toBe(state.eventsDbTarget);
-			expect(state.audienceDbVersion).toBe('1.44.0');
+			expect(versionAtLeast(state.audienceDbVersion, '1.44.0')).toBe(true);
 			expect(state.eventsFeatures).toEqual([]);
 			expect(state.audienceFeatures).toEqual({ photos: true });
 
@@ -67,7 +83,7 @@ test.describe('Retired event gallery', () => {
 
 			const repeated = readGalleryState(seed.attachmentId);
 			expect(repeated.eventsDbVersion).toBe(repeated.eventsDbTarget);
-			expect(repeated.audienceDbVersion).toBe('1.44.0');
+			expect(versionAtLeast(repeated.audienceDbVersion, '1.44.0')).toBe(true);
 			expect(repeated.attachmentExists).toBe(true);
 			expect(repeated.photoAuthorRows).toBe(1);
 			expect(repeated.audienceFeatures).toEqual({ photos: true });
