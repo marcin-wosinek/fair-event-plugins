@@ -16,6 +16,7 @@ use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\GroupSignupPricing;
 use FairAudience\Services\ParticipantToken;
+use FairAudience\Services\TicketActivities;
 use FairAudience\Services\SignupActivities;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -327,6 +328,11 @@ class EventSignupController extends WP_REST_Controller {
 							'type'     => 'array',
 							'required' => true,
 							'items'    => array( 'type' => 'integer' ),
+						),
+						'ticket_id'         => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'sanitize_callback' => 'absint',
 						),
 						'participant_token' => array(
 							'type'              => 'string',
@@ -1135,11 +1141,20 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Added activities belong to one of the participant's tickets on this
+		// date; without tickets they stay on the relationship.
+		$ticket = TicketActivities::resolve_addon_target( (int) $existing->event_date_id, (int) $participant->id, (int) $request->get_param( 'ticket_id' ) );
+		if ( is_wp_error( $ticket ) ) {
+			return $ticket;
+		}
+
 		// Validate the requested options (exist for the event date, have capacity).
 		$requested = $this->load_valid_options( $event_date_id, $raw_option_ids );
 
-		// Drop options already on the subscription — the duplicate-add guard.
-		$already_ids = $this->event_participant_repository->get_option_ids_for_event_participant( (int) $existing->id );
+		// Drop options the target already holds — the duplicate-add guard.
+		$already_ids = $ticket
+			? \FairEvents\Models\EventTicketActivity::get_option_ids( (int) $ticket->id )
+			: $this->get_participant_scope_option_ids( (int) $existing->id );
 		$new_options = array_values(
 			array_filter(
 				$requested,
@@ -1157,7 +1172,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$paid_response = $this->maybe_start_addon_payment( $event_id, $event_date_id, $participant, $existing, $user_id, $new_options );
+		$paid_response = $this->maybe_start_addon_payment( $event_id, $event_date_id, $participant, $existing, $user_id, $new_options, $ticket );
 		if ( null !== $paid_response ) {
 			if ( ! is_wp_error( $paid_response ) ) {
 				AudienceSession::set( (int) $participant->id );
@@ -1166,7 +1181,11 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Free path: attach immediately and notify.
-		$this->save_participant_options( (int) $existing->id, $new_options );
+		if ( $ticket ) {
+			\FairEvents\Models\EventTicketActivity::confirm( (int) $ticket->id, $new_options );
+		} else {
+			$this->save_participant_options( (int) $existing->id, $new_options );
+		}
 
 		$new_option_ids = array_map( static fn( $opt ) => (int) $opt->id, $new_options );
 		do_action( 'fair_audience_event_activities_added', $existing, null, $new_option_ids );
@@ -1199,9 +1218,10 @@ class EventSignupController extends WP_REST_Controller {
 	 * @param \FairAudience\Models\EventParticipant $event_participant Existing signed-up row.
 	 * @param int                                   $user_id           Current WP user ID (0 for anonymous).
 	 * @param array                                 $new_options       New TicketOption objects to add.
+	 * @param object|null                           $ticket            Ticket the activities go to, or null for participant scope.
 	 * @return \WP_REST_Response|\WP_Error|null Response/error on paid path, null on free path.
 	 */
-	private function maybe_start_addon_payment( $event_id, $event_date_id, $participant, $event_participant, $user_id, $new_options ) {
+	private function maybe_start_addon_payment( $event_id, $event_date_id, $participant, $event_participant, $user_id, $new_options, $ticket = null ) {
 		$option_prices = $this->resolve_option_prices( $new_options, $event_date_id, (int) $participant->id );
 
 		$line_items   = array();
@@ -1272,6 +1292,7 @@ class EventSignupController extends WP_REST_Controller {
 					'event_participant_id' => (int) $event_participant->id,
 					'participant_id'       => (int) $participant->id,
 					'ticket_option_ids'    => $new_option_ids,
+					'ticket_id'            => $ticket ? (int) $ticket->id : null,
 				),
 			)
 		);
@@ -1281,10 +1302,10 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Reserve the option's capacity while payment is in flight — the
-		// parent row stays signed_up throughout, so only the junction rows
+		// parent row stays signed_up throughout, so only the activity rows
 		// carry the pending hold (see count_signups_for_ticket_option()).
 		$addon_expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
-		$this->event_participant_repository->add_pending_options( (int) $event_participant->id, $new_options, $addon_expires_at );
+		$this->hold_addon_options( (int) $event_participant->id, $ticket ? (int) $ticket->id : 0, $new_options, $addon_expires_at );
 
 		// Also closes a secondary gap: add-on charges never recorded to the
 		// ledger, so payment history for the registration was missing them.
@@ -1695,6 +1716,44 @@ class EventSignupController extends WP_REST_Controller {
 	 */
 	private function save_participant_options( $event_participant_id, $option_items ) {
 		$this->event_participant_repository->add_options( $event_participant_id, $option_items );
+	}
+
+	/**
+	 * Hold add-on activities while their payment is in flight, on the target
+	 * ticket or, without one, on the relationship.
+	 *
+	 * @param int    $event_participant_id Event participant record ID.
+	 * @param int    $ticket_id            Target ticket ID, or 0 for participant scope.
+	 * @param array  $option_items         TicketOption objects.
+	 * @param string $expires_at           UTC hold expiry.
+	 * @return void
+	 */
+	private function hold_addon_options( $event_participant_id, $ticket_id, $option_items, $expires_at ) {
+		if ( $ticket_id ) {
+			\FairEvents\Models\EventTicketActivity::hold( (int) $ticket_id, $option_items, $expires_at );
+			return;
+		}
+
+		$this->event_participant_repository->add_pending_options( $event_participant_id, $option_items, $expires_at );
+	}
+
+	/**
+	 * Option IDs held at participant scope on a relationship, leaving out
+	 * history carried over to a ticket.
+	 *
+	 * @param int  $event_participant_id Event participant record ID.
+	 * @param bool $confirmed_only       Leave out holds awaiting payment.
+	 * @return int[]
+	 */
+	private function get_participant_scope_option_ids( $event_participant_id, $confirmed_only = false ) {
+		$option_ids = array();
+		foreach ( $this->event_participant_repository->get_participant_scope_option_rows( array( (int) $event_participant_id ) ) as $row ) {
+			if ( ! $confirmed_only || 'confirmed' === $row->status ) {
+				$option_ids[] = (int) $row->ticket_option_id;
+			}
+		}
+
+		return $option_ids;
 	}
 
 	/**
@@ -2560,11 +2619,27 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// The retry targets the same ticket as the attempt it replaces. A
+		// ticket no longer confirmed cannot receive the activities any more.
+		$ticket_id = isset( $metadata['ticket_id'] ) ? (int) $metadata['ticket_id'] : 0;
+		if ( $ticket_id ) {
+			$ticket = TicketActivities::resolve_addon_target( (int) $event_participant->event_date_id, $participant_id, $ticket_id );
+			if ( ! $ticket || is_wp_error( $ticket ) ) {
+				return new WP_Error(
+					'not_signed_up',
+					__( 'Your ticket is no longer active.', 'fair-audience' ),
+					array( 'status' => 409 )
+				);
+			}
+		}
+
 		// Already confirmed (e.g. the original payment landed after all)?
 		// Nothing to retry. Deliberately confirmed-only: the option's own
 		// still-pending hold from the attempt being retried is expected to be
 		// present here and must not look like it's already attached.
-		$already_ids   = $this->event_participant_repository->get_confirmed_option_ids_for_event_participant( $event_participant_id );
+		$already_ids   = $ticket_id
+			? \FairEvents\Models\EventTicketActivity::get_option_ids( $ticket_id, true )
+			: $this->get_participant_scope_option_ids( $event_participant_id, true );
 		$remaining_ids = array_values( array_diff( $option_ids, $already_ids ) );
 		if ( empty( $remaining_ids ) ) {
 			return rest_ensure_response(
@@ -2610,6 +2685,7 @@ class EventSignupController extends WP_REST_Controller {
 					'event_participant_id'    => $event_participant_id,
 					'participant_id'          => $participant_id,
 					'ticket_option_ids'       => $option_ids,
+					'ticket_id'               => $ticket_id ? $ticket_id : null,
 					'retry_of_transaction_id' => $transaction_id,
 				),
 			)
@@ -2624,7 +2700,7 @@ class EventSignupController extends WP_REST_Controller {
 		// row (maybe_start_paid_signup()/retry_payment()).
 		$remaining_options = $this->load_valid_options( $event_date_id, $remaining_ids );
 		$addon_expires_at  = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
-		$this->event_participant_repository->add_pending_options( $event_participant_id, $remaining_options, $addon_expires_at );
+		$this->hold_addon_options( $event_participant_id, $ticket_id, $remaining_options, $addon_expires_at );
 
 		$redirect_url = add_query_arg(
 			array(

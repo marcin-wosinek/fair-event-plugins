@@ -1215,6 +1215,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const checkboxes = section.querySelectorAll(
 			'input[name="add_option_ids[]"]'
 		);
+		// Present when the viewer holds several tickets for this date: the
+		// activities go to the one they choose.
+		const ticketSelect = section.querySelector(
+			'select[name="add_ticket_id"]'
+		);
 
 		const baseText = __( 'Add activities', 'fair-events' );
 		const updateButton = function () {
@@ -1229,7 +1234,8 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				}
 			} );
 			const total = computeTicketTotal( { unitPrice: 0, optionPrices } );
-			button.disabled = ! anyChecked;
+			button.disabled =
+				! anyChecked || ( ticketSelect && ! ticketSelect.value );
 			button.textContent =
 				total > 0
 					? baseText +
@@ -1241,6 +1247,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		checkboxes.forEach( function ( cb ) {
 			cb.addEventListener( 'change', updateButton );
 		} );
+		if ( ticketSelect ) {
+			ticketSelect.addEventListener( 'change', updateButton );
+		}
 		button.addEventListener( 'click', function () {
 			submitAddActivities( block, section, button );
 		} );
@@ -1279,6 +1288,12 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		};
 		if ( eventDateId ) {
 			requestData.event_date_id = eventDateId;
+		}
+		const ticketSelect = section.querySelector(
+			'select[name="add_ticket_id"]'
+		);
+		if ( ticketSelect && ticketSelect.value ) {
+			requestData.ticket_id = parseInt( ticketSelect.value, 10 );
 		}
 		if ( token ) {
 			requestData.participant_token = token;

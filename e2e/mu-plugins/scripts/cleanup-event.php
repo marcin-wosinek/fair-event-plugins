@@ -151,6 +151,14 @@ $deleted['sale_periods'] = (int) $wpdb->query(
 $deleted['get_tickets_signups'] = (int) $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $wpdb->prefix . 'fair_events_signups', $event_date_id )
 );
+$deleted['ticket_activities']   = (int) $wpdb->query(
+	$wpdb->prepare(
+		'DELETE ta FROM %i AS ta INNER JOIN %i AS t ON t.id = ta.ticket_id WHERE t.event_date_id = %d',
+		$wpdb->prefix . 'fair_events_ticket_activities',
+		$wpdb->prefix . 'fair_events_tickets',
+		$event_date_id
+	)
+);
 $deleted['get_tickets_units']   = (int) $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $wpdb->prefix . 'fair_events_tickets', $event_date_id )
 );

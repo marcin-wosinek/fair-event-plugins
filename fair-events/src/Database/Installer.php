@@ -83,6 +83,11 @@ class Installer {
 		$sql = Schema::get_capacity_overrides_table_sql();
 		dbDelta( $sql );
 
+		// Version 3.38.0 - Ticket attended_at column and per-ticket activities
+		// table (no data migration needed, both applied by dbDelta).
+		$sql = Schema::get_ticket_activities_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0.
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();

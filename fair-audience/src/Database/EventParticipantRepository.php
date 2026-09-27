@@ -454,13 +454,20 @@ class EventParticipantRepository {
 	/**
 	 * Count active signups reserved for a specific ticket option (activity).
 	 *
-	 * Counts event_participant rows that have an entry in the
-	 * fair_audience_event_participant_options junction table for the given
-	 * option, restricted to rows with label = 'signed_up' or unexpired
-	 * 'pending_payment', and to junction rows that are themselves either
-	 * confirmed or an unexpired pending hold (an add-on purchase in flight on
-	 * an otherwise signed_up parent row). Used for per-activity capacity
-	 * enforcement.
+	 * Counts each participant once per event date when they hold the option
+	 * through either scope:
+	 *
+	 * - a participant-level junction row not carried over to a ticket, on a
+	 *   relationship with label = 'signed_up' or unexpired
+	 *   'pending_payment', where the junction row is itself confirmed or an
+	 *   unexpired pending hold (an add-on purchase in flight on an otherwise
+	 *   signed_up parent row);
+	 * - an activity on one of their tickets, while the ticket is confirmed
+	 *   or its purchase hold is unexpired, and the activity is confirmed or
+	 *   an unexpired add-on hold.
+	 *
+	 * Counting per participant rather than per ticket is deliberate until
+	 * #1697. Used for per-activity capacity enforcement.
 	 *
 	 * @param int $ticket_option_id Ticket option ID.
 	 * @return int Number of signups held against the option.
@@ -472,22 +479,71 @@ class EventParticipantRepository {
 		$options_table      = $wpdb->prefix . 'fair_audience_event_participant_options';
 		$now                = gmdate( 'Y-m-d H:i:s' );
 
+		if ( ! \FairAudience\Services\TicketActivities::available() ) {
+			$count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*)
+					 FROM %i ep
+					 INNER JOIN %i epo ON epo.event_participant_id = ep.id
+					 WHERE epo.ticket_option_id = %d
+					 AND (
+					     ep.label = 'signed_up'
+					     OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
+					 )
+					 AND (
+					     epo.status = 'confirmed'
+					     OR ( epo.status = 'pending_payment' AND epo.expires_at IS NOT NULL AND epo.expires_at > %s )
+					 )",
+					$participants_table,
+					$options_table,
+					$ticket_option_id,
+					$now,
+					$now
+				)
+			);
+
+			return (int) $count;
+		}
+
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*)
-				 FROM %i ep
-				 INNER JOIN %i epo ON epo.event_participant_id = ep.id
-				 WHERE epo.ticket_option_id = %d
-				 AND (
-				     ep.label = 'signed_up'
-				     OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
-				 )
-				 AND (
-				     epo.status = 'confirmed'
-				     OR ( epo.status = 'pending_payment' AND epo.expires_at IS NOT NULL AND epo.expires_at > %s )
-				 )",
+				"SELECT COUNT(*) FROM (
+				     SELECT ep.event_date_id AS event_date_id, CAST(ep.participant_id AS CHAR) AS holder
+				     FROM %i ep
+				     INNER JOIN %i epo ON epo.event_participant_id = ep.id
+				     WHERE epo.ticket_option_id = %d
+				     AND epo.ticket_id IS NULL
+				     AND (
+				         ep.label = 'signed_up'
+				         OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
+				     )
+				     AND (
+				         epo.status = 'confirmed'
+				         OR ( epo.status = 'pending_payment' AND epo.expires_at IS NOT NULL AND epo.expires_at > %s )
+				     )
+				     UNION
+				     SELECT t.event_date_id, COALESCE(CAST(t.holder_participant_id AS CHAR), CONCAT('ticket-', t.id))
+				     FROM %i ta
+				     INNER JOIN %i t ON t.id = ta.ticket_id
+				     INNER JOIN %i s ON s.id = t.signup_id
+				     WHERE ta.ticket_option_id = %d
+				     AND (
+				         t.status = 'confirmed'
+				         OR ( t.status = 'pending_payment' AND s.payment_expires_at IS NOT NULL AND s.payment_expires_at > %s )
+				     )
+				     AND (
+				         ta.status = 'confirmed'
+				         OR ( ta.status = 'pending_payment' AND ta.expires_at IS NOT NULL AND ta.expires_at > %s )
+				     )
+				 ) held",
 				$participants_table,
 				$options_table,
+				$ticket_option_id,
+				$now,
+				$now,
+				\FairEvents\Models\EventTicketActivity::table(),
+				\FairEvents\Models\EventTicket::table(),
+				$wpdb->prefix . 'fair_events_signups',
 				$ticket_option_id,
 				$now,
 				$now
@@ -519,57 +575,181 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Get the ticket option IDs attached to an event participant, confirmed or
-	 * pending. Use this to guard against re-adding/re-purchasing an option
-	 * that already has a hold on it (confirmed or an in-flight payment).
+	 * Get the ticket option IDs a participant holds on an event date, across
+	 * their tickets and participant scope, confirmed or pending. Use this to
+	 * guard against re-adding/re-purchasing an option that already has a
+	 * hold on it (confirmed or an in-flight payment).
 	 *
 	 * @param int $event_participant_id Event participant row ID.
-	 * @return int[] Attached ticket option IDs (any status).
+	 * @return int[] Held ticket option IDs (any status).
 	 */
 	public function get_option_ids_for_event_participant( $event_participant_id ) {
-		global $wpdb;
+		$event_participant = $this->get_by_id( $event_participant_id );
+		if ( ! $event_participant ) {
+			return array();
+		}
 
-		$options_table = $wpdb->prefix . 'fair_audience_event_participant_options';
-
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				'SELECT ticket_option_id FROM %i WHERE event_participant_id = %d',
-				$options_table,
-				$event_participant_id
+		return array_values(
+			array_unique(
+				array_map(
+					static fn( $row ) => (int) $row->ticket_option_id,
+					$this->get_activity_rows( $event_participant )
+				)
 			)
 		);
-
-		return array_map( 'intval', (array) $ids );
 	}
 
 	/**
-	 * Get the ticket option IDs actually confirmed for an event participant —
-	 * excludes rows still holding an unpaid add-on reservation. Use this for
-	 * anything the viewer sees as "yours" (e.g. "current activities" summary),
-	 * so a payment still in flight is never displayed as already granted.
+	 * Get the ticket option IDs actually confirmed for a participant on an
+	 * event date, across their tickets and participant scope — excludes
+	 * rows still awaiting payment. Use this for anything the viewer sees as
+	 * "yours" (e.g. "current activities" summary), so a payment still in
+	 * flight is never displayed as already granted.
 	 *
 	 * @param int $event_participant_id Event participant row ID.
 	 * @return int[] Confirmed ticket option IDs.
 	 */
 	public function get_confirmed_option_ids_for_event_participant( $event_participant_id ) {
-		global $wpdb;
+		$event_participant = $this->get_by_id( $event_participant_id );
+		if ( ! $event_participant ) {
+			return array();
+		}
 
-		$options_table = $wpdb->prefix . 'fair_audience_event_participant_options';
+		$option_ids = array();
+		foreach ( $this->get_activity_rows( $event_participant ) as $row ) {
+			if ( 'confirmed' === $row->status ) {
+				$option_ids[] = (int) $row->ticket_option_id;
+			}
+		}
 
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT ticket_option_id FROM %i WHERE event_participant_id = %d AND status = 'confirmed'",
-				$options_table,
-				$event_participant_id
-			)
-		);
-
-		return array_map( 'intval', (array) $ids );
+		return array_values( array_unique( $option_ids ) );
 	}
 
 	/**
-	 * Attach ticket options to an event participant. Idempotent: uses REPLACE
-	 * so re-attaching an existing option only refreshes its snapshotted name.
+	 * Get every activity a participant holds on a relationship's event date:
+	 * participant-level rows not carried over to a ticket, then the
+	 * activities of each ticket they hold there. A ticket still awaiting its
+	 * purchase payment reports its activities as pending.
+	 *
+	 * @param EventParticipant $event_participant Relationship.
+	 * @return object[] Rows with ticket_option_id, ticket_option_name, status, expires_at, ticket_id (null at participant scope).
+	 */
+	public function get_activity_rows( $event_participant ) {
+		$rows_by_relationship = $this->get_activity_rows_for_relationships( array( $event_participant ) );
+
+		return $rows_by_relationship[ (int) $event_participant->id ] ?? array();
+	}
+
+	/**
+	 * Bulk form of get_activity_rows().
+	 *
+	 * @param EventParticipant[] $event_participants Relationships.
+	 * @return array<int, object[]> Rows keyed by relationship ID.
+	 */
+	public function get_activity_rows_for_relationships( array $event_participants ) {
+		$rows_by_relationship = array();
+		$ids                  = array();
+		foreach ( $event_participants as $event_participant ) {
+			$ids[] = (int) $event_participant->id;
+			$rows_by_relationship[ (int) $event_participant->id ] = array();
+		}
+		if ( ! $ids ) {
+			return array();
+		}
+
+		foreach ( $this->get_participant_scope_option_rows( $ids ) as $row ) {
+			$rows_by_relationship[ (int) $row->event_participant_id ][] = (object) array(
+				'ticket_option_id'   => (int) $row->ticket_option_id,
+				'ticket_option_name' => (string) $row->ticket_option_name,
+				'status'             => (string) $row->status,
+				'expires_at'         => $row->expires_at,
+				'ticket_id'          => null,
+			);
+		}
+
+		foreach ( $this->get_tickets_for_relationships( $event_participants ) as $relationship_id => $tickets ) {
+			$activities = \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( wp_list_pluck( $tickets, 'id' ) );
+			foreach ( $tickets as $ticket ) {
+				foreach ( $activities[ (int) $ticket->id ] ?? array() as $activity ) {
+					$rows_by_relationship[ $relationship_id ][] = (object) array(
+						'ticket_option_id'   => (int) $activity->ticket_option_id,
+						'ticket_option_name' => (string) $activity->ticket_option_name,
+						'status'             => 'confirmed' === $ticket->status ? (string) $activity->status : 'pending_payment',
+						'expires_at'         => $activity->expires_at,
+						'ticket_id'          => (int) $ticket->id,
+					);
+				}
+			}
+		}
+
+		return $rows_by_relationship;
+	}
+
+	/**
+	 * Get the active tickets each relationship's participant holds on the
+	 * relationship's event date.
+	 *
+	 * @param EventParticipant[] $event_participants Relationships.
+	 * @return array<int, object[]> Tickets keyed by relationship ID; empty when tickets are unavailable.
+	 */
+	public function get_tickets_for_relationships( array $event_participants ) {
+		if ( ! \FairAudience\Services\TicketActivities::available() ) {
+			return array();
+		}
+
+		$participants_by_date = array();
+		foreach ( $event_participants as $event_participant ) {
+			$participants_by_date[ (int) $event_participant->event_date_id ][] = (int) $event_participant->participant_id;
+		}
+
+		$tickets_by_date = array();
+		foreach ( $participants_by_date as $event_date_id => $participant_ids ) {
+			$tickets_by_date[ $event_date_id ] = \FairEvents\Models\EventTicket::get_held_by_participants( $event_date_id, $participant_ids );
+		}
+
+		$tickets_by_relationship = array();
+		foreach ( $event_participants as $event_participant ) {
+			$tickets = $tickets_by_date[ (int) $event_participant->event_date_id ][ (int) $event_participant->participant_id ] ?? array();
+			if ( $tickets ) {
+				$tickets_by_relationship[ (int) $event_participant->id ] = $tickets;
+			}
+		}
+
+		return $tickets_by_relationship;
+	}
+
+	/**
+	 * Get participant-level activity rows not carried over to a ticket.
+	 *
+	 * @param int[] $event_participant_ids Relationship IDs.
+	 * @return object[]
+	 */
+	public function get_participant_scope_option_rows( array $event_participant_ids ) {
+		global $wpdb;
+
+		$event_participant_ids = array_values( array_filter( array_map( 'intval', $event_participant_ids ) ) );
+		if ( ! $event_participant_ids ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $event_participant_ids ), '%d' ) );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE event_participant_id IN ($placeholders) AND ticket_id IS NULL ORDER BY id ASC",
+				array_merge( array( $wpdb->prefix . 'fair_audience_event_participant_options' ), $event_participant_ids )
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		return (array) $rows;
+	}
+
+	/**
+	 * Attach ticket options to an event participant at participant scope.
+	 * Idempotent: re-attaching an existing option only refreshes its
+	 * snapshotted name and confirms it. A historical row already carried
+	 * over to a ticket stays attributed, and the ticket's copy is confirmed.
 	 *
 	 * @param int   $event_participant_id Event participant row ID.
 	 * @param array $options              Array of objects/arrays with `id` and `name`.
@@ -590,15 +770,28 @@ class EventParticipantRepository {
 			if ( ! $option_id ) {
 				continue;
 			}
-			$wpdb->replace(
-				$options_table,
-				array(
-					'event_participant_id' => (int) $event_participant_id,
-					'ticket_option_id'     => (int) $option_id,
-					'ticket_option_name'   => (string) $option_name,
-				),
-				array( '%d', '%d', '%s' )
+			$wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO %i (event_participant_id, ticket_option_id, ticket_option_name, status, expires_at) VALUES (%d, %d, %s, 'confirmed', NULL)
+					 ON DUPLICATE KEY UPDATE ticket_option_name = VALUES(ticket_option_name), status = 'confirmed', expires_at = NULL",
+					$options_table,
+					(int) $event_participant_id,
+					(int) $option_id,
+					(string) $option_name
+				)
 			);
+
+			$attributed_ticket_id = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT ticket_id FROM %i WHERE event_participant_id = %d AND ticket_option_id = %d AND ticket_id IS NOT NULL',
+					$options_table,
+					(int) $event_participant_id,
+					(int) $option_id
+				)
+			);
+			if ( $attributed_ticket_id && \FairAudience\Services\TicketActivities::available() ) {
+				\FairEvents\Models\EventTicketActivity::confirm( $attributed_ticket_id, array( $option ) );
+			}
 		}
 	}
 
@@ -610,8 +803,8 @@ class EventParticipantRepository {
 	 * payment confirms (add_options() re-writes the row as 'confirmed') or the
 	 * hold expires and delete_expired_pending_options() releases it.
 	 *
-	 * Idempotent: uses REPLACE, so re-reserving the same option (e.g. a retry)
-	 * just refreshes its expiry.
+	 * Idempotent: re-reserving the same option (e.g. a retry) just refreshes
+	 * its expiry.
 	 *
 	 * @param int    $event_participant_id Event participant row ID.
 	 * @param array  $options              Array of objects/arrays with `id` and `name`.
@@ -633,16 +826,16 @@ class EventParticipantRepository {
 			if ( ! $option_id ) {
 				continue;
 			}
-			$wpdb->replace(
-				$options_table,
-				array(
-					'event_participant_id' => (int) $event_participant_id,
-					'ticket_option_id'     => (int) $option_id,
-					'ticket_option_name'   => (string) $option_name,
-					'status'               => 'pending_payment',
-					'expires_at'           => $expires_at,
-				),
-				array( '%d', '%d', '%s', '%s', '%s' )
+			$wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO %i (event_participant_id, ticket_option_id, ticket_option_name, status, expires_at) VALUES (%d, %d, %s, 'pending_payment', %s)
+					 ON DUPLICATE KEY UPDATE ticket_option_name = VALUES(ticket_option_name), status = 'pending_payment', expires_at = VALUES(expires_at)",
+					$options_table,
+					(int) $event_participant_id,
+					(int) $option_id,
+					(string) $option_name,
+					$expires_at
+				)
 			);
 		}
 	}
@@ -739,6 +932,7 @@ class EventParticipantRepository {
 	/**
 	 * Delete pending_payment junction rows whose expires_at has passed.
 	 *
+	 * Covers both participant-level holds and holds on individual tickets.
 	 * Unlike delete_expired_pending_payments(), this never touches the parent
 	 * event_participant row — an add-on hold sits on top of an already
 	 * signed_up subscription, which stays valid throughout. Deleting just the
@@ -763,6 +957,11 @@ class EventParticipantRepository {
 				$now
 			)
 		);
+
+		// Add-on holds placed on individual tickets lapse the same way.
+		if ( \FairAudience\Services\TicketActivities::available() ) {
+			$deleted += \FairEvents\Models\EventTicketActivity::delete_expired_holds();
+		}
 
 		return (int) $deleted;
 	}

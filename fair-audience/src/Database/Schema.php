@@ -68,6 +68,8 @@ class Schema {
 			payment_expires_at DATETIME DEFAULT NULL,
 			ticket_type_id BIGINT UNSIGNED DEFAULT NULL,
 			attended_at DATETIME DEFAULT NULL,
+			attended_ticket_id BIGINT UNSIGNED DEFAULT NULL,
+			ticket_history_checked_at DATETIME DEFAULT NULL,
 			admin_comment TEXT DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -583,7 +585,11 @@ class Schema {
 	/**
 	 * Get SQL for creating the event participant options junction table.
 	 *
-	 * Records which ticket options a participant selected at signup.
+	 * Records activities (ticket options) held at participant scope: those
+	 * from signups that have no individual tickets, and history recorded
+	 * before activities were stored per ticket. ticket_id is set once a
+	 * historical row has been carried over to the one ticket it clearly
+	 * belongs to; such rows are kept only as history.
 	 *
 	 * @return string SQL statement.
 	 */
@@ -600,6 +606,7 @@ class Schema {
 			ticket_option_name VARCHAR(255) NOT NULL DEFAULT '',
 			status ENUM('confirmed', 'pending_payment') NOT NULL DEFAULT 'confirmed',
 			expires_at DATETIME DEFAULT NULL,
+			ticket_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			UNIQUE KEY idx_participant_option (event_participant_id, ticket_option_id),

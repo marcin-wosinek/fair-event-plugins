@@ -71,6 +71,14 @@ class EventParticipant {
 	public $attended_at;
 
 	/**
+	 * Ticket the participant-level attendance was carried over to, if any.
+	 * Read-only here: set by TicketHistoryBackfill, never by save().
+	 *
+	 * @var int|null
+	 */
+	public $attended_ticket_id;
+
+	/**
 	 * Free-form admin note about this signup (nullable TEXT).
 	 *
 	 * @var string|null
@@ -116,6 +124,7 @@ class EventParticipant {
 		$this->payment_expires_at = isset( $data['payment_expires_at'] ) && $data['payment_expires_at'] ? $data['payment_expires_at'] : null;
 		$this->ticket_type_id     = isset( $data['ticket_type_id'] ) && $data['ticket_type_id'] ? (int) $data['ticket_type_id'] : null;
 		$this->attended_at        = isset( $data['attended_at'] ) && $data['attended_at'] ? $data['attended_at'] : null;
+		$this->attended_ticket_id = ! empty( $data['attended_ticket_id'] ) ? (int) $data['attended_ticket_id'] : null;
 		$this->admin_comment      = isset( $data['admin_comment'] ) && '' !== $data['admin_comment'] ? $data['admin_comment'] : null;
 		$this->created_at         = isset( $data['created_at'] ) ? $data['created_at'] : '';
 		$this->updated_at         = isset( $data['updated_at'] ) ? $data['updated_at'] : '';

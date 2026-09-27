@@ -16,6 +16,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\TicketActivities;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -227,20 +228,11 @@ class PaymentHooks {
 			// `short_name` when set; fall back to the full `name`, then the
 			// snapshot `epo.ticket_option_name` for options whose row was
 			// deleted after signup.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$option_names = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT COALESCE(NULLIF(topt.short_name, ''), NULLIF(topt.name, ''), epo.ticket_option_name)
-					FROM {$wpdb->prefix}fair_audience_event_participant_options epo
-					LEFT JOIN {$wpdb->prefix}fair_events_ticket_options topt
-						ON topt.id = epo.ticket_option_id
-					WHERE epo.event_participant_id = %d
-						AND ( ( topt.short_name IS NOT NULL AND topt.short_name != '' )
-							OR ( topt.name IS NOT NULL AND topt.name != '' )
-							OR epo.ticket_option_name != '' )",
-					(int) $event_participant->id
-				)
-			);
+			$option_names = array();
+			foreach ( self::get_activity_options( $event_participant ) as $activity ) {
+				$option_names[] = $activity['short_name'];
+			}
+			$option_names = array_values( array_unique( array_filter( $option_names ) ) );
 			if ( ! empty( $option_names ) ) {
 				$context['activities'] = implode( ', ', $option_names );
 			}
@@ -341,20 +333,12 @@ class PaymentHooks {
 		}
 
 		// Pull selected options with their base/discounted prices.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$options = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT COALESCE( NULLIF(topt.name, ''), epo.ticket_option_name ) AS name,
-					topt.price AS price,
-					topt.discounted_price AS discounted_price
-				FROM {$wpdb->prefix}fair_audience_event_participant_options epo
-				LEFT JOIN {$wpdb->prefix}fair_events_ticket_options topt
-					ON topt.id = epo.ticket_option_id
-				WHERE epo.event_participant_id = %d
-					AND topt.discounted_price IS NOT NULL",
-				(int) $event_participant->id
-			)
-		);
+		$options = array();
+		foreach ( self::get_activity_options( $event_participant ) as $activity ) {
+			if ( null !== $activity['discounted_price'] ) {
+				$options[] = (object) $activity;
+			}
+		}
 		if ( empty( $options ) ) {
 			return array();
 		}
@@ -616,7 +600,18 @@ class PaymentHooks {
 
 		set_transient( $dedupe_key, 1, DAY_IN_SECONDS );
 
-		$repo->add_options( $event_participant_id, $options );
+		// An add-on bought for one ticket is confirmed on that ticket only,
+		// provided the participant still holds it on this date.
+		$ticket_id = isset( $metadata['ticket_id'] ) ? (int) $metadata['ticket_id'] : 0;
+		$ticket    = $ticket_id && TicketActivities::available() ? \FairEvents\Models\EventTicket::get_by_id( $ticket_id ) : null;
+		if ( $ticket
+			&& (int) $ticket->holder_participant_id === (int) $event_participant->participant_id
+			&& (int) $ticket->event_date_id === (int) $event_participant->event_date_id
+		) {
+			\FairEvents\Models\EventTicketActivity::confirm( $ticket_id, $options );
+		} else {
+			$repo->add_options( $event_participant_id, $options );
+		}
 
 		do_action( 'fair_audience_event_activities_added', $event_participant, $transaction, $option_ids );
 	}
@@ -671,6 +666,50 @@ class PaymentHooks {
 
 		// Reuse the standard paid-signup confirmation email.
 		do_action( 'fair_audience_event_signup_paid', $event_participant, $transaction );
+	}
+
+	/**
+	 * The activities a participant holds on a relationship's event date,
+	 * across their tickets and participant scope, with current names and
+	 * prices. The snapshotted name stands in for a deleted option.
+	 *
+	 * @param object $event_participant EventParticipant row.
+	 * @return array[] Items with name, short_name, price, discounted_price.
+	 */
+	private static function get_activity_options( $event_participant ) {
+		global $wpdb;
+
+		$rows = ( new EventParticipantRepository() )->get_activity_rows( $event_participant );
+		if ( empty( $rows ) ) {
+			return array();
+		}
+
+		$option_ids   = array_values( array_unique( array_map( static fn( $row ) => (int) $row->ticket_option_id, $rows ) ) );
+		$placeholders = implode( ',', array_fill( 0, count( $option_ids ), '%d' ) );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$live = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, name, short_name, price, discounted_price FROM %i WHERE id IN ($placeholders)",
+				array_merge( array( $wpdb->prefix . 'fair_events_ticket_options' ), $option_ids )
+			),
+			OBJECT_K
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		$activities = array();
+		foreach ( $rows as $row ) {
+			$option = $live[ (int) $row->ticket_option_id ] ?? null;
+			$name   = $option && '' !== (string) $option->name ? (string) $option->name : (string) $row->ticket_option_name;
+
+			$activities[] = array(
+				'name'             => $name,
+				'short_name'       => $option && '' !== (string) $option->short_name ? (string) $option->short_name : $name,
+				'price'            => $option ? $option->price : null,
+				'discounted_price' => $option ? $option->discounted_price : null,
+			);
+		}
+
+		return $activities;
 	}
 
 	/**
@@ -733,20 +772,13 @@ class PaymentHooks {
 
 		$event = get_post( $event_participant->event_id );
 
-		// Prefer the current option name (joined by ticket_option_id) so renames are reflected;
-		// fall back to the snapshotted name when the option was deleted.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$option_names = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT COALESCE(NULLIF(topt.name, ''), epo.ticket_option_name)
-				FROM {$wpdb->prefix}fair_audience_event_participant_options epo
-				LEFT JOIN {$wpdb->prefix}fair_events_ticket_options topt
-					ON topt.id = epo.ticket_option_id
-				WHERE epo.event_participant_id = %d
-					AND ( ( topt.name IS NOT NULL AND topt.name != '' ) OR epo.ticket_option_name != '' )",
-				(int) $event_participant->id
-			)
-		);
+		// Prefer the current option name so renames are reflected; fall back
+		// to the snapshotted name when the option was deleted.
+		$option_names = array();
+		foreach ( self::get_activity_options( $event_participant ) as $activity ) {
+			$option_names[] = $activity['name'];
+		}
+		$option_names = array_values( array_unique( array_filter( $option_names ) ) );
 
 		$email_service = new EmailService();
 		$email_service->send_signup_payment_confirmation(
