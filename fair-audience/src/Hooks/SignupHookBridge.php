@@ -55,6 +55,21 @@ class SignupHookBridge {
 		add_action( 'fair_events_signup_confirmed', array( static::class, 'handle_signup_confirmed' ), 10, 2 );
 		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
 		add_action( 'fair_events_backfill_signup_participant_ids', array( static::class, 'backfill_signup_participant_ids' ) );
+		add_filter( 'fair_events_capacity_legacy_admissions', array( static::class, 'filter_legacy_admissions' ), 10, 3 );
+	}
+
+	/**
+	 * Add admissions that exist only as fair-audience relationships to
+	 * fair-events' capacity count. Hooked on
+	 * fair_events_capacity_legacy_admissions.
+	 *
+	 * @param int    $count Admissions reported so far.
+	 * @param string $scope 'event_date' or 'ticket_type'.
+	 * @param int    $id    Event date ID or ticket type ID.
+	 * @return int
+	 */
+	public static function filter_legacy_admissions( $count, $scope, $id ) {
+		return (int) $count + ( new EventParticipantRepository() )->count_admissions_without_signup( (string) $scope, (int) $id );
 	}
 
 	/**
@@ -835,7 +850,7 @@ class SignupHookBridge {
 				$already_signed_up = $event_participant && 'signed_up' === $event_participant->label;
 
 				if ( ! $already_signed_up ) {
-					if ( self::late_confirmation_exceeds_capacity( $signup, $option_ids, $event_participant_repository )
+					if ( self::late_confirmation_exceeds_capacity( $option_ids, $event_participant_repository )
 						&& class_exists( \FairEvents\Models\EventSignup::class )
 						&& method_exists( \FairEvents\Models\EventSignup::class, 'mark_over_capacity' )
 					) {
@@ -950,32 +965,15 @@ class SignupHookBridge {
 	}
 
 	/**
-	 * Check whether restoring an elapsed hold would exceed configured capacity.
+	 * Check whether restoring an elapsed hold would exceed an activity's
+	 * capacity. Event and ticket-type capacity are rechecked by fair-events
+	 * itself, from ticket units, before the signup is confirmed.
 	 *
-	 * @param object                     $signup     Historical signup row.
 	 * @param int[]                      $option_ids Selected activity IDs.
 	 * @param EventParticipantRepository $repository Capacity repository.
 	 * @return bool
 	 */
-	private static function late_confirmation_exceeds_capacity( $signup, array $option_ids, EventParticipantRepository $repository ) {
-		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
-			$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $signup->event_date_id );
-			if ( $event_date && null !== $event_date->capacity
-				&& $repository->count_active_for_event_date( (int) $signup->event_date_id ) >= (int) $event_date->capacity
-			) {
-				return true;
-			}
-		}
-
-		if ( ! empty( $signup->ticket_type_id ) && class_exists( \FairEvents\Models\TicketType::class ) ) {
-			$ticket_type = \FairEvents\Models\TicketType::get_by_id( (int) $signup->ticket_type_id );
-			if ( $ticket_type && null !== $ticket_type->capacity
-				&& $repository->count_signups_for_ticket_type( (int) $signup->ticket_type_id ) >= (int) $ticket_type->capacity
-			) {
-				return true;
-			}
-		}
-
+	private static function late_confirmation_exceeds_capacity( array $option_ids, EventParticipantRepository $repository ) {
 		if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
 			foreach ( $option_ids as $option_id ) {
 				$option = \FairEventsExperimental\Models\TicketOption::get_by_id( $option_id );

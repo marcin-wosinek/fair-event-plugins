@@ -45,6 +45,7 @@ class SignupHookBridgeRegistrationTest extends TestCase {
 		'fair_events_signup_confirmed'                => 2,
 		'fair_events_signup_payment_failed'           => 2,
 		'fair_events_backfill_signup_participant_ids' => 0,
+		'fair_events_capacity_legacy_admissions'      => 3,
 	);
 
 	/**

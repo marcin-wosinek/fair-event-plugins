@@ -13,8 +13,10 @@ defined( 'WPINC' ) || die;
  * Model for the fair_events_tickets table: one row per individual admission.
  *
  * A signup is the purchase/payment record; its quantity determines how many
- * ticket units it owns, positioned 1 through quantity. Unit status currently
- * mirrors the owning signup's status on every transition.
+ * ticket units it owns, positioned 1 through quantity. Unit status follows
+ * the owning signup's status on every transition, except once a unit has
+ * been cancelled or refunded on its own: that status is final for the unit
+ * and is what capacity counts (see TicketCapacity).
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
@@ -162,7 +164,14 @@ class EventTicket {
 	}
 
 	/**
-	 * Copy a signup's current status onto all of its ticket units.
+	 * Unit statuses set on an individual ticket that signup transitions
+	 * never overwrite.
+	 */
+	const FINAL_UNIT_STATUSES = array( 'cancelled', 'refunded' );
+
+	/**
+	 * Copy a signup's current status onto its ticket units, leaving units
+	 * cancelled or refunded on their own untouched.
 	 *
 	 * @param int $signup_id Signup row ID.
 	 * @return void
@@ -172,10 +181,12 @@ class EventTicket {
 
 		$wpdb->query(
 			$wpdb->prepare(
-				'UPDATE %i AS t INNER JOIN %i AS s ON s.id = t.signup_id SET t.status = s.status WHERE t.signup_id = %d',
+				'UPDATE %i AS t INNER JOIN %i AS s ON s.id = t.signup_id SET t.status = s.status WHERE t.signup_id = %d AND t.status NOT IN (%s, %s)',
 				self::table(),
 				$wpdb->prefix . 'fair_events_signups',
-				$signup_id
+				$signup_id,
+				self::FINAL_UNIT_STATUSES[0],
+				self::FINAL_UNIT_STATUSES[1]
 			)
 		);
 	}

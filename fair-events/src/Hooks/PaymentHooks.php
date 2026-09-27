@@ -49,7 +49,7 @@ class PaymentHooks {
 	 */
 	public static function handle_payment_paid( $payment, $transaction ) {
 		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
-			if ( ! \FairEvents\Models\EventSignup::confirm_paid( $signup_id ) ) {
+			if ( ! self::confirm_paid_signup( $signup_id ) ) {
 				continue;
 			}
 
@@ -64,6 +64,39 @@ class PaymentHooks {
 				do_action( 'fair_events_signup_confirmed', $signup, $transaction );
 			}
 		}
+	}
+
+	/**
+	 * Confirm a paid signup. The payment is always honored. A signup whose
+	 * hold had already lapsed no longer held its places, so they are
+	 * rechecked under the capacity lock; when they have been taken in the
+	 * meantime the signup is flagged over capacity for the organizer.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return bool True when the signup transitioned to confirmed.
+	 */
+	private static function confirm_paid_signup( $signup_id ) {
+		$signup = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
+		if ( ! $signup ) {
+			return false;
+		}
+
+		if ( \FairEvents\Services\TicketCapacity::signup_holds_places( $signup ) ) {
+			return \FairEvents\Models\EventSignup::confirm_paid( $signup_id );
+		}
+
+		return \FairEvents\Services\TicketCapacity::with_capacity_lock(
+			array( \FairEvents\Services\TicketCapacity::demand_for_signup( $signup ) ),
+			static function ( $shortage ) use ( $signup_id ) {
+				if ( ! \FairEvents\Models\EventSignup::confirm_paid( $signup_id ) ) {
+					return false;
+				}
+				if ( $shortage ) {
+					\FairEvents\Models\EventSignup::mark_over_capacity( $signup_id );
+				}
+				return true;
+			}
+		);
 	}
 
 	/**

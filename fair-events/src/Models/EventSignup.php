@@ -17,6 +17,11 @@ defined( 'WPINC' ) || die;
 class EventSignup {
 
 	/**
+	 * How long a paid reservation holds its places while payment is in flight.
+	 */
+	const PAYMENT_HOLD_SECONDS = 900;
+
+	/**
 	 * Save a signup row together with one ticket unit per admission and
 	 * return its ID. The signup and its units are written atomically.
 	 *
@@ -26,29 +31,55 @@ class EventSignup {
 	public static function save( array $data ) {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'fair_events_signups';
-
 		$wpdb->query( 'START TRANSACTION' );
 
+		$signup_id = self::save_in_transaction( $data );
+
+		if ( $signup_id ) {
+			$wpdb->query( 'COMMIT' );
+		} else {
+			$wpdb->query( 'ROLLBACK' );
+		}
+
+		return $signup_id;
+	}
+
+	/**
+	 * Save a signup row and its ticket units inside a transaction the caller
+	 * already opened (e.g. TicketCapacity::reserve()), without starting a
+	 * nested one — MySQL would silently commit the outer transaction. The
+	 * caller rolls back when this returns false.
+	 *
+	 * A pending_payment signup is saved with its payment hold already
+	 * running, so its places are reserved from the moment it exists.
+	 *
+	 * @param array $data See save().
+	 * @return int|false Inserted ID or false on failure.
+	 */
+	public static function save_in_transaction( array $data ) {
+		global $wpdb;
+
+		$status = $data['status'] ?? 'confirmed';
+
 		$inserted = $wpdb->insert(
-			$table,
+			$wpdb->prefix . 'fair_events_signups',
 			array(
-				'event_date_id'  => (int) ( $data['event_date_id'] ?? 0 ),
-				'ticket_type_id' => isset( $data['ticket_type_id'] ) && $data['ticket_type_id'] ? (int) $data['ticket_type_id'] : null,
-				'name'           => $data['name'] ?? '',
-				'email'          => $data['email'] ?? '',
-				'quantity'       => max( 1, (int) ( $data['quantity'] ?? 1 ) ),
-				'mailing_opt_in' => (int) ( $data['mailing_opt_in'] ?? 0 ),
-				'amount'         => (float) ( $data['amount'] ?? 0.00 ),
-				'status'         => $data['status'] ?? 'confirmed',
-				'participant_id' => isset( $data['participant_id'] ) && $data['participant_id'] ? (int) $data['participant_id'] : null,
-				'created_at'     => current_time( 'mysql' ),
+				'event_date_id'      => (int) ( $data['event_date_id'] ?? 0 ),
+				'ticket_type_id'     => isset( $data['ticket_type_id'] ) && $data['ticket_type_id'] ? (int) $data['ticket_type_id'] : null,
+				'name'               => $data['name'] ?? '',
+				'email'              => $data['email'] ?? '',
+				'quantity'           => max( 1, (int) ( $data['quantity'] ?? 1 ) ),
+				'mailing_opt_in'     => (int) ( $data['mailing_opt_in'] ?? 0 ),
+				'amount'             => (float) ( $data['amount'] ?? 0.00 ),
+				'status'             => $status,
+				'participant_id'     => isset( $data['participant_id'] ) && $data['participant_id'] ? (int) $data['participant_id'] : null,
+				'payment_expires_at' => 'pending_payment' === $status ? self::new_hold_expiry() : null,
+				'created_at'         => current_time( 'mysql' ),
 			),
-			array( '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%s', '%d', '%s' )
+			array( '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%s', '%d', '%s', '%s' )
 		);
 
 		if ( ! $inserted ) {
-			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
 
@@ -56,13 +87,19 @@ class EventSignup {
 		$signup    = self::get_by_id( $signup_id );
 
 		if ( ! $signup || false === EventTicket::reconcile_signup( $signup ) ) {
-			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
 
-		$wpdb->query( 'COMMIT' );
-
 		return $signup_id;
+	}
+
+	/**
+	 * Expiry (UTC) of a payment hold starting now.
+	 *
+	 * @return string
+	 */
+	private static function new_hold_expiry() {
+		return gmdate( 'Y-m-d H:i:s', time() + self::PAYMENT_HOLD_SECONDS );
 	}
 
 	/**
@@ -231,6 +268,39 @@ class EventSignup {
 	}
 
 	/**
+	 * Start a fresh payment hold on a signup whose previous hold was released
+	 * (a failed payment being retried). Callers recheck capacity first — see
+	 * TicketCapacity::reserve().
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return bool True when the row now holds its places again.
+	 */
+	public static function renew_hold( int $signup_id ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'fair_events_signups';
+
+		$renewed = 1 === (int) $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s, payment_expires_at = %s WHERE id = %d AND status IN (%s, %s, %s)',
+				$table,
+				'pending_payment',
+				self::new_hold_expiry(),
+				$signup_id,
+				'pending_payment',
+				'failed',
+				'expired'
+			)
+		);
+
+		if ( $renewed ) {
+			EventTicket::sync_status_from_signup( $signup_id );
+		}
+
+		return $renewed;
+	}
+
+	/**
 	 * Atomically transition a signup from one of the allowed statuses.
 	 *
 	 * @param int      $signup_id     Signup row ID.
@@ -284,13 +354,12 @@ class EventSignup {
 	public static function update_transaction( int $signup_id, int $transaction_id, ?string $status = null ) {
 		global $wpdb;
 
-		$table      = $wpdb->prefix . 'fair_events_signups';
-		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
-		$data       = array(
+		$table   = $wpdb->prefix . 'fair_events_signups';
+		$data    = array(
 			'transaction_id'     => $transaction_id,
-			'payment_expires_at' => $expires_at,
+			'payment_expires_at' => self::new_hold_expiry(),
 		);
-		$formats    = array( '%d', '%s' );
+		$formats = array( '%d', '%s' );
 
 		if ( null !== $status ) {
 			$data['status'] = $status;

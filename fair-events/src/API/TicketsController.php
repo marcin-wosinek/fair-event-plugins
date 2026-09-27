@@ -16,6 +16,7 @@ use FairEvents\Models\EventDateSetting;
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketPrice;
+use FairEvents\Services\TicketCapacity;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -497,10 +498,6 @@ class TicketsController extends WP_REST_Controller {
 		$existing_ids = array_map( fn( $t ) => $t->id, $existing );
 		$incoming_ids = array();
 
-		$participant_repo = class_exists( \FairAudience\Database\EventParticipantRepository::class )
-			? new \FairAudience\Database\EventParticipantRepository()
-			: null;
-
 		foreach ( $incoming as $index => $item ) {
 			if ( ! empty( $item['id'] ) ) {
 				$incoming_ids[] = (int) $item['id'];
@@ -510,9 +507,7 @@ class TicketsController extends WP_REST_Controller {
 		// Delete removed.
 		foreach ( $existing_ids as $eid ) {
 			if ( ! in_array( $eid, $incoming_ids, true ) ) {
-				$has_sales = $participant_repo
-					? $participant_repo->count_signups_for_ticket_type( $eid ) > 0
-					: false;
+				$has_sales = TicketCapacity::count_ticket_type( $eid ) > 0;
 				if ( $has_sales ) {
 					continue;
 				}
@@ -548,9 +543,7 @@ class TicketsController extends WP_REST_Controller {
 
 			if ( ! empty( $item['id'] ) && in_array( (int) $item['id'], $existing_ids, true ) ) {
 				$id_map[ $index ] = (int) $item['id'];
-				$has_sales        = $participant_repo
-					? $participant_repo->count_signups_for_ticket_type( (int) $item['id'] ) > 0
-					: false;
+				$has_sales        = TicketCapacity::count_ticket_type( (int) $item['id'] ) > 0;
 				$update           = array(
 					'name'               => $name,
 					'capacity'           => $capacity,
@@ -806,18 +799,14 @@ class TicketsController extends WP_REST_Controller {
 			}
 		}
 
-		$participant_repo = class_exists( \FairAudience\Database\EventParticipantRepository::class )
-			? new \FairAudience\Database\EventParticipantRepository()
-			: null;
-
 		return array(
 			'capacity'     => $event_date->capacity,
 			'end_datetime' => $event_date->end_datetime,
 			'ticket_types' => array_map(
-				function ( $t ) use ( $restrictions, $participant_repo ) {
+				function ( $t ) use ( $restrictions ) {
 					$data              = $t->to_array();
 					$data['group_ids'] = $restrictions[ $t->id ] ?? array();
-					$data['has_sales'] = $participant_repo ? $participant_repo->count_signups_for_ticket_type( $t->id ) > 0 : false;
+					$data['has_sales'] = TicketCapacity::count_ticket_type( (int) $t->id ) > 0;
 					return $data;
 				},
 				$ticket_types
