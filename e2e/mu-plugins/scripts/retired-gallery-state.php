@@ -33,6 +33,7 @@ echo 'E2E_STATE:' . wp_json_encode(
 			)
 		),
 		'eventsDbVersion'   => get_option( 'fair_events_db_version' ),
+		'eventsDbTarget'    => \FairEvents\Database\Schema::DB_VERSION,
 		'audienceDbVersion' => get_option( 'fair_audience_db_version' ),
 		'eventsFeatures'    => get_option( 'fair_events_experimental_features' ),
 		'audienceFeatures'  => get_option( 'fair_audience_experimental_features' ),
