@@ -260,10 +260,13 @@ test.describe( 'Manage Event — List tab', () => {
 				await expect( indicators.nth( 1 ) ).toHaveAccessibleName(
 					'Not selected'
 				);
+				await expect( indicators.nth( 0 ) ).toHaveText( '✓' );
+				await expect( indicators.nth( 1 ) ).toHaveText( '' );
 			} else {
 				await expect(
 					row.getByRole( 'img', { name: 'Selection unavailable' } )
 				).toHaveCount( 2 );
+				await expect( indicators.nth( 0 ) ).toHaveText( '?' );
 			}
 
 			const audienceTab = adminPage.getByRole( 'tab', {

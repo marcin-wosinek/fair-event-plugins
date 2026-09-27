@@ -463,6 +463,34 @@ describe( 'EventSignups — extras (#1683)', () => {
 		).toEqual( [ 'Not selected', 'Not selected' ] );
 	} );
 
+	it( 'shows a check for selected extras and leaves unselected cells empty', async () => {
+		await renderSignups( {
+			ticketOptions: options,
+			participants: [
+				{
+					participant_id: 11,
+					ticket_option_ids: [ 7 ],
+					confirmed_ticket_option_ids: [ 7 ],
+				},
+			],
+		} );
+
+		const selected = await screen.findByRole( 'img', {
+			name: 'Selected',
+		} );
+		expect( selected ).toHaveTextContent( '✓' );
+		expect( selected ).toHaveAttribute( 'title', 'Selected' );
+
+		const notSelected = within( bodyRows()[ 0 ] ).getByRole( 'img', {
+			name: 'Not selected',
+		} );
+		expect( notSelected ).toBeEmptyDOMElement();
+		expect( notSelected ).toHaveAttribute( 'title', 'Not selected' );
+		expect( notSelected.closest( 'td' ) ).toHaveTextContent( /^$/ );
+
+		expect( document.body ).not.toHaveTextContent( /[☑☐]/ );
+	} );
+
 	it( 'shows an unavailable indicator when a registration has no Audience record', async () => {
 		await renderSignups( {
 			rows: [ { ...signups[ 0 ], participant_id: null } ],

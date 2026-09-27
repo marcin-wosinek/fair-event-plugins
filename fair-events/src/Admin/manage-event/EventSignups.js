@@ -116,8 +116,9 @@ function ExtraIndicator( { state } ) {
 				role="img"
 				aria-label={ __( 'Selected', 'fair-events' ) }
 				title={ __( 'Selected', 'fair-events' ) }
+				style={ { fontSize: '1.25em', fontWeight: 600 } }
 			>
-				☑
+				✓
 			</span>
 		);
 	}
@@ -127,10 +128,9 @@ function ExtraIndicator( { state } ) {
 				role="img"
 				aria-label={ __( 'Not selected', 'fair-events' ) }
 				title={ __( 'Not selected', 'fair-events' ) }
-				style={ { color: '#757575' } }
-			>
-				☐
-			</span>
+				// Visually empty, but keeps a hover target for the title.
+				style={ { display: 'inline-block', width: '1em' } }
+			/>
 		);
 	}
 	return (
