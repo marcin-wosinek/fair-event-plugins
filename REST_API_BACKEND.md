@@ -739,6 +739,17 @@ sub-route) expose:
     older and hand-added admissions keep their places without being counted
     twice.
 
+-   **`fair_events_signup_moved` / `fair_events_signup_ticket_type_changed`
+    actions** — `GetTicketsController::update_item()` fires one of these
+    after an administrator moved a confirmed signup to another occurrence of
+    its series (`$signup, $from_event_date_id`) or gave it another ticket type
+    (`$signup, $from_ticket_type_id`). The signup and its units not cancelled
+    or refunded on their own have already changed; `$signup` is the updated
+    `fair_events_signups` row. fair-audience moves or retypes the
+    participant's relationship, unless another active signup of theirs on the
+    source date still backs it; a relationship already on the target date is
+    kept and the source one removed rather than duplicated.
+
 **`accepted_args` contract.** Register each hook with `accepted_args` matching
 what the call site above actually passes — not the callback's own parameter
 count, and never a value the callback can't accept. A callback that requires
@@ -763,6 +774,8 @@ unified-signup submission fatal'd):
 | `fair_events_signup_payment_failed`    | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_backfill_signup_participant_ids` | 0    | `add_action( ... )` (default, no args)     |
 | `fair_events_capacity_legacy_admissions` | 3          | `add_filter( ..., 10, 3 )`                 |
+| `fair_events_signup_moved`             | 2           | `add_action( ..., 10, 2 )`                 |
+| `fair_events_signup_ticket_type_changed` | 2         | `add_action( ..., 10, 1 )` or `2`          |
 
 A registered `accepted_args` may be lower than "args passed" — the callback
 just won't receive the trailing ones — but never lower than the callback's own

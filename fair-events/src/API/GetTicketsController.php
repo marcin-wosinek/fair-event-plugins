@@ -194,8 +194,56 @@ class GetTicketsController extends WP_REST_Controller {
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
 			array(
-				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'delete_item' ),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+				// Move a signup to another occurrence, or give it another
+				// ticket type (#1532). Send exactly one of event_date_id or
+				// ticket_type_id; override_reason confirms going past a limit.
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'id'              => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+						'event_date_id'   => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+						'ticket_type_id'  => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
+						'override_reason' => array(
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+					),
+				),
+			)
+		);
+
+		// GET /fair-events/v1/get-tickets/{id}/targets — the occurrences and
+		// ticket types a signup can be moved to, with the places left on each.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/targets',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_edit_targets' ),
 				'permission_callback' => array( $this, 'admin_permissions_check' ),
 				'args'                => array(
 					'id' => array(
@@ -1419,7 +1467,8 @@ class GetTicketsController extends WP_REST_Controller {
 		$event_date_id = $request->get_param( 'event_date' );
 		$signups       = \FairEvents\Models\EventSignup::get_all_by_event_date_id( $event_date_id );
 
-		$ticket_type_names = array();
+		$ticket_type_names  = array();
+		$ticket_type_scopes = array();
 		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
 			$ticket_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( $event_date_id );
 
@@ -1437,9 +1486,25 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 
 			foreach ( $ticket_types as $ticket_type ) {
-				$ticket_type_names[ (int) $ticket_type->id ] = $ticket_type->name;
+				$ticket_type_names[ (int) $ticket_type->id ]  = $ticket_type->name;
+				$ticket_type_scopes[ (int) $ticket_type->id ] = $ticket_type->recurrence_scope;
 			}
 		}
+
+		// Whether this date has other active occurrences a signup can move to.
+		$master_event_date_id = $this->resolve_master_event_date_id( $event_date_id );
+		$active_dates         = $master_event_date_id
+			? array_filter(
+				\FairEvents\Models\EventDates::get_all_by_master_id( $master_event_date_id ),
+				static function ( $event_date ) {
+					return 'active' === $event_date->status;
+				}
+			)
+			: array();
+		$is_series            = count( $active_dates ) > 1;
+
+		$overrides  = \FairEvents\Models\EventCapacityOverride::get_by_signup_ids( wp_list_pluck( $signups, 'id' ) );
+		$user_names = array();
 
 		foreach ( $signups as $signup ) {
 			$signup->ticket_type_name = $signup->ticket_type_id && isset( $ticket_type_names[ (int) $signup->ticket_type_id ] )
@@ -1451,6 +1516,26 @@ class GetTicketsController extends WP_REST_Controller {
 			$signup->over_capacity    = true === $signup->over_capacity
 				|| 1 === $signup->over_capacity
 				|| '1' === $signup->over_capacity;
+			$signup->recurrence_scope = $signup->ticket_type_id && isset( $ticket_type_scopes[ (int) $signup->ticket_type_id ] )
+				? $ticket_type_scopes[ (int) $signup->ticket_type_id ]
+				: null;
+			$signup->can_move         = $is_series && 'whole_series' !== $signup->recurrence_scope;
+			$signup->overrides        = array_map(
+				static function ( $override ) use ( &$user_names ) {
+					$user_id = (int) $override->user_id;
+					if ( ! array_key_exists( $user_id, $user_names ) ) {
+						$user                   = $user_id ? get_userdata( $user_id ) : false;
+						$user_names[ $user_id ] = $user ? $user->display_name : null;
+					}
+					return array(
+						'action'            => $override->action,
+						'reason'            => $override->reason,
+						'user_display_name' => $user_names[ $user_id ],
+						'created_at'        => $override->created_at,
+					);
+				},
+				$overrides[ (int) $signup->id ] ?? array()
+			);
 		}
 
 		if ( $request->get_param( 'include_answers' ) ) {
@@ -1582,6 +1667,378 @@ class GetTicketsController extends WP_REST_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Move a signup to another occurrence of its series, or give it another
+	 * ticket type (admin). The signup and every unit not cancelled or
+	 * refunded on its own change together, under the capacity lock. Going
+	 * past a limit needs an override reason; the edit is then flagged over
+	 * capacity and recorded in the override audit table.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_item( $request ) {
+		$id     = (int) $request->get_param( 'id' );
+		$signup = \FairEvents\Models\EventSignup::get_by_id( $id );
+
+		if ( ! $signup ) {
+			return new WP_Error(
+				'rest_signup_not_found',
+				__( 'Signup not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( 'confirmed' !== $signup->status ) {
+			return $this->signup_not_editable_error();
+		}
+
+		$target_event_date_id  = (int) $request->get_param( 'event_date_id' );
+		$target_ticket_type_id = (int) $request->get_param( 'ticket_type_id' );
+
+		if ( ( $target_event_date_id > 0 ) === ( $target_ticket_type_id > 0 ) ) {
+			return new WP_Error(
+				'rest_invalid_signup_edit',
+				__( 'Choose either a new date or a new ticket type.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$reason = null;
+		if ( $request->has_param( 'override_reason' ) ) {
+			$reason = trim( (string) $request->get_param( 'override_reason' ) );
+			if ( '' === $reason ) {
+				return new WP_Error(
+					'override_reason_required',
+					__( 'Enter a reason for going over capacity.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		if ( $target_event_date_id ) {
+			$action  = 'move';
+			$scope   = 'event_date';
+			$target  = $target_event_date_id;
+			$current = (int) $signup->event_date_id;
+			$valid   = $this->get_move_targets( $signup );
+		} else {
+			$action  = 'change_type';
+			$scope   = 'ticket_type';
+			$target  = $target_ticket_type_id;
+			$current = (int) $signup->ticket_type_id;
+			$valid   = $this->get_ticket_type_targets( $signup );
+		}
+
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( $target !== $current && ! in_array( $target, array_map( 'intval', wp_list_pluck( $valid, 'id' ) ), true ) ) {
+			return new WP_Error(
+				'rest_invalid_signup_target',
+				'move' === $action
+					? __( 'The chosen date is not another active date of this series.', 'fair-events' )
+					: __( 'The chosen ticket type is not available for this signup.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Lock the target row only: a move changes no ticket type, and a
+		// type change no date.
+		$demand = 'move' === $action
+			? array(
+				'event_date_id'  => $target,
+				'ticket_type_id' => 0,
+				'quantity'       => 1,
+			)
+			: array(
+				'event_date_id'  => 0,
+				'ticket_type_id' => $target,
+				'quantity'       => 1,
+			);
+
+		$result = \FairEvents\Services\TicketCapacity::with_capacity_lock(
+			array( $demand ),
+			static function () use ( $id, $action, $scope, $target, $reason ) {
+				$signup = \FairEvents\Models\EventSignup::get_by_id( $id );
+				if ( ! $signup || 'confirmed' !== $signup->status ) {
+					return new WP_Error(
+						'signup_not_editable',
+						__( 'Only confirmed signups can be moved or given another ticket type.', 'fair-events' ),
+						array( 'status' => 409 )
+					);
+				}
+
+				$failed = new WP_Error(
+					'rest_signup_update_failed',
+					__( 'Failed to update signup.', 'fair-events' ),
+					array( 'status' => 500 )
+				);
+
+				if ( false === \FairEvents\Models\EventTicket::reconcile_signup( $signup ) ) {
+					return $failed;
+				}
+
+				$ticket_count = \FairEvents\Models\EventTicket::count_active_units( $id );
+				$projection   = \FairEvents\Services\TicketCapacity::projection( $scope, $target, $ticket_count, $id );
+				if ( ! $projection ) {
+					return $failed;
+				}
+
+				$over = \FairEvents\Services\TicketCapacity::projection_exceeds( $projection );
+				if ( $over && null === $reason ) {
+					return new WP_Error(
+						'capacity_exceeded',
+						sprintf(
+							/* translators: 1: event date or ticket type name, 2: places taken after the change, 3: capacity */
+							_n(
+								'%1$s would have %2$d of %3$d place taken.',
+								'%1$s would have %2$d of %3$d places taken.',
+								(int) $projection['capacity'],
+								'fair-events'
+							),
+							$projection['label'],
+							$projection['after'],
+							$projection['capacity']
+						),
+						array(
+							'status'     => 409,
+							'projection' => $projection,
+						)
+					);
+				}
+
+				$applied = 'move' === $action
+					? \FairEvents\Models\EventSignup::move_in_transaction( $id, $target )
+					: \FairEvents\Models\EventSignup::change_ticket_type_in_transaction( $id, $target );
+				if ( ! $applied ) {
+					return $failed;
+				}
+
+				if ( $over ) {
+					\FairEvents\Models\EventSignup::mark_over_capacity( $id );
+
+					$recorded = \FairEvents\Models\EventCapacityOverride::create(
+						array(
+							'signup_id'           => $id,
+							'action'              => $action,
+							'from_event_date_id'  => (int) $signup->event_date_id,
+							'to_event_date_id'    => 'move' === $action ? $target : (int) $signup->event_date_id,
+							'from_ticket_type_id' => (int) $signup->ticket_type_id,
+							'to_ticket_type_id'   => 'move' === $action ? (int) $signup->ticket_type_id : $target,
+							'ticket_count'        => $ticket_count,
+							'taken'               => $projection['taken'],
+							'capacity'            => (int) $projection['capacity'],
+							'reason'              => $reason,
+							'user_id'             => get_current_user_id(),
+						)
+					);
+					if ( ! $recorded ) {
+						return $failed;
+					}
+				}
+
+				return array(
+					'projection'    => $projection,
+					'over_capacity' => $over,
+				);
+			}
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$updated = \FairEvents\Models\EventSignup::get_by_id( $id );
+
+		if ( $target !== $current ) {
+			if ( 'move' === $action ) {
+				/**
+				 * Fires after an administrator moved a signup and its ticket
+				 * units to another occurrence of the series.
+				 *
+				 * @param object $signup             The signup row after the move.
+				 * @param int    $from_event_date_id Event date the signup was on.
+				 */
+				do_action( 'fair_events_signup_moved', $updated, $current );
+			} else {
+				/**
+				 * Fires after an administrator gave a signup and its ticket
+				 * units another ticket type.
+				 *
+				 * @param object $signup              The signup row after the change.
+				 * @param int    $from_ticket_type_id Ticket type the signup had.
+				 */
+				do_action( 'fair_events_signup_ticket_type_changed', $updated, $current );
+			}
+		}
+
+		return new WP_REST_Response(
+			array(
+				'signup'        => $updated,
+				'projection'    => $result['projection'],
+				'over_capacity' => $result['over_capacity'],
+			),
+			200
+		);
+	}
+
+	/**
+	 * List where a signup can be moved and which ticket types it can take,
+	 * with the places left on each (admin).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_edit_targets( $request ) {
+		$signup = \FairEvents\Models\EventSignup::get_by_id( (int) $request->get_param( 'id' ) );
+
+		if ( ! $signup ) {
+			return new WP_Error(
+				'rest_signup_not_found',
+				__( 'Signup not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$event_dates = $this->get_move_targets( $signup );
+		$ticket_type = $this->get_ticket_type_targets( $signup );
+
+		return rest_ensure_response(
+			array(
+				'event_dates'  => is_wp_error( $event_dates ) ? array() : array_map(
+					static function ( $event_date ) {
+						return array(
+							'id'        => (int) $event_date->id,
+							'label'     => \FairEvents\Helpers\DateRangeFormatter::format( $event_date->start_datetime, $event_date->end_datetime, (bool) $event_date->all_day ),
+							'capacity'  => $event_date->capacity,
+							'remaining' => \FairEvents\Services\TicketCapacity::remaining_for_event_date( (int) $event_date->id ),
+						);
+					},
+					$event_dates
+				),
+				'ticket_types' => is_wp_error( $ticket_type ) ? array() : array_map(
+					static function ( $type ) {
+						return array(
+							'id'        => (int) $type->id,
+							'label'     => $type->name,
+							'capacity'  => $type->capacity,
+							'remaining' => \FairEvents\Services\TicketCapacity::remaining_for_ticket_type( (int) $type->id ),
+						);
+					},
+					$ticket_type
+				),
+			)
+		);
+	}
+
+	/**
+	 * Error for a signup that is not confirmed.
+	 *
+	 * @return WP_Error
+	 */
+	private function signup_not_editable_error() {
+		return new WP_Error(
+			'signup_not_editable',
+			__( 'Only confirmed signups can be moved or given another ticket type.', 'fair-events' ),
+			array( 'status' => 400 )
+		);
+	}
+
+	/**
+	 * The other active occurrences of a signup's series, which it can be
+	 * moved to. A whole-series ticket already covers every occurrence and
+	 * cannot be moved.
+	 *
+	 * @param object $signup Signup row.
+	 * @return \FairEvents\Models\EventDates[]|WP_Error
+	 */
+	private function get_move_targets( $signup ) {
+		if ( $signup->ticket_type_id ) {
+			$ticket_type = \FairEvents\Models\TicketType::get_by_id( (int) $signup->ticket_type_id );
+			if ( $ticket_type && $ticket_type->is_whole_series() ) {
+				return new WP_Error(
+					'signup_not_movable',
+					__( 'A whole-series ticket covers every date and cannot be moved.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		$master_id = $this->resolve_master_event_date_id( (int) $signup->event_date_id );
+		$siblings  = $master_id
+			? array_filter(
+				array_values( \FairEvents\Models\EventDates::get_all_by_master_id( $master_id ) ),
+				static function ( $event_date ) {
+					return 'active' === $event_date->status;
+				}
+			)
+			: array();
+
+		if ( count( $siblings ) < 2 ) {
+			return new WP_Error(
+				'signup_not_movable',
+				__( 'This event has no other dates to move the signup to.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return array_values(
+			array_filter(
+				$siblings,
+				static function ( $event_date ) use ( $signup ) {
+					return (int) $event_date->id !== (int) $signup->event_date_id;
+				}
+			)
+		);
+	}
+
+	/**
+	 * The other ticket types a signup can take: enabled types of the same
+	 * event or its series master, with the same recurrence scope as its
+	 * current type.
+	 *
+	 * @param object $signup Signup row.
+	 * @return \FairEvents\Models\TicketType[]|WP_Error
+	 */
+	private function get_ticket_type_targets( $signup ) {
+		$current = $signup->ticket_type_id
+			? \FairEvents\Models\TicketType::get_by_id( (int) $signup->ticket_type_id )
+			: null;
+
+		if ( ! $current ) {
+			return new WP_Error(
+				'signup_has_no_ticket_type',
+				__( 'This signup has no ticket type to change.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$event_date_ids = array_unique(
+			array_filter(
+				array(
+					(int) $signup->event_date_id,
+					(int) $this->resolve_master_event_date_id( (int) $signup->event_date_id ),
+				)
+			)
+		);
+
+		$targets = array();
+		foreach ( $event_date_ids as $event_date_id ) {
+			foreach ( \FairEvents\Models\TicketType::get_all_by_event_date_id( $event_date_id ) as $ticket_type ) {
+				if ( (int) $ticket_type->id !== (int) $current->id
+					&& ! $ticket_type->disabled
+					&& $ticket_type->recurrence_scope === $current->recurrence_scope
+				) {
+					$targets[] = $ticket_type;
+				}
+			}
+		}
+
+		return $targets;
 	}
 
 	/**

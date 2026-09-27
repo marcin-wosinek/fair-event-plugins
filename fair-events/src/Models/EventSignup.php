@@ -137,7 +137,10 @@ class EventSignup {
 			array( '%d' )
 		);
 
-		if ( ! $deleted || false === EventTicket::delete_by_signup_id( $signup_id ) ) {
+		if ( ! $deleted
+			|| false === EventTicket::delete_by_signup_id( $signup_id )
+			|| false === EventCapacityOverride::delete_by_signup_id( $signup_id )
+		) {
 			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
@@ -200,6 +203,84 @@ class EventSignup {
 		);
 
 		return $count > 0;
+	}
+
+	/**
+	 * Whether a participant holds an active signup on an event date other
+	 * than the one given: confirmed, or awaiting payment within a running
+	 * hold.
+	 *
+	 * @param int $event_date_id     Event date ID.
+	 * @param int $participant_id    Participant ID.
+	 * @param int $exclude_signup_id Signup row ID to leave out.
+	 * @return bool
+	 */
+	public static function has_other_active_signup( int $event_date_id, int $participant_id, int $exclude_signup_id ) {
+		global $wpdb;
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i WHERE event_date_id = %d AND participant_id = %d AND id <> %d
+				AND ( status = 'confirmed' OR ( status = 'pending_payment' AND payment_expires_at > %s ) )",
+				$wpdb->prefix . 'fair_events_signups',
+				$event_date_id,
+				$participant_id,
+				$exclude_signup_id,
+				gmdate( 'Y-m-d H:i:s' )
+			)
+		);
+
+		return $count > 0;
+	}
+
+	/**
+	 * Move a signup and its ticket units to another event date, inside a
+	 * transaction the caller already opened. Units cancelled or refunded on
+	 * their own stay where they are.
+	 *
+	 * @param int $signup_id     Signup row ID.
+	 * @param int $event_date_id Target event date ID.
+	 * @return bool
+	 */
+	public static function move_in_transaction( int $signup_id, int $event_date_id ) {
+		return self::set_placement( $signup_id, 'event_date_id', $event_date_id );
+	}
+
+	/**
+	 * Give a signup and its ticket units another ticket type, inside a
+	 * transaction the caller already opened. Units cancelled or refunded on
+	 * their own keep their type.
+	 *
+	 * @param int $signup_id      Signup row ID.
+	 * @param int $ticket_type_id Target ticket type ID.
+	 * @return bool
+	 */
+	public static function change_ticket_type_in_transaction( int $signup_id, int $ticket_type_id ) {
+		return self::set_placement( $signup_id, 'ticket_type_id', $ticket_type_id );
+	}
+
+	/**
+	 * Set event_date_id or ticket_type_id on a signup and its active units.
+	 *
+	 * @param int    $signup_id Signup row ID.
+	 * @param string $column    'event_date_id' or 'ticket_type_id'.
+	 * @param int    $value     New value.
+	 * @return bool
+	 */
+	private static function set_placement( int $signup_id, string $column, int $value ) {
+		global $wpdb;
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET %i = %d WHERE id = %d',
+				$wpdb->prefix . 'fair_events_signups',
+				$column,
+				$value,
+				$signup_id
+			)
+		);
+
+		return false !== $updated && EventTicket::set_active_units_column( $signup_id, $column, $value );
 	}
 
 	/**

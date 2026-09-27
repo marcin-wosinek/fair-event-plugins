@@ -56,6 +56,19 @@ add_action(
 			)
 		);
 
+		// A signup row and its ticket units.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/ticket-capacity/signup',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'permission_callback' => $admin_only,
+				'callback'            => static function ( WP_REST_Request $request ) use ( $signup_state ) {
+					return rest_ensure_response( $signup_state( absint( $request->get_param( 'signup_id' ) ) ) );
+				},
+			)
+		);
+
 		// Run the paid webhook's handling for a signup's transaction.
 		register_rest_route(
 			'fair-e2e/v1',
