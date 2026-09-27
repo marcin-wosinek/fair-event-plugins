@@ -15,6 +15,7 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import TicketEditor, { ticketLabel } from './TicketEditor.js';
 
 const LABEL_ORDER = { collaborator: 0, signed_up: 1, interested: 2 };
 
@@ -55,6 +56,58 @@ const occupiesSeat = ( p ) => {
 	if ( p.label === 'pending_payment' ) return ! isStalePendingPayment( p );
 	return false;
 };
+
+// Whether a participant's activities and check-in live on individual
+// tickets. Participants without tickets (signups made through fair-audience's
+// own form, or history not tied to a ticket) keep them at participant level.
+const hasTickets = ( p ) => Array.isArray( p.tickets ) && p.tickets.length > 0;
+
+// Participant-level activities only: never the ones stored on tickets.
+const participantScopeIds = ( p ) =>
+	Array.isArray( p.participant_ticket_option_ids )
+		? p.participant_ticket_option_ids
+		: p.ticket_option_ids || [];
+const participantScopeNames = ( p ) =>
+	Array.isArray( p.participant_ticket_option_names )
+		? p.participant_ticket_option_names
+		: p.ticket_option_names || [];
+
+// Rebuild a participant's combined activity lists after one of their
+// tickets or their participant-level activities changed.
+const withActivities = ( p, tickets, scopeIds, scopeNames ) => {
+	const ids = [ ...scopeIds ];
+	const names = [ ...scopeNames ];
+	const confirmed = [ ...scopeIds ];
+	( tickets || [] ).forEach( ( t ) => {
+		ids.push( ...( t.activity_ids || [] ) );
+		names.push( ...( t.activity_names || [] ) );
+		confirmed.push( ...( t.confirmed_activity_ids || [] ) );
+	} );
+	return {
+		...p,
+		tickets,
+		participant_ticket_option_ids: scopeIds,
+		participant_ticket_option_names: scopeNames,
+		ticket_option_ids: [ ...new Set( ids ) ],
+		ticket_option_names: [ ...new Set( names ) ],
+		confirmed_ticket_option_ids: [ ...new Set( confirmed ) ],
+	};
+};
+
+// The participant-level activities editor is shown for participants
+// without tickets, and for those with activities not tied to a ticket.
+const showsParticipantActivities = ( p ) =>
+	! hasTickets( p ) || participantScopeIds( p ).length > 0;
+
+const withTicket = ( p, updatedTicket ) =>
+	withActivities(
+		p,
+		( p.tickets || [] ).map( ( t ) =>
+			t.id === updatedTicket.id ? updatedTicket : t
+		),
+		participantScopeIds( p ),
+		participantScopeNames( p )
+	);
 
 export default function EventAudience( {
 	eventId,
@@ -605,6 +658,51 @@ export default function EventAudience( {
 			} );
 	};
 
+	const handleToggleTicketAttended = ( participant, ticket, attended ) => {
+		const setTicket = ( updatedTicket ) =>
+			setParticipants( ( current ) =>
+				current.map( ( p ) =>
+					p.id === participant.id ? withTicket( p, updatedTicket ) : p
+				)
+			);
+
+		setTicket( {
+			...ticket,
+			attended_at: attended
+				? ticket.attended_at || new Date().toISOString()
+				: null,
+		} );
+
+		apiFetch( {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/tickets/${ ticket.id }`,
+			method: 'PUT',
+			data: { attended },
+		} )
+			.then( setTicket )
+			.catch( ( err ) => {
+				setTicket( ticket );
+				showToast(
+					__( 'Error saving check-in: ', 'fair-audience' ) +
+						( err.message || '' ),
+					'error'
+				);
+			} );
+	};
+
+	const handleTicketSaved = ( participant, updatedTicket ) => {
+		setParticipants( ( current ) =>
+			current.map( ( p ) =>
+				p.id === participant.id ? withTicket( p, updatedTicket ) : p
+			)
+		);
+		setEditingParticipant( ( current ) =>
+			current && current.id === participant.id
+				? withTicket( current, updatedTicket )
+				: current
+		);
+		showToast( __( 'Ticket saved.', 'fair-audience' ) );
+	};
+
 	const handleDeleteParticipant = ( participant ) => {
 		// A series pass is held on the master event-date; deleting it from one
 		// occurrence is not supported (and the row isn't on this occurrence).
@@ -653,11 +751,11 @@ export default function EventAudience( {
 			return;
 		}
 		setEditingParticipant( participant );
-		const initialIds = Array.isArray( participant.ticket_option_ids )
-			? participant.ticket_option_ids
-			: [];
+		// Only participant-level activities are edited here; each ticket's
+		// activities are edited on the ticket itself.
+		const initialIds = participantScopeIds( participant );
 		// Backfill from names for any rows missing an id link.
-		const names = participant.ticket_option_names || [];
+		const names = participantScopeNames( participant );
 		const namesAsIds = names
 			.map( ( name ) => {
 				const match = ticketOptions.find( ( o ) => o.name === name );
@@ -696,11 +794,15 @@ export default function EventAudience( {
 		if ( ! editingParticipant ) return;
 		setIsSavingOptions( true );
 		try {
+			const editsParticipantActivities =
+				showsParticipantActivities( editingParticipant );
 			const data = {
-				ticket_option_ids: editOptionIds,
 				ticket_type_id: editTicketTypeId,
 				admin_comment: editAdminComment,
 			};
+			if ( editsParticipantActivities ) {
+				data.ticket_option_ids = editOptionIds;
+			}
 			if ( editLabel && editLabel !== editingParticipant.label ) {
 				data.label = editLabel;
 			}
@@ -725,12 +827,16 @@ export default function EventAudience( {
 				current.map( ( p ) =>
 					p.id === editingParticipant.id
 						? {
-								...p,
-								ticket_option_ids:
-									response.ticket_option_ids ?? editOptionIds,
-								ticket_option_names:
-									response.ticket_option_names ??
-									p.ticket_option_names,
+								...( editsParticipantActivities
+									? withActivities(
+											p,
+											p.tickets || [],
+											response.ticket_option_ids ??
+												editOptionIds,
+											response.ticket_option_names ??
+												participantScopeNames( p )
+									  )
+									: p ),
 								ticket_type_id:
 									response.ticket_type_id ?? editTicketTypeId,
 								ticket_type_name:
@@ -1100,6 +1206,59 @@ export default function EventAudience( {
 			days
 		);
 	};
+
+	const renderParticipantCheckIn = ( p ) => (
+		<input
+			type="checkbox"
+			aria-label={ __( 'Shown up', 'fair-audience' ) }
+			checked={ !! p.attended_at }
+			disabled={ p.is_series_pass }
+			title={
+				p.is_series_pass
+					? __(
+							'Attendance for series-pass holders is managed on the series’ master date.',
+							'fair-audience'
+					  )
+					: undefined
+			}
+			onChange={ ( e ) => handleToggleAttended( p, e.target.checked ) }
+		/>
+	);
+
+	// One check-in box per ticket, so arriving guests are checked in one
+	// admission at a time. A check-in recorded before tickets existed and not
+	// tied to one of them stays visible as participant-level history.
+	const renderTicketCheckIns = ( p ) => (
+		<VStack spacing={ 1 }>
+			{ p.tickets.map( ( ticket, index ) => (
+				<CheckboxControl
+					key={ ticket.id }
+					label={ ticket.reference }
+					aria-label={ sprintf(
+						/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
+						__( 'Checked in: %s', 'fair-audience' ),
+						ticketLabel( ticket, index + 1 )
+					) }
+					checked={ !! ticket.attended_at }
+					onChange={ ( checked ) =>
+						handleToggleTicketAttended( p, ticket, checked )
+					}
+					__nextHasNoMarginBottom
+				/>
+			) ) }
+			{ p.attended_at && (
+				<span
+					style={ { color: '#666', fontSize: '12px' } }
+					title={ __(
+						'Recorded for the participant before check-in was kept per ticket, and not linked to a specific ticket.',
+						'fair-audience'
+					) }
+				>
+					{ __( 'Earlier check-in (participant)', 'fair-audience' ) }
+				</span>
+			) }
+		</VStack>
+	);
 
 	const renderActivitiesForParticipant = ( p ) => {
 		const ids = p.ticket_option_ids || [];
@@ -1597,37 +1756,15 @@ export default function EventAudience( {
 																}
 															) }
 															<td>
-																<input
-																	type="checkbox"
-																	aria-label={ __(
-																		'Shown up',
-																		'fair-audience'
-																	) }
-																	checked={
-																		!! p.attended_at
-																	}
-																	disabled={
-																		p.is_series_pass
-																	}
-																	title={
-																		p.is_series_pass
-																			? __(
-																					'Attendance for series-pass holders is managed on the series’ master date.',
-																					'fair-audience'
-																			  )
-																			: undefined
-																	}
-																	onChange={ (
-																		e
-																	) =>
-																		handleToggleAttended(
-																			p,
-																			e
-																				.target
-																				.checked
-																		)
-																	}
-																/>
+																{ hasTickets(
+																	p
+																)
+																	? renderTicketCheckIns(
+																			p
+																	  )
+																	: renderParticipantCheckIn(
+																			p
+																	  ) }
 															</td>
 															<td>
 																{ p.is_series_pass ? (
@@ -2434,7 +2571,7 @@ export default function EventAudience( {
 						editingParticipant.participant_name
 					) }
 					onRequestClose={ () => setEditingParticipant( null ) }
-					style={ { maxWidth: '480px', width: '100%' } }
+					style={ { maxWidth: '520px', width: '100%' } }
 				>
 					<VStack spacing={ 3 }>
 						{ isStalePendingPayment( editingParticipant ) && (
@@ -2574,17 +2711,69 @@ export default function EventAudience( {
 								__nextHasNoMarginBottom
 							/>
 						) }
-						{ ticketOptions.map( ( opt ) => (
-							<CheckboxControl
-								key={ opt.id }
-								label={ opt.name }
-								checked={ editOptionIds.includes( opt.id ) }
-								onChange={ () =>
-									handleToggleOptionId( opt.id )
-								}
-								__nextHasNoMarginBottom
-							/>
-						) ) }
+						{ hasTickets( editingParticipant ) && (
+							<VStack spacing={ 2 }>
+								<h3 style={ { margin: 0, fontSize: '14px' } }>
+									{ __( 'Tickets', 'fair-audience' ) }
+								</h3>
+								<p style={ { margin: 0, fontSize: '12px' } }>
+									{ __(
+										'Each ticket keeps its own activities and check-in. Save each ticket separately.',
+										'fair-audience'
+									) }
+								</p>
+								{ editingParticipant.tickets.map(
+									( ticket, index ) => (
+										<TicketEditor
+											key={ ticket.id }
+											ticket={ ticket }
+											position={ index + 1 }
+											ticketOptions={ ticketOptions }
+											eventDateId={ eventDateId }
+											onSaved={ ( updated ) =>
+												handleTicketSaved(
+													editingParticipant,
+													updated
+												)
+											}
+											onError={ ( message ) =>
+												showToast(
+													__(
+														'Error saving ticket: ',
+														'fair-audience'
+													) + message,
+													'error'
+												)
+											}
+										/>
+									)
+								) }
+								<h3 style={ { margin: 0, fontSize: '14px' } }>
+									{ __( 'Participant', 'fair-audience' ) }
+								</h3>
+							</VStack>
+						) }
+						{ showsParticipantActivities( editingParticipant ) &&
+							hasTickets( editingParticipant ) && (
+								<p style={ { margin: 0, fontSize: '12px' } }>
+									{ __(
+										'Activities recorded for this participant before activities were kept per ticket. They are not linked to a specific ticket.',
+										'fair-audience'
+									) }
+								</p>
+							) }
+						{ showsParticipantActivities( editingParticipant ) &&
+							ticketOptions.map( ( opt ) => (
+								<CheckboxControl
+									key={ opt.id }
+									label={ opt.name }
+									checked={ editOptionIds.includes( opt.id ) }
+									onChange={ () =>
+										handleToggleOptionId( opt.id )
+									}
+									__nextHasNoMarginBottom
+								/>
+							) ) }
 						<TextareaControl
 							label={ __( 'Admin comment', 'fair-audience' ) }
 							help={ __(
@@ -2613,6 +2802,8 @@ export default function EventAudience( {
 							>
 								{ isSavingOptions
 									? __( 'Saving…', 'fair-audience' )
+									: hasTickets( editingParticipant )
+									? __( 'Save participant', 'fair-audience' )
 									: __( 'Save', 'fair-audience' ) }
 							</Button>
 						</HStack>

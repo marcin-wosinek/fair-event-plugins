@@ -807,6 +807,23 @@ function fair_audience_maybe_upgrade_db() {
 	// failure is retried on the next request.
 	if ( version_compare( $db_version, '1.44.0', '<' ) && \FairAudience\Database\GalleryCleanup::run() ) {
 		update_option( 'fair_audience_db_version', '1.44.0' );
+		$db_version = '1.44.0';
+	}
+
+	// Attendance and activities now live on individual tickets. Add the
+	// columns that mark which participant-level history was carried over.
+	if ( version_compare( $db_version, '1.44.0', '>=' ) && version_compare( $db_version, '1.45.0', '<' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( \FairAudience\Database\Schema::get_event_participants_table_sql() );
+		dbDelta( \FairAudience\Database\Schema::get_event_participant_options_table_sql() );
+		update_option( 'fair_audience_db_version', '1.45.0' );
+		$db_version = '1.45.0';
+	}
+
+	// Carry historical participant-level activities and attendance over to
+	// the one ticket each clearly belongs to, a batch per request until done.
+	if ( version_compare( $db_version, '1.45.0', '>=' ) ) {
+		\FairAudience\Services\TicketHistoryBackfill::maybe_run();
 	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );

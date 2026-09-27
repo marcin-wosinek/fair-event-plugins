@@ -11,6 +11,7 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Models\EmailConsentLog;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\TicketActivities;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -196,6 +197,40 @@ class EventParticipantsController extends WP_REST_Controller {
 							'type'     => 'integer',
 							'required' => true,
 							'minimum'  => 1,
+						),
+					),
+				),
+			)
+		);
+
+		// PUT /fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<event_date_id>\d+)/tickets/(?P<ticket_id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_ticket' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'event_date_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'ticket_id'     => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'activity_ids'  => array(
+							'type'     => 'array',
+							'required' => false,
+							'items'    => array(
+								'type' => 'integer',
+							),
+						),
+						'attended'      => array(
+							'type'     => 'boolean',
+							'required' => false,
 						),
 					),
 				),
@@ -406,42 +441,45 @@ class EventParticipantsController extends WP_REST_Controller {
 			}
 		}
 
-		// Build participant → ticket option names + IDs lookup from junction table.
-		// Confirmed IDs exclude options still held for an unpaid add-on, for
-		// views that must show only what the participant actually has.
+		// Activities each participant holds, across their tickets and
+		// participant scope. Confirmed IDs exclude options still held for an
+		// unpaid add-on, for views that must show only what the participant
+		// actually has. The participant-scope lists hold only what is not
+		// tied to a ticket: signups without tickets and unresolved history.
 		$participant_option_names         = array();
 		$participant_option_ids           = array();
 		$participant_confirmed_option_ids = array();
-		$ep_ids                           = array_map( fn( $ep ) => $ep->id, $event_participants );
-		if ( ! empty( $ep_ids ) ) {
-			$placeholders = implode( ',', array_fill( 0, count( $ep_ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$option_rows = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT event_participant_id, ticket_option_id, ticket_option_name, status
-					FROM {$wpdb->prefix}fair_audience_event_participant_options
-					WHERE event_participant_id IN ($placeholders)",
-					...$ep_ids
-				)
-			);
-			foreach ( $option_rows as $row ) {
-				$ep_id = (int) $row->event_participant_id;
-				if ( ! isset( $participant_option_names[ $ep_id ] ) ) {
-					$participant_option_names[ $ep_id ]         = array();
-					$participant_option_ids[ $ep_id ]           = array();
-					$participant_confirmed_option_ids[ $ep_id ] = array();
-				}
+		$participant_scope_option_ids     = array();
+		$participant_scope_option_names   = array();
+		$activity_rows                    = $this->event_participant_repo->get_activity_rows_for_relationships( $event_participants );
+		foreach ( $activity_rows as $ep_id => $rows ) {
+			foreach ( $rows as $row ) {
 				if ( '' !== (string) $row->ticket_option_name ) {
 					$participant_option_names[ $ep_id ][] = $row->ticket_option_name;
 				}
-				if ( $row->ticket_option_id ) {
-					$participant_option_ids[ $ep_id ][] = (int) $row->ticket_option_id;
-					if ( 'confirmed' === $row->status ) {
-						$participant_confirmed_option_ids[ $ep_id ][] = (int) $row->ticket_option_id;
+				$participant_option_ids[ $ep_id ][] = (int) $row->ticket_option_id;
+				if ( 'confirmed' === $row->status ) {
+					$participant_confirmed_option_ids[ $ep_id ][] = (int) $row->ticket_option_id;
+				}
+				if ( null === $row->ticket_id ) {
+					$participant_scope_option_ids[ $ep_id ][] = (int) $row->ticket_option_id;
+					if ( '' !== (string) $row->ticket_option_name ) {
+						$participant_scope_option_names[ $ep_id ][] = $row->ticket_option_name;
 					}
 				}
 			}
 		}
+
+		// Individual tickets each participant holds on this date. A series
+		// pass surfaced from the master is edited on the master's own list.
+		$tickets_by_relationship = $this->event_participant_repo->get_tickets_for_relationships(
+			array_values(
+				array_filter(
+					$event_participants,
+					static fn( $ep ) => (int) $ep->event_date_id === (int) $event_date_id
+				)
+			)
+		);
 
 		// Custom question answers captured during signup (Event Signup block).
 		// Stored as questionnaire submissions keyed by participant + event date,
@@ -449,34 +487,42 @@ class EventParticipantsController extends WP_REST_Controller {
 		$participant_questionnaire = $this->get_signup_answers_by_participant( $event_date_id );
 
 		$items = array_map(
-			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_questionnaire, $event_date_id ) {
+			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $event_date_id ) {
 				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
 				return array(
-					'id'                          => $ep->id,
-					'participant_id'              => $ep->participant_id,
-					'event_date_id'               => $ep->event_date_id,
+					'id'                              => $ep->id,
+					'participant_id'                  => $ep->participant_id,
+					'event_date_id'                   => $ep->event_date_id,
 					// A row whose event_date_id differs from the requested occurrence
 					// is a whole-series pass surfaced from the master event-date.
-					'is_series_pass'              => (int) $ep->event_date_id !== (int) $event_date_id,
-					'participant_name'            => $participant ? $participant->name . ' ' . $participant->surname : '',
-					'name'                        => $participant ? $participant->name : '',
-					'surname'                     => $participant ? $participant->surname : '',
-					'participant_email'           => $participant ? $participant->email : '',
-					'email_profile'               => $participant ? $participant->email_profile : '',
-					'instagram'                   => $participant ? $participant->instagram : '',
-					'label'                       => $ep->label,
-					'ticket_type_id'              => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
-					'ticket_type_name'            => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
+					'is_series_pass'                  => (int) $ep->event_date_id !== (int) $event_date_id,
+					'participant_name'                => $participant ? $participant->name . ' ' . $participant->surname : '',
+					'name'                            => $participant ? $participant->name : '',
+					'surname'                         => $participant ? $participant->surname : '',
+					'participant_email'               => $participant ? $participant->email : '',
+					'email_profile'                   => $participant ? $participant->email_profile : '',
+					'instagram'                       => $participant ? $participant->instagram : '',
+					'label'                           => $ep->label,
+					'ticket_type_id'                  => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
+					'ticket_type_name'                => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
 						? $ticket_type_names[ $ep->ticket_type_id ]
 						: null,
-					'attended_at'                 => $ep->attended_at,
-					'created_at'                  => $ep->created_at,
-					'payment_expires_at'          => $ep->payment_expires_at,
-					'ticket_option_names'         => $participant_option_names[ $ep->id ] ?? array(),
-					'ticket_option_ids'           => $participant_option_ids[ $ep->id ] ?? array(),
-					'confirmed_ticket_option_ids' => $participant_confirmed_option_ids[ $ep->id ] ?? array(),
-					'admin_comment'               => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
-					'questionnaire_answers'       => $participant_questionnaire[ $ep->participant_id ] ?? array(),
+					// Participant-level check-in: from signups without tickets, or
+					// history not carried over to a ticket.
+					'attended_at'                     => $ep->attended_ticket_id ? null : $ep->attended_at,
+					'created_at'                      => $ep->created_at,
+					'payment_expires_at'              => $ep->payment_expires_at,
+					'ticket_option_names'             => array_values( array_unique( $participant_option_names[ $ep->id ] ?? array() ) ),
+					'ticket_option_ids'               => array_values( array_unique( $participant_option_ids[ $ep->id ] ?? array() ) ),
+					'confirmed_ticket_option_ids'     => array_values( array_unique( $participant_confirmed_option_ids[ $ep->id ] ?? array() ) ),
+					'participant_ticket_option_ids'   => $participant_scope_option_ids[ $ep->id ] ?? array(),
+					'participant_ticket_option_names' => $participant_scope_option_names[ $ep->id ] ?? array(),
+					'tickets'                         => array_map(
+						fn( $ticket ) => $this->build_ticket_payload( $ticket, $activity_rows[ $ep->id ] ?? array() ),
+						$tickets_by_relationship[ $ep->id ] ?? array()
+					),
+					'admin_comment'                   => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
+					'questionnaire_answers'           => $participant_questionnaire[ $ep->participant_id ] ?? array(),
 				);
 			},
 			$event_participants
@@ -787,8 +833,17 @@ class EventParticipantsController extends WP_REST_Controller {
 				$ep_id      = (int) $updated_ep->id;
 				$table_name = $wpdb->prefix . 'fair_audience_event_participant_options';
 
+				// Only participant-scope activities are replaced here; history
+				// carried over to a ticket stays, and tickets are edited on
+				// their own (update_ticket()).
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->delete( $table_name, array( 'event_participant_id' => $ep_id ), array( '%d' ) );
+				$wpdb->query(
+					$wpdb->prepare(
+						'DELETE FROM %i WHERE event_participant_id = %d AND ticket_id IS NULL',
+						$table_name,
+						$ep_id
+					)
+				);
 
 				$lookup_event_date_id = $event_date_id;
 				if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
@@ -828,15 +883,16 @@ class EventParticipantsController extends WP_REST_Controller {
 
 				foreach ( array_keys( $resolved_ids ) as $oid ) {
 					$opt = $by_id[ $oid ];
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-					$wpdb->replace(
-						$table_name,
-						array(
-							'event_participant_id' => $ep_id,
-							'ticket_option_id'     => (int) $opt->id,
-							'ticket_option_name'   => $opt->name,
-						),
-						array( '%d', '%d', '%s' )
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->query(
+						$wpdb->prepare(
+							"INSERT INTO %i (event_participant_id, ticket_option_id, ticket_option_name, status, expires_at) VALUES (%d, %d, %s, 'confirmed', NULL)
+							 ON DUPLICATE KEY UPDATE ticket_option_name = VALUES(ticket_option_name), status = 'confirmed', expires_at = NULL, ticket_id = NULL",
+							$table_name,
+							$ep_id,
+							(int) $opt->id,
+							$opt->name
+						)
 					);
 					$saved_option_ids[]   = (int) $opt->id;
 					$saved_option_names[] = $opt->name;
@@ -865,6 +921,144 @@ class EventParticipantsController extends WP_REST_Controller {
 				'ticket_option_names' => $has_options_payload ? $saved_option_names : null,
 				'admin_comment'       => $updated && null !== $updated->admin_comment ? $updated->admin_comment : '',
 			)
+		);
+	}
+
+	/**
+	 * Update one ticket's activities and/or check-in, leaving the holder's
+	 * other tickets unchanged. Checking in again keeps the first check-in
+	 * time; attended = false clears it.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function update_ticket( $request ) {
+		$event_date_id = (int) $request->get_param( 'event_date_id' );
+		$ticket_id     = (int) $request->get_param( 'ticket_id' );
+		$activity_ids  = $request->get_param( 'activity_ids' );
+		$attended      = $request->get_param( 'attended' );
+
+		if ( null === $activity_ids && null === $attended ) {
+			return new WP_Error(
+				'missing_fields',
+				__( 'Provide at least one of: activity_ids, attended.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$ticket = TicketActivities::available() ? \FairEvents\Models\EventTicket::get_by_id( $ticket_id ) : null;
+		if ( ! $ticket || (int) $ticket->event_date_id !== $event_date_id ) {
+			return new WP_Error(
+				'ticket_not_found',
+				__( 'Ticket not found for this event date.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( in_array( (string) $ticket->status, \FairEvents\Models\EventTicket::INACTIVE_STATUSES, true ) ) {
+			return new WP_Error(
+				'ticket_inactive',
+				__( 'This ticket is no longer active.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		if ( null !== $activity_ids ) {
+			$catalogue_event_date_id = $event_date_id;
+			$event_date              = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+			if ( $event_date && 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
+				$catalogue_event_date_id = (int) $event_date->master_id;
+			}
+
+			$catalogue = array();
+			if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+				foreach ( \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $catalogue_event_date_id ) as $option ) {
+					$catalogue[ (int) $option->id ] = $option;
+				}
+			}
+
+			$selected = array();
+			foreach ( array_unique( array_map( 'intval', (array) $activity_ids ) ) as $option_id ) {
+				if ( ! isset( $catalogue[ $option_id ] ) ) {
+					return new WP_Error(
+						'invalid_ticket_option',
+						__( 'One of the selected activities does not belong to this event.', 'fair-audience' ),
+						array( 'status' => 400 )
+					);
+				}
+				$selected[] = $catalogue[ $option_id ];
+			}
+
+			if ( ! \FairEvents\Models\EventTicketActivity::replace_for_ticket( $ticket_id, $selected ) ) {
+				return new WP_Error(
+					'update_failed',
+					__( 'Failed to update the ticket’s activities.', 'fair-audience' ),
+					array( 'status' => 500 )
+				);
+			}
+		}
+
+		if ( null !== $attended && ! \FairEvents\Models\EventTicket::set_attended( $ticket_id, (bool) $attended ) ) {
+			return new WP_Error(
+				'update_failed',
+				__( 'Failed to update attendance.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$ticket = \FairEvents\Models\EventTicket::get_by_id( $ticket_id );
+		$rows   = array();
+		foreach ( \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( array( $ticket_id ) )[ $ticket_id ] ?? array() as $activity ) {
+			$rows[] = (object) array(
+				'ticket_option_id'   => (int) $activity->ticket_option_id,
+				'ticket_option_name' => (string) $activity->ticket_option_name,
+				'status'             => 'confirmed' === $ticket->status ? (string) $activity->status : 'pending_payment',
+				'ticket_id'          => $ticket_id,
+			);
+		}
+
+		return rest_ensure_response( $this->build_ticket_payload( $ticket, $rows ) );
+	}
+
+	/**
+	 * Shape one ticket for the Audience tab.
+	 *
+	 * @param object   $ticket        Ticket row.
+	 * @param object[] $activity_rows Activity rows of the ticket's holder; only this ticket's are used.
+	 * @return array
+	 */
+	private function build_ticket_payload( $ticket, array $activity_rows ) {
+		$ticket_type_name = null;
+		if ( ! empty( $ticket->ticket_type_id ) && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$ticket_type      = \FairEvents\Models\TicketType::get_by_id( (int) $ticket->ticket_type_id );
+			$ticket_type_name = $ticket_type ? $ticket_type->name : null;
+		}
+
+		$activity_ids           = array();
+		$activity_names         = array();
+		$confirmed_activity_ids = array();
+		foreach ( $activity_rows as $row ) {
+			if ( (int) $row->ticket_id !== (int) $ticket->id ) {
+				continue;
+			}
+			$activity_ids[]   = (int) $row->ticket_option_id;
+			$activity_names[] = (string) $row->ticket_option_name;
+			if ( 'confirmed' === $row->status ) {
+				$confirmed_activity_ids[] = (int) $row->ticket_option_id;
+			}
+		}
+
+		return array(
+			'id'                     => (int) $ticket->id,
+			'reference'              => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
+			'signup_id'              => (int) $ticket->signup_id,
+			'ticket_type_id'         => $ticket->ticket_type_id ? (int) $ticket->ticket_type_id : null,
+			'ticket_type_name'       => $ticket_type_name,
+			'status'                 => (string) $ticket->status,
+			'attended_at'            => $ticket->attended_at,
+			'activity_ids'           => $activity_ids,
+			'activity_names'         => $activity_names,
+			'confirmed_activity_ids' => $confirmed_activity_ids,
 		);
 	}
 

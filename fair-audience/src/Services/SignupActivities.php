@@ -382,7 +382,8 @@ class SignupActivities {
 	 * Recompute `price`/`is_full` on the base-resolved `ticket_options`
 	 * render-context entries for the viewer, and add `addable_options` /
 	 * `current_activity_names` when the viewer is already signed up for this
-	 * event date. Called from SignupHookBridge::enrich_render_context().
+	 * event date, plus `addon_tickets` (id, label) when they hold several
+	 * tickets there and must choose which one receives added activities. Called from SignupHookBridge::enrich_render_context().
 	 *
 	 * @param array    $context        Render context from fair-events' base render.
 	 * @param int|null $participant_id Viewer's participant ID, or null for anonymous.
@@ -391,6 +392,7 @@ class SignupActivities {
 	public static function enrich_render_context( array $context, $participant_id ) {
 		$context['addable_options']        = array();
 		$context['current_activity_names'] = array();
+		$context['addon_tickets']          = array();
 
 		if ( empty( $context['ticket_options'] ) ) {
 			return $context;
@@ -417,6 +419,27 @@ class SignupActivities {
 		$confirmed_option_ids = $signed_row
 			? $event_participant_repository->get_confirmed_option_ids_for_event_participant( (int) $signed_row->id )
 			: array();
+
+		// Added activities go to one of the viewer's tickets. An activity is
+		// addable while at least one of those tickets lacks it; with several
+		// tickets the viewer chooses which one receives it.
+		$addon_tickets = $signed_row ? TicketActivities::addon_tickets( (int) $signed_row->event_date_id, (int) $participant_id ) : array();
+		if ( $addon_tickets ) {
+			$held_by_ticket = \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( wp_list_pluck( $addon_tickets, 'id' ) );
+			$held_by_all    = null;
+			foreach ( $addon_tickets as $position => $ticket ) {
+				$held        = array_map( static fn( $row ) => (int) $row->ticket_option_id, $held_by_ticket[ (int) $ticket->id ] ?? array() );
+				$held_by_all = null === $held_by_all ? $held : array_values( array_intersect( $held_by_all, $held ) );
+
+				if ( count( $addon_tickets ) > 1 ) {
+					$context['addon_tickets'][] = array(
+						'id'    => (int) $ticket->id,
+						'label' => TicketActivities::ticket_label( $ticket, $position + 1 ),
+					);
+				}
+			}
+			$current_option_ids = $held_by_all;
+		}
 
 		// One bulk call resolves every option's discount at once, instead of
 		// re-fetching the event's rules and the participant's group

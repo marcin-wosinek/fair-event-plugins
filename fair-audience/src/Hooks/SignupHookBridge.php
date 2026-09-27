@@ -21,6 +21,7 @@ use FairAudience\Services\EmailService;
 use FairAudience\Services\GroupSignupPricing;
 use FairAudience\Services\SignupActivities;
 use FairAudience\Services\SignupPriceResolver;
+use FairAudience\Services\TicketActivities;
 
 defined( 'WPINC' ) || die;
 
@@ -671,6 +672,19 @@ class SignupHookBridge {
 			echo '</ul>';
 		}
 
+		$addon_tickets = $context['addon_tickets'] ?? array();
+		if ( count( $addon_tickets ) > 1 ) {
+			$select_id = 'fair-events-add-ticket-' . $event_date_id;
+			echo '<div class="form-row fair-events-add-activities-ticket">';
+			echo '<label for="' . esc_attr( $select_id ) . '" class="form-label">' . esc_html__( 'Add to ticket', 'fair-audience' ) . '</label>';
+			echo '<select id="' . esc_attr( $select_id ) . '" name="add_ticket_id" class="form-input" required>';
+			echo '<option value="">' . esc_html__( 'Choose a ticket', 'fair-audience' ) . '</option>';
+			foreach ( $addon_tickets as $addon_ticket ) {
+				echo '<option value="' . esc_attr( (string) $addon_ticket['id'] ) . '">' . esc_html( $addon_ticket['label'] ) . '</option>';
+			}
+			echo '</select></div>';
+		}
+
 		foreach ( $addable_options as $option ) {
 			$is_full      = ! empty( $option['is_full'] );
 			$option_label = $option['name'];
@@ -827,23 +841,20 @@ class SignupHookBridge {
 		}
 
 		// Attach selected activities on both the free and pending_payment
-		// paths, matching the legacy form. Uses $existing (already fetched
-		// above) when the relationship pre-existed, otherwise re-fetches the
-		// row add_participant_to_event() just created.
+		// paths, matching the legacy form. They belong to the ticket this
+		// purchase created (quantity is forced to 1 whenever activities are
+		// selected); the ticket's own status then decides whether they count,
+		// so a failed or lapsed payment releases them with it. Without
+		// per-ticket storage they fall back to the relationship.
 		if ( ! empty( $ticket_selection['ticket_option_ids'] ) && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-			$relationship_for_options = $existing
-				? $existing
-				: $event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant->id );
-			if ( $relationship_for_options ) {
-				$options = array();
-				foreach ( $ticket_selection['ticket_option_ids'] as $option_id ) {
-					$option = \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $option_id );
-					if ( $option ) {
-						$options[] = $option;
-					}
+			$options = array();
+			foreach ( $ticket_selection['ticket_option_ids'] as $option_id ) {
+				$option = \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $option_id );
+				if ( $option ) {
+					$options[] = $option;
 				}
-				$event_participant_repository->add_options( (int) $relationship_for_options->id, $options );
 			}
+			self::attach_purchase_activities( (int) $signup_id, (int) $event_date_id, (int) $participant->id, $options, $event_participant_repository );
 		}
 
 		AudienceSession::set( (int) $participant->id );
@@ -961,7 +972,7 @@ class SignupHookBridge {
 					$options[] = $option;
 				}
 			}
-			$repository->add_options( (int) $event_participant->id, $options );
+			self::attach_purchase_activities( (int) $signup->id, (int) $signup->event_date_id, (int) $signup->participant_id, $options, $repository );
 		}
 
 		$ledger = new EventParticipantTransactionRepository();
@@ -971,6 +982,37 @@ class SignupHookBridge {
 		// a paid signup only reaches "confirmed" here, so this is the sole
 		// place a base-route paid signup's confirmation email gets sent.
 		\FairAudience\Hooks\PaymentHooks::send_signup_confirmation_email( $event_participant, $transaction );
+	}
+
+	/**
+	 * Attach activities chosen with a purchase to the ticket it created, or
+	 * to the participant's relationship when the purchase has no single
+	 * ticket to hold them. Safe to repeat.
+	 *
+	 * @param int                        $signup_id      Signup row ID.
+	 * @param int                        $event_date_id  Event date ID.
+	 * @param int                        $participant_id Participant ID.
+	 * @param array                      $options        TicketOption objects.
+	 * @param EventParticipantRepository $repository     Participant repository.
+	 * @return void
+	 */
+	private static function attach_purchase_activities( $signup_id, $event_date_id, $participant_id, array $options, EventParticipantRepository $repository ) {
+		if ( empty( $options ) ) {
+			return;
+		}
+
+		if ( TicketActivities::available() ) {
+			$tickets = \FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup_id );
+			if ( 1 === count( $tickets ) ) {
+				\FairEvents\Models\EventTicketActivity::confirm( (int) $tickets[0]->id, $options );
+				return;
+			}
+		}
+
+		$relationship = $repository->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		if ( $relationship ) {
+			$repository->add_options( (int) $relationship->id, $options );
+		}
 	}
 
 	/**

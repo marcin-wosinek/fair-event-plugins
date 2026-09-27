@@ -705,7 +705,8 @@ sub-route) expose:
     transaction's line items as their own entries — never folded into the
     ticket line — so the finance ledger names what was bought. Quantity is
     forced to 1 server-side (and client-side) whenever any activity is
-    selected, since activities attach to a single `EventParticipant` row.
+    selected, since the activities attach to the single ticket the purchase
+    creates.
 -   **`fair_events_signup_created` action** — fires
     `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token )`
     after a signup row is persisted through the base create path (once per
@@ -794,7 +795,8 @@ hooks `fair_events_signup_options_error` / `fair_events_signup_option_line_items
 `fair-audience/src/Services/SignupActivities.php`, mirroring
 `GroupSignupPricing.php` from #1242) and, once `link_participant()` creates or
 finds the `EventParticipant` row, attaches the selected `ticket_option_ids`
-via `EventParticipantRepository::add_options()`. The unified block reads a
+to the ticket the purchase created (see "Activities and attendance per
+ticket" below). The unified block reads a
 `participant_token` from the page URL and sends it only through uncached REST
 requests. fair-audience validates it before making that identity authoritative
 for hydration, restriction checks, pricing, and linkage, and refreshes the
@@ -825,6 +827,40 @@ the companion plugin's own operational record (kept unique per
 event-date/participant) union the labels instead. `EventSignup::has_confirmed_signup()`
 exists specifically to guard capacity-release cleanups (e.g. an expiry cron)
 against dropping a still-valid relationship because of this multiplicity.
+
+### Activities and attendance per ticket
+
+Each individual ticket (`fair_events_tickets`) records its own check-in
+(`attended_at`) and activities (`fair_events_ticket_activities`, one row per
+ticket option with a name snapshot, a `confirmed`/`pending_payment` status
+and an add-on hold expiry). fair-events owns the tables and models
+(`EventTicket`, `EventTicketActivity`); fair-audience writes them:
+
+-   **Purchase.** Activities chosen with a get-tickets purchase are confirmed
+    on the ticket it created. The ticket's own status decides whether they
+    count, so a failed or lapsed payment releases them with the ticket.
+-   **Add-ons.** `POST fair-audience/v1/event-signup/add-activities` takes an
+    optional `ticket_id`. With one confirmed ticket on the date it is used
+    automatically; with several, the request must name one (400
+    `ticket_required` otherwise). A paid add-on holds the activity on that
+    ticket and carries `ticket_id` in the transaction metadata through
+    retries and confirmation; the expiry cron releases lapsed holds.
+    Participants without tickets (fair-audience's own signup routes) keep
+    activities on their relationship, as before.
+-   **Admin.** `PUT fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}`
+    (`manage_options`) sets one ticket's `activity_ids` and/or `attended`,
+    returning 404 for a ticket on another event date. Checking in again keeps
+    the first time; `attended: false` clears it. The participants list
+    returns each participant's `tickets`, and `participant_ticket_option_ids`
+    / `attended_at` hold only what is not tied to a ticket.
+-   **History.** Participant-level activities and check-ins recorded before
+    this change are copied onto a ticket by `TicketHistoryBackfill` only when
+    the participant held exactly one ticket on that date; the originals are
+    kept and marked (`ticket_id` on the option row, `attended_ticket_id` on
+    the relationship). Anything else stays at participant scope.
+-   **Capacity.** Until #1697, `count_signups_for_ticket_option()` counts each
+    participant once per event date whether they hold the activity through a
+    ticket or at participant scope.
 
 ## Related Documentation
 

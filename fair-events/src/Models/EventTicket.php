@@ -75,6 +75,114 @@ class EventTicket {
 	}
 
 	/**
+	 * Get a ticket unit by ID.
+	 *
+	 * @param int $id Ticket ID.
+	 * @return object|null
+	 */
+	public static function get_by_id( int $id ) {
+		global $wpdb;
+
+		return $wpdb->get_row(
+			$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', self::table(), $id )
+		);
+	}
+
+	/**
+	 * Unit statuses that no longer admit anyone: the purchase failed or
+	 * lapsed, or the unit was cancelled or refunded.
+	 */
+	const INACTIVE_STATUSES = array( 'failed', 'expired', 'cancelled', 'refunded' );
+
+	/**
+	 * Get the units a participant holds on an event date, oldest first,
+	 * leaving out units that no longer admit anyone.
+	 *
+	 * @param int      $event_date_id  Event date ID.
+	 * @param int      $participant_id Holder participant ID.
+	 * @param string[] $statuses       Only these statuses; empty for every active status.
+	 * @return object[]
+	 */
+	public static function get_held_on_event_date( int $event_date_id, int $participant_id, array $statuses = array() ) {
+		$by_holder = self::get_held_by_participants( $event_date_id, array( $participant_id ), $statuses );
+
+		return $by_holder[ $participant_id ] ?? array();
+	}
+
+	/**
+	 * Get the active units several participants hold on an event date,
+	 * grouped by holder and ordered by signup and position.
+	 *
+	 * @param int      $event_date_id   Event date ID.
+	 * @param int[]    $participant_ids Holder participant IDs.
+	 * @param string[] $statuses        Only these statuses; empty for every active status.
+	 * @return array<int, object[]> Units keyed by holder participant ID.
+	 */
+	public static function get_held_by_participants( int $event_date_id, array $participant_ids, array $statuses = array() ) {
+		global $wpdb;
+
+		$participant_ids = array_values( array_filter( array_map( 'intval', $participant_ids ) ) );
+		if ( ! $participant_ids ) {
+			return array();
+		}
+
+		$holder_placeholders = implode( ', ', array_fill( 0, count( $participant_ids ), '%d' ) );
+		if ( $statuses ) {
+			$status_sql  = 'status IN (' . implode( ', ', array_fill( 0, count( $statuses ), '%s' ) ) . ')';
+			$status_args = array_values( $statuses );
+		} else {
+			$status_sql  = 'status NOT IN (' . implode( ', ', array_fill( 0, count( self::INACTIVE_STATUSES ), '%s' ) ) . ')';
+			$status_args = self::INACTIVE_STATUSES;
+		}
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder lists built above.
+		$units = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE event_date_id = %d AND holder_participant_id IN ( $holder_placeholders ) AND $status_sql ORDER BY signup_id ASC, unit_position ASC",
+				array_merge( array( self::table(), $event_date_id ), $participant_ids, $status_args )
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+
+		$by_holder = array();
+		foreach ( $units as $unit ) {
+			$by_holder[ (int) $unit->holder_participant_id ][] = $unit;
+		}
+
+		return $by_holder;
+	}
+
+	/**
+	 * Record or clear one unit's check-in. Checking in an already checked-in
+	 * unit keeps its first time; clearing sets it to null.
+	 *
+	 * @param int         $ticket_id Ticket ID.
+	 * @param bool        $attended  Whether the holder has arrived.
+	 * @param string|null $at        Site-local check-in time; now when omitted.
+	 * @return bool
+	 */
+	public static function set_attended( int $ticket_id, bool $attended, $at = null ) {
+		global $wpdb;
+
+		if ( $attended ) {
+			$result = $wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i SET attended_at = COALESCE(attended_at, %s) WHERE id = %d',
+					self::table(),
+					$at ? (string) $at : current_time( 'mysql' ),
+					$ticket_id
+				)
+			);
+		} else {
+			$result = $wpdb->query(
+				$wpdb->prepare( 'UPDATE %i SET attended_at = NULL WHERE id = %d', self::table(), $ticket_id )
+			);
+		}
+
+		return false !== $result;
+	}
+
+	/**
 	 * Bring a signup's ticket units in line with its quantity: create any
 	 * missing position and remove positions beyond the quantity. Safe to
 	 * repeat and to run concurrently — the (signup_id, unit_position) unique
@@ -110,6 +218,7 @@ class EventTicket {
 
 		$removed = 0;
 		if ( $stale_ids ) {
+			EventTicketActivity::delete_by_ticket_ids( $stale_ids );
 			$removed = (int) $wpdb->query(
 				$wpdb->prepare(
 					'DELETE FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $stale_ids ), '%d' ) ) . ')',
@@ -333,6 +442,10 @@ class EventTicket {
 	 */
 	public static function delete_by_signup_id( int $signup_id ) {
 		global $wpdb;
+
+		EventTicketActivity::delete_by_ticket_ids(
+			array_map( 'intval', wp_list_pluck( self::get_by_signup_id( $signup_id ), 'id' ) )
+		);
 
 		return $wpdb->query(
 			$wpdb->prepare( 'DELETE FROM %i WHERE signup_id = %d', self::table(), $signup_id )

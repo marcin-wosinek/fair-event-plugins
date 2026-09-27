@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.37.0';
+	const DB_VERSION = '3.38.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -465,7 +465,8 @@ class Schema {
 	 * rows, positioned 1 through 3; the (signup_id, unit_position) key makes
 	 * unit creation safe to retry. The signup remains the purchase and
 	 * payment record; the purchaser stays tied to that purchase while the
-	 * holder can later change on transfer.
+	 * holder can later change on transfer. attended_at is the unit's own
+	 * check-in time, independent of its siblings.
 	 *
 	 * @return string SQL statement for creating the table.
 	 */
@@ -485,6 +486,7 @@ class Schema {
 			status VARCHAR(20) NOT NULL DEFAULT 'confirmed',
 			purchaser_participant_id BIGINT UNSIGNED DEFAULT NULL,
 			holder_participant_id BIGINT UNSIGNED DEFAULT NULL,
+			attended_at DATETIME DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
@@ -493,6 +495,39 @@ class Schema {
 			KEY idx_event_date_id (event_date_id),
 			KEY idx_purchaser_participant_id (purchaser_participant_id),
 			KEY idx_holder_participant_id (holder_participant_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_ticket_activities table
+	 *
+	 * One row per activity (ticket option) selected for an individual
+	 * ticket. The option name is snapshotted so the selection stays readable
+	 * after the option is renamed or deleted. A pending_payment row holds its
+	 * place until expires_at while an add-on payment is in flight; the
+	 * ticket's own status decides whether a selection made at purchase
+	 * counts.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_ticket_activities_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_ticket_activities';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			ticket_id BIGINT UNSIGNED NOT NULL,
+			ticket_option_id BIGINT UNSIGNED NOT NULL,
+			ticket_option_name VARCHAR(255) NOT NULL DEFAULT '',
+			status VARCHAR(20) NOT NULL DEFAULT 'confirmed',
+			expires_at DATETIME DEFAULT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_ticket_option (ticket_id, ticket_option_id),
+			KEY idx_ticket_option_id (ticket_option_id),
+			KEY idx_status_expires (status, expires_at)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 
