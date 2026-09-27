@@ -348,6 +348,16 @@ class AdminHooks {
 			true
 		);
 
+		$style_file = $plugin_dir . 'build/admin/manage-event-audience-tab/style-index.css';
+		if ( file_exists( $style_file ) ) {
+			wp_enqueue_style(
+				'fair-audience-manage-event-audience-tab',
+				plugin_dir_url( dirname( __DIR__ ) ) . 'build/admin/manage-event-audience-tab/style-index.css',
+				array( 'wp-components' ),
+				$asset_file['version']
+			);
+		}
+
 		wp_set_script_translations(
 			'fair-audience-manage-event-audience-tab',
 			'fair-audience',
