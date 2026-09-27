@@ -32,7 +32,8 @@ class EventCapacityOverride {
 	 * Record an override.
 	 *
 	 * @param array $data Keys: signup_id, action, from_event_date_id, to_event_date_id,
-	 *                    from_ticket_type_id, to_ticket_type_id, ticket_count, taken,
+	 *                    from_ticket_type_id, to_ticket_type_id, ticket_id,
+	 *                    ticket_option_id, ticket_option_name, ticket_count, taken,
 	 *                    capacity, reason, user_id.
 	 * @return int|false Inserted ID or false on failure.
 	 */
@@ -41,7 +42,7 @@ class EventCapacityOverride {
 
 		$inserted = $wpdb->query(
 			$wpdb->prepare(
-				'INSERT INTO %i (signup_id, action, from_event_date_id, to_event_date_id, from_ticket_type_id, to_ticket_type_id, ticket_count, taken, capacity, reason, user_id, created_at) VALUES (%d, %s, NULLIF(%d, 0), NULLIF(%d, 0), NULLIF(%d, 0), NULLIF(%d, 0), %d, %d, %d, %s, %d, %s)',
+				'INSERT INTO %i (signup_id, action, from_event_date_id, to_event_date_id, from_ticket_type_id, to_ticket_type_id, ticket_id, ticket_option_id, ticket_option_name, ticket_count, taken, capacity, reason, user_id, created_at) VALUES (%d, %s, NULLIF(%d, 0), NULLIF(%d, 0), NULLIF(%d, 0), NULLIF(%d, 0), NULLIF(%d, 0), NULLIF(%d, 0), %s, %d, %d, %d, %s, %d, %s)',
 				self::table(),
 				(int) $data['signup_id'],
 				(string) $data['action'],
@@ -49,6 +50,9 @@ class EventCapacityOverride {
 				(int) ( $data['to_event_date_id'] ?? 0 ),
 				(int) ( $data['from_ticket_type_id'] ?? 0 ),
 				(int) ( $data['to_ticket_type_id'] ?? 0 ),
+				(int) ( $data['ticket_id'] ?? 0 ),
+				(int) ( $data['ticket_option_id'] ?? 0 ),
+				(string) ( $data['ticket_option_name'] ?? '' ),
 				(int) ( $data['ticket_count'] ?? 0 ),
 				(int) ( $data['taken'] ?? 0 ),
 				(int) ( $data['capacity'] ?? 0 ),

@@ -159,6 +159,52 @@ add_action(
 			)
 		);
 
+		// Fail an add-on payment as the payment webhook would.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/ticket-activities/fail-addon',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => $admin_only,
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( absint( $request->get_param( 'transaction_id' ) ) );
+					if ( ! $transaction ) {
+						return new WP_Error( 'no_transaction', 'Transaction not found.', array( 'status' => 400 ) );
+					}
+
+					\FairAudience\Hooks\PaymentHooks::handle_activities_added_failed( (object) array(), $transaction );
+
+					return rest_ensure_response( array( 'failed' => true ) );
+				},
+			)
+		);
+
+		// Let a ticket's add-on holds run out without the cleanup running,
+		// as between the expiry and the next cron run.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/ticket-activities/expire-addon',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => $admin_only,
+				'callback'            => static function ( WP_REST_Request $request ) {
+					global $wpdb;
+
+					$wpdb->query(
+						$wpdb->prepare(
+							'UPDATE %i SET expires_at = %s WHERE ticket_id = %d AND status = %s',
+							\FairEvents\Models\EventTicketActivity::table(),
+							gmdate( 'Y-m-d H:i:s', time() - MINUTE_IN_SECONDS ),
+							absint( $request->get_param( 'ticket_id' ) ),
+							'pending_payment'
+						)
+					);
+
+					return rest_ensure_response( array( 'expired' => true ) );
+				},
+			)
+		);
+
 		// Let a ticket's add-on holds run out and run the expiry cleanup.
 		register_rest_route(
 			'fair-e2e/v1',

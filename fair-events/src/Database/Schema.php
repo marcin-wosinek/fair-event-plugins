@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.38.0';
+	const DB_VERSION = '3.39.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -506,7 +506,8 @@ class Schema {
 	 * after the option is renamed or deleted. A pending_payment row holds its
 	 * place until expires_at while an add-on payment is in flight; the
 	 * ticket's own status decides whether a selection made at purchase
-	 * counts.
+	 * counts. over_capacity flags a selection that went past the activity's
+	 * limit through an administrator's override or a late payment.
 	 *
 	 * @return string SQL statement for creating the table.
 	 */
@@ -523,6 +524,7 @@ class Schema {
 			ticket_option_name VARCHAR(255) NOT NULL DEFAULT '',
 			status VARCHAR(20) NOT NULL DEFAULT 'confirmed',
 			expires_at DATETIME DEFAULT NULL,
+			over_capacity TINYINT(1) NOT NULL DEFAULT 0,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_ticket_option (ticket_id, ticket_option_id),
@@ -534,9 +536,10 @@ class Schema {
 	/**
 	 * Get the SQL for creating the fair_events_capacity_overrides table
 	 *
-	 * One row per administrator edit that took a signup past an event-date
-	 * or ticket-type limit, with the reason given. Rows go when their signup
-	 * is deleted.
+	 * One row per administrator edit that took a signup past an event-date,
+	 * ticket-type or activity limit, with the reason given. An activity
+	 * override also names the ticket and the activity. Rows go when their
+	 * signup is deleted.
 	 *
 	 * @return string SQL statement for creating the table.
 	 */
@@ -554,6 +557,9 @@ class Schema {
 			to_event_date_id BIGINT UNSIGNED DEFAULT NULL,
 			from_ticket_type_id BIGINT UNSIGNED DEFAULT NULL,
 			to_ticket_type_id BIGINT UNSIGNED DEFAULT NULL,
+			ticket_id BIGINT UNSIGNED DEFAULT NULL,
+			ticket_option_id BIGINT UNSIGNED DEFAULT NULL,
+			ticket_option_name VARCHAR(255) NOT NULL DEFAULT '',
 			ticket_count INT UNSIGNED NOT NULL DEFAULT 0,
 			taken INT UNSIGNED NOT NULL DEFAULT 0,
 			capacity INT UNSIGNED NOT NULL DEFAULT 0,

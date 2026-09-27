@@ -213,24 +213,30 @@ class EventParticipantsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'update_ticket' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
-						'event_date_id' => array(
+						'event_date_id'   => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
-						'ticket_id'     => array(
+						'ticket_id'       => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
-						'activity_ids'  => array(
+						'activity_ids'    => array(
 							'type'     => 'array',
 							'required' => false,
 							'items'    => array(
 								'type' => 'integer',
 							),
 						),
-						'attended'      => array(
+						'attended'        => array(
 							'type'     => 'boolean',
 							'required' => false,
+						),
+						// Confirms adding an activity past its limit.
+						'override_reason' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
 						),
 					),
 				),
@@ -989,12 +995,21 @@ class EventParticipantsController extends WP_REST_Controller {
 				$selected[] = $catalogue[ $option_id ];
 			}
 
-			if ( ! \FairEvents\Models\EventTicketActivity::replace_for_ticket( $ticket_id, $selected ) ) {
-				return new WP_Error(
-					'update_failed',
-					__( 'Failed to update the ticket’s activities.', 'fair-audience' ),
-					array( 'status' => 500 )
-				);
+			$reason = null;
+			if ( $request->has_param( 'override_reason' ) ) {
+				$reason = trim( (string) $request->get_param( 'override_reason' ) );
+				if ( '' === $reason ) {
+					return new WP_Error(
+						'override_reason_required',
+						__( 'Enter a reason for going over capacity.', 'fair-audience' ),
+						array( 'status' => 400 )
+					);
+				}
+			}
+
+			$saved = $this->save_ticket_activities( $ticket, $selected, $reason );
+			if ( is_wp_error( $saved ) ) {
+				return $saved;
 			}
 		}
 
@@ -1014,10 +1029,126 @@ class EventParticipantsController extends WP_REST_Controller {
 				'ticket_option_name' => (string) $activity->ticket_option_name,
 				'status'             => 'confirmed' === $ticket->status ? (string) $activity->status : 'pending_payment',
 				'ticket_id'          => $ticket_id,
+				'over_capacity'      => ! empty( $activity->over_capacity ),
 			);
 		}
 
 		return rest_ensure_response( $this->build_ticket_payload( $ticket, $rows ) );
+	}
+
+	/**
+	 * Replace a ticket's activities with an administrator's selection. Only
+	 * activities the ticket does not already hold need a place, so saving
+	 * an unchanged selection never asks for another one. The places are
+	 * checked and the selection written under fair-events' capacity lock; an
+	 * activity that would go past its limit is refused with a 409 carrying
+	 * the projection, unless a reason is given, in which case the change is
+	 * saved, flagged over capacity and recorded in the override audit.
+	 *
+	 * @param object      $ticket   Ticket row.
+	 * @param object[]    $selected TicketOption objects the ticket should hold.
+	 * @param string|null $reason   Override reason, or null when none was given.
+	 * @return true|WP_Error
+	 */
+	private function save_ticket_activities( $ticket, array $selected, $reason ) {
+		$ticket_id = (int) $ticket->id;
+		$failed    = new WP_Error(
+			'update_failed',
+			__( 'Failed to update the ticket’s activities.', 'fair-audience' ),
+			array( 'status' => 500 )
+		);
+
+		if ( ! method_exists( \FairEvents\Services\TicketCapacity::class, 'activity_projections' ) ) {
+			return \FairEvents\Models\EventTicketActivity::replace_for_ticket( $ticket_id, $selected ) ? true : $failed;
+		}
+
+		$held_ids = \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( $ticket_id ) );
+		$added    = array_values(
+			array_filter(
+				$selected,
+				static fn( $option ) => ! in_array( (int) $option->id, $held_ids, true )
+			)
+		);
+		$demand   = array(
+			'event_date_id'  => (int) $ticket->event_date_id,
+			'ticket_type_id' => (int) $ticket->ticket_type_id,
+			'quantity'       => 0,
+			'option_ids'     => array_map( static fn( $option ) => (int) $option->id, $added ),
+		);
+
+		$result = \FairEvents\Services\TicketCapacity::with_capacity_lock(
+			array( $demand ),
+			static function () use ( $ticket, $ticket_id, $selected, $added, $demand, $reason, $failed ) {
+				$exceeding = array_values(
+					array_filter(
+						\FairEvents\Services\TicketCapacity::activity_projections( array( $demand ) ),
+						array( \FairEvents\Services\TicketCapacity::class, 'projection_exceeds' )
+					)
+				);
+
+				if ( $exceeding && null === $reason ) {
+					return new WP_Error(
+						'capacity_exceeded',
+						sprintf(
+							/* translators: 1: activity name, 2: places taken after the change, 3: capacity */
+							_n(
+								'%1$s would have %2$d of %3$d place taken.',
+								'%1$s would have %2$d of %3$d places taken.',
+								(int) $exceeding[0]['capacity'],
+								'fair-audience'
+							),
+							$exceeding[0]['label'],
+							$exceeding[0]['after'],
+							$exceeding[0]['capacity']
+						),
+						array(
+							'status'      => 409,
+							'projection'  => $exceeding[0],
+							'projections' => $exceeding,
+						)
+					);
+				}
+
+				// Newly added activities are confirmed, including one whose
+				// earlier add-on hold had lapsed.
+				if ( ! \FairEvents\Models\EventTicketActivity::replace_for_ticket( $ticket_id, $selected )
+					|| ! \FairEvents\Models\EventTicketActivity::confirm( $ticket_id, $added )
+				) {
+					return $failed;
+				}
+
+				foreach ( $exceeding as $exceeded ) {
+					\FairEvents\Models\EventTicketActivity::mark_over_capacity( $ticket_id, array( (int) $exceeded['id'] ) );
+					\FairEvents\Models\EventSignup::mark_over_capacity( (int) $ticket->signup_id );
+
+					$recorded = \FairEvents\Models\EventCapacityOverride::create(
+						array(
+							'signup_id'           => (int) $ticket->signup_id,
+							'action'              => 'activity',
+							'from_event_date_id'  => (int) $ticket->event_date_id,
+							'to_event_date_id'    => (int) $exceeded['event_date_id'],
+							'from_ticket_type_id' => (int) $ticket->ticket_type_id,
+							'to_ticket_type_id'   => (int) $ticket->ticket_type_id,
+							'ticket_id'           => $ticket_id,
+							'ticket_option_id'    => (int) $exceeded['id'],
+							'ticket_option_name'  => $exceeded['label'],
+							'ticket_count'        => (int) $exceeded['after'] - (int) $exceeded['taken'],
+							'taken'               => (int) $exceeded['taken'],
+							'capacity'            => (int) $exceeded['capacity'],
+							'reason'              => $reason,
+							'user_id'             => get_current_user_id(),
+						)
+					);
+					if ( ! $recorded ) {
+						return $failed;
+					}
+				}
+
+				return true;
+			}
+		);
+
+		return $result;
 	}
 
 	/**
@@ -1034,9 +1165,10 @@ class EventParticipantsController extends WP_REST_Controller {
 			$ticket_type_name = $ticket_type ? $ticket_type->name : null;
 		}
 
-		$activity_ids           = array();
-		$activity_names         = array();
-		$confirmed_activity_ids = array();
+		$activity_ids               = array();
+		$activity_names             = array();
+		$confirmed_activity_ids     = array();
+		$over_capacity_activity_ids = array();
 		foreach ( $activity_rows as $row ) {
 			if ( (int) $row->ticket_id !== (int) $ticket->id ) {
 				continue;
@@ -1046,19 +1178,23 @@ class EventParticipantsController extends WP_REST_Controller {
 			if ( 'confirmed' === $row->status ) {
 				$confirmed_activity_ids[] = (int) $row->ticket_option_id;
 			}
+			if ( ! empty( $row->over_capacity ) ) {
+				$over_capacity_activity_ids[] = (int) $row->ticket_option_id;
+			}
 		}
 
 		return array(
-			'id'                     => (int) $ticket->id,
-			'reference'              => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
-			'signup_id'              => (int) $ticket->signup_id,
-			'ticket_type_id'         => $ticket->ticket_type_id ? (int) $ticket->ticket_type_id : null,
-			'ticket_type_name'       => $ticket_type_name,
-			'status'                 => (string) $ticket->status,
-			'attended_at'            => $ticket->attended_at,
-			'activity_ids'           => $activity_ids,
-			'activity_names'         => $activity_names,
-			'confirmed_activity_ids' => $confirmed_activity_ids,
+			'id'                         => (int) $ticket->id,
+			'reference'                  => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
+			'signup_id'                  => (int) $ticket->signup_id,
+			'ticket_type_id'             => $ticket->ticket_type_id ? (int) $ticket->ticket_type_id : null,
+			'ticket_type_name'           => $ticket_type_name,
+			'status'                     => (string) $ticket->status,
+			'attended_at'                => $ticket->attended_at,
+			'activity_ids'               => $activity_ids,
+			'activity_names'             => $activity_names,
+			'confirmed_activity_ids'     => $confirmed_activity_ids,
+			'over_capacity_activity_ids' => $over_capacity_activity_ids,
 		);
 	}
 

@@ -551,7 +551,7 @@ if ( $pricing_event_date_id && class_exists( \FairEventsExperimental\Models\Tick
 
 		$is_full = false;
 		if ( null !== $opt->capacity ) {
-			$reserved = $event_participant_repository->count_signups_for_ticket_option( (int) $opt->id );
+			$reserved = $event_participant_repository->count_signups_for_ticket_option( (int) $opt->id, (int) $event_date_id );
 			if ( $reserved >= (int) $opt->capacity ) {
 				$is_full = true;
 			}

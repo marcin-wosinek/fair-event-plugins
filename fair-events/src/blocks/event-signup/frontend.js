@@ -669,7 +669,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const quantityField = form.querySelector( 'input[name="quantity"]' );
 		if ( quantityField ) {
 			quantityField.addEventListener( 'input', function () {
-				updateCheckoutTotal( form );
+				refreshSignupState( form );
 			} );
 		}
 
@@ -746,9 +746,202 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 */
 	function refreshSignupState( form ) {
 		updateInstancePicker( form );
+		syncTicketActivityFieldsets( form );
 		updateTicketOptions( form );
 		updateSubmitGate( form );
 		updateCheckoutTotal( form );
+	}
+
+	/**
+	 * The server-rendered activities fieldset: the first ticket's selection.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {HTMLElement|null} The fieldset, if present.
+	 */
+	function getBaseActivityFieldset( form ) {
+		return form.querySelector(
+			'.fair-events-ticket-options:not(.fair-events-ticket-options-copy)'
+		);
+	}
+
+	/**
+	 * Every activities fieldset in ticket order: the first ticket's, then one
+	 * copy for each further ticket.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {HTMLElement[]} Fieldsets.
+	 */
+	function getActivityFieldsets( form ) {
+		const base = getBaseActivityFieldset( form );
+		if ( ! base ) {
+			return [];
+		}
+		return [
+			base,
+			...form.querySelectorAll( '.fair-events-ticket-options-copy' ),
+		];
+	}
+
+	/**
+	 * Number of tickets that each need their own activity selection.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {number} Ticket count (1 when activities are not offered).
+	 */
+	function getActivityTicketCount( form ) {
+		if (
+			! hasActivityOptions( form ) ||
+			! activitiesEnabled( form ) ||
+			isMultipleInstancesSelected( form )
+		) {
+			return 1;
+		}
+		const quantityField = form.querySelector( 'input[name="quantity"]' );
+		return quantityField
+			? Math.max(
+					1,
+					Math.min( 10, parseInt( quantityField.value, 10 ) || 1 )
+			  )
+			: 1;
+	}
+
+	/**
+	 * Give every ticket its own activities fieldset (#1697): the rendered
+	 * fieldset holds the first ticket's selection, and a copy is added for
+	 * each further ticket, with a control that applies the first ticket's
+	 * selection to all of them. A selection is never copied silently.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function syncTicketActivityFieldsets( form ) {
+		const base = getBaseActivityFieldset( form );
+		let copies = form.querySelector(
+			'.fair-events-ticket-activity-copies'
+		);
+
+		// A viewer-context swap replaces the rendered fieldset; copies of the
+		// previous one are rebuilt from the new one.
+		if ( copies && ( ! base || copies.fairEventsBase !== base ) ) {
+			copies.remove();
+			copies = null;
+		}
+		if ( ! base ) {
+			return;
+		}
+
+		const legend = base.querySelector( 'legend' );
+		if ( legend && legend.dataset.baseText === undefined ) {
+			legend.dataset.baseText = legend.textContent;
+		}
+
+		const count = getActivityTicketCount( form );
+		if ( ! copies && count > 1 ) {
+			copies = document.createElement( 'div' );
+			copies.className = 'fair-events-ticket-activity-copies';
+			copies.fairEventsBase = base;
+
+			const apply = document.createElement( 'button' );
+			apply.type = 'button';
+			apply.className = 'fair-events-ticket-activities-apply-all';
+			apply.textContent = __(
+				'Use the first ticket’s activities for all tickets',
+				'fair-events'
+			);
+			apply.addEventListener( 'click', function () {
+				applyFirstTicketActivities( form );
+			} );
+			copies.appendChild( apply );
+
+			( base.closest( '.form-row' ) || base ).after( copies );
+		}
+
+		if ( copies ) {
+			const existing = copies.querySelectorAll(
+				'.fair-events-ticket-options-copy'
+			);
+			for ( let index = existing.length + 1; index < count; index++ ) {
+				copies.appendChild(
+					createActivityFieldsetCopy( form, base, index )
+				);
+			}
+			Array.from( existing )
+				.slice( Math.max( 0, count - 1 ) )
+				.forEach( ( copy ) => copy.remove() );
+			copies.style.display = count > 1 ? '' : 'none';
+		}
+
+		getActivityFieldsets( form ).forEach( function ( fieldset, index ) {
+			const fieldsetLegend = fieldset.querySelector( 'legend' );
+			if ( ! fieldsetLegend ) {
+				return;
+			}
+			fieldsetLegend.textContent =
+				count > 1
+					? sprintf(
+							/* translators: %d: ticket number within the purchase */
+							__( 'Ticket %d: select activities', 'fair-events' ),
+							index + 1
+					  )
+					: legend?.dataset.baseText ?? fieldsetLegend.textContent;
+		} );
+	}
+
+	/**
+	 * Copy the rendered activities fieldset for a further ticket, with its
+	 * own input names and IDs and nothing selected.
+	 * @param {HTMLFormElement} form  The get-tickets form.
+	 * @param {HTMLElement}     base  The rendered fieldset.
+	 * @param {number}          index Zero-based ticket index (1 or more).
+	 * @return {HTMLElement} The copy.
+	 */
+	function createActivityFieldsetCopy( form, base, index ) {
+		const copy = base.cloneNode( true );
+		copy.classList.add( 'fair-events-ticket-options-copy' );
+		copy.dataset.ticketIndex = String( index );
+		copy.querySelectorAll( 'input[type="checkbox"]' ).forEach(
+			function ( input ) {
+				input.checked = false;
+				input.name = `ticket_activities_${ index }[]`;
+				if ( input.id ) {
+					const label = copy.querySelector(
+						`label[for="${ input.id }"]`
+					);
+					input.id = `${ input.id }-ticket-${ index + 1 }`;
+					if ( label ) {
+						label.htmlFor = input.id;
+					}
+				}
+				input.addEventListener( 'change', function () {
+					refreshSignupState( form );
+				} );
+			}
+		);
+		return copy;
+	}
+
+	/**
+	 * Select the first ticket's activities on every other ticket, leaving
+	 * out any activity another ticket cannot take (full or past a maximum).
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function applyFirstTicketActivities( form ) {
+		const [ first, ...others ] = getActivityFieldsets( form );
+		if ( ! first ) {
+			return;
+		}
+		const chosen = Array.from(
+			first.querySelectorAll( 'input[type="checkbox"]:checked' )
+		).map( ( input ) => input.value );
+		others.forEach( function ( fieldset ) {
+			fieldset
+				.querySelectorAll( 'input[type="checkbox"]' )
+				.forEach( function ( input ) {
+					const permanentlyFull = input
+						.closest( 'label' )
+						?.classList.contains(
+							'fair-events-ticket-option-full'
+						);
+					input.checked =
+						! permanentlyFull && chosen.includes( input.value );
+				} );
+		} );
+		refreshSignupState( form );
 	}
 
 	/**
@@ -785,11 +978,16 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		}
 
 		const optionPrices = activitiesEnabled( form )
-			? Array.from(
-					form.querySelectorAll(
-						'input[name="ticket_option_ids[]"]:checked'
+			? getActivityFieldsets( form ).flatMap( ( fieldset ) =>
+					Array.from(
+						fieldset.querySelectorAll(
+							'input[type="checkbox"]:checked'
+						)
+					).map(
+						( input ) =>
+							parseFloat( input.dataset.optionPrice ) || 0
 					)
-			  ).map( ( input ) => parseFloat( input.dataset.optionPrice ) || 0 )
+			  )
 			: [];
 
 		const total = computeTicketTotal( { unitPrice, count, optionPrices } );
@@ -952,9 +1150,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 	/**
 	 * Whether the event date has an activities (ticket options) fieldset at
-	 * all — used to pin quantity to 1, same treatment 'multiple_instances'
-	 * ticket types get, since activities attach to a single EventParticipant
-	 * row.
+	 * all.
 	 * @param {HTMLFormElement} form The get-tickets form.
 	 * @return {boolean} True when an activities fieldset is present.
 	 */
@@ -1009,10 +1205,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		if ( ! effectiveMin ) {
 			return true;
 		}
-		const checkedCount = form.querySelectorAll(
-			'input[name="ticket_option_ids[]"]:checked'
-		).length;
-		return checkedCount >= effectiveMin;
+		return getActivityFieldsets( form ).every(
+			( fieldset ) =>
+				fieldset.querySelectorAll( 'input[type="checkbox"]:checked' )
+					.length >= effectiveMin
+		);
 	}
 
 	/**
@@ -1039,25 +1236,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 	/**
 	 * Disable the submit button until both the instance and activity
-	 * minimums (independent gates that must both hold) are satisfied. Also
-	 * pins quantity to 1 whenever activities are configured, since
-	 * updateInstancePicker() only knows about the 'multiple_instances' case.
+	 * minimums (independent gates that must both hold) are satisfied.
 	 * @param {HTMLFormElement} form The get-tickets form.
 	 */
 	function updateSubmitGate( form ) {
-		const quantityRow = form.querySelector( '.fair-events-quantity-row' );
-		const quantityField = form.querySelector( 'input[name="quantity"]' );
-		if (
-			hasActivityOptions( form ) &&
-			! isMultipleInstancesSelected( form ) &&
-			quantityField
-		) {
-			if ( quantityRow ) {
-				quantityRow.style.display = 'none';
-			}
-			quantityField.value = '1';
-		}
-
 		const submitButton = form.querySelector( 'button[type="submit"]' );
 		if ( ! submitButton ) {
 			return;
@@ -1075,11 +1257,23 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 * @param {HTMLFormElement} form The get-tickets form.
 	 */
 	function updateTicketOptions( form ) {
-		const fieldset = form.querySelector( '.fair-events-ticket-options' );
-		if ( ! fieldset ) {
-			return;
-		}
-		const row = fieldset.closest( '.form-row' ) || fieldset;
+		getActivityFieldsets( form ).forEach( function ( fieldset ) {
+			updateTicketOptionsFieldset( form, fieldset );
+		} );
+	}
+
+	/**
+	 * Keep one ticket's activities fieldset in line with the selected ticket
+	 * type: visibility, selection bounds, hints and add-on price tags.
+	 * @param {HTMLFormElement} form     The get-tickets form.
+	 * @param {HTMLElement}     fieldset One ticket's activities fieldset.
+	 */
+	function updateTicketOptionsFieldset( form, fieldset ) {
+		const row = fieldset.classList.contains(
+			'fair-events-ticket-options-copy'
+		)
+			? fieldset
+			: fieldset.closest( '.form-row' ) || fieldset;
 
 		const hidden = ! activitiesEnabled( form );
 		row.style.display = hidden ? 'none' : '';
@@ -1094,7 +1288,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const effectiveMin = getEffectiveActivityMinimum( form );
 		const effectiveMax = getEffectiveActivityMaximum( form );
 		let checkedOptions = fieldset.querySelectorAll(
-			'input[name="ticket_option_ids[]"]:checked'
+			'input[type="checkbox"]:checked'
 		);
 		if ( effectiveMax !== null && checkedOptions.length > effectiveMax ) {
 			Array.from( checkedOptions )
@@ -1103,12 +1297,12 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 					input.checked = false;
 				} );
 			checkedOptions = fieldset.querySelectorAll(
-				'input[name="ticket_option_ids[]"]:checked'
+				'input[type="checkbox"]:checked'
 			);
 		}
 
 		const selectableCount = fieldset.querySelectorAll(
-			'label:not(.fair-events-ticket-option-full) input[name="ticket_option_ids[]"]'
+			'label:not(.fair-events-ticket-option-full) input[type="checkbox"]'
 		).length;
 		const impossible = ! hidden && effectiveMin > selectableCount;
 
@@ -1162,7 +1356,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		}
 
 		fieldset
-			.querySelectorAll( 'input[name="ticket_option_ids[]"]' )
+			.querySelectorAll( 'input[type="checkbox"]' )
 			.forEach( function ( input ) {
 				const permanentlyFull = input
 					.closest( 'label' )
@@ -1178,7 +1372,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			! impossible &&
 			( effectiveMin === 0 || checkedOptions.length >= effectiveMin );
 		fieldset
-			.querySelectorAll( 'input[name="ticket_option_ids[]"]' )
+			.querySelectorAll( 'input[type="checkbox"]' )
 			.forEach( function ( input ) {
 				const label = input.closest( 'label' );
 				const addon = label
@@ -1623,12 +1817,22 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			hasActivityOptions( form ) &&
 			! isMultipleInstancesSelected( form )
 		) {
-			const optionInputs = form.querySelectorAll(
-				'input[name="ticket_option_ids[]"]:checked'
-			);
-			data.ticket_option_ids = Array.from( optionInputs ).map( ( i ) =>
-				parseInt( i.value, 10 )
-			);
+			// Several tickets send one selection each; a single ticket keeps
+			// the flat list.
+			const selections = getActivityFieldsets( form )
+				.slice( 0, getActivityTicketCount( form ) )
+				.map( ( fieldset ) =>
+					Array.from(
+						fieldset.querySelectorAll(
+							'input[type="checkbox"]:checked'
+						)
+					).map( ( i ) => parseInt( i.value, 10 ) )
+				);
+			if ( selections.length > 1 ) {
+				data.ticket_activities = selections;
+			} else {
+				data.ticket_option_ids = selections[ 0 ] || [];
+			}
 		}
 
 		const mailingField = form.querySelector(

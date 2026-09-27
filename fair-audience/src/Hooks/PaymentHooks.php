@@ -35,6 +35,7 @@ class PaymentHooks {
 		add_action( 'fair_payment_paid', array( static::class, 'handle_signup_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_signup_failed' ), 10, 2 );
 		add_action( 'fair_payment_paid', array( static::class, 'handle_activities_added_paid' ), 10, 2 );
+		add_action( 'fair_payment_failed', array( static::class, 'handle_activities_added_failed' ), 10, 2 );
 		add_action( 'fair_payment_paid', array( static::class, 'handle_series_upgrade_paid' ), 10, 2 );
 
 		add_action( 'fair_audience_event_signup_paid', array( static::class, 'send_signup_confirmation_email' ), 10, 2 );
@@ -608,12 +609,102 @@ class PaymentHooks {
 			&& (int) $ticket->holder_participant_id === (int) $event_participant->participant_id
 			&& (int) $ticket->event_date_id === (int) $event_participant->event_date_id
 		) {
-			\FairEvents\Models\EventTicketActivity::confirm( $ticket_id, $options );
+			self::confirm_ticket_addon( $ticket, $options );
 		} else {
 			$repo->add_options( $event_participant_id, $options );
 		}
 
 		do_action( 'fair_audience_event_activities_added', $event_participant, $transaction, $option_ids );
+	}
+
+	/**
+	 * Confirm a paid add-on on its ticket. The payment is always honored.
+	 * Activities whose hold is still running keep their place; a hold that
+	 * already lapsed released its place, so those activities are rechecked
+	 * under the capacity lock, and any that went past the activity's limit
+	 * meanwhile are flagged over capacity together with the ticket's signup.
+	 *
+	 * @param object $ticket  Ticket row.
+	 * @param array  $options Options as arrays with `id` and `name` (see resolve_option_rows()).
+	 * @return void
+	 */
+	private static function confirm_ticket_addon( $ticket, array $options ) {
+		$ticket_id = (int) $ticket->id;
+		$held_ids  = \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( $ticket_id ) );
+		$lapsed    = array_values(
+			array_filter(
+				$options,
+				static fn( $option ) => ! in_array( (int) $option['id'], $held_ids, true )
+			)
+		);
+
+		if ( ! $lapsed || ! method_exists( \FairEvents\Services\TicketCapacity::class, 'count_ticket_option' ) ) {
+			\FairEvents\Models\EventTicketActivity::confirm( $ticket_id, $options );
+			return;
+		}
+
+		$demand = array(
+			'event_date_id'  => (int) $ticket->event_date_id,
+			'ticket_type_id' => (int) $ticket->ticket_type_id,
+			'quantity'       => 0,
+			'option_ids'     => array_map( static fn( $option ) => (int) $option['id'], $lapsed ),
+		);
+
+		\FairEvents\Services\TicketCapacity::with_capacity_lock(
+			array( $demand ),
+			static function ( $shortage ) use ( $ticket, $ticket_id, $options, $demand ) {
+				$full_option_ids = array();
+				if ( $shortage ) {
+					foreach ( \FairEvents\Services\TicketCapacity::find_shortages( \FairEvents\Services\TicketCapacity::places_needed( array( $demand ) ) ) as $found ) {
+						$full_option_ids[] = (int) $found['id'];
+					}
+				}
+
+				\FairEvents\Models\EventTicketActivity::confirm( $ticket_id, $options );
+				if ( $full_option_ids ) {
+					\FairEvents\Models\EventTicketActivity::mark_over_capacity( $ticket_id, $full_option_ids );
+					\FairEvents\Models\EventSignup::mark_over_capacity( (int) $ticket->signup_id );
+				}
+
+				return true;
+			}
+		);
+	}
+
+	/**
+	 * Release an add-on's holds as soon as its payment fails, is cancelled
+	 * or expires, instead of waiting for the hold to lapse. Only the target
+	 * ticket's (or relationship's) holds for this add-on's activities are
+	 * released; confirmed activities and the base signup stay untouched.
+	 *
+	 * @param object $payment     Mollie payment object.
+	 * @param object $transaction Transaction row from fair-payments-connector.
+	 */
+	public static function handle_activities_added_failed( $payment, $transaction ) {
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		if ( empty( $metadata['source'] ) || 'fair-audience-activity-addon' !== $metadata['source'] ) {
+			return;
+		}
+
+		$option_ids = isset( $metadata['ticket_option_ids'] ) && is_array( $metadata['ticket_option_ids'] )
+			? array_map( 'intval', $metadata['ticket_option_ids'] )
+			: array();
+		if ( ! $option_ids ) {
+			return;
+		}
+
+		$ticket_id = isset( $metadata['ticket_id'] ) ? (int) $metadata['ticket_id'] : 0;
+		if ( $ticket_id ) {
+			if ( TicketActivities::available() ) {
+				\FairEvents\Models\EventTicketActivity::release_holds( $ticket_id, $option_ids );
+			}
+			return;
+		}
+
+		$event_participant_id = isset( $metadata['event_participant_id'] ) ? (int) $metadata['event_participant_id'] : 0;
+		if ( $event_participant_id ) {
+			( new EventParticipantRepository() )->release_pending_options( $event_participant_id, $option_ids );
+		}
 	}
 
 	/**

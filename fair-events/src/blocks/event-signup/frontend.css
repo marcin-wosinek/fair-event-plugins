@@ -233,6 +233,20 @@
 	padding: 0 4px;
 }
 
+.fair-events-get-tickets-form .fair-events-ticket-activity-copies {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.fair-events-get-tickets-form .fair-events-ticket-activities-apply-all {
+	align-self: flex-start;
+	max-width: 100%;
+	white-space: normal;
+	text-align: left;
+}
+
 .fair-events-get-tickets-form .fair-events-ticket-option-item {
 	display: flex;
 	align-items: center;

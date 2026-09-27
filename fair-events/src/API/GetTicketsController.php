@@ -141,15 +141,42 @@ class GetTicketsController extends WP_REST_Controller {
 								return ! is_array( $value ) || count( $value ) <= 50;
 							},
 						),
-						// Chosen activity (ticket option) IDs. Capped, mirroring
-						// event_date_ids above. Ignored on the 'multiple_instances'
-						// path, which never reads this param.
+						// Chosen activity (ticket option) IDs for a single
+						// ticket. Capped, mirroring event_date_ids above.
+						// Ignored on the 'multiple_instances' path, which never
+						// reads this param.
 						'ticket_option_ids'     => array(
 							'type'              => 'array',
 							'items'             => array( 'type' => 'integer' ),
 							'required'          => false,
 							'validate_callback' => function ( $value ) {
 								return ! is_array( $value ) || count( $value ) <= 50;
+							},
+						),
+						// Chosen activity IDs for each ticket, one list per
+						// ticket in order (#1697). Required instead of
+						// ticket_option_ids when buying several tickets with
+						// activities. Capped like the lists above.
+						'ticket_activities'     => array(
+							'type'              => 'array',
+							'items'             => array(
+								'type'  => 'array',
+								'items' => array( 'type' => 'integer' ),
+							),
+							'required'          => false,
+							'validate_callback' => function ( $value ) {
+								if ( ! is_array( $value ) ) {
+									return true;
+								}
+								if ( count( $value ) > 100 ) {
+									return false;
+								}
+								foreach ( $value as $unit ) {
+									if ( is_array( $unit ) && count( $unit ) > 50 ) {
+										return false;
+									}
+								}
+								return true;
 							},
 						),
 						'_honeypot'             => array(
@@ -434,17 +461,13 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		// Chosen activity (ticket option) IDs, deduped/cast defensively even
-		// though the route arg already caps the count — see register_routes().
-		$ticket_option_ids = $request->get_param( 'ticket_option_ids' ) ?? array();
-		$ticket_option_ids = array_values( array_filter( array_unique( array_map( 'absint', (array) $ticket_option_ids ) ) ) );
-
-		// Activities attach to a single EventParticipant row, so a crafted
-		// request can't multiply an activity set by ticket quantity — pinned
-		// before $amount is derived from quantity below.
-		if ( ! empty( $ticket_option_ids ) ) {
-			$quantity = 1;
+		// Chosen activities, one list per ticket. Several tickets must each
+		// name their own; one list is never copied across the quantity.
+		$unit_option_ids = $this->resolve_unit_option_ids( $request, $quantity );
+		if ( is_wp_error( $unit_option_ids ) ) {
+			return $unit_option_ids;
 		}
+		$ticket_option_ids = array_values( array_unique( array_merge( array(), ...$unit_option_ids ) ) );
 
 		$questionnaire_answers = $this->prepare_questionnaire_answers( $request );
 		if ( is_wp_error( $questionnaire_answers ) ) {
@@ -537,20 +560,44 @@ class GetTicketsController extends WP_REST_Controller {
 			$amount = $unit_price * $quantity;
 		}
 
+		$unit_options = $this->load_unit_options( $unit_option_ids, (int) $config_event_date_id );
+		if ( is_wp_error( $unit_options ) ) {
+			return $unit_options;
+		}
+
 		// Extension point for plugins (e.g. fair-audience) that sell selectable
 		// activities (ticket options) alongside a signup. Runs unconditionally
 		// — even a signup with no ticket type can carry a minimum-activities
-		// requirement. See REST_API_BACKEND.md.
-		$options_error = apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, (int) $config_event_date_id, (int) $ticket_type_id, $participant_token );
-		if ( is_wp_error( $options_error ) ) {
-			return $options_error;
+		// requirement — once for each distinct selection among the tickets.
+		// Capacity across all tickets is enforced below, under the lock. See
+		// REST_API_BACKEND.md.
+		$validated_selections = array();
+		foreach ( $unit_option_ids as $selection ) {
+			$selection_key = implode( ',', $selection );
+			if ( isset( $validated_selections[ $selection_key ] ) ) {
+				continue;
+			}
+			$validated_selections[ $selection_key ] = true;
+
+			$options_error = apply_filters( 'fair_events_signup_options_error', null, $selection, (int) $config_event_date_id, (int) $ticket_type_id, $participant_token, (int) $event_date_id );
+			if ( is_wp_error( $options_error ) ) {
+				return $options_error;
+			}
 		}
 
 		// fair-audience resolves discounted per-activity prices; summed here
 		// into $amount and kept as separate line items (below) so the finance
-		// ledger names what was bought instead of folding it into the ticket line.
-		$option_line_items = apply_filters( 'fair_events_signup_option_line_items', array(), $ticket_option_ids, (int) $config_event_date_id, $participant_token );
-		$ticket_amount     = $amount;
+		// ledger names what was bought instead of folding it into the ticket
+		// line. Each activity is priced once and charged for every ticket
+		// that selected it.
+		$option_line_items = array();
+		foreach ( array_count_values( array_merge( array(), ...$unit_option_ids ) ) as $option_id => $selected_count ) {
+			foreach ( apply_filters( 'fair_events_signup_option_line_items', array(), array( (int) $option_id ), (int) $config_event_date_id, $participant_token ) as $item ) {
+				$item['quantity']    = (int) $item['quantity'] * $selected_count;
+				$option_line_items[] = $item;
+			}
+		}
+		$ticket_amount = $amount;
 		foreach ( $option_line_items as $item ) {
 			$amount += (float) $item['quantity'] * (float) $item['amount'];
 		}
@@ -571,20 +618,21 @@ class GetTicketsController extends WP_REST_Controller {
 
 		$this->increment_rate_limit( $email );
 
-		// Check both capacity limits and persist the signup row under the
-		// same row locks, so concurrent buyers can't both take the last
-		// place. A paid signup is saved holding its places until its
-		// payment hold expires.
+		// Check the event, ticket-type and activity limits and persist the
+		// signup row, its tickets and their activities under the same row
+		// locks, so concurrent buyers can't both take the last place. A paid
+		// signup is saved holding its places until its payment hold expires.
 		$signup_id = \FairEvents\Services\TicketCapacity::reserve(
 			array(
 				array(
 					'event_date_id'  => (int) $event_date_id,
 					'ticket_type_id' => (int) $ticket_type_id,
 					'quantity'       => $quantity,
+					'option_ids'     => array_merge( array(), ...$unit_option_ids ),
 				),
 			),
-			static function () use ( $event_date_id, $ticket_type_id, $name, $email, $quantity, $mailing_opt_in, $amount ) {
-				return \FairEvents\Models\EventSignup::save_in_transaction(
+			static function () use ( $event_date_id, $ticket_type_id, $name, $email, $quantity, $mailing_opt_in, $amount, $unit_options ) {
+				$signup_id = \FairEvents\Models\EventSignup::save_in_transaction(
 					array(
 						'event_date_id'  => $event_date_id,
 						'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
@@ -596,6 +644,26 @@ class GetTicketsController extends WP_REST_Controller {
 						'status'         => $amount > 0 ? 'pending_payment' : 'confirmed',
 					)
 				);
+				if ( ! $signup_id ) {
+					return false;
+				}
+
+				// The ticket's own status decides whether its activities
+				// count, so they are written confirmed even while payment is
+				// pending (see EventTicketActivity).
+				$tickets = \FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup_id );
+				foreach ( $unit_options as $position => $options ) {
+					if ( ! $options ) {
+						continue;
+					}
+					if ( ! isset( $tickets[ $position ] )
+						|| ! \FairEvents\Models\EventTicketActivity::confirm( (int) $tickets[ $position ]->id, $options )
+					) {
+						return false;
+					}
+				}
+
+				return $signup_id;
 			}
 		);
 
@@ -615,6 +683,9 @@ class GetTicketsController extends WP_REST_Controller {
 			'ticket_type_id'    => $ticket_type_id ? $ticket_type_id : null,
 			'quantity'          => $quantity,
 			'ticket_option_ids' => $ticket_option_ids,
+			'ticket_activities' => $unit_option_ids,
+			// The activities are already stored on the tickets above.
+			'activities_stored' => true,
 			'mailing_opt_in'    => $mailing_opt_in,
 		);
 
@@ -729,6 +800,106 @@ class GetTicketsController extends WP_REST_Controller {
 				'currency'       => $currency,
 			)
 		);
+	}
+
+	/**
+	 * Resolve the activities chosen for each ticket of a purchase. Several
+	 * tickets need ticket_activities, one list per ticket; a single ticket
+	 * may send ticket_option_ids instead. A single list sent with several
+	 * tickets is refused rather than copied to each or used for just one.
+	 *
+	 * @param WP_REST_Request $request  Request object.
+	 * @param int             $quantity Number of tickets bought.
+	 * @return int[][]|WP_Error One list of option IDs per ticket, in ticket order.
+	 */
+	private function resolve_unit_option_ids( $request, $quantity ) {
+		$normalize = static function ( $ids ) {
+			return array_values( array_filter( array_unique( array_map( 'absint', (array) $ids ) ) ) );
+		};
+
+		$single = $normalize( $request->get_param( 'ticket_option_ids' ) ?? array() );
+		$units  = $request->get_param( 'ticket_activities' );
+
+		if ( is_array( $units ) ) {
+			if ( $single ) {
+				return new WP_Error(
+					'ambiguous_activity_selection',
+					__( 'Send activities either for each ticket or for a single ticket, not both.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+			if ( count( $units ) !== (int) $quantity ) {
+				return new WP_Error(
+					'activity_selection_mismatch',
+					__( 'Choose the activities for each ticket.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			return array_map( $normalize, array_values( $units ) );
+		}
+
+		if ( $single && $quantity > 1 ) {
+			return new WP_Error(
+				'activity_selection_mismatch',
+				__( 'Choose the activities for each ticket.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$unit_option_ids = array_fill( 0, (int) $quantity, array() );
+		if ( $single ) {
+			$unit_option_ids[0] = $single;
+		}
+
+		return $unit_option_ids;
+	}
+
+	/**
+	 * Load the activities chosen for each ticket from the event's activity
+	 * catalogue. Activities are sold only through a companion plugin that
+	 * prices them (fair_events_signup_option_line_items); without one, or
+	 * for an activity outside the catalogue, a selection is refused.
+	 *
+	 * @param int[][] $unit_option_ids      One list of option IDs per ticket.
+	 * @param int     $config_event_date_id Event date the catalogue belongs to.
+	 * @return array[]|WP_Error One list of TicketOption objects per ticket.
+	 */
+	private function load_unit_options( array $unit_option_ids, $config_event_date_id ) {
+		if ( ! array_filter( $unit_option_ids ) ) {
+			return array_fill( 0, count( $unit_option_ids ), array() );
+		}
+
+		$invalid = new WP_Error(
+			'invalid_ticket_option',
+			__( 'One of the selected activities is not available for this event.', 'fair-events' ),
+			array( 'status' => 400 )
+		);
+
+		if ( ! has_filter( 'fair_events_signup_option_line_items' )
+			|| ! class_exists( \FairEventsExperimental\Models\TicketOption::class )
+		) {
+			return $invalid;
+		}
+
+		$catalogue = array();
+		foreach ( \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( (int) $config_event_date_id ) as $option ) {
+			$catalogue[ (int) $option->id ] = $option;
+		}
+
+		$unit_options = array();
+		foreach ( $unit_option_ids as $option_ids ) {
+			$options = array();
+			foreach ( $option_ids as $option_id ) {
+				if ( ! isset( $catalogue[ $option_id ] ) ) {
+					return $invalid;
+				}
+				$options[] = $catalogue[ $option_id ];
+			}
+			$unit_options[] = $options;
+		}
+
+		return $unit_options;
 	}
 
 	/**
@@ -1529,6 +1700,7 @@ class GetTicketsController extends WP_REST_Controller {
 					}
 					return array(
 						'action'            => $override->action,
+						'activity_name'     => (string) ( $override->ticket_option_name ?? '' ),
 						'reason'            => $override->reason,
 						'user_display_name' => $user_names[ $user_id ],
 						'created_at'        => $override->created_at,
@@ -1746,13 +1918,24 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
+		// A ticket type allows its own activities, so a type change must
+		// keep every ticket's selection within the new type's rules.
+		if ( 'change_type' === $action && $target !== $current ) {
+			$rule_error = $this->ticket_type_activity_error( \FairEvents\Models\TicketType::get_by_id( $target ), $id );
+			if ( $rule_error ) {
+				return $rule_error;
+			}
+		}
+
 		// Lock the target row only: a move changes no ticket type, and a
-		// type change no date.
+		// type change no date. A move also takes the tickets' activities to
+		// the target date, where they need places of their own.
 		$demand = 'move' === $action
 			? array(
 				'event_date_id'  => $target,
 				'ticket_type_id' => 0,
 				'quantity'       => 1,
+				'option_ids'     => $target !== $current ? $this->active_signup_option_ids( $id ) : array(),
 			)
 			: array(
 				'event_date_id'  => 0,
@@ -1762,7 +1945,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		$result = \FairEvents\Services\TicketCapacity::with_capacity_lock(
 			array( $demand ),
-			static function () use ( $id, $action, $scope, $target, $reason ) {
+			static function () use ( $id, $action, $scope, $target, $reason, $demand ) {
 				$signup = \FairEvents\Models\EventSignup::get_by_id( $id );
 				if ( ! $signup || 'confirmed' !== $signup->status ) {
 					return new WP_Error(
@@ -1788,25 +1971,36 @@ class GetTicketsController extends WP_REST_Controller {
 					return $failed;
 				}
 
-				$over = \FairEvents\Services\TicketCapacity::projection_exceeds( $projection );
+				$exceeding = \FairEvents\Services\TicketCapacity::projection_exceeds( $projection ) ? array( $projection ) : array();
+				if ( 'move' === $action && ! empty( $demand['option_ids'] ) ) {
+					$demand['quantity'] = 0;
+					foreach ( \FairEvents\Services\TicketCapacity::activity_projections( array( $demand ) ) as $activity_projection ) {
+						if ( \FairEvents\Services\TicketCapacity::projection_exceeds( $activity_projection ) ) {
+							$exceeding[] = $activity_projection;
+						}
+					}
+				}
+
+				$over = (bool) $exceeding;
 				if ( $over && null === $reason ) {
 					return new WP_Error(
 						'capacity_exceeded',
 						sprintf(
-							/* translators: 1: event date or ticket type name, 2: places taken after the change, 3: capacity */
+							/* translators: 1: event date, ticket type or activity name, 2: places taken after the change, 3: capacity */
 							_n(
 								'%1$s would have %2$d of %3$d place taken.',
 								'%1$s would have %2$d of %3$d places taken.',
-								(int) $projection['capacity'],
+								(int) $exceeding[0]['capacity'],
 								'fair-events'
 							),
-							$projection['label'],
-							$projection['after'],
-							$projection['capacity']
+							$exceeding[0]['label'],
+							$exceeding[0]['after'],
+							$exceeding[0]['capacity']
 						),
 						array(
-							'status'     => 409,
-							'projection' => $projection,
+							'status'      => 409,
+							'projection'  => $exceeding[0],
+							'projections' => $exceeding,
 						)
 					);
 				}
@@ -1821,23 +2015,35 @@ class GetTicketsController extends WP_REST_Controller {
 				if ( $over ) {
 					\FairEvents\Models\EventSignup::mark_over_capacity( $id );
 
-					$recorded = \FairEvents\Models\EventCapacityOverride::create(
-						array(
-							'signup_id'           => $id,
-							'action'              => $action,
-							'from_event_date_id'  => (int) $signup->event_date_id,
-							'to_event_date_id'    => 'move' === $action ? $target : (int) $signup->event_date_id,
-							'from_ticket_type_id' => (int) $signup->ticket_type_id,
-							'to_ticket_type_id'   => 'move' === $action ? (int) $signup->ticket_type_id : $target,
-							'ticket_count'        => $ticket_count,
-							'taken'               => $projection['taken'],
-							'capacity'            => (int) $projection['capacity'],
-							'reason'              => $reason,
-							'user_id'             => get_current_user_id(),
-						)
-					);
-					if ( ! $recorded ) {
-						return $failed;
+					$tickets = \FairEvents\Models\EventTicket::get_by_signup_id( $id );
+					foreach ( $exceeding as $exceeded ) {
+						$is_activity = 'ticket_option' === $exceeded['scope'];
+						$recorded    = \FairEvents\Models\EventCapacityOverride::create(
+							array(
+								'signup_id'           => $id,
+								'action'              => $action,
+								'from_event_date_id'  => (int) $signup->event_date_id,
+								'to_event_date_id'    => 'move' === $action ? $target : (int) $signup->event_date_id,
+								'from_ticket_type_id' => (int) $signup->ticket_type_id,
+								'to_ticket_type_id'   => 'move' === $action ? (int) $signup->ticket_type_id : $target,
+								'ticket_option_id'    => $is_activity ? (int) $exceeded['id'] : 0,
+								'ticket_option_name'  => $is_activity ? $exceeded['label'] : '',
+								'ticket_count'        => $is_activity ? (int) $exceeded['after'] - (int) $exceeded['taken'] : $ticket_count,
+								'taken'               => $exceeded['taken'],
+								'capacity'            => (int) $exceeded['capacity'],
+								'reason'              => $reason,
+								'user_id'             => get_current_user_id(),
+							)
+						);
+						if ( ! $recorded ) {
+							return $failed;
+						}
+
+						if ( $is_activity ) {
+							foreach ( $tickets as $ticket ) {
+								\FairEvents\Models\EventTicketActivity::mark_over_capacity( (int) $ticket->id, array( (int) $exceeded['id'] ) );
+							}
+						}
 					}
 				}
 
@@ -1884,6 +2090,86 @@ class GetTicketsController extends WP_REST_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * The activities a signup's tickets currently hold, for tickets not
+	 * cancelled or refunded on their own: one entry per ticket and activity.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return int[]
+	 */
+	private function active_signup_option_ids( $signup_id ) {
+		return \FairEvents\Services\TicketCapacity::demand_for_signup( \FairEvents\Models\EventSignup::get_by_id( (int) $signup_id ) )['option_ids'];
+	}
+
+	/**
+	 * Check that every ticket of a signup keeps an activity selection the
+	 * given ticket type allows: activities enabled at all, and the number
+	 * selected within its minimum and maximum.
+	 *
+	 * @param \FairEvents\Models\TicketType|null $ticket_type Target ticket type.
+	 * @param int                                $signup_id   Signup row ID.
+	 * @return WP_Error|null
+	 */
+	private function ticket_type_activity_error( $ticket_type, $signup_id ) {
+		if ( ! $ticket_type ) {
+			return null;
+		}
+
+		$tickets = array_filter(
+			\FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup_id ),
+			static function ( $ticket ) {
+				return ! in_array( (string) $ticket->status, \FairEvents\Models\EventTicket::FINAL_UNIT_STATUSES, true );
+			}
+		);
+
+		$enabled = $ticket_type->activities_enabled && ! $ticket_type->is_multiple_instances();
+		foreach ( $tickets as $ticket ) {
+			$count = count( \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( (int) $ticket->id ) ) );
+
+			if ( ! $enabled && $count > 0 ) {
+				return new WP_Error(
+					'ticket_type_activities_disabled',
+					__( 'The chosen ticket type does not allow activities, and this signup has some.', 'fair-events' ),
+					array( 'status' => 409 )
+				);
+			}
+			if ( $enabled && null !== $ticket_type->maximum_activities && $count > (int) $ticket_type->maximum_activities ) {
+				return new WP_Error(
+					'ticket_type_activities_exceeded',
+					sprintf(
+						/* translators: %d: maximum number of activities the ticket type allows */
+						_n(
+							'The chosen ticket type allows at most %d activity per ticket.',
+							'The chosen ticket type allows at most %d activities per ticket.',
+							(int) $ticket_type->maximum_activities,
+							'fair-events'
+						),
+						(int) $ticket_type->maximum_activities
+					),
+					array( 'status' => 409 )
+				);
+			}
+			if ( $enabled && $count < (int) $ticket_type->minimum_activities ) {
+				return new WP_Error(
+					'ticket_type_activities_missing',
+					sprintf(
+						/* translators: %d: minimum number of activities the ticket type requires */
+						_n(
+							'The chosen ticket type requires at least %d activity per ticket.',
+							'The chosen ticket type requires at least %d activities per ticket.',
+							(int) $ticket_type->minimum_activities,
+							'fair-events'
+						),
+						(int) $ticket_type->minimum_activities
+					),
+					array( 'status' => 409 )
+				);
+			}
+		}
+
+		return null;
 	}
 
 	/**

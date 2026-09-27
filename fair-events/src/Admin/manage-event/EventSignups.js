@@ -29,6 +29,10 @@ import SignupEditModal, {
 	ACTION_CHANGE_TYPE,
 } from './SignupEditModal.js';
 
+// Override recorded when an administrator added an activity to a ticket
+// past its limit (fair-audience's Audience tab).
+const ACTION_ACTIVITY = 'activity';
+
 /**
  * Whether a signup contains an explicit mailing opt-in value.
  *
@@ -103,6 +107,32 @@ function headerAlign( header ) {
 }
 
 /**
+ * What an administrator did when a signup went over capacity.
+ *
+ * @param {Object} override Override row returned by the API.
+ * @return {string} Label
+ */
+export function overrideActionLabel( override ) {
+	if ( override.action === ACTION_ACTIVITY ) {
+		return sprintf(
+			/* translators: %s: activity name */
+			__( 'Activity %s added', 'fair-events' ),
+			override.activity_name
+		);
+	}
+	if ( override.action === ACTION_MOVE ) {
+		return override.activity_name
+			? sprintf(
+					/* translators: %s: activity name */
+					__( 'Moved (activity %s over capacity)', 'fair-events' ),
+					override.activity_name
+			  )
+			: __( 'Moved', 'fair-events' );
+	}
+	return __( 'Ticket type changed', 'fair-events' );
+}
+
+/**
  * Status cell of a confirmed signup: flags an over-capacity signup and lets
  * the administrator see why it went over.
  *
@@ -149,12 +179,7 @@ function SignupStatus( { signup } ) {
 										'%1$s by %2$s on %3$s: %4$s',
 										'fair-events'
 									),
-									override.action === ACTION_MOVE
-										? __( 'Moved', 'fair-events' )
-										: __(
-												'Ticket type changed',
-												'fair-events'
-										  ),
+									overrideActionLabel( override ),
 									override.user_display_name ||
 										__( 'unknown user', 'fair-events' ),
 									override.created_at,

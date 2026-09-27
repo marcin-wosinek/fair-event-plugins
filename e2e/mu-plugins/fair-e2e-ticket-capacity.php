@@ -33,7 +33,8 @@ add_action(
 			);
 		};
 
-		// Places taken on an event date and/or a ticket type.
+		// Places taken on an event date, a ticket type and/or an activity
+		// on an occurrence.
 		register_rest_route(
 			'fair-e2e/v1',
 			'/ticket-capacity',
@@ -49,6 +50,11 @@ add_action(
 					}
 					foreach ( (array) $request->get_param( 'ticket_type_ids' ) as $ticket_type_id ) {
 						$counts['ticket_types'][ absint( $ticket_type_id ) ] = $capacity::count_ticket_type( absint( $ticket_type_id ) );
+					}
+					// Activity places, each given as "optionId:eventDateId".
+					foreach ( (array) $request->get_param( 'options' ) as $pair ) {
+						list( $option_id, $event_date_id ) = array_map( 'absint', explode( ':', (string) $pair ) + array( 0, 0 ) );
+						$counts['ticket_options'][ $option_id . ':' . $event_date_id ] = $capacity::count_ticket_option( $option_id, $event_date_id );
 					}
 
 					return rest_ensure_response( $counts );

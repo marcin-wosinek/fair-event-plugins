@@ -452,32 +452,30 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Count active signups reserved for a specific ticket option (activity).
+	 * Count the places an activity (ticket option) has taken on an event
+	 * date.
 	 *
-	 * Counts each participant once per event date when they hold the option
-	 * through either scope:
+	 * With per-ticket storage, fair-events counts every active ticket
+	 * selecting the activity on that occurrence (sibling tickets of one
+	 * purchase take one place each) plus the participant-level selections
+	 * reported by count_participant_scope_selections() — see
+	 * TicketCapacity::count_ticket_option(). Without it, each relationship
+	 * holding the option counts once:
 	 *
-	 * - a participant-level junction row not carried over to a ticket, on a
-	 *   relationship with label = 'signed_up' or unexpired
-	 *   'pending_payment', where the junction row is itself confirmed or an
-	 *   unexpired pending hold (an add-on purchase in flight on an otherwise
-	 *   signed_up parent row);
-	 * - an activity on one of their tickets, while the ticket is confirmed
-	 *   or its purchase hold is unexpired, and the activity is confirmed or
-	 *   an unexpired add-on hold.
+	 * - label = 'signed_up' or unexpired 'pending_payment', and
+	 * - the junction row itself confirmed or an unexpired pending hold (an
+	 *   add-on purchase in flight on an otherwise signed_up parent row).
 	 *
-	 * Counting per participant rather than per ticket is deliberate until
-	 * #1697. Used for per-activity capacity enforcement.
+	 * Used for per-activity capacity enforcement.
 	 *
 	 * @param int $ticket_option_id Ticket option ID.
-	 * @return int Number of signups held against the option.
+	 * @param int $event_date_id    Occurrence (event date) the places are on; 0 for the option's own event date.
+	 * @return int Number of places held against the option.
 	 */
-	public function count_signups_for_ticket_option( $ticket_option_id ) {
+	public function count_signups_for_ticket_option( $ticket_option_id, $event_date_id = 0 ) {
 		global $wpdb;
 
-		$participants_table = $this->get_table_name();
-		$options_table      = $wpdb->prefix . 'fair_audience_event_participant_options';
-		$now                = gmdate( 'Y-m-d H:i:s' );
+		$now = gmdate( 'Y-m-d H:i:s' );
 
 		if ( ! \FairAudience\Services\TicketActivities::available() ) {
 			$count = $wpdb->get_var(
@@ -494,8 +492,8 @@ class EventParticipantRepository {
 					     epo.status = 'confirmed'
 					     OR ( epo.status = 'pending_payment' AND epo.expires_at IS NOT NULL AND epo.expires_at > %s )
 					 )",
-					$participants_table,
-					$options_table,
+					$this->get_table_name(),
+					$wpdb->prefix . 'fair_audience_event_participant_options',
 					$ticket_option_id,
 					$now,
 					$now
@@ -505,50 +503,78 @@ class EventParticipantRepository {
 			return (int) $count;
 		}
 
+		if ( ! $event_date_id ) {
+			$event_date_id = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT event_date_id FROM %i WHERE id = %d',
+					$wpdb->prefix . 'fair_events_ticket_options',
+					$ticket_option_id
+				)
+			);
+		}
+
+		return \FairEvents\Services\TicketCapacity::count_ticket_option( (int) $ticket_option_id, (int) $event_date_id );
+	}
+
+	/**
+	 * Count participant-level activity selections still holding a place on
+	 * an occurrence: selections not attributed to a ticket, on an active
+	 * relationship (signed_up, or pending_payment within its hold), the
+	 * selection itself confirmed or an unexpired hold. A selection counts on
+	 * its relationship's event date; one on a whole-series pass counts on
+	 * every date of the series. Reported to fair-events through
+	 * fair_events_capacity_legacy_activity_selections.
+	 *
+	 * @param int   $ticket_option_id Ticket option ID.
+	 * @param int   $event_date_id    Occurrence (event date) ID.
+	 * @param int[] $series_ids       Every event date of the occurrence's series.
+	 * @return int
+	 */
+	public function count_participant_scope_selections( $ticket_option_id, $event_date_id, array $series_ids ) {
+		global $wpdb;
+
+		$series_ids = array_values( array_filter( array_map( 'intval', $series_ids ) ) );
+		if ( ! $series_ids ) {
+			$series_ids = array( (int) $event_date_id );
+		}
+		$now = gmdate( 'Y-m-d H:i:s' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder list built here.
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM (
-				     SELECT ep.event_date_id AS event_date_id, CAST(ep.participant_id AS CHAR) AS holder
-				     FROM %i ep
-				     INNER JOIN %i epo ON epo.event_participant_id = ep.id
-				     WHERE epo.ticket_option_id = %d
-				     AND epo.ticket_id IS NULL
-				     AND (
-				         ep.label = 'signed_up'
-				         OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
-				     )
-				     AND (
-				         epo.status = 'confirmed'
-				         OR ( epo.status = 'pending_payment' AND epo.expires_at IS NOT NULL AND epo.expires_at > %s )
-				     )
-				     UNION
-				     SELECT t.event_date_id, COALESCE(CAST(t.holder_participant_id AS CHAR), CONCAT('ticket-', t.id))
-				     FROM %i ta
-				     INNER JOIN %i t ON t.id = ta.ticket_id
-				     INNER JOIN %i s ON s.id = t.signup_id
-				     WHERE ta.ticket_option_id = %d
-				     AND (
-				         t.status = 'confirmed'
-				         OR ( t.status = 'pending_payment' AND s.payment_expires_at IS NOT NULL AND s.payment_expires_at > %s )
-				     )
-				     AND (
-				         ta.status = 'confirmed'
-				         OR ( ta.status = 'pending_payment' AND ta.expires_at IS NOT NULL AND ta.expires_at > %s )
-				     )
-				 ) held",
-				$participants_table,
-				$options_table,
-				$ticket_option_id,
-				$now,
-				$now,
-				\FairEvents\Models\EventTicketActivity::table(),
-				\FairEvents\Models\EventTicket::table(),
-				$wpdb->prefix . 'fair_events_signups',
-				$ticket_option_id,
-				$now,
-				$now
+				"SELECT COUNT(*)
+				 FROM %i ep
+				 INNER JOIN %i epo ON epo.event_participant_id = ep.id
+				 LEFT JOIN %i tt ON tt.id = ep.ticket_type_id
+				 WHERE epo.ticket_option_id = %d
+				 AND epo.ticket_id IS NULL
+				 AND (
+				     ep.label = 'signed_up'
+				     OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
+				 )
+				 AND (
+				     epo.status = 'confirmed'
+				     OR ( epo.status = 'pending_payment' AND epo.expires_at IS NOT NULL AND epo.expires_at > %s )
+				 )
+				 AND (
+				     ep.event_date_id = %d
+				     OR ( tt.recurrence_scope = 'whole_series' AND ep.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $series_ids ), '%d' ) ) . ' ) )
+				 )',
+				array_merge(
+					array(
+						$this->get_table_name(),
+						$wpdb->prefix . 'fair_audience_event_participant_options',
+						$wpdb->prefix . 'fair_events_ticket_types',
+						(int) $ticket_option_id,
+						$now,
+						$now,
+						(int) $event_date_id,
+					),
+					$series_ids
+				)
 			)
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 
 		return (int) $count;
 	}
@@ -632,7 +658,7 @@ class EventParticipantRepository {
 	 * purchase payment reports its activities as pending.
 	 *
 	 * @param EventParticipant $event_participant Relationship.
-	 * @return object[] Rows with ticket_option_id, ticket_option_name, status, expires_at, ticket_id (null at participant scope).
+	 * @return object[] Rows with ticket_option_id, ticket_option_name, status, expires_at, ticket_id (null at participant scope), and over_capacity for a ticket's activity.
 	 */
 	public function get_activity_rows( $event_participant ) {
 		$rows_by_relationship = $this->get_activity_rows_for_relationships( array( $event_participant ) );
@@ -677,6 +703,7 @@ class EventParticipantRepository {
 						'status'             => 'confirmed' === $ticket->status ? (string) $activity->status : 'pending_payment',
 						'expires_at'         => $activity->expires_at,
 						'ticket_id'          => (int) $ticket->id,
+						'over_capacity'      => ! empty( $activity->over_capacity ),
 					);
 				}
 			}
@@ -838,6 +865,36 @@ class EventParticipantRepository {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Release participant-level add-on holds for some options at once, e.g.
+	 * when their payment could not be started or failed. Confirmed rows are
+	 * untouched.
+	 *
+	 * @param int   $event_participant_id Event participant row ID.
+	 * @param int[] $option_ids           Ticket option IDs.
+	 * @return int Rows deleted.
+	 */
+	public function release_pending_options( $event_participant_id, array $option_ids ) {
+		global $wpdb;
+
+		$option_ids = array_values( array_unique( array_filter( array_map( 'intval', $option_ids ) ) ) );
+		if ( ! $option_ids ) {
+			return 0;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $option_ids ), '%d' ) );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder list built above.
+		$deleted = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM %i WHERE event_participant_id = %d AND ticket_id IS NULL AND status = 'pending_payment' AND ticket_option_id IN ($placeholders)",
+				array_merge( array( $wpdb->prefix . 'fair_audience_event_participant_options', (int) $event_participant_id ), $option_ids )
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+
+		return (int) $deleted;
 	}
 
 	/**
