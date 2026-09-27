@@ -1,5 +1,0 @@
----
-'fair-events': minor
----
-
-Show each recurring series once in the Events List block's Upcoming view. The series is placed in date order by its next date, alongside single events, and its date reads as a schedule summary such as "Weekly on Mondays at 18:00; next occurrence: 28 September". This applies to post-linked and standalone series in the bundled Event List/Event Grid patterns and in custom per-event patterns. In custom patterns, `{{date_range}}` shows the combined summary, and the new `{{recurrence_summary}}` and `{{next_occurrence}}` placeholders show its two parts separately. The schedule always comes from the series rule, so a rescheduled date doesn't change the advertised weekday or time. Hand-picked dates or rules that can't be described show "Recurring event; next occurrence: …". An occurrence that already started today no longer stands in for the series' next date. Calendar feed and external API events are still listed one date at a time, and the Past, Ongoing, and All views are unchanged.
