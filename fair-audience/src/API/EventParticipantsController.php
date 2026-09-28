@@ -203,11 +203,26 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// PUT /fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}.
+		// GET|PUT /fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}.
 		register_rest_route(
 			$this->namespace,
 			'/event-dates/(?P<event_date_id>\d+)/tickets/(?P<ticket_id>\d+)',
 			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_ticket' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'event_date_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'ticket_id'     => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+					),
+				),
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_ticket' ),
@@ -220,6 +235,11 @@ class EventParticipantsController extends WP_REST_Controller {
 						'ticket_id'       => array(
 							'type'     => 'integer',
 							'required' => true,
+						),
+						'ticket_type_id'  => array(
+							'type'     => 'integer',
+							'required' => false,
+							'minimum'  => 1,
 						),
 						'activity_ids'    => array(
 							'type'     => 'array',
@@ -931,35 +951,106 @@ class EventParticipantsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Update one ticket's activities and/or check-in, leaving the holder's
-	 * other tickets unchanged. Checking in again keeps the first check-in
-	 * time; attended = false clears it.
+	 * Everything the ticket editor needs to edit one ticket: the ticket and
+	 * its holder, the ticket types it can take and the event's activities,
+	 * each with the places left.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_ticket( $request ) {
+		$ticket = $this->find_ticket( (int) $request->get_param( 'event_date_id' ), (int) $request->get_param( 'ticket_id' ) );
+		if ( is_wp_error( $ticket ) ) {
+			return $ticket;
+		}
+
+		$payload = $this->build_ticket_payload( $ticket, $this->ticket_activity_rows( $ticket ) );
+
+		$participant = $ticket->holder_participant_id
+			? $this->participant_repo->get_by_id( (int) $ticket->holder_participant_id )
+			: null;
+		if ( $participant ) {
+			$payload['participant_name'] = trim( $participant->name . ' ' . $participant->surname );
+		} else {
+			$signup                      = \FairEvents\Models\EventSignup::get_by_id( (int) $ticket->signup_id );
+			$payload['participant_name'] = $signup ? (string) $signup->name : '';
+		}
+		$payload['editable'] = 'confirmed' === $payload['status'];
+
+		$current      = $ticket->ticket_type_id ? \FairEvents\Models\TicketType::get_by_id( (int) $ticket->ticket_type_id ) : null;
+		$ticket_types = array();
+		if ( $current ) {
+			$ticket_types[] = $current;
+			if ( class_exists( \FairEvents\Services\TicketEditRules::class ) ) {
+				$ticket_types = array_merge( $ticket_types, \FairEvents\Services\TicketEditRules::ticket_type_targets( (int) $ticket->event_date_id, $current ) );
+			}
+		}
+
+		$activities = array();
+		foreach ( $this->activity_catalogue( (int) $ticket->event_date_id ) as $option ) {
+			$activities[] = array(
+				'id'        => (int) $option->id,
+				'name'      => (string) $option->name,
+				'capacity'  => null === $option->capacity ? null : (int) $option->capacity,
+				'remaining' => method_exists( \FairEvents\Services\TicketCapacity::class, 'remaining_for_ticket_option' )
+					? \FairEvents\Services\TicketCapacity::remaining_for_ticket_option( (int) $option->id, (int) $ticket->event_date_id )
+					: null,
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'ticket'       => $payload,
+				'ticket_types' => array_map(
+					static function ( $type ) use ( $current ) {
+						return array(
+							'id'                 => (int) $type->id,
+							'label'              => (string) $type->name,
+							'current'            => (int) $type->id === (int) $current->id,
+							'capacity'           => null === $type->capacity ? null : (int) $type->capacity,
+							'remaining'          => \FairEvents\Services\TicketCapacity::remaining_for_ticket_type( (int) $type->id ),
+							'activities_enabled' => (bool) $type->activities_enabled && ! $type->is_multiple_instances(),
+							'minimum_activities' => (int) $type->minimum_activities,
+							'maximum_activities' => null === $type->maximum_activities ? null : (int) $type->maximum_activities,
+						);
+					},
+					$ticket_types
+				),
+				'activities'   => $activities,
+			)
+		);
+	}
+
+	/**
+	 * Update one ticket's type, activities and/or check-in together,
+	 * leaving the holder's other tickets, the purchase and its payment
+	 * unchanged. Every check runs before anything is written, and the
+	 * writes share one transaction: a refused or failed edit changes
+	 * nothing. Checking in again keeps the first check-in time;
+	 * attended = false clears it. A ticket awaiting payment cannot be
+	 * edited.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function update_ticket( $request ) {
-		$event_date_id = (int) $request->get_param( 'event_date_id' );
-		$ticket_id     = (int) $request->get_param( 'ticket_id' );
-		$activity_ids  = $request->get_param( 'activity_ids' );
-		$attended      = $request->get_param( 'attended' );
+		$ticket_type_id = $request->get_param( 'ticket_type_id' );
+		$activity_ids   = $request->get_param( 'activity_ids' );
+		$attended       = $request->get_param( 'attended' );
 
-		if ( null === $activity_ids && null === $attended ) {
+		if ( null === $ticket_type_id && null === $activity_ids && null === $attended ) {
 			return new WP_Error(
 				'missing_fields',
-				__( 'Provide at least one of: activity_ids, attended.', 'fair-audience' ),
+				__( 'Provide at least one of: ticket_type_id, activity_ids, attended.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
 		}
 
-		$ticket = TicketActivities::available() ? \FairEvents\Models\EventTicket::get_by_id( $ticket_id ) : null;
-		if ( ! $ticket || (int) $ticket->event_date_id !== $event_date_id ) {
-			return new WP_Error(
-				'ticket_not_found',
-				__( 'Ticket not found for this event date.', 'fair-audience' ),
-				array( 'status' => 404 )
-			);
+		$ticket = $this->find_ticket( (int) $request->get_param( 'event_date_id' ), (int) $request->get_param( 'ticket_id' ) );
+		if ( is_wp_error( $ticket ) ) {
+			return $ticket;
 		}
+		$ticket_id = (int) $ticket->id;
 
 		if ( in_array( (string) $ticket->status, \FairEvents\Models\EventTicket::INACTIVE_STATUSES, true ) ) {
 			return new WP_Error(
@@ -969,21 +1060,54 @@ class EventParticipantsController extends WP_REST_Controller {
 			);
 		}
 
+		if ( 'confirmed' !== (string) $ticket->status ) {
+			return new WP_Error(
+				'ticket_awaiting_payment',
+				__( 'This ticket is awaiting payment. It can be edited once the payment is complete.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$has_rules    = class_exists( \FairEvents\Services\TicketEditRules::class );
+		$current_type = $ticket->ticket_type_id ? \FairEvents\Models\TicketType::get_by_id( (int) $ticket->ticket_type_id ) : null;
+		$new_type     = $current_type;
+		$type_changed = null !== $ticket_type_id && (int) $ticket_type_id !== (int) $ticket->ticket_type_id;
+
+		if ( $type_changed ) {
+			if ( ! $has_rules || ! $current_type ) {
+				return new WP_Error(
+					'ticket_type_not_changeable',
+					__( 'This ticket’s type cannot be changed.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$target_ids = array_map(
+				static fn( $type ) => (int) $type->id,
+				\FairEvents\Services\TicketEditRules::ticket_type_targets( (int) $ticket->event_date_id, $current_type )
+			);
+			if ( ! in_array( (int) $ticket_type_id, $target_ids, true ) ) {
+				return new WP_Error(
+					'invalid_ticket_type',
+					__( 'The chosen ticket type is not available for this ticket.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$new_type = \FairEvents\Models\TicketType::get_by_id( (int) $ticket_type_id );
+		}
+
+		$saved_ids = array_map( static fn( $row ) => (int) $row->ticket_option_id, $this->ticket_activity_rows( $ticket ) );
+		$held_ids  = \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( $ticket_id ) );
+
+		$selected           = array();
+		$activities_changed = false;
 		if ( null !== $activity_ids ) {
-			$catalogue_event_date_id = $event_date_id;
-			$event_date              = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
-			if ( $event_date && 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
-				$catalogue_event_date_id = (int) $event_date->master_id;
-			}
-
 			$catalogue = array();
-			if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-				foreach ( \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $catalogue_event_date_id ) as $option ) {
-					$catalogue[ (int) $option->id ] = $option;
-				}
+			foreach ( $this->activity_catalogue( (int) $ticket->event_date_id ) as $option ) {
+				$catalogue[ (int) $option->id ] = $option;
 			}
 
-			$selected = array();
 			foreach ( array_unique( array_map( 'intval', (array) $activity_ids ) ) as $option_id ) {
 				if ( ! isset( $catalogue[ $option_id ] ) ) {
 					return new WP_Error(
@@ -995,102 +1119,134 @@ class EventParticipantsController extends WP_REST_Controller {
 				$selected[] = $catalogue[ $option_id ];
 			}
 
-			$reason = null;
-			if ( $request->has_param( 'override_reason' ) ) {
-				$reason = trim( (string) $request->get_param( 'override_reason' ) );
-				if ( '' === $reason ) {
-					return new WP_Error(
-						'override_reason_required',
-						__( 'Enter a reason for going over capacity.', 'fair-audience' ),
-						array( 'status' => 400 )
-					);
-				}
-			}
+			$selected_ids = array_map( static fn( $option ) => (int) $option->id, $selected );
+			sort( $selected_ids );
+			sort( $saved_ids );
+			$activities_changed = $selected_ids !== $saved_ids;
+		}
 
-			$saved = $this->save_ticket_activities( $ticket, $selected, $reason );
-			if ( is_wp_error( $saved ) ) {
-				return $saved;
+		// A ticket keeps an activity selection its type allows. Checked only
+		// when the edit changes the type or the activities, so a check-in
+		// never fails over a selection made under older rules.
+		if ( $has_rules && ( $type_changed || $activities_changed ) ) {
+			$rule_error = \FairEvents\Services\TicketEditRules::activity_count_error(
+				$new_type,
+				$activities_changed ? count( $selected ) : count( $held_ids )
+			);
+			if ( $rule_error ) {
+				return $rule_error;
 			}
 		}
 
-		if ( null !== $attended && ! \FairEvents\Models\EventTicket::set_attended( $ticket_id, (bool) $attended ) ) {
-			return new WP_Error(
-				'update_failed',
-				__( 'Failed to update attendance.', 'fair-audience' ),
-				array( 'status' => 500 )
-			);
+		$reason = null;
+		if ( $request->has_param( 'override_reason' ) ) {
+			$reason = trim( (string) $request->get_param( 'override_reason' ) );
+			if ( '' === $reason ) {
+				return new WP_Error(
+					'override_reason_required',
+					__( 'Enter a reason for going over capacity.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		$saved = $this->save_ticket(
+			$ticket,
+			array(
+				'new_type'   => $type_changed ? $new_type : null,
+				'activities' => $activities_changed ? $selected : null,
+				'held_ids'   => $held_ids,
+				'attended'   => null === $attended ? null : (bool) $attended,
+			),
+			$reason
+		);
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
 		}
 
 		$ticket = \FairEvents\Models\EventTicket::get_by_id( $ticket_id );
-		$rows   = array();
-		foreach ( \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( array( $ticket_id ) )[ $ticket_id ] ?? array() as $activity ) {
-			$rows[] = (object) array(
-				'ticket_option_id'   => (int) $activity->ticket_option_id,
-				'ticket_option_name' => (string) $activity->ticket_option_name,
-				'status'             => 'confirmed' === $ticket->status ? (string) $activity->status : 'pending_payment',
-				'ticket_id'          => $ticket_id,
-				'over_capacity'      => ! empty( $activity->over_capacity ),
-			);
-		}
 
-		return rest_ensure_response( $this->build_ticket_payload( $ticket, $rows ) );
+		return rest_ensure_response( $this->build_ticket_payload( $ticket, $this->ticket_activity_rows( $ticket ) ) );
 	}
 
 	/**
-	 * Replace a ticket's activities with an administrator's selection. Only
-	 * activities the ticket does not already hold need a place, so saving
-	 * an unchanged selection never asks for another one. The places are
-	 * checked and the selection written under fair-events' capacity lock; an
-	 * activity that would go past its limit is refused with a 409 carrying
-	 * the projection, unless a reason is given, in which case the change is
-	 * saved, flagged over capacity and recorded in the override audit.
+	 * Write an administrator's edit of one ticket in one transaction, under
+	 * fair-events' capacity lock. A new type needs a place of that type, and
+	 * only activities the ticket does not already hold need a place, so
+	 * saving an unchanged selection never asks for another one. Every limit
+	 * the edit would go past is reported at once with a 409 carrying the
+	 * projections, unless a reason is given: then the edit is saved, flagged
+	 * over capacity and recorded in the override audit. A failed write rolls
+	 * back the whole edit.
 	 *
-	 * @param object      $ticket   Ticket row.
-	 * @param object[]    $selected TicketOption objects the ticket should hold.
-	 * @param string|null $reason   Override reason, or null when none was given.
+	 * @param object      $ticket  Ticket row.
+	 * @param array       $changes new_type (TicketType|null), activities (TicketOption[]|null), held_ids (int[]), attended (bool|null).
+	 * @param string|null $reason  Override reason, or null when none was given.
 	 * @return true|WP_Error
 	 */
-	private function save_ticket_activities( $ticket, array $selected, $reason ) {
+	private function save_ticket( $ticket, array $changes, $reason ) {
 		$ticket_id = (int) $ticket->id;
+		$new_type  = $changes['new_type'];
+		$selected  = $changes['activities'];
+		$attended  = $changes['attended'];
 		$failed    = new WP_Error(
 			'update_failed',
-			__( 'Failed to update the ticket’s activities.', 'fair-audience' ),
+			__( 'Failed to update the ticket.', 'fair-audience' ),
 			array( 'status' => 500 )
 		);
 
-		if ( ! method_exists( \FairEvents\Services\TicketCapacity::class, 'activity_projections' ) ) {
-			return \FairEvents\Models\EventTicketActivity::replace_for_ticket( $ticket_id, $selected ) ? true : $failed;
-		}
-
-		$held_ids = \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( $ticket_id ) );
-		$added    = array_values(
+		$type_id = $new_type ? (int) $new_type->id : (int) $ticket->ticket_type_id;
+		$added   = null === $selected ? array() : array_values(
 			array_filter(
 				$selected,
-				static fn( $option ) => ! in_array( (int) $option->id, $held_ids, true )
+				static fn( $option ) => ! in_array( (int) $option->id, $changes['held_ids'], true )
 			)
 		);
-		$demand   = array(
+
+		$demands = array();
+		if ( $new_type ) {
+			$demands[] = array(
+				'event_date_id'  => (int) $ticket->event_date_id,
+				'ticket_type_id' => $type_id,
+				'quantity'       => 1,
+			);
+		}
+		$activity_demand = array(
 			'event_date_id'  => (int) $ticket->event_date_id,
-			'ticket_type_id' => (int) $ticket->ticket_type_id,
+			'ticket_type_id' => $type_id,
 			'quantity'       => 0,
 			'option_ids'     => array_map( static fn( $option ) => (int) $option->id, $added ),
 		);
+		if ( $added ) {
+			$demands[] = $activity_demand;
+		}
 
-		$result = \FairEvents\Services\TicketCapacity::with_capacity_lock(
-			array( $demand ),
-			static function () use ( $ticket, $ticket_id, $selected, $added, $demand, $reason, $failed ) {
-				$exceeding = array_values(
-					array_filter(
-						\FairEvents\Services\TicketCapacity::activity_projections( array( $demand ) ),
-						array( \FairEvents\Services\TicketCapacity::class, 'projection_exceeds' )
-					)
-				);
+		return \FairEvents\Services\TicketCapacity::with_capacity_lock(
+			$demands,
+			static function () use ( $ticket, $ticket_id, $new_type, $selected, $added, $attended, $activity_demand, $reason, $failed ) {
+				$exceeding = array();
+				if ( $new_type ) {
+					$projection = \FairEvents\Services\TicketCapacity::projection( 'ticket_type', (int) $new_type->id, 1 );
+					if ( ! $projection ) {
+						return $failed;
+					}
+					if ( \FairEvents\Services\TicketCapacity::projection_exceeds( $projection ) ) {
+						$exceeding[] = $projection;
+					}
+				}
+				if ( $added && method_exists( \FairEvents\Services\TicketCapacity::class, 'activity_projections' ) ) {
+					foreach ( \FairEvents\Services\TicketCapacity::activity_projections( array( $activity_demand ) ) as $projection ) {
+						if ( \FairEvents\Services\TicketCapacity::projection_exceeds( $projection ) ) {
+							$exceeding[] = $projection;
+						}
+					}
+				}
 
 				if ( $exceeding && null === $reason ) {
 					return new WP_Error(
 						'capacity_exceeded',
 						sprintf(
-							/* translators: 1: activity name, 2: places taken after the change, 3: capacity */
+							/* translators: 1: ticket type or activity name, 2: places taken after the change, 3: capacity */
 							_n(
 								'%1$s would have %2$d of %3$d place taken.',
 								'%1$s would have %2$d of %3$d places taken.',
@@ -1109,30 +1265,42 @@ class EventParticipantsController extends WP_REST_Controller {
 					);
 				}
 
+				if ( $new_type && ! \FairEvents\Models\EventTicket::set_ticket_type( $ticket_id, (int) $new_type->id ) ) {
+					return $failed;
+				}
+
 				// Newly added activities are confirmed, including one whose
-				// earlier add-on hold had lapsed.
-				if ( ! \FairEvents\Models\EventTicketActivity::replace_for_ticket( $ticket_id, $selected )
-					|| ! \FairEvents\Models\EventTicketActivity::confirm( $ticket_id, $added )
+				// earlier add-on hold had lapsed; kept ones keep their status.
+				if ( null !== $selected
+					&& ( ! \FairEvents\Models\EventTicketActivity::replace_for_ticket( $ticket_id, $selected )
+						|| ! \FairEvents\Models\EventTicketActivity::confirm( $ticket_id, $added ) )
 				) {
 					return $failed;
 				}
 
+				if ( null !== $attended && ! \FairEvents\Models\EventTicket::set_attended( $ticket_id, $attended ) ) {
+					return $failed;
+				}
+
 				foreach ( $exceeding as $exceeded ) {
-					\FairEvents\Models\EventTicketActivity::mark_over_capacity( $ticket_id, array( (int) $exceeded['id'] ) );
+					$is_activity = 'ticket_option' === $exceeded['scope'];
+					if ( $is_activity ) {
+						\FairEvents\Models\EventTicketActivity::mark_over_capacity( $ticket_id, array( (int) $exceeded['id'] ) );
+					}
 					\FairEvents\Models\EventSignup::mark_over_capacity( (int) $ticket->signup_id );
 
 					$recorded = \FairEvents\Models\EventCapacityOverride::create(
 						array(
 							'signup_id'           => (int) $ticket->signup_id,
-							'action'              => 'activity',
+							'action'              => $is_activity ? 'activity' : 'change_type',
 							'from_event_date_id'  => (int) $ticket->event_date_id,
-							'to_event_date_id'    => (int) $exceeded['event_date_id'],
+							'to_event_date_id'    => $is_activity ? (int) $exceeded['event_date_id'] : (int) $ticket->event_date_id,
 							'from_ticket_type_id' => (int) $ticket->ticket_type_id,
-							'to_ticket_type_id'   => (int) $ticket->ticket_type_id,
+							'to_ticket_type_id'   => $new_type ? (int) $new_type->id : (int) $ticket->ticket_type_id,
 							'ticket_id'           => $ticket_id,
-							'ticket_option_id'    => (int) $exceeded['id'],
-							'ticket_option_name'  => $exceeded['label'],
-							'ticket_count'        => (int) $exceeded['after'] - (int) $exceeded['taken'],
+							'ticket_option_id'    => $is_activity ? (int) $exceeded['id'] : 0,
+							'ticket_option_name'  => $is_activity ? $exceeded['label'] : '',
+							'ticket_count'        => $is_activity ? (int) $exceeded['after'] - (int) $exceeded['taken'] : 1,
 							'taken'               => (int) $exceeded['taken'],
 							'capacity'            => (int) $exceeded['capacity'],
 							'reason'              => $reason,
@@ -1147,8 +1315,68 @@ class EventParticipantsController extends WP_REST_Controller {
 				return true;
 			}
 		);
+	}
 
-		return $result;
+	/**
+	 * Find a ticket on an event date.
+	 *
+	 * @param int $event_date_id Event date the ticket must be on.
+	 * @param int $ticket_id     Ticket ID.
+	 * @return object|WP_Error Ticket row, or a 404.
+	 */
+	private function find_ticket( $event_date_id, $ticket_id ) {
+		$ticket = TicketActivities::available() ? \FairEvents\Models\EventTicket::get_by_id( $ticket_id ) : null;
+		if ( ! $ticket || (int) $ticket->event_date_id !== $event_date_id ) {
+			return new WP_Error(
+				'ticket_not_found',
+				__( 'Ticket not found for this event date.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		return $ticket;
+	}
+
+	/**
+	 * The activities configured for an event date, from its series master
+	 * for a generated occurrence.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return object[] TicketOption objects.
+	 */
+	private function activity_catalogue( $event_date_id ) {
+		if ( ! class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+			return array();
+		}
+
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( $event_date && 'generated' === $event_date->occurrence_type && $event_date->master_id ) {
+			$event_date_id = (int) $event_date->master_id;
+		}
+
+		return \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
+	}
+
+	/**
+	 * One ticket's activity rows, shaped for build_ticket_payload().
+	 *
+	 * @param object $ticket Ticket row.
+	 * @return object[]
+	 */
+	private function ticket_activity_rows( $ticket ) {
+		$ticket_id = (int) $ticket->id;
+		$rows      = array();
+		foreach ( \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( array( $ticket_id ) )[ $ticket_id ] ?? array() as $activity ) {
+			$rows[] = (object) array(
+				'ticket_option_id'   => (int) $activity->ticket_option_id,
+				'ticket_option_name' => (string) $activity->ticket_option_name,
+				'status'             => 'confirmed' === $ticket->status ? (string) $activity->status : 'pending_payment',
+				'ticket_id'          => $ticket_id,
+				'over_capacity'      => ! empty( $activity->over_capacity ),
+			);
+		}
+
+		return $rows;
 	}
 
 	/**
@@ -1185,6 +1413,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		return array(
 			'id'                         => (int) $ticket->id,
+			'position'                   => (int) $ticket->unit_position,
 			'reference'                  => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
 			'signup_id'                  => (int) $ticket->signup_id,
 			'ticket_type_id'             => $ticket->ticket_type_id ? (int) $ticket->ticket_type_id : null,

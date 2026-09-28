@@ -87,6 +87,38 @@ function mockApi( participant = PARTICIPANT ) {
 		const ticketMatch = path.match(
 			/^\/fair-audience\/v1\/event-dates\/5\/tickets\/(\d+)$/
 		);
+		if ( ticketMatch && ! method ) {
+			const source = [ TICKET_ONE, TICKET_TWO ].find(
+				( t ) => t.id === Number( ticketMatch[ 1 ] )
+			);
+			return Promise.resolve( {
+				ticket: {
+					...source,
+					position: 1,
+					participant_name: 'Jane Doe',
+					editable: true,
+					over_capacity_activity_ids: [],
+				},
+				ticket_types: [
+					{
+						id: 3,
+						label: 'Regular',
+						current: true,
+						capacity: null,
+						remaining: null,
+						activities_enabled: true,
+						minimum_activities: 0,
+						maximum_activities: null,
+					},
+				],
+				activities: OPTIONS.map( ( o ) => ( {
+					id: o.id,
+					name: o.name,
+					capacity: null,
+					remaining: null,
+				} ) ),
+			} );
+		}
 		if ( ticketMatch && method === 'PUT' ) {
 			const source = [ TICKET_ONE, TICKET_TWO ].find(
 				( t ) => t.id === Number( ticketMatch[ 1 ] )
@@ -175,7 +207,10 @@ function totalsCells( label ) {
 function ticketCalls() {
 	return apiFetch.mock.calls
 		.map( ( [ args ] ) => args )
-		.filter( ( args ) => /\/tickets\/\d+$/.test( args.path ) );
+		.filter(
+			( args ) =>
+				args.method === 'PUT' && /\/tickets\/\d+$/.test( args.path )
+		);
 }
 
 beforeEach( () => {
@@ -260,27 +295,23 @@ describe( 'EventAudience — tickets in the Audience tab', () => {
 				name: 'Edit Ticket 2 — Regular (BBBB2222)',
 			} )
 		);
-		const modal = screen.getByRole( 'dialog' );
-		expect(
-			modal.querySelectorAll( '.fair-audience-ticket-editor' )
-		).toHaveLength( 1 );
-
+		const modal = await screen.findByRole( 'dialog', {
+			name: 'Edit ticket — Jane Doe',
+		} );
 		fireEvent.click(
-			within( modal ).getByRole( 'checkbox', {
+			await within( modal ).findByRole( 'checkbox', {
 				name: 'Morning workshop',
 			} )
 		);
 		fireEvent.click(
-			within( modal ).getByRole( 'button', {
-				name: 'Save Ticket 2 — Regular (BBBB2222)',
-			} )
+			within( modal ).getByRole( 'button', { name: 'Save ticket' } )
 		);
 
 		await waitFor( () => expect( ticketCalls() ).toHaveLength( 1 ) );
 		expect( ticketCalls()[ 0 ] ).toEqual( {
 			path: '/fair-audience/v1/event-dates/5/tickets/102',
 			method: 'PUT',
-			data: { activity_ids: [ 8 ], attended: false },
+			data: { activity_ids: [ 8 ] },
 		} );
 		await waitFor( () =>
 			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
@@ -303,7 +334,7 @@ describe( 'EventAudience — tickets in the Audience tab', () => {
 		);
 		const modal = screen.getByRole( 'dialog' );
 		expect(
-			modal.querySelector( '.fair-audience-ticket-editor' )
+			within( modal ).queryByRole( 'button', { name: 'Save ticket' } )
 		).toBeNull();
 
 		fireEvent.click(
@@ -426,6 +457,30 @@ describe( 'EventAudience — tickets in the Audience tab', () => {
 		);
 		expect( groups[ 1 ].querySelector( 'td.activities' ).textContent ).toBe(
 			'PM'
+		);
+	} );
+} );
+
+describe( 'EventAudience — tickets awaiting payment (#1709)', () => {
+	it( 'keeps the check-in of a ticket awaiting payment read-only', async () => {
+		mockApi( {
+			...PARTICIPANT,
+			tickets: [
+				TICKET_ONE,
+				{ ...TICKET_TWO, status: 'pending_payment' },
+			],
+		} );
+		renderAudience();
+
+		await screen.findByText( 'Jane Doe' );
+		expect(
+			within( ticketRow( 101 ) ).getByRole( 'checkbox' )
+		).toBeEnabled();
+		const pending = within( ticketRow( 102 ) ).getByRole( 'checkbox' );
+		expect( pending ).toBeDisabled();
+		expect( pending ).toHaveAttribute(
+			'title',
+			'Check-in is available once the payment is complete.'
 		);
 	} );
 } );

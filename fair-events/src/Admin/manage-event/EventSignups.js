@@ -24,6 +24,11 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from './SignupExportModal.js';
+import {
+	TicketEditModal,
+	ticketReferenceLabel,
+	ticketStatusName,
+} from 'fair-events-shared';
 import SignupEditModal, {
 	ACTION_MOVE,
 	ACTION_CHANGE_TYPE,
@@ -87,6 +92,36 @@ export function buildConfirmedOptionsByParticipant( participants ) {
 	} );
 	return map;
 }
+
+/**
+ * Ticket type of a purchase as the List shows it: each ticket's own type
+ * is authoritative, so a purchase whose tickets were given different types
+ * says so instead of naming the type it was bought with.
+ *
+ * @param {Object} signup Signup row returned by the API.
+ * @return {string} Ticket type name
+ */
+export function purchaseTicketTypeName( signup ) {
+	const names = [
+		...new Set(
+			( signup.tickets || [] ).map(
+				( ticket ) => ticket.ticket_type_name || '—'
+			)
+		),
+	];
+	if ( names.length > 1 ) {
+		return __( 'Mixed types', 'fair-events' );
+	}
+	return names[ 0 ] || signup.ticket_type_name || '—';
+}
+
+// Ticket statuses that no longer admit anyone; such tickets are not edited.
+const INACTIVE_TICKET_STATUSES = [
+	'failed',
+	'expired',
+	'cancelled',
+	'refunded',
+];
 
 const cellStyle = {
 	padding: '8px',
@@ -257,6 +292,8 @@ export default function EventSignups( { eventDateId } ) {
 	const [ isExportModalOpen, setIsExportModalOpen ] = useState( false );
 	// { signup, action } while the move / change-type modal is open.
 	const [ editing, setEditing ] = useState( null );
+	// Ticket ID while the ticket editor is open.
+	const [ editingTicketId, setEditingTicketId ] = useState( null );
 
 	const loadSignups = useCallback( () => {
 		if ( ! eventDateId ) {
@@ -299,7 +336,7 @@ export default function EventSignups( { eventDateId } ) {
 			.catch( () => setTicketOptions( [] ) );
 	}, [ eventDateId ] );
 
-	useEffect( () => {
+	const loadConfirmedOptions = useCallback( () => {
 		if ( ! eventDateId || ! audienceActive ) {
 			return;
 		}
@@ -313,6 +350,10 @@ export default function EventSignups( { eventDateId } ) {
 			)
 			.catch( () => setConfirmedOptionsByParticipant( null ) );
 	}, [ eventDateId, audienceActive ] );
+
+	useEffect( () => {
+		loadConfirmedOptions();
+	}, [ loadConfirmedOptions ] );
 
 	if ( loading ) {
 		return <Spinner />;
@@ -356,6 +397,63 @@ export default function EventSignups( { eventDateId } ) {
 		return selected.has( Number( option.id ) )
 			? EXTRA_SELECTED
 			: EXTRA_NOT_SELECTED;
+	};
+
+	const renderTicketRow = ( signup, ticket ) => {
+		const label = ticketReferenceLabel( ticket.position, ticket.reference );
+		const activityIds = ( ticket.activity_ids || [] ).map( Number );
+		return (
+			<tr
+				key={ `t-${ ticket.id }` }
+				className="fair-events-signups__ticket"
+				data-ticket-id={ ticket.id }
+				data-signup-id={ signup.id }
+				style={ { background: '#f6f7f7' } }
+			>
+				<td style={ cellStyle } />
+				<td style={ { ...cellStyle, paddingLeft: '24px' } }>
+					{ label }
+				</td>
+				<td style={ cellStyle }>{ ticket.ticket_type_name || '—' }</td>
+				<td style={ cellStyle } />
+				{ ticketOptions.map( ( opt ) => (
+					<td
+						key={ opt.id }
+						style={ { ...cellStyle, textAlign: 'center' } }
+					>
+						<ExtraIndicator
+							state={
+								activityIds.includes( Number( opt.id ) )
+									? EXTRA_SELECTED
+									: EXTRA_NOT_SELECTED
+							}
+						/>
+					</td>
+				) ) }
+				<td style={ cellStyle }>
+					{ ticketStatusName( ticket.status ) }
+				</td>
+				<td style={ cellStyle } />
+				<td style={ cellStyle } />
+				<td style={ cellStyle } />
+				<td style={ cellStyle }>
+					{ ! INACTIVE_TICKET_STATUSES.includes( ticket.status ) && (
+						<Button
+							variant="link"
+							onClick={ () => setEditingTicketId( ticket.id ) }
+							label={ sprintf(
+								/* translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)" */
+								__( 'Edit %s', 'fair-events' ),
+								label
+							) }
+							showTooltip={ false }
+						>
+							{ __( 'Edit ticket', 'fair-events' ) }
+						</Button>
+					) }
+				</td>
+			</tr>
+		);
 	};
 
 	const handleDelete = async () => {
@@ -465,7 +563,7 @@ export default function EventSignups( { eventDateId } ) {
 								</tr>
 							</thead>
 							<tbody>
-								{ visibleSignups.map( ( s, index ) => (
+								{ visibleSignups.map( ( s, index ) => [
 									<tr key={ s.id }>
 										<td
 											style={ {
@@ -477,7 +575,7 @@ export default function EventSignups( { eventDateId } ) {
 										</td>
 										<td style={ cellStyle }>{ s.name }</td>
 										<td style={ cellStyle }>
-											{ s.ticket_type_name || '—' }
+											{ purchaseTicketTypeName( s ) }
 										</td>
 										<td style={ cellStyle }>
 											{ s.quantity }
@@ -543,22 +641,23 @@ export default function EventSignups( { eventDateId } ) {
 														) }
 													</Button>
 												) }
-												{ !! s.ticket_type_id && (
-													<Button
-														variant="link"
-														onClick={ () =>
-															setEditing( {
-																signup: s,
-																action: ACTION_CHANGE_TYPE,
-															} )
-														}
-													>
-														{ __(
-															'Change ticket type',
-															'fair-events'
-														) }
-													</Button>
-												) }
+												{ ! audienceActive &&
+													!! s.ticket_type_id && (
+														<Button
+															variant="link"
+															onClick={ () =>
+																setEditing( {
+																	signup: s,
+																	action: ACTION_CHANGE_TYPE,
+																} )
+															}
+														>
+															{ __(
+																'Change ticket type',
+																'fair-events'
+															) }
+														</Button>
+													) }
 												<Button
 													variant="link"
 													isDestructive
@@ -573,8 +672,13 @@ export default function EventSignups( { eventDateId } ) {
 												</Button>
 											</Flex>
 										</td>
-									</tr>
-								) ) }
+									</tr>,
+									...( audienceActive
+										? ( s.tickets || [] ).map( ( ticket ) =>
+												renderTicketRow( s, ticket )
+										  )
+										: [] ),
+								] ) }
 							</tbody>
 						</table>
 					</div>
@@ -617,6 +721,18 @@ export default function EventSignups( { eventDateId } ) {
 					onSaved={ () => {
 						setEditing( null );
 						loadSignups();
+					} }
+				/>
+			) }
+			{ editingTicketId && (
+				<TicketEditModal
+					eventDateId={ eventDateId }
+					ticketId={ editingTicketId }
+					onClose={ () => setEditingTicketId( null ) }
+					onSaved={ () => {
+						setEditingTicketId( null );
+						loadSignups();
+						loadConfirmedOptions();
 					} }
 				/>
 			) }

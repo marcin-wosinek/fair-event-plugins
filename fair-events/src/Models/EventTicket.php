@@ -61,6 +61,36 @@ class EventTicket {
 	}
 
 	/**
+	 * Get the ticket units of several signups, grouped by signup and ordered
+	 * by position.
+	 *
+	 * @param int[] $signup_ids Signup row IDs.
+	 * @return array<int, object[]> Units keyed by signup ID.
+	 */
+	public static function get_by_signup_ids( array $signup_ids ) {
+		global $wpdb;
+
+		$signup_ids = array_values( array_filter( array_map( 'intval', $signup_ids ) ) );
+		if ( ! $signup_ids ) {
+			return array();
+		}
+
+		$units = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE signup_id IN (' . implode( ', ', array_fill( 0, count( $signup_ids ), '%d' ) ) . ') ORDER BY signup_id ASC, unit_position ASC',
+				array_merge( array( self::table() ), $signup_ids )
+			)
+		);
+
+		$by_signup = array();
+		foreach ( $units as $unit ) {
+			$by_signup[ (int) $unit->signup_id ][] = $unit;
+		}
+
+		return $by_signup;
+	}
+
+	/**
 	 * Get a ticket unit by its public reference.
 	 *
 	 * @param string $reference Public reference.
@@ -346,6 +376,51 @@ class EventTicket {
 				$signup_id,
 				self::FINAL_UNIT_STATUSES[0],
 				self::FINAL_UNIT_STATUSES[1]
+			)
+		);
+	}
+
+	/**
+	 * Give one unit another ticket type, leaving its signup and sibling
+	 * units unchanged. From then on the unit's type is its own: the
+	 * signup's type stays as purchase history.
+	 *
+	 * @param int $ticket_id      Ticket ID.
+	 * @param int $ticket_type_id New ticket type ID.
+	 * @return bool
+	 */
+	public static function set_ticket_type( int $ticket_id, int $ticket_type_id ) {
+		global $wpdb;
+
+		return false !== $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET ticket_type_id = %d WHERE id = %d',
+				self::table(),
+				$ticket_type_id,
+				$ticket_id
+			)
+		);
+	}
+
+	/**
+	 * Whether any of a signup's units, other than those cancelled or
+	 * refunded on their own, has a ticket type other than the signup's:
+	 * an administrator gave it one individually.
+	 *
+	 * @param object $signup Signup row (id, ticket_type_id).
+	 * @return bool
+	 */
+	public static function has_individual_types( $signup ) {
+		global $wpdb;
+
+		return (bool) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT 1 FROM %i WHERE signup_id = %d AND status NOT IN (%s, %s) AND NOT ( ticket_type_id <=> NULLIF(%d, 0) ) LIMIT 1',
+				self::table(),
+				(int) $signup->id,
+				self::FINAL_UNIT_STATUSES[0],
+				self::FINAL_UNIT_STATUSES[1],
+				(int) ( $signup->ticket_type_id ?? 0 )
 			)
 		);
 	}

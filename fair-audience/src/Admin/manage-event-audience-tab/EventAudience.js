@@ -15,11 +15,12 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import TicketEditor, {
+import { TicketEditModal } from 'fair-events-shared';
+import {
 	ticketLabel,
 	ticketShortLabel,
 	ticketStatusLabel,
-} from './TicketEditor.js';
+} from './ticketLabels.js';
 
 const LABEL_ORDER = { collaborator: 0, signed_up: 1, interested: 2 };
 
@@ -178,7 +179,7 @@ export default function EventAudience( {
 	const [ editLabel, setEditLabel ] = useState( 'signed_up' );
 	const [ isSavingOptions, setIsSavingOptions ] = useState( false );
 
-	// Edit-ticket modal state: { participant, ticket, position } or null.
+	// Edit-ticket modal state: { participant, ticket } or null.
 	const [ editingTicket, setEditingTicket ] = useState( null );
 
 	// Move-to-occurrence modal state
@@ -1529,7 +1530,9 @@ export default function EventAudience( {
 		];
 
 		( p.tickets || [] ).forEach( ( ticket, ticketIndex ) => {
-			const position = ticketIndex + 1;
+			// Number of the ticket within its purchase, as the ticket
+			// editor names it.
+			const position = ticket.position || ticketIndex + 1;
 			const fullLabel = ticketLabel( ticket, position );
 			rows.push(
 				<tr
@@ -1567,6 +1570,16 @@ export default function EventAudience( {
 								fullLabel
 							) }
 							checked={ !! ticket.attended_at }
+							// A ticket awaiting payment is read-only.
+							disabled={ ticket.status !== 'confirmed' }
+							title={
+								ticket.status !== 'confirmed'
+									? __(
+											'Check-in is available once the payment is complete.',
+											'fair-audience'
+									  )
+									: undefined
+							}
 							onChange={ ( e ) =>
 								handleToggleTicketAttended(
 									p,
@@ -1585,7 +1598,6 @@ export default function EventAudience( {
 								setEditingTicket( {
 									participant: p,
 									ticket,
-									position,
 								} )
 							}
 							label={ sprintf(
@@ -2914,36 +2926,14 @@ export default function EventAudience( {
 			) }
 
 			{ editingTicket && (
-				<Modal
-					title={ sprintf(
-						/* translators: %s: participant name */
-						__( 'Edit ticket — %s', 'fair-audience' ),
-						editingTicket.participant.participant_name
-					) }
-					onRequestClose={ () => setEditingTicket( null ) }
-					style={ { maxWidth: '520px', width: '100%' } }
-				>
-					<TicketEditor
-						ticket={ editingTicket.ticket }
-						position={ editingTicket.position }
-						ticketOptions={ ticketOptions }
-						eventDateId={ eventDateId }
-						onSaved={ ( updated ) =>
-							handleTicketSaved(
-								editingTicket.participant,
-								updated
-							)
-						}
-						onError={ ( message ) =>
-							showToast(
-								__( 'Error saving ticket: ', 'fair-audience' ) +
-									message,
-								'error'
-							)
-						}
-						onCancel={ () => setEditingTicket( null ) }
-					/>
-				</Modal>
+				<TicketEditModal
+					eventDateId={ eventDateId }
+					ticketId={ editingTicket.ticket.id }
+					onClose={ () => setEditingTicket( null ) }
+					onSaved={ ( updated ) =>
+						handleTicketSaved( editingTicket.participant, updated )
+					}
+				/>
 			) }
 
 			{ movingParticipant && (
