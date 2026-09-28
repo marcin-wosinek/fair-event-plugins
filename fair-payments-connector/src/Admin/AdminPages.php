@@ -7,7 +7,6 @@
 
 namespace FairPaymentsConnector\Admin;
 
-use FairEventsShared\Money;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
 
 defined( 'WPINC' ) || die;
@@ -121,13 +120,6 @@ class AdminPages {
 		// Fee Dashboard page.
 		if ( false !== strpos( $hook, 'fair-payments-connector-fee-dashboard' ) ) {
 			$this->enqueue_admin_page_script( 'fee-dashboard' );
-			wp_localize_script(
-				'fair-payments-connector-fee-dashboard',
-				'fairPaymentsConnector',
-				array(
-					'currency' => Money::site_currency(),
-				)
-			);
 			return;
 		}
 
