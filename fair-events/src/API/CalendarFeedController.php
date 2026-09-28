@@ -12,6 +12,7 @@ namespace FairEvents\API;
 
 defined( 'WPINC' ) || die;
 
+use FairEvents\Frontend\EventDateView;
 use FairEvents\Helpers\DateHelper;
 use FairEvents\Services\EventFeedProvider;
 use Sabre\VObject\Component\VCalendar;
@@ -252,20 +253,21 @@ class CalendarFeedController extends WP_REST_Controller {
 	 */
 	private function add_vevent( VCalendar $vcalendar, array $occurrence, \DateTimeZone $tz ) {
 		$now = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+		$url = $this->resolve_url( $occurrence );
 
 		$vevent = $vcalendar->add(
 			'VEVENT',
 			array(
 				'UID'           => $occurrence['uid'],
 				'SUMMARY'       => $occurrence['title'],
-				'DESCRIPTION'   => $occurrence['description'],
+				'DESCRIPTION'   => $this->build_description( (string) $occurrence['description'], $url ),
 				'DTSTAMP'       => $now,
 				'LAST-MODIFIED' => $now,
 			)
 		);
 
-		if ( ! empty( $occurrence['url'] ) ) {
-			$vevent->add( 'URL', $occurrence['url'] );
+		if ( '' !== $url ) {
+			$vevent->add( 'URL', $url );
 		}
 
 		$location_line = $this->build_location_line( $occurrence['location'] ?? null );
@@ -286,6 +288,56 @@ class CalendarFeedController extends WP_REST_Controller {
 			$vevent->add( 'DTSTART', DateHelper::local_to_ical_utc( $occurrence['start'] ) );
 			$vevent->add( 'DTEND', DateHelper::local_to_ical_utc( $occurrence['end'] ) );
 		}
+	}
+
+	/**
+	 * Resolve the link for an occurrence: its own URL when it has one,
+	 * otherwise — for a local event date — the public EventDateView page, so
+	 * every local entry links somewhere specific (#1691).
+	 *
+	 * @param array $occurrence Occurrence DTO.
+	 * @return string URL, or '' when none resolves.
+	 */
+	private function resolve_url( array $occurrence ) {
+		if ( ! empty( $occurrence['url'] ) ) {
+			return (string) $occurrence['url'];
+		}
+
+		if ( ! empty( $occurrence['event_date_id'] ) ) {
+			return EventDateView::url( $occurrence['event_date_id'] );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Build the plain-text DESCRIPTION: the existing text with the event URL
+	 * as its final line, separated by a blank line. Calendar clients such as
+	 * Google Calendar don't show the URL property, so the link has to live
+	 * in the description too. Sabre/VObject handles iCal escaping and
+	 * folding.
+	 *
+	 * @param string $description Occurrence description (plain text).
+	 * @param string $url         Resolved event URL, or ''.
+	 * @return string
+	 */
+	private function build_description( $description, $url ) {
+		$description = rtrim( $description );
+
+		if ( '' === $url ) {
+			return $description;
+		}
+
+		if ( '' === $description ) {
+			return $url;
+		}
+
+		$lines = preg_split( '/\r\n|\r|\n/', $description );
+		if ( trim( end( $lines ) ) === $url ) {
+			return $description;
+		}
+
+		return $description . "\n\n" . $url;
 	}
 
 	/**

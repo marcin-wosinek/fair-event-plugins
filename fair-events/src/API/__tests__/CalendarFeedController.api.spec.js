@@ -412,3 +412,351 @@ test.describe( 'CalendarFeedController — VTIMEZONE block on named zones', () =
 		expect( body ).not.toMatch( /^(DAYLIGHT|STANDARD);DTSTART=/m );
 	} );
 } );
+
+/**
+ * Parse the VEVENTs of an ICS body into { uid, url, description } objects,
+ * unfolding RFC 5545 line folding and unescaping TEXT values.
+ *
+ * @param {string} ics Raw ICS body.
+ * @return {Object[]} Parsed events.
+ */
+function parseVevents( ics ) {
+	const unfolded = ics.replace( /\r\n[ \t]/g, '' );
+	const unescape = ( value ) =>
+		value.replace( /\\([\;,nN])/g, ( _, ch ) =>
+			'n' === ch || 'N' === ch ? '\n' : ch
+		);
+	const property = ( block, name ) => {
+		const match = block.match(
+			new RegExp( `^${ name }(?:;[^:\\r\\n]*)?:(.*)$`, 'm' )
+		);
+		return match ? match[ 1 ].replace( /\r$/, '' ) : null;
+	};
+
+	return unfolded
+		.split( 'BEGIN:VEVENT' )
+		.slice( 1 )
+		.map( ( block ) => {
+			const description = property( block, 'DESCRIPTION' );
+			return {
+				uid: property( block, 'UID' ),
+				url: property( block, 'URL' ),
+				description:
+					null === description ? null : unescape( description ),
+			};
+		} );
+}
+
+test.describe( 'CalendarFeedController — event links in DESCRIPTION (#1691)', () => {
+	const RANGE = 'start_date=2035-10-01&end_date=2035-10-31';
+	const EXCERPT = 'Bring comfortable shoes, please.';
+
+	let api;
+	let postId;
+	let postSeriesIds = [];
+	let externalId;
+	let noUrlId;
+	let noUrlSeriesIds = [];
+	let noUrlTitle;
+	let seriesTitle;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Calendar feed link post ${ Date.now() }`,
+				excerpt: EXCERPT,
+				status: 'publish',
+			},
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		postId = ( await postRes.json() ).id;
+
+		const postMasterRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: 'Calendar feed link post series',
+					link_type: 'post',
+					start_datetime: '2035-10-01 10:00:00',
+					end_datetime: '2035-10-01 12:00:00',
+				},
+			}
+		);
+		expect( postMasterRes.ok() ).toBeTruthy();
+		const postMasterId = ( await postMasterRes.json() ).id;
+
+		const postLinkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ postMasterId }`,
+			{
+				headers: adminHeaders,
+				data: { event_id: postId, rrule: 'FREQ=WEEKLY;COUNT=2' },
+			}
+		);
+		expect( postLinkRes.ok() ).toBeTruthy();
+		postSeriesIds = [
+			postMasterId,
+			...( await postLinkRes.json() ).generated_occurrences.map(
+				( o ) => o.id
+			),
+		];
+		expect( postSeriesIds.length ).toBe( 2 );
+
+		const externalRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Calendar feed link external ${ Date.now() }`,
+					start_datetime: '2035-10-02 10:00:00',
+					end_datetime: '2035-10-02 12:00:00',
+					link_type: 'external',
+					external_url: 'https://example.com/calendar-feed-link',
+				},
+			}
+		);
+		expect( externalRes.ok() ).toBeTruthy();
+		externalId = ( await externalRes.json() ).id;
+
+		noUrlTitle = `Calendar feed link none ${ Date.now() }`;
+		const noUrlRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: noUrlTitle,
+					start_datetime: '2035-10-03 10:00:00',
+					end_datetime: '2035-10-03 12:00:00',
+					link_type: 'none',
+				},
+			}
+		);
+		expect( noUrlRes.ok() ).toBeTruthy();
+		noUrlId = ( await noUrlRes.json() ).id;
+
+		seriesTitle = `Calendar feed link none series ${ Date.now() }`;
+		const seriesRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: seriesTitle,
+					start_datetime: '2035-10-04 18:00:00',
+					end_datetime: '2035-10-04 19:00:00',
+					link_type: 'none',
+				},
+			}
+		);
+		expect( seriesRes.ok() ).toBeTruthy();
+		const seriesMasterId = ( await seriesRes.json() ).id;
+
+		const rruleRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ seriesMasterId }`,
+			{
+				headers: adminHeaders,
+				data: { rrule: 'FREQ=WEEKLY;COUNT=3' },
+			}
+		);
+		expect( rruleRes.ok() ).toBeTruthy();
+		noUrlSeriesIds = [
+			seriesMasterId,
+			...( await rruleRes.json() ).generated_occurrences.map(
+				( o ) => o.id
+			),
+		];
+		expect( noUrlSeriesIds.length ).toBe( 3 );
+	} );
+
+	test.afterAll( async () => {
+		if ( postId ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{
+					headers: adminHeaders,
+				}
+			);
+		}
+		for ( const id of [ postSeriesIds[ 0 ], externalId, noUrlId ] ) {
+			if ( id ) {
+				await api.delete(
+					`/wp-json/fair-events/v1/event-dates/${ id }`,
+					{
+						headers: adminHeaders,
+					}
+				);
+			}
+		}
+		if ( noUrlSeriesIds[ 0 ] ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ noUrlSeriesIds[ 0 ] }`,
+				{ headers: adminHeaders }
+			);
+		}
+	} );
+
+	/**
+	 * Fetch the feed and index its VEVENTs by event-date ID.
+	 *
+	 * @return {Promise<Map<number, Object>>} Event-date ID => parsed VEVENT.
+	 */
+	async function feedByEventDateId() {
+		const res = await api.get(
+			`/wp-json/fair-events/v1/calendar.ics?${ RANGE }`
+		);
+		expect( res.ok() ).toBeTruthy();
+
+		const byId = new Map();
+		for ( const vevent of parseVevents( await res.text() ) ) {
+			const match = vevent.uid?.match( /_(\d+)@/ );
+			if ( match ) {
+				byId.set( Number( match[ 1 ] ), vevent );
+			}
+		}
+		return byId;
+	}
+
+	/**
+	 * Resolve a feed URL against the test site, keeping path and query.
+	 *
+	 * @param {string} url Absolute URL from the feed.
+	 * @return {string} Path + query.
+	 */
+	function localPath( url ) {
+		const parsed = new URL( url );
+		return parsed.pathname + parsed.search;
+	}
+
+	test( 'every entry has its link in URL and as the final DESCRIPTION line', async () => {
+		const byId = await feedByEventDateId();
+		const ids = [
+			...postSeriesIds,
+			externalId,
+			noUrlId,
+			...noUrlSeriesIds,
+		];
+
+		for ( const id of ids ) {
+			const vevent = byId.get( id );
+			expect( vevent, `VEVENT for event date ${ id }` ).toBeTruthy();
+			expect( vevent.url ).toBeTruthy();
+
+			const lines = vevent.description.split( '\n' );
+			expect( lines[ lines.length - 1 ] ).toBe( vevent.url );
+			expect(
+				lines.filter( ( line ) => line === vevent.url ).length
+			).toBe( 1 );
+		}
+	} );
+
+	test( 'local post events keep their text and link to the right occurrence', async () => {
+		const byId = await feedByEventDateId();
+
+		for ( const id of postSeriesIds ) {
+			const edRes = await api.get(
+				`/wp-json/fair-events/v1/event-dates/${ id }`,
+				{ headers: adminHeaders }
+			);
+			const eventDate = await edRes.json();
+			const vevent = byId.get( id );
+
+			expect( vevent.url ).toBe( eventDate.display_url );
+			expect( vevent.description ).toBe(
+				`${ EXCERPT }\n\n${ eventDate.display_url }`
+			);
+		}
+
+		// The generated occurrence points at its own date.
+		expect( byId.get( postSeriesIds[ 1 ] ).url ).toContain(
+			'event_date=2035-10-08'
+		);
+	} );
+
+	test( 'external events link to their original page', async () => {
+		const vevent = ( await feedByEventDateId() ).get( externalId );
+
+		expect( vevent.url ).toBe( 'https://example.com/calendar-feed-link' );
+		expect( vevent.description ).toBe(
+			'https://example.com/calendar-feed-link'
+		);
+	} );
+
+	test( 'events without a URL link to a view of that event date', async () => {
+		const byId = await feedByEventDateId();
+
+		const single = byId.get( noUrlId );
+		expect( single.url ).toMatch(
+			new RegExp( `[?&]fair_event_date=${ noUrlId }$` )
+		);
+
+		const res = await api.get( localPath( single.url ) );
+		expect( res.status() ).toBe( 200 );
+		const html = await res.text();
+		expect( html ).toContain( noUrlTitle );
+
+		// Each occurrence of a series links to its own row.
+		const seriesUrls = noUrlSeriesIds.map( ( id ) => byId.get( id ).url );
+		noUrlSeriesIds.forEach( ( id, index ) => {
+			expect( seriesUrls[ index ] ).toMatch(
+				new RegExp( `[?&]fair_event_date=${ id }$` )
+			);
+		} );
+		expect( new Set( seriesUrls ).size ).toBe( noUrlSeriesIds.length );
+
+		const thirdRes = await api.get( localPath( seriesUrls[ 2 ] ) );
+		expect( thirdRes.status() ).toBe( 200 );
+		const thirdHtml = await thirdRes.text();
+		expect( thirdHtml ).toContain( seriesTitle );
+		expect( thirdHtml ).toMatch( /18 October|October 18/ );
+	} );
+
+	test( 'repeated feed requests do not duplicate the link', async () => {
+		const first = await feedByEventDateId();
+		const second = await feedByEventDateId();
+
+		for ( const [ id, vevent ] of first ) {
+			expect( second.get( id ).description ).toBe( vevent.description );
+		}
+	} );
+
+	test( 'the event-date view 404s for missing, malformed, cancelled, and post-linked rows', async () => {
+		for ( const value of [ '999999999', 'abc' ] ) {
+			const res = await api.get( `/?fair_event_date=${ value }` );
+			expect( res.status(), `fair_event_date=${ value }` ).toBe( 404 );
+		}
+
+		const postRes = await api.get(
+			`/?fair_event_date=${ postSeriesIds[ 0 ] }`
+		);
+		expect( postRes.status() ).toBe( 404 );
+
+		const cancelRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ noUrlSeriesIds[ 0 ] }/toggle-exdate`,
+			{ headers: adminHeaders, data: { date: '2035-10-11' } }
+		);
+		expect( cancelRes.ok() ).toBeTruthy();
+
+		const cancelledRes = await api.get(
+			`/?fair_event_date=${ noUrlSeriesIds[ 1 ] }`
+		);
+		expect( cancelledRes.status() ).toBe( 404 );
+
+		// Restore, so test order doesn't matter.
+		await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ noUrlSeriesIds[ 0 ] }/toggle-exdate`,
+			{ headers: adminHeaders, data: { date: '2035-10-11' } }
+		);
+	} );
+
+	test( 'the event-date view redirects once the event has a link', async () => {
+		const res = await api.get( `/?fair_event_date=${ externalId }`, {
+			maxRedirects: 0,
+		} );
+		expect( res.status() ).toBe( 302 );
+		expect( res.headers().location ).toBe(
+			'https://example.com/calendar-feed-link'
+		);
+	} );
+} );

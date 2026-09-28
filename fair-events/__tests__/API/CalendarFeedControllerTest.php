@@ -231,4 +231,126 @@ class CalendarFeedControllerTest extends TestCase {
 
 		$this->assertSame( 'https://example.com/meet', $line );
 	}
+
+	/**
+	 * Call the private build_description().
+	 *
+	 * @param string $description Occurrence description.
+	 * @param string $url         Resolved event URL.
+	 * @return string DESCRIPTION text.
+	 */
+	private function build_description( $description, $url ) {
+		$controller = new CalendarFeedController();
+		$method     = new \ReflectionMethod( CalendarFeedController::class, 'build_description' );
+		$method->setAccessible( true );
+
+		return $method->invoke( $controller, $description, $url );
+	}
+
+	/**
+	 * The URL goes on its own final line, after a blank line.
+	 *
+	 * @return void
+	 */
+	public function test_description_appends_url_on_separate_line() {
+		$this->assertSame(
+			"Line one\nLine two\n\nhttps://example.com/event",
+			$this->build_description( "Line one\nLine two", 'https://example.com/event' )
+		);
+	}
+
+	/**
+	 * An empty description becomes just the URL.
+	 *
+	 * @return void
+	 */
+	public function test_description_empty_is_url_only() {
+		$this->assertSame( 'https://example.com/event', $this->build_description( '', 'https://example.com/event' ) );
+	}
+
+	/**
+	 * A description already ending in the URL line is left unchanged.
+	 *
+	 * @return void
+	 */
+	public function test_description_does_not_duplicate_url() {
+		$description = "About the event\n\nhttps://example.com/event";
+
+		$this->assertSame( $description, $this->build_description( $description, 'https://example.com/event' ) );
+		$this->assertSame( $description, $this->build_description( $description . "\n", 'https://example.com/event' ) );
+	}
+
+	/**
+	 * The URL mentioned mid-text doesn't count as the final link line.
+	 *
+	 * @return void
+	 */
+	public function test_description_url_in_text_still_appends() {
+		$this->assertSame(
+			"See https://example.com/event for more.\n\nhttps://example.com/event",
+			$this->build_description( 'See https://example.com/event for more.', 'https://example.com/event' )
+		);
+	}
+
+	/**
+	 * Without a URL the description is unchanged.
+	 *
+	 * @return void
+	 */
+	public function test_description_without_url_is_unchanged() {
+		$this->assertSame( 'About the event', $this->build_description( 'About the event', '' ) );
+	}
+
+	/**
+	 * The serialized VEVENT carries the link in both URL and DESCRIPTION, and
+	 * a local event without a URL falls back to the event-date view.
+	 *
+	 * @return void
+	 */
+	public function test_vevent_links_in_url_and_description() {
+		$base = array(
+			'title'    => 'Event',
+			'start'    => '2026-06-15 12:00:00',
+			'end'      => '2026-06-15 13:00:00',
+			'all_day'  => false,
+			'location' => null,
+		);
+
+		$ics = $this->build_ics(
+			array(
+				array_merge(
+					$base,
+					array(
+						'uid'           => 'linked@example.com',
+						'event_date_id' => 7,
+						'description'   => 'Bring shoes, please',
+						'url'           => 'https://example.com/a-rather-long-event-page-url-that-forces-line-folding',
+					)
+				),
+				array_merge(
+					$base,
+					array(
+						'uid'           => 'unlinked@example.com',
+						'event_date_id' => 8,
+						'description'   => '',
+						'url'           => null,
+					)
+				),
+			)
+		);
+
+		$vcalendar = \Sabre\VObject\Reader::read( $ics );
+		$events    = array();
+		foreach ( $vcalendar->select( 'VEVENT' ) as $vevent ) {
+			$events[ (string) $vevent->{'UID'} ] = $vevent;
+		}
+
+		$linked = $events['linked@example.com'];
+		$this->assertSame( 'https://example.com/a-rather-long-event-page-url-that-forces-line-folding', (string) $linked->{'URL'} );
+		$this->assertSame( "Bring shoes, please\n\nhttps://example.com/a-rather-long-event-page-url-that-forces-line-folding", (string) $linked->{'DESCRIPTION'} );
+
+		$unlinked = $events['unlinked@example.com'];
+		$this->assertSame( 'https://example.com/?fair_event_date=8', (string) $unlinked->{'URL'} );
+		$this->assertSame( 'https://example.com/?fair_event_date=8', (string) $unlinked->{'DESCRIPTION'} );
+	}
 }
