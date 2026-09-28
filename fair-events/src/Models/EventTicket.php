@@ -248,6 +248,7 @@ class EventTicket {
 
 		$removed = 0;
 		if ( $stale_ids ) {
+			self::announce_deletion( $stale_ids );
 			EventTicketActivity::delete_by_ticket_ids( $stale_ids );
 			$removed = (int) $wpdb->query(
 				$wpdb->prepare(
@@ -510,6 +511,20 @@ class EventTicket {
 	}
 
 	/**
+	 * Tell companion plugins that these units are about to be deleted, so
+	 * records pointing at them (e.g. fair-form answers) can be detached. The
+	 * listener runs inside the caller's transaction, where there is one.
+	 *
+	 * @param int[] $ticket_ids Ticket IDs about to be deleted.
+	 * @return void
+	 */
+	private static function announce_deletion( array $ticket_ids ) {
+		if ( $ticket_ids ) {
+			do_action( 'fair_events_tickets_deleting', $ticket_ids );
+		}
+	}
+
+	/**
 	 * Delete every unit owned by a signup.
 	 *
 	 * @param int $signup_id Signup row ID.
@@ -518,9 +533,9 @@ class EventTicket {
 	public static function delete_by_signup_id( int $signup_id ) {
 		global $wpdb;
 
-		EventTicketActivity::delete_by_ticket_ids(
-			array_map( 'intval', wp_list_pluck( self::get_by_signup_id( $signup_id ), 'id' ) )
-		);
+		$ticket_ids = array_map( 'intval', wp_list_pluck( self::get_by_signup_id( $signup_id ), 'id' ) );
+		self::announce_deletion( $ticket_ids );
+		EventTicketActivity::delete_by_ticket_ids( $ticket_ids );
 
 		return $wpdb->query(
 			$wpdb->prepare( 'DELETE FROM %i WHERE signup_id = %d', self::table(), $signup_id )

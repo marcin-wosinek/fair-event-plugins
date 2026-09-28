@@ -762,6 +762,14 @@ sub-route) expose:
     active relationship, counted on the relationship's date (on every date
     of the series for a whole-series pass).
 
+-   **`fair_events_tickets_deleting` action** — `EventTicket` fires
+    `do_action( 'fair_events_tickets_deleting', $ticket_ids )` just before it
+    deletes ticket units: positions beyond a reduced quantity
+    (`reconcile_signup()`) or every unit of a deleted signup
+    (`delete_by_signup_id()`). It runs inside the caller's transaction, where
+    there is one. fair-form detaches the Fair Form answers linked to those
+    tickets (see "Fair Form answers per ticket" below).
+
 -   **`fair_events_signup_moved` / `fair_events_signup_ticket_type_changed`
     actions** — `GetTicketsController::update_item()` fires one of these
     after an administrator moved a confirmed signup to another occurrence of
@@ -798,6 +806,7 @@ unified-signup submission fatal'd):
 | `fair_events_backfill_signup_participant_ids` | 0    | `add_action( ... )` (default, no args)     |
 | `fair_events_capacity_legacy_admissions` | 3          | `add_filter( ..., 10, 3 )`                 |
 | `fair_events_capacity_legacy_activity_selections` | 4 | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_tickets_deleting`         | 1           | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_moved`             | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_signup_ticket_type_changed` | 2         | `add_action( ..., 10, 1 )` or `2`          |
 
@@ -928,6 +937,43 @@ and an add-on hold expiry). fair-events owns the tables and models
     ticket's activities break the new type's rules. A late paid purchase or
     add-on is honored and flagged over capacity when its places were taken.
     A failed add-on payment releases that ticket's hold at once.
+
+### Fair Form answers per ticket
+
+A Fair Form submission collected during a get-tickets signup records the
+ticket it belongs to (`ticket_id` and `ticket_link` on
+`fair_audience_questionnaire_submissions`, #1609). fair-form owns the columns
+and `FairForm\Services\TicketAnswers` (the read side); fair-events and
+fair-audience call it behind `class_exists()` guards.
+
+-   **Write.** A signup still collects one answer set. `GetTicketsController`
+    passes the purchase's first ticket (lowest `unit_position`, looked up from
+    the signup it just saved — never from the request) to
+    `QuestionnaireService::save_answers()`, which reuses a submission by
+    ticket, so a later purchase by the same participant never replaces an
+    earlier one's answers. `ticket_link` is `direct`. Submissions with no
+    ticket (standalone Fair Form blocks, fair-audience's own signup routes)
+    keep `ticket_id` and `ticket_link` NULL.
+-   **Read.** The admin `get-tickets` list with `include_answers` puts
+    `answers` on each ticket and repeats the first ticket's on the signup
+    (`answers_ticket_id`, `answers_need_review`). fair-audience's participant
+    list and ticket endpoint return each ticket's `answers`; the participant's
+    `questionnaire_answers` hold only answers not attached to a ticket.
+    `fair-form/v1/questionnaire-responses` returns `ticket_id`, `ticket_link`
+    and `needs_review`.
+-   **Legacy.** `SubmissionTicketBackfill` attaches submissions that predate
+    the link, once fair-events' ticket units are complete: the earliest
+    signup of the same participant on the same event date, its first ticket,
+    marked `inferred`. With no match — or when that ticket already has a
+    submission — it is marked `unresolved` and stays at participant scope.
+    Standalone submissions (a `form_id`, or titled "Fair Form" / "Audience
+    Signup") are left alone.
+-   **Removal.** When a linked ticket is deleted (`fair_events_tickets_deleting`),
+    the submission keeps its answers, loses its `ticket_id` and is marked
+    `ticket_removed`; it is never moved to another ticket.
+
+`inferred`, `unresolved` and `ticket_removed` links are flagged for review in
+the admin views.
 
 ## Related Documentation
 

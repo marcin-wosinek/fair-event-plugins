@@ -71,6 +71,17 @@ class Plugin {
 
 		add_action( 'rest_api_init', array( $this, 'register_api_endpoints' ) );
 
+		// A ticket removed by fair-events (quantity reduced or signup
+		// deleted) keeps its answers at participant scope, flagged for review.
+		add_action(
+			'fair_events_tickets_deleting',
+			static function ( $ticket_ids ) {
+				( new \FairForm\Database\QuestionnaireSubmissionRepository() )->unlink_tickets( (array) $ticket_ids );
+			},
+			10,
+			1
+		);
+
 		// Deferred notification dispatch: the admin notification email is
 		// scheduled rather than sent inline so a slow/unreachable mail
 		// transport can't make submit requests time out. See

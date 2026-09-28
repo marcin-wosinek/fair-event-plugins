@@ -243,6 +243,11 @@ class QuestionnaireSubmissionRepository {
 			$values[] = $filters['form_id'];
 		}
 
+		if ( ! empty( $filters['ticket_id'] ) ) {
+			$where[]  = 'ticket_id = %d';
+			$values[] = $filters['ticket_id'];
+		}
+
 		$sql = 'SELECT * FROM %i';
 
 		if ( ! empty( $where ) ) {
@@ -261,6 +266,82 @@ class QuestionnaireSubmissionRepository {
 				return new QuestionnaireSubmission( $row );
 			},
 			$results
+		);
+	}
+
+	/**
+	 * Get the submissions linked to any of the given tickets, oldest first.
+	 *
+	 * @param int[] $ticket_ids Ticket IDs.
+	 * @return QuestionnaireSubmission[] Array of submissions.
+	 */
+	public function get_by_ticket_ids( array $ticket_ids ) {
+		global $wpdb;
+
+		$ticket_ids = array_values( array_filter( array_map( 'intval', $ticket_ids ) ) );
+		if ( ! $ticket_ids ) {
+			return array();
+		}
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE ticket_id IN (' . implode( ', ', array_fill( 0, count( $ticket_ids ), '%d' ) ) . ') ORDER BY id ASC',
+				array_merge( array( $this->get_table_name() ), $ticket_ids )
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new QuestionnaireSubmission( $row );
+			},
+			$results
+		);
+	}
+
+	/**
+	 * Detach submissions from tickets that are being removed. The
+	 * submissions and their answers are kept at participant scope and
+	 * flagged for review; they are never moved to another ticket.
+	 *
+	 * @param int[] $ticket_ids Ticket IDs being removed.
+	 * @return int|false Number of submissions detached, or false on error.
+	 */
+	public function unlink_tickets( array $ticket_ids ) {
+		global $wpdb;
+
+		$ticket_ids = array_values( array_filter( array_map( 'intval', $ticket_ids ) ) );
+		if ( ! $ticket_ids ) {
+			return 0;
+		}
+
+		return $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET ticket_id = NULL, ticket_link = %s WHERE ticket_id IN (' . implode( ', ', array_fill( 0, count( $ticket_ids ), '%d' ) ) . ')',
+				array_merge( array( $this->get_table_name(), QuestionnaireSubmission::LINK_TICKET_REMOVED ), $ticket_ids )
+			)
+		);
+	}
+
+	/**
+	 * Set how a submission is linked to a ticket.
+	 *
+	 * @param int      $id          Submission ID.
+	 * @param int|null $ticket_id   Ticket ID, or null for none.
+	 * @param string   $ticket_link A QuestionnaireSubmission::LINK_* value.
+	 * @return bool Success.
+	 */
+	public function set_ticket_link( $id, $ticket_id, $ticket_link ) {
+		global $wpdb;
+
+		return false !== $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET ticket_id = NULLIF(%d, 0), ticket_link = %s WHERE id = %d',
+				$this->get_table_name(),
+				(int) $ticket_id,
+				$ticket_link,
+				(int) $id
+			)
 		);
 	}
 

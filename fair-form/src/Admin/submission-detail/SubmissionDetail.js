@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -12,6 +12,48 @@ import {
 } from '@wordpress/components';
 import { submissionToMarkdown } from '../utils/submission-markdown.js';
 import { formatDate } from '../utils/format-date.js';
+
+/**
+ * Which ticket a signup submission belongs to, and whether that link should
+ * be checked.
+ *
+ * @param {Object} submission Submission from the REST response.
+ * @return {string} Description
+ */
+export function ticketLinkDescription( submission ) {
+	const { ticket, ticket_link: link } = submission;
+	const label = ticket
+		? sprintf(
+				/* translators: 1: number of the ticket within its purchase, 2: short ticket reference */
+				__( 'Ticket %1$d (%2$s)', 'fair-form' ),
+				ticket.position,
+				ticket.reference
+		  )
+		: '';
+	if ( link === 'inferred' ) {
+		return sprintf(
+			/* translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)" */
+			__(
+				'%s — attached automatically because the answers predate per-ticket answers. Check that they belong to this ticket.',
+				'fair-form'
+			),
+			label
+		);
+	}
+	if ( link === 'unresolved' ) {
+		return __(
+			'No ticket — these answers predate per-ticket answers and no matching ticket was found. Check which ticket they belong to.',
+			'fair-form'
+		);
+	}
+	if ( link === 'ticket_removed' ) {
+		return __(
+			'No ticket — the ticket these answers belonged to was removed. Check whether they still apply.',
+			'fair-form'
+		);
+	}
+	return label;
+}
 
 function AnswerDisplay( { answer } ) {
 	const { question_type, answer_value, file_url } = answer;
@@ -343,6 +385,14 @@ export default function SubmissionDetail() {
 									onUpdate={ setSubmission }
 								/>
 							</tr>
+							{ submission.ticket_link && (
+								<tr>
+									<th>{ __( 'Ticket', 'fair-form' ) }</th>
+									<td>
+										{ ticketLinkDescription( submission ) }
+									</td>
+								</tr>
+							) }
 						</tbody>
 					</table>
 				</CardBody>

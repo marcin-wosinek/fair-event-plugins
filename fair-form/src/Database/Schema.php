@@ -21,6 +21,11 @@ class Schema {
 	/**
 	 * Get SQL for creating the questionnaire submissions table.
 	 *
+	 * `ticket_id` names the fair-events ticket a signup submission was
+	 * collected for; `ticket_link` says how it got there (see
+	 * QuestionnaireSubmission::LINK_*). Both stay NULL for a submission with
+	 * no signup context, such as a standalone Fair Form block.
+	 *
 	 * @return string SQL statement.
 	 */
 	public static function get_questionnaire_submissions_table_sql() {
@@ -37,12 +42,15 @@ class Schema {
 			title VARCHAR(255) DEFAULT '',
 			form_id VARCHAR(64) DEFAULT NULL,
 			form_title VARCHAR(255) DEFAULT NULL,
+			ticket_id BIGINT UNSIGNED DEFAULT NULL,
+			ticket_link VARCHAR(20) DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			KEY idx_participant_id (participant_id),
 			KEY idx_event_date_id (event_date_id),
 			KEY idx_post_id (post_id),
-			KEY idx_form_id (form_id)
+			KEY idx_form_id (form_id),
+			KEY idx_ticket_id (ticket_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 

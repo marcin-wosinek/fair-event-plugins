@@ -115,5 +115,25 @@ function fair_form_maybe_upgrade_db() {
 
 		update_option( 'fair_form_db_version', '0.5.0' );
 	}
+
+	// Numbered above the plugin version it ships in, because activation
+	// records FAIR_FORM_VERSION as the DB version (1.4.x on existing
+	// installs). dbDelta() only adds what is missing, so repeating it after a
+	// fresh activation is harmless.
+	if ( version_compare( $db_version, '1.5.0', '<' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		// Link signup submissions to the ticket they were collected for.
+		dbDelta( \FairForm\Database\Schema::get_questionnaire_submissions_table_sql() );
+
+		update_option( 'fair_form_db_version', '1.5.0' );
+		$db_version = '1.5.0';
+	}
+
+	// Attach submissions collected before tickets were recorded, a batch per
+	// request until done.
+	if ( version_compare( $db_version, '1.5.0', '>=' ) ) {
+		\FairForm\Services\SubmissionTicketBackfill::maybe_run();
+	}
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_form_maybe_upgrade_db' );

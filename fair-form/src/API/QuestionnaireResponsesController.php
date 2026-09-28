@@ -274,7 +274,7 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 				'participant_categories' => $resolve_categories( (int) $submission->participant_id ),
 				'created_at'             => $submission->created_at,
 				'answers'                => $answers_data,
-			);
+			) + $this->ticket_fields( $submission );
 		}
 
 		return new WP_REST_Response( $data, 200 );
@@ -417,7 +417,7 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 				'created_at'        => $submission->created_at,
 				'post_id'           => $submission->post_id,
 				'event_date_id'     => $submission->event_date_id,
-			);
+			) + $this->ticket_fields( $submission );
 		}
 
 		return new WP_REST_Response( $data, 200 );
@@ -503,9 +503,40 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 			'post_id'           => $submission->post_id,
 			'event_date_id'     => $submission->event_date_id,
 			'answers'           => $answers_data,
-		);
+		) + $this->ticket_fields( $submission, true );
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * How a submission is linked to a fair-events ticket.
+	 *
+	 * @param \FairForm\Models\QuestionnaireSubmission $submission  Submission.
+	 * @param bool                                     $with_ticket Also describe the ticket itself.
+	 * @return array ticket_id, ticket_link and needs_review; with $with_ticket,
+	 *               also ticket (position and short reference, or null).
+	 */
+	private function ticket_fields( $submission, $with_ticket = false ) {
+		$fields = array(
+			'ticket_id'    => $submission->ticket_id,
+			'ticket_link'  => $submission->ticket_link,
+			'needs_review' => $submission->needs_review(),
+		);
+
+		if ( $with_ticket ) {
+			$ticket           = $submission->ticket_id && class_exists( '\FairEvents\Models\EventTicket' )
+				? \FairEvents\Models\EventTicket::get_by_id( (int) $submission->ticket_id )
+				: null;
+			$fields['ticket'] = $ticket
+				? array(
+					'id'        => (int) $ticket->id,
+					'position'  => (int) $ticket->unit_position,
+					'reference' => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
+				)
+				: null;
+		}
+
+		return $fields;
 	}
 
 	/**
