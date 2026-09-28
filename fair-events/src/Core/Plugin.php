@@ -259,6 +259,7 @@ class Plugin {
 	 */
 	private function load_frontend() {
 		\FairEvents\Frontend\RetiredGalleryLinks::init();
+		\FairEvents\Frontend\EventDateView::init();
 	}
 
 	/**
