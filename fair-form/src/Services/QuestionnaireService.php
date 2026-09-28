@@ -483,21 +483,37 @@ class QuestionnaireService {
 	 * @param int      $event_date_id  Optional event date ID.
 	 * @param int      $post_id        Optional post ID.
 	 * @param string   $title          Submission title (e.g. "Fair Form", "Event Signup").
-	 * @param bool     $reuse_existing When true, an existing submission with the same
-	 *                                 participant, event date and title is reused
+	 * @param bool     $reuse_existing When true, an existing submission for the same
+	 *                                 ticket — or, without a ticket, the same
+	 *                                 participant, event date and title — is reused
 	 *                                 (its answers replaced) instead of inserting a
 	 *                                 new one. Keeps re-submits/payment retries idempotent.
 	 * @param string   $form_id        Stable UUID from the block attribute (empty for non-block submissions).
 	 * @param string   $form_title     Human-readable form label from the block attribute.
+	 * @param int      $ticket_id      Optional fair-events ticket the answers were collected
+	 *                                 for. It must be on $event_date_id; the caller is
+	 *                                 responsible for choosing a ticket of its own signup.
 	 * @return int Submission ID, or 0 on failure.
 	 */
-	public function save_answers( $participant_id, $answers, $event_date_id = 0, $post_id = 0, $title = '', $reuse_existing = false, $form_id = '', $form_title = '' ) {
-		$title = '' !== $title ? $title : __( 'Fair Form', 'fair-form' );
+	public function save_answers( $participant_id, $answers, $event_date_id = 0, $post_id = 0, $title = '', $reuse_existing = false, $form_id = '', $form_title = '', $ticket_id = 0 ) {
+		$title     = '' !== $title ? $title : __( 'Fair Form', 'fair-form' );
+		$ticket_id = (int) $ticket_id;
+
+		if ( $ticket_id > 0 && ! $this->is_ticket_on_event_date( $ticket_id, (int) $event_date_id ) ) {
+			return 0;
+		}
 
 		$submission = null;
 
-		// Reuse is only possible when we have a participant to match against.
-		if ( $reuse_existing && $event_date_id > 0 && null !== $participant_id ) {
+		if ( $reuse_existing && $ticket_id > 0 ) {
+			// A ticket's answers are replaced, never merged with another
+			// purchase's by the same participant.
+			$existing = $this->submission_repository->get_by_ticket_ids( array( $ticket_id ) );
+			if ( ! empty( $existing ) ) {
+				$submission = $existing[0];
+			}
+		} elseif ( $reuse_existing && $event_date_id > 0 && null !== $participant_id ) {
+			// Reuse is only possible when we have a participant to match against.
 			$existing = $this->submission_repository->get_by_filters(
 				array(
 					'participant_id' => $participant_id,
@@ -505,8 +521,12 @@ class QuestionnaireService {
 					'title'          => $title,
 				)
 			);
-			if ( ! empty( $existing ) ) {
-				$submission = $existing[0];
+			foreach ( $existing as $candidate ) {
+				// A submission already tied to a ticket belongs to that purchase.
+				if ( null === $candidate->ticket_id && QuestionnaireSubmission::LINK_TICKET_REMOVED !== $candidate->ticket_link ) {
+					$submission = $candidate;
+					break;
+				}
 			}
 		}
 
@@ -532,6 +552,11 @@ class QuestionnaireService {
 				$submission_data['form_title'] = $form_title;
 			}
 
+			if ( $ticket_id > 0 ) {
+				$submission_data['ticket_id']   = $ticket_id;
+				$submission_data['ticket_link'] = QuestionnaireSubmission::LINK_DIRECT;
+			}
+
 			$submission = new QuestionnaireSubmission();
 			$submission->populate( $submission_data );
 
@@ -544,5 +569,23 @@ class QuestionnaireService {
 		$this->answer_repository->save_answers( $submission->id, $answers );
 
 		return $submission->id;
+	}
+
+	/**
+	 * Whether a fair-events ticket exists on the given event date. Without
+	 * fair-events there is no ticket to link to.
+	 *
+	 * @param int $ticket_id     Ticket ID.
+	 * @param int $event_date_id Event date the submission is for.
+	 * @return bool
+	 */
+	private function is_ticket_on_event_date( $ticket_id, $event_date_id ) {
+		if ( ! class_exists( '\FairEvents\Models\EventTicket' ) ) {
+			return false;
+		}
+
+		$ticket = \FairEvents\Models\EventTicket::get_by_id( $ticket_id );
+
+		return $ticket && (int) $ticket->event_date_id === $event_date_id;
 	}
 }

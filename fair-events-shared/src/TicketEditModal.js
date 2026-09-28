@@ -158,6 +158,84 @@ export function activityRuleProblem( ticketType, count ) {
 	return null;
 }
 
+/**
+ * Display text of one Fair Form answer. Multiselect answers are stored as a
+ * JSON list.
+ *
+ * @param {Object} answer Answer from the REST response.
+ * @return {string} Text
+ */
+export function formatAnswerValue( answer ) {
+	if ( answer.question_type === 'multiselect' ) {
+		try {
+			const values = JSON.parse( answer.answer_value );
+			if ( Array.isArray( values ) ) {
+				return values.join( ', ' );
+			}
+		} catch ( e ) {
+			// Fall through to the raw value.
+		}
+	}
+	return answer.answer_value || '';
+}
+
+/**
+ * The Fair Form answers collected for a ticket at signup, read-only.
+ *
+ * @param {Object}  props
+ * @param {Array}   props.answers     Answers attached to the ticket.
+ * @param {boolean} props.needsReview Whether the answers were attached automatically.
+ * @return {Element|null} Answer list, or null when there are none.
+ */
+export function TicketAnswers( { answers, needsReview } ) {
+	if ( ! answers || answers.length === 0 ) {
+		return null;
+	}
+	return (
+		<section
+			className="fair-events-ticket-edit__answers"
+			style={ { marginTop: 16 } }
+		>
+			<h3 style={ { fontSize: 13, margin: '0 0 8px' } }>
+				{ __( 'Signup answers', 'fair-events' ) }
+			</h3>
+			{ needsReview && (
+				<Notice status="warning" isDismissible={ false }>
+					{ __(
+						'These answers were collected before answers were recorded per ticket, so they were attached to this ticket automatically. Check that they belong to this attendee.',
+						'fair-events'
+					) }
+				</Notice>
+			) }
+			<dl style={ { margin: 0 } }>
+				{ answers.map( ( answer, index ) => (
+					<div
+						key={ answer.question_key || index }
+						style={ { marginBottom: 4 } }
+					>
+						<dt style={ { fontWeight: 600 } }>
+							{ answer.question_text }
+						</dt>
+						<dd style={ { margin: 0 } }>
+							{ answer.file_url ? (
+								<a
+									href={ answer.file_url }
+									target="_blank"
+									rel="noreferrer"
+								>
+									{ __( 'View file', 'fair-events' ) }
+								</a>
+							) : (
+								formatAnswerValue( answer ) || '—'
+							) }
+						</dd>
+					</div>
+				) ) }
+			</dl>
+		</section>
+	);
+}
+
 const sameIds = ( a, b ) =>
 	a.length === b.length && a.every( ( id ) => b.includes( id ) );
 
@@ -251,6 +329,12 @@ export default function TicketEditModal( {
 			? chosenType.activities_enabled
 			: true;
 		const overCapacityIds = ticket.over_capacity_activity_ids || [];
+		const answers = (
+			<TicketAnswers
+				answers={ ticket.answers }
+				needsReview={ ticket.answers_need_review }
+			/>
+		);
 
 		const header = (
 			<div style={ { marginBottom: 16 } }>
@@ -299,6 +383,7 @@ export default function TicketEditModal( {
 								: __( 'No', 'fair-events' ) }
 						</dd>
 					</dl>
+					{ answers }
 					<Flex justify="flex-end" style={ { marginTop: 16 } }>
 						<Button variant="tertiary" onClick={ onClose }>
 							{ __( 'Close', 'fair-events' ) }
@@ -479,6 +564,7 @@ export default function TicketEditModal( {
 						onChange={ edited( setAttended ) }
 					/>
 				</div>
+				{ answers }
 				{ saveError && (
 					<Notice status="error" isDismissible={ false }>
 						{ saveError }

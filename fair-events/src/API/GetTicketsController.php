@@ -1202,6 +1202,11 @@ class GetTicketsController extends WP_REST_Controller {
 	 * is inactive or the bridge left it unset. Nothing is persisted for
 	 * signups without custom questions, avoiding empty submissions.
 	 *
+	 * The purchase's one answer set belongs to its first ticket (lowest
+	 * position), looked up here from the signup just saved — never taken
+	 * from the request — so a later purchase by the same participant gets
+	 * its own submission instead of replacing this one's answers.
+	 *
 	 * @param int   $signup_id     The fair_events_signups row just created.
 	 * @param int   $event_date_id Event-date ID the signup targets.
 	 * @param array $answers       Sanitized answers from prepare_questionnaire_answers().
@@ -1233,8 +1238,30 @@ class GetTicketsController extends WP_REST_Controller {
 			$event_date_id,
 			$event_id,
 			__( 'Event Signup', 'fair-events' ),
-			true
+			true,
+			'',
+			'',
+			$this->first_ticket_id( (int) $signup_id, (int) $event_date_id )
 		);
+	}
+
+	/**
+	 * First ticket (lowest position) of a signup, provided it is on the
+	 * event date the answers are saved for.
+	 *
+	 * @param int $signup_id     Signup row ID.
+	 * @param int $event_date_id Event date the answers are saved for.
+	 * @return int Ticket ID, or 0 when the signup has no such ticket.
+	 */
+	private function first_ticket_id( $signup_id, $event_date_id ) {
+		$tickets = \FairEvents\Models\EventTicket::get_by_signup_id( $signup_id );
+		$first   = $tickets[0] ?? null;
+
+		if ( ! $first || (int) $first->signup_id !== $signup_id || (int) $first->event_date_id !== $event_date_id ) {
+			return 0;
+		}
+
+		return (int) $first->id;
 	}
 
 	/**
@@ -1746,20 +1773,78 @@ class GetTicketsController extends WP_REST_Controller {
 
 	/**
 	 * Attach Fair Form answers to each signup row, in place, for the
-	 * "include_answers" export flow. Answers are matched on
-	 * (participant_id, event_date_id) against the signup-origin submission —
-	 * the one persist_questionnaire_answers() wrote for this signup, which
-	 * carries an empty form_id (a standalone Fair Form block submission
-	 * always sets one). Leaves `answers` unset when fair-form isn't active,
-	 * so the frontend can treat "no answers anywhere" and "plugin inactive"
-	 * the same way; sets it to an empty array for a signup that has no
-	 * matching submission (anonymous, or no fair-form data).
+	 * "include_answers" export flow.
+	 *
+	 * Each ticket in `tickets` gains `answers` (empty when none is attached
+	 * to it) and `answers_need_review`. The signup's own `answers` repeat the
+	 * first of its tickets that has any, naming that ticket in
+	 * `answers_ticket_id`. A signup whose tickets hold no answers falls back
+	 * to its participant's signup answers not attached to any ticket
+	 * (collected without one, or whose ticket was removed), with
+	 * `answers_ticket_id` null. Standalone Fair Form block submissions are
+	 * never included.
+	 *
+	 * Leaves `answers` unset when fair-form isn't active, so the frontend can
+	 * treat "no answers anywhere" and "plugin inactive" the same way.
 	 *
 	 * @param array $signups       Signup rows from get_all_by_event_date_id(), mutated in place.
 	 * @param int   $event_date_id Event-date ID the signups belong to.
 	 * @return void
 	 */
 	private function attach_signup_answers( $signups, $event_date_id ) {
+		if ( ! class_exists( \FairForm\Services\TicketAnswers::class ) ) {
+			$this->attach_participant_signup_answers( $signups, $event_date_id );
+			return;
+		}
+
+		$ticket_ids = array();
+		foreach ( $signups as $signup ) {
+			foreach ( $signup->tickets ?? array() as $ticket ) {
+				$ticket_ids[] = (int) $ticket['id'];
+			}
+		}
+
+		$by_ticket      = \FairForm\Services\TicketAnswers::for_tickets( $ticket_ids );
+		$by_participant = \FairForm\Services\TicketAnswers::participant_scope_for_event_date( $event_date_id );
+
+		foreach ( $signups as $signup ) {
+			$signup->answers             = array();
+			$signup->answers_ticket_id   = null;
+			$signup->answers_need_review = false;
+			$tickets                     = $signup->tickets ?? array();
+			foreach ( $tickets as $index => $ticket ) {
+				$entry = $by_ticket[ (int) $ticket['id'] ] ?? null;
+
+				$tickets[ $index ]['answers']             = $entry ? $entry['answers'] : array();
+				$tickets[ $index ]['answers_need_review'] = $entry ? $entry['needs_review'] : false;
+
+				if ( $entry && null === $signup->answers_ticket_id ) {
+					$signup->answers             = $entry['answers'];
+					$signup->answers_ticket_id   = (int) $ticket['id'];
+					$signup->answers_need_review = $entry['needs_review'];
+				}
+			}
+			$signup->tickets = $tickets;
+
+			$participant_id = ! empty( $signup->participant_id ) ? (int) $signup->participant_id : 0;
+			if ( null === $signup->answers_ticket_id && $participant_id && isset( $by_participant[ $participant_id ] ) ) {
+				$signup->answers             = $by_participant[ $participant_id ]['answers'];
+				$signup->answers_need_review = $by_participant[ $participant_id ]['needs_review'];
+			}
+		}
+	}
+
+	/**
+	 * Attach answers by participant and event date, for a fair-form version
+	 * that does not record tickets yet: the signup-origin submission (empty
+	 * form_id) of the signup's participant, newest first. Leaves `answers`
+	 * unset when fair-form isn't active.
+	 *
+	 * @param array $signups       Signup rows, mutated in place.
+	 * @param int   $event_date_id Event-date ID the signups belong to.
+	 * @return void
+	 */
+	private function attach_participant_signup_answers( $signups, $event_date_id ) {
 		if ( ! class_exists( \FairForm\Database\QuestionnaireSubmissionRepository::class )
 			|| ! class_exists( \FairForm\Database\QuestionnaireAnswerRepository::class ) ) {
 			return;

@@ -22,6 +22,8 @@ export {
 	targetOptionLabel,
 	projectionMessage,
 	activityRuleProblem,
+	formatAnswerValue,
+	TicketAnswers,
 } from './TicketEditModal.js';
 export * from './recurrence.js';
 export * from './questionnaire.js';

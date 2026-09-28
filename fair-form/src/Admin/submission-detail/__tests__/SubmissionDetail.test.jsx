@@ -10,7 +10,9 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import SubmissionDetail from '../SubmissionDetail.js';
+import SubmissionDetail, {
+	ticketLinkDescription,
+} from '../SubmissionDetail.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -62,5 +64,44 @@ describe( 'SubmissionDetail', () => {
 			screen.getByRole( 'columnheader', { name: 'Question' } )
 		).toBeInTheDocument();
 		expect( screen.getByText( 'Submitted by' ) ).toBeInTheDocument();
+	} );
+} );
+
+describe( 'ticketLinkDescription (#1609)', () => {
+	const ticket = { id: 71, position: 1, reference: 'AE2671B5' };
+
+	it( 'names the ticket of a direct link', () => {
+		expect(
+			ticketLinkDescription( { ticket, ticket_link: 'direct' } )
+		).toBe( 'Ticket 1 (AE2671B5)' );
+	} );
+
+	it( 'asks for a check when the link was inferred, unresolved or its ticket removed', () => {
+		expect(
+			ticketLinkDescription( { ticket, ticket_link: 'inferred' } )
+		).toMatch( /^Ticket 1 \(AE2671B5\) — attached automatically/ );
+		expect(
+			ticketLinkDescription( { ticket: null, ticket_link: 'unresolved' } )
+		).toMatch( /no matching ticket was found/ );
+		expect(
+			ticketLinkDescription( {
+				ticket: null,
+				ticket_link: 'ticket_removed',
+			} )
+		).toMatch( /was removed/ );
+	} );
+
+	it( 'shows the ticket row on the page for a linked submission', async () => {
+		apiFetch.mockResolvedValue( {
+			...SUBMISSION,
+			ticket_id: 71,
+			ticket_link: 'direct',
+			ticket,
+		} );
+		render( <SubmissionDetail /> );
+
+		expect(
+			await screen.findByText( 'Ticket 1 (AE2671B5)' )
+		).toBeInTheDocument();
 	} );
 } );

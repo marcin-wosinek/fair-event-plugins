@@ -507,48 +507,52 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// Custom question answers captured during signup (Event Signup block).
-		// Stored as questionnaire submissions keyed by participant + event date,
-		// indexed here so each signup row can carry its answers inline.
+		// Custom question answers captured during signup. Answers collected
+		// for a ticket go with that ticket; the participant row carries only
+		// those not attached to any ticket.
 		$participant_questionnaire = $this->get_signup_answers_by_participant( $event_date_id );
+		$ticket_answers            = $this->get_ticket_answers(
+			array_merge( array(), ...array_map( static fn( $tickets ) => wp_list_pluck( $tickets, 'id' ), array_values( $tickets_by_relationship ) ) )
+		);
 
 		$items = array_map(
-			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $event_date_id ) {
+			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $ticket_answers, $event_date_id ) {
 				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
 				return array(
-					'id'                              => $ep->id,
-					'participant_id'                  => $ep->participant_id,
-					'event_date_id'                   => $ep->event_date_id,
+					'id'                                => $ep->id,
+					'participant_id'                    => $ep->participant_id,
+					'event_date_id'                     => $ep->event_date_id,
 					// A row whose event_date_id differs from the requested occurrence
 					// is a whole-series pass surfaced from the master event-date.
-					'is_series_pass'                  => (int) $ep->event_date_id !== (int) $event_date_id,
-					'participant_name'                => $participant ? $participant->name . ' ' . $participant->surname : '',
-					'name'                            => $participant ? $participant->name : '',
-					'surname'                         => $participant ? $participant->surname : '',
-					'participant_email'               => $participant ? $participant->email : '',
-					'email_profile'                   => $participant ? $participant->email_profile : '',
-					'instagram'                       => $participant ? $participant->instagram : '',
-					'label'                           => $ep->label,
-					'ticket_type_id'                  => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
-					'ticket_type_name'                => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
+					'is_series_pass'                    => (int) $ep->event_date_id !== (int) $event_date_id,
+					'participant_name'                  => $participant ? $participant->name . ' ' . $participant->surname : '',
+					'name'                              => $participant ? $participant->name : '',
+					'surname'                           => $participant ? $participant->surname : '',
+					'participant_email'                 => $participant ? $participant->email : '',
+					'email_profile'                     => $participant ? $participant->email_profile : '',
+					'instagram'                         => $participant ? $participant->instagram : '',
+					'label'                             => $ep->label,
+					'ticket_type_id'                    => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
+					'ticket_type_name'                  => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
 						? $ticket_type_names[ $ep->ticket_type_id ]
 						: null,
 					// Participant-level check-in: from signups without tickets, or
 					// history not carried over to a ticket.
-					'attended_at'                     => $ep->attended_ticket_id ? null : $ep->attended_at,
-					'created_at'                      => $ep->created_at,
-					'payment_expires_at'              => $ep->payment_expires_at,
-					'ticket_option_names'             => array_values( array_unique( $participant_option_names[ $ep->id ] ?? array() ) ),
-					'ticket_option_ids'               => array_values( array_unique( $participant_option_ids[ $ep->id ] ?? array() ) ),
-					'confirmed_ticket_option_ids'     => array_values( array_unique( $participant_confirmed_option_ids[ $ep->id ] ?? array() ) ),
-					'participant_ticket_option_ids'   => $participant_scope_option_ids[ $ep->id ] ?? array(),
-					'participant_ticket_option_names' => $participant_scope_option_names[ $ep->id ] ?? array(),
-					'tickets'                         => array_map(
-						fn( $ticket ) => $this->build_ticket_payload( $ticket, $activity_rows[ $ep->id ] ?? array() ),
+					'attended_at'                       => $ep->attended_ticket_id ? null : $ep->attended_at,
+					'created_at'                        => $ep->created_at,
+					'payment_expires_at'                => $ep->payment_expires_at,
+					'ticket_option_names'               => array_values( array_unique( $participant_option_names[ $ep->id ] ?? array() ) ),
+					'ticket_option_ids'                 => array_values( array_unique( $participant_option_ids[ $ep->id ] ?? array() ) ),
+					'confirmed_ticket_option_ids'       => array_values( array_unique( $participant_confirmed_option_ids[ $ep->id ] ?? array() ) ),
+					'participant_ticket_option_ids'     => $participant_scope_option_ids[ $ep->id ] ?? array(),
+					'participant_ticket_option_names'   => $participant_scope_option_names[ $ep->id ] ?? array(),
+					'tickets'                           => array_map(
+						fn( $ticket ) => $this->build_ticket_payload( $ticket, $activity_rows[ $ep->id ] ?? array(), $ticket_answers[ (int) $ticket->id ] ?? null ),
 						$tickets_by_relationship[ $ep->id ] ?? array()
 					),
-					'admin_comment'                   => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
-					'questionnaire_answers'           => $participant_questionnaire[ $ep->participant_id ] ?? array(),
+					'admin_comment'                     => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
+					'questionnaire_answers'             => $participant_questionnaire[ $ep->participant_id ]['answers'] ?? array(),
+					'questionnaire_answers_need_review' => $participant_questionnaire[ $ep->participant_id ]['needs_review'] ?? false,
 				);
 			},
 			$event_participants
@@ -621,12 +625,14 @@ class EventParticipantsController extends WP_REST_Controller {
 
 	/**
 	 * Build a map of participant ID → custom question answers for the signups
-	 * on an event date. Answers come from "Event Signup" questionnaire
-	 * submissions (created by the Event Signup block). File-upload answers gain
-	 * a resolved URL, mirroring QuestionnaireResponsesController.
+	 * on an event date that are not attached to a ticket. Answers come from
+	 * "Event Signup" questionnaire submissions (created by the Event Signup
+	 * blocks); those collected for a ticket are shown with the ticket
+	 * instead (see get_ticket_answers()). File-upload answers gain a
+	 * resolved URL, mirroring QuestionnaireResponsesController.
 	 *
 	 * @param int $event_date_id Event date ID.
-	 * @return array Map of participant_id => array of answer arrays.
+	 * @return array Map of participant_id => array{answers: array, needs_review: bool}.
 	 */
 	private function get_signup_answers_by_participant( $event_date_id ) {
 		if ( ! class_exists( '\FairForm\Database\QuestionnaireSubmissionRepository' ) ) {
@@ -645,6 +651,10 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$by_participant = array();
 		foreach ( $submissions as $submission ) {
+			if ( ! empty( $submission->ticket_id ) ) {
+				continue;
+			}
+
 			// One signup submission per participant; get_by_filters orders by
 			// created_at DESC, so the first seen is the newest — keep that.
 			if ( isset( $by_participant[ $submission->participant_id ] ) ) {
@@ -653,30 +663,60 @@ class EventParticipantsController extends WP_REST_Controller {
 
 			$answers_data = array();
 			foreach ( $answer_repo->get_by_submission( $submission->id ) as $answer ) {
-				$answer_item = array(
-					'question_key'  => $answer->question_key,
-					'question_text' => $answer->question_text,
-					'question_type' => $answer->question_type,
-					'answer_value'  => $answer->answer_value,
-				);
-
-				if ( 'file_upload' === $answer->question_type && is_numeric( $answer->answer_value ) ) {
-					$attachment_id  = (int) $answer->answer_value;
-					$attachment_url = wp_get_attachment_url( $attachment_id );
-					if ( $attachment_url ) {
-						$answer_item['file_url'] = $attachment_url;
-						$mime                    = get_post_mime_type( $attachment_id );
-						$answer_item['is_image'] = $mime && 0 === strpos( $mime, 'image/' );
-					}
-				}
-
-				$answers_data[] = $answer_item;
+				$answers_data[] = $this->format_signup_answer( $answer );
 			}
 
-			$by_participant[ $submission->participant_id ] = $answers_data;
+			$by_participant[ $submission->participant_id ] = array(
+				'answers'      => $answers_data,
+				'needs_review' => method_exists( $submission, 'needs_review' ) && $submission->needs_review(),
+			);
 		}
 
 		return $by_participant;
+	}
+
+	/**
+	 * Answers attached to each of the given tickets, keyed by ticket ID (see
+	 * FairForm\Services\TicketAnswers::for_tickets()). Empty when fair-form
+	 * is inactive or does not record tickets yet.
+	 *
+	 * @param int[] $ticket_ids Ticket IDs.
+	 * @return array<int, array>
+	 */
+	private function get_ticket_answers( array $ticket_ids ) {
+		if ( ! $ticket_ids || ! class_exists( '\FairForm\Services\TicketAnswers' ) ) {
+			return array();
+		}
+
+		return \FairForm\Services\TicketAnswers::for_tickets( $ticket_ids );
+	}
+
+	/**
+	 * Shape one Fair Form answer for a response. File-upload answers gain a
+	 * resolved URL.
+	 *
+	 * @param \FairForm\Models\QuestionnaireAnswer $answer Answer model.
+	 * @return array
+	 */
+	private function format_signup_answer( $answer ) {
+		$answer_item = array(
+			'question_key'  => $answer->question_key,
+			'question_text' => $answer->question_text,
+			'question_type' => $answer->question_type,
+			'answer_value'  => $answer->answer_value,
+		);
+
+		if ( 'file_upload' === $answer->question_type && is_numeric( $answer->answer_value ) ) {
+			$attachment_id  = (int) $answer->answer_value;
+			$attachment_url = wp_get_attachment_url( $attachment_id );
+			if ( $attachment_url ) {
+				$answer_item['file_url'] = $attachment_url;
+				$mime                    = get_post_mime_type( $attachment_id );
+				$answer_item['is_image'] = $mime && 0 === strpos( $mime, 'image/' );
+			}
+		}
+
+		return $answer_item;
 	}
 
 	/**
@@ -964,7 +1004,11 @@ class EventParticipantsController extends WP_REST_Controller {
 			return $ticket;
 		}
 
-		$payload = $this->build_ticket_payload( $ticket, $this->ticket_activity_rows( $ticket ) );
+		$payload = $this->build_ticket_payload(
+			$ticket,
+			$this->ticket_activity_rows( $ticket ),
+			$this->get_ticket_answers( array( (int) $ticket->id ) )[ (int) $ticket->id ] ?? null
+		);
 
 		$participant = $ticket->holder_participant_id
 			? $this->participant_repo->get_by_id( (int) $ticket->holder_participant_id )
@@ -1166,7 +1210,13 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		$ticket = \FairEvents\Models\EventTicket::get_by_id( $ticket_id );
 
-		return rest_ensure_response( $this->build_ticket_payload( $ticket, $this->ticket_activity_rows( $ticket ) ) );
+		return rest_ensure_response(
+			$this->build_ticket_payload(
+				$ticket,
+				$this->ticket_activity_rows( $ticket ),
+				$this->get_ticket_answers( array( (int) $ticket->id ) )[ (int) $ticket->id ] ?? null
+			)
+		);
 	}
 
 	/**
@@ -1382,11 +1432,12 @@ class EventParticipantsController extends WP_REST_Controller {
 	/**
 	 * Shape one ticket for the Audience tab.
 	 *
-	 * @param object   $ticket        Ticket row.
-	 * @param object[] $activity_rows Activity rows of the ticket's holder; only this ticket's are used.
+	 * @param object     $ticket        Ticket row.
+	 * @param object[]   $activity_rows Activity rows of the ticket's holder; only this ticket's are used.
+	 * @param array|null $answers       The ticket's Fair Form answers (a TicketAnswers::for_tickets() entry), or null for none.
 	 * @return array
 	 */
-	private function build_ticket_payload( $ticket, array $activity_rows ) {
+	private function build_ticket_payload( $ticket, array $activity_rows, $answers = null ) {
 		$ticket_type_name = null;
 		if ( ! empty( $ticket->ticket_type_id ) && class_exists( \FairEvents\Models\TicketType::class ) ) {
 			$ticket_type      = \FairEvents\Models\TicketType::get_by_id( (int) $ticket->ticket_type_id );
@@ -1424,6 +1475,8 @@ class EventParticipantsController extends WP_REST_Controller {
 			'activity_names'             => $activity_names,
 			'confirmed_activity_ids'     => $confirmed_activity_ids,
 			'over_capacity_activity_ids' => $over_capacity_activity_ids,
+			'answers'                    => $answers ? $answers['answers'] : array(),
+			'answers_need_review'        => $answers ? (bool) $answers['needs_review'] : false,
 		);
 	}
 

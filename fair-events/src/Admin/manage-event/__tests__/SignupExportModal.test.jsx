@@ -274,6 +274,69 @@ describe( 'SignupExportModal — Fair Form answers (#1568)', () => {
 		] );
 	} );
 
+	it( 'names the ticket each answer set belongs to', async () => {
+		const diet = ( value ) => [
+			{
+				question_key: 'diet',
+				question_text: 'Dietary needs?',
+				question_type: 'short_text',
+				answer_value: value,
+			},
+		];
+		apiFetch.mockResolvedValue( [
+			{
+				...signupWithAnswers( 1, diet( 'Vegan' ) ),
+				answers_ticket_id: 71,
+				answers_need_review: false,
+				tickets: [
+					{ id: 71, position: 1, reference: 'AE2671B5' },
+					{ id: 72, position: 2, reference: 'C0FFEE12' },
+				],
+			},
+			{
+				...signupWithAnswers( 2, diet( 'Vegetarian' ) ),
+				answers_ticket_id: 81,
+				answers_need_review: true,
+				tickets: [ { id: 81, position: 1, reference: 'BADC0DE1' } ],
+			},
+		] );
+		const writeText = mockClipboard();
+
+		render(
+			<SignupExportModal
+				eventDateId={ 42 }
+				rows={ baseRows }
+				onClose={ jest.fn() }
+			/>
+		);
+
+		fireEvent.click(
+			await screen.findByRole( 'checkbox', {
+				name: 'Include Fair Form answers',
+			} )
+		);
+		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
+		fireEvent.click(
+			screen.getByRole( 'radio', { name: 'Handpicked columns' } )
+		);
+		uncheckAllExcept( [
+			'Email',
+			'Answers for',
+			'Dietary needs?',
+			'Include Fair Form answers',
+		] );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
+		);
+
+		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
+		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
+			'Email,Answers for,Dietary needs?',
+			'ada@example.com,Ticket 1 (AE2671B5),Vegan',
+			'bob@example.com,Ticket 1 (BADC0DE1) (needs review),Vegetarian',
+		] );
+	} );
+
 	it( 'disambiguates duplicate question labels with a numeric suffix', async () => {
 		apiFetch.mockResolvedValue( [
 			signupWithAnswers( 1, [

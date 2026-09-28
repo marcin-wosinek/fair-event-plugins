@@ -18,8 +18,9 @@ import {
 	RadioControl,
 	Spinner,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { ticketReferenceLabel } from 'fair-events-shared';
 import { buildSignupExportText, downloadCsvFile } from './signup-export.js';
 import { isMailingOptIn } from './EventSignups.js';
 
@@ -77,6 +78,43 @@ const BASE_COLUMNS = [
 ];
 
 /**
+ * Which ticket of a purchase its Fair Form answers belong to, for the
+ * export: the ticket's label, flagged when it was attached automatically
+ * and should be checked, or "No ticket" for answers kept with the
+ * participant.
+ *
+ * @param {Object} signup Signup row from the include_answers response.
+ * @return {string} Label, empty when the signup has no answers.
+ */
+export function answersOwnerLabel( signup ) {
+	if ( ! ( signup.answers || [] ).length ) {
+		return '';
+	}
+	const ticket = ( signup.tickets || [] ).find(
+		( t ) => Number( t.id ) === Number( signup.answers_ticket_id )
+	);
+	const label = ticket
+		? ticketReferenceLabel( ticket.position, ticket.reference )
+		: __( 'No ticket', 'fair-events' );
+	return signup.answers_need_review
+		? sprintf(
+				/* translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)", or "No ticket" */
+				__( '%s (needs review)', 'fair-events' ),
+				label
+		  )
+		: label;
+}
+
+/**
+ * Column naming the ticket each row's answers belong to.
+ */
+const ANSWERS_OWNER_COLUMN = {
+	id: 'answers_for',
+	label: __( 'Answers for', 'fair-events' ),
+	getValue: ( { item } ) => item.answersFor || '',
+};
+
+/**
  * Derive Fair Form answer columns from the loaded rows: one column per
  * distinct `question_key`, in first-seen order (which is `display_order`
  * within a submission). Duplicate question labels get a numeric suffix —
@@ -96,21 +134,28 @@ function buildAnswerColumns( rowsWithAnswers ) {
 		} );
 	} );
 
+	if ( textByKey.size === 0 ) {
+		return [];
+	}
+
 	const labelCounts = new Map();
-	return Array.from( textByKey.entries() ).map( ( [ key, text ] ) => {
-		const count = ( labelCounts.get( text ) || 0 ) + 1;
-		labelCounts.set( text, count );
-		return {
-			id: `answer_${ key }`,
-			label: count > 1 ? `${ text } (${ count })` : text,
-			getValue: ( { item } ) => {
-				const answer = ( item.answers || [] ).find(
-					( a ) => a.question_key === key
-				);
-				return answer ? answer.answer_value : '';
-			},
-		};
-	} );
+	const questionColumns = Array.from( textByKey.entries() ).map(
+		( [ key, text ] ) => {
+			const count = ( labelCounts.get( text ) || 0 ) + 1;
+			labelCounts.set( text, count );
+			return {
+				id: `answer_${ key }`,
+				label: count > 1 ? `${ text } (${ count })` : text,
+				getValue: ( { item } ) => {
+					const answer = ( item.answers || [] ).find(
+						( a ) => a.question_key === key
+					);
+					return answer ? answer.answer_value : '';
+				},
+			};
+		}
+	);
+	return [ ANSWERS_OWNER_COLUMN, ...questionColumns ];
 }
 
 export default function SignupExportModal( { eventDateId, rows, onClose } ) {
@@ -139,7 +184,10 @@ export default function SignupExportModal( { eventDateId, rows, onClose } ) {
 				}
 				const map = {};
 				( data || [] ).forEach( ( signup ) => {
-					map[ signup.id ] = signup.answers || [];
+					map[ signup.id ] = {
+						answers: signup.answers || [],
+						answersFor: answersOwnerLabel( signup ),
+					};
 				} );
 				setAnswersById( map );
 				setLoading( false );
@@ -164,7 +212,8 @@ export default function SignupExportModal( { eventDateId, rows, onClose } ) {
 		() =>
 			rows.map( ( item ) => ( {
 				...item,
-				answers: answersById[ item.id ] || [],
+				answers: answersById[ item.id ]?.answers || [],
+				answersFor: answersById[ item.id ]?.answersFor || '',
 			} ) ),
 		[ rows, answersById ]
 	);

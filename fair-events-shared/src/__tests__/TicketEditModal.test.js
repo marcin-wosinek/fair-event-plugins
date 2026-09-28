@@ -383,6 +383,86 @@ describe( 'TicketEditModal', () => {
 		expect( onClose ).toHaveBeenCalled();
 	} );
 
+	it( 'shows the answers collected for this ticket', async () => {
+		mockApi(
+			response( {
+				answers: [
+					{
+						question_key: 'diet',
+						question_text: 'Dietary needs?',
+						question_type: 'short_text',
+						answer_value: 'Vegan',
+					},
+					{
+						question_key: 'sizes',
+						question_text: 'T-shirt sizes',
+						question_type: 'multiselect',
+						answer_value: '["M","L"]',
+					},
+					{
+						question_key: 'cv',
+						question_text: 'CV',
+						question_type: 'file_upload',
+						answer_value: '41',
+						file_url: 'https://example.test/cv.pdf',
+					},
+				],
+				answers_need_review: false,
+			} )
+		);
+		const { modal } = await renderModal();
+
+		const section = within( modal )
+			.getByRole( 'heading', { name: 'Signup answers' } )
+			.closest( 'section' );
+		expect( within( section ).getByText( 'Dietary needs?' ) ).toBeVisible();
+		expect( within( section ).getByText( 'Vegan' ) ).toBeVisible();
+		expect( within( section ).getByText( 'M, L' ) ).toBeVisible();
+		expect(
+			within( section ).getByRole( 'link', { name: 'View file' } )
+		).toHaveAttribute( 'href', 'https://example.test/cv.pdf' );
+		expect(
+			within( section ).queryByText(
+				/attached to this ticket automatically/
+			)
+		).toBeNull();
+	} );
+
+	it( 'flags answers attached automatically for review, also while awaiting payment', async () => {
+		mockApi(
+			response( {
+				status: 'pending_payment',
+				editable: false,
+				answers: [
+					{
+						question_key: 'diet',
+						question_text: 'Dietary needs?',
+						question_type: 'short_text',
+						answer_value: 'Vegan',
+					},
+				],
+				answers_need_review: true,
+			} )
+		);
+		const { modal } = await renderModal();
+
+		expect( within( modal ).getByText( 'Vegan' ) ).toBeVisible();
+		expect(
+			within( modal ).getByText(
+				'These answers were collected before answers were recorded per ticket, so they were attached to this ticket automatically. Check that they belong to this attendee.'
+			)
+		).toBeVisible();
+	} );
+
+	it( 'shows no answers section for a ticket without answers', async () => {
+		mockApi( response( { answers: [] } ) );
+		const { modal } = await renderModal();
+
+		expect(
+			within( modal ).queryByRole( 'heading', { name: 'Signup answers' } )
+		).toBeNull();
+	} );
+
 	it( 'closes without saving on Cancel', async () => {
 		mockApi();
 		const { modal, onClose } = await renderModal();

@@ -14,6 +14,7 @@ import {
 import { DataViews } from '@wordpress/dataviews';
 import { dateI18n, getSettings } from '@wordpress/date';
 import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
+import { ticketShortLabel } from '../manage-event-audience-tab/ticketLabels.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -55,10 +56,11 @@ function formatAnswerValue( answer ) {
 /**
  * Render the custom question answers captured during signup as a compact list.
  *
- * @param {Array} answers Answer records from the REST response.
+ * @param {Array}   answers     Answer records from the REST response.
+ * @param {boolean} needsReview Whether the answers' link to a ticket should be checked.
  * @return {JSX.Element|null} The rendered list, or null when there are none.
  */
-function renderQuestionnaireAnswers( answers ) {
+function renderQuestionnaireAnswers( answers, needsReview = false ) {
 	if ( ! answers || answers.length === 0 ) {
 		return null;
 	}
@@ -68,6 +70,17 @@ function renderQuestionnaireAnswers( answers ) {
 			className="fair-audience-signup-answers"
 			style={ { margin: 0, fontSize: '12px' } }
 		>
+			{ needsReview && (
+				<div
+					className="fair-audience-signup-answers__review"
+					style={ { color: '#996800', marginBottom: '4px' } }
+				>
+					{ __(
+						'Check which ticket these belong to',
+						'fair-audience'
+					) }
+				</div>
+			) }
 			{ answers.map( ( answer, index ) => (
 				<div
 					key={ answer.question_key || index }
@@ -93,6 +106,61 @@ function renderQuestionnaireAnswers( answers ) {
 				</div>
 			) ) }
 		</dl>
+	);
+}
+
+/**
+ * Render a participant's signup answers: each ticket's own answers under
+ * the ticket's label, then any answers not attached to a ticket.
+ *
+ * @param {Object} item Participant row from the REST response.
+ * @return {JSX.Element|null} The rendered answers, or null when there are none.
+ */
+export function renderParticipantAnswers( item ) {
+	const ticketsWithAnswers = ( item.tickets || [] ).filter(
+		( ticket ) => ( ticket.answers || [] ).length > 0
+	);
+	const participantAnswers = renderQuestionnaireAnswers(
+		item.questionnaire_answers,
+		item.questionnaire_answers_need_review
+	);
+
+	if ( ticketsWithAnswers.length === 0 ) {
+		return participantAnswers;
+	}
+
+	return (
+		<div>
+			{ ticketsWithAnswers.map( ( ticket ) => (
+				<div
+					key={ ticket.id }
+					className="fair-audience-ticket-answers"
+					style={ { marginBottom: '8px' } }
+				>
+					<div style={ { fontSize: '12px', color: '#646970' } }>
+						{ ticketShortLabel( ticket, ticket.position ) }
+					</div>
+					{ renderQuestionnaireAnswers(
+						ticket.answers,
+						ticket.answers_need_review
+					) }
+				</div>
+			) ) }
+			{ participantAnswers }
+		</div>
+	);
+}
+
+/**
+ * Number of answers a participant row carries, across its tickets.
+ *
+ * @param {Object} item Participant row from the REST response.
+ * @return {number} Answer count.
+ */
+export function countParticipantAnswers( item ) {
+	return ( item.tickets || [] ).reduce(
+		( total, ticket ) => total + ( ticket.answers || [] ).length,
+		( item.questionnaire_answers || [] ).length
 	);
 }
 
@@ -553,11 +621,9 @@ export default function EventParticipants() {
 			{
 				id: 'questions',
 				label: __( 'Questions', 'fair-audience' ),
-				render: ( { item } ) =>
-					renderQuestionnaireAnswers( item.questionnaire_answers ),
+				render: ( { item } ) => renderParticipantAnswers( item ),
 				enableSorting: false,
-				getValue: ( { item } ) =>
-					( item.questionnaire_answers || [] ).length,
+				getValue: ( { item } ) => countParticipantAnswers( item ),
 			},
 		],
 		[]
