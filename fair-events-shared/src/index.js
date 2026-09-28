@@ -15,6 +15,14 @@ export { DurationOptions } from './DurationOptions.js';
 export { default as EventSourceSelector } from './EventSourceSelector.js';
 export { default as MiniCalendar } from './MiniCalendar.js';
 export { default as RecurrenceControl } from './RecurrenceControl.js';
+export {
+	default as TicketEditModal,
+	ticketReferenceLabel,
+	ticketStatusName,
+	targetOptionLabel,
+	projectionMessage,
+	activityRuleProblem,
+} from './TicketEditModal.js';
 export * from './recurrence.js';
 export * from './questionnaire.js';
 export * from './phone-placeholder.js';

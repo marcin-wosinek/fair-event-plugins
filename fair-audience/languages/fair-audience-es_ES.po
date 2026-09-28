@@ -60,9 +60,9 @@ msgstr "Por Evento"
 msgid "Event Participants"
 msgstr "Participantes del Evento"
 
-#: src/API/EventParticipantsController.php:427
-#: src/API/EventParticipantsController.php:689
-#: src/API/EventParticipantsController.php:1757
+#: src/API/EventParticipantsController.php:447
+#: src/API/EventParticipantsController.php:709
+#: src/API/EventParticipantsController.php:1986
 #: src/API/EventSignupController.php:476
 #: src/API/EventSignupController.php:621
 #: src/API/EventSignupController.php:1089
@@ -77,7 +77,7 @@ msgstr "Participantes del Evento"
 msgid "Event not found."
 msgstr "Evento no encontrado."
 
-#: src/API/EventParticipantsController.php:699
+#: src/API/EventParticipantsController.php:719
 #: src/API/ParticipantsController.php:334
 #: src/API/ParticipantsController.php:380
 #: src/API/ParticipantsController.php:505
@@ -93,23 +93,23 @@ msgstr "Evento no encontrado."
 msgid "Participant not found."
 msgstr "Participante no encontrado."
 
-#: src/API/EventParticipantsController.php:709
+#: src/API/EventParticipantsController.php:729
 msgid "Failed to add participant. May already exist."
 msgstr "Error al añadir participante. Puede que ya exista."
 
-#: src/API/EventParticipantsController.php:717
+#: src/API/EventParticipantsController.php:737
 msgid "Participant added successfully."
 msgstr "Participante añadido con éxito."
 
-#: src/API/EventParticipantsController.php:756
+#: src/API/EventParticipantsController.php:776
 msgid "Failed to update label."
 msgstr "Error al actualizar la etiqueta."
 
-#: src/API/EventParticipantsController.php:1216
+#: src/API/EventParticipantsController.php:1445
 msgid "Failed to remove participant."
 msgstr "Error al eliminar participante."
 
-#: src/API/EventParticipantsController.php:1223
+#: src/API/EventParticipantsController.php:1452
 msgid "Participant removed successfully."
 msgstr "Participante eliminado con éxito."
 
@@ -130,7 +130,7 @@ msgstr "Participante creado con éxito."
 msgid "Failed to update participant."
 msgstr "Error al actualizar participante."
 
-#: src/API/EventParticipantsController.php:921
+#: src/API/EventParticipantsController.php:941
 #: src/API/ParticipantsController.php:711
 msgid "Participant updated successfully."
 msgstr "Participante actualizado con éxito."
@@ -166,9 +166,9 @@ msgstr "Agregar Participante"
 #: src/Services/EmailService.php:1682
 #: src/Admin/all-participants/AllParticipants.js:96
 #: src/Admin/event-participants/EventParticipants.js:539
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1172
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1490
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1687
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1173
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1491
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1699
 #: src/Admin/participant-detail/ParticipantDetail.js:186
 msgid "Name"
 msgstr "Nombre"
@@ -204,7 +204,7 @@ msgid "Edit"
 msgstr "Editar"
 
 #: src/Admin/all-participants/AllParticipants.js:528
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1432
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1433
 #: src/blocks/audience-signup/QuestionBuilder.js:128
 msgid "Delete"
 msgstr "Eliminar"
@@ -249,9 +249,9 @@ msgstr "Etiqueta"
 
 #: src/Admin/event-participants/EventParticipants.js:529
 #: src/Admin/event-participants/EventParticipants.js:984
-#: src/Admin/manage-event-audience-tab/EventAudience.js:29
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2031
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2332
+#: src/Admin/manage-event-audience-tab/EventAudience.js:30
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2043
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2344
 #: src/Admin/participant-detail/ParticipantDetail.js:36
 msgid "Interested"
 msgstr "Interesado"
@@ -274,7 +274,7 @@ msgstr "Eventos"
 #: src/Services/EmailService.php:2130
 #: src/Services/EmailService.php:2260
 #: src/Admin/events-list/EventsList.js:37
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1002
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1003
 #: src/Admin/participant-detail/ParticipantDetail.js:277
 #: src/Admin/participant-detail/ParticipantDetail.js:400
 msgid "Event"
@@ -284,9 +284,9 @@ msgstr "Evento"
 msgid "Poll not found."
 msgstr "Encuesta no encontrada."
 
-#: src/API/EventParticipantsController.php:1323
-#: src/API/EventParticipantsController.php:1384
-#: src/API/EventParticipantsController.php:1464
+#: src/API/EventParticipantsController.php:1552
+#: src/API/EventParticipantsController.php:1613
+#: src/API/EventParticipantsController.php:1693
 msgid "Invalid event ID."
 msgstr "ID de evento no válido."
 
@@ -313,7 +313,7 @@ msgstr "Pregunta rápida sobre %s"
 #: src/Services/EmailService.php:2452
 #: src/Services/EmailService.php:2749
 #: src/Services/EmailService.php:2843
-#, php-format, js-format
+#, php-format,js-format
 msgid "Hi %s,"
 msgstr "Hola %s,"
 
@@ -402,9 +402,9 @@ msgid "Add Option"
 msgstr "Agregar opción"
 
 #: src/Admin/all-participants/AllParticipants.js:192
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1493
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1709
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1795
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1494
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1721
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1807
 #: src/Admin/participant-detail/ParticipantDetail.js:194
 msgid "Status"
 msgstr "Estado"
@@ -418,12 +418,11 @@ msgstr "Guardando..."
 #: src/Admin/event-participants/EventParticipants.js:944
 #: src/Admin/event-participants/EventParticipants.js:1010
 #: src/Admin/event-participants/EventParticipants.js:1273
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2251
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2445
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2678
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2898
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2985
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:230
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2263
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2457
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2690
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2910
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2975
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -441,23 +440,23 @@ msgstr "Enviando..."
 
 #: src/Admin/event-participants/EventParticipants.js:527
 #: src/Admin/event-participants/EventParticipants.js:992
-#: src/Admin/manage-event-audience-tab/EventAudience.js:27
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2017
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2325
+#: src/Admin/manage-event-audience-tab/EventAudience.js:28
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2029
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2337
 #: src/Admin/participant-detail/ParticipantDetail.js:34
 msgid "Collaborator"
 msgstr "Colaborador"
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:1348
+#: src/API/EventParticipantsController.php:1577
 #, php-format
 msgid "Failed to remove participant ID %d"
 msgstr "No se pudo eliminar el ID de participante %d"
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:1405
-#: src/API/EventParticipantsController.php:1494
-#: src/API/EventParticipantsController.php:1563
+#: src/API/EventParticipantsController.php:1634
+#: src/API/EventParticipantsController.php:1723
+#: src/API/EventParticipantsController.php:1792
 #, php-format
 msgid "Participant ID %d not found"
 msgstr "ID de participante %d no encontrado"
@@ -623,7 +622,7 @@ msgid "Successfully added %d participant(s)"
 msgstr "Se agregaron %d participante(s) correctamente"
 
 #: src/Admin/event-participants/EventParticipants.js:333
-#: src/Admin/manage-event-audience-tab/EventAudience.js:543
+#: src/Admin/manage-event-audience-tab/EventAudience.js:544
 msgid "Error adding participants: "
 msgstr "Error al agregar participantes: "
 
@@ -639,19 +638,19 @@ msgstr "Agregar Interesados"
 
 #: src/Admin/event-participants/EventParticipants.js:515
 #: src/Admin/event-participants/EventParticipants.js:722
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2076
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2275
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2088
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2287
 msgid "Add Participants"
 msgstr "Agregar Participantes"
 
 #: src/Admin/event-participants/EventParticipants.js:770
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2283
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2295
 msgid "All participants are already added to this event."
 msgstr "Todos los participantes ya están agregados a este evento."
 
 #. translators: %d: number of available participants
 #: src/Admin/event-participants/EventParticipants.js:849
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2363
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2375
 #, js-format
 msgid "%d participant(s) available"
 msgstr "%d participante(s) disponible(s)"
@@ -670,7 +669,7 @@ msgstr "Agregando..."
 
 #. translators: %d: number of selected participants
 #: src/Admin/event-participants/EventParticipants.js:957
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2458
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2470
 #, js-format
 msgid "Add %d Selected"
 msgstr "Agregar %d seleccionado(s)"
@@ -763,7 +762,7 @@ msgstr "Pendiente"
 
 #: src/Admin/all-participants/AllParticipants.js:196
 #: src/Admin/all-participants/AllParticipants.js:207
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:14
+#: src/Admin/manage-event-audience-tab/ticketLabels.js:10
 #: src/Admin/participant-detail/ParticipantDetail.js:53
 msgid "Confirmed"
 msgstr "Confirmado"
@@ -777,7 +776,7 @@ msgid "Events Collaborated"
 msgstr "Eventos Colaborados"
 
 #: src/Admin/events-list/EventsList.js:64
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1847
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1859
 msgid "Participants"
 msgstr "Participantes"
 
@@ -818,7 +817,7 @@ msgid "%d Collaborators"
 msgstr "%d Colaboradores"
 
 #: src/Admin/event-participants/EventParticipants.js:1013
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2909
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2921
 #: src/Admin/settings/MailingTab.js:134
 msgid "Save"
 msgstr "Guardar"
@@ -919,7 +918,7 @@ msgstr "¡Hola %s! Haz clic en el botón de abajo para inscribirte en este event
 #. translators: %s: participant name
 #: src/blocks/event-signup/render.php:1229
 #: src/blocks/event-signup/frontend.js:1704
-#, php-format, js-format
+#, php-format,js-format
 msgid "Hi %s! You can sign up for this event."
 msgstr "¡Hola %s! Puedes inscribirte en este evento."
 
@@ -1009,11 +1008,11 @@ msgid "No users found."
 msgstr "No se encontraron usuarios."
 
 #: src/Admin/event-participants/EventParticipants.js:548
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1173
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1491
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1694
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2005
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2801
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1174
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1492
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1706
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2017
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2813
 #: src/Admin/participant-detail/ParticipantDetail.js:279
 msgid "Role"
 msgstr "Rol"
@@ -1208,7 +1207,7 @@ msgid "%d skipped (already signed up or opted out of marketing)."
 msgstr "%d omitidos (ya registrados o con marketing desactivado)."
 
 #: src/Admin/event-participants/EventParticipants.js:500
-#: src/Admin/manage-event-audience-tab/EventAudience.js:679
+#: src/Admin/manage-event-audience-tab/EventAudience.js:680
 msgid "Error sending invitations: "
 msgstr "Error al enviar invitaciones: "
 
@@ -1235,9 +1234,9 @@ msgid "%1$s (%2$d members)"
 msgstr "%1$s (%2$d miembros)"
 
 #: src/Admin/event-participants/EventParticipants.js:1298
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2106
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2201
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2263
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2118
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2213
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2275
 msgid "Send Invitations"
 msgstr "Enviar Invitaciones"
 
@@ -1247,13 +1246,13 @@ msgstr "Enviar Invitaciones"
 msgid "Settings"
 msgstr "Configuración"
 
-#: src/API/EventParticipantsController.php:416
-#: src/API/EventParticipantsController.php:678
-#: src/API/EventParticipantsController.php:1252
-#: src/API/EventParticipantsController.php:1312
-#: src/API/EventParticipantsController.php:1373
-#: src/API/EventParticipantsController.php:1453
-#: src/API/EventParticipantsController.php:1746
+#: src/API/EventParticipantsController.php:436
+#: src/API/EventParticipantsController.php:698
+#: src/API/EventParticipantsController.php:1481
+#: src/API/EventParticipantsController.php:1541
+#: src/API/EventParticipantsController.php:1602
+#: src/API/EventParticipantsController.php:1682
+#: src/API/EventParticipantsController.php:1975
 #: src/API/EventStatisticsController.php:109
 msgid "Event date not found."
 msgstr "Fecha del evento no encontrada."
@@ -1392,15 +1391,15 @@ msgstr "Todos los grupos"
 
 #. translators: 1: selected count, 2: shown count
 #: src/Admin/event-participants/EventParticipants.js:840
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2354
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2366
 #, js-format
 msgid "%1$d selected, %2$d shown"
 msgstr "%1$d seleccionados, %2$d mostrados"
 
 #: src/Admin/event-participants/EventParticipants.js:924
 #: src/Admin/event-participants/EventParticipants.js:1246
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2425
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2658
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2437
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2670
 msgid "No participants match your search."
 msgstr "Ningún participante coincide con tu búsqueda."
 
@@ -1868,7 +1867,7 @@ msgstr "Has sido eliminado de este evento."
 
 #: src/blocks/event-signup/render.php:1288
 #: src/Hooks/SignupHookBridge.php:486
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2791
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2803
 #: src/blocks/event-signup/frontend.js:1439
 msgid "Cancel signup"
 msgstr "Cancelar registro"
@@ -1946,7 +1945,7 @@ msgstr "IDs de categoría utilizados para correo de marketing"
 msgid "I want to receive updates about:"
 msgstr "Quiero recibir actualizaciones sobre:"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2144
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2156
 #: src/Admin/participant-detail/ParticipantDetail.js:398
 msgid "Form"
 msgstr "Formulario"
@@ -1985,8 +1984,7 @@ msgstr "Correo"
 msgid "View file"
 msgstr "Ver archivo"
 
-#: src/API/EventParticipantsController.php:767
-#: src/API/EventParticipantsController.php:1019
+#: src/API/EventParticipantsController.php:787
 msgid "Failed to update attendance."
 msgstr "Error al actualizar la asistencia."
 
@@ -2048,9 +2046,9 @@ msgstr "Selecciona actividades"
 msgid "Every 5 minutes (fair-audience)"
 msgstr "Cada 5 minutos (fair-audience)"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:28
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2024
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2318
+#: src/Admin/manage-event-audience-tab/EventAudience.js:29
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2036
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2330
 #: src/Admin/participant-detail/ParticipantDetail.js:35
 msgid "Signed up"
 msgstr "Registrado"
@@ -2063,13 +2061,13 @@ msgstr "No se proporcionó ID de participante."
 msgid "All participants"
 msgstr "Todos los participantes"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1777
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1929
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1789
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1941
 #: src/Admin/participant-detail/ParticipantDetail.js:160
 msgid "Participant"
 msgstr "Participante"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1424
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1425
 #: src/Admin/participant-detail/ParticipantDetail.js:166
 msgid "Edit participant"
 msgstr "Editar participante"
@@ -2109,7 +2107,7 @@ msgstr "(sin título)"
 msgid "Form submissions"
 msgstr "Envíos de formularios"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2190
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2202
 #: src/Admin/participant-detail/ParticipantDetail.js:389
 msgid "No form submissions yet."
 msgstr "Sin envíos de formularios aún."
@@ -2189,16 +2187,16 @@ msgstr "Tu registro para %s ha sido confirmado."
 msgid "Phone"
 msgstr "Teléfono"
 
-#: src/API/EventParticipantsController.php:746
+#: src/API/EventParticipantsController.php:766
 msgid "Provide at least one of: label, attended, ticket_type_id, ticket_option_ids, admin_comment."
 msgstr "Proporcione al menos uno de: label, attended, ticket_type_id, ticket_option_ids, admin_comment."
 
-#: src/API/EventParticipantsController.php:778
-#: src/API/EventParticipantsController.php:815
+#: src/API/EventParticipantsController.php:798
+#: src/API/EventParticipantsController.php:835
 msgid "Participant row not found for this event date."
 msgstr "Fila de participante no encontrada para esta fecha de evento."
 
-#: src/API/EventParticipantsController.php:792
+#: src/API/EventParticipantsController.php:812
 msgid "Selected ticket type was not found."
 msgstr "El tipo de entrada seleccionado no fue encontrado."
 
@@ -2211,7 +2209,7 @@ msgstr "Este tipo de entrada está agotado. Por favor, elija otra opción."
 #: src/blocks/event-signup/render.php:830
 #: src/Services/SignupActivities.php:318
 #: src/blocks/event-signup/frontend.js:396
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Por favor, selecciona al menos %d actividad para registrarte."
@@ -2474,13 +2472,13 @@ msgid "Thanks! We will keep you posted about this event."
 msgstr "¡Gracias! Te mantendremos informado sobre este evento."
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:1521
+#: src/API/EventParticipantsController.php:1750
 #, php-format
 msgid "Failed to upgrade participant ID %d"
 msgstr "Error al actualizar el ID de participante %d"
 
 #. translators: 1: admin display name, 2: date, 3: event title
-#: src/API/EventParticipantsController.php:1539
+#: src/API/EventParticipantsController.php:1768
 #, php-format
 msgid "Verbal consent recorded by %1$s on %2$s at event %3$s"
 msgstr "Consentimiento verbal registrado por %1$s el %2$s en el evento %3$s"
@@ -2680,7 +2678,7 @@ msgstr "Marcador de posición de nombre"
 msgid "Failed to register your interest. Please try again."
 msgstr "Error al registrar tu interés. Por favor, intenta de nuevo."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2455
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2467
 #: src/blocks/event-signup/frontend.js:1568
 msgid "Adding…"
 msgstr "Añadiendo…"
@@ -2704,7 +2702,7 @@ msgctxt "block keyword"
 msgid "interest"
 msgstr "interés"
 
-#: src/API/EventParticipantsController.php:622
+#: src/API/EventParticipantsController.php:642
 #: src/API/EventSignupController.php:1929
 #: src/Services/EmailService.php:2063
 #: src/blocks/event-signup/editor.js:117
@@ -2760,13 +2758,13 @@ msgid "Forced by a wp-config constant — change it there."
 msgstr "Forzado por una constante de wp-config — cámbialo allí."
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:1588
+#: src/API/EventParticipantsController.php:1817
 #, php-format
 msgid "Failed to record decline for participant ID %d"
 msgstr "No se pudo registrar el rechazo para el participante ID %d"
 
 #. translators: 1: admin display name, 2: date, 3: event title
-#: src/API/EventParticipantsController.php:1606
+#: src/API/EventParticipantsController.php:1835
 #, php-format
 msgid "Decline recorded by %1$s on %2$s at event %3$s"
 msgstr "Rechazo registrado por %1$s el %2$s en el evento %3$s"
@@ -2787,7 +2785,7 @@ msgstr "Una de las fechas seleccionadas no es válida para esta entrada."
 #. translators: %d: minimum number of occurrences required
 #: src/API/EventSignupController.php:857
 #: src/blocks/event-signup/frontend.js:316
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Selecciona al menos %d ocurrencia."
@@ -2837,7 +2835,7 @@ msgstr "Funciona con %s"
 #: src/Admin/all-participants/AllParticipants.js:131
 #: src/Admin/all-participants/AllParticipants.js:167
 #: src/Admin/all-participants/AllParticipants.js:182
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2642
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2654
 msgid "No"
 msgstr "No"
 
@@ -2848,24 +2846,24 @@ msgstr "No"
 msgid "Weekly Digest"
 msgstr "Resumen semanal"
 
-#: src/API/EventParticipantsController.php:1243
+#: src/API/EventParticipantsController.php:1472
 msgid "The fair-events plugin is required for this action."
 msgstr "El plugin fair-events es necesario para esta acción."
 
-#: src/API/EventParticipantsController.php:1266
+#: src/API/EventParticipantsController.php:1495
 msgid "The target date is not another occurrence of this recurring event."
 msgstr "La fecha de destino no es otra ocurrencia de este evento recurrente."
 
-#: src/API/EventParticipantsController.php:1276
+#: src/API/EventParticipantsController.php:1505
 msgid "Signup not found on this event date."
 msgstr "No se encontró inscripción en esta fecha del evento."
 
-#: src/API/EventParticipantsController.php:1284
+#: src/API/EventParticipantsController.php:1513
 msgid "This participant is already signed up on the target date."
 msgstr "Este participante ya está inscrito en la fecha de destino."
 
-#: src/API/EventParticipantsController.php:1291
-#: src/Admin/manage-event-audience-tab/EventAudience.js:975
+#: src/API/EventParticipantsController.php:1520
+#: src/Admin/manage-event-audience-tab/EventAudience.js:976
 msgid "Signup moved successfully."
 msgstr "Inscripción movida correctamente."
 
@@ -3151,285 +3149,285 @@ msgid "Welcome back — we've restored your answers. Review and continue below."
 msgstr "Bienvenido de vuelta — hemos restaurado tus respuestas. Revisa y continúa a continuación."
 
 #. translators: 1: number upgraded, 2: number declined, 3: number skipped, 4: number of failed emails
-#: src/Admin/manage-event-audience-tab/EventAudience.js:618
+#: src/Admin/manage-event-audience-tab/EventAudience.js:619
 #, js-format
 msgid "Added %1$d to the mailing list, recorded %2$d as declined. Skipped %3$d, %4$d email(s) failed."
 msgstr "Se añadieron %1$d a la lista de correo, se registraron %2$d como rechazados. Se omitieron %3$d, %4$d correo(s) fallido(s)."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:631
+#: src/Admin/manage-event-audience-tab/EventAudience.js:632
 msgid "Error recording consent: "
 msgstr "Error al registrar el consentimiento: "
 
 #. translators: 1: number of sent invitations, 2: number of skipped recipients, 3: number of failures
-#: src/Admin/manage-event-audience-tab/EventAudience.js:667
+#: src/Admin/manage-event-audience-tab/EventAudience.js:668
 #, js-format
 msgid "Sent %1$d invitation(s). Skipped %2$d, failed %3$d."
 msgstr "Se enviaron %1$d invitación(es). Se omitieron %2$d, %3$d fallidas."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:781
+#: src/Admin/manage-event-audience-tab/EventAudience.js:782
 msgid "this participant"
 msgstr "este participante"
 
 #. translators: %s: participant name or "name (email)"
-#: src/Admin/manage-event-audience-tab/EventAudience.js:787
+#: src/Admin/manage-event-audience-tab/EventAudience.js:788
 #, js-format
 msgid "Delete %s’s registration for this event date? This cannot be undone."
 msgstr "¿Eliminar el registro de %s para esta fecha del evento? No se puede deshacer."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:808
+#: src/Admin/manage-event-audience-tab/EventAudience.js:809
 msgid "Error deleting registration: "
 msgstr "Error al eliminar el registro: "
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:930
+#: src/Admin/manage-event-audience-tab/EventAudience.js:931
 msgid "Signup confirmed."
 msgstr "Registro confirmado."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:931
+#: src/Admin/manage-event-audience-tab/EventAudience.js:932
 msgid "Expired signup moved to Interested."
 msgstr "Registro caducado movido a Interesado."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:939
+#: src/Admin/manage-event-audience-tab/EventAudience.js:940
 msgid "Error saving options: "
 msgstr "Error al guardar las opciones: "
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:978
+#: src/Admin/manage-event-audience-tab/EventAudience.js:979
 msgid "Error moving signup: "
 msgstr "Error al mover el registro: "
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1115
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1165
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1116
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1166
 msgid "Participant list"
 msgstr "Lista de participantes"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1159
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1160
 msgid "Print"
 msgstr "Imprimir"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1175
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1492
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1701
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1783
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1878
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2823
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1176
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1493
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1713
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1795
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1890
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2835
 msgid "Ticket type"
 msgstr "Tipo de entrada"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1176
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1789
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1177
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1801
 msgid "Activities"
 msgstr "Actividades"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1177
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2880
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1178
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2892
 msgid "Admin comment"
 msgstr "Comentario del administrador"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1178
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1179
 msgid "Present"
 msgstr "Presente"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1179
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1180
 msgid "Mailing list"
 msgstr "Lista de correo"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1180
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1181
 msgid "Notes"
 msgstr "Notas"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1191
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1192
 msgid "Could not open print window. Please allow pop-ups."
 msgstr "No se pudo abrir la ventana de impresión. Por favor, permite las ventanas emergentes."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1210
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1211
 msgid "Error copying to clipboard: "
 msgstr "Error al copiar al portapapeles: "
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1227
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1228
 msgid "No ticket type"
 msgstr "Sin tipo de entrada"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1262
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1263
 msgid "(none)"
 msgstr "(ninguno)"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1300
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1301
 msgid "no expiry set"
 msgstr "sin fecha de vencimiento"
 
 #. translators: %d: number of minutes
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1309
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1310
 #, js-format
 msgid "expired %d min ago"
 msgstr "vencido hace %d min"
 
 #. translators: %d: number of hours
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1317
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1318
 #, js-format
 msgid "expired %d h ago"
 msgstr "vencido hace %d h"
 
 #. translators: %d: number of days
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1324
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1325
 #, js-format
 msgid "expired %d d ago"
 msgstr "vencido hace %d d"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1357
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1808
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2566
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1358
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1820
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2578
 msgid "—"
 msgstr "—"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1747
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1759
 msgid "Pending review"
 msgstr "Pendiente de revisión"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1767
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1779
 msgid "These signups had a payment hold that expired. They are not counted toward activity capacity until reviewed. Open a row to confirm (e.g. cash payment promised) or cancel."
 msgstr "Estos registros tenían una retención de pago que ha vencido. No se cuentan hacia la capacidad de actividad hasta que se revisen. Abre una fila para confirmar (p. ej. pago en efectivo prometido) o cancelar."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1829
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1841
 msgid "Review"
 msgstr "Revisar"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1863
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1875
 msgid "Copy lists:"
 msgstr "Copiar listas:"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1870
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1882
 msgid "Copied list by ticket type"
 msgstr "Lista copiada por tipo de entrada"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1885
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1897
 msgid "Copied list by activity"
 msgstr "Lista copiada por actividad"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1896
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1908
 msgid "Activity"
 msgstr "Actividad"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1903
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1915
 msgid "Copied activity summary"
 msgstr "Resumen de actividad copiado"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1914
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1926
 msgid "Activity summary"
 msgstr "Resumen de actividad"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1921
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1933
 msgid "Copied list by participant"
 msgstr "Lista copiada por participante"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1941
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1953
 msgid "Collaborators:"
 msgstr "Colaboradores:"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1948
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1960
 msgid "Signed up:"
 msgstr "Registrado:"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1952
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1964
 msgid "Interested:"
 msgstr "Interesado:"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1960
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1972
 msgid "Total:"
 msgstr "Total:"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1973
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1985
 msgid "Pending_payment signups whose hold expired. They do not count toward activity capacity until reviewed."
 msgstr "Inscripciones con pago pendiente cuya retención ha expirado. No cuentan hacia la capacidad de actividad hasta que se revisen."
 
 #. translators: %d: number of stale pending_payment signups
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1980
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1992
 #, js-format
 msgid "%d stale held"
 msgstr "%d retenidos obsoletos"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1992
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2004
 msgid "Search"
 msgstr "Buscar"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1998
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2010
 msgid "Filter by name…"
 msgstr "Filtrar por nombre…"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2010
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2022
 msgid "All roles"
 msgstr "Todos los roles"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1332
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1494
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1710
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1333
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1495
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1722
 msgid "Shown up"
 msgstr "Asistió"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1495
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1711
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2153
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1496
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1723
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2165
 msgid "Actions"
 msgstr "Acciones"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1458
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1459
 msgid "Holds a whole-series pass. Attendance and edits are managed on the series’ master date."
 msgstr "Tiene un pase de serie completa. La asistencia y las ediciones se gestionan en la fecha maestra de la serie."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1464
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1465
 msgid "Series pass"
 msgstr "Pase de serie"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1337
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1338
 msgid "Attendance for series-pass holders is managed on the series’ master date."
 msgstr "La asistencia de los titulares de pases de serie se gestiona en la fecha maestra de la serie."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1415
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1416
 msgid "Managed on series date"
 msgstr "Gestionado en la fecha de serie"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1439
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2994
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1440
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2984
 msgid "Move"
 msgstr "Mover"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2060
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2072
 msgid "No participants yet."
 msgstr "Sin participantes aún."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2064
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2076
 msgid "No participants match the current filters."
 msgstr "Ningún participante coincide con los filtros actuales."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2085
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2097
 msgid "Manage Participants"
 msgstr "Gestionar participantes"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2097
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2109
 msgid "Print list"
 msgstr "Imprimir lista"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2119
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2473
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2131
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2485
 msgid "Record email consent"
 msgstr "Registrar consentimiento de correo"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2133
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2145
 msgid "Forms"
 msgstr "Formularios"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2147
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2159
 msgid "Responses"
 msgstr "Respuestas"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2177
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2189
 msgid "View Responses"
 msgstr "Ver respuestas"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2207
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2219
 msgid "Send event invitation emails to members of the following groups? Participants who are already signed up will be skipped."
 msgstr "¿Enviar correos de invitación del evento a miembros de los siguientes grupos? Se omitirán los participantes que ya estén inscritos."
 
 #. translators: %d: number of group members
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2219
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2231
 #, js-format
 msgid "%d member"
 msgid_plural "%d members"
@@ -3437,91 +3435,90 @@ msgstr[0] "%d miembro"
 msgstr[1] "%d miembros"
 
 #. translators: %d: total number of potential invitees
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2234
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2246
 #, js-format
 msgid "Total: up to %d invitations"
 msgstr "Total: hasta %d invitaciones"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2262
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2274
 msgid "Sending…"
 msgstr "Enviando…"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2299
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2503
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2311
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2515
 msgid "Search by name or email…"
 msgstr "Buscar por nombre o correo…"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2479
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2491
 msgid "No participants are eligible. People are listed here when they are on the minimal email profile."
 msgstr "No hay participantes elegibles. Las personas aparecen aquí cuando tienen el perfil de correo mínimo."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2487
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2499
 msgid "Record each person's answer. \"Yes\" adds them to the mailing list and sends a welcome email. \"No\" records that they declined — they will not be asked again."
 msgstr "Registra la respuesta de cada persona. «Sí» los añade a la lista de correo y envía un correo de bienvenida. «No» registra que declinaron — no se les preguntará de nuevo."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2616
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2628
 msgid "No email — cannot add to mailing list"
 msgstr "Sin correo — no se puede añadir a la lista de correo"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2623
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2635
 msgid "Yes"
 msgstr "Sí"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2690
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2906
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:248
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2702
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2918
 msgid "Saving…"
 msgstr "Guardando…"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2691
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2703
 msgid "Save consent"
 msgstr "Guardar consentimiento"
 
 #. translators: %s: participant name
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2706
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2718
 #, js-format
 msgid "Edit options — %s"
 msgstr "Editar opciones — %s"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2728
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2740
 msgid "Pending payment hold expired"
 msgstr "La retención de pago pendiente expiró"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2740
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2752
 msgid "Will mark as Signed up and count toward activity capacity. Click Save to apply."
 msgstr "Marcará como Inscrito y contará hacia la capacidad de actividad. Haz clic en Guardar para aplicar."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2745
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2757
 msgid "Will mark as Interested and free the seat (record kept for history). Click Save to apply."
 msgstr "Marcará como Interesado y liberará el asiento (registro conservado para el historial). Haz clic en Guardar para aplicar."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2749
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2761
 msgid "Pick how to resolve this expired hold, edit any other fields below, then Save to apply everything in one go."
 msgstr "Elige cómo resolver esta retención expirada, edita cualquier otro campo a continuación y luego Guarda para aplicar todo de una vez."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2769
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2781
 msgid "Confirm signup"
 msgstr "Confirmar inscripción"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2831
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2843
 msgid "— None —"
 msgstr "— Ninguno —"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2881
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2893
 msgid "Internal note about this signup (e.g. \"pending 10€ payment\"). Only visible to admins."
 msgstr "Nota interna sobre esta inscripción (p. ej. «pago pendiente de 10€»). Solo visible para administradores."
 
 #. translators: %s: participant name
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2953
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2943
 #, js-format
 msgid "Move signup — %s"
 msgstr "Mover inscripción — %s"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2961
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2951
 msgid "Move to occurrence"
 msgstr "Mover a la ocurrencia"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2993
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2983
 msgid "Moving…"
 msgstr "Moviendo…"
 
@@ -3577,6 +3574,7 @@ msgstr "Revertido a mínimo: la suscripción de marketing nunca fue confirmada e
 msgid "Opted out of the weekly summary."
 msgstr "Ha rechazado el resumen semanal."
 
+#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Services/WeeklyDigestRenderer.php:165
 #: src/Services/WeeklyDigestRenderer.php:175
@@ -3752,34 +3750,25 @@ msgstr "Día del evento"
 msgid "%s day of the event"
 msgstr "%s día del evento"
 
-#: src/API/EventParticipantsController.php:950
-msgid "Provide at least one of: activity_ids, attended."
-msgstr "Proporciona al menos uno de: activity_ids, attended."
-
-#: src/API/EventParticipantsController.php:959
+#: src/API/EventParticipantsController.php:1332
 msgid "Ticket not found for this event date."
 msgstr "Entrada no encontrada para esta fecha de evento."
 
-#: src/API/EventParticipantsController.php:967
+#: src/API/EventParticipantsController.php:1058
 msgid "This ticket is no longer active."
 msgstr "Esta entrada ya no está activa."
 
-#: src/API/EventParticipantsController.php:991
+#: src/API/EventParticipantsController.php:1115
 msgid "One of the selected activities does not belong to this event."
 msgstr "Una de las actividades seleccionadas no pertenece a este evento."
 
-#: src/API/EventParticipantsController.php:1004
+#: src/API/EventParticipantsController.php:1147
 msgid "Enter a reason for going over capacity."
 msgstr "Introduce un motivo para exceder la capacidad."
 
-#: src/API/EventParticipantsController.php:1057
-msgid "Failed to update the ticket’s activities."
-msgstr "No se pudo actualizar las actividades de la entrada."
-
-#. translators: 1: activity name, 2: places taken after the change, 3: capacity
-#: src/API/EventParticipantsController.php:1094
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:70
-#, php-format, js-format
+#. translators: 1: ticket type or activity name, 2: places taken after the change, 3: capacity
+#: src/API/EventParticipantsController.php:1250
+#, php-format,js-format
 msgid "%1$s would have %2$d of %3$d place taken."
 msgid_plural "%1$s would have %2$d of %3$d places taken."
 msgstr[0] "%1$s tendría %2$d de %3$d lugar ocupado."
@@ -3810,48 +3799,50 @@ msgid "Choose which ticket to add the activities to."
 msgstr "Elige a qué entrada añadir las actividades."
 
 #. translators: 1: ticket number among the participant's tickets, 2: ticket type name, 3: short ticket reference
+#. translators: 1: ticket number within its purchase, 2: ticket type name, 3: short ticket reference
 #: src/Services/TicketActivities.php:115
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:54
-#, php-format, js-format
+#: src/Admin/manage-event-audience-tab/ticketLabels.js:50
+#, php-format,js-format
 msgid "Ticket %1$d — %2$s (%3$s)"
 msgstr "Entrada %1$d — %2$s (%3$s)"
 
 #. translators: 1: ticket number among the participant's tickets, 2: short ticket reference
+#. translators: 1: ticket number within its purchase, 2: short ticket reference
 #: src/Services/TicketActivities.php:122
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:38
-#, php-format, js-format
+#: src/Admin/manage-event-audience-tab/ticketLabels.js:34
+#, php-format,js-format
 msgid "Ticket %1$d (%2$s)"
 msgstr "Entrada %1$d (%2$s)"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:756
+#: src/Admin/manage-event-audience-tab/EventAudience.js:757
 msgid "Error saving check-in: "
 msgstr "Error al guardar el registro de entrada: "
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:770
+#: src/Admin/manage-event-audience-tab/EventAudience.js:771
 msgid "Ticket saved."
 msgstr "Entrada guardada."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1056
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1621
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1057
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1633
 msgid "Not tied to a ticket"
 msgstr "No vinculado a una entrada"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1174
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1543
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1175
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1546
 msgid "Ticket"
 msgstr "Entrada"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1389
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:15
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1390
+#: src/Admin/manage-event-audience-tab/ticketLabels.js:11
 msgid "Awaiting payment"
 msgstr "Pendiente de pago"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1391
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1392
 msgid "(✓)"
 msgstr "(✓)"
 
 #. translators: %d: number of tickets the participant holds
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1471
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1472
 #, js-format
 msgid "%d ticket"
 msgid_plural "%d tickets"
@@ -3859,92 +3850,73 @@ msgstr[0] "%d entrada"
 msgstr[1] "%d entradas"
 
 #. translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)"
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1566
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1569
 #, js-format
 msgid "Checked in: %s"
 msgstr "Registrado: %s"
 
 #. translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)"
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1593
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1605
 #, js-format
 msgid "Edit %s"
 msgstr "Editar %s"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1598
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1610
 msgid "Edit ticket"
 msgstr "Editar entrada"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1616
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1628
 msgid "Recorded for the participant before activities and check-in were kept per ticket, and not linked to a specific ticket. Edit it with “Edit participant”."
 msgstr "Registrado para el participante antes de que las actividades y el registro se mantuvieran por entrada, y no estaban vinculados a una entrada específica. Edítalo con «Editar participante»."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1636
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1648
 msgid "Earlier check-in"
 msgstr "Registro anterior"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1724
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1736
 msgid "Total — tickets"
 msgstr "Total — entradas"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1730
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1742
 msgid "Total — not tied to a ticket"
 msgstr "Total — no vinculado a una entrada"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:1956
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1968
 msgid "Tickets:"
 msgstr "Entradas:"
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2852
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2864
 msgid "Each ticket keeps its own activities and check-in. Edit them with “Edit ticket” on the ticket’s row."
 msgstr "Cada entrada mantiene sus propias actividades y registro. Edítalas con «Editar entrada» en la fila de la entrada."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2861
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2873
 msgid "Activities recorded for this participant before activities were kept per ticket. They are not linked to a specific ticket."
 msgstr "Actividades registradas para este participante antes de que las actividades se mantuvieran por entrada. No están vinculadas a una entrada específica."
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2908
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2920
 msgid "Save participant"
 msgstr "Guardar participante"
 
-#. translators: %s: participant name
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2920
-#, js-format
-msgid "Edit ticket — %s"
-msgstr "Editar entrada — %s"
+#: src/API/EventParticipantsController.php:1044
+msgid "Provide at least one of: ticket_type_id, activity_ids, attended."
+msgstr ""
 
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2939
-msgid "Error saving ticket: "
-msgstr "Error al guardar la entrada: "
+#: src/API/EventParticipantsController.php:1066
+msgid "This ticket is awaiting payment. It can be edited once the payment is complete."
+msgstr ""
 
-#. translators: %s: activity name
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:183
-#, js-format
-msgid "%s — over capacity"
-msgstr "%s — por encima de la capacidad"
+#: src/API/EventParticipantsController.php:1080
+msgid "This ticket’s type cannot be changed."
+msgstr ""
 
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:197
-msgid "Checked in"
-msgstr "Registrado"
+#: src/API/EventParticipantsController.php:1092
+msgid "The chosen ticket type is not available for this ticket."
+msgstr ""
 
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:213
-msgid "Reason for going over capacity"
-msgstr "Motivo para exceder la capacidad"
+#: src/API/EventParticipantsController.php:1194
+msgid "Failed to update the ticket."
+msgstr ""
 
-#. translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)"
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:243
-#, js-format
-msgid "Save %s"
-msgstr "Guardar %s"
-
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:251
-msgid "Save over capacity"
-msgstr "Guardar exceso de capacidad"
-
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:252
-msgid "Save ticket"
-msgstr "Guardar entrada"
-
-#: src/Admin/manage-event-audience-tab/TicketEditor.js:264
-msgid "No unsaved changes."
-msgstr "Sin cambios sin guardar."
-
+#: src/Admin/manage-event-audience-tab/EventAudience.js:1577
+msgid "Check-in is available once the payment is complete."
+msgstr ""

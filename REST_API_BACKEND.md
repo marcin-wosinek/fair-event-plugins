@@ -870,18 +870,39 @@ and an add-on hold expiry). fair-events owns the tables and models
     retries and confirmation; the expiry cron releases lapsed holds.
     Participants without tickets (fair-audience's own signup routes) keep
     activities on their relationship, as before.
--   **Admin.** `PUT fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}`
-    (`manage_options`) sets one ticket's `activity_ids` and/or `attended`,
-    returning 404 for a ticket on another event date. Only activities the
-    ticket does not already hold need a place; one that would go past its
-    limit is refused with 409 `capacity_exceeded` carrying `projection`
-    (and `projections`), unless `override_reason` is given — then it is
-    saved, flagged (`over_capacity_activity_ids` on the ticket, the signup's
-    `over_capacity`) and recorded in the override audit with action
-    `activity`. Checking in again keeps
-    the first time; `attended: false` clears it. The participants list
-    returns each participant's `tickets`, and `participant_ticket_option_ids`
-    / `attended_at` hold only what is not tied to a ticket.
+-   **Admin (#1709).** `GET fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}`
+    (`manage_options`) returns what the shared ticket editor
+    (`fair-events-shared`'s `TicketEditModal`, opened from both the List and
+    Audience tabs) needs: the `ticket` (with `position` within its purchase,
+    `participant_name` and `editable`), the `ticket_types` it can take — its
+    current type first, then the other enabled types of the event or its
+    series master with the same recurrence scope
+    (`FairEvents\Services\TicketEditRules`) — each with places left and
+    activity rules, and the event's `activities` with places left.
+    `PUT` on the same route sets any of the ticket's `ticket_type_id`,
+    `activity_ids` and `attended` together, returning 404 for a ticket on
+    another event date and 409 `ticket_awaiting_payment` for a ticket that
+    is not confirmed. The ticket's type and activity count must keep the
+    type's rules (`ticket_type_activities_disabled` / `_exceeded` /
+    `_missing`), checked only when the edit changes either. A new type needs
+    one place of that type, and only activities the ticket does not already
+    hold need a place; every limit the edit would go past is refused at once
+    with 409 `capacity_exceeded` carrying `projection` and `projections`,
+    unless `override_reason` is given — then the edit is saved, flagged
+    (`over_capacity_activity_ids` on the ticket for an activity, the signup's
+    `over_capacity`) and recorded in the override audit with the ticket's ID
+    and action `change_type` or `activity`. The checks and all writes run in
+    one transaction under `TicketCapacity`'s lock, so a refused or failed
+    edit changes nothing. Kept activities keep their status (a pending add-on
+    hold stays pending); the purchase, its payment and sibling tickets are
+    never touched. Checking in again keeps the first time; `attended: false`
+    clears it. From then on each ticket's own type is authoritative: the
+    signup's `ticket_type_id` stays as purchase history, the List's
+    `get-tickets` rows carry each ticket's own type in `tickets`, and the
+    signup-wide type change refuses with 409 `ticket_types_individually_edited`
+    once a ticket has its own type. The participants list returns each
+    participant's `tickets`, and `participant_ticket_option_ids` /
+    `attended_at` hold only what is not tied to a ticket.
 -   **History.** Participant-level activities and check-ins recorded before
     this change are copied onto a ticket by `TicketHistoryBackfill` only when
     the participant held exactly one ticket on that date; the originals are

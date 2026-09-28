@@ -1674,8 +1674,12 @@ class GetTicketsController extends WP_REST_Controller {
 			: array();
 		$is_series            = count( $active_dates ) > 1;
 
-		$overrides  = \FairEvents\Models\EventCapacityOverride::get_by_signup_ids( wp_list_pluck( $signups, 'id' ) );
-		$user_names = array();
+		$overrides         = \FairEvents\Models\EventCapacityOverride::get_by_signup_ids( wp_list_pluck( $signups, 'id' ) );
+		$tickets_by_signup = \FairEvents\Models\EventTicket::get_by_signup_ids( wp_list_pluck( $signups, 'id' ) );
+		$ticket_activities = \FairEvents\Models\EventTicketActivity::get_by_ticket_ids(
+			array_map( static fn( $ticket ) => (int) $ticket->id, array_merge( array(), ...array_values( $tickets_by_signup ) ) )
+		);
+		$user_names        = array();
 
 		foreach ( $signups as $signup ) {
 			$signup->ticket_type_name = $signup->ticket_type_id && isset( $ticket_type_names[ (int) $signup->ticket_type_id ] )
@@ -1707,6 +1711,29 @@ class GetTicketsController extends WP_REST_Controller {
 					);
 				},
 				$overrides[ (int) $signup->id ] ?? array()
+			);
+			// Each ticket's own type is authoritative: an administrator may
+			// have given one ticket of the purchase another type.
+			$signup->tickets = array_map(
+				static function ( $ticket ) use ( $ticket_type_names, $ticket_activities ) {
+					$activity_ids = array();
+					foreach ( $ticket_activities[ (int) $ticket->id ] ?? array() as $row ) {
+						if ( \FairEvents\Models\EventTicketActivity::is_active_row( $row ) ) {
+							$activity_ids[] = (int) $row->ticket_option_id;
+						}
+					}
+					return array(
+						'id'               => (int) $ticket->id,
+						'position'         => (int) $ticket->unit_position,
+						'reference'        => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
+						'ticket_type_id'   => $ticket->ticket_type_id ? (int) $ticket->ticket_type_id : null,
+						'ticket_type_name' => $ticket->ticket_type_id ? ( $ticket_type_names[ (int) $ticket->ticket_type_id ] ?? null ) : null,
+						'status'           => (string) $ticket->status,
+						'attended_at'      => $ticket->attended_at,
+						'activity_ids'     => $activity_ids,
+					);
+				},
+				$tickets_by_signup[ (int) $signup->id ] ?? array()
 			);
 		}
 
@@ -1921,6 +1948,10 @@ class GetTicketsController extends WP_REST_Controller {
 		// A ticket type allows its own activities, so a type change must
 		// keep every ticket's selection within the new type's rules.
 		if ( 'change_type' === $action && $target !== $current ) {
+			if ( \FairEvents\Models\EventTicket::has_individual_types( $signup ) ) {
+				return self::individual_types_error();
+			}
+
 			$rule_error = $this->ticket_type_activity_error( \FairEvents\Models\TicketType::get_by_id( $target ), $id );
 			if ( $rule_error ) {
 				return $rule_error;
@@ -1960,6 +1991,12 @@ class GetTicketsController extends WP_REST_Controller {
 					__( 'Failed to update signup.', 'fair-events' ),
 					array( 'status' => 500 )
 				);
+
+				// Checked again under the lock: a ticket may have been
+				// given its own type since the check above.
+				if ( 'change_type' === $action && \FairEvents\Models\EventTicket::has_individual_types( $signup ) ) {
+					return self::individual_types_error();
+				}
 
 				if ( false === \FairEvents\Models\EventTicket::reconcile_signup( $signup ) ) {
 					return $failed;
@@ -2124,48 +2161,13 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 		);
 
-		$enabled = $ticket_type->activities_enabled && ! $ticket_type->is_multiple_instances();
 		foreach ( $tickets as $ticket ) {
-			$count = count( \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( (int) $ticket->id ) ) );
-
-			if ( ! $enabled && $count > 0 ) {
-				return new WP_Error(
-					'ticket_type_activities_disabled',
-					__( 'The chosen ticket type does not allow activities, and this signup has some.', 'fair-events' ),
-					array( 'status' => 409 )
-				);
-			}
-			if ( $enabled && null !== $ticket_type->maximum_activities && $count > (int) $ticket_type->maximum_activities ) {
-				return new WP_Error(
-					'ticket_type_activities_exceeded',
-					sprintf(
-						/* translators: %d: maximum number of activities the ticket type allows */
-						_n(
-							'The chosen ticket type allows at most %d activity per ticket.',
-							'The chosen ticket type allows at most %d activities per ticket.',
-							(int) $ticket_type->maximum_activities,
-							'fair-events'
-						),
-						(int) $ticket_type->maximum_activities
-					),
-					array( 'status' => 409 )
-				);
-			}
-			if ( $enabled && $count < (int) $ticket_type->minimum_activities ) {
-				return new WP_Error(
-					'ticket_type_activities_missing',
-					sprintf(
-						/* translators: %d: minimum number of activities the ticket type requires */
-						_n(
-							'The chosen ticket type requires at least %d activity per ticket.',
-							'The chosen ticket type requires at least %d activities per ticket.',
-							(int) $ticket_type->minimum_activities,
-							'fair-events'
-						),
-						(int) $ticket_type->minimum_activities
-					),
-					array( 'status' => 409 )
-				);
+			$error = \FairEvents\Services\TicketEditRules::activity_count_error(
+				$ticket_type,
+				count( \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( (int) $ticket->id ) ) )
+			);
+			if ( $error ) {
+				return $error;
 			}
 		}
 
@@ -2218,6 +2220,20 @@ class GetTicketsController extends WP_REST_Controller {
 					$ticket_type
 				),
 			)
+		);
+	}
+
+	/**
+	 * Error for a signup-wide type change on a purchase whose tickets were
+	 * given their own types: it would silently overwrite them.
+	 *
+	 * @return WP_Error
+	 */
+	private static function individual_types_error() {
+		return new WP_Error(
+			'ticket_types_individually_edited',
+			__( 'Tickets in this purchase have been given their own types. Edit each ticket instead.', 'fair-events' ),
+			array( 'status' => 409 )
 		);
 	}
 
@@ -2303,28 +2319,7 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$event_date_ids = array_unique(
-			array_filter(
-				array(
-					(int) $signup->event_date_id,
-					(int) $this->resolve_master_event_date_id( (int) $signup->event_date_id ),
-				)
-			)
-		);
-
-		$targets = array();
-		foreach ( $event_date_ids as $event_date_id ) {
-			foreach ( \FairEvents\Models\TicketType::get_all_by_event_date_id( $event_date_id ) as $ticket_type ) {
-				if ( (int) $ticket_type->id !== (int) $current->id
-					&& ! $ticket_type->disabled
-					&& $ticket_type->recurrence_scope === $current->recurrence_scope
-				) {
-					$targets[] = $ticket_type;
-				}
-			}
-		}
-
-		return $targets;
+		return \FairEvents\Services\TicketEditRules::ticket_type_targets( (int) $signup->event_date_id, $current );
 	}
 
 	/**

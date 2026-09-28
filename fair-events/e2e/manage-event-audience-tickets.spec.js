@@ -238,16 +238,14 @@ test.describe( 'Manage Event — per-ticket check-in and activities', () => {
 			.getByRole( 'button', { name: /^Edit Ticket 1 — Pair admission/ } )
 			.click();
 
-		let dialog = adminPage.getByRole( 'dialog' );
-		await expect(
-			dialog.locator( '.fair-audience-ticket-editor' )
-		).toHaveCount( 1 );
+		let dialog = adminPage.getByRole( 'dialog', {
+			name: `Edit ticket — ${ buyer }`,
+		} );
+		await expect( dialog.getByText( /^Ticket 1 \(/ ) ).toBeVisible();
 		await dialog
 			.getByRole( 'checkbox', { name: 'Morning session' } )
 			.check();
-		await dialog
-			.getByRole( 'button', { name: /^Save Ticket 1 — Pair admission/ } )
-			.click();
+		await dialog.getByRole( 'button', { name: 'Save ticket' } ).click();
 		await expect( adminPage.getByText( 'Ticket saved.' ) ).toBeVisible();
 		await expect( dialog ).toBeHidden();
 

@@ -979,3 +979,144 @@ describe( 'EventSignups — move and change ticket type (#1532)', () => {
 		).toBeInTheDocument();
 	} );
 } );
+
+describe( 'EventSignups — edit individual tickets (#1709)', () => {
+	const purchase = {
+		...signups[ 1 ],
+		tickets: [
+			{
+				id: 301,
+				position: 1,
+				reference: 'AAAA1111',
+				ticket_type_id: 3,
+				ticket_type_name: 'General',
+				status: 'confirmed',
+				attended_at: null,
+				activity_ids: [ 7 ],
+			},
+			{
+				id: 302,
+				position: 2,
+				reference: 'AE2671B5',
+				ticket_type_id: 61,
+				ticket_type_name: 'Reduced',
+				status: 'confirmed',
+				attended_at: null,
+				activity_ids: [],
+			},
+		],
+	};
+
+	function ticketRow( id ) {
+		return document.querySelector( `tr[data-ticket-id="${ id }"]` );
+	}
+
+	it( 'lists each ticket of a purchase with its own type and activities when Fair Audience is active', async () => {
+		window.fairEventsManageEventData = { audienceUrl: '/audience' };
+		await renderSignups( {
+			rows: [ purchase ],
+			ticketOptions: options,
+		} );
+
+		const purchaseRow = bodyRows()[ 0 ];
+		expect(
+			within( purchaseRow ).getByText( 'Mixed types' )
+		).toBeInTheDocument();
+		expect(
+			within( purchaseRow ).queryByRole( 'button', {
+				name: 'Change ticket type',
+			} )
+		).not.toBeInTheDocument();
+
+		expect( ticketRow( 301 ) ).toHaveTextContent( 'Ticket 1 (AAAA1111)' );
+		expect( ticketRow( 301 ) ).toHaveTextContent( 'General' );
+		expect(
+			within( ticketRow( 301 ) ).getByRole( 'img', { name: 'Selected' } )
+		).toBeInTheDocument();
+		expect( ticketRow( 302 ) ).toHaveTextContent( 'Ticket 2 (AE2671B5)' );
+		expect( ticketRow( 302 ) ).toHaveTextContent( 'Reduced' );
+	} );
+
+	it( 'opens the shared ticket editor for the chosen ticket and reloads after saving', async () => {
+		window.fairEventsManageEventData = { audienceUrl: '/audience' };
+		mockApi( { rows: [ purchase ] } );
+		const listImpl = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( args ) => {
+			if (
+				args.path === '/fair-audience/v1/event-dates/42/tickets/302'
+			) {
+				if ( args.method === 'PUT' ) {
+					return Promise.resolve( { id: 302 } );
+				}
+				return Promise.resolve( {
+					ticket: {
+						...purchase.tickets[ 1 ],
+						participant_name: 'Bob, Jr.',
+						editable: true,
+						over_capacity_activity_ids: [],
+					},
+					ticket_types: [
+						{
+							id: 61,
+							label: 'Reduced',
+							current: true,
+							remaining: 1,
+							activities_enabled: true,
+							minimum_activities: 0,
+							maximum_activities: null,
+						},
+					],
+					activities: [],
+				} );
+			}
+			return listImpl( args );
+		} );
+		render( <EventSignups eventDateId={ 42 } /> );
+		await screen.findByText( 'Bob, Jr.' );
+
+		fireEvent.click(
+			within( ticketRow( 302 ) ).getByRole( 'button', {
+				name: 'Edit Ticket 2 (AE2671B5)',
+			} )
+		);
+		const modal = await screen.findByRole( 'dialog', {
+			name: 'Edit ticket — Bob, Jr.',
+		} );
+		expect(
+			await within( modal ).findByText( 'Ticket 2 (AE2671B5)' )
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			within( modal ).getByRole( 'checkbox', { name: 'Checked in' } )
+		);
+		fireEvent.click(
+			within( modal ).getByRole( 'button', { name: 'Save ticket' } )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-audience/v1/event-dates/42/tickets/302',
+			method: 'PUT',
+			data: { attended: true },
+		} );
+		const listLoads = apiFetch.mock.calls.filter(
+			( [ args ] ) =>
+				args.path === '/fair-events/v1/get-tickets?event_date=42'
+		);
+		expect( listLoads ).toHaveLength( 2 );
+	} );
+
+	it( 'keeps the signup-wide type change and hides ticket rows without Fair Audience', async () => {
+		await renderSignups( { rows: [ purchase ] } );
+
+		expect(
+			screen.getByRole( 'button', { name: 'Change ticket type' } )
+		).toBeInTheDocument();
+		expect( ticketRow( 301 ) ).toBeNull();
+		expect(
+			screen.queryByRole( 'button', { name: /^Edit Ticket/ } )
+		).not.toBeInTheDocument();
+	} );
+} );

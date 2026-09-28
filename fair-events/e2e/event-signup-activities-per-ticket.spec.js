@@ -251,22 +251,24 @@ test.describe( 'Event Signup — activities for each ticket', () => {
 			.click();
 
 		const dialog = adminPage.getByRole( 'dialog' );
-		await dialog.getByRole( 'checkbox', { name: 'Workshop' } ).check();
-		const save = dialog.getByRole( 'button', {
-			name: /^Save Ticket 1 — Regular/,
-		} );
-		await save.click();
+		// The activity is shown as full before the administrator adds it.
+		await dialog
+			.getByRole( 'checkbox', { name: 'Workshop — Full' } )
+			.check();
+		await dialog.getByRole( 'button', { name: 'Save ticket' } ).click();
 
 		await expect( dialog ).toContainText(
 			'Workshop would have 3 of 2 places taken.'
 		);
-		await expect( save ).toHaveText( 'Save over capacity' );
-		await expect( save ).toBeDisabled();
+		const override = dialog.getByRole( 'button', {
+			name: 'Save over capacity',
+		} );
+		await expect( override ).toBeDisabled();
 
 		await dialog
 			.getByLabel( 'Reason for going over capacity' )
 			.fill( 'Extra chair' );
-		await save.click();
+		await override.click();
 		await expect( dialog ).toBeHidden();
 
 		const participants = await apiFetch( adminPage, {

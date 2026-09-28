@@ -20,61 +20,12 @@ import {
 	Spinner,
 	TextareaControl,
 } from '@wordpress/components';
-import { __, _n, sprintf } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { targetOptionLabel, projectionMessage } from 'fair-events-shared';
 
 export const ACTION_MOVE = 'move';
 export const ACTION_CHANGE_TYPE = 'change_type';
-
-/**
- * Option label for a target, naming the places it has left.
- *
- * @param {Object}      target           Target returned by the targets endpoint.
- * @param {string}      target.label     Date or ticket type name.
- * @param {number|null} target.remaining Places left, or null for no limit.
- * @return {string} Option label
- */
-export function targetOptionLabel( { label, remaining } ) {
-	if ( remaining === null || remaining === undefined ) {
-		return label;
-	}
-	if ( Number( remaining ) <= 0 ) {
-		/* translators: %s: event date or ticket type name */
-		return sprintf( __( '%s — Full', 'fair-events' ), label );
-	}
-	return sprintf(
-		/* translators: 1: event date or ticket type name, 2: number of places left */
-		_n(
-			'%1$s — %2$d place left',
-			'%1$s — %2$d places left',
-			Number( remaining ),
-			'fair-events'
-		),
-		label,
-		Number( remaining )
-	);
-}
-
-/**
- * Sentence describing a capacity projection that goes over its limit.
- *
- * @param {Object} projection Projection from a 409 capacity_exceeded response.
- * @return {string} Sentence
- */
-export function projectionMessage( projection ) {
-	return sprintf(
-		/* translators: 1: event date or ticket type name, 2: places taken after the change, 3: capacity */
-		_n(
-			'%1$s would have %2$d of %3$d place taken.',
-			'%1$s would have %2$d of %3$d places taken.',
-			Number( projection.capacity ),
-			'fair-events'
-		),
-		projection.label,
-		Number( projection.after ),
-		Number( projection.capacity )
-	);
-}
 
 export default function SignupEditModal( {
 	signup,
