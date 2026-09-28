@@ -14,20 +14,20 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: fair-payments-connector\n"
 
+#: src/Admin/AdminPages.php:49
 #: src/Admin/AdminPages.php:50
-#: src/Admin/AdminPages.php:51
 msgid "Transactions"
 msgstr "Transaktionen"
 
+#: src/Admin/AdminPages.php:58
 #: src/Admin/AdminPages.php:59
-#: src/Admin/AdminPages.php:60
-#: src/Admin/AdminPages.php:67
+#: src/Admin/AdminPages.php:66
 #: src/Admin/transaction/TransactionPage.js:853
 msgid "Transaction Detail"
 msgstr "Transaktionsdetail"
 
+#: src/Admin/AdminPages.php:82
 #: src/Admin/AdminPages.php:83
-#: src/Admin/AdminPages.php:84
 msgid "Settings"
 msgstr "Einstellungen"
 
@@ -891,8 +891,8 @@ msgstr "Mollie-Gebühren werden synchronisiert: %1$d / %2$d (aktualisiert: %3$d,
 
 #. Plugin Name of the plugin
 #: fair-payments-connector.php
+#: src/Admin/AdminPages.php:37
 #: src/Admin/AdminPages.php:38
-#: src/Admin/AdminPages.php:39
 #: src/Core/Plugin.php:133
 msgid "Fair Payments Connector"
 msgstr ""
@@ -912,9 +912,9 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
+#: src/Admin/AdminPages.php:71
 #: src/Admin/AdminPages.php:72
-#: src/Admin/AdminPages.php:73
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:68
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:256
 msgid "Fee Dashboard"
 msgstr "Gebühren-Dashboard"
 
@@ -943,21 +943,13 @@ msgstr "Laden Sie .mo/.json-Dateien, die mit dem Plugin geliefert werden, anstat
 msgid "Per-bundle feature toggles"
 msgstr "Funktionsumschalter pro Bundle"
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:47
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:232
 msgid "Failed to load dashboard data."
 msgstr "Fehler beim Laden der Dashboard-Daten."
 
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:88
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:330
 msgid "Test mode — these figures reflect test transactions only."
 msgstr "Testmodus — diese Zahlen spiegeln nur Testtransaktionen wider."
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:114
-msgid "Total payment volume this month"
-msgstr "Gesamtzahlungsvolumen diesen Monat"
-
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:125
-msgid "Integration fees this month"
-msgstr "Integrationgebühren diesen Monat"
 
 #: src/Core/Plugin.php:137
 msgid "Forced by a wp-config constant — change it there."
@@ -967,7 +959,7 @@ msgstr "Erzwungen durch eine wp-config-Konstante — ändern Sie sie dort."
 msgid "Fair Payments Connector Settings"
 msgstr "Fair Payments Connector-Einstellungen"
 
-#: src/Admin/AdminPages.php:160
+#: src/Admin/AdminPages.php:152
 msgid "Set up"
 msgstr "Einrichten"
 
@@ -1537,7 +1529,84 @@ msgid "No enabled connected sites. Enable one on the Connected Sites page first.
 msgstr "Keine aktivierten verbundenen Websites. Aktivieren Sie zunächst eine auf der Seite \"Verbundene Websites\"."
 
 #. translators: %d: integration fee percentage
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:78
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:262
 #, js-format
 msgid "The integration fee is %d%% of ticket sales, with no monthly cap. It is waived through 31 December 2026. Mollie processing fees apply separately."
 msgstr "Die Integrationsgebühr beträgt %d%% der Ticketverkäufe, ohne monatliche Obergrenze. Bis zum 31. Dezember 2026 entfällt sie. Die Bearbeitungsgebühren von Mollie fallen separat an."
+
+#: src/API/DashboardController.php:54
+msgid "Month to summarize, as YYYY-MM. Defaults to the current month."
+msgstr "Auszuwertender Monat im Format JJJJ-MM. Standardmäßig der aktuelle Monat."
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:69
+msgid "Incomplete"
+msgstr "Unvollständig"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:106
+msgid "Known subtotal so far."
+msgstr "Bisher bekannte Zwischensumme."
+
+#. translators: %d: number of paid transactions without Mollie fee data
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:121
+#, js-format
+msgid "%d paid transaction is still awaiting Mollie fee data. The Mollie commission and the amount after fees are incomplete until it arrives."
+msgid_plural "%d paid transactions are still awaiting Mollie fee data. The Mollie commission and the amount after fees are incomplete until it arrives."
+msgstr[0] "%d bezahlte Transaktion wartet noch auf Mollie-Gebührendaten. Die Mollie-Provision und der Betrag nach Gebühren sind unvollständig, bis sie eintreffen."
+msgstr[1] "%d bezahlte Transaktionen warten noch auf Mollie-Gebührendaten. Die Mollie-Provision und der Betrag nach Gebühren sind unvollständig, bis sie eintreffen."
+
+#. translators: %d: number of paid transactions without a recorded Fair Event commission
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:136
+#, js-format
+msgid "%d paid transaction has no recorded Fair Event commission. The Fair Event commission and the amount after fees are incomplete."
+msgid_plural "%d paid transactions have no recorded Fair Event commission. The Fair Event commission and the amount after fees are incomplete."
+msgstr[0] "Für %d bezahlte Transaktion ist keine Fair-Event-Provision erfasst. Die Fair-Event-Provision und der Betrag nach Gebühren sind unvollständig."
+msgstr[1] "Für %d bezahlte Transaktionen ist keine Fair-Event-Provision erfasst. Die Fair-Event-Provision und der Betrag nach Gebühren sind unvollständig."
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:157
+msgid "Paid transactions"
+msgstr "Bezahlte Transaktionen"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:164
+msgid "Total paid"
+msgstr "Insgesamt bezahlt"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:168
+msgid "Calculated amount after fees"
+msgstr "Berechneter Betrag nach Gebühren"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:174
+msgid "An estimate, not a confirmed Mollie payout."
+msgstr "Eine Schätzung, keine bestätigte Mollie-Auszahlung."
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:180
+msgid "Fair Event commission"
+msgstr "Fair-Event-Provision"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:189
+msgid "Mollie commission"
+msgstr "Mollie-Provision"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:294
+msgid "Previous month"
+msgstr "Vorheriger Monat"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:304
+msgid "Current month"
+msgstr "Aktueller Monat"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:316
+msgid "Next month"
+msgstr "Nächster Monat"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:322
+msgid "Only paid transactions are counted, in the month they were created (UTC). The calculated amount after fees is the total paid minus the recorded Fair Event and Mollie commissions."
+msgstr "Gezählt werden nur bezahlte Transaktionen, im Monat ihrer Erstellung (UTC). Der berechnete Betrag nach Gebühren ist der bezahlte Gesamtbetrag abzüglich der erfassten Fair-Event- und Mollie-Provisionen."
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:344
+msgid "Try again"
+msgstr "Erneut versuchen"
+
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:359
+msgid "No paid transactions in this month."
+msgstr "Keine bezahlten Transaktionen in diesem Monat."
+

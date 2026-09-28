@@ -183,7 +183,13 @@ test.describe( 'Transaction — integration fee', () => {
 		expect( afterRes.status() ).toBe( 200 );
 		const after = await afterRes.json();
 
-		expect( after.total_fees - before.total_fees ).toBeCloseTo( 50.1, 2 );
+		const eurCommission = ( summary ) =>
+			summary.currencies.find( ( row ) => row.currency === 'EUR' )
+				?.fair_event_commission ?? 0;
+		expect( eurCommission( after ) - eurCommission( before ) ).toBeCloseTo(
+			50.1,
+			2
+		);
 		expect( after ).not.toHaveProperty( 'fee_cap' );
 		expect( after ).not.toHaveProperty( 'cap_remaining' );
 	} );
