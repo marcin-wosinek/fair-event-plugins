@@ -6,7 +6,7 @@ import {
 	Card,
 	CardBody,
 	CardHeader,
-	ConfirmDialog,
+	__experimentalConfirmDialog as ConfirmDialog,
 	ExternalLink,
 	Flex,
 	FlexItem,
