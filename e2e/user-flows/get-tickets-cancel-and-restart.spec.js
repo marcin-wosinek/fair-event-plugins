@@ -198,4 +198,114 @@ test.describe('get-tickets block: abandon and restart', () => {
 		);
 		expect(canceled.status).toBe('failed');
 	});
+
+	test('a failed payment can be canceled and restarted (#1707)', async ({
+		page,
+		seedEvent,
+	}) => {
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'failed');
+		const event = seedEvent('paid', { block: 'get-tickets' });
+		const stamp = Date.now();
+		const failedEmail = `get-tickets.failed.${stamp}@example.test`;
+
+		await page.goto(event.pageUrl);
+		const form = page.locator('.fair-events-get-tickets-form');
+		await form.locator('input[name="name"]').fill(`Failed ${stamp}`);
+		await form.locator('input[name="email"]').fill(failedEmail);
+		await form
+			.locator(
+				`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
+			)
+			.check();
+		await form.locator('button[type="submit"]').click();
+
+		// The callback render synced "failed": the payment hook has already
+		// failed the signup, and the visitor sees the failed-payment card.
+		const retryCard = page.locator(
+			'.fair-events-get-tickets-callback-retry'
+		);
+		await expect(retryCard).toBeVisible({ timeout: 30000 });
+
+		await retryCard
+			.getByRole('link', { name: 'Cancel and start over' })
+			.click();
+
+		const freshForm = page.locator('.fair-events-get-tickets-form');
+		await expect(freshForm).toBeVisible({ timeout: 15000 });
+		await expect(
+			page.locator('.fair-events-get-tickets-callback')
+		).toHaveCount(0);
+		const cleanedUrl = new URL(page.url());
+		expect(cleanedUrl.searchParams.has('transaction_id')).toBe(false);
+		expect(cleanedUrl.searchParams.has('token')).toBe(false);
+
+		// A reload doesn't bring the old attempt back.
+		await page.reload();
+		await expect(page.locator('.fair-events-get-tickets-form')).toBeVisible(
+			{ timeout: 15000 }
+		);
+
+		const state = runScript(
+			'get-tickets-state.php',
+			'E2E_GT_STATE',
+			String(event.eventDateId)
+		);
+		const released = state.signups.find(
+			(signup) => signup.email === failedEmail
+		);
+		expect(released.status).toBe('failed');
+		expect(released.transaction_status).toBe('failed');
+		expect(released.hold_expires).toBeNull();
+	});
+
+	test('a payment that completes while canceling stays confirmed (#1707)', async ({
+		page,
+		seedEvent,
+	}) => {
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'pending');
+		const event = seedEvent('paid', { block: 'get-tickets' });
+		const stamp = Date.now();
+		const raceEmail = `get-tickets.race.${stamp}@example.test`;
+
+		await page.goto(event.pageUrl);
+		const form = page.locator('.fair-events-get-tickets-form');
+		await form.locator('input[name="name"]').fill(`Race ${stamp}`);
+		await form.locator('input[name="email"]').fill(raceEmail);
+		await form
+			.locator(
+				`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
+			)
+			.check();
+		await form.locator('button[type="submit"]').click();
+
+		const processingCard = page.locator(
+			'.fair-events-get-tickets-callback-processing'
+		);
+		await expect(processingCard).toBeVisible({ timeout: 30000 });
+
+		// The bank completes the payment after the card rendered, just as the
+		// visitor gives up on it.
+		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
+		await processingCard
+			.getByRole('link', { name: 'Cancel and start over' })
+			.click();
+
+		await expect(
+			page.locator('.fair-events-get-tickets-callback-confirmed')
+		).toBeVisible({ timeout: 15000 });
+		await expect(page.locator('.fair-events-get-tickets-form')).toHaveCount(
+			0
+		);
+
+		const state = runScript(
+			'get-tickets-state.php',
+			'E2E_GT_STATE',
+			String(event.eventDateId)
+		);
+		const confirmed = state.signups.find(
+			(signup) => signup.email === raceEmail
+		);
+		expect(confirmed.status).toBe('confirmed');
+		expect(confirmed.transaction_status).toBe('paid');
+	});
 });

@@ -155,6 +155,16 @@ class Fair_Test_WPDB {
 		$table   = $prepared['args'][0];
 		$updated = 0;
 
+		if ( str_contains( $prepared['query'], "IF( status = 'pending_payment', 'failed', status )" ) ) {
+			$row = $this->rows[ $table ][ (int) $prepared['args'][1] ] ?? null;
+			if ( ! $row ) {
+				return 0;
+			}
+			$row->status             = 'pending_payment' === $row->status ? 'failed' : $row->status;
+			$row->payment_expires_at = null;
+			return 1;
+		}
+
 		if ( str_contains( $prepared['query'], 'WHERE id = %d AND status' ) ) {
 			$target  = $prepared['args'][1];
 			$id      = (int) $prepared['args'][2];
@@ -198,14 +208,25 @@ class Fair_Test_WPDB {
 	}
 
 	/**
-	 * Result sets are never seeded: every multi-row read comes back empty
-	 * (e.g. a signup with no ticket units yet).
+	 * Multi-row reads come back empty (e.g. a signup with no ticket units
+	 * yet), except a locking `id IN (...) FOR UPDATE` read, which resolves
+	 * the listed ids against seeded rows.
 	 *
-	 * @param string $query Query.
+	 * @param array|mixed $query Value returned by prepare().
 	 * @return array
 	 */
-	public function get_results( $query ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- mirrors wpdb's signature.
-		return array();
+	public function get_results( $query ) {
+		if ( ! is_array( $query ) || ! str_contains( $query['query'], 'FOR UPDATE' ) ) {
+			return array();
+		}
+
+		$rows = array();
+		foreach ( array_slice( $query['args'], 1 ) as $id ) {
+			if ( isset( $this->rows[ $query['table'] ][ (int) $id ] ) ) {
+				$rows[] = $this->rows[ $query['table'] ][ (int) $id ];
+			}
+		}
+		return $rows;
 	}
 
 	/**
