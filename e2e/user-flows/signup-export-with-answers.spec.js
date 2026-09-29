@@ -98,7 +98,7 @@ test.describe('Signups tab export with Fair Form answers', () => {
 			?.split(',');
 		expect(linkedRow).toBeTruthy();
 		expect(linkedRow[dietIndex]).toBe('Vegan (seeded)');
-		expect(linkedRow[ownerIndex]).toBe('No ticket');
+		expect(linkedRow[ownerIndex]).toBe('No ticket (needs review)');
 
 		const unansweredRow = lines
 			.find((line) => line.includes(seed.unansweredEmail))
