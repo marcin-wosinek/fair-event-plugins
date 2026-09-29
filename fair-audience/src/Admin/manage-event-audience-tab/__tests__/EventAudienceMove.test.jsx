@@ -1,9 +1,12 @@
 /**
  * @jest-environment jsdom
  *
- * Component tests for the "Move signup to another occurrence" action (#954).
+ * Component tests for the "Move signup to another occurrence" action (#954)
+ * and the rest of the participant row actions (#1710).
  *
  * Exercises:
+ *   - Rows offer Edit participant and Move but no Delete (#1710); deleting a
+ *     registration lives on the List tab.
  *   - Move button is hidden when there is only one occurrence.
  *   - Move button appears for non-series-pass rows when siblings exist.
  *   - Opening the modal lists the other occurrences (current one excluded).
@@ -51,7 +54,7 @@ const SIBLINGS = [
 	},
 ];
 
-function mockApiFetchFor( { siblings } ) {
+function mockApiFetchFor( { siblings, ticketOptions = [] } ) {
 	apiFetch.mockImplementation( ( { path, method } ) => {
 		if ( path.includes( '/participants/10/move' ) ) {
 			return Promise.resolve( {
@@ -66,7 +69,10 @@ function mockApiFetchFor( { siblings } ) {
 			return Promise.resolve( siblings );
 		}
 		if ( path.includes( '/tickets' ) ) {
-			return Promise.resolve( { options: [], ticket_types: [] } );
+			return Promise.resolve( {
+				options: ticketOptions,
+				ticket_types: [],
+			} );
 		}
 		if ( path.includes( 'forms-summary' ) ) {
 			return Promise.resolve( [] );
@@ -150,6 +156,39 @@ describe( 'EventAudience — Move action', () => {
 				method: 'POST',
 				data: { target_event_date_id: 6 },
 			} )
+		);
+	} );
+} );
+
+describe( 'EventAudience — participant row actions (#1710)', () => {
+	it( 'offers Edit participant and Move but no Delete', async () => {
+		mockApiFetchFor( {
+			siblings: SIBLINGS,
+			ticketOptions: [ { id: 3, name: 'Pottery' } ],
+		} );
+		renderAudience();
+
+		expect(
+			await screen.findByRole( 'button', { name: 'Move' } )
+		).toBeInTheDocument();
+		expect(
+			await screen.findByRole( 'button', { name: 'Edit participant' } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Delete' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'never calls the participant DELETE endpoint from the row', async () => {
+		mockApiFetchFor( { siblings: SIBLINGS } );
+		renderAudience();
+
+		await screen.findByRole( 'button', { name: 'Move' } );
+		expect(
+			screen.queryByRole( 'button', { name: /delete/i } )
+		).not.toBeInTheDocument();
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( { method: 'DELETE' } )
 		);
 	} );
 } );

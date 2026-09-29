@@ -3,7 +3,8 @@
  * whether Fair Audience is active (#1672), numbers confirmed registrations,
  * keeps email addresses out of the table, and shows each configured extra as
  * a column — selected/not selected with Fair Audience, unavailable without
- * it (#1683).
+ * it (#1683). Deleting a registration happens only on the List tab; the
+ * Audience tab offers no Delete action (#1710).
  */
 
 import { test, expect } from '@playwright/test';
@@ -279,4 +280,45 @@ test.describe( 'Manage Event — List tab', () => {
 			}
 		} );
 	}
+
+	test( 'deletes a registration from the List tab, not the Audience tab', async () => {
+		await setPluginStatus( adminPage, 'active' );
+		await adminPage.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=audience`
+		);
+
+		const audienceRow = adminPage
+			.getByRole( 'row', { name: new RegExp( signup.name ) } )
+			.first();
+		await expect(
+			audienceRow.getByRole( 'button', { name: 'Edit participant' } )
+		).toBeVisible();
+		await expect(
+			audienceRow.getByRole( 'button', { name: 'Delete' } )
+		).toHaveCount( 0 );
+
+		await adminPage.getByRole( 'tab', { name: 'List' } ).click();
+		const listRow = adminPage.getByRole( 'row', {
+			name: new RegExp( signup.name ),
+		} );
+		await listRow.getByRole( 'button', { name: 'Delete' } ).click();
+		// The open dialog hides the table from the accessibility tree, so wait
+		// for the DELETE itself before asserting the row is gone.
+		const deleted = adminPage.waitForResponse( ( response ) =>
+			/get-tickets(\/|%2F)\d+/.test( response.url() )
+		);
+		await adminPage
+			.getByRole( 'button', { name: 'Delete signup' } )
+			.click();
+		expect( ( await deleted ).ok() ).toBe( true );
+
+		await expect( adminPage.getByRole( 'dialog' ) ).toHaveCount( 0 );
+		await expect( listRow ).toHaveCount( 0 );
+		const signups = await apiFetch( adminPage, {
+			path: `/fair-events/v1/get-tickets?event_date=${ eventDateId }`,
+		} );
+		expect(
+			signups.filter( ( row ) => row.name === signup.name )
+		).toHaveLength( 0 );
+	} );
 } );
