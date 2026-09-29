@@ -166,24 +166,6 @@ class Plugin {
 			);
 		}
 
-		if ( Features::is_enabled( 'migration' ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEventsExperimental\API\MigrationController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEventsExperimental\API\MigrationSummaryController();
-					$controller->register_routes();
-				}
-			);
-		}
-
 		if ( Features::is_enabled( 'ticketing' ) ) {
 			add_action(
 				'rest_api_init',

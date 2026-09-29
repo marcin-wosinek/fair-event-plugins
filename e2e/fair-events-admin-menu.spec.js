@@ -26,6 +26,7 @@ const ALL_EXPERIMENTAL_BUNDLES_ON = {
 	sources: true,
 	ticketing: true,
 	'event-tools': true,
+	// Stale key of the removed migration bundle (#1674): it must stay inert.
 	migration: true,
 };
 function enableAllBundles() {
@@ -50,17 +51,12 @@ const PAGES = [
 	{ slug: 'fair-events-manage-event', root: 'fair-events-manage-event-root' },
 	{ slug: 'fair-events-source-view', root: 'fair-events-source-view-root' },
 	{ slug: 'fair-events-settings', root: 'fair-events-settings-root' },
-	// Migration pages only register when the CPT exists.
-	{
-		slug: 'fair-events-migration',
-		root: 'fair-events-migration-root',
-		cptOnly: true,
-	},
-	{
-		slug: 'fair-events-migration-summary',
-		root: 'fair-events-migration-summary-root',
-		cptOnly: true,
-	},
+];
+
+/** Admin pages of the removed migration tools (#1674). */
+const RETIRED_PAGES = [
+	'fair-events-migration',
+	'fair-events-migration-summary',
 ];
 
 /**
@@ -83,9 +79,29 @@ async function expectRootMounts(page, slug, root) {
 /** CPT submenu link (the fair_event post list) lives under the top-level menu. */
 const CPT_LINK =
 	'#toplevel_page_fair-events-calendar a[href*="post_type=fair_event"]';
-/** Migration page link — a CPT-only affordance. */
+/** Links to the removed migration pages (both slugs share this prefix). */
 const MIGRATION_LINK =
 	'#toplevel_page_fair-events-calendar a[href*="page=fair-events-migration"]';
+
+/**
+ * Assert the removed migration tools are absent from the menu and that
+ * their old bookmarks no longer mount a Fair Events React root.
+ */
+async function expectMigrationToolsRetired(page) {
+	await page.goto('/wp-admin/admin.php?page=fair-events-calendar');
+	await expect(
+		page.locator(MIGRATION_LINK),
+		'Migration links should be gone from the menu'
+	).toHaveCount(0);
+
+	for (const slug of RETIRED_PAGES) {
+		await page.goto(`/wp-admin/admin.php?page=${slug}`);
+		await expect(
+			page.locator('[id^="fair-events-"][id$="-root"]'),
+			`${slug}: an old bookmark should not render the page`
+		).toHaveCount(0);
+	}
+}
 
 test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 	test.beforeAll(() => {
@@ -132,10 +148,11 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 			page.locator(CPT_LINK),
 			'Events post type submenu link should be visible with the CPT on'
 		).toHaveCount(1);
-		await expect(
-			page.locator(MIGRATION_LINK).first(),
-			'Migrate Posts link should be visible with the CPT on'
-		).toBeVisible();
+	});
+
+	test('retired migration pages are unavailable', async ({ page }) => {
+		await loginAsAdmin(page);
+		await expectMigrationToolsRetired(page);
 	});
 
 	test('every page mounts its React root', async ({ page }) => {
@@ -158,9 +175,7 @@ test.describe('Fair Events admin menu — Events post type off', () => {
 		clearBundles();
 	});
 
-	test('top-level menu and every non-CPT page still mount', async ({
-		page,
-	}) => {
+	test('top-level menu and every page still mount', async ({ page }) => {
 		await loginAsAdmin(page);
 
 		await expect(
@@ -168,10 +183,7 @@ test.describe('Fair Events admin menu — Events post type off', () => {
 			'top-level menu disappeared when the CPT was turned off'
 		).toHaveCount(1);
 
-		for (const { slug, root, cptOnly } of PAGES) {
-			if (cptOnly) {
-				continue;
-			}
+		for (const { slug, root } of PAGES) {
 			await expectRootMounts(page, slug, root);
 		}
 	});
@@ -186,9 +198,10 @@ test.describe('Fair Events admin menu — Events post type off', () => {
 			page.locator(CPT_LINK),
 			'Events post type submenu link should be gone with the CPT off'
 		).toHaveCount(0);
-		await expect(
-			page.locator(MIGRATION_LINK),
-			'Migration links should be gone with the CPT off'
-		).toHaveCount(0);
+	});
+
+	test('retired migration pages are unavailable', async ({ page }) => {
+		await loginAsAdmin(page);
+		await expectMigrationToolsRetired(page);
 	});
 });
