@@ -11,22 +11,20 @@ defined( 'WPINC' ) || die;
 
 /**
  * Produces the same text as the public Events Week copy-summary action for
- * the selected source, calendar page and week.
+ * the selected source and week.
  *
- * The selected page must publicly show an Events Week block for exactly the
- * selected source, without extra categories or drafts, so the notification
- * never contains events the page itself does not show.
+ * The source decides which public events are listed. The selected page only
+ * supplies the heading's title and link and the language, whatever its
+ * content, so it must be a published, publicly visible page.
  */
 class SummaryBuilder {
-	public const BLOCK_NAME   = 'fair-events/events-week';
-	private const MAX_DEPTH   = 5;
 	private const SUMMARY_API = '\FairEvents\Services\EventsWeekSummary';
 
 	/**
 	 * Check that the source and page can produce a public summary.
 	 *
 	 * @param string $source_slug Event source slug.
-	 * @param int    $page_id     Calendar page ID.
+	 * @param int    $page_id     Page that heads the message.
 	 * @return true|\WP_Error
 	 */
 	public function check( $source_slug, $page_id ) {
@@ -44,26 +42,13 @@ class SummaryBuilder {
 
 		$page = $page_id ? get_post( $page_id ) : null;
 		if ( ! $page ) {
-			return new \WP_Error( 'missing_page', __( 'Choose the public calendar page.', 'fair-events-experimental' ) );
+			return new \WP_Error( 'missing_page', __( 'Choose the page that heads the message.', 'fair-events-experimental' ) );
 		}
-		if ( 'publish' !== $page->post_status || ! empty( $page->post_password ) || ! is_post_publicly_viewable( $page ) ) {
-			return new \WP_Error( 'page_not_public', __( 'The calendar page must be published and publicly visible.', 'fair-events-experimental' ) );
-		}
-
-		$blocks = self::find_week_blocks( parse_blocks( $page->post_content ) );
-		if ( empty( $blocks ) ) {
-			return new \WP_Error( 'page_without_calendar', __( 'The calendar page has no Events Week View block.', 'fair-events-experimental' ) );
-		}
-		foreach ( $blocks as $block ) {
-			if ( self::block_matches( $block['attrs'] ?? array(), $source_slug ) ) {
-				return true;
-			}
+		if ( 'page' !== $page->post_type || 'publish' !== $page->post_status || ! empty( $page->post_password ) || ! is_post_publicly_viewable( $page ) ) {
+			return new \WP_Error( 'page_not_public', __( 'The selected page must be published and publicly visible.', 'fair-events-experimental' ) );
 		}
 
-		return new \WP_Error(
-			'calendar_mismatch',
-			__( 'The Events Week View block on the calendar page must show only the selected event source, with no extra categories and no drafts.', 'fair-events-experimental' )
-		);
+		return true;
 	}
 
 	/**
@@ -106,51 +91,5 @@ class SummaryBuilder {
 			'text'             => $text,
 			'occurrence_count' => count( $occurrences ),
 		);
-	}
-
-	/**
-	 * Whether a block's attributes show exactly the source, publicly.
-	 *
-	 * @param array  $attrs       Block attributes.
-	 * @param string $source_slug Event source slug.
-	 * @return bool
-	 */
-	public static function block_matches( array $attrs, $source_slug ) {
-		$sources = array_values( array_unique( array_map( 'strval', (array) ( $attrs['eventSources'] ?? array() ) ) ) );
-
-		return array( $source_slug ) === $sources
-			&& empty( $attrs['categories'] )
-			&& empty( $attrs['showDrafts'] );
-	}
-
-	/**
-	 * Events Week blocks in a block tree, including synced patterns.
-	 *
-	 * @param array[] $blocks Parsed blocks.
-	 * @param int     $depth  Nesting depth, to stop pattern reference loops.
-	 * @return array[]
-	 */
-	public static function find_week_blocks( array $blocks, $depth = 0 ) {
-		$found = array();
-		if ( $depth > self::MAX_DEPTH ) {
-			return $found;
-		}
-
-		foreach ( $blocks as $block ) {
-			$name = $block['blockName'] ?? '';
-			if ( self::BLOCK_NAME === $name ) {
-				$found[] = $block;
-			} elseif ( 'core/block' === $name && ! empty( $block['attrs']['ref'] ) ) {
-				$pattern = get_post( (int) $block['attrs']['ref'] );
-				if ( $pattern && 'wp_block' === $pattern->post_type && 'publish' === $pattern->post_status ) {
-					$found = array_merge( $found, self::find_week_blocks( parse_blocks( $pattern->post_content ), $depth + 1 ) );
-				}
-			}
-			if ( ! empty( $block['innerBlocks'] ) ) {
-				$found = array_merge( $found, self::find_week_blocks( $block['innerBlocks'], $depth + 1 ) );
-			}
-		}
-
-		return $found;
 	}
 }

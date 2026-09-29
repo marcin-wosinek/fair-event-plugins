@@ -349,7 +349,7 @@ export default function WeeklyNotifications( { onNotice } ) {
 	const pageOptions = [
 		{
 			value: '0',
-			label: __( 'Choose a calendar page', 'fair-events-experimental' ),
+			label: __( 'Choose a page', 'fair-events-experimental' ),
 		},
 		...config.pages.map( ( page ) => ( {
 			value: String( page.id ),
@@ -382,7 +382,7 @@ export default function WeeklyNotifications( { onNotice } ) {
 			<CardBody>
 				<p>
 					{ __(
-						'Post the week’s events from a public calendar page to your channels every week, in the same format as the calendar’s “Copy summary” button.',
+						'Post the week’s events from an event source to your channels every week, in the same format as the calendar’s “Copy summary” button.',
 						'fair-events-experimental'
 					) }
 				</p>
@@ -411,11 +411,11 @@ export default function WeeklyNotifications( { onNotice } ) {
 
 				<SelectControl
 					label={ __(
-						'Public calendar page',
+						'Page linked in the heading',
 						'fair-events-experimental'
 					) }
 					help={ __(
-						'Published pages with an Events Week View block. The block must show only the selected event source, with no extra categories and no drafts. Its title and link head the message.',
+						'Any published, public page. Its title and link head the message. The event source decides which events are listed.',
 						'fair-events-experimental'
 					) }
 					value={ String( form.page_id || 0 ) }

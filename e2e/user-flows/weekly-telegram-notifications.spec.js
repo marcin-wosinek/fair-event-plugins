@@ -2,7 +2,8 @@
  * E2E: configure Telegram weekly notifications and send a test message (#1660).
  *
  * Drives the Experimental tab of Fair Events Settings as an administrator:
- * saves a bot token and two chats, checks the token is never shown again, and
+ * picks a plain page (no calendar block) for the heading, saves a bot token
+ * and two chats, checks the token is never shown again, and
  * sends a test message that reaches one chat and fails for the other. No request
  * reaches Telegram — lib/telegram-http-double.php answers api.telegram.org
  * and records each request's chat ID and text (never the token).
@@ -33,18 +34,35 @@ function telegramRequests() {
 }
 
 test.describe('Weekly Telegram notifications', () => {
+	let pageId;
+
 	test.beforeEach(resetState);
-	test.afterAll(resetState);
+	test.afterAll(() => {
+		resetState();
+		if (pageId) {
+			wpCli(`post delete ${pageId} --force`, { allowFailure: true });
+		}
+	});
 
 	test('an administrator configures Telegram and sends a test message', async ({
 		page,
 	}) => {
+		// A plain page with no calendar block can head the message.
+		const pageTitle = `Weekly heading ${Date.now()}`;
+		pageId = wpCli(
+			`post create --post_type=page --post_status=publish --post_title="${pageTitle}" --post_content="No calendar here." --porcelain`
+		).match(/(\d+)\s*$/)[1];
+
 		await loginAsAdmin(page);
 		await page.goto(SETTINGS_URL);
 
 		await expect(
 			page.getByRole('heading', { name: 'Weekly notifications' })
 		).toBeVisible();
+
+		await page
+			.getByLabel('Page linked in the heading')
+			.selectOption({ label: pageTitle });
 
 		await page.getByLabel('Post to Telegram').check();
 		await page.getByLabel('Bot token', { exact: true }).fill(TOKEN);
@@ -66,6 +84,9 @@ test.describe('Weekly Telegram notifications', () => {
 			page.getByText('A bot token is saved. Leave this empty to keep it.')
 		).toBeVisible();
 		await page.reload();
+		await expect(page.getByLabel('Page linked in the heading')).toHaveValue(
+			pageId
+		);
 		await expect(page.getByLabel('Chats and channels')).toHaveValue(
 			'@e2e_channel\n@e2e_missing_chat'
 		);
