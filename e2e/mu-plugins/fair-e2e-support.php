@@ -6,7 +6,7 @@
  *              Never shipped to production and never mounted by the dev
  *              `docker compose` stack.
  *
- * It does five things, all confined to the test environment:
+ * It does six things, all confined to the test environment:
  *
  *   1. Captures outgoing mail into the `fair_e2e_captured_mail` option instead
  *      of sending it, so specs can assert on subject/recipient/body and no real
@@ -26,6 +26,9 @@
  *      lib/meta-http-double.php) so fair-events-experimental's delivery
  *      outbox always talks to a canned "accepted" response instead of the
  *      real graph.facebook.com.
+ *   6. Intercepts the Telegram Bot API (see lib/telegram-http-double.php) so
+ *      fair-events-experimental's weekly notifications never reach
+ *      api.telegram.org.
  *
  * @package FairEventsE2E
  */
@@ -401,3 +404,8 @@ add_filter(
  * scheduled hook).
  */
 require_once __DIR__ . '/lib/meta-http-double.php';
+
+/*
+ * 6. Intercept the Telegram Bot API used by weekly event notifications.
+ */
+require_once __DIR__ . '/lib/telegram-http-double.php';

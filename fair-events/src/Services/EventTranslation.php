@@ -56,8 +56,21 @@ class EventTranslation {
 			return $occurrences;
 		}
 
-		$language = pll_current_language();
-		if ( ! $language ) {
+		return self::translate_occurrences_to_language( $occurrences, pll_current_language() );
+	}
+
+	/**
+	 * Translate every post-linked occurrence to an explicit Polylang
+	 * language. Scheduled work (e.g. a weekly summary sent from WP-Cron) has
+	 * no current front-end language, so it names the language of the page
+	 * the summary belongs to instead.
+	 *
+	 * @param array             $occurrences Occurrence DTOs from EventFeedProvider::get_occurrences().
+	 * @param string|false|null $language    Polylang language slug; empty leaves occurrences unchanged.
+	 * @return array Occurrence DTOs, translated where applicable.
+	 */
+	public static function translate_occurrences_to_language( array $occurrences, $language ) {
+		if ( ! $language || ! function_exists( 'pll_get_post' ) ) {
 			return $occurrences;
 		}
 

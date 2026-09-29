@@ -53,6 +53,10 @@ class Plugin {
 		$this->load_rest_api();
 		$this->load_meta_conversions();
 
+		if ( Features::is_enabled( 'sources' ) ) {
+			\FairEventsExperimental\WeeklyNotifications\Dispatcher::init();
+		}
+
 		// Merge experimental feature states into the manage-event enabledFeatures map
 		// so the React UI can show ticketing tabs when active.
 		add_filter(
@@ -149,6 +153,14 @@ class Plugin {
 				'rest_api_init',
 				function () {
 					$controller = new \FairEventsExperimental\API\WeeklyEventsController();
+					$controller->register_routes();
+				}
+			);
+
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEventsExperimental\API\WeeklyNotificationsController();
 					$controller->register_routes();
 				}
 			);

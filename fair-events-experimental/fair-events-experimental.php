@@ -28,6 +28,8 @@ register_deactivation_hook(
 	static function () {
 		wp_clear_scheduled_hook( \FairEventsExperimental\Meta\Conversions::DELIVERY_HOOK );
 		wp_clear_scheduled_hook( \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK );
+		wp_unschedule_hook( \FairEventsExperimental\WeeklyNotifications\Dispatcher::HOOK );
+		delete_option( \FairEventsExperimental\WeeklyNotifications\Dispatcher::NEXT_RUN_OPTION );
 	}
 );
 
