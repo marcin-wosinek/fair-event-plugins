@@ -38,42 +38,43 @@ msgstr ""
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr "Fair Events Experimental erfordert, dass das Fair Events-Plugin aktiv ist."
 
-#: src/Admin/AdminPages.php:58
+#: src/Admin/AdminPages.php:60
+#: src/Admin/AdminPages.php:61
 msgid "Experimental Settings"
 msgstr "Experimentelle Einstellungen"
 
-#: src/Admin/AdminPages.php:59
+#: src/Admin/settings/index.js:29
 msgid "Experimental"
 msgstr "Experimentell"
 
-#: src/Admin/AdminPages.php:69
-#: src/Admin/AdminPages.php:70
+#: src/Admin/AdminPages.php:72
+#: src/Admin/AdminPages.php:73
 msgid "Event Sources"
 msgstr "Veranstaltungsquellen"
 
-#: src/Admin/AdminPages.php:78
-#: src/Admin/AdminPages.php:79
-#: src/Admin/AdminPages.php:85
+#: src/Admin/AdminPages.php:81
+#: src/Admin/AdminPages.php:82
+#: src/Admin/AdminPages.php:88
 msgid "View Source"
 msgstr "Quelle anzeigen"
 
-#: src/Admin/AdminPages.php:92
-#: src/Admin/AdminPages.php:93
-#: src/Admin/AdminPages.php:99
+#: src/Admin/AdminPages.php:95
+#: src/Admin/AdminPages.php:96
+#: src/Admin/AdminPages.php:102
 msgid "Event Statistics"
 msgstr "Veranstaltungsstatistiken"
 
-#: src/Admin/AdminPages.php:106
-#: src/Admin/AdminPages.php:107
-#: src/Admin/AdminPages.php:113
+#: src/Admin/AdminPages.php:109
+#: src/Admin/AdminPages.php:110
+#: src/Admin/AdminPages.php:116
 #: src/Admin/manage-event-ext/index.js:70
 #: src/Admin/manage-event/DuplicateEventWizard.js:620
 msgid "Duplicate Event"
 msgstr "Veranstaltung duplizieren"
 
-#: src/Admin/AdminPages.php:117
-#: src/Admin/AdminPages.php:118
-#: src/Admin/AdminPages.php:124
+#: src/Admin/AdminPages.php:120
+#: src/Admin/AdminPages.php:121
+#: src/Admin/AdminPages.php:127
 #: src/Admin/manage-event-ext/index.js:94
 #: src/Admin/manage-event/MergeEventWizard.js:453
 msgid "Merge Event"
@@ -509,10 +510,6 @@ msgstr "Wird gespeichert..."
 #: src/Admin/settings/FeaturesTab.js:175
 msgid "Save Features"
 msgstr "Funktionen speichern"
-
-#: src/Admin/settings/SettingsApp.js:28
-msgid "Fair Events Experimental Settings"
-msgstr "Fair Events Experimentelle Einstellungen"
 
 #: src/Admin/manage-event-ext/index.js:35
 msgid "Statistics"

@@ -2,10 +2,10 @@
 /**
  * Admin Pages for Fair Events Experimental
  *
- * Registers the experimental feature admin pages (sources, settings) as
- * submenus under the fair-events-calendar menu.
- * Page rendering and JS assets are delegated to the fair-events plugin; only
- * the settings page uses assets from this plugin's own build directory.
+ * Registers the experimental feature admin pages (sources, statistics, event
+ * tools) as submenus under the fair-events-calendar menu. The experimental
+ * settings live in an Experimental tab of the fair-events Settings page; the
+ * former standalone settings slug only redirects there.
  *
  * @package FairEventsExperimental
  */
@@ -42,6 +42,7 @@ class AdminPages {
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+		add_action( 'fair_events_settings_enqueue_assets', array( $this, 'enqueue_settings_tab_assets' ) );
 	}
 
 	/**
@@ -52,15 +53,17 @@ class AdminPages {
 	public function register_admin_pages() {
 		$parent = $this->get_menu_parent_slug();
 
-		// Settings page for experimental feature toggles.
-		$this->page_hooks['fair-events-experimental-settings'] = add_submenu_page(
-			$parent,
+		// Former standalone settings page (hidden). Kept only so bookmarks
+		// redirect to the Experimental tab of the Fair Events Settings page.
+		$settings_hook = add_submenu_page(
+			'',
 			__( 'Experimental Settings', 'fair-events-experimental' ),
-			__( 'Experimental', 'fair-events-experimental' ),
+			__( 'Experimental Settings', 'fair-events-experimental' ),
 			'manage_options',
 			'fair-events-experimental-settings',
-			array( $this, 'render_settings_page' )
+			'__return_null'
 		);
+		add_action( 'load-' . $settings_hook, array( $this, 'redirect_legacy_settings_page' ) );
 
 		// Event Sources page — `sources` bundle.
 		if ( \FairEventsExperimental\Core\Features::is_enabled( 'sources' ) ) {
@@ -155,32 +158,7 @@ class AdminPages {
 			return;
 		}
 
-		// Settings page uses this plugin's own build.
-		if ( 'fair-events-experimental-settings' === $slug ) {
-			$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/settings/index.asset.php';
-
-			wp_enqueue_script(
-				'fair-events-experimental-settings',
-				FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/settings/index.js',
-				$asset_file['dependencies'],
-				$asset_file['version'],
-				true
-			);
-
-			wp_localize_script(
-				'fair-events-experimental-settings',
-				'fairEventsExperimentalSettingsData',
-				array(
-					'features' => \FairEventsExperimental\Core\Features::all(),
-				)
-			);
-
-			wp_set_script_translations( 'fair-events-experimental-settings', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-			wp_enqueue_style( 'wp-components' );
-			return;
-		}
-
-		// All other pages load JS from this plugin's own build directory.
+		// Pages load JS from this plugin's own build directory.
 		$exp_url = FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL;
 		$exp_dir = FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR;
 
@@ -302,14 +280,49 @@ class AdminPages {
 	}
 
 	/**
-	 * Render experimental settings page
+	 * Redirect the former Experimental Settings page to its tab on the
+	 * Fair Events Settings page. Temporary (302), so browsers don't cache it
+	 * past deactivation or a future URL change.
 	 *
 	 * @return void
 	 */
-	public function render_settings_page() {
-		?>
-		<div id="fair-events-experimental-settings-root"></div>
-		<?php
+	public function redirect_legacy_settings_page() {
+		wp_safe_redirect( admin_url( 'admin.php?page=fair-events-settings&tab=experimental' ), 302 );
+		exit;
+	}
+
+	/**
+	 * Enqueue the Experimental tab on the fair-events Settings page.
+	 *
+	 * Declares `fair-events-settings` as a script dependency so the tab's
+	 * `addFilter()` call runs before the host bundle mounts.
+	 *
+	 * @return void
+	 */
+	public function enqueue_settings_tab_assets() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/settings/index.asset.php';
+
+		wp_enqueue_script(
+			'fair-events-experimental-settings',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/settings/index.js',
+			array_merge( $asset_file['dependencies'], array( 'fair-events-settings' ) ),
+			$asset_file['version'],
+			true
+		);
+
+		wp_localize_script(
+			'fair-events-experimental-settings',
+			'fairEventsExperimentalSettingsData',
+			array(
+				'features' => \FairEventsExperimental\Core\Features::all(),
+			)
+		);
+
+		wp_set_script_translations( 'fair-events-experimental-settings', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 	}
 
 	/**

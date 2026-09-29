@@ -4,6 +4,7 @@
 import { __ } from '@wordpress/i18n';
 import { useCallback, useMemo, useState } from '@wordpress/element';
 import { Notice, TabPanel } from '@wordpress/components';
+import { applyFilters } from '@wordpress/hooks';
 
 /**
  * Internal dependencies
@@ -15,29 +16,46 @@ import OrganizerTab from './OrganizerTab.js';
 /**
  * Settings App Component
  *
- * Main settings page with tabs for General and Features settings.
+ * Main settings page with General, Features and Organizer tabs. Extensions
+ * add tabs through the `fairEvents.settings.tabs` filter; each descriptor is
+ * `{ name, title, order, render: ( { onNotice } ) => JSX }`.
  *
  * @return {JSX.Element} The Settings app component
  */
 export default function SettingsApp() {
 	const [ notice, setNotice ] = useState( null );
 
-	const tabs = useMemo(
-		() => [
+	const tabDescriptors = useMemo( () => {
+		const builtInTabs = [
 			{
 				name: 'general',
 				title: __( 'General', 'fair-events' ),
+				order: 10,
+				render: ( props ) => <GeneralTab { ...props } />,
 			},
 			{
 				name: 'features',
 				title: __( 'Features', 'fair-events' ),
+				order: 20,
+				render: ( props ) => <FeaturesTab { ...props } />,
 			},
 			{
 				name: 'organizer',
 				title: __( 'Organizer', 'fair-events' ),
+				order: 30,
+				render: ( props ) => <OrganizerTab { ...props } />,
 			},
-		],
-		[]
+		];
+
+		return [
+			...applyFilters( 'fairEvents.settings.tabs', builtInTabs ),
+		].sort( ( a, b ) => a.order - b.order );
+	}, [] );
+
+	// Shape TabPanel expects: { name, title }.
+	const tabs = useMemo(
+		() => tabDescriptors.map( ( { name, title } ) => ( { name, title } ) ),
+		[ tabDescriptors ]
 	);
 
 	const initialTab = useMemo( () => {
@@ -63,7 +81,11 @@ export default function SettingsApp() {
 	return (
 		<div className="wrap fair-events-settings">
 			<style>
-				{ `/* The 1.5px height of the active-tab indicator anti-aliases to a thin
+				{ `/* Let the tab bar wrap onto multiple rows instead of overflowing the
+   viewport on narrow screens. Harmless on desktop, where the tabs fit on
+   one row. */
+.fair-events-settings .components-tab-panel__tabs { flex-wrap: wrap; row-gap: 4px; }
+/* The 1.5px height of the active-tab indicator anti-aliases to a thin
    darker top edge at 1x DPI. Round to 2px so the bar renders crisp. */
 .fair-events-settings .components-tab-panel__tabs-item.is-active::after { height: 2px; outline: none; }` }
 			</style>
@@ -88,15 +110,9 @@ export default function SettingsApp() {
 			>
 				{ ( tab ) => (
 					<div style={ { marginTop: '1rem' } }>
-						{ tab.name === 'general' && (
-							<GeneralTab onNotice={ setNotice } />
-						) }
-						{ tab.name === 'features' && (
-							<FeaturesTab onNotice={ setNotice } />
-						) }
-						{ tab.name === 'organizer' && (
-							<OrganizerTab onNotice={ setNotice } />
-						) }
+						{ tabDescriptors
+							.find( ( t ) => t.name === tab.name )
+							?.render( { onNotice: setNotice } ) }
 					</div>
 				) }
 			</TabPanel>

@@ -1,9 +1,9 @@
 /**
  * E2E: configure Telegram weekly notifications and send a test message (#1660).
  *
- * Drives the Experimental Settings page as an administrator: saves a bot
- * token and two chats, checks the token is never shown again, and sends a
- * test message that reaches one chat and fails for the other. No request
+ * Drives the Experimental tab of Fair Events Settings as an administrator:
+ * saves a bot token and two chats, checks the token is never shown again, and
+ * sends a test message that reaches one chat and fails for the other. No request
  * reaches Telegram — lib/telegram-http-double.php answers api.telegram.org
  * and records each request's chat ID and text (never the token).
  */
@@ -13,7 +13,7 @@ import { wpCli, loginAsAdmin } from '../support/wp-cli.js';
 
 const TOKEN = '123456789:AAEe2eWeeklyTelegramToken0123456789';
 const SETTINGS_URL =
-	'/wp-admin/admin.php?page=fair-events-experimental-settings';
+	'/wp-admin/admin.php?page=fair-events-settings&tab=experimental';
 
 function resetState() {
 	for (const option of [
