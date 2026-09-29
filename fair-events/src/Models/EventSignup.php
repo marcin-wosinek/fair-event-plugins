@@ -311,13 +311,15 @@ class EventSignup {
 	}
 
 	/**
-	 * Confirm a signup only while it is awaiting payment or locally expired.
+	 * Confirm a signup while it is awaiting payment, locally expired, or
+	 * released by "Cancel and start over" — a payment that completes after
+	 * the visitor abandoned it is still honored.
 	 *
 	 * @param int $signup_id Signup row ID.
 	 * @return bool True when the row transitioned.
 	 */
 	public static function confirm_paid( int $signup_id ) {
-		return self::transition_status( $signup_id, 'confirmed', array( 'pending_payment', 'expired' ) );
+		return self::transition_status( $signup_id, 'confirmed', array( 'pending_payment', 'expired', 'failed' ) );
 	}
 
 	/**
@@ -392,29 +394,13 @@ class EventSignup {
 	private static function transition_status( int $signup_id, string $target_status, array $from_statuses ) {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'fair_events_signups';
-		if ( 2 === count( $from_statuses ) ) {
-			$updated = $wpdb->query(
-				$wpdb->prepare(
-					'UPDATE %i SET status = %s, payment_expires_at = NULL WHERE id = %d AND status IN (%s, %s)',
-					$table,
-					$target_status,
-					$signup_id,
-					$from_statuses[0],
-					$from_statuses[1]
-				)
-			);
-		} else {
-			$updated = $wpdb->query(
-				$wpdb->prepare(
-					'UPDATE %i SET status = %s, payment_expires_at = NULL WHERE id = %d AND status = %s',
-					$table,
-					$target_status,
-					$signup_id,
-					$from_statuses[0]
-				)
-			);
-		}
+		$table   = $wpdb->prefix . 'fair_events_signups';
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s, payment_expires_at = NULL WHERE id = %d AND status IN (' . implode( ', ', array_fill( 0, count( $from_statuses ), '%s' ) ) . ')',
+				array_merge( array( $table, $target_status, $signup_id ), $from_statuses )
+			)
+		);
 
 		$transitioned = 1 === (int) $updated;
 		if ( $transitioned ) {
@@ -578,6 +564,81 @@ class EventSignup {
 		}
 
 		return $cancelled;
+	}
+
+	/**
+	 * Release every signup row of one transaction for "Cancel and start
+	 * over": a row still awaiting payment is marked failed, and each row's
+	 * hold is cleared so the payment cannot be resumed or retried.
+	 *
+	 * The rows are locked and released in one database transaction, so
+	 * either all of them are released or none is. A paid notification that
+	 * confirmed a row first wins; one that arrives later waits for the lock
+	 * and then confirms the released rows (confirm_paid() accepts 'failed').
+	 *
+	 * @param int   $transaction_id Transaction the rows must belong to.
+	 * @param int[] $signup_ids     Signup row IDs paid for by the transaction.
+	 * @return string 'released', 'confirmed' when a row is already confirmed,
+	 *                or 'unsafe' when nothing was changed.
+	 */
+	public static function release_for_restart( int $transaction_id, array $signup_ids ) {
+		global $wpdb;
+
+		$table      = $wpdb->prefix . 'fair_events_signups';
+		$signup_ids = array_values( array_unique( array_map( 'intval', $signup_ids ) ) );
+		if ( empty( $signup_ids ) ) {
+			return 'unsafe';
+		}
+
+		$wpdb->query( 'START TRANSACTION' );
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id, status, transaction_id FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $signup_ids ), '%d' ) ) . ') FOR UPDATE',
+				array_merge( array( $table ), $signup_ids )
+			)
+		);
+
+		$outcome = count( (array) $rows ) === count( $signup_ids ) ? 'released' : 'unsafe';
+		foreach ( (array) $rows as $row ) {
+			if ( (int) $row->transaction_id !== $transaction_id ) {
+				$outcome = 'unsafe';
+				break;
+			}
+			if ( 'confirmed' === $row->status ) {
+				$outcome = 'confirmed';
+				break;
+			}
+			if ( ! in_array( $row->status, array( 'pending_payment', 'failed', 'expired' ), true ) ) {
+				$outcome = 'unsafe';
+				break;
+			}
+		}
+
+		if ( 'released' === $outcome ) {
+			foreach ( $signup_ids as $signup_id ) {
+				$released = $wpdb->query(
+					$wpdb->prepare(
+						"UPDATE %i SET status = IF( status = 'pending_payment', 'failed', status ), payment_expires_at = NULL WHERE id = %d",
+						$table,
+						$signup_id
+					)
+				);
+				if ( false === $released ) {
+					$outcome = 'unsafe';
+					break;
+				}
+				EventTicket::sync_status_from_signup( $signup_id );
+			}
+		}
+
+		if ( 'released' === $outcome ) {
+			$wpdb->query( 'COMMIT' );
+		} else {
+			$wpdb->query( 'ROLLBACK' );
+		}
+
+		return $outcome;
 	}
 
 	/**

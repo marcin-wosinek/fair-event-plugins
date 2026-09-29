@@ -213,6 +213,113 @@ class EventSignupTest extends TestCase {
 	}
 
 	/**
+	 * Cancel-and-restart releases every row of the transaction: awaiting
+	 * rows fail, provider-failed rows keep their status, and no hold remains.
+	 */
+	public function test_release_for_restart_releases_every_row(): void {
+		$this->seed_signup( 10, 'pending_payment', 40, gmdate( 'Y-m-d H:i:s', time() + 60 ) );
+		$this->seed_signup( 11, 'failed', 40, gmdate( 'Y-m-d H:i:s', time() + 60 ) );
+		$this->seed_signup( 12, 'expired', 40, null );
+
+		$this->assertSame( 'released', EventSignup::release_for_restart( 40, array( 10, 11, 12 ) ) );
+
+		$this->assertSame( 'failed', EventSignup::get_by_id( 10 )->status );
+		$this->assertSame( 'failed', EventSignup::get_by_id( 11 )->status );
+		$this->assertSame( 'expired', EventSignup::get_by_id( 12 )->status );
+		foreach ( array( 10, 11, 12 ) as $signup_id ) {
+			$this->assertNull( EventSignup::get_by_id( $signup_id )->payment_expires_at );
+		}
+
+		// Releasing an already released attempt again is harmless.
+		$this->assertSame( 'released', EventSignup::release_for_restart( 40, array( 10, 11, 12 ) ) );
+	}
+
+	/**
+	 * A confirmed row, a row of another transaction, a missing row, or an
+	 * unexpected status leaves every row untouched.
+	 *
+	 * @dataProvider unreleasable_provider
+	 *
+	 * @param string $status         Second row's status.
+	 * @param int    $transaction_id Second row's transaction.
+	 * @param bool   $seeded         Whether the second row exists.
+	 * @param string $outcome        Expected outcome.
+	 */
+	public function test_release_for_restart_changes_nothing_when_unreleasable( string $status, int $transaction_id, bool $seeded, string $outcome ): void {
+		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 60 );
+		$this->seed_signup( 10, 'pending_payment', 40, $expires_at );
+		if ( $seeded ) {
+			$this->seed_signup( 11, $status, $transaction_id, $expires_at );
+		}
+
+		$this->assertSame( $outcome, EventSignup::release_for_restart( 40, array( 10, 11 ) ) );
+
+		$this->assertSame( 'pending_payment', EventSignup::get_by_id( 10 )->status );
+		$this->assertSame( $expires_at, EventSignup::get_by_id( 10 )->payment_expires_at );
+	}
+
+	/**
+	 * Unreleasable attempts.
+	 *
+	 * @return array<string, array{string, int, bool, string}>
+	 */
+	public function unreleasable_provider(): array {
+		return array(
+			'confirmed row'         => array( 'confirmed', 40, true, 'confirmed' ),
+			'other transaction'     => array( 'pending_payment', 41, true, 'unsafe' ),
+			'missing row'           => array( 'pending_payment', 40, false, 'unsafe' ),
+			'unexpected row status' => array( 'cancelled', 40, true, 'unsafe' ),
+		);
+	}
+
+	/**
+	 * A payment that completes after the visitor started over is still
+	 * honored: the released row is confirmed.
+	 */
+	public function test_payment_paid_after_release_confirms_the_signup(): void {
+		$this->seed_signup( 10, 'pending_payment', 40, gmdate( 'Y-m-d H:i:s', time() + 60 ) );
+		$this->assertSame( 'released', EventSignup::release_for_restart( 40, array( 10 ) ) );
+		$GLOBALS['_fair_test_actions'] = array();
+
+		PaymentHooks::handle_payment_paid(
+			(object) array(),
+			(object) array(
+				'id'       => 40,
+				'metadata' => wp_json_encode(
+					array(
+						'source'    => 'fair-events-get-tickets',
+						'signup_id' => 10,
+					)
+				),
+			)
+		);
+
+		$this->assertSame( 'confirmed', EventSignup::get_by_id( 10 )->status );
+		$this->assertCount( 1, $GLOBALS['_fair_test_actions']['fair_events_signup_confirmed'] );
+	}
+
+	/**
+	 * Seed one signup row.
+	 *
+	 * @param int         $signup_id      Signup row ID.
+	 * @param string      $status         Signup status.
+	 * @param int         $transaction_id Transaction ID.
+	 * @param string|null $expires_at     Hold expiry.
+	 */
+	private function seed_signup( int $signup_id, string $status, int $transaction_id, ?string $expires_at ): void {
+		$GLOBALS['wpdb']->seed_row(
+			'wp_fair_events_signups',
+			$signup_id,
+			(object) array(
+				'id'                 => $signup_id,
+				'status'             => $status,
+				'transaction_id'     => $transaction_id,
+				'payment_expires_at' => $expires_at,
+			)
+		);
+	}
+
+	/**
 	 * Representative timezones, including DST-observing offsets.
 	 *
 	 * @return array<string, array{string}>

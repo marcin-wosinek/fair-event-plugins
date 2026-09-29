@@ -9,8 +9,9 @@
  * fair_events_signups row: name, email, quantity, amount, status, mail
  * (captured mail addressed to the row's email — fair-events' own baseline
  * confirmation, since this script targets the fair-audience-inactive path),
- * and — when a transaction is attached — its status, testmode flag, and
- * Mollie payment id from fair_payment_transactions.
+ * hold_expires (payment_expires_at, null once the hold is released), and —
+ * when a transaction is attached — its status, testmode flag, and Mollie
+ * payment id from fair_payment_transactions.
  *
  * @package FairEventsE2E
  */
@@ -58,6 +59,7 @@ foreach ( $rows as $row ) {
 		'amount'         => (float) $row->amount,
 		'status'         => (string) $row->status,
 		'transaction_id' => $row->transaction_id ? (int) $row->transaction_id : null,
+		'hold_expires'   => $row->payment_expires_at,
 		'mail'           => $mail,
 	);
 

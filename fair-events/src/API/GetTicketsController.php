@@ -2853,9 +2853,11 @@ class GetTicketsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Cancel an in-progress get-tickets payment: mark its signup row(s)
-	 * failed and clear their hold, and clear the session cookie, so "Cancel
-	 * and start over" doesn't resurrect the same checkout on the next load.
+	 * Cancel an in-progress or failed get-tickets payment: release its
+	 * signup row(s) — marked failed, hold cleared — and clear the session
+	 * cookie, so "Cancel and start over" doesn't resurrect the same checkout
+	 * on the next load. When the rows can't all be released, nothing
+	 * changes and the visitor can try again.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
@@ -2910,7 +2912,11 @@ class GetTicketsController extends WP_REST_Controller {
 			return rest_ensure_response( $state );
 		}
 
-		if ( ! in_array( (string) $transaction->status, array( 'pending_payment', 'pending', 'open' ), true ) ) {
+		// Open payments are abandoned locally; a later paid notification
+		// still confirms them. Payments the provider already ended only
+		// need whatever hold they still have released.
+		$cancellable = array( 'pending_payment', 'pending', 'open', 'failed', 'canceled', 'expired' );
+		if ( ! in_array( (string) $transaction->status, $cancellable, true ) ) {
 			return new WP_Error(
 				'invalid_cancel_state',
 				__( 'This payment could not be cancelled safely. Please try again.', 'fair-events' ),
@@ -2918,39 +2924,26 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		foreach ( $signup_ids as $signup_id ) {
-			\FairEvents\Models\EventSignup::cancel_pending( $signup_id );
+		$released = \FairEvents\Models\EventSignup::release_for_restart( (int) $transaction->id, $signup_ids );
+		if ( 'unsafe' === $released ) {
+			return new WP_Error(
+				'invalid_cancel_state',
+				__( 'This payment could not be cancelled safely. Please try again.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
 		}
 
-		$transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( (int) $transaction->id );
-		$signup_rows = \FairEvents\Models\EventSignup::get_all_by_transaction_id( (int) $transaction->id );
-		if ( 'paid' === (string) ( $transaction->status ?? '' )
-			|| array_filter(
-				$signup_rows,
-				static function ( $row ) {
-					return 'confirmed' === (string) $row->status;
-				}
-			)
-		) {
+		// A payment confirmed while the rows were being released stays
+		// confirmed: either a row already was, or the paid hook confirms the
+		// released rows once it gets their lock.
+		$transaction = \FairPaymentsConnector\API\TransactionAPI::get_transaction( (int) $transaction->id ) ?? $transaction;
+		if ( 'confirmed' === $released || 'paid' === (string) $transaction->status ) {
+			$signup_rows               = \FairEvents\Models\EventSignup::get_all_by_transaction_id( (int) $transaction->id );
 			$state                     = \FairEvents\Services\SignupPaymentState::resolve_for_transaction( $transaction, $signup_rows, false );
 			$state['state']            = 'confirmed';
 			$state['lifecycle_status'] = 'confirmed';
 			\FairEvents\Services\SignupPaymentSession::clear();
 			return rest_ensure_response( $state );
-		}
-
-		$unreleased = array_filter(
-			$signup_rows,
-			static function ( $row ) {
-				return 'failed' !== (string) $row->status || null !== $row->payment_expires_at;
-			}
-		);
-		if ( count( $signup_rows ) !== count( $signup_ids ) || ! empty( $unreleased ) ) {
-			return new WP_Error(
-				'invalid_cancel_state',
-				__( 'This payment could not be cancelled safely. Please try again.', 'fair-events' ),
-				array( 'status' => 409 )
-			);
 		}
 
 		\FairEvents\Services\SignupPaymentSession::clear();
