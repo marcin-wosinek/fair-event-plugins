@@ -8,11 +8,10 @@
 namespace FairEventsExperimental\Tests\WeeklyNotifications;
 
 use FairEventsExperimental\Settings\WeeklyNotificationSettings;
-use FairEventsExperimental\WeeklyNotifications\SummaryBuilder;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests settings validation and calendar-block compatibility.
+ * Tests settings validation.
  */
 class WeeklyNotificationSettingsTest extends TestCase {
 
@@ -107,63 +106,5 @@ class WeeklyNotificationSettingsTest extends TestCase {
 		$this->assertTrue( WeeklyNotificationSettings::valid_time( '23:59' ) );
 		$this->assertFalse( WeeklyNotificationSettings::valid_time( '9:00' ) );
 		$this->assertFalse( WeeklyNotificationSettings::valid_time( '24:00' ) );
-	}
-
-	/** Only a calendar block showing exactly the source, publicly, matches. */
-	public function test_block_matches_only_the_selected_source() {
-		$this->assertTrue( SummaryBuilder::block_matches( array( 'eventSources' => array( 'city' ) ), 'city' ) );
-		$this->assertFalse( SummaryBuilder::block_matches( array(), 'city' ) );
-		$this->assertFalse( SummaryBuilder::block_matches( array( 'eventSources' => array( 'city', 'other' ) ), 'city' ) );
-		$this->assertFalse(
-			SummaryBuilder::block_matches(
-				array(
-					'eventSources' => array( 'city' ),
-					'categories'   => array( 4 ),
-				),
-				'city'
-			)
-		);
-		$this->assertFalse(
-			SummaryBuilder::block_matches(
-				array(
-					'eventSources' => array( 'city' ),
-					'showDrafts'   => true,
-				),
-				'city'
-			)
-		);
-	}
-
-	/** Calendar blocks nested in layout blocks are found. */
-	public function test_find_week_blocks_searches_nested_blocks() {
-		$blocks = array(
-			array(
-				'blockName'   => 'core/group',
-				'attrs'       => array(),
-				'innerBlocks' => array(
-					array(
-						'blockName'   => 'core/columns',
-						'attrs'       => array(),
-						'innerBlocks' => array(
-							array(
-								'blockName'   => 'fair-events/events-week',
-								'attrs'       => array( 'eventSources' => array( 'city' ) ),
-								'innerBlocks' => array(),
-							),
-						),
-					),
-				),
-			),
-			array(
-				'blockName'   => 'core/paragraph',
-				'attrs'       => array(),
-				'innerBlocks' => array(),
-			),
-		);
-
-		$found = SummaryBuilder::find_week_blocks( $blocks );
-
-		$this->assertCount( 1, $found );
-		$this->assertSame( array( 'city' ), $found[0]['attrs']['eventSources'] );
 	}
 }

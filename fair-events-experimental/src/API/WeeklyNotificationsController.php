@@ -387,28 +387,25 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Published pages that contain an Events Week View block.
+	 * Published, publicly visible pages.
 	 *
 	 * @param int $selected_id The saved page, listed even if it no longer qualifies.
 	 * @return array[]
 	 */
 	private function pages( $selected_id ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- no core API searches block markup.
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT ID, post_type FROM %i WHERE post_status = 'publish' AND post_type NOT IN ( 'revision', 'attachment', 'wp_block' ) AND post_content LIKE %s ORDER BY post_title ASC LIMIT 100",
-				$wpdb->posts,
-				'%' . $wpdb->esc_like( '<!-- wp:' . SummaryBuilder::BLOCK_NAME ) . '%'
+		$ids = get_posts(
+			array(
+				'post_type'      => 'page',
+				'post_status'    => 'publish',
+				'has_password'   => false,
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+				'fields'         => 'ids',
+				// Every language: the chosen page sets the message language.
+				'lang'           => '',
 			)
 		);
-		$ids  = array();
-		foreach ( (array) $rows as $row ) {
-			if ( is_post_type_viewable( $row->post_type ) ) {
-				$ids[] = $row->ID;
-			}
-		}
 
 		$ids = array_map( 'intval', $ids );
 		if ( $selected_id && ! in_array( (int) $selected_id, $ids, true ) && get_post( $selected_id ) ) {

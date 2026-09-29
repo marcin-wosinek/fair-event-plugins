@@ -119,6 +119,48 @@ describe( 'WeeklyNotifications', () => {
 		} );
 	} );
 
+	it( 'saves any listed page as the heading link', async () => {
+		const save = jest.fn( () =>
+			Promise.resolve( config( { page_id: 34 } ) )
+		);
+		mockApi(
+			config( {
+				pages: [
+					{ id: 12, title: 'Calendar', url: 'https://example.test/' },
+					{
+						id: 34,
+						title: 'About us',
+						url: 'https://example.test/about/',
+					},
+				],
+			} ),
+			{ [ `POST ${ PATH }` ]: save }
+		);
+
+		render( <WeeklyNotifications onNotice={ () => {} } /> );
+
+		const pageField = await screen.findByLabelText(
+			'Page linked in the heading'
+		);
+		expect(
+			screen.getByText(
+				'Any published, public page. Its title and link head the message. The event source decides which events are listed.'
+			)
+		).toBeInTheDocument();
+		fireEvent.change( pageField, { target: { value: '34' } } );
+		fireEvent.click(
+			screen.getByRole( 'button', {
+				name: 'Save weekly notification settings',
+			} )
+		);
+
+		await waitFor( () => expect( save ).toHaveBeenCalled() );
+		expect( save.mock.calls[ 0 ][ 0 ].data ).toMatchObject( {
+			source_slug: 'city',
+			page_id: 34,
+		} );
+	} );
+
 	it( 'shows the server’s validation message when saving fails', async () => {
 		const onNotice = jest.fn();
 		mockApi( config(), {
@@ -228,7 +270,7 @@ describe( 'WeeklyNotifications', () => {
 		mockApi(
 			config( {
 				configuration_error:
-					'The calendar page has no Events Week View block.',
+					'The selected page must be published and publicly visible.',
 				next_run: {
 					time_local: 'September 21, 2026 9:00 am',
 					week_title: '21–27 Sep 2026',
@@ -267,7 +309,7 @@ describe( 'WeeklyNotifications', () => {
 		).toBeInTheDocument();
 		expect(
 			screen.getAllByText(
-				'The calendar page has no Events Week View block.'
+				'The selected page must be published and publicly visible.'
 			)[ 0 ]
 		).toBeInTheDocument();
 		expect( screen.getByText( 'Partly sent' ) ).toBeInTheDocument();

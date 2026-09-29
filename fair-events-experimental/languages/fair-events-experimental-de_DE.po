@@ -813,7 +813,7 @@ msgstr ""
 msgid "Test message from %s. Weekly event notifications will be posted here."
 msgstr ""
 
-#: src/API/WeeklyNotificationsController.php:421
+#: src/API/WeeklyNotificationsController.php:418
 msgid "(no title)"
 msgstr ""
 
@@ -835,32 +835,16 @@ msgstr ""
 msgid "Delivered: %1$d. Failed: %2$d. Unknown outcome: %3$d."
 msgstr ""
 
-#: src/WeeklyNotifications/SummaryBuilder.php:34
+#: src/WeeklyNotifications/SummaryBuilder.php:32
 msgid "Update Fair Events to use weekly notifications."
 msgstr ""
 
-#: src/WeeklyNotifications/SummaryBuilder.php:38
+#: src/WeeklyNotifications/SummaryBuilder.php:36
 msgid "Choose an event source."
 msgstr ""
 
-#: src/WeeklyNotifications/SummaryBuilder.php:42
+#: src/WeeklyNotifications/SummaryBuilder.php:40
 msgid "The selected event source does not exist or is disabled."
-msgstr ""
-
-#: src/WeeklyNotifications/SummaryBuilder.php:47
-msgid "Choose the public calendar page."
-msgstr ""
-
-#: src/WeeklyNotifications/SummaryBuilder.php:50
-msgid "The calendar page must be published and publicly visible."
-msgstr ""
-
-#: src/WeeklyNotifications/SummaryBuilder.php:55
-msgid "The calendar page has no Events Week View block."
-msgstr ""
-
-#: src/WeeklyNotifications/SummaryBuilder.php:65
-msgid "The Events Week View block on the calendar page must show only the selected event source, with no extra categories and no drafts."
 msgstr ""
 
 #: src/WeeklyNotifications/TelegramProvider.php:83
@@ -979,10 +963,6 @@ msgstr ""
 msgid "%s (unavailable)"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:352
-msgid "Choose a calendar page"
-msgstr ""
-
 #: src/Admin/settings/WeeklyNotifications.js:364
 msgid "Save a bot token and at least one chat or channel before sending a test message."
 msgstr ""
@@ -995,24 +975,12 @@ msgstr ""
 msgid "Weekly notifications"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:384
-msgid "Post the week’s events from a public calendar page to your channels every week, in the same format as the calendar’s “Copy summary” button."
-msgstr ""
-
 #: src/Admin/settings/WeeklyNotifications.js:397
 msgid "Send weekly event notifications"
 msgstr ""
 
 #: src/Admin/settings/WeeklyNotifications.js:406
 msgid "Event source"
-msgstr ""
-
-#: src/Admin/settings/WeeklyNotifications.js:413
-msgid "Public calendar page"
-msgstr ""
-
-#: src/Admin/settings/WeeklyNotifications.js:417
-msgid "Published pages with an Events Week View block. The block must show only the selected event source, with no extra categories and no drafts. Its title and link head the message."
 msgstr ""
 
 #: src/Admin/settings/WeeklyNotifications.js:429
@@ -1142,4 +1110,28 @@ msgstr ""
 
 #: src/Admin/settings/WeeklyNotifications.js:770
 msgid "Remove the Telegram bot token? Weekly notifications will not reach Telegram until a new token is saved."
+msgstr ""
+
+#: src/WeeklyNotifications/SummaryBuilder.php:45
+msgid "Choose the page that heads the message."
+msgstr ""
+
+#: src/WeeklyNotifications/SummaryBuilder.php:48
+msgid "The selected page must be published and publicly visible."
+msgstr ""
+
+#: src/Admin/settings/WeeklyNotifications.js:352
+msgid "Choose a page"
+msgstr ""
+
+#: src/Admin/settings/WeeklyNotifications.js:384
+msgid "Post the week’s events from an event source to your channels every week, in the same format as the calendar’s “Copy summary” button."
+msgstr ""
+
+#: src/Admin/settings/WeeklyNotifications.js:413
+msgid "Page linked in the heading"
+msgstr ""
+
+#: src/Admin/settings/WeeklyNotifications.js:417
+msgid "Any published, public page. Its title and link head the message. The event source decides which events are listed."
 msgstr ""

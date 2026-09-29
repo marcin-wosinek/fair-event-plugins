@@ -37,6 +37,25 @@ test.describe( 'WeeklyNotificationsController', () => {
 	let original;
 	let subscriberId;
 	let subscriberHeaders;
+	let sourceId;
+	let sourceSlug;
+	const pageIds = [];
+
+	const createPage = async ( status ) => {
+		const res = await api.post( '/wp-json/wp/v2/pages', {
+			headers: adminHeaders,
+			data: {
+				title: `Weekly heading ${ status } ${ Date.now() }`,
+				content:
+					'<!-- wp:paragraph --><p>No calendar here.</p><!-- /wp:paragraph -->',
+				status,
+			},
+		} );
+		expect( res.ok() ).toBeTruthy();
+		const page = await res.json();
+		pageIds.push( page.id );
+		return page;
+	};
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
@@ -64,6 +83,24 @@ test.describe( 'WeeklyNotificationsController', () => {
 					'base64'
 				),
 		};
+
+		sourceSlug = `weekly-notifications-${ Date.now() }`;
+		const sourceRes = await api.post( '/wp-json/fair-events/v1/sources', {
+			headers: adminHeaders,
+			data: {
+				name: 'Weekly notifications source',
+				slug: sourceSlug,
+				enabled: true,
+				data_sources: [
+					{
+						source_type: 'categories',
+						config: { category_ids: [ 1 ] },
+					},
+				],
+			},
+		} );
+		expect( sourceRes.ok() ).toBeTruthy();
+		sourceId = ( await sourceRes.json() ).id;
 	} );
 
 	test.afterAll( async () => {
@@ -82,6 +119,16 @@ test.describe( 'WeeklyNotificationsController', () => {
 		} );
 		if ( ! original.telegram_token_configured ) {
 			await api.delete( `${ PATH }/telegram-token`, {
+				headers: adminHeaders,
+			} );
+		}
+		for ( const id of pageIds ) {
+			await api.delete( `/wp-json/wp/v2/pages/${ id }?force=true`, {
+				headers: adminHeaders,
+			} );
+		}
+		if ( sourceId ) {
+			await api.delete( `/wp-json/fair-events/v1/sources/${ sourceId }`, {
 				headers: adminHeaders,
 			} );
 		}
@@ -217,7 +264,7 @@ test.describe( 'WeeklyNotificationsController', () => {
 		}
 	} );
 
-	test( 'refuses to turn on without a valid source and calendar page', async () => {
+	test( 'refuses to turn on without a valid source and page', async () => {
 		const res = await api.post( PATH, {
 			headers: adminHeaders,
 			data: { enabled: true, source_slug: '', page_id: 0 },
@@ -227,6 +274,44 @@ test.describe( 'WeeklyNotificationsController', () => {
 
 		const read = await api.get( PATH, { headers: adminHeaders } );
 		expect( ( await read.json() ).enabled ).toBe( original.enabled );
+	} );
+
+	test( 'accepts any public page as the message heading', async () => {
+		const page = await createPage( 'publish' );
+
+		const saved = await api.post( PATH, {
+			headers: adminHeaders,
+			data: { source_slug: sourceSlug, page_id: page.id },
+		} );
+		expect( saved.status() ).toBe( 200 );
+		const body = await saved.json();
+		expect( body.configuration_error ).toBeNull();
+		expect( body.pages.map( ( p ) => p.id ) ).toContain( page.id );
+
+		const preview = await api.get( `${ PATH }/preview`, {
+			headers: adminHeaders,
+		} );
+		expect( preview.status() ).toBe( 200 );
+		expect( ( await preview.json() ).text ).toContain( page.link );
+	} );
+
+	test( 'refuses a page that is not public', async () => {
+		const draft = await createPage( 'draft' );
+
+		const saved = await api.post( PATH, {
+			headers: adminHeaders,
+			data: { source_slug: sourceSlug, page_id: draft.id },
+		} );
+		const body = await saved.json();
+		expect( body.configuration_error ).toBeTruthy();
+		// The saved page stays selectable even though it no longer qualifies.
+		expect( body.pages.map( ( p ) => p.id ) ).toContain( draft.id );
+
+		const preview = await api.get( `${ PATH }/preview`, {
+			headers: adminHeaders,
+		} );
+		expect( preview.status() ).toBe( 400 );
+		expect( ( await preview.json() ).code ).toBe( 'page_not_public' );
 	} );
 
 	test( 'refuses a preview without a valid configuration', async () => {
