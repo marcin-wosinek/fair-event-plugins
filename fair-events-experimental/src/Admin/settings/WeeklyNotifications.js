@@ -6,7 +6,7 @@ import {
 	Card,
 	CardBody,
 	CardHeader,
-	ConfirmDialog,
+	__experimentalConfirmDialog as ConfirmDialog,
 	Flex,
 	FlexItem,
 	Notice,
@@ -242,6 +242,7 @@ export default function WeeklyNotifications( { onNotice } ) {
 			} );
 			setConfig( next );
 			setForm( { ...form } );
+			setToken( '' );
 			onNotice( {
 				status: 'success',
 				message: __(

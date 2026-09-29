@@ -124,5 +124,34 @@ test.describe('Weekly Telegram notifications', () => {
 		await expect(
 			page.getByText('No messages delivered yet.')
 		).toBeVisible();
+
+		// An unsaved replacement must not restore the token after removal.
+		await page.getByLabel('Replace bot token').fill(TOKEN);
+		await page.getByRole('button', { name: 'Remove bot token' }).click();
+		await expect(
+			page.getByText(
+				'Remove the Telegram bot token? Weekly notifications will not reach Telegram until a new token is saved.'
+			)
+		).toBeVisible();
+		await page
+			.getByRole('button', { name: 'Remove bot token' })
+			.last()
+			.click();
+		await expect(
+			page.getByLabel('Bot token', { exact: true })
+		).toBeVisible();
+		await expect(page.getByLabel('Bot token', { exact: true })).toHaveValue(
+			''
+		);
+		await page
+			.getByRole('button', { name: 'Save weekly notification settings' })
+			.click();
+		await expect(
+			page.getByText('Weekly notification settings saved.').first()
+		).toBeVisible();
+		await page.reload();
+		await expect(
+			page.getByLabel('Bot token', { exact: true })
+		).toBeVisible();
 	});
 });
