@@ -10,11 +10,12 @@ import { Notice } from '@wordpress/components';
  */
 import FeaturesTab from './FeaturesTab.js';
 import MetaConversions from './MetaConversions.js';
+import WeeklyNotifications from './WeeklyNotifications.js';
 
 /**
  * Settings App Component for Fair Events Experimental.
  *
- * Renders just the features tab — there are no general settings for this plugin.
+ * Renders the feature toggles and the settings of enabled integrations.
  *
  * @return {JSX.Element} The Settings app component
  */
@@ -41,6 +42,8 @@ export default function SettingsApp() {
 			) }
 
 			<FeaturesTab onNotice={ setNotice } />
+			{ window.fairEventsExperimentalSettingsData?.features?.sources
+				?.enabled && <WeeklyNotifications onNotice={ setNotice } /> }
 			{ window.fairEventsExperimentalSettingsData?.features?.[
 				'meta-conversions'
 			]?.enabled && <MetaConversions onNotice={ setNotice } /> }

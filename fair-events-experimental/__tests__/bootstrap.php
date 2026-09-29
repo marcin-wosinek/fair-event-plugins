@@ -191,4 +191,38 @@ if ( ! function_exists( 'wp_generate_uuid4' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_timezone' ) ) {
+	/**
+	 * Stub of WordPress wp_timezone() — UTC unless a test sets
+	 * $GLOBALS['_fair_test_timezone'].
+	 *
+	 * @return DateTimeZone
+	 */
+	function wp_timezone() {
+		return new DateTimeZone( $GLOBALS['_fair_test_timezone'] ?? 'UTC' );
+	}
+}
+
+if ( ! function_exists( 'sanitize_text_field' ) ) {
+	/**
+	 * Stub of WordPress sanitize_text_field() — strips tags and trims.
+	 *
+	 * @param string $text Text.
+	 * @return string
+	 */
+	function sanitize_text_field( $text ) {
+		return trim( wp_strip_all_tags_stub( (string) $text ) );
+	}
+
+	/**
+	 * Strip tags for the sanitize_text_field() stub.
+	 *
+	 * @param string $text Text.
+	 * @return string
+	 */
+	function wp_strip_all_tags_stub( $text ) {
+		return (string) preg_replace( '/<[^>]*>/', '', $text );
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WP_Error.php';

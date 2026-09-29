@@ -20,59 +20,10 @@ use FairEvents\Helpers\DateHelper;
 use FairEvents\Helpers\EventSchema;
 use FairEvents\Helpers\WeekViewParam;
 use FairEvents\Services\EventFeedProvider;
-use FairEvents\Services\EventTranslation;
-use FairEvents\Services\EventsWeekSummaryFormatter;
+use FairEvents\Services\EventsWeekSummary;
 use FairEvents\Settings\Settings;
 
-// Helper functions — guarded so they compose safely with weekly-schedule on the same page.
-if ( ! function_exists( 'fair_events_get_week_boundaries' ) ) {
-	/**
-	 * Calculate the configured seven-day week boundaries.
-	 *
-	 * @param int $year          ISO week-numbering year.
-	 * @param int $week          ISO week number.
-	 * @param int $start_of_week First weekday, from Sunday (0) to Saturday (6).
-	 * @return array Week start and end dates.
-	 */
-	function fair_events_get_week_boundaries( $year, $week, $start_of_week ) {
-		$date = new DateTime();
-		$date->setISODate( $year, $week );
-		// setISODate() lands on the Monday (weekday 1). Step back to whichever
-		// weekday start_of_week configures (0 = Sunday .. 6 = Saturday).
-		$days_back = ( 1 - $start_of_week + 7 ) % 7;
-		if ( $days_back > 0 ) {
-			$date->modify( "-{$days_back} days" );
-		}
-		$week_start = $date->format( 'Y-m-d' );
-		$date->modify( '+6 days' );
-		$week_end = $date->format( 'Y-m-d' );
-		return array(
-			'start' => $week_start,
-			'end'   => $week_end,
-		);
-	}
-}
-
-if ( ! function_exists( 'fair_events_offset_week' ) ) {
-	/**
-	 * Offset an ISO week by a number of weeks.
-	 *
-	 * @param int $year   ISO week-numbering year.
-	 * @param int $week   ISO week number.
-	 * @param int $offset Number of weeks to offset.
-	 * @return array Offset ISO year and week.
-	 */
-	function fair_events_offset_week( $year, $week, $offset ) {
-		$date = new DateTime();
-		$date->setISODate( $year, $week );
-		$date->modify( sprintf( '%+d weeks', $offset ) );
-		return array(
-			'year' => (int) $date->format( 'o' ),
-			'week' => (int) $date->format( 'W' ),
-		);
-	}
-}
-
+// Helper functions — guarded so they compose safely with other blocks on the same page.
 if ( ! function_exists( 'fair_events_convert_color_to_css' ) ) {
 	/**
 	 * Convert a block color attribute to a CSS value.
@@ -123,22 +74,19 @@ $text_color_value = fair_events_convert_color_to_css( $text_color );
 $header_bg_value  = fair_events_convert_color_to_css( $header_bg_color );
 
 // Week date range.
-$boundaries = fair_events_get_week_boundaries( $year, $week, $start_of_week );
+$boundaries = EventsWeekSummary::iso_week_boundaries( $year, $week, $start_of_week );
 $week_start = $boundaries['start'] . ' 00:00:00';
 $week_end   = $boundaries['end'] . ' 23:59:59';
 
 // Fetch occurrences for the week from the shared provider and bucket by day.
-$provider    = new EventFeedProvider();
-$occurrences = $provider->get_occurrences(
-	$week_start,
-	$week_end,
+$occurrences = EventsWeekSummary::occurrences(
+	$boundaries,
 	array(
 		'categories'         => $categories,
 		'event_source_slugs' => $event_sources,
 		'include_drafts'     => $show_drafts,
 	)
 );
-$occurrences = EventTranslation::translate_occurrences( $occurrences );
 
 $occurrences_by_date = EventFeedProvider::group_by_day( $occurrences, $week_start, $week_end );
 
@@ -184,30 +132,15 @@ for ( $i = 0; $i < 7; $i++ ) {
 }
 
 // Navigation: format the header as a date range (e.g. "16–22 Jun 2026").
-$start_ts      = strtotime( $boundaries['start'] );
-$end_ts        = strtotime( $boundaries['end'] );
-$start_month   = wp_date( 'M', $start_ts );
-$end_month     = wp_date( 'M', $end_ts );
-$start_year    = wp_date( 'Y', $start_ts );
-$end_year      = wp_date( 'Y', $end_ts );
-$start_day_num = wp_date( 'j', $start_ts );
-$end_day_num   = wp_date( 'j', $end_ts );
-
-if ( $start_year !== $end_year ) {
-	$nav_title = sprintf( '%s %s – %s %s %s', $start_day_num, $start_month, $end_day_num, $end_month, $end_year );
-} elseif ( $start_month !== $end_month ) {
-	$nav_title = sprintf( '%s %s – %s %s %s', $start_day_num, $start_month, $end_day_num, $end_month, $end_year );
-} else {
-	$nav_title = sprintf( '%s–%s %s %s', $start_day_num, $end_day_num, $end_month, $end_year );
-}
+$nav_title = EventsWeekSummary::range_title( $boundaries['start'], $boundaries['end'] );
 
 // Id the browser scrolls to after navigation, so paging weeks doesn't jump
 // the visitor back to the top of the page. Defers to a site owner's own
 // custom anchor (block's Advanced panel) when one is set.
 $scroll_anchor_id = ! empty( $attributes['anchor'] ) ? $attributes['anchor'] : 'fair-events-week';
 
-$prev = fair_events_offset_week( $year, $week, -1 );
-$next = fair_events_offset_week( $year, $week, 1 );
+$prev = EventsWeekSummary::offset_iso_week( $year, $week, -1 );
+$next = EventsWeekSummary::offset_iso_week( $year, $week, 1 );
 
 // Explicitly drop calendar_month/calendar_year: otherwise navigating the
 // week view keeps carrying the other block's dated selection along, and
@@ -226,10 +159,7 @@ $next_url = remove_query_arg(
 // Build copy summary text.
 $summary_text = '';
 if ( $show_copy_summary ) {
-	$page_title   = get_the_title( get_queried_object_id() );
-	$page_url     = get_permalink( get_queried_object_id() );
-	$page_label   = $page_url ? $page_title . ' (' . $page_url . ')' : $page_title;
-	$summary_text = EventsWeekSummaryFormatter::format( $occurrences, $week_start, $week_end, $page_label, $nav_title );
+	$summary_text = EventsWeekSummary::format( $occurrences, $boundaries, EventsWeekSummary::page_label( get_queried_object_id() ) );
 }
 
 $wrapper_attributes = array(

@@ -14,6 +14,8 @@ Activates advanced feature bundles for Fair Events: sources, ticketing, duplicat
 
 When the optional Meta Conversions feature is enabled, the plugin processes consented Meta browser identifiers (`_fbp` and `_fbc`), the checkout source URL, purchase value, currency, and transaction identifier to report checkout and completed-purchase measurements to Meta Platforms, Inc. Delivery is asynchronous. Identifiers are cleared after delivery reaches a terminal result, and all delivery rows are deleted after 90 days. The feature requires marketing consent and administrator-supplied Meta credentials; its external service terms and privacy policy apply.
 
+When weekly notifications are turned on, the plugin sends the upcoming week's event summary to Telegram (Telegram Messenger Inc.) through the Telegram Bot API at `api.telegram.org`, at the day and time the administrator schedules, and a short test message whenever an administrator requests one. Each request carries the administrator-supplied bot token and chat or channel identifier, and the summary text: the public calendar page's title and link, the date range, and each public event's weekday, start time, title and link. No visitor or attendee data is sent. Telegram's [Terms of Service](https://telegram.org/tos), [Bot Platform terms](https://telegram.org/tos/bot-developers) and [Privacy Policy](https://telegram.org/privacy) apply.
+
 This plugin is a companion to Fair Events. It activates four advanced feature bundles that are excluded from the public Fair Events build:
 
 * **Event sources & feeds** — External event sources, iCal/JSON feeds, event proposals.
