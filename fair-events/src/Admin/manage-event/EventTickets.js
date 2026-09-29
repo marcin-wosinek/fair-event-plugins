@@ -61,6 +61,21 @@ export const exclusiveEndToInclusiveDate = ( dateStr ) =>
 export const inclusiveEndToExclusiveDate = ( dateStr ) =>
 	shiftCalendarDate( dateStr, 1 );
 
+// Client-only React key for activity rows, so inputs stay attached to the
+// right activity when rows are reordered. Unsaved rows have no ID yet, so the
+// index can't serve as a stable key. Stripped before saving.
+let nextOptionClientKey = 0;
+const newOptionClientKey = () => `option-${ ++nextOptionClientKey }`;
+
+export const moveToTop = ( items, index ) =>
+	index <= 0 || index >= items.length
+		? items
+		: [
+				items[ index ],
+				...items.slice( 0, index ),
+				...items.slice( index + 1 ),
+		  ];
+
 export default function EventTickets( {
 	eventDateId,
 	onSaveRef,
@@ -556,6 +571,7 @@ export default function EventTickets( {
 			...o,
 			derive_price_from_sale_period: !! o.derive_price_from_sale_period,
 			period_prices_map: map,
+			client_key: newOptionClientKey(),
 		};
 	};
 
@@ -579,7 +595,11 @@ export default function EventTickets( {
 	};
 
 	const serializeOptionForSave = ( option, index ) => {
-		const { period_prices_map: _unused, ...rest } = option;
+		const {
+			period_prices_map: _unused,
+			client_key: _unusedKey,
+			...rest
+		} = option;
 		return {
 			...rest,
 			sort_order: index,
@@ -2326,7 +2346,11 @@ export default function EventTickets( {
 															? option.collaborator_ids
 															: [];
 													return (
-														<tr key={ index }>
+														<tr
+															key={
+																option.client_key
+															}
+														>
 															<td>
 																<VStack
 																	spacing={
@@ -2562,28 +2586,53 @@ export default function EventTickets( {
 																/>
 															</td>
 															<td>
-																<Button
-																	variant="tertiary"
-																	isDestructive
-																	size="small"
-																	onClick={ () => {
-																		setOptions(
-																			options.filter(
-																				(
-																					_,
-																					i
-																				) =>
-																					i !==
-																					index
-																			)
-																		);
-																	} }
+																<HStack
+																	justify="flex-end"
+																	wrap
 																>
-																	{ __(
-																		'Remove',
-																		'fair-events'
+																	{ index >
+																		0 && (
+																		<Button
+																			variant="tertiary"
+																			size="small"
+																			onClick={ () =>
+																				setOptions(
+																					moveToTop(
+																						options,
+																						index
+																					)
+																				)
+																			}
+																		>
+																			{ __(
+																				'Move to top',
+																				'fair-events'
+																			) }
+																		</Button>
 																	) }
-																</Button>
+																	<Button
+																		variant="tertiary"
+																		isDestructive
+																		size="small"
+																		onClick={ () => {
+																			setOptions(
+																				options.filter(
+																					(
+																						_,
+																						i
+																					) =>
+																						i !==
+																						index
+																				)
+																			);
+																		} }
+																	>
+																		{ __(
+																			'Remove',
+																			'fair-events'
+																		) }
+																	</Button>
+																</HStack>
 															</td>
 														</tr>
 													);
@@ -2608,6 +2657,7 @@ export default function EventTickets( {
 											period_prices_map: {},
 											collaborator_ids: [],
 											sort_order: options.length,
+											client_key: newOptionClientKey(),
 										},
 									] );
 								} }

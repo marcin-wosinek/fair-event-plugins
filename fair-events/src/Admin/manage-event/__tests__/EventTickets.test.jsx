@@ -24,6 +24,7 @@ import apiFetch from '@wordpress/api-fetch';
 import EventTickets, {
 	exclusiveEndToInclusiveDate,
 	inclusiveEndToExclusiveDate,
+	moveToTop,
 } from '../EventTickets.js';
 import { salePeriodColor } from '../SalePeriodsCalendar.js';
 
@@ -1768,5 +1769,149 @@ describe( 'EventTickets — automatic first start from site-local today (#1582)'
 		expect(
 			within( container ).getByText( /no usable schedule/i )
 		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'EventTickets — move an activity to the top (#1728)', () => {
+	const activity = ( id, name, sortOrder ) => ( {
+		id,
+		name,
+		short_name: '',
+		price: 0,
+		capacity: null,
+		collaborator_ids: [],
+		period_prices: [],
+		sort_order: sortOrder,
+	} );
+
+	const initialDataWithActivities = {
+		...initialDataWithTicketType,
+		options: [
+			activity( 11, 'Yoga', 0 ),
+			activity( 12, 'Dinner', 1 ),
+			activity( 13, 'Hike', 2 ),
+		],
+	};
+
+	// The Add-ons panel starts collapsed.
+	const renderActivities = ( extraProps = {} ) => {
+		const result = renderTickets( {
+			initialData: initialDataWithActivities,
+			...extraProps,
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Add-ons' } ) );
+		return result;
+	};
+
+	const activityNames = ( container ) =>
+		Array.from(
+			container.querySelectorAll( 'input[placeholder="Add-on name"]' )
+		).map( ( input ) => input.value );
+
+	it( 'moveToTop keeps the other items in their relative order', () => {
+		expect( moveToTop( [ 'a', 'b', 'c', 'd' ], 2 ) ).toEqual( [
+			'c',
+			'a',
+			'b',
+			'd',
+		] );
+		const items = [ 'a', 'b' ];
+		expect( moveToTop( items, 0 ) ).toBe( items );
+	} );
+
+	it( 'offers "Move to top" on every activity except the first', () => {
+		const { container } = renderActivities();
+
+		const rows = Array.from(
+			container.querySelectorAll( 'input[placeholder="Add-on name"]' )
+		).map( ( input ) => input.closest( 'tr' ) );
+
+		expect(
+			within( rows[ 0 ] ).queryByRole( 'button', {
+				name: 'Move to top',
+			} )
+		).not.toBeInTheDocument();
+		expect(
+			within( rows[ 1 ] ).getByRole( 'button', { name: 'Move to top' } )
+		).toBeInTheDocument();
+		expect(
+			within( rows[ 2 ] ).getByRole( 'button', { name: 'Move to top' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'moves the activity first immediately, keeping unsaved edits attached', () => {
+		const onDirtyChange = jest.fn();
+		const { container } = renderActivities( { onDirtyChange } );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
+
+		// An unsaved edit on the row being moved must travel with it.
+		const hikeInput = screen.getByDisplayValue( 'Hike' );
+		fireEvent.change( hikeInput, { target: { value: 'Hike (long)' } } );
+
+		const hikeRow = hikeInput.closest( 'tr' );
+		fireEvent.click(
+			within( hikeRow ).getByRole( 'button', { name: 'Move to top' } )
+		);
+
+		expect( activityNames( container ) ).toEqual( [
+			'Hike (long)',
+			'Yoga',
+			'Dinner',
+		] );
+		// Same DOM input stays bound to the same activity after reordering.
+		expect( hikeInput ).toHaveValue( 'Hike (long)' );
+		expect( hikeRow.parentElement.firstElementChild ).toBe( hikeRow );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
+	} );
+
+	it( 'marks the editor dirty for a reorder alone', () => {
+		const onDirtyChange = jest.fn();
+		renderActivities( { onDirtyChange } );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
+
+		const dinnerRow = screen.getByDisplayValue( 'Dinner' ).closest( 'tr' );
+		fireEvent.click(
+			within( dinnerRow ).getByRole( 'button', { name: 'Move to top' } )
+		);
+
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
+	} );
+
+	it( 'saves the new order with unchanged activity IDs', async () => {
+		const { onSaveRef } = renderActivities();
+
+		const hikeRow = screen.getByDisplayValue( 'Hike' ).closest( 'tr' );
+		fireEvent.click(
+			within( hikeRow ).getByRole( 'button', { name: 'Move to top' } )
+		);
+
+		let savedPayload = null;
+		apiFetch.mockImplementation( ( { method, data } ) => {
+			if ( method === 'PUT' ) {
+				savedPayload = data;
+				return Promise.resolve( initialDataWithActivities );
+			}
+			return new Promise( () => {} );
+		} );
+
+		await act( async () => {
+			await onSaveRef.current();
+		} );
+
+		expect(
+			savedPayload.options.map( ( { id, name, sort_order: order } ) => ( {
+				id,
+				name,
+				order,
+			} ) )
+		).toEqual( [
+			{ id: 13, name: 'Hike', order: 0 },
+			{ id: 11, name: 'Yoga', order: 1 },
+			{ id: 12, name: 'Dinner', order: 2 },
+		] );
+		// The client-only row key never reaches the server.
+		savedPayload.options.forEach( ( option ) =>
+			expect( option ).not.toHaveProperty( 'client_key' )
+		);
 	} );
 } );
