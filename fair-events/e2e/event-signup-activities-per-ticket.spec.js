@@ -2,7 +2,8 @@
  * E2E: a buyer of several tickets chooses the activities of each ticket,
  * with an explicit way to apply the first ticket's choice to all of them;
  * an administrator adding an activity past its limit on the Audience tab
- * must give a reason (#1697).
+ * must give a reason (#1697); moving an activity to the top in the Tickets
+ * editor reorders the signup list without touching earlier selections (#1728).
  */
 
 import { test, expect } from '@playwright/test';
@@ -280,5 +281,67 @@ test.describe( 'Event Signup — activities for each ticket', () => {
 		expect( other.tickets[ 0 ].over_capacity_activity_ids ).toHaveLength(
 			1
 		);
+	} );
+
+	test( 'moving an activity to the top reorders the signup list', async ( {
+		browser,
+	} ) => {
+		await adminPage.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=prices`
+		);
+		await adminPage.getByRole( 'button', { name: 'Add-ons' } ).click();
+		const activityNames = () =>
+			adminPage
+				.getByPlaceholder( 'Add-on name' )
+				.evaluateAll( ( inputs ) => inputs.map( ( i ) => i.value ) );
+		await expect.poll( activityNames ).toEqual( [ 'Workshop', 'Show' ] );
+
+		const rowOf = ( name ) =>
+			adminPage.getByRole( 'row' ).filter( {
+				has: adminPage.locator( `input[value="${ name }"]` ),
+			} );
+		await expect(
+			rowOf( 'Workshop' ).getByRole( 'button', { name: 'Move to top' } )
+		).toHaveCount( 0 );
+		await rowOf( 'Show' )
+			.getByRole( 'button', { name: 'Move to top' } )
+			.click();
+		await expect.poll( activityNames ).toEqual( [ 'Show', 'Workshop' ] );
+
+		await adminPage.getByRole( 'button', { name: 'Save tickets' } ).click();
+		await expect(
+			adminPage
+				.locator( '.components-notice' )
+				.getByText( 'Tickets saved successfully.' )
+		).toBeVisible();
+
+		await adminPage.reload();
+		await adminPage.getByRole( 'button', { name: 'Add-ons' } ).click();
+		await expect.poll( activityNames ).toEqual( [ 'Show', 'Workshop' ] );
+
+		const visitor = await browser.newContext();
+		const page = await visitor.newPage();
+		await page.goto( `/?page_id=${ signupPageId }` );
+		const form = page.locator( '.fair-events-get-tickets-form' );
+		const workshop = form.getByRole( 'checkbox', { name: /^Workshop/ } );
+		const show = form.getByRole( 'checkbox', { name: /^Show/ } );
+		await expect( show.first() ).toBeVisible();
+		const [ showBox, workshopBox ] = await Promise.all( [
+			show.first().boundingBox(),
+			workshop.first().boundingBox(),
+		] );
+		expect( showBox.y ).toBeLessThan( workshopBox.y );
+		await visitor.close();
+
+		// The earlier buyer's selections are untouched by the reorder.
+		const participants = await apiFetch( adminPage, {
+			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants?event_date_id=${ eventDateId }`,
+		} );
+		const holder = participants.find(
+			( p ) => p.participant_email === buyerEmail
+		);
+		expect(
+			holder.tickets.map( ( t ) => t.activity_names.sort() )
+		).toEqual( [ [ 'Workshop' ], [ 'Show', 'Workshop' ] ] );
 	} );
 } );
