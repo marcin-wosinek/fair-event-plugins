@@ -349,6 +349,69 @@ test.describe( 'Activity capacity per ticket', () => {
 		expect( await taken( workshop, eventDateId ) ).toBe( 0 );
 	} );
 
+	test( 'the admin list gives each ticket its own confirmed extras, without unpaid holds (#1708)', async () => {
+		const {
+			eventDateId,
+			typeIds: [ typeId ],
+			optionIds: { Lunch: lunch, Dinner: dinner, Tour: tour },
+		} = await createEvent( {
+			ticketTypes: [ { name: 'Regular' } ],
+			activities: [
+				{ name: 'Lunch', capacity: null },
+				{ name: 'Dinner', capacity: null },
+				{ name: 'Tour', price: 10, capacity: null },
+			],
+		} );
+
+		const freeEmail = uniqueEmail( 'differing-siblings' );
+		const free = await buy( {
+			event_date_id: eventDateId,
+			ticket_type_id: typeId,
+			email: freeEmail,
+			quantity: 3,
+			ticket_activities: [ [ lunch ], [ dinner, lunch ], [] ],
+		} );
+		expect( free.status, JSON.stringify( free.body ) ).toBe( 200 );
+
+		const signup = await signupOf( eventDateId, freeEmail );
+		expect( signup.tickets ).toHaveLength( 3 );
+		expect( signup.tickets.map( ( ticket ) => ticket.position ) ).toEqual( [
+			1, 2, 3,
+		] );
+		expect(
+			new Set( signup.tickets.map( ( ticket ) => ticket.reference ) ).size
+		).toBe( 3 );
+		expect(
+			signup.tickets.map( ( ticket ) =>
+				[ ...ticket.confirmed_activity_ids ].sort( ( a, b ) => a - b )
+			)
+		).toEqual( [
+			[ lunch ],
+			[ lunch, dinner ].sort( ( a, b ) => a - b ),
+			[],
+		] );
+
+		// An unpaid selection holds its place but is not a confirmed extra.
+		const heldEmail = uniqueEmail( 'held-extra' );
+		const held = await buy( {
+			event_date_id: eventDateId,
+			ticket_type_id: typeId,
+			email: heldEmail,
+			ticket_option_ids: [ tour ],
+		} );
+		expect( held.status, JSON.stringify( held.body ) ).toBe( 200 );
+		expect( held.body.status ).toBe( 'payment_required' );
+		const heldSignup = await signupOf( eventDateId, heldEmail );
+		expect( heldSignup.tickets[ 0 ].activity_ids ).toEqual( [ tour ] );
+		expect( heldSignup.tickets[ 0 ].confirmed_activity_ids ).toEqual( [] );
+
+		await fixture( 'pay', { signup_id: heldSignup.id } );
+		const paidSignup = await signupOf( eventDateId, heldEmail );
+		expect( paidSignup.tickets[ 0 ].confirmed_activity_ids ).toEqual( [
+			tour,
+		] );
+	} );
+
 	test( 'a cancelled or refunded ticket releases only its own activity place', async () => {
 		const {
 			eventDateId,

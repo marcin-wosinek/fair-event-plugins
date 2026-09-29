@@ -551,6 +551,26 @@ test.describe( 'Ticket units', () => {
 			}
 		} );
 
+		test( 'the admin list gives backfilled registrations one ticket row per unit (#1708)', async () => {
+			const listed = ( await listSignups( eventDateId ) ).filter(
+				( signup ) => legacyIds.includes( Number( signup.id ) )
+			);
+			expect( listed ).toHaveLength( legacy.length );
+			for ( const signup of listed ) {
+				const index = legacyIds.indexOf( Number( signup.id ) );
+				expect( signup.tickets ).toHaveLength(
+					legacy[ index ].quantity
+				);
+				expect(
+					new Set( signup.tickets.map( ( t ) => t.reference ) ).size
+				).toBe( legacy[ index ].quantity );
+				for ( const ticket of signup.tickets ) {
+					expect( ticket.reference ).toHaveLength( 8 );
+					expect( ticket.confirmed_activity_ids ).toEqual( [] );
+				}
+			}
+		} );
+
 		test( 'repeated runs do not duplicate units', async () => {
 			const before = await Promise.all(
 				legacyIds.map( async ( id ) => ( await unitsOf( id ) ).tickets )

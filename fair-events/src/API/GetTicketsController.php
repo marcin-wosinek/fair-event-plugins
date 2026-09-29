@@ -1793,21 +1793,28 @@ class GetTicketsController extends WP_REST_Controller {
 			// have given one ticket of the purchase another type.
 			$signup->tickets = array_map(
 				static function ( $ticket ) use ( $ticket_type_names, $ticket_activities ) {
-					$activity_ids = array();
+					$activity_ids           = array();
+					$confirmed_activity_ids = array();
 					foreach ( $ticket_activities[ (int) $ticket->id ] ?? array() as $row ) {
 						if ( \FairEvents\Models\EventTicketActivity::is_active_row( $row ) ) {
 							$activity_ids[] = (int) $row->ticket_option_id;
 						}
+						// Paid-for extras only: an activity counts once both it and
+						// its ticket are confirmed, as on the Audience tab.
+						if ( 'confirmed' === $row->status && 'confirmed' === (string) $ticket->status ) {
+							$confirmed_activity_ids[] = (int) $row->ticket_option_id;
+						}
 					}
 					return array(
-						'id'               => (int) $ticket->id,
-						'position'         => (int) $ticket->unit_position,
-						'reference'        => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
-						'ticket_type_id'   => $ticket->ticket_type_id ? (int) $ticket->ticket_type_id : null,
-						'ticket_type_name' => $ticket->ticket_type_id ? ( $ticket_type_names[ (int) $ticket->ticket_type_id ] ?? null ) : null,
-						'status'           => (string) $ticket->status,
-						'attended_at'      => $ticket->attended_at,
-						'activity_ids'     => $activity_ids,
+						'id'                     => (int) $ticket->id,
+						'position'               => (int) $ticket->unit_position,
+						'reference'              => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
+						'ticket_type_id'         => $ticket->ticket_type_id ? (int) $ticket->ticket_type_id : null,
+						'ticket_type_name'       => $ticket->ticket_type_id ? ( $ticket_type_names[ (int) $ticket->ticket_type_id ] ?? null ) : null,
+						'status'                 => (string) $ticket->status,
+						'attended_at'            => $ticket->attended_at,
+						'activity_ids'           => $activity_ids,
+						'confirmed_activity_ids' => $confirmed_activity_ids,
 					);
 				},
 				$tickets_by_signup[ (int) $signup->id ] ?? array()

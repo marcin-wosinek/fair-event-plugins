@@ -31,7 +31,9 @@ function escapeCsvField( value ) {
  * Build the export text for the given signup rows and columns.
  *
  * @param {Object}   args
- * @param {Array}    args.rows    Signup rows (already filtered to what's visible).
+ * @param {Array}    args.rows    Ticket rows (already filtered to what's visible),
+ *                                carrying their purchase's fields and an
+ *                                optional `ticketLabel`.
  * @param {Array}    args.columns Column descriptors: `{ id, label, getValue( { item } ) }`.
  * @param {string}   args.format  One of 'csv', 'oneline', 'markdown'.
  * @return {string} Export text
@@ -66,7 +68,11 @@ export function buildSignupExportText( { rows, columns, format } ) {
 	// Markdown.
 	return rows
 		.map( ( item ) => {
-			const heading = item.name || item.email || `#${ item.id }`;
+			const person = item.name || item.email || `#${ item.id }`;
+			// Tickets of the same purchaser are told apart by their label.
+			const heading = item.ticketLabel
+				? `${ person } — ${ item.ticketLabel }`
+				: person;
 			const lines = [ `## ${ heading }`, '' ];
 
 			columns.forEach( ( c ) => {

@@ -4,15 +4,17 @@
  * Component tests for the List tab (#1568 replaces the fixed-column CSV
  * download with the "Export" popup — see SignupExportModal.test.jsx for its
  * own coverage; #1683 narrows the table to confirmed registrations, hides
- * email and amount, and adds numbering and extra columns).
+ * email and amount, and adds numbering and extra columns; #1708 lists one
+ * row per ticket).
  *
  * Exercises:
- *   - Only confirmed registrations (paid or free) are listed and exported.
+ *   - Only confirmed registrations (paid or free) are listed and exported,
+ *     one row per ticket.
  *   - Email and amount stay out of the table and the delete dialog, but are
  *     still exported.
- *   - Rows are numbered from 1 after filtering.
+ *   - Ticket rows are numbered from 1 after filtering.
  *   - Each configured extra gets a column with a selected / not selected /
- *     unavailable indicator; no extras means no extra columns.
+ *     unavailable indicator per ticket; no extras means no extra columns.
  *   - Mailing opt-ins filter, empty states, and delete.
  *   - Move and Change ticket type, including the over-capacity reason step,
  *     and the over-capacity details (#1532).
@@ -26,11 +28,32 @@ import {
 	within,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import EventSignups, {
-	buildConfirmedOptionsByParticipant,
-} from '../EventSignups.js';
+import EventSignups, { expandTicketRows } from '../EventSignups.js';
 
 jest.mock( '@wordpress/api-fetch' );
+
+/**
+ * Ticket unit of a registration, as the get-tickets response lists it.
+ *
+ * @param {number} id        Ticket ID.
+ * @param {number} position  Position within its purchase.
+ * @param {Object} overrides Fields to override.
+ * @return {Object} Ticket
+ */
+function ticket( id, position, overrides = {} ) {
+	return {
+		id,
+		position,
+		reference: `REF${ String( id ).padStart( 5, '0' ) }`,
+		ticket_type_id: 3,
+		ticket_type_name: 'General',
+		status: 'confirmed',
+		attended_at: null,
+		activity_ids: [],
+		confirmed_activity_ids: [],
+		...overrides,
+	};
+}
 
 const signups = [
 	{
@@ -46,6 +69,7 @@ const signups = [
 		participant_id: 11,
 		mailing_opt_in: true,
 		created_at: '2026-07-20 10:00:00',
+		tickets: [ ticket( 101, 1 ) ],
 	},
 	{
 		id: 2,
@@ -60,6 +84,7 @@ const signups = [
 		participant_id: 12,
 		mailing_opt_in: false,
 		created_at: '2026-07-21 10:00:00',
+		tickets: [ ticket( 201, 1 ), ticket( 202, 2 ) ],
 	},
 ];
 
@@ -76,6 +101,9 @@ const signupWithMissingTicketType = {
 	participant_id: 13,
 	mailing_opt_in: false,
 	created_at: '2026-07-22 10:00:00',
+	tickets: [
+		ticket( 301, 1, { ticket_type_id: 99, ticket_type_name: null } ),
+	],
 };
 
 const unsuccessfulSignups = [
@@ -157,7 +185,7 @@ async function renderSignups( config = {} ) {
 	render( <EventSignups eventDateId={ 42 } /> );
 	const firstConfirmed = rows.find( ( row ) => row.status === 'confirmed' );
 	if ( firstConfirmed ) {
-		await screen.findByText( firstConfirmed.name );
+		await screen.findAllByText( firstConfirmed.name );
 	} else {
 		await screen.findByText( 'No confirmed registrations yet.' );
 	}
@@ -202,9 +230,10 @@ describe( 'EventSignups — list and Export button (#1568)', () => {
 			rows: [ signups[ 0 ], { ...signups[ 1 ], over_capacity: 1 } ],
 		} );
 		expect( screen.getByText( 'Confirmed' ) ).toBeInTheDocument();
+		// Over capacity is a registration-wide flag: shown on both tickets.
 		expect(
-			screen.getByText( 'Confirmed — over capacity' )
-		).toBeInTheDocument();
+			screen.getAllByText( 'Confirmed — over capacity' )
+		).toHaveLength( 2 );
 	} );
 
 	it.each( [ false, 0, '0' ] )(
@@ -267,8 +296,11 @@ describe( 'EventSignups — list and Export button (#1568)', () => {
 
 	it( 'shows the ticket type name, not its id, in the table', async () => {
 		await renderSignups();
-		expect( screen.getAllByText( 'General' ) ).toHaveLength( 2 );
-		expect( screen.queryByText( '3' ) ).not.toBeInTheDocument();
+		expect(
+			bodyRows().map(
+				( row ) => within( row ).getAllByRole( 'cell' )[ 3 ].textContent
+			)
+		).toEqual( [ 'General', 'General', 'General' ] );
 	} );
 
 	it( 'falls back to an em dash when the ticket type is missing or deleted', async () => {
@@ -334,14 +366,18 @@ describe( 'EventSignups — confirmed registrations only (#1683)', () => {
 		await renderSignups( { rows } );
 
 		expect( columnHeaders()[ 0 ] ).toBe( '#' );
+		// "Opted out" holds two tickets, so four ticket rows are numbered.
 		expect(
-			bodyRows().map( ( row ) => within( row ).getAllByRole( 'cell' ) )
-		).toHaveLength( 3 );
-		expect(
-			bodyRows().map(
-				( row ) => within( row ).getAllByRole( 'cell' )[ 0 ].textContent
-			)
-		).toEqual( [ '1', '2', '3' ] );
+			bodyRows().map( ( row ) => [
+				within( row ).getAllByRole( 'cell' )[ 0 ].textContent,
+				within( row ).getAllByRole( 'cell' )[ 1 ].textContent,
+			] )
+		).toEqual( [
+			[ '1', 'First in' ],
+			[ '2', 'Opted out' ],
+			[ '3', 'Opted out' ],
+			[ '4', 'Second in' ],
+		] );
 
 		fireEvent.click(
 			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
@@ -387,7 +423,9 @@ describe( 'EventSignups — confirmed registrations only (#1683)', () => {
 		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
 		const lines = writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' );
 		expect( lines[ 0 ] ).toContain( 'Email' );
-		expect( lines[ 0 ] ).toContain( 'Amount' );
+		expect( lines[ 0 ] ).toContain(
+			'Purchase total (once per registration)'
+		);
 		expect( lines[ 1 ] ).toContain( 'ada@example.com' );
 		expect( lines[ 1 ] ).toContain( '20.00' );
 		expect( lines.filter( Boolean ) ).toHaveLength( 2 );
@@ -408,8 +446,8 @@ describe( 'EventSignups — extras (#1683)', () => {
 		expect( columnHeaders() ).toEqual( [
 			'#',
 			'Name',
+			'Ticket',
 			'Ticket Type',
-			'Qty',
 			'Status',
 			'Transaction',
 			'Mailing',
@@ -428,8 +466,8 @@ describe( 'EventSignups — extras (#1683)', () => {
 			expect( columnHeaders() ).toEqual( [
 				'#',
 				'Name',
+				'Ticket',
 				'Ticket Type',
-				'Qty',
 				'Dinner',
 				'Afterparty',
 				'Status',
@@ -441,52 +479,55 @@ describe( 'EventSignups — extras (#1683)', () => {
 		);
 	} );
 
-	it( 'checks only extras the participant holds as confirmed', async () => {
+	it( 'checks only extras each ticket holds as confirmed, per ticket', async () => {
 		await renderSignups( {
 			ticketOptions: options,
-			participants: [
+			rows: [
 				{
-					participant_id: 11,
-					ticket_option_ids: [ 7, 8 ],
-					// 8 is still held for an unpaid add-on.
-					confirmed_ticket_option_ids: [ 7 ],
+					...signups[ 0 ],
+					tickets: [
+						ticket( 101, 1, {
+							// 8 is still held for an unpaid add-on.
+							activity_ids: [ 7, 8 ],
+							confirmed_activity_ids: [ 7 ],
+						} ),
+					],
 				},
 				{
-					participant_id: 12,
-					ticket_option_ids: [],
-					confirmed_ticket_option_ids: [],
+					...signups[ 1 ],
+					tickets: [
+						ticket( 201, 1, { confirmed_activity_ids: [ 8 ] } ),
+						ticket( 202, 2 ),
+					],
 				},
 			],
 		} );
 
-		await waitFor( () =>
-			expect(
-				within( bodyRows()[ 0 ] ).getByRole( 'img', {
-					name: 'Selected',
-				} )
-			).toBeInTheDocument()
-		);
-		const [ ada, bob ] = bodyRows();
-		expect(
-			within( ada )
+		const indicators = ( row ) =>
+			within( row )
 				.getAllByRole( 'img' )
-				.map( ( img ) => img.getAttribute( 'aria-label' ) )
-		).toEqual( [ 'Selected', 'Not selected' ] );
-		expect(
-			within( bob )
-				.getAllByRole( 'img' )
-				.map( ( img ) => img.getAttribute( 'aria-label' ) )
-		).toEqual( [ 'Not selected', 'Not selected' ] );
+				.map( ( img ) => img.getAttribute( 'aria-label' ) );
+		const [ ada, bobFirst, bobSecond ] = bodyRows();
+		expect( indicators( ada ) ).toEqual( [ 'Selected', 'Not selected' ] );
+		expect( indicators( bobFirst ) ).toEqual( [
+			'Not selected',
+			'Selected',
+		] );
+		expect( indicators( bobSecond ) ).toEqual( [
+			'Not selected',
+			'Not selected',
+		] );
 	} );
 
 	it( 'shows a check for selected extras and leaves unselected cells empty', async () => {
 		await renderSignups( {
 			ticketOptions: options,
-			participants: [
+			rows: [
 				{
-					participant_id: 11,
-					ticket_option_ids: [ 7 ],
-					confirmed_ticket_option_ids: [ 7 ],
+					...signups[ 0 ],
+					tickets: [
+						ticket( 101, 1, { confirmed_activity_ids: [ 7 ] } ),
+					],
 				},
 			],
 		} );
@@ -507,49 +548,27 @@ describe( 'EventSignups — extras (#1683)', () => {
 		expect( document.body ).not.toHaveTextContent( /[☑☐]/ );
 	} );
 
-	it( 'shows an unavailable indicator when a registration has no Audience record', async () => {
-		await renderSignups( {
-			rows: [ { ...signups[ 0 ], participant_id: null } ],
-			ticketOptions: options,
-			participants: [],
-		} );
-
-		await waitFor( () =>
-			expect(
-				screen.getAllByRole( 'img', { name: 'Selection unavailable' } )
-			).toHaveLength( 2 )
-		);
-	} );
-
-	it( 'shows an unavailable indicator when the Audience roster fails to load', async () => {
-		await renderSignups( {
-			ticketOptions: options,
-			participants: new Error( 'boom' ),
-		} );
-
-		await waitFor( () =>
-			expect(
-				screen.getAllByRole( 'img', { name: 'Selection unavailable' } )
-			).toHaveLength( 4 )
-		);
-		expect(
-			screen.queryByRole( 'img', { name: 'Not selected' } )
-		).not.toBeInTheDocument();
-	} );
-
-	it( 'keeps extra columns but marks selections unavailable without Fair Audience', async () => {
+	it( 'shows ticket extras without Fair Audience and never asks it', async () => {
 		delete window.fairEventsManageEventData;
-		await renderSignups( { ticketOptions: options } );
+		await renderSignups( {
+			ticketOptions: options,
+			rows: [
+				{
+					...signups[ 0 ],
+					tickets: [
+						ticket( 101, 1, { confirmed_activity_ids: [ 8 ] } ),
+					],
+				},
+			],
+		} );
 
 		await waitFor( () => expect( columnHeaders() ).toContain( 'Dinner' ) );
 		expect(
-			screen.getAllByRole( 'img', { name: 'Selection unavailable' } )
-		).toHaveLength( 4 );
+			within( bodyRows()[ 0 ] ).getByRole( 'img', { name: 'Selected' } )
+		).toBeInTheDocument();
 		expect(
-			document.querySelector( '.components-notice__content' )
-		).toHaveTextContent(
-			'Selected extras are shown only when Fair Audience is active.'
-		);
+			screen.queryByRole( 'img', { name: 'Selection unavailable' } )
+		).not.toBeInTheDocument();
 		expect( apiFetch ).not.toHaveBeenCalledWith(
 			expect.objectContaining( {
 				path: expect.stringContaining( '/fair-audience/' ),
@@ -558,18 +577,49 @@ describe( 'EventSignups — extras (#1683)', () => {
 	} );
 } );
 
-describe( 'buildConfirmedOptionsByParticipant', () => {
-	it( 'merges confirmed option IDs per participant and ignores unlinked rows', () => {
-		const map = buildConfirmedOptionsByParticipant( [
-			{ participant_id: '5', confirmed_ticket_option_ids: [ 1 ] },
-			{ participant_id: 5, confirmed_ticket_option_ids: [ '2' ] },
-			{ participant_id: 6 },
-			{ participant_id: null, confirmed_ticket_option_ids: [ 3 ] },
+describe( 'EventSignups — registrations without tickets yet (#1708)', () => {
+	it( 'keeps one flagged row, without a made-up reference, and explains why', async () => {
+		await renderSignups( {
+			ticketOptions: options,
+			rows: [ signups[ 0 ], { ...signups[ 1 ], tickets: [] } ],
+		} );
+
+		const rows = bodyRows();
+		expect( rows ).toHaveLength( 2 );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Bob, Jr.' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Ticket not created yet' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'General' );
+		expect(
+			within( rows[ 1 ] ).getAllByRole( 'img', {
+				name: 'Selection unavailable',
+			} )
+		).toHaveLength( 2 );
+		expect(
+			document.querySelector( '.components-notice__content' )
+		).toHaveTextContent(
+			'Some older registrations are still being split into individual tickets.'
+		);
+	} );
+} );
+
+describe( 'expandTicketRows', () => {
+	it( 'expands each registration into its tickets, in order', () => {
+		const rows = expandTicketRows( [
+			signups[ 1 ],
+			{ ...signups[ 0 ], tickets: undefined },
 		] );
 
-		expect( [ ...map.get( 5 ) ] ).toEqual( [ 1, 2 ] );
-		expect( map.get( 6 ).size ).toBe( 0 );
-		expect( map.size ).toBe( 2 );
+		expect(
+			rows.map( ( row ) => [
+				row.signup.id,
+				row.ticket?.id ?? null,
+				row.isFirstTicket,
+			] )
+		).toEqual( [
+			[ 2, 201, true ],
+			[ 2, 202, false ],
+			[ 1, null, true ],
+		] );
 	} );
 } );
 
@@ -614,7 +664,9 @@ describe( 'EventSignups — mailing consent normalization (#1492)', () => {
 				consent.optedIn ? 'Opted in' : 'Opted out'
 			} ${ index }`;
 			if ( consent.optedIn ) {
-				expect( screen.getByText( name ) ).toBeInTheDocument();
+				expect( screen.getAllByText( name ).length ).toBeGreaterThan(
+					0
+				);
 			} else {
 				expect( screen.queryByText( name ) ).not.toBeInTheDocument();
 			}
@@ -635,6 +687,9 @@ describe( 'EventSignups — delete signup (#1464)', () => {
 		expect( dialog ).not.toHaveTextContent( 'bob@example.com' );
 		expect( dialog ).not.toHaveTextContent( '40.00' );
 		expect( dialog ).toHaveTextContent( 'confirmed' );
+		expect( dialog ).toHaveTextContent(
+			'Delete the registration for Bob, Jr., with all 2 of its tickets?'
+		);
 		expect( dialog ).toHaveTextContent( 'This deletion is permanent.' );
 		expect( dialog ).toHaveTextContent(
 			'does not refund or cancel any payment-provider transaction'
@@ -662,7 +717,7 @@ describe( 'EventSignups — delete signup (#1464)', () => {
 			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
 		);
 		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Delete signup' } )
+			screen.getByRole( 'button', { name: 'Delete registration' } )
 		);
 
 		await waitFor( () =>
@@ -670,10 +725,11 @@ describe( 'EventSignups — delete signup (#1464)', () => {
 				screen.queryByText( 'Ada Lovelace' )
 			).not.toBeInTheDocument()
 		);
-		expect( screen.getByText( 'Bob, Jr.' ) ).toBeInTheDocument();
 		expect(
-			within( bodyRows()[ 0 ] ).getAllByRole( 'cell' )[ 0 ]
-		).toHaveTextContent( '1' );
+			bodyRows().map(
+				( row ) => within( row ).getAllByRole( 'cell' )[ 0 ].textContent
+			)
+		).toEqual( [ '1', '2' ] );
 		expect( apiFetch ).toHaveBeenLastCalledWith( {
 			path: '/fair-events/v1/get-tickets/1',
 			method: 'DELETE',
@@ -689,7 +745,7 @@ describe( 'EventSignups — delete signup (#1464)', () => {
 			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
 		);
 		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Delete signup' } )
+			screen.getByRole( 'button', { name: 'Delete registration' } )
 		);
 
 		await waitFor( () =>
@@ -993,6 +1049,7 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 				status: 'confirmed',
 				attended_at: null,
 				activity_ids: [ 7 ],
+				confirmed_activity_ids: [ 7 ],
 			},
 			{
 				id: 302,
@@ -1003,6 +1060,7 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 				status: 'confirmed',
 				attended_at: null,
 				activity_ids: [],
+				confirmed_activity_ids: [],
 			},
 		],
 	};
@@ -1011,23 +1069,13 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 		return document.querySelector( `tr[data-ticket-id="${ id }"]` );
 	}
 
-	it( 'lists each ticket of a purchase with its own type and activities when Fair Audience is active', async () => {
-		window.fairEventsManageEventData = { audienceUrl: '/audience' };
+	it( 'lists each ticket of a purchase as its own row with its own type and activities', async () => {
 		await renderSignups( {
 			rows: [ purchase ],
 			ticketOptions: options,
 		} );
 
-		const purchaseRow = bodyRows()[ 0 ];
-		expect(
-			within( purchaseRow ).getByText( 'Mixed types' )
-		).toBeInTheDocument();
-		expect(
-			within( purchaseRow ).queryByRole( 'button', {
-				name: 'Change ticket type',
-			} )
-		).not.toBeInTheDocument();
-
+		expect( bodyRows() ).toHaveLength( 2 );
 		expect( ticketRow( 301 ) ).toHaveTextContent( 'Ticket 1 (AAAA1111)' );
 		expect( ticketRow( 301 ) ).toHaveTextContent( 'General' );
 		expect(
@@ -1035,6 +1083,38 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 		).toBeInTheDocument();
 		expect( ticketRow( 302 ) ).toHaveTextContent( 'Ticket 2 (AE2671B5)' );
 		expect( ticketRow( 302 ) ).toHaveTextContent( 'Reduced' );
+		expect(
+			within( ticketRow( 302 ) ).queryByRole( 'img', {
+				name: 'Selected',
+			} )
+		).not.toBeInTheDocument();
+		// Both rows name the purchaser.
+		expect( ticketRow( 302 ) ).toHaveTextContent( 'Bob, Jr.' );
+	} );
+
+	it( 'puts registration-wide actions on the first ticket row only, labelled as such', async () => {
+		await renderSignups( { rows: [ { ...purchase, can_move: true } ] } );
+
+		const first = ticketRow( 301 );
+		expect( first ).toHaveTextContent( 'Registration (2 tickets):' );
+		expect(
+			within( first ).getByRole( 'button', { name: 'Move' } )
+		).toBeInTheDocument();
+		expect(
+			within( first ).getByRole( 'button', { name: 'Delete' } )
+		).toBeInTheDocument();
+		expect(
+			within( ticketRow( 302 ) ).queryAllByRole( 'button' )
+		).toHaveLength( 0 );
+
+		fireEvent.click(
+			within( first ).getByRole( 'button', { name: 'Move' } )
+		);
+		expect(
+			await screen.findByText(
+				'This moves the whole registration, with all 2 of its tickets.'
+			)
+		).toBeInTheDocument();
 	} );
 
 	it( 'opens the shared ticket editor for the chosen ticket and reloads after saving', async () => {
@@ -1072,7 +1152,7 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 			return listImpl( args );
 		} );
 		render( <EventSignups eventDateId={ 42 } /> );
-		await screen.findByText( 'Bob, Jr.' );
+		await screen.findAllByText( 'Bob, Jr.' );
 
 		fireEvent.click(
 			within( ticketRow( 302 ) ).getByRole( 'button', {
@@ -1108,13 +1188,16 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 		expect( listLoads ).toHaveLength( 2 );
 	} );
 
-	it( 'keeps the signup-wide type change and hides ticket rows without Fair Audience', async () => {
+	it( 'keeps the registration-wide type change and ticket rows, without the editor, without Fair Audience', async () => {
+		delete window.fairEventsManageEventData;
 		await renderSignups( { rows: [ purchase ] } );
 
 		expect(
-			screen.getByRole( 'button', { name: 'Change ticket type' } )
+			within( ticketRow( 301 ) ).getByRole( 'button', {
+				name: 'Change ticket type',
+			} )
 		).toBeInTheDocument();
-		expect( ticketRow( 301 ) ).toBeNull();
+		expect( ticketRow( 302 ) ).toHaveTextContent( 'Ticket 2 (AE2671B5)' );
 		expect(
 			screen.queryByRole( 'button', { name: /^Edit Ticket/ } )
 		).not.toBeInTheDocument();

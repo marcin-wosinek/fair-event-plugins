@@ -1,25 +1,49 @@
 /**
  * @jest-environment jsdom
  *
- * Component tests for the Signups tab's configurable export popup (#1568).
+ * Component tests for the List tab's configurable export popup (#1568),
+ * exporting one row per ticket (#1708).
  *
  * Exercises:
  *   - Column picker (all vs. handpicked) and format switch (markdown / CSV /
  *     one line) change the copied/downloaded output.
+ *   - One exported entry per ticket in every format, each with its own
+ *     reference, type and extras; the purchase total is given once per
+ *     registration.
  *   - "Include Fair Form answers" appears only when at least one loaded
- *     signup carries an answer, and joins the column picker when enabled.
- *   - A signup missing an answer for a selected question exports an empty
- *     value without being dropped.
+ *     registration carries an answer, and joins the column picker when
+ *     enabled.
+ *   - Answers stay with the ticket they belong to; answers kept with no
+ *     ticket go on the registration's first ticket only, flagged for review.
  *   - Duplicate question labels get a numeric suffix.
  */
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from '../SignupExportModal.js';
+import { expandTicketRows } from '../EventSignups.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
-const baseRows = [
+const ticketOptions = [
+	{ id: 7, name: 'Dinner buffet', short_name: 'Dinner' },
+	{ id: 8, name: 'Afterparty', short_name: '' },
+];
+
+function ticket( id, position, overrides = {} ) {
+	return {
+		id,
+		position,
+		reference: `REF${ String( id ).padStart( 5, '0' ) }`,
+		ticket_type_id: 3,
+		ticket_type_name: 'General',
+		status: 'confirmed',
+		confirmed_activity_ids: [],
+		...overrides,
+	};
+}
+
+const signups = [
 	{
 		id: 1,
 		name: 'Ada Lovelace',
@@ -31,24 +55,79 @@ const baseRows = [
 		transaction_id: 501,
 		mailing_opt_in: true,
 		created_at: '2026-07-20 10:00:00',
+		tickets: [ ticket( 101, 1, { confirmed_activity_ids: [ 7 ] } ) ],
 	},
 	{
 		id: 2,
 		name: 'Bob Smith',
 		email: 'bob@example.com',
 		ticket_type_name: 'General',
-		quantity: 1,
-		amount: '20.00',
+		quantity: 3,
+		amount: '60.00',
 		status: 'confirmed',
 		transaction_id: 502,
 		mailing_opt_in: false,
 		created_at: '2026-07-21 10:00:00',
+		tickets: [
+			ticket( 201, 1, { confirmed_activity_ids: [ 7 ] } ),
+			ticket( 202, 2, {
+				ticket_type_id: 61,
+				ticket_type_name: 'Reduced',
+				confirmed_activity_ids: [ 8, 7 ],
+			} ),
+			ticket( 203, 3 ),
+		],
 	},
 ];
 
-function signupWithAnswers( id, answers ) {
-	const row = baseRows.find( ( r ) => r.id === id );
-	return { ...row, answers };
+const rows = expandTicketRows( signups );
+
+const diet = ( value, key = 'diet', text = 'Dietary needs?' ) => [
+	{
+		question_key: key,
+		question_text: text,
+		question_type: 'short_text',
+		answer_value: value,
+	},
+];
+
+/**
+ * An include_answers response: the registrations, with answers attached to
+ * the given tickets and, optionally, answers kept with no ticket.
+ *
+ * @param {Object} byTicketId         Ticket answers by ticket ID.
+ * @param {Object} unlinkedBySignupId Answers with no ticket by signup ID.
+ * @return {Array} Response
+ */
+function answersResponse( byTicketId = {}, unlinkedBySignupId = {} ) {
+	return signups.map( ( signup ) => {
+		const tickets = signup.tickets.map( ( t ) => ( {
+			...t,
+			answers: byTicketId[ t.id ]?.answers || [],
+			answers_need_review: !! byTicketId[ t.id ]?.needsReview,
+		} ) );
+		const firstWith = tickets.find( ( t ) => t.answers.length );
+		return {
+			...signup,
+			tickets,
+			answers: firstWith
+				? firstWith.answers
+				: unlinkedBySignupId[ signup.id ] || [],
+			answers_ticket_id: firstWith ? firstWith.id : null,
+			answers_need_review: false,
+		};
+	} );
+}
+
+function renderModal() {
+	render(
+		<SignupExportModal
+			eventDateId={ 42 }
+			rows={ rows }
+			ticketOptions={ ticketOptions }
+			onClose={ jest.fn() }
+		/>
+	);
 }
 
 function mockClipboard() {
@@ -71,25 +150,33 @@ function uncheckAllExcept( keepLabels ) {
 	} );
 }
 
+async function copyCsvWithAnswers( keepLabels ) {
+	fireEvent.click(
+		await screen.findByRole( 'checkbox', {
+			name: 'Include Fair Form answers',
+		} )
+	);
+	fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
+	fireEvent.click(
+		screen.getByRole( 'radio', { name: 'Handpicked columns' } )
+	);
+	uncheckAllExcept( [ ...keepLabels, 'Include Fair Form answers' ] );
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Copy to clipboard' } )
+	);
+	await screen.findByText( 'Copied to clipboard.' );
+}
+
 afterEach( () => {
 	jest.clearAllMocks();
 	delete navigator.clipboard;
 } );
 
-describe( 'SignupExportModal — columns and format', () => {
-	it( 'copies all base columns in CSV by default when switched to CSV format', async () => {
-		apiFetch.mockResolvedValue(
-			baseRows.map( ( r ) => ( { ...r, answers: [] } ) )
-		);
+describe( 'SignupExportModal — ticket rows (#1708)', () => {
+	it( 'exports one CSV row per ticket with its own reference, type and extras, and the purchase total once', async () => {
+		apiFetch.mockResolvedValue( answersResponse() );
 		const writeText = mockClipboard();
-
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ baseRows }
-				onClose={ jest.fn() }
-			/>
-		);
+		renderModal();
 
 		await screen.findByRole( 'radio', { name: 'Markdown' } );
 		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
@@ -98,84 +185,79 @@ describe( 'SignupExportModal — columns and format', () => {
 		);
 
 		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
-		const text = writeText.mock.calls[ 0 ][ 0 ];
-		expect( text.split( '\r\n' )[ 0 ] ).toBe(
-			'Email,Name,Ticket Type,Quantity,Amount,Status,Transaction,Mailing,Date'
-		);
+		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
+			'Email,Name,Ticket,Ticket Type,Extras,Purchase total (once per registration),Status,Transaction,Mailing,Date',
+			'ada@example.com,Ada Lovelace,Ticket 1 (REF00101),General,Dinner buffet,20.00,confirmed,501,yes,2026-07-20 10:00:00',
+			'bob@example.com,Bob Smith,Ticket 1 (REF00201),General,Dinner buffet,60.00,confirmed,502,no,2026-07-21 10:00:00',
+			'bob@example.com,Bob Smith,Ticket 2 (REF00202),Reduced,"Dinner buffet, Afterparty",,confirmed,502,no,2026-07-21 10:00:00',
+			'bob@example.com,Bob Smith,Ticket 3 (REF00203),General,,,confirmed,502,no,2026-07-21 10:00:00',
+		] );
 	} );
 
 	it( 'narrows the export to handpicked columns', async () => {
-		apiFetch.mockResolvedValue(
-			baseRows.map( ( r ) => ( { ...r, answers: [] } ) )
-		);
+		apiFetch.mockResolvedValue( answersResponse() );
 		const writeText = mockClipboard();
-
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ baseRows }
-				onClose={ jest.fn() }
-			/>
-		);
+		renderModal();
 
 		await screen.findByRole( 'radio', { name: 'Markdown' } );
 		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
 		fireEvent.click(
 			screen.getByRole( 'radio', { name: 'Handpicked columns' } )
 		);
-		uncheckAllExcept( [ 'Email', 'Name' ] );
+		uncheckAllExcept( [ 'Email', 'Ticket' ] );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
 		);
 
 		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
-		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' )[ 0 ] ).toBe(
-			'Email,Name'
-		);
+		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
+			'Email,Ticket',
+			'ada@example.com,Ticket 1 (REF00101)',
+			'bob@example.com,Ticket 1 (REF00201)',
+			'bob@example.com,Ticket 2 (REF00202)',
+			'bob@example.com,Ticket 3 (REF00203)',
+		] );
 	} );
 
-	it( 'switches output when the format changes', async () => {
-		apiFetch.mockResolvedValue( [ signupWithAnswers( 1, [] ) ] );
+	it( 'gives one Markdown section and one line per ticket', async () => {
+		apiFetch.mockResolvedValue( answersResponse() );
 		const writeText = mockClipboard();
-
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ [ baseRows[ 0 ] ] }
-				onClose={ jest.fn() }
-			/>
-		);
+		renderModal();
 
 		await screen.findByRole( 'radio', { name: 'Markdown' } );
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
 		);
 		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
-		expect( writeText.mock.calls[ 0 ][ 0 ] ).toContain( '## Ada Lovelace' );
+		const markdown = writeText.mock.calls[ 0 ][ 0 ];
+		expect( markdown.match( /^## /gm ) ).toHaveLength( 4 );
+		expect( markdown ).toContain( '## Ada Lovelace — Ticket 1 (REF00101)' );
+		expect( markdown ).toContain( '## Bob Smith — Ticket 2 (REF00202)' );
+		expect( markdown ).toContain( '## Bob Smith — Ticket 3 (REF00203)' );
 
 		fireEvent.click(
-			screen.getByRole( 'radio', { name: 'One line per person' } )
+			screen.getByRole( 'radio', { name: 'One line per ticket' } )
 		);
+		fireEvent.click(
+			screen.getByRole( 'radio', { name: 'Handpicked columns' } )
+		);
+		uncheckAllExcept( [ 'Name', 'Ticket' ] );
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
 		);
 		await waitFor( () => expect( writeText ).toHaveBeenCalledTimes( 2 ) );
-		expect( writeText.mock.calls[ 1 ][ 0 ] ).not.toContain( '##' );
+		expect( writeText.mock.calls[ 1 ][ 0 ].split( '\r\n' ) ).toEqual( [
+			'Ada Lovelace Ticket 1 (REF00101)',
+			'Bob Smith Ticket 1 (REF00201)',
+			'Bob Smith Ticket 2 (REF00202)',
+			'Bob Smith Ticket 3 (REF00203)',
+		] );
 	} );
 
 	it( 'disables Copy and Download when no column is selected', async () => {
-		apiFetch.mockResolvedValue(
-			baseRows.map( ( r ) => ( { ...r, answers: [] } ) )
-		);
-
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ baseRows }
-				onClose={ jest.fn() }
-			/>
-		);
+		apiFetch.mockResolvedValue( answersResponse() );
+		renderModal();
 
 		await screen.findByRole( 'radio', { name: 'Markdown' } );
 		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
@@ -193,19 +275,10 @@ describe( 'SignupExportModal — columns and format', () => {
 	} );
 } );
 
-describe( 'SignupExportModal — Fair Form answers (#1568)', () => {
-	it( 'hides the "Include Fair Form answers" checkbox when no signup has an answer', async () => {
-		apiFetch.mockResolvedValue(
-			baseRows.map( ( r ) => ( { ...r, answers: [] } ) )
-		);
-
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ baseRows }
-				onClose={ jest.fn() }
-			/>
-		);
+describe( 'SignupExportModal — Fair Form answers (#1568, #1708)', () => {
+	it( 'hides the "Include Fair Form answers" checkbox when no ticket has an answer', async () => {
+		apiFetch.mockResolvedValue( answersResponse() );
+		renderModal();
 
 		await screen.findByRole( 'radio', { name: 'Markdown' } );
 		expect(
@@ -215,155 +288,89 @@ describe( 'SignupExportModal — Fair Form answers (#1568)', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'offers individually selectable answer columns once enabled', async () => {
-		apiFetch.mockResolvedValue( [
-			signupWithAnswers( 1, [
-				{
-					question_key: 'diet',
-					question_text: 'Dietary needs?',
-					question_type: 'short_text',
-					answer_value: 'Vegetarian',
-				},
-			] ),
-			signupWithAnswers( 2, [] ),
-		] );
-		const writeText = mockClipboard();
-
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ baseRows }
-				onClose={ jest.fn() }
-			/>
-		);
-
-		await screen.findByRole( 'checkbox', {
-			name: 'Include Fair Form answers',
-		} );
-		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
-		fireEvent.click(
-			screen.getByRole( 'checkbox', {
-				name: 'Include Fair Form answers',
+	it( 'keeps each ticket’s answers on its own row', async () => {
+		apiFetch.mockResolvedValue(
+			answersResponse( {
+				201: { answers: diet( 'Vegan' ) },
+				202: { answers: diet( 'Vegetarian' ), needsReview: true },
 			} )
 		);
-		fireEvent.click(
-			screen.getByRole( 'radio', { name: 'Handpicked columns' } )
-		);
-
-		expect(
-			screen.getByRole( 'checkbox', { name: 'Dietary needs?' } )
-		).toBeInTheDocument();
-
-		uncheckAllExcept( [
-			'Email',
-			'Dietary needs?',
-			'Include Fair Form answers',
-		] );
-
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
-		);
-
-		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
-		const lines = writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' );
-		// Ada has the answer, Bob does not — missing answer is empty, row kept.
-		expect( lines ).toEqual( [
-			'Email,Dietary needs?',
-			'ada@example.com,Vegetarian',
-			'bob@example.com,',
-		] );
-	} );
-
-	it( 'names the ticket each answer set belongs to', async () => {
-		const diet = ( value ) => [
-			{
-				question_key: 'diet',
-				question_text: 'Dietary needs?',
-				question_type: 'short_text',
-				answer_value: value,
-			},
-		];
-		apiFetch.mockResolvedValue( [
-			{
-				...signupWithAnswers( 1, diet( 'Vegan' ) ),
-				answers_ticket_id: 71,
-				answers_need_review: false,
-				tickets: [
-					{ id: 71, position: 1, reference: 'AE2671B5' },
-					{ id: 72, position: 2, reference: 'C0FFEE12' },
-				],
-			},
-			{
-				...signupWithAnswers( 2, diet( 'Vegetarian' ) ),
-				answers_ticket_id: 81,
-				answers_need_review: true,
-				tickets: [ { id: 81, position: 1, reference: 'BADC0DE1' } ],
-			},
-		] );
 		const writeText = mockClipboard();
+		renderModal();
 
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ baseRows }
-				onClose={ jest.fn() }
-			/>
-		);
-
-		fireEvent.click(
-			await screen.findByRole( 'checkbox', {
-				name: 'Include Fair Form answers',
-			} )
-		);
-		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
-		fireEvent.click(
-			screen.getByRole( 'radio', { name: 'Handpicked columns' } )
-		);
-		uncheckAllExcept( [
-			'Email',
+		await copyCsvWithAnswers( [
+			'Ticket',
 			'Answers for',
 			'Dietary needs?',
-			'Include Fair Form answers',
 		] );
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
-		);
 
 		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
 		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
-			'Email,Answers for,Dietary needs?',
-			'ada@example.com,Ticket 1 (AE2671B5),Vegan',
-			'bob@example.com,Ticket 1 (BADC0DE1) (needs review),Vegetarian',
+			'Ticket,Answers for,Dietary needs?',
+			'Ticket 1 (REF00101),,',
+			'Ticket 1 (REF00201),Ticket 1 (REF00201),Vegan',
+			'Ticket 2 (REF00202),Ticket 2 (REF00202) (needs review),Vegetarian',
+			'Ticket 3 (REF00203),,',
+		] );
+	} );
+
+	it( 'puts answers kept with no ticket on the first ticket only, flagged for review', async () => {
+		apiFetch.mockResolvedValue(
+			answersResponse( {}, { 2: diet( 'Pescatarian' ) } )
+		);
+		const writeText = mockClipboard();
+		renderModal();
+
+		await copyCsvWithAnswers( [
+			'Ticket',
+			'Answers for',
+			'Dietary needs?',
+		] );
+
+		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
+		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
+			'Ticket,Answers for,Dietary needs?',
+			'Ticket 1 (REF00101),,',
+			'Ticket 1 (REF00201),No ticket (needs review),Pescatarian',
+			'Ticket 2 (REF00202),,',
+			'Ticket 3 (REF00203),,',
+		] );
+	} );
+
+	it( 'treats answers from a Fair Form without ticket links as kept with no ticket', async () => {
+		apiFetch.mockResolvedValue(
+			signups.map( ( signup ) => ( {
+				...signup,
+				answers: signup.id === 2 ? diet( 'Halal' ) : [],
+			} ) )
+		);
+		const writeText = mockClipboard();
+		renderModal();
+
+		await copyCsvWithAnswers( [
+			'Ticket',
+			'Answers for',
+			'Dietary needs?',
+		] );
+
+		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
+		expect(
+			writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ).slice( 2 )
+		).toEqual( [
+			'Ticket 1 (REF00201),No ticket (needs review),Halal',
+			'Ticket 2 (REF00202),,',
+			'Ticket 3 (REF00203),,',
 		] );
 	} );
 
 	it( 'disambiguates duplicate question labels with a numeric suffix', async () => {
-		apiFetch.mockResolvedValue( [
-			signupWithAnswers( 1, [
-				{
-					question_key: 'q1',
-					question_text: 'Notes',
-					question_type: 'short_text',
-					answer_value: 'From form A',
-				},
-			] ),
-			signupWithAnswers( 2, [
-				{
-					question_key: 'q2',
-					question_text: 'Notes',
-					question_type: 'short_text',
-					answer_value: 'From form B',
-				},
-			] ),
-		] );
-
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ baseRows }
-				onClose={ jest.fn() }
-			/>
+		apiFetch.mockResolvedValue(
+			answersResponse( {
+				101: { answers: diet( 'From form A', 'q1', 'Notes' ) },
+				202: { answers: diet( 'From form B', 'q2', 'Notes' ) },
+			} )
 		);
+		renderModal();
 
 		fireEvent.click(
 			await screen.findByRole( 'checkbox', {
@@ -384,16 +391,9 @@ describe( 'SignupExportModal — Fair Form answers (#1568)', () => {
 } );
 
 describe( 'SignupExportModal — no Fair Form / load failure', () => {
-	it( 'stays usable for signup-only export when the answers request fails', async () => {
+	it( 'stays usable for a ticket-only export when the answers request fails', async () => {
 		apiFetch.mockRejectedValue( { message: 'fair-form unavailable' } );
-
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ baseRows }
-				onClose={ jest.fn() }
-			/>
-		);
+		renderModal();
 
 		await waitFor( () =>
 			expect(
@@ -415,14 +415,7 @@ describe( 'SignupExportModal — no Fair Form / load failure', () => {
 
 	it( 'requests answers scoped to the event date with include_answers=true', async () => {
 		apiFetch.mockResolvedValue( [] );
-
-		render(
-			<SignupExportModal
-				eventDateId={ 42 }
-				rows={ baseRows }
-				onClose={ jest.fn() }
-			/>
-		);
+		renderModal();
 
 		await waitFor( () =>
 			expect( apiFetch ).toHaveBeenCalledWith( {

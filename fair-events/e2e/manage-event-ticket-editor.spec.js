@@ -187,7 +187,7 @@ test.describe( 'Manage Event — one ticket editor for List and Audience', () =>
 		await adminPage.goto(
 			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=list`
 		);
-		await expect( adminPage.getByText( buyer ) ).toBeVisible();
+		await expect( adminPage.getByText( buyer ).first() ).toBeVisible();
 	};
 
 	const ticketRows = async () => {
@@ -251,13 +251,11 @@ test.describe( 'Manage Event — one ticket editor for List and Audience', () =>
 		await override.click();
 		await expect( dialog ).toBeHidden();
 
+		// Each ticket row shows its own type; the registration-wide
+		// over-capacity flag shows on both.
 		await expect( rows.nth( 1 ) ).toContainText( 'Reduced' );
 		await expect( rows.nth( 0 ) ).toContainText( 'Regular' );
-		const purchaseRow = adminPage
-			.locator( 'tr', { hasText: buyer } )
-			.first();
-		await expect( purchaseRow ).toContainText( 'Mixed types' );
-		await expect( purchaseRow ).toContainText(
+		await expect( rows.nth( 0 ) ).toContainText(
 			'Confirmed — over capacity'
 		);
 	} );
