@@ -11,6 +11,8 @@
  *   1. The expected admin pages mount (or stop mounting) their React root.
  *   2. The expected REST routes register (or 404 with `rest_no_route`).
  *   3. The Settings → Features tab is reachable in both branches.
+ *   4. The retired migration tools (#1674) stay unavailable in both branches,
+ *      even with a stale `migration: true` left in the stored option.
  *
  * Sibling-plugin dependencies (`fair-audience` for `ticketing`) are not
  * required for these assertions — the ticketing REST routes register on the
@@ -42,15 +44,19 @@ const ALL_BUNDLES_ON = {
 	sources: true,
 	ticketing: true,
 	'event-tools': true,
-	migration: true,
 };
 
 const ALL_BUNDLES_OFF = {
 	sources: false,
 	ticketing: false,
 	'event-tools': false,
-	migration: false,
 };
+
+/**
+ * Key of the removed migration bundle (#1674). Sites that saved settings
+ * before the removal may still store it; it must stay inert.
+ */
+const LEGACY_MIGRATION_ON = { migration: true };
 
 /**
  * Bundle → admin page slug + React root id. Pages without a menu entry are
@@ -64,17 +70,13 @@ const BUNDLE_PAGES = {
 			root: 'fair-events-source-view-root',
 		},
 	],
-	migration: [
-		{
-			slug: 'fair-events-migration',
-			root: 'fair-events-migration-root',
-		},
-		{
-			slug: 'fair-events-migration-summary',
-			root: 'fair-events-migration-summary-root',
-		},
-	],
 };
+
+/** Admin pages of the removed migration tools (#1674). */
+const RETIRED_PAGES = [
+	'fair-events-migration',
+	'fair-events-migration-summary',
+];
 
 /**
  * Bundle → a representative REST route. Probed with GET; a registered route
@@ -83,9 +85,29 @@ const BUNDLE_PAGES = {
  */
 const BUNDLE_PROBE_ROUTES = {
 	sources: '/fair-events/v1/sources',
-	migration: '/fair-events/v1/migration/post-types',
 	ticketing: '/fair-events/v1/event-dates/1/group-pricing-rules',
 };
+
+/**
+ * Every REST route of the removed migration tools (#1674), probed with the
+ * method it used to accept: a method mismatch alone also yields
+ * `rest_no_route`, so a GET probe would not prove a POST route is gone.
+ */
+const RETIRED_ROUTES = [
+	{ method: 'GET', path: '/fair-events/v1/migration/post-types' },
+	{ method: 'GET', path: '/fair-events/v1/migration/categories' },
+	{ method: 'GET', path: '/fair-events/v1/migration/posts' },
+	{ method: 'POST', path: '/fair-events/v1/migration/migrate' },
+	{ method: 'GET', path: '/fair-events/v1/migration-summary' },
+	{
+		method: 'POST',
+		path: '/fair-events/v1/migration-summary/update-orphans',
+	},
+	{
+		method: 'POST',
+		path: '/fair-events/v1/migration-summary/delete-orphans',
+	},
+];
 
 async function expectRootMounts(page, slug, root) {
 	await page.goto(`/wp-admin/admin.php?page=${slug}`);
@@ -113,9 +135,26 @@ async function expectPageMissing(page, slug) {
 	).toBe(0);
 }
 
+/**
+ * Assert the removed migration tools (#1674) neither render through an old
+ * bookmark nor answer on any of their former REST routes.
+ */
+async function expectMigrationToolsRetired(page, request) {
+	await loginAsAdmin(page);
+	for (const slug of RETIRED_PAGES) {
+		await expectPageMissing(page, slug);
+	}
+	for (const { method, path } of RETIRED_ROUTES) {
+		expect(
+			await routeIsRegistered(request, path, method),
+			`${method} ${path} should no longer be registered`
+		).toBe(false);
+	}
+}
+
 /** True iff WordPress returned a registered route (anything but rest_no_route). */
-async function routeIsRegistered(request, path) {
-	const response = await request.get(`/wp-json${path}`);
+async function routeIsRegistered(request, path, method = 'GET') {
+	const response = await request.fetch(`/wp-json${path}`, { method });
 	if (response.status() !== 404) {
 		return true;
 	}
@@ -130,7 +169,7 @@ async function routeIsRegistered(request, path) {
 
 test.describe('Fair Events — simplified public build (no bundles set)', () => {
 	test.beforeAll(() => {
-		setExperimentalFeatures(ALL_BUNDLES_OFF);
+		setExperimentalFeatures({ ...ALL_BUNDLES_OFF, ...LEGACY_MIGRATION_ON });
 	});
 
 	test.afterAll(() => {
@@ -180,6 +219,13 @@ test.describe('Fair Events — simplified public build (no bundles set)', () => 
 		}
 	});
 
+	test('retired migration pages and routes are unavailable', async ({
+		page,
+		request,
+	}) => {
+		await expectMigrationToolsRetired(page, request);
+	});
+
 	test('Settings page exposes the Features tab', async ({ page }) => {
 		await loginAsAdmin(page);
 		await page.goto('/wp-admin/admin.php?page=fair-events-settings');
@@ -192,7 +238,7 @@ test.describe('Fair Events — simplified public build (no bundles set)', () => 
 
 test.describe('Fair Events — full internal build (all bundles on)', () => {
 	test.beforeAll(() => {
-		setExperimentalFeatures(ALL_BUNDLES_ON);
+		setExperimentalFeatures({ ...ALL_BUNDLES_ON, ...LEGACY_MIGRATION_ON });
 	});
 
 	test.afterAll(() => {
@@ -217,6 +263,28 @@ test.describe('Fair Events — full internal build (all bundles on)', () => {
 				`${bundle}: ${path} should be registered in the internal build`
 			).toBe(true);
 		}
+	});
+
+	test('retired migration pages and routes stay unavailable', async ({
+		page,
+		request,
+	}) => {
+		await expectMigrationToolsRetired(page, request);
+	});
+
+	test('Experimental Settings no longer offers a Migration toggle', async ({
+		page,
+	}) => {
+		await loginAsAdmin(page);
+		await page.goto(
+			'/wp-admin/admin.php?page=fair-events-experimental-settings'
+		);
+		await expect(
+			page.getByRole('checkbox', { name: 'Ticketing', exact: true })
+		).toBeVisible();
+		await expect(
+			page.getByRole('checkbox', { name: 'Migration', exact: true })
+		).toHaveCount(0);
 	});
 
 	test('Settings page still exposes the Features tab', async ({ page }) => {

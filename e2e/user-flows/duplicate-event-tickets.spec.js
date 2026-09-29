@@ -55,7 +55,6 @@ test.beforeEach(() => {
 		sources: true,
 		ticketing: true,
 		'event-tools': true,
-		migration: true,
 	});
 });
 

@@ -8,7 +8,7 @@ Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Activates advanced feature bundles for Fair Events: sources, ticketing, duplicate and merge tools, migration.
+Activates advanced feature bundles for Fair Events: sources, ticketing, duplicate and merge tools.
 
 == Description ==
 
@@ -16,12 +16,11 @@ When the optional Meta Conversions feature is enabled, the plugin processes cons
 
 When weekly notifications are turned on, the plugin sends the upcoming week's event summary to Telegram (Telegram Messenger Inc.) through the Telegram Bot API at `api.telegram.org`, at the day and time the administrator schedules, and a short test message whenever an administrator requests one. Each request carries the administrator-supplied bot token and chat or channel identifier, and the summary text: the public calendar page's title and link, the date range, and each public event's weekday, start time, title and link. No visitor or attendee data is sent. Telegram's [Terms of Service](https://telegram.org/tos), [Bot Platform terms](https://telegram.org/tos/bot-developers) and [Privacy Policy](https://telegram.org/privacy) apply.
 
-This plugin is a companion to Fair Events. It activates four advanced feature bundles that are excluded from the public Fair Events build:
+This plugin is a companion to Fair Events. It activates three advanced feature bundles that are excluded from the public Fair Events build:
 
 * **Event sources & feeds** — External event sources, iCal/JSON feeds, event proposals.
 * **Ticketing** — Tickets, group pricing/permission rules, invitations.
 * **Event tools** — Advanced event duplication and merge tools.
-* **Migration** — One-time post → event migration tooling.
 
 Requires Fair Events to be active.
 

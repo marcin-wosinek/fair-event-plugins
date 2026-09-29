@@ -2,8 +2,8 @@
 /**
  * Admin Pages for Fair Events Experimental
  *
- * Registers the experimental feature admin pages (migration, sources,
- * settings) as submenus under the fair-events-calendar menu.
+ * Registers the experimental feature admin pages (sources, settings) as
+ * submenus under the fair-events-calendar menu.
  * Page rendering and JS assets are delegated to the fair-events plugin; only
  * the settings page uses assets from this plugin's own build directory.
  *
@@ -61,27 +61,6 @@ class AdminPages {
 			'fair-events-experimental-settings',
 			array( $this, 'render_settings_page' )
 		);
-
-		// Migration pages — `migration` bundle.
-		if ( \FairEventsExperimental\Core\Features::is_enabled( 'migration' ) && post_type_exists( 'fair_event' ) ) {
-			$this->page_hooks['fair-events-migration'] = add_submenu_page(
-				$parent,
-				__( 'Migrate Posts to Events', 'fair-events-experimental' ),
-				__( 'Migrate Posts', 'fair-events-experimental' ),
-				'manage_options',
-				'fair-events-migration',
-				array( $this, 'render_migration_page' )
-			);
-
-			$this->page_hooks['fair-events-migration-summary'] = add_submenu_page(
-				$parent,
-				__( 'Migration Summary', 'fair-events-experimental' ),
-				__( 'Migration Summary', 'fair-events-experimental' ),
-				'manage_options',
-				'fair-events-migration-summary',
-				array( $this, 'render_migration_summary_page' )
-			);
-		}
 
 		// Event Sources page — `sources` bundle.
 		if ( \FairEventsExperimental\Core\Features::is_enabled( 'sources' ) ) {
@@ -206,20 +185,6 @@ class AdminPages {
 		$exp_dir = FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR;
 
 		switch ( $slug ) {
-			case 'fair-events-migration':
-				$asset_file = include $exp_dir . 'build/admin/migration/index.asset.php';
-				wp_enqueue_script( 'fair-events-migration', $exp_url . 'build/admin/migration/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_set_script_translations( 'fair-events-migration', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-				wp_enqueue_style( 'wp-components' );
-				break;
-
-			case 'fair-events-migration-summary':
-				$asset_file = include $exp_dir . 'build/admin/migration-summary/index.asset.php';
-				wp_enqueue_script( 'fair-events-migration-summary', $exp_url . 'build/admin/migration-summary/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_set_script_translations( 'fair-events-migration-summary', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-				wp_enqueue_style( 'wp-components' );
-				break;
-
 			case 'fair-events-sources':
 				$asset_file = include $exp_dir . 'build/admin/sources/index.asset.php';
 				wp_enqueue_script( 'fair-events-sources', $exp_url . 'build/admin/sources/index.js', $asset_file['dependencies'], $asset_file['version'], true );
@@ -344,28 +309,6 @@ class AdminPages {
 	public function render_settings_page() {
 		?>
 		<div id="fair-events-experimental-settings-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render migration page
-	 *
-	 * @return void
-	 */
-	public function render_migration_page() {
-		?>
-		<div id="fair-events-migration-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render migration summary page
-	 *
-	 * @return void
-	 */
-	public function render_migration_summary_page() {
-		?>
-		<div id="fair-events-migration-summary-root"></div>
 		<?php
 	}
 
