@@ -771,48 +771,6 @@ export default function EventAudience( {
 		showToast( __( 'Ticket saved.', 'fair-audience' ) );
 	};
 
-	const handleDeleteParticipant = ( participant ) => {
-		// A series pass is held on the master event-date; deleting it from one
-		// occurrence is not supported (and the row isn't on this occurrence).
-		if ( participant.is_series_pass ) {
-			return;
-		}
-		const baseName =
-			participant.participant_name ||
-			__( 'this participant', 'fair-audience' );
-		const nameWithEmail = participant.participant_email
-			? `${ baseName } (${ participant.participant_email })`
-			: baseName;
-		const confirmMessage = sprintf(
-			/* translators: %s: participant name or "name (email)" */
-			__(
-				'Delete %s’s registration for this event date? This cannot be undone.',
-				'fair-audience'
-			),
-			nameWithEmail
-		);
-		if ( ! window.confirm( confirmMessage ) ) {
-			return;
-		}
-
-		const previous = participants;
-		setParticipants( ( list ) =>
-			list.filter( ( p ) => p.id !== participant.id )
-		);
-
-		apiFetch( {
-			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants/${ participant.participant_id }`,
-			method: 'DELETE',
-		} ).catch( ( err ) => {
-			setParticipants( previous );
-			showToast(
-				__( 'Error deleting registration: ', 'fair-audience' ) +
-					( err.message || '' ),
-				'error'
-			);
-		} );
-	};
-
 	const handleOpenEditOptions = ( participant ) => {
 		// Edits apply to the master row; editing from an occurrence is disabled.
 		if ( participant.is_series_pass ) {
@@ -1425,13 +1383,6 @@ export default function EventAudience( {
 						{ __( 'Edit participant', 'fair-audience' ) }
 					</Button>
 				) }
-				<Button
-					variant="link"
-					isDestructive
-					onClick={ () => handleDeleteParticipant( p ) }
-				>
-					{ __( 'Delete', 'fair-audience' ) }
-				</Button>
 				{ otherOccurrences.length > 0 && (
 					<Button
 						variant="link"
