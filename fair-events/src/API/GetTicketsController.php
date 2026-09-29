@@ -739,13 +739,14 @@ class GetTicketsController extends WP_REST_Controller {
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
-				'currency'      => $currency,
-				'description'   => $description,
-				'event_date_id' => $event_date_id,
-				'post_id'       => $this->resolve_event_post_id( $event_date_id ),
-				'user_id'       => $user_id ? $user_id : null,
-				'email'         => $email,
-				'metadata'      => array_merge(
+				'currency'       => $currency,
+				'description'    => $description,
+				'event_date_id'  => $event_date_id,
+				'post_id'        => $this->resolve_event_post_id( $event_date_id ),
+				'user_id'        => $user_id ? $user_id : null,
+				'participant_id' => $this->resolve_transaction_participant_id( array( (int) $signup_id ), $email, $participant_token ),
+				'email'          => $email,
+				'metadata'       => array_merge(
 					array(
 						'source'        => 'fair-events-get-tickets',
 						'event_date_id' => $event_date_id,
@@ -765,6 +766,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, (int) $transaction_id, $participant_token );
 		$this->persist_questionnaire_answers( $signup_id, $event_date_id, $questionnaire_answers );
+		$this->fire_signup_transaction_created( (int) $transaction_id, array( (int) $signup_id ) );
 
 		// Load the freshly created transaction so its access token can be attached
 		// to the redirect URL, mirroring PaymentEndpoint::create_payment. The token
@@ -1177,6 +1179,52 @@ class GetTicketsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Ask a companion plugin which participant a purchase's transaction
+	 * belongs to, before the transaction is created, so it is linked to the
+	 * same participant the fair_events_signup_created listener will use
+	 * rather than to whatever a general email lookup finds.
+	 *
+	 * @param int[]  $signup_ids        Signup rows the transaction pays for.
+	 * @param string $email             Buyer email.
+	 * @param string $participant_token Optional companion credential.
+	 * @return int|null Participant ID, or null to let the payments connector resolve it.
+	 */
+	private function resolve_transaction_participant_id( array $signup_ids, $email, $participant_token = '' ) {
+		/**
+		 * Filters the participant a get-tickets transaction is created for.
+		 *
+		 * @param int|null $participant_id    Participant ID; null by default.
+		 * @param int[]    $signup_ids        Signup rows the transaction pays for.
+		 * @param string   $email             Buyer email.
+		 * @param string   $participant_token Optional companion credential.
+		 */
+		$participant_id = apply_filters( 'fair_events_signup_transaction_participant_id', null, $signup_ids, $email, $participant_token );
+
+		return $participant_id ? (int) $participant_id : null;
+	}
+
+	/**
+	 * Fire the post-signup transaction hook, once every signup row a
+	 * transaction pays for has been attached to it and had its
+	 * fair_events_signup_created listeners run, and before payment is
+	 * initiated. A companion plugin links the transaction to the
+	 * participant its signups now carry.
+	 *
+	 * @param int   $transaction_id fair-payments-connector transaction ID.
+	 * @param int[] $signup_ids     Signup rows the transaction pays for.
+	 * @return void
+	 */
+	private function fire_signup_transaction_created( $transaction_id, array $signup_ids ) {
+		/**
+		 * Fires after a get-tickets transaction is attached to its signups.
+		 *
+		 * @param int   $transaction_id fair-payments-connector transaction ID.
+		 * @param int[] $signup_ids     Signup rows the transaction pays for.
+		 */
+		do_action( 'fair_events_signup_transaction_created', $transaction_id, $signup_ids );
+	}
+
+	/**
 	 * Parse and sanitize the custom question answers from a get-tickets
 	 * request, mirroring fair-audience's EventSignupController. Validation
 	 * runs before any signup mutation so bad input (e.g. a malformed phone
@@ -1539,13 +1587,14 @@ class GetTicketsController extends WP_REST_Controller {
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
-				'currency'      => $currency,
-				'description'   => $description,
-				'event_date_id' => $series_master_id,
-				'post_id'       => $this->resolve_event_post_id( $series_master_id ),
-				'user_id'       => $user_id ? $user_id : null,
-				'email'         => $email,
-				'metadata'      => array_merge(
+				'currency'       => $currency,
+				'description'    => $description,
+				'event_date_id'  => $series_master_id,
+				'post_id'        => $this->resolve_event_post_id( $series_master_id ),
+				'user_id'        => $user_id ? $user_id : null,
+				'participant_id' => $this->resolve_transaction_participant_id( array_map( 'intval', $signup_ids ), $email, $participant_token ),
+				'email'          => $email,
+				'metadata'       => array_merge(
 					array(
 						'source'        => 'fair-events-get-tickets',
 						'event_date_id' => $series_master_id,
@@ -1566,6 +1615,7 @@ class GetTicketsController extends WP_REST_Controller {
 			$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, (int) $transaction_id, $participant_token );
 			$this->persist_questionnaire_answers( $signup_id, $occurrence_ids[ $index ], $questionnaire_answers );
 		}
+		$this->fire_signup_transaction_created( (int) $transaction_id, array_map( 'intval', $signup_ids ) );
 
 		$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );
 
@@ -2698,13 +2748,14 @@ class GetTicketsController extends WP_REST_Controller {
 		$new_transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
-				'currency'      => $transaction->currency,
-				'description'   => $transaction->description,
-				'event_date_id' => $event_date_id,
-				'post_id'       => $this->resolve_event_post_id( $event_date_id ),
-				'user_id'       => $user_id ? $user_id : null,
-				'email'         => $buyer_email,
-				'metadata'      => array_merge(
+				'currency'       => $transaction->currency,
+				'description'    => $transaction->description,
+				'event_date_id'  => $event_date_id,
+				'post_id'        => $this->resolve_event_post_id( $event_date_id ),
+				'user_id'        => $user_id ? $user_id : null,
+				'participant_id' => $this->resolve_transaction_participant_id( $new_signup_ids, $buyer_email, '' ),
+				'email'          => $buyer_email,
+				'metadata'       => array_merge(
 					array(
 						'source'                  => 'fair-events-get-tickets',
 						'event_date_id'           => $event_date_id,
@@ -2727,6 +2778,7 @@ class GetTicketsController extends WP_REST_Controller {
 		foreach ( $signup_rows as $row ) {
 			\FairEvents\Models\EventSignup::update_transaction( (int) $row->id, (int) $new_transaction_id, 'pending_payment' );
 		}
+		$this->fire_signup_transaction_created( (int) $new_transaction_id, $new_signup_ids );
 
 		$new_transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $new_transaction_id );
 

@@ -22,6 +22,7 @@ use FairAudience\Services\GroupSignupPricing;
 use FairAudience\Services\SignupActivities;
 use FairAudience\Services\SignupPriceResolver;
 use FairAudience\Services\TicketActivities;
+use FairAudience\Services\TransactionParticipantLink;
 
 defined( 'WPINC' ) || die;
 
@@ -52,7 +53,9 @@ class SignupHookBridge {
 		add_filter( 'fair_events_signup_options_error', array( static::class, 'filter_options_error' ), 10, 6 );
 		add_filter( 'fair_events_signup_option_line_items', array( static::class, 'filter_option_line_items' ), 10, 4 );
 		add_action( 'fair_events_signup_render_after_form', array( static::class, 'render_add_activities' ), 10, 1 );
+		add_filter( 'fair_events_signup_transaction_participant_id', array( static::class, 'filter_transaction_participant_id' ), 10, 4 );
 		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 7 );
+		add_action( 'fair_events_signup_transaction_created', array( static::class, 'link_transaction' ), 10, 2 );
 		add_action( 'fair_events_signup_confirmed', array( static::class, 'handle_signup_confirmed' ), 10, 2 );
 		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
 		add_action( 'fair_events_backfill_signup_participant_ids', array( static::class, 'backfill_signup_participant_ids' ) );
@@ -774,11 +777,7 @@ class SignupHookBridge {
 			return;
 		}
 
-		$participant_repository = new ParticipantRepository();
-		$participant            = GroupSignupPricing::resolve_viewer_participant( $participant_token );
-		if ( ! $participant ) {
-			$participant = $participant_repository->get_by_email( $email );
-		}
+		$participant        = self::resolve_buyer( $email, $participant_token );
 		$mailing_opt_in     = ! empty( $ticket_selection['mailing_opt_in'] );
 		$is_new_participant = false;
 
@@ -880,6 +879,87 @@ class SignupHookBridge {
 			$email_service = new EmailService();
 			$event         = get_post( $event_id );
 			$email_service->send_signup_payment_confirmation( $participant, $event, null, array(), (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
+		}
+	}
+
+	/**
+	 * The existing participant a get-tickets buyer is: the trusted viewer
+	 * identity, else the participant with the submitted email. Shared by
+	 * link_participant() and the transaction's participant, so both name the
+	 * same person.
+	 *
+	 * @param string $email             Buyer email.
+	 * @param string $participant_token Optional request token.
+	 * @return Participant|null
+	 */
+	private static function resolve_buyer( $email, $participant_token = '' ) {
+		$participant = GroupSignupPricing::resolve_viewer_participant( (string) $participant_token );
+		if ( ! $participant ) {
+			$participant = ( new ParticipantRepository() )->get_by_email( $email );
+		}
+
+		return $participant;
+	}
+
+	/**
+	 * Name the participant a get-tickets transaction is created for, so the
+	 * connector's general email lookup cannot pick a different one. Signups
+	 * that already carry a participant (a retry) decide it; a new purchase
+	 * uses the buyer link_participant() is about to resolve. A first-time
+	 * buyer has none yet and is linked by link_transaction() once created.
+	 * Hooked on fair_events_signup_transaction_participant_id.
+	 *
+	 * @param int|null $participant_id    Participant ID from an earlier filter.
+	 * @param int[]    $signup_ids        Signup rows the transaction pays for.
+	 * @param string   $email             Buyer email.
+	 * @param string   $participant_token Optional request token.
+	 * @return int|null
+	 */
+	public static function filter_transaction_participant_id( $participant_id, $signup_ids, $email, $participant_token = '' ) {
+		if ( null !== $participant_id || ! TransactionParticipantLink::available() ) {
+			return $participant_id;
+		}
+
+		$signups = TransactionParticipantLink::load_signups( (array) $signup_ids );
+		if ( ! $signups ) {
+			return null;
+		}
+
+		foreach ( $signups as $signup ) {
+			if ( ! empty( $signup->participant_id ) ) {
+				$signup_participant_id = TransactionParticipantLink::participant_for_signups( $signups );
+				return $signup_participant_id ? $signup_participant_id : null;
+			}
+		}
+
+		if ( empty( $email ) || ! is_email( $email ) ) {
+			return null;
+		}
+
+		$participant = self::resolve_buyer( $email, $participant_token );
+		return $participant ? (int) $participant->id : null;
+	}
+
+	/**
+	 * Link a get-tickets transaction to the participant its signups now
+	 * carry, and record it on their registrations. Hooked on
+	 * fair_events_signup_transaction_created, which fires after
+	 * link_participant() ran for every signup of the purchase or retry.
+	 *
+	 * @param int   $transaction_id fair-payments-connector transaction ID.
+	 * @param int[] $signup_ids     Signup rows the transaction pays for.
+	 * @return void
+	 */
+	public static function link_transaction( $transaction_id, $signup_ids ) {
+		if ( ! TransactionParticipantLink::available() ) {
+			return;
+		}
+
+		$result = TransactionParticipantLink::link( (int) $transaction_id, (array) $signup_ids );
+
+		if ( TransactionParticipantLink::LINKED !== $result && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( sprintf( 'fair-audience: transaction %d not linked to a participant (%s).', (int) $transaction_id, $result ) );
 		}
 	}
 

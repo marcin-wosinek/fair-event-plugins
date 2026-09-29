@@ -825,6 +825,10 @@ function fair_audience_maybe_upgrade_db() {
 	if ( version_compare( $db_version, '1.45.0', '>=' ) ) {
 		\FairAudience\Services\TicketHistoryBackfill::maybe_run();
 	}
+
+	// Link earlier ticket transactions to the participant their signups
+	// record, a batch per request until done.
+	\FairAudience\Services\TransactionParticipantRepair::maybe_run();
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db' );
 

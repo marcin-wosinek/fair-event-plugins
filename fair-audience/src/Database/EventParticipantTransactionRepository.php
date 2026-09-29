@@ -108,6 +108,30 @@ class EventParticipantTransactionRepository {
 	}
 
 	/**
+	 * Participants whose registrations a transaction is recorded against.
+	 *
+	 * @param int $transaction_id fair-payments-connector transaction ID.
+	 * @return int[] Distinct participant IDs.
+	 */
+	public function get_participant_ids_for_transaction( $transaction_id ) {
+		global $wpdb;
+
+		return array_map(
+			'intval',
+			$wpdb->get_col(
+				$wpdb->prepare(
+					'SELECT DISTINCT ep.participant_id FROM %i l
+					 INNER JOIN %i ep ON ep.id = l.event_participant_id
+					 WHERE l.transaction_id = %d',
+					$this->get_table_name(),
+					$wpdb->prefix . 'fair_audience_event_participants',
+					(int) $transaction_id
+				)
+			)
+		);
+	}
+
+	/**
 	 * Net amount paid on a registration: SUM(charges) − SUM(refunds), counting
 	 * only transactions marked paid in fair-payments-connector.
 	 *
@@ -225,7 +249,7 @@ class EventParticipantTransactionRepository {
 			$wpdb->prepare(
 				"SELECT event_participant_id, transaction_id, created_at FROM %i
 				 WHERE event_participant_id IN ($placeholders) AND kind = 'charge'
-				 ORDER BY created_at DESC",
+				 ORDER BY created_at DESC, id DESC",
 				array_merge( array( $this->get_table_name() ), array_map( 'intval', $event_participant_ids ) )
 			),
 			ARRAY_A

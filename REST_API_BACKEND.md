@@ -731,6 +731,33 @@ sub-route) expose:
     the tickets, so a listener must not attach them again). A companion plugin hooks this to
     create/link its own participant record, set a session cookie, or send its
     own confirmation email — instead of owning a competing create route.
+-   **`fair_events_signup_transaction_participant_id` filter** — runs just
+    before a paid purchase's, shared series purchase's or base-route retry's
+    transaction is created:
+    `apply_filters( 'fair_events_signup_transaction_participant_id', null, $signup_ids, $email, $participant_token )`
+    (`$participant_token` is `''` on a retry). A positive ID is passed to
+    `TransactionAPI::create_transaction()` as `participant_id`, so the
+    connector's general email/user lookup (`fair_payment_resolve_participant_id`)
+    cannot pick a different participant; `null` (the default) leaves that
+    lookup in place. fair-audience returns the participant the signups
+    already carry (a retry, and only when they all name the same one), else
+    the buyer `link_participant()` is about to resolve — the trusted viewer
+    identity, then the participant with the submitted email. A first-time
+    buyer has none yet.
+-   **`fair_events_signup_transaction_created` action** — fires
+    `( $transaction_id, $signup_ids )` once every signup row of a paid
+    purchase, shared series purchase or base-route retry is attached to the
+    transaction and has had its `fair_events_signup_created` listeners run,
+    before payment is initiated. fair-audience
+    (`FairAudience\Services\TransactionParticipantLink`) writes the
+    transaction's `participant_id` when every signup names the same
+    participant — with a conditional update that only fills an empty link,
+    so a link set meanwhile is never replaced — and records the transaction
+    in its ledger against that participant's registration on each signup's
+    date, including one that was already `signed_up`. A transaction already
+    linked, or recorded, to another participant is left unchanged. Repeated
+    calls are no-ops. Without a listener the transaction stays as the
+    connector created it.
 -   **`fair_events_signup_confirmed` / `fair_events_signup_payment_failed`
     actions** — `fair-events/src/Hooks/PaymentHooks.php` fires one of these
     per resolved signup row (`$signup, $transaction`) after a
@@ -800,7 +827,9 @@ unified-signup submission fatal'd):
 | `fair_events_signup_unit_price`        | 4           | `add_filter( ..., 10, 4 )`                 |
 | `fair_events_signup_options_error`     | 6           | `add_filter( ..., 10, 6 )` (4 or more)     |
 | `fair_events_signup_option_line_items` | 4           | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_signup_transaction_participant_id` | 4  | `add_filter( ..., 10, 4 )`                 |
 | `fair_events_signup_created`           | 7           | `add_action( ..., 10, 7 )`                 |
+| `fair_events_signup_transaction_created` | 2         | `add_action( ..., 10, 2 )`                 |
 | `fair_events_signup_confirmed`         | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_signup_payment_failed`    | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_backfill_signup_participant_ids` | 0    | `add_action( ... )` (default, no args)     |
@@ -847,6 +876,15 @@ on existing rows by the `fair_events_backfill_signup_participant_ids` action,
 fired once by the fair-events migration that adds the column and available
 for a companion plugin to re-run from its own activation/upgrade path (the
 migration may run while that plugin is inactive).
+
+Get-tickets transactions created before their participant link was
+written at purchase time are repaired by fair-audience's
+`TransactionParticipantRepair`, a batch per request from its upgrade
+routine until done (state, with repaired and skipped counts, in the
+`fair_audience_transaction_participant_repair` option). It uses only the
+signups each transaction's metadata names — including older retries whose
+signups have since moved to a newer transaction — and the same
+`TransactionParticipantLink` rules, never an email match.
 
 **Signups are many-per-participant-per-event, never one-to-one.** Because
 recurring series save "all series" tickets on the master event date, one
