@@ -10,16 +10,10 @@
  * gate; the calling spec handles activation/deactivation around the whole
  * suite).
  *
- * Also seeds a second signup directly, with a participant_id and a matching
- * signup-origin Fair Form submission/answer (form_id empty) — reachable
- * through GetTicketsController::attach_signup_answers() purely via the
- * stored participant_id column, independent of whether fair-audience is
- * currently active. This is the only way to exercise the "answer present"
- * branch here: fair-audience is what normally populates participant_id on a
- * live signup, but fair-audience active would hide the tab this feature
- * lives on. A real signup submitted through the page below (fair-audience
- * inactive) always gets participant_id NULL, covering the complementary
- * "answer missing, row kept" branch instead.
+ * Also seeds a participant-linked signup with a legacy submission that has
+ * no ticket link, and a signup with no answers. The live browser signup has
+ * no participant_id while fair-audience is inactive, but its answers are
+ * linked to its ticket.
  *
  * Run via WP-CLI against the wp-env tests instance:
  *   wp eval-file wp-content/mu-plugins/scripts/seed-signup-export-answers.php
@@ -140,15 +134,33 @@ if ( ! $submission_id ) {
 	WP_CLI::error( 'Failed to create linked submission.' );
 }
 
+$unanswered_email = 'signup-export-unanswered-' . $stamp . '@example.test';
+$unanswered_name  = 'Unanswered Signup Tester ' . $stamp;
+$unanswered_id    = EventSignup::save(
+	array(
+		'event_date_id'  => $event_date_id,
+		'ticket_type_id' => $ticket_type_id,
+		'name'           => $unanswered_name,
+		'email'          => $unanswered_email,
+		'quantity'       => 1,
+		'amount'         => 0.0,
+		'status'         => 'confirmed',
+	)
+);
+
+if ( ! $unanswered_id ) {
+	WP_CLI::error( 'Failed to create unanswered signup.' );
+}
+
 echo 'E2E_EXPORT_ANSWERS_SEED:' . wp_json_encode(
 	array(
-		'pageUrl'        => get_permalink( $event_id ),
-		'eventId'        => (int) $event_id,
-		'eventDateId'    => (int) $event_date_id,
-		'ticketTypeId'   => (int) $ticket_type_id,
-		'linkedSignupId' => (int) $linked_signup_id,
-		'linkedEmail'    => $linked_email,
-		'linkedName'     => $linked_name,
-		'submissionId'   => (int) $submission_id,
+		'pageUrl'         => get_permalink( $event_id ),
+		'eventId'         => (int) $event_id,
+		'eventDateId'     => (int) $event_date_id,
+		'ticketTypeId'    => (int) $ticket_type_id,
+		'linkedEmail'     => $linked_email,
+		'linkedName'      => $linked_name,
+		'unansweredEmail' => $unanswered_email,
+		'unansweredName'  => $unanswered_name,
 	)
 ) . "\n";

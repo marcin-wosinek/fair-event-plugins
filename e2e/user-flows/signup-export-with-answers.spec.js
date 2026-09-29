@@ -6,14 +6,9 @@
  * ManageEventApp.js's `audienceUrl` gate. Deactivated for the whole suite,
  * mirroring get-tickets-purchase.spec.js.
  *
- * A signup submitted through the live page below therefore always resolves
- * `participant_id` NULL (fair-audience is what normally sets it), so it
- * exercises the "answer not joinable, row kept, empty value" branch.
- * seed-signup-export-answers.php additionally seeds a second signup directly
- * with a participant_id and a matching Fair Form answer — the only way to
- * reach the "answer present" branch here, since fair-audience active (which
- * is what normally links a live signup to a participant) would hide this
- * very tab. See that script's docblock for the full reasoning.
+ * A live signup has no participant_id while fair-audience is inactive, but
+ * its answers are linked to its ticket. The seed also creates a legacy
+ * participant-linked answer and a signup with no answers.
  */
 
 import { readFileSync } from 'node:fs';
@@ -35,12 +30,12 @@ test.describe('Signups tab export with Fair Form answers', () => {
 		runScript(
 			'cleanup-signup-export-answers.php',
 			'E2E_EXPORT_ANSWERS_CLEANUP',
-			`${seed.eventId} ${seed.eventDateId} ${seed.ticketTypeId} ${seed.linkedSignupId} ${seed.submissionId}`
+			`${seed.eventId} ${seed.eventDateId} ${seed.ticketTypeId}`
 		);
 		wpCli('plugin activate fair-audience');
 	});
 
-	test('exports Fair Form answers alongside signup fields, keeping unmatched rows with an empty value', async ({
+	test('exports ticket and participant answers while keeping signups without answers', async ({
 		page,
 	}) => {
 		const stamp = Date.now();
@@ -55,7 +50,7 @@ test.describe('Signups tab export with Fair Form answers', () => {
 		await form.locator('input[name="email"]').fill(browserEmail);
 		await form
 			.locator('[data-question-key="diet"] input[type="text"]')
-			.fill('Should not appear (no participant_id)');
+			.fill('Vegetarian (browser)');
 		await form.locator('.form-button').click();
 
 		await expect(
@@ -73,6 +68,7 @@ test.describe('Signups tab export with Fair Form answers', () => {
 		// The List shows names only; emails appear in the export (#1683).
 		const table = page.getByRole('table');
 		await expect(table).toContainText(seed.linkedName);
+		await expect(table).toContainText(seed.unansweredName);
 		await expect(table).toContainText(browserName);
 
 		await page.getByRole('button', { name: 'Export' }).click();
@@ -94,18 +90,28 @@ test.describe('Signups tab export with Fair Form answers', () => {
 		const header = lines[0].split(',');
 		expect(header).toContain('Dietary needs?');
 		const dietIndex = header.indexOf('Dietary needs?');
+		const ownerIndex = header.indexOf('Answers for');
+		expect(ownerIndex).toBeGreaterThanOrEqual(0);
 
 		const linkedRow = lines
 			.find((line) => line.includes(seed.linkedEmail))
 			?.split(',');
 		expect(linkedRow).toBeTruthy();
 		expect(linkedRow[dietIndex]).toBe('Vegan (seeded)');
+		expect(linkedRow[ownerIndex]).toBe('No ticket');
 
-		// Row kept even though its answer isn't joinable — empty, not omitted.
+		const unansweredRow = lines
+			.find((line) => line.includes(seed.unansweredEmail))
+			?.split(',');
+		expect(unansweredRow).toBeTruthy();
+		expect(unansweredRow[dietIndex]).toBe('');
+		expect(unansweredRow[ownerIndex]).toBe('');
+
 		const browserRow = lines
 			.find((line) => line.includes(browserEmail))
 			?.split(',');
 		expect(browserRow).toBeTruthy();
-		expect(browserRow[dietIndex]).toBe('');
+		expect(browserRow[dietIndex]).toBe('Vegetarian (browser)');
+		expect(browserRow[ownerIndex]).toMatch(/^Ticket 1 \([A-F0-9]{8}\)$/);
 	});
 });
