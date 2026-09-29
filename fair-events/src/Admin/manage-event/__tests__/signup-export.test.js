@@ -115,3 +115,19 @@ describe( 'buildSignupExportText — markdown', () => {
 		).toContain( '## #8' );
 	} );
 } );
+
+describe( 'buildSignupExportText — ticket rows (#1708)', () => {
+	it( 'distinguishes tickets of the same purchaser in markdown headings', () => {
+		const tickets = [
+			{ id: 2, name: 'Bob', ticketLabel: 'Ticket 1 (AAAA1111)' },
+			{ id: 2, name: 'Bob', ticketLabel: 'Ticket 2 (AE2671B5)' },
+		];
+		const text = buildSignupExportText( {
+			rows: tickets,
+			columns: [ columns[ 0 ] ],
+			format: 'markdown',
+		} );
+		expect( text ).toContain( '## Bob — Ticket 1 (AAAA1111)' );
+		expect( text ).toContain( '## Bob — Ticket 2 (AE2671B5)' );
+	} );
+} );

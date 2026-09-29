@@ -1,13 +1,18 @@
 /**
  * E2E: the Manage Event List tab loads existing signups regardless of
- * whether Fair Audience is active (#1672), numbers confirmed registrations,
- * keeps email addresses out of the table, and shows each configured extra as
- * a column — selected/not selected with Fair Audience, unavailable without
- * it (#1683). Deleting a registration happens only on the List tab; the
- * Audience tab offers no Delete action (#1710).
+ * whether Fair Audience is active (#1672), numbers confirmed tickets, keeps
+ * email addresses out of the table, and shows each configured extra as a
+ * column (#1683). Each ticket is its own row with its own reference, type
+ * and extras, with and without Fair Audience, and the export has one entry
+ * per ticket with the purchase total given once (#1708). Deleting a
+ * registration happens only on the List tab; the Audience tab offers no
+ * Delete action (#1710).
  */
 
-import { test, expect } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+import { test, expect, request } from '@playwright/test';
+
+const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -52,6 +57,18 @@ async function login( page ) {
 	await page.waitForSelector( '#wpadminbar' );
 }
 
+// A separate visitor, so fair-audience's session cookie does not tie the
+// purchase to an earlier buyer.
+async function buyAsVisitor( data ) {
+	const visitor = await request.newContext( { baseURL: BASE_URL } );
+	const res = await visitor.post( '/wp-json/fair-events/v1/get-tickets', {
+		data: { _honeypot: '', ...data },
+	} );
+	const body = await res.json();
+	await visitor.dispose();
+	expect( res.status(), JSON.stringify( body ) ).toBe( 200 );
+}
+
 async function setPluginStatus( page, status ) {
 	return apiFetch( page, {
 		path: `/wp/v2/plugins/${ FAIR_AUDIENCE_PLUGIN }`,
@@ -75,6 +92,11 @@ test.describe( 'Manage Event — List tab', () => {
 		selectedExtra: 'List Tab Dinner',
 		otherExtra: 'List Tab Party',
 	};
+	const group = {
+		name: `List Tab Group ${ Date.now() }`,
+		email: `manage-event-list-group-${ Date.now() }@example.test`,
+	};
+	let groupReferences = [];
 
 	test.beforeAll( async ( { browser } ) => {
 		adminContext = await browser.newContext();
@@ -181,6 +203,29 @@ test.describe( 'Manage Event — List tab', () => {
 				ticket_option_ids: [ selectedExtraId ],
 			},
 		} );
+
+		const otherExtraId = tickets.options?.find(
+			( option ) => option.name === signup.otherExtra
+		)?.id;
+		await buyAsVisitor( {
+			event_date_id: eventDateId,
+			name: group.name,
+			email: group.email,
+			ticket_type_id: ticketTypeId,
+			quantity: 3,
+			ticket_activities: [
+				[ selectedExtraId ],
+				[ otherExtraId, selectedExtraId ],
+				[],
+			],
+		} );
+		const listed = await apiFetch( adminPage, {
+			path: `/fair-events/v1/get-tickets?event_date=${ eventDateId }`,
+		} );
+		groupReferences = listed
+			.find( ( row ) => row.email === group.email )
+			.tickets.map( ( t ) => t.reference );
+		expect( groupReferences ).toHaveLength( 3 );
 	} );
 
 	test.afterAll( async () => {
@@ -252,23 +297,62 @@ test.describe( 'Manage Event — List tab', () => {
 				} )
 			).toBeVisible();
 
+			// Extras come from each ticket, with or without Fair Audience.
 			const indicators = row.getByRole( 'img' );
-			if ( audienceStatus === 'active' ) {
-				await expect( indicators ).toHaveCount( 2 );
-				await expect( indicators.nth( 0 ) ).toHaveAccessibleName(
-					'Selected'
+			await expect( indicators ).toHaveCount( 2 );
+			await expect( indicators.nth( 0 ) ).toHaveAccessibleName(
+				'Selected'
+			);
+			await expect( indicators.nth( 1 ) ).toHaveAccessibleName(
+				'Not selected'
+			);
+			await expect( indicators.nth( 0 ) ).toHaveText( '✓' );
+			await expect( indicators.nth( 1 ) ).toHaveText( '' );
+
+			// A three-ticket purchase is three numbered rows, each with its
+			// own reference and extras.
+			const groupRows = adminPage.getByRole( 'row', {
+				name: new RegExp( group.name ),
+			} );
+			await expect( groupRows ).toHaveCount( 3 );
+			const expectedExtras = [
+				[ 'Selected', 'Not selected' ],
+				[ 'Selected', 'Selected' ],
+				[ 'Not selected', 'Not selected' ],
+			];
+			// Numbering counts tickets: the group's rows are consecutive.
+			const firstNumber = Number(
+				await groupRows
+					.nth( 0 )
+					.getByRole( 'cell' )
+					.first()
+					.textContent()
+			);
+			for ( const [ index, reference ] of groupReferences.entries() ) {
+				const groupRow = groupRows.nth( index );
+				await expect( groupRow.getByRole( 'cell' ).first() ).toHaveText(
+					String( firstNumber + index )
 				);
-				await expect( indicators.nth( 1 ) ).toHaveAccessibleName(
-					'Not selected'
+				await expect( groupRow ).toContainText(
+					`Ticket ${ index + 1 } (${ reference })`
 				);
-				await expect( indicators.nth( 0 ) ).toHaveText( '✓' );
-				await expect( indicators.nth( 1 ) ).toHaveText( '' );
-			} else {
-				await expect(
-					row.getByRole( 'img', { name: 'Selection unavailable' } )
-				).toHaveCount( 2 );
-				await expect( indicators.nth( 0 ) ).toHaveText( '?' );
+				const groupIndicators = groupRow.getByRole( 'img' );
+				for ( const [ i, name ] of expectedExtras[ index ].entries() ) {
+					await expect(
+						groupIndicators.nth( i )
+					).toHaveAccessibleName( name );
+				}
 			}
+			await expect(
+				adminPage.getByRole( 'columnheader', { name: 'Qty' } )
+			).toHaveCount( 0 );
+			// Registration actions sit on the first ticket only.
+			await expect(
+				groupRows.nth( 0 ).getByRole( 'button', { name: 'Delete' } )
+			).toBeVisible();
+			await expect(
+				groupRows.nth( 1 ).getByRole( 'button', { name: 'Delete' } )
+			).toHaveCount( 0 );
 
 			const audienceTab = adminPage.getByRole( 'tab', {
 				name: 'Audience',
@@ -280,6 +364,62 @@ test.describe( 'Manage Event — List tab', () => {
 			}
 		} );
 	}
+
+	test( 'exports one CSV row per ticket with the purchase total once', async () => {
+		await setPluginStatus( adminPage, 'inactive' );
+		await adminPage.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=list`
+		);
+		await adminPage.getByRole( 'button', { name: 'Export' } ).click();
+		const dialog = adminPage.getByRole( 'dialog', { name: 'Export' } );
+		await dialog.getByRole( 'radio', { name: 'CSV' } ).check();
+		const downloading = adminPage.waitForEvent( 'download' );
+		await dialog.getByRole( 'button', { name: 'Download CSV' } ).click();
+		const csv = (
+			await readFile( await ( await downloading ).path(), 'utf8' )
+		)
+			.replace( /^\uFEFF/, '' )
+			.split( '\r\n' );
+
+		expect( csv[ 0 ] ).toBe(
+			'Email,Name,Ticket,Ticket Type,Extras,Purchase total (once per registration),Status,Transaction,Mailing,Date'
+		);
+		const groupLines = csv.filter( ( line ) =>
+			line.startsWith( `${ group.email },` )
+		);
+		expect( groupLines ).toHaveLength( 3 );
+		groupReferences.forEach( ( reference, index ) =>
+			expect( groupLines[ index ] ).toContain(
+				`Ticket ${ index + 1 } (${ reference })`
+			)
+		);
+		expect( groupLines[ 0 ] ).toContain( `,${ signup.selectedExtra },` );
+		expect( groupLines[ 1 ] ).toContain(
+			`"${ signup.selectedExtra }, ${ signup.otherExtra }"`
+		);
+		// Free purchase: 0 on the first ticket, blank on its siblings.
+		const totals = groupLines.map(
+			( line ) => line.split( ',' ).slice( -5 )[ 0 ]
+		);
+		expect( totals[ 0 ] ).not.toBe( '' );
+		expect( totals.slice( 1 ) ).toEqual( [ '', '' ] );
+		expect( csv.filter( Boolean ) ).toHaveLength( 1 + 1 + 3 );
+
+		// The mailing filter narrows the export the same way as the table.
+		// The footer button, not the header's close icon.
+		await dialog.getByText( 'Close', { exact: true } ).click();
+		await adminPage
+			.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			.check();
+		await expect(
+			adminPage.getByText(
+				'Nothing to export — no registrations match the current filter.'
+			)
+		).toBeVisible();
+		await expect(
+			adminPage.getByRole( 'button', { name: 'Export' } )
+		).toBeDisabled();
+	} );
 
 	test( 'deletes a registration from the List tab, not the Audience tab', async () => {
 		await setPluginStatus( adminPage, 'active' );
@@ -308,7 +448,7 @@ test.describe( 'Manage Event — List tab', () => {
 			/get-tickets(\/|%2F)\d+/.test( response.url() )
 		);
 		await adminPage
-			.getByRole( 'button', { name: 'Delete signup' } )
+			.getByRole( 'button', { name: 'Delete registration' } )
 			.click();
 		expect( ( await deleted ).ok() ).toBe( true );
 

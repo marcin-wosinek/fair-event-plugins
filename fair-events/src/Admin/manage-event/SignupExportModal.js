@@ -1,10 +1,11 @@
 /**
  * Signup export popup.
  *
- * Configurable export for the Signups tab's "Export" button, mirroring the
+ * Configurable export for the List tab's "Export" button, mirroring the
  * Fair Form Questionnaire Responses export experience: pick all columns or
  * handpick them, choose a format, and optionally include Fair Form answers
- * associated with each signup as individually selectable columns.
+ * as individually selectable columns. Exports one row per listed ticket,
+ * each with its own answers.
  *
  * @package FairEvents
  */
@@ -20,89 +21,159 @@ import {
 } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { ticketReferenceLabel } from 'fair-events-shared';
 import { buildSignupExportText, downloadCsvFile } from './signup-export.js';
-import { isMailingOptIn } from './EventSignups.js';
+import {
+	isMailingOptIn,
+	ticketRowLabel,
+	ticketRowTypeName,
+} from './EventSignups.js';
 
 /**
- * The nine signup fields the CSV download used to cover, now expressed as
- * export column descriptors.
- */
-const BASE_COLUMNS = [
-	{
-		id: 'email',
-		label: __( 'Email', 'fair-events' ),
-		getValue: ( { item } ) => item.email,
-	},
-	{
-		id: 'name',
-		label: __( 'Name', 'fair-events' ),
-		getValue: ( { item } ) => item.name,
-	},
-	{
-		id: 'ticket_type',
-		label: __( 'Ticket Type', 'fair-events' ),
-		getValue: ( { item } ) => item.ticket_type_name || '—',
-	},
-	{
-		id: 'quantity',
-		label: __( 'Quantity', 'fair-events' ),
-		getValue: ( { item } ) => item.quantity,
-	},
-	{
-		id: 'amount',
-		label: __( 'Amount', 'fair-events' ),
-		getValue: ( { item } ) => item.amount,
-	},
-	{
-		id: 'status',
-		label: __( 'Status', 'fair-events' ),
-		getValue: ( { item } ) => item.status,
-	},
-	{
-		id: 'transaction_id',
-		label: __( 'Transaction', 'fair-events' ),
-		getValue: ( { item } ) => item.transaction_id,
-	},
-	{
-		id: 'mailing_opt_in',
-		label: __( 'Mailing', 'fair-events' ),
-		getValue: ( { item } ) =>
-			isMailingOptIn( item.mailing_opt_in ) ? 'yes' : 'no',
-	},
-	{
-		id: 'date',
-		label: __( 'Date', 'fair-events' ),
-		getValue: ( { item } ) => item.created_at,
-	},
-];
-
-/**
- * Which ticket of a purchase its Fair Form answers belong to, for the
- * export: the ticket's label, flagged when it was attached automatically
- * and should be checked, or "No ticket" for answers kept with the
- * participant.
+ * Names of the extras a ticket holds with a confirmed payment, in the
+ * configured order.
  *
- * @param {Object} signup Signup row from the include_answers response.
- * @return {string} Label, empty when the signup has no answers.
+ * @param {Object|null} ticket        Ticket of the row.
+ * @param {Array}       ticketOptions Configured extras.
+ * @return {string} Comma-separated names, empty when none.
  */
-export function answersOwnerLabel( signup ) {
-	if ( ! ( signup.answers || [] ).length ) {
-		return '';
+export function ticketExtrasText( ticket, ticketOptions ) {
+	const selected = ( ticket?.confirmed_activity_ids || [] ).map( Number );
+	return ticketOptions
+		.filter( ( option ) => selected.includes( Number( option.id ) ) )
+		.map( ( option ) => option.name )
+		.join( ', ' );
+}
+
+/**
+ * Export columns for ticket rows. Purchase-level values repeat on every
+ * ticket of the purchase, except the amount paid, which is given once per
+ * registration so that summing the column counts each payment once.
+ *
+ * @param {Array} ticketOptions Configured extras.
+ * @return {Array} Column descriptors.
+ */
+function buildBaseColumns( ticketOptions ) {
+	return [
+		{
+			id: 'email',
+			label: __( 'Email', 'fair-events' ),
+			getValue: ( { item } ) => item.email,
+		},
+		{
+			id: 'name',
+			label: __( 'Name', 'fair-events' ),
+			getValue: ( { item } ) => item.name,
+		},
+		{
+			id: 'ticket',
+			label: __( 'Ticket', 'fair-events' ),
+			getValue: ( { item } ) => item.ticketLabel,
+		},
+		{
+			id: 'ticket_type',
+			label: __( 'Ticket Type', 'fair-events' ),
+			getValue: ( { item } ) => ticketRowTypeName( item ),
+		},
+		{
+			id: 'extras',
+			label: __( 'Extras', 'fair-events' ),
+			getValue: ( { item } ) =>
+				ticketExtrasText( item.ticket, ticketOptions ),
+		},
+		{
+			id: 'purchase_total',
+			label: __(
+				'Purchase total (once per registration)',
+				'fair-events'
+			),
+			getValue: ( { item } ) => ( item.isFirstTicket ? item.amount : '' ),
+		},
+		{
+			id: 'status',
+			label: __( 'Status', 'fair-events' ),
+			getValue: ( { item } ) =>
+				item.ticket ? item.ticket.status : item.status,
+		},
+		{
+			id: 'transaction_id',
+			label: __( 'Transaction', 'fair-events' ),
+			getValue: ( { item } ) => item.transaction_id,
+		},
+		{
+			id: 'mailing_opt_in',
+			label: __( 'Mailing', 'fair-events' ),
+			getValue: ( { item } ) =>
+				isMailingOptIn( item.mailing_opt_in ) ? 'yes' : 'no',
+		},
+		{
+			id: 'date',
+			label: __( 'Date', 'fair-events' ),
+			getValue: ( { item } ) => item.created_at,
+		},
+	];
+}
+
+/**
+ * Index the include_answers response for ticket rows: answers attached to
+ * each ticket, and each registration's answers not attached to any ticket.
+ *
+ * @param {Array} signups Registrations from the include_answers response.
+ * @return {{byTicketId: Object, unlinkedBySignupId: Object}} Answers
+ */
+export function indexAnswers( signups ) {
+	const byTicketId = {};
+	const unlinkedBySignupId = {};
+	( signups || [] ).forEach( ( signup ) => {
+		( signup.tickets || [] ).forEach( ( ticket ) => {
+			if ( ( ticket.answers || [] ).length ) {
+				byTicketId[ ticket.id ] = {
+					answers: ticket.answers,
+					needsReview: !! ticket.answers_need_review,
+				};
+			}
+		} );
+		const linked =
+			signup.answers_ticket_id !== null &&
+			signup.answers_ticket_id !== undefined;
+		if ( ! linked && ( signup.answers || [] ).length ) {
+			unlinkedBySignupId[ signup.id ] = signup.answers;
+		}
+	} );
+	return { byTicketId, unlinkedBySignupId };
+}
+
+/**
+ * Fair Form answers of one ticket row. Answers kept with no ticket go on the
+ * registration's first row only, flagged for review, rather than being
+ * copied to sibling tickets.
+ *
+ * @param {Object} row     Row from expandTicketRows().
+ * @param {Object} indexed Result of indexAnswers().
+ * @return {{answers: Array, answersFor: string}} Answers and their owner label
+ */
+export function ticketRowAnswers( row, indexed ) {
+	const own = row.ticket ? indexed.byTicketId[ row.ticket.id ] : null;
+	if ( own ) {
+		const label = ticketRowLabel( row.ticket );
+		return {
+			answers: own.answers,
+			answersFor: own.needsReview
+				? sprintf(
+						/* translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)" */
+						__( '%s (needs review)', 'fair-events' ),
+						label
+				  )
+				: label,
+		};
 	}
-	const ticket = ( signup.tickets || [] ).find(
-		( t ) => Number( t.id ) === Number( signup.answers_ticket_id )
-	);
-	const label = ticket
-		? ticketReferenceLabel( ticket.position, ticket.reference )
-		: __( 'No ticket', 'fair-events' );
-	return signup.answers_need_review
-		? sprintf(
-				/* translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)", or "No ticket" */
-				__( '%s (needs review)', 'fair-events' ),
-				label
-		  )
-		: label;
+	const unlinked = indexed.unlinkedBySignupId[ row.signup.id ];
+	if ( row.isFirstTicket && unlinked ) {
+		return {
+			answers: unlinked,
+			answersFor: __( 'No ticket (needs review)', 'fair-events' ),
+		};
+	}
+	return { answers: [], answersFor: '' };
 }
 
 /**
@@ -158,14 +229,26 @@ function buildAnswerColumns( rowsWithAnswers ) {
 	return [ ANSWERS_OWNER_COLUMN, ...questionColumns ];
 }
 
-export default function SignupExportModal( { eventDateId, rows, onClose } ) {
+export default function SignupExportModal( {
+	eventDateId,
+	rows,
+	ticketOptions = [],
+	onClose,
+} ) {
+	const baseColumns = useMemo(
+		() => buildBaseColumns( ticketOptions ),
+		[ ticketOptions ]
+	);
 	const [ loading, setLoading ] = useState( true );
 	const [ loadError, setLoadError ] = useState( null );
-	const [ answersById, setAnswersById ] = useState( {} );
+	const [ indexedAnswers, setIndexedAnswers ] = useState( {
+		byTicketId: {},
+		unlinkedBySignupId: {},
+	} );
 	const [ includeAnswers, setIncludeAnswers ] = useState( false );
 	const [ columnMode, setColumnMode ] = useState( 'all' );
 	const [ selectedColumns, setSelectedColumns ] = useState(
-		BASE_COLUMNS.map( ( c ) => c.id )
+		baseColumns.map( ( c ) => c.id )
 	);
 	const [ format, setFormat ] = useState( 'markdown' );
 	const [ feedback, setFeedback ] = useState( null );
@@ -182,14 +265,7 @@ export default function SignupExportModal( { eventDateId, rows, onClose } ) {
 				if ( cancelled ) {
 					return;
 				}
-				const map = {};
-				( data || [] ).forEach( ( signup ) => {
-					map[ signup.id ] = {
-						answers: signup.answers || [],
-						answersFor: answersOwnerLabel( signup ),
-					};
-				} );
-				setAnswersById( map );
+				setIndexedAnswers( indexAnswers( data ) );
 				setLoading( false );
 			} )
 			.catch( ( err ) => {
@@ -208,14 +284,18 @@ export default function SignupExportModal( { eventDateId, rows, onClose } ) {
 		};
 	}, [ eventDateId ] );
 
+	// One export row per ticket, carrying its purchase's fields.
 	const rowsWithAnswers = useMemo(
 		() =>
-			rows.map( ( item ) => ( {
-				...item,
-				answers: answersById[ item.id ]?.answers || [],
-				answersFor: answersById[ item.id ]?.answersFor || '',
+			rows.map( ( row ) => ( {
+				...row.signup,
+				ticket: row.ticket,
+				isFirstTicket: row.isFirstTicket,
+				signup: row.signup,
+				ticketLabel: ticketRowLabel( row.ticket ),
+				...ticketRowAnswers( row, indexedAnswers ),
 			} ) ),
-		[ rows, answersById ]
+		[ rows, indexedAnswers ]
 	);
 
 	const answerColumns = useMemo(
@@ -226,8 +306,8 @@ export default function SignupExportModal( { eventDateId, rows, onClose } ) {
 	const hasAnswers = answerColumns.length > 0;
 
 	const allColumns = includeAnswers
-		? [ ...BASE_COLUMNS, ...answerColumns ]
-		: BASE_COLUMNS;
+		? [ ...baseColumns, ...answerColumns ]
+		: baseColumns;
 
 	const activeColumns =
 		columnMode === 'all'
@@ -369,7 +449,7 @@ export default function SignupExportModal( { eventDateId, rows, onClose } ) {
 							},
 							{
 								label: __(
-									'One line per person',
+									'One line per ticket',
 									'fair-events'
 								),
 								value: 'oneline',

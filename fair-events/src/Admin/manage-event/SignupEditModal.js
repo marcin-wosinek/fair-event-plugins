@@ -20,7 +20,7 @@ import {
 	Spinner,
 	TextareaControl,
 } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { targetOptionLabel, projectionMessage } from 'fair-events-shared';
 
@@ -106,6 +106,29 @@ export default function SignupEditModal( {
 				/* translators: %s: participant name */
 				__( 'Change ticket type for %s', 'fair-events' ),
 				signup.name
+		  );
+
+	const ticketCount = Math.max( ( signup.tickets || [] ).length, 1 );
+	const scopeNote = isMove
+		? sprintf(
+				/* translators: %d: number of tickets in the registration */
+				_n(
+					'This moves the whole registration, with its %d ticket.',
+					'This moves the whole registration, with all %d of its tickets.',
+					ticketCount,
+					'fair-events'
+				),
+				ticketCount
+		  )
+		: sprintf(
+				/* translators: %d: number of tickets in the registration */
+				_n(
+					'This changes the type of the whole registration, with its %d ticket.',
+					'This changes the type of the whole registration, with all %d of its tickets.',
+					ticketCount,
+					'fair-events'
+				),
+				ticketCount
 		  );
 
 	const renderBody = () => {
@@ -249,6 +272,7 @@ export default function SignupEditModal( {
 
 	return (
 		<Modal title={ title } onRequestClose={ onClose }>
+			<p>{ scopeNote }</p>
 			{ renderBody() }
 		</Modal>
 	);

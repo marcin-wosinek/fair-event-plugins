@@ -1,9 +1,9 @@
 /**
  * Event Signups Component
  *
- * List confirmed get-tickets registrations for an event date, with the
- * extras each participant holds. Email addresses and amounts stay out of the
- * table but remain available in exports.
+ * List the tickets of confirmed get-tickets registrations for an event date,
+ * one row per ticket, with the extras each ticket holds. Email addresses and
+ * amounts stay out of the table but remain available in exports.
  *
  * @package FairEvents
  */
@@ -21,7 +21,7 @@ import {
 	FlexItem,
 	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from './SignupExportModal.js';
 import {
@@ -70,49 +70,67 @@ export function isConfirmedSignup( signup ) {
 }
 
 /**
- * Index Fair Audience roster rows by participant: each participant maps to the
- * set of extras they currently hold with a confirmed payment.
+ * Expand registrations into the List's rows: one per ticket, numbered in
+ * order. A registration whose tickets were not created yet (an older
+ * registration still being converted) keeps a single row without a ticket,
+ * so it is never dropped.
  *
- * @param {Array} participants Rows from the Audience participants endpoint.
- * @return {Map<number, Set<number>>} Confirmed option IDs by participant ID
+ * @param {Array} signups Registrations returned by the API.
+ * @return {Array<{signup: Object, ticket: Object|null, isFirstTicket: boolean}>} Rows
  */
-export function buildConfirmedOptionsByParticipant( participants ) {
-	const map = new Map();
-	( Array.isArray( participants ) ? participants : [] ).forEach( ( p ) => {
-		const participantId = Number( p.participant_id );
-		if ( ! participantId ) {
-			return;
+export function expandTicketRows( signups ) {
+	return signups.flatMap( ( signup ) => {
+		const tickets = Array.isArray( signup.tickets ) ? signup.tickets : [];
+		if ( tickets.length === 0 ) {
+			return [ { signup, ticket: null, isFirstTicket: true } ];
 		}
-		if ( ! map.has( participantId ) ) {
-			map.set( participantId, new Set() );
-		}
-		( p.confirmed_ticket_option_ids || [] ).forEach( ( id ) =>
-			map.get( participantId ).add( Number( id ) )
-		);
+		return tickets.map( ( ticket, index ) => ( {
+			signup,
+			ticket,
+			isFirstTicket: index === 0,
+		} ) );
 	} );
-	return map;
 }
 
 /**
- * Ticket type of a purchase as the List shows it: each ticket's own type
- * is authoritative, so a purchase whose tickets were given different types
- * says so instead of naming the type it was bought with.
+ * Label identifying a ticket row, e.g. "Ticket 2 (AE2671B5)".
  *
- * @param {Object} signup Signup row returned by the API.
+ * @param {Object|null} ticket Ticket of the row, null when not created yet.
+ * @return {string} Label
+ */
+export function ticketRowLabel( ticket ) {
+	return ticket
+		? ticketReferenceLabel( ticket.position, ticket.reference )
+		: __( 'Ticket not created yet', 'fair-events' );
+}
+
+/**
+ * Ticket type shown on a ticket row: the ticket's own type, falling back to
+ * the type the registration was bought with.
+ *
+ * @param {Object}      row        Row from expandTicketRows().
+ * @param {Object}      row.signup Registration of the row.
+ * @param {Object|null} row.ticket Ticket of the row.
  * @return {string} Ticket type name
  */
-export function purchaseTicketTypeName( signup ) {
-	const names = [
-		...new Set(
-			( signup.tickets || [] ).map(
-				( ticket ) => ticket.ticket_type_name || '—'
-			)
-		),
-	];
-	if ( names.length > 1 ) {
-		return __( 'Mixed types', 'fair-events' );
+export function ticketRowTypeName( { signup, ticket } ) {
+	if ( ticket ) {
+		return ticket.ticket_type_name || '—';
 	}
-	return names[ 0 ] || signup.ticket_type_name || '—';
+	return signup.ticket_type_name || '—';
+}
+
+/**
+ * Extras a ticket holds with a confirmed payment.
+ *
+ * @param {Object|null} ticket Ticket of the row.
+ * @return {number[]|null} Option IDs, null when the ticket is not created yet
+ */
+export function ticketConfirmedOptionIds( ticket ) {
+	if ( ! ticket ) {
+		return null;
+	}
+	return ( ticket.confirmed_activity_ids || [] ).map( Number );
 }
 
 // Ticket statuses that no longer admit anyone; such tickets are not edited.
@@ -234,7 +252,7 @@ const EXTRA_NOT_SELECTED = 'not_selected';
 const EXTRA_UNAVAILABLE = 'unavailable';
 
 /**
- * Read-only indicator for one extra on one registration.
+ * Read-only indicator for one extra on one ticket.
  *
  * @param {Object} props       Component props.
  * @param {string} props.state One of the EXTRA_* states.
@@ -281,9 +299,6 @@ export default function EventSignups( { eventDateId } ) {
 	const audienceActive = !! window.fairEventsManageEventData?.audienceUrl;
 	const [ signups, setSignups ] = useState( [] );
 	const [ ticketOptions, setTicketOptions ] = useState( [] );
-	// Null until loaded, and whenever Fair Audience cannot supply selections.
-	const [ confirmedOptionsByParticipant, setConfirmedOptionsByParticipant ] =
-		useState( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ mailingOnly, setMailingOnly ] = useState( false );
@@ -336,25 +351,6 @@ export default function EventSignups( { eventDateId } ) {
 			.catch( () => setTicketOptions( [] ) );
 	}, [ eventDateId ] );
 
-	const loadConfirmedOptions = useCallback( () => {
-		if ( ! eventDateId || ! audienceActive ) {
-			return;
-		}
-		apiFetch( {
-			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants`,
-		} )
-			.then( ( data ) =>
-				setConfirmedOptionsByParticipant(
-					buildConfirmedOptionsByParticipant( data )
-				)
-			)
-			.catch( () => setConfirmedOptionsByParticipant( null ) );
-	}, [ eventDateId, audienceActive ] );
-
-	useEffect( () => {
-		loadConfirmedOptions();
-	}, [ loadConfirmedOptions ] );
-
 	if ( loading ) {
 		return <Spinner />;
 	}
@@ -366,8 +362,8 @@ export default function EventSignups( { eventDateId } ) {
 	const headers = [
 		{ key: 'number', label: '#' },
 		{ key: 'name', label: __( 'Name', 'fair-events' ) },
+		{ key: 'ticket', label: __( 'Ticket', 'fair-events' ) },
 		{ key: 'ticket_type', label: __( 'Ticket Type', 'fair-events' ) },
-		{ key: 'quantity', label: __( 'Qty', 'fair-events' ) },
 		...ticketOptions.map( ( opt ) => ( {
 			key: `option-${ opt.id }`,
 			label: opt.short_name || opt.name,
@@ -380,77 +376,165 @@ export default function EventSignups( { eventDateId } ) {
 		{ key: 'actions', label: __( 'Actions', 'fair-events' ) },
 	];
 
+	// Filters apply to whole registrations, which are then expanded, so all
+	// tickets of a registration are included or excluded together.
 	const confirmedSignups = signups.filter( isConfirmedSignup );
 	const visibleSignups = mailingOnly
 		? confirmedSignups.filter( ( s ) => isMailingOptIn( s.mailing_opt_in ) )
 		: confirmedSignups;
+	const visibleRows = expandTicketRows( visibleSignups );
+	const hasPendingTickets = visibleRows.some( ( row ) => ! row.ticket );
 
-	const extraState = ( signup, option ) => {
-		const selected =
-			confirmedOptionsByParticipant &&
-			confirmedOptionsByParticipant.get(
-				Number( signup.participant_id )
-			);
+	const extraState = ( ticket, option ) => {
+		const selected = ticketConfirmedOptionIds( ticket );
 		if ( ! selected ) {
 			return EXTRA_UNAVAILABLE;
 		}
-		return selected.has( Number( option.id ) )
+		return selected.includes( Number( option.id ) )
 			? EXTRA_SELECTED
 			: EXTRA_NOT_SELECTED;
 	};
 
-	const renderTicketRow = ( signup, ticket ) => {
-		const label = ticketReferenceLabel( ticket.position, ticket.reference );
-		const activityIds = ( ticket.activity_ids || [] ).map( Number );
+	const renderStatus = ( { signup, ticket } ) => {
+		if ( ticket && ticket.status !== 'confirmed' ) {
+			return ticketStatusName( ticket.status );
+		}
+		return <SignupStatus signup={ signup } />;
+	};
+
+	const renderRegistrationActions = ( signup ) => {
+		const ticketCount = ( signup.tickets || [] ).length;
+		return (
+			<>
+				{ ticketCount > 1 && (
+					<div style={ { color: '#757575', marginBottom: '4px' } }>
+						{ sprintf(
+							/* translators: %d: number of tickets in the registration */
+							_n(
+								'Registration (%d ticket):',
+								'Registration (%d tickets):',
+								ticketCount,
+								'fair-events'
+							),
+							ticketCount
+						) }
+					</div>
+				) }
+				<Flex justify="flex-start" gap={ 3 } wrap>
+					{ signup.can_move && (
+						<Button
+							variant="link"
+							onClick={ () =>
+								setEditing( { signup, action: ACTION_MOVE } )
+							}
+						>
+							{ __( 'Move', 'fair-events' ) }
+						</Button>
+					) }
+					{ ! audienceActive && !! signup.ticket_type_id && (
+						<Button
+							variant="link"
+							onClick={ () =>
+								setEditing( {
+									signup,
+									action: ACTION_CHANGE_TYPE,
+								} )
+							}
+						>
+							{ __( 'Change ticket type', 'fair-events' ) }
+						</Button>
+					) }
+					<Button
+						variant="link"
+						isDestructive
+						onClick={ () => setSelectedSignup( signup ) }
+					>
+						{ __( 'Delete', 'fair-events' ) }
+					</Button>
+				</Flex>
+			</>
+		);
+	};
+
+	const renderRow = ( row, index ) => {
+		const { signup, ticket, isFirstTicket } = row;
+		const label = ticketRowLabel( ticket );
 		return (
 			<tr
-				key={ `t-${ ticket.id }` }
+				key={ `${ signup.id }-${ ticket ? ticket.id : 'pending' }` }
 				className="fair-events-signups__ticket"
-				data-ticket-id={ ticket.id }
+				data-ticket-id={ ticket ? ticket.id : undefined }
 				data-signup-id={ signup.id }
-				style={ { background: '#f6f7f7' } }
+				style={
+					isFirstTicket && index > 0
+						? { borderTop: '2px solid #ddd' }
+						: undefined
+				}
 			>
-				<td style={ cellStyle } />
-				<td style={ { ...cellStyle, paddingLeft: '24px' } }>
+				<td style={ { ...cellStyle, textAlign: 'right' } }>
+					{ index + 1 }
+				</td>
+				<td style={ cellStyle }>{ signup.name }</td>
+				<td style={ { ...cellStyle, whiteSpace: 'nowrap' } }>
 					{ label }
 				</td>
-				<td style={ cellStyle }>{ ticket.ticket_type_name || '—' }</td>
-				<td style={ cellStyle } />
+				<td style={ cellStyle }>{ ticketRowTypeName( row ) }</td>
 				{ ticketOptions.map( ( opt ) => (
 					<td
 						key={ opt.id }
 						style={ { ...cellStyle, textAlign: 'center' } }
 					>
-						<ExtraIndicator
-							state={
-								activityIds.includes( Number( opt.id ) )
-									? EXTRA_SELECTED
-									: EXTRA_NOT_SELECTED
-							}
-						/>
+						<ExtraIndicator state={ extraState( ticket, opt ) } />
 					</td>
 				) ) }
+				<td style={ cellStyle }>{ renderStatus( row ) }</td>
 				<td style={ cellStyle }>
-					{ ticketStatusName( ticket.status ) }
-				</td>
-				<td style={ cellStyle } />
-				<td style={ cellStyle } />
-				<td style={ cellStyle } />
-				<td style={ cellStyle }>
-					{ ! INACTIVE_TICKET_STATUSES.includes( ticket.status ) && (
-						<Button
-							variant="link"
-							onClick={ () => setEditingTicketId( ticket.id ) }
-							label={ sprintf(
-								/* translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)" */
-								__( 'Edit %s', 'fair-events' ),
-								label
-							) }
-							showTooltip={ false }
+					{ signup.transaction_id && connectorActive ? (
+						<a
+							href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ signup.transaction_id }` }
 						>
-							{ __( 'Edit ticket', 'fair-events' ) }
-						</Button>
+							{ signup.transaction_id }
+						</a>
+					) : (
+						signup.transaction_id || '—'
 					) }
+				</td>
+				<td style={ cellStyle }>
+					{ isMailingOptIn( signup.mailing_opt_in )
+						? __( 'Yes', 'fair-events' )
+						: __( 'No', 'fair-events' ) }
+				</td>
+				<td style={ cellStyle }>{ signup.created_at }</td>
+				<td style={ cellStyle }>
+					{ isFirstTicket && renderRegistrationActions( signup ) }
+					{ audienceActive &&
+						ticket &&
+						! INACTIVE_TICKET_STATUSES.includes(
+							ticket.status
+						) && (
+							<div
+								style={
+									isFirstTicket
+										? { marginTop: '4px' }
+										: undefined
+								}
+							>
+								<Button
+									variant="link"
+									onClick={ () =>
+										setEditingTicketId( ticket.id )
+									}
+									label={ sprintf(
+										/* translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)" */
+										__( 'Edit %s', 'fair-events' ),
+										label
+									) }
+									showTooltip={ false }
+								>
+									{ __( 'Edit ticket', 'fair-events' ) }
+								</Button>
+							</div>
+						) }
 				</td>
 			</tr>
 		);
@@ -500,7 +584,7 @@ export default function EventSignups( { eventDateId } ) {
 						<Button
 							variant="secondary"
 							onClick={ () => setIsExportModalOpen( true ) }
-							disabled={ visibleSignups.length === 0 }
+							disabled={ visibleRows.length === 0 }
 						>
 							{ __( 'Export', 'fair-events' ) }
 						</Button>
@@ -513,15 +597,15 @@ export default function EventSignups( { eventDateId } ) {
 						{ deleteError }
 					</Notice>
 				) }
-				{ ticketOptions.length > 0 && ! audienceActive && (
-					<Notice status="info" isDismissible={ false }>
+				{ hasPendingTickets && (
+					<Notice status="warning" isDismissible={ false }>
 						{ __(
-							'Selected extras are shown only when Fair Audience is active.',
+							'Some older registrations are still being split into individual tickets. They are listed as one row for now; reload this page in a few minutes to see their tickets.',
 							'fair-events'
 						) }
 					</Notice>
 				) }
-				{ visibleSignups.length === 0 ? (
+				{ visibleRows.length === 0 ? (
 					<p>
 						{ confirmedSignups.length === 0
 							? __(
@@ -562,124 +646,7 @@ export default function EventSignups( { eventDateId } ) {
 									) ) }
 								</tr>
 							</thead>
-							<tbody>
-								{ visibleSignups.map( ( s, index ) => [
-									<tr key={ s.id }>
-										<td
-											style={ {
-												...cellStyle,
-												textAlign: 'right',
-											} }
-										>
-											{ index + 1 }
-										</td>
-										<td style={ cellStyle }>{ s.name }</td>
-										<td style={ cellStyle }>
-											{ purchaseTicketTypeName( s ) }
-										</td>
-										<td style={ cellStyle }>
-											{ s.quantity }
-										</td>
-										{ ticketOptions.map( ( opt ) => (
-											<td
-												key={ opt.id }
-												style={ {
-													...cellStyle,
-													textAlign: 'center',
-												} }
-											>
-												<ExtraIndicator
-													state={ extraState(
-														s,
-														opt
-													) }
-												/>
-											</td>
-										) ) }
-										<td style={ cellStyle }>
-											<SignupStatus signup={ s } />
-										</td>
-										<td style={ cellStyle }>
-											{ s.transaction_id &&
-											connectorActive ? (
-												<a
-													href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ s.transaction_id }` }
-												>
-													{ s.transaction_id }
-												</a>
-											) : (
-												s.transaction_id || '—'
-											) }
-										</td>
-										<td style={ cellStyle }>
-											{ isMailingOptIn( s.mailing_opt_in )
-												? __( 'Yes', 'fair-events' )
-												: __( 'No', 'fair-events' ) }
-										</td>
-										<td style={ cellStyle }>
-											{ s.created_at }
-										</td>
-										<td style={ cellStyle }>
-											<Flex
-												justify="flex-start"
-												gap={ 3 }
-												wrap
-											>
-												{ s.can_move && (
-													<Button
-														variant="link"
-														onClick={ () =>
-															setEditing( {
-																signup: s,
-																action: ACTION_MOVE,
-															} )
-														}
-													>
-														{ __(
-															'Move',
-															'fair-events'
-														) }
-													</Button>
-												) }
-												{ ! audienceActive &&
-													!! s.ticket_type_id && (
-														<Button
-															variant="link"
-															onClick={ () =>
-																setEditing( {
-																	signup: s,
-																	action: ACTION_CHANGE_TYPE,
-																} )
-															}
-														>
-															{ __(
-																'Change ticket type',
-																'fair-events'
-															) }
-														</Button>
-													) }
-												<Button
-													variant="link"
-													isDestructive
-													onClick={ () =>
-														setSelectedSignup( s )
-													}
-												>
-													{ __(
-														'Delete',
-														'fair-events'
-													) }
-												</Button>
-											</Flex>
-										</td>
-									</tr>,
-									...( audienceActive
-										? ( s.tickets || [] ).map( ( ticket ) =>
-												renderTicketRow( s, ticket )
-										  )
-										: [] ),
-								] ) }
-							</tbody>
+							<tbody>{ visibleRows.map( renderRow ) }</tbody>
 						</table>
 					</div>
 				) }
@@ -688,19 +655,28 @@ export default function EventSignups( { eventDateId } ) {
 				isOpen={ !! selectedSignup }
 				onConfirm={ handleDelete }
 				onCancel={ () => setSelectedSignup( null ) }
-				confirmButtonText={ __( 'Delete signup', 'fair-events' ) }
+				confirmButtonText={ __( 'Delete registration', 'fair-events' ) }
 				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
 			>
 				{ selectedSignup && (
 					<>
 						<p>
 							{ sprintf(
-								/* translators: 1: signup name, 2: payment status */
-								__(
-									'Delete the signup for %1$s? Its current payment status is %2$s.',
+								/* translators: 1: signup name, 2: number of tickets, 3: payment status */
+								_n(
+									'Delete the registration for %1$s, with its %2$d ticket? Its current payment status is %3$s.',
+									'Delete the registration for %1$s, with all %2$d of its tickets? Its current payment status is %3$s.',
+									Math.max(
+										( selectedSignup.tickets || [] ).length,
+										1
+									),
 									'fair-events'
 								),
 								selectedSignup.name,
+								Math.max(
+									( selectedSignup.tickets || [] ).length,
+									1
+								),
 								selectedSignup.status
 							) }
 						</p>
@@ -732,14 +708,14 @@ export default function EventSignups( { eventDateId } ) {
 					onSaved={ () => {
 						setEditingTicketId( null );
 						loadSignups();
-						loadConfirmedOptions();
 					} }
 				/>
 			) }
 			{ isExportModalOpen && (
 				<SignupExportModal
 					eventDateId={ eventDateId }
-					rows={ visibleSignups }
+					rows={ visibleRows }
+					ticketOptions={ ticketOptions }
 					onClose={ () => setIsExportModalOpen( false ) }
 				/>
 			) }
