@@ -277,7 +277,7 @@ test.describe('Fair Events — full internal build (all bundles on)', () => {
 	}) => {
 		await loginAsAdmin(page);
 		await page.goto(
-			'/wp-admin/admin.php?page=fair-events-experimental-settings'
+			'/wp-admin/admin.php?page=fair-events-settings&tab=experimental'
 		);
 		await expect(
 			page.getByRole('checkbox', { name: 'Ticketing', exact: true })

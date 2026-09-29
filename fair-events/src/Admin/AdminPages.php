@@ -543,6 +543,10 @@ class AdminPages {
 			\FairEvents\Core\Features::script_translations_path()
 		);
 
+		// Lets extensions (e.g. fair-events-experimental) register extra
+		// settings tabs via the `fairEvents.settings.tabs` JS filter.
+		do_action( 'fair_events_settings_enqueue_assets', $hook );
+
 		wp_enqueue_style( 'wp-components' );
 	}
 
