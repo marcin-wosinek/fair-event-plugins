@@ -53,6 +53,9 @@ class RestHooks {
 		$audit_log_controller = new \FairPaymentsConnector\API\AuditLogController();
 		$audit_log_controller->register_routes();
 
+		$external_updates_controller = new \FairPaymentsConnector\API\ExternalUpdatesController();
+		$external_updates_controller->register_routes();
+
 		$settings_write_controller = new \FairPaymentsConnector\API\SettingsWriteController();
 		$settings_write_controller->register_routes();
 

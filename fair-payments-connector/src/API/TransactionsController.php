@@ -9,10 +9,12 @@ namespace FairPaymentsConnector\API;
 
 defined( 'WPINC' ) || die;
 
+use FairPaymentsConnector\Database\ExternalUpdateRunRepository;
 use FairPaymentsConnector\Models\Transaction;
 use FairPaymentsConnector\Models\LineItem;
 use FairPaymentsConnector\Models\EntryTransaction;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
+use FairPaymentsConnector\Services\ExternalUpdateRuns;
 use FairPaymentsConnector\Services\TransactionDeletionService;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -155,6 +157,7 @@ class TransactionsController extends WP_REST_Controller {
 									'pattern' => '^tr_[A-Za-z0-9]+$',
 								),
 							),
+							'run_id'      => $this->get_run_id_arg(),
 						)
 					),
 				),
@@ -209,7 +212,7 @@ class TransactionsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'sync_mollie_batch' ),
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => array(
-						'ids' => array(
+						'ids'    => array(
 							'type'              => 'array',
 							'required'          => true,
 							'minItems'          => 1,
@@ -235,6 +238,7 @@ class TransactionsController extends WP_REST_Controller {
 								return array_map( 'absint', (array) $ids );
 							},
 						),
+						'run_id' => $this->get_run_id_arg(),
 					),
 				),
 			)
@@ -595,20 +599,32 @@ class TransactionsController extends WP_REST_Controller {
 	 * @throws \Exception When the Mollie client cannot be initialized.
 	 */
 	public function import_mollie_payments( $request ) {
+		$run_id = (int) $request->get_param( 'run_id' );
+		if ( $run_id ) {
+			$run = ExternalUpdateRuns::claim( $run_id, ExternalUpdateRuns::ACTION_IMPORT_MOLLIE_PAYMENTS, (string) $request['mode'] );
+			if ( is_wp_error( $run ) ) {
+				return $run;
+			}
+		}
+
 		if ( ! in_array( $request['mode'], array( 'live', 'test' ), true ) ) {
-			return new WP_Error( 'invalid_mode', __( 'Choose live or test mode.', 'fair-payments-connector' ), array( 'status' => 400 ) );
+			return $this->fail_run( $run_id, 'invalid_request', new WP_Error( 'invalid_mode', __( 'Choose live or test mode.', 'fair-payments-connector' ), array( 'status' => 400 ) ) );
 		}
 		$date_error = $this->validate_mollie_dates( $request );
 		if ( is_wp_error( $date_error ) ) {
-			return $date_error;
+			return $this->fail_run( $run_id, 'invalid_request', $date_error );
 		}
 		if ( ! MolliePaymentHandler::is_configured() ) {
-			return new WP_Error(
+			return $this->fail_run(
+				$run_id,
 				'mollie_not_connected',
-				__( 'Connect Mollie before importing payments.', 'fair-payments-connector' ),
-				array(
-					'status'       => 400,
-					'settings_url' => $this->mollie_connection_state()['settings_url'],
+				new WP_Error(
+					'mollie_not_connected',
+					__( 'Connect Mollie before importing payments.', 'fair-payments-connector' ),
+					array(
+						'status'       => 400,
+						'settings_url' => $this->mollie_connection_state()['settings_url'],
+					)
 				)
 			);
 		}
@@ -628,8 +644,10 @@ class TransactionsController extends WP_REST_Controller {
 				$state = Transaction::import_mollie_create_only( $handler->map_payment_for_import( $payment ) );
 				if ( 'created' === $state ) {
 					++$result['imported'];
+					$this->record_run( $run_id, array( 'created' => 1 ) );
 				} elseif ( 'existing' === $state ) {
 					++$result['skipped'];
+					$this->record_run( $run_id, array( 'skipped' => 1 ) );
 				} else {
 					throw new \Exception( 'insert_failed' );
 				}
@@ -639,6 +657,7 @@ class TransactionsController extends WP_REST_Controller {
 					'payment_id' => $payment_id,
 					'message'    => __( 'This payment could not be imported.', 'fair-payments-connector' ),
 				);
+				$this->record_run( $run_id, array( 'failed' => 1 ) );
 			}
 		}
 		$result['message'] = sprintf(
@@ -648,7 +667,54 @@ class TransactionsController extends WP_REST_Controller {
 			$result['skipped'],
 			$result['failed']
 		);
+		if ( $run_id ) {
+			$result['run'] = ExternalUpdateRuns::prepare_for_response( ExternalUpdateRuns::finish( $run_id ) );
+		}
 		return new WP_REST_Response( $result, 200 );
+	}
+
+	/**
+	 * Shared `run_id` argument for actions started from External Updates.
+	 *
+	 * @return array
+	 */
+	private function get_run_id_arg() {
+		return array(
+			'description'       => __( 'External Updates run this request belongs to.', 'fair-payments-connector' ),
+			'type'              => 'integer',
+			'default'           => 0,
+			'minimum'           => 0,
+			'sanitize_callback' => 'absint',
+		);
+	}
+
+	/**
+	 * Record progress on a run, when the request belongs to one.
+	 *
+	 * @param int   $run_id Run ID, or 0.
+	 * @param array $counts Count deltas.
+	 * @return void
+	 */
+	private function record_run( $run_id, array $counts ) {
+		if ( $run_id ) {
+			ExternalUpdateRuns::record( $run_id, $counts );
+		}
+	}
+
+	/**
+	 * Close a run as failed before any work, then return the request error.
+	 *
+	 * @param int      $run_id     Run ID, or 0.
+	 * @param string   $error_code Safe failure category.
+	 * @param WP_Error $error      Error to return.
+	 * @return WP_Error
+	 */
+	private function fail_run( $run_id, $error_code, WP_Error $error ) {
+		if ( $run_id ) {
+			$run = ExternalUpdateRuns::finish( $run_id, $error_code );
+			$error->add_data( array_merge( (array) $error->get_error_data(), array( 'run' => ExternalUpdateRuns::prepare_for_response( $run ) ) ) );
+		}
+		return $error;
 	}
 
 	/** Return safe Mollie connection details for the browser. */
@@ -766,6 +832,14 @@ class TransactionsController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function sync_mollie_batch( $request ) {
+		$run_id = (int) $request->get_param( 'run_id' );
+		if ( $run_id ) {
+			$run = ExternalUpdateRuns::claim( $run_id, ExternalUpdateRuns::ACTION_LOAD_MISSING_FEES );
+			if ( is_wp_error( $run ) ) {
+				return $run;
+			}
+		}
+
 		$ids = array_unique( (array) $request->get_param( 'ids' ) );
 
 		$updated = 0;
@@ -781,14 +855,24 @@ class TransactionsController extends WP_REST_Controller {
 			}
 		}
 
-		return new WP_REST_Response(
-			array(
-				'processed' => count( $ids ),
-				'updated'   => $updated,
-				'failed'    => $failed,
-			),
-			200
+		$response = array(
+			'processed' => count( $ids ),
+			'updated'   => $updated,
+			'failed'    => $failed,
 		);
+
+		if ( $run_id ) {
+			ExternalUpdateRuns::record(
+				$run_id,
+				array(
+					'updated' => $updated,
+					'failed'  => $failed,
+				)
+			);
+			$response['run'] = ExternalUpdateRuns::prepare_for_response( ( new ExternalUpdateRunRepository() )->get( $run_id ) );
+		}
+
+		return new WP_REST_Response( $response, 200 );
 	}
 
 	/**

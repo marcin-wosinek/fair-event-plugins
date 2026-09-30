@@ -1,0 +1,123 @@
+.fair-external-updates {
+	max-width: 1100px;
+}
+
+.fair-external-updates__lead {
+	max-width: 720px;
+}
+
+.fair-external-updates__title {
+	margin: 0;
+	font-size: 1.1em;
+}
+
+.fair-external-updates__intro {
+	margin: 0;
+}
+
+.fair-external-updates__muted {
+	color: #646970;
+}
+
+.fair-external-updates__fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 12px;
+	max-width: 640px;
+}
+
+.fair-external-updates__sites {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.fair-external-updates__site {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin: 0;
+	padding: 12px 0;
+	border-top: 1px solid #f0f0f1;
+}
+
+.fair-external-updates__site:first-child {
+	border-top: 0;
+}
+
+.fair-external-updates__site-info {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-external-updates__payment {
+	padding: 12px;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	overflow-wrap: anywhere;
+}
+
+.fair-external-updates__status {
+	font-weight: 600;
+}
+
+.fair-external-updates__status.is-succeeded {
+	color: #007017;
+}
+
+.fair-external-updates__status.is-partial,
+.fair-external-updates__status.is-running {
+	color: #996800;
+}
+
+.fair-external-updates__status.is-failed,
+.fair-external-updates__status.is-interrupted {
+	color: #d63638;
+}
+
+.fair-external-updates__reason {
+	display: block;
+	color: #646970;
+}
+
+.fair-external-updates__pagination {
+	margin-top: 16px;
+}
+
+/* Stack log rows into labelled blocks on narrow screens. */
+@media (max-width: 782px) {
+	.fair-external-updates__log thead {
+		display: none;
+	}
+
+	.fair-external-updates__log,
+	.fair-external-updates__log tbody,
+	.fair-external-updates__log tr,
+	.fair-external-updates__log td {
+		display: block;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.fair-external-updates__log tr {
+		padding: 8px 0;
+		border-bottom: 1px solid #f0f0f1;
+	}
+
+	.fair-external-updates__log td {
+		display: grid;
+		grid-template-columns: 7.5em 1fr;
+		gap: 8px;
+		padding: 4px 12px;
+	}
+
+	.fair-external-updates__log td::before {
+		content: attr(data-label);
+		font-weight: 600;
+	}
+}

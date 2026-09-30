@@ -20,6 +20,10 @@ const PAGES = [
 		root: 'fair-payments-connector-transactions-root',
 	},
 	{
+		slug: 'fair-payments-connector-external-updates',
+		root: 'fair-payments-connector-external-updates-root',
+	},
+	{
 		slug: 'fair-payments-connector-fee-dashboard',
 		root: 'fair-payments-connector-fee-dashboard-root',
 	},
@@ -30,7 +34,7 @@ const PAGES = [
 ];
 
 test.describe('Fair Payments Connector admin menu', () => {
-	test('top-level menu is present with Transactions, Fee Dashboard and Settings', async ({
+	test('top-level menu is present with Transactions, External Updates, Fee Dashboard and Settings', async ({
 		page,
 	}) => {
 		await loginAsAdmin(page);

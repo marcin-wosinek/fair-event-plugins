@@ -11,6 +11,7 @@ defined( 'WPINC' ) || die;
 
 use FairPaymentsConnectorExperimental\Models\ConnectedSite;
 use FairPaymentsConnector\Models\Transaction;
+use FairPaymentsConnector\Services\ExternalUpdateRuns;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -121,6 +122,15 @@ class ConnectedSitesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'import_transactions' ),
 					'permission_callback' => array( $this, 'permissions_check' ),
+					'args'                => array(
+						'run_id' => array(
+							'description'       => __( 'External Updates run this request belongs to.', 'fair-payments-connector-experimental' ),
+							'type'              => 'integer',
+							'default'           => 0,
+							'minimum'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+					),
 				),
 			)
 		);
@@ -310,25 +320,69 @@ class ConnectedSitesController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Resolve a connected site for an External Updates run.
+	 *
+	 * Hooked to `fair_payments_connector_external_update_connected_site`.
+	 *
+	 * @param array|WP_Error|null $site    Value from earlier listeners.
+	 * @param int                 $site_id Connected site ID.
+	 * @return array|WP_Error Label of an enabled site, or an error.
+	 */
+	public static function resolve_external_update_source( $site, $site_id ) {
+		$record = ConnectedSite::get_by_id( (int) $site_id );
+
+		if ( ! $record ) {
+			return new WP_Error(
+				'rest_connected_site_not_found',
+				__( 'Connected site not found.', 'fair-payments-connector-experimental' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! ConnectedSite::is_enabled( $record ) ) {
+			return self::disabled_error();
+		}
+
+		return array( 'label' => (string) $record['label'] );
+	}
+
+	/**
 	 * Pull transactions from a connected site and import them locally.
+	 *
+	 * With a `run_id` from Fair Payments Connector's External Updates page,
+	 * counts are recorded on that run after every page, and the run is
+	 * closed as succeeded, partial or failed.
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function import_transactions( $request ) {
 		$id     = (int) $request->get_param( 'id' );
+		$run_id = (int) $request->get_param( 'run_id' );
+
+		if ( $run_id ) {
+			if ( ! class_exists( ExternalUpdateRuns::class ) ) {
+				return new WP_Error(
+					'rest_external_update_unavailable',
+					__( 'Update Fair Payments Connector to record this import in the External Updates log.', 'fair-payments-connector-experimental' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$run = ExternalUpdateRuns::claim( $run_id, ExternalUpdateRuns::ACTION_IMPORT_CONNECTED_SITE, (string) $id );
+			if ( is_wp_error( $run ) ) {
+				return $run;
+			}
+		}
+
 		$record = ConnectedSite::get_by_id( $id );
 
 		if ( ! $record ) {
-			return $this->not_found();
+			return $this->fail_run( $run_id, 'source_unavailable', $this->not_found() );
 		}
 
 		if ( ! ConnectedSite::is_enabled( $record ) ) {
-			return new WP_Error(
-				'rest_connected_site_disabled',
-				__( 'This connected site is disabled and cannot be used to import transactions.', 'fair-payments-connector-experimental' ),
-				array( 'status' => 403 )
-			);
+			return $this->fail_run( $run_id, 'source_unavailable', self::disabled_error() );
 		}
 
 		$source_domain = (string) wp_parse_url( $record['base_url'], PHP_URL_HOST );
@@ -361,10 +415,16 @@ class ConnectedSitesController extends WP_REST_Controller {
 			if ( is_wp_error( $response ) ) {
 				ConnectedSite::mark_failed( $id );
 
-				return new WP_Error(
-					'rest_connected_site_unreachable',
-					__( 'Could not reach the remote site.', 'fair-payments-connector-experimental' ),
-					array( 'status' => 502 )
+				return $this->fail_run(
+					$run_id,
+					'remote_unreachable',
+					$this->import_error(
+						'rest_connected_site_unreachable',
+						__( 'Could not reach the remote site.', 'fair-payments-connector-experimental' ),
+						502,
+						$record,
+						array( $created, $updated, $skipped )
+					)
 				);
 			}
 
@@ -374,22 +434,34 @@ class ConnectedSitesController extends WP_REST_Controller {
 			if ( 200 !== $code || ! is_array( $body ) || ! isset( $body['transactions'] ) ) {
 				ConnectedSite::mark_failed( $id );
 
-				$message = 401 === $code || 403 === $code
+				$rejected = 401 === $code || 403 === $code;
+				$message  = $rejected
 					? __( 'The remote site rejected the token, or it lacks the transactions:read scope.', 'fair-payments-connector-experimental' )
 					: __( 'The remote site returned an unexpected response.', 'fair-payments-connector-experimental' );
 
-				return new WP_Error(
-					'rest_connected_site_import_failed',
-					$message,
-					array( 'status' => 400 )
+				return $this->fail_run(
+					$run_id,
+					$rejected ? 'remote_rejected' : 'remote_invalid_response',
+					$this->import_error(
+						'rest_connected_site_import_failed',
+						$message,
+						400,
+						$record,
+						array( $created, $updated, $skipped )
+					)
 				);
 			}
 
 			$transactions = is_array( $body['transactions'] ) ? $body['transactions'] : array();
+			$page_counts  = array(
+				'created' => 0,
+				'updated' => 0,
+				'skipped' => 0,
+			);
 
 			foreach ( $transactions as $transaction ) {
 				if ( ! is_array( $transaction ) ) {
-					++$skipped;
+					++$page_counts['skipped'];
 					continue;
 				}
 
@@ -415,12 +487,20 @@ class ConnectedSitesController extends WP_REST_Controller {
 				);
 
 				if ( 'created' === $result ) {
-					++$created;
+					++$page_counts['created'];
 				} elseif ( 'updated' === $result ) {
-					++$updated;
+					++$page_counts['updated'];
 				} else {
-					++$skipped;
+					++$page_counts['skipped'];
 				}
+			}
+
+			$created += $page_counts['created'];
+			$updated += $page_counts['updated'];
+			$skipped += $page_counts['skipped'];
+
+			if ( $run_id ) {
+				ExternalUpdateRuns::record( $run_id, $page_counts );
 			}
 
 			$total    = isset( $body['total'] ) ? (int) $body['total'] : 0;
@@ -429,21 +509,97 @@ class ConnectedSitesController extends WP_REST_Controller {
 			++$page;
 		} while ( $has_more );
 
-		return new WP_REST_Response(
+		$data = array(
+			'created' => $created,
+			'updated' => $updated,
+			'skipped' => $skipped,
+			'message' => sprintf(
+				/* translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label */
+				__( 'Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s.', 'fair-payments-connector-experimental' ),
+				$created,
+				$updated,
+				$skipped,
+				$record['label']
+			),
+		);
+
+		if ( $run_id ) {
+			$data['run'] = ExternalUpdateRuns::prepare_for_response( ExternalUpdateRuns::finish( $run_id ) );
+		}
+
+		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Build an import error that says how much was imported before it.
+	 *
+	 * @param string $code    Error code.
+	 * @param string $reason  Why the import stopped.
+	 * @param int    $status  HTTP status.
+	 * @param array  $record  Connected site record.
+	 * @param int[]  $counts  Created, updated and skipped so far.
+	 * @return WP_Error
+	 */
+	private function import_error( $code, $reason, $status, array $record, array $counts ) {
+		list( $created, $updated, $skipped ) = $counts;
+
+		$message = $reason;
+		if ( $created + $updated + $skipped > 0 ) {
+			$message = sprintf(
+				/* translators: 1: connected site label, 2: created count, 3: updated count, 4: skipped count, 5: reason the import stopped */
+				__( 'The import from %1$s stopped after %2$d new, %3$d updated and %4$d skipped transaction(s). %5$s', 'fair-payments-connector-experimental' ),
+				$record['label'],
+				$created,
+				$updated,
+				$skipped,
+				$reason
+			);
+		}
+
+		return new WP_Error(
+			$code,
+			$message,
 			array(
+				'status'  => $status,
 				'created' => $created,
 				'updated' => $updated,
 				'skipped' => $skipped,
-				'message' => sprintf(
-					/* translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label */
-					__( 'Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s.', 'fair-payments-connector-experimental' ),
-					$created,
-					$updated,
-					$skipped,
-					$record['label']
-				),
-			),
-			200
+			)
+		);
+	}
+
+	/**
+	 * Close a run with a failure category, then return the request error.
+	 *
+	 * @param int      $run_id     Run ID, or 0.
+	 * @param string   $error_code Safe failure category.
+	 * @param WP_Error $error      Error to return.
+	 * @return WP_Error
+	 */
+	private function fail_run( $run_id, $error_code, WP_Error $error ) {
+		if ( $run_id ) {
+			$run = ExternalUpdateRuns::finish( $run_id, $error_code );
+			$error->add_data(
+				array_merge(
+					(array) $error->get_error_data(),
+					array( 'run' => ExternalUpdateRuns::prepare_for_response( $run ) )
+				)
+			);
+		}
+
+		return $error;
+	}
+
+	/**
+	 * Error for a disabled connected site.
+	 *
+	 * @return WP_Error
+	 */
+	private static function disabled_error() {
+		return new WP_Error(
+			'rest_connected_site_disabled',
+			__( 'This connected site is disabled and cannot be used to import transactions.', 'fair-payments-connector-experimental' ),
+			array( 'status' => 403 )
 		);
 	}
 

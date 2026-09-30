@@ -64,17 +64,6 @@ const getModeStyle = ( testmode ) => {
 		: { color: '#007017', fontWeight: 'bold' };
 };
 
-const FEE_SYNC_BATCH_SIZE = 10;
-
-/** Split an array into consecutive chunks of at most `size` items. */
-const chunk = ( items, size ) => {
-	const chunks = [];
-	for ( let i = 0; i < items.length; i += size ) {
-		chunks.push( items.slice( i, i + size ) );
-	}
-	return chunks;
-};
-
 const TransactionsApp = () => {
 	const [ transactions, setTransactions ] = useState( [] );
 	const [ pagination, setPagination ] = useState( {
@@ -97,7 +86,6 @@ const TransactionsApp = () => {
 		new Set()
 	);
 	const [ isImportModalOpen, setIsImportModalOpen ] = useState( false );
-	const [ feeSync, setFeeSync ] = useState( null );
 
 	// One-use success marker set by the transaction detail page after a
 	// deletion redirect; shown once and stripped so a refresh doesn't repeat it.
@@ -247,94 +235,6 @@ const TransactionsApp = () => {
 		loadTransactions();
 	};
 
-	const handleLoadMissingFees = async () => {
-		setError( null );
-		setSuccess( null );
-		setFeeSync( {
-			running: true,
-			processed: 0,
-			total: 0,
-			succeeded: 0,
-			failed: 0,
-		} );
-
-		try {
-			const params = new URLSearchParams();
-			if ( filters.mode ) params.append( 'mode', filters.mode );
-
-			const response = await apiFetch( {
-				path: `/fair-payments-connector/v1/transactions/missing-mollie-fee?${ params.toString() }`,
-			} );
-
-			const ids = response.ids || [];
-
-			if ( ids.length === 0 ) {
-				setFeeSync( null );
-				setSuccess(
-					__(
-						'No paid transactions are missing Mollie fee data.',
-						'fair-payments-connector'
-					)
-				);
-				return;
-			}
-
-			setFeeSync( ( prev ) => ( { ...prev, total: ids.length } ) );
-
-			const batches = chunk( ids, FEE_SYNC_BATCH_SIZE );
-			let processed = 0;
-			let succeeded = 0;
-			let failed = 0;
-
-			for ( let i = 0; i < batches.length; i++ ) {
-				const batch = batches[ i ];
-				try {
-					const result = await apiFetch( {
-						path: '/fair-payments-connector/v1/transactions/sync-mollie-batch',
-						method: 'POST',
-						data: { ids: batch },
-					} );
-					succeeded += result?.updated ?? 0;
-					failed += result?.failed ?? 0;
-				} catch ( err ) {
-					// A batch request that fails entirely counts every id in it as
-					// failed so accounting stays accurate, and the loop continues.
-					failed += batch.length;
-				}
-				processed += batch.length;
-				setFeeSync( {
-					running: i + 1 < batches.length,
-					processed,
-					total: ids.length,
-					succeeded,
-					failed,
-				} );
-			}
-
-			setFeeSync( null );
-			setSuccess(
-				/* translators: 1: synced count, 2: failed count, 3: total count */
-				__(
-					'Mollie fee sync complete: %1$d updated, %2$d failed (out of %3$d).',
-					'fair-payments-connector'
-				)
-					.replace( '%1$d', succeeded )
-					.replace( '%2$d', failed )
-					.replace( '%3$d', ids.length )
-			);
-			loadTransactions();
-		} catch ( err ) {
-			setFeeSync( null );
-			setError(
-				err.message ||
-					__(
-						'Failed to load missing Mollie fees.',
-						'fair-payments-connector'
-					)
-			);
-		}
-	};
-
 	const sortableHeader = ( column, label ) => (
 		<th
 			style={ { cursor: 'pointer' } }
@@ -416,27 +316,6 @@ const TransactionsApp = () => {
 							) }
 							<Button
 								variant="secondary"
-								onClick={ handleLoadMissingFees }
-								isBusy={ !! feeSync?.running }
-								disabled={ !! feeSync?.running }
-								style={ {
-									whiteSpace: 'nowrap',
-									flexShrink: 0,
-									width: 'auto',
-								} }
-							>
-								{ feeSync?.running
-									? __(
-											'Syncing…',
-											'fair-payments-connector'
-									  )
-									: __(
-											'Load Missing Mollie Fees',
-											'fair-payments-connector'
-									  ) }
-							</Button>
-							<Button
-								variant="secondary"
 								onClick={ () => setIsImportModalOpen( true ) }
 								style={ { flexShrink: 0, width: 'auto' } }
 							>
@@ -463,22 +342,6 @@ const TransactionsApp = () => {
 							onRemove={ () => setSuccess( null ) }
 						>
 							{ success }
-						</Notice>
-					) }
-
-					{ feeSync && feeSync.running && (
-						<Notice status="info" isDismissible={ false }>
-							{
-								/* translators: 1: processed count, 2: total count, 3: succeeded count, 4: failed count */
-								__(
-									'Syncing Mollie fees: %1$d / %2$d (updated: %3$d, failed: %4$d)',
-									'fair-payments-connector'
-								)
-									.replace( '%1$d', feeSync.processed )
-									.replace( '%2$d', feeSync.total )
-									.replace( '%3$d', feeSync.succeeded )
-									.replace( '%4$d', feeSync.failed )
-							}
 						</Notice>
 					) }
 
