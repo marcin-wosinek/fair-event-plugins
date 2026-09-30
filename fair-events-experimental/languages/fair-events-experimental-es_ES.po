@@ -126,33 +126,9 @@ msgstr "No se pudo cargar el evento."
 msgid "Event not found."
 msgstr "Evento no encontrado."
 
-#. translators: %d: number of excluded participant rows.
-#: src/Admin/event-statistics/EventStatistics.js:426
-#, js-format
-msgid "Confirmed participants only (signed up). %d excluded (pending payment, interested, collaborators)."
-msgstr "Solo participantes confirmados (registrados). %d excluidos (pago pendiente, interesados, colaboradores)."
-
-#: src/Admin/event-statistics/EventStatistics.js:435
-msgid "People per activity"
-msgstr "Personas por actividad"
-
-#: src/Admin/event-statistics/EventStatistics.js:442
-msgid "No activities recorded for confirmed participants."
-msgstr "Sin actividades registradas para participantes confirmados."
-
-#: src/Admin/event-statistics/EventStatistics.js:467
-#: src/Admin/event-statistics/EventStatistics.js:506
-msgid "People"
-msgstr "Personas"
-
-#: src/Admin/event-statistics/EventStatistics.js:479
-msgid "Activities per person"
-msgstr "Actividades por persona"
-
-#: src/Admin/event-statistics/EventStatistics.js:494
-msgid "Activities"
-msgstr "Actividades"
-
+#: src/Admin/event-statistics/EventStatistics.js:331
+#: src/Admin/event-statistics/EventStatistics.js:434
+#: src/Admin/event-statistics/EventStatistics.js:481
 #: src/Admin/manage-event/DuplicateEventWizard.js:570
 msgid "Tickets"
 msgstr "Entradas"
@@ -531,33 +507,17 @@ msgstr "Entradas, reglas de precios de grupo/permisos. Requiere fair-audience."
 msgid "Advanced event duplication and merge tools."
 msgstr "Herramientas avanzadas de duplicación y fusión de eventos."
 
-#: src/Admin/event-statistics/EventStatistics.js:230
+#: src/Admin/event-statistics/EventStatistics.js:171
 msgid "Event sales statistics could not be loaded."
 msgstr "No se pudieron cargar las estadísticas de ventas del evento."
 
-#. translators: %d: confirmed sales total.
-#: src/Admin/event-statistics/EventStatistics.js:338
-#, js-format
-msgid "%d sale"
-msgid_plural "%d sales"
-msgstr[0] "%d venta"
-msgstr[1] "%d ventas"
-
 #. translators: %d: calendar days until the event.
-#: src/Admin/event-statistics/EventStatistics.js:356
+#: src/Admin/event-statistics/EventStatistics.js:296
 #, js-format
 msgid "%d day until the event"
 msgid_plural "%d days until the event"
 msgstr[0] "%d día hasta el evento"
 msgstr[1] "%d días hasta el evento"
-
-#: src/Admin/event-statistics/EventStatistics.js:268
-msgid "Cumulative sales"
-msgstr "Ventas acumuladas"
-
-#: src/Admin/event-statistics/EventStatistics.js:391
-msgid "Sales"
-msgstr "Ventas"
 
 #: src/Core/Features.php:163
 #: src/Admin/settings/MetaConversions.js:239
@@ -634,16 +594,16 @@ msgid "Clear the Meta access token? Conversion delivery will stop until a new to
 msgstr "¿Borrar el token de acceso de Meta? La entrega de conversiones se detendrá hasta que se guarde un nuevo token."
 
 #. translators: %s: comma-separated currency codes excluded from event revenue.
-#: src/Admin/event-statistics/EventStatistics.js:324
+#: src/Admin/event-statistics/EventStatistics.js:264
 #, js-format
 msgid "Some payments were excluded because they use different currencies: %s."
 msgstr "Algunos pagos fueron excluidos porque utilizan diferentes monedas: %s."
 
-#: src/Admin/event-statistics/EventStatistics.js:272
+#: src/Admin/event-statistics/EventStatistics.js:213
 msgid "Cumulative sales amount"
 msgstr "Importe acumulado de ventas"
 
-#: src/Admin/event-statistics/EventStatistics.js:411
+#: src/Admin/event-statistics/EventStatistics.js:351
 msgid "Net sales amount"
 msgstr "Importe neto de ventas"
 
@@ -758,11 +718,11 @@ msgstr "Aceptado"
 msgid "Rejected"
 msgstr "Rechazado"
 
-#: src/Admin/event-statistics/EventStatistics.js:124
+#: src/Admin/event-statistics/EventStatistics.js:80
 msgid "Download PNG"
 msgstr "Descargar PNG"
 
-#: src/Admin/event-statistics/EventStatistics.js:291
+#: src/Admin/event-statistics/EventStatistics.js:232
 msgid "The chart image could not be downloaded. Please try again."
 msgstr "No se pudo descargar la imagen del gráfico. Por favor, inténtalo de nuevo."
 
@@ -909,7 +869,7 @@ msgid "Not sent — an earlier part failed"
 msgstr ""
 
 #: src/Admin/settings/WeeklyNotifications.js:82
-#: src/Admin/settings/WeeklyNotifications.js:473
+#: src/Admin/settings/WeeklyNotifications.js:474
 msgid "Telegram"
 msgstr ""
 
@@ -929,186 +889,186 @@ msgstr ""
 msgid "Failed to save weekly notification settings."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:247
+#: src/Admin/settings/WeeklyNotifications.js:248
 msgid "Telegram bot token removed."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:257
+#: src/Admin/settings/WeeklyNotifications.js:258
 msgid "Failed to remove the Telegram bot token."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:279
+#: src/Admin/settings/WeeklyNotifications.js:280
 msgid "Telegram accepted the test message for every chat."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:286
+#: src/Admin/settings/WeeklyNotifications.js:287
 msgid "The test message did not reach every chat. See the results below."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:297
+#: src/Admin/settings/WeeklyNotifications.js:298
 msgid "Failed to send the test message."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:315
+#: src/Admin/settings/WeeklyNotifications.js:316
 msgid "Failed to build the preview."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:328
+#: src/Admin/settings/WeeklyNotifications.js:329
 msgid "Choose an event source"
 msgstr ""
 
 #. translators: %s: event source slug
-#: src/Admin/settings/WeeklyNotifications.js:343
+#: src/Admin/settings/WeeklyNotifications.js:344
 #, js-format
 msgid "%s (unavailable)"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:364
+#: src/Admin/settings/WeeklyNotifications.js:365
 msgid "Save a bot token and at least one chat or channel before sending a test message."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:369
+#: src/Admin/settings/WeeklyNotifications.js:370
 msgid "Save your changes first — the test uses the saved settings."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:379
+#: src/Admin/settings/WeeklyNotifications.js:380
 msgid "Weekly notifications"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:397
+#: src/Admin/settings/WeeklyNotifications.js:398
 msgid "Send weekly event notifications"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:406
+#: src/Admin/settings/WeeklyNotifications.js:407
 msgid "Event source"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:429
+#: src/Admin/settings/WeeklyNotifications.js:430
 msgid "Send on"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:439
+#: src/Admin/settings/WeeklyNotifications.js:440
 msgid "Send at"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:440
+#: src/Admin/settings/WeeklyNotifications.js:441
 msgid "In the site’s timezone. Sends can run a few minutes late on low-traffic sites."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:449
+#: src/Admin/settings/WeeklyNotifications.js:450
 msgid "Which week to include"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:457
+#: src/Admin/settings/WeeklyNotifications.js:458
 msgid "The week of the send"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:464
+#: src/Admin/settings/WeeklyNotifications.js:465
 msgid "The following week"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:476
+#: src/Admin/settings/WeeklyNotifications.js:477
 msgid "Post to Telegram"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:480
+#: src/Admin/settings/WeeklyNotifications.js:481
 msgid "Turning this off keeps the bot token and chats below."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:493
+#: src/Admin/settings/WeeklyNotifications.js:494
 msgid "Replace bot token"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:497
+#: src/Admin/settings/WeeklyNotifications.js:498
 msgid "Bot token"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:501
+#: src/Admin/settings/WeeklyNotifications.js:502
 msgid "A bot token is saved. Leave this empty to keep it."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:505
+#: src/Admin/settings/WeeklyNotifications.js:506
 msgid "From @BotFather. It is not shown again after saving."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:522
-#: src/Admin/settings/WeeklyNotifications.js:765
+#: src/Admin/settings/WeeklyNotifications.js:523
+#: src/Admin/settings/WeeklyNotifications.js:766
 msgid "Remove bot token"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:531
+#: src/Admin/settings/WeeklyNotifications.js:532
 msgid "Chats and channels"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:535
+#: src/Admin/settings/WeeklyNotifications.js:536
 msgid "One per line: a numeric chat ID (e.g. -1001234567890) or a public @channel username. Add the bot to each chat or channel with permission to post."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:551
+#: src/Admin/settings/WeeklyNotifications.js:552
 msgid "Save weekly notification settings"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:562
+#: src/Admin/settings/WeeklyNotifications.js:563
 msgid "Send Telegram test message"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:597
+#: src/Admin/settings/WeeklyNotifications.js:598
 msgid "Schedule"
 msgstr ""
 
 #. translators: 1: date and time of the next send, 2: date range of the week it covers
-#: src/Admin/settings/WeeklyNotifications.js:602
+#: src/Admin/settings/WeeklyNotifications.js:603
 #, js-format
 msgid "Next send: %1$s, with events for %2$s."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:609
+#: src/Admin/settings/WeeklyNotifications.js:610
 msgid "Nothing is scheduled. Turn on weekly notifications and save to schedule sends."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:621
+#: src/Admin/settings/WeeklyNotifications.js:622
 msgid "Preview next message"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:629
+#: src/Admin/settings/WeeklyNotifications.js:630
 msgid "Save your changes to preview them."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:644
+#: src/Admin/settings/WeeklyNotifications.js:645
 msgid "No events that week, so nothing would be sent."
 msgstr ""
 
 #. translators: %d: number of Telegram messages
-#: src/Admin/settings/WeeklyNotifications.js:650
+#: src/Admin/settings/WeeklyNotifications.js:651
 #, js-format
 msgid "Telegram: sent as %d message."
 msgid_plural "Telegram: sent as %d messages."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/settings/WeeklyNotifications.js:673
+#: src/Admin/settings/WeeklyNotifications.js:674
 msgid "Recent sends"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:676
+#: src/Admin/settings/WeeklyNotifications.js:677
 msgid "No weekly notification has run yet."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:704
+#: src/Admin/settings/WeeklyNotifications.js:705
 msgid "Delivery details"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:708
+#: src/Admin/settings/WeeklyNotifications.js:709
 msgid "No messages delivered yet."
 msgstr ""
 
 #. translators: 1: message part number, 2: number of parts
-#: src/Admin/settings/WeeklyNotifications.js:734
+#: src/Admin/settings/WeeklyNotifications.js:735
 #, js-format
 msgid "Part %1$d of %2$d"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:770
+#: src/Admin/settings/WeeklyNotifications.js:771
 msgid "Remove the Telegram bot token? Weekly notifications will not reach Telegram until a new token is saved."
 msgstr ""
 
@@ -1120,18 +1080,67 @@ msgstr ""
 msgid "The selected page must be published and publicly visible."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:352
+#: src/Admin/settings/WeeklyNotifications.js:353
 msgid "Choose a page"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:384
+#: src/Admin/settings/WeeklyNotifications.js:385
 msgid "Post the week’s events from an event source to your channels every week, in the same format as the calendar’s “Copy summary” button."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:413
+#: src/Admin/settings/WeeklyNotifications.js:414
 msgid "Page linked in the heading"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:417
+#: src/Admin/settings/WeeklyNotifications.js:418
 msgid "Any published, public page. Its title and link head the message. The event source decides which events are listed."
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:209
+msgid "Cumulative tickets sold"
+msgstr ""
+
+#. translators: %d: number of confirmed tickets.
+#: src/Admin/event-statistics/EventStatistics.js:278
+#, js-format
+msgid "%d ticket"
+msgid_plural "%d tickets"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/event-statistics/EventStatistics.js:361
+msgid "Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included."
+msgstr ""
+
+#. translators: %d: number of purchases with missing ticket records.
+#: src/Admin/event-statistics/EventStatistics.js:370
+#, js-format
+msgid "%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created."
+msgid_plural "%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of tickets left out of the activity charts.
+#: src/Admin/event-statistics/EventStatistics.js:384
+#, js-format
+msgid "%d ticket is left out of the activity charts because its activities were recorded for the participant rather than for each ticket."
+msgid_plural "%d tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/event-statistics/EventStatistics.js:396
+msgid "Tickets per activity"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:403
+msgid "No activities recorded for confirmed tickets."
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:446
+#: src/Admin/event-statistics/EventStatistics.js:469
+msgid "Activities per ticket"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:453
+msgid "No confirmed tickets to chart."
 msgstr ""
