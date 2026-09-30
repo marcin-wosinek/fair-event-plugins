@@ -133,7 +133,7 @@ describe( 'EventStatistics component', () => {
 		).toBeInTheDocument();
 		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
 		expect( apiFetch ).toHaveBeenCalledWith( {
-			path: '/fair-audience/v1/event-dates/42/statistics',
+			path: '/fair-events/v1/event-dates/42/statistics',
 		} );
 		// getAllByText: WordPress Notice mirrors its text into an a11y live region.
 		expect(

@@ -36,6 +36,16 @@ jest.mock( '../EventSignups.js', () => {
 	};
 } );
 
+jest.mock( '../../event-statistics/EventStatistics.js', () => {
+	return function MockEventStatistics( { eventDateId, eventTitle } ) {
+		return (
+			<div>
+				Statistics for { eventDateId }: { eventTitle }
+			</div>
+		);
+	};
+} );
+
 const mockEventDate = {
 	id: 1,
 	title: 'Test Event',
@@ -1335,5 +1345,68 @@ describe( 'inline venue creation (#1622)', () => {
 				} )
 			)
 		);
+	} );
+} );
+
+describe( 'Statistics tab (#1726)', () => {
+	const mockEventDateWith = ( overrides ) => {
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				return Promise.resolve( { ...mockEventDate, ...overrides } );
+			}
+			return Promise.resolve( [] );
+		} );
+	};
+
+	it( 'is hidden when Fair Audience statistics are unavailable', async () => {
+		window.history.replaceState( {}, '', '?tab=statistics' );
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByRole( 'tab', { name: 'Event Details' } )
+		).toHaveAttribute( 'aria-selected', 'true' );
+		expect(
+			screen.queryByRole( 'tab', { name: 'Statistics' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'renders the statistics inline, before Finance and Admin', async () => {
+		window.fairEventsManageEventData.statisticsAvailable = true;
+		window.fairEventsManageEventData.paymentEntriesUrl =
+			'http://example.com/entries';
+		window.history.replaceState( {}, '', '?tab=statistics' );
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByText( 'Statistics for 1: Test Event' )
+		).toBeInTheDocument();
+		const tabNames = screen
+			.getAllByRole( 'tab' )
+			.map( ( tab ) => tab.textContent );
+		expect(
+			tabNames.filter( ( name ) => name === 'Statistics' )
+		).toHaveLength( 1 );
+		expect( tabNames.slice( -3 ) ).toEqual( [
+			'Statistics',
+			'Finance',
+			'Admin',
+		] );
+	} );
+
+	it( 'is disabled for link-only events', async () => {
+		window.fairEventsManageEventData.statisticsAvailable = true;
+		mockEventDateWith( { link_type: 'external' } );
+		window.history.replaceState( {}, '', '?tab=statistics' );
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByRole( 'tab', { name: 'Event Details' } )
+		).toHaveAttribute( 'aria-selected', 'true' );
+		expect(
+			screen.getByRole( 'tab', { name: 'Statistics' } )
+		).toHaveAttribute( 'aria-disabled', 'true' );
+		expect(
+			screen.queryByText( /Statistics for/ )
+		).not.toBeInTheDocument();
 	} );
 } );

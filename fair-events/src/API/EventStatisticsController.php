@@ -2,16 +2,18 @@
 /**
  * Event Statistics REST API Controller
  *
- * @package FairAudience
+ * @package FairEvents
  */
 
-namespace FairAudience\API;
+namespace FairEvents\API;
 
 use DateInterval;
 use DateTimeImmutable;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
-use FairAudience\Services\EventTicketStatistics;
+use FairEvents\Models\EventDates;
+use FairEvents\Models\TicketType;
+use FairEvents\Services\EventTicketStatistics;
 use FairEventsShared\Money;
 use WP_Error;
 use WP_REST_Controller;
@@ -24,7 +26,11 @@ defined( 'WPINC' ) || die;
 /**
  * Provides display-ready sales statistics for one event occurrence: confirmed
  * ticket counts and activity aggregates (see EventTicketStatistics), and
- * revenue from the payment ledger of the qualifying relationships.
+ * revenue from Fair Audience's payment ledger of the qualifying
+ * relationships.
+ *
+ * Serves the canonical fair-events/v1 route and, for existing consumers, the
+ * fair-audience/v1 path the endpoint had before it moved here.
  */
 class EventStatisticsController extends WP_REST_Controller {
 
@@ -33,7 +39,14 @@ class EventStatisticsController extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	protected $namespace = 'fair-audience/v1';
+	protected $namespace = 'fair-events/v1';
+
+	/**
+	 * Former namespace, kept as a compatibility alias.
+	 *
+	 * @var string
+	 */
+	protected $legacy_namespace = 'fair-audience/v1';
 
 	/**
 	 * REST base.
@@ -56,31 +69,47 @@ class EventStatisticsController extends WP_REST_Controller {
 	 */
 	private $transaction_repo;
 
+	/**
+	 * Whether Fair Audience provides the participant and payment data the
+	 * statistics need.
+	 *
+	 * @return bool
+	 */
+	public static function is_available() {
+		return method_exists( EventParticipantRepository::class, 'get_confirmed_sales_rows' )
+			&& method_exists( EventParticipantTransactionRepository::class, 'get_paid_statistics_transactions' );
+	}
+
 	/** Constructor. */
 	public function __construct() {
 		$this->event_participant_repo = new EventParticipantRepository();
 		$this->transaction_repo       = new EventParticipantTransactionRepository();
 	}
 
-	/** Register the route. */
+	/**
+	 * Register the canonical route and its compatibility alias.
+	 *
+	 * The alias overrides any handler an older Fair Audience still registers
+	 * on the same path, so mixed plugin versions answer from one
+	 * implementation.
+	 */
 	public function register_routes() {
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base,
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_item' ),
-				'permission_callback' => array( $this, 'get_item_permissions_check' ),
-				'args'                => array(
-					'event_date_id' => array(
-						'type'              => 'integer',
-						'required'          => true,
-						'sanitize_callback' => 'absint',
-						'validate_callback' => static fn( $value ) => (int) $value > 0,
-					),
+		$route = array(
+			'methods'             => WP_REST_Server::READABLE,
+			'callback'            => array( $this, 'get_item' ),
+			'permission_callback' => array( $this, 'get_item_permissions_check' ),
+			'args'                => array(
+				'event_date_id' => array(
+					'type'              => 'integer',
+					'required'          => true,
+					'sanitize_callback' => 'absint',
+					'validate_callback' => static fn( $value ) => (int) $value > 0,
 				),
-			)
+			),
 		);
+
+		register_rest_route( $this->namespace, '/' . $this->rest_base, $route );
+		register_rest_route( $this->legacy_namespace, '/' . $this->rest_base, $route, true );
 	}
 
 	/**
@@ -91,10 +120,10 @@ class EventStatisticsController extends WP_REST_Controller {
 	 */
 	public function get_item_permissions_check( $request ) {
 		if ( ! is_user_logged_in() ) {
-			return new WP_Error( 'rest_forbidden', __( 'You must be logged in.', 'fair-audience' ), array( 'status' => 401 ) );
+			return new WP_Error( 'rest_forbidden', __( 'You must be logged in.', 'fair-events' ), array( 'status' => 401 ) );
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to view event statistics.', 'fair-audience' ), array( 'status' => 403 ) );
+			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to view event statistics.', 'fair-events' ), array( 'status' => 403 ) );
 		}
 		return true;
 	}
@@ -107,15 +136,15 @@ class EventStatisticsController extends WP_REST_Controller {
 	 */
 	public function get_item( $request ) {
 		$event_date_id = (int) $request->get_param( 'event_date_id' );
-		$event_date    = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		$event_date    = EventDates::get_by_id( $event_date_id );
 		if ( ! $event_date ) {
-			return new WP_Error( 'event_date_not_found', __( 'Event date not found.', 'fair-audience' ), array( 'status' => 404 ) );
+			return new WP_Error( 'event_date_not_found', __( 'Event date not found.', 'fair-events' ), array( 'status' => 404 ) );
 		}
 
 		$timezone = wp_timezone();
 		$start    = DateTimeImmutable::createFromFormat( '!Y-m-d', substr( (string) $event_date->start_datetime, 0, 10 ), $timezone );
 		if ( ! $start ) {
-			return new WP_Error( 'invalid_event_date', __( 'The event start date is invalid.', 'fair-audience' ), array( 'status' => 500 ) );
+			return new WP_Error( 'invalid_event_date', __( 'The event start date is invalid.', 'fair-events' ), array( 'status' => 500 ) );
 		}
 
 		$end = DateTimeImmutable::createFromFormat( '!Y-m-d', substr( (string) $event_date->end_datetime, 0, 10 ), $timezone );
@@ -224,7 +253,7 @@ class EventStatisticsController extends WP_REST_Controller {
 	 */
 	private function get_qualifying_sales_rows( $event_date ) {
 		$rows = $this->event_participant_repo->get_confirmed_sales_rows( (int) $event_date->id );
-		if ( 'generated' !== $event_date->occurrence_type || ! $event_date->master_id || ! class_exists( \FairEvents\Models\TicketType::class ) ) {
+		if ( 'generated' !== $event_date->occurrence_type || ! $event_date->master_id ) {
 			return $rows;
 		}
 
@@ -235,7 +264,7 @@ class EventStatisticsController extends WP_REST_Controller {
 			if ( isset( $participant_ids[ $participant_id ] ) || empty( $row['ticket_type_id'] ) ) {
 				continue;
 			}
-			$ticket_type = \FairEvents\Models\TicketType::get_by_id( (int) $row['ticket_type_id'] );
+			$ticket_type = TicketType::get_by_id( (int) $row['ticket_type_id'] );
 			if ( ! $ticket_type || ! $ticket_type->is_whole_series() || ( $row['created_at'] && $occurrence_time < strtotime( $row['created_at'] ) ) ) {
 				continue;
 			}
@@ -258,17 +287,17 @@ class EventStatisticsController extends WP_REST_Controller {
 			$days = (int) $date->diff( $start )->format( '%a' );
 			return sprintf(
 				/* translators: %d: number of calendar days before the event. */
-				_n( '%d day before the event', '%d days before the event', $days, 'fair-audience' ),
+				_n( '%d day before the event', '%d days before the event', $days, 'fair-events' ),
 				$days
 			);
 		}
 		if ( $start->format( 'Y-m-d' ) === $end->format( 'Y-m-d' ) ) {
-			return __( 'Day of the event', 'fair-audience' );
+			return __( 'Day of the event', 'fair-events' );
 		}
 		$day = (int) $start->diff( $date )->format( '%a' ) + 1;
 		return sprintf(
 			/* translators: %s: ordinal event-day number, for example 1st or 2nd. */
-			__( '%s day of the event', 'fair-audience' ),
+			__( '%s day of the event', 'fair-events' ),
 			$this->ordinal( $day )
 		);
 	}

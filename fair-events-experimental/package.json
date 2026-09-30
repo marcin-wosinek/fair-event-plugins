@@ -33,9 +33,7 @@
 		"@wordpress/dom-ready": "^4.2.0",
 		"@wordpress/element": "^8.0.0",
 		"@wordpress/i18n": "^6.21.0",
-		"@wordpress/icons": "15.2.0",
-		"html2canvas": "^1.4.1",
-		"recharts": "^3.0.0"
+		"@wordpress/icons": "15.2.0"
 	},
 	"devDependencies": {
 		"@babel/core": "^8.0.1",

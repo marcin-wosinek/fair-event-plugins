@@ -22,7 +22,10 @@ import {
 	buildChartFilename,
 	downloadElementAsPng,
 } from './exportChartImage.js';
-import './style.css';
+// Not named style.css: wp-scripts would split a style.css shared by the
+// manage-event and event-statistics entries into one chunk named after
+// whichever entry comes first. Each entry extracts its own index.css instead.
+import './statistics.css';
 import {
 	ResponsiveContainer,
 	BarChart,
@@ -77,7 +80,7 @@ function ChartCard( {
 						aria-describedby={ headingId }
 						onClick={ () => onDownload( cardRef.current ) }
 					>
-						{ __( 'Download PNG', 'fair-events-experimental' ) }
+						{ __( 'Download PNG', 'fair-events' ) }
 					</Button>
 				) }
 			</CardHeader>
@@ -162,7 +165,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 		setStatisticsLoading( true );
 		setStatisticsError( '' );
 		apiFetch( {
-			path: `/fair-audience/v1/event-dates/${ eventDateId }/statistics`,
+			path: `/fair-events/v1/event-dates/${ eventDateId }/statistics`,
 		} )
 			.then( setStatistics )
 			.catch( ( error ) =>
@@ -170,7 +173,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 					error?.message ||
 						__(
 							'Event sales statistics could not be loaded.',
-							'fair-events-experimental'
+							'fair-events'
 						)
 				)
 			)
@@ -206,13 +209,10 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 	const eventName = getEventDisplayTitle(
 		eventTitle?.trim() || statistics?.event_name
 	);
-	const salesChartTitle = __(
-		'Cumulative tickets sold',
-		'fair-events-experimental'
-	);
+	const salesChartTitle = __( 'Cumulative tickets sold', 'fair-events' );
 	const salesAmountChartTitle = __(
 		'Cumulative sales amount',
-		'fair-events-experimental'
+		'fair-events'
 	);
 
 	const downloadChart = async ( chartTitle, cardElement ) => {
@@ -231,7 +231,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 			setExportError(
 				__(
 					'The chart image could not be downloaded. Please try again.',
-					'fair-events-experimental'
+					'fair-events'
 				)
 			);
 		} finally {
@@ -263,7 +263,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 								/* translators: %s: comma-separated currency codes excluded from event revenue. */
 								__(
 									'Some payments were excluded because they use different currencies: %s.',
-									'fair-events-experimental'
+									'fair-events'
 								),
 								statistics.excluded_currencies.join( ', ' )
 							) }
@@ -279,7 +279,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 											'%d ticket',
 											'%d tickets',
 											totalTickets,
-											'fair-events-experimental'
+											'fair-events'
 										),
 										totalTickets
 									) }
@@ -297,7 +297,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 												'%d day until the event',
 												'%d days until the event',
 												statistics.days_until_start,
-												'fair-events-experimental'
+												'fair-events'
 											),
 											statistics.days_until_start
 										) }
@@ -328,10 +328,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 							<CumulativeChart
 								series={ statistics.series }
 								dataKey="total"
-								name={ __(
-									'Tickets',
-									'fair-events-experimental'
-								) }
+								name={ __( 'Tickets', 'fair-events' ) }
 							/>
 						</ChartCard>
 						<ChartCard
@@ -348,10 +345,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 							<CumulativeChart
 								series={ statistics.amount_series }
 								dataKey="amount"
-								name={ __(
-									'Net sales amount',
-									'fair-events-experimental'
-								) }
+								name={ __( 'Net sales amount', 'fair-events' ) }
 								valueFormatter={ formatCurrency }
 							/>
 						</ChartCard>
@@ -360,7 +354,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 					<Notice status="info" isDismissible={ false }>
 						{ __(
 							'Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included.',
-							'fair-events-experimental'
+							'fair-events'
 						) }
 					</Notice>
 					{ incompleteBackfills > 0 && (
@@ -371,7 +365,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 									'%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created.',
 									'%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created.',
 									incompleteBackfills,
-									'fair-events-experimental'
+									'fair-events'
 								),
 								incompleteBackfills
 							) }
@@ -385,7 +379,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 									'%d ticket is left out of the activity charts because its activities were recorded for the participant rather than for each ticket.',
 									'%d tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket.',
 									unassignedTickets,
-									'fair-events-experimental'
+									'fair-events'
 								),
 								unassignedTickets
 							) }
@@ -393,16 +387,13 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 					) }
 
 					<ChartCard
-						title={ __(
-							'Tickets per activity',
-							'fair-events-experimental'
-						) }
+						title={ __( 'Tickets per activity', 'fair-events' ) }
 					>
 						{ activityData.length === 0 ? (
 							<p>
 								{ __(
 									'No activities recorded for confirmed tickets.',
-									'fair-events-experimental'
+									'fair-events'
 								) }
 							</p>
 						) : (
@@ -431,10 +422,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 									<Tooltip />
 									<Bar
 										dataKey="count"
-										name={ __(
-											'Tickets',
-											'fair-events-experimental'
-										) }
+										name={ __( 'Tickets', 'fair-events' ) }
 										fill={ BAR_COLOR }
 									/>
 								</BarChart>
@@ -443,16 +431,13 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 					</ChartCard>
 
 					<ChartCard
-						title={ __(
-							'Activities per ticket',
-							'fair-events-experimental'
-						) }
+						title={ __( 'Activities per ticket', 'fair-events' ) }
 					>
 						{ distributionData.length === 0 ? (
 							<p>
 								{ __(
 									'No confirmed tickets to chart.',
-									'fair-events-experimental'
+									'fair-events'
 								) }
 							</p>
 						) : (
@@ -472,7 +457,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 										label={ {
 											value: __(
 												'Activities per ticket',
-												'fair-events-experimental'
+												'fair-events'
 											),
 											position: 'insideBottom',
 											offset: -4,
@@ -482,10 +467,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 									<Tooltip />
 									<Bar
 										dataKey="tickets"
-										name={ __(
-											'Tickets',
-											'fair-events-experimental'
-										) }
+										name={ __( 'Tickets', 'fair-events' ) }
 										fill={ BAR_COLOR }
 									/>
 								</BarChart>

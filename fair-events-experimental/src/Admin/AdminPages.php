@@ -2,8 +2,8 @@
 /**
  * Admin Pages for Fair Events Experimental
  *
- * Registers the experimental feature admin pages (sources, statistics, event
- * tools) as submenus under the fair-events-calendar menu. The experimental
+ * Registers the experimental feature admin pages (sources, event tools) as
+ * submenus under the fair-events-calendar menu. The experimental
  * settings live in an Experimental tab of the fair-events Settings page; the
  * former standalone settings slug only redirects there.
  *
@@ -86,20 +86,6 @@ class AdminPages {
 			);
 
 			$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Source', 'fair-events-experimental' ) );
-		}
-
-		// Event Statistics page — `audience-statistics` bundle (hidden).
-		if ( \FairEventsExperimental\Core\Features::is_enabled( 'audience-statistics' ) ) {
-			$this->page_hooks['fair-events-event-statistics'] = add_submenu_page(
-				'',
-				__( 'Event Statistics', 'fair-events-experimental' ),
-				__( 'Event Statistics', 'fair-events-experimental' ),
-				'manage_options',
-				'fair-events-event-statistics',
-				array( $this, 'render_event_statistics_page' )
-			);
-
-			$this->set_hidden_page_title( $this->page_hooks['fair-events-event-statistics'], __( 'Event Statistics', 'fair-events-experimental' ) );
 		}
 
 		// Advanced event pages — `event-tools` bundle (hidden).
@@ -197,24 +183,6 @@ class AdminPages {
 					)
 				);
 				wp_set_script_translations( 'fair-events-source-view', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-				break;
-
-			case 'fair-events-event-statistics':
-				$asset_file = include $exp_dir . 'build/admin/event-statistics/index.asset.php';
-				wp_enqueue_script( 'fair-events-event-statistics', $exp_url . 'build/admin/event-statistics/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_enqueue_style( 'fair-events-event-statistics', $exp_url . 'build/admin/event-statistics/style-index.css', array( 'wp-components' ), $asset_file['version'] );
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
-				wp_localize_script(
-					'fair-events-event-statistics',
-					'fairEventsEventStatisticsData',
-					array(
-						'eventDateId'    => $event_date_id,
-						'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
-					)
-				);
-				wp_set_script_translations( 'fair-events-event-statistics', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-				wp_enqueue_style( 'wp-components' );
 				break;
 
 			case 'fair-events-duplicate-event':
@@ -345,16 +313,6 @@ class AdminPages {
 		?>
 		<div id="fair-events-source-view-root"></div>
 		<?php
-	}
-
-	/**
-	 * Render event statistics page
-	 *
-	 * @return void
-	 */
-	public function render_event_statistics_page() {
-		$page = new \FairEventsExperimental\Admin\EventStatisticsPage();
-		$page->render();
 	}
 
 	/**

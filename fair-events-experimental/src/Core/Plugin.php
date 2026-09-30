@@ -80,15 +80,15 @@ class Plugin {
 			$admin = new \FairEventsExperimental\Admin\AdminPages();
 			$admin->init();
 
-			if ( Features::is_enabled( 'audience-statistics' ) || Features::is_enabled( 'event-tools' ) ) {
+			if ( Features::is_enabled( 'event-tools' ) ) {
 				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_ext_assets' ) );
 			}
 		}
 	}
 
 	/**
-	 * Enqueue this plugin's manage-event tab extensions (Statistics,
-	 * Duplicate/Merge admin actions) on the fair-events manage-event page.
+	 * Enqueue this plugin's manage-event extensions (Duplicate/Merge admin
+	 * actions) on the fair-events manage-event page.
 	 *
 	 * Declares `fair-events-manage-event` as a script dependency so its
 	 * `addFilter()` calls run before the host bundle's `domReady()`
@@ -105,12 +105,6 @@ class Plugin {
 			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
 			$asset_file['version'],
 			true
-		);
-		wp_enqueue_style(
-			'fair-events-experimental-event-statistics',
-			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/event-statistics/style-index.css',
-			array( 'wp-components' ),
-			$asset_file['version']
 		);
 
 		wp_set_script_translations( 'fair-events-experimental-manage-event-ext', 'fair-events-experimental', Features::script_translations_path() );

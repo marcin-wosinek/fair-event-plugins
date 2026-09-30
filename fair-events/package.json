@@ -50,7 +50,9 @@
 		"@wordpress/icons": "15.2.0",
 		"calendar-link": "^2.11.0",
 		"fair-events-shared": "*",
-		"react-easy-crop": "^5.5.6"
+		"html2canvas": "^1.4.1",
+		"react-easy-crop": "^5.5.6",
+		"recharts": "^3.0.0"
 	},
 	"devDependencies": {
 		"@babel/core": "^8.0.1",

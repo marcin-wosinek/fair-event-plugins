@@ -3,64 +3,57 @@
  */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
+import { applyFilters } from '@wordpress/hooks';
 
-jest.mock( '../../event-statistics/EventStatistics.js', () => {
-	return function EventStatisticsMock( { eventDateId, eventTitle } ) {
-		return (
-			<div data-testid="event-statistics">
-				Stats for { eventDateId }: { eventTitle }
-			</div>
-		);
+// The module registers its filters as an import side effect and reads its
+// URLs once, so the localized data must exist before it loads. It includes
+// the statistics keys older fair-events versions localized, which must no
+// longer add a tab here.
+beforeAll( () => {
+	window.fairEventsManageEventData = {
+		statisticsUrl:
+			'admin.php?page=fair-events-event-statistics&event_date_id=',
+		statisticsAvailable: true,
+		duplicateEventUrl:
+			'admin.php?page=fair-events-duplicate-event&event_date_id=',
+		mergeEventUrl: 'admin.php?page=fair-events-merge-event&event_date_id=',
 	};
+	require( '../index.js' );
 } );
 
-// The tab is registered as a module side effect, and its `render` reads
-// `statisticsUrl` from a module-level closure. Use a fresh module registry
-// per scenario (including `@wordpress/hooks`) so each import sees its own
-// `window.fairEventsManageEventData` and its own filter store.
-function loadModuleWithData( data ) {
-	let hooks;
-	jest.isolateModules( () => {
-		window.fairEventsManageEventData = data;
-		hooks = require( '@wordpress/hooks' );
-		require( '../index.js' );
-	} );
-	return hooks;
-}
+afterAll( () => {
+	delete window.fairEventsManageEventData;
+} );
 
-describe( 'statistics tab registration', () => {
-	afterEach( () => {
-		delete window.fairEventsManageEventData;
+describe( 'manage-event extensions', () => {
+	it( 'leaves the Statistics tab to fair-events', () => {
+		const builtIn = [ { name: 'statistics', order: 60 } ];
+		expect(
+			applyFilters( 'fairEvents.manageEvent.tabs', builtIn, {} )
+		).toBe( builtIn );
 	} );
 
-	it( 'does not register the tab when statisticsUrl is absent', () => {
-		const { applyFilters } = loadModuleWithData( {} );
-
-		const tabs = applyFilters( 'fairEvents.manageEvent.tabs', [] );
-		expect( tabs ).toHaveLength( 0 );
-	} );
-
-	it( 'renders EventStatistics inline instead of navigating away', async () => {
-		const { applyFilters } = loadModuleWithData( {
-			statisticsUrl:
-				'admin.php?page=fair-events-event-statistics&event_date_id=',
-		} );
-
-		const tabs = applyFilters( 'fairEvents.manageEvent.tabs', [] );
-		const statisticsTab = tabs.find( ( tab ) => tab.name === 'statistics' );
-		expect( statisticsTab ).toBeDefined();
-
-		const originalHref = window.location.href;
-		render(
-			statisticsTab.render( {
+	it( 'adds the Duplicate and Merge admin actions', () => {
+		const actions = applyFilters(
+			'fairEvents.manageEvent.adminActions',
+			[],
+			{
 				eventDateId: 42,
-				eventTitle: 'Summer Retreat',
-			} )
+			}
 		);
+		render( <div>{ actions }</div> );
 
 		expect(
-			await screen.findByTestId( 'event-statistics' )
-		).toHaveTextContent( 'Stats for 42: Summer Retreat' );
-		expect( window.location.href ).toBe( originalHref );
+			screen.getByRole( 'link', { name: 'Duplicate Event' } )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-events-duplicate-event&event_date_id=42'
+		);
+		expect(
+			screen.getByRole( 'link', { name: 'Merge Event' } )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-events-merge-event&event_date_id=42'
+		);
 	} );
 } );

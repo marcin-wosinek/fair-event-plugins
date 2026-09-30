@@ -52,6 +52,7 @@ import EditInstancesModal from './EditInstancesModal.js';
 import EventLinkModal from './EventLinkModal.js';
 import EventSignups from './EventSignups.js';
 import EventContextHeader from './EventContextHeader.js';
+import EventStatistics from '../event-statistics/EventStatistics.js';
 import InlineVenueCreator, {
 	ADD_NEW_VENUE_VALUE,
 } from '../components/InlineVenueCreator.js';
@@ -66,6 +67,10 @@ export default function ManageEventApp() {
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
 	const copyEventUrl = window.fairEventsManageEventData?.copyEventUrl || '';
+	// Statistics read Fair Audience's ticket and payment data, so PHP only
+	// sets this when that plugin is active.
+	const statisticsAvailable =
+		!! window.fairEventsManageEventData?.statisticsAvailable;
 	// Per-bundle feature gates from the PHP registry. Empty object → treat
 	// every bundle as off (fail-closed) on a misconfigured page.
 	const enabledFeatures =
@@ -737,6 +742,19 @@ export default function ManageEventApp() {
 			isVisible: ticketingEnabled,
 			disabled: isLinkOnlyEvent( eventDate ),
 			render: () => <EventSignups eventDateId={ eventDateId } />,
+		},
+		{
+			name: 'statistics',
+			title: __( 'Statistics', 'fair-events' ),
+			order: 60,
+			isVisible: statisticsAvailable,
+			disabled: isLinkOnlyEvent( eventDate ),
+			render: () => (
+				<EventStatistics
+					eventDateId={ eventDateId }
+					eventTitle={ title }
+				/>
+			),
 		},
 		{
 			name: 'finance',

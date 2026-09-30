@@ -2,10 +2,10 @@
 /**
  * Event Ticket Statistics
  *
- * @package FairAudience
+ * @package FairEvents
  */
 
-namespace FairAudience\Services;
+namespace FairEvents\Services;
 
 defined( 'WPINC' ) || die;
 
@@ -15,7 +15,7 @@ defined( 'WPINC' ) || die;
  *
  * A confirmed ticket unit counts once, whoever holds it; unit status alone
  * decides, so cancelling or refunding one ticket of a purchase removes just
- * that one. Occurrence scope follows fair-events' TicketCapacity: a
+ * that one. Occurrence scope follows TicketCapacity: a
  * whole_series ticket counts on every occurrence of its series that starts
  * at or after its purchase.
  *
@@ -41,10 +41,9 @@ class EventTicketStatistics {
 	 * @return array{total: int, daily: array<string, int>, tickets_per_activity: array[], activities_per_ticket: array[], tickets_without_activity_assignment: int, incomplete_ticket_backfills: int}
 	 */
 	public static function for_event_date( $event_date ) {
-		$scope       = self::get_scope( $event_date );
-		$has_tickets = TicketActivities::available();
-		$tickets     = $has_tickets ? self::get_confirmed_tickets( $scope ) : array();
-		$activities  = $has_tickets ? self::get_ticket_activities( $scope ) : array();
+		$scope      = self::get_scope( $event_date );
+		$tickets    = self::get_confirmed_tickets( $scope );
+		$activities = self::get_ticket_activities( $scope );
 
 		$units      = array();
 		$incomplete = array();
@@ -59,7 +58,7 @@ class EventTicketStatistics {
 				$incomplete[ (int) $ticket['signup_id'] ] = true;
 			}
 		}
-		foreach ( self::get_unbackfilled_signups( $scope, $has_tickets ) as $signup ) {
+		foreach ( self::get_unbackfilled_signups( $scope ) as $signup ) {
 			$units[] = array(
 				'key'        => self::participant_key( $signup['participant_id'], $signup['event_date_id'] ),
 				'count'      => (int) $signup['quantity'],
@@ -270,37 +269,30 @@ class EventTicketStatistics {
 	/**
 	 * Confirmed signups that have no ticket units yet.
 	 *
-	 * @param array $scope       Scope from get_scope().
-	 * @param bool  $has_tickets Whether fair-events stores ticket units.
+	 * @param array $scope Scope from get_scope().
 	 * @return array[]
 	 */
-	private static function get_unbackfilled_signups( array $scope, $has_tickets ) {
+	private static function get_unbackfilled_signups( array $scope ) {
 		global $wpdb;
 
 		list( $clause, $args ) = self::scope_clause( $scope, 's.event_date_id', 's.created_at', $scope['start'] );
-		$tables                = array( self::signups_table(), self::ticket_types_table() );
-		$without_units         = '';
-		if ( $has_tickets ) {
-			$without_units = 'AND NOT EXISTS ( SELECT 1 FROM %i AS t WHERE t.signup_id = s.id )';
-			$tables[]      = self::tickets_table();
-		}
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT s.id, s.participant_id, s.event_date_id, s.created_at, GREATEST( s.quantity, 1 ) AS quantity
 				FROM %i AS s
 				LEFT JOIN %i AS tt ON tt.id = s.ticket_type_id
-				WHERE s.status = 'confirmed' {$without_units} AND {$clause}",
-				array_merge( $tables, $args )
+				WHERE s.status = 'confirmed' AND NOT EXISTS ( SELECT 1 FROM %i AS t WHERE t.signup_id = s.id ) AND {$clause}",
+				array_merge( array( self::signups_table(), self::ticket_types_table(), self::tickets_table() ), $args )
 			),
 			ARRAY_A
 		);
 	}
 
 	/**
-	 * Signed-up relationships with no fair-events signup behind them, using
+	 * Signed-up Fair Audience relationships with no signup behind them, using
 	 * the same matching as the capacity bridge
-	 * (EventParticipantRepository::count_admissions_without_signup()).
+	 * (Fair Audience's EventParticipantRepository::count_admissions_without_signup()).
 	 *
 	 * @param array $scope Scope from get_scope().
 	 * @return array[]

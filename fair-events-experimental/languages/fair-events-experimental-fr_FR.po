@@ -61,54 +61,40 @@ msgstr "Afficher la source"
 #: src/Admin/AdminPages.php:95
 #: src/Admin/AdminPages.php:96
 #: src/Admin/AdminPages.php:102
-msgid "Event Statistics"
-msgstr "Statistiques d'événements"
-
-#: src/Admin/AdminPages.php:109
-#: src/Admin/AdminPages.php:110
-#: src/Admin/AdminPages.php:116
-#: src/Admin/manage-event-ext/index.js:70
+#: src/Admin/manage-event-ext/index.js:38
 #: src/Admin/manage-event/DuplicateEventWizard.js:620
 msgid "Duplicate Event"
 msgstr "Dupliquer l'événement"
 
-#: src/Admin/AdminPages.php:120
-#: src/Admin/AdminPages.php:121
-#: src/Admin/AdminPages.php:127
-#: src/Admin/manage-event-ext/index.js:94
+#: src/Admin/AdminPages.php:106
+#: src/Admin/AdminPages.php:107
+#: src/Admin/AdminPages.php:113
+#: src/Admin/manage-event-ext/index.js:62
 #: src/Admin/manage-event/MergeEventWizard.js:453
 msgid "Merge Event"
 msgstr "Fusionner l'événement"
 
-#: src/Core/Features.php:143
+#: src/Core/Features.php:138
 msgid "Event sources & feeds"
 msgstr "Sources d'événements et flux"
 
-#: src/Core/Features.php:144
+#: src/Core/Features.php:139
 msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
 msgstr "Sources d'événements externes, importation Facebook, flux iCal/JSON, propositions d'événements, calendrier hebdomadaire."
 
-#: src/Core/Features.php:147
+#: src/Core/Features.php:142
 msgid "Ticketing"
 msgstr "Billetterie"
 
-#: src/Core/Features.php:151
+#: src/Core/Features.php:146
 msgid "Event tools"
 msgstr "Outils d'événement"
 
-#: src/Core/Features.php:155
-msgid "Audience statistics"
-msgstr "Statistiques d'audience"
-
-#: src/Core/Features.php:156
-msgid "Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience."
-msgstr "Graphiques de statistiques par événement (répartition des activités, délai de vente). Nécessite fair-audience."
-
-#: src/Core/Features.php:159
+#: src/Core/Features.php:150
 msgid "Mailings"
 msgstr "Envois"
 
-#: src/Core/Features.php:160
+#: src/Core/Features.php:151
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr "Envois d'emails programmés pour les participants à l'événement. Nécessite fair-audience."
 
@@ -126,9 +112,6 @@ msgstr "Échec du chargement de l'événement."
 msgid "Event not found."
 msgstr "Événement non trouvé."
 
-#: src/Admin/event-statistics/EventStatistics.js:331
-#: src/Admin/event-statistics/EventStatistics.js:434
-#: src/Admin/event-statistics/EventStatistics.js:485
 #: src/Admin/manage-event/DuplicateEventWizard.js:570
 msgid "Tickets"
 msgstr "Billets"
@@ -487,44 +470,28 @@ msgstr "Enregistrement..."
 msgid "Save Features"
 msgstr "Enregistrer les fonctionnalités"
 
-#: src/Admin/manage-event-ext/index.js:35
-msgid "Statistics"
-msgstr "Statistiques"
-
-#: src/Admin/manage-event-ext/index.js:60
+#: src/Admin/manage-event-ext/index.js:28
 msgid "Create a copy of this event with the same details, links, and settings."
 msgstr "Créez une copie de cet événement avec les mêmes détails, liens et paramètres."
 
-#: src/Admin/manage-event-ext/index.js:84
+#: src/Admin/manage-event-ext/index.js:52
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr "Fusionnez cet événement avec une autre date d'événement, en déplaçant ou en nettoyant toutes les données liées."
 
-#: src/Core/Features.php:148
+#: src/Core/Features.php:143
 msgid "Tickets, group pricing/permission rules. Requires fair-audience."
 msgstr "Billets, tarification de groupe/règles de permission. Nécessite fair-audience."
 
-#: src/Core/Features.php:152
+#: src/Core/Features.php:147
 msgid "Advanced event duplication and merge tools."
 msgstr "Outils avancés de duplication et de fusion d'événements."
 
-#: src/Admin/event-statistics/EventStatistics.js:171
-msgid "Event sales statistics could not be loaded."
-msgstr "Les statistiques de ventes d'événement n'ont pas pu être chargées."
-
-#. translators: %d: calendar days until the event.
-#: src/Admin/event-statistics/EventStatistics.js:296
-#, js-format
-msgid "%d day until the event"
-msgid_plural "%d days until the event"
-msgstr[0] "%d jour jusqu'à l'événement"
-msgstr[1] "%d jours jusqu'à l'événement"
-
-#: src/Core/Features.php:163
+#: src/Core/Features.php:154
 #: src/Admin/settings/MetaConversions.js:239
 msgid "Meta Conversions"
 msgstr "Conversions Meta"
 
-#: src/Core/Features.php:164
+#: src/Core/Features.php:155
 msgid "Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials."
 msgstr "Mesure de paiement et d'achat côté serveur Meta avec consentement. Nécessite Fair Payments Connector et des identifiants explicites."
 
@@ -592,20 +559,6 @@ msgstr "Résultats de livraison récents"
 #: src/Admin/settings/MetaConversions.js:568
 msgid "Clear the Meta access token? Conversion delivery will stop until a new token is saved."
 msgstr "Effacer le jeton d'accès Meta ? La livraison des conversions s'arrêtera jusqu'à ce qu'un nouveau jeton soit enregistré."
-
-#. translators: %s: comma-separated currency codes excluded from event revenue.
-#: src/Admin/event-statistics/EventStatistics.js:264
-#, js-format
-msgid "Some payments were excluded because they use different currencies: %s."
-msgstr "Certains paiements ont été exclus car ils utilisent des devises différentes : %s."
-
-#: src/Admin/event-statistics/EventStatistics.js:213
-msgid "Cumulative sales amount"
-msgstr "Montant cumulatif des ventes"
-
-#: src/Admin/event-statistics/EventStatistics.js:351
-msgid "Net sales amount"
-msgstr "Montant net des ventes"
 
 #: src/Admin/settings/MetaConversions.js:73
 msgid "Test"
@@ -717,14 +670,6 @@ msgstr "Accepté"
 #: src/Admin/settings/MetaConversions.js:416
 msgid "Rejected"
 msgstr "Rejeté"
-
-#: src/Admin/event-statistics/EventStatistics.js:80
-msgid "Download PNG"
-msgstr "Télécharger PNG"
-
-#: src/Admin/event-statistics/EventStatistics.js:232
-msgid "The chart image could not be downloaded. Please try again."
-msgstr "L'image du graphique n'a pas pu être téléchargée. Veuillez réessayer."
 
 #. Description of the plugin
 #: fair-events-experimental.php
@@ -1069,55 +1014,6 @@ msgstr ""
 
 #: src/Admin/settings/WeeklyNotifications.js:474
 msgid "Any published, public page. Its title and link head the message. The event source decides which events are listed."
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:209
-msgid "Cumulative tickets sold"
-msgstr ""
-
-#. translators: %d: number of confirmed tickets.
-#: src/Admin/event-statistics/EventStatistics.js:278
-#, js-format
-msgid "%d ticket"
-msgid_plural "%d tickets"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/Admin/event-statistics/EventStatistics.js:361
-msgid "Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included."
-msgstr ""
-
-#. translators: %d: number of purchases with missing ticket records.
-#: src/Admin/event-statistics/EventStatistics.js:370
-#, js-format
-msgid "%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created."
-msgid_plural "%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created."
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %d: number of tickets left out of the activity charts.
-#: src/Admin/event-statistics/EventStatistics.js:384
-#, js-format
-msgid "%d ticket is left out of the activity charts because its activities were recorded for the participant rather than for each ticket."
-msgid_plural "%d tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket."
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/Admin/event-statistics/EventStatistics.js:396
-msgid "Tickets per activity"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:403
-msgid "No activities recorded for confirmed tickets."
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:446
-#: src/Admin/event-statistics/EventStatistics.js:473
-msgid "Activities per ticket"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:453
-msgid "No confirmed tickets to chart."
 msgstr ""
 
 #: src/Admin/settings/WeeklyNotifications.js:547
