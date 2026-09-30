@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnector\Admin;
 
+use FairPaymentsConnector\Core\Features;
+use FairPaymentsConnector\Core\NotificationOwnership;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
 
 defined( 'WPINC' ) || die;
@@ -22,6 +24,10 @@ class AdminPages {
 	 */
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
+
+		// After the experimental plugin's pages (priority 11), so Notifications
+		// keeps its place at the end of the menu.
+		add_action( 'admin_menu', array( $this, 'register_notifications_page' ), 12 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_filter( 'plugin_action_links_fair-payments-connector/fair-payments-connector.php', array( $this, 'add_plugin_action_links' ) );
 	}
@@ -89,6 +95,26 @@ class AdminPages {
 	}
 
 	/**
+	 * Register the Notifications submenu while this plugin owns notifications.
+	 *
+	 * @return void
+	 */
+	public function register_notifications_page() {
+		if ( ! NotificationOwnership::is_owner() ) {
+			return;
+		}
+
+		add_submenu_page(
+			'fair-payments-connector-transactions',
+			__( 'Notifications', 'fair-payments-connector' ),
+			__( 'Notifications', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-notifications',
+			array( $this, 'render_notifications_page' )
+		);
+	}
+
+	/**
 	 * Enqueue admin scripts
 	 *
 	 * @param string $hook Current admin page hook.
@@ -120,6 +146,13 @@ class AdminPages {
 		// Fee Dashboard page.
 		if ( false !== strpos( $hook, 'fair-payments-connector-fee-dashboard' ) ) {
 			$this->enqueue_admin_page_script( 'fee-dashboard' );
+			return;
+		}
+
+		// Notifications page.
+		if ( false !== strpos( $hook, 'fair-payments-connector-notifications' ) && NotificationOwnership::is_owner() ) {
+			$this->enqueue_admin_page_script( 'notifications' );
+			wp_set_script_translations( 'fair-payments-connector-notifications', 'fair-payments-connector', Features::script_translations_path() );
 			return;
 		}
 
@@ -251,6 +284,17 @@ class AdminPages {
 	public function render_transactions_page() {
 		?>
 		<div id="fair-payments-connector-transactions-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render notifications settings page
+	 *
+	 * @return void
+	 */
+	public function render_notifications_page() {
+		?>
+		<div id="fair-payments-connector-notifications-root"></div>
 		<?php
 	}
 

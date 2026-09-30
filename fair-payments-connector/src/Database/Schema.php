@@ -180,9 +180,10 @@ class Schema {
 		self::migrate_to_v22();
 		self::migrate_to_v23();
 		self::migrate_to_v24();
+		self::migrate_to_v25();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '24.0' );
+		update_option( 'fair_payment_db_version', '25.0' );
 	}
 
 	/**
@@ -1274,6 +1275,22 @@ class Schema {
 
 		if ( version_compare( $current_version, '24.0', '<' ) ) {
 			self::create_audit_log_table();
+		}
+	}
+
+	/**
+	 * Migrate database from v24.0 to v25.0
+	 *
+	 * Takes over the payment notification queue from Fair Payments Connector
+	 * Experimental (#1657), keeping any rows it already queued.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v25() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '25.0', '<' ) ) {
+			NotificationQueueSchema::migrate();
 		}
 	}
 

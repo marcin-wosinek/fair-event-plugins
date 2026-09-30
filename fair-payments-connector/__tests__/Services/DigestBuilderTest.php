@@ -1,0 +1,134 @@
+<?php
+/**
+ * DigestBuilder Tests
+ *
+ * @package FairPaymentsConnector
+ */
+
+namespace FairPaymentsConnector\Tests\Services;
+
+use PHPUnit\Framework\TestCase;
+use FairPaymentsConnector\Services\DigestBuilder;
+
+/**
+ * Unit tests for DigestBuilder — summary line and body concatenation.
+ */
+class DigestBuilderTest extends TestCase {
+
+	/**
+	 * Builder under test.
+	 *
+	 * @var DigestBuilder
+	 */
+	private DigestBuilder $builder;
+
+	/**
+	 * Build a fresh builder.
+	 */
+	protected function setUp(): void {
+		$this->builder = new DigestBuilder();
+	}
+
+	/**
+	 * A queue row.
+	 *
+	 * @param string $rendered_text Message body.
+	 * @param string $amount        Amount.
+	 * @param string $currency      Currency code.
+	 * @return object
+	 */
+	private function row( string $rendered_text, string $amount, string $currency ): object {
+		return (object) array(
+			'rendered_text' => $rendered_text,
+			'amount'        => $amount,
+			'currency'      => $currency,
+		);
+	}
+
+	/**
+	 * One sale uses the singular.
+	 */
+	public function test_single_row_summary_singular() {
+		$result = $this->builder->build( array( $this->row( 'body', '10.00', 'EUR' ) ) );
+		$this->assertStringContainsString( '1 sale', $result );
+	}
+
+	/**
+	 * Several sales use the plural.
+	 */
+	public function test_multiple_rows_summary_plural() {
+		$rows   = array(
+			$this->row( 'a', '10.00', 'EUR' ),
+			$this->row( 'b', '20.00', 'EUR' ),
+		);
+		$result = $this->builder->build( $rows );
+		$this->assertStringContainsString( '2 sales', $result );
+	}
+
+	/**
+	 * Totals are grouped by currency.
+	 */
+	public function test_totals_per_currency() {
+		$rows   = array(
+			$this->row( 'a', '10.00', 'EUR' ),
+			$this->row( 'b', '5.50', 'EUR' ),
+			$this->row( 'c', '20.00', 'USD' ),
+		);
+		$result = $this->builder->build( $rows );
+		$this->assertStringContainsString( '15.50 EUR', $result );
+		$this->assertStringContainsString( '20.00 USD', $result );
+	}
+
+	/**
+	 * Every sale's body is included.
+	 */
+	public function test_body_rows_are_included() {
+		$rows   = array(
+			$this->row( 'First transaction body', '10.00', 'EUR' ),
+			$this->row( 'Second transaction body', '5.00', 'EUR' ),
+		);
+		$result = $this->builder->build( $rows );
+		$this->assertStringContainsString( 'First transaction body', $result );
+		$this->assertStringContainsString( 'Second transaction body', $result );
+	}
+
+	/**
+	 * No rows still produce a summary.
+	 */
+	public function test_empty_rows_returns_zero_sales() {
+		$result = $this->builder->build( array() );
+		$this->assertStringContainsString( '0 sales', $result );
+	}
+
+	/**
+	 * Rows without a currency are counted but not totalled.
+	 */
+	public function test_rows_without_currency_excluded_from_totals() {
+		$rows   = array(
+			$this->row( 'body', '10.00', '' ),
+		);
+		$result = $this->builder->build( $rows );
+		$this->assertStringContainsString( '1 sale', $result );
+		$this->assertStringNotContainsString( '·', $result );
+	}
+
+	/**
+	 * The summary carries the exact count and one total per currency, and every
+	 * transaction body appears exactly once.
+	 */
+	public function test_digest_has_exact_count_totals_and_each_body_once() {
+		$rows = array(
+			$this->row( 'Body A', '10.00', 'EUR' ),
+			$this->row( 'Body B', '5.50', 'EUR' ),
+			$this->row( 'Body C', '20.00', 'USD' ),
+			$this->row( 'Body D', '7.25', 'PLN' ),
+		);
+
+		$result = $this->builder->build( $rows );
+
+		$this->assertStringStartsWith( '4 sales · 15.50 EUR, 20.00 USD, 7.25 PLN', $result );
+		foreach ( array( 'Body A', 'Body B', 'Body C', 'Body D' ) as $body ) {
+			$this->assertSame( 1, substr_count( $result, $body ), $body );
+		}
+	}
+}

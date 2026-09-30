@@ -20,6 +20,10 @@ define( 'FAIR_PAYMENTS_CONNECTOR_VERSION', '2.2.0' );
 define( 'FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_PAYMENTS_CONNECTOR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+// Payment notifications live here now. An updated Fair Payments Connector
+// Experimental yields them when it sees this; see Core\NotificationOwnership.
+define( 'FAIR_PAYMENTS_CONNECTOR_OWNS_NOTIFICATIONS', true );
+
 // Require Composer autoloader if it exists.
 if ( file_exists( FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 	require_once FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'vendor/autoload.php';
@@ -88,7 +92,7 @@ function fair_payments_connector_maybe_upgrade() {
 
 	$db_version = get_option( 'fair_payment_db_version', '1.0' );
 
-	if ( version_compare( $db_version, '24.0', '<' ) ) {
+	if ( version_compare( $db_version, '25.0', '<' ) ) {
 		FairPaymentsConnector\Database\Schema::create_tables();
 	}
 }

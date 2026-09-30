@@ -29,6 +29,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/fee-dashboard/index.js",
     ),
+    "admin/notifications/index": path.resolve(
+      process.cwd(),
+      "src/Admin/notifications/index.js",
+    ),
     "payment-callback": path.resolve(
       process.cwd(),
       "src/payment-callback.js",

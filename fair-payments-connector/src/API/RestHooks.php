@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnector\API;
 
+use FairPaymentsConnector\Core\NotificationOwnership;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -53,5 +55,13 @@ class RestHooks {
 
 		$settings_write_controller = new \FairPaymentsConnector\API\SettingsWriteController();
 		$settings_write_controller->register_routes();
+
+		if ( NotificationOwnership::is_owner() ) {
+			$notifications_controller = new \FairPaymentsConnector\API\NotificationsController();
+			$notifications_controller->register_routes();
+
+			$telegram_controller = new \FairPaymentsConnector\API\TelegramSettingsController();
+			$telegram_controller->register_routes();
+		}
 	}
 }

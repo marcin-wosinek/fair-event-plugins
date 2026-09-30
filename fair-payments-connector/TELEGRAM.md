@@ -1,81 +1,75 @@
-# Telegram notifications
+# Payment notifications
 
-Fair Payments Connector can post a message to a Telegram chat or channel every time a
-transaction is paid. Useful as a live, mobile-friendly feed of sales without
-logging into the WordPress admin.
+Fair Payments Connector can announce every paid transaction in a Telegram chat
+or channel, or by email. Each notification route sends either immediately or
+as an hourly, daily or weekly digest. Useful as a live, mobile-friendly feed of
+sales without logging into the WordPress admin.
 
 ## Setup
 
-1. **Create a bot.** Open Telegram, message `@BotFather`, send `/newbot` and
-   follow the prompts. BotFather replies with an **HTTP API token** that looks
-   like `123456789:AAH...`. Keep it secret — anyone with the token can post as
-   your bot.
+1. **Create a bot** (Telegram routes only). Open Telegram, message
+   `@BotFather`, send `/newbot` and follow the prompts. BotFather replies with
+   an **HTTP API token** that looks like `123456789:AAH...`. Keep it secret —
+   anyone with the token can post as your bot.
 2. **Get a chat ID.**
-   - For a private DM to yourself: message `@userinfobot` — it replies with
-     your numeric user ID.
-   - For a group: add the bot to the group, then visit
-     `https://api.telegram.org/bot<TOKEN>/getUpdates` in a browser and look for
-     `"chat":{"id":...}` after someone posts.
-   - For a public channel: use `@channelname` directly (the bot must be an
-     admin in the channel).
-3. **Configure the plugin.** WP Admin → Fair Payments Connector → Settings → Telegram.
-   Paste the token, the chat ID (or multiple comma-separated IDs), edit the
-   message template if you like, and click **Save settings**.
-4. **Test.** Click **Send test message**. The message lands in the configured
-   chat using sample data. If it doesn't arrive, the inline notice surfaces
-   the Telegram API error description (e.g. `chat not found`, `Unauthorized`).
+    - For a private DM to yourself: message `@userinfobot` — it replies with
+      your numeric user ID.
+    - For a group: add the bot to the group, then visit
+      `https://api.telegram.org/bot<TOKEN>/getUpdates` in a browser and look for
+      `"chat":{"id":...}` after someone posts.
+    - For a public channel: use `@channelname` directly (the bot must be an
+      admin in the channel).
+3. **Configure the plugin.** WP Admin → Fair Payments Connector →
+   Notifications. Paste the bot token, click **Add route**, pick the channel,
+   destination (chat ID or email address), frequency and whether to include
+   personal information, then click **Save settings**.
+4. **Test.** Click **Send test** on a route. The message arrives using sample
+   data. If it doesn't, the inline notice reports the failure.
 
-## Message template
+## Message format
 
-The default template renders as:
+The message format is fixed:
 
 ```
 [TEST] <site domain>
 <event title link>
-<participant name link> (participant@example.com)
+<participant name link>
+Group: <group>
+Fee: <fee>
 Ticket: Regular
 Activities: Activity A, Activity B
 Discounts: Early bird -10%
 Total: 10.00 EUR
 ```
 
-Telegram already shows the message time, so the default template omits the
-transaction date — add `{date}` back to the template if you want it.
+`[TEST]` appears only for Mollie test-mode transactions. Lines whose value is
+empty are left out, so an event signup shows ticket, activity and discount
+lines, and a membership fee shows group and fee lines. A digest starts with the
+number of sales and the totals per currency, followed by each sale.
 
-Available placeholders:
+## Personal information
 
-| Placeholder            | Notes                                                |
-| ---------------------- | ---------------------------------------------------- |
-| `{test_label}`         | `[TEST] ` for Mollie test-mode transactions, empty otherwise. |
-| `{site_domain}`        | Host portion of the site URL (e.g. `example.com`).   |
-| `{date}`               | YYYY-MM-DD of the transaction.                       |
-| `{amount}`             | Numeric, two decimals.                               |
-| `{currency}`           | Currency code.                                       |
-| `{transaction_id}`     | Internal transaction ID.                             |
-| `{event_title}`        | Event post title (when fair-audience active).        |
-| `{event_url}`          | Admin edit link for the event.                       |
-| `{participant_name}`   | PII — see toggle.                                    |
-| `{participant_url}`    | Admin link to the participant.                       |
-| `{participant_email}`  | PII — see toggle.                                    |
-| `{ticket_label}`       | Ticket type / option name(s).                        |
-| `{activities}`         | Activities the participant signed up for.            |
-| `{discounts}`          | Applied discounts (e.g. early bird, group).          |
-
-Allowed HTML: `<b>`, `<strong>`, `<i>`, `<em>`, `<u>`, `<a href>`, `<br>`,
-`<code>`. Other tags are stripped on save.
-
-## PII toggle
-
-`Include participant name and email` is on by default. Turn it off to render
-`{participant_name}` and `{participant_email}` as empty strings — useful if
-the channel has wider visibility than the admin team.
+Each route has an **Include PII** toggle, on by default. When it is off, the
+participant's name is shortened to first name and surname initial (for
+example, `Jane D.`) and the email address is never included — useful if the
+channel has wider visibility than the admin team.
 
 ## How it works
 
-The plugin subscribes to the `fair_payment_paid` action and dispatches via
-`wp_schedule_single_event`, so the Mollie webhook returns immediately and is
-never blocked by Telegram latency. Send failures are written to the PHP error
-log and never bubble up to the payment flow.
+The plugin subscribes to the `fair_payment_paid` action. Immediate routes are
+sent through `wp_schedule_single_event`, so the Mollie webhook returns
+immediately and is never blocked by Telegram or mail latency. Digest routes
+store each sale in the `fair_payment_notification_queue` table; a recurring
+WP-Cron event per frequency claims and sends them, retrying failed sends on the
+next run.
 
 Other plugins can enrich the message context by hooking the
 `fair_payment_notification_context` filter (see fair-audience for an example).
+
+## Moving from Fair Payments Connector Experimental
+
+Notifications used to live in Fair Payments Connector Experimental. Routes, the
+bot token and queued digest sales carry over unchanged. While both plugins are
+active, only one of them runs notifications: an experimental release from
+before the move keeps them until it is updated or deactivated; after that,
+Fair Payments Connector takes over.
