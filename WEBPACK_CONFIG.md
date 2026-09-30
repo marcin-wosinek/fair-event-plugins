@@ -213,6 +213,25 @@ src/
 -   `editor` - Block editor script (for blocks with separate frontend)
 -   `view` / `frontend` - Frontend-only script (loaded via viewScript in block.json)
 
+## Public viewScript dependency check
+
+Webpack emits an `*.asset.php` file beside each built script. Its
+`dependencies` array is the list of WordPress scripts loaded with that entry.
+For a public `viewScript`, inspect this file after `npm run build` and compare
+the requests on a page containing the block with the baseline in
+[PERFORMANCE.md](./PERFORMANCE.md). A small source file can still cause a
+large public-page load through its imports.
+
+In particular, the `fair-events-shared` root entry re-exports editor
+components. Public entries that need its DOM utilities should import the
+specific modules under `fair-events-shared/src/` so the editor component
+chain does not enter the frontend build. For example, use
+`fair-events-shared/src/form-utils.js`,
+`fair-events-shared/src/questionnaire.js`, or
+`fair-events-shared/src/payment-flow.js` as applicable. Confirm the generated
+asset no longer lists `wp-components` or unrelated React/date packages; keep
+dependencies the control actually needs, such as `wp-api-fetch` and `wp-i18n`.
+
 ## Output Structure
 
 Default output from `@wordpress/scripts`:

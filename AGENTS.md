@@ -157,6 +157,13 @@ Frontend:
 deferred loading because the event may already have fired. Example:
 `fair-events/src/blocks/calendar-button/frontend.js`.
 
+Keep public `viewScript` dependency graphs small. When using `fair-events-shared`
+browser utilities, import the specific module (for example,
+`fair-events-shared/src/form-utils.js`) instead of its root entry, which also
+exports editor components. After building, inspect the frontend `.asset.php`
+dependencies and check public-page requests; see [BLOCK_CREATION.md](./BLOCK_CREATION.md)
+and [WEBPACK_CONFIG.md](./WEBPACK_CONFIG.md).
+
 ### i18n — see [I18N_SETUP.md](./I18N_SETUP.md)
 
 -   **Default:** rely on WordPress.org language packs. Do **not** call
