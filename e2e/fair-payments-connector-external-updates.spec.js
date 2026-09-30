@@ -43,7 +43,7 @@ test.describe('External Updates', () => {
 
 	const cleanUp = async () => {
 		wpCli(
-			'db query "DELETE FROM wp_fair_payment_transactions WHERE mollie_payment_id = \'tr_e2emanualimport\'"'
+			"db query \"DELETE FROM wp_fair_payment_transactions WHERE mollie_payment_id IN ('tr_e2emanualimport', 'tr_e2efeeload')\""
 		);
 		await api.delete(
 			'/wp-json/fair-e2e/v1/external-updates/transactions?prefix=tr_e2ecs',
@@ -176,5 +176,42 @@ test.describe('External Updates', () => {
 			'The connected site could not be reached.'
 		);
 		await expect(row).toContainText('200 new');
+	});
+
+	test('loads missing Mollie fees from Transactions for the chosen mode, and logs the run', async ({
+		page,
+	}) => {
+		wpCli(
+			"db query \"INSERT INTO wp_fair_payment_transactions (mollie_payment_id, amount, currency, status, testmode, description) VALUES ('tr_e2efeeload', 10.00, 'EUR', 'paid', 1, 'E2E fee load')\""
+		);
+
+		await loginAsAdmin(page);
+		await page.goto(
+			'/wp-admin/admin.php?page=fair-payments-connector-transactions'
+		);
+		await page.getByLabel('Mode').selectOption('test');
+		await expect(page.getByText('E2E fee load')).toBeVisible();
+
+		const button = page.getByRole('button', {
+			name: 'Load missing Mollie fees',
+		});
+		await expect(button).toBeVisible();
+		await button.click();
+
+		// The Mollie double has no balance data, so every fee lookup fails;
+		// the server records the run as failed.
+		await expect(page.locator('.components-notice.is-error')).toHaveText(
+			/Failed\./
+		);
+		await expect(button).toBeEnabled();
+
+		await page.goto(
+			'/wp-admin/admin.php?page=fair-payments-connector-external-updates'
+		);
+		const row = page.locator('.fair-external-updates__log tbody tr').nth(0);
+		await expect(row).toContainText('Mollie (test)');
+		await expect(row).toContainText('Load missing fees');
+		await expect(row).toContainText('Failed');
+		await expect(row).toContainText(ADMIN_USER);
 	});
 });

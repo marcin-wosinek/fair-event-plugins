@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -19,6 +19,8 @@ import {
  * Internal dependencies
  */
 import ImportTransactionsModal from './components/ImportTransactionsModal.js';
+import MollieFeeFeedback from '../external-updates/components/MollieFeeFeedback.js';
+import useMollieFeeLoad from '../external-updates/useMollieFeeLoad.js';
 
 const STATUS_OPTIONS = [
 	{ label: __( 'All statuses', 'fair-payments-connector' ), value: '' },
@@ -86,6 +88,10 @@ const TransactionsApp = () => {
 		new Set()
 	);
 	const [ isImportModalOpen, setIsImportModalOpen ] = useState( false );
+	const [ loadingFees, setLoadingFees ] = useState( false );
+	// A ref closes the gap before re-render, so a double click can't start
+	// two fee runs.
+	const feesBusyRef = useRef( false );
 
 	// One-use success marker set by the transaction detail page after a
 	// deletion redirect; shown once and stripped so a refresh doesn't repeat it.
@@ -152,6 +158,24 @@ const TransactionsApp = () => {
 	useEffect( () => {
 		loadTransactions();
 	}, [ loadTransactions ] );
+
+	// The fee run is logged on External Updates like any other; this page
+	// scopes it with the Mode filter and refreshes the list when it ends.
+	const feeLoad = useMollieFeeLoad( {
+		onBegin: () => {
+			if ( feesBusyRef.current ) {
+				return false;
+			}
+			feesBusyRef.current = true;
+			setLoadingFees( true );
+			return true;
+		},
+		onEnd: () => {
+			feesBusyRef.current = false;
+			setLoadingFees( false );
+			loadTransactions();
+		},
+	} );
 
 	const handleSort = ( column ) => {
 		setSort( ( prev ) => ( {
@@ -316,6 +340,27 @@ const TransactionsApp = () => {
 							) }
 							<Button
 								variant="secondary"
+								onClick={ () => feeLoad.load( filters.mode ) }
+								isBusy={ loadingFees }
+								disabled={ loadingFees }
+								style={ {
+									whiteSpace: 'nowrap',
+									flexShrink: 0,
+									width: 'auto',
+								} }
+							>
+								{ loadingFees
+									? __(
+											'Loading fees…',
+											'fair-payments-connector'
+									  )
+									: __(
+											'Load missing Mollie fees',
+											'fair-payments-connector'
+									  ) }
+							</Button>
+							<Button
+								variant="secondary"
 								onClick={ () => setIsImportModalOpen( true ) }
 								style={ { flexShrink: 0, width: 'auto' } }
 							>
@@ -344,6 +389,12 @@ const TransactionsApp = () => {
 							{ success }
 						</Notice>
 					) }
+
+					<MollieFeeFeedback
+						progress={ feeLoad.progress }
+						result={ feeLoad.result }
+						clearResult={ feeLoad.clearResult }
+					/>
 
 					{ loading ? (
 						<Spinner />
