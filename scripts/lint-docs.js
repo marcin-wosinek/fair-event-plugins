@@ -45,6 +45,7 @@ const errors = [];
 for (const fileName of docFiles) {
 	const filePath = join(rootDir, fileName);
 	const lines = readFileSync(filePath, 'utf8').split('\n');
+	let inFence = false;
 
 	lines.forEach((line, index) => {
 		const lineNumber = index + 1;
@@ -57,7 +58,13 @@ for (const fileName of docFiles) {
 			}
 		}
 
-		for (const match of line.matchAll(LINK_PATTERN)) {
+		// Code blocks and spans hold examples, not links.
+		if (/^\s*```/.test(line)) {
+			inFence = !inFence;
+		}
+		const prose = inFence ? '' : line.replace(/`[^`]*`/g, '');
+
+		for (const match of prose.matchAll(LINK_PATTERN)) {
 			const target = match[1];
 			if (/^(https?:|mailto:|#)/.test(target)) {
 				continue;

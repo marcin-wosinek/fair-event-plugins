@@ -98,14 +98,15 @@ If `responsive-ui` is among them, this section applies.
 
 **Capture _before_ first — at the start of the task, not the end.** The "before"
 state is the base branch, so grab it _before_ touching any code (rebuilding the
-old state later means a branch switch + extra `npm run build`). For each changed
-page, run the screenshot helper at all three presets against the running dev
-instance (`docker compose up` must be live):
+old state later means a branch switch + extra `npm run build`). Create the
+implementation branch first, then, for each changed page, run the screenshot
+helper at all three presets against the running dev instance
+(`docker compose up` must be live):
 
 ```bash
-npm run screenshot -- "<admin-or-public-path>" desktop before-<page>-desktop.png
-npm run screenshot -- "<admin-or-public-path>" tablet  before-<page>-tablet.png
-npm run screenshot -- "<admin-or-public-path>" mobile  before-<page>-mobile.png
+npm run screenshot -- "<admin-or-public-path>" desktop before-<page>-desktop.png --upload github --issue <NNN>
+npm run screenshot -- "<admin-or-public-path>" tablet  before-<page>-tablet.png  --upload github --issue <NNN>
+npm run screenshot -- "<admin-or-public-path>" mobile  before-<page>-mobile.png  --upload github --issue <NNN>
 ```
 
 **Capture _after_** once the change is built (`npm run build` in the affected
@@ -114,41 +115,68 @@ plugin), repeating the three presets with `after-` filenames.
 The presets are `desktop` (1280×900), `tablet` (768×1024), `mobile` (375×812) —
 see [TESTING.md](./TESTING.md) and `scripts/screenshot.js`.
 
-Screenshots must come from the local dev/demo instance only (synthetic data,
-no real participant names, emails, or finance figures) — the `pr-assets`
-branch this section uploads to is public once this repo is public.
+**Public, synthetic data only.** Every upload below is a GitHub attachment
+that anyone can open and GitHub caches, even after the PR closes. Capture from
+the local dev/demo instance only — no real participant names, emails, or
+finance figures.
 
-**Upload through GitHub, don't leave local files for a human.** Add
-`--upload github --issue <NNN>` to each capture; it publishes the PNG to the
-repo's `pr-assets` branch (via the already-authenticated `gh` CLI — no new
-key needed) and prints the raw, repository-hosted URL:
+**How uploads work.** `--upload github` writes the local PNG first, then
+attaches it through the already-authenticated `gh` CLI (no new key; no
+screenshot branch, no companion PR):
 
-```bash
-npm run screenshot -- "<admin-or-public-path>" desktop before-<page>-desktop.png --upload github --issue <NNN>
-```
+-   **Before the PR exists**, `--issue <NNN>` attaches the PNG to a comment on
+    the ticket, marked with the checked-out implementation branch and the
+    filename. Uploading the same filename again from the same branch supersedes
+    that comment; other branches' uploads for the same issue are untouched.
+    Screenshots can't be uploaded from `main` — pass `--branch <name>` if you
+    capture from somewhere else.
+-   **Once the branch has an open PR** (or with `--pr <n>`), the PNG is attached
+    to the PR itself, and the description's `![<filename>](...)` reference
+    points at it. The PR is the durable home of the final evidence.
 
-Verify each of the six (or more, for multi-page tickets) uploads exits `0`
-before building the PR description — a non-zero exit means that PNG was not
-published. In the PR description, add a **Screenshots** section with a
-before/after row per viewport, embedding the printed URLs directly:
+In the PR description, add a **Screenshots** section with a before/after row
+per viewport (and per changed page). Write each image as a local placeholder
+whose alt text is its filename:
 
 ```markdown
 ## Screenshots
 
-| Viewport | Before                                                                                                | After                                                                                               |
-| -------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Desktop  | ![before](https://raw.githubusercontent.com/<owner>/<repo>/pr-assets/<NNN>/before-<page>-desktop.png) | ![after](https://raw.githubusercontent.com/<owner>/<repo>/pr-assets/<NNN>/after-<page>-desktop.png) |
-| Tablet   | ![before](https://raw.githubusercontent.com/<owner>/<repo>/pr-assets/<NNN>/before-<page>-tablet.png)  | ![after](https://raw.githubusercontent.com/<owner>/<repo>/pr-assets/<NNN>/after-<page>-tablet.png)  |
-| Mobile   | ![before](https://raw.githubusercontent.com/<owner>/<repo>/pr-assets/<NNN>/before-<page>-mobile.png)  | ![after](https://raw.githubusercontent.com/<owner>/<repo>/pr-assets/<NNN>/after-<page>-mobile.png)  |
+| Viewport | Before                                                    | After                                                   |
+| -------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| Desktop  | ![before-<page>-desktop.png](./before-<page>-desktop.png) | ![after-<page>-desktop.png](./after-<page>-desktop.png) |
+| Tablet   | ![before-<page>-tablet.png](./before-<page>-tablet.png)   | ![after-<page>-tablet.png](./after-<page>-tablet.png)   |
+| Mobile   | ![before-<page>-mobile.png](./before-<page>-mobile.png)   | ![after-<page>-mobile.png](./after-<page>-mobile.png)   |
 ```
 
-**If an upload fails,** keep the local PNG, state plainly in the PR
-description which viewport/state is missing and why, and don't claim
-complete visual evidence — re-running the same command is safe; it looks up
-and replaces any file already at that path instead of failing.
+After creating the PR, attach all final PNGs to it, then verify:
 
-Don't commit the PNGs to the implementation branch — they live only on
-`pr-assets`, isolated from the branch the PR merges.
+```bash
+npm run screenshot:attach -- --pr <PR> before-<page>-*.png after-<page>-*.png
+npm run screenshot:verify -- --pr <PR> before-<page>-{desktop,tablet,mobile}.png after-<page>-{desktop,tablet,mobile}.png
+```
+
+`screenshot:attach` replaces each placeholder with a verified
+`github.com/user-attachments` URL. A before PNG you no longer have locally is
+fetched from its issue comment for the PR's branch (the ticket comes from
+`Closes #N`/`Refs #N`, or pass `--issue <NNN>`). `screenshot:verify` fails if
+any referenced image is still a local path or doesn't resolve, or if a listed
+filename isn't referenced.
+
+**Replacing a screenshot** — re-run `screenshot:attach` (or the capture with
+`--upload github`) for that filename. The new attachment is verified before
+its reference changes, so a failed replacement leaves the old image showing.
+
+**If an upload fails,** the command exits non-zero and the local PNG stays
+where it was. `gh` can attach some files and still fail, so the script
+re-reads the description after every attempt and retries only the files that
+are still missing; a fresh attachment can take 15+ seconds to resolve, which
+it waits for. Re-running is safe and doesn't duplicate images. If a file still
+can't be attached, state plainly in the PR description which viewport/state is
+missing and why, and don't claim complete visual evidence.
+
+Never commit the PNGs. Older PRs embed images from the legacy `pr-assets`
+branch; that branch is kept so they keep rendering, but nothing uploads to it
+any more.
 
 ## Before committing
 
