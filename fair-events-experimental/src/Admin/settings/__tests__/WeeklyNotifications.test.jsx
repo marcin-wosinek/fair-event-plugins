@@ -46,22 +46,33 @@ afterEach( () => {
 } );
 
 describe( 'WeeklyNotifications', () => {
-	it( 'never shows a saved bot token and says one is saved', async () => {
+	const TOKEN = '123456789:AAEabcdefghijklmnopqrstuvwxyz012345';
+
+	const clickSave = () =>
+		fireEvent.click(
+			screen.getByRole( 'button', {
+				name: 'Save weekly notification settings',
+			} )
+		);
+
+	it( 'says a token is saved without rendering a token field', async () => {
 		mockApi( config() );
 
 		render( <WeeklyNotifications onNotice={ () => {} } /> );
 
-		const token = await screen.findByLabelText( 'Replace bot token' );
-		expect( token ).toHaveValue( '' );
-		expect( token ).toHaveAttribute( 'type', 'password' );
 		expect(
-			screen.getByText(
-				'A bot token is saved. Leave this empty to keep it.'
+			await screen.findByText(
+				'A bot token is saved. It is not shown here.'
 			)
+		).toBeInTheDocument();
+		expect( screen.queryByLabelText( 'New bot token' ) ).toBeNull();
+		expect( document.querySelector( 'input[type="password"]' ) ).toBeNull();
+		expect(
+			screen.getByRole( 'button', { name: 'Replace bot token' } )
 		).toBeInTheDocument();
 	} );
 
-	it( 'saves the schedule, chats and a new token, then clears the token field', async () => {
+	it( 'saves the schedule and chats without sending a token', async () => {
 		const onNotice = jest.fn();
 		const save = jest.fn( () =>
 			Promise.resolve(
@@ -89,34 +100,144 @@ describe( 'WeeklyNotifications', () => {
 		fireEvent.change( screen.getByLabelText( 'Chats and channels' ), {
 			target: { value: '@fair_channel\n-100200' },
 		} );
-		fireEvent.change( screen.getByLabelText( 'Replace bot token' ), {
-			target: { value: '123456789:AAEabcdefghijklmnopqrstuvwxyz012345' },
-		} );
-		fireEvent.click(
-			screen.getByRole( 'button', {
-				name: 'Save weekly notification settings',
-			} )
-		);
+		clickSave();
 
 		await waitFor( () => expect( save ).toHaveBeenCalled() );
-		expect( save.mock.calls[ 0 ][ 0 ].data ).toMatchObject( {
+		const data = save.mock.calls[ 0 ][ 0 ].data;
+		expect( data ).toMatchObject( {
 			enabled: true,
 			source_slug: 'city',
 			page_id: 12,
 			day_of_week: 7,
 			week_scope: 'next',
 			telegram_chat_ids: '@fair_channel\n-100200',
-			telegram_bot_token: '123456789:AAEabcdefghijklmnopqrstuvwxyz012345',
 		} );
+		expect( data ).not.toHaveProperty( 'telegram_bot_token' );
 		await waitFor( () =>
-			expect( screen.getByLabelText( 'Replace bot token' ) ).toHaveValue(
-				''
-			)
+			expect( onNotice ).toHaveBeenCalledWith( {
+				status: 'success',
+				message: 'Weekly notification settings saved.',
+			} )
 		);
-		expect( onNotice ).toHaveBeenCalledWith( {
-			status: 'success',
-			message: 'Weekly notification settings saved.',
+	} );
+
+	it( 'discards a replacement draft when keeping the saved token', async () => {
+		const save = jest.fn( () => Promise.resolve( config() ) );
+		mockApi( config(), { [ `POST ${ PATH }` ]: save } );
+
+		render( <WeeklyNotifications onNotice={ () => {} } /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Replace bot token' } )
+		);
+		const field = screen.getByLabelText( 'New bot token' );
+		expect( field ).toHaveAttribute( 'type', 'password' );
+		fireEvent.change( field, { target: { value: TOKEN } } );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Keep saved token' } )
+		);
+
+		expect( screen.queryByLabelText( 'New bot token' ) ).toBeNull();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Replace bot token' } )
+		);
+		expect( screen.getByLabelText( 'New bot token' ) ).toHaveValue( '' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Keep saved token' } )
+		);
+
+		clickSave();
+		await waitFor( () => expect( save ).toHaveBeenCalled() );
+		expect( save.mock.calls[ 0 ][ 0 ].data ).not.toHaveProperty(
+			'telegram_bot_token'
+		);
+	} );
+
+	it( 'saves a deliberate replacement, then closes the field', async () => {
+		const save = jest.fn( () => Promise.resolve( config() ) );
+		mockApi( config(), { [ `POST ${ PATH }` ]: save } );
+
+		render( <WeeklyNotifications onNotice={ () => {} } /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Replace bot token' } )
+		);
+		fireEvent.change( screen.getByLabelText( 'New bot token' ), {
+			target: { value: TOKEN },
 		} );
+		clickSave();
+
+		await waitFor( () => expect( save ).toHaveBeenCalled() );
+		expect( save.mock.calls[ 0 ][ 0 ].data.telegram_bot_token ).toBe(
+			TOKEN
+		);
+		await waitFor( () =>
+			expect( screen.queryByLabelText( 'New bot token' ) ).toBeNull()
+		);
+		expect(
+			screen.getByRole( 'button', { name: 'Replace bot token' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps a rejected replacement open with the server’s message', async () => {
+		const onNotice = jest.fn();
+		mockApi( config(), {
+			[ `POST ${ PATH }` ]: () =>
+				Promise.reject( {
+					code: 'invalid_bot_token',
+					message:
+						'That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE….',
+				} ),
+		} );
+
+		render( <WeeklyNotifications onNotice={ onNotice } /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Replace bot token' } )
+		);
+		fireEvent.change( screen.getByLabelText( 'New bot token' ), {
+			target: { value: 'not-a-token' },
+		} );
+		clickSave();
+
+		await waitFor( () =>
+			expect( onNotice ).toHaveBeenCalledWith( {
+				status: 'error',
+				message:
+					'That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE….',
+			} )
+		);
+		expect( screen.getByLabelText( 'New bot token' ) ).toHaveValue(
+			'not-a-token'
+		);
+	} );
+
+	it( 'shows the token field for the first token and sends it', async () => {
+		const save = jest.fn( () => Promise.resolve( config() ) );
+		mockApi( config( { telegram_token_configured: false } ), {
+			[ `POST ${ PATH }` ]: save,
+		} );
+
+		render( <WeeklyNotifications onNotice={ () => {} } /> );
+
+		const field = await screen.findByLabelText( 'Bot token' );
+		expect( field ).toHaveAttribute( 'type', 'password' );
+		expect(
+			screen.queryByRole( 'button', { name: 'Replace bot token' } )
+		).toBeNull();
+		fireEvent.change( field, { target: { value: TOKEN } } );
+		clickSave();
+
+		await waitFor( () => expect( save ).toHaveBeenCalled() );
+		expect( save.mock.calls[ 0 ][ 0 ].data.telegram_bot_token ).toBe(
+			TOKEN
+		);
+		expect(
+			await screen.findByText(
+				'A bot token is saved. It is not shown here.'
+			)
+		).toBeInTheDocument();
+		expect( screen.queryByLabelText( 'Bot token' ) ).toBeNull();
 	} );
 
 	it( 'saves any listed page as the heading link', async () => {

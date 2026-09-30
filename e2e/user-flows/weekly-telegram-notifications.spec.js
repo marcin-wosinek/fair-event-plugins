@@ -3,8 +3,9 @@
  *
  * Drives the Experimental tab of Fair Events Settings as an administrator:
  * picks a plain page (no calendar block) for the heading, saves a bot token
- * and two chats, checks the token is never shown again, and
- * sends a test message that reaches one chat and fails for the other. No request
+ * and two chats, checks the token is never shown again, saves unrelated
+ * settings with no token field present (#1733), and sends a test message
+ * that reaches one chat and fails for the other. No request
  * reaches Telegram — lib/telegram-http-double.php answers api.telegram.org
  * and records each request's chat ID and text (never the token).
  */
@@ -77,13 +78,30 @@ test.describe('Weekly Telegram notifications', () => {
 			page.getByText('Weekly notification settings saved.').first()
 		).toBeVisible();
 
-		// The token is write-only: the field is empty and only says one is saved.
-		const tokenField = page.getByLabel('Replace bot token');
-		await expect(tokenField).toHaveValue('');
+		// The token is write-only, and with one saved there is no token field
+		// for browser autofill to fill.
 		await expect(
-			page.getByText('A bot token is saved. Leave this empty to keep it.')
+			page.getByText('A bot token is saved. It is not shown here.')
 		).toBeVisible();
+		await expect(page.locator('input[type="password"]')).toHaveCount(0);
 		await page.reload();
+		await expect(page.locator('input[type="password"]')).toHaveCount(0);
+
+		// Saving unrelated settings keeps the saved token (#1733).
+		await page.getByLabel('Send at').fill('07:45');
+		await page
+			.getByRole('button', { name: 'Save weekly notification settings' })
+			.click();
+		await expect(
+			page.getByText('Weekly notification settings saved.').first()
+		).toBeVisible();
+		// Compare without printing the token if the assertion fails.
+		const storedToken = wpCli(
+			'option get fair_events_experimental_weekly_telegram_token'
+		).trim();
+		expect(storedToken === TOKEN).toBe(true);
+		await page.reload();
+		await expect(page.getByLabel('Send at')).toHaveValue('07:45');
 		await expect(page.getByLabel('Page linked in the heading')).toHaveValue(
 			pageId
 		);
@@ -126,7 +144,8 @@ test.describe('Weekly Telegram notifications', () => {
 		).toBeVisible();
 
 		// An unsaved replacement must not restore the token after removal.
-		await page.getByLabel('Replace bot token').fill(TOKEN);
+		await page.getByRole('button', { name: 'Replace bot token' }).click();
+		await page.getByLabel('New bot token').fill(TOKEN);
 		await page.getByRole('button', { name: 'Remove bot token' }).click();
 		await expect(
 			page.getByText(

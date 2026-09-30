@@ -136,6 +136,7 @@ export default function WeeklyNotifications( { onNotice } ) {
 	const [ config, setConfig ] = useState( null );
 	const [ form, setForm ] = useState( null );
 	const [ token, setToken ] = useState( '' );
+	const [ replacingToken, setReplacingToken ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
 	const [ testing, setTesting ] = useState( false );
 	const [ testResults, setTestResults ] = useState( null );
@@ -195,21 +196,29 @@ export default function WeeklyNotifications( { onNotice } ) {
 	const update = ( field ) => ( value ) =>
 		setForm( { ...form, [ field ]: value } );
 
+	// With a saved token, the field only exists after an explicit "Replace",
+	// so browser autofill cannot turn an unrelated save into a replacement.
+	const showTokenField = ! config.telegram_token_configured || replacingToken;
+
+	const closeTokenField = () => {
+		setReplacingToken( false );
+		setToken( '' );
+	};
+
 	const save = async () => {
 		setSaving( true );
 		try {
-			const next = await apiFetch( {
-				path: PATH,
-				method: 'POST',
-				data: {
-					...form,
-					page_id: parseInt( form.page_id, 10 ) || 0,
-					day_of_week: parseInt( form.day_of_week, 10 ),
-					telegram_bot_token: token,
-				},
-			} );
+			const data = {
+				...form,
+				page_id: parseInt( form.page_id, 10 ) || 0,
+				day_of_week: parseInt( form.day_of_week, 10 ),
+			};
+			if ( showTokenField && '' !== token ) {
+				data.telegram_bot_token = token;
+			}
+			const next = await apiFetch( { path: PATH, method: 'POST', data } );
 			applyConfig( next );
-			setToken( '' );
+			closeTokenField();
 			setPreview( null );
 			onNotice( {
 				status: 'success',
@@ -242,7 +251,7 @@ export default function WeeklyNotifications( { onNotice } ) {
 			} );
 			setConfig( next );
 			setForm( { ...form } );
-			setToken( '' );
+			closeTokenField();
 			onNotice( {
 				status: 'success',
 				message: __(
@@ -486,34 +495,61 @@ export default function WeeklyNotifications( { onNotice } ) {
 					onChange={ update( 'telegram_enabled' ) }
 				/>
 
-				<TextControl
-					type="password"
-					autoComplete="off"
-					label={
-						config.telegram_token_configured
-							? __(
-									'Replace bot token',
-									'fair-events-experimental'
-							  )
-							: __( 'Bot token', 'fair-events-experimental' )
-					}
-					help={
-						config.telegram_token_configured
-							? __(
-									'A bot token is saved. Leave this empty to keep it.',
-									'fair-events-experimental'
-							  )
-							: __(
-									'From @BotFather. It is not shown again after saving.',
-									'fair-events-experimental'
-							  )
-					}
-					value={ token }
-					onChange={ setToken }
-				/>
+				{ config.telegram_token_configured && (
+					<p>
+						{ __(
+							'A bot token is saved. It is not shown here.',
+							'fair-events-experimental'
+						) }
+					</p>
+				) }
+
+				{ showTokenField && (
+					<TextControl
+						type="password"
+						autoComplete="new-password"
+						label={
+							config.telegram_token_configured
+								? __(
+										'New bot token',
+										'fair-events-experimental'
+								  )
+								: __( 'Bot token', 'fair-events-experimental' )
+						}
+						help={ __(
+							'From @BotFather. It is not shown again after saving.',
+							'fair-events-experimental'
+						) }
+						value={ token }
+						onChange={ setToken }
+					/>
+				) }
 
 				{ config.telegram_token_configured && (
 					<p>
+						{ replacingToken ? (
+							<Button
+								variant="secondary"
+								onClick={ closeTokenField }
+								disabled={ saving }
+							>
+								{ __(
+									'Keep saved token',
+									'fair-events-experimental'
+								) }
+							</Button>
+						) : (
+							<Button
+								variant="secondary"
+								onClick={ () => setReplacingToken( true ) }
+								disabled={ saving || testing }
+							>
+								{ __(
+									'Replace bot token',
+									'fair-events-experimental'
+								) }
+							</Button>
+						) }{ ' ' }
 						<Button
 							variant="secondary"
 							isDestructive
