@@ -6,14 +6,14 @@ import {
 	showMessage,
 	setButtonLoading,
 	onDomReady,
-} from 'fair-events-shared';
+} from 'fair-events-shared/src/form-utils.js';
 import {
 	collectQuestionAnswers,
 	validateQuestions,
 	hasFileUploads,
 	appendQuestionFiles,
 	setupQuestionnaire,
-} from 'fair-events-shared';
+} from 'fair-events-shared/src/questionnaire.js';
 
 onDomReady( initializeFairForms );
 

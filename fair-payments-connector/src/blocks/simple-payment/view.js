@@ -11,7 +11,7 @@ import {
 	handlePaymentCallback,
 	renderPaymentError,
 	wireRestartButton,
-} from 'fair-events-shared';
+} from 'fair-events-shared/src/payment-flow.js';
 
 const STATUS_PATH = '/fair-payments-connector/v1/payments';
 
