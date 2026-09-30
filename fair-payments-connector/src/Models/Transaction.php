@@ -173,31 +173,69 @@ class Transaction {
 			'metadata'        => wp_json_encode( $metadata ),
 		);
 
-		$existing = self::get_by_mollie_id( $mollie_payment_id );
-
-		if ( $existing ) {
-			$wpdb->update(
-				$table_name,
-				$row,
-				array( 'mollie_payment_id' => $mollie_payment_id ),
-				array( '%f', '%s', '%f', '%f', '%s', '%d', '%s', '%s' ),
-				array( '%s' )
-			);
-			return 'updated';
+		if ( ! self::lock_payment( $mollie_payment_id ) ) {
+			return 'skipped';
 		}
 
-		$row['mollie_payment_id'] = $mollie_payment_id;
+		try {
+			$existing = self::get_by_mollie_id( $mollie_payment_id );
 
-		$formats = array( '%f', '%s', '%f', '%f', '%s', '%d', '%s', '%s', '%s' );
+			if ( $existing ) {
+				$wpdb->update(
+					$table_name,
+					$row,
+					array( 'mollie_payment_id' => $mollie_payment_id ),
+					array( '%f', '%s', '%f', '%f', '%s', '%d', '%s', '%s' ),
+					array( '%s' )
+				);
+				return 'updated';
+			}
 
-		if ( ! empty( $data['created_at'] ) ) {
-			$row['created_at'] = (string) $data['created_at'];
-			$formats[]         = '%s';
+			$row['mollie_payment_id'] = $mollie_payment_id;
+
+			$formats = array( '%f', '%s', '%f', '%f', '%s', '%d', '%s', '%s', '%s' );
+
+			if ( ! empty( $data['created_at'] ) ) {
+				$row['created_at'] = (string) $data['created_at'];
+				$formats[]         = '%s';
+			}
+
+			$inserted = $wpdb->insert( $table_name, $row, $formats );
+
+			return $inserted ? 'created' : 'skipped';
+		} finally {
+			self::unlock_payment( $mollie_payment_id );
 		}
+	}
 
-		$inserted = $wpdb->insert( $table_name, $row, $formats );
+	/**
+	 * Serialize imports of one Mollie payment ID across requests.
+	 *
+	 * The mollie_payment_id index is not unique, so a lookup followed by an
+	 * insert could otherwise create the same payment twice when two imports
+	 * run at once.
+	 *
+	 * @param string $mollie_payment_id Mollie payment ID.
+	 * @return bool True when the lock was acquired.
+	 */
+	private static function lock_payment( $mollie_payment_id ) {
+		global $wpdb;
 
-		return $inserted ? 'created' : 'skipped';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- named lock, not data.
+		return 1 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 10 )', 'fair_payment_import_' . md5( $mollie_payment_id ) ) );
+	}
+
+	/**
+	 * Release the lock taken by lock_payment().
+	 *
+	 * @param string $mollie_payment_id Mollie payment ID.
+	 * @return void
+	 */
+	private static function unlock_payment( $mollie_payment_id ) {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- named lock, not data.
+		$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', 'fair_payment_import_' . md5( $mollie_payment_id ) ) );
 	}
 
 	/**
@@ -207,13 +245,33 @@ class Transaction {
 	 * @return string 'created', 'existing', or 'failed'.
 	 */
 	public static function import_mollie_create_only( $data ) {
-		global $wpdb;
-		$table_name = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
 		$payment_id = isset( $data['mollie_payment_id'] ) ? (string) $data['mollie_payment_id'] : '';
 
 		if ( '' === $payment_id ) {
 			return 'failed';
 		}
+
+		if ( ! self::lock_payment( $payment_id ) ) {
+			return 'failed';
+		}
+
+		try {
+			return self::insert_mollie_payment( $payment_id, $data );
+		} finally {
+			self::unlock_payment( $payment_id );
+		}
+	}
+
+	/**
+	 * Insert a Mollie payment unless it exists; caller holds the payment lock.
+	 *
+	 * @param string $payment_id Mollie payment ID.
+	 * @param array  $data       Normalized Mollie payment data.
+	 * @return string 'created', 'existing', or 'failed'.
+	 */
+	private static function insert_mollie_payment( $payment_id, $data ) {
+		global $wpdb;
+		$table_name = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
 
 		if ( self::get_by_mollie_id( $payment_id ) ) {
 			return 'existing';

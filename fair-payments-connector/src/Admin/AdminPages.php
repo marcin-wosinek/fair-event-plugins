@@ -71,6 +71,17 @@ class AdminPages {
 		// Set page title for hidden page to prevent strip_tags() deprecation warning.
 		$this->set_hidden_page_title( $transaction_hookname, __( 'Transaction Detail', 'fair-payments-connector' ) );
 
+		// External Updates submenu, right after Transactions.
+		add_submenu_page(
+			'fair-payments-connector-transactions',
+			__( 'External Updates', 'fair-payments-connector' ),
+			__( 'External Updates', 'fair-payments-connector' ),
+			'manage_options',
+			'fair-payments-connector-external-updates',
+			array( $this, 'render_external_updates_page' ),
+			5
+		);
+
 		// Fee Dashboard submenu (position 10 — gaps reserved for experimental plugin).
 		add_submenu_page(
 			'fair-payments-connector-transactions',
@@ -128,10 +139,26 @@ class AdminPages {
 				'fair-payments-connector-transactions',
 				'fairPaymentTransactions',
 				array(
-					'organizationId'    => get_option( 'fair_payment_organization_id', '' ),
+					'organizationId'     => get_option( 'fair_payment_organization_id', '' ),
+					'externalUpdatesUrl' => add_query_arg( 'page', 'fair-payments-connector-external-updates', admin_url( 'admin.php' ) ),
+				)
+			);
+			return;
+		}
+
+		// External Updates page.
+		if ( false !== strpos( $hook, 'fair-payments-connector-external-updates' ) ) {
+			$this->enqueue_admin_page_script( 'external-updates' );
+			wp_set_script_translations( 'fair-payments-connector-external-updates', 'fair-payments-connector', Features::script_translations_path() );
+			wp_localize_script(
+				'fair-payments-connector-external-updates',
+				'fairPaymentsExternalUpdates',
+				array(
 					'testMode'          => 'test' === get_option( 'fair_payment_mode', 'test' ),
 					'mollieConnected'   => (bool) get_option( 'fair_payment_mollie_connected', false ),
 					'mollieSettingsUrl' => add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) ),
+					'connectedSitesUrl' => add_query_arg( 'page', 'fair-payments-connector-connected-sites', admin_url( 'admin.php' ) ),
+					'transactionsUrl'   => add_query_arg( 'page', 'fair-payments-connector-transactions', admin_url( 'admin.php' ) ),
 				)
 			);
 			return;
@@ -295,6 +322,17 @@ class AdminPages {
 	public function render_notifications_page() {
 		?>
 		<div id="fair-payments-connector-notifications-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render External Updates page
+	 *
+	 * @return void
+	 */
+	public function render_external_updates_page() {
+		?>
+		<div id="fair-payments-connector-external-updates-root"></div>
 		<?php
 	}
 

@@ -40,20 +40,21 @@ test.describe('Connected Site availability (#1619)', () => {
 		await api.dispose();
 	});
 
-	test('disabling a site removes it from the import popup, and re-enabling restores it', async ({
+	test('a disabled site cannot be imported from External Updates, and re-enabling restores it (#1695)', async ({
 		page,
 	}) => {
 		await loginAsAdmin(page);
 
-		// The newly created site is enabled by default and offered as an
-		// import source.
+		const importButton = () =>
+			page.getByRole('button', {
+				name: `Import transactions from ${siteLabel}`,
+			});
+
+		// The newly created site is enabled by default and can be imported.
 		await page.goto(
-			'/wp-admin/admin.php?page=fair-payments-connector-transactions'
+			'/wp-admin/admin.php?page=fair-payments-connector-external-updates'
 		);
-		await page.getByRole('button', { name: 'Import', exact: true }).click();
-		await page.getByRole('button', { name: 'Connected Sites' }).click();
-		await expect(page.getByText(siteLabel)).toBeVisible();
-		await page.getByRole('button', { name: 'Back' }).click();
+		await expect(importButton()).toBeEnabled();
 
 		// Disable it from the Connected Sites management page.
 		await page.goto(
@@ -63,22 +64,20 @@ test.describe('Connected Site availability (#1619)', () => {
 		await row.getByRole('button', { name: 'Disable' }).click();
 		await expect(row.getByText('Disabled')).toBeVisible();
 
-		// It disappears from the import popup while connected sites still
-		// exist.
+		// It stays listed with the reason, but cannot be imported.
 		await page.goto(
-			'/wp-admin/admin.php?page=fair-payments-connector-transactions'
+			'/wp-admin/admin.php?page=fair-payments-connector-external-updates'
 		);
-		await page.getByRole('button', { name: 'Import', exact: true }).click();
-		await page.getByRole('button', { name: 'Connected Sites' }).click();
+		await expect(importButton()).toBeDisabled();
 		await expect(
-			page.getByText(
-				'No enabled connected sites. Enable one on the Connected Sites page first.'
-			)
+			page
+				.locator('li', { hasText: siteLabel })
+				.getByText(
+					'Disabled. Enable it on the Connected Sites page to import from it.'
+				)
 		).toBeVisible();
-		await expect(page.getByText(siteLabel)).toHaveCount(0);
-		await page.getByRole('button', { name: 'Back' }).click();
 
-		// Re-enable it and confirm it returns to the import popup.
+		// Re-enable it and confirm it can be imported again.
 		await page.goto(
 			'/wp-admin/admin.php?page=fair-payments-connector-connected-sites'
 		);
@@ -86,10 +85,8 @@ test.describe('Connected Site availability (#1619)', () => {
 		await expect(row.getByText('Enabled')).toBeVisible();
 
 		await page.goto(
-			'/wp-admin/admin.php?page=fair-payments-connector-transactions'
+			'/wp-admin/admin.php?page=fair-payments-connector-external-updates'
 		);
-		await page.getByRole('button', { name: 'Import', exact: true }).click();
-		await page.getByRole('button', { name: 'Connected Sites' }).click();
-		await expect(page.getByText(siteLabel)).toBeVisible();
+		await expect(importButton()).toBeEnabled();
 	});
 });

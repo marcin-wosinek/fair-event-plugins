@@ -96,6 +96,16 @@ class Schema {
 	}
 
 	/**
+	 * Get the table name for the external update operation log
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_external_update_runs_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_external_update_runs';
+	}
+
+	/**
 	 * Create database tables
 	 *
 	 * @return void
@@ -156,6 +166,9 @@ class Schema {
 		// Create audit log table.
 		self::create_audit_log_table();
 
+		// Create external update operation log table.
+		self::create_external_update_runs_table();
+
 		// Run migrations if needed.
 		self::migrate_to_v2();
 		self::migrate_to_v3();
@@ -181,9 +194,10 @@ class Schema {
 		self::migrate_to_v23();
 		self::migrate_to_v24();
 		self::migrate_to_v25();
+		self::migrate_to_v26();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '25.0' );
+		update_option( 'fair_payment_db_version', '26.0' );
 	}
 
 	/**
@@ -345,6 +359,49 @@ class Schema {
 			KEY created_at (created_at),
 			KEY action (action),
 			KEY actor_user_id (actor_user_id)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create the external update operation log table
+	 *
+	 * One row per administrator-started External Updates run (#1695). Holds
+	 * only an allowlisted summary: source, action, initiator, outcome, counts
+	 * and a failure category. Tokens, Mollie credentials, payment data and
+	 * remote response bodies are never stored here. updated_at doubles as a
+	 * heartbeat so a run whose request died can be marked interrupted.
+	 *
+	 * @return void
+	 */
+	public static function create_external_update_runs_table() {
+		global $wpdb;
+
+		$table_name      = self::get_external_update_runs_table_name();
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			source_type varchar(32) NOT NULL,
+			source_id varchar(64) NOT NULL DEFAULT '',
+			source_label varchar(191) NOT NULL DEFAULT '',
+			action varchar(50) NOT NULL,
+			user_id bigint(20) UNSIGNED DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'running',
+			expected_total int(11) UNSIGNED DEFAULT NULL,
+			created_count int(11) UNSIGNED NOT NULL DEFAULT 0,
+			updated_count int(11) UNSIGNED NOT NULL DEFAULT 0,
+			skipped_count int(11) UNSIGNED NOT NULL DEFAULT 0,
+			failed_count int(11) UNSIGNED NOT NULL DEFAULT 0,
+			error_code varchar(50) DEFAULT NULL,
+			started_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			finished_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY status (status),
+			KEY started_at (started_at)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -1295,6 +1352,21 @@ class Schema {
 	}
 
 	/**
+	 * Migrate database from v25.0 to v26.0
+	 *
+	 * Adds the External Updates operation log table (#1695).
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v26() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '26.0', '<' ) ) {
+			self::create_external_update_runs_table();
+		}
+	}
+
+	/**
 	 * Drop database tables (used for uninstall)
 	 *
 	 * @return void
@@ -1310,6 +1382,10 @@ class Schema {
 		$log_table                = self::get_log_table_name();
 		$api_tokens_table         = self::get_api_tokens_table_name();
 		$audit_log_table          = self::get_audit_log_table_name();
+		$external_update_runs     = self::get_external_update_runs_table_name();
+
+		// Drop external update operation log (standalone, no FK references).
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $external_update_runs ) );
 
 		// Drop audit log table (standalone, no FK references).
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $audit_log_table ) );

@@ -20,6 +20,12 @@ class RestHooks {
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_filter(
+			'fair_payments_connector_external_update_connected_site',
+			array( ConnectedSitesController::class, 'resolve_external_update_source' ),
+			10,
+			2
+		);
 	}
 
 	/**

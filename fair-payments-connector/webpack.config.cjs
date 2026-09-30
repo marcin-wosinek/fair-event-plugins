@@ -17,6 +17,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/transactions/index.js",
     ),
+    "admin/external-updates/index": path.resolve(
+      process.cwd(),
+      "src/Admin/external-updates/index.js",
+    ),
     "admin/transaction/index": path.resolve(
       process.cwd(),
       "src/Admin/transaction/index.js",
