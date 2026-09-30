@@ -92,6 +92,10 @@ test.describe( 'Connected sites — External Updates runs (#1695)', () => {
 		await api.delete( `${ HELPERS }/transactions?prefix=tr_e2ecs`, {
 			headers: admin,
 		} );
+		await api.post( `${ HELPERS }/source-transactions`, {
+			headers: admin,
+			data: { transactions: [] },
+		} );
 		await api.dispose();
 	} );
 
@@ -205,6 +209,172 @@ test.describe( 'Connected sites — External Updates runs (#1695)', () => {
 		expect( log ).not.toContain( TOKEN );
 		expect( log ).not.toContain( 'rest_forbidden' );
 		expect( log ).not.toContain( 'Bearer' );
+	} );
+
+	test( 'a re-import keeps central Mollie fees and only fills missing ones (#1715)', async () => {
+		const site = await createSite( 'fees' );
+		const id = ( key ) => `tr_e2ecsfees${ key }`;
+
+		// `source` is the fee the connected site sends on re-import:
+		// undefined leaves the field out, as an older site does. `central`
+		// is the fee the central site recorded in between.
+		const cases = [
+			{
+				key: 'keepold',
+				central: 0.29,
+				source: undefined,
+				expected: 0.29,
+			},
+			{ key: 'keepnull', central: 0.29, source: null, expected: 0.29 },
+			{ key: 'keepzero', central: 0.29, source: 0, expected: 0.29 },
+			{ key: 'keepdiff', central: 0.29, source: 0.5, expected: 0.29 },
+			{ key: 'centralzero', central: 0, source: 0.5, expected: 0 },
+			{ key: 'fill', central: null, source: 0.35, expected: 0.35 },
+			{ key: 'fillzero', central: null, source: 0, expected: 0 },
+			{ key: 'nonenull', central: null, source: null, expected: null },
+			{
+				key: 'noneold',
+				central: null,
+				source: undefined,
+				expected: null,
+			},
+		];
+
+		const serve = ( version, feeOf ) =>
+			api.post( `${ HELPERS }/source-transactions`, {
+				headers: admin,
+				data: {
+					transactions: cases.map( ( item ) => {
+						const row = {
+							mollie_payment_id: id( item.key ),
+							amount: version === 'v1' ? 10 : 12,
+							currency: 'EUR',
+							status: 'paid',
+							testmode: true,
+							description: `Fee case ${ item.key } ${ version }`,
+							created_at: '2026-09-01 10:00:00',
+						};
+						const fee = feeOf( item );
+						if ( fee !== undefined ) {
+							row.mollie_fee = fee;
+						}
+						return row;
+					} ),
+				},
+			} );
+
+		const stored = async ( key ) => {
+			const res = await api.get(
+				`${ HELPERS }/transaction?mollie_payment_id=${ id( key ) }`,
+				{ headers: admin }
+			);
+			expect( res.ok(), await res.text() ).toBeTruthy();
+			return res.json();
+		};
+
+		// First import from a current site creates each row with its fee.
+		expect(
+			( await serve( 'v1', ( item ) => item.source ) ).ok()
+		).toBeTruthy();
+		const created = await runImport( site );
+		expect( created.ok(), await created.text() ).toBeTruthy();
+		expect( ( await created.json() ).created ).toBe( cases.length );
+		for ( const item of cases ) {
+			expect( ( await stored( item.key ) ).mollie_fee ).toBe(
+				item.source ?? null
+			);
+		}
+
+		// The central site records (or loses) fees on its own.
+		for ( const item of cases ) {
+			const res = await api.post( `${ HELPERS }/transaction`, {
+				headers: admin,
+				data: {
+					mollie_payment_id: id( item.key ),
+					mollie_fee: item.central,
+				},
+			} );
+			expect( res.ok(), await res.text() ).toBeTruthy();
+		}
+
+		// Re-import twice: fees follow the precedence rule and stay put,
+		// while the other details keep updating.
+		expect(
+			( await serve( 'v2', ( item ) => item.source ) ).ok()
+		).toBeTruthy();
+		for ( let attempt = 0; attempt < 2; attempt++ ) {
+			const res = await runImport( site );
+			expect( res.ok(), await res.text() ).toBeTruthy();
+			expect( ( await res.json() ).updated ).toBe( cases.length );
+
+			for ( const item of cases ) {
+				const row = await stored( item.key );
+				expect( row.mollie_fee, item.key ).toBe( item.expected );
+				expect( row.amount ).toBe( 12 );
+				expect( row.description ).toBe( `Fee case ${ item.key } v2` );
+				expect( row.created_at ).toBe( '2026-09-01 10:00:00' );
+			}
+		}
+
+		expect( await countTransactions( 'tr_e2ecsfees' ) ).toEqual( {
+			rows: cases.length,
+			distinct: cases.length,
+		} );
+	} );
+
+	test( 'the source endpoint shares each transaction’s Mollie fee (#1715)', async () => {
+		const created = await api.post(
+			'/wp-json/fair-payments-connector/v1/admin/api-tokens',
+			{
+				headers: admin,
+				data: {
+					label: `E2E fee source ${ Date.now() }`,
+					scopes: [ 'transactions:read' ],
+				},
+			}
+		);
+		expect( created.status(), await created.text() ).toBe( 201 );
+		const token = await created.json();
+
+		try {
+			const imported = await api.post(
+				'/wp-json/fair-payments-connector/v1/transactions/import',
+				{
+					headers: admin,
+					data: {
+						transactions: [
+							{
+								mollie_payment_id: 'tr_e2ecssrcfee',
+								mollie_fee: 0.31,
+								created_at: '2099-01-01 10:00:00',
+							},
+							{
+								mollie_payment_id: 'tr_e2ecssrcnone',
+								created_at: '2099-01-01 10:00:00',
+							},
+						],
+					},
+				}
+			);
+			expect( imported.ok(), await imported.text() ).toBeTruthy();
+
+			const res = await api.get(
+				'/wp-json/fair-payments-connector/v1/external/transactions?from=2099-01-01&per_page=200',
+				{ headers: { Authorization: `Bearer ${ token.token }` } }
+			);
+			expect( res.status(), await res.text() ).toBe( 200 );
+			const { transactions } = await res.json();
+			const feeOf = ( id ) =>
+				transactions.find( ( row ) => row.mollie_payment_id === id )
+					.mollie_fee;
+			expect( feeOf( 'tr_e2ecssrcfee' ) ).toBe( 0.31 );
+			expect( feeOf( 'tr_e2ecssrcnone' ) ).toBeNull();
+		} finally {
+			await api.delete(
+				`/wp-json/fair-payments-connector/v1/admin/api-tokens/${ token.id }`,
+				{ headers: admin }
+			);
+		}
 	} );
 
 	test( 'a run for one site cannot be used to import another', async () => {

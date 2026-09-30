@@ -11,10 +11,16 @@
  *                                         transactions, then the second page
  *                                         cannot be reached.
  *   - rejected.connected-site.e2e.test -> 401, as for a revoked token.
+ *   - fees.connected-site.e2e.test     -> the transactions a spec stored
+ *                                         through `source-transactions`,
+ *                                         sent as given so a row can carry a
+ *                                         Mollie fee, a null one, or none
+ *                                         at all (an older source site).
  *
  * Transaction IDs start with `tr_e2ecs`. The routes under
  * `fair-e2e/v1/external-updates/` let specs set the Mollie double's payment
- * status, interrupt leftover running runs, and count or remove test
+ * status, interrupt leftover running runs, set the `fees` site's payload,
+ * read or set a transaction's recorded fee, and count or remove test
  * transactions.
  *
  * @package FairEventsE2E
@@ -89,6 +95,17 @@ add_filter(
 
 			case 'rejected':
 				return $json( 401, array( 'code' => 'rest_forbidden' ) );
+
+			case 'fees':
+				$rows = get_option( 'fair_e2e_connected_site_fee_transactions', array() );
+				$rows = is_array( $rows ) ? $rows : array();
+				return $json(
+					200,
+					array(
+						'transactions' => $rows,
+						'total'        => count( $rows ),
+					)
+				);
 		}
 
 		return new WP_Error( 'http_request_failed', 'Could not resolve host' );
@@ -140,6 +157,88 @@ add_action(
 
 					return rest_ensure_response( array( 'aged' => (int) $aged ) );
 				},
+			)
+		);
+
+		// Transactions the `fees` connected site serves. Rows are stored as
+		// given, keys and all, so a spec can omit mollie_fee like an older
+		// source site; IDs outside `tr_e2ecsfees` are dropped.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/external-updates/source-transactions',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => $admin_only,
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$rows = $request->get_param( 'transactions' );
+					$rows = array_values(
+						array_filter(
+							is_array( $rows ) ? $rows : array(),
+							static function ( $row ) {
+								return is_array( $row )
+									&& 0 === strpos( (string) ( $row['mollie_payment_id'] ?? '' ), 'tr_e2ecsfees' );
+							}
+						)
+					);
+					update_option( 'fair_e2e_connected_site_fee_transactions', $rows, false );
+					return rest_ensure_response( array( 'count' => count( $rows ) ) );
+				},
+			)
+		);
+
+		// Read a test transaction's stored row, or set its Mollie fee (null
+		// clears it) as if the central site had recorded it itself.
+		$mollie_id = static function ( WP_REST_Request $request ) {
+			$value = preg_replace( '/[^A-Za-z0-9_]/', '', (string) $request->get_param( 'mollie_payment_id' ) );
+			return 0 === strpos( $value, 'tr_e2e' ) ? $value : '';
+		};
+
+		register_rest_route(
+			'fair-e2e/v1',
+			'/external-updates/transaction',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'permission_callback' => $admin_only,
+					'callback'            => static function ( WP_REST_Request $request ) use ( $mollie_id ) {
+						global $wpdb;
+						$table = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
+						$row   = $wpdb->get_row( $wpdb->prepare( 'SELECT mollie_fee, amount, status, description, created_at FROM %i WHERE mollie_payment_id = %s', $table, $mollie_id( $request ) ) );
+
+						if ( ! $row ) {
+							return new WP_Error( 'not_found', 'Transaction not found.', array( 'status' => 404 ) );
+						}
+
+						return rest_ensure_response(
+							array(
+								'mollie_fee'  => null !== $row->mollie_fee ? (float) $row->mollie_fee : null,
+								'amount'      => (float) $row->amount,
+								'status'      => $row->status,
+								'description' => $row->description,
+								'created_at'  => $row->created_at,
+							)
+						);
+					},
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'permission_callback' => $admin_only,
+					'callback'            => static function ( WP_REST_Request $request ) use ( $mollie_id ) {
+						global $wpdb;
+						$table = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
+						$fee   = $request->get_param( 'mollie_fee' );
+
+						$updated = $wpdb->update(
+							$table,
+							array( 'mollie_fee' => null === $fee ? null : (float) $fee ),
+							array( 'mollie_payment_id' => $mollie_id( $request ) ),
+							array( '%f' ),
+							array( '%s' )
+						);
+
+						return rest_ensure_response( array( 'updated' => (int) $updated ) );
+					},
+				),
 			)
 		);
 

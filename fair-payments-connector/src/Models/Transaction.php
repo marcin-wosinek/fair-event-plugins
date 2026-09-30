@@ -130,6 +130,8 @@ class Transaction {
 	 * Creates a new transaction record or updates an existing one matched by
 	 * mollie_payment_id. Preserves fees, status, mode, description and the
 	 * original created_at timestamp so the source and target sites stay in sync.
+	 * A Mollie fee already recorded on this site, including zero, is kept; the
+	 * source's fee only fills a missing one.
 	 *
 	 * @param array $data Transaction data from an export file.
 	 * @return string 'created', 'updated', or 'skipped'.
@@ -181,11 +183,21 @@ class Transaction {
 			$existing = self::get_by_mollie_id( $mollie_payment_id );
 
 			if ( $existing ) {
+				$formats = array( '%f', '%s', '%f', '%f', '%s', '%d', '%s', '%s' );
+
+				// A fee recorded here — fetched from Mollie, or a recorded
+				// zero — wins over whatever the source sends; the source only
+				// fills a fee that is still missing.
+				if ( null !== $existing->mollie_fee ) {
+					unset( $row['mollie_fee'] );
+					unset( $formats[2] );
+				}
+
 				$wpdb->update(
 					$table_name,
 					$row,
 					array( 'mollie_payment_id' => $mollie_payment_id ),
-					array( '%f', '%s', '%f', '%f', '%s', '%d', '%s', '%s' ),
+					array_values( $formats ),
 					array( '%s' )
 				);
 				return 'updated';
