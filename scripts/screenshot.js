@@ -29,15 +29,20 @@
  *   --no-login          Skip the wp-login step (for public pages)
  *   --upload <target>   After saving, upload the PNG and print a public URL +
  *                       markdown snippet. Supports `imgbb` (needs
- *                       IMGBB_API_KEY in .env) and `github` (publishes to the
- *                       repo's `pr-assets` branch via the already-authenticated
- *                       `gh` CLI — no new key needed, but requires --issue).
- *                       Opt-in: the local file is always written; upload is
- *                       in addition to it. Both targets are PUBLIC —
- *                       synthetic/demo data only.
- *   --issue <number>    Issue number the screenshot belongs to. Required with
- *                       `--upload github`; determines the `pr-assets/<issue>/`
- *                       path.
+ *                       IMGBB_API_KEY in .env) and `github` (a GitHub
+ *                       attachment via the already-authenticated `gh` CLI —
+ *                       no new key needed). With `github`, the PNG is
+ *                       attached to the implementation PR when one is open
+ *                       for the branch (or `--pr` names it); otherwise to a
+ *                       marked comment on `--issue`. Opt-in: the local file
+ *                       is always written; upload is in addition to it. Both
+ *                       targets are PUBLIC — synthetic/demo data only.
+ *   --issue <number>    Ticket the screenshot belongs to. With
+ *                       `--upload github`, receives the attachment while the
+ *                       branch has no open PR.
+ *   --pr <number>       Implementation PR to attach to with `--upload github`.
+ *   --branch <name>     Implementation branch recorded with an issue
+ *                       attachment (default: the checked-out branch).
  *   --expiry <seconds>  Upload TTL for hosts that support it (default 2592000
  *                       = 30 days; 0 keeps it indefinitely). imgbb accepts
  *                       60–15552000. Ignored by `github`, which keeps files
@@ -48,6 +53,7 @@
  *   WP_SCREENSHOT_BASE_URL=http://localhost:8889 node scripts/screenshot.js "/" desktop home.png --no-login
  *   node scripts/screenshot.js "/" desktop home.png --no-login --upload imgbb
  *   node scripts/screenshot.js "/wp-admin/" desktop before-desktop.png --upload github --issue 1554
+ *   node scripts/screenshot.js "/wp-admin/" desktop after-desktop.png --upload github --pr 1600
  */
 
 import { execFileSync } from 'node:child_process';
@@ -56,7 +62,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { chromium } from '@playwright/test';
 import dotenv from 'dotenv';
-import { publishScreenshot } from './pr-assets.mjs';
+import {
+	attachPrScreenshots,
+	findPullRequestForBranch,
+	resolveRepo,
+	uploadIssueScreenshot,
+} from './pr-assets.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -92,12 +103,15 @@ const DEFAULT_EXPIRY = 2592000;
  * and the image as a base64 form field. Unlike imgur it still issues free API
  * keys, which is why this replaces the imgur design from #653.
  *
- * @param {Buffer} buffer PNG bytes.
  * @param {object} options
- * @param {number} options.expiry Seconds until imgbb deletes it (0 = keep forever).
+ * @param {string} options.outFile Local PNG path.
+ * @param {object} options.opts Parsed CLI options; `expiry` is the seconds
+ *                              until imgbb deletes it (0 = keep forever).
  * @returns {Promise<string>} The public `i.ibb.co` link.
  */
-async function uploadToImgbb(buffer, { expiry }) {
+async function uploadToImgbb({ outFile, opts }) {
+	const buffer = await readFile(outFile);
+	const { expiry } = opts;
 	const apiKey = process.env.IMGBB_API_KEY;
 	if (!apiKey) {
 		throw new Error(
@@ -138,29 +152,88 @@ async function uploadToImgbb(buffer, { expiry }) {
 }
 
 /**
- * Publish a PNG buffer to the shared `pr-assets` branch and return the raw,
- * repository-hosted URL that renders it in a PR description with no
- * authentication (the repo is public — see COMMIT_GUIDE.md). Resolves the
- * current repository slug via `gh repo view` and hands the actual upload to
- * `publishScreenshot()` in `scripts/pr-assets.mjs`, which shells out to
- * `gh api` — no new dependency or secret, reusing the already-authenticated
- * `gh` CLI session.
+ * Pick where a `--upload github` screenshot goes: the PR named by `--pr`,
+ * else the open PR for the branch, else a marked comment on `--issue`.
+ * Screenshots belong to one implementation branch, so the default branch is
+ * rejected.
  *
- * @param {Buffer} buffer PNG bytes.
- * @param {object} options
- * @param {number|string} options.issue Issue number the screenshot belongs to.
- * @param {string} options.filename Output filename, e.g. `before-desktop.png`.
- * @returns {Promise<string>} The public `raw.githubusercontent.com` link.
+ * @param {object} opts Parsed CLI options.
+ * @param {object} deps
+ * @param {string} deps.currentBranch Checked-out branch.
+ * @param {Function} deps.findPr Returns the open PR number for a branch, or null.
+ * @returns {{kind: 'pr', pr: string} | {kind: 'issue', issue: string, branch: string}}
  */
-async function uploadToGithub(buffer, { issue, filename }) {
-	const repo = execFileSync(
-		'gh',
-		['repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner'],
+export function resolveGithubTarget(opts, { currentBranch, findPr }) {
+	if (opts.pr) {
+		return { kind: 'pr', pr: String(opts.pr) };
+	}
+
+	const branch = opts.branch || currentBranch;
+	if (!branch || branch === 'HEAD' || branch === 'main') {
+		throw new Error(
+			'--upload github needs an implementation branch: check one out, or pass --branch <name> or --pr <number>.'
+		);
+	}
+
+	const pr = findPr(branch);
+	if (pr) {
+		return { kind: 'pr', pr: String(pr) };
+	}
+	if (!opts.issue) {
+		throw new Error(
+			`Branch ${branch} has no open PR yet; pass --issue <number> to attach the screenshot to the ticket.`
+		);
+	}
+	return { kind: 'issue', issue: String(opts.issue), branch };
+}
+
+/**
+ * Attach the PNG through GitHub and return its attachment URL. A PR target
+ * also updates the matching `![<filename>](...)` reference in the PR
+ * description; an issue target posts a marked comment that supersedes this
+ * branch's earlier upload of the same filename.
+ *
+ * @param {object} options
+ * @param {string} options.outFile Local PNG, left in place whatever happens.
+ * @param {object} options.opts Parsed CLI options.
+ * @returns {Promise<string>} The `github.com/user-attachments` link.
+ */
+async function uploadToGithub({ outFile, opts }) {
+	const repo = resolveRepo();
+	const currentBranch = execFileSync(
+		'git',
+		['rev-parse', '--abbrev-ref', 'HEAD'],
 		{ encoding: 'utf8' }
 	).trim();
+	const target = resolveGithubTarget(opts, {
+		currentBranch,
+		findPr: (branch) => findPullRequestForBranch({ repo, branch }),
+	});
 
-	const result = await publishScreenshot({ repo, issue, filename, buffer });
-	return result.rawUrl;
+	if (target.kind === 'pr') {
+		const attached = await attachPrScreenshots({
+			repo,
+			pr: target.pr,
+			files: [outFile],
+			log: (message) => console.error(message),
+		});
+		console.log(`Attached to PR #${target.pr}.`);
+		return attached[path.basename(outFile)];
+	}
+
+	const result = await uploadIssueScreenshot({
+		repo,
+		issue: target.issue,
+		branch: target.branch,
+		file: outFile,
+	});
+	console.log(
+		`Attached to ${result.commentUrl} for branch ${target.branch}` +
+			(result.superseded
+				? ` (superseded ${result.superseded} earlier upload).`
+				: '.')
+	);
+	return result.url;
 }
 
 /**
@@ -171,7 +244,7 @@ async function uploadToGithub(buffer, { issue, filename }) {
 const UPLOADERS = {
 	imgbb: { label: 'imgbb', public: true, upload: uploadToImgbb },
 	github: {
-		label: 'GitHub (pr-assets branch)',
+		label: 'GitHub attachments',
 		public: true,
 		upload: uploadToGithub,
 	},
@@ -189,8 +262,8 @@ export function validateUploadOptions(opts) {
 		}". Supported: ${Object.keys(UPLOADERS).join(', ')}`;
 	}
 
-	if (opts.upload === 'github' && !opts.issue) {
-		return '--upload github requires --issue <number> (the ticket the screenshot belongs to).';
+	if (opts.upload === 'github' && !opts.issue && !opts.pr) {
+		return '--upload github requires --issue <number> (before the PR exists) or --pr <number>.';
 	}
 
 	return null;
@@ -221,14 +294,9 @@ async function uploadScreenshot(target, outFile, opts) {
 		);
 	}
 
-	const buffer = await readFile(outFile);
-	const filename = path.basename(outFile);
-	const link = await uploader.upload(buffer, {
-		expiry: opts.expiry,
-		issue: opts.issue,
-		filename,
-	});
-	const alt = path.basename(outFile, path.extname(outFile));
+	const link = await uploader.upload({ outFile, opts });
+	// The filename is the alt text, which is how PR tooling finds each image.
+	const alt = path.basename(outFile);
 
 	console.log(`Uploaded: ${link}`);
 	console.log(`Markdown:  ![${alt}](${link})`);
@@ -244,6 +312,8 @@ export function parseArgs(argv) {
 		upload: null,
 		expiry: DEFAULT_EXPIRY,
 		issue: null,
+		pr: null,
+		branch: null,
 	};
 
 	for (let i = 0; i < argv.length; i++) {
@@ -269,6 +339,12 @@ export function parseArgs(argv) {
 				break;
 			case '--issue':
 				opts.issue = argv[++i];
+				break;
+			case '--pr':
+				opts.pr = argv[++i];
+				break;
+			case '--branch':
+				opts.branch = argv[++i];
 				break;
 			default:
 				positional.push(arg);
@@ -309,7 +385,8 @@ function usage(message) {
 			'  options: --viewport, --wait <ms>, --wait-for <selector>, --no-login,\n' +
 			`           --upload <${Object.keys(UPLOADERS).join(
 				' | '
-			)}>, --issue <number>, --expiry <seconds>`
+			)}>, --issue <number>, --pr <number>,\n` +
+			'           --branch <name>, --expiry <seconds>'
 	);
 	process.exit(1);
 }

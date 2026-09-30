@@ -288,8 +288,9 @@ npm run screenshot -- "/wp-admin/admin.php?page=fair-finance-budgets" mobile bud
 
 Dimensions may be `desktop`, `tablet`, `mobile`, or `WIDTHxHEIGHT`. Options
 include `--viewport`, `--wait <ms>`, `--wait-for <selector>`, `--no-login`,
-`--upload <imgbb|github>`, `--issue <number>`, and `--expiry <seconds>`. The
-file is written relative to the current directory.
+`--upload <imgbb|github>`, `--issue <number>`, `--pr <number>`,
+`--branch <name>`, and `--expiry <seconds>`. The file is written relative to
+the current directory.
 
 The helper defaults to the regular Docker development site at `:8080`. Set
 `WP_SCREENSHOT_BASE_URL`, `WP_SCREENSHOT_USER`, and
@@ -298,21 +299,32 @@ login details. `WP_BASE_URL` and `WP_ADMIN_*` remain legacy fallbacks, but the
 dedicated names avoid accidentally sharing browser-login credentials with API
 tests that use a different environment and authentication model.
 
-For PR embedding, add `--upload github --issue <n>` (the ticket the
-screenshot belongs to). The command shells out to the already-authenticated
-`gh` CLI — no new API key — and publishes the PNG to the repo's long-lived
-`pr-assets` branch at `pr-assets/<n>/<filename>`, retaining the local file
-and printing the resulting `raw.githubusercontent.com` URL and Markdown
-snippet. Re-running the same command for the same path looks up and replaces
-the existing file instead of failing. See [COMMIT_GUIDE.md](./COMMIT_GUIDE.md)
-for the full responsive-UI PR workflow.
+For PR embedding, add `--upload github`. It shells out to the
+already-authenticated `gh` CLI (no new API key) and uploads the PNG as a
+GitHub attachment after writing the local file:
+
+-   With no open PR for the checked-out branch, `--issue <n>` attaches it to a
+    ticket comment marked with the branch and filename. A later upload of the
+    same filename from the same branch supersedes that comment only.
+-   Once the branch has an open PR (or with `--pr <n>`), it attaches it to the
+    PR and updates the description's `![<filename>](...)` reference.
+
+`npm run screenshot:attach -- --pr <n> <file>...` attaches already-captured
+PNGs to a PR in one go (fetching any missing before image from its issue
+comment), and `npm run screenshot:verify -- --pr <n> [<filename>...]` checks
+that every image the description references resolves. Both, and the upload
+itself, exit non-zero on failure and never remove the local PNG. Attachment
+logic lives in `scripts/pr-assets.mjs`, tested with a fake `gh` in
+`scripts/__tests__/screenshot-attachments.test.mjs`. See
+[COMMIT_GUIDE.md](./COMMIT_GUIDE.md) for the full responsive-UI PR workflow,
+including replacement and failure recovery.
 
 `--upload imgbb` (needs `IMGBB_API_KEY` in the gitignored repository `.env`)
 remains available as an alternative public host; uploads expire after 30 days
 by default, and imgbb accepts 60–15552000 seconds, while `0` disables expiry.
 
 > **Public exposure, synthetic data only.** This repository is public, so
-> both `pr-assets` raw URLs and imgbb links are visible to anyone with the
+> both GitHub attachments and imgbb links are visible to anyone with the
 > link, and GitHub caches them. Never upload participant names, email
 > addresses, finance data, or other real data — capture from a local
 > dev/demo instance only.

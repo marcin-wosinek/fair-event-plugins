@@ -16,7 +16,7 @@
  * The JSON contains only plugin slugs, scenario names, and numeric
  * performance figures — no participant/user data — so publishing it to this
  * public repo carries the same "synthetic data only" posture already
- * documented for pr-assets screenshots, with nothing further to redact.
+ * documented for screenshots, with nothing further to redact.
  */
 
 import { execFileSync } from 'node:child_process';
