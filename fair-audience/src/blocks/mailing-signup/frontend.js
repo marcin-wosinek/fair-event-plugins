@@ -8,7 +8,7 @@ import {
 	setButtonLoading,
 	onDomReady,
 	wireNotYouButton,
-} from 'fair-events-shared';
+} from 'fair-events-shared/src/form-utils.js';
 
 /**
  * Frontend JavaScript for Fair Audience Mailing Signup
