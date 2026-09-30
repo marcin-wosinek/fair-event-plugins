@@ -118,6 +118,45 @@ test('detects a missing iteration configuration safety guard', () => {
 	});
 });
 
+test('detects a missing status transition in each ticket workflow', () => {
+	for (const [workflow, status] of [
+		['plan-ticket', 'Ready'],
+		['make-pr', 'Implementation'],
+	]) {
+		withFixture((root) => {
+			const file = path.join(root, `.agents/skills/${workflow}/SKILL.md`);
+			writeFileSync(
+				file,
+				readFileSync(file, 'utf8').replace(
+					`project status to ${status}`,
+					'project status'
+				)
+			);
+			assert.match(
+				validateAgentWorkflows(root).join('\n'),
+				new RegExp(`Missing verified ${status} status transition`)
+			);
+		});
+	}
+});
+
+test('detects a missing status transition procedure', () => {
+	withFixture((root) => {
+		const file = path.join(root, 'TICKETS.md');
+		writeFileSync(
+			file,
+			readFileSync(file, 'utf8').replace(
+				'## Project status transitions',
+				'## Project status'
+			)
+		);
+		assert.match(
+			validateAgentWorkflows(root).join('\n'),
+			/Missing project status transition procedure/
+		);
+	});
+});
+
 test('detects a wrong hook platform or unsupported action', () => {
 	withFixture((root) => {
 		const file = path.join(root, '.codex/hooks.json');

@@ -23,6 +23,13 @@ const LEGACY_HOOKS = [
 
 const ITERATION_CONFIGURATION_GUARD = 'Never call `updateProjectV2Field`';
 
+const STATUS_TRANSITION_PROCEDURE = '## Project status transitions';
+
+const STATUS_TRANSITIONS = {
+	'plan-ticket': 'Ready',
+	'make-pr': 'Implementation',
+};
+
 function read(root, relative) {
 	return readFileSync(path.join(root, relative), 'utf8');
 }
@@ -102,6 +109,27 @@ export function validateAgentWorkflows(root) {
 		) {
 			errors.push(
 				`Missing iteration configuration safety guard: ${documentationPath}`
+			);
+		}
+	}
+
+	if (!read(root, 'TICKETS.md').includes(STATUS_TRANSITION_PROCEDURE)) {
+		errors.push('Missing project status transition procedure: TICKETS.md');
+	}
+
+	for (const [workflow, status] of Object.entries(STATUS_TRANSITIONS)) {
+		const skillPath = `.agents/skills/${workflow}/SKILL.md`;
+		if (!existsSync(path.join(root, skillPath))) {
+			continue;
+		}
+		const skill = read(root, skillPath);
+		if (
+			!skill.includes(`project status to ${status}`) ||
+			!skill.includes('§ Project status transitions') ||
+			!skill.includes('read the item back to verify')
+		) {
+			errors.push(
+				`Missing verified ${status} status transition: ${skillPath}`
 			);
 		}
 	}

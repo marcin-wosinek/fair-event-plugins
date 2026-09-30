@@ -12,3 +12,5 @@ Structure the plan in implementable layers such as access/URL, frontend, backend
 End the draft with `## Read first` and list the exact applicable repository reference docs. Present the full plan in chat and resolve every fork with the user. Do not post while any decision is unresolved or before explicit approval.
 
 The approved GitHub comment must begin with `## Implementation plan`, contain resolved outcomes under `## Decisions`, and end with `## Read first`. Post it with a temporary body file, remove that file afterward, and do not add AI attribution.
+
+After the plan comment is posted, set the ticket's project status to Ready following `TICKETS.md` § Project status transitions: check the current Status first, write only when needed, never move a later status backward, and read the item back to verify. Report the posted comment and the status transition as separate outcomes. When retrying after the comment was already posted, find the existing `## Implementation plan` comment and retry only the status step; never post a duplicate plan.
