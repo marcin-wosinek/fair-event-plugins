@@ -9,6 +9,8 @@ Resolve the supplied issue number, issue URL, or issue-comment URL. For a commen
 
 If the spec and current code diverge materially, or a scope/design decision remains unresolved, stop and ask. Record an agreed new decision as a timestamped `## Decision` issue comment rather than editing the plan.
 
+After resolving the issue and implementation scope, and before implementation begins, set the ticket's project status to Implementation following `TICKETS.md` § Project status transitions. This applies to whole-issue and issue-comment inputs alike: check the current Status first, write only when needed, never move a later status backward, and read the item back to verify. Report a missing project item, missing status option, or unverified update with the exact remaining action, separately from the implementation outcome.
+
 Never work on `main`. Update `main`, create a short issue-suffixed topic branch, read every document in `## Read first`, and implement against current sibling patterns and `AGENTS.md`.
 
 Before committing, satisfy the complete Definition of Done in `AGENTS.md`. Verify user-facing behavior in the running WordPress site. Add a changeset for user-visible changes according to `RELEASES.md`. For `responsive-ui` issues, capture the required before/after screenshots at all three viewports.

@@ -99,6 +99,47 @@ grounding happens at planning time (`/plan-ticket`), not in the ticket.
      [COMMIT_GUIDE.md](./COMMIT_GUIDE.md) uses to require before/after
      screenshots at PR time, so skipping it silently skips that check.
 
+## Project status transitions
+
+The ticket workflows keep the Project 5 `Status` field in step with their
+work: `/plan-ticket` sets **Ready** after posting the approved plan, and
+`/make-pr` sets **Implementation** before implementation begins. The status
+order is Backlog → Planning → Ready → Implementation → Testing → Done.
+
+1. **Read the current state.** Resolve the `Status` field and the target
+   option ID from the project, and read the issue's existing project items:
+
+   ```bash
+   gh api graphql -f query='query { user(login: "marcin-wosinek") { projectV2(number: 5) { id field(name: "Status") { ... on ProjectV2SingleSelectField { id options { id name } } } } } }'
+   gh api graphql -f query='query { repository(owner: "marcin-wosinek", name: "fair-event-plugins") { issue(number: <issue-number>) { projectItems(first: 20) { nodes { id project { number } fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name optionId } } } } } } }'
+   ```
+
+2. **Decide whether to write.**
+   - No Project 5 item: do not add one. Report that the issue must be added
+     to Project 5 and its Status set to the target.
+   - Target option missing from the field: report it; never edit the field's
+     options.
+   - Status already equals the target: skip the write; the readback is the
+     verification.
+   - Status is later than the target: skip the write and report that the
+     transition was skipped for review. Never move a ticket backward.
+
+3. **Update only that item's Status field**, then re-read it:
+
+   ```bash
+   gh api graphql -f query='mutation { updateProjectV2ItemFieldValue(input: {projectId: "<project-id>", itemId: "<item-id>", fieldId: "<status-field-id>", value: {singleSelectOptionId: "<option-id>"}}) { projectV2Item { id } } }'
+   ```
+
+   If the mutation errors, re-read before reporting failure; automation may
+   have completed the transition. Never call `updateProjectV2Field` or change
+   any project-wide field or iteration configuration.
+
+4. **Report the transition as its own outcome.** Say whether the status was
+   updated, already set, skipped for review, or unverified. A failed or
+   unverified transition never undoes or hides the workflow's other outcome
+   (a posted plan, a started implementation); name the exact remaining
+   action, e.g. "set #123 Status to Ready in Project 5".
+
 ## Ticket structure
 
 Use this skeleton (drop sections that don't apply):
