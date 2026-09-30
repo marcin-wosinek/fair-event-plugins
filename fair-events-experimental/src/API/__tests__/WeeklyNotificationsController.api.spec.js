@@ -211,6 +211,60 @@ test.describe( 'WeeklyNotificationsController', () => {
 		expect( await read.text() ).not.toContain( TOKEN );
 	} );
 
+	const ensureToken = async () => {
+		const read = await api.get( PATH, { headers: adminHeaders } );
+		if ( ( await read.json() ).telegram_token_configured ) {
+			return;
+		}
+		const saved = await api.post( PATH, {
+			headers: adminHeaders,
+			data: { telegram_bot_token: TOKEN },
+		} );
+		expect( saved.status() ).toBe( 200 );
+	};
+
+	test( 'keeps the saved token when other settings are saved (#1733)', async () => {
+		await ensureToken();
+
+		const res = await api.post( PATH, {
+			headers: adminHeaders,
+			data: {
+				time_of_day: '07:45',
+				telegram_chat_ids: '@fair_e2e_channel',
+			},
+		} );
+		expect( res.status() ).toBe( 200 );
+		const text = await res.text();
+		expect( text ).not.toContain( TOKEN );
+		const body = JSON.parse( text );
+		expect( body.time_of_day ).toBe( '07:45' );
+		expect( body.telegram_token_configured ).toBe( true );
+		expect( body ).not.toHaveProperty( 'telegram_bot_token' );
+	} );
+
+	test( 'rejects an invalid replacement without changing other settings (#1733)', async () => {
+		await ensureToken();
+		await api.post( PATH, {
+			headers: adminHeaders,
+			data: { time_of_day: '07:45' },
+		} );
+
+		const invalid = 'not-a-token-1733';
+		const res = await api.post( PATH, {
+			headers: adminHeaders,
+			data: { time_of_day: '18:30', telegram_bot_token: invalid },
+		} );
+		expect( res.status() ).toBe( 400 );
+		const text = await res.text();
+		expect( text ).not.toContain( invalid );
+		expect( JSON.parse( text ).code ).toBe( 'invalid_bot_token' );
+
+		const read = await api.get( PATH, { headers: adminHeaders } );
+		const body = await read.json();
+		expect( body.time_of_day ).toBe( '07:45' );
+		expect( body.telegram_token_configured ).toBe( true );
+	} );
+
 	test( 'keeps Telegram destinations when Telegram is turned off', async () => {
 		await api.post( PATH, {
 			headers: adminHeaders,
