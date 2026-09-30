@@ -225,4 +225,17 @@ if ( ! function_exists( 'sanitize_text_field' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_parse_url' ) ) {
+	/**
+	 * Stub of WordPress wp_parse_url() — delegates to parse_url().
+	 *
+	 * @param string $url       URL.
+	 * @param int    $component Component, or -1 for all.
+	 * @return mixed
+	 */
+	function wp_parse_url( $url, $component = -1 ) {
+		return parse_url( $url, $component ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- test-only stub.
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WP_Error.php';

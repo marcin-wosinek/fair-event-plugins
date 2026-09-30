@@ -8,6 +8,7 @@
 namespace FairEventsExperimental\Tests\WeeklyNotifications;
 
 use FairEventsExperimental\Settings\WeeklyNotificationSettings;
+use FairEventsExperimental\WeeklyNotifications\MessageSplitter;
 use FairEventsExperimental\WeeklyNotifications\TelegramProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -134,14 +135,93 @@ class TelegramProviderTest extends TestCase {
 		$this->assertSame( array(), $provider->destinations( self::settings() ) );
 	}
 
-	/** Long summaries are split within Telegram's limit. */
+	/**
+	 * A summary with a number of linked events.
+	 *
+	 * @param int $count Number of events.
+	 * @return array
+	 */
+	private static function summary( $count ) {
+		$events = array();
+		for ( $i = 1; $i <= $count; $i++ ) {
+			$events[] = array(
+				'when'  => 'Mon, 18:00',
+				'title' => sprintf( 'A fairly long event title number %03d', $i ),
+				'url'   => sprintf( 'https://example.com/events/%03d', $i ),
+			);
+		}
+
+		return array(
+			'title'  => 'Calendar',
+			'url'    => 'https://example.com/calendar/',
+			'range'  => '28 Sep – 4 Oct 2026',
+			'events' => $events,
+		);
+	}
+
+	/** Formatting is sent as entities on plain text, never as parse_mode markup. */
+	public function test_send_posts_formatting_entities() {
+		$provider = new TelegramProvider();
+		$messages = $provider->split( self::summary( 1 ) );
+		$provider->send( '@fair_channel', $messages[0] );
+
+		$body = json_decode( $GLOBALS['_fair_test_remote_post_requests'][0]['args']['body'], true );
+		$this->assertSame( "Calendar\n28 Sep – 4 Oct 2026\n\n• Mon, 18:00, A fairly long event title number 001", $body['text'] );
+		$this->assertArrayNotHasKey( 'parse_mode', $body );
+		$this->assertSame(
+			array(
+				array(
+					'type'   => 'bold',
+					'offset' => 0,
+					'length' => 8,
+				),
+				array(
+					'type'   => 'text_link',
+					'offset' => 0,
+					'length' => 8,
+					'url'    => 'https://example.com/calendar/',
+				),
+				array(
+					'type'   => 'text_link',
+					'offset' => 44,
+					'length' => 36,
+					'url'    => 'https://example.com/events/001',
+				),
+			),
+			$body['entities']
+		);
+	}
+
+	/** Long summaries are split within Telegram's limit, in order, with valid links in every part. */
 	public function test_split_respects_the_telegram_limit() {
-		$text  = "Heading:\n" . implode( "\n", array_fill( 0, 200, '* Mon, 18:00, A fairly long event title: https://example.com/events/some-event' ) );
-		$parts = ( new TelegramProvider() )->split( $text );
+		$parts = ( new TelegramProvider() )->split( self::summary( 200 ) );
 
 		$this->assertGreaterThan( 1, count( $parts ) );
+		$this->assertStringStartsWith( 'Calendar', $parts[0]['text'] );
+		$next = 1;
 		foreach ( $parts as $part ) {
-			$this->assertLessThanOrEqual( TelegramProvider::MESSAGE_LIMIT, mb_strlen( $part ) );
+			$this->assertLessThanOrEqual( TelegramProvider::MESSAGE_LIMIT, MessageSplitter::length( $part['text'] ) );
+			foreach ( $part['entities'] as $entity ) {
+				if ( 'text_link' !== $entity['type'] || 'https://example.com/calendar/' === $entity['url'] ) {
+					continue;
+				}
+				$this->assertSame( sprintf( 'https://example.com/events/%03d', $next ), $entity['url'] );
+				$this->assertSame(
+					sprintf( 'A fairly long event title number %03d', $next ),
+					mb_convert_encoding( substr( mb_convert_encoding( $part['text'], 'UTF-16LE', 'UTF-8' ), $entity['offset'] * 2, $entity['length'] * 2 ), 'UTF-8', 'UTF-16LE' )
+				);
+				++$next;
+			}
 		}
+		$this->assertSame( 201, $next );
+	}
+
+	/** Plain-text messages are still accepted, without entities. */
+	public function test_send_accepts_plain_text() {
+		( new TelegramProvider() )->send( '@fair_channel', 'Just text' );
+
+		$body = json_decode( $GLOBALS['_fair_test_remote_post_requests'][0]['args']['body'], true );
+		$this->assertSame( 'Just text', $body['text'] );
+		$this->assertArrayNotHasKey( 'entities', $body );
 	}
 }

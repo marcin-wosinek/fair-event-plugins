@@ -13,8 +13,9 @@ defined( 'WPINC' ) || die;
  * A destination type for the weekly summary (Telegram today; WhatsApp,
  * Instagram and others later).
  *
- * Providers only deliver text they are given. Week selection, summary
- * generation, scheduling and duplicate prevention stay in {@see Dispatcher}.
+ * Providers format and deliver the summary they are given. Week selection,
+ * summary generation, scheduling and duplicate prevention stay in
+ * {@see Dispatcher}.
  */
 interface Provider {
 
@@ -35,12 +36,12 @@ interface Provider {
 	public function destinations( array $settings, $include_disabled = false );
 
 	/**
-	 * Split a summary into the ordered messages this provider can send.
+	 * Format a summary as the ordered messages this provider sends.
 	 *
-	 * @param string $text Summary text.
-	 * @return string[]
+	 * @param array $summary Summary from {@see SummaryBuilder::build()}.
+	 * @return array Messages in the form {@see send()} accepts.
 	 */
-	public function split( $text );
+	public function split( array $summary );
 
 	/**
 	 * Send one message to one destination.
@@ -49,10 +50,10 @@ interface Provider {
 	 * in the returned code or message.
 	 *
 	 * @param string $destination Destination identifier.
-	 * @param string $text        Message text.
+	 * @param mixed  $message     One message from {@see split()}.
 	 * @return array{state: string, code: string, message: string} State is 'sent',
 	 *     'failed' (the provider refused it; nothing was published) or 'uncertain'
 	 *     (the request may have been published).
 	 */
-	public function send( $destination, $text );
+	public function send( $destination, $message );
 }

@@ -4,7 +4,7 @@
  * fail-closed test-send and preview paths.
  *
  * No case here reaches api.telegram.org: each is refused by a permission
- * check, validation, or a missing-configuration guard first. The successful
+ * check, validation, a missing-configuration guard, or an empty week first. The successful
  * test send is covered end to end by
  * e2e/user-flows/weekly-telegram-notifications.spec.js, which runs against
  * the Telegram HTTP double.
@@ -346,7 +346,22 @@ test.describe( 'WeeklyNotificationsController', () => {
 			headers: adminHeaders,
 		} );
 		expect( preview.status() ).toBe( 200 );
-		expect( ( await preview.json() ).text ).toContain( page.link );
+		const previewBody = await preview.json();
+		expect( previewBody.text ).toContain( page.link );
+
+		// The Telegram presentation links the page title instead of printing its URL.
+		const [ first ] = previewBody.telegram_messages;
+		expect( previewBody.telegram_parts ).toBe(
+			previewBody.telegram_messages.length
+		);
+		expect( first.text.startsWith( page.title.rendered ) ).toBe( true );
+		expect( first.text ).not.toContain( page.link );
+		expect( first.entities ).toContainEqual( {
+			type: 'text_link',
+			offset: 0,
+			length: page.title.rendered.length,
+			url: page.link,
+		} );
 	} );
 
 	test( 'refuses a page that is not public', async () => {
@@ -397,5 +412,68 @@ test.describe( 'WeeklyNotificationsController', () => {
 		} );
 		expect( res.status() ).toBe( 400 );
 		expect( ( await res.json() ).code ).toBe( 'missing_token' );
+	} );
+
+	test( 'sends nothing when the test week has no events (#1735)', async () => {
+		const categoryRes = await api.post( '/wp-json/wp/v2/categories', {
+			headers: adminHeaders,
+			data: { name: `Weekly empty ${ Date.now() }` },
+		} );
+		expect( categoryRes.ok() ).toBeTruthy();
+		const categoryId = ( await categoryRes.json() ).id;
+		const emptySlug = `weekly-empty-${ Date.now() }`;
+		const sourceRes = await api.post( '/wp-json/fair-events/v1/sources', {
+			headers: adminHeaders,
+			data: {
+				name: 'Weekly notifications empty source',
+				slug: emptySlug,
+				enabled: true,
+				data_sources: [
+					{
+						source_type: 'categories',
+						config: { category_ids: [ categoryId ] },
+					},
+				],
+			},
+		} );
+		expect( sourceRes.ok() ).toBeTruthy();
+		const emptySourceId = ( await sourceRes.json() ).id;
+
+		try {
+			const page = await createPage( 'publish' );
+			const saved = await api.post( PATH, {
+				headers: adminHeaders,
+				data: {
+					source_slug: emptySlug,
+					page_id: page.id,
+					telegram_chat_ids: '@e2e_weekly_empty',
+					// Only saved when the site has no token of its own; afterAll removes it.
+					...( original.telegram_token_configured
+						? {}
+						: { telegram_bot_token: TOKEN } ),
+				},
+			} );
+			expect( saved.status() ).toBe( 200 );
+
+			const preview = await api.get( `${ PATH }/preview`, {
+				headers: adminHeaders,
+			} );
+			expect( ( await preview.json() ).occurrence_count ).toBe( 0 );
+
+			const res = await api.post( `${ PATH }/test`, {
+				headers: adminHeaders,
+			} );
+			expect( res.status() ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe( 'no_events' );
+		} finally {
+			await api.delete(
+				`/wp-json/fair-events/v1/sources/${ emptySourceId }`,
+				{ headers: adminHeaders }
+			);
+			await api.delete(
+				`/wp-json/wp/v2/categories/${ categoryId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
 	} );
 } );

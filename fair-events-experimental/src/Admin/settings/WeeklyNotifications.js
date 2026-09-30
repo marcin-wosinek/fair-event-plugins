@@ -99,6 +99,53 @@ function editableState( config ) {
 	};
 }
 
+/**
+ * Render a Telegram message the way Telegram shows it: plain text with its
+ * bold and link entities. Entity offsets count UTF-16 code units, which is
+ * how JavaScript indexes strings.
+ *
+ * @param {Object} props
+ * @param {Object} props.message Message with `text` and `entities`.
+ */
+export function TelegramMessage( { message } ) {
+	const entities = message.entities || [];
+	const bounds = new Set( [ 0, message.text.length ] );
+	entities.forEach( ( entity ) => {
+		bounds.add( entity.offset );
+		bounds.add( entity.offset + entity.length );
+	} );
+	const points = [ ...bounds ].sort( ( a, b ) => a - b );
+
+	const pieces = [];
+	for ( let i = 0; i < points.length - 1; i++ ) {
+		const from = points[ i ];
+		const to = points[ i + 1 ];
+		const active = entities.filter(
+			( entity ) =>
+				entity.offset <= from && entity.offset + entity.length >= to
+		);
+		let node = message.text.slice( from, to );
+		if ( active.some( ( entity ) => 'bold' === entity.type ) ) {
+			node = <strong>{ node }</strong>;
+		}
+		const link = active.find(
+			( entity ) =>
+				'text_link' === entity.type &&
+				/^https?:\/\//i.test( entity.url || '' )
+		);
+		if ( link ) {
+			node = (
+				<a href={ link.url } target="_blank" rel="noopener noreferrer">
+					{ node }
+				</a>
+			);
+		}
+		pieces.push( <span key={ from }>{ node }</span> );
+	}
+
+	return pieces;
+}
+
 function StatusText( { state, label } ) {
 	return (
 		<span
@@ -287,14 +334,14 @@ export default function WeeklyNotifications( { onNotice } ) {
 					? {
 							status: 'success',
 							message: __(
-								'Telegram accepted the test message for every chat.',
+								'Telegram accepted the test summary for every chat.',
 								'fair-events-experimental'
 							),
 					  }
 					: {
 							status: 'error',
 							message: __(
-								'The test message did not reach every chat. See the results below.',
+								'The test summary did not reach every chat. See the results below.',
 								'fair-events-experimental'
 							),
 					  }
@@ -305,7 +352,7 @@ export default function WeeklyNotifications( { onNotice } ) {
 				message: errorMessage(
 					error,
 					__(
-						'Failed to send the test message.',
+						'Failed to send the test summary.',
 						'fair-events-experimental'
 					)
 				),
@@ -597,10 +644,16 @@ export default function WeeklyNotifications( { onNotice } ) {
 						disabled={ saving || testing || !! testBlockedReason }
 					>
 						{ __(
-							'Send Telegram test message',
+							'Send test summary to Telegram',
 							'fair-events-experimental'
 						) }
 					</Button>
+				</p>
+				<p className="description">
+					{ __(
+						'The test sends the summary for the next scheduled week to every saved chat, even while delivery is off. It is not recorded as a weekly send.',
+						'fair-events-experimental'
+					) }
 				</p>
 				{ testBlockedReason && (
 					<p className="description">{ testBlockedReason }</p>
@@ -693,17 +746,34 @@ export default function WeeklyNotifications( { onNotice } ) {
 										preview.telegram_parts
 								  ) }
 						</p>
-						<pre
-							style={ {
-								whiteSpace: 'pre-wrap',
-								background: '#f6f7f7',
-								padding: '12px',
-								maxHeight: '320px',
-								overflow: 'auto',
-							} }
-						>
-							{ preview.text }
-						</pre>
+						{ ( preview.telegram_messages || [] ).map(
+							( message, index ) => (
+								<div
+									key={ index }
+									aria-label={ sprintf(
+										/* translators: 1: message number, 2: number of messages */
+										__(
+											'Telegram message %1$d of %2$d',
+											'fair-events-experimental'
+										),
+										index + 1,
+										preview.telegram_messages.length
+									) }
+									role="group"
+									style={ {
+										whiteSpace: 'pre-wrap',
+										overflowWrap: 'anywhere',
+										background: '#f6f7f7',
+										padding: '12px',
+										marginBottom: '8px',
+										maxHeight: '320px',
+										overflow: 'auto',
+									} }
+								>
+									<TelegramMessage message={ message } />
+								</div>
+							)
+						) }
 					</>
 				) }
 

@@ -84,4 +84,95 @@ class MessageSplitterTest extends TestCase {
 
 		$this->assertSame( array( '🎉🎉', '🎉🎉', '🎉🎉' ), $messages );
 	}
+
+	/**
+	 * Text an entity covers.
+	 *
+	 * @param string $text   Message text.
+	 * @param array  $entity Entity.
+	 * @return string
+	 */
+	private static function covered( $text, array $entity ) {
+		$utf16 = mb_convert_encoding( $text, 'UTF-16LE', 'UTF-8' );
+		return mb_convert_encoding( substr( $utf16, $entity['offset'] * 2, $entity['length'] * 2 ), 'UTF-8', 'UTF-16LE' );
+	}
+
+	/** Entity offsets count UTF-16 units and are relative to each message. */
+	public function test_entities_are_relative_to_each_message() {
+		$lines = array(
+			array( array( 'text' => 'Heading 🎉' ) ),
+			array(
+				array( 'text' => '• 🎉 Mon, ' ),
+				array(
+					'text' => 'First 🎸',
+					'url'  => 'https://example.com/1',
+				),
+			),
+			array(
+				array( 'text' => '• Tue, ' ),
+				array(
+					'text' => 'Second',
+					'url'  => 'https://example.com/2',
+				),
+			),
+		);
+
+		$messages = MessageSplitter::split_lines( $lines, 30 );
+
+		$this->assertSame( array( "Heading 🎉\n• 🎉 Mon, First 🎸", '• Tue, Second' ), array_column( $messages, 'text' ) );
+		$this->assertSame( 'First 🎸', self::covered( $messages[0]['text'], $messages[0]['entities'][0] ) );
+		$this->assertSame( 21, $messages[0]['entities'][0]['offset'] );
+		$this->assertSame( 'Second', self::covered( $messages[1]['text'], $messages[1]['entities'][0] ) );
+		$this->assertSame( 7, $messages[1]['entities'][0]['offset'] );
+	}
+
+	/** A line that exactly fills the limit is packed; one unit more starts a new message. */
+	public function test_boundary_sizes() {
+		$line = array( array( array( 'text' => str_repeat( 'a', 10 ) ) ), array( array( 'text' => str_repeat( 'b', 9 ) ) ) );
+		$this->assertCount( 1, MessageSplitter::split_lines( $line, 20 ) );
+		$this->assertCount( 2, MessageSplitter::split_lines( $line, 19 ) );
+	}
+
+	/** An oversized linked item is split, and each piece keeps the link. */
+	public function test_oversized_linked_item_keeps_the_link_on_every_piece() {
+		$title    = trim( str_repeat( 'Very long title ', 20 ) );
+		$lines    = array(
+			array( array( 'text' => 'Heading' ) ),
+			array(
+				array( 'text' => '• Mon, ' ),
+				array(
+					'text' => $title,
+					'url'  => 'https://example.com/long',
+				),
+			),
+			array( array( 'text' => '• Tue, Short' ) ),
+		);
+		$messages = MessageSplitter::split_lines( $lines, 100 );
+
+		$this->assertGreaterThan( 2, count( $messages ) );
+		$covered = '';
+		foreach ( $messages as $message ) {
+			$this->assertLessThanOrEqual( 100, MessageSplitter::length( $message['text'] ) );
+			foreach ( $message['entities'] as $entity ) {
+				$this->assertSame( 'https://example.com/long', $entity['url'] );
+				$this->assertGreaterThan( 0, $entity['length'] );
+				$this->assertLessThanOrEqual( MessageSplitter::length( $message['text'] ), $entity['offset'] + $entity['length'] );
+				$covered .= self::covered( $message['text'], $entity );
+			}
+		}
+		$this->assertSame( $title, $covered );
+		$this->assertSame( '• Tue, Short', substr( end( $messages )['text'], -strlen( '• Tue, Short' ) ) );
+	}
+
+	/** A message never starts with an empty line. */
+	public function test_message_never_starts_with_an_empty_line() {
+		$lines    = array(
+			array( array( 'text' => str_repeat( 'a', 10 ) ) ),
+			array(),
+			array( array( 'text' => str_repeat( 'b', 10 ) ) ),
+		);
+		$messages = MessageSplitter::split_lines( $lines, 10 );
+
+		$this->assertSame( array( str_repeat( 'a', 10 ), str_repeat( 'b', 10 ) ), array_column( $messages, 'text' ) );
+	}
 }

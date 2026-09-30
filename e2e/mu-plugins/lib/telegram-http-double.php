@@ -7,7 +7,7 @@
  * `pre_http_request` keeps the real request building and response handling
  * in play while nothing reaches the network.
  *
- * Each request's chat ID and text are appended to the
+ * Each request's chat ID, text and formatting entities are appended to the
  * `fair_e2e_telegram_requests` option; the bot token in the URL is never
  * stored. Every chat is accepted except `@e2e_missing_chat`, which gets
  * Telegram's "chat not found" error so specs can exercise a failure.
@@ -29,8 +29,9 @@ add_filter(
 
 		$log   = get_option( 'fair_e2e_telegram_requests', array() );
 		$log[] = array(
-			'chat_id' => $chat_id,
-			'text'    => is_array( $body ) ? (string) ( $body['text'] ?? '' ) : '',
+			'chat_id'  => $chat_id,
+			'text'     => is_array( $body ) ? (string) ( $body['text'] ?? '' ) : '',
+			'entities' => is_array( $body ) ? (array) ( $body['entities'] ?? array() ) : array(),
 		);
 		update_option( 'fair_e2e_telegram_requests', $log, false );
 
