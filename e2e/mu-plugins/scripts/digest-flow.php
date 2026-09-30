@@ -1,7 +1,6 @@
 <?php
 /**
- * Drive the fair-payments-connector-experimental daily digest flow for the
- * digest E2E spec.
+ * Drive the fair-payments-connector daily digest flow for the digest E2E spec.
  *
  * Run via WP-CLI against the wp-env tests instance:
  *   wp eval-file wp-content/mu-plugins/scripts/digest-flow.php <action> [args]
@@ -20,8 +19,8 @@
  * @package FairEventsE2E
  */
 
-use FairPaymentsConnectorExperimental\Hooks\DigestHooks;
-use FairPaymentsConnectorExperimental\Settings\Settings;
+use FairPaymentsConnector\Hooks\DigestHooks;
+use FairPaymentsConnector\Settings\NotificationSettings;
 
 const FAIR_E2E_DIGEST_ROUTE = 'e2e-digest-route';
 const FAIR_E2E_DIGEST_TO    = 'owner@example.test';
@@ -58,7 +57,7 @@ $step = isset( $args[0] ) ? $args[0] : '';
 
 if ( 'cleanup' === $step ) {
 	$wpdb->delete( $queue_table, array( 'route_id' => FAIR_E2E_DIGEST_ROUTE ), array( '%s' ) );
-	delete_option( Settings::ROUTES_OPTION );
+	delete_option( NotificationSettings::ROUTES_OPTION );
 	delete_option( 'fair_e2e_captured_mail' );
 	fair_e2e_digest_report( $queue_table );
 	return;
@@ -71,7 +70,7 @@ if ( 'enqueue' === $step ) {
 	$wpdb->delete( $queue_table, array( 'route_id' => FAIR_E2E_DIGEST_ROUTE ), array( '%s' ) );
 	delete_option( 'fair_e2e_captured_mail' );
 	update_option(
-		Settings::ROUTES_OPTION,
+		NotificationSettings::ROUTES_OPTION,
 		array(
 			array(
 				'id'          => FAIR_E2E_DIGEST_ROUTE,

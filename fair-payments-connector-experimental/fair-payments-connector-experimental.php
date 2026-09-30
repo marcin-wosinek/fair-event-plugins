@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fair Payments Connector Experimental
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: Experimental features for Fair Payments Connector: API tokens, connected sites, and Telegram notifications.
+ * Description: Experimental features for Fair Payments Connector: API tokens and connected sites.
  * Version: 0.4.1
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
@@ -25,8 +25,8 @@ define( 'FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_FILE', __FILE__ );
 define( 'FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_URL', plugin_dir_url( __FILE__ ) );
 
-// This release hands payment notifications to Fair Payments Connector when
-// that plugin owns them; see Core\NotificationHandoff.
+// This plugin no longer runs payment notifications. The constant tells
+// FairPaymentsConnector\Core\NotificationOwnership to take them over.
 define( 'FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_NOTIFICATIONS_HANDOFF', true );
 
 // Composer autoloader.

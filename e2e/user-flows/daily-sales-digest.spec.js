@@ -1,7 +1,7 @@
 /**
  * E2E: a daily email route delivers a sales digest after paid transactions.
  *
- * Drives the real fair-payments-connector-experimental code — the
+ * Drives the real fair-payments-connector code — the
  * fair_payment_paid hook, the notification queue table, and the daily cron
  * callback — through the wp-env instance and asserts on what the recipient
  * would receive (mail captured by e2e/mu-plugins/fair-e2e-support.php). The
