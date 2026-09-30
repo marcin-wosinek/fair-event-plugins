@@ -196,7 +196,7 @@ class Dispatcher {
 		);
 		foreach ( $this->providers as $provider ) {
 			foreach ( $provider->destinations( $settings ) as $destination ) {
-				++$counts[ $this->deliver( $provider, (string) $destination, $week['start'], $summary['text'] ) ];
+				++$counts[ $this->deliver( $provider, (string) $destination, $week['start'], $summary ) ];
 			}
 		}
 
@@ -241,28 +241,28 @@ class Dispatcher {
 	 * @param Provider $provider    Provider.
 	 * @param string   $destination Destination identifier.
 	 * @param string   $week_start  First day of the covered week.
-	 * @param string   $text        Summary text.
+	 * @param array    $summary     Summary from the builder.
 	 * @return string 'sent', 'failed', 'uncertain' or 'duplicate'.
 	 */
-	private function deliver( Provider $provider, $destination, $week_start, $text ) {
+	private function deliver( Provider $provider, $destination, $week_start, array $summary ) {
 		$provider_id = $provider->id();
 		$claimed     = 0;
 
 		try {
-			$parts = $provider->split( $text );
+			$parts = $provider->split( $summary );
 			$count = count( $parts );
 			if ( ! $this->log->claim( $week_start, $provider_id, $destination, 1, $count ) ) {
 				return 'duplicate';
 			}
 
-			foreach ( $parts as $index => $part_text ) {
+			foreach ( $parts as $index => $message ) {
 				$part = $index + 1;
 				if ( $part > 1 && ! $this->log->claim( $week_start, $provider_id, $destination, $part, $count ) ) {
 					continue;
 				}
 				$claimed = $part;
 
-				$result = $provider->send( $destination, $part_text );
+				$result = $provider->send( $destination, $message );
 				$this->log->finish( $week_start, $provider_id, $destination, $part, $result );
 				$claimed = 0;
 

@@ -70,13 +70,13 @@ class FakeProvider implements Provider {
 	}
 
 	/**
-	 * Split text.
+	 * Split the summary text.
 	 *
-	 * @param string $text Text.
+	 * @param array $summary Summary.
 	 * @return string[]
 	 */
-	public function split( $text ) {
-		return $this->split_on_marker ? explode( '|', $text ) : array( $text );
+	public function split( array $summary ) {
+		return $this->split_on_marker ? explode( '|', $summary['text'] ) : array( $summary['text'] );
 	}
 
 	/**

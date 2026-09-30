@@ -17,7 +17,12 @@ defined( 'WPINC' ) || die;
  * limit is broken at whitespace where possible, otherwise between characters;
  * every character of the input appears in the output, in order.
  *
- * Lengths are UTF-16 code units, which is how Telegram measures its limit.
+ * Lines can carry formatting (bold text and links). Each message gets its own
+ * formatting entities, with offsets relative to that message, so a link on a
+ * line broken across messages is recreated on every piece.
+ *
+ * Lengths and offsets are UTF-16 code units, which is how Telegram measures
+ * its limit and its entity offsets.
  */
 class MessageSplitter {
 
@@ -33,18 +38,55 @@ class MessageSplitter {
 			return array();
 		}
 
+		$lines = array_map( static fn( $line ) => array( array( 'text' => $line ) ), explode( "\n", $text ) );
+
+		return array_column( self::split_lines( $lines, $limit ), 'text' );
+	}
+
+	/**
+	 * Split formatted lines into messages of at most $limit UTF-16 code units.
+	 *
+	 * A line is a list of runs: `text`, plus an optional `url` (the run links
+	 * there) and `bold`. A message never starts with an empty line.
+	 *
+	 * @param array[] $lines Lines of runs.
+	 * @param int     $limit Maximum message length.
+	 * @return array{text: string, entities: array[]}[] Messages in order. Entities
+	 *     have `type` ('bold' or 'text_link'), `offset`, `length` and, for links, `url`.
+	 */
+	public static function split_lines( array $lines, $limit ) {
 		$messages = array();
 		$current  = null;
 
-		foreach ( explode( "\n", $text ) as $line ) {
+		foreach ( $lines as $runs ) {
+			list( $line, $spans ) = self::flatten( $runs );
+			$offset               = 0;
+
 			foreach ( self::split_line( $line, $limit ) as $segment ) {
-				if ( null === $current ) {
-					$current = $segment;
-				} elseif ( self::length( $current ) + 1 + self::length( $segment ) <= $limit ) {
-					$current .= "\n" . $segment;
-				} else {
+				$length   = self::length( $segment );
+				$entities = self::clip( $spans, $offset, $length );
+				$offset  += $length;
+
+				if ( null !== $current && $current['length'] + 1 + $length <= $limit ) {
+					foreach ( $entities as $entity ) {
+						$entity['offset']     += $current['length'] + 1;
+						$current['entities'][] = $entity;
+					}
+					$current['text']   .= "\n" . $segment;
+					$current['length'] += 1 + $length;
+					continue;
+				}
+
+				if ( null !== $current ) {
 					$messages[] = $current;
-					$current    = $segment;
+					$current    = null;
+				}
+				if ( '' !== $segment ) {
+					$current = array(
+						'text'     => $segment,
+						'entities' => $entities,
+						'length'   => $length,
+					);
 				}
 			}
 		}
@@ -53,7 +95,13 @@ class MessageSplitter {
 			$messages[] = $current;
 		}
 
-		return $messages;
+		return array_map(
+			static fn( $message ) => array(
+				'text'     => $message['text'],
+				'entities' => $message['entities'],
+			),
+			$messages
+		);
 	}
 
 	/**
@@ -64,6 +112,66 @@ class MessageSplitter {
 	 */
 	public static function length( $text ) {
 		return (int) ( strlen( mb_convert_encoding( $text, 'UTF-16LE', 'UTF-8' ) ) / 2 );
+	}
+
+	/**
+	 * Join a line's runs and locate their formatting.
+	 *
+	 * @param array[] $runs Runs with `text` and optional `url` and `bold`.
+	 * @return array{0: string, 1: array[]} The line text and its entities.
+	 */
+	private static function flatten( array $runs ) {
+		$text  = '';
+		$spans = array();
+		$at    = 0;
+
+		foreach ( $runs as $run ) {
+			$run_text = (string) ( $run['text'] ?? '' );
+			$length   = self::length( $run_text );
+			if ( $length > 0 && ! empty( $run['bold'] ) ) {
+				$spans[] = array(
+					'type'   => 'bold',
+					'offset' => $at,
+					'length' => $length,
+				);
+			}
+			if ( $length > 0 && ! empty( $run['url'] ) ) {
+				$spans[] = array(
+					'type'   => 'text_link',
+					'offset' => $at,
+					'length' => $length,
+					'url'    => (string) $run['url'],
+				);
+			}
+			$text .= $run_text;
+			$at   += $length;
+		}
+
+		return array( $text, $spans );
+	}
+
+	/**
+	 * The parts of a line's entities that fall within one of its segments.
+	 *
+	 * @param array[] $spans  Entities with offsets relative to the line.
+	 * @param int     $start  Segment start within the line.
+	 * @param int     $length Segment length.
+	 * @return array[] Entities with offsets relative to the segment.
+	 */
+	private static function clip( array $spans, $start, $length ) {
+		$entities = array();
+
+		foreach ( $spans as $span ) {
+			$from = max( $span['offset'], $start );
+			$to   = min( $span['offset'] + $span['length'], $start + $length );
+			if ( $to > $from ) {
+				$span['offset'] = $from - $start;
+				$span['length'] = $to - $from;
+				$entities[]     = $span;
+			}
+		}
+
+		return $entities;
 	}
 
 	/**

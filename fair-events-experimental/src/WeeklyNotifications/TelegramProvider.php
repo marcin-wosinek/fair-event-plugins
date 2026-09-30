@@ -12,7 +12,10 @@ use FairEventsExperimental\Settings\WeeklyNotificationSettings;
 defined( 'WPINC' ) || die;
 
 /**
- * Delivers plain-text messages through the Telegram Bot API sendMessage method.
+ * Delivers messages through the Telegram Bot API sendMessage method.
+ *
+ * Formatting is sent as message entities on plain text (no parse_mode), so
+ * characters in titles and URLs are never interpreted as markup.
  */
 class TelegramProvider implements Provider {
 	public const ID            = 'telegram';
@@ -61,23 +64,33 @@ class TelegramProvider implements Provider {
 	}
 
 	/**
-	 * Split into messages within Telegram's length limit.
+	 * Format the summary as messages within Telegram's length limit.
 	 *
-	 * @param string $text Summary text.
-	 * @return string[]
+	 * @param array $summary Summary from {@see SummaryBuilder::build()}.
+	 * @return array{text: string, entities: array[]}[]
 	 */
-	public function split( $text ) {
-		return MessageSplitter::split( $text, self::MESSAGE_LIMIT );
+	public function split( array $summary ) {
+		return MessageSplitter::split_lines( TelegramFormatter::lines( $summary ), self::MESSAGE_LIMIT );
 	}
 
 	/**
-	 * Send one plain-text message.
+	 * Send one message.
 	 *
-	 * @param string $destination Chat ID or @channel username.
-	 * @param string $text        Message text.
+	 * @param string       $destination Chat ID or @channel username.
+	 * @param array|string $message     Message from split(), or plain text.
 	 * @return array{state: string, code: string, message: string}
 	 */
-	public function send( $destination, $text ) {
+	public function send( $destination, $message ) {
+		$message = is_array( $message ) ? $message : array( 'text' => (string) $message );
+		$payload = array(
+			'chat_id'              => $destination,
+			'text'                 => (string) $message['text'],
+			'link_preview_options' => array( 'is_disabled' => true ),
+		);
+		if ( ! empty( $message['entities'] ) ) {
+			$payload['entities'] = array_values( $message['entities'] );
+		}
+
 		$token = $this->token();
 		if ( '' === $token ) {
 			return self::result( 'failed', 'missing_token', __( 'The Telegram bot token is not configured.', 'fair-events-experimental' ) );
@@ -88,13 +101,7 @@ class TelegramProvider implements Provider {
 			array(
 				'timeout' => 15,
 				'headers' => array( 'Content-Type' => 'application/json' ),
-				'body'    => wp_json_encode(
-					array(
-						'chat_id'              => $destination,
-						'text'                 => $text,
-						'link_preview_options' => array( 'is_disabled' => true ),
-					)
-				),
+				'body'    => wp_json_encode( $payload ),
 			)
 		);
 

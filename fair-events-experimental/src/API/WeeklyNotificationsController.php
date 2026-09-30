@@ -305,28 +305,26 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function get_preview() {
-		$settings = WeeklyNotificationSettings::get();
-		$due      = WeekSchedule::next_due( Dispatcher::now(), $settings['day_of_week'], $settings['time_of_day'] );
-		$week     = WeekSchedule::target_week( $due, $settings['week_scope'], Dispatcher::start_of_week() );
-		$summary  = ( new SummaryBuilder() )->build( $settings, $week );
-
+		$summary = $this->next_summary();
 		if ( is_wp_error( $summary ) ) {
-			return new WP_Error( $summary->get_error_code(), $summary->get_error_message(), array( 'status' => 400 ) );
+			return $summary;
 		}
+		$messages = ( new TelegramProvider() )->split( $summary );
 
 		return rest_ensure_response(
 			array(
-				'week_start'       => $week['start'],
-				'week_end'         => $week['end'],
-				'text'             => $summary['text'],
-				'occurrence_count' => $summary['occurrence_count'],
-				'telegram_parts'   => count( ( new TelegramProvider() )->split( $summary['text'] ) ),
+				'week_start'        => $summary['week']['start'],
+				'week_end'          => $summary['week']['end'],
+				'text'              => $summary['text'],
+				'occurrence_count'  => $summary['occurrence_count'],
+				'telegram_parts'    => count( $messages ),
+				'telegram_messages' => $messages,
 			)
 		);
 	}
 
 	/**
-	 * Send a short test message to every saved Telegram destination.
+	 * Send the next scheduled week's summary to every saved Telegram destination.
 	 *
 	 * Test sends are not delivery records and do not affect scheduled sends.
 	 *
@@ -343,15 +341,25 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 			return new WP_Error( 'missing_chat_ids', __( 'Save at least one Telegram chat or channel before sending a test message.', 'fair-events-experimental' ), array( 'status' => 400 ) );
 		}
 
-		$text = sprintf(
-			/* translators: %s: site name */
-			__( 'Test message from %s. Weekly event notifications will be posted here.', 'fair-events-experimental' ),
-			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
-		);
+		$summary = $this->next_summary();
+		if ( is_wp_error( $summary ) ) {
+			return $summary;
+		}
+		if ( 0 === $summary['occurrence_count'] ) {
+			return new WP_Error( 'no_events', __( 'There are no events in the next scheduled week, so there is nothing to send.', 'fair-events-experimental' ), array( 'status' => 400 ) );
+		}
 
-		$results = array();
+		$messages = $provider->split( $summary );
+		$results  = array();
 		foreach ( $destinations as $destination ) {
-			$result    = $provider->send( $destination, $text );
+			// Stop at the first part that is not sent, so parts never arrive out of order.
+			$result = array();
+			foreach ( $messages as $message ) {
+				$result = $provider->send( $destination, $message );
+				if ( 'sent' !== $result['state'] ) {
+					break;
+				}
+			}
 			$results[] = array(
 				'destination' => $destination,
 				'state'       => $result['state'],
@@ -362,9 +370,29 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'success' => ! array_filter( $results, static fn( $result ) => 'sent' !== $result['state'] ),
+				'parts'   => count( $messages ),
 				'results' => $results,
 			)
 		);
+	}
+
+	/**
+	 * The summary for the week the next scheduled send covers.
+	 *
+	 * @return array|WP_Error Summary with its `week`, or a 400 error.
+	 */
+	private function next_summary() {
+		$settings = WeeklyNotificationSettings::get();
+		$due      = WeekSchedule::next_due( Dispatcher::now(), $settings['day_of_week'], $settings['time_of_day'] );
+		$week     = WeekSchedule::target_week( $due, $settings['week_scope'], Dispatcher::start_of_week() );
+		$summary  = ( new SummaryBuilder() )->build( $settings, $week );
+
+		if ( is_wp_error( $summary ) ) {
+			return new WP_Error( $summary->get_error_code(), $summary->get_error_message(), array( 'status' => 400 ) );
+		}
+
+		$summary['week'] = $week;
+		return $summary;
 	}
 
 	/**

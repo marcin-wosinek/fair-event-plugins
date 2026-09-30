@@ -759,21 +759,16 @@ msgstr ""
 msgid "Before turning on weekly notifications, turn on Telegram delivery and save a bot token and at least one chat or channel."
 msgstr ""
 
-#: src/API/WeeklyNotificationsController.php:337
+#: src/API/WeeklyNotificationsController.php:335
 msgid "Save a Telegram bot token before sending a test message."
 msgstr ""
 
-#: src/API/WeeklyNotificationsController.php:343
+#: src/API/WeeklyNotificationsController.php:341
 msgid "Save at least one Telegram chat or channel before sending a test message."
 msgstr ""
 
-#. translators: %s: site name
-#: src/API/WeeklyNotificationsController.php:348
-#, php-format
-msgid "Test message from %s. Weekly event notifications will be posted here."
-msgstr ""
-
-#: src/API/WeeklyNotificationsController.php:418
+#: src/API/WeeklyNotificationsController.php:446
+#: src/WeeklyNotifications/TelegramFormatter.php:66
 msgid "(no title)"
 msgstr ""
 
@@ -795,19 +790,19 @@ msgstr ""
 msgid "Delivered: %1$d. Failed: %2$d. Unknown outcome: %3$d."
 msgstr ""
 
-#: src/WeeklyNotifications/SummaryBuilder.php:32
+#: src/WeeklyNotifications/SummaryBuilder.php:33
 msgid "Update Fair Events to use weekly notifications."
 msgstr ""
 
-#: src/WeeklyNotifications/SummaryBuilder.php:36
+#: src/WeeklyNotifications/SummaryBuilder.php:37
 msgid "Choose an event source."
 msgstr ""
 
-#: src/WeeklyNotifications/SummaryBuilder.php:40
+#: src/WeeklyNotifications/SummaryBuilder.php:41
 msgid "The selected event source does not exist or is disabled."
 msgstr ""
 
-#: src/WeeklyNotifications/TelegramProvider.php:83
+#: src/WeeklyNotifications/TelegramProvider.php:96
 msgid "The Telegram bot token is not configured."
 msgstr ""
 
@@ -869,226 +864,210 @@ msgid "Not sent — an earlier part failed"
 msgstr ""
 
 #: src/Admin/settings/WeeklyNotifications.js:82
-#: src/Admin/settings/WeeklyNotifications.js:484
+#: src/Admin/settings/WeeklyNotifications.js:530
 msgid "Telegram"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:158
+#: src/Admin/settings/WeeklyNotifications.js:205
 msgid "Failed to load weekly notification settings."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:188
+#: src/Admin/settings/WeeklyNotifications.js:235
 msgid "Loading weekly notification settings…"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:226
+#: src/Admin/settings/WeeklyNotifications.js:272
 msgid "Weekly notification settings saved."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:236
+#: src/Admin/settings/WeeklyNotifications.js:282
 msgid "Failed to save weekly notification settings."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:258
+#: src/Admin/settings/WeeklyNotifications.js:304
 msgid "Telegram bot token removed."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:268
+#: src/Admin/settings/WeeklyNotifications.js:314
 msgid "Failed to remove the Telegram bot token."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:290
-msgid "Telegram accepted the test message for every chat."
-msgstr ""
-
-#: src/Admin/settings/WeeklyNotifications.js:297
-msgid "The test message did not reach every chat. See the results below."
-msgstr ""
-
-#: src/Admin/settings/WeeklyNotifications.js:308
-msgid "Failed to send the test message."
-msgstr ""
-
-#: src/Admin/settings/WeeklyNotifications.js:326
+#: src/Admin/settings/WeeklyNotifications.js:372
 msgid "Failed to build the preview."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:339
+#: src/Admin/settings/WeeklyNotifications.js:385
 msgid "Choose an event source"
 msgstr ""
 
 #. translators: %s: event source slug
-#: src/Admin/settings/WeeklyNotifications.js:354
+#: src/Admin/settings/WeeklyNotifications.js:400
 #, js-format
 msgid "%s (unavailable)"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:375
+#: src/Admin/settings/WeeklyNotifications.js:421
 msgid "Save a bot token and at least one chat or channel before sending a test message."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:380
+#: src/Admin/settings/WeeklyNotifications.js:426
 msgid "Save your changes first — the test uses the saved settings."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:390
+#: src/Admin/settings/WeeklyNotifications.js:436
 msgid "Weekly notifications"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:408
+#: src/Admin/settings/WeeklyNotifications.js:454
 msgid "Send weekly event notifications"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:417
+#: src/Admin/settings/WeeklyNotifications.js:463
 msgid "Event source"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:440
+#: src/Admin/settings/WeeklyNotifications.js:486
 msgid "Send on"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:450
+#: src/Admin/settings/WeeklyNotifications.js:496
 msgid "Send at"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:451
+#: src/Admin/settings/WeeklyNotifications.js:497
 msgid "In the site’s timezone. Sends can run a few minutes late on low-traffic sites."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:460
+#: src/Admin/settings/WeeklyNotifications.js:506
 msgid "Which week to include"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:468
+#: src/Admin/settings/WeeklyNotifications.js:514
 msgid "The week of the send"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:475
+#: src/Admin/settings/WeeklyNotifications.js:521
 msgid "The following week"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:487
+#: src/Admin/settings/WeeklyNotifications.js:533
 msgid "Post to Telegram"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:491
+#: src/Admin/settings/WeeklyNotifications.js:537
 msgid "Turning this off keeps the bot token and chats below."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:548
+#: src/Admin/settings/WeeklyNotifications.js:594
 msgid "Replace bot token"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:518
+#: src/Admin/settings/WeeklyNotifications.js:564
 msgid "Bot token"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:520
+#: src/Admin/settings/WeeklyNotifications.js:566
 msgid "From @BotFather. It is not shown again after saving."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:560
-#: src/Admin/settings/WeeklyNotifications.js:803
+#: src/Admin/settings/WeeklyNotifications.js:606
+#: src/Admin/settings/WeeklyNotifications.js:872
 msgid "Remove bot token"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:569
+#: src/Admin/settings/WeeklyNotifications.js:615
 msgid "Chats and channels"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:573
+#: src/Admin/settings/WeeklyNotifications.js:619
 msgid "One per line: a numeric chat ID (e.g. -1001234567890) or a public @channel username. Add the bot to each chat or channel with permission to post."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:589
+#: src/Admin/settings/WeeklyNotifications.js:635
 msgid "Save weekly notification settings"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:600
-msgid "Send Telegram test message"
-msgstr ""
-
-#: src/Admin/settings/WeeklyNotifications.js:635
+#: src/Admin/settings/WeeklyNotifications.js:687
 msgid "Schedule"
 msgstr ""
 
 #. translators: 1: date and time of the next send, 2: date range of the week it covers
-#: src/Admin/settings/WeeklyNotifications.js:640
+#: src/Admin/settings/WeeklyNotifications.js:692
 #, js-format
 msgid "Next send: %1$s, with events for %2$s."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:647
+#: src/Admin/settings/WeeklyNotifications.js:699
 msgid "Nothing is scheduled. Turn on weekly notifications and save to schedule sends."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:659
+#: src/Admin/settings/WeeklyNotifications.js:711
 msgid "Preview next message"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:667
+#: src/Admin/settings/WeeklyNotifications.js:719
 msgid "Save your changes to preview them."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:682
+#: src/Admin/settings/WeeklyNotifications.js:734
 msgid "No events that week, so nothing would be sent."
 msgstr ""
 
 #. translators: %d: number of Telegram messages
-#: src/Admin/settings/WeeklyNotifications.js:688
+#: src/Admin/settings/WeeklyNotifications.js:740
 #, js-format
 msgid "Telegram: sent as %d message."
 msgid_plural "Telegram: sent as %d messages."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/settings/WeeklyNotifications.js:711
+#: src/Admin/settings/WeeklyNotifications.js:780
 msgid "Recent sends"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:714
+#: src/Admin/settings/WeeklyNotifications.js:783
 msgid "No weekly notification has run yet."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:742
+#: src/Admin/settings/WeeklyNotifications.js:811
 msgid "Delivery details"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:746
+#: src/Admin/settings/WeeklyNotifications.js:815
 msgid "No messages delivered yet."
 msgstr ""
 
 #. translators: 1: message part number, 2: number of parts
-#: src/Admin/settings/WeeklyNotifications.js:772
+#: src/Admin/settings/WeeklyNotifications.js:841
 #, js-format
 msgid "Part %1$d of %2$d"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:808
+#: src/Admin/settings/WeeklyNotifications.js:877
 msgid "Remove the Telegram bot token? Weekly notifications will not reach Telegram until a new token is saved."
 msgstr ""
 
-#: src/WeeklyNotifications/SummaryBuilder.php:45
+#: src/WeeklyNotifications/SummaryBuilder.php:46
 msgid "Choose the page that heads the message."
 msgstr ""
 
-#: src/WeeklyNotifications/SummaryBuilder.php:48
+#: src/WeeklyNotifications/SummaryBuilder.php:49
 msgid "The selected page must be published and publicly visible."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:363
+#: src/Admin/settings/WeeklyNotifications.js:409
 msgid "Choose a page"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:395
+#: src/Admin/settings/WeeklyNotifications.js:441
 msgid "Post the week’s events from an event source to your channels every week, in the same format as the calendar’s “Copy summary” button."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:424
+#: src/Admin/settings/WeeklyNotifications.js:470
 msgid "Page linked in the heading"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:428
+#: src/Admin/settings/WeeklyNotifications.js:474
 msgid "Any published, public page. Its title and link head the message. The event source decides which events are listed."
 msgstr ""
 
@@ -1141,14 +1120,44 @@ msgstr ""
 msgid "No confirmed tickets to chart."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:501
+#: src/Admin/settings/WeeklyNotifications.js:547
 msgid "A bot token is saved. It is not shown here."
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:514
+#: src/Admin/settings/WeeklyNotifications.js:560
 msgid "New bot token"
 msgstr ""
 
-#: src/Admin/settings/WeeklyNotifications.js:537
+#: src/Admin/settings/WeeklyNotifications.js:583
 msgid "Keep saved token"
+msgstr ""
+
+#: src/API/WeeklyNotificationsController.php:349
+msgid "There are no events in the next scheduled week, so there is nothing to send."
+msgstr ""
+
+#: src/Admin/settings/WeeklyNotifications.js:336
+msgid "Telegram accepted the test summary for every chat."
+msgstr ""
+
+#: src/Admin/settings/WeeklyNotifications.js:343
+msgid "The test summary did not reach every chat. See the results below."
+msgstr ""
+
+#: src/Admin/settings/WeeklyNotifications.js:354
+msgid "Failed to send the test summary."
+msgstr ""
+
+#: src/Admin/settings/WeeklyNotifications.js:646
+msgid "Send test summary to Telegram"
+msgstr ""
+
+#: src/Admin/settings/WeeklyNotifications.js:653
+msgid "The test sends the summary for the next scheduled week to every saved chat, even while delivery is off. It is not recorded as a weekly send."
+msgstr ""
+
+#. translators: 1: message number, 2: number of messages
+#: src/Admin/settings/WeeklyNotifications.js:755
+#, js-format
+msgid "Telegram message %1$d of %2$d"
 msgstr ""

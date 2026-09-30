@@ -319,7 +319,7 @@ describe( 'WeeklyNotifications', () => {
 		render( <WeeklyNotifications onNotice={ () => {} } /> );
 
 		const testButton = await screen.findByRole( 'button', {
-			name: 'Send Telegram test message',
+			name: 'Send test summary to Telegram',
 		} );
 		expect( testButton ).toBeEnabled();
 
@@ -342,7 +342,7 @@ describe( 'WeeklyNotifications', () => {
 
 		expect(
 			await screen.findByRole( 'button', {
-				name: 'Send Telegram test message',
+				name: 'Send test summary to Telegram',
 			} )
 		).toBeDisabled();
 		expect(
@@ -373,7 +373,7 @@ describe( 'WeeklyNotifications', () => {
 
 		fireEvent.click(
 			await screen.findByRole( 'button', {
-				name: 'Send Telegram test message',
+				name: 'Send test summary to Telegram',
 			} )
 		);
 
@@ -448,6 +448,32 @@ describe( 'WeeklyNotifications', () => {
 					text: 'Calendar (https://example.test/), 21–27 Sep 2026:\n* Mon, 18:00, Workshop',
 					occurrence_count: 1,
 					telegram_parts: 1,
+					telegram_messages: [
+						{
+							text: 'Calendar 🎉\n21–27 Sep 2026\n\n• Mon, 18:00, <b>Workshop</b>\n• Tue, Unlinked',
+							entities: [
+								{ type: 'bold', offset: 0, length: 11 },
+								{
+									type: 'text_link',
+									offset: 0,
+									length: 11,
+									url: 'https://example.test/',
+								},
+								{
+									type: 'text_link',
+									offset: 42,
+									length: 15,
+									url: 'https://example.test/workshop/',
+								},
+								{
+									type: 'text_link',
+									offset: 65,
+									length: 8,
+									url: 'javascript:alert(1)',
+								},
+							],
+						},
+					],
 				} ),
 		} );
 
@@ -463,7 +489,16 @@ describe( 'WeeklyNotifications', () => {
 			await screen.findByText( 'Telegram: sent as 1 message.' )
 		).toBeInTheDocument();
 		expect(
-			screen.getByText( /\* Mon, 18:00, Workshop/ )
-		).toBeInTheDocument();
+			screen.getByRole( 'link', { name: 'Calendar 🎉' } )
+		).toHaveAttribute( 'href', 'https://example.test/' );
+		expect(
+			screen.getByRole( 'link', { name: '<b>Workshop</b>' } )
+		).toHaveAttribute( 'href', 'https://example.test/workshop/' );
+		expect( screen.getByText( 'Calendar 🎉' ).tagName ).toBe( 'STRONG' );
+		expect( screen.queryByText( /\* Mon/ ) ).not.toBeInTheDocument();
+		expect( screen.getAllByRole( 'link' ) ).toHaveLength( 2 );
+		expect(
+			screen.getByRole( 'group', { name: 'Telegram message 1 of 1' } )
+		).toHaveTextContent( '• Tue, Unlinked' );
 	} );
 } );

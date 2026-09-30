@@ -1,17 +1,18 @@
 /**
- * E2E: configure Telegram weekly notifications and send a test message (#1660).
+ * E2E: configure Telegram weekly notifications and send a test summary (#1660, #1735).
  *
  * Drives the Experimental tab of Fair Events Settings as an administrator:
- * picks a plain page (no calendar block) for the heading, saves a bot token
- * and two chats, checks the token is never shown again, saves unrelated
- * settings with no token field present (#1733), and sends a test message
- * that reaches one chat and fails for the other. No request
- * reaches Telegram — lib/telegram-http-double.php answers api.telegram.org
- * and records each request's chat ID and text (never the token).
+ * picks an event source and a plain page (no calendar block) for the heading,
+ * saves a bot token and two chats, checks the token is never shown again,
+ * saves unrelated settings with no token field present (#1733), and sends the
+ * next week's formatted summary as a test, which reaches one chat and fails
+ * for the other. No request reaches Telegram — lib/telegram-http-double.php
+ * answers api.telegram.org and records each request's chat ID, text and
+ * formatting entities (never the token).
  */
 
 import { test, expect } from '@playwright/test';
-import { wpCli, loginAsAdmin } from '../support/wp-cli.js';
+import { wpCli, loginAsAdmin, runScript } from '../support/wp-cli.js';
 
 const TOKEN = '123456789:AAEe2eWeeklyTelegramToken0123456789';
 const SETTINGS_URL =
@@ -34,10 +35,38 @@ function telegramRequests() {
 	return out ? JSON.parse(out) : [];
 }
 
+/**
+ * Text an entity covers; offsets count UTF-16 units, like JavaScript strings.
+ *
+ * @param {string} text   Message text.
+ * @param {Object} entity Telegram message entity.
+ * @return {string} Covered text.
+ */
+function covered(text, entity) {
+	return text.slice(entity.offset, entity.offset + entity.length);
+}
+
 test.describe('Weekly Telegram notifications', () => {
 	let pageId;
+	let source;
+	let event;
 
 	test.beforeEach(resetState);
+	// Remove the source, category and event after each attempt, so retries
+	// never leave fixtures behind.
+	test.afterEach(() => {
+		if (source) {
+			runScript(
+				'weekly-summary-fixture.php',
+				'E2E_WEEKLY',
+				`cleanup ${source.termId} ${source.sourceId} ${
+					event ? event.eventId : 0
+				}`
+			);
+		}
+		source = null;
+		event = null;
+	});
 	test.afterAll(() => {
 		resetState();
 		if (pageId) {
@@ -45,7 +74,7 @@ test.describe('Weekly Telegram notifications', () => {
 		}
 	});
 
-	test('an administrator configures Telegram and sends a test message', async ({
+	test('an administrator configures Telegram and sends a test summary', async ({
 		page,
 	}) => {
 		// A plain page with no calendar block can head the message.
@@ -53,6 +82,11 @@ test.describe('Weekly Telegram notifications', () => {
 		pageId = wpCli(
 			`post create --post_type=page --post_status=publish --post_title="${pageTitle}" --post_content="No calendar here." --porcelain`
 		).match(/(\d+)\s*$/)[1];
+		source = runScript(
+			'weekly-summary-fixture.php',
+			'E2E_WEEKLY',
+			'source'
+		);
 
 		await loginAsAdmin(page);
 		await page.goto(SETTINGS_URL);
@@ -61,6 +95,9 @@ test.describe('Weekly Telegram notifications', () => {
 			page.getByRole('heading', { name: 'Weekly notifications' })
 		).toBeVisible();
 
+		await page
+			.getByLabel('Event source', { exact: true })
+			.selectOption({ label: source.sourceName });
 		await page
 			.getByLabel('Page linked in the heading')
 			.selectOption({ label: pageTitle });
@@ -110,14 +147,35 @@ test.describe('Weekly Telegram notifications', () => {
 		);
 		expect(await page.content()).not.toContain(TOKEN);
 
+		// An event in the week the next send covers, now the schedule is final.
+		event = runScript(
+			'weekly-summary-fixture.php',
+			'E2E_WEEKLY',
+			`event ${source.termId}`
+		);
+
+		// The preview shows the Telegram presentation, with linked titles.
 		await page
-			.getByRole('button', { name: 'Send Telegram test message' })
+			.getByRole('button', { name: 'Preview next message' })
+			.click();
+		const previewMessage = page.getByRole('group', {
+			name: 'Telegram message 1 of 1',
+		});
+		await expect(
+			previewMessage.getByRole('link', { name: pageTitle })
+		).toHaveAttribute('href', /^http/);
+		await expect(
+			previewMessage.getByRole('link', { name: event.eventTitle })
+		).toHaveAttribute('href', event.eventUrl);
+
+		await page
+			.getByRole('button', { name: 'Send test summary to Telegram' })
 			.click();
 
 		await expect(
 			page
 				.getByText(
-					'The test message did not reach every chat. See the results below.'
+					'The test summary did not reach every chat. See the results below.'
 				)
 				.first()
 		).toBeVisible();
@@ -134,7 +192,23 @@ test.describe('Weekly Telegram notifications', () => {
 			'@e2e_missing_chat',
 		]);
 		for (const request of requests) {
-			expect(request.text).toContain('Test message from');
+			const lines = request.text.split('\n');
+			// Linked heading, visible date range, then bullet items.
+			expect(lines[0]).toBe(pageTitle);
+			expect(lines[1]).toMatch(/\d/);
+			expect(lines[2]).toBe('');
+			expect(lines).toHaveLength(4);
+			expect(lines[3].startsWith('• ')).toBe(true);
+			expect(lines[3].endsWith(`, ${event.eventTitle}`)).toBe(true);
+			// Formatting travels as entities: no markup, no raw URLs.
+			expect(request.text).not.toContain('http');
+			const links = request.entities
+				.filter((entity) => 'text_link' === entity.type)
+				.map((entity) => [covered(request.text, entity), entity.url]);
+			expect(links).toEqual([
+				[pageTitle, expect.stringMatching(/^http/)],
+				[event.eventTitle, event.eventUrl],
+			]);
 		}
 
 		// A test send never creates a scheduled-delivery record.
