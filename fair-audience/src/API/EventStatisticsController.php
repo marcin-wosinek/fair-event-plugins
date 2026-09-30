@@ -11,6 +11,7 @@ use DateInterval;
 use DateTimeImmutable;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
+use FairAudience\Services\EventTicketStatistics;
 use FairEventsShared\Money;
 use WP_Error;
 use WP_REST_Controller;
@@ -21,7 +22,9 @@ use WP_REST_Server;
 defined( 'WPINC' ) || die;
 
 /**
- * Provides display-ready sales statistics for one event occurrence.
+ * Provides display-ready sales statistics for one event occurrence: confirmed
+ * ticket counts and activity aggregates (see EventTicketStatistics), and
+ * revenue from the payment ledger of the qualifying relationships.
  */
 class EventStatisticsController extends WP_REST_Controller {
 
@@ -142,14 +145,8 @@ class EventStatisticsController extends WP_REST_Controller {
 			$total_sales_amount += $amount;
 		}
 		$excluded_currencies = array_values( array_unique( $excluded_currencies ) );
-		$daily_sales         = array();
-		foreach ( $rows as $row ) {
-			$date = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $row['created_at'], $timezone );
-			if ( $date ) {
-				$key                 = $date->format( 'Y-m-d' );
-				$daily_sales[ $key ] = ( $daily_sales[ $key ] ?? 0 ) + 1;
-			}
-		}
+		$tickets             = EventTicketStatistics::for_event_date( $event_date );
+		$daily_sales         = $tickets['daily'];
 
 		$window_start = $start->sub( new DateInterval( 'P27D' ) );
 		if ( $window_start > $recorded_end ) {
@@ -178,7 +175,7 @@ class EventStatisticsController extends WP_REST_Controller {
 				$cumulative_amount += $daily_amounts[ $key ] ?? 0.0;
 			} elseif ( $key === $recorded_end->format( 'Y-m-d' ) ) {
 				// Fold all remaining confirmations into the final visible point.
-				$cumulative        = count( $rows );
+				$cumulative        = $tickets['total'];
 				$cumulative_amount = $total_sales_amount;
 			}
 			$label           = $this->get_point_label( $cursor, $start, $end );
@@ -197,25 +194,33 @@ class EventStatisticsController extends WP_REST_Controller {
 
 		return new WP_REST_Response(
 			array(
-				'event_name'          => trim( (string) $event_date->get_display_title() ),
-				'total_sales'         => count( $rows ),
-				'currency'            => $currency,
-				'total_sales_amount'  => $total_sales_amount,
-				'amount_series'       => $amount_series,
-				'excluded_currencies' => $excluded_currencies,
-				'start_date'          => $start->format( 'Y-m-d' ),
-				'end_date'            => $end->format( 'Y-m-d' ),
-				'days_until_start'    => $today < $start ? (int) $today->diff( $start )->format( '%a' ) : null,
-				'series'              => $series,
+				'event_name'                          => trim( (string) $event_date->get_display_title() ),
+				'total_tickets'                       => $tickets['total'],
+				// Deprecated alias of total_tickets, kept for older clients.
+				'total_sales'                         => $tickets['total'],
+				'currency'                            => $currency,
+				'total_sales_amount'                  => $total_sales_amount,
+				'amount_series'                       => $amount_series,
+				'excluded_currencies'                 => $excluded_currencies,
+				'start_date'                          => $start->format( 'Y-m-d' ),
+				'end_date'                            => $end->format( 'Y-m-d' ),
+				'days_until_start'                    => $today < $start ? (int) $today->diff( $start )->format( '%a' ) : null,
+				'series'                              => $series,
+				'tickets_per_activity'                => $tickets['tickets_per_activity'],
+				'activities_per_ticket'               => $tickets['activities_per_ticket'],
+				'tickets_without_activity_assignment' => $tickets['tickets_without_activity_assignment'],
+				'incomplete_ticket_backfills'         => $tickets['incomplete_ticket_backfills'],
 			)
 		);
 	}
 
 	/**
-	 * Get direct signups plus qualifying whole-series passes.
+	 * Get the signed-up relationships whose payments count as revenue: direct
+	 * relationships plus qualifying whole-series passes. Revenue only; ticket
+	 * counts come from EventTicketStatistics.
 	 *
 	 * @param \FairEvents\Models\EventDates $event_date Event occurrence.
-	 * @return array[] Confirmed sale rows.
+	 * @return array[] Confirmed relationship rows.
 	 */
 	private function get_qualifying_sales_rows( $event_date ) {
 		$rows = $this->event_participant_repo->get_confirmed_sales_rows( (int) $event_date->id );

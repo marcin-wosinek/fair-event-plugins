@@ -38,50 +38,6 @@ import {
 
 const BAR_COLOR = '#3858e9'; // WordPress admin blue.
 
-// People per activity: one row per distinct ticket option, counting how many
-// confirmed participants picked it. ticket_option_ids / ticket_option_names are
-// parallel arrays on each participant row. Sorted by count descending.
-export function peoplePerActivity( participants ) {
-	const counts = new Map();
-	participants.forEach( ( p ) => {
-		const ids = Array.isArray( p.ticket_option_ids )
-			? p.ticket_option_ids
-			: [];
-		const names = Array.isArray( p.ticket_option_names )
-			? p.ticket_option_names
-			: [];
-		ids.forEach( ( id, i ) => {
-			const name = names[ i ] || `#${ id }`;
-			counts.set( name, ( counts.get( name ) || 0 ) + 1 );
-		} );
-	} );
-	return Array.from( counts.entries() )
-		.map( ( [ name, count ] ) => ( { name, count } ) )
-		.sort( ( a, b ) => b.count - a.count );
-}
-
-// Activities-per-person histogram: how many people picked 0 activities, 1, 2, …
-// The range is filled continuously from the smallest to the largest observed
-// count so the histogram has no gaps.
-export function activityCountDistribution( participants ) {
-	const buckets = new Map();
-	participants.forEach( ( p ) => {
-		const n = Array.isArray( p.ticket_option_ids )
-			? p.ticket_option_ids.length
-			: 0;
-		buckets.set( n, ( buckets.get( n ) || 0 ) + 1 );
-	} );
-	if ( ! buckets.size ) return [];
-	const keys = Array.from( buckets.keys() );
-	const min = Math.min( ...keys );
-	const max = Math.max( ...keys );
-	const result = [];
-	for ( let i = min; i <= max; i++ ) {
-		result.push( { activities: i, people: buckets.get( i ) || 0 } );
-	}
-	return result;
-}
-
 // A chart card. Passing `onDownload` adds the "Download PNG" action and the
 // event-name subtitle, so the exported image stays self-explanatory outside the
 // admin screen.
@@ -194,32 +150,17 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 	const [ exportError, setExportError ] = useState( '' );
 	// Guards against a second activation landing before the busy state renders.
 	const exportInFlight = useRef( false );
-	const [ participants, setParticipants ] = useState( [] );
-	const [ participantLoading, setParticipantLoading ] = useState( true );
 	const [ statistics, setStatistics ] = useState( null );
 	const [ statisticsLoading, setStatisticsLoading ] = useState( true );
 	const [ statisticsError, setStatisticsError ] = useState( '' );
 
 	useEffect( () => {
 		if ( ! eventDateId ) {
-			setParticipantLoading( false );
 			setStatisticsLoading( false );
 			return;
 		}
-		setParticipantLoading( true );
 		setStatisticsLoading( true );
 		setStatisticsError( '' );
-		apiFetch( {
-			path: `/fair-audience/v1/event-dates/${ eventDateId }/participants`,
-		} )
-			.then( ( participantData ) => {
-				setParticipants(
-					Array.isArray( participantData ) ? participantData : []
-				);
-			} )
-			.catch( () => setParticipants( [] ) )
-			.finally( () => setParticipantLoading( false ) );
-
 		apiFetch( {
 			path: `/fair-audience/v1/event-dates/${ eventDateId }/statistics`,
 		} )
@@ -236,20 +177,20 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 			.finally( () => setStatisticsLoading( false ) );
 	}, [ eventDateId ] );
 
-	const confirmed = useMemo(
-		() => participants.filter( ( p ) => p.label === 'signed_up' ),
-		[ participants ]
-	);
-	const excludedCount = participants.length - confirmed.length;
-
+	const totalTickets =
+		statistics?.total_tickets ?? statistics?.total_sales ?? 0;
 	const activityData = useMemo(
-		() => peoplePerActivity( confirmed ),
-		[ confirmed ]
+		() =>
+			( statistics?.tickets_per_activity || [] ).map( ( activity ) => ( {
+				name: activity.name || `#${ activity.id }`,
+				count: activity.count,
+			} ) ),
+		[ statistics?.tickets_per_activity ]
 	);
-	const distributionData = useMemo(
-		() => activityCountDistribution( confirmed ),
-		[ confirmed ]
-	);
+	const distributionData = statistics?.activities_per_ticket || [];
+	const unassignedTickets =
+		statistics?.tickets_without_activity_assignment || 0;
+	const incompleteBackfills = statistics?.incomplete_ticket_backfills || 0;
 	const currencyFormatter = useMemo(
 		() =>
 			new Intl.NumberFormat( undefined, {
@@ -266,7 +207,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 		eventTitle?.trim() || statistics?.event_name
 	);
 	const salesChartTitle = __(
-		'Cumulative sales',
+		'Cumulative tickets sold',
 		'fair-events-experimental'
 	);
 	const salesAmountChartTitle = __(
@@ -299,7 +240,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 		}
 	};
 
-	if ( participantLoading && statisticsLoading ) {
+	if ( statisticsLoading && ! statistics ) {
 		return (
 			<div style={ { padding: '24px', textAlign: 'center' } }>
 				<Spinner />
@@ -309,7 +250,6 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 
 	return (
 		<div>
-			{ statisticsLoading && <Spinner /> }
 			{ statisticsError && (
 				<Notice status="error" isDismissible={ false }>
 					{ statisticsError }
@@ -334,14 +274,14 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 							<div className="fair-event-statistics__summary">
 								<strong style={ { fontSize: '24px' } }>
 									{ sprintf(
-										/* translators: %d: confirmed sales total. */
+										/* translators: %d: number of confirmed tickets. */
 										_n(
-											'%d sale',
-											'%d sales',
-											statistics.total_sales,
+											'%d ticket',
+											'%d tickets',
+											totalTickets,
 											'fair-events-experimental'
 										),
-										statistics.total_sales
+										totalTickets
 									) }
 								</strong>
 								<strong style={ { fontSize: '24px' } }>
@@ -389,7 +329,7 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 								series={ statistics.series }
 								dataKey="total"
 								name={ __(
-									'Sales',
+									'Tickets',
 									'fair-events-experimental'
 								) }
 							/>
@@ -416,99 +356,144 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 							/>
 						</ChartCard>
 					</div>
-				</>
-			) }
 
-			{ participantLoading && <Spinner /> }
-			<Notice status="info" isDismissible={ false }>
-				{ sprintf(
-					/* translators: %d: number of excluded participant rows. */
-					__(
-						'Confirmed participants only (signed up). %d excluded (pending payment, interested, collaborators).',
-						'fair-events-experimental'
-					),
-					excludedCount
-				) }
-			</Notice>
-
-			<ChartCard
-				title={ __(
-					'People per activity',
-					'fair-events-experimental'
-				) }
-			>
-				{ activityData.length === 0 ? (
-					<p>
+					<Notice status="info" isDismissible={ false }>
 						{ __(
-							'No activities recorded for confirmed participants.',
+							'Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included.',
 							'fair-events-experimental'
 						) }
-					</p>
-				) : (
-					<ResponsiveContainer
-						width="100%"
-						height={ Math.max( 120, activityData.length * 44 ) }
-					>
-						<BarChart
-							data={ activityData }
-							layout="vertical"
-							margin={ { left: 24, right: 24 } }
-						>
-							<CartesianGrid strokeDasharray="3 3" />
-							<XAxis type="number" allowDecimals={ false } />
-							<YAxis
-								type="category"
-								dataKey="name"
-								width={ 160 }
-							/>
-							<Tooltip />
-							<Bar
-								dataKey="count"
-								name={ __(
-									'People',
-									'fair-events-experimental'
-								) }
-								fill={ BAR_COLOR }
-							/>
-						</BarChart>
-					</ResponsiveContainer>
-				) }
-			</ChartCard>
-
-			<ChartCard
-				title={ __(
-					'Activities per person',
-					'fair-events-experimental'
-				) }
-			>
-				<ResponsiveContainer width="100%" height={ 280 }>
-					<BarChart
-						data={ distributionData }
-						margin={ { left: 8, right: 24 } }
-					>
-						<CartesianGrid strokeDasharray="3 3" />
-						<XAxis
-							dataKey="activities"
-							allowDecimals={ false }
-							label={ {
-								value: __(
-									'Activities',
+					</Notice>
+					{ incompleteBackfills > 0 && (
+						<Notice status="warning" isDismissible={ false }>
+							{ sprintf(
+								/* translators: %d: number of purchases with missing ticket records. */
+								_n(
+									'%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created.',
+									'%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created.',
+									incompleteBackfills,
 									'fair-events-experimental'
 								),
-								position: 'insideBottom',
-								offset: -4,
-							} }
-						/>
-						<YAxis allowDecimals={ false } />
-						<Tooltip />
-						<Bar
-							dataKey="people"
-							name={ __( 'People', 'fair-events-experimental' ) }
-							fill={ BAR_COLOR }
-						/>
-					</BarChart>
-				</ResponsiveContainer>
-			</ChartCard>
+								incompleteBackfills
+							) }
+						</Notice>
+					) }
+					{ unassignedTickets > 0 && (
+						<Notice status="warning" isDismissible={ false }>
+							{ sprintf(
+								/* translators: %d: number of tickets left out of the activity charts. */
+								_n(
+									'%d ticket is left out of the activity charts because its activities were recorded for the participant rather than for each ticket.',
+									'%d tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket.',
+									unassignedTickets,
+									'fair-events-experimental'
+								),
+								unassignedTickets
+							) }
+						</Notice>
+					) }
+
+					<ChartCard
+						title={ __(
+							'Tickets per activity',
+							'fair-events-experimental'
+						) }
+					>
+						{ activityData.length === 0 ? (
+							<p>
+								{ __(
+									'No activities recorded for confirmed tickets.',
+									'fair-events-experimental'
+								) }
+							</p>
+						) : (
+							<ResponsiveContainer
+								width="100%"
+								height={ Math.max(
+									120,
+									activityData.length * 44
+								) }
+							>
+								<BarChart
+									data={ activityData }
+									layout="vertical"
+									margin={ { left: 24, right: 24 } }
+								>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis
+										type="number"
+										allowDecimals={ false }
+									/>
+									<YAxis
+										type="category"
+										dataKey="name"
+										width={ 160 }
+									/>
+									<Tooltip />
+									<Bar
+										dataKey="count"
+										name={ __(
+											'Tickets',
+											'fair-events-experimental'
+										) }
+										fill={ BAR_COLOR }
+									/>
+								</BarChart>
+							</ResponsiveContainer>
+						) }
+					</ChartCard>
+
+					<ChartCard
+						title={ __(
+							'Activities per ticket',
+							'fair-events-experimental'
+						) }
+					>
+						{ distributionData.length === 0 ? (
+							<p>
+								{ __(
+									'No confirmed tickets to chart.',
+									'fair-events-experimental'
+								) }
+							</p>
+						) : (
+							<ResponsiveContainer width="100%" height={ 280 }>
+								<BarChart
+									data={ distributionData }
+									margin={ {
+										left: 8,
+										right: 24,
+										bottom: 16,
+									} }
+								>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis
+										dataKey="activities"
+										allowDecimals={ false }
+										label={ {
+											value: __(
+												'Activities per ticket',
+												'fair-events-experimental'
+											),
+											position: 'insideBottom',
+											offset: -4,
+										} }
+									/>
+									<YAxis allowDecimals={ false } />
+									<Tooltip />
+									<Bar
+										dataKey="tickets"
+										name={ __(
+											'Tickets',
+											'fair-events-experimental'
+										) }
+										fill={ BAR_COLOR }
+									/>
+								</BarChart>
+							</ResponsiveContainer>
+						) }
+					</ChartCard>
+				</>
+			) }
 		</div>
 	);
 }

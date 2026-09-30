@@ -98,6 +98,40 @@ function addTransaction(
 	return JSON.parse( match[ 1 ] ).transactionId;
 }
 
+function runFixture( script, args, marker ) {
+	const output = execFileSync(
+		'npx',
+		[
+			'wp-env',
+			'run',
+			'tests-cli',
+			'wp',
+			'eval-file',
+			`wp-content/mu-plugins/scripts/${ script }`,
+			...args,
+		],
+		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
+	);
+	const match = output.match( new RegExp( `${ marker }:(\\{.*\\})` ) );
+	if ( ! match ) {
+		throw new Error( `Expected ${ marker } output, got:\n${ output }` );
+	}
+	return JSON.parse( match[ 1 ] );
+}
+
+function ticketFixture( action, data ) {
+	return runFixture(
+		'seed-event-statistics-tickets.php',
+		[ action, JSON.stringify( data ) ],
+		'E2E_EVENT_STATISTICS_TICKETS'
+	);
+}
+
+const confirmed = ( ...activities ) => ( {
+	status: 'confirmed',
+	activities,
+} );
+
 test.describe( 'EventStatisticsController', () => {
 	let api;
 	let anonymousApi;
@@ -109,6 +143,7 @@ test.describe( 'EventStatisticsController', () => {
 	const eventIds = [];
 	const participantIds = [];
 	const occurrences = {};
+	let series;
 	const username = `statistics-subscriber-${ Date.now() }`;
 	const password = 'Statistics-test-1514!';
 
@@ -182,6 +217,39 @@ test.describe( 'EventStatisticsController', () => {
 		return relationshipData.id;
 	}
 
+	async function addRelationship( eventDateId, label = 'signed_up' ) {
+		const participant = await api.post(
+			'/wp-json/fair-audience/v1/participants',
+			{
+				headers: adminHeaders,
+				data: {
+					name: 'Statistics ticket holder',
+					email: `statistics-ticket-${ Date.now() }-${
+						participantIds.length
+					}@example.test`,
+				},
+			}
+		);
+		expect( participant.ok() ).toBeTruthy();
+		const participantId = ( await participant.json() ).id;
+		participantIds.push( participantId );
+		if ( ! eventDateId ) {
+			return { participantId };
+		}
+		const relationship = await api.post(
+			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+			{
+				headers: adminHeaders,
+				data: { participant_id: participantId, label },
+			}
+		);
+		expect( relationship.ok() ).toBeTruthy();
+		return {
+			participantId,
+			relationshipId: ( await relationship.json() ).id,
+		};
+	}
+
 	async function getStatistics( eventDateId ) {
 		const response = await api.get(
 			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/statistics`,
@@ -217,6 +285,7 @@ test.describe( 'EventStatisticsController', () => {
 		occurrences.ongoing = await createOccurrence( 'ongoing', -2, 2 );
 		occurrences.completed = await createOccurrence( 'completed', -5, -3 );
 		occurrences.qualifying = await createOccurrence( 'qualifying', 12 );
+		occurrences.tickets = await createOccurrence( 'tickets', 10 );
 
 		occurrences.upcoming.firstRelationshipId = await addParticipant(
 			occurrences.upcoming.eventDateId,
@@ -323,6 +392,19 @@ test.describe( 'EventStatisticsController', () => {
 	} );
 
 	test.afterAll( async () => {
+		ticketFixture( 'cleanup', {
+			eventDateIds: Object.values( occurrences ).map(
+				( occurrence ) => occurrence.eventDateId
+			),
+		} );
+		if ( series ) {
+			ticketFixture( 'cleanup', { eventDateIds: series.occurrenceIds } );
+			runFixture(
+				'cleanup-event.php',
+				[ String( series.eventId ), String( series.eventDateId ) ],
+				'E2E_CLEANUP'
+			);
+		}
 		if ( adminHeaders && originalTimezone !== undefined ) {
 			await api.post( '/wp-json/wp/v2/settings', {
 				headers: adminHeaders,
@@ -358,6 +440,230 @@ test.describe( 'EventStatisticsController', () => {
 		await api?.dispose();
 		await anonymousApi?.dispose();
 		await subscriberApi?.dispose();
+	} );
+
+	test( 'counts confirmed tickets, historical admissions, and per-ticket activities', async () => {
+		const eventDateId = occurrences.tickets.eventDateId;
+		const at = ( offset, time = '12:00:00' ) =>
+			`${ addDays( today, offset ) } ${ time }`;
+		const signup = ( participantId, createdAt, units, extra = {} ) =>
+			ticketFixture( 'signup', {
+				eventDateId,
+				participantId,
+				quantity: units.length,
+				createdAt,
+				units,
+				...extra,
+			} );
+		const yoga = { optionId: 900001, name: 'Yoga' };
+		const acro = { optionId: 900002, name: 'Acro' };
+		const thai = { optionId: 900003, name: 'Thai' };
+		const otherYoga = { optionId: 900005, name: 'Yoga' };
+
+		// One participant, two purchases: three tickets, then one more.
+		const buyer = await addRelationship( eventDateId );
+		const threeTickets = signup( buyer.participantId, at( -6 ), [
+			confirmed( yoga, acro ),
+			confirmed( yoga ),
+			confirmed(),
+		] );
+		const oneMore = signup( buyer.participantId, at( -4 ), [
+			confirmed( acro ),
+		] );
+		// A refunded sibling and a pending activity hold do not count; an
+		// activity with the same name but another ID stays separate.
+		signup(
+			( await addRelationship( eventDateId ) ).participantId,
+			at( -4 ),
+			[
+				confirmed( otherYoga, { ...thai, status: 'pending_payment' } ),
+				{ status: 'refunded', activities: [ acro ] },
+			]
+		);
+		// Pending, failed and expired tickets are not confirmed sales.
+		const unpaid = ( await addRelationship( eventDateId ) ).participantId;
+		signup( unpaid, at( -5 ), [
+			{ status: 'pending_payment' },
+			{ status: 'failed' },
+		] );
+		signup( unpaid, at( -5 ), [ { status: 'expired' } ] );
+		signup( unpaid, at( -5 ), [], {
+			quantity: 1,
+			status: 'pending_payment',
+		} );
+		// Historical signups without ticket rows count by quantity: before
+		// the chart window, with no activities...
+		signup( null, at( -30 ), [], { quantity: 2 } );
+		// ...one ticket with participant-scoped activities...
+		const single = await addRelationship( eventDateId );
+		signup( single.participantId, at( -2 ), [], { quantity: 1 } );
+		ticketFixture( 'participant-option', {
+			relationshipId: single.relationshipId,
+			...yoga,
+		} );
+		// ...and two tickets whose activities cannot be attributed.
+		const ambiguous = await addRelationship( eventDateId );
+		signup( ambiguous.participantId, at( -2 ), [], { quantity: 2 } );
+		ticketFixture( 'participant-option', {
+			relationshipId: ambiguous.relationshipId,
+			...acro,
+		} );
+		// A partial backfill counts its rows only, at a late local hour.
+		signup( null, at( -1, '23:30:00' ), [ confirmed(), confirmed() ], {
+			quantity: 3,
+		} );
+		// A relationship with no signup is one historical admission.
+		const legacy = await addRelationship( eventDateId );
+		setParticipantCreatedAt(
+			eventDateId,
+			legacy.participantId,
+			addDays( today, -3 )
+		);
+		ticketFixture( 'participant-option', {
+			relationshipId: legacy.relationshipId,
+			...thai,
+		} );
+		addTransaction(
+			legacy.relationshipId,
+			20,
+			'EUR',
+			'paid',
+			'charge',
+			addDays( today, -3 )
+		);
+
+		let body = await getStatistics( eventDateId );
+		expect( body.total_tickets ).toBe( 13 );
+		expect( body.total_sales ).toBe( body.total_tickets );
+		expect( body.total_sales_amount ).toBe( 20 );
+		expect( body.tickets_without_activity_assignment ).toBe( 2 );
+		expect( body.incomplete_ticket_backfills ).toBe( 1 );
+		const totalOn = ( offset ) =>
+			body.series.find(
+				( point ) => point.date === addDays( today, offset )
+			).total;
+		expect( body.series[ 0 ].total ).toBe( 2 );
+		expect( totalOn( -6 ) ).toBe( 5 );
+		expect( totalOn( -5 ) ).toBe( 5 );
+		expect( totalOn( -4 ) ).toBe( 7 );
+		expect( totalOn( -3 ) ).toBe( 8 );
+		expect( totalOn( -2 ) ).toBe( 11 );
+		expect( totalOn( -1 ) ).toBe( 13 );
+		expect( totalOn( 0 ) ).toBe( 13 );
+		expect( body.tickets_per_activity ).toEqual( [
+			{ id: 900001, name: 'Yoga', count: 3 },
+			{ id: 900002, name: 'Acro', count: 2 },
+			{ id: 900003, name: 'Thai', count: 1 },
+			{ id: 900005, name: 'Yoga', count: 1 },
+		] );
+		expect( body.activities_per_ticket ).toEqual( [
+			{ activities: 0, tickets: 5 },
+			{ activities: 1, tickets: 5 },
+			{ activities: 2, tickets: 1 },
+		] );
+		expect( JSON.stringify( body ) ).not.toMatch( /@example\.test/ );
+
+		// A transfer changes nothing; each cancellation or refund removes one.
+		const second = await addRelationship( null );
+		ticketFixture( 'transfer', {
+			ticketId: threeTickets.ticketIds[ 1 ],
+			holderParticipantId: second.participantId,
+		} );
+		expect( ( await getStatistics( eventDateId ) ).total_tickets ).toBe(
+			13
+		);
+		ticketFixture( 'ticket-status', {
+			ticketId: threeTickets.ticketIds[ 2 ],
+			status: 'cancelled',
+		} );
+		body = await getStatistics( eventDateId );
+		expect( body.total_tickets ).toBe( 12 );
+		expect( body.activities_per_ticket[ 0 ] ).toEqual( {
+			activities: 0,
+			tickets: 4,
+		} );
+		ticketFixture( 'ticket-status', {
+			ticketId: oneMore.ticketIds[ 0 ],
+			status: 'refunded',
+		} );
+		body = await getStatistics( eventDateId );
+		expect( body.total_tickets ).toBe( 11 );
+		expect( body.total_sales_amount ).toBe( 20 );
+		expect(
+			body.tickets_per_activity.find( ( row ) => row.id === 900002 ).count
+		).toBe( 1 );
+	} );
+
+	test( 'counts whole-series tickets once on each applicable occurrence', async () => {
+		series = runFixture(
+			'seed-event.php',
+			[ 'three-ticket-scopes', JSON.stringify( { omitMulti: true } ) ],
+			'E2E_SEED'
+		);
+		const [ masterId, firstId, secondId ] = series.occurrenceIds;
+		const starts = {};
+		for ( const id of series.occurrenceIds ) {
+			const response = await api.get(
+				`/wp-json/fair-events/v1/event-dates/${ id }`,
+				{ headers: adminHeaders }
+			);
+			expect( response.ok() ).toBeTruthy();
+			starts[ id ] = ( await response.json() ).start_datetime;
+		}
+		const [ wholeSeriesTypeId ] = series.extraTypeIds;
+		const hourAfter = ( datetime ) =>
+			datetime.replace(
+				/ (\d\d):/,
+				( _, hour ) =>
+					` ${ String( Number( hour ) + 1 ).padStart( 2, '0' ) }:`
+			);
+		const dayBefore = ( datetime ) =>
+			`${ addDays( datetime.slice( 0, 10 ), -1 ) } 12:00:00`;
+
+		// Bought before the series starts: applies to every occurrence.
+		ticketFixture( 'signup', {
+			eventDateId: masterId,
+			participantId: ( await addRelationship( null ) ).participantId,
+			ticketTypeId: wholeSeriesTypeId,
+			quantity: 2,
+			createdAt: dayBefore( starts[ masterId ] ),
+			units: [
+				confirmed( { optionId: 900001, name: 'Yoga' } ),
+				confirmed(),
+			],
+		} );
+		// Bought from the second occurrence after it started: third only.
+		ticketFixture( 'signup', {
+			eventDateId: firstId,
+			participantId: ( await addRelationship( null ) ).participantId,
+			ticketTypeId: wholeSeriesTypeId,
+			quantity: 1,
+			createdAt: hourAfter( starts[ firstId ] ),
+			units: [ confirmed() ],
+		} );
+		// A single-session ticket stays on its own occurrence.
+		ticketFixture( 'signup', {
+			eventDateId: firstId,
+			participantId: ( await addRelationship( null ) ).participantId,
+			ticketTypeId: series.ticketTypeId,
+			quantity: 1,
+			createdAt: dayBefore( starts[ masterId ] ),
+			units: [ confirmed() ],
+		} );
+
+		const master = await getStatistics( masterId );
+		const first = await getStatistics( firstId );
+		const second = await getStatistics( secondId );
+		expect( master.total_tickets ).toBe( 2 );
+		expect( first.total_tickets ).toBe( 3 );
+		expect( second.total_tickets ).toBe( 3 );
+		expect( second.tickets_per_activity ).toEqual( [
+			{ id: 900001, name: 'Yoga', count: 1 },
+		] );
+		expect( second.activities_per_ticket ).toEqual( [
+			{ activities: 0, tickets: 2 },
+			{ activities: 1, tickets: 1 },
+		] );
 	} );
 
 	test( 'includes the event display name for chart labels', async () => {

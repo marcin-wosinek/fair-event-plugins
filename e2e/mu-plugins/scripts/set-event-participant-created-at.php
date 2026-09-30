@@ -4,6 +4,9 @@
  *
  * Usage: wp eval-file .../set-event-participant-created-at.php <event-date-id> <participant-id> <ISO-date-time>
  *
+ * The date-time is site-local; it is stored in UTC, as the database clock
+ * records relationship creation times.
+ *
  * @package FairEventsE2E
  */
 
@@ -19,7 +22,7 @@ $created_at     = isset( $args[2] ) ? str_replace( 'T', ' ', sanitize_text_field
 
 $updated = $wpdb->update(
 	$wpdb->prefix . 'fair_audience_event_participants',
-	array( 'created_at' => $created_at ),
+	array( 'created_at' => get_gmt_from_date( $created_at ) ),
 	array(
 		'event_date_id'  => $event_date_id,
 		'participant_id' => $participant_id,
