@@ -195,6 +195,86 @@ test.describe( 'Transaction — integration fee', () => {
 	} );
 } );
 
+test.describe( 'Transaction — JSON import keeps recorded Mollie fees (#1715)', () => {
+	const HELPERS = '/wp-json/fair-e2e/v1/external-updates';
+	const PREFIX = 'tr_e2efeeimport';
+	let api;
+
+	const importRows = ( rows ) =>
+		api.post( IMPORT_ENDPOINT, {
+			headers: adminAuth(),
+			data: {
+				transactions: rows.map( ( row ) => ( {
+					amount: 10,
+					currency: 'EUR',
+					status: 'paid',
+					testmode: true,
+					...row,
+				} ) ),
+			},
+		} );
+
+	const storedFee = async ( id ) => {
+		const res = await api.get(
+			`${ HELPERS }/transaction?mollie_payment_id=${ id }`,
+			{ headers: adminAuth() }
+		);
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		return ( await res.json() ).mollie_fee;
+	};
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
+
+	test.afterAll( async () => {
+		await api.delete( `${ HELPERS }/transactions?prefix=${ PREFIX }`, {
+			headers: adminAuth(),
+		} );
+		await api.dispose();
+	} );
+
+	test( 'a re-import keeps a recorded fee and only fills a missing one', async () => {
+		const suffix = Date.now();
+		const kept = `${ PREFIX }kept${ suffix }`;
+		const zero = `${ PREFIX }zero${ suffix }`;
+		const filled = `${ PREFIX }filled${ suffix }`;
+		const none = `${ PREFIX }none${ suffix }`;
+
+		const first = await importRows( [
+			{ mollie_payment_id: kept, mollie_fee: 0.29 },
+			{ mollie_payment_id: zero, mollie_fee: 0 },
+			{ mollie_payment_id: filled },
+			{ mollie_payment_id: none },
+		] );
+		expect( first.status() ).toBe( 200 );
+		expect( ( await first.json() ).created ).toBe( 4 );
+
+		for ( const source of [ undefined, null, 0, 0.5 ] ) {
+			const res = await importRows( [
+				{ mollie_payment_id: kept, mollie_fee: source },
+				{ mollie_payment_id: zero, mollie_fee: source },
+			] );
+			expect( res.status() ).toBe( 200 );
+			expect( ( await res.json() ).updated ).toBe( 2 );
+			expect( await storedFee( kept ) ).toBe( 0.29 );
+			expect( await storedFee( zero ) ).toBe( 0 );
+		}
+
+		const fill = await importRows( [
+			{ mollie_payment_id: filled, mollie_fee: 0 },
+			{ mollie_payment_id: none, description: 'Still no fee' },
+		] );
+		expect( ( await fill.json() ).updated ).toBe( 2 );
+		expect( await storedFee( filled ) ).toBe( 0 );
+		expect( await storedFee( none ) ).toBeNull();
+
+		// Filled once, the fee is recorded and wins from then on.
+		await importRows( [ { mollie_payment_id: filled, mollie_fee: 0.4 } ] );
+		expect( await storedFee( filled ) ).toBe( 0 );
+	} );
+} );
+
 test.describe( 'Transaction — Mollie import', () => {
 	let api;
 	const endpoint = '/wp-json/fair-payments-connector/v1/transactions/mollie';

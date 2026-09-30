@@ -191,6 +191,7 @@ class ExternalTransactionsController extends WP_REST_Controller {
 			'mollie_payment_id' => $transaction->mollie_payment_id ?? '',
 			'amount'            => (float) ( $transaction->amount ?? 0 ),
 			'currency'          => $transaction->currency ?? 'EUR',
+			'mollie_fee'        => null !== $transaction->mollie_fee ? (float) $transaction->mollie_fee : null,
 			'application_fee'   => null !== $transaction->application_fee ? (float) $transaction->application_fee : null,
 			'status'            => $transaction->status ?? 'unknown',
 			'testmode'          => ! empty( $transaction->testmode ),

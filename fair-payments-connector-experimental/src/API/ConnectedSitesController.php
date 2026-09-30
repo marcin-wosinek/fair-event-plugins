@@ -470,6 +470,9 @@ class ConnectedSitesController extends WP_REST_Controller {
 						'mollie_payment_id' => $transaction['mollie_payment_id'] ?? '',
 						'amount'            => $transaction['amount'] ?? 0,
 						'currency'          => $transaction['currency'] ?? 'EUR',
+						// Older connected sites omit mollie_fee; null leaves
+						// the central fee as it is.
+						'mollie_fee'        => $transaction['mollie_fee'] ?? null,
 						'application_fee'   => $transaction['application_fee'] ?? null,
 						'status'            => $transaction['status'] ?? 'paid',
 						'testmode'          => ! empty( $transaction['testmode'] ),
