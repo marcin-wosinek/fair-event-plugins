@@ -1254,7 +1254,6 @@ msgstr "Ustawienia"
 #: src/API/EventParticipantsController.php:1655
 #: src/API/EventParticipantsController.php:1735
 #: src/API/EventParticipantsController.php:2028
-#: src/API/EventStatisticsController.php:109
 msgid "Event date not found."
 msgstr "Data wydarzenia nie znaleziona."
 
@@ -1867,7 +1866,7 @@ msgid "You have been removed from this event."
 msgstr "Zostałeś usunięty z tego wydarzenia."
 
 #: src/blocks/event-signup/render.php:1288
-#: src/Hooks/SignupHookBridge.php:486
+#: src/Hooks/SignupHookBridge.php:489
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2754
 #: src/blocks/event-signup/frontend.js:1439
 msgid "Cancel signup"
@@ -1889,8 +1888,8 @@ msgstr "Nie znaleziono daty wydarzenia dla tego wydarzenia"
 #: src/blocks/event-interest/render.php:161
 #: src/blocks/event-signup/render.php:1368
 #: src/blocks/mailing-signup/render.php:156
-#: src/Hooks/SignupHookBridge.php:492
-#: src/Hooks/SignupHookBridge.php:520
+#: src/Hooks/SignupHookBridge.php:495
+#: src/Hooks/SignupHookBridge.php:523
 msgid "Not you? Start fresh"
 msgstr "To nie ty? Zacznij od nowa"
 
@@ -2033,7 +2032,7 @@ msgstr "Wybierz typ biletu"
 #: src/blocks/event-signup/render.php:768
 #: src/blocks/event-signup/render.php:856
 #: src/blocks/event-signup/render.php:918
-#: src/Hooks/SignupHookBridge.php:714
+#: src/Hooks/SignupHookBridge.php:717
 msgid "free"
 msgstr "bezpłatnie"
 
@@ -2268,12 +2267,12 @@ msgstr "wyprzedane"
 
 #: src/blocks/event-signup/render.php:861
 #: src/blocks/event-signup/render.php:922
-#: src/Hooks/SignupHookBridge.php:717
+#: src/Hooks/SignupHookBridge.php:720
 msgid "full"
 msgstr "pełne"
 
 #: src/blocks/event-signup/render.php:963
-#: src/Hooks/SignupHookBridge.php:475
+#: src/Hooks/SignupHookBridge.php:478
 msgid "Choose a date"
 msgstr "Wybierz datę"
 
@@ -2361,7 +2360,7 @@ msgid "Payment status: %s"
 msgstr "Status płatności: %s"
 
 #: src/blocks/event-signup/render.php:1262
-#: src/Hooks/SignupHookBridge.php:425
+#: src/Hooks/SignupHookBridge.php:428
 msgid "You are signed up for this date."
 msgstr "Jesteś zarejestrowany na ten termin."
 
@@ -2466,7 +2465,7 @@ msgid "Invalid or expired unsubscribe link."
 msgstr "Nieprawidłowy lub wygasły link do anulowania subskrypcji."
 
 #: src/API/EventInterestController.php:266
-#: src/Core/Plugin.php:319
+#: src/Core/Plugin.php:313
 msgid "You will no longer receive updates about this event."
 msgstr "Nie będziesz już otrzymywać aktualizacji dotyczących tego wydarzenia."
 
@@ -2535,8 +2534,8 @@ msgstr "Strona internetowa"
 
 #: src/blocks/event-signup/render.php:910
 #: src/blocks/event-signup/render.php:940
-#: src/Hooks/SignupHookBridge.php:683
-#: src/Hooks/SignupHookBridge.php:734
+#: src/Hooks/SignupHookBridge.php:686
+#: src/Hooks/SignupHookBridge.php:737
 #: src/blocks/event-signup/frontend.js:1497
 msgid "Add activities"
 msgstr "Dodaj aktywności"
@@ -2549,31 +2548,31 @@ msgstr "Cześć %s! Oto Twoja rejestracja na to wydarzenie."
 
 #. translators: %s: ticket type name
 #: src/blocks/event-signup/render.php:1269
-#: src/Hooks/SignupHookBridge.php:432
+#: src/Hooks/SignupHookBridge.php:435
 #, php-format
 msgid "Your ticket: %s"
 msgstr "Twój bilet: %s"
 
 #: src/blocks/event-signup/render.php:1277
-#: src/Hooks/SignupHookBridge.php:439
-#: src/Hooks/SignupHookBridge.php:686
+#: src/Hooks/SignupHookBridge.php:442
+#: src/Hooks/SignupHookBridge.php:689
 msgid "Your activities:"
 msgstr "Twoje aktywności:"
 
-#: src/Core/Plugin.php:292
+#: src/Core/Plugin.php:286
 msgid "Missing unsubscribe token."
 msgstr "Brakuje tokenu rezygnacji z subskrypcji."
 
-#: src/Core/Plugin.php:293
-#: src/Core/Plugin.php:303
+#: src/Core/Plugin.php:287
+#: src/Core/Plugin.php:297
 msgid "Unsubscribe"
 msgstr "Rezygnuj z subskrypcji"
 
-#: src/Core/Plugin.php:302
+#: src/Core/Plugin.php:296
 msgid "This unsubscribe link is invalid or has expired."
 msgstr "Ten link rezygnacji z subskrypcji jest nieprawidłowy lub wygasł."
 
-#: src/Core/Plugin.php:320
+#: src/Core/Plugin.php:314
 msgid "Unsubscribed"
 msgstr "Zrezygnowano z subskrypcji"
 
@@ -2820,7 +2819,7 @@ msgid "Choose occurrences"
 msgstr "Wybierz wystąpienia"
 
 #: src/blocks/event-signup/render.php:1036
-#: src/Hooks/SignupHookBridge.php:463
+#: src/Hooks/SignupHookBridge.php:466
 msgid "already signed up"
 msgstr "już zapisany"
 
@@ -3643,7 +3642,7 @@ msgstr "Razem: %s"
 msgid "Translations"
 msgstr "Tłumaczenia"
 
-#: src/Hooks/SignupHookBridge.php:373
+#: src/Hooks/SignupHookBridge.php:376
 msgid "You already have a ticket for this date."
 msgstr "Masz już bilet na tę datę."
 
@@ -3714,37 +3713,6 @@ msgstr[0] "Wybierz nie więcej niż %d rozszerzenie."
 msgstr[1] "Wybierz nie więcej niż %d rozszerzenia."
 msgstr[2] "Wybierz nie więcej niż %d rozszerzeń."
 
-#: src/API/EventStatisticsController.php:91
-msgid "You must be logged in."
-msgstr "Musisz być zalogowany."
-
-#: src/API/EventStatisticsController.php:94
-msgid "You do not have permission to view event statistics."
-msgstr "Nie posiadasz uprawnienia do wyświetlania statystyk wydarzenia."
-
-#: src/API/EventStatisticsController.php:115
-msgid "The event start date is invalid."
-msgstr "Data rozpoczęcia wydarzenia jest nieprawidłowa."
-
-#. translators: %d: number of calendar days before the event.
-#: src/API/EventStatisticsController.php:256
-#, php-format
-msgid "%d day before the event"
-msgid_plural "%d days before the event"
-msgstr[0] "%d dzień przed wydarzeniem"
-msgstr[1] "%d dni przed wydarzeniem"
-msgstr[2] "%d dni przed wydarzeniem"
-
-#: src/API/EventStatisticsController.php:261
-msgid "Day of the event"
-msgstr "Dzień wydarzenia"
-
-#. translators: %s: ordinal event-day number, for example 1st or 2nd.
-#: src/API/EventStatisticsController.php:266
-#, php-format
-msgid "%s day of the event"
-msgstr "%s dzień wydarzenia"
-
 #: src/API/EventParticipantsController.php:1382
 msgid "Ticket not found for this event date."
 msgstr "Bilet nie znaleziony dla tej daty wydarzenia."
@@ -3778,11 +3746,11 @@ msgstr "Twoje zajęcia nie mogły być zapisane. Spróbuj ponownie."
 msgid "Your ticket is no longer active."
 msgstr "Twój bilet nie jest już aktywny."
 
-#: src/Hooks/SignupHookBridge.php:697
+#: src/Hooks/SignupHookBridge.php:700
 msgid "Add to ticket"
 msgstr "Dodaj do biletu"
 
-#: src/Hooks/SignupHookBridge.php:699
+#: src/Hooks/SignupHookBridge.php:702
 msgid "Choose a ticket"
 msgstr "Wybierz bilet"
 

@@ -1,5 +1,6 @@
 /**
- * Live API coverage for event sales statistics.
+ * Live API coverage for event sales statistics: the canonical fair-events
+ * route and the fair-audience path it moved from (#1726).
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -127,12 +128,21 @@ function ticketFixture( action, data ) {
 	);
 }
 
+const NAMESPACES = [ 'fair-events/v1', 'fair-audience/v1' ];
+
+const statisticsPath = ( namespace, eventDateId ) =>
+	`/wp-json/${ namespace }/event-dates/${ eventDateId }/statistics`;
+
 const confirmed = ( ...activities ) => ( {
 	status: 'confirmed',
 	activities,
 } );
 
 test.describe( 'EventStatisticsController', () => {
+	// Several tests seed through a dozen or more sequential WP-CLI fixture
+	// calls, each taking seconds, which overruns the default 30s budget.
+	test.describe.configure( { timeout: 120 * 1000 } );
+
 	let api;
 	let anonymousApi;
 	let subscriberApi;
@@ -250,13 +260,21 @@ test.describe( 'EventStatisticsController', () => {
 		};
 	}
 
+	// Every assertion runs against the canonical route; the compatibility
+	// alias must answer with the same body.
 	async function getStatistics( eventDateId ) {
-		const response = await api.get(
-			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/statistics`,
-			{ headers: adminHeaders }
+		const [ canonical, legacy ] = await Promise.all(
+			NAMESPACES.map( async ( namespace ) => {
+				const response = await api.get(
+					statisticsPath( namespace, eventDateId ),
+					{ headers: adminHeaders }
+				);
+				expect( response.ok() ).toBeTruthy();
+				return response.json();
+			} )
 		);
-		expect( response.ok() ).toBeTruthy();
-		return response.json();
+		expect( legacy ).toEqual( canonical );
+		return canonical;
 	}
 
 	test.beforeAll( async () => {
@@ -673,25 +691,50 @@ test.describe( 'EventStatisticsController', () => {
 		expect( body.event_name ).toBe( body.event_name.trim() );
 	} );
 
-	test( 'rejects anonymous and insufficient-capability requests', async () => {
-		const endpoint = `/wp-json/fair-audience/v1/event-dates/${ occurrences.upcoming.eventDateId }/statistics`;
-		expect( ( await anonymousApi.get( endpoint ) ).status() ).toBe( 401 );
-		expect(
-			(
-				await subscriberApi.get( endpoint, {
-					headers: subscriberHeaders,
-				} )
-			).status()
-		).toBe( 403 );
-	} );
+	for ( const namespace of NAMESPACES ) {
+		test( `rejects anonymous and insufficient-capability requests on ${ namespace }`, async () => {
+			const endpoint = statisticsPath(
+				namespace,
+				occurrences.upcoming.eventDateId
+			);
+			expect( ( await anonymousApi.get( endpoint ) ).status() ).toBe(
+				401
+			);
+			expect(
+				(
+					await subscriberApi.get( endpoint, {
+						headers: subscriberHeaders,
+					} )
+				).status()
+			).toBe( 403 );
+		} );
 
-	test( 'returns 404 for a missing occurrence', async () => {
-		const response = await api.get(
-			'/wp-json/fair-audience/v1/event-dates/999999999/statistics',
-			{ headers: adminHeaders }
-		);
-		expect( response.status() ).toBe( 404 );
-	} );
+		test( `returns 404 for a missing occurrence on ${ namespace }`, async () => {
+			const response = await api.get(
+				statisticsPath( namespace, 999999999 ),
+				{ headers: adminHeaders }
+			);
+			expect( response.status() ).toBe( 404 );
+		} );
+
+		test( `registers a single GET handler on ${ namespace }`, async () => {
+			const response = await api.get( `/wp-json/${ namespace }`, {
+				headers: adminHeaders,
+			} );
+			expect( response.ok() ).toBeTruthy();
+			const { routes } = await response.json();
+			const route =
+				routes[
+					`/${ namespace }/event-dates/(?P<event_date_id>\\d+)/statistics`
+				];
+			expect( route ).toBeDefined();
+			expect(
+				route.endpoints.filter( ( endpoint ) =>
+					endpoint.methods.includes( 'GET' )
+				)
+			).toHaveLength( 1 );
+		} );
+	}
 
 	test( 'keeps an upcoming event horizon with null future totals', async () => {
 		const body = await getStatistics( occurrences.upcoming.eventDateId );

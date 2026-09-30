@@ -242,6 +242,23 @@ class Plugin {
 			}
 		);
 
+		// Event statistics — registers `/fair-events/v1/event-dates/{id}/statistics`
+		// and its former `/fair-audience/v1/...` path. The data lives in Fair
+		// Audience, so both exist only while it is active. Priority 20 runs
+		// after an older Fair Audience's own registration, which the alias
+		// then overrides.
+		add_action(
+			'rest_api_init',
+			function () {
+				if ( ! \FairEvents\API\EventStatisticsController::is_available() ) {
+					return;
+				}
+				$controller = new \FairEvents\API\EventStatisticsController();
+				$controller->register_routes();
+			},
+			20
+		);
+
 		// Venue controller — registers `/fair-events/v1/venues`.
 		add_action(
 			'rest_api_init',
@@ -277,7 +294,7 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_auto_create_event() {
-		add_action( 'wp_after_insert_post', array( $this, 'auto_create_event_date' ), 10, 4 );
+		add_action( 'wp_after_insert_post', array( $this, 'auto_create_event_date' ), 10, 3 );
 	}
 
 	/**
@@ -333,10 +350,9 @@ class Plugin {
 	 * @param int      $post_id     Post ID.
 	 * @param \WP_Post $post        Post object.
 	 * @param bool     $update      Whether this is an existing post being updated.
-	 * @param \WP_Post $post_before Post object before the update (null for new posts).
 	 * @return void
 	 */
-	public function auto_create_event_date( $post_id, $post, $update, $post_before ) {
+	public function auto_create_event_date( $post_id, $post, $update ) {
 		// Only for new fair_event posts (not updates).
 		if ( $update ) {
 			return;

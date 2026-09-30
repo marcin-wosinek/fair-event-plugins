@@ -4,7 +4,7 @@
  * Captures one rendered chart card (heading, event subtitle, and the chart's
  * SVG) as a PNG and hands it to the browser as a download.
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
 // Elements carrying this attribute (the download control) are left out of the

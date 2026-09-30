@@ -7,6 +7,7 @@
 
 namespace FairEvents\Admin;
 
+use FairEvents\API\EventStatisticsController;
 use FairEvents\Models\EventDates;
 use FairEvents\Services\EventCopyService;
 use FairEvents\Settings\Settings;
@@ -114,7 +115,7 @@ class AdminPages {
 			array( $this, 'render_calendar_page' )
 		);
 
-		// All Events page
+		// All Events page.
 		$this->page_hooks['fair-events-all-events'] = add_submenu_page(
 			$parent,
 			__( 'All Events', 'fair-events' ),
@@ -137,7 +138,7 @@ class AdminPages {
 			array( $this, 'render_venues_page' )
 		);
 
-		// Settings page
+		// Settings page.
 		$this->page_hooks['fair-events-settings'] = add_submenu_page(
 			$parent,
 			__( 'Fair Events Settings', 'fair-events' ),
@@ -147,9 +148,9 @@ class AdminPages {
 			array( $this, 'render_settings_page' )
 		);
 
-		// Manage Event page (hidden from menu, accessed via calendar)
+		// Manage Event page (hidden from menu, accessed via calendar).
 		$this->page_hooks['fair-events-manage-event'] = add_submenu_page(
-			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility)
+			'', // Hidden from menu (empty string instead of null for PHP 8.1+ compatibility).
 			__( 'Manage Event', 'fair-events' ),
 			__( 'Manage Event', 'fair-events' ),
 			'edit_posts',
@@ -159,6 +160,20 @@ class AdminPages {
 
 		// Manage Event hidden-page title (always on; the page itself is core).
 		$this->set_hidden_page_title( $this->page_hooks['fair-events-manage-event'], __( 'Manage Event', 'fair-events' ) );
+
+		// Event Statistics page (hidden; opened from bookmarks — Manage Event
+		// shows the same view inline). Registered even without Fair Audience
+		// so old links explain the missing dependency instead of failing.
+		$this->page_hooks['fair-events-event-statistics'] = add_submenu_page(
+			'',
+			__( 'Event Statistics', 'fair-events' ),
+			__( 'Event Statistics', 'fair-events' ),
+			'manage_options',
+			'fair-events-event-statistics',
+			array( $this, 'render_event_statistics_page' )
+		);
+
+		$this->set_hidden_page_title( $this->page_hooks['fair-events-event-statistics'], __( 'Event Statistics', 'fair-events' ) );
 
 		// Copy Event page (hidden from menu, accessed via event actions).
 		$this->page_hooks['fair-events-copy'] = add_submenu_page(
@@ -275,7 +290,7 @@ class AdminPages {
 			return;
 		}
 
-		// Calendar page
+		// Calendar page.
 		if ( 'fair-events-calendar' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/calendar/index.asset.php';
 
@@ -321,7 +336,7 @@ class AdminPages {
 			return;
 		}
 
-		// All Events page
+		// All Events page.
 		if ( 'fair-events-all-events' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/all-events/index.asset.php';
 
@@ -396,7 +411,7 @@ class AdminPages {
 			return;
 		}
 
-		// Manage Event page
+		// Manage Event page.
 		if ( 'fair-events-manage-event' === $slug ) {
 			wp_enqueue_media();
 
@@ -450,10 +465,11 @@ class AdminPages {
 			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
 				$localized_data['audienceUrl']         = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
 				$localized_data['groupPricingEnabled'] = \FairEvents\Core\Features::is_enabled( 'ticketing' );
-				if ( class_exists( 'FairEventsExperimental\Core\Features' ) && \FairEventsExperimental\Core\Features::is_enabled( 'audience-statistics' ) ) {
-					$localized_data['statisticsUrl'] = admin_url( 'admin.php?page=fair-events-event-statistics&event_date_id=' );
-				}
 			}
+
+			// The Statistics tab mirrors its REST route: administrators only,
+			// and only when Fair Audience provides the data.
+			$localized_data['statisticsAvailable'] = EventStatisticsController::is_available() && current_user_can( 'manage_options' );
 
 			if ( class_exists( 'FairEventsExperimental\Core\Features' ) && \FairEventsExperimental\Core\Features::is_enabled( 'event-tools' ) ) {
 				$localized_data['duplicateEventUrl'] = admin_url( 'admin.php?page=fair-events-duplicate-event&event_date_id=' );
@@ -503,7 +519,53 @@ class AdminPages {
 
 			do_action( 'fair_events_manage_event_enqueue_assets', $hook );
 
-			wp_enqueue_style( 'wp-components' );
+			// Styles imported by the bundle (the Statistics tab's charts).
+			wp_enqueue_style(
+				'fair-events-manage-event',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/manage-event/index.css',
+				array( 'wp-components' ),
+				$asset_file['version']
+			);
+			return;
+		}
+
+		// Event Statistics page.
+		if ( 'fair-events-event-statistics' === $slug ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/event-statistics/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-event-statistics',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-statistics/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				true
+			);
+
+			wp_enqueue_style(
+				'fair-events-event-statistics',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-statistics/index.css',
+				array( 'wp-components' ),
+				$asset_file['version']
+			);
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
+
+			wp_localize_script(
+				'fair-events-event-statistics',
+				'fairEventsEventStatisticsData',
+				array(
+					'eventDateId'    => $event_date_id,
+					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
+					'audienceActive' => EventStatisticsController::is_available(),
+				)
+			);
+
+			wp_set_script_translations(
+				'fair-events-event-statistics',
+				'fair-events',
+				\FairEvents\Core\Features::script_translations_path()
+			);
 			return;
 		}
 
@@ -605,6 +667,17 @@ class AdminPages {
 	}
 
 	/**
+	 * Render the event statistics page.
+	 *
+	 * @return void
+	 */
+	public function render_event_statistics_page() {
+		?>
+		<div id="fair-events-event-statistics-root"></div>
+		<?php
+	}
+
+	/**
 	 * Reorder admin menu: Calendar first, Settings last
 	 *
 	 * @return void
@@ -618,7 +691,7 @@ class AdminPages {
 			return;
 		}
 
-		// Find special items
+		// Find special items.
 		$calendar_item   = null;
 		$calendar_key    = null;
 		$all_events_item = null;
@@ -641,7 +714,7 @@ class AdminPages {
 			}
 		}
 
-		// Remove items we want to reposition
+		// Remove items we want to reposition.
 		if ( null !== $calendar_key ) {
 			unset( $submenu[ $parent_slug ][ $calendar_key ] );
 		}
@@ -652,10 +725,10 @@ class AdminPages {
 			unset( $submenu[ $parent_slug ][ $settings_key ] );
 		}
 
-		// Re-index the remaining items
+		// Re-index the remaining items.
 		$remaining_items = array_values( $submenu[ $parent_slug ] );
 
-		// Build the new menu order
+		// Build the new menu order.
 		$new_submenu = array();
 
 		// 1. Calendar first
@@ -678,6 +751,7 @@ class AdminPages {
 			$new_submenu[] = $settings_item;
 		}
 
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reordering this WordPress menu requires replacing its submenu array.
 		$submenu[ $parent_slug ] = $new_submenu;
 	}
 
@@ -724,19 +798,18 @@ class AdminPages {
 			return;
 		}
 
-		add_filter( 'posts_clauses', array( $this, 'upcoming_events_clauses' ), 10, 2 );
+		add_filter( 'posts_clauses', array( $this, 'upcoming_events_clauses' ) );
 	}
 
 	/**
 	 * Modify query clauses for upcoming events filter
 	 *
-	 * @param array     $clauses Query clauses.
-	 * @param \WP_Query $query   The query object.
+	 * @param array $clauses Query clauses.
 	 * @return array Modified clauses.
 	 *
 	 * phpcs:disable WordPress.DB.DirectDatabaseQuery
 	 */
-	public function upcoming_events_clauses( $clauses, $query ) {
+	public function upcoming_events_clauses( $clauses ) {
 		global $wpdb;
 
 		$table_name  = $wpdb->prefix . 'fair_event_dates';

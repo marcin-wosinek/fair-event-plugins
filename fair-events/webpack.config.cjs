@@ -86,6 +86,10 @@ const scriptConfig = {
       process.cwd(),
       "src/Admin/manage-event/index.js",
     ),
+    "admin/event-statistics/index": path.resolve(
+      process.cwd(),
+      "src/Admin/event-statistics/index.js",
+    ),
     "admin/all-events/index": path.resolve(
       process.cwd(),
       "src/Admin/all-events/index.js",

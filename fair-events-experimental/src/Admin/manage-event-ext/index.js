@@ -1,9 +1,9 @@
 /**
  * Manage Event tab extensions - Entry Point
  *
- * Registers this plugin's manage-event tabs (Statistics) and admin-tab
- * actions (Duplicate/Merge) with the fair-events tab registry via filters,
- * instead of fair-events hardcoding them.
+ * Registers this plugin's admin-tab actions (Duplicate/Merge) with the
+ * fair-events Manage Event page via a filter, instead of fair-events
+ * hardcoding them.
  *
  * @package FairEventsExperimental
  */
@@ -11,41 +11,9 @@
 import { Button, __experimentalVStack as VStack } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
-import { isLinkOnlyEvent } from 'fair-events-shared';
-import EventStatistics from '../event-statistics/EventStatistics.js';
 
-const {
-	statisticsUrl = '',
-	duplicateEventUrl = '',
-	mergeEventUrl = '',
-} = window.fairEventsManageEventData || {};
-
-addFilter(
-	'fairEvents.manageEvent.tabs',
-	'fair-events-experimental/statistics-tab',
-	( tabs, { eventDate } = {} ) => {
-		if ( ! statisticsUrl ) {
-			return tabs;
-		}
-
-		return [
-			...tabs,
-			{
-				name: 'statistics',
-				title: __( 'Statistics', 'fair-events-experimental' ),
-				order: 60,
-				isVisible: true,
-				disabled: isLinkOnlyEvent( eventDate ),
-				render: ( { eventDateId, eventTitle } ) => (
-					<EventStatistics
-						eventDateId={ eventDateId }
-						eventTitle={ eventTitle }
-					/>
-				),
-			},
-		];
-	}
-);
+const { duplicateEventUrl = '', mergeEventUrl = '' } =
+	window.fairEventsManageEventData || {};
 
 addFilter(
 	'fairEvents.manageEvent.adminActions',

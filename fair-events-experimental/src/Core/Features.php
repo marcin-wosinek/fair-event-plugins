@@ -46,32 +46,27 @@ class Features {
 	 */
 	public static function registry() {
 		return array(
-			'sources'             => array(
+			'sources'          => array(
 				'label'       => 'Event sources & feeds',
 				'description' => 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.',
 				'default'     => true,
 			),
-			'ticketing'           => array(
+			'ticketing'        => array(
 				'label'       => 'Ticketing',
 				'description' => 'Tickets, group pricing/permission rules. Requires fair-audience.',
 				'default'     => true,
 			),
-			'event-tools'         => array(
+			'event-tools'      => array(
 				'label'       => 'Event tools',
 				'description' => 'Advanced event duplication and merge tools.',
 				'default'     => true,
 			),
-			'audience-statistics' => array(
-				'label'       => 'Audience statistics',
-				'description' => 'Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience.',
-				'default'     => true,
-			),
-			'mailings'            => array(
+			'mailings'         => array(
 				'label'       => 'Mailings',
 				'description' => 'Scheduled email mailings for event attendees. Requires fair-audience.',
 				'default'     => true,
 			),
-			'meta-conversions'    => array(
+			'meta-conversions' => array(
 				'label'       => 'Meta Conversions',
 				'description' => 'Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials.',
 				'default'     => false,
@@ -139,27 +134,23 @@ class Features {
 	public static function all() {
 		$out        = array();
 		$translated = array(
-			'sources'             => array(
+			'sources'          => array(
 				'label'       => __( 'Event sources & feeds', 'fair-events-experimental' ),
 				'description' => __( 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule.', 'fair-events-experimental' ),
 			),
-			'ticketing'           => array(
+			'ticketing'        => array(
 				'label'       => __( 'Ticketing', 'fair-events-experimental' ),
 				'description' => __( 'Tickets, group pricing/permission rules. Requires fair-audience.', 'fair-events-experimental' ),
 			),
-			'event-tools'         => array(
+			'event-tools'      => array(
 				'label'       => __( 'Event tools', 'fair-events-experimental' ),
 				'description' => __( 'Advanced event duplication and merge tools.', 'fair-events-experimental' ),
 			),
-			'audience-statistics' => array(
-				'label'       => __( 'Audience statistics', 'fair-events-experimental' ),
-				'description' => __( 'Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience.', 'fair-events-experimental' ),
-			),
-			'mailings'            => array(
+			'mailings'         => array(
 				'label'       => __( 'Mailings', 'fair-events-experimental' ),
 				'description' => __( 'Scheduled email mailings for event attendees. Requires fair-audience.', 'fair-events-experimental' ),
 			),
-			'meta-conversions'    => array(
+			'meta-conversions' => array(
 				'label'       => __( 'Meta Conversions', 'fair-events-experimental' ),
 				'description' => __( 'Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials.', 'fair-events-experimental' ),
 			),

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-30T09:28:31+00:00\n"
+"POT-Creation-Date: 2026-09-30T11:33:34+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -62,21 +62,15 @@ msgstr ""
 #: src/Admin/AdminPages.php:95
 #: src/Admin/AdminPages.php:96
 #: src/Admin/AdminPages.php:102
-msgid "Event Statistics"
-msgstr ""
-
-#: src/Admin/AdminPages.php:109
-#: src/Admin/AdminPages.php:110
-#: src/Admin/AdminPages.php:116
-#: src/Admin/manage-event-ext/index.js:70
+#: src/Admin/manage-event-ext/index.js:38
 #: src/Admin/manage-event/DuplicateEventWizard.js:620
 msgid "Duplicate Event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:120
-#: src/Admin/AdminPages.php:121
-#: src/Admin/AdminPages.php:127
-#: src/Admin/manage-event-ext/index.js:94
+#: src/Admin/AdminPages.php:106
+#: src/Admin/AdminPages.php:107
+#: src/Admin/AdminPages.php:113
+#: src/Admin/manage-event-ext/index.js:62
 #: src/Admin/manage-event/MergeEventWizard.js:453
 msgid "Merge Event"
 msgstr ""
@@ -133,52 +127,44 @@ msgstr ""
 msgid "(no title)"
 msgstr ""
 
-#: src/Core/Features.php:143
+#: src/Core/Features.php:138
 msgid "Event sources & feeds"
 msgstr ""
 
-#: src/Core/Features.php:144
+#: src/Core/Features.php:139
 msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
 msgstr ""
 
-#: src/Core/Features.php:147
+#: src/Core/Features.php:142
 msgid "Ticketing"
 msgstr ""
 
-#: src/Core/Features.php:148
+#: src/Core/Features.php:143
 msgid "Tickets, group pricing/permission rules. Requires fair-audience."
 msgstr ""
 
-#: src/Core/Features.php:151
+#: src/Core/Features.php:146
 msgid "Event tools"
 msgstr ""
 
-#: src/Core/Features.php:152
+#: src/Core/Features.php:147
 msgid "Advanced event duplication and merge tools."
 msgstr ""
 
-#: src/Core/Features.php:155
-msgid "Audience statistics"
-msgstr ""
-
-#: src/Core/Features.php:156
-msgid "Per-event statistics charts (activity breakdown, sales lead time). Requires fair-audience."
-msgstr ""
-
-#: src/Core/Features.php:159
+#: src/Core/Features.php:150
 msgid "Mailings"
 msgstr ""
 
-#: src/Core/Features.php:160
+#: src/Core/Features.php:151
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr ""
 
-#: src/Core/Features.php:163
+#: src/Core/Features.php:154
 #: src/Admin/settings/MetaConversions.js:239
 msgid "Meta Conversions"
 msgstr ""
 
-#: src/Core/Features.php:164
+#: src/Core/Features.php:155
 msgid "Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials."
 msgstr ""
 
@@ -238,105 +224,11 @@ msgstr ""
 msgid "Event not found."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:80
-msgid "Download PNG"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:171
-msgid "Event sales statistics could not be loaded."
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:209
-msgid "Cumulative tickets sold"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:213
-msgid "Cumulative sales amount"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:232
-msgid "The chart image could not be downloaded. Please try again."
-msgstr ""
-
-#. translators: %s: comma-separated currency codes excluded from event revenue.
-#: src/Admin/event-statistics/EventStatistics.js:264
-#, js-format
-msgid "Some payments were excluded because they use different currencies: %s."
-msgstr ""
-
-#. translators: %d: number of confirmed tickets.
-#: src/Admin/event-statistics/EventStatistics.js:278
-#, js-format
-msgid "%d ticket"
-msgid_plural "%d tickets"
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %d: calendar days until the event.
-#: src/Admin/event-statistics/EventStatistics.js:296
-#, js-format
-msgid "%d day until the event"
-msgid_plural "%d days until the event"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/Admin/event-statistics/EventStatistics.js:331
-#: src/Admin/event-statistics/EventStatistics.js:434
-#: src/Admin/event-statistics/EventStatistics.js:485
-#: src/Admin/manage-event/DuplicateEventWizard.js:570
-msgid "Tickets"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:351
-msgid "Net sales amount"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:361
-msgid "Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included."
-msgstr ""
-
-#. translators: %d: number of purchases with missing ticket records.
-#: src/Admin/event-statistics/EventStatistics.js:370
-#, js-format
-msgid "%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created."
-msgid_plural "%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created."
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %d: number of tickets left out of the activity charts.
-#: src/Admin/event-statistics/EventStatistics.js:384
-#, js-format
-msgid "%d ticket is left out of the activity charts because its activities were recorded for the participant rather than for each ticket."
-msgid_plural "%d tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket."
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/Admin/event-statistics/EventStatistics.js:396
-msgid "Tickets per activity"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:403
-msgid "No activities recorded for confirmed tickets."
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:446
-#: src/Admin/event-statistics/EventStatistics.js:473
-msgid "Activities per ticket"
-msgstr ""
-
-#: src/Admin/event-statistics/EventStatistics.js:453
-msgid "No confirmed tickets to chart."
-msgstr ""
-
-#: src/Admin/manage-event-ext/index.js:35
-msgid "Statistics"
-msgstr ""
-
-#: src/Admin/manage-event-ext/index.js:60
+#: src/Admin/manage-event-ext/index.js:28
 msgid "Create a copy of this event with the same details, links, and settings."
 msgstr ""
 
-#: src/Admin/manage-event-ext/index.js:84
+#: src/Admin/manage-event-ext/index.js:52
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr ""
 
@@ -379,6 +271,10 @@ msgstr ""
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:564
 msgid "Links"
+msgstr ""
+
+#: src/Admin/manage-event/DuplicateEventWizard.js:570
+msgid "Tickets"
 msgstr ""
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:576
