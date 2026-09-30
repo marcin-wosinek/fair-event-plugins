@@ -63,6 +63,7 @@ class Plugin {
 
 		$this->load_admin();
 		$this->load_settings();
+		$this->load_notifications();
 		$this->load_api_key_removed_notice();
 		$this->load_payment_setup_notice();
 		$this->load_shared_settings_page();
@@ -222,6 +223,29 @@ class Plugin {
 	 */
 	private function load_settings() {
 		$settings = new \FairPaymentsConnector\Settings\Settings();
+		$settings->init();
+	}
+
+	/**
+	 * Load payment notifications: dispatch, digests and their settings.
+	 *
+	 * Skipped while an experimental release that still owns notifications is
+	 * active, so a payment is never announced twice.
+	 *
+	 * @return void
+	 */
+	private function load_notifications() {
+		if ( ! NotificationOwnership::is_owner() ) {
+			return;
+		}
+
+		$notifications = new \FairPaymentsConnector\Hooks\NotificationHooks();
+		$notifications->init();
+
+		$digest = new \FairPaymentsConnector\Hooks\DigestHooks();
+		$digest->init();
+
+		$settings = new \FairPaymentsConnector\Settings\NotificationSettings();
 		$settings->init();
 	}
 

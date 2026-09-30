@@ -24,7 +24,7 @@ Fair Payments Connector is the money layer for your WordPress site: it takes pay
 * **Ticket Checkout for Fair Events:** Powers the paid signup flow of [Fair Events](https://wordpress.org/plugins/fair-events/) automatically when both plugins are active
 * **Reliable Status Tracking:** Webhooks plus proactive status sync, so a payment stuck in "pending" recovers on its own
 * **Bookkeeping Included:** Budgets and a financial-entries ledger; import bank statements and reconcile them against your transactions
-* **Instant Notifications:** Optional Telegram message the moment a payment succeeds or fails
+* **Payment Notifications:** Optional Telegram or email message for every successful payment, sent at once or as an hourly, daily or weekly digest
 * **Multi-Site Ready:** Satellite sites can pull their own transaction data from a central hub over a token-secured API
 * **Fair Pricing Model:** No premium tiers or hidden features - everything is included
 
@@ -90,7 +90,7 @@ Used when you connect Mollie through the built-in OAuth flow. The plugin redirec
 
 = Telegram Bot API (api.telegram.org) =
 
-Used only if you configure a Telegram bot token and chat ID in the plugin settings to receive payment notifications. When a payment event occurs (such as a payment being marked as paid or failed), the plugin sends an HTTP request to `https://api.telegram.org/bot<token>/sendMessage` containing the notification text (transaction id, amount, status, and a link back to the admin transaction page) and the configured chat id. The Telegram Bot API is operated by Telegram FZ-LLC / Telegram Messenger Inc.
+Used only if you configure a Telegram bot token and a Telegram notification route on the Notifications page. When a payment succeeds, or when a digest or test message is sent, the plugin sends an HTTP request to `https://api.telegram.org/bot<token>/sendMessage` containing the notification text (site domain, amount and currency, and, when available, the event, ticket, activities, discounts or membership fee and the participant's name — shortened to first name and surname initial unless the route includes personal information) and the configured chat id. The Telegram Bot API is operated by Telegram FZ-LLC / Telegram Messenger Inc.
 
 * Terms of service (Bot API): https://telegram.org/tos/bot-developers
 * Privacy policy: https://telegram.org/privacy

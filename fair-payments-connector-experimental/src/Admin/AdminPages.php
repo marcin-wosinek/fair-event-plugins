@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnectorExperimental\Admin;
 
+use FairPaymentsConnectorExperimental\Core\NotificationHandoff;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -49,6 +51,12 @@ class AdminPages {
 			array( $this, 'render_connected_sites_page' )
 		);
 
+		// Fair Payments Connector shows its own Notifications page when it owns
+		// notifications.
+		if ( NotificationHandoff::yields() ) {
+			return;
+		}
+
 		// Notifications submenu under the fair-payments-connector menu.
 		add_submenu_page(
 			'fair-payments-connector-transactions',
@@ -77,7 +85,7 @@ class AdminPages {
 			return;
 		}
 
-		if ( false !== strpos( $hook, 'fair-payments-connector-notifications' ) ) {
+		if ( false !== strpos( $hook, 'fair-payments-connector-notifications' ) && ! NotificationHandoff::yields() ) {
 			$this->enqueue_admin_page_script( 'notifications' );
 			return;
 		}
