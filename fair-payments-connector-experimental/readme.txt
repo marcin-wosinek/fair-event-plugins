@@ -1,6 +1,6 @@
 === Fair Payments Connector Experimental ===
 Contributors: marcinwosinek
-Tags: payments, mollie, telegram
+Tags: payments, mollie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.0
@@ -8,7 +8,7 @@ Stable tag: 0.4.1
 License: Private
 License URI: https://fair-event-plugins.com
 
-Experimental features for Fair Payments Connector: API tokens, connected sites, and Telegram notifications.
+Experimental features for Fair Payments Connector: API tokens and connected sites.
 
 == Description ==
 
@@ -18,7 +18,6 @@ This plugin houses features that are under active development and not yet ready 
 
 * API Tokens — issue scoped bearer tokens so other sites can read transaction data
 * Connected Sites — pull transaction data from other sites over the data sharing API
-* Telegram Notifications — send payment notifications to Telegram chats
 
 == Changelog ==
 

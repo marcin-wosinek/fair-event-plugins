@@ -7,8 +7,6 @@
 
 namespace FairPaymentsConnectorExperimental\API;
 
-use FairPaymentsConnectorExperimental\Core\NotificationHandoff;
-
 defined( 'WPINC' ) || die;
 
 /**
@@ -45,13 +43,5 @@ class RestHooks {
 
 		$connected_sites_controller = new \FairPaymentsConnectorExperimental\API\ConnectedSitesController();
 		$connected_sites_controller->register_routes();
-
-		if ( ! NotificationHandoff::yields() ) {
-			$telegram_controller = new \FairPaymentsConnectorExperimental\API\TelegramSettingsController();
-			$telegram_controller->register_routes();
-
-			$notifications_controller = new \FairPaymentsConnectorExperimental\API\NotificationsController();
-			$notifications_controller->register_routes();
-		}
 	}
 }

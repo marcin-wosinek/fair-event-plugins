@@ -53,22 +53,6 @@ class Plugin {
 		$budget_hooks = new \FairPaymentsConnectorExperimental\Hooks\BudgetHooks();
 		$budget_hooks->init();
 
-		// Fair Payments Connector runs payment notifications when it owns them;
-		// running them here too would announce every payment twice.
-		if ( ! NotificationHandoff::yields() ) {
-			$migration = new \FairPaymentsConnectorExperimental\Migration\Migration();
-			$migration->init();
-
-			$notifications = new \FairPaymentsConnectorExperimental\Hooks\NotificationHooks();
-			$notifications->init();
-
-			$digest = new \FairPaymentsConnectorExperimental\Hooks\DigestHooks();
-			$digest->init();
-
-			$settings = new \FairPaymentsConnectorExperimental\Settings\Settings();
-			$settings->init();
-		}
-
 		if ( is_admin() ) {
 			$admin = new \FairPaymentsConnectorExperimental\Admin\AdminPages();
 			$admin->init();

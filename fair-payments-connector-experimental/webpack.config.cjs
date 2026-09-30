@@ -13,10 +13,6 @@ module.exports = {
       process.cwd(),
       "src/Admin/connected-sites/index.js",
     ),
-    "admin/notifications/index": path.resolve(
-      process.cwd(),
-      "src/Admin/notifications/index.js",
-    ),
   },
   plugins: [
     ...defaultConfig.plugins,
