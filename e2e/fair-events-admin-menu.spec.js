@@ -46,6 +46,10 @@ function clearBundles() {
 const PAGES = [
 	{ slug: 'fair-events-calendar', root: 'fair-events-calendar-root' },
 	{ slug: 'fair-events-all-events', root: 'fair-events-all-events-root' },
+	{
+		slug: 'fair-events-compare-events',
+		root: 'fair-events-compare-events-root',
+	},
 	{ slug: 'fair-events-sources', root: 'fair-events-sources-root' },
 	{ slug: 'fair-events-venues', root: 'fair-events-venues-root' },
 	{ slug: 'fair-events-manage-event', root: 'fair-events-manage-event-root' },

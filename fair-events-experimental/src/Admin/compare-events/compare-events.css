@@ -1,0 +1,136 @@
+.fair-compare-events__intro {
+	max-width: 720px;
+	margin: 8px 0 16px;
+	color: #50575e;
+}
+
+.fair-compare-events .components-notice {
+	margin: 16px 0 0;
+}
+
+.fair-compare-events__selectors,
+.fair-compare-events__summary,
+.fair-compare-events__charts {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+	margin-top: 16px;
+}
+
+.fair-compare-events__selector {
+	min-width: 0;
+}
+
+.fair-compare-events__loading {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-top: 24px;
+}
+
+.fair-compare-events__summary-card,
+.fair-compare-events__chart-card {
+	min-width: 0;
+}
+
+.fair-compare-events__summary-card p {
+	margin: 0;
+}
+
+.fair-compare-events__summary-role {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	color: #50575e;
+}
+
+.fair-compare-events__summary-name {
+	overflow-wrap: anywhere;
+}
+
+.fair-compare-events__summary-card .fair-compare-events__summary-figures {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 20px;
+	align-items: baseline;
+	margin-top: 8px;
+}
+
+.fair-compare-events__summary-figures strong {
+	font-size: 20px;
+}
+
+.fair-compare-events__summary-card .fair-compare-events__summary-empty,
+.fair-compare-events__summary-card .fair-compare-events__summary-link {
+	margin-top: 8px;
+}
+
+.fair-compare-events__summary-empty {
+	color: #50575e;
+}
+
+/* Title on the left, download action on the right. The action wraps onto its
+   own row on narrow cards. The card-scoped selector outranks the Flex
+   component's own nowrap rule. */
+.fair-compare-events__chart-card .fair-compare-events__chart-header {
+	flex-wrap: wrap;
+	gap: 8px 16px;
+}
+
+.fair-compare-events__chart-title {
+	flex: 1 1 200px;
+	min-width: 0;
+	margin: 0;
+	font-size: 1.2em;
+}
+
+.fair-compare-events__download {
+	flex: 0 0 auto;
+}
+
+.fair-compare-events__legend {
+	display: grid;
+	gap: 8px;
+	margin: 0 0 16px;
+	padding: 0;
+	list-style: none;
+}
+
+.fair-compare-events__legend-item {
+	display: flex;
+	gap: 8px;
+	align-items: baseline;
+	min-width: 0;
+	margin: 0;
+}
+
+.fair-compare-events__legend-text {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-compare-events__legend-role {
+	margin-right: 6px;
+	color: #50575e;
+}
+
+.fair-compare-events__swatch {
+	flex: 0 0 24px;
+	width: 24px;
+	height: 0;
+	border-top: 3px solid #50575e;
+	transform: translateY(-3px);
+}
+
+.fair-compare-events__swatch.is-future {
+	border-top-style: dashed;
+	border-top-width: 2px;
+}
+
+@media (max-width: 782px) {
+	.fair-compare-events__selectors,
+	.fair-compare-events__summary,
+	.fair-compare-events__charts {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

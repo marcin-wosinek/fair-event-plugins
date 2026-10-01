@@ -2,7 +2,7 @@
 /**
  * Admin Pages for Fair Events Experimental
  *
- * Registers the experimental feature admin pages (sources, event tools) as
+ * Registers the experimental admin pages (compare events, sources, event tools) as
  * submenus under the fair-events-calendar menu. The experimental
  * settings live in an Experimental tab of the fair-events Settings page; the
  * former standalone settings slug only redirects there.
@@ -41,6 +41,8 @@ class AdminPages {
 	 */
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
+		// After Fair Events' own menu reorder (priority 999).
+		add_action( 'admin_menu', array( $this, 'place_compare_events_before_sources' ), 1000 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'fair_events_settings_enqueue_assets', array( $this, 'enqueue_settings_tab_assets' ) );
 	}
@@ -64,6 +66,17 @@ class AdminPages {
 			'__return_null'
 		);
 		add_action( 'load-' . $settings_hook, array( $this, 'redirect_legacy_settings_page' ) );
+
+		// Compare events page. Not part of a bundle: it only reads Fair Events'
+		// Statistics, so it is registered whether or not Sources is enabled.
+		$this->page_hooks['fair-events-compare-events'] = add_submenu_page(
+			$parent,
+			__( 'Compare events', 'fair-events-experimental' ),
+			__( 'Compare events', 'fair-events-experimental' ),
+			'manage_options',
+			'fair-events-compare-events',
+			array( $this, 'render_compare_events_page' )
+		);
 
 		// Event Sources page — `sources` bundle.
 		if ( \FairEventsExperimental\Core\Features::is_enabled( 'sources' ) ) {
@@ -115,6 +128,51 @@ class AdminPages {
 	}
 
 	/**
+	 * Keep Compare events immediately before Event Sources in the Events menu.
+	 *
+	 * Runs after Fair Events' reorder_admin_menu(), which keeps the relative
+	 * order of these items but lets other plugins' pages land between them.
+	 * Without Sources the page stays where it was registered.
+	 *
+	 * @return void
+	 */
+	public function place_compare_events_before_sources() {
+		global $submenu;
+
+		$parent = $this->get_menu_parent_slug();
+		if ( empty( $submenu[ $parent ] ) ) {
+			return;
+		}
+
+		$items   = array_values( $submenu[ $parent ] );
+		$slugs   = array_column( $items, 2 );
+		$compare = array_search( 'fair-events-compare-events', $slugs, true );
+		if ( false === $compare || ! in_array( 'fair-events-sources', $slugs, true ) ) {
+			return;
+		}
+
+		$compare_item = $items[ $compare ];
+		unset( $items[ $compare ] );
+		$items   = array_values( $items );
+		$sources = array_search( 'fair-events-sources', array_column( $items, 2 ), true );
+		array_splice( $items, $sources, 0, array( $compare_item ) );
+
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reordering this WordPress menu requires replacing its submenu array.
+		$submenu[ $parent ] = $items;
+	}
+
+	/**
+	 * Whether Fair Events can serve the Statistics the comparison charts read.
+	 *
+	 * @return bool
+	 */
+	private function is_statistics_available() {
+		$controller = '\FairEvents\API\EventStatisticsController';
+
+		return method_exists( $controller, 'is_available' ) && $controller::is_available();
+	}
+
+	/**
 	 * Set the page title for a hidden admin page.
 	 *
 	 * @param string $hookname  The page hook name returned by add_submenu_page().
@@ -149,6 +207,24 @@ class AdminPages {
 		$exp_dir = FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR;
 
 		switch ( $slug ) {
+			case 'fair-events-compare-events':
+				$asset_file = include $exp_dir . 'build/admin/compare-events/index.asset.php';
+				wp_enqueue_script( 'fair-events-compare-events', $exp_url . 'build/admin/compare-events/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				// Styles imported by the bundle (the comparison charts).
+				wp_enqueue_style( 'fair-events-compare-events', $exp_url . 'build/admin/compare-events/index.css', array( 'wp-components' ), $asset_file['version'] );
+				wp_localize_script(
+					'fair-events-compare-events',
+					'fairEventsCompareEventsData',
+					array(
+						// Without Fair Audience there are no statistics to
+						// compare, so the page explains the dependency instead.
+						'statisticsAvailable' => $this->is_statistics_available(),
+						'manageEventUrl'      => admin_url( 'admin.php?page=fair-events-manage-event' ),
+					)
+				);
+				wp_set_script_translations( 'fair-events-compare-events', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
+				break;
+
 			case 'fair-events-sources':
 				$asset_file = include $exp_dir . 'build/admin/sources/index.asset.php';
 				wp_enqueue_script( 'fair-events-sources', $exp_url . 'build/admin/sources/index.js', $asset_file['dependencies'], $asset_file['version'], true );
@@ -291,6 +367,17 @@ class AdminPages {
 		);
 
 		wp_set_script_translations( 'fair-events-experimental-settings', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
+	}
+
+	/**
+	 * Render compare events page
+	 *
+	 * @return void
+	 */
+	public function render_compare_events_page() {
+		?>
+		<div id="fair-events-compare-events-root"></div>
+		<?php
 	}
 
 	/**
