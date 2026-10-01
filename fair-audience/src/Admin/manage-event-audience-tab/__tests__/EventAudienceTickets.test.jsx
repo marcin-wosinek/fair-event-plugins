@@ -12,6 +12,10 @@
  *     totalled separately.
  *   - History not tied to a ticket is shown, and printed, as such.
  *   - The printed list gives each ticket its own row.
+ *   - "Assign ticket" gives one ticket to an existing or a new participant,
+ *     names the purchaser and the current assignee, offers the existing
+ *     identity on an email conflict, and moves the ticket to its new holder
+ *     (#1535).
  */
 import '@testing-library/jest-dom';
 import {
@@ -482,5 +486,377 @@ describe( 'EventAudience — tickets awaiting payment (#1709)', () => {
 			'title',
 			'Check-in is available once the payment is complete.'
 		);
+	} );
+} );
+
+describe( 'EventAudience — assigning a ticket (#1535)', () => {
+	const JANE = {
+		participant_id: 10,
+		name: 'Jane Doe',
+		email: 'jane@example.com',
+	};
+	const CASEY = {
+		participant_id: 20,
+		name: 'Casey Companion',
+		email: 'casey@example.com',
+	};
+	const owned = ( ticket, position, assignee = JANE ) => ( {
+		...ticket,
+		position,
+		purchaser: JANE,
+		assignee,
+	} );
+	const PURCHASER = {
+		...PARTICIPANT,
+		tickets: [ owned( TICKET_ONE, 1 ), owned( TICKET_TWO, 2 ) ],
+		assigned_away_ticket_count: 0,
+	};
+	// The list once ticket two is Casey's.
+	const AFTER_ASSIGNMENT = [
+		{
+			...PURCHASER,
+			tickets: [ owned( TICKET_ONE, 1 ) ],
+			assigned_away_ticket_count: 1,
+		},
+		{
+			...PARTICIPANT,
+			id: 3,
+			participant_id: 20,
+			participant_name: 'Casey Companion',
+			name: 'Casey',
+			surname: 'Companion',
+			participant_email: 'casey@example.com',
+			ticket_type_id: null,
+			ticket_type_name: null,
+			tickets: [ owned( TICKET_TWO, 2, CASEY ) ],
+			assigned_away_ticket_count: 0,
+		},
+	];
+	const DIRECTORY = [
+		{
+			id: 20,
+			name: 'Casey',
+			surname: 'Companion',
+			email: 'casey@example.com',
+		},
+		{ id: 10, name: 'Jane', surname: 'Doe', email: 'jane@example.com' },
+		{ id: 30, name: 'Alex', surname: 'Other', email: 'alex@example.com' },
+	];
+
+	// The audience list follows the assignment: `assign` decides each
+	// request's outcome, and a successful one switches the list.
+	function mockAssignApi( { audience = [ PURCHASER ], assign } = {} ) {
+		let rows = audience;
+		apiFetch.mockImplementation( ( { path, method, data } ) => {
+			if ( /\/tickets\/\d+\/assign$/.test( path ) && method === 'POST' ) {
+				const outcome = assign
+					? assign( data )
+					: { assignee: CASEY, purchaser: JANE };
+				if ( outcome.error ) {
+					return Promise.reject( outcome.error );
+				}
+				rows = AFTER_ASSIGNMENT;
+				return Promise.resolve( { ...TICKET_TWO, ...outcome } );
+			}
+			if ( path === '/fair-audience/v1/participants?per_page=0' ) {
+				return Promise.resolve( DIRECTORY );
+			}
+			if ( path.endsWith( '/participants' ) ) {
+				return Promise.resolve( rows );
+			}
+			if ( path.includes( '/fair-events/v1/event-dates/5/tickets' ) ) {
+				return Promise.resolve( {
+					options: OPTIONS,
+					ticket_types: [],
+				} );
+			}
+			return Promise.resolve( [] );
+		} );
+	}
+
+	function assignCalls() {
+		return apiFetch.mock.calls
+			.map( ( [ args ] ) => args )
+			.filter( ( args ) => /\/assign$/.test( args.path ) );
+	}
+
+	async function openAssignModal( ticketId = 102 ) {
+		await screen.findByText( 'Jane Doe' );
+		fireEvent.click(
+			within( ticketRow( ticketId ) ).getByRole( 'button', {
+				name: /^Assign Ticket/,
+			} )
+		);
+		return screen.findByRole( 'dialog' );
+	}
+
+	it( 'names the purchaser and the current assignee, and requires a choice', async () => {
+		mockAssignApi();
+		renderAudience();
+
+		const modal = await openAssignModal();
+		expect( modal ).toHaveAccessibleName(
+			'Assign ticket — Ticket 2 — Regular (BBBB2222)'
+		);
+		const people = modal.querySelector(
+			'.fair-audience-assign-ticket__people'
+		);
+		expect( people ).toHaveTextContent(
+			'PurchaserJane Doe (jane@example.com)'
+		);
+		expect( people ).toHaveTextContent(
+			'Current assigneeJane Doe (jane@example.com)'
+		);
+
+		// The current assignee is not offered; everyone else is.
+		await within( modal ).findByRole( 'radio', {
+			name: 'Casey Companion (casey@example.com)',
+		} );
+		expect(
+			within( modal ).queryByRole( 'radio', { name: /Jane Doe/ } )
+		).not.toBeInTheDocument();
+
+		expect(
+			within( modal ).getByRole( 'button', { name: 'Assign ticket' } )
+		).toBeDisabled();
+		expect( modal ).toHaveTextContent( 'Choose a participant.' );
+	} );
+
+	it( 'assigns the ticket to an existing participant and lists it under them', async () => {
+		mockAssignApi();
+		renderAudience();
+
+		const modal = await openAssignModal();
+		fireEvent.change(
+			within( modal ).getByLabelText( 'Search by name or email' ),
+			{ target: { value: 'casey' } }
+		);
+		expect(
+			within( modal ).queryByRole( 'radio', { name: /Alex Other/ } )
+		).not.toBeInTheDocument();
+		fireEvent.click(
+			await within( modal ).findByRole( 'radio', {
+				name: 'Casey Companion (casey@example.com)',
+			} )
+		);
+		fireEvent.click(
+			within( modal ).getByRole( 'button', { name: 'Assign ticket' } )
+		);
+
+		await waitFor( () => expect( assignCalls() ).toHaveLength( 1 ) );
+		expect( assignCalls()[ 0 ] ).toEqual( {
+			path: '/fair-audience/v1/event-dates/5/tickets/102/assign',
+			method: 'POST',
+			data: { participant_id: 20 },
+		} );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect(
+			await screen.findByText( 'Ticket assigned to Casey Companion.' )
+		).toBeInTheDocument();
+
+		// The ticket moved to its new holder's rows and still names its
+		// purchaser; the purchaser keeps the other one.
+		const caseyRow = await waitFor( () => {
+			const row = document.querySelector(
+				'tr[data-participant-id="20"]'
+			);
+			expect( row ).not.toBeNull();
+			return row;
+		} );
+		expect( caseyRow.parentElement ).toContainElement( ticketRow( 102 ) );
+		expect( ticketRow( 102 ) ).toHaveTextContent(
+			'Purchased by Jane Doe (jane@example.com)'
+		);
+		const janeRow = document.querySelector(
+			'tr[data-participant-id="10"]'
+		);
+		expect( janeRow.parentElement ).toContainElement( ticketRow( 101 ) );
+		expect( janeRow.parentElement ).not.toContainElement(
+			ticketRow( 102 )
+		);
+		expect( janeRow ).toHaveTextContent(
+			'1 ticket assigned to someone else'
+		);
+		expect( ticketRow( 101 ) ).not.toHaveTextContent( 'Purchased by' );
+	} );
+
+	it( 'creates a new participant in the same step', async () => {
+		mockAssignApi( {
+			assign: () => ( {
+				purchaser: JANE,
+				assignee: {
+					participant_id: 40,
+					name: 'Nico Newcomer',
+					email: 'nico@example.com',
+				},
+			} ),
+		} );
+		renderAudience();
+
+		const modal = await openAssignModal();
+		fireEvent.click(
+			within( modal ).getByRole( 'radio', { name: 'A new participant' } )
+		);
+		const submit = within( modal ).getByRole( 'button', {
+			name: 'Assign ticket',
+		} );
+		expect( submit ).toBeDisabled();
+		expect( modal ).toHaveTextContent( 'Enter a name.' );
+
+		fireEvent.change( within( modal ).getByLabelText( 'Name' ), {
+			target: { value: ' Nico ' },
+		} );
+		fireEvent.change( within( modal ).getByLabelText( 'Surname' ), {
+			target: { value: 'Newcomer' },
+		} );
+		fireEvent.change(
+			within( modal ).getByLabelText( 'Email (optional)' ),
+			{ target: { value: 'nico@example.com' } }
+		);
+		fireEvent.click( submit );
+
+		await waitFor( () => expect( assignCalls() ).toHaveLength( 1 ) );
+		expect( assignCalls()[ 0 ].data ).toEqual( {
+			participant: {
+				name: 'Nico',
+				surname: 'Newcomer',
+				email: 'nico@example.com',
+			},
+		} );
+		expect(
+			await screen.findByText( 'Ticket assigned to Nico Newcomer.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'offers the existing participant when the email is already used', async () => {
+		mockAssignApi( {
+			assign: ( data ) =>
+				data.participant
+					? {
+							error: {
+								code: 'email_exists',
+								message:
+									'A participant with this email already exists.',
+								data: { status: 409, participant: CASEY },
+							},
+					  }
+					: { purchaser: JANE, assignee: CASEY },
+		} );
+		renderAudience();
+
+		const modal = await openAssignModal();
+		fireEvent.click(
+			within( modal ).getByRole( 'radio', { name: 'A new participant' } )
+		);
+		fireEvent.change( within( modal ).getByLabelText( 'Name' ), {
+			target: { value: 'Casey' },
+		} );
+		fireEvent.change(
+			within( modal ).getByLabelText( 'Email (optional)' ),
+			{ target: { value: 'casey@example.com' } }
+		);
+		fireEvent.click(
+			within( modal ).getByRole( 'button', { name: 'Assign ticket' } )
+		);
+
+		// The popup stays open with the conflict and a way out of it.
+		expect(
+			await within( modal ).findByText(
+				'A participant with this email already exists.'
+			)
+		).toBeInTheDocument();
+		fireEvent.click(
+			within( modal ).getByRole( 'button', {
+				name: 'Select Casey Companion (casey@example.com)',
+			} )
+		);
+		expect(
+			within( modal ).getByRole( 'radio', {
+				name: 'Casey Companion (casey@example.com)',
+			} )
+		).toBeChecked();
+		expect(
+			within( modal ).queryByText(
+				'A participant with this email already exists.'
+			)
+		).not.toBeInTheDocument();
+
+		fireEvent.click(
+			within( modal ).getByRole( 'button', { name: 'Assign ticket' } )
+		);
+		await waitFor( () => expect( assignCalls() ).toHaveLength( 2 ) );
+		expect( assignCalls()[ 1 ].data ).toEqual( { participant_id: 20 } );
+	} );
+
+	it( 'explains that a checked-in ticket must have its check-in cleared', async () => {
+		mockAssignApi( {
+			audience: [
+				{
+					...PURCHASER,
+					tickets: [
+						owned( TICKET_ONE, 1 ),
+						owned(
+							{
+								...TICKET_TWO,
+								attended_at: '2026-01-01 18:00:00',
+							},
+							2
+						),
+					],
+				},
+			],
+		} );
+		renderAudience();
+
+		const modal = await openAssignModal();
+		expect( modal ).toHaveTextContent(
+			'This ticket is checked in. Clear the check-in before assigning the ticket to someone else.'
+		);
+		fireEvent.click(
+			await within( modal ).findByRole( 'radio', {
+				name: 'Casey Companion (casey@example.com)',
+			} )
+		);
+		expect(
+			within( modal ).getByRole( 'button', { name: 'Assign ticket' } )
+		).toBeDisabled();
+		expect( assignCalls() ).toHaveLength( 0 );
+	} );
+
+	it( 'lists a purchaser holding none of their tickets as the purchaser, not as attending', async () => {
+		mockAssignApi( {
+			audience: [
+				{
+					...PURCHASER,
+					label: 'interested',
+					tickets: [],
+					ticket_option_ids: [],
+					ticket_option_names: [],
+					confirmed_ticket_option_ids: [],
+					assigned_away_ticket_count: 2,
+				},
+				{
+					...AFTER_ASSIGNMENT[ 1 ],
+					tickets: [
+						owned( TICKET_ONE, 1, CASEY ),
+						owned( TICKET_TWO, 2, CASEY ),
+					],
+				},
+			],
+		} );
+		renderAudience();
+
+		await screen.findByText( 'Casey Companion' );
+		const janeRow = document.querySelector(
+			'tr[data-participant-id="10"]'
+		);
+		expect( janeRow ).toHaveTextContent( 'Purchaser' );
+		expect( janeRow ).toHaveTextContent( '2 tickets assigned to others' );
+		expect( janeRow ).not.toHaveTextContent( 'Regular' );
+		expect(
+			within( janeRow ).queryByRole( 'checkbox' )
+		).not.toBeInTheDocument();
 	} );
 } );

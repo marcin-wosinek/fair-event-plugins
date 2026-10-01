@@ -54,6 +54,14 @@ class EventParticipantsController extends WP_REST_Controller {
 	private $participant_repo;
 
 	/**
+	 * Purchaser and assignee details already looked up for this request,
+	 * keyed by participant ID (false for a participant that no longer exists).
+	 *
+	 * @var array<int, array|false>
+	 */
+	private $ticket_people = array();
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -257,6 +265,45 @@ class EventParticipantsController extends WP_REST_Controller {
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+					),
+				),
+			)
+		);
+
+		// POST /fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}/assign.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<event_date_id>\d+)/tickets/(?P<ticket_id>\d+)/assign',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'assign_ticket' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'event_date_id'  => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'ticket_id'      => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						// An existing participant to give the ticket to.
+						'participant_id' => array(
+							'type'     => 'integer',
+							'required' => false,
+							'minimum'  => 1,
+						),
+						// Or the details of a participant to create.
+						'participant'    => array(
+							'type'       => 'object',
+							'required'   => false,
+							'properties' => array(
+								'name'    => array( 'type' => 'string' ),
+								'surname' => array( 'type' => 'string' ),
+								'email'   => array( 'type' => 'string' ),
+							),
 						),
 					),
 				),
@@ -507,6 +554,9 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
+		// Admission follows the tickets held, not the relationship alone.
+		$assigned_away = $this->assigned_away_counts( (int) $event_date_id, $event_participants );
+
 		// Custom question answers captured during signup. Answers collected
 		// for a ticket go with that ticket; the participant row carries only
 		// those not attached to any ticket.
@@ -516,8 +566,10 @@ class EventParticipantsController extends WP_REST_Controller {
 		);
 
 		$items = array_map(
-			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $ticket_answers, $event_date_id ) {
-				$participant = $this->participant_repo->get_by_id( $ep->participant_id );
+			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $ticket_answers, $event_date_id, $assigned_away ) {
+				$participant     = $this->participant_repo->get_by_id( $ep->participant_id );
+				$on_this_date    = (int) $ep->event_date_id === (int) $event_date_id;
+				$given_to_others = $on_this_date ? ( $assigned_away[ (int) $ep->participant_id ] ?? 0 ) : 0;
 				return array(
 					'id'                                => $ep->id,
 					'participant_id'                    => $ep->participant_id,
@@ -531,7 +583,12 @@ class EventParticipantsController extends WP_REST_Controller {
 					'participant_email'                 => $participant ? $participant->email : '',
 					'email_profile'                     => $participant ? $participant->email_profile : '',
 					'instagram'                         => $participant ? $participant->instagram : '',
-					'label'                             => $ep->label,
+					'label'                             => $on_this_date
+						? $this->admission_label( $ep, $tickets_by_relationship[ $ep->id ] ?? array(), $given_to_others )
+						: $ep->label,
+					// Active tickets this participant bought here that someone
+					// else now holds.
+					'assigned_away_ticket_count'        => $given_to_others,
 					'ticket_type_id'                    => $ep->ticket_type_id ? (int) $ep->ticket_type_id : null,
 					'ticket_type_name'                  => $ep->ticket_type_id && isset( $ticket_type_names[ $ep->ticket_type_id ] )
 						? $ticket_type_names[ $ep->ticket_type_id ]
@@ -592,35 +649,114 @@ class EventParticipantsController extends WP_REST_Controller {
 			$already_listed[ (int) $row->participant_id ] = true;
 		}
 
-		$is_series_scope = array();
-		foreach ( $this->event_participant_repo->get_by_event_date( $master_id ) as $master_row ) {
-			if ( 'signed_up' !== $master_row->label || ! $master_row->ticket_type_id ) {
-				continue;
+		$master_rows     = $this->event_participant_repo->get_by_event_date( $master_id );
+		$master_tickets  = $this->event_participant_repo->get_tickets_for_relationships( $master_rows );
+		$assigned_away   = $this->assigned_away_counts( $master_id, $master_rows );
+		$is_series_scope = static function ( $ticket_type_id ) {
+			static $cache = array();
+			if ( ! isset( $cache[ $ticket_type_id ] ) ) {
+				$tt                       = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+				$cache[ $ticket_type_id ] = $tt && $tt->is_whole_series();
 			}
+			return $cache[ $ticket_type_id ];
+		};
+
+		foreach ( $master_rows as $master_row ) {
 			if ( isset( $already_listed[ (int) $master_row->participant_id ] ) ) {
 				continue;
 			}
 
-			$tt_id = (int) $master_row->ticket_type_id;
-			if ( ! isset( $is_series_scope[ $tt_id ] ) ) {
-				$tt                        = \FairEvents\Models\TicketType::get_by_id( $tt_id );
-				$is_series_scope[ $tt_id ] = $tt && $tt->is_whole_series();
+			// A pass given to someone else admits its holder, not its purchaser.
+			$tickets = $master_tickets[ (int) $master_row->id ] ?? array();
+			if ( 'signed_up' !== $this->admission_label( $master_row, $tickets, $assigned_away[ (int) $master_row->participant_id ] ?? 0 ) ) {
+				continue;
 			}
-			if ( ! $is_series_scope[ $tt_id ] ) {
+
+			// The pass is named by the relationship, or, for someone it was
+			// assigned to, by the ticket they hold.
+			$tt_id       = (int) $master_row->ticket_type_id;
+			$covers_from = $master_row->created_at;
+			if ( ! $tt_id ) {
+				foreach ( $tickets as $ticket ) {
+					if ( 'confirmed' === $ticket->status && $ticket->ticket_type_id && $is_series_scope( (int) $ticket->ticket_type_id ) ) {
+						$tt_id       = (int) $ticket->ticket_type_id;
+						$covers_from = $ticket->created_at;
+						break;
+					}
+				}
+			}
+			if ( ! $tt_id || ! $is_series_scope( $tt_id ) ) {
 				continue;
 			}
 
 			// Mid-series purchase: a pass only covers occurrences on or after its date.
-			if ( $occurrence_ts && $master_row->created_at
-				&& $occurrence_ts < strtotime( $master_row->created_at ) ) {
+			if ( $occurrence_ts && $covers_from && $occurrence_ts < strtotime( $covers_from ) ) {
 				continue;
 			}
 
+			$pass_row                 = clone $master_row;
+			$pass_row->label          = 'signed_up';
+			$pass_row->ticket_type_id = $tt_id;
+
 			$already_listed[ (int) $master_row->participant_id ] = true;
-			$occurrence_rows[]                                   = $master_row;
+			$occurrence_rows[]                                   = $pass_row;
 		}
 
 		return $occurrence_rows;
+	}
+
+	/**
+	 * Count the active tickets each relationship's participant bought on an
+	 * event date that someone else now holds.
+	 *
+	 * @param int                                     $event_date_id      Event date ID.
+	 * @param \FairAudience\Models\EventParticipant[] $event_participants Relationships; only those on the event date are counted.
+	 * @return array<int, int> Counts keyed by participant ID; empty when tickets are unavailable.
+	 */
+	private function assigned_away_counts( $event_date_id, array $event_participants ) {
+		if ( ! TicketActivities::available() || ! method_exists( \FairEvents\Models\EventTicket::class, 'count_assigned_away' ) ) {
+			return array();
+		}
+
+		$participant_ids = array();
+		foreach ( $event_participants as $event_participant ) {
+			if ( (int) $event_participant->event_date_id === (int) $event_date_id ) {
+				$participant_ids[] = (int) $event_participant->participant_id;
+			}
+		}
+
+		return \FairEvents\Models\EventTicket::count_assigned_away( (int) $event_date_id, $participant_ids );
+	}
+
+	/**
+	 * A relationship's label once the tickets held on its date are taken
+	 * into account. Someone holding a confirmed ticket another participant
+	 * bought is signed up, though their relationship only lists them; a
+	 * purchaser whose tickets are all held by others no longer is. The
+	 * stored label is never changed: it is what applies again when a ticket
+	 * comes back or is given away.
+	 *
+	 * @param \FairAudience\Models\EventParticipant $event_participant Relationship.
+	 * @param object[]                              $tickets           Active tickets the participant holds on the relationship's date.
+	 * @param int                                   $assigned_away     Active tickets they bought there that someone else holds.
+	 * @return string
+	 */
+	private function admission_label( $event_participant, array $tickets, $assigned_away ) {
+		$label = (string) $event_participant->label;
+
+		if ( 'interested' === $label ) {
+			foreach ( $tickets as $ticket ) {
+				if ( 'confirmed' === $ticket->status && (int) $ticket->purchaser_participant_id !== (int) $ticket->holder_participant_id ) {
+					return 'signed_up';
+				}
+			}
+		}
+
+		if ( 'signed_up' === $label && ! $tickets && $assigned_away > 0 ) {
+			return 'interested';
+		}
+
+		return $label;
 	}
 
 	/**
@@ -1368,6 +1504,283 @@ class EventParticipantsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Give one ticket to another participant: an existing one, or one
+	 * created from the given details in the same step. Only the ticket's
+	 * holder changes. Its purchaser, signup, payment, type, activities and
+	 * answers, and the purchase's other tickets, stay as they are. The new
+	 * holder gets a relationship on the event date when they have none, so
+	 * they are listed in the audience; an existing relationship, and the
+	 * previous holder's, are left untouched. Creating the participant, the
+	 * relationship and the change of holder share one transaction.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function assign_ticket( $request ) {
+		$participant_id = (int) $request->get_param( 'participant_id' );
+		$details        = $request->get_param( 'participant' );
+		$has_details    = is_array( $details ) && $details;
+
+		if ( ( $participant_id > 0 ) === (bool) $has_details ) {
+			return new WP_Error(
+				'invalid_assignee',
+				__( 'Choose an existing participant or enter the details of a new one.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$ticket = $this->find_ticket( (int) $request->get_param( 'event_date_id' ), (int) $request->get_param( 'ticket_id' ) );
+		if ( is_wp_error( $ticket ) ) {
+			return $ticket;
+		}
+
+		if ( ! method_exists( \FairEvents\Models\EventTicket::class, 'set_holder' ) ) {
+			return new WP_Error(
+				'fair_events_unavailable',
+				__( 'Update Fair Events to assign tickets.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$refusal = $this->assignment_refusal( $ticket );
+		if ( $refusal ) {
+			return $refusal;
+		}
+
+		if ( $participant_id ) {
+			$participant = $this->participant_repo->get_by_id( $participant_id );
+			if ( ! $participant ) {
+				return new WP_Error(
+					'invalid_participant',
+					__( 'Participant not found.', 'fair-audience' ),
+					array( 'status' => 404 )
+				);
+			}
+		} else {
+			$participant = $this->new_assignee( $details );
+			if ( is_wp_error( $participant ) ) {
+				return $participant;
+			}
+		}
+
+		$saved = $this->save_assignment( $ticket, $participant );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
+		}
+
+		$ticket = \FairEvents\Models\EventTicket::get_by_id( (int) $ticket->id );
+
+		return rest_ensure_response(
+			$this->build_ticket_payload(
+				$ticket,
+				$this->ticket_activity_rows( $ticket ),
+				$this->get_ticket_answers( array( (int) $ticket->id ) )[ (int) $ticket->id ] ?? null
+			)
+		);
+	}
+
+	/**
+	 * Why a ticket cannot be given to someone else, if it cannot. A ticket
+	 * that no longer admits anyone, or whose payment window has lapsed,
+	 * stays with its holder. A checked-in ticket records that its holder
+	 * arrived, so the check-in has to be cleared first.
+	 *
+	 * @param object $ticket Ticket row.
+	 * @return WP_Error|null
+	 */
+	private function assignment_refusal( $ticket ) {
+		if ( in_array( (string) $ticket->status, \FairEvents\Models\EventTicket::INACTIVE_STATUSES, true ) ) {
+			return new WP_Error(
+				'ticket_inactive',
+				__( 'This ticket is no longer active.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		if ( 'confirmed' !== (string) $ticket->status ) {
+			$signup = \FairEvents\Models\EventSignup::get_by_id( (int) $ticket->signup_id );
+			if ( $signup && ! empty( $signup->payment_expires_at ) && strtotime( $signup->payment_expires_at . ' UTC' ) <= time() ) {
+				return new WP_Error(
+					'ticket_payment_expired',
+					__( 'The payment for this ticket was not completed in time, so it cannot be assigned.', 'fair-audience' ),
+					array( 'status' => 409 )
+				);
+			}
+		}
+
+		if ( ! empty( $ticket->attended_at ) ) {
+			return new WP_Error(
+				'ticket_checked_in',
+				__( 'This ticket is checked in. Clear the check-in before assigning the ticket to someone else.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Build, without saving, the participant a ticket is to be assigned to
+	 * from the details an administrator entered. A name is required. An
+	 * email is optional, has to be valid, and must not belong to an existing
+	 * participant: that identity is offered instead of creating a second
+	 * one. The participant starts on the minimal email profile; marketing
+	 * consent is recorded through its own flow.
+	 *
+	 * @param array $details name, surname, email.
+	 * @return \FairAudience\Models\Participant|WP_Error
+	 */
+	private function new_assignee( array $details ) {
+		$name  = trim( sanitize_text_field( (string) ( $details['name'] ?? '' ) ) );
+		$email = trim( (string) ( $details['email'] ?? '' ) );
+
+		if ( '' === $name ) {
+			return new WP_Error(
+				'participant_name_required',
+				__( 'Enter the new participant’s name.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( '' !== $email ) {
+			if ( ! is_email( $email ) ) {
+				return new WP_Error(
+					'invalid_email',
+					__( 'Enter a valid email address.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$email    = sanitize_email( $email );
+			$existing = $this->participant_repo->get_by_email( $email );
+			if ( $existing ) {
+				return $this->email_exists_error( $existing );
+			}
+		}
+
+		return new \FairAudience\Models\Participant(
+			array(
+				'name'    => $name,
+				'surname' => (string) ( $details['surname'] ?? '' ),
+				'email'   => $email,
+			)
+		);
+	}
+
+	/**
+	 * The refusal to create a participant whose email an existing one
+	 * already uses, naming that participant so they can be chosen instead.
+	 *
+	 * @param \FairAudience\Models\Participant $existing Participant using the email.
+	 * @return WP_Error
+	 */
+	private function email_exists_error( $existing ) {
+		return new WP_Error(
+			'email_exists',
+			__( 'A participant with this email already exists.', 'fair-audience' ),
+			array(
+				'status'      => 409,
+				'participant' => $this->ticket_person( (int) $existing->id ),
+			)
+		);
+	}
+
+	/**
+	 * Write an assignment in one transaction: create the participant when
+	 * they are new, make sure they have a relationship on the ticket's
+	 * event date, and make them the ticket's holder. The ticket is checked
+	 * again under a row lock, so a check-in or status change made meanwhile
+	 * is not overwritten. A failed step rolls back all of them, so no
+	 * participant is left behind without the ticket.
+	 *
+	 * @param object                           $ticket      Ticket row.
+	 * @param \FairAudience\Models\Participant $participant New holder; saved here when not saved yet.
+	 * @return true|WP_Error
+	 * @throws \Throwable Re-thrown after rolling back.
+	 */
+	private function save_assignment( $ticket, $participant ) {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'START TRANSACTION' );
+
+		try {
+			$result = $this->write_assignment( $ticket, $participant );
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			throw $e;
+		}
+
+		if ( is_wp_error( $result ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'COMMIT' );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * The writes of save_assignment(), run inside its transaction.
+	 *
+	 * @param object                           $ticket      Ticket row.
+	 * @param \FairAudience\Models\Participant $participant New holder; saved here when not saved yet.
+	 * @return true|WP_Error
+	 */
+	private function write_assignment( $ticket, $participant ) {
+		global $wpdb;
+
+		$failed = new WP_Error(
+			'assignment_failed',
+			__( 'Failed to assign the ticket.', 'fair-audience' ),
+			array( 'status' => 500 )
+		);
+
+		$locked = \FairEvents\Models\EventTicket::get_for_update( (int) $ticket->id );
+		if ( ! $locked || (int) $locked->event_date_id !== (int) $ticket->event_date_id ) {
+			return new WP_Error(
+				'ticket_not_found',
+				__( 'Ticket not found for this event date.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$refusal = $this->assignment_refusal( $locked );
+		if ( $refusal ) {
+			return $refusal;
+		}
+
+		if ( ! $participant->id ) {
+			// The email's unique key refuses a participant created with the
+			// same email since it was checked.
+			$suppressed = $wpdb->suppress_errors( true );
+			$created    = $participant->save() && $participant->id;
+			$wpdb->suppress_errors( $suppressed );
+
+			if ( ! $created ) {
+				$existing = $participant->email ? $this->participant_repo->get_by_email( $participant->email ) : null;
+
+				return $existing ? $this->email_exists_error( $existing ) : $failed;
+			}
+		}
+
+		if ( ! $this->event_participant_repo->ensure_ticket_holder_relationship( (int) $locked->event_date_id, (int) $participant->id ) ) {
+			return $failed;
+		}
+
+		if ( (int) $locked->holder_participant_id !== (int) $participant->id
+			&& ! \FairEvents\Models\EventTicket::set_holder( (int) $locked->id, (int) $participant->id )
+		) {
+			return $failed;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Find a ticket on an event date.
 	 *
 	 * @param int $event_date_id Event date the ticket must be on.
@@ -1462,6 +1875,10 @@ class EventParticipantsController extends WP_REST_Controller {
 			}
 		}
 
+		// A ticket nobody was given yet is its purchaser's.
+		$purchaser = $this->ticket_purchaser( $ticket );
+		$assignee  = $this->ticket_person( $ticket->holder_participant_id ?? 0 ) ?? $purchaser;
+
 		return array(
 			'id'                         => (int) $ticket->id,
 			'position'                   => (int) $ticket->unit_position,
@@ -1477,6 +1894,62 @@ class EventParticipantsController extends WP_REST_Controller {
 			'over_capacity_activity_ids' => $over_capacity_activity_ids,
 			'answers'                    => $answers ? $answers['answers'] : array(),
 			'answers_need_review'        => $answers ? (bool) $answers['needs_review'] : false,
+			'purchaser'                  => $purchaser,
+			'assignee'                   => $assignee,
+		);
+	}
+
+	/**
+	 * A participant's ID, name and email, as shown for a ticket's purchaser
+	 * and assignee.
+	 *
+	 * @param int $participant_id Participant ID.
+	 * @return array|null Null for no participant, or one that no longer exists.
+	 */
+	private function ticket_person( $participant_id ) {
+		$participant_id = (int) $participant_id;
+		if ( ! $participant_id ) {
+			return null;
+		}
+
+		if ( ! isset( $this->ticket_people[ $participant_id ] ) ) {
+			$participant                            = $this->participant_repo->get_by_id( $participant_id );
+			$this->ticket_people[ $participant_id ] = $participant
+				? array(
+					'participant_id' => (int) $participant->id,
+					'name'           => trim( $participant->name . ' ' . $participant->surname ),
+					'email'          => (string) $participant->email,
+				)
+				: false;
+		}
+
+		return $this->ticket_people[ $participant_id ] ? $this->ticket_people[ $participant_id ] : null;
+	}
+
+	/**
+	 * Who bought a ticket: the participant its purchaser link names, else
+	 * the one its signup names, else the name and email the signup was made
+	 * with (records from before purchasers were linked).
+	 *
+	 * @param object $ticket Ticket row.
+	 * @return array participant_id (null when no participant is linked), name, email.
+	 */
+	private function ticket_purchaser( $ticket ) {
+		$purchaser = $this->ticket_person( $ticket->purchaser_participant_id ?? 0 );
+		if ( $purchaser ) {
+			return $purchaser;
+		}
+
+		$signup    = \FairEvents\Models\EventSignup::get_by_id( (int) $ticket->signup_id );
+		$purchaser = $signup ? $this->ticket_person( $signup->participant_id ?? 0 ) : null;
+		if ( $purchaser ) {
+			return $purchaser;
+		}
+
+		return array(
+			'participant_id' => null,
+			'name'           => $signup ? (string) $signup->name : '',
+			'email'          => $signup ? (string) $signup->email : '',
 		);
 	}
 

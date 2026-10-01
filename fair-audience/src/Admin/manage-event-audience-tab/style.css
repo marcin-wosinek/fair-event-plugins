@@ -64,6 +64,55 @@
 	text-align: right;
 }
 
+/* Assign-ticket popup. */
+.fair-audience-assign-ticket__people {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 4px 12px;
+	margin: 0;
+}
+
+.fair-audience-assign-ticket__people dt {
+	color: #50575e;
+	font-weight: 600;
+}
+
+.fair-audience-assign-ticket__people dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-audience-assign-ticket__note {
+	margin: 0;
+	color: #646970;
+	font-size: 12px;
+}
+
+.fair-audience-assign-ticket__matches {
+	max-height: 240px;
+	margin: 0;
+	overflow-y: auto;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+}
+
+.fair-audience-assign-ticket__matches li {
+	margin: 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.fair-audience-assign-ticket__matches li:last-child {
+	border-bottom: 0;
+}
+
+.fair-audience-assign-ticket__matches label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	overflow-wrap: anywhere;
+}
+
 @media screen and (max-width: 782px) {
 	.fair-audience-audience-table thead {
 		display: none;
