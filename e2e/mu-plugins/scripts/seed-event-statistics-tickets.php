@@ -1,19 +1,28 @@
 <?php
 /**
- * Seed signups, ticket units and activity selections for EventStatistics
- * API coverage (#1725).
+ * Seed signups, ticket units, activity selections and capacity limits for
+ * EventStatistics API coverage (#1725, #1711).
  *
  * Usage: wp eval-file .../seed-event-statistics-tickets.php <action> <json>
  *
  * Actions:
  *   signup              {eventDateId, participantId, ticketTypeId?, quantity,
  *                       status?, createdAt (site-local 'Y-m-d H:i:s'),
- *                       units: [{status, activities: [{optionId, name, status?}]}]}
+ *                       holdMinutes?,
+ *                       units: [{status, activities: [{optionId, name, status?, holdMinutes?}]}]}
  *                       Omit units (or pass []) for a signup not yet backfilled.
+ *                       holdMinutes sets a payment hold ending that many
+ *                       minutes from now (negative: already lapsed).
+ *   configure           {eventDateId, eventCapacity?,
+ *                       ticketTypes?: [{name, capacity}], options?: [{name, capacity}]}
+ *                       A null capacity is unlimited.
+ *   ticket-type-limit   {ticketTypeId, capacity}
  *   ticket-status       {ticketId, status}
  *   transfer            {ticketId, holderParticipantId}
  *   participant-option  {relationshipId, optionId, name}
- *   cleanup             {eventDateIds: []}
+ *   cleanup             {eventDateIds: [], configuredEventDateIds?: []}
+ *                       configuredEventDateIds also lose the ticket types and
+ *                       activities `configure` gave them.
  *
  * Rows are written directly so no signup hook creates relationships the
  * spec did not ask for. Prints one `E2E_EVENT_STATISTICS_TICKETS:{json}` line.
@@ -36,7 +45,13 @@ if ( ! is_array( $data ) ) {
 $signups_table    = $wpdb->prefix . 'fair_events_signups';
 $tickets_table    = $wpdb->prefix . 'fair_events_tickets';
 $activities_table = $wpdb->prefix . 'fair_events_ticket_activities';
+$types_table      = $wpdb->prefix . 'fair_events_ticket_types';
+$options_table    = $wpdb->prefix . 'fair_events_ticket_options';
 $result           = array();
+
+$hold_until = static function ( $item ) {
+	return isset( $item['holdMinutes'] ) ? gmdate( 'Y-m-d H:i:s', time() + (int) $item['holdMinutes'] * MINUTE_IN_SECONDS ) : null;
+};
 
 switch ( $fixture_action ) {
 	case 'signup':
@@ -44,14 +59,15 @@ switch ( $fixture_action ) {
 		$wpdb->insert(
 			$signups_table,
 			array(
-				'event_date_id'  => (int) $data['eventDateId'],
-				'ticket_type_id' => empty( $data['ticketTypeId'] ) ? null : (int) $data['ticketTypeId'],
-				'name'           => 'Statistics buyer',
-				'email'          => 'statistics-buyer@example.test',
-				'quantity'       => $quantity,
-				'status'         => $data['status'] ?? 'confirmed',
-				'participant_id' => empty( $data['participantId'] ) ? null : (int) $data['participantId'],
-				'created_at'     => (string) $data['createdAt'],
+				'event_date_id'      => (int) $data['eventDateId'],
+				'ticket_type_id'     => empty( $data['ticketTypeId'] ) ? null : (int) $data['ticketTypeId'],
+				'name'               => 'Statistics buyer',
+				'email'              => 'statistics-buyer@example.test',
+				'quantity'           => $quantity,
+				'status'             => $data['status'] ?? 'confirmed',
+				'participant_id'     => empty( $data['participantId'] ) ? null : (int) $data['participantId'],
+				'payment_expires_at' => $hold_until( $data ),
+				'created_at'         => (string) $data['createdAt'],
 			)
 		);
 		$signup_id  = (int) $wpdb->insert_id;
@@ -80,6 +96,7 @@ switch ( $fixture_action ) {
 						'ticket_option_id'   => (int) $activity['optionId'],
 						'ticket_option_name' => (string) $activity['name'],
 						'status'             => $activity['status'] ?? 'confirmed',
+						'expires_at'         => $hold_until( $activity ),
 					)
 				);
 			}
@@ -88,6 +105,34 @@ switch ( $fixture_action ) {
 			'signupId'  => $signup_id,
 			'ticketIds' => $ticket_ids,
 		);
+		break;
+
+	case 'configure':
+		$event_date_id = (int) $data['eventDateId'];
+		if ( array_key_exists( 'eventCapacity', $data ) ) {
+			$result['eventCapacity'] = $wpdb->query( $wpdb->prepare( 'UPDATE %i SET capacity = NULLIF(%d, -1) WHERE id = %d', $wpdb->prefix . 'fair_event_dates', null === $data['eventCapacity'] ? -1 : (int) $data['eventCapacity'], $event_date_id ) );
+		}
+		$result['ticketTypeIds'] = array();
+		foreach ( array_values( $data['ticketTypes'] ?? array() ) as $index => $ticket_type ) {
+			$result['ticketTypeIds'][] = (int) \FairEvents\Models\TicketType::create( $event_date_id, (string) $ticket_type['name'], isset( $ticket_type['capacity'] ) ? (int) $ticket_type['capacity'] : null, $index );
+		}
+		$result['optionIds'] = array();
+		foreach ( array_values( $data['options'] ?? array() ) as $index => $option ) {
+			$wpdb->insert(
+				$options_table,
+				array(
+					'event_date_id' => $event_date_id,
+					'name'          => (string) $option['name'],
+					'capacity'      => isset( $option['capacity'] ) ? (int) $option['capacity'] : null,
+					'sort_order'    => $index,
+				)
+			);
+			$result['optionIds'][] = (int) $wpdb->insert_id;
+		}
+		break;
+
+	case 'ticket-type-limit':
+		$result['updated'] = $wpdb->query( $wpdb->prepare( 'UPDATE %i SET capacity = NULLIF(%d, -1) WHERE id = %d', $types_table, null === $data['capacity'] ? -1 : (int) $data['capacity'], (int) $data['ticketTypeId'] ) );
 		break;
 
 	case 'ticket-status':
@@ -120,6 +165,10 @@ switch ( $fixture_action ) {
 			$result['signups']    = $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE event_date_id IN ( $placeholders )", array_merge( array( $signups_table ), $event_date_ids ) ) );
 			$result['options']    = $wpdb->query( $wpdb->prepare( "DELETE epo FROM %i AS epo INNER JOIN %i AS ep ON ep.id = epo.event_participant_id WHERE ep.event_date_id IN ( $placeholders )", array_merge( array( $wpdb->prefix . 'fair_audience_event_participant_options', $wpdb->prefix . 'fair_audience_event_participants' ), $event_date_ids ) ) );
 			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		}
+		foreach ( array_filter( array_map( 'intval', (array) ( $data['configuredEventDateIds'] ?? array() ) ) ) as $configured_id ) {
+			$wpdb->delete( $types_table, array( 'event_date_id' => $configured_id ) );
+			$wpdb->delete( $options_table, array( 'event_date_id' => $configured_id ) );
 		}
 		break;
 

@@ -13,6 +13,7 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
 use FairEvents\Models\EventDates;
 use FairEvents\Models\TicketType;
+use FairEvents\Services\EventCapacityStatistics;
 use FairEvents\Services\EventTicketStatistics;
 use FairEventsShared\Money;
 use WP_Error;
@@ -25,9 +26,10 @@ defined( 'WPINC' ) || die;
 
 /**
  * Provides display-ready sales statistics for one event occurrence: confirmed
- * ticket counts and activity aggregates (see EventTicketStatistics), and
- * revenue from Fair Audience's payment ledger of the qualifying
- * relationships.
+ * ticket counts and activity aggregates (see EventTicketStatistics), revenue
+ * from Fair Audience's payment ledger of the qualifying relationships, and
+ * the places currently taken against each capacity limit (see
+ * EventCapacityStatistics).
  *
  * Serves the canonical fair-events/v1 route and, for existing consumers, the
  * fair-audience/v1 path the endpoint had before it moved here.
@@ -239,7 +241,9 @@ class EventStatisticsController extends WP_REST_Controller {
 				'activities_per_ticket'               => $tickets['activities_per_ticket'],
 				'tickets_without_activity_assignment' => $tickets['tickets_without_activity_assignment'],
 				'incomplete_ticket_backfills'         => $tickets['incomplete_ticket_backfills'],
-			)
+				// Places taken now, payment holds included: not the confirmed
+				// sales counted above.
+			) + EventCapacityStatistics::for_event_date( $event_date )
 		);
 	}
 

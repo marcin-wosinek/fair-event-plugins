@@ -273,7 +273,7 @@ msgctxt "block description"
 msgid "Display a list of events with filtering options."
 msgstr "Mostrar una lista de eventos con opciones de filtrado."
 
-#: src/Admin/AdminPages.php:774
+#: src/Admin/AdminPages.php:775
 msgid "Upcoming"
 msgstr "Próximos"
 
@@ -756,7 +756,7 @@ msgstr "Error al crear la fecha del evento."
 #: src/API/EventDatesController.php:1586
 #: src/API/EventDatesController.php:1678
 #: src/API/EventDatesController.php:1715
-#: src/API/EventStatisticsController.php:141
+#: src/API/EventStatisticsController.php:143
 #: src/API/GetTicketsController.php:481
 #: src/API/GetTicketsController.php:490
 #: src/API/GetTicketsController.php:935
@@ -1374,6 +1374,7 @@ msgstr "Dejar vacío para capacidad ilimitada."
 msgid "+ Add Ticket Type"
 msgstr "+ Añadir tipo de ticket"
 
+#: src/Admin/event-statistics/EventStatistics.js:217
 #: src/Admin/manage-event/EventTickets.js:1616
 #: src/Admin/manage-event/EventTickets.js:2325
 msgid "Capacity"
@@ -1397,6 +1398,7 @@ msgstr "Hasta"
 msgid "Type name"
 msgstr "Nombre del tipo"
 
+#: src/Admin/event-statistics/EventStatistics.js:220
 #: src/Admin/manage-event/EventTickets.js:1750
 #: src/Admin/manage-event/EventTickets.js:1898
 #: src/Admin/manage-event/EventTickets.js:2488
@@ -4878,64 +4880,64 @@ msgstr "Mover al principio"
 msgid "Event Statistics"
 msgstr "Estadísticas de eventos"
 
-#: src/API/EventStatisticsController.php:123
+#: src/API/EventStatisticsController.php:125
 msgid "You must be logged in."
 msgstr "Debes estar conectado."
 
-#: src/API/EventStatisticsController.php:126
+#: src/API/EventStatisticsController.php:128
 msgid "You do not have permission to view event statistics."
 msgstr "No tienes permiso para ver las estadísticas del evento."
 
-#: src/API/EventStatisticsController.php:147
+#: src/API/EventStatisticsController.php:149
 msgid "The event start date is invalid."
 msgstr "La fecha de inicio del evento no es válida."
 
 #. translators: %d: number of calendar days before the event.
-#: src/API/EventStatisticsController.php:290
+#: src/API/EventStatisticsController.php:294
 #, php-format
 msgid "%d day before the event"
 msgid_plural "%d days before the event"
 msgstr[0] "%d día antes del evento"
 msgstr[1] "%d días antes del evento"
 
-#: src/API/EventStatisticsController.php:295
+#: src/API/EventStatisticsController.php:299
 msgid "Day of the event"
 msgstr "Día del evento"
 
 #. translators: %s: ordinal event-day number, for example 1st or 2nd.
-#: src/API/EventStatisticsController.php:300
+#: src/API/EventStatisticsController.php:304
 #, php-format
 msgid "%s day of the event"
 msgstr "%s día del evento"
 
-#: src/Admin/event-statistics/EventStatistics.js:80
+#: src/Admin/event-statistics/EventStatistics.js:83
 msgid "Download PNG"
 msgstr "Descargar PNG"
 
-#: src/Admin/event-statistics/EventStatistics.js:171
+#: src/Admin/event-statistics/EventStatistics.js:272
 msgid "Event sales statistics could not be loaded."
 msgstr "No se pudieron cargar las estadísticas de ventas del evento."
 
-#: src/Admin/event-statistics/EventStatistics.js:209
+#: src/Admin/event-statistics/EventStatistics.js:312
 msgid "Cumulative tickets sold"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:210
+#: src/Admin/event-statistics/EventStatistics.js:313
 msgid "Cumulative sales amount"
 msgstr "Importe acumulado de ventas"
 
-#: src/Admin/event-statistics/EventStatistics.js:229
+#: src/Admin/event-statistics/EventStatistics.js:332
 msgid "The chart image could not be downloaded. Please try again."
 msgstr "No se pudo descargar la imagen del gráfico. Por favor, inténtalo de nuevo."
 
 #. translators: %s: comma-separated currency codes excluded from event revenue.
-#: src/Admin/event-statistics/EventStatistics.js:261
+#: src/Admin/event-statistics/EventStatistics.js:364
 #, js-format
 msgid "Some payments were excluded because they use different currencies: %s."
 msgstr "Algunos pagos fueron excluidos porque utilizan diferentes monedas: %s."
 
 #. translators: %d: number of confirmed tickets.
-#: src/Admin/event-statistics/EventStatistics.js:275
+#: src/Admin/event-statistics/EventStatistics.js:378
 #, js-format
 msgid "%d ticket"
 msgid_plural "%d tickets"
@@ -4943,29 +4945,29 @@ msgstr[0] "%d entrada"
 msgstr[1] "%d entradas"
 
 #. translators: %d: calendar days until the event.
-#: src/Admin/event-statistics/EventStatistics.js:293
+#: src/Admin/event-statistics/EventStatistics.js:396
 #, js-format
 msgid "%d day until the event"
 msgid_plural "%d days until the event"
 msgstr[0] "%d día hasta el evento"
 msgstr[1] "%d días hasta el evento"
 
-#: src/Admin/event-statistics/EventStatistics.js:328
-#: src/Admin/event-statistics/EventStatistics.js:422
-#: src/Admin/event-statistics/EventStatistics.js:467
+#: src/Admin/event-statistics/EventStatistics.js:431
+#: src/Admin/event-statistics/EventStatistics.js:594
+#: src/Admin/event-statistics/EventStatistics.js:639
 msgid "Tickets"
 msgstr "Entradas"
 
-#: src/Admin/event-statistics/EventStatistics.js:345
+#: src/Admin/event-statistics/EventStatistics.js:448
 msgid "Net sales amount"
 msgstr "Importe neto de ventas"
 
-#: src/Admin/event-statistics/EventStatistics.js:352
+#: src/Admin/event-statistics/EventStatistics.js:455
 msgid "Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included."
 msgstr ""
 
 #. translators: %d: number of purchases with missing ticket records.
-#: src/Admin/event-statistics/EventStatistics.js:361
+#: src/Admin/event-statistics/EventStatistics.js:533
 #, js-format
 msgid "%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created."
 msgid_plural "%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created."
@@ -4973,27 +4975,27 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of tickets left out of the activity charts.
-#: src/Admin/event-statistics/EventStatistics.js:375
+#: src/Admin/event-statistics/EventStatistics.js:547
 #, js-format
 msgid "%d ticket is left out of the activity charts because its activities were recorded for the participant rather than for each ticket."
 msgid_plural "%d tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/event-statistics/EventStatistics.js:387
+#: src/Admin/event-statistics/EventStatistics.js:559
 msgid "Tickets per activity"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:391
+#: src/Admin/event-statistics/EventStatistics.js:563
 msgid "No activities recorded for confirmed tickets."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:431
-#: src/Admin/event-statistics/EventStatistics.js:455
+#: src/Admin/event-statistics/EventStatistics.js:603
+#: src/Admin/event-statistics/EventStatistics.js:627
 msgid "Activities per ticket"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:435
+#: src/Admin/event-statistics/EventStatistics.js:607
 msgid "No confirmed tickets to chart."
 msgstr ""
 
@@ -5008,3 +5010,51 @@ msgstr ""
 #: src/Admin/manage-event/ManageEventApp.js:748
 msgid "Statistics"
 msgstr "Estadísticas"
+
+#: src/Admin/event-statistics/EventStatistics.js:182
+msgid "Full"
+msgstr "Completo"
+
+#. translators: %d: number of places taken beyond the capacity limit.
+#: src/Admin/event-statistics/EventStatistics.js:189
+#, js-format
+msgid "Over capacity by %d place"
+msgid_plural "Over capacity by %d places"
+msgstr[0] "Capacidad superada en %d plaza"
+msgstr[1] "Capacidad superada en %d plazas"
+
+#: src/Admin/event-statistics/EventStatistics.js:213
+msgid "Places taken"
+msgstr "Plazas ocupadas"
+
+#: src/Admin/event-statistics/EventStatistics.js:226
+msgid "Remaining"
+msgstr "Restantes"
+
+#: src/Admin/event-statistics/EventStatistics.js:464
+msgid "Capacity shows the places taken right now: confirmed tickets and tickets held while their payment is in progress. This can be more than the confirmed tickets sold."
+msgstr "La capacidad muestra las plazas ocupadas en este momento: entradas confirmadas y entradas reservadas mientras su pago está en curso. Pueden ser más que las entradas confirmadas vendidas."
+
+#: src/Admin/event-statistics/EventStatistics.js:470
+msgid "Event capacity"
+msgstr "Capacidad del evento"
+
+#: src/Admin/event-statistics/EventStatistics.js:479
+msgid "Capacity by ticket type"
+msgstr "Capacidad por tipo de entrada"
+
+#: src/Admin/event-statistics/EventStatistics.js:486
+msgid "This event has no ticket types."
+msgstr "Este evento no tiene tipos de entrada."
+
+#: src/Admin/event-statistics/EventStatistics.js:497
+msgid "Each ticket type has one limit for the whole series, so these places are counted across all its dates."
+msgstr "Cada tipo de entrada tiene un único límite para toda la serie, por lo que estas plazas se cuentan en todas sus fechas."
+
+#: src/Admin/event-statistics/EventStatistics.js:510
+msgid "Capacity by activity"
+msgstr "Capacidad por actividad"
+
+#: src/Admin/event-statistics/EventStatistics.js:517
+msgid "This event has no activities."
+msgstr "Este evento no tiene actividades."

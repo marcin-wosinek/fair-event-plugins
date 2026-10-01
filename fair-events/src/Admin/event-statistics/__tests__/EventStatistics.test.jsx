@@ -622,3 +622,336 @@ describe( 'EventStatistics chart downloads', () => {
 		expect( downloadElementAsPng ).toHaveBeenCalledTimes( 2 );
 	} );
 } );
+
+describe( 'EventStatistics capacity', () => {
+	const baseResponse = {
+		event_name: 'Summer Retreat',
+		total_tickets: 3,
+		total_sales: 3,
+		currency: 'EUR',
+		total_sales_amount: 12.5,
+		excluded_currencies: [],
+		days_until_start: 5,
+		series: [ { date: '2026-06-15', label: 'Day of event', total: 3 } ],
+		amount_series: [
+			{ date: '2026-06-15', label: 'Day of event', amount: 12.5 },
+		],
+		tickets_per_activity: [ { id: 1, name: 'Yoga', count: 2 } ],
+		activities_per_ticket: [ { activities: 1, tickets: 3 } ],
+		tickets_without_activity_assignment: 0,
+		incomplete_ticket_backfills: 0,
+		event_capacity: { taken: 29, capacity: 40, remaining: 11, over: 0 },
+		ticket_type_capacity: [
+			{
+				id: 1,
+				name: 'Standard',
+				series_wide: false,
+				taken: 5,
+				capacity: 5,
+				remaining: 0,
+				over: 0,
+			},
+			{
+				id: 2,
+				name: 'VIP',
+				series_wide: false,
+				taken: 7,
+				capacity: 5,
+				remaining: 0,
+				over: 2,
+			},
+			{
+				id: 3,
+				name: 'Volunteer',
+				series_wide: false,
+				taken: 4,
+				capacity: null,
+				remaining: null,
+				over: 0,
+			},
+		],
+		activity_capacity: [
+			{
+				id: 11,
+				name: 'Yoga',
+				taken: 3,
+				capacity: 12,
+				remaining: 9,
+				over: 0,
+			},
+			{
+				id: 12,
+				name: '',
+				taken: 2,
+				capacity: 1,
+				remaining: 0,
+				over: 1,
+			},
+		],
+	};
+
+	beforeEach( () => {
+		jest.resetAllMocks();
+	} );
+
+	function mockApi( statistics = {} ) {
+		apiFetch.mockImplementation( () =>
+			Promise.resolve( { ...baseResponse, ...statistics } )
+		);
+	}
+
+	const cardFor = ( title ) =>
+		screen
+			.getByRole( 'heading', { name: title } )
+			.closest( '.fair-event-statistics__chart-card' );
+
+	const rowFor = ( title, name ) => {
+		const card = cardFor( title );
+		return name
+			? within( card ).getByText( name ).closest( 'li' )
+			: card.querySelector( 'li' );
+	};
+
+	// Reads a row's labelled figures back as { label: value }.
+	const figuresOf = ( row ) =>
+		Object.fromEntries(
+			[ ...row.querySelectorAll( 'dl > div' ) ].map( ( pair ) => [
+				pair.querySelector( 'dt' ).textContent,
+				pair.querySelector( 'dd' ).textContent,
+			] )
+		);
+
+	async function renderStatistics() {
+		render( <EventStatistics eventDateId={ 42 } /> );
+		await screen.findByText( 'Cumulative tickets sold' );
+	}
+
+	it( 'places the three capacity cards between the sales and activity charts', async () => {
+		mockApi();
+		await renderStatistics();
+
+		expect(
+			screen
+				.getAllByRole( 'heading', { level: 3 } )
+				.map( ( heading ) => heading.textContent )
+		).toEqual( [
+			'Cumulative tickets sold',
+			'Cumulative sales amount',
+			'Event capacity',
+			'Capacity by ticket type',
+			'Capacity by activity',
+			'Tickets per activity',
+			'Activities per ticket',
+		] );
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+		expect(
+			screen.getByText(
+				/tickets held while their payment is in progress/
+			)
+		).toBeInTheDocument();
+		// Capacity cards are not exported as images.
+		expect(
+			screen.getAllByRole( 'button', { name: 'Download PNG' } )
+		).toHaveLength( 2 );
+	} );
+
+	it( 'shows places taken, capacity and remaining for the event', async () => {
+		mockApi();
+		await renderStatistics();
+
+		const row = rowFor( 'Event capacity' );
+		expect( row ).toHaveAttribute( 'data-capacity-state', 'available' );
+		expect( figuresOf( row ) ).toEqual( {
+			'Places taken': '29',
+			Capacity: '40',
+			Remaining: '11',
+		} );
+		expect(
+			row.querySelector( '.fair-event-statistics__capacity-fill' )
+		).toHaveStyle( { width: '72.5%' } );
+		expect( within( row ).queryByText( 'Full' ) ).toBeNull();
+		expect( within( row ).queryByText( /Over capacity/ ) ).toBeNull();
+	} );
+
+	it( 'marks full and over-capacity ticket types differently', async () => {
+		mockApi();
+		await renderStatistics();
+
+		const full = rowFor( 'Capacity by ticket type', 'Standard' );
+		expect( full ).toHaveAttribute( 'data-capacity-state', 'full' );
+		expect( within( full ).getByText( 'Full' ) ).toBeInTheDocument();
+		expect( figuresOf( full ) ).toEqual( {
+			'Places taken': '5',
+			Capacity: '5',
+			Remaining: '0',
+		} );
+
+		const over = rowFor( 'Capacity by ticket type', 'VIP' );
+		expect( over ).toHaveAttribute( 'data-capacity-state', 'over' );
+		expect(
+			within( over ).getByText( 'Over capacity by 2 places' )
+		).toBeInTheDocument();
+		expect( within( over ).queryByText( 'Full' ) ).toBeNull();
+		expect( figuresOf( over ) ).toEqual( {
+			'Places taken': '7',
+			Capacity: '5',
+			Remaining: '0',
+		} );
+		expect(
+			over.querySelector( '.fair-event-statistics__capacity-fill' )
+		).toHaveStyle( { width: '100%' } );
+	} );
+
+	it( 'shows an unlimited scope without a bar or remaining count', async () => {
+		mockApi( {
+			event_capacity: {
+				taken: 8,
+				capacity: null,
+				remaining: null,
+				over: 0,
+			},
+		} );
+		await renderStatistics();
+
+		for ( const row of [
+			rowFor( 'Event capacity' ),
+			rowFor( 'Capacity by ticket type', 'Volunteer' ),
+		] ) {
+			expect( row ).toHaveAttribute( 'data-capacity-state', 'unlimited' );
+			expect( figuresOf( row ) ).toEqual( {
+				'Places taken': expect.any( String ),
+				Capacity: 'Unlimited',
+			} );
+			expect(
+				row.querySelector( '.fair-event-statistics__capacity-bar' )
+			).toBeNull();
+			expect( row.textContent ).not.toMatch( /%|NaN|Infinity/ );
+		}
+		expect(
+			figuresOf( rowFor( 'Event capacity' ) )[ 'Places taken' ]
+		).toBe( '8' );
+	} );
+
+	it( 'lists activities, with singular overflow and a fallback name', async () => {
+		mockApi();
+		await renderStatistics();
+
+		expect( figuresOf( rowFor( 'Capacity by activity', 'Yoga' ) ) ).toEqual(
+			{
+				'Places taken': '3',
+				Capacity: '12',
+				Remaining: '9',
+			}
+		);
+		const unnamed = rowFor( 'Capacity by activity', '#12' );
+		expect(
+			within( unnamed ).getByText( 'Over capacity by 1 place' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'treats a zero limit as full, not as a division by zero', async () => {
+		mockApi( {
+			event_capacity: { taken: 0, capacity: 0, remaining: 0, over: 0 },
+		} );
+		await renderStatistics();
+
+		const row = rowFor( 'Event capacity' );
+		expect( row ).toHaveAttribute( 'data-capacity-state', 'full' );
+		expect(
+			row.querySelector( '.fair-event-statistics__capacity-fill' )
+		).toHaveStyle( { width: '100%' } );
+		expect( row.textContent ).not.toMatch( /NaN|Infinity/ );
+	} );
+
+	it( 'renders empty ticket-type and activity lists with no sales', async () => {
+		mockApi( {
+			total_tickets: 0,
+			total_sales: 0,
+			total_sales_amount: 0,
+			tickets_per_activity: [],
+			activities_per_ticket: [],
+			event_capacity: { taken: 0, capacity: 20, remaining: 20, over: 0 },
+			ticket_type_capacity: [],
+			activity_capacity: [],
+		} );
+		await renderStatistics();
+
+		expect( figuresOf( rowFor( 'Event capacity' ) ) ).toEqual( {
+			'Places taken': '0',
+			Capacity: '20',
+			Remaining: '20',
+		} );
+		expect(
+			within( cardFor( 'Capacity by ticket type' ) ).getByText(
+				'This event has no ticket types.'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( cardFor( 'Capacity by activity' ) ).getByText(
+				'This event has no activities.'
+			)
+		).toBeInTheDocument();
+		expect(
+			cardFor( 'Capacity by ticket type' ).querySelector( 'li' )
+		).toBeNull();
+	} );
+
+	it( 'explains series-wide ticket type limits only for a series', async () => {
+		mockApi();
+		const { unmount } = render( <EventStatistics eventDateId={ 42 } /> );
+		await screen.findByText( 'Capacity by ticket type' );
+		expect(
+			screen.queryByText( /one limit for the whole series/ )
+		).toBeNull();
+		unmount();
+
+		mockApi( {
+			ticket_type_capacity: baseResponse.ticket_type_capacity.map(
+				( row ) => ( { ...row, series_wide: true } )
+			),
+		} );
+		render( <EventStatistics eventDateId={ 42 } /> );
+		expect(
+			await screen.findByText( /one limit for the whole series/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows no capacity cards while loading or after a failed request', async () => {
+		let fail;
+		apiFetch.mockImplementation(
+			() =>
+				new Promise( ( resolve, reject ) => {
+					fail = reject;
+				} )
+		);
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		expect(
+			document.querySelector( '.components-spinner' )
+		).toBeInTheDocument();
+		expect( screen.queryByText( 'Event capacity' ) ).toBeNull();
+
+		await act( async () => fail( new Error( 'Statistics unavailable' ) ) );
+
+		expect(
+			screen.getAllByText( 'Statistics unavailable' ).length
+		).toBeGreaterThan( 0 );
+		expect( screen.queryByText( 'Event capacity' ) ).toBeNull();
+		expect( screen.queryByText( 'Capacity by activity' ) ).toBeNull();
+	} );
+
+	it( 'omits the capacity cards for a response without capacity data', async () => {
+		mockApi( {
+			event_capacity: undefined,
+			ticket_type_capacity: undefined,
+			activity_capacity: undefined,
+		} );
+		await renderStatistics();
+
+		expect( screen.queryByText( 'Event capacity' ) ).toBeNull();
+		expect( screen.queryByText( 'Capacity by ticket type' ) ).toBeNull();
+		expect(
+			screen.getByText( 'Tickets per activity' )
+		).toBeInTheDocument();
+	} );
+} );

@@ -148,6 +148,104 @@ function CumulativeChart( { series, dataKey, name, valueFormatter } ) {
 	);
 }
 
+// Where a scope stands against its limit.
+function getCapacityState( { capacity, taken } ) {
+	if ( capacity === null || capacity === undefined ) {
+		return 'unlimited';
+	}
+	if ( taken > capacity ) {
+		return 'over';
+	}
+	return taken === capacity ? 'full' : 'available';
+}
+
+// One scope's places taken against its limit: a bar plus the same figures as
+// text, so nothing depends on reading the bar or its color.
+function CapacityRow( { name, figures } ) {
+	const { taken, capacity, remaining, over } = figures;
+	const state = getCapacityState( figures );
+	const fill =
+		capacity > 0 ? Math.min( 100, ( taken / capacity ) * 100 ) : 100;
+	return (
+		<li
+			className={ `fair-event-statistics__capacity-row is-${ state }` }
+			data-capacity-state={ state }
+		>
+			<div className="fair-event-statistics__capacity-heading">
+				{ name && (
+					<strong className="fair-event-statistics__capacity-name">
+						{ name }
+					</strong>
+				) }
+				{ state === 'full' && (
+					<span className="fair-event-statistics__capacity-badge">
+						{ __( 'Full', 'fair-events' ) }
+					</span>
+				) }
+				{ state === 'over' && (
+					<span className="fair-event-statistics__capacity-badge">
+						{ sprintf(
+							/* translators: %d: number of places taken beyond the capacity limit. */
+							_n(
+								'Over capacity by %d place',
+								'Over capacity by %d places',
+								over,
+								'fair-events'
+							),
+							over
+						) }
+					</span>
+				) }
+			</div>
+			{ state !== 'unlimited' && (
+				<div
+					className="fair-event-statistics__capacity-bar"
+					aria-hidden="true"
+				>
+					<div
+						className="fair-event-statistics__capacity-fill"
+						style={ { width: `${ fill }%` } }
+					/>
+				</div>
+			) }
+			<dl className="fair-event-statistics__capacity-figures">
+				<div>
+					<dt>{ __( 'Places taken', 'fair-events' ) }</dt>
+					<dd>{ taken }</dd>
+				</div>
+				<div>
+					<dt>{ __( 'Capacity', 'fair-events' ) }</dt>
+					<dd>
+						{ state === 'unlimited'
+							? __( 'Unlimited', 'fair-events' )
+							: capacity }
+					</dd>
+				</div>
+				{ state !== 'unlimited' && (
+					<div>
+						<dt>{ __( 'Remaining', 'fair-events' ) }</dt>
+						<dd>{ remaining }</dd>
+					</div>
+				) }
+			</dl>
+		</li>
+	);
+}
+
+function CapacityList( { rows } ) {
+	return (
+		<ul className="fair-event-statistics__capacity-list">
+			{ rows.map( ( row ) => (
+				<CapacityRow
+					key={ row.id }
+					name={ row.name || `#${ row.id }` }
+					figures={ row }
+				/>
+			) ) }
+		</ul>
+	);
+}
+
 export default function EventStatistics( { eventDateId, eventTitle } ) {
 	const [ exportingChart, setExportingChart ] = useState( null );
 	const [ exportError, setExportError ] = useState( '' );
@@ -191,6 +289,8 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 		[ statistics?.tickets_per_activity ]
 	);
 	const distributionData = statistics?.activities_per_ticket || [];
+	const ticketTypeCapacity = statistics?.ticket_type_capacity || [];
+	const activityCapacity = statistics?.activity_capacity || [];
 	const unassignedTickets =
 		statistics?.tickets_without_activity_assignment || 0;
 	const incompleteBackfills = statistics?.incomplete_ticket_backfills || 0;
@@ -357,6 +457,75 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 							'fair-events'
 						) }
 					</Notice>
+
+					{ statistics.event_capacity && (
+						<>
+							<p className="fair-event-statistics__capacity-intro">
+								{ __(
+									'Capacity shows the places taken right now: confirmed tickets and tickets held while their payment is in progress. This can be more than the confirmed tickets sold.',
+									'fair-events'
+								) }
+							</p>
+							<ChartCard
+								title={ __( 'Event capacity', 'fair-events' ) }
+							>
+								<ul className="fair-event-statistics__capacity-list">
+									<CapacityRow
+										figures={ statistics.event_capacity }
+									/>
+								</ul>
+							</ChartCard>
+							<ChartCard
+								title={ __(
+									'Capacity by ticket type',
+									'fair-events'
+								) }
+							>
+								{ ticketTypeCapacity.length === 0 ? (
+									<p>
+										{ __(
+											'This event has no ticket types.',
+											'fair-events'
+										) }
+									</p>
+								) : (
+									<>
+										{ ticketTypeCapacity.some(
+											( row ) => row.series_wide
+										) && (
+											<p className="fair-event-statistics__capacity-note">
+												{ __(
+													'Each ticket type has one limit for the whole series, so these places are counted across all its dates.',
+													'fair-events'
+												) }
+											</p>
+										) }
+										<CapacityList
+											rows={ ticketTypeCapacity }
+										/>
+									</>
+								) }
+							</ChartCard>
+							<ChartCard
+								title={ __(
+									'Capacity by activity',
+									'fair-events'
+								) }
+							>
+								{ activityCapacity.length === 0 ? (
+									<p>
+										{ __(
+											'This event has no activities.',
+											'fair-events'
+										) }
+									</p>
+								) : (
+									<CapacityList rows={ activityCapacity } />
+								) }
+							</ChartCard>
+						</>
+					) }
+
 					{ incompleteBackfills > 0 && (
 						<Notice status="warning" isDismissible={ false }>
 							{ sprintf(
