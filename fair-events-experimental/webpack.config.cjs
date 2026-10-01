@@ -9,6 +9,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/settings/index.js",
     ),
+    "admin/compare-events/index": path.resolve(
+      process.cwd(),
+      "src/Admin/compare-events/index.js",
+    ),
     "admin/sources/index": path.resolve(
       process.cwd(),
       "src/Admin/sources/index.js",
