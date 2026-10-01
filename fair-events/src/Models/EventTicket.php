@@ -404,6 +404,73 @@ class EventTicket {
 	}
 
 	/**
+	 * Give one unit to another holder, leaving its purchaser, signup and
+	 * sibling units unchanged. Payment stays with the purchaser.
+	 *
+	 * @param int $ticket_id      Ticket ID.
+	 * @param int $participant_id New holder participant ID.
+	 * @return bool
+	 */
+	public static function set_holder( int $ticket_id, int $participant_id ) {
+		global $wpdb;
+
+		return false !== $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET holder_participant_id = %d WHERE id = %d',
+				self::table(),
+				$participant_id,
+				$ticket_id
+			)
+		);
+	}
+
+	/**
+	 * Read one unit and lock its row until the surrounding transaction
+	 * ends, so a check made on it still holds when the unit is written.
+	 *
+	 * @param int $ticket_id Ticket ID.
+	 * @return object|null
+	 */
+	public static function get_for_update( int $ticket_id ) {
+		global $wpdb;
+
+		return $wpdb->get_row(
+			$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d FOR UPDATE', self::table(), $ticket_id )
+		);
+	}
+
+	/**
+	 * Count the active units each participant bought on an event date that
+	 * someone else now holds.
+	 *
+	 * @param int   $event_date_id   Event date ID.
+	 * @param int[] $participant_ids Purchaser participant IDs.
+	 * @return array<int, int> Counts keyed by purchaser participant ID; purchasers holding all their units are left out.
+	 */
+	public static function count_assigned_away( int $event_date_id, array $participant_ids ) {
+		global $wpdb;
+
+		$participant_ids = array_values( array_filter( array_map( 'intval', $participant_ids ) ) );
+		if ( ! $participant_ids ) {
+			return array();
+		}
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT purchaser_participant_id, COUNT(*) AS units FROM %i WHERE event_date_id = %d AND purchaser_participant_id IN (' . implode( ', ', array_fill( 0, count( $participant_ids ), '%d' ) ) . ') AND holder_participant_id IS NOT NULL AND holder_participant_id <> purchaser_participant_id AND status NOT IN (' . implode( ', ', array_fill( 0, count( self::INACTIVE_STATUSES ), '%s' ) ) . ') GROUP BY purchaser_participant_id',
+				array_merge( array( self::table(), $event_date_id ), $participant_ids, self::INACTIVE_STATUSES )
+			)
+		);
+
+		$counts = array();
+		foreach ( $rows as $row ) {
+			$counts[ (int) $row->purchaser_participant_id ] = (int) $row->units;
+		}
+
+		return $counts;
+	}
+
+	/**
 	 * Whether any of a signup's units, other than those cancelled or
 	 * refunded on their own, has a ticket type other than the signup's:
 	 * an administrator gave it one individually.

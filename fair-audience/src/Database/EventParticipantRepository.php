@@ -222,6 +222,34 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Make sure someone given a ticket has a relationship on its event date,
+	 * so they are listed in the audience. An existing relationship is kept
+	 * exactly as it is. A new one is created as 'interested': the ticket
+	 * they hold, not the relationship, is what admits them, so it stops
+	 * doing so the moment the ticket is taken back, cancelled or lapses.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return int|false Relationship ID, or false when it could not be created.
+	 */
+	public function ensure_ticket_holder_relationship( $event_date_id, $participant_id ) {
+		$existing = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		if ( $existing ) {
+			return (int) $existing->id;
+		}
+
+		$event_date = class_exists( \FairEvents\Models\EventDates::class )
+			? \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id )
+			: null;
+		$event_id   = $event_date ? (int) $event_date->get_resolved_event_id() : 0;
+		if ( ! $event_id ) {
+			return false;
+		}
+
+		return $this->add_participant_to_event( $event_id, (int) $participant_id, 'interested', (int) $event_date_id );
+	}
+
+	/**
 	 * Remove participant from event by event_date_id.
 	 *
 	 * @param int $event_date_id  Event date ID.
@@ -418,7 +446,9 @@ class EventParticipantRepository {
 	 * keep occupying capacity next to fair-events' ticket units. A
 	 * relationship whose participant has a signup for the same event date
 	 * or ticket type is already counted there and is skipped, so one
-	 * admission never counts twice.
+	 * admission never counts twice. So is one whose participant holds an
+	 * active ticket on the date: a ticket assigned to them by its purchaser
+	 * is counted as that ticket.
 	 *
 	 * @param string $scope 'event_date' or 'ticket_type'.
 	 * @param int    $id    Event date ID or ticket type ID.
@@ -429,7 +459,7 @@ class EventParticipantRepository {
 
 		$column = 'ticket_type' === $scope ? 'ticket_type_id' : 'event_date_id';
 
-		return (int) $wpdb->get_var(
+		$count = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM %i AS ep
 				 WHERE ep.%i = %d
@@ -441,14 +471,23 @@ class EventParticipantRepository {
 				     SELECT 1 FROM %i AS s
 				     WHERE s.participant_id = ep.participant_id
 				     AND ( s.event_date_id = ep.event_date_id OR ( ep.ticket_type_id IS NOT NULL AND s.ticket_type_id = ep.ticket_type_id ) )
+				 )
+				 AND NOT EXISTS (
+				     SELECT 1 FROM %i AS t
+				     WHERE t.holder_participant_id = ep.participant_id
+				     AND t.event_date_id = ep.event_date_id
+				     AND t.status NOT IN ( 'failed', 'expired', 'cancelled', 'refunded' )
 				 )",
 				$this->get_table_name(),
 				$column,
 				(int) $id,
 				gmdate( 'Y-m-d H:i:s' ),
-				$wpdb->prefix . 'fair_events_signups'
+				$wpdb->prefix . 'fair_events_signups',
+				$wpdb->prefix . 'fair_events_tickets'
 			)
 		);
+
+		return (int) $count;
 	}
 
 	/**

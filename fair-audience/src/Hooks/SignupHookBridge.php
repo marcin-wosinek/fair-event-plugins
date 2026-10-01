@@ -82,6 +82,8 @@ class SignupHookBridge {
 		$from_event_date_id = (int) $from_event_date_id;
 		$to_event_date_id   = (int) $signup->event_date_id;
 
+		self::list_assigned_holders( $signup );
+
 		if ( ! $participant_id
 			|| \FairEvents\Models\EventSignup::has_other_active_signup( $from_event_date_id, $participant_id, (int) $signup->id )
 		) {
@@ -99,6 +101,33 @@ class SignupHookBridge {
 		}
 
 		$repository->move_to_event_date( $from_event_date_id, $participant_id, $to_event_date_id );
+	}
+
+	/**
+	 * Tickets of a moved signup that were assigned to someone else moved
+	 * with it. Give each of their holders a relationship on the new date
+	 * when they have none, so they are listed in its audience.
+	 *
+	 * @param object $signup Signup row after the move.
+	 * @return void
+	 */
+	private static function list_assigned_holders( $signup ) {
+		if ( ! TicketActivities::available() ) {
+			return;
+		}
+
+		$repository   = new EventParticipantRepository();
+		$purchaser_id = (int) ( $signup->participant_id ?? 0 );
+		foreach ( \FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup->id ) as $ticket ) {
+			$holder_id = (int) $ticket->holder_participant_id;
+			if ( $holder_id
+				&& $purchaser_id !== $holder_id
+				&& (int) $ticket->event_date_id === (int) $signup->event_date_id
+				&& ! in_array( (string) $ticket->status, \FairEvents\Models\EventTicket::INACTIVE_STATUSES, true )
+			) {
+				$repository->ensure_ticket_holder_relationship( (int) $ticket->event_date_id, $holder_id );
+			}
+		}
 	}
 
 	/**

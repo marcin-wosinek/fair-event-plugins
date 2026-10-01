@@ -950,6 +950,45 @@ and an add-on hold expiry). fair-events owns the tables and models
     once a ticket has its own type. The participants list returns each
     participant's `tickets`, and `participant_ticket_option_ids` /
     `attended_at` hold only what is not tied to a ticket.
+-   **Assignment (#1535).** Every ticket payload (the single-ticket
+    response and each participant's `tickets`) carries `purchaser` and
+    `assignee`, each `{ participant_id, name, email }`. The purchaser is the
+    ticket's `purchaser_participant_id`, else its signup's participant, else
+    the name and email the signup was made with (`participant_id` null); the
+    assignee is the holder, or the purchaser while nobody else holds it.
+    `POST fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}/assign`
+    (`manage_options`) takes either `participant_id` or
+    `participant: { name, surname, email }` (400 `invalid_assignee` for
+    neither or both) and changes only the ticket's `holder_participant_id`
+    (`EventTicket::set_holder()`): purchaser, signup, transaction, type,
+    activities, answers and sibling tickets stay. It returns the ticket
+    payload. Confirmed tickets and tickets awaiting payment can be assigned;
+    it refuses 409 `ticket_inactive` (failed, expired, cancelled, refunded),
+    409 `ticket_payment_expired` (hold lapsed) and 409 `ticket_checked_in`
+    (clear the check-in first). A new participant needs a name
+    (400 `participant_name_required`); an email is optional, must be valid
+    (400 `invalid_email`) and unused — 409 `email_exists` carries the
+    existing one in `data.participant` and creates nothing. It starts on the
+    `minimal` email profile. Creating the participant, the holder's
+    relationship and the holder change share one transaction, with the ticket
+    row locked.
+
+    **Admission follows the ticket held, not the relationship.** A holder
+    without a relationship on the date gets one labelled `interested`
+    (`EventParticipantRepository::ensure_ticket_holder_relationship()`); an
+    existing relationship, and the previous holder's, are never changed. The
+    participants list then reports the label that applies: `signed_up` for an
+    `interested` relationship holding a confirmed ticket someone else bought,
+    and `interested` for a `signed_up` purchaser holding none of the active
+    tickets they bought there (`assigned_away_ticket_count` says how many
+    others hold).
+    Whole-series passes surfaced on occurrences follow the same rule, and a
+    signup moved to another date gives its assigned holders a relationship
+    there. `count_admissions_without_signup()` skips a relationship whose
+    participant holds an active ticket on the date, so a hand-added
+    participant given a ticket takes one place. Label-based consumers outside
+    the Audience tab (label counts, mailing audiences) still read the stored
+    label.
 -   **History.** Participant-level activities and check-ins recorded before
     this change are copied onto a ticket by `TicketHistoryBackfill` only when
     the participant held exactly one ticket on that date; the originals are

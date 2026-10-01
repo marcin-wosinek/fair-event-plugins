@@ -21,6 +21,7 @@ import {
 	ticketShortLabel,
 	ticketStatusLabel,
 } from './ticketLabels.js';
+import AssignTicketModal, { personLabel } from './AssignTicketModal.js';
 
 const LABEL_ORDER = { collaborator: 0, signed_up: 1, interested: 2 };
 
@@ -116,6 +117,20 @@ const hasUnattributedActivities = ( p ) =>
 const hasUnattributedHistory = ( p ) =>
 	hasUnattributedActivities( p ) || ( hasTickets( p ) && !! p.attended_at );
 
+// Tickets this participant bought here that someone else now holds.
+const assignedAwayCount = ( p ) => Number( p.assigned_away_ticket_count ) || 0;
+
+// A purchaser who gave every ticket to someone else: listed for the
+// purchase, not as attending.
+const isPurchaserOnly = ( p ) =>
+	assignedAwayCount( p ) > 0 && ! hasTickets( p ) && p.label === 'interested';
+
+// Whether a ticket is held by someone other than its purchaser.
+const isAssignedAway = ( ticket ) =>
+	!! ticket.purchaser &&
+	!! ticket.assignee?.participant_id &&
+	ticket.purchaser.participant_id !== ticket.assignee.participant_id;
+
 const holdsOption = ( ids, names, opt ) =>
 	( ids || [] ).includes( opt.id ) || ( names || [] ).includes( opt.name );
 
@@ -181,6 +196,9 @@ export default function EventAudience( {
 
 	// Edit-ticket modal state: { participant, ticket } or null.
 	const [ editingTicket, setEditingTicket ] = useState( null );
+
+	// Assign-ticket modal state: { ticket, position } or null.
+	const [ assigningTicket, setAssigningTicket ] = useState( null );
 
 	// Move-to-occurrence modal state
 	const [ movingParticipant, setMovingParticipant ] = useState( null );
@@ -435,6 +453,11 @@ export default function EventAudience( {
 			showParticipantLevel: hasParticipantLevel,
 		};
 	}, [ ticketOptions, filteredParticipants ] );
+
+	const audienceParticipantIds = useMemo(
+		() => participants.map( ( p ) => p.participant_id ),
+		[ participants ]
+	);
 
 	const stalePending = useMemo(
 		() => participants.filter( isStalePendingPayment ),
@@ -769,6 +792,20 @@ export default function EventAudience( {
 		);
 		setEditingTicket( null );
 		showToast( __( 'Ticket saved.', 'fair-audience' ) );
+	};
+
+	// The ticket now belongs under another participant, who may be new to
+	// this list, so the rows are reloaded rather than patched.
+	const handleTicketAssigned = ( updatedTicket ) => {
+		setAssigningTicket( null );
+		loadParticipants();
+		showToast(
+			sprintf(
+				/* translators: %s: name of the participant the ticket was assigned to */
+				__( 'Ticket assigned to %s.', 'fair-audience' ),
+				updatedTicket.assignee?.name || __( '—', 'fair-audience' )
+			)
+		);
 	};
 
 	const handleOpenEditOptions = ( participant ) => {
@@ -1430,6 +1467,20 @@ export default function EventAudience( {
 					) }
 				</span>
 			) }
+			{ assignedAwayCount( p ) > 0 && (
+				<span className="fair-audience-audience-table__meta">
+					{ sprintf(
+						/* translators: %d: number of tickets the participant bought that someone else holds */
+						_n(
+							'%d ticket assigned to someone else',
+							'%d tickets assigned to others',
+							assignedAwayCount( p ),
+							'fair-audience'
+						),
+						assignedAwayCount( p )
+					) }
+				</span>
+			) }
 		</>
 	);
 
@@ -1439,6 +1490,9 @@ export default function EventAudience( {
 	// own row.
 	const renderParticipantRows = ( p, index ) => {
 		const withTickets = hasTickets( p );
+		// A purchaser whose tickets are all with others holds no admission
+		// to show a type or a check-in for.
+		const ownsAdmission = ! withTickets && ! isPurchaserOnly( p );
 		const colName = __( 'Name', 'fair-audience' );
 		const colRole = __( 'Role', 'fair-audience' );
 		const colType = __( 'Ticket type', 'fair-audience' );
@@ -1458,10 +1512,16 @@ export default function EventAudience( {
 				{ cell( 'name', colName, renderParticipantName( p ), {
 					className: 'fair-audience-audience-table__name',
 				} ) }
-				{ cell( 'role', colRole, LABEL_DISPLAY[ p.label ] || p.label ) }
-				{ withTickets
-					? cell( 'type', colType, null )
-					: cell( 'type', colType, p.ticket_type_name || '—' ) }
+				{ cell(
+					'role',
+					colRole,
+					isPurchaserOnly( p )
+						? __( 'Purchaser', 'fair-audience' )
+						: LABEL_DISPLAY[ p.label ] || p.label
+				) }
+				{ ownsAdmission
+					? cell( 'type', colType, p.ticket_type_name || '—' )
+					: cell( 'type', colType, null ) }
 				{ withTickets
 					? ticketOptions.map( ( opt ) =>
 							cell( `opt-${ opt.id }`, '', null )
@@ -1474,7 +1534,7 @@ export default function EventAudience( {
 				{ cell(
 					'shown',
 					colShownUp,
-					withTickets ? null : renderParticipantCheckIn( p )
+					ownsAdmission ? renderParticipantCheckIn( p ) : null
 				) }
 				{ cell( 'actions', colActions, renderParticipantActions( p ) ) }
 			</tr>,
@@ -1495,7 +1555,21 @@ export default function EventAudience( {
 					{ cell(
 						'name',
 						__( 'Ticket', 'fair-audience' ),
-						ticketShortLabel( ticket, position ),
+						<>
+							{ ticketShortLabel( ticket, position ) }
+							{ isAssignedAway( ticket ) && (
+								<span className="fair-audience-audience-table__meta">
+									{ sprintf(
+										/* translators: %s: purchaser's name and email */
+										__(
+											'Purchased by %s',
+											'fair-audience'
+										),
+										personLabel( ticket.purchaser )
+									) }
+								</span>
+							) }
+						</>,
 						{ className: 'fair-audience-audience-table__name' }
 					) }
 					{ cell( 'role', colRole, null ) }
@@ -1543,23 +1617,39 @@ export default function EventAudience( {
 					{ cell(
 						'actions',
 						colActions,
-						<Button
-							variant="link"
-							onClick={ () =>
-								setEditingTicket( {
-									participant: p,
-									ticket,
-								} )
-							}
-							label={ sprintf(
-								/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
-								__( 'Edit %s', 'fair-audience' ),
-								fullLabel
-							) }
-							showTooltip={ false }
-						>
-							{ __( 'Edit ticket', 'fair-audience' ) }
-						</Button>
+						<HStack spacing={ 2 } justify="flex-start" wrap>
+							<Button
+								variant="link"
+								onClick={ () =>
+									setEditingTicket( {
+										participant: p,
+										ticket,
+									} )
+								}
+								label={ sprintf(
+									/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
+									__( 'Edit %s', 'fair-audience' ),
+									fullLabel
+								) }
+								showTooltip={ false }
+							>
+								{ __( 'Edit ticket', 'fair-audience' ) }
+							</Button>
+							<Button
+								variant="link"
+								onClick={ () =>
+									setAssigningTicket( { ticket, position } )
+								}
+								label={ sprintf(
+									/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
+									__( 'Assign %s', 'fair-audience' ),
+									fullLabel
+								) }
+								showTooltip={ false }
+							>
+								{ __( 'Assign ticket', 'fair-audience' ) }
+							</Button>
+						</HStack>
 					) }
 				</tr>
 			);
@@ -2884,6 +2974,17 @@ export default function EventAudience( {
 					onSaved={ ( updated ) =>
 						handleTicketSaved( editingTicket.participant, updated )
 					}
+				/>
+			) }
+
+			{ assigningTicket && (
+				<AssignTicketModal
+					eventDateId={ eventDateId }
+					ticket={ assigningTicket.ticket }
+					position={ assigningTicket.position }
+					audienceParticipantIds={ audienceParticipantIds }
+					onClose={ () => setAssigningTicket( null ) }
+					onAssigned={ handleTicketAssigned }
 				/>
 			) }
 
