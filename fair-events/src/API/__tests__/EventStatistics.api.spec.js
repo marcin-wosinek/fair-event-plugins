@@ -1,10 +1,12 @@
 /**
  * Live API coverage for event sales statistics: the canonical fair-events
- * route and the fair-audience path it moved from (#1726).
+ * route and the fair-audience path it moved from (#1726), and the capacity
+ * figures it reports beside them (#1711).
  */
 
 import { test, expect, request } from '@playwright/test';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -126,6 +128,32 @@ function ticketFixture( action, data ) {
 		[ action, JSON.stringify( data ) ],
 		'E2E_EVENT_STATISTICS_TICKETS'
 	);
+}
+
+// The same fixture without blocking the event loop. A long run of blocking
+// fixture calls leaves the server time to close the idle keep-alive
+// connections unnoticed, and the next request then fails with "socket hang
+// up".
+async function ticketFixtureAsync( action, data ) {
+	const { stdout } = await promisify( execFile )(
+		'npx',
+		[
+			'wp-env',
+			'run',
+			'tests-cli',
+			'wp',
+			'eval-file',
+			'wp-content/mu-plugins/scripts/seed-event-statistics-tickets.php',
+			action,
+			JSON.stringify( data ),
+		],
+		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
+	);
+	const match = stdout.match( /E2E_EVENT_STATISTICS_TICKETS:(\{.*\})/ );
+	if ( ! match ) {
+		throw new Error( `Expected fixture output, got:\n${ stdout }` );
+	}
+	return JSON.parse( match[ 1 ] );
 }
 
 const NAMESPACES = [ 'fair-events/v1', 'fair-audience/v1' ];
@@ -277,6 +305,28 @@ test.describe( 'EventStatisticsController', () => {
 		return canonical;
 	}
 
+	// What TicketCapacity itself counts, through the test-only route.
+	async function capacityCounts( {
+		eventDateIds = [],
+		ticketTypeIds = [],
+		options = [],
+	} ) {
+		const params = new URLSearchParams();
+		eventDateIds.forEach( ( id ) =>
+			params.append( 'event_date_ids[]', id )
+		);
+		ticketTypeIds.forEach( ( id ) =>
+			params.append( 'ticket_type_ids[]', id )
+		);
+		options.forEach( ( pair ) => params.append( 'options[]', pair ) );
+		const response = await api.get(
+			`/wp-json/fair-e2e/v1/ticket-capacity?${ params }`,
+			{ headers: adminHeaders }
+		);
+		expect( response.ok() ).toBeTruthy();
+		return response.json();
+	}
+
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
 		anonymousApi = await request.newContext( { baseURL: BASE_URL } );
@@ -304,6 +354,7 @@ test.describe( 'EventStatisticsController', () => {
 		occurrences.completed = await createOccurrence( 'completed', -5, -3 );
 		occurrences.qualifying = await createOccurrence( 'qualifying', 12 );
 		occurrences.tickets = await createOccurrence( 'tickets', 10 );
+		occurrences.capacity = await createOccurrence( 'capacity', 10 );
 
 		occurrences.upcoming.firstRelationshipId = await addParticipant(
 			occurrences.upcoming.eventDateId,
@@ -414,6 +465,9 @@ test.describe( 'EventStatisticsController', () => {
 			eventDateIds: Object.values( occurrences ).map(
 				( occurrence ) => occurrence.eventDateId
 			),
+			configuredEventDateIds: occurrences.capacity
+				? [ occurrences.capacity.eventDateId ]
+				: [],
 		} );
 		if ( series ) {
 			ticketFixture( 'cleanup', { eventDateIds: series.occurrenceIds } );
@@ -682,6 +736,282 @@ test.describe( 'EventStatisticsController', () => {
 			{ activities: 0, tickets: 2 },
 			{ activities: 1, tickets: 1 },
 		] );
+
+		// Capacity (#1711): limits are configured on the series master. The
+		// event and activity limits apply to each date on its own; a ticket
+		// type's limit is one pool for the whole series.
+		const [ workshopId ] = ticketFixture( 'configure', {
+			eventDateId: masterId,
+			eventCapacity: 3,
+			options: [ { name: 'Series workshop', capacity: 2 } ],
+		} ).optionIds;
+		ticketFixture( 'ticket-type-limit', {
+			ticketTypeId: wholeSeriesTypeId,
+			capacity: 2,
+		} );
+		const workshop = { optionId: workshopId, name: 'Series workshop' };
+		// Another pass bought before the series starts: every date.
+		ticketFixture( 'signup', {
+			eventDateId: masterId,
+			participantId: null,
+			ticketTypeId: wholeSeriesTypeId,
+			quantity: 1,
+			createdAt: dayBefore( starts[ masterId ] ),
+			units: [ confirmed( workshop ) ],
+		} );
+		// A single-session ticket on the second date.
+		ticketFixture( 'signup', {
+			eventDateId: firstId,
+			participantId: null,
+			ticketTypeId: series.ticketTypeId,
+			quantity: 1,
+			createdAt: dayBefore( starts[ masterId ] ),
+			units: [ confirmed( workshop ) ],
+		} );
+		// A single-session ticket on the third date, held for payment.
+		ticketFixture( 'signup', {
+			eventDateId: secondId,
+			participantId: null,
+			ticketTypeId: series.ticketTypeId,
+			quantity: 1,
+			status: 'pending_payment',
+			holdMinutes: 30,
+			createdAt: dayBefore( starts[ masterId ] ),
+			units: [ { status: 'pending_payment', activities: [ workshop ] } ],
+		} );
+
+		const counts = await capacityCounts( {
+			eventDateIds: series.occurrenceIds,
+			ticketTypeIds: [ series.ticketTypeId, wholeSeriesTypeId ],
+			options: series.occurrenceIds.map(
+				( id ) => `${ workshopId }:${ id }`
+			),
+		} );
+		const expectedEvent = {
+			[ masterId ]: { taken: 3, capacity: 3, remaining: 0, over: 0 },
+			[ firstId ]: { taken: 5, capacity: 3, remaining: 0, over: 2 },
+			[ secondId ]: { taken: 5, capacity: 3, remaining: 0, over: 2 },
+		};
+		const expectedWorkshop = {
+			[ masterId ]: { taken: 1, capacity: 2, remaining: 1, over: 0 },
+			[ firstId ]: { taken: 2, capacity: 2, remaining: 0, over: 0 },
+			[ secondId ]: { taken: 2, capacity: 2, remaining: 0, over: 0 },
+		};
+		for ( const id of series.occurrenceIds ) {
+			const body = await getStatistics( id );
+			expect( body.event_capacity ).toEqual( expectedEvent[ id ] );
+			expect( body.event_capacity.taken ).toBe(
+				counts.event_dates[ id ]
+			);
+			// The same shared pools, whichever date is selected.
+			expect( body.ticket_type_capacity ).toEqual( [
+				{
+					id: series.ticketTypeId,
+					name: 'Single Session',
+					series_wide: true,
+					taken: 3,
+					capacity: null,
+					remaining: null,
+					over: 0,
+				},
+				{
+					id: wholeSeriesTypeId,
+					name: 'Full Series Pass',
+					series_wide: true,
+					taken: 4,
+					capacity: 2,
+					remaining: 0,
+					over: 2,
+				},
+			] );
+			for ( const row of body.ticket_type_capacity ) {
+				expect( row.taken ).toBe( counts.ticket_types[ row.id ] );
+			}
+			expect( body.activity_capacity ).toEqual( [
+				{
+					id: workshopId,
+					name: 'Series workshop',
+					...expectedWorkshop[ id ],
+				},
+			] );
+			expect( body.activity_capacity[ 0 ].taken ).toBe(
+				counts.ticket_options[ `${ workshopId }:${ id }` ]
+			);
+		}
+	} );
+
+	test( 'reports places taken against event, ticket type, and activity limits', async () => {
+		const eventDateId = occurrences.capacity.eventDateId;
+		const createdAt = `${ addDays( today, -1 ) } 12:00:00`;
+		const {
+			ticketTypeIds: [ limitedId, openId ],
+			optionIds: [ workshopId, floorId ],
+		} = await ticketFixtureAsync( 'configure', {
+			eventDateId,
+			eventCapacity: 5,
+			ticketTypes: [
+				{ name: 'Limited', capacity: 3 },
+				{ name: 'Open', capacity: null },
+			],
+			options: [
+				{ name: 'Workshop', capacity: 2 },
+				{ name: 'Open floor', capacity: null },
+			],
+		} );
+		const workshop = { optionId: workshopId, name: 'Workshop' };
+		const floor = { optionId: floorId, name: 'Open floor' };
+		const signup = ( ticketTypeId, units, extra = {} ) =>
+			ticketFixtureAsync( 'signup', {
+				eventDateId,
+				participantId: null,
+				ticketTypeId,
+				quantity: units.length,
+				createdAt,
+				units,
+				...extra,
+			} );
+
+		// Two tickets of one purchase choosing the same activity take one
+		// place each.
+		const pair = await signup( limitedId, [
+			confirmed( workshop ),
+			confirmed( workshop ),
+		] );
+		// A running payment hold takes its places; a lapsed one does not.
+		await signup(
+			limitedId,
+			[ { status: 'pending_payment', activities: [ floor ] } ],
+			{ status: 'pending_payment', holdMinutes: 30 }
+		);
+		await signup(
+			limitedId,
+			[ { status: 'pending_payment', activities: [ workshop ] } ],
+			{ status: 'pending_payment', holdMinutes: -5 }
+		);
+		// Cancelled and refunded tickets release their places.
+		await signup( openId, [
+			confirmed(),
+			{ status: 'cancelled', activities: [ workshop ] },
+			{ status: 'refunded' },
+		] );
+		// A booking past the activity's and the event's limit, and an
+		// activity hold that ran out.
+		await signup( openId, [
+			confirmed( workshop ),
+			confirmed( {
+				...workshop,
+				status: 'pending_payment',
+				holdMinutes: -5,
+			} ),
+		] );
+
+		let body = await getStatistics( eventDateId );
+		// Confirmed sales leave the payment hold out; capacity counts it.
+		expect( body.total_tickets ).toBe( 5 );
+		expect( body.event_capacity ).toEqual( {
+			taken: 6,
+			capacity: 5,
+			remaining: 0,
+			over: 1,
+		} );
+		expect( body.ticket_type_capacity ).toEqual( [
+			{
+				id: limitedId,
+				name: 'Limited',
+				series_wide: false,
+				taken: 3,
+				capacity: 3,
+				remaining: 0,
+				over: 0,
+			},
+			{
+				id: openId,
+				name: 'Open',
+				series_wide: false,
+				taken: 3,
+				capacity: null,
+				remaining: null,
+				over: 0,
+			},
+		] );
+		expect( body.activity_capacity ).toEqual( [
+			{
+				id: workshopId,
+				name: 'Workshop',
+				taken: 3,
+				capacity: 2,
+				remaining: 0,
+				over: 1,
+			},
+			{
+				id: floorId,
+				name: 'Open floor',
+				taken: 1,
+				capacity: null,
+				remaining: null,
+				over: 0,
+			},
+		] );
+
+		// The figures are the capacity service's own counts.
+		const counts = await capacityCounts( {
+			eventDateIds: [ eventDateId ],
+			ticketTypeIds: [ limitedId, openId ],
+			options: [ workshopId, floorId ].map(
+				( id ) => `${ id }:${ eventDateId }`
+			),
+		} );
+		expect( body.event_capacity.taken ).toBe(
+			counts.event_dates[ eventDateId ]
+		);
+		for ( const row of body.ticket_type_capacity ) {
+			expect( row.taken ).toBe( counts.ticket_types[ row.id ] );
+		}
+		for ( const row of body.activity_capacity ) {
+			expect( row.taken ).toBe(
+				counts.ticket_options[ `${ row.id }:${ eventDateId }` ]
+			);
+		}
+
+		// Aggregates only: no buyer details.
+		expect( JSON.stringify( body ) ).not.toMatch(
+			/@example\.test|Statistics buyer/
+		);
+
+		// Cancelling a ticket releases its event, type and activity places.
+		await ticketFixtureAsync( 'ticket-status', {
+			ticketId: pair.ticketIds[ 0 ],
+			status: 'cancelled',
+		} );
+		body = await getStatistics( eventDateId );
+		expect( body.event_capacity ).toEqual( {
+			taken: 5,
+			capacity: 5,
+			remaining: 0,
+			over: 0,
+		} );
+		expect( body.ticket_type_capacity[ 0 ] ).toMatchObject( {
+			taken: 2,
+			remaining: 1,
+			over: 0,
+		} );
+		expect( body.activity_capacity[ 0 ] ).toMatchObject( {
+			taken: 2,
+			remaining: 0,
+			over: 0,
+		} );
+	} );
+
+	test( 'reports unlimited, empty capacity for an event without limits', async () => {
+		const body = await getStatistics( occurrences.farFuture.eventDateId );
+		expect( body.event_capacity ).toEqual( {
+			taken: 0,
+			capacity: null,
+			remaining: null,
+			over: 0,
+		} );
+		expect( body.ticket_type_capacity ).toEqual( [] );
+		expect( body.activity_capacity ).toEqual( [] );
 	} );
 
 	test( 'includes the event display name for chart labels', async () => {

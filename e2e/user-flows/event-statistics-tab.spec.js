@@ -39,6 +39,24 @@ test.describe('Event Statistics without Experimental', () => {
 			page.getByRole('heading', { name: 'Cumulative tickets sold' })
 		).toBeVisible();
 
+		// Capacity (#1711) loads without the activity catalogue Experimental
+		// provides: the event and its ticket type, and no activities.
+		await expect(
+			page.getByRole('heading', { name: 'Event capacity' })
+		).toBeVisible();
+		const ticketTypes = page
+			.locator('.fair-event-statistics__chart-card')
+			.filter({
+				has: page.getByRole('heading', {
+					name: 'Capacity by ticket type',
+				}),
+			});
+		await expect(ticketTypes.getByText('Free Admission')).toBeVisible();
+		await expect(ticketTypes.getByText('Unlimited')).toBeVisible();
+		await expect(
+			page.getByText('This event has no activities.')
+		).toBeVisible();
+
 		await page.goto(
 			`/wp-admin/admin.php?page=fair-events-event-statistics&event_date_id=${event.eventDateId}`
 		);
