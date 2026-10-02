@@ -67,6 +67,15 @@ export const inclusiveEndToExclusiveDate = ( dateStr ) =>
 let nextOptionClientKey = 0;
 const newOptionClientKey = () => `option-${ ++nextOptionClientKey }`;
 
+// Client-only identity for ticket types that have no ID yet. It keys the
+// unsaved row and its price cells, so both follow the type when rows are
+// reordered. Stripped before saving.
+let nextTicketTypeClientKey = 0;
+const newTicketTypeClientKey = () => `new-type-${ ++nextTicketTypeClientKey }`;
+
+const ticketTypeKey = ( type ) =>
+	type.id ? String( type.id ) : type.client_key;
+
 export const moveToTop = ( items, index ) =>
 	index <= 0 || index >= items.length
 		? items
@@ -193,6 +202,7 @@ export default function EventTickets( {
 		setTicketTypes(
 			( data.ticket_types || [] ).map( ( type ) => ( {
 				...type,
+				...( type.id ? {} : { client_key: newTicketTypeClientKey() } ),
 				activities_enabled:
 					type.recurrence_scope === 'multiple_instances'
 						? false
@@ -461,6 +471,7 @@ export default function EventTickets( {
 				minimum_instances: 0,
 				group_ids: [],
 				sort_order: ticketTypes.length,
+				client_key: newTicketTypeClientKey(),
 			},
 		] );
 	};
@@ -730,10 +741,7 @@ export default function EventTickets( {
 					ticketTypes.forEach( ( type ) => {
 						const oldKey = getPriceKey( type, base );
 						if ( prices[ oldKey ] !== undefined ) {
-							const typeKey =
-								type.id ||
-								`new-${ ticketTypes.indexOf( type ) }`;
-							newPrices[ `${ typeKey }-new-0` ] =
+							newPrices[ `${ ticketTypeKey( type ) }-new-0` ] =
 								prices[ oldKey ];
 						}
 					} );
@@ -776,9 +784,8 @@ export default function EventTickets( {
 			ticketTypes.forEach( ( type ) => {
 				const oldKey = getPriceKey( type, first );
 				if ( prices[ oldKey ] !== undefined ) {
-					const typeKey =
-						type.id || `new-${ ticketTypes.indexOf( type ) }`;
-					newPrices[ `${ typeKey }-new-0` ] = prices[ oldKey ];
+					newPrices[ `${ ticketTypeKey( type ) }-new-0` ] =
+						prices[ oldKey ];
 				}
 			} );
 			setPrices( newPrices );
@@ -801,9 +808,8 @@ export default function EventTickets( {
 	};
 
 	const getPriceKey = ( type, period ) => {
-		const typeKey = type.id || `new-${ ticketTypes.indexOf( type ) }`;
 		const periodKey = period.id || `new-${ salePeriods.indexOf( period ) }`;
-		return `${ typeKey }-${ periodKey }`;
+		return `${ ticketTypeKey( type ) }-${ periodKey }`;
 	};
 
 	const updatePrice = ( type, period, field, value ) => {
@@ -875,10 +881,12 @@ export default function EventTickets( {
 
 		return {
 			capacity: capacity !== '' ? parseInt( capacity, 10 ) : null,
-			ticket_types: ticketTypes.map( ( t, i ) => ( {
-				...t,
-				sort_order: i,
-			} ) ),
+			ticket_types: ticketTypes.map(
+				( { client_key: _unusedKey, ...t }, i ) => ( {
+					...t,
+					sort_order: i,
+				} )
+			),
 			sale_periods: getEffectiveSalePeriods().map( ( p, i ) => ( {
 				...p,
 				sort_order: i,
@@ -1701,15 +1709,12 @@ export default function EventTickets( {
 													);
 												}
 											) }
+											<th />
 										</tr>
 									</thead>
 									<tbody>
 										{ ticketTypes.map( ( type, tIndex ) => (
-											<tr
-												key={
-													type.id || `new-${ tIndex }`
-												}
-											>
+											<tr key={ ticketTypeKey( type ) }>
 												<td>
 													<TextControl
 														placeholder={ __(
@@ -2158,47 +2163,73 @@ export default function EventTickets( {
 													}
 												) }
 												<td>
-													{ type.has_sales ? (
-														<ToggleControl
-															label={
-																type.disabled
-																	? __(
-																			'Disabled',
-																			'fair-events'
-																	  )
-																	: __(
-																			'Enabled',
-																			'fair-events'
-																	  )
-															}
-															checked={
-																! type.disabled
-															}
-															onChange={ ( v ) =>
-																updateTicketType(
-																	tIndex,
-																	'disabled',
-																	! v
-																)
-															}
-														/>
-													) : (
-														<Button
-															variant="tertiary"
-															isDestructive
-															size="small"
-															onClick={ () =>
-																removeTicketType(
-																	tIndex
-																)
-															}
-														>
-															{ __(
-																'Remove',
-																'fair-events'
-															) }
-														</Button>
-													) }
+													<HStack
+														justify="flex-end"
+														wrap
+													>
+														{ tIndex > 0 && (
+															<Button
+																variant="tertiary"
+																size="small"
+																onClick={ () =>
+																	setTicketTypes(
+																		moveToTop(
+																			ticketTypes,
+																			tIndex
+																		)
+																	)
+																}
+															>
+																{ __(
+																	'Move to top',
+																	'fair-events'
+																) }
+															</Button>
+														) }
+														{ type.has_sales ? (
+															<ToggleControl
+																label={
+																	type.disabled
+																		? __(
+																				'Disabled',
+																				'fair-events'
+																		  )
+																		: __(
+																				'Enabled',
+																				'fair-events'
+																		  )
+																}
+																checked={
+																	! type.disabled
+																}
+																onChange={ (
+																	v
+																) =>
+																	updateTicketType(
+																		tIndex,
+																		'disabled',
+																		! v
+																	)
+																}
+															/>
+														) : (
+															<Button
+																variant="tertiary"
+																isDestructive
+																size="small"
+																onClick={ () =>
+																	removeTicketType(
+																		tIndex
+																	)
+																}
+															>
+																{ __(
+																	'Remove',
+																	'fair-events'
+																) }
+															</Button>
+														) }
+													</HStack>
 												</td>
 											</tr>
 										) ) }

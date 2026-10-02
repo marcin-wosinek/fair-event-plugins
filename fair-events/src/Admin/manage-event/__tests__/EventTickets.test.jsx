@@ -1915,3 +1915,223 @@ describe( 'EventTickets — move an activity to the top (#1728)', () => {
 		);
 	} );
 } );
+
+describe( 'EventTickets — move a ticket type to the top (#1757)', () => {
+	const ticketType = ( id, name, sortOrder, extra = {} ) => ( {
+		id,
+		name,
+		capacity: null,
+		minimum_activities: 0,
+		maximum_activities: null,
+		activities_enabled: true,
+		disable_at: null,
+		recurrence_scope: 'single_instance',
+		group_ids: [],
+		sort_order: sortOrder,
+		...extra,
+	} );
+
+	const initialDataWithTypes = {
+		...emptyInitialData,
+		ticket_types: [
+			ticketType( 21, 'Standard', 0 ),
+			ticketType( 22, 'Student', 1, { has_sales: true } ),
+			ticketType( 23, 'Supporter', 2, { capacity: 5 } ),
+		],
+		sale_periods: [
+			{
+				id: 801,
+				name: '',
+				sale_start: '2026-01-01',
+				sale_end: '2026-02-01',
+			},
+		],
+		prices: [
+			{ ticket_type_id: 21, sale_period_id: 801, price: 20 },
+			{ ticket_type_id: 22, sale_period_id: 801, price: 12 },
+			{ ticket_type_id: 23, sale_period_id: 801, price: 35 },
+		],
+	};
+
+	const typeRows = ( container ) =>
+		Array.from(
+			container.querySelectorAll( 'input[placeholder="Type name"]' )
+		).map( ( input ) => input.closest( 'tr' ) );
+
+	const rowName = ( row ) =>
+		row.querySelector( 'input[placeholder="Type name"]' ).value;
+
+	// The per-cell Price input is the only spinbutton carrying step="0.01".
+	const rowPriceInput = ( row ) => row.querySelector( 'input[step="0.01"]' );
+
+	const rowSummary = ( container ) =>
+		typeRows( container ).map( ( row ) => [
+			rowName( row ),
+			rowPriceInput( row ).value,
+		] );
+
+	const moveToTopButton = ( row ) =>
+		within( row ).queryByRole( 'button', { name: 'Move to top' } );
+
+	async function saveAndCapturePayload( onSaveRef ) {
+		let savedPayload = null;
+		apiFetch.mockImplementation( ( { method, data } ) => {
+			if ( method === 'PUT' ) {
+				savedPayload = data;
+				return Promise.resolve( initialDataWithTypes );
+			}
+			return new Promise( () => {} );
+		} );
+		await act( async () => {
+			await onSaveRef.current();
+		} );
+		return savedPayload;
+	}
+
+	it( 'offers "Move to top" on every ticket type except the first', () => {
+		const { container } = renderTickets( {
+			initialData: initialDataWithTypes,
+		} );
+		const rows = typeRows( container );
+
+		expect( moveToTopButton( rows[ 0 ] ) ).not.toBeInTheDocument();
+		expect( moveToTopButton( rows[ 1 ] ) ).toBeInTheDocument();
+		expect( moveToTopButton( rows[ 2 ] ) ).toBeInTheDocument();
+		// The action sits beside the row's existing Enabled / Remove control.
+		expect(
+			within( rows[ 1 ] ).getByRole( 'checkbox', { name: 'Enabled' } )
+		).toBeInTheDocument();
+		expect(
+			within( rows[ 2 ] ).getByRole( 'button', { name: 'Remove' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'moves the type first immediately, keeping the others in order and marking the editor dirty', () => {
+		const onDirtyChange = jest.fn();
+		const { container } = renderTickets( {
+			initialData: initialDataWithTypes,
+			onDirtyChange,
+		} );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
+
+		const supporterRow = typeRows( container )[ 2 ];
+		fireEvent.click( moveToTopButton( supporterRow ) );
+
+		expect( rowSummary( container ) ).toEqual( [
+			[ 'Supporter', '35' ],
+			[ 'Standard', '20' ],
+			[ 'Student', '12' ],
+		] );
+		// The same DOM row moved; it was not re-created.
+		expect( typeRows( container )[ 0 ] ).toBe( supporterRow );
+		expect( moveToTopButton( supporterRow ) ).not.toBeInTheDocument();
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
+	} );
+
+	it( 'saves the new order with unchanged IDs, configuration, and prices', async () => {
+		const { container, onSaveRef } = renderTickets( {
+			initialData: initialDataWithTypes,
+		} );
+
+		fireEvent.click( moveToTopButton( typeRows( container )[ 2 ] ) );
+		const savedPayload = await saveAndCapturePayload( onSaveRef );
+
+		expect(
+			savedPayload.ticket_types.map(
+				( { id, name, capacity, sort_order: order } ) => ( {
+					id,
+					name,
+					capacity,
+					order,
+				} )
+			)
+		).toEqual( [
+			{ id: 23, name: 'Supporter', capacity: 5, order: 0 },
+			{ id: 21, name: 'Standard', capacity: null, order: 1 },
+			{ id: 22, name: 'Student', capacity: null, order: 2 },
+		] );
+		expect(
+			savedPayload.prices.map(
+				( { ticket_type_index: index, price } ) => [ index, price ]
+			)
+		).toEqual( [
+			[ 0, 35 ],
+			[ 1, 20 ],
+			[ 2, 12 ],
+		] );
+	} );
+
+	it( 'keeps unsaved ticket types attached to their own fields and prices', async () => {
+		const { container, onSaveRef } = renderTickets( {
+			initialData: initialDataWithTypes,
+		} );
+
+		// Two unsaved types, each with its own name and price.
+		const addUnsavedType = ( name, price ) => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
+			);
+			const row = typeRows( container ).pop();
+			fireEvent.change(
+				row.querySelector( 'input[placeholder="Type name"]' ),
+				{ target: { value: name } }
+			);
+			fireEvent.change( rowPriceInput( row ), {
+				target: { value: price },
+			} );
+		};
+		addUnsavedType( 'Kids', '5' );
+		addUnsavedType( 'Patron', '80' );
+
+		const patronRow = typeRows( container )[ 4 ];
+		fireEvent.click( moveToTopButton( patronRow ) );
+		// Moving the other unsaved type shifts every row's index again.
+		const kidsRow = typeRows( container )[ 4 ];
+		expect( rowName( kidsRow ) ).toBe( 'Kids' );
+		fireEvent.click( moveToTopButton( kidsRow ) );
+
+		expect( rowSummary( container ) ).toEqual( [
+			[ 'Kids', '5' ],
+			[ 'Patron', '80' ],
+			[ 'Standard', '20' ],
+			[ 'Student', '12' ],
+			[ 'Supporter', '35' ],
+		] );
+		expect( typeRows( container ).slice( 0, 2 ) ).toEqual( [
+			kidsRow,
+			patronRow,
+		] );
+
+		// A price typed after the move still lands on the moved type.
+		fireEvent.change( rowPriceInput( patronRow ), {
+			target: { value: '90' },
+		} );
+
+		const savedPayload = await saveAndCapturePayload( onSaveRef );
+
+		expect(
+			savedPayload.ticket_types.map( ( { id, name } ) => [ id, name ] )
+		).toEqual( [
+			[ undefined, 'Kids' ],
+			[ undefined, 'Patron' ],
+			[ 21, 'Standard' ],
+			[ 22, 'Student' ],
+			[ 23, 'Supporter' ],
+		] );
+		expect(
+			savedPayload.prices.map(
+				( { ticket_type_index: index, price } ) => [ index, price ]
+			)
+		).toEqual( [
+			[ 0, 5 ],
+			[ 1, 90 ],
+			[ 2, 20 ],
+			[ 3, 12 ],
+			[ 4, 35 ],
+		] );
+		// The client-only row identity never reaches the server.
+		savedPayload.ticket_types.forEach( ( type ) =>
+			expect( type ).not.toHaveProperty( 'client_key' )
+		);
+	} );
+} );
