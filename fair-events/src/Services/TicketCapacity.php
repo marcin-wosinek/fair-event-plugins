@@ -525,11 +525,17 @@ class TicketCapacity {
 	 * Run a write only when every place it needs is still available,
 	 * checked and written under the same locks (see with_capacity_lock()).
 	 *
-	 * @param array[]  $demands Each: event_date_id, ticket_type_id, quantity, option_ids.
-	 * @param callable $write   Performs the write; false or WP_Error rolls back.
+	 * An optional $existing callback runs first, under the same locks: when
+	 * it returns anything but null, the write was already made (a retried
+	 * checkout), so that is returned without checking capacity or writing
+	 * again.
+	 *
+	 * @param array[]       $demands  Each: event_date_id, ticket_type_id, quantity, option_ids.
+	 * @param callable      $write    Performs the write; false or WP_Error rolls back.
+	 * @param callable|null $existing Returns an earlier write's result, or null when there is none.
 	 * @return mixed|WP_Error The write's result, or a 409 error naming what is full.
 	 */
-	public static function reserve( array $demands, callable $write ) {
+	public static function reserve( array $demands, callable $write, ?callable $existing = null ) {
 		$needed         = self::places_needed( $demands );
 		$multiple_dates = count( $needed['event_dates'] ) > 1;
 		foreach ( $needed['ticket_options'] as $by_event_date ) {
@@ -538,7 +544,12 @@ class TicketCapacity {
 
 		return self::with_capacity_lock(
 			$demands,
-			static function ( $shortage ) use ( $write, $multiple_dates ) {
+			static function ( $shortage ) use ( $write, $existing, $multiple_dates ) {
+				$earlier = $existing ? $existing() : null;
+				if ( null !== $earlier ) {
+					return $earlier;
+				}
+
 				return $shortage ? self::shortage_error( $shortage, $multiple_dates ) : $write();
 			}
 		);

@@ -395,6 +395,18 @@ foreach (
 	}
 }
 
+if ( ! function_exists( 'is_wp_error' ) ) {
+	/**
+	 * Stub of WordPress is_wp_error().
+	 *
+	 * @param mixed $thing Value to check.
+	 * @return bool
+	 */
+	function is_wp_error( $thing ) {
+		return $thing instanceof WP_Error;
+	}
+}
+
 if ( ! function_exists( 'add_action' ) ) {
 	/**
 	 * Stub of WordPress add_action() — hooks are not run in unit tests.

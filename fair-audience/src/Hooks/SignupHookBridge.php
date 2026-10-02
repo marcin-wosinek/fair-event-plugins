@@ -44,7 +44,6 @@ class SignupHookBridge {
 	 */
 	public static function init() {
 		add_filter( 'fair_events_signup_viewer_context', array( static::class, 'enrich_render_context' ), 10, 1 );
-		add_filter( 'fair_events_signup_precheck_error', array( static::class, 'filter_precheck_error' ), 10, 5 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_signed_up_card' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_not_you' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
@@ -358,56 +357,6 @@ class SignupHookBridge {
 		}
 
 		return $context;
-	}
-
-	/**
-	 * Reject a signup for an event date the viewer already holds a
-	 * `signed_up` relationship for. Hooked on fair_events_signup_precheck_error.
-	 * A `pending_payment` relationship is not rejected here — that's an
-	 * incomplete payment, not a genuine repeat, so a resubmit (e.g. via the
-	 * payment retry card) must still be allowed through.
-	 *
-	 * @param WP_Error|null $error          Prior filter result — passed through unchanged if already an error.
-	 * @param int           $event_date_id  Event-date ID the signup targets.
-	 * @param string        $email          Submitted email (unused — the viewer is resolved by trusted identity).
-	 * @param int           $ticket_type_id Submitted ticket type ID (unused).
-	 * @param string        $participant_token Optional request token.
-	 * @return \WP_Error|null
-	 */
-	public static function filter_precheck_error( $error, $event_date_id, $email, $ticket_type_id, $participant_token = '' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- viewer is resolved by trusted identity, not the submitted email; required by the hook signature.
-		if ( is_wp_error( $error ) ) {
-			return $error;
-		}
-
-		// Scoped to a duplicate *ticket* purchase only — a free/no-ticket-type
-		// signup (companion tickets, activity-only, a whole-series pass bought
-		// again) is intentionally allowed to repeat; fair_events_signups rows
-		// are many-per-participant-per-event by design (see the "Canonical
-		// signup store" section of REST_API_BACKEND.md). This guard exists to
-		// stop a resubmitted/double-clicked ticket purchase from writing a
-		// second row and, on a paid tier, charging again — not to enforce
-		// one-signup-per-participant in general.
-		if ( ! $ticket_type_id ) {
-			return $error;
-		}
-
-		$participant = GroupSignupPricing::resolve_viewer_participant( $participant_token );
-		if ( ! $participant ) {
-			return $error;
-		}
-
-		$event_participant_repository = new EventParticipantRepository();
-		$existing                     = $event_participant_repository->get_by_event_date_and_participant( (int) $event_date_id, (int) $participant->id );
-
-		if ( $existing && 'signed_up' === $existing->label && ! empty( $existing->ticket_type_id ) ) {
-			return new \WP_Error(
-				'already_signed_up',
-				__( 'You already have a ticket for this date.', 'fair-audience' ),
-				array( 'status' => 409 )
-			);
-		}
-
-		return $error;
 	}
 
 	/**
@@ -1107,7 +1056,63 @@ class SignupHookBridge {
 		// The free path emails its confirmation inline in link_participant();
 		// a paid signup only reaches "confirmed" here, so this is the sole
 		// place a base-route paid signup's confirmation email gets sent.
-		\FairAudience\Hooks\PaymentHooks::send_signup_confirmation_email( $event_participant, $transaction );
+		self::send_purchase_confirmation( $signup, $event_participant, $transaction );
+	}
+
+	/**
+	 * Email the confirmation of one paid purchase. The ticket type and
+	 * activities come from the purchase's own signup and tickets: the
+	 * participant's relationship is shared by every purchase they make for
+	 * the date, so it may describe an earlier one.
+	 *
+	 * @param object $signup            Confirmed signup row.
+	 * @param object $event_participant The participant's relationship on the signup's date.
+	 * @param object $transaction       Payment transaction.
+	 * @return void
+	 */
+	private static function send_purchase_confirmation( $signup, $event_participant, $transaction ) {
+		// Without per-ticket activities the relationship is all there is.
+		if ( ! TicketActivities::available() ) {
+			\FairAudience\Hooks\PaymentHooks::send_signup_confirmation_email( $event_participant, $transaction );
+			return;
+		}
+
+		$participant = ( new ParticipantRepository() )->get_by_id( (int) $signup->participant_id );
+		if ( ! $participant ) {
+			return;
+		}
+
+		$ticket_ids = array_map(
+			static function ( $ticket ) {
+				return (int) $ticket->id;
+			},
+			\FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup->id )
+		);
+
+		$activity_names = array();
+		foreach ( \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( $ticket_ids ) as $rows ) {
+			foreach ( $rows as $row ) {
+				if ( ! \FairEvents\Models\EventTicketActivity::is_active_row( $row ) ) {
+					continue;
+				}
+				// Prefer the current option name so renames are reflected;
+				// fall back to the name stored with the selection.
+				$option           = class_exists( \FairEventsExperimental\Models\TicketOption::class )
+					? \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $row->ticket_option_id )
+					: null;
+				$activity_names[] = $option && '' !== (string) $option->name ? (string) $option->name : (string) $row->ticket_option_name;
+			}
+		}
+
+		( new EmailService() )->send_signup_payment_confirmation(
+			$participant,
+			get_post( $event_participant->event_id ),
+			$transaction,
+			array_values( array_unique( array_filter( $activity_names ) ) ),
+			(int) $signup->event_date_id,
+			(int) $signup->ticket_type_id,
+			(int) $event_participant->id
+		);
 	}
 
 	/**

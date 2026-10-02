@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.39.0';
+	const DB_VERSION = '3.40.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -568,6 +568,43 @@ class Schema {
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_signup_id (signup_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_checkout_keys table
+	 *
+	 * One row per get-tickets checkout submitted with an idempotency key. The
+	 * unique key hash makes a retried request resolve to the purchase it
+	 * already created: signup_ids lists that purchase's signup rows
+	 * (comma-separated), fingerprint identifies the purchase details the key
+	 * was first used with, and context keeps what is needed to finish an
+	 * interrupted checkout at the prices it was created with. An 'open' row
+	 * is still being finished by the request holding its claim; a
+	 * 'completed' row only reports its purchase's current state.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_checkout_keys_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_checkout_keys';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			key_hash CHAR(64) NOT NULL,
+			fingerprint CHAR(64) NOT NULL,
+			state VARCHAR(20) NOT NULL DEFAULT 'open',
+			signup_ids TEXT NOT NULL,
+			context LONGTEXT DEFAULT NULL,
+			hooks_fired TINYINT(1) NOT NULL DEFAULT 0,
+			claim_token CHAR(32) DEFAULT NULL,
+			claim_expires_at DATETIME DEFAULT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_key_hash (key_hash),
+			KEY idx_created_at (created_at)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

@@ -649,22 +649,53 @@ sub-route) expose:
     requirement, capped at `count( $ticket_options )`; a ticket type can raise
     it further via its own `minimum_activities` property — see
     `frontend.js`' `getEffectiveActivityMinimum()`.
+-   **Idempotency key** — `POST fair-events/v1/get-tickets` accepts an
+    optional `idempotency_key` (16–128 characters of `A-Za-z0-9_-`; the
+    public form sends a random one). One key is one intended purchase:
+    -   The first request with a key saves the key (hashed) with its signup
+        row(s) in `fair_events_checkout_keys`, in the same transaction and
+        under the same capacity locks, so concurrent requests with one key
+        run one after the other and converge on the same purchase. A
+        `multiple_instances` checkout has one key for all its signup rows.
+    -   A repeated key is resolved **before** the rate limit and before any
+        capacity, price or availability check, and never creates another
+        signup, ticket unit, capacity reservation, transaction or provider
+        payment. It returns the purchase's result: `confirmed` (free, or
+        paid meanwhile), or `payment_required` with the same transaction and
+        checkout link while that payment is open.
+    -   A checkout interrupted part-way (e.g. the provider failed while the
+        payment was being started) is continued from what was persisted by
+        the next request with its key: the transaction is created only when
+        the signups have none, the signup hooks run once, and the payment is
+        started through `TransactionAPI::resume_payment()`, which returns an
+        open payment as it is instead of creating a second one. No database
+        lock is held during the provider call; the request finishing a
+        checkout holds a time-limited claim on its key record, and a repeat
+        arriving meanwhile waits for it (409 `checkout_in_progress` if it
+        takes too long).
+    -   The same key with different purchase details is refused with 409
+        `idempotency_key_reused`. A key whose purchase failed, was cancelled
+        or expired stays used and answers 409 `checkout_closed`; a payment
+        in flight at the bank answers 409 `payment_processing`. Buying again
+        — after a completed, failed, cancelled or expired checkout alike —
+        takes a new key. Retrying a failed payment stays on the
+        `retry-payment` route and that checkout's own signups.
+    -   Keys of confirmed purchases are kept for good. Others are deleted by
+        the hourly cleanup once `CheckoutKey::RETENTION_SECONDS` (30 days)
+        passed and none of their signups is confirmed or pending.
+    -   A request without a key is not protected against being repeated.
 -   **`fair_events_signup_precheck_error` filter** — `GetTicketsController::create_signup()`
     runs this immediately after the event date is validated, before ticket-type
     or options validation, so it covers the single-, `multiple_instances`- and
     no-ticket-type paths alike:
     `apply_filters( 'fair_events_signup_precheck_error', null, $event_date_id, $email, $ticket_type_id, $participant_token )`.
-    Returning a `WP_Error` rejects the signup. fair-audience scopes this to a
-    duplicate *ticket* purchase only: when the request carries a
-    `$ticket_type_id` and the recognised viewer already holds a `signed_up`
-    relationship for this event date with a ticket type attached, it returns
-    409 `already_signed_up` — this is a guard against a resubmitted/
-    double-clicked ticket purchase writing a second row (and, on a paid tier,
-    charging again), not a one-signup-per-participant rule. A `$ticket_type_id`
-    of `0` (no ticket type — activity-only or a companion signup) or a
-    `pending_payment` relationship (an incomplete payment, not a genuine
-    repeat) is never rejected here, matching the "Canonical signup store"
-    multiplicity below. `null` (the default) allows the signup to proceed.
+    Returning a `WP_Error` rejects the signup; `null` (the default) allows it
+    to proceed. It is not run for a repeated idempotency key. **A participant
+    already holding a ticket for the date is not a reason to reject** — each
+    checkout is its own purchase (see "Canonical signup store" below), and
+    accidental repeats are stopped by the idempotency key, not by the
+    participant's relationship. fair-audience no longer hooks this filter
+    (it used to return 409 `already_signed_up`).
 -   **`fair_events_signup_ticket_type_error` filter** — `GetTicketsController::create_signup()`
     runs this right after a submitted ticket type is validated and confirmed
     not disabled: `apply_filters( 'fair_events_signup_ticket_type_error', null, $ticket_type_id, $event_date_id, $participant_token )`.
@@ -819,7 +850,7 @@ unified-signup submission fatal'd):
 | Hook                                  | args passed | `add_filter`/`add_action` call            |
 | -------------------------------------- | :---------: | ------------------------------------------ |
 | `fair_events_signup_viewer_context`    | 1           | `add_filter( ..., 10, 1 )`                 |
-| `fair_events_signup_precheck_error`    | 5           | `add_filter( ..., 10, 5 )`                 |
+| `fair_events_signup_precheck_error`    | 5           | `add_filter( ..., 10, 5 )` (no consumer)   |
 | `fair_events_signup_render_before_form` | 1          | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_before_submit` | 1        | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_after_form` | 1           | `add_action( ..., 10, 1 )`                 |
@@ -893,7 +924,11 @@ participant can legitimately hold multiple signup rows for the same
 same email, ...). No code may treat "a relationship row already exists" as
 "duplicate signup" — always write a fresh `fair_events_signups` row and let
 the companion plugin's own operational record (kept unique per
-event-date/participant) union the labels instead. `EventSignup::has_confirmed_signup()`
+event-date/participant) union the labels instead. The same holds for a
+deliberate repeat purchase: every checkout with a new idempotency key creates
+its own signup, ticket units, activity selections, answers and — when paid —
+transaction, each recorded in the participant's ledger; the relationship
+stays one per event date and is never duplicated per ticket. `EventSignup::has_confirmed_signup()`
 exists specifically to guard capacity-release cleanups (e.g. an expiry cron)
 against dropping a still-valid relationship because of this multiplicity.
 

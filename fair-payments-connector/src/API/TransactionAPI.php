@@ -277,6 +277,53 @@ class TransactionAPI {
 	}
 
 	/**
+	 * Continue a transaction's payment without ever starting a second one.
+	 *
+	 * A transaction whose payment was never started is initiated. One whose
+	 * payment is started and still open returns the checkout it already has,
+	 * with no provider call. Anything else (paid, in flight at the bank,
+	 * failed, cancelled, expired) cannot be continued: create a new
+	 * transaction to retry.
+	 *
+	 * Callers retrying a request (e.g. a checkout repeated with the same
+	 * idempotency key) use this instead of initiate_payment(), and make sure
+	 * only one request at a time continues a given transaction.
+	 *
+	 * @param int   $transaction_id Transaction ID.
+	 * @param array $args           Payment arguments (redirect_url, webhook_url), used when the payment is initiated.
+	 * @return array|\WP_Error Payment data (checkout_url, mollie_payment_id, status) or error.
+	 */
+	public static function resume_payment( $transaction_id, $args = array() ) {
+		$transaction = Transaction::get_by_id( $transaction_id );
+
+		if ( ! $transaction ) {
+			return new \WP_Error(
+				'transaction_not_found',
+				__( 'Transaction not found.', 'fair-payments-connector' )
+			);
+		}
+
+		if ( 'draft' === $transaction->status && empty( $transaction->mollie_payment_id ) && null === $transaction->payment_initiated_at ) {
+			return self::initiate_payment( $transaction_id, $args );
+		}
+
+		$closed = array( 'paid', 'pending', 'failed', 'canceled', 'expired' );
+		if ( ! empty( $transaction->checkout_url ) && ! in_array( (string) $transaction->status, $closed, true ) ) {
+			return array(
+				'checkout_url'      => $transaction->checkout_url,
+				'mollie_payment_id' => $transaction->mollie_payment_id,
+				'status'            => $transaction->status,
+			);
+		}
+
+		return new \WP_Error(
+			'payment_not_resumable',
+			__( 'This payment can no longer be continued.', 'fair-payments-connector' ),
+			array( 'status' => 409 )
+		);
+	}
+
+	/**
 	 * Build the provider metadata from the locally persisted transaction.
 	 *
 	 * Local ownership data stays on the transaction record. Provider metadata

@@ -14,6 +14,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use FairEvents\Models\CheckoutKey;
 use FairEventsShared\Money;
 
 /**
@@ -53,6 +54,12 @@ class GetTicketsController extends WP_REST_Controller {
 	 * Rate limit window in seconds (1 hour).
 	 */
 	const RATE_LIMIT_WINDOW = 3600;
+
+	/**
+	 * How long a repeated request waits for the request already finishing
+	 * its checkout, in seconds.
+	 */
+	const CHECKOUT_WAIT_SECONDS = 8;
 
 	/**
 	 * Register REST API routes.
@@ -183,6 +190,19 @@ class GetTicketsController extends WP_REST_Controller {
 							'type'     => 'string',
 							'required' => false,
 							'default'  => '',
+						),
+						// Identifies one intended purchase (#1534). A request
+						// repeated with the same key returns the purchase it
+						// already created instead of creating, reserving or
+						// charging again; a new purchase sends a new key.
+						'idempotency_key'       => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+							'validate_callback' => static function ( $value ) {
+								return '' === $value || ( is_string( $value ) && (bool) preg_match( '/^[A-Za-z0-9_-]{16,128}$/', $value ) );
+							},
 						),
 						// No 'type' declared: QuestionnaireService::parse_answers()
 						// handles both a decoded array and a raw JSON string.
@@ -447,7 +467,19 @@ class GetTicketsController extends WP_REST_Controller {
 		$quantity          = max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) );
 		$mailing_opt_in    = (bool) $request->get_param( 'mailing_opt_in' );
 		$participant_token = (string) $request->get_param( 'participant_token' );
-		$meta_attribution  = $this->get_meta_attribution( $request );
+		$idempotency_key   = (string) $request->get_param( 'idempotency_key' );
+		$fingerprint       = '' !== $idempotency_key ? $this->checkout_fingerprint( $request ) : '';
+
+		// A request repeated with a known key resolves to the purchase it
+		// already created — before the rate limit, so a retry does not use
+		// up another attempt, and before any check whose answer may have
+		// changed since (capacity, price, availability).
+		if ( '' !== $idempotency_key ) {
+			$existing = CheckoutKey::find( $idempotency_key );
+			if ( $existing ) {
+				return $this->replay_checkout( $request, $existing, $fingerprint );
+			}
+		}
 
 		// Server-side rate limit by IP and by email. The IP ceiling is loose
 		// enough that a shared-NAT venue's fourth signup that hour doesn't
@@ -469,6 +501,8 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 		$ticket_option_ids = array_values( array_unique( array_merge( array(), ...$unit_option_ids ) ) );
 
+		// Validated here, before any signup is written; saved with the
+		// signup's hooks (see fire_checkout_hooks()).
 		$questionnaire_answers = $this->prepare_questionnaire_answers( $request );
 		if ( is_wp_error( $questionnaire_answers ) ) {
 			return $questionnaire_answers;
@@ -492,11 +526,11 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		// Extension point for plugins (e.g. fair-audience) that need to reject
-		// a signup before any row is written — a duplicate already-signed-up
-		// guard, for instance. Runs before ticket-type/options validation so
-		// it covers the single-, multiple-instances- and no-ticket-type paths
-		// alike. See REST_API_BACKEND.md.
+		// Extension point for plugins that need to reject a signup before any
+		// row is written. Runs before ticket-type/options validation so it
+		// covers the single-, multiple-instances- and no-ticket-type paths
+		// alike. A participant already holding a ticket is no reason to
+		// reject: every checkout is its own purchase. See REST_API_BACKEND.md.
 		$precheck_error = apply_filters( 'fair_events_signup_precheck_error', null, (int) $event_date_id, $email, (int) $ticket_type_id, $participant_token );
 		if ( is_wp_error( $precheck_error ) ) {
 			return $precheck_error;
@@ -542,7 +576,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// path that creates one signup row per chosen occurrence.
 			if ( $ticket_type->is_multiple_instances() ) {
 				$this->increment_rate_limit( $email );
-				return $this->create_multi_instance_signup( $request, $ticket_type, $event_date_id, $name, $email, $mailing_opt_in, $questionnaire_answers );
+				return $this->create_multi_instance_signup( $request, $ticket_type, $event_date_id, $name, $email, $mailing_opt_in, $idempotency_key, $fingerprint );
 			}
 
 			// Resolve price from the active sale period (server-side; client amount is ignored).
@@ -618,11 +652,72 @@ class GetTicketsController extends WP_REST_Controller {
 
 		$this->increment_rate_limit( $email );
 
+		$ticket_selection = array(
+			'ticket_type_id'    => $ticket_type_id ? $ticket_type_id : null,
+			'quantity'          => $quantity,
+			'ticket_option_ids' => $ticket_option_ids,
+			'ticket_activities' => $unit_option_ids,
+			// The activities are stored on the tickets with the signup.
+			'activities_stored' => true,
+			'mailing_opt_in'    => $mailing_opt_in,
+		);
+
+		// Paid path — payments were confirmed available above (see the
+		// fail-closed guard), so the payment is planned here, at the prices
+		// just resolved, and carried out once the signup is saved.
+		$payment = null;
+		if ( $amount > 0 ) {
+			$event_title = $this->resolve_event_title( $event_date );
+			$description = $event_title
+				? sprintf(
+					/* translators: %s: event name */
+					__( 'Ticket for %s', 'fair-events' ),
+					$event_title
+				)
+				: sprintf(
+					/* translators: %d: event date ID */
+					__( 'Ticket for event #%d', 'fair-events' ),
+					$event_date_id
+				);
+
+			// Activities get their own line item(s) (from $option_line_items,
+			// resolved above) instead of being folded into the ticket line, so the
+			// finance ledger names what was bought. The ticket line is only added
+			// when there's an actual ticket price — a pure activity-only signup
+			// (free/no ticket type + paid activity) skips a nonsensical €0 line.
+			$line_items = array();
+			if ( $ticket_amount > 0 ) {
+				$line_items[] = array(
+					'name'     => $description,
+					'quantity' => $quantity,
+					'amount'   => $ticket_amount / $quantity,
+				);
+			}
+			foreach ( $option_line_items as $item ) {
+				$line_items[] = $item;
+			}
+
+			$payment = array(
+				'line_items'    => $line_items,
+				'description'   => $description,
+				'currency'      => Money::site_currency(),
+				'event_date_id' => (int) $event_date_id,
+			);
+		}
+
 		// Check the event, ticket-type and activity limits and persist the
 		// signup row, its tickets and their activities under the same row
 		// locks, so concurrent buyers can't both take the last place. A paid
 		// signup is saved holding its places until its payment hold expires.
-		$signup_id = \FairEvents\Services\TicketCapacity::reserve(
+		$checkout = $this->reserve_checkout(
+			$idempotency_key,
+			$fingerprint,
+			array(
+				'ticket_selection' => $ticket_selection,
+				'amount'           => $amount,
+				'payment'          => $payment,
+				'shared'           => false,
+			),
 			array(
 				array(
 					'event_date_id'  => (int) $event_date_id,
@@ -663,15 +758,129 @@ class GetTicketsController extends WP_REST_Controller {
 					}
 				}
 
-				return $signup_id;
+				return array( (int) $signup_id );
 			}
 		);
 
-		if ( is_wp_error( $signup_id ) ) {
-			return $signup_id;
+		if ( is_wp_error( $checkout ) ) {
+			return $checkout;
 		}
 
-		if ( ! $signup_id ) {
+		if ( isset( $checkout['replay'] ) ) {
+			return $this->replay_checkout( $request, $checkout['replay'], $fingerprint );
+		}
+
+		return $this->finish_checkout( $request, $checkout );
+	}
+
+	/**
+	 * Fingerprint the purchase details of a request, so a key reused for a
+	 * different purchase is refused instead of returning the first one.
+	 * Leaves out what does not describe the purchase: the credential,
+	 * tracking identifiers and the honeypot.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return string
+	 */
+	private function checkout_fingerprint( $request ) {
+		$ids = static function ( $values ) {
+			$values = array_values( array_filter( array_unique( array_map( 'absint', (array) $values ) ) ) );
+			sort( $values );
+			return $values;
+		};
+
+		$activities = $request->get_param( 'ticket_activities' );
+		$answers    = $request->get_param( 'questionnaire_answers' );
+		if ( is_string( $answers ) ) {
+			$decoded = json_decode( $answers, true );
+			$answers = is_array( $decoded ) ? $decoded : $answers;
+		}
+
+		return hash(
+			'sha256',
+			(string) wp_json_encode(
+				array(
+					'event_date_id'         => (int) $request->get_param( 'event_date_id' ),
+					'name'                  => (string) $request->get_param( 'name' ),
+					'email'                 => strtolower( (string) $request->get_param( 'email' ) ),
+					'ticket_type_id'        => (int) $request->get_param( 'ticket_type_id' ),
+					'quantity'              => max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) ),
+					'event_date_ids'        => $ids( $request->get_param( 'event_date_ids' ) ?? array() ),
+					'ticket_option_ids'     => $ids( $request->get_param( 'ticket_option_ids' ) ?? array() ),
+					// One list per ticket: their order is part of the purchase.
+					'ticket_activities'     => is_array( $activities ) ? array_map( $ids, array_values( $activities ) ) : array(),
+					'mailing_opt_in'        => (bool) $request->get_param( 'mailing_opt_in' ),
+					'questionnaire_answers' => $answers ? $answers : array(),
+				)
+			)
+		);
+	}
+
+	/**
+	 * Save a checkout's signup rows once every place they need is available,
+	 * and — for a request carrying an idempotency key — record the key with
+	 * them, in the same transaction and under the same capacity locks. Two
+	 * requests with one key therefore run one after the other, and the
+	 * second finds the first one's record instead of checking capacity or
+	 * saving again.
+	 *
+	 * @param string   $idempotency_key Idempotency key, or '' for none.
+	 * @param string   $fingerprint     Fingerprint of the purchase details.
+	 * @param array    $context         What finishing the checkout needs: 'ticket_selection', 'amount',
+	 *                                  'payment' (line_items, description, currency, event_date_id; null when
+	 *                                  free) and 'shared' (several signups under one transaction).
+	 * @param array[]  $demands         Places needed, see TicketCapacity::reserve().
+	 * @param callable $save            Saves the signup rows; returns their IDs or false.
+	 * @return array|WP_Error The new checkout, array( 'replay' => record ) when the key already
+	 *                        has a purchase, or an error.
+	 */
+	private function reserve_checkout( $idempotency_key, $fingerprint, array $context, array $demands, callable $save ) {
+		$claim_token = wp_generate_password( 32, false );
+		$key_id      = 0;
+
+		$result = \FairEvents\Services\TicketCapacity::reserve(
+			$demands,
+			static function () use ( $idempotency_key, $fingerprint, $context, $claim_token, $save, &$key_id ) {
+				if ( '' !== $idempotency_key ) {
+					$key_id = (int) CheckoutKey::create( $idempotency_key, $fingerprint, $context, $claim_token );
+					if ( ! $key_id ) {
+						return false;
+					}
+				}
+
+				$signup_ids = $save();
+				if ( ! $signup_ids ) {
+					return false;
+				}
+
+				if ( $key_id && ! CheckoutKey::set_signup_ids( $key_id, $signup_ids ) ) {
+					return false;
+				}
+
+				return array_map( 'intval', $signup_ids );
+			},
+			'' === $idempotency_key
+				? null
+				: static function () use ( $idempotency_key ) {
+					return CheckoutKey::find( $idempotency_key );
+				}
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		if ( is_object( $result ) ) {
+			return array( 'replay' => $result );
+		}
+
+		if ( ! $result ) {
+			// A request with the same key may have recorded it meanwhile.
+			$existing = '' !== $idempotency_key ? CheckoutKey::find( $idempotency_key ) : null;
+			if ( $existing ) {
+				return array( 'replay' => $existing );
+			}
+
 			return new WP_Error(
 				'db_error',
 				__( 'Failed to save signup. Please try again.', 'fair-events' ),
@@ -679,81 +888,314 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$ticket_selection = array(
-			'ticket_type_id'    => $ticket_type_id ? $ticket_type_id : null,
-			'quantity'          => $quantity,
-			'ticket_option_ids' => $ticket_option_ids,
-			'ticket_activities' => $unit_option_ids,
-			// The activities are already stored on the tickets above.
-			'activities_stored' => true,
-			'mailing_opt_in'    => $mailing_opt_in,
+		return array(
+			'id'          => $key_id,
+			'state'       => CheckoutKey::STATE_OPEN,
+			'claim_token' => $claim_token,
+			'signup_ids'  => $result,
+			'context'     => $context,
+			'hooks_fired' => false,
+		);
+	}
+
+	/**
+	 * Answer a request whose idempotency key already has a purchase: return
+	 * that purchase's result, never a new signup, reservation or charge.
+	 *
+	 * A checkout that was interrupted (the first request failed part-way,
+	 * e.g. at the payment provider) is continued from what was saved. While
+	 * the first request is still finishing it, this one waits for its result.
+	 *
+	 * @param WP_REST_Request $request     Request object.
+	 * @param object          $record      Checkout key row.
+	 * @param string          $fingerprint Fingerprint of this request's purchase details.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function replay_checkout( $request, $record, $fingerprint ) {
+		if ( ! hash_equals( (string) $record->fingerprint, (string) $fingerprint ) ) {
+			return new WP_Error(
+				'idempotency_key_reused',
+				__( 'This purchase was already submitted with different details. Reload the page and try again.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$claim_token = '';
+		if ( CheckoutKey::STATE_OPEN === $record->state ) {
+			$claim_token = wp_generate_password( 32, false );
+			$claimed     = $this->claim_checkout( (int) $record->id, $claim_token );
+			$record      = CheckoutKey::get_by_id( (int) $record->id );
+
+			if ( ! $record ) {
+				return $this->checkout_closed_error();
+			}
+
+			if ( CheckoutKey::STATE_OPEN === $record->state && ! $claimed ) {
+				return $this->checkout_in_progress_error();
+			}
+		}
+
+		return $this->finish_checkout(
+			$request,
+			array(
+				'id'          => (int) $record->id,
+				'state'       => (string) $record->state,
+				'claim_token' => $claim_token,
+				'signup_ids'  => CheckoutKey::signup_ids( $record ),
+				'context'     => CheckoutKey::context( $record ),
+				'hooks_fired' => (bool) $record->hooks_fired,
+			)
+		);
+	}
+
+	/**
+	 * Claim an open checkout to continue it, waiting a moment for the
+	 * request that is finishing it.
+	 *
+	 * @param int    $checkout_id Checkout key row ID.
+	 * @param string $claim_token Claim token of this request.
+	 * @return bool True when this request holds the claim; false when the checkout
+	 *              was finished meanwhile or is still being worked on.
+	 */
+	private function claim_checkout( $checkout_id, $claim_token ) {
+		$deadline = microtime( true ) + self::CHECKOUT_WAIT_SECONDS;
+
+		do {
+			if ( CheckoutKey::claim( $checkout_id, $claim_token ) ) {
+				return true;
+			}
+
+			$record = CheckoutKey::get_by_id( $checkout_id );
+			if ( ! $record || CheckoutKey::STATE_OPEN !== $record->state ) {
+				return false;
+			}
+
+			usleep( 200000 );
+		} while ( microtime( true ) < $deadline );
+
+		return false;
+	}
+
+	/**
+	 * Carry a checkout to its result and record how far it got: finished,
+	 * ended, or — after an error it can recover from — left open for the
+	 * next request with its key.
+	 *
+	 * @param WP_REST_Request $request  Request object.
+	 * @param array           $checkout Checkout, see reserve_checkout().
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function finish_checkout( $request, array $checkout ) {
+		$result = $this->advance_checkout( $request, $checkout );
+
+		if ( $checkout['id'] && CheckoutKey::STATE_OPEN === $checkout['state'] ) {
+			if ( is_wp_error( $result ) && 'checkout_closed' !== $result->get_error_code() ) {
+				// Only gives up this request's own claim; a no-op when
+				// another request took the checkout over.
+				CheckoutKey::release_claim( $checkout['id'], $checkout['claim_token'] );
+			} else {
+				CheckoutKey::complete( $checkout['id'] );
+			}
+		}
+
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/**
+	 * Take a checkout from wherever it stands to its response. Every step
+	 * reads what the previous ones persisted, so it gives the same result
+	 * whether run by the request that created the checkout, by one
+	 * continuing it after an interruption, or by one repeating a finished
+	 * checkout's key:
+	 *
+	 * - the signups' payment transaction is created only when they have none;
+	 * - the signup hooks run only once;
+	 * - a payment is started only for a transaction that has none, and an
+	 *   open one is returned as it is (TransactionAPI::resume_payment()).
+	 *
+	 * Only an open checkout is advanced; a finished one just reports where
+	 * its purchase stands. A purchase that can no longer be paid (failed,
+	 * cancelled, expired) is closed: its key never starts another one.
+	 *
+	 * @param WP_REST_Request $request  Request object.
+	 * @param array           $checkout Checkout, see reserve_checkout().
+	 * @return array|WP_Error Response data, or an error.
+	 */
+	private function advance_checkout( $request, array $checkout ) {
+		$signups = array_values(
+			array_filter(
+				array_map(
+					static function ( $signup_id ) {
+						return \FairEvents\Models\EventSignup::get_by_id( (int) $signup_id );
+					},
+					$checkout['signup_ids']
+				)
+			)
+		);
+		if ( ! $signups || count( $signups ) !== count( $checkout['signup_ids'] ) ) {
+			return $this->checkout_closed_error();
+		}
+
+		$open      = CheckoutKey::STATE_OPEN === $checkout['state'];
+		$payment   = $checkout['context']['payment'] ?? null;
+		$confirmed = array(
+			'status'  => 'confirmed',
+			'message' => __( 'You have successfully registered! A confirmation email is on its way.', 'fair-events' ),
 		);
 
 		// Free path.
-		if ( $amount <= 0 ) {
-			$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, null, $participant_token );
-			$this->persist_questionnaire_answers( $signup_id, $event_date_id, $questionnaire_answers );
-			return rest_ensure_response(
-				array(
-					'status'  => 'confirmed',
-					'message' => __( 'You have successfully registered! A confirmation email is on its way.', 'fair-events' ),
-				)
-			);
+		if ( ! $payment ) {
+			if ( ! $checkout['hooks_fired'] ) {
+				if ( ! $open ) {
+					return $this->checkout_closed_error();
+				}
+				$this->fire_checkout_hooks( $request, $checkout, $signups, null );
+			}
+
+			return $confirmed;
 		}
 
-		// Paid path — payments were confirmed available before the signup row
-		// was saved (see the fail-closed guard above), so a transaction can be
-		// created here without a free-fallback.
-		$currency    = Money::site_currency();
-		$event_title = $this->resolve_event_title( $event_date );
-		$description = $event_title
-			? sprintf(
-				/* translators: %s: event name */
-				__( 'Ticket for %s', 'fair-events' ),
-				$event_title
-			)
-			: sprintf(
-				/* translators: %d: event date ID */
-				__( 'Ticket for event #%d', 'fair-events' ),
-				$event_date_id
-			);
-
-		// Activities get their own line item(s) (from $option_line_items,
-		// resolved above) instead of being folded into the ticket line, so the
-		// finance ledger names what was bought. The ticket line is only added
-		// when there's an actual ticket price — a pure activity-only signup
-		// (free/no ticket type + paid activity) skips a nonsensical €0 line.
-		$line_items = array();
-		if ( $ticket_amount > 0 ) {
-			$line_items[] = array(
-				'name'     => $description,
-				'quantity' => $quantity,
-				'amount'   => $ticket_amount / $quantity,
-			);
+		$all_confirmed = true;
+		$holds_places  = true;
+		foreach ( $signups as $signup ) {
+			$all_confirmed = $all_confirmed && 'confirmed' === $signup->status;
+			$holds_places  = $holds_places && \FairEvents\Services\TicketCapacity::signup_holds_places( $signup );
 		}
-		foreach ( $option_line_items as $item ) {
-			$line_items[] = $item;
+		if ( $all_confirmed ) {
+			return $confirmed;
 		}
 
-		$user_id        = get_current_user_id();
-		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
-			$line_items,
+		// A retried payment moved the signups to a newer transaction; the
+		// one they carry now is the one that counts.
+		$transaction_id = (int) $signups[0]->transaction_id;
+		$transaction    = $transaction_id ? \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id ) : null;
+		if ( $transaction && 'paid' === $transaction->status ) {
+			return $confirmed;
+		}
+
+		// The payment failed, was cancelled, or its hold ran out: the places
+		// are released, so nothing more is charged for this checkout.
+		if ( ! $holds_places ) {
+			return $this->checkout_closed_error();
+		}
+
+		if ( ! $transaction ) {
+			if ( ! $open ) {
+				return $this->checkout_closed_error();
+			}
+
+			$transaction_id = $this->create_checkout_transaction( $request, $checkout, $signups );
+			if ( is_wp_error( $transaction_id ) ) {
+				return $transaction_id;
+			}
+		}
+
+		if ( ! $checkout['hooks_fired'] ) {
+			if ( ! $open ) {
+				return $this->checkout_closed_error();
+			}
+			$this->fire_checkout_hooks( $request, $checkout, $signups, $transaction_id );
+		}
+
+		// Load the transaction so its access token can be attached to the
+		// redirect URL, mirroring PaymentEndpoint::create_payment. The token
+		// gates the shared /payments/{id}/status endpoint this now polls.
+		$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );
+		if ( ! $transaction ) {
+			return $this->checkout_closed_error();
+		}
+
+		if ( 'draft' === $transaction->status ) {
+			// Starting the payment is the one step that must not run twice:
+			// only the request still holding the checkout's claim does it.
+			if ( ! $open ) {
+				return $this->checkout_closed_error();
+			}
+			if ( $checkout['id'] && ! CheckoutKey::renew_claim( $checkout['id'], $checkout['claim_token'] ) ) {
+				return $this->checkout_in_progress_error();
+			}
+		}
+
+		$redirect_url = add_query_arg(
 			array(
-				'currency'       => $currency,
-				'description'    => $description,
-				'event_date_id'  => $event_date_id,
-				'post_id'        => $this->resolve_event_post_id( $event_date_id ),
+				'fair_payment_callback' => 'true',
+				'transaction_id'        => $transaction_id,
+				'token'                 => $transaction->access_token,
+			),
+			$this->resolve_return_url( (int) $request->get_param( 'event_date_id' ) )
+		);
+
+		$started = \FairPaymentsConnector\API\TransactionAPI::resume_payment(
+			$transaction_id,
+			array( 'redirect_url' => $redirect_url )
+		);
+
+		if ( is_wp_error( $started ) ) {
+			if ( 'payment_not_resumable' !== $started->get_error_code() ) {
+				return $started;
+			}
+
+			// 'pending' is a payment in flight at the bank: neither payable
+			// again nor over.
+			return 'pending' === $transaction->status
+				? new WP_Error(
+					'payment_processing',
+					__( 'Your payment is being processed. You will receive a confirmation email once it is complete.', 'fair-events' ),
+					array( 'status' => 409 )
+				)
+				: $this->checkout_closed_error();
+		}
+
+		\FairEvents\Services\SignupPaymentSession::set( (int) $signups[0]->id, $transaction_id );
+
+		return array(
+			'status'         => 'payment_required',
+			'checkout_url'   => esc_url_raw( $started['checkout_url'] ),
+			'transaction_id' => $transaction_id,
+			'amount'         => $checkout['context']['amount'],
+			'currency'       => $payment['currency'],
+		);
+	}
+
+	/**
+	 * Create the transaction a checkout's signups are paid with, from the
+	 * payment planned when they were saved, and attach it to them.
+	 *
+	 * @param WP_REST_Request $request  Request object.
+	 * @param array           $checkout Checkout, see reserve_checkout().
+	 * @param object[]        $signups  The checkout's signup rows.
+	 * @return int|WP_Error Transaction ID, or an error.
+	 */
+	private function create_checkout_transaction( $request, array $checkout, array $signups ) {
+		$payment    = $checkout['context']['payment'];
+		$email      = (string) $signups[0]->email;
+		$user_id    = get_current_user_id();
+		$signup_ids = array_map(
+			static function ( $signup ) {
+				return (int) $signup->id;
+			},
+			$signups
+		);
+
+		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
+			$payment['line_items'],
+			array(
+				'currency'       => $payment['currency'],
+				'description'    => $payment['description'],
+				'event_date_id'  => (int) $payment['event_date_id'],
+				'post_id'        => $this->resolve_event_post_id( (int) $payment['event_date_id'] ),
 				'user_id'        => $user_id ? $user_id : null,
-				'participant_id' => $this->resolve_transaction_participant_id( array( (int) $signup_id ), $email, $participant_token ),
+				'participant_id' => $this->resolve_transaction_participant_id( $signup_ids, $email, (string) $request->get_param( 'participant_token' ) ),
 				'email'          => $email,
 				'metadata'       => array_merge(
 					array(
 						'source'        => 'fair-events-get-tickets',
-						'event_date_id' => $event_date_id,
-						'signup_id'     => $signup_id,
-						'email'         => $email,
+						'event_date_id' => (int) $payment['event_date_id'],
 					),
-					$meta_attribution
+					// A 'multiple_instances' purchase stores one signup row ID per chosen occurrence.
+					empty( $checkout['context']['shared'] ) ? array( 'signup_id' => $signup_ids[0] ) : array( 'signup_ids' => $signup_ids ),
+					array( 'email' => $email ),
+					$this->get_meta_attribution( $request )
 				),
 			)
 		);
@@ -762,45 +1204,72 @@ class GetTicketsController extends WP_REST_Controller {
 			return $transaction_id;
 		}
 
-		\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
-
-		$this->fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, (int) $transaction_id, $participant_token );
-		$this->persist_questionnaire_answers( $signup_id, $event_date_id, $questionnaire_answers );
-		$this->fire_signup_transaction_created( (int) $transaction_id, array( (int) $signup_id ) );
-
-		// Load the freshly created transaction so its access token can be attached
-		// to the redirect URL, mirroring PaymentEndpoint::create_payment. The token
-		// gates the shared /payments/{id}/status endpoint this now polls.
-		$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );
-
-		$redirect_url = add_query_arg(
-			array(
-				'fair_payment_callback' => 'true',
-				'transaction_id'        => $transaction_id,
-				'token'                 => $transaction ? $transaction->access_token : '',
-			),
-			$this->resolve_return_url( $event_date_id )
-		);
-
-		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
-			$transaction_id,
-			array( 'redirect_url' => $redirect_url )
-		);
-
-		if ( is_wp_error( $payment ) ) {
-			return $payment;
+		foreach ( $signup_ids as $signup_id ) {
+			\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
 		}
 
-		\FairEvents\Services\SignupPaymentSession::set( $signup_id, (int) $transaction_id );
+		return (int) $transaction_id;
+	}
 
-		return rest_ensure_response(
-			array(
-				'status'         => 'payment_required',
-				'checkout_url'   => esc_url_raw( $payment['checkout_url'] ),
-				'transaction_id' => $transaction_id,
-				'amount'         => $amount,
-				'currency'       => $currency,
-			)
+	/**
+	 * Run a checkout's signup hooks, once: the companion plugin's
+	 * participant link and confirmation for each signup row, the buyer's
+	 * custom-question answers, and — when paid — the transaction link.
+	 *
+	 * @param WP_REST_Request $request        Request object.
+	 * @param array           $checkout       Checkout, see reserve_checkout().
+	 * @param object[]        $signups        The checkout's signup rows.
+	 * @param int|null        $transaction_id Transaction paying for them, or null on the free path.
+	 * @return void
+	 */
+	private function fire_checkout_hooks( $request, array $checkout, array $signups, $transaction_id ) {
+		$ticket_selection  = $checkout['context']['ticket_selection'] ?? array();
+		$participant_token = (string) $request->get_param( 'participant_token' );
+		$answers           = $this->prepare_questionnaire_answers( $request );
+		if ( is_wp_error( $answers ) ) {
+			$answers = array();
+		}
+
+		$signup_ids = array();
+		foreach ( $signups as $signup ) {
+			$signup_ids[] = (int) $signup->id;
+			$this->fire_signup_created( (int) $signup->id, (int) $signup->event_date_id, (string) $signup->name, (string) $signup->email, $ticket_selection, $transaction_id, $participant_token );
+			$this->persist_questionnaire_answers( (int) $signup->id, (int) $signup->event_date_id, $answers );
+		}
+
+		if ( $transaction_id ) {
+			$this->fire_signup_transaction_created( (int) $transaction_id, $signup_ids );
+		}
+
+		if ( $checkout['id'] ) {
+			CheckoutKey::mark_hooks_fired( $checkout['id'] );
+		}
+	}
+
+	/**
+	 * Error for a key whose purchase is over without being confirmed. The
+	 * key stays used: buying again takes a new key.
+	 *
+	 * @return WP_Error
+	 */
+	private function checkout_closed_error() {
+		return new WP_Error(
+			'checkout_closed',
+			__( 'This purchase has ended and can no longer be paid. Submit the form again to start a new one.', 'fair-events' ),
+			array( 'status' => 409 )
+		);
+	}
+
+	/**
+	 * Error for a key whose checkout another request is still finishing.
+	 *
+	 * @return WP_Error
+	 */
+	private function checkout_in_progress_error() {
+		return new WP_Error(
+			'checkout_in_progress',
+			__( 'This purchase is still being processed. Please wait a moment and try again.', 'fair-events' ),
+			array( 'status' => 409 )
 		);
 	}
 
@@ -1386,14 +1855,14 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @param string                        $name           Buyer name.
 	 * @param string                        $email          Buyer email.
 	 * @param bool                          $mailing_opt_in Whether the buyer opted into mailings.
-	 * @param array                         $questionnaire_answers Sanitized custom-question answers, shared across every occurrence row.
+	 * @param string                        $idempotency_key Idempotency key of the checkout, or '' for none.
+	 * @param string                        $fingerprint    Fingerprint of the purchase details, or '' without a key.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	private function create_multi_instance_signup( $request, $ticket_type, $series_page_id, $name, $email, $mailing_opt_in, $questionnaire_answers = array() ) {
-		$meta_attribution = $this->get_meta_attribution( $request );
-		$raw_ids          = $request->get_param( 'event_date_ids' ) ?? array();
-		$raw_ids          = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
-		$raw_ids          = array_filter( $raw_ids );
+	private function create_multi_instance_signup( $request, $ticket_type, $series_page_id, $name, $email, $mailing_opt_in, $idempotency_key = '', $fingerprint = '' ) {
+		$raw_ids = $request->get_param( 'event_date_ids' ) ?? array();
+		$raw_ids = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
+		$raw_ids = array_filter( $raw_ids );
 
 		if ( empty( $raw_ids ) ) {
 			return new WP_Error(
@@ -1471,6 +1940,62 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
+		$occurrence_ids   = array_map(
+			function ( $occ ) {
+				return (int) $occ->id;
+			},
+			$occurrences
+		);
+		$ticket_selection = array(
+			'ticket_type_id' => (int) $ticket_type->id,
+			'quantity'       => 1,
+			'event_date_ids' => $occurrence_ids,
+			'mailing_opt_in' => $mailing_opt_in,
+		);
+
+		// Paid path — payments were confirmed available above (see the
+		// fail-closed guard), so one shared payment for every occurrence is
+		// planned here and carried out once the signup rows are saved.
+		$payment = null;
+		if ( $total_amount > 0 ) {
+			$series_master = \FairEvents\Models\EventDates::get_by_id( $series_master_id );
+			$event_title   = $series_master ? $this->resolve_event_title( $series_master ) : null;
+			$description   = $event_title
+				? sprintf(
+					/* translators: %s: event name */
+					__( 'Tickets for %s', 'fair-events' ),
+					$event_title
+				)
+				: sprintf(
+					/* translators: %d: event date ID */
+					__( 'Tickets for event #%d', 'fair-events' ),
+					$series_master_id
+				);
+
+			$line_items = array();
+			foreach ( $occurrences as $occ ) {
+				$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
+					? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
+					: $occ->start_datetime;
+				$line_items[] = array(
+					'name'     => sprintf(
+						/* translators: %s: occurrence date/time label */
+						__( 'Ticket for %s', 'fair-events' ),
+						$occ_label
+					),
+					'quantity' => 1,
+					'amount'   => $unit_price,
+				);
+			}
+
+			$payment = array(
+				'line_items'    => $line_items,
+				'description'   => $description,
+				'currency'      => Money::site_currency(),
+				'event_date_id' => (int) $series_master_id,
+			);
+		}
+
 		// Persist one signup row per chosen occurrence (quantity fixed at 1;
 		// instance count is the only multiplier for this scope). Every row is
 		// checked and written in one locked transaction: each occurrence
@@ -1484,7 +2009,16 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$signup_ids = \FairEvents\Services\TicketCapacity::reserve(
+		$checkout = $this->reserve_checkout(
+			$idempotency_key,
+			$fingerprint,
+			array(
+				'ticket_selection' => $ticket_selection,
+				'amount'           => $total_amount,
+				'payment'          => $payment,
+				// One key and one transaction pay for every occurrence's row.
+				'shared'           => true,
+			),
 			$demands,
 			static function () use ( $occurrences, $ticket_type, $name, $email, $mailing_opt_in, $unit_price, $total_amount ) {
 				$saved_ids = array();
@@ -1510,144 +2044,15 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 		);
 
-		if ( is_wp_error( $signup_ids ) ) {
-			return $signup_ids;
+		if ( is_wp_error( $checkout ) ) {
+			return $checkout;
 		}
 
-		if ( ! $signup_ids ) {
-			return new WP_Error(
-				'db_error',
-				__( 'Failed to save signup. Please try again.', 'fair-events' ),
-				array( 'status' => 500 )
-			);
+		if ( isset( $checkout['replay'] ) ) {
+			return $this->replay_checkout( $request, $checkout['replay'], $fingerprint );
 		}
 
-		$occurrence_ids   = array_map(
-			function ( $occ ) {
-				return (int) $occ->id;
-			},
-			$occurrences
-		);
-		$ticket_selection = array(
-			'ticket_type_id' => (int) $ticket_type->id,
-			'quantity'       => 1,
-			'event_date_ids' => $occurrence_ids,
-			'mailing_opt_in' => $mailing_opt_in,
-		);
-
-		// Free path.
-		if ( $total_amount <= 0 ) {
-			foreach ( $signup_ids as $index => $signup_id ) {
-				$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, null, $participant_token );
-				$this->persist_questionnaire_answers( $signup_id, $occurrence_ids[ $index ], $questionnaire_answers );
-			}
-			return rest_ensure_response(
-				array(
-					'status'  => 'confirmed',
-					'message' => __( 'You have successfully registered! A confirmation email is on its way.', 'fair-events' ),
-				)
-			);
-		}
-
-		// Paid path — payments were confirmed available before any signup row
-		// was saved (see the fail-closed guard above), so a shared transaction
-		// can be created here without a free-fallback.
-		$currency      = Money::site_currency();
-		$series_master = \FairEvents\Models\EventDates::get_by_id( $series_master_id );
-		$event_title   = $series_master ? $this->resolve_event_title( $series_master ) : null;
-		$description   = $event_title
-			? sprintf(
-				/* translators: %s: event name */
-				__( 'Tickets for %s', 'fair-events' ),
-				$event_title
-			)
-			: sprintf(
-				/* translators: %d: event date ID */
-				__( 'Tickets for event #%d', 'fair-events' ),
-				$series_master_id
-			);
-
-		$line_items = array();
-		foreach ( $occurrences as $occ ) {
-			$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
-				? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
-				: $occ->start_datetime;
-			$line_items[] = array(
-				'name'     => sprintf(
-					/* translators: %s: occurrence date/time label */
-					__( 'Ticket for %s', 'fair-events' ),
-					$occ_label
-				),
-				'quantity' => 1,
-				'amount'   => $unit_price,
-			);
-		}
-
-		$user_id        = get_current_user_id();
-		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
-			$line_items,
-			array(
-				'currency'       => $currency,
-				'description'    => $description,
-				'event_date_id'  => $series_master_id,
-				'post_id'        => $this->resolve_event_post_id( $series_master_id ),
-				'user_id'        => $user_id ? $user_id : null,
-				'participant_id' => $this->resolve_transaction_participant_id( array_map( 'intval', $signup_ids ), $email, $participant_token ),
-				'email'          => $email,
-				'metadata'       => array_merge(
-					array(
-						'source'        => 'fair-events-get-tickets',
-						'event_date_id' => $series_master_id,
-						'signup_ids'    => $signup_ids,
-						'email'         => $email,
-					),
-					$meta_attribution
-				),
-			)
-		);
-
-		if ( is_wp_error( $transaction_id ) ) {
-			return $transaction_id;
-		}
-
-		foreach ( $signup_ids as $index => $signup_id ) {
-			\FairEvents\Models\EventSignup::update_transaction( $signup_id, (int) $transaction_id );
-			$this->fire_signup_created( $signup_id, $occurrence_ids[ $index ], $name, $email, $ticket_selection, (int) $transaction_id, $participant_token );
-			$this->persist_questionnaire_answers( $signup_id, $occurrence_ids[ $index ], $questionnaire_answers );
-		}
-		$this->fire_signup_transaction_created( (int) $transaction_id, array_map( 'intval', $signup_ids ) );
-
-		$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );
-
-		$redirect_url = add_query_arg(
-			array(
-				'fair_payment_callback' => 'true',
-				'transaction_id'        => $transaction_id,
-				'token'                 => $transaction ? $transaction->access_token : '',
-			),
-			$this->resolve_return_url( $series_page_id )
-		);
-
-		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
-			$transaction_id,
-			array( 'redirect_url' => $redirect_url )
-		);
-
-		if ( is_wp_error( $payment ) ) {
-			return $payment;
-		}
-
-		\FairEvents\Services\SignupPaymentSession::set( (int) $signup_ids[0], (int) $transaction_id );
-
-		return rest_ensure_response(
-			array(
-				'status'         => 'payment_required',
-				'checkout_url'   => esc_url_raw( $payment['checkout_url'] ),
-				'transaction_id' => $transaction_id,
-				'amount'         => $total_amount,
-				'currency'       => $currency,
-			)
-		);
+		return $this->finish_checkout( $request, $checkout );
 	}
 
 	/**

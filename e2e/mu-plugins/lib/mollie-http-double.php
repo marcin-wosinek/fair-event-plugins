@@ -13,7 +13,10 @@
  * Canned behaviour, enough to drive the ticket-purchase flow:
  *   - POST /v2/payments        -> a payment in status "open" whose checkout link
  *                                 points straight back at the redirectUrl, so the
- *                                 buyer lands on the signup callback page.
+ *                                 buyer lands on the signup callback page. Each
+ *                                 one is counted in `fair_e2e_mollie_create_count`;
+ *                                 while `fair_e2e_mollie_fail_creates` is above
+ *                                 zero it throws instead, as an outage would.
  *   - GET  /v2/payments/{id}   -> the same payment in the status set via the
  *                                 `fair_e2e_mollie_get_status` WP option
  *                                 (default "paid", settable per-test via
@@ -110,10 +113,20 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 	 * @param string $path    URL path component.
 	 * @param array  $payload Decoded request body.
 	 * @return array|\stdClass
+	 * @throws \RuntimeException When a spec armed a payment creation failure.
 	 */
 	private function canned_response( string $method, string $path, array $payload ) {
 		// Create payment: POST /v2/payments.
 		if ( 'POST' === $method && \preg_match( '#/payments/?$#', $path ) ) {
+			// A spec can make the next creations fail, as an unreachable
+			// provider would (see fair-e2e-checkout-keys.php).
+			$failures = (int) \get_option( 'fair_e2e_mollie_fail_creates', 0 );
+			if ( $failures > 0 ) {
+				\update_option( 'fair_e2e_mollie_fail_creates', $failures - 1, false );
+				throw new \RuntimeException( 'E2E: simulated payment provider outage.' );
+			}
+
+			\update_option( 'fair_e2e_mollie_create_count', (int) \get_option( 'fair_e2e_mollie_create_count', 0 ) + 1, false );
 			\update_option( 'fair_e2e_mollie_last_create_payload', $payload, false );
 			return $this->payment_response( $payload, 'open' );
 		}
