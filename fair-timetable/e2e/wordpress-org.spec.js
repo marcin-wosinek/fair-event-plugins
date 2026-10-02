@@ -163,6 +163,10 @@ async function deleteExistingDemoPost( page, title ) {
  * @param {{title: string, columns: string[], sessions: string[]}} content
  */
 async function buildDemoPost( page, content ) {
+	// The cleanup needs wp.apiFetch, which the dashboard doesn't load — run
+	// it from the editor, then reload so the new post starts clean.
+	await page.goto( '/wp-admin/post-new.php' );
+	await page.waitForFunction( () => window.wp && window.wp.apiFetch );
 	await deleteExistingDemoPost( page, content.title );
 
 	await page.goto( '/wp-admin/post-new.php' );

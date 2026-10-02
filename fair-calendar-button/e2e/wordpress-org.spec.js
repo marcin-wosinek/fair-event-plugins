@@ -27,6 +27,21 @@ test.describe( 'WordPress.org Screenshot for Fair Calendar Button', () => {
 		// Wait a bit for the editor to fully initialize
 		await page.waitForTimeout( 2000 );
 
+		// Dismiss the "Welcome to the editor" guide if it shows up. It appears
+		// on a fresh admin session and blocks the inserter.
+		const modalOverlay = page.locator(
+			'.components-modal__screen-overlay'
+		);
+		if (
+			await modalOverlay
+				.first()
+				.isVisible()
+				.catch( () => false )
+		) {
+			await page.keyboard.press( 'Escape' );
+			await modalOverlay.first().waitFor( { state: 'detached' } );
+		}
+
 		// Add Calendar Button block via the main inserter
 		await page.getByRole( 'button', { name: 'Block Inserter' } ).click();
 		await page.fill(
