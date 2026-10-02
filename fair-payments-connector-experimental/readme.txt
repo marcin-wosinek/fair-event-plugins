@@ -4,7 +4,7 @@ Tags: payments, mollie
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 0.4.1
+Stable tag: 0.5.0
 License: Private
 License URI: https://fair-event-plugins.com
 
@@ -20,6 +20,19 @@ This plugin houses features that are under active development and not yet ready 
 * Connected Sites — pull transaction data from other sites over the data sharing API
 
 == Changelog ==
+
+## 0.5.0
+
+### Minor Changes
+
+-   b69bbb7: Add an External Updates page that runs Mollie payment imports, missing Mollie fee loading and connected-site imports from one place, with a persistent operation log of each run's source, action, initiator, outcome and counts. Only one update runs at a time, and partial or interrupted runs stay visible after a reload. Manual file imports remain on the Transactions page.
+-   65d93ed: Payment notifications now come with Fair Payments Connector, so Fair Payments Connector Experimental is no longer needed for them. The Notifications page keeps its place in the Fair Payments Connector menu and its address. Telegram and email routes, the Telegram bot token, immediate and hourly/daily/weekly digest delivery, test messages and details added by other Fair Event plugins all work as before. Existing routes, the bot token and sales still waiting for a digest carry over without re-entering anything.
+
+    Fair Payments Connector Experimental no longer includes payment notifications, and its Telegram settings screen and readme mention are removed. Notifications need Fair Payments Connector 2.3.0 or newer, so update Fair Payments Connector first or together with the experimental plugin. An older Fair Payments Connector Experimental release keeps sending notifications until it is updated. Fair Payments Connector Experimental still provides API tokens and connected sites.
+
+### Patch Changes
+
+-   f0c816c: Re-importing transactions from a connected site or an export file no longer clears Mollie fees. A fee already recorded on the receiving site, including zero, is kept; an imported fee only fills a missing one. Connected sites now share each transaction's Mollie fee, and imports from older sites that do not send it still work. Fees lost to earlier imports can be recovered with **Load missing Mollie fees** under External Updates, as described in the plugin README.
 
 ## 0.4.1
 

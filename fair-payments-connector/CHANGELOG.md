@@ -1,5 +1,22 @@
 # fair-payments-connector
 
+## 2.3.0
+
+### Minor Changes
+
+-   b69bbb7: Add an External Updates page that runs Mollie payment imports, missing Mollie fee loading and connected-site imports from one place, with a persistent operation log of each run's source, action, initiator, outcome and counts. Only one update runs at a time, and partial or interrupted runs stay visible after a reload. Manual file imports remain on the Transactions page.
+-   c134f96: The Fee Dashboard is now a monthly statistics page. Organizers can move between months and see paid transaction count, total paid, recorded Fair Event commission, recorded Mollie commission, and a calculated amount after fees, shown separately for each currency. Figures are marked incomplete, with a count of affected transactions, while Mollie fee data or a Fair Event commission is still missing, and they update when fees arrive later. Only paid transactions count, in the month they were created (UTC). The `/fair-payments-connector/v1/dashboard/monthly-summary` endpoint accepts an optional `month` (`YYYY-MM`) and now returns a `currencies` array instead of `total_volume` and `total_fees`. Pending transactions no longer add to the integration-fee total.
+-   65d93ed: Payment notifications now come with Fair Payments Connector, so Fair Payments Connector Experimental is no longer needed for them. The Notifications page keeps its place in the Fair Payments Connector menu and its address. Telegram and email routes, the Telegram bot token, immediate and hourly/daily/weekly digest delivery, test messages and details added by other Fair Event plugins all work as before. Existing routes, the bot token and sales still waiting for a digest carry over without re-entering anything.
+
+    Fair Payments Connector Experimental no longer includes payment notifications, and its Telegram settings screen and readme mention are removed. Notifications need Fair Payments Connector 2.3.0 or newer, so update Fair Payments Connector first or together with the experimental plugin. An older Fair Payments Connector Experimental release keeps sending notifications until it is updated. Fair Payments Connector Experimental still provides API tokens and connected sites.
+
+### Patch Changes
+
+-   f0c816c: Re-importing transactions from a connected site or an export file no longer clears Mollie fees. A fee already recorded on the receiving site, including zero, is kept; an imported fee only fills a missing one. Connected sites now share each transaction's Mollie fee, and imports from older sites that do not send it still work. Fees lost to earlier imports can be recovered with **Load missing Mollie fees** under External Updates, as described in the plugin README.
+-   f62e157: Let a participant buy tickets again for a date they already hold a ticket for. Each purchase keeps its own signup, tickets and payment. The Event Signup form now protects against accidental repeats instead: submitting the same purchase twice, or retrying after a lost connection or a payment that could not be started, continues the first purchase and never charges twice. After an error message the form can be submitted again without reloading the page.
+-   02c95eb: Restore the "Load missing Mollie fees" button on the Transactions page. It follows the page's Mode filter, and each run now appears in the External Updates operation log.
+-   78727b4: Pages with the Mailing Signup, Fair Form, or Simple Payment block load much less JavaScript. These blocks no longer load the block editor's component library for visitors. The forms and the payment button work as before.
+
 ## 2.2.0
 
 ### Minor Changes

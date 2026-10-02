@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.1
-Stable tag: 1.17.0
+Stable tag: 1.18.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,23 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.18.0
+
+### Minor Changes
+
+-   93df554: Administrators can now give one ticket of a purchase to someone else from the Audience tab. "Assign ticket" on a ticket shows who bought it and who holds it, and lets you pick any existing participant — including the purchaser, to take it back — or add a new one in the same step. If the email you enter already belongs to someone, you are offered that person instead of a duplicate. Only the chosen ticket changes hands: the purchase, its payment and its other tickets stay with the purchaser, who keeps receiving confirmation and refund messages. The ticket then appears under its new holder with "Purchased by …", and a purchaser who has given away every ticket is listed as the purchaser rather than as attending. A checked-in ticket has to have its check-in cleared first, and tickets that failed, expired, were cancelled or refunded cannot be assigned.
+-   f6f2aa4: The List and Audience tabs now open the same "Edit ticket" popup for an individual ticket. It names the participant and the ticket ("Ticket 2 (AE2671B5)"), shows its status, and lets an administrator change the ticket's type, activities and check-in in one save, without touching the other tickets of the purchase or its payment. It says that a type change makes no charge or refund, checks the type's activity rules, and shows every ticket-type and activity limit the change would pass, saving over capacity only with a reason. A failed save keeps the popup open with the edits. With Fair Audience active, the List shows each purchase's tickets with their own types; without it, the List keeps its "Change ticket type" action for the whole purchase, which is now refused once a ticket has been given its own type. Tickets awaiting payment are read-only, including their check-in.
+-   f62e157: Let a participant buy tickets again for a date they already hold a ticket for. Each purchase keeps its own signup, tickets and payment. The Event Signup form now protects against accidental repeats instead: submitting the same purchase twice, or retrying after a lost connection or a payment that could not be started, continues the first purchase and never charges twice. After an error message the form can be submitted again without reloading the page.
+-   22a1e88: Event statistics now count confirmed tickets instead of participants. A purchase of three tickets adds three to the total and the cumulative chart, and cancelling or refunding one ticket removes one. Whole-series tickets count once on each occurrence they cover. The activity charts show tickets per activity and activities per ticket, with a notice for older tickets whose activities were recorded per participant. Revenue is unchanged.
+-   928d9f2: Move event Statistics into Fair Events. The Statistics tab on Manage Event and the standalone Statistics page no longer need Fair Events Experimental, and the page explains when Fair Audience is missing. The statistics endpoint now lives at `/fair-events/v1/event-dates/{id}/statistics`; the former `/fair-audience/v1/...` path keeps working as an alias. Experimental's "Audience statistics" setting is retired.
+-   98c6e65: Fair Form answers collected during a ticket signup now belong to a specific ticket: the purchase's first ticket, since the signup form still collects one set of answers. A second purchase by the same person keeps its own answers instead of replacing the first one's. The "Edit ticket" popup shows the answers of that ticket, the Event Participants list shows each ticket's answers under that ticket, and the signup export names the ticket each answer set belongs to. Answers collected before this change are attached to the first ticket of the person's earliest purchase for that date and flagged for review; answers with no matching ticket, or whose ticket is removed, stay with the person and are flagged for review too. Standalone Fair Form submissions are unchanged.
+
+### Patch Changes
+
+-   7ccd235: Remove the Delete action from the Manage Event Audience tab; registrations are deleted from the List tab.
+-   e803bba: Link ticket payments to the participant who bought them. Payments show the buyer as the Person, and the purchase appears in that participant's activity, also for first-time buyers, retried payments and series purchases. Earlier ticket payments are linked where their signups clearly identify one participant.
+-   78727b4: Pages with the Mailing Signup, Fair Form, or Simple Payment block load much less JavaScript. These blocks no longer load the block editor's component library for visitors. The forms and the payment button work as before.
 
 ## 1.17.0
 

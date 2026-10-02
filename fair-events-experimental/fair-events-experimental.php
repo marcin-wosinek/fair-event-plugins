@@ -3,7 +3,7 @@
  * Plugin Name: Fair Events Experimental
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Activates advanced feature bundles for Fair Events, including sources, ticketing, and duplicate and merge tools. Requires fair-events.
- * Version: 1.9.0
+ * Version: 1.10.0
  * Requires at least: 6.7
  * Requires PHP: 8.0
  * Requires Plugins: fair-events
@@ -60,7 +60,7 @@ add_action(
 			return;
 		}
 
-		define( 'FAIR_EVENTS_EXPERIMENTAL_VERSION', '1.9.0' );
+		define( 'FAIR_EVENTS_EXPERIMENTAL_VERSION', '1.10.0' );
 		define( 'FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 		define( 'FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

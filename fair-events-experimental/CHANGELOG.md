@@ -1,5 +1,38 @@
 # fair-events-experimental
 
+## 1.10.0
+
+### Minor Changes
+
+-   2ad15e0: Add a Compare events page to the Events menu, just before Event Sources. Pick a current event and a comparison event to see their cumulative tickets sold and sales amount on the same charts, lined up by the days before each event. The selection is kept in the page link, so a comparison can be shared or reloaded, and each chart downloads as a PNG naming both events.
+-   064980e: Fair Events Experimental settings now live in an Experimental tab of Fair Events → Settings instead of their own menu entry. The tab holds the same feature toggles, weekly notifications and Meta Conversions settings, with their saved values unchanged, and only administrators can open it. Links to the former Experimental Settings page redirect to the new tab, and the selected tab is kept on reload and in bookmarks. Without Fair Events Experimental, the Settings page shows its other tabs as before. The Settings tabs now wrap onto a second row on narrow screens.
+-   f85bc20: Removed the Migrate Posts to Events and Migration Summary admin pages, the "Migration" feature toggle, and their REST routes, including the orphan repair and deletion actions. Old bookmarks to these pages and a previously saved "Migration" setting no longer bring them back. Previously migrated events, their dates and relationships, and all other stored data stay as they are; Fair Events' own database upgrades are unaffected.
+-   22a1e88: Event statistics now count confirmed tickets instead of participants. A purchase of three tickets adds three to the total and the cumulative chart, and cancelling or refunding one ticket removes one. Whole-series tickets count once on each occurrence they cover. The activity charts show tickets per activity and activities per ticket, with a notice for older tickets whose activities were recorded per participant. Revenue is unchanged.
+-   928d9f2: Move event Statistics into Fair Events. The Statistics tab on Manage Event and the standalone Statistics page no longer need Fair Events Experimental, and the page explains when Fair Audience is missing. The statistics endpoint now lives at `/fair-events/v1/event-dates/{id}/statistics`; the former `/fair-audience/v1/...` path keeps working as an alias. Experimental's "Audience statistics" setting is retired.
+-   ceefad4: Weekly Telegram notifications are easier to read: the calendar title is a link, the date range has its own line, and each event is a bullet with its weekday, time and linked title instead of `*` markers and full URLs. Titles with characters such as `*`, `_` or `[` are shown exactly as written. The "Send test summary to Telegram" button now sends the next scheduled week's real summary, and the preview shows each Telegram message with its links. The Events Week "copy summary" text is unchanged.
+-   da72269: Post the week's events from an event source to Telegram on a weekly schedule, in the same format as the calendar's copy-summary button. Any published, public page can head the message with its title and link; it does not need to show a calendar. The Events Week View heading now shows the right dates on sites west of UTC.
+
+### Patch Changes
+
+-   9a6f852: With a Telegram bot token saved, Weekly notifications now shows "A bot token is saved" without a token field. You can change the schedule, chats or other settings and save them without re-entering the token. Browser autofill can no longer replace the token or block the save. To change the token, choose "Replace bot token". "Keep saved token" discards the new value. If the new token is rejected, the saved token and other settings stay unchanged and the new value stays in the field so you can correct it.
+-   Updated dependencies [7419f12]
+-   Updated dependencies [93df554]
+-   Updated dependencies [8ddfbc2]
+-   Updated dependencies [f6f2aa4]
+-   Updated dependencies [296c5a0]
+-   Updated dependencies [064980e]
+-   Updated dependencies [f7510c6]
+-   Updated dependencies [7c509c1]
+-   Updated dependencies [f62e157]
+-   Updated dependencies [4a4d8f1]
+-   Updated dependencies [928d9f2]
+-   Updated dependencies [ceefad4]
+-   Updated dependencies [98c6e65]
+-   Updated dependencies [e803bba]
+-   Updated dependencies [903d362]
+-   Updated dependencies [da72269]
+    -   fair-events@1.20.0
+
 ## 1.9.0
 
 ### Minor Changes
