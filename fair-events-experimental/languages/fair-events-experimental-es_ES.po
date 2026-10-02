@@ -629,7 +629,7 @@ msgstr "Error: %s"
 #. translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase)
 #: src/API/MetaConversionsController.php:150
 #: src/Admin/settings/MetaConversions.js:224
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta rechazó el evento de prueba %s. Comprueba la configuración e intenta de nuevo."
 
@@ -678,553 +678,554 @@ msgstr "Activa paquetes de funciones avanzadas para Fair Events, incluyendo fuen
 
 #: src/API/WeeklyNotificationsController.php:145
 msgid "You do not have permission to manage weekly notifications."
-msgstr ""
+msgstr "No tienes permiso para gestionar notificaciones semanales."
 
 #: src/API/WeeklyNotificationsController.php:159
 msgid "Enter the send time as HH:MM, for example 09:00."
-msgstr ""
+msgstr "Introduce la hora de envío en formato HH:MM, por ejemplo 09:00."
 
 #. translators: %s: comma-separated list of the rejected identifiers
 #: src/API/WeeklyNotificationsController.php:224
 #, php-format
 msgid "These are not Telegram chat IDs or @channel usernames: %s"
-msgstr ""
+msgstr "Estos no son IDs de chat de Telegram ni nombres de usuario de @canal: %s"
 
 #. translators: %d: maximum number of Telegram destinations
 #: src/API/WeeklyNotificationsController.php:235
 #, php-format
 msgid "Enter at most %d Telegram chats or channels."
-msgstr ""
+msgstr "Introduce como máximo %d chats o canales de Telegram."
 
 #: src/API/WeeklyNotificationsController.php:248
 msgid "That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE…."
-msgstr ""
+msgstr "Esto no parece un token de bot de Telegram. Copia el token completo de @BotFather, por ejemplo 123456789:AAE…."
 
 #: src/API/WeeklyNotificationsController.php:272
 msgid "Before turning on weekly notifications, turn on Telegram delivery and save a bot token and at least one chat or channel."
-msgstr ""
+msgstr "Antes de activar las notificaciones semanales, activa la entrega por Telegram y guarda un token de bot y al menos un chat o canal."
 
 #: src/API/WeeklyNotificationsController.php:335
 msgid "Save a Telegram bot token before sending a test message."
-msgstr ""
+msgstr "Guarda un token de bot de Telegram antes de enviar un mensaje de prueba."
 
 #: src/API/WeeklyNotificationsController.php:341
 msgid "Save at least one Telegram chat or channel before sending a test message."
-msgstr ""
+msgstr "Guarda al menos un chat o canal de Telegram antes de enviar un mensaje de prueba."
 
 #: src/API/WeeklyNotificationsController.php:446
 #: src/WeeklyNotifications/TelegramFormatter.php:66
 msgid "(no title)"
-msgstr ""
+msgstr "(sin título)"
 
 #: src/WeeklyNotifications/Dispatcher.php:179
 msgid "Not sent: the week had already ended when the scheduled send ran."
-msgstr ""
+msgstr "No enviado: la semana ya había terminado cuando se ejecutó el envío programado."
 
 #: src/WeeklyNotifications/Dispatcher.php:188
 msgid "No events this week, so nothing was sent."
-msgstr ""
+msgstr "No hay eventos esta semana, así que no se envió nada."
 
 #: src/WeeklyNotifications/Dispatcher.php:209
 msgid "No delivery destination is enabled and configured."
-msgstr ""
+msgstr "No hay ningún destino de entrega habilitado y configurado."
 
 #. translators: 1: destinations delivered, 2: destinations failed, 3: destinations with an unknown outcome
 #: src/WeeklyNotifications/Dispatcher.php:225
 #, php-format
 msgid "Delivered: %1$d. Failed: %2$d. Unknown outcome: %3$d."
-msgstr ""
+msgstr "Entregados: %1$d. Fallidos: %2$d. Resultado desconocido: %3$d."
 
 #: src/WeeklyNotifications/SummaryBuilder.php:33
 msgid "Update Fair Events to use weekly notifications."
-msgstr ""
+msgstr "Actualiza Fair Events para usar notificaciones semanales."
 
 #: src/WeeklyNotifications/SummaryBuilder.php:37
 msgid "Choose an event source."
-msgstr ""
+msgstr "Elige una fuente de eventos."
 
 #: src/WeeklyNotifications/SummaryBuilder.php:41
 msgid "The selected event source does not exist or is disabled."
-msgstr ""
+msgstr "La fuente de eventos seleccionada no existe o está deshabilitada."
 
 #: src/WeeklyNotifications/TelegramProvider.php:96
 msgid "The Telegram bot token is not configured."
-msgstr ""
+msgstr "El token del bot de Telegram no está configurado."
 
 #: src/Admin/settings/WeeklyNotifications.js:34
 msgid "Monday"
-msgstr ""
+msgstr "Lunes"
 
 #: src/Admin/settings/WeeklyNotifications.js:35
 msgid "Tuesday"
-msgstr ""
+msgstr "Martes"
 
 #: src/Admin/settings/WeeklyNotifications.js:36
 msgid "Wednesday"
-msgstr ""
+msgstr "Miércoles"
 
 #: src/Admin/settings/WeeklyNotifications.js:37
 msgid "Thursday"
-msgstr ""
+msgstr "Jueves"
 
 #: src/Admin/settings/WeeklyNotifications.js:38
 msgid "Friday"
-msgstr ""
+msgstr "Viernes"
 
 #: src/Admin/settings/WeeklyNotifications.js:39
 msgid "Saturday"
-msgstr ""
+msgstr "Sábado"
 
 #: src/Admin/settings/WeeklyNotifications.js:40
 msgid "Sunday"
-msgstr ""
+msgstr "Domingo"
 
 #: src/Admin/settings/WeeklyNotifications.js:44
 msgid "Sent"
-msgstr ""
+msgstr "Enviado"
 
 #: src/Admin/settings/WeeklyNotifications.js:45
 msgid "Partly sent"
-msgstr ""
+msgstr "Parcialmente enviado"
 
 #: src/Admin/settings/WeeklyNotifications.js:46
 #: src/Admin/settings/WeeklyNotifications.js:58
 msgid "Failed"
-msgstr ""
+msgstr "Error"
 
 #: src/Admin/settings/WeeklyNotifications.js:47
 msgid "Skipped — no events"
-msgstr ""
+msgstr "Omitido — sin eventos"
 
 #: src/Admin/settings/WeeklyNotifications.js:48
 msgid "Skipped — week ended"
-msgstr ""
+msgstr "Omitido — semana finalizada"
 
 #: src/Admin/settings/WeeklyNotifications.js:59
 msgid "Unknown — check the chat before resending"
-msgstr ""
+msgstr "Desconocido — comprueba el chat antes de reenviar"
 
 #: src/Admin/settings/WeeklyNotifications.js:63
 msgid "Not sent — an earlier part failed"
-msgstr ""
+msgstr "No enviado — una parte anterior falló"
 
 #: src/Admin/settings/WeeklyNotifications.js:82
 #: src/Admin/settings/WeeklyNotifications.js:530
 msgid "Telegram"
-msgstr ""
+msgstr "Telegram"
 
 #: src/Admin/settings/WeeklyNotifications.js:205
 msgid "Failed to load weekly notification settings."
-msgstr ""
+msgstr "Error al cargar los ajustes de notificación semanal."
 
 #: src/Admin/settings/WeeklyNotifications.js:235
 msgid "Loading weekly notification settings…"
-msgstr ""
+msgstr "Cargando ajustes de notificación semanal…"
 
 #: src/Admin/settings/WeeklyNotifications.js:272
 msgid "Weekly notification settings saved."
-msgstr ""
+msgstr "Ajustes de notificación semanal guardados."
 
 #: src/Admin/settings/WeeklyNotifications.js:282
 msgid "Failed to save weekly notification settings."
-msgstr ""
+msgstr "Error al guardar los ajustes de notificación semanal."
 
 #: src/Admin/settings/WeeklyNotifications.js:304
 msgid "Telegram bot token removed."
-msgstr ""
+msgstr "Token del bot de Telegram eliminado."
 
 #: src/Admin/settings/WeeklyNotifications.js:314
 msgid "Failed to remove the Telegram bot token."
-msgstr ""
+msgstr "Error al eliminar el token del bot de Telegram."
 
 #: src/Admin/settings/WeeklyNotifications.js:372
 msgid "Failed to build the preview."
-msgstr ""
+msgstr "Error al generar la vista previa."
 
 #: src/Admin/settings/WeeklyNotifications.js:385
 msgid "Choose an event source"
-msgstr ""
+msgstr "Elige una fuente de eventos"
 
 #. translators: %s: event source slug
 #: src/Admin/settings/WeeklyNotifications.js:400
 #, js-format
 msgid "%s (unavailable)"
-msgstr ""
+msgstr "%s (no disponible)"
 
 #: src/Admin/settings/WeeklyNotifications.js:421
 msgid "Save a bot token and at least one chat or channel before sending a test message."
-msgstr ""
+msgstr "Guarda un token de bot y al menos un chat o canal antes de enviar un mensaje de prueba."
 
 #: src/Admin/settings/WeeklyNotifications.js:426
 msgid "Save your changes first — the test uses the saved settings."
-msgstr ""
+msgstr "Guarda primero tus cambios — la prueba utiliza los ajustes guardados."
 
 #: src/Admin/settings/WeeklyNotifications.js:436
 msgid "Weekly notifications"
-msgstr ""
+msgstr "Notificaciones semanales"
 
 #: src/Admin/settings/WeeklyNotifications.js:454
 msgid "Send weekly event notifications"
-msgstr ""
+msgstr "Enviar notificaciones semanales de eventos"
 
 #: src/Admin/settings/WeeklyNotifications.js:463
 msgid "Event source"
-msgstr ""
+msgstr "Origen del evento"
 
 #: src/Admin/settings/WeeklyNotifications.js:486
 msgid "Send on"
-msgstr ""
+msgstr "Enviar el"
 
 #: src/Admin/settings/WeeklyNotifications.js:496
 msgid "Send at"
-msgstr ""
+msgstr "Enviar a las"
 
 #: src/Admin/settings/WeeklyNotifications.js:497
 msgid "In the site’s timezone. Sends can run a few minutes late on low-traffic sites."
-msgstr ""
+msgstr "En la zona horaria del sitio. Los envíos pueden retrasarse unos minutos en sitios con poco tráfico."
 
 #: src/Admin/settings/WeeklyNotifications.js:506
 msgid "Which week to include"
-msgstr ""
+msgstr "Qué semana incluir"
 
 #: src/Admin/settings/WeeklyNotifications.js:514
 msgid "The week of the send"
-msgstr ""
+msgstr "La semana del envío"
 
 #: src/Admin/settings/WeeklyNotifications.js:521
 msgid "The following week"
-msgstr ""
+msgstr "La semana siguiente"
 
 #: src/Admin/settings/WeeklyNotifications.js:533
 msgid "Post to Telegram"
-msgstr ""
+msgstr "Publicar en Telegram"
 
 #: src/Admin/settings/WeeklyNotifications.js:537
 msgid "Turning this off keeps the bot token and chats below."
-msgstr ""
+msgstr "Desactivar esto mantiene el token de bot y los chats a continuación."
 
 #: src/Admin/settings/WeeklyNotifications.js:594
 msgid "Replace bot token"
-msgstr ""
+msgstr "Reemplazar token de bot"
 
 #: src/Admin/settings/WeeklyNotifications.js:564
 msgid "Bot token"
-msgstr ""
+msgstr "Token de bot"
 
 #: src/Admin/settings/WeeklyNotifications.js:566
 msgid "From @BotFather. It is not shown again after saving."
-msgstr ""
+msgstr "De @BotFather. No se muestra de nuevo después de guardar."
 
 #: src/Admin/settings/WeeklyNotifications.js:606
 #: src/Admin/settings/WeeklyNotifications.js:872
 msgid "Remove bot token"
-msgstr ""
+msgstr "Eliminar token de bot"
 
 #: src/Admin/settings/WeeklyNotifications.js:615
 msgid "Chats and channels"
-msgstr ""
+msgstr "Chats y canales"
 
 #: src/Admin/settings/WeeklyNotifications.js:619
 msgid "One per line: a numeric chat ID (e.g. -1001234567890) or a public @channel username. Add the bot to each chat or channel with permission to post."
-msgstr ""
+msgstr "Uno por línea: un ID de chat numérico (p. ej. -1001234567890) o un nombre de usuario de canal público @canal. Añade el bot a cada chat o canal con permiso para publicar."
 
 #: src/Admin/settings/WeeklyNotifications.js:635
 msgid "Save weekly notification settings"
-msgstr ""
+msgstr "Guardar ajustes de notificaciones semanales"
 
 #: src/Admin/settings/WeeklyNotifications.js:687
 msgid "Schedule"
-msgstr ""
+msgstr "Programación"
 
 #. translators: 1: date and time of the next send, 2: date range of the week it covers
 #: src/Admin/settings/WeeklyNotifications.js:692
 #, js-format
 msgid "Next send: %1$s, with events for %2$s."
-msgstr ""
+msgstr "Próximo envío: %1$s, con eventos para %2$s."
 
 #: src/Admin/settings/WeeklyNotifications.js:699
 msgid "Nothing is scheduled. Turn on weekly notifications and save to schedule sends."
-msgstr ""
+msgstr "No hay nada programado. Activa las notificaciones semanales y guarda para programar envíos."
 
 #: src/Admin/settings/WeeklyNotifications.js:711
 msgid "Preview next message"
-msgstr ""
+msgstr "Vista previa del próximo mensaje"
 
 #: src/Admin/settings/WeeklyNotifications.js:719
 msgid "Save your changes to preview them."
-msgstr ""
+msgstr "Guarda tus cambios para verlos en vista previa."
 
 #: src/Admin/settings/WeeklyNotifications.js:734
 msgid "No events that week, so nothing would be sent."
-msgstr ""
+msgstr "No hay eventos esa semana, así que no se enviaría nada."
 
 #. translators: %d: number of Telegram messages
 #: src/Admin/settings/WeeklyNotifications.js:740
 #, js-format
 msgid "Telegram: sent as %d message."
 msgid_plural "Telegram: sent as %d messages."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Telegram: enviado como %d mensaje."
+msgstr[1] "Telegram: enviado como %d mensajes."
 
 #: src/Admin/settings/WeeklyNotifications.js:780
 msgid "Recent sends"
-msgstr ""
+msgstr "Envíos recientes"
 
 #: src/Admin/settings/WeeklyNotifications.js:783
 msgid "No weekly notification has run yet."
-msgstr ""
+msgstr "Aún no se ha ejecutado ninguna notificación semanal."
 
 #: src/Admin/settings/WeeklyNotifications.js:811
 msgid "Delivery details"
-msgstr ""
+msgstr "Detalles de entrega"
 
 #: src/Admin/settings/WeeklyNotifications.js:815
 msgid "No messages delivered yet."
-msgstr ""
+msgstr "Aún no se ha entregado ningún mensaje."
 
 #. translators: 1: message part number, 2: number of parts
 #: src/Admin/settings/WeeklyNotifications.js:841
 #, js-format
 msgid "Part %1$d of %2$d"
-msgstr ""
+msgstr "Parte %1$d de %2$d"
 
 #: src/Admin/settings/WeeklyNotifications.js:877
 msgid "Remove the Telegram bot token? Weekly notifications will not reach Telegram until a new token is saved."
-msgstr ""
+msgstr "¿Eliminar el token del bot de Telegram? Las notificaciones semanales no llegarán a Telegram hasta que se guarde un nuevo token."
 
 #: src/WeeklyNotifications/SummaryBuilder.php:46
 msgid "Choose the page that heads the message."
-msgstr ""
+msgstr "Elige la página que encabeza el mensaje."
 
 #: src/WeeklyNotifications/SummaryBuilder.php:49
 msgid "The selected page must be published and publicly visible."
-msgstr ""
+msgstr "La página seleccionada debe estar publicada y ser visible públicamente."
 
 #: src/Admin/settings/WeeklyNotifications.js:409
 msgid "Choose a page"
-msgstr ""
+msgstr "Elige una página"
 
 #: src/Admin/settings/WeeklyNotifications.js:441
 msgid "Post the week’s events from an event source to your channels every week, in the same format as the calendar’s “Copy summary” button."
-msgstr ""
+msgstr "Publica los eventos de la semana de una fuente de eventos en tus canales cada semana, en el mismo formato que el botón «Copiar resumen» del calendario."
 
 #: src/Admin/settings/WeeklyNotifications.js:470
 msgid "Page linked in the heading"
-msgstr ""
+msgstr "Página vinculada en el encabezado"
 
 #: src/Admin/settings/WeeklyNotifications.js:474
 msgid "Any published, public page. Its title and link head the message. The event source decides which events are listed."
-msgstr ""
+msgstr "Cualquier página publicada y pública. Su título y enlace encabezan el mensaje. La fuente de eventos decide qué eventos se enumeran."
 
 #: src/Admin/settings/WeeklyNotifications.js:547
 msgid "A bot token is saved. It is not shown here."
-msgstr ""
+msgstr "Se ha guardado un token de bot. No se muestra aquí."
 
 #: src/Admin/settings/WeeklyNotifications.js:560
 msgid "New bot token"
-msgstr ""
+msgstr "Nuevo token de bot"
 
 #: src/Admin/settings/WeeklyNotifications.js:583
 msgid "Keep saved token"
-msgstr ""
+msgstr "Mantener token guardado"
 
 #: src/API/WeeklyNotificationsController.php:349
 msgid "There are no events in the next scheduled week, so there is nothing to send."
-msgstr ""
+msgstr "No hay eventos en la próxima semana programada, por lo que no hay nada que enviar."
 
 #: src/Admin/settings/WeeklyNotifications.js:336
 msgid "Telegram accepted the test summary for every chat."
-msgstr ""
+msgstr "Telegram aceptó el resumen de prueba para cada chat."
 
 #: src/Admin/settings/WeeklyNotifications.js:343
 msgid "The test summary did not reach every chat. See the results below."
-msgstr ""
+msgstr "El resumen de prueba no llegó a todos los chats. Consulta los resultados a continuación."
 
 #: src/Admin/settings/WeeklyNotifications.js:354
 msgid "Failed to send the test summary."
-msgstr ""
+msgstr "No se pudo enviar el resumen de prueba."
 
 #: src/Admin/settings/WeeklyNotifications.js:646
 msgid "Send test summary to Telegram"
-msgstr ""
+msgstr "Enviar resumen de prueba a Telegram"
 
 #: src/Admin/settings/WeeklyNotifications.js:653
 msgid "The test sends the summary for the next scheduled week to every saved chat, even while delivery is off. It is not recorded as a weekly send."
-msgstr ""
+msgstr "La prueba envía el resumen de la próxima semana programada a cada chat guardado, incluso mientras la entrega está desactivada. No se registra como un envío semanal."
 
 #. translators: 1: message number, 2: number of messages
 #: src/Admin/settings/WeeklyNotifications.js:755
 #, js-format
 msgid "Telegram message %1$d of %2$d"
-msgstr ""
+msgstr "Mensaje de Telegram %1$d de %2$d"
 
 #: src/Admin/AdminPages.php:74
 #: src/Admin/AdminPages.php:75
-#: src/Admin/compare-events/CompareEventsPage.js:478
+#: src/Admin/compare-events/CompareEventsPage.js:485
 msgid "Compare events"
-msgstr ""
+msgstr "Comparar eventos"
 
 #: src/Admin/compare-events/CompareEventsPage.js:36
 #: src/Admin/compare-events/ComparisonChart.js:41
 msgid "Current event"
-msgstr ""
+msgstr "Evento actual"
 
 #: src/Admin/compare-events/CompareEventsPage.js:37
 #: src/Admin/compare-events/ComparisonChart.js:42
 msgid "Comparison event"
-msgstr ""
+msgstr "Evento de comparación"
 
 #. translators: %s: which selection, "Current event" or "Comparison event".
-#: src/Admin/compare-events/CompareEventsPage.js:104
+#: src/Admin/compare-events/CompareEventsPage.js:106
 #, js-format
 msgid "%s: this link does not point to a valid event. Choose an event from the list."
-msgstr ""
+msgstr "%s: este enlace no apunta a un evento válido. Elige un evento de la lista."
 
 #. translators: %s: which selection, "Current event" or "Comparison event".
-#: src/Admin/compare-events/CompareEventsPage.js:113
+#: src/Admin/compare-events/CompareEventsPage.js:115
 #, js-format
 msgid "%s: the event in this link no longer exists. Choose another event."
-msgstr ""
+msgstr "%s: el evento en este enlace ya no existe. Elige otro evento."
 
 #. translators: 1: which selection, "Current event" or "Comparison event". 2: event name and date.
-#: src/Admin/compare-events/CompareEventsPage.js:122
+#: src/Admin/compare-events/CompareEventsPage.js:124
 #, js-format
 msgid "%1$s: %2$s was cancelled, so it cannot be compared. Choose another event."
-msgstr ""
+msgstr "%1$s: %2$s fue cancelado, por lo que no se puede comparar. Elige otro evento."
 
 #. translators: 1: which selection, "Current event" or "Comparison event". 2: error message.
-#: src/Admin/compare-events/CompareEventsPage.js:132
+#: src/Admin/compare-events/CompareEventsPage.js:134
 #, js-format
 msgid "%1$s: %2$s"
-msgstr ""
+msgstr "%1$s: %2$s"
 
-#: src/Admin/compare-events/CompareEventsPage.js:135
+#: src/Admin/compare-events/CompareEventsPage.js:137
 msgid "Event sales statistics could not be loaded."
-msgstr ""
+msgstr "Las estadísticas de ventas del evento no se pudieron cargar."
 
-#: src/Admin/compare-events/CompareEventsPage.js:152
-#: src/Admin/compare-events/CompareEventsPage.js:546
+#: src/Admin/compare-events/CompareEventsPage.js:154
+#: src/Admin/compare-events/CompareEventsPage.js:558
 msgid "Try again"
-msgstr ""
+msgstr "Intentar de nuevo"
 
 #. translators: 1: event name and date. 2: comma-separated currency codes excluded from event revenue.
-#: src/Admin/compare-events/CompareEventsPage.js:176
+#: src/Admin/compare-events/CompareEventsPage.js:178
 #, js-format
 msgid "%1$s: some payments were excluded because they use different currencies: %2$s."
-msgstr ""
+msgstr "%1$s: algunos pagos fueron excluidos porque utilizan diferentes monedas: %2$s."
 
 #. translators: 1: event name and date. 2: number of purchases with missing ticket records.
-#: src/Admin/compare-events/CompareEventsPage.js:189
+#: src/Admin/compare-events/CompareEventsPage.js:191
 #, js-format
 msgid "%1$s: %2$d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created."
 msgid_plural "%1$s: %2$d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1$s: %2$d compra tiene menos registros de entradas que entradas compradas. Sus entradas faltantes no se cuentan hasta que se crean sus registros."
+msgstr[1] "%1$s: %2$d compras tienen menos registros de entradas que entradas compradas. Sus entradas faltantes no se cuentan hasta que se crean sus registros."
 
 #. translators: %d: number of confirmed tickets.
-#: src/Admin/compare-events/CompareEventsPage.js:232
+#: src/Admin/compare-events/CompareEventsPage.js:234
 #, js-format
 msgid "%d ticket"
 msgid_plural "%d tickets"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d entrada"
+msgstr[1] "%d entradas"
 
 #. translators: %d: calendar days until the event.
-#: src/Admin/compare-events/CompareEventsPage.js:249
+#: src/Admin/compare-events/CompareEventsPage.js:251
 #, js-format
 msgid "%d day until the event"
 msgid_plural "%d days until the event"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d día hasta el evento"
+msgstr[1] "%d días hasta el evento"
 
-#: src/Admin/compare-events/CompareEventsPage.js:262
+#: src/Admin/compare-events/CompareEventsPage.js:264
 msgid "No sales recorded for this event yet."
-msgstr ""
+msgstr "Aún no hay ventas registradas para este evento."
 
-#: src/Admin/compare-events/CompareEventsPage.js:273
+#: src/Admin/compare-events/CompareEventsPage.js:275
 msgid "Open event statistics"
-msgstr ""
+msgstr "Abrir estadísticas del evento"
 
-#: src/Admin/compare-events/CompareEventsPage.js:328
+#: src/Admin/compare-events/CompareEventsPage.js:330
 msgid "Cumulative tickets sold"
-msgstr ""
+msgstr "Entradas acumuladas vendidas"
 
-#: src/Admin/compare-events/CompareEventsPage.js:332
+#: src/Admin/compare-events/CompareEventsPage.js:334
 msgid "Cumulative sales amount"
-msgstr ""
+msgstr "Cantidad acumulada de ventas"
 
-#: src/Admin/compare-events/CompareEventsPage.js:351
+#: src/Admin/compare-events/CompareEventsPage.js:353
 msgid "The chart image could not be downloaded. Please try again."
-msgstr ""
+msgstr "No se pudo descargar la imagen del gráfico. Inténtalo de nuevo."
 
-#: src/Admin/compare-events/CompareEventsPage.js:409
+#: src/Admin/compare-events/CompareEventsPage.js:415
 msgid "Each event is lined up by the days before and during its own start. Counts confirmed tickets only: pending, failed, expired, cancelled, and refunded tickets are not included."
-msgstr ""
-
-#: src/Admin/compare-events/CompareEventsPage.js:422
-msgid "Choose a current event and a comparison event to compare their sales."
-msgstr ""
+msgstr "Cada evento se alinea por los días anteriores y durante su propio inicio. Solo cuenta las entradas confirmadas: las entradas pendientes, fallidas, expiradas, canceladas y reembolsadas no se incluyen."
 
 #: src/Admin/compare-events/CompareEventsPage.js:428
-msgid "Choose a current event to compare with the comparison event."
-msgstr ""
+msgid "Choose a current event and a comparison event to compare their sales."
+msgstr "Elige un evento actual y un evento de comparación para comparar sus ventas."
 
 #: src/Admin/compare-events/CompareEventsPage.js:434
+msgid "Choose a current event to compare with the comparison event."
+msgstr "Elige un evento actual para comparar con el evento de comparación."
+
+#: src/Admin/compare-events/CompareEventsPage.js:440
 msgid "Choose a comparison event to compare with the current event."
-msgstr ""
+msgstr "Elige un evento de comparación para comparar con el evento actual."
 
-#: src/Admin/compare-events/CompareEventsPage.js:485
+#: src/Admin/compare-events/CompareEventsPage.js:493
 msgid "Comparing events needs the Fair Audience plugin, which records tickets and payments. Activate Fair Audience to compare event sales."
-msgstr ""
+msgstr "Comparar eventos requiere el complemento Fair Audience, que registra entradas y pagos. Activa Fair Audience para comparar las ventas de eventos."
 
-#: src/Admin/compare-events/CompareEventsPage.js:512
+#: src/Admin/compare-events/CompareEventsPage.js:524
 msgid "Both selections are the same event. Choose a different comparison event."
-msgstr ""
+msgstr "Ambas selecciones son el mismo evento. Elige un evento de comparación diferente."
 
-#: src/Admin/compare-events/CompareEventsPage.js:525
+#: src/Admin/compare-events/CompareEventsPage.js:537
 msgid "Loading event sales…"
-msgstr ""
+msgstr "Cargando ventas del evento…"
 
-#: src/Admin/compare-events/CompareEventsPage.js:535
+#: src/Admin/compare-events/CompareEventsPage.js:547
 msgid "See how ticket sales of two events progressed in the days before each one."
-msgstr ""
+msgstr "Observa cómo progresaron las ventas de entradas de dos eventos en los días anteriores a cada uno."
 
-#: src/Admin/compare-events/CompareEventsPage.js:552
+#: src/Admin/compare-events/CompareEventsPage.js:567
 msgid "The list of events could not be loaded."
-msgstr ""
+msgstr "No se pudo cargar la lista de eventos."
 
 #. translators: 1: event name, 2: event start date.
 #: src/Admin/compare-events/comparison.js:109
 #, js-format
 msgid "%1$s — %2$s"
-msgstr ""
+msgstr "%1$s — %2$s"
 
 #. translators: %d: number of calendar days before the event.
-#: src/Admin/compare-events/comparison.js:166
+#: src/Admin/compare-events/comparison.js:173
 #, js-format
 msgid "%d day before the event"
 msgid_plural "%d days before the event"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d día antes del evento"
+msgstr[1] "%d días antes del evento"
 
-#: src/Admin/compare-events/comparison.js:176
+#: src/Admin/compare-events/comparison.js:183
 msgid "Day of the event"
-msgstr ""
+msgstr "Día del evento"
 
 #. translators: %d: event-day number, counting the first day as 1.
-#: src/Admin/compare-events/comparison.js:180
+#: src/Admin/compare-events/comparison.js:187
 #, js-format
 msgid "Day %d of the event"
-msgstr ""
+msgstr "Día %d del evento"
 
 #: src/Admin/compare-events/ComparisonChart.js:68
 msgid "Dashed line: days that have not happened yet, so no sales are recorded for them."
-msgstr ""
+msgstr "Línea discontinua: días que aún no han sucedido, por lo que no se registran ventas para ellos."
 
-#: src/Admin/compare-events/ComparisonChart.js:128
+#: src/Admin/compare-events/ComparisonChart.js:131
 msgid "Download PNG"
-msgstr ""
+msgstr "Descargar PNG"
 
-#: src/Admin/compare-events/EventSelector.js:94
+#: src/Admin/compare-events/EventSelector.js:99
 msgid "Type to search events by name."
-msgstr ""
+msgstr "Escribe para buscar eventos por nombre."
+

@@ -1260,37 +1260,37 @@ msgstr "Nach Vorkommen-Typ filtern."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:66
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d days"
 msgstr "Alle %d Tage"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:73
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every 2 weeks on %s"
 msgstr "Alle 2 Wochen am %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:77
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Alle %1$d Wochen am %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:80
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %s"
 msgstr "Jeden %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:85
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d months"
 msgstr "Alle %d Monate"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:92
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d years"
 msgstr "Alle %d Jahre"
 
@@ -1300,7 +1300,7 @@ msgstr "Jährlich"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:167
-#, php-format,js-format
+#, php-format, js-format
 msgid "Next: %s"
 msgstr "Nächste: %s"
 
@@ -1783,7 +1783,7 @@ msgstr "Eines der ausgewählten Vorkommen ist für dieses Ticket ungültig."
 #: src/API/GetTicketsController.php:1906
 #: src/blocks/event-signup/frontend.js:1150
 #: src/blocks/event-signup/frontend.js:1723
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Bitte wählen Sie mindestens %d Vorkommen aus."
@@ -1795,7 +1795,6 @@ msgstr[1] "Bitte wählen Sie mindestens %d Vorkommen aus."
 msgid "Tickets for event #%d"
 msgstr "Tickets für Veranstaltung #%d"
 
-#. translators: %s: event name
 #. translators: %s: occurrence date/time label
 #: src/API/GetTicketsController.php:674
 #: src/API/GetTicketsController.php:1983
@@ -2973,7 +2972,7 @@ msgstr "Aktivitäten auswählen"
 #: src/Services/SignupFieldsetRenderer.php:180
 #: src/blocks/event-signup/frontend.js:1327
 #: src/blocks/event-signup/frontend.js:1763
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Bitte wählen Sie mindestens %d Aktivität aus, um sich anzumelden."
@@ -4412,7 +4411,7 @@ msgstr "Fehler beim Aktualisieren der Anmeldung."
 #. translators: 1: event date, ticket type or activity name, 2: places taken after the change, 3: capacity
 #: src/API/GetTicketsController.php:2574
 #: ../fair-events-shared/src/TicketEditModal.js:100
-#, php-format,js-format
+#, php-format, js-format
 msgid "%1$s would have %2$d of %3$d place taken."
 msgid_plural "%1$s would have %2$d of %3$d places taken."
 msgstr[0] "%1$s hätte %2$d von %3$d Platz belegt."
@@ -4672,204 +4671,204 @@ msgstr "Ticket %d: Aktivitäten auswählen"
 
 #: src/API/GetTicketsController.php:2782
 msgid "Tickets in this purchase have been given their own types. Edit each ticket instead."
-msgstr ""
+msgstr "Tickets in diesem Kauf haben ihre eigenen Typen erhalten. Bearbeite stattdessen jedes Ticket einzeln."
 
 #: src/Services/TicketEditRules.php:85
 msgid "The chosen ticket type does not allow activities, and this ticket has some."
-msgstr ""
+msgstr "Der gewählte Tickettyp erlaubt keine Aktivitäten, und dieses Ticket hat einige."
 
 #. translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)"
 #: src/Admin/manage-event/EventSignups.js:529
 #, js-format
 msgid "Edit %s"
-msgstr ""
+msgstr "Bearbeite %s"
 
 #: src/Admin/manage-event/EventSignups.js:534
 #: ../fair-events-shared/src/TicketEditModal.js:649
 msgid "Edit ticket"
-msgstr ""
+msgstr "Ticket bearbeiten"
 
 #: ../fair-events-shared/src/TicketEditModal.js:40
 msgid "Ticket %1$d (%2$s)"
-msgstr ""
+msgstr "Ticket %1$d (%2$s)"
 
 #: ../fair-events-shared/src/TicketEditModal.js:57
 msgid "Awaiting payment"
-msgstr ""
+msgstr "Zahlung ausstehend"
 
 #: ../fair-events-shared/src/TicketEditModal.js:126
 msgid "The chosen ticket type does not include activities. Clear them to save."
-msgstr ""
+msgstr "Der gewählte Tickettyp beinhaltet keine Aktivitäten. Lösche sie, um zu speichern."
 
 #: ../fair-events-shared/src/TicketEditModal.js:136
 msgid "Choose at most %d activity for this ticket type."
-msgstr ""
+msgstr "Wähle maximal %d Aktivität für diesen Tickettyp."
 
 #: ../fair-events-shared/src/TicketEditModal.js:149
 msgid "Choose at least %d activity for this ticket type."
-msgstr ""
+msgstr "Wähle mindestens %d Aktivität für diesen Tickettyp."
 
 #: ../fair-events-shared/src/TicketEditModal.js:287
 msgid "Failed to load the ticket."
-msgstr ""
+msgstr "Fehler beim Laden des Tickets."
 
 #: ../fair-events-shared/src/TicketEditModal.js:350
 msgid "Status: %s"
-msgstr ""
+msgstr "Status: %s"
 
 #: ../fair-events-shared/src/TicketEditModal.js:365
 msgid "This ticket is awaiting payment. It can be edited once the payment is complete."
-msgstr ""
+msgstr "Dieses Ticket wartet auf Zahlung. Es kann bearbeitet werden, sobald die Zahlung abgeschlossen ist."
 
 #: ../fair-events-shared/src/TicketEditModal.js:371
 #: ../fair-events-shared/src/TicketEditModal.js:487
 msgid "Ticket type"
-msgstr ""
+msgstr "Tickettyp"
 
 #: ../fair-events-shared/src/TicketEditModal.js:373
 #: ../fair-events-shared/src/TicketEditModal.js:528
 msgid "Activities"
-msgstr ""
+msgstr "Aktivitäten"
 
 #: ../fair-events-shared/src/TicketEditModal.js:379
 #: ../fair-events-shared/src/TicketEditModal.js:562
 msgid "Checked in"
-msgstr ""
+msgstr "Eingecheckt"
 
 #: ../fair-events-shared/src/TicketEditModal.js:403
 msgid "No unsaved changes."
-msgstr ""
+msgstr "Keine ungespeicherten Änderungen."
 
 #: ../fair-events-shared/src/TicketEditModal.js:424
 msgid "%s — over capacity"
-msgstr ""
+msgstr "%s — über Kapazität"
 
 #: ../fair-events-shared/src/TicketEditModal.js:471
 msgid "Failed to save the ticket."
-msgstr ""
+msgstr "Fehler beim Speichern des Tickets."
 
 #: ../fair-events-shared/src/TicketEditModal.js:493
 msgid "%s (current)"
-msgstr ""
+msgstr "%s (aktuell)"
 
 #: ../fair-events-shared/src/TicketEditModal.js:506
 msgid "No other ticket type with the same dates is available for this ticket."
-msgstr ""
+msgstr "Kein anderer Tickettyp mit den gleichen Daten ist für dieses Ticket verfügbar."
 
 #: ../fair-events-shared/src/TicketEditModal.js:520
 msgid "Ticket type: %s"
-msgstr ""
+msgstr "Tickettyp: %s"
 
 #: ../fair-events-shared/src/TicketEditModal.js:532
 msgid "This ticket type does not include activities."
-msgstr ""
+msgstr "Dieser Tickettyp enthält keine Aktivitäten."
 
 #: ../fair-events-shared/src/TicketEditModal.js:587
 msgid "Reason for going over capacity"
-msgstr ""
+msgstr "Grund für die Kapazitätsüberschreitung"
 
 #: ../fair-events-shared/src/TicketEditModal.js:630
 msgid "Save over capacity"
-msgstr ""
+msgstr "Über Kapazität speichern"
 
 #: ../fair-events-shared/src/TicketEditModal.js:631
 msgid "Save ticket"
-msgstr ""
+msgstr "Ticket speichern"
 
 #: ../fair-events-shared/src/TicketEditModal.js:645
 msgid "Edit ticket — %s"
-msgstr ""
+msgstr "Ticket bearbeiten — %s"
 
 #: ../fair-events-shared/src/TicketEditModal.js:647
 msgid "(no name)"
-msgstr ""
+msgstr "(kein Name)"
 
 #: src/Admin/manage-event/EventSignups.js:104
 msgid "Ticket not created yet"
-msgstr ""
+msgstr "Ticket noch nicht erstellt"
 
 #: src/Admin/manage-event/EventSignups.js:365
 #: src/Admin/manage-event/SignupExportModal.js:69
 msgid "Ticket"
-msgstr ""
+msgstr "Ticket"
 
 #. translators: %d: number of tickets in the registration
 #: src/Admin/manage-event/EventSignups.js:413
 #, js-format
 msgid "Registration (%d ticket):"
 msgid_plural "Registration (%d tickets):"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Registrierung (%d Ticket):"
+msgstr[1] "Registrierung (%d Tickets):"
 
 #: src/Admin/manage-event/EventSignups.js:602
 msgid "Some older registrations are still being split into individual tickets. They are listed as one row for now; reload this page in a few minutes to see their tickets."
-msgstr ""
+msgstr "Einige ältere Registrierungen werden immer noch in einzelne Tickets aufgeteilt. Sie werden vorerst als eine Zeile aufgelistet; laden Sie diese Seite in wenigen Minuten neu, um ihre Tickets zu sehen."
 
 #: src/Admin/manage-event/EventSignups.js:658
 msgid "Delete registration"
-msgstr ""
+msgstr "Registrierung löschen"
 
 #. translators: 1: signup name, 2: number of tickets, 3: payment status
 #: src/Admin/manage-event/EventSignups.js:666
 #, js-format
 msgid "Delete the registration for %1$s, with its %2$d ticket? Its current payment status is %3$s."
 msgid_plural "Delete the registration for %1$s, with all %2$d of its tickets? Its current payment status is %3$s."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Registrierung für %1$s mit %2$d Ticket löschen? Der aktuelle Zahlungsstatus ist %3$s."
+msgstr[1] "Registrierung für %1$s mit allen %2$d Tickets löschen? Der aktuelle Zahlungsstatus ist %3$s."
 
 #. translators: %d: number of tickets in the registration
 #: src/Admin/manage-event/SignupEditModal.js:115
 #, js-format
 msgid "This moves the whole registration, with its %d ticket."
 msgid_plural "This moves the whole registration, with all %d of its tickets."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Dies verschiebt die gesamte Registrierung mit ihrem %d Ticket."
+msgstr[1] "Dies verschiebt die gesamte Registrierung mit allen %d ihrer Tickets."
 
 #. translators: %d: number of tickets in the registration
 #: src/Admin/manage-event/SignupEditModal.js:125
 #, js-format
 msgid "This changes the type of the whole registration, with its %d ticket."
 msgid_plural "This changes the type of the whole registration, with all %d of its tickets."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Dies ändert den Typ der gesamten Registrierung mit ihrem %d Ticket."
+msgstr[1] "Dies ändert den Typ der gesamten Registrierung mit allen %d ihrer Tickets."
 
 #: src/Admin/manage-event/SignupExportModal.js:79
 msgid "Extras"
-msgstr ""
+msgstr "Extras"
 
 #: src/Admin/manage-event/SignupExportModal.js:85
 msgid "Purchase total (once per registration)"
-msgstr ""
+msgstr "Kaufsumme (einmal pro Registrierung)"
 
 #. translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)"
 #: src/Admin/manage-event/SignupExportModal.js:163
 #, js-format
 msgid "%s (needs review)"
-msgstr ""
+msgstr "%s (benötigt Überprüfung)"
 
 #: src/Admin/manage-event/SignupExportModal.js:173
 msgid "No ticket (needs review)"
-msgstr ""
+msgstr "Kein Ticket (benötigt Überprüfung)"
 
 #: src/Admin/manage-event/SignupExportModal.js:184
 msgid "Answers for"
-msgstr ""
+msgstr "Antworten für"
 
 #: src/Admin/manage-event/SignupExportModal.js:451
 msgid "One line per ticket"
-msgstr ""
+msgstr "Eine Zeile pro Ticket"
 
 #: ../fair-events-shared/src/TicketEditModal.js:200
 msgid "Signup answers"
-msgstr ""
+msgstr "Anmeldeantworten"
 
 #: ../fair-events-shared/src/TicketEditModal.js:204
 msgid "These answers were collected before answers were recorded per ticket, so they were attached to this ticket automatically. Check that they belong to this attendee."
-msgstr ""
+msgstr "Diese Antworten wurden gesammelt, bevor Antworten pro Ticket erfasst wurden, daher wurden sie automatisch an dieses Ticket angehängt. Überprüfen Sie, dass sie zu diesem Teilnehmer gehören."
 
 #: ../fair-events-shared/src/TicketEditModal.js:226
 msgid "View file"
-msgstr ""
+msgstr "Datei anzeigen"
 
 #: src/Admin/manage-event/EventTickets.js:2183
 #: src/Admin/manage-event/EventTickets.js:2638
@@ -4922,7 +4921,7 @@ msgstr "Ereignisverkaufsstatistiken konnten nicht geladen werden."
 
 #: src/Admin/event-statistics/EventStatistics.js:312
 msgid "Cumulative tickets sold"
-msgstr ""
+msgstr "Kumulativ verkaufte Tickets"
 
 #: src/Admin/event-statistics/EventStatistics.js:313
 msgid "Cumulative sales amount"
@@ -4966,48 +4965,48 @@ msgstr "Netto-Verkaufsbetrag"
 
 #: src/Admin/event-statistics/EventStatistics.js:455
 msgid "Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included."
-msgstr ""
+msgstr "Zählt nur bestätigte Tickets. Ausstehende, fehlgeschlagene, abgelaufene, stornierte und rückerstattete Tickets sind nicht enthalten."
 
 #. translators: %d: number of purchases with missing ticket records.
 #: src/Admin/event-statistics/EventStatistics.js:533
 #, js-format
 msgid "%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created."
 msgid_plural "%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Kauf hat weniger Ticketdatensätze als gekaufte Tickets. Die fehlenden Tickets werden nicht gezählt, bis ihre Datensätze erstellt werden."
+msgstr[1] "%d Käufe haben weniger Ticketdatensätze als gekaufte Tickets. Die fehlenden Tickets werden nicht gezählt, bis ihre Datensätze erstellt werden."
 
 #. translators: %d: number of tickets left out of the activity charts.
 #: src/Admin/event-statistics/EventStatistics.js:547
 #, js-format
 msgid "%d ticket is left out of the activity charts because its activities were recorded for the participant rather than for each ticket."
 msgid_plural "%d tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Ticket wird aus den Aktivitätsdiagrammen ausgelassen, da seine Aktivitäten für den Teilnehmer statt für jedes Ticket aufgezeichnet wurden."
+msgstr[1] "%d Tickets werden aus den Aktivitätsdiagrammen ausgelassen, da ihre Aktivitäten für den Teilnehmer statt für jedes Ticket aufgezeichnet wurden."
 
 #: src/Admin/event-statistics/EventStatistics.js:559
 msgid "Tickets per activity"
-msgstr ""
+msgstr "Tickets pro Aktivität"
 
 #: src/Admin/event-statistics/EventStatistics.js:563
 msgid "No activities recorded for confirmed tickets."
-msgstr ""
+msgstr "Keine Aktivitäten für bestätigte Tickets aufgezeichnet."
 
 #: src/Admin/event-statistics/EventStatistics.js:603
 #: src/Admin/event-statistics/EventStatistics.js:627
 msgid "Activities per ticket"
-msgstr ""
+msgstr "Aktivitäten pro Ticket"
 
 #: src/Admin/event-statistics/EventStatistics.js:607
 msgid "No confirmed tickets to chart."
-msgstr ""
+msgstr "Keine bestätigten Tickets zum Darstellen."
 
 #: src/Admin/event-statistics/StatisticsPage.js:24
 msgid "Event statistics need the Fair Audience plugin, which records tickets and payments. Activate Fair Audience to see sales and activity charts for this event."
-msgstr ""
+msgstr "Ereignisstatistiken benötigen das Fair Audience Plugin, das Tickets und Zahlungen aufzeichnet. Aktivieren Sie Fair Audience, um Verkaufs- und Aktivitätsdiagramme für dieses Ereignis anzuzeigen."
 
 #: src/Admin/event-statistics/StatisticsPage.js:34
 msgid "Back to Manage Event"
-msgstr ""
+msgstr "Zurück zu Ereignis verwalten"
 
 #: src/Admin/manage-event/ManageEventApp.js:874
 msgid "Statistics"
@@ -5071,19 +5070,19 @@ msgstr "Zu setzender Veröffentlichungsstatus (publish, draft)."
 
 #: src/API/GetTicketsController.php:918
 msgid "This purchase was already submitted with different details. Reload the page and try again."
-msgstr ""
+msgstr "Dieser Kauf wurde bereits mit anderen Details eingereicht. Laden Sie die Seite neu und versuchen Sie es erneut."
 
 #: src/API/GetTicketsController.php:1143
 msgid "Your payment is being processed. You will receive a confirmation email once it is complete."
-msgstr ""
+msgstr "Ihre Zahlung wird verarbeitet. Sie erhalten eine Bestätigungs-E-Mail, sobald sie abgeschlossen ist."
 
 #: src/API/GetTicketsController.php:1258
 msgid "This purchase has ended and can no longer be paid. Submit the form again to start a new one."
-msgstr ""
+msgstr "Dieser Kauf ist beendet und kann nicht mehr bezahlt werden. Reichen Sie das Formular erneut ein, um einen neuen zu starten."
 
 #: src/API/GetTicketsController.php:1271
 msgid "This purchase is still being processed. Please wait a moment and try again."
-msgstr ""
+msgstr "Dieser Kauf wird noch verarbeitet. Bitte warten Sie einen Moment und versuchen Sie es erneut."
 
 #: src/Services/EventPublication.php:49
 msgid "The publication status must be \"publish\" or \"draft\"."
@@ -5220,3 +5219,4 @@ msgstr "Die externe Seite, auf die diese Veranstaltung verlinkt, wird nicht geä
 #: src/Admin/manage-event/ManageEventApp.js:1581
 msgid "Your unsaved changes to the event details stay on this screen, but this action does not save them."
 msgstr "Ihre ungespeicherten Änderungen an den Veranstaltungsdetails bleiben auf diesem Bildschirm erhalten, werden durch diese Aktion aber nicht gespeichert."
+

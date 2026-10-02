@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-01T09:50:57+00:00\n"
+"POT-Creation-Date: 2026-10-02T10:45:24+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -50,7 +50,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:74
 #: src/Admin/AdminPages.php:75
-#: src/Admin/compare-events/CompareEventsPage.js:478
+#: src/Admin/compare-events/CompareEventsPage.js:485
 msgid "Compare events"
 msgstr ""
 
@@ -231,46 +231,46 @@ msgid "Comparison event"
 msgstr ""
 
 #. translators: %s: which selection, "Current event" or "Comparison event".
-#: src/Admin/compare-events/CompareEventsPage.js:104
+#: src/Admin/compare-events/CompareEventsPage.js:106
 #, js-format
 msgid "%s: this link does not point to a valid event. Choose an event from the list."
 msgstr ""
 
 #. translators: %s: which selection, "Current event" or "Comparison event".
-#: src/Admin/compare-events/CompareEventsPage.js:113
+#: src/Admin/compare-events/CompareEventsPage.js:115
 #, js-format
 msgid "%s: the event in this link no longer exists. Choose another event."
 msgstr ""
 
 #. translators: 1: which selection, "Current event" or "Comparison event". 2: event name and date.
-#: src/Admin/compare-events/CompareEventsPage.js:122
+#: src/Admin/compare-events/CompareEventsPage.js:124
 #, js-format
 msgid "%1$s: %2$s was cancelled, so it cannot be compared. Choose another event."
 msgstr ""
 
 #. translators: 1: which selection, "Current event" or "Comparison event". 2: error message.
-#: src/Admin/compare-events/CompareEventsPage.js:132
+#: src/Admin/compare-events/CompareEventsPage.js:134
 #, js-format
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:135
+#: src/Admin/compare-events/CompareEventsPage.js:137
 msgid "Event sales statistics could not be loaded."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:152
-#: src/Admin/compare-events/CompareEventsPage.js:546
+#: src/Admin/compare-events/CompareEventsPage.js:154
+#: src/Admin/compare-events/CompareEventsPage.js:558
 msgid "Try again"
 msgstr ""
 
 #. translators: 1: event name and date. 2: comma-separated currency codes excluded from event revenue.
-#: src/Admin/compare-events/CompareEventsPage.js:176
+#: src/Admin/compare-events/CompareEventsPage.js:178
 #, js-format
 msgid "%1$s: some payments were excluded because they use different currencies: %2$s."
 msgstr ""
 
 #. translators: 1: event name and date. 2: number of purchases with missing ticket records.
-#: src/Admin/compare-events/CompareEventsPage.js:189
+#: src/Admin/compare-events/CompareEventsPage.js:191
 #, js-format
 msgid "%1$s: %2$d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created."
 msgid_plural "%1$s: %2$d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created."
@@ -278,7 +278,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of confirmed tickets.
-#: src/Admin/compare-events/CompareEventsPage.js:232
+#: src/Admin/compare-events/CompareEventsPage.js:234
 #, js-format
 msgid "%d ticket"
 msgid_plural "%d tickets"
@@ -286,66 +286,66 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: calendar days until the event.
-#: src/Admin/compare-events/CompareEventsPage.js:249
+#: src/Admin/compare-events/CompareEventsPage.js:251
 #, js-format
 msgid "%d day until the event"
 msgid_plural "%d days until the event"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:262
+#: src/Admin/compare-events/CompareEventsPage.js:264
 msgid "No sales recorded for this event yet."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:273
+#: src/Admin/compare-events/CompareEventsPage.js:275
 msgid "Open event statistics"
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:328
+#: src/Admin/compare-events/CompareEventsPage.js:330
 msgid "Cumulative tickets sold"
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:332
+#: src/Admin/compare-events/CompareEventsPage.js:334
 msgid "Cumulative sales amount"
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:351
+#: src/Admin/compare-events/CompareEventsPage.js:353
 msgid "The chart image could not be downloaded. Please try again."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:409
+#: src/Admin/compare-events/CompareEventsPage.js:415
 msgid "Each event is lined up by the days before and during its own start. Counts confirmed tickets only: pending, failed, expired, cancelled, and refunded tickets are not included."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:422
+#: src/Admin/compare-events/CompareEventsPage.js:428
 msgid "Choose a current event and a comparison event to compare their sales."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:428
+#: src/Admin/compare-events/CompareEventsPage.js:434
 msgid "Choose a current event to compare with the comparison event."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:434
+#: src/Admin/compare-events/CompareEventsPage.js:440
 msgid "Choose a comparison event to compare with the current event."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:485
+#: src/Admin/compare-events/CompareEventsPage.js:493
 msgid "Comparing events needs the Fair Audience plugin, which records tickets and payments. Activate Fair Audience to compare event sales."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:512
+#: src/Admin/compare-events/CompareEventsPage.js:524
 msgid "Both selections are the same event. Choose a different comparison event."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:525
+#: src/Admin/compare-events/CompareEventsPage.js:537
 msgid "Loading event sales…"
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:535
+#: src/Admin/compare-events/CompareEventsPage.js:547
 msgid "See how ticket sales of two events progressed in the days before each one."
 msgstr ""
 
-#: src/Admin/compare-events/CompareEventsPage.js:552
+#: src/Admin/compare-events/CompareEventsPage.js:567
 msgid "The list of events could not be loaded."
 msgstr ""
 
@@ -356,19 +356,19 @@ msgid "%1$s — %2$s"
 msgstr ""
 
 #. translators: %d: number of calendar days before the event.
-#: src/Admin/compare-events/comparison.js:166
+#: src/Admin/compare-events/comparison.js:173
 #, js-format
 msgid "%d day before the event"
 msgid_plural "%d days before the event"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/compare-events/comparison.js:176
+#: src/Admin/compare-events/comparison.js:183
 msgid "Day of the event"
 msgstr ""
 
 #. translators: %d: event-day number, counting the first day as 1.
-#: src/Admin/compare-events/comparison.js:180
+#: src/Admin/compare-events/comparison.js:187
 #, js-format
 msgid "Day %d of the event"
 msgstr ""
@@ -377,11 +377,11 @@ msgstr ""
 msgid "Dashed line: days that have not happened yet, so no sales are recorded for them."
 msgstr ""
 
-#: src/Admin/compare-events/ComparisonChart.js:128
+#: src/Admin/compare-events/ComparisonChart.js:131
 msgid "Download PNG"
 msgstr ""
 
-#: src/Admin/compare-events/EventSelector.js:94
+#: src/Admin/compare-events/EventSelector.js:99
 msgid "Type to search events by name."
 msgstr ""
 

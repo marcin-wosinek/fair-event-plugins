@@ -93,13 +93,13 @@ msgid "The remote site rejected the token, or it lacks the transactions:read sco
 msgstr "El sitio remoto rechazó el token, o carece del alcance transactions:read."
 
 #. translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label
-#: src/API/ConnectedSitesController.php:518
+#: src/API/ConnectedSitesController.php:521
 #, php-format
 msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s."
 msgstr "Se importaron %1$d nuevas, se actualizaron %2$d, se omitieron %3$d transacción(es) de %4$s."
 
 #: src/API/ConnectedSitesController.php:337
-#: src/API/ConnectedSitesController.php:614
+#: src/API/ConnectedSitesController.php:617
 msgid "Connected site not found."
 msgstr "Sitio conectado no encontrado."
 
@@ -371,7 +371,7 @@ msgstr "Habilitado"
 msgid "Linked Fair Finance budget id, or null to clear the association."
 msgstr "ID de presupuesto de Fair Finance vinculado, o nulo para borrar la asociación."
 
-#: src/API/ConnectedSitesController.php:645
+#: src/API/ConnectedSitesController.php:648
 msgid "Budget not found."
 msgstr "Presupuesto no encontrado."
 
@@ -405,7 +405,7 @@ msgstr "La reconciliación propone este presupuesto para las transacciones impor
 msgid "Whether the site is available as an import source."
 msgstr "Si el sitio está disponible como fuente de importación."
 
-#: src/API/ConnectedSitesController.php:601
+#: src/API/ConnectedSitesController.php:604
 msgid "This connected site is disabled and cannot be used to import transactions."
 msgstr "Este sitio conectado está deshabilitado y no se puede usar para importar transacciones."
 
@@ -447,7 +447,7 @@ msgid "Update Fair Payments Connector to record this import in the External Upda
 msgstr "Actualiza Fair Payments Connector para registrar esta importación en el registro de actualizaciones externas."
 
 #. translators: 1: connected site label, 2: created count, 3: updated count, 4: skipped count, 5: reason the import stopped
-#: src/API/ConnectedSitesController.php:550
+#: src/API/ConnectedSitesController.php:553
 #, php-format
 msgid "The import from %1$s stopped after %2$d new, %3$d updated and %4$d skipped transaction(s). %5$s"
 msgstr "La importación desde %1$s se detuvo tras %2$d transacción(es) nueva(s), %3$d actualizada(s) y %4$d omitida(s). %5$s"

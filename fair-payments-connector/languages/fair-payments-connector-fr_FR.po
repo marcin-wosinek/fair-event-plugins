@@ -14,20 +14,21 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Domain: fair-payments-connector\n"
 
-#: src/Admin/AdminPages.php:49
-#: src/Admin/AdminPages.php:50
+#: src/Admin/AdminPages.php:55
+#: src/Admin/AdminPages.php:56
+#: src/Admin/external-updates/components/MollieFeesPanel.js:62
 msgid "Transactions"
 msgstr "Transactions"
 
-#: src/Admin/AdminPages.php:58
-#: src/Admin/AdminPages.php:59
-#: src/Admin/AdminPages.php:66
+#: src/Admin/AdminPages.php:64
+#: src/Admin/AdminPages.php:65
+#: src/Admin/AdminPages.php:72
 #: src/Admin/transaction/TransactionPage.js:853
 msgid "Transaction Detail"
 msgstr "Détail de la transaction"
 
-#: src/Admin/AdminPages.php:82
-#: src/Admin/AdminPages.php:83
+#: src/Admin/AdminPages.php:99
+#: src/Admin/AdminPages.php:100
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -59,11 +60,12 @@ msgstr "Échec du test de connexion : %s"
 #: src/API/PaymentEndpoint.php:447
 #: src/API/PaymentEndpoint.php:488
 #: src/API/TransactionAPI.php:165
-#: src/API/TransactionsController.php:362
-#: src/API/TransactionsController.php:382
-#: src/API/TransactionsController.php:454
-#: src/API/TransactionsController.php:745
-#: src/Models/Transaction.php:585
+#: src/API/TransactionAPI.php:302
+#: src/API/TransactionsController.php:366
+#: src/API/TransactionsController.php:386
+#: src/API/TransactionsController.php:458
+#: src/API/TransactionsController.php:811
+#: src/Models/Transaction.php:655
 msgid "Transaction not found."
 msgstr "Transaction non trouvée."
 
@@ -103,40 +105,40 @@ msgstr "Paiement n°%d"
 msgid "Failed to update transaction with payment details."
 msgstr "Échec de la mise à jour de la transaction avec les détails de paiement."
 
-#: src/API/TransactionAPI.php:580
+#: src/API/TransactionAPI.php:627
 msgid "Line items must be an array."
 msgstr "Les articles de ligne doivent être un tableau."
 
-#: src/API/TransactionAPI.php:588
+#: src/API/TransactionAPI.php:635
 msgid "At least one line item is required."
 msgstr "Au moins un article de ligne est requis."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:600
+#: src/API/TransactionAPI.php:647
 #, php-format
 msgid "Line item at index %d must be an array."
 msgstr "L'article de ligne à l'index %d doit être un tableau."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:612
+#: src/API/TransactionAPI.php:659
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
 msgstr "L'article de ligne à l'index %d est manquant du champ obligatoire « name »."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:624
+#: src/API/TransactionAPI.php:671
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
 msgstr "L'élément de ligne à l'index %d a un champ « montant » invalide."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:636
+#: src/API/TransactionAPI.php:683
 #, php-format
 msgid "Line item at index %d must have positive amount."
 msgstr "L'élément de ligne à l'index %d doit avoir un montant positif."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:650
+#: src/API/TransactionAPI.php:697
 #, php-format
 msgid "Line item at index %d must have positive quantity."
 msgstr "L'élément de ligne à l'index %d doit avoir une quantité positive."
@@ -174,12 +176,12 @@ msgstr "Traitement du paiement en cours..."
 msgid "Payment gateway is not configured. Please configure your Mollie API keys."
 msgstr "La passerelle de paiement n'est pas configurée. Veuillez configurer vos clés API Mollie."
 
-#: src/Models/Transaction.php:593
+#: src/Models/Transaction.php:663
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr "Un paiement a déjà été initié pour cette transaction. Créez une nouvelle transaction pour réessayer."
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:603
+#: src/Models/Transaction.php:673
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr "Le statut de la transaction doit être « brouillon » pour initier le paiement. Statut actuel : %s"
@@ -240,13 +242,9 @@ msgstr "Nom"
 
 #: src/Admin/transaction/TransactionPage.js:1094
 #: src/Admin/transaction/TransactionPage.js:1160
-#: src/Admin/transactions/TransactionsApp.js:559
+#: src/Admin/transactions/TransactionsApp.js:473
 msgid "Description"
 msgstr "Description"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:636
-msgid "Actions"
-msgstr "Actions"
 
 #: src/Admin/transaction/TransactionPage.js:169
 #: src/Admin/transaction/TransactionPage.js:377
@@ -263,6 +261,7 @@ msgstr "Total"
 #: src/Admin/transaction/TransactionPage.js:281
 #: src/Admin/transaction/TransactionPage.js:505
 #: src/Admin/transaction/TransactionPage.js:1364
+#: src/Admin/transactions/components/ImportTransactionsModal.js:157
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -273,36 +272,36 @@ msgid "Event"
 msgstr "Événement"
 
 #: src/Admin/transaction/TransactionPage.js:971
-#: src/Admin/transactions/TransactionsApp.js:523
+#: src/Admin/transactions/TransactionsApp.js:437
 #: src/blocks/simple-payment/index.js:118
 msgid "Amount"
 msgstr "Montant"
 
-#: src/Admin/transactions/TransactionsApp.js:578
+#: src/Admin/transactions/TransactionsApp.js:492
 msgid "Date"
 msgstr "Date"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:672
-#: src/Admin/transactions/TransactionsApp.js:443
+#: src/Admin/transactions/TransactionsApp.js:367
 msgid "Import"
 msgstr "Importer"
 
-#: src/Admin/transactions/TransactionsApp.js:154
+#: src/Admin/transactions/TransactionsApp.js:148
 msgid "Failed to load transactions."
 msgstr "Impossible de charger les transactions."
 
+#: src/Admin/notifications/NotificationsTab.js:219
 #: src/Admin/transaction/TransactionPage.js:272
 #: src/Admin/transaction/TransactionPage.js:496
 msgid "Remove"
 msgstr "Supprimer"
 
 #: src/Admin/settings/AuditLogTab.js:182
-#: src/Admin/transactions/TransactionsApp.js:716
+#: src/Admin/transactions/TransactionsApp.js:630
 msgid "Previous"
 msgstr "Précédent"
 
 #: src/Admin/settings/AuditLogTab.js:200
-#: src/Admin/transactions/TransactionsApp.js:737
+#: src/Admin/transactions/TransactionsApp.js:651
 msgid "Next"
 msgstr "Suivant"
 
@@ -325,21 +324,21 @@ msgstr "Échec de la déconnexion."
 msgid "Switched to %s mode."
 msgstr "Passage en mode %s."
 
+#: src/Admin/external-updates/components/MollieImportPanel.js:252
+#: src/Admin/external-updates/components/MollieImportPanel.js:301
 #: src/Admin/settings/ConnectionTab.js:238
 #: src/Admin/transaction/TransactionPage.js:1023
-#: src/Admin/transactions/components/ImportTransactionsModal.js:369
-#: src/Admin/transactions/components/ImportTransactionsModal.js:485
-#: src/Admin/transactions/TransactionsApp.js:40
-#: src/Admin/transactions/TransactionsApp.js:647
+#: src/Admin/transactions/TransactionsApp.js:42
+#: src/Admin/transactions/TransactionsApp.js:561
 msgid "Test"
 msgstr "Test"
 
+#: src/Admin/external-updates/components/MollieImportPanel.js:253
+#: src/Admin/external-updates/components/MollieImportPanel.js:308
 #: src/Admin/settings/ConnectionTab.js:239
 #: src/Admin/transaction/TransactionPage.js:1027
-#: src/Admin/transactions/components/ImportTransactionsModal.js:376
-#: src/Admin/transactions/components/ImportTransactionsModal.js:486
-#: src/Admin/transactions/TransactionsApp.js:39
-#: src/Admin/transactions/TransactionsApp.js:651
+#: src/Admin/transactions/TransactionsApp.js:41
+#: src/Admin/transactions/TransactionsApp.js:565
 msgid "Live"
 msgstr "En direct"
 
@@ -397,11 +396,11 @@ msgstr "Veuillez vous reconnecter à Mollie pour récupérer l'ID de profil."
 msgid "Token expires: %s"
 msgstr "Le jeton expire : %s"
 
+#: src/Admin/external-updates/components/MollieImportPanel.js:294
 #: src/Admin/settings/ConnectionTab.js:617
 #: src/Admin/transaction/TransactionPage.js:1004
-#: src/Admin/transactions/components/ImportTransactionsModal.js:365
-#: src/Admin/transactions/TransactionsApp.js:380
-#: src/Admin/transactions/TransactionsApp.js:548
+#: src/Admin/transactions/TransactionsApp.js:304
+#: src/Admin/transactions/TransactionsApp.js:462
 msgid "Mode"
 msgstr "Mode"
 
@@ -474,12 +473,12 @@ msgid "Payment Details"
 msgstr "Détails du Paiement"
 
 #: src/Admin/transaction/TransactionPage.js:980
-#: src/Admin/transactions/TransactionsApp.js:529
+#: src/Admin/transactions/TransactionsApp.js:443
 msgid "Mollie Fee"
 msgstr "Frais Mollie"
 
 #: src/Admin/transaction/TransactionPage.js:992
-#: src/Admin/transactions/TransactionsApp.js:535
+#: src/Admin/transactions/TransactionsApp.js:449
 msgid "Integration Fee"
 msgstr "Frais d'Intégration"
 
@@ -488,9 +487,8 @@ msgid "Status & Timing"
 msgstr "Statut et Timing"
 
 #: src/Admin/transaction/TransactionPage.js:1051
-#: src/Admin/transactions/components/ImportTransactionsModal.js:633
-#: src/Admin/transactions/TransactionsApp.js:361
-#: src/Admin/transactions/TransactionsApp.js:542
+#: src/Admin/transactions/TransactionsApp.js:285
+#: src/Admin/transactions/TransactionsApp.js:456
 msgid "Status"
 msgstr "Statut"
 
@@ -546,55 +544,57 @@ msgstr "URL du webhook"
 msgid "Checkout URL"
 msgstr "URL de paiement"
 
-#: src/Admin/transactions/TransactionsApp.js:24
+#: src/Admin/transactions/TransactionsApp.js:26
 msgid "All statuses"
 msgstr "Tous les statuts"
 
-#: src/Admin/transactions/TransactionsApp.js:25
+#: src/Admin/transactions/TransactionsApp.js:27
 msgid "Paid"
 msgstr "Payé"
 
-#: src/Admin/transactions/TransactionsApp.js:26
+#: src/Admin/transactions/TransactionsApp.js:28
 msgid "Pending"
 msgstr "En attente"
 
-#: src/Admin/transactions/TransactionsApp.js:27
+#: src/Admin/transactions/TransactionsApp.js:29
 msgid "Open"
 msgstr "Ouvert"
 
-#: src/Admin/transactions/TransactionsApp.js:28
+#: src/Admin/external-updates/format.js:95
+#: src/Admin/transactions/TransactionsApp.js:30
 msgid "Failed"
 msgstr "Échoué"
 
-#: src/Admin/transactions/TransactionsApp.js:29
+#: src/Admin/transactions/TransactionsApp.js:31
 msgid "Canceled"
 msgstr "Annulé"
 
-#: src/Admin/transactions/TransactionsApp.js:30
+#: src/Admin/transactions/TransactionsApp.js:32
 msgid "Expired"
 msgstr "Expiré"
 
-#: src/Admin/transactions/TransactionsApp.js:31
+#: src/Admin/transactions/TransactionsApp.js:33
 msgid "Draft"
 msgstr "Brouillon"
 
-#: src/Admin/transactions/TransactionsApp.js:33
+#: src/Admin/transactions/TransactionsApp.js:35
 msgid "Pending payment"
 msgstr "Paiement en attente"
 
-#: src/Admin/transactions/TransactionsApp.js:41
+#: src/Admin/external-updates/components/MollieFeesPanel.js:83
+#: src/Admin/transactions/TransactionsApp.js:43
 msgid "All modes"
 msgstr "Tous les modes"
 
-#: src/Admin/transactions/TransactionsApp.js:350
+#: src/Admin/transactions/TransactionsApp.js:274
 msgid "Payment Transactions"
 msgstr "Transactions de paiement"
 
-#: src/Admin/transactions/TransactionsApp.js:489
+#: src/Admin/transactions/TransactionsApp.js:403
 msgid "No transactions found."
 msgstr "Aucune transaction trouvée."
 
-#: src/Admin/transactions/TransactionsApp.js:516
+#: src/Admin/transactions/TransactionsApp.js:430
 msgid "ID"
 msgstr "ID"
 
@@ -626,37 +626,37 @@ msgid "Simple payment block for WordPress"
 msgstr "Bloc de paiement simple pour WordPress"
 
 #. translators: %d is the number of exported transactions
-#: src/Admin/transactions/TransactionsApp.js:236
+#: src/Admin/transactions/TransactionsApp.js:248
 #, js-format
 msgid "%d transaction(s) exported."
 msgstr "%d transaction(s) exportée(s)."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:151
+#: src/Admin/transactions/components/ImportTransactionsModal.js:62
 msgid "Invalid file format. Expected a JSON array."
 msgstr "Format de fichier invalide. Un tableau JSON est attendu."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:163
+#: src/Admin/transactions/components/ImportTransactionsModal.js:74
 msgid "No valid transactions found in the file."
 msgstr "Aucune transaction valide trouvée dans le fichier."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:180
+#: src/Admin/transactions/components/ImportTransactionsModal.js:91
 msgid "Failed to import transactions."
 msgstr "Échec de l'importation des transactions."
 
-#: src/Admin/transactions/TransactionsApp.js:411
+#: src/Admin/transactions/TransactionsApp.js:335
 msgid "Export Selected"
 msgstr "Exporter la sélection"
 
-#: src/API/TransactionAPI.php:389
+#: src/API/TransactionAPI.php:436
 msgid "This transaction has no Mollie payment ID to sync."
 msgstr "Cette transaction n'a pas d'ID de paiement Mollie à synchroniser."
 
-#: src/API/TransactionsController.php:490
+#: src/API/TransactionsController.php:494
 msgid "Expected an array of transactions."
 msgstr "Un tableau de transactions est attendu."
 
 #. translators: 1: created count, 2: updated count, 3: skipped count
-#: src/API/TransactionsController.php:523
+#: src/API/TransactionsController.php:527
 #, php-format
 msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
 msgstr "Importé %1$d nouveau(x), mis à jour %2$d, ignoré %3$d transaction(s)."
@@ -680,7 +680,6 @@ msgid "Failed to sync with Mollie."
 msgstr "Échec de la synchronisation avec Mollie."
 
 #: src/Admin/transaction/TransactionPage.js:914
-#: src/Admin/transactions/TransactionsApp.js:429
 msgid "Syncing…"
 msgstr "Synchronisation en cours…"
 
@@ -697,7 +696,7 @@ msgstr "Voir la réponse Mollie"
 msgid "Participant"
 msgstr "Participant"
 
-#: src/Admin/transactions/TransactionsApp.js:565
+#: src/Admin/transactions/TransactionsApp.js:479
 msgid "Person"
 msgstr "Personne"
 
@@ -705,11 +704,11 @@ msgstr "Personne"
 msgid "Search by name or email…"
 msgstr "Rechercher par nom ou email…"
 
-#: src/API/TransactionsController.php:419
+#: src/API/TransactionsController.php:423
 msgid "No fields to update."
 msgstr "Aucun champ à mettre à jour."
 
-#: src/API/TransactionsController.php:429
+#: src/API/TransactionsController.php:433
 msgid "Failed to update transaction."
 msgstr "Échec de la mise à jour de la transaction."
 
@@ -807,93 +806,41 @@ msgstr "Ajouter"
 msgid "Failed to update."
 msgstr "Échec de la mise à jour."
 
-#: src/Admin/transactions/TransactionsApp.js:571
+#: src/Admin/transactions/TransactionsApp.js:485
 msgid "Entry"
 msgstr "Entrée"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:318
-msgid "Connected Sites"
-msgstr "Sites connectés"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:630
-msgid "Label"
-msgstr "Étiquette"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:77
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:59
 msgid "Failed to load connected sites."
 msgstr "Échec du chargement des sites connectés."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:600
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:121
 msgid "Loading sites…"
 msgstr "Chargement des sites…"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:204
-msgid "Failed to import transactions from the connected site."
-msgstr "Échec de l'importation des transactions depuis le site connecté."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:296
-msgid "Where do you want to import transactions from?"
-msgstr "D'où souhaitez-vous importer les transactions ?"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:327
-msgid "From File"
-msgstr "À partir d'un fichier"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:551
+#: src/Admin/transactions/components/ImportTransactionsModal.js:119
 msgid "Select a JSON file exported from another site, or a Mollie payments CSV export."
 msgstr "Sélectionnez un fichier JSON exporté depuis un autre site ou un export CSV de paiements Mollie."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:567
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:201
+#: src/Admin/external-updates/components/MollieImportPanel.js:427
+#: src/Admin/transactions/components/ImportTransactionsModal.js:135
 msgid "Importing…"
 msgstr "Importation en cours…"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:543
-#: src/Admin/transactions/components/ImportTransactionsModal.js:577
-#: src/Admin/transactions/components/ImportTransactionsModal.js:690
-msgid "Back"
-msgstr "Retour"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:590
-msgid "Pull transactions from a registered connected site. Existing transactions are matched by payment ID and updated rather than duplicated."
-msgstr "Récupérez les transactions d'un site connecté enregistré. Les transactions existantes sont mises en correspondance par ID de paiement et mises à jour plutôt que dupliquées."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:607
-msgid "No connected sites yet. Add one on the Connected Sites page first."
-msgstr "Aucun site connecté pour le moment. Ajoutez-en un d'abord sur la page Sites connectés."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:698
+#: src/Admin/transactions/components/ImportTransactionsModal.js:103
 msgid "Import Transactions"
 msgstr "Importer les transactions"
 
-#: src/Admin/transactions/TransactionsApp.js:274
+#: src/Admin/external-updates/useMollieFeeLoad.js:66
 msgid "No paid transactions are missing Mollie fee data."
 msgstr "Aucune transaction payée ne manque de données de frais Mollie."
 
-#. translators: 1: synced count, 2: failed count, 3: total count
-#: src/Admin/transactions/TransactionsApp.js:317
-#, js-format
-msgid "Mollie fee sync complete: %1$d updated, %2$d failed (out of %3$d)."
-msgstr "Synchronisation des frais Mollie terminée : %1$d mises à jour, %2$d échouées (sur %3$d)."
-
-#: src/Admin/transactions/TransactionsApp.js:330
-msgid "Failed to load missing Mollie fees."
-msgstr "Échec du chargement des frais Mollie manquants."
-
-#: src/Admin/transactions/TransactionsApp.js:433
-msgid "Load Missing Mollie Fees"
-msgstr "Charger les frais Mollie manquants"
-
-#. translators: 1: processed count, 2: total count, 3: succeeded count, 4: failed count
-#: src/Admin/transactions/TransactionsApp.js:473
-#, js-format
-msgid "Syncing Mollie fees: %1$d / %2$d (updated: %3$d, failed: %4$d)"
-msgstr "Synchronisation des frais Mollie : %1$d / %2$d (mises à jour : %3$d, échouées : %4$d)"
-
 #. Plugin Name of the plugin
 #: fair-payments-connector.php
-#: src/Admin/AdminPages.php:37
-#: src/Admin/AdminPages.php:38
-#: src/Core/Plugin.php:133
+#: src/Admin/AdminPages.php:43
+#: src/Admin/AdminPages.php:44
+#: src/Core/Plugin.php:134
 msgid "Fair Payments Connector"
 msgstr ""
 
@@ -912,8 +859,8 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:71
-#: src/Admin/AdminPages.php:72
+#: src/Admin/AdminPages.php:88
+#: src/Admin/AdminPages.php:89
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:256
 msgid "Fee Dashboard"
 msgstr "Tableau de bord des frais"
@@ -935,7 +882,7 @@ msgid "Bundled translations"
 msgstr "Traductions groupées"
 
 #: src/Core/Features.php:127
-#: src/Core/Plugin.php:134
+#: src/Core/Plugin.php:135
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Charger les fichiers .mo/.json fournis avec le plugin au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
 
@@ -951,7 +898,7 @@ msgstr "Impossible de charger les données du tableau de bord."
 msgid "Test mode — these figures reflect test transactions only."
 msgstr "Mode test — ces chiffres reflètent uniquement les transactions de test."
 
-#: src/Core/Plugin.php:137
+#: src/Core/Plugin.php:138
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là."
 
@@ -959,7 +906,7 @@ msgstr "Forcé par une constante wp-config — modifiez-la là."
 msgid "Fair Payments Connector Settings"
 msgstr "Paramètres Fair Payments Connector"
 
-#: src/Admin/AdminPages.php:152
+#: src/Admin/AdminPages.php:212
 msgid "Set up"
 msgstr "Configurer"
 
@@ -1152,7 +1099,7 @@ msgstr "Créer un paiement test"
 msgid "Connect Mollie first to run a test payment."
 msgstr "Connectez d'abord Mollie pour effectuer un paiement test."
 
-#: src/Core/Plugin.php:128
+#: src/Core/Plugin.php:129
 msgid "Translations"
 msgstr "Traductions"
 
@@ -1172,97 +1119,87 @@ msgstr "Cette option de paiement est mal configurée. Veuillez contacter le prop
 msgid "This block shared its identifier with another Simple Payment block on this page, which could cause buyers to be charged the wrong price. A new identifier was assigned — save or update the post now."
 msgstr "Ce bloc a partagé son identifiant avec un autre bloc Simple Payment sur cette page, ce qui pourrait entraîner une facturation incorrecte des acheteurs. Un nouvel identifiant a été attribué — enregistrez ou mettez à jour l'article maintenant."
 
-#: src/API/TransactionsController.php:586
+#: src/API/TransactionsController.php:590
 #: src/Payment/MolliePaymentHandler.php:509
-#: src/Admin/transactions/components/ImportTransactionsModal.js:242
+#: src/Admin/external-updates/components/MollieImportPanel.js:129
 msgid "Mollie payments could not be loaded. Please try again."
 msgstr "Les paiements Mollie n'ont pas pu être chargés. Veuillez réessayer."
 
-#: src/API/TransactionsController.php:608
-#: src/Admin/transactions/components/ImportTransactionsModal.js:337
+#: src/API/ExternalUpdatesController.php:160
+#: src/API/TransactionsController.php:623
+#: src/Admin/external-updates/components/MollieImportPanel.js:215
 msgid "Connect Mollie before importing payments."
 msgstr "Connectez Mollie avant d'importer les paiements."
 
-#: src/API/TransactionsController.php:640
+#: src/API/TransactionsController.php:658
 msgid "This payment could not be imported."
 msgstr "Ce paiement n'a pas pu être importé."
 
 #. translators: 1: imported count, 2: skipped count, 3: failed count.
-#: src/API/TransactionsController.php:646
+#: src/API/TransactionsController.php:665
 #, php-format
 msgid "Imported %1$d, skipped %2$d, and failed %3$d payment(s)."
 msgstr "Importé %1$d, ignoré %2$d et échoué %3$d paiement(s)."
 
-#: src/API/TransactionsController.php:673
+#: src/API/TransactionsController.php:739
 msgid "Choose a valid date range of no more than 90 days."
 msgstr "Choisissez une plage de dates valide de 90 jours maximum."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:283
-msgid "The selected Mollie payments could not be imported."
-msgstr "Les paiements Mollie sélectionnés n'ont pas pu être importés."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:309
-msgid "Import from Mollie"
-msgstr "Importer depuis Mollie"
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:342
+#: src/Admin/external-updates/components/MollieImportPanel.js:220
 msgid "Open Mollie settings"
 msgstr "Ouvrir les paramètres Mollie"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:351
-msgid "Show paid Mollie payments created during this period. A search can cover up to 90 days."
-msgstr "Affiche les paiements Mollie payés créés au cours de cette période. Une recherche peut couvrir jusqu'à 90 jours."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:395
+#: src/Admin/external-updates/components/MollieImportPanel.js:328
 msgid "Start date"
 msgstr "Date de début"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:404
+#: src/Admin/external-updates/components/MollieImportPanel.js:339
 msgid "End date"
 msgstr "Date de fin"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:418
+#: src/Admin/external-updates/components/MollieImportPanel.js:356
 msgid "Find payments"
 msgstr "Trouver les paiements"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:424
+#: src/Admin/external-updates/components/MollieImportPanel.js:374
 msgid "Loading Mollie payments…"
 msgstr "Chargement des paiements Mollie…"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:436
+#: src/Admin/external-updates/components/MollieImportPanel.js:385
 msgid "No paid Mollie payments match these filters."
 msgstr "Aucun paiement Mollie payé ne correspond à ces filtres."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:490
+#: src/Admin/external-updates/components/MollieImportPanel.js:257
 msgid "Already imported"
 msgstr "Déjà importé"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:504
+#: src/Admin/external-updates/components/MollieImportPanel.js:399
 msgid "Load more"
 msgstr "Charger plus"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:509
+#: src/Admin/external-updates/components/MollieImportPanel.js:408
 msgid "More payments are available. Load another bounded page to continue."
 msgstr "D'autres paiements sont disponibles. Chargez une autre page délimitée pour continuer."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:531
+#: src/Admin/external-updates/components/MollieImportPanel.js:431
 msgid "Import selected payments"
 msgstr "Importer les paiements sélectionnés"
 
-#: src/API/TransactionsController.php:541
-#: src/API/TransactionsController.php:599
+#: src/API/ExternalUpdatesController.php:157
+#: src/API/TransactionsController.php:545
+#: src/API/TransactionsController.php:611
 msgid "Choose live or test mode."
 msgstr "Choisissez le mode en direct ou le mode test."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:387
+#: src/Admin/external-updates/components/MollieImportPanel.js:319
 msgid "Checking the current mode…"
 msgstr "Vérification du mode actuel…"
 
-#: src/API/TransactionsController.php:228
+#: src/API/TransactionsController.php:231
 msgid "Provide between 1 and 25 transaction ids."
 msgstr "Fournir entre 1 et 25 identifiants de transaction."
 
-#: src/API/TransactionsController.php:409
+#: src/API/TransactionsController.php:413
 msgid "The selected event date does not exist."
 msgstr "La date d'événement sélectionnée n'existe pas."
 
@@ -1282,7 +1219,7 @@ msgstr "Aucun événement correspondant."
 msgid "Person, Post & Event"
 msgstr "Personne, Article et Événement"
 
-#: src/API/TransactionsController.php:462
+#: src/API/TransactionsController.php:466
 msgid "Failed to delete the transaction. It has not been changed."
 msgstr "Impossible de supprimer la transaction. Elle n'a pas été modifiée."
 
@@ -1317,7 +1254,7 @@ msgstr "Supprimer définitivement la transaction n°%d ? Cette action ne peut pa
 msgid "Only the local transaction record and its exclusively owned local data are removed. The payment in Mollie or any other external service is not cancelled, refunded, or deleted."
 msgstr "Seul l'enregistrement de transaction local et ses données locales exclusivement détenues sont supprimés. Le paiement dans Mollie ou tout autre service externe n'est pas annulé, remboursé ou supprimé."
 
-#: src/Admin/transactions/TransactionsApp.js:111
+#: src/Admin/transactions/TransactionsApp.js:105
 msgid "Transaction deleted. The payment in Mollie or any other external service was not changed."
 msgstr "Transaction supprimée. Le paiement dans Mollie ou tout autre service externe n'a pas été modifié."
 
@@ -1335,6 +1272,7 @@ msgstr "Fair Payments Connector <strong>la configuration est incomplète</strong
 
 #. translators: %d: WordPress user ID
 #: src/API/AuditLogController.php:123
+#: src/Services/ExternalUpdateRuns.php:264
 #, php-format
 msgid "Deleted user #%d"
 msgstr "Utilisateur supprimé n°%d"
@@ -1494,6 +1432,8 @@ msgstr "Aucune modification n'a encore été enregistrée."
 msgid "When"
 msgstr "Quand"
 
+#: src/Admin/external-updates/components/OperationLog.js:82
+#: src/Admin/external-updates/components/OperationLog.js:149
 #: src/Admin/settings/AuditLogTab.js:134
 msgid "Action"
 msgstr "Action"
@@ -1511,6 +1451,7 @@ msgid "Reason"
 msgstr "Raison"
 
 #. translators: 1: current page, 2: total pages
+#: src/Admin/external-updates/components/OperationLog.js:192
 #: src/Admin/settings/AuditLogTab.js:187
 #, js-format
 msgid "Page %1$d of %2$d"
@@ -1523,10 +1464,6 @@ msgstr "Mode de sauvegarde"
 #: src/Admin/settings/ConnectionTab.js:778
 msgid "Disconnect from Mollie? You will need to reconnect to accept payments."
 msgstr "Déconnecter de Mollie ? Vous devrez vous reconnecter pour accepter les paiements."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:618
-msgid "No enabled connected sites. Enable one on the Connected Sites page first."
-msgstr "Aucun site connecté activé. Activez-en un d'abord sur la page Sites connectés."
 
 #. translators: %d: integration fee percentage
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:262
@@ -1609,4 +1546,530 @@ msgstr "Réessayer"
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:359
 msgid "No paid transactions in this month."
 msgstr "Aucune transaction payée ce mois-ci."
+
+#: src/Admin/AdminPages.php:77
+#: src/Admin/AdminPages.php:78
+#: src/Admin/external-updates/ExternalUpdatesApp.js:51
+msgid "External Updates"
+msgstr "Mises à jour externes"
+
+#: src/Admin/AdminPages.php:120
+#: src/Admin/AdminPages.php:121
+#: src/Admin/notifications/NotificationsApp.js:23
+msgid "Notifications"
+msgstr "Notifications"
+
+#: src/API/ExternalUpdatesController.php:166
+msgid "Choose live, test, or all modes."
+msgstr "Choisissez les modes en direct, test ou tous."
+
+#: src/API/ExternalUpdatesController.php:191
+msgid "Connected sites are not available. Activate Fair Payments Connector Experimental to import from them."
+msgstr "Les sites connectés ne sont pas disponibles. Activez Fair Payments Connector Experimental pour importer à partir d'eux."
+
+#: src/API/NotificationsController.php:78
+msgid "Destination is required."
+msgstr "La destination est requise."
+
+#: src/API/NotificationsController.php:88
+#: src/Services/TelegramService.php:38
+msgid "Telegram bot token is not configured."
+msgstr "Le jeton du bot Telegram n'est pas configuré."
+
+#: src/API/NotificationsController.php:102
+msgid "Unknown notification channel."
+msgstr "Canal de notification inconnu."
+
+#: src/API/NotificationsController.php:112
+msgid "Test notification failed to send."
+msgstr "L'envoi de la notification de test a échoué."
+
+#: src/API/NotificationsController.php:120
+#: src/Admin/notifications/NotificationsTab.js:89
+msgid "Test notification sent."
+msgstr "Notification de test envoyée."
+
+#: src/API/TelegramSettingsController.php:100
+msgid "Bot token is required."
+msgstr "Le jeton du bot est requis."
+
+#: src/API/TelegramSettingsController.php:109
+msgid "At least one chat ID is required."
+msgstr "Au moins un ID de chat est requis."
+
+#: src/API/TelegramSettingsController.php:142
+msgid "Telegram test message failed for all chat IDs."
+msgstr "Le message de test Telegram a échoué pour tous les ID de chat."
+
+#: src/API/TelegramSettingsController.php:153
+msgid "Telegram test message sent."
+msgstr "Message de test Telegram envoyé."
+
+#: src/API/TransactionAPI.php:321
+msgid "This payment can no longer be continued."
+msgstr "Ce paiement ne peut plus être poursuivi."
+
+#: src/API/TransactionsController.php:683
+msgid "External Updates run this request belongs to."
+msgstr "Exécution des mises à jour externes à laquelle appartient cette demande."
+
+#: src/Hooks/DigestHooks.php:114
+msgid "Every hour (fair-payments digest)"
+msgstr "Chaque heure (résumé fair-payments)"
+
+#: src/Hooks/DigestHooks.php:120
+msgid "Every day (fair-payments digest)"
+msgstr "Chaque jour (résumé fair-payments)"
+
+#: src/Hooks/DigestHooks.php:126
+msgid "Every week (fair-payments digest)"
+msgstr "Chaque semaine (résumé fair-payments)"
+
+#. translators: %s: site name
+#: src/Services/EmailChannel.php:33
+#, php-format
+msgid "Payment notification — %s"
+msgstr "Notification de paiement — %s"
+
+#: src/Services/ExternalUpdateRuns.php:71
+msgid "The connected site could not be reached."
+msgstr "Le site connecté n'a pas pu être atteint."
+
+#: src/Services/ExternalUpdateRuns.php:72
+msgid "The connected site rejected the access token."
+msgstr "Le site connecté a rejeté le jeton d'accès."
+
+#: src/Services/ExternalUpdateRuns.php:73
+msgid "The connected site returned an unexpected response."
+msgstr "Le site connecté a renvoyé une réponse inattendue."
+
+#: src/Services/ExternalUpdateRuns.php:74
+msgid "The source is no longer available."
+msgstr "La source n'est plus disponible."
+
+#: src/Services/ExternalUpdateRuns.php:75
+msgid "Mollie is not connected."
+msgstr "Mollie n'est pas connecté."
+
+#: src/Services/ExternalUpdateRuns.php:76
+msgid "Mollie could not be reached."
+msgstr "Mollie n'a pas pu être atteint."
+
+#: src/Services/ExternalUpdateRuns.php:77
+msgid "The request was not valid."
+msgstr "La demande n'était pas valide."
+
+#: src/Services/ExternalUpdateRuns.php:78
+msgid "Some requests did not complete."
+msgstr "Certaines demandes n'ont pas été complétées."
+
+#: src/Services/ExternalUpdateRuns.php:79
+msgid "The run stopped before it finished, for example because a request timed out or the page was closed."
+msgstr "L'exécution s'est arrêtée avant la fin, par exemple parce qu'une demande a expiré ou que la page a été fermée."
+
+#: src/Services/ExternalUpdateRuns.php:80
+msgid "The run failed."
+msgstr "L'exécution a échoué."
+
+#: src/Services/ExternalUpdateRuns.php:105
+msgid "Unknown external update."
+msgstr "Mise à jour externe inconnue."
+
+#: src/Services/ExternalUpdateRuns.php:141
+msgid "The external update could not be started."
+msgstr "La mise à jour externe n'a pas pu être démarrée."
+
+#: src/Services/ExternalUpdateRuns.php:164
+msgid "External update run not found."
+msgstr "Exécution de mise à jour externe non trouvée."
+
+#: src/Services/ExternalUpdateRuns.php:172
+msgid "This external update was started by another user."
+msgstr "Cette mise à jour externe a été démarrée par un autre utilisateur."
+
+#: src/Services/ExternalUpdateRuns.php:180
+msgid "This external update run belongs to a different source or action."
+msgstr "Cette exécution de mise à jour externe appartient à une source ou une action différente."
+
+#: src/Services/ExternalUpdateRuns.php:188
+msgid "This external update run has already finished. Start a new run to try again."
+msgstr "Cette exécution de mise à jour externe est déjà terminée. Démarrez une nouvelle exécution pour réessayer."
+
+#: src/Services/ExternalUpdateRuns.php:302
+msgid "Import payments"
+msgstr "Importer les paiements"
+
+#: src/Services/ExternalUpdateRuns.php:304
+msgid "Load missing fees"
+msgstr "Charger les frais manquants"
+
+#: src/Services/ExternalUpdateRuns.php:306
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:205
+msgid "Import transactions"
+msgstr "Importer les transactions"
+
+#: src/Services/ExternalUpdateRuns.php:321
+msgid "Mollie (live)"
+msgstr "Mollie (en direct)"
+
+#: src/Services/ExternalUpdateRuns.php:323
+msgid "Mollie (test)"
+msgstr "Mollie (test)"
+
+#: src/Services/ExternalUpdateRuns.php:325
+msgid "Mollie (all modes)"
+msgstr "Mollie (tous les modes)"
+
+#. translators: %s: connected site ID
+#: src/Services/ExternalUpdateRuns.php:334
+#, php-format
+msgid "Connected site #%s"
+msgstr "Site connecté n°%s"
+
+#: src/Services/ExternalUpdateRuns.php:346
+msgid "Another external update is still running. Wait for it to finish, then try again."
+msgstr "Une autre mise à jour externe est toujours en cours. Attendez qu'elle se termine, puis réessayez."
+
+#: src/Services/TelegramService.php:41
+msgid "Telegram chat ID is empty."
+msgstr "L'ID de chat Telegram est vide."
+
+#: src/Settings/NotificationSettings.php:46
+msgid "Telegram bot token (from @BotFather)"
+msgstr "Jeton de bot Telegram (de @BotFather)"
+
+#: src/Settings/NotificationSettings.php:63
+msgid "Notification routes configuration"
+msgstr "Configuration des routes de notification"
+
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:91
+#: src/Admin/external-updates/components/MollieImportPanel.js:182
+msgid "The import request did not complete. Check the operation log for its outcome."
+msgstr "La demande d'importation n'a pas abouti. Consultez le journal des opérations pour connaître son résultat."
+
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:103
+#: src/Admin/external-updates/components/MollieImportPanel.js:194
+msgid "The import could not be started."
+msgstr "L'importation n'a pas pu être démarrée."
+
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:130
+msgid "Importing from other sites needs the Fair Payments Connector Experimental plugin. Activate it, then add a site on its Connected Sites page."
+msgstr "L'importation à partir d'autres sites nécessite le plugin Fair Payments Connector Experimental. Activez-le, puis ajoutez un site sur sa page Sites connectés."
+
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:149
+msgid "No connected sites yet."
+msgstr "Aucun site connecté pour le moment."
+
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:154
+msgid "Add one on the Connected Sites page."
+msgstr "Ajoutez-en un sur la page Sites connectés."
+
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:179
+msgid "Disabled. Enable it on the Connected Sites page to import from it."
+msgstr "Désactivé. Activez-le sur la page Sites connectés pour importer à partir de celui-ci."
+
+#. translators: %s: connected site label
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:193
+#, js-format
+msgid "Import transactions from %s"
+msgstr "Importer les transactions de %s"
+
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:221
+msgid "Connected sites"
+msgstr "Sites connectés"
+
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:227
+msgid "Pull transactions from another site. Transactions already here are matched by payment ID and updated, never duplicated."
+msgstr "Récupérez les transactions d'un autre site. Les transactions déjà présentes sont mises en correspondance par ID de paiement et mises à jour, jamais dupliquées."
+
+#. translators: 1: processed count, 2: total count, 3: updated count, 4: failed count
+#: src/Admin/external-updates/components/MollieFeeFeedback.js:37
+#, js-format
+msgid "Loading Mollie fees: %1$d of %2$d (updated: %3$d, failed: %4$d)"
+msgstr "Chargement des frais Mollie : %1$d sur %2$d (mis à jour : %3$d, échoués : %4$d)"
+
+#: src/Admin/external-updates/components/MollieFeesPanel.js:44
+msgid "Mollie fees"
+msgstr "Frais Mollie"
+
+#: src/Admin/external-updates/components/MollieFeesPanel.js:50
+msgid "Fetch the Mollie processing fee for paid transactions that do not have one yet."
+msgstr "Récupérez les frais de traitement Mollie pour les transactions payées qui n'en ont pas encore."
+
+#: src/Admin/external-updates/components/MollieFeesPanel.js:69
+msgid "Live mode"
+msgstr "Mode en direct"
+
+#: src/Admin/external-updates/components/MollieFeesPanel.js:76
+msgid "Test mode"
+msgstr "Mode test"
+
+#: src/Admin/external-updates/components/MollieFeesPanel.js:103
+#: src/Admin/transactions/TransactionsApp.js:353
+msgid "Loading fees…"
+msgstr "Chargement des frais…"
+
+#: src/Admin/external-updates/components/MollieFeesPanel.js:107
+#: src/Admin/transactions/TransactionsApp.js:357
+msgid "Load missing Mollie fees"
+msgstr "Charger les frais Mollie manquants"
+
+#: src/Admin/external-updates/components/MollieImportPanel.js:272
+msgid "Mollie payments"
+msgstr "Paiements Mollie"
+
+#: src/Admin/external-updates/components/MollieImportPanel.js:278
+msgid "Find paid Mollie payments created during a period of up to 90 days and import the ones missing here. Payments already imported are left unchanged."
+msgstr "Trouvez les paiements Mollie payés créés au cours d'une période pouvant aller jusqu'à 90 jours et importez ceux qui manquent ici. Les paiements déjà importés restent inchangés."
+
+#: src/Admin/external-updates/components/MollieImportPanel.js:440
+msgid "Select at least one payment to import."
+msgstr "Sélectionnez au moins un paiement à importer."
+
+#: src/Admin/external-updates/components/OperationLog.js:51
+msgid "Failed to load the operation log."
+msgstr "Impossible de charger le journal des opérations."
+
+#: src/Admin/external-updates/components/OperationLog.js:76
+#: src/Admin/external-updates/components/OperationLog.js:137
+msgid "Started"
+msgstr "Démarré"
+
+#: src/Admin/external-updates/components/OperationLog.js:79
+#: src/Admin/external-updates/components/OperationLog.js:143
+msgid "Source"
+msgstr "Source"
+
+#: src/Admin/external-updates/components/OperationLog.js:86
+#: src/Admin/external-updates/components/OperationLog.js:155
+msgid "Started by"
+msgstr "Démarré par"
+
+#: src/Admin/external-updates/components/OperationLog.js:90
+#: src/Admin/external-updates/components/OperationLog.js:161
+msgid "Outcome"
+msgstr "Résultat"
+
+#: src/Admin/external-updates/components/OperationLog.js:104
+#: src/Admin/external-updates/components/OperationLog.js:167
+msgid "Counts"
+msgstr "Comptages"
+
+#: src/Admin/external-updates/components/OperationLog.js:114
+msgid "Operation log"
+msgstr "Journal des opérations"
+
+#: src/Admin/external-updates/components/OperationLog.js:126
+msgid "No external updates have run yet."
+msgstr "Aucune mise à jour externe n'a encore été exécutée."
+
+#: src/Admin/external-updates/components/OperationLog.js:187
+msgid "Newer"
+msgstr "Plus récent"
+
+#: src/Admin/external-updates/components/OperationLog.js:205
+msgid "Older"
+msgstr "Plus ancien"
+
+#: src/Admin/external-updates/components/RunResultNotice.js:32
+#, js-format
+msgid "Finished: %s."
+msgstr "Terminé : %s."
+
+#. translators: 1: counts, e.g. "3 new, 2 failed"; 2: reason the run stopped
+#: src/Admin/external-updates/components/RunResultNotice.js:38
+#, js-format
+msgid "Partly completed: %1$s. %2$s"
+msgstr "Partiellement complété : %1$s. %2$s"
+
+#. translators: %s: reason the run failed
+#: src/Admin/external-updates/components/RunResultNotice.js:45
+#, js-format
+msgid "Failed. %s"
+msgstr "Échoué. %s"
+
+#: src/Admin/external-updates/ExternalUpdatesApp.js:53
+msgid "Fetch transactions and fees from connected sites and Mollie. Every run is recorded in the operation log. Only one update runs at a time."
+msgstr "Récupérez les transactions et les frais des sites connectés et de Mollie. Chaque exécution est enregistrée dans le journal des opérations. Une seule mise à jour s'exécute à la fois."
+
+#: src/Admin/external-updates/ExternalUpdatesApp.js:58
+msgid "Import a file on the Transactions page."
+msgstr "Importez un fichier sur la page Transactions."
+
+#: src/Admin/external-updates/format.js:19
+#, js-format
+msgid "%d new"
+msgid_plural "%d new"
+msgstr[0] "%d nouveau"
+msgstr[1] "%d nouveaux"
+
+#: src/Admin/external-updates/format.js:33
+#, js-format
+msgid "%d updated"
+msgid_plural "%d updated"
+msgstr[0] "%d mis à jour"
+msgstr[1] "%d mis à jour"
+
+#: src/Admin/external-updates/format.js:47
+#, js-format
+msgid "%d skipped"
+msgid_plural "%d skipped"
+msgstr[0] "%d ignoré"
+msgstr[1] "%d ignorés"
+
+#: src/Admin/external-updates/format.js:61
+#, js-format
+msgid "%d failed"
+msgid_plural "%d failed"
+msgstr[0] "%d échoué"
+msgstr[1] "%d échoués"
+
+#: src/Admin/external-updates/format.js:73
+msgid "no changes"
+msgstr "aucune modification"
+
+#. translators: separator between count items, e.g. "3 new, 2 failed"
+#: src/Admin/external-updates/format.js:77
+msgid ", "
+msgstr ", "
+
+#: src/Admin/external-updates/format.js:89
+msgid "Running"
+msgstr "En cours"
+
+#: src/Admin/external-updates/format.js:91
+msgid "Succeeded"
+msgstr "Réussi"
+
+#: src/Admin/external-updates/format.js:93
+msgid "Partly completed"
+msgstr "Partiellement complété"
+
+#: src/Admin/external-updates/format.js:97
+msgid "Interrupted"
+msgstr "Interrompu"
+
+#: src/Admin/external-updates/useMollieFeeLoad.js:109
+msgid "Loading missing Mollie fees did not complete. Check the operation log for its outcome."
+msgstr "Le chargement des frais Mollie manquants n'a pas été complété. Vérifiez le journal des opérations pour connaître son résultat."
+
+#: src/Admin/notifications/NotificationsTab.js:19
+msgid "Telegram"
+msgstr "Telegram"
+
+#: src/Admin/notifications/NotificationsTab.js:23
+msgid "Email"
+msgstr "E-mail"
+
+#: src/Admin/notifications/NotificationsTab.js:30
+msgid "Immediate"
+msgstr "Immédiat"
+
+#: src/Admin/notifications/NotificationsTab.js:34
+msgid "Hourly digest"
+msgstr "Résumé horaire"
+
+#: src/Admin/notifications/NotificationsTab.js:38
+msgid "Daily digest"
+msgstr "Résumé quotidien"
+
+#: src/Admin/notifications/NotificationsTab.js:42
+msgid "Weekly digest"
+msgstr "Résumé hebdomadaire"
+
+#: src/Admin/notifications/NotificationsTab.js:101
+msgid "Test notification failed."
+msgstr "La notification de test a échoué."
+
+#: src/Admin/notifications/NotificationsTab.js:124
+msgid "Enabled"
+msgstr "Activé"
+
+#: src/Admin/notifications/NotificationsTab.js:136
+msgid "Channel"
+msgstr "Canal"
+
+#: src/Admin/notifications/NotificationsTab.js:151
+msgid "Email address"
+msgstr "Adresse e-mail"
+
+#: src/Admin/notifications/NotificationsTab.js:155
+msgid "Chat ID"
+msgstr "ID de chat"
+
+#: src/Admin/notifications/NotificationsTab.js:159
+msgid "Numeric user/chat/channel ID, or @channelname."
+msgstr "ID numérique utilisateur/chat/canal, ou @nomducanal."
+
+#: src/Admin/notifications/NotificationsTab.js:176
+msgid "Frequency"
+msgstr "Fréquence"
+
+#: src/Admin/notifications/NotificationsTab.js:191
+msgid "Include PII"
+msgstr "Inclure les PII"
+
+#: src/Admin/notifications/NotificationsTab.js:195
+msgid "Name & email in messages."
+msgstr "Nom et email dans les messages."
+
+#: src/Admin/notifications/NotificationsTab.js:227
+msgid "Send test"
+msgstr "Envoyer un test"
+
+#: src/Admin/notifications/NotificationsTab.js:275
+msgid "Failed to load notification settings."
+msgstr "Échec du chargement des paramètres de notification."
+
+#: src/Admin/notifications/NotificationsTab.js:297
+msgid "Notification settings saved."
+msgstr "Paramètres de notification enregistrés."
+
+#: src/Admin/notifications/NotificationsTab.js:312
+msgid "Failed to save notification settings: "
+msgstr "Échec de l'enregistrement des paramètres de notification : "
+
+#: src/Admin/notifications/NotificationsTab.js:338
+msgid "Loading notification settings…"
+msgstr "Chargement des paramètres de notification…"
+
+#: src/Admin/notifications/NotificationsTab.js:353
+msgid "Telegram Bot Token"
+msgstr "Jeton du bot Telegram"
+
+#: src/Admin/notifications/NotificationsTab.js:359
+msgid "Required for any Telegram notification routes."
+msgstr "Requis pour toute route de notification Telegram."
+
+#: src/Admin/notifications/NotificationsTab.js:367
+msgid "Bot token"
+msgstr "Jeton du bot"
+
+#: src/Admin/notifications/NotificationsTab.js:368
+msgid "From @BotFather. Stored as plain text in wp_options — anyone with admin access can read it."
+msgstr "De @BotFather. Stocké en texte brut dans wp_options — toute personne ayant accès administrateur peut le lire."
+
+#: src/Admin/notifications/NotificationsTab.js:380
+msgid "Notification Routes"
+msgstr "Routes de notification"
+
+#: src/Admin/notifications/NotificationsTab.js:382
+msgid "Each route sends a notification on a transaction paid event. Immediate routes fire at once; digest routes batch transactions into a single periodic message."
+msgstr "Chaque route envoie une notification lors d'un événement de transaction payée. Les routes immédiates se déclenchent immédiatement ; les routes de synthèse regroupent les transactions en un seul message périodique."
+
+#: src/Admin/notifications/NotificationsTab.js:402
+msgid "Add route"
+msgstr "Ajouter une route"
+
+#: src/Admin/notifications/NotificationsTab.js:410
+msgid "Save settings"
+msgstr "Enregistrer les paramètres"
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:140
+msgid "To import from Mollie or a connected site, use External Updates."
+msgstr "Pour importer depuis Mollie ou un site connecté, utilisez Mises à jour externes."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:145
+msgid "Open External Updates"
+msgstr "Ouvrir les mises à jour externes"
 

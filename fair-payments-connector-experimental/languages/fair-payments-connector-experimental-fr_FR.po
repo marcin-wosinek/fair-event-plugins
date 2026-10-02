@@ -93,13 +93,13 @@ msgid "The remote site rejected the token, or it lacks the transactions:read sco
 msgstr "Le site distant a rejeté le jeton, ou il n'a pas la portée transactions:read."
 
 #. translators: 1: created count, 2: updated count, 3: skipped count, 4: connected site label
-#: src/API/ConnectedSitesController.php:518
+#: src/API/ConnectedSitesController.php:521
 #, php-format
 msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s) from %4$s."
 msgstr "Importé %1$d nouveau(x), mis à jour %2$d, ignoré %3$d transaction(s) de %4$s."
 
 #: src/API/ConnectedSitesController.php:337
-#: src/API/ConnectedSitesController.php:614
+#: src/API/ConnectedSitesController.php:617
 msgid "Connected site not found."
 msgstr "Site connecté non trouvé."
 
@@ -371,7 +371,7 @@ msgstr "Activé"
 msgid "Linked Fair Finance budget id, or null to clear the association."
 msgstr "ID de budget Fair Finance lié, ou null pour effacer l'association."
 
-#: src/API/ConnectedSitesController.php:645
+#: src/API/ConnectedSitesController.php:648
 msgid "Budget not found."
 msgstr "Budget non trouvé."
 
@@ -405,7 +405,7 @@ msgstr "La réconciliation propose ce budget pour les transactions importées de
 msgid "Whether the site is available as an import source."
 msgstr "Si le site est disponible comme source d'importation."
 
-#: src/API/ConnectedSitesController.php:601
+#: src/API/ConnectedSitesController.php:604
 msgid "This connected site is disabled and cannot be used to import transactions."
 msgstr "Ce site connecté est désactivé et ne peut pas être utilisé pour importer des transactions."
 
@@ -447,7 +447,7 @@ msgid "Update Fair Payments Connector to record this import in the External Upda
 msgstr "Mettez à jour Fair Payments Connector pour enregistrer cette importation dans le journal des mises à jour externes."
 
 #. translators: 1: connected site label, 2: created count, 3: updated count, 4: skipped count, 5: reason the import stopped
-#: src/API/ConnectedSitesController.php:550
+#: src/API/ConnectedSitesController.php:553
 #, php-format
 msgid "The import from %1$s stopped after %2$d new, %3$d updated and %4$d skipped transaction(s). %5$s"
 msgstr "L’importation depuis %1$s s’est arrêtée après %2$d transaction(s) nouvelle(s), %3$d mise(s) à jour et %4$d ignorée(s). %5$s"

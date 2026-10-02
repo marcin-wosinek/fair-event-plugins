@@ -510,7 +510,7 @@ msgstr "Groupe supprimé avec succès."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:204
-#, php-format, js-format
+#, php-format,js-format
 msgid "%s (copy)"
 msgstr "%s (copie)"
 
@@ -2059,4 +2059,3 @@ msgstr "Photos"
 #: src/Core/Features.php:187
 msgid "Participant photo uploads, photo authors and tags, media library hooks."
 msgstr "Téléchargements de photos de participants, auteurs de photos et balises, crochets de la bibliothèque multimédia."
-
