@@ -20,6 +20,7 @@ import {
 	setButtonLoading,
 	wireNotYouButton,
 } from 'fair-events-shared';
+import { createCheckoutKeyStore } from './checkout-key.js';
 import './frontend.css';
 
 const CSS_PREFIX = 'fair-events-get-tickets';
@@ -651,15 +652,25 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	}
 
 	function setupForm( form ) {
+		// One key per intended purchase (#1534): kept while the same purchase
+		// is submitted again, so a repeated request cannot buy twice.
+		const checkoutKeys = createCheckoutKeyStore();
+		let submitting = false;
+
 		form.addEventListener( 'submit', function ( e ) {
 			e.preventDefault();
 
-			if ( ! validateForm( form ) ) {
+			if ( submitting || ! validateForm( form ) ) {
 				return;
 			}
 
 			const data = collectFormData( form );
-			submitForm( form, data );
+			data.idempotency_key = checkoutKeys.keyFor( data );
+
+			submitting = true;
+			submitForm( form, data, checkoutKeys ).finally( function () {
+				submitting = false;
+			} );
 		} );
 
 		wireTicketTypeInputs( form );
@@ -1465,7 +1476,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			? parseInt( section.dataset.eventDateId, 10 )
 			: null;
 		const token = section.dataset.participantToken || '';
-		const messageContainer = block.querySelector( '.message-container' );
+		const messageContainer = getMessageContainer( block );
 
 		const checked = section.querySelectorAll(
 			'input[name="add_option_ids[]"]:checked'
@@ -1591,7 +1602,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			? parseInt( card.dataset.eventDateId, 10 )
 			: null;
 		const token = card.dataset.participantToken || '';
-		const messageContainer = block.querySelector( '.message-container' );
+		const messageContainer = getMessageContainer( block );
 
 		const requestData = { event_id: eventId };
 		if ( eventDateId ) {
@@ -1639,10 +1650,25 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			} );
 	}
 
+	/**
+	 * The block's message element. showMessage() replaces its class with the
+	 * shown message's own, so it is found by either — otherwise the form
+	 * could not be submitted again once it had shown an error.
+	 * @param {HTMLElement|null} block The .fair-events-get-tickets wrapper.
+	 * @return {HTMLElement|null} The message element.
+	 */
+	function getMessageContainer( block ) {
+		return block
+			? block.querySelector(
+					`.message-container, .${ CSS_PREFIX }-message`
+			  )
+			: null;
+	}
+
 	function validateForm( form ) {
-		const messageContainer = form
-			.closest( '.fair-events-get-tickets' )
-			.querySelector( '.message-container' );
+		const messageContainer = getMessageContainer(
+			form.closest( '.fair-events-get-tickets' )
+		);
 		const requiredFields = form.querySelectorAll( '[required]' );
 		let isValid = true;
 
@@ -1854,16 +1880,24 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		return data;
 	}
 
-	function submitForm( form, data ) {
-		const messageContainer = form
-			.closest( '.fair-events-get-tickets' )
-			.querySelector( '.message-container' );
+	/**
+	 * Submit a purchase. Resolves once the request settled, whether it
+	 * succeeded or failed.
+	 * @param {HTMLFormElement} form         The get-tickets form.
+	 * @param {Object}          data         Request payload, including its idempotency key.
+	 * @param {Object}          checkoutKeys The form's checkout key store.
+	 * @return {Promise<void>} Settles with the request.
+	 */
+	function submitForm( form, data, checkoutKeys ) {
+		const messageContainer = getMessageContainer(
+			form.closest( '.fair-events-get-tickets' )
+		);
 		const submitButton = form.querySelector( 'button[type="submit"]' );
 
 		messageContainer.textContent = '';
 		messageContainer.className = 'message-container';
 
-		initiatePayment( {
+		return initiatePayment( {
 			apiPath: '/fair-events/v1/get-tickets',
 			data,
 			button: submitButton,
@@ -1872,7 +1906,13 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				'Failed to submit. Please try again.',
 				'fair-events'
 			),
-			onError: ( message ) => {
+			onError: ( message, error ) => {
+				// The purchase behind this key is over: submitting again
+				// begins a new one. Any other failure keeps the key, so a
+				// retry continues the same purchase.
+				if ( error && error.code === 'checkout_closed' ) {
+					checkoutKeys.reset();
+				}
 				showMessage( messageContainer, message, 'error', CSS_PREFIX );
 			},
 		} )

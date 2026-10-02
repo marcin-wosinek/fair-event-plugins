@@ -74,7 +74,7 @@ Canned behaviour, enough to complete a purchase:
 
 | Request | Response |
 | --- | --- |
-| `POST /v2/payments` | payment `status: open`, `checkout` link = the request's `redirectUrl` |
+| `POST /v2/payments` | payment `status: open`, `checkout` link = the request's `redirectUrl`; counted in `fair_e2e_mollie_create_count`, and failing like an outage while `fair_e2e_mollie_fail_creates` is above zero (armed through `fair-e2e/v1/checkout-keys/faults`) |
 | `GET /v2/payments/{id}` | the same payment, `status: paid` |
 | `GET /v2/methods` | empty list (no method allowlist applied) |
 | `GET /v2/balances…` | empty list (fee capture finds nothing) |

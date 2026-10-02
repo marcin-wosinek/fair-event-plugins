@@ -954,3 +954,80 @@ describe( 'Event Signup frontend.js — activities for each ticket (#1697)', () 
 		expect( data.ticket_activities ).toBeUndefined();
 	} );
 } );
+
+describe( 'Event Signup frontend.js — idempotent submission (#1534)', () => {
+	function buildForm() {
+		const block = buildBlock();
+		apiFetch.mockReturnValue( Promise.resolve( noopResponse() ) );
+		initialize();
+		const form = block.querySelector( 'form' );
+		form.querySelector( 'input[name="name"]' ).value = 'Ada';
+		form.querySelector( 'input[name="email"]' ).value = 'ada@example.test';
+		return form;
+	}
+
+	const submit = ( form ) =>
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+	const sentKey = ( call ) =>
+		initiatePayment.mock.calls[ call ][ 0 ].data.idempotency_key;
+	const settle = () => new Promise( ( resolve ) => setTimeout( resolve ) );
+
+	test( 'ignores a second submission while the first is in flight', async () => {
+		const form = buildForm();
+		let finish;
+		initiatePayment.mockImplementationOnce(
+			() =>
+				new Promise( ( resolve ) => {
+					finish = resolve;
+				} )
+		);
+
+		submit( form );
+		submit( form );
+		expect( initiatePayment ).toHaveBeenCalledTimes( 1 );
+		expect( sentKey( 0 ) ).toMatch( /^[a-f0-9]{32}$/ );
+
+		finish( {} );
+		await settle();
+	} );
+
+	test( 'retries a failed submission with the same key, also after the error was shown', async () => {
+		const form = buildForm();
+		initiatePayment.mockImplementationOnce( ( { onError } ) => {
+			const error = { code: 'fetch_error' };
+			onError( 'Failed', error );
+			return Promise.reject( error );
+		} );
+
+		submit( form );
+		await settle();
+
+		// What the real showMessage() leaves behind after an error.
+		document.querySelector( '.message-container' ).className =
+			'fair-events-get-tickets-message fair-events-get-tickets-message-error';
+
+		submit( form );
+		expect( initiatePayment ).toHaveBeenCalledTimes( 2 );
+		expect( sentKey( 1 ) ).toBe( sentKey( 0 ) );
+		await settle();
+	} );
+
+	test( 'starts a new key once the server reports the purchase ended', async () => {
+		const form = buildForm();
+		initiatePayment.mockImplementationOnce( ( { onError } ) => {
+			const error = { code: 'checkout_closed' };
+			onError( 'Ended', error );
+			return Promise.reject( error );
+		} );
+
+		submit( form );
+		await settle();
+		submit( form );
+
+		expect( initiatePayment ).toHaveBeenCalledTimes( 2 );
+		expect( sentKey( 1 ) ).not.toBe( sentKey( 0 ) );
+		await settle();
+	} );
+} );

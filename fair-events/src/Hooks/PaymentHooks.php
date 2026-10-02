@@ -147,12 +147,14 @@ class PaymentHooks {
 	}
 
 	/**
-	 * Retain and mark expired pending-payment rows.
+	 * Retain and mark expired pending-payment rows, and drop the checkout
+	 * keys of purchases that ended unconfirmed long ago.
 	 *
 	 * @return void
 	 */
 	public static function cleanup_expired_signups() {
 		\FairEvents\Models\EventSignup::expire_pending();
+		\FairEvents\Models\CheckoutKey::delete_stale();
 	}
 
 	/**

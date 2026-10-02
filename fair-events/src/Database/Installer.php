@@ -92,6 +92,10 @@ class Installer {
 		// the override audit (no data migration needed, applied by dbDelta
 		// through the two statements above).
 
+		// Version 3.40.0 - Checkout idempotency keys table (no data migration needed, table created by dbDelta).
+		$sql = Schema::get_checkout_keys_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0.
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
