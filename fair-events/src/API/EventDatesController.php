@@ -12,6 +12,7 @@ defined( 'WPINC' ) || die;
 use FairEvents\Models\EventDates;
 use FairEvents\Services\EventBudget;
 use FairEvents\Services\EventCopyService;
+use FairEvents\Services\EventPublication;
 use FairEvents\Services\RecurrenceService;
 use FairEvents\Services\PostTranslationLinks;
 use FairEvents\Services\EventDateForPost;
@@ -218,6 +219,31 @@ class EventDatesController extends WP_REST_Controller {
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
+		// POST /fair-events/v1/event-dates/{id}/publication-status - Draft or publish the event and its linked posts.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<id>\d+)/publication-status',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_publication_status' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id'                 => array(
+							'description' => __( 'Event date ID. A date of a series applies to the whole series.', 'fair-events' ),
+							'type'        => 'integer',
+						),
+						'publication_status' => array(
+							'description' => __( 'Publication status to set (publish, draft).', 'fair-events' ),
+							'type'        => 'string',
+							'required'    => true,
+							'enum'        => EventPublication::STATUSES,
 						),
 					),
 				),
@@ -1660,6 +1686,38 @@ class EventDatesController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Draft or publish an event together with every post linked to it.
+	 *
+	 * Applies to the whole event: a request for a date of a series changes the
+	 * series. Cancellation, event details, recurrence and signups are not
+	 * touched. Capabilities on each linked post are checked by
+	 * EventPublication, on top of this route's own permission check.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function update_publication_status( $request ) {
+		$id         = (int) $request->get_param( 'id' );
+		$event_date = EventDates::get_by_id( $id );
+
+		if ( ! $event_date ) {
+			return new WP_Error(
+				'rest_event_date_not_found',
+				__( 'Event date not found.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$result = EventPublication::set_status( $event_date, $request->get_param( 'publication_status' ) );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		// Return the originally requested event date (occurrence, not master).
+		return new WP_REST_Response( $this->prepare_event_date( EventDates::get_by_id( $id ) ), 200 );
+	}
+
+	/**
 	 * Get the finance budget linked to an event date.
 	 *
 	 * Applies to the whole event: a generated occurrence reports the same
@@ -1912,8 +1970,9 @@ class EventDatesController extends WP_REST_Controller {
 		// Add display_url.
 		$event_date = EventDates::get_by_id( (int) $result->id );
 		if ( $event_date ) {
-			$data['display_url'] = $event_date->get_display_url();
-			$data['categories']  = $this->get_event_date_categories( $event_date );
+			$data['publication_status'] = $event_date->publication_status;
+			$data['display_url']        = $event_date->get_display_url();
+			$data['categories']         = $this->get_event_date_categories( $event_date );
 		} else {
 			$data['display_url'] = null;
 			$data['categories']  = array();
@@ -1958,24 +2017,25 @@ class EventDatesController extends WP_REST_Controller {
 	 */
 	private function prepare_event_date( $event_date ) {
 		$data = array(
-			'id'              => $event_date->id,
-			'event_id'        => $event_date->event_id,
-			'title'           => $event_date->title,
-			'start_datetime'  => $event_date->start_datetime,
-			'end_datetime'    => $event_date->end_datetime,
-			'all_day'         => $event_date->all_day,
-			'occurrence_type' => $event_date->occurrence_type,
-			'master_id'       => $event_date->master_id,
-			'venue_id'        => $event_date->venue_id,
-			'address'         => $event_date->address,
-			'link_type'       => $event_date->link_type,
-			'external_url'    => $event_date->external_url,
-			'attendance_mode' => $event_date->attendance_mode ?? 'in_person',
-			'joining_link'    => $event_date->joining_link,
-			'display_url'     => $event_date->get_display_url(),
-			'rrule'           => $event_date->rrule,
-			'status'          => $event_date->status,
-			'recurrence_mode' => $event_date->recurrence_mode,
+			'id'                 => $event_date->id,
+			'event_id'           => $event_date->event_id,
+			'title'              => $event_date->title,
+			'start_datetime'     => $event_date->start_datetime,
+			'end_datetime'       => $event_date->end_datetime,
+			'all_day'            => $event_date->all_day,
+			'occurrence_type'    => $event_date->occurrence_type,
+			'master_id'          => $event_date->master_id,
+			'venue_id'           => $event_date->venue_id,
+			'address'            => $event_date->address,
+			'link_type'          => $event_date->link_type,
+			'external_url'       => $event_date->external_url,
+			'attendance_mode'    => $event_date->attendance_mode ?? 'in_person',
+			'joining_link'       => $event_date->joining_link,
+			'display_url'        => $event_date->get_display_url(),
+			'rrule'              => $event_date->rrule,
+			'status'             => $event_date->status,
+			'publication_status' => $event_date->publication_status,
+			'recurrence_mode'    => $event_date->recurrence_mode,
 		);
 
 		// Add master event info for generated occurrences.

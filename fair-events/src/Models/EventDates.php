@@ -87,6 +87,14 @@ class EventDates {
 	public $status = 'active';
 
 	/**
+	 * Publication status ('publish' or 'draft'). Stored on single and master
+	 * rows; a generated occurrence always reports its master's.
+	 *
+	 * @var string
+	 */
+	public $publication_status = 'publish';
+
+	/**
 	 * Recurrence mode ('none', 'rule', 'manual') — explicit series shape.
 	 *
 	 * @var string
@@ -225,6 +233,7 @@ class EventDates {
 		$event_dates->master_id                = $result->master_id ? (int) $result->master_id : null;
 		$event_dates->rrule                    = $result->rrule ?? null;
 		$event_dates->status                   = $result->status ?? 'active';
+		$event_dates->publication_status       = $result->publication_status ?? 'publish';
 		$event_dates->recurrence_mode          = $result->recurrence_mode ?? 'none';
 		$event_dates->venue_id                 = isset( $result->venue_id ) ? (int) $result->venue_id : null;
 		$event_dates->title                    = $result->title ?? null;
@@ -277,6 +286,19 @@ class EventDates {
 				$event_dates->$field = $master->$field;
 			}
 		}
+
+		// A series has one publication status, held by its master.
+		$event_dates->publication_status = $master->publication_status;
+	}
+
+	/**
+	 * Whether the event is drafted in Fair Events, and so hidden from public
+	 * lists, calendars and feeds.
+	 *
+	 * @return bool
+	 */
+	public function is_event_draft() {
+		return 'draft' === $this->publication_status;
 	}
 
 	/**
@@ -762,20 +784,26 @@ class EventDates {
 	 * either edge is excluded. No fix needed here — this comment locks the
 	 * behavior in.
 	 *
-	 * @param string $start_date Start date (Y-m-d H:i:s format).
-	 * @param string $end_date   End date (Y-m-d H:i:s format).
+	 * Events drafted in Fair Events are left out unless `$include_event_drafts`
+	 * is set; a generated occurrence follows its master's publication status.
+	 *
+	 * @param string $start_date           Start date (Y-m-d H:i:s format).
+	 * @param string $end_date             End date (Y-m-d H:i:s format).
+	 * @param bool   $include_event_drafts Whether to include drafted events (admin surfaces only).
 	 * @return EventDates[] Array of EventDates objects.
 	 */
-	public static function get_for_date_range( $start_date, $end_date ) {
+	public static function get_for_date_range( $start_date, $end_date, $include_event_drafts = false ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
+		$publication_sql = $include_event_drafts ? '' : " AND COALESCE( m.publication_status, ed.publication_status ) = 'publish'";
+
 		$results = $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- inherited_select_sql() adds 2 more %i placeholders than visible here.
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- inherited_select_sql() is a static internal template, not user input.
-				self::inherited_select_sql() . " WHERE ed.status = 'active' AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) ORDER BY ed.start_datetime ASC",
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- inherited_select_sql() and $publication_sql are static internal templates, not user input.
+				self::inherited_select_sql() . " WHERE ed.status = 'active'{$publication_sql} AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) ORDER BY ed.start_datetime ASC",
 				$table_name,
 				$table_name,
 				$end_date,
@@ -808,6 +836,7 @@ class EventDates {
 	private static function inherited_select_sql() {
 		return 'SELECT ed.id, ed.event_id, ed.start_datetime, ed.end_datetime, ed.all_day, ed.occurrence_type,
 			ed.master_id, ed.rrule, ed.recurrence_anchor, ed.status, ed.recurrence_mode, ed.category_selection_saved, ed.created_at, ed.updated_at,
+			COALESCE( m.publication_status, ed.publication_status ) AS publication_status,
 			COALESCE( ed.title, m.title ) AS title,
 			COALESCE( ed.venue_id, m.venue_id ) AS venue_id,
 			COALESCE( ed.address, m.address ) AS address,
@@ -929,24 +958,25 @@ class EventDates {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		$allowed_fields = array(
-			'event_id'          => '%d',
-			'start_datetime'    => '%s',
-			'end_datetime'      => '%s',
-			'all_day'           => '%d',
-			'occurrence_type'   => '%s',
-			'master_id'         => '%d',
-			'rrule'             => '%s',
-			'venue_id'          => '%d',
-			'title'             => '%s',
-			'external_url'      => '%s',
-			'link_type'         => '%s',
-			'attendance_mode'   => '%s',
-			'joining_link'      => '%s',
-			'capacity'          => '%d',
-			'address'           => '%s',
-			'recurrence_anchor' => '%s',
-			'status'            => '%s',
-			'recurrence_mode'   => '%s',
+			'event_id'           => '%d',
+			'start_datetime'     => '%s',
+			'end_datetime'       => '%s',
+			'all_day'            => '%d',
+			'occurrence_type'    => '%s',
+			'master_id'          => '%d',
+			'rrule'              => '%s',
+			'venue_id'           => '%d',
+			'title'              => '%s',
+			'external_url'       => '%s',
+			'link_type'          => '%s',
+			'attendance_mode'    => '%s',
+			'joining_link'       => '%s',
+			'capacity'           => '%d',
+			'address'            => '%s',
+			'recurrence_anchor'  => '%s',
+			'status'             => '%s',
+			'publication_status' => '%s',
+			'recurrence_mode'    => '%s',
 		);
 
 		$update_data   = array();
@@ -972,6 +1002,9 @@ class EventDates {
 		);
 
 		if ( false !== $result ) {
+			// Occurrences resolved later in this request must see the new values.
+			unset( self::$master_cache[ (int) $id ] );
+
 			/**
 			 * Fires after an event date row is updated.
 			 *
@@ -1319,6 +1352,38 @@ class EventDates {
 		);
 
 		return array_map( 'intval', $post_ids );
+	}
+
+	/**
+	 * Get the events a post is linked to, as link-owning (single or master)
+	 * event date IDs.
+	 *
+	 * Reads both link records: the junction table and the primary `event_id`
+	 * column. A consistent post resolves to exactly one event.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int[] Unique event date IDs.
+	 */
+	public static function get_link_owner_ids_for_post( $post_id ) {
+		global $wpdb;
+
+		$table_name  = $wpdb->prefix . 'fair_event_dates';
+		$posts_table = $wpdb->prefix . 'fair_event_date_posts';
+
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT COALESCE( ed.master_id, ed.id ) FROM %i ed WHERE ed.event_id = %d
+				UNION
+				SELECT COALESCE( ed.master_id, ed.id ) FROM %i edp JOIN %i ed ON ed.id = edp.event_date_id WHERE edp.post_id = %d',
+				$table_name,
+				$post_id,
+				$posts_table,
+				$table_name,
+				$post_id
+			)
+		);
+
+		return array_values( array_unique( array_map( 'intval', $ids ) ) );
 	}
 
 	/**

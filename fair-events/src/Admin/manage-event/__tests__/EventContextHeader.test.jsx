@@ -349,3 +349,102 @@ it( 'renders category chips', () => {
 	expect( screen.getByText( 'Workshops' ) ).toBeInTheDocument();
 	expect( screen.getByText( 'Music' ) ).toBeInTheDocument();
 } );
+
+describe( 'publication state (#1692)', () => {
+	it( 'shows a published event with a Move to draft action', () => {
+		const onChangePublication = jest.fn();
+		render(
+			<EventContextHeader
+				eventDate={ {
+					...baseEventDate,
+					publication_status: 'publish',
+				} }
+				manageEventUrl={ manageEventUrl }
+				calendarUrl={ calendarUrl }
+				onChangePublication={ onChangePublication }
+			/>
+		);
+
+		expect( screen.getByText( 'Published' ) ).toBeInTheDocument();
+		screen.getByRole( 'button', { name: 'Move to draft' } ).click();
+		expect( onChangePublication ).toHaveBeenCalledWith( 'draft' );
+	} );
+
+	it( 'shows a drafted event with a Publish event action', () => {
+		const onChangePublication = jest.fn();
+		render(
+			<EventContextHeader
+				eventDate={ { ...baseEventDate, publication_status: 'draft' } }
+				manageEventUrl={ manageEventUrl }
+				calendarUrl={ calendarUrl }
+				onChangePublication={ onChangePublication }
+			/>
+		);
+
+		expect(
+			screen.getByText(
+				'Draft — hidden from public lists, calendars and feeds'
+			)
+		).toBeInTheDocument();
+		expect( screen.queryByText( 'Published' ) ).not.toBeInTheDocument();
+		screen.getByRole( 'button', { name: 'Publish event' } ).click();
+		expect( onChangePublication ).toHaveBeenCalledWith( 'publish' );
+	} );
+
+	it( 'offers the action on a date of a series too', () => {
+		render(
+			<EventContextHeader
+				eventDate={ {
+					...baseEventDate,
+					occurrence_type: 'generated',
+					master: { id: 9, title: 'Weekly class' },
+					publication_status: 'draft',
+				} }
+				manageEventUrl={ manageEventUrl }
+				calendarUrl={ calendarUrl }
+				onChangePublication={ jest.fn() }
+			/>
+		);
+
+		expect(
+			screen.getByRole( 'button', { name: 'Publish event' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows the state without an action in read-only contexts', () => {
+		render(
+			<EventContextHeader
+				eventDate={ {
+					...baseEventDate,
+					publication_status: 'publish',
+				} }
+				manageEventUrl={ manageEventUrl }
+				calendarUrl={ calendarUrl }
+			/>
+		);
+
+		expect( screen.getByText( 'Published' ) ).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Move to draft' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'disables the action while a change is being saved', () => {
+		render(
+			<EventContextHeader
+				eventDate={ {
+					...baseEventDate,
+					publication_status: 'publish',
+				} }
+				manageEventUrl={ manageEventUrl }
+				calendarUrl={ calendarUrl }
+				onChangePublication={ jest.fn() }
+				publicationBusy
+			/>
+		);
+
+		expect(
+			screen.getByRole( 'button', { name: 'Move to draft' } )
+		).toBeDisabled();
+	} );
+} );

@@ -333,6 +333,61 @@ class EventDatesTest extends TestCase {
 	}
 
 	/**
+	 * A series has one publication status: a generated occurrence reports
+	 * its master's, whatever its own column holds, so dates added to a
+	 * drafted series later are drafts too.
+	 */
+	public function test_generated_occurrence_follows_master_publication_status() {
+		$master                     = new EventDates();
+		$master->id                 = 1;
+		$master->publication_status = 'draft';
+
+		$this->seed_master_cache( $master );
+
+		$occurrence = ( new ReflectionMethod( EventDates::class, 'hydrate' ) )->invoke(
+			null,
+			$this->make_row(
+				array(
+					'id'                 => 2,
+					'occurrence_type'    => 'generated',
+					'master_id'          => 1,
+					'publication_status' => 'publish',
+				)
+			)
+		);
+
+		$this->assertSame( 'draft', $occurrence->publication_status );
+		$this->assertTrue( $occurrence->is_event_draft() );
+	}
+
+	/**
+	 * The public date-range read leaves out events drafted in Fair Events,
+	 * resolving a generated occurrence through its master; only an admin
+	 * surface asking for them gets drafts back.
+	 */
+	public function test_date_range_excludes_drafted_events_unless_asked() {
+		global $wpdb;
+
+		$clause = "COALESCE( m.publication_status, ed.publication_status ) = 'publish'";
+
+		EventDates::get_for_date_range( '2026-01-01 00:00:00', '2026-12-31 23:59:59' );
+		$this->assertStringContainsString( $clause, $wpdb->last_prepared['query'] );
+
+		EventDates::get_for_date_range( '2026-01-01 00:00:00', '2026-12-31 23:59:59', true );
+		$this->assertStringNotContainsString( $clause, $wpdb->last_prepared['query'] );
+	}
+
+	/**
+	 * Rows that predate the publication column stay published.
+	 */
+	public function test_publication_status_defaults_to_publish() {
+		$event_date = ( new ReflectionMethod( EventDates::class, 'hydrate' ) )->invoke( null, $this->make_row() );
+
+		$this->assertSame( 'publish', $event_date->publication_status );
+		$this->assertFalse( $event_date->is_event_draft() );
+	}
+
+	/**
 	 * A generated occurrence that overrides attendance_mode/joining_link
 	 * keeps its own value rather than inheriting the master's.
 	 */

@@ -111,6 +111,9 @@ export default function ManageEventApp() {
 	const [ endSeriesDialogOpen, setEndSeriesDialogOpen ] = useState( false );
 	const [ linkModalOpen, setLinkModalOpen ] = useState( false );
 	const [ linkModalConfirmOpen, setLinkModalConfirmOpen ] = useState( false );
+	// Target state ('draft' | 'publish') awaiting confirmation, or null.
+	const [ publicationTarget, setPublicationTarget ] = useState( null );
+	const [ publicationSaving, setPublicationSaving ] = useState( false );
 
 	// Dirty-state tracking (#987): snapshot the saved form/ticket state so we
 	// can warn before losing edits and mark which tab holds them.
@@ -615,6 +618,129 @@ export default function ManageEventApp() {
 		await handleSave();
 		setLinkModalOpen( true );
 	};
+
+	// Drafting or publishing is its own action: it leaves the Event Details
+	// form (and any unsaved edits in it) alone, so only the loaded event is
+	// replaced, never the form state.
+	const confirmPublicationChange = async () => {
+		const target = publicationTarget;
+		setPublicationTarget( null );
+		setPublicationSaving( true );
+		setError( null );
+		setSuccess( null );
+
+		try {
+			const updated = await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }/publication-status`,
+				method: 'POST',
+				data: { publication_status: target },
+			} );
+			setEventDate( updated );
+			setSuccess(
+				target === 'draft'
+					? __( 'Event moved to draft.', 'fair-events' )
+					: __( 'Event published.', 'fair-events' )
+			);
+		} catch ( err ) {
+			let fallback = __( 'Failed to publish the event.', 'fair-events' );
+			if ( target === 'draft' ) {
+				fallback = __(
+					'Failed to move the event to draft.',
+					'fair-events'
+				);
+			}
+			setError( err.message || fallback );
+		} finally {
+			setPublicationSaving( false );
+		}
+	};
+
+	// Posts whose status follows the event's. Trashed and placeholder posts
+	// are left alone, matching EventPublication::get_linked_posts().
+	const publicationPosts = useMemo(
+		() =>
+			( eventDate?.linked_posts || [] ).filter(
+				( post ) => ! [ 'trash', 'auto-draft' ].includes( post.status )
+			),
+		[ eventDate ]
+	);
+
+	// One sentence naming the event and how far the action reaches: a date of
+	// a series always changes the whole series.
+	const publicationHeadline = useMemo( () => {
+		if ( ! eventDate || ! publicationTarget ) {
+			return '';
+		}
+		const toDraft = publicationTarget === 'draft';
+		const eventTitle = getEventDisplayTitle( eventDate.title );
+
+		if ( eventDate.occurrence_type === 'generated' && eventDate.master ) {
+			const seriesTitle = getEventDisplayTitle( eventDate.master.title );
+			return toDraft
+				? sprintf(
+						/* translators: %s: title of the series */
+						__(
+							'This date is part of the series %s. Move the whole series to draft? All its dates will be hidden from public event lists, calendars and feeds.',
+							'fair-events'
+						),
+						seriesTitle
+				  )
+				: sprintf(
+						/* translators: %s: title of the series */
+						__(
+							'This date is part of the series %s. Publish the whole series? All its dates will be shown in public event lists, calendars and feeds.',
+							'fair-events'
+						),
+						seriesTitle
+				  );
+		}
+
+		if ( eventDate.occurrence_type === 'master' ) {
+			const dateCount =
+				1 + ( eventDate.generated_occurrences?.length || 0 );
+			return toDraft
+				? sprintf(
+						/* translators: 1: title of the series, 2: number of dates in the series */
+						_n(
+							'Move the whole series %1$s (%2$d date) to draft? It will be hidden from public event lists, calendars and feeds.',
+							'Move the whole series %1$s (%2$d dates) to draft? All its dates will be hidden from public event lists, calendars and feeds.',
+							dateCount,
+							'fair-events'
+						),
+						eventTitle,
+						dateCount
+				  )
+				: sprintf(
+						/* translators: 1: title of the series, 2: number of dates in the series */
+						_n(
+							'Publish the whole series %1$s (%2$d date)? It will be shown in public event lists, calendars and feeds.',
+							'Publish the whole series %1$s (%2$d dates)? All its dates will be shown in public event lists, calendars and feeds.',
+							dateCount,
+							'fair-events'
+						),
+						eventTitle,
+						dateCount
+				  );
+		}
+
+		return toDraft
+			? sprintf(
+					/* translators: %s: event title */
+					__(
+						'Move %s to draft? It will be hidden from public event lists, calendars and feeds.',
+						'fair-events'
+					),
+					eventTitle
+			  )
+			: sprintf(
+					/* translators: %s: event title */
+					__(
+						'Publish %s? It will be shown in public event lists, calendars and feeds.',
+						'fair-events'
+					),
+					eventTitle
+			  );
+	}, [ eventDate, publicationTarget ] );
 
 	const handleToggleExdate = async ( date ) => {
 		setTogglingExdate( date );
@@ -1307,7 +1433,9 @@ export default function ManageEventApp() {
 /* The 1.5px height of the active-tab indicator anti-aliases to a thin
    darker top edge at 1x DPI. Round to 2px so the bar renders crisp. */
 .fair-events-manage-event .components-tab-panel__tabs-item.is-active::after { height: 2px; outline: none; }
-.fair-events-manage-event .fair-events-context-badge { margin-left: 8px; padding: 2px 8px; border-radius: 12px; background: #f0f0f1; font-size: 12px; }` }
+.fair-events-manage-event .fair-events-context-badge { margin-left: 8px; padding: 2px 8px; border-radius: 12px; background: #f0f0f1; font-size: 12px; }
+.fair-events-manage-event .fair-events-context-badge.is-event-draft { background: #fcf0c3; }
+.fair-events-manage-event .fair-events-publication-posts { margin: 0; padding-left: 20px; list-style: disc; }` }
 			</style>
 			<h1>
 				{ __( 'Manage Event', 'fair-events' ) }
@@ -1321,6 +1449,8 @@ export default function ManageEventApp() {
 				calendarUrl={ calendarUrl }
 				venues={ venues }
 				onManageLink={ handleManageLink }
+				onChangePublication={ setPublicationTarget }
+				publicationBusy={ publicationSaving }
 			/>
 
 			{ error && (
@@ -1395,6 +1525,66 @@ export default function ManageEventApp() {
 					'You have unsaved changes. Save event details before setting up the link?',
 					'fair-events'
 				) }
+			</ConfirmDialog>
+
+			<ConfirmDialog
+				isOpen={ publicationTarget !== null }
+				onConfirm={ confirmPublicationChange }
+				onCancel={ () => setPublicationTarget( null ) }
+				confirmButtonText={
+					publicationTarget === 'draft'
+						? __( 'Move to draft', 'fair-events' )
+						: __( 'Publish event', 'fair-events' )
+				}
+				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
+			>
+				<VStack spacing={ 3 }>
+					<p style={ { margin: 0 } }>{ publicationHeadline }</p>
+					{ publicationPosts.length > 0 && (
+						<>
+							<p style={ { margin: 0 } }>
+								{ publicationTarget === 'draft'
+									? _n(
+											'This linked page will be moved to draft too:',
+											'These linked pages will be moved to draft too:',
+											publicationPosts.length,
+											'fair-events'
+									  )
+									: _n(
+											'This linked page will be published too, even if it is a draft now:',
+											'These linked pages will be published too, even if they are drafts now:',
+											publicationPosts.length,
+											'fair-events'
+									  ) }
+							</p>
+							<ul className="fair-events-publication-posts">
+								{ publicationPosts.map( ( post ) => (
+									<li key={ post.id }>
+										{ post.title ||
+											__( '(no title)', 'fair-events' ) }
+									</li>
+								) ) }
+							</ul>
+						</>
+					) }
+					{ eventDate.link_type === 'external' &&
+						eventDate.external_url && (
+							<p style={ { margin: 0 } }>
+								{ __(
+									'The external page this event links to is not changed.',
+									'fair-events'
+								) }
+							</p>
+						) }
+					{ detailsDirty && (
+						<p style={ { margin: 0 } }>
+							{ __(
+								'Your unsaved changes to the event details stay on this screen, but this action does not save them.',
+								'fair-events'
+							) }
+						</p>
+					) }
+				</VStack>
 			</ConfirmDialog>
 
 			{ linkModalOpen && (

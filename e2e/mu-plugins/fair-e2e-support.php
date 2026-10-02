@@ -89,6 +89,18 @@ add_action(
 	4
 );
 
+// Reject updates of the post configured through fair-e2e/v1/post-update-failure.
+add_filter(
+	'wp_insert_post_empty_content',
+	static function ( $maybe_empty, $postarr ) {
+		$failing_post_id = (int) get_option( 'fair_e2e_fail_post_update', 0 );
+
+		return ( $failing_post_id && (int) ( $postarr['ID'] ?? 0 ) === $failing_post_id ) ? true : $maybe_empty;
+	},
+	10,
+	2
+);
+
 add_action(
 	'rest_api_init',
 	static function () {
@@ -132,6 +144,46 @@ add_action(
 					if ( $saved_post_id ) {
 						do_action( 'pll_save_post', $saved_post_id );
 					}
+
+					return rest_ensure_response( array( 'updated' => true ) );
+				},
+			)
+		);
+
+		// Link a post to an event date directly in the junction table, the
+		// way legacy or inconsistent data leaves one post linked to two
+		// events — a state the regular link routes always repair.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/event-date-post-links',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$linked = \FairEvents\Models\EventDates::add_linked_post(
+						absint( $request->get_param( 'event_date_id' ) ),
+						absint( $request->get_param( 'post_id' ) )
+					);
+
+					return rest_ensure_response( array( 'linked' => $linked ) );
+				},
+			)
+		);
+
+		// Make every update of one post fail (0 clears it), so specs can
+		// exercise a publication change that breaks part-way.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/post-update-failure',
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					update_option( 'fair_e2e_fail_post_update', absint( $request->get_param( 'post_id' ) ), false );
 
 					return rest_ensure_response( array( 'updated' => true ) );
 				},

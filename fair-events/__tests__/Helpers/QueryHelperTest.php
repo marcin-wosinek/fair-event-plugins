@@ -85,14 +85,34 @@ class QueryHelperTest extends TestCase {
 
 	/**
 	 * The 'all' filter (a bare `true` date query, not an array) still
-	 * excludes inactive rows, but adds no date boundary.
+	 * excludes inactive rows and drafted events, but adds no date boundary.
 	 */
 	public function test_where_excludes_inactive_rows_for_all_filter() {
 		$query = new \QueryHelperTestQuery( array( 'fair_events_date_query' => true ) );
 
 		$where = QueryHelper::filter_by_dates( '', $query );
 
-		$this->assertSame( " AND wp_fair_event_dates.status = 'active'", $where );
+		$this->assertStringStartsWith( " AND wp_fair_event_dates.status = 'active' AND COALESCE(", $where );
+		$this->assertStringNotContainsString( 'start_datetime', $where );
+		$this->assertStringNotContainsString( 'end_datetime', $where );
+	}
+
+	/**
+	 * Events drafted in Fair Events are excluded whatever the time filter,
+	 * reading the status from the series master for a generated occurrence
+	 * and from the row itself otherwise.
+	 */
+	public function test_where_excludes_drafted_events() {
+		$query = new \QueryHelperTestQuery(
+			array( 'fair_events_date_query' => array( 'start_after' => '2026-06-01 00:00:00' ) )
+		);
+
+		$where = QueryHelper::filter_by_dates( '', $query );
+
+		$this->assertStringContainsString(
+			"COALESCE( ( SELECT fair_ed_publication.publication_status FROM wp_fair_event_dates AS fair_ed_publication WHERE fair_ed_publication.id = COALESCE( wp_fair_event_dates.master_id, wp_fair_event_dates.id ) ), 'publish' ) = 'publish'",
+			$where
+		);
 	}
 
 	/**

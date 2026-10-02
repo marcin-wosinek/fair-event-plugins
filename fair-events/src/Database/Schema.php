@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.40.0';
+	const DB_VERSION = '3.41.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -53,6 +53,7 @@ class Schema {
 			address TEXT DEFAULT NULL,
 			recurrence_anchor DATE DEFAULT NULL,
 			status ENUM('active','cancelled') NOT NULL DEFAULT 'active',
+			publication_status ENUM('publish','draft') NOT NULL DEFAULT 'publish',
 			recurrence_mode ENUM('none','rule','manual') NOT NULL DEFAULT 'none',
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -67,7 +68,8 @@ class Schema {
 			KEY idx_link_type (link_type),
 			KEY idx_recurrence_anchor (recurrence_anchor),
 			KEY idx_venue_id (venue_id),
-			KEY idx_status (status)
+			KEY idx_status (status),
+			KEY idx_publication_status (publication_status)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 
