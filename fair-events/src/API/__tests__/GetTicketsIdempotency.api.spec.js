@@ -662,6 +662,40 @@ test.describe( 'Repeat purchases with idempotent checkout', () => {
 			expect( ( await buy( first ) ).status ).toBe( 200 );
 			expect( ( await state( eventDateId ) ).signups ).toHaveLength( 3 );
 		} );
+
+		test( 'failed attempts do not block another ticket for the same email', async () => {
+			const { eventDateId } = await createEvent( { capacity: 2 } );
+			const email = uniqueEmail( 'retry-after-full' );
+			const purchase = {
+				event_date_id: eventDateId,
+				email,
+				quantity: 1,
+			};
+
+			expect(
+				( await buy( { ...purchase, idempotency_key: newKey() } ) )
+					.status
+			).toBe( 200 );
+
+			for ( let i = 0; i < 3; i++ ) {
+				const failed = await buy( {
+					...purchase,
+					quantity: 2,
+					idempotency_key: newKey(),
+				} );
+				expect( failed.status, JSON.stringify( failed.body ) ).toBe(
+					409
+				);
+				expect( failed.body.code ).toBe( 'event_full' );
+			}
+
+			const second = await buy( {
+				...purchase,
+				idempotency_key: newKey(),
+			} );
+			expect( second.status, JSON.stringify( second.body ) ).toBe( 200 );
+			expect( ( await state( eventDateId ) ).signups ).toHaveLength( 2 );
+		} );
 	} );
 
 	test.describe( 'an interrupted checkout is continued, not repeated', () => {
