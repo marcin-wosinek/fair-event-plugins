@@ -1410,3 +1410,272 @@ describe( 'Statistics tab (#1726)', () => {
 		).not.toBeInTheDocument();
 	} );
 } );
+
+describe( 'draft and publish (#1692)', () => {
+	const publicationPath = '/fair-events/v1/event-dates/1/publication-status';
+
+	const mockEvent = ( eventDate, onPublication ) =>
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.path === publicationPath ) {
+				return onPublication( opts );
+			}
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				return Promise.resolve( eventDate );
+			}
+			return Promise.resolve( [] );
+		} );
+
+	// A Notice repeats its text in a screen-reader live region.
+	const notice = { selector: '.components-notice__content' };
+
+	const publicationCalls = () =>
+		apiFetch.mock.calls.filter(
+			( [ opts ] ) => opts.path === publicationPath
+		);
+
+	it( 'drafts a calendar-only event after confirming and shows the saved state', async () => {
+		mockEvent( { ...mockEventDate, publication_status: 'publish' }, () =>
+			Promise.resolve( { ...mockEventDate, publication_status: 'draft' } )
+		);
+
+		render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Move to draft' } )
+		);
+
+		const dialog = screen.getByRole( 'dialog' );
+		expect(
+			within( dialog ).getByText(
+				'Move Test Event to draft? It will be hidden from public event lists, calendars and feeds.'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).queryByRole( 'list' )
+		).not.toBeInTheDocument();
+		// Nothing is sent until the organizer confirms.
+		expect( publicationCalls() ).toHaveLength( 0 );
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Move to draft' } )
+		);
+
+		expect(
+			await screen.findByText( 'Event moved to draft.', notice )
+		).toBeInTheDocument();
+		expect( publicationCalls()[ 0 ][ 0 ] ).toMatchObject( {
+			method: 'POST',
+			data: { publication_status: 'draft' },
+		} );
+		expect(
+			screen.getByText(
+				'Draft — hidden from public lists, calendars and feeds'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Publish event' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'names every linked page that follows the event, leaving trashed ones out', async () => {
+		mockEvent(
+			{
+				...mockEventDate,
+				publication_status: 'draft',
+				link_type: 'post',
+				linked_posts: [
+					{ id: 10, title: 'Summer party', status: 'draft' },
+					{ id: 11, title: 'Fiesta de verano', status: 'draft' },
+					{ id: 12, title: 'Old page', status: 'trash' },
+				],
+			},
+			() =>
+				Promise.resolve( {
+					...mockEventDate,
+					publication_status: 'publish',
+				} )
+		);
+
+		render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Publish event' } )
+		);
+
+		const dialog = screen.getByRole( 'dialog' );
+		expect(
+			within( dialog ).getByText(
+				'These linked pages will be published too, even if they are drafts now:'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( dialog )
+				.getAllByRole( 'listitem' )
+				.map( ( item ) => item.textContent )
+		).toEqual( [ 'Summer party', 'Fiesta de verano' ] );
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Publish event' } )
+		);
+		expect(
+			await screen.findByText( 'Event published.', notice )
+		).toBeInTheDocument();
+	} );
+
+	it( 'says a series is drafted as a whole, from the series and from one of its dates', async () => {
+		mockEvent(
+			{
+				...mockEventDate,
+				publication_status: 'publish',
+				occurrence_type: 'master',
+				generated_occurrences: [
+					{ id: 2, start_datetime: '2026-07-08 18:00:00' },
+					{ id: 3, start_datetime: '2026-07-15 18:00:00' },
+				],
+			},
+			() => Promise.resolve( mockEventDate )
+		);
+
+		const { unmount } = render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Move to draft' } )
+		);
+		expect(
+			screen.getByText(
+				'Move the whole series Test Event (3 dates) to draft? All its dates will be hidden from public event lists, calendars and feeds.'
+			)
+		).toBeInTheDocument();
+		unmount();
+
+		mockEvent(
+			{
+				...mockEventDate,
+				publication_status: 'publish',
+				occurrence_type: 'generated',
+				master: { id: 9, title: 'Weekly class' },
+			},
+			() => Promise.resolve( mockEventDate )
+		);
+
+		render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Move to draft' } )
+		);
+		expect(
+			screen.getByText(
+				'This date is part of the series Weekly class. Move the whole series to draft? All its dates will be hidden from public event lists, calendars and feeds.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'says an external page is not changed', async () => {
+		mockEvent(
+			{
+				...mockEventDate,
+				publication_status: 'publish',
+				link_type: 'external',
+				external_url: 'https://example.com/partner',
+			},
+			() => Promise.resolve( mockEventDate )
+		);
+
+		render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Move to draft' } )
+		);
+
+		expect(
+			screen.getByText(
+				'The external page this event links to is not changed.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'does nothing when the organizer cancels', async () => {
+		mockEvent( { ...mockEventDate, publication_status: 'publish' }, () =>
+			Promise.resolve( mockEventDate )
+		);
+
+		render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Move to draft' } )
+		);
+		fireEvent.click(
+			within( screen.getByRole( 'dialog' ) ).getByRole( 'button', {
+				name: 'Cancel',
+			} )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( publicationCalls() ).toHaveLength( 0 );
+		expect( screen.getByText( 'Published' ) ).toBeInTheDocument();
+	} );
+
+	it( 'shows the API error and keeps the saved state when the change is refused', async () => {
+		mockEvent( { ...mockEventDate, publication_status: 'publish' }, () =>
+			Promise.reject( {
+				message:
+					'“Shared page” is also linked to another event (Other event). Nothing was changed.',
+			} )
+		);
+
+		render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Move to draft' } )
+		);
+		fireEvent.click(
+			within( screen.getByRole( 'dialog' ) ).getByRole( 'button', {
+				name: 'Move to draft',
+			} )
+		);
+
+		expect(
+			await screen.findByText(
+				'“Shared page” is also linked to another event (Other event). Nothing was changed.',
+				notice
+			)
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Published' ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Move to draft' } )
+		).not.toBeDisabled();
+	} );
+
+	it( 'keeps unsaved event details and says they are not saved', async () => {
+		window.history.replaceState( {}, '', '?tab=event-details' );
+		mockEvent( { ...mockEventDate, publication_status: 'publish' }, () =>
+			Promise.resolve( { ...mockEventDate, publication_status: 'draft' } )
+		);
+
+		render( <ManageEventApp /> );
+		const titleInput = await screen.findByLabelText( 'Title' );
+		fireEvent.change( titleInput, { target: { value: 'Edited title' } } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Move to draft' } )
+		);
+		const dialog = screen.getByRole( 'dialog' );
+		expect(
+			within( dialog ).getByText(
+				'Your unsaved changes to the event details stay on this screen, but this action does not save them.'
+			)
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Move to draft' } )
+		);
+
+		expect(
+			await screen.findByText( 'Event moved to draft.', notice )
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Title' ) ).toHaveValue(
+			'Edited title'
+		);
+		expect(
+			screen.getByRole( 'tab', { name: 'Event Details •' } )
+		).toBeInTheDocument();
+		expect(
+			apiFetch.mock.calls.some( ( [ opts ] ) => opts.method === 'PUT' )
+		).toBe( false );
+	} );
+} );

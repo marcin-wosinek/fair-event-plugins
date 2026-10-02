@@ -340,6 +340,10 @@ class Installer {
 			$gallery_removed = self::migrate_to_3_36_0();
 		}
 
+		if ( version_compare( $current_version, '3.41.0', '<' ) ) {
+			self::migrate_to_3_41_0();
+		}
+
 		// Update database version.
 		Schema::update_db_version( $gallery_removed ? Schema::DB_VERSION : '3.35.0' );
 	}
@@ -2193,6 +2197,29 @@ class Installer {
 	 */
 	private static function migrate_to_3_36_0() {
 		return GalleryCleanup::run();
+	}
+
+	/**
+	 * Migrate to version 3.41.0 - Publication state for event dates.
+	 *
+	 * Existing events stay published. The state lives on single and master
+	 * rows; generated occurrences follow their master's.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_41_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		if ( ! self::column_exists( $table_name, 'publication_status' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					"ALTER TABLE %i ADD COLUMN publication_status ENUM('publish','draft') NOT NULL DEFAULT 'publish' AFTER status, ADD KEY idx_publication_status (publication_status)",
+					$table_name
+				)
+			);
+		}
 	}
 
 	/**

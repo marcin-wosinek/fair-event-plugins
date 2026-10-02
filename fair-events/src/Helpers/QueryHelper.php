@@ -55,8 +55,11 @@ class QueryHelper {
 	/**
 	 * Filter posts by date criteria
 	 *
-	 * Cancelled/inactive rows are always excluded once the custom-table join
-	 * is engaged, independent of which time filter (if any) is selected. A
+	 * Cancelled/inactive rows and events drafted in Fair Events are always
+	 * excluded once the custom-table join is engaged, independent of which
+	 * time filter (if any) is selected. A drafted event stays out even when
+	 * the query itself asks for draft posts; a generated occurrence follows
+	 * its master's publication status, a single or master row its own. A
 	 * missing `end_datetime` is treated as equal to `start_datetime` (a
 	 * single-instant event), so "past"/"ongoing" boundaries stay correct for
 	 * events with no explicit end.
@@ -77,6 +80,9 @@ class QueryHelper {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$where .= " AND {$dates_table}.status = 'active'";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$where .= " AND COALESCE( ( SELECT fair_ed_publication.publication_status FROM {$dates_table} AS fair_ed_publication WHERE fair_ed_publication.id = COALESCE( {$dates_table}.master_id, {$dates_table}.id ) ), 'publish' ) = 'publish'";
 
 		if ( ! is_array( $date_query ) ) {
 			return $where;

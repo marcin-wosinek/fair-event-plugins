@@ -18,9 +18,9 @@ use FairEvents\Models\EventDates;
  * event date, used as the link target for standalone events that have no
  * page of their own (e.g. the iCal feed's URL/DESCRIPTION fallback, #1691).
  *
- * Only active standalone rows are shown. A standalone row that has since
- * gained a link redirects there, so feed links issued earlier keep working;
- * post-linked, cancelled, and missing rows get a 404.
+ * Only active, published standalone rows are shown. A standalone row that has
+ * since gained a link redirects there, so feed links issued earlier keep
+ * working; post-linked, cancelled, drafted, and missing rows get a 404.
  */
 class EventDateView {
 
@@ -76,7 +76,7 @@ class EventDateView {
 
 		$event_date = ctype_digit( $raw ) ? EventDates::get_by_id( absint( $raw ) ) : null;
 
-		if ( ! $event_date || 'active' !== $event_date->status || $event_date->get_resolved_event_id() ) {
+		if ( ! $event_date || 'active' !== $event_date->status || $event_date->is_event_draft() || $event_date->get_resolved_event_id() ) {
 			self::not_found();
 			return;
 		}

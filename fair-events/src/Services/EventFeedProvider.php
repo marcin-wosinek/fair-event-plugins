@@ -30,7 +30,8 @@ defined( 'WPINC' ) || die;
  * ('post'|'standalone'|'ical'|'api'), link_type (the row's own
  * 'post'|'external'|'none', exposed for both source === 'post' — see
  * format_post_occurrence() — and source === 'standalone' — see
- * format_standalone_occurrence()), is_draft, source_color, location (neutral
+ * format_standalone_occurrence()), is_draft (the linked post is not published,
+ * or the event itself is drafted in Fair Events), source_color, location (neutral
  * shape from EventLocation::resolve(), or null), attendance_mode (the row's
  * raw, possibly-null 'in_person'|'online'|'hybrid' column — as opposed to
  * `location`'s already-defaulted mode — exposed only for source ===
@@ -78,9 +79,14 @@ class EventFeedProvider {
 	 *     @type string[] $event_source_slugs Event source slugs whose iCal/API
 	 *                                        streams and category filters are
 	 *                                        merged in.
-	 *     @type bool   $include_drafts       Include draft posts.
+	 *     @type bool   $include_drafts       Include draft posts. Events
+	 *                                        drafted in Fair Events stay
+	 *                                        excluded.
 	 *     @type bool   $include_all_statuses Include posts of any status
-	 *                                        (supersedes include_drafts).
+	 *                                        (supersedes include_drafts) and
+	 *                                        events drafted in Fair Events.
+	 *                                        For authenticated admin
+	 *                                        surfaces only.
 	 * }
 	 * @return array[] Flat array of occurrence DTOs, sorted by 'start' ASC.
 	 */
@@ -194,11 +200,11 @@ class EventFeedProvider {
 	 * @param string $end                   Range end, naive site-local.
 	 * @param int[]  $category_ids          Category term IDs to filter by (empty = no filter).
 	 * @param bool   $include_drafts        Include draft posts.
-	 * @param bool   $include_all_statuses  Include posts of any status.
+	 * @param bool   $include_all_statuses  Include posts of any status and drafted events.
 	 * @return array[] Occurrence DTOs.
 	 */
 	private function get_local_stream( $start, $end, $category_ids, $include_drafts, $include_all_statuses ) {
-		$rows               = EventDates::get_for_date_range( $start, $end );
+		$rows               = EventDates::get_for_date_range( $start, $end, $include_all_statuses );
 		$enabled_post_types = Settings::get_enabled_post_types();
 		$site_host          = wp_parse_url( get_site_url(), PHP_URL_HOST );
 
@@ -286,7 +292,7 @@ class EventFeedProvider {
 			'categories'      => $this->get_category_objects( $post_category_ids ),
 			'source'          => 'post',
 			'link_type'       => $row->link_type,
-			'is_draft'        => $is_draft,
+			'is_draft'        => $is_draft || $row->is_event_draft(),
 			'source_color'    => null,
 			'location'        => EventLocation::resolve( $row, $event_id ),
 		);
@@ -323,7 +329,7 @@ class EventFeedProvider {
 			'source'          => 'standalone',
 			'link_type'       => $row->link_type,
 			'attendance_mode' => $row->attendance_mode,
-			'is_draft'        => false,
+			'is_draft'        => $row->is_event_draft(),
 			'source_color'    => null,
 			'location'        => EventLocation::resolve( $row, null ),
 		);

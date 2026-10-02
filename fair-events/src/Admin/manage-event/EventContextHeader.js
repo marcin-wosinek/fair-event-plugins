@@ -3,9 +3,10 @@
  *
  * Structured context header shown directly under the Manage Event H1:
  * breadcrumb, date/time/venue meta line, a chip row (link status, series
- * badge, categories), and link-state actions (view/edit the linked page,
- * open an external link, or set one up). For generated occurrences, also
- * explains why the Tickets tab is disabled.
+ * badge, categories), the publication state with its Draft/Publish action,
+ * and link-state actions (view/edit the linked page, open an external link,
+ * or set one up). For generated occurrences, also explains why the Tickets
+ * tab is disabled.
  *
  * @package FairEvents
  */
@@ -27,6 +28,8 @@ import {
  * @param {string}      props.calendarUrl    Base Calendar admin URL.
  * @param {Array}       props.venues         Venues loaded for the site (id, name).
  * @param {Function}    [props.onManageLink] Called to open the link-target popup. Omitted → no link actions render (read-only contexts).
+ * @param {Function}    [props.onChangePublication] Called with the target state ('draft' or 'publish'). Omitted → the state shows without an action.
+ * @param {boolean}     [props.publicationBusy] Whether a publication change is being saved.
  */
 export default function EventContextHeader( {
 	eventDate,
@@ -34,6 +37,8 @@ export default function EventContextHeader( {
 	calendarUrl,
 	venues = [],
 	onManageLink,
+	onChangePublication,
+	publicationBusy = false,
 } ) {
 	if ( ! eventDate ) return null;
 
@@ -182,6 +187,8 @@ export default function EventContextHeader( {
 
 	const categories = eventDate.categories || [];
 
+	const isEventDraft = eventDate.publication_status === 'draft';
+
 	return (
 		<div
 			className="fair-events-context-header"
@@ -263,6 +270,41 @@ export default function EventContextHeader( {
 					</span>
 				) ) }
 			</p>
+			<div style={ { margin: '0 0 8px' } }>
+				<HStack spacing={ 2 } alignment="left" wrap>
+					<span
+						className={
+							isEventDraft
+								? 'fair-events-context-badge is-event-draft'
+								: 'fair-events-context-badge is-event-published'
+						}
+						style={ { marginLeft: 0 } }
+					>
+						{ isEventDraft
+							? __(
+									'Draft — hidden from public lists, calendars and feeds',
+									'fair-events'
+							  )
+							: __( 'Published', 'fair-events' ) }
+					</span>
+					{ onChangePublication && (
+						<Button
+							variant="secondary"
+							isBusy={ publicationBusy }
+							disabled={ publicationBusy }
+							onClick={ () =>
+								onChangePublication(
+									isEventDraft ? 'publish' : 'draft'
+								)
+							}
+						>
+							{ isEventDraft
+								? __( 'Publish event', 'fair-events' )
+								: __( 'Move to draft', 'fair-events' ) }
+						</Button>
+					) }
+				</HStack>
+			</div>
 			{ linkActions && (
 				<div style={ { margin: '0 0 4px' } }>{ linkActions }</div>
 			) }
