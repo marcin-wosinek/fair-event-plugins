@@ -53,6 +53,45 @@ class Plugin {
 		$this->load_rest_api();
 		$this->load_frontend();
 		$this->load_hooks();
+
+		// Tell the manage-event UI whether the Groups tab has everything it
+		// needs, so it is not offered when its REST routes are unregistered.
+		add_filter( 'fair_events_enabled_features_map', array( $this, 'add_group_rules_availability' ) );
+	}
+
+	/**
+	 * Add the `groupRulesAvailable` flag to the manage-event feature map.
+	 *
+	 * A dedicated key rather than `ticketing`: core fair-events and
+	 * fair-events-experimental both write `ticketing`, so it does not say
+	 * whether the experimental group rule routes are registered.
+	 *
+	 * @param array<string,bool> $map Resolved feature map.
+	 * @return array<string,bool>
+	 */
+	public function add_group_rules_availability( $map ) {
+		$map['groupRulesAvailable'] = self::group_rules_available();
+		return $map;
+	}
+
+	/**
+	 * Whether group rule management can work on this site.
+	 *
+	 * The Groups tab reads the group pricing and permission rule routes that
+	 * fair-events-experimental registers with its `ticketing` bundle (and only
+	 * while fair-audience is active), plus this plugin's `groups` routes. Its
+	 * script ships with the `manage-event-ext` bundle.
+	 *
+	 * @return bool
+	 */
+	public static function group_rules_available() {
+		return defined( 'FAIR_EVENTS_VERSION' )
+			&& defined( 'FAIR_AUDIENCE_PLUGIN_DIR' )
+			&& defined( 'FAIR_EVENTS_EXPERIMENTAL_VERSION' )
+			&& class_exists( \FairEventsExperimental\Core\Features::class )
+			&& \FairEventsExperimental\Core\Features::is_enabled( 'ticketing' )
+			&& Features::is_enabled( 'groups' )
+			&& Features::is_enabled( 'manage-event-ext' );
 	}
 
 	/**

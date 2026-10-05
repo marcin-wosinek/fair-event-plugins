@@ -108,7 +108,7 @@ msgstr "Wochenplan"
 #: src/Core/Features.php:194
 #: src/Admin/custom-mail/CustomMail.js:839
 #: src/Admin/groups/Groups.js:325
-#: src/Admin/manage-event-ext/index.js:32
+#: src/Admin/manage-event-ext/index.js:35
 msgid "Groups"
 msgstr "Gruppen"
 
@@ -202,7 +202,7 @@ msgstr "Alle ausgewählten Fotos werden diesem Autor zugeordnet."
 #: src/Admin/groups/Groups.js:398
 #: src/Admin/groups/Groups.js:449
 #: src/Admin/manage-event-ext/EventMailings.js:693
-#: src/Admin/manage-event-ext/GroupRules.js:500
+#: src/Admin/manage-event-ext/GroupRules.js:565
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -1554,7 +1554,7 @@ msgstr "Inaktiv"
 #: src/Admin/group-detail/GroupDetail.js:298
 #: src/Admin/groups/Groups.js:292
 #: src/Admin/manage-event-ext/EventMailings.js:680
-#: src/Admin/manage-event-ext/GroupRules.js:527
+#: src/Admin/manage-event-ext/GroupRules.js:592
 msgid "Edit"
 msgstr "Bearbeiten"
 
@@ -1590,7 +1590,7 @@ msgid "(unnamed)"
 msgstr "(unbenannt)"
 
 #: src/Admin/group-detail/GroupDetail.js:374
-#: src/Admin/manage-event-ext/GroupRules.js:542
+#: src/Admin/manage-event-ext/GroupRules.js:607
 msgid "Remove"
 msgstr "Entfernen"
 
@@ -1717,7 +1717,7 @@ msgstr "Wird ungefähr gesendet: %s"
 msgid "Send time will be computed from the chosen date."
 msgstr "Die Sendezeit wird aus dem gewählten Datum berechnet."
 
-#: src/Admin/manage-event-ext/GroupRules.js:488
+#: src/Admin/manage-event-ext/GroupRules.js:553
 msgid "Save"
 msgstr "Speichern"
 
@@ -1893,97 +1893,93 @@ msgstr "Anmeldungen anzeigen"
 msgid "Manage signups"
 msgstr "Anmeldungen verwalten"
 
-#: src/Admin/manage-event-ext/GroupRules.js:121
-msgid "Failed to load group rules."
-msgstr "Fehler beim Laden der Gruppenregeln."
-
-#: src/Admin/manage-event-ext/GroupRules.js:210
+#: src/Admin/manage-event-ext/GroupRules.js:249
 msgid "Group rules added."
 msgstr "Gruppenregeln hinzugefügt."
 
-#: src/Admin/manage-event-ext/GroupRules.js:215
+#: src/Admin/manage-event-ext/GroupRules.js:254
 msgid "Failed to add group rules."
 msgstr "Fehler beim Hinzufügen von Gruppenregeln."
 
-#: src/Admin/manage-event-ext/GroupRules.js:281
+#: src/Admin/manage-event-ext/GroupRules.js:322
 msgid "Group rules updated."
 msgstr "Gruppenregeln aktualisiert."
 
-#: src/Admin/manage-event-ext/GroupRules.js:286
+#: src/Admin/manage-event-ext/GroupRules.js:327
 msgid "Failed to update group rules."
 msgstr "Fehler beim Aktualisieren von Gruppenregeln."
 
-#: src/Admin/manage-event-ext/GroupRules.js:323
+#: src/Admin/manage-event-ext/GroupRules.js:364
 msgid "Failed to update permission."
 msgstr "Fehler beim Aktualisieren der Berechtigung."
 
-#: src/Admin/manage-event-ext/GroupRules.js:334
+#: src/Admin/manage-event-ext/GroupRules.js:375
 msgid "Are you sure you want to remove all rules for this group?"
 msgstr "Sind Sie sicher, dass Sie alle Regeln für diese Gruppe entfernen möchten?"
 
-#: src/Admin/manage-event-ext/GroupRules.js:370
+#: src/Admin/manage-event-ext/GroupRules.js:413
 msgid "Group rules removed."
 msgstr "Gruppenregeln entfernt."
 
-#: src/Admin/manage-event-ext/GroupRules.js:375
+#: src/Admin/manage-event-ext/GroupRules.js:418
 msgid "Failed to remove group rules."
 msgstr "Fehler beim Entfernen von Gruppenregeln."
 
-#: src/Admin/manage-event-ext/GroupRules.js:386
+#: src/Admin/manage-event-ext/GroupRules.js:429
 msgid "Group Rules"
 msgstr "Gruppenregeln"
 
-#: src/Admin/manage-event-ext/GroupRules.js:440
-#: src/Admin/manage-event-ext/GroupRules.js:651
+#: src/Admin/manage-event-ext/GroupRules.js:505
+#: src/Admin/manage-event-ext/GroupRules.js:716
 msgid "Discount Type"
 msgstr "Rabatttyp"
 
-#: src/Admin/manage-event-ext/GroupRules.js:456
-#: src/Admin/manage-event-ext/GroupRules.js:660
+#: src/Admin/manage-event-ext/GroupRules.js:521
+#: src/Admin/manage-event-ext/GroupRules.js:725
 msgid "Discount Value"
 msgstr "Rabattwert"
 
-#: src/Admin/manage-event-ext/GroupRules.js:469
+#: src/Admin/manage-event-ext/GroupRules.js:534
 msgid "0 = no discount"
 msgstr "0 = kein Rabatt"
 
-#: src/Admin/manage-event-ext/GroupRules.js:555
+#: src/Admin/manage-event-ext/GroupRules.js:620
 msgid "Discount:"
 msgstr "Rabatt:"
 
-#: src/Admin/manage-event-ext/GroupRules.js:613
+#: src/Admin/manage-event-ext/GroupRules.js:678
 msgid "No group rules yet. Add one below."
 msgstr "Noch keine Gruppenregeln. Fügen Sie eine unten hinzu."
 
-#: src/Admin/manage-event-ext/GroupRules.js:623
+#: src/Admin/manage-event-ext/GroupRules.js:688
 msgid "Add Group"
 msgstr "Gruppe hinzufügen"
 
-#: src/Admin/manage-event-ext/GroupRules.js:629
+#: src/Admin/manage-event-ext/GroupRules.js:694
 msgid "Group"
 msgstr "Gruppe"
 
-#: src/Admin/manage-event-ext/GroupRules.js:636
+#: src/Admin/manage-event-ext/GroupRules.js:701
 msgid "Select a group..."
 msgstr "Wählen Sie eine Gruppe..."
 
-#: src/Admin/manage-event-ext/GroupRules.js:671
+#: src/Admin/manage-event-ext/GroupRules.js:736
 msgid "e.g. 10"
 msgstr "z.B. 10"
 
-#: src/Admin/manage-event-ext/GroupRules.js:675
+#: src/Admin/manage-event-ext/GroupRules.js:740
 msgid "e.g. 5.00"
 msgstr "z.B. 5,00"
 
-#: src/Admin/manage-event-ext/GroupRules.js:720
+#: src/Admin/manage-event-ext/GroupRules.js:785
 msgid "Add"
 msgstr "Hinzufügen"
 
-#: src/Admin/manage-event-ext/GroupRules.js:734
+#: src/Admin/manage-event-ext/GroupRules.js:799
 msgid "All groups already have rules for this event."
 msgstr "Alle Gruppen haben bereits Regeln für dieses Event."
 
-#: src/Admin/manage-event-ext/index.js:56
+#: src/Admin/manage-event-ext/index.js:59
 msgid "Mailings"
 msgstr "Mailings"
 
@@ -2059,3 +2055,11 @@ msgstr "Fotos"
 #: src/Core/Features.php:187
 msgid "Participant photo uploads, photo authors and tags, media library hooks."
 msgstr "Teilnehmer-Foto-Uploads, Fotoautoren und Tags, Media-Library-Hooks."
+
+#: src/Admin/manage-event-ext/GroupRules.js:465
+msgid "Retry"
+msgstr "Erneut versuchen"
+
+#: src/Admin/manage-event-ext/GroupRules.js:473
+msgid "Group rules could not be loaded."
+msgstr "Die Gruppenregeln konnten nicht geladen werden."
