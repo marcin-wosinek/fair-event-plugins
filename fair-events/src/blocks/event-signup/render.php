@@ -795,7 +795,10 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 		// checked) so a paid default never paints as zero; frontend.js keeps it
 		// in sync afterwards. .fair-events-signup-checkout-total with its
 		// data-amount/data-currency is a documented tracking contract (see
-		// readme.txt) — don't rename it.
+		// readme.txt) — don't rename it. The row starts hidden and the submit
+		// button disabled: frontend.js reveals the total together with an
+		// enabled button once the viewer's pricing is known, so an amount is
+		// never shown beside an action the visitor cannot take yet.
 		$checkout_currency     = \FairEventsShared\Money::site_currency();
 		$checkout_default_type = \FairEvents\Services\SignupFieldsetRenderer::resolve_first_enabled_type_id( $ticket_types, $price_by_type_id, $payments_unavailable );
 		$checkout_total        = 0.0;
@@ -812,13 +815,14 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 			data-currency="<?php echo esc_attr( $checkout_currency ); ?>"
 			data-decimal-point="<?php echo esc_attr( $wp_locale->number_format['decimal_point'] ?? '.' ); ?>"
 			data-thousands-sep="<?php echo esc_attr( $wp_locale->number_format['thousands_sep'] ?? ',' ); ?>"
+			hidden
 		>
 			<span class="fair-events-signup-checkout-total-label"><?php esc_html_e( 'Total', 'fair-events' ); ?></span>
 			<span class="fair-events-signup-checkout-total-amount" aria-live="polite" aria-atomic="true"><?php echo esc_html( \FairEventsShared\Money::format_display( $checkout_total, $checkout_currency ) ); ?></span>
 		</div>
 
 		<div class="form-row form-submit">
-			<button type="submit" class="form-button wp-block-button__link wp-element-button">
+			<button type="submit" class="form-button wp-block-button__link wp-element-button is-disabled" disabled>
 				<?php echo esc_html( $submit_button_text ); ?>
 			</button>
 		</div>

@@ -18,6 +18,12 @@
 	font-size: 1.125em;
 }
 
+/* Hidden while the submit button is disabled: the row's own display would
+   otherwise override the hidden attribute and leave its border and spacing. */
+.fair-events-get-tickets-form .fair-events-signup-checkout-total[hidden] {
+	display: none;
+}
+
 .fair-events-get-tickets-form .fair-events-signup-checkout-total-label {
 	font-weight: 600;
 }

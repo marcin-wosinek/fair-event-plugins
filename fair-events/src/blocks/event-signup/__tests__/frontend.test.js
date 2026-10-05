@@ -797,6 +797,270 @@ describe( 'Event Signup frontend.js — checkout total (#1666)', () => {
 	} );
 } );
 
+describe( 'Event Signup frontend.js — total follows the submit button (#1730)', () => {
+	// Mirrors render.php: the total starts hidden and the button disabled.
+	function buildGatedBlock( {
+		ticketPrice = '15.00',
+		minActivities = '1',
+	} = {} ) {
+		document.body.innerHTML = `
+			<div class="fair-events-get-tickets" data-event-date-id="42" data-currency="EUR">
+				<form class="fair-events-get-tickets-form" data-event-date-id="42" data-min-activities="0" data-currency="EUR">
+					<div class="form-row"><fieldset class="fair-events-ticket-fieldset">
+						<label><input type="radio" name="ticket_type_id" value="1" data-ticket-price="${ ticketPrice }" data-activities-enabled="1" data-min-activities="${ minActivities }" data-max-activities="" data-recurrence-scope="single_instance" checked>General</label>
+					</fieldset></div>
+					<div class="form-row"><fieldset class="fair-events-ticket-options">
+						<label><input type="checkbox" name="ticket_option_ids[]" value="10" data-option-price="5.50"></label>
+					</fieldset></div>
+					<div class="form-row"><input type="text" name="name" value="Buyer" required /></div>
+					<div class="form-row"><input type="email" name="email" value="buyer@example.test" required /></div>
+					<div class="form-row fair-events-signup-checkout-total" data-amount="${ ticketPrice }" data-currency="EUR" hidden>
+						<span class="fair-events-signup-checkout-total-label">Total</span>
+						<span class="fair-events-signup-checkout-total-amount">${ ticketPrice } EUR</span>
+					</div>
+					<div class="form-row form-submit"><button type="submit" class="is-disabled" disabled>Get Tickets</button></div>
+				</form>
+				<div class="message-container"></div>
+			</div>`;
+		return document.querySelector( 'form' );
+	}
+
+	function readState( form ) {
+		const total = form.querySelector(
+			'.fair-events-signup-checkout-total'
+		);
+		const button = form.querySelector( 'button[type="submit"]' );
+		return {
+			totalHidden: total.hidden,
+			buttonDisabled: button.disabled,
+			buttonMarked: button.classList.contains( 'is-disabled' ),
+			label: button.textContent,
+			amount: total.dataset.amount,
+			currency: total.dataset.currency,
+			text: total.querySelector(
+				'.fair-events-signup-checkout-total-amount'
+			).textContent,
+		};
+	}
+
+	function setActivity( form, checked ) {
+		const box = form.querySelector( 'input[name="ticket_option_ids[]"]' );
+		box.checked = checked;
+		box.dispatchEvent( new window.Event( 'change', { bubbles: true } ) );
+	}
+
+	const submit = ( form ) =>
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+	const settle = () => new Promise( ( resolve ) => setTimeout( resolve ) );
+
+	async function hydrated( options ) {
+		const form = buildGatedBlock( options );
+		apiFetch.mockResolvedValue( noopResponse() );
+		initialize();
+		await settle();
+		return form;
+	}
+
+	test( 'keeps the total hidden and the button disabled while viewer context loads', async () => {
+		const form = buildGatedBlock( { minActivities: '0' } );
+		let resolveFetch;
+		apiFetch.mockReturnValue(
+			new Promise( ( resolve ) => {
+				resolveFetch = resolve;
+			} )
+		);
+
+		initialize();
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: true,
+			buttonDisabled: true,
+			buttonMarked: true,
+			amount: '15.00',
+			currency: 'EUR',
+		} );
+
+		// A selection made while loading keeps the hidden amount current but
+		// does not release the gate.
+		setActivity( form, true );
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: true,
+			buttonDisabled: true,
+			amount: '20.50',
+			text: '20.50 EUR',
+		} );
+
+		resolveFetch( noopResponse() );
+		await settle();
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: false,
+			buttonDisabled: false,
+			buttonMarked: false,
+			amount: '20.50',
+		} );
+	} );
+
+	test( 'reveals the total when a viewer-context error releases the gate', async () => {
+		const form = buildGatedBlock( { minActivities: '0' } );
+		const consoleError = jest
+			.spyOn( console, 'error' )
+			.mockImplementation( () => {} );
+		apiFetch.mockRejectedValue( new Error( 'offline' ) );
+
+		initialize();
+		await settle();
+
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: false,
+			buttonDisabled: false,
+			amount: '15.00',
+		} );
+		consoleError.mockRestore();
+	} );
+
+	test( 'reveals the total when the viewer-context timeout releases the gate', () => {
+		jest.useFakeTimers();
+		const form = buildGatedBlock( { minActivities: '0' } );
+		apiFetch.mockReturnValue( new Promise( () => {} ) );
+
+		initialize();
+		expect( readState( form ).totalHidden ).toBe( true );
+
+		jest.advanceTimersByTime( 3000 );
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: false,
+			buttonDisabled: false,
+		} );
+		jest.useRealTimers();
+	} );
+
+	test( 'keeps an unmet minimum hidden after loading, with accurate attributes', async () => {
+		const form = await hydrated();
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: true,
+			buttonDisabled: true,
+			amount: '15.00',
+			currency: 'EUR',
+			text: '15.00 EUR',
+		} );
+	} );
+
+	test( 'shows the total when a selection enables the button and hides it again when one disables it', async () => {
+		const form = await hydrated();
+
+		setActivity( form, true );
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: false,
+			buttonDisabled: false,
+			buttonMarked: false,
+			amount: '20.50',
+			text: '20.50 EUR',
+		} );
+		expect(
+			form.querySelector( '.fair-events-signup-checkout-total' )
+				.nextElementSibling
+		).toBe( form.querySelector( '.form-submit' ) );
+
+		setActivity( form, false );
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: true,
+			buttonDisabled: true,
+			buttonMarked: true,
+			amount: '15.00',
+			text: '15.00 EUR',
+		} );
+	} );
+
+	test( 'shows an explicit zero for an enabled free signup', async () => {
+		const form = await hydrated( {
+			ticketPrice: '0.00',
+			minActivities: '0',
+		} );
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: false,
+			buttonDisabled: false,
+			amount: '0.00',
+			text: '0.00 EUR',
+		} );
+	} );
+
+	test( 'hides the total while a purchase is processing and restores both after a failure', async () => {
+		const form = await hydrated( { minActivities: '0' } );
+		let fail;
+		initiatePayment.mockImplementationOnce(
+			() =>
+				new Promise( ( _resolve, reject ) => {
+					fail = reject;
+				} )
+		);
+
+		submit( form );
+		expect( initiatePayment.mock.calls[ 0 ][ 0 ].button ).toBeUndefined();
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: true,
+			buttonDisabled: true,
+			label: 'Processing…',
+			amount: '15.00',
+		} );
+
+		// A selection change while processing must not release the form.
+		setActivity( form, true );
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: true,
+			buttonDisabled: true,
+			amount: '20.50',
+		} );
+
+		fail( { code: 'fetch_error' } );
+		await settle();
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: false,
+			buttonDisabled: false,
+			label: 'Get Tickets',
+			amount: '20.50',
+		} );
+
+		submit( form );
+		expect( initiatePayment ).toHaveBeenCalledTimes( 2 );
+		await settle();
+	} );
+
+	test( 'stays in processing while the browser is redirected to checkout', async () => {
+		const form = await hydrated( { minActivities: '0' } );
+		initiatePayment.mockResolvedValueOnce( {
+			checkout_url: 'https://pay.example.test/checkout',
+		} );
+
+		submit( form );
+		await settle();
+
+		expect( readState( form ) ).toMatchObject( {
+			totalHidden: true,
+			buttonDisabled: true,
+			label: 'Processing…',
+		} );
+	} );
+
+	test( 'keeps each form on a page independent', async () => {
+		const first = buildGatedBlock();
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			document.body.innerHTML
+		);
+		const second = document.querySelectorAll( 'form' )[ 1 ];
+		apiFetch.mockResolvedValue( noopResponse() );
+		initialize();
+		await settle();
+
+		setActivity( second, true );
+		expect( readState( first ).totalHidden ).toBe( true );
+		expect( readState( first ).buttonDisabled ).toBe( true );
+		expect( readState( second ).totalHidden ).toBe( false );
+		expect( readState( second ).buttonDisabled ).toBe( false );
+	} );
+} );
+
 describe( 'Event Signup frontend.js — activities for each ticket (#1697)', () => {
 	function buildPerTicketBlock( { minActivities = '0' } = {} ) {
 		document.body.innerHTML = `
@@ -909,8 +1173,10 @@ describe( 'Event Signup frontend.js — activities for each ticket (#1697)', () 
 		).toBe( true );
 	} );
 
-	test( 'charges every ticket’s activities and gates each ticket’s minimum', () => {
+	test( 'charges every ticket’s activities and gates each ticket’s minimum', async () => {
 		const form = buildPerTicketBlock( { minActivities: '1' } );
+		// The gate only opens once viewer-context hydration has settled.
+		await new Promise( ( resolve ) => setTimeout( resolve ) );
 		setQuantity( form, 2 );
 		tick( fieldsets( form )[ 0 ], 10 );
 		const submit = form.querySelector( 'button[type="submit"]' );
