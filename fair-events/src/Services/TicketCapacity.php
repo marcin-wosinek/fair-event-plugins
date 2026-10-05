@@ -343,6 +343,53 @@ class TicketCapacity {
 	}
 
 	/**
+	 * Describe what a signup's tickets ask of capacity, one demand per event
+	 * date and ticket type they are on: a ticket moved on its own, or given
+	 * its own type, asks for its place where it now is. Tickets cancelled or
+	 * refunded on their own ask for nothing, so a signup whose tickets are
+	 * all cancelled has no demands. A signup without ticket units yet is
+	 * described by its own row, as demand_for_signup() does.
+	 *
+	 * @param object $signup Signup row.
+	 * @return array[] Each: event_date_id, ticket_type_id, quantity, option_ids.
+	 */
+	public static function demands_for_signup( $signup ) {
+		$tickets = EventTicket::get_by_signup_id( (int) ( $signup->id ?? 0 ) );
+		if ( ! $tickets ) {
+			return array( self::demand_for_signup( $signup ) );
+		}
+
+		$groups = array();
+		foreach ( $tickets as $ticket ) {
+			if ( in_array( (string) $ticket->status, EventTicket::FINAL_UNIT_STATUSES, true ) ) {
+				continue;
+			}
+
+			$key = (int) $ticket->event_date_id . ':' . (int) $ticket->ticket_type_id;
+			if ( ! isset( $groups[ $key ] ) ) {
+				$groups[ $key ] = array(
+					'event_date_id'  => (int) $ticket->event_date_id,
+					'ticket_type_id' => (int) $ticket->ticket_type_id,
+					'ticket_ids'     => array(),
+				);
+			}
+			$groups[ $key ]['ticket_ids'][] = (int) $ticket->id;
+		}
+
+		return array_map(
+			static function ( $group ) {
+				return array(
+					'event_date_id'  => $group['event_date_id'],
+					'ticket_type_id' => $group['ticket_type_id'],
+					'quantity'       => count( $group['ticket_ids'] ),
+					'option_ids'     => EventTicketActivity::get_active_option_ids( $group['ticket_ids'] ),
+				);
+			},
+			array_values( $groups )
+		);
+	}
+
+	/**
 	 * Resolve demands into the places each event date, ticket type and
 	 * activity must provide. A whole_series ticket needs a place on every
 	 * upcoming active occurrence of its series, and so does each activity

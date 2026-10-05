@@ -250,6 +250,70 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Make sure the holder of a ticket moved to an event date is admitted
+	 * there. A holder other than the purchaser is listed as for an assigned
+	 * ticket (see ensure_ticket_holder_relationship()). A purchaser holding
+	 * their own confirmed ticket is signed up: a new relationship says so,
+	 * and one that only listed them as interested is raised to it. Every
+	 * other existing relationship, with its role, comment, consent and
+	 * history, is left exactly as it is.
+	 *
+	 * @param int  $event_date_id  Event date ID.
+	 * @param int  $participant_id Holder participant ID.
+	 * @param bool $signed_up      Whether the holder bought the ticket and it is confirmed.
+	 * @return int|false Relationship ID, or false when it could not be written.
+	 */
+	public function ensure_ticket_admission( $event_date_id, $participant_id, $signed_up ) {
+		if ( ! $signed_up ) {
+			return $this->ensure_ticket_holder_relationship( $event_date_id, $participant_id );
+		}
+
+		$existing = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		if ( $existing ) {
+			if ( 'interested' === $existing->label && ! $this->update_label_by_event_date( $event_date_id, $participant_id, 'signed_up' ) ) {
+				return false;
+			}
+
+			return (int) $existing->id;
+		}
+
+		$event_date = class_exists( \FairEvents\Models\EventDates::class )
+			? \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id )
+			: null;
+		$event_id   = $event_date ? (int) $event_date->get_resolved_event_id() : 0;
+		if ( ! $event_id ) {
+			return false;
+		}
+
+		return $this->add_participant_to_event( $event_id, (int) $participant_id, 'signed_up', (int) $event_date_id );
+	}
+
+	/**
+	 * Bring a purchaser's relationship on an event date in line with the
+	 * tickets left there after one was cancelled or moved away. With no
+	 * active ticket they hold or bought on the date, a signed-up or
+	 * awaiting-payment relationship becomes 'interested': the participant
+	 * stays listed, with their identity, consent, comment and history, but
+	 * is no longer admitted. A collaborator keeps that role.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Purchaser participant ID.
+	 * @return bool False only when the relationship could not be written.
+	 */
+	public function reconcile_ticket_admission( $event_date_id, $participant_id ) {
+		$relationship = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		if ( ! $relationship || ! in_array( $relationship->label, array( 'signed_up', 'pending_payment' ), true ) ) {
+			return true;
+		}
+
+		if ( \FairEvents\Models\EventTicket::count_active_for_participant( (int) $event_date_id, (int) $participant_id ) > 0 ) {
+			return true;
+		}
+
+		return (bool) $this->update_label_by_event_date( $event_date_id, $participant_id, 'interested' );
+	}
+
+	/**
 	 * Remove participant from event by event_date_id.
 	 *
 	 * @param int $event_date_id  Event date ID.

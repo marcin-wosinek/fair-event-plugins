@@ -2578,8 +2578,18 @@ class GetTicketsController extends WP_REST_Controller {
 					return $failed;
 				}
 
-				$ticket_count = \FairEvents\Models\EventTicket::count_active_units( $id );
-				$projection   = \FairEvents\Services\TicketCapacity::projection( $scope, $target, $ticket_count, $id );
+				// A move takes along the tickets still on the signup's date,
+				// and joins any the signup already has on the target; a
+				// ticket moved on its own to a third date stays there.
+				if ( 'move' === $action ) {
+					$ticket_count = \FairEvents\Models\EventTicket::count_active_units( $id, (int) $signup->event_date_id );
+					if ( $target !== (int) $signup->event_date_id ) {
+						$ticket_count += \FairEvents\Models\EventTicket::count_active_units( $id, $target );
+					}
+				} else {
+					$ticket_count = \FairEvents\Models\EventTicket::count_active_units( $id );
+				}
+				$projection = \FairEvents\Services\TicketCapacity::projection( $scope, $target, $ticket_count, $id );
 				if ( ! $projection ) {
 					return $failed;
 				}
@@ -2706,14 +2716,23 @@ class GetTicketsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * The activities a signup's tickets currently hold, for tickets not
-	 * cancelled or refunded on their own: one entry per ticket and activity.
+	 * The activities held by the tickets a signup's move takes along: those
+	 * on the signup's own date and not cancelled or refunded on their own.
+	 * One entry per ticket and activity.
 	 *
 	 * @param int $signup_id Signup row ID.
 	 * @return int[]
 	 */
 	private function active_signup_option_ids( $signup_id ) {
-		return \FairEvents\Services\TicketCapacity::demand_for_signup( \FairEvents\Models\EventSignup::get_by_id( (int) $signup_id ) )['option_ids'];
+		$signup     = \FairEvents\Models\EventSignup::get_by_id( (int) $signup_id );
+		$option_ids = array();
+		foreach ( \FairEvents\Services\TicketCapacity::demands_for_signup( $signup ) as $demand ) {
+			if ( (int) $demand['event_date_id'] === (int) $signup->event_date_id ) {
+				$option_ids = array_merge( $option_ids, $demand['option_ids'] );
+			}
+		}
+
+		return $option_ids;
 	}
 
 	/**
@@ -3135,7 +3154,7 @@ class GetTicketsController extends WP_REST_Controller {
 		);
 		if ( $released_rows ) {
 			$renewed = \FairEvents\Services\TicketCapacity::reserve(
-				array_map( array( \FairEvents\Services\TicketCapacity::class, 'demand_for_signup' ), $released_rows ),
+				array_merge( array(), ...array_map( array( \FairEvents\Services\TicketCapacity::class, 'demands_for_signup' ), $released_rows ) ),
 				static function () use ( $released_rows ) {
 					foreach ( $released_rows as $row ) {
 						if ( ! \FairEvents\Models\EventSignup::renew_hold( (int) $row->id ) ) {

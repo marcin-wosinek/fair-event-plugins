@@ -22,6 +22,17 @@ import {
 	ticketStatusLabel,
 } from './ticketLabels.js';
 import AssignTicketModal, { personLabel } from './AssignTicketModal.js';
+import {
+	MoveTicketModal,
+	CancelTicketModal,
+	DeleteTicketModal,
+} from './TicketOperationModals.js';
+import {
+	searchParticipants,
+	ticketsOf,
+	buildTicketsCsv,
+	downloadCsvFile,
+} from './ticketSearch.js';
 
 const LABEL_ORDER = { collaborator: 0, signed_up: 1, interested: 2 };
 
@@ -131,6 +142,10 @@ const isAssignedAway = ( ticket ) =>
 	!! ticket.assignee?.participant_id &&
 	ticket.purchaser.participant_id !== ticket.assignee.participant_id;
 
+// A date of the recurring event, as the move popups name it.
+const occurrenceLabel = ( occurrence ) =>
+	new Date( occurrence.start_datetime.replace( ' ', 'T' ) ).toLocaleString();
+
 const holdsOption = ( ids, names, opt ) =>
 	( ids || [] ).includes( opt.id ) || ( names || [] ).includes( opt.name );
 
@@ -199,6 +214,11 @@ export default function EventAudience( {
 
 	// Assign-ticket modal state: { ticket, position } or null.
 	const [ assigningTicket, setAssigningTicket ] = useState( null );
+
+	// Move / cancel / delete one ticket: { ticket, position }.
+	const [ movingTicket, setMovingTicket ] = useState( null );
+	const [ cancellingTicket, setCancellingTicket ] = useState( null );
+	const [ deletingTicket, setDeletingTicket ] = useState( null );
 
 	// Move-to-occurrence modal state
 	const [ movingParticipant, setMovingParticipant ] = useState( null );
@@ -357,15 +377,16 @@ export default function EventAudience( {
 			list = list.filter( ( p ) => p.label === filterRole );
 		}
 
-		if ( searchText ) {
-			const term = searchText.toLowerCase();
-			list = list.filter( ( p ) =>
-				( p.participant_name || '' ).toLowerCase().includes( term )
-			);
-		}
-
-		return list;
+		// A search also narrows each participant to the tickets it finds.
+		return searchParticipants( list, searchText );
 	}, [ sortedParticipants, filterRole, searchText ] );
+
+	// The tickets shown under the current role filter and search: what the
+	// ticket export contains.
+	const shownTickets = useMemo(
+		() => ticketsOf( filteredParticipants ),
+		[ filteredParticipants ]
+	);
 
 	// The printable roster: collaborators and signed-up participants under the
 	// Audience page's current sort/filter/search. Both the printout and the
@@ -470,6 +491,15 @@ export default function EventAudience( {
 				( s ) => Number( s.id ) !== Number( eventDateId )
 			),
 		[ siblings, eventDateId ]
+	);
+
+	const ticketMoveTargets = useMemo(
+		() =>
+			otherOccurrences.map( ( s ) => ( {
+				id: s.id,
+				label: occurrenceLabel( s ),
+			} ) ),
+		[ otherOccurrences ]
 	);
 
 	const handleSort = ( column ) => {
@@ -805,6 +835,52 @@ export default function EventAudience( {
 				__( 'Ticket assigned to %s.', 'fair-audience' ),
 				updatedTicket.assignee?.name || __( '—', 'fair-audience' )
 			)
+		);
+	};
+
+	// The ticket left this date's list, and the relationships on both
+	// dates may have changed with it, so the rows are reloaded.
+	const handleTicketMoved = ( movedTicket, dateLabel ) => {
+		setMovingTicket( null );
+		loadParticipants();
+		showToast(
+			sprintf(
+				/* translators: %s: date and time the ticket was moved to */
+				__( 'Ticket moved to %s.', 'fair-audience' ),
+				dateLabel
+			)
+		);
+	};
+
+	const handleTicketCancelled = () => {
+		setCancellingTicket( null );
+		loadParticipants();
+		showToast(
+			__( 'Ticket cancelled. No refund was issued.', 'fair-audience' )
+		);
+	};
+
+	const handleTicketDeleted = () => {
+		setDeletingTicket( null );
+		loadParticipants();
+		showToast( __( 'Ticket deleted.', 'fair-audience' ) );
+	};
+
+	const handleExportTicketsCsv = () => {
+		const startByDateId = new Map(
+			siblings.map( ( s ) => [ Number( s.id ), s.start_datetime ] )
+		);
+		downloadCsvFile(
+			buildTicketsCsv( {
+				tickets: shownTickets,
+				// Stored site-local date and time, as the event shows it.
+				eventDate: ( id ) =>
+					startByDateId.get( Number( id ) ) ||
+					startByDateId.get( Number( eventDateId ) ) ||
+					'',
+				statusLabel: ticketStatusLabel,
+			} ),
+			`tickets-event-date-${ eventDateId }.csv`
 		);
 	};
 
@@ -1489,7 +1565,8 @@ export default function EventAudience( {
 	// to a ticket. Participants without tickets keep everything on their
 	// own row.
 	const renderParticipantRows = ( p, index ) => {
-		const withTickets = hasTickets( p );
+		// A search may show none of the tickets a participant holds.
+		const withTickets = hasTickets( p ) || !! p.holds_tickets;
 		// A purchaser whose tickets are all with others holds no admission
 		// to show a type or a check-in for.
 		const ownsAdmission = ! withTickets && ! isPurchaserOnly( p );
@@ -1649,7 +1726,108 @@ export default function EventAudience( {
 							>
 								{ __( 'Assign ticket', 'fair-audience' ) }
 							</Button>
+							{ ticketMoveTargets.length > 0 &&
+								! ticket.whole_series && (
+									<Button
+										variant="link"
+										onClick={ () =>
+											setMovingTicket( {
+												ticket,
+												position,
+											} )
+										}
+										label={ sprintf(
+											/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
+											__( 'Move %s', 'fair-audience' ),
+											fullLabel
+										) }
+										showTooltip={ false }
+									>
+										{ __( 'Move ticket', 'fair-audience' ) }
+									</Button>
+								) }
+							<Button
+								variant="link"
+								isDestructive
+								onClick={ () =>
+									setCancellingTicket( { ticket, position } )
+								}
+								label={ sprintf(
+									/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
+									__( 'Cancel %s', 'fair-audience' ),
+									fullLabel
+								) }
+								showTooltip={ false }
+							>
+								{ __( 'Cancel ticket', 'fair-audience' ) }
+							</Button>
 						</HStack>
+					) }
+				</tr>
+			);
+		} );
+
+		// Cancelled tickets admit nobody: they are listed until deleted,
+		// with nothing to check in or edit.
+		( p.cancelled_tickets || [] ).forEach( ( ticket, ticketIndex ) => {
+			const position = ticket.position || ticketIndex + 1;
+			const fullLabel = ticketLabel( ticket, position );
+			rows.push(
+				<tr
+					key={ `c-${ ticket.id }` }
+					className="fair-audience-audience-table__ticket is-cancelled"
+					data-ticket-id={ ticket.id }
+				>
+					{ cell( 'num', '#', null ) }
+					{ cell(
+						'name',
+						__( 'Ticket', 'fair-audience' ),
+						<>
+							{ ticketShortLabel( ticket, position ) }
+							{ isAssignedAway( ticket ) && (
+								<span className="fair-audience-audience-table__meta">
+									{ sprintf(
+										/* translators: %s: purchaser's name and email */
+										__(
+											'Purchased by %s',
+											'fair-audience'
+										),
+										personLabel( ticket.purchaser )
+									) }
+								</span>
+							) }
+						</>,
+						{ className: 'fair-audience-audience-table__name' }
+					) }
+					{ cell( 'role', colRole, null ) }
+					{ cell( 'type', colType, ticket.ticket_type_name || '—' ) }
+					{ ticketOptions.map( ( opt ) =>
+						cell( `opt-${ opt.id }`, '', null )
+					) }
+					{ cell(
+						'status',
+						colStatus,
+						ticketStatusLabel( ticket.status )
+					) }
+					{ cell( 'shown', colShownUp, null ) }
+					{ cell(
+						'actions',
+						colActions,
+						<Button
+							variant="link"
+							isDestructive
+							onClick={ () =>
+								setDeletingTicket( { ticket, position } )
+							}
+							label={ sprintf(
+								/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
+								__( 'Delete %s', 'fair-audience' ),
+								fullLabel
+							) }
+							showTooltip={ false }
+						>
+							{ __( 'Delete ticket', 'fair-audience' ) }
+						</Button>
 					) }
 				</tr>
 			);
@@ -2049,7 +2227,7 @@ export default function EventAudience( {
 										value={ searchText }
 										onChange={ setSearchText }
 										placeholder={ __(
-											'Filter by name…',
+											'Name, email, reference…',
 											'fair-audience'
 										) }
 										__nextHasNoMarginBottom
@@ -2148,6 +2326,16 @@ export default function EventAudience( {
 										}
 									>
 										{ __( 'Print list', 'fair-audience' ) }
+									</Button>
+									<Button
+										variant="secondary"
+										onClick={ handleExportTicketsCsv }
+										disabled={ shownTickets.length === 0 }
+									>
+										{ __(
+											'Export tickets CSV',
+											'fair-audience'
+										) }
 									</Button>
 									{ invitedGroups.length > 0 && (
 										<Button
@@ -2988,6 +3176,37 @@ export default function EventAudience( {
 				/>
 			) }
 
+			{ movingTicket && (
+				<MoveTicketModal
+					eventDateId={ eventDateId }
+					ticket={ movingTicket.ticket }
+					position={ movingTicket.position }
+					occurrences={ ticketMoveTargets }
+					onClose={ () => setMovingTicket( null ) }
+					onMoved={ handleTicketMoved }
+				/>
+			) }
+
+			{ cancellingTicket && (
+				<CancelTicketModal
+					eventDateId={ eventDateId }
+					ticket={ cancellingTicket.ticket }
+					position={ cancellingTicket.position }
+					onClose={ () => setCancellingTicket( null ) }
+					onCancelled={ handleTicketCancelled }
+				/>
+			) }
+
+			{ deletingTicket && (
+				<DeleteTicketModal
+					eventDateId={ eventDateId }
+					ticket={ deletingTicket.ticket }
+					position={ deletingTicket.position }
+					onClose={ () => setDeletingTicket( null ) }
+					onDeleted={ handleTicketDeleted }
+				/>
+			) }
+
 			{ movingParticipant && (
 				<Modal
 					title={ sprintf(
@@ -3006,9 +3225,7 @@ export default function EventAudience( {
 							) }
 							value={ moveTargetId }
 							options={ otherOccurrences.map( ( s ) => ( {
-								label: new Date(
-									s.start_datetime.replace( ' ', 'T' )
-								).toLocaleString(),
+								label: occurrenceLabel( s ),
 								value: String( s.id ),
 							} ) ) }
 							onChange={ setMoveTargetId }

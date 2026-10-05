@@ -845,9 +845,11 @@ sub-route) expose:
     `do_action( 'fair_events_tickets_deleting', $ticket_ids )` just before it
     deletes ticket units: positions beyond a reduced quantity
     (`reconcile_signup()`) or every unit of a deleted signup
-    (`delete_by_signup_id()`). It runs inside the caller's transaction, where
-    there is one. fair-form detaches the Fair Form answers linked to those
-    tickets (see "Fair Form answers per ticket" below).
+    (`delete_by_signup_id()`). It also fires right after an administrator
+    deletes one cancelled ticket (`mark_deleted()`), whose row stays but is
+    hidden for good. It runs inside the caller's transaction, where there is
+    one. fair-form detaches the Fair Form answers linked to those tickets
+    (see "Fair Form answers per ticket" below).
 
 -   **`fair_events_signup_moved` / `fair_events_signup_ticket_type_changed`
     actions** — `GetTicketsController::update_item()` fires one of these
@@ -1047,6 +1049,64 @@ and an add-on hold expiry). fair-events owns the tables and models
     participant given a ticket takes one place. Label-based consumers outside
     the Audience tab (label counts, mailing audiences) still read the stored
     label.
+-   **Move, cancel, delete (#1699).** Three `manage_options` routes act on
+    one ticket and nothing else: its signup, purchaser, transaction and
+    amounts, and the purchase's other tickets, are never written, and none of
+    them refunds anything or removes a participant. All return 404
+    `ticket_not_found` for a ticket on another event date or a deleted one.
+    fair-audience's `TicketOperations` service runs each in one transaction
+    with the ticket row locked, so a refused or failed operation changes
+    nothing.
+
+    -   `POST …/tickets/{ticket_id}/move` takes `target_event_date_id`: another
+        active date of the same recurring event (400 `invalid_target`
+        otherwise). Confirmed tickets move, checked in or not, and so do
+        tickets awaiting payment while their hold runs (409
+        `ticket_payment_expired` after it); a ticket that no longer admits
+        anyone is refused with 409 `ticket_inactive`, a whole-series pass
+        with 400 `ticket_not_movable`. Only the ticket's `event_date_id`
+        changes: type, activities, answers, check-in, purchaser and holder
+        stay. The target date needs one place and each activity the ticket
+        holds one place there, checked under `TicketCapacity`'s lock; going
+        past a limit returns 409 `capacity_exceeded` with `projection` /
+        `projections` unless `override_reason` is given, which saves the
+        move, flags it and records it in the override audit (action `move`,
+        with the ticket's ID).
+    -   `POST …/tickets/{ticket_id}/cancel` sets the ticket to `cancelled`
+        (409 `ticket_inactive` when it already admits nobody). It releases
+        its places and activities at once. The status is final: signup
+        transitions, including a payment completed later, never revive it.
+    -   `DELETE …/tickets/{ticket_id}` needs a cancelled ticket (409
+        `ticket_not_cancelled`) and sets its `deleted_at`. The row stays with
+        its position, purchaser and signup, so `reconcile_signup()` never
+        fills the position again and the capacity fallback for signups
+        without units never counts the signup's quantity. Deleted tickets are
+        left out of every admin ticket response.
+
+    **A ticket's date is its own.** It starts on its signup's date and
+    follows the signup when that is moved, until it is moved individually:
+    from then on a signup move takes along only the tickets still on the
+    signup's date. Capacity already counts each ticket on its own date;
+    `TicketCapacity::demands_for_signup()` describes a signup's tickets per
+    date and type for late confirmations and retries, leaving out tickets
+    cancelled on their own.
+
+    **Relationships follow the tickets.** The holder of a moved ticket gets a
+    relationship on the target date (`ensure_ticket_admission()`): `signed_up`
+    for a purchaser holding their own confirmed ticket — an `interested` one
+    is raised to it — and the assigned-ticket rule otherwise. A purchaser left
+    with no active ticket they hold or bought on a date goes from `signed_up`
+    or `pending_payment` to `interested` (`reconcile_ticket_admission()`), so
+    they stay listed with their identity, consent, comment and history but
+    are no longer admitted; a collaborator keeps that role. The same two
+    steps run after a late payment confirmation
+    (`TicketOperations::follow_signup_confirmation()`), for tickets moved or
+    cancelled while the purchase was awaiting payment.
+
+    The participants list returns the cancelled, not deleted tickets each
+    participant holds as `cancelled_tickets`, apart from `tickets`, which
+    stay the tickets that admit them. Every ticket payload carries its
+    `event_date_id` and `whole_series`.
 -   **History.** Participant-level activities and check-ins recorded before
     this change are copied onto a ticket by `TicketHistoryBackfill` only when
     the participant held exactly one ticket on that date; the originals are
