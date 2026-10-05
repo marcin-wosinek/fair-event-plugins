@@ -30,6 +30,7 @@ class AdminPages {
 		add_action( 'admin_menu', array( $this, 'register_notifications_page' ), 12 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_filter( 'plugin_action_links_fair-payments-connector/fair-payments-connector.php', array( $this, 'add_plugin_action_links' ) );
+		add_filter( 'removable_query_args', array( $this, 'keep_oauth_error_query_arg' ) );
 	}
 
 	/**
@@ -195,6 +196,26 @@ class AdminPages {
 			);
 			return;
 		}
+	}
+
+	/**
+	 * Keep the `error` query argument on the settings page.
+	 *
+	 * A cancelled or failed Mollie authorization returns there with `error`,
+	 * which WordPress otherwise strips from the address bar before the
+	 * settings app can read it. The app removes it once it has shown the
+	 * outcome.
+	 *
+	 * @param string[] $args Query arguments WordPress removes from admin URLs.
+	 * @return string[]
+	 */
+	public function keep_oauth_error_query_arg( $args ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only compares the admin page slug.
+		if ( isset( $_GET['page'] ) && 'fair-payments-connector-settings' === $_GET['page'] ) {
+			return array_values( array_diff( $args, array( 'error' ) ) );
+		}
+
+		return $args;
 	}
 
 	/**

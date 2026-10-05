@@ -88,8 +88,15 @@ function mockApiFetchByPath( {
 	entries = [ entry ],
 	transactions = [],
 	budgets = [ budgetA, budgetB ],
+	connectorStatus = null,
 } = {} ) {
 	apiFetch.mockImplementation( ( { path, method } ) => {
+		if ( path === '/fair-payments-connector/v1/oauth/status' ) {
+			// No status: the connector is inactive, so the route is missing.
+			return connectorStatus
+				? Promise.resolve( connectorStatus )
+				: Promise.reject( { code: 'rest_no_route' } );
+		}
 		if ( path === '/fair-finance/v1/budgets' ) {
 			return Promise.resolve( budgets );
 		}
@@ -281,5 +288,106 @@ describe( 'ReconciliationApp — Connected Site budget proposal (#1612)', () => 
 				} )
 			)
 		);
+	} );
+} );
+
+describe( 'ReconciliationApp — Mollie settlement access (#1693)', () => {
+	const NOTICE =
+		'Mollie has not authorized this site to read settlements yet';
+	// A Notice also announces its text through an a11y live region.
+	const NOTICE_CONTENT = {
+		exact: false,
+		selector: '.components-notice__content',
+	};
+
+	async function renderLoaded() {
+		render( <ReconciliationApp /> );
+		await waitFor( () =>
+			expect(
+				screen.getByRole( 'button', { name: 'Import settlement CSV' } )
+			).toBeInTheDocument()
+		);
+	}
+
+	it( 'explains the missing permission and links to the connection settings', async () => {
+		mockApiFetchByPath( {
+			connectorStatus: {
+				connected: true,
+				scopes_known: false,
+				granted_scopes: [],
+				settlement_access: false,
+			},
+		} );
+		await renderLoaded();
+
+		expect(
+			await screen.findByText( NOTICE, NOTICE_CONTENT )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', {
+				name: 'Open Mollie connection settings',
+			} )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-payments-connector-settings'
+		);
+		// Reconciliation itself stays available.
+		expect(
+			screen.getByRole( 'button', { name: 'Import settlement CSV' } )
+		).toBeEnabled();
+	} );
+
+	it( 'shows nothing once settlement access is granted', async () => {
+		mockApiFetchByPath( {
+			connectorStatus: {
+				connected: true,
+				scopes_known: true,
+				granted_scopes: [ 'payments.read', 'settlements.read' ],
+				settlement_access: true,
+			},
+		} );
+		await renderLoaded();
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith( {
+				path: '/fair-payments-connector/v1/oauth/status',
+			} )
+		);
+		expect(
+			screen.queryByText( NOTICE, NOTICE_CONTENT )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'does not ask a site without a Mollie connection to reconnect', async () => {
+		mockApiFetchByPath( {
+			connectorStatus: {
+				connected: false,
+				scopes_known: false,
+				granted_scopes: [],
+				settlement_access: false,
+			},
+		} );
+		await renderLoaded();
+
+		expect(
+			screen.queryByText( NOTICE, NOTICE_CONTENT )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'treats an unavailable connector separately and keeps the page usable', async () => {
+		mockApiFetchByPath();
+		await renderLoaded();
+
+		expect(
+			screen.queryByText( NOTICE, NOTICE_CONTENT )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'link', {
+				name: 'Open Mollie connection settings',
+			} )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Import settlement CSV' } )
+		).toBeEnabled();
 	} );
 } );

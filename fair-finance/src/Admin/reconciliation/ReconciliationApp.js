@@ -67,6 +67,23 @@ const ReconciliationApp = () => {
 			.catch( () => setBudgets( [] ) );
 	}, [] );
 
+	// Mollie connection status from Fair Payments Connector. Stays null
+	// when the connector is inactive or too old to report it — that is not
+	// the same as a connected account lacking the permission, so it shows
+	// nothing here.
+	const [ connectorStatus, setConnectorStatus ] = useState( null );
+
+	useEffect( () => {
+		apiFetch( { path: '/fair-payments-connector/v1/oauth/status' } )
+			.then( ( status ) => setConnectorStatus( status ) )
+			.catch( () => setConnectorStatus( null ) );
+	}, [] );
+
+	const needsSettlementAccess =
+		connectorStatus !== null &&
+		connectorStatus.connected === true &&
+		connectorStatus.settlement_access !== true;
+
 	// Recompute the proposed budget whenever the transaction selection
 	// changes, unless the entry already has a budget (nothing to propose —
 	// it's preserved) or the administrator already overrode the proposal.
@@ -315,6 +332,27 @@ const ReconciliationApp = () => {
 					} }
 					onCancel={ () => setShowSettlementModal( false ) }
 				/>
+			) }
+
+			{ needsSettlementAccess && (
+				<Notice
+					status="warning"
+					isDismissible={ false }
+					actions={ [
+						{
+							label: __(
+								'Open Mollie connection settings',
+								'fair-finance'
+							),
+							url: 'admin.php?page=fair-payments-connector-settings',
+						},
+					] }
+				>
+					{ __(
+						'Mollie has not authorized this site to read settlements yet, so they cannot be retrieved automatically. Reconnect to Mollie in the Fair Payments Connector settings to grant that permission. You can keep importing the settlement CSV in the meantime.',
+						'fair-finance'
+					) }
+				</Notice>
 			) }
 
 			{ error && (

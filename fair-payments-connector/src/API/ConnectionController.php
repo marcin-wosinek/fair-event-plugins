@@ -8,6 +8,7 @@
 namespace FairPaymentsConnector\API;
 
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
+use FairPaymentsConnector\OAuth\GrantedScopes;
 use FairPaymentsConnector\Models\Transaction;
 use FairEventsShared\Money;
 
@@ -50,6 +51,18 @@ class ConnectionController extends \WP_REST_Controller {
 
 		register_rest_route(
 			'fair-payments-connector/v1',
+			'/oauth/status',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_oauth_status' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+
+		register_rest_route(
+			'fair-payments-connector/v1',
 			'/test-payment',
 			array(
 				'methods'             => 'POST',
@@ -60,6 +73,31 @@ class ConnectionController extends \WP_REST_Controller {
 					return current_user_can( 'manage_options' );
 				},
 			)
+		);
+	}
+
+	/**
+	 * Get the connection status and the permissions Mollie granted.
+	 *
+	 * `settlement_access` is true only for an active connection whose
+	 * recorded scopes include settlement access. A connection made before
+	 * scopes were recorded reports `scopes_known: false` and has to be
+	 * reconnected before settlements can be read.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_oauth_status() {
+		$scopes = GrantedScopes::get();
+
+		return new \WP_REST_Response(
+			array(
+				'connected'                   => (bool) get_option( 'fair_payment_mollie_connected', false ),
+				'scopes_known'                => null !== $scopes,
+				'granted_scopes'              => null === $scopes ? array() : $scopes,
+				'settlement_access'           => GrantedScopes::has_settlement_access(),
+				'settlement_access_requested' => GrantedScopes::is_settlement_access_requested(),
+			),
+			200
 		);
 	}
 

@@ -558,6 +558,49 @@ if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
 	}
 }
 
+if ( ! function_exists( 'delete_option' ) ) {
+	/**
+	 * Stub of WordPress delete_option() backed by $GLOBALS['_fair_test_options'].
+	 *
+	 * @param string $name Option name.
+	 * @return true
+	 */
+	function delete_option( $name ) {
+		unset( $GLOBALS['_fair_test_options'][ $name ] );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_remote_post' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_post() — returns the response a test put in
+	 * $GLOBALS['_fair_test_remote_post'] and records the request.
+	 *
+	 * @param string $url  Request URL.
+	 * @param array  $args Request arguments.
+	 * @return array|WP_Error
+	 */
+	function wp_remote_post( $url, $args = array() ) {
+		$GLOBALS['_fair_test_remote_requests'][] = array(
+			'url'  => $url,
+			'args' => $args,
+		);
+		return $GLOBALS['_fair_test_remote_post'] ?? new WP_Error( 'http_request_failed', 'No response configured.' );
+	}
+}
+
+if ( ! function_exists( 'wp_remote_retrieve_body' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_retrieve_body().
+	 *
+	 * @param array $response HTTP response.
+	 * @return string
+	 */
+	function wp_remote_retrieve_body( $response ) {
+		return is_array( $response ) && isset( $response['body'] ) ? $response['body'] : '';
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WPDB.php';
 
 // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.

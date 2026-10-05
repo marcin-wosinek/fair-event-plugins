@@ -68,7 +68,7 @@ Before using this plugin, you must:
    - Go to Mollie Dashboard → Developers → Your Apps
    - Create new OAuth app
    - Set redirect URI: `https://fair-event-plugins.com/oauth/callback`
-   - Select scopes: `payments.read`, `payments.write`, `refunds.read`, `refunds.write`, `organizations.read`
+   - Select scopes: `payments.read`, `payments.write`, `refunds.read`, `refunds.write`, `organizations.read`, `profiles.read`, `profiles.write`, `balances.read`, and `settlements.read` (requested only by sites running Fair Finance)
 
 3. **Enable Platform Fees**
    - Contact partners@mollie.com
