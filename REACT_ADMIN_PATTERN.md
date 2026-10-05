@@ -311,7 +311,7 @@ function initializeApp() {
 		return;
 	}
 
-	// Pass data from PHP via dataset attributes
+	// Read bootstrap data from PHP once; component state owns later changes.
 	const initialData = {
 		userId: parseInt(rootElement.dataset.userId, 10),
 		// ... other data from PHP
@@ -326,7 +326,8 @@ function initializeApp() {
 
 -   Always check if root element exists before rendering
 -   Use defensive DOM ready pattern (see CLAUDE.md)
--   Pass initial data from PHP via `dataset` attributes
+-   Pass initial data from PHP via `dataset` attributes, then keep changing
+    values in component state rather than reading them back from the DOM
 -   Import from `@wordpress/element`, not `react` directly
 
 ### 6. React Admin Component
@@ -692,6 +693,14 @@ if (error) {
 
 -   Use `useState` for local component state
 -   Use `useEffect` for data fetching
+-   Keep each page or form's important data and lifecycle state in React state
+    (or a reducer when transitions interact). Derive related UI properties
+    from that state once and pass them to every consumer: a button's disabled
+    state, a total's visibility, and the displayed amount must agree.
+-   Treat event targets and PHP-provided `data-*` attributes as inputs to
+    state. Do not read rendered text, CSS classes, or a control's `disabled`
+    property to decide another control's behavior. Any documented DOM value
+    used by an external integration is an output synchronized from state.
 -   Update local state optimistically after mutations
 -   Reload data after create/delete operations
 

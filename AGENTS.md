@@ -149,6 +149,17 @@ Frontend:
     `src/API/`, built to `build/admin/{page-name}/`.
 -   Canonical examples: **fair-audience** (most admin pages), fair-payments-connector, fair-events.
 
+### Frontend state — see [BLOCK_CREATION.md](./BLOCK_CREATION.md) & [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md)
+
+For interactive frontend forms and blocks, keep important state in one
+per-instance JavaScript model (or React state), including asynchronous phases,
+selection eligibility, and derived values. Update that model from input events
+and API responses, then render related controls from the same derived state.
+Do not use a button's `disabled` property, visibility classes, or mutable
+`data-*` attributes as the source of truth for another control. Server-rendered
+`data-*` values may bootstrap the model or expose a documented integration
+value, but later changes must flow from the model to the DOM.
+
 ### Frontend `viewScript`
 
 `viewScript` files must use the defensive DOM-ready pattern: check

@@ -28,6 +28,26 @@ src/blocks/block-name/
 -   `render` - Server-side PHP rendering (REQUIRED)
 -   `viewScript` - Frontend JavaScript for interactivity
 
+## Frontend state model
+
+For an interactive block, create one state model per block or form instance.
+Keep business values and lifecycle state there: current selections, calculated
+amounts, validation or eligibility, loading, and submission. Input events and
+API responses update the model; one render path derives and applies all related
+UI states. For example, derive `canSubmit` once and use it for both the submit
+button and a checkout total that is visible only when submission is available.
+Avoid separate handlers that independently toggle those elements.
+
+The DOM is an input and output boundary. Read a control's value when handling
+its event, but do not treat another element's `disabled` property, text,
+visibility class, or `data-*` attribute as the authoritative form state. PHP
+may render initial `data-*` configuration; read it once to initialize the
+model. If external integrations need a documented `data-*` value, update it
+from the model alongside the visible text, including while that text is hidden.
+Keep each instance's state separate when multiple copies of the block appear
+on one page. Plain JavaScript can use a closure or `WeakMap`; a React block can
+use component state. Add focused transition tests for every related control.
+
 ## Public script dependencies
 
 Keep `viewScript` imports limited to what the visitor-facing control uses.
