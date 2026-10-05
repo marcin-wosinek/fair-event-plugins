@@ -117,13 +117,36 @@ test.describe
 		};
 	}
 
-	async function buySingle( email, headers = {} ) {
+	// A known participant is recognised by the token an emailed link
+	// carries; their email alone, typed by anyone, would be held back.
+	async function participantToken( participantId ) {
+		const res = await api.post(
+			'/wp-json/fair-e2e/v1/event-signup/participant-token',
+			{
+				headers: adminHeaders,
+				data: {
+					participant_id: participantId,
+					event_date_id: single.eventDateId,
+				},
+			}
+		);
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		return ( await res.json() ).token;
+	}
+
+	async function buySingle( email, headers = {}, participantId = 0 ) {
 		const purchase = await buy(
 			{
 				event_date_id: single.eventDateId,
 				email,
 				ticket_type_id: single.typeId,
 				quantity: 1,
+				...( participantId
+					? {
+							participant_token:
+								await participantToken( participantId ),
+					  }
+					: {} ),
 			},
 			headers
 		);
@@ -298,7 +321,7 @@ test.describe
 		const email = uniqueEmail( 'returning' );
 		const participantId = await createParticipant( email );
 
-		returning = await buySingle( email );
+		returning = await buySingle( email, {}, participantId );
 
 		const after = await state(
 			returning.transactionId,
@@ -326,7 +349,7 @@ test.describe
 		);
 		expect( addRes.ok(), await addRes.text() ).toBeTruthy();
 
-		signedUp = await buySingle( email );
+		signedUp = await buySingle( email, {}, participantId );
 
 		const after = await state( signedUp.transactionId, signedUp.signupIds );
 		expect( after.participant_id ).toBe( participantId );

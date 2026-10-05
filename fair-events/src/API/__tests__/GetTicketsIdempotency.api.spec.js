@@ -144,18 +144,31 @@ test.describe( 'Repeat purchases with idempotent checkout', () => {
 		};
 	}
 
+	// One browser per buyer: fair-audience recognises a returning buyer by
+	// the session their first purchase opened, and holds back a purchase
+	// typed with a known email from a browser it has not seen.
+	const buyers = new Map();
+
+	async function buyerContext( email ) {
+		if ( ! buyers.has( email ) ) {
+			buyers.set(
+				email,
+				await request.newContext( { baseURL: BASE_URL } )
+			);
+		}
+		return buyers.get( email );
+	}
+
 	/**
-	 * Submit the purchase form's request. Without a visitor each call is a
-	 * new anonymous browser; pass one to keep its cookies between calls, as
-	 * a returning participant's browser does.
+	 * Submit the purchase form's request. Without a visitor each buyer
+	 * (email) gets a browser of their own; pass one to choose the browser.
 	 *
 	 * @param {Object} data      Request payload.
 	 * @param {Object} [visitor] Request context to reuse.
 	 * @return {Promise<{status: number, body: Object}>} Response.
 	 */
 	async function buy( data, visitor ) {
-		const context =
-			visitor || ( await request.newContext( { baseURL: BASE_URL } ) );
+		const context = visitor || ( await buyerContext( data.email || '' ) );
 		const res = await context.post( GET_TICKETS, {
 			data: { name: 'Repeat Buyer', _honeypot: '', ...data },
 		} );
@@ -165,9 +178,6 @@ test.describe( 'Repeat purchases with idempotent checkout', () => {
 			body = JSON.parse( text );
 		} catch ( error ) {
 			body = { raw: text.slice( 0, 300 ) };
-		}
-		if ( ! visitor ) {
-			await context.dispose();
 		}
 		return { status: res.status(), body };
 	}
@@ -261,6 +271,9 @@ test.describe( 'Repeat purchases with idempotent checkout', () => {
 					headers: adminHeaders,
 				}
 			);
+		}
+		for ( const context of buyers.values() ) {
+			await context.dispose();
 		}
 		await api.dispose();
 	} );

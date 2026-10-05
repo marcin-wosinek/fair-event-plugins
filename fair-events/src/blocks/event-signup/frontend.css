@@ -107,6 +107,15 @@
 	border-radius: 4px;
 }
 
+.fair-events-get-tickets-resume-notice {
+	margin: 0 0 12px;
+	padding: 8px 12px;
+	background: #d4edda;
+	color: #155724;
+	border: 1px solid #c3e6cb;
+	border-radius: 4px;
+}
+
 .fair-events-get-tickets-form .ticket-price {
 	font-size: 0.9em;
 	color: #555;

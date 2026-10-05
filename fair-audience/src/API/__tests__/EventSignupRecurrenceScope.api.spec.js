@@ -5,8 +5,6 @@
  * Tests the core contract:
  *   - A whole_series signup is stored against the master event-date, not the
  *     chosen occurrence — verified by checking /event-dates/:id/participants.
- *   - get_status for an occurrence returns is_signed_up:true when the
- *     participant holds a series pass on the master.
  *   - A single_instance signup is stored against the occurrence's event-date.
  *   - Capacity is enforced independently for both scopes (separate ticket types,
  *     each with capacity 1; second signup for the same scope is rejected).
@@ -14,10 +12,6 @@
  *   - A multiple_instances signup that names an occurrence outside the ticket
  *     type's own series is rejected.
  *   - A valid multiple_instances signup creates one row per chosen occurrence.
- *   - register_and_signup() (the public "I'm new" form, #1001) dispatches
- *     multiple_instances ticket types the same way create_signup() does,
- *     creating one row per chosen occurrence for a brand-new participant
- *     instead of collapsing to a single occurrence.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -228,26 +222,6 @@ test.describe( 'Recurrence-scope ticket types — signup semantics', () => {
 		expect( row.label ).toBe( 'signed_up' );
 	} );
 
-	test( 'get_status for the master returns is_signed_up:true after whole_series signup', async () => {
-		test.skip(
-			! fixtureOk,
-			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
-		);
-		const statusRes = await api.get(
-			'/wp-json/fair-audience/v1/event-signup/status',
-			{
-				headers: authHeaders,
-				params: {
-					event_id: eventA.eventId,
-					event_date_id: eventA.masterEventDateId,
-				},
-			}
-		);
-		expect( statusRes.ok() ).toBeTruthy();
-		const body = await statusRes.json();
-		expect( body.is_signed_up ).toBe( true );
-	} );
-
 	test( 'single_instance signup is stored against the given event-date', async () => {
 		test.skip(
 			! fixtureOk,
@@ -316,34 +290,56 @@ test.describe( 'Recurrence-scope ticket types — signup semantics', () => {
 			);
 			expect( firstRes.ok() ).toBeTruthy();
 
-			// The public registration route supplies a genuinely distinct identity.
-			const secondEmail = uniqueEmail( 'second-scope' );
-			const secondRes = await api.post(
-				'/wp-json/fair-audience/v1/event-signup/register',
+			// A participant token supplies a genuinely distinct identity.
+			const secondParticipantRes = await api.post(
+				'/wp-json/fair-audience/v1/participants',
 				{
+					headers: authHeaders,
 					data: {
-						event_id: capEvent.eventId,
-						event_date_id: capEvent.masterEventDateId,
-						ticket_type_id: capTtId,
 						name: 'Second Scope Tester',
-						email: secondEmail,
+						email: uniqueEmail( 'second-scope' ),
 					},
 				}
 			);
-			const secondBody = await secondRes.json();
-			expect( secondRes.status(), JSON.stringify( secondBody ) ).toBe(
-				409
-			);
-			expect( secondBody.code ).toBe( 'ticket_type_sold_out' );
+			expect( secondParticipantRes.ok() ).toBeTruthy();
+			secondParticipantId = ( await secondParticipantRes.json() ).id;
 
-			const participantsRes = await api.get(
-				'/wp-json/fair-audience/v1/participants',
-				{ headers: authHeaders }
+			const tokenRes = await api.post(
+				'/wp-json/fair-e2e/v1/event-signup/participant-token',
+				{
+					headers: authHeaders,
+					data: {
+						participant_id: secondParticipantId,
+						event_date_id: capEvent.masterEventDateId,
+					},
+				}
 			);
-			const secondParticipant = ( await participantsRes.json() ).find(
-				( candidate ) => candidate.email === secondEmail
-			);
-			secondParticipantId = secondParticipant?.id;
+			expect( tokenRes.ok(), await tokenRes.text() ).toBeTruthy();
+			const { token } = await tokenRes.json();
+
+			const anonymous = await request.newContext( {
+				baseURL: BASE_URL,
+			} );
+			try {
+				const secondRes = await anonymous.post(
+					'/wp-json/fair-audience/v1/event-signup',
+					{
+						data: {
+							event_id: capEvent.eventId,
+							event_date_id: capEvent.masterEventDateId,
+							ticket_type_id: capTtId,
+							participant_token: token,
+						},
+					}
+				);
+				const secondBody = await secondRes.json();
+				expect( secondRes.status(), JSON.stringify( secondBody ) ).toBe(
+					409
+				);
+				expect( secondBody.code ).toBe( 'ticket_type_sold_out' );
+			} finally {
+				await anonymous.dispose();
+			}
 
 			// Cleanup capacity-test event.
 			await api.delete(
@@ -565,180 +561,6 @@ test.describe( 'multiple_instances ticket types — pick-N signup semantics (#93
 			const rows = await participantsRes.json();
 			expect(
 				rows.find( ( p ) => p.participant_id === participantId )
-			).toBeFalsy();
-		}
-	} );
-} );
-
-test.describe( 'multiple_instances via register_and_signup — public "I\'m new" form (#1001)', () => {
-	let api;
-	let event;
-	let occurrenceIds;
-	let ttId;
-	let createdParticipantIds;
-
-	async function createRecurringEvent( title, rrule ) {
-		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
-			headers: authHeaders,
-			data: { title, status: 'publish' },
-		} );
-		expect( postRes.ok() ).toBeTruthy();
-		const eventId = ( await postRes.json() ).id;
-
-		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
-			headers: authHeaders,
-			data: {
-				title,
-				start_datetime: '2035-05-02 10:00:00',
-				end_datetime: '2035-05-02 12:00:00',
-				rrule,
-			},
-		} );
-		expect( edRes.ok() ).toBeTruthy();
-		const masterEventDateId = ( await edRes.json() ).id;
-
-		const linkRes = await api.put(
-			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
-			{ headers: authHeaders, data: { event_id: eventId } }
-		);
-		expect( linkRes.ok() ).toBeTruthy();
-
-		const occRes = await api.get(
-			`/wp-json/fair-events/v1/event-dates?event_id=${ eventId }`,
-			{ headers: authHeaders }
-		);
-		expect( occRes.ok() ).toBeTruthy();
-		const occurrences = ( await occRes.json() ).map( ( o ) => o.id ).sort();
-
-		return { eventId, masterEventDateId, occurrences };
-	}
-
-	async function createMultiInstanceTicketType( masterEventDateId ) {
-		const res = await api.post(
-			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/tickets`,
-			{
-				headers: authHeaders,
-				data: {
-					ticket_types: [
-						{
-							name: 'Pick your sessions',
-							capacity: null,
-							sort_order: 0,
-							recurrence_scope: 'multiple_instances',
-							minimum_instances: 1,
-						},
-					],
-					sale_periods: [],
-					prices: [],
-				},
-			}
-		);
-		expect(
-			res.ok(),
-			'create multiple_instances ticket type'
-		).toBeTruthy();
-		const tt = ( await res.json() ).ticket_types?.[ 0 ];
-		expect( tt.recurrence_scope ).toBe( 'multiple_instances' );
-		return tt.id;
-	}
-
-	async function findParticipantByEmail( email ) {
-		const res = await api.get( '/wp-json/fair-audience/v1/participants', {
-			headers: authHeaders,
-			params: { search: email },
-		} );
-		expect( res.ok() ).toBeTruthy();
-		const found = ( await res.json() ).find( ( p ) => p.email === email );
-		expect(
-			found,
-			'participant created by register_and_signup'
-		).toBeTruthy();
-		return found;
-	}
-
-	test.beforeAll( async () => {
-		api = await request.newContext( { baseURL: BASE_URL } );
-		createdParticipantIds = [];
-
-		event = await createRecurringEvent(
-			`Register Multi Instance Test ${ Date.now() }`,
-			'FREQ=WEEKLY;COUNT=3'
-		);
-		expect( event.occurrences.length ).toBe( 3 );
-		occurrenceIds = event.occurrences;
-
-		// Free ticket type (no prices configured) — exercises the dispatch
-		// itself without needing a configured payment connector, mirroring
-		// the sliding-scale tests' all-zero-band approach.
-		ttId = await createMultiInstanceTicketType( event.masterEventDateId );
-	} );
-
-	test.afterAll( async () => {
-		for ( const id of createdParticipantIds ) {
-			await deleteParticipant( api, id );
-		}
-		if ( event?.eventId ) {
-			await api.delete( `/wp-json/wp/v2/fair_event/${ event.eventId }`, {
-				headers: authHeaders,
-				params: { force: 'true' },
-			} );
-		}
-		await api.dispose();
-	} );
-
-	test( 'a brand-new buyer picking N occurrences gets one signup row per occurrence, not just one', async () => {
-		const email = uniqueEmail( 'register-multi-instance' );
-		const chosen = [ occurrenceIds[ 0 ], occurrenceIds[ 2 ] ];
-
-		const res = await api.post(
-			'/wp-json/fair-audience/v1/event-signup/register',
-			{
-				headers: authHeaders,
-				data: {
-					event_id: event.eventId,
-					event_date_id: event.masterEventDateId,
-					ticket_type_id: ttId,
-					event_date_ids: chosen,
-					name: 'Register Multi Instance Tester',
-					email,
-				},
-			}
-		);
-		expect( res.ok(), await res.text() ).toBeTruthy();
-		const body = await res.json();
-		expect( body.status ).toMatch( /^(signed_up|already_signed_up)$/ );
-
-		const participant = await findParticipantByEmail( email );
-		createdParticipantIds.push( participant.id );
-
-		for ( const occId of chosen ) {
-			const participantsRes = await api.get(
-				`/wp-json/fair-audience/v1/event-dates/${ occId }/participants`,
-				{ headers: authHeaders }
-			);
-			expect( participantsRes.ok() ).toBeTruthy();
-			const rows = await participantsRes.json();
-			const row = rows.find(
-				( p ) => p.participant_id === participant.id
-			);
-			expect( row, `signup row on occurrence ${ occId }` ).toBeTruthy();
-			expect( row.label ).toBe( 'signed_up' );
-		}
-
-		// The unselected occurrence must have no row — before the fix, the
-		// bug collapsed every selection onto a single event_date_id instead.
-		const untouched = occurrenceIds.filter(
-			( id ) => ! chosen.includes( id )
-		);
-		for ( const occId of untouched ) {
-			const participantsRes = await api.get(
-				`/wp-json/fair-audience/v1/event-dates/${ occId }/participants`,
-				{ headers: authHeaders }
-			);
-			expect( participantsRes.ok() ).toBeTruthy();
-			const rows = await participantsRes.json();
-			expect(
-				rows.find( ( p ) => p.participant_id === participant.id )
 			).toBeFalsy();
 		}
 	} );

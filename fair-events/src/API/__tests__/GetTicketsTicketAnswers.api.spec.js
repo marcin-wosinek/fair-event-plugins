@@ -50,19 +50,25 @@ const dietQuestion = ( value ) => ( {
 	display_order: 0,
 } );
 
+// One browser per buyer (email): separate buyers stay cookie-isolated, and a
+// returning buyer keeps the session fair-audience recognises them by — a
+// purchase typed with a known email from an unseen browser is held back.
+const visitors = new Map();
+
 /**
- * POST as an independent, cookie-isolated anonymous visitor.
+ * POST as a visitor, one per buyer.
  *
  * @param {string} path Request path.
  * @param {Object} data JSON body.
  * @return {Promise<{ok: boolean, status: number}>}
  */
 async function anonymousPost( path, data ) {
-	const context = await request.newContext( { baseURL: BASE_URL } );
-	const res = await context.post( path, { data } );
-	const result = { ok: res.ok(), status: res.status() };
-	await context.dispose();
-	return result;
+	const key = data.email || '';
+	if ( ! visitors.has( key ) ) {
+		visitors.set( key, await request.newContext( { baseURL: BASE_URL } ) );
+	}
+	const res = await visitors.get( key ).post( path, { data } );
+	return { ok: res.ok(), status: res.status() };
 }
 
 test.describe( 'Fair Form answers per ticket', () => {
@@ -190,6 +196,9 @@ test.describe( 'Fair Form answers per ticket', () => {
 	} );
 
 	test.afterAll( async () => {
+		for ( const visitor of visitors.values() ) {
+			await visitor.dispose();
+		}
 		if ( eventPostId ) {
 			await api.delete(
 				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,

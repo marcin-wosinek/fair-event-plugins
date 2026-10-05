@@ -1,49 +1,40 @@
 /**
- * E2E: resume an anonymous signup on a recognised email (#1004), including
- * the anti-enumeration guard when the browser already holds a session for a
+ * E2E: resume a signup on a recognised email (#1004) through the Event Signup
+ * block, including the guard when the browser already holds a session for a
  * *different* participant.
  *
- * Stays on the legacy fair-audience/event-signup block (`{block: 'legacy'}`):
- * the request-link/resume-by-email flow and its `participant_token`+`resume`
- * URL tokens are deferred to a follow-up ticket at the #1245 cutover — the
- * unified block has no equivalent tab/flow yet, so this scenario isn't
- * reachable there. Session pre-fill (step 1 below) already works on the
- * unified block too; see resume-signup coverage there once the follow-up
- * lands.
- *
- * The API spec (EventSignupResume.api.spec.js) covers the register/resume
- * endpoints in isolation but only from a cookie-less request context, and
- * can't drive the emailed resume link at all. Here we go through the real
+ * The API spec (EventSignupResume.api.spec.js) covers the endpoints in
+ * isolation but can't drive the emailed link. Here we go through the real
  * browser UI end to end:
  *
  *   1. The browser already has a fair_audience_session cookie for an
  *      unrelated participant (seeded directly — AudienceSession::set() can't
  *      be called from a CLI script, see seed-audience-session-cookie.php).
- *      That session pre-fills the anonymous form, proving the cookie is
- *      read, but its identity must NOT be reused for a different email.
+ *      That session pre-fills the form, proving the cookie is read, but its
+ *      identity must NOT stand in for a different email.
  *   2. Typing a second, already-registered participant's email submits the
  *      form; since the session belongs to someone else, the server must
- *      stash the submission and email a resume link instead of signing
- *      anyone up (anti-enumeration — a guessed email can't be hijacked via
- *      an unrelated active session either).
- *   3. The resume link (extracted from the captured mail, since the dev
- *      stack has no real inbox) is visited for real; the form must restore
- *      into the authenticated "with_token" state and let the visitor
- *      complete the (paid) signup they originally filled in — through the
- *      real Mollie-double checkout/callback round trip, same as
+ *      stash the submission and email a link instead of signing anyone up —
+ *      a guessed email can't be taken over through an unrelated session.
+ *   3. The link (extracted from the captured mail, since the dev stack has no
+ *      real inbox) is visited for real; the form must come back with the
+ *      answers the visitor gave and let them complete the (paid) signup —
+ *      through the real Mollie-double checkout/callback round trip, same as
  *      ticket-purchase-confirmation.spec.js.
+ *   4. Opening the link again restores nothing.
  */
 
 import { test, expect } from '../support/fixtures.js';
 import { runScript } from '../support/wp-cli.js';
 
-test.describe('event-signup block: resume anonymous signup on recognised email', () => {
+test.describe('event-signup block: resume a signup on a recognised email', () => {
 	test('a session for another participant does not bypass the resume-by-email flow', async ({
 		page,
 		context,
+		browser,
 		seedEvent,
 	}) => {
-		const event = seedEvent('paid', { block: 'legacy' });
+		const event = seedEvent('paid', { block: 'unified-with-question' });
 		const stamp = Date.now();
 
 		const recognisedEmail = `resume.recognised.${stamp}@example.test`;
@@ -77,34 +68,35 @@ test.describe('event-signup block: resume anonymous signup on recognised email',
 				},
 			]);
 
-			// The session cookie pre-fills the anonymous form with the session
-			// owner's details — proves the cookie is actually being read.
+			// The session cookie pre-fills the form with the session owner's
+			// details — proves the cookie is actually being read.
 			await page.goto(event.pageUrl);
-			const form = page.locator('.fair-audience-signup-register');
+			const form = page.locator('.fair-events-get-tickets-form');
 			await expect(form).toBeVisible();
-			await expect(
-				form.locator('input[name="signup_email"]')
-			).toHaveValue(sessionOwnerEmail);
+			await expect(form.locator('input[name="email"]')).toHaveValue(
+				sessionOwnerEmail
+			);
 
 			// Overwrite with the OTHER, already-registered participant's email —
 			// the session belongs to someone else, so this must not be treated
-			// as an authenticated resubmission of that session's identity.
+			// as that participant signing up.
 			await form
-				.locator('input[name="signup_name"]')
+				.locator('input[name="name"]')
 				.fill('Resume Recognised Visitor');
+			await form.locator('input[name="email"]').fill(recognisedEmail);
 			await form
-				.locator('input[name="signup_email"]')
-				.fill(recognisedEmail);
+				.locator('[data-question-key="dietary"] input[type="text"]')
+				.fill('No nuts');
 			const ticket = form.locator('input[name="ticket_type_id"]');
 			await ticket.check();
 			expect(
 				Number(await ticket.getAttribute('data-ticket-price'))
 			).toBeGreaterThan(0);
 
-			await form.locator('.fair-audience-signup-submit-button').click();
+			await form.locator('button[type="submit"]').click();
 
-			// Anti-enumeration response: generic "check your inbox" message, no
-			// signup created, no session hijack.
+			// Generic "check your inbox" message, no signup created, no
+			// session taken over.
 			await expect(
 				page.getByText('check your inbox', { exact: false })
 			).toBeVisible();
@@ -114,17 +106,17 @@ test.describe('event-signup block: resume anonymous signup on recognised email',
 				'E2E_STATE',
 				`${recognisedEmail} ${event.eventDateId}`
 			);
-			expect(state.label).not.toBe('signed_up');
+			expect(state.label).toBeNull();
+			expect(state.transaction_id).toBeNull();
 
-			// Pull the resume link out of the captured mail (no real inbox in
-			// this stack) and follow it as the visitor would from their email
-			// client.
+			// Pull the link out of the captured mail (no real inbox in this
+			// stack) and follow it as the visitor would from their email client.
 			const resumeMail = state.mail.find((m) =>
 				m.subject.includes('Continue registering')
 			);
 			expect(
 				resumeMail,
-				'a "Continue registering" resume email should be captured'
+				'a "Continue registering" email should be captured'
 			).toBeTruthy();
 
 			const participantTokenMatch = resumeMail.body.match(
@@ -133,33 +125,48 @@ test.describe('event-signup block: resume anonymous signup on recognised email',
 			const resumeTokenMatch = resumeMail.body.match(/resume=([^"&#]+)/);
 			expect(
 				participantTokenMatch,
-				'participant_token in resume email'
+				'participant_token in the email'
 			).toBeTruthy();
-			expect(
-				resumeTokenMatch,
-				'resume token in resume email'
-			).toBeTruthy();
+			expect(resumeTokenMatch, 'resume token in the email').toBeTruthy();
+			const resumeUrl = `${event.pageUrl}?participant_token=${participantTokenMatch[1]}&resume=${resumeTokenMatch[1]}`;
 
-			await page.goto(
-				`${event.pageUrl}?participant_token=${participantTokenMatch[1]}&resume=${resumeTokenMatch[1]}`
-			);
+			// The inbox owner opens the link in their own browser.
+			const ownerContext = await browser.newContext();
+			const ownerPage = await ownerContext.newPage();
+			try {
+				await ownerPage.goto(resumeUrl);
 
-			// The restored, authenticated form shows the "welcome back" notice
-			// and lets the visitor finish the signup they originally filled in.
-			await expect(
-				page.getByText('restored your answers', { exact: false })
-			).toBeVisible();
+				const ownerForm = ownerPage.locator(
+					'.fair-events-get-tickets-form'
+				);
+				await expect(
+					ownerPage.getByText('restored your answers', {
+						exact: false,
+					})
+				).toBeVisible();
+				await expect(
+					ownerForm.locator('input[name="email"]')
+				).toHaveValue(recognisedEmail);
+				await expect(
+					ownerForm.locator('input[name="name"]')
+				).toHaveValue('Resume Recognised Visitor');
+				await expect(
+					ownerForm.locator(
+						'[data-question-key="dietary"] input[type="text"]'
+					)
+				).toHaveValue('No nuts');
 
-			// Complete the paid signup: the double's checkout link sends the
-			// buyer straight back to the callback URL, which syncs "paid" from
-			// the double on the reload (see ticket-purchase-confirmation.spec.js).
-			const signupButton = page.locator('.fair-audience-signup-button');
-			await expect(signupButton).toBeVisible();
-			await signupButton.click();
-			await expect(
-				page.getByText('Payment confirmed', { exact: false })
-			).toBeVisible({ timeout: 30000 });
-			await expect(page).toHaveURL(/fair_payment_callback=true/);
+				// Complete the paid signup: the double's checkout link sends
+				// the buyer straight back to the callback URL, which syncs
+				// "paid" from the double on the reload.
+				await ownerForm.locator('button[type="submit"]').click();
+				await expect(
+					ownerPage.getByText('Payment confirmed', { exact: false })
+				).toBeVisible({ timeout: 30000 });
+				await expect(ownerPage).toHaveURL(/fair_payment_callback=true/);
+			} finally {
+				await ownerContext.close();
+			}
 
 			const finalState = runScript(
 				'signup-state.php',
@@ -167,6 +174,24 @@ test.describe('event-signup block: resume anonymous signup on recognised email',
 				`${recognisedEmail} ${event.eventDateId}`
 			);
 			expect(finalState.label).toBe('signed_up');
+
+			// Opening the link again offers nothing to restore: the participant
+			// now holds this signup, so their registration is shown instead.
+			const reuseContext = await browser.newContext();
+			const reusePage = await reuseContext.newPage();
+			try {
+				await reusePage.goto(resumeUrl);
+				await expect(
+					reusePage.locator('.fair-events-signed-up-card')
+				).toBeVisible();
+				await expect(
+					reusePage.getByText('restored your answers', {
+						exact: false,
+					})
+				).toHaveCount(0);
+			} finally {
+				await reuseContext.close();
+			}
 		} finally {
 			runScript(
 				'cleanup-participant.php',

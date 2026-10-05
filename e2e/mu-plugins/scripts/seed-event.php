@@ -25,11 +25,6 @@
  *                        {"seriesCount":N} to change the number of occurrences
  *                        (default 3); {"seriesCount":1} seeds a series with
  *                        exactly one upcoming occurrence.
- *   audience-ticket-scopes  like three-ticket-scopes, but always renders the
- *                        dormant fair-audience/event-signup block regardless
- *                        of any {"block":…} override — for specs proving old
- *                        pages (authored before #1245) keep rendering it
- *                        unchanged.
  *   address              event-info block + a calendar button, no ticket
  *                        type/sale period (signup path untouched). Renders
  *                        {"address":"…"} (default 'Calle Mayor 1, Madrid') via
@@ -41,9 +36,9 @@
  *                        {"venueName":"…","venueAddress":"…"}) to attach a
  *                        venue, which must win over any address on the row.
  *   unified-with-options like paid-with-options, but renders the unified
- *                        fair-events/event-signup block (instead of the
- *                        default fair-audience/event-signup) so the base
- *                        plugin's own activities fieldset is under test.
+ *                        fair-events/event-signup block with activities, so
+ *                        the base plugin's own activities fieldset is under
+ *                        test.
  *                        Override {"minimumActivities":N} to set the
  *                        event-date global minimum-activities requirement
  *                        (default 0 = none).
@@ -98,22 +93,24 @@ $is_paid            = true;
 
 // Which purchase block the event page carries. Default (#1245 cutover): the
 // unified fair-events/event-signup block — the only signup block new content
-// uses now that render.php no longer delegates to fair-audience's legacy
-// block. Override {"block":"get-tickets"} for specs that exercise the
+// uses. Override {"block":"get-tickets"} for specs that exercise the
 // fair-events standalone purchase path (with fair-audience deactivated).
 // Override {"block":"unified-with-question"} for specs that exercise the
 // unified block with a nested fair-form question.
+// Override {"block":"saved-audience-signup"} for content saved with the
+// removed fair-audience/event-signup block (custom button text plus nested
+// questions), which a render-only alias shows as the unified form.
 $block_content = '<!-- wp:fair-events/event-signup /-->';
-if ( 'audience-ticket-scopes' === $flavour ) {
-	// The legacy block deliberately, regardless of any override — this
-	// flavour exists to prove old pages (authored before #1245) keep
-	// rendering their dormant fair-audience/event-signup block unchanged.
-	$block_content = '<!-- wp:fair-audience/event-signup /-->';
-} elseif ( isset( $overrides['block'] ) && 'legacy' === $overrides['block'] ) {
-	// The dormant legacy block, on request — for specs covering
-	// functionality still deferred to it post-#1245 (participant_token URL
-	// login, the request-link/resume-by-email flow).
-	$block_content = '<!-- wp:fair-audience/event-signup /-->';
+if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['block'] ) {
+	$block_content = implode(
+		"\n",
+		array(
+			'<!-- wp:fair-audience/event-signup {"signupButtonText":"Join the retreat"} -->',
+			'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"dietary","questionText":"Dietary needs"} /-->',
+			'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"arrival","questionText":"Arrival time"} /-->',
+			'<!-- /wp:fair-audience/event-signup -->',
+		)
+	);
 } elseif ( isset( $overrides['block'] ) && 'get-tickets' === $overrides['block'] ) {
 	$block_content = '<!-- wp:fair-events/get-tickets /-->';
 } elseif ( isset( $overrides['block'] ) && 'unified-with-question' === $overrides['block'] ) {
@@ -286,24 +283,6 @@ switch ( $flavour ) {
 		}
 		break;
 
-	case 'audience-ticket-scopes':
-		$price = isset( $overrides['price'] ) ? (float) $overrides['price'] : 15.00;
-		// Turns the single occurrence already created above into the series
-		// master (same event_date_id/sale_period_id) plus 2 generated siblings.
-		$occurrence_ids = fair_e2e_add_series( $event_id, 3 );
-		$single_type_id = fair_e2e_add_ticket_type( $event_date_id, 'Single Session', null );
-		$whole_type_id  = fair_e2e_add_whole_series_ticket_type( $event_date_id, 'Full Series Pass' );
-		fair_e2e_add_price( $single_type_id, $sale_period_id, $price, null );
-		fair_e2e_add_price( $whole_type_id, $sale_period_id, 40.00, null );
-		$ticket_type_id = $single_type_id;
-		$extra_type_ids = array( $whole_type_id );
-		if ( ! $omit_multi ) {
-			$multi_type_id    = fair_e2e_add_multi_instance_ticket_type( $event_date_id, 'Pick your sessions', $minimum_instances );
-			$extra_type_ids[] = $multi_type_id;
-			fair_e2e_add_price( $multi_type_id, $sale_period_id, 10.00, null );
-		}
-		break;
-
 	case 'address':
 		fair_e2e_set_address( $event_date_id, $address );
 		if ( $recurring ) {
@@ -318,7 +297,7 @@ switch ( $flavour ) {
 		break;
 
 	default:
-		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes, audience-ticket-scopes, address, unified-with-options." );
+		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes, address, unified-with-options." );
 }
 
 echo 'E2E_SEED:' . wp_json_encode(

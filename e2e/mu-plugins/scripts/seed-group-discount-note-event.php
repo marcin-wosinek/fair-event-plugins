@@ -7,11 +7,9 @@
  * Run via WP-CLI against the wp-env tests instance:
  *   wp eval-file wp-content/mu-plugins/scripts/seed-group-discount-note-event.php <json-args>
  *
- * The event renders fair-audience's own event-signup block (event-factory's
- * default) — the one variant that resolves the viewer synchronously via a
- * `?participant_token=` URL, so the seeded participant's personalized note
- * and price are present in the very first server-rendered page, no cookie or
- * login choreography needed.
+ * The event renders the Event Signup block (event-factory's default). The
+ * page URL carries a `?participant_token=`, so the seeded participant is
+ * recognised without cookie or login choreography.
  *
  * Args (JSON object):
  *   price          Ticket type base price. Default 20.00.

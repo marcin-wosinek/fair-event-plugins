@@ -536,6 +536,35 @@ class GetTicketsController extends WP_REST_Controller {
 			return $precheck_error;
 		}
 
+		// Extension point for plugins (e.g. fair-audience) that answer a
+		// submission themselves instead of letting it be saved now — a typed
+		// email that belongs to someone the browser is not known to be, who
+		// then continues from a link sent to that address. Runs before any
+		// signup, participant link or payment exists. Only sanitized values
+		// are handed over. See REST_API_BACKEND.md.
+		$deferred_response = apply_filters(
+			'fair_events_signup_deferred_response',
+			null,
+			array(
+				'event_date_id'         => (int) $event_date_id,
+				'name'                  => $name,
+				'email'                 => $email,
+				'ticket_type_id'        => (int) $ticket_type_id,
+				'quantity'              => $quantity,
+				'mailing_opt_in'        => $mailing_opt_in,
+				'ticket_option_ids'     => $ticket_option_ids,
+				'ticket_activities'     => $unit_option_ids,
+				'event_date_ids'        => array_values( array_filter( array_map( 'absint', (array) $request->get_param( 'event_date_ids' ) ) ) ),
+				'questionnaire_answers' => $questionnaire_answers,
+			),
+			$participant_token
+		);
+		if ( null !== $deferred_response ) {
+			// Counts as an attempt, so the answer cannot be requested without limit.
+			$this->increment_rate_limit( $email );
+			return rest_ensure_response( $deferred_response );
+		}
+
 		// Validate ticket type belongs to this event date (or its series master)
 		// and has not been disabled.
 		$amount               = 0.00;

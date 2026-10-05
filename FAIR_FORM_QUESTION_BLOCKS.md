@@ -14,12 +14,14 @@ Mirror the closest existing sibling under `fair-form/src/blocks/fair-form-{type}
     attributes as the other question blocks. Set `ancestor` to name every
     parent context the question should be available in:
     -   `fair-audience/fair-form`
-    -   `fair-audience/event-signup`
     -   `fair-events/event-signup`
+    -   `fair-audience/event-signup` — not a block anyone can insert: the
+        name survives only for content saved before the block was removed,
+        which a render-only alias shows as `fair-events/event-signup`
 
     Omit a context only when the question type genuinely shouldn't appear
-    there (e.g. file-upload is left out of both event-signup blocks because
-    there's no vetted anonymous-upload path).
+    there (e.g. file-upload is left out of Event Signup because there's no
+    vetted anonymous-upload path).
 -   `editor.js` — the block's own editor UI (question text, key, required
     toggle, placeholder, disabled preview input).
 -   `render.php` — frontend markup, via `get_block_wrapper_attributes()` with
@@ -36,21 +38,20 @@ Mirror the closest existing sibling under `fair-form/src/blocks/fair-form-{type}
 `ancestor` in `block.json` is necessary but **not sufficient** — each parent
 block also keeps its own hardcoded allow-list passed to
 `useInnerBlocksProps`/`InnerBlocks`, and the inserter only offers a question
-block where it appears in **both** places. There are four such gates:
+block where it appears in **both** places. There are three such gates:
 
 -   `fair-form/src/blocks/fair-form/editor.js` — `ALLOWED_BLOCKS`
 -   `fair-form/src/blocks/fair-form-conditional/editor.js` — `ALLOWED_BLOCKS`
--   `fair-audience/src/blocks/event-signup/editor.js` — `ALLOWED_BLOCKS`
 -   `fair-events/src/blocks/event-signup/editor.js` — `FAIR_FORM_ALLOWED_BLOCKS`
 
 The first two source from `FAIR_FORM_QUESTION_BLOCK_NAMES`
 (`fair-events-shared/src/question-utils.js`), since a fair-form and a
 conditional section inside it are supposed to accept the exact same set of
 question types — add the new block's name there and both arrays pick it up.
-The two `event-signup` arrays are genuine, deliberately smaller subsets (e.g.
-file-upload and mailing-signup are excluded) and stay hardcoded — add
-`'fair-audience/fair-form-{type}'` to each one directly, if the new type
-belongs there.
+The `event-signup` array is a genuine, deliberately smaller subset (e.g.
+file-upload and mailing-signup are excluded) and stays hardcoded — add
+`'fair-audience/fair-form-{type}'` to it directly, if the new type belongs
+there.
 
 A block with a correct `ancestor` array and no entry in these arrays will
 register cleanly, pass review, and simply never show up in the inserter.
@@ -59,8 +60,8 @@ register cleanly, pass review, and simply never show up in the inserter.
 
 -   `fair-events-shared/src/questionnaire.js` — `validateQuestions()`: add a
     block keyed on `[data-question-type="{type}"]`, mirroring the existing
-    phone/email/url blocks. Used by fair-form, and both event-signup
-    frontend.js files, so one change covers all three.
+    phone/email/url blocks. Used by fair-form and the Event Signup
+    frontend.js, so one change covers both.
 -   `fair-form/src/Services/QuestionnaireService.php`:
     -   add `'{type}'` to `VALID_TYPES`
     -   add a `'{type}' === $question_type` branch in `sanitize_answers()`

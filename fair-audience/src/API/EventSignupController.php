@@ -10,8 +10,6 @@ namespace FairAudience\API;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
-use FairAudience\Database\EmailConfirmationTokenRepository;
-use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\GroupSignupPricing;
@@ -68,66 +66,18 @@ class EventSignupController extends WP_REST_Controller {
 	private $email_service;
 
 	/**
-	 * Token repository instance.
-	 *
-	 * @var EmailConfirmationTokenRepository
-	 */
-	private $token_repository;
-
-	/**
-	 * Rate limit: max requests per email per hour.
-	 */
-	const RATE_LIMIT_MAX = 3;
-
-	/**
-	 * Rate limit window in seconds (1 hour).
-	 */
-	const RATE_LIMIT_WINDOW = 3600;
-
-	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->participant_repository       = new ParticipantRepository();
 		$this->event_participant_repository = new EventParticipantRepository();
 		$this->email_service                = new EmailService();
-		$this->token_repository             = new EmailConfirmationTokenRepository();
 	}
 
 	/**
 	 * Register REST API routes.
 	 */
 	public function register_routes() {
-		// GET /fair-audience/v1/event-signup/status
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/status',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_status' ),
-					'permission_callback' => '__return_true',
-					'args'                => array(
-						'event_id'          => array(
-							'type'              => 'integer',
-							'required'          => true,
-							'sanitize_callback' => 'absint',
-						),
-						'event_date_id'     => array(
-							'type'              => 'integer',
-							'required'          => false,
-							'sanitize_callback' => 'absint',
-						),
-						'participant_token' => array(
-							'type'              => 'string',
-							'required'          => false,
-							'sanitize_callback' => 'sanitize_text_field',
-						),
-					),
-				),
-			)
-		);
-
 		// GET /fair-audience/v1/event-signup/resume.
 		register_rest_route(
 			$this->namespace,
@@ -153,7 +103,7 @@ class EventSignupController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-audience/v1/event-signup
+		// POST /fair-audience/v1/event-signup.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -214,7 +164,7 @@ class EventSignupController extends WP_REST_Controller {
 			)
 		);
 
-		// DELETE /fair-audience/v1/event-signup
+		// DELETE /fair-audience/v1/event-signup.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -244,7 +194,7 @@ class EventSignupController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-audience/v1/event-signup/retry-payment
+		// POST /fair-audience/v1/event-signup/retry-payment.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/retry-payment',
@@ -270,41 +220,7 @@ class EventSignupController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /fair-audience/v1/event-signup/request-link
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/request-link',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'request_link' ),
-					'permission_callback' => '__return_true',
-					'args'                => array(
-						'event_id'      => array(
-							'type'              => 'integer',
-							'required'          => true,
-							'sanitize_callback' => 'absint',
-						),
-						'event_date_id' => array(
-							'type'              => 'integer',
-							'required'          => false,
-							'default'           => 0,
-							'sanitize_callback' => 'absint',
-						),
-						'email'         => array(
-							'type'              => 'string',
-							'required'          => true,
-							'sanitize_callback' => 'sanitize_email',
-							'validate_callback' => function ( $value ) {
-								return is_email( $value );
-							},
-						),
-					),
-				),
-			)
-		);
-
-		// POST /fair-audience/v1/event-signup/add-activities
+		// POST /fair-audience/v1/event-signup/add-activities.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/add-activities',
@@ -343,87 +259,6 @@ class EventSignupController extends WP_REST_Controller {
 				),
 			)
 		);
-
-		// POST /fair-audience/v1/event-signup/register
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/register',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'register_and_signup' ),
-					'permission_callback' => '__return_true',
-					'args'                => array(
-						'event_id'              => array(
-							'type'              => 'integer',
-							'required'          => true,
-							'sanitize_callback' => 'absint',
-						),
-						'event_date_id'         => array(
-							'type'              => 'integer',
-							'required'          => false,
-							'sanitize_callback' => 'absint',
-						),
-						'ticket_type_id'        => array(
-							'type'              => 'integer',
-							'required'          => false,
-							'sanitize_callback' => 'absint',
-						),
-						'ticket_option_ids'     => array(
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						),
-						'chosen_amount'         => array(
-							'type'     => 'number',
-							'required' => false,
-						),
-						// Chosen occurrence IDs for 'multiple_instances' ticket types.
-						// Capped so a crafted request can't force an unbounded number
-						// of line items / DB rows per submission.
-						'event_date_ids'        => array(
-							'type'              => 'array',
-							'items'             => array( 'type' => 'integer' ),
-							'required'          => false,
-							'validate_callback' => function ( $value ) {
-								return ! is_array( $value ) || count( $value ) <= 50;
-							},
-						),
-						'name'                  => array(
-							'type'              => 'string',
-							'required'          => true,
-							'sanitize_callback' => 'sanitize_text_field',
-						),
-						'surname'               => array(
-							'type'              => 'string',
-							'required'          => false,
-							'default'           => '',
-							'sanitize_callback' => 'sanitize_text_field',
-						),
-						'email'                 => array(
-							'type'              => 'string',
-							'required'          => true,
-							'sanitize_callback' => 'sanitize_email',
-							'validate_callback' => function ( $value ) {
-								return is_email( $value );
-							},
-						),
-						'keep_informed'         => array(
-							'type'              => 'boolean',
-							'required'          => false,
-							'default'           => false,
-							'sanitize_callback' => 'rest_sanitize_boolean',
-						),
-						// No 'type' declared: a JSON string sent via FormData would
-						// otherwise be mangled. The QuestionnaireService parse/sanitize
-						// helpers handle both raw JSON strings and decoded arrays.
-						'questionnaire_answers' => array(
-							'required' => false,
-							'default'  => array(),
-						),
-					),
-				),
-			)
-		);
 	}
 
 	/**
@@ -455,105 +290,6 @@ class EventSignupController extends WP_REST_Controller {
 			__( 'You must be logged in or have a valid signup link.', 'fair-audience' ),
 			array( 'status' => 401 )
 		);
-	}
-
-	/**
-	 * Get signup status.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error Response object or error.
-	 */
-	public function get_status( $request ) {
-		$event_id          = $request->get_param( 'event_id' );
-		$participant_token = $request->get_param( 'participant_token' );
-		$user_id           = get_current_user_id();
-
-		// Validate event exists.
-		$event = get_post( $event_id );
-		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
-			return new WP_Error(
-				'invalid_event',
-				__( 'Event not found.', 'fair-audience' ),
-				array( 'status' => 404 )
-			);
-		}
-
-		// Resolve event_date_id.
-		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
-		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
-			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
-			if ( $event_dates_obj ) {
-				$event_date_id = (int) $event_dates_obj->id;
-			}
-		}
-
-		// Determine user state and participant.
-		$state        = 'anonymous';
-		$participant  = null;
-		$is_signed_up = false;
-
-		if ( ! empty( $participant_token ) ) {
-			// Token-based access via HMAC participant token.
-			$token_data = ParticipantToken::verify( $participant_token );
-			if ( $token_data ) {
-				$state       = 'with_token';
-				$participant = $this->participant_repository->get_by_id( $token_data['participant_id'] );
-			}
-		} elseif ( $user_id ) {
-			// Logged-in user.
-			$participant = $this->participant_repository->get_by_user_id( $user_id );
-			if ( $participant ) {
-				$state = 'linked';
-			} else {
-				$state = 'not_linked';
-			}
-		}
-
-		// Check if already signed up.
-		if ( $participant ) {
-			if ( $event_date_id ) {
-				$event_participant = $this->event_participant_repository->get_by_event_date_and_participant(
-					$event_date_id,
-					$participant->id
-				);
-			} else {
-				$event_participant = $this->event_participant_repository->get_by_event_and_participant(
-					$event_id,
-					$participant->id
-				);
-			}
-			if ( $event_participant && 'signed_up' === $event_participant->label ) {
-				$is_signed_up = true;
-			}
-
-			// Also check for a whole-series pass on the master event-date. A
-			// participant holding a series pass is considered signed up for every
-			// occurrence from the purchase date forward.
-			if ( ! $is_signed_up && $event_date_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
-				$is_signed_up = $this->is_occurrence_covered_by_series_pass( $event_date_id, $participant->id );
-			}
-		}
-
-		$response_data = array(
-			'state'        => $state,
-			'is_signed_up' => $is_signed_up,
-			'event'        => array(
-				'id'    => $event_id,
-				'title' => $event->post_title,
-			),
-		);
-
-		// Include participant info if available and not anonymous.
-		if ( $participant && 'anonymous' !== $state ) {
-			$response_data['participant'] = array(
-				'id'      => $participant->id,
-				'name'    => $participant->name,
-				'surname' => $participant->surname,
-				'email'   => $participant->email,
-			);
-		}
-
-		return rest_ensure_response( $response_data );
 	}
 
 	/**
@@ -608,9 +344,9 @@ class EventSignupController extends WP_REST_Controller {
 	public function create_signup( $request ) {
 		$event_id          = $request->get_param( 'event_id' );
 		$participant_token = $request->get_param( 'participant_token' );
-		$ticket_type_id    = $request->get_param( 'ticket_type_id' ) ?: null;
+		$ticket_type_id    = $request->get_param( 'ticket_type_id' ) ? $request->get_param( 'ticket_type_id' ) : null;
 		$user_id           = get_current_user_id();
-		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ?: array();
+		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ? $request->get_param( 'ticket_option_ids' ) : array();
 		$chosen_amount     = $request->get_param( 'chosen_amount' );
 
 		// Validate event exists.
@@ -624,7 +360,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Resolve event_date_id.
-		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
+		$event_date_id = (int) $request->get_param( 'event_date_id' );
 		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
 			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
 			if ( $event_dates_obj ) {
@@ -804,7 +540,7 @@ class EventSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function create_multi_instance_signup( $request, $event, $event_id, $participant, $ticket_type ) {
-		$raw_ids = $request->get_param( 'event_date_ids' ) ?: array();
+		$raw_ids = $request->get_param( 'event_date_ids' ) ? $request->get_param( 'event_date_ids' ) : array();
 		$raw_ids = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
 		$raw_ids = array_filter( $raw_ids );
 
@@ -1009,7 +745,7 @@ class EventSignupController extends WP_REST_Controller {
 				),
 				'post_id'       => $event_id,
 				'event_date_id' => (int) $pending_occurrences[0]->id,
-				'user_id'       => get_current_user_id() ?: null,
+				'user_id'       => get_current_user_id() ? get_current_user_id() : null,
 				'metadata'      => array(
 					'source'                => 'fair-audience-signup',
 					'event_date_id'         => (int) $pending_occurrences[0]->id,
@@ -1079,7 +815,7 @@ class EventSignupController extends WP_REST_Controller {
 		$event_id          = $request->get_param( 'event_id' );
 		$participant_token = $request->get_param( 'participant_token' );
 		$user_id           = get_current_user_id();
-		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ?: array();
+		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ? $request->get_param( 'ticket_option_ids' ) : array();
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -1092,7 +828,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Resolve event_date_id.
-		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
+		$event_date_id = (int) $request->get_param( 'event_date_id' );
 		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
 			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
 			if ( $event_dates_obj ) {
@@ -1411,49 +1147,6 @@ class EventSignupController extends WP_REST_Controller {
 			return (int) $ed->id;
 		}
 		return null;
-	}
-
-	/**
-	 * Check whether a participant holds a whole-series pass that covers a given
-	 * occurrence.
-	 *
-	 * A whole-series pass is a signed_up row on the master event-date whose
-	 * ticket type has recurrence_scope = 'whole_series'. An occurrence is covered
-	 * when its start_datetime is on or after the pass's created_at (mid-series
-	 * purchase semantics).
-	 *
-	 * @param int $event_date_id  Occurrence (or master) event-date ID.
-	 * @param int $participant_id Participant ID.
-	 * @return bool True if the participant's series pass covers this occurrence.
-	 */
-	private function is_occurrence_covered_by_series_pass( $event_date_id, $participant_id ) {
-		$master_id = $this->resolve_master_event_date_id( $event_date_id );
-		if ( ! $master_id ) {
-			return false;
-		}
-
-		$pass_row = $this->event_participant_repository->get_series_pass_for_participant( $master_id, $participant_id );
-		if ( ! $pass_row || ! $pass_row->ticket_type_id ) {
-			return false;
-		}
-
-		if ( ! class_exists( \FairEvents\Models\TicketType::class ) ) {
-			return false;
-		}
-		$tt = \FairEvents\Models\TicketType::get_by_id( (int) $pass_row->ticket_type_id );
-		if ( ! $tt || ! $tt->is_whole_series() ) {
-			return false;
-		}
-
-		// Mid-series: pass covers occurrences starting on or after the purchase date.
-		if ( $event_date_id !== $master_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
-			$occ = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
-			if ( $occ && $occ->start_datetime && $pass_row->created_at ) {
-				return strtotime( $occ->start_datetime ) >= strtotime( $pass_row->created_at );
-			}
-		}
-
-		return true;
 	}
 
 	/**
@@ -2024,7 +1717,7 @@ class EventSignupController extends WP_REST_Controller {
 		if ( $existing ) {
 			$existing->label              = 'pending_payment';
 			$existing->payment_expires_at = $expires_at;
-			$existing->ticket_type_id     = $ticket_type_id ?: null;
+			$existing->ticket_type_id     = $ticket_type_id ? $ticket_type_id : null;
 			$existing->save();
 			$event_participant = $existing;
 		} else {
@@ -2035,7 +1728,7 @@ class EventSignupController extends WP_REST_Controller {
 					'participant_id'     => $participant->id,
 					'label'              => 'pending_payment',
 					'payment_expires_at' => $expires_at,
-					'ticket_type_id'     => $ticket_type_id ?: null,
+					'ticket_type_id'     => $ticket_type_id ? $ticket_type_id : null,
 				)
 			);
 			$event_participant->save();
@@ -2235,7 +1928,7 @@ class EventSignupController extends WP_REST_Controller {
 				),
 				'post_id'       => $event_id,
 				'event_date_id' => $event_date_id,
-				'user_id'       => get_current_user_id() ?: null,
+				'user_id'       => get_current_user_id() ? get_current_user_id() : null,
 				'metadata'      => array(
 					'source'               => 'fair-audience-series-upgrade',
 					'event_date_id'        => $event_date_id,
@@ -2285,77 +1978,6 @@ class EventSignupController extends WP_REST_Controller {
 				'transaction_id' => $transaction_id,
 				'amount'         => $delta,
 				'currency'       => Money::site_currency(),
-			)
-		);
-	}
-
-	/**
-	 * Request signup link for existing participant.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error Response object or error.
-	 */
-	public function request_link( $request ) {
-		$event_id      = $request->get_param( 'event_id' );
-		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
-		$email         = $request->get_param( 'email' );
-
-		// Validate event exists.
-		$event = get_post( $event_id );
-		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
-			return new WP_Error(
-				'invalid_event',
-				__( 'Event not found.', 'fair-audience' ),
-				array( 'status' => 404 )
-			);
-		}
-
-		// Validate email.
-		if ( ! is_email( $email ) ) {
-			return new WP_Error(
-				'invalid_email',
-				__( 'Please enter a valid email address.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Check rate limit.
-		if ( $this->is_rate_limited( $email ) ) {
-			return new WP_Error(
-				'rate_limited',
-				__( 'Too many requests. Please try again later.', 'fair-audience' ),
-				array( 'status' => 429 )
-			);
-		}
-
-		// Increment rate limit counter.
-		$this->increment_rate_limit( $email );
-
-		// Find participant by email.
-		$participant = $this->participant_repository->get_by_email( $email );
-
-		// Always return success to prevent email enumeration.
-		// But only send email if participant exists.
-		if ( $participant ) {
-			// Resolve event_date_id if not provided.
-			if ( ! $event_date_id && class_exists( \FairEvents\Models\EventDates::class ) ) {
-				$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
-				if ( $event_dates_obj ) {
-					$event_date_id = $event_dates_obj->id;
-				}
-			}
-
-			// Generate participant token URL.
-			$token_url = ParticipantToken::get_url( $participant->id, $event_date_id, $event->ID );
-
-			// Send signup link email.
-			$this->email_service->send_signup_link_email( $event, $participant, $token_url );
-		}
-
-		return rest_ensure_response(
-			array(
-				'success' => true,
-				'message' => __( 'If your email is in our system, you will receive a signup link shortly. Please check your inbox.', 'fair-audience' ),
 			)
 		);
 	}
@@ -2854,312 +2476,6 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Register new participant and sign up for event.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error Response object or error.
-	 */
-	public function register_and_signup( $request ) {
-		$event_id       = $request->get_param( 'event_id' );
-		$name           = $request->get_param( 'name' );
-		$surname        = $request->get_param( 'surname' );
-		$email          = $request->get_param( 'email' );
-		$keep_informed  = $request->get_param( 'keep_informed' );
-		$ticket_type_id = $request->get_param( 'ticket_type_id' ) ?: null;
-		$raw_option_ids = $request->get_param( 'ticket_option_ids' ) ?: array();
-		$chosen_amount  = $request->get_param( 'chosen_amount' );
-
-		// Validate event exists.
-		$event = get_post( $event_id );
-		if ( ! $event || ! \FairEvents\Database\EventRepository::is_event( $event ) ) {
-			return new WP_Error(
-				'invalid_event',
-				__( 'Event not found.', 'fair-audience' ),
-				array( 'status' => 404 )
-			);
-		}
-
-		// Resolve event_date_id.
-		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
-		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
-			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
-			if ( $event_dates_obj ) {
-				$event_date_id = (int) $event_dates_obj->id;
-			}
-		}
-
-		// Validate email.
-		if ( ! is_email( $email ) ) {
-			return new WP_Error(
-				'invalid_email',
-				__( 'Please enter a valid email address.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Validate name.
-		if ( empty( trim( $name ) ) ) {
-			return new WP_Error(
-				'invalid_name',
-				__( 'Please enter your name.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Parse and validate custom question answers before any mutation.
-		$questionnaire_answers = $this->prepare_questionnaire_answers( $request );
-		if ( is_wp_error( $questionnaire_answers ) ) {
-			return $questionnaire_answers;
-		}
-
-		// Logged-in WP users with a linked participant get to skip the email
-		// lookup entirely. Their wp_user_id is a stronger identity than the
-		// typed email — typing someone else's email shouldn't let them sign
-		// up under that participant. Rate limit is also bypassed because
-		// they've already authenticated.
-		$wp_user_id         = get_current_user_id();
-		$participant        = null;
-		$existing           = null;
-		$is_new_participant = false;
-
-		if ( $wp_user_id ) {
-			$participant = $this->participant_repository->get_by_user_id( $wp_user_id );
-		}
-
-		if ( ! $participant ) {
-			// Check rate limit only when going through the email-lookup flow.
-			if ( $this->is_rate_limited( $email ) ) {
-				return new WP_Error(
-					'rate_limited',
-					__( 'Too many requests. Please try again later.', 'fair-audience' ),
-					array( 'status' => 429 )
-				);
-			}
-			$this->increment_rate_limit( $email );
-
-			$participant = $this->participant_repository->get_by_email( $email );
-
-			// Known email + anonymous flow: if the browser doesn't already
-			// hold a session for *this* participant, don't act on their
-			// identity. A stranger guessing the email shouldn't sign someone
-			// up or trigger any pre-fill — send a resume link to the address
-			// instead so only the inbox owner can continue.
-			if ( $participant ) {
-				$session_pid = (int) AudienceSession::get_participant_id();
-				if ( $session_pid !== (int) $participant->id ) {
-					// Stash the already-validated submission so the resume link
-					// restores it instead of landing on a blank form. Only the
-					// parsed/sanitized answers are stored — never raw request input.
-					$resume_token = \FairAudience\Services\PendingSignupStash::stash(
-						array(
-							'participant_id'        => (int) $participant->id,
-							'event_id'              => (int) $event_id,
-							'event_date_id'         => (int) $event_date_id,
-							'ticket_type_id'        => $ticket_type_id ? (int) $ticket_type_id : null,
-							'ticket_option_ids'     => array_map( 'absint', (array) $raw_option_ids ),
-							'event_date_ids'        => array_map( 'absint', (array) ( $request->get_param( 'event_date_ids' ) ? $request->get_param( 'event_date_ids' ) : array() ) ),
-							'chosen_amount'         => null !== $chosen_amount ? (float) $chosen_amount : null,
-							'keep_informed'         => (bool) $keep_informed,
-							'questionnaire_answers' => $questionnaire_answers,
-						)
-					);
-
-					$token_url  = ParticipantToken::get_url(
-						$participant->id,
-						(int) $event_date_id,
-						(int) $event->ID
-					);
-					$resume_url = add_query_arg( 'resume', $resume_token, $token_url );
-
-					$is_paid = $event_date_id
-						&& \FairAudience\Services\SignupPriceResolver::has_paid_price_configured(
-							(int) $event_date_id,
-							$ticket_type_id ? (int) $ticket_type_id : null
-						);
-
-					$this->email_service->send_resume_registration_email( $event, $participant, $resume_url, $is_paid );
-
-					return rest_ensure_response(
-						array(
-							'success' => true,
-							'status'  => 'email_recognized',
-							'message' => __( 'We recognise this email — check your inbox to continue.', 'fair-audience' ),
-						)
-					);
-				}
-			}
-		}
-
-		if ( $participant ) {
-			// Participant exists - check if already signed up.
-			if ( $event_date_id ) {
-				$existing = $this->event_participant_repository->get_by_event_date_and_participant(
-					$event_date_id,
-					$participant->id
-				);
-			} else {
-				$existing = $this->event_participant_repository->get_by_event_and_participant(
-					$event_id,
-					$participant->id
-				);
-			}
-
-			if ( $existing && 'signed_up' === $existing->label ) {
-				return rest_ensure_response(
-					array(
-						'success' => true,
-						'message' => __( 'You are already signed up for this event.', 'fair-audience' ),
-						'status'  => 'already_signed_up',
-					)
-				);
-			}
-		} else {
-			// Create new participant before starting the paid or free flow so
-			// we always have a participant_id to link the signup/payment to.
-			$participant = new Participant();
-			$participant->populate(
-				array(
-					'name'          => $name,
-					'surname'       => $surname,
-					'email'         => $email,
-					'email_profile' => $keep_informed ? 'marketing' : 'minimal',
-					'status'        => $keep_informed ? 'pending' : 'confirmed',
-					// Link to the WP account when the caller is logged in.
-					// Only set on new-participant creation — never claim an
-					// existing-email participant for the current WP user, the
-					// email_recognized branch above guards that case.
-					'wp_user_id'    => $wp_user_id ? $wp_user_id : null,
-				)
-			);
-
-			if ( ! $participant->save() ) {
-				return new WP_Error(
-					'creation_failed',
-					__( 'Failed to process registration. Please try again.', 'fair-audience' ),
-					array( 'status' => 500 )
-				);
-			}
-
-			$is_new_participant = true;
-
-			// Mailing-list double opt-in: dispatch the confirmation email as
-			// soon as the participant lands in 'pending' status. Doing it here
-			// (rather than only in the free-signup tail below) ensures the
-			// paid-signup branch — which short-circuits with a payment URL —
-			// still triggers the email. Without this, paid signups with
-			// keep_informed=true left the subscriber stuck on 'pending' with
-			// no way to confirm.
-			if ( $keep_informed ) {
-				$token = $this->token_repository->create_token( $participant->id );
-				if ( $token ) {
-					$this->email_service->send_confirmation_email( $participant, $token->token );
-				}
-			}
-		}
-
-		// 'multiple_instances' ticket types pick several specific occurrences
-		// instead of resolving a single price — dispatch to the same
-		// per-occurrence signup path create_signup() uses (see lines 590-595
-		// above), now that we have a participant to attach the signup to.
-		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
-			$tt_for_multi = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
-			if ( $tt_for_multi && $tt_for_multi->is_multiple_instances() ) {
-				$multi_response = $this->create_multi_instance_signup( $request, $event, $event_id, $participant, $tt_for_multi );
-				if ( $is_new_participant && ! is_wp_error( $multi_response ) ) {
-					AudienceSession::set( (int) $participant->id );
-				}
-				return $multi_response;
-			}
-		}
-
-		// Validate ticket type group restrictions.
-		$group_error = $this->validate_ticket_type_group_restriction( $ticket_type_id, $participant->id );
-		if ( is_wp_error( $group_error ) ) {
-			return $group_error;
-		}
-
-		// Reject sold-out tiers server-side too — the frontend disables them
-		// but a stale page or crafted request could still POST a full
-		// ticket_type_id.
-		$capacity_error = $this->validate_ticket_type_capacity( $ticket_type_id );
-		if ( is_wp_error( $capacity_error ) ) {
-			return $capacity_error;
-		}
-
-		// Reject disabled/expired ticket types server-side.
-		$availability_error = $this->validate_ticket_type_enabled( $ticket_type_id );
-		if ( is_wp_error( $availability_error ) ) {
-			return $availability_error;
-		}
-
-		// Paid path takes over when a positive price resolves for this participant.
-		$option_items = $this->load_valid_options( $event_date_id, $raw_option_ids );
-
-		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items, $ticket_type_id );
-		if ( is_wp_error( $min_error ) ) {
-			return $min_error;
-		}
-
-		// Persist custom question answers up front so they survive the paid
-		// flow (the signup row may be only pending_payment at this point).
-		$save_error = $this->save_signup_questionnaire( $request, $questionnaire_answers, $participant->id, $event_date_id, $event_id );
-		if ( is_wp_error( $save_error ) ) {
-			return $save_error;
-		}
-
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $wp_user_id, $ticket_type_id, $option_items, $chosen_amount );
-		if ( null !== $paid_response ) {
-			if ( $is_new_participant && ! is_wp_error( $paid_response ) ) {
-				AudienceSession::set( (int) $participant->id );
-			}
-			return $paid_response;
-		}
-
-		// Free path: sign the participant up.
-		if ( $existing ) {
-			if ( $event_date_id ) {
-				$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
-			} else {
-				$this->event_participant_repository->update_label( $event_id, $participant->id, 'signed_up' );
-			}
-			$event_participant_id = (int) $existing->id;
-		} else {
-			$event_participant_id = (int) $this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', $event_date_id );
-		}
-
-		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
-		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
-
-		$option_names = $this->translated_option_names( $option_items );
-		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
-
-		if ( $is_new_participant ) {
-			AudienceSession::set( (int) $participant->id );
-		}
-
-		// The mailing-list confirmation email (when keep_informed=true) is
-		// dispatched at participant-creation time so both free and paid signup
-		// branches trigger it — see the participant-creation block above.
-		if ( $keep_informed ) {
-			return rest_ensure_response(
-				array(
-					'success' => true,
-					'message' => __( 'You have been signed up for the event! Please check your email to confirm your subscription.', 'fair-audience' ),
-					'status'  => 'registered_and_signed_up',
-				)
-			);
-		}
-
-		return rest_ensure_response(
-			array(
-				'success' => true,
-				'message' => __( 'You have successfully registered and signed up for the event!', 'fair-audience' ),
-				'status'  => 'registered_and_signed_up',
-			)
-		);
-	}
-
-	/**
 	 * Cancel signup for event.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -3181,7 +2497,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Resolve event_date_id.
-		$event_date_id = $request->get_param( 'event_date_id' ) ?: 0;
+		$event_date_id = (int) $request->get_param( 'event_date_id' );
 		if ( empty( $event_date_id ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
 			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
 			if ( $event_dates_obj ) {
@@ -3230,8 +2546,8 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Remove signup (also clears a pending_payment hold row so the
-		// DB-fallback in render.php doesn't resurrect a stale checkout — issue #554).
+		// Remove signup (also clears a pending_payment hold row, so a stale
+		// checkout is not offered again — issue #554).
 		if ( $event_date_id ) {
 			$this->event_participant_repository->remove_participant_from_event_date( $event_date_id, $participant->id );
 		} else {
@@ -3245,34 +2561,5 @@ class EventSignupController extends WP_REST_Controller {
 				'status'  => 'cancelled',
 			)
 		);
-	}
-
-	/**
-	 * Check if email is rate limited.
-	 *
-	 * @param string $email Email address.
-	 * @return bool True if rate limited.
-	 */
-	private function is_rate_limited( $email ) {
-		$transient_key = 'fair_audience_event_signup_' . md5( $email );
-		$count         = get_transient( $transient_key );
-
-		return $count && (int) $count >= self::RATE_LIMIT_MAX;
-	}
-
-	/**
-	 * Increment rate limit counter.
-	 *
-	 * @param string $email Email address.
-	 */
-	private function increment_rate_limit( $email ) {
-		$transient_key = 'fair_audience_event_signup_' . md5( $email );
-		$count         = get_transient( $transient_key );
-
-		if ( $count ) {
-			set_transient( $transient_key, (int) $count + 1, self::RATE_LIMIT_WINDOW );
-		} else {
-			set_transient( $transient_key, 1, self::RATE_LIMIT_WINDOW );
-		}
 	}
 }

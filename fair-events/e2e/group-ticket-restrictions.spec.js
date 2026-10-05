@@ -264,12 +264,34 @@ test( 'organizer restrictions survive reload and control public availability', a
 			signupResult.ok,
 			JSON.stringify( signupResult.body )
 		).toBeTruthy();
+		// Typing a member's email is not being that member: nothing is
+		// saved, no session opens, and the members' ticket stays hidden.
+		expect( signupResult.body.status ).toBe( 'email_recognized' );
 		expect(
 			( await memberContext.cookies() ).some(
 				( cookie ) => cookie.name === 'fair_audience_session'
 			)
-		).toBe( true );
+		).toBe( false );
 		await memberPage.reload();
+		await expect(
+			memberPage.getByRole( 'radio', { name: /^Open/ } )
+		).toBeVisible();
+		await expect(
+			memberPage.getByRole( 'radio', { name: /^Members Only/ } )
+		).toHaveCount( 0 );
+
+		// The member's own link recognises them.
+		const { token } = await apiFetch( adminPage, {
+			path: '/fair-e2e/v1/event-signup/participant-token',
+			method: 'POST',
+			data: {
+				participant_id: participantId,
+				event_date_id: identityEventDateId,
+			},
+		} );
+		await memberPage.goto(
+			`/?page_id=${ signupPageId }&participant_token=${ token }`
+		);
 		await expect(
 			memberPage.getByRole( 'radio', { name: /^Members Only/ } )
 		).toBeVisible( { timeout: 15_000 } );

@@ -2,14 +2,11 @@
  * E2E: the group discount note above the signup button must match the price
  * actually shown/charged (#1297).
  *
- * Targets fair-audience's own event-signup block — the one variant that
- * resolves the viewer synchronously from a `?participant_token=` URL, so a
- * seeded member's personalized note and price are present in the very first
- * server-rendered page (no cookie/login choreography needed). The unified
- * fair-events/event-signup block (the default for new content since #1245)
- * shares the same underlying resolver (SignupHookBridge::enrich_render_context,
- * covered by the fix in this PR) but personalizes via an async viewer-context
- * fetch, which needs a different testing technique — left to a follow-up.
+ * The page is opened through a `?participant_token=` URL, so the Event Signup
+ * block recognises the seeded member without cookie or login choreography.
+ * The note and the member's price arrive with the viewer-context request
+ * after load (SignupHookBridge::enrich_render_context), which the assertions
+ * below wait for.
  *
  * Each case seeds a single ticket type plus a group discount rule via
  * seed-group-discount-note-event.php (real fair-audience/fair-events-experimental
@@ -50,7 +47,7 @@ test.describe('Group discount note accuracy', () => {
 		try {
 			await page.goto(event.pageUrl);
 
-			const note = page.locator('.fair-audience-signup-discount-note');
+			const note = page.locator('.fair-events-get-tickets-discount-note');
 			await expect(note).toBeVisible();
 			await expect(note).toContainText('20% discount applied');
 
@@ -72,7 +69,7 @@ test.describe('Group discount note accuracy', () => {
 		try {
 			await page.goto(event.pageUrl);
 
-			const note = page.locator('.fair-audience-signup-discount-note');
+			const note = page.locator('.fair-events-get-tickets-discount-note');
 			await expect(note).toBeVisible();
 			await expect(note).toContainText('discount applied');
 
@@ -94,7 +91,7 @@ test.describe('Group discount note accuracy', () => {
 		try {
 			await page.goto(event.pageUrl);
 
-			const note = page.locator('.fair-audience-signup-discount-note');
+			const note = page.locator('.fair-events-get-tickets-discount-note');
 			await expect(note).toContainText('12.5% discount applied');
 
 			const radio = page.locator('input[name="ticket_type_id"]');
@@ -115,8 +112,13 @@ test.describe('Group discount note accuracy', () => {
 		try {
 			await page.goto(event.pageUrl);
 
+			// The member's name appears once the viewer-context request was
+			// applied, so the missing note is not just a request still running.
+			await expect(page.locator('input[name="email"]')).not.toHaveValue(
+				''
+			);
 			await expect(
-				page.locator('.fair-audience-signup-discount-note')
+				page.locator('.fair-events-get-tickets-discount-note')
 			).toHaveCount(0);
 
 			const radio = page.locator('input[name="ticket_type_id"]');
