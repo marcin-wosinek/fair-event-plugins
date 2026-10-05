@@ -251,33 +251,10 @@ if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
 }
 $ticket_types_hidden_by_sale_period = ! empty( $ticket_types_before_pricing_filter ) && empty( $ticket_types );
 
-// Resolve activity options (ticket options) for this event date, if the
-// experimental catalogue is active. Options are displayed as checkboxes —
-// participants can select zero or more at signup. Gated on fair-audience
-// being active too: selections can only be persisted through its options
-// junction table, so a base-alone site must not render dead checkboxes.
-$ticket_options = array();
-if ( class_exists( \FairAudience\API\EventSignupController::class )
-	&& class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-	$raw_options = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $pricing_event_date_id );
-	foreach ( $raw_options as $opt ) {
-		$resolved_base = class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class )
-			? \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $opt )
-			: (float) $opt->price;
-		if ( null === $resolved_base ) {
-			// Derived mode with no active period / no row → option not purchasable; skip.
-			continue;
-		}
-		$display          = \FairEvents\Services\SignupFieldsetRenderer::resolve_option_display( $opt );
-		$ticket_options[] = array(
-			'id'         => (int) $opt->id,
-			'name'       => $display['name'],
-			'short_name' => $display['short_name'],
-			'price'      => (float) $resolved_base,
-			'is_full'    => false,
-		);
-	}
-}
+// Activity options (ticket options) offered for this event date right now,
+// displayed as checkboxes — participants can select zero or more at signup.
+// An option without a price for the current sale period is left out.
+$ticket_options = \FairEvents\Services\ActivitySelection::offered_options( $pricing_event_date_id, (int) $event_date_id );
 
 // Minimum number of activities the participant must select. Capped at the
 // number of options actually available so the requirement is never

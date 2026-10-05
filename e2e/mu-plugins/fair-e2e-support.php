@@ -385,7 +385,36 @@ if ( get_option( 'fair_e2e_force_form_bundled_translations' ) ) {
 add_filter(
 	'pre_option_fair_payment_mollie_connected',
 	static function () {
-		return true;
+		// 0 rather than false: false would fall through to the stored option.
+		return get_option( 'fair_e2e_mollie_disconnected' ) ? 0 : true;
+	}
+);
+
+// Lets a spec disconnect the fake Mollie account, to cover the paths that
+// refuse a paid purchase while online payments are not configured:
+// POST fair-e2e/v1/mollie-connection { connected: bool }.
+add_action(
+	'rest_api_init',
+	static function () {
+		register_rest_route(
+			'fair-e2e/v1',
+			'/mollie-connection',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$connected = (bool) $request->get_param( 'connected' );
+					if ( $connected ) {
+						delete_option( 'fair_e2e_mollie_disconnected' );
+					} else {
+						update_option( 'fair_e2e_mollie_disconnected', 1, false );
+					}
+					return rest_ensure_response( array( 'connected' => $connected ) );
+				},
+			)
+		);
 	}
 );
 add_filter(

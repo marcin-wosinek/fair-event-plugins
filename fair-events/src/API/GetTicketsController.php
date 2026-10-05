@@ -628,12 +628,13 @@ class GetTicketsController extends WP_REST_Controller {
 			return $unit_options;
 		}
 
-		// Extension point for plugins (e.g. fair-audience) that sell selectable
-		// activities (ticket options) alongside a signup. Runs unconditionally
-		// — even a signup with no ticket type can carry a minimum-activities
-		// requirement — once for each distinct selection among the tickets.
-		// Capacity across all tickets is enforced below, under the lock. See
-		// REST_API_BACKEND.md.
+		// Validate each distinct selection among the tickets: the activities
+		// belong to the event, are on sale and have a place left, and the
+		// selection satisfies the ticket type's activity rule. Runs
+		// unconditionally — even a signup with no ticket type can carry a
+		// minimum-activities requirement. Capacity across all tickets is
+		// enforced below, under the lock. The filter lets a companion plugin
+		// add its own restriction. See REST_API_BACKEND.md.
 		$validated_selections = array();
 		foreach ( $unit_option_ids as $selection ) {
 			$selection_key = implode( ',', $selection );
@@ -642,23 +643,19 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 			$validated_selections[ $selection_key ] = true;
 
-			$options_error = apply_filters( 'fair_events_signup_options_error', null, $selection, (int) $config_event_date_id, (int) $ticket_type_id, $participant_token, (int) $event_date_id );
+			$options_error = \FairEvents\Services\ActivitySelection::validate( $selection, (int) $config_event_date_id, (int) $ticket_type_id, (int) $event_date_id );
+			$options_error = apply_filters( 'fair_events_signup_options_error', $options_error, $selection, (int) $config_event_date_id, (int) $ticket_type_id, $participant_token, (int) $event_date_id );
 			if ( is_wp_error( $options_error ) ) {
 				return $options_error;
 			}
 		}
 
-		// fair-audience resolves discounted per-activity prices; summed here
-		// into $amount and kept as separate line items (below) so the finance
-		// ledger names what was bought instead of folding it into the ticket
-		// line. Each activity is priced once and charged for every ticket
-		// that selected it.
-		$option_line_items = array();
-		foreach ( array_count_values( array_merge( array(), ...$unit_option_ids ) ) as $option_id => $selected_count ) {
-			foreach ( apply_filters( 'fair_events_signup_option_line_items', array(), array( (int) $option_id ), (int) $config_event_date_id, $participant_token ) as $item ) {
-				$item['quantity']    = (int) $item['quantity'] * $selected_count;
-				$option_line_items[] = $item;
-			}
+		// Each activity is priced once and charged for every ticket that
+		// selected it, as its own line item so the finance ledger names what
+		// was bought instead of folding it into the ticket line.
+		$option_line_items = $this->option_line_items( $unit_options, (int) $config_event_date_id, $participant_token );
+		if ( is_wp_error( $option_line_items ) ) {
+			return $option_line_items;
 		}
 		$ticket_amount = $amount;
 		foreach ( $option_line_items as $item ) {
@@ -1357,9 +1354,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 	/**
 	 * Load the activities chosen for each ticket from the event's activity
-	 * catalogue. Activities are sold only through a companion plugin that
-	 * prices them (fair_events_signup_option_line_items); without one, or
-	 * for an activity outside the catalogue, a selection is refused.
+	 * catalogue. A selection naming an activity outside it is refused.
 	 *
 	 * @param int[][] $unit_option_ids      One list of option IDs per ticket.
 	 * @param int     $config_event_date_id Event date the catalogue belongs to.
@@ -1370,20 +1365,8 @@ class GetTicketsController extends WP_REST_Controller {
 			return array_fill( 0, count( $unit_option_ids ), array() );
 		}
 
-		$invalid = new WP_Error(
-			'invalid_ticket_option',
-			__( 'One of the selected activities is not available for this event.', 'fair-events' ),
-			array( 'status' => 400 )
-		);
-
-		if ( ! has_filter( 'fair_events_signup_option_line_items' )
-			|| ! class_exists( \FairEventsExperimental\Models\TicketOption::class )
-		) {
-			return $invalid;
-		}
-
 		$catalogue = array();
-		foreach ( \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( (int) $config_event_date_id ) as $option ) {
+		foreach ( \FairEvents\Models\TicketOption::get_all_by_event_date_id( (int) $config_event_date_id ) as $option ) {
 			$catalogue[ (int) $option->id ] = $option;
 		}
 
@@ -1392,7 +1375,11 @@ class GetTicketsController extends WP_REST_Controller {
 			$options = array();
 			foreach ( $option_ids as $option_id ) {
 				if ( ! isset( $catalogue[ $option_id ] ) ) {
-					return $invalid;
+					return new WP_Error(
+						'invalid_ticket_option',
+						__( 'One of the selected activities is not available for this event.', 'fair-events' ),
+						array( 'status' => 400 )
+					);
 				}
 				$options[] = $catalogue[ $option_id ];
 			}
@@ -1400,6 +1387,65 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		return $unit_options;
+	}
+
+	/**
+	 * Build the payment line items for the activities chosen across the
+	 * tickets of a purchase: one line per activity, charged once for every
+	 * ticket that selected it, at the price resolved for this buyer. An
+	 * activity priced at zero is free and gets no line; one without a price
+	 * right now refuses the purchase rather than being given away.
+	 *
+	 * @param array[] $unit_options         One list of TicketOption objects per ticket.
+	 * @param int     $config_event_date_id Event date the catalogue belongs to.
+	 * @param string  $participant_token    Optional participant token sent with the request.
+	 * @return array[]|WP_Error List of [ name, quantity, amount ].
+	 */
+	private function option_line_items( array $unit_options, $config_event_date_id, $participant_token ) {
+		$options  = array();
+		$selected = array();
+		foreach ( $unit_options as $ticket_options ) {
+			foreach ( $ticket_options as $option ) {
+				$options[ (int) $option->id ]  = $option;
+				$selected[ (int) $option->id ] = ( $selected[ (int) $option->id ] ?? 0 ) + 1;
+			}
+		}
+		if ( ! $options ) {
+			return array();
+		}
+
+		$base_prices = \FairEvents\Services\ActivityOptionPriceResolver::resolve_for_event_date( (int) $config_event_date_id )['price_by_option_id'];
+		$prices      = \FairEvents\Services\ActivityOptionPriceResolver::charged_prices(
+			array_intersect_key( $base_prices, $options ),
+			(int) $config_event_date_id,
+			$participant_token
+		);
+
+		$line_items = array();
+		foreach ( $options as $option_id => $option ) {
+			$price = $prices[ $option_id ] ?? null;
+			if ( null === $price ) {
+				return new WP_Error(
+					'ticket_option_unavailable',
+					sprintf(
+						/* translators: %s: activity name */
+						__( '"%s" is not currently on sale. Reload the page and choose again.', 'fair-events' ),
+						$option->name
+					),
+					array( 'status' => 409 )
+				);
+			}
+			if ( 0.0 === (float) $price ) {
+				continue;
+			}
+			$line_items[] = array(
+				'name'     => $option->name,
+				'quantity' => $selected[ $option_id ],
+				'amount'   => (float) $price,
+			);
+		}
+
+		return $line_items;
 	}
 
 	/**
@@ -1500,27 +1546,8 @@ class GetTicketsController extends WP_REST_Controller {
 				: array();
 		}
 
-		$ticket_options = array();
-		if ( class_exists( \FairAudience\API\EventSignupController::class )
-			&& class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-			$raw_options = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $pricing_event_date_id );
-			foreach ( $raw_options as $opt ) {
-				$resolved_base = class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class )
-					? \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $opt )
-					: (float) $opt->price;
-				if ( null === $resolved_base ) {
-					continue;
-				}
-				$display          = \FairEvents\Services\SignupFieldsetRenderer::resolve_option_display( $opt );
-				$ticket_options[] = array(
-					'id'         => (int) $opt->id,
-					'name'       => $display['name'],
-					'short_name' => $display['short_name'],
-					'price'      => (float) $resolved_base,
-					'is_full'    => false,
-				);
-			}
-		}
+		// The same offered options, prices and availability render.php resolves.
+		$ticket_options = \FairEvents\Services\ActivitySelection::offered_options( $pricing_event_date_id, $event_date_id );
 
 		$minimum_activities = 0;
 		if ( ! empty( $ticket_options ) && class_exists( \FairEvents\Models\EventDateSetting::class ) ) {

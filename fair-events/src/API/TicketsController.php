@@ -192,89 +192,85 @@ class TicketsController extends WP_REST_Controller {
 			EventDateSetting::set_multiple( $event_date_id, $this->normalize_settings( $body['settings'] ) );
 		}
 
-		// 6. Sync ticket options — only when fair-events-experimental is active.
-		if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-			$existing_options = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
-			$existing_ids     = array_map( fn( $o ) => $o->id, $existing_options );
-			$incoming_options = $body['options'] ?? array();
-			$kept_ids         = array();
-			foreach ( $incoming_options as $index => $option_data ) {
-				$name              = sanitize_text_field( $option_data['name'] ?? '' );
-				$short_name_raw    = $option_data['short_name'] ?? null;
-				$short_name        = ( null !== $short_name_raw && '' !== $short_name_raw )
-					? sanitize_text_field( $short_name_raw )
-					: null;
-				$price             = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
-				$discounted_price  = null;
-				$capacity_raw      = $option_data['capacity'] ?? null;
-				$capacity          = ( null === $capacity_raw || '' === $capacity_raw )
-					? null
-					: absint( $capacity_raw );
-				$derive            = ! empty( $option_data['derive_price_from_sale_period'] );
-				$collaborator_ids  = isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] )
-					? array_values( array_unique( array_filter( array_map( 'absint', $option_data['collaborator_ids'] ) ) ) )
-					: array();
-				$period_prices_raw = isset( $option_data['period_prices'] ) && is_array( $option_data['period_prices'] )
-					? $option_data['period_prices']
-					: array();
-				if ( '' === $name ) {
-					continue;
-				}
-				$option_id = isset( $option_data['id'] ) ? (int) $option_data['id'] : 0;
-				if ( $option_id && in_array( $option_id, $existing_ids, true ) ) {
-					\FairEventsExperimental\Models\TicketOption::update( $option_id, $name, $price, $index, $short_name, $discounted_price, $capacity, $derive );
-					if ( class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class ) ) {
-						\FairEventsExperimental\Models\TicketOptionCollaborator::sync_for_option( $option_id, $collaborator_ids );
-					}
-					$kept_ids[]      = $option_id;
-					$saved_option_id = $option_id;
-				} else {
-					$new_id = \FairEventsExperimental\Models\TicketOption::create( $event_date_id, $name, $price, $index, $short_name, $discounted_price, $capacity, $derive );
-					if ( $new_id ) {
-						if ( class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class ) ) {
-							\FairEventsExperimental\Models\TicketOptionCollaborator::sync_for_option( (int) $new_id, $collaborator_ids );
-						}
-						$kept_ids[]      = $new_id;
-						$saved_option_id = (int) $new_id;
-					} else {
-						$saved_option_id = 0;
-					}
-				}
-
-				// Replace per-period prices for this option.
-				if ( $saved_option_id && class_exists( \FairEventsExperimental\Models\TicketOptionPrice::class ) ) {
-					\FairEventsExperimental\Models\TicketOptionPrice::delete_by_option_id( $saved_option_id );
-					if ( $derive ) {
-						foreach ( $period_prices_raw as $pp ) {
-							$pp_index     = (int) ( $pp['sale_period_index'] ?? -1 );
-							$pp_period_id = isset( $pp['sale_period_id'] )
-								? (int) $pp['sale_period_id']
-								: ( $period_ids[ $pp_index ] ?? 0 );
-							if ( ! $pp_period_id ) {
-								continue;
-							}
-							$pp_price = isset( $pp['price'] ) ? (float) $pp['price'] : 0.0;
-							\FairEventsExperimental\Models\TicketOptionPrice::upsert( $saved_option_id, $pp_period_id, $pp_price );
-						}
-					}
-				}
+		// 6. Sync ticket options.
+		$existing_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
+		$existing_ids     = array_map( fn( $o ) => $o->id, $existing_options );
+		$incoming_options = $body['options'] ?? array();
+		$kept_ids         = array();
+		foreach ( $incoming_options as $index => $option_data ) {
+			$name              = sanitize_text_field( $option_data['name'] ?? '' );
+			$short_name_raw    = $option_data['short_name'] ?? null;
+			$short_name        = ( null !== $short_name_raw && '' !== $short_name_raw )
+				? sanitize_text_field( $short_name_raw )
+				: null;
+			$price             = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
+			$discounted_price  = null;
+			$capacity_raw      = $option_data['capacity'] ?? null;
+			$capacity          = ( null === $capacity_raw || '' === $capacity_raw )
+				? null
+				: absint( $capacity_raw );
+			$derive            = ! empty( $option_data['derive_price_from_sale_period'] );
+			$collaborator_ids  = isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] )
+				? array_values( array_unique( array_filter( array_map( 'absint', $option_data['collaborator_ids'] ) ) ) )
+				: array();
+			$period_prices_raw = isset( $option_data['period_prices'] ) && is_array( $option_data['period_prices'] )
+				? $option_data['period_prices']
+				: array();
+			if ( '' === $name ) {
+				continue;
 			}
-			$to_delete = array_diff( $existing_ids, $kept_ids );
-			foreach ( $to_delete as $del_id ) {
+			$option_id = isset( $option_data['id'] ) ? (int) $option_data['id'] : 0;
+			if ( $option_id && in_array( $option_id, $existing_ids, true ) ) {
+				\FairEvents\Models\TicketOption::update( $option_id, $name, $price, $index, $short_name, $discounted_price, $capacity, $derive );
 				if ( class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class ) ) {
-					\FairEventsExperimental\Models\TicketOptionCollaborator::delete_by_option_id( (int) $del_id );
+					\FairEventsExperimental\Models\TicketOptionCollaborator::sync_for_option( $option_id, $collaborator_ids );
 				}
-				if ( class_exists( \FairEventsExperimental\Models\TicketOptionPrice::class ) ) {
-					\FairEventsExperimental\Models\TicketOptionPrice::delete_by_option_id( (int) $del_id );
+				$kept_ids[]      = $option_id;
+				$saved_option_id = $option_id;
+			} else {
+				$new_id = \FairEvents\Models\TicketOption::create( $event_date_id, $name, $price, $index, $short_name, $discounted_price, $capacity, $derive );
+				if ( $new_id ) {
+					if ( class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class ) ) {
+						\FairEventsExperimental\Models\TicketOptionCollaborator::sync_for_option( (int) $new_id, $collaborator_ids );
+					}
+					$kept_ids[]      = $new_id;
+					$saved_option_id = (int) $new_id;
+				} else {
+					$saved_option_id = 0;
 				}
-				global $wpdb;
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->delete(
-					$wpdb->prefix . 'fair_events_ticket_options',
-					array( 'id' => $del_id ),
-					array( '%d' )
-				);
 			}
+
+			// Replace per-period prices for this option.
+			if ( $saved_option_id ) {
+				\FairEvents\Models\TicketOptionPrice::delete_by_option_id( $saved_option_id );
+				if ( $derive ) {
+					foreach ( $period_prices_raw as $pp ) {
+						$pp_index     = (int) ( $pp['sale_period_index'] ?? -1 );
+						$pp_period_id = isset( $pp['sale_period_id'] )
+							? (int) $pp['sale_period_id']
+							: ( $period_ids[ $pp_index ] ?? 0 );
+						if ( ! $pp_period_id ) {
+							continue;
+						}
+						$pp_price = isset( $pp['price'] ) ? (float) $pp['price'] : 0.0;
+						\FairEvents\Models\TicketOptionPrice::upsert( $saved_option_id, $pp_period_id, $pp_price );
+					}
+				}
+			}
+		}
+		$to_delete = array_diff( $existing_ids, $kept_ids );
+		foreach ( $to_delete as $del_id ) {
+			if ( class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class ) ) {
+				\FairEventsExperimental\Models\TicketOptionCollaborator::delete_by_option_id( (int) $del_id );
+			}
+			\FairEvents\Models\TicketOptionPrice::delete_by_option_id( (int) $del_id );
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->delete(
+				$wpdb->prefix . 'fair_events_ticket_options',
+				array( 'id' => $del_id ),
+				array( '%d' )
+			);
 		}
 
 		// 7. Return refreshed response.
@@ -426,54 +422,50 @@ class TicketsController extends WP_REST_Controller {
 			EventDateSetting::set_multiple( $event_date_id, $this->normalize_settings( $body['settings'] ) );
 		}
 
-		// 7. Import ticket options — only when fair-events-experimental is active.
-		if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-			$existing_options_for_clear = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
-			foreach ( $existing_options_for_clear as $existing_option ) {
-				if ( class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class ) ) {
-					\FairEventsExperimental\Models\TicketOptionCollaborator::delete_by_option_id( (int) $existing_option->id );
-				}
+		// 7. Import ticket options.
+		$existing_options_for_clear = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
+		foreach ( $existing_options_for_clear as $existing_option ) {
+			if ( class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class ) ) {
+				\FairEventsExperimental\Models\TicketOptionCollaborator::delete_by_option_id( (int) $existing_option->id );
 			}
-			if ( class_exists( \FairEventsExperimental\Models\TicketOptionPrice::class ) ) {
-				\FairEventsExperimental\Models\TicketOptionPrice::delete_by_event_date_id( $event_date_id );
-			}
-			\FairEventsExperimental\Models\TicketOption::delete_by_event_date_id( $event_date_id );
-			$incoming_options = isset( $body['options'] ) && is_array( $body['options'] )
-				? $body['options']
-				: array();
-			foreach ( $incoming_options as $index => $option_data ) {
-				$name             = sanitize_text_field( $option_data['name'] ?? '' );
-				$short_name_raw   = $option_data['short_name'] ?? null;
-				$short_name       = ( null !== $short_name_raw && '' !== $short_name_raw )
-					? sanitize_text_field( $short_name_raw )
-					: null;
-				$price            = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
-				$discounted_price = null;
-				$capacity_raw     = $option_data['capacity'] ?? null;
-				$capacity         = ( null === $capacity_raw || '' === $capacity_raw )
-					? null
-					: absint( $capacity_raw );
-				$derive           = ! empty( $option_data['derive_price_from_sale_period'] );
-				if ( '' !== $name ) {
-					$new_id = \FairEventsExperimental\Models\TicketOption::create( $event_date_id, $name, $price, $index, $short_name, $discounted_price, $capacity, $derive );
-					if ( $new_id ) {
-						if ( isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] ) && class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class ) ) {
-							$collaborator_ids = array_values(
-								array_unique( array_filter( array_map( 'absint', $option_data['collaborator_ids'] ) ) )
-							);
-							if ( ! empty( $collaborator_ids ) ) {
-								\FairEventsExperimental\Models\TicketOptionCollaborator::sync_for_option( (int) $new_id, $collaborator_ids );
-							}
+		}
+		\FairEvents\Models\TicketOptionPrice::delete_by_event_date_id( $event_date_id );
+		\FairEvents\Models\TicketOption::delete_by_event_date_id( $event_date_id );
+		$incoming_options = isset( $body['options'] ) && is_array( $body['options'] )
+			? $body['options']
+			: array();
+		foreach ( $incoming_options as $index => $option_data ) {
+			$name             = sanitize_text_field( $option_data['name'] ?? '' );
+			$short_name_raw   = $option_data['short_name'] ?? null;
+			$short_name       = ( null !== $short_name_raw && '' !== $short_name_raw )
+				? sanitize_text_field( $short_name_raw )
+				: null;
+			$price            = isset( $option_data['price'] ) ? (float) $option_data['price'] : 0.0;
+			$discounted_price = null;
+			$capacity_raw     = $option_data['capacity'] ?? null;
+			$capacity         = ( null === $capacity_raw || '' === $capacity_raw )
+				? null
+				: absint( $capacity_raw );
+			$derive           = ! empty( $option_data['derive_price_from_sale_period'] );
+			if ( '' !== $name ) {
+				$new_id = \FairEvents\Models\TicketOption::create( $event_date_id, $name, $price, $index, $short_name, $discounted_price, $capacity, $derive );
+				if ( $new_id ) {
+					if ( isset( $option_data['collaborator_ids'] ) && is_array( $option_data['collaborator_ids'] ) && class_exists( \FairEventsExperimental\Models\TicketOptionCollaborator::class ) ) {
+						$collaborator_ids = array_values(
+							array_unique( array_filter( array_map( 'absint', $option_data['collaborator_ids'] ) ) )
+						);
+						if ( ! empty( $collaborator_ids ) ) {
+							\FairEventsExperimental\Models\TicketOptionCollaborator::sync_for_option( (int) $new_id, $collaborator_ids );
 						}
-						if ( $derive && isset( $option_data['period_prices'] ) && is_array( $option_data['period_prices'] ) && class_exists( \FairEventsExperimental\Models\TicketOptionPrice::class ) ) {
-							foreach ( $option_data['period_prices'] as $pp ) {
-								$pp_period_index = (int) ( $pp['sale_period_index'] ?? -1 );
-								if ( ! isset( $period_ids_by_index[ $pp_period_index ] ) ) {
-									continue;
-								}
-								$pp_price = isset( $pp['price'] ) ? (float) $pp['price'] : 0.0;
-								\FairEventsExperimental\Models\TicketOptionPrice::upsert( (int) $new_id, $period_ids_by_index[ $pp_period_index ], $pp_price );
+					}
+					if ( $derive && isset( $option_data['period_prices'] ) && is_array( $option_data['period_prices'] ) ) {
+						foreach ( $option_data['period_prices'] as $pp ) {
+							$pp_period_index = (int) ( $pp['sale_period_index'] ?? -1 );
+							if ( ! isset( $period_ids_by_index[ $pp_period_index ] ) ) {
+								continue;
 							}
+							$pp_price = isset( $pp['price'] ) ? (float) $pp['price'] : 0.0;
+							\FairEvents\Models\TicketOptionPrice::upsert( (int) $new_id, $period_ids_by_index[ $pp_period_index ], $pp_price );
 						}
 					}
 				}
@@ -701,9 +693,7 @@ class TicketsController extends WP_REST_Controller {
 		foreach ( $existing_ids as $eid ) {
 			if ( ! in_array( $eid, $incoming_ids, true ) ) {
 				TicketPrice::delete_by_sale_period_id( $eid );
-				if ( class_exists( \FairEventsExperimental\Models\TicketOptionPrice::class ) ) {
-					\FairEventsExperimental\Models\TicketOptionPrice::delete_by_sale_period_id( $eid );
-				}
+				\FairEvents\Models\TicketOptionPrice::delete_by_sale_period_id( $eid );
 				TicketSalePeriod::delete( $eid );
 			}
 		}
@@ -768,9 +758,7 @@ class TicketsController extends WP_REST_Controller {
 		$prices       = TicketPrice::get_all_by_event_date_id( $event_date_id );
 		$raw_settings = EventDateSetting::get_all_for_event_date( $event_date_id );
 
-		$options = class_exists( \FairEventsExperimental\Models\TicketOption::class )
-			? \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $event_date_id )
-			: array();
+		$options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
 
 		$restrictions = TicketTypeGroupRestriction::get_all_by_event_date_id( $event_date_id );
 
@@ -778,9 +766,7 @@ class TicketsController extends WP_REST_Controller {
 			? \FairEventsExperimental\Models\TicketOptionCollaborator::get_all_by_event_date_id( $event_date_id )
 			: array();
 
-		$option_prices = class_exists( \FairEventsExperimental\Models\TicketOptionPrice::class )
-			? \FairEventsExperimental\Models\TicketOptionPrice::get_all_by_event_date_id( $event_date_id )
-			: array();
+		$option_prices = \FairEvents\Models\TicketOptionPrice::get_all_by_event_date_id( $event_date_id );
 
 		$option_prices_by_option = array();
 		foreach ( $option_prices as $op ) {
@@ -816,9 +802,7 @@ class TicketsController extends WP_REST_Controller {
 			'settings'     => $settings,
 			'options'      => array_map(
 				function ( $o ) use ( $collaborators, $option_prices_by_option ) {
-					if ( class_exists( \FairEventsExperimental\Services\ActivityOptionTranslation::class ) ) {
-						\FairEventsExperimental\Services\ActivityOptionTranslation::register( $o );
-					}
+					\FairEvents\Services\ActivityOptionTranslation::register( $o );
 					$data                     = $o->to_array();
 					unset( $data['discounted_price'] );
 					$data['collaborator_ids'] = $collaborators[ $o->id ] ?? array();

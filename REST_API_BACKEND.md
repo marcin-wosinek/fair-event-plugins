@@ -638,12 +638,12 @@ sub-route) expose:
     div. A third action, `fair_events_signup_render_before_submit`, fires
     immediately before the submit button — fair-audience uses it to render a
     group discount note. `ticket_options` is a list of
-    `[ id, name, short_name, price, is_full ]` (empty unless both
-    `fair-events-experimental`'s activity catalogue and fair-audience — the
-    only consumer that can persist a selection — are active); fair-audience's
+    `[ id, name, short_name, price, is_full ]` resolved by fair-events'
+    own `ActivitySelection::offered_options()` — the event's activities that
+    have a price right now, with or without a companion plugin; fair-audience's
     `SignupHookBridge::enrich_render_context()` overrides each option's
-    `price`/`is_full` with participant-aware resolution (group discount,
-    live capacity) and, for a recognised viewer already signed up for this
+    `price` with the viewer's group discount and, for a recognised viewer
+    already signed up for this
     event date, adds `addable_options` (options they don't already have) and
     `current_activity_names`. `minimum_activities` is the event-date global
     requirement, capped at `count( $ticket_options )`; a ticket type can raise
@@ -743,34 +743,47 @@ sub-route) expose:
     `activity_selection_mismatch`; sending both fields is 400
     `ambiguous_activity_selection`. One selection is never copied across the
     quantity, and the quantity is never reduced to fit it.
--   **`fair_events_signup_options_error` filter** — `GetTicketsController::create_signup()`
-    runs this unconditionally (outside the `if ( $ticket_type_id )`
-    block, so a global minimum-activities requirement still applies to a
-    signup with no ticket type), once for each distinct selection among the
-    purchase's tickets:
-    `apply_filters( 'fair_events_signup_options_error', null, $ticket_option_ids, $config_event_date_id, $ticket_type_id, $participant_token, $event_date_id )`,
-    where `$ticket_option_ids` is one ticket's sanitized (deduped, capped at
-    50) selection, `$config_event_date_id` is the series-master-resolved
-    event date the ticket-type validation above already computed, and
-    `$event_date_id` is the occurrence bought, whose activity places are
-    checked. Capacity across all of the purchase's tickets is enforced
-    afterwards by `TicketCapacity`, under its lock. Returning a
-    `WP_Error` rejects the signup (fair-audience returns 400
-    `invalid_ticket_option` for an ID that doesn't belong to the event date,
-    409 `ticket_option_full` naming the activity when it has no capacity
-    left, or 400 `minimum_activities_not_met` when the selection is short);
-    `null` (the default) allows the signup to proceed.
--   **`fair_events_signup_option_line_items` filter** — runs after the
-    filter above, once validation passed, once per distinct activity:
-    `apply_filters( 'fair_events_signup_option_line_items', array(), array( $option_id ), $config_event_date_id, $participant_token )`.
-    A companion plugin resolves the option to a priced line item
-    (`[ 'name', 'quantity', 'amount' ]`, participant discounts applied);
-    `create_signup()` multiplies its quantity by the number of tickets that
-    selected the activity, sums it into `$amount` and appends it to the paid
-    transaction's line items as its own entry — never folded into the
-    ticket line — so the finance ledger names what was bought. Without a
-    listener for this filter fair-events refuses any activity selection
-    (400 `invalid_ticket_option`) rather than store it unpriced.
+-   **Activity selection and pricing are owned by fair-events.**
+    `GetTicketsController::create_signup()` validates each distinct selection
+    among the purchase's tickets with
+    `FairEvents\Services\ActivitySelection::validate()` — unconditionally
+    (outside the `if ( $ticket_type_id )` block, so a global
+    minimum-activities requirement still applies to a signup with no ticket
+    type). It returns 400 `invalid_ticket_option` for an ID that doesn't
+    belong to the event date, 409 `ticket_option_unavailable` naming an
+    activity that has no price for the sale period on sale, 409
+    `ticket_option_full` naming the activity when it has no capacity left,
+    400 `activities_disabled` / `maximum_activities_exceeded` /
+    `minimum_activities_not_met` when the selection breaks the ticket type's
+    rule, and 409 `activity_minimum_unavailable` when too few activities can
+    be selected at all. Capacity across all of the purchase's tickets is
+    enforced afterwards by `TicketCapacity`, under its lock.
+    `FairEvents\Services\ActivityOptionPriceResolver` resolves each
+    activity's base price (a flat price, or the row for the active sale
+    period); a missing price is unavailable, never free. The signup render
+    and `GET /get-tickets/viewer-context` use the same resolver through
+    `ActivitySelection::offered_options()`, so an unavailable activity is
+    not offered in the first place.
+-   **`fair_events_signup_options_error` filter** — runs right after that
+    validation, once per distinct selection, so a companion plugin can add
+    a restriction of its own:
+    `apply_filters( 'fair_events_signup_options_error', $error, $ticket_option_ids, $config_event_date_id, $ticket_type_id, $participant_token, $event_date_id )`,
+    where `$error` is fair-events' own result (`null` when the selection is
+    valid), `$ticket_option_ids` is one ticket's sanitized (deduped, capped
+    at 50) selection, `$config_event_date_id` is the series-master-resolved
+    event date and `$event_date_id` is the occurrence bought. Returning a
+    `WP_Error` rejects the signup. No consumer in this repository.
+-   **`fair_events_signup_option_prices` filter** — fair-events builds the
+    activity line items itself: one line per activity, its quantity the
+    number of tickets that selected it, never folded into the ticket line,
+    so the finance ledger names what was bought. An activity priced at zero
+    gets no line. Before building them it passes the base prices through
+    `apply_filters( 'fair_events_signup_option_prices', $prices, $config_event_date_id, $participant_token )`
+    (`$prices` keyed by option ID), so a companion plugin can lower a price
+    for a recognised participant. A callback returns the same keys and must
+    not add charges of its own — it adjusts prices, fair-events charges
+    them. This replaces the former `fair_events_signup_option_line_items`
+    filter, which is no longer applied.
 -   **`fair_events_signup_created` action** — fires
     `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token )`
     after a signup row is persisted through the base create path (once per
@@ -880,8 +893,8 @@ unified-signup submission fatal'd):
 | `fair_events_signup_render_after_form` | 1           | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_ticket_type_error` | 4           | `add_filter( ..., 10, 4 )`                 |
 | `fair_events_signup_unit_price`        | 4           | `add_filter( ..., 10, 4 )`                 |
-| `fair_events_signup_options_error`     | 6           | `add_filter( ..., 10, 6 )` (4 or more)     |
-| `fair_events_signup_option_line_items` | 4           | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_signup_options_error`     | 6           | `add_filter( ..., 10, 6 )` (no consumer)   |
+| `fair_events_signup_option_prices`     | 3           | `add_filter( ..., 10, 3 )`                 |
 | `fair_events_signup_transaction_participant_id` | 4  | `add_filter( ..., 10, 4 )`                 |
 | `fair_events_signup_created`           | 7           | `add_action( ..., 10, 7 )`                 |
 | `fair_events_signup_transaction_created` | 2         | `add_action( ..., 10, 2 )`                 |
@@ -906,9 +919,9 @@ it hooks `fair_events_signup_created` to link a `Participant`/`EventParticipant`
 for the anonymous/linked signup case, and `fair_events_signup_confirmed` /
 `fair_events_signup_payment_failed` to flip that `EventParticipant`'s label
 and (on confirmation) record the charge in its transaction ledger. It also
-hooks `fair_events_signup_options_error` / `fair_events_signup_option_line_items`
-(delegating the actual validation/pricing logic to
-`fair-audience/src/Services/SignupActivities.php`, mirroring
+hooks `fair_events_signup_option_prices` to apply the viewer's group
+discounts to the base activity prices fair-events resolved (the discount
+math lives in `fair-audience/src/Services/SignupActivities.php`, mirroring
 `GroupSignupPricing.php` from #1242). The selected activities themselves are
 written on the purchase's tickets by fair-events (see "Activities and
 attendance per ticket" below). The unified block reads a

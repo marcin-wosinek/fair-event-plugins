@@ -64,6 +64,14 @@ add_action(
 		define( 'FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 		define( 'FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+		// Add-on models and pricing moved to Fair Events; the old class names
+		// stay resolvable for code that still references them.
+		foreach ( array( 'Models\TicketOption', 'Models\TicketOptionPrice', 'Services\ActivityOptionPriceResolver', 'Services\ActivityOptionTranslation' ) as $moved_class ) {
+			if ( class_exists( 'FairEvents\\' . $moved_class ) ) {
+				class_alias( 'FairEvents\\' . $moved_class, 'FairEventsExperimental\\' . $moved_class );
+			}
+		}
+
 		\FairEventsExperimental\Core\Plugin::instance()->init();
 	},
 	5

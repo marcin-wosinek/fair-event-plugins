@@ -1161,8 +1161,8 @@ class EventParticipantsController extends WP_REST_Controller {
 
 				$by_id   = array();
 				$by_name = array();
-				if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-					$all_options = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $lookup_event_date_id );
+				if ( class_exists( \FairEvents\Models\TicketOption::class ) ) {
+					$all_options = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $lookup_event_date_id );
 					foreach ( $all_options as $opt ) {
 						$by_id[ (int) $opt->id ] = $opt;
 						$by_name[ $opt->name ]   = $opt;
@@ -2036,7 +2036,7 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return object[] TicketOption objects.
 	 */
 	private function activity_catalogue( $event_date_id ) {
-		if ( ! class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+		if ( ! class_exists( \FairEvents\Models\TicketOption::class ) ) {
 			return array();
 		}
 
@@ -2045,7 +2045,7 @@ class EventParticipantsController extends WP_REST_Controller {
 			$event_date_id = (int) $event_date->master_id;
 		}
 
-		return \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
+		return \FairEvents\Models\TicketOption::get_all_by_event_date_id( $event_date_id );
 	}
 
 	/**

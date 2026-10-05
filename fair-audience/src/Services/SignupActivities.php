@@ -8,42 +8,17 @@
 namespace FairAudience\Services;
 
 use FairAudience\Database\EventParticipantRepository;
-use WP_Error;
 
 defined( 'WPINC' ) || die;
 
 /**
- * Pure presenter/validation logic for selectable activities (ticket options)
- * in the unified Event Signup form, kept independent of the WordPress
- * bootstrap where possible so it stays unit-testable — mirrors
- * GroupSignupPricing from #1242. Experimental-only lookups (the option
- * catalogue, capacity, discount rules) stay behind `class_exists()` guards at
- * each call site, degrading to "no activities" when `fair-events-experimental`
- * is inactive.
+ * Participant-specific layer over fair-events' activities (ticket options)
+ * in the unified Event Signup form: group discounts on top of the base
+ * prices fair-events resolves, and the signed-up viewer's own activities.
+ * The option catalogue, base pricing and selection validation belong to
+ * fair-events (`ActivityOptionPriceResolver`, `ActivitySelection`).
  */
 class SignupActivities {
-	/**
-	 * Resolve the complete activity rule for a selected ticket type.
-	 *
-	 * @param int         $global_min  Type-less event minimum.
-	 * @param object|null $ticket_type Selected ticket type, if any.
-	 * @return array{enabled: bool, minimum: int, maximum: int|null}
-	 */
-	public static function selection_rule( $global_min, $ticket_type = null ) {
-		if ( ! $ticket_type ) {
-			return array(
-				'enabled' => true,
-				'minimum' => max( 0, (int) $global_min ),
-				'maximum' => null,
-			);
-		}
-		return array(
-			'enabled' => ! empty( $ticket_type->activities_enabled ) && 'multiple_instances' !== ( $ticket_type->recurrence_scope ?? '' ),
-			'minimum' => max( 0, (int) ( $ticket_type->minimum_activities ?? 0 ) ),
-			'maximum' => isset( $ticket_type->maximum_activities ) ? max( 0, (int) $ticket_type->maximum_activities ) : null,
-		);
-	}
-
 	/**
 	 * Compute the effective minimum number of activities a buyer must select:
 	 * the event-date global baseline, possibly raised by the selected ticket
@@ -169,223 +144,9 @@ class SignupActivities {
 	}
 
 	/**
-	 * Whether a raw TicketOption is full on an occurrence, based on its
-	 * configured capacity.
-	 *
-	 * @param object                     $option        Raw TicketOption row (needs `id`, `capacity`).
-	 * @param EventParticipantRepository $repository    Repository used to count active signups.
-	 * @param int                        $event_date_id Occurrence to check; 0 for the option's own event date.
-	 * @return bool True when full.
-	 */
-	public static function is_full( $option, EventParticipantRepository $repository, $event_date_id = 0 ) {
-		if ( null === $option->capacity ) {
-			return false;
-		}
-		$reserved = $repository->count_signups_for_ticket_option( (int) $option->id, (int) $event_date_id );
-		return self::capacity_reached( $reserved, (int) $option->capacity );
-	}
-
-	/**
-	 * Resolve the effective minimum for a signup request. A selected ticket
-	 * type is authoritative; the event-date value is only the type-less fallback.
-	 *
-	 * @param int $pricing_event_date_id Event date the activity catalogue/settings belong to.
-	 * @param int $ticket_type_id        Selected ticket type ID, or 0 for none.
-	 * @param int $option_count          Number of activity options available.
-	 * @return int Effective minimum.
-	 */
-	public static function effective_minimum_for_selection( $pricing_event_date_id, $ticket_type_id, $option_count ) {
-		unset( $option_count ); // Retained for backward-compatible callers of this public helper.
-		$global_min = class_exists( \FairEvents\Models\EventDateSetting::class )
-			? (int) \FairEvents\Models\EventDateSetting::get( $pricing_event_date_id, 'minimum_activities' )
-			: 0;
-
-		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
-			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
-			if ( $ticket_type ) {
-				return (int) $ticket_type->minimum_activities;
-			}
-		}
-
-		return (int) $global_min;
-	}
-
-	/**
-	 * Validate a submitted activity selection: every ID must belong to the
-	 * event date and not be full, and the selection must meet the effective
-	 * minimum. Hooked on `fair_events_signup_options_error`.
-	 *
-	 * @param int[] $ticket_option_ids     Submitted option IDs.
-	 * @param int   $pricing_event_date_id Event date the activity catalogue belongs to.
-	 * @param int   $ticket_type_id        Selected ticket type ID, or 0 for none.
-	 * @param int   $event_date_id         Occurrence whose activity places are checked; 0 for the catalogue's own date.
-	 * @return WP_Error|null 400/409 on failure, null when the selection is valid.
-	 */
-	public static function validate_selection( array $ticket_option_ids, $pricing_event_date_id, $ticket_type_id, $event_date_id = 0 ) {
-		$event_date_id = $event_date_id ? (int) $event_date_id : (int) $pricing_event_date_id;
-
-		if ( ! class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-			// No activity catalogue active: a non-empty selection can't be valid.
-			if ( empty( $ticket_option_ids ) ) {
-				return null;
-			}
-			return new WP_Error(
-				'invalid_ticket_option',
-				__( 'One of the selected activities is not available for this event.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$available = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $pricing_event_date_id );
-
-		$available_by_id = array();
-		foreach ( $available as $option ) {
-			$available_by_id[ (int) $option->id ] = $option;
-		}
-
-		$repository       = new EventParticipantRepository();
-		$selectable_count = 0;
-		foreach ( $available as $option ) {
-			if ( ! self::is_full( $option, $repository, $event_date_id ) ) {
-				++$selectable_count;
-			}
-		}
-
-		$ticket_type = $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class )
-			? \FairEvents\Models\TicketType::get_by_id( $ticket_type_id )
-			: null;
-		$global_min  = class_exists( \FairEvents\Models\EventDateSetting::class )
-			? (int) \FairEvents\Models\EventDateSetting::get( $pricing_event_date_id, 'minimum_activities' )
-			: 0;
-		$rule        = self::selection_rule( $global_min, $ticket_type );
-		$enabled     = $rule['enabled'];
-		$minimum     = $rule['minimum'];
-		$maximum     = $rule['maximum'];
-
-		if ( ! $enabled && ! empty( $ticket_option_ids ) ) {
-			return new WP_Error(
-				'activities_disabled',
-				__( 'Extensions are not available for the selected ticket type.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-		if ( $enabled && $minimum > $selectable_count ) {
-			return new WP_Error(
-				'activity_minimum_unavailable',
-				__( 'Signup is unavailable because too few extensions can currently be selected.', 'fair-audience' ),
-				array( 'status' => 409 )
-			);
-		}
-		if ( $enabled && null !== $maximum && count( $ticket_option_ids ) > $maximum ) {
-			return new WP_Error(
-				'maximum_activities_exceeded',
-				sprintf(
-					/* translators: %d: maximum number of extensions allowed */
-					_n( 'Please select no more than %d extension.', 'Please select no more than %d extensions.', $maximum, 'fair-audience' ),
-					$maximum
-				),
-				array( 'status' => 400 )
-			);
-		}
-
-		foreach ( $ticket_option_ids as $option_id ) {
-			$option = $available_by_id[ (int) $option_id ] ?? null;
-			if ( ! $option ) {
-				return new WP_Error(
-					'invalid_ticket_option',
-					__( 'One of the selected activities is not available for this event.', 'fair-audience' ),
-					array( 'status' => 400 )
-				);
-			}
-			if ( self::is_full( $option, $repository, $event_date_id ) ) {
-				return new WP_Error(
-					'ticket_option_full',
-					sprintf(
-						/* translators: %s: activity name */
-						__( '"%s" is full.', 'fair-audience' ),
-						$option->name
-					),
-					array( 'status' => 409 )
-				);
-			}
-		}
-
-		if ( $enabled && count( $ticket_option_ids ) < $minimum ) {
-			return new WP_Error(
-				'minimum_activities_not_met',
-				sprintf(
-					/* translators: %d: minimum number of activities required */
-					_n(
-						'Please select at least %d activity to sign up.',
-						'Please select at least %d activities to sign up.',
-						$minimum,
-						'fair-audience'
-					),
-					$minimum
-				),
-				array( 'status' => 400 )
-			);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Resolve priced line items for a submitted activity selection, applying
-	 * each option's own best-matching group discount rule against its own
-	 * real base price. Hooked on `fair_events_signup_option_line_items`.
-	 * Assumes the selection was already validated by validate_selection() —
-	 * an ID that no longer resolves is skipped rather than erroring.
-	 *
-	 * @param int[]    $ticket_option_ids     Submitted option IDs.
-	 * @param int      $pricing_event_date_id Event date the activity catalogue belongs to.
-	 * @param int|null $participant_id        Viewer's participant ID, or null for anonymous.
-	 * @return array[] List of `[ 'name' => string, 'quantity' => 1, 'amount' => float ]`.
-	 */
-	public static function line_items( array $ticket_option_ids, $pricing_event_date_id, $participant_id ) {
-		if ( empty( $ticket_option_ids ) || ! class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-			return array();
-		}
-
-		$name_by_option_id       = array();
-		$base_price_by_option_id = array();
-		foreach ( $ticket_option_ids as $option_id ) {
-			$option = \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $option_id );
-			if ( ! $option ) {
-				continue;
-			}
-
-			$base_price = class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class )
-				? \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $option )
-				: (float) $option->price;
-			if ( null === $base_price ) {
-				continue;
-			}
-
-			$name_by_option_id[ (int) $option_id ]       = $option->name;
-			$base_price_by_option_id[ (int) $option_id ] = (float) $base_price;
-		}
-
-		// One bulk call resolves every selected option's discount at once,
-		// instead of re-fetching the event's rules and the participant's
-		// group membership per option (issue #1299).
-		$resolved_prices = self::resolve_prices_for_participant( $base_price_by_option_id, $pricing_event_date_id, $participant_id );
-
-		$line_items = array();
-		foreach ( $name_by_option_id as $option_id => $name ) {
-			$line_items[] = array(
-				'name'     => $name,
-				'quantity' => 1,
-				'amount'   => $resolved_prices[ $option_id ],
-			);
-		}
-
-		return $line_items;
-	}
-
-	/**
-	 * Recompute `price`/`is_full` on the base-resolved `ticket_options`
-	 * render-context entries for the viewer, and add `addable_options` /
+	 * Apply the viewer's discounts to the `price` of the base-resolved
+	 * `ticket_options` render-context entries (fair-events already resolved
+	 * each one's availability and `is_full`), and add `addable_options` /
 	 * `current_activity_names` when the viewer is already signed up for this
 	 * event date, plus `addon_tickets` (id, label) when they hold several
 	 * tickets there and must choose which one receives added activities. Called from SignupHookBridge::enrich_render_context().
@@ -457,15 +218,6 @@ class SignupActivities {
 
 		foreach ( $context['ticket_options'] as &$option ) {
 			$option['price'] = $resolved_prices[ (int) $option['id'] ];
-
-			$is_full = false;
-			if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-				$raw_option = \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $option['id'] );
-				if ( $raw_option ) {
-					$is_full = self::is_full( $raw_option, $event_participant_repository, (int) $context['event_date_id'] );
-				}
-			}
-			$option['is_full'] = $is_full;
 
 			if ( $signed_row ) {
 				if ( in_array( (int) $option['id'], $confirmed_option_ids, true ) ) {

@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketSalePeriod;
-use FairEventsExperimental\Models\TicketOption;
+use FairEvents\Models\TicketOption;
 
 $event_date_id = isset( $args[0] ) ? (int) $args[0] : 0;
 if ( ! $event_date_id ) {

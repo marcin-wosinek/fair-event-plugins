@@ -58,6 +58,10 @@ $deleted['ticket_types'] = (int) $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $types_table, $event_date_id )
 );
 
+$deleted['options'] = (int) $wpdb->query(
+	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $wpdb->prefix . 'fair_events_ticket_options', $event_date_id )
+);
+
 $deleted['sale_periods'] = (int) $wpdb->query(
 	$wpdb->prepare( 'DELETE FROM %i WHERE event_date_id = %d', $wpdb->prefix . 'fair_events_ticket_sale_periods', $event_date_id )
 );

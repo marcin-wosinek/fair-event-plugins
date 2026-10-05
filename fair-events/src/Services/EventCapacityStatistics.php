@@ -53,14 +53,11 @@ class EventCapacityStatistics {
 		}
 
 		$activities = array();
-		// The activity catalogue belongs to Fair Events Experimental.
-		if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
-			foreach ( \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $config_event_date_id ) as $option ) {
-				$activities[] = array(
-					'id'   => (int) $option->id,
-					'name' => (string) $option->name,
-				) + self::figures( TicketCapacity::count_ticket_option( (int) $option->id, $event_date_id ), $option->capacity );
-			}
+		foreach ( \FairEvents\Models\TicketOption::get_all_by_event_date_id( $config_event_date_id ) as $option ) {
+			$activities[] = array(
+				'id'   => (int) $option->id,
+				'name' => (string) $option->name,
+			) + self::figures( TicketCapacity::count_ticket_option( (int) $option->id, $event_date_id ), $option->capacity );
 		}
 
 		return array(

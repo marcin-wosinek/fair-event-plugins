@@ -48,20 +48,6 @@ test.describe( 'GetTicketsController — transaction describes and links the eve
 		await api.dispose();
 	} );
 
-	async function isExperimentalActive() {
-		const res = await api.get( '/wp-json/wp/v2/plugins', {
-			headers: adminHeaders,
-		} );
-		if ( ! res.ok() ) {
-			return false;
-		}
-		return ( await res.json() ).some(
-			( p ) =>
-				p.plugin?.includes( 'fair-events-experimental' ) &&
-				p.status === 'active'
-		);
-	}
-
 	async function createEventPost( title ) {
 		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
@@ -257,11 +243,6 @@ test.describe( 'GetTicketsController — transaction describes and links the eve
 	} );
 
 	test( 'paid signup with an optional activity links the event', async () => {
-		test.skip(
-			! ( await isExperimentalActive() ),
-			'Optional activities require fair-events-experimental.'
-		);
-
 		const eventTitle = `Get-tickets activity link test ${ Date.now() }`;
 		const eventPostId = await createEventPost( eventTitle );
 
