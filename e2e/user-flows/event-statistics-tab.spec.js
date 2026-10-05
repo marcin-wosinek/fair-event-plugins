@@ -39,8 +39,8 @@ test.describe('Event Statistics without Experimental', () => {
 			page.getByRole('heading', { name: 'Cumulative tickets sold' })
 		).toBeVisible();
 
-		// Capacity (#1711) loads without the activity catalogue Experimental
-		// provides: the event and its ticket type, and no activities.
+		// Capacity (#1711) loads without Experimental: the event and its
+		// ticket type, and no activities, as none were configured.
 		await expect(
 			page.getByRole('heading', { name: 'Event capacity' })
 		).toBeVisible();

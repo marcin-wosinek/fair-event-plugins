@@ -30,9 +30,9 @@ class EventTicketConfigurationCopier {
 	 * @return void
 	 */
 	public function cleanup( $event_date_id ) {
-		$option_class       = \FairEventsExperimental\Models\TicketOption::class;
+		$option_class       = \FairEvents\Models\TicketOption::class;
 		$collaborator_class = \FairEventsExperimental\Models\TicketOptionCollaborator::class;
-		$price_class        = \FairEventsExperimental\Models\TicketOptionPrice::class;
+		$price_class        = \FairEvents\Models\TicketOptionPrice::class;
 
 		if ( class_exists( $option_class ) ) {
 			$options = $option_class::get_all_by_event_date_id( $event_date_id );
@@ -198,9 +198,9 @@ class EventTicketConfigurationCopier {
 	 * @throws \RuntimeException When an option record cannot be copied or remapped.
 	 */
 	private function copy_experimental_options( $source_id, $destination_id, $period_map ) {
-		$option_class       = \FairEventsExperimental\Models\TicketOption::class;
+		$option_class       = \FairEvents\Models\TicketOption::class;
 		$collaborator_class = \FairEventsExperimental\Models\TicketOptionCollaborator::class;
-		$price_class        = \FairEventsExperimental\Models\TicketOptionPrice::class;
+		$price_class        = \FairEvents\Models\TicketOptionPrice::class;
 
 		if ( ! class_exists( $option_class ) ) {
 			return;

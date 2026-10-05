@@ -5,10 +5,10 @@
  * Per-(option, sale_period) price row used when the option has
  * `derive_price_from_sale_period` enabled.
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
-namespace FairEventsExperimental\Models;
+namespace FairEvents\Models;
 
 defined( 'WPINC' ) || die;
 

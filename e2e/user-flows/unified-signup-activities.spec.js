@@ -1,21 +1,16 @@
 /**
  * E2E: selectable activities (ticket options) in the unified Event Signup
- * form (#1243, re-pointed at the unified markup by #1245).
- *
- * The activities fieldset only ever renders when fair-audience is active
- * (`class_exists( \FairAudience\API\EventSignupController::class )` —
- * selections can only be persisted through its options table), and before
- * #1245 the base render also only ran when fair-audience was *inactive* —
- * two mutually exclusive preconditions, so only the negative case (base-alone
- * site, fieldset absent) was ever reachable end-to-end. #1245 removed that
- * delegation guard, so the positive path — fieldset renders, a selection
- * persists through a real signup — is now covered here too. API-level
- * coverage for the create-route validation/pricing logic lives in
- * fair-audience/src/API/__tests__/EventSignupActivities.api.spec.js.
+ * form (#1243, re-pointed at the unified markup by #1245), with fair-audience
+ * active: the fieldset renders and a selection persists through a real
+ * signup onto the participant. The same form without fair-audience — where
+ * fair-events sells the add-ons on its own — is covered by
+ * addon-pricing-standalone.spec.js. API-level coverage for validation and
+ * pricing lives in fair-events' and fair-audience's
+ * ActivityOptionPricing.api.spec.js.
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { wpCli, runScript } from '../support/wp-cli.js';
+import { runScript } from '../support/wp-cli.js';
 
 test.describe('Activities fieldset (fair-audience active)', () => {
 	test('a free signup with an activity selected persists the selection', async ({
@@ -62,43 +57,5 @@ test.describe('Activities fieldset (fair-audience active)', () => {
 		expect(state.found).toBe(true);
 		expect(state.label).toBe('signed_up');
 		expect(state.option_ids).toContain(event.optionIds[0]);
-	});
-});
-
-test.describe('Activities fieldset base-alone guard (fair-audience inactive)', () => {
-	test.beforeAll(() => {
-		wpCli('plugin deactivate fair-audience fair-audience-experimental');
-	});
-
-	test.afterAll(() => {
-		wpCli('plugin activate fair-audience fair-audience-experimental');
-	});
-
-	test('activities configured on the event never render dead checkboxes when fair-audience is absent', async ({
-		page,
-		seedEvent,
-	}) => {
-		const event = seedEvent('unified-with-options', {
-			options: ['dinner', 'tshirt'],
-		});
-
-		await page.goto(event.pageUrl);
-
-		const form = page.locator('.fair-events-get-tickets-form');
-		await expect(form).toBeVisible();
-
-		// Selections could never be persisted without fair-audience's options
-		// table, so the fieldset must be entirely absent — not just hidden.
-		await expect(form.locator('.fair-events-ticket-options')).toHaveCount(
-			0
-		);
-		await expect(
-			form.locator('input[name="ticket_option_ids[]"]')
-		).toHaveCount(0);
-
-		// The rest of the form still works unaffected.
-		await expect(form.locator('input[name="ticket_type_id"]')).toHaveCount(
-			1
-		);
 	});
 });

@@ -473,12 +473,22 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$option_items = $this->load_valid_options( $event_date_id, $raw_option_ids );
-
-		$min_error = $this->validate_minimum_activities( $event_date_id, $option_items, $ticket_type_id );
-		if ( is_wp_error( $min_error ) ) {
-			return $min_error;
+		// The same selection rules fair-events applies on its own signup
+		// route: a stale selection is refused rather than silently dropped.
+		if ( $event_date_id && class_exists( \FairEvents\Services\ActivitySelection::class ) ) {
+			$master_event_date_id = $this->resolve_master_event_date_id( $event_date_id );
+			$selection_error      = \FairEvents\Services\ActivitySelection::validate(
+				array_values( array_filter( array_unique( array_map( 'absint', (array) $raw_option_ids ) ) ) ),
+				$master_event_date_id ? (int) $master_event_date_id : (int) $event_date_id,
+				(int) $ticket_type_id,
+				(int) $event_date_id
+			);
+			if ( is_wp_error( $selection_error ) ) {
+				return $selection_error;
+			}
 		}
+
+		$option_items = $this->load_valid_options( $event_date_id, $raw_option_ids );
 
 		// Persist custom question answers up front so they survive the paid
 		// flow (the signup row may be only pending_payment at this point).
@@ -970,6 +980,9 @@ class EventSignupController extends WP_REST_Controller {
 	 */
 	private function maybe_start_addon_payment( $event_id, $event_date_id, $participant, $event_participant, $user_id, $new_options, $ticket = null ) {
 		$option_prices = $this->resolve_option_prices( $new_options, $event_date_id, (int) $participant->id );
+		if ( is_wp_error( $option_prices ) ) {
+			return $option_prices;
+		}
 
 		$line_items   = array();
 		$total_amount = 0;
@@ -1276,76 +1289,6 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Enforce the minimum-activities event setting.  When the event date has
-	 * no minimum configured (or no options at all), this is a no-op.
-	 *
-	 * @param int      $event_date_id  Event date ID.
-	 * @param array    $option_items   Validated TicketOption objects selected by the participant.
-	 * @param int|null $ticket_type_id Selected ticket type ID, or null when none chosen.
-	 * @return WP_Error|null WP_Error when the minimum is not met, null otherwise.
-	 */
-	private function validate_minimum_activities( $event_date_id, $option_items, $ticket_type_id = null ) {
-		if ( ! $event_date_id || ! class_exists( \FairEvents\Models\EventDateSetting::class ) ) {
-			return null;
-		}
-
-		$lookup_id = (int) $event_date_id;
-		if ( class_exists( \FairEvents\Models\EventDates::class ) ) {
-			$ed = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
-			if ( $ed && 'generated' === $ed->occurrence_type && $ed->master_id ) {
-				$lookup_id = (int) $ed->master_id;
-			}
-		}
-
-		$minimum = (int) \FairEvents\Models\EventDateSetting::get( $lookup_id, 'minimum_activities' );
-		$maximum = null;
-		$enabled = true;
-
-		if ( $ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
-			$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
-			if ( $ticket_type ) {
-				$enabled = $ticket_type->activities_enabled && ! $ticket_type->is_multiple_instances();
-				$minimum = (int) $ticket_type->minimum_activities;
-				$maximum = $ticket_type->maximum_activities;
-			}
-		}
-
-		if ( ! $enabled ) {
-			if ( empty( $option_items ) ) {
-				return null;
-			}
-			return new WP_Error( 'activities_disabled', __( 'Extensions are not available for the selected ticket type.', 'fair-audience' ), array( 'status' => 400 ) );
-		}
-
-		if ( null !== $maximum && count( $option_items ) > $maximum ) {
-			return new WP_Error( 'maximum_activities_exceeded', __( 'Too many extensions were selected for this ticket type.', 'fair-audience' ), array( 'status' => 400 ) );
-		}
-
-		if ( $minimum <= 0 ) {
-			return null;
-		}
-
-		if ( count( $option_items ) >= $minimum ) {
-			return null;
-		}
-
-		return new WP_Error(
-			'minimum_activities_not_met',
-			sprintf(
-				/* translators: %d: minimum number of activities required */
-				_n(
-					'Please select at least %d activity to sign up.',
-					'Please select at least %d activities to sign up.',
-					$minimum,
-					'fair-audience'
-				),
-				$minimum
-			),
-			array( 'status' => 400 )
-		);
-	}
-
-	/**
 	 * Load and validate ticket options by ID, ensuring they belong to the event date.
 	 *
 	 * @param int   $event_date_id Event date ID.
@@ -1360,7 +1303,7 @@ class EventSignupController extends WP_REST_Controller {
 		}
 		$occurrence_id = $occurrence_id ? (int) $occurrence_id : (int) $event_date_id;
 
-		if ( ! class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+		if ( ! class_exists( \FairEvents\Models\TicketOption::class ) ) {
 			return array();
 		}
 
@@ -1374,7 +1317,7 @@ class EventSignupController extends WP_REST_Controller {
 
 		$valid_options   = array();
 		$available_by_id = array();
-		$all_options     = \FairEventsExperimental\Models\TicketOption::get_all_by_event_date_id( $lookup_id );
+		$all_options     = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $lookup_id );
 		foreach ( $all_options as $opt ) {
 			$available_by_id[ $opt->id ] = $opt;
 		}
@@ -1398,33 +1341,39 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Resolve every selected option's effective price in one bulk call,
-	 * applying the buyer's best-matching group pricing rule for each
-	 * option's own real base price — not a shared event-date-level rule, so
-	 * mixed percentage/amount rules resolve correctly per option (issue
-	 * #1297). The event's discount rules and the buyer's group membership
-	 * are each fetched once for the whole selection rather than once per
-	 * option (issue #1299).
+	 * Resolve every selected option's effective price in one bulk call:
+	 * fair-events' base price for the current sale period, with the buyer's
+	 * best-matching group pricing rule applied to each option's own base
+	 * price (issue #1297). The event's discount rules and the buyer's group
+	 * membership are each fetched once for the whole selection (issue #1299).
+	 * An option without a price right now refuses the purchase — it is
+	 * unavailable, never free.
 	 *
 	 * @param object[] $option_items   Selected TicketOption objects.
 	 * @param int      $event_date_id  Event date ID.
 	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
-	 * @return array<int, float> Effective prices (>= 0 inputs assumed; may be 0), keyed by option ID.
+	 * @return array<int, float>|WP_Error Effective prices (may be 0), keyed by option ID.
 	 */
 	private function resolve_option_prices( array $option_items, $event_date_id, $participant_id ) {
 		$base_price_by_option_id = array();
 		foreach ( $option_items as $option ) {
-			if ( class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class ) ) {
-				$resolved                                     = \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $option );
-				$base_price_by_option_id[ (int) $option->id ] = null !== $resolved ? (float) $resolved : 0.0;
-			} else {
-				$base_price_by_option_id[ (int) $option->id ] = (float) $option->price;
+			$resolved = class_exists( \FairEvents\Services\ActivityOptionPriceResolver::class )
+				? \FairEvents\Services\ActivityOptionPriceResolver::resolve( $option )
+				: null;
+			if ( null === $resolved ) {
+				return new WP_Error(
+					'ticket_option_unavailable',
+					sprintf(
+						/* translators: %s: activity name */
+						__( '"%s" is not currently on sale. Reload the page and choose again.', 'fair-audience' ),
+						$option->name
+					),
+					array( 'status' => 409 )
+				);
 			}
+			$base_price_by_option_id[ (int) $option->id ] = (float) $resolved;
 		}
 
-		// Discount resolution itself is identical to the render overlay's own
-		// bulk option-price step — delegate instead of a second hand-rolled
-		// copy of the same "filter discountable, bulk-resolve, merge back" logic.
 		return SignupActivities::resolve_prices_for_participant( $base_price_by_option_id, $event_date_id, $participant_id );
 	}
 
@@ -1556,8 +1505,8 @@ class EventSignupController extends WP_REST_Controller {
 	private function translated_option_names( array $option_items ) {
 		return array_map(
 			function ( $o ) {
-				return class_exists( \FairEventsExperimental\Services\ActivityOptionTranslation::class )
-					? \FairEventsExperimental\Services\ActivityOptionTranslation::translate_name( $o )
+				return class_exists( \FairEvents\Services\ActivityOptionTranslation::class )
+					? \FairEvents\Services\ActivityOptionTranslation::translate_name( $o )
 					: $o->name;
 			},
 			$option_items
@@ -1660,6 +1609,9 @@ class EventSignupController extends WP_REST_Controller {
 		// collapse a duplicate and undercount the total against what's
 		// actually charged.
 		$option_prices = $this->resolve_option_prices( $option_items, $event_date_id, (int) $participant->id );
+		if ( is_wp_error( $option_prices ) ) {
+			return $option_prices;
+		}
 		$options_total = 0.0;
 		foreach ( $option_items as $opt ) {
 			$options_total += $option_prices[ (int) $opt->id ];

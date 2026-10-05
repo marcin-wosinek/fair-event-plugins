@@ -364,8 +364,8 @@ class PaymentHooks {
 
 		foreach ( $options as $opt ) {
 			$name = (string) $opt->name;
-			if ( class_exists( \FairEventsExperimental\Services\ActivityOptionPriceResolver::class ) ) {
-				$resolved = \FairEventsExperimental\Services\ActivityOptionPriceResolver::resolve( $opt );
+			if ( class_exists( \FairEvents\Services\ActivityOptionPriceResolver::class ) ) {
+				$resolved = \FairEvents\Services\ActivityOptionPriceResolver::resolve( $opt );
 				$price    = null !== $resolved ? (float) $resolved : (float) $opt->price;
 			} else {
 				$price = (float) $opt->price;

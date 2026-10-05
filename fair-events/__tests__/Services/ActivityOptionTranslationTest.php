@@ -2,13 +2,13 @@
 /**
  * ActivityOptionTranslation tests
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
-namespace FairEventsExperimental\Tests\Services;
+namespace FairEvents\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
-use FairEventsExperimental\Services\ActivityOptionTranslation;
+use FairEvents\Services\ActivityOptionTranslation;
 
 /**
  * Covers the fallback behavior available in this process (Polylang absent)
@@ -85,7 +85,7 @@ class ActivityOptionTranslationTest extends TestCase {
 	 * @runInSeparateProcess
 	 */
 	public function test_register_calls_pll_register_string_with_stable_name_and_group() {
-		require_once __DIR__ . '/../helpers/pll-stubs.php';
+		require_once __DIR__ . '/../pll-string-stubs.php';
 
 		$option = $this->option( 42, 'Yoga class', 'Yoga' );
 
@@ -114,7 +114,7 @@ class ActivityOptionTranslationTest extends TestCase {
 	 * @runInSeparateProcess
 	 */
 	public function test_register_does_not_register_empty_short_name() {
-		require_once __DIR__ . '/../helpers/pll-stubs.php';
+		require_once __DIR__ . '/../pll-string-stubs.php';
 
 		$option = $this->option( 7, 'Yoga class' );
 
@@ -133,7 +133,7 @@ class ActivityOptionTranslationTest extends TestCase {
 	 * @runInSeparateProcess
 	 */
 	public function test_register_reuses_the_same_string_name_when_value_changes() {
-		require_once __DIR__ . '/../helpers/pll-stubs.php';
+		require_once __DIR__ . '/../pll-string-stubs.php';
 
 		ActivityOptionTranslation::register( $this->option( 3, 'Yoga class' ) );
 		ActivityOptionTranslation::register( $this->option( 3, 'Yoga class (updated)' ) );
@@ -151,7 +151,7 @@ class ActivityOptionTranslationTest extends TestCase {
 	 * @runInSeparateProcess
 	 */
 	public function test_translate_name_resolves_through_pll() {
-		require_once __DIR__ . '/../helpers/pll-stubs.php';
+		require_once __DIR__ . '/../pll-string-stubs.php';
 
 		$GLOBALS['_fair_pll_translations']['Yoga class'] = 'Clase de yoga';
 
@@ -188,7 +188,7 @@ class ActivityOptionTranslationTest extends TestCase {
 	 * @runInSeparateProcess
 	 */
 	public function test_register_registers_the_string_zero_as_a_real_value() {
-		require_once __DIR__ . '/../helpers/pll-stubs.php';
+		require_once __DIR__ . '/../pll-string-stubs.php';
 
 		$option = $this->option( 9, '0', '0' );
 

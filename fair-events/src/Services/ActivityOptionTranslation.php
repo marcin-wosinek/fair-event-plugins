@@ -2,10 +2,10 @@
 /**
  * Activity Option Translation Service
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
-namespace FairEventsExperimental\Services;
+namespace FairEvents\Services;
 
 defined( 'WPINC' ) || die;
 

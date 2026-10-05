@@ -8,7 +8,7 @@
  * in the main PHPUnit process, so it can't leak into tests that assert on
  * the Polylang-absent fallback behavior.
  *
- * @package FairEventsExperimental
+ * @package FairEvents
  */
 
 $GLOBALS['_fair_pll_registered_strings'] = array();

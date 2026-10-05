@@ -22,7 +22,7 @@ use FairEvents\Models\EventDates;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketPrice;
-use FairEventsExperimental\Models\TicketOption;
+use FairEvents\Models\TicketOption;
 
 // Nested block content: the conditional reveals the "diet" question only when
 // the "dinner" option is selected. Wrapped in the unified fair-events/event-signup

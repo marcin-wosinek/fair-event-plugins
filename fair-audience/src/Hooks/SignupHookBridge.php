@@ -53,8 +53,7 @@ class SignupHookBridge {
 		add_filter( 'fair_events_signup_deferred_response', array( static::class, 'defer_recognised_email' ), 10, 3 );
 		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 4 );
 		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 4 );
-		add_filter( 'fair_events_signup_options_error', array( static::class, 'filter_options_error' ), 10, 6 );
-		add_filter( 'fair_events_signup_option_line_items', array( static::class, 'filter_option_line_items' ), 10, 4 );
+		add_filter( 'fair_events_signup_option_prices', array( static::class, 'filter_option_prices' ), 10, 3 );
 		add_action( 'fair_events_signup_render_after_form', array( static::class, 'render_add_activities' ), 10, 1 );
 		add_filter( 'fair_events_signup_transaction_participant_id', array( static::class, 'filter_transaction_participant_id' ), 10, 4 );
 		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 7 );
@@ -600,49 +599,24 @@ class SignupHookBridge {
 	}
 
 	/**
-	 * Validate a submitted activity (ticket option) selection: belongs to the
-	 * event date, not full, and meets the effective minimum-activities
-	 * requirement. Hooked on fair_events_signup_options_error.
+	 * Apply the viewer's best group discount rule to the base activity prices
+	 * fair-events resolved. fair-events builds the line items from the
+	 * returned prices, so nothing is charged twice. Hooked on
+	 * fair_events_signup_option_prices.
 	 *
-	 * @param WP_Error|null $error                 Prior filter result — passed through unchanged if already an error.
-	 * @param int[]         $ticket_option_ids      Submitted option IDs.
-	 * @param int           $pricing_event_date_id Event date the activity catalogue belongs to.
-	 * @param int           $ticket_type_id         Selected ticket type ID, or 0 for none.
-	 * @param string        $participant_token      Optional request token (unused).
-	 * @param int           $event_date_id          Occurrence the ticket is for, whose activity places are checked; 0 for the catalogue's own date.
-	 * @return \WP_Error|null
+	 * @param array<int, float> $prices                Base prices, keyed by option ID.
+	 * @param int               $pricing_event_date_id Event date the activity catalogue belongs to.
+	 * @param string            $participant_token     Optional request token.
+	 * @return array<int, float> Prices for this viewer, same keys.
 	 */
-	public static function filter_options_error( $error, $ticket_option_ids, $pricing_event_date_id, $ticket_type_id, $participant_token = '', $event_date_id = 0 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundBeforeLastUsed -- required by the hook signature.
-		if ( is_wp_error( $error ) ) {
-			return $error;
+	public static function filter_option_prices( $prices, $pricing_event_date_id, $participant_token = '' ) {
+		if ( empty( $prices ) ) {
+			return $prices;
 		}
 
-		return SignupActivities::validate_selection( (array) $ticket_option_ids, (int) $pricing_event_date_id, (int) $ticket_type_id, (int) $event_date_id );
-	}
+		$participant = GroupSignupPricing::resolve_viewer_participant( $participant_token );
 
-	/**
-	 * Resolve priced line items for a submitted activity selection, applying
-	 * the viewer's best group discount rule. Hooked on
-	 * fair_events_signup_option_line_items.
-	 *
-	 * @param array  $line_items            Prior filter result (empty by default).
-	 * @param int[]  $ticket_option_ids     Submitted option IDs.
-	 * @param int    $pricing_event_date_id Event date the activity catalogue belongs to.
-	 * @param string $participant_token Optional request token.
-	 * @return array[]
-	 */
-	public static function filter_option_line_items( $line_items, $ticket_option_ids, $pricing_event_date_id, $participant_token = '' ) {
-		if ( empty( $ticket_option_ids ) ) {
-			return $line_items;
-		}
-
-		$participant    = GroupSignupPricing::resolve_viewer_participant( $participant_token );
-		$participant_id = $participant ? (int) $participant->id : null;
-
-		return array_merge(
-			$line_items,
-			SignupActivities::line_items( (array) $ticket_option_ids, (int) $pricing_event_date_id, $participant_id )
-		);
+		return SignupActivities::resolve_prices_for_participant( (array) $prices, (int) $pricing_event_date_id, $participant ? (int) $participant->id : null );
 	}
 
 	/**
@@ -952,10 +926,10 @@ class SignupHookBridge {
 		// whether they count, so a failed or lapsed payment releases them
 		// with it. Only a purchase fair-events did not store them for falls
 		// back to attaching them here.
-		if ( empty( $ticket_selection['activities_stored'] ) && ! empty( $ticket_selection['ticket_option_ids'] ) && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+		if ( empty( $ticket_selection['activities_stored'] ) && ! empty( $ticket_selection['ticket_option_ids'] ) && class_exists( \FairEvents\Models\TicketOption::class ) ) {
 			$options = array();
 			foreach ( $ticket_selection['ticket_option_ids'] as $option_id ) {
-				$option = \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $option_id );
+				$option = \FairEvents\Models\TicketOption::get_by_id( (int) $option_id );
 				if ( $option ) {
 					$options[] = $option;
 				}
@@ -1153,10 +1127,10 @@ class SignupHookBridge {
 			return;
 		}
 
-		if ( ! empty( $option_ids ) && class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+		if ( ! empty( $option_ids ) && class_exists( \FairEvents\Models\TicketOption::class ) ) {
 			$options = array();
 			foreach ( $option_ids as $option_id ) {
-				$option = \FairEventsExperimental\Models\TicketOption::get_by_id( $option_id );
+				$option = \FairEvents\Models\TicketOption::get_by_id( $option_id );
 				if ( $option ) {
 					$options[] = $option;
 				}
@@ -1211,8 +1185,8 @@ class SignupHookBridge {
 				}
 				// Prefer the current option name so renames are reflected;
 				// fall back to the name stored with the selection.
-				$option           = class_exists( \FairEventsExperimental\Models\TicketOption::class )
-					? \FairEventsExperimental\Models\TicketOption::get_by_id( (int) $row->ticket_option_id )
+				$option           = class_exists( \FairEvents\Models\TicketOption::class )
+					? \FairEvents\Models\TicketOption::get_by_id( (int) $row->ticket_option_id )
 					: null;
 				$activity_names[] = $option && '' !== (string) $option->name ? (string) $option->name : (string) $row->ticket_option_name;
 			}
@@ -1322,9 +1296,9 @@ class SignupHookBridge {
 	 * @return bool
 	 */
 	private static function late_confirmation_exceeds_capacity( array $option_ids, $event_date_id, EventParticipantRepository $repository ) {
-		if ( class_exists( \FairEventsExperimental\Models\TicketOption::class ) ) {
+		if ( class_exists( \FairEvents\Models\TicketOption::class ) ) {
 			foreach ( $option_ids as $option_id ) {
-				$option = \FairEventsExperimental\Models\TicketOption::get_by_id( $option_id );
+				$option = \FairEvents\Models\TicketOption::get_by_id( $option_id );
 				if ( $option && null !== $option->capacity
 					&& $repository->count_signups_for_ticket_option( $option_id, $event_date_id ) >= (int) $option->capacity
 				) {

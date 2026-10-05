@@ -21,7 +21,7 @@ use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketPrice;
 use FairEvents\Services\RecurrenceService;
-use FairEventsExperimental\Models\TicketOption;
+use FairEvents\Models\TicketOption;
 use FairEvents\Models\Venue;
 
 if ( ! function_exists( 'fair_e2e_create_event' ) ) {
