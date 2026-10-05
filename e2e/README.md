@@ -85,17 +85,19 @@ syntactically valid dummy API key via `pre_option_*` filters, so the real
 
 ### How a test purchase flows end to end
 
-1. The spec fills and submits the public event-signup form (real REST call to
-   `register_and_signup`), which sets `email_profile` from the "Keep me
-   informed" checkbox and creates a `pending_payment` signup + transaction.
+1. The spec fills and submits the public Event Signup form (real REST call to
+   `fair-events/v1/get-tickets`), which creates a `pending_payment` signup +
+   transaction; fair-audience links the participant and sets `email_profile`
+   from the "Keep me informed" checkbox.
 2. `initiate_payment` → the double returns an `open` payment whose checkout link
-   is the signup **callback URL** (`?fair_payment_callback=true&fair_signup_tx=…`).
-3. The frontend redirects the browser there. `event-signup/render.php` calls the
-   real `fair_payment_sync_transaction_status`, which fetches the payment → the
-   double returns `paid`.
-4. That fires the real `fair_payment_paid` → `handle_signup_paid` →
-   `fair_audience_event_signup_paid` → `send_signup_confirmation_email` chain.
-   The email is captured; the signup row flips to `signed_up`.
+   is the signup **callback URL** (`?fair_payment_callback=true&transaction_id=…`).
+3. The frontend redirects the browser there. `event-signup/render.php` resolves
+   the payment state through `SignupPaymentState`, which calls the real
+   `fair_payment_sync_transaction_status` and fetches the payment → the double
+   returns `paid`.
+4. That fires the real `fair_payment_paid` → `fair_events_signup_confirmed` →
+   `SignupHookBridge::handle_signup_confirmed` chain. The confirmation email
+   is captured; the participant's row flips to `signed_up`.
 
 No separate "simulate the webhook" step is needed — the production sync-on-
 redirect path does it.
@@ -177,20 +179,13 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
 - **`fair-form-notification-state.php [email]`** — reports mail captured for
   the given recipient (or everything captured, unfiltered, when called with
   no address — used by the "nothing should be sent" scenarios).
-- **`seed-pending-signup.php <eventId> <eventDateId> <ticketTypeId> <price> [status]`**
-  — writes a stuck `pending_payment` event-signup directly (participant +
-  `fair_payment_transactions` row in the given status, default `failed`, +
-  `event_participants` row with an unexpired `payment_expires_at`), since the
-  Mollie double can't produce a failed/canceled payment by itself. Emits the
-  participant id, transaction id, and a real `ParticipantToken`. Pair with
-  **`cleanup-transaction.php <transactionId>`** to remove the transaction row
-  afterwards (the participant/event_participant rows are covered by
-  `cleanup-event.php`).
 
-The event seeded by `seed-event.php` carries the fair-audience event-signup
-block by default; pass `{"block":"get-tickets"}` in the JSON overrides to seed
-it with the fair-events get-tickets block instead (used by the spec that runs
-with fair-audience deactivated).
+The event seeded by `seed-event.php` carries the unified
+`fair-events/event-signup` block by default; pass `{"block":"get-tickets"}` in
+the JSON overrides to seed it with the fair-events get-tickets block instead
+(used by the spec that runs with fair-audience deactivated), or
+`{"block":"saved-audience-signup"}` for content saved with the removed
+fair-audience block, which a render-only alias shows as the unified form.
 
 ## Playwright fixture: `seedEvent`
 

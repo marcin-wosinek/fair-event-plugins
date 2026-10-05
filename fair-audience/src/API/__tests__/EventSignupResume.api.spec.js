@@ -1,13 +1,15 @@
 /**
- * Playwright API tests for resuming an anonymous signup on a recognised email
- * (#1004): the register endpoint's anti-enumeration response, and the
- * resume-payload endpoint's access control.
+ * Playwright API tests for resuming a signup on a recognised email (#1004,
+ * moved to the unified signup route by #1701): the create route holds back a
+ * submission whose email belongs to a participant the caller is not known to
+ * be, and the resume endpoint hands the stashed submission to the holder of
+ * the emailed link, once.
  *
- * The full stash → emailed link → resume round trip can't be driven from here
- * because the dev stack has no mail catcher to read the resume token back out
- * of the sent email, and the token is deliberately never returned by any API
- * response (only the emailed link carries it). That round trip was verified
- * manually via the WP-CLI eval-file recipe (TESTING.md).
+ * The link's token is never returned by any API response — only the email
+ * carries it — so these specs read it from the mail the test instance
+ * captures (fair-e2e-event-signup.php). The browser journey, including a
+ * session that belongs to someone else, is covered by
+ * e2e/user-flows/resume-signup-recognised-email.spec.js.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -58,11 +60,63 @@ async function deleteEvent( api, eventId ) {
 	} );
 }
 
-test.describe( 'Resume anonymous signup on recognised email — register endpoint', () => {
+const CREATE_ROUTE = '/wp-json/fair-events/v1/get-tickets';
+const RESUME_ROUTE = '/wp-json/fair-audience/v1/event-signup/resume';
+
+const ANSWERS = [
+	{
+		question_key: 'dietary',
+		question_text: 'Dietary needs',
+		question_type: 'short_text',
+		answer_value: 'No nuts',
+		display_order: 0,
+	},
+];
+
+async function createParticipant( api, name, email ) {
+	const res = await api.post( '/wp-json/fair-audience/v1/participants', {
+		headers: authHeaders,
+		data: { name, email },
+	} );
+	expect( res.ok(), await res.text() ).toBeTruthy();
+	return ( await res.json() ).id;
+}
+
+async function deleteParticipant( api, participantId ) {
+	if ( ! participantId ) return;
+	await api.delete(
+		`/wp-json/fair-audience/v1/participants/${ participantId }`,
+		{ headers: authHeaders }
+	);
+}
+
+async function participantRow( api, eventDateId, participantId ) {
+	const res = await api.get(
+		`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+		{ headers: authHeaders }
+	);
+	expect( res.ok(), await res.text() ).toBeTruthy();
+	return ( await res.json() ).find(
+		( row ) => row.participant_id === participantId
+	);
+}
+
+async function resumeLink( api, email ) {
+	const res = await api.get(
+		'/wp-json/fair-e2e/v1/event-signup/resume-link',
+		{ headers: authHeaders, params: { email } }
+	);
+	expect( res.ok(), await res.text() ).toBeTruthy();
+	return res.json();
+}
+
+test.describe( 'Resume a signup on a recognised email — create route', () => {
 	let api;
 	let event;
 	let participantId;
+	let otherParticipantId;
 	let email;
+	const createdEmails = [];
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
@@ -71,83 +125,200 @@ test.describe( 'Resume anonymous signup on recognised email — register endpoin
 			`Resume Signup Test ${ Date.now() }`
 		);
 		email = uniqueEmail( 'resume-signup' );
-
-		const participantRes = await api.post(
-			'/wp-json/fair-audience/v1/participants',
-			{
-				headers: authHeaders,
-				data: { name: 'Resume Tester', email },
-			}
+		participantId = await createParticipant( api, 'Resume Tester', email );
+		otherParticipantId = await createParticipant(
+			api,
+			'Other Tester',
+			uniqueEmail( 'resume-other' )
 		);
-		expect( participantRes.ok() ).toBeTruthy();
-		participantId = ( await participantRes.json() ).id;
 	} );
 
 	test.afterAll( async () => {
-		if ( participantId ) {
-			await api.delete(
-				`/wp-json/fair-audience/v1/participants/${ participantId }`,
+		await deleteParticipant( api, participantId );
+		await deleteParticipant( api, otherParticipantId );
+		if ( createdEmails.length ) {
+			const res = await api.get(
+				'/wp-json/fair-audience/v1/participants',
 				{ headers: authHeaders }
 			);
+			for ( const participant of await res.json() ) {
+				if ( createdEmails.includes( participant.email ) ) {
+					await deleteParticipant( api, participant.id );
+				}
+			}
 		}
 		await deleteEvent( api, event?.eventId );
 		await api.dispose();
 	} );
 
-	test( 'a known email with no session gets the generic anti-enumeration response', async () => {
-		// A fresh, cookie-less request context: the server has no session for
-		// this participant, so it must not create a signup or reveal any
-		// pre-filled state — only the generic "check your inbox" message.
+	test( 'a known email from an unrecognised caller is held back and resumed once from the emailed link', async () => {
+		// A fresh, cookie-less request context: the server has no reason to
+		// believe this caller is the participant, so nothing may be saved
+		// for them — only the generic "check your inbox" answer.
 		const anon = await request.newContext( { baseURL: BASE_URL } );
 		try {
-			const res = await anon.post(
-				'/wp-json/fair-audience/v1/event-signup/register',
-				{
-					data: {
-						event_id: event.eventId,
-						event_date_id: event.eventDateId,
-						name: 'Resume Tester',
-						email,
-					},
-				}
-			);
+			const res = await anon.post( CREATE_ROUTE, {
+				data: {
+					event_date_id: event.eventDateId,
+					name: 'Resume Tester',
+					email,
+					mailing_opt_in: true,
+					questionnaire_answers: ANSWERS,
+				},
+			} );
 			expect( res.ok(), await res.text() ).toBeTruthy();
 			const body = await res.json();
 			expect( body.status ).toBe( 'email_recognized' );
 			expect( body.message ).toBeTruthy();
+			// Nothing that identifies or continues the signup leaves the server.
+			expect( JSON.stringify( body ) ).not.toContain( 'resume' );
+			expect( body.signup_id ).toBeUndefined();
+			expect( body.checkout_url ).toBeUndefined();
+
+			// No session was opened for the participant either.
+			const cookies = ( await anon.storageState() ).cookies;
+			expect(
+				cookies.find(
+					( cookie ) => cookie.name === 'fair_audience_session'
+				)
+			).toBeUndefined();
 		} finally {
 			await anon.dispose();
 		}
+
+		expect(
+			await participantRow( api, event.eventDateId, participantId ),
+			'no relationship is created for the recognised participant'
+		).toBeFalsy();
+
+		const { count, link } = await resumeLink( api, email );
+		expect( count, 'one link was emailed' ).toBe( 1 );
+
+		// Someone else's valid participant token does not unlock the stash,
+		// and trying does not use the link up.
+		const otherTokenRes = await api.post(
+			'/wp-json/fair-e2e/v1/event-signup/participant-token',
+			{
+				headers: authHeaders,
+				data: {
+					participant_id: otherParticipantId,
+					event_date_id: event.eventDateId,
+				},
+			}
+		);
+		const otherToken = ( await otherTokenRes.json() ).token;
+		const strangerRes = await api.get( RESUME_ROUTE, {
+			params: { participant_token: otherToken, resume: link.resume },
+		} );
+		expect( strangerRes.status() ).toBe( 404 );
+
+		const resumeRes = await api.get( RESUME_ROUTE, { params: link } );
+		expect( resumeRes.ok(), await resumeRes.text() ).toBeTruthy();
+		const { payload } = await resumeRes.json();
+		expect( payload.participant_id ).toBeUndefined();
+		expect( payload.event_date_id ).toBe( event.eventDateId );
+		expect( payload.name ).toBe( 'Resume Tester' );
+		expect( payload.quantity ).toBe( 1 );
+		expect( payload.keep_informed ).toBe( true );
+		expect( payload.questionnaire_answers ).toHaveLength( 1 );
+		expect( payload.questionnaire_answers[ 0 ] ).toMatchObject( {
+			question_key: 'dietary',
+			answer_value: 'No nuts',
+		} );
+
+		// Single use.
+		const againRes = await api.get( RESUME_ROUTE, { params: link } );
+		expect( againRes.status() ).toBe( 404 );
+
+		// With the link's participant token the same submission goes through.
+		const owner = await request.newContext( { baseURL: BASE_URL } );
+		try {
+			const res = await owner.post( CREATE_ROUTE, {
+				data: {
+					event_date_id: event.eventDateId,
+					name: 'Resume Tester',
+					email,
+					participant_token: link.participant_token,
+					questionnaire_answers: ANSWERS,
+				},
+			} );
+			expect( res.ok(), await res.text() ).toBeTruthy();
+			expect( ( await res.json() ).status ).toBe( 'confirmed' );
+		} finally {
+			await owner.dispose();
+		}
+
+		const row = await participantRow(
+			api,
+			event.eventDateId,
+			participantId
+		);
+		expect( row?.label ).toBe( 'signed_up' );
 	} );
 
-	test( 'an unknown email also gets the same generic response (no enumeration)', async () => {
+	test( 'an unknown email is signed up directly, with no "recognised" answer', async () => {
+		const anon = await request.newContext( { baseURL: BASE_URL } );
+		const unknownEmail = uniqueEmail( 'unknown' );
+		createdEmails.push( unknownEmail );
+		try {
+			const res = await anon.post( CREATE_ROUTE, {
+				data: {
+					event_date_id: event.eventDateId,
+					name: 'Nobody',
+					email: unknownEmail,
+				},
+			} );
+			expect( res.ok(), await res.text() ).toBeTruthy();
+			expect( ( await res.json() ).status ).toBe( 'confirmed' );
+		} finally {
+			await anon.dispose();
+		}
+
+		expect( ( await resumeLink( api, unknownEmail ) ).count ).toBe( 0 );
+	} );
+
+	test( 'the removed public signup routes are gone', async () => {
+		for ( const [ method, path ] of [
+			[ 'POST', '/wp-json/fair-audience/v1/event-signup/register' ],
+			[ 'POST', '/wp-json/fair-audience/v1/event-signup/request-link' ],
+			[ 'GET', '/wp-json/fair-audience/v1/event-signup/status' ],
+		] ) {
+			const res = await api.fetch( path, {
+				method,
+				params: { event_id: event.eventId, email, name: 'Anyone' },
+			} );
+			expect( res.status(), path ).toBe( 404 );
+		}
+	} );
+
+	test( 'the routes that remain refuse a caller with no login and no participant token', async () => {
 		const anon = await request.newContext( { baseURL: BASE_URL } );
 		try {
-			const res = await anon.post(
-				'/wp-json/fair-audience/v1/event-signup/register',
-				{
+			for ( const [ method, path ] of [
+				[ 'POST', '/wp-json/fair-audience/v1/event-signup' ],
+				[ 'DELETE', '/wp-json/fair-audience/v1/event-signup' ],
+				[
+					'POST',
+					'/wp-json/fair-audience/v1/event-signup/add-activities',
+				],
+			] ) {
+				const res = await anon.fetch( path, {
+					method,
 					data: {
 						event_id: event.eventId,
 						event_date_id: event.eventDateId,
-						name: 'Nobody',
-						email: uniqueEmail( 'unknown' ),
+						ticket_option_ids: [ 1 ],
 					},
-				}
-			);
-			expect( res.ok(), await res.text() ).toBeTruthy();
-			const body = await res.json();
-			// New-participant path signs them up directly (no prior record to
-			// "recognise"), which is the existing, unrelated behaviour — assert
-			// only that it never leaks an email_recognized/resume state for an
-			// address that was never registered.
-			expect( body.status ).not.toBe( 'email_recognized' );
+				} );
+				expect( res.status(), `${ method } ${ path }` ).toBe( 401 );
+			}
 		} finally {
 			await anon.dispose();
 		}
 	} );
 } );
 
-test.describe( 'Resume anonymous signup on recognised email — resume endpoint', () => {
+test.describe( 'Resume a signup on a recognised email — resume endpoint', () => {
 	let api;
 
 	test.beforeAll( async () => {

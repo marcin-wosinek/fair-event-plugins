@@ -3,8 +3,8 @@
  *
  * Shared source of truth for the two parent blocks whose allow-lists are
  * supposed to contain the full set (`fair-form` and `fair-form-conditional`).
- * The `event-signup` parents keep their own hardcoded, deliberately smaller
- * subsets — see FAIR_FORM_QUESTION_BLOCKS.md.
+ * The Event Signup block keeps its own hardcoded, deliberately smaller
+ * subset — see FAIR_FORM_QUESTION_BLOCKS.md.
  *
  * @type {string[]}
  */

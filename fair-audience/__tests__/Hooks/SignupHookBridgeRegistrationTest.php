@@ -34,6 +34,7 @@ class SignupHookBridgeRegistrationTest extends TestCase {
 	private const ARGS_PASSED_BY_FAIR_EVENTS = array(
 		'fair_events_signup_viewer_context'               => 1,
 		'fair_events_signup_precheck_error'               => 5,
+		'fair_events_signup_deferred_response'            => 3,
 		'fair_events_signup_render_before_form'           => 1,
 		'fair_events_signup_render_before_submit'         => 1,
 		'fair_events_signup_render_after_form'            => 1,

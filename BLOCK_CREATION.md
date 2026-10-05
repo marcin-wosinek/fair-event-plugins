@@ -80,4 +80,4 @@ register_block_type(PLUGIN_DIR . 'build/blocks/block-name');
 
 -   `fair-events/src/blocks/events-calendar/`
 -   `fair-events/src/blocks/calendar-button/` (canonical `viewScript` DOM-ready pattern)
--   `fair-audience/src/blocks/event-signup/`
+-   `fair-events/src/blocks/event-signup/`

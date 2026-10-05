@@ -10,6 +10,7 @@
  */
 import apiFetch from '@wordpress/api-fetch';
 import {
+	applyQuestionAnswers,
 	initiatePayment,
 	pollPaymentStatus,
 	showMessage,
@@ -32,6 +33,7 @@ jest.mock( 'fair-events-shared', () => ( {
 	formatMoney: jest.fn( ( amount ) => String( amount ) ),
 	collectQuestionAnswers: jest.fn( () => ( {} ) ),
 	validateQuestions: jest.fn( () => null ),
+	applyQuestionAnswers: jest.fn(),
 	setupQuestionnaire: jest.fn(),
 	extractErrorMessage: jest.fn( ( _error, fallback ) => fallback ),
 	setButtonLoading: jest.fn( () => jest.fn() ),
@@ -92,6 +94,7 @@ function noopResponse() {
 
 beforeEach( () => {
 	apiFetch.mockReset();
+	applyQuestionAnswers.mockClear();
 	wireNotYouButton.mockClear();
 	initiatePayment.mockClear();
 	pollPaymentStatus.mockClear();
@@ -1029,5 +1032,170 @@ describe( 'Event Signup frontend.js — idempotent submission (#1534)', () => {
 		expect( initiatePayment ).toHaveBeenCalledTimes( 2 );
 		expect( sentKey( 1 ) ).not.toBe( sentKey( 0 ) );
 		await settle();
+	} );
+} );
+
+describe( 'Event Signup frontend.js — resuming from an emailed link (#1701)', () => {
+	const settle = () => new Promise( ( resolve ) => setTimeout( resolve ) );
+	const RESUME_MARKER =
+		'<div hidden data-resume-route="/fair-audience/v1/event-signup/resume"></div>';
+	const answers = [ { question_key: 'dietary', answer_value: 'No nuts' } ];
+
+	function buildResumableBlock() {
+		const block = buildBlock();
+		const form = block.querySelector( 'form' );
+		form.querySelector( '.fair-events-ticket-fieldset' ).insertAdjacentHTML(
+			'beforeend',
+			'<label><input type="radio" name="ticket_type_id" value="2" /> Supporter</label>'
+		);
+		form.querySelector( '.form-submit' ).insertAdjacentHTML(
+			'beforebegin',
+			'<div class="form-row"><input type="number" name="quantity" value="1" /></div>' +
+				'<div class="form-row"><input type="checkbox" name="mailing_opt_in" value="1" /></div>'
+		);
+		return block;
+	}
+
+	function recognisedByToken( overrides = {} ) {
+		return {
+			...noopResponse(),
+			viewer_resolved: true,
+			token_identity_validated: true,
+			prefill_name: 'Ada Participant',
+			prefill_email: 'ada@example.test',
+			before_form_html: RESUME_MARKER,
+			...overrides,
+		};
+	}
+
+	afterEach( () => {
+		window.history.replaceState( {}, '', '/' );
+	} );
+
+	test( 'fetches the stashed submission once and restores it into the form', async () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/?participant_token=signed-token&resume=stash-token'
+		);
+		const block = buildResumableBlock();
+		apiFetch
+			.mockResolvedValueOnce( recognisedByToken() )
+			.mockResolvedValueOnce( {
+				success: true,
+				payload: {
+					name: 'Ada Typed',
+					ticket_type_id: 2,
+					quantity: 2,
+					keep_informed: true,
+					ticket_option_ids: [],
+					questionnaire_answers: answers,
+				},
+			} );
+
+		initialize();
+		await settle();
+
+		expect( apiFetch ).toHaveBeenCalledTimes( 2 );
+		expect( apiFetch.mock.calls[ 1 ][ 0 ].path ).toBe(
+			'/fair-audience/v1/event-signup/resume?participant_token=signed-token&resume=stash-token'
+		);
+
+		const form = block.querySelector( 'form' );
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ada Typed'
+		);
+		expect( form.querySelector( 'input[name="email"]' ).value ).toBe(
+			'ada@example.test'
+		);
+		expect(
+			form.querySelector( 'input[name="ticket_type_id"]:checked' ).value
+		).toBe( '2' );
+		expect( form.querySelector( 'input[name="quantity"]' ).value ).toBe(
+			'2'
+		);
+		expect(
+			form.querySelector( 'input[name="mailing_opt_in"]' ).checked
+		).toBe( true );
+		expect( applyQuestionAnswers ).toHaveBeenCalledWith( form, answers );
+		expect(
+			form.querySelector( '.fair-events-get-tickets-resume-notice' )
+				.textContent
+		).toContain( 'restored your answers' );
+	} );
+
+	test( 'leaves the form as it is when the link expired or was used', async () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/?participant_token=signed-token&resume=used-token'
+		);
+		const block = buildResumableBlock();
+		apiFetch
+			.mockResolvedValueOnce( recognisedByToken() )
+			.mockRejectedValueOnce( { code: 'resume_not_found' } );
+
+		initialize();
+		await settle();
+
+		const form = block.querySelector( 'form' );
+		expect( apiFetch ).toHaveBeenCalledTimes( 2 );
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ada Participant'
+		);
+		expect(
+			form.querySelector( '.fair-events-get-tickets-resume-notice' )
+		).toBeNull();
+		expect( applyQuestionAnswers ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not ask for a stash without a resume token, a validated token or a named route', async () => {
+		for ( const [ url, response ] of [
+			[ '/?participant_token=signed-token', recognisedByToken() ],
+			[
+				'/?participant_token=bad-token&resume=stash-token',
+				recognisedByToken( { token_identity_validated: false } ),
+			],
+			[
+				'/?participant_token=signed-token&resume=stash-token',
+				recognisedByToken( { before_form_html: null } ),
+			],
+		] ) {
+			window.history.replaceState( {}, '', url );
+			buildResumableBlock();
+			apiFetch.mockReset();
+			apiFetch.mockResolvedValue( response );
+
+			initialize();
+			await settle();
+
+			expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+		}
+	} );
+
+	test( 'a recognised email keeps the form and shows the inbox message', async () => {
+		const block = buildResumableBlock();
+		apiFetch.mockResolvedValue( noopResponse() );
+		initialize();
+		const form = block.querySelector( 'form' );
+		form.querySelector( 'input[name="name"]' ).value = 'Ada';
+		form.querySelector( 'input[name="email"]' ).value = 'ada@example.test';
+		initiatePayment.mockResolvedValueOnce( {
+			status: 'email_recognized',
+			message: 'We recognise this email — check your inbox to continue.',
+		} );
+
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+		await settle();
+
+		expect( showMessage ).toHaveBeenCalledWith(
+			block.querySelector( '.message-container' ),
+			'We recognise this email — check your inbox to continue.',
+			'success',
+			'fair-events-get-tickets'
+		);
+		expect( form.style.display ).not.toBe( 'none' );
 	} );
 } );

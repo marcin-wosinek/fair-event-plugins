@@ -589,124 +589,11 @@ class EmailService {
 	}
 
 	/**
-	 * Send event signup link email.
-	 *
-	 * @param object      $event      Event post object.
-	 * @param Participant $participant Participant object.
-	 * @param string      $signup_url Full signup URL with participant token.
-	 * @return bool Success.
-	 */
-	public function send_signup_link_email( $event, $participant, $signup_url ) {
-		if ( ! $this->has_valid_email( $participant ) ) {
-			return false;
-		}
-
-		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-
-		// Build manage subscription URL for unsubscribe link.
-		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
-
-		// Subject line.
-		$subject = sprintf(
-			/* translators: %s: event title */
-			__( 'Sign up for %s', 'fair-audience' ),
-			$event->post_title
-		);
-
-		// Build HTML message body.
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: event title */
-								esc_html__( 'You requested a signup link for %s.', 'fair-audience' ),
-								'<strong>' . esc_html( $event->post_title ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . esc_html__( 'Click the button below to sign up for the event:', 'fair-audience' ) . '
-							</p>
-
-							<p style="margin: 0 0 30px 0; text-align: center;">
-								<a href="' . esc_url( $signup_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
-									' . esc_html__( 'Sign Up Now', 'fair-audience' ) . '
-								</a>
-							</p>
-
-							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
-								' . esc_html__( "If you didn't request this link, you can safely ignore this email.", 'fair-audience' ) . '
-							</p>
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-									'<br>',
-									esc_html( $site_name )
-								) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0 0 5px 0;">
-								' . esc_html__( "If the button above doesn't work, copy and paste this link:", 'fair-audience' ) . '
-							</p>
-							<p style="margin: 0 0 15px 0; word-break: break-all;">
-								<a href="' . esc_url( $signup_url ) . '" style="color: #0073aa;">' . esc_url( $signup_url ) . '</a>
-							</p>
-							<p style="margin: 0; border-top: 1px solid #e0e0e0; padding-top: 15px;">
-								' . esc_html__( "Don't want to receive event invitations?", 'fair-audience' ) . '
-								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
-
-		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
-	}
-
-	/**
 	 * Send an email inviting a returning visitor to resume a registration that
 	 * was stashed because their browser held no session for the matching
-	 * participant. Unlike send_signup_link_email(), this tells them their
-	 * answers are already saved — clicking through continues the in-progress
-	 * registration instead of landing on a blank form.
+	 * participant. It tells them their answers are already saved — clicking
+	 * through continues the in-progress registration instead of landing on a
+	 * blank form.
 	 *
 	 * @param object      $event      Event post object.
 	 * @param Participant $participant Participant object.
@@ -1145,6 +1032,8 @@ class EmailService {
 	 * @param bool   $is_marketing Whether to filter by marketing consent.
 	 * @param array  $labels               Labels to include (e.g. 'signed_up', 'collaborator', 'interested').
 	 * @param array  $skip_participant_ids  Participant IDs to skip.
+	 * @param int    $event_date_id         Optional event date ID to limit recipients to.
+	 * @param array  $group_ids             Optional group IDs to limit recipients to.
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
 	public function send_bulk_custom_mail( $event_id, $subject, $content, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $skip_participant_ids = array(), $event_date_id = 0, $group_ids = array() ) {
@@ -1412,6 +1301,7 @@ class EmailService {
 	 * @param int   $event_id     Event ID.
 	 * @param bool  $is_marketing Whether to filter by marketing consent.
 	 * @param array $labels       Labels to include.
+	 * @param array $group_ids    Optional group IDs to limit recipients to.
 	 * @return array List of recipient info arrays.
 	 */
 	public function preview_custom_mail_recipients( $event_id, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $group_ids = array() ) {
@@ -2369,7 +2259,8 @@ class EmailService {
 	/**
 	 * Preview recipients for bulk custom mail to all audience.
 	 *
-	 * @param bool $is_marketing Whether to filter by marketing consent.
+	 * @param bool  $is_marketing Whether to filter by marketing consent.
+	 * @param array $group_ids    Optional group IDs to limit recipients to.
 	 * @return array List of recipient info arrays.
 	 */
 	public function preview_custom_mail_recipients_all( $is_marketing = true, $group_ids = array() ) {
@@ -2398,8 +2289,7 @@ class EmailService {
 	/**
 	 * Send event invitation to a single participant.
 	 *
-	 * Unlike send_signup_link_email (which is for requested links),
-	 * this is a marketing email for participants who subscribed to updates.
+	 * This is a marketing email for participants who subscribed to updates.
 	 *
 	 * @param object $event           Event post object.
 	 * @param object $participant     Participant object.

@@ -19,6 +19,8 @@ use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\GroupSignupPricing;
+use FairAudience\Services\ParticipantToken;
+use FairAudience\Services\PendingSignupStash;
 use FairAudience\Services\SignupActivities;
 use FairAudience\Services\SignupPriceResolver;
 use FairAudience\Services\TicketActivities;
@@ -29,9 +31,8 @@ defined( 'WPINC' ) || die;
 /**
  * Bridges the base fair-events signup render/create path to fair-audience's
  * participant records for the simple (anonymous/linked, non-group-restricted)
- * signup case. The identity routes (/status, /resume,
- * /request-link, /register, /retry-payment, /add-activities) stay on
- * fair-audience/v1 and are unaffected by this bridge.
+ * signup case. Resuming a signup from an emailed link, cancelling one and
+ * adding activities stay on fair-audience/v1 (EventSignupController).
  */
 class SignupHookBridge {
 	// Named locks intentionally use direct, non-cacheable database calls.
@@ -46,7 +47,9 @@ class SignupHookBridge {
 		add_filter( 'fair_events_signup_viewer_context', array( static::class, 'enrich_render_context' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_signed_up_card' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_not_you' ), 10, 1 );
+		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_resume_marker' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
+		add_filter( 'fair_events_signup_deferred_response', array( static::class, 'defer_recognised_email' ), 10, 3 );
 		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 4 );
 		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 4 );
 		add_filter( 'fair_events_signup_options_error', array( static::class, 'filter_options_error' ), 10, 6 );
@@ -275,7 +278,7 @@ class SignupHookBridge {
 			// every discounted type resolved to the same rule. A mixed-rule
 			// event drops the note rather than risk misnaming a type's discount
 			// — this block's note-only template has no per-type slot to attach
-			// a per-type tag to (unlike fair-audience's own event-signup block).
+			// a per-type tag to.
 			$reduced_rule_ids = array_values( array_unique( array_map( static fn( $rule ) => (int) $rule->id, $rule_by_type_id ) ) );
 			if ( 1 === count( $reduced_rule_ids ) ) {
 				$context['group_discount_rule'] = reset( $rule_by_type_id );
@@ -483,7 +486,7 @@ class SignupHookBridge {
 	 * clear the pre-filled name/email and register as someone else. Hooked on
 	 * fair_events_signup_render_before_form; wired client-side against the
 	 * existing DELETE /fair-audience/v1/session route by fair-events-shared's
-	 * wireNotYouButton(), the same helper the legacy block uses.
+	 * wireNotYouButton().
 	 *
 	 * @param array $context Context, see fair_events_signup_viewer_context /
 	 *                       enrich_render_context() above.
@@ -500,6 +503,25 @@ class SignupHookBridge {
 		echo '<button type="button" class="fair-events-not-you-button">'
 			. esc_html__( 'Not you? Start fresh', 'fair-audience' )
 			. '</button>';
+	}
+
+	/**
+	 * Tell the unified form where a visitor arriving from an emailed link can
+	 * fetch the submission stashed for them (see defer_recognised_email()).
+	 * Emitted only for an identity a valid participant token proved, so it is
+	 * never part of the cached page. Hooked on
+	 * fair_events_signup_render_before_form.
+	 *
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
+	 * @return void
+	 */
+	public static function render_resume_marker( $context ) {
+		if ( empty( $context['token_identity_validated'] ) || ! empty( $context['suppress_form'] ) ) {
+			return;
+		}
+
+		echo '<div hidden data-resume-route="/fair-audience/v1/event-signup/resume"></div>';
 	}
 
 	/**
@@ -717,6 +739,95 @@ class SignupHookBridge {
 		echo '</div>';
 		echo '</fieldset>';
 		echo '</div>';
+	}
+
+	/**
+	 * Hold back a signup whose email belongs to an existing participant the
+	 * browser is not known to be. Nothing is saved for that participant and
+	 * no session is opened; the submission is stashed and a single-use link
+	 * goes to the address, so only whoever reads that inbox can continue.
+	 * A valid participant token or a signed-in account with a participant
+	 * is the buyer already (see resolve_buyer()), whatever email was typed.
+	 * Hooked on fair_events_signup_deferred_response.
+	 *
+	 * @param array|null $response          Response from an earlier filter.
+	 * @param array      $submission        Sanitized submission from fair-events.
+	 * @param string     $participant_token Optional request token.
+	 * @return array|null Response to send instead of saving, or null to proceed.
+	 */
+	public static function defer_recognised_email( $response, $submission, $participant_token = '' ) {
+		if ( null !== $response ) {
+			return $response;
+		}
+
+		$email = (string) ( $submission['email'] ?? '' );
+		if ( '' === $email || ! is_email( $email ) || ! class_exists( \FairEvents\Models\EventDates::class ) ) {
+			return null;
+		}
+
+		$participant = ( new ParticipantRepository() )->get_by_email( $email );
+		if ( ! $participant ) {
+			return null;
+		}
+
+		$identity = GroupSignupPricing::resolve_viewer_identity( (string) $participant_token );
+		if ( $identity['participant'] ) {
+			if ( 'audience_session' !== $identity['source'] || (int) $identity['participant']->id === (int) $participant->id ) {
+				return null;
+			}
+		}
+
+		$event_date_id = (int) ( $submission['event_date_id'] ?? 0 );
+		$event_date    = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		$event_id      = $event_date ? (int) $event_date->get_resolved_event_id() : 0;
+		$event         = $event_id ? get_post( $event_id ) : null;
+		if ( ! $event ) {
+			return null;
+		}
+
+		$ticket_type_id = (int) ( $submission['ticket_type_id'] ?? 0 );
+		$resume_token   = PendingSignupStash::stash(
+			array(
+				'participant_id'        => (int) $participant->id,
+				'event_id'              => $event_id,
+				'event_date_id'         => $event_date_id,
+				'name'                  => (string) ( $submission['name'] ?? '' ),
+				'ticket_type_id'        => $ticket_type_id ? $ticket_type_id : null,
+				'ticket_option_ids'     => array_map( 'absint', (array) ( $submission['ticket_option_ids'] ?? array() ) ),
+				'ticket_activities'     => array_map(
+					static function ( $selection ) {
+						return array_map( 'absint', (array) $selection );
+					},
+					array_values( (array) ( $submission['ticket_activities'] ?? array() ) )
+				),
+				'event_date_ids'        => array_map( 'absint', (array) ( $submission['event_date_ids'] ?? array() ) ),
+				'quantity'              => max( 1, (int) ( $submission['quantity'] ?? 1 ) ),
+				'chosen_amount'         => null,
+				'keep_informed'         => ! empty( $submission['mailing_opt_in'] ),
+				'questionnaire_answers' => (array) ( $submission['questionnaire_answers'] ?? array() ),
+			)
+		);
+
+		$page_url = $event_date->get_event_page_url();
+		if ( ! $page_url ) {
+			$page_url = get_permalink( $event_id );
+		}
+		$resume_url = add_query_arg(
+			array(
+				'participant_token' => ParticipantToken::generate( (int) $participant->id, $event_date_id ),
+				'resume'            => $resume_token,
+			),
+			$page_url
+		);
+
+		$is_paid = SignupPriceResolver::has_paid_price_configured( $event_date_id, $ticket_type_id ? $ticket_type_id : null );
+		( new EmailService() )->send_resume_registration_email( $event, $participant, $resume_url, $is_paid );
+
+		return array(
+			'success' => true,
+			'status'  => 'email_recognized',
+			'message' => __( 'We recognise this email — check your inbox to continue.', 'fair-audience' ),
+		);
 	}
 
 	/**

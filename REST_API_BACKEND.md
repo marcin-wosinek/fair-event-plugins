@@ -696,6 +696,27 @@ sub-route) expose:
     accidental repeats are stopped by the idempotency key, not by the
     participant's relationship. fair-audience no longer hooks this filter
     (it used to return 409 `already_signed_up`).
+-   **`fair_events_signup_deferred_response` filter** — `GetTicketsController::create_signup()`
+    runs this right after the precheck, still before any signup, participant
+    link or payment exists:
+    `apply_filters( 'fair_events_signup_deferred_response', null, $submission, $participant_token )`.
+    `$submission` holds only sanitized values: `event_date_id`, `name`,
+    `email`, `ticket_type_id`, `quantity`, `mailing_opt_in`,
+    `ticket_option_ids`, `ticket_activities` (one list per ticket),
+    `event_date_ids` and `questionnaire_answers`. Returning an array sends it
+    as the response instead of saving anything, and counts as an attempt
+    against the rate limit; `null` (the default) lets the signup proceed. Like
+    the precheck, it is not run for a repeated idempotency key.
+    fair-audience uses it for a typed email that belongs to an existing
+    participant the browser is not known to be (no valid participant token,
+    no signed-in account with a participant, and no audience session for that
+    participant): it stashes the submission, emails a single-use link and
+    answers `{ status: 'email_recognized' }`, so a guessed email can neither
+    sign someone up nor open a session as them. The link carries
+    `participant_token` and `resume`; the unified frontend reads both from
+    the URL and fetches the stash once from
+    `GET fair-audience/v1/event-signup/resume`, a route fair-audience names
+    in its `fair_events_signup_render_before_form` fragment.
 -   **`fair_events_signup_ticket_type_error` filter** — `GetTicketsController::create_signup()`
     runs this right after a submitted ticket type is validated and confirmed
     not disabled: `apply_filters( 'fair_events_signup_ticket_type_error', null, $ticket_type_id, $event_date_id, $participant_token )`.
@@ -851,6 +872,7 @@ unified-signup submission fatal'd):
 | -------------------------------------- | :---------: | ------------------------------------------ |
 | `fair_events_signup_viewer_context`    | 1           | `add_filter( ..., 10, 1 )`                 |
 | `fair_events_signup_precheck_error`    | 5           | `add_filter( ..., 10, 5 )` (no consumer)   |
+| `fair_events_signup_deferred_response` | 3           | `add_filter( ..., 10, 3 )`                 |
 | `fair_events_signup_render_before_form` | 1          | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_before_submit` | 1        | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_after_form` | 1           | `add_action( ..., 10, 1 )`                 |
@@ -892,11 +914,12 @@ attendance per ticket" below). The unified block reads a
 requests. fair-audience validates it before making that identity authoritative
 for hydration, restriction checks, pricing, and linkage, and refreshes the
 audience session. Invalid supplied tokens resolve anonymously rather than
-falling back to another browser identity. The "I have an account" /
-request-link prompt still goes through `fair-audience/v1`'s own routes —
-everything else (identity pre-fill, cancel/resignup, per-occurrence
-signup status, whole-series passes) is bridged through this contract, no
-parallel template.
+falling back to another browser identity. A visitor who types the email of
+an existing participant without being recognised as them gets a link by
+email instead of a signup (`fair_events_signup_deferred_response`, above).
+Identity pre-fill, cancel/resignup, per-occurrence signup status and
+whole-series passes are all bridged through this contract, no parallel
+template.
 
 ### Canonical signup store — participant write-back and multiplicity
 

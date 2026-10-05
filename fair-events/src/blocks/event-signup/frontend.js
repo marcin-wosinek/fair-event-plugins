@@ -15,6 +15,7 @@ import {
 	formatMoney,
 	collectQuestionAnswers,
 	validateQuestions,
+	applyQuestionAnswers,
 	setupQuestionnaire,
 	extractErrorMessage,
 	setButtonLoading,
@@ -207,6 +208,137 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		wireNotYouButton( form.querySelector( '.fair-events-not-you-button' ) );
 		wireAddActivities( block );
 		wireCancelSignup( block );
+
+		refreshSignupState( form );
+
+		resumeStashedSignup( form );
+	}
+
+	/**
+	 * Restore a submission the visitor continues from an emailed link: the
+	 * page URL carries a `resume` token next to the participant token, and a
+	 * companion plugin names the route that returns the stashed submission
+	 * (once) through a marker in its render-slot fragment. Without a marker,
+	 * or with a link that expired or was used already, the form stays as it is.
+	 * @param {HTMLFormElement} form The get-tickets form, after hydration.
+	 */
+	function resumeStashedSignup( form ) {
+		const marker = form.querySelector( '[data-resume-route]' );
+		const participantToken = form.dataset.participantToken || '';
+		const resumeToken = new URL( window.location.href ).searchParams.get(
+			'resume'
+		);
+		if ( ! marker || ! participantToken || ! resumeToken ) {
+			return;
+		}
+
+		const params = new URLSearchParams( {
+			participant_token: participantToken,
+			resume: resumeToken,
+		} );
+		apiFetch( {
+			path: `${ marker.dataset.resumeRoute }?${ params.toString() }`,
+		} )
+			.then( function ( response ) {
+				if ( ! response || ! response.payload ) {
+					return;
+				}
+				applyResumePayload( form, response.payload );
+
+				const notice = document.createElement( 'p' );
+				notice.className = 'fair-events-get-tickets-resume-notice';
+				notice.setAttribute( 'role', 'status' );
+				notice.textContent = __(
+					'Welcome back — we’ve restored your answers. Review and continue below.',
+					'fair-events'
+				);
+				form.insertBefore( notice, form.firstChild );
+				form.scrollIntoView( { behavior: 'smooth', block: 'start' } );
+			} )
+			.catch( function () {
+				// Expired or already used: the plain form is still usable.
+			} );
+	}
+
+	/**
+	 * Put a stashed submission back into the form, in the order its parts
+	 * depend on each other: ticket type and quantity decide which occurrence
+	 * and activity inputs exist.
+	 * @param {HTMLFormElement} form    The get-tickets form.
+	 * @param {Object}          payload Stashed submission.
+	 */
+	function applyResumePayload( form, payload ) {
+		const check = function ( scope, name, ids ) {
+			const wanted = ( ids || [] ).map( String );
+			scope
+				.querySelectorAll( `input[name="${ name }"]` )
+				.forEach( function ( input ) {
+					if ( ! input.disabled ) {
+						input.checked = wanted.includes( input.value );
+					}
+				} );
+		};
+
+		if ( payload.name ) {
+			const nameField = form.querySelector( 'input[name="name"]' );
+			if ( nameField ) {
+				nameField.value = payload.name;
+			}
+		}
+
+		if ( payload.ticket_type_id ) {
+			check( form, 'ticket_type_id', [ payload.ticket_type_id ] );
+		}
+
+		const quantityField = form.querySelector( 'input[name="quantity"]' );
+		if ( quantityField && payload.quantity ) {
+			quantityField.value = payload.quantity;
+		}
+
+		const occurrenceSelect = form.querySelector(
+			'select[name="event_date_id_single"]'
+		);
+		if (
+			occurrenceSelect &&
+			payload.event_date_id &&
+			Array.from( occurrenceSelect.options ).some(
+				( option ) => option.value === String( payload.event_date_id )
+			)
+		) {
+			occurrenceSelect.value = String( payload.event_date_id );
+		}
+
+		check( form, 'event_date_ids[]', payload.event_date_ids );
+
+		// Builds one activities fieldset per ticket for the restored quantity.
+		refreshSignupState( form );
+
+		const selections =
+			Array.isArray( payload.ticket_activities ) &&
+			payload.ticket_activities.length > 1
+				? payload.ticket_activities
+				: [ payload.ticket_option_ids || [] ];
+		getActivityFieldsets( form ).forEach( function ( fieldset, index ) {
+			const wanted = ( selections[ index ] || [] ).map( String );
+			fieldset
+				.querySelectorAll( 'input[type="checkbox"]' )
+				.forEach( function ( input ) {
+					if ( ! input.disabled ) {
+						input.checked = wanted.includes( input.value );
+					}
+				} );
+		} );
+
+		const mailingField = form.querySelector(
+			'input[name="mailing_opt_in"]'
+		);
+		if ( mailingField ) {
+			mailingField.checked = !! payload.keep_informed;
+		}
+
+		applyQuestionAnswers( form, payload.questionnaire_answers );
+		// Conditional question sections follow the restored answers.
+		form.dispatchEvent( new Event( 'change', { bubbles: true } ) );
 
 		refreshSignupState( form );
 	}
@@ -1918,6 +2050,23 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		} )
 			.then( function ( response ) {
 				if ( response.checkout_url ) {
+					return;
+				}
+
+				// The email belongs to someone this browser is not known to
+				// be: nothing was saved and a link went to that address. The
+				// form stays, so a mistyped email can be corrected.
+				if ( response.status === 'email_recognized' ) {
+					showMessage(
+						messageContainer,
+						response.message ||
+							__(
+								'We recognise this email — check your inbox to continue.',
+								'fair-events'
+							),
+						'success',
+						CSS_PREFIX
+					);
 					return;
 				}
 

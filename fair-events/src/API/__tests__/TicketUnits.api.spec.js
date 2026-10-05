@@ -69,15 +69,23 @@ test.describe( 'Ticket units', () => {
 		return res.json();
 	}
 
-	// Each purchase is a separate visitor: fair-audience's session cookie
-	// would otherwise make later buyers resolve to the first participant.
+	// Each buyer is a separate visitor: fair-audience's session cookie would
+	// otherwise make later buyers resolve to the first participant. A buyer
+	// keeps their own, as fair-audience holds back a purchase typed with a
+	// known email from a browser it has not seen.
+	const visitors = new Map();
+
 	async function postAsVisitor( data ) {
-		const visitor = await request.newContext( { baseURL: BASE_URL } );
-		const res = await visitor.post( '/wp-json/fair-events/v1/get-tickets', {
-			data,
-		} );
+		if ( ! visitors.has( data.email ) ) {
+			visitors.set(
+				data.email,
+				await request.newContext( { baseURL: BASE_URL } )
+			);
+		}
+		const res = await visitors
+			.get( data.email )
+			.post( '/wp-json/fair-events/v1/get-tickets', { data } );
 		const body = await res.json();
-		await visitor.dispose();
 		return { res, body };
 	}
 
@@ -209,6 +217,9 @@ test.describe( 'Ticket units', () => {
 	} );
 
 	test.afterAll( async () => {
+		for ( const visitor of visitors.values() ) {
+			await visitor.dispose();
+		}
 		for ( const dateId of [
 			eventDateId,
 			...( seriesOccurrenceIds || [] ),
