@@ -27,7 +27,7 @@ async function apiFetch( page, options ) {
 	return result.data;
 }
 
-test( 'keeps one checkout total above the submit button in sync with selections', async ( {
+test( 'shows one checkout total above the submit button only while it is enabled', async ( {
 	page,
 	browser,
 } ) => {
@@ -71,6 +71,13 @@ test( 'keeps one checkout total above the submit button in sync with selections'
 						maximum_activities: null,
 						recurrence_scope: 'single_instance',
 					},
+					{
+						name: 'Supporter',
+						activities_enabled: true,
+						minimum_activities: 1,
+						maximum_activities: null,
+						recurrence_scope: 'single_instance',
+					},
 				],
 				sale_periods: [
 					{
@@ -82,6 +89,7 @@ test( 'keeps one checkout total above the submit button in sync with selections'
 				prices: [
 					{ ticket_type_index: 0, sale_period_index: 0, price: 15 },
 					{ ticket_type_index: 1, sale_period_index: 0, price: 0 },
+					{ ticket_type_index: 2, sale_period_index: 0, price: 25 },
 				],
 				options: [ { name: 'Workshop', price: 5.5 } ],
 				settings: {},
@@ -102,18 +110,42 @@ test( 'keeps one checkout total above the submit button in sync with selections'
 			baseURL: test.info().project.use.baseURL,
 		} );
 		const visitor = await context.newPage();
+
+		// Hold viewer-context hydration back so the loading state is
+		// observable: the server markup alone must keep the total hidden.
+		let releaseViewerContext;
+		const viewerContextHeld = new Promise( ( resolve ) => {
+			releaseViewerContext = resolve;
+		} );
+		await visitor.route(
+			/get-tickets(\/|%2F)viewer-context/,
+			async ( route ) => {
+				await viewerContextHeld;
+				await route.continue();
+			}
+		);
 		await visitor.goto( `/?page_id=${ signupPage.id }` );
 
 		const form = visitor.locator( '.fair-events-get-tickets-form' );
+		const submit = form.locator( 'button[type="submit"]' );
 		const total = form.locator( '.fair-events-signup-checkout-total' );
 		const amount = total.locator(
 			'.fair-events-signup-checkout-total-amount'
 		);
-		const expectTotal = async ( value ) => {
-			await expect( total ).toBeVisible();
+		const expectAmount = async ( value ) => {
 			await expect( total ).toHaveAttribute( 'data-amount', value );
 			await expect( total ).toHaveAttribute( 'data-currency', 'EUR' );
+		};
+		const expectTotal = async ( value ) => {
+			await expect( submit ).toBeEnabled();
+			await expect( total ).toBeVisible();
+			await expectAmount( value );
 			await expect( amount ).toHaveText( `${ value } EUR` );
+		};
+		const expectHiddenTotal = async ( value ) => {
+			await expect( submit ).toBeDisabled();
+			await expect( total ).toBeHidden();
+			await expectAmount( value );
 		};
 
 		// Exactly one total, directly before the submit row; the old
@@ -130,7 +162,15 @@ test( 'keeps one checkout total above the submit button in sync with selections'
 			)
 		).toHaveCount( 0 );
 
-		// Paid default is shown on first paint, before any interaction.
+		// While the viewer's pricing is still loading the button is disabled
+		// and no total is shown, but tracking can already read the baseline.
+		await expectHiddenTotal( '15.00' );
+		expect(
+			await total.evaluate( ( el ) => el.getBoundingClientRect().height )
+		).toBe( 0 );
+
+		// Once loaded, the paid default appears with the enabled button.
+		releaseViewerContext();
 		await expectTotal( '15.00' );
 
 		await visitor.getByLabel( 'Workshop' ).check();
@@ -142,6 +182,17 @@ test( 'keeps one checkout total above the submit button in sync with selections'
 		await visitor.getByLabel( 'Workshop' ).uncheck();
 		await expectTotal( '0.00' );
 
+		// A ticket type whose required activity is not chosen disables the
+		// button and hides the total, while the amount stays current.
+		await visitor.getByLabel( /Supporter/ ).check();
+		await expectHiddenTotal( '25.00' );
+
+		await visitor.getByLabel( 'Workshop' ).check();
+		await expectTotal( '30.50' );
+
+		await visitor.getByLabel( 'Workshop' ).uncheck();
+		await expectHiddenTotal( '25.00' );
+
 		// Persists while the visitor fills in the rest of the form.
 		await form.locator( 'input[name="name"]' ).fill( 'Checkout Tester' );
 		await form
@@ -149,7 +200,6 @@ test( 'keeps one checkout total above the submit button in sync with selections'
 			.fill( 'checkout-total@example.test' );
 		await visitor.getByLabel( /Standard/ ).check();
 		await expectTotal( '15.00' );
-		await expect( form.locator( 'button[type="submit"]' ) ).toBeVisible();
 
 		await context.close();
 	} finally {

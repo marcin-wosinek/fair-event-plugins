@@ -34,6 +34,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 ( function () {
 	'use strict';
 
+	// One state model per signup form: the lifecycle phases that, together
+	// with the selection minimums, decide whether the form can be submitted.
+	// renderFormState() is the only place that turns it into DOM.
+	const formStates = new WeakMap();
+
 	onDomReady( initialize );
 
 	function initialize() {
@@ -94,12 +99,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		}
 
 		const form = block.querySelector( '.fair-events-get-tickets-form' );
-		const submitButton = form
-			? form.querySelector( 'button[type="submit"]' )
-			: null;
-		if ( submitButton ) {
-			submitButton.disabled = true;
-			submitButton.classList.add( 'is-disabled' );
+		if ( form ) {
+			getFormState( form ).viewerContextLoading = true;
+			renderFormState( form );
 		}
 
 		let settled = false;
@@ -109,7 +111,8 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			}
 			settled = true;
 			if ( form ) {
-				updateSubmitGate( form );
+				getFormState( form ).viewerContextLoading = false;
+				renderFormState( form );
 			}
 		};
 		const timeoutId = setTimeout( release, VIEWER_CONTEXT_TIMEOUT );
@@ -655,22 +658,36 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		// One key per intended purchase (#1534): kept while the same purchase
 		// is submitted again, so a repeated request cannot buy twice.
 		const checkoutKeys = createCheckoutKeyStore();
-		let submitting = false;
+		const state = getFormState( form );
+		// Viewer-context hydration follows for every block with an event date;
+		// the form stays unavailable until it settles.
+		const block = form.closest( '.fair-events-get-tickets' );
+		state.viewerContextLoading =
+			!! block && parseInt( block.dataset.eventDateId || '0', 10 ) > 0;
 
 		form.addEventListener( 'submit', function ( e ) {
 			e.preventDefault();
 
-			if ( submitting || ! validateForm( form ) ) {
+			if ( state.processing || ! validateForm( form ) ) {
 				return;
 			}
 
 			const data = collectFormData( form );
 			data.idempotency_key = checkoutKeys.keyFor( data );
 
-			submitting = true;
-			submitForm( form, data, checkoutKeys ).finally( function () {
-				submitting = false;
-			} );
+			state.processing = true;
+			renderFormState( form );
+			submitForm( form, data, checkoutKeys ).then(
+				function ( redirecting ) {
+					// A purchase on its way to checkout stays in processing until
+					// the browser leaves the page.
+					if ( redirecting ) {
+						return;
+					}
+					state.processing = false;
+					renderFormState( form );
+				}
+			);
 		} );
 
 		wireTicketTypeInputs( form );
@@ -759,8 +776,72 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		updateInstancePicker( form );
 		syncTicketActivityFieldsets( form );
 		updateTicketOptions( form );
-		updateSubmitGate( form );
 		updateCheckoutTotal( form );
+		renderFormState( form );
+	}
+
+	/**
+	 * The form's state model, created on first use.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {Object} State: viewerContextLoading, processing, submitLabel.
+	 */
+	function getFormState( form ) {
+		let state = formStates.get( form );
+		if ( ! state ) {
+			const submitButton = form.querySelector( 'button[type="submit"]' );
+			state = {
+				viewerContextLoading: false,
+				processing: false,
+				submitLabel: submitButton ? submitButton.textContent : '',
+			};
+			formStates.set( form, state );
+		}
+		return state;
+	}
+
+	/**
+	 * Whether the form can be submitted right now: nothing is pending and
+	 * both selection minimums (independent gates that must both hold) are
+	 * satisfied.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {boolean} True when submission is available.
+	 */
+	function canSubmit( form ) {
+		const state = getFormState( form );
+		return (
+			! state.viewerContextLoading &&
+			! state.processing &&
+			meetsInstanceMinimum( form ) &&
+			meetsActivityMinimum( form )
+		);
+	}
+
+	/**
+	 * Render the submit button and the checkout total from the form's state,
+	 * so the total is only ever shown beside a button the visitor can use.
+	 * The total's amount and data-amount stay current while it is hidden
+	 * (see updateCheckoutTotal).
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function renderFormState( form ) {
+		const state = getFormState( form );
+		const available = canSubmit( form );
+
+		const submitButton = form.querySelector( 'button[type="submit"]' );
+		if ( submitButton ) {
+			submitButton.disabled = ! available;
+			submitButton.classList.toggle( 'is-disabled', ! available );
+			submitButton.textContent = state.processing
+				? __( 'Processing…', 'fair-events' )
+				: state.submitLabel;
+		}
+
+		const totalEl = form.querySelector(
+			'.fair-events-signup-checkout-total'
+		);
+		if ( totalEl ) {
+			totalEl.hidden = ! available;
+		}
 	}
 
 	/**
@@ -1243,22 +1324,6 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			'input[name="event_date_ids[]"]:checked'
 		).length;
 		return checked >= min;
-	}
-
-	/**
-	 * Disable the submit button until both the instance and activity
-	 * minimums (independent gates that must both hold) are satisfied.
-	 * @param {HTMLFormElement} form The get-tickets form.
-	 */
-	function updateSubmitGate( form ) {
-		const submitButton = form.querySelector( 'button[type="submit"]' );
-		if ( ! submitButton ) {
-			return;
-		}
-		const enabled =
-			meetsInstanceMinimum( form ) && meetsActivityMinimum( form );
-		submitButton.disabled = ! enabled;
-		submitButton.classList.toggle( 'is-disabled', ! enabled );
 	}
 
 	/**
@@ -1882,26 +1947,24 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 	/**
 	 * Submit a purchase. Resolves once the request settled, whether it
-	 * succeeded or failed.
+	 * succeeded or failed. The submit button's processing presentation
+	 * belongs to the form's state (see renderFormState), so no button is
+	 * handed to the shared payment helper.
 	 * @param {HTMLFormElement} form         The get-tickets form.
 	 * @param {Object}          data         Request payload, including its idempotency key.
 	 * @param {Object}          checkoutKeys The form's checkout key store.
-	 * @return {Promise<void>} Settles with the request.
+	 * @return {Promise<boolean>} Settles with the request; true when the browser is being redirected to checkout.
 	 */
 	function submitForm( form, data, checkoutKeys ) {
 		const messageContainer = getMessageContainer(
 			form.closest( '.fair-events-get-tickets' )
 		);
-		const submitButton = form.querySelector( 'button[type="submit"]' );
-
 		messageContainer.textContent = '';
 		messageContainer.className = 'message-container';
 
 		return initiatePayment( {
 			apiPath: '/fair-events/v1/get-tickets',
 			data,
-			button: submitButton,
-			loadingText: __( 'Processing…', 'fair-events' ),
 			defaultErrorMessage: __(
 				'Failed to submit. Please try again.',
 				'fair-events'
@@ -1918,7 +1981,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		} )
 			.then( function ( response ) {
 				if ( response.checkout_url ) {
-					return;
+					return true;
 				}
 
 				showMessage(
@@ -1932,9 +1995,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 					CSS_PREFIX
 				);
 				form.style.display = 'none';
+				return false;
 			} )
 			.catch( function () {
 				// Error already surfaced via onError.
+				return false;
 			} );
 	}
 } )();
