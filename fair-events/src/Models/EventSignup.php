@@ -261,6 +261,8 @@ class EventSignup {
 
 	/**
 	 * Set event_date_id or ticket_type_id on a signup and its active units.
+	 * A move takes along only the units still on the signup's date: a unit
+	 * an administrator moved on its own stays where it was put.
 	 *
 	 * @param int    $signup_id Signup row ID.
 	 * @param string $column    'event_date_id' or 'ticket_type_id'.
@@ -269,6 +271,15 @@ class EventSignup {
 	 */
 	private static function set_placement( int $signup_id, string $column, int $value ) {
 		global $wpdb;
+
+		$from_event_date_id = null;
+		if ( 'event_date_id' === $column ) {
+			$signup = self::get_by_id( $signup_id );
+			if ( ! $signup ) {
+				return false;
+			}
+			$from_event_date_id = (int) $signup->event_date_id;
+		}
 
 		$updated = $wpdb->query(
 			$wpdb->prepare(
@@ -280,7 +291,7 @@ class EventSignup {
 			)
 		);
 
-		return false !== $updated && EventTicket::set_active_units_column( $signup_id, $column, $value );
+		return false !== $updated && EventTicket::set_active_units_column( $signup_id, $column, $value, $from_event_date_id );
 	}
 
 	/**

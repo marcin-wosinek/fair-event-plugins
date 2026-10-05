@@ -31,6 +31,16 @@
 	font-style: italic;
 }
 
+/* A cancelled ticket admits nobody; it stays listed until deleted. */
+.fair-audience-audience-table__ticket.is-cancelled td {
+	color: #646970;
+}
+
+.fair-audience-audience-table__ticket.is-cancelled
+	.fair-audience-audience-table__name {
+	text-decoration: line-through;
+}
+
 .fair-audience-audience-table__num {
 	text-align: right;
 	color: #666;

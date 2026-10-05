@@ -87,13 +87,15 @@ class PaymentHooks {
 			return \FairEvents\Models\EventSignup::confirm_paid( $signup_id );
 		}
 
-		$demand = \FairEvents\Services\TicketCapacity::demand_for_signup( $signup );
+		// Each ticket asks for its place where it now is: one moved on its
+		// own on its new date, and one cancelled on its own nowhere.
+		$demands = \FairEvents\Services\TicketCapacity::demands_for_signup( $signup );
 
 		return \FairEvents\Services\TicketCapacity::with_capacity_lock(
-			array( $demand ),
-			static function ( $shortage ) use ( $signup_id, $demand ) {
+			$demands,
+			static function ( $shortage ) use ( $signup_id, $demands ) {
 				$shortages = $shortage
-					? \FairEvents\Services\TicketCapacity::find_shortages( \FairEvents\Services\TicketCapacity::places_needed( array( $demand ) ) )
+					? \FairEvents\Services\TicketCapacity::find_shortages( \FairEvents\Services\TicketCapacity::places_needed( $demands ) )
 					: array();
 
 				if ( ! \FairEvents\Models\EventSignup::confirm_paid( $signup_id ) ) {

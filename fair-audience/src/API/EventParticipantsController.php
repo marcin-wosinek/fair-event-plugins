@@ -12,6 +12,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Models\EmailConsentLog;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\TicketActivities;
+use FairAudience\Services\TicketOperations;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -211,7 +212,7 @@ class EventParticipantsController extends WP_REST_Controller {
 			)
 		);
 
-		// GET|PUT /fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}.
+		// GET|PUT|DELETE /fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}.
 		register_rest_route(
 			$this->namespace,
 			'/event-dates/(?P<event_date_id>\d+)/tickets/(?P<ticket_id>\d+)',
@@ -265,6 +266,78 @@ class EventParticipantsController extends WP_REST_Controller {
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_ticket' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+					'args'                => array(
+						'event_date_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'ticket_id'     => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+					),
+				),
+			)
+		);
+
+		// POST /fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}/move.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<event_date_id>\d+)/tickets/(?P<ticket_id>\d+)/move',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'move_ticket' ),
+					'permission_callback' => array( $this, 'move_item_permissions_check' ),
+					'args'                => array(
+						'event_date_id'        => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'ticket_id'            => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'target_event_date_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+							'minimum'  => 1,
+						),
+						// Confirms moving past the target date's or an activity's limit.
+						'override_reason'      => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+					),
+				),
+			)
+		);
+
+		// POST /fair-audience/v1/event-dates/{event_date_id}/tickets/{ticket_id}/cancel.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<event_date_id>\d+)/tickets/(?P<ticket_id>\d+)/cancel',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'cancel_ticket' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'event_date_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'ticket_id'     => array(
+							'type'     => 'integer',
+							'required' => true,
 						),
 					),
 				),
@@ -557,6 +630,10 @@ class EventParticipantsController extends WP_REST_Controller {
 		// Admission follows the tickets held, not the relationship alone.
 		$assigned_away = $this->assigned_away_counts( (int) $event_date_id, $event_participants );
 
+		// Cancelled tickets stay listed under their holder, apart from the
+		// tickets that admit them, until an administrator deletes them.
+		$cancelled_tickets = $this->cancelled_tickets_by_participant( (int) $event_date_id, $event_participants );
+
 		// Custom question answers captured during signup. Answers collected
 		// for a ticket go with that ticket; the participant row carries only
 		// those not attached to any ticket.
@@ -566,7 +643,7 @@ class EventParticipantsController extends WP_REST_Controller {
 		);
 
 		$items = array_map(
-			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $ticket_answers, $event_date_id, $assigned_away ) {
+			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $ticket_answers, $event_date_id, $assigned_away, $cancelled_tickets ) {
 				$participant     = $this->participant_repo->get_by_id( $ep->participant_id );
 				$on_this_date    = (int) $ep->event_date_id === (int) $event_date_id;
 				$given_to_others = $on_this_date ? ( $assigned_away[ (int) $ep->participant_id ] ?? 0 ) : 0;
@@ -606,6 +683,10 @@ class EventParticipantsController extends WP_REST_Controller {
 					'tickets'                           => array_map(
 						fn( $ticket ) => $this->build_ticket_payload( $ticket, $activity_rows[ $ep->id ] ?? array(), $ticket_answers[ (int) $ticket->id ] ?? null ),
 						$tickets_by_relationship[ $ep->id ] ?? array()
+					),
+					'cancelled_tickets'                 => array_map(
+						fn( $ticket ) => $this->build_ticket_payload( $ticket, array() ),
+						$on_this_date ? ( $cancelled_tickets[ (int) $ep->participant_id ] ?? array() ) : array()
 					),
 					'admin_comment'                     => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
 					'questionnaire_answers'             => $participant_questionnaire[ $ep->participant_id ]['answers'] ?? array(),
@@ -726,6 +807,29 @@ class EventParticipantsController extends WP_REST_Controller {
 		}
 
 		return \FairEvents\Models\EventTicket::count_assigned_away( (int) $event_date_id, $participant_ids );
+	}
+
+	/**
+	 * The cancelled tickets each relationship's participant holds on an
+	 * event date, leaving out those an administrator deleted.
+	 *
+	 * @param int                                     $event_date_id      Event date ID.
+	 * @param \FairAudience\Models\EventParticipant[] $event_participants Relationships; only those on the event date are looked up.
+	 * @return array<int, object[]> Tickets keyed by participant ID; empty when tickets cannot be cancelled individually.
+	 */
+	private function cancelled_tickets_by_participant( $event_date_id, array $event_participants ) {
+		if ( ! TicketOperations::available() ) {
+			return array();
+		}
+
+		$participant_ids = array();
+		foreach ( $event_participants as $event_participant ) {
+			if ( (int) $event_participant->event_date_id === (int) $event_date_id ) {
+				$participant_ids[] = (int) $event_participant->participant_id;
+			}
+		}
+
+		return \FairEvents\Models\EventTicket::get_held_by_participants( (int) $event_date_id, $participant_ids, array( 'cancelled' ) );
 	}
 
 	/**
@@ -1781,7 +1885,131 @@ class EventParticipantsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Find a ticket on an event date.
+	 * Move one ticket to another date of its recurring event, leaving the
+	 * purchase's other tickets, the signup and its payment where they are.
+	 * The ticket keeps its type, activities, answers, check-in, purchaser
+	 * and holder; its holder is admitted on the target date.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function move_ticket( $request ) {
+		$ticket = $this->find_operable_ticket( $request );
+		if ( is_wp_error( $ticket ) ) {
+			return $ticket;
+		}
+
+		$reason = null;
+		if ( $request->has_param( 'override_reason' ) ) {
+			$reason = trim( (string) $request->get_param( 'override_reason' ) );
+			if ( '' === $reason ) {
+				return new WP_Error(
+					'override_reason_required',
+					__( 'Enter a reason for going over capacity.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		$moved = ( new TicketOperations( $this->event_participant_repo ) )->move( $ticket, (int) $request->get_param( 'target_event_date_id' ), $reason );
+		if ( is_wp_error( $moved ) ) {
+			return $moved;
+		}
+
+		return $this->ticket_response( (int) $ticket->id );
+	}
+
+	/**
+	 * Cancel one ticket, leaving the purchase's other tickets, the signup
+	 * and its payment as they are. Nothing is refunded.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function cancel_ticket( $request ) {
+		$ticket = $this->find_operable_ticket( $request );
+		if ( is_wp_error( $ticket ) ) {
+			return $ticket;
+		}
+
+		$cancelled = ( new TicketOperations( $this->event_participant_repo ) )->cancel( $ticket );
+		if ( is_wp_error( $cancelled ) ) {
+			return $cancelled;
+		}
+
+		return $this->ticket_response( (int) $ticket->id );
+	}
+
+	/**
+	 * Delete one cancelled ticket: it is no longer listed, searched or
+	 * exported, while its record stays with the purchase.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function delete_ticket( $request ) {
+		$ticket = $this->find_operable_ticket( $request );
+		if ( is_wp_error( $ticket ) ) {
+			return $ticket;
+		}
+
+		$deleted = ( new TicketOperations( $this->event_participant_repo ) )->delete( $ticket );
+		if ( is_wp_error( $deleted ) ) {
+			return $deleted;
+		}
+
+		return rest_ensure_response(
+			array(
+				'deleted' => true,
+				'id'      => (int) $ticket->id,
+			)
+		);
+	}
+
+	/**
+	 * Find the ticket a move, cancellation or deletion names, once
+	 * fair-events can do those.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return object|WP_Error Ticket row, a 404, or a 500 when fair-events is too old.
+	 */
+	private function find_operable_ticket( $request ) {
+		$ticket = $this->find_ticket( (int) $request->get_param( 'event_date_id' ), (int) $request->get_param( 'ticket_id' ) );
+		if ( is_wp_error( $ticket ) ) {
+			return $ticket;
+		}
+
+		if ( ! TicketOperations::available() ) {
+			return new WP_Error(
+				'fair_events_unavailable',
+				__( 'Update Fair Events to move, cancel or delete tickets.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return $ticket;
+	}
+
+	/**
+	 * One ticket as it is now, shaped for the Audience tab.
+	 *
+	 * @param int $ticket_id Ticket ID.
+	 * @return WP_REST_Response
+	 */
+	private function ticket_response( $ticket_id ) {
+		$ticket = \FairEvents\Models\EventTicket::get_by_id( $ticket_id );
+
+		return rest_ensure_response(
+			$this->build_ticket_payload(
+				$ticket,
+				$this->ticket_activity_rows( $ticket ),
+				$this->get_ticket_answers( array( $ticket_id ) )[ $ticket_id ] ?? null
+			)
+		);
+	}
+
+	/**
+	 * Find a ticket on an event date. A deleted ticket is not found.
 	 *
 	 * @param int $event_date_id Event date the ticket must be on.
 	 * @param int $ticket_id     Ticket ID.
@@ -1789,7 +2017,7 @@ class EventParticipantsController extends WP_REST_Controller {
 	 */
 	private function find_ticket( $event_date_id, $ticket_id ) {
 		$ticket = TicketActivities::available() ? \FairEvents\Models\EventTicket::get_by_id( $ticket_id ) : null;
-		if ( ! $ticket || (int) $ticket->event_date_id !== $event_date_id ) {
+		if ( ! $ticket || (int) $ticket->event_date_id !== $event_date_id || ! empty( $ticket->deleted_at ) ) {
 			return new WP_Error(
 				'ticket_not_found',
 				__( 'Ticket not found for this event date.', 'fair-audience' ),
@@ -1852,9 +2080,11 @@ class EventParticipantsController extends WP_REST_Controller {
 	 */
 	private function build_ticket_payload( $ticket, array $activity_rows, $answers = null ) {
 		$ticket_type_name = null;
+		$whole_series     = false;
 		if ( ! empty( $ticket->ticket_type_id ) && class_exists( \FairEvents\Models\TicketType::class ) ) {
 			$ticket_type      = \FairEvents\Models\TicketType::get_by_id( (int) $ticket->ticket_type_id );
 			$ticket_type_name = $ticket_type ? $ticket_type->name : null;
+			$whole_series     = $ticket_type && $ticket_type->is_whole_series();
 		}
 
 		$activity_ids               = array();
@@ -1884,6 +2114,9 @@ class EventParticipantsController extends WP_REST_Controller {
 			'position'                   => (int) $ticket->unit_position,
 			'reference'                  => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
 			'signup_id'                  => (int) $ticket->signup_id,
+			'event_date_id'              => (int) $ticket->event_date_id,
+			// A whole-series pass covers every date, so it has none to move to.
+			'whole_series'               => $whole_series,
 			'ticket_type_id'             => $ticket->ticket_type_id ? (int) $ticket->ticket_type_id : null,
 			'ticket_type_name'           => $ticket_type_name,
 			'status'                     => (string) $ticket->status,

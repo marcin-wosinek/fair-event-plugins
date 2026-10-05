@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.41.0';
+	const DB_VERSION = '3.42.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -468,7 +468,11 @@ class Schema {
 	 * unit creation safe to retry. The signup remains the purchase and
 	 * payment record; the purchaser stays tied to that purchase while the
 	 * holder can later change on transfer. attended_at is the unit's own
-	 * check-in time, independent of its siblings.
+	 * check-in time, independent of its siblings. event_date_id is the
+	 * unit's own date: it follows the signup until the unit is moved on its
+	 * own. deleted_at marks a cancelled unit an administrator removed from
+	 * view; the row stays, so its position is never filled again and the
+	 * purchase keeps its history.
 	 *
 	 * @return string SQL statement for creating the table.
 	 */
@@ -489,6 +493,7 @@ class Schema {
 			purchaser_participant_id BIGINT UNSIGNED DEFAULT NULL,
 			holder_participant_id BIGINT UNSIGNED DEFAULT NULL,
 			attended_at DATETIME DEFAULT NULL,
+			deleted_at DATETIME DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),

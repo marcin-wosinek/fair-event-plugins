@@ -18,6 +18,11 @@ defined( 'WPINC' ) || die;
  * been cancelled or refunded on its own: that status is final for the unit
  * and is what capacity counts (see TicketCapacity).
  *
+ * A unit's event date is its own too: it starts on its signup's date and
+ * follows the signup when that is moved, until an administrator moves the
+ * unit on its own. A cancelled unit can be marked deleted: it is hidden
+ * from admin views but its row stays, keeping its position in the purchase.
+ *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
 class EventTicket {
@@ -145,7 +150,7 @@ class EventTicket {
 	 *
 	 * @param int      $event_date_id   Event date ID.
 	 * @param int[]    $participant_ids Holder participant IDs.
-	 * @param string[] $statuses        Only these statuses; empty for every active status.
+	 * @param string[] $statuses        Only these statuses; empty for every active status. Deleted units are never returned.
 	 * @return array<int, object[]> Units keyed by holder participant ID.
 	 */
 	public static function get_held_by_participants( int $event_date_id, array $participant_ids, array $statuses = array() ) {
@@ -168,7 +173,7 @@ class EventTicket {
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder lists built above.
 		$units = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE event_date_id = %d AND holder_participant_id IN ( $holder_placeholders ) AND $status_sql ORDER BY signup_id ASC, unit_position ASC",
+				"SELECT * FROM %i WHERE event_date_id = %d AND holder_participant_id IN ( $holder_placeholders ) AND $status_sql AND deleted_at IS NULL ORDER BY signup_id ASC, unit_position ASC",
 				array_merge( array( self::table(), $event_date_id ), $participant_ids, $status_args )
 			)
 		);
@@ -216,7 +221,9 @@ class EventTicket {
 	 * Bring a signup's ticket units in line with its quantity: create any
 	 * missing position and remove positions beyond the quantity. Safe to
 	 * repeat and to run concurrently — the (signup_id, unit_position) unique
-	 * key turns a duplicate insert into a no-op.
+	 * key turns a duplicate insert into a no-op. A unit marked deleted keeps
+	 * its row and so its position: it is never created again. New units
+	 * start on the signup's date; existing ones keep their own.
 	 *
 	 * @param object $signup Signup row (id, quantity, event_date_id, ticket_type_id, status, participant_id).
 	 * @return array{created: int, removed: int}|false Counts, or false when a unit could not be written.
@@ -335,11 +342,25 @@ class EventTicket {
 	 * Count a signup's units that follow it on a move or type change: every
 	 * unit except those cancelled or refunded on their own.
 	 *
-	 * @param int $signup_id Signup row ID.
+	 * @param int      $signup_id     Signup row ID.
+	 * @param int|null $event_date_id Only units on this event date; null for every date.
 	 * @return int
 	 */
-	public static function count_active_units( int $signup_id ) {
+	public static function count_active_units( int $signup_id, ?int $event_date_id = null ) {
 		global $wpdb;
+
+		if ( null !== $event_date_id ) {
+			return (int) $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT COUNT(*) FROM %i WHERE signup_id = %d AND event_date_id = %d AND status NOT IN (%s, %s)',
+					self::table(),
+					$signup_id,
+					$event_date_id,
+					self::FINAL_UNIT_STATUSES[0],
+					self::FINAL_UNIT_STATUSES[1]
+				)
+			);
+		}
 
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
@@ -356,16 +377,32 @@ class EventTicket {
 	 * Set event_date_id or ticket_type_id on a signup's units, leaving units
 	 * cancelled or refunded on their own untouched.
 	 *
-	 * @param int    $signup_id Signup row ID.
-	 * @param string $column    'event_date_id' or 'ticket_type_id'.
-	 * @param int    $value     New value.
+	 * @param int      $signup_id          Signup row ID.
+	 * @param string   $column             'event_date_id' or 'ticket_type_id'.
+	 * @param int      $value              New value.
+	 * @param int|null $from_event_date_id Only units on this event date, so a unit moved on its own stays where it is; null for every unit.
 	 * @return bool
 	 */
-	public static function set_active_units_column( int $signup_id, string $column, int $value ) {
+	public static function set_active_units_column( int $signup_id, string $column, int $value, ?int $from_event_date_id = null ) {
 		global $wpdb;
 
 		if ( ! in_array( $column, array( 'event_date_id', 'ticket_type_id' ), true ) ) {
 			return false;
+		}
+
+		if ( null !== $from_event_date_id ) {
+			return false !== $wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i SET %i = %d WHERE signup_id = %d AND event_date_id = %d AND status NOT IN (%s, %s)',
+					self::table(),
+					$column,
+					$value,
+					$signup_id,
+					$from_event_date_id,
+					self::FINAL_UNIT_STATUSES[0],
+					self::FINAL_UNIT_STATUSES[1]
+				)
+			);
 		}
 
 		return false !== $wpdb->query(
@@ -420,6 +457,105 @@ class EventTicket {
 				self::table(),
 				$participant_id,
 				$ticket_id
+			)
+		);
+	}
+
+	/**
+	 * Move one unit to another event date, leaving its signup, purchaser,
+	 * holder, type, activities, check-in and sibling units unchanged. From
+	 * then on the unit's date is its own: moving the signup no longer takes
+	 * it along.
+	 *
+	 * @param int $ticket_id     Ticket ID.
+	 * @param int $event_date_id Target event date ID.
+	 * @return bool
+	 */
+	public static function set_event_date( int $ticket_id, int $event_date_id ) {
+		global $wpdb;
+
+		return false !== $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET event_date_id = %d WHERE id = %d',
+				self::table(),
+				$event_date_id,
+				$ticket_id
+			)
+		);
+	}
+
+	/**
+	 * Cancel one unit, leaving its signup, payment and sibling units
+	 * unchanged. The unit stops admitting anyone and releases its places;
+	 * the status is final, so later signup transitions never revive it.
+	 *
+	 * @param int $ticket_id Ticket ID.
+	 * @return bool True when the unit was cancelled by this call.
+	 */
+	public static function cancel( int $ticket_id ) {
+		global $wpdb;
+
+		return 1 === $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s WHERE id = %d AND status NOT IN (' . implode( ', ', array_fill( 0, count( self::INACTIVE_STATUSES ), '%s' ) ) . ')',
+				array_merge( array( self::table(), 'cancelled', $ticket_id ), self::INACTIVE_STATUSES )
+			)
+		);
+	}
+
+	/**
+	 * Mark one cancelled unit as deleted. The row stays, with its position,
+	 * purchaser and signup, so the purchase's history and amounts are kept
+	 * and reconcile_signup() never fills the position again. Companion
+	 * records pointing at the unit are detached as for a removed unit.
+	 *
+	 * @param int $ticket_id Ticket ID.
+	 * @return bool True when the unit was marked by this call.
+	 */
+	public static function mark_deleted( int $ticket_id ) {
+		global $wpdb;
+
+		$marked = 1 === $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET deleted_at = %s WHERE id = %d AND status = %s AND deleted_at IS NULL',
+				self::table(),
+				current_time( 'mysql' ),
+				$ticket_id,
+				'cancelled'
+			)
+		);
+
+		if ( $marked ) {
+			self::announce_deletion( array( $ticket_id ) );
+		}
+
+		return $marked;
+	}
+
+	/**
+	 * Whether a unit was marked deleted.
+	 *
+	 * @param object $ticket Ticket row.
+	 * @return bool
+	 */
+	public static function is_deleted( $ticket ) {
+		return ! empty( $ticket->deleted_at );
+	}
+
+	/**
+	 * Count the active units a participant holds or bought on an event date.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return int
+	 */
+	public static function count_active_for_participant( int $event_date_id, int $participant_id ) {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE event_date_id = %d AND ( holder_participant_id = %d OR purchaser_participant_id = %d ) AND status NOT IN (' . implode( ', ', array_fill( 0, count( self::INACTIVE_STATUSES ), '%s' ) ) . ')',
+				array_merge( array( self::table(), $event_date_id, $participant_id, $participant_id ), self::INACTIVE_STATUSES )
 			)
 		);
 	}
@@ -578,8 +714,9 @@ class EventTicket {
 	}
 
 	/**
-	 * Tell companion plugins that these units are about to be deleted, so
-	 * records pointing at them (e.g. fair-form answers) can be detached. The
+	 * Tell companion plugins that these units are being deleted, or hidden
+	 * for good by mark_deleted(), so records pointing at them (e.g. fair-form
+	 * answers) can be detached. The
 	 * listener runs inside the caller's transaction, where there is one.
 	 *
 	 * @param int[] $ticket_ids Ticket IDs about to be deleted.

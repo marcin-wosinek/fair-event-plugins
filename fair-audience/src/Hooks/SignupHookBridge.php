@@ -24,6 +24,7 @@ use FairAudience\Services\PendingSignupStash;
 use FairAudience\Services\SignupActivities;
 use FairAudience\Services\SignupPriceResolver;
 use FairAudience\Services\TicketActivities;
+use FairAudience\Services\TicketOperations;
 use FairAudience\Services\TransactionParticipantLink;
 
 defined( 'WPINC' ) || die;
@@ -1116,6 +1117,7 @@ class SignupHookBridge {
 				}
 
 				self::complete_confirmation( $signup, $transaction, $event_participant, $option_ids, $event_participant_repository );
+				( new TicketOperations( $event_participant_repository ) )->follow_signup_confirmation( $signup );
 			} finally {
 				$wpdb->get_var(
 					$wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name )
@@ -1125,6 +1127,7 @@ class SignupHookBridge {
 		}
 
 		self::complete_confirmation( $signup, $transaction, $event_participant, $option_ids, $event_participant_repository );
+		( new TicketOperations( $event_participant_repository ) )->follow_signup_confirmation( $signup );
 	}
 
 	/**

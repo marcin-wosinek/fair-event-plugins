@@ -9,6 +9,7 @@ import { __, sprintf } from '@wordpress/i18n';
 const TICKET_STATUS_DISPLAY = {
 	confirmed: __( 'Confirmed', 'fair-audience' ),
 	pending_payment: __( 'Awaiting payment', 'fair-audience' ),
+	cancelled: __( 'Cancelled', 'fair-audience' ),
 };
 
 /**

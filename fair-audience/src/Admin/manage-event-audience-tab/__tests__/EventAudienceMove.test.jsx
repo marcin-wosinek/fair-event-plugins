@@ -11,9 +11,18 @@
  *   - Move button appears for non-series-pass rows when siblings exist.
  *   - Opening the modal lists the other occurrences (current one excluded).
  *   - Confirming calls the move endpoint and refreshes the participant list.
+ *   - "Move ticket" moves one ticket to another date, names its purchaser
+ *     and assignee, is not offered for a whole-series pass or without other
+ *     dates, and asks for a reason before going over capacity (#1699).
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	within,
+	waitFor,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventAudience from '../EventAudience.js';
 
@@ -190,5 +199,226 @@ describe( 'EventAudience — participant row actions (#1710)', () => {
 		expect( apiFetch ).not.toHaveBeenCalledWith(
 			expect.objectContaining( { method: 'DELETE' } )
 		);
+	} );
+} );
+
+const BUYER = {
+	participant_id: 10,
+	name: 'Jane Doe',
+	email: 'jane@example.com',
+};
+const GUEST = {
+	participant_id: 12,
+	name: 'Gil Guest',
+	email: 'gil@example.com',
+};
+
+const MOVABLE_TICKET = {
+	id: 101,
+	position: 1,
+	reference: 'AAAA1111',
+	signup_id: 40,
+	event_date_id: 5,
+	whole_series: false,
+	ticket_type_id: 3,
+	ticket_type_name: 'Regular',
+	status: 'confirmed',
+	attended_at: '2026-01-01 18:00:00',
+	activity_ids: [],
+	activity_names: [],
+	confirmed_activity_ids: [],
+	purchaser: BUYER,
+	assignee: GUEST,
+};
+const SIBLING_TICKET = {
+	...MOVABLE_TICKET,
+	id: 102,
+	position: 2,
+	reference: 'BBBB2222',
+	attended_at: null,
+	assignee: BUYER,
+};
+const SERIES_PASS = {
+	...MOVABLE_TICKET,
+	id: 103,
+	position: 1,
+	reference: 'CCCC3333',
+	whole_series: true,
+	ticket_type_name: 'Season pass',
+	attended_at: null,
+	assignee: BUYER,
+};
+
+function mockTicketMove( { siblings = SIBLINGS, refusal = null } = {} ) {
+	let refused = false;
+	apiFetch.mockImplementation( ( { path, data } ) => {
+		if ( /\/tickets\/\d+\/move$/.test( path ) ) {
+			if ( refusal && ! refused && ! data.override_reason ) {
+				refused = true;
+				return Promise.reject( refusal );
+			}
+			return Promise.resolve( { ...MOVABLE_TICKET, event_date_id: 7 } );
+		}
+		if ( path.endsWith( '/participants' ) ) {
+			return Promise.resolve( [
+				{
+					...PARTICIPANT,
+					tickets: [ MOVABLE_TICKET, SIBLING_TICKET, SERIES_PASS ],
+					cancelled_tickets: [],
+				},
+			] );
+		}
+		if ( path.includes( '/siblings' ) ) {
+			return Promise.resolve( siblings );
+		}
+		if ( path.includes( '/tickets' ) ) {
+			return Promise.resolve( { options: [], ticket_types: [] } );
+		}
+		return Promise.resolve( [] );
+	} );
+}
+
+const ticketRowOf = ( id ) =>
+	document.querySelector( `tr[data-ticket-id="${ id }"]` );
+
+const moveCalls = () =>
+	apiFetch.mock.calls
+		.map( ( [ args ] ) => args )
+		.filter( ( args ) => /\/tickets\/\d+\/move$/.test( args.path ) );
+
+describe( 'EventAudience — moving one ticket (#1699)', () => {
+	it( 'offers no ticket move without another date, or for a whole-series pass', async () => {
+		mockTicketMove( { siblings: [ SIBLINGS[ 0 ] ] } );
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+		expect(
+			screen.queryByRole( 'button', { name: /^Move Ticket/ } )
+		).not.toBeInTheDocument();
+
+		jest.clearAllMocks();
+		document.body.innerHTML = '';
+		mockTicketMove();
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+
+		expect(
+			within( ticketRowOf( 101 ) ).getByRole( 'button', {
+				name: 'Move Ticket 1 — Regular (AAAA1111)',
+			} )
+		).toBeInTheDocument();
+		expect(
+			within( ticketRowOf( 103 ) ).queryByRole( 'button', {
+				name: /^Move Ticket/,
+			} )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'moves only the selected ticket to the chosen date', async () => {
+		mockTicketMove();
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+
+		fireEvent.click(
+			within( ticketRowOf( 101 ) ).getByRole( 'button', {
+				name: 'Move Ticket 1 — Regular (AAAA1111)',
+			} )
+		);
+
+		const dialog = screen.getByRole( 'dialog', {
+			name: 'Move ticket — Ticket 1 — Regular (AAAA1111)',
+		} );
+		expect(
+			Array.from( dialog.querySelectorAll( 'dd' ) ).map(
+				( dd ) => dd.textContent
+			)
+		).toEqual( [
+			'Jane Doe (jane@example.com)',
+			'Gil Guest (gil@example.com)',
+		] );
+		expect( dialog ).toHaveTextContent( 'Only this ticket moves.' );
+		expect( dialog ).toHaveTextContent( 'nothing is charged or refunded' );
+
+		// The other dates only, never the current one.
+		const select = within( dialog ).getByLabelText( 'Move to date' );
+		const optionValues = Array.from( select.options ).map(
+			( o ) => o.value
+		);
+		expect( optionValues ).toEqual( [ '6', '7' ] );
+
+		fireEvent.change( select, { target: { value: '7' } } );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Move ticket' } )
+		);
+
+		await screen.findByText( /^Ticket moved to / );
+		expect( moveCalls() ).toEqual( [
+			{
+				path: '/fair-audience/v1/event-dates/5/tickets/101/move',
+				method: 'POST',
+				data: { target_event_date_id: 7 },
+			},
+		] );
+		expect(
+			apiFetch.mock.calls.filter( ( [ args ] ) =>
+				args.path.endsWith( '/participants' )
+			)
+		).toHaveLength( 2 );
+	} );
+
+	it( 'asks for a reason before moving over capacity', async () => {
+		mockTicketMove( {
+			refusal: {
+				code: 'capacity_exceeded',
+				message:
+					'January 8, 2026 10:00 would have 3 of 2 places taken.',
+				data: {
+					status: 409,
+					projections: [ { after: 3, capacity: 2 } ],
+				},
+			},
+		} );
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+
+		fireEvent.click(
+			within( ticketRowOf( 101 ) ).getByRole( 'button', {
+				name: 'Move Ticket 1 — Regular (AAAA1111)',
+			} )
+		);
+		const dialog = screen.getByRole( 'dialog' );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Move ticket' } )
+		);
+
+		expect(
+			await within( dialog ).findByText(
+				'January 8, 2026 10:00 would have 3 of 2 places taken.'
+			)
+		).toBeInTheDocument();
+
+		// The move stays blocked until a reason is entered.
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Move over capacity',
+		} );
+		expect( confirm ).toBeDisabled();
+		expect( dialog ).toHaveTextContent(
+			'Enter a reason to move over capacity.'
+		);
+
+		fireEvent.change(
+			within( dialog ).getByLabelText( 'Reason for going over capacity' ),
+			{ target: { value: 'Organizer approved an extra place' } }
+		);
+		await waitFor( () => expect( confirm ).toBeEnabled() );
+		fireEvent.click( confirm );
+
+		await screen.findByText( /^Ticket moved to / );
+		expect( moveCalls().map( ( call ) => call.data ) ).toEqual( [
+			{ target_event_date_id: 6 },
+			{
+				target_event_date_id: 6,
+				override_reason: 'Organizer approved an extra place',
+			},
+		] );
 	} );
 } );

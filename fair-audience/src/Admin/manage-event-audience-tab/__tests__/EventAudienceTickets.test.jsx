@@ -16,6 +16,13 @@
  *     names the purchaser and the current assignee, offers the existing
  *     identity on an email conflict, and moves the ticket to its new holder
  *     (#1535).
+ *   - "Cancel ticket" and "Delete ticket" name the ticket, its purchaser
+ *     and assignee and what happens to the payment, and send a request for
+ *     that ticket only; a cancelled ticket offers nothing but deletion
+ *     (#1699).
+ *   - Search finds tickets by purchaser, assignee, email and reference and
+ *     shows only matching tickets; the tickets CSV exports those same
+ *     tickets, one row each (#1699).
  */
 import '@testing-library/jest-dom';
 import {
@@ -27,6 +34,7 @@ import {
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventAudience from '../EventAudience.js';
+import { buildTicketsCsv, escapeCsvField } from '../ticketSearch.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -858,5 +866,417 @@ describe( 'EventAudience — assigning a ticket (#1535)', () => {
 		expect(
 			within( janeRow ).queryByRole( 'checkbox' )
 		).not.toBeInTheDocument();
+	} );
+} );
+
+// One purchase of two tickets under one email: Jane keeps the first and
+// gave the second to Gil. A third, cancelled ticket stays under Jane.
+const JANE = {
+	participant_id: 10,
+	name: 'Jane Doe',
+	email: 'jane@example.com',
+};
+const GIL = { participant_id: 12, name: 'Gil Guest', email: 'gil@example.com' };
+
+const OWN_TICKET = {
+	...TICKET_ONE,
+	position: 1,
+	event_date_id: 5,
+	purchaser: JANE,
+	assignee: JANE,
+};
+const GIVEN_TICKET = {
+	...TICKET_TWO,
+	signup_id: 40,
+	position: 2,
+	event_date_id: 5,
+	purchaser: JANE,
+	assignee: GIL,
+};
+const CANCELLED_TICKET = {
+	...TICKET_ONE,
+	id: 103,
+	reference: 'CCCC3333',
+	position: 3,
+	event_date_id: 5,
+	status: 'cancelled',
+	activity_ids: [],
+	activity_names: [],
+	confirmed_activity_ids: [],
+	purchaser: JANE,
+	assignee: JANE,
+};
+
+const PURCHASER_ROW = {
+	...PARTICIPANT,
+	tickets: [ OWN_TICKET ],
+	cancelled_tickets: [ CANCELLED_TICKET ],
+	assigned_away_ticket_count: 1,
+};
+const HOLDER_ROW = {
+	...PARTICIPANT,
+	id: 3,
+	participant_id: 12,
+	participant_name: 'Gil Guest',
+	name: 'Gil',
+	surname: 'Guest',
+	participant_email: 'gil@example.com',
+	ticket_type_id: null,
+	ticket_type_name: null,
+	tickets: [ GIVEN_TICKET ],
+	cancelled_tickets: [],
+};
+
+function mockOperationsApi( { cancelError = null } = {} ) {
+	apiFetch.mockImplementation( ( { path, method } ) => {
+		if ( /\/tickets\/\d+\/cancel$/.test( path ) ) {
+			return cancelError
+				? Promise.reject( cancelError )
+				: Promise.resolve( { ...OWN_TICKET, status: 'cancelled' } );
+		}
+		if ( /\/tickets\/\d+$/.test( path ) && method === 'DELETE' ) {
+			return Promise.resolve( { deleted: true, id: 103 } );
+		}
+		if ( path.endsWith( '/participants' ) ) {
+			return Promise.resolve( [ PURCHASER_ROW, HOLDER_ROW ] );
+		}
+		if ( path.includes( '/siblings' ) ) {
+			return Promise.resolve( [
+				{
+					id: 5,
+					start_datetime: '2026-01-01 10:00:00',
+					occurrence_type: 'master',
+				},
+			] );
+		}
+		if ( path.includes( '/fair-events/v1/event-dates/5/tickets' ) ) {
+			return Promise.resolve( { options: OPTIONS, ticket_types: [] } );
+		}
+		return Promise.resolve( [] );
+	} );
+}
+
+function mutations() {
+	return apiFetch.mock.calls
+		.map( ( [ args ] ) => args )
+		.filter( ( args ) => args.method && args.method !== 'GET' );
+}
+
+function participantLoads() {
+	return apiFetch.mock.calls.filter( ( [ args ] ) =>
+		args.path.endsWith( '/participants' )
+	).length;
+}
+
+describe( 'EventAudience — cancelling and deleting a ticket (#1699)', () => {
+	it( 'states that cancelling refunds nothing and cancels only the selected ticket', async () => {
+		mockOperationsApi();
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+
+		fireEvent.click(
+			within( ticketRow( 101 ) ).getByRole( 'button', {
+				name: 'Cancel Ticket 1 — Regular (AAAA1111)',
+			} )
+		);
+
+		const dialog = screen.getByRole( 'dialog', {
+			name: 'Cancel ticket — Ticket 1 — Regular (AAAA1111)',
+		} );
+		const people = Array.from( dialog.querySelectorAll( 'dd' ) ).map(
+			( dd ) => dd.textContent
+		);
+		expect( people ).toEqual( [
+			'Jane Doe (jane@example.com)',
+			'Jane Doe (jane@example.com)',
+		] );
+		expect( dialog ).toHaveTextContent(
+			'Cancelling does not refund anything.'
+		);
+		expect( dialog ).toHaveTextContent( 'Only this ticket is cancelled.' );
+		// Nothing is sent until the action is confirmed.
+		expect( mutations() ).toHaveLength( 0 );
+
+		const loadsBefore = participantLoads();
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel ticket' } )
+		);
+
+		await screen.findByText( 'Ticket cancelled. No refund was issued.' );
+		expect( mutations() ).toEqual( [
+			{
+				path: '/fair-audience/v1/event-dates/5/tickets/101/cancel',
+				method: 'POST',
+			},
+		] );
+		// The rows and totals are reloaded.
+		expect( participantLoads() ).toBe( loadsBefore + 1 );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'sends nothing when the ticket is kept', async () => {
+		mockOperationsApi();
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+
+		fireEvent.click(
+			within( ticketRow( 102 ) ).getByRole( 'button', {
+				name: 'Cancel Ticket 2 — Regular (BBBB2222)',
+			} )
+		);
+		// The assignee differs from the purchaser, and both are named.
+		const dialog = screen.getByRole( 'dialog' );
+		expect(
+			Array.from( dialog.querySelectorAll( 'dd' ) ).map(
+				( dd ) => dd.textContent
+			)
+		).toEqual( [
+			'Jane Doe (jane@example.com)',
+			'Gil Guest (gil@example.com)',
+		] );
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Keep ticket' } )
+		);
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( mutations() ).toHaveLength( 0 );
+	} );
+
+	it( 'keeps the popup open with the reason when cancelling is refused', async () => {
+		mockOperationsApi( {
+			cancelError: {
+				code: 'ticket_inactive',
+				message: 'This ticket is no longer active.',
+			},
+		} );
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+
+		fireEvent.click(
+			within( ticketRow( 101 ) ).getByRole( 'button', {
+				name: 'Cancel Ticket 1 — Regular (AAAA1111)',
+			} )
+		);
+		const dialog = screen.getByRole( 'dialog' );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel ticket' } )
+		);
+
+		expect(
+			await within( dialog ).findByText(
+				'This ticket is no longer active.'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel ticket' } )
+		).toBeEnabled();
+	} );
+
+	it( 'offers only deletion for a cancelled ticket, and deletes that ticket alone', async () => {
+		mockOperationsApi();
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+
+		const cancelledRow = ticketRow( 103 );
+		expect( cancelledRow ).toHaveTextContent( 'Cancelled' );
+		expect( within( cancelledRow ).getAllByRole( 'button' ) ).toHaveLength(
+			1
+		);
+		expect(
+			within( cancelledRow ).queryByRole( 'checkbox' )
+		).not.toBeInTheDocument();
+		// A cancelled ticket is not one of the tickets the participant holds.
+		expect( screen.getAllByText( '1 ticket' ) ).toHaveLength( 2 );
+
+		fireEvent.click(
+			within( cancelledRow ).getByRole( 'button', {
+				name: 'Delete Ticket 3 — Regular (CCCC3333)',
+			} )
+		);
+		const dialog = screen.getByRole( 'dialog', {
+			name: 'Delete ticket — Ticket 3 — Regular (CCCC3333)',
+		} );
+		expect( dialog ).toHaveTextContent(
+			'Deleting does not refund anything and does not change the payment.'
+		);
+		expect( dialog ).toHaveTextContent( 'This cannot be undone.' );
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Delete ticket' } )
+		);
+
+		await screen.findByText( 'Ticket deleted.' );
+		expect( mutations() ).toEqual( [
+			{
+				path: '/fair-audience/v1/event-dates/5/tickets/103',
+				method: 'DELETE',
+			},
+		] );
+	} );
+} );
+
+describe( 'EventAudience — searching and exporting tickets (#1699)', () => {
+	const search = ( text ) =>
+		fireEvent.change( screen.getByLabelText( 'Search' ), {
+			target: { value: text },
+		} );
+
+	const shownTicketIds = () =>
+		Array.from( document.querySelectorAll( 'tr[data-ticket-id]' ) ).map(
+			( row ) => Number( row.dataset.ticketId )
+		);
+
+	it( 'finds a ticket by its reference and shows only that ticket', async () => {
+		mockOperationsApi();
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+		expect( shownTicketIds() ).toEqual( [ 102, 101, 103 ] );
+
+		search( 'bbbb2222' );
+
+		expect( shownTicketIds() ).toEqual( [ 102 ] );
+		expect( screen.queryByText( 'Jane Doe' ) ).not.toBeInTheDocument();
+		expect( screen.getByText( 'Gil Guest' ) ).toBeInTheDocument();
+	} );
+
+	it( 'tells apart tickets bought with one email by their assignee', async () => {
+		mockOperationsApi();
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+
+		// The purchaser's email finds every ticket of the purchase,
+		// each under the participant holding it.
+		search( 'jane@example.com' );
+		expect( shownTicketIds() ).toEqual( [ 102, 101, 103 ] );
+
+		// The assignee's name or email finds only the ticket they hold.
+		search( 'gil@example.com' );
+		expect( shownTicketIds() ).toEqual( [ 102 ] );
+		search( 'Gil' );
+		expect( shownTicketIds() ).toEqual( [ 102 ] );
+	} );
+
+	it( 'keeps a participant without tickets findable by name or email', async () => {
+		mockApi( [ PARTICIPANT, WALK_IN ] );
+		renderAudience();
+		await screen.findByText( 'Sam Walkin' );
+
+		search( 'walkin' );
+
+		expect( screen.getByText( 'Sam Walkin' ) ).toBeInTheDocument();
+		expect( screen.queryByText( 'Jane Doe' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'does not give a participant row a check-in when the search hides their tickets', async () => {
+		mockOperationsApi();
+		renderAudience();
+		await screen.findByText( 'Jane Doe' );
+
+		// Matches Jane's cancelled ticket only: her active ticket is hidden.
+		search( 'cccc3333' );
+
+		expect( shownTicketIds() ).toEqual( [ 103 ] );
+		const participantRow = document.querySelector(
+			'tr[data-participant-id="10"]'
+		);
+		expect(
+			within( participantRow ).queryByRole( 'checkbox' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'exports the tickets the search shows, one row per ticket', async () => {
+		mockOperationsApi();
+		const parts = [];
+		const OriginalBlob = global.Blob;
+		global.Blob = function ( content ) {
+			parts.push( content.join( '' ) );
+		};
+		URL.createObjectURL = jest.fn( () => 'blob:tickets' );
+		URL.revokeObjectURL = jest.fn();
+		const click = jest
+			.spyOn( HTMLAnchorElement.prototype, 'click' )
+			.mockImplementation( () => {} );
+
+		try {
+			renderAudience();
+			await screen.findByText( 'Jane Doe' );
+
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Export tickets CSV' } )
+			);
+			search( 'gil' );
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Export tickets CSV' } )
+			);
+		} finally {
+			global.Blob = OriginalBlob;
+		}
+
+		expect( click ).toHaveBeenCalledTimes( 2 );
+		const [ all, searched ] = parts.map( ( text ) =>
+			text.replace( '﻿', '' ).split( '\r\n' )
+		);
+
+		// Header, then every listed ticket: two bought with one email are
+		// separate rows, told apart by ID, reference and assignee.
+		expect( all ).toHaveLength( 4 );
+		expect( all[ 0 ] ).toBe(
+			'"Ticket ID","Reference","Event date","Ticket type","Status","Activities","Checked in","Purchaser ID","Purchaser name","Purchaser email","Assignee ID","Assignee name","Assignee email"'
+		);
+		expect( all[ 1 ] ).toBe(
+			'"102","BBBB2222","2026-01-01 10:00:00","Regular","Confirmed","Morning workshop; Evening workshop","","10","Jane Doe","jane@example.com","12","Gil Guest","gil@example.com"'
+		);
+		expect( all[ 2 ] ).toBe(
+			'"101","AAAA1111","2026-01-01 10:00:00","Regular","Confirmed","Morning workshop","","10","Jane Doe","jane@example.com","10","Jane Doe","jane@example.com"'
+		);
+		expect( all[ 3 ] ).toContain( '"103","CCCC3333"' );
+		expect( all[ 3 ] ).toContain( '"Cancelled"' );
+
+		// The export follows the search.
+		expect( searched ).toHaveLength( 2 );
+		expect( searched[ 1 ] ).toContain( '"102","BBBB2222"' );
+	} );
+
+	it( 'disables the export when no ticket is shown', async () => {
+		mockApi( [ WALK_IN ] );
+		renderAudience();
+		await screen.findByText( 'Sam Walkin' );
+
+		expect(
+			screen.getByRole( 'button', { name: 'Export tickets CSV' } )
+		).toBeDisabled();
+	} );
+} );
+
+describe( 'tickets CSV', () => {
+	it( 'quotes fields, doubles quotes and keeps line breaks inside one field', () => {
+		expect( escapeCsvField( 'Doe, "JD" Jane' ) ).toBe(
+			'"Doe, ""JD"" Jane"'
+		);
+		expect( escapeCsvField( 'two\nlines' ) ).toBe( '"two\nlines"' );
+		expect( escapeCsvField( null ) ).toBe( '""' );
+	} );
+
+	it( 'stops a spreadsheet from running a cell as a formula', () => {
+		expect( escapeCsvField( '=HYPERLINK("http://x","y")' ) ).toBe(
+			'"\'=HYPERLINK(""http://x"",""y"")"'
+		);
+		expect( escapeCsvField( '+1' ) ).toBe( '"\'+1"' );
+		expect( escapeCsvField( '-1' ) ).toBe( '"\'-1"' );
+		expect( escapeCsvField( '@cmd' ) ).toBe( '"\'@cmd"' );
+		expect( escapeCsvField( '\tcmd' ) ).toBe( '"\'\tcmd"' );
+
+		const csv = buildTicketsCsv( {
+			tickets: [
+				{
+					...OWN_TICKET,
+					purchaser: { ...JANE, name: '=SUM(A1:A9)' },
+				},
+			],
+			eventDate: () => '2026-01-01 10:00:00',
+			statusLabel: ( status ) => status,
+		} );
+		expect( csv.split( '\r\n' )[ 1 ] ).toContain( '"\'=SUM(A1:A9)"' );
 	} );
 } );
