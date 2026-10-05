@@ -21,7 +21,10 @@ addFilter(
 	'fairEvents.manageEvent.tabs',
 	'fair-audience-experimental/groups-tab',
 	( tabs, { eventDate, eventDateId, enabledFeatures = {} } ) => {
-		if ( ! audienceUrl || ! enabledFeatures.ticketing ) {
+		// `groupRulesAvailable` is set in PHP only when every service the tab
+		// reads is registered. `ticketing` alone does not say that: core
+		// fair-events sets it too.
+		if ( ! audienceUrl || ! enabledFeatures.groupRulesAvailable ) {
 			return tabs;
 		}
 

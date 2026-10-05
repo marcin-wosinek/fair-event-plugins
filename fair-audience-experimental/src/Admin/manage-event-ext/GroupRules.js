@@ -7,7 +7,7 @@
  * @package FairAudience
  */
 
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef, useCallback } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -66,7 +66,15 @@ export default function GroupRules( { eventDateId } ) {
 	const [ pricingRules, setPricingRules ] = useState( [] );
 	const [ permissionRules, setPermissionRules ] = useState( [] );
 	const [ groups, setGroups ] = useState( [] );
-	const [ loading, setLoading ] = useState( true );
+	// Load state is kept apart from the dismissible mutation notices below, so
+	// dismissing a notice can never turn a failed load into an empty list.
+	// 'idle' | 'loading' | 'loaded' | 'error'.
+	const [ loadStatus, setLoadStatus ] = useState(
+		eventDateId ? 'loading' : 'idle'
+	);
+	// Server-provided detail for the failed load, when there is one.
+	const [ loadError, setLoadError ] = useState( '' );
+	const latestLoadRef = useRef( 0 );
 	const [ error, setError ] = useState( null );
 	const [ success, setSuccess ] = useState( null );
 
@@ -86,17 +94,16 @@ export default function GroupRules( { eventDateId } ) {
 	const [ editDiscountValue, setEditDiscountValue ] = useState( '' );
 	const [ saving, setSaving ] = useState( false );
 
-	useEffect( () => {
-		if ( ! eventDateId ) {
-			setLoading( false );
-			return;
-		}
-		loadData();
-	}, [ eventDateId ] );
-
-	const loadData = async () => {
-		setLoading( true );
-		setError( null );
+	/**
+	 * Load the rules and the group list.
+	 *
+	 * @return {Promise<boolean>} True when all three requests succeeded and
+	 *                            this is still the latest load.
+	 */
+	const loadData = useCallback( async () => {
+		const loadId = ++latestLoadRef.current;
+		setLoadStatus( 'loading' );
+		setLoadError( '' );
 
 		try {
 			const [ pricingData, permissionData, groupsData ] =
@@ -112,21 +119,51 @@ export default function GroupRules( { eventDateId } ) {
 					} ),
 				] );
 
+			// A newer load (another event, or a retry) has taken over.
+			if ( loadId !== latestLoadRef.current ) {
+				return false;
+			}
+
 			setPricingRules( pricingData );
 			setPermissionRules( permissionData );
 			setGroups( groupsData );
+			setLoadStatus( 'loaded' );
+			return true;
 		} catch ( err ) {
-			setError(
-				err.message ||
-					__(
-						'Failed to load group rules.',
-						'fair-audience-experimental'
-					)
-			);
-		} finally {
-			setLoading( false );
+			if ( loadId !== latestLoadRef.current ) {
+				return false;
+			}
+
+			setLoadError( err?.message || '' );
+			setLoadStatus( 'error' );
+			return false;
 		}
-	};
+	}, [ eventDateId ] );
+
+	useEffect( () => {
+		// Drop everything that belongs to the previous event.
+		setPricingRules( [] );
+		setPermissionRules( [] );
+		setGroups( [] );
+		setError( null );
+		setSuccess( null );
+		setEditingGroupId( null );
+		setSelectedGroupId( '' );
+
+		if ( ! eventDateId ) {
+			latestLoadRef.current++;
+			setLoadStatus( 'idle' );
+			setLoadError( '' );
+			return undefined;
+		}
+
+		loadData();
+
+		return () => {
+			// Ignore a response that arrives after the event changed.
+			latestLoadRef.current++;
+		};
+	}, [ eventDateId, loadData ] );
 
 	// Build per-group merged view
 	const groupsWithRules = [];
@@ -200,7 +237,9 @@ export default function GroupRules( { eventDateId } ) {
 			}
 
 			await Promise.all( promises );
-			await loadData();
+			if ( ! ( await loadData() ) ) {
+				return;
+			}
 
 			setSelectedGroupId( '' );
 			setDiscountValue( '' );
@@ -275,7 +314,9 @@ export default function GroupRules( { eventDateId } ) {
 				} );
 			}
 
-			await loadData();
+			if ( ! ( await loadData() ) ) {
+				return;
+			}
 			setEditingGroupId( null );
 			setSuccess(
 				__( 'Group rules updated.', 'fair-audience-experimental' )
@@ -365,7 +406,9 @@ export default function GroupRules( { eventDateId } ) {
 			}
 
 			await Promise.all( promises );
-			await loadData();
+			if ( ! ( await loadData() ) ) {
+				return;
+			}
 			setSuccess(
 				__( 'Group rules removed.', 'fair-audience-experimental' )
 			);
@@ -407,13 +450,35 @@ export default function GroupRules( { eventDateId } ) {
 						</Notice>
 					) }
 
-					{ loading && (
+					{ loadStatus === 'loading' && (
 						<div style={ { textAlign: 'center', padding: '20px' } }>
 							<Spinner />
 						</div>
 					) }
 
-					{ ! loading && (
+					{ loadStatus === 'error' && (
+						<Notice
+							status="error"
+							isDismissible={ false }
+							actions={ [
+								{
+									label: __(
+										'Retry',
+										'fair-audience-experimental'
+									),
+									onClick: loadData,
+								},
+							] }
+						>
+							{ __(
+								'Group rules could not be loaded.',
+								'fair-audience-experimental'
+							) }
+							{ loadError ? ` ${ loadError }` : '' }
+						</Notice>
+					) }
+
+					{ loadStatus === 'loaded' && (
 						<>
 							{ groupsWithRules.length > 0 &&
 								groupsWithRules.map( ( entry ) => (

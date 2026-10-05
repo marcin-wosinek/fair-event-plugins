@@ -38,7 +38,11 @@ describe( 'groups/mailings tab registration', () => {
 			eventDate: { ...eventDate, link_type: 'external' },
 			eventDateId: 1,
 			eventTitle: 'Test Event',
-			enabledFeatures: { ticketing: true, mailings: true },
+			enabledFeatures: {
+				ticketing: true,
+				mailings: true,
+				groupRulesAvailable: true,
+			},
 		};
 
 		const tabs = applyFilters( 'fairEvents.manageEvent.tabs', [], ctx );
@@ -60,7 +64,11 @@ describe( 'groups/mailings tab registration', () => {
 			eventDate: { ...eventDate, link_type: 'post' },
 			eventDateId: 1,
 			eventTitle: 'Test Event',
-			enabledFeatures: { ticketing: true, mailings: true },
+			enabledFeatures: {
+				ticketing: true,
+				mailings: true,
+				groupRulesAvailable: true,
+			},
 		};
 
 		const tabs = applyFilters( 'fairEvents.manageEvent.tabs', [], ctx );
@@ -86,7 +94,11 @@ describe( 'groups/mailings tab registration', () => {
 			},
 			eventDateId: 1,
 			eventTitle: 'Test Event',
-			enabledFeatures: { ticketing: true, mailings: true },
+			enabledFeatures: {
+				ticketing: true,
+				mailings: true,
+				groupRulesAvailable: true,
+			},
 		};
 
 		const tabs = applyFilters( 'fairEvents.manageEvent.tabs', [], ctx );
@@ -94,5 +106,24 @@ describe( 'groups/mailings tab registration', () => {
 		expect( tabs.find( ( t ) => t.name === 'groups' ).disabled ).toBe(
 			true
 		);
+	} );
+
+	it( 'does not register Groups when group rules are unavailable', () => {
+		const { applyFilters } = loadModuleWithData( {
+			audienceUrl: 'http://example.com/audience/',
+		} );
+
+		const ctx = {
+			eventDate: { ...eventDate, link_type: 'post' },
+			eventDateId: 1,
+			eventTitle: 'Test Event',
+			// Core ticketing on, but the experimental rule routes are not.
+			enabledFeatures: { ticketing: true, mailings: true },
+		};
+
+		const tabs = applyFilters( 'fairEvents.manageEvent.tabs', [], ctx );
+
+		expect( tabs.find( ( t ) => t.name === 'groups' ) ).toBeUndefined();
+		expect( tabs.find( ( t ) => t.name === 'mailings' ) ).toBeDefined();
 	} );
 } );
