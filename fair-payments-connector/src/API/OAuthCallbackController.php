@@ -8,6 +8,7 @@
 namespace FairPaymentsConnector\API;
 
 use FairPaymentsConnector\AuditLog\AuditLogger;
+use FairPaymentsConnector\OAuth\GrantedScopes;
 
 defined( 'WPINC' ) || die;
 
@@ -84,6 +85,11 @@ class OAuthCallbackController extends \WP_REST_Controller {
 						'type'    => 'boolean',
 						'default' => false,
 					),
+					'scope'           => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'default'           => '',
+					),
 				),
 			)
 		);
@@ -103,7 +109,8 @@ class OAuthCallbackController extends \WP_REST_Controller {
 
 	/**
 	 * Generate a one-time OAuth state token and store it in a user-scoped
-	 * transient.
+	 * transient. Also says whether the authorization should ask Mollie for
+	 * settlement access, so the client can pass that on to the platform.
 	 *
 	 * @param \WP_REST_Request $request Incoming request.
 	 * @return \WP_REST_Response
@@ -111,7 +118,13 @@ class OAuthCallbackController extends \WP_REST_Controller {
 	public function generate_state( \WP_REST_Request $request ) {
 		$state = wp_generate_password( 32, false );
 		set_transient( $this->state_transient_key(), $state, 5 * MINUTE_IN_SECONDS );
-		return new \WP_REST_Response( array( 'state' => $state ), 200 );
+		return new \WP_REST_Response(
+			array(
+				'state'                     => $state,
+				'request_settlement_access' => GrantedScopes::is_settlement_access_requested(),
+			),
+			200
+		);
 	}
 
 	/**
@@ -135,6 +148,17 @@ class OAuthCallbackController extends \WP_REST_Controller {
 			);
 		}
 
+		// Nothing stored is touched until the whole callback is known to be
+		// usable — a reconnect that comes back incomplete must leave the
+		// existing connection working.
+		if ( '' === $request->get_param( 'access_token' ) || '' === $request->get_param( 'refresh_token' ) || $request->get_param( 'expires_in' ) <= 0 ) {
+			return new \WP_Error(
+				'invalid_oauth_callback',
+				__( 'The Mollie authorization response was incomplete. Please try connecting again.', 'fair-payments-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		// An organization ID from a prior connection is our signal that this
 		// is a reconnect rather than a first-ever connection, independent of
 		// the current fair_payment_mollie_connected flag (which is also
@@ -149,6 +173,14 @@ class OAuthCallbackController extends \WP_REST_Controller {
 		update_option( 'fair_payment_mollie_profile_id', $request->get_param( 'profile_id' ) );
 		update_option( 'fair_payment_mollie_connected', true );
 		update_option( 'fair_payment_mode', $mode );
+
+		// The scopes belong to these tokens: record what Mollie granted, or
+		// forget the previous connection's when none were reported.
+		GrantedScopes::store( $request->get_param( 'scope' ) );
+
+		// The overview may now describe a different profile or account.
+		delete_transient( 'fair_payment_connection_overview_test' );
+		delete_transient( 'fair_payment_connection_overview_live' );
 
 		$mode_label  = 'live' === $mode
 			? __( 'live', 'fair-payments-connector' )
@@ -203,6 +235,7 @@ class OAuthCallbackController extends \WP_REST_Controller {
 		delete_option( 'fair_payment_mollie_refresh_token' );
 		update_option( 'fair_payment_mollie_token_expires', 0 );
 		update_option( 'fair_payment_mollie_connected', false );
+		GrantedScopes::clear();
 		delete_transient( 'fair_payment_connection_overview_test' );
 		delete_transient( 'fair_payment_connection_overview_live' );
 

@@ -48,6 +48,10 @@ class Plugin {
 	 */
 	private function init_hooks() {
 		new \FairFinance\API\RestHooks();
+
+		// Settlement reconciliation needs to read Mollie settlements, so ask
+		// Fair Payments Connector to request that permission when connecting.
+		add_filter( 'fair_payment_request_settlement_access', '__return_true' );
 		if ( is_admin() ) {
 			( new \FairFinance\Admin\AdminPages() )->init();
 		}

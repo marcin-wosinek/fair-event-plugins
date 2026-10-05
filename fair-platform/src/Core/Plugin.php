@@ -12,6 +12,7 @@ use FairPlatform\Database\ConnectionRepository;
 use FairPlatform\Database\InstagramConnectionRepository;
 use FairPlatform\API\ConnectionsController;
 use FairPlatform\API\InstagramConnectionsController;
+use FairPlatform\OAuth\MollieOAuth;
 
 defined( 'ABSPATH' ) || die;
 
@@ -312,6 +313,10 @@ class Plugin {
 		$site_url     = esc_url_raw( $_GET['site_url'] ?? '' );
 		$client_state = sanitize_text_field( $_GET['state'] ?? '' );
 
+		// Optional extra permission: sites running Fair Finance ask for it.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- public OAuth entry point, called from other sites.
+		$settlement_access = MollieOAuth::is_settlement_access_requested( sanitize_text_field( wp_unslash( $_GET['settlement_access'] ?? '' ) ) );
+
 		if ( empty( $site_id ) || empty( $return_url ) ) {
 			wp_die( 'Missing required parameters: site_id and return_url' );
 		}
@@ -345,7 +350,7 @@ class Plugin {
 			array(
 				'client_id'       => MOLLIE_CLIENT_ID,
 				'state'           => $state,
-				'scope'           => 'payments.read payments.write refunds.read refunds.write organizations.read profiles.read profiles.write balances.read',
+				'scope'           => MollieOAuth::authorization_scope( $settlement_access ),
 				'response_type'   => 'code',
 				'approval_prompt' => 'auto',
 				'redirect_uri'    => home_url( '/oauth/callback' ),
@@ -372,16 +377,23 @@ class Plugin {
 		if ( ! empty( $error ) ) {
 			$error_description = sanitize_text_field( $_GET['error_description'] ?? 'Unknown error' );
 
+			// A cancellation is only returned to the site whose stored state
+			// this request carries; the state is single-use either way.
+			$data = empty( $state ) ? false : get_transient( "mollie_oauth_{$state}" );
+			if ( $data ) {
+				delete_transient( "mollie_oauth_{$state}" );
+			}
+
 			// Log failed connection.
 			$this->log_connection_attempt(
-				array(),
+				is_array( $data ) ? $data : array(),
 				array(),
 				'failed',
 				$error,
 				$error_description
 			);
 
-			$this->redirect_with_error( '', $error, $error_description );
+			$this->return_mollie_error( $data, $error, $error_description );
 		}
 
 		if ( empty( $code ) || empty( $state ) ) {
@@ -397,6 +409,9 @@ class Plugin {
 		// Exchange authorization code for tokens.
 		$tokens = $this->exchange_code_for_tokens( $code );
 		if ( is_wp_error( $tokens ) ) {
+			// The authorization code is spent, so this state cannot be retried.
+			delete_transient( "mollie_oauth_{$state}" );
+
 			// Log failed connection.
 			$this->log_connection_attempt(
 				$data,
@@ -406,11 +421,7 @@ class Plugin {
 				$tokens->get_error_message()
 			);
 
-			$this->redirect_with_error(
-				$data['return_url'],
-				'token_exchange_failed',
-				$tokens->get_error_message()
-			);
+			$this->return_mollie_error( $data, 'token_exchange_failed', $tokens->get_error_message() );
 		}
 
 		// Get organization details.
@@ -950,12 +961,34 @@ class Plugin {
 				'mollie_organization_id' => $session_data['organization_id'] ?? '',
 				'mollie_profile_id'      => $profile_id,
 				'mollie_test_mode'       => $session_data['testmode'] ?? 0,
+				'mollie_scope'           => rawurlencode( $session_data['scope'] ?? '' ),
 				'state'                  => $site_data['client_state'] ?? '',
 			),
 			$site_data['return_url']
 		);
 
 		// Redirect back to WordPress site.
+		wp_redirect( $redirect_url );
+		exit;
+	}
+
+	/**
+	 * Return a Mollie authorization error to the site that started it, or
+	 * show it here when no stored state names a site.
+	 *
+	 * @param mixed  $state_data Stored state data, or false when the state is unknown or expired.
+	 * @param string $error Error code.
+	 * @param string $description Error description.
+	 * @return void
+	 */
+	private function return_mollie_error( $state_data, $error, $description ) {
+		$redirect_url = MollieOAuth::error_return_url( $state_data, $error, $description );
+
+		if ( '' === $redirect_url ) {
+			$this->redirect_with_error( '', $error, $description );
+		}
+
+		// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- returns to the connecting site, taken from this platform's own stored state.
 		wp_redirect( $redirect_url );
 		exit;
 	}
@@ -1054,13 +1087,11 @@ class Plugin {
 			);
 		}
 
-		// Return new access token.
+		// Return new access token, with the scope and rotated refresh token
+		// when Mollie supplied them.
 		wp_send_json_success(
 			array(
-				'data' => array(
-					'access_token' => $body['access_token'],
-					'expires_in'   => $body['expires_in'] ?? 3600,
-				),
+				'data' => MollieOAuth::refresh_response_data( $body ),
 			)
 		);
 	}

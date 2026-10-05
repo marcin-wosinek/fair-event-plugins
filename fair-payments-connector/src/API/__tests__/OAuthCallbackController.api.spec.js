@@ -7,6 +7,7 @@ const DISCONNECT_ENDPOINT =
 	'/wp-json/fair-payments-connector/v1/oauth/disconnect';
 const SETTINGS_ENDPOINT = '/wp-json/wp/v2/settings';
 const AUDIT_LOG_ENDPOINT = '/wp-json/fair-payments-connector/v1/audit-log';
+const STATUS_ENDPOINT = '/wp-json/fair-payments-connector/v1/oauth/status';
 
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -33,8 +34,39 @@ const VALID_TOKENS = {
 	test_mode: true,
 };
 
+const BASE_SCOPE =
+	'payments.read payments.write refunds.read refunds.write organizations.read profiles.read profiles.write balances.read';
+
 test.describe( 'OAuthCallbackController', () => {
 	let api;
+
+	/**
+	 * Complete a callback with a fresh state and the given extra fields.
+	 *
+	 * @param {Object} extra Fields merged over the valid token payload.
+	 * @return {Promise<import('@playwright/test').APIResponse>} Callback response.
+	 */
+	async function connectWith( extra = {} ) {
+		const stateRes = await api.post( STATE_ENDPOINT, {
+			headers: adminAuth(),
+		} );
+		const { state } = await stateRes.json();
+		return api.post( CALLBACK_ENDPOINT, {
+			headers: adminAuth(),
+			data: { state, ...VALID_TOKENS, ...extra },
+		} );
+	}
+
+	/**
+	 * Read the connection status as an admin.
+	 *
+	 * @return {Promise<Object>} Status body.
+	 */
+	async function readStatus() {
+		const res = await api.get( STATUS_ENDPOINT, { headers: adminAuth() } );
+		expect( res.status() ).toBe( 200 );
+		return res.json();
+	}
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
@@ -58,6 +90,16 @@ test.describe( 'OAuthCallbackController', () => {
 			const body = await res.json();
 			expect( typeof body.state ).toBe( 'string' );
 			expect( body.state.length ).toBeGreaterThan( 0 );
+		} );
+
+		test( 'says settlement access should be requested while Fair Finance is active (#1693)', async () => {
+			// The test site activates Fair Finance (.wp-env.json), which opts
+			// in through the fair_payment_request_settlement_access filter.
+			const res = await api.post( STATE_ENDPOINT, {
+				headers: adminAuth(),
+			} );
+			const body = await res.json();
+			expect( body.request_settlement_access ).toBe( true );
 		} );
 	} );
 
@@ -142,6 +184,118 @@ test.describe( 'OAuthCallbackController', () => {
 			expect( second.status() ).toBe( 403 );
 			const body = await second.json();
 			expect( body.code ).toBe( 'invalid_oauth_state' );
+		} );
+	} );
+
+	test.describe( 'granted permissions (#1693)', () => {
+		test( 'records the scopes Mollie granted and enables settlement access', async () => {
+			const res = await connectWith( {
+				scope: `${ BASE_SCOPE }  settlements.read settlements.read`,
+			} );
+			expect( res.status() ).toBe( 200 );
+
+			const status = await readStatus();
+			expect( status.connected ).toBe( true );
+			expect( status.scopes_known ).toBe( true );
+			expect( status.granted_scopes ).toEqual( [
+				...BASE_SCOPE.split( ' ' ),
+				'settlements.read',
+			] );
+			expect( status.settlement_access ).toBe( true );
+		} );
+
+		test( 'does not enable settlement access when only the existing permissions were granted', async () => {
+			const res = await connectWith( { scope: BASE_SCOPE } );
+			expect( res.status() ).toBe( 200 );
+
+			const status = await readStatus();
+			expect( status.scopes_known ).toBe( true );
+			expect( status.granted_scopes ).toEqual( BASE_SCOPE.split( ' ' ) );
+			expect( status.settlement_access ).toBe( false );
+		} );
+
+		test( 'does not treat a similarly named scope as settlement access', async () => {
+			const res = await connectWith( {
+				scope: 'payments.read settlements.write settlements.readonly',
+			} );
+			expect( res.status() ).toBe( 200 );
+
+			const status = await readStatus();
+			expect( status.settlement_access ).toBe( false );
+		} );
+
+		test( 'leaves permissions unknown for a connection without scope metadata', async () => {
+			// First record a grant, then reconnect the way an older platform
+			// would: tokens only. The earlier grant must not carry over.
+			await connectWith( { scope: `${ BASE_SCOPE } settlements.read` } );
+			const res = await connectWith();
+			expect( res.status() ).toBe( 200 );
+
+			const status = await readStatus();
+			expect( status.connected ).toBe( true );
+			expect( status.scopes_known ).toBe( false );
+			expect( status.granted_scopes ).toEqual( [] );
+			expect( status.settlement_access ).toBe( false );
+		} );
+
+		test( 'a callback with an invalid state leaves the existing connection and its permissions untouched', async () => {
+			await connectWith( { scope: `${ BASE_SCOPE } settlements.read` } );
+			const before = await readStatus();
+
+			const res = await api.post( CALLBACK_ENDPOINT, {
+				headers: adminAuth(),
+				data: {
+					state: 'wrong_state',
+					...VALID_TOKENS,
+					access_token: 'access_rejected',
+					scope: 'payments.read',
+				},
+			} );
+			expect( res.status() ).toBe( 403 );
+
+			expect( await readStatus() ).toEqual( before );
+		} );
+
+		test( 'an incomplete callback is rejected before anything is replaced', async () => {
+			await connectWith( { scope: `${ BASE_SCOPE } settlements.read` } );
+			const before = await readStatus();
+
+			const res = await connectWith( {
+				expires_in: 0,
+				scope: 'payments.read',
+			} );
+			expect( res.status() ).toBe( 400 );
+			const body = await res.json();
+			expect( body.code ).toBe( 'invalid_oauth_callback' );
+
+			expect( await readStatus() ).toEqual( before );
+		} );
+
+		test( 'keeps the granted scopes out of /wp/v2/settings', async () => {
+			await connectWith( { scope: `${ BASE_SCOPE } settlements.read` } );
+
+			const res = await api.get( SETTINGS_ENDPOINT, {
+				headers: adminAuth(),
+			} );
+			const body = await res.json();
+			expect( body ).not.toHaveProperty( 'fair_payment_mollie_scopes' );
+		} );
+
+		test( 'disconnecting forgets the granted permissions', async () => {
+			await connectWith( { scope: `${ BASE_SCOPE } settlements.read` } );
+			expect( ( await readStatus() ).settlement_access ).toBe( true );
+
+			const res = await api.post( DISCONNECT_ENDPOINT, {
+				headers: adminAuth(),
+			} );
+			expect( res.status() ).toBe( 200 );
+
+			// The shared test env forces the connected flag on (#1405), so
+			// only the permission metadata is asserted here.
+			const status = await readStatus();
+			expect( status.scopes_known ).toBe( false );
+			expect( status.granted_scopes ).toEqual( [] );
+			expect( status.settlement_access ).toBe( false );
 		} );
 	} );
 

@@ -11,6 +11,7 @@ use Mollie\Api\MollieApiClient;
 use Mollie\Api\Exceptions\ApiException;
 use FairPaymentsConnector\AuditLog\AuditLogger;
 use FairPaymentsConnector\Database\PaymentLogRepository;
+use FairPaymentsConnector\OAuth\GrantedScopes;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -153,6 +154,20 @@ class MolliePaymentHandler {
 		$expires_in = $body['data']['data']['expires_in'];
 		update_option( 'fair_payment_mollie_access_token', $new_token );
 		update_option( 'fair_payment_mollie_token_expires', time() + $expires_in );
+
+		// Mollie may rotate the refresh token; the old one stops working then.
+		$new_refresh_token = $body['data']['data']['refresh_token'] ?? '';
+		if ( is_string( $new_refresh_token ) && '' !== $new_refresh_token ) {
+			update_option( 'fair_payment_mollie_refresh_token', $new_refresh_token );
+		}
+
+		// Replace the recorded permissions only with ones this response
+		// reports. A refresh that says nothing about scopes keeps what the
+		// authorization recorded, and never grants anything by itself.
+		$refreshed_scopes = GrantedScopes::normalize( $body['data']['data']['scope'] ?? null );
+		if ( ! empty( $refreshed_scopes ) ) {
+			GrantedScopes::store( $body['data']['data']['scope'] );
+		}
 
 		AuditLogger::record_system_action(
 			'mollie_token_refreshed',

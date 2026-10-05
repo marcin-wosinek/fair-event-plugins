@@ -4,6 +4,8 @@ const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const OVERVIEW_ENDPOINT =
 	'/wp-json/fair-payments-connector/v1/connection/overview';
 
+const STATUS_ENDPOINT = '/wp-json/fair-payments-connector/v1/oauth/status';
+
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
 
@@ -29,6 +31,40 @@ test.describe( 'ConnectionController', () => {
 
 	test.afterAll( async () => {
 		await api.dispose();
+	} );
+
+	test.describe( 'GET /oauth/status (#1693)', () => {
+		test( 'returns 401 for unauthenticated requests', async () => {
+			const res = await api.get( STATUS_ENDPOINT );
+			expect( res.status() ).toBe( 401 );
+		} );
+
+		test( 'reports the connection and its permissions to an admin, without credentials', async () => {
+			const res = await api.get( STATUS_ENDPOINT, {
+				headers: adminAuth(),
+			} );
+			expect( res.status() ).toBe( 200 );
+			const body = await res.json();
+
+			expect( Object.keys( body ).sort() ).toEqual( [
+				'connected',
+				'granted_scopes',
+				'scopes_known',
+				'settlement_access',
+				'settlement_access_requested',
+			] );
+			expect( typeof body.connected ).toBe( 'boolean' );
+			expect( typeof body.scopes_known ).toBe( 'boolean' );
+			expect( Array.isArray( body.granted_scopes ) ).toBe( true );
+			expect( typeof body.settlement_access ).toBe( 'boolean' );
+			// Settlement access is never inferred from the request for it:
+			// it needs the exact granted scope.
+			expect( body.settlement_access ).toBe(
+				body.granted_scopes.includes( 'settlements.read' )
+			);
+			// Fair Finance is active on the test site (.wp-env.json).
+			expect( body.settlement_access_requested ).toBe( true );
+		} );
 	} );
 
 	test.describe( 'GET /connection/overview', () => {

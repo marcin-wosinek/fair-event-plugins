@@ -77,15 +77,68 @@ export function loadAuditLog( { page = 1, perPage = 20 } = {} ) {
 }
 
 /**
- * Generate and retrieve a one-time OAuth state token from the server.
+ * Generate and retrieve a one-time OAuth state token from the server, along
+ * with whether this site wants settlement access requested from Mollie.
  *
- * @return {Promise<string>} Promise resolving to the state string
+ * @return {Promise<Object>} Promise resolving to { state, requestSettlementAccess }
  */
 export function fetchOAuthState() {
 	return apiFetch( {
 		path: '/fair-payments-connector/v1/oauth/state',
 		method: 'POST',
-	} ).then( ( response ) => response.state );
+	} ).then( ( response ) => ( {
+		state: response.state,
+		requestSettlementAccess: response.request_settlement_access === true,
+	} ) );
+}
+
+/**
+ * Build the platform URL that starts the Mollie authorization.
+ *
+ * Settlement access is passed as a flag, never as a scope list — the
+ * platform decides which permission that flag adds.
+ *
+ * @param {Object}  args                         Arguments
+ * @param {string}  args.state                   One-time state from fetchOAuthState()
+ * @param {boolean} args.requestSettlementAccess Whether to ask for settlement access
+ * @return {string} Authorization URL
+ */
+export function buildAuthorizeUrl( { state, requestSettlementAccess } ) {
+	const authorizeUrl = new URL(
+		'https://fair-event-plugins.com/oauth/authorize'
+	);
+	authorizeUrl.searchParams.set(
+		'site_id',
+		btoa( window.location.hostname )
+	);
+	authorizeUrl.searchParams.set(
+		'return_url',
+		window.location.href.split( '?' )[ 0 ] +
+			'?page=fair-payments-connector-settings'
+	);
+	authorizeUrl.searchParams.set( 'site_name', document.title );
+	authorizeUrl.searchParams.set( 'site_url', window.location.origin );
+	authorizeUrl.searchParams.set( 'state', state );
+	if ( requestSettlementAccess ) {
+		authorizeUrl.searchParams.set( 'settlement_access', '1' );
+	}
+
+	return authorizeUrl.toString();
+}
+
+/**
+ * Load the connection status and the permissions Mollie granted.
+ *
+ * @return {Promise<Object>} Promise resolving to { connected, settlementAccess, settlementAccessRequested }
+ */
+export function loadOAuthStatus() {
+	return apiFetch( {
+		path: '/fair-payments-connector/v1/oauth/status',
+	} ).then( ( status ) => ( {
+		connected: status.connected === true,
+		settlementAccess: status.settlement_access === true,
+		settlementAccessRequested: status.settlement_access_requested === true,
+	} ) );
 }
 
 /**

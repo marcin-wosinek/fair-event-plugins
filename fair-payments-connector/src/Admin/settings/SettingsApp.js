@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import { Notice, TabPanel } from '@wordpress/components';
 
@@ -39,29 +39,46 @@ export default function SettingsApp() {
 		const orgId = params.get( 'mollie_organization_id' );
 		const profileId = params.get( 'mollie_profile_id' );
 		const testMode = params.get( 'mollie_test_mode' );
+		const scope = params.get( 'mollie_scope' );
 		const state = params.get( 'state' );
 		const error = params.get( 'error' );
 
-		// Handle OAuth errors
-		if ( error === 'access_denied' ) {
-			setNotice( {
-				status: 'error',
-				message: __(
-					'Authorization cancelled. Please try again.',
-					'fair-payments-connector'
-				),
-			} );
-			// Clean URL
+		// Whatever the outcome, callback parameters (tokens, error details)
+		// don't stay in the address bar.
+		const cleanUrl = () =>
 			window.history.replaceState(
 				{},
 				'',
 				window.location.pathname +
 					'?page=fair-payments-connector-settings'
 			);
+
+		// Handle OAuth errors. Nothing was saved, so a connection that
+		// existed before the attempt is still in place.
+		if ( error ) {
+			cleanUrl();
+			setNotice( {
+				status: 'error',
+				message:
+					error === 'access_denied'
+						? __(
+								'Authorization cancelled. Nothing was changed, so an existing Mollie connection keeps working.',
+								'fair-payments-connector'
+						  )
+						: sprintf(
+								/* translators: %s: error code reported by the authorization server */
+								__(
+									'Mollie authorization failed (%s). Nothing was changed, so an existing Mollie connection keeps working.',
+									'fair-payments-connector'
+								),
+								error.replace( /[^a-z0-9_]/gi, '' )
+						  ),
+			} );
 			return;
 		}
 
 		if ( accessToken && ! refreshToken ) {
+			cleanUrl();
 			setNotice( {
 				status: 'warning',
 				message: __(
@@ -74,6 +91,8 @@ export default function SettingsApp() {
 
 		// Handle successful OAuth callback — validate state server-side before saving.
 		if ( accessToken && refreshToken ) {
+			cleanUrl();
+
 			if ( ! state ) {
 				setNotice( {
 					status: 'error',
@@ -93,16 +112,9 @@ export default function SettingsApp() {
 				organization_id: orgId || '',
 				profile_id: profileId || '',
 				test_mode: testMode === '1',
+				scope: scope || '',
 			} )
 				.then( () => {
-					// Clean URL (remove tokens from address bar)
-					window.history.replaceState(
-						{},
-						'',
-						window.location.pathname +
-							'?page=fair-payments-connector-settings'
-					);
-
 					// Trigger reload in ConnectionTab
 					setShouldReloadConnection( true );
 

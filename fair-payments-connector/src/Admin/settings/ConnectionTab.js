@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import {
 	Button,
 	Notice,
@@ -19,10 +19,12 @@ import {
 import {
 	loadConnectionSettings,
 	loadConnectionOverview,
+	loadOAuthStatus,
 	saveConnectorSettings,
 	testConnection,
 	createTestPayment,
 	fetchOAuthState,
+	buildAuthorizeUrl,
 	disconnectOAuth,
 } from './settings-api';
 
@@ -54,22 +56,39 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	const [ pendingMode, setPendingMode ] = useState( 'test' );
 	const [ isDisconnectDialogOpen, setIsDisconnectDialogOpen ] =
 		useState( false );
+	const latestLoadId = useRef( 0 );
+	// Granted-permission status; null until loaded, and when it can't be
+	// loaded — the rest of the tab doesn't depend on it.
+	const [ oauthStatus, setOauthStatus ] = useState( null );
 
 	/**
 	 * Load connection settings from API
 	 */
-	const loadSettings = () => {
-		if ( isLoading ) {
+	const loadSettings = ( { force = false } = {} ) => {
+		if ( isLoading && ! force ) {
 			console.log(
 				'[Fair Payments Connector] Skipping loadSettings - already loading'
 			);
 			return;
 		}
 
+		// A forced reload can overlap an earlier load; only the newest
+		// request may update the tab, so an older response can't put stale
+		// connection data back.
+		const loadId = ++latestLoadId.current;
+		const isLatest = () => loadId === latestLoadId.current;
+
 		setIsLoading( true );
+
+		loadOAuthStatus()
+			.then( ( status ) => isLatest() && setOauthStatus( status ) )
+			.catch( () => isLatest() && setOauthStatus( null ) );
 
 		loadConnectionSettings()
 			.then( ( settings ) => {
+				if ( ! isLatest() ) {
+					return;
+				}
 				setConnected( settings.connected );
 				setMode( settings.mode );
 				setPendingMode( settings.mode );
@@ -79,6 +98,9 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 				setIsLoading( false );
 			} )
 			.catch( ( error ) => {
+				if ( ! isLatest() ) {
+					return;
+				}
 				console.error(
 					'[Fair Payments Connector] Failed to load settings:',
 					error
@@ -102,11 +124,13 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	}, [] );
 
 	/**
-	 * Reload settings when shouldReload changes
+	 * Reload settings when shouldReload changes. Forced: the OAuth callback
+	 * can finish while the initial load is still running, and that load
+	 * predates the connection it just saved.
 	 */
 	useEffect( () => {
 		if ( shouldReload ) {
-			loadSettings();
+			loadSettings( { force: true } );
 		}
 	}, [ shouldReload ] );
 
@@ -145,28 +169,15 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	}, [ connected, mode ] );
 
 	/**
-	 * Handle Connect button click — fetches a CSRF state token first, then redirects.
+	 * Handle Connect and Reconnect — fetches a CSRF state token first, then
+	 * redirects. Reconnecting goes through the same authorization without
+	 * disconnecting, so the current connection stays in place until the new
+	 * one is saved.
 	 */
 	const handleConnect = () => {
 		fetchOAuthState()
-			.then( ( state ) => {
-				const siteId = btoa( window.location.hostname );
-				const returnUrl =
-					window.location.href.split( '?' )[ 0 ] +
-					'?page=fair-payments-connector-settings';
-				const siteName = document.title;
-				const siteUrl = window.location.origin;
-
-				const authorizeUrl = new URL(
-					'https://fair-event-plugins.com/oauth/authorize'
-				);
-				authorizeUrl.searchParams.set( 'site_id', siteId );
-				authorizeUrl.searchParams.set( 'return_url', returnUrl );
-				authorizeUrl.searchParams.set( 'site_name', siteName );
-				authorizeUrl.searchParams.set( 'site_url', siteUrl );
-				authorizeUrl.searchParams.set( 'state', state );
-
-				window.location.href = authorizeUrl.toString();
+			.then( ( oauthState ) => {
+				window.location.href = buildAuthorizeUrl( oauthState );
 			} )
 			.catch( () => {
 				onNotice( {
@@ -386,6 +397,12 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 			} );
 	};
 
+	const needsSettlementAccess =
+		connected &&
+		oauthStatus !== null &&
+		oauthStatus.settlementAccessRequested &&
+		! oauthStatus.settlementAccess;
+
 	if ( isLoading ) {
 		return (
 			<Card>
@@ -434,6 +451,43 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 									'fair-payments-connector'
 								) }
 							</Notice>
+
+							{ needsSettlementAccess && (
+								<Notice
+									status="warning"
+									isDismissible={ false }
+									actions={ [
+										{
+											label: __(
+												'Reconnect to Mollie',
+												'fair-payments-connector'
+											),
+											onClick: handleConnect,
+											variant: 'primary',
+										},
+									] }
+								>
+									{ __(
+										'Mollie has not authorized this site to read settlements yet. Reconnect to grant that permission. Payments keep working in the meantime.',
+										'fair-payments-connector'
+									) }
+								</Notice>
+							) }
+
+							{ oauthStatus?.settlementAccess && (
+								<p
+									style={ {
+										fontSize: '0.9em',
+										color: '#666',
+										marginTop: '0.5rem',
+									} }
+								>
+									{ __(
+										'Settlement access: authorized',
+										'fair-payments-connector'
+									) }
+								</p>
+							) }
 
 							{ organizationId && (
 								<div style={ { marginTop: '1rem' } }>
@@ -664,6 +718,16 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 									>
 										{ __(
 											'Disconnect',
+											'fair-payments-connector'
+										) }
+									</Button>
+									<Button
+										isSecondary
+										onClick={ handleConnect }
+										disabled={ isSaving }
+									>
+										{ __(
+											'Reconnect',
 											'fair-payments-connector'
 										) }
 									</Button>

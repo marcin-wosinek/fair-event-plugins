@@ -14,11 +14,15 @@
  *     and is enabled immediately.
  *   - Disconnect: confirming the dialog posts to oauth/disconnect (not
  *     /wp/v2/settings) with no reason.
+ *   - Settlement access (#1693): the authorization asks for it only when the
+ *     site wants it, a connection missing it offers a reconnect that never
+ *     disconnects, and nothing is shown when it is granted or not wanted.
  */
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import ConnectionTab from '../ConnectionTab.js';
+import { buildAuthorizeUrl } from '../settings-api.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -41,8 +45,24 @@ const OVERVIEW = {
 	manage_url: 'https://my.mollie.com/dashboard/',
 };
 
-function mockApiFetchFor( { connected, overview, overviewError } ) {
+function mockApiFetchFor( {
+	connected,
+	overview,
+	overviewError,
+	oauthStatus,
+} ) {
 	apiFetch.mockImplementation( ( { path } ) => {
+		if ( path === '/fair-payments-connector/v1/oauth/status' ) {
+			return oauthStatus
+				? Promise.resolve( oauthStatus )
+				: Promise.reject( new Error( 'No route' ) );
+		}
+		if ( path === '/fair-payments-connector/v1/oauth/state' ) {
+			return Promise.resolve( {
+				state: 'test-state',
+				request_settlement_access: true,
+			} );
+		}
 		if ( path === '/wp/v2/settings' ) {
 			return Promise.resolve(
 				connected
@@ -273,6 +293,168 @@ describe( 'ConnectionTab — disconnect', () => {
 				method: 'POST',
 			} )
 		);
+
+		expect( console ).toHaveLogged();
+	} );
+} );
+
+describe( 'buildAuthorizeUrl — requested permissions (#1693)', () => {
+	it( 'does not mention settlement access unless the site asks for it', () => {
+		const url = new URL(
+			buildAuthorizeUrl( {
+				state: 'abc',
+				requestSettlementAccess: false,
+			} )
+		);
+
+		expect( url.origin + url.pathname ).toBe(
+			'https://fair-event-plugins.com/oauth/authorize'
+		);
+		expect( url.searchParams.get( 'state' ) ).toBe( 'abc' );
+		expect( url.searchParams.has( 'settlement_access' ) ).toBe( false );
+		expect( url.searchParams.has( 'scope' ) ).toBe( false );
+	} );
+
+	it( 'passes a bounded flag, not a scope list, when settlement access is wanted', () => {
+		const url = new URL(
+			buildAuthorizeUrl( { state: 'abc', requestSettlementAccess: true } )
+		);
+
+		expect( url.searchParams.get( 'settlement_access' ) ).toBe( '1' );
+		expect( url.searchParams.has( 'scope' ) ).toBe( false );
+		expect( url.searchParams.get( 'return_url' ) ).toMatch(
+			/\?page=fair-payments-connector-settings$/
+		);
+	} );
+} );
+
+describe( 'ConnectionTab — settlement access (#1693)', () => {
+	const SETTLEMENT_NOTICE =
+		'Mollie has not authorized this site to read settlements yet.';
+	// A Notice also announces its text through an a11y live region.
+	const NOTICE_CONTENT = {
+		exact: false,
+		selector: '.components-notice__content',
+	};
+
+	it( 'explains the missing permission and reconnects without disconnecting', async () => {
+		mockApiFetchFor( {
+			connected: true,
+			overview: OVERVIEW,
+			oauthStatus: {
+				connected: true,
+				settlement_access: false,
+				settlement_access_requested: true,
+			},
+		} );
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+
+		expect(
+			await screen.findByText( SETTLEMENT_NOTICE, NOTICE_CONTENT )
+		).toBeInTheDocument();
+		// The existing connection is still shown as usable.
+		expect( screen.getByText( 'Connected to Mollie' ) ).toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Reconnect to Mollie' } )
+		);
+
+		await waitFor( () => {
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					path: '/fair-payments-connector/v1/oauth/state',
+					method: 'POST',
+				} )
+			);
+		} );
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: '/fair-payments-connector/v1/oauth/disconnect',
+			} )
+		);
+
+		expect( console ).toHaveLogged();
+		// jsdom can't follow the redirect to the authorization page.
+		expect( console ).toHaveErrored();
+	} );
+
+	it( 'always offers Reconnect on a connected site, without disconnecting', async () => {
+		mockApiFetchFor( {
+			connected: true,
+			overview: OVERVIEW,
+			oauthStatus: {
+				connected: true,
+				settlement_access: false,
+				settlement_access_requested: false,
+			},
+		} );
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Reconnect' } )
+		);
+
+		await waitFor( () => {
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					path: '/fair-payments-connector/v1/oauth/state',
+				} )
+			);
+		} );
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: '/fair-payments-connector/v1/oauth/disconnect',
+			} )
+		);
+		// Nothing on this site wants settlement access, so nothing asks for it.
+		expect(
+			screen.queryByText( SETTLEMENT_NOTICE, NOTICE_CONTENT )
+		).not.toBeInTheDocument();
+
+		expect( console ).toHaveLogged();
+		expect( console ).toHaveErrored();
+	} );
+
+	it( 'shows the permission as authorized once Mollie granted it', async () => {
+		mockApiFetchFor( {
+			connected: true,
+			overview: OVERVIEW,
+			oauthStatus: {
+				connected: true,
+				settlement_access: true,
+				settlement_access_requested: true,
+			},
+		} );
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+
+		expect(
+			await screen.findByText( 'Settlement access: authorized' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( SETTLEMENT_NOTICE, NOTICE_CONTENT )
+		).not.toBeInTheDocument();
+
+		expect( console ).toHaveLogged();
+	} );
+
+	it( 'keeps the connected controls when the status cannot be loaded', async () => {
+		mockApiFetchFor( { connected: true, overview: OVERVIEW } );
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+
+		expect(
+			await screen.findByRole( 'button', { name: 'Disconnect' } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( SETTLEMENT_NOTICE, NOTICE_CONTENT )
+		).not.toBeInTheDocument();
 
 		expect( console ).toHaveLogged();
 	} );

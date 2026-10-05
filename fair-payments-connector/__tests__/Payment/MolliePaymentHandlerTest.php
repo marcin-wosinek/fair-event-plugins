@@ -18,6 +18,7 @@ use FairPaymentsConnector\Payment\MolliePaymentHandler;
 use FairPaymentsConnector\Payment\PaymentGatewayError;
 use FairPaymentsConnector\Payment\PaymentGatewayException;
 use FairPaymentsConnector\Database\PaymentLogRepository;
+use FairPaymentsConnector\OAuth\GrantedScopes;
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Fake\MockResponse;
 use Mollie\Api\Http\PendingRequest;
@@ -84,6 +85,7 @@ class MolliePaymentHandlerTest extends TestCase {
 	protected function setUp(): void {
 		$GLOBALS['_fair_test_options']    = array();
 		$GLOBALS['_fair_test_transients'] = array();
+		unset( $GLOBALS['_fair_test_remote_post'] );
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
 		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
 		PaymentLogRepository::reset_request_id();
@@ -408,6 +410,95 @@ class MolliePaymentHandlerTest extends TestCase {
 		$this->expectExceptionMessageMatches( '/not connected/' );
 
 		new MolliePaymentHandler();
+	}
+
+	/**
+	 * Seed an expired OAuth connection and the platform's refresh response.
+	 *
+	 * @param array $refresh_data Token data the platform returns for the refresh.
+	 * @return void
+	 */
+	private function seed_expired_connection( array $refresh_data ): void {
+		$GLOBALS['_fair_test_options'] = array(
+			'fair_payment_mollie_connected'     => true,
+			'fair_payment_mollie_access_token'  => 'access_old',
+			'fair_payment_mollie_refresh_token' => 'refresh_old',
+			'fair_payment_mollie_token_expires' => time() - 60,
+			'fair_payment_mollie_scopes'        => array( 'payments.read', 'payments.write' ),
+		);
+
+		$GLOBALS['_fair_test_remote_post'] = array(
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
+			'body' => json_encode(
+				array(
+					'success' => true,
+					'data'    => array( 'data' => $refresh_data ),
+				)
+			),
+		);
+	}
+
+	/**
+	 * #1693: a refresh that reports no scopes keeps the recorded ones and the
+	 * stored refresh token — it never grants a permission by itself.
+	 */
+	public function test_refresh_without_scope_preserves_recorded_scopes_and_refresh_token() {
+		$this->seed_expired_connection(
+			array(
+				'access_token' => 'access_new',
+				'expires_in'   => 3600,
+			)
+		);
+
+		new MolliePaymentHandler();
+
+		$options = $GLOBALS['_fair_test_options'];
+		$this->assertSame( 'access_new', $options['fair_payment_mollie_access_token'] );
+		$this->assertSame( 'refresh_old', $options['fair_payment_mollie_refresh_token'] );
+		$this->assertSame( array( 'payments.read', 'payments.write' ), $options['fair_payment_mollie_scopes'] );
+		$this->assertFalse( GrantedScopes::has_settlement_access() );
+	}
+
+	/**
+	 * #1693: scopes Mollie reports with the refresh replace the recorded ones,
+	 * and a rotated refresh token is stored with the new access token.
+	 */
+	public function test_refresh_with_scope_replaces_recorded_scopes_and_stores_rotated_refresh_token() {
+		$this->seed_expired_connection(
+			array(
+				'access_token'  => 'access_new',
+				'expires_in'    => 3600,
+				'refresh_token' => 'refresh_new',
+				'scope'         => 'payments.read settlements.read',
+			)
+		);
+
+		new MolliePaymentHandler();
+
+		$options = $GLOBALS['_fair_test_options'];
+		$this->assertSame( 'access_new', $options['fair_payment_mollie_access_token'] );
+		$this->assertSame( 'refresh_new', $options['fair_payment_mollie_refresh_token'] );
+		$this->assertSame( array( 'payments.read', 'settlements.read' ), $options['fair_payment_mollie_scopes'] );
+		$this->assertTrue( GrantedScopes::has_settlement_access() );
+	}
+
+	/**
+	 * #1693: a refresh reporting a narrower grant removes settlement access.
+	 */
+	public function test_refresh_with_narrower_scope_removes_settlement_access() {
+		$this->seed_expired_connection(
+			array(
+				'access_token' => 'access_new',
+				'expires_in'   => 3600,
+				'scope'        => 'payments.read',
+			)
+		);
+		$GLOBALS['_fair_test_options']['fair_payment_mollie_scopes'] = array( 'payments.read', 'settlements.read' );
+
+		new MolliePaymentHandler();
+
+		$this->assertSame( array( 'payments.read' ), $GLOBALS['_fair_test_options']['fair_payment_mollie_scopes'] );
+		$this->assertFalse( GrantedScopes::has_settlement_access() );
 	}
 
 	/**
