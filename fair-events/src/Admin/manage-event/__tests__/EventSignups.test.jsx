@@ -623,6 +623,107 @@ describe( 'expandTicketRows', () => {
 	} );
 } );
 
+describe( 'EventSignups — confirmed tickets only (#1754)', () => {
+	const mixedPurchase = {
+		...signups[ 1 ],
+		quantity: 3,
+		tickets: [
+			ticket( 201, 1, { status: 'cancelled' } ),
+			ticket( 202, 2 ),
+			ticket( 203, 3 ),
+		],
+	};
+
+	it( 'lists only the confirmed tickets of a confirmed registration', () => {
+		const rows = expandTicketRows( [
+			{
+				...signups[ 1 ],
+				quantity: 5,
+				tickets: [
+					ticket( 201, 1, { status: 'pending_payment' } ),
+					ticket( 202, 2, { status: 'failed' } ),
+					ticket( 203, 3 ),
+					ticket( 204, 4, { status: 'expired' } ),
+					ticket( 205, 5, { status: 'refunded' } ),
+				],
+			},
+		] );
+
+		expect(
+			rows.map( ( row ) => [
+				row.ticket.id,
+				row.isFirstTicket,
+				row.ticketCount,
+			] )
+		).toEqual( [ [ 203, true, 1 ] ] );
+	} );
+
+	it( 'gives no row, and no fallback row, to a registration whose tickets all stopped admitting', () => {
+		expect(
+			expandTicketRows( [
+				{
+					...signups[ 0 ],
+					tickets: [ ticket( 101, 1, { status: 'cancelled' } ) ],
+				},
+			] )
+		).toEqual( [] );
+	} );
+
+	it( 'counts and labels a registration by its listed tickets', async () => {
+		await renderSignups( { rows: [ signups[ 0 ], mixedPurchase ] } );
+
+		const rows = bodyRows();
+		expect( rows ).toHaveLength( 3 );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Ticket 2' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Registration (2 tickets):' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Delete' );
+		expect( rows[ 2 ] ).toHaveTextContent( 'Ticket 3' );
+		expect( screen.queryByText( 'Cancelled' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'shows the empty state when no confirmed registration has a ticket left', async () => {
+		mockApi( {
+			rows: [
+				{
+					...signups[ 0 ],
+					tickets: [ ticket( 101, 1, { status: 'cancelled' } ) ],
+				},
+			],
+		} );
+		render( <EventSignups eventDateId={ 42 } /> );
+
+		expect(
+			await screen.findByText( 'No confirmed registrations yet.' )
+		).toBeInTheDocument();
+		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Export' } )
+		).toBeDisabled();
+	} );
+
+	it( 'exports the same tickets the List shows', async () => {
+		const writeText = jest.fn().mockResolvedValue();
+		Object.assign( navigator, { clipboard: { writeText } } );
+		await renderSignups( { rows: [ signups[ 0 ], mixedPurchase ] } );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Export' } ) );
+		await screen.findByRole( 'radio', { name: 'Markdown' } );
+		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
+		);
+
+		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
+		const text = writeText.mock.calls[ 0 ][ 0 ];
+		expect( text ).toContain( 'REF00202' );
+		expect( text ).toContain( 'REF00203' );
+		expect( text ).not.toContain( 'REF00201' );
+		expect( text ).not.toContain( 'cancelled' );
+		expect( text.split( '\r\n' ).filter( Boolean ) ).toHaveLength( 4 );
+		delete navigator.clipboard;
+	} );
+} );
+
 describe( 'EventSignups — mailing consent normalization (#1492)', () => {
 	const consentCases = [
 		{ value: false, label: 'boolean false', optedIn: false },

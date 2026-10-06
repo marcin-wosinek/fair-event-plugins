@@ -24,11 +24,7 @@ import {
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from './SignupExportModal.js';
-import {
-	TicketEditModal,
-	ticketReferenceLabel,
-	ticketStatusName,
-} from 'fair-events-shared';
+import { TicketEditModal, ticketReferenceLabel } from 'fair-events-shared';
 import SignupEditModal, {
 	ACTION_MOVE,
 	ACTION_CHANGE_TYPE,
@@ -70,24 +66,40 @@ export function isConfirmedSignup( signup ) {
 }
 
 /**
- * Expand registrations into the List's rows: one per ticket, numbered in
- * order. A registration whose tickets were not created yet (an older
- * registration still being converted) keeps a single row without a ticket,
- * so it is never dropped.
+ * Whether a ticket admits its holder: its payment succeeded (or it was free)
+ * and it was not cancelled or refunded since.
+ *
+ * @param {Object} ticket Ticket returned by the API.
+ * @return {boolean} Whether the ticket is confirmed
+ */
+export function isConfirmedTicket( ticket ) {
+	return ticket.status === 'confirmed';
+}
+
+/**
+ * Expand registrations into the List's rows: one per confirmed ticket,
+ * numbered in order. A registration whose tickets were not created yet (an
+ * older registration still being converted) keeps a single row without a
+ * ticket, so it is never dropped. One whose tickets all stopped admitting
+ * anyone has no row.
  *
  * @param {Array} signups Registrations returned by the API.
- * @return {Array<{signup: Object, ticket: Object|null, isFirstTicket: boolean}>} Rows
+ * @return {Array<{signup: Object, ticket: Object|null, isFirstTicket: boolean, ticketCount: number}>} Rows
  */
 export function expandTicketRows( signups ) {
 	return signups.flatMap( ( signup ) => {
 		const tickets = Array.isArray( signup.tickets ) ? signup.tickets : [];
 		if ( tickets.length === 0 ) {
-			return [ { signup, ticket: null, isFirstTicket: true } ];
+			return [
+				{ signup, ticket: null, isFirstTicket: true, ticketCount: 1 },
+			];
 		}
-		return tickets.map( ( ticket, index ) => ( {
+		const listed = tickets.filter( isConfirmedTicket );
+		return listed.map( ( ticket, index ) => ( {
 			signup,
 			ticket,
 			isFirstTicket: index === 0,
+			ticketCount: listed.length,
 		} ) );
 	} );
 }
@@ -132,14 +144,6 @@ export function ticketConfirmedOptionIds( ticket ) {
 	}
 	return ( ticket.confirmed_activity_ids || [] ).map( Number );
 }
-
-// Ticket statuses that no longer admit anyone; such tickets are not edited.
-const INACTIVE_TICKET_STATUSES = [
-	'failed',
-	'expired',
-	'cancelled',
-	'refunded',
-];
 
 const cellStyle = {
 	padding: '8px',
@@ -395,21 +399,13 @@ export default function EventSignups( { eventDateId } ) {
 			: EXTRA_NOT_SELECTED;
 	};
 
-	const renderStatus = ( { signup, ticket } ) => {
-		if ( ticket && ticket.status !== 'confirmed' ) {
-			return ticketStatusName( ticket.status );
-		}
-		return <SignupStatus signup={ signup } />;
-	};
-
-	const renderRegistrationActions = ( signup ) => {
-		const ticketCount = ( signup.tickets || [] ).length;
+	const renderRegistrationActions = ( signup, ticketCount ) => {
 		return (
 			<>
 				{ ticketCount > 1 && (
 					<div style={ { color: '#757575', marginBottom: '4px' } }>
 						{ sprintf(
-							/* translators: %d: number of tickets in the registration */
+							/* translators: %d: number of listed tickets in the registration */
 							_n(
 								'Registration (%d ticket):',
 								'Registration (%d tickets):',
@@ -457,7 +453,7 @@ export default function EventSignups( { eventDateId } ) {
 	};
 
 	const renderRow = ( row, index ) => {
-		const { signup, ticket, isFirstTicket } = row;
+		const { signup, ticket, isFirstTicket, ticketCount } = row;
 		const label = ticketRowLabel( ticket );
 		return (
 			<tr
@@ -487,7 +483,9 @@ export default function EventSignups( { eventDateId } ) {
 						<ExtraIndicator state={ extraState( ticket, opt ) } />
 					</td>
 				) ) }
-				<td style={ cellStyle }>{ renderStatus( row ) }</td>
+				<td style={ cellStyle }>
+					<SignupStatus signup={ signup } />
+				</td>
 				<td style={ cellStyle }>
 					{ signup.transaction_id && connectorActive ? (
 						<a
@@ -506,35 +504,30 @@ export default function EventSignups( { eventDateId } ) {
 				</td>
 				<td style={ cellStyle }>{ signup.created_at }</td>
 				<td style={ cellStyle }>
-					{ isFirstTicket && renderRegistrationActions( signup ) }
-					{ audienceActive &&
-						ticket &&
-						! INACTIVE_TICKET_STATUSES.includes(
-							ticket.status
-						) && (
-							<div
-								style={
-									isFirstTicket
-										? { marginTop: '4px' }
-										: undefined
+					{ isFirstTicket &&
+						renderRegistrationActions( signup, ticketCount ) }
+					{ audienceActive && ticket && (
+						<div
+							style={
+								isFirstTicket ? { marginTop: '4px' } : undefined
+							}
+						>
+							<Button
+								variant="link"
+								onClick={ () =>
+									setEditingTicketId( ticket.id )
 								}
+								label={ sprintf(
+									/* translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)" */
+									__( 'Edit %s', 'fair-events' ),
+									label
+								) }
+								showTooltip={ false }
 							>
-								<Button
-									variant="link"
-									onClick={ () =>
-										setEditingTicketId( ticket.id )
-									}
-									label={ sprintf(
-										/* translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)" */
-										__( 'Edit %s', 'fair-events' ),
-										label
-									) }
-									showTooltip={ false }
-								>
-									{ __( 'Edit ticket', 'fair-events' ) }
-								</Button>
-							</div>
-						) }
+								{ __( 'Edit ticket', 'fair-events' ) }
+							</Button>
+						</div>
+					) }
 				</td>
 			</tr>
 		);
@@ -607,7 +600,7 @@ export default function EventSignups( { eventDateId } ) {
 				) }
 				{ visibleRows.length === 0 ? (
 					<p>
-						{ confirmedSignups.length === 0
+						{ expandTicketRows( confirmedSignups ).length === 0
 							? __(
 									'No confirmed registrations yet.',
 									'fair-events'

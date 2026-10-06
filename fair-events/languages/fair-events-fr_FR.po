@@ -305,7 +305,7 @@ msgstr "Titre"
 #: src/Admin/calendar/components/QuickEventModal.js:615
 #: src/Admin/components/InlineVenueCreator.js:95
 #: src/Admin/manage-event/EditInstancesModal.js:75
-#: src/Admin/manage-event/EventSignups.js:659
+#: src/Admin/manage-event/EventSignups.js:654
 #: src/Admin/manage-event/EventTickets.js:2781
 #: src/Admin/manage-event/ManageEventApp.js:1502
 #: src/Admin/manage-event/ManageEventApp.js:1512
@@ -428,7 +428,7 @@ msgid "Remove"
 msgstr "Supprimer"
 
 #: src/Admin/all-events/AllEvents.js:106
-#: src/Admin/manage-event/EventSignups.js:364
+#: src/Admin/manage-event/EventSignups.js:368
 #: src/Admin/manage-event/EventTickets.js:1253
 #: src/Admin/manage-event/EventTickets.js:2340
 #: src/Admin/manage-event/EventTickets.js:2392
@@ -440,7 +440,7 @@ msgid "Name"
 msgstr "Nom"
 
 #: src/Admin/manage-event/EventFinance.js:591
-#: src/Admin/manage-event/EventSignups.js:372
+#: src/Admin/manage-event/EventSignups.js:376
 #: src/Admin/manage-event/SignupExportModal.js:93
 msgid "Status"
 msgstr "Statut"
@@ -1008,7 +1008,7 @@ msgstr "Solde"
 #: src/Admin/manage-event/EventFinance.js:391
 #: src/Admin/manage-event/EventFinance.js:448
 #: src/Admin/manage-event/EventFinance.js:579
-#: src/Admin/manage-event/EventSignups.js:375
+#: src/Admin/manage-event/EventSignups.js:379
 #: src/Admin/manage-event/SignupExportModal.js:110
 msgid "Date"
 msgstr "Date"
@@ -1134,7 +1134,7 @@ msgstr "Lier l'article"
 msgid "Delete Event"
 msgstr "Supprimer l'événement"
 
-#: src/Admin/manage-event/EventSignups.js:215
+#: src/Admin/manage-event/EventSignups.js:219
 #: src/Admin/manage-event/ManageEventApp.js:1039
 msgid "Details"
 msgstr "Détails"
@@ -1354,7 +1354,7 @@ msgstr "Billets enregistrés avec succès."
 msgid "Failed to save tickets."
 msgstr "Échec de l'enregistrement des billets."
 
-#: src/Admin/manage-event/EventSignups.js:366
+#: src/Admin/manage-event/EventSignups.js:370
 #: src/Admin/manage-event/EventTickets.js:1617
 #: src/Admin/manage-event/SignupExportModal.js:74
 msgid "Ticket Type"
@@ -1831,7 +1831,7 @@ msgstr "Billetterie"
 msgid "Ticket types, sale periods, and pricing."
 msgstr "Types de billets, périodes de vente et tarification."
 
-#: src/Admin/manage-event/EventSignups.js:328
+#: src/Admin/manage-event/EventSignups.js:332
 msgid "Failed to load signups."
 msgstr "Impossible de charger les inscriptions."
 
@@ -1839,17 +1839,17 @@ msgstr "Impossible de charger les inscriptions."
 msgid "Email"
 msgstr "E-mail"
 
-#: src/Admin/manage-event/EventSignups.js:374
+#: src/Admin/manage-event/EventSignups.js:378
 #: src/Admin/manage-event/SignupExportModal.js:104
 msgid "Mailing"
 msgstr "Mailing"
 
-#: src/Admin/manage-event/EventSignups.js:504
+#: src/Admin/manage-event/EventSignups.js:502
 #: ../fair-events-shared/src/TicketEditModal.js:382
 msgid "Yes"
 msgstr "Oui"
 
-#: src/Admin/manage-event/EventSignups.js:505
+#: src/Admin/manage-event/EventSignups.js:503
 #: ../fair-events-shared/src/TicketEditModal.js:383
 msgid "No"
 msgstr "Non"
@@ -2646,7 +2646,7 @@ msgstr "Confirmer"
 msgid "Link Existing Post"
 msgstr "Lier un article existant"
 
-#: src/Admin/manage-event/EventSignups.js:575
+#: src/Admin/manage-event/EventSignups.js:570
 msgid "Mailing opt-ins only"
 msgstr "Inscriptions à la liste de diffusion uniquement"
 
@@ -3425,7 +3425,7 @@ msgstr "Chargement des lieux..."
 msgid "No venues found. Create your first venue to get started."
 msgstr "Aucun lieu trouvé. Créez votre premier lieu pour commencer."
 
-#: src/Admin/manage-event/EventSignups.js:376
+#: src/Admin/manage-event/EventSignups.js:380
 #: src/Admin/venues/VenuesApp.js:579
 msgid "Actions"
 msgstr "Actions"
@@ -3434,7 +3434,7 @@ msgstr "Actions"
 msgid "No address"
 msgstr "Aucune adresse"
 
-#: src/Admin/manage-event/EventSignups.js:452
+#: src/Admin/manage-event/EventSignups.js:448
 #: src/Admin/venues/VenuesApp.js:659
 msgid "Delete"
 msgstr "Supprimer"
@@ -3501,16 +3501,16 @@ msgstr "Créer un lieu"
 msgid "Tickets for %s"
 msgstr "Billets pour %s"
 
-#: src/Admin/manage-event/EventSignups.js:373
+#: src/Admin/manage-event/EventSignups.js:377
 #: src/Admin/manage-event/SignupExportModal.js:99
 msgid "Transaction"
 msgstr "Transaction"
 
-#: src/Admin/manage-event/EventSignups.js:207
+#: src/Admin/manage-event/EventSignups.js:211
 msgid "Confirmed — over capacity"
 msgstr "Confirmé — au-delà de la capacité"
 
-#: src/Admin/manage-event/EventSignups.js:200
+#: src/Admin/manage-event/EventSignups.js:204
 #: ../fair-events-shared/src/TicketEditModal.js:54
 msgid "Confirmed"
 msgstr "Confirmé"
@@ -3534,7 +3534,7 @@ msgid "Signup not found."
 msgstr "Inscription non trouvée."
 
 #: src/API/GetTicketsController.php:2460
-#: src/Admin/manage-event/EventSignups.js:560
+#: src/Admin/manage-event/EventSignups.js:555
 msgid "Failed to delete signup."
 msgstr "Impossible de supprimer l'inscription."
 
@@ -3543,7 +3543,7 @@ msgstr "Impossible de supprimer l'inscription."
 msgid "Loading calendar…"
 msgstr "Chargement du calendrier…"
 
-#: src/Admin/manage-event/EventSignups.js:684
+#: src/Admin/manage-event/EventSignups.js:679
 msgid "This deletion is permanent. It removes only the local signup record and does not refund or cancel any payment-provider transaction."
 msgstr "Cette suppression est permanente. Elle supprime uniquement l'enregistrement d'inscription local et ne rembourse ni n'annule aucune transaction du fournisseur de paiement."
 
@@ -3815,7 +3815,7 @@ msgstr "Vous n'avez pas la permission de copier les événements du calendrier."
 msgid "The event copy could not be completed, and any partial copy was removed. Please try again."
 msgstr "La copie de l'événement n'a pas pu être complétée, et toute copie partielle a été supprimée. Veuillez réessayer."
 
-#: src/Admin/manage-event/EventSignups.js:570
+#: src/Admin/manage-event/EventSignups.js:565
 #: src/Admin/manage-event/ManageEventApp.js:866
 msgid "List"
 msgstr "Liste"
@@ -3975,7 +3975,7 @@ msgstr "Aucun budget"
 msgid "Save budget"
 msgstr "Enregistrer le budget"
 
-#: src/Admin/manage-event/EventSignups.js:589
+#: src/Admin/manage-event/EventSignups.js:584
 #: src/Admin/manage-event/SignupExportModal.js:379
 msgid "Export"
 msgstr "Exporter"
@@ -4321,26 +4321,26 @@ msgstr "Affiche les événements qui n'ont pas encore commencé. Une série réc
 msgid "Event Prices block is empty — every price is hidden in this block's settings."
 msgstr "Le bloc Tarifs de l'événement est vide — chaque tarif est masqué dans les paramètres de ce bloc."
 
-#: src/Admin/manage-event/EventSignups.js:266
-#: src/Admin/manage-event/EventSignups.js:267
+#: src/Admin/manage-event/EventSignups.js:270
+#: src/Admin/manage-event/EventSignups.js:271
 msgid "Selected"
 msgstr "Sélectionné"
 
-#: src/Admin/manage-event/EventSignups.js:278
-#: src/Admin/manage-event/EventSignups.js:279
+#: src/Admin/manage-event/EventSignups.js:282
+#: src/Admin/manage-event/EventSignups.js:283
 msgid "Not selected"
 msgstr "Non sélectionné"
 
-#: src/Admin/manage-event/EventSignups.js:288
-#: src/Admin/manage-event/EventSignups.js:289
+#: src/Admin/manage-event/EventSignups.js:292
+#: src/Admin/manage-event/EventSignups.js:293
 msgid "Selection unavailable"
 msgstr "Sélection indisponible"
 
-#: src/Admin/manage-event/EventSignups.js:611
+#: src/Admin/manage-event/EventSignups.js:606
 msgid "No confirmed registrations yet."
 msgstr "Aucune inscription confirmée pour le moment."
 
-#: src/Admin/manage-event/EventSignups.js:615
+#: src/Admin/manage-event/EventSignups.js:610
 msgid "Nothing to export — no registrations match the current filter."
 msgstr "Rien à exporter — aucune inscription ne correspond au filtre actuel."
 
@@ -4535,48 +4535,48 @@ msgstr[0] "Il ne reste que %d place."
 msgstr[1] "Il ne reste que %d places."
 
 #. translators: %s: activity name
-#: src/Admin/manage-event/EventSignups.js:172
+#: src/Admin/manage-event/EventSignups.js:176
 #, js-format
 msgid "Activity %s added"
 msgstr "Activité %s ajoutée"
 
 #. translators: %s: activity name
-#: src/Admin/manage-event/EventSignups.js:180
+#: src/Admin/manage-event/EventSignups.js:184
 #, js-format
 msgid "Moved (activity %s over capacity)"
 msgstr "Déplacé (activité %s au-delà de la capacité)"
 
-#: src/Admin/manage-event/EventSignups.js:183
+#: src/Admin/manage-event/EventSignups.js:187
 msgid "Moved"
 msgstr "Déplacé"
 
-#: src/Admin/manage-event/EventSignups.js:185
+#: src/Admin/manage-event/EventSignups.js:189
 msgid "Ticket type changed"
 msgstr "Type de billet modifié"
 
-#: src/Admin/manage-event/EventSignups.js:214
+#: src/Admin/manage-event/EventSignups.js:218
 msgid "Hide details"
 msgstr "Masquer les détails"
 
-#: src/Admin/manage-event/EventSignups.js:221
+#: src/Admin/manage-event/EventSignups.js:225
 msgid "Paid after its hold expired"
 msgstr "Payé après l'expiration de sa réserve"
 
 #. translators: 1: what the administrator did, 2: administrator name, 3: date and time, 4: reason given
-#: src/Admin/manage-event/EventSignups.js:231
+#: src/Admin/manage-event/EventSignups.js:235
 #, js-format
 msgid "%1$s by %2$s on %3$s: %4$s"
 msgstr "%1$s par %2$s le %3$s : %4$s"
 
-#: src/Admin/manage-event/EventSignups.js:237
+#: src/Admin/manage-event/EventSignups.js:241
 msgid "unknown user"
 msgstr "utilisateur inconnu"
 
-#: src/Admin/manage-event/EventSignups.js:431
+#: src/Admin/manage-event/EventSignups.js:427
 msgid "Move"
 msgstr "Déplacer"
 
-#: src/Admin/manage-event/EventSignups.js:444
+#: src/Admin/manage-event/EventSignups.js:440
 #: src/Admin/manage-event/SignupEditModal.js:261
 msgid "Change ticket type"
 msgstr "Modifier le type de billet"
@@ -4683,12 +4683,12 @@ msgid "The chosen ticket type does not allow activities, and this ticket has som
 msgstr "Le type de ticket choisi ne permet pas les activités, et ce ticket en a."
 
 #. translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)"
-#: src/Admin/manage-event/EventSignups.js:529
+#: src/Admin/manage-event/EventSignups.js:524
 #, js-format
 msgid "Edit %s"
 msgstr "Modifier %s"
 
-#: src/Admin/manage-event/EventSignups.js:534
+#: src/Admin/manage-event/EventSignups.js:529
 #: ../fair-events-shared/src/TicketEditModal.js:649
 msgid "Edit ticket"
 msgstr "Modifier le ticket"
@@ -4788,33 +4788,33 @@ msgstr "Modifier le billet — %s"
 msgid "(no name)"
 msgstr "(sans nom)"
 
-#: src/Admin/manage-event/EventSignups.js:104
+#: src/Admin/manage-event/EventSignups.js:116
 msgid "Ticket not created yet"
 msgstr "Billet non créé"
 
-#: src/Admin/manage-event/EventSignups.js:365
+#: src/Admin/manage-event/EventSignups.js:369
 #: src/Admin/manage-event/SignupExportModal.js:69
 msgid "Ticket"
 msgstr "Billet"
 
-#. translators: %d: number of tickets in the registration
-#: src/Admin/manage-event/EventSignups.js:413
+#. translators: %d: number of listed tickets in the registration
+#: src/Admin/manage-event/EventSignups.js:409
 #, js-format
 msgid "Registration (%d ticket):"
 msgid_plural "Registration (%d tickets):"
 msgstr[0] "Inscription (%d billet) :"
 msgstr[1] "Inscription (%d billets) :"
 
-#: src/Admin/manage-event/EventSignups.js:602
+#: src/Admin/manage-event/EventSignups.js:597
 msgid "Some older registrations are still being split into individual tickets. They are listed as one row for now; reload this page in a few minutes to see their tickets."
 msgstr "Certaines inscriptions plus anciennes sont toujours en cours de division en billets individuels. Elles sont listées comme une seule ligne pour l'instant ; rechargez cette page dans quelques minutes pour voir leurs billets."
 
-#: src/Admin/manage-event/EventSignups.js:658
+#: src/Admin/manage-event/EventSignups.js:653
 msgid "Delete registration"
 msgstr "Supprimer l'inscription"
 
 #. translators: 1: signup name, 2: number of tickets, 3: payment status
-#: src/Admin/manage-event/EventSignups.js:666
+#: src/Admin/manage-event/EventSignups.js:661
 #, js-format
 msgid "Delete the registration for %1$s, with its %2$d ticket? Its current payment status is %3$s."
 msgid_plural "Delete the registration for %1$s, with all %2$d of its tickets? Its current payment status is %3$s."
