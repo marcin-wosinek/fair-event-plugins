@@ -52,13 +52,16 @@ test.describe( 'Tickets — ticket type order (#1757)', () => {
 	const typeIds = ( data ) =>
 		data.ticket_types.map( ( type ) => Number( type.id ) );
 
-	// Everything stored on a type except its position.
+	// Everything stored on a type except its position. `updated_at` goes
+	// too: the database bumps it on the save that writes the new position.
 	const configById = ( data ) =>
 		Object.fromEntries(
-			data.ticket_types.map( ( { sort_order: _order, ...type } ) => [
-				Number( type.id ),
-				type,
-			] )
+			data.ticket_types.map(
+				( { sort_order: _order, updated_at: _updatedAt, ...type } ) => [
+					Number( type.id ),
+					type,
+				]
+			)
 		);
 
 	const pricesByTypeId = ( data ) =>
