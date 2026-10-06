@@ -206,6 +206,12 @@ class Dispatcher {
 			return null;
 		}
 		if ( 0 === $attempted ) {
+			foreach ( $this->providers as $provider ) {
+				$error = $provider->configuration_error( $settings );
+				if ( '' !== $error ) {
+					return $this->record( $week, 'configuration_error', $error );
+				}
+			}
 			return $this->record( $week, 'configuration_error', __( 'No delivery destination is enabled and configured.', 'fair-events-experimental' ) );
 		}
 

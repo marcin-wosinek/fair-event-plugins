@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Activates advanced feature bundles for Fair Events, including sources, ticketing, and duplicate and merge tools. Requires fair-events.
  * Version: 1.10.0
- * Requires at least: 6.7
+ * Requires at least: 7.0
  * Requires PHP: 8.0
  * Requires Plugins: fair-events
  * Author: Marcin Wosinek

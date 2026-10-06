@@ -585,7 +585,7 @@ msgid "Pending"
 msgstr "Oczekujące"
 
 #: src/Admin/settings/MetaConversions.js:37
-#: src/Admin/settings/WeeklyNotifications.js:56
+#: src/Admin/settings/WeeklyNotifications.js:67
 msgid "Sending"
 msgstr "Wysyłanie"
 
@@ -594,12 +594,12 @@ msgid "Retrying"
 msgstr "Ponowna próba"
 
 #: src/Admin/settings/MetaConversions.js:39
-#: src/Admin/settings/WeeklyNotifications.js:57
+#: src/Admin/settings/WeeklyNotifications.js:68
 msgid "Delivered"
 msgstr "Dostarczone"
 
 #: src/Admin/settings/MetaConversions.js:40
-#: src/Admin/settings/WeeklyNotifications.js:49
+#: src/Admin/settings/WeeklyNotifications.js:60
 msgid "Configuration error"
 msgstr "Błąd konfiguracji"
 
@@ -630,7 +630,7 @@ msgstr "Błąd: %s"
 #. translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase)
 #: src/API/MetaConversionsController.php:150
 #: src/Admin/settings/MetaConversions.js:224
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta odrzuciła zdarzenie testowe %s. Sprawdź konfigurację i spróbuj ponownie."
 
@@ -677,43 +677,31 @@ msgstr "Odrzucone"
 msgid "Activates advanced feature bundles for Fair Events, including sources, ticketing, and duplicate and merge tools. Requires fair-events."
 msgstr "Włącza zaawansowane pakiety funkcji dla Fair Events, w tym źródła, sprzedaż biletów oraz narzędzia do duplikowania i scalania. Wymaga fair-events."
 
-#: src/API/WeeklyNotificationsController.php:145
+#: src/API/WeeklyNotificationsController.php:133
 msgid "You do not have permission to manage weekly notifications."
 msgstr "Nie posiadasz uprawnienia do zarządzania powiadomieniami tygodniowymi."
 
-#: src/API/WeeklyNotificationsController.php:159
+#: src/API/WeeklyNotificationsController.php:147
 msgid "Enter the send time as HH:MM, for example 09:00."
 msgstr "Wpisz czas wysłania w formacie HH:MM, na przykład 09:00."
 
 #. translators: %s: comma-separated list of the rejected identifiers
-#: src/API/WeeklyNotificationsController.php:224
+#: src/API/WeeklyNotificationsController.php:225
 #, php-format
 msgid "These are not Telegram chat IDs or @channel usernames: %s"
 msgstr "To nie są identyfikatory czatów Telegram ani nazwy użytkowników kanałów @: %s"
 
 #. translators: %d: maximum number of Telegram destinations
-#: src/API/WeeklyNotificationsController.php:235
+#: src/API/WeeklyNotificationsController.php:236
 #, php-format
 msgid "Enter at most %d Telegram chats or channels."
 msgstr "Wpisz co najwyżej %d czatów lub kanałów Telegram."
 
-#: src/API/WeeklyNotificationsController.php:248
-msgid "That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE…."
-msgstr "To nie wygląda na token bota Telegram. Skopiuj pełny token z @BotFather, na przykład 123456789:AAE…."
-
-#: src/API/WeeklyNotificationsController.php:272
-msgid "Before turning on weekly notifications, turn on Telegram delivery and save a bot token and at least one chat or channel."
-msgstr "Zanim włączysz powiadomienia tygodniowe, włącz dostarczanie za pośrednictwem Telegram i zapisz token bota oraz co najmniej jeden czat lub kanał."
-
-#: src/API/WeeklyNotificationsController.php:335
-msgid "Save a Telegram bot token before sending a test message."
-msgstr "Zapisz token bota Telegram przed wysłaniem wiadomości testowej."
-
-#: src/API/WeeklyNotificationsController.php:341
+#: src/API/WeeklyNotificationsController.php:322
 msgid "Save at least one Telegram chat or channel before sending a test message."
 msgstr "Zapisz co najmniej jeden czat lub kanał Telegram przed wysłaniem wiadomości testowej."
 
-#: src/API/WeeklyNotificationsController.php:446
+#: src/API/WeeklyNotificationsController.php:427
 #: src/WeeklyNotifications/TelegramFormatter.php:66
 msgid "(no title)"
 msgstr "(bez tytułu)"
@@ -726,12 +714,12 @@ msgstr "Nie wysłano: tydzień już się skończył, gdy uruchomiono zaplanowane
 msgid "No events this week, so nothing was sent."
 msgstr "Brak wydarzeń w tym tygodniu, dlatego nic nie zostało wysłane."
 
-#: src/WeeklyNotifications/Dispatcher.php:209
+#: src/WeeklyNotifications/Dispatcher.php:215
 msgid "No delivery destination is enabled and configured."
 msgstr "Żaden cel dostarczania nie jest włączony i skonfigurowany."
 
 #. translators: 1: destinations delivered, 2: destinations failed, 3: destinations with an unknown outcome
-#: src/WeeklyNotifications/Dispatcher.php:225
+#: src/WeeklyNotifications/Dispatcher.php:231
 #, php-format
 msgid "Delivered: %1$d. Failed: %2$d. Unknown outcome: %3$d."
 msgstr "Dostarczone: %1$d. Nieudane: %2$d. Nieznany wynik: %3$d."
@@ -748,219 +736,183 @@ msgstr "Wybierz źródło wydarzeń."
 msgid "The selected event source does not exist or is disabled."
 msgstr "Wybrane źródło wydarzeń nie istnieje lub jest wyłączone."
 
-#: src/WeeklyNotifications/TelegramProvider.php:96
-msgid "The Telegram bot token is not configured."
-msgstr "Token bota Telegram nie jest skonfigurowany."
-
-#: src/Admin/settings/WeeklyNotifications.js:34
+#: src/Admin/settings/WeeklyNotifications.js:45
 msgid "Monday"
 msgstr "Poniedziałek"
 
-#: src/Admin/settings/WeeklyNotifications.js:35
+#: src/Admin/settings/WeeklyNotifications.js:46
 msgid "Tuesday"
 msgstr "Wtorek"
 
-#: src/Admin/settings/WeeklyNotifications.js:36
+#: src/Admin/settings/WeeklyNotifications.js:47
 msgid "Wednesday"
 msgstr "Środa"
 
-#: src/Admin/settings/WeeklyNotifications.js:37
+#: src/Admin/settings/WeeklyNotifications.js:48
 msgid "Thursday"
 msgstr "Czwartek"
 
-#: src/Admin/settings/WeeklyNotifications.js:38
+#: src/Admin/settings/WeeklyNotifications.js:49
 msgid "Friday"
 msgstr "Piątek"
 
-#: src/Admin/settings/WeeklyNotifications.js:39
+#: src/Admin/settings/WeeklyNotifications.js:50
 msgid "Saturday"
 msgstr "Sobota"
 
-#: src/Admin/settings/WeeklyNotifications.js:40
+#: src/Admin/settings/WeeklyNotifications.js:51
 msgid "Sunday"
 msgstr "Niedziela"
 
-#: src/Admin/settings/WeeklyNotifications.js:44
+#: src/Admin/settings/WeeklyNotifications.js:55
 msgid "Sent"
 msgstr "Wysłane"
 
-#: src/Admin/settings/WeeklyNotifications.js:45
+#: src/Admin/settings/WeeklyNotifications.js:56
 msgid "Partly sent"
 msgstr "Częściowo wysłane"
 
-#: src/Admin/settings/WeeklyNotifications.js:46
-#: src/Admin/settings/WeeklyNotifications.js:58
+#: src/Admin/settings/WeeklyNotifications.js:57
+#: src/Admin/settings/WeeklyNotifications.js:69
 msgid "Failed"
 msgstr "Nie powiodło się"
 
-#: src/Admin/settings/WeeklyNotifications.js:47
+#: src/Admin/settings/WeeklyNotifications.js:58
 msgid "Skipped — no events"
 msgstr "Pominięte – brak wydarzeń"
 
-#: src/Admin/settings/WeeklyNotifications.js:48
+#: src/Admin/settings/WeeklyNotifications.js:59
 msgid "Skipped — week ended"
 msgstr "Pominięte – tydzień się skończył"
 
-#: src/Admin/settings/WeeklyNotifications.js:59
+#: src/Admin/settings/WeeklyNotifications.js:70
 msgid "Unknown — check the chat before resending"
 msgstr "Nieznany status – sprawdź czat przed ponownym wysłaniem"
 
-#: src/Admin/settings/WeeklyNotifications.js:63
+#: src/Admin/settings/WeeklyNotifications.js:74
 msgid "Not sent — an earlier part failed"
 msgstr "Nie wysłane – wcześniejsza część nie powiodła się"
 
-#: src/Admin/settings/WeeklyNotifications.js:82
-#: src/Admin/settings/WeeklyNotifications.js:530
+#: src/WeeklyNotifications/TelegramConnector.php:55
+#: src/Admin/settings/WeeklyNotifications.js:93
+#: src/Admin/settings/WeeklyNotifications.js:623
 msgid "Telegram"
 msgstr "Telegram"
 
-#: src/Admin/settings/WeeklyNotifications.js:205
+#: src/Admin/settings/WeeklyNotifications.js:305
 msgid "Failed to load weekly notification settings."
 msgstr "Nie udało się wczytać ustawień powiadomień tygodniowych."
 
-#: src/Admin/settings/WeeklyNotifications.js:235
+#: src/Admin/settings/WeeklyNotifications.js:366
 msgid "Loading weekly notification settings…"
 msgstr "Wczytywanie ustawień powiadomień tygodniowych…"
 
-#: src/Admin/settings/WeeklyNotifications.js:272
+#: src/Admin/settings/WeeklyNotifications.js:390
 msgid "Weekly notification settings saved."
 msgstr "Ustawienia powiadomień tygodniowych zapisane."
 
-#: src/Admin/settings/WeeklyNotifications.js:282
+#: src/Admin/settings/WeeklyNotifications.js:400
 msgid "Failed to save weekly notification settings."
 msgstr "Nie udało się zapisać ustawień powiadomień tygodniowych."
 
-#: src/Admin/settings/WeeklyNotifications.js:304
-msgid "Telegram bot token removed."
-msgstr "Token bota Telegram usunięty."
-
-#: src/Admin/settings/WeeklyNotifications.js:314
-msgid "Failed to remove the Telegram bot token."
-msgstr "Nie udało się usunąć tokenu bota Telegram."
-
-#: src/Admin/settings/WeeklyNotifications.js:372
+#: src/Admin/settings/WeeklyNotifications.js:459
 msgid "Failed to build the preview."
 msgstr "Nie udało się zbudować podglądu."
 
-#: src/Admin/settings/WeeklyNotifications.js:385
+#: src/Admin/settings/WeeklyNotifications.js:472
 msgid "Choose an event source"
 msgstr "Wybierz źródło wydarzeń"
 
 #. translators: %s: event source slug
-#: src/Admin/settings/WeeklyNotifications.js:400
+#: src/Admin/settings/WeeklyNotifications.js:487
 #, js-format
 msgid "%s (unavailable)"
 msgstr "%s (niedostępne)"
 
-#: src/Admin/settings/WeeklyNotifications.js:421
-msgid "Save a bot token and at least one chat or channel before sending a test message."
-msgstr "Zapisz token bota i co najmniej jeden czat lub kanał, zanim wyślesz wiadomość testową."
-
-#: src/Admin/settings/WeeklyNotifications.js:426
+#: src/Admin/settings/WeeklyNotifications.js:519
 msgid "Save your changes first — the test uses the saved settings."
 msgstr "Najpierw zapisz zmiany – test używa zapisanych ustawień."
 
-#: src/Admin/settings/WeeklyNotifications.js:436
+#: src/Admin/settings/WeeklyNotifications.js:529
 msgid "Weekly notifications"
 msgstr "Powiadomienia tygodniowe"
 
-#: src/Admin/settings/WeeklyNotifications.js:454
+#: src/Admin/settings/WeeklyNotifications.js:547
 msgid "Send weekly event notifications"
 msgstr "Wysyłaj tygodniowe powiadomienia o wydarzeniach"
 
-#: src/Admin/settings/WeeklyNotifications.js:463
+#: src/Admin/settings/WeeklyNotifications.js:556
 msgid "Event source"
 msgstr "Źródło wydarzenia"
 
-#: src/Admin/settings/WeeklyNotifications.js:486
+#: src/Admin/settings/WeeklyNotifications.js:579
 msgid "Send on"
 msgstr "Wyślij w"
 
-#: src/Admin/settings/WeeklyNotifications.js:496
+#: src/Admin/settings/WeeklyNotifications.js:589
 msgid "Send at"
 msgstr "Wyślij o"
 
-#: src/Admin/settings/WeeklyNotifications.js:497
+#: src/Admin/settings/WeeklyNotifications.js:590
 msgid "In the site’s timezone. Sends can run a few minutes late on low-traffic sites."
 msgstr "W strefie czasowej witryny. Wysyłanie może być opóźnione o kilka minut na witrynach o niskim ruchu."
 
-#: src/Admin/settings/WeeklyNotifications.js:506
+#: src/Admin/settings/WeeklyNotifications.js:599
 msgid "Which week to include"
 msgstr "Który tydzień uwzględnić"
 
-#: src/Admin/settings/WeeklyNotifications.js:514
+#: src/Admin/settings/WeeklyNotifications.js:607
 msgid "The week of the send"
 msgstr "Tydzień wysyłania"
 
-#: src/Admin/settings/WeeklyNotifications.js:521
+#: src/Admin/settings/WeeklyNotifications.js:614
 msgid "The following week"
 msgstr "Następny tydzień"
 
-#: src/Admin/settings/WeeklyNotifications.js:533
+#: src/Admin/settings/WeeklyNotifications.js:626
 msgid "Post to Telegram"
 msgstr "Wyślij na Telegram"
 
-#: src/Admin/settings/WeeklyNotifications.js:537
-msgid "Turning this off keeps the bot token and chats below."
-msgstr "Wyłączenie tej opcji zachowuje token bota i czaty poniżej."
-
-#: src/Admin/settings/WeeklyNotifications.js:594
-msgid "Replace bot token"
-msgstr "Zastąp token bota"
-
-#: src/Admin/settings/WeeklyNotifications.js:564
-msgid "Bot token"
-msgstr "Token bota"
-
-#: src/Admin/settings/WeeklyNotifications.js:566
-msgid "From @BotFather. It is not shown again after saving."
-msgstr "Od @BotFather. Nie będzie wyświetlany ponownie po zapisaniu."
-
-#: src/Admin/settings/WeeklyNotifications.js:606
-#: src/Admin/settings/WeeklyNotifications.js:872
-msgid "Remove bot token"
-msgstr "Usuń token bota"
-
-#: src/Admin/settings/WeeklyNotifications.js:615
+#: src/Admin/settings/WeeklyNotifications.js:651
 msgid "Chats and channels"
 msgstr "Czaty i kanały"
 
-#: src/Admin/settings/WeeklyNotifications.js:619
+#: src/Admin/settings/WeeklyNotifications.js:655
 msgid "One per line: a numeric chat ID (e.g. -1001234567890) or a public @channel username. Add the bot to each chat or channel with permission to post."
 msgstr "Po jednym w linii: numeryczny identyfikator czatu (np. -1001234567890) lub publiczna nazwa kanału @channel. Dodaj bota do każdego czatu lub kanału z uprawnieniami do wysyłania wiadomości."
 
-#: src/Admin/settings/WeeklyNotifications.js:635
+#: src/Admin/settings/WeeklyNotifications.js:671
 msgid "Save weekly notification settings"
 msgstr "Zapisz ustawienia powiadomień tygodniowych"
 
-#: src/Admin/settings/WeeklyNotifications.js:687
+#: src/Admin/settings/WeeklyNotifications.js:723
 msgid "Schedule"
 msgstr "Harmonogram"
 
 #. translators: 1: date and time of the next send, 2: date range of the week it covers
-#: src/Admin/settings/WeeklyNotifications.js:692
+#: src/Admin/settings/WeeklyNotifications.js:728
 #, js-format
 msgid "Next send: %1$s, with events for %2$s."
 msgstr "Następne wysłanie: %1$s, z wydarzeniami na %2$s."
 
-#: src/Admin/settings/WeeklyNotifications.js:699
+#: src/Admin/settings/WeeklyNotifications.js:735
 msgid "Nothing is scheduled. Turn on weekly notifications and save to schedule sends."
 msgstr "Nic nie jest zaplanowane. Włącz powiadomienia tygodniowe i zapisz, aby zaplanować wysyłki."
 
-#: src/Admin/settings/WeeklyNotifications.js:711
+#: src/Admin/settings/WeeklyNotifications.js:747
 msgid "Preview next message"
 msgstr "Podgląd następnej wiadomości"
 
-#: src/Admin/settings/WeeklyNotifications.js:719
+#: src/Admin/settings/WeeklyNotifications.js:755
 msgid "Save your changes to preview them."
 msgstr "Zapisz zmiany, aby zobaczyć ich podgląd."
 
-#: src/Admin/settings/WeeklyNotifications.js:734
+#: src/Admin/settings/WeeklyNotifications.js:770
 msgid "No events that week, so nothing would be sent."
 msgstr "Brak wydarzeń w tym tygodniu, więc nic nie zostałoby wysłane."
 
 #. translators: %d: number of Telegram messages
-#: src/Admin/settings/WeeklyNotifications.js:740
+#: src/Admin/settings/WeeklyNotifications.js:776
 #, js-format
 msgid "Telegram: sent as %d message."
 msgid_plural "Telegram: sent as %d messages."
@@ -968,31 +920,27 @@ msgstr[0] "Telegram: wysłane jako %d wiadomość."
 msgstr[1] "Telegram: wysłane jako %d wiadomości."
 msgstr[2] "Telegram: wysłane jako %d wiadomości."
 
-#: src/Admin/settings/WeeklyNotifications.js:780
+#: src/Admin/settings/WeeklyNotifications.js:816
 msgid "Recent sends"
 msgstr "Ostatnie wysyłki"
 
-#: src/Admin/settings/WeeklyNotifications.js:783
+#: src/Admin/settings/WeeklyNotifications.js:819
 msgid "No weekly notification has run yet."
 msgstr "Żadne powiadomienie tygodniowe nie zostało jeszcze uruchomione."
 
-#: src/Admin/settings/WeeklyNotifications.js:811
+#: src/Admin/settings/WeeklyNotifications.js:847
 msgid "Delivery details"
 msgstr "Szczegóły dostarczenia"
 
-#: src/Admin/settings/WeeklyNotifications.js:815
+#: src/Admin/settings/WeeklyNotifications.js:851
 msgid "No messages delivered yet."
 msgstr "Nie dostarczono jeszcze żadnych wiadomości."
 
 #. translators: 1: message part number, 2: number of parts
-#: src/Admin/settings/WeeklyNotifications.js:841
+#: src/Admin/settings/WeeklyNotifications.js:877
 #, js-format
 msgid "Part %1$d of %2$d"
 msgstr "Część %1$d z %2$d"
-
-#: src/Admin/settings/WeeklyNotifications.js:877
-msgid "Remove the Telegram bot token? Weekly notifications will not reach Telegram until a new token is saved."
-msgstr "Usunąć token bota Telegram? Powiadomienia tygodniowe nie będą docierać do Telegrama, dopóki nie zapiszesz nowego tokenu."
 
 #: src/WeeklyNotifications/SummaryBuilder.php:46
 msgid "Choose the page that heads the message."
@@ -1002,60 +950,48 @@ msgstr "Wybierz stronę, która otwiera wiadomość."
 msgid "The selected page must be published and publicly visible."
 msgstr "Wybrana strona musi być opublikowana i publicznie widoczna."
 
-#: src/Admin/settings/WeeklyNotifications.js:409
+#: src/Admin/settings/WeeklyNotifications.js:496
 msgid "Choose a page"
 msgstr "Wybierz stronę"
 
-#: src/Admin/settings/WeeklyNotifications.js:441
+#: src/Admin/settings/WeeklyNotifications.js:534
 msgid "Post the week’s events from an event source to your channels every week, in the same format as the calendar’s “Copy summary” button."
 msgstr "Publikuj co tydzień na swoich kanałach wydarzenia z danego tygodnia ze źródła wydarzeń, w tym samym formacie co przycisk „Kopiuj streszczenie” w kalendarzu."
 
-#: src/Admin/settings/WeeklyNotifications.js:470
+#: src/Admin/settings/WeeklyNotifications.js:563
 msgid "Page linked in the heading"
 msgstr "Strona, do której prowadzi odnośnik w nagłówku"
 
-#: src/Admin/settings/WeeklyNotifications.js:474
+#: src/Admin/settings/WeeklyNotifications.js:567
 msgid "Any published, public page. Its title and link head the message. The event source decides which events are listed."
 msgstr "Dowolna opublikowana, publiczna strona. Jej tytuł i odnośnik otwierają wiadomość. Źródło wydarzeń decyduje o tym, które wydarzenia są wymienione."
 
-#: src/Admin/settings/WeeklyNotifications.js:547
-msgid "A bot token is saved. It is not shown here."
-msgstr "Token bota jest zapisany. Nie jest tutaj wyświetlany."
-
-#: src/Admin/settings/WeeklyNotifications.js:560
-msgid "New bot token"
-msgstr "Nowy token bota"
-
-#: src/Admin/settings/WeeklyNotifications.js:583
-msgid "Keep saved token"
-msgstr "Zachowaj zapisany token"
-
-#: src/API/WeeklyNotificationsController.php:349
+#: src/API/WeeklyNotificationsController.php:330
 msgid "There are no events in the next scheduled week, so there is nothing to send."
 msgstr "W następnym zaplanowanym tygodniu nie ma żadnych wydarzeń, więc nie ma nic do wysłania."
 
-#: src/Admin/settings/WeeklyNotifications.js:336
+#: src/Admin/settings/WeeklyNotifications.js:423
 msgid "Telegram accepted the test summary for every chat."
 msgstr "Telegram zaakceptował podsumowanie testowe dla każdego czatu."
 
-#: src/Admin/settings/WeeklyNotifications.js:343
+#: src/Admin/settings/WeeklyNotifications.js:430
 msgid "The test summary did not reach every chat. See the results below."
 msgstr "Podsumowanie testowe nie dotarło do każdego czatu. Sprawdź wyniki poniżej."
 
-#: src/Admin/settings/WeeklyNotifications.js:354
+#: src/Admin/settings/WeeklyNotifications.js:441
 msgid "Failed to send the test summary."
 msgstr "Nie udało się wysłać podsumowania testowego."
 
-#: src/Admin/settings/WeeklyNotifications.js:646
+#: src/Admin/settings/WeeklyNotifications.js:682
 msgid "Send test summary to Telegram"
 msgstr "Wyślij podsumowanie testowe do Telegramu"
 
-#: src/Admin/settings/WeeklyNotifications.js:653
+#: src/Admin/settings/WeeklyNotifications.js:689
 msgid "The test sends the summary for the next scheduled week to every saved chat, even while delivery is off. It is not recorded as a weekly send."
 msgstr "Test wysyła podsumowanie na następny zaplanowany tydzień do każdego zapisanego czatu, nawet gdy dostarczanie jest wyłączone. Nie jest rejestrowany jako cotygodniowe wysłanie."
 
 #. translators: 1: message number, 2: number of messages
-#: src/Admin/settings/WeeklyNotifications.js:755
+#: src/Admin/settings/WeeklyNotifications.js:791
 #, js-format
 msgid "Telegram message %1$d of %2$d"
 msgstr "Wiadomość Telegramu %1$d z %2$d"
@@ -1235,3 +1171,98 @@ msgstr "Pobierz PNG"
 msgid "Type to search events by name."
 msgstr "Wpisz, aby wyszukać wydarzenia po nazwie."
 
+#: src/API/WeeklyNotificationsController.php:200
+msgid "The Telegram bot token is managed in Settings → Connectors. Nothing was saved."
+msgstr "Token bota Telegrama jest zarządzany w Ustawienia → Łączniki. Nic nie zostało zapisane."
+
+#: src/API/WeeklyNotificationsController.php:263
+msgid "Before turning on weekly notifications, add a Telegram bot token in Settings → Connectors, turn on Telegram delivery and save at least one chat or channel."
+msgstr "Przed włączeniem cotygodniowych powiadomień dodaj token bota Telegrama w Ustawienia → Łączniki, włącz wysyłkę na Telegram i zapisz co najmniej jeden czat lub kanał."
+
+#: src/WeeklyNotifications/TelegramConnector.php:56
+msgid "Post weekly event summaries to Telegram chats and channels."
+msgstr "Publikuj cotygodniowe podsumowania wydarzeń na czatach i kanałach Telegrama."
+
+#: src/WeeklyNotifications/TelegramConnector.php:75
+msgid "Telegram bot token"
+msgstr "Token bota Telegrama"
+
+#: src/WeeklyNotifications/TelegramConnector.php:76
+msgid "Bot token for weekly event notifications on Telegram."
+msgstr "Token bota do cotygodniowych powiadomień o wydarzeniach na Telegramie."
+
+#: src/WeeklyNotifications/TelegramConnector.php:145
+msgid "That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE…. The saved token was not changed."
+msgstr "To nie wygląda na token bota Telegrama. Skopiuj pełny token od @BotFather, na przykład 123456789:AAE…. Zapisany token nie został zmieniony."
+
+#: src/WeeklyNotifications/TelegramConnector.php:222
+msgid "No Telegram bot token is configured. Add one in Settings → Connectors."
+msgstr "Nie skonfigurowano tokenu bota Telegrama. Dodaj go w Ustawienia → Łączniki."
+
+#. translators: %s: environment variable name
+#: src/WeeklyNotifications/TelegramConnector.php:231
+#, php-format
+msgid "The %s environment variable does not hold a valid Telegram bot token. Correct it where it is set."
+msgstr "Zmienna środowiskowa %s nie zawiera prawidłowego tokenu bota Telegrama. Popraw ją tam, gdzie jest ustawiana."
+
+#. translators: %s: PHP constant name
+#: src/WeeklyNotifications/TelegramConnector.php:234
+#, php-format
+msgid "The %s constant does not hold a valid Telegram bot token. Correct it where it is defined."
+msgstr "Stała %s nie zawiera prawidłowego tokenu bota Telegrama. Popraw ją tam, gdzie jest zdefiniowana."
+
+#: src/WeeklyNotifications/TelegramConnector.php:236
+msgid "The saved Telegram bot token is not a valid bot token. Replace it in Settings → Connectors with the full token from @BotFather."
+msgstr "Zapisany token bota Telegrama nie jest prawidłowym tokenem bota. Zastąp go w Ustawienia → Łączniki pełnym tokenem od @BotFather."
+
+#: src/Admin/settings/WeeklyNotifications.js:174
+msgid "No bot token is configured. Add one in Connectors to post to Telegram."
+msgstr "Nie skonfigurowano tokenu bota. Dodaj go w Łącznikach, aby wysyłać na Telegram."
+
+#. translators: %s: environment variable name
+#: src/Admin/settings/WeeklyNotifications.js:187
+#, js-format
+msgid "The %s environment variable does not hold a valid Telegram bot token, so nothing can be sent. Correct it where it is set."
+msgstr "Zmienna środowiskowa %s nie zawiera prawidłowego tokenu bota Telegrama, więc nic nie można wysłać. Popraw ją tam, gdzie jest ustawiana."
+
+#. translators: %s: PHP constant name
+#: src/Admin/settings/WeeklyNotifications.js:200
+#, js-format
+msgid "The %s constant does not hold a valid Telegram bot token, so nothing can be sent. Correct it where it is defined."
+msgstr "Stała %s nie zawiera prawidłowego tokenu bota Telegrama, więc nic nie można wysłać. Popraw ją tam, gdzie jest zdefiniowana."
+
+#: src/Admin/settings/WeeklyNotifications.js:210
+msgid "The saved bot token is not a valid Telegram bot token, so nothing can be sent. Replace it in Connectors."
+msgstr "Zapisany token bota nie jest prawidłowym tokenem bota Telegrama, więc nic nie można wysłać. Zastąp go w Łącznikach."
+
+#. translators: %s: environment variable name
+#: src/Admin/settings/WeeklyNotifications.js:222
+#, js-format
+msgid "The bot token comes from the %s environment variable, which overrides any token saved in Connectors. Send a test summary to confirm Telegram accepts it."
+msgstr "Token bota pochodzi ze zmiennej środowiskowej %s, która ma pierwszeństwo przed tokenem zapisanym w Łącznikach. Wyślij podsumowanie testowe, aby potwierdzić, że Telegram go akceptuje."
+
+#. translators: %s: PHP constant name
+#: src/Admin/settings/WeeklyNotifications.js:235
+#, js-format
+msgid "The bot token comes from the %s constant, which overrides any token saved in Connectors. Send a test summary to confirm Telegram accepts it."
+msgstr "Token bota pochodzi ze stałej %s, która ma pierwszeństwo przed tokenem zapisanym w Łącznikach. Wyślij podsumowanie testowe, aby potwierdzić, że Telegram go akceptuje."
+
+#: src/Admin/settings/WeeklyNotifications.js:245
+msgid "A bot token is saved in Connectors. It is not shown here. Send a test summary to confirm Telegram accepts it."
+msgstr "Token bota jest zapisany w Łącznikach. Nie jest tutaj wyświetlany. Wyślij podsumowanie testowe, aby potwierdzić, że Telegram go akceptuje."
+
+#: src/Admin/settings/WeeklyNotifications.js:509
+msgid "Fix the bot token in Connectors before sending a test message."
+msgstr "Popraw token bota w Łącznikach przed wysłaniem wiadomości testowej."
+
+#: src/Admin/settings/WeeklyNotifications.js:514
+msgid "Save at least one chat or channel before sending a test message."
+msgstr "Zapisz co najmniej jeden czat lub kanał przed wysłaniem wiadomości testowej."
+
+#: src/Admin/settings/WeeklyNotifications.js:630
+msgid "Turning this off keeps the bot token in Connectors and the chats below."
+msgstr "Wyłączenie tej opcji zachowuje token bota w Łącznikach i czaty poniżej."
+
+#: src/Admin/settings/WeeklyNotifications.js:643
+msgid "Manage in Connectors"
+msgstr "Zarządzaj w Łącznikach"

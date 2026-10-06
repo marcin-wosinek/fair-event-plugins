@@ -70,6 +70,23 @@ class FakeProvider implements Provider {
 	}
 
 	/**
+	 * Configuration problem reported for the run history.
+	 *
+	 * @var string
+	 */
+	public $configuration_error = '';
+
+	/**
+	 * Configuration problem.
+	 *
+	 * @param array $settings Settings.
+	 * @return string
+	 */
+	public function configuration_error( array $settings ) {
+		return $this->configuration_error;
+	}
+
+	/**
 	 * Split the summary text.
 	 *
 	 * @param array $summary Summary.

@@ -9,6 +9,7 @@ namespace FairEventsExperimental\Tests\WeeklyNotifications;
 
 use FairEventsExperimental\Settings\WeeklyNotificationSettings;
 use FairEventsExperimental\WeeklyNotifications\MessageSplitter;
+use FairEventsExperimental\WeeklyNotifications\TelegramConnector;
 use FairEventsExperimental\WeeklyNotifications\TelegramProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -27,6 +28,16 @@ class TelegramProviderTest extends TestCase {
 		$GLOBALS['_fair_test_options']              = array( WeeklyNotificationSettings::TOKEN_OPTION => self::TOKEN );
 		$GLOBALS['_fair_test_remote_post_requests'] = array();
 		$GLOBALS['_fair_test_remote_post_response'] = self::response( 200, array( 'ok' => true ) );
+		putenv( TelegramConnector::CREDENTIAL_NAME ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_putenv -- test-only environment.
+	}
+
+	/**
+	 * Clear the environment override.
+	 *
+	 * @return void
+	 */
+	protected function tearDown(): void {
+		putenv( TelegramConnector::CREDENTIAL_NAME ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_putenv -- test-only environment.
 	}
 
 	/**
@@ -120,7 +131,65 @@ class TelegramProviderTest extends TestCase {
 		$result = ( new TelegramProvider() )->send( '@fair_channel', 'Text' );
 
 		$this->assertSame( 'failed', $result['state'] );
+		$this->assertSame( 'missing_token', $result['code'] );
 		$this->assertSame( array(), $GLOBALS['_fair_test_remote_post_requests'] );
+	}
+
+	/** A malformed token is refused locally, without a request or its value in the result. */
+	public function test_malformed_token_sends_nothing() {
+		$GLOBALS['_fair_test_options'] = array( WeeklyNotificationSettings::TOKEN_OPTION => 'not-a-bot-token' );
+		$provider                      = new TelegramProvider();
+
+		$result = $provider->send( '@fair_channel', 'Text' );
+
+		$this->assertSame( 'failed', $result['state'] );
+		$this->assertSame( 'invalid_token', $result['code'] );
+		$this->assertStringNotContainsString( 'not-a-bot-token', $result['message'] );
+		$this->assertSame( array(), $GLOBALS['_fair_test_remote_post_requests'] );
+		$this->assertSame( array(), $provider->destinations( self::settings() ) );
+		$this->assertStringNotContainsString( 'not-a-bot-token', $provider->configuration_error( self::settings() ) );
+		$this->assertNotSame( '', $provider->configuration_error( self::settings() ) );
+		$this->assertSame( '', $provider->configuration_error( self::settings( false ) ) );
+	}
+
+	/** Each send uses the credential in effect at that moment. */
+	public function test_send_uses_the_current_effective_credential() {
+		$replacement = '987654321:AAEzyxwvutsrqponmlkjihgfedcba543210';
+		$override    = '555555555:AAEoverrideoverrideoverrideoverride01';
+		$provider    = new TelegramProvider();
+
+		$provider->send( '@fair_channel', 'Text' );
+		$GLOBALS['_fair_test_options'][ WeeklyNotificationSettings::TOKEN_OPTION ] = $replacement;
+		$provider->send( '@fair_channel', 'Text' );
+		putenv( TelegramConnector::CREDENTIAL_NAME . '=' . $override ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_putenv -- test-only environment.
+		$provider->send( '@fair_channel', 'Text' );
+
+		$this->assertSame(
+			array(
+				'https://api.telegram.org/bot' . self::TOKEN . '/sendMessage',
+				'https://api.telegram.org/bot' . $replacement . '/sendMessage',
+				'https://api.telegram.org/bot' . $override . '/sendMessage',
+			),
+			array_column( $GLOBALS['_fair_test_remote_post_requests'], 'url' )
+		);
+	}
+
+	/** A token Telegram rejects is a definite failure, reported without the token. */
+	public function test_rejected_token_is_failed_without_the_token() {
+		$GLOBALS['_fair_test_remote_post_response'] = self::response(
+			401,
+			array(
+				'ok'          => false,
+				'error_code'  => 401,
+				'description' => 'Unauthorized',
+			)
+		);
+
+		$result = ( new TelegramProvider() )->send( '@fair_channel', 'Text' );
+
+		$this->assertSame( 'failed', $result['state'] );
+		$this->assertSame( 'http_401', $result['code'] );
+		$this->assertSame( 'Unauthorized', $result['message'] );
 	}
 
 	/** Destinations are empty while Telegram is off, except for test sends. */

@@ -245,6 +245,19 @@ class DispatcherTest extends TestCase {
 		$this->assertSame( 'configuration_error', $run['status'] );
 	}
 
+	/** A provider's credential problem is the recorded reason, and nothing is sent. */
+	public function test_provider_configuration_error_is_recorded() {
+		$this->provider->destinations        = array();
+		$this->provider->configuration_error = 'No Telegram bot token is configured.';
+
+		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+
+		$this->assertSame( 'configuration_error', $run['status'] );
+		$this->assertSame( 'No Telegram bot token is configured.', $run['message'] );
+		$this->assertSame( array(), $this->provider->sent );
+		$this->assertSame( array(), $this->log->rows );
+	}
+
 	/** Disabled notifications and invalid week keys do nothing. */
 	public function test_disabled_or_invalid_runs_do_nothing() {
 		$disabled = WeeklyNotificationSettings::defaults();

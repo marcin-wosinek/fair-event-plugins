@@ -12,8 +12,10 @@ defined( 'WPINC' ) || die;
 /**
  * Stores the weekly notification schedule and provider configuration.
  *
- * The Telegram bot token lives in its own non-autoloaded option and is never
- * returned by {@see self::get()}, so settings responses cannot disclose it.
+ * The Telegram bot token lives in its own non-autoloaded option, managed in
+ * Settings → Connectors and read through
+ * {@see \FairEventsExperimental\WeeklyNotifications\TelegramConnector}. It is
+ * never returned by {@see self::get()}, so settings responses cannot disclose it.
  * Provider configuration is kept when a provider or the whole feature is
  * disabled.
  */
@@ -144,33 +146,5 @@ class WeeklyNotificationSettings {
 		$parts = is_array( $raw ) ? $raw : preg_split( '/[\s,]+/', (string) $raw );
 		$parts = array_map( 'trim', array_map( 'strval', (array) $parts ) );
 		return array_values( array_unique( array_filter( $parts, 'strlen' ) ) );
-	}
-
-	/**
-	 * The saved Telegram bot token, or an empty string.
-	 *
-	 * @return string
-	 */
-	public static function telegram_token() {
-		return (string) get_option( self::TOKEN_OPTION, '' );
-	}
-
-	/**
-	 * Save the Telegram bot token.
-	 *
-	 * @param string $token Validated bot token.
-	 * @return void
-	 */
-	public static function set_telegram_token( $token ) {
-		update_option( self::TOKEN_OPTION, (string) $token, false );
-	}
-
-	/**
-	 * Remove the saved Telegram bot token.
-	 *
-	 * @return void
-	 */
-	public static function clear_telegram_token() {
-		delete_option( self::TOKEN_OPTION );
 	}
 }
