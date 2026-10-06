@@ -14,21 +14,21 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Domain: fair-payments-connector\n"
 
-#: src/Admin/AdminPages.php:56
 #: src/Admin/AdminPages.php:57
+#: src/Admin/AdminPages.php:58
 #: src/Admin/external-updates/components/MollieFeesPanel.js:62
 msgid "Transactions"
 msgstr "Transactions"
 
-#: src/Admin/AdminPages.php:65
 #: src/Admin/AdminPages.php:66
-#: src/Admin/AdminPages.php:73
+#: src/Admin/AdminPages.php:67
+#: src/Admin/AdminPages.php:74
 #: src/Admin/transaction/TransactionPage.js:853
 msgid "Transaction Detail"
 msgstr "Détail de la transaction"
 
-#: src/Admin/AdminPages.php:100
 #: src/Admin/AdminPages.php:101
+#: src/Admin/AdminPages.php:102
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -256,6 +256,8 @@ msgstr "Modifier"
 msgid "Total"
 msgstr "Total"
 
+#: src/Admin/settings/ApiTokensTab.js:464
+#: src/Admin/settings/ApiTokensTab.js:559
 #: src/Admin/settings/ConnectionTab.js:839
 #: src/Admin/transaction/TransactionPage.js:151
 #: src/Admin/transaction/TransactionPage.js:281
@@ -431,19 +433,19 @@ msgstr "Actualiser la connexion"
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src/Admin/settings/SettingsApp.js:123
+#: src/Admin/settings/SettingsApp.js:131
 msgid "Successfully connected to Mollie!"
 msgstr "Connecté avec succès à Mollie !"
 
-#: src/Admin/settings/SettingsApp.js:133
+#: src/Admin/settings/SettingsApp.js:141
 msgid "Failed to save OAuth tokens: "
 msgstr "Échec de l'enregistrement des jetons OAuth : "
 
-#: src/Admin/settings/SettingsApp.js:84
+#: src/Admin/settings/SettingsApp.js:92
 msgid "OAuth callback incomplete: refresh token not received from authorization server."
 msgstr "Rappel OAuth incomplet : le jeton d'actualisation n'a pas été reçu du serveur d'autorisation."
 
-#: src/Admin/settings/SettingsApp.js:199
+#: src/Admin/settings/SettingsApp.js:207
 msgid "Connection"
 msgstr "Connexion"
 
@@ -482,12 +484,16 @@ msgstr "Frais d'Intégration"
 msgid "Status & Timing"
 msgstr "Statut et Timing"
 
+#: src/Admin/settings/ApiTokensTab.js:273
+#: src/Admin/settings/ApiTokensTab.js:334
 #: src/Admin/transaction/TransactionPage.js:1051
 #: src/Admin/transactions/TransactionsApp.js:285
 #: src/Admin/transactions/TransactionsApp.js:456
 msgid "Status"
 msgstr "Statut"
 
+#: src/Admin/settings/ApiTokensTab.js:261
+#: src/Admin/settings/ApiTokensTab.js:313
 #: src/Admin/transaction/TransactionPage.js:1062
 msgid "Created"
 msgstr "Créé"
@@ -598,7 +604,7 @@ msgstr "ID"
 msgid "Simple Payment Block"
 msgstr "Bloc de paiement simple"
 
-#: src/Admin/settings/SettingsApp.js:210
+#: src/Admin/settings/SettingsApp.js:218
 #: src/blocks/simple-payment/index.js:128
 msgid "Currency"
 msgstr "Devise"
@@ -752,7 +758,7 @@ msgstr "Seuil de jours ouvrables"
 msgid "Disable bank transfer when fewer than this many working days remain before the key date."
 msgstr "Désactiver le virement bancaire lorsque moins de ce nombre de jours ouvrables restent avant la date clé."
 
-#: src/Admin/settings/SettingsApp.js:203
+#: src/Admin/settings/SettingsApp.js:211
 msgid "Payment Methods"
 msgstr "Modes de paiement"
 
@@ -834,8 +840,8 @@ msgstr "Aucune transaction payée ne manque de données de frais Mollie."
 
 #. Plugin Name of the plugin
 #: fair-payments-connector.php
-#: src/Admin/AdminPages.php:44
 #: src/Admin/AdminPages.php:45
+#: src/Admin/AdminPages.php:46
 #: src/Core/Plugin.php:134
 msgid "Fair Payments Connector"
 msgstr ""
@@ -855,8 +861,8 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:89
 #: src/Admin/AdminPages.php:90
+#: src/Admin/AdminPages.php:91
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:256
 msgid "Fee Dashboard"
 msgstr "Tableau de bord des frais"
@@ -898,11 +904,11 @@ msgstr "Mode test — ces chiffres reflètent uniquement les transactions de tes
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là."
 
-#: src/Admin/settings/SettingsApp.js:177
+#: src/Admin/settings/SettingsApp.js:185
 msgid "Fair Payments Connector Settings"
 msgstr "Paramètres Fair Payments Connector"
 
-#: src/Admin/AdminPages.php:233
+#: src/Admin/AdminPages.php:244
 msgid "Set up"
 msgstr "Configurer"
 
@@ -968,11 +974,11 @@ msgstr "Définissez la devise par défaut pour toutes les nouvelles transactions
 msgid "Site currency"
 msgstr "Devise du site"
 
-#: src/Admin/settings/SettingsApp.js:99
+#: src/Admin/settings/SettingsApp.js:107
 msgid "OAuth callback is missing the state parameter. Please try connecting again."
 msgstr "Le rappel OAuth ne dispose pas du paramètre d'état. Veuillez essayer de vous reconnecter."
 
-#: src/Admin/settings/SettingsApp.js:244
+#: src/Admin/settings/SettingsApp.js:264
 msgid "Need help?"
 msgstr "Besoin d'aide ?"
 
@@ -1412,7 +1418,7 @@ msgid "Failed to load the audit log."
 msgstr "Impossible de charger le journal d'audit."
 
 #: src/Admin/settings/AuditLogTab.js:103
-#: src/Admin/settings/SettingsApp.js:214
+#: src/Admin/settings/SettingsApp.js:222
 msgid "Audit Log"
 msgstr "Journal d'audit"
 
@@ -1543,14 +1549,14 @@ msgstr "Réessayer"
 msgid "No paid transactions in this month."
 msgstr "Aucune transaction payée ce mois-ci."
 
-#: src/Admin/AdminPages.php:78
 #: src/Admin/AdminPages.php:79
+#: src/Admin/AdminPages.php:80
 #: src/Admin/external-updates/ExternalUpdatesApp.js:51
 msgid "External Updates"
 msgstr "Mises à jour externes"
 
-#: src/Admin/AdminPages.php:121
 #: src/Admin/AdminPages.php:122
+#: src/Admin/AdminPages.php:123
 #: src/Admin/notifications/NotificationsApp.js:23
 msgid "Notifications"
 msgstr "Notifications"
@@ -2089,12 +2095,191 @@ msgstr ""
 msgid "Reconnect"
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:64
+#: src/Admin/settings/SettingsApp.js:72
 msgid "Authorization cancelled. Nothing was changed, so an existing Mollie connection keeps working."
 msgstr ""
 
 #. translators: %s: error code reported by the authorization server
-#: src/Admin/settings/SettingsApp.js:70
+#: src/Admin/settings/SettingsApp.js:78
 #, js-format
 msgid "Mollie authorization failed (%s). Nothing was changed, so an existing Mollie connection keeps working."
 msgstr ""
+
+#: src/API/ApiTokenAuth.php:46
+msgid "This token does not have the required scope."
+msgstr "Ce jeton n'a pas la portée requise."
+
+#: src/API/ApiTokenAuth.php:106
+msgid "Invalid or missing API token."
+msgstr "Jeton API invalide ou manquant."
+
+#: src/API/ApiTokensController.php:127
+msgid "A label is required."
+msgstr "Un libellé est requis."
+
+#: src/API/ApiTokensController.php:137
+msgid "At least one valid scope is required."
+msgstr "Au moins une portée valide est requise."
+
+#: src/API/ApiTokensController.php:147
+#: src/Admin/settings/ApiTokensTab.js:147
+msgid "Failed to create API token."
+msgstr "Impossible de créer le jeton API."
+
+#: src/API/ApiTokensController.php:174
+msgid "API token not found."
+msgstr "Jeton API non trouvé."
+
+#: src/API/ExternalTransactionsController.php:85
+msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
+msgstr "Filtrer par date de transaction (created_at) à partir de cette date, par exemple 2026-01-01."
+
+#: src/API/ExternalTransactionsController.php:92
+msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
+msgstr "Filtrer par date de transaction (created_at) jusqu'à cette date, par exemple 2026-12-31."
+
+#: src/Admin/settings/ApiTokensTab.js:35
+msgid "Read transactions"
+msgstr "Lire les transactions"
+
+#. translators: %s: date and time, e.g. 2026-01-31 14:05
+#: src/Admin/settings/ApiTokensTab.js:50
+#, js-format
+msgid "%s UTC"
+msgstr "%s UTC"
+
+#: src/Admin/settings/ApiTokensTab.js:88
+msgid "Failed to load API tokens."
+msgstr "Impossible de charger les jetons API."
+
+#. translators: %s: token label
+#: src/Admin/settings/ApiTokensTab.js:179
+#, js-format
+msgid "API token \"%s\" revoked."
+msgstr "Jeton d’API « %s » révoqué."
+
+#: src/Admin/settings/ApiTokensTab.js:194
+msgid "Failed to revoke API token."
+msgstr "Échec de la révocation du jeton API."
+
+#: src/Admin/settings/ApiTokensTab.js:206
+#: src/Admin/settings/SettingsApp.js:228
+msgid "API Tokens"
+msgstr "Jetons API"
+
+#: src/Admin/settings/ApiTokensTab.js:209
+#: src/Admin/settings/ApiTokensTab.js:477
+msgid "Generate token"
+msgstr "Générer un jeton"
+
+#: src/Admin/settings/ApiTokensTab.js:214
+msgid "Issue tokens so other sites can read this site's transactions over the data sharing API."
+msgstr "Émettez des jetons pour que d’autres sites puissent lire les transactions de ce site via l’API de partage de données."
+
+#: src/Admin/settings/ApiTokensTab.js:240
+msgid "No API tokens yet. Generate one to share transactions with another site."
+msgstr "Aucun jeton d’API pour le moment. Générez-en un pour partager des transactions avec un autre site."
+
+#: src/Admin/settings/ApiTokensTab.js:252
+#: src/Admin/settings/ApiTokensTab.js:290
+#: src/Admin/settings/ApiTokensTab.js:402
+msgid "Label"
+msgstr "Étiquette"
+
+#: src/Admin/settings/ApiTokensTab.js:255
+#: src/Admin/settings/ApiTokensTab.js:304
+#: src/Admin/settings/ApiTokensTab.js:417
+msgid "Scopes"
+msgstr "Portées"
+
+#: src/Admin/settings/ApiTokensTab.js:267
+#: src/Admin/settings/ApiTokensTab.js:321
+msgid "Last used"
+msgstr "Dernière utilisation"
+
+#: src/Admin/settings/ApiTokensTab.js:279
+msgid "Actions"
+msgstr "Actions"
+
+#: src/Admin/settings/ApiTokensTab.js:297
+msgid "(no label)"
+msgstr "(sans libellé)"
+
+#: src/Admin/settings/ApiTokensTab.js:328
+msgid "Never"
+msgstr "Jamais"
+
+#: src/Admin/settings/ApiTokensTab.js:347
+msgid "Active"
+msgstr "Actif"
+
+#: src/Admin/settings/ApiTokensTab.js:351
+msgid "Revoked"
+msgstr "Révoqué"
+
+#: src/Admin/settings/ApiTokensTab.js:372
+msgid "Revoke"
+msgstr "Révoquer"
+
+#: src/Admin/settings/ApiTokensTab.js:388
+msgid "Generate API token"
+msgstr "Générer un jeton d’API"
+
+#: src/Admin/settings/ApiTokensTab.js:407
+msgid "A name to identify who this token is for, e.g. the address of the site that will use it."
+msgstr "Un nom pour identifier à qui ce jeton est destiné, par exemple l’adresse du site qui l’utilisera."
+
+#: src/Admin/settings/ApiTokensTab.js:448
+msgid "Enter a label to generate the token."
+msgstr "Saisissez un libellé pour générer le jeton."
+
+#: src/Admin/settings/ApiTokensTab.js:452
+msgid "Select at least one scope to generate the token."
+msgstr "Sélectionnez au moins une portée pour générer le jeton."
+
+#: src/Admin/settings/ApiTokensTab.js:473
+msgid "Generating…"
+msgstr "Génération…"
+
+#: src/Admin/settings/ApiTokensTab.js:489
+msgid "Token created"
+msgstr "Jeton créé"
+
+#: src/Admin/settings/ApiTokensTab.js:494
+msgid "Copy this token now. For security it will not be shown again."
+msgstr "Copiez ce jeton maintenant. Pour des raisons de sécurité, il ne sera plus affiché."
+
+#: src/Admin/settings/ApiTokensTab.js:504
+msgid "Copying failed. Select the token above and copy it manually."
+msgstr "La copie a échoué. Sélectionnez le jeton ci-dessus et copiez-le manuellement."
+
+#: src/Admin/settings/ApiTokensTab.js:513
+msgid "Copied!"
+msgstr "Copié !"
+
+#: src/Admin/settings/ApiTokensTab.js:514
+msgid "Copy token"
+msgstr "Copier le jeton"
+
+#: src/Admin/settings/ApiTokensTab.js:520
+msgid "Done"
+msgstr "Terminé"
+
+#: src/Admin/settings/ApiTokensTab.js:528
+msgid "Revoke API token"
+msgstr "Révoquer le jeton d’API"
+
+#. translators: %s: token label
+#: src/Admin/settings/ApiTokensTab.js:546
+#, js-format
+msgid "Revoke the API token \"%s\"? Every site connected with it loses access to this site's transactions immediately. This cannot be undone."
+msgstr "Révoquer le jeton d’API « %s » ? Tous les sites connectés avec lui perdent immédiatement l’accès aux transactions de ce site. Cette action est irréversible."
+
+#: src/Admin/settings/ApiTokensTab.js:569
+msgid "Revoking…"
+msgstr "Révocation…"
+
+#: src/Admin/settings/ApiTokensTab.js:570
+msgid "Revoke token"
+msgstr "Révoquer le jeton"
+

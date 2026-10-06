@@ -24,6 +24,10 @@ define( 'FAIR_PAYMENTS_CONNECTOR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 // Experimental yields them when it sees this; see Core\NotificationOwnership.
 define( 'FAIR_PAYMENTS_CONNECTOR_OWNS_NOTIFICATIONS', true );
 
+// API tokens and the data sharing API live here now. An updated Fair Payments
+// Connector Experimental yields them when it sees this; see Core\ApiTokenOwnership.
+define( 'FAIR_PAYMENTS_CONNECTOR_OWNS_API_TOKENS', true );
+
 // Require Composer autoloader if it exists.
 if ( file_exists( FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 	require_once FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'vendor/autoload.php';

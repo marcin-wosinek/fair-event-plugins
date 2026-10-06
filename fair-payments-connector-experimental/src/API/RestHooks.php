@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnectorExperimental\API;
 
+use FairPaymentsConnectorExperimental\Core\ApiTokenFallback;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -32,14 +34,18 @@ class RestHooks {
 	 * @return void
 	 */
 	public function register_routes() {
-		$api_tokens_controller = new \FairPaymentsConnectorExperimental\API\ApiTokensController();
-		$api_tokens_controller->register_routes();
+		// API tokens live in Fair Payments Connector; these are a fallback
+		// for a release of it that predates the move.
+		if ( ApiTokenFallback::is_owner() ) {
+			$api_tokens_controller = new \FairPaymentsConnectorExperimental\API\ApiTokensController();
+			$api_tokens_controller->register_routes();
 
-		$external_me = new \FairPaymentsConnectorExperimental\API\ExternalMeController();
-		$external_me->register_routes();
+			$external_me = new \FairPaymentsConnectorExperimental\API\ExternalMeController();
+			$external_me->register_routes();
 
-		$external_transactions = new \FairPaymentsConnectorExperimental\API\ExternalTransactionsController();
-		$external_transactions->register_routes();
+			$external_transactions = new \FairPaymentsConnectorExperimental\API\ExternalTransactionsController();
+			$external_transactions->register_routes();
+		}
 
 		$connected_sites_controller = new \FairPaymentsConnectorExperimental\API\ConnectedSitesController();
 		$connected_sites_controller->register_routes();

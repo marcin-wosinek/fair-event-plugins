@@ -8,7 +8,7 @@ Stable tag: 0.5.0
 License: Private
 License URI: https://fair-event-plugins.com
 
-Experimental features for Fair Payments Connector: API tokens and connected sites.
+Experimental features for Fair Payments Connector: connected sites.
 
 == Description ==
 
@@ -16,7 +16,6 @@ This plugin houses features that are under active development and not yet ready 
 
 **Features:**
 
-* API Tokens — issue scoped bearer tokens so other sites can read transaction data
 * Connected Sites — pull transaction data from other sites over the data sharing API
 
 == Changelog ==

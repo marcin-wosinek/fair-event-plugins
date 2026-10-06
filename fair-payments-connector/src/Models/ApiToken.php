@@ -2,10 +2,12 @@
 /**
  * API Token Model
  *
- * @package FairPaymentsConnectorExperimental
+ * @package FairPaymentsConnector
  */
 
-namespace FairPaymentsConnectorExperimental\Models;
+namespace FairPaymentsConnector\Models;
+
+use FairPaymentsConnector\Database\Schema;
 
 defined( 'WPINC' ) || die;
 
@@ -56,7 +58,7 @@ class ApiToken {
 	 */
 	public static function create( $label, array $scopes ) {
 		global $wpdb;
-		$table_name = \FairPaymentsConnector\Database\Schema::get_api_tokens_table_name();
+		$table_name = Schema::get_api_tokens_table_name();
 
 		$valid_scopes = array_values( array_intersect( $scopes, self::ALLOWED_SCOPES ) );
 
@@ -93,7 +95,7 @@ class ApiToken {
 	 */
 	public static function find_by_token( $plaintext ) {
 		global $wpdb;
-		$table_name = \FairPaymentsConnector\Database\Schema::get_api_tokens_table_name();
+		$table_name = Schema::get_api_tokens_table_name();
 
 		$token_hash = self::hash_token( $plaintext );
 
@@ -115,7 +117,7 @@ class ApiToken {
 	 */
 	public static function get_by_id( $id ) {
 		global $wpdb;
-		$table_name = \FairPaymentsConnector\Database\Schema::get_api_tokens_table_name();
+		$table_name = Schema::get_api_tokens_table_name();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->get_row(
@@ -134,7 +136,7 @@ class ApiToken {
 	 */
 	public static function get_all() {
 		global $wpdb;
-		$table_name = \FairPaymentsConnector\Database\Schema::get_api_tokens_table_name();
+		$table_name = Schema::get_api_tokens_table_name();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->get_results(
@@ -153,7 +155,7 @@ class ApiToken {
 	 */
 	public static function revoke( $id ) {
 		global $wpdb;
-		$table_name = \FairPaymentsConnector\Database\Schema::get_api_tokens_table_name();
+		$table_name = Schema::get_api_tokens_table_name();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (bool) $wpdb->update(
@@ -173,7 +175,7 @@ class ApiToken {
 	 */
 	public static function touch_last_used( $id ) {
 		global $wpdb;
-		$table_name = \FairPaymentsConnector\Database\Schema::get_api_tokens_table_name();
+		$table_name = Schema::get_api_tokens_table_name();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(

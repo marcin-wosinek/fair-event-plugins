@@ -33,14 +33,14 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:35
-#: src/Admin/AdminPages.php:36
-#: src/Admin/api-tokens/ApiTokensApp.js:180
+#: src/Admin/AdminPages.php:39
+#: src/Admin/AdminPages.php:40
+#: src/Admin/api-tokens/ApiTokensApp.js:176
 msgid "API Tokens"
 msgstr "Tokeny API"
 
-#: src/Admin/AdminPages.php:45
-#: src/Admin/AdminPages.php:46
+#: src/Admin/AdminPages.php:50
+#: src/Admin/AdminPages.php:51
 #: src/Admin/connected-sites/ConnectedSitesApp.js:353
 msgid "Connected Sites"
 msgstr "Połączone witryny"
@@ -62,7 +62,7 @@ msgid "At least one valid scope is required."
 msgstr "Wymagany jest co najmniej jeden prawidłowy zakres."
 
 #: src/API/ApiTokensController.php:147
-#: src/Admin/api-tokens/ApiTokensApp.js:112
+#: src/Admin/api-tokens/ApiTokensApp.js:108
 msgid "Failed to create API token."
 msgstr "Nie udało się utworzyć tokenu API."
 
@@ -115,128 +115,124 @@ msgstr "Filtruj według daty transakcji (created_at) do tej daty, np. 2026-12-31
 msgid "Read transactions"
 msgstr "Odczyt transakcji"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:31
-msgid "Read locations"
-msgstr "Odczyt lokalizacji"
-
-#: src/Admin/api-tokens/ApiTokensApp.js:63
+#: src/Admin/api-tokens/ApiTokensApp.js:59
 msgid "Failed to load API tokens."
 msgstr "Nie udało się załadować tokenów API."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:103
+#: src/Admin/api-tokens/ApiTokensApp.js:99
 msgid "API token created."
 msgstr "Token API utworzony."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:125
+#: src/Admin/api-tokens/ApiTokensApp.js:121
 msgid "Revoke this token? Any site using it will immediately lose access."
 msgstr "Odwołać ten token? Każda witryna go używająca natychmiast utraci dostęp."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:143
+#: src/Admin/api-tokens/ApiTokensApp.js:139
 msgid "API token revoked."
 msgstr "Token API odwołany."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:152
+#: src/Admin/api-tokens/ApiTokensApp.js:148
 msgid "Failed to revoke API token."
 msgstr "Nie udało się odwołać tokenu API."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:189
+#: src/Admin/api-tokens/ApiTokensApp.js:185
 msgid "Generate Token"
 msgstr "Generuj token"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:199
+#: src/Admin/api-tokens/ApiTokensApp.js:195
 msgid "Issue scoped tokens so other sites can read this site's data over the data sharing API."
 msgstr "Wydawaj tokeny o ograniczonym zakresie, aby inne witryny mogły odczytywać dane tej witryny za pośrednictwem API udostępniania danych."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:229
+#: src/Admin/api-tokens/ApiTokensApp.js:225
 msgid "Loading tokens…"
 msgstr "Ładowanie tokenów…"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:239
+#: src/Admin/api-tokens/ApiTokensApp.js:235
 msgid "No API tokens yet. Generate one to share data with another site."
 msgstr "Brak tokenów API. Wygeneruj jeden, aby udostępnić dane innej witrynie."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:251
-#: src/Admin/api-tokens/ApiTokensApp.js:429
+#: src/Admin/api-tokens/ApiTokensApp.js:247
+#: src/Admin/api-tokens/ApiTokensApp.js:425
 #: src/Admin/connected-sites/ConnectedSitesApp.js:421
 #: src/Admin/connected-sites/ConnectedSitesApp.js:625
 msgid "Label"
 msgstr "Etykieta"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:257
-#: src/Admin/api-tokens/ApiTokensApp.js:448
+#: src/Admin/api-tokens/ApiTokensApp.js:253
+#: src/Admin/api-tokens/ApiTokensApp.js:444
 #: src/Admin/connected-sites/ConnectedSitesApp.js:433
 msgid "Scopes"
 msgstr "Zakresy"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:263
+#: src/Admin/api-tokens/ApiTokensApp.js:259
 msgid "Created"
 msgstr "Utworzono"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:269
+#: src/Admin/api-tokens/ApiTokensApp.js:265
 msgid "Last used"
 msgstr "Ostatnio używane"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:275
+#: src/Admin/api-tokens/ApiTokensApp.js:271
 #: src/Admin/connected-sites/ConnectedSitesApp.js:445
 msgid "Status"
 msgstr "Status"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:281
+#: src/Admin/api-tokens/ApiTokensApp.js:277
 #: src/Admin/connected-sites/ConnectedSitesApp.js:463
 msgid "Actions"
 msgstr "Akcje"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:305
+#: src/Admin/api-tokens/ApiTokensApp.js:301
 #: src/Admin/connected-sites/ConnectedSitesApp.js:504
 msgid "Never"
 msgstr "Nigdy"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:325
+#: src/Admin/api-tokens/ApiTokensApp.js:321
 msgid "Active"
 msgstr "Aktywny"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:329
+#: src/Admin/api-tokens/ApiTokensApp.js:325
 msgid "Revoked"
 msgstr "Odwołany"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:348
+#: src/Admin/api-tokens/ApiTokensApp.js:344
 msgid "Revoke"
 msgstr "Odwołaj"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:369
+#: src/Admin/api-tokens/ApiTokensApp.js:365
 msgid "Token created"
 msgstr "Token utworzony"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:373
+#: src/Admin/api-tokens/ApiTokensApp.js:369
 msgid "Generate API Token"
 msgstr "Generuj token API"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:384
+#: src/Admin/api-tokens/ApiTokensApp.js:380
 msgid "Copy this token now. For security it will not be shown again."
 msgstr "Skopiuj ten token teraz. Ze względów bezpieczeństwa nie będzie już wyświetlany."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:405
+#: src/Admin/api-tokens/ApiTokensApp.js:401
 msgid "Copied!"
 msgstr "Skopiowano!"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:409
+#: src/Admin/api-tokens/ApiTokensApp.js:405
 msgid "Copy token"
 msgstr "Kopiuj token"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:418
+#: src/Admin/api-tokens/ApiTokensApp.js:414
 msgid "Done"
 msgstr "Gotowe"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:435
+#: src/Admin/api-tokens/ApiTokensApp.js:431
 msgid "A name to identify who this token is for, e.g. lamutable.es"
 msgstr "Nazwa do identyfikacji, dla kogo jest ten token, np. lamutable.es"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:477
+#: src/Admin/api-tokens/ApiTokensApp.js:473
 #: src/Admin/connected-sites/ConnectedSitesApp.js:713
 msgid "Cancel"
 msgstr "Anuluj"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:492
+#: src/Admin/api-tokens/ApiTokensApp.js:488
 msgid "Generate"
 msgstr "Generuj"
 
@@ -433,11 +429,6 @@ msgstr "Wyłącz"
 msgid "Enable"
 msgstr "Włącz"
 
-#. Description of the plugin
-#: fair-payments-connector-experimental.php
-msgid "Experimental features for Fair Payments Connector: API tokens and connected sites."
-msgstr "Eksperymentalne funkcje dla Fair Payments Connector: tokeny API i połączone witryny."
-
 #: src/API/ConnectedSitesController.php:127
 msgid "External Updates run this request belongs to."
 msgstr "Przebieg aktualizacji zewnętrznych, do którego należy to żądanie."
@@ -451,3 +442,8 @@ msgstr "Zaktualizuj Fair Payments Connector, aby zapisać ten import w dzienniku
 #, php-format
 msgid "The import from %1$s stopped after %2$d new, %3$d updated and %4$d skipped transaction(s). %5$s"
 msgstr "Import z %1$s został przerwany po %2$d nowych, %3$d zaktualizowanych i %4$d pominiętych transakcjach. %5$s"
+
+#. Description of the plugin
+#: fair-payments-connector-experimental.php
+msgid "Experimental features for Fair Payments Connector: connected sites."
+msgstr ""

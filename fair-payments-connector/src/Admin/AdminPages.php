@@ -7,6 +7,7 @@
 
 namespace FairPaymentsConnector\Admin;
 
+use FairPaymentsConnector\Core\ApiTokenOwnership;
 use FairPaymentsConnector\Core\Features;
 use FairPaymentsConnector\Core\NotificationOwnership;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
@@ -168,6 +169,16 @@ class AdminPages {
 		// Settings page.
 		if ( false !== strpos( $hook, 'fair-payments-connector-settings' ) ) {
 			$this->enqueue_admin_page_script( 'settings' );
+			wp_set_script_translations( 'fair-payments-connector-settings', 'fair-payments-connector', Features::script_translations_path() );
+			wp_localize_script(
+				'fair-payments-connector-settings',
+				'fairPaymentsConnectorSettings',
+				array(
+					// The API Tokens tab is offered only while this plugin
+					// serves the token routes it calls.
+					'apiTokensEnabled' => ApiTokenOwnership::is_owner(),
+				)
+			);
 			return;
 		}
 

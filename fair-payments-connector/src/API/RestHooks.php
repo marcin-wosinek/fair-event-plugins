@@ -7,6 +7,7 @@
 
 namespace FairPaymentsConnector\API;
 
+use FairPaymentsConnector\Core\ApiTokenOwnership;
 use FairPaymentsConnector\Core\NotificationOwnership;
 
 defined( 'WPINC' ) || die;
@@ -65,6 +66,17 @@ class RestHooks {
 
 			$telegram_controller = new \FairPaymentsConnector\API\TelegramSettingsController();
 			$telegram_controller->register_routes();
+		}
+
+		if ( ApiTokenOwnership::is_owner() ) {
+			$api_tokens_controller = new \FairPaymentsConnector\API\ApiTokensController();
+			$api_tokens_controller->register_routes();
+
+			$external_me_controller = new \FairPaymentsConnector\API\ExternalMeController();
+			$external_me_controller->register_routes();
+
+			$external_transactions_controller = new \FairPaymentsConnector\API\ExternalTransactionsController();
+			$external_transactions_controller->register_routes();
 		}
 	}
 }

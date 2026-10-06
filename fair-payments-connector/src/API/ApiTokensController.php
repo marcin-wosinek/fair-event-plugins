@@ -2,14 +2,14 @@
 /**
  * Admin REST API controller for API tokens.
  *
- * @package FairPaymentsConnectorExperimental
+ * @package FairPaymentsConnector
  */
 
-namespace FairPaymentsConnectorExperimental\API;
+namespace FairPaymentsConnector\API;
 
 defined( 'WPINC' ) || die;
 
-use FairPaymentsConnectorExperimental\Models\ApiToken;
+use FairPaymentsConnector\Models\ApiToken;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -124,7 +124,7 @@ class ApiTokensController extends WP_REST_Controller {
 		if ( empty( $label ) ) {
 			return new WP_Error(
 				'rest_invalid_label',
-				__( 'A label is required.', 'fair-payments-connector-experimental' ),
+				__( 'A label is required.', 'fair-payments-connector' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -134,7 +134,7 @@ class ApiTokensController extends WP_REST_Controller {
 		if ( empty( $scopes ) || array_diff( $scopes, ApiToken::ALLOWED_SCOPES ) ) {
 			return new WP_Error(
 				'rest_invalid_scopes',
-				__( 'At least one valid scope is required.', 'fair-payments-connector-experimental' ),
+				__( 'At least one valid scope is required.', 'fair-payments-connector' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -144,7 +144,7 @@ class ApiTokensController extends WP_REST_Controller {
 		if ( ! $result ) {
 			return new WP_Error(
 				'rest_api_token_creation_failed',
-				__( 'Failed to create API token.', 'fair-payments-connector-experimental' ),
+				__( 'Failed to create API token.', 'fair-payments-connector' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -171,7 +171,7 @@ class ApiTokensController extends WP_REST_Controller {
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_api_token_not_found',
-				__( 'API token not found.', 'fair-payments-connector-experimental' ),
+				__( 'API token not found.', 'fair-payments-connector' ),
 				array( 'status' => 404 )
 			);
 		}

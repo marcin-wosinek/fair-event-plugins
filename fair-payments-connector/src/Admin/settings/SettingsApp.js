@@ -12,6 +12,7 @@ import ConnectionTab from './ConnectionTab';
 import CurrencyTab from './CurrencyTab.js';
 import PaymentMethodsTab from './PaymentMethodsTab.js';
 import AuditLogTab from './AuditLogTab.js';
+import ApiTokensTab from './ApiTokensTab.js';
 import { saveOAuthCallback } from './settings-api';
 
 /**
@@ -23,6 +24,13 @@ import { saveOAuthCallback } from './settings-api';
  * @return {JSX.Element} The settings app
  */
 export default function SettingsApp() {
+	// Server-derived: the tab is offered only while this plugin serves the
+	// token routes (an older Fair Payments Connector Experimental may still
+	// own them).
+	const apiTokensEnabled = Boolean(
+		window.fairPaymentsConnectorSettings?.apiTokensEnabled
+	);
+
 	const [ notice, setNotice ] = useState( null );
 	const [ currentTab, setCurrentTab ] = useState( 'connection' );
 	const [ shouldReloadConnection, setShouldReloadConnection ] =
@@ -213,6 +221,17 @@ export default function SettingsApp() {
 						name: 'audit-log',
 						title: __( 'Audit Log', 'fair-payments-connector' ),
 					},
+					...( apiTokensEnabled
+						? [
+								{
+									name: 'api-tokens',
+									title: __(
+										'API Tokens',
+										'fair-payments-connector'
+									),
+								},
+						  ]
+						: [] ),
 				] }
 				onSelect={ handleTabSelect }
 			>
@@ -231,6 +250,7 @@ export default function SettingsApp() {
 							<CurrencyTab onNotice={ setNotice } />
 						) }
 						{ tab.name === 'audit-log' && <AuditLogTab /> }
+						{ tab.name === 'api-tokens' && <ApiTokensTab /> }
 					</div>
 				) }
 			</TabPanel>
