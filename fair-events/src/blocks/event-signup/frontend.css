@@ -325,15 +325,82 @@
 	cursor: not-allowed;
 }
 
-/* Signed-up/cancel card (recognised viewer), rendered by fair-audience in
- * place of the suppressed <form>. */
-.fair-events-signed-up-card {
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	padding: 12px 16px;
+/* What a recognised viewer already holds (rendered by fair-audience), shown
+ * just before the form. Tinted and set apart so it reads as existing
+ * tickets, not as part of the purchase the form below starts. */
+.fair-events-get-tickets-existing {
+	margin-bottom: 24px;
 }
 
-.fair-events-signed-up-card .fair-events-not-you-button {
+.fair-events-get-tickets-existing[hidden],
+.fair-events-get-tickets-form[hidden] {
+	display: none;
+}
+
+.fair-events-signed-up-card {
+	border: 1px solid #c3e6cb;
+	border-radius: 4px;
+	padding: 12px 16px;
+	background: #f3faf5;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-signed-up-card .fair-events-signed-up-status {
+	margin-top: 0;
+	font-weight: 600;
+}
+
+.fair-events-signed-up-card .fair-events-signed-up-tickets {
+	margin: 0 0 12px;
+	padding-left: 1.25em;
+}
+
+.fair-events-signed-up-card .fair-events-signed-up-tickets ul {
+	margin: 4px 0 8px;
+	padding-left: 1.25em;
+	font-size: 0.9em;
+}
+
+/* Heading of the new purchase: who it is for, and the ways to buy as
+ * someone else. */
+.fair-events-buy-another {
+	margin: 0 0 16px;
+	padding-top: 16px;
+	border-top: 1px solid #ccc;
+}
+
+.fair-events-buy-another-heading {
+	margin: 0 0 4px;
+	font-size: 1.25em;
+}
+
+.fair-events-buy-another-identity {
+	margin: 0;
+	color: #50575e;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-get-tickets-return {
+	margin: 12px 0 0;
+}
+
+.fair-events-get-tickets-callback-purchase {
+	display: inline-block;
+	margin: 4px 0;
+	text-align: left;
+}
+
+.fair-events-get-tickets-callback-purchase-label {
+	margin: 0 0 4px;
+	font-weight: 600;
+}
+
+.fair-events-get-tickets-callback-purchase-tickets {
+	margin: 0;
+	padding-left: 1.25em;
+}
+
+.fair-events-get-tickets .fair-events-not-you-button {
 	display: block;
 	margin-top: 12px;
 	padding: 0;
@@ -345,7 +412,7 @@
 	cursor: pointer;
 }
 
-.fair-events-signed-up-card .fair-events-not-you-button:disabled {
+.fair-events-get-tickets .fair-events-not-you-button:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
 }

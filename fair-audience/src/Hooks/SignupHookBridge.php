@@ -46,8 +46,11 @@ class SignupHookBridge {
 	 */
 	public static function init() {
 		add_filter( 'fair_events_signup_viewer_context', array( static::class, 'enrich_render_context' ), 10, 1 );
+		add_action( 'fair_events_signup_render_existing_signup', array( static::class, 'render_existing_signup' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_signed_up_card' ), 10, 1 );
+		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_buy_another' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_not_you' ), 10, 1 );
+		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_identity_actions' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_resume_marker' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
 		add_filter( 'fair_events_signup_deferred_response', array( static::class, 'defer_recognised_email' ), 10, 3 );
@@ -290,8 +293,10 @@ class SignupHookBridge {
 		// this runs unconditionally.
 		$context = SignupActivities::enrich_render_context( $context, $participant_id );
 
-		$context['suppress_form'] = false;
-		$context['is_signed_up']  = false;
+		$context['suppress_form']        = false;
+		$context['is_signed_up']         = false;
+		$context['held_tickets']         = array();
+		$context['signup_ticket_backed'] = false;
 
 		if ( $participant_id && ! empty( $context['event_date_id'] ) && class_exists( \FairEvents\Models\EventDates::class ) ) {
 			$event_date_id                = (int) $context['event_date_id'];
@@ -324,17 +329,31 @@ class SignupHookBridge {
 				}
 			}
 
-			if ( ! $is_signed_up && $series_pass && $event_date_row && $event_date_row->start_datetime
-				&& strtotime( $event_date_row->start_datetime ) >= strtotime( $series_pass->created_at )
-			) {
+			$pass_covers_date = $series_pass && $event_date_row && $event_date_row->start_datetime
+				&& strtotime( $event_date_row->start_datetime ) >= strtotime( $series_pass->created_at );
+			if ( $pass_covers_date ) {
 				$is_signed_up = true;
 			}
 
 			$context['is_signed_up'] = $is_signed_up;
 
 			if ( $is_signed_up ) {
-				$context['suppress_form']          = true;
+				// The form stays: a signed-up participant can buy another
+				// ticket for themselves. What they already hold is rendered
+				// beside it (render_existing_signup()). Only a fair-events
+				// without that slot still gets the card in place of the form.
+				$context['suppress_form']          = empty( $context['existing_signup_slot'] );
 				$context['signed_up_ticket_label'] = '';
+
+				// The tickets themselves say what the participant holds; the
+				// relationship is one per date however many purchases there
+				// are, so its ticket type and activities may describe an
+				// earlier one. It is the fallback for admissions without
+				// ticket units only.
+				$context['held_tickets'] = TicketActivities::held_ticket_summaries( $event_date_id, $participant_id, $pass_covers_date ? $master_id_for_pass : null );
+
+				$context['signup_ticket_backed'] = TicketActivities::backs_admission( $event_date_id, $participant_id )
+					|| ( $pass_covers_date && TicketActivities::backs_admission( $master_id_for_pass, $participant_id ) );
 
 				$relationship_for_label = ( $existing && 'signed_up' === $existing->label ) ? $existing : $series_pass;
 				if ( $relationship_for_label && $relationship_for_label->ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
@@ -363,8 +382,23 @@ class SignupHookBridge {
 	}
 
 	/**
-	 * Render the signed-up/cancel card for a recognised viewer who already
-	 * holds this signup — shown in place of the suppressed <form> (see
+	 * Render what a recognised viewer already holds for this date — their
+	 * tickets, then the activities they can add to them — beside the signup
+	 * form, which stays available for another purchase. Hooked on
+	 * fair_events_signup_render_existing_signup.
+	 *
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
+	 * @return void
+	 */
+	public static function render_existing_signup( $context ) {
+		self::output_signed_up_card( $context );
+		self::output_add_activities( $context );
+	}
+
+	/**
+	 * Render the signed-up card in place of the suppressed <form>, for a
+	 * fair-events that has no slot of its own for it (see
 	 * enrich_render_context()'s suppress_form). Hooked on
 	 * fair_events_signup_render_before_form.
 	 *
@@ -373,6 +407,24 @@ class SignupHookBridge {
 	 * @return void
 	 */
 	public static function render_signed_up_card( $context ) {
+		if ( ! empty( $context['existing_signup_slot'] ) ) {
+			return;
+		}
+
+		self::output_signed_up_card( $context );
+	}
+
+	/**
+	 * Output the card listing the tickets a recognised viewer holds for this
+	 * date. The broad "Cancel signup" action is offered only for an
+	 * admission without tickets: with tickets it would remove the one
+	 * relationship every purchase shares.
+	 *
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
+	 * @return void
+	 */
+	private static function output_signed_up_card( $context ) {
 		if ( empty( $context['is_signed_up'] ) ) {
 			return;
 		}
@@ -408,23 +460,41 @@ class SignupHookBridge {
 
 		echo '<p class="fair-events-signed-up-status">' . esc_html__( 'You are signed up for this date.', 'fair-audience' ) . '</p>';
 
-		$ticket_label = $context['signed_up_ticket_label'] ?? '';
-		if ( '' !== $ticket_label ) {
-			echo '<p class="fair-events-signed-up-ticket">';
-			printf(
-				/* translators: %s: ticket type name */
-				esc_html__( 'Your ticket: %s', 'fair-audience' ),
-				'<strong>' . esc_html( $ticket_label ) . '</strong>' // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pre-escaped substitution.
-			);
-			echo '</p>';
-		}
-
-		if ( ! empty( $context['current_activity_names'] ) ) {
-			echo '<div class="fair-events-signed-up-activities"><p>' . esc_html__( 'Your activities:', 'fair-audience' ) . '</p><ul>';
-			foreach ( $context['current_activity_names'] as $activity_name ) {
-				echo '<li>' . esc_html( $activity_name ) . '</li>';
+		$held_tickets = $context['held_tickets'] ?? array();
+		if ( $held_tickets ) {
+			echo '<p class="fair-events-signed-up-tickets-label">' . esc_html__( 'Your tickets:', 'fair-audience' ) . '</p>';
+			echo '<ul class="fair-events-signed-up-tickets">';
+			foreach ( $held_tickets as $held_ticket ) {
+				echo '<li><strong>' . esc_html( $held_ticket['label'] ) . '</strong>';
+				if ( ! empty( $held_ticket['activities'] ) ) {
+					echo '<ul>';
+					foreach ( $held_ticket['activities'] as $activity_name ) {
+						echo '<li>' . esc_html( $activity_name ) . '</li>';
+					}
+					echo '</ul>';
+				}
+				echo '</li>';
 			}
-			echo '</ul></div>';
+			echo '</ul>';
+		} else {
+			$ticket_label = $context['signed_up_ticket_label'] ?? '';
+			if ( '' !== $ticket_label ) {
+				echo '<p class="fair-events-signed-up-ticket">';
+				printf(
+					/* translators: %s: ticket type name */
+					esc_html__( 'Your ticket: %s', 'fair-audience' ),
+					'<strong>' . esc_html( $ticket_label ) . '</strong>' // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pre-escaped substitution.
+				);
+				echo '</p>';
+			}
+
+			if ( ! empty( $context['current_activity_names'] ) ) {
+				echo '<div class="fair-events-signed-up-activities"><p>' . esc_html__( 'Your activities:', 'fair-audience' ) . '</p><ul>';
+				foreach ( $context['current_activity_names'] as $activity_name ) {
+					echo '<li>' . esc_html( $activity_name ) . '</li>';
+				}
+				echo '</ul></div>';
+			}
 		}
 
 		// Resolve destinations from each occurrence model rather than the
@@ -456,7 +526,7 @@ class SignupHookBridge {
 			if ( count( $options ) > 1 ) {
 				$select_id = 'fair-events-signed-up-occurrence-' . $event_date_id;
 				echo '<div class="form-row fair-events-signed-up-occurrence-picker">';
-				echo '<label for="' . esc_attr( $select_id ) . '" class="form-label">' . esc_html__( 'Choose a date', 'fair-audience' ) . '</label>';
+				echo '<label for="' . esc_attr( $select_id ) . '" class="form-label">' . esc_html__( 'View another date', 'fair-audience' ) . '</label>';
 				echo '<select id="' . esc_attr( $select_id ) . '" class="form-input fair-events-occurrence-select fair-events-signed-up-occurrence-select">';
 				foreach ( $options as $option ) {
 					echo '<option value="' . esc_attr( (string) $option['id'] ) . '" data-event-url="' . esc_url( $option['url'] ) . '"' . ( $option['selected'] ? ' selected' : '' ) . '>' . esc_html( $option['label'] ) . '</option>';
@@ -465,19 +535,91 @@ class SignupHookBridge {
 			}
 		}
 
-		echo '<div class="wp-block-button">';
-		echo '<button type="button" class="wp-block-button__link wp-element-button fair-events-cancel-signup-button">';
-		echo esc_html__( 'Cancel signup', 'fair-audience' );
-		echo '</button>';
-		echo '</div>';
+		if ( empty( $context['signup_ticket_backed'] ) ) {
+			echo '<div class="wp-block-button">';
+			echo '<button type="button" class="wp-block-button__link wp-element-button fair-events-cancel-signup-button">';
+			echo esc_html__( 'Cancel signup', 'fair-audience' );
+			echo '</button>';
+			echo '</div>';
+		}
 
-		if ( 'audience_session' === ( $context['viewer_identity_source'] ?? null ) ) {
+		// Beside the form, render_not_you() offers this with the new
+		// purchase's identity instead.
+		if ( ! empty( $context['suppress_form'] ) && 'audience_session' === ( $context['viewer_identity_source'] ?? null ) ) {
 			echo '<button type="button" class="fair-events-not-you-button">'
 				. esc_html__( 'Not you? Start fresh', 'fair-audience' )
 				. '</button>';
 		}
 
 		echo '</div>';
+	}
+
+	/**
+	 * Head the form of a recognised viewer who already holds a ticket: the
+	 * purchase it starts is another ticket for the same participant, named
+	 * here so it is not taken for registering someone else. Hooked on
+	 * fair_events_signup_render_before_form.
+	 *
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
+	 * @return void
+	 */
+	public static function render_buy_another( $context ) {
+		if ( empty( $context['is_signed_up'] ) || ! empty( $context['suppress_form'] ) ) {
+			return;
+		}
+
+		$name  = trim( (string) ( $context['prefill_name'] ?? '' ) );
+		$email = trim( (string) ( $context['prefill_email'] ?? '' ) );
+
+		echo '<div class="fair-events-buy-another">';
+		echo '<h3 class="fair-events-buy-another-heading">' . esc_html__( 'Buy another ticket for yourself', 'fair-audience' ) . '</h3>';
+
+		if ( '' !== $name && '' !== $email ) {
+			echo '<p class="fair-events-buy-another-identity">';
+			printf(
+				/* translators: 1: participant name, 2: participant email address */
+				esc_html__( 'You are buying as %1$s (%2$s).', 'fair-audience' ),
+				'<strong>' . esc_html( $name ) . '</strong>', // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pre-escaped substitution.
+				esc_html( $email )
+			);
+			echo '</p>';
+		} elseif ( '' !== $name || '' !== $email ) {
+			echo '<p class="fair-events-buy-another-identity">';
+			printf(
+				/* translators: %s: participant name or email address */
+				esc_html__( 'You are buying as %s.', 'fair-audience' ),
+				'<strong>' . esc_html( '' !== $name ? $name : $email ) . '</strong>' // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pre-escaped substitution.
+			);
+			echo '</p>';
+		}
+
+		echo '</div>';
+	}
+
+	/**
+	 * Fire the slot for further identity actions of a recognised viewer's
+	 * form, after "Not you? Start fresh" — where registering another person
+	 * (#1528) belongs, as an action of its own beside buying another ticket
+	 * for oneself and resetting the identity. Hooked on
+	 * fair_events_signup_render_before_form.
+	 *
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
+	 * @return void
+	 */
+	public static function render_identity_actions( $context ) {
+		if ( ! empty( $context['suppress_form'] ) || empty( $context['viewer_resolved'] ) ) {
+			return;
+		}
+
+		/**
+		 * Fires inside a recognised viewer's signup form, after the identity
+		 * reset action.
+		 *
+		 * @param array $context Viewer context, see fair_events_signup_viewer_context.
+		 */
+		do_action( 'fair_audience_signup_identity_actions', $context );
 	}
 
 	/**
@@ -633,6 +775,23 @@ class SignupHookBridge {
 	 * @return void
 	 */
 	public static function render_add_activities( $context ) {
+		// With a slot for what the viewer already holds, the section is
+		// rendered there (render_existing_signup()), outside the form.
+		if ( ! empty( $context['existing_signup_slot'] ) ) {
+			return;
+		}
+
+		self::output_add_activities( $context );
+	}
+
+	/**
+	 * Output the "add activities" section.
+	 *
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
+	 * @return void
+	 */
+	private static function output_add_activities( $context ) {
 		$addable_options = $context['addable_options'] ?? array();
 		if ( empty( $addable_options ) ) {
 			return;
@@ -660,7 +819,8 @@ class SignupHookBridge {
 		echo '<fieldset>';
 		echo '<legend>' . esc_html__( 'Add activities', 'fair-audience' ) . '</legend>';
 
-		if ( ! empty( $context['current_activity_names'] ) ) {
+		// The card above already lists each held ticket with its activities.
+		if ( empty( $context['held_tickets'] ) && ! empty( $context['current_activity_names'] ) ) {
 			echo '<p>' . esc_html__( 'Your activities:', 'fair-audience' ) . '</p><ul>';
 			foreach ( $context['current_activity_names'] as $activity_name ) {
 				echo '<li>' . esc_html( $activity_name ) . '</li>';
@@ -945,9 +1105,21 @@ class SignupHookBridge {
 		AudienceSession::set( (int) $participant->id );
 
 		if ( ! $transaction_id ) {
+			// This purchase's own ticket type and activities: the relationship
+			// may already describe an earlier purchase for the same date.
+			$activity_names = array();
+			if ( class_exists( \FairEvents\Models\TicketOption::class ) ) {
+				foreach ( (array) ( $ticket_selection['ticket_option_ids'] ?? array() ) as $option_id ) {
+					$option = \FairEvents\Models\TicketOption::get_by_id( (int) $option_id );
+					if ( $option && '' !== (string) $option->name ) {
+						$activity_names[] = (string) $option->name;
+					}
+				}
+			}
+
 			$email_service = new EmailService();
 			$event         = get_post( $event_id );
-			$email_service->send_signup_payment_confirmation( $participant, $event, null, array(), (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
+			$email_service->send_signup_payment_confirmation( $participant, $event, null, array_values( array_unique( $activity_names ) ), (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
 		}
 	}
 

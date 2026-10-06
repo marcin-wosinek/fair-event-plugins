@@ -1590,6 +1590,11 @@ class GetTicketsController extends WP_REST_Controller {
 				'prefill_name'             => '',
 				'prefill_email'            => '',
 				'suppress_form'            => false,
+				// Tells a companion plugin that what the viewer already holds
+				// is rendered in its own slot beside the form (the response's
+				// existing_signup_html). Without it — an older fair-events —
+				// the companion keeps replacing the form with that card.
+				'existing_signup_slot'     => true,
 				'viewer_resolved'          => false,
 				'participant_token'        => (string) $request->get_param( 'participant_token' ),
 				'token_identity_validated' => false,
@@ -1612,6 +1617,7 @@ class GetTicketsController extends WP_REST_Controller {
 			'suppress_form'                => $suppress_form,
 			'ticket_type_fieldset_html'    => null,
 			'ticket_options_fieldset_html' => null,
+			'existing_signup_html'         => null,
 			'before_form_html'             => null,
 			'before_submit_html'           => null,
 			'after_form_html'              => null,
@@ -1656,6 +1662,13 @@ class GetTicketsController extends WP_REST_Controller {
 			do_action( 'fair_events_signup_render_before_submit', $context );
 			$response['before_submit_html'] = ob_get_clean();
 		}
+
+		// What the viewer already holds for this date, shown beside the form
+		// rather than inside it, so it is never mistaken for — or submitted
+		// with — a new purchase.
+		ob_start();
+		do_action( 'fair_events_signup_render_existing_signup', $context );
+		$response['existing_signup_html'] = ob_get_clean();
 
 		// Fired regardless of suppress_form — inside the <form> when not
 		// suppressed, inside the client-swapped companion wrapper otherwise,

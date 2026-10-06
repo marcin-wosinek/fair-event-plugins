@@ -213,8 +213,9 @@ if ( $series_master_id && class_exists( \FairEvents\Models\EventDates::class ) )
 			'all_day'        => (bool) $occ->all_day,
 			// A companion plugin (fair-audience) flips this true for
 			// occurrences the recognised viewer already holds, so the
-			// pickers below can label/disable them instead of allowing a
-			// silent double-book.
+			// pickers below can label them. They stay selectable: buying
+			// another ticket for a date already held is a purchase of its
+			// own.
 			'signed_up'      => false,
 		);
 	}
@@ -321,6 +322,9 @@ $context = apply_filters(
 		// emits a plain wrapper div instead, still firing the render slots
 		// inside it so the companion can render its own signed-up/cancel UI.
 		'suppress_form'          => false,
+		// What the viewer already holds is rendered in its own slot beside
+		// the form (fair_events_signup_render_existing_signup below).
+		'existing_signup_slot'   => true,
 	),
 	$attributes,
 	$block
@@ -458,8 +462,16 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 				);
 				?>
 			</p>
+			<?php
+			// Only this purchase's tickets: the buyer may hold others for
+			// the same date from earlier purchases.
+			echo \FairEvents\Services\SignupFieldsetRenderer::purchase_summary( $signup_state['tickets'] ?? array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fully escaped inside the renderer.
+			?>
 			<p class="fair-events-get-tickets-callback-email">
 				<?php esc_html_e( 'A confirmation email is on its way. You can close this page.', 'fair-events' ); ?>
+			</p>
+			<p class="fair-events-get-tickets-callback-return">
+				<a href="<?php echo esc_url( remove_query_arg( array( 'fair_payment_callback', 'transaction_id', 'token' ) ) ); ?>"><?php esc_html_e( 'Back to the signup form', 'fair-events' ); ?></a>
 			</p>
 		</div>
 	<?php elseif ( 'processing' === $signup_state['state'] ) : ?>
@@ -669,7 +681,6 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 							id="<?php echo esc_attr( $checkbox_id ); ?>"
 							value="<?php echo (int) $occ_row['id']; ?>"
 							class="form-checkbox"
-							<?php echo $occ_signed_up ? 'disabled' : ''; ?>
 						/>
 						<?php echo esc_html( $occ_label ); ?>
 					</label>

@@ -66,6 +66,16 @@ describe( 'createCheckoutKeyStore', () => {
 		store.reset();
 		expect( store.keyFor( purchase ) ).toBe( 'key-2' );
 	} );
+	it( 'gives a deliberate repeat of the same purchase its own key, kept while it is retried', () => {
+		const store = createCheckoutKeyStore( sequence() );
+
+		expect( store.keyFor( purchase ) ).toBe( 'key-1' );
+		// The first purchase completed; the same participant buys the same
+		// ticket again.
+		store.reset();
+		expect( store.keyFor( { ...purchase } ) ).toBe( 'key-2' );
+		expect( store.keyFor( { ...purchase } ) ).toBe( 'key-2' );
+	} );
 } );
 
 describe( 'purchaseSignature', () => {

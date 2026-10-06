@@ -1465,3 +1465,299 @@ describe( 'Event Signup frontend.js — resuming from an emailed link (#1701)', 
 		expect( form.style.display ).not.toBe( 'none' );
 	} );
 } );
+
+describe( 'Event Signup frontend.js — buying another ticket (#1526)', () => {
+	const CARD =
+		'<div class="fair-events-signed-up-card" data-event-id="5" data-event-date-id="42" data-cancel-route="/fair-audience/v1/event-signup">' +
+		'<p class="fair-events-signed-up-status">You are signed up for this date.</p>' +
+		'<ul class="fair-events-signed-up-tickets"><li>Ticket 1 — General<ul><li>Workshop</li></ul></li></ul>' +
+		'</div>' +
+		'<div class="fair-events-add-activities" data-event-id="5" data-event-date-id="42">' +
+		'<select name="add_ticket_id" required><option value="">Choose a ticket</option></select>' +
+		'<input type="checkbox" name="add_option_ids[]" value="9" />' +
+		'<button type="button" class="fair-events-add-activities-button">Add activities</button>' +
+		'</div>';
+	const HEADING =
+		'<div class="fair-events-buy-another"><h3>Buy another ticket for yourself</h3></div>' +
+		'<button type="button" class="fair-events-not-you-button">Not you? Start fresh</button>';
+
+	function signedUpResponse( overrides = {} ) {
+		return {
+			...noopResponse(),
+			viewer_resolved: true,
+			existing_signup_html: CARD,
+			before_form_html: HEADING,
+			prefill_name: 'Ada Lovelace',
+			prefill_email: 'ada@example.test',
+			...overrides,
+		};
+	}
+
+	const settle = () => new Promise( ( resolve ) => setTimeout( resolve ) );
+	const submit = ( form ) =>
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+	const sentKey = ( call ) =>
+		initiatePayment.mock.calls[ call ][ 0 ].data.idempotency_key;
+
+	async function hydrate( response = signedUpResponse() ) {
+		const block = buildBlock();
+		apiFetch.mockResolvedValue( response );
+		initialize();
+		await settle();
+		return block;
+	}
+
+	test( 'keeps the existing tickets before the form and the form available', async () => {
+		const block = await hydrate();
+		const form = block.querySelector( '.fair-events-get-tickets-form' );
+		const existing = block.querySelector(
+			'.fair-events-get-tickets-existing'
+		);
+
+		expect( form ).not.toBeNull();
+		expect(
+			block.querySelector( '.fair-events-get-tickets-companion' )
+		).toBeNull();
+		expect( existing.nextElementSibling ).toBe( form );
+		expect(
+			existing.querySelector( '.fair-events-signed-up-card' )
+		).not.toBeNull();
+		// Nothing the viewer already holds is part of the new purchase's form.
+		expect(
+			form.querySelector( '.fair-events-signed-up-card' )
+		).toBeNull();
+		expect(
+			form.querySelector( '.fair-events-add-activities' )
+		).toBeNull();
+		expect( form.firstElementChild.textContent ).toContain(
+			'Buy another ticket for yourself'
+		);
+		expect( form.querySelector( 'button[type="submit"]' ).disabled ).toBe(
+			false
+		);
+	} );
+
+	test( 'retains the recognised identity and wires the identity reset inside the form', async () => {
+		const block = await hydrate();
+		const form = block.querySelector( '.fair-events-get-tickets-form' );
+
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ada Lovelace'
+		);
+		expect( form.querySelector( 'input[name="email"]' ).value ).toBe(
+			'ada@example.test'
+		);
+		expect( wireNotYouButton ).toHaveBeenCalledWith(
+			form.querySelector( '.fair-events-not-you-button' )
+		);
+	} );
+
+	test( 'submits the new purchase without the existing tickets’ controls', async () => {
+		const block = await hydrate();
+		const form = block.querySelector( '.fair-events-get-tickets-form' );
+
+		// The add-activities section's own required ticket choice is empty;
+		// it belongs to the tickets already held and must not block or join
+		// the new purchase.
+		submit( form );
+		await settle();
+
+		expect( initiatePayment ).toHaveBeenCalledTimes( 1 );
+		const { data } = initiatePayment.mock.calls[ 0 ][ 0 ];
+		expect( data.name ).toBe( 'Ada Lovelace' );
+		expect( data.ticket_type_id ).toBe( 1 );
+		expect( data ).not.toHaveProperty( 'add_option_ids' );
+	} );
+
+	test( 'labels an already-held occurrence and leaves it selectable', async () => {
+		const block = buildBlock();
+		const form = block.querySelector( '.fair-events-get-tickets-form' );
+		form.insertAdjacentHTML(
+			'afterbegin',
+			'<div class="fair-events-instance-picker"><label><input type="checkbox" name="event_date_ids[]" value="99" /> Sat, 1 Jan</label><p class="fair-events-instance-picker-hint"></p></div>'
+		);
+		apiFetch.mockResolvedValue(
+			signedUpResponse( { occurrences_signed_up: [ 99 ] } )
+		);
+		initialize();
+		await settle();
+
+		const checkbox = form.querySelector( 'input[name="event_date_ids[]"]' );
+		expect( checkbox.disabled ).toBe( false );
+		expect( checkbox.closest( 'label' ).textContent ).toContain(
+			'already signed up'
+		);
+	} );
+
+	test( 'a completed purchase gives way to a return to the signup form', async () => {
+		const block = await hydrate();
+		const form = block.querySelector( '.fair-events-get-tickets-form' );
+		initiatePayment.mockResolvedValueOnce( { status: 'confirmed' } );
+
+		submit( form );
+		await settle();
+
+		expect( form.hidden ).toBe( true );
+		expect(
+			block.querySelector( '.fair-events-get-tickets-existing' ).hidden
+		).toBe( true );
+		const link = block.querySelector( '.fair-events-get-tickets-return a' );
+		expect( link.textContent ).toBe( 'Back to the signup form' );
+		expect( link.getAttribute( 'href' ) ).toBe(
+			window.location.href.split( '#' )[ 0 ]
+		);
+
+		// The finished purchase cannot be sent again from this page.
+		submit( form );
+		expect( initiatePayment ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'an in-flight retry keeps its key; the next purchase takes a new one', async () => {
+		const block = await hydrate();
+		const form = block.querySelector( '.fair-events-get-tickets-form' );
+		initiatePayment.mockImplementationOnce( ( { onError } ) => {
+			const error = { code: 'fetch_error' };
+			onError( 'Failed', error );
+			return Promise.reject( error );
+		} );
+
+		submit( form );
+		await settle();
+		document.querySelector( '.message-container' ).className =
+			'fair-events-get-tickets-message fair-events-get-tickets-message-error';
+		submit( form );
+		await settle();
+
+		expect( initiatePayment ).toHaveBeenCalledTimes( 2 );
+		expect( sentKey( 1 ) ).toBe( sentKey( 0 ) );
+
+		// That purchase completed. The page the visitor returns to builds a
+		// form of its own, and the same selection there is another purchase.
+		const nextBlock = await hydrate();
+		submit( nextBlock.querySelector( '.fair-events-get-tickets-form' ) );
+		await settle();
+
+		expect( initiatePayment ).toHaveBeenCalledTimes( 3 );
+		expect( sentKey( 2 ) ).not.toBe( sentKey( 0 ) );
+	} );
+
+	test( 'a late or repeated viewer context never rebuilds a purchase in progress', async () => {
+		jest.useFakeTimers();
+		try {
+			const block = buildBlock();
+			const form = block.querySelector( '.fair-events-get-tickets-form' );
+			let respond;
+			apiFetch.mockReturnValue(
+				new Promise( ( resolve ) => {
+					respond = resolve;
+				} )
+			);
+			let finish;
+			initiatePayment.mockImplementationOnce(
+				() =>
+					new Promise( ( resolve ) => {
+						finish = resolve;
+					} )
+			);
+			initialize();
+
+			// The wait for the viewer context is bounded; the visitor submits
+			// once the form is released.
+			jest.advanceTimersByTime( 3000 );
+			form.querySelector( 'input[name="name"]' ).value = 'Ada';
+			form.querySelector( 'input[name="email"]' ).value =
+				'ada@example.test';
+			submit( form );
+			expect( initiatePayment ).toHaveBeenCalledTimes( 1 );
+
+			respond(
+				signedUpResponse( {
+					prefill_name: 'Someone Else',
+					ticket_type_fieldset_html:
+						'<div class="form-row"><fieldset class="fair-events-ticket-fieldset"><input type="radio" name="ticket_type_id" value="2" checked /></fieldset></div>',
+				} )
+			);
+			await Promise.resolve();
+			await Promise.resolve();
+
+			expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+				'Ada'
+			);
+			expect(
+				form.querySelector( 'input[name="ticket_type_id"]' ).value
+			).toBe( '1' );
+			expect(
+				block.querySelector( '.fair-events-get-tickets-existing' )
+			).toBeNull();
+
+			finish( {} );
+		} finally {
+			jest.useRealTimers();
+		}
+	} );
+
+	test( 'attaches the existing tickets’ actions once', async () => {
+		// An admission without tickets still offers the broad cancellation.
+		const block = await hydrate(
+			signedUpResponse( {
+				existing_signup_html: CARD.replace(
+					'</ul></div>',
+					'</ul><button type="button" class="fair-events-cancel-signup-button">Cancel signup</button></div>'
+				),
+			} )
+		);
+
+		// A second pass over the page (another script reaching the same
+		// DOM-ready entry) must not double the listeners.
+		initialize();
+		await settle();
+		apiFetch.mockClear();
+		apiFetch.mockResolvedValue( {} );
+
+		block.querySelector( '.fair-events-cancel-signup-button' ).click();
+		const deletions = apiFetch.mock.calls.filter(
+			( [ options ] ) => options.method === 'DELETE'
+		);
+		expect( deletions ).toHaveLength( 1 );
+
+		// The form's own submit handler is not doubled either.
+		submit( block.querySelector( '.fair-events-get-tickets-form' ) );
+		await settle();
+		expect( initiatePayment ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'the paid confirmation lists only this purchase and links back to the form', async () => {
+		document.body.innerHTML = `
+			<div class="fair-events-get-tickets-callback fair-events-get-tickets-callback-processing" data-transaction-id="77" data-token="owner-token">
+				<p class="fair-events-get-tickets-callback-status">Checking</p>
+				<div class="fair-events-get-tickets-callback-status-retry" style="display:none"><button class="fair-events-get-tickets-callback-status-retry-button">Check payment status again</button></div>
+				<a href="#" class="fair-events-get-tickets-callback-cancel-link">Cancel and start over</a>
+				<div class="fair-events-get-tickets-callback-message"></div>
+			</div>`;
+		initialize();
+		const card = document.querySelector(
+			'.fair-events-get-tickets-callback'
+		);
+
+		pollPaymentStatus.mock.calls[ 0 ][ 0 ].onConfirmed( {
+			state: 'confirmed',
+			amount: 12,
+			currency: 'EUR',
+			tickets: [
+				{ ticket_type: 'Supporter', activities: [ 'Evening social' ] },
+			],
+		} );
+
+		const purchase = card.querySelector(
+			'.fair-events-get-tickets-callback-purchase'
+		);
+		expect( purchase.textContent ).toContain( 'Supporter' );
+		expect( purchase.textContent ).toContain( 'Evening social' );
+		expect(
+			card.querySelector( '.fair-events-get-tickets-callback-return a' )
+				.textContent
+		).toBe( 'Back to the signup form' );
+	} );
+} );

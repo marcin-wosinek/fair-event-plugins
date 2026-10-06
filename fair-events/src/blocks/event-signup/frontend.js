@@ -39,6 +39,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	// with the selection minimums, decide whether the form can be submitted.
 	// renderFormState() is the only place that turns it into DOM.
 	const formStates = new WeakMap();
+	// Elements whose listeners are attached. Hydration and form setup both
+	// reach the same sections, and a second listener would submit twice.
+	const wiredElements = new WeakSet();
 
 	onDomReady( initialize );
 
@@ -101,7 +104,17 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 		const form = block.querySelector( '.fair-events-get-tickets-form' );
 		if ( form ) {
-			getFormState( form ).viewerContextLoading = true;
+			const state = getFormState( form );
+			// Already personalized, or a purchase is under way: nothing to
+			// fetch, and nothing that may take the form away again.
+			if (
+				state.viewerContextApplied ||
+				state.processing ||
+				state.completed
+			) {
+				return;
+			}
+			state.viewerContextLoading = true;
 			renderFormState( form );
 		}
 
@@ -158,6 +171,20 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		if ( ! response || ! response.viewer_resolved ) {
 			return;
 		}
+		if ( form ) {
+			// A response arriving after the visitor already submitted (the
+			// wait for it is bounded), or a second one, must not rebuild the
+			// selection of a purchase in progress.
+			const state = getFormState( form );
+			if (
+				state.processing ||
+				state.completed ||
+				state.viewerContextApplied
+			) {
+				return;
+			}
+			state.viewerContextApplied = true;
+		}
 		if ( response.token_identity_validated ) {
 			form?.setAttribute(
 				'data-participant-token',
@@ -175,6 +202,8 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		if ( ! form ) {
 			return;
 		}
+
+		placeExistingSignup( block, form, response.existing_signup_html );
 
 		if ( response.ticket_type_fieldset_html ) {
 			replaceFieldset(
@@ -211,10 +240,34 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		wireNotYouButton( form.querySelector( '.fair-events-not-you-button' ) );
 		wireAddActivities( block );
 		wireCancelSignup( block );
+		wireSignedUpOccurrenceSelector( block );
 
 		refreshSignupState( form );
 
 		resumeStashedSignup( form );
+	}
+
+	/**
+	 * Show what the viewer already holds for this date just before the form,
+	 * outside it: the tickets they have stay apart from the purchase the
+	 * form starts, and none of their controls is submitted with it.
+	 * @param {HTMLElement}     block The .fair-events-get-tickets wrapper.
+	 * @param {HTMLFormElement} form  The get-tickets form.
+	 * @param {string|null}     html  Fragment HTML, or null/empty for nothing to show.
+	 */
+	function placeExistingSignup( block, form, html ) {
+		if ( ! html || ! html.trim() ) {
+			return;
+		}
+		let existing = block.querySelector(
+			'.fair-events-get-tickets-existing'
+		);
+		if ( ! existing ) {
+			existing = document.createElement( 'div' );
+			existing.className = 'fair-events-get-tickets-existing';
+			form.parentNode.insertBefore( existing, form );
+		}
+		existing.innerHTML = html;
 	}
 
 	/**
@@ -370,9 +423,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	}
 
 	/**
-	 * Label (and disable, for the checkbox picker) occurrences the viewer
-	 * already holds a signup for, mirroring the server-rendered "already
-	 * signed up" treatment the baseline render can no longer bake in.
+	 * Label occurrences the viewer already holds a signup for, mirroring the
+	 * server-rendered "already signed up" treatment the baseline render can
+	 * no longer bake in. They stay selectable: another ticket for a date
+	 * already held is a purchase of its own.
 	 * @param {HTMLFormElement} form          The get-tickets form.
 	 * @param {number[]}        signedUpIds   event_date_ids the viewer already holds.
 	 */
@@ -402,8 +456,6 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				if ( ! idSet.has( parseInt( checkbox.value, 10 ) ) ) {
 					return;
 				}
-				checkbox.checked = false;
-				checkbox.disabled = true;
 				const label = checkbox.closest( 'label' );
 				if ( label && label.textContent.indexOf( suffix ) === -1 ) {
 					label.append( suffix );
@@ -485,6 +537,12 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			'data-event-date-id',
 			block.dataset.eventDateId || ''
 		);
+		if ( response.existing_signup_html ) {
+			companion.insertAdjacentHTML(
+				'beforeend',
+				response.existing_signup_html
+			);
+		}
 		if ( response.before_form_html ) {
 			companion.insertAdjacentHTML(
 				'beforeend',
@@ -517,10 +575,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const select = block
 			? block.querySelector( '.fair-events-signed-up-occurrence-select' )
 			: null;
-		if ( ! select || select.dataset.navigationWired === 'true' ) {
+		if ( ! select || wiredElements.has( select ) ) {
 			return;
 		}
-		select.dataset.navigationWired = 'true';
+		wiredElements.add( select );
 		select.addEventListener( 'change', function () {
 			const option = select.options[ select.selectedIndex ];
 			const destination = option ? option.dataset.eventUrl : '';
@@ -658,6 +716,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			container.appendChild( amountEl );
 		}
 
+		const purchase = buildPurchaseSummary( response.tickets );
+		if ( purchase ) {
+			container.appendChild( purchase );
+		}
+
 		const emailEl = document.createElement( 'p' );
 		emailEl.className = 'fair-events-get-tickets-callback-email';
 		emailEl.textContent = __(
@@ -665,6 +728,72 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			'fair-events'
 		);
 		container.appendChild( emailEl );
+
+		const returnEl = document.createElement( 'p' );
+		returnEl.className = 'fair-events-get-tickets-callback-return';
+		const returnLink = document.createElement( 'a' );
+		returnLink.href = signupFormUrl();
+		returnLink.textContent = __( 'Back to the signup form', 'fair-events' );
+		returnEl.appendChild( returnLink );
+		container.appendChild( returnEl );
+	}
+
+	/**
+	 * The page's own address without the return-from-payment parameters and
+	 * without a fragment, so following it loads the signup form afresh: the
+	 * tickets now held, and a form ready for another purchase.
+	 * @return {string} URL.
+	 */
+	function signupFormUrl() {
+		const url = new URL( window.location.href );
+		url.searchParams.delete( 'fair_payment_callback' );
+		url.searchParams.delete( 'transaction_id' );
+		url.searchParams.delete( 'token' );
+		url.hash = '';
+		return url.toString();
+	}
+
+	/**
+	 * List the tickets of one purchase — each ticket's type and the
+	 * activities chosen for it — matching the markup
+	 * FairEvents\Services\SignupFieldsetRenderer::purchase_summary() renders.
+	 * @param {Array|undefined} tickets Entries of { ticket_type, activities }.
+	 * @return {HTMLElement|null} The summary, or null without tickets.
+	 */
+	function buildPurchaseSummary( tickets ) {
+		if ( ! Array.isArray( tickets ) || tickets.length === 0 ) {
+			return null;
+		}
+		const wrapper = document.createElement( 'div' );
+		wrapper.className = 'fair-events-get-tickets-callback-purchase';
+
+		const label = document.createElement( 'p' );
+		label.className = 'fair-events-get-tickets-callback-purchase-label';
+		label.textContent = __( 'This purchase:', 'fair-events' );
+		wrapper.appendChild( label );
+
+		const list = document.createElement( 'ul' );
+		list.className = 'fair-events-get-tickets-callback-purchase-tickets';
+		tickets.forEach( function ( ticket ) {
+			const item = document.createElement( 'li' );
+			item.textContent =
+				ticket.ticket_type || __( 'Ticket', 'fair-events' );
+			if (
+				Array.isArray( ticket.activities ) &&
+				ticket.activities.length
+			) {
+				const activities = document.createElement( 'ul' );
+				ticket.activities.forEach( function ( name ) {
+					const activity = document.createElement( 'li' );
+					activity.textContent = name;
+					activities.appendChild( activity );
+				} );
+				item.appendChild( activities );
+			}
+			list.appendChild( item );
+		} );
+		wrapper.appendChild( list );
+		return wrapper;
 	}
 
 	/**
@@ -787,6 +916,13 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	}
 
 	function setupForm( form ) {
+		// A form is set up once: a second submit listener would send every
+		// purchase twice, each with a checkout key of its own.
+		if ( wiredElements.has( form ) ) {
+			return;
+		}
+		wiredElements.add( form );
+
 		// One key per intended purchase (#1534): kept while the same purchase
 		// is submitted again, so a repeated request cannot buy twice.
 		const checkoutKeys = createCheckoutKeyStore();
@@ -800,7 +936,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		form.addEventListener( 'submit', function ( e ) {
 			e.preventDefault();
 
-			if ( state.processing || ! validateForm( form ) ) {
+			if (
+				state.processing ||
+				state.completed ||
+				! validateForm( form )
+			) {
 				return;
 			}
 
@@ -809,17 +949,22 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 			state.processing = true;
 			renderFormState( form );
-			submitForm( form, data, checkoutKeys ).then(
-				function ( redirecting ) {
-					// A purchase on its way to checkout stays in processing until
-					// the browser leaves the page.
-					if ( redirecting ) {
-						return;
-					}
-					state.processing = false;
-					renderFormState( form );
+			submitForm( form, data, checkoutKeys ).then( function ( outcome ) {
+				// A purchase on its way to checkout stays in processing until
+				// the browser leaves the page.
+				if ( outcome === 'redirecting' ) {
+					return;
 				}
-			);
+				if ( outcome === 'completed' ) {
+					// This purchase is done. Whatever is bought next is another
+					// purchase and takes a key of its own, even with the very
+					// same selection.
+					checkoutKeys.reset();
+					state.completed = true;
+				}
+				state.processing = false;
+				renderFormState( form );
+			} );
 		} );
 
 		wireTicketTypeInputs( form );
@@ -915,7 +1060,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	/**
 	 * The form's state model, created on first use.
 	 * @param {HTMLFormElement} form The get-tickets form.
-	 * @return {Object} State: viewerContextLoading, processing, submitLabel.
+	 * @return {Object} State: viewerContextLoading, viewerContextApplied, processing, completed, submitLabel.
 	 */
 	function getFormState( form ) {
 		let state = formStates.get( form );
@@ -923,7 +1068,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			const submitButton = form.querySelector( 'button[type="submit"]' );
 			state = {
 				viewerContextLoading: false,
+				viewerContextApplied: false,
 				processing: false,
+				completed: false,
 				submitLabel: submitButton ? submitButton.textContent : '',
 			};
 			formStates.set( form, state );
@@ -943,6 +1090,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		return (
 			! state.viewerContextLoading &&
 			! state.processing &&
+			! state.completed &&
 			meetsInstanceMinimum( form ) &&
 			meetsActivityMinimum( form )
 		);
@@ -973,6 +1121,48 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		);
 		if ( totalEl ) {
 			totalEl.hidden = ! available;
+		}
+
+		renderCompletedState( form, state );
+	}
+
+	/**
+	 * Once a purchase is completed on this page, replace the form — and the
+	 * list of tickets held before it, which no longer tells the whole story —
+	 * with a way back to the signup form, where the new ticket is listed and
+	 * another purchase can begin.
+	 * @param {HTMLFormElement} form  The get-tickets form.
+	 * @param {Object}          state The form's state.
+	 */
+	function renderCompletedState( form, state ) {
+		const block = form.closest( '.fair-events-get-tickets' );
+		form.hidden = state.completed;
+		if ( ! block ) {
+			return;
+		}
+
+		const existing = block.querySelector(
+			'.fair-events-get-tickets-existing'
+		);
+		if ( existing ) {
+			existing.hidden = state.completed;
+		}
+
+		let returnEl = block.querySelector( '.fair-events-get-tickets-return' );
+		if ( ! state.completed ) {
+			if ( returnEl ) {
+				returnEl.remove();
+			}
+			return;
+		}
+		if ( ! returnEl ) {
+			returnEl = document.createElement( 'p' );
+			returnEl.className = 'fair-events-get-tickets-return';
+			const link = document.createElement( 'a' );
+			link.href = signupFormUrl();
+			link.textContent = __( 'Back to the signup form', 'fair-events' );
+			returnEl.appendChild( link );
+			block.appendChild( returnEl );
 		}
 	}
 
@@ -1611,9 +1801,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const button = section.querySelector(
 			'.fair-events-add-activities-button'
 		);
-		if ( ! button ) {
+		if ( ! button || wiredElements.has( button ) ) {
 			return;
 		}
+		wiredElements.add( button );
 		const checkboxes = section.querySelectorAll(
 			'input[name="add_option_ids[]"]'
 		);
@@ -1772,9 +1963,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const button = card.querySelector(
 			'.fair-events-cancel-signup-button'
 		);
-		if ( ! button ) {
+		if ( ! button || wiredElements.has( button ) ) {
 			return;
 		}
+		wiredElements.add( button );
 
 		button.addEventListener( 'click', function () {
 			submitCancelSignup( block, card, button );
@@ -2085,7 +2277,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 * @param {HTMLFormElement} form         The get-tickets form.
 	 * @param {Object}          data         Request payload, including its idempotency key.
 	 * @param {Object}          checkoutKeys The form's checkout key store.
-	 * @return {Promise<boolean>} Settles with the request; true when the browser is being redirected to checkout.
+	 * @return {Promise<string>} Settles with the request: 'redirecting' when the browser is leaving for checkout, 'completed' when the purchase is done, 'open' when the form stays for another attempt.
 	 */
 	function submitForm( form, data, checkoutKeys ) {
 		const messageContainer = getMessageContainer(
@@ -2113,7 +2305,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		} )
 			.then( function ( response ) {
 				if ( response.checkout_url ) {
-					return true;
+					return 'redirecting';
 				}
 
 				// The email belongs to someone this browser is not known to
@@ -2130,7 +2322,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 						'success',
 						CSS_PREFIX
 					);
-					return;
+					return 'open';
 				}
 
 				showMessage(
@@ -2143,12 +2335,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 					'success',
 					CSS_PREFIX
 				);
-				form.style.display = 'none';
-				return false;
+				return 'completed';
 			} )
 			.catch( function () {
 				// Error already surfaced via onError.
-				return false;
+				return 'open';
 			} );
 	}
 } )();

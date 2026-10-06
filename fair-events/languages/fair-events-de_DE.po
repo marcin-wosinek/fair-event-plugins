@@ -305,7 +305,7 @@ msgstr "Titel"
 #: src/Admin/calendar/components/QuickEventModal.js:615
 #: src/Admin/components/InlineVenueCreator.js:95
 #: src/Admin/manage-event/EditInstancesModal.js:75
-#: src/Admin/manage-event/EventSignups.js:654
+#: src/Admin/manage-event/EventSignups.js:652
 #: src/Admin/manage-event/EventTickets.js:2781
 #: src/Admin/manage-event/ManageEventApp.js:1502
 #: src/Admin/manage-event/ManageEventApp.js:1512
@@ -510,12 +510,12 @@ msgid "4 hours"
 msgstr "4 Stunden"
 
 #: src/blocks/event-proposal/render.php:58
-#: src/blocks/event-signup/render.php:683
+#: src/blocks/event-signup/render.php:694
 msgid "Your Name"
 msgstr "Ihr Name"
 
 #: src/blocks/event-proposal/render.php:73
-#: src/blocks/event-signup/render.php:700
+#: src/blocks/event-signup/render.php:711
 msgid "Your Email"
 msgstr "Ihre E-Mail"
 
@@ -1753,7 +1753,7 @@ msgid "Too many requests. Please try again later."
 msgstr "Zu viele Anfragen. Bitte versuchen Sie es später erneut."
 
 #: src/API/GetTicketsController.php:582
-#: src/API/GetTicketsController.php:1938
+#: src/API/GetTicketsController.php:1951
 msgid "Invalid ticket type."
 msgstr "Ungültiger Tickettyp."
 
@@ -1771,18 +1771,18 @@ msgstr "Anmeldung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut
 msgid "Ticket for event #%d"
 msgstr "Ticket für Veranstaltung #%d"
 
-#: src/API/GetTicketsController.php:1926
+#: src/API/GetTicketsController.php:1939
 msgid "Please select at least one occurrence."
 msgstr "Bitte wählen Sie mindestens ein Vorkommen aus."
 
-#: src/API/GetTicketsController.php:1949
+#: src/API/GetTicketsController.php:1962
 msgid "One of the selected occurrences is not valid for this ticket."
 msgstr "Eines der ausgewählten Vorkommen ist für dieses Ticket ungültig."
 
 #. translators: %d: minimum number of occurrences required
-#: src/API/GetTicketsController.php:1962
-#: src/blocks/event-signup/frontend.js:1363
-#: src/blocks/event-signup/frontend.js:1920
+#: src/API/GetTicketsController.php:1975
+#: src/blocks/event-signup/frontend.js:1553
+#: src/blocks/event-signup/frontend.js:2112
 #, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
@@ -1790,7 +1790,7 @@ msgstr[0] "Bitte wählen Sie mindestens %d Vorkommen aus."
 msgstr[1] "Bitte wählen Sie mindestens %d Vorkommen aus."
 
 #. translators: %d: event date ID
-#: src/API/GetTicketsController.php:2027
+#: src/API/GetTicketsController.php:2040
 #, php-format
 msgid "Tickets for event #%d"
 msgstr "Tickets für Veranstaltung #%d"
@@ -1798,7 +1798,7 @@ msgstr "Tickets für Veranstaltung #%d"
 #. translators: %s: event name
 #. translators: %s: occurrence date/time label
 #: src/API/GetTicketsController.php:700
-#: src/API/GetTicketsController.php:2039
+#: src/API/GetTicketsController.php:2052
 #, php-format
 msgid "Ticket for %s"
 msgstr "Ticket für %s"
@@ -1811,15 +1811,15 @@ msgstr "Ungültige Importdaten."
 msgid "Get Tickets"
 msgstr "Tickets erhalten"
 
-#: src/blocks/event-signup/render.php:651
+#: src/blocks/event-signup/render.php:663
 msgid "Choose occurrences"
 msgstr "Vorkommen auswählen"
 
-#: src/blocks/event-signup/render.php:716
+#: src/blocks/event-signup/render.php:727
 msgid "Quantity"
 msgstr "Menge"
 
-#: src/blocks/event-signup/render.php:737
+#: src/blocks/event-signup/render.php:748
 msgid "Keep me informed about future events"
 msgstr "Halten Sie mich über zukünftige Veranstaltungen auf dem Laufenden"
 
@@ -1967,23 +1967,23 @@ msgstr "%d entfernt"
 msgid "Recurrence updated: %s."
 msgstr "Wiederholung aktualisiert: %s."
 
-#: src/blocks/event-signup/frontend.js:1884
+#: src/blocks/event-signup/frontend.js:2076
 msgid "Please fill in all required fields."
 msgstr "Bitte füllen Sie alle erforderlichen Felder aus."
 
-#: src/blocks/event-signup/frontend.js:1897
+#: src/blocks/event-signup/frontend.js:2089
 msgid "Please enter a valid email address."
 msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein."
 
-#: src/blocks/event-signup/frontend.js:1942
+#: src/blocks/event-signup/frontend.js:2134
 msgid "Quantity must be between 1 and 10."
 msgstr "Die Menge muss zwischen 1 und 10 liegen."
 
-#: src/blocks/event-signup/frontend.js:967
+#: src/blocks/event-signup/frontend.js:1115
 msgid "Processing…"
 msgstr "Wird verarbeitet…"
 
-#: src/blocks/event-signup/frontend.js:2100
+#: src/blocks/event-signup/frontend.js:2292
 msgid "Failed to submit. Please try again."
 msgstr "Übermittlung fehlgeschlagen. Bitte versuchen Sie es erneut."
 
@@ -2467,29 +2467,29 @@ msgid "Apple Calendar"
 msgstr "Apple Calendar"
 
 #: src/API/GetTicketsController.php:674
-#: src/API/GetTicketsController.php:1994
-#: src/API/GetTicketsController.php:3167
+#: src/API/GetTicketsController.php:2007
+#: src/API/GetTicketsController.php:3180
 msgid "Paid tickets are not available because online payments are not configured."
 msgstr "Bezahlte Tickets sind nicht verfügbar, da Online-Zahlungen nicht konfiguriert sind."
 
-#: src/API/GetTicketsController.php:1813
+#: src/API/GetTicketsController.php:1826
 msgid "Event Signup"
 msgstr "Event-Anmeldung"
 
-#: src/blocks/event-signup/render.php:536
-#: src/blocks/event-signup/render.php:553
+#: src/blocks/event-signup/render.php:548
+#: src/blocks/event-signup/render.php:565
 msgid "Ticket sales are temporarily unavailable. Please check back later."
 msgstr "Ticketverkäufe sind vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut."
 
-#: src/Services/SignupFieldsetRenderer.php:65
+#: src/Services/SignupFieldsetRenderer.php:99
 msgid "Choose ticket type"
 msgstr "Tickettyp wählen"
 
-#: src/Services/SignupFieldsetRenderer.php:87
+#: src/Services/SignupFieldsetRenderer.php:121
 msgid "ticket sales temporarily unavailable"
 msgstr "Ticketverkäufe vorübergehend nicht verfügbar"
 
-#: src/blocks/event-signup/render.php:627
+#: src/blocks/event-signup/render.php:639
 msgid "Choose a date"
 msgstr "Datum wählen"
 
@@ -2646,7 +2646,7 @@ msgstr "Bestätigen"
 msgid "Link Existing Post"
 msgstr "Vorhandenen Beitrag verknüpfen"
 
-#: src/Admin/manage-event/EventSignups.js:570
+#: src/Admin/manage-event/EventSignups.js:568
 msgid "Mailing opt-ins only"
 msgstr "Nur Mailing-Opt-ins"
 
@@ -2841,106 +2841,106 @@ msgstr "Organisator speichern"
 msgid "Organizer"
 msgstr "Organisator"
 
-#: src/API/GetTicketsController.php:2973
-#: src/API/GetTicketsController.php:3066
-#: src/API/GetTicketsController.php:3098
-#: src/API/GetTicketsController.php:3350
+#: src/API/GetTicketsController.php:2986
+#: src/API/GetTicketsController.php:3079
+#: src/API/GetTicketsController.php:3111
+#: src/API/GetTicketsController.php:3363
 msgid "Transaction not found."
 msgstr "Transaktion nicht gefunden."
 
-#: src/API/GetTicketsController.php:3107
-#: src/API/GetTicketsController.php:3201
+#: src/API/GetTicketsController.php:3120
+#: src/API/GetTicketsController.php:3214
 msgid "This payment cannot be retried."
 msgstr "Diese Zahlung kann nicht wiederholt werden."
 
-#: src/API/GetTicketsController.php:3116
+#: src/API/GetTicketsController.php:3129
 msgid "This payment is not retriable from this endpoint."
 msgstr "Diese Zahlung kann von diesem Endpunkt aus nicht wiederholt werden."
 
-#: src/API/GetTicketsController.php:3136
-#: src/API/GetTicketsController.php:3316
-#: src/API/GetTicketsController.php:3327
+#: src/API/GetTicketsController.php:3149
+#: src/API/GetTicketsController.php:3329
+#: src/API/GetTicketsController.php:3340
 msgid "This payment is missing context needed to retry."
 msgstr "Bei dieser Zahlung fehlt der Kontext, um sie zu wiederholen."
 
-#: src/API/GetTicketsController.php:3159
+#: src/API/GetTicketsController.php:3172
 msgid "This payment session has expired. Please start over."
 msgstr "Diese Zahlungssitzung ist abgelaufen. Bitte beginnen Sie von vorne."
 
-#: src/API/GetTicketsController.php:3211
+#: src/API/GetTicketsController.php:3224
 msgid "Original line items could not be loaded."
 msgstr "Ursprüngliche Positionen konnten nicht geladen werden."
 
-#: src/API/GetTicketsController.php:3359
+#: src/API/GetTicketsController.php:3372
 msgid "This payment is not manageable from this endpoint."
 msgstr "Diese Zahlung kann von diesem Endpunkt aus nicht verwaltet werden."
 
-#: src/blocks/event-signup/render.php:440
-#: src/blocks/event-signup/frontend.js:648
+#: src/blocks/event-signup/render.php:444
+#: src/blocks/event-signup/frontend.js:706
 msgid "Payment confirmed"
 msgstr "Zahlung bestätigt"
 
 #. translators: %s: event title
-#: src/blocks/event-signup/render.php:446
+#: src/blocks/event-signup/render.php:450
 #, php-format
 msgid "You're signed up for %s."
 msgstr "Sie sind angemeldet für %s."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:456
+#: src/blocks/event-signup/render.php:460
 #, php-format
 msgid "Amount paid: %s"
 msgstr "Gezahlter Betrag: %s"
 
-#: src/blocks/event-signup/render.php:462
-#: src/blocks/event-signup/frontend.js:663
+#: src/blocks/event-signup/render.php:471
+#: src/blocks/event-signup/frontend.js:726
 msgid "A confirmation email is on its way. You can close this page."
 msgstr "Eine Bestätigungs-E-Mail ist unterwegs. Sie können diese Seite schließen."
 
-#: src/blocks/event-signup/render.php:470
+#: src/blocks/event-signup/render.php:482
 msgid "Thank you for your payment!"
 msgstr "Vielen Dank für Ihre Zahlung!"
 
-#: src/blocks/event-signup/render.php:472
+#: src/blocks/event-signup/render.php:484
 msgid "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done."
 msgstr "Wir bestätigen dies bei Ihrer Bank. Dies dauert normalerweise ein paar Sekunden — die Seite wird aktualisiert, sobald es fertig ist."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:478
+#: src/blocks/event-signup/render.php:490
 #, php-format
 msgid "Amount: %s"
 msgstr "Betrag: %s"
 
-#: src/blocks/event-signup/render.php:497
+#: src/blocks/event-signup/render.php:509
 msgid "Your payment is waiting."
 msgstr "Ihre Zahlung wartet."
 
-#: src/blocks/event-signup/render.php:499
+#: src/blocks/event-signup/render.php:511
 msgid "You can pick up where you left off on the secure payment page."
 msgstr "Sie können dort weitermachen, wo Sie auf der sicheren Zahlungsseite aufgehört haben."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:505
-#: src/blocks/event-signup/render.php:529
+#: src/blocks/event-signup/render.php:517
+#: src/blocks/event-signup/render.php:541
 #, php-format
 msgid "Amount due: %s"
 msgstr "Fälliger Betrag: %s"
 
-#: src/blocks/event-signup/render.php:512
+#: src/blocks/event-signup/render.php:524
 msgid "Continue payment"
 msgstr "Zahlung fortsetzen"
 
-#: src/blocks/event-signup/render.php:489
-#: src/blocks/event-signup/render.php:516
-#: src/blocks/event-signup/render.php:546
+#: src/blocks/event-signup/render.php:501
+#: src/blocks/event-signup/render.php:528
+#: src/blocks/event-signup/render.php:558
 msgid "Cancel and start over"
 msgstr "Abbrechen und von vorne beginnen"
 
-#: src/blocks/event-signup/render.php:524
+#: src/blocks/event-signup/render.php:536
 msgid "Your payment didn't go through."
 msgstr "Ihre Zahlung ist fehlgeschlagen."
 
-#: src/blocks/event-signup/render.php:541
+#: src/blocks/event-signup/render.php:553
 msgid "Retry payment"
 msgstr "Zahlung erneut versuchen"
 
@@ -2953,40 +2953,40 @@ msgid "Bundled translations moved to Settings → Fair Event Plugins."
 msgstr "Gebündelte Übersetzungen wurden zu Einstellungen → Fair Event Plugins verschoben."
 
 #: src/Services/EmailService.php:93
-#: src/blocks/event-signup/frontend.js:654
+#: src/blocks/event-signup/frontend.js:712
 msgid "Amount paid:"
 msgstr "Gezahlter Betrag:"
 
-#: src/blocks/event-signup/frontend.js:698
+#: src/blocks/event-signup/frontend.js:827
 msgid "Redirecting…"
 msgstr "Wird weitergeleitet…"
 
-#: src/blocks/event-signup/frontend.js:699
+#: src/blocks/event-signup/frontend.js:828
 msgid "Could not start the retry. Please try again."
 msgstr "Wiederholung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
 
-#: src/Services/SignupFieldsetRenderer.php:152
+#: src/Services/SignupFieldsetRenderer.php:186
 msgid "Select activities"
 msgstr "Aktivitäten auswählen"
 
 #. translators: %d: minimum number of activities required
 #: src/Services/ActivitySelection.php:195
-#: src/Services/SignupFieldsetRenderer.php:157
-#: src/blocks/event-signup/frontend.js:1524
-#: src/blocks/event-signup/frontend.js:1960
+#: src/Services/SignupFieldsetRenderer.php:191
+#: src/blocks/event-signup/frontend.js:1714
+#: src/blocks/event-signup/frontend.js:2152
 #, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Bitte wählen Sie mindestens %d Aktivität aus, um sich anzumelden."
 msgstr[1] "Bitte wählen Sie mindestens %d Aktivitäten aus, um sich anzumelden."
 
-#: src/Services/SignupFieldsetRenderer.php:180
+#: src/Services/SignupFieldsetRenderer.php:214
 msgid "full"
 msgstr "vollständig"
 
-#: src/blocks/event-signup/render.php:638
-#: src/blocks/event-signup/render.php:661
-#: src/blocks/event-signup/frontend.js:384
+#: src/blocks/event-signup/render.php:650
+#: src/blocks/event-signup/render.php:673
+#: src/blocks/event-signup/frontend.js:438
 msgid "already signed up"
 msgstr "bereits angemeldet"
 
@@ -3038,32 +3038,32 @@ msgstr "Kontakttelefon"
 msgid "Fix the invalid link(s) above before saving."
 msgstr "Bitte beheben Sie die ungültigen Link(s) oben, bevor Sie speichern."
 
-#: src/blocks/event-signup/frontend.js:1626
+#: src/blocks/event-signup/frontend.js:1817
 msgid "Add activities"
 msgstr "Aktivitäten hinzufügen"
 
-#: src/blocks/event-signup/frontend.js:1706
+#: src/blocks/event-signup/frontend.js:1897
 msgid "Adding…"
 msgstr "Wird hinzugefügt…"
 
-#: src/blocks/event-signup/frontend.js:1727
+#: src/blocks/event-signup/frontend.js:1918
 msgid "Your activities have been added!"
 msgstr "Ihre Aktivitäten wurden hinzugefügt!"
 
-#: src/blocks/event-signup/frontend.js:1743
+#: src/blocks/event-signup/frontend.js:1934
 msgid "Failed to add activities. Please try again."
 msgstr "Aktivitäten konnten nicht hinzugefügt werden. Bitte versuchen Sie es erneut."
 
-#: src/blocks/event-signup/frontend.js:741
-#: src/blocks/event-signup/frontend.js:1814
+#: src/blocks/event-signup/frontend.js:870
+#: src/blocks/event-signup/frontend.js:2006
 msgid "Cancelling…"
 msgstr "Wird abgebrochen…"
 
-#: src/blocks/event-signup/frontend.js:1825
+#: src/blocks/event-signup/frontend.js:2017
 msgid "Your signup has been cancelled."
 msgstr "Ihre Anmeldung wurde abgebrochen."
 
-#: src/blocks/event-signup/frontend.js:1835
+#: src/blocks/event-signup/frontend.js:2027
 msgid "Failed to cancel signup. Please try again."
 msgstr "Anmeldung konnte nicht abgebrochen werden. Bitte versuchen Sie es erneut."
 
@@ -3080,12 +3080,12 @@ msgid "The joining link must be a valid URL."
 msgstr "Der Beitrittslink muss eine gültige URL sein."
 
 #: src/API/GetTicketsController.php:619
-#: src/API/GetTicketsController.php:1981
+#: src/API/GetTicketsController.php:1994
 msgid "This ticket type is not currently on sale."
 msgstr "Dieser Tickettyp ist derzeit nicht im Verkauf."
 
 #: src/API/GetTicketsController.php:1069
-#: src/blocks/event-signup/frontend.js:2139
+#: src/blocks/event-signup/frontend.js:2331
 msgid "You have successfully registered! A confirmation email is on its way."
 msgstr "Sie haben sich erfolgreich registriert! Eine Bestätigungsemail ist unterwegs."
 
@@ -3181,13 +3181,13 @@ msgid "Return to the event page to try again"
 msgstr "Kehren Sie zur Veranstaltungsseite zurück, um es erneut zu versuchen"
 
 #. translators: %s: formatted add-on price
-#: src/Services/SignupFieldsetRenderer.php:207
+#: src/Services/SignupFieldsetRenderer.php:241
 #, php-format
 msgid "+%s"
 msgstr "+%s"
 
 #. translators: %s: formatted add-on price
-#: src/Services/SignupFieldsetRenderer.php:215
+#: src/Services/SignupFieldsetRenderer.php:249
 #, php-format
 msgid "-%s"
 msgstr "-%s"
@@ -3496,7 +3496,7 @@ msgid "Create Venue"
 msgstr "Veranstaltungsort erstellen"
 
 #. translators: %s: event name
-#: src/API/GetTicketsController.php:2022
+#: src/API/GetTicketsController.php:2035
 #, php-format
 msgid "Tickets for %s"
 msgstr "Tickets für %s"
@@ -3527,14 +3527,14 @@ msgstr "Sie haben keine Berechtigung, diesen Beitrag zu bearbeiten."
 msgid "Failed to create event data."
 msgstr "Fehler beim Erstellen von Ereignisdaten."
 
-#: src/API/GetTicketsController.php:2452
-#: src/API/GetTicketsController.php:2491
-#: src/API/GetTicketsController.php:2812
+#: src/API/GetTicketsController.php:2465
+#: src/API/GetTicketsController.php:2504
+#: src/API/GetTicketsController.php:2825
 msgid "Signup not found."
 msgstr "Anmeldung nicht gefunden."
 
-#: src/API/GetTicketsController.php:2460
-#: src/Admin/manage-event/EventSignups.js:555
+#: src/API/GetTicketsController.php:2473
+#: src/Admin/manage-event/EventSignups.js:553
 msgid "Failed to delete signup."
 msgstr "Fehler beim Löschen der Anmeldung."
 
@@ -3543,7 +3543,7 @@ msgstr "Fehler beim Löschen der Anmeldung."
 msgid "Loading calendar…"
 msgstr "Kalender wird geladen…"
 
-#: src/Admin/manage-event/EventSignups.js:679
+#: src/Admin/manage-event/EventSignups.js:677
 msgid "This deletion is permanent. It removes only the local signup record and does not refund or cancel any payment-provider transaction."
 msgstr "Dieses Löschen ist dauerhaft. Es entfernt nur den lokalen Anmeldungsdatensatz und führt keine Rückerstattung oder Stornierung einer Zahlungsanbieter-Transaktion durch."
 
@@ -3617,7 +3617,7 @@ msgid "Create Copy"
 msgstr "Kopie erstellen"
 
 #. translators: %s: active ticket sale period name.
-#: src/Services/SignupFieldsetRenderer.php:71
+#: src/Services/SignupFieldsetRenderer.php:105
 #, php-format
 msgid "You’re seeing %s prices."
 msgstr "Du siehst die Preise für %s."
@@ -3638,7 +3638,7 @@ msgid "Minimum selections cannot exceed the number of configured extensions."
 msgstr "Die minimale Auswahl kann die Anzahl der konfigurierten Erweiterungen nicht überschreiten."
 
 #: src/Services/ActivitySelection.php:140
-#: src/Services/SignupFieldsetRenderer.php:173
+#: src/Services/SignupFieldsetRenderer.php:207
 msgid "Signup is unavailable because too few extensions can currently be selected."
 msgstr "Die Anmeldung ist nicht verfügbar, da derzeit zu wenige Erweiterungen ausgewählt werden können."
 
@@ -3663,7 +3663,7 @@ msgid "Maximum selections"
 msgstr "Höchstauswahl"
 
 #. translators: %d: maximum number of activities allowed
-#: src/blocks/event-signup/frontend.js:1548
+#: src/blocks/event-signup/frontend.js:1738
 #, js-format
 msgid "You can select at most %d extension."
 msgid_plural "You can select at most %d extensions."
@@ -3716,17 +3716,17 @@ msgstr "Ein Google Maps-Link ist für diese Werte nicht verfügbar."
 msgid "Includes the complete day of the last occurrence."
 msgstr "Umfasst den kompletten Tag des letzten Vorkommens."
 
-#: src/API/GetTicketsController.php:3368
-#: src/API/GetTicketsController.php:3402
-#: src/API/GetTicketsController.php:3411
+#: src/API/GetTicketsController.php:3381
+#: src/API/GetTicketsController.php:3415
+#: src/API/GetTicketsController.php:3424
 msgid "This payment could not be cancelled safely. Please try again."
 msgstr "Diese Zahlung konnte nicht sicher storniert werden. Bitte versuchen Sie es erneut."
 
-#: src/API/GetTicketsController.php:3380
+#: src/API/GetTicketsController.php:3393
 msgid "We could not verify the payment status. Please try again."
 msgstr "Wir konnten den Zahlungsstatus nicht überprüfen. Bitte versuchen Sie es erneut."
 
-#: src/blocks/event-signup/render.php:485
+#: src/blocks/event-signup/render.php:497
 msgid "Check payment status again"
 msgstr "Zahlungsstatus erneut überprüfen"
 
@@ -3734,15 +3734,15 @@ msgstr "Zahlungsstatus erneut überprüfen"
 msgid "Latitude coordinate (e.g., 39.4878023). You can also paste a latitude, longitude pair."
 msgstr "Breitengrad-Koordinate (z. B. 39.4878023). Sie können auch ein Breitengrad-, Längengradpaar einfügen."
 
-#: src/blocks/event-signup/frontend.js:610
+#: src/blocks/event-signup/frontend.js:668
 msgid "Payment confirmation is taking longer than expected. You can check again or cancel and start over."
 msgstr "Die Zahlungsbestätigung dauert länger als erwartet. Sie können erneut überprüfen oder abbrechen und von vorne beginnen."
 
-#: src/blocks/event-signup/frontend.js:617
+#: src/blocks/event-signup/frontend.js:675
 msgid "We could not check your payment status. Please check again or cancel and start over."
 msgstr "Wir konnten Ihren Zahlungsstatus nicht überprüfen. Bitte überprüfen Sie erneut oder brechen Sie ab und beginnen Sie von vorne."
 
-#: src/blocks/event-signup/frontend.js:777
+#: src/blocks/event-signup/frontend.js:906
 msgid "Could not cancel this payment. Please try again."
 msgstr "Diese Zahlung konnte nicht storniert werden. Bitte versuchen Sie es erneut."
 
@@ -3815,7 +3815,7 @@ msgstr "Sie haben keine Berechtigung, Kalenderereignisse zu kopieren."
 msgid "The event copy could not be completed, and any partial copy was removed. Please try again."
 msgstr "Das Ereignis konnte nicht vollständig kopiert werden, und jede teilweise Kopie wurde entfernt. Bitte versuchen Sie es erneut."
 
-#: src/Admin/manage-event/EventSignups.js:565
+#: src/Admin/manage-event/EventSignups.js:563
 #: src/Admin/manage-event/ManageEventApp.js:866
 msgid "List"
 msgstr "Liste"
@@ -3975,7 +3975,7 @@ msgstr "Kein Budget"
 msgid "Save budget"
 msgstr "Budget speichern"
 
-#: src/Admin/manage-event/EventSignups.js:584
+#: src/Admin/manage-event/EventSignups.js:582
 #: src/Admin/manage-event/SignupExportModal.js:379
 msgid "Export"
 msgstr "Exportieren"
@@ -4336,11 +4336,11 @@ msgstr "Nicht ausgewählt"
 msgid "Selection unavailable"
 msgstr "Auswahl nicht verfügbar"
 
-#: src/Admin/manage-event/EventSignups.js:606
+#: src/Admin/manage-event/EventSignups.js:604
 msgid "No confirmed registrations yet."
 msgstr "Noch keine bestätigten Anmeldungen."
 
-#: src/Admin/manage-event/EventSignups.js:610
+#: src/Admin/manage-event/EventSignups.js:608
 msgid "Nothing to export — no registrations match the current filter."
 msgstr "Nichts zu exportieren – keine Anmeldungen entsprechen dem aktuellen Filter."
 
@@ -4386,34 +4386,34 @@ msgstr "Wählen Sie die Aktivitäten für jedes Ticket aus."
 msgid "One of the selected activities is not available for this event."
 msgstr "Eine der ausgewählten Aktivitäten ist für dieses Event nicht verfügbar."
 
-#: src/API/GetTicketsController.php:2506
+#: src/API/GetTicketsController.php:2519
 msgid "Choose either a new date or a new ticket type."
 msgstr "Wählen Sie entweder ein neues Datum oder einen neuen Tickettyp."
 
-#: src/API/GetTicketsController.php:2517
+#: src/API/GetTicketsController.php:2530
 msgid "Enter a reason for going over capacity."
 msgstr "Geben Sie einen Grund für das Überschreiten der Kapazität ein."
 
-#: src/API/GetTicketsController.php:2545
+#: src/API/GetTicketsController.php:2558
 msgid "The chosen date is not another active date of this series."
 msgstr "Das gewählte Datum ist kein anderes aktives Datum dieser Serie."
 
-#: src/API/GetTicketsController.php:2546
+#: src/API/GetTicketsController.php:2559
 msgid "The chosen ticket type is not available for this signup."
 msgstr "Der gewählte Tickettyp ist für diese Anmeldung nicht verfügbar."
 
-#: src/API/GetTicketsController.php:2587
-#: src/API/GetTicketsController.php:2870
+#: src/API/GetTicketsController.php:2600
+#: src/API/GetTicketsController.php:2883
 msgid "Only confirmed signups can be moved or given another ticket type."
 msgstr "Nur bestätigte Anmeldungen können verschoben oder mit einem anderen Tickettyp versehen werden."
 
-#: src/API/GetTicketsController.php:2594
+#: src/API/GetTicketsController.php:2607
 #: src/Admin/manage-event/SignupEditModal.js:91
 msgid "Failed to update signup."
 msgstr "Fehler beim Aktualisieren der Anmeldung."
 
 #. translators: 1: event date, ticket type or activity name, 2: places taken after the change, 3: capacity
-#: src/API/GetTicketsController.php:2640
+#: src/API/GetTicketsController.php:2653
 #: ../fair-events-shared/src/TicketEditModal.js:100
 #, php-format,js-format
 msgid "%1$s would have %2$d of %3$d place taken."
@@ -4437,19 +4437,19 @@ msgid_plural "The chosen ticket type requires at least %d activities per ticket.
 msgstr[0] "Der gewählte Tickettyp erfordert mindestens %d Aktivität pro Ticket."
 msgstr[1] "Der gewählte Tickettyp erfordert mindestens %d Aktivitäten pro Ticket."
 
-#: src/API/GetTicketsController.php:2889
+#: src/API/GetTicketsController.php:2902
 msgid "A whole-series ticket covers every date and cannot be moved."
 msgstr "Ein Ticket für die gesamte Serie deckt jedes Datum ab und kann nicht verschoben werden."
 
-#: src/API/GetTicketsController.php:2908
+#: src/API/GetTicketsController.php:2921
 msgid "This event has no other dates to move the signup to."
 msgstr "Dieses Event hat keine anderen Termine, zu denen die Anmeldung verschoben werden kann."
 
-#: src/API/GetTicketsController.php:2939
+#: src/API/GetTicketsController.php:2952
 msgid "This signup has no ticket type to change."
 msgstr "Diese Anmeldung hat keinen Tickettyp zum Ändern."
 
-#: src/blocks/event-signup/render.php:797
+#: src/blocks/event-signup/render.php:808
 msgid "Total"
 msgstr "Gesamt"
 
@@ -4664,17 +4664,17 @@ msgstr "Kapazität überschreiten"
 msgid "Move signup"
 msgstr "Anmeldung verschieben"
 
-#: src/blocks/event-signup/frontend.js:1066
+#: src/blocks/event-signup/frontend.js:1256
 msgid "Use the first ticket’s activities for all tickets"
 msgstr "Verwenden Sie die Aktivitäten des ersten Tickets für alle Tickets"
 
 #. translators: %d: ticket number within the purchase
-#: src/blocks/event-signup/frontend.js:1102
+#: src/blocks/event-signup/frontend.js:1292
 #, js-format
 msgid "Ticket %d: select activities"
 msgstr "Ticket %d: Aktivitäten auswählen"
 
-#: src/API/GetTicketsController.php:2857
+#: src/API/GetTicketsController.php:2870
 msgid "Tickets in this purchase have been given their own types. Edit each ticket instead."
 msgstr "Tickets in diesem Kauf haben ihre eigenen Typen erhalten. Bearbeite stattdessen jedes Ticket einzeln."
 
@@ -4683,12 +4683,12 @@ msgid "The chosen ticket type does not allow activities, and this ticket has som
 msgstr "Der gewählte Tickettyp erlaubt keine Aktivitäten, und dieses Ticket hat einige."
 
 #. translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)"
-#: src/Admin/manage-event/EventSignups.js:524
+#: src/Admin/manage-event/EventSignups.js:522
 #, js-format
 msgid "Edit %s"
 msgstr "Bearbeite %s"
 
-#: src/Admin/manage-event/EventSignups.js:529
+#: src/Admin/manage-event/EventSignups.js:527
 #: ../fair-events-shared/src/TicketEditModal.js:649
 msgid "Edit ticket"
 msgstr "Ticket bearbeiten"
@@ -4792,8 +4792,10 @@ msgstr "(kein Name)"
 msgid "Ticket not created yet"
 msgstr "Ticket noch nicht erstellt"
 
+#: src/Services/SignupFieldsetRenderer.php:61
 #: src/Admin/manage-event/EventSignups.js:369
 #: src/Admin/manage-event/SignupExportModal.js:69
+#: src/blocks/event-signup/frontend.js:780
 msgid "Ticket"
 msgstr "Ticket"
 
@@ -4805,16 +4807,16 @@ msgid_plural "Registration (%d tickets):"
 msgstr[0] "Registrierung (%d Ticket):"
 msgstr[1] "Registrierung (%d Tickets):"
 
-#: src/Admin/manage-event/EventSignups.js:597
+#: src/Admin/manage-event/EventSignups.js:595
 msgid "Some older registrations are still being split into individual tickets. They are listed as one row for now; reload this page in a few minutes to see their tickets."
 msgstr "Einige ältere Registrierungen werden immer noch in einzelne Tickets aufgeteilt. Sie werden vorerst als eine Zeile aufgelistet; laden Sie diese Seite in wenigen Minuten neu, um ihre Tickets zu sehen."
 
-#: src/Admin/manage-event/EventSignups.js:653
+#: src/Admin/manage-event/EventSignups.js:651
 msgid "Delete registration"
 msgstr "Registrierung löschen"
 
 #. translators: 1: signup name, 2: number of tickets, 3: payment status
-#: src/Admin/manage-event/EventSignups.js:661
+#: src/Admin/manage-event/EventSignups.js:659
 #, js-format
 msgid "Delete the registration for %1$s, with its %2$d ticket? Its current payment status is %3$s."
 msgid_plural "Delete the registration for %1$s, with all %2$d of its tickets? Its current payment status is %3$s."
@@ -5225,11 +5227,11 @@ msgstr "Die externe Seite, auf die diese Veranstaltung verlinkt, wird nicht geä
 msgid "Your unsaved changes to the event details stay on this screen, but this action does not save them."
 msgstr "Ihre ungespeicherten Änderungen an den Veranstaltungsdetails bleiben auf diesem Bildschirm erhalten, werden durch diese Aktion aber nicht gespeichert."
 
-#: src/blocks/event-signup/frontend.js:254
+#: src/blocks/event-signup/frontend.js:307
 msgid "Welcome back — we’ve restored your answers. Review and continue below."
 msgstr "Willkommen zurück — wir haben deine Antworten wiederhergestellt. Überprüfe und fahre unten fort."
 
-#: src/blocks/event-signup/frontend.js:2126
+#: src/blocks/event-signup/frontend.js:2318
 msgid "We recognise this email — check your inbox to continue."
 msgstr "Wir erkennen diese E-Mail — überprüfen Sie Ihren Posteingang, um fortzufahren."
 
@@ -5251,3 +5253,14 @@ msgid "Please select no more than %d extension."
 msgid_plural "Please select no more than %d extensions."
 msgstr[0] "Bitte wählen Sie nicht mehr als %d Erweiterung."
 msgstr[1] "Bitte wählen Sie nicht mehr als %d Erweiterungen."
+
+#: src/blocks/event-signup/render.php:474
+#: src/blocks/event-signup/frontend.js:736
+#: src/blocks/event-signup/frontend.js:1163
+msgid "Back to the signup form"
+msgstr ""
+
+#: src/Services/SignupFieldsetRenderer.php:57
+#: src/blocks/event-signup/frontend.js:772
+msgid "This purchase:"
+msgstr ""
