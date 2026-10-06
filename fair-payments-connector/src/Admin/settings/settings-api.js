@@ -210,3 +210,43 @@ export function testConnection() {
 		return response;
 	} );
 }
+
+/**
+ * Load every API token, newest first.
+ *
+ * @return {Promise<Object[]>} Promise resolving to the token list
+ */
+export function loadApiTokens() {
+	return apiFetch( {
+		path: '/fair-payments-connector/v1/admin/api-tokens',
+	} );
+}
+
+/**
+ * Create an API token.
+ *
+ * @param {Object}   data        Token details.
+ * @param {string}   data.label  Name identifying who the token is for.
+ * @param {string[]} data.scopes Scopes to grant.
+ * @return {Promise<Object>} Promise resolving to the token, with its one-time plaintext `token`
+ */
+export function createApiToken( { label, scopes } ) {
+	return apiFetch( {
+		path: '/fair-payments-connector/v1/admin/api-tokens',
+		method: 'POST',
+		data: { label, scopes },
+	} );
+}
+
+/**
+ * Revoke an API token.
+ *
+ * @param {number} id Token ID.
+ * @return {Promise<Object>} Promise resolving to the revoked token
+ */
+export function revokeApiToken( id ) {
+	return apiFetch( {
+		path: `/fair-payments-connector/v1/admin/api-tokens/${ id }`,
+		method: 'DELETE',
+	} );
+}

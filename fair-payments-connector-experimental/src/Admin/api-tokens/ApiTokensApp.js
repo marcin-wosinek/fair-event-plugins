@@ -26,10 +26,6 @@ const AVAILABLE_SCOPES = [
 			'fair-payments-connector-experimental'
 		),
 	},
-	{
-		value: 'locations:read',
-		label: __( 'Read locations', 'fair-payments-connector-experimental' ),
-	},
 ];
 
 const ApiTokensApp = () => {

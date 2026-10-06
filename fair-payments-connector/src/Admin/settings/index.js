@@ -8,6 +8,7 @@ import { createRoot } from '@wordpress/element';
  * Internal dependencies
  */
 import SettingsApp from './SettingsApp.js';
+import './style.css';
 
 /**
  * Initialize the settings page

@@ -345,6 +345,114 @@ add_action(
 );
 
 /*
+ * API token fixtures for the data sharing API specs (#1747): seed a token row
+ * exactly as an older release stored it (any scopes, including the retired
+ * `locations:read`), read a row's stored columns, hard-delete it, and report
+ * which classes serve the token routes.
+ */
+add_action(
+	'rest_api_init',
+	static function () {
+		$admin_only = static function () {
+			return current_user_can( 'manage_options' );
+		};
+
+		register_rest_route(
+			'fair-e2e/v1',
+			'/api-tokens',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'permission_callback' => $admin_only,
+					'callback'            => static function ( WP_REST_Request $request ) {
+						global $wpdb;
+						$table     = \FairPaymentsConnector\Database\Schema::get_api_tokens_table_name();
+						$plaintext = wp_generate_password( 40, false );
+
+						// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- test-only fixture.
+						$wpdb->insert(
+							$table,
+							array(
+								'label'      => sanitize_text_field( (string) $request->get_param( 'label' ) ),
+								'token_hash' => hash( 'sha256', $plaintext ),
+								'scopes'     => wp_json_encode( array_map( 'sanitize_text_field', (array) $request->get_param( 'scopes' ) ) ),
+								'created_at' => current_time( 'mysql', true ),
+							),
+							array( '%s', '%s', '%s', '%s' )
+						);
+
+						return rest_ensure_response(
+							array(
+								'id'    => (int) $wpdb->insert_id,
+								'token' => $plaintext,
+							)
+						);
+					},
+				),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'permission_callback' => $admin_only,
+					'callback'            => static function ( WP_REST_Request $request ) {
+						global $wpdb;
+						$table = \FairPaymentsConnector\Database\Schema::get_api_tokens_table_name();
+
+						return rest_ensure_response(
+							// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- test-only fixture.
+							$wpdb->get_row(
+								$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, absint( $request->get_param( 'id' ) ) ),
+								ARRAY_A
+							)
+						);
+					},
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'permission_callback' => $admin_only,
+					'callback'            => static function ( WP_REST_Request $request ) {
+						global $wpdb;
+						$table = \FairPaymentsConnector\Database\Schema::get_api_tokens_table_name();
+
+						// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- test-only fixture.
+						$wpdb->delete( $table, array( 'id' => absint( $request->get_param( 'id' ) ) ), array( '%d' ) );
+
+						return rest_ensure_response( array( 'deleted' => true ) );
+					},
+				),
+			)
+		);
+
+		register_rest_route(
+			'fair-e2e/v1',
+			'/api-token-owners',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'permission_callback' => $admin_only,
+				'callback'            => static function () {
+					$routes = rest_get_server()->get_routes( 'fair-payments-connector/v1' );
+					$owners = array();
+
+					foreach ( $routes as $route => $handlers ) {
+						if ( false === strpos( $route, '/admin/api-tokens' ) && false === strpos( $route, '/external/' ) ) {
+							continue;
+						}
+
+						foreach ( $handlers as $handler ) {
+							$callback = $handler['callback'];
+							$owners[ $route ][] = array(
+								'methods' => array_keys( array_filter( $handler['methods'] ) ),
+								'class'   => is_array( $callback ) && is_object( $callback[0] ) ? get_class( $callback[0] ) : null,
+							);
+						}
+					}
+
+					return rest_ensure_response( $owners );
+				},
+			)
+		);
+	}
+);
+
+/*
  * 0. Force fair-form's bundled-translations flag from an option, so specs can
  *    exercise the central Fair Event Plugins settings screen's "locked by a
  *    wp-config constant" behavior without restarting PHP between requests —

@@ -9,15 +9,15 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-05T08:56:32+00:00\n"
+"POT-Creation-Date: 2026-10-06T08:40:33+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector\n"
 
 #. Plugin Name of the plugin
 #: fair-payments-connector.php
-#: src/Admin/AdminPages.php:44
 #: src/Admin/AdminPages.php:45
+#: src/Admin/AdminPages.php:46
 #: src/Core/Plugin.php:134
 msgid "Fair Payments Connector"
 msgstr ""
@@ -42,43 +42,43 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Admin/AdminPages.php:56
 #: src/Admin/AdminPages.php:57
+#: src/Admin/AdminPages.php:58
 #: src/Admin/external-updates/components/MollieFeesPanel.js:62
 msgid "Transactions"
 msgstr ""
 
-#: src/Admin/AdminPages.php:65
 #: src/Admin/AdminPages.php:66
-#: src/Admin/AdminPages.php:73
+#: src/Admin/AdminPages.php:67
+#: src/Admin/AdminPages.php:74
 #: src/Admin/transaction/TransactionPage.js:853
 msgid "Transaction Detail"
 msgstr ""
 
-#: src/Admin/AdminPages.php:78
 #: src/Admin/AdminPages.php:79
+#: src/Admin/AdminPages.php:80
 #: src/Admin/external-updates/ExternalUpdatesApp.js:51
 msgid "External Updates"
 msgstr ""
 
-#: src/Admin/AdminPages.php:89
 #: src/Admin/AdminPages.php:90
+#: src/Admin/AdminPages.php:91
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:256
 msgid "Fee Dashboard"
 msgstr ""
 
-#: src/Admin/AdminPages.php:100
 #: src/Admin/AdminPages.php:101
+#: src/Admin/AdminPages.php:102
 msgid "Settings"
 msgstr ""
 
-#: src/Admin/AdminPages.php:121
 #: src/Admin/AdminPages.php:122
+#: src/Admin/AdminPages.php:123
 #: src/Admin/notifications/NotificationsApp.js:23
 msgid "Notifications"
 msgstr ""
 
-#: src/Admin/AdminPages.php:233
+#: src/Admin/AdminPages.php:244
 msgid "Set up"
 msgstr ""
 
@@ -105,6 +105,31 @@ msgstr ""
 #: src/Admin/PaymentSetupNotice.php:60
 #, php-format
 msgid "Fair Payments Connector <strong>setup is incomplete</strong> — paid flows cannot accept real payments until setup is finished. <a href=\"%s\">Finish setup</a>."
+msgstr ""
+
+#: src/API/ApiTokenAuth.php:46
+msgid "This token does not have the required scope."
+msgstr ""
+
+#: src/API/ApiTokenAuth.php:106
+msgid "Invalid or missing API token."
+msgstr ""
+
+#: src/API/ApiTokensController.php:127
+msgid "A label is required."
+msgstr ""
+
+#: src/API/ApiTokensController.php:137
+msgid "At least one valid scope is required."
+msgstr ""
+
+#: src/API/ApiTokensController.php:147
+#: src/Admin/settings/ApiTokensTab.js:147
+msgid "Failed to create API token."
+msgstr ""
+
+#: src/API/ApiTokensController.php:174
+msgid "API token not found."
 msgstr ""
 
 #. translators: %d: WordPress user ID
@@ -144,6 +169,14 @@ msgstr ""
 
 #: src/API/DashboardController.php:54
 msgid "Month to summarize, as YYYY-MM. Defaults to the current month."
+msgstr ""
+
+#: src/API/ExternalTransactionsController.php:85
+msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
+msgstr ""
+
+#: src/API/ExternalTransactionsController.php:92
+msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
 msgstr ""
 
 #: src/API/ExternalUpdatesController.php:157
@@ -1326,6 +1359,176 @@ msgstr ""
 msgid "Save settings"
 msgstr ""
 
+#: src/Admin/settings/ApiTokensTab.js:35
+msgid "Read transactions"
+msgstr ""
+
+#. translators: %s: date and time, e.g. 2026-01-31 14:05
+#: src/Admin/settings/ApiTokensTab.js:50
+#, js-format
+msgid "%s UTC"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:88
+msgid "Failed to load API tokens."
+msgstr ""
+
+#. translators: %s: token label
+#: src/Admin/settings/ApiTokensTab.js:179
+#, js-format
+msgid "API token \"%s\" revoked."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:194
+msgid "Failed to revoke API token."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:206
+#: src/Admin/settings/SettingsApp.js:228
+msgid "API Tokens"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:209
+#: src/Admin/settings/ApiTokensTab.js:477
+msgid "Generate token"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:214
+msgid "Issue tokens so other sites can read this site's transactions over the data sharing API."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:240
+msgid "No API tokens yet. Generate one to share transactions with another site."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:252
+#: src/Admin/settings/ApiTokensTab.js:290
+#: src/Admin/settings/ApiTokensTab.js:402
+msgid "Label"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:255
+#: src/Admin/settings/ApiTokensTab.js:304
+#: src/Admin/settings/ApiTokensTab.js:417
+msgid "Scopes"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:261
+#: src/Admin/settings/ApiTokensTab.js:313
+#: src/Admin/transaction/TransactionPage.js:1062
+msgid "Created"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:267
+#: src/Admin/settings/ApiTokensTab.js:321
+msgid "Last used"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:273
+#: src/Admin/settings/ApiTokensTab.js:334
+#: src/Admin/transaction/TransactionPage.js:1051
+#: src/Admin/transactions/TransactionsApp.js:285
+#: src/Admin/transactions/TransactionsApp.js:456
+msgid "Status"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:279
+msgid "Actions"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:297
+msgid "(no label)"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:328
+msgid "Never"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:347
+msgid "Active"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:351
+msgid "Revoked"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:372
+msgid "Revoke"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:388
+msgid "Generate API token"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:407
+msgid "A name to identify who this token is for, e.g. the address of the site that will use it."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:448
+msgid "Enter a label to generate the token."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:452
+msgid "Select at least one scope to generate the token."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:464
+#: src/Admin/settings/ApiTokensTab.js:559
+#: src/Admin/settings/ConnectionTab.js:839
+#: src/Admin/transaction/TransactionPage.js:151
+#: src/Admin/transaction/TransactionPage.js:281
+#: src/Admin/transaction/TransactionPage.js:505
+#: src/Admin/transaction/TransactionPage.js:1364
+#: src/Admin/transactions/components/ImportTransactionsModal.js:157
+msgid "Cancel"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:473
+msgid "Generating…"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:489
+msgid "Token created"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:494
+msgid "Copy this token now. For security it will not be shown again."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:504
+msgid "Copying failed. Select the token above and copy it manually."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:513
+msgid "Copied!"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:514
+msgid "Copy token"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:520
+msgid "Done"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:528
+msgid "Revoke API token"
+msgstr ""
+
+#. translators: %s: token label
+#: src/Admin/settings/ApiTokensTab.js:546
+#, js-format
+msgid "Revoke the API token \"%s\"? Every site connected with it loses access to this site's transactions immediately. This cannot be undone."
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:569
+msgid "Revoking…"
+msgstr ""
+
+#: src/Admin/settings/ApiTokensTab.js:570
+msgid "Revoke token"
+msgstr ""
+
 #: src/Admin/settings/AuditLogTab.js:14
 msgid "Setting changed"
 msgstr ""
@@ -1359,7 +1562,7 @@ msgid "Failed to load the audit log."
 msgstr ""
 
 #: src/Admin/settings/AuditLogTab.js:103
-#: src/Admin/settings/SettingsApp.js:214
+#: src/Admin/settings/SettingsApp.js:222
 msgid "Audit Log"
 msgstr ""
 
@@ -1578,15 +1781,6 @@ msgstr ""
 msgid "Connect Mollie first to run a test payment."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:839
-#: src/Admin/transaction/TransactionPage.js:151
-#: src/Admin/transaction/TransactionPage.js:281
-#: src/Admin/transaction/TransactionPage.js:505
-#: src/Admin/transaction/TransactionPage.js:1364
-#: src/Admin/transactions/components/ImportTransactionsModal.js:157
-msgid "Cancel"
-msgstr ""
-
 #: src/Admin/settings/ConnectionTab.js:842
 msgid "Disconnect from Mollie? You will need to reconnect to accept payments."
 msgstr ""
@@ -1657,50 +1851,50 @@ msgstr ""
 msgid "Disable bank transfer when fewer than this many working days remain before the key date."
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:64
+#: src/Admin/settings/SettingsApp.js:72
 msgid "Authorization cancelled. Nothing was changed, so an existing Mollie connection keeps working."
 msgstr ""
 
 #. translators: %s: error code reported by the authorization server
-#: src/Admin/settings/SettingsApp.js:70
+#: src/Admin/settings/SettingsApp.js:78
 #, js-format
 msgid "Mollie authorization failed (%s). Nothing was changed, so an existing Mollie connection keeps working."
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:84
+#: src/Admin/settings/SettingsApp.js:92
 msgid "OAuth callback incomplete: refresh token not received from authorization server."
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:99
+#: src/Admin/settings/SettingsApp.js:107
 msgid "OAuth callback is missing the state parameter. Please try connecting again."
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:123
+#: src/Admin/settings/SettingsApp.js:131
 msgid "Successfully connected to Mollie!"
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:133
+#: src/Admin/settings/SettingsApp.js:141
 msgid "Failed to save OAuth tokens: "
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:177
+#: src/Admin/settings/SettingsApp.js:185
 msgid "Fair Payments Connector Settings"
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:199
+#: src/Admin/settings/SettingsApp.js:207
 msgid "Connection"
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:203
+#: src/Admin/settings/SettingsApp.js:211
 msgid "Payment Methods"
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:210
+#: src/Admin/settings/SettingsApp.js:218
 #: src/blocks/simple-payment/index.js:128
 msgid "Currency"
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:244
+#: src/Admin/settings/SettingsApp.js:264
 msgid "Need help?"
 msgstr ""
 
@@ -1862,16 +2056,6 @@ msgstr ""
 
 #: src/Admin/transaction/TransactionPage.js:1041
 msgid "Status & Timing"
-msgstr ""
-
-#: src/Admin/transaction/TransactionPage.js:1051
-#: src/Admin/transactions/TransactionsApp.js:285
-#: src/Admin/transactions/TransactionsApp.js:456
-msgid "Status"
-msgstr ""
-
-#: src/Admin/transaction/TransactionPage.js:1062
-msgid "Created"
 msgstr ""
 
 #: src/Admin/transaction/TransactionPage.js:1070

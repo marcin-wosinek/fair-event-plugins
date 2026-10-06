@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnectorExperimental\Admin;
 
+use FairPaymentsConnectorExperimental\Core\ApiTokenFallback;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -29,15 +31,18 @@ class AdminPages {
 	 * @return void
 	 */
 	public function register_admin_pages() {
-		// API Tokens submenu under the fair-payments-connector menu.
-		add_submenu_page(
-			'fair-payments-connector-transactions',
-			__( 'API Tokens', 'fair-payments-connector-experimental' ),
-			__( 'API Tokens', 'fair-payments-connector-experimental' ),
-			'manage_options',
-			'fair-payments-connector-api-tokens',
-			array( $this, 'render_api_tokens_page' )
-		);
+		// API Tokens are a tab of Fair Payments Connector's Settings page. This
+		// standalone page remains only for a release of it that predates the move.
+		if ( ApiTokenFallback::is_owner() ) {
+			add_submenu_page(
+				'fair-payments-connector-transactions',
+				__( 'API Tokens', 'fair-payments-connector-experimental' ),
+				__( 'API Tokens', 'fair-payments-connector-experimental' ),
+				'manage_options',
+				'fair-payments-connector-api-tokens',
+				array( $this, 'render_api_tokens_page' )
+			);
+		}
 
 		// Connected Sites submenu under the fair-payments-connector menu.
 		add_submenu_page(
@@ -58,7 +63,9 @@ class AdminPages {
 	 */
 	public function enqueue_admin_scripts( $hook ) {
 		if ( false !== strpos( $hook, 'fair-payments-connector-api-tokens' ) ) {
-			$this->enqueue_admin_page_script( 'api-tokens' );
+			if ( ApiTokenFallback::is_owner() ) {
+				$this->enqueue_admin_page_script( 'api-tokens' );
+			}
 			return;
 		}
 

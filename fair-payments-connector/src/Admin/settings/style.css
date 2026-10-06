@@ -1,0 +1,125 @@
+/* Let the tab strip wrap onto a second row instead of squeezing its labels. */
+.fair-payments-connector-settings-tabs .components-tab-panel__tabs {
+	flex-wrap: wrap;
+}
+
+.fair-payments-connector-settings-tabs .components-tab-panel__tabs-item {
+	white-space: nowrap;
+}
+
+.fair-payments-connector-api-tokens__header {
+	flex-wrap: wrap;
+	gap: 8px 16px;
+}
+
+.fair-payments-connector-api-tokens__title {
+	margin: 0;
+}
+
+.fair-payments-connector-api-tokens__intro {
+	margin-top: 0;
+	color: #646970;
+}
+
+.fair-payments-connector-api-tokens__table td {
+	overflow-wrap: anywhere;
+}
+
+.fair-payments-connector-api-tokens__status {
+	font-weight: 600;
+}
+
+.fair-payments-connector-api-tokens__status.is-active {
+	color: #007017;
+}
+
+.fair-payments-connector-api-tokens__status.is-revoked {
+	color: #d63638;
+}
+
+.fair-payments-connector-api-tokens__dialog {
+	width: 100%;
+	max-width: 500px;
+}
+
+.fair-payments-connector-api-tokens__dialog .components-notice {
+	margin: 0 0 16px;
+}
+
+.fair-payments-connector-api-tokens__scopes {
+	margin: 16px 0 0;
+	padding: 0;
+	border: 0;
+}
+
+.fair-payments-connector-api-tokens__scopes legend {
+	margin-bottom: 8px;
+	padding: 0;
+	font-weight: 600;
+}
+
+.fair-payments-connector-api-tokens__hint {
+	margin: 12px 0 0;
+	color: #646970;
+}
+
+.fair-payments-connector-api-tokens__token {
+	display: block;
+	padding: 12px;
+	background: #f0f0f1;
+	overflow-wrap: anywhere;
+	user-select: all;
+}
+
+.fair-payments-connector-api-tokens__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+/* Narrow screens: each token becomes a labelled block instead of a table row. */
+@media screen and (max-width: 782px) {
+	.fair-payments-connector-api-tokens__table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+	}
+
+	.fair-payments-connector-api-tokens__table,
+	.fair-payments-connector-api-tokens__table tbody,
+	.fair-payments-connector-api-tokens__table tr,
+	.fair-payments-connector-api-tokens__table td {
+		display: block;
+		width: auto;
+	}
+
+	.fair-payments-connector-api-tokens__table tr {
+		padding: 8px 0;
+	}
+
+	.fair-payments-connector-api-tokens__table td {
+		display: flex;
+		gap: 12px;
+		padding: 4px 12px;
+	}
+
+	.fair-payments-connector-api-tokens__table td[data-label]::before {
+		content: attr(data-label);
+		flex: 0 0 6.5em;
+		color: #646970;
+	}
+
+	.fair-payments-connector-api-tokens__table
+		.fair-payments-connector-api-tokens__actions:empty {
+		display: none;
+	}
+
+	.fair-payments-connector-api-tokens__buttons .components-button {
+		flex: 1 1 auto;
+		justify-content: center;
+	}
+}

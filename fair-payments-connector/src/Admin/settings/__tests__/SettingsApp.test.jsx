@@ -5,7 +5,13 @@
  * parameters never stay in the address bar.
  */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+	render,
+	screen,
+	waitFor,
+	fireEvent,
+	act,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import SettingsApp from '../SettingsApp.js';
 
@@ -13,6 +19,7 @@ jest.mock( '@wordpress/api-fetch' );
 // The tabs load their own data; the callback handling is what's under test.
 // The page's pre-existing tab-selection logging is expected in every test.
 jest.mock( '../ConnectionTab', () => () => <div>Connection tab</div> );
+jest.mock( '../ApiTokensTab.js', () => () => <div>API tokens tab</div> );
 
 const CALLBACK_PATH = '/fair-payments-connector/v1/oauth/callback';
 const SETTINGS_URL =
@@ -53,6 +60,60 @@ const TOKENS = {
 afterEach( () => {
 	jest.clearAllMocks();
 	window.history.replaceState( {}, '', SETTINGS_URL );
+	delete window.fairPaymentsConnectorSettings;
+} );
+
+// TabPanel selects its first tab asynchronously after mounting.
+async function renderSettled() {
+	render( <SettingsApp /> );
+	await waitFor( () =>
+		expect(
+			screen.getByRole( 'tab', { name: 'Connection' } )
+		).toHaveAttribute( 'aria-selected', 'true' )
+	);
+}
+
+describe( 'SettingsApp — API Tokens tab (#1747)', () => {
+	it( 'appends the tab when this plugin serves API tokens', async () => {
+		window.fairPaymentsConnectorSettings = { apiTokensEnabled: '1' };
+
+		await renderSettled();
+
+		expect(
+			screen.getAllByRole( 'tab' ).map( ( tab ) => tab.textContent )
+		).toEqual( [
+			'Connection',
+			'Payment Methods',
+			'Currency',
+			'Audit Log',
+			'API Tokens',
+		] );
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'tab', { name: 'API Tokens' } )
+			);
+		} );
+		expect(
+			await screen.findByText( 'API tokens tab' )
+		).toBeInTheDocument();
+		expect( console ).toHaveLogged();
+	} );
+
+	it.each( [
+		[ 'another plugin owns API tokens', { apiTokensEnabled: '' } ],
+		[ 'the page was given no bootstrap data', undefined ],
+	] )( 'leaves the tab out when %s', async ( _reason, bootstrap ) => {
+		window.fairPaymentsConnectorSettings = bootstrap;
+
+		await renderSettled();
+
+		expect(
+			screen.queryByRole( 'tab', { name: 'API Tokens' } )
+		).not.toBeInTheDocument();
+		expect( screen.getAllByRole( 'tab' ) ).toHaveLength( 4 );
+		expect( console ).toHaveLogged();
+	} );
 } );
 
 describe( 'SettingsApp — OAuth callback (#1693)', () => {
