@@ -1,7 +1,11 @@
 /**
- * Playwright API tests for WeeklyNotificationsController (#1660):
- * authorization, input validation, write-only bot token handling, and the
- * fail-closed test-send and preview paths.
+ * Playwright API tests for WeeklyNotificationsController (#1660, #1734):
+ * authorization, input validation, the bot token's move to Settings →
+ * Connectors, and the fail-closed test-send and preview paths.
+ *
+ * The bot token is entered, replaced and removed through the core settings
+ * route (`/wp/v2/settings`), the route the Connectors screen writes to. The
+ * weekly notifications routes only report whether a token is configured.
  *
  * No case here reaches api.telegram.org: each is refused by a permission
  * check, validation, a missing-configuration guard, or an empty week first. The successful
@@ -10,9 +14,9 @@
  * the Telegram HTTP double.
  *
  * The routes register with the `sources` feature bundle (on by default).
- * The suite restores the settings it found. The bot token is write-only and
- * cannot be restored, so the cases that save or remove one are skipped when
- * the site already has a token.
+ * The suite restores the settings it found. Responses never hold the token,
+ * so it cannot be restored: the cases that save or remove one are skipped
+ * when the site already has a token.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -22,7 +26,10 @@ const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 
 const PATH = '/wp-json/fair-events-experimental/v1/weekly-notifications';
+const SETTINGS_PATH = '/wp-json/wp/v2/settings';
+const TOKEN_OPTION = 'fair_events_experimental_weekly_telegram_token';
 const TOKEN = '123456789:AAEe2eWeeklyNotificationsToken0123456';
+const REPLACEMENT = '987654321:AAEe2eWeeklyNotificationsToken6543210';
 
 const adminHeaders = {
 	Authorization:
@@ -40,6 +47,16 @@ test.describe( 'WeeklyNotificationsController', () => {
 	let sourceId;
 	let sourceSlug;
 	const pageIds = [];
+
+	// Write the credential the way the Connectors screen does.
+	const saveToken = ( value, headers = adminHeaders ) =>
+		api.post( SETTINGS_PATH, {
+			headers,
+			data: { [ TOKEN_OPTION ]: value },
+		} );
+
+	const readStatus = async () =>
+		( await api.get( PATH, { headers: adminHeaders } ) ).json();
 
 	const createPage = async ( status ) => {
 		const res = await api.post( '/wp-json/wp/v2/pages', {
@@ -118,9 +135,7 @@ test.describe( 'WeeklyNotificationsController', () => {
 			},
 		} );
 		if ( ! original.telegram_token_configured ) {
-			await api.delete( `${ PATH }/telegram-token`, {
-				headers: adminHeaders,
-			} );
+			await saveToken( '' );
 		}
 		for ( const id of pageIds ) {
 			await api.delete( `/wp-json/wp/v2/pages/${ id }?force=true`, {
@@ -162,10 +177,9 @@ test.describe( 'WeeklyNotificationsController', () => {
 			() =>
 				api.get( `${ PATH }/preview`, { headers: subscriberHeaders } ),
 			() => api.post( `${ PATH }/test`, { headers: subscriberHeaders } ),
-			() =>
-				api.delete( `${ PATH }/telegram-token`, {
-					headers: subscriberHeaders,
-				} ),
+			() => saveToken( TOKEN, subscriberHeaders ),
+			// Refused on permissions, not on the value's format.
+			() => saveToken( 'not-a-token', subscriberHeaders ),
 		] ) {
 			expect( ( await call() ).status() ).toBe( 403 );
 		}
@@ -183,6 +197,13 @@ test.describe( 'WeeklyNotificationsController', () => {
 				time_of_day: expect.stringMatching( /^\d{2}:\d{2}$/ ),
 				week_scope: expect.stringMatching( /^(current|next)$/ ),
 				telegram_token_configured: expect.any( Boolean ),
+				telegram_token_valid: expect.any( Boolean ),
+				telegram_token_source: expect.stringMatching(
+					/^(env|constant|database|none)$/
+				),
+				connectors_url: expect.stringMatching(
+					/\/wp-admin\/options-connectors\.php$/
+				),
 				telegram_chat_ids: expect.any( Array ),
 				sources: expect.any( Array ),
 				pages: expect.any( Array ),
@@ -193,34 +214,110 @@ test.describe( 'WeeklyNotificationsController', () => {
 		expect( body ).not.toHaveProperty( 'telegram_bot_token' );
 	} );
 
-	test( 'saves a bot token write-only', async () => {
+	test( 'enters, replaces and removes the token through the settings API', async () => {
 		test.skip(
 			original.telegram_token_configured,
-			'Would replace the bot token already saved on this site.'
+			'Would replace the bot token already configured on this site.'
 		);
+
+		for ( const token of [ TOKEN, REPLACEMENT ] ) {
+			const res = await saveToken( token );
+			expect( res.status() ).toBe( 200 );
+			const text = await res.text();
+			expect( text ).not.toContain( token );
+			// Masked, showing only the last four characters.
+			expect( JSON.parse( text )[ TOKEN_OPTION ] ).toMatch(
+				new RegExp( `^•+${ token.slice( -4 ) }$` )
+			);
+
+			const read = await api.get( PATH, { headers: adminHeaders } );
+			const statusText = await read.text();
+			expect( statusText ).not.toContain( token );
+			expect( JSON.parse( statusText ) ).toMatchObject( {
+				telegram_token_configured: true,
+				telegram_token_valid: true,
+				telegram_token_source: 'database',
+			} );
+
+			const settings = await api.get( SETTINGS_PATH, {
+				headers: adminHeaders,
+			} );
+			expect( await settings.text() ).not.toContain( token );
+		}
+
+		const removed = await saveToken( '' );
+		expect( removed.status() ).toBe( 200 );
+		expect( await readStatus() ).toMatchObject( {
+			telegram_token_configured: false,
+			telegram_token_valid: false,
+			telegram_token_source: 'none',
+		} );
+	} );
+
+	test( 'rejects a malformed replacement and keeps the previous token', async () => {
+		test.skip(
+			original.telegram_token_configured,
+			'Would replace the bot token already configured on this site.'
+		);
+		expect( ( await saveToken( TOKEN ) ).status() ).toBe( 200 );
+
+		const invalid = 'not-a-token-1734';
+		const res = await saveToken( invalid );
+		expect( res.status() ).toBe( 400 );
+		const text = await res.text();
+		expect( text ).not.toContain( invalid );
+		expect( JSON.parse( text ).code ).toBe( 'invalid_bot_token' );
+
+		const settings = await api.get( SETTINGS_PATH, {
+			headers: adminHeaders,
+		} );
+		expect( ( await settings.json() )[ TOKEN_OPTION ] ).toMatch(
+			new RegExp( `^•+${ TOKEN.slice( -4 ) }$` )
+		);
+		expect( await readStatus() ).toMatchObject( {
+			telegram_token_configured: true,
+			telegram_token_valid: true,
+		} );
+	} );
+
+	test( 'rejects the former token parameter and route without saving anything', async () => {
+		await api.post( PATH, {
+			headers: adminHeaders,
+			data: { time_of_day: '07:45' },
+		} );
+		const before = await readStatus();
+
 		const res = await api.post( PATH, {
 			headers: adminHeaders,
-			data: { telegram_bot_token: TOKEN },
+			data: { time_of_day: '18:30', telegram_bot_token: REPLACEMENT },
 		} );
-		expect( res.status() ).toBe( 200 );
+		expect( res.status() ).toBe( 400 );
 		const text = await res.text();
-		expect( text ).not.toContain( TOKEN );
-		expect( JSON.parse( text ).telegram_token_configured ).toBe( true );
+		expect( text ).not.toContain( REPLACEMENT );
+		const body = JSON.parse( text );
+		expect( body.code ).toBe( 'token_managed_in_connectors' );
+		expect( body.message ).toContain( 'Connectors' );
 
-		const read = await api.get( PATH, { headers: adminHeaders } );
-		expect( await read.text() ).not.toContain( TOKEN );
+		const after = await readStatus();
+		expect( after.time_of_day ).toBe( '07:45' );
+		expect( after.telegram_token_configured ).toBe(
+			before.telegram_token_configured
+		);
+
+		const removed = await api.delete( `${ PATH }/telegram-token`, {
+			headers: adminHeaders,
+		} );
+		expect( removed.status() ).toBe( 404 );
+		expect( ( await readStatus() ).telegram_token_configured ).toBe(
+			before.telegram_token_configured
+		);
 	} );
 
 	const ensureToken = async () => {
-		const read = await api.get( PATH, { headers: adminHeaders } );
-		if ( ( await read.json() ).telegram_token_configured ) {
+		if ( ( await readStatus() ).telegram_token_configured ) {
 			return;
 		}
-		const saved = await api.post( PATH, {
-			headers: adminHeaders,
-			data: { telegram_bot_token: TOKEN },
-		} );
-		expect( saved.status() ).toBe( 200 );
+		expect( ( await saveToken( TOKEN ) ).status() ).toBe( 200 );
 	};
 
 	test( 'keeps the saved token when other settings are saved (#1733)', async () => {
@@ -242,29 +339,6 @@ test.describe( 'WeeklyNotificationsController', () => {
 		expect( body ).not.toHaveProperty( 'telegram_bot_token' );
 	} );
 
-	test( 'rejects an invalid replacement without changing other settings (#1733)', async () => {
-		await ensureToken();
-		await api.post( PATH, {
-			headers: adminHeaders,
-			data: { time_of_day: '07:45' },
-		} );
-
-		const invalid = 'not-a-token-1733';
-		const res = await api.post( PATH, {
-			headers: adminHeaders,
-			data: { time_of_day: '18:30', telegram_bot_token: invalid },
-		} );
-		expect( res.status() ).toBe( 400 );
-		const text = await res.text();
-		expect( text ).not.toContain( invalid );
-		expect( JSON.parse( text ).code ).toBe( 'invalid_bot_token' );
-
-		const read = await api.get( PATH, { headers: adminHeaders } );
-		const body = await read.json();
-		expect( body.time_of_day ).toBe( '07:45' );
-		expect( body.telegram_token_configured ).toBe( true );
-	} );
-
 	test( 'keeps Telegram destinations when Telegram is turned off', async () => {
 		await api.post( PATH, {
 			headers: adminHeaders,
@@ -284,15 +358,6 @@ test.describe( 'WeeklyNotificationsController', () => {
 			'@fair_e2e_channel',
 			'-1001234567890',
 		] );
-	} );
-
-	test( 'rejects a malformed bot token', async () => {
-		const res = await api.post( PATH, {
-			headers: adminHeaders,
-			data: { telegram_bot_token: 'not-a-token' },
-		} );
-		expect( res.status() ).toBe( 400 );
-		expect( ( await res.json() ).code ).toBe( 'invalid_bot_token' );
 	} );
 
 	test( 'rejects invalid chat identifiers and names them', async () => {
@@ -395,15 +460,13 @@ test.describe( 'WeeklyNotificationsController', () => {
 		expect( ( await res.json() ).code ).toBe( 'invalid_source' );
 	} );
 
-	test( 'refuses a test send without a saved token', async () => {
+	test( 'refuses a test send and turning on without a token', async () => {
 		test.skip(
 			original.telegram_token_configured,
-			'Would remove the bot token already saved on this site.'
+			'Would remove the bot token already configured on this site.'
 		);
-		const cleared = await api.delete( `${ PATH }/telegram-token`, {
-			headers: adminHeaders,
-		} );
-		expect( ( await cleared.json() ).telegram_token_configured ).toBe(
+		expect( ( await saveToken( '' ) ).status() ).toBe( 200 );
+		expect( ( await readStatus() ).telegram_token_configured ).toBe(
 			false
 		);
 
@@ -411,7 +474,26 @@ test.describe( 'WeeklyNotificationsController', () => {
 			headers: adminHeaders,
 		} );
 		expect( res.status() ).toBe( 400 );
-		expect( ( await res.json() ).code ).toBe( 'missing_token' );
+		const body = await res.json();
+		expect( body.code ).toBe( 'missing_token' );
+		expect( body.message ).toContain( 'Connectors' );
+
+		const page = await createPage( 'publish' );
+		const enabled = await api.post( PATH, {
+			headers: adminHeaders,
+			data: {
+				enabled: true,
+				source_slug: sourceSlug,
+				page_id: page.id,
+				telegram_enabled: true,
+				telegram_chat_ids: '@fair_e2e_channel',
+			},
+		} );
+		expect( enabled.status() ).toBe( 400 );
+		const refusal = await enabled.json();
+		expect( refusal.code ).toBe( 'no_destination' );
+		expect( refusal.message ).toContain( 'Connectors' );
+		expect( ( await readStatus() ).enabled ).toBe( original.enabled );
 	} );
 
 	test( 'sends nothing when the test week has no events (#1735)', async () => {
@@ -447,12 +529,10 @@ test.describe( 'WeeklyNotificationsController', () => {
 					source_slug: emptySlug,
 					page_id: page.id,
 					telegram_chat_ids: '@e2e_weekly_empty',
-					// Only saved when the site has no token of its own; afterAll removes it.
-					...( original.telegram_token_configured
-						? {}
-						: { telegram_bot_token: TOKEN } ),
 				},
 			} );
+			// Only saved when the site has no token of its own; afterAll removes it.
+			await ensureToken();
 			expect( saved.status() ).toBe( 200 );
 
 			const preview = await api.get( `${ PATH }/preview`, {

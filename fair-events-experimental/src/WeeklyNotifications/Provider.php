@@ -36,6 +36,16 @@ interface Provider {
 	public function destinations( array $settings, $include_disabled = false );
 
 	/**
+	 * Why an enabled provider with destinations cannot deliver, for the run history.
+	 *
+	 * Must never include credentials.
+	 *
+	 * @param array $settings Weekly notification settings.
+	 * @return string Administrator-facing message, or '' when nothing is wrong.
+	 */
+	public function configuration_error( array $settings );
+
+	/**
 	 * Format a summary as the ordered messages this provider sends.
 	 *
 	 * @param array $summary Summary from {@see SummaryBuilder::build()}.

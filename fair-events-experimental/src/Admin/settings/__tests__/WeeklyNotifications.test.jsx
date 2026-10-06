@@ -2,7 +2,14 @@
  * @jest-environment jsdom
  */
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import WeeklyNotifications from '../WeeklyNotifications.js';
 
@@ -21,6 +28,9 @@ function config( overrides ) {
 		telegram_enabled: true,
 		telegram_chat_ids: [ '@fair_channel' ],
 		telegram_token_configured: true,
+		telegram_token_valid: true,
+		telegram_token_source: 'database',
+		connectors_url: 'https://example.test/wp-admin/options-connectors.php',
 		configuration_error: null,
 		sources: [ { slug: 'city', name: 'City events' } ],
 		pages: [ { id: 12, title: 'Calendar', url: 'https://example.test/' } ],
@@ -46,8 +56,6 @@ afterEach( () => {
 } );
 
 describe( 'WeeklyNotifications', () => {
-	const TOKEN = '123456789:AAEabcdefghijklmnopqrstuvwxyz012345';
-
 	const clickSave = () =>
 		fireEvent.click(
 			screen.getByRole( 'button', {
@@ -55,20 +63,124 @@ describe( 'WeeklyNotifications', () => {
 			} )
 		);
 
-	it( 'says a token is saved without rendering a token field', async () => {
+	it( 'reports a saved token and links to Connectors, with no token controls', async () => {
 		mockApi( config() );
 
 		render( <WeeklyNotifications onNotice={ () => {} } /> );
 
 		expect(
 			await screen.findByText(
-				'A bot token is saved. It is not shown here.'
+				'A bot token is saved in Connectors. It is not shown here. Send a test summary to confirm Telegram accepts it.'
 			)
 		).toBeInTheDocument();
-		expect( screen.queryByLabelText( 'New bot token' ) ).toBeNull();
-		expect( document.querySelector( 'input[type="password"]' ) ).toBeNull();
 		expect(
-			screen.getByRole( 'button', { name: 'Replace bot token' } )
+			screen.getByRole( 'link', { name: /Manage in Connectors/ } )
+		).toHaveAttribute(
+			'href',
+			'https://example.test/wp-admin/options-connectors.php'
+		);
+		expect( document.querySelector( 'input[type="password"]' ) ).toBeNull();
+		expect( screen.queryByLabelText( /bot token/i ) ).toBeNull();
+		expect(
+			screen.queryByRole( 'button', { name: /bot token/i } )
+		).toBeNull();
+		// Every other control is still there.
+		for ( const label of [
+			'Send weekly event notifications',
+			'Event source',
+			'Page linked in the heading',
+			'Send on',
+			'Send at',
+			'Which week to include',
+			'Post to Telegram',
+			'Chats and channels',
+		] ) {
+			expect( screen.getByLabelText( label ) ).toBeInTheDocument();
+		}
+		expect(
+			screen.getByRole( 'button', { name: 'Preview next message' } )
+		).toBeInTheDocument();
+	} );
+
+	it.each( [
+		[
+			'env',
+			'The bot token comes from the FAIR_EVENTS_EXPERIMENTAL_TELEGRAM_BOT_TOKEN environment variable, which overrides any token saved in Connectors. Send a test summary to confirm Telegram accepts it.',
+		],
+		[
+			'constant',
+			'The bot token comes from the FAIR_EVENTS_EXPERIMENTAL_TELEGRAM_BOT_TOKEN constant, which overrides any token saved in Connectors. Send a test summary to confirm Telegram accepts it.',
+		],
+	] )( 'explains a token supplied by %s', async ( source, message ) => {
+		mockApi( config( { telegram_token_source: source } ) );
+
+		render( <WeeklyNotifications onNotice={ () => {} } /> );
+
+		expect( await screen.findByText( message ) ).toBeInTheDocument();
+	} );
+
+	it( 'blocks the test send for a malformed token and says where to fix it', async () => {
+		mockApi( config( { telegram_token_valid: false } ) );
+
+		render( <WeeklyNotifications onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByText(
+				'The saved bot token is not a valid Telegram bot token, so nothing can be sent. Replace it in Connectors.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', {
+				name: 'Send test summary to Telegram',
+			} )
+		).toBeDisabled();
+		expect(
+			screen.getByText(
+				'Fix the bot token in Connectors before sending a test message.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'refreshes the token status on return, keeping unsaved edits', async () => {
+		let current = config( {
+			telegram_token_configured: false,
+			telegram_token_valid: false,
+			telegram_token_source: 'none',
+		} );
+		mockApi( null, {
+			[ `GET ${ PATH }` ]: () => Promise.resolve( current ),
+		} );
+
+		render( <WeeklyNotifications onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByText(
+				'No bot token is configured. Add one in Connectors to post to Telegram.'
+			)
+		).toBeInTheDocument();
+		fireEvent.change( screen.getByLabelText( 'Send at' ), {
+			target: { value: '10:30' },
+		} );
+
+		// The token is added in Connectors; the server also has a newer
+		// schedule, which must not overwrite the unsaved edit.
+		current = config( { time_of_day: '06:00' } );
+		await act( async () => {
+			window.dispatchEvent( new Event( 'focus' ) );
+		} );
+
+		expect(
+			(
+				await screen.findAllByText(
+					/A bot token is saved in Connectors\./
+				)
+			).length
+		).toBeGreaterThan( 0 );
+		expect( screen.getByLabelText( 'Send at' ) ).toHaveValue( '10:30' );
+		expect(
+			screen.getByText(
+				'Save your changes first — the test uses the saved settings.'
+			)
 		).toBeInTheDocument();
 	} );
 
@@ -119,125 +231,6 @@ describe( 'WeeklyNotifications', () => {
 				message: 'Weekly notification settings saved.',
 			} )
 		);
-	} );
-
-	it( 'discards a replacement draft when keeping the saved token', async () => {
-		const save = jest.fn( () => Promise.resolve( config() ) );
-		mockApi( config(), { [ `POST ${ PATH }` ]: save } );
-
-		render( <WeeklyNotifications onNotice={ () => {} } /> );
-
-		fireEvent.click(
-			await screen.findByRole( 'button', { name: 'Replace bot token' } )
-		);
-		const field = screen.getByLabelText( 'New bot token' );
-		expect( field ).toHaveAttribute( 'type', 'password' );
-		fireEvent.change( field, { target: { value: TOKEN } } );
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Keep saved token' } )
-		);
-
-		expect( screen.queryByLabelText( 'New bot token' ) ).toBeNull();
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Replace bot token' } )
-		);
-		expect( screen.getByLabelText( 'New bot token' ) ).toHaveValue( '' );
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Keep saved token' } )
-		);
-
-		clickSave();
-		await waitFor( () => expect( save ).toHaveBeenCalled() );
-		expect( save.mock.calls[ 0 ][ 0 ].data ).not.toHaveProperty(
-			'telegram_bot_token'
-		);
-	} );
-
-	it( 'saves a deliberate replacement, then closes the field', async () => {
-		const save = jest.fn( () => Promise.resolve( config() ) );
-		mockApi( config(), { [ `POST ${ PATH }` ]: save } );
-
-		render( <WeeklyNotifications onNotice={ () => {} } /> );
-
-		fireEvent.click(
-			await screen.findByRole( 'button', { name: 'Replace bot token' } )
-		);
-		fireEvent.change( screen.getByLabelText( 'New bot token' ), {
-			target: { value: TOKEN },
-		} );
-		clickSave();
-
-		await waitFor( () => expect( save ).toHaveBeenCalled() );
-		expect( save.mock.calls[ 0 ][ 0 ].data.telegram_bot_token ).toBe(
-			TOKEN
-		);
-		await waitFor( () =>
-			expect( screen.queryByLabelText( 'New bot token' ) ).toBeNull()
-		);
-		expect(
-			screen.getByRole( 'button', { name: 'Replace bot token' } )
-		).toBeInTheDocument();
-	} );
-
-	it( 'keeps a rejected replacement open with the server’s message', async () => {
-		const onNotice = jest.fn();
-		mockApi( config(), {
-			[ `POST ${ PATH }` ]: () =>
-				Promise.reject( {
-					code: 'invalid_bot_token',
-					message:
-						'That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE….',
-				} ),
-		} );
-
-		render( <WeeklyNotifications onNotice={ onNotice } /> );
-
-		fireEvent.click(
-			await screen.findByRole( 'button', { name: 'Replace bot token' } )
-		);
-		fireEvent.change( screen.getByLabelText( 'New bot token' ), {
-			target: { value: 'not-a-token' },
-		} );
-		clickSave();
-
-		await waitFor( () =>
-			expect( onNotice ).toHaveBeenCalledWith( {
-				status: 'error',
-				message:
-					'That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE….',
-			} )
-		);
-		expect( screen.getByLabelText( 'New bot token' ) ).toHaveValue(
-			'not-a-token'
-		);
-	} );
-
-	it( 'shows the token field for the first token and sends it', async () => {
-		const save = jest.fn( () => Promise.resolve( config() ) );
-		mockApi( config( { telegram_token_configured: false } ), {
-			[ `POST ${ PATH }` ]: save,
-		} );
-
-		render( <WeeklyNotifications onNotice={ () => {} } /> );
-
-		const field = await screen.findByLabelText( 'Bot token' );
-		expect( field ).toHaveAttribute( 'type', 'password' );
-		expect(
-			screen.queryByRole( 'button', { name: 'Replace bot token' } )
-		).toBeNull();
-		fireEvent.change( field, { target: { value: TOKEN } } );
-		clickSave();
-
-		await waitFor( () => expect( save ).toHaveBeenCalled() );
-		expect( save.mock.calls[ 0 ][ 0 ].data.telegram_bot_token ).toBe(
-			TOKEN
-		);
-		expect(
-			await screen.findByText(
-				'A bot token is saved. It is not shown here.'
-			)
-		).toBeInTheDocument();
-		expect( screen.queryByLabelText( 'Bot token' ) ).toBeNull();
 	} );
 
 	it( 'saves any listed page as the heading link', async () => {
@@ -336,7 +329,13 @@ describe( 'WeeklyNotifications', () => {
 	} );
 
 	it( 'explains why the test send is unavailable without a token', async () => {
-		mockApi( config( { telegram_token_configured: false } ) );
+		mockApi(
+			config( {
+				telegram_token_configured: false,
+				telegram_token_valid: false,
+				telegram_token_source: 'none',
+			} )
+		);
 
 		render( <WeeklyNotifications onNotice={ () => {} } /> );
 
@@ -347,7 +346,7 @@ describe( 'WeeklyNotifications', () => {
 		).toBeDisabled();
 		expect(
 			screen.getByText(
-				'Save a bot token and at least one chat or channel before sending a test message.'
+				'Fix the bot token in Connectors before sending a test message.'
 			)
 		).toBeInTheDocument();
 	} );
@@ -496,7 +495,11 @@ describe( 'WeeklyNotifications', () => {
 		).toHaveAttribute( 'href', 'https://example.test/workshop/' );
 		expect( screen.getByText( 'Calendar 🎉' ).tagName ).toBe( 'STRONG' );
 		expect( screen.queryByText( /\* Mon/ ) ).not.toBeInTheDocument();
-		expect( screen.getAllByRole( 'link' ) ).toHaveLength( 2 );
+		expect(
+			within(
+				screen.getByRole( 'group', { name: 'Telegram message 1 of 1' } )
+			).getAllByRole( 'link' )
+		).toHaveLength( 2 );
 		expect(
 			screen.getByRole( 'group', { name: 'Telegram message 1 of 1' } )
 		).toHaveTextContent( '• Tue, Unlinked' );

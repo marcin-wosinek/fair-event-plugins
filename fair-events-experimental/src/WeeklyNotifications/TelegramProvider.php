@@ -7,8 +7,6 @@
 
 namespace FairEventsExperimental\WeeklyNotifications;
 
-use FairEventsExperimental\Settings\WeeklyNotificationSettings;
-
 defined( 'WPINC' ) || die;
 
 /**
@@ -23,7 +21,7 @@ class TelegramProvider implements Provider {
 	public const MESSAGE_LIMIT = 4096;
 
 	/**
-	 * Bot token override; null reads the saved token at send time.
+	 * Bot token override; null reads the connector credential at send time.
 	 *
 	 * @var string|null
 	 */
@@ -32,7 +30,7 @@ class TelegramProvider implements Provider {
 	/**
 	 * Constructor.
 	 *
-	 * @param string|null $token Bot token, or null for the saved one.
+	 * @param string|null $token Bot token, or null for the connector credential.
 	 */
 	public function __construct( $token = null ) {
 		$this->token = $token;
@@ -56,11 +54,27 @@ class TelegramProvider implements Provider {
 	 */
 	public function destinations( array $settings, $include_disabled = false ) {
 		$telegram = $settings['providers'][ self::ID ] ?? array();
-		if ( ( ! $include_disabled && empty( $telegram['enabled'] ) ) || '' === $this->token() ) {
+		if ( ( ! $include_disabled && empty( $telegram['enabled'] ) ) || $this->problem() ) {
 			return array();
 		}
 
 		return array_values( (array) ( $telegram['chat_ids'] ?? array() ) );
+	}
+
+	/**
+	 * The credential problem keeping Telegram's saved chats from being used.
+	 *
+	 * @param array $settings Weekly notification settings.
+	 * @return string
+	 */
+	public function configuration_error( array $settings ) {
+		$telegram = $settings['providers'][ self::ID ] ?? array();
+		if ( empty( $telegram['enabled'] ) || empty( $telegram['chat_ids'] ) ) {
+			return '';
+		}
+		$problem = $this->problem();
+
+		return $problem ? $problem['message'] : '';
 	}
 
 	/**
@@ -91,13 +105,14 @@ class TelegramProvider implements Provider {
 			$payload['entities'] = array_values( $message['entities'] );
 		}
 
-		$token = $this->token();
-		if ( '' === $token ) {
-			return self::result( 'failed', 'missing_token', __( 'The Telegram bot token is not configured.', 'fair-events-experimental' ) );
+		// A missing or malformed token never reaches Telegram.
+		$problem = $this->problem();
+		if ( $problem ) {
+			return self::result( 'failed', $problem['code'], $problem['message'] );
 		}
 
 		$response = wp_remote_post(
-			self::API_BASE . '/bot' . $token . '/sendMessage',
+			self::API_BASE . '/bot' . $this->token() . '/sendMessage',
 			array(
 				'timeout' => 15,
 				'headers' => array( 'Content-Type' => 'application/json' ),
@@ -130,7 +145,32 @@ class TelegramProvider implements Provider {
 	 * @return string
 	 */
 	private function token() {
-		return trim( null === $this->token ? WeeklyNotificationSettings::telegram_token() : (string) $this->token );
+		return $this->credential()['token'];
+	}
+
+	/**
+	 * The credential in use and its source.
+	 *
+	 * @return array{token: string, source: string}
+	 */
+	private function credential() {
+		if ( null === $this->token ) {
+			return TelegramConnector::credential();
+		}
+
+		return array(
+			'token'  => trim( (string) $this->token ),
+			'source' => 'database',
+		);
+	}
+
+	/**
+	 * Why the credential cannot be used, if it cannot.
+	 *
+	 * @return array{code: string, message: string}|null
+	 */
+	private function problem() {
+		return TelegramConnector::problem( $this->credential() );
 	}
 
 	/**

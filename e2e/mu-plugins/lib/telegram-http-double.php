@@ -12,6 +12,10 @@
  * stored. Every chat is accepted except `@e2e_missing_chat`, which gets
  * Telegram's "chat not found" error so specs can exercise a failure.
  *
+ * A bot token whose bot ID is 401401401 is answered with Telegram's
+ * "Unauthorized" error, like a revoked token. The log entry is marked
+ * `rejected`; it still never holds the token.
+ *
  * @package FairEventsE2E
  */
 
@@ -27,13 +31,38 @@ add_filter(
 		$body    = isset( $parsed_args['body'] ) ? json_decode( (string) $parsed_args['body'], true ) : null;
 		$chat_id = is_array( $body ) ? (string) ( $body['chat_id'] ?? '' ) : '';
 
+		$rejected = 0 === strpos( $url, 'https://api.telegram.org/bot401401401:' );
+
 		$log   = get_option( 'fair_e2e_telegram_requests', array() );
-		$log[] = array(
+		$entry = array(
 			'chat_id'  => $chat_id,
 			'text'     => is_array( $body ) ? (string) ( $body['text'] ?? '' ) : '',
 			'entities' => is_array( $body ) ? (array) ( $body['entities'] ?? array() ) : array(),
 		);
+		if ( $rejected ) {
+			$entry['rejected'] = true;
+		}
+		$log[] = $entry;
 		update_option( 'fair_e2e_telegram_requests', $log, false );
+
+		if ( $rejected ) {
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode(
+					array(
+						'ok'          => false,
+						'error_code'  => 401,
+						'description' => 'Unauthorized',
+					)
+				),
+				'response' => array(
+					'code'    => 401,
+					'message' => 'Unauthorized',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		}
 
 		$missing = '@e2e_missing_chat' === $chat_id;
 

@@ -6,7 +6,7 @@ import {
 	Card,
 	CardBody,
 	CardHeader,
-	__experimentalConfirmDialog as ConfirmDialog,
+	ExternalLink,
 	Flex,
 	FlexItem,
 	Notice,
@@ -29,6 +29,17 @@ const EDITABLE_FIELDS = [
 	'telegram_enabled',
 	'telegram_chat_ids',
 ];
+
+// Fields describing the bot token, which is managed in Settings → Connectors.
+const TOKEN_FIELDS = [
+	'telegram_token_configured',
+	'telegram_token_valid',
+	'telegram_token_source',
+	'connectors_url',
+];
+
+// Environment variable and PHP constant that override the saved token.
+const TOKEN_OVERRIDE_NAME = 'FAIR_EVENTS_EXPERIMENTAL_TELEGRAM_BOT_TOKEN';
 
 const DAYS = [
 	{ value: '1', label: __( 'Monday', 'fair-events-experimental' ) },
@@ -146,6 +157,98 @@ export function TelegramMessage( { message } ) {
 	return pieces;
 }
 
+/**
+ * What the administrator should know about the bot token: whether one is
+ * configured, where it comes from, and whether it can be used at all.
+ * A configured token is not proof that Telegram accepts it.
+ *
+ * @param {Object} config Settings response.
+ * @return {{status: string, message: string}} Notice status and text.
+ */
+export function tokenStatus( config ) {
+	const source = config.telegram_token_source;
+
+	if ( ! config.telegram_token_configured ) {
+		return {
+			status: 'warning',
+			message: __(
+				'No bot token is configured. Add one in Connectors to post to Telegram.',
+				'fair-events-experimental'
+			),
+		};
+	}
+
+	if ( ! config.telegram_token_valid ) {
+		if ( 'env' === source ) {
+			return {
+				status: 'warning',
+				message: sprintf(
+					/* translators: %s: environment variable name */
+					__(
+						'The %s environment variable does not hold a valid Telegram bot token, so nothing can be sent. Correct it where it is set.',
+						'fair-events-experimental'
+					),
+					TOKEN_OVERRIDE_NAME
+				),
+			};
+		}
+		if ( 'constant' === source ) {
+			return {
+				status: 'warning',
+				message: sprintf(
+					/* translators: %s: PHP constant name */
+					__(
+						'The %s constant does not hold a valid Telegram bot token, so nothing can be sent. Correct it where it is defined.',
+						'fair-events-experimental'
+					),
+					TOKEN_OVERRIDE_NAME
+				),
+			};
+		}
+		return {
+			status: 'warning',
+			message: __(
+				'The saved bot token is not a valid Telegram bot token, so nothing can be sent. Replace it in Connectors.',
+				'fair-events-experimental'
+			),
+		};
+	}
+
+	if ( 'env' === source ) {
+		return {
+			status: 'info',
+			message: sprintf(
+				/* translators: %s: environment variable name */
+				__(
+					'The bot token comes from the %s environment variable, which overrides any token saved in Connectors. Send a test summary to confirm Telegram accepts it.',
+					'fair-events-experimental'
+				),
+				TOKEN_OVERRIDE_NAME
+			),
+		};
+	}
+	if ( 'constant' === source ) {
+		return {
+			status: 'info',
+			message: sprintf(
+				/* translators: %s: PHP constant name */
+				__(
+					'The bot token comes from the %s constant, which overrides any token saved in Connectors. Send a test summary to confirm Telegram accepts it.',
+					'fair-events-experimental'
+				),
+				TOKEN_OVERRIDE_NAME
+			),
+		};
+	}
+	return {
+		status: 'info',
+		message: __(
+			'A bot token is saved in Connectors. It is not shown here. Send a test summary to confirm Telegram accepts it.',
+			'fair-events-experimental'
+		),
+	};
+}
+
 function StatusText( { state, label } ) {
 	return (
 		<span
@@ -182,14 +285,11 @@ function Row( { children, detail } ) {
 export default function WeeklyNotifications( { onNotice } ) {
 	const [ config, setConfig ] = useState( null );
 	const [ form, setForm ] = useState( null );
-	const [ token, setToken ] = useState( '' );
-	const [ replacingToken, setReplacingToken ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
 	const [ testing, setTesting ] = useState( false );
 	const [ testResults, setTestResults ] = useState( null );
 	const [ previewing, setPreviewing ] = useState( false );
 	const [ preview, setPreview ] = useState( null );
-	const [ confirmingClear, setConfirmingClear ] = useState( false );
 
 	const applyConfig = ( next ) => {
 		setConfig( next );
@@ -210,12 +310,43 @@ export default function WeeklyNotifications( { onNotice } ) {
 			);
 	}, [] );
 
+	// The token is edited on another screen, usually in another tab. Coming
+	// back re-reads only its status, so unsaved edits here are kept.
+	useEffect( () => {
+		const refreshToken = () => {
+			if ( 'hidden' === document.visibilityState ) {
+				return;
+			}
+			apiFetch( { path: PATH } )
+				.then( ( next ) =>
+					setConfig(
+						( current ) =>
+							current && {
+								...current,
+								...Object.fromEntries(
+									TOKEN_FIELDS.map( ( field ) => [
+										field,
+										next[ field ],
+									] )
+								),
+							}
+					)
+				)
+				.catch( () => {} );
+		};
+		window.addEventListener( 'focus', refreshToken );
+		document.addEventListener( 'visibilitychange', refreshToken );
+		return () => {
+			window.removeEventListener( 'focus', refreshToken );
+			document.removeEventListener( 'visibilitychange', refreshToken );
+		};
+	}, [] );
+
 	const dirty =
 		!! form &&
-		( '' !== token ||
-			EDITABLE_FIELDS.some(
-				( field ) => editableState( config )[ field ] !== form[ field ]
-			) );
+		EDITABLE_FIELDS.some(
+			( field ) => editableState( config )[ field ] !== form[ field ]
+		);
 
 	useEffect( () => {
 		if ( ! dirty ) {
@@ -243,15 +374,6 @@ export default function WeeklyNotifications( { onNotice } ) {
 	const update = ( field ) => ( value ) =>
 		setForm( { ...form, [ field ]: value } );
 
-	// With a saved token, the field only exists after an explicit "Replace",
-	// so browser autofill cannot turn an unrelated save into a replacement.
-	const showTokenField = ! config.telegram_token_configured || replacingToken;
-
-	const closeTokenField = () => {
-		setReplacingToken( false );
-		setToken( '' );
-	};
-
 	const save = async () => {
 		setSaving( true );
 		try {
@@ -260,12 +382,8 @@ export default function WeeklyNotifications( { onNotice } ) {
 				page_id: parseInt( form.page_id, 10 ) || 0,
 				day_of_week: parseInt( form.day_of_week, 10 ),
 			};
-			if ( showTokenField && '' !== token ) {
-				data.telegram_bot_token = token;
-			}
 			const next = await apiFetch( { path: PATH, method: 'POST', data } );
 			applyConfig( next );
-			closeTokenField();
 			setPreview( null );
 			onNotice( {
 				status: 'success',
@@ -287,37 +405,6 @@ export default function WeeklyNotifications( { onNotice } ) {
 			} );
 		}
 		setSaving( false );
-	};
-
-	const clearToken = async () => {
-		setConfirmingClear( false );
-		try {
-			const next = await apiFetch( {
-				path: `${ PATH }/telegram-token`,
-				method: 'DELETE',
-			} );
-			setConfig( next );
-			setForm( { ...form } );
-			closeTokenField();
-			onNotice( {
-				status: 'success',
-				message: __(
-					'Telegram bot token removed.',
-					'fair-events-experimental'
-				),
-			} );
-		} catch ( error ) {
-			onNotice( {
-				status: 'error',
-				message: errorMessage(
-					error,
-					__(
-						'Failed to remove the Telegram bot token.',
-						'fair-events-experimental'
-					)
-				),
-			} );
-		}
 	};
 
 	const sendTest = async () => {
@@ -414,12 +501,18 @@ export default function WeeklyNotifications( { onNotice } ) {
 		} ) ),
 	];
 
-	const testReady =
-		config.telegram_token_configured && config.telegram_chat_ids.length > 0;
+	const token = tokenStatus( config );
+	const tokenUsable =
+		config.telegram_token_configured && config.telegram_token_valid;
 	let testBlockedReason = null;
-	if ( ! testReady ) {
+	if ( ! tokenUsable ) {
 		testBlockedReason = __(
-			'Save a bot token and at least one chat or channel before sending a test message.',
+			'Fix the bot token in Connectors before sending a test message.',
+			'fair-events-experimental'
+		);
+	} else if ( 0 === config.telegram_chat_ids.length ) {
+		testBlockedReason = __(
+			'Save at least one chat or channel before sending a test message.',
 			'fair-events-experimental'
 		);
 	} else if ( dirty ) {
@@ -535,81 +628,24 @@ export default function WeeklyNotifications( { onNotice } ) {
 						'fair-events-experimental'
 					) }
 					help={ __(
-						'Turning this off keeps the bot token and chats below.',
+						'Turning this off keeps the bot token in Connectors and the chats below.',
 						'fair-events-experimental'
 					) }
 					checked={ !! form.telegram_enabled }
 					onChange={ update( 'telegram_enabled' ) }
 				/>
 
-				{ config.telegram_token_configured && (
-					<p>
+				<Notice status={ token.status } isDismissible={ false }>
+					{ token.message }
+				</Notice>
+				<p>
+					<ExternalLink href={ config.connectors_url }>
 						{ __(
-							'A bot token is saved. It is not shown here.',
+							'Manage in Connectors',
 							'fair-events-experimental'
 						) }
-					</p>
-				) }
-
-				{ showTokenField && (
-					<TextControl
-						type="password"
-						autoComplete="new-password"
-						label={
-							config.telegram_token_configured
-								? __(
-										'New bot token',
-										'fair-events-experimental'
-								  )
-								: __( 'Bot token', 'fair-events-experimental' )
-						}
-						help={ __(
-							'From @BotFather. It is not shown again after saving.',
-							'fair-events-experimental'
-						) }
-						value={ token }
-						onChange={ setToken }
-					/>
-				) }
-
-				{ config.telegram_token_configured && (
-					<p>
-						{ replacingToken ? (
-							<Button
-								variant="secondary"
-								onClick={ closeTokenField }
-								disabled={ saving }
-							>
-								{ __(
-									'Keep saved token',
-									'fair-events-experimental'
-								) }
-							</Button>
-						) : (
-							<Button
-								variant="secondary"
-								onClick={ () => setReplacingToken( true ) }
-								disabled={ saving || testing }
-							>
-								{ __(
-									'Replace bot token',
-									'fair-events-experimental'
-								) }
-							</Button>
-						) }{ ' ' }
-						<Button
-							variant="secondary"
-							isDestructive
-							onClick={ () => setConfirmingClear( true ) }
-							disabled={ saving || testing }
-						>
-							{ __(
-								'Remove bot token',
-								'fair-events-experimental'
-							) }
-						</Button>
-					</p>
-				) }
+					</ExternalLink>
+				</p>
 
 				<TextareaControl
 					label={ __(
@@ -863,22 +899,6 @@ export default function WeeklyNotifications( { onNotice } ) {
 							</Row>
 						) ) }
 					</VStack>
-				) }
-
-				{ confirmingClear && (
-					<ConfirmDialog
-						onConfirm={ clearToken }
-						onCancel={ () => setConfirmingClear( false ) }
-						confirmButtonText={ __(
-							'Remove bot token',
-							'fair-events-experimental'
-						) }
-					>
-						{ __(
-							'Remove the Telegram bot token? Weekly notifications will not reach Telegram until a new token is saved.',
-							'fair-events-experimental'
-						) }
-					</ConfirmDialog>
 				) }
 			</CardBody>
 		</Card>

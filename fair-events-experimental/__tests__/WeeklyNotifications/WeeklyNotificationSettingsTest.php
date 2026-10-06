@@ -70,7 +70,7 @@ class WeeklyNotificationSettingsTest extends TestCase {
 
 	/** The settings never include the bot token. */
 	public function test_settings_never_include_the_token() {
-		WeeklyNotificationSettings::set_telegram_token( '123456789:AAEabcdefghijklmnopqrstuvwxyz012345' );
+		$GLOBALS['_fair_test_options'][ WeeklyNotificationSettings::TOKEN_OPTION ] = '123456789:AAEabcdefghijklmnopqrstuvwxyz012345';
 
 		$this->assertStringNotContainsString( 'AAEabcdefghijklmnopqrstuvwxyz012345', json_encode( WeeklyNotificationSettings::get() ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
 	}

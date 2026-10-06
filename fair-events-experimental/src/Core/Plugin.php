@@ -53,6 +53,10 @@ class Plugin {
 		$this->load_rest_api();
 		$this->load_meta_conversions();
 
+		// Registered with every bundle, so the Telegram credential stays
+		// manageable in Connectors while `sources` is off.
+		\FairEventsExperimental\WeeklyNotifications\TelegramConnector::init();
+
 		if ( Features::is_enabled( 'sources' ) ) {
 			\FairEventsExperimental\WeeklyNotifications\Dispatcher::init();
 		}

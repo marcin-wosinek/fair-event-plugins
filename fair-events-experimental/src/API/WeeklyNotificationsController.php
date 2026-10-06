@@ -12,6 +12,7 @@ use FairEventsExperimental\WeeklyNotifications\DeliveryLog;
 use FairEventsExperimental\WeeklyNotifications\Dispatcher;
 use FairEventsExperimental\WeeklyNotifications\Providers;
 use FairEventsExperimental\WeeklyNotifications\SummaryBuilder;
+use FairEventsExperimental\WeeklyNotifications\TelegramConnector;
 use FairEventsExperimental\WeeklyNotifications\TelegramProvider;
 use FairEventsExperimental\WeeklyNotifications\WeekSchedule;
 use WP_Error;
@@ -24,8 +25,9 @@ defined( 'WPINC' ) || die;
 /**
  * Settings, preview and test-send routes for weekly event notifications.
  *
- * The Telegram bot token is write-only: responses report only whether one is
- * saved, and provider errors are returned with the token removed.
+ * The Telegram bot token is managed in Settings → Connectors. Responses report
+ * only whether one is configured and where it comes from, and provider errors
+ * are returned with the token removed.
  */
 class WeeklyNotificationsController extends WP_REST_Controller {
 
@@ -63,49 +65,35 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => array( $this, 'permissions_check' ),
 					'args'                => array(
-						'enabled'            => array( 'type' => 'boolean' ),
-						'source_slug'        => array(
+						'enabled'           => array( 'type' => 'boolean' ),
+						'source_slug'       => array(
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_key',
 						),
-						'page_id'            => array(
+						'page_id'           => array(
 							'type'    => 'integer',
 							'minimum' => 0,
 						),
-						'day_of_week'        => array(
+						'day_of_week'       => array(
 							'type'    => 'integer',
 							'minimum' => 1,
 							'maximum' => 7,
 						),
-						'time_of_day'        => array(
+						'time_of_day'       => array(
 							'type'              => 'string',
 							'validate_callback' => array( $this, 'validate_time' ),
 						),
-						'week_scope'         => array(
+						'week_scope'        => array(
 							'type' => 'string',
 							'enum' => WeeklyNotificationSettings::WEEK_SCOPES,
 						),
-						'telegram_enabled'   => array( 'type' => 'boolean' ),
-						'telegram_chat_ids'  => array(
+						'telegram_enabled'  => array( 'type' => 'boolean' ),
+						'telegram_chat_ids' => array(
 							'type'  => array( 'array', 'string' ),
 							'items' => array( 'type' => 'string' ),
 						),
-						'telegram_bot_token' => array(
-							'type'              => 'string',
-							'sanitize_callback' => 'sanitize_text_field',
-						),
 					),
 				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/telegram-token',
-			array(
-				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'clear_token' ),
-				'permission_callback' => array( $this, 'permissions_check' ),
 			)
 		);
 
@@ -168,6 +156,7 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 	public function get_item( $request = null ) {
 		unset( $request );
 		$settings = WeeklyNotificationSettings::get();
+		$token    = TelegramConnector::status();
 		$builder  = new SummaryBuilder();
 		$check    = '' !== $settings['source_slug'] || $settings['page_id']
 			? $builder->check( $settings['source_slug'], $settings['page_id'] )
@@ -183,7 +172,10 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 				'week_scope'                => $settings['week_scope'],
 				'telegram_enabled'          => $settings['providers']['telegram']['enabled'],
 				'telegram_chat_ids'         => $settings['providers']['telegram']['chat_ids'],
-				'telegram_token_configured' => '' !== WeeklyNotificationSettings::telegram_token(),
+				'telegram_token_configured' => $token['configured'],
+				'telegram_token_valid'      => $token['valid'],
+				'telegram_token_source'     => $token['source'],
+				'connectors_url'            => TelegramConnector::admin_url(),
 				'configuration_error'       => is_wp_error( $check ) ? $check->get_error_message() : null,
 				'sources'                   => $this->sources(),
 				'pages'                     => $this->pages( $settings['page_id'] ),
@@ -201,6 +193,15 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function update_item( $request ) {
+		// The token moved to Connectors; never treat it as a setting here.
+		if ( $request->has_param( 'telegram_bot_token' ) ) {
+			return new WP_Error(
+				'token_managed_in_connectors',
+				__( 'The Telegram bot token is managed in Settings → Connectors. Nothing was saved.', 'fair-events-experimental' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		$settings = WeeklyNotificationSettings::get();
 		$previous = $settings;
 
@@ -241,15 +242,6 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 			$settings['providers']['telegram']['chat_ids'] = $chat_ids;
 		}
 
-		$token = trim( (string) $request->get_param( 'telegram_bot_token' ) );
-		if ( '' !== $token && ! WeeklyNotificationSettings::valid_token( $token ) ) {
-			return new WP_Error(
-				'invalid_bot_token',
-				__( 'That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE….', 'fair-events-experimental' ),
-				array( 'status' => 400 )
-			);
-		}
-
 		$settings = WeeklyNotificationSettings::normalize( $settings );
 
 		if ( $settings['enabled'] ) {
@@ -257,27 +249,23 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 			if ( is_wp_error( $check ) ) {
 				return new WP_Error( $check->get_error_code(), $check->get_error_message(), array( 'status' => 400 ) );
 			}
-			$providers = Providers::all();
-			if ( '' !== $token ) {
-				// Judge Telegram by the token being saved with this request.
-				$providers[ TelegramProvider::ID ] = new TelegramProvider( $token );
-			}
 			$has_destination = false;
-			foreach ( $providers as $provider ) {
+			$problem         = '';
+			foreach ( Providers::all() as $provider ) {
 				$has_destination = $has_destination || (bool) $provider->destinations( $settings );
+				$problem         = '' !== $problem ? $problem : $provider->configuration_error( $settings );
 			}
 			if ( ! $has_destination ) {
 				return new WP_Error(
 					'no_destination',
-					__( 'Before turning on weekly notifications, turn on Telegram delivery and save a bot token and at least one chat or channel.', 'fair-events-experimental' ),
+					'' !== $problem
+						? $problem
+						: __( 'Before turning on weekly notifications, add a Telegram bot token in Settings → Connectors, turn on Telegram delivery and save at least one chat or channel.', 'fair-events-experimental' ),
 					array( 'status' => 400 )
 				);
 			}
 		}
 
-		if ( '' !== $token ) {
-			WeeklyNotificationSettings::set_telegram_token( $token );
-		}
 		WeeklyNotificationSettings::save( $settings );
 
 		$schedule_fields = array( 'enabled', 'day_of_week', 'time_of_day', 'week_scope' );
@@ -286,16 +274,6 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 			Dispatcher::reschedule( $settings );
 		}
 
-		return $this->get_item();
-	}
-
-	/**
-	 * Remove the saved bot token.
-	 *
-	 * @return \WP_REST_Response
-	 */
-	public function clear_token() {
-		WeeklyNotificationSettings::clear_telegram_token();
 		return $this->get_item();
 	}
 
@@ -324,15 +302,18 @@ class WeeklyNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Send the next scheduled week's summary to every saved Telegram destination.
+	 * Send the next scheduled week's summary to every saved Telegram destination,
+	 * with the credential currently in effect.
 	 *
 	 * Test sends are not delivery records and do not affect scheduled sends.
 	 *
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function send_test() {
-		if ( '' === WeeklyNotificationSettings::telegram_token() ) {
-			return new WP_Error( 'missing_token', __( 'Save a Telegram bot token before sending a test message.', 'fair-events-experimental' ), array( 'status' => 400 ) );
+		// Refused before anything is built or sent, so no request reaches Telegram.
+		$problem = TelegramConnector::problem();
+		if ( $problem ) {
+			return new WP_Error( $problem['code'], $problem['message'], array( 'status' => 400 ) );
 		}
 
 		$provider     = new TelegramProvider();
