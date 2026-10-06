@@ -83,7 +83,7 @@ class SignupPaymentState {
 	 * @param bool     $sync         Whether to reconcile with the provider before reading. Callers on a page-load
 	 *                               path with no reason to expect a status change (e.g. an already-confirmed poll
 	 *                               tick) should pass false to skip the provider round-trip.
-	 * @return array{state: string, transaction_id: int, amount: float, currency: string, checkout_url: string, event_date_id: int, event_title: string}
+	 * @return array{state: string, transaction_id: int, amount: float, currency: string, checkout_url: string, event_date_id: int, event_title: string, tickets: array}
 	 */
 	public static function resolve_for_transaction( $transaction, array $signup_rows, bool $sync = true ): array {
 		if ( $sync
@@ -113,7 +113,89 @@ class SignupPaymentState {
 			'checkout_url'   => self::RESUME === $state ? $checkout_url : '',
 			'event_date_id'  => $event_date_id,
 			'event_title'    => self::resolve_event_title( $event_date_id ),
+			'tickets'        => self::purchase_tickets( $signup_rows ),
 		);
+	}
+
+	/**
+	 * Describe what one purchase bought: a ticket type name and activity
+	 * names for each of its tickets, read from the purchase's own signup
+	 * rows and ticket units. The buyer may hold other tickets for the same
+	 * date; those belong to other purchases and are never listed here.
+	 *
+	 * @param object[] $signup_rows The purchase's fair_events_signups rows.
+	 * @return array<int, array{ticket_type: string, activities: string[]}> One entry per ticket.
+	 */
+	public static function purchase_tickets( array $signup_rows ): array {
+		$tickets = array();
+
+		foreach ( $signup_rows as $signup ) {
+			$units = class_exists( \FairEvents\Models\EventTicket::class )
+				? \FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup->id )
+				: array();
+
+			// A signup from before ticket units: its own type, once per place.
+			if ( ! $units ) {
+				$type_name = self::ticket_type_name( (int) ( $signup->ticket_type_id ?? 0 ) );
+				$places    = max( 1, (int) ( $signup->quantity ?? 1 ) );
+				for ( $position = 0; $position < $places; $position++ ) {
+					$tickets[] = array(
+						'ticket_type' => $type_name,
+						'activities'  => array(),
+					);
+				}
+				continue;
+			}
+
+			$activity_rows = \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( wp_list_pluck( $units, 'id' ) );
+			foreach ( $units as $unit ) {
+				if ( ! empty( $unit->deleted_at ) ) {
+					continue;
+				}
+				$unit_type_id = (int) ( $unit->ticket_type_id ?? 0 );
+				$activities   = array();
+				foreach ( $activity_rows[ (int) $unit->id ] ?? array() as $row ) {
+					$activities[] = self::ticket_option_name( $row );
+				}
+				$tickets[] = array(
+					'ticket_type' => self::ticket_type_name( $unit_type_id ? $unit_type_id : (int) ( $signup->ticket_type_id ?? 0 ) ),
+					'activities'  => array_values( array_filter( $activities ) ),
+				);
+			}
+		}
+
+		return $tickets;
+	}
+
+	/**
+	 * Name of a ticket type, or '' when the purchase has none.
+	 *
+	 * @param int $ticket_type_id Ticket type ID.
+	 * @return string
+	 */
+	private static function ticket_type_name( int $ticket_type_id ): string {
+		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketType::class ) ) {
+			return '';
+		}
+
+		$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+
+		return $ticket_type ? (string) $ticket_type->name : '';
+	}
+
+	/**
+	 * Name of a ticket's activity: the option's current name, so a rename
+	 * shows, else the name stored with the selection.
+	 *
+	 * @param object $row fair_events_ticket_activities row.
+	 * @return string
+	 */
+	private static function ticket_option_name( $row ): string {
+		$option = class_exists( \FairEvents\Models\TicketOption::class )
+			? \FairEvents\Models\TicketOption::get_by_id( (int) $row->ticket_option_id )
+			: null;
+
+		return $option && '' !== (string) $option->name ? (string) $option->name : (string) ( $row->ticket_option_name ?? '' );
 	}
 
 	/**

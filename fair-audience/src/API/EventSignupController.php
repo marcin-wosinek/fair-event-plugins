@@ -2498,6 +2498,18 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// A relationship backed by tickets is one admission for possibly
+		// several purchases. Removing it would invalidate every ticket the
+		// participant holds or bought there, so only a relationship without
+		// tickets (an older or hand-added admission) is cancelled this way.
+		if ( $event_date_id && TicketActivities::backs_admission( $event_date_id, (int) $participant->id ) ) {
+			return new WP_Error(
+				'signup_has_tickets',
+				__( 'This signup has tickets and cannot be cancelled here. Please contact the organizer.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		// Remove signup (also clears a pending_payment hold row, so a stale
 		// checkout is not offered again — issue #554).
 		if ( $event_date_id ) {

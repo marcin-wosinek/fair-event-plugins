@@ -40,6 +40,40 @@ class SignupFieldsetRenderer {
 	}
 
 	/**
+	 * Render the tickets of one purchase for its payment confirmation: each
+	 * ticket's type with the activities chosen for it. frontend.js builds the
+	 * same markup when the confirmation arrives while the page is open.
+	 *
+	 * @param array $tickets One entry per ticket: 'ticket_type' (name, may be '')
+	 *                       and 'activities' (names), see SignupPaymentState::purchase_tickets().
+	 * @return string HTML, or '' when the purchase has no tickets to describe.
+	 */
+	public static function purchase_summary( array $tickets ) {
+		if ( empty( $tickets ) ) {
+			return '';
+		}
+
+		$html  = '<div class="fair-events-get-tickets-callback-purchase">';
+		$html .= '<p class="fair-events-get-tickets-callback-purchase-label">' . esc_html__( 'This purchase:', 'fair-events' ) . '</p>';
+		$html .= '<ul class="fair-events-get-tickets-callback-purchase-tickets">';
+		foreach ( $tickets as $ticket ) {
+			$type_name = (string) ( $ticket['ticket_type'] ?? '' );
+			$html     .= '<li>' . esc_html( '' !== $type_name ? $type_name : __( 'Ticket', 'fair-events' ) );
+			if ( ! empty( $ticket['activities'] ) ) {
+				$html .= '<ul>';
+				foreach ( $ticket['activities'] as $activity_name ) {
+					$html .= '<li>' . esc_html( $activity_name ) . '</li>';
+				}
+				$html .= '</ul>';
+			}
+			$html .= '</li>';
+		}
+		$html .= '</ul></div>';
+
+		return $html;
+	}
+
+	/**
 	 * Render the "Choose ticket type" fieldset.
 	 *
 	 * @param object[]    $ticket_types         Ticket type objects for this event date.

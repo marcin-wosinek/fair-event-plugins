@@ -256,6 +256,18 @@ test.describe.serial( 'A participant buys again for the same date', () => {
 		const again = await buy( purchase );
 		expect( again.body ).toEqual( second.body );
 
+		// The payment card describes this purchase's own tickets (#1526),
+		// not the Standard ticket the participant already holds.
+		const stateRes = await visitor.get(
+			'/wp-json/fair-events/v1/get-tickets/payment-state',
+			{ params: { transaction_id: second.body.transaction_id } }
+		);
+		expect( stateRes.ok(), await stateRes.text() ).toBeTruthy();
+		expect( ( await stateRes.json() ).tickets ).toEqual( [
+			{ ticket_type: 'Supporter', activities: [] },
+			{ ticket_type: 'Supporter', activities: [] },
+		] );
+
 		const rows = await signups();
 		expect( rows ).toHaveLength( 2 );
 		expect( rows[ 1 ].tickets ).toHaveLength( 2 );

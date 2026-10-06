@@ -56,6 +56,79 @@ class TicketActivities {
 	}
 
 	/**
+	 * Whether a participant's admission on an event date rests on tickets:
+	 * they hold or bought at least one ticket there that still admits
+	 * someone, or is awaiting its payment. Removing their relationship would
+	 * orphan those tickets, so they are cancelled one by one instead.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return bool
+	 */
+	public static function backs_admission( $event_date_id, $participant_id ) {
+		return self::available()
+			&& method_exists( \FairEvents\Models\EventTicket::class, 'count_active_for_participant' )
+			&& \FairEvents\Models\EventTicket::count_active_for_participant( (int) $event_date_id, (int) $participant_id ) > 0;
+	}
+
+	/**
+	 * Describe the confirmed tickets a participant holds for an event date,
+	 * each with the activities selected on it — for showing them what they
+	 * already have. A whole-series pass held on the series master is included
+	 * when the caller names that master.
+	 *
+	 * @param int      $event_date_id    Event date ID.
+	 * @param int      $participant_id   Participant ID.
+	 * @param int|null $series_master_id Series master whose whole-series passes also cover this date, if any.
+	 * @return array<int, array{id: int, label: string, activities: string[]}>
+	 */
+	public static function held_ticket_summaries( $event_date_id, $participant_id, $series_master_id = null ) {
+		if ( ! self::available() ) {
+			return array();
+		}
+
+		$tickets = \FairEvents\Models\EventTicket::get_held_on_event_date( (int) $event_date_id, (int) $participant_id, array( 'confirmed' ) );
+
+		if ( $series_master_id && (int) $series_master_id !== (int) $event_date_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
+			foreach ( \FairEvents\Models\EventTicket::get_held_on_event_date( (int) $series_master_id, (int) $participant_id, array( 'confirmed' ) ) as $ticket ) {
+				$ticket_type = $ticket->ticket_type_id ? \FairEvents\Models\TicketType::get_by_id( (int) $ticket->ticket_type_id ) : null;
+				if ( $ticket_type && $ticket_type->is_whole_series() ) {
+					$tickets[] = $ticket;
+				}
+			}
+		}
+
+		if ( ! $tickets ) {
+			return array();
+		}
+
+		$activity_rows = \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( wp_list_pluck( $tickets, 'id' ) );
+		$summaries     = array();
+		foreach ( $tickets as $position => $ticket ) {
+			$activities = array();
+			foreach ( $activity_rows[ (int) $ticket->id ] ?? array() as $row ) {
+				if ( 'confirmed' !== $row->status ) {
+					continue;
+				}
+				// Prefer the current option name so renames are reflected;
+				// fall back to the name stored with the selection.
+				$option       = class_exists( \FairEvents\Models\TicketOption::class )
+					? \FairEvents\Models\TicketOption::get_by_id( (int) $row->ticket_option_id )
+					: null;
+				$activities[] = $option && '' !== (string) $option->name ? (string) $option->name : (string) $row->ticket_option_name;
+			}
+
+			$summaries[] = array(
+				'id'         => (int) $ticket->id,
+				'label'      => self::ticket_label( $ticket, $position + 1 ),
+				'activities' => array_values( array_filter( $activities ) ),
+			);
+		}
+
+		return $summaries;
+	}
+
+	/**
 	 * Resolve the ticket an add-on targets. With no eligible ticket the
 	 * add-on stays at participant scope (null); with one, that ticket is
 	 * used; with several, the request must name one of them.

@@ -232,23 +232,100 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 			// Reload as the same browser (same AudienceSession cookie): the
 			// server-rendered baseline is identical, but frontend.js's
 			// viewer-context hydration must recognise this viewer already
-			// holds the signup and swap in the signed-up card.
+			// holds the signup and show their ticket — beside the form,
+			// which stays for another purchase (#1526).
 			await visitorPage.reload();
+			const signedUpCard = visitorPage.locator(
+				'.fair-events-signed-up-card'
+			);
+			const purchaseForm = visitorPage.locator(
+				'.fair-events-get-tickets-form'
+			);
+			await expect( signedUpCard ).toBeVisible();
+			await expect( signedUpCard ).toContainText(
+				'You are signed up for this date.'
+			);
 			await expect(
-				visitorPage.locator( '.fair-events-get-tickets-form' )
-			).toHaveCount( 0 );
+				signedUpCard.locator( '.fair-events-signed-up-tickets > li' )
+			).toHaveCount( 1 );
+			await expect( purchaseForm ).toBeVisible();
 			await expect(
-				visitorPage.locator( '.fair-events-signed-up-card' )
+				purchaseForm.getByRole( 'heading', {
+					name: 'Buy another ticket for yourself',
+				} )
 			).toBeVisible();
 			await expect(
-				visitorPage.locator( '.fair-events-signed-up-card' )
-			).toContainText( 'You are signed up for this date.' );
+				purchaseForm.locator( 'input[name="name"]' )
+			).toHaveValue( 'Ada Lovelace' );
+			// The ticket held is not part of the new purchase's form.
+			await expect(
+				purchaseForm.locator( '.fair-events-signed-up-card' )
+			).toHaveCount( 0 );
+			// A ticket backs this admission, so the broad cancellation that
+			// would remove it together with any other ticket is not offered.
 			await expect(
 				visitorPage.locator( '.fair-events-cancel-signup-button' )
-			).toBeVisible();
+			).toHaveCount( 0 );
 			await expect(
-				visitorPage.locator( '.fair-events-not-you-button' )
+				purchaseForm.locator( '.fair-events-not-you-button' )
 			).toBeVisible();
+
+			// Both sections stay apart and inside the page at every viewport.
+			for ( const [ name, width, height ] of [
+				[ 'desktop', 1280, 900 ],
+				[ 'tablet', 768, 1024 ],
+				[ 'mobile', 375, 812 ],
+			] ) {
+				await visitorPage.setViewportSize( { width, height } );
+				await expect( signedUpCard ).toBeVisible();
+				await expect( purchaseForm ).toBeVisible();
+				const layout = await visitorPage.evaluate( () => {
+					const card = document
+						.querySelector( '.fair-events-signed-up-card' )
+						.getBoundingClientRect();
+					const heading = document
+						.querySelector( '.fair-events-buy-another-heading' )
+						.getBoundingClientRect();
+					return {
+						overflow:
+							document.documentElement.scrollWidth -
+							document.documentElement.clientWidth,
+						cardBottom: card.bottom,
+						cardRight: card.right,
+						headingTop: heading.top,
+						headingRight: heading.right,
+					};
+				} );
+				expect( layout.overflow, name ).toBeLessThanOrEqual( 0 );
+				expect( layout.cardRight, name ).toBeLessThanOrEqual( width );
+				expect( layout.headingRight, name ).toBeLessThanOrEqual(
+					width
+				);
+				expect( layout.headingTop, name ).toBeGreaterThanOrEqual(
+					layout.cardBottom
+				);
+			}
+			await visitorPage.setViewportSize( { width: 1280, height: 900 } );
+
+			// Another ticket for the same participant: no identity reset, and
+			// afterwards a way back to the tickets now held.
+			await purchaseForm.locator( 'button[type="submit"]' ).click();
+			await expect(
+				visitorPage.locator(
+					'.fair-events-get-tickets-message-success'
+				)
+			).toBeVisible();
+			await expect( purchaseForm ).toBeHidden();
+			await visitorPage
+				.getByRole( 'link', { name: 'Back to the signup form' } )
+				.click();
+			await expect(
+				signedUpCard.locator( '.fair-events-signed-up-tickets > li' )
+			).toHaveCount( 2 );
+			await expect( purchaseForm ).toBeVisible();
+			await expect(
+				purchaseForm.locator( 'input[name="email"]' )
+			).toHaveValue( /^ada-e2e-/ );
 
 			// A failed session reset must retain the signed-up state and make the
 			// action usable again instead of navigating to a misleading blank form.
@@ -299,44 +376,6 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 				)
 			).toBe( true );
 			await resetPage.close();
-
-			const cancelButton = visitorPage.getByRole( 'button', {
-				name: 'Cancel signup',
-			} );
-			await expect( cancelButton ).toBeVisible();
-			await expect( cancelButton ).toHaveText( 'Cancel signup' );
-			await visitorPage.mouse.move( 0, 0 );
-			await expectButtonContrast( cancelButton, 'rgb(179, 45, 46)' );
-
-			await cancelButton.hover();
-			await expectButtonContrast( cancelButton, 'rgb(138, 36, 36)' );
-
-			await cancelButton.focus();
-			await expectButtonContrast( cancelButton );
-			const focusIndicator = await cancelButton.evaluate( ( element ) => {
-				const styles = window.getComputedStyle( element );
-				return {
-					style: styles.outlineStyle,
-					width: Number.parseFloat( styles.outlineWidth ),
-				};
-			} );
-			expect( focusIndicator.style ).not.toBe( 'none' );
-			expect( focusIndicator.width ).toBeGreaterThanOrEqual( 2 );
-
-			await cancelButton.hover();
-			await visitorPage.mouse.down();
-			await expectButtonContrast( cancelButton, 'rgb(105, 27, 27)' );
-			await visitorPage.mouse.move( 0, 0 );
-			await visitorPage.mouse.up();
-
-			await cancelButton.evaluate( ( element ) => {
-				element.disabled = true;
-			} );
-			await expect( cancelButton ).toBeDisabled();
-			await expectButtonContrast( cancelButton, 'rgb(240, 240, 241)' );
-			await cancelButton.evaluate( ( element ) => {
-				element.disabled = false;
-			} );
 
 			const occurrenceSelector = visitorPage.locator(
 				'.fair-events-signed-up-occurrence-select'
@@ -457,6 +496,17 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 			await expect(
 				adminPage.locator( '.fair-events-not-you-button' )
 			).toHaveCount( 0 );
+			// Recognised by the account, the purchase form is theirs as well.
+			await expect(
+				adminPage.getByRole( 'heading', {
+					name: 'Buy another ticket for yourself',
+				} )
+			).toBeVisible();
+			await expect(
+				adminPage.locator(
+					'.fair-events-get-tickets-form input[name="email"]'
+				)
+			).toHaveValue( adminEmail );
 			await apiFetch( adminPage, {
 				path: `/fair-audience/v1/participants/${ adminParticipant.id }`,
 				method: 'PUT',
@@ -491,7 +541,103 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 			await expect(
 				seriesOptions.filter( { hasText: 'already signed up' } )
 			).toHaveCount( 10 );
+			// A pass for the whole series is listed as the ticket held, and
+			// another ticket can still be bought.
+			await expect(
+				seriesPage.locator( '.fair-events-signed-up-tickets > li' )
+			).toContainText( 'All dates' );
+			await expect(
+				seriesPage.getByRole( 'heading', {
+					name: 'Buy another ticket for yourself',
+				} )
+			).toBeVisible();
 			await seriesContext.close();
+
+			// An admission without tickets — here from fair-audience's own
+			// signup route, opened through a signed link — still offers the
+			// broad cancellation, in its destructive styling.
+			const legacyParticipant = await apiFetch( adminPage, {
+				path: '/fair-audience/v1/participants',
+				method: 'POST',
+				data: {
+					name: 'Legacy',
+					surname: 'Admission',
+					email: `legacy-e2e-${ Date.now() }@example.test`,
+				},
+			} );
+			const { token: legacyToken } = await apiFetch( adminPage, {
+				path: '/fair-e2e/v1/event-signup/participant-token',
+				method: 'POST',
+				data: {
+					participant_id: legacyParticipant.id,
+					event_date_id: eventDate.id,
+				},
+			} );
+			const legacyContext = await browser.newContext();
+			const legacyPage = await legacyContext.newPage();
+			await legacyPage.goto(
+				`/?page_id=${ signupPage.id }&participant_token=${ legacyToken }`
+			);
+			await legacyPage.waitForFunction( () => window.wp?.apiFetch );
+			await apiFetch( legacyPage, {
+				path: '/fair-audience/v1/event-signup',
+				method: 'POST',
+				data: {
+					event_id: eventPost.id,
+					event_date_id: eventDate.id,
+					ticket_type_id: ticketSettings.ticket_types[ 0 ].id,
+					participant_token: legacyToken,
+				},
+			} );
+			await legacyPage.reload();
+			await expect(
+				legacyPage.getByRole( 'heading', {
+					name: 'Buy another ticket for yourself',
+				} )
+			).toBeVisible();
+
+			const cancelButton = legacyPage.getByRole( 'button', {
+				name: 'Cancel signup',
+			} );
+			await expect( cancelButton ).toBeVisible();
+			await expect( cancelButton ).toHaveText( 'Cancel signup' );
+			await legacyPage.mouse.move( 0, 0 );
+			await expectButtonContrast( cancelButton, 'rgb(179, 45, 46)' );
+
+			await cancelButton.hover();
+			await expectButtonContrast( cancelButton, 'rgb(138, 36, 36)' );
+
+			await cancelButton.focus();
+			await expectButtonContrast( cancelButton );
+			const focusIndicator = await cancelButton.evaluate( ( element ) => {
+				const styles = window.getComputedStyle( element );
+				return {
+					style: styles.outlineStyle,
+					width: Number.parseFloat( styles.outlineWidth ),
+				};
+			} );
+			expect( focusIndicator.style ).not.toBe( 'none' );
+			expect( focusIndicator.width ).toBeGreaterThanOrEqual( 2 );
+
+			await cancelButton.hover();
+			await legacyPage.mouse.down();
+			await expectButtonContrast( cancelButton, 'rgb(105, 27, 27)' );
+			await legacyPage.mouse.move( 0, 0 );
+			await legacyPage.mouse.up();
+
+			await cancelButton.evaluate( ( element ) => {
+				element.disabled = true;
+			} );
+			await expect( cancelButton ).toBeDisabled();
+			await expectButtonContrast( cancelButton, 'rgb(240, 240, 241)' );
+			await cancelButton.evaluate( ( element ) => {
+				element.disabled = false;
+			} );
+			await legacyContext.close();
+			await apiFetch( adminPage, {
+				path: `/fair-audience/v1/participants/${ legacyParticipant.id }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
 			await visitorContext.close();
 			await apiFetch( adminPage, {
 				path: `/wp/v2/pages/${ signupPage.id }`,

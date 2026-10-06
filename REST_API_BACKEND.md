@@ -608,8 +608,14 @@ sub-route) expose:
     `SignupHookBridge::enrich_render_context()` — the same method, now
     hooked to this filter instead) and overrides `ticket_types`/
     `price_by_type_id` (participant-filtered/discounted), `prefill_name`/
-    `prefill_email`, `suppress_form`, and each `occurrences_for_picker`
-    row's `signed_up`, exactly as it used to for the base render. When
+    `prefill_email`, and each `occurrences_for_picker` row's `signed_up`.
+    The context also carries `existing_signup_slot` (`true`): fair-events
+    renders what the viewer already holds in a slot of its own (below), so
+    a viewer who holds a ticket keeps the form and `suppress_form` stays
+    `false`. A companion that does not find the key — an older fair-events —
+    falls back to `suppress_form = true` and its card in place of the form.
+    Occurrences marked `signed_up` are labelled, never disabled: buying
+    again for a date already held is a purchase of its own (#1526). When
     `viewer_resolved` is true the endpoint renders the personalized
     fragments below and returns them as HTML (reusing
     `SignupFieldsetRenderer` and the same render-slot actions the base
@@ -618,14 +624,35 @@ sub-route) expose:
     no rendering work happens for the anonymous majority. Response shape:
     `viewer_resolved`, `suppress_form`, `ticket_type_fieldset_html` /
     `ticket_options_fieldset_html` (the two fieldsets, HTML or `null`),
+    `existing_signup_html` (what the viewer already holds, HTML or `null`),
     `before_form_html` / `before_submit_html` / `after_form_html` (the three
-    render-slot actions' captured output, HTML or `null`),
+    in-form render-slot actions' captured output, HTML or `null`),
     `occurrences_signed_up` (event_date_ids), `prefill_name`, `prefill_email`,
     and the non-secret `token_identity_validated` boolean. The token itself and
     participant ID are never returned.
-    frontend.js swaps the `<form>` for a `fair-events-get-tickets-companion`
-    wrapper client-side when `suppress_form` is true (mirroring what the base
-    render used to do server-side), instead of patching the fieldsets.
+    frontend.js places `existing_signup_html` in a
+    `fair-events-get-tickets-existing` wrapper just before the `<form>`,
+    outside it, so none of its controls is validated or submitted with a new
+    purchase. It swaps the `<form>` for a `fair-events-get-tickets-companion`
+    wrapper client-side only when `suppress_form` is true, instead of
+    patching the fieldsets.
+-   **`fair_events_signup_render_existing_signup` action** — fired with the
+    same context just before the `<form>` (a no-op on the base render) and
+    by the viewer-context endpoint into `existing_signup_html`. fair-audience
+    renders the signed-up card here: every confirmed ticket the participant
+    holds for the date — a whole-series pass included — with its own type
+    and activities, read from the ticket units (the relationship's ticket
+    type and activities are the fallback for admissions without units only),
+    followed by its "add activities" section. The card offers "Cancel
+    signup" only for an admission without tickets (see
+    `DELETE fair-audience/v1/event-signup` under "Canonical signup store").
+    Inside the form, `fair_events_signup_render_before_form` then heads the
+    purchase "Buy another ticket for yourself" with the recognised name and
+    email, followed by "Not you? Start fresh" (the identity reset) and
+    fair-audience's own `fair_audience_signup_identity_actions` action — the
+    place for a separate "register another person" action (#1528). The buyer
+    of a recognised viewer's purchase is always that participant, whatever
+    name or email the form is sent with.
 -   **Three render-slot actions**, all passed the context from whichever
     filter above ran (so they no-op on the base render's un-enriched
     context, and produce fragments on the viewer-context endpoint's enriched
@@ -823,6 +850,14 @@ sub-route) expose:
     linked, or recorded, to another participant is left unchanged. Repeated
     calls are no-ops. Without a listener the transaction stays as the
     connector created it.
+-   **Payment confirmation** — `SignupPaymentState::resolve_for_transaction()`
+    (the return-from-payment card and `GET …/get-tickets/payment-state`)
+    includes `tickets`: one `{ ticket_type, activities }` entry per ticket of
+    that transaction's own signups, so the card lists the purchase just paid
+    for and never a ticket from an earlier one. The confirmed card links
+    back to the signup form, where the tickets now held are listed and
+    another purchase can begin; a free purchase offers the same link in
+    place of the form.
 -   **`fair_events_signup_confirmed` / `fair_events_signup_payment_failed`
     actions** — `fair-events/src/Hooks/PaymentHooks.php` fires one of these
     per resolved signup row (`$signup, $transaction`) after a
@@ -888,6 +923,7 @@ unified-signup submission fatal'd):
 | `fair_events_signup_viewer_context`    | 1           | `add_filter( ..., 10, 1 )`                 |
 | `fair_events_signup_precheck_error`    | 5           | `add_filter( ..., 10, 5 )` (no consumer)   |
 | `fair_events_signup_deferred_response` | 3           | `add_filter( ..., 10, 3 )`                 |
+| `fair_events_signup_render_existing_signup` | 1      | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_before_form` | 1          | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_before_submit` | 1        | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_after_form` | 1           | `add_action( ..., 10, 1 )`                 |
@@ -966,7 +1002,13 @@ event-date/participant) union the labels instead. The same holds for a
 deliberate repeat purchase: every checkout with a new idempotency key creates
 its own signup, ticket units, activity selections, answers and — when paid —
 transaction, each recorded in the participant's ledger; the relationship
-stays one per event date and is never duplicated per ticket. `EventSignup::has_confirmed_signup()`
+stays one per event date and is never duplicated per ticket. For the same
+reason `DELETE fair-audience/v1/event-signup`, which removes that
+relationship, answers 409 `signup_has_tickets` while the participant holds
+or bought a ticket there that still admits someone or awaits its payment
+(`TicketActivities::backs_admission()`): it would invalidate every purchase
+at once. It keeps working for an admission without tickets; one ticket is
+cancelled through the per-ticket routes (#1699). `EventSignup::has_confirmed_signup()`
 exists specifically to guard capacity-release cleanups (e.g. an expiry cron)
 against dropping a still-valid relationship because of this multiplicity.
 
