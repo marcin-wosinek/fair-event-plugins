@@ -118,6 +118,22 @@ export default function SeriesModal( {
 		[ preview ]
 	);
 
+	// Where each tab's calendar starts, fixed for as long as the modal is open:
+	// its earliest date at opening. Later schedule edits and date toggles
+	// recolour the days but never move this boundary or the viewed month.
+	const [ calendarStart ] = useState( () => ( {
+		regular: preview.dates[ 0 ] || masterDateStr,
+		irregular: [ masterDateStr, ...manualDates ].sort()[ 0 ],
+	} ) );
+	// Owned here rather than by the calendar: TabPanel unmounts the inactive
+	// tab, and each tab must come back on the month it was left on.
+	const [ viewMonths, setViewMonths ] = useState( () => ( {
+		regular: calendarStart.regular.slice( 0, 7 ),
+		irregular: calendarStart.irregular.slice( 0, 7 ),
+	} ) );
+	const setViewMonth = ( tabName ) => ( month ) =>
+		setViewMonths( ( prev ) => ( { ...prev, [ tabName ]: month } ) );
+
 	const regularDayProps = ( dateStr ) => {
 		if ( ! generatedDatesSet.has( dateStr ) ) return {};
 		const isMaster = dateStr === masterDateStr;
@@ -132,7 +148,6 @@ export default function SeriesModal( {
 	const uniqueManualDates = new Set( allManualDates );
 	const hasDuplicateManualDates =
 		uniqueManualDates.size !== allManualDates.length;
-	const sortedSelectedDates = [ ...uniqueManualDates ].sort();
 
 	const toggleManualDate = ( dateStr ) => {
 		if ( dateStr === masterDateStr ) return;
@@ -299,11 +314,21 @@ export default function SeriesModal( {
 
 							<VStack
 								spacing={ 2 }
-								style={ { minWidth: '260px' } }
+								style={ { maxWidth: '100%' } }
 							>
 								<strong>
 									{ __( 'Schedule preview', 'fair-events' ) }
 								</strong>
+								<MiniCalendar
+									fixedMonths={ 2 }
+									viewMonth={ viewMonths.regular }
+									onViewMonthChange={ setViewMonth(
+										'regular'
+									) }
+									minDate={ calendarStart.regular }
+									maxDate={ preview.lastDate }
+									dayProps={ regularDayProps }
+								/>
 								{ preview.dates.length === 0 ? (
 									<p>
 										{ __(
@@ -312,27 +337,20 @@ export default function SeriesModal( {
 										) }
 									</p>
 								) : (
-									<>
-										<MiniCalendar
-											minDate={ preview.dates[ 0 ] }
-											maxDate={ preview.lastDate }
-											dayProps={ regularDayProps }
-										/>
-										<p>
-											{ sprintf(
-												/* translators: 1: number of dates in the series, 2: last date in the series */
-												__(
-													'%1$d dates, until %2$s',
-													'fair-events'
-												),
-												preview.totalCount,
-												formatDateOnly(
-													preview.lastDate,
-													'short'
-												)
-											) }
-										</p>
-									</>
+									<p>
+										{ sprintf(
+											/* translators: 1: number of dates in the series, 2: last date in the series */
+											__(
+												'%1$d dates, until %2$s',
+												'fair-events'
+											),
+											preview.totalCount,
+											formatDateOnly(
+												preview.lastDate,
+												'short'
+											)
+										) }
+									</p>
 								) }
 							</VStack>
 						</HStack>
@@ -361,12 +379,12 @@ export default function SeriesModal( {
 							) }
 
 							<MiniCalendar
-								minDate={ sortedSelectedDates[ 0 ] }
-								maxDate={
-									sortedSelectedDates[
-										sortedSelectedDates.length - 1
-									]
-								}
+								fixedMonths={ 2 }
+								viewMonth={ viewMonths.irregular }
+								onViewMonthChange={ setViewMonth(
+									'irregular'
+								) }
+								minDate={ calendarStart.irregular }
 								dayProps={ irregularDayProps }
 								allowForwardBeyondRange
 							/>

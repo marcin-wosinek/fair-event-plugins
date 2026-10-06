@@ -17,6 +17,12 @@
  * A day with none of `href`/`interactive` renders as a plain, non-operable
  * cell.
  *
+ * By default the number of visible months follows the viewport width and the
+ * pages are derived from the date range. Passing `fixedMonths` opts into a
+ * fixed-size view instead: exactly that many consecutive months starting at
+ * `viewMonth`, whatever the range or the viewport, so a caller whose dates
+ * change while the calendar is open keeps a stable layout.
+ *
  * @package FairEventsShared
  */
 
@@ -48,6 +54,20 @@ function computeMonthRange( minDate, maxDate ) {
 	return result;
 }
 
+// "Y-m" (or any "Y-m-d") string -> local Date on the 1st of that month.
+function parseMonth( value ) {
+	const [ year, month ] = value.split( '-' ).map( Number );
+	return new Date( year, month - 1, 1 );
+}
+
+function formatMonth( date ) {
+	return formatLocalDate( date ).slice( 0, 7 );
+}
+
+function addMonths( date, count ) {
+	return new Date( date.getFullYear(), date.getMonth() + count, 1 );
+}
+
 export function computeVisibleMonths( width ) {
 	if ( width < 600 ) return 1;
 	if ( width < 900 ) return 2;
@@ -62,8 +82,19 @@ export function computeVisibleMonths( width ) {
  * @param {string}   [props.maxDate]                 Last date (Y-m-d) the calendar must cover.
  * @param {Function} props.dayProps                  `(dateStr, date) => descriptor` for each day cell.
  * @param {boolean}  [props.allowForwardBeyondRange] Keep "next months" enabled past `maxDate` (for pickers).
+ * @param {number}   [props.fixedMonths]             Opt into a fixed-size view of this many consecutive months.
+ * @param {string}   [props.viewMonth]               Fixed mode: first visible month (Y-m). Controlled when set.
+ * @param {Function} [props.onViewMonthChange]       Fixed mode: called with the new first visible month (Y-m).
  */
-export default function MiniCalendar( {
+export default function MiniCalendar( { fixedMonths, ...props } ) {
+	return fixedMonths ? (
+		<FixedMonthsCalendar monthCount={ fixedMonths } { ...props } />
+	) : (
+		<PagedCalendar { ...props } />
+	);
+}
+
+function PagedCalendar( {
 	minDate,
 	maxDate,
 	dayProps,
@@ -133,10 +164,90 @@ export default function MiniCalendar( {
 		}
 	};
 
+	return (
+		<MonthsView
+			months={ visibleMonths }
+			dayProps={ dayProps }
+			showNav={ months.length > visibleCount || allowForwardBeyondRange }
+			canGoBack={ canGoBack }
+			canGoForward={ canGoForward }
+			onBack={ () =>
+				setStartIndex( Math.max( 0, startIndex - visibleCount ) )
+			}
+			onForward={ handleForward }
+		/>
+	);
+}
+
+/**
+ * Fixed-size view: always `monthCount` consecutive months from the viewed
+ * month, paged a whole view at a time. The viewed month never follows the
+ * dates — `minDate` only limits paging back and `maxDate` paging forward — so
+ * a view left past a shrunken range stays where the user put it.
+ */
+function FixedMonthsCalendar( {
+	monthCount,
+	minDate,
+	maxDate,
+	dayProps,
+	allowForwardBeyondRange = false,
+	viewMonth,
+	onViewMonthChange,
+} ) {
+	const [ internalMonth, setInternalMonth ] = useState( () =>
+		formatMonth( minDate ? parseMonth( minDate ) : new Date() )
+	);
+	const first = parseMonth( viewMonth || internalMonth );
+
+	const showMonth = ( date ) => {
+		const next = formatMonth( date );
+		setInternalMonth( next );
+		if ( onViewMonthChange ) {
+			onViewMonthChange( next );
+		}
+	};
+
+	const months = [];
+	for ( let i = 0; i < monthCount; i++ ) {
+		months.push( addMonths( first, i ) );
+	}
+
+	const earliest = minDate ? parseMonth( minDate ) : null;
+	const latest = maxDate ? parseMonth( maxDate ) : null;
+	const canGoBack = ! earliest || first > earliest;
+	const canGoForward =
+		allowForwardBeyondRange ||
+		( !! latest && months[ months.length - 1 ] < latest );
+
+	return (
+		<MonthsView
+			months={ months }
+			dayProps={ dayProps }
+			showNav
+			canGoBack={ canGoBack }
+			canGoForward={ canGoForward }
+			onBack={ () => {
+				const previous = addMonths( first, -monthCount );
+				showMonth(
+					earliest && previous < earliest ? earliest : previous
+				);
+			} }
+			onForward={ () => showMonth( addMonths( first, monthCount ) ) }
+		/>
+	);
+}
+
+function MonthsView( {
+	months,
+	dayProps,
+	showNav,
+	canGoBack,
+	canGoForward,
+	onBack,
+	onForward,
+} ) {
 	const weekdayLabels = getWeekdayLabels( 1, { weekday: 'narrow' } );
 	const todayStr = formatLocalDate( new Date() );
-
-	const showNav = months.length > visibleCount || allowForwardBeyondRange;
 
 	return (
 		<div>
@@ -154,24 +265,20 @@ export default function MiniCalendar( {
 							size="small"
 							disabled={ ! canGoBack }
 							label={ __( 'Previous months', 'fair-events' ) }
-							onClick={ () =>
-								setStartIndex(
-									Math.max( 0, startIndex - visibleCount )
-								)
-							}
+							onClick={ onBack }
 						/>
 						<Button
 							icon="arrow-right-alt2"
 							size="small"
 							disabled={ ! canGoForward }
 							label={ __( 'Next months', 'fair-events' ) }
-							onClick={ handleForward }
+							onClick={ onForward }
 						/>
 					</HStack>
 				</HStack>
 			) }
 			<div style={ { display: 'flex', gap: '24px', flexWrap: 'wrap' } }>
-				{ visibleMonths.map( ( monthDate ) => (
+				{ months.map( ( monthDate ) => (
 					<MiniMonth
 						key={ `${ monthDate.getFullYear() }-${ monthDate.getMonth() }` }
 						monthDate={ monthDate }
