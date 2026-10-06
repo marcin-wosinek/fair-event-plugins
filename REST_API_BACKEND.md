@@ -1062,6 +1062,25 @@ and an add-on hold expiry). fair-events owns the tables and models
     participant given a ticket takes one place. Label-based consumers outside
     the Audience tab (label counts, mailing audiences) still read the stored
     label.
+
+    **An unfinished purchase is not a registration (#1754).** A paid
+    get-tickets purchase sets the buyer's relationship to `pending_payment`
+    until `fair_events_signup_confirmed` makes it `signed_up` — unless the
+    buyer already has a role that stands without it: `signed_up`, a
+    `collaborator`, or an `interested` holder of a confirmed ticket keeps
+    that label, so a failed or abandoned payment cannot take it away. The
+    participants list reports `signed_up` for a `pending_payment`
+    relationship holding a confirmed ticket someone else bought, and adds
+    `payment_in_progress`: true while the hold runs and the purchase behind
+    it has not failed or expired (a purchase without tickets is judged by its
+    hold alone). The Audience tab names the two cases "Payment in progress"
+    and "Payment not completed", never a registered role, and its edit
+    dialog sends `label` only when the administrator picks one. The expiry
+    cleanup (`delete_expired_pending_payments()`) keeps a relationship whose
+    participant has a confirmed signup, and turns one whose participant
+    holds a confirmed ticket into `interested` instead of deleting it. The
+    List tab shows confirmed tickets of confirmed signups only; the
+    `get-tickets` admin list still returns every signup and ticket status.
 -   **Move, cancel, delete (#1699).** Three `manage_options` routes act on
     one ticket and nothing else: its signup, purchaser, transaction and
     amounts, and the purchase's other tickets, are never written, and none of

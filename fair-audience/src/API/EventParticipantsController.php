@@ -634,6 +634,10 @@ class EventParticipantsController extends WP_REST_Controller {
 		// tickets that admit them, until an administrator deletes them.
 		$cancelled_tickets = $this->cancelled_tickets_by_participant( (int) $event_date_id, $event_participants );
 
+		// Failed or lapsed tickets behind the unfinished purchases, to tell a
+		// payment still in progress from one that was not completed.
+		$lapsed_tickets = $this->lapsed_tickets_by_participant( (int) $event_date_id, $event_participants );
+
 		// Custom question answers captured during signup. Answers collected
 		// for a ticket go with that ticket; the participant row carries only
 		// those not attached to any ticket.
@@ -643,7 +647,7 @@ class EventParticipantsController extends WP_REST_Controller {
 		);
 
 		$items = array_map(
-			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $ticket_answers, $event_date_id, $assigned_away, $cancelled_tickets ) {
+			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $ticket_answers, $event_date_id, $assigned_away, $cancelled_tickets, $lapsed_tickets ) {
 				$participant     = $this->participant_repo->get_by_id( $ep->participant_id );
 				$on_this_date    = (int) $ep->event_date_id === (int) $event_date_id;
 				$given_to_others = $on_this_date ? ( $assigned_away[ (int) $ep->participant_id ] ?? 0 ) : 0;
@@ -675,6 +679,8 @@ class EventParticipantsController extends WP_REST_Controller {
 					'attended_at'                       => $ep->attended_ticket_id ? null : $ep->attended_at,
 					'created_at'                        => $ep->created_at,
 					'payment_expires_at'                => $ep->payment_expires_at,
+					// Only meaningful while the label is pending_payment.
+					'payment_in_progress'               => $this->payment_in_progress( $ep, $tickets_by_relationship[ $ep->id ] ?? array(), $lapsed_tickets[ (int) $ep->participant_id ] ?? array() ),
 					'ticket_option_names'               => array_values( array_unique( $participant_option_names[ $ep->id ] ?? array() ) ),
 					'ticket_option_ids'                 => array_values( array_unique( $participant_option_ids[ $ep->id ] ?? array() ) ),
 					'confirmed_ticket_option_ids'       => array_values( array_unique( $participant_confirmed_option_ids[ $ep->id ] ?? array() ) ),
@@ -833,12 +839,64 @@ class EventParticipantsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * The failed or expired tickets held on an event date by each
+	 * participant whose relationship there is awaiting payment.
+	 *
+	 * @param int                                     $event_date_id      Event date ID.
+	 * @param \FairAudience\Models\EventParticipant[] $event_participants Relationships; only those on the event date awaiting payment are looked up.
+	 * @return array<int, object[]> Tickets keyed by participant ID; empty when tickets are unavailable.
+	 */
+	private function lapsed_tickets_by_participant( $event_date_id, array $event_participants ) {
+		if ( ! TicketActivities::available() ) {
+			return array();
+		}
+
+		$participant_ids = array();
+		foreach ( $event_participants as $event_participant ) {
+			if ( (int) $event_participant->event_date_id === (int) $event_date_id && 'pending_payment' === $event_participant->label ) {
+				$participant_ids[] = (int) $event_participant->participant_id;
+			}
+		}
+
+		return \FairEvents\Models\EventTicket::get_held_by_participants( (int) $event_date_id, $participant_ids, array( 'failed', 'expired' ) );
+	}
+
+	/**
+	 * Whether a relationship awaiting payment can still be paid: its hold
+	 * runs, and the purchase behind it has not failed or lapsed. A purchase
+	 * without tickets (fair-audience's own signup routes) is judged by its
+	 * hold alone.
+	 *
+	 * @param \FairAudience\Models\EventParticipant $event_participant Relationship.
+	 * @param object[]                              $tickets           Active tickets the participant holds on the relationship's date.
+	 * @param object[]                              $lapsed_tickets    Failed or expired tickets they hold there.
+	 * @return bool
+	 */
+	private function payment_in_progress( $event_participant, array $tickets, array $lapsed_tickets ) {
+		if ( 'pending_payment' !== $event_participant->label
+			|| empty( $event_participant->payment_expires_at )
+			|| strtotime( $event_participant->payment_expires_at . ' UTC' ) <= time()
+		) {
+			return false;
+		}
+
+		foreach ( $tickets as $ticket ) {
+			if ( 'pending_payment' === $ticket->status ) {
+				return true;
+			}
+		}
+
+		return ! $lapsed_tickets;
+	}
+
+	/**
 	 * A relationship's label once the tickets held on its date are taken
 	 * into account. Someone holding a confirmed ticket another participant
-	 * bought is signed up, though their relationship only lists them; a
-	 * purchaser whose tickets are all held by others no longer is. The
-	 * stored label is never changed: it is what applies again when a ticket
-	 * comes back or is given away.
+	 * bought is signed up, though their relationship only lists them or
+	 * awaits the payment of a purchase of their own; a purchaser whose
+	 * tickets are all held by others no longer is. The stored label is never
+	 * changed: it is what applies again when a ticket comes back or is given
+	 * away.
 	 *
 	 * @param \FairAudience\Models\EventParticipant $event_participant Relationship.
 	 * @param object[]                              $tickets           Active tickets the participant holds on the relationship's date.
@@ -848,7 +906,7 @@ class EventParticipantsController extends WP_REST_Controller {
 	private function admission_label( $event_participant, array $tickets, $assigned_away ) {
 		$label = (string) $event_participant->label;
 
-		if ( 'interested' === $label ) {
+		if ( 'interested' === $label || 'pending_payment' === $label ) {
 			foreach ( $tickets as $ticket ) {
 				if ( 'confirmed' === $ticket->status && (int) $ticket->purchaser_participant_id !== (int) $ticket->holder_participant_id ) {
 					return 'signed_up';

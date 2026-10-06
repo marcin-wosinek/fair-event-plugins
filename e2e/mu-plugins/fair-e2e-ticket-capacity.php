@@ -258,5 +258,34 @@ add_action(
 				},
 			)
 		);
+
+		// Let a participant's fair-audience payment hold on an event date
+		// run out, then run the cleanup its cron would.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/ticket-capacity/expire-audience-hold',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => $admin_only,
+				'callback'            => static function ( WP_REST_Request $request ) {
+					global $wpdb;
+
+					$wpdb->query(
+						$wpdb->prepare(
+							'UPDATE %i SET payment_expires_at = %s WHERE event_date_id = %d AND participant_id = %d AND label = %s',
+							$wpdb->prefix . 'fair_audience_event_participants',
+							gmdate( 'Y-m-d H:i:s', time() - MINUTE_IN_SECONDS ),
+							absint( $request->get_param( 'event_date_id' ) ),
+							absint( $request->get_param( 'participant_id' ) ),
+							'pending_payment'
+						)
+					);
+
+					\FairAudience\Hooks\PaymentHooks::cleanup_expired_signups();
+
+					return rest_ensure_response( array( 'done' => true ) );
+				},
+			)
+		);
 	}
 );

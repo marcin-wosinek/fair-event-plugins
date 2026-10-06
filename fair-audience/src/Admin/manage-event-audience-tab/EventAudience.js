@@ -65,6 +65,26 @@ const isStalePendingPayment = ( p ) => {
 	return parsePaymentExpiresAt( p.payment_expires_at ) <= Date.now();
 };
 
+// Whether an unfinished purchase can still be paid: its hold runs, and the
+// server found no failed or lapsed attempt behind it.
+const isPaymentInProgress = ( p ) =>
+	!! p &&
+	p.label === 'pending_payment' &&
+	! isStalePendingPayment( p ) &&
+	p.payment_in_progress !== false;
+
+// The role shown for a participant. Someone whose purchase is unfinished is
+// never named with a registered role: their payment is either in progress or
+// was not completed.
+const roleLabel = ( p ) => {
+	if ( p.label === 'pending_payment' ) {
+		return isPaymentInProgress( p )
+			? __( 'Payment in progress', 'fair-audience' )
+			: __( 'Payment not completed', 'fair-audience' );
+	}
+	return LABEL_DISPLAY[ p.label ] || p.label;
+};
+
 // Whether a participant currently occupies a seat for capacity purposes.
 // Mirrors EventParticipantRepository::count_signups_for_ticket_option in PHP.
 const occupiesSeat = ( p ) => {
@@ -421,6 +441,7 @@ export default function EventAudience( {
 			collaborator: 0,
 			signed_up: 0,
 			interested: 0,
+			pending_payment: 0,
 			tickets: 0,
 		};
 		participants.forEach( ( p ) => {
@@ -909,16 +930,11 @@ export default function EventAudience( {
 		);
 		setEditAdminComment( participant.admin_comment || '' );
 		setEditStaleDecision( null );
-		// Only the three editable roles are exposed here. Transient states
-		// such as pending_payment fall back to signed_up — the stale-payment
-		// resolver below takes over when applicable.
-		setEditLabel(
-			[ 'collaborator', 'signed_up', 'interested' ].includes(
-				participant.label
-			)
-				? participant.label
-				: 'signed_up'
-		);
+		// Start from the participant's own state, so saving other details
+		// never changes it: an unfinished purchase becomes a registration
+		// only when the administrator picks a role, or through the
+		// stale-payment resolver below.
+		setEditLabel( participant.label );
 	};
 
 	const handleToggleOptionId = ( id ) => {
@@ -1594,7 +1610,7 @@ export default function EventAudience( {
 					colRole,
 					isPurchaserOnly( p )
 						? __( 'Purchaser', 'fair-audience' )
-						: LABEL_DISPLAY[ p.label ] || p.label
+						: roleLabel( p )
 				) }
 				{ ownsAdmission
 					? cell( 'type', colType, p.ticket_type_name || '—' )
@@ -2183,6 +2199,17 @@ export default function EventAudience( {
 										{ __( 'Interested:', 'fair-audience' ) }{ ' ' }
 										<strong>{ counts.interested }</strong>
 									</span>
+									{ counts.pending_payment > 0 && (
+										<span>
+											{ __(
+												'Unfinished purchases:',
+												'fair-audience'
+											) }{ ' ' }
+											<strong>
+												{ counts.pending_payment }
+											</strong>
+										</span>
+									) }
 									<span>
 										{ __( 'Tickets:', 'fair-audience' ) }{ ' ' }
 										<strong>{ counts.tickets }</strong>
@@ -3041,7 +3068,26 @@ export default function EventAudience( {
 							<SelectControl
 								label={ __( 'Role', 'fair-audience' ) }
 								value={ editLabel }
+								help={
+									editLabel === 'pending_payment'
+										? __(
+												'This purchase is not paid yet. The role changes to Signed up when the payment succeeds; pick a role only to decide it yourself.',
+												'fair-audience'
+										  )
+										: undefined
+								}
 								options={ [
+									...( editingParticipant.label ===
+									'pending_payment'
+										? [
+												{
+													label: roleLabel(
+														editingParticipant
+													),
+													value: 'pending_payment',
+												},
+										  ]
+										: [] ),
 									{
 										label: LABEL_DISPLAY.collaborator,
 										value: 'collaborator',

@@ -891,7 +891,12 @@ class SignupHookBridge {
 		$event_participant_id = $existing ? (int) $existing->id : 0;
 
 		if ( $existing ) {
-			if ( 'signed_up' !== $existing->label ) {
+			// A purchase awaiting payment never replaces a role the buyer
+			// already has for another reason: a failed or abandoned payment
+			// would otherwise take it away with the expired hold.
+			$keeps_role = 'signed_up' === $existing->label
+				|| ( 'pending_payment' === $label && self::has_standing_role( $existing ) );
+			if ( ! $keeps_role ) {
 				$event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, $label );
 				$stamp_metadata = true;
 			}
@@ -944,6 +949,24 @@ class SignupHookBridge {
 			$event         = get_post( $event_id );
 			$email_service->send_signup_payment_confirmation( $participant, $event, null, array(), (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
 		}
+	}
+
+	/**
+	 * Whether a relationship stands without the purchase being started: a
+	 * collaborator, or someone listed who holds a confirmed ticket on its
+	 * date, such as one another participant bought and assigned to them.
+	 *
+	 * @param object $event_participant Existing relationship.
+	 * @return bool
+	 */
+	private static function has_standing_role( $event_participant ) {
+		if ( 'collaborator' === $event_participant->label ) {
+			return true;
+		}
+
+		return 'interested' === $event_participant->label
+			&& TicketActivities::available()
+			&& (bool) \FairEvents\Models\EventTicket::get_held_on_event_date( (int) $event_participant->event_date_id, (int) $event_participant->participant_id, array( 'confirmed' ) );
 	}
 
 	/**

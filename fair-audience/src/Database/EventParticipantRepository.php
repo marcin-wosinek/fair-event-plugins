@@ -1035,7 +1035,9 @@ class EventParticipantRepository {
 	 * Skips rows whose participant already holds a confirmed signup on the
 	 * same event date (e.g. a series pass bought after this hold), so the
 	 * cleanup never drops a still-relevant relationship — see
-	 * EventSignup::has_confirmed_signup().
+	 * EventSignup::has_confirmed_signup(). A participant holding a confirmed
+	 * ticket there that someone else bought stays listed as 'interested',
+	 * the label an assigned ticket's holder has.
 	 *
 	 * @return int Number of rows deleted.
 	 */
@@ -1061,12 +1063,19 @@ class EventParticipantRepository {
 		}
 
 		$has_signup_guard = class_exists( \FairEvents\Models\EventSignup::class );
+		$has_ticket_guard = \FairAudience\Services\TicketActivities::available();
 		$deletable_ids    = array();
 
 		foreach ( $candidates as $row ) {
 			if ( $has_signup_guard
 				&& \FairEvents\Models\EventSignup::has_confirmed_signup( (int) $row->event_date_id, (int) $row->participant_id )
 			) {
+				continue;
+			}
+			if ( $has_ticket_guard
+				&& \FairEvents\Models\EventTicket::get_held_on_event_date( (int) $row->event_date_id, (int) $row->participant_id, array( 'confirmed' ) )
+			) {
+				$this->update_label_by_event_date( (int) $row->event_date_id, (int) $row->participant_id, 'interested' );
 				continue;
 			}
 			$deletable_ids[] = (int) $row->id;
