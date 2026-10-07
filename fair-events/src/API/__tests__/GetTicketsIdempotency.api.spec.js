@@ -649,15 +649,16 @@ test.describe( 'Repeat purchases with idempotent checkout', () => {
 				idempotency_key: newKey(),
 			};
 
-			// One purchase and four repeats: more requests than the limit of
-			// three an hour for one email.
-			for ( let i = 0; i < 5; i++ ) {
+			// One purchase and eleven repeats: more requests than the limit
+			// of ten checkouts for one email.
+			for ( let i = 0; i < 12; i++ ) {
 				const res = await buy( first );
 				expect( res.status, JSON.stringify( res.body ) ).toBe( 200 );
 			}
 
-			// Only the purchase counted, so two more fit and a fourth does not.
-			for ( let i = 0; i < 2; i++ ) {
+			// Only the purchase counted, so nine more fit and an eleventh
+			// does not.
+			for ( let i = 0; i < 9; i++ ) {
 				const res = await buy( {
 					...first,
 					idempotency_key: newKey(),
@@ -673,7 +674,7 @@ test.describe( 'Repeat purchases with idempotent checkout', () => {
 
 			// The limit does not stop a key from reporting its purchase.
 			expect( ( await buy( first ) ).status ).toBe( 200 );
-			expect( ( await state( eventDateId ) ).signups ).toHaveLength( 3 );
+			expect( ( await state( eventDateId ) ).signups ).toHaveLength( 10 );
 		} );
 	} );
 

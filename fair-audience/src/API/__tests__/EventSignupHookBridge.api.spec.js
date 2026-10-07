@@ -360,13 +360,13 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		expect( relationships[ 0 ].label ).toBe( 'signed_up' );
 	} );
 
-	test( 'the per-email rate limit rejects a 4th signup within the window (#1245)', async () => {
+	test( 'the per-email rate limit rejects an 11th signup within the window (#1245, #1769)', async () => {
 		test.skip( ! fairAudienceActive, 'fair-audience not active' );
 
 		const rateLimitEmail = `signup-hook-bridge-rl-${ Date.now() }@example.test`;
 
 		// No ticket_type_id: a plain signup, so only the rate limiter decides.
-		for ( let i = 0; i < 3; i++ ) {
+		for ( let i = 0; i < 10; i++ ) {
 			const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
 				data: {
 					event_date_id: eventDateId,
@@ -378,7 +378,7 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 			expect( res.ok() ).toBeTruthy();
 		}
 
-		const fourthRes = await api.post(
+		const limitedRes = await api.post(
 			'/wp-json/fair-events/v1/get-tickets',
 			{
 				data: {
@@ -389,7 +389,7 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 				},
 			}
 		);
-		expect( fourthRes.status() ).toBe( 429 );
-		expect( ( await fourthRes.json() ).code ).toBe( 'rate_limited' );
+		expect( limitedRes.status() ).toBe( 429 );
+		expect( ( await limitedRes.json() ).code ).toBe( 'rate_limited' );
 	} );
 } );
