@@ -208,3 +208,164 @@ test.describe( 'Series popup calendar', () => {
 		}
 	} );
 } );
+
+/**
+ * #1749: generated dates in the Regular schedule calendar can be skipped and
+ * restored before saving, and a saved skip comes back when the series is
+ * reopened.
+ *
+ * Runs with the site and the browser both on Europe/Madrid, ahead of UTC,
+ * where a date-only value converted through UTC lands on the wrong day
+ * (UI_GUIDELINES.md "Dates and times").
+ */
+test.describe( 'Series popup calendar — skipping dates', () => {
+	test.use( { timezoneId: 'Europe/Madrid' } );
+
+	test( 'skips a date, saves it, shows it on reopening, and restores it', async ( {
+		page,
+	} ) => {
+		await login( page );
+		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+		await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+
+		const settings = await apiFetch( page, { path: '/wp/v2/settings' } );
+		await apiFetch( page, {
+			path: '/wp/v2/settings',
+			method: 'POST',
+			data: { timezone: 'Europe/Madrid' },
+		} );
+
+		const master = await apiFetch( page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: 'Series popup skipped dates',
+				// Late evening: the next day already in UTC+1/+2 terms.
+				start_datetime: '2026-09-01 23:30:00',
+				end_datetime: '2026-09-02 00:30:00',
+				all_day: false,
+			},
+		} );
+		const managePage = `/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ master.id }`;
+
+		try {
+			await page.goto( managePage );
+			await page
+				.getByRole( 'button', { name: 'Turn into a series' } )
+				.click();
+
+			const dialog = page.getByRole( 'dialog' );
+			const day = ( label ) =>
+				dialog.getByRole( 'button', { name: new RegExp( label ) } );
+
+			await dialog
+				.getByRole( 'spinbutton', { name: 'Number of occurrences' } )
+				.fill( '4' );
+			await expect( dialog.getByText( /^4 dates, until/ ) ).toBeVisible();
+
+			// The original date is shown but cannot be skipped; a day outside
+			// the schedule is not a control at all.
+			await expect( day( 'September 1, 2026' ) ).toBeDisabled();
+			await expect( day( 'September 2, 2026' ) ).toHaveCount( 0 );
+
+			// Keyboard only: skip with Enter, restore with Space.
+			const second = day( 'September 8, 2026' );
+			await second.focus();
+			await page.keyboard.press( 'Enter' );
+			await expect( second ).toHaveAttribute( 'aria-pressed', 'false' );
+			await expect( dialog.getByText( /^3 dates, until/ ) ).toBeVisible();
+			await expect( dialog.getByText( '1 date skipped' ) ).toBeVisible();
+			await page.keyboard.press( 'Space' );
+			await expect( second ).toHaveAttribute( 'aria-pressed', 'true' );
+			await expect( dialog.getByText( /^4 dates, until/ ) ).toBeVisible();
+
+			// Skip the third date and save.
+			const third = day( 'September 15, 2026' );
+			await third.click();
+			await expect( third ).toHaveAttribute( 'aria-pressed', 'false' );
+			await expect( third ).toHaveCSS(
+				'text-decoration-line',
+				'line-through'
+			);
+			// The schedule still ends on its fourth weekly date.
+			await expect( day( 'September 22, 2026' ) ).toHaveAttribute(
+				'aria-pressed',
+				'true'
+			);
+			await expect( day( 'September 29, 2026' ) ).toHaveCount( 0 );
+
+			await dialog
+				.getByRole( 'button', { name: 'Create series — 3 dates' } )
+				.click();
+			await expect( dialog ).toHaveCount( 0 );
+
+			const saved = await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ master.id }`,
+			} );
+			expect( saved.rrule ).toBe( 'FREQ=WEEKLY;COUNT=4' );
+			expect( saved.cancelled_dates ).toEqual( [ '2026-09-15' ] );
+			const savedRows = Object.fromEntries(
+				saved.generated_occurrences.map( ( occ ) => [
+					occ.start_datetime,
+					occ,
+				] )
+			);
+			expect( Object.keys( savedRows ).sort() ).toEqual( [
+				'2026-09-08 23:30:00',
+				'2026-09-15 23:30:00',
+				'2026-09-22 23:30:00',
+			] );
+			expect( savedRows[ '2026-09-15 23:30:00' ].status ).toBe(
+				'cancelled'
+			);
+
+			// Reopened after a fresh page load, the skip is still there.
+			await page.goto( managePage );
+			await page.getByRole( 'button', { name: 'Edit series' } ).click();
+			await expect( third ).toHaveAttribute( 'aria-pressed', 'false' );
+			await expect( dialog.getByText( /^3 dates, until/ ) ).toBeVisible();
+			await expect( dialog.getByText( '1 date skipped' ) ).toBeVisible();
+
+			// Closing without saving discards a toggle.
+			await second.click();
+			await expect( dialog.getByText( '2 dates skipped' ) ).toBeVisible();
+			await dialog.getByRole( 'button', { name: 'Cancel' } ).click();
+			await expect( dialog ).toHaveCount( 0 );
+			await page.getByRole( 'button', { name: 'Edit series' } ).click();
+			await expect( second ).toHaveAttribute( 'aria-pressed', 'true' );
+
+			// Restoring brings the same occurrence back.
+			await third.click();
+			await dialog
+				.getByRole( 'button', { name: 'Update series — 4 dates' } )
+				.click();
+			await expect( dialog ).toHaveCount( 0 );
+
+			const restored = await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ master.id }`,
+			} );
+			expect( restored.cancelled_dates ).toEqual( [] );
+			const restoredRow = restored.generated_occurrences.find(
+				( occ ) => occ.start_datetime === '2026-09-15 23:30:00'
+			);
+			expect( restoredRow.id ).toBe(
+				savedRows[ '2026-09-15 23:30:00' ].id
+			);
+			expect( restoredRow.status ).toBe( 'active' );
+		} finally {
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-events-all-events'
+			);
+			await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ master.id }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: { timezone: settings.timezone },
+			} ).catch( () => {} );
+		}
+	} );
+} );

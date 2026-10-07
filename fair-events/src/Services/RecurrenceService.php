@@ -197,12 +197,14 @@ class RecurrenceService {
 	 * Uses reconcile_occurrences() so existing row IDs are preserved when
 	 * dates shift, avoiding id-churn that breaks attached ticket types and signups.
 	 *
-	 * @param int         $event_id Event post ID.
-	 * @param string|null $rrule    Optional RRULE to use. Pass null to read from database,
-	 *                              pass empty string to explicitly clear recurrence.
-	 * @return int Number of occurrences generated.
+	 * @param int           $event_id Event post ID.
+	 * @param string|null   $rrule          Optional RRULE to use. Pass null to read from database,
+	 *                                      pass empty string to explicitly clear recurrence.
+	 * @param string[]|null $excluded_dates Complete list of scheduled dates (Y-m-d) to keep cancelled.
+	 *                                      Null restores every scheduled date, as before.
+	 * @return int|false Number of active occurrences, or false when a row could not be written.
 	 */
-	public static function regenerate_event_occurrences( $event_id, $rrule = null ) {
+	public static function regenerate_event_occurrences( $event_id, $rrule = null, $excluded_dates = null ) {
 		$master = EventDates::get_by_event_id( $event_id );
 
 		if ( ! $master ) {
@@ -264,13 +266,16 @@ class RecurrenceService {
 		// capacity, attendance_mode, joining_link) are NOT propagated here — instances hold NULL
 		// for them unless explicitly overridden, and resolve against the master
 		// at read time.
-		$generated = array_slice( $occurrences, 1 );
-		return 1 + self::reconcile_occurrences(
+		$generated  = array_slice( $occurrences, 1 );
+		$reconciled = self::reconcile_occurrences(
 			$master_id,
 			$generated,
 			$master->all_day,
-			array( 'event_id' => $event_id )
+			array( 'event_id' => $event_id ),
+			$excluded_dates
 		);
+
+		return false === $reconciled ? false : 1 + $reconciled;
 	}
 
 	/**
@@ -278,12 +283,14 @@ class RecurrenceService {
 	 *
 	 * Uses reconcile_occurrences() to preserve existing row IDs.
 	 *
-	 * @param int         $event_date_id Event date row ID.
-	 * @param string|null $rrule         RRULE string. Pass null to read from DB,
-	 *                                   empty string to clear recurrence.
-	 * @return int Number of occurrences generated.
+	 * @param int           $event_date_id Event date row ID.
+	 * @param string|null   $rrule          RRULE string. Pass null to read from DB,
+	 *                                      empty string to clear recurrence.
+	 * @param string[]|null $excluded_dates Complete list of scheduled dates (Y-m-d) to keep cancelled.
+	 *                                      Null restores every scheduled date, as before.
+	 * @return int|false Number of active occurrences, or false when a row could not be written.
 	 */
-	public static function regenerate_standalone_occurrences( $event_date_id, $rrule = null ) {
+	public static function regenerate_standalone_occurrences( $event_date_id, $rrule = null, $excluded_dates = null ) {
 		$master = EventDates::get_by_id( $event_date_id );
 
 		if ( ! $master ) {
@@ -336,13 +343,16 @@ class RecurrenceService {
 		);
 
 		// Inheritable fields are NOT propagated here — see regenerate_event_occurrences().
-		$generated = array_slice( $occurrences, 1 );
-		return 1 + self::reconcile_occurrences(
+		$generated  = array_slice( $occurrences, 1 );
+		$reconciled = self::reconcile_occurrences(
 			$event_date_id,
 			$generated,
 			$master->all_day,
-			array( 'event_id' => $master->event_id )
+			array( 'event_id' => $master->event_id ),
+			$excluded_dates
 		);
+
+		return false === $reconciled ? false : 1 + $reconciled;
 	}
 
 	/**
@@ -443,6 +453,9 @@ class RecurrenceService {
 	 * - Updates rows whose anchor matches (preserves id); a cancelled row whose
 	 *   anchor reappears in the desired set is restored to active.
 	 * - Inserts rows for new anchors.
+	 * - Keeps the desired anchors listed in $cancelled_anchors as cancelled rows
+	 *   (inserting them when missing), so a date the organizer excluded from the
+	 *   schedule stays part of it and can be restored later.
 	 * - Soft-cancels (status='cancelled') rows whose anchor is no longer in the
 	 *   desired set instead of deleting them, so dependents (ticket types,
 	 *   signups) survive and the occurrence can come back if the anchor
@@ -453,13 +466,17 @@ class RecurrenceService {
 	 * hold NULL for them unless explicitly overridden, and resolve against the
 	 * master at read time.
 	 *
-	 * @param int   $master_id    Master event date row ID.
-	 * @param array $desired      Desired generated occurrences — each entry has 'start' and 'end' keys.
-	 * @param bool  $all_day      All-day flag to apply to inserted/updated rows.
-	 * @param array $master_props Non-inherited fields to copy onto children (currently just event_id).
-	 * @return int Number of surviving generated children (updated + inserted).
+	 * @param int           $master_id    Master event date row ID.
+	 * @param array         $desired      Desired generated occurrences — each entry has 'start' and 'end' keys.
+	 * @param bool          $all_day      All-day flag to apply to inserted/updated rows.
+	 * @param array         $master_props      Non-inherited fields to copy onto children (currently just event_id).
+	 * @param string[]|null $cancelled_anchors Desired anchors (Y-m-d) that must be cancelled. Null means
+	 *                                         every desired anchor is active.
+	 * @return int|false Number of active generated children, or false when a row could not be written.
 	 */
-	public static function reconcile_occurrences( $master_id, $desired, $all_day, $master_props = array() ) {
+	public static function reconcile_occurrences( $master_id, $desired, $all_day, $master_props = array(), $cancelled_anchors = null ) {
+		$cancelled_anchors = array_fill_keys( (array) $cancelled_anchors, true );
+
 		// Build the desired set keyed by anchor date.
 		$desired_by_anchor = array();
 		foreach ( $desired as $occ ) {
@@ -479,6 +496,8 @@ class RecurrenceService {
 		$count = 0;
 
 		foreach ( $desired_by_anchor as $anchor => $occ ) {
+			$status = isset( $cancelled_anchors[ $anchor ] ) ? 'cancelled' : 'active';
+
 			if ( isset( $existing_by_anchor[ $anchor ] ) ) {
 				// Match — update in place, preserving id. Inheritable fields
 				// (title, venue_id, address, link_type, external_url,
@@ -495,37 +514,46 @@ class RecurrenceService {
 				if ( array_key_exists( 'event_id', $master_props ) ) {
 					$update['event_id'] = $master_props['event_id'];
 				}
-				// Every desired anchor must be active. This restores soft-cancelled
-				// rows on regrow and repairs any unsupported legacy status.
-				if ( 'active' !== $row->status ) {
-					$update['status'] = 'active';
+				// Every desired anchor is active unless it is excluded. This restores
+				// soft-cancelled rows on regrow and repairs any unsupported legacy status.
+				if ( $status !== $row->status ) {
+					$update['status'] = $status;
 				}
-				EventDates::update_by_id( $row->id, $update );
+				if ( ! EventDates::update_by_id( $row->id, $update ) ) {
+					return false;
+				}
 				unset( $existing_by_anchor[ $anchor ] );
-				++$count;
 			} else {
 				// New anchor — insert.
 				if ( ! empty( $master_props['event_id'] ) ) {
-					EventDates::save_occurrence(
+					$inserted = EventDates::save_occurrence(
 						$master_props['event_id'],
 						$occ['start'],
 						$occ['end'],
 						$all_day,
 						'generated',
 						$master_id,
-						$anchor
+						$anchor,
+						$status
 					);
 				} else {
-					EventDates::create_standalone_occurrence(
+					$inserted = EventDates::create_standalone_occurrence(
 						array(
 							'start_datetime'    => $occ['start'],
 							'end_datetime'      => $occ['end'],
 							'all_day'           => $all_day,
 							'master_id'         => $master_id,
 							'recurrence_anchor' => $anchor,
+							'status'            => $status,
 						)
 					);
 				}
+				if ( ! $inserted ) {
+					return false;
+				}
+			}
+
+			if ( 'active' === $status ) {
 				++$count;
 			}
 		}
@@ -534,8 +562,10 @@ class RecurrenceService {
 		// of deleting them — dependents (ticket types, signups) survive, and the
 		// occurrence can come back active if the anchor reappears later.
 		foreach ( $existing_by_anchor as $stale_row ) {
-			if ( 'cancelled' !== $stale_row->status ) {
-				EventDates::update_by_id( $stale_row->id, array( 'status' => 'cancelled' ) );
+			if ( 'cancelled' !== $stale_row->status
+				&& ! EventDates::update_by_id( $stale_row->id, array( 'status' => 'cancelled' ) )
+			) {
+				return false;
 			}
 		}
 
@@ -551,6 +581,8 @@ class RecurrenceService {
 	 * types + active signups) and an 'is_past' flag.
 	 *
 	 * Only classifies generated children — the master row is always preserved.
+	 * Pass the active occurrences only: a cancelled row that becomes active again
+	 * counts as added, and one that stays out of the active set is not a change.
 	 *
 	 * @param int   $master_id         Master event date row ID.
 	 * @param array $proposed_generated Desired generated occurrences (slice after first);
@@ -585,7 +617,7 @@ class RecurrenceService {
 		);
 
 		foreach ( $desired_by_anchor as $anchor => $occ ) {
-			if ( isset( $all_existing[ $anchor ] ) ) {
+			if ( isset( $all_existing[ $anchor ] ) && 'cancelled' !== $all_existing[ $anchor ]->status ) {
 				$row            = $all_existing[ $anchor ];
 				$existing_start = ( new \DateTime( $row->start_datetime ) )->format( 'Y-m-d\TH:i:s' );
 				$proposed_start = ( new \DateTime( $occ['start'] ) )->format( 'Y-m-d\TH:i:s' );
@@ -609,10 +641,14 @@ class RecurrenceService {
 				$result['added'][] = array(
 					'start_datetime' => $occ['start'],
 				);
+				unset( $all_existing[ $anchor ] );
 			}
 		}
 
 		foreach ( $all_existing as $stale_row ) {
+			if ( 'cancelled' === $stale_row->status ) {
+				continue;
+			}
 			$result['removed'][] = array(
 				'id'             => $stale_row->id,
 				'start_datetime' => $stale_row->start_datetime,
