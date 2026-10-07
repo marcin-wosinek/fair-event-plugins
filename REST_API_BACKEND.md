@@ -711,6 +711,24 @@ sub-route) expose:
         the hourly cleanup once `CheckoutKey::RETENTION_SECONDS` (30 days)
         passed and none of their signups is confirmed or pending.
     -   A request without a key is not protected against being repeated.
+-   **Rate limits** — `POST fair-events/v1/get-tickets` keeps two separate
+    transient counters and answers 429 `rate_limited`, with one generic
+    message, when either is reached:
+    -   **Per email** (case-insensitive): 10 checkouts, counted once a
+        checkout's signup rows are committed — one per checkout, whatever
+        its quantity or number of occurrences, and also when starting its
+        payment fails afterwards. A request rejected before that
+        (validation, capacity, a rolled-back save, a deferred response)
+        and a repeated idempotency key count nothing. The counter expires
+        15 minutes after the last counted checkout; only a counted
+        checkout refreshes it.
+    -   **Per IP**: 20 attempts an hour, counted when a request reaches a
+        checkout (before the reservation, so a capacity failure counts),
+        enters the `multiple_instances` path, or gets a deferred response.
+
+    Emails are typed by visitors and prove nothing about who is asking, so
+    the email counter is not the only control. Neither counter is atomic
+    under concurrent requests.
 -   **`fair_events_signup_precheck_error` filter** — `GetTicketsController::create_signup()`
     runs this immediately after the event date is validated, before ticket-type
     or options validation, so it covers the single-, `multiple_instances`- and
@@ -732,7 +750,8 @@ sub-route) expose:
     `ticket_option_ids`, `ticket_activities` (one list per ticket),
     `event_date_ids` and `questionnaire_answers`. Returning an array sends it
     as the response instead of saving anything, and counts as an attempt
-    against the rate limit; `null` (the default) lets the signup proceed. Like
+    against the per-IP rate limit (nothing was created, so not against the
+    email's); `null` (the default) lets the signup proceed. Like
     the precheck, it is not run for a repeated idempotency key.
     fair-audience uses it for a typed email that belongs to an existing
     participant the browser is not known to be (no valid participant token,

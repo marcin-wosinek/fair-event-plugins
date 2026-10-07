@@ -557,6 +557,8 @@ add_filter(
  *    single IP, which would otherwise fail later specs with 429s unrelated
  *    to what they're testing. The per-email limit is left untouched — it's
  *    what EventSignupHookBridge.api.spec.js (#1245) exercises directly.
+ *    GetTicketsRateLimit.api.spec.js switches the per-IP limit back on for
+ *    itself through fair-e2e-rate-limit.php.
  */
 add_filter( 'fair_events_get_tickets_rate_limit_bypass_ip', '__return_true' );
 
