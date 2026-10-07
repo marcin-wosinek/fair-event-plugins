@@ -1604,6 +1604,7 @@ export default function ManageEventApp() {
 					initialRecurrenceMode={ eventDate.recurrence_mode }
 					startDatetime={ eventDate.start_datetime }
 					generatedOccurrences={ eventDate.generated_occurrences }
+					cancelledDates={ eventDate.cancelled_dates }
 					onClose={ () => setSeriesModalOpen( false ) }
 					onSaved={ handleSeriesSaved }
 					onImpact={ handleSeriesImpact }

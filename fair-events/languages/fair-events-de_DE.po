@@ -290,8 +290,8 @@ msgid "Fair Event: End Date"
 msgstr "Fair Event: Enddatum"
 
 #: src/Admin/CopyEventPage.php:51
-#: src/API/EventDatesController.php:649
-#: src/API/EventDatesController.php:1109
+#: src/API/EventDatesController.php:770
+#: src/API/EventDatesController.php:1243
 msgid "Event title is required."
 msgstr "Veranstaltungstitel ist erforderlich."
 
@@ -311,7 +311,7 @@ msgstr "Titel"
 #: src/Admin/manage-event/ManageEventApp.js:1512
 #: src/Admin/manage-event/ManageEventApp.js:1522
 #: src/Admin/manage-event/ManageEventApp.js:1539
-#: src/Admin/manage-event/SeriesModal.js:396
+#: src/Admin/manage-event/SeriesModal.js:514
 #: src/Admin/manage-event/SignupEditModal.js:238
 #: src/Admin/settings/OrganizerTab.js:520
 #: src/Admin/venues/VenuesApp.js:862
@@ -739,25 +739,25 @@ msgstr "Wiederholungsregel im RRULE-Format."
 msgid "Category term IDs."
 msgstr "Kategorie-Begriff-IDs."
 
-#: src/API/EventDatesController.php:657
+#: src/API/EventDatesController.php:778
 msgid "Start date/time is required."
 msgstr "Startdatum/-zeit ist erforderlich."
 
-#: src/API/EventDatesController.php:678
+#: src/API/EventDatesController.php:799
 msgid "Failed to create event date."
 msgstr "Fehler beim Erstellen des Ereignisdatums."
 
-#: src/API/EventDatesController.php:1004
-#: src/API/EventDatesController.php:1029
-#: src/API/EventDatesController.php:1095
-#: src/API/EventDatesController.php:1367
-#: src/API/EventDatesController.php:1407
-#: src/API/EventDatesController.php:1474
-#: src/API/EventDatesController.php:1514
-#: src/API/EventDatesController.php:1612
-#: src/API/EventDatesController.php:1706
-#: src/API/EventDatesController.php:1736
-#: src/API/EventDatesController.php:1773
+#: src/API/EventDatesController.php:1125
+#: src/API/EventDatesController.php:1150
+#: src/API/EventDatesController.php:1216
+#: src/API/EventDatesController.php:1513
+#: src/API/EventDatesController.php:1553
+#: src/API/EventDatesController.php:1620
+#: src/API/EventDatesController.php:1660
+#: src/API/EventDatesController.php:1758
+#: src/API/EventDatesController.php:1852
+#: src/API/EventDatesController.php:1882
+#: src/API/EventDatesController.php:1919
 #: src/API/EventStatisticsController.php:143
 #: src/API/GetTicketsController.php:515
 #: src/API/GetTicketsController.php:524
@@ -769,26 +769,26 @@ msgstr "Fehler beim Erstellen des Ereignisdatums."
 msgid "Event date not found."
 msgstr "Ereignisdatum nicht gefunden."
 
-#: src/API/EventDatesController.php:1197
+#: src/API/EventDatesController.php:1335
 msgid "Failed to update event date."
 msgstr "Fehler beim Aktualisieren des Ereignisdatums."
 
-#: src/API/EventDatesController.php:1377
+#: src/API/EventDatesController.php:1523
 msgid "Failed to delete event date."
 msgstr "Fehler beim Löschen des Ereignisdatums."
 
-#: src/API/EventDatesController.php:808
-#: src/API/EventDatesController.php:1417
+#: src/API/EventDatesController.php:929
+#: src/API/EventDatesController.php:1563
 msgid "The specified post type is not enabled."
 msgstr "Der angegebene Beitragstyp ist nicht aktiviert."
 
-#: src/API/EventDatesController.php:1425
+#: src/API/EventDatesController.php:1571
 #: src/Admin/event-meta-box/LinkOptions.js:52
 msgid "Untitled Event"
 msgstr "Ereignis ohne Titel"
 
-#: src/API/EventDatesController.php:800
-#: src/API/EventDatesController.php:1483
+#: src/API/EventDatesController.php:921
+#: src/API/EventDatesController.php:1629
 msgid "Post not found."
 msgstr "Beitrag nicht gefunden."
 
@@ -2150,15 +2150,15 @@ msgstr "Nirgendwo – nur Details anzeigen"
 msgid "Delete event"
 msgstr "Ereignis löschen"
 
-#: src/API/EventDatesController.php:1620
+#: src/API/EventDatesController.php:1766
 msgid "Dates can only be cancelled on master events."
 msgstr "Daten können nur bei Master-Events storniert werden."
 
-#: src/API/EventDatesController.php:1630
+#: src/API/EventDatesController.php:1776
 msgid "Cannot cancel the master event date."
 msgstr "Das Master-Event-Datum kann nicht storniert werden."
 
-#: src/API/EventDatesController.php:1652
+#: src/API/EventDatesController.php:1798
 msgid "Invalid date."
 msgstr "Ungültiges Datum."
 
@@ -2192,25 +2192,25 @@ msgstr "Wiederholungsmuster: keine (einzelnes Datum), Regel (RRULE-basiert) oder
 msgid "Hand-picked occurrence dates (Y-m-d) for a manual-mode series. The earliest date becomes the master."
 msgstr "Handverlesene Vorkommen-Daten (Y-m-d) für eine Serie im manuellen Modus. Das früheste Datum wird zum Master."
 
-#: src/API/EventDatesController.php:555
+#: src/API/EventDatesController.php:676
 msgid "manual_dates must be an array of Y-m-d dates."
 msgstr "manual_dates muss ein Array von Y-m-d Daten sein."
 
 #. translators: %d: maximum allowed occurrence count.
-#: src/API/EventDatesController.php:565
+#: src/API/EventDatesController.php:686
 #, php-format
 msgid "A series can have at most %d dates."
 msgstr "Eine Serie kann maximal %d Daten enthalten."
 
-#: src/API/EventDatesController.php:577
+#: src/API/EventDatesController.php:698
 msgid "Each manual date must be in Y-m-d format."
 msgstr "Jedes manuelle Datum muss im Y-m-d Format sein."
 
-#: src/API/EventDatesController.php:586
+#: src/API/EventDatesController.php:707
 msgid "Each manual date must be a valid calendar date."
 msgstr "Jedes manuelle Datum muss ein gültiges Kalenderdatum sein."
 
-#: src/API/EventDatesController.php:594
+#: src/API/EventDatesController.php:715
 msgid "Manual dates must not contain duplicates — only one occurrence per day is supported."
 msgstr "Manuelle Daten dürfen keine Duplikate enthalten — nur ein Vorkommen pro Tag wird unterstützt."
 
@@ -2350,7 +2350,7 @@ msgid "Repeats %1$s · %2$d dates"
 msgstr "Wiederholt sich %1$s · %2$d Termine"
 
 #: src/Admin/manage-event/ManageEventApp.js:1300
-#: src/Admin/manage-event/SeriesModal.js:264
+#: src/Admin/manage-event/SeriesModal.js:361
 msgid "Edit series"
 msgstr "Serie bearbeiten"
 
@@ -2360,7 +2360,7 @@ msgid "End series"
 msgstr "Serie beenden"
 
 #: src/Admin/manage-event/ManageEventApp.js:1374
-#: src/Admin/manage-event/SeriesModal.js:265
+#: src/Admin/manage-event/SeriesModal.js:362
 msgid "Turn into a series"
 msgstr "In eine Serie umwandeln"
 
@@ -2368,53 +2368,39 @@ msgstr "In eine Serie umwandeln"
 msgid "Open this occurrence"
 msgstr "Diesen Termin öffnen"
 
-#: src/Admin/manage-event/SeriesModal.js:205
+#: src/Admin/manage-event/SeriesModal.js:303
 msgid "Failed to save the series."
 msgstr "Fehler beim Speichern der Serie."
 
-#. translators: %d: number of dates in the series
-#: src/Admin/manage-event/SeriesModal.js:223
-#: src/Admin/manage-event/SeriesModal.js:234
-#, js-format
-msgid "Update series — %d dates"
-msgstr "Serie aktualisieren — %d Termine"
-
-#. translators: %d: number of dates in the series
-#: src/Admin/manage-event/SeriesModal.js:228
-#: src/Admin/manage-event/SeriesModal.js:239
-#, js-format
-msgid "Create series — %d dates"
-msgstr "Serie erstellen — %d Termine"
-
-#: src/Admin/manage-event/SeriesModal.js:252
+#: src/Admin/manage-event/SeriesModal.js:349
 msgid "Regular schedule"
 msgstr "Regelmäßiger Zeitplan"
 
-#: src/Admin/manage-event/SeriesModal.js:256
+#: src/Admin/manage-event/SeriesModal.js:353
 msgid "Irregular series"
 msgstr "Unregelmäßige Serie"
 
-#: src/Admin/manage-event/SeriesModal.js:305
+#: src/Admin/manage-event/SeriesModal.js:396
 msgid "Schedule preview"
 msgstr "Zeitplan-Vorschau"
 
-#: src/Admin/manage-event/SeriesModal.js:309
+#: src/Admin/manage-event/SeriesModal.js:408
 msgid "No dates match this schedule yet."
 msgstr "Keine Termine entsprechen diesem Zeitplan."
 
-#: src/Admin/manage-event/SeriesModal.js:342
+#: src/Admin/manage-event/SeriesModal.js:466
 msgid "Pick the exact dates this event happens on."
 msgstr "Wählen Sie die genauen Daten aus, an denen dieses Event stattfindet."
 
-#: src/Admin/manage-event/SeriesModal.js:348
+#: src/Admin/manage-event/SeriesModal.js:472
 msgid "One session per day. All dates share the event’s start time and length."
 msgstr "Eine Sitzung pro Tag. Alle Daten verwenden die Startzeit und Dauer des Events."
 
-#: src/Admin/manage-event/SeriesModal.js:356
+#: src/Admin/manage-event/SeriesModal.js:480
 msgid "Each date can only be used once — remove the duplicate before saving."
 msgstr "Jedes Datum kann nur einmal verwendet werden – entfernen Sie das Duplikat vor dem Speichern."
 
-#: src/Admin/manage-event/SeriesModal.js:158
+#: src/Admin/manage-event/SeriesModal.js:256
 msgid "Master date — edit it from Event Details"
 msgstr "Masterdatum — bearbeiten Sie es unter Veranstaltungsdetails"
 
@@ -2515,22 +2501,16 @@ msgstr "Formularinhalt"
 msgid "No ticket types yet. Add one to start selling tickets for this event."
 msgstr "Noch keine Tickettypen vorhanden. Fügen Sie einen hinzu, um mit dem Verkauf von Tickets für diese Veranstaltung zu beginnen."
 
-#: src/Admin/manage-event/SeriesModal.js:173
+#: src/Admin/manage-event/SeriesModal.js:271
 msgid "Selected — click to remove this date"
 msgstr "Ausgewählt — klicken Sie, um dieses Datum zu entfernen"
 
-#: src/Admin/manage-event/SeriesModal.js:174
+#: src/Admin/manage-event/SeriesModal.js:272
 msgid "Click to add this date"
 msgstr "Klicken Sie, um dieses Datum hinzuzufügen"
 
-#. translators: 1: number of dates in the series, 2: last date in the series
-#: src/Admin/manage-event/SeriesModal.js:324
-#, js-format
-msgid "%1$d dates, until %2$s"
-msgstr "%1$d Termine, bis %2$s"
-
 #. translators: %d: number of selected dates
-#: src/Admin/manage-event/SeriesModal.js:377
+#: src/Admin/manage-event/SeriesModal.js:499
 #, js-format
 msgid "%d dates selected"
 msgstr "%d Termine ausgewählt"
@@ -2705,11 +2685,11 @@ msgstr "Keine Ereignisquellen konfiguriert. Erstellen Sie Ereignisquellen in den
 msgid "Manage Event Sources"
 msgstr "Ereignisquellen verwalten"
 
-#: ../fair-events-shared/src/MiniCalendar.js:156
+#: ../fair-events-shared/src/MiniCalendar.js:267
 msgid "Previous months"
 msgstr "Vorherige Monate"
 
-#: ../fair-events-shared/src/MiniCalendar.js:167
+#: ../fair-events-shared/src/MiniCalendar.js:274
 msgid "Next months"
 msgstr "Nächste Monate"
 
@@ -3075,7 +3055,7 @@ msgstr "Teilnahmemodus (in_person, online, hybrid)."
 msgid "Public joining URL for online/hybrid events. Falls back to the event page URL when empty."
 msgstr "Öffentliche Beitritts-URL für Online-/Hybrid-Veranstaltungen. Fällt auf die Veranstaltungsseiten-URL zurück, wenn leer."
 
-#: src/API/EventDatesController.php:621
+#: src/API/EventDatesController.php:742
 msgid "The joining link must be a valid URL."
 msgstr "Der Beitrittslink muss eine gültige URL sein."
 
@@ -3519,11 +3499,11 @@ msgstr "Bestätigt"
 msgid "Post ID that should have event data."
 msgstr "Post-ID, die Ereignisdaten enthalten sollte."
 
-#: src/API/EventDatesController.php:816
+#: src/API/EventDatesController.php:937
 msgid "You do not have permission to edit this post."
 msgstr "Sie haben keine Berechtigung, diesen Beitrag zu bearbeiten."
 
-#: src/API/EventDatesController.php:837
+#: src/API/EventDatesController.php:958
 msgid "Failed to create event data."
 msgstr "Fehler beim Erstellen von Ereignisdaten."
 
@@ -3917,16 +3897,16 @@ msgstr "Registriert den dedizierten Beitragstyp „Events“, dessen Einträge d
 msgid "Fair Finance budget ID to link, or null to clear."
 msgstr "Fair Finance Budget-ID zum Verknüpfen oder null zum Löschen."
 
-#: src/API/EventDatesController.php:1744
-#: src/API/EventDatesController.php:1781
+#: src/API/EventDatesController.php:1890
+#: src/API/EventDatesController.php:1927
 msgid "The Fair Finance plugin is required to manage a budget link."
 msgstr "Das Fair Finance Plugin ist erforderlich, um eine Budget-Verknüpfung zu verwalten."
 
-#: src/API/EventDatesController.php:1791
+#: src/API/EventDatesController.php:1937
 msgid "Budget not found."
 msgstr "Budget nicht gefunden."
 
-#: src/API/EventDatesController.php:1800
+#: src/API/EventDatesController.php:1946
 msgid "This event has no linked page, so it cannot store a budget."
 msgstr "Diese Veranstaltung hat keine verknüpfte Seite, daher kann sie kein Budget speichern."
 
@@ -5263,4 +5243,108 @@ msgstr ""
 #: src/Services/SignupFieldsetRenderer.php:57
 #: src/blocks/event-signup/frontend.js:772
 msgid "This purchase:"
+msgstr ""
+
+#: src/API/EventDatesController.php:538
+msgid "Complete list of dates (Y-m-d) in the regular schedule to keep cancelled. An empty list restores every date."
+msgstr ""
+
+#: src/API/EventDatesController.php:565
+msgid "excluded_dates must be an array of Y-m-d dates."
+msgstr ""
+
+#: src/API/EventDatesController.php:577
+msgid "Each excluded date must be a valid calendar date in Y-m-d format."
+msgstr ""
+
+#: src/API/EventDatesController.php:601
+msgid "Excluded dates cannot be combined with hand-picked dates."
+msgstr ""
+
+#: src/API/EventDatesController.php:609
+msgid "Excluded dates can only be set on the series, not on one of its dates."
+msgstr ""
+
+#: src/API/EventDatesController.php:626
+msgid "Excluded dates need a regular schedule."
+msgstr ""
+
+#: src/API/EventDatesController.php:640
+msgid "The original event date cannot be excluded from the series."
+msgstr ""
+
+#. translators: %s: date in Y-m-d format.
+#: src/API/EventDatesController.php:649
+#, php-format
+msgid "%s is not part of this schedule."
+msgstr ""
+
+#: src/API/EventDatesController.php:1415
+msgid "Failed to save the series dates."
+msgstr ""
+
+#. translators: %s: full date, e.g. "November 3, 2026"
+#: src/Admin/manage-event/SeriesModal.js:186
+#, js-format
+msgid "%s — original date, always included"
+msgstr ""
+
+#: src/Admin/manage-event/SeriesModal.js:189
+msgid "Original date — change it in Event Details"
+msgstr ""
+
+#. translators: %s: full date, e.g. "November 3, 2026"
+#: src/Admin/manage-event/SeriesModal.js:207
+#, js-format
+msgid "%s — skipped, activate to restore"
+msgstr ""
+
+#: src/Admin/manage-event/SeriesModal.js:210
+msgid "Skipped — click to restore"
+msgstr ""
+
+#. translators: %s: full date, e.g. "November 3, 2026"
+#: src/Admin/manage-event/SeriesModal.js:223
+#, js-format
+msgid "%s — included, activate to skip"
+msgstr ""
+
+#: src/Admin/manage-event/SeriesModal.js:226
+msgid "Click to skip this date"
+msgstr ""
+
+#. translators: %d: number of dates in the series
+#: src/Admin/manage-event/SeriesModal.js:321
+#, js-format
+msgid "Update series — %d date"
+msgid_plural "Update series — %d dates"
+msgstr[0] "Serie aktualisieren — %d Termin"
+msgstr[1] "Serie aktualisieren — %d Termine"
+
+#. translators: %d: number of dates in the series
+#: src/Admin/manage-event/SeriesModal.js:331
+#, js-format
+msgid "Create series — %d date"
+msgid_plural "Create series — %d dates"
+msgstr[0] "Serie erstellen — %d Termin"
+msgstr[1] "Serie erstellen — %d Termine"
+
+#. translators: 1: number of dates in the series, 2: last date in the series
+#: src/Admin/manage-event/SeriesModal.js:418
+#, js-format
+msgid "%1$d date, until %2$s"
+msgid_plural "%1$d dates, until %2$s"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of dates the organizer skipped
+#: src/Admin/manage-event/SeriesModal.js:437
+#, js-format
+msgid "%d date skipped"
+msgid_plural "%d dates skipped"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/manage-event/SeriesModal.js:454
+msgid "Click a date to skip it, and click it again to restore it. The original date (blue) is always part of the series."
 msgstr ""

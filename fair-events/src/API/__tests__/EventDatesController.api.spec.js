@@ -2105,3 +2105,383 @@ test.describe( 'EventDatesController — event_id propagation to generated child
 		);
 	} );
 } );
+
+test.describe( 'EventDatesController — excluded dates of a regular series (#1749)', () => {
+	let api;
+	const eventDateIds = [];
+	const postIds = [];
+	let subscriberId;
+	let subscriberHeaders;
+
+	const url = ( id ) => `/wp-json/fair-events/v1/event-dates/${ id }`;
+	const put = ( id, data, headers = adminHeaders ) =>
+		api.put( url( id ), { headers, data } );
+	const read = async ( id ) =>
+		( await api.get( url( id ), { headers: adminHeaders } ) ).json();
+	// Generated rows as { 'Y-m-d': { id, status } }.
+	const rowsByDate = ( body ) =>
+		Object.fromEntries(
+			body.generated_occurrences.map( ( occ ) => [
+				occ.start_datetime.slice( 0, 10 ),
+				{ id: occ.id, status: occ.status },
+			] )
+		);
+
+	// A single date on Thursday 2035-03-01; weekly dates follow on 03-08, 03-15…
+	const createSingle = async ( extra = {} ) => {
+		const res = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Excluded dates ${ Date.now() }`,
+				start_datetime: '2035-03-01 10:00:00',
+				end_datetime: '2035-03-01 12:00:00',
+				...extra,
+			},
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		const body = await res.json();
+		eventDateIds.push( body.id );
+		return body;
+	};
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const userLogin = `excluded-dates-${ Date.now() }`;
+		const userResponse = await api.post( '/wp-json/wp/v2/users', {
+			headers: adminHeaders,
+			data: {
+				username: userLogin,
+				email: `${ userLogin }@example.com`,
+				password: 'Test-password-1749!',
+				roles: [ 'subscriber' ],
+			},
+		} );
+		expect( userResponse.ok() ).toBeTruthy();
+		subscriberId = ( await userResponse.json() ).id;
+		subscriberHeaders = {
+			Authorization:
+				'Basic ' +
+				Buffer.from( `${ userLogin }:Test-password-1749!` ).toString(
+					'base64'
+				),
+		};
+	} );
+
+	test.afterAll( async () => {
+		for ( const id of eventDateIds ) {
+			await api.delete( url( id ), { headers: adminHeaders } );
+		}
+		for ( const postId of postIds ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+		if ( subscriberId ) {
+			await api.delete(
+				`/wp-json/wp/v2/users/${ subscriberId }?force=true&reassign=1`,
+				{ headers: adminHeaders }
+			);
+		}
+		await api.dispose();
+	} );
+
+	test( 'creating a series with excluded dates saves them as cancelled dates without extending the schedule', async () => {
+		const single = await createSingle();
+
+		const res = await put( single.id, {
+			rrule: 'FREQ=WEEKLY;COUNT=10',
+			excluded_dates: [ '2035-03-15', '2035-03-29' ],
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		const body = await res.json();
+
+		expect( body.rrule ).toBe( 'FREQ=WEEKLY;COUNT=10' );
+		expect( body.cancelled_dates.sort() ).toEqual( [
+			'2035-03-15',
+			'2035-03-29',
+		] );
+
+		// Ten weekly dates end on 2035-05-03, excluded or not: nine rows after
+		// the original date, none on 05-10.
+		const rows = rowsByDate( body );
+		const dates = Object.keys( rows ).sort();
+		expect( dates ).toHaveLength( 9 );
+		expect( dates[ dates.length - 1 ] ).toBe( '2035-05-03' );
+		expect( rows[ '2035-03-15' ].status ).toBe( 'cancelled' );
+		expect( rows[ '2035-03-29' ].status ).toBe( 'cancelled' );
+		expect(
+			dates.filter( ( date ) => rows[ date ].status === 'active' )
+		).toHaveLength( 7 );
+
+		// Reopening reads the same state back.
+		expect( rowsByDate( await read( single.id ) ) ).toEqual( rows );
+	} );
+
+	test( 'repeating, changing and clearing the exclusions keeps every occurrence id', async () => {
+		const single = await createSingle();
+		const first = rowsByDate(
+			await (
+				await put( single.id, {
+					rrule: 'FREQ=WEEKLY;COUNT=4',
+					excluded_dates: [ '2035-03-08' ],
+				} )
+			).json()
+		);
+
+		// Same selection again: nothing changes, nothing is reported.
+		const repeat = await (
+			await put( single.id, {
+				rrule: 'FREQ=WEEKLY;COUNT=4',
+				excluded_dates: [ '2035-03-08' ],
+			} )
+		).json();
+		expect( rowsByDate( repeat ) ).toEqual( first );
+		expect( repeat.recurrence_impact.removed ).toEqual( [] );
+		expect( repeat.recurrence_impact.added ).toEqual( [] );
+
+		// Exclusions sent on their own apply to the stored schedule.
+		const swapped = await (
+			await put( single.id, { excluded_dates: [ '2035-03-22' ] } )
+		).json();
+		expect( swapped.rrule ).toBe( 'FREQ=WEEKLY;COUNT=4' );
+		expect( swapped.cancelled_dates ).toEqual( [ '2035-03-22' ] );
+		expect( swapped.recurrence_impact.removed ).toHaveLength( 1 );
+		expect( swapped.recurrence_impact.added ).toHaveLength( 1 );
+
+		// An empty list restores every date of the schedule.
+		const restored = await (
+			await put( single.id, {
+				rrule: 'FREQ=WEEKLY;COUNT=4',
+				excluded_dates: [],
+			} )
+		).json();
+		expect( restored.cancelled_dates ).toEqual( [] );
+		const restoredRows = rowsByDate( restored );
+		for ( const date of Object.keys( first ) ) {
+			expect( restoredRows[ date ] ).toEqual( {
+				id: first[ date ].id,
+				status: 'active',
+			} );
+		}
+	} );
+
+	test( 'a request that omits excluded_dates keeps restoring every scheduled date', async () => {
+		const single = await createSingle();
+		await put( single.id, {
+			rrule: 'FREQ=WEEKLY;COUNT=3',
+			excluded_dates: [ '2035-03-08' ],
+		} );
+
+		const body = await (
+			await put( single.id, { rrule: 'FREQ=WEEKLY;COUNT=3' } )
+		).json();
+		expect( body.cancelled_dates ).toEqual( [] );
+	} );
+
+	test( 'excluding a date with a ticket type keeps the occurrence and reports it', async () => {
+		const series = await createSingle( { rrule: 'FREQ=WEEKLY;COUNT=3' } );
+		const target = rowsByDate( series )[ '2035-03-08' ];
+
+		const ticket = await api.put( `${ url( target.id ) }/tickets`, {
+			headers: adminHeaders,
+			data: { ticket_types: [ { name: 'General', capacity: 10 } ] },
+		} );
+		expect( ticket.ok(), await ticket.text() ).toBeTruthy();
+
+		const excluded = await (
+			await put( series.id, {
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+				excluded_dates: [ '2035-03-08' ],
+			} )
+		).json();
+		expect( rowsByDate( excluded )[ '2035-03-08' ] ).toEqual( {
+			id: target.id,
+			status: 'cancelled',
+		} );
+		expect( excluded.recurrence_impact.removed ).toHaveLength( 1 );
+		expect( excluded.recurrence_impact.removed[ 0 ].id ).toBe( target.id );
+		expect(
+			excluded.recurrence_impact.removed[ 0 ].dependents
+		).toBeGreaterThan( 0 );
+
+		const tickets = await api.get( `${ url( target.id ) }/tickets`, {
+			headers: adminHeaders,
+		} );
+		expect( ( await tickets.json() ).ticket_types ).toHaveLength( 1 );
+
+		const restored = await (
+			await put( series.id, {
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+				excluded_dates: [],
+			} )
+		).json();
+		expect( rowsByDate( restored )[ '2035-03-08' ] ).toEqual( {
+			id: target.id,
+			status: 'active',
+		} );
+		expect( restored.recurrence_impact.added ).toHaveLength( 1 );
+	} );
+
+	test( 'works the same for a series linked to an event post', async () => {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Excluded dates ${ Date.now() }`,
+				status: 'publish',
+			},
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		const postId = ( await postRes.json() ).id;
+		postIds.push( postId );
+
+		const single = await createSingle();
+		expect(
+			( await put( single.id, { event_id: postId } ) ).ok()
+		).toBeTruthy();
+
+		const res = await put( single.id, {
+			rrule: 'FREQ=WEEKLY;UNTIL=20350322',
+			excluded_dates: [ '2035-03-15' ],
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		const body = await res.json();
+
+		// UNTIL is a fixed limit too: 03-08, 03-15 and 03-22 only.
+		const rows = rowsByDate( body );
+		expect( Object.keys( rows ).sort() ).toEqual( [
+			'2035-03-08',
+			'2035-03-15',
+			'2035-03-22',
+		] );
+		expect( body.cancelled_dates ).toEqual( [ '2035-03-15' ] );
+
+		// The public list of the post's dates leaves the excluded one out.
+		const listed = await (
+			await api.get(
+				`/wp-json/fair-events/v1/event-dates?event_id=${ postId }`,
+				{ headers: adminHeaders }
+			)
+		).json();
+		const listedById = Object.fromEntries(
+			listed.map( ( row ) => [ row.id, row.status ] )
+		);
+		expect( listedById[ rows[ '2035-03-15' ].id ] ?? 'cancelled' ).toBe(
+			'cancelled'
+		);
+		expect( listedById[ rows[ '2035-03-08' ].id ] ).toBe( 'active' );
+
+		const restored = await (
+			await put( single.id, { excluded_dates: [] } )
+		).json();
+		expect( rowsByDate( restored )[ '2035-03-15' ] ).toEqual( {
+			id: rows[ '2035-03-15' ].id,
+			status: 'active',
+		} );
+	} );
+
+	test( 'rejects unusable exclusions before changing anything', async () => {
+		const series = await createSingle( { rrule: 'FREQ=WEEKLY;COUNT=3' } );
+		const before = await read( series.id );
+
+		const cases = [
+			// Not an array of real dates.
+			[ { excluded_dates: 'not-a-list' }, 'rest_invalid_param' ],
+			[ { excluded_dates: [ '08/03/2035' ] }, null ],
+			[ { excluded_dates: [ '2035-02-30' ] }, null ],
+			// The original date is always part of the series.
+			[
+				{ excluded_dates: [ '2035-03-01' ] },
+				'rest_cannot_exclude_master',
+			],
+			// Not generated by the schedule: a weekday off, and one past COUNT.
+			[
+				{ excluded_dates: [ '2035-03-09' ] },
+				'rest_excluded_date_not_in_schedule',
+			],
+			[
+				{ excluded_dates: [ '2035-03-22' ] },
+				'rest_excluded_date_not_in_schedule',
+			],
+			// Judged against the schedule in the same request, not the stored one.
+			[
+				{
+					rrule: 'FREQ=WEEKLY;COUNT=2',
+					excluded_dates: [ '2035-03-15' ],
+				},
+				'rest_excluded_date_not_in_schedule',
+			],
+			// No regular schedule to exclude from.
+			[
+				{ rrule: '', excluded_dates: [] },
+				'rest_excluded_dates_not_supported',
+			],
+			[
+				{
+					recurrence_mode: 'manual',
+					manual_dates: [ '2035-03-01', '2035-03-05' ],
+					excluded_dates: [ '2035-03-05' ],
+				},
+				'rest_excluded_dates_not_supported',
+			],
+		];
+
+		for ( const [ data, code ] of cases ) {
+			const res = await put( series.id, {
+				title: 'Must not be saved',
+				...data,
+			} );
+			expect( res.status(), JSON.stringify( data ) ).toBe( 400 );
+			if ( code ) {
+				expect( ( await res.json() ).code ).toBe( code );
+			}
+		}
+
+		const after = await read( series.id );
+		expect( after.title ).toBe( before.title );
+		expect( after.rrule ).toBe( before.rrule );
+		expect( after.recurrence_mode ).toBe( 'rule' );
+		expect( rowsByDate( after ) ).toEqual( rowsByDate( before ) );
+
+		// One of a series' own dates cannot carry exclusions.
+		const child = rowsByDate( before )[ '2035-03-08' ];
+		const childRes = await put( child.id, { excluded_dates: [] } );
+		expect( childRes.status() ).toBe( 400 );
+		expect( ( await childRes.json() ).code ).toBe(
+			'rest_excluded_dates_not_supported'
+		);
+	} );
+
+	test( 'rejects exclusions on a hand-picked series that sends no rule', async () => {
+		const single = await createSingle();
+		await put( single.id, {
+			recurrence_mode: 'manual',
+			manual_dates: [ '2035-03-01', '2035-03-05' ],
+		} );
+
+		const res = await put( single.id, {
+			excluded_dates: [ '2035-03-05' ],
+		} );
+		expect( res.status() ).toBe( 400 );
+		expect( ( await res.json() ).code ).toBe(
+			'rest_excluded_dates_not_supported'
+		);
+		const after = await read( single.id );
+		expect( after.recurrence_mode ).toBe( 'manual' );
+		expect( after.cancelled_dates ).toEqual( [] );
+	} );
+
+	test( 'requires permission to edit events', async () => {
+		const series = await createSingle( { rrule: 'FREQ=WEEKLY;COUNT=3' } );
+		const data = {
+			rrule: 'FREQ=WEEKLY;COUNT=3',
+			excluded_dates: [ '2035-03-08' ],
+		};
+
+		expect( ( await put( series.id, data, {} ) ).status() ).toBe( 401 );
+		expect(
+			( await put( series.id, data, subscriberHeaders ) ).status()
+		).toBe( 403 );
+		expect( ( await read( series.id ) ).cancelled_dates ).toEqual( [] );
+	} );
+} );

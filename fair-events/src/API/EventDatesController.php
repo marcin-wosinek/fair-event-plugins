@@ -533,7 +533,128 @@ class EventDatesController extends WP_REST_Controller {
 			'required'    => false,
 		);
 
+		// Only meaningful against an existing row's schedule, so update-only.
+		$args['excluded_dates'] = array(
+			'description'       => __( 'Complete list of dates (Y-m-d) in the regular schedule to keep cancelled. An empty list restores every date.', 'fair-events' ),
+			'type'              => 'array',
+			'required'          => false,
+			'items'             => array(
+				'type'   => 'string',
+				'format' => 'date',
+			),
+			'validate_callback' => array( $this, 'validate_excluded_dates' ),
+		);
+
 		return $args;
+	}
+
+	/**
+	 * Validate the shape of the `excluded_dates` param.
+	 *
+	 * Checks only what the value alone can answer (a list of real Y-m-d
+	 * dates). Whether each date belongs to the proposed schedule depends on
+	 * the stored row, and is checked by get_excluded_dates_error().
+	 *
+	 * @param mixed $value Raw param value.
+	 * @return true|WP_Error True if valid, WP_Error otherwise.
+	 */
+	public function validate_excluded_dates( $value ) {
+		if ( ! is_array( $value ) ) {
+			return new WP_Error(
+				'rest_invalid_param',
+				__( 'excluded_dates must be an array of Y-m-d dates.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		foreach ( $value as $date ) {
+			$parsed = is_string( $date ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date )
+				? \DateTime::createFromFormat( 'Y-m-d', $date )
+				: false;
+			if ( ! $parsed || $parsed->format( 'Y-m-d' ) !== $date ) {
+				return new WP_Error(
+					'rest_invalid_excluded_date',
+					__( 'Each excluded date must be a valid calendar date in Y-m-d format.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check `excluded_dates` against the schedule the request would produce.
+	 *
+	 * Runs before update_item() writes anything, so a rejected request leaves
+	 * the series untouched.
+	 *
+	 * @param WP_REST_Request $request        Full data about the request.
+	 * @param EventDates      $existing       The stored row being updated.
+	 * @param string[]        $excluded_dates Requested excluded dates (Y-m-d).
+	 * @return WP_Error|null Error to return, or null when the dates are acceptable.
+	 */
+	private function get_excluded_dates_error( $request, $existing, $excluded_dates ) {
+		if ( 'manual' === $request->get_param( 'recurrence_mode' ) || null !== $request->get_param( 'manual_dates' ) ) {
+			return new WP_Error(
+				'rest_excluded_dates_not_supported',
+				__( 'Excluded dates cannot be combined with hand-picked dates.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( 'generated' === $existing->occurrence_type ) {
+			return new WP_Error(
+				'rest_excluded_dates_not_supported',
+				__( 'Excluded dates can only be set on the series, not on one of its dates.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$rrule = $request->get_param( 'rrule' );
+		if ( null === $rrule ) {
+			$rrule = $existing->rrule;
+		}
+
+		$start     = $request->get_param( 'start_datetime' ) ?? $existing->start_datetime;
+		$end       = $request->get_param( 'end_datetime' ) ?? $existing->end_datetime;
+		$scheduled = empty( $rrule ) ? array() : RecurrenceService::generate_occurrences( $start, $end ? $end : $start, $rrule );
+
+		if ( empty( $scheduled ) ) {
+			return new WP_Error(
+				'rest_excluded_dates_not_supported',
+				__( 'Excluded dates need a regular schedule.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$anchors = array();
+		foreach ( $scheduled as $occurrence ) {
+			$anchors[] = ( new \DateTime( $occurrence['start'] ) )->format( 'Y-m-d' );
+		}
+
+		foreach ( $excluded_dates as $date ) {
+			if ( $date === $anchors[0] ) {
+				return new WP_Error(
+					'rest_cannot_exclude_master',
+					__( 'The original event date cannot be excluded from the series.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+			if ( ! in_array( $date, $anchors, true ) ) {
+				return new WP_Error(
+					'rest_excluded_date_not_in_schedule',
+					sprintf(
+						/* translators: %s: date in Y-m-d format. */
+						__( '%s is not part of this schedule.', 'fair-events' ),
+						$date
+					),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -1097,6 +1218,19 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
+		// Null when the request leaves exclusions alone; an array (even empty) is
+		// the complete selection for the schedule this request produces.
+		$excluded_dates = $request->get_param( 'excluded_dates' );
+		if ( is_array( $excluded_dates ) ) {
+			$excluded_dates       = array_values( array_unique( $excluded_dates ) );
+			$excluded_dates_error = $this->get_excluded_dates_error( $request, $existing, $excluded_dates );
+			if ( $excluded_dates_error ) {
+				return $excluded_dates_error;
+			}
+		} else {
+			$excluded_dates = null;
+		}
+
 		$update_data       = array();
 		$newly_linked      = false;
 		$recurrence_impact = null;
@@ -1186,6 +1320,10 @@ class EventDatesController extends WP_REST_Controller {
 		$rrule = $request->get_param( 'rrule' );
 		if ( null !== $rrule ) {
 			$update_data['rrule'] = $rrule ? $rrule : null;
+		} elseif ( null !== $excluded_dates ) {
+			// Exclusions sent on their own still have to be reconciled: keep the
+			// stored rule so the regenerate branch below runs.
+			$update_data['rrule'] = $existing->rrule;
 		}
 
 		if ( ! empty( $update_data ) ) {
@@ -1255,8 +1393,10 @@ class EventDatesController extends WP_REST_Controller {
 				if ( ! empty( $effective_rrule ) ) {
 					$proposed_start = $update_data['start_datetime'] ?? $existing->start_datetime;
 					$proposed_end   = $update_data['end_datetime'] ?? $existing->end_datetime;
-					$all_proposed   = RecurrenceService::generate_occurrences( $proposed_start, $proposed_end, $effective_rrule );
-					$proposed_gen   = array_slice( $all_proposed, 1 );
+					// Excluded dates are not part of the active schedule, so their
+					// existing rows (and dependents) are reported as removed.
+					$all_proposed = RecurrenceService::generate_occurrences( $proposed_start, $proposed_end, $effective_rrule, null, (array) $excluded_dates );
+					$proposed_gen = array_slice( $all_proposed, 1 );
 
 					$classify_master_id = ( 'generated' === $existing->occurrence_type && $existing->master_id )
 						? $existing->master_id
@@ -1265,10 +1405,16 @@ class EventDatesController extends WP_REST_Controller {
 					$recurrence_impact = RecurrenceService::classify_change( $classify_master_id, $proposed_gen );
 				}
 
-				if ( $effective_event_id ) {
-					RecurrenceService::regenerate_event_occurrences( $effective_event_id, $effective_rrule );
-				} else {
-					RecurrenceService::regenerate_standalone_occurrences( $id, $effective_rrule );
+				$regenerated = $effective_event_id
+					? RecurrenceService::regenerate_event_occurrences( $effective_event_id, $effective_rrule, $excluded_dates )
+					: RecurrenceService::regenerate_standalone_occurrences( $id, $effective_rrule, $excluded_dates );
+
+				if ( false === $regenerated ) {
+					return new WP_Error(
+						'rest_event_date_recurrence_failed',
+						__( 'Failed to save the series dates.', 'fair-events' ),
+						array( 'status' => 500 )
+					);
 				}
 			}
 
