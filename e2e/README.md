@@ -46,6 +46,14 @@ message — recipient, subject, body — into the `fair_e2e_captured_mail` optio
 Specs read it back via WP-CLI (`signup-state.php` filters it down to the buyer's
 mail). No real mail leaves the host, and no MailHog/Mailpit container is needed.
 
+Specs that stay on HTTP read the same log through `fair-e2e-fee-reminders.php`:
+`GET fair-e2e/v1/fee-reminders/mail` lists the captured recipients and subjects
+(optionally for one `to` address) and `DELETE` clears it. The same file makes
+`wp_mail()` report a failure for one address
+(`fair-e2e/v1/fee-reminders/mail-failure`, an empty `email` clears it) and
+stores a raw participant address the participant routes would sanitize away
+(`fair-e2e/v1/fee-reminders/participant-email`).
+
 ## Intercepting Mollie (the key decision)
 
 Driving a *real* purchase in the isolated env is the hard part, and we

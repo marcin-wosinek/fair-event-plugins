@@ -199,6 +199,7 @@ msgstr "Wszystkie wybrane zdjęcia będą przypisane temu autorowi."
 
 #: src/Admin/MediaBatchActions.php:257
 #: src/Admin/edit-extra-message/EditExtraMessage.js:272
+#: src/Admin/fee-detail/FeeDetail.js:1006
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
 #: src/Admin/groups/Groups.js:449
@@ -354,111 +355,111 @@ msgstr "Zawartość jest wymagana."
 msgid "The specified category does not exist."
 msgstr "Określona kategoria nie istnieje."
 
-#: src/API/FeesController.php:283
-#: src/API/FeesController.php:376
-#: src/API/FeesController.php:427
-#: src/API/FeesController.php:460
-#: src/API/FeesController.php:483
-#: src/API/FeesController.php:737
-#: src/API/FeesController.php:760
-#: src/API/FeesController.php:823
+#: src/API/FeesController.php:297
+#: src/API/FeesController.php:390
+#: src/API/FeesController.php:441
+#: src/API/FeesController.php:474
+#: src/API/FeesController.php:497
+#: src/API/FeesController.php:751
+#: src/API/FeesController.php:774
+#: src/API/FeesController.php:917
 msgid "Fee not found."
 msgstr "Opłata nie znaleziona."
 
-#: src/API/FeesController.php:305
+#: src/API/FeesController.php:319
 msgid "Fee name is required."
 msgstr "Nazwa opłaty jest wymagana."
 
-#: src/API/FeesController.php:313
+#: src/API/FeesController.php:327
 msgid "Group is required."
 msgstr "Grupa jest wymagana."
 
-#: src/API/FeesController.php:321
+#: src/API/FeesController.php:335
 msgid "Amount must be a positive number."
 msgstr "Kwota musi być liczbą dodatnią."
 
-#: src/API/FeesController.php:346
+#: src/API/FeesController.php:360
 msgid "Failed to create fee."
 msgstr "Nie udało się utworzyć opłaty."
 
-#: src/API/FeesController.php:358
+#: src/API/FeesController.php:372
 msgid "Fee created successfully."
 msgstr "Opłata utworzona pomyślnie."
 
-#: src/API/FeesController.php:401
+#: src/API/FeesController.php:415
 msgid "Failed to update fee."
 msgstr "Nie udało się zaktualizować opłaty."
 
-#: src/API/FeesController.php:409
+#: src/API/FeesController.php:423
 msgid "Fee updated successfully."
 msgstr "Opłata zaktualizowana pomyślnie."
 
-#: src/API/FeesController.php:435
+#: src/API/FeesController.php:449
 msgid "Failed to delete fee."
 msgstr "Nie udało się usunąć opłaty."
 
-#: src/API/FeesController.php:442
+#: src/API/FeesController.php:456
 msgid "Fee deleted successfully."
 msgstr "Opłata usunięta pomyślnie."
 
-#: src/API/FeesController.php:492
+#: src/API/FeesController.php:506
 msgid "Participant is required."
 msgstr "Uczestnik jest wymagany."
 
-#: src/API/FeesController.php:503
-#: src/API/FeesController.php:590
+#: src/API/FeesController.php:517
+#: src/API/FeesController.php:604
 msgid "Amount must be a non-negative number."
 msgstr "Kwota musi być liczbą nieujemną."
 
-#: src/API/FeesController.php:523
+#: src/API/FeesController.php:537
 msgid "Participant is not a member of this fee's group."
 msgstr "Uczestnik nie jest członkiem grupy tej opłaty."
 
-#: src/API/FeesController.php:533
+#: src/API/FeesController.php:547
 msgid "This participant already has a payment for this fee."
 msgstr "Ten uczestnik ma już płatność za tę opłatę."
 
-#: src/API/FeesController.php:551
+#: src/API/FeesController.php:565
 msgid "Failed to add participant to fee."
 msgstr "Nie udało się dodać uczestnika do opłaty."
 
-#: src/API/FeesController.php:561
+#: src/API/FeesController.php:575
 msgid "Participant added manually."
 msgstr "Uczestnik dodany ręcznie."
 
-#: src/API/FeesController.php:567
+#: src/API/FeesController.php:581
 msgid "Participant added to fee."
 msgstr "Uczestnik dodany do opłaty."
 
-#: src/API/FeesController.php:598
+#: src/API/FeesController.php:612
 msgid "A reason for the adjustment is required."
 msgstr "Wymagana jest przyczyna korekty."
 
-#: src/API/FeesController.php:609
+#: src/API/FeesController.php:623
 msgid "Failed to update payment amount."
 msgstr "Nie udało się zaktualizować kwoty płatności."
 
-#: src/API/FeesController.php:625
+#: src/API/FeesController.php:639
 msgid "Payment amount adjusted successfully."
 msgstr "Kwota płatności została pomyślnie dostosowana."
 
-#: src/API/FeesController.php:649
+#: src/API/FeesController.php:663
 msgid "Failed to mark payment as paid."
 msgstr "Nie udało się oznaczyć płatności jako opłaconej."
 
-#: src/API/FeesController.php:664
+#: src/API/FeesController.php:678
 msgid "Payment marked as paid."
 msgstr "Płatność oznaczona jako opłacona."
 
-#: src/API/FeesController.php:687
+#: src/API/FeesController.php:701
 msgid "Failed to cancel payment."
 msgstr "Nie udało się anulować płatności."
 
-#: src/API/FeesController.php:702
+#: src/API/FeesController.php:716
 msgid "Payment canceled."
 msgstr "Płatność anulowana."
 
-#: src/API/FeesController.php:832
+#: src/API/FeesController.php:926
 #: templates/fee-payment.php:51
 msgid "Payment not found."
 msgstr "Płatność nie znaleziona."
@@ -1214,10 +1215,12 @@ msgstr "Ta opłata została już zapłacona. Dziękuję!"
 
 #: templates/fee-payment.php:385
 #: templates/fee-payment.php:459
+#: src/Admin/fee-detail/FeeDetail.js:949
 msgid "Fee:"
 msgstr "Opłata:"
 
 #: templates/fee-payment.php:389
+#: src/Admin/fee-detail/FeeDetail.js:955
 msgid "Amount:"
 msgstr "Kwota:"
 
@@ -1590,6 +1593,7 @@ msgstr "Członkowie"
 msgid "No members in this group."
 msgstr "Brak członków w tej grupie."
 
+#: src/Admin/fee-detail/FeeDetail.js:936
 #: src/Admin/group-detail/GroupDetail.js:357
 msgid "(unnamed)"
 msgstr "(bez nazwy)"
@@ -2068,3 +2072,69 @@ msgstr "Spróbuj ponownie"
 #: src/Admin/manage-event-ext/GroupRules.js:473
 msgid "Group rules could not be loaded."
 msgstr "Nie udało się wczytać reguł grupy."
+
+#: src/API/FeesController.php:802
+msgid "This payment is no longer pending, so no reminder was sent."
+msgstr ""
+
+#: src/API/FeesController.php:812
+msgid "The member for this payment no longer exists, so no reminder was sent."
+msgstr ""
+
+#: src/API/FeesController.php:820
+msgid "This member has no valid email address, so no reminder was sent."
+msgstr ""
+
+#: src/API/FeesController.php:831
+msgid "The reminder email could not be sent."
+msgstr ""
+
+#: src/API/FeesController.php:849
+msgid "The reminder was sent, but it could not be recorded on the payment. Do not send it again."
+msgstr ""
+
+#: src/API/FeesController.php:860
+msgid "Payment reminder sent."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:575
+msgid "The payment reminder could not be sent."
+msgstr ""
+
+#. translators: %s: recipient email address
+#: src/Admin/fee-detail/FeeDetail.js:618
+#, js-format
+msgid "Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again."
+msgstr ""
+
+#. translators: %s: recipient email address
+#: src/Admin/fee-detail/FeeDetail.js:630
+#, js-format
+msgid "Payment reminder sent to %s."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:726
+#: src/Admin/fee-detail/FeeDetail.js:903
+#: src/Admin/fee-detail/FeeDetail.js:1018
+msgid "Send Payment Reminder"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:914
+msgid "One reminder email will be sent to this member only."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:930
+msgid "Member:"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:943
+msgid "Email:"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:969
+msgid "This member has no email address, so a reminder cannot be sent."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:979
+msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
+msgstr ""

@@ -1,5 +1,11 @@
-import { __ } from '@wordpress/i18n';
-import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
+import {
+	useState,
+	useEffect,
+	useCallback,
+	useMemo,
+	useRef,
+} from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
@@ -40,6 +46,19 @@ const DEFAULT_LAYOUTS = {
 	table: {},
 };
 
+// Rejections that mean the row on screen is out of date, not that mail failed.
+const STALE_PAYMENT_ERRORS = [
+	'payment_not_pending',
+	'payment_not_found',
+	'participant_not_found',
+	'fee_not_found',
+];
+
+const memberName = ( payment ) =>
+	`${ payment.participant_name || '' } ${
+		payment.participant_surname || ''
+	}`.trim();
+
 export default function FeeDetail() {
 	const urlParams = new URLSearchParams( window.location.search );
 	const feeId = urlParams.get( 'fee_id' );
@@ -72,6 +91,15 @@ export default function FeeDetail() {
 
 	// Reminders state.
 	const [ isSendingReminders, setIsSendingReminders ] = useState( false );
+
+	// Single-member reminder: the payment being confirmed, whether its request
+	// is in flight, and the error to show in the dialog.
+	const [ reminderPayment, setReminderPayment ] = useState( null );
+	const [ isSendingReminder, setIsSendingReminder ] = useState( false );
+	const [ reminderError, setReminderError ] = useState( null );
+	// Set synchronously so a second click cannot start another send before the
+	// state above has re-rendered.
+	const reminderSendLock = useRef( false );
 
 	// Add participant modal.
 	const [ isAddModalOpen, setIsAddModalOpen ] = useState( false );
@@ -504,8 +532,117 @@ export default function FeeDetail() {
 			} );
 	};
 
+	// Send a reminder to one member.
+	const openReminderModal = ( payment ) => {
+		setReminderError( null );
+		setReminderPayment( payment );
+	};
+
+	const closeReminderModal = () => {
+		if ( isSendingReminder ) {
+			return;
+		}
+		setReminderPayment( null );
+		setReminderError( null );
+	};
+
+	const handleSendPaymentReminder = async () => {
+		if (
+			! reminderPayment ||
+			! reminderPayment.participant_email ||
+			isSendingReminders ||
+			reminderSendLock.current
+		) {
+			return;
+		}
+
+		reminderSendLock.current = true;
+		setIsSendingReminder( true );
+		setReminderError( null );
+
+		let result;
+		try {
+			result = await apiFetch( {
+				path: `/fair-audience/v1/fees/${ feeId }/payments/${ reminderPayment.id }/send-reminder`,
+				method: 'POST',
+			} );
+		} catch ( err ) {
+			reminderSendLock.current = false;
+			setIsSendingReminder( false );
+
+			const message =
+				err.message ||
+				__(
+					'The payment reminder could not be sent.',
+					'fair-audience-experimental'
+				);
+
+			if ( STALE_PAYMENT_ERRORS.includes( err.code ) ) {
+				// The row changed since it was loaded: show its current state.
+				setReminderPayment( null );
+				setNotice( { status: 'error', message } );
+				loadPayments();
+				return;
+			}
+
+			setReminderError( message );
+			return;
+		}
+
+		reminderSendLock.current = false;
+		setIsSendingReminder( false );
+		setReminderPayment( null );
+
+		const recipient = result.email || reminderPayment.participant_email;
+		let refreshed = true;
+		try {
+			const [ feeData, paymentData ] = await Promise.all( [
+				apiFetch( { path: `/fair-audience/v1/fees/${ feeId }` } ),
+				apiFetch( {
+					path: `/fair-audience/v1/fees/${ feeId }/payments`,
+				} ),
+			] );
+			setFee( feeData );
+			setPayments( paymentData );
+		} catch {
+			refreshed = false;
+		}
+
+		if ( result.recorded === false ) {
+			setNotice( { status: 'warning', message: result.message } );
+		} else if ( ! refreshed ) {
+			setNotice( {
+				status: 'warning',
+				message: sprintf(
+					/* translators: %s: recipient email address */
+					__(
+						'Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again.',
+						'fair-audience-experimental'
+					),
+					recipient
+				),
+			} );
+		} else {
+			setNotice( {
+				status: 'success',
+				message: sprintf(
+					/* translators: %s: recipient email address */
+					__(
+						'Payment reminder sent to %s.',
+						'fair-audience-experimental'
+					),
+					recipient
+				),
+			} );
+		}
+	};
+
 	// Send reminders.
 	const handleSendReminders = () => {
+		if ( reminderSendLock.current ) {
+			return;
+		}
+
 		// eslint-disable-next-line no-undef
 		if (
 			! confirm(
@@ -581,6 +718,17 @@ export default function FeeDetail() {
 				label: __( 'Cancel', 'fair-audience' ),
 				icon: 'dismiss',
 				callback: ( [ item ] ) => handleCancel( item ),
+				supportsBulk: false,
+				isEligible: ( item ) => item.status === 'pending',
+			},
+			{
+				id: 'send-payment-reminder',
+				label: __(
+					'Send Payment Reminder',
+					'fair-audience-experimental'
+				),
+				icon: 'email',
+				callback: ( [ item ] ) => openReminderModal( item ),
 				supportsBulk: false,
 				isEligible: ( item ) => item.status === 'pending',
 			},
@@ -721,7 +869,7 @@ export default function FeeDetail() {
 						<Button
 							variant="secondary"
 							onClick={ handleSendReminders }
-							disabled={ isSendingReminders }
+							disabled={ isSendingReminders || isSendingReminder }
 							isBusy={ isSendingReminders }
 						>
 							{ __( 'Send Reminders', 'fair-audience' ) }
@@ -748,6 +896,133 @@ export default function FeeDetail() {
 					/>
 				</CardBody>
 			</Card>
+
+			{ /* Send Payment Reminder Modal */ }
+			{ reminderPayment && (
+				<Modal
+					title={ __(
+						'Send Payment Reminder',
+						'fair-audience-experimental'
+					) }
+					onRequestClose={ closeReminderModal }
+					isDismissible={ ! isSendingReminder }
+					shouldCloseOnClickOutside={ ! isSendingReminder }
+					shouldCloseOnEsc={ ! isSendingReminder }
+					style={ { maxWidth: '500px', width: '100%' } }
+				>
+					<p>
+						{ __(
+							'One reminder email will be sent to this member only.',
+							'fair-audience-experimental'
+						) }
+					</p>
+
+					<div
+						style={ {
+							display: 'grid',
+							gap: '4px',
+							marginBottom: '16px',
+							overflowWrap: 'anywhere',
+						} }
+					>
+						<div>
+							<strong>
+								{ __(
+									'Member:',
+									'fair-audience-experimental'
+								) }
+							</strong>{ ' ' }
+							{ memberName( reminderPayment ) ||
+								__(
+									'(unnamed)',
+									'fair-audience-experimental'
+								) }
+						</div>
+						<div>
+							<strong>
+								{ __( 'Email:', 'fair-audience-experimental' ) }
+							</strong>{ ' ' }
+							{ reminderPayment.participant_email || '—' }
+						</div>
+						<div>
+							<strong>
+								{ __( 'Fee:', 'fair-audience-experimental' ) }
+							</strong>{ ' ' }
+							{ fee ? fee.name : '—' }
+						</div>
+						<div>
+							<strong>
+								{ __(
+									'Amount:',
+									'fair-audience-experimental'
+								) }
+							</strong>{ ' ' }
+							{ parseFloat( reminderPayment.amount ).toFixed(
+								2
+							) }
+							{ fee?.currency ? ` ${ fee.currency }` : '' }
+						</div>
+					</div>
+
+					{ ! reminderPayment.participant_email && (
+						<Notice status="warning" isDismissible={ false }>
+							{ __(
+								'This member has no email address, so a reminder cannot be sent.',
+								'fair-audience-experimental'
+							) }
+						</Notice>
+					) }
+
+					{ reminderPayment.participant_email &&
+						isSendingReminders && (
+							<Notice status="info" isDismissible={ false }>
+								{ __(
+									'Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one.',
+									'fair-audience-experimental'
+								) }
+							</Notice>
+						) }
+
+					{ reminderError && (
+						<Notice status="error" isDismissible={ false }>
+							{ reminderError }
+						</Notice>
+					) }
+
+					<div
+						style={ {
+							display: 'flex',
+							flexWrap: 'wrap',
+							justifyContent: 'flex-end',
+							gap: '8px',
+							marginTop: '16px',
+						} }
+					>
+						<Button
+							variant="secondary"
+							onClick={ closeReminderModal }
+							disabled={ isSendingReminder }
+						>
+							{ __( 'Cancel', 'fair-audience-experimental' ) }
+						</Button>
+						<Button
+							variant="primary"
+							onClick={ handleSendPaymentReminder }
+							disabled={
+								! reminderPayment.participant_email ||
+								isSendingReminder ||
+								isSendingReminders
+							}
+							isBusy={ isSendingReminder }
+						>
+							{ __(
+								'Send Payment Reminder',
+								'fair-audience-experimental'
+							) }
+						</Button>
+					</div>
+				</Modal>
+			) }
 
 			{ /* Add Participant Modal */ }
 			{ isAddModalOpen && (
