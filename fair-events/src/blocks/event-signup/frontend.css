@@ -319,6 +319,49 @@
 	padding: 0 4px;
 }
 
+/* One activity per row. The section sits outside the purchase form, so the
+   form's activity-row rules above don't reach it. The label's text is a bare
+   text node here: it becomes the row's second flex item and wraps beside the
+   checkbox instead of under it. */
+.fair-events-add-activities .fair-events-ticket-option-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-weight: normal;
+	cursor: pointer;
+	padding: 4px 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-add-activities
+	.fair-events-ticket-option-item
+	input[type="checkbox"] {
+	width: 18px;
+	height: 18px;
+	/* Centre the box on the first text line, whatever the theme's line height.
+	   `lh` reads the checkbox's own line height, so inherit the label's. */
+	font: inherit;
+	margin: 3px 0 0;
+	margin-top: calc((1lh - 18px) / 2);
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.fair-events-add-activities .fair-events-ticket-option-full {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.fair-events-add-activities
+	.fair-events-ticket-option-full
+	input[type="checkbox"] {
+	cursor: not-allowed;
+}
+
+.fair-events-add-activities .wp-block-button {
+	margin-top: 8px;
+}
+
 .fair-events-add-activities-button:disabled,
 .fair-events-add-activities-button.is-disabled {
 	opacity: 0.6;
