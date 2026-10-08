@@ -190,6 +190,7 @@ test.describe('External Updates', () => {
 			'/wp-admin/admin.php?page=fair-payments-connector-transactions'
 		);
 		await page.getByLabel('Mode').selectOption('test');
+		await page.getByRole('button', { name: 'Apply filters' }).click();
 		await expect(page.getByText('E2E fee load')).toBeVisible();
 
 		const button = page.getByRole('button', {

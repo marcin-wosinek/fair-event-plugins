@@ -44,6 +44,7 @@ class PaymentHooks {
 
 		add_filter( 'fair_payment_resolve_participant_id', array( static::class, 'resolve_participant_id' ), 10, 2 );
 		add_filter( 'fair_payment_prepare_participant', array( static::class, 'prepare_participant' ), 10, 2 );
+		add_filter( 'fair_payment_participant_search_source', array( static::class, 'participant_search_source' ) );
 		add_filter( 'fair_payment_notification_context', array( static::class, 'enrich_notification_context' ), 10, 3 );
 		add_action( 'fair_payment_backfill_participant_ids', array( static::class, 'backfill_participant_ids' ) );
 
@@ -123,6 +124,29 @@ class PaymentHooks {
 			'name'      => $full_name,
 			'email'     => $participant->email,
 			'admin_url' => admin_url( 'admin.php?page=fair-audience-participant-detail&participant_id=' . (int) $participant->id ),
+		);
+	}
+
+	/**
+	 * Tell fair-payments-connector where participant names and emails live,
+	 * so its transaction search can match the person prepare_participant()
+	 * displays. Identifiers only; fair-payments-connector builds the query.
+	 *
+	 * @param array|null $source Current value (null if not yet provided).
+	 * @return array Source descriptor: table, id_column, name_columns, email_column.
+	 */
+	public static function participant_search_source( $source ) {
+		if ( null !== $source ) {
+			return $source;
+		}
+
+		global $wpdb;
+
+		return array(
+			'table'        => $wpdb->prefix . 'fair_audience_participants',
+			'id_column'    => 'id',
+			'name_columns' => array( 'name', 'surname' ),
+			'email_column' => 'email',
 		);
 	}
 
