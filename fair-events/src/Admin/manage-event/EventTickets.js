@@ -34,6 +34,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { moreVertical } from '@wordpress/icons';
 import apiFetch from '@wordpress/api-fetch';
 import SalePeriodsCalendar, { salePeriodColor } from './SalePeriodsCalendar.js';
+import ReorderAddonsModal, { moveItem } from './ReorderAddonsModal.js';
 import {
 	resolveEffectiveSalePeriods,
 	hasUsableSalePeriodRange,
@@ -76,14 +77,7 @@ const newTicketTypeClientKey = () => `new-type-${ ++nextTicketTypeClientKey }`;
 const ticketTypeKey = ( type ) =>
 	type.id ? String( type.id ) : type.client_key;
 
-export const moveToTop = ( items, index ) =>
-	index <= 0 || index >= items.length
-		? items
-		: [
-				items[ index ],
-				...items.slice( 0, index ),
-				...items.slice( index + 1 ),
-		  ];
+export const moveToTop = ( items, index ) => moveItem( items, index, 0 );
 
 export default function EventTickets( {
 	eventDateId,
@@ -121,6 +115,7 @@ export default function EventTickets( {
 	const [ success, setSuccess ] = useState( null );
 	const [ groups, setGroups ] = useState( [] );
 	const [ showScopeModal, setShowScopeModal ] = useState( false );
+	const [ showReorderModal, setShowReorderModal ] = useState( false );
 	const [ pendingScope, setPendingScope ] = useState( 'single_instance' );
 	const [ participants, setParticipants ] = useState( [] );
 	const [ mergePeriodsDialogOpen, setMergePeriodsDialogOpen ] =
@@ -2673,28 +2668,45 @@ export default function EventTickets( {
 									</table>
 								</div>
 							) }
-							<Button
-								variant="secondary"
-								size="small"
-								onClick={ () => {
-									setOptions( [
-										...options,
-										{
-											name: '',
-											short_name: '',
-											price: 0,
-											capacity: null,
-											derive_price_from_sale_period: false,
-											period_prices_map: {},
-											collaborator_ids: [],
-											sort_order: options.length,
-											client_key: newOptionClientKey(),
-										},
-									] );
-								} }
-							>
-								{ __( '+ Add Option', 'fair-events' ) }
-							</Button>
+							<HStack justify="flex-start" wrap>
+								<Button
+									variant="secondary"
+									size="small"
+									onClick={ () => {
+										setOptions( [
+											...options,
+											{
+												name: '',
+												short_name: '',
+												price: 0,
+												capacity: null,
+												derive_price_from_sale_period: false,
+												period_prices_map: {},
+												collaborator_ids: [],
+												sort_order: options.length,
+												client_key:
+													newOptionClientKey(),
+											},
+										] );
+									} }
+								>
+									{ __( '+ Add Option', 'fair-events' ) }
+								</Button>
+								{ options.length > 1 && (
+									<Button
+										variant="tertiary"
+										size="small"
+										onClick={ () =>
+											setShowReorderModal( true )
+										}
+									>
+										{ __(
+											'Reorder add-ons',
+											'fair-events'
+										) }
+									</Button>
+								) }
+							</HStack>
 						</VStack>
 					</PanelBody>
 				</Panel>
@@ -2789,6 +2801,13 @@ export default function EventTickets( {
 					Math.max( salePeriods.length - 1, 0 )
 				) }
 			</ConfirmDialog>
+			{ showReorderModal && (
+				<ReorderAddonsModal
+					options={ options }
+					onReorder={ setOptions }
+					onClose={ () => setShowReorderModal( false ) }
+				/>
+			) }
 			{ showScopeModal && (
 				<Modal
 					title={ __( 'Choose ticket scope', 'fair-events' ) }

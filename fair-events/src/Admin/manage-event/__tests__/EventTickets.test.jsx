@@ -2135,3 +2135,312 @@ describe( 'EventTickets — move a ticket type to the top (#1757)', () => {
 		);
 	} );
 } );
+
+describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
+	const salePeriod = {
+		id: 801,
+		name: '',
+		sale_start: '2026-01-01',
+		sale_end: '2026-02-01',
+	};
+
+	const addon = ( id, name, sortOrder, extra = {} ) => ( {
+		id,
+		name,
+		short_name: '',
+		price: 0,
+		capacity: null,
+		collaborator_ids: [],
+		period_prices: [],
+		sort_order: sortOrder,
+		...extra,
+	} );
+
+	const initialDataWithAddons = {
+		...initialDataWithTicketType,
+		sale_periods: [ salePeriod ],
+		settings: { activity_period_pricing: true },
+		options: [
+			addon( 11, 'Yoga', 0, {
+				short_name: 'YG',
+				capacity: 12,
+				collaborator_ids: [ 501, 502 ],
+				period_prices: [ { sale_period_id: 801, price: 7.5 } ],
+			} ),
+			addon( 12, 'Dinner', 1, {
+				capacity: 40,
+				period_prices: [ { sale_period_id: 801, price: 25 } ],
+			} ),
+			addon( 13, 'Hike', 2, { collaborator_ids: [ 503 ] } ),
+		],
+	};
+
+	// The Add-ons panel starts collapsed.
+	const renderAddons = ( extraProps = {} ) => {
+		const result = renderTickets( {
+			initialData: initialDataWithAddons,
+			...extraProps,
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Add-ons' } ) );
+		return result;
+	};
+
+	const editorNames = ( container ) =>
+		Array.from(
+			container.querySelectorAll( 'input[placeholder="Add-on name"]' )
+		).map( ( input ) => input.value );
+
+	const openPopup = () => {
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Reorder add-ons' } )
+		);
+		return screen.getByRole( 'dialog', { name: 'Reorder add-ons' } );
+	};
+
+	const closePopup = async () => {
+		fireEvent.click( screen.getByRole( 'button', { name: 'Done' } ) );
+		await waitFor( () =>
+			expect(
+				screen.queryByRole( 'dialog', { name: 'Reorder add-ons' } )
+			).not.toBeInTheDocument()
+		);
+	};
+
+	const savePayload = async ( onSaveRef ) => {
+		let savedPayload = null;
+		apiFetch.mockImplementation( ( { method, data } ) => {
+			if ( method === 'PUT' ) {
+				savedPayload = data;
+				return Promise.resolve( initialDataWithAddons );
+			}
+			return new Promise( () => {} );
+		} );
+		await act( async () => {
+			await onSaveRef.current();
+		} );
+		return savedPayload;
+	};
+
+	const writeCalls = () =>
+		apiFetch.mock.calls.filter(
+			( [ request ] ) => request.method && request.method !== 'GET'
+		);
+
+	it( 'offers the popup only when there are at least two add-ons', () => {
+		renderTickets( {
+			initialData: {
+				...initialDataWithAddons,
+				options: [ initialDataWithAddons.options[ 0 ] ],
+			},
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Add-ons' } ) );
+		expect(
+			screen.queryByRole( 'button', { name: 'Reorder add-ons' } )
+		).not.toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: '+ Add Option' } )
+		);
+		expect(
+			screen.getByRole( 'button', { name: 'Reorder add-ons' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'opens and closes without saving or touching other edits', async () => {
+		const onDirtyChange = jest.fn();
+		const { container } = renderAddons( { onDirtyChange } );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
+
+		const dialog = openPopup();
+		expect(
+			within( dialog )
+				.getAllByRole( 'listitem' )
+				.map( ( row ) => row.textContent )
+		).toEqual( [ 'Yoga', 'Dinner', 'Hike' ] );
+		await closePopup();
+
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
+		expect( writeCalls() ).toEqual( [] );
+
+		// An unsaved edit elsewhere in Prices survives a visit to the popup,
+		// and the popup lists the edited name.
+		fireEvent.change( screen.getByDisplayValue( 'Dinner' ), {
+			target: { value: 'Gala dinner' },
+		} );
+		fireEvent.change( screen.getByPlaceholderText( 'Type name' ), {
+			target: { value: 'General admission' },
+		} );
+		expect(
+			within( openPopup() ).getByText( 'Gala dinner' )
+		).toBeInTheDocument();
+		await closePopup();
+
+		expect( editorNames( container ) ).toEqual( [
+			'Yoga',
+			'Gala dinner',
+			'Hike',
+		] );
+		expect( screen.getByPlaceholderText( 'Type name' ) ).toHaveValue(
+			'General admission'
+		);
+		expect( writeCalls() ).toEqual( [] );
+	} );
+
+	it( 'applies each move to the editor at once and marks Prices unsaved', async () => {
+		const onDirtyChange = jest.fn();
+		const { container } = renderAddons( { onDirtyChange } );
+
+		openPopup();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Move Hike up' } )
+		);
+		expect( editorNames( container ) ).toEqual( [
+			'Yoga',
+			'Hike',
+			'Dinner',
+		] );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
+
+		// Closing keeps the reordered draft and still saves nothing.
+		await closePopup();
+		expect( editorNames( container ) ).toEqual( [
+			'Yoga',
+			'Hike',
+			'Dinner',
+		] );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
+		expect( writeCalls() ).toEqual( [] );
+	} );
+
+	it( 'is clean again once the add-ons are back in their saved order', () => {
+		const onDirtyChange = jest.fn();
+		renderAddons( { onDirtyChange } );
+
+		openPopup();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Move Yoga down' } )
+		);
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Move Yoga up' } )
+		);
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
+	} );
+
+	it( 'keeps "Move to top" working alongside the popup', async () => {
+		const { container } = renderAddons();
+
+		openPopup();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Move Yoga down' } )
+		);
+		await closePopup();
+
+		const hikeRow = screen.getByDisplayValue( 'Hike' ).closest( 'tr' );
+		fireEvent.click(
+			within( hikeRow ).getByRole( 'button', { name: 'Move to top' } )
+		);
+		expect( editorNames( container ) ).toEqual( [
+			'Hike',
+			'Dinner',
+			'Yoga',
+		] );
+	} );
+
+	it( 'saves the new order with every add-on’s own details', async () => {
+		const { onSaveRef } = renderAddons();
+
+		// An add-on that has never been saved takes part too.
+		fireEvent.click(
+			screen.getByRole( 'button', { name: '+ Add Option' } )
+		);
+		const newRow = screen
+			.getAllByPlaceholderText( 'Add-on name' )
+			.pop()
+			.closest( 'tr' );
+		fireEvent.change(
+			within( newRow ).getByPlaceholderText( 'Add-on name' ),
+			{ target: { value: 'Sauna' } }
+		);
+		fireEvent.change(
+			within( newRow ).getByPlaceholderText( 'Unlimited' ),
+			{
+				target: { value: '6' },
+			}
+		);
+
+		openPopup();
+		// Sauna: last → first. Yoga: second → last.
+		[ 1, 2, 3 ].forEach( () =>
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Move Sauna up' } )
+			)
+		);
+		[ 1, 2 ].forEach( () =>
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Move Yoga down' } )
+			)
+		);
+		await closePopup();
+
+		const savedPayload = await savePayload( onSaveRef );
+
+		expect(
+			savedPayload.options.map( ( option ) => ( {
+				id: option.id,
+				name: option.name,
+				short_name: option.short_name,
+				order: option.sort_order,
+				capacity: option.capacity,
+				collaborators: option.collaborator_ids,
+				period_prices: option.period_prices.map(
+					( { sale_period_id: periodId, price } ) => [
+						periodId,
+						price,
+					]
+				),
+			} ) )
+		).toEqual( [
+			{
+				id: undefined,
+				name: 'Sauna',
+				short_name: '',
+				order: 0,
+				capacity: 6,
+				collaborators: [],
+				period_prices: [],
+			},
+			{
+				id: 12,
+				name: 'Dinner',
+				short_name: '',
+				order: 1,
+				capacity: 40,
+				collaborators: [],
+				period_prices: [ [ 801, 25 ] ],
+			},
+			{
+				id: 13,
+				name: 'Hike',
+				short_name: '',
+				order: 2,
+				capacity: null,
+				collaborators: [ 503 ],
+				period_prices: [],
+			},
+			{
+				id: 11,
+				name: 'Yoga',
+				short_name: 'YG',
+				order: 3,
+				capacity: 12,
+				collaborators: [ 501, 502 ],
+				period_prices: [ [ 801, 7.5 ] ],
+			},
+		] );
+		// The client-only row key never reaches the server.
+		savedPayload.options.forEach( ( option ) =>
+			expect( option ).not.toHaveProperty( 'client_key' )
+		);
+	} );
+} );
