@@ -12,6 +12,7 @@ use FairAudienceExperimental\Database\FeePaymentRepository;
 use FairAudienceExperimental\Database\FeeAuditLogRepository;
 use FairAudienceExperimental\Database\FeePaymentTransactionRepository;
 use FairAudienceExperimental\Models\Fee;
+use FairAudience\Database\ParticipantRepository;
 use FairAudience\Services\EmailService;
 use FairAudienceExperimental\Services\FeePaymentToken;
 use WP_REST_Controller;
@@ -216,6 +217,19 @@ class FeesController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'send_reminders' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+
+		// POST /fees/{id}/payments/{pid}/send-reminder.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/payments/(?P<pid>\d+)/send-reminder',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'send_payment_reminder' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
@@ -766,6 +780,86 @@ class FeesController extends WP_REST_Controller {
 		$results       = $email_service->send_bulk_fee_reminders( $fee_id );
 
 		return rest_ensure_response( $results );
+	}
+
+	/**
+	 * Send a payment reminder to the member of a single pending payment.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function send_payment_reminder( $request ) {
+		// Loaded fresh for this request, so a payment settled or canceled since
+		// the page was rendered is rejected here.
+		$payment = $this->get_validated_payment( $request );
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		if ( 'pending' !== $payment->status ) {
+			return new WP_Error(
+				'payment_not_pending',
+				__( 'This payment is no longer pending, so no reminder was sent.', 'fair-audience-experimental' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$participant_repository = new ParticipantRepository();
+		$participant            = $participant_repository->get_by_id( $payment->participant_id );
+		if ( ! $participant ) {
+			return new WP_Error(
+				'participant_not_found',
+				__( 'The member for this payment no longer exists, so no reminder was sent.', 'fair-audience-experimental' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( empty( $participant->email ) || ! is_email( $participant->email ) ) {
+			return new WP_Error(
+				'invalid_recipient_email',
+				__( 'This member has no valid email address, so no reminder was sent.', 'fair-audience-experimental' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$fee           = $this->fee_repository->get_by_id( $payment->fee_id );
+		$email_service = new EmailService();
+
+		if ( ! $email_service->send_fee_reminder( $participant, $fee, $payment ) ) {
+			return new WP_Error(
+				'reminder_send_failed',
+				__( 'The reminder email could not be sent.', 'fair-audience-experimental' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$sent_at  = current_time( 'mysql' );
+		$recorded = $this->payment_repository->mark_reminder_sent( $payment->id, $sent_at );
+		$logged   = $this->audit_log_repository->log_action( $payment->id, 'reminder_sent' );
+
+		// The email is already out, so a recording failure is not an error the
+		// organizer should answer by sending again.
+		if ( ! $recorded || ! $logged ) {
+			return rest_ensure_response(
+				array(
+					'sent'             => true,
+					'recorded'         => false,
+					'email'            => $participant->email,
+					'reminder_sent_at' => $recorded ? $sent_at : null,
+					'message'          => __( 'The reminder was sent, but it could not be recorded on the payment. Do not send it again.', 'fair-audience-experimental' ),
+				)
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'sent'             => true,
+				'recorded'         => true,
+				'email'            => $participant->email,
+				'reminder_sent_at' => $sent_at,
+				'message'          => __( 'Payment reminder sent.', 'fair-audience-experimental' ),
+			)
+		);
 	}
 
 	/**

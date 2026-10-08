@@ -183,4 +183,28 @@ class FeePaymentRepository {
 			$results
 		);
 	}
+
+	/**
+	 * Record when a reminder was sent for a payment.
+	 *
+	 * Writes only the timestamp, so a status change made since the payment was
+	 * loaded is left alone.
+	 *
+	 * @param int    $id      Payment ID.
+	 * @param string $sent_at Sent timestamp (MySQL format).
+	 * @return bool Success.
+	 */
+	public function mark_reminder_sent( $id, $sent_at ) {
+		global $wpdb;
+
+		$result = $wpdb->update(
+			$this->get_table_name(),
+			array( 'reminder_sent_at' => $sent_at ),
+			array( 'id' => $id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+
+		return false !== $result;
+	}
 }
