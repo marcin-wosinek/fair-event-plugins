@@ -963,3 +963,304 @@ test.describe( 'TicketsController — discounted_price dropped from add-on optio
 		expect( body.options[ 0 ] ).not.toHaveProperty( 'discounted_price' );
 	} );
 } );
+
+test.describe( 'TicketsController — add-on order from the reorder popup (#1765)', () => {
+	let api;
+	let postId;
+	let eventDateId;
+	let ticketsPath;
+	let originalExperimentalStatus;
+
+	const setExperimentalStatus = ( status ) =>
+		api.put(
+			`/wp-json/wp/v2/plugins/${ FAIR_EVENTS_EXPERIMENTAL_PLUGIN }`,
+			{ headers: adminHeaders, data: { status } }
+		);
+
+	// What the Prices tab sends: every ticket section, with the add-ons in
+	// their on-screen order.
+	const ticketsPayload = ( { typeId, periodId, options } ) => ( {
+		capacity: null,
+		ticket_types: [
+			{
+				...( typeId ? { id: typeId } : {} ),
+				name: 'Regular',
+				capacity: null,
+				minimum_activities: 0,
+				maximum_activities: null,
+				activities_enabled: true,
+				disable_at: null,
+				recurrence_scope: 'single_instance',
+				minimum_instances: 1,
+				group_ids: [],
+			},
+		],
+		sale_periods: [
+			{
+				...( periodId ? { id: periodId } : {} ),
+				name: 'Always on',
+				sale_start: '2020-01-01 00:00:00',
+				sale_end: '2099-01-01 00:00:00',
+			},
+		],
+		prices: [ { ticket_type_index: 0, sale_period_index: 0, price: 0 } ],
+		options,
+		settings: { activity_period_pricing: true },
+	} );
+
+	const addon = (
+		name,
+		shortName,
+		capacity,
+		periodPrice,
+		collaborators
+	) => ( {
+		name,
+		short_name: shortName,
+		price: 0,
+		capacity,
+		derive_price_from_sale_period: true,
+		collaborator_ids: collaborators,
+		period_prices: [ { sale_period_index: 0, price: periodPrice } ],
+	} );
+
+	// Everything an add-on carries besides its position.
+	const details = ( option ) => ( {
+		id: Number( option.id ),
+		name: option.name,
+		short_name: option.short_name || '',
+		capacity: option.capacity === null ? null : Number( option.capacity ),
+		collaborators: option.collaborator_ids
+			.map( Number )
+			.sort( ( a, b ) => a - b ),
+		period_prices: option.period_prices.map( ( pp ) => [
+			Number( pp.sale_period_id ),
+			Number( pp.price ),
+		] ),
+	} );
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+
+		// Collaborators are stored by the experimental companion.
+		const pluginsRes = await api.get( '/wp-json/wp/v2/plugins', {
+			headers: adminHeaders,
+		} );
+		expect( pluginsRes.ok() ).toBeTruthy();
+		const experimental = ( await pluginsRes.json() ).find(
+			( plugin ) => plugin.plugin === FAIR_EVENTS_EXPERIMENTAL_PLUGIN
+		);
+		expect( experimental ).toBeTruthy();
+		originalExperimentalStatus = experimental.status;
+		if ( originalExperimentalStatus !== 'active' ) {
+			expect(
+				( await setExperimentalStatus( 'active' ) ).ok()
+			).toBeTruthy();
+		}
+
+		const title = `Add-on order ${ Date.now() }`;
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title, status: 'publish' },
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		postId = ( await postRes.json() ).id;
+
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title,
+				link_type: 'post',
+				start_datetime: '2036-06-01 10:00:00',
+				end_datetime: '2036-06-01 12:00:00',
+			},
+		} );
+		const edBody = await edRes.json();
+		expect( edRes.ok(), JSON.stringify( edBody ) ).toBeTruthy();
+		eventDateId = edBody.id;
+		ticketsPath = `/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`;
+
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{ headers: adminHeaders, data: { event_id: postId } }
+		);
+		expect( linkRes.ok() ).toBeTruthy();
+	} );
+
+	test.afterAll( async () => {
+		if ( eventDateId ) {
+			const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
+				headers: adminHeaders,
+				params: { event_date: eventDateId },
+			} );
+			for ( const signup of res.ok() ? await res.json() : [] ) {
+				await api.delete(
+					`/wp-json/fair-events/v1/get-tickets/${ signup.id }`,
+					{ headers: adminHeaders }
+				);
+			}
+			// Removing the add-ons also removes their collaborator rows.
+			await api.put( ticketsPath, {
+				headers: adminHeaders,
+				data: {
+					ticket_types: [],
+					sale_periods: [],
+					prices: [],
+					options: [],
+					settings: {},
+				},
+			} );
+		}
+		if ( postId ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+		if (
+			originalExperimentalStatus &&
+			originalExperimentalStatus !== 'active'
+		) {
+			await setExperimentalStatus( originalExperimentalStatus );
+		}
+		await api.dispose();
+	} );
+
+	test( 'an arbitrary reorder keeps IDs, details, period prices, collaborators, and signup selections', async () => {
+		const createRes = await api.put( ticketsPath, {
+			headers: adminHeaders,
+			data: ticketsPayload( {
+				options: [
+					addon( 'Yoga', 'YG', 12, 0, [ 9101, 9102 ] ),
+					addon( 'Dinner', 'DN', 40, 25, [] ),
+					addon( 'Hike', '', null, 0, [ 9103 ] ),
+					addon( 'Sauna', 'SN', 6, 12.5, [ 9101 ] ),
+				],
+			} ),
+		} );
+		const created = await createRes.json();
+		expect( createRes.ok(), JSON.stringify( created ) ).toBeTruthy();
+		const typeId = created.ticket_types[ 0 ].id;
+		const periodId = Number( created.sale_periods[ 0 ].id );
+		const [ yoga, dinner, hike, sauna ] = created.options;
+		expect( created.options.map( details ) ).toEqual( [
+			{
+				id: Number( yoga.id ),
+				name: 'Yoga',
+				short_name: 'YG',
+				capacity: 12,
+				collaborators: [ 9101, 9102 ],
+				period_prices: [ [ periodId, 0 ] ],
+			},
+			{
+				id: Number( dinner.id ),
+				name: 'Dinner',
+				short_name: 'DN',
+				capacity: 40,
+				collaborators: [],
+				period_prices: [ [ periodId, 25 ] ],
+			},
+			{
+				id: Number( hike.id ),
+				name: 'Hike',
+				short_name: '',
+				capacity: null,
+				collaborators: [ 9103 ],
+				period_prices: [ [ periodId, 0 ] ],
+			},
+			{
+				id: Number( sauna.id ),
+				name: 'Sauna',
+				short_name: 'SN',
+				capacity: 6,
+				collaborators: [ 9101 ],
+				period_prices: [ [ periodId, 12.5 ] ],
+			},
+		] );
+
+		// An existing signup that picked the first and third add-ons.
+		const email = `addon-order-${ Date.now() }@example.test`;
+		const visitor = await request.newContext( { baseURL: BASE_URL } );
+		const buyRes = await visitor.post(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				data: {
+					name: 'Addon Order',
+					_honeypot: '',
+					event_date_id: eventDateId,
+					ticket_type_id: typeId,
+					email,
+					ticket_option_ids: [ Number( yoga.id ), Number( hike.id ) ],
+				},
+			}
+		);
+		const buyBody = await buyRes.json();
+		await visitor.dispose();
+		expect( buyRes.status(), JSON.stringify( buyBody ) ).toBe( 200 );
+
+		const signupsRes = await api.get(
+			'/wp-json/fair-events/v1/get-tickets',
+			{ headers: adminHeaders, params: { event_date: eventDateId } }
+		);
+		const signupId = ( await signupsRes.json() ).find(
+			( row ) => row.email === email
+		).id;
+		const selectedAddons = async () => {
+			const res = await api.get(
+				`/wp-json/fair-e2e/v1/ticket-activities/state?signup_ids[]=${ signupId }`,
+				{ headers: adminHeaders }
+			);
+			expect( res.ok() ).toBeTruthy();
+			return ( await res.json() ).tickets.map( ( ticket ) =>
+				ticket.activities
+					.map( ( a ) => Number( a.ticket_option_id ) )
+					.sort( ( a, b ) => a - b )
+			);
+		};
+		const selectedBefore = await selectedAddons();
+		expect( selectedBefore ).toEqual( [
+			[ Number( yoga.id ), Number( hike.id ) ].sort( ( a, b ) => a - b ),
+		] );
+
+		// The popup can place any add-on anywhere, so no position survives:
+		// Hike, Sauna, Yoga, Dinner. The editor resends the loaded options,
+		// untouched apart from their order.
+		const reordered = [ hike, sauna, yoga, dinner ];
+		const saveRes = await api.put( ticketsPath, {
+			headers: adminHeaders,
+			data: ticketsPayload( {
+				typeId,
+				periodId,
+				options: reordered.map( ( option, index ) => ( {
+					...option,
+					sort_order: index,
+					derive_price_from_sale_period: true,
+					period_prices: option.period_prices.map( ( pp ) => ( {
+						sale_period_index: 0,
+						sale_period_id: pp.sale_period_id,
+						price: Number( pp.price ),
+					} ) ),
+				} ) ),
+			} ),
+		} );
+		const saved = await saveRes.json();
+		expect( saveRes.ok(), JSON.stringify( saved ) ).toBeTruthy();
+		expect( saved.options.map( details ) ).toEqual(
+			reordered.map( details )
+		);
+
+		const reloadRes = await api.get( ticketsPath, {
+			headers: adminHeaders,
+		} );
+		const reloaded = await reloadRes.json();
+		expect( reloadRes.ok() ).toBeTruthy();
+		expect( reloaded.options.map( details ) ).toEqual(
+			reordered.map( details )
+		);
+		expect(
+			reloaded.options.map( ( option ) => Number( option.sort_order ) )
+		).toEqual( [ 0, 1, 2, 3 ] );
+
+		expect( await selectedAddons() ).toEqual( selectedBefore );
+	} );
+} );
