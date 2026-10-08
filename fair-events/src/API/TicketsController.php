@@ -16,6 +16,7 @@ use FairEvents\Models\EventDateSetting;
 use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketSalePeriod;
 use FairEvents\Models\TicketPrice;
+use FairEvents\Services\EventSchedule;
 use FairEvents\Services\TicketCapacity;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -151,6 +152,18 @@ class TicketsController extends WP_REST_Controller {
 		$periods_error = $this->validate_sale_periods( $body['sale_periods'] ?? array() );
 		if ( is_wp_error( $periods_error ) ) {
 			return $periods_error;
+		}
+		// An option left out of the save is deleted below; one the schedule
+		// links to has to leave the schedule first.
+		$kept_option_ids = array();
+		foreach ( (array) ( $body['options'] ?? array() ) as $option_data ) {
+			if ( ! empty( $option_data['id'] ) && '' !== sanitize_text_field( $option_data['name'] ?? '' ) ) {
+				$kept_option_ids[] = (int) $option_data['id'];
+			}
+		}
+		$schedule_error = EventSchedule::guard_option_removal( $event_date_id, $kept_option_ids );
+		if ( is_wp_error( $schedule_error ) ) {
+			return $schedule_error;
 		}
 
 		// 1. Update capacity on event_dates row.
@@ -312,6 +325,12 @@ class TicketsController extends WP_REST_Controller {
 		$periods_error = $this->validate_sale_periods( $body['sale_periods'] ?? array() );
 		if ( is_wp_error( $periods_error ) ) {
 			return $periods_error;
+		}
+		// An import replaces every option with a new one, which would leave
+		// the schedule's workshops pointing at options that are gone.
+		$schedule_error = EventSchedule::guard_option_removal( $event_date_id, array() );
+		if ( is_wp_error( $schedule_error ) ) {
+			return $schedule_error;
 		}
 
 		// 1. Update capacity on event_dates row.

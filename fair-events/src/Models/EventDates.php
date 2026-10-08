@@ -1051,6 +1051,10 @@ class EventDates {
 			array( '%d' )
 		);
 
+		// The schedule belongs to the event date; its entries would otherwise
+		// keep pointing at an event that no longer exists.
+		ScheduleItem::delete_by_event_date_id( $id );
+
 		$result = $wpdb->delete(
 			$table_name,
 			array( 'id' => $id ),

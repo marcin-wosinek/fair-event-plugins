@@ -96,6 +96,10 @@ class Installer {
 		$sql = Schema::get_checkout_keys_table_sql();
 		dbDelta( $sql );
 
+		// Version 3.43.0 - Schedule items table (no data migration needed, table created by dbDelta).
+		$sql = Schema::get_schedule_items_table_sql();
+		dbDelta( $sql );
+
 		// Run migration if upgrading from pre-1.0.0.
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();

@@ -34,6 +34,8 @@ class EventTicketConfigurationCopier {
 		$collaborator_class = \FairEventsExperimental\Models\TicketOptionCollaborator::class;
 		$price_class        = \FairEvents\Models\TicketOptionPrice::class;
 
+		\FairEvents\Models\ScheduleItem::delete_by_event_date_id( $event_date_id );
+
 		if ( class_exists( $option_class ) ) {
 			$options = $option_class::get_all_by_event_date_id( $event_date_id );
 			if ( class_exists( $price_class ) && method_exists( $price_class, 'delete_by_event_date_id' ) ) {
@@ -89,7 +91,8 @@ class EventTicketConfigurationCopier {
 			$type_map        = $this->copy_ticket_types( $source_event_date_id, $destination_event_date_id, $date_shift );
 			$sale_period_map = $this->copy_sale_periods( $source_event_date_id, $destination_event_date_id, $date_shift );
 			$this->copy_prices( $source_event_date_id, $type_map, $sale_period_map );
-			$this->copy_experimental_options( $source_event_date_id, $destination_event_date_id, $sale_period_map );
+			$option_map = $this->copy_experimental_options( $source_event_date_id, $destination_event_date_id, $sale_period_map );
+			EventSchedule::copy( $source_event_date_id, $destination_event_date_id, $option_map, $date_shift );
 
 			$wpdb->query( 'COMMIT' );
 			return array( 'ticket_type_id_map' => $type_map );
@@ -194,7 +197,7 @@ class EventTicketConfigurationCopier {
 	 * @param int             $source_id      Source event date ID.
 	 * @param int             $destination_id Destination event date ID.
 	 * @param array<int, int> $period_map     Sale-period ID map.
-	 * @return void
+	 * @return array<int, int> Old-to-new ticket option ID map.
 	 * @throws \RuntimeException When an option record cannot be copied or remapped.
 	 */
 	private function copy_experimental_options( $source_id, $destination_id, $period_map ) {
@@ -203,7 +206,7 @@ class EventTicketConfigurationCopier {
 		$price_class        = \FairEvents\Models\TicketOptionPrice::class;
 
 		if ( ! class_exists( $option_class ) ) {
-			return;
+			return array();
 		}
 
 		$collaborators = class_exists( $collaborator_class ) ? $collaborator_class::get_all_by_event_date_id( $source_id ) : array();
@@ -223,7 +226,7 @@ class EventTicketConfigurationCopier {
 		}
 
 		if ( ! class_exists( $price_class ) ) {
-			return;
+			return $option_map;
 		}
 
 		foreach ( $option_prices as $price ) {
@@ -231,6 +234,8 @@ class EventTicketConfigurationCopier {
 				throw new \RuntimeException( 'Could not copy a ticket option price.' );
 			}
 		}
+
+		return $option_map;
 	}
 
 	/**

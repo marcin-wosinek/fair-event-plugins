@@ -1317,6 +1317,58 @@ fair-audience call it behind `class_exists()` guards.
 `inferred`, `unresolved` and `ticket_removed` links are flagged for review in
 the admin views.
 
+### Event schedule and booking status
+
+`GET` / `PUT fair-events/v1/event-dates/{id}/schedule` (`edit_posts`) read and
+replace the program of an event (#1767). fair-events owns the table
+(`fair_events_schedule_items`), the model (`ScheduleItem`) and the service
+(`FairEvents\Services\EventSchedule`); the organizer's editor is the Schedule
+tab fair-events-experimental registers on Manage Event.
+
+-   **Entries.** An entry with a `ticket_option_id` is a workshop: its name,
+    price and capacity stay on the ticket option, so a rename or reorder in
+    Prices never touches the entry, and one option has at most one entry. An
+    entry without one is a schedule item of its own (a break) with its own
+    `title`; it is never bookable. `start_datetime` / `end_datetime` are naive
+    site-local strings; the end must be after the start and may be on a later
+    day. Overlapping entries are accepted, also in the same room.
+-   **Enablement.** `schedule_enabled` is an `EventDateSetting`, saved with
+    the ticket configuration. `PUT` answers 409 `schedule_disabled` while it
+    is off; `GET` still returns what is stored. `GET …/event-dates/{id}`
+    carries `schedule_enabled` (the list routes do not).
+-   **Save.** `PUT` takes `items`, the whole schedule in display order (up to
+    `EventSchedule::MAX_ITEMS`); entries left out are removed. Everything is
+    validated before anything is written, in one transaction: 400
+    `schedule_invalid` or 409 `schedule_booking_locked`, with
+    `data.errors` — one `{ index, key, id, field, code, message }` per
+    problem, `key` being the client's own key for the entry. A date outside
+    the event's days is saved and reported in `warnings`.
+-   **Booking status.** A workshop's `bookable` flag is the booking status of
+    its ticket option. `ActivitySelection::offered_options()` leaves a
+    not-bookable option out of the signup form, `ActivitySelection::validate()`
+    refuses it with 409 `ticket_option_not_bookable`, and
+    `TicketCapacity::find_shortages()` reports it as a shortage under the
+    capacity lock, so every path through `TicketCapacity::reserve()`
+    (purchases, payment retries, fair-audience add-ons) refuses it too. The
+    status applies while the schedule is disabled and while the experimental
+    plugin is inactive. Removing a workshop's entry removes the restriction.
+-   **Marking a workshop not bookable** is refused (`booking_has_dependents`)
+    while a confirmed ticket or an unexpired hold includes the option on any
+    date of the event or series. The save locks the event's ticket option
+    rows first — the rows `TicketCapacity::with_capacity_lock()` takes — so
+    the check and a concurrent purchase run one after the other. No purchase,
+    payment or reservation record is changed.
+-   **Ticket configuration.** `PUT …/tickets` answers 409
+    `ticket_option_scheduled` before writing anything when it would delete an
+    option the schedule links to, and `POST …/tickets/import`, which replaces
+    every option, whenever the event has a workshop entry.
+-   **Series.** A series keeps one schedule on its master. `GET` for a
+    generated occurrence returns it with every date shifted to the
+    occurrence on the wall clock, `read_only: true`; `PUT` there answers 409
+    `schedule_managed_on_series`.
+-   **Lifecycle.** Entries are deleted with their event date, and copied by
+    `EventTicketConfigurationCopier` with shifted dates and remapped options.
+
 ## Related Documentation
 
 -   [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend implementation guide

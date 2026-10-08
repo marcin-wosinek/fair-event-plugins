@@ -11,6 +11,7 @@ use FairEvents\Helpers\DateRangeFormatter;
 use FairEvents\Models\EventDates;
 use FairEvents\Models\EventTicket;
 use FairEvents\Models\EventTicketActivity;
+use FairEvents\Models\ScheduleItem;
 use FairEvents\Models\TicketType;
 use WP_Error;
 
@@ -286,6 +287,28 @@ class TicketCapacity {
 	}
 
 	/**
+	 * Count the places an activity (ticket option) has taken on every date of
+	 * its event: the event date itself, or each date of its series.
+	 *
+	 * @param int $ticket_option_id Ticket option ID.
+	 * @param int $event_date_id    Any event date of the event or series.
+	 * @return int
+	 */
+	public static function count_ticket_option_all_dates( int $ticket_option_id, int $event_date_id ) {
+		$event_date = self::get_event_date_row( $event_date_id );
+		if ( ! $event_date ) {
+			return 0;
+		}
+
+		$total = 0;
+		foreach ( self::get_series_ids( self::get_series_master_id( $event_date ) ) as $series_event_date_id ) {
+			$total += self::count_ticket_option( $ticket_option_id, $series_event_date_id );
+		}
+
+		return $total;
+	}
+
+	/**
 	 * Places still available in an activity on one occurrence.
 	 *
 	 * @param int $ticket_option_id Ticket option ID.
@@ -501,7 +524,22 @@ class TicketCapacity {
 
 		$needed_options = $needed['ticket_options'] ?? array();
 		$options        = self::get_ticket_option_rows( array_keys( $needed_options ) );
+		// A workshop its schedule marks as not bookable has no place to
+		// give, whatever its capacity. Read here so the answer is the one
+		// committed before the caller's locks were taken.
+		$not_bookable = ScheduleItem::filter_non_bookable_option_ids( array_keys( $needed_options ) );
 		foreach ( $needed_options as $option_id => $by_event_date ) {
+			if ( in_array( (int) $option_id, $not_bookable, true ) ) {
+				$shortages[] = array(
+					'scope'         => 'ticket_option',
+					'id'            => (int) $option_id,
+					'event_date_id' => (int) array_key_first( $by_event_date ),
+					'remaining'     => 0,
+					'not_bookable'  => true,
+				);
+				continue;
+			}
+
 			$option = $options[ (int) $option_id ] ?? null;
 			if ( ! $option || null === $option->capacity ) {
 				continue;
@@ -761,6 +799,10 @@ class TicketCapacity {
 			'status'    => 409,
 			'remaining' => $remaining,
 		);
+
+		if ( 'ticket_option' === $shortage['scope'] && ! empty( $shortage['not_bookable'] ) ) {
+			return EventSchedule::not_bookable_error( self::ticket_option_name( (int) $shortage['id'] ), (int) $shortage['id'] );
+		}
 
 		if ( 'ticket_option' === $shortage['scope'] ) {
 			$data['ticket_option_id'] = (int) $shortage['id'];

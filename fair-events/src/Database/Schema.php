@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.42.0';
+	const DB_VERSION = '3.43.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -612,6 +612,44 @@ class Schema {
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_key_hash (key_hash),
 			KEY idx_created_at (created_at)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_schedule_items table
+	 *
+	 * One row per entry of an event's program. A row with a ticket_option_id
+	 * is a workshop: its name, price and capacity stay on the ticket option,
+	 * and bookable says whether that option can still be chosen with a
+	 * ticket. A row without one is a program item of its own (a break, a
+	 * talk) that is never a ticket choice. Datetimes are naive site-local
+	 * strings, stored for the event date the row belongs to; a series keeps
+	 * its rows on the master.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_schedule_items_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_schedule_items';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_date_id BIGINT UNSIGNED NOT NULL,
+			ticket_option_id BIGINT UNSIGNED DEFAULT NULL,
+			bookable TINYINT(1) NOT NULL DEFAULT 0,
+			title VARCHAR(255) NOT NULL DEFAULT '',
+			start_datetime DATETIME NOT NULL,
+			end_datetime DATETIME NOT NULL,
+			description TEXT,
+			location VARCHAR(255) NOT NULL DEFAULT '',
+			sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_ticket_option_id (ticket_option_id),
+			KEY idx_event_date_id (event_date_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

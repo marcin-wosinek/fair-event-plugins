@@ -448,3 +448,27 @@ describe( 'publication state (#1692)', () => {
 		).toBeDisabled();
 	} );
 } );
+
+it( 'generated occurrence with a schedule: the note covers the schedule too (#1767)', () => {
+	render(
+		<EventContextHeader
+			eventDate={ {
+				...baseEventDate,
+				occurrence_type: 'generated',
+				master: {
+					id: 9,
+					title: 'Master Event',
+					start_datetime: '2026-07-01 18:00:00',
+				},
+			} }
+			manageEventUrl={ manageEventUrl }
+			calendarUrl={ calendarUrl }
+			scheduleEnabled
+		/>
+	);
+	expect(
+		screen.getByText(
+			/Tickets and the schedule are managed on the series/i
+		)
+	).toBeInTheDocument();
+} );

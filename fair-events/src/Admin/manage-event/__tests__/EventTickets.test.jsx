@@ -2444,3 +2444,43 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 		);
 	} );
 } );
+
+describe( 'EventTickets — workshop schedule setting (#1767)', () => {
+	const originalManageEventData = window.fairEventsManageEventData;
+
+	afterEach( () => {
+		window.fairEventsManageEventData = originalManageEventData;
+	} );
+
+	it( 'is not offered when no plugin provides the Schedule tab', () => {
+		window.fairEventsManageEventData = { enabledFeatures: {} };
+		renderTickets( { initialData: initialDataWithTicketType } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
+
+		expect(
+			screen.queryByRole( 'checkbox', { name: /Workshop schedule/i } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'shows the saved state and can be switched on', () => {
+		window.fairEventsManageEventData = {
+			enabledFeatures: { schedule: true },
+		};
+		renderTickets( { initialData: initialDataWithTicketType } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
+		const checkbox = screen.getByRole( 'checkbox', {
+			name: /Workshop schedule/i,
+		} );
+		expect( checkbox ).not.toBeChecked();
+
+		fireEvent.click( checkbox );
+
+		expect( checkbox ).toBeChecked();
+	} );
+} );

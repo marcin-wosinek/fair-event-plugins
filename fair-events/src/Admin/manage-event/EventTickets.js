@@ -89,6 +89,7 @@ export default function EventTickets( {
 	lastOccurrenceDatetime,
 	isSeries,
 	onDirtyChange,
+	onSavedSettingsChange,
 } ) {
 	const [ capacity, setCapacity ] = useState( '' );
 	const [ endDatetime, setEndDatetime ] = useState(
@@ -106,6 +107,7 @@ export default function EventTickets( {
 		show_ticket_type_minimum_activities: false,
 		activity_period_pricing: false,
 		show_ticket_type_end_date: false,
+		schedule_enabled: false,
 	} );
 	const [ options, setOptions ] = useState( [] );
 	const [ loading, setLoading ] = useState( ! initialData );
@@ -253,6 +255,7 @@ export default function EventTickets( {
 				path: `/fair-events/v1/event-dates/${ eventDateId }/tickets`,
 			} );
 			populateFromData( data );
+			onSavedSettingsChange?.( data.settings || {} );
 		} catch ( err ) {
 			setError(
 				err.message || __( 'Failed to load tickets.', 'fair-events' )
@@ -260,7 +263,7 @@ export default function EventTickets( {
 		} finally {
 			setLoading( false );
 		}
-	}, [ eventDateId, populateFromData ] );
+	}, [ eventDateId, populateFromData, onSavedSettingsChange ] );
 
 	useEffect( () => {
 		if ( initialData ) {
@@ -979,6 +982,7 @@ export default function EventTickets( {
 			} );
 
 			populateFromData( data );
+			onSavedSettingsChange?.( data.settings || {} );
 			setSuccess( __( 'Tickets saved successfully.', 'fair-events' ) );
 		} catch ( err ) {
 			setError(
@@ -990,6 +994,11 @@ export default function EventTickets( {
 	};
 
 	const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
+
+	// The Schedule tab is provided by a companion plugin; without it there
+	// is nothing for this setting to show.
+	const scheduleAvailable =
+		!! window.fairEventsManageEventData?.enabledFeatures?.schedule;
 
 	// Controlled mode (initialData + onDataRef, e.g. the Duplicate Event
 	// wizard): the caller owns fetch/save against its own event lifecycle, so
@@ -2781,6 +2790,25 @@ export default function EventTickets( {
 									} ) )
 								}
 							/>
+							{ scheduleAvailable && (
+								<CheckboxControl
+									label={ __(
+										'Workshop schedule',
+										'fair-events'
+									) }
+									help={ __(
+										'Add a Schedule tab to plan when and where each add-on takes place, next to breaks and other program items. Turning it off hides the tab and keeps what you entered.',
+										'fair-events'
+									) }
+									checked={ !! settings.schedule_enabled }
+									onChange={ ( value ) =>
+										setSettings( ( prev ) => ( {
+											...prev,
+											schedule_enabled: value,
+										} ) )
+									}
+								/>
+							) }
 						</VStack>
 					</PanelBody>
 				</Panel>

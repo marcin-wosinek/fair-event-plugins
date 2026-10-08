@@ -747,6 +747,22 @@ import {
 -   **Page**: Settings (Mollie API configuration)
 -   **Features**: Form with validation
 
+### Manage Event tabs from another plugin
+
+A companion plugin adds a tab to the fair-events Manage Event page through
+the `fairEvents.manageEvent.tabs` filter (see
+`fair-audience/src/Admin/manage-event-audience-tab/` and
+`fair-events-experimental/src/Admin/manage-event-schedule/`). Its content is
+unmounted whenever another tab is selected, so the context passed to the
+filter carries what a tab with a save button needs:
+
+-   `setTabDirty( tabName, isDirty )` — marks the tab as holding unsaved
+    changes and arms the page's `beforeunload` warning.
+-   `getTabDraft( tabName )` / `setTabDraft( tabName, draft )` — park unsaved
+    edits with the page and read them back when the tab is opened again; pass
+    `undefined` to clear the draft after a save.
+-   `scheduleEnabled` — whether the organizer enabled the workshop schedule.
+
 ## Adding a New Admin Page
 
 1. **Create REST API Controller** in `src/API/ResourceController.php`

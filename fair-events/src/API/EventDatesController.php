@@ -13,6 +13,7 @@ use FairEvents\Models\EventDates;
 use FairEvents\Services\EventBudget;
 use FairEvents\Services\EventCopyService;
 use FairEvents\Services\EventPublication;
+use FairEvents\Services\EventSchedule;
 use FairEvents\Services\RecurrenceService;
 use FairEvents\Services\PostTranslationLinks;
 use FairEvents\Services\EventDateForPost;
@@ -1127,7 +1128,13 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		return new WP_REST_Response( $this->prepare_event_date( $event_date ), 200 );
+		$data = $this->prepare_event_date( $event_date );
+		// Only the single-event read carries this: Manage Event uses it to
+		// show the Schedule tab. A series keeps its schedule on the master,
+		// so an occurrence reports its series' setting.
+		$data['schedule_enabled'] = EventSchedule::is_enabled( EventSchedule::config_event_date_id( $event_date ) );
+
+		return new WP_REST_Response( $data, 200 );
 	}
 
 	/**

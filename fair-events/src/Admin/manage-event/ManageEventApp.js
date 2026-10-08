@@ -125,6 +125,42 @@ export default function ManageEventApp() {
 		[]
 	);
 
+	// Tabs registered by other plugins report their own unsaved edits and
+	// park their drafts here, since a tab's content is unmounted whenever
+	// another tab is selected.
+	const [ extensionDirty, setExtensionDirty ] = useState( {} );
+	const setTabDirty = useCallback(
+		( tabName, isDirty ) =>
+			setExtensionDirty( ( prev ) =>
+				!! prev[ tabName ] === !! isDirty
+					? prev
+					: { ...prev, [ tabName ]: !! isDirty }
+			),
+		[]
+	);
+	const tabDraftsRef = useRef( {} );
+	const getTabDraft = useCallback(
+		( tabName ) => tabDraftsRef.current[ tabName ],
+		[]
+	);
+	const setTabDraft = useCallback( ( tabName, draft ) => {
+		if ( draft === undefined ) {
+			delete tabDraftsRef.current[ tabName ];
+		} else {
+			tabDraftsRef.current[ tabName ] = draft;
+		}
+	}, [] );
+
+	// Whether the organizer enabled the schedule in Prices. Kept apart from
+	// eventDate, which later saves replace with responses that do not carry
+	// it.
+	const [ scheduleEnabled, setScheduleEnabled ] = useState( false );
+	const handleSavedTicketSettings = useCallback(
+		( savedSettings ) =>
+			setScheduleEnabled( !! savedSettings.schedule_enabled ),
+		[]
+	);
+
 	useEffect( () => {
 		if ( ! eventDateId ) {
 			setLoading( false );
@@ -143,6 +179,7 @@ export default function ManageEventApp() {
 				path: `/fair-events/v1/event-dates/${ eventDateId }`,
 			} );
 			setEventDate( data );
+			setScheduleEnabled( !! data.schedule_enabled );
 			populateForm( data );
 		} catch ( err ) {
 			setError(
@@ -286,9 +323,11 @@ export default function ManageEventApp() {
 	const detailsDirty =
 		detailsSnapshot !== null && detailsSnapshot !== buildDetailsSnapshot();
 
-	// Warn before losing unsaved edits on either tab that can be dirty.
+	const anyExtensionDirty = Object.values( extensionDirty ).some( Boolean );
+
+	// Warn before losing unsaved edits on any tab that can be dirty.
 	useEffect( () => {
-		if ( ! detailsDirty && ! ticketsDirty ) {
+		if ( ! detailsDirty && ! ticketsDirty && ! anyExtensionDirty ) {
 			return;
 		}
 		const handleBeforeUnload = ( event ) => {
@@ -298,7 +337,7 @@ export default function ManageEventApp() {
 		window.addEventListener( 'beforeunload', handleBeforeUnload );
 		return () =>
 			window.removeEventListener( 'beforeunload', handleBeforeUnload );
-	}, [ detailsDirty, ticketsDirty ] );
+	}, [ detailsDirty, ticketsDirty, anyExtensionDirty ] );
 
 	// Duration options
 	const timedDurationOptions = useMemo(
@@ -834,6 +873,10 @@ export default function ManageEventApp() {
 		eventDateId,
 		eventTitle: title,
 		enabledFeatures,
+		scheduleEnabled,
+		setTabDirty,
+		getTabDraft,
+		setTabDraft,
 	};
 
 	const builtInTabs = [
@@ -858,6 +901,7 @@ export default function ManageEventApp() {
 					lastOccurrenceDatetime={ lastOccurrenceDatetime }
 					isSeries={ isSeries }
 					onDirtyChange={ handleTicketsDirtyChange }
+					onSavedSettingsChange={ handleSavedTicketSettings }
 				/>
 			),
 		},
@@ -983,6 +1027,7 @@ export default function ManageEventApp() {
 
 	// Tabs whose section currently holds unsaved edits get a " •" marker.
 	const dirtyTabNames = {
+		...extensionDirty,
 		'event-details': detailsDirty,
 		prices: ticketsDirty,
 	};
@@ -1448,6 +1493,7 @@ export default function ManageEventApp() {
 				manageEventUrl={ manageEventUrl }
 				calendarUrl={ calendarUrl }
 				venues={ venues }
+				scheduleEnabled={ ticketingEnabled && scheduleEnabled }
 				onManageLink={ handleManageLink }
 				onChangePublication={ setPublicationTarget }
 				publicationBusy={ publicationSaving }
