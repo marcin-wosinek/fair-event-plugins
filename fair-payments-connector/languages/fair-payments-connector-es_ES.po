@@ -108,11 +108,11 @@ msgstr "Pago de %1$s %2$s"
 #: src/API/PaymentEndpoint.php:488
 #: src/API/TransactionAPI.php:165
 #: src/API/TransactionAPI.php:302
-#: src/API/TransactionsController.php:366
-#: src/API/TransactionsController.php:386
-#: src/API/TransactionsController.php:458
-#: src/API/TransactionsController.php:811
-#: src/Models/Transaction.php:655
+#: src/API/TransactionsController.php:427
+#: src/API/TransactionsController.php:447
+#: src/API/TransactionsController.php:519
+#: src/API/TransactionsController.php:872
+#: src/Models/Transaction.php:761
 msgid "Transaction not found."
 msgstr "Transacción no encontrada."
 
@@ -180,20 +180,20 @@ msgstr "El elemento de línea en el índice %d debe tener una cantidad positiva.
 msgid "Line item at index %d must have positive quantity."
 msgstr "El elemento de línea en el índice %d debe tener una cantidad positiva."
 
-#: src/API/TransactionsController.php:423
+#: src/API/TransactionsController.php:484
 msgid "No fields to update."
 msgstr "No hay campos para actualizar."
 
-#: src/API/TransactionsController.php:433
+#: src/API/TransactionsController.php:494
 msgid "Failed to update transaction."
 msgstr "No se pudo actualizar la transacción."
 
-#: src/API/TransactionsController.php:494
+#: src/API/TransactionsController.php:555
 msgid "Expected an array of transactions."
 msgstr "Se esperaba un array de transacciones."
 
 #. translators: 1: created count, 2: updated count, 3: skipped count
-#: src/API/TransactionsController.php:527
+#: src/API/TransactionsController.php:588
 #, php-format
 msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
 msgstr "Se importaron %1$d nuevas, se actualizaron %2$d, se omitieron %3$d transacción(es)."
@@ -248,12 +248,12 @@ msgstr "Traducciones incluidas"
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de los paquetes de idioma de WordPress.org. Útil cuando una configuración regional está por debajo del umbral del 90 % en translate.wordpress.org o para cadenas en progreso."
 
-#: src/Models/Transaction.php:663
+#: src/Models/Transaction.php:769
 msgid "Payment has already been initiated for this transaction. Create a new transaction to retry."
 msgstr "El pago ya ha sido iniciado para esta transacción. Crea una nueva transacción para reintentar."
 
 #. translators: %s: current transaction status
-#: src/Models/Transaction.php:673
+#: src/Models/Transaction.php:779
 #, php-format
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr "El estado de la transacción debe ser «borrador» para iniciar el pago. Estado actual: %s"
@@ -335,8 +335,8 @@ msgstr "Creado"
 #: src/Admin/settings/ApiTokensTab.js:273
 #: src/Admin/settings/ApiTokensTab.js:334
 #: src/Admin/transaction/TransactionPage.js:1051
-#: src/Admin/transactions/TransactionsApp.js:285
-#: src/Admin/transactions/TransactionsApp.js:456
+#: src/Admin/transactions/TransactionsApp.js:554
+#: src/Admin/transactions/TransactionsApp.js:884
 msgid "Status"
 msgstr "Estado"
 
@@ -363,8 +363,8 @@ msgstr "Cargando sitios…"
 #: src/Admin/external-updates/components/MollieImportPanel.js:301
 #: src/Admin/settings/ConnectionTab.js:249
 #: src/Admin/transaction/TransactionPage.js:1023
-#: src/Admin/transactions/TransactionsApp.js:42
-#: src/Admin/transactions/TransactionsApp.js:561
+#: src/Admin/transactions/TransactionsApp.js:43
+#: src/Admin/transactions/TransactionsApp.js:989
 msgid "Test"
 msgstr "Probar"
 
@@ -417,8 +417,8 @@ msgstr "Cambiado a modo %s."
 #: src/Admin/external-updates/components/MollieImportPanel.js:308
 #: src/Admin/settings/ConnectionTab.js:250
 #: src/Admin/transaction/TransactionPage.js:1027
-#: src/Admin/transactions/TransactionsApp.js:41
-#: src/Admin/transactions/TransactionsApp.js:565
+#: src/Admin/transactions/TransactionsApp.js:42
+#: src/Admin/transactions/TransactionsApp.js:993
 msgid "Live"
 msgstr "En directo"
 
@@ -479,8 +479,8 @@ msgstr "El token caduca: %s"
 #: src/Admin/external-updates/components/MollieImportPanel.js:294
 #: src/Admin/settings/ConnectionTab.js:671
 #: src/Admin/transaction/TransactionPage.js:1004
-#: src/Admin/transactions/TransactionsApp.js:304
-#: src/Admin/transactions/TransactionsApp.js:462
+#: src/Admin/transactions/TransactionsApp.js:567
+#: src/Admin/transactions/TransactionsApp.js:890
 msgid "Mode"
 msgstr "Modo"
 
@@ -684,18 +684,18 @@ msgid "See Mollie response"
 msgstr "Ver respuesta de Mollie"
 
 #: src/Admin/transaction/TransactionPage.js:971
-#: src/Admin/transactions/TransactionsApp.js:437
+#: src/Admin/transactions/TransactionsApp.js:865
 #: src/blocks/simple-payment/index.js:118
 msgid "Amount"
 msgstr "Importe"
 
 #: src/Admin/transaction/TransactionPage.js:980
-#: src/Admin/transactions/TransactionsApp.js:443
+#: src/Admin/transactions/TransactionsApp.js:871
 msgid "Mollie Fee"
 msgstr "Comisión de Mollie"
 
 #: src/Admin/transaction/TransactionPage.js:992
-#: src/Admin/transactions/TransactionsApp.js:449
+#: src/Admin/transactions/TransactionsApp.js:877
 msgid "Integration Fee"
 msgstr "Comisión de integración"
 
@@ -713,7 +713,7 @@ msgstr "Actualizado"
 
 #: src/Admin/transaction/TransactionPage.js:1094
 #: src/Admin/transaction/TransactionPage.js:1160
-#: src/Admin/transactions/TransactionsApp.js:473
+#: src/Admin/transactions/TransactionsApp.js:901
 msgid "Description"
 msgstr "Descripción"
 
@@ -779,7 +779,7 @@ msgstr "Selecciona un archivo JSON exportado desde otro sitio o una exportación
 msgid "Importing…"
 msgstr "Importando…"
 
-#: src/Admin/transactions/TransactionsApp.js:367
+#: src/Admin/transactions/TransactionsApp.js:725
 msgid "Import"
 msgstr "Importar"
 
@@ -787,54 +787,54 @@ msgstr "Importar"
 msgid "Import Transactions"
 msgstr "Importar transacciones"
 
-#: src/Admin/transactions/TransactionsApp.js:26
+#: src/Admin/transactions/TransactionsApp.js:27
 msgid "All statuses"
 msgstr "Todos los estados"
 
-#: src/Admin/transactions/TransactionsApp.js:27
+#: src/Admin/transactions/TransactionsApp.js:28
 msgid "Paid"
 msgstr "Pagado"
 
-#: src/Admin/transactions/TransactionsApp.js:28
+#: src/Admin/transactions/TransactionsApp.js:29
 msgid "Pending"
 msgstr "Pendiente"
 
-#: src/Admin/transactions/TransactionsApp.js:29
+#: src/Admin/transactions/TransactionsApp.js:30
 msgid "Open"
 msgstr "Abierto"
 
 #: src/Admin/external-updates/format.js:95
-#: src/Admin/transactions/TransactionsApp.js:30
+#: src/Admin/transactions/TransactionsApp.js:31
 msgid "Failed"
 msgstr "Fallido"
 
-#: src/Admin/transactions/TransactionsApp.js:31
+#: src/Admin/transactions/TransactionsApp.js:32
 msgid "Canceled"
 msgstr "Cancelado"
 
-#: src/Admin/transactions/TransactionsApp.js:32
+#: src/Admin/transactions/TransactionsApp.js:33
 msgid "Expired"
 msgstr "Caducado"
 
-#: src/Admin/transactions/TransactionsApp.js:33
+#: src/Admin/transactions/TransactionsApp.js:34
 msgid "Draft"
 msgstr "Borrador"
 
-#: src/Admin/transactions/TransactionsApp.js:35
+#: src/Admin/transactions/TransactionsApp.js:36
 msgid "Pending payment"
 msgstr "Pago pendiente"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:83
-#: src/Admin/transactions/TransactionsApp.js:43
+#: src/Admin/transactions/TransactionsApp.js:44
 msgid "All modes"
 msgstr "Todos los modos"
 
-#: src/Admin/transactions/TransactionsApp.js:148
+#: src/Admin/transactions/TransactionsApp.js:349
 msgid "Failed to load transactions."
 msgstr "No se pudieron cargar las transacciones."
 
 #. translators: %d is the number of exported transactions
-#: src/Admin/transactions/TransactionsApp.js:248
+#: src/Admin/transactions/TransactionsApp.js:489
 #, js-format
 msgid "%d transaction(s) exported."
 msgstr "Se han exportado %d transacciones."
@@ -843,41 +843,41 @@ msgstr "Se han exportado %d transacciones."
 msgid "No paid transactions are missing Mollie fee data."
 msgstr "No hay transacciones pagadas sin datos de comisión de Mollie."
 
-#: src/Admin/transactions/TransactionsApp.js:274
+#: src/Admin/transactions/TransactionsApp.js:515
 msgid "Payment Transactions"
 msgstr "Transacciones de pago"
 
-#: src/Admin/transactions/TransactionsApp.js:335
+#: src/Admin/transactions/TransactionsApp.js:693
 msgid "Export Selected"
 msgstr "Exportar seleccionados"
 
-#: src/Admin/transactions/TransactionsApp.js:403
+#: src/Admin/transactions/TransactionsApp.js:828
 msgid "No transactions found."
 msgstr "No se encontraron transacciones."
 
-#: src/Admin/transactions/TransactionsApp.js:430
+#: src/Admin/transactions/TransactionsApp.js:858
 msgid "ID"
 msgstr "ID"
 
-#: src/Admin/transactions/TransactionsApp.js:479
+#: src/Admin/transactions/TransactionsApp.js:907
 msgid "Person"
 msgstr "Persona"
 
-#: src/Admin/transactions/TransactionsApp.js:485
+#: src/Admin/transactions/TransactionsApp.js:913
 msgid "Entry"
 msgstr "Entrada"
 
-#: src/Admin/transactions/TransactionsApp.js:492
+#: src/Admin/transactions/TransactionsApp.js:920
 msgid "Date"
 msgstr "Fecha"
 
 #: src/Admin/settings/AuditLogTab.js:182
-#: src/Admin/transactions/TransactionsApp.js:630
+#: src/Admin/transactions/TransactionsApp.js:1057
 msgid "Previous"
 msgstr "Anterior"
 
 #: src/Admin/settings/AuditLogTab.js:200
-#: src/Admin/transactions/TransactionsApp.js:651
+#: src/Admin/transactions/TransactionsApp.js:1074
 msgid "Next"
 msgstr "Siguiente"
 
@@ -1121,29 +1121,29 @@ msgstr "Esta opción de pago está mal configurada. Por favor, contacta al propi
 msgid "This block shared its identifier with another Simple Payment block on this page, which could cause buyers to be charged the wrong price. A new identifier was assigned — save or update the post now."
 msgstr "Este bloque compartió su identificador con otro bloque de pago simple en esta página, lo que podría causar que se cobre a los compradores un precio incorrecto. Se asignó un nuevo identificador — guarda o actualiza la entrada ahora."
 
-#: src/API/TransactionsController.php:590
+#: src/API/TransactionsController.php:651
 #: src/Payment/MolliePaymentHandler.php:524
 #: src/Admin/external-updates/components/MollieImportPanel.js:129
 msgid "Mollie payments could not be loaded. Please try again."
 msgstr "No se pudieron cargar los pagos de Mollie. Por favor, inténtalo de nuevo."
 
 #: src/API/ExternalUpdatesController.php:160
-#: src/API/TransactionsController.php:623
+#: src/API/TransactionsController.php:684
 #: src/Admin/external-updates/components/MollieImportPanel.js:215
 msgid "Connect Mollie before importing payments."
 msgstr "Conecta Mollie antes de importar pagos."
 
-#: src/API/TransactionsController.php:658
+#: src/API/TransactionsController.php:719
 msgid "This payment could not be imported."
 msgstr "Este pago no se pudo importar."
 
 #. translators: 1: imported count, 2: skipped count, 3: failed count.
-#: src/API/TransactionsController.php:665
+#: src/API/TransactionsController.php:726
 #, php-format
 msgid "Imported %1$d, skipped %2$d, and failed %3$d payment(s)."
 msgstr "Se importaron %1$d, se omitieron %2$d y fallaron %3$d pago(s)."
 
-#: src/API/TransactionsController.php:739
+#: src/API/TransactionsController.php:800
 msgid "Choose a valid date range of no more than 90 days."
 msgstr "Elige un rango de fechas válido de no más de 90 días."
 
@@ -1188,8 +1188,8 @@ msgid "Import selected payments"
 msgstr "Importar pagos seleccionados"
 
 #: src/API/ExternalUpdatesController.php:157
-#: src/API/TransactionsController.php:545
-#: src/API/TransactionsController.php:611
+#: src/API/TransactionsController.php:606
+#: src/API/TransactionsController.php:672
 msgid "Choose live or test mode."
 msgstr "Elige modo en vivo o de prueba."
 
@@ -1201,7 +1201,7 @@ msgstr "Comprobando el modo actual…"
 msgid "Provide between 1 and 25 transaction ids."
 msgstr "Proporciona entre 1 y 25 IDs de transacción."
 
-#: src/API/TransactionsController.php:413
+#: src/API/TransactionsController.php:474
 msgid "The selected event date does not exist."
 msgstr "La fecha del evento seleccionado no existe."
 
@@ -1221,7 +1221,7 @@ msgstr "No hay eventos coincidentes."
 msgid "Person, Post & Event"
 msgstr "Persona, entrada y evento"
 
-#: src/API/TransactionsController.php:466
+#: src/API/TransactionsController.php:527
 msgid "Failed to delete the transaction. It has not been changed."
 msgstr "No se pudo eliminar la transacción. No ha sido modificada."
 
@@ -1256,7 +1256,7 @@ msgstr "¿Eliminar permanentemente la transacción #%d? Esto no se puede deshace
 msgid "Only the local transaction record and its exclusively owned local data are removed. The payment in Mollie or any other external service is not cancelled, refunded, or deleted."
 msgstr "Solo se elimina el registro de transacción local y sus datos locales de propiedad exclusiva. El pago en Mollie ni en ningún otro servicio externo no se cancela, reembolsa ni se elimina."
 
-#: src/Admin/transactions/TransactionsApp.js:105
+#: src/Admin/transactions/TransactionsApp.js:295
 msgid "Transaction deleted. The payment in Mollie or any other external service was not changed."
 msgstr "Transacción eliminada. El pago en Mollie ni en ningún otro servicio externo fue modificado."
 
@@ -1542,6 +1542,7 @@ msgid "Only paid transactions are counted, in the month they were created (UTC).
 msgstr "Solo se cuentan las transacciones pagadas, en el mes en que se crearon (UTC). El importe calculado tras comisiones es el total pagado menos las comisiones registradas de Fair Event y de Mollie."
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:344
+#: src/Admin/transactions/TransactionsApp.js:762
 msgid "Try again"
 msgstr "Reintentar"
 
@@ -1611,7 +1612,7 @@ msgstr "Mensaje de prueba de Telegram enviado."
 msgid "This payment can no longer be continued."
 msgstr "Este pago ya no puede continuarse."
 
-#: src/API/TransactionsController.php:683
+#: src/API/TransactionsController.php:744
 msgid "External Updates run this request belongs to."
 msgstr "Ejecución de actualizaciones externas a la que pertenece esta solicitud."
 
@@ -1807,12 +1808,12 @@ msgid "Test mode"
 msgstr "Modo de prueba"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:103
-#: src/Admin/transactions/TransactionsApp.js:353
+#: src/Admin/transactions/TransactionsApp.js:711
 msgid "Loading fees…"
 msgstr "Cargando cuotas…"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:107
-#: src/Admin/transactions/TransactionsApp.js:357
+#: src/Admin/transactions/TransactionsApp.js:715
 msgid "Load missing Mollie fees"
 msgstr "Cargar cuotas de Mollie faltantes"
 
@@ -2283,3 +2284,153 @@ msgstr "Revocando…"
 msgid "Revoke token"
 msgstr "Revocar token"
 
+#: src/API/TransactionsController.php:374
+msgid "The start date must be on or before the end date."
+msgstr "La fecha de inicio debe ser igual o anterior a la fecha de fin."
+
+#: src/API/TransactionsController.php:382
+msgid "The minimum amount must not be greater than the maximum amount."
+msgstr "El importe mínimo no puede ser mayor que el importe máximo."
+
+#: src/API/TransactionsController.php:1062
+msgid "Limit results to a transaction ID, Mollie payment ID, description, or person name or email."
+msgstr "Limita los resultados a un ID de transacción, ID de pago de Mollie, descripción, o nombre o correo electrónico de una persona."
+
+#: src/API/TransactionsController.php:1068
+msgid "Earliest transaction date (YYYY-MM-DD, site timezone, inclusive)."
+msgstr "Fecha de transacción más antigua (AAAA-MM-DD, zona horaria del sitio, inclusive)."
+
+#: src/API/TransactionsController.php:1069
+msgid "Latest transaction date (YYYY-MM-DD, site timezone, inclusive)."
+msgstr "Fecha de transacción más reciente (AAAA-MM-DD, zona horaria del sitio, inclusive)."
+
+#: src/API/TransactionsController.php:1070
+msgid "Lowest transaction amount, inclusive, without currency conversion."
+msgstr "Importe de transacción más bajo, inclusive, sin conversión de moneda."
+
+#: src/API/TransactionsController.php:1071
+msgid "Highest transaction amount, inclusive, without currency conversion."
+msgstr "Importe de transacción más alto, inclusive, sin conversión de moneda."
+
+#: src/API/TransactionsController.php:1148
+msgid "Enter a valid date as YYYY-MM-DD."
+msgstr "Introduce una fecha válida con el formato AAAA-MM-DD."
+
+#: src/API/TransactionsController.php:1174
+#: src/Admin/transactions/TransactionsApp.js:98
+msgid "Enter an amount of zero or more with at most two decimal places."
+msgstr "Introduce un importe igual o superior a cero con un máximo de dos decimales."
+
+#: src/API/TransactionsController.php:1192
+msgid "Enter a search of at most 200 characters."
+msgstr "Introduce una búsqueda de 200 caracteres como máximo."
+
+#: src/Admin/transactions/TransactionsApp.js:112
+msgid "The maximum amount must not be less than the minimum amount."
+msgstr "El importe máximo no puede ser menor que el importe mínimo."
+
+#: src/Admin/transactions/TransactionsApp.js:119
+msgid "The end date must be on or after the start date."
+msgstr "La fecha de fin debe ser igual o posterior a la fecha de inicio."
+
+#. translators: %s is the selected transaction status, e.g. "Paid".
+#: src/Admin/transactions/TransactionsApp.js:138
+#, js-format
+msgid "Status: %s"
+msgstr "Estado: %s"
+
+#. translators: %s is the selected payment mode, e.g. "Live".
+#: src/Admin/transactions/TransactionsApp.js:143
+#, js-format
+msgid "Mode: %s"
+msgstr "Modo: %s"
+
+#. translators: %s is the text the organizer searched for.
+#: src/Admin/transactions/TransactionsApp.js:152
+#, js-format
+msgid "Search: %s"
+msgstr "Búsqueda: %s"
+
+#. translators: %s is a date, e.g. 2026-03-01.
+#: src/Admin/transactions/TransactionsApp.js:161
+#, js-format
+msgid "From %s"
+msgstr "Desde %s"
+
+#. translators: %s is a date, e.g. 2026-03-31.
+#: src/Admin/transactions/TransactionsApp.js:170
+#, js-format
+msgid "Until %s"
+msgstr "Hasta %s"
+
+#. translators: %s is an amount, e.g. 10.00.
+#: src/Admin/transactions/TransactionsApp.js:179
+#, js-format
+msgid "Amount at least %s"
+msgstr "Importe mínimo de %s"
+
+#. translators: %s is an amount, e.g. 50.00.
+#: src/Admin/transactions/TransactionsApp.js:188
+#, js-format
+msgid "Amount at most %s"
+msgstr "Importe máximo de %s"
+
+#: src/Admin/transactions/TransactionsApp.js:528
+msgid "Filter transactions"
+msgstr "Filtrar transacciones"
+
+#: src/Admin/transactions/TransactionsApp.js:537
+msgid "Search"
+msgstr "Buscar"
+
+#: src/Admin/transactions/TransactionsApp.js:541
+msgid "Transaction ID, Mollie payment ID, description, or person name or email."
+msgstr "ID de transacción, ID de pago de Mollie, descripción, o nombre o correo electrónico de la persona."
+
+#: src/Admin/transactions/TransactionsApp.js:581
+msgid "From date"
+msgstr "Fecha desde"
+
+#: src/Admin/transactions/TransactionsApp.js:594
+msgid "To date"
+msgstr "Fecha hasta"
+
+#: src/Admin/transactions/TransactionsApp.js:610
+msgid "Minimum amount"
+msgstr "Importe mínimo"
+
+#: src/Admin/transactions/TransactionsApp.js:626
+msgid "Maximum amount"
+msgstr "Importe máximo"
+
+#: src/Admin/transactions/TransactionsApp.js:639
+msgid "Dates include the whole day in the site timezone. Amounts are compared as recorded, in each transaction’s own currency, without conversion."
+msgstr "Las fechas incluyen el día completo en la zona horaria del sitio. Los importes se comparan tal como se registraron, en la moneda de cada transacción y sin conversión."
+
+#: src/Admin/transactions/TransactionsApp.js:655
+msgid "Apply filters"
+msgstr "Aplicar filtros"
+
+#: src/Admin/transactions/TransactionsApp.js:665
+msgid "Reset filters"
+msgstr "Restablecer filtros"
+
+#: src/Admin/transactions/TransactionsApp.js:672
+msgid "Filters changed. Select “Apply filters” to update the list."
+msgstr "Los filtros han cambiado. Selecciona «Aplicar filtros» para actualizar la lista."
+
+#: src/Admin/transactions/TransactionsApp.js:776
+msgid "Applied filters:"
+msgstr "Filtros aplicados:"
+
+#. translators: %d is the number of transactions matching the applied filters.
+#: src/Admin/transactions/TransactionsApp.js:810
+#, js-format
+msgid "%d transaction found."
+msgid_plural "%d transactions found."
+msgstr[0] "%d transacción encontrada."
+msgstr[1] "%d transacciones encontradas."
+
+#: src/Admin/transactions/TransactionsApp.js:832
+msgid "No transactions match these filters. Change them or select “Reset filters”."
+msgstr "Ninguna transacción coincide con estos filtros. Cámbialos o selecciona «Restablecer filtros»."

@@ -475,7 +475,7 @@ class Transaction {
 	/**
 	 * Get all transactions
 	 *
-	 * @param array $args Query arguments.
+	 * @param array $args Query arguments; see build_where() for the filters.
 	 * @return array Array of transaction objects.
 	 */
 	public static function get_all( $args = array() ) {
@@ -483,46 +483,14 @@ class Transaction {
 		$table_name = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
 
 		$defaults = array(
-			'limit'         => 50,
-			'offset'        => 0,
-			'status'        => '',
-			'mode'          => '',
-			'event_date_id' => 0,
-			'date_from'     => '',
-			'date_to'       => '',
-			'orderby'       => 'created_at',
-			'order'         => 'DESC',
+			'limit'   => 50,
+			'offset'  => 0,
+			'orderby' => 'created_at',
+			'order'   => 'DESC',
 		);
 
-		$args = wp_parse_args( $args, $defaults );
-
-		$where_clauses = array();
-
-		if ( ! empty( $args['status'] ) ) {
-			$where_clauses[] = $wpdb->prepare( 'status = %s', $args['status'] );
-		}
-
-		if ( '' !== $args['mode'] ) {
-			$testmode        = 'test' === $args['mode'] ? 1 : 0;
-			$where_clauses[] = $wpdb->prepare( 'testmode = %d', $testmode );
-		}
-
-		if ( ! empty( $args['event_date_id'] ) ) {
-			$where_clauses[] = $wpdb->prepare( 'event_date_id = %d', (int) $args['event_date_id'] );
-		}
-
-		if ( ! empty( $args['date_from'] ) ) {
-			$where_clauses[] = $wpdb->prepare( 'created_at >= %s', $args['date_from'] );
-		}
-
-		if ( ! empty( $args['date_to'] ) ) {
-			$where_clauses[] = $wpdb->prepare( 'created_at <= %s', $args['date_to'] );
-		}
-
-		$where = '';
-		if ( ! empty( $where_clauses ) ) {
-			$where = ' WHERE ' . implode( ' AND ', $where_clauses );
-		}
+		$args  = wp_parse_args( $args, $defaults );
+		$where = self::build_where( $args );
 
 		$allowed_orderby = array( 'created_at', 'amount', 'status', 'id' );
 		$orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'created_at';
@@ -530,8 +498,8 @@ class Transaction {
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where joins clauses already prepared above; $orderby/$order are validated against allowlists.
-				"SELECT * FROM %i{$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where joins clauses already prepared in build_where(); $orderby/$order are validated against allowlists.
+				"SELECT t.* FROM %i AS t{$where} ORDER BY t.{$orderby} {$order} LIMIT %d OFFSET %d",
 				$table_name,
 				$args['limit'],
 				$args['offset']
@@ -542,48 +510,186 @@ class Transaction {
 	/**
 	 * Count transactions with optional filters
 	 *
-	 * @param array $args Query arguments.
+	 * @param array $args Query arguments; see build_where() for the filters.
 	 * @return int Total count.
 	 */
 	public static function count( $args = array() ) {
 		global $wpdb;
 		$table_name = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
 
+		$where = self::build_where( $args );
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where joins clauses already prepared in build_where().
+				"SELECT COUNT(*) FROM %i AS t{$where}",
+				$table_name
+			)
+		);
+	}
+
+	/**
+	 * Build the WHERE clause shared by get_all() and count(), so a list and
+	 * its total always describe the same rows.
+	 *
+	 * Supported filters, combined with AND: `status`, `mode` ('live'|'test'),
+	 * `event_date_id`, `date_from` (created_at >=), `date_to` (created_at <=),
+	 * `date_before` (created_at <, for an exclusive upper bound), `amount_min`
+	 * and `amount_max` (inclusive; null or '' means unset, so zero is a valid
+	 * bound) and `search` (see build_search_clause()). Datetimes are UTC, as
+	 * stored. The transactions table is aliased `t`.
+	 *
+	 * @param array $args Query arguments.
+	 * @return string Prepared ' WHERE …' fragment, or '' when unfiltered.
+	 */
+	private static function build_where( array $args ) {
+		global $wpdb;
+
 		$where_clauses = array();
 
 		if ( ! empty( $args['status'] ) ) {
-			$where_clauses[] = $wpdb->prepare( 'status = %s', $args['status'] );
+			$where_clauses[] = $wpdb->prepare( 't.status = %s', $args['status'] );
 		}
 
 		if ( isset( $args['mode'] ) && '' !== $args['mode'] ) {
 			$testmode        = 'test' === $args['mode'] ? 1 : 0;
-			$where_clauses[] = $wpdb->prepare( 'testmode = %d', $testmode );
+			$where_clauses[] = $wpdb->prepare( 't.testmode = %d', $testmode );
 		}
 
 		if ( ! empty( $args['event_date_id'] ) ) {
-			$where_clauses[] = $wpdb->prepare( 'event_date_id = %d', (int) $args['event_date_id'] );
+			$where_clauses[] = $wpdb->prepare( 't.event_date_id = %d', (int) $args['event_date_id'] );
 		}
 
 		if ( ! empty( $args['date_from'] ) ) {
-			$where_clauses[] = $wpdb->prepare( 'created_at >= %s', $args['date_from'] );
+			$where_clauses[] = $wpdb->prepare( 't.created_at >= %s', $args['date_from'] );
 		}
 
 		if ( ! empty( $args['date_to'] ) ) {
-			$where_clauses[] = $wpdb->prepare( 'created_at <= %s', $args['date_to'] );
+			$where_clauses[] = $wpdb->prepare( 't.created_at <= %s', $args['date_to'] );
 		}
 
-		$where = '';
-		if ( ! empty( $where_clauses ) ) {
-			$where = ' WHERE ' . implode( ' AND ', $where_clauses );
+		if ( ! empty( $args['date_before'] ) ) {
+			$where_clauses[] = $wpdb->prepare( 't.created_at < %s', $args['date_before'] );
 		}
 
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where joins clauses already prepared above.
-				"SELECT COUNT(*) FROM %i{$where}",
-				$table_name
-			)
+		if ( isset( $args['amount_min'] ) && '' !== $args['amount_min'] ) {
+			$where_clauses[] = $wpdb->prepare( 't.amount >= %f', (float) $args['amount_min'] );
+		}
+
+		if ( isset( $args['amount_max'] ) && '' !== $args['amount_max'] ) {
+			$where_clauses[] = $wpdb->prepare( 't.amount <= %f', (float) $args['amount_max'] );
+		}
+
+		if ( isset( $args['search'] ) && '' !== $args['search'] ) {
+			$where_clauses[] = self::build_search_clause( (string) $args['search'] );
+		}
+
+		if ( empty( $where_clauses ) ) {
+			return '';
+		}
+
+		return ' WHERE ' . implode( ' AND ', $where_clauses );
+	}
+
+	/**
+	 * Build the search predicate: one OR group over the transaction ID (exact,
+	 * for a numeric term), the Mollie payment ID, the description and the
+	 * displayed person.
+	 *
+	 * The person follows the list's Person column: the linked participant's
+	 * full name and email when a participant source is registered and the
+	 * participant exists, otherwise the WordPress user's display name and
+	 * email. Person matches use EXISTS, so they never duplicate a transaction.
+	 *
+	 * @param string $search Search term.
+	 * @return string Prepared, parenthesized predicate.
+	 */
+	private static function build_search_clause( $search ) {
+		global $wpdb;
+
+		$like    = '%' . $wpdb->esc_like( $search ) . '%';
+		$matches = array(
+			$wpdb->prepare( 't.mollie_payment_id LIKE %s', $like ),
+			$wpdb->prepare( 't.description LIKE %s', $like ),
 		);
+
+		if ( ctype_digit( $search ) && strlen( $search ) <= 18 ) {
+			$matches[] = $wpdb->prepare( 't.id = %d', (int) $search );
+		}
+
+		$user_match = $wpdb->prepare(
+			'EXISTS ( SELECT 1 FROM %i AS u WHERE u.ID = t.user_id AND ( u.display_name LIKE %s OR u.user_email LIKE %s ) )',
+			$wpdb->users,
+			$like,
+			$like
+		);
+
+		$source = self::get_participant_search_source();
+
+		if ( null === $source ) {
+			$matches[] = $user_match;
+		} else {
+			$name_columns = implode( ', ', array_fill( 0, count( $source['name_columns'] ), 'p.%i' ) );
+
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $name_columns is a list of %i placeholders filled from the merged values.
+			$matches[] = $wpdb->prepare(
+				"EXISTS ( SELECT 1 FROM %i AS p WHERE p.%i = t.participant_id AND ( CONCAT_WS( ' ', {$name_columns} ) LIKE %s OR p.%i LIKE %s ) )",
+				array_merge(
+					array( $source['table'], $source['id_column'] ),
+					$source['name_columns'],
+					array( $like, $source['email_column'], $like )
+				)
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+
+			$participant_exists = $wpdb->prepare(
+				'EXISTS ( SELECT 1 FROM %i AS p WHERE p.%i = t.participant_id )',
+				$source['table'],
+				$source['id_column']
+			);
+
+			$matches[] = "( NOT {$participant_exists} AND {$user_match} )";
+		}
+
+		return '( ' . implode( ' OR ', $matches ) . ' )';
+	}
+
+	/**
+	 * Resolve where participant names and emails can be searched.
+	 *
+	 * @return array|null Validated source descriptor, or null when no plugin provides one.
+	 */
+	private static function get_participant_search_source() {
+		/**
+		 * Filters the table that holds the participants transactions link to
+		 * through `participant_id`, so the transaction search can match their
+		 * name and email in SQL.
+		 *
+		 * Return a plain array of identifiers — never SQL:
+		 * `table` (full table name), `id_column`, `name_columns` (list, joined
+		 * with spaces into the full name) and `email_column`.
+		 *
+		 * @param array|null $source Source descriptor, or null when participants are unavailable.
+		 */
+		$source = apply_filters( 'fair_payment_participant_search_source', null );
+
+		if ( ! is_array( $source ) ) {
+			return null;
+		}
+
+		foreach ( array( 'table', 'id_column', 'email_column' ) as $key ) {
+			if ( empty( $source[ $key ] ) || ! is_string( $source[ $key ] ) ) {
+				return null;
+			}
+		}
+
+		if ( empty( $source['name_columns'] ) || ! is_array( $source['name_columns'] ) ) {
+			return null;
+		}
+
+		$source['name_columns'] = array_values( array_filter( $source['name_columns'], 'is_string' ) );
+
+		return $source['name_columns'] ? $source : null;
 	}
 
 	/**

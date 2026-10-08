@@ -266,24 +266,24 @@ class TransactionsController extends WP_REST_Controller {
 		$page     = $request->get_param( 'page' ) ?? 1;
 		$offset   = ( $page - 1 ) * $per_page;
 
-		$query_args = array(
-			'limit'         => $per_page,
-			'offset'        => $offset,
-			'status'        => $request->get_param( 'status' ) ?? '',
-			'mode'          => $request->get_param( 'mode' ) ?? '',
-			'event_date_id' => $request->get_param( 'event_date_id' ) ?? 0,
-			'orderby'       => $request->get_param( 'orderby' ) ?? 'created_at',
-			'order'         => $request->get_param( 'order' ) ?? 'DESC',
-		);
+		$criteria = $this->get_list_criteria( $request );
+		if ( is_wp_error( $criteria ) ) {
+			return $criteria;
+		}
 
-		$transactions = Transaction::get_all( $query_args );
-		$total        = Transaction::count(
-			array(
-				'status'        => $query_args['status'],
-				'mode'          => $query_args['mode'],
-				'event_date_id' => $query_args['event_date_id'],
+		// The list and its total share one set of criteria.
+		$transactions = Transaction::get_all(
+			array_merge(
+				$criteria,
+				array(
+					'limit'   => $per_page,
+					'offset'  => $offset,
+					'orderby' => $request->get_param( 'orderby' ) ?? 'created_at',
+					'order'   => $request->get_param( 'order' ) ?? 'DESC',
+				)
 			)
 		);
+		$total        = Transaction::count( $criteria );
 
 		$transaction_ids  = array_map(
 			function ( $t ) {
@@ -348,6 +348,67 @@ class TransactionsController extends WP_REST_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Normalize the list filters into the criteria shared by the list and
+	 * count queries.
+	 *
+	 * Dates are inclusive calendar days in the site timezone, converted to
+	 * UTC boundaries for the stored `created_at`; the upper bound is the
+	 * following local midnight, exclusive. Amounts are inclusive and compared
+	 * as recorded, across currencies.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return array|WP_Error Criteria for Transaction::get_all()/count(), or a 400 error for a reversed range.
+	 */
+	private function get_list_criteria( $request ) {
+		$date_from  = (string) $request->get_param( 'date_from' );
+		$date_to    = (string) $request->get_param( 'date_to' );
+		$amount_min = (string) $request->get_param( 'amount_min' );
+		$amount_max = (string) $request->get_param( 'amount_max' );
+
+		if ( '' !== $date_from && '' !== $date_to && $date_from > $date_to ) {
+			return new WP_Error(
+				'invalid_date_range',
+				__( 'The start date must be on or before the end date.', 'fair-payments-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( '' !== $amount_min && '' !== $amount_max && (float) $amount_min > (float) $amount_max ) {
+			return new WP_Error(
+				'invalid_amount_range',
+				__( 'The minimum amount must not be greater than the maximum amount.', 'fair-payments-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$timezone = wp_timezone();
+		$utc      = new \DateTimeZone( 'UTC' );
+		$criteria = array(
+			'status'        => $request->get_param( 'status' ) ?? '',
+			'mode'          => $request->get_param( 'mode' ) ?? '',
+			'event_date_id' => $request->get_param( 'event_date_id' ) ?? 0,
+			'search'        => (string) $request->get_param( 'search' ),
+			'amount_min'    => $amount_min,
+			'amount_max'    => $amount_max,
+		);
+
+		if ( '' !== $date_from ) {
+			$criteria['date_from'] = ( new \DateTimeImmutable( $date_from . ' 00:00:00', $timezone ) )
+				->setTimezone( $utc )
+				->format( 'Y-m-d H:i:s' );
+		}
+
+		if ( '' !== $date_to ) {
+			$criteria['date_before'] = ( new \DateTimeImmutable( $date_to . ' 00:00:00', $timezone ) )
+				->modify( '+1 day' )
+				->setTimezone( $utc )
+				->format( 'Y-m-d H:i:s' );
+		}
+
+		return $criteria;
 	}
 
 	/**
@@ -997,6 +1058,17 @@ class TransactionsController extends WP_REST_Controller {
 				'minimum'           => 0,
 				'sanitize_callback' => 'absint',
 			),
+			'search'        => array(
+				'description'       => __( 'Limit results to a transaction ID, Mollie payment ID, description, or person name or email.', 'fair-payments-connector' ),
+				'type'              => 'string',
+				'default'           => '',
+				'validate_callback' => array( $this, 'validate_search' ),
+				'sanitize_callback' => array( $this, 'sanitize_search' ),
+			),
+			'date_from'     => $this->get_date_filter_arg( __( 'Earliest transaction date (YYYY-MM-DD, site timezone, inclusive).', 'fair-payments-connector' ) ),
+			'date_to'       => $this->get_date_filter_arg( __( 'Latest transaction date (YYYY-MM-DD, site timezone, inclusive).', 'fair-payments-connector' ) ),
+			'amount_min'    => $this->get_amount_filter_arg( __( 'Lowest transaction amount, inclusive, without currency conversion.', 'fair-payments-connector' ) ),
+			'amount_max'    => $this->get_amount_filter_arg( __( 'Highest transaction amount, inclusive, without currency conversion.', 'fair-payments-connector' ) ),
 			'orderby'       => array(
 				'type'              => 'string',
 				'default'           => 'created_at',
@@ -1010,5 +1082,131 @@ class TransactionsController extends WP_REST_Controller {
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 		);
+	}
+
+	/**
+	 * Schema for an optional calendar-date filter.
+	 *
+	 * @param string $description Argument description.
+	 * @return array
+	 */
+	private function get_date_filter_arg( $description ) {
+		return array(
+			'description'       => $description,
+			'type'              => 'string',
+			'default'           => '',
+			'validate_callback' => array( $this, 'validate_date_filter' ),
+			'sanitize_callback' => array( $this, 'sanitize_filter_value' ),
+		);
+	}
+
+	/**
+	 * Schema for an optional amount filter.
+	 *
+	 * @param string $description Argument description.
+	 * @return array
+	 */
+	private function get_amount_filter_arg( $description ) {
+		return array(
+			'description'       => $description,
+			'type'              => 'string',
+			'default'           => '',
+			'validate_callback' => array( $this, 'validate_amount_filter' ),
+			'sanitize_callback' => array( $this, 'sanitize_filter_value' ),
+		);
+	}
+
+	/**
+	 * Trim a scalar filter value; anything else becomes an empty (unset) filter.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string
+	 */
+	public function sanitize_filter_value( $value ) {
+		return is_scalar( $value ) ? trim( (string) $value ) : '';
+	}
+
+	/**
+	 * Validate a date filter: empty, or a real calendar date as YYYY-MM-DD.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return true|WP_Error
+	 */
+	public function validate_date_filter( $value ) {
+		$value = is_scalar( $value ) ? trim( (string) $value ) : null;
+
+		if ( '' === $value ) {
+			return true;
+		}
+
+		if ( null === $value
+			|| ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts )
+			|| ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] )
+		) {
+			return new WP_Error(
+				'invalid_date',
+				__( 'Enter a valid date as YYYY-MM-DD.', 'fair-payments-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validate an amount filter: empty, or a plain non-negative decimal with
+	 * at most two decimal places. Rejects signs, exponents and non-finite
+	 * values.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return true|WP_Error
+	 */
+	public function validate_amount_filter( $value ) {
+		$value = is_scalar( $value ) ? trim( (string) $value ) : null;
+
+		if ( '' === $value ) {
+			return true;
+		}
+
+		if ( null === $value || ! preg_match( '/^\d{1,9}(\.\d{1,2})?$/', $value ) ) {
+			return new WP_Error(
+				'invalid_amount',
+				__( 'Enter an amount of zero or more with at most two decimal places.', 'fair-payments-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validate the search term.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return true|WP_Error
+	 */
+	public function validate_search( $value ) {
+		if ( ! is_scalar( $value ) || mb_strlen( trim( (string) $value ) ) > 200 ) {
+			return new WP_Error(
+				'invalid_search',
+				__( 'Enter a search of at most 200 characters.', 'fair-payments-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Normalize the search term without altering literal characters such as
+	 * `%` or `_`: it is only ever used as an escaped, prepared LIKE value.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string
+	 */
+	public function sanitize_search( $value ) {
+		$value = wp_check_invalid_utf8( is_scalar( $value ) ? (string) $value : '' );
+
+		return trim( (string) preg_replace( '/[\x00-\x1F\x7F]+/', ' ', $value ) );
 	}
 }

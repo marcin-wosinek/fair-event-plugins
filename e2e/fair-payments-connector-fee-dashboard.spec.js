@@ -43,7 +43,8 @@ async function deleteSeeded(api) {
 	for (const mode of ['test', 'live']) {
 		const res = await api.get(`${API}/transactions`, {
 			headers: adminAuth,
-			params: { per_page: 100, mode },
+			// Search, so seeded rows are found beyond the first page.
+			params: { per_page: 100, mode, search: PREFIX },
 		});
 		const { transactions = [] } = await res.json();
 		for (const txn of transactions) {
