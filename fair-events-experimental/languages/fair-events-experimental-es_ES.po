@@ -190,11 +190,13 @@ msgstr "Siguiente"
 msgid "Create Duplicate"
 msgstr "Crear duplicado"
 
+#: src/Admin/manage-event-schedule/EventSchedule.js:763
 #: src/Admin/manage-event/DuplicateEventWizard.js:698
 #: src/Admin/manage-event/MergeEventWizard.js:516
 msgid "Cancel"
 msgstr "Cancelar"
 
+#: src/Admin/manage-event-schedule/EventSchedule.js:553
 #: src/Admin/manage-event/DuplicateEventWizard.js:716
 msgid "Title"
 msgstr "Título"
@@ -203,20 +205,24 @@ msgstr "Título"
 msgid "All day"
 msgstr "Todo el día"
 
+#: src/Admin/manage-event-schedule/EventSchedule.js:630
 #: src/Admin/manage-event/DuplicateEventWizard.js:734
 #: src/Admin/manage-event/DuplicateEventWizard.js:757
 msgid "Start date"
 msgstr "Fecha de inicio"
 
+#: src/Admin/manage-event-schedule/EventSchedule.js:673
 #: src/Admin/manage-event/DuplicateEventWizard.js:744
 #: src/Admin/manage-event/DuplicateEventWizard.js:777
 msgid "End date"
 msgstr "Fecha de finalización"
 
+#: src/Admin/manage-event-schedule/EventSchedule.js:652
 #: src/Admin/manage-event/DuplicateEventWizard.js:767
 msgid "Start time"
 msgstr "Hora de inicio"
 
+#: src/Admin/manage-event-schedule/EventSchedule.js:695
 #: src/Admin/manage-event/DuplicateEventWizard.js:787
 msgid "End time"
 msgstr "Hora de finalización"
@@ -629,7 +635,7 @@ msgstr "Error: %s"
 #. translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase)
 #: src/API/MetaConversionsController.php:150
 #: src/Admin/settings/MetaConversions.js:224
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta rechazó el evento de prueba %s. Comprueba la configuración e intenta de nuevo."
 
@@ -884,6 +890,7 @@ msgstr "Uno por línea: un ID de chat numérico (p. ej. -1001234567890) o un nom
 msgid "Save weekly notification settings"
 msgstr "Guardar ajustes de notificaciones semanales"
 
+#: src/Admin/manage-event-schedule/index.js:35
 #: src/Admin/settings/WeeklyNotifications.js:723
 msgid "Schedule"
 msgstr "Programación"
@@ -1260,3 +1267,161 @@ msgstr "Desactivar esto mantiene el token de bot en Conectores y los chats a con
 #: src/Admin/settings/WeeklyNotifications.js:643
 msgid "Manage in Connectors"
 msgstr "Gestionar en Conectores"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:124
+msgid "Failed to load the schedule."
+msgstr "No se pudo cargar el programa."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:221
+msgid "The schedule was not saved. Check the marked fields and save again."
+msgstr "El programa no se ha guardado. Revisa los campos marcados y guarda de nuevo."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:240
+msgid "Schedule saved."
+msgstr "Programa guardado."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:246
+msgid "Failed to save the schedule. Your changes are still here — try again."
+msgstr "No se pudo guardar el programa. Tus cambios siguen aquí: inténtalo de nuevo."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:276
+msgid "Workshops come from the add-ons in Prices. Add one there first."
+msgstr "Los talleres proceden de las extensiones de Precios. Añade una allí primero."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:281
+msgid "Every add-on from Prices is on the schedule already."
+msgstr "Todas las extensiones de Precios ya están en el programa."
+
+#. translators: %s: workshop name
+#: src/Admin/manage-event-schedule/EventSchedule.js:295
+#, js-format
+msgid "Remove %s from the schedule? Once you save, it can be booked again: only its schedule entry keeps it Not bookable."
+msgstr "¿Quitar %s del programa? Cuando guardes, se podrá reservar de nuevo: solo su entrada en el programa lo mantiene como No reservable."
+
+#. translators: %s: workshop name
+#: src/Admin/manage-event-schedule/EventSchedule.js:305
+#, js-format
+msgid "Remove %s from the schedule? Its add-on in Prices and its bookings stay as they are."
+msgstr "¿Quitar %s del programa? Su extensión en Precios y sus reservas se quedan como están."
+
+#. translators: %s: schedule item title
+#: src/Admin/manage-event-schedule/EventSchedule.js:314
+#, js-format
+msgid "Remove %s from the schedule?"
+msgstr "¿Quitar %s del programa?"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:327
+msgid "The schedule is managed on the series. Its dates are shown shifted to this date."
+msgstr "El programa se gestiona en la serie. Sus fechas se muestran desplazadas a esta fecha."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:362
+msgid "Save schedule"
+msgstr "Guardar programa"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:367
+#: src/Admin/manage-event-schedule/EventSchedule.js:388
+msgid "Add workshop"
+msgstr "Añadir taller"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:371
+msgid "Add a workshop from Prices"
+msgstr "Añadir un taller de Precios"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:392
+msgid "Add schedule item"
+msgstr "Añadir elemento del programa"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:399
+msgid "No unsaved changes."
+msgstr "No hay cambios sin guardar."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:421
+msgid "Nothing is scheduled yet. Add a workshop to set its time and room, or a schedule item for a break or anything else that is not booked."
+msgstr "Todavía no hay nada programado. Añade un taller para fijar su hora y su sala, o un elemento del programa para una pausa o cualquier otra cosa que no se reserve."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:450
+msgid "Workshop from Prices"
+msgstr "Taller de Precios"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:454
+msgid "Schedule item"
+msgstr "Elemento del programa"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:467
+#: src/Admin/manage-event-schedule/EventSchedule.js:587
+msgid "Bookable"
+msgstr "Reservable"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:471
+#: src/Admin/manage-event-schedule/EventSchedule.js:595
+msgid "Not bookable"
+msgstr "No reservable"
+
+#. translators: %s: schedule entry name
+#: src/Admin/manage-event-schedule/EventSchedule.js:492
+#, js-format
+msgid "Remove %s"
+msgstr "Quitar %s"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:499
+msgid "Remove"
+msgstr "Quitar"
+
+#. translators: %s: comma-separated names of other schedule entries
+#: src/Admin/manage-event-schedule/EventSchedule.js:520
+#, js-format
+msgid "Runs at the same time as %s."
+msgid_plural "Runs at the same time as: %s."
+msgstr[0] "Coincide en horario con %s."
+msgstr[1] "Coincide en horario con: %s."
+
+#. translators: 1: schedule entry name, 2: room or location
+#: src/Admin/manage-event-schedule/EventSchedule.js:531
+#, js-format
+msgid "%1$s (%2$s)"
+msgstr "%1$s (%2$s)"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:576
+msgid "Booking"
+msgstr "Reserva"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:610
+msgid "Not bookable keeps the workshop on the schedule and stops new bookings. Price and capacity stay in Prices."
+msgstr "No reservable mantiene el taller en el programa y detiene las nuevas reservas. El precio y el aforo siguen en Precios."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:614
+msgid "A schedule item is never a ticket choice. To take bookings, add it as an add-on in Prices and use Add workshop."
+msgstr "Un elemento del programa nunca es una opción de entrada. Para aceptar reservas, añádelo como extensión en Precios y usa Añadir taller."
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:717
+msgid "Room or location"
+msgstr "Sala o ubicación"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:735
+msgid "Description"
+msgstr "Descripción"
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:759
+msgid "Remove from schedule"
+msgstr "Quitar del programa"
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:164
+msgid "Enter a title."
+msgstr "Introduce un título."
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:171
+msgid "Enter a valid start date and time."
+msgstr "Introduce una fecha y hora de inicio válidas."
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:181
+msgid "Enter a valid end date and time."
+msgstr "Introduce una fecha y hora de fin válidas."
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:193
+msgid "The end must be after the start."
+msgstr "El fin debe ser posterior al inicio."
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:262
+msgid "(untitled item)"
+msgstr "(elemento sin título)"
+

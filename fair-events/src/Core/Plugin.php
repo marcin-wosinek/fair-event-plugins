@@ -231,6 +231,17 @@ class Plugin {
 					$controller->register_routes();
 				}
 			);
+
+			// Event schedule — the booking status it stores is enforced by
+			// ActivitySelection and TicketCapacity whether or not these
+			// routes are registered.
+			add_action(
+				'rest_api_init',
+				function () {
+					$controller = new \FairEvents\API\EventScheduleController();
+					$controller->register_routes();
+				}
+			);
 		}
 
 		// GetTickets controller — registers the public ticket purchase endpoint.

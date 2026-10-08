@@ -1,0 +1,100 @@
+/* The host page caps card content at 600px; the schedule uses the full width. */
+.fair-events-manage-event .fair-events-schedule .components-card__body > * {
+	max-width: none;
+}
+
+.fair-events-schedule-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.fair-events-schedule-status,
+.fair-events-schedule-hint,
+.fair-events-schedule-empty {
+	margin: 0;
+	color: #50575e;
+}
+
+.fair-events-schedule-entry-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.fair-events-schedule-entry-heading h3 {
+	margin: 0;
+	font-size: 14px;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-schedule-badge {
+	padding: 2px 8px;
+	border-radius: 12px;
+	background: #f0f0f1;
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+.fair-events-schedule-badge.is-bookable {
+	background: #edfaef;
+}
+
+.fair-events-schedule-badge.is-not-bookable {
+	background: #fcf0c3;
+}
+
+.fair-events-schedule-badge.is-room {
+	background: #e5f1f8;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-schedule-entry .components-notice {
+	margin: 12px 0 0;
+}
+
+.fair-events-schedule-entry .fair-events-schedule-hint {
+	margin-top: 8px;
+}
+
+/* One column on phones, two on tablets, four date/time fields in a row on
+   wide screens. */
+.fair-events-schedule-fields {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 16px;
+	margin-top: 16px;
+}
+
+@media (min-width: 600px) {
+	.fair-events-schedule-fields {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.fair-events-schedule-field.is-full {
+		grid-column: 1 / -1;
+	}
+}
+
+@media (min-width: 1100px) {
+	.fair-events-schedule-fields {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+
+	.fair-events-schedule-field.is-wide {
+		grid-column: span 2;
+	}
+}
+
+.fair-events-schedule-field.has-error input,
+.fair-events-schedule-field.has-error select {
+	border-color: #d63638;
+}
+
+.fair-events-schedule-field.has-error .components-base-control__help {
+	color: #d63638;
+}

@@ -25,8 +25,19 @@ import { ADD_NEW_VENUE_VALUE } from '../../components/InlineVenueCreator.js';
 jest.mock( '@wordpress/api-fetch' );
 
 jest.mock( '../EventTickets.js', () => {
-	return function MockEventTickets( { isSeries } ) {
-		return <div>Prices content; isSeries: { String( isSeries ) }</div>;
+	return function MockEventTickets( { isSeries, onSavedSettingsChange } ) {
+		return (
+			<div>
+				Prices content; isSeries: { String( isSeries ) }
+				<button
+					onClick={ () =>
+						onSavedSettingsChange( { schedule_enabled: true } )
+					}
+				>
+					Save tickets with schedule enabled
+				</button>
+			</div>
+		);
 	};
 } );
 
@@ -1677,5 +1688,145 @@ describe( 'draft and publish (#1692)', () => {
 		expect(
 			apiFetch.mock.calls.some( ( [ opts ] ) => opts.method === 'PUT' )
 		).toBe( false );
+	} );
+} );
+
+describe( 'extension tabs: schedule state, unsaved changes and drafts (#1767)', () => {
+	const NAMESPACE = 'test/extension-tab-1767';
+
+	// A tab the way a companion plugin registers one: shown only once the
+	// schedule is enabled, reporting its own unsaved edits and parking its
+	// draft with the host.
+	const registerExtensionTab = () =>
+		addFilter(
+			'fairEvents.manageEvent.tabs',
+			NAMESPACE,
+			(
+				descriptors,
+				{ scheduleEnabled, setTabDirty, getTabDraft, setTabDraft }
+			) => [
+				...descriptors,
+				{
+					name: 'schedule',
+					title: 'Schedule',
+					order: 22,
+					isVisible: !! scheduleEnabled,
+					render: () => (
+						<div>
+							<p>
+								Draft: { getTabDraft( 'schedule' ) || 'none' }
+							</p>
+							<button
+								onClick={ () => {
+									setTabDraft( 'schedule', 'typed text' );
+									setTabDirty( 'schedule', true );
+								} }
+							>
+								Edit schedule
+							</button>
+							<button
+								onClick={ () => {
+									setTabDraft( 'schedule', undefined );
+									setTabDirty( 'schedule', false );
+								} }
+							>
+								Save schedule
+							</button>
+						</div>
+					),
+				},
+			]
+		);
+
+	afterEach( () => {
+		removeFilter( 'fairEvents.manageEvent.tabs', NAMESPACE );
+	} );
+
+	it( 'hides the tab until the schedule is enabled', async () => {
+		registerExtensionTab();
+		render( <ManageEventApp /> );
+		await screen.findByRole( 'tab', { name: 'Admin' } );
+
+		expect(
+			screen.queryByRole( 'tab', { name: 'Schedule' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'shows the tab for an event loaded with the schedule enabled', async () => {
+		apiFetch.mockImplementation( ( opts ) =>
+			Promise.resolve(
+				opts.path && opts.path.includes( '/event-dates/' )
+					? { ...mockEventDate, schedule_enabled: true }
+					: []
+			)
+		);
+		registerExtensionTab();
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByRole( 'tab', { name: 'Schedule' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows the tab as soon as Prices saves the setting', async () => {
+		window.fairEventsManageEventData.enabledFeatures = { ticketing: true };
+		window.history.replaceState( {}, '', '?tab=prices' );
+		registerExtensionTab();
+		render( <ManageEventApp /> );
+
+		const enable = await screen.findByRole( 'button', {
+			name: 'Save tickets with schedule enabled',
+		} );
+		expect(
+			screen.queryByRole( 'tab', { name: 'Schedule' } )
+		).not.toBeInTheDocument();
+
+		fireEvent.click( enable );
+
+		expect(
+			await screen.findByRole( 'tab', { name: 'Schedule' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'marks the tab, warns before leaving and keeps the draft across a tab switch', async () => {
+		apiFetch.mockImplementation( ( opts ) =>
+			Promise.resolve(
+				opts.path && opts.path.includes( '/event-dates/' )
+					? { ...mockEventDate, schedule_enabled: true }
+					: []
+			)
+		);
+		window.history.replaceState( {}, '', '?tab=schedule' );
+		registerExtensionTab();
+		render( <ManageEventApp /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Edit schedule' } )
+		);
+
+		expect(
+			await screen.findByRole( 'tab', { name: 'Schedule •' } )
+		).toBeInTheDocument();
+		const leaving = new Event( 'beforeunload', { cancelable: true } );
+		window.dispatchEvent( leaving );
+		expect( leaving.defaultPrevented ).toBe( true );
+
+		// The tab's content is unmounted while another tab is open.
+		fireEvent.click( screen.getByRole( 'tab', { name: 'Admin' } ) );
+		expect( screen.queryByText( /^Draft:/ ) ).not.toBeInTheDocument();
+		fireEvent.click( screen.getByRole( 'tab', { name: 'Schedule •' } ) );
+		expect(
+			await screen.findByText( 'Draft: typed text' )
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save schedule' } )
+		);
+		expect(
+			await screen.findByRole( 'tab', { name: 'Schedule' } )
+		).toBeInTheDocument();
+		const stillLeaving = new Event( 'beforeunload', { cancelable: true } );
+		window.dispatchEvent( stillLeaving );
+		expect( stillLeaving.defaultPrevented ).toBe( false );
 	} );
 } );

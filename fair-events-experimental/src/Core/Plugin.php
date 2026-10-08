@@ -69,6 +69,9 @@ class Plugin {
 				foreach ( array_keys( Features::registry() ) as $key ) {
 					$map[ $key ] = Features::is_enabled( $key );
 				}
+				// Not a bundle of its own: Prices offers "Workshop schedule"
+				// whenever this plugin can show the tab it enables.
+				$map['schedule'] = self::schedule_available();
 				return $map;
 			}
 		);
@@ -87,7 +90,50 @@ class Plugin {
 			if ( Features::is_enabled( 'event-tools' ) ) {
 				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_ext_assets' ) );
 			}
+
+			// The Schedule tab is not part of the event-tools bundle.
+			if ( self::schedule_available() ) {
+				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_schedule_assets' ) );
+			}
 		}
+	}
+
+	/**
+	 * Whether the active Fair Events stores and serves event schedules.
+	 *
+	 * @return bool
+	 */
+	private static function schedule_available() {
+		return class_exists( \FairEvents\API\EventScheduleController::class );
+	}
+
+	/**
+	 * Enqueue the Schedule tab on the fair-events manage-event page.
+	 *
+	 * Declares `fair-events-manage-event` as a script dependency so its
+	 * `addFilter()` call runs before the host bundle's `domReady()` mount.
+	 *
+	 * @return void
+	 */
+	public function enqueue_manage_event_schedule_assets() {
+		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/manage-event-schedule/index.asset.php';
+
+		wp_enqueue_script(
+			'fair-events-experimental-manage-event-schedule',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-schedule/index.js',
+			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
+			$asset_file['version'],
+			true
+		);
+
+		wp_enqueue_style(
+			'fair-events-experimental-manage-event-schedule',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-schedule/index.css',
+			array( 'wp-components' ),
+			$asset_file['version']
+		);
+
+		wp_set_script_translations( 'fair-events-experimental-manage-event-schedule', 'fair-events-experimental', Features::script_translations_path() );
 	}
 
 	/**

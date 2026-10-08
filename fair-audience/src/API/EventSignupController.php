@@ -1318,7 +1318,14 @@ class EventSignupController extends WP_REST_Controller {
 		$valid_options   = array();
 		$available_by_id = array();
 		$all_options     = \FairEvents\Models\TicketOption::get_all_by_event_date_id( $lookup_id );
+		// A workshop its schedule marks as not bookable is not a choice.
+		$not_bookable = method_exists( \FairEvents\Services\EventSchedule::class, 'non_bookable_option_ids' )
+			? \FairEvents\Services\EventSchedule::non_bookable_option_ids( $lookup_id )
+			: array();
 		foreach ( $all_options as $opt ) {
+			if ( in_array( (int) $opt->id, $not_bookable, true ) ) {
+				continue;
+			}
 			$available_by_id[ $opt->id ] = $opt;
 		}
 

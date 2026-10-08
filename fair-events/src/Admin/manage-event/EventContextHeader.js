@@ -39,6 +39,7 @@ export default function EventContextHeader( {
 	onManageLink,
 	onChangePublication,
 	publicationBusy = false,
+	scheduleEnabled = false,
 } ) {
 	if ( ! eventDate ) return null;
 
@@ -310,10 +311,15 @@ export default function EventContextHeader( {
 			) }
 			{ isGenerated && (
 				<p style={ { margin: 0 } }>
-					{ __(
-						'Tickets are managed on the series —',
-						'fair-events'
-					) }{ ' ' }
+					{ scheduleEnabled
+						? __(
+								'Tickets and the schedule are managed on the series —',
+								'fair-events'
+						  )
+						: __(
+								'Tickets are managed on the series —',
+								'fair-events'
+						  ) }{ ' ' }
 					<a href={ masterUrl }>
 						{ __( 'open the master event', 'fair-events' ) }
 					</a>

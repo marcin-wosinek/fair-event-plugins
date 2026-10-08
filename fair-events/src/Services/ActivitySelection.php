@@ -62,19 +62,21 @@ class ActivitySelection {
 	 * The options that can be offered for an event date right now: those
 	 * with a price for the current sale period, with that price, their
 	 * translated display names and whether they are full. Options without a
-	 * price right now are left out — they are unavailable, not free.
+	 * price right now are left out — they are unavailable, not free — and so
+	 * are those the event's schedule marks as not bookable.
 	 *
 	 * @param int $pricing_event_date_id Event date the option catalogue belongs to.
 	 * @param int $event_date_id         Occurrence whose places are counted.
 	 * @return array[] Rows of [ id, name, short_name, price, is_full ], in display order.
 	 */
 	public static function offered_options( $pricing_event_date_id, $event_date_id ) {
-		$resolved = ActivityOptionPriceResolver::resolve_for_event_date( (int) $pricing_event_date_id );
+		$resolved     = ActivityOptionPriceResolver::resolve_for_event_date( (int) $pricing_event_date_id );
+		$not_bookable = EventSchedule::non_bookable_option_ids( (int) $pricing_event_date_id );
 
 		$rows = array();
 		foreach ( $resolved['options'] as $option_id => $option ) {
 			$price = $resolved['price_by_option_id'][ $option_id ];
-			if ( null === $price ) {
+			if ( null === $price || in_array( (int) $option_id, $not_bookable, true ) ) {
 				continue;
 			}
 
@@ -92,7 +94,8 @@ class ActivitySelection {
 
 	/**
 	 * Validate one ticket's submitted activity selection: every option must
-	 * belong to the event date, have a price right now and a place left, and
+	 * belong to the event date, be bookable, have a price right now and a
+	 * place left, and
 	 * the selection must satisfy the ticket type's activity rule. Places
 	 * across all tickets of a purchase are checked again under the capacity
 	 * lock when it is saved.
@@ -109,11 +112,12 @@ class ActivitySelection {
 		$options       = $resolved['options'];
 		$prices        = $resolved['price_by_option_id'];
 
+		$not_bookable     = EventSchedule::non_bookable_option_ids( (int) $pricing_event_date_id );
 		$full_by_id       = array();
 		$selectable_count = 0;
 		foreach ( $options as $option_id => $option ) {
 			$full_by_id[ $option_id ] = self::is_full( $option, $event_date_id );
-			if ( null !== $prices[ $option_id ] && ! $full_by_id[ $option_id ] ) {
+			if ( null !== $prices[ $option_id ] && ! $full_by_id[ $option_id ] && ! in_array( (int) $option_id, $not_bookable, true ) ) {
 				++$selectable_count;
 			}
 		}
@@ -162,6 +166,9 @@ class ActivitySelection {
 					__( 'One of the selected activities is not available for this event.', 'fair-events' ),
 					array( 'status' => 400 )
 				);
+			}
+			if ( in_array( (int) $option_id, $not_bookable, true ) ) {
+				return EventSchedule::not_bookable_error( $option->name, (int) $option_id );
 			}
 			if ( null === $prices[ (int) $option_id ] ) {
 				return new WP_Error(

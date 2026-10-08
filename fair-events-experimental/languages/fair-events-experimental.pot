@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T05:55:22+00:00\n"
+"POT-Creation-Date: 2026-10-08T08:00:44+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -437,6 +437,201 @@ msgstr ""
 msgid "Merge this event into another event date, moving or cleaning up all linked data."
 msgstr ""
 
+#: src/Admin/manage-event-schedule/EventSchedule.js:124
+msgid "Failed to load the schedule."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:221
+msgid "The schedule was not saved. Check the marked fields and save again."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:240
+msgid "Schedule saved."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:246
+msgid "Failed to save the schedule. Your changes are still here — try again."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:276
+msgid "Workshops come from the add-ons in Prices. Add one there first."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:281
+msgid "Every add-on from Prices is on the schedule already."
+msgstr ""
+
+#. translators: %s: workshop name
+#: src/Admin/manage-event-schedule/EventSchedule.js:295
+#, js-format
+msgid "Remove %s from the schedule? Once you save, it can be booked again: only its schedule entry keeps it Not bookable."
+msgstr ""
+
+#. translators: %s: workshop name
+#: src/Admin/manage-event-schedule/EventSchedule.js:305
+#, js-format
+msgid "Remove %s from the schedule? Its add-on in Prices and its bookings stay as they are."
+msgstr ""
+
+#. translators: %s: schedule item title
+#: src/Admin/manage-event-schedule/EventSchedule.js:314
+#, js-format
+msgid "Remove %s from the schedule?"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:327
+msgid "The schedule is managed on the series. Its dates are shown shifted to this date."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:362
+msgid "Save schedule"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:367
+#: src/Admin/manage-event-schedule/EventSchedule.js:388
+msgid "Add workshop"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:371
+msgid "Add a workshop from Prices"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:392
+msgid "Add schedule item"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:399
+msgid "No unsaved changes."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:421
+msgid "Nothing is scheduled yet. Add a workshop to set its time and room, or a schedule item for a break or anything else that is not booked."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:450
+msgid "Workshop from Prices"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:454
+msgid "Schedule item"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:467
+#: src/Admin/manage-event-schedule/EventSchedule.js:587
+msgid "Bookable"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:471
+#: src/Admin/manage-event-schedule/EventSchedule.js:595
+msgid "Not bookable"
+msgstr ""
+
+#. translators: %s: schedule entry name
+#: src/Admin/manage-event-schedule/EventSchedule.js:492
+#, js-format
+msgid "Remove %s"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:499
+msgid "Remove"
+msgstr ""
+
+#. translators: %s: comma-separated names of other schedule entries
+#: src/Admin/manage-event-schedule/EventSchedule.js:520
+#, js-format
+msgid "Runs at the same time as %s."
+msgid_plural "Runs at the same time as: %s."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: schedule entry name, 2: room or location
+#: src/Admin/manage-event-schedule/EventSchedule.js:531
+#, js-format
+msgid "%1$s (%2$s)"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:553
+#: src/Admin/manage-event/DuplicateEventWizard.js:716
+msgid "Title"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:576
+msgid "Booking"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:610
+msgid "Not bookable keeps the workshop on the schedule and stops new bookings. Price and capacity stay in Prices."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:614
+msgid "A schedule item is never a ticket choice. To take bookings, add it as an add-on in Prices and use Add workshop."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:630
+#: src/Admin/manage-event/DuplicateEventWizard.js:734
+#: src/Admin/manage-event/DuplicateEventWizard.js:757
+msgid "Start date"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:652
+#: src/Admin/manage-event/DuplicateEventWizard.js:767
+msgid "Start time"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:673
+#: src/Admin/manage-event/DuplicateEventWizard.js:744
+#: src/Admin/manage-event/DuplicateEventWizard.js:777
+msgid "End date"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:695
+#: src/Admin/manage-event/DuplicateEventWizard.js:787
+msgid "End time"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:717
+msgid "Room or location"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:735
+msgid "Description"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:759
+msgid "Remove from schedule"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/EventSchedule.js:763
+#: src/Admin/manage-event/DuplicateEventWizard.js:698
+#: src/Admin/manage-event/MergeEventWizard.js:516
+msgid "Cancel"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/index.js:35
+#: src/Admin/settings/WeeklyNotifications.js:723
+msgid "Schedule"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:164
+msgid "Enter a title."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:171
+msgid "Enter a valid start date and time."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:181
+msgid "Enter a valid end date and time."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:193
+msgid "The end must be after the start."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/scheduleModel.js:262
+msgid "(untitled item)"
+msgstr ""
+
 #: src/Admin/manage-event/DuplicateEventWizard.js:344
 msgid "— No venue —"
 msgstr ""
@@ -515,35 +710,8 @@ msgstr ""
 msgid "Create Duplicate"
 msgstr ""
 
-#: src/Admin/manage-event/DuplicateEventWizard.js:698
-#: src/Admin/manage-event/MergeEventWizard.js:516
-msgid "Cancel"
-msgstr ""
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:716
-msgid "Title"
-msgstr ""
-
 #: src/Admin/manage-event/DuplicateEventWizard.js:723
 msgid "All day"
-msgstr ""
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:734
-#: src/Admin/manage-event/DuplicateEventWizard.js:757
-msgid "Start date"
-msgstr ""
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:744
-#: src/Admin/manage-event/DuplicateEventWizard.js:777
-msgid "End date"
-msgstr ""
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:767
-msgid "Start time"
-msgstr ""
-
-#: src/Admin/manage-event/DuplicateEventWizard.js:787
-msgid "End time"
 msgstr ""
 
 #: src/Admin/manage-event/DuplicateEventWizard.js:800
@@ -1197,10 +1365,6 @@ msgstr ""
 
 #: src/Admin/settings/WeeklyNotifications.js:689
 msgid "The test sends the summary for the next scheduled week to every saved chat, even while delivery is off. It is not recorded as a weekly send."
-msgstr ""
-
-#: src/Admin/settings/WeeklyNotifications.js:723
-msgid "Schedule"
 msgstr ""
 
 #. translators: 1: date and time of the next send, 2: date range of the week it covers
