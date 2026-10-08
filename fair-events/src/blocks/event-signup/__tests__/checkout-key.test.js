@@ -86,6 +86,21 @@ describe( 'purchaseSignature', () => {
 	} );
 } );
 
+describe( 'purchases for another person', () => {
+	test( 'never share a key with the viewer’s own purchase of the same details', () => {
+		const store = createCheckoutKeyStore();
+		const purchase = { name: 'Ada', email: 'ada@example.test' };
+
+		const own = store.keyFor( purchase );
+		const another = store.keyFor( {
+			...purchase,
+			register_another_person: true,
+		} );
+
+		expect( another ).not.toBe( own );
+	} );
+} );
+
 describe( 'generateCheckoutKey', () => {
 	const originalCrypto = window.crypto;
 

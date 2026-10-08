@@ -443,7 +443,9 @@
 	padding-left: 1.25em;
 }
 
-.fair-events-get-tickets .fair-events-not-you-button {
+.fair-events-get-tickets .fair-events-not-you-button,
+.fair-events-get-tickets .fair-events-register-another-button,
+.fair-events-get-tickets .fair-events-register-another-back {
 	display: block;
 	margin-top: 12px;
 	padding: 0;
@@ -458,6 +460,28 @@
 .fair-events-get-tickets .fair-events-not-you-button:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
+}
+
+/* Heading of the form that registers another person: says whose signup the
+ * form is, with the way back to the viewer's own ticket. */
+.fair-events-register-another {
+	margin: 0 0 16px;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-register-another-heading {
+	margin: 0 0 4px;
+	font-size: 1.25em;
+}
+
+/* Focused by script when the form opens, so a screen reader announces whose
+ * signup it is; it is not a control, so it shows no focus ring. */
+.fair-events-register-another-heading:focus {
+	outline: none;
+}
+
+.fair-events-get-tickets .fair-events-register-another-back {
+	margin-top: 4px;
 }
 
 .fair-events-signed-up-card .fair-events-cancel-signup-button {

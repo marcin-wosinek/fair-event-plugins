@@ -88,17 +88,17 @@ class GetTicketsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_signup' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'event_date_id'         => array(
+						'event_date_id'           => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
-						'name'                  => array(
+						'name'                    => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'email'                 => array(
+						'email'                   => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_email',
@@ -106,33 +106,33 @@ class GetTicketsController extends WP_REST_Controller {
 								return is_email( $value );
 							},
 						),
-						'ticket_type_id'        => array(
+						'ticket_type_id'          => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'default'           => 0,
 							'sanitize_callback' => 'absint',
 						),
-						'quantity'              => array(
+						'quantity'                => array(
 							'type'              => 'integer',
 							'required'          => false,
 							'default'           => 1,
 							'sanitize_callback' => 'absint',
 						),
-						'mailing_opt_in'        => array(
+						'mailing_opt_in'          => array(
 							'type'              => 'boolean',
 							'required'          => false,
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
 						),
-						'marketing_consent'     => array(
+						'marketing_consent'       => array(
 							'type'              => 'boolean',
 							'required'          => false,
 							'default'           => false,
 							'sanitize_callback' => 'rest_sanitize_boolean',
 						),
-						'meta_fbp'              => $this->meta_identifier_argument(),
-						'meta_fbc'              => $this->meta_identifier_argument(),
-						'meta_source_url'       => array(
+						'meta_fbp'                => $this->meta_identifier_argument(),
+						'meta_fbc'                => $this->meta_identifier_argument(),
+						'meta_source_url'         => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
@@ -141,16 +141,26 @@ class GetTicketsController extends WP_REST_Controller {
 								return '' === $value || (bool) wp_http_validate_url( $value );
 							},
 						),
-						'participant_token'     => array(
+						'participant_token'       => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
+						// A visitor the browser remembers registers someone
+						// else (#1528): the purchase is the other person's
+						// own, and nothing the browser is remembered for
+						// applies to it. Grants no access to any participant.
+						'register_another_person' => array(
+							'type'              => 'boolean',
+							'required'          => false,
+							'default'           => false,
+							'sanitize_callback' => 'rest_sanitize_boolean',
+						),
 						// Chosen occurrence IDs for 'multiple_instances' ticket types.
 						// Capped so a crafted request can't force an unbounded number
 						// of line items / DB rows per submission.
-						'event_date_ids'        => array(
+						'event_date_ids'          => array(
 							'type'              => 'array',
 							'items'             => array( 'type' => 'integer' ),
 							'required'          => false,
@@ -162,7 +172,7 @@ class GetTicketsController extends WP_REST_Controller {
 						// ticket. Capped, mirroring event_date_ids above.
 						// Ignored on the 'multiple_instances' path, which never
 						// reads this param.
-						'ticket_option_ids'     => array(
+						'ticket_option_ids'       => array(
 							'type'              => 'array',
 							'items'             => array( 'type' => 'integer' ),
 							'required'          => false,
@@ -174,7 +184,7 @@ class GetTicketsController extends WP_REST_Controller {
 						// ticket in order (#1697). Required instead of
 						// ticket_option_ids when buying several tickets with
 						// activities. Capped like the lists above.
-						'ticket_activities'     => array(
+						'ticket_activities'       => array(
 							'type'              => 'array',
 							'items'             => array(
 								'type'  => 'array',
@@ -196,7 +206,7 @@ class GetTicketsController extends WP_REST_Controller {
 								return true;
 							},
 						),
-						'_honeypot'             => array(
+						'_honeypot'               => array(
 							'type'     => 'string',
 							'required' => false,
 							'default'  => '',
@@ -205,7 +215,7 @@ class GetTicketsController extends WP_REST_Controller {
 						// repeated with the same key returns the purchase it
 						// already created instead of creating, reserving or
 						// charging again; a new purchase sends a new key.
-						'idempotency_key'       => array(
+						'idempotency_key'         => array(
 							'type'              => 'string',
 							'required'          => false,
 							'default'           => '',
@@ -217,7 +227,7 @@ class GetTicketsController extends WP_REST_Controller {
 						// No 'type' declared: QuestionnaireService::parse_answers()
 						// handles both a decoded array and a raw JSON string.
 						// Capped at 50 answers, mirroring the event_date_ids cap above.
-						'questionnaire_answers' => array(
+						'questionnaire_answers'   => array(
 							'required'          => false,
 							'default'           => array(),
 							'validate_callback' => function ( $value ) {
@@ -328,7 +338,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'callback'            => array( $this, 'get_viewer_context' ),
 				'permission_callback' => '__return_true',
 				'args'                => array(
-					'event_date_id'      => array(
+					'event_date_id'           => array(
 						'type'              => 'integer',
 						'required'          => true,
 						'sanitize_callback' => 'absint',
@@ -336,23 +346,32 @@ class GetTicketsController extends WP_REST_Controller {
 					// Block-author display choices, viewer-independent — read
 					// from the baseline render's data attributes by
 					// frontend.js so the personalized fragments match it.
-					'show_ticket_price'  => array(
+					'show_ticket_price'       => array(
 						'type'              => 'boolean',
 						'required'          => false,
 						'default'           => true,
 						'sanitize_callback' => 'rest_sanitize_boolean',
 					),
-					'show_option_prices' => array(
+					'show_option_prices'      => array(
 						'type'              => 'boolean',
 						'required'          => false,
 						'default'           => true,
 						'sanitize_callback' => 'rest_sanitize_boolean',
 					),
-					'participant_token'  => array(
+					'participant_token'       => array(
 						'type'              => 'string',
 						'required'          => false,
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
+					),
+					// The form for registering another person (#1528): the
+					// response is what a visitor nobody remembers would get,
+					// whoever the browser is remembered as.
+					'register_another_person' => array(
+						'type'              => 'boolean',
+						'required'          => false,
+						'default'           => false,
+						'sanitize_callback' => 'rest_sanitize_boolean',
 					),
 				),
 			)
@@ -470,6 +489,11 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
+		$another_person_error = $this->register_another_person_error( $request );
+		if ( is_wp_error( $another_person_error ) ) {
+			return $another_person_error;
+		}
+
 		$event_date_id     = $request->get_param( 'event_date_id' );
 		$name              = $request->get_param( 'name' );
 		$email             = $request->get_param( 'email' );
@@ -477,6 +501,7 @@ class GetTicketsController extends WP_REST_Controller {
 		$quantity          = max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) );
 		$mailing_opt_in    = (bool) $request->get_param( 'mailing_opt_in' );
 		$participant_token = (string) $request->get_param( 'participant_token' );
+		$request_context   = $this->signup_request_context( $request );
 		$idempotency_key   = (string) $request->get_param( 'idempotency_key' );
 		$fingerprint       = '' !== $idempotency_key ? $this->checkout_fingerprint( $request ) : '';
 
@@ -540,7 +565,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// covers the single-, multiple-instances- and no-ticket-type paths
 		// alike. A participant already holding a ticket is no reason to
 		// reject: every checkout is its own purchase. See REST_API_BACKEND.md.
-		$precheck_error = apply_filters( 'fair_events_signup_precheck_error', null, (int) $event_date_id, $email, (int) $ticket_type_id, $participant_token );
+		$precheck_error = apply_filters( 'fair_events_signup_precheck_error', null, (int) $event_date_id, $email, (int) $ticket_type_id, $participant_token, $request_context );
 		if ( is_wp_error( $precheck_error ) ) {
 			return $precheck_error;
 		}
@@ -566,7 +591,8 @@ class GetTicketsController extends WP_REST_Controller {
 				'event_date_ids'        => array_values( array_filter( array_map( 'absint', (array) $request->get_param( 'event_date_ids' ) ) ) ),
 				'questionnaire_answers' => $questionnaire_answers,
 			),
-			$participant_token
+			$participant_token,
+			$request_context
 		);
 		if ( null !== $deferred_response ) {
 			// Counts as an attempt from this IP, so the answer cannot be
@@ -605,7 +631,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// ticket type to specific groups. Applies to both the single- and
 			// multiple_instances paths below, since this runs before either
 			// dispatches. See REST_API_BACKEND.md.
-			$restriction_error = apply_filters( 'fair_events_signup_ticket_type_error', null, (int) $ticket_type_id, (int) $event_date_id, $participant_token );
+			$restriction_error = apply_filters( 'fair_events_signup_ticket_type_error', null, (int) $ticket_type_id, (int) $event_date_id, $participant_token, $request_context );
 			if ( is_wp_error( $restriction_error ) ) {
 				return $restriction_error;
 			}
@@ -622,7 +648,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// The filter is the extension point a companion plugin uses to apply
 			// participant-specific discounts on top of this base price.
 			$unit_price = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type_id );
-			$unit_price = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type_id, (int) $event_date_id, $participant_token );
+			$unit_price = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type_id, (int) $event_date_id, $participant_token, $request_context );
 			if ( null === $unit_price ) {
 				return new WP_Error(
 					'ticket_type_unavailable',
@@ -654,7 +680,7 @@ class GetTicketsController extends WP_REST_Controller {
 			$validated_selections[ $selection_key ] = true;
 
 			$options_error = \FairEvents\Services\ActivitySelection::validate( $selection, (int) $config_event_date_id, (int) $ticket_type_id, (int) $event_date_id );
-			$options_error = apply_filters( 'fair_events_signup_options_error', $options_error, $selection, (int) $config_event_date_id, (int) $ticket_type_id, $participant_token, (int) $event_date_id );
+			$options_error = apply_filters( 'fair_events_signup_options_error', $options_error, $selection, (int) $config_event_date_id, (int) $ticket_type_id, $participant_token, (int) $event_date_id, $request_context );
 			if ( is_wp_error( $options_error ) ) {
 				return $options_error;
 			}
@@ -663,7 +689,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// Each activity is priced once and charged for every ticket that
 		// selected it, as its own line item so the finance ledger names what
 		// was bought instead of folding it into the ticket line.
-		$option_line_items = $this->option_line_items( $unit_options, (int) $config_event_date_id, $participant_token );
+		$option_line_items = $this->option_line_items( $unit_options, (int) $config_event_date_id, $participant_token, $request_context );
 		if ( is_wp_error( $option_line_items ) ) {
 			return $option_line_items;
 		}
@@ -837,23 +863,67 @@ class GetTicketsController extends WP_REST_Controller {
 			$answers = is_array( $decoded ) ? $decoded : $answers;
 		}
 
-		return hash(
-			'sha256',
-			(string) wp_json_encode(
-				array(
-					'event_date_id'         => (int) $request->get_param( 'event_date_id' ),
-					'name'                  => (string) $request->get_param( 'name' ),
-					'email'                 => strtolower( (string) $request->get_param( 'email' ) ),
-					'ticket_type_id'        => (int) $request->get_param( 'ticket_type_id' ),
-					'quantity'              => max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) ),
-					'event_date_ids'        => $ids( $request->get_param( 'event_date_ids' ) ?? array() ),
-					'ticket_option_ids'     => $ids( $request->get_param( 'ticket_option_ids' ) ?? array() ),
-					// One list per ticket: their order is part of the purchase.
-					'ticket_activities'     => is_array( $activities ) ? array_map( $ids, array_values( $activities ) ) : array(),
-					'mailing_opt_in'        => (bool) $request->get_param( 'mailing_opt_in' ),
-					'questionnaire_answers' => $answers ? $answers : array(),
-				)
-			)
+		$details = array(
+			'event_date_id'         => (int) $request->get_param( 'event_date_id' ),
+			'name'                  => (string) $request->get_param( 'name' ),
+			'email'                 => strtolower( (string) $request->get_param( 'email' ) ),
+			'ticket_type_id'        => (int) $request->get_param( 'ticket_type_id' ),
+			'quantity'              => max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) ),
+			'event_date_ids'        => $ids( $request->get_param( 'event_date_ids' ) ?? array() ),
+			'ticket_option_ids'     => $ids( $request->get_param( 'ticket_option_ids' ) ?? array() ),
+			// One list per ticket: their order is part of the purchase.
+			'ticket_activities'     => is_array( $activities ) ? array_map( $ids, array_values( $activities ) ) : array(),
+			'mailing_opt_in'        => (bool) $request->get_param( 'mailing_opt_in' ),
+			'questionnaire_answers' => $answers ? $answers : array(),
+		);
+
+		// Who a purchase is for is part of it: a key used for the visitor's
+		// own purchase never answers one made for another person. Added only
+		// when set, so the fingerprint of every other purchase stays as it was.
+		if ( $request->get_param( 'register_another_person' ) ) {
+			$details['register_another_person'] = true;
+		}
+
+		return hash( 'sha256', (string) wp_json_encode( $details ) );
+	}
+
+	/**
+	 * What a signup request says about itself besides its fields, handed to
+	 * the signup hooks after the participant token so a companion plugin
+	 * resolves the buyer the way the request asks for.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array{register_another_person: bool}
+	 */
+	private function signup_request_context( $request ) {
+		return array(
+			// The purchase belongs to someone other than the visitor the
+			// browser is remembered as (#1528).
+			'register_another_person' => (bool) $request->get_param( 'register_another_person' ),
+		);
+	}
+
+	/**
+	 * Refuse registering another person together with an identity that is
+	 * stronger than a remembered browser: a signed participant link or a
+	 * signed-in account always acts as that participant.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_Error|null Error, or null when the request may proceed.
+	 */
+	private function register_another_person_error( $request ) {
+		if ( ! $request->get_param( 'register_another_person' ) ) {
+			return null;
+		}
+
+		if ( '' === (string) $request->get_param( 'participant_token' ) && ! is_user_logged_in() ) {
+			return null;
+		}
+
+		return new WP_Error(
+			'register_another_person_unavailable',
+			__( 'Registering another person is not available from a personal link or while signed in.', 'fair-events' ),
+			array( 'status' => 400 )
 		);
 	}
 
@@ -1208,10 +1278,11 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @return int|WP_Error Transaction ID, or an error.
 	 */
 	private function create_checkout_transaction( $request, array $checkout, array $signups ) {
-		$payment    = $checkout['context']['payment'];
-		$email      = (string) $signups[0]->email;
-		$user_id    = get_current_user_id();
-		$signup_ids = array_map(
+		$payment         = $checkout['context']['payment'];
+		$email           = (string) $signups[0]->email;
+		$user_id         = get_current_user_id();
+		$request_context = $this->signup_request_context( $request );
+		$signup_ids      = array_map(
 			static function ( $signup ) {
 				return (int) $signup->id;
 			},
@@ -1226,7 +1297,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'event_date_id'  => (int) $payment['event_date_id'],
 				'post_id'        => $this->resolve_event_post_id( (int) $payment['event_date_id'] ),
 				'user_id'        => $user_id ? $user_id : null,
-				'participant_id' => $this->resolve_transaction_participant_id( $signup_ids, $email, (string) $request->get_param( 'participant_token' ) ),
+				'participant_id' => $this->resolve_transaction_participant_id( $signup_ids, $email, (string) $request->get_param( 'participant_token' ), $request_context ),
 				'email'          => $email,
 				'metadata'       => array_merge(
 					array(
@@ -1236,6 +1307,9 @@ class GetTicketsController extends WP_REST_Controller {
 					// A 'multiple_instances' purchase stores one signup row ID per chosen occurrence.
 					empty( $checkout['context']['shared'] ) ? array( 'signup_id' => $signup_ids[0] ) : array( 'signup_ids' => $signup_ids ),
 					array( 'email' => $email ),
+					// Kept with the payment, so a retry resolves its buyer
+					// the same way without the request that started it.
+					$request_context['register_another_person'] ? array( 'register_another_person' => true ) : array(),
 					$this->get_meta_attribution( $request )
 				),
 			)
@@ -1266,6 +1340,7 @@ class GetTicketsController extends WP_REST_Controller {
 	private function fire_checkout_hooks( $request, array $checkout, array $signups, $transaction_id ) {
 		$ticket_selection  = $checkout['context']['ticket_selection'] ?? array();
 		$participant_token = (string) $request->get_param( 'participant_token' );
+		$request_context   = $this->signup_request_context( $request );
 		$answers           = $this->prepare_questionnaire_answers( $request );
 		if ( is_wp_error( $answers ) ) {
 			$answers = array();
@@ -1274,7 +1349,7 @@ class GetTicketsController extends WP_REST_Controller {
 		$signup_ids = array();
 		foreach ( $signups as $signup ) {
 			$signup_ids[] = (int) $signup->id;
-			$this->fire_signup_created( (int) $signup->id, (int) $signup->event_date_id, (string) $signup->name, (string) $signup->email, $ticket_selection, $transaction_id, $participant_token );
+			$this->fire_signup_created( (int) $signup->id, (int) $signup->event_date_id, (string) $signup->name, (string) $signup->email, $ticket_selection, $transaction_id, $participant_token, $request_context );
 			$this->persist_questionnaire_answers( (int) $signup->id, (int) $signup->event_date_id, $answers );
 		}
 
@@ -1414,9 +1489,10 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @param array[] $unit_options         One list of TicketOption objects per ticket.
 	 * @param int     $config_event_date_id Event date the catalogue belongs to.
 	 * @param string  $participant_token    Optional participant token sent with the request.
+	 * @param array   $request_context      See signup_request_context().
 	 * @return array[]|WP_Error List of [ name, quantity, amount ].
 	 */
-	private function option_line_items( array $unit_options, $config_event_date_id, $participant_token ) {
+	private function option_line_items( array $unit_options, $config_event_date_id, $participant_token, array $request_context = array() ) {
 		$options  = array();
 		$selected = array();
 		foreach ( $unit_options as $ticket_options ) {
@@ -1433,7 +1509,8 @@ class GetTicketsController extends WP_REST_Controller {
 		$prices      = \FairEvents\Services\ActivityOptionPriceResolver::charged_prices(
 			array_intersect_key( $base_prices, $options ),
 			(int) $config_event_date_id,
-			$participant_token
+			$participant_token,
+			$request_context
 		);
 
 		$line_items = array();
@@ -1486,7 +1563,13 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_viewer_context( $request ) {
-		$event_date_id = (int) $request->get_param( 'event_date_id' );
+		$another_person_error = $this->register_another_person_error( $request );
+		if ( is_wp_error( $another_person_error ) ) {
+			return $another_person_error;
+		}
+
+		$event_date_id           = (int) $request->get_param( 'event_date_id' );
+		$register_another_person = (bool) $request->get_param( 'register_another_person' );
 
 		if ( ! class_exists( \FairEvents\Models\EventDates::class ) ) {
 			return new WP_Error(
@@ -1515,6 +1598,23 @@ class GetTicketsController extends WP_REST_Controller {
 		$ticket_types = array();
 		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
 			$ticket_types = \FairEvents\Models\TicketType::get_all_by_event_date_id( $pricing_event_date_id );
+		}
+
+		// The form for another person starts from what render.php offers
+		// everyone: no group-restricted tier, with or without a companion
+		// plugin to filter them.
+		if ( $register_another_person && ! empty( $ticket_types ) && class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
+			$restrictions_map = \FairEvents\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
+			if ( ! empty( $restrictions_map ) ) {
+				$ticket_types = array_values(
+					array_filter(
+						$ticket_types,
+						static function ( $type ) use ( $restrictions_map ) {
+							return empty( $restrictions_map[ (int) $type->id ] ?? array() );
+						}
+					)
+				);
+			}
 		}
 
 		$series_master_id = null;
@@ -1593,28 +1693,79 @@ class GetTicketsController extends WP_REST_Controller {
 		$context = apply_filters(
 			'fair_events_signup_viewer_context',
 			array(
-				'event_date_id'            => $event_date_id,
-				'pricing_event_date_id'    => $pricing_event_date_id,
-				'ticket_types'             => $ticket_types,
-				'price_by_type_id'         => $price_by_type_id,
-				'active_sale_period'       => $active_sale_period,
-				'sale_period_count'        => $sale_period_count,
-				'occurrences_for_picker'   => $occurrences_for_picker,
-				'ticket_options'           => $ticket_options,
-				'minimum_activities'       => $minimum_activities,
-				'prefill_name'             => '',
-				'prefill_email'            => '',
-				'suppress_form'            => false,
+				'event_date_id'                => $event_date_id,
+				'pricing_event_date_id'        => $pricing_event_date_id,
+				'ticket_types'                 => $ticket_types,
+				'price_by_type_id'             => $price_by_type_id,
+				'active_sale_period'           => $active_sale_period,
+				'sale_period_count'            => $sale_period_count,
+				'occurrences_for_picker'       => $occurrences_for_picker,
+				'ticket_options'               => $ticket_options,
+				'minimum_activities'           => $minimum_activities,
+				'prefill_name'                 => '',
+				'prefill_email'                => '',
+				'suppress_form'                => false,
 				// Tells a companion plugin that what the viewer already holds
 				// is rendered in its own slot beside the form (the response's
 				// existing_signup_html). Without it — an older fair-events —
 				// the companion keeps replacing the form with that card.
-				'existing_signup_slot'     => true,
-				'viewer_resolved'          => false,
-				'participant_token'        => (string) $request->get_param( 'participant_token' ),
-				'token_identity_validated' => false,
+				'existing_signup_slot'         => true,
+				'viewer_resolved'              => false,
+				'participant_token'            => (string) $request->get_param( 'participant_token' ),
+				'token_identity_validated'     => false,
+				// Tells a companion plugin this fair-events can open a form
+				// for another person, so it may offer that action (#1528).
+				'register_another_person_slot' => true,
+				// True while that form is being built: the companion
+				// resolves nobody, whoever the browser is remembered as.
+				'register_another_person'      => $register_another_person,
 			)
 		);
+
+		// The form for another person: the selection fieldsets at the prices
+		// and with the ticket types of a visitor nobody remembers. Nothing a
+		// companion resolved about the browser's own identity is returned.
+		if ( $register_another_person ) {
+			$form_id  = 'fair-events-get-tickets-viewer-' . $event_date_id;
+			$response = array(
+				'viewer_resolved'              => false,
+				'register_another_person'      => true,
+				'token_identity_validated'     => false,
+				'suppress_form'                => false,
+				'ticket_type_fieldset_html'    => null,
+				'ticket_options_fieldset_html' => null,
+				'existing_signup_html'         => null,
+				'before_form_html'             => null,
+				'before_submit_html'           => null,
+				'after_form_html'              => null,
+				'occurrences_signed_up'        => array(),
+				'prefill_name'                 => '',
+				'prefill_email'                => '',
+			);
+
+			if ( ! empty( $context['ticket_types'] ) ) {
+				$response['ticket_type_fieldset_html'] = \FairEvents\Services\SignupFieldsetRenderer::ticket_type_fieldset(
+					$context['ticket_types'],
+					$context['price_by_type_id'],
+					$context['active_sale_period'],
+					(int) $context['sale_period_count'],
+					$show_ticket_price,
+					$payments_unavailable,
+					$form_id
+				);
+			}
+			$response['ticket_options_fieldset_html'] = \FairEvents\Services\SignupFieldsetRenderer::ticket_options_fieldset(
+				$context['ticket_options'],
+				$context['ticket_types'],
+				$context['price_by_type_id'],
+				(int) $context['minimum_activities'],
+				$show_option_prices,
+				$payments_unavailable,
+				$form_id
+			);
+
+			return rest_ensure_response( $response );
+		}
 
 		$viewer_resolved = ! empty( $context['viewer_resolved'] );
 		$suppress_form   = ! empty( $context['suppress_form'] );
@@ -1714,9 +1865,10 @@ class GetTicketsController extends WP_REST_Controller {
 	 *                                   'multiple_instances' types), and 'mailing_opt_in'.
 	 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
 	 * @param string   $participant_token Optional companion credential.
+	 * @param array    $request_context  See signup_request_context().
 	 * @return void
 	 */
-	private function fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token = '' ) {
+	private function fire_signup_created( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token = '', array $request_context = array() ) {
 		/**
 		 * Fires after a signup row is persisted through the base create path.
 		 *
@@ -1727,8 +1879,9 @@ class GetTicketsController extends WP_REST_Controller {
 		 * @param array    $ticket_selection Ticket selection details.
 		 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
 		 * @param string   $participant_token Optional companion credential.
+		 * @param array    $request_context  What the request says about itself: 'register_another_person' (bool).
 		 */
-		do_action( 'fair_events_signup_created', $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token );
+		do_action( 'fair_events_signup_created', $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token, $request_context );
 	}
 
 	/**
@@ -1740,9 +1893,10 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @param int[]  $signup_ids        Signup rows the transaction pays for.
 	 * @param string $email             Buyer email.
 	 * @param string $participant_token Optional companion credential.
+	 * @param array  $request_context   See signup_request_context().
 	 * @return int|null Participant ID, or null to let the payments connector resolve it.
 	 */
-	private function resolve_transaction_participant_id( array $signup_ids, $email, $participant_token = '' ) {
+	private function resolve_transaction_participant_id( array $signup_ids, $email, $participant_token = '', array $request_context = array() ) {
 		/**
 		 * Filters the participant a get-tickets transaction is created for.
 		 *
@@ -1750,8 +1904,9 @@ class GetTicketsController extends WP_REST_Controller {
 		 * @param int[]    $signup_ids        Signup rows the transaction pays for.
 		 * @param string   $email             Buyer email.
 		 * @param string   $participant_token Optional companion credential.
+		 * @param array    $request_context   What the request says about itself: 'register_another_person' (bool).
 		 */
-		$participant_id = apply_filters( 'fair_events_signup_transaction_participant_id', null, $signup_ids, $email, $participant_token );
+		$participant_id = apply_filters( 'fair_events_signup_transaction_participant_id', null, $signup_ids, $email, $participant_token, $request_context );
 
 		return $participant_id ? (int) $participant_id : null;
 	}
@@ -2002,7 +2157,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// Resolve the per-instance price from the active sale period (server-side; client amount is ignored).
 		$unit_price        = \FairEvents\Services\TicketPricing::resolve_unit_price( $ticket_type->id );
 		$participant_token = (string) $request->get_param( 'participant_token' );
-		$unit_price        = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type->id, (int) $series_page_id, $participant_token );
+		$unit_price        = apply_filters( 'fair_events_signup_unit_price', $unit_price, (int) $ticket_type->id, (int) $series_page_id, $participant_token, $this->signup_request_context( $request ) );
 		if ( null === $unit_price ) {
 			return new WP_Error(
 				'ticket_type_unavailable',
@@ -3258,6 +3413,11 @@ class GetTicketsController extends WP_REST_Controller {
 		$event_date_id = isset( $metadata['event_date_id'] ) ? (int) $metadata['event_date_id'] : (int) ( $transaction->event_date_id ?? 0 );
 		$user_id       = isset( $transaction->user_id ) ? (int) $transaction->user_id : 0;
 
+		// A purchase made for another person stays that person's when its
+		// payment is retried: whoever the browser is remembered as never
+		// stands in for the buyer.
+		$request_context = array( 'register_another_person' => ! empty( $metadata['register_another_person'] ) );
+
 		$new_signup_ids = array_map(
 			function ( $row ) {
 				return (int) $row->id;
@@ -3273,7 +3433,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'event_date_id'  => $event_date_id,
 				'post_id'        => $this->resolve_event_post_id( $event_date_id ),
 				'user_id'        => $user_id ? $user_id : null,
-				'participant_id' => $this->resolve_transaction_participant_id( $new_signup_ids, $buyer_email, '' ),
+				'participant_id' => $this->resolve_transaction_participant_id( $new_signup_ids, $buyer_email, '', $request_context ),
 				'email'          => $buyer_email,
 				'metadata'       => array_merge(
 					array(
@@ -3285,7 +3445,7 @@ class GetTicketsController extends WP_REST_Controller {
 					),
 					array_intersect_key(
 						$metadata,
-						array_flip( array( 'meta_fbp', 'meta_fbc', 'meta_source_url', 'meta_consent' ) )
+						array_flip( array( 'meta_fbp', 'meta_fbc', 'meta_source_url', 'meta_consent', 'register_another_person' ) )
 					)
 				),
 			)

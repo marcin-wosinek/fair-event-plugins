@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T08:15:14+00:00\n"
+"POT-Creation-Date: 2026-10-08T07:00:34+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -729,8 +729,8 @@ msgstr ""
 #: src/blocks/audience-signup/render.php:393
 #: src/blocks/event-interest/render.php:161
 #: src/blocks/mailing-signup/render.php:156
-#: src/Hooks/SignupHookBridge.php:550
-#: src/Hooks/SignupHookBridge.php:646
+#: src/Hooks/SignupHookBridge.php:556
+#: src/Hooks/SignupHookBridge.php:680
 msgid "Not you? Start fresh"
 msgstr ""
 
@@ -832,18 +832,18 @@ msgstr ""
 msgid "Sign Up"
 msgstr ""
 
-#: src/Hooks/PaymentHooks.php:425
+#: src/Hooks/PaymentHooks.php:449
 #: src/Hooks/PendingSubscriptionTimeoutHooks.php:56
 #: src/Hooks/WeeklyDigestHooks.php:55
 msgid "Every 5 minutes (fair-audience)"
 msgstr ""
 
-#: src/Hooks/PaymentHooks.php:999
+#: src/Hooks/PaymentHooks.php:1023
 msgid "Paid online via Mollie"
 msgstr ""
 
 #. translators: %1$s: Mollie status, %2$d: transaction ID
-#: src/Hooks/PaymentHooks.php:1043
+#: src/Hooks/PaymentHooks.php:1067
 #, php-format
 msgid "Online payment %1$s (transaction #%2$d)"
 msgstr ""
@@ -852,76 +852,80 @@ msgstr ""
 msgid "Reverted to minimal: marketing subscription was never confirmed within a week."
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:461
+#: src/Hooks/SignupHookBridge.php:467
 msgid "You are signed up for this date."
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:465
+#: src/Hooks/SignupHookBridge.php:471
 msgid "Your tickets:"
 msgstr ""
 
 #. translators: %s: ticket type name
-#: src/Hooks/SignupHookBridge.php:485
+#: src/Hooks/SignupHookBridge.php:491
 #, php-format
 msgid "Your ticket: %s"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:492
-#: src/Hooks/SignupHookBridge.php:824
+#: src/Hooks/SignupHookBridge.php:498
+#: src/Hooks/SignupHookBridge.php:861
 msgid "Your activities:"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:517
+#: src/Hooks/SignupHookBridge.php:523
 msgid "already signed up"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:529
+#: src/Hooks/SignupHookBridge.php:535
 msgid "View another date"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:541
+#: src/Hooks/SignupHookBridge.php:547
 #: src/Admin/manage-event-audience-tab/EventAudience.js:3059
 msgid "Cancel signup"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:576
+#: src/Hooks/SignupHookBridge.php:562
+msgid "Register another person"
+msgstr ""
+
+#: src/Hooks/SignupHookBridge.php:609
 msgid "Buy another ticket for yourself"
 msgstr ""
 
 #. translators: 1: participant name, 2: participant email address
-#: src/Hooks/SignupHookBridge.php:582
+#: src/Hooks/SignupHookBridge.php:615
 #, php-format
 msgid "You are buying as %1$s (%2$s)."
 msgstr ""
 
 #. translators: %s: participant name or email address
-#: src/Hooks/SignupHookBridge.php:591
+#: src/Hooks/SignupHookBridge.php:624
 #, php-format
 msgid "You are buying as %s."
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:820
-#: src/Hooks/SignupHookBridge.php:872
+#: src/Hooks/SignupHookBridge.php:857
+#: src/Hooks/SignupHookBridge.php:909
 msgid "Add activities"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:835
+#: src/Hooks/SignupHookBridge.php:872
 msgid "Add to ticket"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:837
+#: src/Hooks/SignupHookBridge.php:874
 msgid "Choose a ticket"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:852
+#: src/Hooks/SignupHookBridge.php:889
 msgid "free"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:855
+#: src/Hooks/SignupHookBridge.php:892
 msgid "full"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:964
+#: src/Hooks/SignupHookBridge.php:1005
 msgid "We recognise this email — check your inbox to continue."
 msgstr ""
 
@@ -1391,18 +1395,18 @@ msgstr ""
 msgid "Manage your subscription or unsubscribe"
 msgstr ""
 
-#: src/Services/GroupSignupPricing.php:159
+#: src/Services/GroupSignupPricing.php:173
 msgid "This ticket type is not available for your account."
 msgstr ""
 
 #. translators: 1: discount percentage, 2: group name
-#: src/Services/GroupSignupPricing.php:192
+#: src/Services/GroupSignupPricing.php:206
 #, php-format
 msgid "%1$s%% discount applied (%2$s)"
 msgstr ""
 
 #. translators: 1: discount amount, 2: group name
-#: src/Services/GroupSignupPricing.php:200
+#: src/Services/GroupSignupPricing.php:214
 #, php-format
 msgid "%1$s discount applied (%2$s)"
 msgstr ""

@@ -649,10 +649,11 @@ sub-route) expose:
     Inside the form, `fair_events_signup_render_before_form` then heads the
     purchase "Buy another ticket for yourself" with the recognised name and
     email, followed by "Not you? Start fresh" (the identity reset) and
-    fair-audience's own `fair_audience_signup_identity_actions` action — the
-    place for a separate "register another person" action (#1528). The buyer
-    of a recognised viewer's purchase is always that participant, whatever
-    name or email the form is sent with.
+    fair-audience's own `fair_audience_signup_identity_actions` action. The
+    buyer of a recognised viewer's purchase is always that participant,
+    whatever name or email the form is sent with. "Register another person"
+    is a third, separate choice, offered at the bottom of the signed-up card
+    — see "Registering another person" below.
 -   **Three render-slot actions**, all passed the context from whichever
     filter above ran (so they no-op on the base render's un-enriched
     context, and produce fragments on the viewer-context endpoint's enriched
@@ -676,6 +677,58 @@ sub-route) expose:
     requirement, capped at `count( $ticket_options )`; a ticket type can raise
     it further via its own `minimum_activities` property — see
     `frontend.js`' `getEffectiveActivityMinimum()`.
+-   **Registering another person (#1528)** — a visitor the browser merely
+    remembers (identity source `audience_session`, not signed in) who holds
+    a ticket for the date gets a "Register another person" button on the
+    signed-up card. fair-audience renders it only when the viewer context
+    carries `register_another_person_slot` (`true` from a fair-events that
+    can open the form), so an older fair-events never shows a dead action.
+    It is never offered for a signed participant link or a signed-in
+    account, with or without a participant of its own.
+
+    frontend.js keeps the mode in memory, per block: it replaces the form
+    with a copy of the untouched baseline form (no identity, selection,
+    answers, consent or checkout key), headed "Registering another person"
+    with "Back to your ticket", and hides the viewer's own tickets. The mode
+    ends when the visitor goes back, completes a free registration, or
+    reloads; the viewer's own context is then fetched again. Viewer-context
+    responses are applied only while their request is the block's latest.
+
+    Both routes take the boolean `register_another_person`:
+
+    -   `GET …/get-tickets/viewer-context?register_another_person=1` passes
+        `register_another_person: true` in the filtered context; fair-audience
+        then resolves nobody. The response has `register_another_person:
+        true`, `viewer_resolved: false`, empty prefill, no existing-signup or
+        render-slot fragments, and — unlike the ordinary anonymous no-op —
+        freshly rendered `ticket_type_fieldset_html` /
+        `ticket_options_fieldset_html` for an anonymous visitor: no
+        group-restricted tier, undiscounted prices. The form cannot be
+        submitted before this response arrived.
+    -   `POST …/get-tickets` with the flag is the ordinary new-participant
+        purchase. Every hook that receives `$participant_token` also
+        receives a trailing `$request_context` array
+        (`[ 'register_another_person' => bool ]`); with the flag set,
+        `GroupSignupPricing::resolve_viewer_identity()` returns no
+        participant, so the audience cookie decides nothing: not the buyer,
+        the ticket-type restriction, the ticket or activity prices, nor the
+        transaction's participant. `link_participant()` does not set or
+        replace the session cookie. An email that belongs to an existing
+        participant — the remembered one's included — gets the usual
+        `email_recognized` answer and emailed link.
+    -   Either route answers 400 `register_another_person_unavailable` when
+        the flag comes with a `participant_token` or from a signed-in
+        account. The flag grants no access to any participant; validation,
+        capacity and rate limits are those of any public signup.
+    -   The flag is part of the idempotency fingerprint (only when set), so
+        a key used for the visitor's own purchase answers 409
+        `idempotency_key_reused` for one made for another person. A paid
+        purchase stores `register_another_person` in its transaction
+        metadata; `retry-payment` carries it to the new transaction and
+        resolves the buyer from the signups and their email, never from the
+        cookie. Payment return and polling are authorized by the
+        transaction's own token or the `SignupPaymentSession` cookie, as for
+        any purchase.
 -   **Idempotency key** — `POST fair-events/v1/get-tickets` accepts an
     optional `idempotency_key` (16–128 characters of `A-Za-z0-9_-`; the
     public form sends a random one). One key is one intended purchase:
@@ -733,7 +786,7 @@ sub-route) expose:
     runs this immediately after the event date is validated, before ticket-type
     or options validation, so it covers the single-, `multiple_instances`- and
     no-ticket-type paths alike:
-    `apply_filters( 'fair_events_signup_precheck_error', null, $event_date_id, $email, $ticket_type_id, $participant_token )`.
+    `apply_filters( 'fair_events_signup_precheck_error', null, $event_date_id, $email, $ticket_type_id, $participant_token, $request_context )`.
     Returning a `WP_Error` rejects the signup; `null` (the default) allows it
     to proceed. It is not run for a repeated idempotency key. **A participant
     already holding a ticket for the date is not a reason to reject** — each
@@ -744,7 +797,7 @@ sub-route) expose:
 -   **`fair_events_signup_deferred_response` filter** — `GetTicketsController::create_signup()`
     runs this right after the precheck, still before any signup, participant
     link or payment exists:
-    `apply_filters( 'fair_events_signup_deferred_response', null, $submission, $participant_token )`.
+    `apply_filters( 'fair_events_signup_deferred_response', null, $submission, $participant_token, $request_context )`.
     `$submission` holds only sanitized values: `event_date_id`, `name`,
     `email`, `ticket_type_id`, `quantity`, `mailing_opt_in`,
     `ticket_option_ids`, `ticket_activities` (one list per ticket),
@@ -765,7 +818,7 @@ sub-route) expose:
     in its `fair_events_signup_render_before_form` fragment.
 -   **`fair_events_signup_ticket_type_error` filter** — `GetTicketsController::create_signup()`
     runs this right after a submitted ticket type is validated and confirmed
-    not disabled: `apply_filters( 'fair_events_signup_ticket_type_error', null, $ticket_type_id, $event_date_id, $participant_token )`.
+    not disabled: `apply_filters( 'fair_events_signup_ticket_type_error', null, $ticket_type_id, $event_date_id, $participant_token, $request_context )`.
     Returning a `WP_Error` rejects the signup with that error (fair-audience
     returns a 403 `ticket_type_restricted` when the ticket type is
     group-restricted and the viewer isn't a member); returning `null` (the
@@ -773,7 +826,7 @@ sub-route) expose:
     single- or `multiple_instances` path dispatches, so it covers both.
 -   **`fair_events_signup_unit_price` filter** — runs immediately after
     `TicketPricing::resolve_unit_price()` in both `create_signup()` and
-    `create_multi_instance_signup()`: `apply_filters( 'fair_events_signup_unit_price', $unit_price, $ticket_type_id, $event_date_id, $participant_token )`.
+    `create_multi_instance_signup()`: `apply_filters( 'fair_events_signup_unit_price', $unit_price, $ticket_type_id, $event_date_id, $participant_token, $request_context )`.
     A companion plugin uses this to apply participant-specific discounts (e.g.
     a group pricing rule) on top of the base price; `$unit_price` is `null`
     when no active sale period configures one, which a filter callback should
@@ -813,7 +866,7 @@ sub-route) expose:
 -   **`fair_events_signup_options_error` filter** — runs right after that
     validation, once per distinct selection, so a companion plugin can add
     a restriction of its own:
-    `apply_filters( 'fair_events_signup_options_error', $error, $ticket_option_ids, $config_event_date_id, $ticket_type_id, $participant_token, $event_date_id )`,
+    `apply_filters( 'fair_events_signup_options_error', $error, $ticket_option_ids, $config_event_date_id, $ticket_type_id, $participant_token, $event_date_id, $request_context )`,
     where `$error` is fair-events' own result (`null` when the selection is
     valid), `$ticket_option_ids` is one ticket's sanitized (deduped, capped
     at 50) selection, `$config_event_date_id` is the series-master-resolved
@@ -824,14 +877,14 @@ sub-route) expose:
     number of tickets that selected it, never folded into the ticket line,
     so the finance ledger names what was bought. An activity priced at zero
     gets no line. Before building them it passes the base prices through
-    `apply_filters( 'fair_events_signup_option_prices', $prices, $config_event_date_id, $participant_token )`
+    `apply_filters( 'fair_events_signup_option_prices', $prices, $config_event_date_id, $participant_token, $request_context )`
     (`$prices` keyed by option ID), so a companion plugin can lower a price
     for a recognised participant. A callback returns the same keys and must
     not add charges of its own — it adjusts prices, fair-events charges
     them. This replaces the former `fair_events_signup_option_line_items`
     filter, which is no longer applied.
 -   **`fair_events_signup_created` action** — fires
-    `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token )`
+    `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token, $request_context )`
     after a signup row is persisted through the base create path (once per
     row for multi-occurrence signups; `$transaction_id` is `null` on the free
     path). `$ticket_selection` carries `'ticket_type_id'`, `'quantity'`,
@@ -845,8 +898,9 @@ sub-route) expose:
 -   **`fair_events_signup_transaction_participant_id` filter** — runs just
     before a paid purchase's, shared series purchase's or base-route retry's
     transaction is created:
-    `apply_filters( 'fair_events_signup_transaction_participant_id', null, $signup_ids, $email, $participant_token )`
-    (`$participant_token` is `''` on a retry). A positive ID is passed to
+    `apply_filters( 'fair_events_signup_transaction_participant_id', null, $signup_ids, $email, $participant_token, $request_context )`
+    (`$participant_token` is `''` on a retry; `$request_context` is then
+    rebuilt from the transaction's metadata). A positive ID is passed to
     `TransactionAPI::create_transaction()` as `participant_id`, so the
     connector's general email/user lookup (`fair_payment_resolve_participant_id`)
     cannot pick a different participant; `null` (the default) leaves that
@@ -940,18 +994,18 @@ unified-signup submission fatal'd):
 | Hook                                  | args passed | `add_filter`/`add_action` call            |
 | -------------------------------------- | :---------: | ------------------------------------------ |
 | `fair_events_signup_viewer_context`    | 1           | `add_filter( ..., 10, 1 )`                 |
-| `fair_events_signup_precheck_error`    | 5           | `add_filter( ..., 10, 5 )` (no consumer)   |
-| `fair_events_signup_deferred_response` | 3           | `add_filter( ..., 10, 3 )`                 |
+| `fair_events_signup_precheck_error`    | 6           | `add_filter( ..., 10, 6 )` (no consumer)   |
+| `fair_events_signup_deferred_response` | 4           | `add_filter( ..., 10, 4 )`                 |
 | `fair_events_signup_render_existing_signup` | 1      | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_before_form` | 1          | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_before_submit` | 1        | `add_action( ..., 10, 1 )`                 |
 | `fair_events_signup_render_after_form` | 1           | `add_action( ..., 10, 1 )`                 |
-| `fair_events_signup_ticket_type_error` | 4           | `add_filter( ..., 10, 4 )`                 |
-| `fair_events_signup_unit_price`        | 4           | `add_filter( ..., 10, 4 )`                 |
-| `fair_events_signup_options_error`     | 6           | `add_filter( ..., 10, 6 )` (no consumer)   |
-| `fair_events_signup_option_prices`     | 3           | `add_filter( ..., 10, 3 )`                 |
-| `fair_events_signup_transaction_participant_id` | 4  | `add_filter( ..., 10, 4 )`                 |
-| `fair_events_signup_created`           | 7           | `add_action( ..., 10, 7 )`                 |
+| `fair_events_signup_ticket_type_error` | 5           | `add_filter( ..., 10, 5 )`                 |
+| `fair_events_signup_unit_price`        | 5           | `add_filter( ..., 10, 5 )`                 |
+| `fair_events_signup_options_error`     | 7           | `add_filter( ..., 10, 7 )` (no consumer)   |
+| `fair_events_signup_option_prices`     | 4           | `add_filter( ..., 10, 4 )`                 |
+| `fair_events_signup_transaction_participant_id` | 5  | `add_filter( ..., 10, 5 )`                 |
+| `fair_events_signup_created`           | 8           | `add_action( ..., 10, 8 )`                 |
 | `fair_events_signup_transaction_created` | 2         | `add_action( ..., 10, 2 )`                 |
 | `fair_events_signup_confirmed`         | 2           | `add_action( ..., 10, 2 )`                 |
 | `fair_events_signup_payment_failed`    | 2           | `add_action( ..., 10, 2 )`                 |
