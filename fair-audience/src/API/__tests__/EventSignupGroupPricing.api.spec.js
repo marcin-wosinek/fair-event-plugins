@@ -440,6 +440,65 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 		expect( memberRes.ok(), await memberRes.text() ).toBeTruthy();
 		expect( ( await memberRes.json() ).status ).toBe( 'confirmed' );
 
+		// Registering another person from the member's browser (#1528): the
+		// member's discount and restricted tier are not the other person's.
+		const anotherPriced = await member.post(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				data: {
+					event_date_id: event.eventDateId,
+					ticket_type_id: discountedTypeId,
+					name: 'Member Guest',
+					email: uniqueEmail( 'member-guest-priced' ),
+					register_another_person: true,
+				},
+			}
+		);
+		const anotherPricedBody = await anotherPriced.json();
+		if ( anotherPriced.status() === 503 ) {
+			expect( anotherPricedBody.code ).toBe( 'payment_unavailable' );
+		} else {
+			expect(
+				anotherPriced.status(),
+				JSON.stringify( anotherPricedBody )
+			).toBe( 200 );
+			expect( anotherPricedBody.status ).toBe( 'payment_required' );
+			expect( anotherPricedBody.amount ).toBe( 25 );
+		}
+
+		const anotherRestricted = await member.post(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				data: {
+					event_date_id: event.eventDateId,
+					ticket_type_id: restrictedTypeId,
+					name: 'Member Guest',
+					email: uniqueEmail( 'member-guest-restricted' ),
+					register_another_person: true,
+				},
+			}
+		);
+		expect( anotherRestricted.status() ).toBe( 403 );
+		expect( ( await anotherRestricted.json() ).code ).toBe(
+			'ticket_type_restricted'
+		);
+
+		// Their form offers neither the restricted tier nor the member price.
+		const contextRes = await member.get(
+			'/wp-json/fair-events/v1/get-tickets/viewer-context',
+			{
+				params: {
+					event_date_id: event.eventDateId,
+					register_another_person: '1',
+				},
+			}
+		);
+		expect( contextRes.ok(), await contextRes.text() ).toBeTruthy();
+		const fieldset = ( await contextRes.json() ).ticket_type_fieldset_html;
+		expect( fieldset ).not.toContain( 'Members Only' );
+		expect( fieldset ).toContain( 'data-ticket-price="25.00"' );
+		expect( fieldset ).not.toContain( 'data-ticket-price="0.00"' );
+
 		await member.dispose();
 	} );
 } );

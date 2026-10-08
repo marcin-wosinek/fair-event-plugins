@@ -24,6 +24,9 @@ const PURCHASE_FIELDS = [
 	'ticket_activities',
 	'mailing_opt_in',
 	'questionnaire_answers',
+	// A purchase for another person is never the viewer's own, even with
+	// the same details.
+	'register_another_person',
 ];
 
 /**

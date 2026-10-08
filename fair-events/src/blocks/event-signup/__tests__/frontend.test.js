@@ -1761,3 +1761,512 @@ describe( 'Event Signup frontend.js — buying another ticket (#1526)', () => {
 		).toBe( 'Back to the signup form' );
 	} );
 } );
+
+describe( 'Event Signup frontend.js — registering another person (#1528)', () => {
+	const CARD =
+		'<div class="fair-events-signed-up-card" data-event-id="5" data-event-date-id="42">' +
+		'<p class="fair-events-signed-up-status">You are signed up for this date.</p>' +
+		'<ul class="fair-events-signed-up-tickets"><li>Ticket 1 — General</li></ul>' +
+		'<button type="button" class="fair-events-register-another-button">Register another person</button>' +
+		'</div>';
+	const HEADING =
+		'<div class="fair-events-buy-another"><h3>Buy another ticket for yourself</h3></div>' +
+		'<button type="button" class="fair-events-not-you-button">Not you? Start fresh</button>';
+	const MEMBER_FIELDSET =
+		'<div class="form-row"><fieldset class="fair-events-ticket-fieldset"><legend>Choose ticket type</legend>' +
+		'<label><input type="radio" name="ticket_type_id" value="1" data-ticket-price="5.00" checked /> General</label>' +
+		'<label><input type="radio" name="ticket_type_id" value="2" data-ticket-price="0.00" /> Members only</label>' +
+		'</fieldset></div>';
+	const ANONYMOUS_FIELDSET =
+		'<div class="form-row"><fieldset class="fair-events-ticket-fieldset"><legend>Choose ticket type</legend>' +
+		'<label><input type="radio" name="ticket_type_id" value="1" data-ticket-price="10.00" checked /> General</label>' +
+		'</fieldset></div>';
+
+	function ownResponse( overrides = {} ) {
+		return {
+			...noopResponse(),
+			viewer_resolved: true,
+			existing_signup_html: CARD,
+			before_form_html: HEADING,
+			ticket_type_fieldset_html: MEMBER_FIELDSET,
+			prefill_name: 'Ada Lovelace',
+			prefill_email: 'ada@example.test',
+			...overrides,
+		};
+	}
+
+	function anotherPersonResponse() {
+		return {
+			...noopResponse(),
+			register_another_person: true,
+			ticket_type_fieldset_html: ANONYMOUS_FIELDSET,
+		};
+	}
+
+	const settle = () => new Promise( ( resolve ) => setTimeout( resolve ) );
+	const submit = ( form ) =>
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+	const currentForm = ( block ) =>
+		block.querySelector( '.fair-events-get-tickets-form' );
+	const registerButton = ( block ) =>
+		block.querySelector( '.fair-events-register-another-button' );
+	const isAnotherPersonRequest = ( call ) =>
+		call[ 0 ].path.includes( 'register_another_person=1' );
+
+	// Answers each viewer-context request by its kind, whatever their order.
+	function answerByKind() {
+		apiFetch.mockImplementation( ( { path } ) =>
+			Promise.resolve(
+				path.includes( 'register_another_person=1' )
+					? anotherPersonResponse()
+					: ownResponse()
+			)
+		);
+	}
+
+	async function hydrate() {
+		const block = buildBlock();
+		answerByKind();
+		initialize();
+		await settle();
+		return block;
+	}
+
+	async function enter( block ) {
+		registerButton( block ).click();
+		await settle();
+		return currentForm( block );
+	}
+
+	function fill( form, name, email ) {
+		form.querySelector( 'input[name="name"]' ).value = name;
+		form.querySelector( 'input[name="email"]' ).value = email;
+	}
+
+	test( 'is offered only where the companion rendered the action', async () => {
+		const block = buildBlock();
+		apiFetch.mockResolvedValue(
+			ownResponse( {
+				existing_signup_html: CARD.replace(
+					/<button[^>]*register-another-button.*?<\/button>/,
+					''
+				),
+			} )
+		);
+		initialize();
+		await settle();
+
+		expect( registerButton( block ) ).toBeNull();
+		expect(
+			block.querySelector( '.fair-events-register-another' )
+		).toBeNull();
+	} );
+
+	test( 'opens an empty form with none of the viewer’s identity, tickets or restricted access', async () => {
+		const block = await hydrate();
+		const ownForm = currentForm( block );
+		ownForm.setAttribute( 'data-participant-token', 'own-token' );
+		expect(
+			ownForm.querySelector( 'input[name="ticket_type_id"][value="2"]' )
+		).not.toBeNull();
+
+		const form = await enter( block );
+
+		expect( form ).not.toBe( ownForm );
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe( '' );
+		expect( form.querySelector( 'input[name="email"]' ).value ).toBe( '' );
+		expect( form.dataset.participantToken ).toBeUndefined();
+		// The member-only tier and the member price are gone.
+		expect(
+			form.querySelector( 'input[name="ticket_type_id"][value="2"]' )
+		).toBeNull();
+		expect(
+			form.querySelector( 'input[name="ticket_type_id"]' ).dataset
+				.ticketPrice
+		).toBe( '10.00' );
+		// No fragment of the viewer's own form came along.
+		expect( form.querySelector( '.fair-events-buy-another' ) ).toBeNull();
+		expect(
+			form.querySelector( '.fair-events-not-you-button' )
+		).toBeNull();
+		expect(
+			form.querySelector( '.fair-events-register-another-heading' )
+				.textContent
+		).toBe( 'Registering another person' );
+		expect(
+			form.querySelector( '.fair-events-register-another-back' )
+				.textContent
+		).toBe( 'Back to your ticket' );
+		// The viewer's tickets step aside but stay in the page.
+		const existing = block.querySelector(
+			'.fair-events-get-tickets-existing'
+		);
+		expect( existing.hidden ).toBe( true );
+		expect(
+			existing.querySelector( '.fair-events-signed-up-card' )
+		).not.toBeNull();
+	} );
+
+	test( 'asks for an anonymous context without the page’s participant token', async () => {
+		const originalUrl = window.location.href;
+		const block = await hydrate();
+		window.history.replaceState( {}, '', '?participant_token=page-token' );
+
+		await enter( block );
+		window.history.replaceState( {}, '', originalUrl );
+
+		const request = apiFetch.mock.calls.find( isAnotherPersonRequest );
+		expect( request[ 0 ].path ).toContain( 'event_date_id=42' );
+		expect( request[ 0 ].path ).not.toContain( 'participant_token' );
+	} );
+
+	test( 'keeps the form unavailable until the anonymous context arrives', async () => {
+		jest.useFakeTimers();
+		try {
+			const block = buildBlock();
+			let answer;
+			apiFetch.mockImplementation( ( { path } ) =>
+				path.includes( 'register_another_person=1' )
+					? new Promise( ( resolve ) => {
+							answer = resolve;
+					  } )
+					: Promise.resolve( ownResponse() )
+			);
+			initialize();
+			await jest.advanceTimersByTimeAsync( 0 );
+
+			registerButton( block ).click();
+			const form = currentForm( block );
+			const button = form.querySelector( 'button[type="submit"]' );
+			expect( button.disabled ).toBe( true );
+
+			// Unlike the viewer's own form, no timeout opens it early.
+			await jest.advanceTimersByTimeAsync( 10000 );
+			expect( button.disabled ).toBe( true );
+			fill( form, 'Grace Hopper', 'grace@example.test' );
+			submit( form );
+			expect( initiatePayment ).not.toHaveBeenCalled();
+
+			answer( anotherPersonResponse() );
+			await jest.advanceTimersByTimeAsync( 0 );
+			expect( button.disabled ).toBe( false );
+		} finally {
+			jest.useRealTimers();
+		}
+	} );
+
+	test( 'a failed anonymous context leaves the form unavailable and the way back in place', async () => {
+		const block = buildBlock();
+		const consoleError = jest
+			.spyOn( console, 'error' )
+			.mockImplementation( () => {} );
+		apiFetch.mockImplementation( ( { path } ) =>
+			path.includes( 'register_another_person=1' )
+				? Promise.reject( new Error( 'offline' ) )
+				: Promise.resolve( ownResponse() )
+		);
+		initialize();
+		await settle();
+
+		const form = await enter( block );
+		consoleError.mockRestore();
+
+		expect( form.querySelector( 'button[type="submit"]' ).disabled ).toBe(
+			true
+		);
+		expect( showMessage ).toHaveBeenCalledWith(
+			block.querySelector( '.message-container' ),
+			expect.stringContaining( 'could not prepare the form' ),
+			'error',
+			'fair-events-get-tickets'
+		);
+
+		form.querySelector( '.fair-events-register-another-back' ).click();
+		await settle();
+		expect(
+			block.querySelector( '.fair-events-get-tickets-existing' ).hidden
+		).toBe( false );
+	} );
+
+	test( 'sends the other person’s purchase without the viewer’s credential and under its own key', async () => {
+		const block = await hydrate();
+		const ownForm = currentForm( block );
+		ownForm.setAttribute( 'data-participant-token', 'own-token' );
+		initiatePayment.mockImplementationOnce( ( { onError } ) => {
+			onError( 'Failed', { code: 'rest_error' } );
+			return Promise.reject( new Error( 'Failed' ) );
+		} );
+		submit( ownForm );
+		await settle();
+		const ownData = initiatePayment.mock.calls[ 0 ][ 0 ].data;
+		expect( ownData.participant_token ).toBe( 'own-token' );
+		expect( ownData ).not.toHaveProperty( 'register_another_person' );
+
+		const form = await enter( block );
+		// Even with the very same details the viewer just tried to buy with.
+		fill( form, 'Ada Lovelace', 'ada@example.test' );
+		submit( form );
+		await settle();
+
+		const data = initiatePayment.mock.calls[ 1 ][ 0 ].data;
+		expect( data.register_another_person ).toBe( true );
+		expect( data ).not.toHaveProperty( 'participant_token' );
+		expect( data.idempotency_key ).toMatch( /^[a-f0-9]{32}$/ );
+		expect( data.idempotency_key ).not.toBe( ownData.idempotency_key );
+	} );
+
+	test( '“Back to your ticket” discards the form and restores the viewer’s own', async () => {
+		const block = await hydrate();
+		const form = await enter( block );
+		fill( form, 'Grace Hopper', 'grace@example.test' );
+
+		form.querySelector( '.fair-events-register-another-back' ).click();
+		await settle();
+
+		const restored = currentForm( block );
+		expect( restored ).not.toBe( form );
+		expect( restored.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ada Lovelace'
+		);
+		expect( restored.querySelector( 'input[name="email"]' ).value ).toBe(
+			'ada@example.test'
+		);
+		expect(
+			restored.querySelector( '.fair-events-register-another' )
+		).toBeNull();
+		expect( restored.firstElementChild.textContent ).toContain(
+			'Buy another ticket for yourself'
+		);
+		expect(
+			restored.querySelector( 'input[name="ticket_type_id"][value="2"]' )
+		).not.toBeNull();
+		expect(
+			block.querySelector( '.fair-events-get-tickets-existing' ).hidden
+		).toBe( false );
+		expect(
+			block.querySelectorAll( '.fair-events-signed-up-card' )
+		).toHaveLength( 1 );
+		// The last request was the viewer's own context again.
+		expect( isAnotherPersonRequest( apiFetch.mock.calls.at( -1 ) ) ).toBe(
+			false
+		);
+
+		// The restored form buys for the viewer, not for another person.
+		submit( restored );
+		await settle();
+		expect( initiatePayment.mock.calls[ 0 ][ 0 ].data ).not.toHaveProperty(
+			'register_another_person'
+		);
+		// And the action can be used again.
+		const again = await enter( block );
+		expect( again.querySelector( 'input[name="name"]' ).value ).toBe( '' );
+	} );
+
+	test( 'a free registration confirms and returns to the viewer’s own ticket', async () => {
+		const block = await hydrate();
+		const form = await enter( block );
+		fill( form, 'Grace Hopper', 'grace@example.test' );
+		initiatePayment.mockResolvedValueOnce( {
+			status: 'confirmed',
+			message: 'Registered',
+		} );
+
+		submit( form );
+		await settle();
+		await settle();
+
+		expect( showMessage ).toHaveBeenCalledWith(
+			block.querySelector( '.message-container' ),
+			'Registered',
+			'success',
+			'fair-events-get-tickets'
+		);
+		const restored = currentForm( block );
+		expect( restored ).not.toBe( form );
+		expect( restored.hidden ).toBe( false );
+		expect( restored.querySelector( 'input[name="email"]' ).value ).toBe(
+			'ada@example.test'
+		);
+		expect(
+			block.querySelector( '.fair-events-get-tickets-existing' ).hidden
+		).toBe( false );
+		expect(
+			block.querySelector( '.fair-events-get-tickets-return' )
+		).toBeNull();
+		expect( registerButton( block ) ).not.toBeNull();
+	} );
+
+	test( 'a paid registration stays on its way to checkout', async () => {
+		const block = await hydrate();
+		const form = await enter( block );
+		fill( form, 'Grace Hopper', 'grace@example.test' );
+		initiatePayment.mockResolvedValueOnce( {
+			status: 'payment_required',
+			checkout_url: 'https://pay.example.test/checkout',
+		} );
+
+		submit( form );
+		await settle();
+
+		expect( currentForm( block ) ).toBe( form );
+		expect( form.querySelector( 'button[type="submit"]' ).disabled ).toBe(
+			true
+		);
+		// Leaving is not offered half-way through a purchase.
+		form.querySelector( '.fair-events-register-another-back' ).click();
+		await settle();
+		expect( currentForm( block ) ).toBe( form );
+	} );
+
+	test( 'a recognised email keeps the other person’s form open', async () => {
+		const block = await hydrate();
+		const form = await enter( block );
+		fill( form, 'Ada Lovelace', 'ada@example.test' );
+		initiatePayment.mockResolvedValueOnce( {
+			status: 'email_recognized',
+			message: 'Check your inbox',
+		} );
+
+		submit( form );
+		await settle();
+
+		expect( currentForm( block ) ).toBe( form );
+		expect(
+			form.querySelector( '.fair-events-register-another-heading' )
+		).not.toBeNull();
+		expect( form.querySelector( 'button[type="submit"]' ).disabled ).toBe(
+			false
+		);
+	} );
+
+	test( 'ignores a viewer context that arrives after the form it was for was replaced', async () => {
+		const block = buildBlock();
+		const pending = [];
+		apiFetch.mockImplementation(
+			( { path } ) =>
+				new Promise( ( resolve ) => {
+					pending.push( { path, resolve } );
+				} )
+		);
+		initialize();
+		pending.shift().resolve( ownResponse() );
+		await settle();
+
+		// Enter, leave and enter again before any of the three answers.
+		registerButton( block ).click();
+		currentForm( block )
+			.querySelector( '.fair-events-register-another-back' )
+			.click();
+		registerButton( block ).click();
+		const form = currentForm( block );
+		const [ firstAnother, own, secondAnother ] = pending;
+
+		// The viewer's own context must not personalize another person's form.
+		own.resolve( ownResponse() );
+		await settle();
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe( '' );
+		expect( form.querySelector( '.fair-events-buy-another' ) ).toBeNull();
+		expect( form.querySelector( 'button[type="submit"]' ).disabled ).toBe(
+			true
+		);
+
+		// Nor does the superseded anonymous answer open it.
+		firstAnother.resolve( anotherPersonResponse() );
+		await settle();
+		expect( form.querySelector( 'button[type="submit"]' ).disabled ).toBe(
+			true
+		);
+
+		secondAnother.resolve( anotherPersonResponse() );
+		await settle();
+		expect( form.querySelector( 'button[type="submit"]' ).disabled ).toBe(
+			false
+		);
+		expect(
+			block.querySelector( '.fair-events-get-tickets-existing' ).hidden
+		).toBe( true );
+	} );
+
+	test( 'ignores an anonymous context that arrives after going back', async () => {
+		const block = buildBlock();
+		const pending = [];
+		apiFetch.mockImplementation(
+			( { path } ) =>
+				new Promise( ( resolve ) => {
+					pending.push( { path, resolve } );
+				} )
+		);
+		initialize();
+		pending.shift().resolve( ownResponse() );
+		await settle();
+
+		registerButton( block ).click();
+		currentForm( block )
+			.querySelector( '.fair-events-register-another-back' )
+			.click();
+		const [ another, own ] = pending;
+		own.resolve( ownResponse() );
+		await settle();
+		another.resolve( anotherPersonResponse() );
+		await settle();
+
+		const form = currentForm( block );
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ada Lovelace'
+		);
+		expect(
+			form.querySelector( 'input[name="ticket_type_id"][value="2"]' )
+		).not.toBeNull();
+	} );
+
+	test( 'keeps each block on a page in its own mode', async () => {
+		const first = buildBlock( { eventDateId: 42 } );
+		const markup = first.outerHTML;
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			markup.replace( /42/g, '43' )
+		);
+		const second = document.querySelectorAll(
+			'.fair-events-get-tickets'
+		)[ 1 ];
+		answerByKind();
+		initialize();
+		await settle();
+
+		const form = await enter( first );
+
+		expect(
+			form.querySelector( '.fair-events-register-another' )
+		).not.toBeNull();
+		const otherForm = currentForm( second );
+		expect(
+			otherForm.querySelector( '.fair-events-register-another' )
+		).toBeNull();
+		expect( otherForm.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ada Lovelace'
+		);
+		expect(
+			second.querySelector( '.fair-events-get-tickets-existing' ).hidden
+		).toBe( false );
+		expect(
+			apiFetch.mock.calls.filter( isAnotherPersonRequest )
+		).toHaveLength( 1 );
+
+		fill( form, 'Grace Hopper', 'grace@example.test' );
+		submit( form );
+		submit( otherForm );
+		await settle();
+		const sent = initiatePayment.mock.calls.map(
+			( call ) => call[ 0 ].data
+		);
+		expect( sent[ 0 ].register_another_person ).toBe( true );
+		expect( sent[ 0 ].event_date_id ).toBe( 42 );
+		expect( sent[ 1 ] ).not.toHaveProperty( 'register_another_person' );
+		expect( sent[ 1 ].event_date_id ).toBe( 43 );
+		expect( sent[ 0 ].idempotency_key ).not.toBe(
+			sent[ 1 ].idempotency_key
+		);
+	} );
+} );

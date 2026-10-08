@@ -139,9 +139,10 @@ class ActivityOptionPriceResolver {
 	 * @param array<int, float|null> $base_price_by_option_id Base prices, keyed by option ID.
 	 * @param int                    $event_date_id           Event date the option catalogue belongs to.
 	 * @param string                 $participant_token       Optional participant token sent with the request.
+	 * @param array                  $request_context         What the request says about itself: 'register_another_person' (bool).
 	 * @return array<int, float|null> Charged prices, same keys.
 	 */
-	public static function charged_prices( array $base_price_by_option_id, $event_date_id, $participant_token = '' ) {
+	public static function charged_prices( array $base_price_by_option_id, $event_date_id, $participant_token = '', array $request_context = array() ) {
 		$available = array_filter(
 			$base_price_by_option_id,
 			static function ( $price ) {
@@ -159,8 +160,9 @@ class ActivityOptionPriceResolver {
 		 * @param array<int, float> $prices            Base prices, keyed by option ID.
 		 * @param int               $event_date_id     Event date the option catalogue belongs to.
 		 * @param string            $participant_token Optional participant token sent with the request.
+		 * @param array             $request_context   What the request says about itself: 'register_another_person' (bool).
 		 */
-		$filtered = (array) apply_filters( 'fair_events_signup_option_prices', $available, (int) $event_date_id, (string) $participant_token );
+		$filtered = (array) apply_filters( 'fair_events_signup_option_prices', $available, (int) $event_date_id, (string) $participant_token, $request_context );
 
 		$prices = array();
 		foreach ( $base_price_by_option_id as $option_id => $base_price ) {

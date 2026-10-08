@@ -172,6 +172,63 @@ test.describe( 'GetTicketsController — viewer-context', () => {
 		expect( body.prefill_email ).toBe( '' );
 	} );
 
+	test( 'the form for another person gets fresh anonymous fieldsets and nothing about a viewer (#1528)', async () => {
+		const anon = await request.newContext( { baseURL: BASE_URL } );
+		const res = await anon.get( VIEWER_CONTEXT_PATH, {
+			params: {
+				event_date_id: eventDateId,
+				register_another_person: '1',
+			},
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		const body = await res.json();
+		await anon.dispose();
+
+		expect( body.register_another_person ).toBe( true );
+		expect( body.viewer_resolved ).toBe( false );
+		expect( body.token_identity_validated ).toBe( false );
+		expect( body.prefill_name ).toBe( '' );
+		expect( body.prefill_email ).toBe( '' );
+		expect( body.occurrences_signed_up ).toEqual( [] );
+		expect( body.existing_signup_html ).toBeNull();
+		expect( body.before_form_html ).toBeNull();
+		expect( body.after_form_html ).toBeNull();
+		// Unlike the ordinary anonymous no-op, the baseline ticket types are
+		// rendered anew, at their undiscounted price.
+		expect( body.ticket_type_fieldset_html ).toContain( 'General' );
+		expect( body.ticket_type_fieldset_html ).toContain(
+			'data-ticket-price="15.00"'
+		);
+	} );
+
+	test( 'the form for another person is refused with a participant token or a signed-in account (#1528)', async () => {
+		const anon = await request.newContext( { baseURL: BASE_URL } );
+		const withToken = await anon.get( VIEWER_CONTEXT_PATH, {
+			params: {
+				event_date_id: eventDateId,
+				register_another_person: '1',
+				participant_token: 'any-token',
+			},
+		} );
+		expect( withToken.status() ).toBe( 400 );
+		expect( ( await withToken.json() ).code ).toBe(
+			'register_another_person_unavailable'
+		);
+		await anon.dispose();
+
+		const signedIn = await api.get( VIEWER_CONTEXT_PATH, {
+			headers: adminHeaders,
+			params: {
+				event_date_id: eventDateId,
+				register_another_person: '1',
+			},
+		} );
+		expect( signedIn.status() ).toBe( 400 );
+		expect( ( await signedIn.json() ).code ).toBe(
+			'register_another_person_unavailable'
+		);
+	} );
+
 	test( 'display flags round-trip without affecting viewer_resolved', async () => {
 		const res = await api.get( VIEWER_CONTEXT_PATH, {
 			params: {

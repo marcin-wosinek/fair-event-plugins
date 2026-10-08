@@ -53,13 +53,13 @@ class SignupHookBridge {
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_identity_actions' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_form', array( static::class, 'render_resume_marker' ), 10, 1 );
 		add_action( 'fair_events_signup_render_before_submit', array( static::class, 'render_discount_note' ), 10, 1 );
-		add_filter( 'fair_events_signup_deferred_response', array( static::class, 'defer_recognised_email' ), 10, 3 );
-		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 4 );
-		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 4 );
-		add_filter( 'fair_events_signup_option_prices', array( static::class, 'filter_option_prices' ), 10, 3 );
+		add_filter( 'fair_events_signup_deferred_response', array( static::class, 'defer_recognised_email' ), 10, 4 );
+		add_filter( 'fair_events_signup_ticket_type_error', array( static::class, 'filter_ticket_type_error' ), 10, 5 );
+		add_filter( 'fair_events_signup_unit_price', array( static::class, 'filter_unit_price' ), 10, 5 );
+		add_filter( 'fair_events_signup_option_prices', array( static::class, 'filter_option_prices' ), 10, 4 );
 		add_action( 'fair_events_signup_render_after_form', array( static::class, 'render_add_activities' ), 10, 1 );
-		add_filter( 'fair_events_signup_transaction_participant_id', array( static::class, 'filter_transaction_participant_id' ), 10, 4 );
-		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 7 );
+		add_filter( 'fair_events_signup_transaction_participant_id', array( static::class, 'filter_transaction_participant_id' ), 10, 5 );
+		add_action( 'fair_events_signup_created', array( static::class, 'link_participant' ), 10, 8 );
 		add_action( 'fair_events_signup_transaction_created', array( static::class, 'link_transaction' ), 10, 2 );
 		add_action( 'fair_events_signup_confirmed', array( static::class, 'handle_signup_confirmed' ), 10, 2 );
 		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
@@ -200,8 +200,14 @@ class SignupHookBridge {
 	 * @return array Filtered context.
 	 */
 	public static function enrich_render_context( $context ) {
-		$participant_token                 = (string) ( $context['participant_token'] ?? '' );
-		$identity                          = GroupSignupPricing::resolve_viewer_identity( $participant_token );
+		$participant_token = (string) ( $context['participant_token'] ?? '' );
+		// The form for another person (#1528) is resolved for nobody: the
+		// ticket types, prices and activities below are an anonymous
+		// visitor's, whoever the browser is remembered as.
+		$identity                          = GroupSignupPricing::resolve_viewer_identity(
+			$participant_token,
+			array( 'register_another_person' => ! empty( $context['register_another_person'] ) )
+		);
 		$participant                       = $identity['participant'];
 		$participant_id                    = $participant ? (int) $participant->id : null;
 		$context['viewer_identity_source'] = $participant ? $identity['source'] : null;
@@ -551,7 +557,34 @@ class SignupHookBridge {
 				. '</button>';
 		}
 
+		if ( self::offers_register_another_person( $context ) ) {
+			echo '<button type="button" class="fair-events-register-another-button">'
+				. esc_html__( 'Register another person', 'fair-audience' )
+				. '</button>';
+		}
+
 		echo '</div>';
+	}
+
+	/**
+	 * Whether the card of tickets held offers registering another person
+	 * (#1528): a fresh form for someone else, which leaves the viewer's own
+	 * session and tickets as they are. Offered only to a viewer the browser
+	 * merely remembers — a signed participant link or a signed-in account,
+	 * with or without a participant of its own, always acts as that
+	 * participant — who holds a ticket here, and only when fair-events has a
+	 * form to open for it.
+	 *
+	 * @param array $context Context, see fair_events_signup_viewer_context /
+	 *                       enrich_render_context() above.
+	 * @return bool
+	 */
+	private static function offers_register_another_person( $context ) {
+		return ! empty( $context['register_another_person_slot'] )
+			&& empty( $context['suppress_form'] )
+			&& ! empty( $context['signup_ticket_backed'] )
+			&& 'audience_session' === ( $context['viewer_identity_source'] ?? null )
+			&& ! is_user_logged_in();
 	}
 
 	/**
@@ -599,9 +632,10 @@ class SignupHookBridge {
 
 	/**
 	 * Fire the slot for further identity actions of a recognised viewer's
-	 * form, after "Not you? Start fresh" — where registering another person
-	 * (#1528) belongs, as an action of its own beside buying another ticket
-	 * for oneself and resetting the identity. Hooked on
+	 * form, after "Not you? Start fresh". "Register another person" is not
+	 * one of them: it is offered on the card of tickets held (see
+	 * offers_register_another_person()), apart from the form that buys
+	 * another ticket for oneself. Hooked on
 	 * fair_events_signup_render_before_form.
 	 *
 	 * @param array $context Context, see fair_events_signup_viewer_context /
@@ -703,14 +737,15 @@ class SignupHookBridge {
 	 * @param int           $ticket_type_id Ticket type ID.
 	 * @param int           $event_date_id Event date ID (unused).
 	 * @param string        $participant_token Optional request token.
+	 * @param array         $request_context   What the request says about itself: 'register_another_person' (bool).
 	 * @return \WP_Error|null
 	 */
-	public static function filter_ticket_type_error( $error, $ticket_type_id, $event_date_id = 0, $participant_token = '' ) {
+	public static function filter_ticket_type_error( $error, $ticket_type_id, $event_date_id = 0, $participant_token = '', $request_context = array() ) {
 		if ( is_wp_error( $error ) ) {
 			return $error;
 		}
 
-		$participant = GroupSignupPricing::resolve_viewer_participant( $participant_token );
+		$participant = GroupSignupPricing::resolve_viewer_participant( $participant_token, (array) $request_context );
 		return GroupSignupPricing::restriction_error( $ticket_type_id, $participant ? (int) $participant->id : null );
 	}
 
@@ -722,14 +757,15 @@ class SignupHookBridge {
 	 * @param int        $ticket_type_id Ticket type ID.
 	 * @param int        $event_date_id Event date ID (unused).
 	 * @param string     $participant_token Optional request token.
+	 * @param array      $request_context   What the request says about itself: 'register_another_person' (bool).
 	 * @return float|null
 	 */
-	public static function filter_unit_price( $unit_price, $ticket_type_id, $event_date_id = 0, $participant_token = '' ) {
+	public static function filter_unit_price( $unit_price, $ticket_type_id, $event_date_id = 0, $participant_token = '', $request_context = array() ) {
 		if ( null === $unit_price ) {
 			return $unit_price;
 		}
 
-		$participant    = GroupSignupPricing::resolve_viewer_participant( $participant_token );
+		$participant    = GroupSignupPricing::resolve_viewer_participant( $participant_token, (array) $request_context );
 		$participant_id = $participant ? (int) $participant->id : null;
 
 		$resolved = SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type_id, $participant_id );
@@ -749,14 +785,15 @@ class SignupHookBridge {
 	 * @param array<int, float> $prices                Base prices, keyed by option ID.
 	 * @param int               $pricing_event_date_id Event date the activity catalogue belongs to.
 	 * @param string            $participant_token     Optional request token.
+	 * @param array             $request_context       What the request says about itself: 'register_another_person' (bool).
 	 * @return array<int, float> Prices for this viewer, same keys.
 	 */
-	public static function filter_option_prices( $prices, $pricing_event_date_id, $participant_token = '' ) {
+	public static function filter_option_prices( $prices, $pricing_event_date_id, $participant_token = '', $request_context = array() ) {
 		if ( empty( $prices ) ) {
 			return $prices;
 		}
 
-		$participant = GroupSignupPricing::resolve_viewer_participant( $participant_token );
+		$participant = GroupSignupPricing::resolve_viewer_participant( $participant_token, (array) $request_context );
 
 		return SignupActivities::resolve_prices_for_participant( (array) $prices, (int) $pricing_event_date_id, $participant ? (int) $participant->id : null );
 	}
@@ -883,14 +920,18 @@ class SignupHookBridge {
 	 * goes to the address, so only whoever reads that inbox can continue.
 	 * A valid participant token or a signed-in account with a participant
 	 * is the buyer already (see resolve_buyer()), whatever email was typed.
+	 * A request registering another person (#1528) is known to be nobody, so
+	 * every existing participant's email is held back — the remembered
+	 * visitor's own included.
 	 * Hooked on fair_events_signup_deferred_response.
 	 *
 	 * @param array|null $response          Response from an earlier filter.
 	 * @param array      $submission        Sanitized submission from fair-events.
 	 * @param string     $participant_token Optional request token.
+	 * @param array      $request_context   What the request says about itself: 'register_another_person' (bool).
 	 * @return array|null Response to send instead of saving, or null to proceed.
 	 */
-	public static function defer_recognised_email( $response, $submission, $participant_token = '' ) {
+	public static function defer_recognised_email( $response, $submission, $participant_token = '', $request_context = array() ) {
 		if ( null !== $response ) {
 			return $response;
 		}
@@ -905,7 +946,7 @@ class SignupHookBridge {
 			return null;
 		}
 
-		$identity = GroupSignupPricing::resolve_viewer_identity( (string) $participant_token );
+		$identity = GroupSignupPricing::resolve_viewer_identity( (string) $participant_token, (array) $request_context );
 		if ( $identity['participant'] ) {
 			if ( 'audience_session' !== $identity['source'] || (int) $identity['participant']->id === (int) $participant->id ) {
 				return null;
@@ -980,9 +1021,10 @@ class SignupHookBridge {
 	 *                                   'ticket_option_ids'/'event_date_ids', 'mailing_opt_in').
 	 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
 	 * @param string   $participant_token Optional request token.
+	 * @param array    $request_context  What the request says about itself: 'register_another_person' (bool).
 	 * @return void
 	 */
-	public static function link_participant( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token = '' ) {
+	public static function link_participant( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token = '', $request_context = array() ) {
 		if ( empty( $email ) || ! is_email( $email ) ) {
 			return;
 		}
@@ -1001,7 +1043,8 @@ class SignupHookBridge {
 			return;
 		}
 
-		$participant        = self::resolve_buyer( $email, $participant_token );
+		$request_context    = (array) $request_context;
+		$participant        = self::resolve_buyer( $email, $participant_token, $request_context );
 		$mailing_opt_in     = ! empty( $ticket_selection['mailing_opt_in'] );
 		$is_new_participant = false;
 
@@ -1102,7 +1145,11 @@ class SignupHookBridge {
 			self::attach_purchase_activities( (int) $signup_id, (int) $event_date_id, (int) $participant->id, $options, $event_participant_repository );
 		}
 
-		AudienceSession::set( (int) $participant->id );
+		// Registering another person leaves the browser remembered as who it
+		// was: the new participant never takes over its session.
+		if ( empty( $request_context['register_another_person'] ) ) {
+			AudienceSession::set( (int) $participant->id );
+		}
 
 		if ( ! $transaction_id ) {
 			// This purchase's own ticket type and activities: the relationship
@@ -1145,14 +1192,16 @@ class SignupHookBridge {
 	 * The existing participant a get-tickets buyer is: the trusted viewer
 	 * identity, else the participant with the submitted email. Shared by
 	 * link_participant() and the transaction's participant, so both name the
-	 * same person.
+	 * same person. A purchase made for another person (#1528) has no viewer
+	 * identity, so only the submitted email decides.
 	 *
 	 * @param string $email             Buyer email.
 	 * @param string $participant_token Optional request token.
+	 * @param array  $request_context   What the request says about itself: 'register_another_person' (bool).
 	 * @return Participant|null
 	 */
-	private static function resolve_buyer( $email, $participant_token = '' ) {
-		$participant = GroupSignupPricing::resolve_viewer_participant( (string) $participant_token );
+	private static function resolve_buyer( $email, $participant_token = '', array $request_context = array() ) {
+		$participant = GroupSignupPricing::resolve_viewer_participant( (string) $participant_token, $request_context );
 		if ( ! $participant ) {
 			$participant = ( new ParticipantRepository() )->get_by_email( $email );
 		}
@@ -1172,9 +1221,10 @@ class SignupHookBridge {
 	 * @param int[]    $signup_ids        Signup rows the transaction pays for.
 	 * @param string   $email             Buyer email.
 	 * @param string   $participant_token Optional request token.
+	 * @param array    $request_context   What the request says about itself: 'register_another_person' (bool).
 	 * @return int|null
 	 */
-	public static function filter_transaction_participant_id( $participant_id, $signup_ids, $email, $participant_token = '' ) {
+	public static function filter_transaction_participant_id( $participant_id, $signup_ids, $email, $participant_token = '', $request_context = array() ) {
 		if ( null !== $participant_id || ! TransactionParticipantLink::available() ) {
 			return $participant_id;
 		}
@@ -1195,7 +1245,7 @@ class SignupHookBridge {
 			return null;
 		}
 
-		$participant = self::resolve_buyer( $email, $participant_token );
+		$participant = self::resolve_buyer( $email, $participant_token, (array) $request_context );
 		return $participant ? (int) $participant->id : null;
 	}
 

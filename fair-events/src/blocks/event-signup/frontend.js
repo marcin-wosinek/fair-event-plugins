@@ -39,6 +39,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	// with the selection minimums, decide whether the form can be submitted.
 	// renderFormState() is the only place that turns it into DOM.
 	const formStates = new WeakMap();
+	// One state model per block: the untouched baseline form, whether the
+	// block is registering another person (#1528), and a counter that tells
+	// the latest viewer-context request from the ones it superseded.
+	const blockStates = new WeakMap();
 	// Elements whose listeners are attached. Hydration and form setup both
 	// reach the same sections, and a second listener would submit twice.
 	const wiredElements = new WeakSet();
@@ -61,6 +65,14 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const forms = document.querySelectorAll(
 			'.fair-events-get-tickets-form'
 		);
+		// Kept before anything personalizes the form: a form for another
+		// person starts from this copy, never from the viewer's own.
+		forms.forEach( function ( form ) {
+			const block = form.closest( '.fair-events-get-tickets' );
+			if ( block ) {
+				getBlockState( block ).baselineForm = form.cloneNode( true );
+			}
+		} );
 		forms.forEach( setupForm );
 
 		// Companion wrapper rendered in place of the <form> for a recognised
@@ -92,6 +104,126 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	}
 
 	/**
+	 * The block's state model, created on first use.
+	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper.
+	 * @return {Object} State: baselineForm, registeringAnother, generation.
+	 */
+	function getBlockState( block ) {
+		let state = blockStates.get( block );
+		if ( ! state ) {
+			state = {
+				baselineForm: null,
+				registeringAnother: false,
+				generation: 0,
+			};
+			blockStates.set( block, state );
+		}
+		return state;
+	}
+
+	/**
+	 * Replace the block's form with a fresh copy of the baseline one — no
+	 * identity, selection, answers, consent or checkout key carried over —
+	 * and fetch the context it needs: an anonymous visitor's ticket types and
+	 * prices while registering another person, the viewer's own otherwise.
+	 * The mode lives in memory only, so a reload restores normal recognition.
+	 * @param {HTMLElement} block                The .fair-events-get-tickets wrapper.
+	 * @param {boolean}     registeringAnother   Whether the fresh form registers another person.
+	 * @param {Object}      [options]
+	 * @param {boolean}     [options.keepMessage] Leave the block's message as it is.
+	 */
+	function showFreshForm( block, registeringAnother, options = {} ) {
+		const blockState = getBlockState( block );
+		const current = block.querySelector( '.fair-events-get-tickets-form' );
+		if ( ! current || ! blockState.baselineForm ) {
+			return;
+		}
+
+		blockState.registeringAnother = registeringAnother;
+		const fresh = blockState.baselineForm.cloneNode( true );
+		current.replaceWith( fresh );
+
+		if ( ! options.keepMessage ) {
+			const messageContainer = getMessageContainer( block );
+			if ( messageContainer ) {
+				messageContainer.textContent = '';
+				messageContainer.className = 'message-container';
+			}
+		}
+
+		if ( registeringAnother ) {
+			fresh.insertBefore(
+				buildRegisterAnotherHeader( block ),
+				fresh.firstChild
+			);
+		}
+
+		setupForm( fresh );
+		hydrateViewerContext( block );
+
+		if ( registeringAnother ) {
+			fresh
+				.querySelector( '.fair-events-register-another-heading' )
+				.focus();
+		}
+	}
+
+	/**
+	 * Heading of the form that registers another person, with the way back
+	 * to the viewer's own ticket.
+	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper.
+	 * @return {HTMLElement} The header.
+	 */
+	function buildRegisterAnotherHeader( block ) {
+		const header = document.createElement( 'div' );
+		header.className = 'fair-events-register-another';
+
+		const heading = document.createElement( 'h3' );
+		heading.className = 'fair-events-register-another-heading';
+		heading.tabIndex = -1;
+		heading.textContent = __( 'Registering another person', 'fair-events' );
+		header.appendChild( heading );
+
+		const back = document.createElement( 'button' );
+		back.type = 'button';
+		back.className = 'fair-events-register-another-back';
+		back.textContent = __( 'Back to your ticket', 'fair-events' );
+		back.addEventListener( 'click', function () {
+			const form = block.querySelector( '.fair-events-get-tickets-form' );
+			// A purchase on its way is not abandoned half-sent.
+			if ( form && getFormState( form ).processing ) {
+				return;
+			}
+			showFreshForm( block, false );
+		} );
+		header.appendChild( back );
+
+		return header;
+	}
+
+	/**
+	 * Wire the "Register another person" action a companion plugin renders
+	 * with the tickets the viewer holds. No-op when it isn't offered.
+	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper.
+	 */
+	function wireRegisterAnother( block ) {
+		const button = block
+			? block.querySelector( '.fair-events-register-another-button' )
+			: null;
+		if ( ! button || wiredElements.has( button ) ) {
+			return;
+		}
+		wiredElements.add( button );
+		button.addEventListener( 'click', function () {
+			const form = block.querySelector( '.fair-events-get-tickets-form' );
+			if ( form && getFormState( form ).processing ) {
+				return;
+			}
+			showFreshForm( block, true );
+		} );
+	}
+
+	/**
 	 * Fetch and apply the request-time viewer-context personalization for a
 	 * single Event Signup block.
 	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper.
@@ -118,9 +250,17 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			renderFormState( form );
 		}
 
+		// A response is applied only while its request is the block's latest:
+		// one that arrives after the form was replaced belongs to a form —
+		// and an identity — no longer shown.
+		const blockState = getBlockState( block );
+		const generation = ++blockState.generation;
+		const isCurrent = () => blockState.generation === generation;
+		const registeringAnother = blockState.registeringAnother;
+
 		let settled = false;
 		const release = function () {
-			if ( settled ) {
+			if ( settled || ! isCurrent() ) {
 				return;
 			}
 			settled = true;
@@ -129,13 +269,20 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				renderFormState( form );
 			}
 		};
-		const timeoutId = setTimeout( release, VIEWER_CONTEXT_TIMEOUT );
+		// Another person's form is never released without its answer: their
+		// ticket types and prices must be the server's, not the ones last
+		// shown to the viewer.
+		const timeoutId = registeringAnother
+			? null
+			: setTimeout( release, VIEWER_CONTEXT_TIMEOUT );
 
 		const params = new URLSearchParams( { event_date_id: eventDateId } );
 		const pageToken = new URL( window.location.href ).searchParams.get(
 			'participant_token'
 		);
-		if ( pageToken ) {
+		if ( registeringAnother ) {
+			params.set( 'register_another_person', '1' );
+		} else if ( pageToken ) {
 			params.set( 'participant_token', pageToken );
 		}
 		if ( block.dataset.showTicketPrice !== undefined ) {
@@ -148,14 +295,83 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		apiFetch( { path: `${ VIEWER_CONTEXT_PATH }?${ params.toString() }` } )
 			.then( function ( response ) {
 				clearTimeout( timeoutId );
+				if ( ! isCurrent() ) {
+					return;
+				}
+				if ( registeringAnother ) {
+					if ( applyAnotherPersonContext( form, response ) ) {
+						release();
+					} else {
+						showAnotherPersonUnavailable( block );
+					}
+					return;
+				}
 				applyViewerContext( block, form, response );
 				release();
 			} )
 			.catch( function ( error ) {
 				console.error( 'Viewer-context fetch error:', error );
 				clearTimeout( timeoutId );
+				if ( ! isCurrent() ) {
+					return;
+				}
+				if ( registeringAnother ) {
+					showAnotherPersonUnavailable( block );
+					return;
+				}
 				release();
 			} );
+	}
+
+	/**
+	 * Give another person's form the ticket types, activities and prices of
+	 * a visitor nobody remembers, as the server just resolved them.
+	 * @param {HTMLFormElement|null} form     The fresh form.
+	 * @param {Object}               response viewer-context response.
+	 * @return {boolean} Whether the response was the anonymous one asked for.
+	 */
+	function applyAnotherPersonContext( form, response ) {
+		if ( ! form || ! response || ! response.register_another_person ) {
+			return false;
+		}
+		getFormState( form ).viewerContextApplied = true;
+
+		if ( response.ticket_type_fieldset_html ) {
+			replaceFieldset(
+				form,
+				'.fair-events-ticket-fieldset',
+				response.ticket_type_fieldset_html
+			);
+			wireTicketTypeInputs( form );
+		}
+		if ( response.ticket_options_fieldset_html ) {
+			replaceFieldset(
+				form,
+				'.fair-events-ticket-options',
+				response.ticket_options_fieldset_html
+			);
+			wireTicketOptionInputs( form );
+		}
+
+		refreshSignupState( form );
+		return true;
+	}
+
+	/**
+	 * Say that another person's form could not be prepared. It stays
+	 * unavailable; the way back to the viewer's own ticket remains.
+	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper.
+	 */
+	function showAnotherPersonUnavailable( block ) {
+		showMessage(
+			getMessageContainer( block ),
+			__(
+				'We could not prepare the form for another person. Go back to your ticket and try again.',
+				'fair-events'
+			),
+			'error',
+			CSS_PREFIX
+		);
 	}
 
 	/**
@@ -241,6 +457,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		wireAddActivities( block );
 		wireCancelSignup( block );
 		wireSignedUpOccurrenceSelector( block );
+		wireRegisterAnother( block );
 
 		refreshSignupState( form );
 
@@ -932,6 +1149,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const block = form.closest( '.fair-events-get-tickets' );
 		state.viewerContextLoading =
 			!! block && parseInt( block.dataset.eventDateId || '0', 10 ) > 0;
+		// Fixed for the life of this form: leaving the mode replaces it.
+		state.registeringAnother =
+			!! block && getBlockState( block ).registeringAnother;
 
 		form.addEventListener( 'submit', function ( e ) {
 			e.preventDefault();
@@ -939,6 +1159,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			if (
 				state.processing ||
 				state.completed ||
+				// Another person's form is never sent before the server
+				// resolved their own ticket types and prices.
+				( state.registeringAnother && state.viewerContextLoading ) ||
 				! validateForm( form )
 			) {
 				return;
@@ -960,6 +1183,12 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 					// purchase and takes a key of its own, even with the very
 					// same selection.
 					checkoutKeys.reset();
+					if ( state.registeringAnother && block ) {
+						// The other person is registered: back to the viewer's
+						// own ticket, with the confirmation left in place.
+						showFreshForm( block, false, { keepMessage: true } );
+						return;
+					}
 					state.completed = true;
 				}
 				state.processing = false;
@@ -1060,7 +1289,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	/**
 	 * The form's state model, created on first use.
 	 * @param {HTMLFormElement} form The get-tickets form.
-	 * @return {Object} State: viewerContextLoading, viewerContextApplied, processing, completed, submitLabel.
+	 * @return {Object} State: viewerContextLoading, viewerContextApplied, processing, completed, registeringAnother, submitLabel.
 	 */
 	function getFormState( form ) {
 		let state = formStates.get( form );
@@ -1071,6 +1300,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				viewerContextApplied: false,
 				processing: false,
 				completed: false,
+				registeringAnother: false,
 				submitLabel: submitButton ? submitButton.textContent : '',
 			};
 			formStates.set( form, state );
@@ -1141,11 +1371,13 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			return;
 		}
 
+		// The viewer's own tickets step aside while the form is another
+		// person's, so it is never read as part of their registration.
 		const existing = block.querySelector(
 			'.fair-events-get-tickets-existing'
 		);
 		if ( existing ) {
-			existing.hidden = state.completed;
+			existing.hidden = state.completed || state.registeringAnother;
 		}
 
 		let returnEl = block.querySelector( '.fair-events-get-tickets-return' );
@@ -2259,7 +2491,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		data._honeypot = honeypotField ? honeypotField.value : '';
 
 		data.questionnaire_answers = collectQuestionAnswers( form );
-		if ( form.dataset.participantToken ) {
+		if ( getFormState( form ).registeringAnother ) {
+			// The other person's own purchase: no credential of the viewer's
+			// travels with it.
+			data.register_another_person = true;
+		} else if ( form.dataset.participantToken ) {
 			data.participant_token = form.dataset.participantToken;
 		}
 		if ( typeof window.fairEventsMetaAttribution === 'function' ) {

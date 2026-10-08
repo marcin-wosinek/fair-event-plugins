@@ -1119,12 +1119,12 @@ msgstr "Opłata nie znaleziona."
 msgid "Could not read SVG file."
 msgstr "Nie można odczytać pliku SVG."
 
-#: src/Hooks/PaymentHooks.php:999
+#: src/Hooks/PaymentHooks.php:1023
 msgid "Paid online via Mollie"
 msgstr "Opłacone online za pośrednictwem Mollie"
 
 #. translators: %1$s: Mollie status, %2$d: transaction ID
-#: src/Hooks/PaymentHooks.php:1043
+#: src/Hooks/PaymentHooks.php:1067
 #, php-format
 msgid "Online payment %1$s (transaction #%2$d)"
 msgstr "Płatność online %1$s (transakcja #%2$d)"
@@ -1715,7 +1715,7 @@ msgstr "Nie jesteś zarejestrowany na to wydarzenie."
 msgid "You have been removed from this event."
 msgstr "Zostałeś usunięty z tego wydarzenia."
 
-#: src/Hooks/SignupHookBridge.php:541
+#: src/Hooks/SignupHookBridge.php:547
 #: src/Admin/manage-event-audience-tab/EventAudience.js:3059
 msgid "Cancel signup"
 msgstr "Anuluj rejestrację"
@@ -1735,8 +1735,8 @@ msgstr "Nie znaleziono daty wydarzenia dla tego wydarzenia"
 #: src/blocks/audience-signup/render.php:393
 #: src/blocks/event-interest/render.php:161
 #: src/blocks/mailing-signup/render.php:156
-#: src/Hooks/SignupHookBridge.php:550
-#: src/Hooks/SignupHookBridge.php:646
+#: src/Hooks/SignupHookBridge.php:556
+#: src/Hooks/SignupHookBridge.php:680
 msgid "Not you? Start fresh"
 msgstr "To nie ty? Zacznij od nowa"
 
@@ -1823,7 +1823,7 @@ msgstr "Wyświetl plik"
 msgid "Failed to update attendance."
 msgstr "Nie udało się zaktualizować frekwencji."
 
-#: src/Services/GroupSignupPricing.php:159
+#: src/Services/GroupSignupPricing.php:173
 msgid "This ticket type is not available for your account."
 msgstr "Ten typ biletu nie jest dostępny dla Twojego konta."
 
@@ -1848,11 +1848,11 @@ msgstr "Rejestracja dla %s"
 msgid "Redirecting to payment…"
 msgstr "Przekierowanie do płatności…"
 
-#: src/Hooks/SignupHookBridge.php:852
+#: src/Hooks/SignupHookBridge.php:889
 msgid "free"
 msgstr "bezpłatnie"
 
-#: src/Hooks/PaymentHooks.php:425
+#: src/Hooks/PaymentHooks.php:449
 #: src/Hooks/PendingSubscriptionTimeoutHooks.php:56
 #: src/Hooks/WeeklyDigestHooks.php:55
 msgid "Every 5 minutes (fair-audience)"
@@ -2050,7 +2050,7 @@ msgstr "Ta płatność nie ma kontekstu potrzebnego do ponowienia."
 msgid "Original line items could not be loaded."
 msgstr "Nie można załadować oryginalnych pozycji."
 
-#: src/Hooks/SignupHookBridge.php:964
+#: src/Hooks/SignupHookBridge.php:1005
 msgid "We recognise this email — check your inbox to continue."
 msgstr "Rozpoznajemy ten adres e-mail — sprawdź swoją skrzynkę odbiorczą, aby kontynuować."
 
@@ -2058,11 +2058,11 @@ msgstr "Rozpoznajemy ten adres e-mail — sprawdź swoją skrzynkę odbiorczą, 
 msgid "You have been subscribed."
 msgstr "Zostałeś zapisany."
 
-#: src/Hooks/SignupHookBridge.php:855
+#: src/Hooks/SignupHookBridge.php:892
 msgid "full"
 msgstr "pełne"
 
-#: src/Hooks/SignupHookBridge.php:461
+#: src/Hooks/SignupHookBridge.php:467
 msgid "You are signed up for this date."
 msgstr "Jesteś zarejestrowany na ten termin."
 
@@ -2204,19 +2204,19 @@ msgstr "Wiadomość e-mail potwierdzająca została wysłana."
 msgid "Website"
 msgstr "Strona internetowa"
 
-#: src/Hooks/SignupHookBridge.php:820
-#: src/Hooks/SignupHookBridge.php:872
+#: src/Hooks/SignupHookBridge.php:857
+#: src/Hooks/SignupHookBridge.php:909
 msgid "Add activities"
 msgstr "Dodaj aktywności"
 
 #. translators: %s: ticket type name
-#: src/Hooks/SignupHookBridge.php:485
+#: src/Hooks/SignupHookBridge.php:491
 #, php-format
 msgid "Your ticket: %s"
 msgstr "Twój bilet: %s"
 
-#: src/Hooks/SignupHookBridge.php:492
-#: src/Hooks/SignupHookBridge.php:824
+#: src/Hooks/SignupHookBridge.php:498
+#: src/Hooks/SignupHookBridge.php:861
 msgid "Your activities:"
 msgstr "Twoje aktywności:"
 
@@ -2375,7 +2375,7 @@ msgid "This ticket type is no longer available. Please pick another option."
 msgstr "Ten typ biletu nie jest już dostępny. Proszę wybrać inną opcję."
 
 #. translators: 1: discount percentage, 2: group name
-#: src/Services/GroupSignupPricing.php:192
+#: src/Services/GroupSignupPricing.php:206
 #, php-format
 msgid "%1$s%% discount applied (%2$s)"
 msgstr "%1$s%% rabatu zastosowano (%2$s)"
@@ -2459,7 +2459,7 @@ msgstr "Jedno z wybranych wystąpień jest w pełni zarezerwowane."
 msgid "Paid activities are not available because the payment plugin is not configured."
 msgstr "Płatne zajęcia nie są dostępne, ponieważ wtyczka płatności nie jest skonfigurowana."
 
-#: src/Hooks/SignupHookBridge.php:517
+#: src/Hooks/SignupHookBridge.php:523
 msgid "already signed up"
 msgstr "już zapisany"
 
@@ -3231,7 +3231,7 @@ msgid "Enter a valid phone number with country code (for example +49 170 123 45 
 msgstr "Wpisz prawidłowy numer telefonu z kodem kraju (na przykład +49 170 123 45 67) dla: %s"
 
 #. translators: 1: discount amount, 2: group name
-#: src/Services/GroupSignupPricing.php:200
+#: src/Services/GroupSignupPricing.php:214
 #, php-format
 msgid "%1$s discount applied (%2$s)"
 msgstr "Zastosowana zniżka %1$s (%2$s)"
@@ -3308,11 +3308,11 @@ msgstr "Twoje zajęcia nie mogły być zapisane. Spróbuj ponownie."
 msgid "Your ticket is no longer active."
 msgstr "Twój bilet nie jest już aktywny."
 
-#: src/Hooks/SignupHookBridge.php:835
+#: src/Hooks/SignupHookBridge.php:872
 msgid "Add to ticket"
 msgstr "Dodaj do biletu"
 
-#: src/Hooks/SignupHookBridge.php:837
+#: src/Hooks/SignupHookBridge.php:874
 msgid "Choose a ticket"
 msgstr "Wybierz bilet"
 
@@ -3846,26 +3846,30 @@ msgstr "Ten zakup nie został jeszcze opłacony. Rola zmieni się na „Zarejest
 msgid "This signup has tickets and cannot be cancelled here. Please contact the organizer."
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:465
+#: src/Hooks/SignupHookBridge.php:471
 msgid "Your tickets:"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:529
+#: src/Hooks/SignupHookBridge.php:535
 msgid "View another date"
 msgstr ""
 
-#: src/Hooks/SignupHookBridge.php:576
+#: src/Hooks/SignupHookBridge.php:609
 msgid "Buy another ticket for yourself"
 msgstr ""
 
 #. translators: 1: participant name, 2: participant email address
-#: src/Hooks/SignupHookBridge.php:582
+#: src/Hooks/SignupHookBridge.php:615
 #, php-format
 msgid "You are buying as %1$s (%2$s)."
 msgstr ""
 
 #. translators: %s: participant name or email address
-#: src/Hooks/SignupHookBridge.php:591
+#: src/Hooks/SignupHookBridge.php:624
 #, php-format
 msgid "You are buying as %s."
+msgstr ""
+
+#: src/Hooks/SignupHookBridge.php:562
+msgid "Register another person"
 msgstr ""

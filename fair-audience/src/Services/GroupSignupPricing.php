@@ -28,10 +28,11 @@ class GroupSignupPricing {
 	 * SignupHookBridge::enrich_render_context() already performs for pre-fill.
 	 *
 	 * @param string $participant_token Optional request token.
+	 * @param array  $request_context   What the request says about itself, see resolve_viewer_identity().
 	 * @return \FairAudience\Models\Participant|null Participant, or null when anonymous/unknown.
 	 */
-	public static function resolve_viewer_participant( $participant_token = '' ) {
-		$identity = self::resolve_viewer_identity( $participant_token );
+	public static function resolve_viewer_participant( $participant_token = '', array $request_context = array() ) {
+		$identity = self::resolve_viewer_identity( $participant_token, $request_context );
 		return $identity['participant'];
 	}
 
@@ -41,10 +42,23 @@ class GroupSignupPricing {
 	 * A signed-in WordPress account is authoritative even when the browser also
 	 * carries a synchronized audience-session cookie.
 	 *
+	 * A request that registers another person (#1528) has no viewer identity:
+	 * whoever the browser is remembered as is not the buyer, so nothing of
+	 * theirs — prefill, restricted tiers, discounts — applies to it, and no
+	 * session is read or written.
+	 *
 	 * @param string $participant_token Optional request token, authoritative when valid.
+	 * @param array  $request_context   What the request says about itself: 'register_another_person' (bool).
 	 * @return array{participant: \FairAudience\Models\Participant|null, source: string|null}
 	 */
-	public static function resolve_viewer_identity( $participant_token = '' ) {
+	public static function resolve_viewer_identity( $participant_token = '', array $request_context = array() ) {
+		if ( ! empty( $request_context['register_another_person'] ) ) {
+			return array(
+				'participant' => null,
+				'source'      => null,
+			);
+		}
+
 		$participant_repository = new ParticipantRepository();
 
 		if ( '' !== $participant_token ) {
