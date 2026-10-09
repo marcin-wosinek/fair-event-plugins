@@ -15,6 +15,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use FairEvents\Models\CheckoutKey;
+use FairEventsShared\LineItemTotals;
 use FairEventsShared\Money;
 
 /**
@@ -603,7 +604,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		// Validate ticket type belongs to this event date (or its series master)
 		// and has not been disabled.
-		$amount               = 0.00;
+		$ticket_unit_price    = null;
 		$config_event_date_id = $this->resolve_master_event_date_id( $event_date_id );
 		if ( ! $config_event_date_id ) {
 			$config_event_date_id = $event_date_id;
@@ -656,7 +657,7 @@ class GetTicketsController extends WP_REST_Controller {
 					array( 'status' => 409 )
 				);
 			}
-			$amount = $unit_price * $quantity;
+			$ticket_unit_price = $unit_price;
 		}
 
 		$unit_options = $this->load_unit_options( $unit_option_ids, (int) $config_event_date_id );
@@ -693,17 +694,46 @@ class GetTicketsController extends WP_REST_Controller {
 		if ( is_wp_error( $option_line_items ) ) {
 			return $option_line_items;
 		}
-		$ticket_amount = $amount;
-		foreach ( $option_line_items as $item ) {
-			$amount += (float) $item['quantity'] * (float) $item['amount'];
+		$event_title = $this->resolve_event_title( $event_date );
+		$description = $event_title
+			? sprintf(
+				/* translators: %s: event name */
+				__( 'Ticket for %s', 'fair-events' ),
+				$event_title
+			)
+			: sprintf(
+				/* translators: %d: event date ID */
+				__( 'Ticket for event #%d', 'fair-events' ),
+				$event_date_id
+			);
+
+		// The purchase's line items, built before anything is decided: the
+		// amount saved on the signup, whether it is free or paid and what
+		// the transaction charges all come from this one list (see
+		// FairEventsShared\LineItemTotals). Activities get their own line
+		// item(s) instead of being folded into the ticket line, so the finance
+		// ledger names what was bought. A ticket priced at zero gets no line —
+		// a pure activity-only signup (free/no ticket type + paid activity)
+		// skips a nonsensical €0 line.
+		$line_items = array();
+		if ( null !== $ticket_unit_price && 0.0 !== LineItemTotals::normalize_amount( $ticket_unit_price ) ) {
+			$line_items[] = array(
+				'name'     => $description,
+				'quantity' => $quantity,
+				'amount'   => $ticket_unit_price,
+			);
 		}
+		foreach ( $option_line_items as $item ) {
+			$line_items[] = $item;
+		}
+		$amount = LineItemTotals::total( $line_items );
 
 		// Fail closed: a priced ticket must never be saved when payment can't
 		// be collected. Rejecting up front avoids the orphaned pending_payment
 		// row left by the connector-unconfigured case and the silent
 		// free-confirmation the old connector-absent fallback produced. Covers
 		// activity-only pricing too (free ticket type + paid activity), since
-		// $amount already includes the options total above.
+		// $amount is the total of every line above.
 		if ( $amount > 0 && $this->payments_unavailable() ) {
 			return new WP_Error(
 				'payment_unavailable',
@@ -725,40 +755,11 @@ class GetTicketsController extends WP_REST_Controller {
 		);
 
 		// Paid path — payments were confirmed available above (see the
-		// fail-closed guard), so the payment is planned here, at the prices
-		// just resolved, and carried out once the signup is saved.
+		// fail-closed guard), so the payment is planned here, from the line
+		// items the amount was calculated from, and carried out once the
+		// signup is saved.
 		$payment = null;
 		if ( $amount > 0 ) {
-			$event_title = $this->resolve_event_title( $event_date );
-			$description = $event_title
-				? sprintf(
-					/* translators: %s: event name */
-					__( 'Ticket for %s', 'fair-events' ),
-					$event_title
-				)
-				: sprintf(
-					/* translators: %d: event date ID */
-					__( 'Ticket for event #%d', 'fair-events' ),
-					$event_date_id
-				);
-
-			// Activities get their own line item(s) (from $option_line_items,
-			// resolved above) instead of being folded into the ticket line, so the
-			// finance ledger names what was bought. The ticket line is only added
-			// when there's an actual ticket price — a pure activity-only signup
-			// (free/no ticket type + paid activity) skips a nonsensical €0 line.
-			$line_items = array();
-			if ( $ticket_amount > 0 ) {
-				$line_items[] = array(
-					'name'     => $description,
-					'quantity' => $quantity,
-					'amount'   => $ticket_amount / $quantity,
-				);
-			}
-			foreach ( $option_line_items as $item ) {
-				$line_items[] = $item;
-			}
-
 			$payment = array(
 				'line_items'    => $line_items,
 				'description'   => $description,
@@ -1292,14 +1293,17 @@ class GetTicketsController extends WP_REST_Controller {
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$payment['line_items'],
 			array(
-				'currency'       => $payment['currency'],
-				'description'    => $payment['description'],
-				'event_date_id'  => (int) $payment['event_date_id'],
-				'post_id'        => $this->resolve_event_post_id( (int) $payment['event_date_id'] ),
-				'user_id'        => $user_id ? $user_id : null,
-				'participant_id' => $this->resolve_transaction_participant_id( $signup_ids, $email, (string) $request->get_param( 'participant_token' ), $request_context ),
-				'email'          => $email,
-				'metadata'       => array_merge(
+				'currency'        => $payment['currency'],
+				'description'     => $payment['description'],
+				'event_date_id'   => (int) $payment['event_date_id'],
+				'post_id'         => $this->resolve_event_post_id( (int) $payment['event_date_id'] ),
+				'user_id'         => $user_id ? $user_id : null,
+				'participant_id'  => $this->resolve_transaction_participant_id( $signup_ids, $email, (string) $request->get_param( 'participant_token' ), $request_context ),
+				'email'           => $email,
+				// The amount the signups were saved with; a transaction for
+				// any other total is refused.
+				'expected_amount' => LineItemTotals::normalize_amount( $checkout['context']['amount'] ),
+				'metadata'        => array_merge(
 					array(
 						'source'        => 'fair-events-get-tickets',
 						'event_date_id' => (int) $payment['event_date_id'],
@@ -1527,7 +1531,7 @@ class GetTicketsController extends WP_REST_Controller {
 					array( 'status' => 409 )
 				);
 			}
-			if ( 0.0 === (float) $price ) {
+			if ( 0.0 === LineItemTotals::normalize_amount( $price ) ) {
 				continue;
 			}
 			$line_items[] = array(
@@ -2166,8 +2170,27 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$count        = count( $occurrences );
-		$total_amount = $unit_price * $count;
+		// One line item per occurrence, built before anything is decided: each
+		// signup row's amount, the free-or-paid decision and the shared
+		// transaction all come from this list (see
+		// FairEventsShared\LineItemTotals).
+		$line_items = array();
+		foreach ( $occurrences as $occ ) {
+			$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
+				? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
+				: $occ->start_datetime;
+			$line_items[] = array(
+				'name'     => sprintf(
+					/* translators: %s: occurrence date/time label */
+					__( 'Ticket for %s', 'fair-events' ),
+					$occ_label
+				),
+				'quantity' => 1,
+				'amount'   => $unit_price,
+			);
+		}
+		$occurrence_amount = LineItemTotals::line_total( 1, $unit_price );
+		$total_amount      = LineItemTotals::total( $line_items );
 
 		// Fail closed before any row is written: reject a priced multi-instance
 		// signup when payment can't be collected, mirroring create_signup().
@@ -2211,22 +2234,6 @@ class GetTicketsController extends WP_REST_Controller {
 					$series_master_id
 				);
 
-			$line_items = array();
-			foreach ( $occurrences as $occ ) {
-				$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
-					? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
-					: $occ->start_datetime;
-				$line_items[] = array(
-					'name'     => sprintf(
-						/* translators: %s: occurrence date/time label */
-						__( 'Ticket for %s', 'fair-events' ),
-						$occ_label
-					),
-					'quantity' => 1,
-					'amount'   => $unit_price,
-				);
-			}
-
 			$payment = array(
 				'line_items'    => $line_items,
 				'description'   => $description,
@@ -2259,7 +2266,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'shared'           => true,
 			),
 			$demands,
-			static function () use ( $occurrences, $ticket_type, $name, $email, $mailing_opt_in, $unit_price, $total_amount ) {
+			static function () use ( $occurrences, $ticket_type, $name, $email, $mailing_opt_in, $occurrence_amount, $total_amount ) {
 				$saved_ids = array();
 				foreach ( $occurrences as $occ ) {
 					$signup_id = \FairEvents\Models\EventSignup::save_in_transaction(
@@ -2270,7 +2277,7 @@ class GetTicketsController extends WP_REST_Controller {
 							'email'          => $email,
 							'quantity'       => 1,
 							'mailing_opt_in' => $mailing_opt_in ? 1 : 0,
-							'amount'         => $unit_price,
+							'amount'         => $occurrence_amount,
 							'status'         => $total_amount > 0 ? 'pending_payment' : 'confirmed',
 						)
 					);

@@ -431,14 +431,52 @@ if ( ! function_exists( 'add_filter' ) ) {
 
 if ( ! function_exists( 'apply_filters' ) ) {
 	/**
-	 * Stub of WordPress apply_filters() — returns the value unfiltered.
+	 * Stub of WordPress apply_filters() — returns the value unfiltered, unless
+	 * a test put a callback for the hook in $GLOBALS['_fair_test_filters'].
 	 *
 	 * @param string $hook_name Filter name.
 	 * @param mixed  $value     Value to filter.
+	 * @param mixed  ...$args   Further arguments passed to the callback.
 	 * @return mixed
 	 */
-	function apply_filters( $hook_name, $value ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- stub keeps the real signature.
-		return $value;
+	function apply_filters( $hook_name, $value, ...$args ) {
+		$filters = isset( $GLOBALS['_fair_test_filters'] ) ? $GLOBALS['_fair_test_filters'] : array();
+		return isset( $filters[ $hook_name ] ) ? $filters[ $hook_name ]( $value, ...$args ) : $value;
+	}
+}
+
+if ( ! function_exists( 'do_action' ) ) {
+	/**
+	 * Stub of WordPress do_action() — hooks are not run in unit tests.
+	 *
+	 * @return void
+	 */
+	function do_action() {
+	}
+}
+
+if ( ! function_exists( 'absint' ) ) {
+	/**
+	 * Stub of WordPress absint().
+	 *
+	 * @param mixed $maybeint Value to convert.
+	 * @return int
+	 */
+	function absint( $maybeint ) {
+		return abs( (int) $maybeint );
+	}
+}
+
+if ( ! function_exists( 'wp_generate_password' ) ) {
+	/**
+	 * Stub of WordPress wp_generate_password() — a fixed-character string of
+	 * the requested length.
+	 *
+	 * @param int $length Password length.
+	 * @return string
+	 */
+	function wp_generate_password( $length = 12 ) {
+		return str_repeat( 'a', $length );
 	}
 }
 

@@ -9,6 +9,8 @@
 
 namespace FairPaymentsConnector\Models;
 
+use FairEventsShared\LineItemTotals;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -29,9 +31,11 @@ class LineItem {
 		$sort_order = 0;
 
 		foreach ( $items as $item ) {
+			// Stored already rounded, by the same policy as the transaction
+			// amount, instead of leaving it to the DECIMAL(10,2) columns.
 			$quantity     = isset( $item['quantity'] ) ? absint( $item['quantity'] ) : 1;
-			$unit_amount  = (float) $item['amount'];
-			$total_amount = $quantity * $unit_amount;
+			$unit_amount  = LineItemTotals::normalize_amount( $item['amount'] );
+			$total_amount = LineItemTotals::line_total( $quantity, $item['amount'] );
 
 			$inserted = $wpdb->insert(
 				$table_name,

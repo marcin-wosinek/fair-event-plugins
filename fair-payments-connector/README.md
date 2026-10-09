@@ -40,6 +40,26 @@ Other plugins integrate via four global functions in `fair-payments-connector.ph
 - `fair_payment_get_transaction( $transaction_id )`
 - `fair_payment_sync_transaction_status( $transaction_id )`
 
+### Transaction totals
+
+A transaction charges the total of its line items, calculated by
+`FairEventsShared\LineItemTotals`: two decimals, rounded half up — the unit
+amount first, then each line (quantity × unit amount), then the sum. The
+stored line items always add up to the transaction amount.
+
+- A quantity is a positive whole number (default 1). An amount is any finite
+  number: negative for a discount line, zero for something free. The total
+  must be positive.
+- `fair_payment_before_validate_line_items` may change the line items; the
+  result is validated again and is what gets charged and stored.
+- `fair_payment_calculated_total` and `fair_payment_before_create_transaction`
+  cannot change the amount: a transaction whose amount no longer equals its
+  line items is refused (`transaction_total_mismatch`). Change the price
+  through the line items.
+- Pass `expected_amount` in `$args` to refuse a transaction whose total
+  differs from the amount you already decided on (409
+  `transaction_amount_mismatch`).
+
 ## Development
 
 ### Install dependencies
