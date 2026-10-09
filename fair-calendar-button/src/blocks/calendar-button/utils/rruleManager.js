@@ -1,18 +1,82 @@
 /**
- * RRULE Manager for centralized parsing and generation
- * Handles bidirectional conversion between UI state and RRULE strings
+ * RRULE Manager for the Calendar Button block.
+ *
+ * Adapts the block's recurrence attributes to the shared recurrence logic in
+ * fair-events-shared, so rules and occurrence dates match Fair Events.
  */
 
-import { addDays, addWeeks, parseISO, isValid, isAfter } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
+import {
+	buildRRule,
+	expandRRulePreview,
+} from 'fair-events-shared/src/recurrence.js';
+
+const UNTIL_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * RRuleManager class for managing RRULE parsing and generation
+ * Translate the block's recurrence attributes into the shared recurrence shape.
+ *
+ * @param {Object} uiState Block recurrence attributes (frequency, interval, count, until).
+ * @return {Object} Shared recurrence shape accepted by `buildRRule()`.
  */
-export class RRuleManager {
-	constructor() {
-		this.supportedFields = [ 'FREQ', 'INTERVAL', 'COUNT', 'UNTIL' ];
+function toSharedRecurrence( uiState ) {
+	const hasFrequency = !! uiState?.frequency;
+	let frequency = hasFrequency ? String( uiState.frequency ) : '';
+
+	// A stored two-week interval is the shared "biweekly" frequency. Other
+	// intervals are outside the shared vocabulary and are dropped.
+	if ( frequency === 'WEEKLY' && Number( uiState.interval ) === 2 ) {
+		frequency = 'BIWEEKLY';
 	}
 
+	const count = Number( uiState?.count ) > 0 ? Number( uiState.count ) : null;
+	const until =
+		typeof uiState?.until === 'string' &&
+		UNTIL_DATE_PATTERN.test( uiState.until )
+			? uiState.until
+			: '';
+
+	return {
+		enabled: hasFrequency,
+		frequency: frequency.toLowerCase(),
+		endType: ! count && until ? 'until' : 'count',
+		count,
+		until,
+	};
+}
+
+/**
+ * Normalize a block start value to the naive local datetime the shared
+ * expansion expects. A date-only value becomes local midnight, so it is not
+ * read as UTC.
+ *
+ * @param {string} startDate Start date string (YYYY-MM-DD or datetime format).
+ * @return {string} Local "Y-m-dTH:i:s" string, or '' when the value is not a date.
+ */
+function toLocalStartDatetime( startDate ) {
+	if ( ! startDate || typeof startDate !== 'string' ) {
+		return '';
+	}
+
+	const start = parseISO( startDate );
+	return isValid( start ) ? format( start, "yyyy-MM-dd'T'HH:mm:ss" ) : '';
+}
+
+/**
+ * Convert a "Y-m-d" string to a Date at local midnight.
+ *
+ * @param {string} dateString Date string in YYYY-MM-DD format.
+ * @return {Date} Local date.
+ */
+function toLocalDate( dateString ) {
+	const [ year, month, day ] = dateString.split( '-' ).map( Number );
+	return new Date( year, month - 1, day );
+}
+
+/**
+ * RRuleManager class for managing RRULE generation and occurrence previews
+ */
+export class RRuleManager {
 	/**
 	 * Convert UI state to RRULE string
 	 *
@@ -20,117 +84,27 @@ export class RRuleManager {
 	 * @return {string} RRULE string
 	 */
 	toRRule( uiState ) {
-		if ( ! uiState || ! uiState.frequency ) {
-			return '';
-		}
-
-		const parts = [];
-
-		// Handle frequency - convert BIWEEKLY to WEEKLY with INTERVAL=2
-		if ( uiState.frequency === 'BIWEEKLY' ) {
-			parts.push( 'FREQ=WEEKLY' );
-			parts.push( 'INTERVAL=2' );
-		} else {
-			parts.push( `FREQ=${ uiState.frequency }` );
-			if ( uiState.interval && uiState.interval > 1 ) {
-				parts.push( `INTERVAL=${ uiState.interval }` );
-			}
-		}
-
-		// Add COUNT or UNTIL (mutually exclusive)
-		if ( uiState.count && uiState.count > 0 ) {
-			parts.push( `COUNT=${ uiState.count }` );
-		} else if ( uiState.until ) {
-			const untilFormatted = this.formatUntilDate( uiState.until );
-			if ( untilFormatted ) {
-				parts.push( `UNTIL=${ untilFormatted }` );
-			}
-		}
-
-		return parts.join( ';' );
-	}
-
-	/**
-	 * Format date for UNTIL clause (YYYYMMDD format)
-	 *
-	 * @param {string} dateString Date string in YYYY-MM-DD format
-	 * @return {string} Formatted date for RRULE (YYYYMMDD)
-	 */
-	formatUntilDate( dateString ) {
-		if ( ! dateString || typeof dateString !== 'string' ) {
-			return '';
-		}
-
-		// Remove hyphens and validate format
-		const formatted = dateString.replace( /-/g, '' );
-		if ( ! /^\d{8}$/.test( formatted ) ) {
-			return '';
-		}
-
-		return formatted;
+		return buildRRule( toSharedRecurrence( uiState ) ) || '';
 	}
 
 	/**
 	 * Generate array of event dates based on recurrence rule
 	 *
-	 * @param {Object} uiState UI state object with frequency, count, until, and interval
-	 * @param {string} startDate Start date string (YYYY-MM-DD or datetime format)
+	 * @param {Object} uiState      UI state object with frequency, count, until, and interval
+	 * @param {string} startDate    Start date string (YYYY-MM-DD or datetime format)
 	 * @param {number} maxInstances Maximum number of instances to generate (default: 10)
-	 * @return {Array<Date>} Array of Date objects representing event occurrences
+	 * @return {Array<Date>} Array of local-midnight Date objects, one per occurrence day
 	 */
 	generateEvents( uiState, startDate, maxInstances = 10 ) {
-		if ( ! uiState || ! uiState.frequency || ! startDate ) {
+		const rrule = this.toRRule( uiState );
+		const start = toLocalStartDatetime( startDate );
+		if ( ! rrule || ! start ) {
 			return [];
 		}
 
-		const start = parseISO( startDate );
-		if ( ! isValid( start ) ) {
-			return [];
-		}
-
-		const events = [ start ];
-		const frequency =
-			uiState.frequency === 'BIWEEKLY' ? 'WEEKLY' : uiState.frequency;
-		const interval =
-			uiState.frequency === 'BIWEEKLY' ? 2 : uiState.interval || 1;
-
-		// Parse until date if provided
-		let untilDate = null;
-		if ( uiState.until ) {
-			untilDate = parseISO( uiState.until );
-			if ( ! isValid( untilDate ) ) {
-				untilDate = null;
-			}
-		}
-
-		// Determine how many events to generate
-		const targetCount = uiState.count || maxInstances;
-		const limit = Math.min( targetCount, maxInstances );
-
-		let currentDate = start;
-		for ( let i = 1; i < limit; i++ ) {
-			// Calculate next occurrence based on frequency and interval
-			switch ( frequency ) {
-				case 'DAILY':
-					currentDate = addDays( currentDate, interval );
-					break;
-				case 'WEEKLY':
-					currentDate = addWeeks( currentDate, interval );
-					break;
-				default:
-					// Unknown frequency, stop generating
-					return events;
-			}
-
-			// Check if we've exceeded the until date
-			if ( untilDate && isAfter( currentDate, untilDate ) ) {
-				break;
-			}
-
-			events.push( currentDate );
-		}
-
-		return events;
+		return expandRRulePreview( rrule, start, maxInstances ).dates.map(
+			toLocalDate
+		);
 	}
 }
 
