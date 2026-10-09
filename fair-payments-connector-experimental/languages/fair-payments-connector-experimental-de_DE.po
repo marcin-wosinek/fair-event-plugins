@@ -446,4 +446,5 @@ msgstr "Der Import von %1$s wurde nach %2$d neuen, %3$d aktualisierten und %4$d 
 #. Description of the plugin
 #: fair-payments-connector-experimental.php
 msgid "Experimental features for Fair Payments Connector: connected sites."
-msgstr ""
+msgstr "Experimentelle Funktionen für Fair Payments Connector: verbundene Websites."
+

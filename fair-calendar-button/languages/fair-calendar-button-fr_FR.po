@@ -206,60 +206,60 @@ msgstr "Date de fin"
 msgid "Leave empty for unlimited repetitions, or set \"Number of Repetitions\" above."
 msgstr "Laissez vide pour des répétitions illimitées, ou définissez un \"Nombre de répétitions\" ci-dessus."
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:84
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:86
 msgid "Sun"
 msgstr "Dim"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:85
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:87
 msgid "Mon"
 msgstr "Lun"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:86
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:88
 msgid "Tue"
 msgstr "Mar"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:87
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:89
 msgid "Wed"
 msgstr "Mer"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:88
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:90
 msgid "Thu"
 msgstr "Jeu"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:89
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:91
 msgid "Fri"
 msgstr "Ven"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:90
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:92
 msgid "Sat"
 msgstr "Sam"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:105
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:107
 msgid "Previous month"
 msgstr "Mois précédent"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:119
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:121
 msgid "Next month"
 msgstr "Mois suivant"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:154
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:156
 msgid "Event occurs on this day"
 msgstr "L'événement a lieu ce jour"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:162
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:164
 msgid "Event occurs on this day (last occurrence)"
 msgstr "L'événement a lieu ce jour (dernière occurrence)"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:166
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:168
 msgid "Last occurrence date"
 msgstr "Date de la dernière occurrence"
 
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:189
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:191
 msgid "1 event occurrence in this month"
 msgstr "1 occurrence d'événement ce mois"
 
 #. translators: %d: number of event occurrences
-#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:194
+#: src/blocks/calendar-button/components/RecurringEventsCalendar.js:196
 #, js-format
 msgid "%d event occurrences in this month"
 msgstr "%d occurrences d'événement ce mois"

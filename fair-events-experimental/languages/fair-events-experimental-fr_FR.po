@@ -635,7 +635,7 @@ msgstr "Erreur : %s"
 #. translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase)
 #: src/API/MetaConversionsController.php:150
 #: src/Admin/settings/MetaConversions.js:224
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta a rejeté l'événement de test %s. Vérifiez la configuration et réessayez."
 
@@ -1424,4 +1424,3 @@ msgstr "La fin doit être postérieure au début."
 #: src/Admin/manage-event-schedule/scheduleModel.js:262
 msgid "(untitled item)"
 msgstr "(élément sans titre)"
-

@@ -598,4 +598,3 @@ msgstr "Sin entrada — la entrada a la que pertenecían estas respuestas fue el
 #: src/Admin/submission-detail/SubmissionDetail.js:390
 msgid "Ticket"
 msgstr "Entrada"
-

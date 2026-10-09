@@ -598,4 +598,3 @@ msgstr "Kein Ticket — das Ticket, zu dem diese Antworten gehörten, wurde entf
 #: src/Admin/submission-detail/SubmissionDetail.js:390
 msgid "Ticket"
 msgstr "Ticket"
-

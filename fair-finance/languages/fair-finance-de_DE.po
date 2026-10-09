@@ -507,8 +507,9 @@ msgstr "Von Administrator überprüftes Budget für die Zuordnung oder null für
 
 #: src/Admin/reconciliation/ReconciliationApp.js:343
 msgid "Open Mollie connection settings"
-msgstr ""
+msgstr "Mollie-Verbindungseinstellungen öffnen"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:351
 msgid "Mollie has not authorized this site to read settlements yet, so they cannot be retrieved automatically. Reconnect to Mollie in the Fair Payments Connector settings to grant that permission. You can keep importing the settlement CSV in the meantime."
-msgstr ""
+msgstr "Mollie hat diese Website noch nicht autorisiert, um Abrechnungen zu lesen, daher können diese nicht automatisch abgerufen werden. Verbinden Sie sich erneut mit Mollie in den Fair Payments Connector-Einstellungen, um diese Berechtigung zu erteilen. Sie können die Abrechnungs-CSV in der Zwischenzeit weiterhin importieren."
+

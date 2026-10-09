@@ -636,7 +636,7 @@ msgstr "Błąd: %s"
 #. translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase)
 #: src/API/MetaConversionsController.php:150
 #: src/Admin/settings/MetaConversions.js:224
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta odrzuciła zdarzenie testowe %s. Sprawdź konfigurację i spróbuj ponownie."
 
@@ -1431,4 +1431,3 @@ msgstr "Zakończenie musi być późniejsze niż rozpoczęcie."
 #: src/Admin/manage-event-schedule/scheduleModel.js:262
 msgid "(untitled item)"
 msgstr "(pozycja bez tytułu)"
-

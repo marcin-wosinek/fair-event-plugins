@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-08T06:10:25+00:00\n"
+"POT-Creation-Date: 2026-10-09T07:52:43+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector\n"
@@ -296,8 +296,8 @@ msgstr ""
 
 #: src/API/PaymentEndpoint.php:447
 #: src/API/PaymentEndpoint.php:488
-#: src/API/TransactionAPI.php:165
-#: src/API/TransactionAPI.php:302
+#: src/API/TransactionAPI.php:207
+#: src/API/TransactionAPI.php:344
 #: src/API/TransactionsController.php:427
 #: src/API/TransactionsController.php:447
 #: src/API/TransactionsController.php:519
@@ -336,72 +336,78 @@ msgstr ""
 msgid "Telegram test message sent."
 msgstr ""
 
-#: src/API/TransactionAPI.php:103
+#: src/API/TransactionAPI.php:64
+msgid "The total of the line items must be positive."
+msgstr ""
+
+#: src/API/TransactionAPI.php:78
+msgid "The price of this purchase changed while it was being prepared. Please try again."
+msgstr ""
+
+#: src/API/TransactionAPI.php:145
 msgid "Failed to create transaction."
 msgstr ""
 
-#: src/API/TransactionAPI.php:119
+#: src/API/TransactionAPI.php:161
 msgid "Failed to create line items."
 msgstr ""
 
-#: src/API/TransactionAPI.php:179
+#: src/API/TransactionAPI.php:221
 msgid "Redirect URL is required."
 msgstr ""
 
 #. translators: %d: transaction ID
-#: src/API/TransactionAPI.php:194
+#: src/API/TransactionAPI.php:236
 #, php-format
 msgid "Payment #%d"
 msgstr ""
 
-#: src/API/TransactionAPI.php:264
+#: src/API/TransactionAPI.php:306
 msgid "Failed to update transaction with payment details."
 msgstr ""
 
-#: src/API/TransactionAPI.php:321
+#: src/API/TransactionAPI.php:363
 msgid "This payment can no longer be continued."
 msgstr ""
 
-#: src/API/TransactionAPI.php:436
+#: src/API/TransactionAPI.php:478
 msgid "This transaction has no Mollie payment ID to sync."
 msgstr ""
 
-#: src/API/TransactionAPI.php:627
+#: src/API/TransactionAPI.php:669
 msgid "Line items must be an array."
 msgstr ""
 
-#: src/API/TransactionAPI.php:635
+#: src/API/TransactionAPI.php:677
 msgid "At least one line item is required."
 msgstr ""
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:647
+#: src/API/TransactionAPI.php:689
 #, php-format
 msgid "Line item at index %d must be an array."
 msgstr ""
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:659
+#: src/API/TransactionAPI.php:701
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
 msgstr ""
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:671
+#: src/API/TransactionAPI.php:714
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
 msgstr ""
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:683
-#, php-format
-msgid "Line item at index %d must have positive amount."
-msgstr ""
-
-#. translators: %d: line item index
-#: src/API/TransactionAPI.php:697
+#: src/API/TransactionAPI.php:728
 #, php-format
 msgid "Line item at index %d must have positive quantity."
+msgstr ""
+
+#: src/API/TransactionAPI.php:811
+msgid "The transaction amount does not match its line items."
 msgstr ""
 
 #: src/API/TransactionsController.php:231

@@ -507,8 +507,9 @@ msgstr "Presupuesto revisado por el administrador para aplicar a la coincidencia
 
 #: src/Admin/reconciliation/ReconciliationApp.js:343
 msgid "Open Mollie connection settings"
-msgstr ""
+msgstr "Abre los ajustes de conexión de Mollie"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:351
 msgid "Mollie has not authorized this site to read settlements yet, so they cannot be retrieved automatically. Reconnect to Mollie in the Fair Payments Connector settings to grant that permission. You can keep importing the settlement CSV in the meantime."
-msgstr ""
+msgstr "Mollie aún no ha autorizado a este sitio a leer liquidaciones, por lo que no se pueden recuperar automáticamente. Vuelve a conectar con Mollie en los ajustes de Fair Payments Connector para otorgar ese permiso. Mientras tanto, puedes seguir importando el CSV de liquidación."
+

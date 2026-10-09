@@ -446,4 +446,5 @@ msgstr "Import z %1$s został przerwany po %2$d nowych, %3$d zaktualizowanych i 
 #. Description of the plugin
 #: fair-payments-connector-experimental.php
 msgid "Experimental features for Fair Payments Connector: connected sites."
-msgstr ""
+msgstr "Eksperymentalne funkcje dla Fair Payments Connector: połączone witryny."
+

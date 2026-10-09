@@ -513,7 +513,7 @@ msgstr "Grupa została pomyślnie usunięta."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:204
-#, php-format,js-format
+#, php-format, js-format
 msgid "%s (copy)"
 msgstr "%s (kopia)"
 
@@ -2075,66 +2075,67 @@ msgstr "Nie udało się wczytać reguł grupy."
 
 #: src/API/FeesController.php:802
 msgid "This payment is no longer pending, so no reminder was sent."
-msgstr ""
+msgstr "Ta płatność nie jest już oczekująca, dlatego nie wysłano przypomnienia."
 
 #: src/API/FeesController.php:812
 msgid "The member for this payment no longer exists, so no reminder was sent."
-msgstr ""
+msgstr "Członek powiązany z tą płatnością już nie istnieje, dlatego nie wysłano przypomnienia."
 
 #: src/API/FeesController.php:820
 msgid "This member has no valid email address, so no reminder was sent."
-msgstr ""
+msgstr "Ten członek nie ma ważnego adresu e-mail, dlatego nie wysłano przypomnienia."
 
 #: src/API/FeesController.php:831
 msgid "The reminder email could not be sent."
-msgstr ""
+msgstr "Nie można było wysłać wiadomości e-mail z przypomnieniem."
 
 #: src/API/FeesController.php:849
 msgid "The reminder was sent, but it could not be recorded on the payment. Do not send it again."
-msgstr ""
+msgstr "Przypomnienie zostało wysłane, ale nie można było go zapisać na płatności. Nie wysyłaj go ponownie."
 
 #: src/API/FeesController.php:860
 msgid "Payment reminder sent."
-msgstr ""
+msgstr "Przypomnienie o płatności wysłane."
 
 #: src/Admin/fee-detail/FeeDetail.js:575
 msgid "The payment reminder could not be sent."
-msgstr ""
+msgstr "Nie można było wysłać przypomnienia o płatności."
 
 #. translators: %s: recipient email address
 #: src/Admin/fee-detail/FeeDetail.js:618
 #, js-format
 msgid "Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again."
-msgstr ""
+msgstr "Przypomnienie o płatności wysłane do %s, ale nie można było odświeżyć tej strony. Przeładuj stronę, aby zobaczyć datę przypomnienia; wiadomość e-mail nie musi być wysyłana ponownie."
 
 #. translators: %s: recipient email address
 #: src/Admin/fee-detail/FeeDetail.js:630
 #, js-format
 msgid "Payment reminder sent to %s."
-msgstr ""
+msgstr "Przypomnienie o płatności wysłane do %s."
 
 #: src/Admin/fee-detail/FeeDetail.js:726
 #: src/Admin/fee-detail/FeeDetail.js:903
 #: src/Admin/fee-detail/FeeDetail.js:1018
 msgid "Send Payment Reminder"
-msgstr ""
+msgstr "Wyślij przypomnienie o płatności"
 
 #: src/Admin/fee-detail/FeeDetail.js:914
 msgid "One reminder email will be sent to this member only."
-msgstr ""
+msgstr "Jedno wiadomość e-mail z przypomnieniem zostanie wysłana tylko do tego członka."
 
 #: src/Admin/fee-detail/FeeDetail.js:930
 msgid "Member:"
-msgstr ""
+msgstr "Członek:"
 
 #: src/Admin/fee-detail/FeeDetail.js:943
 msgid "Email:"
-msgstr ""
+msgstr "E-mail:"
 
 #: src/Admin/fee-detail/FeeDetail.js:969
 msgid "This member has no email address, so a reminder cannot be sent."
-msgstr ""
+msgstr "Ten członek nie ma adresu e-mail, dlatego nie można wysłać przypomnienia."
 
 #: src/Admin/fee-detail/FeeDetail.js:979
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
-msgstr ""
+msgstr "Przypomnienia są wysyłane do wszystkich członków z oczekującymi płatnościami. Poczekaj, aż to się skończy, zanim wyślesz to."
+

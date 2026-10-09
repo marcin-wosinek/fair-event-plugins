@@ -598,4 +598,3 @@ msgstr "Aucun billet — le billet auquel ces réponses appartenaient a été su
 #: src/Admin/submission-detail/SubmissionDetail.js:390
 msgid "Ticket"
 msgstr "Billet"
-

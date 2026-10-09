@@ -598,4 +598,3 @@ msgstr "Brak biletu — bilet, do którego należały te odpowiedzi, został usu
 #: src/Admin/submission-detail/SubmissionDetail.js:390
 msgid "Ticket"
 msgstr "Bilet"
-

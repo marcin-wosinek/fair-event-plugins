@@ -59,8 +59,8 @@ msgstr "Test połączenia nie powiódł się: %s"
 
 #: src/API/PaymentEndpoint.php:447
 #: src/API/PaymentEndpoint.php:488
-#: src/API/TransactionAPI.php:165
-#: src/API/TransactionAPI.php:302
+#: src/API/TransactionAPI.php:207
+#: src/API/TransactionAPI.php:344
 #: src/API/TransactionsController.php:427
 #: src/API/TransactionsController.php:447
 #: src/API/TransactionsController.php:519
@@ -83,62 +83,56 @@ msgstr "Nieprawidłowa kwota płatności."
 msgid "Payment of %1$s %2$s"
 msgstr "Płatność %1$s %2$s"
 
-#: src/API/TransactionAPI.php:103
+#: src/API/TransactionAPI.php:145
 msgid "Failed to create transaction."
 msgstr "Nie udało się utworzyć transakcji."
 
-#: src/API/TransactionAPI.php:119
+#: src/API/TransactionAPI.php:161
 msgid "Failed to create line items."
 msgstr "Nie udało się utworzyć pozycji linii."
 
-#: src/API/TransactionAPI.php:179
+#: src/API/TransactionAPI.php:221
 msgid "Redirect URL is required."
 msgstr "Adres URL przekierowania jest wymagany."
 
 #. translators: %d: transaction ID
-#: src/API/TransactionAPI.php:194
+#: src/API/TransactionAPI.php:236
 #, php-format
 msgid "Payment #%d"
 msgstr "Płatność #%d"
 
-#: src/API/TransactionAPI.php:264
+#: src/API/TransactionAPI.php:306
 msgid "Failed to update transaction with payment details."
 msgstr "Nie udało się zaktualizować transakcji szczegółami płatności."
 
-#: src/API/TransactionAPI.php:627
+#: src/API/TransactionAPI.php:669
 msgid "Line items must be an array."
 msgstr "Pozycje linii muszą być tablicą."
 
-#: src/API/TransactionAPI.php:635
+#: src/API/TransactionAPI.php:677
 msgid "At least one line item is required."
 msgstr "Wymagana jest co najmniej jedna pozycja linii."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:647
+#: src/API/TransactionAPI.php:689
 #, php-format
 msgid "Line item at index %d must be an array."
 msgstr "Pozycja linii na indeksie %d musi być tablicą."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:659
+#: src/API/TransactionAPI.php:701
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
 msgstr "Pozycja linii na indeksie %d nie ma wymaganego pola \"name\"."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:671
+#: src/API/TransactionAPI.php:714
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
 msgstr "Pozycja w indeksie %d ma nieprawidłowe pole \"amount\"."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:683
-#, php-format
-msgid "Line item at index %d must have positive amount."
-msgstr "Pozycja w indeksie %d musi mieć dodatnią kwotę."
-
-#. translators: %d: line item index
-#: src/API/TransactionAPI.php:697
+#: src/API/TransactionAPI.php:728
 #, php-format
 msgid "Line item at index %d must have positive quantity."
 msgstr "Pozycja w indeksie %d musi mieć dodatnią ilość."
@@ -649,7 +643,7 @@ msgstr "Nie udało się zaimportować transakcji."
 msgid "Export Selected"
 msgstr "Eksportuj wybrane"
 
-#: src/API/TransactionAPI.php:436
+#: src/API/TransactionAPI.php:478
 msgid "This transaction has no Mollie payment ID to sync."
 msgstr "Ta transakcja nie ma identyfikatora płatności Mollie do synchronizacji."
 
@@ -1611,7 +1605,7 @@ msgstr "Wiadomość testowa Telegram nie powiodła się dla wszystkich identyfik
 msgid "Telegram test message sent."
 msgstr "Wiadomość testowa Telegram została wysłana."
 
-#: src/API/TransactionAPI.php:321
+#: src/API/TransactionAPI.php:363
 msgid "This payment can no longer be continued."
 msgstr "Ta płatność nie może być już kontynuowana."
 
@@ -2085,33 +2079,33 @@ msgstr "Otwórz Aktualizacje zewnętrzne"
 
 #: src/API/OAuthCallbackController.php:157
 msgid "The Mollie authorization response was incomplete. Please try connecting again."
-msgstr ""
+msgstr "Odpowiedź autoryzacji Mollie była niekompletna. Spróbuj połączyć się ponownie."
 
 #: src/Admin/settings/ConnectionTab.js:461
 msgid "Reconnect to Mollie"
-msgstr ""
+msgstr "Połącz się ponownie z Mollie"
 
 #: src/Admin/settings/ConnectionTab.js:470
 msgid "Mollie has not authorized this site to read settlements yet. Reconnect to grant that permission. Payments keep working in the meantime."
-msgstr ""
+msgstr "Mollie nie udzielił jeszcze tej witrynie dostępu do odczytu rozliczeń. Połącz się ponownie, aby udzielić tego uprawnienia. Płatności będą działać w międzyczasie."
 
 #: src/Admin/settings/ConnectionTab.js:485
 msgid "Settlement access: authorized"
-msgstr ""
+msgstr "Dostęp do rozliczeń: autoryzowany"
 
 #: src/Admin/settings/ConnectionTab.js:729
 msgid "Reconnect"
-msgstr ""
+msgstr "Połącz się ponownie"
 
 #: src/Admin/settings/SettingsApp.js:72
 msgid "Authorization cancelled. Nothing was changed, so an existing Mollie connection keeps working."
-msgstr ""
+msgstr "Autoryzacja anulowana. Nic nie zostało zmienione, więc istniejące połączenie z Mollie nadal działa."
 
 #. translators: %s: error code reported by the authorization server
 #: src/Admin/settings/SettingsApp.js:78
 #, js-format
 msgid "Mollie authorization failed (%s). Nothing was changed, so an existing Mollie connection keeps working."
-msgstr ""
+msgstr "Autoryzacja Mollie nie powiodła się (%s). Nic nie zostało zmienione, więc istniejące połączenie z Mollie nadal działa."
 
 #: src/API/ApiTokenAuth.php:46
 msgid "This token does not have the required scope."
@@ -2442,3 +2436,16 @@ msgstr[2] "Znaleziono %d transakcji."
 #: src/Admin/transactions/TransactionsApp.js:832
 msgid "No transactions match these filters. Change them or select “Reset filters”."
 msgstr "Żadna transakcja nie pasuje do tych filtrów. Zmień je lub wybierz „Resetuj filtry”."
+
+#: src/API/TransactionAPI.php:64
+msgid "The total of the line items must be positive."
+msgstr "Suma pozycji musi być dodatnia."
+
+#: src/API/TransactionAPI.php:78
+msgid "The price of this purchase changed while it was being prepared. Please try again."
+msgstr "Cena tego zakupu zmieniła się podczas jego przygotowywania. Spróbuj ponownie."
+
+#: src/API/TransactionAPI.php:811
+msgid "The transaction amount does not match its line items."
+msgstr "Kwota transakcji nie odpowiada jej pozycjom."
+

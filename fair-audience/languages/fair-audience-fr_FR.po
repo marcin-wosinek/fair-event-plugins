@@ -64,10 +64,10 @@ msgstr "Participants à l'événement"
 #: src/API/EventParticipantsController.php:1047
 #: src/API/EventParticipantsController.php:2803
 #: src/API/EventSignupController.php:357
-#: src/API/EventSignupController.php:835
-#: src/API/EventSignupController.php:2085
-#: src/API/EventSignupController.php:2277
-#: src/API/EventSignupController.php:2446
+#: src/API/EventSignupController.php:849
+#: src/API/EventSignupController.php:2134
+#: src/API/EventSignupController.php:2326
+#: src/API/EventSignupController.php:2495
 #: src/Services/EmailService.php:324
 #: src/Services/EmailService.php:1055
 #: src/Services/EmailService.php:2449
@@ -308,7 +308,7 @@ msgstr "Une petite question à propos de %s"
 #: src/Services/EmailService.php:2342
 #: src/Services/EmailService.php:2639
 #: src/Services/EmailService.php:2733
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s,"
 msgstr "Bonjour %s,"
 
@@ -806,23 +806,23 @@ msgstr "Enregistrer"
 msgid "Groups"
 msgstr "Groupes"
 
-#: src/API/EventSignupController.php:290
+#: src/API/EventSignupController.php:291
 msgid "You must be logged in or have a valid signup link."
 msgstr "Vous devez être connecté ou avoir un lien d'inscription valide."
 
 #: src/API/EventSignupController.php:386
-#: src/API/EventSignupController.php:863
-#: src/API/EventSignupController.php:2475
+#: src/API/EventSignupController.php:877
+#: src/API/EventSignupController.php:2524
 msgid "Could not find your participant profile."
 msgstr "Impossible de trouver votre profil de participant."
 
 #: src/API/EventSignupController.php:470
-#: src/API/EventSignupController.php:2113
+#: src/API/EventSignupController.php:2162
 msgid "You are already signed up for this event."
 msgstr "Vous êtes déjà inscrit à cet événement."
 
-#: src/API/EventSignupController.php:531
-#: src/API/EventSignupController.php:673
+#: src/API/EventSignupController.php:538
+#: src/API/EventSignupController.php:700
 msgid "You have successfully signed up for the event!"
 msgstr "Vous vous êtes inscrit avec succès à l'événement !"
 
@@ -1705,11 +1705,11 @@ msgctxt "block keyword"
 msgid "member"
 msgstr "membre"
 
-#: src/API/EventSignupController.php:2496
+#: src/API/EventSignupController.php:2545
 msgid "You are not signed up for this event."
 msgstr "Vous n'êtes pas inscrit à cet événement."
 
-#: src/API/EventSignupController.php:2524
+#: src/API/EventSignupController.php:2573
 msgid "You have been removed from this event."
 msgstr "Vous avez été retiré de cet événement."
 
@@ -1825,24 +1825,24 @@ msgstr "Échec de la mise à jour de la présence."
 msgid "This ticket type is not available for your account."
 msgstr "Ce type de billet n'est pas disponible pour votre compte."
 
-#: src/API/EventSignupController.php:1661
+#: src/API/EventSignupController.php:1728
 msgid "This event is fully booked."
 msgstr "Cet événement est complet."
 
 #. translators: %s: event title or occurrence date/time label
-#: src/API/EventSignupController.php:739
-#: src/API/EventSignupController.php:753
-#: src/API/EventSignupController.php:1693
+#: src/API/EventSignupController.php:675
+#: src/API/EventSignupController.php:766
+#: src/API/EventSignupController.php:1658
 #, php-format
 msgid "Signup for %s"
 msgstr "Inscription pour %s"
 
-#: src/API/EventSignupController.php:806
-#: src/API/EventSignupController.php:1115
-#: src/API/EventSignupController.php:1781
-#: src/API/EventSignupController.php:1928
-#: src/API/EventSignupController.php:2234
-#: src/API/EventSignupController.php:2421
+#: src/API/EventSignupController.php:820
+#: src/API/EventSignupController.php:1131
+#: src/API/EventSignupController.php:1822
+#: src/API/EventSignupController.php:1977
+#: src/API/EventSignupController.php:2283
+#: src/API/EventSignupController.php:2470
 msgid "Redirecting to payment…"
 msgstr "Redirection vers le paiement…"
 
@@ -2008,42 +2008,42 @@ msgstr "Ligne de participant non trouvée pour cette date d'événement."
 msgid "Selected ticket type was not found."
 msgstr "Le type de billet sélectionné n'a pas été trouvé."
 
-#: src/API/EventSignupController.php:1190
+#: src/API/EventSignupController.php:1233
 msgid "This ticket type is sold out. Please pick another option."
 msgstr "Ce type de billet est épuisé. Veuillez choisir une autre option."
 
-#: src/API/EventSignupController.php:1951
+#: src/API/EventSignupController.php:2000
 msgid "Invalid transaction."
 msgstr "Transaction invalide."
 
-#: src/API/EventSignupController.php:1959
+#: src/API/EventSignupController.php:2008
 msgid "Payment plugin is missing."
 msgstr "Le plugin de paiement est manquant."
 
-#: src/API/EventSignupController.php:1968
-#: src/API/EventSignupController.php:2033
+#: src/API/EventSignupController.php:2017
+#: src/API/EventSignupController.php:2082
 msgid "Transaction not found."
 msgstr "Transaction non trouvée."
 
-#: src/API/EventSignupController.php:2009
+#: src/API/EventSignupController.php:2058
 msgid "You are not authorized to retry this payment."
 msgstr "Vous n'êtes pas autorisé à réessayer ce paiement."
 
-#: src/API/EventSignupController.php:2045
+#: src/API/EventSignupController.php:2094
 msgid "This payment cannot be retried."
 msgstr "Ce paiement ne peut pas être réessayé."
 
-#: src/API/EventSignupController.php:2063
+#: src/API/EventSignupController.php:2112
 msgid "This payment is not retriable from this endpoint."
 msgstr "Ce paiement ne peut pas être réessayé à partir de ce point de terminaison."
 
-#: src/API/EventSignupController.php:2076
-#: src/API/EventSignupController.php:2268
+#: src/API/EventSignupController.php:2125
+#: src/API/EventSignupController.php:2317
 msgid "This payment is missing context needed to retry."
 msgstr "Ce paiement manque du contexte nécessaire pour réessayer."
 
-#: src/API/EventSignupController.php:2124
-#: src/API/EventSignupController.php:2329
+#: src/API/EventSignupController.php:2173
+#: src/API/EventSignupController.php:2378
 msgid "Original line items could not be loaded."
 msgstr "Les articles de ligne originaux n'ont pas pu être chargés."
 
@@ -2155,29 +2155,29 @@ msgstr "Échec de la mise à niveau du participant ID %d"
 msgid "Verbal consent recorded by %1$s on %2$s at event %3$s"
 msgstr "Consentement verbal enregistré par %1$s le %2$s à l'événement %3$s"
 
-#: src/API/EventSignupController.php:885
+#: src/API/EventSignupController.php:899
 msgid "You need an active signup before you can add activities."
 msgstr "Vous devez avoir une inscription active avant de pouvoir ajouter des activités."
 
-#: src/API/EventSignupController.php:916
+#: src/API/EventSignupController.php:930
 msgid "No new activities to add."
 msgstr "Aucune nouvelle activité à ajouter."
 
-#: src/API/EventSignupController.php:956
+#: src/API/EventSignupController.php:970
 msgid "Your activities have been added!"
 msgstr "Vos activités ont été ajoutées !"
 
 #. translators: %s: event title
-#: src/API/EventSignupController.php:1035
+#: src/API/EventSignupController.php:1050
 #, php-format
 msgid "Added activities for %s"
 msgstr "Activités ajoutées pour %s"
 
-#: src/API/EventSignupController.php:2286
+#: src/API/EventSignupController.php:2335
 msgid "Your signup is no longer active."
 msgstr "Votre inscription n'est plus active."
 
-#: src/API/EventSignupController.php:2318
+#: src/API/EventSignupController.php:2367
 msgid "These activities are already on your signup."
 msgstr "Ces activités sont déjà dans votre inscription."
 
@@ -2358,7 +2358,7 @@ msgid "interest"
 msgstr "intérêt"
 
 #: src/API/EventParticipantsController.php:946
-#: src/API/EventSignupController.php:1571
+#: src/API/EventSignupController.php:1621
 #: src/Services/EmailService.php:1953
 msgid "Event Signup"
 msgstr "Inscription à l'événement"
@@ -2367,7 +2367,7 @@ msgstr "Inscription à l'événement"
 msgid "Your answers:"
 msgstr "Vos réponses :"
 
-#: src/API/EventSignupController.php:1223
+#: src/API/EventSignupController.php:1266
 msgid "This ticket type is no longer available. Please pick another option."
 msgstr "Ce type de billet n'est plus disponible. Veuillez choisir une autre option."
 
@@ -2414,44 +2414,44 @@ msgstr "Impossible d'enregistrer le refus pour l'ID participant %d"
 msgid "Decline recorded by %1$s on %2$s at event %3$s"
 msgstr "Refus enregistré par %1$s le %2$s à l'événement %3$s"
 
-#: src/API/EventSignupController.php:560
+#: src/API/EventSignupController.php:567
 msgid "Please select at least one occurrence."
 msgstr "Veuillez sélectionner au moins une occurrence."
 
-#: src/API/EventSignupController.php:568
-#: src/API/EventSignupController.php:579
+#: src/API/EventSignupController.php:575
+#: src/API/EventSignupController.php:586
 msgid "Invalid ticket type."
 msgstr "Type de billet invalide."
 
-#: src/API/EventSignupController.php:590
+#: src/API/EventSignupController.php:597
 msgid "One of the selected occurrences is not valid for this ticket."
 msgstr "L'une des occurrences sélectionnées n'est pas valide pour ce billet."
 
 #. translators: %d: minimum number of occurrences required
-#: src/API/EventSignupController.php:603
-#, php-format,js-format
+#: src/API/EventSignupController.php:610
+#, php-format, js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Veuillez sélectionner au moins %d occurrence."
 msgstr[1] "Veuillez sélectionner au moins %d occurrences."
 
-#: src/API/EventSignupController.php:630
+#: src/API/EventSignupController.php:637
 msgid "You are already signed up for these occurrences."
 msgstr "Vous êtes déjà inscrit à ces occurrences."
 
-#: src/API/EventSignupController.php:683
-#: src/API/EventSignupController.php:1636
-#: src/API/EventSignupController.php:1648
-#: src/API/EventSignupController.php:1855
+#: src/API/EventSignupController.php:710
+#: src/API/EventSignupController.php:1703
+#: src/API/EventSignupController.php:1715
+#: src/API/EventSignupController.php:1915
 msgid "Paid signup is not available because the payment plugin is not configured."
 msgstr "L'inscription payante n'est pas disponible car le plugin de paiement n'est pas configuré."
 
-#: src/API/EventSignupController.php:700
+#: src/API/EventSignupController.php:727
 msgid "One of the selected occurrences is fully booked."
 msgstr "L'une des occurrences sélectionnées est complètement réservée."
 
-#: src/API/EventSignupController.php:1016
-#: src/API/EventSignupController.php:1028
+#: src/API/EventSignupController.php:1031
+#: src/API/EventSignupController.php:1043
 msgid "Paid activities are not available because the payment plugin is not configured."
 msgstr "Les activités payantes ne sont pas disponibles car le plugin de paiement n'est pas configuré."
 
@@ -2501,26 +2501,26 @@ msgstr "Ce participant est déjà inscrit à la date cible."
 msgid "Signup moved successfully."
 msgstr "Inscription déplacée avec succès."
 
-#: src/API/EventSignupController.php:314
+#: src/API/EventSignupController.php:315
 msgid "This link is invalid or has expired."
 msgstr "Ce lien est invalide ou a expiré."
 
-#: src/API/EventSignupController.php:323
+#: src/API/EventSignupController.php:324
 msgid "This registration link has expired. Please fill in the form again."
 msgstr "Ce lien d'inscription a expiré. Veuillez remplir le formulaire à nouveau."
 
-#: src/API/EventSignupController.php:1846
+#: src/API/EventSignupController.php:1906
 msgid "Your series pass is now active!"
 msgstr "Votre passe série est maintenant actif !"
 
 #. translators: %s: ticket type name
-#: src/API/EventSignupController.php:1864
+#: src/API/EventSignupController.php:1888
 #, php-format
 msgid "Upgrade to series pass: %s"
 msgstr "Passer à un passe série : %s"
 
 #. translators: %s: event title
-#: src/API/EventSignupController.php:1878
+#: src/API/EventSignupController.php:1926
 #, php-format
 msgid "Series pass upgrade for %s"
 msgstr "Mise à niveau du passe série pour %s"
@@ -3177,7 +3177,6 @@ msgstr "Revenu à minimal : l'abonnement marketing n'a jamais été confirmé da
 msgid "Opted out of the weekly summary."
 msgstr "Désinscrit du résumé hebdomadaire."
 
-#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Services/WeeklyDigestRenderer.php:165
 #: src/Services/WeeklyDigestRenderer.php:175
@@ -3282,21 +3281,20 @@ msgstr "L'une des activités sélectionnées n'appartient pas à cet événement
 msgid "Enter a reason for going over capacity."
 msgstr "Entrez une raison pour dépasser la capacité."
 
-#. translators: 1: ticket type or activity name, 2: places taken after the change, 3: capacity
 #. translators: 1: event date or activity name, 2: places taken after the move, 3: capacity
 #: src/API/EventParticipantsController.php:1598
 #: src/Services/TicketOperations.php:218
-#, php-format,js-format
+#, php-format, js-format
 msgid "%1$s would have %2$d of %3$d place taken."
 msgid_plural "%1$s would have %2$d of %3$d places taken."
 msgstr[0] "%1$s aurait %2$d sur %3$d place occupée."
 msgstr[1] "%1$s aurait %2$d sur %3$d places occupées."
 
-#: src/API/EventSignupController.php:1471
+#: src/API/EventSignupController.php:1521
 msgid "Your activities could not be saved. Please try again."
 msgstr "Vos activités n'ont pas pu être enregistrées. Veuillez réessayer."
 
-#: src/API/EventSignupController.php:2299
+#: src/API/EventSignupController.php:2348
 msgid "Your ticket is no longer active."
 msgstr "Votre billet n'est plus actif."
 
@@ -3316,19 +3314,17 @@ msgstr "Ce billet ne peut pas recevoir d'activités."
 msgid "Choose which ticket to add the activities to."
 msgstr "Choisissez le billet auquel ajouter les activités."
 
-#. translators: 1: ticket number among the participant's tickets, 2: ticket type name, 3: short ticket reference
 #. translators: 1: ticket number within its purchase, 2: ticket type name, 3: short ticket reference
 #: src/Services/TicketActivities.php:188
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:51
-#, php-format,js-format
+#, php-format, js-format
 msgid "Ticket %1$d — %2$s (%3$s)"
 msgstr "Billet %1$d — %2$s (%3$s)"
 
-#. translators: 1: ticket number among the participant's tickets, 2: short ticket reference
 #. translators: 1: ticket number within its purchase, 2: short ticket reference
 #: src/Services/TicketActivities.php:195
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:35
-#, php-format,js-format
+#, php-format, js-format
 msgid "Ticket %1$d (%2$s)"
 msgstr "Billet %1$d (%2$s)"
 
@@ -3811,7 +3807,7 @@ msgid "Assignee email"
 msgstr "E-mail du titulaire"
 
 #. translators: %s: activity name
-#: src/API/EventSignupController.php:1368
+#: src/API/EventSignupController.php:1418
 #, php-format
 msgid "\"%s\" is not currently on sale. Reload the page and choose again."
 msgstr "« %s » n'est pas actuellement en vente. Rechargez la page et choisissez à nouveau."
@@ -3832,34 +3828,39 @@ msgstr "Achats non finalisés :"
 msgid "This purchase is not paid yet. The role changes to Signed up when the payment succeeds; pick a role only to decide it yourself."
 msgstr "Cet achat n’est pas encore payé. Le rôle passe à « Inscrit » lorsque le paiement aboutit ; ne choisissez un rôle que pour en décider vous-même."
 
-#: src/API/EventSignupController.php:2508
+#: src/API/EventSignupController.php:2557
 msgid "This signup has tickets and cannot be cancelled here. Please contact the organizer."
-msgstr ""
+msgstr "Cette inscription a des billets et ne peut pas être annulée ici. Veuillez contacter l'organisateur."
 
 #: src/Hooks/SignupHookBridge.php:471
 msgid "Your tickets:"
-msgstr ""
+msgstr "Vos billets :"
 
 #: src/Hooks/SignupHookBridge.php:535
 msgid "View another date"
-msgstr ""
+msgstr "Voir une autre date"
 
 #: src/Hooks/SignupHookBridge.php:609
 msgid "Buy another ticket for yourself"
-msgstr ""
+msgstr "Acheter un autre billet pour vous-même"
 
 #. translators: 1: participant name, 2: participant email address
 #: src/Hooks/SignupHookBridge.php:615
 #, php-format
 msgid "You are buying as %1$s (%2$s)."
-msgstr ""
+msgstr "Vous achetez en tant que %1$s (%2$s)."
 
 #. translators: %s: participant name or email address
 #: src/Hooks/SignupHookBridge.php:624
 #, php-format
 msgid "You are buying as %s."
-msgstr ""
+msgstr "Vous achetez en tant que %s."
 
 #: src/Hooks/SignupHookBridge.php:562
 msgid "Register another person"
-msgstr ""
+msgstr "Enregistrer une autre personne"
+
+#: src/API/EventSignupController.php:1173
+msgid "This ticket type is not currently on sale."
+msgstr "Ce type de billet n'est actuellement pas en vente."
+

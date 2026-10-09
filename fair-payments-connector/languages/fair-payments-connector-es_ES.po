@@ -106,8 +106,8 @@ msgstr "Pago de %1$s %2$s"
 
 #: src/API/PaymentEndpoint.php:447
 #: src/API/PaymentEndpoint.php:488
-#: src/API/TransactionAPI.php:165
-#: src/API/TransactionAPI.php:302
+#: src/API/TransactionAPI.php:207
+#: src/API/TransactionAPI.php:344
 #: src/API/TransactionsController.php:427
 #: src/API/TransactionsController.php:447
 #: src/API/TransactionsController.php:519
@@ -116,66 +116,60 @@ msgstr "Pago de %1$s %2$s"
 msgid "Transaction not found."
 msgstr "Transacción no encontrada."
 
-#: src/API/TransactionAPI.php:103
+#: src/API/TransactionAPI.php:145
 msgid "Failed to create transaction."
 msgstr "Error al crear la transacción."
 
-#: src/API/TransactionAPI.php:119
+#: src/API/TransactionAPI.php:161
 msgid "Failed to create line items."
 msgstr "Error al crear los elementos de línea."
 
-#: src/API/TransactionAPI.php:179
+#: src/API/TransactionAPI.php:221
 msgid "Redirect URL is required."
 msgstr "La URL de redirección es obligatoria."
 
 #. translators: %d: transaction ID
-#: src/API/TransactionAPI.php:194
+#: src/API/TransactionAPI.php:236
 #, php-format
 msgid "Payment #%d"
 msgstr "Pago #%d"
 
-#: src/API/TransactionAPI.php:264
+#: src/API/TransactionAPI.php:306
 msgid "Failed to update transaction with payment details."
 msgstr "Error al actualizar la transacción con los detalles del pago."
 
-#: src/API/TransactionAPI.php:436
+#: src/API/TransactionAPI.php:478
 msgid "This transaction has no Mollie payment ID to sync."
 msgstr "Esta transacción no tiene un ID de pago de Mollie para sincronizar."
 
-#: src/API/TransactionAPI.php:627
+#: src/API/TransactionAPI.php:669
 msgid "Line items must be an array."
 msgstr "Los elementos de línea deben ser una matriz."
 
-#: src/API/TransactionAPI.php:635
+#: src/API/TransactionAPI.php:677
 msgid "At least one line item is required."
 msgstr "Se requiere al menos un elemento de línea."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:647
+#: src/API/TransactionAPI.php:689
 #, php-format
 msgid "Line item at index %d must be an array."
 msgstr "El elemento de línea en el índice %d debe ser un array."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:659
+#: src/API/TransactionAPI.php:701
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
 msgstr "El elemento de línea en el índice %d no tiene el campo requerido «name»."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:671
+#: src/API/TransactionAPI.php:714
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
 msgstr "El elemento de línea en el índice %d tiene un campo «amount» inválido."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:683
-#, php-format
-msgid "Line item at index %d must have positive amount."
-msgstr "El elemento de línea en el índice %d debe tener una cantidad positiva."
-
-#. translators: %d: line item index
-#: src/API/TransactionAPI.php:697
+#: src/API/TransactionAPI.php:728
 #, php-format
 msgid "Line item at index %d must have positive quantity."
 msgstr "El elemento de línea en el índice %d debe tener una cantidad positiva."
@@ -1608,7 +1602,7 @@ msgstr "El mensaje de prueba de Telegram falló para todos los ID de chat."
 msgid "Telegram test message sent."
 msgstr "Mensaje de prueba de Telegram enviado."
 
-#: src/API/TransactionAPI.php:321
+#: src/API/TransactionAPI.php:363
 msgid "This payment can no longer be continued."
 msgstr "Este pago ya no puede continuarse."
 
@@ -1789,7 +1783,7 @@ msgstr "Extrae transacciones de otro sitio. Las transacciones que ya existen aqu
 #: src/Admin/external-updates/components/MollieFeeFeedback.js:37
 #, js-format
 msgid "Loading Mollie fees: %1$d of %2$d (updated: %3$d, failed: %4$d)"
-msgstr "Cargando comisiones de Mollie: %1$d de %2$d (actualizadas: %3$d, fallidas: %4$d)"
+msgstr "Sincronizando comisiones de Mollie: %1$d / %2$d (actualizadas: %3$d, fallidas: %4$d)"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:44
 msgid "Mollie fees"
@@ -1815,7 +1809,7 @@ msgstr "Cargando cuotas…"
 #: src/Admin/external-updates/components/MollieFeesPanel.js:107
 #: src/Admin/transactions/TransactionsApp.js:715
 msgid "Load missing Mollie fees"
-msgstr "Cargar cuotas de Mollie faltantes"
+msgstr "Cargar comisiones de Mollie faltantes"
 
 #: src/Admin/external-updates/components/MollieImportPanel.js:272
 msgid "Mollie payments"
@@ -2078,33 +2072,33 @@ msgstr "Abrir Actualizaciones externas"
 
 #: src/API/OAuthCallbackController.php:157
 msgid "The Mollie authorization response was incomplete. Please try connecting again."
-msgstr ""
+msgstr "La respuesta de autorización de Mollie estaba incompleta. Por favor, intenta conectar de nuevo."
 
 #: src/Admin/settings/ConnectionTab.js:461
 msgid "Reconnect to Mollie"
-msgstr ""
+msgstr "Reconectar a Mollie"
 
 #: src/Admin/settings/ConnectionTab.js:470
 msgid "Mollie has not authorized this site to read settlements yet. Reconnect to grant that permission. Payments keep working in the meantime."
-msgstr ""
+msgstr "Mollie aún no ha autorizado a este sitio a leer liquidaciones. Reconecta para otorgar ese permiso. Los pagos seguirán funcionando mientras tanto."
 
 #: src/Admin/settings/ConnectionTab.js:485
 msgid "Settlement access: authorized"
-msgstr ""
+msgstr "Acceso a liquidaciones: autorizado"
 
 #: src/Admin/settings/ConnectionTab.js:729
 msgid "Reconnect"
-msgstr ""
+msgstr "Reconectar"
 
 #: src/Admin/settings/SettingsApp.js:72
 msgid "Authorization cancelled. Nothing was changed, so an existing Mollie connection keeps working."
-msgstr ""
+msgstr "Autorización cancelada. No se cambió nada, por lo que la conexión existente a Mollie sigue funcionando."
 
 #. translators: %s: error code reported by the authorization server
 #: src/Admin/settings/SettingsApp.js:78
 #, js-format
 msgid "Mollie authorization failed (%s). Nothing was changed, so an existing Mollie connection keeps working."
-msgstr ""
+msgstr "Error de autorización de Mollie (%s). No se cambió nada, por lo que la conexión existente a Mollie sigue funcionando."
 
 #: src/API/ApiTokenAuth.php:46
 msgid "This token does not have the required scope."
@@ -2125,19 +2119,19 @@ msgstr "Se requiere al menos un alcance válido."
 #: src/API/ApiTokensController.php:147
 #: src/Admin/settings/ApiTokensTab.js:147
 msgid "Failed to create API token."
-msgstr "No se pudo crear el token de API."
+msgstr "Error al crear el token API."
 
 #: src/API/ApiTokensController.php:174
 msgid "API token not found."
-msgstr "Token de API no encontrado."
+msgstr "Token API no encontrado."
 
 #: src/API/ExternalTransactionsController.php:85
 msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
-msgstr "Filtra por fecha de transacción (created_at) desde esta fecha, p. ej. 2026-01-01."
+msgstr "Filtrar por fecha de transacción (created_at) desde esta fecha, p. ej. 2026-01-01."
 
 #: src/API/ExternalTransactionsController.php:92
 msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
-msgstr "Filtra por fecha de transacción (created_at) hasta esta fecha, p. ej. 2026-12-31."
+msgstr "Filtrar por fecha de transacción (created_at) hasta esta fecha, p. ej. 2026-12-31."
 
 #: src/Admin/settings/ApiTokensTab.js:35
 msgid "Read transactions"
@@ -2151,7 +2145,7 @@ msgstr "%s UTC"
 
 #: src/Admin/settings/ApiTokensTab.js:88
 msgid "Failed to load API tokens."
-msgstr "No se pudieron cargar los tokens de API."
+msgstr "Error al cargar los tokens de API."
 
 #. translators: %s: token label
 #: src/Admin/settings/ApiTokensTab.js:179
@@ -2161,7 +2155,7 @@ msgstr "Token de API «%s» revocado."
 
 #: src/Admin/settings/ApiTokensTab.js:194
 msgid "Failed to revoke API token."
-msgstr "No se pudo revocar el token de API."
+msgstr "Error al revocar el token de API."
 
 #: src/Admin/settings/ApiTokensTab.js:206
 #: src/Admin/settings/SettingsApp.js:228
@@ -2434,3 +2428,16 @@ msgstr[1] "%d transacciones encontradas."
 #: src/Admin/transactions/TransactionsApp.js:832
 msgid "No transactions match these filters. Change them or select “Reset filters”."
 msgstr "Ninguna transacción coincide con estos filtros. Cámbialos o selecciona «Restablecer filtros»."
+
+#: src/API/TransactionAPI.php:64
+msgid "The total of the line items must be positive."
+msgstr "El total de los artículos de línea debe ser positivo."
+
+#: src/API/TransactionAPI.php:78
+msgid "The price of this purchase changed while it was being prepared. Please try again."
+msgstr "El precio de esta compra cambió mientras se estaba preparando. Por favor, intenta de nuevo."
+
+#: src/API/TransactionAPI.php:811
+msgid "The transaction amount does not match its line items."
+msgstr "El importe de la transacción no coincide con sus artículos de línea."
+

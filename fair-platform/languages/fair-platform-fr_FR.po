@@ -39,7 +39,7 @@ msgid "Fair Platform Settings"
 msgstr "Paramètres Fair Platform"
 
 #: src/Admin/AdminHooks.php:37
-#: src/Core/Plugin.php:157
+#: src/Core/Plugin.php:158
 msgid "Fair Platform"
 msgstr ""
 
@@ -60,7 +60,7 @@ msgstr "Connexions Instagram"
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Admin/AdminHooks.php:145
+#: src/Admin/AdminHooks.php:151
 #: src/Admin/ConnectionsPage.php:24
 #: src/Admin/InstagramConnectionsPage.php:24
 msgid "You do not have sufficient permissions to access this page."
@@ -287,21 +287,21 @@ msgstr "Suppression de %d anciens journaux de connexion Instagram."
 msgid "You do not have permission to view Instagram connection logs."
 msgstr "Vous n'avez pas la permission de consulter les journaux de connexion Instagram."
 
-#: src/Core/Plugin.php:1484
-#: src/Core/Plugin.php:1508
-#: src/Core/Plugin.php:1532
+#: src/Core/Plugin.php:1515
+#: src/Core/Plugin.php:1539
+#: src/Core/Plugin.php:1563
 msgid "Fair Platform:"
 msgstr "Fair Platform :"
 
-#: src/Core/Plugin.php:1485
+#: src/Core/Plugin.php:1516
 msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
 msgstr "Les identifiants OAuth Instagram ne sont pas configurés. Veuillez ajouter INSTAGRAM_APP_ID et INSTAGRAM_APP_SECRET à wp-config.php pour l'intégration Instagram."
 
-#: src/Core/Plugin.php:1509
+#: src/Core/Plugin.php:1540
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr "Les identifiants OAuth Mollie ne sont pas configurés. Veuillez ajouter MOLLIE_CLIENT_ID et MOLLIE_CLIENT_SECRET à wp-config.php"
 
-#: src/Core/Plugin.php:1533
+#: src/Core/Plugin.php:1564
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "La bibliothèque PHP Mollie n'est pas installée. Veuillez exécuter : composer require mollie/mollie-api-php"
 
@@ -512,7 +512,7 @@ msgstr "ID utilisateur IG"
 msgid "https://github.com/marcin-wosinek/fair-event-plugins"
 msgstr ""
 
-#: src/Core/Plugin.php:161
+#: src/Core/Plugin.php:162
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là-bas."
 
@@ -529,10 +529,10 @@ msgid "Bundled translations"
 msgstr "Traductions intégrées"
 
 #: src/Core/Features.php:120
-#: src/Core/Plugin.php:158
+#: src/Core/Plugin.php:159
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Charger les fichiers .mo/.json fournis avec l'extension au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
 
-#: src/Core/Plugin.php:152
+#: src/Core/Plugin.php:153
 msgid "Translations"
 msgstr "Traductions"

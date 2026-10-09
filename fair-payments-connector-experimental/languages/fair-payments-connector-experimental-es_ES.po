@@ -446,4 +446,5 @@ msgstr "La importación desde %1$s se detuvo tras %2$d transacción(es) nueva(s)
 #. Description of the plugin
 #: fair-payments-connector-experimental.php
 msgid "Experimental features for Fair Payments Connector: connected sites."
-msgstr ""
+msgstr "Funciones experimentales para Fair Payments Connector: sitios conectados."
+
