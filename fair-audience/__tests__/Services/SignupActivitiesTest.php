@@ -11,26 +11,11 @@ use PHPUnit\Framework\TestCase;
 use FairAudience\Services\SignupActivities;
 
 /**
- * Validates the pure effective-minimum, capacity, and discount-pricing logic
- * behind #1243, without needing fair-events-experimental loaded — mirrors
- * GroupSignupPricingTest from #1242. Duck-typed rule objects (`discount_type`/
- * `discount_value`) are used instead of the concrete experimental class.
+ * Validates the pure effective-minimum and capacity logic behind #1243,
+ * without needing fair-events-experimental loaded — mirrors
+ * GroupSignupPricingTest from #1242.
  */
 class SignupActivitiesTest extends TestCase {
-	/**
-	 * Build a discount rule stub.
-	 *
-	 * @param string $discount_type  'percentage' or 'amount'.
-	 * @param float  $discount_value Discount magnitude.
-	 * @return object
-	 */
-	private function rule( $discount_type, $discount_value ) {
-		$rule                 = new \stdClass();
-		$rule->discount_type  = $discount_type;
-		$rule->discount_value = $discount_value;
-		return $rule;
-	}
-
 	/**
 	 * No minimum applies when neither the event-date global nor the ticket
 	 * type raises it.
@@ -74,44 +59,5 @@ class SignupActivitiesTest extends TestCase {
 	public function test_capacity_reached_true_at_or_above_capacity() {
 		$this->assertTrue( SignupActivities::capacity_reached( 5, 5 ) );
 		$this->assertTrue( SignupActivities::capacity_reached( 6, 5 ) );
-	}
-
-	/**
-	 * A percentage discount reduces the price proportionally.
-	 */
-	public function test_apply_discount_percentage() {
-		$this->assertEqualsWithDelta( 8.0, SignupActivities::apply_discount( 10.0, 'percentage', 20 ), 0.0001 );
-	}
-
-	/**
-	 * An amount discount subtracts a flat value.
-	 */
-	public function test_apply_discount_amount() {
-		$this->assertEqualsWithDelta( 7.0, SignupActivities::apply_discount( 10.0, 'amount', 3 ), 0.0001 );
-	}
-
-	/**
-	 * Without a discount rule, the base price passes through unchanged.
-	 */
-	public function test_resolve_price_without_discount_rule() {
-		$this->assertSame( 10.0, SignupActivities::resolve_price( 10.0, null ) );
-	}
-
-	/**
-	 * With a discount rule and a positive base price, the discount is applied.
-	 */
-	public function test_resolve_price_with_discount_rule() {
-		$price = SignupActivities::resolve_price( 10.0, $this->rule( 'percentage', 50 ) );
-		$this->assertEqualsWithDelta( 5.0, $price, 0.0001 );
-	}
-
-	/**
-	 * A free (zero-price) option is never discounted below zero — the
-	 * discount is skipped entirely, matching the legacy render's
-	 * `$opt_price > 0` guard.
-	 */
-	public function test_resolve_price_skips_discount_on_free_option() {
-		$price = SignupActivities::resolve_price( 0.0, $this->rule( 'amount', 5 ) );
-		$this->assertSame( 0.0, $price );
 	}
 }

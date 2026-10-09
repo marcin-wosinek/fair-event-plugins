@@ -55,6 +55,33 @@ async function createEventWithDates( api, title ) {
 	return { eventId, masterEventDateId: match.event_date_id };
 }
 
+// A ticket type is only purchasable with a price row in an open sale period
+// (#1659); an explicit zero keeps these scope fixtures free.
+const ALWAYS_ON_PERIOD = {
+	name: 'Always on',
+	sale_start: '2020-01-01 00:00:00',
+	sale_end: '2099-01-01 00:00:00',
+};
+
+function zeroPrice( ticketTypeIndex ) {
+	return {
+		ticket_type_index: ticketTypeIndex,
+		sale_period_index: 0,
+		price: 0,
+	};
+}
+
+async function findSignupRow( api, eventDateId, participantId ) {
+	const res = await api.get(
+		`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+		{ headers: authHeaders }
+	);
+	expect( res.ok() ).toBeTruthy();
+	return ( await res.json() ).find(
+		( p ) => p.participant_id === participantId
+	);
+}
+
 async function createTicketType(
 	api,
 	masterEventDateId,
@@ -74,8 +101,8 @@ async function createTicketType(
 						recurrence_scope: recurrenceScope,
 					},
 				],
-				sale_periods: [],
-				prices: [],
+				sale_periods: [ ALWAYS_ON_PERIOD ],
+				prices: [ zeroPrice( 0 ) ],
 			},
 		}
 	);
@@ -362,6 +389,7 @@ test.describe( 'multiple_instances ticket types — pick-N signup semantics (#93
 	let event;
 	let occurrenceIds;
 	let ttId;
+	let unpricedTtId;
 
 	async function createRecurringEvent( title, rrule ) {
 		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
@@ -416,9 +444,16 @@ test.describe( 'multiple_instances ticket types — pick-N signup semantics (#93
 							recurrence_scope: 'multiple_instances',
 							minimum_instances: minimumInstances,
 						},
+						{
+							name: 'Unpriced sessions',
+							capacity: null,
+							sort_order: 1,
+							recurrence_scope: 'multiple_instances',
+							minimum_instances: minimumInstances,
+						},
 					],
-					sale_periods: [],
-					prices: [],
+					sale_periods: [ ALWAYS_ON_PERIOD ],
+					prices: [ zeroPrice( 0 ) ],
 				},
 			}
 		);
@@ -427,10 +462,17 @@ test.describe( 'multiple_instances ticket types — pick-N signup semantics (#93
 			'create multiple_instances ticket type'
 		).toBeTruthy();
 		const body = await res.json();
-		const tt = body.ticket_types?.[ 0 ];
+		const tt = body.ticket_types.find(
+			( t ) => t.name === 'Pick your sessions'
+		);
 		expect( tt.recurrence_scope ).toBe( 'multiple_instances' );
 		expect( tt.minimum_instances ).toBe( minimumInstances );
-		return tt.id;
+		return {
+			pricedId: tt.id,
+			unpricedId: body.ticket_types.find(
+				( t ) => t.name === 'Unpriced sessions'
+			).id,
+		};
 	}
 
 	test.beforeAll( async () => {
@@ -449,10 +491,8 @@ test.describe( 'multiple_instances ticket types — pick-N signup semantics (#93
 		expect( event.occurrences.length ).toBe( 4 );
 		occurrenceIds = event.occurrences;
 
-		ttId = await createMultiInstanceTicketType(
-			event.masterEventDateId,
-			2
-		);
+		( { pricedId: ttId, unpricedId: unpricedTtId } =
+			await createMultiInstanceTicketType( event.masterEventDateId, 2 ) );
 
 		participantId = await createParticipant(
 			api,
@@ -519,6 +559,30 @@ test.describe( 'multiple_instances ticket types — pick-N signup semantics (#93
 		}
 	} );
 
+	test( 'a ticket type without a resolvable price is rejected and creates no rows', async () => {
+		const chosen = [ occurrenceIds[ 2 ], occurrenceIds[ 3 ] ];
+		const res = await api.post( '/wp-json/fair-audience/v1/event-signup', {
+			headers: authHeaders,
+			data: {
+				event_id: event.eventId,
+				event_date_id: event.masterEventDateId,
+				ticket_type_id: unpricedTtId,
+				event_date_ids: chosen,
+			},
+		} );
+		const body = await res.json();
+		expect( res.status(), JSON.stringify( body ) ).toBe( 409 );
+		expect( body.code ).toBe( 'ticket_type_unavailable' );
+		expect( body.transaction_id ).toBeUndefined();
+
+		for ( const occId of chosen ) {
+			expect(
+				await findSignupRow( api, occId, participantId ),
+				`no signup row on occurrence ${ occId }`
+			).toBeFalsy();
+		}
+	} );
+
 	test( 'a valid selection creates one row per chosen occurrence', async () => {
 		const chosen = [ occurrenceIds[ 0 ], occurrenceIds[ 1 ] ];
 		const res = await api.post( '/wp-json/fair-audience/v1/event-signup', {
@@ -570,29 +634,20 @@ test.describe( 'Series-pass upgrade — single_instance → whole_series', () =>
 	let api;
 	let adminUserId;
 	let event;
+	let unpricedEvent;
 	let singleTtId;
 	let seriesTtId;
+	let unpricedSingleTtId;
+	let unpricedSeriesTtId;
 	let participantId;
 	let fixtureOk = true;
 
-	test.beforeAll( async () => {
-		api = await request.newContext( { baseURL: BASE_URL } );
-
-		const meRes = await api.get( '/wp-json/wp/v2/users/me', {
-			headers: authHeaders,
-		} );
-		expect( meRes.ok() ).toBeTruthy();
-		adminUserId = ( await meRes.json() ).id;
-
-		event = await createEventWithDates(
-			api,
-			`Series Upgrade Test ${ Date.now() }`
-		);
-
-		// Both ticket types live on the same master date. The tickets endpoint
-		// saves the full set per event-date, so they must be created together.
+	// Both ticket types live on the same master date. The tickets endpoint
+	// saves the full set per event-date, so they must be created together.
+	// The drop-in is always free; the series pass is free only when priced.
+	async function createUpgradeTicketTypes( masterEventDateId, priceSeries ) {
 		const res = await api.post(
-			`/wp-json/fair-events/v1/event-dates/${ event.masterEventDateId }/tickets`,
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/tickets`,
 			{
 				headers: authHeaders,
 				data: {
@@ -608,25 +663,63 @@ test.describe( 'Series-pass upgrade — single_instance → whole_series', () =>
 							recurrence_scope: 'whole_series',
 						},
 					],
-					sale_periods: [],
-					prices: [],
+					sale_periods: [ ALWAYS_ON_PERIOD ],
+					prices: priceSeries
+						? [ zeroPrice( 0 ), zeroPrice( 1 ) ]
+						: [ zeroPrice( 0 ) ],
 				},
 			}
 		);
+		if ( ! res.ok() ) {
+			return null;
+		}
+		const tts = ( await res.json() ).ticket_types;
+		return {
+			singleId: tts.find(
+				( t ) => t.recurrence_scope === 'single_instance'
+			).id,
+			seriesId: tts.find( ( t ) => t.recurrence_scope === 'whole_series' )
+				.id,
+		};
+	}
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+
+		const meRes = await api.get( '/wp-json/wp/v2/users/me', {
+			headers: authHeaders,
+		} );
+		expect( meRes.ok() ).toBeTruthy();
+		adminUserId = ( await meRes.json() ).id;
+
+		event = await createEventWithDates(
+			api,
+			`Series Upgrade Test ${ Date.now() }`
+		);
+		unpricedEvent = await createEventWithDates(
+			api,
+			`Series Upgrade Unpriced Test ${ Date.now() }`
+		);
+
 		// #1410 — publishing a fair_event doesn't auto-create its event-date;
-		// captured (not asserted) so the test below can skip with a
+		// captured (not asserted) so the tests below can skip with a
 		// reference instead of failing the hook.
-		fixtureOk = res.ok();
+		const priced = await createUpgradeTicketTypes(
+			event.masterEventDateId,
+			true
+		);
+		const unpriced = await createUpgradeTicketTypes(
+			unpricedEvent.masterEventDateId,
+			false
+		);
+		fixtureOk = Boolean( priced && unpriced );
 		if ( ! fixtureOk ) {
 			return;
 		}
-		const tts = ( await res.json() ).ticket_types;
-		singleTtId = tts.find(
-			( t ) => t.recurrence_scope === 'single_instance'
-		).id;
-		seriesTtId = tts.find(
-			( t ) => t.recurrence_scope === 'whole_series'
-		).id;
+		singleTtId = priced.singleId;
+		seriesTtId = priced.seriesId;
+		unpricedSingleTtId = unpriced.singleId;
+		unpricedSeriesTtId = unpriced.seriesId;
 
 		participantId = await createParticipant(
 			api,
@@ -637,13 +730,59 @@ test.describe( 'Series-pass upgrade — single_instance → whole_series', () =>
 
 	test.afterAll( async () => {
 		await deleteParticipant( api, participantId );
-		if ( event?.eventId ) {
-			await api.delete( `/wp-json/wp/v2/fair_event/${ event.eventId }`, {
-				headers: authHeaders,
-				params: { force: 'true' },
-			} );
+		for ( const fixture of [ event, unpricedEvent ] ) {
+			if ( fixture?.eventId ) {
+				await api.delete(
+					`/wp-json/wp/v2/fair_event/${ fixture.eventId }`,
+					{ headers: authHeaders, params: { force: 'true' } }
+				);
+			}
 		}
 		await api.dispose();
+	} );
+
+	test( 'an upgrade to a series pass without a resolvable price is rejected and keeps the original signup', async () => {
+		test.skip(
+			! fixtureOk,
+			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
+		);
+		const first = await api.post(
+			'/wp-json/fair-audience/v1/event-signup',
+			{
+				headers: authHeaders,
+				data: {
+					event_id: unpricedEvent.eventId,
+					event_date_id: unpricedEvent.masterEventDateId,
+					ticket_type_id: unpricedSingleTtId,
+				},
+			}
+		);
+		expect( first.ok(), await first.text() ).toBeTruthy();
+
+		const upgrade = await api.post(
+			'/wp-json/fair-audience/v1/event-signup',
+			{
+				headers: authHeaders,
+				data: {
+					event_id: unpricedEvent.eventId,
+					event_date_id: unpricedEvent.masterEventDateId,
+					ticket_type_id: unpricedSeriesTtId,
+				},
+			}
+		);
+		const body = await upgrade.json();
+		expect( upgrade.status(), JSON.stringify( body ) ).toBe( 409 );
+		expect( body.code ).toBe( 'ticket_type_unavailable' );
+		expect( body.transaction_id ).toBeUndefined();
+
+		const row = await findSignupRow(
+			api,
+			unpricedEvent.masterEventDateId,
+			participantId
+		);
+		expect( row, 'original signup row' ).toBeTruthy();
+		expect( row.label ).toBe( 'signed_up' );
+		expect( row.ticket_type_id ).toBe( unpricedSingleTtId );
 	} );
 
 	test( 'whole_series purchase after a single_instance signup on the master upgrades in place instead of reporting already_signed_up', async () => {
