@@ -1,0 +1,1786 @@
+{
+  "generatedAt": "2026-10-09T06:37:17.938Z",
+  "results": [
+    {
+      "scenario": "wordpress-only",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 41.52,
+        "memoryBytes": 8388608,
+        "queryCount": 21,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "wordpress-only",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 40.9,
+        "memoryBytes": 8388608,
+        "queryCount": 21,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-payments-connector",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 41.37,
+        "memoryBytes": 8388608,
+        "queryCount": 22,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-payments-connector",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 43.11,
+        "memoryBytes": 8388608,
+        "queryCount": 23,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 9,
+        "transferBytes": 39298,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-content/plugins/fair-payments-connector/build/blocks/simple-payment/view.js?ver=7e924bf361a7ff70a516",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 44.79,
+        "memoryBytes": 8388608,
+        "queryCount": 26,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 58.91,
+        "memoryBytes": 8388608,
+        "queryCount": 27,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-platform",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 40.44,
+        "memoryBytes": 8388608,
+        "queryCount": 22,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-platform",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 41.91,
+        "memoryBytes": 8388608,
+        "queryCount": 22,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-audience",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 41.75,
+        "memoryBytes": 8388608,
+        "queryCount": 22,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-audience",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 42.45,
+        "memoryBytes": 8388608,
+        "queryCount": 23,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 9,
+        "transferBytes": 39032,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=2fa48842fe7d203110e3",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-timetable",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 40.22,
+        "memoryBytes": 8388608,
+        "queryCount": 22,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-timetable",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 40.94,
+        "memoryBytes": 8388608,
+        "queryCount": 22,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 6,
+        "transferBytes": 27865,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-content/plugins/fair-timetable/build/blocks/timetable/view.js?ver=ed57f83f5cb71e7557ce",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-finance",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 39.32,
+        "memoryBytes": 8388608,
+        "queryCount": 21,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-finance",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 40.08,
+        "memoryBytes": 8388608,
+        "queryCount": 21,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-payments-connector-experimental",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 39.83,
+        "memoryBytes": 8388608,
+        "queryCount": 21,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-payments-connector-experimental",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 39.89,
+        "memoryBytes": 8388608,
+        "queryCount": 21,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-form",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 43.14,
+        "memoryBytes": 8388608,
+        "queryCount": 23,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-form",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 44.85,
+        "memoryBytes": 8388608,
+        "queryCount": 23,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 12,
+        "transferBytes": 85694,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-content/plugins/fair-form/build/blocks/fair-form/frontend.js?ver=55724e5723aedc481bd2",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-calendar-button",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 40.78,
+        "memoryBytes": 8388608,
+        "queryCount": 21,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-calendar-button",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 40.9,
+        "memoryBytes": 8388608,
+        "queryCount": 21,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 6,
+        "transferBytes": 55949,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-content/plugins/fair-calendar-button/build/blocks/calendar-button/frontend.js?ver=b6c56b78183cc2d2751a",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 45.59,
+        "memoryBytes": 8388608,
+        "queryCount": 28,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 58.9,
+        "memoryBytes": 8388608,
+        "queryCount": 29,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-audience-experimental+deps",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 41.78,
+        "memoryBytes": 8388608,
+        "queryCount": 23,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-audience-experimental+deps",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 42.55,
+        "memoryBytes": 8388608,
+        "queryCount": 24,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 9,
+        "transferBytes": 39032,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=2fa48842fe7d203110e3",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 51.06,
+        "memoryBytes": 8388608,
+        "queryCount": 32,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 68.95,
+        "memoryBytes": 10485760,
+        "queryCount": 35,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 16,
+        "transferBytes": 118882,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=2fa48842fe7d203110e3",
+          "http://localhost:8889/wp-content/plugins/fair-timetable/build/blocks/timetable/view.js?ver=ed57f83f5cb71e7557ce",
+          "http://localhost:8889/wp-content/plugins/fair-payments-connector/build/blocks/simple-payment/view.js?ver=7e924bf361a7ff70a516",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-content/plugins/fair-form/build/blocks/fair-form/frontend.js?ver=55724e5723aedc481bd2",
+          "http://localhost:8889/wp-content/plugins/fair-calendar-button/build/blocks/calendar-button/frontend.js?ver=b6c56b78183cc2d2751a",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack+experimental",
+      "page": "plain",
+      "metrics": {
+        "durationMs": 52.47,
+        "memoryBytes": 8388608,
+        "queryCount": 35,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 3,
+        "transferBytes": 22613,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack+experimental",
+      "page": "feature",
+      "metrics": {
+        "durationMs": 68.91,
+        "memoryBytes": 10485760,
+        "queryCount": 38,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 16,
+        "transferBytes": 118882,
+        "assets": [
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=2fa48842fe7d203110e3",
+          "http://localhost:8889/wp-content/plugins/fair-timetable/build/blocks/timetable/view.js?ver=ed57f83f5cb71e7557ce",
+          "http://localhost:8889/wp-content/plugins/fair-payments-connector/build/blocks/simple-payment/view.js?ver=7e924bf361a7ff70a516",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-content/plugins/fair-form/build/blocks/fair-form/frontend.js?ver=55724e5723aedc481bd2",
+          "http://localhost:8889/wp-content/plugins/fair-calendar-button/build/blocks/calendar-button/frontend.js?ver=b6c56b78183cc2d2751a",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events",
+      "page": "recurring-master",
+      "metrics": {
+        "durationMs": 103.67,
+        "memoryBytes": 8388608,
+        "queryCount": 101,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events",
+      "page": "recurring-occurrence",
+      "metrics": {
+        "durationMs": 97.99,
+        "memoryBytes": 8388608,
+        "queryCount": 94,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events",
+      "page": "event-options",
+      "metrics": {
+        "durationMs": 66.72,
+        "memoryBytes": 8388608,
+        "queryCount": 82,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events",
+      "page": "listings",
+      "metrics": {
+        "durationMs": 73.88,
+        "memoryBytes": 8388608,
+        "queryCount": 60,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 6,
+        "transferBytes": 27789,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-calendar/view.js?ver=05304dd255aab17195f6",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-week/view.js?ver=4db700176b0403ccf2fe",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "recurring-master",
+      "metrics": {
+        "durationMs": 103.25,
+        "memoryBytes": 8388608,
+        "queryCount": 103,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "recurring-occurrence",
+      "metrics": {
+        "durationMs": 99.16,
+        "memoryBytes": 8388608,
+        "queryCount": 96,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "event-options",
+      "metrics": {
+        "durationMs": 69.36,
+        "memoryBytes": 8388608,
+        "queryCount": 84,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "listings",
+      "metrics": {
+        "durationMs": 77.68,
+        "memoryBytes": 8388608,
+        "queryCount": 62,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 6,
+        "transferBytes": 27789,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-calendar/view.js?ver=05304dd255aab17195f6",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-week/view.js?ver=4db700176b0403ccf2fe",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack",
+      "page": "recurring-master",
+      "metrics": {
+        "durationMs": 110.89,
+        "memoryBytes": 10485760,
+        "queryCount": 107,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack",
+      "page": "recurring-occurrence",
+      "metrics": {
+        "durationMs": 102.7,
+        "memoryBytes": 10485760,
+        "queryCount": 100,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack",
+      "page": "event-options",
+      "metrics": {
+        "durationMs": 73.31,
+        "memoryBytes": 10485760,
+        "queryCount": 88,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack",
+      "page": "listings",
+      "metrics": {
+        "durationMs": 82.4,
+        "memoryBytes": 10485760,
+        "queryCount": 66,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 6,
+        "transferBytes": 27789,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-calendar/view.js?ver=05304dd255aab17195f6",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-week/view.js?ver=4db700176b0403ccf2fe",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack+experimental",
+      "page": "recurring-master",
+      "metrics": {
+        "durationMs": 106.42,
+        "memoryBytes": 10485760,
+        "queryCount": 110,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack+experimental",
+      "page": "recurring-occurrence",
+      "metrics": {
+        "durationMs": 106.51,
+        "memoryBytes": 10485760,
+        "queryCount": 103,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack+experimental",
+      "page": "event-options",
+      "metrics": {
+        "durationMs": 75.33,
+        "memoryBytes": 10485760,
+        "queryCount": 91,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 36,
+        "transferBytes": 532242,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-jsx-runtime.min.js?ver=18.3.1",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/dom-ready.min.js?ver=3fe927cab37bf38d6a23",
+          "http://localhost:8889/wp-includes/js/dist/vendor/react-dom.min.js?ver=18.3.1.1",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/a11y.min.js?ver=31c6cec5a4ff7aff483d",
+          "http://localhost:8889/wp-includes/js/dist/dom.min.js?ver=c95f94cbbc1ac3fde84f",
+          "http://localhost:8889/wp-includes/js/dist/escape-html.min.js?ver=87ebe53e97bba59805a5",
+          "http://localhost:8889/wp-includes/js/dist/element.min.js?ver=4a4370b2b349066fd440",
+          "http://localhost:8889/wp-includes/js/dist/is-shallow-equal.min.js?ver=7ad271045c1fe60f5496",
+          "http://localhost:8889/wp-includes/js/dist/keycodes.min.js?ver=d0b4204e4bbeb412df6e",
+          "http://localhost:8889/wp-includes/js/dist/priority-queue.min.js?ver=6c0aa59b65d55dfd509b",
+          "http://localhost:8889/wp-includes/js/dist/undo-manager.min.js?ver=4554fce6276d8910a4ae",
+          "http://localhost:8889/wp-includes/js/dist/compose.min.js?ver=0e8bde2a499ea6073b42",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-includes/js/dist/html-entities.min.js?ver=a976ff3a0f00bc2999a3",
+          "http://localhost:8889/wp-includes/js/dist/primitives.min.js?ver=44cc5a35c7b9fe07a838",
+          "http://localhost:8889/wp-includes/js/dist/redux-routine.min.js?ver=acca2b4857d83ad1790e",
+          "http://localhost:8889/wp-includes/js/dist/data.min.js?ver=14a216e0932d72c22976",
+          "http://localhost:8889/wp-includes/js/dist/rich-text.min.js?ver=3e5852e42cee1c239bae",
+          "http://localhost:8889/wp-includes/js/dist/theme.min.js?ver=56a75cc08ae66c1fcb7a",
+          "http://localhost:8889/wp-includes/js/dist/warning.min.js?ver=a0978839debc564a6608",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=112d56691179ba6fa866",
+          "http://localhost:8889/wp-includes/js/dist/components.min.js?ver=9b751f17060211272a5c",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=7880dc16a04caf08fa36",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    },
+    {
+      "scenario": "production-stack+experimental",
+      "page": "listings",
+      "metrics": {
+        "durationMs": 84.11,
+        "memoryBytes": 10485760,
+        "queryCount": 69,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 6,
+        "transferBytes": 27789,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.3",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=efaa5193bbad9c60ffd1",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-calendar/view.js?ver=05304dd255aab17195f6",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-week/view.js?ver=4db700176b0403ccf2fe",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.3"
+        ]
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "scenario": "fair-payments-connector",
+      "page": "plain",
+      "deltaDurationMs": -0.15000000000000568,
+      "deltaQueryCount": 1,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-payments-connector",
+      "page": "feature",
+      "deltaDurationMs": 2.210000000000001,
+      "deltaQueryCount": 2,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 6,
+      "deltaTransferBytes": 16685
+    },
+    {
+      "scenario": "fair-events",
+      "page": "plain",
+      "deltaDurationMs": 3.269999999999996,
+      "deltaQueryCount": 5,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-events",
+      "page": "feature",
+      "deltaDurationMs": 18.009999999999998,
+      "deltaQueryCount": 6,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-platform",
+      "page": "plain",
+      "deltaDurationMs": -1.0800000000000054,
+      "deltaQueryCount": 1,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-platform",
+      "page": "feature",
+      "deltaDurationMs": 1.009999999999998,
+      "deltaQueryCount": 1,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-audience",
+      "page": "plain",
+      "deltaDurationMs": 0.22999999999999687,
+      "deltaQueryCount": 1,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-audience",
+      "page": "feature",
+      "deltaDurationMs": 1.5500000000000043,
+      "deltaQueryCount": 2,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 6,
+      "deltaTransferBytes": 16419
+    },
+    {
+      "scenario": "fair-timetable",
+      "page": "plain",
+      "deltaDurationMs": -1.3000000000000043,
+      "deltaQueryCount": 1,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-timetable",
+      "page": "feature",
+      "deltaDurationMs": 0.03999999999999915,
+      "deltaQueryCount": 1,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 3,
+      "deltaTransferBytes": 5252
+    },
+    {
+      "scenario": "fair-finance",
+      "page": "plain",
+      "deltaDurationMs": -2.200000000000003,
+      "deltaQueryCount": 0,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-finance",
+      "page": "feature",
+      "deltaDurationMs": -0.8200000000000003,
+      "deltaQueryCount": 0,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-payments-connector-experimental",
+      "page": "plain",
+      "deltaDurationMs": -1.6900000000000048,
+      "deltaQueryCount": 0,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-payments-connector-experimental",
+      "page": "feature",
+      "deltaDurationMs": -1.009999999999998,
+      "deltaQueryCount": 0,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-form",
+      "page": "plain",
+      "deltaDurationMs": 1.6199999999999974,
+      "deltaQueryCount": 2,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-form",
+      "page": "feature",
+      "deltaDurationMs": 3.950000000000003,
+      "deltaQueryCount": 2,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 9,
+      "deltaTransferBytes": 63081
+    },
+    {
+      "scenario": "fair-calendar-button",
+      "page": "plain",
+      "deltaDurationMs": -0.740000000000002,
+      "deltaQueryCount": 0,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-calendar-button",
+      "page": "feature",
+      "deltaDurationMs": 0,
+      "deltaQueryCount": 0,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 3,
+      "deltaTransferBytes": 33336
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "plain",
+      "deltaDurationMs": 4.07,
+      "deltaQueryCount": 7,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "feature",
+      "deltaDurationMs": 18,
+      "deltaQueryCount": 8,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-audience-experimental+deps",
+      "page": "plain",
+      "deltaDurationMs": 0.259999999999998,
+      "deltaQueryCount": 2,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "fair-audience-experimental+deps",
+      "page": "feature",
+      "deltaDurationMs": 1.6499999999999986,
+      "deltaQueryCount": 3,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 6,
+      "deltaTransferBytes": 16419
+    },
+    {
+      "scenario": "production-stack",
+      "page": "plain",
+      "deltaDurationMs": 9.54,
+      "deltaQueryCount": 11,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "production-stack",
+      "page": "feature",
+      "deltaDurationMs": 28.050000000000004,
+      "deltaQueryCount": 14,
+      "deltaMemoryBytes": 2097152,
+      "deltaRequestCount": 13,
+      "deltaTransferBytes": 96269
+    },
+    {
+      "scenario": "production-stack+experimental",
+      "page": "plain",
+      "deltaDurationMs": 10.949999999999996,
+      "deltaQueryCount": 14,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
+      "scenario": "production-stack+experimental",
+      "page": "feature",
+      "deltaDurationMs": 28.009999999999998,
+      "deltaQueryCount": 17,
+      "deltaMemoryBytes": 2097152,
+      "deltaRequestCount": 13,
+      "deltaTransferBytes": 96269
+    }
+  ],
+  "skipped": [
+    {
+      "scenario": "wordpress-only",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "wordpress-only",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "wordpress-only",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "wordpress-only",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-payments-connector",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-payments-connector",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-payments-connector",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-payments-connector",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-platform",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-platform",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-platform",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-platform",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-audience",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-audience",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-audience",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-audience",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-timetable",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-timetable",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-timetable",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-timetable",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-finance",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-finance",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-finance",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-finance",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-payments-connector-experimental",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-payments-connector-experimental",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-payments-connector-experimental",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-payments-connector-experimental",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-form",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-form",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-form",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-form",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-calendar-button",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-calendar-button",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-calendar-button",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-calendar-button",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-audience-experimental+deps",
+      "page": "recurring-master",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-audience-experimental+deps",
+      "page": "recurring-occurrence",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-audience-experimental+deps",
+      "page": "event-options",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    },
+    {
+      "scenario": "fair-audience-experimental+deps",
+      "page": "listings",
+      "status": "n/a",
+      "reason": "not measured where fair-events is inactive — the page's blocks would render empty."
+    }
+  ]
+}
