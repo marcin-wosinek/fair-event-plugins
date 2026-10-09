@@ -118,6 +118,11 @@ function fair_payments_connector_maybe_upgrade() {
  *     ]
  * );
  *
+ * The amount charged is the total of the line items: each unit amount is
+ * rounded to two decimals (half up), then each line (quantity × unit amount),
+ * then the sum. A quantity is a positive whole number (default 1); an amount
+ * may be negative (a discount line) or zero, as long as the total is positive.
+ *
  * @param array $line_items Array of line items [['name' => '', 'quantity' => 1, 'amount' => 0.00], ...].
  * @param array $args {
  *     Optional transaction parameters.
@@ -127,6 +132,7 @@ function fair_payments_connector_maybe_upgrade() {
  *     @type int    $post_id Associated post ID.
  *     @type int    $user_id User ID (default: current user).
  *     @type array  $metadata Additional metadata.
+ *     @type float  $expected_amount Total the caller decided on; the transaction is refused when its line items add up to anything else.
  * }
  * @return int|WP_Error Transaction ID on success, WP_Error on failure.
  */

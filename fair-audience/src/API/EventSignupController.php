@@ -21,6 +21,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use FairEventsShared\LineItemTotals;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -659,8 +660,26 @@ class EventSignupController extends WP_REST_Controller {
 		if ( is_wp_error( $unit_price ) ) {
 			return $unit_price;
 		}
-		$count        = count( $pending_occurrences );
-		$total_amount = $unit_price * $count;
+
+		// One line item per occurrence, built before anything is decided:
+		// free or paid, and what the transaction charges, both come from this
+		// list (see FairEventsShared\LineItemTotals).
+		$line_items = array();
+		foreach ( $pending_occurrences as $occ ) {
+			$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
+				? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
+				: $occ->start_datetime;
+			$line_items[] = array(
+				'name'     => sprintf(
+					/* translators: %s: event title or occurrence date/time label */
+					__( 'Signup for %s', 'fair-audience' ),
+					$occ_label
+				),
+				'quantity' => 1,
+				'amount'   => $unit_price,
+			);
+		}
+		$total_amount = LineItemTotals::total( $line_items );
 
 		if ( $total_amount <= 0 ) {
 			foreach ( $pending_occurrences as $occ ) {
@@ -713,7 +732,6 @@ class EventSignupController extends WP_REST_Controller {
 
 		$expires_at            = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
 		$event_participant_ids = array();
-		$line_items            = array();
 
 		foreach ( $pending_occurrences as $occ ) {
 			$existing_occ = $this->event_participant_repository->get_by_event_date_and_participant( (int) $occ->id, $participant->id );
@@ -737,34 +755,22 @@ class EventSignupController extends WP_REST_Controller {
 				$ep->save();
 			}
 			$event_participant_ids[] = (int) $ep->id;
-
-			$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
-				? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
-				: $occ->start_datetime;
-			$line_items[] = array(
-				'name'     => sprintf(
-					/* translators: %s: event title or occurrence date/time label */
-					__( 'Signup for %s', 'fair-audience' ),
-					$occ_label
-				),
-				'quantity' => 1,
-				'amount'   => $unit_price,
-			);
 		}
 
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
-				'currency'      => Money::site_currency(),
-				'description'   => sprintf(
+				'currency'        => Money::site_currency(),
+				'description'     => sprintf(
 					/* translators: %s: event title or occurrence date/time label */
 					__( 'Signup for %s', 'fair-audience' ),
 					get_the_title( $event_id )
 				),
-				'post_id'       => $event_id,
-				'event_date_id' => (int) $pending_occurrences[0]->id,
-				'user_id'       => get_current_user_id() ? get_current_user_id() : null,
-				'metadata'      => array(
+				'post_id'         => $event_id,
+				'event_date_id'   => (int) $pending_occurrences[0]->id,
+				'user_id'         => get_current_user_id() ? get_current_user_id() : null,
+				'expected_amount' => $total_amount,
+				'metadata'        => array(
 					'source'                => 'fair-audience-signup',
 					'event_date_id'         => (int) $pending_occurrences[0]->id,
 					'event_participant_ids' => $event_participant_ids,
@@ -992,12 +998,12 @@ class EventSignupController extends WP_REST_Controller {
 			return $option_prices;
 		}
 
-		$line_items   = array();
-		$total_amount = 0;
+		// The line items come first: free or paid, and what the transaction
+		// charges, both come from this list (see FairEventsShared\LineItemTotals).
+		$line_items = array();
 		foreach ( $new_options as $opt ) {
-			$opt_price     = $option_prices[ (int) $opt->id ];
-			$total_amount += $opt_price;
-			if ( 0.0 !== (float) $opt_price ) {
+			$opt_price = $option_prices[ (int) $opt->id ];
+			if ( 0.0 !== LineItemTotals::normalize_amount( $opt_price ) ) {
 				$line_items[] = array(
 					'name'     => $opt->name,
 					'quantity' => 1,
@@ -1005,6 +1011,7 @@ class EventSignupController extends WP_REST_Controller {
 				);
 			}
 		}
+		$total_amount = LineItemTotals::total( $line_items );
 
 		// Any option with a raw price > 0 means payment is configured for that option.
 		$any_option_paid = array_reduce(
@@ -1068,12 +1075,13 @@ class EventSignupController extends WP_REST_Controller {
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
-				'currency'      => Money::site_currency(),
-				'description'   => $description,
-				'post_id'       => $event_id,
-				'event_date_id' => $event_date_id,
-				'user_id'       => $user_id ? $user_id : null,
-				'metadata'      => array(
+				'currency'        => Money::site_currency(),
+				'description'     => $description,
+				'post_id'         => $event_id,
+				'event_date_id'   => $event_date_id,
+				'user_id'         => $user_id ? $user_id : null,
+				'expected_amount' => $total_amount,
+				'metadata'        => array(
 					'source'               => 'fair-audience-activity-addon',
 					'event_date_id'        => $event_date_id,
 					'event_participant_id' => (int) $event_participant->id,
@@ -1639,21 +1647,43 @@ class EventSignupController extends WP_REST_Controller {
 		// Each option resolves its own best-matching group discount rule
 		// against its own real base price (issue #1297), resolved once for the
 		// whole selection here and reused below when building line items,
-		// instead of recomputing per option twice over (issue #1299). Summed
-		// per raw selected item (not per unique option ID) so a duplicate
-		// option ID counts twice here exactly as it does in the line items
-		// built below — array_sum() over the ID-keyed map would silently
-		// collapse a duplicate and undercount the total against what's
-		// actually charged.
+		// instead of recomputing per option twice over (issue #1299).
 		$option_prices = $this->resolve_option_prices( $option_items, $event_date_id, (int) $participant->id );
 		if ( is_wp_error( $option_prices ) ) {
 			return $option_prices;
 		}
-		$options_total = 0.0;
-		foreach ( $option_items as $opt ) {
-			$options_total += $option_prices[ (int) $opt->id ];
+
+		$line_item_description = sprintf(
+			/* translators: %s: event title or occurrence date/time label */
+			__( 'Signup for %s', 'fair-audience' ),
+			get_the_title( $event_id )
+		);
+
+		// Build line items: base price plus each selected option — one line
+		// per raw selected item, so a duplicate option ID is charged twice
+		// and counted twice. Negative amounts represent discounts (e.g.
+		// solidarity tickets). They are built before anything is decided, so
+		// free or paid and what the transaction charges both come from this
+		// list (see FairEventsShared\LineItemTotals).
+		$line_items = array();
+		if ( 0.0 !== LineItemTotals::normalize_amount( $base_price ) ) {
+			$line_items[] = array(
+				'name'     => $line_item_description,
+				'quantity' => 1,
+				'amount'   => (float) $base_price,
+			);
 		}
-		$total_amount = (float) $base_price + $options_total;
+		foreach ( $option_items as $opt ) {
+			$opt_price = $option_prices[ (int) $opt->id ];
+			if ( 0.0 !== LineItemTotals::normalize_amount( $opt_price ) ) {
+				$line_items[] = array(
+					'name'     => $opt->name,
+					'quantity' => 1,
+					'amount'   => $opt_price,
+				);
+			}
+		}
+		$total_amount = LineItemTotals::total( $line_items );
 
 		// Determine whether a price is configured for this event regardless of
 		// how the resolution turned out (discount-to-zero, service unavailable, etc.).
@@ -1725,33 +1755,6 @@ class EventSignupController extends WP_REST_Controller {
 
 		$this->save_participant_options( (int) $event_participant->id, $option_items );
 
-		$line_item_description = sprintf(
-			/* translators: %s: event title or occurrence date/time label */
-			__( 'Signup for %s', 'fair-audience' ),
-			get_the_title( $event_id )
-		);
-
-		// Build line items: base price plus each selected option.
-		// Negative amounts represent discounts (e.g. solidarity tickets).
-		$line_items = array();
-		if ( 0.0 !== (float) $base_price ) {
-			$line_items[] = array(
-				'name'     => $line_item_description,
-				'quantity' => 1,
-				'amount'   => (float) $base_price,
-			);
-		}
-		foreach ( $option_items as $opt ) {
-			$opt_price = $option_prices[ (int) $opt->id ];
-			if ( 0.0 !== $opt_price ) {
-				$line_items[] = array(
-					'name'     => $opt->name,
-					'quantity' => 1,
-					'amount'   => $opt_price,
-				);
-			}
-		}
-
 		// Persist the buyer's selection on the transaction so retry can
 		// rebuild the EventParticipant row (and its options) if the original
 		// row has already been cleaned up by the cron.
@@ -1763,12 +1766,13 @@ class EventSignupController extends WP_REST_Controller {
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
-				'currency'      => Money::site_currency(),
-				'description'   => $line_item_description,
-				'post_id'       => $event_id,
-				'event_date_id' => $event_date_id,
-				'user_id'       => $user_id ? $user_id : null,
-				'metadata'      => array(
+				'currency'        => Money::site_currency(),
+				'description'     => $line_item_description,
+				'post_id'         => $event_id,
+				'event_date_id'   => $event_date_id,
+				'user_id'         => $user_id ? $user_id : null,
+				'expected_amount' => $total_amount,
+				'metadata'        => array(
 					'source'               => 'fair-audience-signup',
 					'event_date_id'        => $event_date_id,
 					'event_participant_id' => $event_participant->id,
@@ -1871,7 +1875,24 @@ class EventSignupController extends WP_REST_Controller {
 
 		$ledger   = new EventParticipantTransactionRepository();
 		$net_paid = $ledger->get_net_paid( (int) $existing->id );
-		$delta    = max( 0.0, $series_price - $net_paid );
+
+		// The upgrade's one line, built before anything is decided: the
+		// difference still owed, never below zero. Free or paid, and what the
+		// transaction charges, both come from it (see
+		// FairEventsShared\LineItemTotals) — a difference below half a cent is
+		// nothing to pay.
+		$line_items = array(
+			array(
+				'name'     => sprintf(
+					/* translators: %s: ticket type name */
+					__( 'Upgrade to series pass: %s', 'fair-audience' ),
+					$ticket_type->name
+				),
+				'quantity' => 1,
+				'amount'   => max( 0.0, $series_price - $net_paid ),
+			),
+		);
+		$delta      = LineItemTotals::total( $line_items );
 
 		// Nothing left to pay (already covered, or a free series): convert in place now.
 		if ( $delta <= 0 ) {
@@ -1896,31 +1917,20 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$line_items = array(
-			array(
-				'name'     => sprintf(
-					/* translators: %s: ticket type name */
-					__( 'Upgrade to series pass: %s', 'fair-audience' ),
-					$ticket_type->name
-				),
-				'quantity' => 1,
-				'amount'   => $delta,
-			),
-		);
-
 		$transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
-				'currency'      => Money::site_currency(),
-				'description'   => sprintf(
+				'currency'        => Money::site_currency(),
+				'description'     => sprintf(
 					/* translators: %s: event title */
 					__( 'Series pass upgrade for %s', 'fair-audience' ),
 					get_the_title( $event_id )
 				),
-				'post_id'       => $event_id,
-				'event_date_id' => $event_date_id,
-				'user_id'       => get_current_user_id() ? get_current_user_id() : null,
-				'metadata'      => array(
+				'post_id'         => $event_id,
+				'event_date_id'   => $event_date_id,
+				'user_id'         => get_current_user_id() ? get_current_user_id() : null,
+				'expected_amount' => $delta,
+				'metadata'        => array(
 					'source'               => 'fair-audience-series-upgrade',
 					'event_date_id'        => $event_date_id,
 					'event_participant_id' => (int) $existing->id,

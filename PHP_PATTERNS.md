@@ -493,6 +493,33 @@ package, make sure its `package.json` gets a `composer:update:shared` script
 too (see [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md)) — two plugins were
 found missing it.
 
+### Monetary totals: `LineItemTotals`
+
+Every amount derived from a list of quantities and unit amounts goes through
+`FairEventsShared\LineItemTotals` — never a hand-written `$price * $quantity`
+or a bare `round()`:
+
+-   `normalize_amount( $amount )` — two decimals, rounded **half up**
+    (`PHP_ROUND_HALF_UP`: a value exactly halfway moves away from zero, so
+    `0.005` → `0.01` and `-0.005` → `-0.01`).
+-   `line_total( $quantity, $unit_amount )` — the unit amount is normalized
+    first, then the extended total.
+-   `total( $line_items )` — the sum of the normalized line totals, normalized.
+-   `amounts_match( $a, $b )` — compares whole cents, never raw floats.
+
+Quantities are integers (a line without one counts once); negative amounts
+are kept, so a discount is an ordinary line. Two decimals apply to every
+supported currency.
+
+**Build the line items first, then decide.** A signup flow builds the exact
+line-item array it will pass to `TransactionAPI::create_transaction()` and
+takes the amount it stores, its free-versus-paid decision (`$total > 0`) and
+the amount it returns to the buyer from `LineItemTotals::total()` of that
+array. It passes the total as `expected_amount`, so a transaction for any
+other amount is refused. Rounding only a final sum is not enough: the ledger
+stores each line with two decimals, and a total rounded once can disagree
+with its own rows.
+
 ## Code Quality Standards
 
 Formatting is automatic — see [CLAUDE.md § Formatting & Build](./CLAUDE.md#formatting--build)

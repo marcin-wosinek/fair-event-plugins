@@ -883,6 +883,17 @@ sub-route) expose:
     not add charges of its own — it adjusts prices, fair-events charges
     them. This replaces the former `fair_events_signup_option_line_items`
     filter, which is no longer applied.
+-   **Amounts (#1366).** Both create paths build the purchase's line items
+    first and take everything from them through
+    `FairEventsShared\LineItemTotals` (two decimals, half up — see
+    [PHP_PATTERNS.md](./PHP_PATTERNS.md#monetary-totals-lineitemtotals)): the
+    signup's stored `amount`, the free-versus-paid decision, the `amount` in
+    the response and the transaction's line items. A `multiple_instances`
+    purchase stores each occurrence's own rounded line total on its signup
+    row, so the rows add up to the shared transaction. The total is passed
+    to `TransactionAPI::create_transaction()` as `expected_amount`; a payment
+    filter that changes the line items afterwards gets the checkout refused
+    with 409 `transaction_amount_mismatch` instead of charged.
 -   **`fair_events_signup_created` action** — fires
     `( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token, $request_context )`
     after a signup row is persisted through the base create path (once per

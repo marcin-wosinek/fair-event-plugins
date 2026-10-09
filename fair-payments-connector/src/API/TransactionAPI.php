@@ -14,6 +14,7 @@ use FairPaymentsConnector\Payment\PaymentGatewayError;
 use FairPaymentsConnector\Payment\PaymentGatewayException;
 use FairPaymentsConnector\Payment\WorkingDays;
 use FairPaymentsConnector\Database\PaymentLogRepository;
+use FairEventsShared\LineItemTotals;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -25,8 +26,14 @@ class TransactionAPI {
 	/**
 	 * Create a new transaction with line items
 	 *
+	 * The transaction amount is always the canonical total of its line items
+	 * (see FairEventsShared\LineItemTotals): filters may change the line items,
+	 * but a total that no longer equals them is refused, so the transaction and
+	 * its ledger rows cannot disagree. Pass 'expected_amount' to also refuse a
+	 * transaction whose total differs from the amount the caller decided on.
+	 *
 	 * @param array $line_items Array of line items with name, quantity, amount.
-	 * @param array $args Optional transaction metadata (user_id, post_id, currency, description).
+	 * @param array $args Optional transaction metadata (user_id, post_id, currency, description, expected_amount).
 	 * @return int|\WP_Error Transaction ID or error.
 	 */
 	public static function create_transaction( $line_items, $args = array() ) {
@@ -39,11 +46,39 @@ class TransactionAPI {
 		// Allow filtering of line items before validation.
 		$line_items = apply_filters( 'fair_payment_before_validate_line_items', $line_items, $args );
 
-		// 2. Calculate total.
-		$total = self::calculate_total( $line_items );
+		// What a filter returned is charged and stored, so it is held to the
+		// same rules as what the caller passed.
+		$validation = self::validate_line_items( $line_items );
+		if ( is_wp_error( $validation ) ) {
+			return $validation;
+		}
 
-		// Allow filtering of calculated total.
-		$total = apply_filters( 'fair_payment_calculated_total', $total, $line_items );
+		// 2. Calculate total.
+		$total = LineItemTotals::total( $line_items );
+
+		// A transaction is a charge: refunds and negative totals are not
+		// created here, and a total of zero has nothing to pay.
+		if ( $total <= 0 ) {
+			return new \WP_Error(
+				'invalid_transaction_total',
+				__( 'The total of the line items must be positive.', 'fair-payments-connector' )
+			);
+		}
+
+		// Allow filtering of calculated total. Kept for listeners; a price
+		// change must be made in the line items, never in the total alone.
+		$filtered_total = apply_filters( 'fair_payment_calculated_total', $total, $line_items );
+		if ( ! self::amount_matches( $filtered_total, $total ) ) {
+			return self::total_mismatch_error();
+		}
+
+		if ( isset( $args['expected_amount'] ) && ! self::amount_matches( $args['expected_amount'], $total ) ) {
+			return new \WP_Error(
+				'transaction_amount_mismatch',
+				__( 'The price of this purchase changed while it was being prepared. Please try again.', 'fair-payments-connector' ),
+				array( 'status' => 409 )
+			);
+		}
 
 		// 3. Parse arguments.
 		$defaults = array(
@@ -57,6 +92,7 @@ class TransactionAPI {
 			'metadata'       => array(),
 		);
 		$args     = wp_parse_args( $args, $defaults );
+		unset( $args['expected_amount'] );
 
 		// 4. Resolve participant_id if not explicitly provided.
 		// fair-audience listens to this filter and resolves by email or user_id.
@@ -93,6 +129,12 @@ class TransactionAPI {
 
 		// Allow filtering of transaction data before creation.
 		$transaction_data = apply_filters( 'fair_payment_before_create_transaction', $transaction_data );
+
+		// The filter may change anything but the amount owed for the line items.
+		if ( ! is_array( $transaction_data ) || ! isset( $transaction_data['amount'] ) || ! self::amount_matches( $transaction_data['amount'], $total ) ) {
+			return self::total_mismatch_error();
+		}
+		$transaction_data['amount'] = $total;
 
 		// 6. Create transaction record.
 		$transaction_id = Transaction::create( $transaction_data );
@@ -662,8 +704,9 @@ class TransactionAPI {
 				);
 			}
 
-			// Required: amount.
-			if ( ! isset( $item['amount'] ) || ! is_numeric( $item['amount'] ) ) {
+			// Required: amount. Any finite number: a negative amount is a
+			// discount line, and zero names something given for free.
+			if ( ! isset( $item['amount'] ) || ! is_numeric( $item['amount'] ) || ! is_finite( (float) $item['amount'] ) ) {
 				return new \WP_Error(
 					'invalid_line_item_amount',
 					sprintf(
@@ -674,22 +717,10 @@ class TransactionAPI {
 				);
 			}
 
-			// Amount must be positive.
-			if ( $item['amount'] <= 0 ) {
-				return new \WP_Error(
-					'negative_line_item_amount',
-					sprintf(
-						/* translators: %d: line item index */
-						__( 'Line item at index %d must have positive amount.', 'fair-payments-connector' ),
-						$index
-					)
-				);
-			}
-
-			// Optional: quantity (default 1).
+			// Optional: quantity (default 1), a positive whole number.
 			if ( isset( $item['quantity'] ) ) {
-				$quantity = (int) $item['quantity'];
-				if ( $quantity <= 0 ) {
+				$quantity = $item['quantity'];
+				if ( ! is_numeric( $quantity ) || (float) (int) $quantity !== (float) $quantity || (int) $quantity <= 0 ) {
 					return new \WP_Error(
 						'invalid_line_item_quantity',
 						sprintf(
@@ -757,20 +788,27 @@ class TransactionAPI {
 	}
 
 	/**
-	 * Calculate total from line items
+	 * Whether an amount returned by a filter is the canonical total, to the cent.
 	 *
-	 * @param array $line_items Array of line items.
-	 * @return float Total amount.
+	 * @param mixed $amount Amount to check.
+	 * @param float $total  Canonical total of the line items.
+	 * @return bool
 	 */
-	private static function calculate_total( $line_items ) {
-		$total = 0;
+	private static function amount_matches( $amount, $total ) {
+		return is_numeric( $amount )
+			&& is_finite( (float) $amount )
+			&& LineItemTotals::amounts_match( $amount, $total );
+	}
 
-		foreach ( $line_items as $item ) {
-			$quantity = isset( $item['quantity'] ) ? (int) $item['quantity'] : 1;
-			$amount   = (float) $item['amount'];
-			$total   += $quantity * $amount;
-		}
-
-		return round( $total, 2 );
+	/**
+	 * Error for a transaction amount that no longer equals its line items.
+	 *
+	 * @return \WP_Error
+	 */
+	private static function total_mismatch_error() {
+		return new \WP_Error(
+			'transaction_total_mismatch',
+			__( 'The transaction amount does not match its line items.', 'fair-payments-connector' )
+		);
 	}
 }
