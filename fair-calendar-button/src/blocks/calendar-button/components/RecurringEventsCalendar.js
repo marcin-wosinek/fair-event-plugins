@@ -15,6 +15,7 @@ import {
 	subMonths,
 	isSameDay,
 	isSameMonth,
+	parseISO,
 } from 'date-fns';
 import { rruleManager } from '../utils/rruleManager.js';
 
@@ -68,10 +69,11 @@ export default function RecurringEventsCalendar( { startDate, recurrence } ) {
 		return eventDates.some( ( eventDate ) => isSameDay( eventDate, date ) );
 	};
 
-	// Check if a given day is the end date
+	// Check if a given day is the end date. parseISO reads the date-only
+	// value as local midnight; `new Date()` would read it as UTC.
 	const isEndDate = ( day ) => {
 		return (
-			recurrence?.until && isSameDay( new Date( recurrence.until ), day )
+			recurrence?.until && isSameDay( parseISO( recurrence.until ), day )
 		);
 	};
 
