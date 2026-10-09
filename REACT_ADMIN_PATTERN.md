@@ -210,7 +210,10 @@ class AdminHooks {
             plugin_dir_url( dirname( __DIR__ ) ) . "build/admin/{$page_name}/index.js",
             $asset_data['dependencies'],
             $asset_data['version'],
-            true
+            array(
+                'in_footer' => true,
+                'strategy'  => 'defer',
+            )
         );
 
         // Set translations
@@ -244,6 +247,16 @@ class AdminHooks {
 -   Always load asset metadata from `build/admin/*/index.asset.php`
 -   Set translations using `wp_set_script_translations()` pointing to `build/languages/`
 -   Always enqueue `wp-components` stylesheet
+-   Request `'strategy' => 'defer'` with `'in_footer' => true` (never `async`,
+    never a script-tag filter). WordPress falls back to a blocking tag by
+    itself when a dependent script is blocking or an inline script is attached
+    after the handle
+-   A script that must run **before another bundle mounts** — one that
+    registers a JS filter the host reads on first render — stays blocking
+    (`true`), with a comment saying why. Deferred scripts run when the document
+    is already interactive, so the host's `domReady()` fires immediately and
+    would mount first. See `enqueue_manage_event_audience_tab_assets()` in
+    `fair-audience/src/Admin/AdminHooks.php`
 
 ### 4. PHP Page Wrapper
 

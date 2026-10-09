@@ -171,7 +171,10 @@ class Event {
 			FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-meta-box/index.js',
 			$asset_file['dependencies'],
 			$asset_file['version'],
-			true
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
 		);
 
 		wp_enqueue_style( 'wp-components' );

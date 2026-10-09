@@ -299,7 +299,10 @@ class AdminPages {
 				FAIR_EVENTS_PLUGIN_URL . 'build/admin/calendar/index.js',
 				$asset_file['dependencies'],
 				$asset_file['version'],
-				true
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
 			);
 
 			wp_enqueue_style(
@@ -345,7 +348,10 @@ class AdminPages {
 				FAIR_EVENTS_PLUGIN_URL . 'build/admin/all-events/index.js',
 				$asset_file['dependencies'],
 				$asset_file['version'],
-				true
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
 			);
 
 			wp_localize_script(
@@ -388,7 +394,10 @@ class AdminPages {
 				FAIR_EVENTS_PLUGIN_URL . 'build/admin/venues/index.js',
 				$asset_file['dependencies'],
 				$asset_file['version'],
-				true
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
 			);
 
 			wp_localize_script(
@@ -417,12 +426,18 @@ class AdminPages {
 
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/manage-event/index.asset.php';
 
+			// Extensions add tabs with a blocking script depending on this
+			// handle; WordPress then keeps this script blocking as well, so
+			// their filters are registered before the page mounts.
 			wp_enqueue_script(
 				'fair-events-manage-event',
 				FAIR_EVENTS_PLUGIN_URL . 'build/admin/manage-event/index.js',
 				$asset_file['dependencies'],
 				$asset_file['version'],
-				true
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
 			);
 
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -538,7 +553,10 @@ class AdminPages {
 				FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-statistics/index.js',
 				$asset_file['dependencies'],
 				$asset_file['version'],
-				true
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
 			);
 
 			wp_enqueue_style(
@@ -578,12 +596,17 @@ class AdminPages {
 
 		wp_enqueue_media();
 
+		// As on Manage Event: a blocking extension script depending on this
+		// handle makes WordPress keep it blocking too.
 		wp_enqueue_script(
 			'fair-events-settings',
 			FAIR_EVENTS_PLUGIN_URL . 'build/admin/settings/index.js',
 			$asset_file['dependencies'],
 			$asset_file['version'],
-			true
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
 		);
 
 		wp_localize_script(

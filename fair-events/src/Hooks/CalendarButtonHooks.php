@@ -179,7 +179,10 @@ class CalendarButtonHooks {
 			$script_url,
 			$asset['dependencies'],
 			$asset['version'],
-			true
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
 		);
 
 		// Pass enabled post types to JavaScript.
@@ -243,7 +246,10 @@ class CalendarButtonHooks {
 			$script_url,
 			$asset['dependencies'],
 			$asset['version'],
-			true
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
 		);
 
 		// Enqueue the CSS.

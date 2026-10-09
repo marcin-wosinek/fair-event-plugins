@@ -193,7 +193,10 @@ class Plugin {
 			FAIR_PAYMENTS_CONNECTOR_PLUGIN_URL . 'build/payment-callback.js',
 			$asset['dependencies'],
 			$asset['version'],
-			true
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
 		);
 
 		wp_enqueue_style(

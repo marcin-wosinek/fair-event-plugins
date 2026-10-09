@@ -294,7 +294,10 @@ class AdminPages {
 			FAIR_PAYMENTS_CONNECTOR_PLUGIN_URL . 'build/admin/' . $page . '/index.js',
 			$asset_file['dependencies'],
 			$asset_file['version'],
-			true
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
 		);
 
 		wp_enqueue_style( 'wp-components' );

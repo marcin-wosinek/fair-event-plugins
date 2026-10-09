@@ -97,7 +97,10 @@ class AdminHooks {
 					\FAIR_PLATFORM_URL . 'build/admin/connections/index.js',
 					$asset['dependencies'],
 					$asset['version'],
-					true
+					array(
+						'in_footer' => true,
+						'strategy'  => 'defer',
+					)
 				);
 
 				wp_enqueue_style(
@@ -121,7 +124,10 @@ class AdminHooks {
 					\FAIR_PLATFORM_URL . 'build/admin/instagram-connections/index.js',
 					$asset['dependencies'],
 					$asset['version'],
-					true
+					array(
+						'in_footer' => true,
+						'strategy'  => 'defer',
+					)
 				);
 
 				wp_enqueue_style(
