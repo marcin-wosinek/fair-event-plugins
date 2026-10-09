@@ -67,7 +67,12 @@ CPU contention, no CDN, cold caches) to treat as stable metrics.
 
 ## Fixtures
 
-Two synthetic pages are created before the sweep and removed afterward:
+All fixtures are synthetic, created by the run and removed by it.
+
+### Pages measured on an empty site
+
+Two pages are created before the sweep and measured in **every** scenario,
+while the site holds no events:
 
 -   **Plain** (`fair-performance-plain`) — a single paragraph, no Fair Event
     blocks. Isolates site-wide bootstrap cost and globally (unconditionally)
@@ -87,6 +92,65 @@ render callback) — this is what exposes each plugin's **conditional**
 rendering and asset cost against the same fixed page content, rather than
 requiring a different feature page per scenario.
 
+### Event pages
+
+Once every scenario has measured the two pages above, the runner seeds
+events with `e2e/mu-plugins/scripts/seed-performance-fixtures.php` and
+measures four more pages. The sizes are fixed (`EVENT_FIXTURES` in
+`scripts/performance-runner.mjs`) so runs stay comparable over time.
+
+-   **recurring-master** and **recurring-occurrence** — a weekly series of
+    **48 occurrences**, the master included. Its ticket type is priced and
+    covers several occurrences (`multiple_instances`), so the signup form
+    shows the occurrence picker with all 48 dates. `recurring-master` is the
+    event's own URL; `recurring-occurrence` is the same event with
+    `?event_date=YYYY-MM-DD` set to occurrence 24, a generated occurrence
+    that looks up its series master for pricing and configuration.
+-   **event-options** — a single event with one priced ticket type and
+    **16 options**, each selectable and with its own price for the active
+    sale period.
+-   **listings** — a page with the `fair-events/events-list`,
+    `fair-events/events-calendar` and `fair-events/events-week` blocks. The
+    calendar and week blocks show one date window, so the measured URL sets
+    `calendar_month`, `calendar_year` and `week_view` to the first
+    occurrence: both blocks contain data on every run.
+
+Both event posts contain the event dates, event info, event prices, event
+signup and get tickets blocks, in that order.
+
+**Dates are relative to the run.** The first occurrence starts seven days
+after the run, so all 48 occurrences are upcoming whenever the audit runs.
+After seeding, the runner checks that the series has 48 upcoming occurrences
+and that all 16 options are on offer, and fails the run otherwise. A fixture
+that shrank would otherwise show up only as a cheaper page.
+
+**Event pages are measured only in scenarios where `fair-events` is
+active.** Without it the blocks render empty, which costs run time and says
+nothing. Those scenarios show `n/a` in the report (see
+[Reading the event pages](#reading-the-event-pages)).
+
+### Cleanup
+
+Every fixture post carries the `_fair_performance_fixture` post meta,
+written in the same insert as the post and before any row that depends on
+it. `e2e/mu-plugins/scripts/cleanup-performance-fixtures.php` deletes every
+post with that meta, together with the event dates, sale periods, ticket
+types, options and prices of the event posts. It works in any activation
+state.
+
+The runner calls it twice:
+
+-   **Before creating fixtures**, to remove what an earlier run left behind
+    if it was killed before its own cleanup. Leftover events would distort
+    every page, the Feature page's events list first.
+-   **After measuring**, before it restores the plugin activation state. This
+    also runs after a failed seed, a failed measurement, and
+    `SIGINT`/`SIGTERM`.
+
+If removing the fixtures, restoring the plugins or stopping the environment
+fails, the runner says which step failed and exits non-zero. An earlier
+failure keeps its own exit code.
+
 ## Activation matrix
 
 Built from each plugin's own header (`Plugin Name`, `Requires Plugins`) via
@@ -102,9 +166,22 @@ matches the current workspace list:
 5. `production-stack+experimental` — the production stack plus every
    `-experimental` plugin.
 
-Every comparison reports the delta from the `wordpress-only` baseline for
-median duration, query count, peak memory, request count, and transferred
-JS/CSS bytes.
+For the Plain and Feature pages, every comparison reports the delta from the
+`wordpress-only` baseline for median duration, query count, peak memory,
+request count, and transferred JS/CSS bytes.
+
+### Reading the event pages
+
+The event pages have no `wordpress-only` measurement, so there is nothing to
+subtract. Their tables show absolute numbers and `—` in every delta column.
+Compare an event page with the same page in another scenario or in an
+earlier run.
+
+A scenario that does not measure the event pages gets a row of `n/a`, and
+the reason is printed under the table. In the JSON report those rows are not
+in `results`; they are listed in a separate `skipped` array, each with
+`scenario`, `page`, `status: "n/a"` and `reason`. `results` holds only
+measured pages.
 
 ## Running it
 
@@ -120,10 +197,15 @@ npm run performance -- --out=report.md      # also write the markdown report to 
 install, and start/stop, and expects
 `npm run test:wp-env:start` to have already been run.
 
-The runner always restores whichever plugins were active before it ran and
-always deletes its fixture pages in a `finally` block — including after a
+The runner always removes its fixtures (see [Cleanup](#cleanup)) and then
+restores whichever plugins were active before it ran — including after a
 thrown error or `SIGINT`/`SIGTERM` — so a failed or interrupted run never
-leaves the instance in a different activation state than it found it in.
+leaves the instance with extra data or in a different activation state than
+it found it in.
+
+`--scenario` focuses both phases. With a scenario that doesn't include
+`fair-events`, no events are seeded and the event pages are reported as
+`n/a`.
 
 ### Running it on consistent hardware
 
@@ -191,6 +273,11 @@ further to redact.
     bootstrap or asset-enqueuing cost worth investigating; the **Feature**
     page cost should track roughly with active/present blocks and is
     evidence of conditional rendering cost only.
+
+-   On the **event pages**, read the query count against the fixture size.
+    A count that moves with the 48 occurrences or the 16 options points at
+    per-item work; a count close to the other event pages points at fixed
+    cost.
 
 This ticket is measurement and evidence only. Where a comparison surfaces a
 material bottleneck, the "Findings" section below names it, attributes it to

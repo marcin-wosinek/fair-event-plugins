@@ -208,13 +208,21 @@ function formatDelta(value, unit = '') {
 	return `${sign}${rounded}${unit ? ` ${unit}` : ''}`;
 }
 
-/** Render the measured results and their baseline deltas as a markdown report. */
+/**
+ * Render the measured results and their baseline deltas as a markdown report.
+ * A scenario/page pair listed in `skipped` gets an `n/a` row, with the reason
+ * under the table, so a page that was deliberately not measured never reads
+ * as a missing or cheap result.
+ */
 export function formatMarkdownReport({
 	results,
 	comparisons,
+	skipped = [],
 	generatedAt = new Date().toISOString(),
 }) {
-	const pages = [...new Set(results.map((r) => r.page))];
+	const rows = [...results, ...skipped];
+	const pages = [...new Set(rows.map((r) => r.page))];
+	const scenarios = [...new Set(rows.map((r) => r.scenario))];
 	const lines = [
 		'# Performance audit results',
 		'',
@@ -230,14 +238,28 @@ export function formatMarkdownReport({
 		lines.push(
 			'| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
 		);
-		for (const result of results.filter((r) => r.page === page)) {
+		const reasons = new Set();
+		for (const scenario of scenarios) {
+			const result = results.find(
+				(r) => r.page === page && r.scenario === scenario
+			);
+			if (!result) {
+				const skip = skipped.find(
+					(s) => s.page === page && s.scenario === scenario
+				);
+				if (skip) {
+					reasons.add(skip.reason);
+					lines.push(
+						`| ${scenario} | n/a | — | n/a | — | n/a | — | n/a | — | n/a | — |`
+					);
+				}
+				continue;
+			}
 			const comparison = comparisons.find(
-				(c) => c.page === page && c.scenario === result.scenario
+				(c) => c.page === page && c.scenario === scenario
 			);
 			lines.push(
-				`| ${result.scenario} | ${result.metrics.durationMs.toFixed(
-					1
-				)} | ${
+				`| ${scenario} | ${result.metrics.durationMs.toFixed(1)} | ${
 					comparison
 						? formatDelta(comparison.deltaDurationMs, 'ms')
 						: '—'
@@ -262,6 +284,9 @@ export function formatMarkdownReport({
 			);
 		}
 		lines.push('');
+		for (const reason of reasons) {
+			lines.push(`n/a: ${reason}`, '');
+		}
 	}
 
 	return lines.join('\n');
@@ -270,21 +295,114 @@ export function formatMarkdownReport({
 /**
  * Render the measured results and their baseline deltas as JSON, for
  * scripts/performance-history.mjs and any future comparison tooling — the
- * markdown report is for reading, this is for parsing.
+ * markdown report is for reading, this is for parsing. `results` holds only
+ * measured pages; scenario/page pairs that were not measured are listed in
+ * `skipped` with their reason.
  */
 export function formatJsonReport({
 	results,
 	comparisons,
+	skipped = [],
 	generatedAt = new Date().toISOString(),
 }) {
-	return JSON.stringify({ generatedAt, results, comparisons }, null, 2);
+	return JSON.stringify(
+		{ generatedAt, results, comparisons, skipped },
+		null,
+		2
+	);
+}
+
+const SEED_SCRIPT =
+	'wp-content/mu-plugins/scripts/seed-performance-fixtures.php';
+const CLEANUP_SCRIPT =
+	'wp-content/mu-plugins/scripts/cleanup-performance-fixtures.php';
+
+/**
+ * Post meta marking a post as owned by the audit. Written in the same insert
+ * as the post, so cleanup-performance-fixtures.php finds every fixture even
+ * when the run that created it never reached its own cleanup.
+ */
+export const FIXTURE_MARKER_META = '_fair_performance_fixture';
+
+/**
+ * Event fixtures, seeded by seed-performance-fixtures.php. The counts are
+ * fixed so runs stay comparable over time; `measuredOccurrence` is the
+ * 1-based position in the series (the master is 1) of the generated
+ * occurrence whose page is measured.
+ */
+export const EVENT_FIXTURES = {
+	requiredPlugin: 'fair-events',
+	config: { occurrences: 48, measuredOccurrence: 24, options: 16 },
+	pages: [
+		'recurring-master',
+		'recurring-occurrence',
+		'event-options',
+		'listings',
+	],
+};
+
+/** Event pages are measured only where the plugin that renders them is active. */
+export function scenarioMeasuresEventPages(scenario, eventFixtures) {
+	return scenario.plugins.includes(eventFixtures.requiredPlugin);
+}
+
+/** Read the `PERF_SEED:{json}` line seed-performance-fixtures.php prints. */
+export function parseSeedOutput(stdout) {
+	const line = stdout
+		.split('\n')
+		.find((candidate) => candidate.startsWith('PERF_SEED:'));
+	if (!line) {
+		return null;
+	}
+	try {
+		return JSON.parse(line.slice('PERF_SEED:'.length));
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Check that seeding produced what the audit claims to measure. A series
+ * with fewer upcoming occurrences, or options that are not on offer, would
+ * otherwise show up only as a misleadingly cheap page.
+ */
+export function findSeedProblems(seed, eventFixtures) {
+	if (!seed) {
+		return ['the seed script printed no PERF_SEED result'];
+	}
+	const problems = [];
+	const { occurrences, options } = eventFixtures.config;
+	if (seed.upcomingOccurrences !== occurrences) {
+		problems.push(
+			`expected ${occurrences} upcoming occurrences, got ${seed.upcomingOccurrences}`
+		);
+	}
+	if (seed.offeredOptions !== options) {
+		problems.push(
+			`expected ${options} offered options, got ${seed.offeredOptions}`
+		);
+	}
+	for (const page of eventFixtures.pages) {
+		if (!seed.pages?.[page]) {
+			problems.push(`no URL for the ${page} page`);
+		}
+	}
+	return problems;
 }
 
 /**
  * Run the full audit: provision (unless reused), snapshot and later restore
- * plugin activation state, create and later remove fixture pages, sweep the
- * comparison matrix, and always clean up in `finally` — including on a
- * thrown error or SIGINT/SIGTERM.
+ * plugin activation state, create fixtures, sweep the comparison matrix, and
+ * always clean up — including on a thrown error or SIGINT/SIGTERM.
+ *
+ * Measurement has two phases. The fixture pages are measured first, in every
+ * scenario, while the site holds no events, so their numbers stay comparable
+ * with earlier runs. Only then are the event fixtures seeded and their pages
+ * measured, in the scenarios `scenarioMeasuresEventPages()` accepts.
+ *
+ * Cleanup removes the fixtures before restoring the activation state, and a
+ * cleanup step that fails turns an otherwise successful run into a failed
+ * one.
  */
 export async function runPerformanceAudit({
 	options,
@@ -292,6 +410,7 @@ export async function runPerformanceAudit({
 	plugins,
 	matrix,
 	fixtures,
+	eventFixtures,
 	baseUrl,
 	measureBackend,
 	measureFrontend,
@@ -303,8 +422,8 @@ export async function runPerformanceAudit({
 	let capturedState = false;
 	let originalActivePlugins = [];
 	let interruptedSignal;
-	const createdPages = {};
 	const results = [];
+	const skipped = [];
 
 	const onSignal = (signal) => {
 		interruptedSignal ??= signal;
@@ -318,14 +437,39 @@ export async function runPerformanceAudit({
 		logger(`\n==> ${message}`);
 	}
 
-	const wpCli = (args, options) =>
+	const wpCli = (args, runOptions) =>
 		executor.run(
 			'npx',
 			['wp-env', 'run', 'tests-cli', 'wp', ...args],
-			options
+			runOptions
 		);
 
-	try {
+	/** Switch to exactly the given plugin set; returns a non-zero exit code on failure. */
+	async function activateOnly(slugs) {
+		const deactivate = await wpCli(['plugin', 'deactivate', ...allSlugs]);
+		if (deactivate.code !== 0 || !slugs.length) {
+			return deactivate.code;
+		}
+		const activate = await wpCli(['plugin', 'activate', ...slugs]);
+		return activate.code;
+	}
+
+	async function measurePage(scenario, pageKey, url) {
+		const samples = [];
+		for (let i = 0; i < options.samples + 1; i++) {
+			samples.push(await measureBackend(url));
+		}
+		const metrics = aggregateSamples(samples);
+		const frontend = await measureFrontend(url);
+		results.push({
+			scenario: scenario.name,
+			page: pageKey,
+			metrics,
+			frontend,
+		});
+	}
+
+	async function measure() {
 		if (!options.reuse) {
 			const status = await executor.run(
 				'npx',
@@ -397,7 +541,16 @@ export async function runPerformanceAudit({
 			.filter(Boolean);
 		capturedState = true;
 
+		// A run that was killed outright never reached its cleanup; whatever
+		// it left would distort every page measured below.
+		phase('Removing fixtures left by an earlier run');
+		const recover = await wpCli(['eval-file', CLEANUP_SCRIPT]);
+		if (recover.code !== 0) {
+			return { code: recover.code };
+		}
+
 		phase('Creating synthetic fixture pages');
+		const createdPages = {};
 		for (const [pageKey, fixture] of Object.entries(fixtures)) {
 			const create = await wpCli(
 				[
@@ -408,6 +561,9 @@ export async function runPerformanceAudit({
 					`--post_title=${fixture.title}`,
 					`--post_name=${fixture.slug}`,
 					`--post_content=${fixture.content}`,
+					`--meta_input=${JSON.stringify({
+						[FIXTURE_MARKER_META]: '1',
+					})}`,
 					'--porcelain',
 				],
 				{ capture: true }
@@ -432,39 +588,82 @@ export async function runPerformanceAudit({
 			}
 
 			phase(`Measuring scenario: ${scenario.name}`);
-			const deactivate = await wpCli([
-				'plugin',
-				'deactivate',
-				...allSlugs,
-			]);
-			if (deactivate.code !== 0) {
-				return { code: deactivate.code };
-			}
-			if (scenario.plugins.length) {
-				const activate = await wpCli([
-					'plugin',
-					'activate',
-					...scenario.plugins,
-				]);
-				if (activate.code !== 0) {
-					return { code: activate.code };
-				}
+			const code = await activateOnly(scenario.plugins);
+			if (code !== 0) {
+				return { code };
 			}
 
 			for (const [pageKey, pageId] of Object.entries(createdPages)) {
-				const url = `${baseUrl}/?p=${pageId}`;
-				const samples = [];
-				for (let i = 0; i < options.samples + 1; i++) {
-					samples.push(await measureBackend(url));
+				await measurePage(scenario, pageKey, `${baseUrl}/?p=${pageId}`);
+			}
+		}
+
+		const eventScenarios = eventFixtures
+			? scenarios.filter((s) =>
+					scenarioMeasuresEventPages(s, eventFixtures)
+			  )
+			: [];
+
+		if (eventFixtures) {
+			for (const scenario of scenarios) {
+				if (eventScenarios.includes(scenario)) {
+					continue;
 				}
-				const metrics = aggregateSamples(samples);
-				const frontend = await measureFrontend(url);
-				results.push({
-					scenario: scenario.name,
-					page: pageKey,
-					metrics,
-					frontend,
-				});
+				for (const page of eventFixtures.pages) {
+					skipped.push({
+						scenario: scenario.name,
+						page,
+						status: 'n/a',
+						reason: `not measured where ${eventFixtures.requiredPlugin} is inactive — the page's blocks would render empty.`,
+					});
+				}
+			}
+		}
+
+		if (eventScenarios.length && !interruptedSignal) {
+			phase('Seeding event fixtures');
+			const code = await activateOnly([eventFixtures.requiredPlugin]);
+			if (code !== 0) {
+				return { code };
+			}
+			const seedResult = await wpCli(
+				[
+					'eval-file',
+					SEED_SCRIPT,
+					JSON.stringify(eventFixtures.config),
+				],
+				{ capture: true }
+			);
+			if (seedResult.code !== 0) {
+				return { code: seedResult.code };
+			}
+			const seed = parseSeedOutput(seedResult.stdout);
+			const problems = findSeedProblems(seed, eventFixtures);
+			if (problems.length) {
+				logger(
+					`Event fixtures are incomplete: ${problems.join('; ')}.`
+				);
+				return { code: 1 };
+			}
+
+			for (const scenario of eventScenarios) {
+				if (interruptedSignal) {
+					break;
+				}
+
+				phase(`Measuring event pages in scenario: ${scenario.name}`);
+				const activateCode = await activateOnly(scenario.plugins);
+				if (activateCode !== 0) {
+					return { code: activateCode };
+				}
+
+				for (const page of eventFixtures.pages) {
+					await measurePage(
+						scenario,
+						page,
+						`${baseUrl}${seed.pages[page]}`
+					);
+				}
 			}
 		}
 
@@ -473,32 +672,55 @@ export async function runPerformanceAudit({
 		}
 
 		const comparisons = compareToBaseline(results, matrix[0].name);
-		return { code: 0, results, comparisons };
-	} finally {
-		signalSource.off('SIGINT', onSigint);
-		signalSource.off('SIGTERM', onSigterm);
+		return { code: 0, results, comparisons, skipped };
+	}
+
+	/** Undo everything the run changed; returns a description of each step that failed. */
+	async function cleanUp() {
+		const failures = [];
 
 		if (capturedState) {
-			phase('Restoring original plugin activation state');
-			await wpCli(['plugin', 'deactivate', ...allSlugs]);
-			if (originalActivePlugins.length) {
-				await wpCli(['plugin', 'activate', ...originalActivePlugins]);
+			phase('Removing fixtures');
+			const remove = await wpCli(['eval-file', CLEANUP_SCRIPT]);
+			if (remove.code !== 0) {
+				failures.push('removing the fixtures');
 			}
-		}
 
-		const pageIds = Object.values(createdPages);
-		if (pageIds.length) {
-			phase('Removing synthetic fixture pages');
-			for (const pageId of pageIds) {
-				await wpCli(['post', 'delete', pageId, '--force']);
+			phase('Restoring original plugin activation state');
+			if ((await activateOnly(originalActivePlugins)) !== 0) {
+				failures.push('restoring the plugin activation state');
 			}
 		}
 
 		if (ownsEnvironment) {
 			phase('Stopping owned WordPress test environment');
-			await executor.run('npx', ['wp-env', 'stop']);
+			const stop = await executor.run('npx', ['wp-env', 'stop']);
+			if (stop.code !== 0) {
+				failures.push('stopping the WordPress test environment');
+			}
+		}
+
+		return failures;
+	}
+
+	let outcome;
+	let cleanupFailures;
+	try {
+		outcome = await measure();
+	} finally {
+		signalSource.off('SIGINT', onSigint);
+		signalSource.off('SIGTERM', onSigterm);
+		cleanupFailures = await cleanUp();
+		for (const failure of cleanupFailures) {
+			logger(`Cleanup failed while ${failure}.`);
 		}
 	}
+
+	// A cleanup error becomes the run's status only when nothing failed earlier.
+	if (cleanupFailures.length && outcome.code === 0) {
+		return { ...outcome, code: 1 };
+	}
+	return outcome;
 }
 
 const PLAIN_PAGE_CONTENT =
@@ -532,6 +754,11 @@ async function realMeasureBackend(url) {
 	});
 	await response.arrayBuffer();
 
+	// An error page is fast and cheap, so it must never pass as a measurement.
+	if (!response.ok) {
+		throw new Error(`${url} responded with HTTP ${response.status}.`);
+	}
+
 	const durationMs = Number(response.headers.get('x-fair-perf-duration-ms'));
 	const memoryBytes = Number(
 		response.headers.get('x-fair-perf-peak-memory-bytes')
@@ -557,7 +784,14 @@ async function createFrontendMeasurer() {
 		async measure(url) {
 			const context = await browser.newContext();
 			const page = await context.newPage();
-			await page.goto(url, { waitUntil: 'networkidle' });
+			const response = await page.goto(url, {
+				waitUntil: 'networkidle',
+			});
+			if (!response?.ok()) {
+				throw new Error(
+					`${url} responded with HTTP ${response?.status()}.`
+				);
+			}
 			const resources = await page.evaluate(() =>
 				performance
 					.getEntriesByType('resource')
@@ -614,6 +848,7 @@ async function main() {
 			plugins,
 			matrix,
 			fixtures: FIXTURES,
+			eventFixtures: EVENT_FIXTURES,
 			baseUrl,
 			measureBackend: realMeasureBackend,
 			measureFrontend: frontendMeasurer.measure,
@@ -622,10 +857,11 @@ async function main() {
 		await frontendMeasurer.close();
 	}
 
-	if (outcome.code === 0 && outcome.results) {
+	if (outcome.results) {
 		const report = formatMarkdownReport({
 			results: outcome.results,
 			comparisons: outcome.comparisons,
+			skipped: outcome.skipped,
 		});
 		console.log(`\n${report}`);
 		if (options.outFile) {
@@ -636,6 +872,7 @@ async function main() {
 			const json = formatJsonReport({
 				results: outcome.results,
 				comparisons: outcome.comparisons,
+				skipped: outcome.skipped,
 			});
 			await writeFile(options.jsonOut, json);
 			console.log(`JSON report written to ${options.jsonOut}`);

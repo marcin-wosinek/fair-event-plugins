@@ -22,6 +22,7 @@ use FairEvents\Models\TicketType;
 use FairEvents\Models\TicketPrice;
 use FairEvents\Services\RecurrenceService;
 use FairEvents\Models\TicketOption;
+use FairEvents\Models\TicketOptionPrice;
 use FairEvents\Models\Venue;
 
 if ( ! function_exists( 'fair_e2e_create_event' ) ) {
@@ -32,15 +33,18 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	 * @param string $content Post content; defaults to the Event Signup block.
 	 *                        Pass the fair-events get-tickets block for specs
 	 *                        that cover its saved-content path.
+	 * @param array  $meta    Post meta written together with the post (e.g. an
+	 *                        ownership marker a cleanup script looks up).
 	 * @return int Event post ID.
 	 */
-	function fair_e2e_create_event( $title, $content = '<!-- wp:fair-events/event-signup /-->' ) {
+	function fair_e2e_create_event( $title, $content = '<!-- wp:fair-events/event-signup /-->', $meta = array() ) {
 		$event_id = wp_insert_post(
 			array(
 				'post_type'    => 'fair_event',
 				'post_status'  => 'publish',
 				'post_title'   => $title,
 				'post_content' => $content,
+				'meta_input'   => $meta,
 			),
 			true
 		);
@@ -249,16 +253,34 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	 * @param string   $short_name    Short name.
 	 * @param int      $sort_order    Sort order.
 	 * @param int|null $capacity      Max signups for this option (null = unlimited).
+	 * @param bool     $derive_price  Take the price from the active sale period
+	 *                                (see fair_e2e_add_option_price()) instead
+	 *                                of the stored $price.
 	 * @return int Option ID.
 	 */
-	function fair_e2e_add_option( $event_date_id, $name, $price, $short_name, $sort_order = 0, $capacity = null ) {
-		$option_id = TicketOption::create( $event_date_id, $name, $price, $sort_order, $short_name, null, $capacity );
+	function fair_e2e_add_option( $event_date_id, $name, $price, $short_name, $sort_order = 0, $capacity = null, $derive_price = false ) {
+		$option_id = TicketOption::create( $event_date_id, $name, $price, $sort_order, $short_name, null, $capacity, $derive_price );
 
 		if ( ! $option_id ) {
 			WP_CLI::error( 'Failed to create ticket option.' );
 		}
 
 		return (int) $option_id;
+	}
+
+	/**
+	 * Attach a price to a ticket option for a sale period — what makes an
+	 * option created with $derive_price purchasable during that period.
+	 *
+	 * @param int   $option_id      Option ID.
+	 * @param int   $sale_period_id Sale period ID.
+	 * @param float $price          Price.
+	 * @return void
+	 */
+	function fair_e2e_add_option_price( $option_id, $sale_period_id, $price ) {
+		if ( ! TicketOptionPrice::upsert( $option_id, $sale_period_id, $price ) ) {
+			WP_CLI::error( 'Failed to create ticket option price.' );
+		}
 	}
 
 	/**
