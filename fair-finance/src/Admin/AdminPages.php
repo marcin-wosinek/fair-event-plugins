@@ -126,7 +126,10 @@ class AdminPages {
 			FAIR_FINANCE_URL . 'build/admin/' . $page . '/index.js',
 			$asset_file['dependencies'],
 			$asset_file['version'],
-			true
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
 		);
 
 		wp_enqueue_style( 'wp-components' );

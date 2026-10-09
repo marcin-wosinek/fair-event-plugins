@@ -304,7 +304,10 @@ class AdminHooks {
 				plugin_dir_url( dirname( __DIR__ ) ) . "build/admin/{$page_name}/index.js",
 				$asset_data['dependencies'],
 				$asset_data['version'],
-				true
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
 			);
 
 			wp_set_script_translations(
@@ -333,6 +336,12 @@ class AdminHooks {
 	 * Declares `fair-events-manage-event` as a script dependency so its
 	 * `addFilter()` call runs before the host bundle's `domReady()` mount,
 	 * avoiding a first-render flicker where the tab pops in late.
+	 *
+	 * Stays a blocking footer script on purpose. Deferred scripts run once the
+	 * document is already interactive, where `domReady()` fires immediately:
+	 * a deferred host would mount before this bundle's filter is registered.
+	 * A blocking dependent also makes WordPress keep the host blocking, so the
+	 * two keep their order.
 	 *
 	 * @return void
 	 */
