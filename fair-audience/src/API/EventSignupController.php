@@ -347,7 +347,6 @@ class EventSignupController extends WP_REST_Controller {
 		$ticket_type_id    = $request->get_param( 'ticket_type_id' ) ? $request->get_param( 'ticket_type_id' ) : null;
 		$user_id           = get_current_user_id();
 		$raw_option_ids    = $request->get_param( 'ticket_option_ids' ) ? $request->get_param( 'ticket_option_ids' ) : array();
-		$chosen_amount     = $request->get_param( 'chosen_amount' );
 
 		// Validate event exists.
 		$event = get_post( $event_id );
@@ -473,6 +472,13 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Resolved before anything is saved, so a ticket type that is not on
+		// sale rejects the signup without leaving answers or a row behind.
+		$base_price = $this->resolve_signup_base_price( $ticket_type_id, $participant->id );
+		if ( is_wp_error( $base_price ) ) {
+			return $base_price;
+		}
+
 		// The same selection rules fair-events applies on its own signup
 		// route: a stale selection is refused rather than silently dropped.
 		if ( $event_date_id && class_exists( \FairEvents\Services\ActivitySelection::class ) ) {
@@ -497,7 +503,7 @@ class EventSignupController extends WP_REST_Controller {
 			return $save_error;
 		}
 
-		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $chosen_amount );
+		$paid_response = $this->maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id, $option_items, $base_price );
 		if ( null !== $paid_response ) {
 			if ( ! is_wp_error( $paid_response ) ) {
 				AudienceSession::set( (int) $participant->id );
@@ -505,7 +511,7 @@ class EventSignupController extends WP_REST_Controller {
 			return $paid_response;
 		}
 
-		// Free path: either no price configured, or the price resolved to 0 (e.g. 100% discount).
+		// Free path: no ticket type selected, or the price resolved to 0 (an explicit zero price or a 100% discount).
 		if ( $existing ) {
 			if ( $event_date_id ) {
 				$this->event_participant_repository->update_label_by_event_date( $event_date_id, $participant->id, 'signed_up' );
@@ -649,8 +655,10 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		// Recompute the per-instance price server-side; never trust a client amount.
-		$resolved     = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
-		$unit_price   = null !== $resolved ? (float) $resolved : 0.0;
+		$unit_price = $this->resolve_signup_base_price( $ticket_type->id, $participant->id );
+		if ( is_wp_error( $unit_price ) ) {
+			return $unit_price;
+		}
 		$count        = count( $pending_occurrences );
 		$total_amount = $unit_price * $count;
 
@@ -1136,6 +1144,33 @@ class EventSignupController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Resolve the base price a signup pays for its ticket type, through the
+	 * pricing rules shared with fair-events' own purchase route. A selected
+	 * ticket type without a price right now is unavailable, never free; only
+	 * a signup without a ticket type has a free base price.
+	 *
+	 * @param int|null $ticket_type_id Ticket type ID, or null when none selected.
+	 * @param int      $participant_id Participant ID.
+	 * @return float|WP_Error Base price (may be 0), or WP_Error when the ticket type is not on sale.
+	 */
+	private function resolve_signup_base_price( $ticket_type_id, $participant_id ) {
+		if ( ! $ticket_type_id ) {
+			return 0.0;
+		}
+
+		$resolved = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( (int) $ticket_type_id, (int) $participant_id );
+		if ( null === $resolved ) {
+			return new WP_Error(
+				'ticket_type_unavailable',
+				__( 'This ticket type is not currently on sale.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return (float) $resolved;
+	}
+
+	/**
 	 * Resolve the master event-date ID for a given event-date.
 	 *
 	 * Returns the master_id if the event-date is a generated occurrence, the
@@ -1595,16 +1630,11 @@ class EventSignupController extends WP_REST_Controller {
 	 * @param \FairAudience\Models\EventParticipant|null $existing       Existing row for (event_date, participant), if any.
 	 * @param int                                        $user_id        Current WP user ID (0 for anonymous).
 	 * @param int|null                                   $ticket_type_id Selected ticket type ID, or null when not using ticket types.
-	 * @param array                                      $option_items     Selected TicketOption objects.
-	 * @param float|null                                 $chosen_amount    Unused; kept for call-site compatibility.
+	 * @param array                                      $option_items   Selected TicketOption objects.
+	 * @param float                                      $base_price     Ticket-type price from resolve_signup_base_price(); 0 without a ticket type.
 	 * @return \WP_REST_Response|\WP_Error|null WP_REST_Response/WP_Error on paid path, null on free path.
 	 */
-	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $chosen_amount = null ) {
-		$final_price = null;
-		if ( $event_date_id && $ticket_type_id ) {
-			$final_price = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type_id, $participant->id );
-		}
-
+	private function maybe_start_paid_signup( $event_id, $event_date_id, $participant, $existing, $user_id, $ticket_type_id = null, $option_items = array(), $base_price = 0.0 ) {
 		// Option prices count towards the total even when there is no base price.
 		// Each option resolves its own best-matching group discount rule
 		// against its own real base price (issue #1297), resolved once for the
@@ -1623,7 +1653,7 @@ class EventSignupController extends WP_REST_Controller {
 		foreach ( $option_items as $opt ) {
 			$options_total += $option_prices[ (int) $opt->id ];
 		}
-		$total_amount = (float) ( $final_price ?? 0 ) + $options_total;
+		$total_amount = (float) $base_price + $options_total;
 
 		// Determine whether a price is configured for this event regardless of
 		// how the resolution turned out (discount-to-zero, service unavailable, etc.).
@@ -1704,11 +1734,11 @@ class EventSignupController extends WP_REST_Controller {
 		// Build line items: base price plus each selected option.
 		// Negative amounts represent discounts (e.g. solidarity tickets).
 		$line_items = array();
-		if ( null !== $final_price && 0.0 !== (float) $final_price ) {
+		if ( 0.0 !== (float) $base_price ) {
 			$line_items[] = array(
 				'name'     => $line_item_description,
 				'quantity' => 1,
-				'amount'   => (float) $final_price,
+				'amount'   => (float) $base_price,
 			);
 		}
 		foreach ( $option_items as $opt ) {
@@ -1834,8 +1864,10 @@ class EventSignupController extends WP_REST_Controller {
 			}
 		}
 
-		$resolved     = \FairAudience\Services\SignupPriceResolver::resolve_price_for_ticket_type( $ticket_type->id, $participant->id );
-		$series_price = null !== $resolved ? (float) $resolved : 0.0;
+		$series_price = $this->resolve_signup_base_price( $ticket_type->id, $participant->id );
+		if ( is_wp_error( $series_price ) ) {
+			return $series_price;
+		}
 
 		$ledger   = new EventParticipantTransactionRepository();
 		$net_paid = $ledger->get_net_paid( (int) $existing->id );

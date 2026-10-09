@@ -10,7 +10,9 @@
  * rejected with 503 payment_unavailable, never confirmed for free. A ticket
  * type with an explicit zero-price row on the same event must still confirm,
  * proving the guard isn't over-blocking. Only an explicit zero row counts as
- * free — a type with no price row at all is unavailable, not free (#1624).
+ * free — a type with no price row at all, or with no sale period open right
+ * now, is unavailable and rejected with 409 ticket_type_unavailable (#1624,
+ * #1659). A signup that names no ticket type stays a free RSVP.
  *
  * These assertions hold in both plugin configurations (base-only and with
  * fair-events-experimental active) — the resolver falls back correctly
@@ -58,6 +60,17 @@ async function createEventWithDates( api, title ) {
 	return { eventId, eventDateId: match.event_date_id };
 }
 
+async function findSignupRow( api, eventDateId, participantId ) {
+	const res = await api.get(
+		`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+		{ headers: authHeaders }
+	);
+	expect( res.ok() ).toBeTruthy();
+	return ( await res.json() ).find(
+		( p ) => p.participant_id === participantId
+	);
+}
+
 async function deleteEvent( api, eventId ) {
 	if ( ! eventId ) return;
 	await api.delete( `/wp-json/wp/v2/fair_event/${ eventId }`, {
@@ -69,9 +82,13 @@ async function deleteEvent( api, eventId ) {
 test.describe( 'Base signup pricing — ticket-type price', () => {
 	let api;
 	let event;
+	let closedEvent;
+	let rsvpEvent;
 	let participantId;
 	let paidTypeId;
 	let freeTypeId;
+	let unpricedTypeId;
+	let closedTypeId;
 	let fixtureOk = true;
 
 	test.beforeAll( async () => {
@@ -120,6 +137,12 @@ test.describe( 'Base signup pricing — ticket-type price', () => {
 							sort_order: 1,
 							recurrence_scope: 'single_instance',
 						},
+						{
+							name: 'Unpriced tier',
+							capacity: null,
+							sort_order: 2,
+							recurrence_scope: 'single_instance',
+						},
 					],
 					sale_periods: [
 						{
@@ -154,8 +177,56 @@ test.describe( 'Base signup pricing — ticket-type price', () => {
 		const types = ( await ticketsRes.json() ).ticket_types || [];
 		paidTypeId = types.find( ( t ) => t.name === 'Paid tier' )?.id;
 		freeTypeId = types.find( ( t ) => t.name === 'Free tier' )?.id;
+		unpricedTypeId = types.find( ( t ) => t.name === 'Unpriced tier' )?.id;
 		expect( paidTypeId ).toBeTruthy();
 		expect( freeTypeId ).toBeTruthy();
+		expect( unpricedTypeId ).toBeTruthy();
+
+		// A priced ticket type whose only sale period has already ended.
+		closedEvent = await createEventWithDates(
+			api,
+			`Base Pricing Closed Window Test ${ Date.now() }`
+		);
+		const closedRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ closedEvent.eventDateId }/tickets`,
+			{
+				headers: authHeaders,
+				data: {
+					ticket_types: [
+						{
+							name: 'Closed tier',
+							capacity: null,
+							sort_order: 0,
+							recurrence_scope: 'single_instance',
+						},
+					],
+					sale_periods: [
+						{
+							name: 'Long over',
+							sale_start: '2020-01-01 00:00:00',
+							sale_end: '2020-02-01 00:00:00',
+						},
+					],
+					prices: [
+						{
+							ticket_type_index: 0,
+							sale_period_index: 0,
+							price: 18,
+						},
+					],
+					settings: {},
+				},
+			}
+		);
+		expect( closedRes.ok(), await closedRes.text() ).toBeTruthy();
+		closedTypeId = ( await closedRes.json() ).ticket_types?.[ 0 ]?.id;
+		expect( closedTypeId ).toBeTruthy();
+
+		// A free RSVP event: no ticket types or prices configured at all.
+		rsvpEvent = await createEventWithDates(
+			api,
+			`Base Pricing RSVP Test ${ Date.now() }`
+		);
 	} );
 
 	test.afterAll( async () => {
@@ -166,6 +237,8 @@ test.describe( 'Base signup pricing — ticket-type price', () => {
 			);
 		}
 		await deleteEvent( api, event?.eventId );
+		await deleteEvent( api, closedEvent?.eventId );
+		await deleteEvent( api, rsvpEvent?.eventId );
 		await api.dispose();
 	} );
 
@@ -185,12 +258,94 @@ test.describe( 'Base signup pricing — ticket-type price', () => {
 		} );
 		const body = await res.json();
 		if ( res.status() === 503 ) {
+			// No working payment connector: the paid signup fails closed
+			// and leaves no confirmed registration behind.
 			expect( body.code ).toBe( 'payment_unavailable' );
+			const row = await findSignupRow(
+				api,
+				event.eventDateId,
+				participantId
+			);
+			expect( row?.label ).not.toBe( 'signed_up' );
 		} else {
 			expect( res.status(), JSON.stringify( body ) ).toBe( 200 );
 			expect( body.status ).toBe( 'payment_required' );
 			expect( body.amount ).toBe( 18 );
 		}
+	} );
+
+	test( 'a ticket type without a price row is rejected as unavailable', async () => {
+		test.skip(
+			! fixtureOk,
+			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
+		);
+		const res = await api.post( '/wp-json/fair-audience/v1/event-signup', {
+			headers: authHeaders,
+			data: {
+				event_id: event.eventId,
+				event_date_id: event.eventDateId,
+				ticket_type_id: unpricedTypeId,
+			},
+		} );
+		const body = await res.json();
+		expect( res.status(), JSON.stringify( body ) ).toBe( 409 );
+		expect( body.code ).toBe( 'ticket_type_unavailable' );
+		expect( body.transaction_id ).toBeUndefined();
+
+		const row = await findSignupRow(
+			api,
+			event.eventDateId,
+			participantId
+		);
+		expect( row?.label ).not.toBe( 'signed_up' );
+		expect( row?.ticket_type_id ).not.toBe( unpricedTypeId );
+	} );
+
+	test( 'a priced ticket type outside its sale window is rejected as unavailable', async () => {
+		test.skip(
+			! fixtureOk,
+			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
+		);
+		const res = await api.post( '/wp-json/fair-audience/v1/event-signup', {
+			headers: authHeaders,
+			data: {
+				event_id: closedEvent.eventId,
+				event_date_id: closedEvent.eventDateId,
+				ticket_type_id: closedTypeId,
+			},
+		} );
+		const body = await res.json();
+		expect( res.status(), JSON.stringify( body ) ).toBe( 409 );
+		expect( body.code ).toBe( 'ticket_type_unavailable' );
+		expect( body.transaction_id ).toBeUndefined();
+
+		expect(
+			await findSignupRow( api, closedEvent.eventDateId, participantId ),
+			'no registration row after a rejected signup'
+		).toBeFalsy();
+	} );
+
+	test( 'a signup without a ticket type still confirms for free', async () => {
+		test.skip(
+			! fixtureOk,
+			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
+		);
+		const res = await api.post( '/wp-json/fair-audience/v1/event-signup', {
+			headers: authHeaders,
+			data: {
+				event_id: rsvpEvent.eventId,
+				event_date_id: rsvpEvent.eventDateId,
+			},
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		expect( ( await res.json() ).status ).toBe( 'signed_up' );
+
+		const row = await findSignupRow(
+			api,
+			rsvpEvent.eventDateId,
+			participantId
+		);
+		expect( row?.label ).toBe( 'signed_up' );
 	} );
 
 	test( 'a ticket type with an explicit zero price still confirms', async () => {

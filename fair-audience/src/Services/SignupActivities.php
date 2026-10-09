@@ -47,70 +47,15 @@ class SignupActivities {
 	}
 
 	/**
-	 * Apply a discount rule to a base price. Duplicates the small formula in
-	 * `FairEventsExperimental\Services\EventSignupPricing::apply_discount()`
-	 * rather than depending on that class here, so this stays testable
-	 * without fair-events-experimental loaded.
-	 *
-	 * @param float  $base_price     Original price.
-	 * @param string $discount_type  'percentage' or 'amount'.
-	 * @param float  $discount_value Discount magnitude.
-	 * @return float Discounted price (not clamped).
-	 */
-	public static function apply_discount( $base_price, $discount_type, $discount_value ) {
-		if ( 'percentage' === $discount_type ) {
-			return $base_price * ( 1.0 - ( $discount_value / 100.0 ) );
-		}
-		return $base_price - $discount_value;
-	}
-
-	/**
-	 * Resolve an activity option's price for the viewer, applying their best
-	 * group discount rule (if any) on top of a positive base price. Mirrors
-	 * the legacy render's `compute_option_price()`.
-	 *
-	 * @param float       $base_price    Base (undiscounted) option price.
-	 * @param object|null $discount_rule Discount rule with `discount_type`/`discount_value`, or null.
-	 * @return float Resolved price.
-	 */
-	public static function resolve_price( $base_price, $discount_rule ) {
-		if ( ! $discount_rule || $base_price <= 0 ) {
-			return $base_price;
-		}
-		return self::apply_discount( $base_price, $discount_rule->discount_type, (float) $discount_rule->discount_value );
-	}
-
-	/**
-	 * Resolve an activity option's price for the viewer via the real-price
-	 * group-discount resolver: each option is compared against its own base
-	 * price, not one rule shared across the whole event date, so mixed
-	 * percentage/amount rules pick the correct winner per option (issue
-	 * #1297).
-	 *
-	 * @param float    $base_price            Base (undiscounted) option price.
-	 * @param int      $pricing_event_date_id Event date the discount rules belong to.
-	 * @param int|null $participant_id        Viewer's participant ID, or null for anonymous.
-	 * @return float Resolved price.
-	 */
-	public static function resolve_price_for_participant( $base_price, $pricing_event_date_id, $participant_id ) {
-		if ( ! $participant_id || $base_price <= 0 ) {
-			return $base_price;
-		}
-		return \FairAudience\Services\SignupPriceResolver::resolve_price_and_rule(
-			(float) $base_price,
-			$pricing_event_date_id,
-			$participant_id
-		)['price'];
-	}
-
-	/**
-	 * Bulk counterpart to resolve_price_for_participant(): resolves several
-	 * options' discounted prices in one call instead of once per option, so
-	 * the event's discount rules and the viewer's group membership are each
-	 * fetched once per render/request rather than once per option (issue
-	 * #1299). Options with a zero/negative base price are left out of the
-	 * lookup (nothing to discount) and pass through unchanged, mirroring
-	 * resolve_price_for_participant()'s own guard.
+	 * Resolve several activity options' prices for the viewer in one call via
+	 * the real-price group-discount resolver: each option is compared against
+	 * its own base price, not one rule shared across the whole event date, so
+	 * mixed percentage/amount rules pick the correct winner per option (issue
+	 * #1297), and the event's discount rules and the viewer's group
+	 * membership are each fetched once per render/request rather than once
+	 * per option (issue #1299). Options with a zero/negative base price are
+	 * left out of the lookup (nothing to discount) and pass through
+	 * unchanged, as do all prices for an anonymous viewer.
 	 *
 	 * @param array<int, float> $base_price_by_option_id Base (undiscounted) option prices, keyed by option ID.
 	 * @param int               $pricing_event_date_id  Event date the discount rules belong to.
