@@ -3,7 +3,7 @@
  * Plugin Name: Fair Events
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Recurring events, venues, calendar blocks, ticket configuration and signup for WordPress. Paid checkout requires Fair Payments Connector.
- * Version: 1.20.0
+ * Version: 1.21.0
  * Requires at least: 6.7
  * Requires PHP: 7.4
  * Author: Marcin Wosinek
@@ -37,7 +37,7 @@ namespace FairEvents {
 	defined( 'WPINC' ) || die;
 
 	// Define plugin constants.
-	define( 'FAIR_EVENTS_VERSION', '1.20.0' );
+	define( 'FAIR_EVENTS_VERSION', '1.21.0' );
 	define( 'FAIR_EVENTS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 	define( 'FAIR_EVENTS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

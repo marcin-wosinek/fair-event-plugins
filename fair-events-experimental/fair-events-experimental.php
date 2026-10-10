@@ -3,7 +3,7 @@
  * Plugin Name: Fair Events Experimental
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
  * Description: Event sources, group pricing, schedule editing, duplication, merging, comparisons, Telegram summaries and optional Meta conversions for Fair Events.
- * Version: 1.10.0
+ * Version: 1.11.0
  * Requires at least: 7.0
  * Requires PHP: 8.0
  * Requires Plugins: fair-events
@@ -60,7 +60,7 @@ add_action(
 			return;
 		}
 
-		define( 'FAIR_EVENTS_EXPERIMENTAL_VERSION', '1.10.0' );
+		define( 'FAIR_EVENTS_EXPERIMENTAL_VERSION', '1.11.0' );
 		define( 'FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 		define( 'FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

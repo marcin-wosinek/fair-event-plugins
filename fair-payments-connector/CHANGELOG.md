@@ -1,5 +1,31 @@
 # fair-payments-connector
 
+## 2.4.0
+
+### Minor Changes
+
+-   d20c34e: API tokens now come with Fair Payments Connector, so a site no longer needs Fair Payments Connector Experimental to share its transactions with other sites. Tokens are managed on a new **API Tokens** tab under Fair Payments Connector → Settings: generate a token, copy it while it is shown once, see when each token was last used, and revoke it after a confirmation that names the token. The tab and its dialogs work on phone-sized screens, and the Settings tabs wrap instead of squeezing.
+
+    Existing tokens keep working and nothing has to be re-entered. The data sharing API keeps its addresses, responses and error codes, so sites that already import from this one need no change. New tokens can only read transactions: the unused "Read locations" permission is no longer offered, and a request for it is refused. An older token that still lists it keeps its transaction access and gains nothing else.
+
+    Fair Payments Connector Experimental no longer has its own API Tokens page and is now only about Connected Sites, which work as before. The two plugins can be updated in either order: an older Fair Payments Connector Experimental keeps serving API tokens until it is updated, and an updated one keeps serving them for an older Fair Payments Connector, so there is always exactly one place to manage tokens.
+
+-   3a7b83d: Calculate signup and payment totals in one way. The amount saved with a signup, whether it is free or paid, the amount charged and the line items recorded in the finance ledger now all come from the same calculation: amounts have two decimals and are rounded half up — each unit price first, then each line, then the total. Purchases at ordinary two-decimal prices are unchanged.
+
+    A price with a fraction of a cent (for example after a discount) can now differ by a cent from what one of these places showed before, and a total that rounds to zero is confirmed as free instead of being sent to payment. In a purchase for several dates, each date's signup now holds its own rounded amount.
+
+    For developers: a transaction's amount is always the total of its line items. `fair_payment_before_validate_line_items` may still change the line items, which are validated again; a total changed through `fair_payment_calculated_total` or `fair_payment_before_create_transaction` without matching line items is refused. Line items may now be negative (discounts) or zero as long as the total is positive, and a quantity must be a positive whole number. `fair_payment_create_transaction()` accepts `expected_amount` to refuse a transaction whose total differs from the amount the caller decided on.
+
+-   bc63391: Request Mollie settlement access when Fair Finance is active. Connecting to Mollie asks for the same permissions as before, plus permission to read settlements on sites running Fair Finance. The site records the permissions Mollie actually granted and treats settlement access as available only when that permission was granted.
+
+    A site connected before this change keeps accepting payments. Its connection settings now offer **Reconnect**, which goes through the Mollie authorization again without disconnecting first, and Fair Finance's Reconciliation page explains when settlement access still needs to be authorized and links there. Cancelling or failing an authorization leaves the existing connection as it was and says so, instead of ending on an error page.
+
+-   3cbb450: Payment Transactions: search by transaction ID, Mollie payment ID, description, or the person's name or email, and filter by date and amount range. Filters apply together with Status and Mode, show the number of matching transactions, and reset to the Paid / Live defaults.
+
+### Patch Changes
+
+-   9413f36: Load the plugins' own scripts with WordPress's `defer` strategy. The Add to Calendar button script, the payment return notification script, and the admin and editor scripts of these plugins no longer pause page parsing while they download; they stay in the footer and behave as before. WordPress still loads a script the usual way where deferring would break ordering — Manage Event while a plugin adds tabs to it (Fair Audience does), and Fair Events → Settings while an extension adds a settings tab.
+
 ## 2.3.0
 
 ### Minor Changes
