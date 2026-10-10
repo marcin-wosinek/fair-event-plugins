@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fair Events
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: Complete event system for the block editor: recurring events, responsive calendar blocks, and built-in ticket signup.
+ * Description: Recurring events, venues, calendar blocks, ticket configuration and signup for WordPress. Paid checkout requires Fair Payments Connector.
  * Version: 1.20.0
  * Requires at least: 6.7
  * Requires PHP: 7.4

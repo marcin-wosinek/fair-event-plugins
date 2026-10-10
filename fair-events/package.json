@@ -1,7 +1,7 @@
 {
 	"name": "fair-events",
 	"version": "1.20.0",
-	"description": "Fair Events WordPress plugin",
+	"description": "Recurring events, venues, calendar blocks, ticket configuration and signup for WordPress. Paid checkout requires Fair Payments Connector.",
 	"license": "GPL-3.0-or-later",
 	"author": "Marcin Wosinek",
 	"type": "module",

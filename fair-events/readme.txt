@@ -10,11 +10,11 @@ License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-events
 Domain Path: /languages
 
-Events with recurring dates, a responsive calendar, and built-in ticket signup. A complete event system for the block editor — all features free.
+Recurring events, venues, calendars, ticket configuration and signup. Paid checkout requires Fair Payments Connector.
 
 == Description ==
 
-Fair Events turns WordPress into a complete event system. Create events with real start and end dates, repeat them weekly or on hand-picked dates, show them in a responsive monthly calendar, and let visitors sign up or buy tickets — all with native Gutenberg blocks that inherit your theme's styling.
+Fair Events provides event publishing, calendars, ticket configuration and signup for WordPress. Create events with real start and end dates, repeat them weekly or on hand-picked dates, show them in a responsive monthly calendar, and let visitors sign up or buy tickets — all with native Gutenberg blocks that inherit your theme's styling.
 
 **Fair pricing, no subscription:** The plugin is free to install and every feature is included — there is no premium version. Publishing events and taking free signups costs nothing, ever. When you sell paid tickets through [Fair Payments Connector](https://wordpress.org/plugins/fair-payments-connector/), a flat 2% integration fee is collected automatically in the payment flow, with no monthly cap: sell nothing, pay €0; sell €200 in tickets, pay €4. The integration fee is waived through 31 December 2026, and Mollie's processing fees apply separately. See [fair-event-plugins.com](https://fair-event-plugins.com/) for details.
 
@@ -22,7 +22,10 @@ Fair Events turns WordPress into a complete event system. Create events with rea
 
 * **Real Event Dates:** Start, end, and all-day events, always displayed in your site's date and time format
 * **Recurring Events:** Weekly rules or manually picked dates, with per-occurrence edits and cancellations that don't break the series
-* **Ticket Signup Built In:** Ticket types, early-bird sale periods, capacity limits, and pay-what-you-can pricing
+* **Ticket Configuration and Signup:** Ticket types, sale periods, scheduled prices, pay-what-you-can pricing, ticket and activity capacity, and activity options. Free signup is included; paid checkout requires Fair Payments Connector
+* **Signup Administration:** Manage signups, edit tickets and answers, allocate activities, and export signup data
+* **Venues and Event Copies:** Reuse venues with addresses, coordinates and map links; copy events with adjusted dates and ticket configuration
+* **Suite Integrations:** Event statistics require Fair Audience; event budgets require Fair Finance; multilingual event links and activity options integrate with Polylang
 * **Responsive Calendar:** Monthly grid with category filtering that collapses gracefully on mobile
 * **Add to Calendar & iCal:** Visitors save events to Google, Apple, or Outlook; your site exposes an iCal feed
 * **Organizer Dashboard:** An admin calendar, a filterable list of all events, and a Manage Event page that gathers details, dates, and tickets in one place
@@ -36,9 +39,11 @@ Fair Events turns WordPress into a complete event system. Create events with rea
 * 🗓 **Events Week** - Seven-day overview of the current week
 * ℹ️ **Event Info** - Date, time, and venue of a single event
 * ⏰ **Event Dates** - Start and end times in your site's format
-* ➕ **Add to Calendar** - One-click save to the visitor's own calendar
+* 💶 **Event Prices** - Display configured ticket prices
+* ➕ **Add to Calendar** - A core Button variation for saving events to personal calendars; the separate Fair Calendar Button plugin provides a standalone block
 * 🎟 **Event Signup** - Signup and ticket purchase for an event date
-* 📨 **Event Proposal Form** - Let visitors submit events for review
+
+The legacy Get Tickets block remains compatible with saved content and renders through Event Signup. The Event Proposal form is currently unavailable, including with Fair Events Experimental active.
 
 **Perfect For:**
 
@@ -48,7 +53,7 @@ Fair Events turns WordPress into a complete event system. Create events with rea
 * Nonprofits and associations running free signups
 * Any site builder who needs events without a subscription
 
-Fair Events works on its own and grows with the rest of the suite: add [Fair Payments Connector](https://wordpress.org/plugins/fair-payments-connector/) for online payments through Mollie, Fair Audience for attendee management and mailings, and [Fair Timetable](https://wordpress.org/plugins/fair-timetable/) for multi-track schedules.
+Fair Events works on its own and grows with the rest of the suite: add [Fair Payments Connector](https://wordpress.org/plugins/fair-payments-connector/) for online payments through Mollie, Fair Audience for attendee management and mailing subscriptions, Fair Audience Experimental for scheduled event mailings, Fair Finance for event budgets, and [Fair Timetable](https://wordpress.org/plugins/fair-timetable/) for multi-track schedules.
 
 == Installation ==
 
@@ -120,4 +125,4 @@ The Event Signup form shows one total directly above its submit button. Site-lev
 * `data-amount`: the total as a dot-separated decimal with two places (e.g. `42.50`), independent of the site language's number format. It is `0.00` for free signups or before a payable choice is made.
 * `data-currency`: the ISO currency code (e.g. `EUR`).
 
-Both attributes update whenever the visitor changes a ticket type, quantity, date, or activity, and always match the visible amount. The plugin itself sends no tracking events. This selector and its attributes are a stable interface and will not be renamed.
+Both attributes update whenever the visitor changes a ticket type, quantity, date, or activity, and always match the visible amount. Core Fair Events sends no tracking events. Fair Events Experimental can optionally send consented Meta conversions when configured. This selector and its attributes are a stable interface and will not be renamed.

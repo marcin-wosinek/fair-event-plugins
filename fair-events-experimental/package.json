@@ -1,7 +1,7 @@
 {
 	"name": "fair-events-experimental",
 	"version": "1.10.0",
-	"description": "Fair Events Experimental WordPress plugin",
+	"description": "Event sources, group pricing, schedule editing, duplication, merging, comparisons, Telegram summaries and optional Meta conversions for Fair Events.",
 	"license": "GPL-3.0-or-later",
 	"author": "Marcin Wosinek",
 	"type": "module",

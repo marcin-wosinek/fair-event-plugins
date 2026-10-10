@@ -1,7 +1,7 @@
 {
 	"name": "fair-event-plugins",
 	"version": "1.0.0",
-	"description": "First plugin form Fair Event Plugins set—all you need for running event page, fairy priced.",
+	"description": "WordPress plugins for event publishing, ticket signup, attendee management, payments and finance.",
 	"homepage": "https://github.com/marcin-wosinek/fair-event-plugins#readme",
 	"bugs": {
 		"url": "https://github.com/marcin-wosinek/fair-event-plugins/issues"

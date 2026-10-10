@@ -8,9 +8,21 @@ Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Activates advanced feature bundles for Fair Events: sources, ticketing, duplicate and merge tools.
+Sources, group rules, schedules, duplicate/merge tools, comparisons, Telegram summaries and optional Meta conversions. Requires Fair Events.
 
 == Description ==
+
+Fair Events Experimental is a companion requiring Fair Events. Core Fair Events already supplies ticket configuration, public signup, calendars, venues and basic event copying. This companion adds:
+
+* **Event sources and feeds:** Configure sources combining local categories, external iCal feeds and Fair Events JSON feeds, preview them, and share source-specific ICS subscriptions. Parsing and aggregation are provided by Fair Events.
+* **Group pricing and permissions:** Apply group discount and signup visibility rules using Fair Audience group and participant data; associate collaborators with activity options.
+* **Event tools:** Duplicate events through a configurable wizard or preview and merge event dates, including linked data choices.
+* **Workshop/activity schedules:** Edit schedule rows and booking state on Manage Event. Storage, API and booking enforcement are provided by core Fair Events ticketing.
+* **Event comparisons:** Compare ticket-sales and revenue timelines for two occurrences and download chart images. Requires Fair Audience statistics.
+* **Weekly Telegram summaries:** Schedule upcoming-week summaries for selected sources and destinations, with test sends and delivery history. Requires configuration.
+* **Optional Meta conversions:** Report consented checkout and purchase measurements. Disabled by default; requires Fair Payments Connector and configured Meta credentials.
+
+Sources, group rules and event tools have feature toggles enabled by default. Meta conversions are opt-in. Visitor proposal submission has an API, but the public form is currently unavailable. Scheduled event mailings are supplied by Fair Audience Experimental.
 
 When the optional Meta Conversions feature is enabled, the plugin processes consented Meta browser identifiers (`_fbp` and `_fbc`), the checkout source URL, purchase value, currency, and transaction identifier to report checkout and completed-purchase measurements to Meta Platforms, Inc. Delivery is asynchronous. Identifiers are cleared after delivery reaches a terminal result, and all delivery rows are deleted after 90 days. The feature requires marketing consent and administrator-supplied Meta credentials; its external service terms and privacy policy apply.
 
@@ -29,14 +41,6 @@ Requires WordPress 7.0 or newer, where the Connectors screen was introduced.
 A bot token saved in an earlier version keeps working and appears in Connectors as connected; nothing needs to be entered again.
 
 The token can also be supplied outside the database, as an environment variable or a PHP constant, both named `FAIR_EVENTS_EXPERIMENTAL_TELEGRAM_BOT_TOKEN`. The environment variable is used first, then the constant, then the token saved in Connectors. The Weekly notifications settings say which one is in use. Without a usable token, test and scheduled sends are stopped before anything is sent to Telegram, and the reason is shown in the settings and in Recent sends.
-
-This plugin is a companion to Fair Events. It activates three advanced feature bundles that are excluded from the public Fair Events build:
-
-* **Event sources & feeds** — External event sources, iCal/JSON feeds, event proposals.
-* **Ticketing** — Tickets, group pricing/permission rules, invitations.
-* **Event tools** — Advanced event duplication and merge tools.
-
-Requires Fair Events to be active.
 
 == Changelog ==
 

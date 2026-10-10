@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fair Events Experimental
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: Activates advanced feature bundles for Fair Events, including sources, ticketing, and duplicate and merge tools. Requires fair-events.
+ * Description: Event sources, group pricing, schedule editing, duplication, merging, comparisons, Telegram summaries and optional Meta conversions for Fair Events.
  * Version: 1.10.0
  * Requires at least: 7.0
  * Requires PHP: 8.0

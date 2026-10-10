@@ -1,6 +1,6 @@
 {
 	"name": "fair-event-plugins/fair-events-experimental",
-	"description": "Experimental feature bundles extension for Fair Events",
+	"description": "Event sources, group pricing, schedule editing, duplication, merging, comparisons, Telegram summaries and optional Meta conversions for Fair Events.",
 	"type": "wordpress-plugin",
 	"license": "GPL-3.0-or-later",
 	"authors": [

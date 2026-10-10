@@ -6,8 +6,8 @@ A collection of WordPress plugins for running event websites with fair, transpar
 
 Published on WordPress.org:
 
--   **[Fair Events](https://wordpress.org/plugins/fair-events/)** - Core event management with custom post types and blocks
--   **[Fair Audience](https://wordpress.org/plugins/fair-audience/)** - Event participants, signups, and mailing management
+-   **[Fair Events](https://wordpress.org/plugins/fair-events/)** - Recurring events, venues, public calendars, ticket configuration, free signup, and signup administration; paid checkout requires Fair Payments Connector
+-   **[Fair Audience](https://wordpress.org/plugins/fair-audience/)** - Participant profiles, attendee management, and mailing subscriptions; integrates with Fair Events signups and statistics
 -   **[Fair Timetable](https://wordpress.org/plugins/fair-timetable/)** - Timetable management for events & weekly activities
 
 In the monorepo, not (yet) published:
@@ -15,7 +15,10 @@ In the monorepo, not (yet) published:
 -   **fair-payments-connector** - Payment blocks and Mollie integration
 -   **fair-finance** - Budgeting, financial entries, and reconciliation
 -   **fair-form** - Form blocks and answer data layer
--   **fair-events-experimental** / **fair-payments-connector-experimental** - Feature-flag companions for advanced features
+-   **fair-events-experimental** - Requires Fair Events; adds source configuration and feeds, group rules, schedule editing, duplication and merging, event comparisons, Telegram summaries, and optional Meta conversions. Group rules and comparisons require Fair Audience; Meta conversions require Fair Payments Connector
+-   **fair-audience-experimental** - Fair Audience companion, including scheduled event mailings
+-   **fair-payments-connector-experimental** - Feature-flag companion for Fair Payments Connector
+-   **fair-calendar-button** - Standalone Add to Calendar block; Fair Events also provides its own button variation
 -   **fair-events-shared** - Shared JS utilities (private workspace package)
 
 ### Platform Plugin (Private)
@@ -65,6 +68,8 @@ npm run build    # Build this plugin only
 ```
 
 ## Documentation
+
+See [EVENT_FEATURE_INVENTORY.md](./EVENT_FEATURE_INVENTORY.md) for source-backed feature ownership, integration requirements, and current availability limitations.
 
 ### For Developers
 
