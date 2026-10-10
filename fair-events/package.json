@@ -1,6 +1,6 @@
 {
 	"name": "fair-events",
-	"version": "1.20.0",
+	"version": "1.21.0",
 	"description": "Recurring events, venues, calendar blocks, ticket configuration and signup for WordPress. Paid checkout requires Fair Payments Connector.",
 	"license": "GPL-3.0-or-later",
 	"author": "Marcin Wosinek",

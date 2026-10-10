@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 6.7
 Tested up to: 7.1
-Stable tag: 1.18.0
+Stable tag: 1.19.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +38,57 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.19.0
+
+### Minor Changes
+
+-   946a907: Sell priced add-ons with Fair Events alone. Add-ons (activities) configured on an event's Tickets tab — with one flat price or a price per sale period — now appear on the signup form and are charged at checkout without Fair Audience or Fair Events Experimental. Each add-on is charged once for every ticket that selects it, and the total shown on the form is the amount charged.
+
+    An add-on that has no price for the sale period currently on sale is no longer offered, and a purchase that still selects it is refused with a message naming it instead of the add-on being given away. An add-on priced at zero stays free, and can now be combined with a paid ticket. Add-ons that are full are marked as full for every visitor.
+
+    Existing add-ons, their prices, past selections and pending payments are kept as they are. With Fair Audience active, its signup and add-activities flows use the same prices and rules, and group discounts keep applying on top.
+
+    For developers: `TicketOption`, `TicketOptionPrice`, `ActivityOptionPriceResolver` and `ActivityOptionTranslation` moved from `FairEventsExperimental` to the matching `FairEvents` namespaces (the old names remain as aliases while Fair Events Experimental is active). Fair Events builds add-on line items itself; the `fair_events_signup_option_line_items` filter is replaced by `fair_events_signup_option_prices`, which only adjusts prices.
+
+-   fbd90d6: Let a recognised participant buy another ticket for themselves. A participant who already holds a ticket for an event date now sees their tickets — each with its own ticket type and activities — and, right below, the signup form headed "Buy another ticket for yourself" with their name and email. Their identity, discounts and access to restricted tickets are kept, nothing from the earlier ticket is carried into the new purchase, and "Not you? Start fresh" stays a separate way to continue as someone else. Dates already held are marked in the date pickers and can be chosen again. Each purchase keeps its own signup, tickets and payment, and ticket and activity limits apply as for any other purchase.
+
+    After a purchase, the form gives way to a "Back to the signup form" link, which shows the tickets now held and a fresh form; the payment confirmation page offers the same link and lists the tickets of the purchase just paid for. Confirmation emails for free signups now list the activities chosen with that purchase.
+
+    "Cancel signup" is no longer offered to participants whose signup has tickets, and the request is refused: it removed the participant from the event together with every ticket they hold. It is still available for signups without tickets, such as those added by an organizer. Cancelling a single ticket is done by an organizer from Manage Event.
+
+    For developers: the signed-up card moved from `fair_events_signup_render_before_form` to the new `fair_events_signup_render_existing_signup` action, returned as `existing_signup_html` by `GET fair-events/v1/get-tickets/viewer-context` and placed before the form; `suppress_form` is no longer set for a signed-up viewer. `DELETE fair-audience/v1/event-signup` answers 409 `signup_has_tickets` for a ticket-backed signup. The payment-state response gained `tickets`.
+
+-   e751903: Manage single tickets from the Audience tab. Each ticket row now offers **Move ticket** (to another date of the same recurring event, with a required reason when the target date or an activity is full), **Cancel ticket** and, once cancelled, **Delete ticket**. Every action changes only the ticket it names: the purchase, its payment and its other tickets stay as they are, nothing is refunded automatically, and the popups say so before anything changes. A participant left without tickets stays in the audience, no longer listed as signed up.
+
+    The Audience search now finds participants and tickets by purchaser, assignee, email and ticket reference and shows only the matching tickets, and **Export tickets CSV** downloads those tickets one per row with their purchaser and assignee.
+
+-   a5b30c4: Let a returning participant register another person. A participant the browser remembers who already holds a ticket for an event date now finds "Register another person" below their tickets. It opens an empty signup form headed "Registering another person": no name, email, ticket choice, activities or answers are carried over, the other person's ticket types and prices are their own (no member discount or members-only ticket), and their signup, tickets and payment are recorded under their own name. The participant's own ticket and the browser's memory of them stay as they were: "Back to your ticket", completing a free registration, or reloading the page shows their ticket again; a paid registration ends on the usual payment confirmation.
+
+    The action is not offered to someone who opened a personal signup link or is signed in to the site. "Buy another ticket for yourself" and "Not you? Start fresh" keep working as before. If the email entered for the other person already belongs to a participant, they get the usual link by email to continue.
+
+    For developers: `POST fair-events/v1/get-tickets` and `GET fair-events/v1/get-tickets/viewer-context` accept `register_another_person` (400 `register_another_person_unavailable` together with a participant token or a signed-in account). Every signup hook that passes `$participant_token` now also passes a trailing `$request_context` array (`register_another_person`); see REST_API_BACKEND.md.
+
+-   85e31c0: Remove the old Fair Audience Event Signup block. Pages that still contain it keep working: they now show the Event Signup form, with their button text and custom questions in the same order. A saved form that asks for a file upload shows a notice to contact the organizer instead, because the Event Signup form does not accept uploads. In the editor, old pages show the block as unsupported and it can be replaced with Event Signup.
+
+    The Event Signup form now protects existing participants. When a visitor types the email of someone already known to the site, and is not recognised as that person, nothing is saved and a link is sent to that address. Opening the link brings back the ticket choice and answers so the signup can be finished. Signed-in members and visitors arriving from their own link continue as before.
+
+### Patch Changes
+
+-   9413f36: Load the plugins' own scripts with WordPress's `defer` strategy. The Add to Calendar button script, the payment return notification script, and the admin and editor scripts of these plugins no longer pause page parsing while they download; they stay in the footer and behave as before. WordPress still loads a script the usual way where deferring would break ordering — Manage Event while a plugin adds tabs to it (Fair Audience does), and Fair Events → Settings while an extension adds a settings tab.
+-   3a7b83d: Calculate signup and payment totals in one way. The amount saved with a signup, whether it is free or paid, the amount charged and the line items recorded in the finance ledger now all come from the same calculation: amounts have two decimals and are rounded half up — each unit price first, then each line, then the total. Purchases at ordinary two-decimal prices are unchanged.
+
+    A price with a fraction of a cent (for example after a discount) can now differ by a cent from what one of these places showed before, and a total that rounds to zero is confirmed as free instead of being sent to payment. In a purchase for several dates, each date's signup now holds its own rounded amount.
+
+    For developers: a transaction's amount is always the total of its line items. `fair_payment_before_validate_line_items` may still change the line items, which are validated again; a total changed through `fair_payment_calculated_total` or `fair_payment_before_create_transaction` without matching line items is refused. Line items may now be negative (discounts) or zero as long as the total is positive, and a quantity must be a positive whole number. `fair_payment_create_transaction()` accepts `expected_amount` to refuse a transaction whose total differs from the amount the caller decided on.
+
+-   48275f4: Reject participant signups for a ticket type that has no price for the current sale period instead of completing them for free. Signups without a ticket type and ticket types with an explicit zero price still confirm for free.
+-   3cbb450: Payment Transactions: search by transaction ID, Mollie payment ID, description, or the person's name or email, and filter by date and amount range. Filters apply together with Status and Mode, show the number of matching transactions, and reset to the Paid / Live defaults.
+-   c0c3d69: Keep purchases that are not paid out of the rosters. In the Audience tab, someone whose purchase awaits payment is now shown as **Payment in progress** (or **Payment not completed** once the payment failed or its hold ran out) instead of a raw status, and is counted apart from signed-up participants. Saving a comment or other details for them no longer marks them as signed up; an administrator can still pick a role on purpose. A collaborator, or someone holding a ticket another participant gave them, keeps that role when a purchase of their own fails or expires.
+
+    The List tab and its export now show only tickets that are confirmed: a cancelled ticket of an otherwise confirmed registration is no longer listed, and the registration's ticket count matches the rows shown.
+
+-   64c0160: Plan a workshop schedule in Manage Event. With Fair Events Experimental active, Manage Event → Prices → More options has a new **Workshop schedule** setting; once saved, a **Schedule** tab appears after Prices. There you add each add-on as a workshop with its date, start and end time, room or location and description — its name, price and capacity stay in Prices — and add schedule items such as breaks, which are never a ticket choice. Workshops may run at the same time, also in the same room. A workshop can be marked **Not bookable**: it stays on the schedule and leaves the signup form, and purchases that try to include it are refused. That switch is refused while tickets or reservations include the workshop, and an add-on that is on the schedule cannot be deleted or replaced by an import in Prices. A series keeps one schedule, managed on the series and shifted to each of its dates; copying an event copies its schedule. Turning the setting off hides the tab and keeps the entries and their booking status. Fair Audience no longer accepts a not-bookable workshop in its own signup routes.
 
 ## 1.18.0
 

@@ -1,5 +1,39 @@
 # fair-events-experimental
 
+## 1.11.0
+
+### Minor Changes
+
+-   946a907: Sell priced add-ons with Fair Events alone. Add-ons (activities) configured on an event's Tickets tab — with one flat price or a price per sale period — now appear on the signup form and are charged at checkout without Fair Audience or Fair Events Experimental. Each add-on is charged once for every ticket that selects it, and the total shown on the form is the amount charged.
+
+    An add-on that has no price for the sale period currently on sale is no longer offered, and a purchase that still selects it is refused with a message naming it instead of the add-on being given away. An add-on priced at zero stays free, and can now be combined with a paid ticket. Add-ons that are full are marked as full for every visitor.
+
+    Existing add-ons, their prices, past selections and pending payments are kept as they are. With Fair Audience active, its signup and add-activities flows use the same prices and rules, and group discounts keep applying on top.
+
+    For developers: `TicketOption`, `TicketOptionPrice`, `ActivityOptionPriceResolver` and `ActivityOptionTranslation` moved from `FairEventsExperimental` to the matching `FairEvents` namespaces (the old names remain as aliases while Fair Events Experimental is active). Fair Events builds add-on line items itself; the `fair_events_signup_option_line_items` filter is replaced by `fair_events_signup_option_prices`, which only adjusts prices.
+
+-   5547fdb: The Telegram bot token for weekly notifications is now managed in Settings → Connectors, and the plugin requires WordPress 7.0 or newer. A token saved earlier keeps working without being entered again. Weekly notifications shows whether a token is configured and links to Connectors; the chats, schedule, preview and test send stay where they were. The token can also come from an environment variable or PHP constant named `FAIR_EVENTS_EXPERIMENTAL_TELEGRAM_BOT_TOKEN`, which take precedence over the saved one. A missing or malformed token stops test and scheduled sends before anything reaches Telegram and says why. Send a test summary to confirm Telegram accepts the token.
+-   64c0160: Plan a workshop schedule in Manage Event. With Fair Events Experimental active, Manage Event → Prices → More options has a new **Workshop schedule** setting; once saved, a **Schedule** tab appears after Prices. There you add each add-on as a workshop with its date, start and end time, room or location and description — its name, price and capacity stay in Prices — and add schedule items such as breaks, which are never a ticket choice. Workshops may run at the same time, also in the same room. A workshop can be marked **Not bookable**: it stays on the schedule and leaves the signup form, and purchases that try to include it are refused. That switch is refused while tickets or reservations include the workshop, and an add-on that is on the schedule cannot be deleted or replaced by an import in Prices. A series keeps one schedule, managed on the series and shifted to each of its dates; copying an event copies its schedule. Turning the setting off hides the tab and keeps the entries and their booking status. Fair Audience no longer accepts a not-bookable workshop in its own signup routes.
+
+### Patch Changes
+
+-   Updated dependencies [f49cee6]
+-   Updated dependencies [946a907]
+-   Updated dependencies [fbd90d6]
+-   Updated dependencies [9413f36]
+-   Updated dependencies [4ecd614]
+-   Updated dependencies [e751903]
+-   Updated dependencies [3a7b83d]
+-   Updated dependencies [a5b30c4]
+-   Updated dependencies [1da561f]
+-   Updated dependencies [85e31c0]
+-   Updated dependencies [d39f0cb]
+-   Updated dependencies [c65bf49]
+-   Updated dependencies [a80905e]
+-   Updated dependencies [c0c3d69]
+-   Updated dependencies [64c0160]
+    -   fair-events@1.21.0
+
 ## 1.10.0
 
 ### Minor Changes
