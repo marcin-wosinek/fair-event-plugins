@@ -67,10 +67,6 @@ npm run start    # Watch mode for this plugin only
 npm run build    # Build this plugin only
 ```
 
-## Documentation
-
-See [EVENT_FEATURE_INVENTORY.md](./EVENT_FEATURE_INVENTORY.md) for source-backed feature ownership, integration requirements, and current availability limitations.
-
 ### For Developers
 
 -   **[CLAUDE.md](./CLAUDE.md)** - Project overview, coding standards, and AI assistant instructions
