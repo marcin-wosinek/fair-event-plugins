@@ -473,4 +473,84 @@ test.describe( 'Manage Event — reorder add-ons in a popup', () => {
 		expect( await editorNames( page ) ).toEqual( tapped );
 		await context.close();
 	} );
+
+	test( 'add-ons are edited, saved and reloaded without collaborator assignments (#1793)', async () => {
+		const participantRequests = [];
+		const savedBodies = [];
+		adminPage.on( 'request', ( req ) => {
+			if ( /fair-audience\/v1\/participants/.test( req.url() ) ) {
+				participantRequests.push( req.url() );
+			}
+			if (
+				req.method() !== 'GET' &&
+				/\/tickets(\?|$)/.test( req.url() )
+			) {
+				savedBodies.push( req.postDataJSON() );
+			}
+		} );
+
+		// No collaborator column or participant selector at any viewport.
+		for ( const viewport of [
+			{ width: 375, height: 812 },
+			{ width: 768, height: 1024 },
+			{ width: 1280, height: 900 },
+		] ) {
+			await adminPage.setViewportSize( viewport );
+			await openAddons( adminPage );
+			await expect(
+				adminPage.getByText( 'Collaborator(s)' )
+			).toHaveCount( 0 );
+			await expect(
+				adminPage.getByPlaceholder( 'Add participants' )
+			).toHaveCount( 0 );
+		}
+
+		// Edit an existing add-on and add a new one.
+		const before = await editorNames( adminPage );
+		await adminPage
+			.getByPlaceholder( 'Add-on name' )
+			.first()
+			.fill( `${ before[ 0 ] } deluxe` );
+		await adminPage.getByRole( 'button', { name: '+ Add Option' } ).click();
+		await adminPage
+			.getByPlaceholder( 'Add-on name' )
+			.last()
+			.fill( 'Massage' );
+		const expected = [
+			`${ before[ 0 ] } deluxe`,
+			...before.slice( 1 ),
+			'Massage',
+		];
+
+		await saveTickets( adminPage );
+		expect( savedBodies ).toHaveLength( 1 );
+		expect( savedBodies[ 0 ].options.map( ( o ) => o.name ) ).toEqual(
+			expected
+		);
+		savedBodies[ 0 ].options.forEach( ( option ) =>
+			expect( option ).not.toHaveProperty( 'collaborator_ids' )
+		);
+
+		// The saved add-ons come back in order after a reload.
+		await openAddons( adminPage );
+		expect( await editorNames( adminPage ) ).toEqual( expected );
+		const stored = await apiFetch( adminPage, {
+			path: `/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+		} );
+		expect( stored.options.map( ( o ) => o.name ) ).toEqual( expected );
+		stored.options.forEach( ( option ) =>
+			expect( option ).not.toHaveProperty( 'collaborator_ids' )
+		);
+		expect( participantRequests ).toEqual( [] );
+
+		// The earlier signup still has the add-on it picked.
+		const state = await apiFetch( adminPage, {
+			path: `/fair-e2e/v1/ticket-activities/state?signup_ids[]=${ signupId }`,
+		} );
+		expect(
+			state.tickets.map( ( ticket ) =>
+				ticket.activities.map( ( a ) => Number( a.ticket_option_id ) )
+			)
+		).toEqual( [ [ hikeId ] ] );
+	} );
 } );

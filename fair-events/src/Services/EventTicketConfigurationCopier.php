@@ -30,21 +30,14 @@ class EventTicketConfigurationCopier {
 	 * @return void
 	 */
 	public function cleanup( $event_date_id ) {
-		$option_class       = \FairEvents\Models\TicketOption::class;
-		$collaborator_class = \FairEventsExperimental\Models\TicketOptionCollaborator::class;
-		$price_class        = \FairEvents\Models\TicketOptionPrice::class;
+		$option_class = \FairEvents\Models\TicketOption::class;
+		$price_class  = \FairEvents\Models\TicketOptionPrice::class;
 
 		\FairEvents\Models\ScheduleItem::delete_by_event_date_id( $event_date_id );
 
 		if ( class_exists( $option_class ) ) {
-			$options = $option_class::get_all_by_event_date_id( $event_date_id );
 			if ( class_exists( $price_class ) && method_exists( $price_class, 'delete_by_event_date_id' ) ) {
 				$price_class::delete_by_event_date_id( $event_date_id );
-			}
-			if ( class_exists( $collaborator_class ) ) {
-				foreach ( $options as $option ) {
-					$collaborator_class::delete_by_option_id( $option->id );
-				}
 			}
 			$option_class::delete_by_event_date_id( $event_date_id );
 		}
@@ -201,15 +194,13 @@ class EventTicketConfigurationCopier {
 	 * @throws \RuntimeException When an option record cannot be copied or remapped.
 	 */
 	private function copy_experimental_options( $source_id, $destination_id, $period_map ) {
-		$option_class       = \FairEvents\Models\TicketOption::class;
-		$collaborator_class = \FairEventsExperimental\Models\TicketOptionCollaborator::class;
-		$price_class        = \FairEvents\Models\TicketOptionPrice::class;
+		$option_class = \FairEvents\Models\TicketOption::class;
+		$price_class  = \FairEvents\Models\TicketOptionPrice::class;
 
 		if ( ! class_exists( $option_class ) ) {
 			return array();
 		}
 
-		$collaborators = class_exists( $collaborator_class ) ? $collaborator_class::get_all_by_event_date_id( $source_id ) : array();
 		$option_prices = class_exists( $price_class ) ? $price_class::get_all_by_event_date_id( $source_id ) : array();
 		$option_map    = array();
 
@@ -220,9 +211,6 @@ class EventTicketConfigurationCopier {
 			}
 
 			$option_map[ $option->id ] = (int) $new_id;
-			if ( class_exists( $collaborator_class ) ) {
-				$collaborator_class::sync_for_option( (int) $new_id, $collaborators[ $option->id ] ?? array() );
-			}
 		}
 
 		if ( ! class_exists( $price_class ) ) {

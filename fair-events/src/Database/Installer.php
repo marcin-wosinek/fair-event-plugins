@@ -65,9 +65,6 @@ class Installer {
 		$sql = Schema::get_ticket_type_group_restrictions_table_sql();
 		dbDelta( $sql );
 
-		$sql = Schema::get_ticket_option_collaborators_table_sql();
-		dbDelta( $sql );
-
 		$sql = Schema::get_ticket_option_prices_table_sql();
 		dbDelta( $sql );
 
@@ -196,7 +193,6 @@ class Installer {
 		// Version 3.5.0 - Invitation tokens table (no data migration needed, table created by dbDelta).
 
 		// Run migration if upgrading from pre-3.6.0 (add short_name to ticket_options).
-		// Version 3.6.0 - Ticket option collaborators junction table (no data migration needed, table created by dbDelta).
 		if ( version_compare( $current_version, '3.6.0', '<' ) ) {
 			self::migrate_to_3_6_0();
 		}
@@ -348,8 +344,35 @@ class Installer {
 			self::migrate_to_3_41_0();
 		}
 
+		// Only record 3.44.0 once the add-on collaborator table is gone, so a
+		// failed drop is retried by the next maybe_upgrade().
+		$addon_collaborators_removed = true;
+		if ( version_compare( $current_version, '3.44.0', '<' ) ) {
+			$addon_collaborators_removed = self::migrate_to_3_44_0();
+		}
+
 		// Update database version.
-		Schema::update_db_version( $gallery_removed ? Schema::DB_VERSION : '3.35.0' );
+		Schema::update_db_version( self::version_to_record( $gallery_removed, $addon_collaborators_removed ) );
+	}
+
+	/**
+	 * Version to store after an install run.
+	 *
+	 * Stops just below the earliest cleanup that failed, so that cleanup and
+	 * everything after it run again on the next maybe_upgrade().
+	 *
+	 * @param bool $gallery_removed             Whether the 3.36.0 cleanup succeeded.
+	 * @param bool $addon_collaborators_removed Whether the 3.44.0 cleanup succeeded.
+	 * @return string Database version.
+	 */
+	private static function version_to_record( $gallery_removed, $addon_collaborators_removed ) {
+		if ( ! $gallery_removed ) {
+			return '3.35.0';
+		}
+		if ( ! $addon_collaborators_removed ) {
+			return '3.43.0';
+		}
+		return Schema::DB_VERSION;
 	}
 
 	/**
@@ -441,8 +464,6 @@ class Installer {
 			if ( version_compare( $current_version, '3.6.0', '<' ) ) {
 				self::migrate_to_3_6_0();
 			}
-
-			// Version 3.6.0 - Ticket option collaborators junction table (no data migration needed, table created by dbDelta).
 
 			if ( version_compare( $current_version, '3.7.0', '<' ) ) {
 				self::migrate_to_3_7_0();
@@ -2224,6 +2245,27 @@ class Installer {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Migrate to version 3.44.0 - Remove add-on collaborator assignments.
+	 *
+	 * Drops the junction table that linked add-ons to participants. Nothing
+	 * else referenced it: participants, event-level collaborators, add-ons,
+	 * prices and purchases are untouched. A no-op when the table is already
+	 * gone, and independent of the companion plugin being active.
+	 *
+	 * @return bool True when the table is gone.
+	 */
+	private static function migrate_to_3_44_0() {
+		global $wpdb;
+
+		return false !== $wpdb->query(
+			$wpdb->prepare(
+				'DROP TABLE IF EXISTS %i',
+				$wpdb->prefix . 'fair_events_ticket_option_collaborators'
+			)
+		);
 	}
 
 	/**

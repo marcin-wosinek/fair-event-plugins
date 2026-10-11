@@ -1137,7 +1137,8 @@ test( 'copies Experimental ticket options and period prices', async ( {
 						price: 12,
 						capacity: 18,
 						derive_price_from_sale_period: true,
-						collaborator_ids: [],
+						// Legacy field: accepted, never stored or copied.
+						collaborator_ids: [ 9101 ],
 						period_prices: [ { sale_period_index: 0, price: 9.5 } ],
 					},
 				],
@@ -1168,8 +1169,10 @@ test( 'copies Experimental ticket options and period prices', async ( {
 			price: 12,
 			capacity: 18,
 			derive_price_from_sale_period: true,
-			collaborator_ids: [],
 		} );
+		expect( copiedTickets.options[ 0 ] ).not.toHaveProperty(
+			'collaborator_ids'
+		);
 		expect( copiedTickets.options[ 0 ].id ).not.toBe(
 			sourceTickets.options[ 0 ].id
 		);

@@ -15,7 +15,7 @@ Sources, group rules, schedules, duplicate/merge tools, comparisons, Telegram su
 Fair Events Experimental is a companion requiring Fair Events. Core Fair Events already supplies ticket configuration, public signup, calendars, venues and basic event copying. This companion adds:
 
 * **Event sources and feeds:** Configure sources combining local categories, external iCal feeds and Fair Events JSON feeds, preview them, and share source-specific ICS subscriptions. Parsing and aggregation are provided by Fair Events.
-* **Group pricing and permissions:** Apply group discount and signup visibility rules using Fair Audience group and participant data; associate collaborators with activity options.
+* **Group pricing and permissions:** Apply group discount and signup visibility rules using Fair Audience group and participant data.
 * **Event tools:** Duplicate events through a configurable wizard or preview and merge event dates, including linked data choices.
 * **Workshop/activity schedules:** Edit schedule rows and booking state on Manage Event. Storage, API and booking enforcement are provided by core Fair Events ticketing.
 * **Event comparisons:** Compare ticket-sales and revenue timelines for two occurrences and download chart images. Requires Fair Audience statistics.
