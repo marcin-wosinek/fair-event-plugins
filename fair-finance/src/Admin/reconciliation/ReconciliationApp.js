@@ -308,14 +308,25 @@ const ReconciliationApp = () => {
 
 	return (
 		<div className="wrap">
-			<HStack justify="space-between" alignment="center">
+			<HStack justify="space-between" alignment="center" wrap>
 				<h1>{ __( 'Reconciliation', 'fair-payments-connector' ) }</h1>
-				<Button
-					variant="secondary"
-					onClick={ () => setShowSettlementModal( true ) }
-				>
-					{ __( 'Import settlement CSV', 'fair-payments-connector' ) }
-				</Button>
+				<HStack justify="flex-end" expanded={ false } wrap>
+					<Button
+						variant="tertiary"
+						href="admin.php?page=fair-finance-settlements"
+					>
+						{ __( 'Saved settlements', 'fair-finance' ) }
+					</Button>
+					<Button
+						variant="secondary"
+						onClick={ () => setShowSettlementModal( true ) }
+					>
+						{ __(
+							'Import settlement CSV',
+							'fair-payments-connector'
+						) }
+					</Button>
+				</HStack>
 			</HStack>
 
 			{ showSettlementModal && (

@@ -1,0 +1,4 @@
+Datum;Betaalmethode;Valuta;Bedrag;Status;ID;Omschrijving;Naam consument;Rekeningnummer consument;BIC consument;Uitbetalingsvaluta;Uitbetalingsbedrag;Uitbetalingsreferentie;Teruggestort bedrag
+2026-05-02 10:15:00;ideal;EUR;25,00;paid;tr_fixtureAAA111;Ticket A;Jan Voorbeeld;NL00BANK0123456789;BANKNL2A;EUR;25,00;19415110.2605.03;
+2026-05-04 12:00:00;ideal;EUR;-10,00;terugbetaald;tr_fixtureAAA111;Terugbetaling A;;;;EUR;-10,00;19415110.2605.03;
+;;EUR;-0,29;;;Transactiekosten iDEAL;;;;EUR;-0,29;19415110.2605.03;

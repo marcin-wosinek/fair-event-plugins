@@ -96,7 +96,7 @@ function fair_payments_connector_maybe_upgrade() {
 
 	$db_version = get_option( 'fair_payment_db_version', '1.0' );
 
-	if ( version_compare( $db_version, '26.0', '<' ) ) {
+	if ( version_compare( $db_version, '27.0', '<' ) ) {
 		FairPaymentsConnector\Database\Schema::create_tables();
 	}
 }

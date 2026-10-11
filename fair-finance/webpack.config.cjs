@@ -17,6 +17,10 @@ module.exports = {
       process.cwd(),
       "src/Admin/reconciliation/index.js",
     ),
+    "admin/settlements/index": path.resolve(
+      process.cwd(),
+      "src/Admin/settlements/index.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,

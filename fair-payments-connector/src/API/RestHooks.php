@@ -57,6 +57,9 @@ class RestHooks {
 		$external_updates_controller = new \FairPaymentsConnector\API\ExternalUpdatesController();
 		$external_updates_controller->register_routes();
 
+		$settlement_controller = new \FairPaymentsConnector\API\SettlementController();
+		$settlement_controller->register_routes();
+
 		$settings_write_controller = new \FairPaymentsConnector\API\SettingsWriteController();
 		$settings_write_controller->register_routes();
 

@@ -1,0 +1,10 @@
+Date,Payment method,Currency,Amount,Status,ID,Description,Consumer name,Consumer bank account,Consumer BIC,Settlement currency,Settlement amount,Settlement reference,Amount refunded
+2026-05-02 10:15:00,ideal,EUR,25.00,paid,tr_fixtureAAA111,Ticket A,Jane Example,NL00BANK0123456789,BANKNL2A,EUR,25.00,19415110.2605.03,
+2026-05-02 11:00:00,creditcard,USD,40.00,paid,tr_fixtureBBB222,"Ticket B, front row",John Example,,,EUR,36.80,19415110.2605.03,
+2026-05-03 09:00:00,creditcard,EUR,30.00,paid,cpt_fixtureCCC333,Capture C,,,,EUR,30.00,19415110.2605.03,
+2026-05-04 12:00:00,ideal,EUR,-10.00,refunded,re_fixtureDDD444,Refund D,,,,EUR,-10.00,19415110.2605.03,
+2026-05-05 12:00:00,creditcard,EUR,-15.00,chargeback,chb_fixtureEEE555,Chargeback E,,,,EUR,-15.00,19415110.2605.03,
+,,EUR,-1.45,,,Transaction fees ideal,,,,EUR,-1.45,19415110.2605.03,
+,,EUR,-1.45,,,Transaction fees ideal,,,,EUR,-1.45,19415110.2605.03,
+,,EUR,2.00,,,Correction previous settlement,,,,EUR,2.00,19415110.2605.03,
+2026-05-06 12:00:00,voucher,EUR,5.00,paid,xyz_fixtureFFF666,Unrecognized movement,,,,EUR,5.00,19415110.2605.03,

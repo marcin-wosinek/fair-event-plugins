@@ -22,6 +22,7 @@ e2e/
 │   └── output/                           # gitignored PNGs
 └── mu-plugins/                           # mounted into wp-env only (see .wp-env.json)
     ├── fair-e2e-support.php              # auto-loaded mu-plugin (mail capture + Mollie test creds + loads the double)
+    ├── fair-e2e-settlements.php          # resets saved settlements and steers the double's settlement responses
     ├── lib/
     │   ├── event-factory.php             # composable event-seeding builders
     │   └── mollie-http-double.php        # fake Mollie HTTP transport

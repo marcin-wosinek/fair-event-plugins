@@ -1,0 +1,189 @@
+/**
+ * Settlements admin page styles.
+ *
+ * Everything is scoped under `.fair-finance-settlements-page` (and the CSV
+ * dialog's own class, which renders outside it) so other admin screens are
+ * untouched.
+ *
+ * Below the mobile breakpoint the list and movement tables drop the grid and
+ * render each row as a stacked card with label/value pairs. The selectors
+ * stack `.wrap.fair-finance-settlements-page` and `.wp-list-table.widefat` to
+ * outweigh WordPress core's responsive list-table rules, which would
+ * otherwise blank out the `data-label` text.
+ */
+
+.fair-finance-settlements-page,
+.fair-finance-settlements-csv-modal {
+	.fair-finance-settlements-badge {
+		display: inline-block;
+		padding: 1px 8px;
+		border-radius: 10px;
+		background: #f0f0f1;
+		color: #2c3338;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 1.6;
+		white-space: nowrap;
+
+		&.is-good {
+			background: #edfaef;
+			color: #005c12;
+		}
+
+		&.is-warning {
+			background: #fcf9e8;
+			color: #755100;
+		}
+	}
+
+	.fair-finance-settlements-facts {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: 12px 24px;
+		margin: 0;
+
+		dt {
+			color: #50575e;
+			font-size: 12px;
+		}
+
+		dd {
+			margin: 2px 0 0;
+			font-weight: 500;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	.fair-finance-settlements-errors {
+		margin: 8px 0 0;
+		padding-left: 18px;
+		list-style: disc;
+
+		li {
+			margin-bottom: 4px;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	.fair-finance-settlements-blocked {
+		color: #50575e;
+		font-size: 12px;
+	}
+
+	.fair-finance-settlements-file-label {
+		display: block;
+		margin-bottom: 8px;
+		font-size: 11px;
+		font-weight: 500;
+		text-transform: uppercase;
+	}
+
+	input[type="file"] {
+		max-width: 100%;
+	}
+}
+
+.fair-finance-settlements-page {
+	h1 {
+		overflow-wrap: anywhere;
+	}
+
+	.components-notice {
+		margin: 12px 0;
+	}
+
+	.fair-finance-settlements-import,
+	.fair-finance-settlements-card {
+		margin: 16px 0;
+
+		h2 {
+			margin: 0;
+			font-size: 14px;
+		}
+	}
+
+	.fair-finance-settlements-filter {
+		max-width: 320px;
+		margin: 16px 0;
+	}
+
+	.fair-finance-settlements-loading {
+		padding: 40px;
+		text-align: center;
+	}
+
+	.fair-finance-settlements-pagination {
+		margin-top: 12px;
+	}
+
+	.fair-finance-settlements-scroll {
+		overflow-x: auto;
+	}
+
+	.fair-finance-settlements-conflict {
+		color: #755100;
+		font-size: 12px;
+	}
+
+	.fair-finance-settlements-table code {
+		overflow-wrap: anywhere;
+	}
+}
+
+.wrap.fair-finance-settlements-page {
+	@media screen and (max-width: 782px) {
+		.wp-list-table.widefat.fair-finance-settlements-table {
+			display: block;
+			border: none;
+			background: none;
+			box-shadow: none;
+
+			// Column headers are replaced by per-cell labels.
+			thead {
+				display: none;
+			}
+
+			tbody,
+			tr,
+			td {
+				display: block;
+			}
+
+			tr {
+				margin-bottom: 12px;
+				padding: 8px 12px;
+				border: 1px solid #c3c4c7;
+				background: #fff;
+			}
+
+			td {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 4px 16px;
+				align-items: baseline;
+				justify-content: flex-end;
+				width: auto !important;
+				padding: 6px 0;
+				border: none;
+				text-align: right;
+				overflow-wrap: anywhere;
+
+				&::before {
+					content: attr(data-label);
+					// Core's responsive list-table absolutely positions this
+					// pseudo-element; keep it in the flex flow so the label
+					// sits beside the value instead of over it.
+					position: static;
+					flex: 0 0 38%;
+					width: auto;
+					// Values that do not fit wrap below, still right-aligned.
+					margin-right: auto;
+					padding: 0;
+					color: #50575e;
+					font-weight: 600;
+					text-align: left;
+				}
+			}
+		}
+	}
+}

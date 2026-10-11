@@ -67,6 +67,16 @@ class AdminPages {
 			'fair-finance-reconciliation',
 			array( $this, 'render_reconciliation_page' )
 		);
+
+		// Settlements submenu.
+		add_submenu_page(
+			'fair-finance-entries',
+			__( 'Settlements', 'fair-finance' ),
+			__( 'Settlements', 'fair-finance' ),
+			'manage_options',
+			'fair-finance-settlements',
+			array( $this, 'render_settlements_page' )
+		);
 	}
 
 	/**
@@ -88,6 +98,12 @@ class AdminPages {
 			return;
 		}
 
+		// Settlements page.
+		if ( false !== strpos( $hook, 'fair-finance-settlements' ) ) {
+			$this->enqueue_admin_page_script( 'settlements' );
+			return;
+		}
+
 		// Entries page (check last — slug is also the top-level menu slug).
 		if ( 'toplevel_page_fair-finance-entries' === $hook || false !== strpos( $hook, 'fair-finance-entries' ) ) {
 			$this->enqueue_admin_page_script( 'entries' );
@@ -105,7 +121,7 @@ class AdminPages {
 	/**
 	 * Enqueue script for an admin page
 	 *
-	 * @param string $page Page name (budgets, entries, reconciliation).
+	 * @param string $page Page name (budgets, entries, reconciliation, settlements).
 	 * @return void
 	 */
 	private function enqueue_admin_page_script( $page ) {
@@ -166,6 +182,17 @@ class AdminPages {
 	public function render_budgets_page() {
 		?>
 		<div id="fair-finance-budgets-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render settlements page
+	 *
+	 * @return void
+	 */
+	public function render_settlements_page() {
+		?>
+		<div id="fair-finance-settlements-root"></div>
 		<?php
 	}
 

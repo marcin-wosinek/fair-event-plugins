@@ -305,7 +305,11 @@ add_action(
 						$inserted = $wpdb->insert(
 							$table,
 							array(
-								'mollie_payment_id' => 'tr_e2e_' . wp_generate_password( 20, false ),
+								// A spec may pin the Mollie ID, to stand in for a
+								// payment a saved settlement refers to (#1694).
+								'mollie_payment_id' => $request->get_param( 'mollie_payment_id' )
+									? sanitize_text_field( (string) $request->get_param( 'mollie_payment_id' ) )
+									: 'tr_e2e_' . wp_generate_password( 20, false ),
 								'event_date_id'     => $event_date_id ? absint( $event_date_id ) : null,
 								'amount'            => (float) $request->get_param( 'amount' ),
 								'application_fee'   => $request->has_param( 'application_fee' ) ? (float) $request->get_param( 'application_fee' ) : null,
