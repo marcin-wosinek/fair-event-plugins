@@ -25,6 +25,7 @@ import EventTickets, {
 	exclusiveEndToInclusiveDate,
 	inclusiveEndToExclusiveDate,
 	moveToTop,
+	duplicateOption,
 } from '../EventTickets.js';
 import { salePeriodColor } from '../SalePeriodsCalendar.js';
 
@@ -2619,5 +2620,418 @@ describe( 'EventTickets — workshop schedule setting (#1767)', () => {
 		fireEvent.click( checkbox );
 
 		expect( checkbox ).toBeChecked();
+	} );
+} );
+
+describe( 'EventTickets — duplicate an add-on (#1785)', () => {
+	const addon = ( id, name, sortOrder, extra = {} ) => ( {
+		id,
+		name,
+		short_name: '',
+		price: 0,
+		capacity: null,
+		period_prices: [],
+		sort_order: sortOrder,
+		...extra,
+	} );
+
+	const flatData = {
+		...initialDataWithTicketType,
+		options: [
+			// collaborator_ids: a legacy field older responses still carry.
+			addon( 31, 'Yoga', 0, {
+				short_name: 'YG',
+				price: 7,
+				capacity: 12,
+				collaborator_ids: [ 501, 502 ],
+			} ),
+			addon( 32, 'Dinner', 1 ),
+		],
+	};
+
+	// One saved sale period and one that has no ID yet.
+	const periodData = {
+		...initialDataWithTicketType,
+		sale_periods: [
+			{
+				id: 801,
+				name: 'Early',
+				sale_start: '2026-01-01',
+				sale_end: '2026-02-01',
+			},
+			{ name: 'Late', sale_start: '2026-02-01', sale_end: '2026-03-01' },
+		],
+		settings: {
+			activity_period_pricing: true,
+			multiple_pricing_periods: true,
+		},
+		options: [
+			addon( 41, 'Yoga', 0, {
+				period_prices: [ { sale_period_id: 801, price: 7.5 } ],
+			} ),
+			addon( 42, 'Dinner', 1 ),
+		],
+	};
+
+	// The Add-ons panel starts collapsed.
+	const renderAddons = ( initialData, extraProps = {} ) => {
+		const result = renderTickets( { initialData, ...extraProps } );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Add-ons' } ) );
+		return result;
+	};
+
+	const rows = ( container ) =>
+		Array.from(
+			container.querySelectorAll( 'input[placeholder="Add-on name"]' )
+		).map( ( input ) => input.closest( 'tr' ) );
+
+	const editorNames = ( container ) =>
+		Array.from(
+			container.querySelectorAll( 'input[placeholder="Add-on name"]' )
+		).map( ( input ) => input.value );
+
+	const duplicate = ( row ) =>
+		fireEvent.click(
+			within( row ).getByRole( 'button', { name: 'Duplicate' } )
+		);
+
+	const savePayload = async ( onSaveRef, response ) => {
+		let savedPayload = null;
+		apiFetch.mockImplementation( ( { method, data } ) => {
+			if ( method === 'PUT' ) {
+				savedPayload = data;
+				return Promise.resolve( response );
+			}
+			return new Promise( () => {} );
+		} );
+		await act( async () => {
+			await onSaveRef.current();
+		} );
+		return savedPayload;
+	};
+
+	const writeCalls = () =>
+		apiFetch.mock.calls.filter(
+			( [ request ] ) => request.method && request.method !== 'GET'
+		);
+
+	it( 'duplicateOption inserts a configuration-only copy after the source', () => {
+		const source = {
+			id: 5,
+			name: 'Yoga',
+			short_name: 'YG',
+			price: 7,
+			capacity: 12,
+			derive_price_from_sale_period: true,
+			period_prices_map: { 801: '7.5', 'new-1': '' },
+			collaborator_ids: [ 501 ],
+			event_date_id: 99,
+			sort_order: 0,
+			client_key: 'option-source',
+		};
+		const other = { id: 6, name: 'Dinner', client_key: 'option-other' };
+		const items = [ source, other ];
+
+		const result = duplicateOption( items, 0 );
+
+		expect( result ).toHaveLength( 3 );
+		expect( result[ 0 ] ).toBe( source );
+		expect( result[ 2 ] ).toBe( other );
+		const { client_key: copyKey, ...copy } = result[ 1 ];
+		expect( copy ).toEqual( {
+			name: 'Yoga Copy',
+			short_name: 'YG',
+			price: 7,
+			capacity: 12,
+			derive_price_from_sale_period: true,
+			period_prices_map: { 801: '7.5', 'new-1': '' },
+		} );
+		expect( copyKey ).toBeTruthy();
+		expect( copyKey ).not.toBe( source.client_key );
+		expect( result[ 1 ].period_prices_map ).not.toBe(
+			source.period_prices_map
+		);
+		// The input array and the source are left untouched.
+		expect( items ).toEqual( [ source, other ] );
+		expect( duplicateOption( items, 7 ) ).toBe( items );
+	} );
+
+	it( 'keeps a blank name blank instead of naming the copy "Copy"', () => {
+		const [ , copy ] = duplicateOption( [ { name: '', price: 0 } ], 0 );
+		expect( copy.name ).toBe( '' );
+		expect( copy.capacity ).toBeNull();
+	} );
+
+	it( 'offers "Duplicate" as a button on every add-on row', () => {
+		const { container } = renderAddons( flatData );
+		const addonRows = rows( container );
+		expect( addonRows ).toHaveLength( 2 );
+		addonRows.forEach( ( row ) =>
+			expect(
+				within( row ).getByRole( 'button', { name: 'Duplicate' } )
+			).toBeEnabled()
+		);
+	} );
+
+	it( 'copies unsaved edits right after the source without saving', () => {
+		const onDirtyChange = jest.fn();
+		const { container } = renderAddons( flatData, { onDirtyChange } );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
+
+		const yogaRow = rows( container )[ 0 ];
+		fireEvent.change( within( yogaRow ).getByDisplayValue( 'Yoga' ), {
+			target: { value: 'Yoga flow' },
+		} );
+		fireEvent.change( within( yogaRow ).getByDisplayValue( 'YG' ), {
+			target: { value: 'YF' },
+		} );
+		const [ price, capacity ] =
+			within( yogaRow ).getAllByRole( 'spinbutton' );
+		fireEvent.change( price, { target: { value: '9.5' } } );
+		fireEvent.change( capacity, { target: { value: '15' } } );
+
+		duplicate( yogaRow );
+
+		expect( editorNames( container ) ).toEqual( [
+			'Yoga flow',
+			'Yoga flow Copy',
+			'Dinner',
+		] );
+		const copyRow = rows( container )[ 1 ];
+		expect(
+			within( copyRow ).getByPlaceholderText( 'Short name' )
+		).toHaveValue( 'YF' );
+		const [ copyPrice, copyCapacity ] =
+			within( copyRow ).getAllByRole( 'spinbutton' );
+		expect( copyPrice ).toHaveValue( 9.5 );
+		expect( copyCapacity ).toHaveValue( 15 );
+		// The source row keeps its own DOM row and values.
+		expect( rows( container )[ 0 ] ).toBe( yogaRow );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
+		expect( writeCalls() ).toEqual( [] );
+	} );
+
+	it( 'saves the copy as a new add-on and keeps the source ID', async () => {
+		const { container, onSaveRef } = renderAddons( flatData );
+
+		// Dinner: unlimited capacity and a zero price.
+		duplicate( rows( container )[ 1 ] );
+		duplicate( rows( container )[ 0 ] );
+
+		const payload = await savePayload( onSaveRef, flatData );
+
+		expect(
+			payload.options.map(
+				( {
+					id,
+					name,
+					short_name: shortName,
+					price,
+					capacity,
+					sort_order: order,
+				} ) => ( { id, name, shortName, price, capacity, order } )
+			)
+		).toEqual( [
+			{
+				id: 31,
+				name: 'Yoga',
+				shortName: 'YG',
+				price: 7,
+				capacity: 12,
+				order: 0,
+			},
+			{
+				id: undefined,
+				name: 'Yoga Copy',
+				shortName: 'YG',
+				price: 7,
+				capacity: 12,
+				order: 1,
+			},
+			{
+				id: 32,
+				name: 'Dinner',
+				shortName: '',
+				price: 0,
+				capacity: null,
+				order: 2,
+			},
+			{
+				id: undefined,
+				name: 'Dinner Copy',
+				shortName: '',
+				price: 0,
+				capacity: null,
+				order: 3,
+			},
+		] );
+		payload.options.forEach( ( option ) => {
+			expect( option ).not.toHaveProperty( 'collaborator_ids' );
+			expect( option ).not.toHaveProperty( 'client_key' );
+		} );
+		expect( payload.options[ 1 ] ).not.toHaveProperty( 'id' );
+		expect( payload.options[ 3 ] ).not.toHaveProperty( 'id' );
+	} );
+
+	it( 'lets the source and the copy be edited and removed independently', () => {
+		const { container } = renderAddons( flatData );
+		duplicate( rows( container )[ 0 ] );
+
+		const [ sourceRow, copyRow ] = rows( container );
+		fireEvent.change( within( copyRow ).getByDisplayValue( 'Yoga Copy' ), {
+			target: { value: 'Evening yoga' },
+		} );
+		fireEvent.change( within( copyRow ).getAllByRole( 'spinbutton' )[ 1 ], {
+			target: { value: '' },
+		} );
+		fireEvent.change(
+			within( sourceRow ).getAllByRole( 'spinbutton' )[ 0 ],
+			{ target: { value: '11' } }
+		);
+
+		expect( editorNames( container ) ).toEqual( [
+			'Yoga',
+			'Evening yoga',
+			'Dinner',
+		] );
+		expect(
+			within( sourceRow ).getAllByRole( 'spinbutton' )[ 1 ]
+		).toHaveValue( 12 );
+		expect(
+			within( copyRow ).getAllByRole( 'spinbutton' )[ 0 ]
+		).toHaveValue( 7 );
+		expect(
+			within( copyRow ).getAllByRole( 'spinbutton' )[ 1 ]
+		).toHaveValue( null );
+
+		// Removing the source leaves the copy, and the other way round.
+		fireEvent.click(
+			within( sourceRow ).getByRole( 'button', { name: 'Remove' } )
+		);
+		expect( editorNames( container ) ).toEqual( [
+			'Evening yoga',
+			'Dinner',
+		] );
+		duplicate( rows( container )[ 1 ] );
+		fireEvent.click(
+			within( rows( container )[ 2 ] ).getByRole( 'button', {
+				name: 'Remove',
+			} )
+		);
+		expect( editorNames( container ) ).toEqual( [
+			'Evening yoga',
+			'Dinner',
+		] );
+	} );
+
+	it( 'duplicates a newly added add-on, repeatedly', async () => {
+		const { container, onSaveRef } = renderAddons( flatData );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: '+ Add Option' } )
+		);
+		const newRow = rows( container )[ 2 ];
+		fireEvent.change(
+			within( newRow ).getByPlaceholderText( 'Add-on name' ),
+			{ target: { value: 'Sauna' } }
+		);
+
+		duplicate( newRow );
+		// A second copy of the source lands between it and the first copy.
+		duplicate( newRow );
+		fireEvent.change(
+			within( rows( container )[ 3 ] ).getByPlaceholderText(
+				'Add-on name'
+			),
+			{ target: { value: 'Sauna late' } }
+		);
+		// A copy can be duplicated too.
+		duplicate( rows( container )[ 4 ] );
+
+		expect( editorNames( container ) ).toEqual( [
+			'Yoga',
+			'Dinner',
+			'Sauna',
+			'Sauna late',
+			'Sauna Copy',
+			'Sauna Copy Copy',
+		] );
+
+		const payload = await savePayload( onSaveRef, flatData );
+		expect(
+			payload.options.map( ( { id, name } ) => [ id, name ] )
+		).toEqual( [
+			[ 31, 'Yoga' ],
+			[ 32, 'Dinner' ],
+			[ undefined, 'Sauna' ],
+			[ undefined, 'Sauna late' ],
+			[ undefined, 'Sauna Copy' ],
+			[ undefined, 'Sauna Copy Copy' ],
+		] );
+	} );
+
+	it( 'copies sale-period prices, including blank ones and unsaved periods', async () => {
+		const { container, onSaveRef } = renderAddons( periodData );
+		const yogaRow = rows( container )[ 0 ];
+		expect( within( yogaRow ).getByLabelText( 'Early' ) ).toHaveValue(
+			7.5
+		);
+		// An unsaved price for the sale period that has no ID yet.
+		fireEvent.change( within( yogaRow ).getByLabelText( 'Late' ), {
+			target: { value: '9' },
+		} );
+
+		duplicate( yogaRow );
+		// Dinner has no period prices at all.
+		duplicate( rows( container )[ 2 ] );
+
+		const copyRow = rows( container )[ 1 ];
+		expect( within( copyRow ).getByLabelText( 'Early' ) ).toHaveValue(
+			7.5
+		);
+		expect( within( copyRow ).getByLabelText( 'Late' ) ).toHaveValue( 9 );
+
+		// Period prices are independent after the copy.
+		fireEvent.change( within( copyRow ).getByLabelText( 'Early' ), {
+			target: { value: '5' },
+		} );
+		fireEvent.change( within( yogaRow ).getByLabelText( 'Late' ), {
+			target: { value: '' },
+		} );
+		expect( within( yogaRow ).getByLabelText( 'Early' ) ).toHaveValue(
+			7.5
+		);
+		expect( within( copyRow ).getByLabelText( 'Late' ) ).toHaveValue( 9 );
+
+		const payload = await savePayload( onSaveRef, periodData );
+		expect(
+			payload.options.map(
+				( { id, name, period_prices: periodPrices } ) => ( {
+					id,
+					name,
+					periodPrices,
+				} )
+			)
+		).toEqual( [
+			{
+				id: 41,
+				name: 'Yoga',
+				periodPrices: [
+					{ sale_period_index: 0, price: 7.5, sale_period_id: 801 },
+				],
+			},
+			{
+				id: undefined,
+				name: 'Yoga Copy',
+				periodPrices: [
+					{ sale_period_index: 0, price: 5, sale_period_id: 801 },
+					{ sale_period_index: 1, price: 9 },
+				],
+			},
+			{ id: 42, name: 'Dinner', periodPrices: [] },
+			{ id: undefined, name: 'Dinner Copy', periodPrices: [] },
+		] );
+		payload.options.forEach( ( option ) =>
+			expect( option.derive_price_from_sale_period ).toBe( true )
+		);
 	} );
 } );
