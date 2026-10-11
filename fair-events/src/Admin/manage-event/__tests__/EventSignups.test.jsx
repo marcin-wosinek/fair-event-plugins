@@ -826,11 +826,16 @@ describe( 'EventSignups — delete signup (#1464)', () => {
 				screen.queryByText( 'Ada Lovelace' )
 			).not.toBeInTheDocument()
 		);
-		expect(
-			bodyRows().map(
-				( row ) => within( row ).getAllByRole( 'cell' )[ 0 ].textContent
-			)
-		).toEqual( [ '1', '2' ] );
+		// The closing dialog keeps the table aria-hidden for a moment after
+		// the row is gone, so role queries need to wait for it to clear.
+		await waitFor( () =>
+			expect(
+				bodyRows().map(
+					( row ) =>
+						within( row ).getAllByRole( 'cell' )[ 0 ].textContent
+				)
+			).toEqual( [ '1', '2' ] )
+		);
 		expect( apiFetch ).toHaveBeenLastCalledWith( {
 			path: '/fair-events/v1/get-tickets/1',
 			method: 'DELETE',
