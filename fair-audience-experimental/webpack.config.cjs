@@ -37,10 +37,6 @@ module.exports = {
       process.cwd(),
       "src/Admin/image-templates/index.js",
     ),
-    "admin/weekly-schedule/index": path.resolve(
-      process.cwd(),
-      "src/Admin/weekly-schedule/index.js",
-    ),
     "admin/fees-list/index": path.resolve(
       process.cwd(),
       "src/Admin/fees-list/index.js",

@@ -14,11 +14,9 @@ defined( 'WPINC' ) || die;
 /**
  * Safety-net cron sweep for temporary Instagram-upload attachments.
  *
- * The upload and publish endpoints clean these up in the normal flow (publish
- * success deletes them, publish failure keeps them for retry), but an
- * abandoned publish (browser closed mid-flow, request timeout) can leave one
- * behind. This sweeps anything still tagged as temporary after the retry
- * window has passed.
+ * Earlier versions stored client-generated images as temporary attachments
+ * and an abandoned publish could leave one behind. Nothing creates them any
+ * more; this sweeps the ones still tagged as temporary on existing sites.
  */
 class InstagramCleanupHooks {
 

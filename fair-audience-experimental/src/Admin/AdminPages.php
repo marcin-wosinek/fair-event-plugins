@@ -170,18 +170,6 @@ class AdminPages {
 			);
 		}
 
-		// Weekly Schedule — `weekly-schedule` bundle (only when fair-events is active).
-		if ( \FairAudienceExperimental\Core\Features::is_enabled( 'weekly-schedule' ) && class_exists( 'FairEvents\Core\Plugin' ) ) {
-			$this->page_hooks['fair-audience-weekly-schedule'] = add_submenu_page(
-				$parent,
-				__( 'Weekly Schedule', 'fair-audience-experimental' ),
-				__( 'Weekly Schedule', 'fair-audience-experimental' ),
-				'manage_options',
-				'fair-audience-weekly-schedule',
-				array( $this, 'render_weekly_schedule_page' )
-			);
-		}
-
 		// Groups — `groups` bundle.
 		if ( \FairAudienceExperimental\Core\Features::is_enabled( 'groups' ) ) {
 			$this->page_hooks['fair-audience-groups'] = add_submenu_page(
@@ -349,17 +337,6 @@ class AdminPages {
 				$this->enqueue_page_script( 'image-templates', $exp_url, $exp_dir );
 				break;
 
-			case 'fair-audience-weekly-schedule':
-				$this->enqueue_page_script( 'weekly-schedule', $exp_url, $exp_dir );
-				wp_localize_script(
-					'fair-audience-experimental-weekly-schedule',
-					'fairAudienceWeeklyScheduleData',
-					array(
-						'participantsUrl' => admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' ),
-					)
-				);
-				break;
-
 			case 'fair-audience-groups':
 				$this->enqueue_page_script( 'groups', $exp_url, $exp_dir );
 				wp_localize_script(
@@ -521,16 +498,6 @@ class AdminPages {
 	 */
 	public function render_image_templates_page() {
 		$page = new \FairAudienceExperimental\Admin\ImageTemplatesPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Weekly Schedule page.
-	 *
-	 * @return void
-	 */
-	public function render_weekly_schedule_page() {
-		$page = new \FairAudienceExperimental\Admin\WeeklySchedulePage();
 		$page->render();
 	}
 

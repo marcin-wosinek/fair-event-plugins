@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Audience Experimental 1.2.0\n"
+"Project-Id-Version: Fair Audience Experimental 1.3.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-audience-experimental\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-09T07:52:50+00:00\n"
+"POT-Creation-Date: 2026-10-11T06:53:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience-experimental\n"
@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: fair-audience-experimental.php
-msgid "Activates advanced feature bundles for Fair Audience (fees, polls, photos, Instagram, groups, collaborators, messaging, image templates, timeline, import, weekly schedule, invitations, manage-event-ext). Requires fair-audience."
+msgid "Activates advanced feature bundles for Fair Audience (fees, polls, photos, Instagram, groups, collaborators, messaging, image templates, timeline, import, invitations, manage-event-ext). Requires fair-audience."
 msgstr ""
 
 #. Author of the plugin
@@ -58,7 +58,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
-#: src/Core/Features.php:198
+#: src/Core/Features.php:192
 #: src/Admin/custom-mail/CustomMail.js:797
 #: src/Admin/manage-event-ext/EventMailings.js:54
 msgid "Collaborators"
@@ -77,13 +77,13 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:118
 #: src/Admin/AdminPages.php:119
-#: src/Core/Features.php:214
+#: src/Core/Features.php:208
 msgid "Import"
 msgstr ""
 
 #: src/Admin/AdminPages.php:130
 #: src/Admin/AdminPages.php:131
-#: src/Core/Features.php:182
+#: src/Core/Features.php:176
 msgid "Polls"
 msgstr ""
 
@@ -105,42 +105,37 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:177
 #: src/Admin/AdminPages.php:178
-msgid "Weekly Schedule"
-msgstr ""
-
-#: src/Admin/AdminPages.php:189
-#: src/Admin/AdminPages.php:190
-#: src/Core/Features.php:194
+#: src/Core/Features.php:188
 #: src/Admin/custom-mail/CustomMail.js:839
 #: src/Admin/groups/Groups.js:325
 #: src/Admin/manage-event-ext/index.js:35
 msgid "Groups"
 msgstr ""
 
-#: src/Admin/AdminPages.php:198
-#: src/Admin/AdminPages.php:199
-#: src/Admin/AdminPages.php:205
+#: src/Admin/AdminPages.php:186
+#: src/Admin/AdminPages.php:187
+#: src/Admin/AdminPages.php:193
 msgid "Group Detail"
 msgstr ""
 
-#: src/Admin/AdminPages.php:212
-#: src/Admin/AdminPages.php:213
+#: src/Admin/AdminPages.php:200
+#: src/Admin/AdminPages.php:201
 #: src/Admin/custom-mail/CustomMail.js:536
 #: src/Admin/custom-mail/CustomMail.js:552
 msgid "Custom Mail"
 msgstr ""
 
-#: src/Admin/AdminPages.php:221
-#: src/Admin/AdminPages.php:222
+#: src/Admin/AdminPages.php:209
+#: src/Admin/AdminPages.php:210
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:85
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:96
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:108
 msgid "Extra Messages"
 msgstr ""
 
-#: src/Admin/AdminPages.php:230
-#: src/Admin/AdminPages.php:231
-#: src/Admin/AdminPages.php:237
+#: src/Admin/AdminPages.php:218
+#: src/Admin/AdminPages.php:219
+#: src/Admin/AdminPages.php:225
 #: src/Admin/edit-extra-message/EditExtraMessage.js:152
 #: src/Admin/edit-extra-message/EditExtraMessage.js:170
 msgid "Edit Extra Message"
@@ -726,82 +721,52 @@ msgstr ""
 msgid "Instagram Account"
 msgstr ""
 
-#: src/API/InstagramPostsController.php:105
+#: src/API/InstagramPostsController.php:101
 msgid "Publicly accessible image URL."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:111
+#: src/API/InstagramPostsController.php:107
 msgid "Post caption."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:117
-msgid "Temporary attachment to delete after a successful publish."
-msgstr ""
-
-#: src/API/InstagramPostsController.php:138
+#: src/API/InstagramPostsController.php:128
 msgid "WordPress attachment ID."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:158
-msgid "Base64-encoded PNG image data."
-msgstr ""
-
-#: src/API/InstagramPostsController.php:231
+#: src/API/InstagramPostsController.php:200
 msgid "Image URL is required."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:240
+#: src/API/InstagramPostsController.php:209
 msgid "Caption is required."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:268
+#: src/API/InstagramPostsController.php:237
 msgid "Failed to create post record."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:301
+#: src/API/InstagramPostsController.php:263
 msgid "Post published successfully!"
 msgstr ""
 
-#: src/API/InstagramPostsController.php:329
+#: src/API/InstagramPostsController.php:291
 msgid "Post not found."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:337
+#: src/API/InstagramPostsController.php:299
 msgid "Failed to delete post."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:345
+#: src/API/InstagramPostsController.php:307
 msgid "Post deleted successfully."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:363
+#: src/API/InstagramPostsController.php:325
 msgid "Attachment is not a valid image."
 msgstr ""
 
-#: src/API/InstagramPostsController.php:372
+#: src/API/InstagramPostsController.php:334
 msgid "Attachment file not found."
-msgstr ""
-
-#: src/API/InstagramPostsController.php:408
-msgid "Invalid base64 image data."
-msgstr ""
-
-#: src/API/InstagramPostsController.php:416
-msgid "Image is too large."
-msgstr ""
-
-#: src/API/InstagramPostsController.php:427
-msgid "Uploaded data is not a valid PNG image."
-msgstr ""
-
-#. translators: %s: error message
-#: src/API/InstagramPostsController.php:444
-#, php-format
-msgid "Failed to store image: %s"
-msgstr ""
-
-#: src/API/InstagramPostsController.php:464
-msgid "Failed to save uploaded image."
 msgstr ""
 
 #: src/API/PhotoTagsController.php:196
@@ -980,92 +945,84 @@ msgid_plural "%1$d ticket sales on %2$s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Core/Features.php:178
+#: src/Core/Features.php:172
 msgid "Fees"
 msgstr ""
 
-#: src/Core/Features.php:179
+#: src/Core/Features.php:173
 msgid "Event fees, fee payments, fee audit log."
 msgstr ""
 
-#: src/Core/Features.php:183
+#: src/Core/Features.php:177
 msgid "Attendee polls and responses."
 msgstr ""
 
-#: src/Core/Features.php:186
+#: src/Core/Features.php:180
 msgid "Photos"
 msgstr ""
 
-#: src/Core/Features.php:187
+#: src/Core/Features.php:181
 msgid "Participant photo uploads, photo authors and tags, media library hooks."
 msgstr ""
 
-#: src/Core/Features.php:190
+#: src/Core/Features.php:184
 #: templates/collaborator-profile.php:331
 msgid "Instagram"
 msgstr ""
 
-#: src/Core/Features.php:191
+#: src/Core/Features.php:185
 msgid "Instagram post import and scheduled posting."
 msgstr ""
 
-#: src/Core/Features.php:195
+#: src/Core/Features.php:189
 msgid "Participant groups."
 msgstr ""
 
-#: src/Core/Features.php:199
+#: src/Core/Features.php:193
 msgid "Event collaborators."
 msgstr ""
 
-#: src/Core/Features.php:202
+#: src/Core/Features.php:196
 msgid "Messaging"
 msgstr ""
 
-#: src/Core/Features.php:203
+#: src/Core/Features.php:197
 msgid "Custom mail, extra messages, scheduled messages."
 msgstr ""
 
-#: src/Core/Features.php:206
+#: src/Core/Features.php:200
 msgid "Image templates"
 msgstr ""
 
-#: src/Core/Features.php:207
+#: src/Core/Features.php:201
 msgid "Generated image templates."
 msgstr ""
 
-#: src/Core/Features.php:210
+#: src/Core/Features.php:204
 msgid "Timeline"
 msgstr ""
 
-#: src/Core/Features.php:211
+#: src/Core/Features.php:205
 msgid "Participant activity timeline."
 msgstr ""
 
-#: src/Core/Features.php:215
+#: src/Core/Features.php:209
 msgid "Bulk participant import."
 msgstr ""
 
-#: src/Core/Features.php:218
-msgid "Weekly schedule"
-msgstr ""
-
-#: src/Core/Features.php:219
-msgid "Weekly schedule admin page."
-msgstr ""
-
-#: src/Core/Features.php:222
+#: src/Core/Features.php:212
 msgid "Invitations"
 msgstr ""
 
-#: src/Core/Features.php:223
+#: src/Core/Features.php:213
 msgid "Event invitations, consumed by fair-events-experimental ticketing."
 msgstr ""
 
-#: src/Core/Features.php:226
+#: src/Core/Features.php:216
 msgid "Manage-event extensions"
 msgstr ""
 
-#: src/Core/Features.php:227
+#: src/Core/Features.php:217
 msgid "The Mailings tab in the manage-event admin UI."
 msgstr ""
 

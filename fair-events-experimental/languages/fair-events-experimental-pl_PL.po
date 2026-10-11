@@ -78,10 +78,6 @@ msgstr "Scal zdarzenie"
 msgid "Event sources & feeds"
 msgstr "Źródła i kanały imprez"
 
-#: src/Core/Features.php:139
-msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly schedule."
-msgstr "Zewnętrzne źródła imprez, import z Facebooka, kanały iCal/JSON, propozycje imprez, harmonogram tygodniowy."
-
 #: src/Core/Features.php:142
 msgid "Ticketing"
 msgstr "Sprzedaż biletów"
@@ -677,11 +673,6 @@ msgstr "Zaakceptowane"
 #: src/Admin/settings/MetaConversions.js:416
 msgid "Rejected"
 msgstr "Odrzucone"
-
-#. Description of the plugin
-#: fair-events-experimental.php
-msgid "Activates advanced feature bundles for Fair Events, including sources, ticketing, and duplicate and merge tools. Requires fair-events."
-msgstr "Włącza zaawansowane pakiety funkcji dla Fair Events, w tym źródła, sprzedaż biletów oraz narzędzia do duplikowania i scalania. Wymaga fair-events."
 
 #: src/API/WeeklyNotificationsController.php:133
 msgid "You do not have permission to manage weekly notifications."
@@ -1431,3 +1422,12 @@ msgstr "Zakończenie musi być późniejsze niż rozpoczęcie."
 #: src/Admin/manage-event-schedule/scheduleModel.js:262
 msgid "(untitled item)"
 msgstr "(pozycja bez tytułu)"
+
+#. Description of the plugin
+#: fair-events-experimental.php
+msgid "Event sources, group pricing, schedule editing, duplication, merging, comparisons, Telegram summaries and optional Meta conversions for Fair Events."
+msgstr "Źródła imprez, ceny grupowe, edycja harmonogramu, duplikowanie, scalanie, porównania, podsumowania na Telegramie i opcjonalne konwersje Meta dla Fair Events."
+
+#: src/Core/Features.php:139
+msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly notifications."
+msgstr "Zewnętrzne źródła imprez, import z Facebooka, kanały iCal/JSON, propozycje imprez, powiadomienia tygodniowe."
