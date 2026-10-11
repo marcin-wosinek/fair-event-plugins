@@ -6,7 +6,8 @@
  *
  * Exercises:
  *   - Rows offer Edit participant and Move but no Delete (#1710); deleting a
- *     registration lives on the List tab.
+ *     registration lives on the List tab. The guarded "Remove participant"
+ *     action (#1820) is covered in EventAudienceRemoveParticipant.test.jsx.
  *   - Move button is hidden when there is only one occurrence.
  *   - Move button appears for non-series-pass rows when siblings exist.
  *   - Opening the modal lists the other occurrences (current one excluded).
@@ -186,6 +187,10 @@ describe( 'EventAudience — participant row actions (#1710)', () => {
 		expect(
 			screen.queryByRole( 'button', { name: 'Delete' } )
 		).not.toBeInTheDocument();
+		// Removing someone from the date is its own, clearly named action.
+		expect(
+			screen.getByRole( 'button', { name: 'Remove participant' } )
+		).toBeInTheDocument();
 	} );
 
 	it( 'never calls the participant DELETE endpoint from the row', async () => {

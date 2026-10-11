@@ -11,6 +11,7 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Models\EmailConsentLog;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\ParticipantRemoval;
 use FairAudience\Services\TicketActivities;
 use FairAudience\Services\TicketOperations;
 use WP_REST_Controller;
@@ -638,6 +639,10 @@ class EventParticipantsController extends WP_REST_Controller {
 		// payment still in progress from one that was not completed.
 		$lapsed_tickets = $this->lapsed_tickets_by_participant( (int) $event_date_id, $event_participants );
 
+		// What stops each participant from being removed from this date, so
+		// the organizer is told before trying. The removal checks again.
+		$removal_blockers = ( new ParticipantRemoval( $this->event_participant_repo ) )->blockers_for_event_date( (int) $event_date_id, $event_participants );
+
 		// Custom question answers captured during signup. Answers collected
 		// for a ticket go with that ticket; the participant row carries only
 		// those not attached to any ticket.
@@ -647,7 +652,7 @@ class EventParticipantsController extends WP_REST_Controller {
 		);
 
 		$items = array_map(
-			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $ticket_answers, $event_date_id, $assigned_away, $cancelled_tickets, $lapsed_tickets ) {
+			function ( $ep ) use ( $ticket_type_names, $participant_option_names, $participant_option_ids, $participant_confirmed_option_ids, $participant_scope_option_ids, $participant_scope_option_names, $tickets_by_relationship, $activity_rows, $participant_questionnaire, $ticket_answers, $event_date_id, $assigned_away, $cancelled_tickets, $lapsed_tickets, $removal_blockers ) {
 				$participant     = $this->participant_repo->get_by_id( $ep->participant_id );
 				$on_this_date    = (int) $ep->event_date_id === (int) $event_date_id;
 				$given_to_others = $on_this_date ? ( $assigned_away[ (int) $ep->participant_id ] ?? 0 ) : 0;
@@ -694,6 +699,9 @@ class EventParticipantsController extends WP_REST_Controller {
 						fn( $ticket ) => $this->build_ticket_payload( $ticket, array() ),
 						$on_this_date ? ( $cancelled_tickets[ (int) $ep->participant_id ] ?? array() ) : array()
 					),
+					// Empty when the participant can be removed from this date.
+					// A series pass is removed on its series date.
+					'removal_blockers'                  => $removal_blockers[ (int) $ep->id ] ?? array(),
 					'admin_comment'                     => isset( $ep->admin_comment ) && null !== $ep->admin_comment ? $ep->admin_comment : '',
 					'questionnaire_answers'             => $participant_questionnaire[ $ep->participant_id ]['answers'] ?? array(),
 					'questionnaire_answers_need_review' => $participant_questionnaire[ $ep->participant_id ]['needs_review'] ?? false,
@@ -2251,21 +2259,25 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function delete_item( $request ) {
-		$event_date_id  = $request->get_param( 'event_date_id' );
-		$participant_id = $request->get_param( 'participant_id' );
+		$event_date_id  = (int) $request->get_param( 'event_date_id' );
+		$participant_id = (int) $request->get_param( 'participant_id' );
 
-		$success = $this->event_participant_repo->remove_participant_from_event_date( $event_date_id, $participant_id );
-
-		if ( ! $success ) {
+		if ( ! class_exists( \FairEvents\Models\EventDates::class ) || ! \FairEvents\Models\EventDates::get_by_id( $event_date_id ) ) {
 			return new WP_Error(
-				'deletion_failed',
-				__( 'Failed to remove participant.', 'fair-audience' ),
-				array( 'status' => 400 )
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
 			);
+		}
+
+		$removed = ( new ParticipantRemoval( $this->event_participant_repo ) )->remove( $event_date_id, $participant_id );
+		if ( is_wp_error( $removed ) ) {
+			return $removed;
 		}
 
 		return rest_ensure_response(
 			array(
+				'removed' => true,
 				'message' => __( 'Participant removed successfully.', 'fair-audience' ),
 			)
 		);
@@ -2377,22 +2389,23 @@ class EventParticipantsController extends WP_REST_Controller {
 			'errors'  => array(),
 		);
 
+		$removal = new ParticipantRemoval( $this->event_participant_repo );
+
 		foreach ( $participant_ids as $participant_id ) {
 			$participant_id = (int) $participant_id;
 
-			$deleted = $this->event_participant_repo->remove_participant_from_event_date(
-				$event_date_id,
-				$participant_id
-			);
+			// Each removal is guarded like a single one.
+			$removed = $removal->remove( $event_date_id, $participant_id );
 
-			if ( $deleted ) {
+			if ( ! is_wp_error( $removed ) ) {
 				++$results['removed'];
 			} else {
 				++$results['failed'];
 				$results['errors'][] = sprintf(
-					/* translators: %d: participant ID */
-					__( 'Failed to remove participant ID %d', 'fair-audience' ),
-					$participant_id
+					/* translators: 1: participant ID, 2: why they were not removed */
+					__( 'Failed to remove participant ID %1$d: %2$s', 'fair-audience' ),
+					$participant_id,
+					$removed->get_error_message()
 				);
 			}
 		}

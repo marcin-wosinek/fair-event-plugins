@@ -233,11 +233,45 @@ class EventParticipantRepository {
 	 * @return int|false Relationship ID, or false when it could not be created.
 	 */
 	public function ensure_ticket_holder_relationship( $event_date_id, $participant_id ) {
-		$existing = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		$existing = $this->lock_existing( $event_date_id, $participant_id );
+		if ( false === $existing ) {
+			return false;
+		}
 		if ( $existing ) {
 			return (int) $existing->id;
 		}
 
+		return $this->insert_for_ticket( $event_date_id, $participant_id, 'interested' );
+	}
+
+	/**
+	 * Find the relationship a ticket is about to rest on and keep it from
+	 * being removed until the surrounding transaction ends (see
+	 * ParticipantRemoval). One removed since it was first read is reported
+	 * as missing, so the caller creates it again.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return EventParticipant|null|false Null without a relationship, false when it could not be locked.
+	 */
+	private function lock_existing( $event_date_id, $participant_id ) {
+		if ( ! $this->get_by_event_date_and_participant( $event_date_id, $participant_id ) ) {
+			return null;
+		}
+
+		return $this->get_for_update( $event_date_id, $participant_id );
+	}
+
+	/**
+	 * Create the relationship of a ticket's holder, once lock_existing()
+	 * found none.
+	 *
+	 * @param int    $event_date_id  Event date ID.
+	 * @param int    $participant_id Participant ID.
+	 * @param string $label          Label.
+	 * @return int|false Relationship ID, or false when it could not be created.
+	 */
+	private function insert_for_ticket( $event_date_id, $participant_id, $label ) {
 		$event_date = class_exists( \FairEvents\Models\EventDates::class )
 			? \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id )
 			: null;
@@ -246,7 +280,69 @@ class EventParticipantRepository {
 			return false;
 		}
 
-		return $this->add_participant_to_event( $event_id, (int) $participant_id, 'interested', (int) $event_date_id );
+		$relationship = new EventParticipant(
+			array(
+				'event_id'       => $event_id,
+				'event_date_id'  => (int) $event_date_id,
+				'participant_id' => (int) $participant_id,
+				'label'          => $label,
+			)
+		);
+
+		return $relationship->save() ? $relationship->id : false;
+	}
+
+	/**
+	 * Read a relationship and lock its row until the surrounding
+	 * transaction ends, so a check made on it still holds when it is
+	 * written or removed.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return EventParticipant|null|false Null without a relationship, false when the read failed.
+	 */
+	public function get_for_update( $event_date_id, $participant_id ) {
+		global $wpdb;
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE event_date_id = %d AND participant_id = %d FOR UPDATE',
+				$this->get_table_name(),
+				$event_date_id,
+				$participant_id
+			),
+			ARRAY_A
+		);
+		if ( $wpdb->last_error ) {
+			return false;
+		}
+
+		return $result ? new EventParticipant( $result ) : null;
+	}
+
+	/**
+	 * Delete a relationship together with the activities recorded on it,
+	 * which belong to it alone. The caller runs this in a transaction and
+	 * rolls back when it fails.
+	 *
+	 * @param EventParticipant $relationship Relationship.
+	 * @return bool
+	 */
+	public function delete_with_activities( $relationship ) {
+		global $wpdb;
+
+		if ( ! $relationship->id ) {
+			return false;
+		}
+
+		$activities_deleted = $wpdb->delete(
+			$wpdb->prefix . 'fair_audience_event_participant_options',
+			array( 'event_participant_id' => (int) $relationship->id ),
+			array( '%d' )
+		);
+
+		return false !== $activities_deleted
+			&& 1 === $wpdb->delete( $this->get_table_name(), array( 'id' => (int) $relationship->id ), array( '%d' ) );
 	}
 
 	/**
@@ -268,7 +364,10 @@ class EventParticipantRepository {
 			return $this->ensure_ticket_holder_relationship( $event_date_id, $participant_id );
 		}
 
-		$existing = $this->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		$existing = $this->lock_existing( $event_date_id, $participant_id );
+		if ( false === $existing ) {
+			return false;
+		}
 		if ( $existing ) {
 			if ( 'interested' === $existing->label && ! $this->update_label_by_event_date( $event_date_id, $participant_id, 'signed_up' ) ) {
 				return false;
@@ -277,15 +376,7 @@ class EventParticipantRepository {
 			return (int) $existing->id;
 		}
 
-		$event_date = class_exists( \FairEvents\Models\EventDates::class )
-			? \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id )
-			: null;
-		$event_id   = $event_date ? (int) $event_date->get_resolved_event_id() : 0;
-		if ( ! $event_id ) {
-			return false;
-		}
-
-		return $this->add_participant_to_event( $event_id, (int) $participant_id, 'signed_up', (int) $event_date_id );
+		return $this->insert_for_ticket( $event_date_id, $participant_id, 'signed_up' );
 	}
 
 	/**
