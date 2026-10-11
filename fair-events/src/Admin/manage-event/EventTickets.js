@@ -79,6 +79,38 @@ const ticketTypeKey = ( type ) =>
 
 export const moveToTop = ( items, index ) => moveItem( items, index, 0 );
 
+// Insert an editable copy of the add-on at `index` right after it. The copy
+// is built from the configuration fields only, so it carries no ID (the save
+// creates a new add-on and bookings stay with the source) and no server
+// metadata. A blank name stays blank, so the copy of an empty row is still
+// skipped on save.
+export const duplicateOption = ( items, index ) => {
+	const source = items[ index ];
+	if ( ! source ) {
+		return items;
+	}
+	const copy = {
+		name: source.name
+			? sprintf(
+					/* translators: %s: name of the add-on being duplicated */
+					__( '%s Copy', 'fair-events' ),
+					source.name
+			  )
+			: '',
+		short_name: source.short_name ?? '',
+		price: source.price ?? 0,
+		capacity: source.capacity ?? null,
+		derive_price_from_sale_period: !! source.derive_price_from_sale_period,
+		period_prices_map: { ...( source.period_prices_map || {} ) },
+		client_key: newOptionClientKey(),
+	};
+	return [
+		...items.slice( 0, index + 1 ),
+		copy,
+		...items.slice( index + 1 ),
+	];
+};
+
 export default function EventTickets( {
 	eventDateId,
 	onSaveRef,
@@ -2558,6 +2590,23 @@ export default function EventTickets( {
 																			) }
 																		</Button>
 																	) }
+																	<Button
+																		variant="tertiary"
+																		size="small"
+																		onClick={ () =>
+																			setOptions(
+																				duplicateOption(
+																					options,
+																					index
+																				)
+																			)
+																		}
+																	>
+																		{ __(
+																			'Duplicate',
+																			'fair-events'
+																		) }
+																	</Button>
 																	<Button
 																		variant="tertiary"
 																		isDestructive
