@@ -168,9 +168,11 @@ class AdminHooks {
 		// Hidden submenu page - Participant Detail.
 		$this->register_hidden_page( 'fair-audience-participant-detail' );
 
-		// Submenu page - Weekly Digest (requires stable fair-events).
-		if ( class_exists( 'FairEvents\Core\Plugin' ) ) {
-			add_submenu_page(
+		// Submenu page - Weekly Digest. The weekly email is managed in Fair
+		// Events; this entry only leads there. It stays while Fair Events is
+		// inactive on a site that used the email, to say what is missing.
+		if ( class_exists( 'FairEvents\Core\Plugin' ) || \FairAudience\Services\WeeklyDigestMailer::is_configured() ) {
+			$weekly_digest_hook = add_submenu_page(
 				'fair-audience',
 				__( 'Weekly Digest', 'fair-audience' ),
 				__( 'Weekly Digest', 'fair-audience' ),
@@ -178,6 +180,7 @@ class AdminHooks {
 				'fair-audience-weekly-digest',
 				array( $this, 'render_weekly_digest_page' )
 			);
+			add_action( 'load-' . $weekly_digest_hook, array( $this, 'redirect_weekly_digest_page' ) );
 		}
 
 		// Submenu page - Settings.
@@ -232,7 +235,21 @@ class AdminHooks {
 	}
 
 	/**
-	 * Render Weekly Digest page.
+	 * Send the former Weekly Digest page to Event notifications in Fair Events.
+	 *
+	 * Temporary (302), so browsers don't cache it past a deactivation.
+	 */
+	public function redirect_weekly_digest_page() {
+		$url = \FairAudience\Services\WeeklyDigestMailer::management_url();
+		if ( $url ) {
+			wp_safe_redirect( $url, 302 );
+			exit;
+		}
+	}
+
+	/**
+	 * Render the Weekly Digest page: shown only while Fair Events cannot
+	 * manage the weekly email.
 	 */
 	public function render_weekly_digest_page() {
 		$page = new WeeklyDigestPage();
@@ -278,12 +295,6 @@ class AdminHooks {
 		// Settings page.
 		if ( 'fair-audience_page_fair-audience-settings' === $hook ) {
 			$this->enqueue_page_script( 'settings', $plugin_dir );
-		}
-
-		// Weekly Digest page.
-		if ( 'fair-audience_page_fair-audience-weekly-digest' === $hook ) {
-			wp_enqueue_editor();
-			$this->enqueue_page_script( 'weekly-digest', $plugin_dir );
 		}
 	}
 

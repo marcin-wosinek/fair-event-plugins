@@ -6,7 +6,7 @@
  * URL as an anonymous visitor, unchecks the "Weekly summary of upcoming
  * events" checkbox, and submits the form — then verifies the stored
  * preference via the admin REST API while the email_profile stays
- * unaffected. Fixtures (participant, weekly-digest config) are created via
+ * unaffected. Fixtures (participant, weekly email settings) are created via
  * the admin REST API using Application Password credentials
  * (WP_ADMIN_USER / WP_ADMIN_PASSWORD) and torn down at the end of the suite.
  */
@@ -16,6 +16,8 @@ import { test, expect, request } from '@playwright/test';
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
+
+const NOTIFICATIONS_PATH = '/wp-json/fair-events/v1/event-notifications';
 
 const authHeaders = {
 	Authorization:
@@ -36,22 +38,44 @@ test.describe( 'Manage-subscription page — weekly summary opt-out', () => {
 	let participantId;
 	let subscriptionUrl;
 	let originalDigestConfig;
+	let sourceId;
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
 
-		// Save the original weekly-digest config and enable the feature so the
-		// preference is shown on the manage page.
-		const configRes = await api.get(
-			'/wp-json/fair-audience/v1/weekly-digest',
-			{ headers: authHeaders }
-		);
+		// The weekly email is configured in Fair Events (Event notifications).
+		// Save its settings and turn it on so the preference is shown on the
+		// manage page; turning it on needs an event source.
+		const configRes = await api.get( NOTIFICATIONS_PATH, {
+			headers: authHeaders,
+		} );
 		if ( configRes.ok() ) {
-			originalDigestConfig = ( await configRes.json() ).config;
+			originalDigestConfig = ( await configRes.json() ).channels
+				.bulk_email;
 		}
-		const enableRes = await api.put(
-			'/wp-json/fair-audience/v1/weekly-digest',
-			{ headers: authHeaders, data: { enabled: true } }
+		const sourceSlug = `weekly-summary-${ Date.now() }`;
+		const sourceRes = await api.post( '/wp-json/fair-events/v1/sources', {
+			headers: authHeaders,
+			data: {
+				name: 'Weekly summary opt-out source',
+				slug: sourceSlug,
+				enabled: true,
+				data_sources: [
+					{
+						source_type: 'categories',
+						config: { category_ids: [ 1 ] },
+					},
+				],
+			},
+		} );
+		expect( sourceRes.ok() ).toBeTruthy();
+		sourceId = ( await sourceRes.json() ).id;
+		const enableRes = await api.post(
+			`${ NOTIFICATIONS_PATH }/bulk-email`,
+			{
+				headers: authHeaders,
+				data: { enabled: true, source_slug: sourceSlug },
+			}
 		);
 		expect( enableRes.ok() ).toBeTruthy();
 
@@ -87,9 +111,17 @@ test.describe( 'Manage-subscription page — weekly summary opt-out', () => {
 			);
 		}
 		if ( originalDigestConfig ) {
-			await api.put( '/wp-json/fair-audience/v1/weekly-digest', {
+			await api.post( `${ NOTIFICATIONS_PATH }/bulk-email`, {
 				headers: authHeaders,
-				data: originalDigestConfig,
+				data: {
+					enabled: originalDigestConfig.enabled,
+					source_slug: originalDigestConfig.source_slug,
+				},
+			} );
+		}
+		if ( sourceId ) {
+			await api.delete( `/wp-json/fair-events/v1/sources/${ sourceId }`, {
+				headers: authHeaders,
 			} );
 		}
 		await api.dispose();

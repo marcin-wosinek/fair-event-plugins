@@ -15,7 +15,7 @@ In the monorepo, not (yet) published:
 -   **fair-payments-connector** - Payment blocks and Mollie integration
 -   **fair-finance** - Budgeting, financial entries, and reconciliation
 -   **fair-form** - Form blocks and answer data layer
--   **fair-events-experimental** - Requires Fair Events; adds source configuration and feeds, group rules, schedule editing, duplication and merging, event comparisons, Telegram summaries, and optional Meta conversions. Group rules and comparisons require Fair Audience; Meta conversions require Fair Payments Connector
+-   **fair-events-experimental** - Requires Fair Events; adds source configuration and feeds, group rules, schedule editing, duplication and merging, event comparisons, and optional Meta conversions. Group rules and comparisons require Fair Audience; Meta conversions require Fair Payments Connector
 -   **fair-audience-experimental** - Fair Audience companion, including scheduled event mailings
 -   **fair-payments-connector-experimental** - Feature-flag companion for Fair Payments Connector
 -   **fair-calendar-button** - Standalone Add to Calendar block; Fair Events also provides its own button variation

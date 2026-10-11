@@ -791,3 +791,128 @@ require_once __DIR__ . '/Fair_Test_WPDB.php';
 // safely instead of fataling on a null global. See Fair_Test_WPDB's docblock.
 // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
 $GLOBALS['wpdb'] = new Fair_Test_WPDB();
+
+// Stubs for the event notification classes: the Telegram HTTP boundary and
+// WP-Cron. Tests control the simulated response through
+// $GLOBALS['_fair_test_remote_post_response']; every request is recorded in
+// $GLOBALS['_fair_test_remote_post_requests'], and scheduled events live in
+// $GLOBALS['_fair_test_cron'] as [ hook => [ [ timestamp, args ], ... ] ].
+if ( ! function_exists( 'wp_remote_post' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_post(). Records every call and returns the
+	 * response the test queued, defaulting to an accepted 200.
+	 *
+	 * @param string $url  Request URL.
+	 * @param array  $args Request args.
+	 * @return array|WP_Error
+	 */
+	function wp_remote_post( $url, $args = array() ) {
+		$GLOBALS['_fair_test_remote_post_requests'][] = array(
+			'url'  => $url,
+			'args' => $args,
+		);
+		return isset( $GLOBALS['_fair_test_remote_post_response'] )
+			? $GLOBALS['_fair_test_remote_post_response']
+			: array(
+				'response' => array( 'code' => 200 ),
+				'body'     => '{}',
+			);
+	}
+}
+
+if ( ! function_exists( 'wp_schedule_single_event' ) ) {
+	/**
+	 * Stub of WordPress wp_schedule_single_event().
+	 *
+	 * @param int    $timestamp When the event runs.
+	 * @param string $hook      Hook name.
+	 * @param array  $args      Hook arguments.
+	 * @return true
+	 */
+	function wp_schedule_single_event( $timestamp, $hook, $args = array() ) {
+		$GLOBALS['_fair_test_cron'][ $hook ][] = array( $timestamp, $args );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_next_scheduled' ) ) {
+	/**
+	 * Stub of WordPress wp_next_scheduled().
+	 *
+	 * @param string $hook Hook name.
+	 * @param array  $args Hook arguments.
+	 * @return int|false
+	 */
+	function wp_next_scheduled( $hook, $args = array() ) {
+		foreach ( $GLOBALS['_fair_test_cron'][ $hook ] ?? array() as $event ) {
+			if ( $event[1] === $args ) {
+				return $event[0];
+			}
+		}
+		return false;
+	}
+}
+
+if ( ! function_exists( 'wp_unschedule_hook' ) ) {
+	/**
+	 * Stub of WordPress wp_unschedule_hook().
+	 *
+	 * @param string $hook Hook name.
+	 * @return int Number of events removed.
+	 */
+	function wp_unschedule_hook( $hook ) {
+		$count = count( $GLOBALS['_fair_test_cron'][ $hook ] ?? array() );
+		unset( $GLOBALS['_fair_test_cron'][ $hook ] );
+		return $count;
+	}
+}
+
+if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
+	/**
+	 * Stub of WordPress wp_clear_scheduled_hook().
+	 *
+	 * @param string $hook Hook name.
+	 * @return int Number of events removed.
+	 */
+	function wp_clear_scheduled_hook( $hook ) {
+		return wp_unschedule_hook( $hook );
+	}
+}
+
+if ( ! function_exists( 'add_action' ) ) {
+	/**
+	 * Stub of WordPress add_action() — registration only, never dispatched.
+	 *
+	 * @param string   $hook_name Hook name.
+	 * @param callable $callback  Callback.
+	 * @return true
+	 */
+	function add_action( $hook_name, $callback ) {
+		$GLOBALS['_fair_test_added_actions'][ $hook_name ][] = $callback;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'sanitize_title' ) ) {
+	/**
+	 * Stub of WordPress sanitize_title() — lowercase, dashes for anything else.
+	 *
+	 * @param string $title Title.
+	 * @return string
+	 */
+	function sanitize_title( $title ) {
+		return trim( (string) preg_replace( '/[^a-z0-9_\-]+/', '-', strtolower( (string) $title ) ), '-' );
+	}
+}
+
+if ( ! function_exists( 'wp_kses_post' ) ) {
+	/**
+	 * Stub of WordPress wp_kses_post() — drops script elements only.
+	 *
+	 * @param string $content Content.
+	 * @return string
+	 */
+	function wp_kses_post( $content ) {
+		return (string) preg_replace( '#<script\b[^>]*>.*?</script>#is', '', (string) $content );
+	}
+}

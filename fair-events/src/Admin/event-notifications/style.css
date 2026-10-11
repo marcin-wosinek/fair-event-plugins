@@ -1,0 +1,85 @@
+.fair-events-notifications {
+	max-width: 960px;
+}
+
+.fair-events-notifications__channel {
+	margin-top: 16px;
+}
+
+.fair-events-notifications__channel h2,
+.fair-events-notifications__channel h3 {
+	margin: 0;
+}
+
+.fair-events-notifications__channel h3 {
+	margin-top: 24px;
+	margin-bottom: 8px;
+}
+
+.fair-events-notifications__fields {
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	margin: 16px 0;
+}
+
+.fair-events-notifications__fields > .is-wide {
+	grid-column: 1 / -1;
+}
+
+.fair-events-notifications__actions {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 16px 0 8px;
+}
+
+.fair-events-notifications__unsaved {
+	color: #b26200;
+	font-weight: 600;
+}
+
+.fair-events-notifications__row {
+	border-bottom: 1px solid #e0e0e0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 12px;
+	padding: 8px 0;
+}
+
+.fair-events-notifications__row-detail {
+	color: #757575;
+	flex-basis: 100%;
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-notifications__preview {
+	background: #f6f7f7;
+	margin-bottom: 8px;
+	max-height: 320px;
+	overflow: auto;
+	overflow-wrap: anywhere;
+	padding: 12px;
+}
+
+.fair-events-notifications__preview.is-telegram {
+	white-space: pre-wrap;
+}
+
+.fair-events-notifications__preview img,
+.fair-events-notifications__preview table {
+	max-width: 100%;
+}
+
+@media (max-width: 782px) {
+	.fair-events-notifications__fields {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.fair-events-notifications__actions .components-button {
+		justify-content: center;
+		width: 100%;
+	}
+}

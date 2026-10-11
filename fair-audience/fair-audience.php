@@ -25,6 +25,11 @@ define( 'FAIR_AUDIENCE_VERSION', '1.19.0' );
 define( 'FAIR_AUDIENCE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FAIR_AUDIENCE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+// This plugin no longer schedules the weekly events email. The constant tells
+// FairEvents\Notifications\Ownership to take its settings and schedule over;
+// Services\WeeklyDigestMailer still sends it.
+define( 'FAIR_AUDIENCE_EVENT_NOTIFICATIONS_HANDOFF', true );
+
 // Composer autoloader.
 require_once __DIR__ . '/vendor/autoload.php';
 

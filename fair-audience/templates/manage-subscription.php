@@ -64,8 +64,7 @@ if ( false === $participant_id ) {
 			if ( in_array( $new_profile, array( 'minimal', 'marketing' ), true ) ) {
 				$participant->email_profile = $new_profile;
 
-				$weekly_digest_config = get_option( 'fair_audience_weekly_digest', array() );
-				if ( ! empty( $weekly_digest_config['enabled'] ) && 'marketing' === $new_profile ) {
+				if ( \FairAudience\Services\WeeklyDigestMailer::is_enabled() && 'marketing' === $new_profile ) {
 					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public form, token provides auth.
 					$participant->weekly_summary_opt_out = isset( $_POST['weekly_summary'] ) ? 0 : 1;
 				}
@@ -88,8 +87,7 @@ if ( false === $participant_id ) {
 }
 
 // Whether the weekly summary preference should be shown at all.
-$weekly_digest_option = get_option( 'fair_audience_weekly_digest', array() );
-$weekly_enabled       = ! empty( $weekly_digest_option['enabled'] );
+$weekly_enabled = \FairAudience\Services\WeeklyDigestMailer::is_enabled();
 
 // Load mailing categories for display.
 $mailing_category_ids = get_option( 'fair_audience_mailing_category_ids', array() );

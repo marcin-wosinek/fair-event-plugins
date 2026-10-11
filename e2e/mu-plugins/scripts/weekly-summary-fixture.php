@@ -9,7 +9,7 @@
  *
  * `source` creates a category and an enabled event source listing it.
  * `event` publishes an event in that category, dated inside the week the next
- * scheduled send covers under the saved weekly notification settings. Its
+ * scheduled send covers under the saved Telegram notification settings. Its
  * title carries Telegram markup characters, so the spec can check they are
  * delivered verbatim. `cleanup` removes all of it.
  *
@@ -22,9 +22,9 @@ defined( 'ABSPATH' ) || exit;
 
 use FairEvents\Database\EventSourceRepository;
 use FairEvents\Models\EventDates;
-use FairEventsExperimental\Settings\WeeklyNotificationSettings;
-use FairEventsExperimental\WeeklyNotifications\Dispatcher;
-use FairEventsExperimental\WeeklyNotifications\WeekSchedule;
+use FairEvents\Notifications\TelegramDispatcher;
+use FairEvents\Notifications\TelegramSettings;
+use FairEvents\Notifications\WeekSchedule;
 
 require_once __DIR__ . '/../lib/event-factory.php';
 
@@ -57,9 +57,9 @@ if ( 'source' === $fixture_step ) {
 		'sourceName' => $name,
 	);
 } elseif ( 'event' === $fixture_step ) {
-	$settings    = WeeklyNotificationSettings::get();
-	$due         = WeekSchedule::next_due( Dispatcher::now(), $settings['day_of_week'], $settings['time_of_day'] );
-	$week        = WeekSchedule::target_week( $due, $settings['week_scope'], Dispatcher::start_of_week() );
+	$settings    = TelegramSettings::get();
+	$due         = WeekSchedule::next_due( TelegramDispatcher::now(), $settings['day_of_week'], $settings['time_of_day'] );
+	$week        = WeekSchedule::target_week( $due, $settings['week_scope'], TelegramDispatcher::start_of_week() );
 	$event_title = 'E2E *Weekly* _Jam_ [x](y) `z` & 🎉 ' . wp_rand( 1000, 9999 );
 	$event_id    = fair_e2e_create_event( $event_title, '<!-- wp:paragraph --><p>Weekly summary fixture.</p><!-- /wp:paragraph -->' );
 	wp_set_object_terms( $event_id, array( (int) ( $args[1] ?? 0 ) ), 'category' );

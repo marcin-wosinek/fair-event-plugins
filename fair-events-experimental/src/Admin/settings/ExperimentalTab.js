@@ -3,7 +3,7 @@
  */
 import FeaturesTab from './FeaturesTab.js';
 import MetaConversions from './MetaConversions.js';
-import WeeklyNotifications from './WeeklyNotifications.js';
+import WeeklyNotificationsMoved from './WeeklyNotificationsMoved.js';
 
 /**
  * Experimental tab of the Fair Events Settings page.
@@ -20,9 +20,12 @@ export default function ExperimentalTab( { onNotice } ) {
 	return (
 		<div className="fair-events-experimental-settings">
 			<FeaturesTab onNotice={ onNotice } />
-			{ features?.sources?.enabled && (
-				<WeeklyNotifications onNotice={ onNotice } />
-			) }
+			<WeeklyNotificationsMoved
+				url={
+					window.fairEventsExperimentalSettingsData
+						?.eventNotificationsUrl || null
+				}
+			/>
 			{ features?.[ 'meta-conversions' ]?.enabled && (
 				<MetaConversions onNotice={ onNotice } />
 			) }

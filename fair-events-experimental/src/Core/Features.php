@@ -48,7 +48,7 @@ class Features {
 		return array(
 			'sources'          => array(
 				'label'       => 'Event sources & feeds',
-				'description' => 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly notifications.',
+				'description' => 'External event sources, Facebook import, iCal/JSON feeds, event proposals.',
 				'default'     => true,
 			),
 			'ticketing'        => array(
@@ -136,7 +136,7 @@ class Features {
 		$translated = array(
 			'sources'          => array(
 				'label'       => __( 'Event sources & feeds', 'fair-events-experimental' ),
-				'description' => __( 'External event sources, Facebook import, iCal/JSON feeds, event proposals, weekly notifications.', 'fair-events-experimental' ),
+				'description' => __( 'External event sources, Facebook import, iCal/JSON feeds, event proposals.', 'fair-events-experimental' ),
 			),
 			'ticketing'        => array(
 				'label'       => __( 'Ticketing', 'fair-events-experimental' ),
