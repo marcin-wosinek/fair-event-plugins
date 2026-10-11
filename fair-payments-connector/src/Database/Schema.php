@@ -106,6 +106,56 @@ class Schema {
 	}
 
 	/**
+	 * Get the table name for settlement accounts
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_settlement_accounts_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_settlement_accounts';
+	}
+
+	/**
+	 * Get the table name for saved settlements
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_settlements_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_settlements';
+	}
+
+	/**
+	 * Get the table name for settlement import revisions
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_settlement_revisions_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_settlement_revisions';
+	}
+
+	/**
+	 * Get the table name for settlement movements
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_settlement_items_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_settlement_items';
+	}
+
+	/**
+	 * Get the table name for settlement import runs
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_settlement_import_runs_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_payment_settlement_import_runs';
+	}
+
+	/**
 	 * Create database tables
 	 *
 	 * @return void
@@ -169,6 +219,9 @@ class Schema {
 		// Create external update operation log table.
 		self::create_external_update_runs_table();
 
+		// Create saved settlement tables.
+		self::create_settlement_tables();
+
 		// Run migrations if needed.
 		self::migrate_to_v2();
 		self::migrate_to_v3();
@@ -195,9 +248,10 @@ class Schema {
 		self::migrate_to_v24();
 		self::migrate_to_v25();
 		self::migrate_to_v26();
+		self::migrate_to_v27();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '26.0' );
+		update_option( 'fair_payment_db_version', '27.0' );
 	}
 
 	/**
@@ -406,6 +460,149 @@ class Schema {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+	}
+
+	/**
+	 * Create the saved settlement tables (#1694)
+	 *
+	 * Provider facts only: nothing here records a reconciliation decision.
+	 *
+	 * - accounts: the Mollie account a settlement belongs to. `verified` is 1
+	 *   once Mollie itself reported the organization; an account named during
+	 *   a CSV upload stays unverified until an administrator confirms it.
+	 * - settlements: one row per payout, with a stable local ID. Amounts are
+	 *   exact decimal strings; NULL means unknown, never zero.
+	 * - revisions: one immutable import of a settlement from one source. A
+	 *   settlement points at its published revision per source; earlier ones
+	 *   are kept so a later reconciliation can compare against them.
+	 * - items: the movements of one revision.
+	 * - import runs: resumable API import progress with server-held cursors.
+	 *
+	 * @return void
+	 */
+	public static function create_settlement_tables() {
+		global $wpdb;
+
+		$charset_collate = $wpdb->get_charset_collate();
+		$accounts        = self::get_settlement_accounts_table_name();
+		$settlements     = self::get_settlements_table_name();
+		$revisions       = self::get_settlement_revisions_table_name();
+		$items           = self::get_settlement_items_table_name();
+		$runs            = self::get_settlement_import_runs_table_name();
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		dbDelta(
+			"CREATE TABLE $accounts (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			label varchar(191) NOT NULL DEFAULT '',
+			organization_id varchar(64) DEFAULT NULL,
+			balance_id varchar(64) DEFAULT NULL,
+			verified tinyint(1) NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY organization_id (organization_id)
+		) $charset_collate;"
+		);
+
+		dbDelta(
+			"CREATE TABLE $settlements (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			account_id bigint(20) UNSIGNED NOT NULL,
+			provider_id varchar(64) DEFAULT NULL,
+			reference varchar(64) DEFAULT NULL,
+			currency varchar(3) DEFAULT NULL,
+			amount varchar(32) DEFAULT NULL,
+			status varchar(20) DEFAULT NULL,
+			provider_created_at datetime DEFAULT NULL,
+			settled_at datetime DEFAULT NULL,
+			invoice_id varchar(64) DEFAULT NULL,
+			balance_id varchar(64) DEFAULT NULL,
+			api_revision_id bigint(20) UNSIGNED DEFAULT NULL,
+			csv_revision_id bigint(20) UNSIGNED DEFAULT NULL,
+			completeness varchar(20) NOT NULL DEFAULT 'incomplete',
+			discrepancies longtext DEFAULT NULL,
+			discrepancy_count int(11) UNSIGNED NOT NULL DEFAULT 0,
+			last_refreshed_at datetime DEFAULT NULL,
+			last_csv_import_at datetime DEFAULT NULL,
+			last_failure_code varchar(50) DEFAULT NULL,
+			last_failure_at datetime DEFAULT NULL,
+			material_change_at datetime DEFAULT NULL,
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY account_provider (account_id, provider_id),
+			KEY account_reference (account_id, reference),
+			KEY settled_at (settled_at)
+		) $charset_collate;"
+		);
+
+		dbDelta(
+			"CREATE TABLE $revisions (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			settlement_id bigint(20) UNSIGNED NOT NULL,
+			source varchar(10) NOT NULL,
+			status varchar(20) NOT NULL DEFAULT 'staged',
+			run_id bigint(20) UNSIGNED DEFAULT NULL,
+			content_hash varchar(64) DEFAULT NULL,
+			facts longtext DEFAULT NULL,
+			coverage longtext DEFAULT NULL,
+			totals longtext DEFAULT NULL,
+			item_count int(11) UNSIGNED NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			published_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY settlement_source (settlement_id, source, status),
+			KEY run_id (run_id)
+		) $charset_collate;"
+		);
+
+		dbDelta(
+			"CREATE TABLE $items (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			revision_id bigint(20) UNSIGNED NOT NULL,
+			identity_key varchar(120) NOT NULL,
+			item_type varchar(20) NOT NULL,
+			is_aggregate tinyint(1) NOT NULL DEFAULT 0,
+			external_id varchar(64) DEFAULT NULL,
+			payment_reference varchar(64) DEFAULT NULL,
+			occurrence int(11) UNSIGNED NOT NULL DEFAULT 1,
+			amount varchar(32) DEFAULT NULL,
+			currency varchar(3) DEFAULT NULL,
+			settlement_amount varchar(32) DEFAULT NULL,
+			settlement_currency varchar(3) DEFAULT NULL,
+			description varchar(255) NOT NULL DEFAULT '',
+			provider_status varchar(32) DEFAULT NULL,
+			occurred_at datetime DEFAULT NULL,
+			needs_review tinyint(1) NOT NULL DEFAULT 0,
+			raw_type varchar(64) DEFAULT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY revision_identity (revision_id, identity_key),
+			KEY payment_reference (payment_reference)
+		) $charset_collate;"
+		);
+
+		dbDelta(
+			"CREATE TABLE $runs (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			kind varchar(20) NOT NULL,
+			account_id bigint(20) UNSIGNED NOT NULL,
+			organization_id varchar(64) NOT NULL,
+			settlement_id bigint(20) UNSIGNED DEFAULT NULL,
+			user_id bigint(20) UNSIGNED DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'running',
+			state longtext DEFAULT NULL,
+			settlements_done int(11) UNSIGNED NOT NULL DEFAULT 0,
+			requests_done int(11) UNSIGNED NOT NULL DEFAULT 0,
+			error_code varchar(50) DEFAULT NULL,
+			started_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			finished_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY status (status)
+		) $charset_collate;"
+		);
 	}
 
 	/**
@@ -1367,6 +1564,21 @@ class Schema {
 	}
 
 	/**
+	 * Migrate database from v26.0 to v27.0
+	 *
+	 * Adds the saved settlement tables (#1694).
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v27() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '27.0', '<' ) ) {
+			self::create_settlement_tables();
+		}
+	}
+
+	/**
 	 * Drop database tables (used for uninstall)
 	 *
 	 * @return void
@@ -1383,6 +1595,13 @@ class Schema {
 		$api_tokens_table         = self::get_api_tokens_table_name();
 		$audit_log_table          = self::get_audit_log_table_name();
 		$external_update_runs     = self::get_external_update_runs_table_name();
+
+		// Drop saved settlements (standalone, no FK references).
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', self::get_settlement_import_runs_table_name() ) );
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', self::get_settlement_items_table_name() ) );
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', self::get_settlement_revisions_table_name() ) );
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', self::get_settlements_table_name() ) );
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', self::get_settlement_accounts_table_name() ) );
 
 		// Drop external update operation log (standalone, no FK references).
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $external_update_runs ) );

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-11T14:06:37+00:00\n"
+"POT-Creation-Date: 2026-10-11T15:15:15+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector\n"
@@ -320,6 +320,49 @@ msgstr ""
 msgid "The setting change could not be recorded and was not saved. Please try again."
 msgstr ""
 
+#: src/API/SettlementController.php:271
+#: src/Services/SettlementApiImport.php:173
+msgid "Settlement not found."
+msgstr ""
+
+#: src/API/SettlementController.php:315
+msgid "Connect Mollie before confirming which organization an account belongs to."
+msgstr ""
+
+#: src/API/SettlementController.php:323
+msgid "An account can only be confirmed as the Mollie organization that is currently connected."
+msgstr ""
+
+#: src/API/SettlementController.php:370
+msgid "Choose a settlement CSV file to upload."
+msgstr ""
+
+#: src/API/SettlementController.php:378
+#: src/Settlements/CsvParser.php:99
+msgid "The file is larger than 2 MB. Export one settlement at a time."
+msgstr ""
+
+#: src/API/SettlementController.php:400
+#: src/Services/SettlementStore.php:133
+msgid "Account not found."
+msgstr ""
+
+#: src/API/SettlementController.php:412
+msgid "Choose the account this settlement belongs to, or name a new one."
+msgstr ""
+
+#: src/API/SettlementController.php:419
+msgid "Confirm that this file was exported from the selected Mollie organization."
+msgstr ""
+
+#: src/API/SettlementController.php:455
+msgid "The file could not be imported. Nothing was saved."
+msgstr ""
+
+#: src/API/SettlementController.php:486
+msgid "Choose the settlement to refresh."
+msgstr ""
+
 #: src/API/TelegramSettingsController.php:100
 msgid "Bot token is required."
 msgstr ""
@@ -449,7 +492,7 @@ msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
 msgstr ""
 
 #: src/API/TransactionsController.php:651
-#: src/Payment/MolliePaymentHandler.php:524
+#: src/Payment/MolliePaymentHandler.php:534
 #: src/Admin/external-updates/components/MollieImportPanel.js:129
 msgid "Mollie payments could not be loaded. Please try again."
 msgstr ""
@@ -641,52 +684,52 @@ msgstr ""
 msgid "Transaction status must be \"draft\" to initiate payment. Current status: %s"
 msgstr ""
 
-#: src/Payment/MolliePaymentHandler.php:61
+#: src/Payment/MolliePaymentHandler.php:71
 msgid "Mollie is not connected. Please connect your Mollie account in settings."
 msgstr ""
 
-#: src/Payment/MolliePaymentHandler.php:102
+#: src/Payment/MolliePaymentHandler.php:112
 msgid "Mollie connection lost: no refresh token was stored."
 msgstr ""
 
-#: src/Payment/MolliePaymentHandler.php:139
+#: src/Payment/MolliePaymentHandler.php:149
 msgid "Mollie connection lost: the token refresh request was rejected."
 msgstr ""
 
-#: src/Payment/MolliePaymentHandler.php:149
+#: src/Payment/MolliePaymentHandler.php:159
 msgid "Mollie connection lost: the token refresh response was malformed."
 msgstr ""
 
-#: src/Payment/MolliePaymentHandler.php:174
+#: src/Payment/MolliePaymentHandler.php:184
 msgid "Mollie access token refreshed automatically before expiry."
 msgstr ""
 
-#: src/Payment/MolliePaymentHandler.php:241
+#: src/Payment/MolliePaymentHandler.php:251
 msgid "Failed to load Mollie connection overview: Mollie profile is not configured."
 msgstr ""
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:259
+#: src/Payment/MolliePaymentHandler.php:269
 #, php-format
 msgid "Failed to load Mollie connection overview: %s"
 msgstr ""
 
-#: src/Payment/MolliePaymentHandler.php:299
+#: src/Payment/MolliePaymentHandler.php:309
 msgid "Payment"
 msgstr ""
 
-#: src/Payment/MolliePaymentHandler.php:332
+#: src/Payment/MolliePaymentHandler.php:342
 msgid "Application fee"
 msgstr ""
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:496
+#: src/Payment/MolliePaymentHandler.php:506
 #, php-format
 msgid "Failed to retrieve payment: %s"
 msgstr ""
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:604
+#: src/Payment/MolliePaymentHandler.php:614
 #, php-format
 msgid "Failed to list balance transactions: %s"
 msgstr ""
@@ -820,6 +863,148 @@ msgstr ""
 msgid "Another external update is still running. Wait for it to finish, then try again."
 msgstr ""
 
+#: src/Services/SettlementApiImport.php:98
+msgid "Mollie is not connected. Connect Mollie in Fair Payments Connector settings, then continue."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:99
+msgid "The Mollie connection does not have permission to read settlements. Reconnect Mollie in Fair Payments Connector settings and approve settlement access, then continue."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:100
+msgid "The connected Mollie organization is not known. Reconnect Mollie in Fair Payments Connector settings."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:101
+msgid "Mollie is now connected to a different organization than when this import started, so it was stopped. Start a new import for the connected organization."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:102
+msgid "Mollie could not be reached or returned an error. Nothing already saved was changed; continue to try again."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:103
+msgid "Mollie returned data that could not be read. Nothing already saved was changed."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:104
+msgid "The import stopped before it finished, for example because a request timed out or the page was closed. Continue to pick up where it stopped."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:105
+msgid "A newer import was started instead."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:106
+msgid "The data could not be saved. Continue to try again."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:178
+msgid "This settlement belongs to a different account than the Mollie organization that is connected, so it cannot be refreshed."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:185
+msgid "This settlement was only imported from a file. Load settlements from Mollie to match it with the provider record."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:227
+#: src/Admin/external-updates/components/ConnectedSitesPanel.js:103
+#: src/Admin/external-updates/components/MollieImportPanel.js:194
+msgid "The import could not be started."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:244
+msgid "This import is already being continued in another request."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:252
+msgid "Import not found."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:257
+msgid "This import has already finished. Start a new one to load again."
+msgstr ""
+
+#: src/Services/SettlementApiImport.php:538
+msgid "Another settlement import is still running. Wait for it to finish, then try again."
+msgstr ""
+
+#: src/Services/SettlementStore.php:64
+msgid "Another settlement import is being saved. Try again in a moment."
+msgstr ""
+
+#. translators: %s: Mollie organization ID
+#: src/Services/SettlementStore.php:109
+#, php-format
+msgid "Mollie %s"
+msgstr ""
+
+#: src/Services/SettlementStore.php:136
+msgid "This account is already confirmed."
+msgstr ""
+
+#: src/Services/SettlementStore.php:514
+msgid "More than one saved settlement in this account has this reference, so the file cannot be attached to one of them. Nothing was imported."
+msgstr ""
+
+#: src/Services/SettlementStore.php:715
+msgid "The settlement could not be saved. Nothing was changed."
+msgstr ""
+
+#: src/Services/SettlementView.php:259
+msgid "The report summary from Mollie does not add up to the payout amount."
+msgstr ""
+
+#: src/Services/SettlementView.php:262
+msgid "The uploaded file and Mollie state different settlement currencies."
+msgstr ""
+
+#. translators: %s: Mollie reference such as tr_abc123
+#: src/Services/SettlementView.php:267
+#, php-format
+msgid "The uploaded file and Mollie state different values for %s. The value from Mollie is shown; neither was added to the other."
+msgstr ""
+
+#. translators: %d: number of movements
+#: src/Services/SettlementView.php:274
+#, php-format
+msgid "%d movement from Mollie is not in the uploaded file."
+msgid_plural "%d movements from Mollie are not in the uploaded file."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of movements
+#: src/Services/SettlementView.php:281
+#, php-format
+msgid "%d movement in the uploaded file was not reported by Mollie."
+msgid_plural "%d movements in the uploaded file were not reported by Mollie."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of movements
+#: src/Services/SettlementView.php:288
+#, php-format
+msgid "%d movement has a type or value that was not recognized."
+msgid_plural "%d movements have a type or value that was not recognized."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Services/SettlementView.php:293
+msgid "A different file was uploaded for this settlement. The first accepted file is kept; the differences are listed below."
+msgstr ""
+
+#: src/Services/SettlementView.php:296
+msgid "More than one saved settlement in this account has this reference, so they were not merged."
+msgstr ""
+
+#: src/Services/SettlementView.php:299
+msgid "Mollie reported different data for this settlement on a later refresh. The earlier version is kept for comparison."
+msgstr ""
+
+#: src/Services/SettlementView.php:303
+msgid "This settlement needs review."
+msgstr ""
+
 #: src/Services/TelegramService.php:41
 msgid "Telegram chat ID is empty."
 msgstr ""
@@ -880,6 +1065,69 @@ msgstr ""
 msgid "Per-bundle feature toggles"
 msgstr ""
 
+#: src/Settlements/CsvParser.php:108
+msgid "The file is empty."
+msgstr ""
+
+#: src/Settlements/CsvParser.php:112
+msgid "The file is not UTF-8 text. Export the settlement from Mollie as CSV and upload it unchanged."
+msgstr ""
+
+#. translators: 1: number of columns found, 2: number of columns expected
+#: src/Settlements/CsvParser.php:133
+#, php-format
+msgid "The row has %1$d columns, but the header has %2$d."
+msgstr ""
+
+#: src/Settlements/CsvParser.php:146
+msgid "The file has a header but no settlement rows."
+msgstr ""
+
+#. translators: %s: comma-separated list of column names
+#: src/Settlements/CsvParser.php:279
+#, php-format
+msgid "The file is missing required columns: %s. Export the settlement from Mollie in English or Dutch and upload it unchanged."
+msgstr ""
+
+#: src/Settlements/CsvParser.php:285
+msgid "This does not look like a Mollie settlement export. Only the English and Dutch CSV exports are supported."
+msgstr ""
+
+#: src/Settlements/CsvParser.php:328
+msgid "No settlement reference was found in the file."
+msgstr ""
+
+#: src/Settlements/CsvParser.php:332
+msgid "The file contains more than one settlement reference. Upload one settlement at a time."
+msgstr ""
+
+#: src/Settlements/CsvParser.php:338
+msgid "The settlement reference is not in a recognized format."
+msgstr ""
+
+#: src/Settlements/CsvParser.php:347
+msgid "The file contains more than one settlement currency. Upload one settlement at a time."
+msgstr ""
+
+#. translators: %s: value found in the currency column
+#: src/Settlements/CsvParser.php:356
+#: src/Settlements/CsvParser.php:393
+#, php-format
+msgid "\"%s\" is not a currency code."
+msgstr ""
+
+#. translators: %s: value found in the ID column
+#: src/Settlements/CsvParser.php:416
+#, php-format
+msgid "\"%s\" is not a Mollie reference."
+msgstr ""
+
+#. translators: %s: value found in an amount column
+#: src/Settlements/CsvParser.php:481
+#, php-format
+msgid "\"%s\" is not an amount that can be read exactly. Amounts must be plain numbers such as 12.50, without thousands separators."
+msgstr ""
+
 #: src/Admin/external-updates/components/ConnectedSitesPanel.js:59
 msgid "Failed to load connected sites."
 msgstr ""
@@ -887,11 +1135,6 @@ msgstr ""
 #: src/Admin/external-updates/components/ConnectedSitesPanel.js:91
 #: src/Admin/external-updates/components/MollieImportPanel.js:182
 msgid "The import request did not complete. Check the operation log for its outcome."
-msgstr ""
-
-#: src/Admin/external-updates/components/ConnectedSitesPanel.js:103
-#: src/Admin/external-updates/components/MollieImportPanel.js:194
-msgid "The import could not be started."
 msgstr ""
 
 #: src/Admin/external-updates/components/ConnectedSitesPanel.js:121

@@ -58,6 +58,7 @@ msgstr "Budgets"
 
 #: src/Admin/AdminPages.php:64
 #: src/Admin/AdminPages.php:65
+#: src/Admin/settlements/SettlementsApp.js:218
 msgid "Reconciliation"
 msgstr "Abstimmung"
 
@@ -505,11 +506,662 @@ msgstr "Alle Tags"
 msgid "Administrator-reviewed budget to apply to the match, or null for no budget."
 msgstr "Von Administrator überprüftes Budget für die Zuordnung oder null für kein Budget."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:343
+#: src/Admin/reconciliation/ReconciliationApp.js:354
+#: src/Admin/settlements/components/MollieImportPanel.js:98
 msgid "Open Mollie connection settings"
 msgstr "Mollie-Verbindungseinstellungen öffnen"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:351
+#: src/Admin/reconciliation/ReconciliationApp.js:362
 msgid "Mollie has not authorized this site to read settlements yet, so they cannot be retrieved automatically. Reconnect to Mollie in the Fair Payments Connector settings to grant that permission. You can keep importing the settlement CSV in the meantime."
 msgstr "Mollie hat diese Website noch nicht autorisiert, um Abrechnungen zu lesen, daher können diese nicht automatisch abgerufen werden. Verbinden Sie sich erneut mit Mollie in den Fair Payments Connector-Einstellungen, um diese Berechtigung zu erteilen. Sie können die Abrechnungs-CSV in der Zwischenzeit weiterhin importieren."
 
+#: src/Admin/AdminPages.php:74
+#: src/Admin/AdminPages.php:75
+#: src/Admin/settlements/SettlementsApp.js:150
+#: src/Admin/settlements/SettlementsApp.js:161
+#: src/Admin/settlements/SettlementsApp.js:175
+#: src/Admin/settlements/SettlementsApp.js:215
+msgid "Settlements"
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:318
+msgid "Saved settlements"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:37
+msgid "This settlement is already saved from Mollie. The file will be added to it as a second source; amounts are compared, never added together."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:45
+msgid "This file is already saved for this settlement. Importing it again changes nothing."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:53
+msgid "A different file is already saved for this settlement. The saved data stays as it is; the differences in this file will be listed on the settlement for review."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:61
+msgid "More than one saved settlement in this account has this reference, so the file cannot be attached to one of them."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:69
+msgid "The file is valid. A new settlement will be saved."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:143
+msgid "Choose a file first."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:145
+#: src/Admin/settlements/components/CsvImportModal.js:305
+msgid "Checking the file…"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:147
+msgid "Fix the file and choose it again."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:149
+msgid "This file cannot be attached to one settlement."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:154
+msgid "Name the account first."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:156
+msgid "Confirm where the file was exported from."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:176
+#: src/Admin/settlements/components/CsvImportModal.js:314
+msgid "The file could not be imported."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:186
+#: src/Admin/settlements/SettlementsApp.js:224
+msgid "Import settlement CSV"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:197
+msgid "The settlement was saved."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:202
+msgid "Close"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:209
+msgid "Open settlement"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:217
+msgid "Upload a settlement exported from Mollie as CSV, in English or Dutch, one settlement per file. The file is checked before anything is saved, and it works without a Mollie connection. Consumer names and bank details in the file are not kept."
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:228
+msgid "Settlement file"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:242
+#: src/Admin/settlements/components/SettlementDetail.js:259
+#: src/Admin/settlements/components/SettlementList.js:63
+msgid "Mollie account"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:243
+msgid "The file does not say which Mollie organization it was exported from."
+msgstr ""
+
+#. translators: %s: account name
+#: src/Admin/settlements/components/CsvImportModal.js:255
+#, js-format
+msgid "%s (not confirmed)"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:264
+msgid "A new account…"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:276
+msgid "Account name"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:277
+msgid "For your own reference. Its settlements stay separate from those loaded from Mollie until you confirm which organization it is."
+msgstr ""
+
+#. translators: %s: account name
+#: src/Admin/settlements/components/CsvImportModal.js:290
+#, js-format
+msgid "This file was exported from %s."
+msgstr ""
+
+#. translators: 1: line number in the file, 2: what is wrong
+#: src/Admin/settlements/components/CsvImportModal.js:326
+#, js-format
+msgid "Line %1$d: %2$s"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:354
+msgid "Settlement reference"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:362
+#: src/Admin/settlements/components/SettlementDetail.js:331
+#: src/Admin/settlements/components/SettlementDetail.js:367
+msgid "Rows"
+msgstr ""
+
+#. translators: %d: number of rows
+#: src/Admin/settlements/components/CsvImportModal.js:366
+#, js-format
+msgid "%d row"
+msgid_plural "%d rows"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: movement type, 2: number of rows
+#: src/Admin/settlements/components/CsvImportModal.js:382
+#: src/Admin/settlements/components/SettlementDetail.js:374
+#, js-format
+msgid "%1$s (%2$d)"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:416
+msgid "Cancel"
+msgstr ""
+
+#: src/Admin/settlements/components/CsvImportModal.js:424
+msgid "Import settlement"
+msgstr ""
+
+#. translators: %d: number of settlements loaded so far
+#: src/Admin/settlements/components/MollieImportPanel.js:34
+#, js-format
+msgid "%d settlement loaded so far."
+msgid_plural "%d settlements loaded so far."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/settlements/components/MollieImportPanel.js:83
+msgid "Load from Mollie"
+msgstr ""
+
+#: src/Admin/settlements/components/MollieImportPanel.js:86
+msgid "Loads every settlement Mollie lists for the connected organization, with its payments, captures, refunds and chargebacks. Settlements already saved are refreshed, not duplicated."
+msgstr ""
+
+#: src/Admin/settlements/components/MollieImportPanel.js:108
+msgid "Saved settlements and CSV import keep working."
+msgstr ""
+
+#: src/Admin/settlements/components/MollieImportPanel.js:131
+msgid "An import from Mollie did not finish."
+msgstr ""
+
+#. translators: %d: number of settlements loaded
+#: src/Admin/settlements/components/MollieImportPanel.js:150
+#, js-format
+msgid "Loaded %d settlement from Mollie."
+msgid_plural "Loaded %d settlements from Mollie."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/settlements/components/MollieImportPanel.js:168
+msgid "Continue import"
+msgstr ""
+
+#: src/Admin/settlements/components/MollieImportPanel.js:182
+msgid "Start over"
+msgstr ""
+
+#: src/Admin/settlements/components/MollieImportPanel.js:183
+msgid "Load settlements from Mollie"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:43
+msgid "This settlement has not been fully loaded from Mollie yet. What is shown may be missing movements."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:55
+msgid "This settlement comes from an uploaded file. The payout amount, dates and Mollie status are not in the file and stay unknown until the settlement is loaded from Mollie."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:63
+msgid "Every page Mollie lists for this settlement was loaded, but Mollie gave no summary that confirms the payout amount. The movements below may not be the whole payout."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:103
+#: src/Admin/settlements/components/SettlementList.js:149
+#: src/Admin/settlements/components/SettlementList.js:170
+#: src/Admin/settlements/format.js:31
+msgid "Unknown"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:115
+#: src/Admin/settlements/SettlementsApp.js:187
+msgid "← All settlements"
+msgstr ""
+
+#. translators: %s: settlement reference
+#: src/Admin/settlements/components/SettlementDetail.js:122
+#, js-format
+msgid "Settlement %s"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:136
+msgid "Refresh from Mollie"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:147
+msgid "This settlement belongs to a different Mollie organization than the one connected, so it cannot be refreshed."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:158
+msgid "Refreshing from Mollie…"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:175
+msgid "Try again"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:186
+msgid "Refreshed from Mollie."
+msgstr ""
+
+#. translators: %s: date and time
+#: src/Admin/settlements/components/SettlementDetail.js:201
+#, js-format
+msgid "The last attempt to load this settlement from Mollie failed on %s."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:210
+msgid "The data below is from the last complete load."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:219
+msgid "To review"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:232
+#: src/Admin/settlements/components/SettlementList.js:96
+#: src/Admin/settlements/components/SettlementList.js:153
+msgid "Payout"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:237
+msgid "Payout reference"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:241
+msgid "Payout amount"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:247
+msgid "Currency"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:250
+#: src/Admin/settlements/components/SettlementList.js:97
+#: src/Admin/settlements/components/SettlementList.js:164
+msgid "Mollie status"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:253
+#: src/Admin/settlements/components/SettlementList.js:95
+#: src/Admin/settlements/components/SettlementList.js:142
+msgid "Paid out"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:256
+msgid "Created"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:266
+#: src/Admin/settlements/components/SettlementList.js:133
+msgid "Not confirmed"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:275
+msgid "Mollie settlement ID"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:282
+msgid "Mollie invoice"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:285
+#: src/Admin/settlements/components/SettlementDetail.js:328
+#: src/Admin/settlements/components/SettlementDetail.js:357
+#: src/Admin/settlements/components/SettlementDetail.js:538
+#: src/Admin/settlements/components/SettlementDetail.js:640
+#: src/Admin/settlements/components/SettlementDetail.js:705
+#: src/Admin/settlements/components/SettlementDetail.js:743
+#: src/Admin/settlements/components/SettlementList.js:98
+#: src/Admin/settlements/components/SettlementList.js:173
+msgid "Source"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:289
+msgid "Last loaded from Mollie"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:296
+#: src/Admin/settlements/components/SettlementDetail.js:304
+msgid "Never"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:300
+msgid "Last file import"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:314
+msgid "What was loaded"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:318
+msgid "Totals are kept per source and are never added together. The payout amount above is what Mollie reported, not a sum of these rows."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:334
+#: src/Admin/settlements/components/SettlementDetail.js:383
+msgid "Total settled"
+msgstr ""
+
+#. translators: %d: number of payments
+#: src/Admin/settlements/components/SettlementDetail.js:403
+#, js-format
+msgid "%d payment was settled through its captures and is not counted on top of them."
+msgid_plural "%d payments were settled through their captures and are not counted on top of them."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: date and time
+#: src/Admin/settlements/components/SettlementDetail.js:426
+#, js-format
+msgid "Differences in the file uploaded on %s"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:436
+msgid "This file was not applied. The saved data is unchanged."
+msgstr ""
+
+#. translators: 1: Mollie reference or description, 2: saved amount, 3: amount in the file
+#: src/Admin/settlements/components/SettlementDetail.js:446
+#, js-format
+msgid "%1$s: saved %2$s, file says %3$s"
+msgstr ""
+
+#. translators: 1: Mollie reference or description, 2: amount
+#: src/Admin/settlements/components/SettlementDetail.js:463
+#, js-format
+msgid "Only in the file: %1$s (%2$s)"
+msgstr ""
+
+#. translators: 1: Mollie reference or description, 2: amount
+#: src/Admin/settlements/components/SettlementDetail.js:480
+#, js-format
+msgid "Missing from the file: %1$s (%2$s)"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:500
+msgid "Movements"
+msgstr ""
+
+#. translators: %d: number of payments
+#: src/Admin/settlements/components/SettlementDetail.js:507
+#, js-format
+msgid "%d payment is not in this site’s transactions yet. Its reference is kept and links up once the payment is imported."
+msgid_plural "%d payments are not in this site’s transactions yet. Their references are kept and link up once the payments are imported."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:519
+msgid "No movements are saved for this settlement."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:528
+#: src/Admin/settlements/components/SettlementDetail.js:551
+#: src/Admin/settlements/components/SettlementDetail.js:700
+#: src/Admin/settlements/components/SettlementDetail.js:712
+msgid "Type"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:530
+#: src/Admin/settlements/components/SettlementDetail.js:570
+msgid "Reference"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:533
+#: src/Admin/settlements/components/SettlementDetail.js:580
+#: src/Admin/settlements/components/SettlementDetail.js:702
+#: src/Admin/settlements/components/SettlementDetail.js:720
+msgid "Description"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:535
+#: src/Admin/settlements/components/SettlementDetail.js:592
+msgid "Date"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:536
+#: src/Admin/settlements/components/SettlementDetail.js:603
+#: src/Admin/settlements/components/SettlementDetail.js:704
+#: src/Admin/settlements/components/SettlementDetail.js:732
+msgid "Amount"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:537
+#: src/Admin/settlements/components/SettlementDetail.js:614
+msgid "Settled"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:540
+#: src/Admin/settlements/components/SettlementDetail.js:648
+msgid "Local payment"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:561
+msgid "Review"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:586
+#: src/Admin/settlements/components/SettlementDetail.js:726
+msgid "(no description)"
+msgstr ""
+
+#. translators: %s: amount stated in the uploaded file
+#: src/Admin/settlements/components/SettlementDetail.js:628
+#, js-format
+msgid "File says %s"
+msgstr ""
+
+#. translators: %d: transaction ID
+#: src/Admin/settlements/components/SettlementDetail.js:659
+#, js-format
+msgid "Transaction #%d"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:669
+msgid "Not imported yet"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:687
+msgid "Summed rows and fees"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:692
+msgid "These rows are totals reported by the source, not single movements. They may cover the same money as the movements above, so they are shown apart and not added to them."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementList.js:68
+msgid "All accounts"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementList.js:84
+msgid "No settlements are saved yet. Load them from Mollie or import a settlement CSV."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementList.js:93
+#: src/Admin/settlements/components/SettlementList.js:110
+msgid "Settlement"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementList.js:94
+#: src/Admin/settlements/components/SettlementList.js:122
+msgid "Account"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementList.js:99
+#: src/Admin/settlements/components/SettlementList.js:181
+msgid "Data"
+msgstr ""
+
+#. translators: %d: number of points to review
+#: src/Admin/settlements/components/SettlementList.js:195
+#, js-format
+msgid "%d point to review"
+msgid_plural "%d points to review"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/settlements/components/SettlementList.js:210
+msgid "Last load failed"
+msgstr ""
+
+#. translators: 1: current page, 2: number of pages, 3: number of settlements
+#: src/Admin/settlements/components/SettlementList.js:234
+#, js-format
+msgid "Page %1$d of %2$d (%3$d settlement)"
+msgid_plural "Page %1$d of %2$d (%3$d settlements)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/settlements/components/SettlementList.js:251
+msgid "Previous"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementList.js:258
+msgid "Next"
+msgstr ""
+
+#: src/Admin/settlements/format.js:55
+msgid "Payment"
+msgstr ""
+
+#: src/Admin/settlements/format.js:57
+msgid "Capture"
+msgstr ""
+
+#: src/Admin/settlements/format.js:59
+msgid "Refund"
+msgstr ""
+
+#: src/Admin/settlements/format.js:61
+msgid "Chargeback"
+msgstr ""
+
+#: src/Admin/settlements/format.js:63
+msgid "Fees"
+msgstr ""
+
+#: src/Admin/settlements/format.js:65
+msgid "Adjustment"
+msgstr ""
+
+#: src/Admin/settlements/format.js:67
+msgid "Revenue summary"
+msgstr ""
+
+#: src/Admin/settlements/format.js:69
+msgid "Not recognized"
+msgstr ""
+
+#: src/Admin/settlements/format.js:83
+msgid "Mollie and file"
+msgstr ""
+
+#: src/Admin/settlements/format.js:86
+msgid "Mollie"
+msgstr ""
+
+#: src/Admin/settlements/format.js:89
+msgid "File"
+msgstr ""
+
+#: src/Admin/settlements/format.js:91
+msgid "Not loaded yet"
+msgstr ""
+
+#: src/Admin/settlements/format.js:104
+msgid "Adds up to payout"
+msgstr ""
+
+#: src/Admin/settlements/format.js:109
+msgid "Loaded, not verified"
+msgstr ""
+
+#: src/Admin/settlements/format.js:114
+msgid "Incomplete"
+msgstr ""
+
+#: src/Admin/settlements/format.js:129
+msgid "(no reference)"
+msgstr ""
+
+#: src/Admin/settlements/SettlementsApp.js:90
+msgid "Settlements could not be loaded."
+msgstr ""
+
+#. translators: %s: account name
+#: src/Admin/settlements/SettlementsApp.js:127
+#, js-format
+msgid "%s is now confirmed. Its settlements were matched with those loaded from Mollie."
+msgstr ""
+
+#: src/Admin/settlements/SettlementsApp.js:142
+msgid "The account could not be confirmed."
+msgstr ""
+
+#: src/Admin/settlements/SettlementsApp.js:163
+msgid "Saved settlements are kept by Fair Payments Connector. Install and activate it, or update it to a version that saves settlements, then reload this page."
+msgstr ""
+
+#: src/Admin/settlements/SettlementsApp.js:178
+msgid "This settlement is not saved on this site."
+msgstr ""
+
+#: src/Admin/settlements/SettlementsApp.js:229
+msgid "Mollie payouts saved on this site, from Mollie itself or from a CSV export. Saved settlements stay available without a Mollie connection. Matching them with bank entries happens on the Reconciliation page."
+msgstr ""
+
+#. translators: %s: Mollie organization ID
+#: src/Admin/settlements/SettlementsApp.js:261
+#, js-format
+msgid "Confirm it is %s"
+msgstr ""
+
+#. translators: %s: account name
+#: src/Admin/settlements/SettlementsApp.js:275
+#, js-format
+msgid "Settlements imported from files into “%s” are kept apart from those loaded from Mollie, because a file does not say which Mollie organization it came from."
+msgstr ""
+
+#: src/Admin/settlements/SettlementsApp.js:308
+msgid "Confirm account"
+msgstr ""
+
+#. translators: 1: account name, 2: Mollie organization ID
+#: src/Admin/settlements/SettlementsApp.js:315
+#, js-format
+msgid "Confirm that every file imported into “%1$s” was exported from the connected Mollie organization %2$s? Its settlements will be matched with those loaded from Mollie by payout reference. This cannot be undone."
+msgstr ""
+
+#: src/Admin/settlements/useImportRun.js:58
+msgid "The import could not continue. Reload the page to see where it stopped."
+msgstr ""
+
+#: src/Admin/settlements/useImportRun.js:88
+msgid "The import could not be started."
+msgstr ""

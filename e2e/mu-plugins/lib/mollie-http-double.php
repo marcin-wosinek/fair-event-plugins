@@ -26,6 +26,12 @@
  *                                 chain fires accordingly.
  *   - GET  /v2/methods         -> empty list (method allowlist stays unset).
  *   - GET  /v2/balances...     -> empty list (fee capture finds nothing).
+ *   - GET  /v2/settlements...  -> three canned settlements over two pages, with
+ *                                 their payments, captures, refunds and
+ *                                 chargebacks (see settlement_response()).
+ *                                 Driven per-test through the
+ *                                 `fair_e2e_settlements` option, set by
+ *                                 fair-e2e-settlements.php.
  *
  * @package FairEventsE2E
  */
@@ -83,7 +89,12 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 		$payload     = ! empty( $raw_body ) ? \json_decode( $raw_body, true ) : array();
 		$payload     = \is_array( $payload ) ? $payload : array();
 
-		$data = $this->canned_response( $method, $path, $payload );
+		if ( 'GET' === $method && \preg_match( '#/settlements(/|$)#', $path ) ) {
+			\parse_str( (string) $psr_request->getUri()->getQuery(), $query );
+			$data = $this->settlement_response( $path, $query );
+		} else {
+			$data = $this->canned_response( $method, $path, $payload );
+		}
 		$json = \wp_json_encode( $data );
 
 		$fc = $pending_request->getFactoryCollection();
@@ -188,6 +199,174 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 		}
 
 		return new \stdClass();
+	}
+
+	/**
+	 * Canned settlement data for the saved-settlements specs (#1694).
+	 *
+	 *   - stl_e2e0003: open, no reference yet, no contents.
+	 *   - stl_e2e0002: paid out, no report summary; one payment settled
+	 *     through a capture, one payment in USD, a refund and a chargeback.
+	 *   - stl_e2e0001: paid out; two payments on separate pages and a report
+	 *     summary that adds up to the payout.
+	 *
+	 * The list returns the first two, then stl_e2e0001 on a second page. The
+	 * `fair_e2e_settlements` option steers it: `fail_match` makes any request
+	 * whose path and query contain that text fail like an outage, and
+	 * `variant: changed` reports a different amount for stl_e2e0001's second
+	 * payment. Every request is counted in `requests`.
+	 *
+	 * @param string $path  URL path component.
+	 * @param array  $query Decoded query string.
+	 * @return array
+	 * @throws \RuntimeException When a spec armed a failure for this request.
+	 */
+	private function settlement_response( string $path, array $query ): array {
+		$state             = (array) \get_option( 'fair_e2e_settlements', array() );
+		$state['requests'] = (int) ( $state['requests'] ?? 0 ) + 1;
+		\update_option( 'fair_e2e_settlements', $state, false );
+
+		$from       = isset( $query['from'] ) ? (string) $query['from'] : '';
+		$fail_match = (string) ( $state['fail_match'] ?? '' );
+		if ( '' !== $fail_match && false !== \strpos( $path . '?from=' . $from, $fail_match ) ) {
+			throw new \RuntimeException( 'E2E: simulated settlement provider outage.' );
+		}
+
+		$changed  = 'changed' === ( $state['variant'] ?? '' );
+		$money    = static function ( string $value, string $currency = 'EUR' ): array {
+			return array(
+				'value'    => $value,
+				'currency' => $currency,
+			);
+		};
+		$list     = static function ( string $key, array $items, ?string $next = null ): array {
+			return array(
+				'count'     => \count( $items ),
+				'_embedded' => array( $key => $items ),
+				'_links'    => array(
+					'previous' => null,
+					'next'     => null === $next ? null : array( 'href' => 'https://api.mollie.com/v2/' . $key . '?from=' . $next ),
+				),
+			);
+		};
+		$movement = static function ( string $kind, string $id, string $amount, string $settled, array $extra = array() ) use ( $money ): array {
+			return \array_merge(
+				array(
+					'resource'         => $kind,
+					'id'               => $id,
+					'mode'             => 'live',
+					'status'           => 'paid',
+					'description'      => 'E2E settlement ' . $kind,
+					'createdAt'        => '2026-05-01T10:00:00+00:00',
+					'amount'           => $money( $amount ),
+					'settlementAmount' => $money( $settled ),
+					'_links'           => new \stdClass(),
+				),
+				$extra
+			);
+		};
+
+		$settlements = array(
+			'stl_e2e0003' => array(
+				'resource'  => 'settlement',
+				'id'        => 'stl_e2e0003',
+				'reference' => null,
+				'createdAt' => '2026-05-20T08:00:00+00:00',
+				'settledAt' => null,
+				'status'    => 'open',
+				'amount'    => $money( '12.00' ),
+				'periods'   => new \stdClass(),
+				'_links'    => new \stdClass(),
+			),
+			'stl_e2e0002' => array(
+				'resource'  => 'settlement',
+				'id'        => 'stl_e2e0002',
+				'reference' => 'E2E.2605.02',
+				'createdAt' => '2026-05-10T08:00:00+00:00',
+				'settledAt' => '2026-05-11T08:00:00+00:00',
+				'status'    => 'paidout',
+				'amount'    => $money( '50.00' ),
+				'periods'   => new \stdClass(),
+				'_links'    => new \stdClass(),
+			),
+			'stl_e2e0001' => array(
+				'resource'  => 'settlement',
+				'id'        => 'stl_e2e0001',
+				'reference' => 'E2E.2605.01',
+				'createdAt' => '2026-05-01T08:00:00+00:00',
+				'settledAt' => '2026-05-02T08:00:00+00:00',
+				'status'    => 'paidout',
+				'amount'    => $money( $changed ? '37.55' : '38.55' ),
+				'balanceId' => 'bal_e2e0001',
+				'invoiceId' => 'inv_e2e0001',
+				'periods'   => array(
+					'2026' => array(
+						'05' => array(
+							'revenue' => array(
+								array(
+									'description' => 'iDEAL',
+									'method'      => 'ideal',
+									'count'       => 2,
+									'amountNet'   => $money( $changed ? '39.00' : '40.00' ),
+									'amountVat'   => null,
+									'amountGross' => $money( $changed ? '39.00' : '40.00' ),
+								),
+							),
+							'costs'   => array(
+								array(
+									'description' => 'iDEAL',
+									'method'      => 'ideal',
+									'count'       => 2,
+									'amountNet'   => $money( '1.20' ),
+									'amountVat'   => $money( '0.25' ),
+									'amountGross' => $money( '1.45' ),
+								),
+							),
+						),
+					),
+				),
+				'_links'    => new \stdClass(),
+			),
+		);
+
+		if ( \preg_match( '#/settlements/?$#', $path ) ) {
+			return 'stl_e2e0001' === $from
+				? $list( 'settlements', array( $settlements['stl_e2e0001'] ) )
+				: $list( 'settlements', array( $settlements['stl_e2e0003'], $settlements['stl_e2e0002'] ), 'stl_e2e0001' );
+		}
+
+		if ( \preg_match( '#/settlements/([^/]+)$#', $path, $m ) ) {
+			if ( ! isset( $settlements[ $m[1] ] ) ) {
+				throw new \RuntimeException( 'E2E: unknown settlement.' );
+			}
+			return $settlements[ $m[1] ];
+		}
+
+		if ( ! \preg_match( '#/settlements/([^/]+)/(payments|captures|refunds|chargebacks)$#', $path, $m ) ) {
+			throw new \RuntimeException( 'E2E: unsupported settlement request.' );
+		}
+
+		$contents = array(
+			'stl_e2e0001' => array(
+				'payments' => 'tr_e2estl01b' === $from
+					? $list( 'payments', array( $movement( 'payment', 'tr_e2estl01b', '15.00', $changed ? '14.00' : '15.00' ) ) )
+					: $list( 'payments', array( $movement( 'payment', 'tr_e2estl01a', '25.00', '25.00' ) ), 'tr_e2estl01b' ),
+			),
+			'stl_e2e0002' => array(
+				'payments'    => $list(
+					'payments',
+					array(
+						$movement( 'payment', 'tr_e2estl02a', '30.00', '30.00' ),
+						$movement( 'payment', 'tr_e2estl02b', '40.00', '36.80', array( 'amount' => $money( '40.00', 'USD' ) ) ),
+					)
+				),
+				'captures'    => $list( 'captures', array( $movement( 'capture', 'cpt_e2estl02a', '30.00', '30.00', array( 'paymentId' => 'tr_e2estl02a' ) ) ) ),
+				'refunds'     => $list( 'refunds', array( $movement( 'refund', 're_e2estl02a', '10.00', '-10.00', array( 'paymentId' => 'tr_e2estl02b' ) ) ) ),
+				'chargebacks' => $list( 'chargebacks', array( $movement( 'chargeback', 'chb_e2estl02a', '6.80', '-6.80', array( 'paymentId' => 'tr_e2estl02b' ) ) ) ),
+			),
+		);
+
+		return $contents[ $m[1] ][ $m[2] ] ?? $list( $m[2], array() );
 	}
 
 	/**

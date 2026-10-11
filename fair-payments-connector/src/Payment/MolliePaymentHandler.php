@@ -46,6 +46,16 @@ class MolliePaymentHandler {
 	}
 
 	/**
+	 * The authenticated Mollie client, for sibling adapters that read other
+	 * resources through the same connection.
+	 *
+	 * @return MollieApiClient
+	 */
+	public function client() {
+		return $this->mollie;
+	}
+
+	/**
 	 * Set OAuth access token
 	 *
 	 * Sets the Mollie API client to use OAuth access token authentication.
