@@ -22,6 +22,7 @@ import {
 	ticketStatusLabel,
 } from './ticketLabels.js';
 import AssignTicketModal, { personLabel } from './AssignTicketModal.js';
+import RemoveParticipantModal from './RemoveParticipantModal.js';
 import {
 	MoveTicketModal,
 	CancelTicketModal,
@@ -244,6 +245,9 @@ export default function EventAudience( {
 	const [ movingParticipant, setMovingParticipant ] = useState( null );
 	const [ moveTargetId, setMoveTargetId ] = useState( '' );
 	const [ isMoving, setIsMoving ] = useState( false );
+
+	// Remove-participant modal state: the participant row, or null.
+	const [ removingParticipant, setRemovingParticipant ] = useState( null );
 
 	const [ toast, setToast ] = useState( null );
 	const toastTimerRef = useRef( null );
@@ -513,6 +517,14 @@ export default function EventAudience( {
 			),
 		[ siblings, eventDateId ]
 	);
+
+	// This date, as the removal popup names it.
+	const currentDateLabel = useMemo( () => {
+		const current = siblings.find(
+			( s ) => Number( s.id ) === Number( eventDateId )
+		);
+		return current?.start_datetime ? occurrenceLabel( current ) : '';
+	}, [ siblings, eventDateId ] );
 
 	const ticketMoveTargets = useMemo(
 		() =>
@@ -1071,6 +1083,19 @@ export default function EventAudience( {
 		}
 	};
 
+	const handleParticipantRemoved = ( removed ) => {
+		setRemovingParticipant( null );
+		loadParticipants();
+		showToast(
+			sprintf(
+				/* translators: %s: participant name */
+				__( '%s was removed from this date.', 'fair-audience' ),
+				( removed.participant_name || '' ).trim() ||
+					__( 'The participant', 'fair-audience' )
+			)
+		);
+	};
+
 	const handlePrintList = () => {
 		const escape = ( str ) =>
 			String( str ?? '' ).replace(
@@ -1520,6 +1545,13 @@ export default function EventAudience( {
 						{ __( 'Move', 'fair-audience' ) }
 					</Button>
 				) }
+				<Button
+					variant="link"
+					isDestructive
+					onClick={ () => setRemovingParticipant( p ) }
+				>
+					{ __( 'Remove participant', 'fair-audience' ) }
+				</Button>
 			</HStack>
 		);
 
@@ -3250,6 +3282,18 @@ export default function EventAudience( {
 					position={ deletingTicket.position }
 					onClose={ () => setDeletingTicket( null ) }
 					onDeleted={ handleTicketDeleted }
+				/>
+			) }
+
+			{ removingParticipant && (
+				<RemoveParticipantModal
+					eventDateId={ eventDateId }
+					participant={ removingParticipant }
+					eventTitle={ eventTitle }
+					dateLabel={ currentDateLabel }
+					onClose={ () => setRemovingParticipant( null ) }
+					onRemoved={ handleParticipantRemoved }
+					onRefused={ loadParticipants }
 				/>
 			) }
 
