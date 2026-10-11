@@ -229,10 +229,12 @@ $has_instance_picker = $has_multiple_instances_type && ! empty( $occurrences_for
 $price_by_type_id   = array();
 $active_sale_period = null;
 $sale_period_count  = 0;
+$sales_closed       = false;
 if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
 	$resolved_prices    = \FairEvents\Services\TicketPricing::resolve_unit_prices_for_event_date( $pricing_event_date_id );
 	$active_sale_period = $resolved_prices['active_period'];
 	$sale_period_count  = $resolved_prices['sale_period_count'];
+	$sales_closed       = ! empty( $resolved_prices['sales_closed'] );
 	$price_by_type_id   = $resolved_prices['price_by_type_id'];
 }
 
@@ -242,8 +244,8 @@ if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
 // #1624). When there's no active sale period, nothing is purchasable, so
 // every type is dropped regardless. When every configured type is dropped
 // this way, $ticket_types_hidden_by_sale_period feeds $all_purchases_blocked
-// below so the form shows the same "temporarily unavailable" treatment
-// instead of an empty ticket-type fieldset.
+// below so the form shows a blocked-purchase notice (closed sales, or
+// "temporarily unavailable") instead of an empty ticket-type fieldset.
 $ticket_types_before_pricing_filter = $ticket_types;
 if ( class_exists( \FairEvents\Services\TicketPricing::class ) ) {
 	$ticket_types = $active_sale_period
@@ -402,6 +404,12 @@ $all_purchases_blocked = $ticket_types_hidden_by_sale_period
 		&& $has_paid_type
 		&& ! $has_free_type );
 
+// Why purchases are blocked decides the notice: a confirmed end of online
+// sales (TicketAvailability's decision, never a date comparison here) is
+// explained as such, while payment problems, future periods, gaps, and
+// unresolved configuration keep the "temporarily unavailable" wording.
+$online_sales_closed = $sales_closed && $ticket_types_hidden_by_sale_period;
+
 // Generate unique form ID.
 $form_id = 'fair-events-get-tickets-' . wp_unique_id();
 
@@ -543,7 +551,11 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 				);
 				?>
 			</p>
-			<?php if ( $all_purchases_blocked ) : ?>
+			<?php if ( $online_sales_closed ) : ?>
+				<div class="message-container message-neutral" role="status">
+					<?php esc_html_e( 'Online ticket sales for this event have closed.', 'fair-events' ); ?>
+				</div>
+			<?php elseif ( $all_purchases_blocked ) : ?>
 				<div class="message-container message-error" role="alert">
 					<?php esc_html_e( 'Ticket sales are temporarily unavailable. Please check back later.', 'fair-events' ); ?>
 				</div>
@@ -560,6 +572,10 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 			<div class="fair-events-get-tickets-callback-message message-container" style="display: none;"></div>
 		</div>
 	<?php endif; ?>
+<?php elseif ( $online_sales_closed ) : ?>
+	<div class="message-container message-neutral" role="status">
+		<?php esc_html_e( 'Online ticket sales for this event have closed.', 'fair-events' ); ?>
+	</div>
 <?php elseif ( $all_purchases_blocked ) : ?>
 	<div class="message-container message-error" role="alert">
 		<?php esc_html_e( 'Ticket sales are temporarily unavailable. Please check back later.', 'fair-events' ); ?>

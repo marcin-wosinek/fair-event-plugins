@@ -168,6 +168,46 @@ class TicketAvailability {
 	}
 
 	/**
+	 * Decide whether online sales have definitively ended: every configured
+	 * period has a known end at or before now, so nothing can go on sale
+	 * again without an organizer changing the configuration. Pure, DB-free.
+	 *
+	 * An inactive period alone never means closed. This stays false while a
+	 * period is active (including the continues_pricing_period fallback) or
+	 * still to come, in a gap before a later period, with no periods
+	 * configured, and whenever a boundary is unresolved — a missing end, or
+	 * a missing start anywhere but on the first period, whose start is only
+	 * left unresolved once its own end has passed (see resolve_periods()).
+	 * Callers keep their "temporarily unavailable" treatment for all of
+	 * those.
+	 *
+	 * @param object[] $periods   Sale periods in sort order, post resolve_periods().
+	 * @param string   $now       Current site datetime ('Y-m-d H:i:s'), comparable lexically.
+	 * @param bool     $continues Whether the continues_pricing_period fallback is enabled.
+	 * @return bool Whether online sales have closed for good.
+	 */
+	public static function has_sales_closed( $periods, $now, $continues = false ) {
+		if ( empty( $periods )
+			|| self::pick_active_period( $periods, $now, $continues )
+			|| self::pick_upcoming_period( $periods, $now )
+		) {
+			return false;
+		}
+
+		foreach ( array_values( $periods ) as $index => $period ) {
+			// Half-open interval: sale_end itself is the first moment off sale.
+			if ( empty( $period->sale_end ) || $period->sale_end > $now ) {
+				return false;
+			}
+			if ( empty( $period->sale_start ) && 0 !== $index ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Resolve an active/upcoming/count classification from already-fetched
 	 * periods. Pure — split out from resolve_sale_period_context() for unit
 	 * testing without a database.
@@ -176,7 +216,7 @@ class TicketAvailability {
 	 * @param string      $now         Current site datetime.
 	 * @param string|null $default_end Lazy default sale end.
 	 * @param bool        $continues   Whether the continues_pricing_period fallback is enabled.
-	 * @return array{active_period: object|null, upcoming_period: object|null, sale_period_count: int}
+	 * @return array{active_period: object|null, upcoming_period: object|null, sale_period_count: int, sales_closed: bool}
 	 */
 	public static function resolve_period_context_from_periods( array $periods, $now, $default_end, $continues = false ) {
 		$period_count     = count( $periods );
@@ -186,12 +226,13 @@ class TicketAvailability {
 			'active_period'     => self::pick_active_period( $resolved_periods, $now, $continues ),
 			'upcoming_period'   => self::pick_upcoming_period( $resolved_periods, $now ),
 			'sale_period_count' => $period_count,
+			'sales_closed'      => self::has_sales_closed( $resolved_periods, $now, $continues ),
 		);
 	}
 
 	/**
-	 * Resolve the active/upcoming/count classification for an event date
-	 * from the database.
+	 * Resolve the active/upcoming/count/closed classification for an event
+	 * date from the database.
 	 *
 	 * Periods use a half-open day range [sale_start, sale_end) in the site
 	 * timezone: sale_start is the first day on sale (00:00:00 site time) and
@@ -206,7 +247,7 @@ class TicketAvailability {
 	 *
 	 * @param int  $event_date_id Event date ID.
 	 * @param bool $continues     Whether the continues_pricing_period fallback is enabled.
-	 * @return array{active_period: TicketSalePeriod|null, upcoming_period: TicketSalePeriod|null, sale_period_count: int}
+	 * @return array{active_period: TicketSalePeriod|null, upcoming_period: TicketSalePeriod|null, sale_period_count: int, sales_closed: bool}
 	 */
 	public static function resolve_sale_period_context( $event_date_id, $continues = false ) {
 		$now          = current_time( 'mysql' );

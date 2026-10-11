@@ -329,7 +329,7 @@ class TicketAvailabilityTest extends TestCase {
 	}
 
 	/**
-	 * pick_active_period() never selects a period with an unresolved
+	 * Pick_active_period() never selects a period with an unresolved
 	 * boundary — the sentinel-free unresolved state must stay inert even if
 	 * a caller forgets to filter it out first.
 	 */
@@ -351,11 +351,169 @@ class TicketAvailabilityTest extends TestCase {
 	}
 
 	/**
-	 * pick_upcoming_period() never selects a period with an unresolved start.
+	 * Pick_upcoming_period() never selects a period with an unresolved start.
 	 */
 	public function test_pick_upcoming_period_skips_unresolved_start() {
 		$period = $this->period( null, '2026-06-01 00:00:00' );
 		$this->assertNull( TicketAvailability::pick_upcoming_period( array( $period ), '2026-01-01 00:00:00' ) );
+	}
+
+	/**
+	 * Resolve the closed-sales classification the way every consumer gets it:
+	 * through the period context, from unresolved periods.
+	 *
+	 * @param object[]    $periods     Configured sale periods.
+	 * @param string      $now         Current site datetime.
+	 * @param string|null $default_end Lazy default sale end.
+	 * @param bool        $continues   Whether the continues fallback is enabled.
+	 * @return bool Whether online sales are reported as closed.
+	 */
+	private function sales_closed( array $periods, $now, $default_end = null, $continues = false ) {
+		return TicketAvailability::resolve_period_context_from_periods( $periods, $now, $default_end, $continues )['sales_closed'];
+	}
+
+	/**
+	 * Once the only period's explicit end has passed, sales are closed.
+	 */
+	public function test_sales_closed_after_explicit_end() {
+		$period = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$this->assertTrue( $this->sales_closed( array( $period ), '2026-03-01 00:00:00' ) );
+	}
+
+	/**
+	 * The closing boundary is exact: still on sale the second before
+	 * sale_end, closed at sale_end itself (half-open interval).
+	 */
+	public function test_sales_closed_at_exact_end_boundary() {
+		$period = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$this->assertFalse( $this->sales_closed( array( $period ), '2026-01-31 23:59:59' ) );
+		$this->assertTrue( $this->sales_closed( array( $period ), '2026-02-01 00:00:00' ) );
+	}
+
+	/**
+	 * A last period with no stored end closes at the inferred default end —
+	 * the day after the last occurrence — and not before.
+	 */
+	public function test_sales_closed_at_inferred_end() {
+		$period      = $this->period( '2026-01-01 00:00:00', null );
+		$default_end = TicketAvailability::compute_default_sale_end( '2026-06-15 18:30:00' );
+
+		$this->assertFalse( $this->sales_closed( array( $period ), '2026-06-15 23:59:59', $default_end ) );
+		$this->assertTrue( $this->sales_closed( array( $period ), '2026-06-16 00:00:00', $default_end ) );
+	}
+
+	/**
+	 * A fully unset window (inferred start and end) closes at the inferred
+	 * end too: the first period's start stops resolving only because its own
+	 * end has passed, which is closure rather than missing configuration.
+	 */
+	public function test_sales_closed_with_inferred_start_and_end() {
+		$period      = $this->period( null, null );
+		$default_end = TicketAvailability::compute_default_sale_end( '2026-06-15 18:30:00' );
+
+		$this->assertFalse( $this->sales_closed( array( $period ), '2026-06-15 12:00:00', $default_end ) );
+		$this->assertTrue( $this->sales_closed( array( $period ), '2026-06-16 00:00:00', $default_end ) );
+	}
+
+	/**
+	 * The inferred end is a site-local midnight: in a non-UTC site timezone
+	 * sales close at local midnight after the last occurrence, compared
+	 * against site-local "now", with no UTC shift either way.
+	 */
+	public function test_sales_closed_uses_site_local_time_in_non_utc_timezone() {
+		$GLOBALS['_fair_test_timezone'] = 'Pacific/Auckland';
+
+		try {
+			$period      = $this->period( '2026-01-01 00:00:00', null );
+			$default_end = TicketAvailability::compute_default_sale_end( '2026-06-15 23:30:00' );
+
+			$this->assertSame( '2026-06-16 00:00:00', $default_end );
+			// 23:59:59 on the 15th in Auckland is still the 15th in UTC.
+			$this->assertFalse( $this->sales_closed( array( $period ), '2026-06-15 23:59:59', $default_end ) );
+			// Local midnight on the 16th is only midday on the 15th in UTC.
+			$this->assertTrue( $this->sales_closed( array( $period ), '2026-06-16 00:00:00', $default_end ) );
+		} finally {
+			unset( $GLOBALS['_fair_test_timezone'] );
+		}
+	}
+
+	/**
+	 * Every period of a sequence must have ended before sales are closed.
+	 */
+	public function test_sales_closed_after_every_period_ended() {
+		$first = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$last  = $this->period( '2026-02-01 00:00:00', '2026-03-01 00:00:00' );
+
+		$this->assertFalse( $this->sales_closed( array( $first, $last ), '2026-02-15 00:00:00' ) );
+		$this->assertTrue( $this->sales_closed( array( $first, $last ), '2026-03-01 00:00:00' ) );
+	}
+
+	/**
+	 * A period that hasn't started yet is not closed sales.
+	 */
+	public function test_sales_not_closed_before_future_period() {
+		$period = $this->period( '2026-06-01 00:00:00', '2026-07-01 00:00:00' );
+		$this->assertFalse( $this->sales_closed( array( $period ), '2026-01-01 00:00:00' ) );
+	}
+
+	/**
+	 * A gap between an ended period and a later one is not closed sales.
+	 */
+	public function test_sales_not_closed_in_gap_between_periods() {
+		$earlier = $this->period( '2026-01-01 00:00:00', '2026-01-15 00:00:00' );
+		$later   = $this->period( '2026-02-01 00:00:00', '2026-02-15 00:00:00' );
+		$this->assertFalse( $this->sales_closed( array( $earlier, $later ), '2026-01-20 00:00:00' ) );
+	}
+
+	/**
+	 * No configured periods is missing configuration, not closed sales.
+	 */
+	public function test_sales_not_closed_without_periods() {
+		$this->assertFalse( $this->sales_closed( array(), '2026-01-20 00:00:00' ) );
+	}
+
+	/**
+	 * An end that can't be resolved (nothing stored, no occurrence to infer
+	 * from) is never reported as closed.
+	 */
+	public function test_sales_not_closed_with_unresolved_end() {
+		$period = $this->period( '2026-01-01 00:00:00', null );
+		$this->assertFalse( $this->sales_closed( array( $period ), '2030-01-01 00:00:00', null ) );
+	}
+
+	/**
+	 * An interior period missing its end leaves the sequence unresolved even
+	 * after every known end has passed.
+	 */
+	public function test_sales_not_closed_with_unresolved_interior_end() {
+		$first    = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$interior = $this->period( '2026-02-01 00:00:00', null );
+		$last     = $this->period( '2026-03-01 00:00:00', '2026-04-01 00:00:00' );
+
+		$this->assertFalse( $this->sales_closed( array( $first, $interior, $last ), '2026-05-01 00:00:00', '2026-04-01 00:00:00' ) );
+	}
+
+	/**
+	 * An interior period missing its start is unresolved configuration, not
+	 * closed sales — only the first period's start may be inferred.
+	 */
+	public function test_sales_not_closed_with_unresolved_interior_start() {
+		$first    = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+		$interior = $this->period( '', '2026-03-01 00:00:00' );
+		$last     = $this->period( '2026-03-01 00:00:00', '2026-04-01 00:00:00' );
+
+		$this->assertFalse( $this->sales_closed( array( $first, $interior, $last ), '2026-05-01 00:00:00' ) );
+	}
+
+	/**
+	 * While the continues_pricing_period fallback keeps the last period on
+	 * sale past its end, sales are not closed.
+	 */
+	public function test_sales_not_closed_while_continues_fallback_is_active() {
+		$period = $this->period( '2026-01-01 00:00:00', '2026-02-01 00:00:00' );
+
+		$this->assertFalse( $this->sales_closed( array( $period ), '2026-03-01 00:00:00', null, true ) );
+		$this->assertTrue( $this->sales_closed( array( $period ), '2026-03-01 00:00:00', null, false ) );
 	}
 
 	/**
