@@ -43,8 +43,8 @@ class PendingSubscriptionTimeoutHooks {
 	/**
 	 * Register the shared 5-minute cron schedule.
 	 *
-	 * Mirrors WeeklyDigestHooks::add_cron_schedule so both coexist; the
-	 * `isset()` guard makes adding the same key twice a no-op.
+	 * Other plugins register the same key; the `isset()` guard makes adding
+	 * it twice a no-op.
 	 *
 	 * @param array $schedules Existing schedules.
 	 * @return array

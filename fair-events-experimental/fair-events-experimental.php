@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fair Events Experimental
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: Event sources, group pricing, schedule editing, duplication, merging, comparisons, Telegram summaries and optional Meta conversions for Fair Events.
+ * Description: Event sources, group pricing, schedule editing, duplication, merging, comparisons and optional Meta conversions for Fair Events.
  * Version: 1.11.0
  * Requires at least: 7.0
  * Requires PHP: 8.0
@@ -23,13 +23,19 @@ defined( 'ABSPATH' ) || die;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Weekly Telegram notifications moved to Fair Events (Event notifications).
+// The constant tells FairEvents\Notifications\Ownership to take them over;
+// this plugin no longer has a sender of its own.
+define( 'FAIR_EVENTS_EXPERIMENTAL_NOTIFICATIONS_HANDOFF', true );
+
 register_deactivation_hook(
 	__FILE__,
 	static function () {
 		wp_clear_scheduled_hook( \FairEventsExperimental\Meta\Conversions::DELIVERY_HOOK );
 		wp_clear_scheduled_hook( \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK );
-		wp_unschedule_hook( \FairEventsExperimental\WeeklyNotifications\Dispatcher::HOOK );
-		delete_option( \FairEventsExperimental\WeeklyNotifications\Dispatcher::NEXT_RUN_OPTION );
+		// Cron event of the former weekly notification sender.
+		wp_unschedule_hook( 'fair_events_experimental_weekly_notification' );
+		delete_option( 'fair_events_experimental_weekly_notification_next_run' );
 	}
 );
 

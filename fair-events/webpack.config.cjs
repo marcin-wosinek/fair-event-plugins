@@ -98,6 +98,10 @@ const scriptConfig = {
       process.cwd(),
       "src/Admin/venues/index.js",
     ),
+    "admin/event-notifications/index": path.resolve(
+      process.cwd(),
+      "src/Admin/event-notifications/index.js",
+    ),
   },
   plugins: [
     ...defaultConfig.plugins,

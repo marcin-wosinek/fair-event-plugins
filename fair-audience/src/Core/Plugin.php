@@ -89,8 +89,9 @@ class Plugin {
 		// Initialize payment hooks (for fair-payments-connector webhook integration).
 		\FairAudience\Hooks\PaymentHooks::init();
 
-		// Initialize the weekly events digest cron.
-		\FairAudience\Hooks\WeeklyDigestHooks::init();
+		// The weekly events email is scheduled by Fair Events; only retire
+		// this plugin's former cron event.
+		\FairAudience\Services\WeeklyDigestMailer::init();
 
 		// Initialize the pending-subscription timeout sweep cron.
 		\FairAudience\Hooks\PendingSubscriptionTimeoutHooks::init();
@@ -170,9 +171,6 @@ class Plugin {
 
 		$event_interest_controller = new \FairAudience\API\EventInterestController();
 		$event_interest_controller->register_routes();
-
-		$weekly_digest_controller = new \FairAudience\API\WeeklyDigestController();
-		$weekly_digest_controller->register_routes();
 	}
 
 	/**

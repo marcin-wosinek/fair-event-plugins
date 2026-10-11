@@ -138,6 +138,16 @@ class AdminPages {
 			array( $this, 'render_venues_page' )
 		);
 
+		// Event notifications page: every weekly notification channel.
+		$this->page_hooks['fair-events-event-notifications'] = add_submenu_page(
+			$parent,
+			__( 'Event notifications', 'fair-events' ),
+			__( 'Event notifications', 'fair-events' ),
+			'manage_options',
+			'fair-events-event-notifications',
+			array( $this, 'render_event_notifications_page' )
+		);
+
 		// Settings page.
 		$this->page_hooks['fair-events-settings'] = add_submenu_page(
 			$parent,
@@ -587,6 +597,46 @@ class AdminPages {
 			return;
 		}
 
+		// Event notifications page.
+		if ( 'fair-events-event-notifications' === $slug ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/event-notifications/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-event-notifications',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-notifications/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
+			);
+
+			wp_enqueue_style(
+				'fair-events-event-notifications',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/event-notifications/style-index.css',
+				array( 'wp-components' ),
+				$asset_file['version']
+			);
+
+			wp_localize_script(
+				'fair-events-event-notifications',
+				'fairEventsEventNotificationsData',
+				array(
+					// Event sources are created on a Fair Events Experimental
+					// page; null while it is not there.
+					'sourcesUrl' => menu_page_url( 'fair-events-sources', false ) ? admin_url( 'admin.php?page=fair-events-sources' ) : null,
+				)
+			);
+
+			wp_set_script_translations(
+				'fair-events-event-notifications',
+				'fair-events',
+				\FairEvents\Core\Features::script_translations_path()
+			);
+			return;
+		}
+
 		// Settings page (the only remaining slug at this point).
 		if ( 'fair-events-settings' !== $slug ) {
 			return;
@@ -643,6 +693,17 @@ class AdminPages {
 	public function render_settings_page() {
 		?>
 		<div id="fair-events-settings-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render the event notifications page
+	 *
+	 * @return void
+	 */
+	public function render_event_notifications_page() {
+		?>
+		<div id="fair-events-event-notifications-root"></div>
 		<?php
 	}
 

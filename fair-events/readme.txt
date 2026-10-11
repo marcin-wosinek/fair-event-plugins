@@ -25,6 +25,7 @@ Fair Events provides event publishing, calendars, ticket configuration and signu
 * **Ticket Configuration and Signup:** Ticket types, sale periods, scheduled prices, pay-what-you-can pricing, ticket and activity capacity, and activity options. Free signup is included; paid checkout requires Fair Payments Connector
 * **Signup Administration:** Manage signups, edit tickets and answers, allocate activities, and export signup data
 * **Venues and Event Copies:** Reuse venues with addresses, coordinates and map links; copy events with adjusted dates and ticket configuration
+* **Weekly Event Notifications:** Post the week's events to Telegram chats and channels and, with Fair Audience, email them to your subscribers — each channel on its own schedule, with previews, test sends and delivery status
 * **Suite Integrations:** Event statistics require Fair Audience; event budgets require Fair Finance; multilingual event links and activity options integrate with Polylang
 * **Responsive Calendar:** Monthly grid with category filtering that collapses gracefully on mobile
 * **Add to Calendar & iCal:** Visitors save events to Google, Apple, or Outlook; your site exposes an iCal feed
@@ -54,6 +55,31 @@ The legacy Get Tickets block remains compatible with saved content and renders t
 * Any site builder who needs events without a subscription
 
 Fair Events works on its own and grows with the rest of the suite: add [Fair Payments Connector](https://wordpress.org/plugins/fair-payments-connector/) for online payments through Mollie, Fair Audience for attendee management and mailing subscriptions, Fair Audience Experimental for scheduled event mailings, Fair Finance for event budgets, and [Fair Timetable](https://wordpress.org/plugins/fair-timetable/) for multi-track schedules.
+
+= Event notifications =
+
+Fair Events → Event notifications is the one place to manage weekly event notifications. Each channel has its own on/off switch, event source, weekday, time, choice of week, save button, preview, test and delivery status, so one channel never changes or blocks another.
+
+* **Telegram** posts the week's events to the chats and channels you list. It needs only Fair Events and a bot token. A test posts to the saved chats.
+* **Bulk email** sends the week's events to your subscribers. It needs Fair Audience, which decides who receives it (participants who agreed to marketing emails and did not opt out of the weekly summary), adds each recipient's unsubscribe link and sends the email. A test goes to your own address only.
+
+A notification lists the events of an event source. Event sources are created with Fair Events Experimental; existing sources keep working without it.
+
+**Telegram setup.** Requires WordPress 7.0 or newer for the Connectors screen.
+
+1. Create a bot with [@BotFather](https://core.telegram.org/bots/features#botfather) and copy its bot token.
+2. Open Settings → Connectors, choose "Set up" on the Telegram connector, paste the token as the API key and save. A value that is not a bot token is refused and the saved token stays in place.
+3. Add the bot to each chat or channel it should post to, with permission to post.
+4. Open Fair Events → Event notifications. Under Telegram choose the event source, heading page, schedule and the chats or channels, then save.
+5. Choose "Send test to the saved chats". Connectors only stores the token; the test is what confirms that Telegram accepts it and that the bot can post to each chat.
+
+The token can also be supplied outside the database, as an environment variable or a PHP constant, both named `FAIR_EVENTS_EXPERIMENTAL_TELEGRAM_BOT_TOKEN` (the name is kept from Fair Events Experimental so existing configuration keeps working). The environment variable is used first, then the constant, then the token saved in Connectors. The page says which one is in use and never shows the token.
+
+**When a plugin is inactive.** Deactivating Fair Audience pauses the bulk email only: its settings are kept, Telegram keeps running, and sending resumes at the next scheduled time after Fair Audience is active again. Deactivating Fair Events pauses every channel until it is active again. A send that was missed in the meantime is not sent later.
+
+**Upgrading from Fair Events Experimental and Fair Audience.** Telegram summaries used to be set up in Fair Events → Settings → Experimental and the weekly email in Fair Audience → Weekly Digest. Fair Events takes both over the first time it runs next to versions of those plugins that hand them over (or while they are inactive): the settings, schedules, event sources, email wording, chats, the bot token and the delivery history are kept, each channel with its own schedule. Nothing is sent during the takeover and no channel is turned on by it; a channel that was not being sent arrives turned off. The former settings screens now lead to Event notifications. Update all three plugins together. While an older Fair Events Experimental or Fair Audience is still active, its channel keeps running from its old screen and Event notifications asks you to update it; the other channel is not affected. With an updated companion and an older Fair Events, that channel is paused until Fair Events is updated.
+
+When Telegram posting is turned on, the plugin sends the week's event summary to Telegram (Telegram Messenger Inc.) through the Telegram Bot API at `api.telegram.org`, at the day and time the administrator schedules, and whenever an administrator requests a test. Each request carries the administrator-supplied bot token and chat or channel identifier, and the summary text: the title and link of the public page the administrator selects, the date range, and each public event's weekday, start time, title and link. No visitor or attendee data is sent. Telegram's [Terms of Service](https://telegram.org/tos), [Bot Platform terms](https://telegram.org/tos/bot-developers) and [Privacy Policy](https://telegram.org/privacy) apply.
 
 == Installation ==
 

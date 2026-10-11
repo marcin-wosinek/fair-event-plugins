@@ -41,6 +41,11 @@ namespace FairEvents {
 	define( 'FAIR_EVENTS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 	define( 'FAIR_EVENTS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+	// Weekly event notifications (Telegram, bulk email) are run by this plugin.
+	// The plugins that used to run them yield when they see this; see
+	// Notifications\Ownership.
+	define( 'FAIR_EVENTS_OWNS_EVENT_NOTIFICATIONS', true );
+
 	require_once __DIR__ . '/vendor/autoload.php';
 
 	use FairEvents\Core\Plugin;
@@ -71,6 +76,8 @@ namespace FairEvents {
 	function fair_events_deactivate() {
 		// Clear the permalinks to remove our post type's rules from the database.
 		flush_rewrite_rules();
+		// Notification settings and history stay; nothing is sent while inactive.
+		\FairEvents\Notifications\Notifications::deactivate();
 	}
 	register_deactivation_hook( __FILE__, __NAMESPACE__ . '\fair_events_deactivate' );
 }

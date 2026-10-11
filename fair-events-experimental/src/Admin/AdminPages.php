@@ -362,7 +362,12 @@ class AdminPages {
 			'fair-events-experimental-settings',
 			'fairEventsExperimentalSettingsData',
 			array(
-				'features' => \FairEventsExperimental\Core\Features::all(),
+				'features'              => \FairEventsExperimental\Core\Features::all(),
+				// Weekly notifications moved to Fair Events; null while the
+				// active Fair Events is too old to have the page.
+				'eventNotificationsUrl' => defined( 'FAIR_EVENTS_OWNS_EVENT_NOTIFICATIONS' )
+					? admin_url( 'admin.php?page=fair-events-event-notifications' )
+					: null,
 			)
 		);
 
