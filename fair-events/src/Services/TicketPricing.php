@@ -98,9 +98,12 @@ class TicketPricing {
 	 * @return array{
 	 *     active_period: TicketSalePeriod|null,
 	 *     sale_period_count: int,
+	 *     sales_closed: bool,
 	 *     price_by_type_id: float[]
 	 * } `price_by_type_id` covers only types with an explicit price row for
 	 *   the active period — the sole purchasability signal (issue #1624).
+	 *   `sales_closed` is TicketAvailability's confirmed-closure decision,
+	 *   passed through so a display never re-derives it from dates.
 	 */
 	public static function resolve_unit_prices_for_event_date( $event_date_id ) {
 		$period_context = TicketAvailability::resolve_sale_period_context( $event_date_id );
@@ -109,6 +112,7 @@ class TicketPricing {
 			return array(
 				'active_period'     => null,
 				'sale_period_count' => $period_context['sale_period_count'],
+				'sales_closed'      => $period_context['sales_closed'],
 				'price_by_type_id'  => array(),
 			);
 		}
@@ -123,6 +127,7 @@ class TicketPricing {
 		return array(
 			'active_period'     => $active_period,
 			'sale_period_count' => $period_context['sale_period_count'],
+			'sales_closed'      => $period_context['sales_closed'],
 			'price_by_type_id'  => $price_by_type_id,
 		);
 	}

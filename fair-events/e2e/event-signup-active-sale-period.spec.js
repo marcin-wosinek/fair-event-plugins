@@ -14,6 +14,10 @@ const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
  *   - only one type priced for the active period → only that one shown.
  *   - no sale period active at all → the form is hidden and treated as
  *     temporarily unavailable, not shown with unpriced/selectable types.
+ *
+ * And #1824: once every sale period has ended, the block explains that
+ * online sales have closed instead of asking the visitor to check back —
+ * while a period that hasn't opened yet keeps the temporary wording.
  */
 
 async function apiFetch( page, options ) {
@@ -311,6 +315,112 @@ test.describe( 'Event Signup — hide ticket types outside their active sale per
 					'.message-container.message-error'
 				)
 			).toContainText( 'Ticket sales are temporarily unavailable' );
+			// Missing configuration is not a confirmed end of sales.
+			await expect(
+				resources.visitorPage.locator( 'body' )
+			).not.toContainText(
+				'Online ticket sales for this event have closed.'
+			);
+		} finally {
+			await cleanUp( adminPage, resources );
+		}
+	} );
+
+	test( 'ended sale periods explain that online sales have closed', async ( {
+		browser,
+	} ) => {
+		const resources = await setUpSignupPage(
+			adminPage,
+			browser,
+			'Sales closed e2e',
+			{
+				ticket_types: [
+					{
+						name: 'Regular',
+						recurrence_scope: 'single_instance',
+						capacity: null,
+						minimum_activities: 0,
+						disable_at: null,
+						group_ids: [],
+					},
+				],
+				sale_periods: [
+					{
+						name: 'Advance sale (ended)',
+						sale_start: '2020-01-01 00:00:00',
+						sale_end: '2020-02-01 00:00:00',
+					},
+				],
+				prices: [
+					{ ticket_type_index: 0, sale_period_index: 0, price: 0 },
+				],
+				settings: {},
+			}
+		);
+
+		try {
+			const block = resources.visitorPage.locator(
+				'.fair-events-get-tickets'
+			);
+			await expect(
+				block.locator( '.message-container.message-neutral' )
+			).toHaveText( 'Online ticket sales for this event have closed.' );
+			await expect(
+				block.locator( '.fair-events-get-tickets-form' )
+			).toHaveCount( 0 );
+			await expect( block.locator( 'button' ) ).toHaveCount( 0 );
+			await expect( block ).not.toContainText(
+				'Ticket sales are temporarily unavailable'
+			);
+		} finally {
+			await cleanUp( adminPage, resources );
+		}
+	} );
+
+	test( 'a sale period that has not opened yet is not reported as closed', async ( {
+		browser,
+	} ) => {
+		const resources = await setUpSignupPage(
+			adminPage,
+			browser,
+			'Sales upcoming e2e',
+			{
+				ticket_types: [
+					{
+						name: 'Regular',
+						recurrence_scope: 'single_instance',
+						capacity: null,
+						minimum_activities: 0,
+						disable_at: null,
+						group_ids: [],
+					},
+				],
+				sale_periods: [
+					// One period only: the tickets endpoint rejects a gap
+					// between periods, so that case stays in the PHP unit tests.
+					{
+						name: 'Advance sale (not open yet)',
+						sale_start: '2098-01-01 00:00:00',
+						sale_end: '2099-01-01 00:00:00',
+					},
+				],
+				prices: [
+					{ ticket_type_index: 0, sale_period_index: 0, price: 0 },
+				],
+				settings: {},
+			}
+		);
+
+		try {
+			const block = resources.visitorPage.locator(
+				'.fair-events-get-tickets'
+			);
+			await expect(
+				block.locator( '.message-container.message-error' )
+			).toContainText( 'Ticket sales are temporarily unavailable' );
+			await expect( block ).not.toContainText(
+				'Online ticket sales for this event have closed.'
+			);
 		} finally {
 			await cleanUp( adminPage, resources );
 		}
