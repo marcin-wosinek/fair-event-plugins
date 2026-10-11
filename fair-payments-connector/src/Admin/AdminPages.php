@@ -26,9 +26,10 @@ class AdminPages {
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
 
-		// After the experimental plugin's pages (priority 11), so Notifications
-		// keeps its place at the end of the menu.
+		// After the experimental plugin's pages (priority 11): Notifications
+		// follows Connected Sites, and Settings closes the menu.
 		add_action( 'admin_menu', array( $this, 'register_notifications_page' ), 12 );
+		add_action( 'admin_menu', array( $this, 'register_settings_page' ), 13 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_filter( 'plugin_action_links_fair-payments-connector/fair-payments-connector.php', array( $this, 'add_plugin_action_links' ) );
 		add_filter( 'removable_query_args', array( $this, 'keep_oauth_error_query_arg' ) );
@@ -84,26 +85,31 @@ class AdminPages {
 			5
 		);
 
-		// Fee Dashboard submenu (position 10 — gaps reserved for experimental plugin).
+		// Dashboard submenu; the experimental plugin's pages are added after it.
 		add_submenu_page(
 			'fair-payments-connector-transactions',
-			__( 'Fee Dashboard', 'fair-payments-connector' ),
-			__( 'Fee Dashboard', 'fair-payments-connector' ),
+			__( 'Dashboard', 'fair-payments-connector' ),
+			__( 'Dashboard', 'fair-payments-connector' ),
 			'manage_options',
 			'fair-payments-connector-fee-dashboard',
 			array( $this, 'render_fee_dashboard_page' ),
 			10
 		);
+	}
 
-		// Settings submenu (position 20 — gaps reserved for experimental plugin).
+	/**
+	 * Register the Settings submenu last, after every other page.
+	 *
+	 * @return void
+	 */
+	public function register_settings_page() {
 		add_submenu_page(
 			'fair-payments-connector-transactions',
 			__( 'Settings', 'fair-payments-connector' ),
 			__( 'Settings', 'fair-payments-connector' ),
 			'manage_options',
 			'fair-payments-connector-settings',
-			array( $this, 'render_settings_page' ),
-			20
+			array( $this, 'render_settings_page' )
 		);
 	}
 
@@ -182,9 +188,10 @@ class AdminPages {
 			return;
 		}
 
-		// Fee Dashboard page.
+		// Dashboard page.
 		if ( false !== strpos( $hook, 'fair-payments-connector-fee-dashboard' ) ) {
 			$this->enqueue_admin_page_script( 'fee-dashboard' );
+			wp_set_script_translations( 'fair-payments-connector-fee-dashboard', 'fair-payments-connector', Features::script_translations_path() );
 			return;
 		}
 

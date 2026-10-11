@@ -16,8 +16,8 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: fair-payments-connector.php
-#: src/Admin/AdminPages.php:45
 #: src/Admin/AdminPages.php:46
+#: src/Admin/AdminPages.php:47
 #: src/Core/Plugin.php:134
 msgid "Fair Payments Connector"
 msgstr "Fair Payments Connector"
@@ -37,27 +37,21 @@ msgstr "Marcin Wosinek"
 msgid "https://github.com/marcin-wosinek"
 msgstr "https://github.com/marcin-wosinek"
 
-#: src/Admin/AdminPages.php:57
 #: src/Admin/AdminPages.php:58
+#: src/Admin/AdminPages.php:59
 #: src/Admin/external-updates/components/MollieFeesPanel.js:62
 msgid "Transactions"
 msgstr "Transacciones"
 
-#: src/Admin/AdminPages.php:66
 #: src/Admin/AdminPages.php:67
-#: src/Admin/AdminPages.php:74
+#: src/Admin/AdminPages.php:68
+#: src/Admin/AdminPages.php:75
 #: src/Admin/transaction/TransactionPage.js:853
 msgid "Transaction Detail"
 msgstr "Detalle de transacción"
 
-#: src/Admin/AdminPages.php:90
-#: src/Admin/AdminPages.php:91
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:256
-msgid "Fee Dashboard"
-msgstr "Panel de comisiones"
-
-#: src/Admin/AdminPages.php:101
-#: src/Admin/AdminPages.php:102
+#: src/Admin/AdminPages.php:108
+#: src/Admin/AdminPages.php:109
 msgid "Settings"
 msgstr "Ajustes"
 
@@ -902,7 +896,7 @@ msgctxt "block description"
 msgid "Simple payment block for WordPress"
 msgstr "Bloque de pago sencillo para WordPress"
 
-#: src/Admin/AdminPages.php:244
+#: src/Admin/AdminPages.php:251
 msgid "Set up"
 msgstr "Configurar"
 
@@ -1544,14 +1538,14 @@ msgstr "Reintentar"
 msgid "No paid transactions in this month."
 msgstr "No hay transacciones pagadas en este mes."
 
-#: src/Admin/AdminPages.php:79
 #: src/Admin/AdminPages.php:80
+#: src/Admin/AdminPages.php:81
 #: src/Admin/external-updates/ExternalUpdatesApp.js:51
 msgid "External Updates"
 msgstr "Actualizaciones externas"
 
-#: src/Admin/AdminPages.php:122
-#: src/Admin/AdminPages.php:123
+#: src/Admin/AdminPages.php:128
+#: src/Admin/AdminPages.php:129
 #: src/Admin/notifications/NotificationsApp.js:23
 msgid "Notifications"
 msgstr "Notificaciones"
@@ -2441,3 +2435,8 @@ msgstr "El precio de esta compra cambió mientras se estaba preparando. Por favo
 msgid "The transaction amount does not match its line items."
 msgstr "El importe de la transacción no coincide con sus artículos de línea."
 
+#: src/Admin/AdminPages.php:91
+#: src/Admin/AdminPages.php:92
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:256
+msgid "Dashboard"
+msgstr "Panel"

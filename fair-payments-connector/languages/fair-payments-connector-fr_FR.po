@@ -14,21 +14,21 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Domain: fair-payments-connector\n"
 
-#: src/Admin/AdminPages.php:57
 #: src/Admin/AdminPages.php:58
+#: src/Admin/AdminPages.php:59
 #: src/Admin/external-updates/components/MollieFeesPanel.js:62
 msgid "Transactions"
 msgstr "Transactions"
 
-#: src/Admin/AdminPages.php:66
 #: src/Admin/AdminPages.php:67
-#: src/Admin/AdminPages.php:74
+#: src/Admin/AdminPages.php:68
+#: src/Admin/AdminPages.php:75
 #: src/Admin/transaction/TransactionPage.js:853
 msgid "Transaction Detail"
 msgstr "Détail de la transaction"
 
-#: src/Admin/AdminPages.php:101
-#: src/Admin/AdminPages.php:102
+#: src/Admin/AdminPages.php:108
+#: src/Admin/AdminPages.php:109
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -834,8 +834,8 @@ msgstr "Aucune transaction payée ne manque de données de frais Mollie."
 
 #. Plugin Name of the plugin
 #: fair-payments-connector.php
-#: src/Admin/AdminPages.php:45
 #: src/Admin/AdminPages.php:46
+#: src/Admin/AdminPages.php:47
 #: src/Core/Plugin.php:134
 msgid "Fair Payments Connector"
 msgstr ""
@@ -854,12 +854,6 @@ msgstr ""
 #: fair-payments-connector.php
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
-
-#: src/Admin/AdminPages.php:90
-#: src/Admin/AdminPages.php:91
-#: src/Admin/fee-dashboard/FeeDashboardApp.js:256
-msgid "Fee Dashboard"
-msgstr "Tableau de bord des frais"
 
 #: src/Admin/ApiKeyRemovedNotice.php:70
 msgid "Fair Payments Connector:"
@@ -902,7 +896,7 @@ msgstr "Forcé par une constante wp-config — modifiez-la là."
 msgid "Fair Payments Connector Settings"
 msgstr "Paramètres Fair Payments Connector"
 
-#: src/Admin/AdminPages.php:244
+#: src/Admin/AdminPages.php:251
 msgid "Set up"
 msgstr "Configurer"
 
@@ -1544,14 +1538,14 @@ msgstr "Réessayer"
 msgid "No paid transactions in this month."
 msgstr "Aucune transaction payée ce mois-ci."
 
-#: src/Admin/AdminPages.php:79
 #: src/Admin/AdminPages.php:80
+#: src/Admin/AdminPages.php:81
 #: src/Admin/external-updates/ExternalUpdatesApp.js:51
 msgid "External Updates"
 msgstr "Mises à jour externes"
 
-#: src/Admin/AdminPages.php:122
-#: src/Admin/AdminPages.php:123
+#: src/Admin/AdminPages.php:128
+#: src/Admin/AdminPages.php:129
 #: src/Admin/notifications/NotificationsApp.js:23
 msgid "Notifications"
 msgstr "Notifications"
@@ -2441,3 +2435,8 @@ msgstr "Le prix de cet achat a changé pendant qu'il était en cours de prépara
 msgid "The transaction amount does not match its line items."
 msgstr "Le montant de la transaction ne correspond pas à ses articles."
 
+#: src/Admin/AdminPages.php:91
+#: src/Admin/AdminPages.php:92
+#: src/Admin/fee-dashboard/FeeDashboardApp.js:256
+msgid "Dashboard"
+msgstr "Tableau de bord"

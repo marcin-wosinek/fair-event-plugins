@@ -253,7 +253,7 @@ const FeeDashboardApp = () => {
 		<div className="wrap fair-payments-connector-fee-dashboard-page">
 			<VStack spacing={ 4 }>
 				<h1 style={ { margin: 0 } }>
-					{ __( 'Fee Dashboard', 'fair-payments-connector' ) }
+					{ __( 'Dashboard', 'fair-payments-connector' ) }
 				</h1>
 
 				<p style={ { margin: 0 } }>
