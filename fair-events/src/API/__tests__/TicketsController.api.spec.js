@@ -919,7 +919,6 @@ test.describe( 'TicketsController — discounted_price dropped from add-on optio
 							price: 20,
 							discounted_price: 12,
 							capacity: null,
-							collaborator_ids: [],
 						},
 					],
 				},
@@ -951,7 +950,6 @@ test.describe( 'TicketsController — discounted_price dropped from add-on optio
 							price: 20,
 							discounted_price: 12,
 							capacity: null,
-							collaborator_ids: [],
 						},
 					],
 				},
@@ -969,13 +967,6 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 	let postId;
 	let eventDateId;
 	let ticketsPath;
-	let originalExperimentalStatus;
-
-	const setExperimentalStatus = ( status ) =>
-		api.put(
-			`/wp-json/wp/v2/plugins/${ FAIR_EVENTS_EXPERIMENTAL_PLUGIN }`,
-			{ headers: adminHeaders, data: { status } }
-		);
 
 	// What the Prices tab sends: every ticket section, with the add-ons in
 	// their on-screen order.
@@ -1008,19 +999,12 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 		settings: { activity_period_pricing: true },
 	} );
 
-	const addon = (
-		name,
-		shortName,
-		capacity,
-		periodPrice,
-		collaborators
-	) => ( {
+	const addon = ( name, shortName, capacity, periodPrice ) => ( {
 		name,
 		short_name: shortName,
 		price: 0,
 		capacity,
 		derive_price_from_sale_period: true,
-		collaborator_ids: collaborators,
 		period_prices: [ { sale_period_index: 0, price: periodPrice } ],
 	} );
 
@@ -1030,9 +1014,6 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 		name: option.name,
 		short_name: option.short_name || '',
 		capacity: option.capacity === null ? null : Number( option.capacity ),
-		collaborators: option.collaborator_ids
-			.map( Number )
-			.sort( ( a, b ) => a - b ),
 		period_prices: option.period_prices.map( ( pp ) => [
 			Number( pp.sale_period_id ),
 			Number( pp.price ),
@@ -1041,22 +1022,6 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
-
-		// Collaborators are stored by the experimental companion.
-		const pluginsRes = await api.get( '/wp-json/wp/v2/plugins', {
-			headers: adminHeaders,
-		} );
-		expect( pluginsRes.ok() ).toBeTruthy();
-		const experimental = ( await pluginsRes.json() ).find(
-			( plugin ) => plugin.plugin === FAIR_EVENTS_EXPERIMENTAL_PLUGIN
-		);
-		expect( experimental ).toBeTruthy();
-		originalExperimentalStatus = experimental.status;
-		if ( originalExperimentalStatus !== 'active' ) {
-			expect(
-				( await setExperimentalStatus( 'active' ) ).ok()
-			).toBeTruthy();
-		}
 
 		const title = `Add-on order ${ Date.now() }`;
 		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
@@ -1099,7 +1064,6 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 					{ headers: adminHeaders }
 				);
 			}
-			// Removing the add-ons also removes their collaborator rows.
 			await api.put( ticketsPath, {
 				headers: adminHeaders,
 				data: {
@@ -1117,24 +1081,18 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 				{ headers: adminHeaders }
 			);
 		}
-		if (
-			originalExperimentalStatus &&
-			originalExperimentalStatus !== 'active'
-		) {
-			await setExperimentalStatus( originalExperimentalStatus );
-		}
 		await api.dispose();
 	} );
 
-	test( 'an arbitrary reorder keeps IDs, details, period prices, collaborators, and signup selections', async () => {
+	test( 'an arbitrary reorder keeps IDs, details, period prices, and signup selections', async () => {
 		const createRes = await api.put( ticketsPath, {
 			headers: adminHeaders,
 			data: ticketsPayload( {
 				options: [
-					addon( 'Yoga', 'YG', 12, 0, [ 9101, 9102 ] ),
-					addon( 'Dinner', 'DN', 40, 25, [] ),
-					addon( 'Hike', '', null, 0, [ 9103 ] ),
-					addon( 'Sauna', 'SN', 6, 12.5, [ 9101 ] ),
+					addon( 'Yoga', 'YG', 12, 0 ),
+					addon( 'Dinner', 'DN', 40, 25 ),
+					addon( 'Hike', '', null, 0 ),
+					addon( 'Sauna', 'SN', 6, 12.5 ),
 				],
 			} ),
 		} );
@@ -1149,7 +1107,6 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 				name: 'Yoga',
 				short_name: 'YG',
 				capacity: 12,
-				collaborators: [ 9101, 9102 ],
 				period_prices: [ [ periodId, 0 ] ],
 			},
 			{
@@ -1157,7 +1114,6 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 				name: 'Dinner',
 				short_name: 'DN',
 				capacity: 40,
-				collaborators: [],
 				period_prices: [ [ periodId, 25 ] ],
 			},
 			{
@@ -1165,7 +1121,6 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 				name: 'Hike',
 				short_name: '',
 				capacity: null,
-				collaborators: [ 9103 ],
 				period_prices: [ [ periodId, 0 ] ],
 			},
 			{
@@ -1173,7 +1128,6 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 				name: 'Sauna',
 				short_name: 'SN',
 				capacity: 6,
-				collaborators: [ 9101 ],
 				period_prices: [ [ periodId, 12.5 ] ],
 			},
 		] );
@@ -1263,4 +1217,164 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 
 		expect( await selectedAddons() ).toEqual( selectedBefore );
 	} );
+} );
+
+test.describe( 'TicketsController — add-on collaborator assignments removed (#1793)', () => {
+	let api;
+	let eventDateId;
+	let ticketsPath;
+	let originalExperimentalStatus;
+
+	const setExperimentalStatus = async ( status ) => {
+		const res = await api.put(
+			`/wp-json/wp/v2/plugins/${ FAIR_EVENTS_EXPERIMENTAL_PLUGIN }`,
+			{ headers: adminHeaders, data: { status } }
+		);
+		expect( res.ok() ).toBeTruthy();
+	};
+
+	// Add-ons as an older editor or export wrote them: each names participants.
+	const legacyOptions = () => [
+		{
+			name: 'Yoga',
+			short_name: 'YG',
+			price: 7,
+			capacity: 12,
+			collaborator_ids: [ 9101, 9102 ],
+		},
+		{
+			name: 'Dinner',
+			short_name: '',
+			price: 25,
+			capacity: null,
+			collaborator_ids: [ 9103 ],
+		},
+	];
+
+	const summary = ( options ) =>
+		options.map( ( option ) => ( {
+			name: option.name,
+			short_name: option.short_name || '',
+			price: Number( option.price ),
+			capacity:
+				option.capacity === null ? null : Number( option.capacity ),
+		} ) );
+
+	const expectedSummary = [
+		{ name: 'Yoga', short_name: 'YG', price: 7, capacity: 12 },
+		{ name: 'Dinner', short_name: '', price: 25, capacity: null },
+	];
+
+	const expectNoAssignments = ( body ) => {
+		expect( summary( body.options ) ).toEqual( expectedSummary );
+		body.options.forEach( ( option ) =>
+			expect( option ).not.toHaveProperty( 'collaborator_ids' )
+		);
+	};
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const pluginsRes = await api.get( '/wp-json/wp/v2/plugins', {
+			headers: adminHeaders,
+		} );
+		expect( pluginsRes.ok() ).toBeTruthy();
+		const experimental = ( await pluginsRes.json() ).find(
+			( plugin ) => plugin.plugin === FAIR_EVENTS_EXPERIMENTAL_PLUGIN
+		);
+		expect( experimental ).toBeTruthy();
+		originalExperimentalStatus = experimental.status;
+
+		const eventRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Legacy assignments ${ Date.now() }`,
+					start_datetime: '2037-03-01 10:00:00',
+					end_datetime: '2037-03-01 12:00:00',
+				},
+			}
+		);
+		expect( eventRes.ok() ).toBeTruthy();
+		eventDateId = ( await eventRes.json() ).id;
+		ticketsPath = `/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`;
+	} );
+
+	test.afterAll( async () => {
+		if ( eventDateId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		if ( originalExperimentalStatus ) {
+			await setExperimentalStatus( originalExperimentalStatus );
+		}
+		await api.dispose();
+	} );
+
+	for ( const status of [ 'active', 'inactive' ] ) {
+		test( `a legacy save and import succeed without assignments (experimental ${ status })`, async () => {
+			await setExperimentalStatus( status );
+
+			const saveRes = await api.put( ticketsPath, {
+				headers: adminHeaders,
+				data: {
+					ticket_types: [],
+					sale_periods: [],
+					prices: [],
+					settings: {},
+					options: legacyOptions(),
+				},
+			} );
+			const saved = await saveRes.json();
+			expect( saveRes.ok(), JSON.stringify( saved ) ).toBeTruthy();
+			expectNoAssignments( saved );
+
+			// Saving again with the stored IDs keeps the add-ons editable.
+			const resaveRes = await api.put( ticketsPath, {
+				headers: adminHeaders,
+				data: {
+					ticket_types: [],
+					sale_periods: [],
+					prices: [],
+					settings: {},
+					options: saved.options.map( ( option, index ) => ( {
+						...option,
+						collaborator_ids:
+							legacyOptions()[ index ].collaborator_ids,
+					} ) ),
+				},
+			} );
+			const resaved = await resaveRes.json();
+			expect( resaveRes.ok(), JSON.stringify( resaved ) ).toBeTruthy();
+			expectNoAssignments( resaved );
+			expect(
+				resaved.options.map( ( option ) => Number( option.id ) )
+			).toEqual( saved.options.map( ( option ) => Number( option.id ) ) );
+
+			const importRes = await api.post( `${ ticketsPath }/import`, {
+				headers: adminHeaders,
+				data: {
+					version: 1,
+					type: 'fair-events-tickets',
+					capacity: null,
+					settings: {},
+					ticket_types: [],
+					sale_periods: [],
+					prices: [],
+					options: legacyOptions(),
+				},
+			} );
+			const imported = await importRes.json();
+			expect( importRes.ok(), JSON.stringify( imported ) ).toBeTruthy();
+			expectNoAssignments( imported );
+
+			const getRes = await api.get( ticketsPath, {
+				headers: adminHeaders,
+			} );
+			expect( getRes.ok() ).toBeTruthy();
+			expectNoAssignments( await getRes.json() );
+		} );
+	}
 } );

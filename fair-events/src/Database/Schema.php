@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.43.0';
+	const DB_VERSION = '3.44.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -401,27 +401,6 @@ class Schema {
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (ticket_option_id, sale_period_id),
 			KEY idx_sale_period_id (sale_period_id)
-		) ENGINE=InnoDB {$charset_collate};";
-	}
-
-	/**
-	 * Get the SQL for creating the fair_events_ticket_option_collaborators table
-	 *
-	 * Junction table linking ticket options to participants who collaborate on the activity.
-	 *
-	 * @return string SQL statement for creating the table.
-	 */
-	public static function get_ticket_option_collaborators_table_sql() {
-		global $wpdb;
-
-		$table_name      = $wpdb->prefix . 'fair_events_ticket_option_collaborators';
-		$charset_collate = $wpdb->get_charset_collate();
-
-		return "CREATE TABLE {$table_name} (
-			ticket_option_id BIGINT UNSIGNED NOT NULL,
-			participant_id BIGINT UNSIGNED NOT NULL,
-			PRIMARY KEY (ticket_option_id, participant_id),
-			KEY idx_participant_id (participant_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

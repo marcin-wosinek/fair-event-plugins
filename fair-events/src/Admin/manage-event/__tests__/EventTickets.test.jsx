@@ -708,7 +708,6 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 				short_name: '',
 				price: 20,
 				capacity: null,
-				collaborator_ids: [],
 				period_prices: [],
 				sort_order: 0,
 			},
@@ -1388,7 +1387,6 @@ describe( 'EventTickets — Add-on collaborator discount removed (#1139)', () =>
 				short_name: '',
 				price: 20,
 				capacity: null,
-				collaborator_ids: [],
 				period_prices: [],
 				sort_order: 0,
 			},
@@ -1649,7 +1647,6 @@ describe( 'EventTickets — controlled mode without eventDateId (Duplicate Event
 						capacity: null,
 						derive_price_from_sale_period: false,
 						period_prices: [],
-						collaborator_ids: [],
 					},
 				],
 			},
@@ -1779,7 +1776,6 @@ describe( 'EventTickets — move an activity to the top (#1728)', () => {
 		short_name: '',
 		price: 0,
 		capacity: null,
-		collaborator_ids: [],
 		period_prices: [],
 		sort_order: sortOrder,
 	} );
@@ -2150,7 +2146,6 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 		short_name: '',
 		price: 0,
 		capacity: null,
-		collaborator_ids: [],
 		period_prices: [],
 		sort_order: sortOrder,
 		...extra,
@@ -2161,6 +2156,7 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 		sale_periods: [ salePeriod ],
 		settings: { activity_period_pricing: true },
 		options: [
+			// collaborator_ids: a legacy field older responses still carry.
 			addon( 11, 'Yoga', 0, {
 				short_name: 'YG',
 				capacity: 12,
@@ -2392,7 +2388,6 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 				short_name: option.short_name,
 				order: option.sort_order,
 				capacity: option.capacity,
-				collaborators: option.collaborator_ids,
 				period_prices: option.period_prices.map(
 					( { sale_period_id: periodId, price } ) => [
 						periodId,
@@ -2407,7 +2402,6 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 				short_name: '',
 				order: 0,
 				capacity: 6,
-				collaborators: [],
 				period_prices: [],
 			},
 			{
@@ -2416,7 +2410,6 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 				short_name: '',
 				order: 1,
 				capacity: 40,
-				collaborators: [],
 				period_prices: [ [ 801, 25 ] ],
 			},
 			{
@@ -2425,7 +2418,6 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 				short_name: '',
 				order: 2,
 				capacity: null,
-				collaborators: [ 503 ],
 				period_prices: [],
 			},
 			{
@@ -2434,13 +2426,158 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 				short_name: 'YG',
 				order: 3,
 				capacity: 12,
-				collaborators: [ 501, 502 ],
 				period_prices: [ [ 801, 7.5 ] ],
 			},
 		] );
-		// The client-only row key never reaches the server.
+		// The client-only row key never reaches the server, and neither do
+		// the legacy add-on collaborator assignments the fixture carries.
+		savedPayload.options.forEach( ( option ) => {
+			expect( option ).not.toHaveProperty( 'client_key' );
+			expect( option ).not.toHaveProperty( 'collaborator_ids' );
+		} );
+	} );
+} );
+
+describe( 'EventTickets — add-on collaborator assignments removed (#1793)', () => {
+	// A response from before the removal: every add-on still names
+	// participants.
+	const legacyData = {
+		...initialDataWithTicketType,
+		options: [
+			{
+				id: 21,
+				name: 'Yoga',
+				short_name: 'YG',
+				price: 7,
+				capacity: 12,
+				collaborator_ids: [ 501, 502 ],
+				period_prices: [],
+				sort_order: 0,
+			},
+			{
+				id: 22,
+				name: 'Dinner',
+				short_name: '',
+				price: 25,
+				capacity: null,
+				collaborator_ids: [ 503 ],
+				period_prices: [],
+				sort_order: 1,
+			},
+		],
+	};
+
+	const openAddons = () =>
+		fireEvent.click( screen.getByRole( 'button', { name: 'Add-ons' } ) );
+
+	it( 'shows add-ons without a collaborator column or participant selector', () => {
+		const { container } = renderTickets( { initialData: legacyData } );
+		openAddons();
+
+		expect(
+			Array.from(
+				container.querySelectorAll( 'input[placeholder="Add-on name"]' )
+			).map( ( input ) => input.value )
+		).toEqual( [ 'Yoga', 'Dinner' ] );
+		expect(
+			screen.queryByText( 'Collaborator(s)' )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByPlaceholderText( 'Add participants' )
+		).not.toBeInTheDocument();
+		expect( screen.queryByText( '#501' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'does not request the participant list', () => {
+		renderTickets( { initialData: legacyData } );
+		openAddons();
+
+		const paths = apiFetch.mock.calls.map(
+			( [ request ] ) => request.path
+		);
+		expect( paths ).toContain( '/fair-audience/v1/groups' );
+		expect(
+			paths.filter( ( path ) => path.includes( '/participants' ) )
+		).toEqual( [] );
+	} );
+
+	it( 'saves legacy and new add-ons without assignments', async () => {
+		const { onSaveRef } = renderTickets( { initialData: legacyData } );
+		openAddons();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: '+ Add Option' } )
+		);
+		const nameInputs = screen.getAllByPlaceholderText( 'Add-on name' );
+		fireEvent.change( nameInputs[ nameInputs.length - 1 ], {
+			target: { value: 'Sauna' },
+		} );
+
+		let savedPayload = null;
+		apiFetch.mockImplementation( ( { method, data } ) => {
+			if ( method === 'PUT' ) {
+				savedPayload = data;
+				return Promise.resolve( legacyData );
+			}
+			return new Promise( () => {} );
+		} );
+		await act( async () => {
+			await onSaveRef.current();
+		} );
+
+		expect( savedPayload.options.map( ( option ) => option.name ) ).toEqual(
+			[ 'Yoga', 'Dinner', 'Sauna' ]
+		);
+		expect( savedPayload.options[ 0 ] ).toMatchObject( {
+			id: 21,
+			short_name: 'YG',
+			price: 7,
+			capacity: 12,
+			sort_order: 0,
+		} );
 		savedPayload.options.forEach( ( option ) =>
-			expect( option ).not.toHaveProperty( 'client_key' )
+			expect( option ).not.toHaveProperty( 'collaborator_ids' )
+		);
+	} );
+
+	it( 'exports add-ons without assignments', () => {
+		const blobParts = [];
+		jest.spyOn( global, 'Blob' ).mockImplementation( ( parts ) => {
+			blobParts.push( parts );
+			return {};
+		} );
+		const originalCreate = URL.createObjectURL;
+		const originalRevoke = URL.revokeObjectURL;
+		URL.createObjectURL = jest.fn( () => 'blob:tickets' );
+		URL.revokeObjectURL = jest.fn();
+
+		try {
+			renderTickets( { initialData: legacyData } );
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'More actions' } )
+			);
+			fireEvent.click(
+				screen.getByRole( 'menuitem', {
+					name: 'Export ticket settings',
+				} )
+			);
+		} finally {
+			URL.createObjectURL = originalCreate;
+			URL.revokeObjectURL = originalRevoke;
+		}
+
+		expect( blobParts ).toHaveLength( 1 );
+		const exported = JSON.parse( blobParts[ 0 ][ 0 ] );
+		expect( exported.options.map( ( option ) => option.name ) ).toEqual( [
+			'Yoga',
+			'Dinner',
+		] );
+		expect( exported.options[ 0 ] ).toMatchObject( {
+			short_name: 'YG',
+			price: 7,
+			capacity: 12,
+		} );
+		exported.options.forEach( ( option ) =>
+			expect( option ).not.toHaveProperty( 'collaborator_ids' )
 		);
 	} );
 } );

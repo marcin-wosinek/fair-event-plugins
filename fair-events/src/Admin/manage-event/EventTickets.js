@@ -119,7 +119,6 @@ export default function EventTickets( {
 	const [ showScopeModal, setShowScopeModal ] = useState( false );
 	const [ showReorderModal, setShowReorderModal ] = useState( false );
 	const [ pendingScope, setPendingScope ] = useState( 'single_instance' );
-	const [ participants, setParticipants ] = useState( [] );
 	const [ mergePeriodsDialogOpen, setMergePeriodsDialogOpen ] =
 		useState( false );
 	const fileInputRef = useRef( null );
@@ -171,18 +170,6 @@ export default function EventTickets( {
 		groups.map( ( g ) => [ g.name, g.id ] )
 	);
 	const groupSuggestions = groups.map( ( g ) => g.name );
-
-	const formatParticipantLabel = ( p ) => {
-		const fullName = `${ p.name || '' } ${ p.surname || '' }`.trim();
-		return fullName || p.email || `#${ p.id }`;
-	};
-	const participantLabelById = Object.fromEntries(
-		participants.map( ( p ) => [ p.id, formatParticipantLabel( p ) ] )
-	);
-	const participantIdByLabel = Object.fromEntries(
-		participants.map( ( p ) => [ formatParticipantLabel( p ), p.id ] )
-	);
-	const participantSuggestions = participants.map( formatParticipantLabel );
 
 	const populateFromData = useCallback( ( data ) => {
 		setLoadGen( ( g ) => g + 1 );
@@ -280,14 +267,6 @@ export default function EventTickets( {
 	}, [] );
 
 	useEffect( () => {
-		apiFetch( { path: '/fair-audience/v1/participants?per_page=0' } )
-			.then( ( data ) =>
-				setParticipants( Array.isArray( data ) ? data : [] )
-			)
-			.catch( () => setParticipants( [] ) );
-	}, [] );
-
-	useEffect( () => {
 		if ( onSaveRef ) {
 			onSaveRef.current = handleSave;
 		}
@@ -355,9 +334,6 @@ export default function EventTickets( {
 						price: pp.price,
 					} )
 				),
-				collaborator_ids: Array.isArray( o.collaborator_ids )
-					? o.collaborator_ids
-					: [],
 			} ) ),
 		};
 	};
@@ -576,8 +552,11 @@ export default function EventTickets( {
 				map[ String( pp.sale_period_id ) ] = String( pp.price );
 			}
 		} );
+		// Add-on collaborator assignments were removed (#1793); drop the field
+		// a legacy response or import may still carry.
+		const { collaborator_ids: _legacyCollaborators, ...rest } = o;
 		return {
-			...o,
+			...rest,
 			derive_price_from_sale_period: !! o.derive_price_from_sale_period,
 			period_prices_map: map,
 			client_key: newOptionClientKey(),
@@ -607,6 +586,7 @@ export default function EventTickets( {
 		const {
 			period_prices_map: _unused,
 			client_key: _unusedKey,
+			collaborator_ids: _legacyCollaborators,
 			...rest
 		} = option;
 		return {
@@ -2362,24 +2342,12 @@ export default function EventTickets( {
 														'fair-events'
 													) }
 												</th>
-												<th>
-													{ __(
-														'Collaborator(s)',
-														'fair-events'
-													) }
-												</th>
 												<th />
 											</tr>
 										</thead>
 										<tbody>
 											{ options.map(
 												( option, index ) => {
-													const collaboratorIds =
-														Array.isArray(
-															option.collaborator_ids
-														)
-															? option.collaborator_ids
-															: [];
 													return (
 														<tr
 															key={
@@ -2566,61 +2534,6 @@ export default function EventTickets( {
 																/>
 															</td>
 															<td>
-																<FormTokenField
-																	value={ collaboratorIds.map(
-																		(
-																			id
-																		) =>
-																			participantLabelById[
-																				id
-																			] ||
-																			`#${ id }`
-																	) }
-																	suggestions={
-																		participantSuggestions
-																	}
-																	onChange={ (
-																		tokens
-																	) => {
-																		const ids =
-																			tokens
-																				.map(
-																					(
-																						label
-																					) =>
-																						participantIdByLabel[
-																							label
-																						]
-																				)
-																				.filter(
-																					Boolean
-																				);
-																		const updated =
-																			[
-																				...options,
-																			];
-																		updated[
-																			index
-																		] = {
-																			...updated[
-																				index
-																			],
-																			collaborator_ids:
-																				ids,
-																		};
-																		setOptions(
-																			updated
-																		);
-																	} }
-																	__experimentalExpandOnFocus
-																	__experimentalAutoSelectFirstMatch
-																	placeholder={ __(
-																		'Add participants',
-																		'fair-events'
-																	) }
-																/>
-															</td>
-															<td>
 																<HStack
 																	justify="flex-end"
 																	wrap
@@ -2691,7 +2604,6 @@ export default function EventTickets( {
 												capacity: null,
 												derive_price_from_sale_period: false,
 												period_prices_map: {},
-												collaborator_ids: [],
 												sort_order: options.length,
 												client_key:
 													newOptionClientKey(),
