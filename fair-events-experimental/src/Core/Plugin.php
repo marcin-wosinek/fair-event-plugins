@@ -196,14 +196,6 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairEventsExperimental\API\WeeklyEventsController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
 					$controller = new \FairEventsExperimental\API\WeeklyNotificationsController();
 					$controller->register_routes();
 				}

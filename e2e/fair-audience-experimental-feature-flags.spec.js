@@ -7,18 +7,20 @@
  *   - all bundles on — every migrated bundle's admin page mounts and its
  *     REST routes register.
  *
- * `weekly-schedule` and `manage-event-ext` are intentionally not probed here:
- * `weekly-schedule` has no REST routes of its own (it reads fair-events'
- * event-dates routes), and `manage-event-ext` has no standalone admin page —
- * it only mounts a tab inside fair-events' manage-event screen, which needs
- * an event fixture. Both are exercised by the manual smoke checks instead
- * (TESTING.md).
+ * `manage-event-ext` is intentionally not probed here: it has no standalone
+ * admin page — it only mounts a tab inside fair-events' manage-event screen,
+ * which needs an event fixture. It is exercised by the manual smoke checks
+ * instead (TESTING.md).
+ *
+ * The removed Weekly Schedule bundle (#1809) has its own block: its menu
+ * entry, settings toggle and bookmarked page stay absent, whatever a stale
+ * option, a filter or a constant says.
  *
  * Run: `npm run test:e2e -- fair-audience-experimental-feature-flags`.
  */
 
 import { test, expect } from '@playwright/test';
-import { wpCli, loginAsAdmin } from './support/wp-cli.js';
+import { wpCli, loginAsAdmin, runScript } from './support/wp-cli.js';
 
 /** Set the `fair_audience_experimental_features` option to a `{bundle: bool}` map. */
 function setExperimentalFeatures(map) {
@@ -45,7 +47,6 @@ const ALL_BUNDLES_ON = {
 	'image-templates': true,
 	timeline: true,
 	import: true,
-	'weekly-schedule': true,
 	invitations: true,
 	'manage-event-ext': true,
 };
@@ -61,7 +62,6 @@ const ALL_BUNDLES_OFF = {
 	'image-templates': false,
 	timeline: false,
 	import: false,
-	'weekly-schedule': false,
 	invitations: false,
 	'manage-event-ext': false,
 };
@@ -267,5 +267,60 @@ test.describe('Fair Audience Experimental — all bundles on', () => {
 				name: 'Fair Audience Experimental Settings',
 			})
 		).toBeVisible();
+	});
+});
+
+test.describe('Fair Audience Experimental — removed Weekly Schedule', () => {
+	const SLUG = 'fair-audience-weekly-schedule';
+	const state = (mode) =>
+		runScript('retired-weekly-schedule-state.php', 'E2E_STATE', mode);
+
+	test.afterAll(() => {
+		clearExperimentalFeatures();
+	});
+
+	test('a stale enabled option does not bring it back', async ({ page }) => {
+		// A site that had the bundle on keeps the key in its stored option.
+		const seeded = state('seed');
+		expect(seeded.stored['weekly-schedule']).toBe(true);
+		expect(seeded.enabled).toBe(false);
+		expect(seeded.inSnapshot).toBe(false);
+
+		await loginAsAdmin(page);
+		await page.goto(
+			'/wp-admin/admin.php?page=fair-audience-experimental-settings'
+		);
+		// Another bundle's toggle and menu entry prove both lists rendered.
+		await expect(page.getByLabel('Image templates')).toBeVisible();
+		await expect(page.getByLabel('Weekly schedule')).toHaveCount(0);
+		await expect(
+			page.locator('#adminmenu a[href*="fair-audience-image-templates"]')
+		).toHaveCount(1);
+		await expect(page.locator(`#adminmenu a[href*="${SLUG}"]`)).toHaveCount(
+			0
+		);
+
+		// The bookmarked page gets WordPress's answer for an unregistered page.
+		const response = await page.goto(`/wp-admin/admin.php?page=${SLUG}`);
+		expect(response.status()).toBe(403);
+		await expect(page.locator(`#${SLUG}-root`)).toHaveCount(0);
+		await expect(
+			page.getByRole('heading', { name: 'Weekly Schedule' })
+		).toHaveCount(0);
+	});
+
+	test('a constant and a filter cannot revive it', () => {
+		const revived = state('revive');
+		expect(revived.enabled).toBe(false);
+		expect(revived.forced).toBe(false);
+		expect(revived.inSnapshot).toBe(false);
+	});
+
+	test('saving settings discards the obsolete key and keeps the rest', () => {
+		state('seed');
+		const resaved = state('resave');
+		expect(resaved.stored).not.toHaveProperty('weekly-schedule');
+		expect(resaved.stored.fees).toBe(true);
+		expect(resaved.stored['image-templates']).toBe(true);
 	});
 });

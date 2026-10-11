@@ -1,16 +1,18 @@
 /**
- * Playwright API tests for InstagramPostsController's upload-blob endpoint.
+ * Playwright API tests for InstagramPostsController.
  *
- * Covers the #1063 fix: the schedule PNG is now stored as a WordPress
- * media-library attachment instead of being round-tripped through
- * tmpfiles.org (which stopped serving raw image bytes).
+ * Covers the routes the Instagram Posts admin page still uses, and the
+ * retirement of the upload-blob route that only the removed Weekly Schedule
+ * page called (#1809):
  *
- *   POST /fair-audience/v1/instagram/upload-blob
+ *   GET  /fair-audience/v1/instagram/posts
+ *   POST /fair-audience/v1/instagram/posts
+ *   POST /fair-audience/v1/instagram/upload-image
+ *   POST /fair-audience/v1/instagram/upload-blob (retired)
  *
  * Out of HTTP scope (validated manually per TESTING.md's WP-CLI eval-file
- * recipe): the live Instagram Graph API round-trip, and the temp-attachment
- * cleanup that happens inside create_item() after a successful publish
- * (requires configured Instagram credentials).
+ * recipe): the live Instagram Graph API round-trip, which requires
+ * configured Instagram credentials.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -31,7 +33,7 @@ const authHeaders = {
 const VALID_PNG_BASE64 =
 	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
-test.describe( 'InstagramPostsController – upload-blob', () => {
+test.describe( 'InstagramPostsController', () => {
 	let api;
 	const createdAttachmentIds = [];
 
@@ -49,7 +51,7 @@ test.describe( 'InstagramPostsController – upload-blob', () => {
 		await api.dispose();
 	} );
 
-	test( 'stores a valid PNG as a local media-library attachment', async () => {
+	test( 'the retired upload-blob route is not registered', async () => {
 		const res = await api.post(
 			'/wp-json/fair-audience/v1/instagram/upload-blob',
 			{
@@ -57,15 +59,80 @@ test.describe( 'InstagramPostsController – upload-blob', () => {
 				data: { image_data: VALID_PNG_BASE64 },
 			}
 		);
+		expect( res.status() ).toBe( 404 );
+
+		const body = await res.json();
+		expect( body.code ).toBe( 'rest_no_route' );
+	} );
+
+	test( 'lists posts for an administrator', async () => {
+		const res = await api.get(
+			'/wp-json/fair-audience/v1/instagram/posts',
+			{
+				headers: authHeaders,
+			}
+		);
+		expect( res.ok() ).toBeTruthy();
+		expect( Array.isArray( await res.json() ) ).toBe( true );
+	} );
+
+	test( 'rejects unauthenticated list and create requests', async () => {
+		const list = await api.get(
+			'/wp-json/fair-audience/v1/instagram/posts'
+		);
+		expect( list.status() ).toBe( 401 );
+
+		const create = await api.post(
+			'/wp-json/fair-audience/v1/instagram/posts',
+			{
+				data: {
+					image_url: 'https://example.com/image.png',
+					caption: 'Caption',
+				},
+			}
+		);
+		expect( create.status() ).toBe( 401 );
+	} );
+
+	test( 'rejects a post without a caption', async () => {
+		const res = await api.post(
+			'/wp-json/fair-audience/v1/instagram/posts',
+			{
+				headers: authHeaders,
+				data: { image_url: 'https://example.com/image.png' },
+			}
+		);
+		expect( res.status() ).toBe( 400 );
+
+		const body = await res.json();
+		expect( body.code ).toBe( 'rest_missing_callback_param' );
+	} );
+
+	test( 'resolves the public URL of a media-library image', async () => {
+		const upload = await api.post( '/wp-json/wp/v2/media', {
+			headers: {
+				...authHeaders,
+				'Content-Type': 'image/png',
+				'Content-Disposition':
+					'attachment; filename="instagram-api-spec.png"',
+			},
+			data: Buffer.from( VALID_PNG_BASE64, 'base64' ),
+		} );
+		expect( upload.ok() ).toBeTruthy();
+		const attachment = await upload.json();
+		createdAttachmentIds.push( attachment.id );
+
+		const res = await api.post(
+			'/wp-json/fair-audience/v1/instagram/upload-image',
+			{
+				headers: authHeaders,
+				data: { attachment_id: attachment.id },
+			}
+		);
 		expect( res.ok() ).toBeTruthy();
 
 		const body = await res.json();
-		expect( typeof body.attachment_id ).toBe( 'number' );
-		createdAttachmentIds.push( body.attachment_id );
-
-		// Not tmpfiles.org — a URL on this same WordPress origin.
-		expect( body.url.startsWith( BASE_URL ) ).toBe( true );
-		expect( body.url ).toContain( '/wp-content/uploads/' );
+		expect( body.url ).toBe( attachment.source_url );
 
 		// The Graph API needs a URL that actually serves image bytes.
 		const imageRes = await api.get( body.url );
@@ -73,50 +140,17 @@ test.describe( 'InstagramPostsController – upload-blob', () => {
 		expect( imageRes.headers()[ 'content-type' ] ).toBe( 'image/png' );
 	} );
 
-	test( 'rejects data that is not a valid image', async () => {
-		const notAnImage = Buffer.from( 'this is not an image' ).toString(
-			'base64'
-		);
-
+	test( 'rejects an attachment that is not an image', async () => {
 		const res = await api.post(
-			'/wp-json/fair-audience/v1/instagram/upload-blob',
+			'/wp-json/fair-audience/v1/instagram/upload-image',
 			{
 				headers: authHeaders,
-				data: { image_data: notAnImage },
+				data: { attachment_id: 999999999 },
 			}
 		);
 		expect( res.status() ).toBe( 400 );
 
 		const body = await res.json();
-		expect( body.code ).toBe( 'invalid_image_data' );
-	} );
-
-	test( 'rejects a blob over the size cap', async () => {
-		// MAX_BLOB_SIZE is 5 MiB in InstagramPostsController.
-		const oversized = Buffer.alloc( 5 * 1024 * 1024 + 1, 'a' ).toString(
-			'base64'
-		);
-
-		const res = await api.post(
-			'/wp-json/fair-audience/v1/instagram/upload-blob',
-			{
-				headers: authHeaders,
-				data: { image_data: oversized },
-			}
-		);
-		expect( res.status() ).toBe( 400 );
-
-		const body = await res.json();
-		expect( body.code ).toBe( 'file_too_large' );
-	} );
-
-	test( 'rejects unauthenticated requests', async () => {
-		const res = await api.post(
-			'/wp-json/fair-audience/v1/instagram/upload-blob',
-			{
-				data: { image_data: VALID_PNG_BASE64 },
-			}
-		);
-		expect( res.status() ).toBe( 401 );
+		expect( body.code ).toBe( 'invalid_attachment' );
 	} );
 } );

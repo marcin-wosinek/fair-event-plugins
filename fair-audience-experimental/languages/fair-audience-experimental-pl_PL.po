@@ -53,7 +53,7 @@ msgstr "Aktywność"
 
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
-#: src/Core/Features.php:198
+#: src/Core/Features.php:192
 #: src/Admin/custom-mail/CustomMail.js:797
 #: src/Admin/manage-event-ext/EventMailings.js:54
 msgid "Collaborators"
@@ -72,13 +72,13 @@ msgstr "Szczegóły opłaty"
 
 #: src/Admin/AdminPages.php:118
 #: src/Admin/AdminPages.php:119
-#: src/Core/Features.php:214
+#: src/Core/Features.php:208
 msgid "Import"
 msgstr "Import"
 
 #: src/Admin/AdminPages.php:130
 #: src/Admin/AdminPages.php:131
-#: src/Core/Features.php:182
+#: src/Core/Features.php:176
 msgid "Polls"
 msgstr "Ankiety"
 
@@ -100,42 +100,37 @@ msgstr "Szablony obrazów"
 
 #: src/Admin/AdminPages.php:177
 #: src/Admin/AdminPages.php:178
-msgid "Weekly Schedule"
-msgstr "Harmonogram tygodniowy"
-
-#: src/Admin/AdminPages.php:189
-#: src/Admin/AdminPages.php:190
-#: src/Core/Features.php:194
+#: src/Core/Features.php:188
 #: src/Admin/custom-mail/CustomMail.js:839
 #: src/Admin/groups/Groups.js:325
 #: src/Admin/manage-event-ext/index.js:35
 msgid "Groups"
 msgstr "Grupy"
 
-#: src/Admin/AdminPages.php:198
-#: src/Admin/AdminPages.php:199
-#: src/Admin/AdminPages.php:205
+#: src/Admin/AdminPages.php:186
+#: src/Admin/AdminPages.php:187
+#: src/Admin/AdminPages.php:193
 msgid "Group Detail"
 msgstr "Szczegóły grupy"
 
-#: src/Admin/AdminPages.php:212
-#: src/Admin/AdminPages.php:213
+#: src/Admin/AdminPages.php:200
+#: src/Admin/AdminPages.php:201
 #: src/Admin/custom-mail/CustomMail.js:536
 #: src/Admin/custom-mail/CustomMail.js:552
 msgid "Custom Mail"
 msgstr "Niestandardowa poczta"
 
-#: src/Admin/AdminPages.php:221
-#: src/Admin/AdminPages.php:222
+#: src/Admin/AdminPages.php:209
+#: src/Admin/AdminPages.php:210
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:85
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:96
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:108
 msgid "Extra Messages"
 msgstr "Dodatkowe wiadomości"
 
-#: src/Admin/AdminPages.php:230
-#: src/Admin/AdminPages.php:231
-#: src/Admin/AdminPages.php:237
+#: src/Admin/AdminPages.php:218
+#: src/Admin/AdminPages.php:219
+#: src/Admin/AdminPages.php:225
 #: src/Admin/edit-extra-message/EditExtraMessage.js:152
 #: src/Admin/edit-extra-message/EditExtraMessage.js:170
 msgid "Edit Extra Message"
@@ -513,7 +508,7 @@ msgstr "Grupa została pomyślnie usunięta."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:204
-#, php-format, js-format
+#, php-format,js-format
 msgid "%s (copy)"
 msgstr "%s (kopia)"
 
@@ -699,83 +694,53 @@ msgstr "Token jest ważny!"
 msgid "Instagram Account"
 msgstr "Konto Instagram"
 
-#: src/API/InstagramPostsController.php:105
+#: src/API/InstagramPostsController.php:101
 msgid "Publicly accessible image URL."
 msgstr "Publicznie dostępny adres URL obrazu."
 
-#: src/API/InstagramPostsController.php:111
+#: src/API/InstagramPostsController.php:107
 msgid "Post caption."
 msgstr "Podpis postu."
 
-#: src/API/InstagramPostsController.php:117
-msgid "Temporary attachment to delete after a successful publish."
-msgstr "Tymczasowe załączenie do usunięcia po pomyślnym opublikowaniu."
-
-#: src/API/InstagramPostsController.php:138
+#: src/API/InstagramPostsController.php:128
 msgid "WordPress attachment ID."
 msgstr "Identyfikator załącznika WordPress."
 
-#: src/API/InstagramPostsController.php:158
-msgid "Base64-encoded PNG image data."
-msgstr "Dane obrazu PNG zakodowane w Base64."
-
-#: src/API/InstagramPostsController.php:231
+#: src/API/InstagramPostsController.php:200
 msgid "Image URL is required."
 msgstr "Wymagany jest adres URL obrazu."
 
-#: src/API/InstagramPostsController.php:240
+#: src/API/InstagramPostsController.php:209
 msgid "Caption is required."
 msgstr "Wymagany jest opis."
 
-#: src/API/InstagramPostsController.php:268
+#: src/API/InstagramPostsController.php:237
 msgid "Failed to create post record."
 msgstr "Nie udało się utworzyć rekordu postu."
 
-#: src/API/InstagramPostsController.php:301
+#: src/API/InstagramPostsController.php:263
 msgid "Post published successfully!"
 msgstr "Post opublikowany pomyślnie!"
 
-#: src/API/InstagramPostsController.php:329
+#: src/API/InstagramPostsController.php:291
 msgid "Post not found."
 msgstr "Post nie znaleziony."
 
-#: src/API/InstagramPostsController.php:337
+#: src/API/InstagramPostsController.php:299
 msgid "Failed to delete post."
 msgstr "Nie udało się usunąć postu."
 
-#: src/API/InstagramPostsController.php:345
+#: src/API/InstagramPostsController.php:307
 msgid "Post deleted successfully."
 msgstr "Post usunięty pomyślnie."
 
-#: src/API/InstagramPostsController.php:363
+#: src/API/InstagramPostsController.php:325
 msgid "Attachment is not a valid image."
 msgstr "Załącznik nie jest prawidłowym obrazem."
 
-#: src/API/InstagramPostsController.php:372
+#: src/API/InstagramPostsController.php:334
 msgid "Attachment file not found."
 msgstr "Plik załącznika nie znaleziony."
-
-#: src/API/InstagramPostsController.php:408
-msgid "Invalid base64 image data."
-msgstr "Nieprawidłowe dane obrazu w formacie Base64."
-
-#: src/API/InstagramPostsController.php:416
-msgid "Image is too large."
-msgstr "Obraz jest zbyt duży."
-
-#: src/API/InstagramPostsController.php:427
-msgid "Uploaded data is not a valid PNG image."
-msgstr "Przesłane dane nie są prawidłowym obrazem PNG."
-
-#. translators: %s: error message
-#: src/API/InstagramPostsController.php:444
-#, php-format
-msgid "Failed to store image: %s"
-msgstr "Nie udało się zapisać obrazu: %s"
-
-#: src/API/InstagramPostsController.php:464
-msgid "Failed to save uploaded image."
-msgstr "Nie udało się zapisać przesłanego obrazu."
 
 #: src/API/PhotoTagsController.php:196
 msgid "Failed to tag participant."
@@ -956,84 +921,76 @@ msgstr[0] "%1$d sprzedaż biletów na %2$s"
 msgstr[1] "%1$d sprzedaże biletów na %2$s"
 msgstr[2] "%1$d sprzedaży biletów na %2$s"
 
-#: src/Core/Features.php:178
+#: src/Core/Features.php:172
 msgid "Fees"
 msgstr "Opłaty"
 
-#: src/Core/Features.php:179
+#: src/Core/Features.php:173
 msgid "Event fees, fee payments, fee audit log."
 msgstr "Opłaty za imprezy, płatności opłat, dziennik audytu opłat."
 
-#: src/Core/Features.php:183
+#: src/Core/Features.php:177
 msgid "Attendee polls and responses."
 msgstr "Ankiety uczestników i odpowiedzi."
 
-#: src/Core/Features.php:190
+#: src/Core/Features.php:184
 #: templates/collaborator-profile.php:331
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Core/Features.php:191
+#: src/Core/Features.php:185
 msgid "Instagram post import and scheduled posting."
 msgstr "Import postów Instagram i zaplanowane publikowanie."
 
-#: src/Core/Features.php:195
+#: src/Core/Features.php:189
 msgid "Participant groups."
 msgstr "Grupy uczestników."
 
-#: src/Core/Features.php:199
+#: src/Core/Features.php:193
 msgid "Event collaborators."
 msgstr "Współpracownicy imprezy."
 
-#: src/Core/Features.php:202
+#: src/Core/Features.php:196
 msgid "Messaging"
 msgstr "Wiadomości"
 
-#: src/Core/Features.php:203
+#: src/Core/Features.php:197
 msgid "Custom mail, extra messages, scheduled messages."
 msgstr "Niestandardowa poczta, dodatkowe wiadomości, zaplanowane wiadomości."
 
-#: src/Core/Features.php:206
+#: src/Core/Features.php:200
 msgid "Image templates"
 msgstr "Szablony obrazów"
 
-#: src/Core/Features.php:207
+#: src/Core/Features.php:201
 msgid "Generated image templates."
 msgstr "Wygenerowane szablony obrazów."
 
-#: src/Core/Features.php:210
+#: src/Core/Features.php:204
 msgid "Timeline"
 msgstr "Oś czasu"
 
-#: src/Core/Features.php:211
+#: src/Core/Features.php:205
 msgid "Participant activity timeline."
 msgstr "Oś czasu aktywności uczestników."
 
-#: src/Core/Features.php:215
+#: src/Core/Features.php:209
 msgid "Bulk participant import."
 msgstr "Zbiorcze importowanie uczestników."
 
-#: src/Core/Features.php:218
-msgid "Weekly schedule"
-msgstr "Harmonogram tygodniowy"
-
-#: src/Core/Features.php:219
-msgid "Weekly schedule admin page."
-msgstr "Strona administracyjna harmonogramu tygodniowego."
-
-#: src/Core/Features.php:222
+#: src/Core/Features.php:212
 msgid "Invitations"
 msgstr "Zaproszenia"
 
-#: src/Core/Features.php:223
+#: src/Core/Features.php:213
 msgid "Event invitations, consumed by fair-events-experimental ticketing."
 msgstr "Zaproszenia na imprezy, wykorzystywane przez fair-events-experimental ticketing."
 
-#: src/Core/Features.php:226
+#: src/Core/Features.php:216
 msgid "Manage-event extensions"
 msgstr "Rozszerzenia Manage-event"
 
-#: src/Core/Features.php:227
+#: src/Core/Features.php:217
 msgid "The Mailings tab in the manage-event admin UI."
 msgstr "Karta Mailings w interfejsie administracyjnym manage-event."
 
@@ -2052,16 +2009,11 @@ msgstr "Zapisz funkcje"
 msgid "Fair Audience Experimental Settings"
 msgstr "Ustawienia eksperymentalne Fair Audience"
 
-#. Description of the plugin
-#: fair-audience-experimental.php
-msgid "Activates advanced feature bundles for Fair Audience (fees, polls, photos, Instagram, groups, collaborators, messaging, image templates, timeline, import, weekly schedule, invitations, manage-event-ext). Requires fair-audience."
-msgstr "Włącza zaawansowane pakiety funkcji dla Fair Audience (opłaty, ankiety, zdjęcia, Instagram, grupy, współpracownicy, wiadomości, szablony obrazków, oś czasu, import, harmonogram tygodniowy, zaproszenia, manage-event-ext). Wymaga fair-audience."
-
-#: src/Core/Features.php:186
+#: src/Core/Features.php:180
 msgid "Photos"
 msgstr "Zdjęcia"
 
-#: src/Core/Features.php:187
+#: src/Core/Features.php:181
 msgid "Participant photo uploads, photo authors and tags, media library hooks."
 msgstr "Przesyłanie zdjęć uczestników, autorzy zdjęć i tagi, haki biblioteki mediów."
 
@@ -2139,3 +2091,7 @@ msgstr "Ten członek nie ma adresu e-mail, dlatego nie można wysłać przypomni
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
 msgstr "Przypomnienia są wysyłane do wszystkich członków z oczekującymi płatnościami. Poczekaj, aż to się skończy, zanim wyślesz to."
 
+#. Description of the plugin
+#: fair-audience-experimental.php
+msgid "Activates advanced feature bundles for Fair Audience (fees, polls, photos, Instagram, groups, collaborators, messaging, image templates, timeline, import, invitations, manage-event-ext). Requires fair-audience."
+msgstr "Włącza zaawansowane pakiety funkcji dla Fair Audience (opłaty, ankiety, zdjęcia, Instagram, grupy, współpracownicy, wiadomości, szablony obrazków, oś czasu, import, zaproszenia, manage-event-ext). Wymaga fair-audience."
