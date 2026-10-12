@@ -20,6 +20,7 @@ Fair Audience is a WordPress plugin that helps you manage event participants. It
 * Participant interest levels (interested or signed up)
 * Admin interface for managing participants and viewing them by event
 * REST API for integration with other tools
+* Custom Mail: email the participants of one event date, with a recipient preview, per-person exclusions, marketing-consent checks and a history of sent messages
 * Weekly events email to subscribers who agreed to it, with an unsubscribe link and a separate weekly-summary opt-out. Its schedule and wording are managed in Fair Events → Event notifications; Fair Audience decides who receives it and sends it
 
 == Installation ==

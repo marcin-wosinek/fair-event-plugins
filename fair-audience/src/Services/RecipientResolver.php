@@ -262,10 +262,10 @@ class RecipientResolver {
 	 * Check if a participant has a valid email address.
 	 *
 	 * @param Participant $participant The participant to check.
-	 * @return bool True if the participant has a non-empty email.
+	 * @return bool True if the participant has a well-formed email address.
 	 */
 	public function has_valid_email( Participant $participant ): bool {
-		return ! empty( $participant->email );
+		return ! empty( $participant->email ) && (bool) is_email( $participant->email );
 	}
 
 	/**

@@ -2,10 +2,10 @@
 /**
  * Custom Mail Admin Page
  *
- * @package FairAudienceExperimental
+ * @package FairAudience
  */
 
-namespace FairAudienceExperimental\Admin;
+namespace FairAudience\Admin;
 
 defined( 'WPINC' ) || die;
 

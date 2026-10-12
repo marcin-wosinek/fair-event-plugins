@@ -2,10 +2,10 @@
 /**
  * Custom Mail Message Model
  *
- * @package FairAudienceExperimental
+ * @package FairAudience
  */
 
-namespace FairAudienceExperimental\Models;
+namespace FairAudience\Models;
 
 defined( 'WPINC' ) || die;
 
@@ -157,7 +157,7 @@ class CustomMailMessage {
 			}
 		}
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**

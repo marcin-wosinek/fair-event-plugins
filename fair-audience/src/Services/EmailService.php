@@ -354,7 +354,7 @@ class EmailService {
 				$results['failed'][] = array(
 					'name'   => $participant->name,
 					'email'  => '',
-					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+					'reason' => __( 'Participant has no valid email address.', 'fair-audience' ),
 				);
 				continue;
 			}
@@ -1026,6 +1026,12 @@ class EmailService {
 	/**
 	 * Send bulk custom mail to event participants.
 	 *
+	 * Recipients come from the same RecipientResolver selection the preview
+	 * shows: with an event date ID, only that occurrence's participants;
+	 * without one, every participant of the event. Eligibility (valid email,
+	 * marketing consent) is rechecked here for each recipient, so the preview
+	 * is never what authorizes a send.
+	 *
 	 * @param int    $event_id     Event ID.
 	 * @param string $subject      Email subject.
 	 * @param string $content      Email content (HTML).
@@ -1057,35 +1063,21 @@ class EmailService {
 			return $results;
 		}
 
-		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
-		$email_type            = $is_marketing ? EmailType::MARKETING : EmailType::MINIMAL;
+		$email_type           = $is_marketing ? EmailType::MARKETING : EmailType::MINIMAL;
+		$skip_participant_ids = array_map( 'intval', (array) $skip_participant_ids );
+		$recipients           = $this->preview_custom_mail_recipients( $event_id, $is_marketing, $labels, $group_ids, $event_date_id );
+		$handled              = array();
 
-		// Get participants signed up for this event.
-		$event_participants = $this->event_participant_repository->get_by_event( $event_id );
+		foreach ( $recipients as $recipient ) {
+			$participant_id = (int) $recipient['participant_id'];
 
-		foreach ( $event_participants as $ep ) {
-			// Only send to participants with matching labels.
-			if ( ! in_array( $ep->label, $labels, true ) ) {
+			// One delivery per participant, however many rows matched.
+			if ( isset( $handled[ $participant_id ] ) ) {
 				continue;
 			}
+			$handled[ $participant_id ] = true;
 
-			// Filter by group membership.
-			if ( ! empty( $group_ids ) && ! in_array( $ep->participant_id, $group_participant_ids, true ) ) {
-				continue;
-			}
-
-			// Skip manually excluded participants.
-			if ( ! empty( $skip_participant_ids ) && in_array( $ep->participant_id, $skip_participant_ids, true ) ) {
-				$participant          = $this->participant_repository->get_by_id( $ep->participant_id );
-				$results['skipped'][] = array(
-					'name'   => $participant ? $participant->name : '',
-					'email'  => $participant ? $participant->email : '',
-					'reason' => __( 'Manually skipped.', 'fair-audience' ),
-				);
-				continue;
-			}
-
-			$participant = $this->participant_repository->get_by_id( $ep->participant_id );
+			$participant = $this->participant_repository->get_by_id( $participant_id );
 
 			if ( ! $participant ) {
 				$results['failed'][] = array(
@@ -1096,11 +1088,21 @@ class EmailService {
 				continue;
 			}
 
+			// Skip manually excluded participants.
+			if ( in_array( $participant_id, $skip_participant_ids, true ) ) {
+				$results['skipped'][] = array(
+					'name'   => $participant->name,
+					'email'  => $participant->email,
+					'reason' => __( 'Manually skipped.', 'fair-audience' ),
+				);
+				continue;
+			}
+
 			if ( ! $this->has_valid_email( $participant ) ) {
 				$results['failed'][] = array(
 					'name'   => $participant->name,
-					'email'  => '',
-					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+					'email'  => (string) $participant->email,
+					'reason' => __( 'Participant has no valid email address.', 'fair-audience' ),
 				);
 				continue;
 			}
@@ -1177,7 +1179,7 @@ class EmailService {
 				$results['failed'][] = array(
 					'name'   => $participant->name,
 					'email'  => '',
-					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+					'reason' => __( 'Participant has no valid email address.', 'fair-audience' ),
 				);
 				continue;
 			}
@@ -1298,21 +1300,26 @@ class EmailService {
 	/**
 	 * Preview recipients for bulk custom mail to event participants.
 	 *
-	 * @param int   $event_id     Event ID.
-	 * @param bool  $is_marketing Whether to filter by marketing consent.
-	 * @param array $labels       Labels to include.
-	 * @param array $group_ids    Optional group IDs to limit recipients to.
+	 * @param int   $event_id      Event ID.
+	 * @param bool  $is_marketing  Whether to filter by marketing consent.
+	 * @param array $labels        Labels to include.
+	 * @param array $group_ids     Optional group IDs to limit recipients to.
+	 * @param int   $event_date_id Optional event date ID; when set, only that
+	 *                             occurrence's participants are returned.
 	 * @return array List of recipient info arrays.
 	 */
-	public function preview_custom_mail_recipients( $event_id, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $group_ids = array() ) {
-		return $this->recipient_resolver->resolve(
-			array(
-				'labels'       => $labels,
-				'group_ids'    => $group_ids,
-				'is_marketing' => $is_marketing,
-			),
-			$event_id
+	public function preview_custom_mail_recipients( $event_id, $is_marketing = true, $labels = array( 'signed_up', 'collaborator' ), $group_ids = array(), $event_date_id = 0 ) {
+		$filter = array(
+			'labels'       => $labels,
+			'group_ids'    => $group_ids,
+			'is_marketing' => $is_marketing,
 		);
+
+		if ( ! empty( $event_date_id ) ) {
+			return $this->recipient_resolver->resolve_by_event_date( $filter, $event_date_id );
+		}
+
+		return $this->recipient_resolver->resolve( $filter, $event_id );
 	}
 
 	/**
@@ -1491,7 +1498,7 @@ class EmailService {
 				$results['failed'][] = array(
 					'name'   => $participant->name,
 					'email'  => '',
-					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+					'reason' => __( 'Participant has no valid email address.', 'fair-audience' ),
 				);
 				continue;
 			}
@@ -2530,7 +2537,7 @@ class EmailService {
 				$results['failed'][] = array(
 					'name'   => $participant->name,
 					'email'  => '',
-					'reason' => __( 'Participant has no email address.', 'fair-audience' ),
+					'reason' => __( 'Participant has no valid email address.', 'fair-audience' ),
 				);
 				continue;
 			}

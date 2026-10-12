@@ -12,6 +12,10 @@
  * which needs an event fixture. It is exercised by the manual smoke checks
  * instead (TESTING.md).
  *
+ * Custom Mail is not a bundle page any more (#1784): Fair Audience owns its
+ * page and routes, so both stay available with every bundle off. The
+ * `messaging` bundle only adds the all-audience choice there.
+ *
  * The removed Weekly Schedule bundle (#1809) has its own block: its menu
  * entry, settings toggle and bookmarked page stay absent, whatever a stale
  * option, a filter or a constant says.
@@ -104,10 +108,6 @@ const BUNDLE_PAGES = {
 	],
 	messaging: [
 		{
-			slug: 'fair-audience-custom-mail',
-			root: 'fair-audience-custom-mail-root',
-		},
-		{
 			slug: 'fair-audience-extra-messages',
 			root: 'fair-audience-extra-messages-root',
 		},
@@ -128,7 +128,7 @@ const BUNDLE_PROBE_ROUTES = {
 	timeline: '/fair-audience/v1/timeline',
 	import: '/fair-audience/v1/import/entradium',
 	groups: '/fair-audience/v1/groups',
-	messaging: '/fair-audience/v1/custom-mail',
+	messaging: '/fair-audience/v1/extra-messages',
 	invitations: '/fair-audience/v1/event-dates/1/event-invitations',
 	photos: '/fair-audience/v1/photos/1/tags',
 };
@@ -211,6 +211,27 @@ test.describe('Fair Audience Experimental — all bundles off', () => {
 		}
 	});
 
+	test('Custom Mail stays in Fair Audience, limited to event emails', async ({
+		page,
+		request,
+	}) => {
+		await loginAsAdmin(page);
+		await expectRootMounts(
+			page,
+			'fair-audience-custom-mail',
+			'fair-audience-custom-mail-root'
+		);
+		await expect(
+			page
+				.getByRole('combobox', { name: 'Event' })
+				.locator('option', { hasText: 'All audience' })
+		).toHaveCount(0);
+
+		expect(
+			await routeIsRegistered(request, '/fair-audience/v1/custom-mail')
+		).toBe(true);
+	});
+
 	test('Settings page is reachable with every bundle off', async ({
 		page,
 	}) => {
@@ -253,6 +274,27 @@ test.describe('Fair Audience Experimental — all bundles on', () => {
 				`${bundle}: ${path} should be registered when its bundle is on`
 			).toBe(true);
 		}
+	});
+
+	test('Custom Mail mounts once and offers the all-audience choice', async ({
+		page,
+	}) => {
+		await loginAsAdmin(page);
+		await expectRootMounts(
+			page,
+			'fair-audience-custom-mail',
+			'fair-audience-custom-mail-root'
+		);
+		await expect(
+			page.locator(
+				'#adminmenu a[href="admin.php?page=fair-audience-custom-mail"]'
+			)
+		).toHaveCount(1);
+		await expect(
+			page
+				.getByRole('combobox', { name: 'Event' })
+				.locator('option', { hasText: 'All audience' })
+		).toHaveCount(1);
 	});
 
 	test('Settings page still mounts with every bundle on', async ({

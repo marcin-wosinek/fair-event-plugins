@@ -20,7 +20,7 @@ This plugin is a companion to Fair Audience. It carries the advanced feature bun
 * **Instagram** — Instagram post import and scheduling.
 * **Groups** — Participant groups.
 * **Collaborators** — Event collaborators.
-* **Messaging** — Custom mail, extra messages, scheduled messages.
+* **Messaging** — Custom mail to the whole audience, extra messages, scheduled messages.
 * **Image templates** — Generated image templates.
 * **Timeline** — Participant activity timeline.
 * **Import** — Bulk participant import.

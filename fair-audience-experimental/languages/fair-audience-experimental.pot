@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-11T06:53:37+00:00\n"
+"POT-Creation-Date: 2026-10-12T04:15:05+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience-experimental\n"
@@ -59,7 +59,6 @@ msgstr ""
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
 #: src/Core/Features.php:192
-#: src/Admin/custom-mail/CustomMail.js:797
 #: src/Admin/manage-event-ext/EventMailings.js:54
 msgid "Collaborators"
 msgstr ""
@@ -106,7 +105,6 @@ msgstr ""
 #: src/Admin/AdminPages.php:177
 #: src/Admin/AdminPages.php:178
 #: src/Core/Features.php:188
-#: src/Admin/custom-mail/CustomMail.js:839
 #: src/Admin/groups/Groups.js:325
 #: src/Admin/manage-event-ext/index.js:35
 msgid "Groups"
@@ -118,24 +116,17 @@ msgstr ""
 msgid "Group Detail"
 msgstr ""
 
-#: src/Admin/AdminPages.php:200
 #: src/Admin/AdminPages.php:201
-#: src/Admin/custom-mail/CustomMail.js:536
-#: src/Admin/custom-mail/CustomMail.js:552
-msgid "Custom Mail"
-msgstr ""
-
-#: src/Admin/AdminPages.php:209
-#: src/Admin/AdminPages.php:210
+#: src/Admin/AdminPages.php:202
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:85
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:96
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:108
 msgid "Extra Messages"
 msgstr ""
 
-#: src/Admin/AdminPages.php:218
-#: src/Admin/AdminPages.php:219
-#: src/Admin/AdminPages.php:225
+#: src/Admin/AdminPages.php:210
+#: src/Admin/AdminPages.php:211
+#: src/Admin/AdminPages.php:217
 #: src/Admin/edit-extra-message/EditExtraMessage.js:152
 #: src/Admin/edit-extra-message/EditExtraMessage.js:170
 msgid "Edit Extra Message"
@@ -288,23 +279,13 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: src/API/CustomMailController.php:257
-msgid "You do not have permission to manage custom mail."
+#: src/API/EventInvitationsController.php:107
+msgid "You do not have permission to send event invitations."
 msgstr ""
 
-#: src/API/CustomMailController.php:319
-#: src/API/CustomMailController.php:402
 #: src/API/EventInvitationsController.php:132
 #: src/API/ScheduledMessagesController.php:380
 msgid "Event date not found."
-msgstr ""
-
-#: src/API/CustomMailController.php:434
-msgid "Custom mail message not found."
-msgstr ""
-
-#: src/API/EventInvitationsController.php:107
-msgid "You do not have permission to send event invitations."
 msgstr ""
 
 #: src/API/EventInvitationsController.php:143
@@ -987,7 +968,7 @@ msgid "Messaging"
 msgstr ""
 
 #: src/Core/Features.php:197
-msgid "Custom mail, extra messages, scheduled messages."
+msgid "Custom mail to the whole audience, extra messages, scheduled messages."
 msgstr ""
 
 #: src/Core/Features.php:200
@@ -1133,7 +1114,6 @@ msgid "Register your profile information."
 msgstr ""
 
 #: templates/collaborator-profile.php:290
-#: src/Admin/custom-mail/CustomMail.js:934
 #: src/Admin/group-detail/GroupDetail.js:327
 #: src/Admin/group-detail/GroupDetail.js:467
 #: src/Admin/groups/Groups.js:62
@@ -1147,7 +1127,6 @@ msgid "Surname"
 msgstr ""
 
 #: templates/collaborator-profile.php:318
-#: src/Admin/custom-mail/CustomMail.js:940
 #: src/Admin/group-detail/GroupDetail.js:333
 msgid "Email"
 msgstr ""
@@ -1257,226 +1236,6 @@ msgstr ""
 msgid "Failed to send to:"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:84
-msgid "Failed to load data."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:362
-#: src/Admin/manage-event-ext/EventMailings.js:244
-msgid "Please enter a subject."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:374
-msgid "Please enter content."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:391
-msgid "Please select at least one audience type."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:428
-msgid "sent"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:435
-msgid "failed"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:443
-msgid "skipped"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:466
-msgid "Failed to send mail."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:483
-msgid "Are you sure you want to delete this record?"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:496
-msgid "Record deleted."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:512
-msgid "Failed to delete record."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:569
-msgid "Send Custom Mail"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:578
-#: src/Admin/custom-mail/CustomMail.js:1085
-#: src/Admin/manage-event-ext/EventMailings.js:393
-msgid "Subject"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:596
-#: src/Admin/edit-extra-message/EditExtraMessage.js:201
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:131
-msgid "Content"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:614
-#: src/Admin/manage-event-ext/MailBodyEditor.js:157
-msgid "Upload photos"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:622
-#: src/Admin/manage-event-ext/MailBodyEditor.js:162
-msgid "Insert photo upload link"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:633
-#: src/Admin/manage-event-ext/MailBodyEditor.js:173
-msgid "Open event page"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:643
-msgid "Select an event below to enable this link."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:650
-#: src/Admin/manage-event-ext/MailBodyEditor.js:181
-msgid "Insert event page link"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:665
-#: src/Admin/manage-event-ext/MailBodyEditor.js:196
-msgid "Search page…"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:742
-#: src/Admin/manage-event-ext/MailBodyEditor.js:261
-msgid "Insert token link"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:752
-#: src/Admin/custom-mail/CustomMail.js:1091
-msgid "Event"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:759
-msgid "-- All audience --"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:782
-msgid "Audience"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:788
-msgid "Participants"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:806
-#: src/Admin/manage-event-ext/EventMailings.js:50
-msgid "Interested"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:818
-msgid "Marketing"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:824
-msgid "If checked, only sends to participants who consented to marketing communications."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:851
-msgid "If selected, only sends to members of these groups."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:884
-msgid "Loading recipients..."
-msgstr ""
-
-#. translators: %1$d: active recipients count, %2$d: total count, %3$d: skipped count
-#: src/Admin/custom-mail/CustomMail.js:898
-#, js-format
-msgid "%1$d recipients (%2$d skipped)"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:928
-msgid "Skip"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:946
-msgid "Label"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:952
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:143
-msgid "Status"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1001
-msgid "No email"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1006
-msgid "No marketing"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1011
-#: src/Admin/custom-mail/CustomMail.js:1109
-msgid "Skipped"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1015
-msgid "Will send"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1035
-msgid "No matching recipients."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1049
-msgid "Sending..."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1053
-msgid "Send Mail"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1066
-msgid "Mail History"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1072
-msgid "No messages sent yet."
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1097
-msgid "Sent"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1103
-msgid "Failed"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1115
-msgid "Date"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1121
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:149
-#: src/Admin/group-detail/GroupDetail.js:339
-msgid "Actions"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1149
-#: src/Admin/groups/Groups.js:299
-#: src/Admin/groups/Groups.js:457
-#: src/Admin/manage-event-ext/EventMailings.js:722
-msgid "Duplicate"
-msgstr ""
-
-#: src/Admin/custom-mail/CustomMail.js:1161
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:212
-#: src/Admin/groups/Groups.js:306
-msgid "Delete"
-msgstr ""
-
 #: src/Admin/edit-extra-message/EditExtraMessage.js:110
 msgid "Please enter message content."
 msgstr ""
@@ -1484,6 +1243,11 @@ msgstr ""
 #: src/Admin/edit-extra-message/EditExtraMessage.js:156
 #: src/Admin/edit-extra-message/EditExtraMessage.js:171
 msgid "Add New Extra Message"
+msgstr ""
+
+#: src/Admin/edit-extra-message/EditExtraMessage.js:201
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:131
+msgid "Content"
 msgstr ""
 
 #: src/Admin/edit-extra-message/EditExtraMessage.js:212
@@ -1539,6 +1303,15 @@ msgstr ""
 msgid "No extra messages found. Create your first extra message to get started."
 msgstr ""
 
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:143
+msgid "Status"
+msgstr ""
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:149
+#: src/Admin/group-detail/GroupDetail.js:339
+msgid "Actions"
+msgstr ""
+
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:164
 msgid "All"
 msgstr ""
@@ -1553,6 +1326,11 @@ msgstr ""
 #: src/Admin/manage-event-ext/EventMailings.js:680
 #: src/Admin/manage-event-ext/GroupRules.js:592
 msgid "Edit"
+msgstr ""
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:212
+#: src/Admin/groups/Groups.js:306
+msgid "Delete"
 msgstr ""
 
 #: src/Admin/fee-detail/FeeDetail.js:575
@@ -1686,6 +1464,12 @@ msgstr ""
 msgid "View"
 msgstr ""
 
+#: src/Admin/groups/Groups.js:299
+#: src/Admin/groups/Groups.js:457
+#: src/Admin/manage-event-ext/EventMailings.js:722
+msgid "Duplicate"
+msgstr ""
+
 #: src/Admin/groups/Groups.js:331
 #: src/Admin/groups/Groups.js:358
 msgid "Create Group"
@@ -1761,8 +1545,16 @@ msgstr ""
 msgid "Registered"
 msgstr ""
 
+#: src/Admin/manage-event-ext/EventMailings.js:50
+msgid "Interested"
+msgstr ""
+
 #: src/Admin/manage-event-ext/EventMailings.js:155
 msgid "Could not load mailings."
+msgstr ""
+
+#: src/Admin/manage-event-ext/EventMailings.js:244
+msgid "Please enter a subject."
 msgstr ""
 
 #: src/Admin/manage-event-ext/EventMailings.js:254
@@ -1799,6 +1591,10 @@ msgstr ""
 
 #: src/Admin/manage-event-ext/EventMailings.js:384
 msgid "Schedule new mailing"
+msgstr ""
+
+#: src/Admin/manage-event-ext/EventMailings.js:393
+msgid "Subject"
 msgstr ""
 
 #: src/Admin/manage-event-ext/EventMailings.js:426
@@ -2045,6 +1841,30 @@ msgstr ""
 
 #: src/Admin/manage-event-ext/MailBodyEditor.js:130
 msgid "Body"
+msgstr ""
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:157
+msgid "Upload photos"
+msgstr ""
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:162
+msgid "Insert photo upload link"
+msgstr ""
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:173
+msgid "Open event page"
+msgstr ""
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:181
+msgid "Insert event page link"
+msgstr ""
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:196
+msgid "Search page…"
+msgstr ""
+
+#: src/Admin/manage-event-ext/MailBodyEditor.js:261
+msgid "Insert token link"
 msgstr ""
 
 #: src/Admin/manage-event-ext/MailBodyEditor.js:279

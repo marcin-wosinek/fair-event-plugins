@@ -1,0 +1,135 @@
+/* Custom Mail admin page. */
+
+.fair-audience-custom-mail .components-notice {
+	margin: 0 0 16px;
+}
+
+.fair-audience-custom-mail__compose {
+	margin-bottom: 32px;
+}
+
+.fair-audience-custom-mail__card-title {
+	margin: 0;
+}
+
+.fair-audience-custom-mail__compose form > * {
+	margin-bottom: 20px;
+}
+
+.fair-audience-custom-mail__label,
+.fair-audience-custom-mail__fieldset legend {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 600;
+}
+
+.fair-audience-custom-mail__fieldset .components-checkbox-control {
+	margin-bottom: 8px;
+}
+
+.fair-audience-custom-mail__help {
+	margin: 0 0 8px;
+	color: #50575e;
+}
+
+.fair-audience-custom-mail__editor textarea {
+	width: 100%;
+}
+
+.fair-audience-custom-mail__links,
+.fair-audience-custom-mail__page-link,
+.fair-audience-custom-mail__actions,
+.fair-audience-custom-mail__submit,
+.fair-audience-custom-mail__loading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.fair-audience-custom-mail__links {
+	margin: 8px 0;
+}
+
+.fair-audience-custom-mail__page-link {
+	position: relative;
+}
+
+.fair-audience-custom-mail__page-results {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 100;
+	width: 280px;
+	max-width: 80vw;
+	max-height: 200px;
+	margin: 0;
+	padding: 4px;
+	overflow: auto;
+	border: 1px solid #c3c4c7;
+	border-radius: 2px;
+	background: #fff;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+	list-style: none;
+}
+
+.fair-audience-custom-mail__page-results li {
+	margin: 0;
+}
+
+.fair-audience-custom-mail__page-results .components-button {
+	width: 100%;
+	justify-content: flex-start;
+}
+
+.fair-audience-custom-mail__submit .fair-audience-custom-mail__help {
+	margin: 0;
+}
+
+.fair-audience-custom-mail__outcomes {
+	margin: 0 0 8px 20px;
+	list-style: disc;
+}
+
+.fair-audience-custom-mail__table tr.is-not-receiving td {
+	color: #646970;
+}
+
+.fair-audience-custom-mail__table td {
+	overflow-wrap: anywhere;
+}
+
+/* Narrow screens: each row becomes a labelled block instead of a cramped row. */
+@media (max-width: 600px) {
+	.fair-audience-custom-mail__table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+	}
+
+	.fair-audience-custom-mail__table,
+	.fair-audience-custom-mail__table tbody,
+	.fair-audience-custom-mail__table tr {
+		display: block;
+		width: 100%;
+	}
+
+	.fair-audience-custom-mail__table tr {
+		padding: 8px 0;
+	}
+
+	.fair-audience-custom-mail__table td {
+		display: flex;
+		align-items: baseline;
+		gap: 12px;
+		padding: 4px 12px;
+	}
+
+	.fair-audience-custom-mail__table td::before {
+		flex: 0 0 88px;
+		content: attr(data-label);
+		font-weight: 600;
+	}
+}

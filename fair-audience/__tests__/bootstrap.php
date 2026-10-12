@@ -203,6 +203,18 @@ if ( ! function_exists( 'wp_timezone' ) ) {
 	}
 }
 
+if ( ! function_exists( 'is_email' ) ) {
+	/**
+	 * Stub of WordPress is_email().
+	 *
+	 * @param string $email Address to check.
+	 * @return string|false The address when well-formed, false otherwise.
+	 */
+	function is_email( $email ) {
+		return filter_var( $email, FILTER_VALIDATE_EMAIL );
+	}
+}
+
 if ( ! function_exists( 'sanitize_text_field' ) ) {
 	/**
 	 * Stub of WordPress sanitize_text_field().

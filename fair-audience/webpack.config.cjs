@@ -34,6 +34,10 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/participant-detail/index.js',
 		),
+		'admin/custom-mail/index': path.resolve(
+			process.cwd(),
+			'src/Admin/custom-mail/index.js',
+		),
 		'admin/manage-event-audience-tab/index': path.resolve(
 			process.cwd(),
 			'src/Admin/manage-event-audience-tab/index.js',
