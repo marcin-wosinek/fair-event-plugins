@@ -43,6 +43,7 @@ class AdminHooks {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'current_screen', array( $this, 'set_title_for_hidden_pages' ) );
+		add_action( 'admin_notices', array( $this, 'render_outdated_companion_notice' ) );
 		add_filter( 'parent_file', array( $this, 'fix_parent_file_for_hidden_pages' ) );
 		add_filter( 'submenu_file', array( $this, 'fix_submenu_file_for_hidden_pages' ), 10, 2 );
 
@@ -168,6 +169,19 @@ class AdminHooks {
 		// Hidden submenu page - Participant Detail.
 		$this->register_hidden_page( 'fair-audience-participant-detail' );
 
+		// Submenu page - Custom Mail. An outdated companion still registers
+		// this page itself; a notice says how to resolve that.
+		if ( ! \FairAudience\Services\CustomMailFeatures::outdated_companion_active() ) {
+			add_submenu_page(
+				'fair-audience',
+				__( 'Custom Mail', 'fair-audience' ),
+				__( 'Custom Mail', 'fair-audience' ),
+				'manage_options',
+				'fair-audience-custom-mail',
+				array( $this, 'render_custom_mail_page' )
+			);
+		}
+
 		// Submenu page - Weekly Digest. The weekly email is managed in Fair
 		// Events; this entry only leads there. It stays while Fair Events is
 		// inactive on a site that used the email, to say what is missing.
@@ -224,6 +238,34 @@ class AdminHooks {
 	public function render_participant_detail_page() {
 		$page = new ParticipantDetailPage();
 		$page->render();
+	}
+
+	/**
+	 * Render Custom Mail page.
+	 */
+	public function render_custom_mail_page() {
+		$page = new CustomMailPage();
+		$page->render();
+	}
+
+	/**
+	 * Tell administrators that an outdated companion plugin keeps Custom Mail
+	 * out of Fair Audience, on the Fair Audience screens.
+	 */
+	public function render_outdated_companion_notice() {
+		if ( ! current_user_can( 'manage_options' ) || ! \FairAudience\Services\CustomMailFeatures::outdated_companion_active() ) {
+			return;
+		}
+
+		$screen = get_current_screen();
+		if ( ! $screen || false === strpos( $screen->id, 'fair-audience' ) ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p>%s</p></div>',
+			esc_html__( 'Custom Mail is now part of Fair Audience. Update Fair Audience Experimental to its latest version, or deactivate it, to send emails to event participants from Fair Audience.', 'fair-audience' )
+		);
 	}
 
 	/**
@@ -290,6 +332,19 @@ class AdminHooks {
 		// Participant Detail page.
 		if ( 'admin_page_fair-audience-participant-detail' === $hook ) {
 			$this->enqueue_page_script( 'participant-detail', $plugin_dir );
+		}
+
+		// Custom Mail page.
+		if ( 'fair-audience_page_fair-audience-custom-mail' === $hook
+			&& ! \FairAudience\Services\CustomMailFeatures::outdated_companion_active() ) {
+			wp_enqueue_editor();
+			$this->enqueue_page_script( 'custom-mail', $plugin_dir );
+
+			wp_localize_script(
+				'fair-audience-custom-mail',
+				'fairAudienceCustomMailData',
+				\FairAudience\Services\CustomMailFeatures::for_script()
+			);
 		}
 
 		// Settings page.

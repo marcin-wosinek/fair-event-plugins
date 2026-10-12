@@ -171,6 +171,13 @@ class Plugin {
 
 		$event_interest_controller = new \FairAudience\API\EventInterestController();
 		$event_interest_controller->register_routes();
+
+		// An outdated companion still registers the Custom Mail routes itself;
+		// leave them alone so each send is processed once.
+		if ( ! \FairAudience\Services\CustomMailFeatures::outdated_companion_active() ) {
+			$custom_mail_controller = new \FairAudience\API\CustomMailController();
+			$custom_mail_controller->register_routes();
+		}
 	}
 
 	/**

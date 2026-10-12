@@ -308,14 +308,6 @@ class Plugin {
 			add_action(
 				'rest_api_init',
 				function () {
-					$controller = new \FairAudienceExperimental\API\CustomMailController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
 					$controller = new \FairAudienceExperimental\API\ExtraMessagesController();
 					$controller->register_routes();
 				}

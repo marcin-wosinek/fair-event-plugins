@@ -193,17 +193,9 @@ class AdminPages {
 			$this->set_hidden_page_title( $this->page_hooks['fair-audience-group-detail'], __( 'Group Detail', 'fair-audience-experimental' ) );
 		}
 
-		// Messaging — `messaging` bundle.
+		// Messaging — `messaging` bundle. Custom Mail itself lives in
+		// fair-audience; this bundle only unlocks all-audience sends there.
 		if ( \FairAudienceExperimental\Core\Features::is_enabled( 'messaging' ) ) {
-			$this->page_hooks['fair-audience-custom-mail'] = add_submenu_page(
-				$parent,
-				__( 'Custom Mail', 'fair-audience-experimental' ),
-				__( 'Custom Mail', 'fair-audience-experimental' ),
-				'manage_options',
-				'fair-audience-custom-mail',
-				array( $this, 'render_custom_mail_page' )
-			);
-
 			$this->page_hooks['fair-audience-extra-messages'] = add_submenu_page(
 				$parent,
 				__( 'Extra Messages', 'fair-audience-experimental' ),
@@ -357,11 +349,6 @@ class AdminPages {
 						'groupsListUrl' => admin_url( 'admin.php?page=fair-audience-groups' ),
 					)
 				);
-				break;
-
-			case 'fair-audience-custom-mail':
-				wp_enqueue_editor();
-				$this->enqueue_page_script( 'custom-mail', $exp_url, $exp_dir );
 				break;
 
 			case 'fair-audience-extra-messages':
@@ -518,16 +505,6 @@ class AdminPages {
 	 */
 	public function render_group_detail_page() {
 		$page = new \FairAudienceExperimental\Admin\GroupDetailPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Custom Mail page.
-	 *
-	 * @return void
-	 */
-	public function render_custom_mail_page() {
-		$page = new \FairAudienceExperimental\Admin\CustomMailPage();
 		$page->render();
 	}
 

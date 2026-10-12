@@ -8,6 +8,7 @@ import { createRoot } from '@wordpress/element';
  * Internal dependencies
  */
 import CustomMail from './CustomMail.js';
+import './style.css';
 
 /**
  * Initialize the Custom Mail page

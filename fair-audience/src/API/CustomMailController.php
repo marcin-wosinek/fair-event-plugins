@@ -2,12 +2,14 @@
 /**
  * Custom Mail REST API Controller
  *
- * @package FairAudienceExperimental
+ * @package FairAudience
  */
 
-namespace FairAudienceExperimental\API;
+namespace FairAudience\API;
 
-use FairAudienceExperimental\Database\CustomMailMessageRepository;
+use FairAudience\Database\CustomMailMessageRepository;
+use FairAudience\Models\CustomMailMessage;
+use FairAudience\Services\CustomMailFeatures;
 use FairAudience\Services\EmailService;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -45,7 +47,7 @@ class CustomMailController extends WP_REST_Controller {
 
 	/**
 	 * Group repository instance, or null when the `groups` bundle
-	 * (fair-audience-experimental) is not active.
+	 * (fair-audience-experimental) is not available.
 	 *
 	 * @var \FairAudienceExperimental\Database\GroupRepository|null
 	 */
@@ -57,7 +59,7 @@ class CustomMailController extends WP_REST_Controller {
 	public function __construct() {
 		$this->repository       = new CustomMailMessageRepository();
 		$this->email_service    = new EmailService();
-		$this->group_repository = class_exists( \FairAudienceExperimental\Database\GroupRepository::class )
+		$this->group_repository = CustomMailFeatures::groups_available()
 			? new \FairAudienceExperimental\Database\GroupRepository()
 			: null;
 	}
@@ -254,8 +256,9 @@ class CustomMailController extends WP_REST_Controller {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to manage custom mail.', 'fair-audience-experimental' ),
-				array( 'status' => 403 )
+				__( 'You do not have permission to manage custom mail.', 'fair-audience' ),
+				// 401 for a visitor who is not logged in, 403 otherwise.
+				array( 'status' => rest_authorization_required_code() )
 			);
 		}
 
@@ -282,6 +285,148 @@ class CustomMailController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Resolve the audience an email is addressed to.
+	 *
+	 * An unknown occurrence is an error; it never widens the send to the whole
+	 * audience. No occurrence at all means the whole audience, which only the
+	 * experimental messaging feature allows.
+	 *
+	 * @param int $event_date_id Event date ID, or 0 for the whole audience.
+	 * @return array{event_date_id:int,event_id:int|null}|WP_Error Scope or error.
+	 */
+	private function resolve_scope( $event_date_id ) {
+		$event_date_id = (int) $event_date_id;
+
+		if ( ! $event_date_id ) {
+			if ( ! CustomMailFeatures::all_audience_available() ) {
+				return new WP_Error(
+					'event_date_required',
+					__( 'Select the event whose participants should receive this email.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			return array(
+				'event_date_id' => 0,
+				'event_id'      => null,
+			);
+		}
+
+		global $wpdb;
+
+		// An occurrence of a series may carry the event only on its master.
+		$event_dates_table = $wpdb->prefix . 'fair_event_dates';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$event_id = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COALESCE( ed.event_id, m.event_id )
+				FROM %i ed
+				LEFT JOIN %i m ON ed.master_id = m.id
+				WHERE ed.id = %d',
+				$event_dates_table,
+				$event_dates_table,
+				$event_date_id
+			)
+		);
+
+		if ( ! $event_id || ! get_post( $event_id ) ) {
+			return new WP_Error(
+				'invalid_event_date',
+				__( 'Event date not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		return array(
+			'event_date_id' => $event_date_id,
+			'event_id'      => $event_id,
+		);
+	}
+
+	/**
+	 * Validate the recipient filter against the resolved scope.
+	 *
+	 * @param array $scope     Scope from resolve_scope().
+	 * @param array $labels    Requested participant labels.
+	 * @param array $group_ids Requested group IDs.
+	 * @return true|WP_Error True when valid.
+	 */
+	private function validate_filter( $scope, $labels, $group_ids ) {
+		if ( $scope['event_date_id'] && empty( $labels ) ) {
+			return new WP_Error(
+				'no_audience_selected',
+				__( 'Select at least one audience type.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! empty( $group_ids ) && ! $this->group_repository ) {
+			return new WP_Error(
+				'groups_unavailable',
+				__( 'Filtering by group is not available on this site.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Whether sanitized HTML has anything a recipient would see.
+	 *
+	 * Catches empty markup such as `<p>&nbsp;</p>` left behind by the editor.
+	 *
+	 * @param string $content Sanitized HTML.
+	 * @return bool
+	 */
+	private function has_visible_content( $content ) {
+		if ( false !== stripos( $content, '<img' ) ) {
+			return true;
+		}
+
+		$text = html_entity_decode( wp_strip_all_tags( $content ), ENT_QUOTES, 'UTF-8' );
+		$text = str_replace( "\xc2\xa0", ' ', $text );
+
+		return '' !== trim( $text );
+	}
+
+	/**
+	 * Validate the subject and sanitized body of a message.
+	 *
+	 * @param string $subject Sanitized subject.
+	 * @param string $content Sanitized HTML body.
+	 * @return true|WP_Error True when valid.
+	 */
+	private function validate_message( $subject, $content ) {
+		if ( '' === trim( (string) $subject ) ) {
+			return new WP_Error(
+				'empty_subject',
+				__( 'Enter a subject for the email.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! $this->has_visible_content( $content ) ) {
+			return new WP_Error(
+				'empty_content',
+				__( 'Write the email content before sending.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( false !== strpos( $content, '{photo_upload_url}' ) && ! CustomMailFeatures::photo_upload_available() ) {
+			return new WP_Error(
+				'unsupported_placeholder',
+				__( 'This email contains a photo upload link, which is not available on this site. Remove the link before sending.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
 	 * Send a custom mail and create a record.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -290,48 +435,36 @@ class CustomMailController extends WP_REST_Controller {
 	public function create_item( $request ) {
 		$subject              = $request->get_param( 'subject' );
 		$content              = wp_kses_post( $request->get_param( 'content' ) );
-		$event_date_id        = $request->get_param( 'event_date_id' );
 		$is_marketing         = $request->get_param( 'is_marketing' );
 		$labels               = $request->get_param( 'labels' );
 		$skip_participant_ids = $request->get_param( 'skip_participant_ids' );
 		$group_ids            = $request->get_param( 'group_ids' );
 
-		$event_id = null;
+		$valid = $this->validate_message( $subject, $content );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
 
-		if ( $event_date_id ) {
-			// Look up event_date to get event_id.
-			global $wpdb;
-			$event_dates_table = $wpdb->prefix . 'fair_event_dates';
+		$scope = $this->resolve_scope( $request->get_param( 'event_date_id' ) );
+		if ( is_wp_error( $scope ) ) {
+			return $scope;
+		}
 
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$event_date = $wpdb->get_row(
-				$wpdb->prepare(
-					'SELECT * FROM %i WHERE id = %d',
-					$event_dates_table,
-					$event_date_id
-				),
-				ARRAY_A
-			);
+		$valid = $this->validate_filter( $scope, $labels, $group_ids );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
 
-			if ( ! $event_date ) {
-				return new WP_Error(
-					'invalid_event_date',
-					__( 'Event date not found.', 'fair-audience-experimental' ),
-					array( 'status' => 404 )
-				);
-			}
-
-			$event_id = (int) $event_date['event_id'];
-
-			// Send to event participants filtered by labels.
+		if ( $scope['event_date_id'] ) {
+			// Send to the participants of this occurrence, filtered by labels.
 			$results = $this->email_service->send_bulk_custom_mail(
-				$event_id,
+				$scope['event_id'],
 				$subject,
 				$content,
 				$is_marketing,
 				$labels,
 				$skip_participant_ids,
-				$event_date_id,
+				$scope['event_date_id'],
 				$group_ids
 			);
 		} else {
@@ -345,21 +478,23 @@ class CustomMailController extends WP_REST_Controller {
 			);
 		}
 
-		// Save the record.
-		$message                = new \FairAudienceExperimental\Models\CustomMailMessage();
+		// Save the record. The emails are already out at this point, so a
+		// failed write is reported on its own rather than as a failed send.
+		$message                = new CustomMailMessage();
 		$message->subject       = $subject;
 		$message->content       = $content;
-		$message->event_date_id = $event_date_id ?: null;
-		$message->event_id      = $event_id;
+		$message->event_date_id = $scope['event_date_id'] ? $scope['event_date_id'] : null;
+		$message->event_id      = $scope['event_id'];
 		$message->is_marketing  = $is_marketing;
 		$message->sent_count    = count( $results['sent'] );
 		$message->failed_count  = count( $results['failed'] );
 		$message->skipped_count = count( $results['skipped'] );
-		$message->save();
+		$history_saved          = $message->save();
 
 		return rest_ensure_response(
 			array(
 				'success'       => true,
+				'history_saved' => (bool) $history_saved,
 				'sent_count'    => count( $results['sent'] ),
 				'failed_count'  => count( $results['failed'] ),
 				'skipped_count' => count( $results['skipped'] ),
@@ -373,43 +508,34 @@ class CustomMailController extends WP_REST_Controller {
 	/**
 	 * Preview recipients for a custom mail.
 	 *
+	 * Uses the same scope and filter rules as create_item(), so the list shown
+	 * is the list a send would walk.
+	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error Response object.
 	 */
 	public function preview_recipients( $request ) {
-		$event_date_id = $request->get_param( 'event_date_id' );
-		$is_marketing  = $request->get_param( 'is_marketing' );
-		$labels        = $request->get_param( 'labels' );
-		$group_ids     = $request->get_param( 'group_ids' );
+		$is_marketing = $request->get_param( 'is_marketing' );
+		$labels       = $request->get_param( 'labels' );
+		$group_ids    = $request->get_param( 'group_ids' );
 
-		if ( $event_date_id ) {
-			global $wpdb;
-			$event_dates_table = $wpdb->prefix . 'fair_event_dates';
+		$scope = $this->resolve_scope( $request->get_param( 'event_date_id' ) );
+		if ( is_wp_error( $scope ) ) {
+			return $scope;
+		}
 
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$event_date = $wpdb->get_row(
-				$wpdb->prepare(
-					'SELECT * FROM %i WHERE id = %d',
-					$event_dates_table,
-					$event_date_id
-				),
-				ARRAY_A
-			);
+		$valid = $this->validate_filter( $scope, $labels, $group_ids );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
 
-			if ( ! $event_date ) {
-				return new WP_Error(
-					'invalid_event_date',
-					__( 'Event date not found.', 'fair-audience-experimental' ),
-					array( 'status' => 404 )
-				);
-			}
-
-			$event_id   = (int) $event_date['event_id'];
+		if ( $scope['event_date_id'] ) {
 			$recipients = $this->email_service->preview_custom_mail_recipients(
-				$event_id,
+				$scope['event_id'],
 				$is_marketing,
 				$labels,
-				$group_ids
+				$group_ids,
+				$scope['event_date_id']
 			);
 		} else {
 			$recipients = $this->email_service->preview_custom_mail_recipients_all( $is_marketing, $group_ids );
@@ -431,7 +557,7 @@ class CustomMailController extends WP_REST_Controller {
 		if ( ! $message ) {
 			return new WP_Error(
 				'not_found',
-				__( 'Custom mail message not found.', 'fair-audience-experimental' ),
+				__( 'Custom mail message not found.', 'fair-audience' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -456,11 +582,13 @@ class CustomMailController extends WP_REST_Controller {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT ed.id, ed.event_id, ed.start_datetime, p.post_title
+				'SELECT ed.id, p.ID AS event_id, ed.start_datetime, p.post_title
 				FROM %i ed
-				INNER JOIN %i p ON ed.event_id = p.ID
+				LEFT JOIN %i m ON ed.master_id = m.id
+				INNER JOIN %i p ON COALESCE( ed.event_id, m.event_id ) = p.ID
 				WHERE p.post_status = %s
 				ORDER BY ed.start_datetime DESC',
+				$event_dates_table,
 				$event_dates_table,
 				$posts_table,
 				'publish'
@@ -470,17 +598,29 @@ class CustomMailController extends WP_REST_Controller {
 
 		$data = array_map(
 			function ( $row ) {
+				// start_datetime is a naive site-local string: format it as
+				// written, without shifting it by the site's UTC offset.
 				$date_display = '';
 				if ( ! empty( $row['start_datetime'] ) ) {
-					$date_display = wp_date( 'Y-m-d H:i', strtotime( $row['start_datetime'] ) );
+					$date_display = date_i18n(
+						get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
+						strtotime( $row['start_datetime'] )
+					);
 				}
+
+				$title = '' !== trim( (string) $row['post_title'] )
+					? $row['post_title']
+					: __( '(untitled event)', 'fair-audience' );
 
 				return array(
 					'id'             => (int) $row['id'],
 					'event_id'       => (int) $row['event_id'],
-					'title'          => $row['post_title'],
+					'title'          => $title,
 					'start_datetime' => $row['start_datetime'],
-					'display_label'  => $row['post_title'] . ( $date_display ? ' (' . $date_display . ')' : '' ),
+					'display_label'  => $date_display
+						/* translators: 1: event title, 2: event date and time */
+						? sprintf( __( '%1$s (%2$s)', 'fair-audience' ), $title, $date_display )
+						: $title,
 				);
 			},
 			$results
@@ -515,7 +655,7 @@ class CustomMailController extends WP_REST_Controller {
 	/**
 	 * Prepare message for response.
 	 *
-	 * @param \FairAudienceExperimental\Models\CustomMailMessage $message Message object.
+	 * @param CustomMailMessage $message Message object.
 	 * @return array Prepared data.
 	 */
 	private function prepare_message( $message ) {

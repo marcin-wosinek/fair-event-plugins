@@ -53,10 +53,6 @@ module.exports = {
       process.cwd(),
       "src/Admin/group-detail/index.js",
     ),
-    "admin/custom-mail/index": path.resolve(
-      process.cwd(),
-      "src/Admin/custom-mail/index.js",
-    ),
     "admin/extra-messages-list/index": path.resolve(
       process.cwd(),
       "src/Admin/extra-messages-list/index.js",

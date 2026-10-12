@@ -132,4 +132,21 @@ class RecipientResolverTest extends TestCase {
 			$resolver->can_receive_email( $this->participant( 'minimal', 'confirmed', false ), EmailType::WEEKLY_SUMMARY )
 		);
 	}
+
+	/**
+	 * Only a well-formed address counts as deliverable: a missing or
+	 * malformed one must be reported instead of handed to the mailer.
+	 */
+	public function test_has_valid_email_rejects_missing_and_malformed_addresses() {
+		$resolver    = new RecipientResolver();
+		$participant = $this->participant( 'marketing', 'confirmed' );
+
+		$participant->email = 'jane@example.test';
+		$this->assertTrue( $resolver->has_valid_email( $participant ) );
+
+		foreach ( array( '', null, 'not-an-email', 'jane@', '@example.test' ) as $email ) {
+			$participant->email = $email;
+			$this->assertFalse( $resolver->has_valid_email( $participant ), 'Address: ' . $email );
+		}
+	}
 }

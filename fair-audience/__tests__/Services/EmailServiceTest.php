@@ -170,6 +170,43 @@ class EmailServiceTest extends TestCase {
 	}
 
 	/**
+	 * A malformed address is not handed to the mailer by the custom-mail
+	 * senders either; callers report it as a recipient-level failure.
+	 */
+	public function test_custom_mail_skips_send_for_malformed_email(): void {
+		$email_service = new EmailService();
+
+		$participant        = $this->participant();
+		$participant->email = 'not-an-email';
+
+		$this->assertFalse( $email_service->send_custom_mail( $this->event(), $participant, 'Subject', '<p>Body</p>', 3 ) );
+		$this->assertFalse( $email_service->send_custom_mail_without_event( $participant, 'Subject', '<p>Body</p>' ) );
+		$this->assertCount( 0, $GLOBALS['_fair_test_sent_emails'] );
+	}
+
+	/**
+	 * A custom mail to a valid address is delivered once, with the body and
+	 * the manage-preferences footer.
+	 */
+	public function test_custom_mail_delivers_to_valid_email(): void {
+		$email_service = new EmailService();
+		$participant   = $this->participant();
+
+		// Marketing consent is required for the default (marketing) type.
+		$participant->email_profile = 'marketing';
+		$participant->status        = 'confirmed';
+
+		$this->assertTrue( $email_service->send_custom_mail( $this->event(), $participant, 'Subject', '<p>Body text</p>', 3 ) );
+		$this->assertCount( 1, $GLOBALS['_fair_test_sent_emails'] );
+
+		$sent = $GLOBALS['_fair_test_sent_emails'][0];
+		$this->assertSame( 'jane@example.test', $sent['to'] );
+		$this->assertSame( 'Subject', $sent['subject'] );
+		$this->assertStringContainsString( 'Body text', $sent['message'] );
+		$this->assertStringContainsString( 'Manage your preferences', $sent['message'] );
+	}
+
+	/**
 	 * With no event_date_id, FairEvents\Models\EventDates is never reached
 	 * (class_exists() guard no-ops), so no event URL is available and the
 	 * inline event-name mention stays bold-only.

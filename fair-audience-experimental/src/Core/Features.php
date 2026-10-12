@@ -78,7 +78,7 @@ class Features {
 			),
 			'messaging'        => array(
 				'label'       => 'Messaging',
-				'description' => 'Custom mail, extra messages, scheduled messages.',
+				'description' => 'Custom mail to the whole audience, extra messages, scheduled messages.',
 				'default'     => true,
 			),
 			'image-templates'  => array(
@@ -194,7 +194,7 @@ class Features {
 			),
 			'messaging'        => array(
 				'label'       => __( 'Messaging', 'fair-audience-experimental' ),
-				'description' => __( 'Custom mail, extra messages, scheduled messages.', 'fair-audience-experimental' ),
+				'description' => __( 'Custom mail to the whole audience, extra messages, scheduled messages.', 'fair-audience-experimental' ),
 			),
 			'image-templates'  => array(
 				'label'       => __( 'Image templates', 'fair-audience-experimental' ),
