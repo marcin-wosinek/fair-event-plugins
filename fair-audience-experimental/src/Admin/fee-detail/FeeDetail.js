@@ -130,6 +130,10 @@ export default function FeeDetail() {
 		target_budget_id: '',
 	} );
 	const [ isCreatingTransfer, setIsCreatingTransfer ] = useState( false );
+	const [ transferError, setTransferError ] = useState( null );
+	// Set synchronously so a second click cannot create a second transfer
+	// before the state above has re-rendered.
+	const transferCreateLock = useRef( false );
 
 	const loadFee = useCallback( () => {
 		if ( ! feeId ) return;
@@ -483,59 +487,96 @@ export default function FeeDetail() {
 			source_budget_id: '',
 			target_budget_id: fee?.budget_id ? fee.budget_id.toString() : '',
 		} );
+		setTransferError( null );
 		setIsTransferModalOpen( true );
 		loadBudgets();
 	};
 
-	const handleCreateTransfer = () => {
+	const closeTransferModal = () => {
+		if ( isCreatingTransfer ) {
+			return;
+		}
+		setIsTransferModalOpen( false );
+		setTransferPayment( null );
+		setTransferError( null );
+	};
+
+	const handleCreateTransfer = async () => {
+		if ( ! transferPayment || transferCreateLock.current ) {
+			return;
+		}
+
+		transferCreateLock.current = true;
 		setIsCreatingTransfer( true );
+		setTransferError( null );
 
 		const data = {
 			amount: parseFloat( transferData.amount ),
 			entry_date: transferData.entry_date,
 			source_budget_id: parseInt( transferData.source_budget_id, 10 ),
 			target_budget_id: parseInt( transferData.target_budget_id, 10 ),
-			description: transferData.description || null,
 			participant_id: transferPayment.participant_id,
 		};
+		// The endpoint declares the description as a string: omit it if empty.
+		const description = transferData.description.trim();
+		if ( description ) {
+			data.description = description;
+		}
 
-		apiFetch( {
-			path: '/fair-payments-connector/v1/financial-entries/transfer',
-			method: 'POST',
-			data,
-		} )
-			.then( () => {
-				return apiFetch( {
-					path: `/fair-audience/v1/fees/${ feeId }/payments/${ transferPayment.id }/mark-paid`,
-					method: 'POST',
-				} );
-			} )
-			.then( () => {
-				setIsTransferModalOpen( false );
-				setTransferPayment( null );
-				loadPayments();
-				setNotice( {
-					status: 'success',
-					message: __(
-						'Transfer created and payment marked as paid.',
-						'fair-audience'
-					),
-				} );
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience' ) +
-						( err.message ||
-							__(
-								'Failed to create transfer.',
-								'fair-audience'
-							) )
-				);
-			} )
-			.finally( () => {
-				setIsCreatingTransfer( false );
+		try {
+			await apiFetch( {
+				path: '/fair-finance/v1/financial-entries/transfer',
+				method: 'POST',
+				data,
 			} );
+		} catch ( err ) {
+			transferCreateLock.current = false;
+			setIsCreatingTransfer( false );
+			setTransferError(
+				err.message ||
+					__(
+						'The transfer could not be created.',
+						'fair-audience-experimental'
+					)
+			);
+			return;
+		}
+
+		// The transfer exists from here on: the dialog closes whatever happens
+		// next, so it cannot be submitted a second time.
+		let markedPaid = true;
+		try {
+			await apiFetch( {
+				path: `/fair-audience/v1/fees/${ feeId }/payments/${ transferPayment.id }/mark-paid`,
+				method: 'POST',
+			} );
+		} catch {
+			markedPaid = false;
+		}
+
+		transferCreateLock.current = false;
+		setIsCreatingTransfer( false );
+		setIsTransferModalOpen( false );
+		setTransferPayment( null );
+		loadPayments();
+
+		if ( markedPaid ) {
+			setNotice( {
+				status: 'success',
+				message: __(
+					'Transfer created and payment marked as paid.',
+					'fair-audience'
+				),
+			} );
+		} else {
+			setNotice( {
+				status: 'warning',
+				message: __(
+					'The transfer was created, but the payment could not be marked as paid. Mark the payment as paid from its row actions; do not create the transfer again.',
+					'fair-audience-experimental'
+				),
+			} );
+		}
 	};
 
 	// Send a reminder to one member.
@@ -1403,10 +1444,10 @@ export default function FeeDetail() {
 			{ isTransferModalOpen && transferPayment && (
 				<Modal
 					title={ __( 'Create Transfer', 'fair-audience' ) }
-					onRequestClose={ () => {
-						setIsTransferModalOpen( false );
-						setTransferPayment( null );
-					} }
+					onRequestClose={ closeTransferModal }
+					isDismissible={ ! isCreatingTransfer }
+					shouldCloseOnClickOutside={ ! isCreatingTransfer }
+					shouldCloseOnEsc={ ! isCreatingTransfer }
 					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<p>
@@ -1532,6 +1573,12 @@ export default function FeeDetail() {
 							</Notice>
 						) }
 
+					{ transferError && (
+						<Notice status="error" isDismissible={ false }>
+							{ transferError }
+						</Notice>
+					) }
+
 					<div
 						style={ {
 							display: 'flex',
@@ -1542,10 +1589,8 @@ export default function FeeDetail() {
 					>
 						<Button
 							variant="secondary"
-							onClick={ () => {
-								setIsTransferModalOpen( false );
-								setTransferPayment( null );
-							} }
+							onClick={ closeTransferModal }
+							disabled={ isCreatingTransfer }
 						>
 							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>

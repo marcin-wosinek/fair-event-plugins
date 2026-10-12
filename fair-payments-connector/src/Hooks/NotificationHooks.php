@@ -247,7 +247,7 @@ class NotificationHooks {
 			'event_url'              => admin_url( 'edit.php' ),
 			'participant_name'       => 'Sample Participant',
 			'participant_name_short' => 'Sample P.',
-			'participant_url'        => admin_url( 'admin.php?page=fair-audience-participants' ),
+			'participant_url'        => admin_url( 'admin.php?page=fair-audience' ),
 			'participant_email'      => 'sample@example.com',
 			'ticket_label'           => 'Regular',
 			'activities'             => 'Sample Activity A, Sample Activity B',

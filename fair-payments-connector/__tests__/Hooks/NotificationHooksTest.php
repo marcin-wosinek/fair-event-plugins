@@ -240,4 +240,37 @@ class NotificationHooksTest extends TestCase {
 
 		$this->assertCount( 2, $this->wpdb->inserts );
 	}
+
+	/**
+	 * The participant link in a test message opens a page Fair Audience
+	 * registers, not a slug that only resembles one.
+	 */
+	public function test_sample_participant_link_targets_a_registered_fair_audience_page() {
+		$url = NotificationHooks::sample_context()['participant_url'];
+
+		$this->assertStringStartsWith( admin_url( 'admin.php?page=' ), $url );
+
+		parse_str( (string) parse_url( $url, PHP_URL_QUERY ), $query ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- unit test runs without WordPress.
+
+		$this->assertContains( $query['page'], $this->fair_audience_page_slugs() );
+	}
+
+	/**
+	 * Admin page slugs Fair Audience registers: the slug that follows the
+	 * capability in each add_menu_page() / add_submenu_page() call, plus the
+	 * keys of the hidden-pages map.
+	 *
+	 * @return string[]
+	 */
+	private function fair_audience_page_slugs(): array {
+		$source = file_get_contents( dirname( __DIR__, 3 ) . '/fair-audience/src/Admin/AdminHooks.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- reads a local source file.
+
+		preg_match_all( "/'manage_options',\\s*'([a-z-]+)'/", $source, $menu );
+		preg_match_all( "/'(fair-audience-[a-z-]+)'\\s*=>\\s*array\\(/", $source, $hidden );
+
+		$slugs = array_merge( $menu[1], $hidden[1] );
+		$this->assertContains( 'fair-audience', $slugs, 'Fair Audience menu registration was not found.' );
+
+		return $slugs;
+	}
 }
