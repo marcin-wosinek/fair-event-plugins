@@ -85,6 +85,7 @@
 		"translation:pull": "node scripts/translation/sync-from-wporg.js",
 		"translation:export-for-wporg": "node scripts/translation/export-for-wporg.js",
 		"translation:coverage": "node scripts/translation/coverage-report.js",
+		"translation:wporg-status": "node scripts/translation/wporg-status.js",
 		"translation:validate": "node scripts/translation/validate-translations.js",
 		"translation:ai": "node scripts/translation/ai-translate.js"
 	},

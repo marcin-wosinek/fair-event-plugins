@@ -1,0 +1,8 @@
+{
+	"plugins": {
+		"fair-calendar-button": "fair-calendar-button",
+		"fair-events": "fair-events",
+		"fair-payments-connector": "fair-payments-connector",
+		"fair-timetable": "fair-timetable"
+	}
+}
