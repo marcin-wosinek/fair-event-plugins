@@ -221,6 +221,96 @@ npm run translation:coverage -- --plugin=fair-events
 npm run translation:coverage -- --markdown > TRANSLATION_STATUS.md
 ```
 
+### WordPress.org Translation Status
+
+`translation:coverage` measures the local `.po` catalogs. To see what is
+actually approved — or waiting for review — on
+[translate.wordpress.org](https://translate.wordpress.org/), use the remote
+status report:
+
+```bash
+# Every published plugin, stable and dev, every remote translation set
+npm run translation:wporg-status
+
+# One plugin / one locale
+npm run translation:wporg-status -- --plugin=fair-events --locale=es_ES
+
+# One branch only
+npm run translation:wporg-status -- --set=stable
+
+# JSON on stdout (diagnostics go to stderr), or JSON saved to a file
+npm run --silent translation:wporg-status -- --json > wporg-status.json
+npm run translation:wporg-status -- --output=wporg-status.json
+```
+
+**Options:** `--plugin=`, `--locale=`, `--set=stable|dev|both` (default `both`),
+`--json`, `--output=<file>`.
+
+The report is **read-only**. It reads no local catalog, submits nothing to
+WordPress.org, and writes a file only when `--output` asks for one. It is run
+by hand; nothing schedules it.
+
+**Scope.** The plugins reported are the ones listed in
+`scripts/translation/published-plugins.json`, which maps a workspace name to
+its WordPress.org slug. The report does not ask WordPress.org which plugins
+exist, so **update that file when a plugin is first published** (or removed
+from WordPress.org). Entries are checked against the root `package.json`
+workspaces and each plugin's main file; `fair-events-shared` and unpublished
+workspaces are not reported. `--plugin=` with an unpublished workspace or an
+unknown name is an error — a filter is never silently widened. Readme
+translation projects (`stable-readme`, `dev-readme`) are not included.
+
+**Locales and variants.** Every translation set WordPress.org returns is
+reported, whether or not the repository has a catalog for it — the four
+locales in `config.js` do not apply here. `--locale=` accepts the GlotPress
+locale (`de`, `es`, `pt-br`) or the WordPress locale (`de_DE`, `es_ES`,
+`de_DE_formal`). A GlotPress locale matches all of its variants (`de` matches
+both the default and the formal German set); a WordPress locale matches one.
+The variant is the translation-set slug (`default`, `formal`, …) and is kept
+apart from the branch (`stable` is the latest release, `dev` is trunk), so the
+two branches are never merged.
+
+**Metrics.** One row per plugin, branch and translation set:
+
+| Report field      | Terminal column | GlotPress field      | Meaning                                  |
+| ----------------- | --------------- | -------------------- | ---------------------------------------- |
+| `percentApproved` | Approved %      | `percent_translated` | Approved share, as GlotPress reports it  |
+| `approved`        | Approved        | `current_count`      | Strings with an approved translation     |
+| `waiting`         | Waiting         | `waiting_count`      | Suggestions awaiting review              |
+| `fuzzy`           | Fuzzy           | `fuzzy_count`        | Translations flagged for another look    |
+| `untranslated`    | Untranslated    | `untranslated_count` | Strings with no translation in any state |
+| `total`           | —               | `all_count`          | Strings in the branch                    |
+
+The percentage is never recomputed locally. A metric WordPress.org does not return is `null` in JSON and `unavailable` in
+the terminal; `0` always means a real zero.
+
+Each JSON row also carries `url` (the GlotPress page of that translation set),
+`sourceUrl` (the API response it was read from) and `retrievedAt`. The report
+itself has `schemaVersion`, `generatedAt`, the applied `filters`, one
+`responses` entry per branch that answered, and `errors`.
+
+**Failures.** A request that fails never shows up as zero coverage: it
+produces an entry in `errors` instead of rows, and rows from the requests
+that succeeded are still reported.
+
+| `category`        | Meaning                                                              |
+| ----------------- | -------------------------------------------------------------------- |
+| `missing-project` | WordPress.org has no translation project for the registered slug     |
+| `missing-branch`  | The project exists but has no such `stable`/`dev` branch             |
+| `missing-locale`  | The branch answered, but has no set for the requested `--locale`     |
+| `network`         | No answer: connection failure or the 20-second timeout               |
+| `http`            | Unexpected HTTP status (including 429/5xx that survived the retries) |
+| `parse`           | The answer was not the expected JSON structure                       |
+
+At most three requests run at once. Network failures, HTTP 429 and HTTP 5xx
+are retried up to twice with a short backoff. A branch that answers with no
+translation sets at all (and no `--locale` filter) is a successful, empty
+result — not an error.
+
+**Exit codes:** `0` everything requested was reported; `1` at least one entry
+in `errors` (the successful rows are still printed); `2` invalid invocation or
+registry, before any request is made.
+
 ### Validate Translations
 
 Check for placeholder mismatches, HTML tag errors, etc.:
@@ -383,10 +473,13 @@ scripts/translation/
 │   ├── po-parser.js            # PO file parsing library
 │   ├── po-writer.js            # PO file writing library
 │   ├── validators.js           # Validation functions
+│   ├── wporg-status.js         # WordPress.org translation status reader
 │   └── ai-providers.js         # AI API integrations (OpenAI, Claude)
+├── published-plugins.json      # Plugins published on WordPress.org
 ├── get-untranslated.js         # Extract untranslated strings
 ├── sync-from-wporg.js          # Pull community translations (WordPress.org wins)
 ├── coverage-report.js          # Coverage statistics
+├── wporg-status.js             # WordPress.org translation status (read-only)
 ├── validate-translations.js    # Validate integrity
 └── ai-translate.js             # AI-assisted translation
 ```

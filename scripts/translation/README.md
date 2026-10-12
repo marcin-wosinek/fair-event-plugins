@@ -61,6 +61,11 @@ npm run translation:coverage -- --plugin=fair-events
 npm run translation:coverage -- --markdown > TRANSLATION_STATUS.md
 ```
 
+This measures the local catalogs. For the approval status on WordPress.org
+(approved, waiting, fuzzy and untranslated counts per plugin, branch and
+locale), run `npm run translation:wporg-status` — see
+[TRANSLATIONS.md § WordPress.org Translation Status](../../TRANSLATIONS.md#wordpressorg-translation-status).
+
 ### 3. Validate Translations
 
 Check translation integrity (placeholders, HTML tags, formatting):
