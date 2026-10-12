@@ -21,6 +21,8 @@ import {
 	Spinner,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
+import useBudgets from '../components/useBudgets.js';
+import BudgetLoadStatus from '../components/BudgetLoadStatus.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -113,7 +115,13 @@ export default function FeeDetail() {
 	// Transfer modal.
 	const [ isTransferModalOpen, setIsTransferModalOpen ] = useState( false );
 	const [ transferPayment, setTransferPayment ] = useState( null );
-	const [ budgets, setBudgets ] = useState( [] );
+	// Reloaded each time the transfer modal opens.
+	const {
+		status: budgetsStatus,
+		budgets,
+		error: budgetsError,
+		load: loadBudgets,
+	} = useBudgets();
 	const [ transferData, setTransferData ] = useState( {
 		amount: '',
 		entry_date: '',
@@ -156,9 +164,6 @@ export default function FeeDetail() {
 	useEffect( () => {
 		loadFee();
 		loadPayments();
-		apiFetch( { path: '/fair-payments-connector/v1/budgets' } )
-			.then( ( data ) => setBudgets( data ) )
-			.catch( () => {} );
 	}, [ loadFee, loadPayments ] );
 
 	// Define fields configuration for DataViews.
@@ -479,6 +484,7 @@ export default function FeeDetail() {
 			target_budget_id: fee?.budget_id ? fee.budget_id.toString() : '',
 		} );
 		setIsTransferModalOpen( true );
+		loadBudgets();
 	};
 
 	const handleCreateTransfer = () => {
@@ -764,7 +770,7 @@ export default function FeeDetail() {
 				supportsBulk: false,
 			},
 		],
-		[ feeId, fee, budgets ]
+		[ feeId, fee, loadBudgets ]
 	);
 
 	const paginationInfo = useMemo(
@@ -831,6 +837,15 @@ export default function FeeDetail() {
 									{ __( 'Group:', 'fair-audience' ) }
 								</strong>{ ' ' }
 								{ fee.group_name || '—' }
+							</div>
+							<div>
+								<strong>
+									{ __(
+										'Budget:',
+										'fair-audience-experimental'
+									) }
+								</strong>{ ' ' }
+								{ fee.budget_name || '—' }
 							</div>
 							<div>
 								<strong>
@@ -1440,6 +1455,21 @@ export default function FeeDetail() {
 						}
 					/>
 
+					<BudgetLoadStatus
+						status={ budgetsStatus }
+						budgets={ budgets }
+						error={ budgetsError }
+						onRetry={ loadBudgets }
+						failureMessage={ __(
+							'A transfer needs a source and a target budget.',
+							'fair-audience-experimental'
+						) }
+						emptyMessage={ __(
+							'There are no budgets yet. Add budgets in Fair Finance to create a transfer.',
+							'fair-audience-experimental'
+						) }
+					/>
+
 					<SelectControl
 						label={ __( 'From Budget (Source)', 'fair-audience' ) }
 						value={ transferData.source_budget_id }
@@ -1462,6 +1492,7 @@ export default function FeeDetail() {
 								source_budget_id: value,
 							} )
 						}
+						disabled={ budgetsStatus === 'loading' }
 					/>
 
 					<SelectControl
@@ -1486,6 +1517,7 @@ export default function FeeDetail() {
 								target_budget_id: value,
 							} )
 						}
+						disabled={ budgetsStatus === 'loading' }
 					/>
 
 					{ transferData.source_budget_id &&

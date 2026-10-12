@@ -7,6 +7,10 @@
  * confirmation sends one request however often the button is clicked, and
  * each outcome (sent, mail failure, stale payment, failed refresh, send
  * that could not be recorded) gets its own feedback.
+ *
+ * Also covers the budgets offered by the transfer dialog (#1802): they come
+ * from Fair Finance when the dialog opens, and a load that is running, empty
+ * or failed each looks different.
  */
 import '@testing-library/jest-dom';
 import {
@@ -27,6 +31,12 @@ const PAYMENTS_PATH = `${ FEE_PATH }/payments`;
 const REMINDER_PATH = `${ PAYMENTS_PATH }/31/send-reminder`;
 const BULK_PATH = `${ FEE_PATH }/send-reminders`;
 const SENT_AT = '2026-10-08 09:30:00';
+const BUDGETS_PATH = '/fair-finance/v1/budgets';
+const STALE_BUDGETS_PATH = '/fair-payments-connector/v1/budgets';
+const BUDGETS = [
+	{ id: 11, name: 'Membership income' },
+	{ id: 12, name: 'Bank account' },
+];
 
 const FEE = {
 	id: 7,
@@ -146,6 +156,25 @@ async function openReminderDialog( name = 'Ada Example' ) {
  */
 const findNotice = ( text ) =>
 	screen.findByText( text, { selector: '.components-notice__content' } );
+
+/** Open the transfer dialog for a row and return it. */
+async function openTransferDialog( name = 'Ada Example' ) {
+	await openRowMenu( name );
+	fireEvent.click(
+		await screen.findByRole( 'menuitem', { name: 'Create Transfer' } )
+	);
+	return screen.findByRole( 'dialog', { name: 'Create Transfer' } );
+}
+
+const budgetSelects = ( dialog ) => [
+	within( dialog ).getByRole( 'combobox', { name: 'From Budget (Source)' } ),
+	within( dialog ).getByRole( 'combobox', { name: 'To Budget (Target)' } ),
+];
+
+const optionLabels = ( select ) =>
+	within( select )
+		.getAllByRole( 'option' )
+		.map( ( option ) => option.textContent );
 
 const sendButton = ( dialog ) =>
 	within( dialog ).getByRole( 'button', { name: 'Send Payment Reminder' } );
@@ -500,5 +529,116 @@ describe( 'FeeDetail — individual and bulk sends do not overlap', () => {
 			bulk.resolve( { sent: [ 'ada@example.test' ], failed: [] } );
 		} );
 		await waitFor( () => expect( sendButton( dialog ) ).toBeEnabled() );
+	} );
+} );
+
+describe( 'FeeDetail — budgets in the transfer dialog', () => {
+	const EMPTY_MESSAGE =
+		'There are no budgets yet. Add budgets in Fair Finance to create a transfer.';
+	const FAILURE_MESSAGE = 'Budgets could not be loaded.';
+
+	it( 'asks Fair Finance for budgets when the dialog opens and lists them by name', async () => {
+		mockApi( {
+			routes: { [ BUDGETS_PATH ]: () => Promise.resolve( BUDGETS ) },
+		} );
+		render( <FeeDetail /> );
+
+		await rowOf( 'Ada Example' );
+		expect( callsTo( BUDGETS_PATH ) ).toHaveLength( 0 );
+
+		const dialog = await openTransferDialog();
+		await within( dialog ).findAllByRole( 'option', {
+			name: 'Bank account',
+		} );
+		for ( const select of budgetSelects( dialog ) ) {
+			expect( optionLabels( select ) ).toEqual( [
+				'-- Select Budget --',
+				'Membership income',
+				'Bank account',
+			] );
+		}
+		expect( callsTo( BUDGETS_PATH ) ).toHaveLength( 1 );
+		expect( callsTo( STALE_BUDGETS_PATH ) ).toHaveLength( 0 );
+		expect(
+			within( dialog ).queryByText( FAILURE_MESSAGE )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'shows that budgets are loading and holds the selects until they arrive', async () => {
+		const pending = deferred();
+		mockApi( { routes: { [ BUDGETS_PATH ]: () => pending.promise } } );
+		render( <FeeDetail /> );
+
+		const dialog = await openTransferDialog();
+		expect(
+			within( dialog ).getByText( 'Loading budgets…' )
+		).toBeInTheDocument();
+		for ( const select of budgetSelects( dialog ) ) {
+			expect( select ).toBeDisabled();
+		}
+
+		await act( async () => {
+			pending.resolve( BUDGETS );
+		} );
+
+		expect(
+			within( dialog ).queryByText( 'Loading budgets…' )
+		).not.toBeInTheDocument();
+		for ( const select of budgetSelects( dialog ) ) {
+			expect( select ).toBeEnabled();
+		}
+	} );
+
+	it( 'says there are no budgets yet when the list is empty', async () => {
+		mockApi();
+		render( <FeeDetail /> );
+
+		const dialog = await openTransferDialog();
+		expect(
+			await within( dialog ).findByText( EMPTY_MESSAGE )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).queryByText( FAILURE_MESSAGE )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'reports a failed load, unlike an empty list, and loads the budgets on Retry', async () => {
+		let loads = 0;
+		mockApi( {
+			routes: {
+				[ BUDGETS_PATH ]: () => {
+					loads += 1;
+					return loads === 1
+						? Promise.reject( new Error( 'Network error' ) )
+						: Promise.resolve( BUDGETS );
+				},
+			},
+		} );
+		render( <FeeDetail /> );
+
+		const dialog = await openTransferDialog();
+		expect(
+			await within( dialog ).findByText( FAILURE_MESSAGE )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText(
+				'A transfer needs a source and a target budget.'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).queryByText( EMPTY_MESSAGE )
+		).not.toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Retry' } )
+		);
+
+		await within( dialog ).findAllByRole( 'option', {
+			name: 'Bank account',
+		} );
+		expect(
+			within( dialog ).queryByText( FAILURE_MESSAGE )
+		).not.toBeInTheDocument();
+		expect( callsTo( BUDGETS_PATH ) ).toHaveLength( 2 );
 	} );
 } );

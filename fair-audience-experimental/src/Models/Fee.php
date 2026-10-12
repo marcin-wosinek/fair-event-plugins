@@ -59,7 +59,7 @@ class Fee {
 	public $currency;
 
 	/**
-	 * Budget ID (optional link to fair-payments-connector budget).
+	 * Budget ID (optional link to a Fair Finance budget).
 	 *
 	 * @var int|null
 	 */

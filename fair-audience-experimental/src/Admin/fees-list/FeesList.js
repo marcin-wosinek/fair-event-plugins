@@ -12,6 +12,8 @@ import {
 	Tooltip,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
+import useBudgets from '../components/useBudgets.js';
+import BudgetLoadStatus from '../components/BudgetLoadStatus.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -62,8 +64,13 @@ export default function FeesList() {
 	// Groups for select.
 	const [ groups, setGroups ] = useState( [] );
 
-	// Budgets for select.
-	const [ budgets, setBudgets ] = useState( [] );
+	// Budgets for select, reloaded each time the create modal opens.
+	const {
+		status: budgetsStatus,
+		budgets,
+		error: budgetsError,
+		load: loadBudgets,
+	} = useBudgets();
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
@@ -224,17 +231,6 @@ export default function FeesList() {
 			} );
 	}, [] );
 
-	const loadBudgets = useCallback( () => {
-		apiFetch( { path: '/fair-payments-connector/v1/budgets' } )
-			.then( ( data ) => {
-				setBudgets( data );
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-console
-				console.error( 'Error loading budgets:', err );
-			} );
-	}, [] );
-
 	useEffect( () => {
 		loadFees();
 	}, [ loadFees ] );
@@ -242,10 +238,6 @@ export default function FeesList() {
 	useEffect( () => {
 		loadGroups();
 	}, [ loadGroups ] );
-
-	useEffect( () => {
-		loadBudgets();
-	}, [ loadBudgets ] );
 
 	// Open create modal.
 	const openCreateModal = () => {
@@ -256,6 +248,7 @@ export default function FeesList() {
 		setFeeDueDate( '' );
 		setFeeBudgetId( '' );
 		setIsCreateModalOpen( true );
+		loadBudgets();
 	};
 
 	// Handle create fee.
@@ -275,7 +268,9 @@ export default function FeesList() {
 				group_id: parseInt( feeGroupId ),
 				amount: parseFloat( feeAmount ),
 				due_date: feeDueDate || null,
-				budget_id: feeBudgetId ? parseInt( feeBudgetId ) : null,
+				budget_id: selectedBudgetId
+					? parseInt( selectedBudgetId, 10 )
+					: null,
 			},
 		} )
 			.then( () => {
@@ -419,6 +414,13 @@ export default function FeesList() {
 		...budgets.map( ( b ) => ( { label: b.name, value: String( b.id ) } ) ),
 	];
 
+	// A budget counts as selected only while it is in the loaded list.
+	const selectedBudgetId = budgets.some(
+		( b ) => String( b.id ) === feeBudgetId
+	)
+		? feeBudgetId
+		: '';
+
 	return (
 		<div className="wrap">
 			<h1>{ __( 'Membership Fees', 'fair-audience' ) }</h1>
@@ -498,12 +500,28 @@ export default function FeesList() {
 
 					<SelectControl
 						label={ __( 'Budget', 'fair-audience' ) }
-						value={ feeBudgetId }
+						value={ selectedBudgetId }
 						options={ budgetOptions }
 						onChange={ setFeeBudgetId }
+						disabled={ budgetsStatus === 'loading' }
 						help={ __(
 							'Optionally link to a budget for financial tracking.',
 							'fair-audience'
+						) }
+					/>
+
+					<BudgetLoadStatus
+						status={ budgetsStatus }
+						budgets={ budgets }
+						error={ budgetsError }
+						onRetry={ loadBudgets }
+						failureMessage={ __(
+							'You can still create this fee without a budget.',
+							'fair-audience-experimental'
+						) }
+						emptyMessage={ __(
+							'There are no budgets yet. Add one in Fair Finance to link fees to it.',
+							'fair-audience-experimental'
 						) }
 					/>
 
