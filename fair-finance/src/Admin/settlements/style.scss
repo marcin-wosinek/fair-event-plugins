@@ -128,6 +128,24 @@
 	.fair-finance-settlements-table code {
 		overflow-wrap: anywhere;
 	}
+
+	.fair-finance-settlements-parent {
+		margin-top: 2px;
+		color: #50575e;
+		font-size: 12px;
+	}
+
+	.fair-finance-settlements-totals {
+		th,
+		td {
+			font-weight: 600;
+			vertical-align: top;
+		}
+
+		.fair-finance-settlements-conflict {
+			font-weight: 400;
+		}
+	}
 }
 
 .wrap.fair-finance-settlements-page {
@@ -144,9 +162,28 @@
 			}
 
 			tbody,
+			tfoot,
 			tr,
+			th,
 			td {
 				display: block;
+			}
+
+			// The parent payment of a refund or capture sits under its own ID.
+			.fair-finance-settlements-parent {
+				flex-basis: 100%;
+			}
+
+			// The totals row keeps its heading and drops its filler cell.
+			.fair-finance-settlements-totals {
+				th {
+					padding: 6px 0;
+					border: none;
+				}
+
+				td:empty {
+					display: none;
+				}
 			}
 
 			tr {

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-11T15:15:14+00:00\n"
+"POT-Creation-Date: 2026-10-12T14:05:27+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-finance\n"
@@ -605,7 +605,7 @@ msgid "Settlement file"
 msgstr ""
 
 #: src/Admin/settlements/components/CsvImportModal.js:242
-#: src/Admin/settlements/components/SettlementDetail.js:259
+#: src/Admin/settlements/components/SettlementDetail.js:283
 #: src/Admin/settlements/components/SettlementList.js:63
 msgid "Mollie account"
 msgstr ""
@@ -649,8 +649,8 @@ msgid "Settlement reference"
 msgstr ""
 
 #: src/Admin/settlements/components/CsvImportModal.js:362
-#: src/Admin/settlements/components/SettlementDetail.js:331
-#: src/Admin/settlements/components/SettlementDetail.js:367
+#: src/Admin/settlements/components/SettlementDetail.js:366
+#: src/Admin/settlements/components/SettlementDetail.js:402
 msgid "Rows"
 msgstr ""
 
@@ -664,7 +664,7 @@ msgstr[1] ""
 
 #. translators: 1: movement type, 2: number of rows
 #: src/Admin/settlements/components/CsvImportModal.js:382
-#: src/Admin/settlements/components/SettlementDetail.js:374
+#: src/Admin/settlements/components/SettlementDetail.js:409
 #, js-format
 msgid "%1$s (%2$d)"
 msgstr ""
@@ -721,157 +721,157 @@ msgstr ""
 msgid "Load settlements from Mollie"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:43
+#: src/Admin/settlements/components/SettlementDetail.js:47
 msgid "This settlement has not been fully loaded from Mollie yet. What is shown may be missing movements."
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:55
+#: src/Admin/settlements/components/SettlementDetail.js:59
 msgid "This settlement comes from an uploaded file. The payout amount, dates and Mollie status are not in the file and stay unknown until the settlement is loaded from Mollie."
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:63
+#: src/Admin/settlements/components/SettlementDetail.js:67
 msgid "Every page Mollie lists for this settlement was loaded, but Mollie gave no summary that confirms the payout amount. The movements below may not be the whole payout."
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:103
+#: src/Admin/settlements/components/SettlementDetail.js:125
 #: src/Admin/settlements/components/SettlementList.js:149
 #: src/Admin/settlements/components/SettlementList.js:170
 #: src/Admin/settlements/format.js:31
 msgid "Unknown"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:115
+#: src/Admin/settlements/components/SettlementDetail.js:139
 #: src/Admin/settlements/SettlementsApp.js:187
 msgid "← All settlements"
 msgstr ""
 
 #. translators: %s: settlement reference
-#: src/Admin/settlements/components/SettlementDetail.js:122
+#: src/Admin/settlements/components/SettlementDetail.js:146
 #, js-format
 msgid "Settlement %s"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:136
+#: src/Admin/settlements/components/SettlementDetail.js:160
 msgid "Refresh from Mollie"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:147
+#: src/Admin/settlements/components/SettlementDetail.js:171
 msgid "This settlement belongs to a different Mollie organization than the one connected, so it cannot be refreshed."
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:158
+#: src/Admin/settlements/components/SettlementDetail.js:182
 msgid "Refreshing from Mollie…"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:175
+#: src/Admin/settlements/components/SettlementDetail.js:199
 msgid "Try again"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:186
+#: src/Admin/settlements/components/SettlementDetail.js:210
 msgid "Refreshed from Mollie."
 msgstr ""
 
 #. translators: %s: date and time
-#: src/Admin/settlements/components/SettlementDetail.js:201
+#: src/Admin/settlements/components/SettlementDetail.js:225
 #, js-format
 msgid "The last attempt to load this settlement from Mollie failed on %s."
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:210
+#: src/Admin/settlements/components/SettlementDetail.js:234
 msgid "The data below is from the last complete load."
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:219
+#: src/Admin/settlements/components/SettlementDetail.js:243
 msgid "To review"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:232
+#: src/Admin/settlements/components/SettlementDetail.js:256
 #: src/Admin/settlements/components/SettlementList.js:96
 #: src/Admin/settlements/components/SettlementList.js:153
 msgid "Payout"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:237
+#: src/Admin/settlements/components/SettlementDetail.js:261
 msgid "Payout reference"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:241
+#: src/Admin/settlements/components/SettlementDetail.js:265
 msgid "Payout amount"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:247
+#: src/Admin/settlements/components/SettlementDetail.js:271
 msgid "Currency"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:250
+#: src/Admin/settlements/components/SettlementDetail.js:274
 #: src/Admin/settlements/components/SettlementList.js:97
 #: src/Admin/settlements/components/SettlementList.js:164
 msgid "Mollie status"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:253
+#: src/Admin/settlements/components/SettlementDetail.js:277
 #: src/Admin/settlements/components/SettlementList.js:95
 #: src/Admin/settlements/components/SettlementList.js:142
 msgid "Paid out"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:256
+#: src/Admin/settlements/components/SettlementDetail.js:280
 msgid "Created"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:266
+#: src/Admin/settlements/components/SettlementDetail.js:290
 #: src/Admin/settlements/components/SettlementList.js:133
 msgid "Not confirmed"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:275
+#: src/Admin/settlements/components/SettlementDetail.js:299
 msgid "Mollie settlement ID"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:282
+#: src/Admin/settlements/components/SettlementDetail.js:317
 msgid "Mollie invoice"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:285
-#: src/Admin/settlements/components/SettlementDetail.js:328
-#: src/Admin/settlements/components/SettlementDetail.js:357
-#: src/Admin/settlements/components/SettlementDetail.js:538
-#: src/Admin/settlements/components/SettlementDetail.js:640
-#: src/Admin/settlements/components/SettlementDetail.js:705
-#: src/Admin/settlements/components/SettlementDetail.js:743
+#: src/Admin/settlements/components/SettlementDetail.js:320
+#: src/Admin/settlements/components/SettlementDetail.js:363
+#: src/Admin/settlements/components/SettlementDetail.js:392
+#: src/Admin/settlements/components/SettlementDetail.js:573
+#: src/Admin/settlements/components/SettlementDetail.js:713
+#: src/Admin/settlements/components/SettlementDetail.js:825
+#: src/Admin/settlements/components/SettlementDetail.js:863
 #: src/Admin/settlements/components/SettlementList.js:98
 #: src/Admin/settlements/components/SettlementList.js:173
 msgid "Source"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:289
+#: src/Admin/settlements/components/SettlementDetail.js:324
 msgid "Last loaded from Mollie"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:296
-#: src/Admin/settlements/components/SettlementDetail.js:304
+#: src/Admin/settlements/components/SettlementDetail.js:331
+#: src/Admin/settlements/components/SettlementDetail.js:339
 msgid "Never"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:300
+#: src/Admin/settlements/components/SettlementDetail.js:335
 msgid "Last file import"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:314
+#: src/Admin/settlements/components/SettlementDetail.js:349
 msgid "What was loaded"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:318
+#: src/Admin/settlements/components/SettlementDetail.js:353
 msgid "Totals are kept per source and are never added together. The payout amount above is what Mollie reported, not a sum of these rows."
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:334
-#: src/Admin/settlements/components/SettlementDetail.js:383
+#: src/Admin/settlements/components/SettlementDetail.js:369
+#: src/Admin/settlements/components/SettlementDetail.js:418
 msgid "Total settled"
 msgstr ""
 
 #. translators: %d: number of payments
-#: src/Admin/settlements/components/SettlementDetail.js:403
+#: src/Admin/settlements/components/SettlementDetail.js:438
 #, js-format
 msgid "%d payment was settled through its captures and is not counted on top of them."
 msgid_plural "%d payments were settled through their captures and are not counted on top of them."
@@ -879,120 +879,141 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: date and time
-#: src/Admin/settlements/components/SettlementDetail.js:426
+#: src/Admin/settlements/components/SettlementDetail.js:461
 #, js-format
 msgid "Differences in the file uploaded on %s"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:436
+#: src/Admin/settlements/components/SettlementDetail.js:471
 msgid "This file was not applied. The saved data is unchanged."
 msgstr ""
 
 #. translators: 1: Mollie reference or description, 2: saved amount, 3: amount in the file
-#: src/Admin/settlements/components/SettlementDetail.js:446
+#: src/Admin/settlements/components/SettlementDetail.js:481
 #, js-format
 msgid "%1$s: saved %2$s, file says %3$s"
 msgstr ""
 
 #. translators: 1: Mollie reference or description, 2: amount
-#: src/Admin/settlements/components/SettlementDetail.js:463
+#: src/Admin/settlements/components/SettlementDetail.js:498
 #, js-format
 msgid "Only in the file: %1$s (%2$s)"
 msgstr ""
 
 #. translators: 1: Mollie reference or description, 2: amount
-#: src/Admin/settlements/components/SettlementDetail.js:480
+#: src/Admin/settlements/components/SettlementDetail.js:515
 #, js-format
 msgid "Missing from the file: %1$s (%2$s)"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:500
+#: src/Admin/settlements/components/SettlementDetail.js:535
 msgid "Movements"
 msgstr ""
 
 #. translators: %d: number of payments
-#: src/Admin/settlements/components/SettlementDetail.js:507
+#: src/Admin/settlements/components/SettlementDetail.js:542
 #, js-format
 msgid "%d payment is not in this site’s transactions yet. Its reference is kept and links up once the payment is imported."
 msgid_plural "%d payments are not in this site’s transactions yet. Their references are kept and link up once the payments are imported."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:519
+#: src/Admin/settlements/components/SettlementDetail.js:554
 msgid "No movements are saved for this settlement."
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:528
-#: src/Admin/settlements/components/SettlementDetail.js:551
-#: src/Admin/settlements/components/SettlementDetail.js:700
-#: src/Admin/settlements/components/SettlementDetail.js:712
+#: src/Admin/settlements/components/SettlementDetail.js:563
+#: src/Admin/settlements/components/SettlementDetail.js:586
+#: src/Admin/settlements/components/SettlementDetail.js:820
+#: src/Admin/settlements/components/SettlementDetail.js:832
 msgid "Type"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:530
-#: src/Admin/settlements/components/SettlementDetail.js:570
+#: src/Admin/settlements/components/SettlementDetail.js:565
+#: src/Admin/settlements/components/SettlementDetail.js:605
 msgid "Reference"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:533
-#: src/Admin/settlements/components/SettlementDetail.js:580
-#: src/Admin/settlements/components/SettlementDetail.js:702
-#: src/Admin/settlements/components/SettlementDetail.js:720
+#: src/Admin/settlements/components/SettlementDetail.js:568
+#: src/Admin/settlements/components/SettlementDetail.js:653
+#: src/Admin/settlements/components/SettlementDetail.js:822
+#: src/Admin/settlements/components/SettlementDetail.js:840
 msgid "Description"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:535
-#: src/Admin/settlements/components/SettlementDetail.js:592
+#: src/Admin/settlements/components/SettlementDetail.js:570
+#: src/Admin/settlements/components/SettlementDetail.js:665
 msgid "Date"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:536
-#: src/Admin/settlements/components/SettlementDetail.js:603
-#: src/Admin/settlements/components/SettlementDetail.js:704
-#: src/Admin/settlements/components/SettlementDetail.js:732
+#: src/Admin/settlements/components/SettlementDetail.js:571
+#: src/Admin/settlements/components/SettlementDetail.js:676
+#: src/Admin/settlements/components/SettlementDetail.js:824
+#: src/Admin/settlements/components/SettlementDetail.js:852
 msgid "Amount"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:537
-#: src/Admin/settlements/components/SettlementDetail.js:614
+#: src/Admin/settlements/components/SettlementDetail.js:572
+#: src/Admin/settlements/components/SettlementDetail.js:687
+#: src/Admin/settlements/components/SettlementDetail.js:757
 msgid "Settled"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:540
-#: src/Admin/settlements/components/SettlementDetail.js:648
+#: src/Admin/settlements/components/SettlementDetail.js:575
+#: src/Admin/settlements/components/SettlementDetail.js:721
 msgid "Local payment"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:561
+#: src/Admin/settlements/components/SettlementDetail.js:596
 msgid "Review"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:586
-#: src/Admin/settlements/components/SettlementDetail.js:726
+#: src/Admin/settlements/components/SettlementDetail.js:628
+msgid "For payment <payment />"
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:659
+#: src/Admin/settlements/components/SettlementDetail.js:846
 msgid "(no description)"
 msgstr ""
 
 #. translators: %s: amount stated in the uploaded file
-#: src/Admin/settlements/components/SettlementDetail.js:628
+#: src/Admin/settlements/components/SettlementDetail.js:701
 #, js-format
 msgid "File says %s"
 msgstr ""
 
 #. translators: %d: transaction ID
-#: src/Admin/settlements/components/SettlementDetail.js:659
+#: src/Admin/settlements/components/SettlementDetail.js:732
 #, js-format
 msgid "Transaction #%d"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:669
+#: src/Admin/settlements/components/SettlementDetail.js:742
 msgid "Not imported yet"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:687
+#: src/Admin/settlements/components/SettlementDetail.js:754
+msgid "Totals"
+msgstr ""
+
+#. translators: %d: number of rows
+#: src/Admin/settlements/components/SettlementDetail.js:775
+#, js-format
+msgid "Partial: %d row with an unknown amount is left out."
+msgid_plural "Partial: %d rows with unknown amounts are left out."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:794
+msgid "Totals add up the Settled column of the rows above. They are not the payout amount and do not confirm it."
+msgstr ""
+
+#: src/Admin/settlements/components/SettlementDetail.js:807
 msgid "Summed rows and fees"
 msgstr ""
 
-#: src/Admin/settlements/components/SettlementDetail.js:692
+#: src/Admin/settlements/components/SettlementDetail.js:812
 msgid "These rows are totals reported by the source, not single movements. They may cover the same money as the movements above, so they are shown apart and not added to them."
 msgstr ""
 

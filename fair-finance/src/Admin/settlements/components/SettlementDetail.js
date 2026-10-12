@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { createInterpolateElement } from '@wordpress/element';
 import {
 	Button,
 	Card,
@@ -22,6 +23,9 @@ import {
 	completenessBadge,
 	formatDatetime,
 	formatMoney,
+	molliePaymentUrl,
+	mollieSettlementUrl,
+	settledTotals,
 	settlementName,
 	sourcesLabel,
 	typeLabel,
@@ -83,6 +87,24 @@ const Fact = ( { label, children } ) => (
 );
 
 /**
+ * A Mollie ID that opens its record in the Mollie dashboard, or the plain ID
+ * when there is no address for it.
+ *
+ * @param {Object}      props
+ * @param {string|null} props.href     Mollie dashboard URL.
+ * @param {*}           props.children The ID as shown.
+ * @return {JSX.Element} Link or plain ID.
+ */
+const MollieLink = ( { href, children } ) =>
+	href ? (
+		<a href={ href } target="_blank" rel="noopener noreferrer">
+			{ children }
+		</a>
+	) : (
+		children
+	);
+
+/**
  * One saved settlement: payout facts, where they came from, and movements.
  *
  * @param {Object}      props
@@ -107,6 +129,8 @@ export default function SettlementDetail( {
 	const failedRun = ! working && run?.resumable;
 	const api = settlement.revisions.api;
 	const csv = settlement.revisions.csv;
+	const organizationId = settlement.account?.organization_id;
+	const settled = settledTotals( settlement.movements );
 
 	return (
 		<>
@@ -277,7 +301,18 @@ export default function SettlementDetail( {
 								'fair-finance'
 							) }
 						>
-							{ settlement.provider_id || unknown }
+							{ settlement.provider_id ? (
+								<MollieLink
+									href={ mollieSettlementUrl(
+										organizationId,
+										settlement.provider_id
+									) }
+								>
+									{ settlement.provider_id }
+								</MollieLink>
+							) : (
+								unknown
+							) }
 						</Fact>
 						<Fact label={ __( 'Mollie invoice', 'fair-finance' ) }>
 							{ settlement.invoice_id || unknown }
@@ -572,9 +607,47 @@ export default function SettlementDetail( {
 												'fair-finance'
 											) }
 										>
-											<code>
-												{ movement.external_id }
-											</code>
+											<MollieLink
+												href={ molliePaymentUrl(
+													organizationId,
+													movement.external_id
+												) }
+											>
+												<code>
+													{ movement.external_id }
+												</code>
+											</MollieLink>
+											{ movement.payment_reference !==
+												movement.external_id &&
+												molliePaymentUrl(
+													organizationId,
+													movement.payment_reference
+												) && (
+													<div className="fair-finance-settlements-parent">
+														{ createInterpolateElement(
+															__(
+																'For payment <payment />',
+																'fair-finance'
+															),
+															{
+																payment: (
+																	<MollieLink
+																		href={ molliePaymentUrl(
+																			organizationId,
+																			movement.payment_reference
+																		) }
+																	>
+																		<code>
+																			{
+																				movement.payment_reference
+																			}
+																		</code>
+																	</MollieLink>
+																),
+															}
+														) }
+													</div>
+												) }
 										</td>
 										<td
 											data-label={ __(
@@ -675,7 +748,54 @@ export default function SettlementDetail( {
 									</tr>
 								) ) }
 							</tbody>
+							<tfoot>
+								<tr className="fair-finance-settlements-totals">
+									<th scope="row" colSpan={ 5 }>
+										{ __( 'Totals', 'fair-finance' ) }
+									</th>
+									<td
+										data-label={ __(
+											'Settled',
+											'fair-finance'
+										) }
+									>
+										<div>
+											{ settled.totals.map( ( total ) => (
+												<div key={ total.currency }>
+													{ formatMoney(
+														total.amount,
+														total.currency
+													) }
+												</div>
+											) ) }
+											{ settled.unknown > 0 && (
+												<div className="fair-finance-settlements-conflict">
+													{ sprintf(
+														/* translators: %d: number of rows */
+														_n(
+															'Partial: %d row with an unknown amount is left out.',
+															'Partial: %d rows with unknown amounts are left out.',
+															settled.unknown,
+															'fair-finance'
+														),
+														settled.unknown
+													) }
+												</div>
+											) }
+										</div>
+									</td>
+									<td colSpan={ 2 } />
+								</tr>
+							</tfoot>
 						</table>
+					) }
+					{ settlement.movements.length > 0 && (
+						<p className="description">
+							{ __(
+								'Totals add up the Settled column of the rows above. They are not the payout amount and do not confirm it.',
+								'fair-finance'
+							) }
+						</p>
 					) }
 				</CardBody>
 			</Card>

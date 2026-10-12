@@ -127,3 +127,109 @@ export const settlementName = ( settlement ) =>
 	settlement.reference ||
 	settlement.provider_id ||
 	__( '(no reference)', 'fair-finance' );
+
+/**
+ * Check that a value is an ID Mollie issues, so it is safe inside an address.
+ *
+ * @param {*}      id     Value to check.
+ * @param {string} prefix What the ID has to start with, such as `tr_`.
+ * @return {boolean} Whether the value is such an ID.
+ */
+const isMollieId = ( id, prefix ) =>
+	typeof id === 'string' &&
+	id.startsWith( prefix ) &&
+	/^[A-Za-z0-9]+$/.test( id.slice( prefix.length ) );
+
+/**
+ * Address of a payment in the Mollie dashboard. The organization is the one
+ * the settlement was saved under, which may not be the one connected now;
+ * without it Mollie looks the payment up in whichever organization is open.
+ *
+ * @param {string|null} organizationId Mollie organization of the settlement.
+ * @param {string|null} paymentId      Mollie payment ID, such as `tr_abc`.
+ * @return {string|null} URL, or null when this is not a payment ID.
+ */
+export const molliePaymentUrl = ( organizationId, paymentId ) => {
+	if ( ! isMollieId( paymentId, 'tr_' ) ) {
+		return null;
+	}
+	return isMollieId( organizationId, 'org_' )
+		? `https://my.mollie.com/dashboard/${ encodeURIComponent(
+				organizationId
+		  ) }/payments/${ encodeURIComponent( paymentId ) }`
+		: `https://www.mollie.com/dashboard/payments/${ encodeURIComponent(
+				paymentId
+		  ) }`;
+};
+
+/**
+ * Where the Mollie dashboard shows a settlement. Mollie has no page per
+ * settlement, so this is the settlements report of the organization the
+ * settlement was saved under; without that organization there is no address.
+ *
+ * @param {string|null} organizationId Mollie organization of the settlement.
+ * @param {string|null} settlementId   Mollie settlement ID, such as `stl_abc`.
+ * @return {string|null} URL, or null when either ID is missing or malformed.
+ */
+export const mollieSettlementUrl = ( organizationId, settlementId ) =>
+	isMollieId( settlementId, 'stl_' ) && isMollieId( organizationId, 'org_' )
+		? `https://my.mollie.com/dashboard/${ encodeURIComponent(
+				organizationId
+		  ) }/reports/settlements`
+		: null;
+
+const DECIMAL = /^(-?)(\d+)(?:\.(\d+))?$/;
+
+/**
+ * Add up the Settled values of movement rows, per currency. The stored decimal
+ * strings are summed as integers, so no amount passes through a float.
+ *
+ * @param {Object[]} movements Movement rows.
+ * @return {{totals: Array<{currency: string, amount: string}>, unknown: number}}
+ *         One total per currency in order of first appearance, and how many
+ *         rows had no usable amount or currency and were left out.
+ */
+export const settledTotals = ( movements ) => {
+	const sums = new Map();
+	let unknown = 0;
+
+	movements.forEach( ( movement ) => {
+		const currency = movement.settlement_currency;
+		const match =
+			typeof movement.settlement_amount === 'string'
+				? DECIMAL.exec( movement.settlement_amount )
+				: null;
+		if ( ! currency || ! match ) {
+			unknown++;
+			return;
+		}
+
+		const [ , sign, whole, fraction = '' ] = match;
+		const sum = sums.get( currency ) || { units: BigInt( 0 ), scale: 0 };
+		const scale = Math.max( sum.scale, fraction.length );
+		const units = BigInt( whole + fraction.padEnd( scale, '0' ) );
+
+		sums.set( currency, {
+			units:
+				sum.units * BigInt( `1${ '0'.repeat( scale - sum.scale ) }` ) +
+				( sign ? -units : units ),
+			scale,
+		} );
+	} );
+
+	return {
+		totals: [ ...sums ].map( ( [ currency, { units, scale } ] ) => {
+			const negative = units < BigInt( 0 );
+			const digits = ( negative ? -units : units )
+				.toString()
+				.padStart( scale + 1, '0' );
+			const whole = digits.slice( 0, digits.length - scale );
+			const amount = scale
+				? `${ whole }.${ digits.slice( -scale ) }`
+				: whole;
+
+			return { currency, amount: negative ? `-${ amount }` : amount };
+		} ),
+		unknown,
+	};
+};
