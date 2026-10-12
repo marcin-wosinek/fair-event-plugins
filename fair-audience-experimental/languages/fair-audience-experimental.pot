@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-12T04:15:05+00:00\n"
+"POT-Creation-Date: 2026-10-12T14:30:44+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience-experimental\n"
@@ -189,7 +189,7 @@ msgstr ""
 
 #: src/Admin/MediaBatchActions.php:257
 #: src/Admin/edit-extra-message/EditExtraMessage.js:272
-#: src/Admin/fee-detail/FeeDetail.js:1006
+#: src/Admin/fee-detail/FeeDetail.js:1021
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
 #: src/Admin/groups/Groups.js:449
@@ -1183,12 +1183,12 @@ msgstr ""
 
 #: templates/fee-payment.php:385
 #: templates/fee-payment.php:459
-#: src/Admin/fee-detail/FeeDetail.js:949
+#: src/Admin/fee-detail/FeeDetail.js:964
 msgid "Fee:"
 msgstr ""
 
 #: templates/fee-payment.php:389
-#: src/Admin/fee-detail/FeeDetail.js:955
+#: src/Admin/fee-detail/FeeDetail.js:970
 msgid "Amount:"
 msgstr ""
 
@@ -1218,6 +1218,23 @@ msgstr ""
 
 #: templates/fee-payment.php:497
 msgid "Payment is taking longer than expected. Please reload this page to check the status."
+msgstr ""
+
+#: src/Admin/components/BudgetLoadStatus.js:34
+msgid "Loading budgets…"
+msgstr ""
+
+#: src/Admin/components/BudgetLoadStatus.js:43
+msgid "Budgets are unavailable because Fair Finance is not active."
+msgstr ""
+
+#: src/Admin/components/BudgetLoadStatus.js:47
+msgid "Budgets could not be loaded."
+msgstr ""
+
+#: src/Admin/components/BudgetLoadStatus.js:58
+#: src/Admin/manage-event-ext/GroupRules.js:465
+msgid "Retry"
 msgstr ""
 
 #. translators: %d: number of emails sent
@@ -1333,51 +1350,71 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:575
+#: src/Admin/fee-detail/FeeDetail.js:581
 msgid "The payment reminder could not be sent."
 msgstr ""
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:618
+#: src/Admin/fee-detail/FeeDetail.js:624
 #, js-format
 msgid "Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again."
 msgstr ""
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:630
+#: src/Admin/fee-detail/FeeDetail.js:636
 #, js-format
 msgid "Payment reminder sent to %s."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:726
-#: src/Admin/fee-detail/FeeDetail.js:903
-#: src/Admin/fee-detail/FeeDetail.js:1018
+#: src/Admin/fee-detail/FeeDetail.js:732
+#: src/Admin/fee-detail/FeeDetail.js:918
+#: src/Admin/fee-detail/FeeDetail.js:1033
 msgid "Send Payment Reminder"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:914
+#: src/Admin/fee-detail/FeeDetail.js:843
+msgid "Budget:"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:929
 msgid "One reminder email will be sent to this member only."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:930
+#: src/Admin/fee-detail/FeeDetail.js:945
 msgid "Member:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:936
+#: src/Admin/fee-detail/FeeDetail.js:951
 #: src/Admin/group-detail/GroupDetail.js:357
 msgid "(unnamed)"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:943
+#: src/Admin/fee-detail/FeeDetail.js:958
 msgid "Email:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:969
+#: src/Admin/fee-detail/FeeDetail.js:984
 msgid "This member has no email address, so a reminder cannot be sent."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:979
+#: src/Admin/fee-detail/FeeDetail.js:994
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1463
+msgid "A transfer needs a source and a target budget."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1467
+msgid "There are no budgets yet. Add budgets in Fair Finance to create a transfer."
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:518
+msgid "You can still create this fee without a budget."
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:522
+msgid "There are no budgets yet. Add one in Fair Finance to link fees to it."
 msgstr ""
 
 #: src/Admin/group-detail/GroupDetail.js:50
@@ -1759,10 +1796,6 @@ msgstr ""
 
 #: src/Admin/manage-event-ext/GroupRules.js:429
 msgid "Group Rules"
-msgstr ""
-
-#: src/Admin/manage-event-ext/GroupRules.js:465
-msgid "Retry"
 msgstr ""
 
 #: src/Admin/manage-event-ext/GroupRules.js:473

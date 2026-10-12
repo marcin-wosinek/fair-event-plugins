@@ -185,7 +185,7 @@ msgstr "Wszystkie wybrane zdjęcia będą przypisane temu autorowi."
 
 #: src/Admin/MediaBatchActions.php:257
 #: src/Admin/edit-extra-message/EditExtraMessage.js:272
-#: src/Admin/fee-detail/FeeDetail.js:1006
+#: src/Admin/fee-detail/FeeDetail.js:1021
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
 #: src/Admin/groups/Groups.js:449
@@ -1147,12 +1147,12 @@ msgstr "Ta opłata została już zapłacona. Dziękuję!"
 
 #: templates/fee-payment.php:385
 #: templates/fee-payment.php:459
-#: src/Admin/fee-detail/FeeDetail.js:949
+#: src/Admin/fee-detail/FeeDetail.js:964
 msgid "Fee:"
 msgstr "Opłata:"
 
 #: templates/fee-payment.php:389
-#: src/Admin/fee-detail/FeeDetail.js:955
+#: src/Admin/fee-detail/FeeDetail.js:970
 msgid "Amount:"
 msgstr "Kwota:"
 
@@ -1366,7 +1366,7 @@ msgstr "Członkowie"
 msgid "No members in this group."
 msgstr "Brak członków w tej grupie."
 
-#: src/Admin/fee-detail/FeeDetail.js:936
+#: src/Admin/fee-detail/FeeDetail.js:951
 #: src/Admin/group-detail/GroupDetail.js:357
 msgid "(unnamed)"
 msgstr "(bez nazwy)"
@@ -1833,6 +1833,7 @@ msgstr "Zdjęcia"
 msgid "Participant photo uploads, photo authors and tags, media library hooks."
 msgstr "Przesyłanie zdjęć uczestników, autorzy zdjęć i tagi, haki biblioteki mediów."
 
+#: src/Admin/components/BudgetLoadStatus.js:58
 #: src/Admin/manage-event-ext/GroupRules.js:465
 msgid "Retry"
 msgstr "Spróbuj ponownie"
@@ -1865,45 +1866,45 @@ msgstr "Przypomnienie zostało wysłane, ale nie można było go zapisać na pł
 msgid "Payment reminder sent."
 msgstr "Przypomnienie o płatności wysłane."
 
-#: src/Admin/fee-detail/FeeDetail.js:575
+#: src/Admin/fee-detail/FeeDetail.js:581
 msgid "The payment reminder could not be sent."
 msgstr "Nie można było wysłać przypomnienia o płatności."
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:618
+#: src/Admin/fee-detail/FeeDetail.js:624
 #, js-format
 msgid "Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again."
 msgstr "Przypomnienie o płatności wysłane do %s, ale nie można było odświeżyć tej strony. Przeładuj stronę, aby zobaczyć datę przypomnienia; wiadomość e-mail nie musi być wysyłana ponownie."
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:630
+#: src/Admin/fee-detail/FeeDetail.js:636
 #, js-format
 msgid "Payment reminder sent to %s."
 msgstr "Przypomnienie o płatności wysłane do %s."
 
-#: src/Admin/fee-detail/FeeDetail.js:726
-#: src/Admin/fee-detail/FeeDetail.js:903
-#: src/Admin/fee-detail/FeeDetail.js:1018
+#: src/Admin/fee-detail/FeeDetail.js:732
+#: src/Admin/fee-detail/FeeDetail.js:918
+#: src/Admin/fee-detail/FeeDetail.js:1033
 msgid "Send Payment Reminder"
 msgstr "Wyślij przypomnienie o płatności"
 
-#: src/Admin/fee-detail/FeeDetail.js:914
+#: src/Admin/fee-detail/FeeDetail.js:929
 msgid "One reminder email will be sent to this member only."
 msgstr "Jedno wiadomość e-mail z przypomnieniem zostanie wysłana tylko do tego członka."
 
-#: src/Admin/fee-detail/FeeDetail.js:930
+#: src/Admin/fee-detail/FeeDetail.js:945
 msgid "Member:"
 msgstr "Członek:"
 
-#: src/Admin/fee-detail/FeeDetail.js:943
+#: src/Admin/fee-detail/FeeDetail.js:958
 msgid "Email:"
 msgstr "E-mail:"
 
-#: src/Admin/fee-detail/FeeDetail.js:969
+#: src/Admin/fee-detail/FeeDetail.js:984
 msgid "This member has no email address, so a reminder cannot be sent."
 msgstr "Ten członek nie ma adresu e-mail, dlatego nie można wysłać przypomnienia."
 
-#: src/Admin/fee-detail/FeeDetail.js:979
+#: src/Admin/fee-detail/FeeDetail.js:994
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
 msgstr "Przypomnienia są wysyłane do wszystkich członków z oczekującymi płatnościami. Poczekaj, aż to się skończy, zanim wyślesz to."
 
@@ -1915,3 +1916,35 @@ msgstr "Włącza zaawansowane pakiety funkcji dla Fair Audience (opłaty, ankiet
 #: src/Core/Features.php:197
 msgid "Custom mail to the whole audience, extra messages, scheduled messages."
 msgstr ""
+
+#: src/Admin/components/BudgetLoadStatus.js:34
+msgid "Loading budgets…"
+msgstr "Ładowanie budżetów…"
+
+#: src/Admin/components/BudgetLoadStatus.js:43
+msgid "Budgets are unavailable because Fair Finance is not active."
+msgstr "Budżety są niedostępne, ponieważ Fair Finance nie jest aktywne."
+
+#: src/Admin/components/BudgetLoadStatus.js:47
+msgid "Budgets could not be loaded."
+msgstr "Nie udało się wczytać budżetów."
+
+#: src/Admin/fee-detail/FeeDetail.js:843
+msgid "Budget:"
+msgstr "Budżet:"
+
+#: src/Admin/fee-detail/FeeDetail.js:1463
+msgid "A transfer needs a source and a target budget."
+msgstr "Przelew wymaga budżetu źródłowego i docelowego."
+
+#: src/Admin/fee-detail/FeeDetail.js:1467
+msgid "There are no budgets yet. Add budgets in Fair Finance to create a transfer."
+msgstr "Nie ma jeszcze żadnych budżetów. Dodaj budżety w Fair Finance, aby utworzyć przelew."
+
+#: src/Admin/fees-list/FeesList.js:518
+msgid "You can still create this fee without a budget."
+msgstr "Nadal możesz utworzyć tę opłatę bez budżetu."
+
+#: src/Admin/fees-list/FeesList.js:522
+msgid "There are no budgets yet. Add one in Fair Finance to link fees to it."
+msgstr "Nie ma jeszcze żadnych budżetów. Dodaj budżet w Fair Finance, aby powiązać z nim opłaty."
