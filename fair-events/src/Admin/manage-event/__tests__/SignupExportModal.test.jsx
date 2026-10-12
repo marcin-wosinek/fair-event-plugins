@@ -119,11 +119,11 @@ function answersResponse( byTicketId = {}, unlinkedBySignupId = {} ) {
 	} );
 }
 
-function renderModal() {
+function renderModal( exportRows = rows ) {
 	render(
 		<SignupExportModal
 			eventDateId={ 42 }
-			rows={ rows }
+			rows={ exportRows }
 			ticketOptions={ ticketOptions }
 			onClose={ jest.fn() }
 		/>
@@ -186,11 +186,11 @@ describe( 'SignupExportModal — ticket rows (#1708)', () => {
 
 		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
 		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
-			'Email,Name,Ticket,Ticket Type,Extras,Purchase total (once per registration),Status,Transaction,Mailing,Date',
-			'ada@example.com,Ada Lovelace,Ticket 1 (REF00101),General,Dinner buffet,20.00,confirmed,501,yes,2026-07-20 10:00:00',
-			'bob@example.com,Bob Smith,Ticket 1 (REF00201),General,Dinner buffet,60.00,confirmed,502,no,2026-07-21 10:00:00',
-			'bob@example.com,Bob Smith,Ticket 2 (REF00202),Reduced,"Dinner buffet, Afterparty",,confirmed,502,no,2026-07-21 10:00:00',
-			'bob@example.com,Bob Smith,Ticket 3 (REF00203),General,,,confirmed,502,no,2026-07-21 10:00:00',
+			'Email,Name,Ticket,Ticket Type,Extras,Purchase total (once per registration),Purchase reference,Status,Transaction,Mailing,Date',
+			'ada@example.com,Ada Lovelace,Ticket 1 (REF00101),General,Dinner buffet,20.00,1,confirmed,501,yes,2026-07-20 10:00:00',
+			'bob@example.com,Bob Smith,Ticket 1 (REF00201),General,Dinner buffet,60.00,2,confirmed,502,no,2026-07-21 10:00:00',
+			'bob@example.com,Bob Smith,Ticket 2 (REF00202),Reduced,"Dinner buffet, Afterparty",,2,confirmed,502,no,2026-07-21 10:00:00',
+			'bob@example.com,Bob Smith,Ticket 3 (REF00203),General,,,2,confirmed,502,no,2026-07-21 10:00:00',
 		] );
 	} );
 
@@ -422,5 +422,146 @@ describe( 'SignupExportModal — no Fair Form / load failure', () => {
 				path: '/fair-events/v1/get-tickets?event_date=42&include_answers=true',
 			} )
 		);
+	} );
+} );
+
+describe( 'SignupExportModal — purchases split over dates (#1791)', () => {
+	// A €100 purchase of tickets 101 and 102, bought for 10 June; 102 was
+	// moved on its own to 17 June.
+	const split = ( overrides = {} ) => ( {
+		id: 9,
+		name: 'Paula Purchaser',
+		email: 'paula@example.com',
+		ticket_type_name: 'General',
+		quantity: 2,
+		amount: '100.00',
+		status: 'confirmed',
+		transaction_id: 900,
+		mailing_opt_in: true,
+		created_at: '2026-05-01 10:00:00',
+		event_date_id: 10,
+		tickets: [
+			ticket( 101, 1, { event_date_id: 10 } ),
+			ticket( 102, 2, { event_date_id: 17 } ),
+		],
+		accounting_anchor_ticket_id: 101,
+		...overrides,
+	} );
+
+	async function exportTotals( signup ) {
+		apiFetch.mockResolvedValue( [ { ...signup, answers: [] } ] );
+		const writeText = mockClipboard();
+		renderModal( expandTicketRows( [ signup ] ) );
+
+		await screen.findByRole( 'radio', { name: 'Markdown' } );
+		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
+		fireEvent.click(
+			screen.getByRole( 'radio', { name: 'Handpicked columns' } )
+		);
+		uncheckAllExcept( [
+			'Ticket',
+			'Purchase total (once per registration)',
+			'Purchase reference',
+		] );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
+		);
+		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
+		return writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ).slice( 1 );
+	}
+
+	it( 'exports the total on the anchor ticket of the original date', async () => {
+		expect(
+			await exportTotals( split( { listed_ticket_ids: [ 101 ] } ) )
+		).toEqual( [ 'Ticket 1 (REF00101),100.00,9' ] );
+	} );
+
+	it( 'leaves the total blank for the moved ticket, keeping the purchase reference', async () => {
+		expect(
+			await exportTotals( split( { listed_ticket_ids: [ 102 ] } ) )
+		).toEqual( [ 'Ticket 2 (REF00102),,9' ] );
+	} );
+
+	it( 'moves the total with the anchor when it is the first listed ticket of another date', async () => {
+		expect(
+			await exportTotals(
+				split( {
+					listed_ticket_ids: [ 101, 102 ],
+					tickets: [
+						ticket( 101, 1, { event_date_id: 17 } ),
+						ticket( 102, 2, { event_date_id: 17 } ),
+					],
+				} )
+			)
+		).toEqual( [
+			'Ticket 1 (REF00101),100.00,9',
+			'Ticket 2 (REF00102),,9',
+		] );
+	} );
+
+	it( 'gives the total to the remaining ticket once the anchor is cancelled, even when it is not the first listed', async () => {
+		expect(
+			await exportTotals(
+				split( {
+					listed_ticket_ids: [ 102 ],
+					accounting_anchor_ticket_id: 102,
+					tickets: [
+						ticket( 101, 1, {
+							event_date_id: 10,
+							status: 'cancelled',
+						} ),
+						ticket( 102, 2, { event_date_id: 17 } ),
+					],
+				} )
+			)
+		).toEqual( [ 'Ticket 2 (REF00102),100.00,9' ] );
+	} );
+
+	it( 'preserves a zero total on the anchor row', async () => {
+		expect(
+			await exportTotals(
+				split( { amount: '0.00', listed_ticket_ids: [ 101 ] } )
+			)
+		).toEqual( [ 'Ticket 1 (REF00101),0.00,9' ] );
+	} );
+
+	it( 'keeps a moved ticket’s own answers and never gives it the purchase’s unlinked answers', async () => {
+		const signup = split( { listed_ticket_ids: [ 102 ] } );
+		apiFetch.mockResolvedValue( [
+			{
+				...signup,
+				tickets: [
+					{ ...signup.tickets[ 0 ], answers: diet( 'Vegan' ) },
+					{ ...signup.tickets[ 1 ], answers: diet( 'Halal' ) },
+				],
+				answers: diet( 'Vegan' ),
+				answers_ticket_id: 101,
+			},
+		] );
+		const writeText = mockClipboard();
+		renderModal( expandTicketRows( [ signup ] ) );
+
+		await copyCsvWithAnswers( [
+			'Ticket',
+			'Answers for',
+			'Dietary needs?',
+		] );
+
+		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
+		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
+			'Ticket,Answers for,Dietary needs?',
+			'Ticket 2 (REF00102),Ticket 2 (REF00102),Halal',
+		] );
+	} );
+
+	it( 'explains what a date’s totals stand for', async () => {
+		apiFetch.mockResolvedValue( answersResponse() );
+		renderModal();
+
+		expect(
+			await screen.findByText(
+				/Each purchase total appears once.*not the revenue from its attendance/
+			)
+		).toBeInTheDocument();
 	} );
 } );

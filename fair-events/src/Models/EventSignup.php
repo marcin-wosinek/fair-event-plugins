@@ -673,6 +673,34 @@ class EventSignup {
 	}
 
 	/**
+	 * Get the signups the List of an event date is built from: every signup
+	 * made for the date, and every signup made for another date that has a
+	 * confirmed ticket on it — one an administrator moved here on its own.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array
+	 */
+	public static function get_all_listed_on_event_date_id( int $event_date_id ) {
+		global $wpdb;
+
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT s.* FROM %i AS s
+				WHERE s.event_date_id = %d
+					OR s.id IN (
+						SELECT t.signup_id FROM %i AS t
+						WHERE t.event_date_id = %d AND t.status = 'confirmed' AND t.deleted_at IS NULL
+					)
+				ORDER BY s.created_at DESC",
+				$wpdb->prefix . 'fair_events_signups',
+				$event_date_id,
+				EventTicket::table(),
+				$event_date_id
+			)
+		);
+	}
+
+	/**
 	 * Expire stale pending-payment rows without deleting reconciliation data.
 	 *
 	 * @return int Number of rows transitioned.

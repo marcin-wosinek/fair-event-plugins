@@ -27,9 +27,126 @@ import { targetOptionLabel, projectionMessage } from 'fair-events-shared';
 export const ACTION_MOVE = 'move';
 export const ACTION_CHANGE_TYPE = 'change_type';
 
+/**
+ * Sentences saying what a purchase-wide action does to the tickets of the
+ * purchase, on every date they are on. The action is offered beside one
+ * ticket, possibly on a date the purchase is not registered for, so its
+ * reach is spelled out before anything changes.
+ *
+ * @param {Object}  args
+ * @param {boolean} args.isMove   Whether the action is a move.
+ * @param {Object}  args.signup   Registration returned by the API.
+ * @param {Object}  [args.counts] Result of purchaseTicketCounts().
+ * @return {string[]} Sentences, in reading order
+ */
+export function scopeNotes( { isMove, signup, counts } ) {
+	const total = counts
+		? counts.confirmed
+		: Math.max( ( signup.tickets || [] ).length, 1 );
+	const movable = counts ? counts.onRegistrationDate : total;
+	const elsewhere = total - movable;
+	const inactive = counts ? counts.inactive : 0;
+	const notes = [];
+
+	if ( ! isMove ) {
+		notes.push(
+			sprintf(
+				/* translators: %d: number of tickets in the registration */
+				_n(
+					'This changes the type of the whole registration, with its %d ticket.',
+					'This changes the type of the whole registration, with all %d of its tickets.',
+					Math.max( total, 1 ),
+					'fair-events'
+				),
+				Math.max( total, 1 )
+			)
+		);
+		if ( counts?.onOtherDates > 0 ) {
+			notes.push(
+				sprintf(
+					/* translators: %d: number of tickets of the purchase on other dates */
+					_n(
+						'That includes %d ticket on another date.',
+						'That includes %d tickets on other dates.',
+						counts.onOtherDates,
+						'fair-events'
+					),
+					counts.onOtherDates
+				)
+			);
+		}
+	} else if ( elsewhere === 0 ) {
+		notes.push(
+			sprintf(
+				/* translators: %d: number of tickets in the registration */
+				_n(
+					'This moves the whole registration, with its %d ticket.',
+					'This moves the whole registration, with all %d of its tickets.',
+					Math.max( total, 1 ),
+					'fair-events'
+				),
+				Math.max( total, 1 )
+			)
+		);
+	} else {
+		notes.push(
+			movable > 0
+				? sprintf(
+						/* translators: 1: number of tickets that move, 2: date the purchase is registered for */
+						_n(
+							'This moves the purchase and the %1$d ticket still on the date it is registered for (%2$s).',
+							'This moves the purchase and the %1$d tickets still on the date it is registered for (%2$s).',
+							movable,
+							'fair-events'
+						),
+						movable,
+						signup.event_date_label
+				  )
+				: sprintf(
+						/* translators: %s: date the purchase is registered for */
+						__(
+							'No ticket of this purchase is still on the date it is registered for (%s), so no ticket moves: only the date the purchase is registered for changes.',
+							'fair-events'
+						),
+						signup.event_date_label
+				  )
+		);
+		notes.push(
+			sprintf(
+				/* translators: %d: number of tickets moved individually to other dates */
+				_n(
+					'%d ticket was moved on its own to another date and stays where it is, unless that is the new date, which it then shares with the purchase.',
+					'%d tickets were moved on their own to other dates and stay where they are; any already on the new date stay there with the purchase.',
+					elsewhere,
+					'fair-events'
+				),
+				elsewhere
+			)
+		);
+	}
+
+	if ( inactive > 0 ) {
+		notes.push(
+			sprintf(
+				/* translators: %d: number of cancelled or otherwise inactive tickets */
+				_n(
+					'%d cancelled or otherwise inactive ticket is left as it is.',
+					'%d cancelled or otherwise inactive tickets are left as they are.',
+					inactive,
+					'fair-events'
+				),
+				inactive
+			)
+		);
+	}
+
+	return notes;
+}
+
 export default function SignupEditModal( {
 	signup,
 	action,
+	counts,
 	onClose,
 	onSaved,
 } ) {
@@ -108,28 +225,7 @@ export default function SignupEditModal( {
 				signup.name
 		  );
 
-	const ticketCount = Math.max( ( signup.tickets || [] ).length, 1 );
-	const scopeNote = isMove
-		? sprintf(
-				/* translators: %d: number of tickets in the registration */
-				_n(
-					'This moves the whole registration, with its %d ticket.',
-					'This moves the whole registration, with all %d of its tickets.',
-					ticketCount,
-					'fair-events'
-				),
-				ticketCount
-		  )
-		: sprintf(
-				/* translators: %d: number of tickets in the registration */
-				_n(
-					'This changes the type of the whole registration, with its %d ticket.',
-					'This changes the type of the whole registration, with all %d of its tickets.',
-					ticketCount,
-					'fair-events'
-				),
-				ticketCount
-		  );
+	const notes = scopeNotes( { isMove, signup, counts } );
 
 	const renderBody = () => {
 		if ( loadError ) {
@@ -272,7 +368,9 @@ export default function SignupEditModal( {
 
 	return (
 		<Modal title={ title } onRequestClose={ onClose }>
-			<p>{ scopeNote }</p>
+			{ notes.map( ( note ) => (
+				<p key={ note }>{ note }</p>
+			) ) }
 			{ renderBody() }
 		</Modal>
 	);

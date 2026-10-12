@@ -1,9 +1,11 @@
 /**
  * Event Signups Component
  *
- * List the tickets of confirmed get-tickets registrations for an event date,
- * one row per ticket, with the extras each ticket holds. Email addresses and
- * amounts stay out of the table but remain available in exports.
+ * List the confirmed tickets that are on an event date, one row per ticket,
+ * with the extras each ticket holds: the tickets of registrations made for
+ * the date, and tickets of other registrations moved to it on their own.
+ * Email addresses and amounts stay out of the table but remain available in
+ * exports.
  *
  * @package FairEvents
  */
@@ -77,31 +79,147 @@ export function isConfirmedTicket( ticket ) {
 }
 
 /**
- * Expand registrations into the List's rows: one per confirmed ticket,
- * numbered in order. A registration whose tickets were not created yet (an
- * older registration still being converted) keeps a single row without a
- * ticket, so it is never dropped. One whose tickets all stopped admitting
- * anyone has no row.
+ * Tickets of a purchase the List of the selected date shows: the confirmed
+ * tickets the API names as being on that date. A purchase can hold tickets
+ * on other dates too, moved there on their own.
+ *
+ * @param {Object} signup Registration returned by the API.
+ * @return {Array} Listed tickets, in purchase order
+ */
+export function listedTickets( signup ) {
+	const tickets = Array.isArray( signup.tickets ) ? signup.tickets : [];
+	if ( ! Array.isArray( signup.listed_ticket_ids ) ) {
+		return tickets.filter( isConfirmedTicket );
+	}
+	const listedIds = signup.listed_ticket_ids.map( Number );
+	return tickets.filter( ( ticket ) =>
+		listedIds.includes( Number( ticket.id ) )
+	);
+}
+
+/**
+ * How the confirmed tickets of a purchase are spread over dates. Tickets
+ * that stopped admitting anyone are counted apart: they are not attendance,
+ * but purchase-wide actions can still concern them.
+ *
+ * @param {Object} signup Registration returned by the API.
+ * @return {{confirmed: number, onThisDate: number, onOtherDates: number, onRegistrationDate: number, inactive: number}} Counts
+ */
+export function purchaseTicketCounts( signup ) {
+	const counts = signup.ticket_counts;
+	if ( counts ) {
+		return {
+			confirmed: Number( counts.confirmed ) || 0,
+			onThisDate: Number( counts.on_this_date ) || 0,
+			onOtherDates: Number( counts.on_other_dates ) || 0,
+			onRegistrationDate: Number( counts.on_registration_date ) || 0,
+			inactive: Number( counts.inactive ) || 0,
+		};
+	}
+	const tickets = Array.isArray( signup.tickets ) ? signup.tickets : [];
+	const confirmed = tickets.filter( isConfirmedTicket ).length;
+	const onThisDate = listedTickets( signup ).length;
+	return {
+		confirmed,
+		onThisDate,
+		onOtherDates: confirmed - onThisDate,
+		onRegistrationDate: confirmed,
+		inactive: tickets.length - confirmed,
+	};
+}
+
+/**
+ * Expand registrations into the List's rows: one per confirmed ticket on the
+ * selected date, numbered in order. A registration whose tickets were not
+ * created yet (an older registration still being converted) keeps a single
+ * row without a ticket, so it is never dropped. One with tickets, none of
+ * them listed on this date, has no row.
+ *
+ * `isFirstTicket` places the purchase-wide actions; `isAccountingAnchor`
+ * marks the one row, across all dates, that carries the purchase total.
  *
  * @param {Array} signups Registrations returned by the API.
- * @return {Array<{signup: Object, ticket: Object|null, isFirstTicket: boolean, ticketCount: number}>} Rows
+ * @return {Array<{signup: Object, ticket: Object|null, isFirstTicket: boolean, isAccountingAnchor: boolean, ticketCount: number}>} Rows
  */
 export function expandTicketRows( signups ) {
 	return signups.flatMap( ( signup ) => {
 		const tickets = Array.isArray( signup.tickets ) ? signup.tickets : [];
 		if ( tickets.length === 0 ) {
 			return [
-				{ signup, ticket: null, isFirstTicket: true, ticketCount: 1 },
+				{
+					signup,
+					ticket: null,
+					isFirstTicket: true,
+					isAccountingAnchor: true,
+					ticketCount: 1,
+				},
 			];
 		}
-		const listed = tickets.filter( isConfirmedTicket );
+		const listed = listedTickets( signup );
+		const anchorId = signup.accounting_anchor_ticket_id;
+		const hasAnchor = anchorId !== null && anchorId !== undefined;
 		return listed.map( ( ticket, index ) => ( {
 			signup,
 			ticket,
 			isFirstTicket: index === 0,
+			isAccountingAnchor: hasAnchor
+				? Number( ticket.id ) === Number( anchorId )
+				: index === 0,
 			ticketCount: listed.length,
 		} ) );
 	} );
+}
+
+/**
+ * Whether a purchase is listed on a date other than the one it is
+ * registered for: the ticket shown was moved here on its own.
+ *
+ * @param {Object} signup      Registration returned by the API.
+ * @param {number} eventDateId Date the List is showing.
+ * @return {boolean} Whether the registration belongs to another date
+ */
+export function isRegisteredElsewhere( signup, eventDateId ) {
+	return (
+		!! signup.event_date_id &&
+		!! eventDateId &&
+		Number( signup.event_date_id ) !== Number( eventDateId )
+	);
+}
+
+/**
+ * "1 ticket on this date; 1 on another date" for a purchase split over dates.
+ *
+ * @param {{onThisDate: number, onOtherDates: number}} counts Purchase counts.
+ * @return {string} Distribution, empty when every ticket is on this date
+ */
+export function ticketDistributionLabel( { onThisDate, onOtherDates } ) {
+	if ( ! onOtherDates ) {
+		return '';
+	}
+	return sprintf(
+		/* translators: 1: e.g. "1 ticket on this date", 2: e.g. "1 on another date" */
+		__( '%1$s; %2$s', 'fair-events' ),
+		sprintf(
+			/* translators: %d: number of tickets of the purchase on the date shown */
+			_n(
+				'%d ticket on this date',
+				'%d tickets on this date',
+				onThisDate,
+				'fair-events'
+			),
+			onThisDate
+		),
+		sprintf(
+			/* translators: %d: number of tickets of the purchase on other dates */
+			_n(
+				'%d on another date',
+				'%d on other dates',
+				onOtherDates,
+				'fair-events'
+			),
+			onOtherDates
+		)
+	);
 }
 
 /**
@@ -399,21 +517,33 @@ export default function EventSignups( { eventDateId } ) {
 			: EXTRA_NOT_SELECTED;
 	};
 
-	const renderRegistrationActions = ( signup, ticketCount ) => {
+	const renderRegistrationActions = ( signup ) => {
+		const counts = purchaseTicketCounts( signup );
+		const distribution = ticketDistributionLabel( counts );
 		return (
 			<>
-				{ ticketCount > 1 && (
-					<div style={ { color: '#757575', marginBottom: '4px' } }>
-						{ sprintf(
-							/* translators: %d: number of listed tickets in the registration */
-							_n(
-								'Registration (%d ticket):',
-								'Registration (%d tickets):',
-								ticketCount,
-								'fair-events'
-							),
-							ticketCount
-						) }
+				{ counts.confirmed > 1 && (
+					<div
+						className="fair-events-signups__purchase-scope"
+						style={ {
+							color: '#757575',
+							marginBottom: '4px',
+							whiteSpace: 'nowrap',
+						} }
+					>
+						<div>
+							{ sprintf(
+								/* translators: %d: number of confirmed tickets in the purchase, on every date */
+								_n(
+									'Entire purchase — %d ticket',
+									'Entire purchase — %d tickets',
+									counts.confirmed,
+									'fair-events'
+								),
+								counts.confirmed
+							) }
+						</div>
+						{ distribution && <div>{ distribution }</div> }
 					</div>
 				) }
 				<Flex justify="flex-start" gap={ 3 } wrap>
@@ -453,8 +583,12 @@ export default function EventSignups( { eventDateId } ) {
 	};
 
 	const renderRow = ( row, index ) => {
-		const { signup, ticket, isFirstTicket, ticketCount } = row;
+		const { signup, ticket, isFirstTicket } = row;
 		const label = ticketRowLabel( ticket );
+		const registeredElsewhere = isRegisteredElsewhere(
+			signup,
+			eventDateId
+		);
 		return (
 			<tr
 				key={ `${ signup.id }-${ ticket ? ticket.id : 'pending' }` }
@@ -470,7 +604,28 @@ export default function EventSignups( { eventDateId } ) {
 				<td style={ { ...cellStyle, textAlign: 'right' } }>
 					{ index + 1 }
 				</td>
-				<td style={ cellStyle }>{ signup.name }</td>
+				<td style={ cellStyle }>
+					{ signup.name }
+					{ registeredElsewhere && signup.event_date_label && (
+						<div
+							className="fair-events-signups__registered-for"
+							style={ {
+								color: '#757575',
+								fontSize: '12px',
+								whiteSpace: 'nowrap',
+							} }
+						>
+							{ sprintf(
+								/* translators: %s: event date, e.g. "19:00—22:00, 10 June" */
+								__(
+									'Purchase registered for %s',
+									'fair-events'
+								),
+								signup.event_date_label
+							) }
+						</div>
+					) }
+				</td>
 				<td style={ { ...cellStyle, whiteSpace: 'nowrap' } }>
 					{ label }
 				</td>
@@ -504,8 +659,7 @@ export default function EventSignups( { eventDateId } ) {
 				</td>
 				<td style={ cellStyle }>{ signup.created_at }</td>
 				<td style={ cellStyle }>
-					{ isFirstTicket &&
-						renderRegistrationActions( signup, ticketCount ) }
+					{ isFirstTicket && renderRegistrationActions( signup ) }
 					{ audienceActive && ticket && (
 						<div
 							style={
@@ -532,6 +686,10 @@ export default function EventSignups( { eventDateId } ) {
 			</tr>
 		);
 	};
+
+	const deleteCounts = selectedSignup
+		? purchaseTicketCounts( selectedSignup )
+		: null;
 
 	const handleDelete = async () => {
 		if ( ! selectedSignup ) {
@@ -659,20 +817,43 @@ export default function EventSignups( { eventDateId } ) {
 								_n(
 									'Delete the registration for %1$s, with its %2$d ticket? Its current payment status is %3$s.',
 									'Delete the registration for %1$s, with all %2$d of its tickets? Its current payment status is %3$s.',
-									Math.max(
-										( selectedSignup.tickets || [] ).length,
-										1
-									),
+									Math.max( deleteCounts.confirmed, 1 ),
 									'fair-events'
 								),
 								selectedSignup.name,
-								Math.max(
-									( selectedSignup.tickets || [] ).length,
-									1
-								),
+								Math.max( deleteCounts.confirmed, 1 ),
 								selectedSignup.status
 							) }
 						</p>
+						{ deleteCounts.onOtherDates > 0 && (
+							<p>
+								{ sprintf(
+									/* translators: 1: number of tickets on the date shown, 2: number of tickets on other dates */
+									_n(
+										'This deletes the entire purchase on every date: %1$d on this date and %2$d ticket on another date.',
+										'This deletes the entire purchase on every date: %1$d on this date and %2$d tickets on other dates.',
+										deleteCounts.onOtherDates,
+										'fair-events'
+									),
+									deleteCounts.onThisDate,
+									deleteCounts.onOtherDates
+								) }
+							</p>
+						) }
+						{ deleteCounts.inactive > 0 && (
+							<p>
+								{ sprintf(
+									/* translators: %d: number of cancelled or otherwise inactive tickets */
+									_n(
+										'It also removes %d cancelled or otherwise inactive ticket of this purchase.',
+										'It also removes %d cancelled or otherwise inactive tickets of this purchase.',
+										deleteCounts.inactive,
+										'fair-events'
+									),
+									deleteCounts.inactive
+								) }
+							</p>
+						) }
 						<p>
 							{ __(
 								'This deletion is permanent. It removes only the local signup record and does not refund or cancel any payment-provider transaction.',
@@ -686,6 +867,7 @@ export default function EventSignups( { eventDateId } ) {
 				<SignupEditModal
 					signup={ editing.signup }
 					action={ editing.action }
+					counts={ purchaseTicketCounts( editing.signup ) }
 					onClose={ () => setEditing( null ) }
 					onSaved={ () => {
 						setEditing( null );

@@ -2362,14 +2362,23 @@ class GetTicketsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Get signups for an event date (admin).
+	 * Get the signups behind the List of an event date (admin): those made
+	 * for the date, and those with a confirmed ticket an administrator moved
+	 * to it on its own.
+	 *
+	 * Each signup carries its whole purchase in `tickets`, whatever date each
+	 * ticket is on, so purchase-wide actions keep their full context.
+	 * `listed_ticket_ids` names the confirmed tickets that are on the
+	 * requested date — the List's rows — and may be empty for a purchase
+	 * whose tickets all moved away. `accounting_anchor_ticket_id` names the
+	 * ticket whose row carries the purchase total in exports.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_items( $request ) {
-		$event_date_id = $request->get_param( 'event_date' );
-		$signups       = \FairEvents\Models\EventSignup::get_all_by_event_date_id( $event_date_id );
+		$event_date_id = (int) $request->get_param( 'event_date' );
+		$signups       = \FairEvents\Models\EventSignup::get_all_listed_on_event_date_id( $event_date_id );
 
 		$ticket_type_names  = array();
 		$ticket_type_scopes = array();
@@ -2395,6 +2404,40 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 		}
 
+		$tickets_by_signup = \FairEvents\Models\EventTicket::get_by_signup_ids( wp_list_pluck( $signups, 'id' ) );
+		$all_tickets       = array_merge( array(), ...array_values( $tickets_by_signup ) );
+
+		// A purchase made for another date may use a type held there.
+		if ( class_exists( \FairEvents\Models\TicketType::class ) ) {
+			$used_type_ids = array_filter(
+				array_unique(
+					array_map( 'intval', array_merge( wp_list_pluck( $signups, 'ticket_type_id' ), wp_list_pluck( $all_tickets, 'ticket_type_id' ) ) )
+				)
+			);
+			foreach ( array_diff( $used_type_ids, array_keys( $ticket_type_names ) ) as $ticket_type_id ) {
+				$ticket_type = \FairEvents\Models\TicketType::get_by_id( $ticket_type_id );
+				if ( $ticket_type ) {
+					$ticket_type_names[ (int) $ticket_type->id ]  = $ticket_type->name;
+					$ticket_type_scopes[ (int) $ticket_type->id ] = $ticket_type->recurrence_scope;
+				}
+			}
+		}
+
+		// A whole-series pass covers every date and stays listed where it
+		// was bought, with all its tickets.
+		$is_whole_series = static function ( $signup ) use ( $ticket_type_scopes ) {
+			return $signup->ticket_type_id
+				&& 'whole_series' === ( $ticket_type_scopes[ (int) $signup->ticket_type_id ] ?? null );
+		};
+		$signups         = array_values(
+			array_filter(
+				$signups,
+				static function ( $signup ) use ( $is_whole_series, $event_date_id ) {
+					return (int) $signup->event_date_id === $event_date_id || ! $is_whole_series( $signup );
+				}
+			)
+		);
+
 		// Whether this date has other active occurrences a signup can move to.
 		$master_event_date_id = $this->resolve_master_event_date_id( $event_date_id );
 		$active_dates         = $master_event_date_id
@@ -2408,13 +2451,65 @@ class GetTicketsController extends WP_REST_Controller {
 		$is_series            = count( $active_dates ) > 1;
 
 		$overrides         = \FairEvents\Models\EventCapacityOverride::get_by_signup_ids( wp_list_pluck( $signups, 'id' ) );
-		$tickets_by_signup = \FairEvents\Models\EventTicket::get_by_signup_ids( wp_list_pluck( $signups, 'id' ) );
 		$ticket_activities = \FairEvents\Models\EventTicketActivity::get_by_ticket_ids(
-			array_map( static fn( $ticket ) => (int) $ticket->id, array_merge( array(), ...array_values( $tickets_by_signup ) ) )
+			array_map( static fn( $ticket ) => (int) $ticket->id, $all_tickets )
 		);
 		$user_names        = array();
+		$date_labels       = array();
 
 		foreach ( $signups as $signup ) {
+			$signup_tickets = $tickets_by_signup[ (int) $signup->id ] ?? array();
+			$whole_series   = $is_whole_series( $signup );
+			$own_date_id    = (int) $signup->event_date_id;
+
+			if ( ! array_key_exists( $own_date_id, $date_labels ) ) {
+				$own_date                    = \FairEvents\Models\EventDates::get_by_id( $own_date_id );
+				$date_labels[ $own_date_id ] = $own_date
+					? \FairEvents\Helpers\DateRangeFormatter::format( $own_date->start_datetime, $own_date->end_datetime, (bool) $own_date->all_day )
+					: '';
+			}
+
+			// Counted over the whole purchase, before any date filtering:
+			// the lowest confirmed ticket anchors the purchase total.
+			$listed_ticket_ids = array();
+			$anchor_ticket_id  = null;
+			$counts            = array(
+				'confirmed'            => 0,
+				'on_this_date'         => 0,
+				'on_other_dates'       => 0,
+				'on_registration_date' => 0,
+				'inactive'             => 0,
+			);
+			foreach ( $signup_tickets as $ticket ) {
+				if ( \FairEvents\Models\EventTicket::is_deleted( $ticket ) ) {
+					continue;
+				}
+				if ( 'confirmed' !== (string) $ticket->status ) {
+					++$counts['inactive'];
+					continue;
+				}
+
+				$ticket_id = (int) $ticket->id;
+				++$counts['confirmed'];
+				if ( null === $anchor_ticket_id || $ticket_id < $anchor_ticket_id ) {
+					$anchor_ticket_id = $ticket_id;
+				}
+				if ( (int) $ticket->event_date_id === $own_date_id ) {
+					++$counts['on_registration_date'];
+				}
+				if ( $whole_series || (int) $ticket->event_date_id === $event_date_id ) {
+					$listed_ticket_ids[] = $ticket_id;
+					++$counts['on_this_date'];
+				} else {
+					++$counts['on_other_dates'];
+				}
+			}
+
+			$signup->event_date_label            = $date_labels[ $own_date_id ];
+			$signup->listed_ticket_ids           = $listed_ticket_ids;
+			$signup->accounting_anchor_ticket_id = $anchor_ticket_id;
+			$signup->ticket_counts               = $counts;
+
 			$signup->ticket_type_name = $signup->ticket_type_id && isset( $ticket_type_names[ (int) $signup->ticket_type_id ] )
 				? $ticket_type_names[ (int) $signup->ticket_type_id ]
 				: null;
@@ -2467,13 +2562,14 @@ class GetTicketsController extends WP_REST_Controller {
 						'reference'              => strtoupper( substr( (string) $ticket->reference, 0, 8 ) ),
 						'ticket_type_id'         => $ticket->ticket_type_id ? (int) $ticket->ticket_type_id : null,
 						'ticket_type_name'       => $ticket->ticket_type_id ? ( $ticket_type_names[ (int) $ticket->ticket_type_id ] ?? null ) : null,
+						'event_date_id'          => (int) $ticket->event_date_id,
 						'status'                 => (string) $ticket->status,
 						'attended_at'            => $ticket->attended_at,
 						'activity_ids'           => $activity_ids,
 						'confirmed_activity_ids' => $confirmed_activity_ids,
 					);
 				},
-				$tickets_by_signup[ (int) $signup->id ] ?? array()
+				$signup_tickets
 			);
 		}
 
@@ -2500,7 +2596,7 @@ class GetTicketsController extends WP_REST_Controller {
 	 * Leaves `answers` unset when fair-form isn't active, so the frontend can
 	 * treat "no answers anywhere" and "plugin inactive" the same way.
 	 *
-	 * @param array $signups       Signup rows from get_all_by_event_date_id(), mutated in place.
+	 * @param array $signups       Signup rows from get_items(), mutated in place.
 	 * @param int   $event_date_id Event-date ID the signups belong to.
 	 * @return void
 	 */
@@ -2539,7 +2635,12 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 			$signup->tickets = $tickets;
 
-			$participant_id = ! empty( $signup->participant_id ) ? (int) $signup->participant_id : 0;
+			// Answers kept with no ticket were collected for the date the
+			// purchase is registered for: they are never given to a ticket
+			// listed on another date.
+			$participant_id = ! empty( $signup->participant_id ) && (int) $signup->event_date_id === (int) $event_date_id
+				? (int) $signup->participant_id
+				: 0;
 			if ( null === $signup->answers_ticket_id && $participant_id && isset( $by_participant[ $participant_id ] ) ) {
 				$signup->answers             = $by_participant[ $participant_id ]['answers'];
 				$signup->answers_need_review = $by_participant[ $participant_id ]['needs_review'];
@@ -2584,7 +2685,9 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		foreach ( $signups as $signup ) {
-			$participant_id = ! empty( $signup->participant_id ) ? (int) $signup->participant_id : 0;
+			$participant_id = ! empty( $signup->participant_id ) && (int) $signup->event_date_id === (int) $event_date_id
+				? (int) $signup->participant_id
+				: 0;
 			$submission     = $participant_id && isset( $submission_by_participant[ $participant_id ] )
 				? $submission_by_participant[ $participant_id ]
 				: null;

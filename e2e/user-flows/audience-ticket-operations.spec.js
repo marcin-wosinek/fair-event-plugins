@@ -4,7 +4,8 @@
  *
  * A visitor buys two tickets with one email. The administrator assigns the
  * second to someone else, tells the two apart by search and in the tickets
- * CSV, moves the first to another date of the series, then cancels and
+ * CSV, moves the first to another date of the series — after which the List
+ * of each date shows the ticket that is on it (#1791) — then cancels and
  * deletes the second. Each step changes only the ticket it names, and nobody
  * is removed from the audience.
  */
@@ -168,6 +169,74 @@ test.describe('Manage individual tickets from the Audience tab', () => {
 		await expect(tickets('Paula Purchaser')).toContainText('Ticket 1');
 		await expect(role('Paula Purchaser')).toHaveText('Signed up');
 		await expect(group('Gil Guest')).toHaveCount(0);
+
+		// The List of each date shows the tickets that are on it, the same
+		// confirmed tickets as its Audience tab, and exports those rows.
+		const audienceTicketIds = () =>
+			page
+				.locator(
+					'tr.fair-audience-audience-table__ticket:not(.is-cancelled)'
+				)
+				.evaluateAll((rows) =>
+					rows.map((row) => row.dataset.ticketId).sort()
+				);
+		const listRows = page.locator('tr.fair-events-signups__ticket');
+		const openList = async (eventDateId) => {
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}&tab=list`
+			);
+			await expect(page.locator('.fair-events-signups')).toBeVisible();
+			await expect(listRows).toHaveCount(1);
+			return listRows.evaluateAll((rows) =>
+				rows.map((row) => row.dataset.ticketId).sort()
+			);
+		};
+		const readListExport = async () => {
+			await page.getByRole('button', { name: 'Export' }).click();
+			const exportDialog = page.getByRole('dialog', { name: 'Export' });
+			await exportDialog.getByRole('radio', { name: 'CSV' }).check();
+			const [download] = await Promise.all([
+				page.waitForEvent('download'),
+				exportDialog
+					.getByRole('button', { name: 'Download CSV' })
+					.click(),
+			]);
+			const chunks = [];
+			for await (const chunk of await download.createReadStream()) {
+				chunks.push(chunk);
+			}
+			return Buffer.concat(chunks)
+				.toString('utf8')
+				.replace('\uFEFF', '')
+				.split('\r\n')
+				.slice(1);
+		};
+
+		const movedTicketIds = await audienceTicketIds();
+		expect(movedTicketIds).toHaveLength(1);
+		expect(await openList(otherDateId)).toEqual(movedTicketIds);
+		await expect(listRows).toContainText('Paula Purchaser');
+		await expect(listRows).toContainText('Ticket 1');
+		await expect(listRows).toContainText('Purchase registered for');
+		await expect(listRows).toContainText('Entire purchase — 2 tickets');
+		await expect(listRows).toContainText(
+			'1 ticket on this date; 1 on another date'
+		);
+		let listCsv = await readListExport();
+		expect(listCsv).toHaveLength(1);
+		expect(listCsv[0]).toContain('Ticket 1 (');
+
+		await openAudience(event.eventDateId);
+		const keptTicketIds = await audienceTicketIds();
+		expect(keptTicketIds).toHaveLength(1);
+		expect(keptTicketIds).not.toEqual(movedTicketIds);
+		expect(await openList(event.eventDateId)).toEqual(keptTicketIds);
+		await expect(listRows).toContainText('Ticket 2');
+		await expect(listRows).not.toContainText('Purchase registered for');
+		await expect(listRows).toContainText('Entire purchase — 2 tickets');
+		listCsv = await readListExport();
+		expect(listCsv).toHaveLength(1);
+		expect(listCsv[0]).toContain('Ticket 2 (');
 
 		// Cancel: the payment consequence is stated before anything changes.
 		await openAudience(event.eventDateId);

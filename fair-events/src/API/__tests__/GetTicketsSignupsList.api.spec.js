@@ -8,6 +8,10 @@
  *   - a signup with a valid ticket type gets its name attached.
  *   - a signup whose ticket type has since been deleted gets ticket_type_name
  *     null instead of an error or the stale ID.
+ *
+ * And the List's membership per date (#1791): a ticket moved on its own is
+ * listed on the date it is on, with its purchase, and the purchase total is
+ * anchored to the lowest confirmed ticket of the purchase.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -252,5 +256,318 @@ test.describe( 'GetTicketsController — admin signups list ticket_type_name', (
 		);
 		expect( signup ).toBeTruthy();
 		expect( signup.ticket_type_name ).toBeNull();
+	} );
+} );
+
+test.describe( 'GetTicketsController — tickets listed under their own date (#1791)', () => {
+	let api;
+	let postId;
+	let first;
+	let second;
+	let third;
+	let singleId;
+	let wholeId;
+	const signupIds = new Set();
+
+	const uniqueEmail = ( prefix ) =>
+		`${ prefix }-${ Date.now() }-${ Math.floor(
+			Math.random() * 1e6
+		) }@example.test`;
+
+	async function list( eventDateId ) {
+		const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
+			headers: adminHeaders,
+			params: { event_date: eventDateId },
+		} );
+		expect( res.ok() ).toBeTruthy();
+		const signups = await res.json();
+		signups.forEach( ( signup ) => signupIds.add( signup.id ) );
+		return signups;
+	}
+
+	// Each purchase is a separate visitor, so each gets its own participant.
+	async function buy( data ) {
+		const email = uniqueEmail( 'listed' );
+		const visitor = await request.newContext( { baseURL: BASE_URL } );
+		const res = await visitor.post( '/wp-json/fair-events/v1/get-tickets', {
+			data: {
+				name: 'Listed Buyer',
+				email,
+				_honeypot: '',
+				event_date_id: first,
+				ticket_type_id: singleId,
+				...data,
+			},
+		} );
+		const body = await res.json();
+		await visitor.dispose();
+		expect( res.status(), JSON.stringify( body ) ).toBe( 200 );
+		return ( await list( data.event_date_id || first ) ).find(
+			( signup ) => signup.email === email
+		);
+	}
+
+	async function moveTicket( ticketId, eventDateId ) {
+		const res = await api.post( '/wp-json/fair-e2e/v1/ticket-units/move', {
+			headers: adminHeaders,
+			data: { ticket_id: ticketId, event_date_id: eventDateId },
+		} );
+		expect( res.ok() ).toBeTruthy();
+	}
+
+	async function setTicketStatus( signupId, position, status ) {
+		const res = await api.post(
+			'/wp-json/fair-e2e/v1/ticket-capacity/unit-status',
+			{
+				headers: adminHeaders,
+				data: { signup_id: signupId, position, status },
+			}
+		);
+		expect( res.ok() ).toBeTruthy();
+	}
+
+	const purchaseOn = async ( eventDateId, signupId ) =>
+		( await list( eventDateId ) ).find(
+			( signup ) => signup.id === signupId
+		);
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const title = `Listed tickets ${ Date.now() }`;
+
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title, status: 'publish' },
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		postId = ( await postRes.json() ).id;
+
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title,
+				link_type: 'post',
+				start_datetime: '2035-06-10 19:00:00',
+				end_datetime: '2035-06-10 22:00:00',
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+			},
+		} );
+		const edBody = await edRes.json();
+		expect( edRes.ok(), JSON.stringify( edBody ) ).toBeTruthy();
+		[ first, second, third ] = [
+			edBody.id,
+			...( edBody.generated_occurrences || [] ).map( ( o ) => o.id ),
+		].sort( ( a, b ) => a - b );
+
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ edBody.id }`,
+			{ headers: adminHeaders, data: { event_id: postId } }
+		);
+		expect( linkRes.ok() ).toBeTruthy();
+
+		const scopes = [ 'single_instance', 'whole_series' ];
+		const ticketsRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ edBody.id }/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: scopes.map( ( scope ) => ( {
+						name: scope,
+						capacity: null,
+						minimum_activities: 0,
+						disable_at: null,
+						recurrence_scope: scope,
+						minimum_instances: 1,
+						group_ids: [],
+					} ) ),
+					sale_periods: [
+						{
+							name: 'Always on',
+							sale_start: '2020-01-01 00:00:00',
+							sale_end: '2099-01-01 00:00:00',
+						},
+					],
+					prices: scopes.map( ( scope, index ) => ( {
+						ticket_type_index: index,
+						sale_period_index: 0,
+						price: 0,
+					} ) ),
+					settings: {},
+				},
+			}
+		);
+		const ticketsBody = await ticketsRes.json();
+		expect( ticketsRes.ok(), JSON.stringify( ticketsBody ) ).toBeTruthy();
+		[ singleId, wholeId ] = ticketsBody.ticket_types.map(
+			( type ) => type.id
+		);
+	} );
+
+	test.afterAll( async () => {
+		for ( const signupId of signupIds ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/get-tickets/${ signupId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		if ( postId ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+		await api.dispose();
+	} );
+
+	test( 'an unmoved purchase is listed on its own date only, as before', async () => {
+		const signup = await buy( { quantity: 2 } );
+		const ids = signup.tickets.map( ( ticket ) => ticket.id );
+
+		expect( signup.listed_ticket_ids ).toEqual( ids );
+		expect( signup.accounting_anchor_ticket_id ).toBe( ids[ 0 ] );
+		expect( signup.ticket_counts ).toEqual( {
+			confirmed: 2,
+			on_this_date: 2,
+			on_other_dates: 0,
+			on_registration_date: 2,
+			inactive: 0,
+		} );
+		expect( signup.tickets.map( ( t ) => t.event_date_id ) ).toEqual( [
+			first,
+			first,
+		] );
+		expect( await purchaseOn( second, signup.id ) ).toBeUndefined();
+	} );
+
+	test( 'a ticket moved on its own is listed on its new date, with its purchase', async () => {
+		const signup = await buy( { quantity: 2 } );
+		const [ kept, moved ] = signup.tickets;
+		await moveTicket( moved.id, second );
+
+		const original = await purchaseOn( first, signup.id );
+		expect( original.listed_ticket_ids ).toEqual( [ kept.id ] );
+		expect( original.ticket_counts ).toMatchObject( {
+			confirmed: 2,
+			on_this_date: 1,
+			on_other_dates: 1,
+			on_registration_date: 1,
+		} );
+
+		const target = await purchaseOn( second, signup.id );
+		expect( target ).toBeTruthy();
+		expect( target.listed_ticket_ids ).toEqual( [ moved.id ] );
+		expect( Number( target.event_date_id ) ).toBe( first );
+		expect( target.event_date_label ).toBeTruthy();
+		expect( target.name ).toBe( 'Listed Buyer' );
+		expect( target.can_move ).toBe( true );
+		// The whole purchase stays available for purchase-wide actions.
+		expect( target.tickets.map( ( t ) => t.id ) ).toEqual( [
+			kept.id,
+			moved.id,
+		] );
+		expect( target.tickets[ 1 ] ).toMatchObject( {
+			id: moved.id,
+			position: 2,
+			reference: moved.reference,
+			ticket_type_id: singleId,
+			ticket_type_name: 'single_instance',
+			event_date_id: second,
+			status: 'confirmed',
+			attended_at: moved.attended_at,
+			confirmed_activity_ids: moved.confirmed_activity_ids,
+		} );
+		// The total stays with the lowest confirmed ticket, on the original date.
+		expect( original.accounting_anchor_ticket_id ).toBe( kept.id );
+		expect( target.accounting_anchor_ticket_id ).toBe( kept.id );
+
+		expect( await purchaseOn( third, signup.id ) ).toBeUndefined();
+	} );
+
+	test( 'a purchase whose tickets all moved has no listed ticket on its date and takes its total along', async () => {
+		const signup = await buy( { quantity: 2 } );
+		const ids = signup.tickets.map( ( ticket ) => ticket.id );
+		await moveTicket( ids[ 0 ], second );
+		await moveTicket( ids[ 1 ], third );
+
+		// Still returned for its own date, so the List can tell it apart
+		// from a registration whose tickets were never created.
+		const original = await purchaseOn( first, signup.id );
+		expect( original.listed_ticket_ids ).toEqual( [] );
+		expect( original.tickets ).toHaveLength( 2 );
+		expect( original.ticket_counts ).toMatchObject( {
+			on_this_date: 0,
+			on_other_dates: 2,
+			on_registration_date: 0,
+		} );
+
+		const onSecond = await purchaseOn( second, signup.id );
+		expect( onSecond.listed_ticket_ids ).toEqual( [ ids[ 0 ] ] );
+		expect( onSecond.accounting_anchor_ticket_id ).toBe( ids[ 0 ] );
+		const onThird = await purchaseOn( third, signup.id );
+		expect( onThird.listed_ticket_ids ).toEqual( [ ids[ 1 ] ] );
+		expect( onThird.accounting_anchor_ticket_id ).toBe( ids[ 0 ] );
+	} );
+
+	test( 'cancelling the anchor gives the total to the next confirmed ticket, and none when no ticket is left', async () => {
+		const signup = await buy( { quantity: 2 } );
+		const ids = signup.tickets.map( ( ticket ) => ticket.id );
+		await moveTicket( ids[ 1 ], second );
+		await setTicketStatus( signup.id, 1, 'cancelled' );
+
+		const original = await purchaseOn( first, signup.id );
+		expect( original.listed_ticket_ids ).toEqual( [] );
+		expect( original.accounting_anchor_ticket_id ).toBe( ids[ 1 ] );
+		expect( original.ticket_counts ).toMatchObject( {
+			confirmed: 1,
+			inactive: 1,
+		} );
+		const target = await purchaseOn( second, signup.id );
+		expect( target.listed_ticket_ids ).toEqual( [ ids[ 1 ] ] );
+		expect( target.accounting_anchor_ticket_id ).toBe( ids[ 1 ] );
+
+		await setTicketStatus( signup.id, 2, 'cancelled' );
+		expect( await purchaseOn( second, signup.id ) ).toBeUndefined();
+		const emptied = await purchaseOn( first, signup.id );
+		expect( emptied.listed_ticket_ids ).toEqual( [] );
+		expect( emptied.accounting_anchor_ticket_id ).toBeNull();
+	} );
+
+	test( 'a whole-series pass stays listed where it was bought, with all its tickets', async () => {
+		const signup = await buy( { ticket_type_id: wholeId, quantity: 2 } );
+		const ids = signup.tickets.map( ( ticket ) => ticket.id );
+		expect( signup.recurrence_scope ).toBe( 'whole_series' );
+		// Not reachable through the UI: a pass cannot be moved.
+		await moveTicket( ids[ 1 ], second );
+
+		const original = await purchaseOn( first, signup.id );
+		expect( original.listed_ticket_ids ).toEqual( ids );
+		expect( original.accounting_anchor_ticket_id ).toBe( ids[ 0 ] );
+		expect( await purchaseOn( second, signup.id ) ).toBeUndefined();
+	} );
+
+	test( 'a registration without tickets keeps its single row on its own date', async () => {
+		const email = uniqueEmail( 'legacy' );
+		const seeded = await api.post(
+			'/wp-json/fair-e2e/v1/ticket-units/legacy-signups',
+			{
+				headers: adminHeaders,
+				data: {
+					event_date_id: third,
+					email,
+					signups: [ { quantity: 2 } ],
+				},
+			}
+		);
+		expect( seeded.ok() ).toBeTruthy();
+
+		const legacy = ( await list( third ) ).find(
+			( signup ) => signup.email === email
+		);
+		expect( legacy.tickets ).toEqual( [] );
+		expect( legacy.listed_ticket_ids ).toEqual( [] );
+		expect( legacy.accounting_anchor_ticket_id ).toBeNull();
+		expect(
+			( await list( first ) ).some( ( signup ) => signup.email === email )
+		).toBe( false );
 	} );
 } );

@@ -29,6 +29,7 @@ import {
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventSignups, { expandTicketRows } from '../EventSignups.js';
+import { scopeNotes } from '../SignupEditModal.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -675,7 +676,7 @@ describe( 'EventSignups — confirmed tickets only (#1754)', () => {
 		const rows = bodyRows();
 		expect( rows ).toHaveLength( 3 );
 		expect( rows[ 1 ] ).toHaveTextContent( 'Ticket 2' );
-		expect( rows[ 1 ] ).toHaveTextContent( 'Registration (2 tickets):' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Entire purchase — 2 tickets' );
 		expect( rows[ 1 ] ).toHaveTextContent( 'Delete' );
 		expect( rows[ 2 ] ).toHaveTextContent( 'Ticket 3' );
 		expect( screen.queryByText( 'Cancelled' ) ).not.toBeInTheDocument();
@@ -1202,7 +1203,7 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 		await renderSignups( { rows: [ { ...purchase, can_move: true } ] } );
 
 		const first = ticketRow( 301 );
-		expect( first ).toHaveTextContent( 'Registration (2 tickets):' );
+		expect( first ).toHaveTextContent( 'Entire purchase — 2 tickets' );
 		expect(
 			within( first ).getByRole( 'button', { name: 'Move' } )
 		).toBeInTheDocument();
@@ -1307,5 +1308,319 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 		expect(
 			screen.queryByRole( 'button', { name: /^Edit Ticket/ } )
 		).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'EventSignups — tickets listed under their own date (#1791)', () => {
+	// The List of date 42. Paula bought tickets 901 and 902 for date 42 and
+	// 902 was moved to date 43; Quinn bought 911 and 912 for date 43 and 912
+	// was moved here.
+	const stayed = {
+		...signups[ 1 ],
+		id: 9,
+		name: 'Paula Purchaser',
+		event_date_id: 42,
+		event_date_label: '10 June',
+		can_move: true,
+		tickets: [
+			ticket( 901, 1, { event_date_id: 42 } ),
+			ticket( 902, 2, { event_date_id: 43 } ),
+		],
+		listed_ticket_ids: [ 901 ],
+		accounting_anchor_ticket_id: 901,
+		ticket_counts: {
+			confirmed: 2,
+			on_this_date: 1,
+			on_other_dates: 1,
+			on_registration_date: 1,
+			inactive: 0,
+		},
+	};
+	const movedIn = {
+		...signups[ 1 ],
+		id: 10,
+		name: 'Quinn Guest',
+		event_date_id: 43,
+		event_date_label: '17 June',
+		can_move: true,
+		mailing_opt_in: true,
+		tickets: [
+			ticket( 911, 1, { event_date_id: 43 } ),
+			ticket( 912, 2, {
+				event_date_id: 42,
+				ticket_type_name: 'Reduced',
+				confirmed_activity_ids: [ 7 ],
+				attended_at: '2026-06-10 19:05:00',
+			} ),
+		],
+		listed_ticket_ids: [ 912 ],
+		accounting_anchor_ticket_id: 911,
+		ticket_counts: {
+			confirmed: 2,
+			on_this_date: 1,
+			on_other_dates: 1,
+			on_registration_date: 1,
+			inactive: 0,
+		},
+	};
+	const allMovedAway = {
+		...stayed,
+		id: 11,
+		name: 'Rae Away',
+		tickets: [
+			ticket( 921, 1, { event_date_id: 43 } ),
+			ticket( 922, 2, { event_date_id: 43 } ),
+		],
+		listed_ticket_ids: [],
+		accounting_anchor_ticket_id: 921,
+		ticket_counts: {
+			confirmed: 2,
+			on_this_date: 0,
+			on_other_dates: 2,
+			on_registration_date: 0,
+			inactive: 0,
+		},
+	};
+
+	function ticketRow( id ) {
+		return document.querySelector( `tr[data-ticket-id="${ id }"]` );
+	}
+
+	it( 'lists only the tickets on this date, wherever their purchase is registered', async () => {
+		await renderSignups( {
+			rows: [ stayed, movedIn, allMovedAway ],
+			ticketOptions: options,
+		} );
+
+		expect(
+			bodyRows().map( ( row ) => row.getAttribute( 'data-ticket-id' ) )
+		).toEqual( [ '901', '912' ] );
+		expect( screen.queryByText( 'Rae Away' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByText( 'Ticket not created yet' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'keeps the moved ticket’s reference, position, type and extras, with its purchase details', async () => {
+		window.fairPaymentsConnector = { connectorActive: true };
+		await renderSignups( { rows: [ movedIn ], ticketOptions: options } );
+
+		const row = ticketRow( 912 );
+		expect( row ).toHaveTextContent( 'Quinn Guest' );
+		expect( row ).toHaveTextContent( 'Ticket 2 (REF00912)' );
+		expect( row ).toHaveTextContent( 'Reduced' );
+		expect(
+			within( row ).getByRole( 'img', { name: 'Selected' } )
+		).toBeInTheDocument();
+		expect(
+			within( row ).getByRole( 'link', { name: '502' } )
+		).toBeInTheDocument();
+		expect( within( row ).getByText( 'Yes' ) ).toBeInTheDocument();
+	} );
+
+	it( 'says which date a purchase is registered for only when it is another date', async () => {
+		await renderSignups( { rows: [ stayed, movedIn ] } );
+
+		expect( ticketRow( 912 ) ).toHaveTextContent(
+			'Purchase registered for 17 June'
+		);
+		expect( ticketRow( 901 ) ).not.toHaveTextContent(
+			'Purchase registered for'
+		);
+	} );
+
+	it( 'offers the purchase-wide actions once, on both dates, with the purchase’s ticket counts', async () => {
+		await renderSignups( { rows: [ stayed, movedIn ] } );
+
+		[ 901, 912 ].forEach( ( id ) => {
+			const row = ticketRow( id );
+			expect( row ).toHaveTextContent( 'Entire purchase — 2 tickets' );
+			expect( row ).toHaveTextContent(
+				'1 ticket on this date; 1 on another date'
+			);
+			expect(
+				within( row ).getAllByRole( 'button', { name: 'Move' } )
+			).toHaveLength( 1 );
+			expect(
+				within( row ).getAllByRole( 'button', { name: 'Delete' } )
+			).toHaveLength( 1 );
+		} );
+	} );
+
+	it( 'shows no distribution for a purchase whose tickets are all on this date', async () => {
+		await renderSignups( { rows: [ signups[ 1 ] ] } );
+
+		expect( bodyRows()[ 0 ] ).toHaveTextContent(
+			'Entire purchase — 2 tickets'
+		);
+		expect( bodyRows()[ 0 ] ).not.toHaveTextContent( 'on this date' );
+	} );
+
+	it( 'explains before a move that individually moved tickets stay, using the registration’s own date', async () => {
+		await renderSignups( { rows: [ movedIn ] } );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Move' } ) );
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Move Quinn Guest to another date',
+		} );
+
+		expect( dialog ).toHaveTextContent(
+			'This moves the purchase and the 1 ticket still on the date it is registered for (17 June).'
+		);
+		expect( dialog ).toHaveTextContent(
+			'1 ticket was moved on its own to another date and stays where it is'
+		);
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-events/v1/get-tickets/10/targets',
+		} );
+	} );
+
+	it( 'explains that a type change reaches the tickets on other dates', async () => {
+		await renderSignups( { rows: [ stayed ] } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Change ticket type' } )
+		);
+		const dialog = await screen.findByRole( 'dialog' );
+
+		expect( dialog ).toHaveTextContent(
+			'This changes the type of the whole registration, with all 2 of its tickets.'
+		);
+		expect( dialog ).toHaveTextContent(
+			'That includes 1 ticket on another date.'
+		);
+	} );
+
+	it( 'explains that deleting removes the purchase on every date, and its inactive tickets', async () => {
+		await renderSignups( {
+			rows: [
+				{
+					...stayed,
+					quantity: 3,
+					tickets: [
+						...stayed.tickets,
+						ticket( 903, 3, {
+							event_date_id: 42,
+							status: 'cancelled',
+						} ),
+					],
+					ticket_counts: { ...stayed.ticket_counts, inactive: 1 },
+				},
+			],
+		} );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Delete' } ) );
+		const dialog = screen.getByRole( 'dialog' );
+
+		expect( dialog ).toHaveTextContent(
+			'Delete the registration for Paula Purchaser, with all 2 of its tickets?'
+		);
+		expect( dialog ).toHaveTextContent(
+			'This deletes the entire purchase on every date: 1 on this date and 1 ticket on another date.'
+		);
+		expect( dialog ).toHaveTextContent(
+			'It also removes 1 cancelled or otherwise inactive ticket of this purchase.'
+		);
+	} );
+
+	it( 'applies the mailing filter to the tickets listed on this date', async () => {
+		await renderSignups( { rows: [ stayed, movedIn ] } );
+
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+		);
+
+		expect(
+			bodyRows().map( ( row ) => row.getAttribute( 'data-ticket-id' ) )
+		).toEqual( [ '912' ] );
+	} );
+
+	it( 'exports exactly the listed rows, with the total on the anchor only', async () => {
+		const writeText = jest.fn().mockResolvedValue();
+		Object.assign( navigator, { clipboard: { writeText } } );
+		await renderSignups( { rows: [ stayed, movedIn, allMovedAway ] } );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Export' } ) );
+		await screen.findByRole( 'radio', { name: 'Markdown' } );
+		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
+		);
+
+		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
+		const lines = writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ).slice( 1 );
+		expect( lines ).toHaveLength( 2 );
+		// Paula's anchor is listed here; Quinn's is on the other date.
+		expect( lines[ 0 ] ).toContain( 'REF00901' );
+		expect( lines[ 0 ] ).toContain( ',40.00,9,' );
+		expect( lines[ 1 ] ).toContain( 'REF00912' );
+		expect( lines[ 1 ] ).toContain( ',,10,' );
+		delete navigator.clipboard;
+	} );
+
+	it( 'keeps whole-series passes and registrations without tickets as they were', () => {
+		const rows = expandTicketRows( [
+			{
+				...signups[ 1 ],
+				recurrence_scope: 'whole_series',
+				listed_ticket_ids: [ 201, 202 ],
+				accounting_anchor_ticket_id: 201,
+			},
+			{ ...signups[ 0 ], tickets: [], listed_ticket_ids: [] },
+		] );
+
+		expect(
+			rows.map( ( row ) => [
+				row.ticket?.id ?? null,
+				row.isFirstTicket,
+				row.isAccountingAnchor,
+			] )
+		).toEqual( [
+			[ 201, true, true ],
+			[ 202, false, false ],
+			[ null, true, true ],
+		] );
+	} );
+} );
+
+describe( 'scopeNotes', () => {
+	const signup = { event_date_label: '10 June', tickets: [ {}, {} ] };
+
+	it( 'keeps the whole-registration wording when no ticket was moved on its own', () => {
+		expect(
+			scopeNotes( {
+				isMove: true,
+				signup,
+				counts: {
+					confirmed: 2,
+					onThisDate: 2,
+					onOtherDates: 0,
+					onRegistrationDate: 2,
+					inactive: 0,
+				},
+			} )
+		).toEqual( [
+			'This moves the whole registration, with all 2 of its tickets.',
+		] );
+	} );
+
+	it( 'says no ticket moves when every ticket was moved on its own, and names inactive tickets', () => {
+		expect(
+			scopeNotes( {
+				isMove: true,
+				signup,
+				counts: {
+					confirmed: 2,
+					onThisDate: 2,
+					onOtherDates: 0,
+					onRegistrationDate: 0,
+					inactive: 1,
+				},
+			} )
+		).toEqual( [
+			'No ticket of this purchase is still on the date it is registered for (10 June), so no ticket moves: only the date the purchase is registered for changes.',
+			'2 tickets were moved on their own to other dates and stay where they are; any already on the new date stay there with the purchase.',
+			'1 cancelled or otherwise inactive ticket is left as it is.',
+		] );
 	} );
 } );

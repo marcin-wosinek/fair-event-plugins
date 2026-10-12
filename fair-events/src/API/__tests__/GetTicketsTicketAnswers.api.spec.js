@@ -233,6 +233,78 @@ test.describe( 'Fair Form answers per ticket', () => {
 		expect( third.answers ).toEqual( [] );
 	} );
 
+	test( 'a ticket moved to another date keeps its own answers in that date’s export', async () => {
+		test.skip( ! active, 'fair-form or fair-audience not active' );
+
+		const otherRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Ticket answers other date ${ Date.now() }`,
+					link_type: 'post',
+					start_datetime: '2036-03-08 10:00:00',
+					end_datetime: '2036-03-08 12:00:00',
+				},
+			}
+		);
+		expect( otherRes.ok() ).toBeTruthy();
+		const otherDateId = ( await otherRes.json() ).id;
+
+		const signup = await buy( uniqueEmail( 'moved' ), 2, [
+			dietQuestion( 'Vegan' ),
+		] );
+		const [ answered, sibling ] = signup.tickets;
+		const moveRes = await api.post(
+			'/wp-json/fair-e2e/v1/ticket-units/move',
+			{
+				headers: adminHeaders,
+				data: { ticket_id: answered.id, event_date_id: otherDateId },
+			}
+		);
+		expect( moveRes.ok() ).toBeTruthy();
+
+		const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
+			headers: adminHeaders,
+			params: { event_date: otherDateId, include_answers: 'true' },
+		} );
+		expect( res.ok() ).toBeTruthy();
+		const listed = ( await res.json() ).find(
+			( row ) => row.id === signup.id
+		);
+
+		expect( listed.listed_ticket_ids ).toEqual( [ answered.id ] );
+		expect( listed.answers_ticket_id ).toBe( answered.id );
+		const byId = Object.fromEntries(
+			listed.tickets.map( ( ticket ) => [ ticket.id, ticket ] )
+		);
+		expect( byId[ answered.id ].answers[ 0 ].answer_value ).toBe( 'Vegan' );
+		expect( byId[ sibling.id ].answers ).toEqual( [] );
+
+		// The sibling left on the original date gets none of them.
+		const original = ( await signups() ).find(
+			( row ) => row.id === signup.id
+		);
+		expect( original.listed_ticket_ids ).toEqual( [ sibling.id ] );
+		expect(
+			original.tickets.find( ( ticket ) => ticket.id === sibling.id )
+				.answers
+		).toEqual( [] );
+
+		await api.delete(
+			`/wp-json/fair-events/v1/get-tickets/${ signup.id }`,
+			{
+				headers: adminHeaders,
+			}
+		);
+		await api.delete(
+			`/wp-json/fair-events/v1/event-dates/${ otherDateId }`,
+			{
+				headers: adminHeaders,
+			}
+		);
+	} );
+
 	test( 'a repeat purchase by the same participant keeps both answer sets', async () => {
 		test.skip( ! active, 'fair-form or fair-audience not active' );
 

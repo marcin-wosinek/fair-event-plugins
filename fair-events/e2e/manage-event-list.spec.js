@@ -382,7 +382,7 @@ test.describe( 'Manage Event — List tab', () => {
 			.split( '\r\n' );
 
 		expect( csv[ 0 ] ).toBe(
-			'Email,Name,Ticket,Ticket Type,Extras,Purchase total (once per registration),Status,Transaction,Mailing,Date'
+			'Email,Name,Ticket,Ticket Type,Extras,Purchase total (once per registration),Purchase reference,Status,Transaction,Mailing,Date'
 		);
 		const groupLines = csv.filter( ( line ) =>
 			line.startsWith( `${ group.email },` )
@@ -399,7 +399,7 @@ test.describe( 'Manage Event — List tab', () => {
 		);
 		// Free purchase: 0 on the first ticket, blank on its siblings.
 		const totals = groupLines.map(
-			( line ) => line.split( ',' ).slice( -5 )[ 0 ]
+			( line ) => line.split( ',' ).slice( -6 )[ 0 ]
 		);
 		expect( totals[ 0 ] ).not.toBe( '' );
 		expect( totals.slice( 1 ) ).toEqual( [ '', '' ] );
