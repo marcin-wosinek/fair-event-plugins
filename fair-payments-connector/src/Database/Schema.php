@@ -249,9 +249,10 @@ class Schema {
 		self::migrate_to_v25();
 		self::migrate_to_v26();
 		self::migrate_to_v27();
+		self::migrate_to_v28();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '27.0' );
+		update_option( 'fair_payment_db_version', '28.0' );
 	}
 
 	/**
@@ -475,7 +476,10 @@ class Schema {
 	 * - revisions: one immutable import of a settlement from one source. A
 	 *   settlement points at its published revision per source; earlier ones
 	 *   are kept so a later reconciliation can compare against them.
-	 * - items: the movements of one revision.
+	 *   `report_version` is the format of the Mollie report details its items
+	 *   carry; NULL means it was saved before those details were kept.
+	 * - items: the movements of one revision. `report` holds the allowlisted
+	 *   details of a Mollie report line as JSON, NULL for every other row.
 	 * - import runs: resumable API import progress with server-held cursors.
 	 *
 	 * @return void
@@ -549,6 +553,7 @@ class Schema {
 			facts longtext DEFAULT NULL,
 			coverage longtext DEFAULT NULL,
 			totals longtext DEFAULT NULL,
+			report_version smallint(5) UNSIGNED DEFAULT NULL,
 			item_count int(11) UNSIGNED NOT NULL DEFAULT 0,
 			created_at datetime NOT NULL,
 			published_at datetime DEFAULT NULL,
@@ -577,6 +582,7 @@ class Schema {
 			occurred_at datetime DEFAULT NULL,
 			needs_review tinyint(1) NOT NULL DEFAULT 0,
 			raw_type varchar(64) DEFAULT NULL,
+			report longtext DEFAULT NULL,
 			PRIMARY KEY  (id),
 			UNIQUE KEY revision_identity (revision_id, identity_key),
 			KEY payment_reference (payment_reference)
@@ -1574,6 +1580,24 @@ class Schema {
 		$current_version = get_option( 'fair_payment_db_version', '1.0' );
 
 		if ( version_compare( $current_version, '27.0', '<' ) ) {
+			self::create_settlement_tables();
+		}
+	}
+
+	/**
+	 * Migrate database from v27.0 to v28.0
+	 *
+	 * Adds the Mollie report details of settlement items and the report
+	 * format version of their revision (#1694). Both are nullable: revisions
+	 * saved earlier keep NULL, which marks their report details as never
+	 * loaded rather than as zero.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v28() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '28.0', '<' ) ) {
 			self::create_settlement_tables();
 		}
 	}

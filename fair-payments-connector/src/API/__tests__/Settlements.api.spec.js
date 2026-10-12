@@ -806,6 +806,292 @@ test.describe( 'Saved settlements', () => {
 		).toBeNull();
 	} );
 
+	// Synthetic report: 0.7545 + 1.5300 + 1.3700 + 0.2500 - 0.0045 = 3.9000.
+	test( 'keeps fractional-cent report amounts, rates and invoices exactly', async () => {
+		await setState( { variant: 'precise' } );
+		await runImport();
+		const requests = await mollieRequests();
+
+		const saved = await byProviderId( 'stl_e2e0001' );
+		// Reopening reads the saved report without contacting Mollie.
+		expect( await mollieRequests() ).toBe( requests );
+
+		expect( saved.amount ).toBe( '36.10' );
+		expect( saved.invoice_id ).toBe( 'inv_e2e0001' );
+		expect( saved.report.source ).toBe( 'api' );
+		expect( saved.report.status ).toBe( 'available' );
+		expect( saved.report.summary ).toMatchObject( {
+			currency: 'EUR',
+			lines: 6,
+			missing: 0,
+			invalid: 0,
+			other_currency: 0,
+			complete: true,
+			revenue: { lines: 1, amount: '40.00' },
+			refunds: { lines: 0, amount: null },
+			costs: { lines: 5, amount: '-3.9000' },
+			net: '36.1000',
+			payout: '36.10',
+			difference: '0.0000',
+			check: 'verified',
+		} );
+
+		expect( saved.report.periods ).toHaveLength( 1 );
+		const [ period ] = saved.report.periods;
+		expect( period ).toMatchObject( {
+			year: '2026',
+			month: '05',
+			invoice_id: 'inv_e2e0001',
+			invoice_reference: '2026.10001',
+		} );
+		expect( period.revenue ).toHaveLength( 1 );
+		expect( period.revenue[ 0 ].amount_gross ).toEqual( {
+			value: '40.00',
+			currency: 'EUR',
+			state: 'provided',
+		} );
+		// Not sent is not zero.
+		expect( period.revenue[ 0 ].amount_vat.state ).toBe( 'missing' );
+		expect( period.revenue[ 0 ].amount_vat.value ).toBeNull();
+
+		const costs = Object.fromEntries(
+			period.costs.map( ( line ) => [ line.description, line ] )
+		);
+		expect( Object.keys( costs ) ).toHaveLength( 5 );
+		expect( costs.iDEAL ).toMatchObject( {
+			method: 'ideal',
+			count: 2,
+			is_refund: false,
+			needs_review: false,
+			rate_fixed: { value: '0.3118', currency: 'EUR', state: 'provided' },
+			rate_percentage: { value: null, state: 'missing' },
+			amount_net: { value: '0.6236', currency: 'EUR', state: 'provided' },
+			amount_vat: { value: '0.1309', currency: 'EUR', state: 'provided' },
+			amount_gross: {
+				value: '0.7545',
+				currency: 'EUR',
+				state: 'provided',
+			},
+			// Costs reduce the payout; Mollie's own sign stays on the amounts.
+			contribution: {
+				value: '-0.7545',
+				currency: 'EUR',
+				state: 'provided',
+			},
+		} );
+		expect( costs[ 'Credit card' ].rate_percentage ).toEqual( {
+			value: '1.8',
+			state: 'provided',
+		} );
+		expect( costs[ 'Credit card' ].amount_gross.value ).toBe( '1.5300' );
+		expect( costs[ 'Refunds iDEAL' ].is_refund ).toBe( true );
+		// Zero VAT is a value; it is not "not provided".
+		expect( costs[ 'Refunds iDEAL' ].amount_vat ).toEqual( {
+			value: '0.0000',
+			currency: 'EUR',
+			state: 'provided',
+		} );
+		// A negative cost adjustment increases the payout.
+		expect( costs[ 'Rounding difference' ] ).toMatchObject( {
+			method: null,
+			count: null,
+			amount_gross: { value: '-0.0045', state: 'provided' },
+			contribution: { value: '0.0045', state: 'provided' },
+		} );
+
+		// The report matches the payout and nothing needs review.
+		expect( saved.revisions.api.coverage.summary_check ).toBe( 'verified' );
+		expect( saved.completeness ).toBe( 'verified' );
+		expect( saved.discrepancies ).toEqual( [] );
+		// Report lines are flagged as such and totalled apart from movements.
+		expect( saved.aggregates ).toHaveLength( 6 );
+		expect( saved.aggregates.every( ( row ) => row.in_report ) ).toBe(
+			true
+		);
+		expect( saved.revisions.api.totals.aggregate.settlement_amount ).toBe(
+			'-3.9000'
+		);
+		expect( saved.revisions.api.totals.detail.settlement_amount ).toBe(
+			'40.00'
+		);
+
+		// Loading the same report again keeps the published revision.
+		await runImport();
+		const again = await detail( saved.id );
+		expect( again.revisions.api.id ).toBe( saved.revisions.api.id );
+		expect( again.revisions.api.content_hash ).toBe(
+			saved.revisions.api.content_hash
+		);
+		expect( again.material_change_at ).toBeNull();
+		expect( again.report ).toEqual( saved.report );
+	} );
+
+	test( 'reports a difference below one cent instead of calling the report verified', async () => {
+		await setState( { variant: 'precise_residual' } );
+		await runImport();
+
+		const saved = await byProviderId( 'stl_e2e0001' );
+		expect( saved.report.summary ).toMatchObject( {
+			costs: { lines: 4, amount: '-3.9045' },
+			net: '36.0955',
+			payout: '36.10',
+			difference: '-0.0045',
+			check: 'mismatch',
+		} );
+		expect( saved.revisions.api.coverage.summary_check ).toBe( 'mismatch' );
+		expect( saved.completeness ).toBe( 'unverified' );
+		const mismatch = saved.discrepancies.find(
+			( d ) => d.code === 'summary_total_mismatch'
+		);
+		expect( mismatch.difference ).toBe( '-0.0045' );
+		expect( mismatch.currency ).toBe( 'EUR' );
+		expect( mismatch.message ).toContain( '-0.0045 EUR' );
+	} );
+
+	test( 'says when Mollie sent no report for a settlement', async () => {
+		await runImport();
+
+		const saved = await byProviderId( 'stl_e2e0002' );
+		expect( saved.report.status ).toBe( 'not_provided' );
+		expect( saved.report.summary ).toBeNull();
+		expect( saved.report.periods ).toEqual( [] );
+	} );
+
+	test( 'keeps an earlier revision readable and loads its report details on refresh', async () => {
+		await setState( { variant: 'precise' } );
+		await runImport();
+		// As saved before report details were kept.
+		await setState( { forget_reports: true } );
+
+		const legacy = await byProviderId( 'stl_e2e0001' );
+		expect( legacy.report ).toEqual( {
+			source: 'api',
+			status: 'legacy',
+			summary: null,
+			periods: [],
+		} );
+		// Still readable: payout facts, movements and the earlier rows.
+		expect( legacy.amount ).toBe( '36.10' );
+		expect( legacy.movements ).toHaveLength( 2 );
+		expect( legacy.aggregates ).toHaveLength( 6 );
+		expect( legacy.aggregates.some( ( row ) => row.in_report ) ).toBe(
+			false
+		);
+
+		// A failed refresh leaves the earlier revision in place.
+		await setState( {
+			fail_match: 'stl_e2e0001/payments?from=tr_e2estl01b',
+		} );
+		const failed = await runImport( {
+			kind: 'refresh',
+			settlement_id: legacy.id,
+		} );
+		expect( failed.status ).toBe( 'failed' );
+		const during = await detail( legacy.id );
+		expect( during.revisions.api.id ).toBe( legacy.revisions.api.id );
+		expect( during.report.status ).toBe( 'legacy' );
+		expect( during.last_failure.code ).toBe( 'mollie_request_failed' );
+
+		await setState( { fail_match: '' } );
+		const resumed = await drive( await step( failed.id ) );
+		expect( resumed.status ).toBe( 'completed' );
+
+		// A new revision carries the details; the earlier one is not edited.
+		const refreshed = await detail( legacy.id );
+		expect( refreshed.id ).toBe( legacy.id );
+		expect( refreshed.revisions.api.id ).toBeGreaterThan(
+			legacy.revisions.api.id
+		);
+		expect( refreshed.report.status ).toBe( 'available' );
+		expect( refreshed.report.summary.net ).toBe( '36.1000' );
+		expect( refreshed.report.summary.check ).toBe( 'verified' );
+		expect( refreshed.last_failure ).toBeNull();
+		// Gaining report details is not Mollie changing the settlement.
+		expect( refreshed.material_change_at ).toBeNull();
+		expect( refreshed.discrepancies.map( ( d ) => d.code ) ).not.toContain(
+			'source_changed'
+		);
+		expect( refreshed.movements ).toEqual( legacy.movements );
+	} );
+
+	test( 'flags a report that Mollie changed on a later refresh', async () => {
+		await setState( { variant: 'precise' } );
+		await runImport();
+		const before = await byProviderId( 'stl_e2e0001' );
+
+		// Mollie drops the rounding line.
+		await setState( { variant: 'precise_residual' } );
+		const run = await runImport( {
+			kind: 'refresh',
+			settlement_id: before.id,
+		} );
+		expect( run.status ).toBe( 'completed' );
+
+		const after = await detail( before.id );
+		expect( after.revisions.api.id ).toBeGreaterThan(
+			before.revisions.api.id
+		);
+		expect( after.revisions.api.content_hash ).not.toBe(
+			before.revisions.api.content_hash
+		);
+		expect( after.material_change_at ).not.toBeNull();
+		expect( after.discrepancies.map( ( d ) => d.code ) ).toEqual(
+			expect.arrayContaining( [
+				'source_changed',
+				'summary_total_mismatch',
+			] )
+		);
+		expect( after.report.summary.difference ).toBe( '-0.0045' );
+		// The movements did not change.
+		expect( after.movements ).toEqual( before.movements );
+	} );
+
+	test( 'keeps the Mollie report apart from the costs of an uploaded file', async () => {
+		await setState( { variant: 'precise' } );
+		await runImport();
+		const saved = await byProviderId( 'stl_e2e0001' );
+
+		const imported = await importCsv( MATCHING_CSV, {
+			account_id: String( saved.account.id ),
+			confirm_account: 'true',
+		} );
+		expect( imported.settlement_id ).toBe( saved.id );
+
+		const merged = await detail( saved.id );
+		expect( merged.sources ).toEqual( [ 'api', 'csv' ] );
+		// The file's summed fee is its own row and is not a report line.
+		const fileRows = merged.aggregates.filter( ( row ) => ! row.in_report );
+		expect( fileRows ).toHaveLength( 1 );
+		expect( fileRows[ 0 ].sources ).toEqual( [ 'csv' ] );
+		expect( fileRows[ 0 ].settlement_amount ).toBe( '-1.45' );
+		// The report and its total are unchanged by the file.
+		expect( merged.report ).toEqual( saved.report );
+		expect( merged.revisions.api.totals.aggregate.settlement_amount ).toBe(
+			'-3.9000'
+		);
+		expect( merged.revisions.csv.totals.aggregate.settlement_amount ).toBe(
+			'-1.45'
+		);
+		// Each payment is still one movement from both sources.
+		expect( merged.movements ).toHaveLength( 2 );
+	} );
+
+	test( 'does not serve the report to users who cannot manage settlements', async () => {
+		await setState( { variant: 'precise' } );
+		await runImport();
+		const saved = await byProviderId( 'stl_e2e0001' );
+		const editor = await createUser( 'editor' );
+
+		const forbidden = await api.get( `${ SETTLEMENTS }/${ saved.id }`, {
+			headers: editor,
+		} );
+		expect( forbidden.status() ).toBe( 403 );
+		expect( await forbidden.text() ).not.toContain( '0.7545' );
+
+		const anonymous = await api.get( `${ SETTLEMENTS }/${ saved.id }` );
+		expect( anonymous.status() ).toBe( 401 );
+	} );
+
 	test( 'explains a missing permission while saved data and CSV import stay available', async () => {
 		await runImport();
 		await setState( { scopes: [ 'payments.read' ] } );

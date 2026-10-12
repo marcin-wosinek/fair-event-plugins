@@ -8,6 +8,7 @@
 namespace FairPaymentsConnector\Database;
 
 use FairPaymentsConnector\Settlements\Movements;
+use FairPaymentsConnector\Settlements\Report;
 
 defined( 'WPINC' ) || die;
 
@@ -543,6 +544,7 @@ class SettlementRepository {
 			foreach ( self::ITEM_FIELDS as $field ) {
 				$row[ $field ] = $movement[ $field ];
 			}
+			$row['report'] = empty( $movement['report'] ) ? null : wp_json_encode( $movement['report'] );
 
 			$wpdb->replace( Schema::get_settlement_items_table_name(), $row );
 		}
@@ -577,6 +579,7 @@ class SettlementRepository {
 				$movement[ $field ] = $row[ $field ];
 			}
 			$movement['occurrence'] = (int) $movement['occurrence'];
+			$movement['report']     = empty( $row['report'] ) ? null : Report::from_stored( json_decode( (string) $row['report'], true ) );
 			$movements[]            = Movements::make( $movement );
 		}
 

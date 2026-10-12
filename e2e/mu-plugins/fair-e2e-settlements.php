@@ -56,7 +56,7 @@ add_action(
 		/*
 		 * GET  fair-e2e/v1/settlements/state  -> the double's request count.
 		 * POST fair-e2e/v1/settlements/state  -> { fail_match, variant,
-		 *      organization_id, scopes, age_running }.
+		 *      organization_id, scopes, age_running, forget_reports }.
 		 */
 		register_rest_route(
 			'fair-e2e/v1',
@@ -108,6 +108,14 @@ add_action(
 									'running'
 								)
 							);
+						}
+
+						// Make saved revisions look as they did before report details were kept.
+						if ( $request->get_param( 'forget_reports' ) ) {
+							// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test-only fixture.
+							$wpdb->query( $wpdb->prepare( 'UPDATE %i SET report_version = NULL', $wpdb->prefix . 'fair_payment_settlement_revisions' ) );
+							// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test-only fixture.
+							$wpdb->query( $wpdb->prepare( 'UPDATE %i SET report = NULL', $wpdb->prefix . 'fair_payment_settlement_items' ) );
 						}
 
 						return rest_ensure_response( array( 'updated' => true ) );

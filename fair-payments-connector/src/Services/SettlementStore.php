@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Services;
 
 use FairPaymentsConnector\Database\SettlementRepository;
 use FairPaymentsConnector\Settlements\Movements;
+use FairPaymentsConnector\Settlements\Report;
 use WP_Error;
 
 defined( 'WPINC' ) || die;
@@ -279,12 +280,13 @@ class SettlementStore {
 
 		$revision_id = $this->repository->insert_revision(
 			array(
-				'settlement_id' => (int) $settlement_id,
-				'source'        => Movements::SOURCE_API,
-				'status'        => 'staged',
-				'run_id'        => (int) $run_id,
-				'facts'         => wp_json_encode( $facts ),
-				'coverage'      => wp_json_encode( array( 'summary_check' => $summary_check ) ),
+				'settlement_id'  => (int) $settlement_id,
+				'source'         => Movements::SOURCE_API,
+				'status'         => 'staged',
+				'run_id'         => (int) $run_id,
+				'facts'          => wp_json_encode( $facts ),
+				'coverage'       => wp_json_encode( array( 'summary_check' => $summary_check ) ),
+				'report_version' => Report::VERSION,
 			)
 		);
 
@@ -338,7 +340,18 @@ class SettlementStore {
 				$header['last_failure_code'] = null;
 				$header['last_failure_at']   = null;
 
-				if ( $previous && $previous['content_hash'] === $hash ) {
+				// A revision saved before report details were kept cannot hash
+				// like one that has them. Gaining those details is not Mollie
+				// changing its mind, so only the payout facts and the detail
+				// movements decide whether the source changed.
+				$upgrade = $previous && null === $previous['report_version'];
+				$changed = $previous && $previous['content_hash'] !== $hash;
+				if ( $upgrade ) {
+					$before  = self::detail_hash( (array) json_decode( (string) $previous['facts'], true ), $this->repository->get_items( (int) $previous['id'] ) );
+					$changed = self::detail_hash( $facts, $items ) !== $before;
+				}
+
+				if ( $previous && ! $upgrade && ! $changed ) {
 					// Same facts as before: keep the revision already published.
 					$this->repository->delete_staged_revision( $revision_id );
 					$outcome = 'unchanged';
@@ -374,7 +387,9 @@ class SettlementStore {
 
 					if ( $previous ) {
 						$this->repository->update_revision( (int) $previous['id'], array( 'status' => 'superseded' ) );
-						$header['material_change_at'] = $now;
+						if ( $changed ) {
+							$header['material_change_at'] = $now;
+						}
 					}
 					$header['api_revision_id'] = (int) $revision_id;
 				}
@@ -392,6 +407,26 @@ class SettlementStore {
 
 				return $outcome;
 			}
+		);
+	}
+
+	/**
+	 * Hash of a settlement's payout facts and detail movements only, leaving
+	 * the report lines out.
+	 *
+	 * @param array   $facts Settlement facts.
+	 * @param array[] $items Movements of a revision.
+	 * @return string
+	 */
+	private static function detail_hash( array $facts, array $items ) {
+		return Movements::content_hash(
+			$facts,
+			array_filter(
+				$items,
+				static function ( $item ) {
+					return ! $item['is_aggregate'];
+				}
+			)
 		);
 	}
 
@@ -615,7 +650,13 @@ class SettlementStore {
 		$discrepancies = array();
 
 		if ( 'mismatch' === $summary_check ) {
-			$discrepancies[] = array( 'code' => 'summary_total_mismatch' );
+			$summary         = Report::summarize( $settlement['amount'], $settlement['currency'], $api_items );
+			$discrepancies[] = array(
+				'code'       => 'summary_total_mismatch',
+				// Exact, so a difference below one cent is not rounded away.
+				'difference' => $summary['difference'] ?? null,
+				'currency'   => $summary['currency'] ?? null,
+			);
 		}
 
 		if ( $api && $csv ) {

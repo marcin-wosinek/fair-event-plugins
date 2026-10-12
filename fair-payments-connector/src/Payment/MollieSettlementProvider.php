@@ -15,6 +15,7 @@ use Mollie\Api\Http\Requests\GetPaginatedSettlementPaymentsRequest;
 use Mollie\Api\Http\Requests\GetPaginatedSettlementRefundsRequest;
 use FairPaymentsConnector\Settlements\Decimal;
 use FairPaymentsConnector\Settlements\Movements;
+use FairPaymentsConnector\Settlements\Report;
 
 defined( 'WPINC' ) || die;
 
@@ -292,11 +293,11 @@ class MollieSettlementProvider {
 	}
 
 	/**
-	 * Aggregate rows from a settlement's per-period report summary.
+	 * Aggregate rows from a settlement's per-period report.
 	 *
-	 * Revenue lines are kept as report summaries and cost lines as summed
-	 * fees. Both describe money that the detail movements may also describe,
-	 * so they are stored apart and never added to them.
+	 * Each revenue and cost line keeps its report details exactly as Mollie
+	 * supplied them. Both describe money that the detail movements may also
+	 * describe, so they are stored apart and never added to them.
 	 *
 	 * @param mixed       $periods  Mollie `periods` object.
 	 * @param string|null $currency Settlement currency.
@@ -310,31 +311,34 @@ class MollieSettlementProvider {
 
 		foreach ( (array) $periods as $year => $months ) {
 			foreach ( (array) $months as $month => $period ) {
+				$period = (array) $period;
 				$groups = array(
-					Movements::TYPE_SUMMARY => (array) ( ( (array) $period )['revenue'] ?? array() ),
-					Movements::TYPE_FEE     => (array) ( ( (array) $period )['costs'] ?? array() ),
+					Report::GROUP_REVENUE => Movements::TYPE_SUMMARY,
+					Report::GROUP_COSTS   => Movements::TYPE_FEE,
 				);
 
-				foreach ( $groups as $type => $lines ) {
-					foreach ( $lines as $line ) {
-						$line = (object) (array) $line;
-						// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
-						$money = self::money( $line->amountGross ?? ( $line->amountNet ?? null ) );
-						$value = $money['value'];
-						if ( null !== $value && Movements::TYPE_FEE === $type ) {
-							// Costs reduce the payout.
-							$value = Decimal::from_minor( -Decimal::to_minor( $value, $money['currency'] ), $money['currency'] );
+				foreach ( $groups as $group => $type ) {
+					foreach ( (array) ( $period[ $group ] ?? array() ) as $line ) {
+						$line = (array) $line;
+						if ( isset( $line['rate'] ) ) {
+							$line['rate'] = (array) $line['rate'];
 						}
+
+						$report       = Report::line( $year, $month, $group, $line, $period );
+						$contribution = Report::contribution( $report );
 
 						$aggregates[] = Movements::make(
 							array(
 								'type'                => $type,
 								'is_aggregate'        => true,
-								'settlement_amount'   => $value,
-								'settlement_currency' => null === $value ? null : ( $money['currency'] ?? $currency ),
-								'description'         => (string) self::text( $line->description ?? null, 255 ),
-								'needs_review'        => $money['invalid'],
-								'raw_type'            => substr( sprintf( '%s-%s|%s', $year, $month, (string) self::text( $line->method ?? null, 40 ) ), 0, 64 ),
+								// Signed payout contribution: costs reduce the payout.
+								'settlement_amount'   => $contribution['value'],
+								'settlement_currency' => null === $contribution['value'] ? null : ( $contribution['currency'] ?? $currency ),
+								'description'         => (string) self::text( $line['description'] ?? null, 255 ),
+								// A value Mollie sent that could not be read exactly is flagged.
+								'needs_review'        => Report::has_invalid_value( $report ),
+								'raw_type'            => substr( sprintf( '%s-%s|%s', $year, $month, (string) $report['method'] ), 0, 64 ),
+								'report'              => $report,
 							)
 						);
 					}
@@ -346,28 +350,16 @@ class MollieSettlementProvider {
 	}
 
 	/**
-	 * Whether the report summary adds up to the payout.
+	 * Whether the report adds up to the payout, compared exactly.
 	 *
 	 * @param array   $facts      Settlement facts.
-	 * @param array[] $aggregates Aggregate rows from the report summary.
+	 * @param array[] $aggregates Aggregate rows from the report.
 	 * @return string `verified`, `mismatch`, or `unavailable` when it cannot be checked.
 	 */
 	private static function summary_check( array $facts, array $aggregates ) {
-		if ( null === $facts['amount'] || null === $facts['currency'] || empty( $aggregates ) ) {
-			return 'unavailable';
-		}
+		$summary = Report::summarize( $facts['amount'], $facts['currency'], $aggregates );
 
-		$values = array();
-		foreach ( $aggregates as $aggregate ) {
-			if ( null === $aggregate['settlement_amount'] || $aggregate['settlement_currency'] !== $facts['currency'] ) {
-				return 'unavailable';
-			}
-			$values[] = $aggregate['settlement_amount'];
-		}
-
-		return Decimal::equals( Decimal::sum( $values, $facts['currency'] ), $facts['amount'], $facts['currency'] )
-			? 'verified'
-			: 'mismatch';
+		return null === $summary || null === $facts['currency'] ? 'unavailable' : $summary['check'];
 	}
 
 	/**

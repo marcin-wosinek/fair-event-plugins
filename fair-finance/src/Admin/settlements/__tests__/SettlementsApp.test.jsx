@@ -1214,3 +1214,515 @@ describe( 'SettlementsApp — one settlement', () => {
 		).toHaveAttribute( 'href', 'admin.php?page=fair-finance-settlements' );
 	} );
 } );
+
+// Synthetic report: 0.7545 + 1.5300 + 1.3700 + 0.2500 - 0.0045 = 3.9000.
+describe( 'SettlementsApp — Mollie report of one settlement', () => {
+	const provided = ( value ) => ( {
+		value,
+		currency: 'EUR',
+		state: 'provided',
+	} );
+	const missing = { value: null, currency: null, state: 'missing' };
+	const invalid = { value: null, currency: null, state: 'invalid' };
+
+	const line = ( overrides = {} ) => ( {
+		key: 'agg:fee:a#1',
+		description: 'iDEAL',
+		method: 'ideal',
+		is_refund: false,
+		count: 2,
+		rate_fixed: provided( '0.3118' ),
+		rate_percentage: { value: null, state: 'missing' },
+		amount_net: provided( '0.6236' ),
+		amount_vat: provided( '0.1309' ),
+		amount_gross: provided( '0.7545' ),
+		contribution: provided( '-0.7545' ),
+		needs_review: false,
+		...overrides,
+	} );
+
+	const reportSummary = ( overrides = {} ) => ( {
+		currency: 'EUR',
+		lines: 6,
+		missing: 0,
+		invalid: 0,
+		other_currency: 0,
+		revenue: { lines: 1, amount: '40.00' },
+		refunds: { lines: 0, amount: null },
+		costs: { lines: 5, amount: '-3.9000' },
+		complete: true,
+		net: '36.1000',
+		payout: '36.10',
+		difference: '0.0000',
+		check: 'verified',
+		...overrides,
+	} );
+
+	const report = ( overrides = {} ) => ( {
+		source: 'api',
+		status: 'available',
+		summary: reportSummary(),
+		periods: [
+			{
+				year: '2026',
+				month: '05',
+				invoice_id: 'inv_test1',
+				invoice_reference: '2026.10001',
+				revenue: [
+					line( {
+						key: 'agg:summary:r#1',
+						count: 2,
+						rate_fixed: missing,
+						amount_net: provided( '40.00' ),
+						amount_vat: missing,
+						amount_gross: provided( '40.00' ),
+						contribution: provided( '40.00' ),
+					} ),
+				],
+				costs: [
+					line(),
+					line( {
+						key: 'agg:fee:b#1',
+						description: 'Credit card',
+						method: 'creditcard',
+						count: 1,
+						rate_fixed: provided( '0.25' ),
+						rate_percentage: { value: '1.8', state: 'provided' },
+						amount_net: provided( '1.2645' ),
+						amount_vat: provided( '0.2655' ),
+						amount_gross: provided( '1.5300' ),
+						contribution: provided( '-1.5300' ),
+					} ),
+					line( {
+						key: 'agg:fee:c#1',
+						description: 'Refunds iDEAL',
+						method: 'refund',
+						is_refund: true,
+						count: 0,
+						rate_fixed: provided( '0.25' ),
+						amount_net: provided( '0.2500' ),
+						amount_vat: provided( '0.0000' ),
+						amount_gross: provided( '0.2500' ),
+						contribution: provided( '-0.2500' ),
+					} ),
+					line( {
+						key: 'agg:fee:d#1',
+						description: 'Rounding difference',
+						method: null,
+						count: null,
+						rate_fixed: missing,
+						amount_net: provided( '-0.0045' ),
+						amount_vat: missing,
+						amount_gross: provided( '-0.0045' ),
+						contribution: provided( '0.0045' ),
+					} ),
+				],
+			},
+		],
+		...overrides,
+	} );
+
+	const reportRow = ( overrides = {} ) => ( {
+		...movement( {
+			key: 'api:agg:fee:a#1',
+			type: 'fee',
+			external_id: null,
+			payment_reference: null,
+			description: 'iDEAL',
+			settlement_amount: '-0.7545',
+		} ),
+		in_report: true,
+		...overrides,
+	} );
+
+	const open = async ( overrides = {} ) => {
+		mockApi( {
+			[ `GET ${ BASE }/3` ]: detail( {
+				amount: '36.10',
+				report: report(),
+				aggregates: [ reportRow() ],
+				...overrides,
+			} ),
+		} );
+		render( <SettlementsApp /> );
+		return within(
+			(
+				await screen.findByRole( 'heading', {
+					name: 'Settlement summary',
+				} )
+			).closest( '.fair-finance-settlements-report' )
+		);
+	};
+
+	const valueOf = ( scope, label ) =>
+		scope.getByText( label ).closest( 'div' );
+
+	beforeEach( () => {
+		openAt( '?page=fair-finance-settlements&settlement=3' );
+	} );
+
+	it( 'summarizes the report at the precision Mollie supplied', async () => {
+		const card = await open();
+
+		expect( card.getByText( /Source: Mollie API\./ ) ).toBeInTheDocument();
+		expect( valueOf( card, 'Revenue reported' ) ).toHaveTextContent(
+			'40.00 EUR'
+		);
+		// Fractional cents are shown, not rounded to -3.90.
+		expect( valueOf( card, 'Costs and adjustments' ) ).toHaveTextContent(
+			'-3.9000 EUR'
+		);
+		expect( valueOf( card, 'Report net' ) ).toHaveTextContent(
+			'36.1000 EUR'
+		);
+		// The payout keeps its own precision.
+		expect( valueOf( card, 'Payout' ) ).toHaveTextContent( '36.10 EUR' );
+		expect( valueOf( card, 'Difference from payout' ) ).toHaveTextContent(
+			'0.0000 EUR'
+		);
+		// No refund line was reported, so no refund total is made up.
+		expect( card.queryByText( 'Refunds reported' ) ).toBeNull();
+
+		// Agreement with the payout is not a claim about the movements.
+		expect(
+			card.getByText( 'The report net equals the payout exactly.' )
+		).toBeInTheDocument();
+		expect(
+			card.getByText(
+				/It does not confirm that every movement is listed below\./
+			)
+		).toBeInTheDocument();
+
+		// The breakdown stays closed until asked for.
+		expect(
+			card.getByRole( 'button', {
+				name: 'Show Mollie report breakdown',
+			} )
+		).toHaveAttribute( 'aria-expanded', 'false' );
+		expect( card.queryByText( 'Period 2026-05' ) ).toBeNull();
+	} );
+
+	it( 'opens the breakdown by period and group with every preserved field', async () => {
+		const card = await open();
+
+		fireEvent.click(
+			card.getByRole( 'button', { name: 'Show Mollie report breakdown' } )
+		);
+
+		expect(
+			card.getByRole( 'button', { name: 'Hide Mollie report breakdown' } )
+		).toHaveAttribute( 'aria-expanded', 'true' );
+		expect(
+			card.getByRole( 'heading', { name: 'Period 2026-05' } )
+		).toBeInTheDocument();
+		expect(
+			card.getByText( 'Mollie invoice: 2026.10001' )
+		).toBeInTheDocument();
+		expect(
+			card.getByRole( 'heading', { name: 'Revenue' } )
+		).toBeInTheDocument();
+		expect(
+			card.getByRole( 'heading', { name: 'Costs' } )
+		).toBeInTheDocument();
+
+		const card2 = within( card.getByText( 'Credit card' ).closest( 'tr' ) );
+		expect( card2.getByText( 'creditcard' ) ).toBeInTheDocument();
+		expect( card2.getByText( '1.5300 EUR' ) ).toBeInTheDocument();
+		// Costs reduce the payout.
+		expect( card2.getByText( '-1.5300 EUR' ) ).toBeInTheDocument();
+
+		// A negative cost keeps its sign and increases the payout.
+		const rounding = within(
+			card.getByText( 'Rounding difference' ).closest( 'tr' )
+		);
+		expect( rounding.getByText( '-0.0045 EUR' ) ).toBeInTheDocument();
+		expect( rounding.getByText( '0.0045 EUR' ) ).toBeInTheDocument();
+		// No method and no count were sent; neither is shown as zero.
+		expect(
+			rounding.getAllByText( 'Not provided by Mollie' )
+		).toHaveLength( 2 );
+
+		// A count of zero is a value.
+		const refunds = within(
+			card.getByText( 'Refunds iDEAL' ).closest( 'tr' )
+		);
+		expect( refunds.getByText( 'Refund' ) ).toBeInTheDocument();
+		expect( refunds.getByText( '0' ) ).toBeInTheDocument();
+
+		// Net, VAT and rates sit in each line's own details.
+		expect( card.queryByText( '1.2645 EUR' ) ).toBeNull();
+		const toggle = card.getByRole( 'button', {
+			name: 'Show details of Credit card',
+		} );
+		expect( toggle ).toHaveAttribute( 'aria-expanded', 'false' );
+		fireEvent.click( toggle );
+
+		const hide = card.getByRole( 'button', {
+			name: 'Hide details of Credit card',
+		} );
+		expect( hide ).toHaveAttribute( 'aria-expanded', 'true' );
+		const details = within(
+			document.getElementById( hide.getAttribute( 'aria-controls' ) )
+		);
+		expect( valueOf( details, 'Net amount' ) ).toHaveTextContent(
+			'1.2645 EUR'
+		);
+		expect( valueOf( details, 'VAT' ) ).toHaveTextContent( '0.2655 EUR' );
+		expect( valueOf( details, 'Gross amount' ) ).toHaveTextContent(
+			'1.5300 EUR'
+		);
+		expect( valueOf( details, 'Fixed fee rate' ) ).toHaveTextContent(
+			'0.25 EUR'
+		);
+		expect( valueOf( details, 'Percentage fee rate' ) ).toHaveTextContent(
+			'1.8%'
+		);
+
+		fireEvent.click( hide );
+		expect( card.queryByText( '1.2645 EUR' ) ).toBeNull();
+	} );
+
+	it( 'tells zero, not provided and unreadable amounts apart', async () => {
+		const card = await open( {
+			report: report( {
+				periods: [
+					{
+						year: '2026',
+						month: '05',
+						invoice_id: null,
+						invoice_reference: null,
+						revenue: [],
+						costs: [
+							line( {
+								description: 'Odd line',
+								rate_fixed: invalid,
+								rate_percentage: {
+									value: null,
+									state: 'invalid',
+								},
+								amount_net: provided( '0.0000' ),
+								amount_vat: missing,
+								amount_gross: invalid,
+								contribution: invalid,
+								needs_review: true,
+							} ),
+						],
+					},
+				],
+			} ),
+		} );
+
+		fireEvent.click(
+			card.getByRole( 'button', { name: 'Show Mollie report breakdown' } )
+		);
+		// Without an invoice, no invoice line is shown.
+		expect( card.queryByText( /Mollie invoice:/ ) ).toBeNull();
+
+		const row = within( card.getByText( 'Odd line' ).closest( 'tr' ) );
+		expect( row.getByText( 'Review' ) ).toBeInTheDocument();
+		expect( row.getAllByText( 'Could not read amount' ) ).toHaveLength( 2 );
+
+		fireEvent.click(
+			card.getByRole( 'button', { name: 'Show details of Odd line' } )
+		);
+		const details = within(
+			document.getElementById(
+				card
+					.getByRole( 'button', {
+						name: 'Hide details of Odd line',
+					} )
+					.getAttribute( 'aria-controls' )
+			)
+		);
+		expect( valueOf( details, 'Net amount' ) ).toHaveTextContent(
+			'0.0000 EUR'
+		);
+		expect( valueOf( details, 'VAT' ) ).toHaveTextContent(
+			'Not provided by Mollie'
+		);
+		expect( valueOf( details, 'Gross amount' ) ).toHaveTextContent(
+			'Could not read amount'
+		);
+		expect( valueOf( details, 'Fixed fee rate' ) ).toHaveTextContent(
+			'Could not read amount'
+		);
+		expect( valueOf( details, 'Percentage fee rate' ) ).toHaveTextContent(
+			'Could not read rate'
+		);
+	} );
+
+	it( 'does not complete a summary from partial values', async () => {
+		const card = await open( {
+			report: report( {
+				summary: reportSummary( {
+					missing: 1,
+					invalid: 1,
+					costs: { lines: 5, amount: null },
+					complete: false,
+					net: null,
+					difference: null,
+					check: 'unavailable',
+				} ),
+			} ),
+		} );
+
+		expect(
+			card.getByText(
+				'2 report amounts are missing, unreadable or in another currency, so the report is not totalled.'
+			)
+		).toBeInTheDocument();
+		// What was reported in full is still shown.
+		expect( valueOf( card, 'Revenue reported' ) ).toHaveTextContent(
+			'40.00 EUR'
+		);
+		expect( valueOf( card, 'Costs and adjustments' ) ).toHaveTextContent(
+			'Could not be totalled'
+		);
+		expect( valueOf( card, 'Report net' ) ).toHaveTextContent(
+			'Not totalled'
+		);
+		expect( valueOf( card, 'Difference from payout' ) ).toHaveTextContent(
+			'Not available'
+		);
+		expect(
+			card.getByText(
+				'The report could not be compared with the payout.'
+			)
+		).toBeInTheDocument();
+		expect(
+			card.queryByText( 'The report net equals the payout exactly.' )
+		).toBeNull();
+	} );
+
+	it( 'shows a difference below one cent and the refunds Mollie marked', async () => {
+		const card = await open( {
+			report: report( {
+				summary: reportSummary( {
+					refunds: { lines: 1, amount: '-10.00' },
+					costs: { lines: 4, amount: '-3.9045' },
+					net: '26.0955',
+					payout: '26.10',
+					difference: '-0.0045',
+					check: 'mismatch',
+				} ),
+			} ),
+		} );
+
+		expect( valueOf( card, 'Refunds reported' ) ).toHaveTextContent(
+			'-10.00 EUR'
+		);
+		expect( valueOf( card, 'Difference from payout' ) ).toHaveTextContent(
+			'-0.0045 EUR'
+		);
+		expect(
+			card.getByText(
+				'The report net differs from the payout by -0.0045 EUR.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'offers a refresh for a settlement saved before report details were kept', async () => {
+		const card = await open( {
+			report: report( {
+				status: 'legacy',
+				summary: null,
+				periods: [],
+			} ),
+			aggregates: [
+				reportRow( { in_report: false, settlement_amount: null } ),
+			],
+		} );
+
+		expect(
+			card.getByText( 'Refresh to load report details' )
+		).toBeInTheDocument();
+		expect(
+			card.getByText( /which is not the same as zero/ )
+		).toBeInTheDocument();
+		// Nothing is summarized or offered for expansion.
+		expect( card.queryByText( 'Report net' ) ).toBeNull();
+		expect(
+			card.queryByRole( 'button', {
+				name: 'Show Mollie report breakdown',
+			} )
+		).toBeNull();
+		// The rows saved earlier stay readable, and the refresh is at hand.
+		expect(
+			screen.getByRole( 'heading', { name: 'Summed rows and fees' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Refresh from Mollie' } )
+		).toBeEnabled();
+	} );
+
+	it( 'says when Mollie sent no report', async () => {
+		const card = await open( {
+			report: report( {
+				status: 'not_provided',
+				summary: null,
+				periods: [],
+			} ),
+			aggregates: [],
+		} );
+
+		expect(
+			card.getByText( 'Not provided by Mollie' )
+		).toBeInTheDocument();
+		expect( card.queryByText( 'Report net' ) ).toBeNull();
+	} );
+
+	it( 'keeps report lines out of the rows summed by a file', async () => {
+		await open( {
+			sources: [ 'api', 'csv' ],
+			aggregates: [
+				reportRow(),
+				reportRow( {
+					key: 'csv:agg:fee:f#1',
+					description: 'Transaction fees ideal',
+					settlement_amount: '-1.45',
+					sources: [ 'csv' ],
+					in_report: false,
+				} ),
+			],
+		} );
+
+		const summed = within(
+			screen
+				.getByRole( 'heading', { name: 'Summed rows and fees' } )
+				.closest( '.fair-finance-settlements-card' )
+		);
+		expect(
+			summed.getByText( 'Transaction fees ideal' )
+		).toBeInTheDocument();
+		expect( summed.getByText( '-1.45 EUR' ) ).toBeInTheDocument();
+		expect( summed.getByText( 'File' ) ).toBeInTheDocument();
+		// The report line is not listed a second time here.
+		expect( summed.queryByText( '-0.7545 EUR' ) ).toBeNull();
+		expect( summed.queryByText( 'Mollie API' ) ).toBeNull();
+	} );
+
+	it( 'shows no report card for a settlement that only came from a file', async () => {
+		mockApi( {
+			[ `GET ${ BASE }/3` ]: detail( {
+				sources: [ 'csv' ],
+				report: null,
+				revisions: {},
+			} ),
+		} );
+		render( <SettlementsApp /> );
+
+		await screen.findByRole( 'heading', {
+			name: /Settlement TEST\.2605\.01/,
+		} );
+		expect(
+			screen.queryByRole( 'heading', { name: 'Settlement summary' } )
+		).toBeNull();
+	} );
+
+	it( 'names the API as the source of what Mollie reported', async () => {
+		await open();
+
+		const source = screen.getAllByText( 'Source' )[ 0 ].closest( 'div' );
+		expect( source ).toHaveTextContent( 'Mollie API' );
+	} );
+} );

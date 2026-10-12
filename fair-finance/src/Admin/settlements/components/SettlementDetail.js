@@ -31,6 +31,7 @@ import {
 	typeLabel,
 } from '../format.js';
 import { Badge } from './SettlementList.js';
+import SettlementReport from './SettlementReport.js';
 
 const TRANSACTION_URL = 'admin.php?page=fair-payments-connector-transaction';
 
@@ -131,6 +132,10 @@ export default function SettlementDetail( {
 	const csv = settlement.revisions.csv;
 	const organizationId = settlement.account?.organization_id;
 	const settled = settledTotals( settlement.movements );
+	// Lines of Mollie's report are shown in the settlement summary.
+	const summedRows = settlement.aggregates.filter(
+		( row ) => ! row.in_report
+	);
 
 	return (
 		<>
@@ -342,6 +347,13 @@ export default function SettlementDetail( {
 					</dl>
 				</CardBody>
 			</Card>
+
+			{ settlement.report && (
+				<SettlementReport
+					report={ settlement.report }
+					settlement={ settlement }
+				/>
+			) }
 
 			{ ( api || csv ) && (
 				<Card className="fair-finance-settlements-card">
@@ -800,7 +812,7 @@ export default function SettlementDetail( {
 				</CardBody>
 			</Card>
 
-			{ settlement.aggregates.length > 0 && (
+			{ summedRows.length > 0 && (
 				<Card className="fair-finance-settlements-card">
 					<CardHeader>
 						<h2>
@@ -826,7 +838,7 @@ export default function SettlementDetail( {
 								</tr>
 							</thead>
 							<tbody>
-								{ settlement.aggregates.map( ( row ) => (
+								{ summedRows.map( ( row ) => (
 									<tr key={ row.key }>
 										<td
 											data-label={ __(

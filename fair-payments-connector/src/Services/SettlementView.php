@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Services;
 
 use FairPaymentsConnector\Database\SettlementRepository;
 use FairPaymentsConnector\Settlements\Movements;
+use FairPaymentsConnector\Settlements\Report;
 
 defined( 'WPINC' ) || die;
 
@@ -117,9 +118,10 @@ class SettlementView {
 	 * @return array
 	 */
 	public function detail( array $settlement ) {
-		$data      = $this->summary( $settlement );
-		$revisions = array();
-		$items     = array(
+		$data           = $this->summary( $settlement );
+		$data['report'] = null;
+		$revisions      = array();
+		$items          = array(
 			Movements::SOURCE_API => array(),
 			Movements::SOURCE_CSV => array(),
 		);
@@ -140,6 +142,10 @@ class SettlementView {
 				'coverage'     => json_decode( (string) $revision['coverage'], true ),
 				'totals'       => json_decode( (string) $revision['totals'], true ),
 			);
+
+			if ( Movements::SOURCE_API === $source ) {
+				$data['report'] = self::report( $settlement, $revision, $items[ $source ] );
+			}
 		}
 
 		$merged     = Movements::merge( $items[ Movements::SOURCE_API ], $items[ Movements::SOURCE_CSV ] );
@@ -174,7 +180,9 @@ class SettlementView {
 			);
 
 			if ( $movement['is_aggregate'] ) {
-				$aggregates[] = $row;
+				// Report lines are also listed, with their details, under `report`.
+				$row['in_report'] = ! empty( $movement['report'] );
+				$aggregates[]     = $row;
 				continue;
 			}
 
@@ -197,6 +205,83 @@ class SettlementView {
 		$data['can_refresh']              = null !== $settlement['provider_id'] && $data['account'] && $data['account']['is_connected'];
 
 		return $data;
+	}
+
+	/**
+	 * Mollie's report of a settlement: its lines by period and what they add
+	 * up to, at the precision Mollie supplied.
+	 *
+	 * The report describes the same payout as the movements; it is never
+	 * added to them. Its agreement with the payout says nothing about whether
+	 * every movement was listed.
+	 *
+	 * @param array   $settlement Settlement row.
+	 * @param array   $revision   Published API revision.
+	 * @param array[] $items      Movements of that revision.
+	 * @return array
+	 */
+	private static function report( array $settlement, array $revision, array $items ) {
+		$report = array(
+			'source'  => Movements::SOURCE_API,
+			'status'  => 'available',
+			'summary' => null,
+			'periods' => array(),
+		);
+
+		if ( null === $revision['report_version'] ) {
+			// Saved before report details were kept: unknown, not zero.
+			$report['status'] = 'legacy';
+			return $report;
+		}
+
+		$periods = array();
+		foreach ( $items as $item ) {
+			if ( empty( $item['report'] ) ) {
+				continue;
+			}
+
+			$line = $item['report'];
+			$key  = $line['year'] . '-' . $line['month'];
+			if ( ! isset( $periods[ $key ] ) ) {
+				$periods[ $key ] = array(
+					'year'                => $line['year'],
+					'month'               => $line['month'],
+					'invoice_id'          => $line['invoice_id'],
+					'invoice_reference'   => $line['invoice_reference'],
+					Report::GROUP_REVENUE => array(),
+					Report::GROUP_COSTS   => array(),
+				);
+			}
+
+			$contribution = Report::contribution( $line );
+
+			$periods[ $key ][ $line['group'] ][] = array(
+				'key'             => $item['identity_key'],
+				'description'     => $item['description'],
+				'method'          => $line['method'],
+				// Only Mollie's own method marks a refund line.
+				'is_refund'       => Report::METHOD_REFUND === $line['method'],
+				'count'           => $line['count'],
+				'rate_fixed'      => $line['rate_fixed'],
+				'rate_percentage' => $line['rate_percentage'],
+				'amount_net'      => $line['amount_net'],
+				'amount_vat'      => $line['amount_vat'],
+				'amount_gross'    => $line['amount_gross'],
+				'contribution'    => $contribution,
+				'needs_review'    => (bool) $item['needs_review'],
+			);
+		}
+
+		if ( empty( $periods ) ) {
+			$report['status'] = 'not_provided';
+			return $report;
+		}
+
+		ksort( $periods );
+		$report['periods'] = array_values( $periods );
+		$report['summary'] = Report::summarize( $settlement['amount'], $settlement['currency'], $items );
+
+		return $report;
 	}
 
 	/**
@@ -256,7 +341,13 @@ class SettlementView {
 
 		switch ( $discrepancy['code'] ?? '' ) {
 			case 'summary_total_mismatch':
-				$message = __( 'The report summary from Mollie does not add up to the payout amount.', 'fair-payments-connector' );
+				$message = empty( $discrepancy['difference'] )
+					? __( 'The report summary from Mollie does not add up to the payout amount.', 'fair-payments-connector' )
+					: sprintf(
+						/* translators: %s: exact amount with currency, such as -0.0045 EUR */
+						__( 'The report from Mollie differs from the payout amount by %s.', 'fair-payments-connector' ),
+						trim( $discrepancy['difference'] . ' ' . (string) ( $discrepancy['currency'] ?? '' ) )
+					);
 				break;
 			case 'currency_conflict':
 				$message = __( 'The uploaded file and Mollie state different settlement currencies.', 'fair-payments-connector' );
