@@ -71,7 +71,8 @@ function jsonResponse(data, status = 200, headers = {}) {
 	return {
 		status,
 		headers: { get: (name) => headers[name.toLowerCase()] ?? null },
-		text: async () => (typeof data === 'string' ? data : JSON.stringify(data)),
+		text: async () =>
+			typeof data === 'string' ? data : JSON.stringify(data),
 	};
 }
 
@@ -268,7 +269,9 @@ test('collectStatus reports every returned set and keeps branches separate', asy
 	const { report, calls } = await collect(
 		{
 			[stableUrl]: sets(remoteSet(), GERMAN, GERMAN_FORMAL, AFRIKAANS),
-			[devUrl]: sets(remoteSet({ current_count: 1439, percent_translated: 79 })),
+			[devUrl]: sets(
+				remoteSet({ current_count: 1439, percent_translated: 79 })
+			),
 		},
 		{ branches: ['stable', 'dev'] }
 	);
@@ -309,7 +312,10 @@ test('collectStatus reports every returned set and keeps branches separate', asy
 	assert.equal(report.results[4].percentApproved, 79);
 	assert.equal(report.results[2].url.endsWith('/stable/de/formal/'), true);
 	assert.deepEqual(
-		report.responses.map((response) => [response.branch, response.setCount]),
+		report.responses.map((response) => [
+			response.branch,
+			response.setCount,
+		]),
 		[
 			['stable', 4],
 			['dev', 1],
@@ -318,7 +324,9 @@ test('collectStatus reports every returned set and keeps branches separate', asy
 });
 
 test('collectStatus filters by a locale that has no local catalog', async () => {
-	const routes = { [stableUrl]: sets(remoteSet(), GERMAN, GERMAN_FORMAL, AFRIKAANS) };
+	const routes = {
+		[stableUrl]: sets(remoteSet(), GERMAN, GERMAN_FORMAL, AFRIKAANS),
+	};
 
 	const byGlotPress = await collect(routes, { locale: 'af' });
 	assert.deepEqual(
@@ -512,7 +520,10 @@ test('formatText marks unavailable metrics and keeps real zeros', async () => {
 	const { report } = await collect({
 		[stableUrl]: sets(
 			AFRIKAANS,
-			remoteSet({ percent_translated: undefined, waiting_count: undefined })
+			remoteSet({
+				percent_translated: undefined,
+				waiting_count: undefined,
+			})
 		),
 	});
 	const lines = formatText(report).split('\n');
@@ -562,7 +573,10 @@ test('parseArgs reads the supported options and rejects the rest', () => {
 /** Collects what the CLI writes to a stream. */
 function sink() {
 	const chunks = [];
-	return { write: (chunk) => chunks.push(chunk), text: () => chunks.join('') };
+	return {
+		write: (chunk) => chunks.push(chunk),
+		text: () => chunks.join(''),
+	};
 }
 
 /** Content hashes of every file in every workspace's languages directory. */
@@ -617,7 +631,10 @@ test('the CLI emits JSON on stdout and leaves catalogs unchanged', async () => {
 		assert.equal(report.results.length, 2);
 		assert.ok(!Number.isNaN(Date.parse(report.generatedAt)));
 		assert.ok(!Number.isNaN(Date.parse(report.results[0].retrievedAt)));
-		assert.match(report.results[0].url, /^https:\/\/translate\.wordpress\.org\/projects\//);
+		assert.match(
+			report.results[0].url,
+			/^https:\/\/translate\.wordpress\.org\/projects\//
+		);
 		assert.equal(report.results[0].sourceUrl, stableUrl);
 		assert.equal(report.errors[0].category, CATEGORY.network);
 		assert.match(stderr.text(), /\[network\] fair-events dev/);
