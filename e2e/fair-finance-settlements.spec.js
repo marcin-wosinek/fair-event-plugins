@@ -238,6 +238,27 @@ test.describe('Fair Finance settlements', () => {
 		await expect(payment).toContainText('15.00 EUR');
 		await expect(payment).toContainText('Mollie and file');
 		await expect(payment).toContainText('Not imported yet');
+
+		// Mollie IDs open the dashboard of the settlement's own organization,
+		// even though no organization is connected any more. Mollie has no
+		// page per settlement, so its ID opens the settlements report.
+		const settlementId = page.getByRole('link', { name: 'stl_e2e0001' });
+		await expect(settlementId).toHaveAttribute(
+			'href',
+			'https://my.mollie.com/dashboard/org_e2e0001/reports/settlements'
+		);
+		await expect(settlementId).toHaveAttribute('target', '_blank');
+		await expect(
+			payment.getByRole('link', { name: 'tr_e2estl01b' })
+		).toHaveAttribute(
+			'href',
+			'https://my.mollie.com/dashboard/org_e2e0001/payments/tr_e2estl01b'
+		);
+		// The two payments add up; the fee row is listed apart and left out.
+		await expect(
+			page.locator('.fair-finance-settlements-totals')
+		).toContainText('40.00 EUR');
+
 		await expect(
 			page.getByRole('button', { name: 'Refresh from Mollie' })
 		).toBeDisabled();
@@ -338,6 +359,58 @@ test.describe('Fair Finance settlements', () => {
 				{ exact: false }
 			)
 		).toBeVisible();
+	});
+
+	test('totals the movements and links parent payments on a phone', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 375, height: 812 });
+		await loginAsAdmin(page);
+		await page.goto(PAGE);
+		await page
+			.getByRole('button', { name: 'Load settlements from Mollie' })
+			.click();
+		await expect(
+			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+		).toBeVisible({ timeout: 30000 });
+
+		await follow(
+			page,
+			rowFor(page, 'E2E.2605.02').getByRole('link', {
+				name: 'E2E.2605.02',
+			})
+		);
+
+		// A refund keeps its own ID and links the payment it belongs to.
+		const refund = page.locator('tr', { hasText: 're_e2estl02a' });
+		await expect(
+			refund.getByRole('link', { name: 're_e2estl02a' })
+		).toHaveCount(0);
+		const parent = refund.getByRole('link', { name: 'tr_e2estl02b' });
+		await expect(parent).toBeVisible();
+		await expect(parent).toHaveAttribute(
+			'href',
+			'https://my.mollie.com/dashboard/org_e2e0001/payments/tr_e2estl02b'
+		);
+
+		// 30.00 + 36.80 + 30.00 - 10.00 - 6.80, as shown, deductions included.
+		const totals = page.locator('.fair-finance-settlements-totals');
+		await expect(
+			totals.getByRole('rowheader', { name: 'Totals' })
+		).toBeVisible();
+		const settled = totals.locator('td[data-label="Settled"]');
+		await expect(settled).toBeVisible();
+		await expect(settled).toContainText('80.00 EUR');
+		await expect(totals).not.toContainText('Partial');
+
+		// The stacked layout fits the screen without sideways scrolling.
+		expect(
+			await page.evaluate(
+				() =>
+					document.documentElement.scrollWidth <=
+					document.documentElement.clientWidth
+			)
+		).toBe(true);
 	});
 
 	test('keeps reconciliation usable and links it to saved settlements', async ({

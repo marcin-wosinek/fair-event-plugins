@@ -797,8 +797,8 @@ describe( 'SettlementsApp — one settlement', () => {
 			'admin.php?page=fair-payments-connector-transaction&transaction_id=77'
 		);
 
-		// Totals stay per source.
-		expect( screen.getByText( '40.00 EUR' ) ).toBeInTheDocument();
+		// Totals stay per source. Mollie's also equals the movements' total.
+		expect( screen.getAllByText( '40.00 EUR' ) ).toHaveLength( 2 );
 		expect( screen.getByText( '39.50 EUR' ) ).toBeInTheDocument();
 		expect(
 			screen.getByText( /They may cover the same money/ )
@@ -809,6 +809,233 @@ describe( 'SettlementsApp — one settlement', () => {
 			`GET ${ BASE }/3`,
 			`GET ${ BASE }/accounts`,
 		] );
+	} );
+
+	it( 'links Mollie IDs to the dashboard of the organization the settlement was saved under', async () => {
+		mockApi( {
+			// A different organization is connected now.
+			[ `GET ${ BASE }/accounts` ]: {
+				accounts: [ VERIFIED ],
+				connection: { ...CONNECTED, organization_id: 'org_other' },
+			},
+			[ `GET ${ BASE }/3` ]: detail( {
+				movements: [
+					movement( { local_transaction_id: 77 } ),
+					movement( {
+						key: 'api:refund:re_test1#1',
+						type: 'refund',
+						external_id: 're_test1',
+						payment_reference: 'tr_test2',
+						settlement_amount: '-10.00',
+					} ),
+					movement( {
+						key: 'api:adjustment:x#1',
+						type: 'adjustment',
+						external_id: 'tr_bad/../x',
+						payment_reference: null,
+					} ),
+				],
+			} ),
+		} );
+
+		render( <SettlementsApp /> );
+
+		// Mollie has no page per settlement; the ID opens the settlements report.
+		const settlementLink = await screen.findByRole( 'link', {
+			name: 'stl_test1',
+		} );
+		expect( settlementLink ).toHaveAttribute(
+			'href',
+			'https://my.mollie.com/dashboard/org_test/reports/settlements'
+		);
+		expect( settlementLink ).toHaveAttribute( 'target', '_blank' );
+		expect( settlementLink ).toHaveAttribute(
+			'rel',
+			'noopener noreferrer'
+		);
+
+		const paymentLink = screen.getByRole( 'link', { name: 'tr_test1' } );
+		expect( paymentLink ).toHaveAttribute(
+			'href',
+			'https://my.mollie.com/dashboard/org_test/payments/tr_test1'
+		);
+		expect( paymentLink ).toHaveAttribute( 'target', '_blank' );
+		expect( paymentLink ).toHaveAttribute( 'rel', 'noopener noreferrer' );
+
+		// A refund keeps its own ID as text and links its parent payment.
+		const refund = screen.getByText( 're_test1' ).closest( 'tr' );
+		expect(
+			within( refund ).queryByRole( 'link', { name: 're_test1' } )
+		).not.toBeInTheDocument();
+		expect(
+			within( refund ).getByRole( 'link', { name: 'tr_test2' } )
+		).toHaveAttribute(
+			'href',
+			'https://my.mollie.com/dashboard/org_test/payments/tr_test2'
+		);
+
+		// An ID Mollie would not issue is shown, never turned into an address.
+		const odd = screen.getByText( 'tr_bad/../x' ).closest( 'tr' );
+		expect( within( odd ).queryByRole( 'link' ) ).not.toBeInTheDocument();
+
+		// The local payment link is unchanged.
+		expect(
+			screen.getByRole( 'link', { name: 'Transaction #77' } )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-payments-connector-transaction&transaction_id=77'
+		);
+	} );
+
+	it( 'leaves the settlement ID as text when its account has no organization', async () => {
+		mockApi( {
+			[ `GET ${ BASE }/3` ]: detail( { account: LOCAL } ),
+		} );
+
+		render( <SettlementsApp /> );
+
+		const id = (
+			await screen.findByText( 'Mollie settlement ID' )
+		).closest( 'div' );
+		expect( within( id ).getByText( 'stl_test1' ) ).toBeInTheDocument();
+		expect( within( id ).queryByRole( 'link' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'links without an organization when the account has none, and not at all without an ID', async () => {
+		mockApi( {
+			[ `GET ${ BASE }/3` ]: detail( {
+				account: LOCAL,
+				provider_id: null,
+				sources: [ 'csv' ],
+				movements: [ movement( { sources: [ 'csv' ] } ) ],
+				can_refresh: false,
+			} ),
+		} );
+
+		render( <SettlementsApp /> );
+
+		expect(
+			await screen.findByRole( 'link', { name: 'tr_test1' } )
+		).toHaveAttribute(
+			'href',
+			'https://www.mollie.com/dashboard/payments/tr_test1'
+		);
+		const id = screen.getByText( 'Mollie settlement ID' ).closest( 'div' );
+		expect( within( id ).getByText( 'Unknown' ) ).toBeInTheDocument();
+		expect( within( id ).queryByRole( 'link' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'totals the Settled column exactly, with deductions, per currency', async () => {
+		mockApi( {
+			[ `GET ${ BASE }/3` ]: detail( {
+				movements: [
+					movement( { settlement_amount: '0.10' } ),
+					movement( {
+						key: 'api:payment:tr_test2#1',
+						external_id: 'tr_test2',
+						payment_reference: 'tr_test2',
+						settlement_amount: '0.2',
+					} ),
+					movement( {
+						key: 'api:refund:re_test1#1',
+						type: 'refund',
+						external_id: 're_test1',
+						settlement_amount: '-10.005',
+					} ),
+					movement( {
+						key: 'api:payment:tr_test3#1',
+						external_id: 'tr_test3',
+						payment_reference: 'tr_test3',
+						settlement_amount: '36.80',
+						settlement_currency: 'USD',
+					} ),
+				],
+				// Neither of these is part of the total.
+				aggregates: [
+					movement( {
+						key: 'api:agg:fee:x#1',
+						type: 'fee',
+						external_id: null,
+						payment_reference: null,
+						description: 'iDEAL',
+						settlement_amount: '-1.45',
+					} ),
+				],
+				proposed_changes: [
+					{
+						revision_id: 11,
+						created_at: '2026-05-05 09:00:00',
+						counts: { added: 1, removed: 0, changed: 0 },
+						added: [
+							{
+								type: 'payment',
+								external_id: 'tr_test9',
+								description: 'Ticket C',
+								settlement_amount: '99.00',
+								settlement_currency: 'EUR',
+							},
+						],
+						removed: [],
+						changed: [],
+					},
+				],
+			} ),
+		} );
+
+		render( <SettlementsApp /> );
+
+		const totalsRow = (
+			await screen.findByRole( 'rowheader', { name: 'Totals' } )
+		).closest( 'tr' );
+		// 0.10 + 0.2 - 10.005, which floats would get wrong.
+		expect(
+			within( totalsRow ).getByText( '-9.705 EUR' )
+		).toBeInTheDocument();
+		expect(
+			within( totalsRow ).getByText( '36.80 USD' )
+		).toBeInTheDocument();
+		expect(
+			within( totalsRow ).queryByText( /Partial/ )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByText( /They are not the payout amount/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'marks the total as partial instead of counting unknown amounts as zero', async () => {
+		mockApi( {
+			[ `GET ${ BASE }/3` ]: detail( {
+				movements: [
+					movement(),
+					movement( {
+						key: 'csv:payment:tr_test2#1',
+						external_id: 'tr_test2',
+						payment_reference: 'tr_test2',
+						settlement_amount: null,
+					} ),
+					movement( {
+						key: 'csv:payment:tr_test3#1',
+						external_id: 'tr_test3',
+						payment_reference: 'tr_test3',
+						settlement_currency: null,
+					} ),
+				],
+			} ),
+		} );
+
+		render( <SettlementsApp /> );
+
+		const totalsRow = (
+			await screen.findByRole( 'rowheader', { name: 'Totals' } )
+		).closest( 'tr' );
+		expect(
+			within( totalsRow ).getByText( '25.00 EUR' )
+		).toBeInTheDocument();
+		expect(
+			within( totalsRow ).getByText(
+				'Partial: 2 rows with unknown amounts are left out.'
+			)
+		).toBeInTheDocument();
 	} );
 
 	it( 'keeps unknown facts of a file-only settlement explicit', async () => {
