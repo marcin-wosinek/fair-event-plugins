@@ -5,7 +5,8 @@
  * A visitor buys two tickets with one email. The administrator assigns the
  * second to someone else, tells the two apart by search and in the tickets
  * CSV, moves the first to another date of the series — after which the List
- * of each date shows the ticket that is on it (#1791) — then cancels and
+ * of each date shows, and prints, the ticket that is on it (#1791, #1842) —
+ * then cancels and
  * deletes the second. Each step changes only the ticket it names, and nobody
  * is removed from the audience.
  */
@@ -212,6 +213,19 @@ test.describe('Manage individual tickets from the Audience tab', () => {
 				.slice(1);
 		};
 
+		// The printed List of a date holds the tickets its List shows (#1842).
+		// Printed before exporting: the Export dialog stays open over the List.
+		const printedTickets = async () => {
+			const [popup] = await Promise.all([
+				page.waitForEvent('popup'),
+				page.getByRole('button', { name: 'Print list' }).click(),
+			]);
+			await expect(popup.locator('tbody tr')).toHaveCount(1);
+			const text = await popup.locator('tbody tr').innerText();
+			await popup.close();
+			return text;
+		};
+
 		const movedTicketIds = await audienceTicketIds();
 		expect(movedTicketIds).toHaveLength(1);
 		expect(await openList(otherDateId)).toEqual(movedTicketIds);
@@ -222,6 +236,11 @@ test.describe('Manage individual tickets from the Audience tab', () => {
 		await expect(listRows).toContainText(
 			'1 ticket on this date; 1 on another date'
 		);
+		let printed = await printedTickets();
+		expect(printed).toContain('Paula Purchaser');
+		expect(printed).toContain('Ticket 1 (');
+		expect(printed).toContain('Purchase registered for');
+		expect(printed).not.toContain('Ticket 2 (');
 		let listCsv = await readListExport();
 		expect(listCsv).toHaveLength(1);
 		expect(listCsv[0]).toContain('Ticket 1 (');
@@ -234,6 +253,10 @@ test.describe('Manage individual tickets from the Audience tab', () => {
 		await expect(listRows).toContainText('Ticket 2');
 		await expect(listRows).not.toContainText('Purchase registered for');
 		await expect(listRows).toContainText('Entire purchase — 2 tickets');
+		printed = await printedTickets();
+		expect(printed).toContain('Ticket 2 (');
+		expect(printed).not.toContain('Ticket 1 (');
+		expect(printed).not.toContain('Purchase registered for');
 		listCsv = await readListExport();
 		expect(listCsv).toHaveLength(1);
 		expect(listCsv[0]).toContain('Ticket 2 (');

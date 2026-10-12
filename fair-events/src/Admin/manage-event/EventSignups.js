@@ -26,7 +26,12 @@ import {
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from './SignupExportModal.js';
-import { TicketEditModal, ticketReferenceLabel } from 'fair-events-shared';
+import { buildSignupPrintHtml, openPrintWindow } from './signup-print.js';
+import {
+	TicketEditModal,
+	ticketReferenceLabel,
+	getEventDisplayTitle,
+} from 'fair-events-shared';
 import SignupEditModal, {
 	ACTION_MOVE,
 	ACTION_CHANGE_TYPE,
@@ -308,6 +313,18 @@ export function overrideActionLabel( override ) {
 }
 
 /**
+ * Status of a confirmed signup, as the List and its printout word it.
+ *
+ * @param {Object} signup Signup row returned by the API.
+ * @return {string} Status
+ */
+export function signupStatusLabel( signup ) {
+	return isOverCapacity( signup.over_capacity )
+		? __( 'Confirmed — over capacity', 'fair-events' )
+		: __( 'Confirmed', 'fair-events' );
+}
+
+/**
  * Status cell of a confirmed signup: flags an over-capacity signup and lets
  * the administrator see why it went over.
  *
@@ -319,14 +336,14 @@ function SignupStatus( { signup } ) {
 	const [ showDetails, setShowDetails ] = useState( false );
 
 	if ( ! isOverCapacity( signup.over_capacity ) ) {
-		return __( 'Confirmed', 'fair-events' );
+		return signupStatusLabel( signup );
 	}
 
 	const overrides = Array.isArray( signup.overrides ) ? signup.overrides : [];
 
 	return (
 		<>
-			<span>{ __( 'Confirmed — over capacity', 'fair-events' ) }</span>{ ' ' }
+			<span>{ signupStatusLabel( signup ) }</span>{ ' ' }
 			<Button
 				variant="link"
 				aria-expanded={ showDetails }
@@ -374,6 +391,51 @@ const EXTRA_NOT_SELECTED = 'not_selected';
 const EXTRA_UNAVAILABLE = 'unavailable';
 
 /**
+ * State of one extra on one ticket.
+ *
+ * @param {Object|null} ticket Ticket of the row.
+ * @param {Object}      option Extra, as the tickets response lists it.
+ * @return {string} One of the EXTRA_* states
+ */
+export function extraState( ticket, option ) {
+	const selected = ticketConfirmedOptionIds( ticket );
+	if ( ! selected ) {
+		return EXTRA_UNAVAILABLE;
+	}
+	return selected.includes( Number( option.id ) )
+		? EXTRA_SELECTED
+		: EXTRA_NOT_SELECTED;
+}
+
+/**
+ * Mark shown for an extra state. Unselected extras stay empty.
+ *
+ * @param {string} state One of the EXTRA_* states.
+ * @return {string} Mark
+ */
+export function extraStateSymbol( state ) {
+	if ( state === EXTRA_SELECTED ) {
+		return '✓';
+	}
+	return state === EXTRA_NOT_SELECTED ? '' : '?';
+}
+
+/**
+ * Name of an extra state.
+ *
+ * @param {string} state One of the EXTRA_* states.
+ * @return {string} Label
+ */
+export function extraStateLabel( state ) {
+	if ( state === EXTRA_SELECTED ) {
+		return __( 'Selected', 'fair-events' );
+	}
+	return state === EXTRA_NOT_SELECTED
+		? __( 'Not selected', 'fair-events' )
+		: __( 'Selection unavailable', 'fair-events' );
+}
+
+/**
  * Read-only indicator for one extra on one ticket.
  *
  * @param {Object} props       Component props.
@@ -381,15 +443,16 @@ const EXTRA_UNAVAILABLE = 'unavailable';
  * @return {Element} Indicator
  */
 function ExtraIndicator( { state } ) {
+	const label = extraStateLabel( state );
 	if ( state === EXTRA_SELECTED ) {
 		return (
 			<span
 				role="img"
-				aria-label={ __( 'Selected', 'fair-events' ) }
-				title={ __( 'Selected', 'fair-events' ) }
+				aria-label={ label }
+				title={ label }
 				style={ { fontSize: '1.25em', fontWeight: 600 } }
 			>
-				✓
+				{ extraStateSymbol( state ) }
 			</span>
 		);
 	}
@@ -397,8 +460,8 @@ function ExtraIndicator( { state } ) {
 		return (
 			<span
 				role="img"
-				aria-label={ __( 'Not selected', 'fair-events' ) }
-				title={ __( 'Not selected', 'fair-events' ) }
+				aria-label={ label }
+				title={ label }
 				// Visually empty, but keeps a hover target for the title.
 				style={ { display: 'inline-block', width: '1em' } }
 			/>
@@ -407,16 +470,113 @@ function ExtraIndicator( { state } ) {
 	return (
 		<span
 			role="img"
-			aria-label={ __( 'Selection unavailable', 'fair-events' ) }
-			title={ __( 'Selection unavailable', 'fair-events' ) }
+			aria-label={ label }
+			title={ label }
 			style={ { color: '#757575' } }
 		>
-			?
+			{ extraStateSymbol( state ) }
 		</span>
 	);
 }
 
-export default function EventSignups( { eventDateId } ) {
+/**
+ * Data columns of the List, in order. The screen adds its Actions column;
+ * the printout uses these as they are.
+ *
+ * @param {Array} ticketOptions Extras of the event date.
+ * @return {Array<{key: string, label: string, isExtra: boolean|undefined}>} Columns
+ */
+export function listDataColumns( ticketOptions ) {
+	return [
+		{ key: 'number', label: '#' },
+		{ key: 'name', label: __( 'Name', 'fair-events' ) },
+		{ key: 'ticket', label: __( 'Ticket', 'fair-events' ) },
+		{ key: 'ticket_type', label: __( 'Ticket Type', 'fair-events' ) },
+		...ticketOptions.map( ( opt ) => ( {
+			key: `option-${ opt.id }`,
+			label: opt.short_name || opt.name,
+			isExtra: true,
+		} ) ),
+		{ key: 'status', label: __( 'Status', 'fair-events' ) },
+		{ key: 'transaction', label: __( 'Transaction', 'fair-events' ) },
+		{ key: 'mailing', label: __( 'Mailing', 'fair-events' ) },
+		{ key: 'date', label: __( 'Date', 'fair-events' ) },
+	];
+}
+
+/**
+ * Note under the name of a purchase registered for another date than the one
+ * listed.
+ *
+ * @param {Object} signup      Registration returned by the API.
+ * @param {number} eventDateId Date the List is showing.
+ * @return {string} Note, empty when the purchase is registered for this date
+ */
+export function registeredForNote( signup, eventDateId ) {
+	if (
+		! isRegisteredElsewhere( signup, eventDateId ) ||
+		! signup.event_date_label
+	) {
+		return '';
+	}
+	return sprintf(
+		/* translators: %s: event date, e.g. "19:00—22:00, 10 June" */
+		__( 'Purchase registered for %s', 'fair-events' ),
+		signup.event_date_label
+	);
+}
+
+/**
+ * Mailing consent of a signup, as the List words it.
+ *
+ * @param {Object} signup Signup row returned by the API.
+ * @return {string} "Yes" or "No"
+ */
+export function mailingLabel( signup ) {
+	return isMailingOptIn( signup.mailing_opt_in )
+		? __( 'Yes', 'fair-events' )
+		: __( 'No', 'fair-events' );
+}
+
+/**
+ * Rows of the printed List: the text of every data column of each List row,
+ * numbered from 1 in the order given.
+ *
+ * @param {Array}  rows          Rows from expandTicketRows().
+ * @param {Array}  ticketOptions Extras of the event date.
+ * @param {number} eventDateId   Date the List is showing.
+ * @return {Array<{cells: Object, isGroupStart: boolean}>} Printed rows
+ */
+export function printableListRows( rows, ticketOptions, eventDateId ) {
+	return rows.map( ( row, index ) => {
+		const { signup, ticket, isFirstTicket } = row;
+		const cells = {
+			number: { text: index + 1 },
+			name: {
+				text: signup.name,
+				note: registeredForNote( signup, eventDateId ),
+			},
+			ticket: { text: ticketRowLabel( ticket ) },
+			ticket_type: { text: ticketRowTypeName( row ) },
+			status: { text: signupStatusLabel( signup ) },
+			transaction: { text: signup.transaction_id || '—' },
+			mailing: { text: mailingLabel( signup ) },
+			date: { text: signup.created_at },
+		};
+		ticketOptions.forEach( ( opt ) => {
+			cells[ `option-${ opt.id }` ] = {
+				text: extraStateSymbol( extraState( ticket, opt ) ),
+			};
+		} );
+		return { cells, isGroupStart: isFirstTicket && index > 0 };
+	} );
+}
+
+export default function EventSignups( {
+	eventDateId,
+	eventTitle = '',
+	eventDateLabel = '',
+} ) {
 	const connectorActive = !! window.fairPaymentsConnector?.connectorActive;
 	const audienceActive = !! window.fairEventsManageEventData?.audienceUrl;
 	const [ signups, setSignups ] = useState( [] );
@@ -427,6 +587,7 @@ export default function EventSignups( { eventDateId } ) {
 	const [ selectedSignup, setSelectedSignup ] = useState( null );
 	const [ deleteError, setDeleteError ] = useState( null );
 	const [ isExportModalOpen, setIsExportModalOpen ] = useState( false );
+	const [ printError, setPrintError ] = useState( null );
 	// { signup, action } while the move / change-type modal is open.
 	const [ editing, setEditing ] = useState( null );
 	// Ticket ID while the ticket editor is open.
@@ -482,19 +643,7 @@ export default function EventSignups( { eventDateId } ) {
 	}
 
 	const headers = [
-		{ key: 'number', label: '#' },
-		{ key: 'name', label: __( 'Name', 'fair-events' ) },
-		{ key: 'ticket', label: __( 'Ticket', 'fair-events' ) },
-		{ key: 'ticket_type', label: __( 'Ticket Type', 'fair-events' ) },
-		...ticketOptions.map( ( opt ) => ( {
-			key: `option-${ opt.id }`,
-			label: opt.short_name || opt.name,
-			isExtra: true,
-		} ) ),
-		{ key: 'status', label: __( 'Status', 'fair-events' ) },
-		{ key: 'transaction', label: __( 'Transaction', 'fair-events' ) },
-		{ key: 'mailing', label: __( 'Mailing', 'fair-events' ) },
-		{ key: 'date', label: __( 'Date', 'fair-events' ) },
+		...listDataColumns( ticketOptions ),
 		{ key: 'actions', label: __( 'Actions', 'fair-events' ) },
 	];
 
@@ -506,15 +655,39 @@ export default function EventSignups( { eventDateId } ) {
 		: confirmedSignups;
 	const visibleRows = expandTicketRows( visibleSignups );
 	const hasPendingTickets = visibleRows.some( ( row ) => ! row.ticket );
+	// The printout is the complete List: screen filters never narrow it.
+	const completeRows = expandTicketRows( confirmedSignups );
 
-	const extraState = ( ticket, option ) => {
-		const selected = ticketConfirmedOptionIds( ticket );
-		if ( ! selected ) {
-			return EXTRA_UNAVAILABLE;
-		}
-		return selected.includes( Number( option.id ) )
-			? EXTRA_SELECTED
-			: EXTRA_NOT_SELECTED;
+	const handlePrint = () => {
+		const html = buildSignupPrintHtml( {
+			title: getEventDisplayTitle( eventTitle ),
+			dateLabel: eventDateLabel,
+			columns: listDataColumns( ticketOptions ),
+			rows: printableListRows( completeRows, ticketOptions, eventDateId ),
+			legend: ticketOptions.length
+				? [ EXTRA_SELECTED, EXTRA_NOT_SELECTED, EXTRA_UNAVAILABLE ].map(
+						( state ) => ( {
+							symbol: extraStateSymbol( state ),
+							label: extraStateLabel( state ),
+						} )
+				  )
+				: [],
+			warning: completeRows.some( ( row ) => ! row.ticket )
+				? __(
+						'Some older registrations are still being split into individual tickets. They are listed as one row for now.',
+						'fair-events'
+				  )
+				: '',
+			lang: document.documentElement.lang || 'en',
+		} );
+		setPrintError(
+			openPrintWindow( html )
+				? null
+				: __(
+						'Could not open the print window. Allow pop-ups for this site and try again.',
+						'fair-events'
+				  )
+		);
 	};
 
 	const renderRegistrationActions = ( signup ) => {
@@ -585,10 +758,7 @@ export default function EventSignups( { eventDateId } ) {
 	const renderRow = ( row, index ) => {
 		const { signup, ticket, isFirstTicket } = row;
 		const label = ticketRowLabel( ticket );
-		const registeredElsewhere = isRegisteredElsewhere(
-			signup,
-			eventDateId
-		);
+		const registeredNote = registeredForNote( signup, eventDateId );
 		return (
 			<tr
 				key={ `${ signup.id }-${ ticket ? ticket.id : 'pending' }` }
@@ -606,7 +776,7 @@ export default function EventSignups( { eventDateId } ) {
 				</td>
 				<td style={ cellStyle }>
 					{ signup.name }
-					{ registeredElsewhere && signup.event_date_label && (
+					{ registeredNote && (
 						<div
 							className="fair-events-signups__registered-for"
 							style={ {
@@ -615,14 +785,7 @@ export default function EventSignups( { eventDateId } ) {
 								whiteSpace: 'nowrap',
 							} }
 						>
-							{ sprintf(
-								/* translators: %s: event date, e.g. "19:00—22:00, 10 June" */
-								__(
-									'Purchase registered for %s',
-									'fair-events'
-								),
-								signup.event_date_label
-							) }
+							{ registeredNote }
 						</div>
 					) }
 				</td>
@@ -652,11 +815,7 @@ export default function EventSignups( { eventDateId } ) {
 						signup.transaction_id || '—'
 					) }
 				</td>
-				<td style={ cellStyle }>
-					{ isMailingOptIn( signup.mailing_opt_in )
-						? __( 'Yes', 'fair-events' )
-						: __( 'No', 'fair-events' ) }
-				</td>
+				<td style={ cellStyle }>{ mailingLabel( signup ) }</td>
 				<td style={ cellStyle }>{ signup.created_at }</td>
 				<td style={ cellStyle }>
 					{ isFirstTicket && renderRegistrationActions( signup ) }
@@ -717,9 +876,14 @@ export default function EventSignups( { eventDateId } ) {
 
 	return (
 		<Card className="fair-events-signups" style={ { marginTop: '16px' } }>
-			<CardHeader>
+			<CardHeader style={ { flexWrap: 'wrap', gap: '8px' } }>
 				<h2>{ __( 'List', 'fair-events' ) }</h2>
-				<Flex justify="flex-end" gap={ 2 }>
+				<Flex
+					justify="flex-end"
+					gap={ 2 }
+					wrap
+					style={ { width: 'auto', flex: '1 1 auto' } }
+				>
 					<FlexItem>
 						<ToggleControl
 							__nextHasNoMarginBottom
@@ -740,9 +904,26 @@ export default function EventSignups( { eventDateId } ) {
 							{ __( 'Export', 'fair-events' ) }
 						</Button>
 					</FlexItem>
+					<FlexItem>
+						<Button
+							variant="secondary"
+							onClick={ handlePrint }
+							disabled={ completeRows.length === 0 }
+						>
+							{ __( 'Print list', 'fair-events' ) }
+						</Button>
+					</FlexItem>
 				</Flex>
 			</CardHeader>
 			<CardBody>
+				{ printError && (
+					<Notice
+						status="error"
+						onRemove={ () => setPrintError( null ) }
+					>
+						{ printError }
+					</Notice>
+				) }
 				{ deleteError && (
 					<Notice status="error" isDismissible={ false }>
 						{ deleteError }
@@ -758,7 +939,7 @@ export default function EventSignups( { eventDateId } ) {
 				) }
 				{ visibleRows.length === 0 ? (
 					<p>
-						{ expandTicketRows( confirmedSignups ).length === 0
+						{ completeRows.length === 0
 							? __(
 									'No confirmed registrations yet.',
 									'fair-events'

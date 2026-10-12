@@ -911,7 +911,19 @@ export default function ManageEventApp() {
 			order: 25,
 			isVisible: ticketingEnabled,
 			disabled: isLinkOnlyEvent( eventDate ),
-			render: () => <EventSignups eventDateId={ eventDateId } />,
+			render: () => (
+				<EventSignups
+					eventDateId={ eventDateId }
+					eventTitle={ getEventDisplayTitle( title ) }
+					eventDateLabel={
+						eventDate?.start_datetime
+							? formatSiteLocalDatetime(
+									eventDate.start_datetime
+							  )
+							: ''
+					}
+				/>
+			),
 		},
 		{
 			name: 'statistics',
