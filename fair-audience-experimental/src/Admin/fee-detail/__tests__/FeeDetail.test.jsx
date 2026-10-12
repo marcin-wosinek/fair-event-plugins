@@ -11,6 +11,11 @@
  * Also covers the budgets offered by the transfer dialog (#1802): they come
  * from Fair Finance when the dialog opens, and a load that is running, empty
  * or failed each looks different.
+ *
+ * And submitting that dialog (#1802): the transfer goes to Fair Finance, an
+ * empty description is left out, a failed transfer keeps the dialog open
+ * with the reason, and a transfer that was created but could not be followed
+ * by marking the payment paid is reported as such and never sent twice.
  */
 import '@testing-library/jest-dom';
 import {
@@ -33,6 +38,10 @@ const BULK_PATH = `${ FEE_PATH }/send-reminders`;
 const SENT_AT = '2026-10-08 09:30:00';
 const BUDGETS_PATH = '/fair-finance/v1/budgets';
 const STALE_BUDGETS_PATH = '/fair-payments-connector/v1/budgets';
+const TRANSFER_PATH = '/fair-finance/v1/financial-entries/transfer';
+const STALE_TRANSFER_PATH =
+	'/fair-payments-connector/v1/financial-entries/transfer';
+const MARK_PAID_PATH = `${ PAYMENTS_PATH }/31/mark-paid`;
 const BUDGETS = [
 	{ id: 11, name: 'Membership income' },
 	{ id: 12, name: 'Bank account' },
@@ -640,5 +649,167 @@ describe( 'FeeDetail — budgets in the transfer dialog', () => {
 			within( dialog ).queryByText( FAILURE_MESSAGE )
 		).not.toBeInTheDocument();
 		expect( callsTo( BUDGETS_PATH ) ).toHaveLength( 2 );
+	} );
+} );
+
+describe( 'FeeDetail — creating a transfer', () => {
+	const MARK_PAID_FAILED =
+		'The transfer was created, but the payment could not be marked as paid. Mark the payment as paid from its row actions; do not create the transfer again.';
+
+	const createButton = ( dialog ) =>
+		within( dialog ).getByRole( 'button', { name: 'Create Transfer' } );
+
+	/** Open the dialog and pick a source and a target budget. */
+	async function fillTransferDialog( routes = {} ) {
+		const state = mockApi( {
+			routes: {
+				[ BUDGETS_PATH ]: () => Promise.resolve( BUDGETS ),
+				...routes,
+			},
+		} );
+		render( <FeeDetail /> );
+
+		const dialog = await openTransferDialog();
+		await within( dialog ).findAllByRole( 'option', {
+			name: 'Bank account',
+		} );
+		const [ source, target ] = budgetSelects( dialog );
+		fireEvent.change( source, { target: { value: '12' } } );
+		fireEvent.change( target, { target: { value: '11' } } );
+		await waitFor( () => expect( createButton( dialog ) ).toBeEnabled() );
+		return { dialog, state };
+	}
+
+	it( 'posts the transfer to Fair Finance, then marks the payment paid', async () => {
+		const { dialog, state } = await fillTransferDialog();
+		state.payments = [ payment( { status: 'paid' } ), PAID ];
+
+		fireEvent.click( createButton( dialog ) );
+
+		expect(
+			await findNotice( 'Transfer created and payment marked as paid.' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'dialog', { name: 'Create Transfer' } )
+		).not.toBeInTheDocument();
+
+		expect( callsTo( STALE_TRANSFER_PATH ) ).toHaveLength( 0 );
+		expect( callsTo( TRANSFER_PATH ) ).toHaveLength( 1 );
+		const [ [ transfer ] ] = callsTo( TRANSFER_PATH );
+		expect( transfer.method ).toBe( 'POST' );
+		expect( transfer.data ).toEqual( {
+			amount: 25,
+			entry_date: new Date().toISOString().split( 'T' )[ 0 ],
+			source_budget_id: 12,
+			target_budget_id: 11,
+			description: 'Membership 2026 — Ada Example',
+			participant_id: 101,
+		} );
+
+		expect( callsTo( MARK_PAID_PATH ) ).toHaveLength( 1 );
+		expect( callsTo( MARK_PAID_PATH )[ 0 ][ 0 ].method ).toBe( 'POST' );
+	} );
+
+	it( 'leaves the description out when it is empty', async () => {
+		const { dialog } = await fillTransferDialog();
+
+		fireEvent.change(
+			within( dialog ).getByRole( 'textbox', { name: 'Description' } ),
+			{ target: { value: '   ' } }
+		);
+		fireEvent.click( createButton( dialog ) );
+
+		await findNotice( 'Transfer created and payment marked as paid.' );
+		const [ [ transfer ] ] = callsTo( TRANSFER_PATH );
+		expect( transfer.data ).not.toHaveProperty( 'description' );
+	} );
+
+	it( 'keeps the dialog open with the reason when the transfer fails', async () => {
+		const alert = jest.fn();
+		window.alert = alert;
+		let attempts = 0;
+		const { dialog } = await fillTransferDialog( {
+			[ TRANSFER_PATH ]: () => {
+				attempts += 1;
+				return attempts === 1
+					? Promise.reject(
+							restError(
+								'rest_transfer_creation_failed',
+								'Failed to create transfer.'
+							)
+					  )
+					: Promise.resolve( { id: 501 } );
+			},
+		} );
+
+		fireEvent.click( createButton( dialog ) );
+
+		expect(
+			await within( dialog ).findByText( 'Failed to create transfer.' )
+		).toBeInTheDocument();
+		expect( alert ).not.toHaveBeenCalled();
+		expect( callsTo( MARK_PAID_PATH ) ).toHaveLength( 0 );
+		expect(
+			screen.getByRole( 'dialog', { name: 'Create Transfer' } )
+		).toBeInTheDocument();
+
+		// What was entered is still there, and the transfer can be retried.
+		const [ source, target ] = budgetSelects( dialog );
+		expect( source ).toHaveValue( '12' );
+		expect( target ).toHaveValue( '11' );
+		await waitFor( () => expect( createButton( dialog ) ).toBeEnabled() );
+
+		fireEvent.click( createButton( dialog ) );
+
+		await findNotice( 'Transfer created and payment marked as paid.' );
+		expect( callsTo( TRANSFER_PATH ) ).toHaveLength( 2 );
+		expect( callsTo( MARK_PAID_PATH ) ).toHaveLength( 1 );
+	} );
+
+	it( 'says the transfer exists when only marking the payment paid fails', async () => {
+		const { dialog } = await fillTransferDialog( {
+			[ MARK_PAID_PATH ]: () =>
+				Promise.reject(
+					restError( 'rest_forbidden', 'Sorry, you cannot do that.' )
+				),
+		} );
+
+		fireEvent.click( createButton( dialog ) );
+
+		expect( await findNotice( MARK_PAID_FAILED ) ).toBeInTheDocument();
+		// The dialog is gone, so the transfer cannot be submitted again.
+		expect(
+			screen.queryByRole( 'dialog', { name: 'Create Transfer' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByText( 'Transfer created and payment marked as paid.' )
+		).not.toBeInTheDocument();
+		expect( callsTo( TRANSFER_PATH ) ).toHaveLength( 1 );
+		expect( callsTo( MARK_PAID_PATH ) ).toHaveLength( 1 );
+	} );
+
+	it( 'sends a single transfer when the button is clicked repeatedly', async () => {
+		const pending = deferred();
+		const { dialog } = await fillTransferDialog( {
+			[ TRANSFER_PATH ]: () => pending.promise,
+		} );
+
+		const button = createButton( dialog );
+		fireEvent.click( button );
+		fireEvent.click( button );
+		fireEvent.click( button );
+
+		await waitFor( () => expect( button ).toBeDisabled() );
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+
+		await act( async () => {
+			pending.resolve( { id: 501 } );
+		} );
+
+		await findNotice( 'Transfer created and payment marked as paid.' );
+		expect( callsTo( TRANSFER_PATH ) ).toHaveLength( 1 );
+		expect( callsTo( MARK_PAID_PATH ) ).toHaveLength( 1 );
 	} );
 } );

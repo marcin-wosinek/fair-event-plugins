@@ -184,7 +184,7 @@ msgstr "Alle ausgewählten Fotos werden diesem Autor zugeordnet."
 
 #: src/Admin/MediaBatchActions.php:257
 #: src/Admin/edit-extra-message/EditExtraMessage.js:272
-#: src/Admin/fee-detail/FeeDetail.js:1021
+#: src/Admin/fee-detail/FeeDetail.js:1062
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
 #: src/Admin/groups/Groups.js:449
@@ -1142,12 +1142,12 @@ msgstr "Diese Gebühr wurde bereits bezahlt. Vielen Dank!"
 
 #: templates/fee-payment.php:385
 #: templates/fee-payment.php:459
-#: src/Admin/fee-detail/FeeDetail.js:964
+#: src/Admin/fee-detail/FeeDetail.js:1005
 msgid "Fee:"
 msgstr "Gebühr:"
 
 #: templates/fee-payment.php:389
-#: src/Admin/fee-detail/FeeDetail.js:970
+#: src/Admin/fee-detail/FeeDetail.js:1011
 msgid "Amount:"
 msgstr "Betrag:"
 
@@ -1361,7 +1361,7 @@ msgstr "Mitglieder"
 msgid "No members in this group."
 msgstr "Keine Mitglieder in dieser Gruppe."
 
-#: src/Admin/fee-detail/FeeDetail.js:951
+#: src/Admin/fee-detail/FeeDetail.js:992
 #: src/Admin/group-detail/GroupDetail.js:357
 msgid "(unnamed)"
 msgstr "(unbenannt)"
@@ -1861,45 +1861,45 @@ msgstr "Die Erinnerung wurde gesendet, konnte aber nicht in der Zahlung erfasst 
 msgid "Payment reminder sent."
 msgstr "Zahlungserinnerung gesendet."
 
-#: src/Admin/fee-detail/FeeDetail.js:581
+#: src/Admin/fee-detail/FeeDetail.js:622
 msgid "The payment reminder could not be sent."
 msgstr "Die Zahlungserinnerung konnte nicht gesendet werden."
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:624
+#: src/Admin/fee-detail/FeeDetail.js:665
 #, js-format
 msgid "Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again."
 msgstr "Zahlungserinnerung an %s gesendet, aber diese Seite konnte nicht aktualisiert werden. Laden Sie die Seite neu, um das Erinnerungsdatum zu sehen; die E-Mail muss nicht erneut gesendet werden."
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:636
+#: src/Admin/fee-detail/FeeDetail.js:677
 #, js-format
 msgid "Payment reminder sent to %s."
 msgstr "Zahlungserinnerung an %s gesendet."
 
-#: src/Admin/fee-detail/FeeDetail.js:732
-#: src/Admin/fee-detail/FeeDetail.js:918
-#: src/Admin/fee-detail/FeeDetail.js:1033
+#: src/Admin/fee-detail/FeeDetail.js:773
+#: src/Admin/fee-detail/FeeDetail.js:959
+#: src/Admin/fee-detail/FeeDetail.js:1074
 msgid "Send Payment Reminder"
 msgstr "Zahlungserinnerung senden"
 
-#: src/Admin/fee-detail/FeeDetail.js:929
+#: src/Admin/fee-detail/FeeDetail.js:970
 msgid "One reminder email will be sent to this member only."
 msgstr "Eine Erinnerungs-E-Mail wird nur an dieses Mitglied gesendet."
 
-#: src/Admin/fee-detail/FeeDetail.js:945
+#: src/Admin/fee-detail/FeeDetail.js:986
 msgid "Member:"
 msgstr "Mitglied:"
 
-#: src/Admin/fee-detail/FeeDetail.js:958
+#: src/Admin/fee-detail/FeeDetail.js:999
 msgid "Email:"
 msgstr "E-Mail:"
 
-#: src/Admin/fee-detail/FeeDetail.js:984
+#: src/Admin/fee-detail/FeeDetail.js:1025
 msgid "This member has no email address, so a reminder cannot be sent."
 msgstr "Dieses Mitglied hat keine E-Mail-Adresse, daher kann keine Erinnerung gesendet werden."
 
-#: src/Admin/fee-detail/FeeDetail.js:994
+#: src/Admin/fee-detail/FeeDetail.js:1035
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
 msgstr "Erinnerungen werden an alle Mitglieder mit ausstehenden Zahlungen gesendet. Warten Sie, bis dies abgeschlossen ist, bevor Sie diese senden."
 
@@ -1924,15 +1924,15 @@ msgstr "Budgets sind nicht verfügbar, weil Fair Finance nicht aktiv ist."
 msgid "Budgets could not be loaded."
 msgstr "Die Budgets konnten nicht geladen werden."
 
-#: src/Admin/fee-detail/FeeDetail.js:843
+#: src/Admin/fee-detail/FeeDetail.js:884
 msgid "Budget:"
 msgstr "Budget:"
 
-#: src/Admin/fee-detail/FeeDetail.js:1463
+#: src/Admin/fee-detail/FeeDetail.js:1504
 msgid "A transfer needs a source and a target budget."
 msgstr "Eine Umbuchung benötigt ein Quell- und ein Zielbudget."
 
-#: src/Admin/fee-detail/FeeDetail.js:1467
+#: src/Admin/fee-detail/FeeDetail.js:1508
 msgid "There are no budgets yet. Add budgets in Fair Finance to create a transfer."
 msgstr "Es gibt noch keine Budgets. Lege in Fair Finance Budgets an, um eine Umbuchung zu erstellen."
 
@@ -1943,3 +1943,11 @@ msgstr "Du kannst diese Gebühr trotzdem ohne Budget anlegen."
 #: src/Admin/fees-list/FeesList.js:522
 msgid "There are no budgets yet. Add one in Fair Finance to link fees to it."
 msgstr "Es gibt noch keine Budgets. Lege eines in Fair Finance an, um Gebühren damit zu verknüpfen."
+
+#: src/Admin/fee-detail/FeeDetail.js:537
+msgid "The transfer could not be created."
+msgstr "Die Umbuchung konnte nicht erstellt werden."
+
+#: src/Admin/fee-detail/FeeDetail.js:574
+msgid "The transfer was created, but the payment could not be marked as paid. Mark the payment as paid from its row actions; do not create the transfer again."
+msgstr "Die Umbuchung wurde erstellt, aber die Zahlung konnte nicht als bezahlt markiert werden. Markiere die Zahlung über ihre Zeilenaktionen als bezahlt; erstelle die Umbuchung nicht erneut."

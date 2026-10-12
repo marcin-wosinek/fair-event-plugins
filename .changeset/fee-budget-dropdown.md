@@ -14,3 +14,10 @@ linked to.
 Sites where Fair Finance was never installed can list and open membership fees
 again: a fee keeps the budget it was linked to, and its budget name is simply
 left empty.
+
+Creating a transfer from a pending payment on Fee Detail works again: it was
+sent to an address that no longer exists, so the transfer was never created
+and the payment stayed pending. A transfer that cannot be created now says
+why inside the dialog and keeps what was entered. If the transfer is created
+but the payment cannot be marked as paid, the page says so, so the transfer
+is not created a second time.
