@@ -3035,3 +3035,241 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 		);
 	} );
 } );
+
+describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () => {
+	const originalManageEventData = window.fairEventsManageEventData;
+
+	afterEach( () => {
+		window.fairEventsManageEventData = originalManageEventData;
+	} );
+
+	const twoPeriods = [
+		{
+			id: 601,
+			name: 'Advance ticket',
+			sale_start: '2026-01-01',
+			sale_end: '2026-01-15',
+		},
+		{
+			id: 602,
+			name: 'Day of event',
+			sale_start: '2026-01-15',
+			sale_end: '2026-02-01',
+		},
+	];
+	const bothPrices = [
+		{ ticket_type_id: 1, sale_period_id: 601, price: '20' },
+		{ ticket_type_id: 1, sale_period_id: 602, price: '5' },
+	];
+	const gapData = ( overrides = {} ) => ( {
+		...initialDataWithTicketType,
+		sale_periods: twoPeriods,
+		prices: [ bothPrices[ 0 ] ],
+		settings: { show_ticket_type_end_date: true },
+		...overrides,
+	} );
+	const withTicketType = ( fields, prices = bothPrices ) =>
+		gapData( {
+			ticket_types: [
+				{ ...initialDataWithTicketType.ticket_types[ 0 ], ...fields },
+			],
+			prices,
+		} );
+
+	const renderGaps = ( initialData, extraProps = {} ) => {
+		const result = renderTickets( {
+			initialData,
+			startDatetime: '2026-01-31 10:00:00',
+			endDatetime: '2026-01-31 12:00:00',
+			...extraProps,
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+		return result;
+	};
+
+	const warning = ( periodName ) =>
+		screen.queryByText(
+			new RegExp( `^${ periodName }: no tickets on sale ` )
+		);
+	// The legend entry is present exactly while something is flagged. (The
+	// warning text itself also lingers in the a11y speak region.)
+	const legendEntry = () => screen.queryByText( 'No tickets on sale' );
+	// The struck-through day number is the calendar's non-colour marking.
+	const isMarked = ( day ) =>
+		within( screen.getByText( 'January 2026' ).parentElement ).getByText(
+			String( day ),
+			{ exact: true }
+		).style.textDecoration === 'line-through';
+	const priceInputIn = ( checkbox ) =>
+		checkbox.closest( 'td' ).querySelector( 'input[type="number"]' );
+
+	it( 'names a period without a price and marks its dates', () => {
+		renderGaps( gapData() );
+
+		expect( warning( 'Day of event' ) ).toHaveTextContent(
+			/from .*15.* to .*31.*\.$/
+		);
+		expect( warning( 'Advance ticket' ) ).not.toBeInTheDocument();
+		expect( legendEntry() ).toBeInTheDocument();
+		expect( isMarked( 14 ) ).toBe( false );
+		expect( isMarked( 15 ) ).toBe( true );
+		expect( isMarked( 31 ) ).toBe( true );
+	} );
+
+	it( 'shows no warning when every period has a ticket, including a free one', () => {
+		renderGaps(
+			gapData( {
+				prices: [
+					bothPrices[ 0 ],
+					{ ticket_type_id: 1, sale_period_id: 602, price: '0' },
+				],
+			} )
+		);
+
+		expect( legendEntry() ).not.toBeInTheDocument();
+		expect( isMarked( 20 ) ).toBe( false );
+	} );
+
+	it( 'removes the warning and the marking as soon as a price is added, without saving', () => {
+		const onDirtyChange = jest.fn();
+		renderGaps( gapData(), { onDirtyChange } );
+
+		const available = screen.getAllByRole( 'checkbox', {
+			name: 'Available',
+		} )[ 1 ];
+		fireEvent.click( available );
+		// Ticked but still wholly empty: nothing would be saved for it.
+		expect( warning( 'Day of event' ) ).toBeInTheDocument();
+
+		fireEvent.change( priceInputIn( available ), {
+			target: { value: '0' },
+		} );
+
+		expect( warning( 'Day of event' ) ).not.toBeInTheDocument();
+		expect( legendEntry() ).not.toBeInTheDocument();
+		expect( isMarked( 20 ) ).toBe( false );
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( { method: 'PUT' } )
+		);
+	} );
+
+	it( 'warns again when a priced cell is marked unavailable', () => {
+		renderGaps( gapData( { prices: bothPrices } ) );
+		expect( warning( 'Day of event' ) ).not.toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getAllByRole( 'checkbox', { name: 'Available' } )[ 1 ]
+		);
+
+		expect( warning( 'Day of event' ) ).toBeInTheDocument();
+	} );
+
+	it( 'flags every period of a manually disabled ticket until it is enabled again', () => {
+		renderGaps( withTicketType( { has_sales: true, disabled: true } ) );
+
+		expect( warning( 'Advance ticket' ) ).toBeInTheDocument();
+		expect( warning( 'Day of event' ) ).toBeInTheDocument();
+
+		fireEvent.click( screen.getByRole( 'checkbox', { name: 'Disabled' } ) );
+
+		expect( legendEntry() ).not.toBeInTheDocument();
+	} );
+
+	it( 'marks only the dates after a scheduled cutoff, and the cutoff date itself at midnight', () => {
+		const { container } = renderGaps(
+			withTicketType( { disable_at: '2026-01-20 15:00:00' } )
+		);
+
+		expect( warning( 'Advance ticket' ) ).not.toBeInTheDocument();
+		expect( warning( 'Day of event' ) ).toHaveTextContent(
+			/from .*21.* to .*31.*\.$/
+		);
+		expect( isMarked( 20 ) ).toBe( false );
+		expect( isMarked( 21 ) ).toBe( true );
+
+		fireEvent.change(
+			container.querySelector( 'input[type="datetime-local"]' ),
+			{ target: { value: '2026-01-20T00:00' } }
+		);
+
+		expect( isMarked( 19 ) ).toBe( false );
+		expect( isMarked( 20 ) ).toBe( true );
+	} );
+
+	it( 'counts a ticket type that has not been saved yet', () => {
+		renderGaps( gapData() );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
+		);
+		expect( warning( 'Day of event' ) ).toBeInTheDocument();
+
+		// Second row, second period.
+		const available = screen.getAllByRole( 'checkbox', {
+			name: 'Available',
+		} )[ 3 ];
+		fireEvent.change( priceInputIn( available ), {
+			target: { value: '8' },
+		} );
+
+		expect( warning( 'Day of event' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'follows periods that have not been saved yet, and their removal', () => {
+		window.fairEventsManageEventData = { siteToday: '2026-01-05' };
+		renderGaps(
+			gapData( {
+				sale_periods: [
+					{ id: 501, name: '', sale_start: '', sale_end: '' },
+				],
+				prices: [
+					{ ticket_type_id: 1, sale_period_id: 501, price: '12' },
+				],
+			} )
+		);
+		// One period: no calendar, so no warning either.
+		expect( legendEntry() ).not.toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /More options/i } )
+		);
+		fireEvent.click(
+			screen.getByRole( 'checkbox', {
+				name: /Multiple pricing periods/i,
+			} )
+		);
+
+		// The price moved to "Advance ticket"; the new "Day of event" period
+		// (the event day, with an automatic end) has none.
+		expect( warning( 'Advance ticket' ) ).not.toBeInTheDocument();
+		expect( warning( 'Day of event' ) ).toHaveTextContent(
+			/on sale on .*31.*\.$/
+		);
+
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Remove' } )[ 1 ]
+		);
+
+		expect( legendEntry() ).not.toBeInTheDocument();
+	} );
+
+	it( 'shows no warning while a boundary is unresolved', () => {
+		// No schedule to anchor the automatic end: the calendar stays hidden.
+		renderTickets( {
+			initialData: gapData( {
+				sale_periods: [
+					twoPeriods[ 0 ],
+					{ ...twoPeriods[ 1 ], sale_end: '' },
+				],
+			} ),
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+
+		expect( legendEntry() ).not.toBeInTheDocument();
+	} );
+} );
