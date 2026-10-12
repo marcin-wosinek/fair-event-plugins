@@ -554,6 +554,66 @@ test.describe( 'Signup admin edits', () => {
 			expect( c.event( second ) ).toBe( 2 );
 		} );
 
+		test( 'a move leaves individually moved tickets where they are, and the List follows each ticket', async () => {
+			const email = uniqueEmail( 'split' );
+			await buy( {
+				event_date_id: first,
+				ticket_type_id: singleId,
+				email,
+				quantity: 3,
+			} );
+			const signup = await signupOf( first, email );
+			const [ stays, toSecond, toThird ] = signup.tickets.map(
+				( ticket ) => ticket.id
+			);
+			for ( const [ ticketId, eventDateId ] of [
+				[ toSecond, second ],
+				[ toThird, third ],
+			] ) {
+				const res = await api.post(
+					'/wp-json/fair-e2e/v1/ticket-units/move',
+					{
+						headers: adminHeaders,
+						data: {
+							ticket_id: ticketId,
+							event_date_id: eventDateId,
+						},
+					}
+				);
+				expect( res.ok() ).toBeTruthy();
+			}
+
+			// The move is offered from the third date too, where one ticket
+			// is listed, and still acts on the registration's own date.
+			const fromThird = await signupOf( third, email );
+			expect( fromThird.listed_ticket_ids ).toEqual( [ toThird ] );
+			const moved = await edit( fromThird.id, {
+				event_date_id: second,
+			} );
+			expect( moved.status, JSON.stringify( moved.body ) ).toBe( 200 );
+
+			const { tickets } = await state( signup.id );
+			expect( tickets.map( ( t ) => t.event_date_id ) ).toEqual( [
+				String( second ),
+				String( second ),
+				String( third ),
+			] );
+
+			expect( await signupOf( first, email ) ).toBeUndefined();
+			const onSecond = await signupOf( second, email );
+			expect( onSecond.listed_ticket_ids ).toEqual( [ stays, toSecond ] );
+			expect( onSecond.ticket_counts ).toMatchObject( {
+				confirmed: 3,
+				on_this_date: 2,
+				on_other_dates: 1,
+				on_registration_date: 2,
+			} );
+			expect( onSecond.accounting_anchor_ticket_id ).toBe( stays );
+			const onThird = await signupOf( third, email );
+			expect( onThird.listed_ticket_ids ).toEqual( [ toThird ] );
+			expect( onThird.accounting_anchor_ticket_id ).toBe( stays );
+		} );
+
 		test( 'a type change moves the tickets to the new type and its capacity', async () => {
 			// The reduced type has room for 2; one is sold.
 			const takenEmail = uniqueEmail( 'reduced' );

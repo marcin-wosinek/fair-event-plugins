@@ -120,6 +120,27 @@ add_action(
 			)
 		);
 
+		// Put one ticket unit on another event date, as a single-ticket move
+		// does, through fair-events alone.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/ticket-units/move',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => $admin_only,
+				'callback'            => static function ( WP_REST_Request $request ) {
+					return rest_ensure_response(
+						array(
+							'moved' => \FairEvents\Models\EventTicket::set_event_date(
+								absint( $request->get_param( 'ticket_id' ) ),
+								absint( $request->get_param( 'event_date_id' ) )
+							),
+						)
+					);
+				},
+			)
+		);
+
 		// Simulate an interrupted or corrupted backfill for one signup.
 		register_rest_route(
 			'fair-e2e/v1',

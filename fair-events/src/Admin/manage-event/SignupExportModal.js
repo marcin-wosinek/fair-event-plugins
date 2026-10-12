@@ -47,7 +47,9 @@ export function ticketExtrasText( ticket, ticketOptions ) {
 /**
  * Export columns for ticket rows. Purchase-level values repeat on every
  * ticket of the purchase, except the amount paid, which is given once per
- * registration so that summing the column counts each payment once.
+ * purchase — on its accounting anchor's row, whichever date that ticket is
+ * on — so that summing the column over the exports of several dates counts
+ * each payment once.
  *
  * @param {Array} ticketOptions Configured extras.
  * @return {Array} Column descriptors.
@@ -86,7 +88,13 @@ function buildBaseColumns( ticketOptions ) {
 				'Purchase total (once per registration)',
 				'fair-events'
 			),
-			getValue: ( { item } ) => ( item.isFirstTicket ? item.amount : '' ),
+			getValue: ( { item } ) =>
+				item.isAccountingAnchor ? item.amount : '',
+		},
+		{
+			id: 'purchase_reference',
+			label: __( 'Purchase reference', 'fair-events' ),
+			getValue: ( { item } ) => item.signup.id,
 		},
 		{
 			id: 'status',
@@ -291,6 +299,7 @@ export default function SignupExportModal( {
 				...row.signup,
 				ticket: row.ticket,
 				isFirstTicket: row.isFirstTicket,
+				isAccountingAnchor: row.isAccountingAnchor ?? row.isFirstTicket,
 				signup: row.signup,
 				ticketLabel: ticketRowLabel( row.ticket ),
 				...ticketRowAnswers( row, indexedAnswers ),
@@ -434,6 +443,13 @@ export default function SignupExportModal( {
 							onChange={ handleToggleIncludeAnswers }
 						/>
 					) }
+
+					<p className="description">
+						{ __(
+							'Each purchase total appears once, on the row of the purchase’s first confirmed ticket, on whichever date that ticket is. The totals of one date are the purchases counted on that date, not the revenue from its attendance. To add up several dates, export them without changing tickets in between.',
+							'fair-events'
+						) }
+					</p>
 
 					<RadioControl
 						label={ __( 'Format', 'fair-events' ) }
