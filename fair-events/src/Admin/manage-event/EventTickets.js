@@ -39,6 +39,7 @@ import {
 	resolveEffectiveSalePeriods,
 	hasUsableSalePeriodRange,
 } from './salePeriodBoundaries.js';
+import { findUnavailableSaleDates } from './salePeriodAvailability.js';
 
 const shiftCalendarDate = ( dateStr, days ) => {
 	if ( ! dateStr ) return '';
@@ -1044,6 +1045,22 @@ export default function EventTickets( {
 		! lastResolvedPeriod.sale_end &&
 		! lastResolvedPeriod.effectiveEnd;
 
+	// The calendar only renders in multiple-periods mode with every boundary
+	// resolved; the advisory "no tickets on sale" warning follows it. Derived
+	// from the same draft state the save serializes, so it tracks unsaved
+	// edits to tickets, prices, and periods.
+	const showSalePeriodsCalendar =
+		effectiveMultiple && hasUsableSalePeriodRange( resolvedSalePeriods );
+	const unavailableSaleDates = showSalePeriodsCalendar
+		? findUnavailableSaleDates( {
+				ticketTypes,
+				periods: resolvedSalePeriods,
+				getPriceCell: ( type, periodIndex ) =>
+					getPrice( type, salePeriods[ periodIndex ] ),
+				respectAvailableFlag: effectiveMultiple,
+		  } )
+		: [];
+
 	if ( loading ) {
 		return (
 			<Card style={ { marginTop: '16px' } }>
@@ -1241,23 +1258,20 @@ export default function EventTickets( {
 									) }
 								</Notice>
 							) }
-							{ effectiveMultiple &&
-								hasUsableSalePeriodRange(
-									resolvedSalePeriods
-								) && (
-									<SalePeriodsCalendar
-										salePeriods={ resolvedSalePeriods.map(
-											( period ) => ( {
-												...period,
-												sale_start:
-													period.effectiveStart,
-												sale_end: period.effectiveEnd,
-											} )
-										) }
-										eventDay={ eventDay }
-										embedded
-									/>
-								) }
+							{ showSalePeriodsCalendar && (
+								<SalePeriodsCalendar
+									salePeriods={ resolvedSalePeriods.map(
+										( period ) => ( {
+											...period,
+											sale_start: period.effectiveStart,
+											sale_end: period.effectiveEnd,
+										} )
+									) }
+									eventDay={ eventDay }
+									unavailableDates={ unavailableSaleDates }
+									embedded
+								/>
+							) }
 							{ effectiveMultiple ? (
 								<VStack spacing={ 3 }>
 									<div style={ { overflowX: 'auto' } }>
