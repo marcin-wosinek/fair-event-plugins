@@ -199,7 +199,7 @@ test.describe('Fair Finance settlements', () => {
 			page.locator('.fair-finance-settlements-table tbody tr')
 		).toHaveCount(3);
 		const merged = rowFor(page, 'E2E.2605.01');
-		await expect(merged).toContainText('Mollie and file');
+		await expect(merged).toContainText('Mollie API and file');
 		await expect(merged).toContainText('38.55 EUR');
 		await expect(merged).toContainText('Adds up to payout');
 
@@ -236,7 +236,7 @@ test.describe('Fair Finance settlements', () => {
 		await expect(inApp(page).getByText('stl_e2e0001')).toBeVisible();
 		const payment = page.locator('tr', { hasText: 'tr_e2estl01b' });
 		await expect(payment).toContainText('15.00 EUR');
-		await expect(payment).toContainText('Mollie and file');
+		await expect(payment).toContainText('Mollie API and file');
 		await expect(payment).toContainText('Not imported yet');
 
 		// Mollie IDs open the dashboard of the settlement's own organization,
@@ -411,6 +411,176 @@ test.describe('Fair Finance settlements', () => {
 					document.documentElement.clientWidth
 			)
 		).toBe(true);
+	});
+
+	// Synthetic report: 0.7545 + 1.5300 + 1.3700 + 0.2500 - 0.0045 = 3.9000.
+	test('explains a settlement from the Mollie report at full precision on a phone', async ({
+		page,
+	}) => {
+		await setState({ variant: 'precise' });
+		await page.setViewportSize({ width: 375, height: 812 });
+		await loginAsAdmin(page);
+		await page.goto(PAGE);
+		await page
+			.getByRole('button', { name: 'Load settlements from Mollie' })
+			.click();
+		await expect(
+			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+		).toBeVisible({ timeout: 30000 });
+
+		await follow(
+			page,
+			rowFor(page, 'E2E.2605.01').getByRole('link', {
+				name: 'E2E.2605.01',
+			})
+		);
+
+		const report = page.locator('.fair-finance-settlements-report');
+		const summaryRow = (label) =>
+			report.locator('.fair-finance-settlements-summary > div', {
+				has: page.getByText(label, { exact: true }),
+			});
+		const checkSummary = async () => {
+			await expect(
+				report.getByRole('heading', { name: 'Settlement summary' })
+			).toBeVisible();
+			await expect(report).toContainText('Source: Mollie API.');
+			await expect(summaryRow('Revenue reported')).toContainText(
+				'40.00 EUR'
+			);
+			// Fractional cents are kept, not rounded to -3.90.
+			await expect(summaryRow('Costs and adjustments')).toContainText(
+				'-3.9000 EUR'
+			);
+			await expect(summaryRow('Report net')).toContainText('36.1000 EUR');
+			await expect(summaryRow('Payout')).toContainText('36.10 EUR');
+			await expect(summaryRow('Difference from payout')).toContainText(
+				'0.0000 EUR'
+			);
+			await expect(
+				report.getByText('The report net equals the payout exactly.')
+			).toBeVisible();
+		};
+		await checkSummary();
+		// Nothing is unknown any more and nothing needs review.
+		await expect(inApp(page)).not.toContainText('To review');
+		await expect(report).not.toContainText('Unknown');
+
+		// The breakdown opens on request, grouped by period.
+		const breakdown = report.getByRole('button', {
+			name: 'Show Mollie report breakdown',
+		});
+		await expect(breakdown).toHaveAttribute('aria-expanded', 'false');
+		await breakdown.click();
+		await expect(
+			report.getByRole('heading', { name: 'Period 2026-05' })
+		).toBeVisible();
+		await expect(report).toContainText('Mollie invoice: 2026.10001');
+
+		const rounding = report.locator('tr', {
+			hasText: 'Rounding difference',
+		});
+		await expect(
+			rounding.locator('td[data-label="Gross amount"]')
+		).toContainText('-0.0045 EUR');
+		// A negative cost increases the payout.
+		await expect(
+			rounding.locator('td[data-label="Effect on payout"]')
+		).toContainText('0.0045 EUR');
+		await expect(rounding.locator('td[data-label="Count"]')).toContainText(
+			'Not provided by Mollie'
+		);
+
+		// Net, VAT and rates are a line's own labelled details.
+		await report
+			.getByRole('button', { name: 'Show details of Credit card' })
+			.click();
+		const details = report.locator(
+			'.fair-finance-settlements-line-details'
+		);
+		await expect(details).toHaveCount(1);
+		await expect(details).toContainText('Net amount');
+		await expect(details).toContainText('1.2645 EUR');
+		await expect(details).toContainText('0.2655 EUR');
+		await expect(details).toContainText('Fixed fee rate');
+		await expect(details).toContainText('0.25 EUR');
+		await expect(details).toContainText('1.8%');
+
+		// The movements total still adds up the movements, not the report.
+		const settled = page.locator(
+			'.fair-finance-settlements-totals td[data-label="Settled"]'
+		);
+		await expect(settled).toContainText('40.00 EUR');
+		await expect(settled).not.toContainText('36.10');
+
+		// Opened breakdown and details fit the screen without sideways scrolling.
+		expect(
+			await page.evaluate(
+				() =>
+					document.documentElement.scrollWidth <=
+					document.documentElement.clientWidth
+			)
+		).toBe(true);
+
+		// The saved report reopens while Mollie is disconnected.
+		const before = await mollieRequests();
+		await setConnected(false);
+		await page.reload();
+		await checkSummary();
+		expect(await mollieRequests()).toBe(before);
+	});
+
+	test('loads report details of a settlement saved earlier on refresh', async ({
+		page,
+	}) => {
+		await setState({ variant: 'precise' });
+		await loginAsAdmin(page);
+		await page.goto(PAGE);
+		await page
+			.getByRole('button', { name: 'Load settlements from Mollie' })
+			.click();
+		await expect(
+			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+		).toBeVisible({ timeout: 30000 });
+		// As saved before report details were kept.
+		await setState({ forget_reports: true });
+
+		await follow(
+			page,
+			rowFor(page, 'E2E.2605.01').getByRole('link', {
+				name: 'E2E.2605.01',
+			})
+		);
+
+		const report = page.locator('.fair-finance-settlements-report');
+		await expect(
+			report.getByText('Refresh to load report details')
+		).toBeVisible();
+		await expect(report).not.toContainText('Report net');
+		// The earlier record stays readable.
+		await expect(
+			page.locator('.fair-finance-settlements-facts div', {
+				hasText: 'Payout amount',
+			})
+		).toContainText('36.10 EUR');
+
+		await page.getByRole('button', { name: 'Refresh from Mollie' }).click();
+		await expect(
+			inApp(page).getByText('Refreshed from Mollie.')
+		).toBeVisible({ timeout: 30000 });
+
+		await expect(
+			report.locator('.fair-finance-settlements-summary > div', {
+				hasText: 'Report net',
+			})
+		).toContainText('36.1000 EUR');
+		await expect(
+			report.getByText('Refresh to load report details')
+		).toHaveCount(0);
+		// Gaining report details is not reported as Mollie changing its data.
+		await expect(inApp(page)).not.toContainText(
+			'Mollie reported different data'
+		);
 	});
 
 	test('keeps reconciliation usable and links it to saved settlements', async ({

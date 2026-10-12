@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 /**
  * Internal dependencies
@@ -32,6 +32,55 @@ export const formatMoney = ( amount, currency ) => {
 	}
 	return currency ? `${ amount } ${ currency }` : amount;
 };
+
+/**
+ * Show an amount of Mollie's settlement report at the precision Mollie
+ * supplied. An amount Mollie did not send and one that could not be read are
+ * named as such, so neither is mistaken for zero.
+ *
+ * @param {Object|null} amount Report amount as `{ value, currency, state }`.
+ * @return {string} Amount, or what is known about its absence.
+ */
+export const formatReportAmount = ( amount ) => {
+	if ( amount?.state === 'provided' ) {
+		return formatMoney( amount.value, amount.currency );
+	}
+	return amount?.state === 'invalid'
+		? __( 'Could not read amount', 'fair-finance' )
+		: __( 'Not provided by Mollie', 'fair-finance' );
+};
+
+/**
+ * Show a percentage rate of Mollie's settlement report as supplied.
+ *
+ * @param {Object|null} rate Rate as `{ value, state }`.
+ * @return {string} Rate, or what is known about its absence.
+ */
+export const formatReportRate = ( rate ) => {
+	if ( rate?.state === 'provided' ) {
+		/* translators: %s: percentage rate as a decimal number, such as 1.8 */
+		return sprintf( __( '%s%%', 'fair-finance' ), rate.value );
+	}
+	return rate?.state === 'invalid'
+		? __( 'Could not read rate', 'fair-finance' )
+		: __( 'Not provided by Mollie', 'fair-finance' );
+};
+
+/**
+ * Name a report period.
+ *
+ * @param {Object} period Period with `year` and `month`.
+ * @return {string} Period, such as "2026-05".
+ */
+export const periodLabel = ( period ) =>
+	period.year && period.month
+		? sprintf(
+				/* translators: 1: four-digit year, 2: two-digit month */
+				__( 'Period %1$s-%2$s', 'fair-finance' ),
+				period.year,
+				period.month
+		  )
+		: __( 'Period not stated', 'fair-finance' );
 
 /**
  * Show a site-local datetime, or a fallback when there is none.
@@ -80,10 +129,10 @@ export const sourcesLabel = ( sources = [] ) => {
 	const fromApi = sources.includes( 'api' );
 	const fromCsv = sources.includes( 'csv' );
 	if ( fromApi && fromCsv ) {
-		return __( 'Mollie and file', 'fair-finance' );
+		return __( 'Mollie API and file', 'fair-finance' );
 	}
 	if ( fromApi ) {
-		return __( 'Mollie', 'fair-finance' );
+		return __( 'Mollie API', 'fair-finance' );
 	}
 	if ( fromCsv ) {
 		return __( 'File', 'fair-finance' );

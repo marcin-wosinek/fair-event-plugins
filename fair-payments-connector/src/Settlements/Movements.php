@@ -73,6 +73,7 @@ class Movements {
 				'occurred_at'         => null,
 				'needs_review'        => false,
 				'raw_type'            => null,
+				'report'              => null,
 			),
 			$movement
 		);
@@ -114,6 +115,14 @@ class Movements {
 			return $movement['type'] . ':' . $movement['external_id'];
 		}
 
+		if ( ! empty( $movement['report'] ) ) {
+			// A report line is identified by its details, with one spelling per
+			// amount, so a refresh that only respells a decimal is the same line.
+			$content = array( strtolower( trim( (string) $movement['description'] ) ), Report::material( $movement['report'] ) );
+
+			return 'agg:' . $movement['type'] . ':' . md5( (string) wp_json_encode( $content ) );
+		}
+
 		$content = array(
 			strtolower( trim( (string) $movement['description'] ) ),
 			(string) $movement['raw_type'],
@@ -140,6 +149,9 @@ class Movements {
 	 * Hash of everything that matters financially in one source's view of a
 	 * settlement. Two imports with the same hash describe the same facts.
 	 *
+	 * Rows without report details hash exactly as they did before report
+	 * details were kept, so earlier revisions keep their hashes.
+	 *
 	 * @param array   $facts     Settlement facts.
 	 * @param array[] $movements Movements with identities.
 	 * @return string
@@ -147,7 +159,7 @@ class Movements {
 	public static function content_hash( array $facts, array $movements ) {
 		$material = array();
 		foreach ( $movements as $movement ) {
-			$material[ $movement['identity_key'] ] = array(
+			$row = array(
 				$movement['type'],
 				(bool) $movement['is_aggregate'],
 				$movement['external_id'],
@@ -157,6 +169,14 @@ class Movements {
 				$movement['settlement_currency'],
 				$movement['provider_status'],
 			);
+
+			if ( ! empty( $movement['report'] ) ) {
+				// The report details stand in for the amount, spelled one way.
+				$row[5] = null;
+				$row[]  = Report::material( $movement['report'] );
+			}
+
+			$material[ $movement['identity_key'] ] = $row;
 		}
 		ksort( $material );
 
@@ -255,7 +275,8 @@ class Movements {
 			'count'             => count( $movements ),
 			'unknown'           => $unknown,
 			'currency'          => $currency,
-			'settlement_amount' => $exact ? Decimal::sum( $values, $currency ) : null,
+			// Report lines can carry more decimals than the currency has minor units.
+			'settlement_amount' => $exact ? ReportDecimal::sum( $values ) : null,
 		);
 	}
 

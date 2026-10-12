@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Tests\Settlements;
 
 use PHPUnit\Framework\TestCase;
 use FairPaymentsConnector\Settlements\Movements;
+use FairPaymentsConnector\Settlements\Report;
 
 /**
  * Unit tests for Movements.
@@ -219,5 +220,92 @@ class MovementsTest extends TestCase {
 		$this->assertCount( 1, $diff['changed'] );
 		$this->assertSame( 'tr_changed', $diff['changed'][0]['external_id'] );
 		$this->assertSame( '12.00', $diff['changed'][0]['fields']['settlement_amount']['proposed'] );
+	}
+
+	/**
+	 * Build a report cost line with an identity, as the Mollie adapter does.
+	 *
+	 * @param string $description Description.
+	 * @param string $gross       Gross amount as Mollie spells it.
+	 * @return array
+	 */
+	private function report_line( $description, $gross ) {
+		$report = Report::line(
+			'2026',
+			'05',
+			Report::GROUP_COSTS,
+			array(
+				'method'      => 'ideal',
+				'count'       => 1,
+				'amountGross' => array(
+					'value'    => $gross,
+					'currency' => 'EUR',
+				),
+			)
+		);
+
+		return Movements::make(
+			array(
+				'type'                => Movements::TYPE_FEE,
+				'is_aggregate'        => true,
+				'description'         => $description,
+				'settlement_amount'   => Report::contribution( $report )['value'],
+				'settlement_currency' => 'EUR',
+				'report'              => $report,
+			)
+		);
+	}
+
+	/** Report lines with fractional cents are totalled at their own precision. */
+	public function test_totals_keep_fractional_cents_of_report_lines() {
+		$lines = array();
+		foreach ( array( '0.7545', '1.5300', '1.3700', '0.2500', '-0.0045' ) as $index => $gross ) {
+			$lines[] = $this->report_line( 'Cost ' . $index, $gross );
+		}
+		$totals = Movements::totals( Movements::assign_identities( $lines ) );
+
+		$this->assertSame( '-3.9000', $totals['aggregate']['settlement_amount'] );
+		$this->assertSame( '-3.9000', $totals['by_type'][ Movements::TYPE_FEE ]['settlement_amount'] );
+		$this->assertSame( 0, $totals['aggregate']['unknown'] );
+	}
+
+	/** Respelling a report decimal changes neither the identity nor the hash. */
+	public function test_report_line_spelling_does_not_change_identity_or_hash() {
+		$facts   = array(
+			'provider_id' => 'stl_unit0001',
+			'amount'      => '38.55',
+			'currency'    => 'EUR',
+		);
+		$padded  = Movements::assign_identities( array( $this->report_line( 'iDEAL', '0.7500' ) ) );
+		$short   = Movements::assign_identities( array( $this->report_line( 'iDEAL', '0.75' ) ) );
+		$changed = Movements::assign_identities( array( $this->report_line( 'iDEAL', '0.7545' ) ) );
+
+		$this->assertSame( $padded[0]['identity_key'], $short[0]['identity_key'] );
+		$this->assertSame( Movements::content_hash( $facts, $padded ), Movements::content_hash( $facts, $short ) );
+		// A different amount is a different line and a different hash.
+		$this->assertNotSame( $padded[0]['identity_key'], $changed[0]['identity_key'] );
+		$this->assertNotSame( Movements::content_hash( $facts, $padded ), Movements::content_hash( $facts, $changed ) );
+	}
+
+	/** Two identical report lines stay two rows. */
+	public function test_repeated_report_lines_are_kept_apart() {
+		$lines = Movements::assign_identities(
+			array( $this->report_line( 'iDEAL', '0.7545' ), $this->report_line( 'iDEAL', '0.7545' ) )
+		);
+
+		$this->assertNotSame( $lines[0]['identity_key'], $lines[1]['identity_key'] );
+		$this->assertSame( 2, $lines[1]['occurrence'] );
+		$this->assertSame( '-1.5090', Movements::totals( $lines )['aggregate']['settlement_amount'] );
+	}
+
+	/** A change in a rate or count is part of what a revision hashes. */
+	public function test_content_hash_reflects_report_details() {
+		$facts  = array( 'provider_id' => 'stl_unit0001' );
+		$before = Movements::assign_identities( array( $this->report_line( 'iDEAL', '0.7545' ) ) );
+		$after  = $before;
+
+		$after[0]['report']['count'] = 2;
+
+		$this->assertNotSame( Movements::content_hash( $facts, $before ), Movements::content_hash( $facts, $after ) );
 	}
 }

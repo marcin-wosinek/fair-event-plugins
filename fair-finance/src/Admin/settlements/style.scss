@@ -135,6 +135,58 @@
 		font-size: 12px;
 	}
 
+	.fair-finance-settlements-summary {
+		max-width: 520px;
+		margin: 12px 0;
+
+		> div {
+			display: flex;
+			gap: 4px 16px;
+			align-items: baseline;
+			justify-content: space-between;
+			padding: 6px 0;
+			border-bottom: 1px solid #f0f0f1;
+
+			&.is-strong {
+				font-weight: 600;
+			}
+		}
+
+		dt {
+			color: #50575e;
+		}
+
+		dd {
+			margin: 0;
+			text-align: right;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	.fair-finance-settlements-agreement {
+		max-width: 720px;
+	}
+
+	.fair-finance-settlements-breakdown {
+		margin-top: 16px;
+
+		h3 {
+			margin: 16px 0 4px;
+			font-size: 14px;
+		}
+
+		h4 {
+			margin: 12px 0 6px;
+			font-size: 13px;
+		}
+
+		.components-button.is-link {
+			height: auto;
+			text-align: left;
+			white-space: normal;
+		}
+	}
+
 	.fair-finance-settlements-totals {
 		th,
 		td {
@@ -172,6 +224,16 @@
 			// The parent payment of a refund or capture sits under its own ID.
 			.fair-finance-settlements-parent {
 				flex-basis: 100%;
+			}
+
+			// A report line's details keep their own labels.
+			.fair-finance-settlements-line-details td {
+				display: block;
+				text-align: left;
+
+				&::before {
+					display: none;
+				}
 			}
 
 			// The totals row keeps its heading and drops its filler cell.

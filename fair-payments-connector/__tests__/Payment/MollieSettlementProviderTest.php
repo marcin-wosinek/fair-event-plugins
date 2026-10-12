@@ -14,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 use FairPaymentsConnector\Payment\MollieSettlementProvider;
 use FairPaymentsConnector\Payment\SettlementProviderException;
 use FairPaymentsConnector\Settlements\Movements;
+use FairPaymentsConnector\Settlements\Report;
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Fake\MockResponse;
 use Mollie\Api\Http\PendingRequest;
@@ -232,6 +233,267 @@ class MollieSettlementProviderTest extends TestCase {
 
 		$this->assertSame( array(), $settlement['aggregates'] );
 		$this->assertSame( 'unavailable', $settlement['summary_check'] );
+	}
+
+	/**
+	 * A report cost line in Mollie's shape.
+	 *
+	 * @param string      $description Description.
+	 * @param string|null $gross       Gross value.
+	 * @param array       $extra       Other fields.
+	 * @return array
+	 */
+	private function cost( $description, $gross, array $extra = array() ) {
+		return array_merge(
+			array(
+				'description' => $description,
+				'method'      => 'ideal',
+				'count'       => 1,
+				'amountNet'   => null,
+				'amountVat'   => null,
+				'amountGross' => null === $gross ? null : array(
+					'value'    => $gross,
+					'currency' => 'EUR',
+				),
+			),
+			$extra
+		);
+	}
+
+	/**
+	 * A settlement whose report holds the given cost lines against 40.00 of revenue.
+	 *
+	 * @param string  $payout Payout value.
+	 * @param array[] $costs  Cost lines.
+	 * @return array
+	 */
+	private function settlement_with_costs( $payout, array $costs ) {
+		$settlement = $this->settlement(
+			array(
+				'amount' => array(
+					'value'    => $payout,
+					'currency' => 'EUR',
+				),
+			)
+		);
+
+		$settlement['periods']['2026']['05']['costs']            = $costs;
+		$settlement['periods']['2026']['05']['invoiceId']        = 'inv_period0001';
+		$settlement['periods']['2026']['05']['invoiceReference'] = '2026.10001';
+
+		return $settlement;
+	}
+
+	/**
+	 * Load a settlement through a faked client.
+	 *
+	 * @param array $settlement Mollie settlement resource.
+	 * @return array
+	 */
+	private function load( array $settlement ) {
+		$provider = new MollieSettlementProvider(
+			MollieApiClient::fake( array( GetSettlementRequest::class => new MockResponse( $settlement ) ) )
+		);
+
+		return $provider->get_settlement( 'stl_unit0001' );
+	}
+
+	/**
+	 * Fractional-cent fees, a negative rounding line and rates are kept as
+	 * supplied, and the report still adds up to the payout exactly.
+	 *
+	 * Synthetic fixture: 0.7545 + 1.5300 + 1.3700 + 0.2500 - 0.0045 = 3.9000.
+	 */
+	public function test_fractional_cent_report_amounts_are_kept_exactly() {
+		$settlement = $this->load(
+			$this->settlement_with_costs(
+				'36.10',
+				array(
+					$this->cost(
+						'iDEAL',
+						'0.7545',
+						array(
+							'count'     => 2,
+							'rate'      => array(
+								'fixed'      => array(
+									'value'    => '0.3118',
+									'currency' => 'EUR',
+								),
+								'percentage' => null,
+							),
+							'amountNet' => array(
+								'value'    => '0.6236',
+								'currency' => 'EUR',
+							),
+							'amountVat' => array(
+								'value'    => '0.1309',
+								'currency' => 'EUR',
+							),
+						)
+					),
+					$this->cost(
+						'Credit card',
+						'1.5300',
+						array(
+							'method' => 'creditcard',
+							'rate'   => array(
+								'fixed'      => array(
+									'value'    => '0.25',
+									'currency' => 'EUR',
+								),
+								'percentage' => '1.8',
+							),
+						)
+					),
+					$this->cost( 'Bancontact', '1.3700', array( 'method' => 'bancontact' ) ),
+					$this->cost( 'Refunds iDEAL', '0.2500', array( 'method' => 'refund' ) ),
+					$this->cost(
+						'Rounding difference',
+						'-0.0045',
+						array(
+							'method' => null,
+							'count'  => null,
+						)
+					),
+				)
+			)
+		);
+
+		$fees = array_values(
+			array_filter(
+				$settlement['aggregates'],
+				static function ( $row ) {
+					return Movements::TYPE_FEE === $row['type'];
+				}
+			)
+		);
+
+		$this->assertCount( 5, $fees );
+		// Nothing became unknown, and the payout contribution keeps every digit.
+		$this->assertSame(
+			array( '-0.7545', '-1.5300', '-1.3700', '-0.2500', '0.0045' ),
+			array_column( $fees, 'settlement_amount' )
+		);
+		foreach ( $fees as $fee ) {
+			$this->assertFalse( $fee['needs_review'] );
+			$this->assertTrue( $fee['is_aggregate'] );
+			$this->assertSame( 'EUR', $fee['settlement_currency'] );
+		}
+
+		$ideal = $fees[0]['report'];
+		$this->assertSame( '2026', $ideal['year'] );
+		$this->assertSame( '05', $ideal['month'] );
+		$this->assertSame( Report::GROUP_COSTS, $ideal['group'] );
+		$this->assertSame( 'ideal', $ideal['method'] );
+		$this->assertSame( 2, $ideal['count'] );
+		$this->assertSame( '0.3118', $ideal['rate_fixed']['value'] );
+		$this->assertSame( Report::STATE_MISSING, $ideal['rate_percentage']['state'] );
+		$this->assertSame( '0.6236', $ideal['amount_net']['value'] );
+		$this->assertSame( '0.1309', $ideal['amount_vat']['value'] );
+		// Mollie's own sign is stored; only the contribution is negated.
+		$this->assertSame( '0.7545', $ideal['amount_gross']['value'] );
+		$this->assertSame( 'inv_period0001', $ideal['invoice_id'] );
+		$this->assertSame( '2026.10001', $ideal['invoice_reference'] );
+
+		$this->assertSame( '1.8', $fees[1]['report']['rate_percentage']['value'] );
+		$this->assertSame( '-0.0045', $fees[4]['report']['amount_gross']['value'] );
+		$this->assertNull( $fees[4]['report']['count'] );
+		$this->assertNull( $fees[4]['report']['method'] );
+
+		$this->assertSame( 'inv_unit0001', $settlement['facts']['invoice_id'] );
+		$this->assertSame( 'verified', $settlement['summary_check'] );
+	}
+
+	/** A report that misses the payout by less than a cent is a mismatch. */
+	public function test_sub_cent_difference_is_a_mismatch() {
+		$settlement = $this->load(
+			$this->settlement_with_costs(
+				'36.10',
+				array(
+					$this->cost( 'iDEAL', '0.7545' ),
+					$this->cost( 'Credit card', '1.5300' ),
+					$this->cost( 'Bancontact', '1.3700' ),
+					$this->cost( 'Refunds iDEAL', '0.2500' ),
+				)
+			)
+		);
+
+		$this->assertSame( 'mismatch', $settlement['summary_check'] );
+	}
+
+	/** An amount with more decimals than can be kept is flagged, not cut short. */
+	public function test_oversized_report_amount_is_flagged_and_not_totalled() {
+		$settlement = $this->load(
+			$this->settlement_with_costs( '36.10', array( $this->cost( 'iDEAL', '3.900000001' ) ) )
+		);
+		$fee        = $settlement['aggregates'][1];
+
+		$this->assertNull( $fee['settlement_amount'] );
+		$this->assertNull( $fee['settlement_currency'] );
+		$this->assertTrue( $fee['needs_review'] );
+		$this->assertSame( Report::STATE_INVALID, $fee['report']['amount_gross']['state'] );
+		$this->assertSame( 'unavailable', $settlement['summary_check'] );
+	}
+
+	/** An amount Mollie did not send is missing, which is neither zero nor an error. */
+	public function test_report_amount_that_was_not_sent_is_missing() {
+		$settlement = $this->load(
+			$this->settlement_with_costs(
+				'40.00',
+				array(
+					$this->cost( 'No amount', null ),
+					$this->cost( 'Zero', '0.0000' ),
+				)
+			)
+		);
+
+		list( , $missing, $zero ) = $settlement['aggregates'];
+
+		$this->assertNull( $missing['settlement_amount'] );
+		$this->assertFalse( $missing['needs_review'] );
+		$this->assertSame( Report::STATE_MISSING, $missing['report']['amount_gross']['state'] );
+		$this->assertSame( '0.0000', $zero['settlement_amount'] );
+		$this->assertSame( Report::STATE_PROVIDED, $zero['report']['amount_gross']['state'] );
+		// The missing amount keeps the report from being called complete.
+		$this->assertSame( 'unavailable', $settlement['summary_check'] );
+	}
+
+	/** A report line in another currency is kept but never added to the payout check. */
+	public function test_report_line_in_another_currency_is_not_summed() {
+		$settlement = $this->load(
+			$this->settlement_with_costs(
+				'36.10',
+				array(
+					$this->cost(
+						'Foreign fee',
+						'3.9000',
+						array(
+							'amountGross' => array(
+								'value'    => '3.9000',
+								'currency' => 'USD',
+							),
+						)
+					),
+				)
+			)
+		);
+
+		$this->assertSame( '-3.9000', $settlement['aggregates'][1]['settlement_amount'] );
+		$this->assertSame( 'USD', $settlement['aggregates'][1]['settlement_currency'] );
+		$this->assertSame( 'unavailable', $settlement['summary_check'] );
+	}
+
+	/** Two identical report lines of one period stay two rows. */
+	public function test_repeated_report_lines_keep_their_own_identity() {
+		$settlement = $this->load(
+			$this->settlement_with_costs(
+				'38.49',
+				array( $this->cost( 'iDEAL', '0.7545' ), $this->cost( 'iDEAL', '0.7545' ) )
+			)
+		);
+
+		$this->assertCount( 3, $settlement['aggregates'] );
+		$this->assertNotSame( $settlement['aggregates'][1]['identity_key'], $settlement['aggregates'][2]['identity_key'] );
 	}
 
 	/** A response for a different settlement than the one asked for is refused. */

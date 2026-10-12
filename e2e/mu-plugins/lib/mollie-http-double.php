@@ -214,7 +214,11 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 	 * `fair_e2e_settlements` option steers it: `fail_match` makes any request
 	 * whose path and query contain that text fail like an outage, and
 	 * `variant: changed` reports a different amount for stl_e2e0001's second
-	 * payment. Every request is counted in `requests`.
+	 * payment. `variant: precise` gives stl_e2e0001 a report with fractional-cent
+	 * costs, rates, VAT, a negative rounding line and a period invoice, adding
+	 * up to a payout of 36.10; `variant: precise_residual` leaves the rounding
+	 * line out, so the report misses the payout by 0.0045. Every request is
+	 * counted in `requests`.
 	 *
 	 * @param string $path  URL path component.
 	 * @param array  $query Decoded query string.
@@ -232,7 +236,9 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 			throw new \RuntimeException( 'E2E: simulated settlement provider outage.' );
 		}
 
-		$changed  = 'changed' === ( $state['variant'] ?? '' );
+		$variant  = (string) ( $state['variant'] ?? '' );
+		$changed  = 'changed' === $variant;
+		$precise  = \in_array( $variant, array( 'precise', 'precise_residual' ), true );
 		$money    = static function ( string $value, string $currency = 'EUR' ): array {
 			return array(
 				'value'    => $value,
@@ -266,6 +272,73 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 			);
 		};
 
+		$cost = static function ( string $description, ?string $method, ?int $count, ?array $rate, string $net, ?string $vat, string $gross ) use ( $money ): array {
+			return array(
+				'description' => $description,
+				'method'      => $method,
+				'count'       => $count,
+				'rate'        => $rate,
+				'amountNet'   => $money( $net ),
+				'amountVat'   => null === $vat ? null : $money( $vat ),
+				'amountGross' => $money( $gross ),
+			);
+		};
+
+		// Synthetic fractional-cent report: 0.7545 + 1.5300 + 1.3700 + 0.2500 - 0.0045 = 3.9000.
+		$precise_costs = array(
+			$cost(
+				'iDEAL',
+				'ideal',
+				2,
+				array(
+					'fixed'      => $money( '0.3118' ),
+					'percentage' => null,
+				),
+				'0.6236',
+				'0.1309',
+				'0.7545'
+			),
+			$cost(
+				'Credit card',
+				'creditcard',
+				1,
+				array(
+					'fixed'      => $money( '0.25' ),
+					'percentage' => '1.8',
+				),
+				'1.2645',
+				'0.2655',
+				'1.5300'
+			),
+			$cost(
+				'Bancontact',
+				'bancontact',
+				1,
+				array(
+					'fixed'      => $money( '0.39' ),
+					'percentage' => null,
+				),
+				'1.1322',
+				'0.2378',
+				'1.3700'
+			),
+			$cost(
+				'Refunds iDEAL',
+				'refund',
+				1,
+				array(
+					'fixed'      => $money( '0.25' ),
+					'percentage' => null,
+				),
+				'0.2500',
+				'0.0000',
+				'0.2500'
+			),
+		);
+		if ( 'precise' === $variant ) {
+			$precise_costs[] = $cost( 'Rounding difference', null, null, null, '-0.0045', null, '-0.0045' );
+		}
+
 		$settlements = array(
 			'stl_e2e0003' => array(
 				'resource'  => 'settlement',
@@ -296,13 +369,15 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 				'createdAt' => '2026-05-01T08:00:00+00:00',
 				'settledAt' => '2026-05-02T08:00:00+00:00',
 				'status'    => 'paidout',
-				'amount'    => $money( $changed ? '37.55' : '38.55' ),
+				'amount'    => $money( $precise ? '36.10' : ( $changed ? '37.55' : '38.55' ) ),
 				'balanceId' => 'bal_e2e0001',
 				'invoiceId' => 'inv_e2e0001',
 				'periods'   => array(
 					'2026' => array(
 						'05' => array(
-							'revenue' => array(
+							'invoiceId'        => 'inv_e2e0001',
+							'invoiceReference' => '2026.10001',
+							'revenue'          => array(
 								array(
 									'description' => 'iDEAL',
 									'method'      => 'ideal',
@@ -312,16 +387,18 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 									'amountGross' => $money( $changed ? '39.00' : '40.00' ),
 								),
 							),
-							'costs'   => array(
-								array(
-									'description' => 'iDEAL',
-									'method'      => 'ideal',
-									'count'       => 2,
-									'amountNet'   => $money( '1.20' ),
-									'amountVat'   => $money( '0.25' ),
-									'amountGross' => $money( '1.45' ),
+							'costs'            => $precise
+								? $precise_costs
+								: array(
+									array(
+										'description' => 'iDEAL',
+										'method'      => 'ideal',
+										'count'       => 2,
+										'amountNet'   => $money( '1.20' ),
+										'amountVat'   => $money( '0.25' ),
+										'amountGross' => $money( '1.45' ),
+									),
 								),
-							),
 						),
 					),
 				),
