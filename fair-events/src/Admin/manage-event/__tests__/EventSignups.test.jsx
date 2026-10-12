@@ -18,6 +18,8 @@
  *   - Mailing opt-ins filter, empty states, and delete.
  *   - Move and Change ticket type, including the over-capacity reason step,
  *     and the over-capacity details (#1532).
+ *   - "Print list" prints the complete, unfiltered List in its own window
+ *     (#1842).
  */
 import '@testing-library/jest-dom';
 import {
@@ -29,6 +31,7 @@ import {
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventSignups, { expandTicketRows } from '../EventSignups.js';
+import { splitColumnSections } from '../signup-print.js';
 import { scopeNotes } from '../SignupEditModal.js';
 
 jest.mock( '@wordpress/api-fetch' );
@@ -1579,6 +1582,541 @@ describe( 'EventSignups — tickets listed under their own date (#1791)', () => 
 			[ 201, true, true ],
 			[ 202, false, false ],
 			[ null, true, true ],
+		] );
+	} );
+} );
+
+describe( 'EventSignups — Print list (#1842)', () => {
+	const printButton = () =>
+		screen.getByRole( 'button', { name: 'Print list' } );
+
+	/**
+	 * Click "Print list" with a stand-in preview window and parse what was
+	 * written to it.
+	 *
+	 * @return {{html: string, doc: Document}} Printed document
+	 */
+	function print() {
+		const written = [];
+		jest.spyOn( window, 'open' ).mockReturnValue( {
+			document: {
+				open: jest.fn(),
+				write: ( html ) => written.push( html ),
+				close: jest.fn(),
+			},
+		} );
+		fireEvent.click( printButton() );
+		const html = written.join( '' );
+		return {
+			html,
+			doc: new window.DOMParser().parseFromString( html, 'text/html' ),
+		};
+	}
+
+	const cellTexts = ( row ) =>
+		Array.from( row.querySelectorAll( 'th, td' ) ).map(
+			( cell ) => cell.textContent
+		);
+	const printedHeaders = ( doc ) =>
+		cellTexts( doc.querySelector( 'thead tr' ) );
+	const printedRows = ( doc ) =>
+		Array.from( doc.querySelectorAll( 'tbody tr' ) ).map( cellTexts );
+
+	async function renderForPrint( config = {}, props = {} ) {
+		mockApi( config );
+		render(
+			<EventSignups
+				eventDateId={ 42 }
+				eventTitle="Summer Ball"
+				eventDateLabel="June 10, 2026 7:00 pm"
+				{ ...props }
+			/>
+		);
+		await waitFor( () => expect( printButton() ).toBeInTheDocument() );
+	}
+
+	afterEach( () => {
+		jest.restoreAllMocks();
+	} );
+
+	it( 'prints the List’s data columns in order, numbered rows and the event heading, without controls', async () => {
+		window.fairPaymentsConnector = { connectorActive: true };
+		window.fairEventsManageEventData = { audienceUrl: '/audience' };
+		await renderForPrint( { ticketOptions: options } );
+		await screen.findByText( 'Ada Lovelace' );
+
+		const screenHeaders = columnHeaders();
+		const { html, doc } = print();
+
+		expect( screenHeaders.pop() ).toBe( 'Actions' );
+		expect( printedHeaders( doc ) ).toEqual( screenHeaders );
+		expect( printedHeaders( doc ) ).toEqual( [
+			'#',
+			'Name',
+			'Ticket',
+			'Ticket Type',
+			'Dinner',
+			'Afterparty',
+			'Status',
+			'Transaction',
+			'Mailing',
+			'Date',
+		] );
+		expect( printedRows( doc ) ).toEqual( [
+			[
+				'1',
+				'Ada Lovelace',
+				'Ticket 1 (REF00101)',
+				'General',
+				'',
+				'',
+				'Confirmed',
+				'501',
+				'Yes',
+				'2026-07-20 10:00:00',
+			],
+			[
+				'2',
+				'Bob, Jr.',
+				'Ticket 1 (REF00201)',
+				'General',
+				'',
+				'',
+				'Confirmed',
+				'502',
+				'No',
+				'2026-07-21 10:00:00',
+			],
+			[
+				'3',
+				'Bob, Jr.',
+				'Ticket 2 (REF00202)',
+				'General',
+				'',
+				'',
+				'Confirmed',
+				'502',
+				'No',
+				'2026-07-21 10:00:00',
+			],
+		] );
+		expect( doc.querySelector( 'h1' ).textContent ).toBe( 'Summer Ball' );
+		expect( doc.querySelector( '.meta' ).textContent ).toBe(
+			'June 10, 2026 7:00 pm · List · 3 tickets'
+		);
+		expect( doc.title ).toBe( 'Summer Ball — List' );
+
+		// No actions, links or emails; the only control is the Print button.
+		expect( doc.querySelectorAll( 'a' ) ).toHaveLength( 0 );
+		expect(
+			Array.from( doc.querySelectorAll( 'button' ) ).map(
+				( button ) => button.textContent
+			)
+		).toEqual( [ 'Print' ] );
+		expect( html ).not.toContain( 'Delete' );
+		expect( html ).not.toContain( 'Edit ticket' );
+		expect( html ).not.toContain( 'ada@example.com' );
+		expect( html ).not.toContain( '20.00' );
+		expect( html ).toContain( '.toolbar { display: none; }' );
+		expect( html ).toContain( 'size: landscape' );
+	} );
+
+	it( 'prints every row while the mailing filter narrows the screen', async () => {
+		await renderForPrint();
+		await screen.findByText( 'Ada Lovelace' );
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+		);
+		expect( bodyRows() ).toHaveLength( 1 );
+
+		const { doc } = print();
+
+		expect(
+			printedRows( doc ).map( ( row ) => row.slice( 0, 2 ) )
+		).toEqual( [
+			[ '1', 'Ada Lovelace' ],
+			[ '2', 'Bob, Jr.' ],
+			[ '3', 'Bob, Jr.' ],
+		] );
+	} );
+
+	it( 'stays available when the filter matches nothing but the List has rows', async () => {
+		await renderForPrint( { rows: [ signups[ 1 ] ] } );
+		await screen.findAllByText( 'Bob, Jr.' );
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+		);
+
+		expect(
+			screen.getByRole( 'button', { name: 'Export' } )
+		).toBeDisabled();
+		expect( printButton() ).toBeEnabled();
+		expect( printedRows( print().doc ) ).toHaveLength( 2 );
+	} );
+
+	it( 'is disabled when the complete List is empty', async () => {
+		await renderForPrint( { rows: unsuccessfulSignups } );
+		await screen.findByText( 'No confirmed registrations yet.' );
+		const open = jest.spyOn( window, 'open' );
+
+		expect( printButton() ).toBeDisabled();
+		fireEvent.click( printButton() );
+		expect( open ).not.toHaveBeenCalled();
+	} );
+
+	it( 'explains a blocked print window and clears the message once printing works', async () => {
+		await renderForPrint();
+		await screen.findByText( 'Ada Lovelace' );
+		jest.spyOn( window, 'open' ).mockReturnValue( null );
+		// The notice is also announced, so look at the visible one only.
+		const notice = () =>
+			document.querySelector(
+				'.fair-events-signups .components-notice.is-error'
+			);
+
+		fireEvent.click( printButton() );
+
+		expect( notice() ).toHaveTextContent(
+			'Could not open the print window. Allow pop-ups for this site and try again.'
+		);
+
+		print();
+
+		expect( notice() ).toBeNull();
+	} );
+
+	it( 'prints each extra state with a legend, per ticket', async () => {
+		await renderForPrint( {
+			rows: [
+				{
+					...signups[ 1 ],
+					tickets: [
+						ticket( 201, 1, { confirmed_activity_ids: [ 7 ] } ),
+						ticket( 202, 2, { confirmed_activity_ids: [ 8 ] } ),
+					],
+				},
+				{ ...signups[ 0 ], tickets: [] },
+			],
+			ticketOptions: options,
+		} );
+		await screen.findAllByText( 'Bob, Jr.' );
+
+		const { doc } = print();
+
+		expect(
+			printedRows( doc ).map( ( row ) => row.slice( 2, 6 ) )
+		).toEqual( [
+			[ 'Ticket 1 (REF00201)', 'General', '✓', '' ],
+			[ 'Ticket 2 (REF00202)', 'General', '', '✓' ],
+			[ 'Ticket not created yet', 'General', '?', '?' ],
+		] );
+		expect(
+			Array.from( doc.querySelectorAll( '.legend-entry' ) ).map(
+				( entry ) => entry.textContent.trim()
+			)
+		).toEqual( [
+			'✓ Selected',
+			'Not selected',
+			'? Selection unavailable',
+		] );
+		expect( doc.querySelector( '.warning' ).textContent ).toBe(
+			'Some older registrations are still being split into individual tickets. They are listed as one row for now.'
+		);
+	} );
+
+	it( 'prints no legend or warning when there are no extras and every ticket exists', async () => {
+		await renderForPrint();
+		await screen.findByText( 'Ada Lovelace' );
+
+		const { doc } = print();
+
+		expect( doc.querySelector( '.legend' ) ).toBeNull();
+		expect( doc.querySelector( '.warning' ) ).toBeNull();
+	} );
+
+	it( 'leaves out unsuccessful registrations and tickets that stopped admitting', async () => {
+		await renderForPrint( {
+			rows: [
+				...unsuccessfulSignups,
+				{
+					...signups[ 1 ],
+					tickets: [
+						ticket( 201, 1, { status: 'cancelled' } ),
+						ticket( 202, 2 ),
+					],
+				},
+				{
+					...signups[ 0 ],
+					id: 5,
+					name: 'Gone Entirely',
+					tickets: [ ticket( 501, 1, { status: 'refunded' } ) ],
+				},
+			],
+		} );
+		await screen.findByText( 'Bob, Jr.' );
+
+		const { html, doc } = print();
+
+		expect(
+			printedRows( doc ).map( ( row ) => row.slice( 0, 3 ) )
+		).toEqual( [ [ '1', 'Bob, Jr.', 'Ticket 2 (REF00202)' ] ] );
+		expect( html ).not.toContain( 'Unsuccessful' );
+		expect( html ).not.toContain( 'Gone Entirely' );
+		expect( doc.querySelector( '.meta' ).textContent ).toContain(
+			'1 ticket'
+		);
+	} );
+
+	it( 'prints an individually moved ticket only on its current date, with its purchase note', async () => {
+		const stayed = {
+			...signups[ 1 ],
+			id: 9,
+			name: 'Paula Purchaser',
+			event_date_id: 42,
+			event_date_label: '10 June',
+			tickets: [
+				ticket( 901, 1, { event_date_id: 42 } ),
+				ticket( 902, 2, { event_date_id: 43 } ),
+			],
+			listed_ticket_ids: [ 901 ],
+		};
+		const movedIn = {
+			...signups[ 1 ],
+			id: 10,
+			name: 'Quinn Guest',
+			event_date_id: 43,
+			event_date_label: '17 June',
+			tickets: [
+				ticket( 911, 1, { event_date_id: 43 } ),
+				ticket( 912, 2, {
+					event_date_id: 42,
+					ticket_type_name: 'Reduced',
+				} ),
+			],
+			listed_ticket_ids: [ 912 ],
+		};
+		const allMovedAway = {
+			...stayed,
+			id: 11,
+			name: 'Rae Away',
+			tickets: [ ticket( 921, 1, { event_date_id: 43 } ) ],
+			listed_ticket_ids: [],
+		};
+		await renderForPrint( { rows: [ stayed, movedIn, allMovedAway ] } );
+		await screen.findByText( 'Paula Purchaser' );
+
+		const { html, doc } = print();
+
+		expect(
+			printedRows( doc ).map( ( row ) => row.slice( 0, 4 ) )
+		).toEqual( [
+			[ '1', 'Paula Purchaser', 'Ticket 1 (REF00901)', 'General' ],
+			[
+				'2',
+				'Quinn GuestPurchase registered for 17 June',
+				'Ticket 2 (REF00912)',
+				'Reduced',
+			],
+		] );
+		expect( html ).not.toContain( 'Rae Away' );
+		expect( html ).not.toContain( 'REF00902' );
+		expect( html ).not.toContain( 'REF00911' );
+	} );
+
+	it( 'prints over-capacity status as text, without its details', async () => {
+		await renderForPrint( {
+			rows: [
+				{
+					...signups[ 0 ],
+					over_capacity: 1,
+					overrides: [
+						{
+							action: 'move',
+							user_display_name: 'Admin Person',
+							created_at: '2026-07-01 09:00:00',
+							reason: 'Promised a place',
+						},
+					],
+				},
+			],
+		} );
+		await screen.findByText( 'Ada Lovelace' );
+
+		const { html, doc } = print();
+
+		expect( printedRows( doc )[ 0 ][ 4 ] ).toBe(
+			'Confirmed — over capacity'
+		);
+		expect( html ).not.toContain( 'Details' );
+		expect( html ).not.toContain( 'Promised a place' );
+	} );
+
+	it( 'escapes names, titles and extra labels', async () => {
+		const markup = '<img src=x onerror="alert(1)">';
+		await renderForPrint(
+			{
+				rows: [
+					{
+						...signups[ 0 ],
+						name: `Eve ${ markup } & "Co" 'x'`,
+						event_date_id: 43,
+						event_date_label: '<b>17 June</b>',
+						tickets: [
+							ticket( 101, 1, {
+								ticket_type_name: '<script>alert(2)</script>',
+							} ),
+						],
+					},
+				],
+				ticketOptions: [ { id: 7, name: '<i>Dinner</i>' } ],
+			},
+			{
+				eventTitle: '</title><script>alert(3)</script>',
+				eventDateLabel: '<u>June</u>',
+			}
+		);
+		await screen.findByText( /Eve/ );
+
+		const { html, doc } = print();
+
+		expect( doc.querySelectorAll( 'img, script, b, i, u' ) ).toHaveLength(
+			0
+		);
+		expect( html ).not.toContain( '<script>' );
+		expect( html ).toContain(
+			'&lt;img src=x onerror=&quot;alert(1)&quot;&gt;'
+		);
+		expect( html ).toContain( '&amp; &quot;Co&quot; &#39;x&#39;' );
+		expect( doc.querySelector( 'h1' ).textContent ).toBe(
+			'</title><script>alert(3)</script>'
+		);
+		expect( printedHeaders( doc )[ 4 ] ).toBe( '<i>Dinner</i>' );
+		expect( printedRows( doc )[ 0 ][ 1 ] ).toBe(
+			`Eve ${ markup } & "Co" 'x'Purchase registered for <b>17 June</b>`
+		);
+		expect( printedRows( doc )[ 0 ][ 3 ] ).toBe(
+			'<script>alert(2)</script>'
+		);
+	} );
+
+	it( 'names an untitled event rather than printing an empty heading', async () => {
+		await renderForPrint( {}, { eventTitle: '', eventDateLabel: '' } );
+		await screen.findByText( 'Ada Lovelace' );
+
+		const { doc } = print();
+
+		expect( doc.querySelector( 'h1' ).textContent ).toBe(
+			'(untitled event)'
+		);
+		expect( doc.querySelector( '.meta' ).textContent ).toBe(
+			'List · 3 tickets'
+		);
+	} );
+
+	it( 'splits a table with many extras into sections that keep every column, row and value', async () => {
+		const manyOptions = Array.from( { length: 20 }, ( _, index ) => ( {
+			id: 100 + index,
+			name: `Extra ${ index + 1 }`,
+		} ) );
+		await renderForPrint( {
+			rows: [
+				{
+					...signups[ 1 ],
+					tickets: [
+						ticket( 201, 1, {
+							confirmed_activity_ids: [ 100, 119 ],
+						} ),
+						ticket( 202, 2, { confirmed_activity_ids: [ 110 ] } ),
+					],
+				},
+			],
+			ticketOptions: manyOptions,
+		} );
+		await screen.findAllByText( 'Bob, Jr.' );
+		const screenHeaders = columnHeaders().slice( 0, -1 );
+
+		const { doc } = print();
+
+		const tables = Array.from( doc.querySelectorAll( 'table' ) );
+		expect( tables.length ).toBeGreaterThan( 1 );
+		expect(
+			Array.from( doc.querySelectorAll( 'h2' ) ).map(
+				( heading ) => heading.textContent
+			)
+		).toEqual(
+			tables.map(
+				( _, index ) =>
+					`Columns — part ${ index + 1 } of ${ tables.length }`
+			)
+		);
+
+		const merged = [ {}, {} ];
+		const seenHeaders = [];
+		tables.forEach( ( table, tableIndex ) => {
+			const headers = cellTexts( table.querySelector( 'thead tr' ) );
+			if ( tableIndex > 0 ) {
+				// Later sections repeat the row number and the ticket.
+				expect( headers.slice( 0, 2 ) ).toEqual( [ '#', 'Ticket' ] );
+			}
+			const rows = Array.from( table.querySelectorAll( 'tbody tr' ) );
+			expect( rows ).toHaveLength( 2 );
+			rows.forEach( ( row, rowIndex ) => {
+				const cells = cellTexts( row );
+				expect( cells[ 0 ] ).toBe( String( rowIndex + 1 ) );
+				headers.forEach( ( header, cellIndex ) => {
+					merged[ rowIndex ][ header ] = cells[ cellIndex ];
+				} );
+			} );
+			seenHeaders.push( ...headers.slice( tableIndex > 0 ? 2 : 0 ) );
+		} );
+
+		expect( seenHeaders ).toEqual( screenHeaders );
+		expect( merged[ 0 ] ).toMatchObject( {
+			Name: 'Bob, Jr.',
+			Ticket: 'Ticket 1 (REF00201)',
+			'Extra 1': '✓',
+			'Extra 2': '',
+			'Extra 11': '',
+			'Extra 20': '✓',
+			Mailing: 'No',
+			Date: '2026-07-21 10:00:00',
+		} );
+		expect( merged[ 1 ] ).toMatchObject( {
+			Ticket: 'Ticket 2 (REF00202)',
+			'Extra 1': '',
+			'Extra 11': '✓',
+			'Extra 20': '',
+		} );
+	} );
+} );
+
+describe( 'splitColumnSections', () => {
+	const column = ( key, isExtra = false ) => ( { key, label: key, isExtra } );
+
+	it( 'keeps a table that fits in one section', () => {
+		const columns = [ column( 'number' ), column( 'name' ) ];
+		expect( splitColumnSections( columns ) ).toEqual( [ columns ] );
+	} );
+
+	it( 'never leaves a section with only the repeated columns', () => {
+		const columns = [
+			column( 'number' ),
+			column( 'name' ),
+			column( 'ticket' ),
+			column( 'a', true ),
+			column( 'b', true ),
+		];
+
+		const sections = splitColumnSections( columns, 1 );
+
+		expect(
+			sections.map( ( section ) => section.map( ( c ) => c.key ) )
+		).toEqual( [
+			[ 'number' ],
+			[ 'number', 'name' ],
+			[ 'number', 'ticket' ],
+			[ 'number', 'ticket', 'a' ],
+			[ 'number', 'ticket', 'b' ],
 		] );
 	} );
 } );
