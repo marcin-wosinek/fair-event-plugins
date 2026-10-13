@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-12T15:14:39+00:00\n"
+"POT-Creation-Date: 2026-10-13T03:58:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -1238,12 +1238,12 @@ msgid "4 hours"
 msgstr ""
 
 #: src/blocks/event-proposal/render.php:58
-#: src/blocks/event-signup/render.php:710
+#: src/blocks/event-signup/render.php:713
 msgid "Your Name"
 msgstr ""
 
 #: src/blocks/event-proposal/render.php:73
-#: src/blocks/event-signup/render.php:727
+#: src/blocks/event-signup/render.php:730
 msgid "Your Email"
 msgstr ""
 
@@ -1271,122 +1271,122 @@ msgstr ""
 msgid "Get Tickets"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:73
+#: src/blocks/event-signup/render.php:76
 msgid "Event Signup: could not resolve an event date for this page."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:452
+#: src/blocks/event-signup/render.php:455
 #: src/blocks/event-signup/frontend.js:923
 msgid "Payment confirmed"
 msgstr ""
 
 #. translators: %s: event title
-#: src/blocks/event-signup/render.php:458
+#: src/blocks/event-signup/render.php:461
 #, php-format
 msgid "You're signed up for %s."
 msgstr ""
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:468
+#: src/blocks/event-signup/render.php:471
 #, php-format
 msgid "Amount paid: %s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:479
+#: src/blocks/event-signup/render.php:482
 #: src/blocks/event-signup/frontend.js:943
 msgid "A confirmation email is on its way. You can close this page."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:482
+#: src/blocks/event-signup/render.php:485
 #: src/blocks/event-signup/frontend.js:953
 #: src/blocks/event-signup/frontend.js:1395
 msgid "Back to the signup form"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:490
+#: src/blocks/event-signup/render.php:493
 msgid "Thank you for your payment!"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:492
+#: src/blocks/event-signup/render.php:495
 msgid "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done."
 msgstr ""
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:498
+#: src/blocks/event-signup/render.php:501
 #, php-format
 msgid "Amount: %s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:505
+#: src/blocks/event-signup/render.php:508
 msgid "Check payment status again"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:509
-#: src/blocks/event-signup/render.php:536
-#: src/blocks/event-signup/render.php:570
+#: src/blocks/event-signup/render.php:512
+#: src/blocks/event-signup/render.php:539
+#: src/blocks/event-signup/render.php:573
 msgid "Cancel and start over"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:517
+#: src/blocks/event-signup/render.php:520
 msgid "Your payment is waiting."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:519
+#: src/blocks/event-signup/render.php:522
 msgid "You can pick up where you left off on the secure payment page."
 msgstr ""
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:525
-#: src/blocks/event-signup/render.php:549
+#: src/blocks/event-signup/render.php:528
+#: src/blocks/event-signup/render.php:552
 #, php-format
 msgid "Amount due: %s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:532
+#: src/blocks/event-signup/render.php:535
 msgid "Continue payment"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:544
+#: src/blocks/event-signup/render.php:547
 msgid "Your payment didn't go through."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:556
-#: src/blocks/event-signup/render.php:577
+#: src/blocks/event-signup/render.php:559
+#: src/blocks/event-signup/render.php:580
 msgid "Online ticket sales for this event have closed."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:560
-#: src/blocks/event-signup/render.php:581
+#: src/blocks/event-signup/render.php:563
+#: src/blocks/event-signup/render.php:584
 msgid "Ticket sales are temporarily unavailable. Please check back later."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:565
+#: src/blocks/event-signup/render.php:568
 msgid "Retry payment"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:655
+#: src/blocks/event-signup/render.php:658
 msgid "Choose a date"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:666
-#: src/blocks/event-signup/render.php:689
+#: src/blocks/event-signup/render.php:669
+#: src/blocks/event-signup/render.php:692
 #: src/blocks/event-signup/frontend.js:655
 msgid "already signed up"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:679
+#: src/blocks/event-signup/render.php:682
 msgid "Choose occurrences"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:743
+#: src/blocks/event-signup/render.php:746
 msgid "Quantity"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:764
+#: src/blocks/event-signup/render.php:768
 msgid "Keep me informed about future events"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:824
+#: src/blocks/event-signup/render.php:829
 msgid "Total"
 msgstr ""
 
@@ -5685,11 +5685,15 @@ msgstr ""
 msgid "Show option prices"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:185
+#: src/blocks/event-signup/editor.js:180
+msgid "Show mailing signup checkbox"
+msgstr ""
+
+#: src/blocks/event-signup/editor.js:195
 msgid "Edit tickets"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:189
+#: src/blocks/event-signup/editor.js:199
 msgid "Connect this block to an event date to edit its tickets."
 msgstr ""
 

@@ -152,11 +152,11 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   event-participant rows, ticket types/prices/options/sale periods/dates, and
   the post), by id. Emits `E2E_CLEANUP` row counts.
 - **`signup-state.php <email> <event_date_id>`** — reports the participant's
-  `email_profile`/`status`, the event-participant `label`, and the mail captured
-  for that buyer.
+  `email_profile`/`status`, their `confirmation_tokens` count (mailing double
+  opt-in), the event-participant `label`, and the mail captured for that buyer.
 - **`get-tickets-state.php <event_date_id>`** — reports the fair-events
   `fair_events_signups` rows (the standalone get-tickets purchase path) with
-  each row's status and, when paid, its transaction status + Mollie payment id.
+  each row's status and stored `mailing_opt_in` and, when paid, its transaction status + Mollie payment id.
 - **`seed-payment-page.php [amount] [description]`** / **`cleanup-payment-page.php <pageId>`**
   — create/delete a published page carrying a simple-payment block (with the
   editor-style UUID `blockId` attribute the payment endpoint matches on);
@@ -195,6 +195,10 @@ the JSON overrides to seed it with the fair-events get-tickets block instead
 (used by the spec that runs with fair-audience deactivated), or
 `{"block":"saved-audience-signup"}` for content saved with the removed
 fair-audience block, which a render-only alias shows as the unified form.
+`{"block":"unified-hidden-mailing"}` seeds the unified block with its mailing
+signup checkbox hidden (`showKeepInformed: false`), and
+`{"block":"unified-two-signups"}` two unified blocks saved without that
+attribute.
 
 ## Playwright fixture: `seedEvent`
 

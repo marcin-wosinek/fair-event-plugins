@@ -100,6 +100,10 @@ $is_paid            = true;
 // Override {"block":"saved-audience-signup"} for content saved with the
 // removed fair-audience/event-signup block (custom button text plus nested
 // questions), which a render-only alias shows as the unified form.
+// Override {"block":"unified-hidden-mailing"} for a unified block whose
+// "Show mailing signup checkbox" setting is off, and
+// {"block":"unified-two-signups"} for two unified blocks saved without that
+// attribute (content from before the setting existed).
 $block_content = '<!-- wp:fair-events/event-signup /-->';
 if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['block'] ) {
 	$block_content = implode(
@@ -120,6 +124,17 @@ if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['blo
 			'<!-- wp:fair-events/event-signup -->',
 			'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"dietary","questionText":"Dietary needs"} /-->',
 			'<!-- /wp:fair-events/event-signup -->',
+		)
+	);
+} elseif ( isset( $overrides['block'] ) && 'unified-hidden-mailing' === $overrides['block'] ) {
+	$block_content = '<!-- wp:fair-events/event-signup {"showKeepInformed":false} /-->';
+} elseif ( isset( $overrides['block'] ) && 'unified-two-signups' === $overrides['block'] ) {
+	$block_content = implode(
+		"\n",
+		array(
+			'<!-- wp:fair-events/event-signup /-->',
+			'',
+			'<!-- wp:fair-events/event-signup /-->',
 		)
 	);
 } elseif ( 'unified-with-options' === $flavour ) {

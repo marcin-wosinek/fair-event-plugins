@@ -32,6 +32,10 @@
 			"type": "boolean",
 			"default": true
 		},
+		"showKeepInformed": {
+			"type": "boolean",
+			"default": true
+		},
 		"isEditorPreview": {
 			"type": "boolean",
 			"default": false

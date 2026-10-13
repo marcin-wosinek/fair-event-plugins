@@ -6,7 +6,8 @@
  *   wp eval-file wp-content/mu-plugins/scripts/get-tickets-state.php <event_date_id>
  *
  * Prints a single `E2E_GT_STATE:{json}` line with one entry per
- * fair_events_signups row: name, email, quantity, amount, status, mail
+ * fair_events_signups row: name, email, quantity, amount, status,
+ * mailing_opt_in (the consent stored from the signup form's checkbox), mail
  * (captured mail addressed to the row's email — fair-events' own baseline
  * confirmation, since this script targets the fair-audience-inactive path),
  * hold_expires (payment_expires_at, null once the hold is released), and —
@@ -58,6 +59,7 @@ foreach ( $rows as $row ) {
 		'quantity'       => (int) $row->quantity,
 		'amount'         => (float) $row->amount,
 		'status'         => (string) $row->status,
+		'mailing_opt_in' => (bool) $row->mailing_opt_in,
 		'transaction_id' => $row->transaction_id ? (int) $row->transaction_id : null,
 		'hold_expires'   => $row->payment_expires_at,
 		'mail'           => $mail,

@@ -176,6 +176,16 @@ registerBlockType( metadata.name, {
 								setAttributes( { showOptionPrices: value } )
 							}
 						/>
+						<ToggleControl
+							label={ __(
+								'Show mailing signup checkbox',
+								'fair-events'
+							) }
+							checked={ attributes.showKeepInformed }
+							onChange={ ( value ) =>
+								setAttributes( { showKeepInformed: value } )
+							}
+						/>
 						{ ticketingEnabled &&
 							canManageEvents &&
 							( postEventDateId > 0 ? (
