@@ -15,6 +15,7 @@ import {
 	waitFor,
 	fireEvent,
 	within,
+	act,
 } from '@testing-library/react';
 import { addFilter, removeFilter } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
@@ -985,6 +986,235 @@ describe( 'single-event recurrence action (#1343)', () => {
 		expect(
 			screen.queryByRole( 'heading', { name: 'Recurrence' } )
 		).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'end series confirmation (#1772)', () => {
+	const seriesMaster = {
+		...mockEventDate,
+		title: 'Weekly Jam',
+		occurrence_type: 'master',
+		recurrence_mode: 'rule',
+		rrule: 'FREQ=WEEKLY;COUNT=3',
+		generated_occurrences: [
+			{ id: 2, start_datetime: '2026-07-08 18:00:00' },
+			{ id: 3, start_datetime: '2026-07-15 18:00:00' },
+		],
+	};
+	const endedSeries = {
+		...seriesMaster,
+		occurrence_type: 'single',
+		recurrence_mode: 'none',
+		rrule: null,
+		generated_occurrences: [],
+	};
+
+	const mockSeries = ( { current = () => seriesMaster, onEnd } = {} ) => {
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.method === 'PUT' ) {
+				return onEnd( opts );
+			}
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				const value = current();
+				return value instanceof Error
+					? Promise.reject( value )
+					: Promise.resolve( value );
+			}
+			return Promise.resolve( [] );
+		} );
+	};
+
+	const endCalls = () =>
+		apiFetch.mock.calls.filter( ( [ o ] ) => o.method === 'PUT' );
+
+	const openDialog = async () => {
+		render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'End series' } )
+		);
+		return screen.findByRole( 'dialog', { name: 'End series?' } );
+	};
+
+	const confirmButton = ( dialog ) =>
+		within( dialog ).getByRole( 'button', { name: 'End series' } );
+
+	beforeEach( () => {
+		window.history.replaceState( {}, '', '?tab=event-details' );
+	} );
+
+	it( 'names the series, the date that stays and the dates that are deleted', async () => {
+		mockSeries( { onEnd: () => Promise.resolve( endedSeries ) } );
+
+		const dialog = await openDialog();
+
+		expect( dialog ).toHaveTextContent( 'End the series Weekly Jam?' );
+		expect( dialog ).toHaveTextContent(
+			`Its first date, ${ formatSiteLocalDatetime(
+				'2026-07-01 18:00:00'
+			) }, is kept as a single event.`
+		);
+		expect( dialog ).toHaveTextContent( 'All 2 other dates are deleted:' );
+		const dates = within( dialog ).getAllByRole( 'listitem' );
+		expect( dates.map( ( li ) => li.textContent ) ).toEqual( [
+			formatSiteLocalDatetime( '2026-07-08 18:00:00' ),
+			formatSiteLocalDatetime( '2026-07-15 18:00:00' ),
+		] );
+		expect( dialog ).toHaveTextContent(
+			'Registrations and ticket types that belong to a deleted date are not moved to the first date.'
+		);
+		expect( dialog ).toHaveTextContent(
+			'This is saved immediately and cannot be undone.'
+		);
+		expect( confirmButton( dialog ) ).toHaveClass( 'is-destructive' );
+		expect( endCalls() ).toHaveLength( 0 );
+	} );
+
+	it( 'summarises a long series instead of listing every date', async () => {
+		mockSeries( {
+			current: () => ( {
+				...seriesMaster,
+				generated_occurrences: Array.from(
+					{ length: 9 },
+					( _, i ) => ( {
+						id: i + 2,
+						start_datetime: `2026-07-${ String( i + 2 ).padStart(
+							2,
+							'0'
+						) } 18:00:00`,
+					} )
+				),
+			} ),
+			onEnd: () => Promise.resolve( endedSeries ),
+		} );
+
+		const dialog = await openDialog();
+
+		expect( dialog ).toHaveTextContent( 'All 9 other dates are deleted:' );
+		const dates = within( dialog ).getAllByRole( 'listitem' );
+		expect( dates ).toHaveLength( 7 );
+		expect( dates[ 6 ] ).toHaveTextContent( 'and 3 more dates' );
+	} );
+
+	it( 'cancelling ends nothing', async () => {
+		mockSeries( { onEnd: () => Promise.resolve( endedSeries ) } );
+
+		const dialog = await openDialog();
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( endCalls() ).toHaveLength( 0 );
+		expect(
+			screen.getByRole( 'button', { name: 'End series' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'confirming ends the series once and shows progress', async () => {
+		let finish;
+		mockSeries( {
+			onEnd: () =>
+				new Promise( ( resolve ) => {
+					finish = resolve;
+				} ),
+		} );
+
+		const dialog = await openDialog();
+		const confirm = confirmButton( dialog );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
+
+		const busy = await within( dialog ).findByRole( 'button', {
+			name: 'Ending series…',
+		} );
+		expect( busy ).toBeDisabled();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect( endCalls() ).toHaveLength( 1 );
+		expect( endCalls()[ 0 ][ 0 ].data ).toEqual( { rrule: '' } );
+
+		await act( async () => finish( endedSeries ) );
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect(
+			document.querySelector( '.components-notice.is-success' )
+		).toHaveTextContent( 'Series Weekly Jam ended.' );
+		expect(
+			screen.queryByRole( 'button', { name: 'End series' } )
+		).not.toBeInTheDocument();
+		expect( endCalls() ).toHaveLength( 1 );
+	} );
+
+	it( 'a failure keeps the dialog open with the saved dates and allows a retry', async () => {
+		const onEnd = jest
+			.fn()
+			.mockRejectedValueOnce( {
+				message: 'Failed to update event date.',
+			} )
+			.mockResolvedValueOnce( endedSeries );
+		mockSeries( { onEnd } );
+
+		const dialog = await openDialog();
+		fireEvent.click( confirmButton( dialog ) );
+
+		await waitFor( () =>
+			expect( dialog ).toHaveTextContent(
+				'The series was not ended: Failed to update event date. The dates listed here are the ones saved now.'
+			)
+		);
+		expect( dialog ).toHaveTextContent( 'End the series Weekly Jam?' );
+
+		fireEvent.click( confirmButton( dialog ) );
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( onEnd ).toHaveBeenCalledTimes( 2 );
+	} );
+
+	it( 'a failure whose series is ended on reload is reported as ended', async () => {
+		let saved = seriesMaster;
+		mockSeries( {
+			current: () => saved,
+			onEnd: () => {
+				saved = endedSeries;
+				return Promise.reject( { message: 'Timed out.' } );
+			},
+		} );
+
+		const dialog = await openDialog();
+		fireEvent.click( confirmButton( dialog ) );
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect(
+			document.querySelector( '.components-notice.is-success' )
+		).toHaveTextContent( 'Series Weekly Jam ended.' );
+	} );
+
+	it( 'withholds another attempt when the outcome cannot be confirmed', async () => {
+		let saved = seriesMaster;
+		mockSeries( {
+			current: () => saved,
+			onEnd: () => {
+				saved = new Error( 'Offline.' );
+				return Promise.reject( { message: 'Offline.' } );
+			},
+		} );
+
+		const dialog = await openDialog();
+		fireEvent.click( confirmButton( dialog ) );
+
+		await waitFor( () =>
+			expect( dialog ).toHaveTextContent(
+				'Could not confirm whether the series was ended. Reload the page to see its current dates before trying again.'
+			)
+		);
+		expect( confirmButton( dialog ) ).toBeDisabled();
 	} );
 } );
 

@@ -52,6 +52,7 @@ import EditInstancesModal from './EditInstancesModal.js';
 import EventLinkModal from './EventLinkModal.js';
 import EventSignups from './EventSignups.js';
 import EventContextHeader from './EventContextHeader.js';
+import ConfirmActionModal from '../components/ConfirmActionModal.js';
 import EventStatistics from '../event-statistics/EventStatistics.js';
 import InlineVenueCreator, {
 	ADD_NEW_VENUE_VALUE,
@@ -109,6 +110,10 @@ export default function ManageEventApp() {
 	const [ editInstancesModalOpen, setEditInstancesModalOpen ] =
 		useState( false );
 	const [ endSeriesDialogOpen, setEndSeriesDialogOpen ] = useState( false );
+	const [ endingSeries, setEndingSeries ] = useState( false );
+	const [ endSeriesError, setEndSeriesError ] = useState( null );
+	const [ endSeriesOutcomeUnknown, setEndSeriesOutcomeUnknown ] =
+		useState( false );
 	const [ linkModalOpen, setLinkModalOpen ] = useState( false );
 	const [ linkModalConfirmOpen, setLinkModalConfirmOpen ] = useState( false );
 	// Target state ('draft' | 'publish') awaiting confirmation, or null.
@@ -533,42 +538,92 @@ export default function ManageEventApp() {
 
 	const handleSeriesImpact = ( impact ) => setRecurrenceImpact( impact );
 
+	const openEndSeriesDialog = () => {
+		setEndSeriesError( null );
+		setEndSeriesOutcomeUnknown( false );
+		setEndSeriesDialogOpen( true );
+	};
+
+	const closeEndSeriesDialog = () => {
+		setEndSeriesDialogOpen( false );
+		setEndSeriesError( null );
+		setEndSeriesOutcomeUnknown( false );
+	};
+
+	const applyEndedSeries = ( updated ) => {
+		setEventDate( updated );
+		setRecurrenceImpact(
+			updated.recurrence_impact
+				? { impact: updated.recurrence_impact, blocked: false }
+				: null
+		);
+		closeEndSeriesDialog();
+		setSuccess(
+			sprintf(
+				/* translators: %s: event title */
+				__( 'Series %s ended.', 'fair-events' ),
+				getEventDisplayTitle( updated.title )
+			)
+		);
+	};
+
 	const confirmEndSeries = async () => {
+		if ( endingSeries ) {
+			return;
+		}
+
+		setEndingSeries( true );
+		setEndSeriesError( null );
+		setError( null );
+
 		try {
 			const updated = await apiFetch( {
 				path: `/fair-events/v1/event-dates/${ eventDateId }`,
 				method: 'PUT',
 				data: { rrule: '' },
 			} );
-			setEventDate( updated );
-			setRecurrenceImpact(
-				updated.recurrence_impact
-					? { impact: updated.recurrence_impact, blocked: false }
-					: null
-			);
-			setSuccess( __( 'Series ended.', 'fair-events' ) );
+			applyEndedSeries( updated );
 		} catch ( err ) {
-			setError(
-				err.message || __( 'Failed to end the series.', 'fair-events' )
-			);
+			// A failed request says nothing certain about what was saved, so
+			// read the event back before offering another attempt.
+			try {
+				const current = await apiFetch( {
+					path: `/fair-events/v1/event-dates/${ eventDateId }`,
+				} );
+				if ( ! current.rrule && current.recurrence_mode !== 'manual' ) {
+					applyEndedSeries( current );
+				} else {
+					setEventDate( current );
+					setEndSeriesError(
+						sprintf(
+							/* translators: %s: error message */
+							__(
+								'The series was not ended: %s The dates listed here are the ones saved now.',
+								'fair-events'
+							),
+							err.message ||
+								__( 'Failed to end the series.', 'fair-events' )
+						)
+					);
+				}
+			} catch ( reloadErr ) {
+				setEndSeriesOutcomeUnknown( true );
+				setEndSeriesError(
+					__(
+						'Could not confirm whether the series was ended. Reload the page to see its current dates before trying again.',
+						'fair-events'
+					)
+				);
+			}
 		} finally {
-			setEndSeriesDialogOpen( false );
+			setEndingSeries( false );
 		}
 	};
 
-	const endSeriesConfirmMessage = useMemo( () => {
-		const count = eventDate?.generated_occurrences?.length || 0;
-		return sprintf(
-			/* translators: %d: number of generated dates that will be removed */
-			_n(
-				'End this series? %d generated date will be removed. This cannot be undone.',
-				'End this series? %d generated dates will be removed. This cannot be undone.',
-				count,
-				'fair-events'
-			),
-			count
-		);
-	}, [ eventDate ] );
+	// Ending a series deletes every date after the first one, cancelled ones
+	// included; the first date stays as a single event.
+	const endSeriesRemovedDates = eventDate?.generated_occurrences || [];
+	const END_SERIES_LISTED_DATES = 6;
 
 	const isSeries =
 		!! eventDate?.rrule || eventDate?.recurrence_mode === 'manual';
@@ -900,6 +955,10 @@ export default function ManageEventApp() {
 					endDatetime={ eventDate.end_datetime }
 					lastOccurrenceDatetime={ lastOccurrenceDatetime }
 					isSeries={ isSeries }
+					eventTitle={ getEventDisplayTitle( eventDate.title ) }
+					eventDateLabel={ formatSiteLocalDatetime(
+						eventDate.start_datetime
+					) }
 					onDirtyChange={ handleTicketsDirtyChange }
 					onSavedSettingsChange={ handleSavedTicketSettings }
 				/>
@@ -1362,9 +1421,7 @@ export default function ManageEventApp() {
 										<Button
 											variant="tertiary"
 											isDestructive
-											onClick={ () =>
-												setEndSeriesDialogOpen( true )
-											}
+											onClick={ openEndSeriesDialog }
 										>
 											{ __(
 												'End series',
@@ -1562,15 +1619,106 @@ export default function ManageEventApp() {
 				{ deleteConfirmMessage }
 			</ConfirmDialog>
 
-			<ConfirmDialog
-				isOpen={ endSeriesDialogOpen }
-				onConfirm={ confirmEndSeries }
-				onCancel={ () => setEndSeriesDialogOpen( false ) }
-				confirmButtonText={ __( 'End series', 'fair-events' ) }
-				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
-			>
-				{ endSeriesConfirmMessage }
-			</ConfirmDialog>
+			{ endSeriesDialogOpen && (
+				<ConfirmActionModal
+					title={ __( 'End series?', 'fair-events' ) }
+					confirmLabel={ __( 'End series', 'fair-events' ) }
+					busyLabel={ __( 'Ending series…', 'fair-events' ) }
+					isDestructive
+					isBusy={ endingSeries }
+					confirmDisabled={ endSeriesOutcomeUnknown }
+					error={ endSeriesError }
+					onConfirm={ confirmEndSeries }
+					onCancel={ closeEndSeriesDialog }
+				>
+					<p style={ { margin: 0 } }>
+						{ sprintf(
+							/* translators: %s: event title */
+							__( 'End the series %s?', 'fair-events' ),
+							getEventDisplayTitle( eventDate.title )
+						) }
+					</p>
+					<p style={ { margin: 0 } }>
+						{ sprintf(
+							/* translators: %s: date and time of the first date of the series */
+							__(
+								'Its first date, %s, is kept as a single event.',
+								'fair-events'
+							),
+							formatSiteLocalDatetime( eventDate.start_datetime )
+						) }
+					</p>
+					{ endSeriesRemovedDates.length > 0 ? (
+						<>
+							<p style={ { margin: 0 } }>
+								{ sprintf(
+									/* translators: %d: number of dates that will be deleted */
+									_n(
+										'%d other date is deleted:',
+										'All %d other dates are deleted:',
+										endSeriesRemovedDates.length,
+										'fair-events'
+									),
+									endSeriesRemovedDates.length
+								) }
+							</p>
+							<ul
+								style={ {
+									margin: 0,
+									paddingLeft: '20px',
+									listStyle: 'disc',
+								} }
+							>
+								{ endSeriesRemovedDates
+									.slice( 0, END_SERIES_LISTED_DATES )
+									.map( ( occurrence ) => (
+										<li key={ occurrence.id }>
+											{ formatSiteLocalDatetime(
+												occurrence.start_datetime
+											) }
+										</li>
+									) ) }
+								{ endSeriesRemovedDates.length >
+									END_SERIES_LISTED_DATES && (
+									<li>
+										{ sprintf(
+											/* translators: %d: number of further dates not listed individually */
+											_n(
+												'and %d more date',
+												'and %d more dates',
+												endSeriesRemovedDates.length -
+													END_SERIES_LISTED_DATES,
+												'fair-events'
+											),
+											endSeriesRemovedDates.length -
+												END_SERIES_LISTED_DATES
+										) }
+									</li>
+								) }
+							</ul>
+							<p style={ { margin: 0 } }>
+								{ __(
+									'Registrations and ticket types that belong to a deleted date are not moved to the first date.',
+									'fair-events'
+								) }
+							</p>
+						</>
+					) : (
+						<p style={ { margin: 0 } }>
+							{ __(
+								'The series has no other dates to delete.',
+								'fair-events'
+							) }
+						</p>
+					) }
+					<p style={ { margin: 0 } }>
+						{ __(
+							'This is saved immediately and cannot be undone.',
+							'fair-events'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			<ConfirmDialog
 				isOpen={ linkModalConfirmOpen }

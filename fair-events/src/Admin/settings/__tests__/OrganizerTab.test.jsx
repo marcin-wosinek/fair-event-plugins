@@ -249,3 +249,86 @@ test( 'cancelling the remove-logo dialog leaves the override untouched', async (
 		screen.getByRole( 'button', { name: /^Remove$/i } )
 	).toBeInTheDocument();
 } );
+
+describe( 'remove-logo confirmation (#1772)', () => {
+	const openDialog = async ( settings ) => {
+		loadOrganizerSettings.mockResolvedValue( {
+			...baseOrganizer,
+			logo_id: 42,
+			...settings,
+		} );
+		render( <OrganizerTab onNotice={ jest.fn() } /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: /^Remove$/i } )
+		);
+		return screen.findByRole( 'dialog', {
+			name: 'Remove organizer logo?',
+		} );
+	};
+
+	test( 'names the organizer and explains the fallback, the save and the media file', async () => {
+		const dialog = await openDialog( {
+			name: 'Demo Collective',
+			defaults: { ...baseOrganizer.defaults, logoId: 7 },
+		} );
+
+		expect( dialog ).toHaveTextContent(
+			'Remove the logo chosen for the organizer Demo Collective?'
+		);
+		expect( dialog ).toHaveTextContent(
+			"The organizer will use the site's logo instead. The image you remove here stays in the Media Library."
+		);
+		expect( dialog ).toHaveTextContent(
+			'Nothing is saved until you select Save organizer.'
+		);
+		expect(
+			screen.getByRole( 'button', { name: 'Remove logo' } )
+		).toHaveClass( 'is-destructive' );
+	} );
+
+	test( 'falls back to the site name and says when the site has no logo', async () => {
+		const dialog = await openDialog( {} );
+
+		expect( dialog ).toHaveTextContent(
+			'Remove the logo chosen for the organizer Test Site?'
+		);
+		expect( dialog ).toHaveTextContent(
+			'The site has no logo of its own, so the organizer will have no logo. The image you remove here stays in the Media Library.'
+		);
+	} );
+
+	test( 'confirming changes only the form: saving is still a separate step', async () => {
+		await openDialog( { name: 'Demo Collective' } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Remove logo' } )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( saveSettings ).not.toHaveBeenCalled();
+
+		fireEvent.click( saveButton() );
+
+		await waitFor( () =>
+			expect( saveSettings ).toHaveBeenCalledWith( {
+				fair_events_organizer: expect.objectContaining( {
+					logo_id: 0,
+				} ),
+			} )
+		);
+	} );
+
+	test( 'cancelling keeps the logo and saves nothing', async () => {
+		await openDialog( { name: 'Demo Collective' } );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: /^Remove$/i } )
+		).toBeInTheDocument();
+		expect( saveSettings ).not.toHaveBeenCalled();
+	} );
+} );

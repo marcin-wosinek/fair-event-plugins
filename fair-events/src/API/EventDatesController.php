@@ -1390,7 +1390,10 @@ class EventDatesController extends WP_REST_Controller {
 				);
 				RecurrenceService::set_manual_occurrences( $id, $existing_dates );
 			} elseif ( $rrule_changed || $dates_changed_on_recurring ) {
-				$effective_rrule = $update_data['rrule'] ?? $existing->rrule;
+				// Not `??`: a cleared rule is a null $update_data['rrule'], which
+				// would fall back to the stored rule and rebuild the series the
+				// request asked to end. An empty string ends it explicitly.
+				$effective_rrule = $rrule_changed ? (string) $update_data['rrule'] : $existing->rrule;
 
 				// Classify the impact before applying, for informational purposes —
 				// removed occurrences are soft-cancelled (their id and any
