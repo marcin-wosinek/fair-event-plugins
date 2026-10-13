@@ -333,9 +333,9 @@ test.describe( 'Manage Event — List tab', () => {
 				await expect( groupRow.getByRole( 'cell' ).first() ).toHaveText(
 					String( firstNumber + index )
 				);
-				await expect( groupRow ).toContainText(
-					`Ticket ${ index + 1 } (${ reference })`
-				);
+				await expect(
+					groupRow.getByRole( 'cell' ).nth( 2 )
+				).toHaveText( reference );
 				const groupIndicators = groupRow.getByRole( 'img' );
 				for ( const [ i, name ] of expectedExtras[ index ].entries() ) {
 					await expect(

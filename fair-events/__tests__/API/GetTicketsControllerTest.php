@@ -61,6 +61,25 @@ class GetTicketsControllerTest extends TestCase {
 	}
 
 	/**
+	 * Without Fair Audience there is no participant to ask, linked or not, so
+	 * the List reports no current consent rather than a refusal.
+	 */
+	public function test_reports_no_newsletter_consent_without_fair_audience() {
+		$this->assertFalse( class_exists( \FairAudience\Database\ParticipantRepository::class ) );
+
+		$method = new ReflectionMethod( GetTicketsController::class, 'resolve_newsletter_consent' );
+		if ( PHP_VERSION_ID < 80100 ) {
+			$method->setAccessible( true );
+		}
+		$cache      = array();
+		$controller = new GetTicketsController();
+
+		$this->assertNull( $method->invokeArgs( $controller, array( 12, &$cache ) ) );
+		$this->assertNull( $method->invokeArgs( $controller, array( null, &$cache ) ) );
+		$this->assertSame( array(), $cache );
+	}
+
+	/**
 	 * Invalid retry email scenarios.
 	 *
 	 * @return array[]

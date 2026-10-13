@@ -16,12 +16,10 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 const COLUMN_WEIGHTS = {
 	number: 1.5,
 	name: 6,
-	ticket: 5.5,
+	ticket: 4,
 	ticket_type: 4.5,
 	status: 4.5,
-	transaction: 3.5,
-	mailing: 2.5,
-	date: 4.5,
+	mailing: 3.5,
 };
 const EXTRA_WEIGHT = 3;
 const PAGE_WEIGHT = 48;
@@ -273,9 +271,9 @@ export function buildSignupPrintHtml( {
 		tr.group-start td { border-top-width: 2px; }
 		.col-number { text-align: right; color: #555; }
 		.col-name { font-weight: 600; }
-		.extra { text-align: center; }
+		.extra, .col-mailing { text-align: center; }
 		th.extra { font-size: 8.5pt; hyphens: auto; }
-		td.extra { font-size: 12pt; font-weight: 600; }
+		td.extra, td.col-mailing { font-size: 12pt; font-weight: 600; }
 		.note { color: #555; font-size: 8.5pt; font-weight: 400; }
 		.toolbar { margin-bottom: 12px; }
 		.toolbar button { padding: 6px 12px; font-size: 11pt; cursor: pointer; }
