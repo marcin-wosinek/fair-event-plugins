@@ -9,7 +9,13 @@
  * refactor can't silently break the selector the CSS depends on.
  */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	within,
+	waitFor,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import ParticipantDetail from '../ParticipantDetail.js';
 
@@ -102,5 +108,97 @@ describe( 'ParticipantDetail', () => {
 			0
 		);
 		expect( screen.getByText( 'Signup form' ) ).toBeInTheDocument();
+	} );
+} );
+
+describe( 'ParticipantDetail — delete participant (#1775)', () => {
+	const openDelete = async () => {
+		render( <ParticipantDetail /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Delete participant' } )
+		);
+		return screen.findByRole( 'dialog', {
+			name: 'Delete participant — Jane Doe',
+		} );
+	};
+
+	const deletions = () =>
+		apiFetch.mock.calls.filter(
+			( [ request ] ) => request.method === 'DELETE'
+		);
+
+	beforeEach( () => {
+		jest.spyOn( console, 'error' ).mockImplementation( () => {} );
+		jest.spyOn( window, 'confirm' ).mockImplementation( () => true );
+		jest.spyOn( window, 'alert' ).mockImplementation( () => {} );
+	} );
+
+	it( 'confirms in the same popup as the participants list, not in the browser', async () => {
+		const dialog = await openDelete();
+
+		expect( window.confirm ).not.toHaveBeenCalled();
+		expect( dialog ).toHaveTextContent(
+			'Permanently delete the participant profile of Jane Doe?'
+		);
+		expect( dialog ).toHaveTextContent(
+			'Deleting a profile does not cancel tickets, delete event registrations or refund payments.'
+		);
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+		await waitFor( () => expect( dialog ).not.toBeInTheDocument() );
+		expect( deletions() ).toHaveLength( 0 );
+	} );
+
+	it( 'shows a failed deletion in the popup and allows a retry', async () => {
+		let fails = true;
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			if ( method === 'DELETE' ) {
+				return fails
+					? Promise.reject( {
+							message: 'Failed to delete participant.',
+					  } )
+					: Promise.resolve( {} );
+			}
+			return Promise.resolve(
+				path.endsWith( '/activity' ) ? ACTIVITY : PARTICIPANT
+			);
+		} );
+		const dialog = await openDelete();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Delete participant',
+			} )
+		);
+
+		await waitFor( () =>
+			expect( dialog ).toHaveTextContent(
+				'Failed to delete participant.'
+			)
+		);
+		expect( window.alert ).not.toHaveBeenCalled();
+
+		fails = false;
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Delete participant',
+			} )
+		);
+
+		await waitFor( () => expect( dialog ).not.toBeInTheDocument() );
+		expect( deletions().map( ( [ request ] ) => request.path ) ).toEqual( [
+			'/fair-audience/v1/participants/144',
+			'/fair-audience/v1/participants/144',
+		] );
+	} );
+
+	it( 'links back to the participants list', async () => {
+		render( <ParticipantDetail /> );
+
+		expect(
+			await screen.findByRole( 'link', { name: /All participants/ } )
+		).toHaveAttribute( 'href', 'admin.php?page=fair-audience' );
 	} );
 } );

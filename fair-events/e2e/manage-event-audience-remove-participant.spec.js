@@ -3,7 +3,9 @@
  * from the event date after a confirmation naming them, the event and the
  * date; keeping them changes nothing, and a failure leaves them listed for a
  * retry. A participant whose registration still stands is not removed: the
- * popup says what to do first and leads to the List tab (#1820).
+ * popup says what to do first and leads to the List tab (#1820). The Event
+ * Participants page removes several at once through the same popup, keeping
+ * whoever is blocked (#1775).
  */
 
 import { test, expect } from '@playwright/test';
@@ -382,5 +384,86 @@ test.describe( 'Manage Event — remove a participant from the audience', () => 
 		} finally {
 			await adminPage.setViewportSize( { width: 1280, height: 720 } );
 		}
+	} );
+
+	// Last: it removes the remaining hand-added participant (#1775).
+	test( 'removes several from the Event Participants page, keeping who is blocked', async () => {
+		await adminPage.goto(
+			`/wp-admin/admin.php?page=fair-audience-event-participants&event_date_id=${ eventDateId }`
+		);
+		const rows = adminPage.locator( '.dataviews-view-table tbody tr' );
+		await expect( rows ).toHaveCount( 2 );
+
+		// No browser confirmation: the popup below asks instead.
+		let nativeDialogs = 0;
+		const countDialog = ( nativeDialog ) => {
+			nativeDialogs++;
+			nativeDialog.dismiss();
+		};
+		adminPage.on( 'dialog', countDialog );
+
+		const boxes = rows.locator( '.dataviews-selection-checkbox input' );
+		await boxes.nth( 0 ).check( { force: true } );
+		await boxes.nth( 1 ).check( { force: true } );
+		await adminPage
+			.locator( '.dataviews-bulk-actions-footer__container' )
+			.getByRole( 'button', { name: 'Remove' } )
+			.click();
+
+		const dialog = adminPage.getByRole( 'dialog', {
+			name: 'Remove participants from this event',
+		} );
+		await expect( dialog ).toBeVisible();
+		expect( nativeDialogs ).toBe( 0 );
+		// The stored wall-clock time, whatever the browser's timezone.
+		await expect( dialog ).toContainText(
+			`Remove 1 participant from the audience of ${ title } on April 4, 2036 10:00 am?`
+		);
+		await expect(
+			dialog.getByRole( 'list', { name: 'Participants to remove' } )
+		).toContainText( kept.fullName );
+		const blocked = dialog.getByRole( 'list', {
+			name: 'Participants who cannot be removed yet',
+		} );
+		await expect( blocked ).toContainText( buyer );
+		await expect( blocked ).toContainText(
+			'This participant has 1 registration for this date.'
+		);
+
+		const sent = adminPage.waitForResponse(
+			( response ) =>
+				decodeURIComponent( response.url() ).includes(
+					`/event-dates/${ eventDateId }/participants/batch`
+				) &&
+				response.request().headers()[ 'x-http-method-override' ] ===
+					'DELETE'
+		);
+		await dialog
+			.getByRole( 'button', { name: 'Remove 1 participant' } )
+			.click();
+		const result = await ( await sent ).json();
+		expect( result.removed ).toBe( 1 );
+		expect( result.failed ).toBe( 0 );
+
+		// The blocked participant stays, in the popup and in the list.
+		await expect( dialog ).toContainText(
+			'1 participant was removed from this date.'
+		);
+		await expect(
+			dialog.getByRole( 'button', { name: /^Remove/ } )
+		).toHaveCount( 0 );
+		await dialog
+			.getByRole( 'button', { name: 'Back to the audience' } )
+			.click();
+		await expect( dialog ).toBeHidden();
+		await expect( rows ).toHaveCount( 1 );
+		await expect( rows ).toContainText( buyer );
+		adminPage.off( 'dialog', countDialog );
+
+		// Only the audience entry went: the profile is still there.
+		const profile = await apiFetch( adminPage, {
+			path: `/fair-audience/v1/participants/${ participantIds[ 0 ] }`,
+		} );
+		expect( profile.name ).toBe( kept.name );
 	} );
 } );

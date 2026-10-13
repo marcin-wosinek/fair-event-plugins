@@ -14,11 +14,11 @@ import {
 	__experimentalItemGroup as ItemGroup,
 	__experimentalItem as Item,
 	__experimentalText as Text,
-	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews';
 import { Icon, caution, link, send } from '@wordpress/icons';
 import ParticipantEditModal from '../components/ParticipantEditModal.js';
+import DeleteParticipantsModal from '../components/DeleteParticipantsModal.js';
 import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
 
 const DEFAULT_VIEW = {
@@ -54,6 +54,7 @@ export default function AllParticipants() {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ stats, setStats ] = useState( null );
 	const [ view, setView ] = useState( DEFAULT_VIEW );
+	const [ selection, setSelection ] = useState( [] );
 	const [ isModalOpen, setIsModalOpen ] = useState( false );
 	const [ editingParticipant, setEditingParticipant ] = useState( null );
 
@@ -410,54 +411,41 @@ export default function AllParticipants() {
 		setDeleteItems( items );
 	};
 
-	const confirmDelete = () => {
-		const items = deleteItems;
+	// Whoever was deleted is gone from the list and the totals; whoever
+	// could not be deleted stays selected, and in the popup with the reason.
+	const handleDeleted = ( deleted, remaining ) => {
+		refresh();
+		setSelection( remaining.map( ( participant ) => participant.id ) );
 
-		Promise.all(
-			items.map( ( item ) =>
-				apiFetch( {
-					path: `/fair-audience/v1/participants/${ item.id }`,
-					method: 'DELETE',
-				} )
+		if ( remaining.length > 0 ) {
+			return;
+		}
+
+		setDeleteItems( null );
+		setSnackbar(
+			sprintf(
+				/* translators: %d: number of participant profiles */
+				_n(
+					'%d participant profile deleted.',
+					'%d participant profiles deleted.',
+					deleted.length,
+					'fair-audience'
+				),
+				deleted.length
 			)
-		)
-			.then( () => {
-				refresh();
-			} )
-			.catch( ( err ) => {
-				setErrorMessage(
-					__( 'Error: ', 'fair-audience' ) + err.message
-				);
-			} )
-			.finally( () => {
-				setDeleteItems( null );
-			} );
+		);
 	};
 
-	const deleteConfirmMessage = useMemo( () => {
-		if ( ! deleteItems ) {
-			return '';
-		}
-
-		if ( deleteItems.length === 1 ) {
-			return sprintf(
-				/* translators: %s: participant name and surname */
-				__( 'Delete %s? This cannot be undone.', 'fair-audience' ),
-				`${ deleteItems[ 0 ].name } ${ deleteItems[ 0 ].surname }`
+	const handleSaved = ( result, outcome ) => {
+		refresh();
+		if ( outcome?.complete ) {
+			setSnackbar(
+				outcome.created
+					? __( 'Participant added.', 'fair-audience' )
+					: __( 'Participant updated.', 'fair-audience' )
 			);
 		}
-
-		return sprintf(
-			/* translators: %d: number of participants */
-			_n(
-				'Delete %d participant? This cannot be undone.',
-				'Delete %d participants? This cannot be undone.',
-				deleteItems.length,
-				'fair-audience'
-			),
-			deleteItems.length
-		);
-	}, [ deleteItems ] );
+	};
 
 	// Define actions for DataViews.
 	const actions = useMemo(
@@ -716,6 +704,8 @@ export default function AllParticipants() {
 							defaultLayouts={ DEFAULT_LAYOUTS }
 							isLoading={ isLoading }
 							getItemId={ ( item ) => item.id }
+							selection={ selection }
+							onChangeSelection={ setSelection }
 						/>
 					</CardBody>
 				</Card>
@@ -755,23 +745,16 @@ export default function AllParticipants() {
 				isOpen={ isModalOpen }
 				participant={ editingParticipant }
 				onClose={ () => setIsModalOpen( false ) }
-				onSaved={ refresh }
+				onSaved={ handleSaved }
 			/>
 
-			<ConfirmDialog
-				isOpen={ deleteItems !== null }
-				onConfirm={ confirmDelete }
-				onCancel={ () => setDeleteItems( null ) }
-				confirmButtonText={ _n(
-					'Delete participant',
-					'Delete participants',
-					deleteItems?.length || 0,
-					'fair-audience'
-				) }
-				cancelButtonText={ __( 'Cancel', 'fair-audience' ) }
-			>
-				{ deleteConfirmMessage }
-			</ConfirmDialog>
+			{ deleteItems && (
+				<DeleteParticipantsModal
+					participants={ deleteItems }
+					onClose={ () => setDeleteItems( null ) }
+					onDeleted={ handleDeleted }
+				/>
+			) }
 
 			{ snackbar && (
 				<div className="fair-audience-all-participants__snackbar">

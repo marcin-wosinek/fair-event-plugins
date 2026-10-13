@@ -623,6 +623,16 @@ test.describe( 'Remove a participant from an event date (#1820)', () => {
 		expect( body.removed ).toBe( 1 );
 		expect( body.failed ).toBe( 1 );
 		expect( body.errors[ 0 ] ).toContain( 'List tab' );
+		// Who was kept and why, for the removal popup (#1775).
+		expect( body.failures ).toHaveLength( 1 );
+		expect( body.failures[ 0 ] ).toMatchObject( {
+			participant_id: buyer.participantId,
+			code: 'removal_blocked',
+		} );
+		expect( body.failures[ 0 ].message ).toContain( 'List tab' );
+		expect(
+			body.failures[ 0 ].blockers.map( ( blocker ) => blocker.code )
+		).toContain( 'registration' );
 
 		expect(
 			await audienceRow( event.eventDateId, byHand.email )
