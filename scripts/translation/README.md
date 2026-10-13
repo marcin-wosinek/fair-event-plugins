@@ -63,7 +63,9 @@ npm run translation:coverage -- --markdown > TRANSLATION_STATUS.md
 
 This measures the local catalogs. For the approval status on WordPress.org
 (approved, waiting, fuzzy and untranslated counts per plugin, branch and
-locale), run `npm run translation:wporg-status` — see
+locale), run `npm run translation:wporg-status`. It reports the `pl`, `es`,
+`de`, `fr` and `en` sets by default; add `-- --all-locales` for every remote
+locale or `-- --locale=<locale>` for a single one — see
 [TRANSLATIONS.md § WordPress.org Translation Status](../../TRANSLATIONS.md#wordpressorg-translation-status).
 
 ### 3. Validate Translations

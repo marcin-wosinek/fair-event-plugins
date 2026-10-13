@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import {
 	CATEGORY,
 	CONCURRENCY,
+	DEFAULT_LOCALES,
 	UsageError,
 	branchApiUrl,
 	collectStatus,
@@ -18,6 +19,7 @@ import {
 	matchesLocale,
 	parseTranslationSets,
 	projectApiUrl,
+	resolveLocaleScope,
 	selectPlugins,
 	validateRegistry,
 } from '../translation/lib/wporg-status.js';
@@ -55,6 +57,21 @@ const GERMAN_FORMAL = remoteSet({
 	slug: 'formal',
 	locale: 'de',
 	wp_locale: 'de_DE_formal',
+});
+const POLISH = remoteSet({
+	name: 'Polish',
+	locale: 'pl',
+	wp_locale: 'pl_PL',
+});
+const FRENCH = remoteSet({
+	name: 'French (France)',
+	locale: 'fr',
+	wp_locale: 'fr_FR',
+});
+const ENGLISH_UK = remoteSet({
+	name: 'English (UK)',
+	locale: 'en-gb',
+	wp_locale: 'en_GB',
 });
 const AFRIKAANS = remoteSet({
 	name: 'Afrikaans',
@@ -273,7 +290,7 @@ test('collectStatus reports every returned set and keeps branches separate', asy
 				remoteSet({ current_count: 1439, percent_translated: 79 })
 			),
 		},
-		{ branches: ['stable', 'dev'] }
+		{ branches: ['stable', 'dev'], allLocales: true }
 	);
 
 	assert.deepEqual(calls.sort(), [devUrl, stableUrl].sort());
@@ -341,6 +358,137 @@ test('collectStatus filters by a locale that has no local catalog', async () => 
 		['formal']
 	);
 	assert.equal(exitCodeFor(byWpLocale.report), 0);
+});
+
+test('resolveLocaleScope defaults to five locales and rejects conflicts', () => {
+	assert.deepEqual(DEFAULT_LOCALES, ['pl', 'es', 'de', 'fr', 'en']);
+	assert.deepEqual(resolveLocaleScope({}), {
+		localeScope: 'default',
+		locales: DEFAULT_LOCALES,
+	});
+	assert.deepEqual(resolveLocaleScope({ allLocales: true }), {
+		localeScope: 'all',
+		locales: null,
+	});
+	assert.deepEqual(resolveLocaleScope({ locale: 'af' }), {
+		localeScope: 'explicit',
+		locales: ['af'],
+	});
+	assert.throws(
+		() => resolveLocaleScope({ locale: 'af', allLocales: true }),
+		(error) =>
+			error instanceof UsageError &&
+			/--all-locales cannot be combined with --locale/.test(error.message)
+	);
+});
+
+test('collectStatus reports the default locales with all their variants', async () => {
+	const routes = {
+		[stableUrl]: sets(
+			AFRIKAANS,
+			POLISH,
+			remoteSet(),
+			GERMAN,
+			GERMAN_FORMAL,
+			FRENCH,
+			ENGLISH_UK
+		),
+		[devUrl]: sets(GERMAN_FORMAL, AFRIKAANS, ENGLISH_UK),
+	};
+	const { report, calls } = await collect(routes, {
+		branches: ['stable', 'dev'],
+	});
+
+	// The same branch endpoints are read; only the reported rows narrow.
+	assert.deepEqual(calls.sort(), [devUrl, stableUrl].sort());
+	assert.deepEqual(
+		report.results.map((row) => [row.branch, row.locale, row.variant]),
+		[
+			['stable', 'pl', 'default'],
+			['stable', 'es', 'default'],
+			['stable', 'de', 'default'],
+			['stable', 'de', 'formal'],
+			['stable', 'fr', 'default'],
+			['dev', 'de', 'formal'],
+		]
+	);
+	assert.deepEqual(report.filters, {
+		plugins: ['fair-events'],
+		branches: ['stable', 'dev'],
+		locale: null,
+		localeScope: 'default',
+		locales: ['pl', 'es', 'de', 'fr', 'en'],
+	});
+	assert.deepEqual(
+		report.responses.map((response) => [
+			response.setCount,
+			response.matchedCount,
+		]),
+		[
+			[7, 5],
+			[3, 1],
+		]
+	);
+	// No English set and, on dev, no pl/es/fr set: absent defaults are fine.
+	assert.deepEqual(report.errors, []);
+	assert.equal(exitCodeFor(report), 0);
+	assert.match(
+		formatText(report),
+		/Locales: pl, es, de, fr, en \(default; --all-locales reports every remote locale\)/
+	);
+});
+
+test('a branch with none of the default locales is an empty result, not an error', async () => {
+	const { report } = await collect({
+		[stableUrl]: sets(AFRIKAANS, ENGLISH_UK),
+	});
+
+	assert.deepEqual(report.results, []);
+	assert.deepEqual(report.errors, []);
+	assert.equal(report.responses[0].setCount, 2);
+	assert.equal(report.responses[0].matchedCount, 0);
+	assert.equal(exitCodeFor(report), 0);
+	assert.match(
+		formatText(report),
+		/No translation sets for the selected locales \(2 sets in other locales\)/
+	);
+});
+
+test('allLocales and an explicit locale both replace the default selection', async () => {
+	const routes = {
+		[stableUrl]: sets(remoteSet(), AFRIKAANS, ENGLISH_UK),
+	};
+
+	const all = await collect(routes, { allLocales: true });
+	assert.deepEqual(
+		all.report.results.map((row) => row.locale),
+		['es', 'af', 'en-gb']
+	);
+	assert.equal(all.report.filters.localeScope, 'all');
+	assert.equal(all.report.filters.locales, null);
+	assert.equal(all.report.filters.locale, null);
+	assert.match(formatText(all.report), /Locales: every remote locale/);
+
+	// A locale outside the default list is still reachable by name.
+	const explicit = await collect(routes, { locale: 'en_GB' });
+	assert.deepEqual(
+		explicit.report.results.map((row) => row.locale),
+		['en-gb']
+	);
+	assert.deepEqual(
+		[
+			explicit.report.filters.locale,
+			explicit.report.filters.localeScope,
+			explicit.report.filters.locales,
+		],
+		['en_GB', 'explicit', ['en_GB']]
+	);
+	assert.match(formatText(explicit.report), /Locales: en_GB \(--locale\)/);
+
+	await assert.rejects(
+		collect(routes, { locale: 'af', allLocales: true }),
+		UsageError
+	);
 });
 
 test('a requested locale without a set is missing, an empty response is not', async () => {
@@ -467,7 +615,7 @@ test('partial failures keep successful rows and exit nonzero', async () => {
 			[stableUrl]: sets(remoteSet(), AFRIKAANS),
 			[branchApiUrl('fair-timetable', 'stable')]: new Error('ECONNRESET'),
 		},
-		{ plugins: [EVENTS, TIMETABLE] }
+		{ plugins: [EVENTS, TIMETABLE], allLocales: true }
 	);
 
 	assert.equal(report.results.length, 2);
@@ -517,15 +665,18 @@ test('requests share one bounded concurrency limit', async () => {
 });
 
 test('formatText marks unavailable metrics and keeps real zeros', async () => {
-	const { report } = await collect({
-		[stableUrl]: sets(
-			AFRIKAANS,
-			remoteSet({
-				percent_translated: undefined,
-				waiting_count: undefined,
-			})
-		),
-	});
+	const { report } = await collect(
+		{
+			[stableUrl]: sets(
+				AFRIKAANS,
+				remoteSet({
+					percent_translated: undefined,
+					waiting_count: undefined,
+				})
+			),
+		},
+		{ allLocales: true }
+	);
 	const lines = formatText(report).split('\n');
 	const afrikaans = lines.find((line) => line.startsWith('af'));
 	const spanish = lines.find((line) => line.startsWith('es'));
@@ -545,10 +696,12 @@ test('parseArgs reads the supported options and rejects the rest', () => {
 	assert.deepEqual(parseArgs([]), {
 		plugin: null,
 		locale: null,
+		allLocales: false,
 		set: 'both',
 		json: false,
 		output: null,
 	});
+	assert.equal(parseArgs(['--all-locales']).allLocales, true);
 	assert.deepEqual(
 		parseArgs([
 			'--plugin=fair-events',
@@ -560,6 +713,7 @@ test('parseArgs reads the supported options and rejects the rest', () => {
 		{
 			plugin: 'fair-events',
 			locale: 'es_ES',
+			allLocales: false,
 			set: 'dev',
 			json: true,
 			output: 'report.json',
@@ -568,6 +722,10 @@ test('parseArgs reads the supported options and rejects the rest', () => {
 	assert.throws(() => parseArgs(['--set=trunk']), UsageError);
 	assert.throws(() => parseArgs(['--plugin=']), UsageError);
 	assert.throws(() => parseArgs(['--bogus']), UsageError);
+	assert.throws(
+		() => parseArgs(['--all-locales', '--locale=es_ES']),
+		UsageError
+	);
 });
 
 /** Collects what the CLI writes to a stream. */
@@ -610,7 +768,7 @@ test('the CLI emits JSON on stdout and leaves catalogs unchanged', async () => {
 	const stdout = sink();
 	const stderr = sink();
 	const { fetchImpl, calls } = fakeFetch({
-		[stableUrl]: sets(remoteSet(), AFRIKAANS),
+		[stableUrl]: sets(remoteSet(), GERMAN_FORMAL, AFRIKAANS),
 		[devUrl]: new Error('ECONNRESET'),
 	});
 
@@ -627,8 +785,13 @@ test('the CLI emits JSON on stdout and leaves catalogs unchanged', async () => {
 			plugins: ['fair-events'],
 			branches: ['stable', 'dev'],
 			locale: null,
+			localeScope: 'default',
+			locales: ['pl', 'es', 'de', 'fr', 'en'],
 		});
-		assert.equal(report.results.length, 2);
+		assert.deepEqual(
+			report.results.map((row) => row.wpLocale),
+			['es_ES', 'de_DE_formal']
+		);
 		assert.ok(!Number.isNaN(Date.parse(report.generatedAt)));
 		assert.ok(!Number.isNaN(Date.parse(report.results[0].retrievedAt)));
 		assert.match(
@@ -649,11 +812,74 @@ test('the CLI emits JSON on stdout and leaves catalogs unchanged', async () => {
 	assert.deepEqual(await catalogSnapshot(), before);
 });
 
+test('the CLI applies one locale selection to text, JSON and file output', async () => {
+	const outputDir = await mkdtemp(join(tmpdir(), 'wporg-status-'));
+	const outputFile = join(outputDir, 'report.json');
+	const routes = () => ({
+		[stableUrl]: sets(remoteSet(), GERMAN, GERMAN_FORMAL, AFRIKAANS),
+	});
+	const cli = async (...args) => {
+		const stdout = sink();
+		const code = await run(
+			[
+				'--plugin=fair-events',
+				'--set=stable',
+				`--output=${outputFile}`,
+				...args,
+			],
+			{ stdout, stderr: sink(), fetchImpl: fakeFetch(routes()).fetchImpl }
+		);
+		assert.equal(code, 0, args.join(' '));
+		return {
+			stdout: stdout.text(),
+			file: JSON.parse(await readFile(outputFile, 'utf8')),
+		};
+	};
+	const locales = (report) => report.results.map((row) => row.wpLocale);
+
+	try {
+		const text = await cli();
+		assert.match(text.stdout, /Locales: pl, es, de, fr, en \(default/);
+		assert.match(text.stdout, /^es\s+es_ES\s+default/m);
+		assert.match(text.stdout, /^de\s+de_DE_formal\s+formal/m);
+		assert.doesNotMatch(text.stdout, /^af\s/m);
+		assert.deepEqual(locales(text.file), [
+			'es_ES',
+			'de_DE',
+			'de_DE_formal',
+		]);
+
+		const json = await cli('--json');
+		assert.deepEqual(JSON.parse(json.stdout), json.file);
+		assert.deepEqual(locales(json.file), locales(text.file));
+
+		const all = await cli('--all-locales', '--json');
+		assert.deepEqual(JSON.parse(all.stdout), all.file);
+		assert.deepEqual(locales(all.file), [
+			'es_ES',
+			'de_DE',
+			'de_DE_formal',
+			'af',
+		]);
+		assert.equal(all.file.filters.localeScope, 'all');
+
+		const explicit = await cli('--locale=af');
+		assert.match(explicit.stdout, /^af\s+af\s+default/m);
+		assert.doesNotMatch(explicit.stdout, /^es\s/m);
+		assert.deepEqual(locales(explicit.file), ['af']);
+		assert.equal(explicit.file.filters.locale, 'af');
+	} finally {
+		await rm(outputDir, { recursive: true, force: true });
+	}
+});
+
 test('the CLI rejects bad filters before making any request', async () => {
 	for (const args of [
 		['--plugin=fair-audience'],
 		['--plugin=fair-nope'],
 		['--set=trunk'],
+		['--all-locales', '--locale=es_ES'],
+		['--locale=es_ES', '--all-locales'],
 	]) {
 		const stderr = sink();
 		const { fetchImpl, calls } = fakeFetch({});

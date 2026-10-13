@@ -3,12 +3,15 @@
 /**
  * WordPress.org Translation Status Report
  *
- * Reads the approval status of every translation set on
- * translate.wordpress.org for the plugins listed in published-plugins.json.
+ * Reads the approval status of translation sets on translate.wordpress.org
+ * for the plugins listed in published-plugins.json. By default only the
+ * pl, es, de, fr and en sets are reported; --locale= picks any one remote
+ * locale instead and --all-locales reports every remote locale.
  * Read-only: no local catalog is read or written, nothing is submitted.
  *
  * Usage:
  *   node scripts/translation/wporg-status.js
+ *   node scripts/translation/wporg-status.js --all-locales
  *   node scripts/translation/wporg-status.js --plugin=fair-events --locale=es_ES
  *   node scripts/translation/wporg-status.js --set=stable --json
  *   node scripts/translation/wporg-status.js --output=wporg-status.json
@@ -27,6 +30,7 @@ import {
 	exitCodeFor,
 	formatText,
 	loadPublishedPlugins,
+	resolveLocaleScope,
 	selectPlugins,
 } from './lib/wporg-status.js';
 
@@ -40,6 +44,7 @@ export function parseArgs(args) {
 	const options = {
 		plugin: null,
 		locale: null,
+		allLocales: false,
 		set: 'both',
 		json: false,
 		output: null,
@@ -54,6 +59,8 @@ export function parseArgs(args) {
 			options.set = arg.substring('--set='.length);
 		} else if (arg.startsWith('--output=')) {
 			options.output = arg.substring('--output='.length);
+		} else if (arg === '--all-locales') {
+			options.allLocales = true;
 		} else if (arg === '--json') {
 			options.json = true;
 		} else {
@@ -71,6 +78,7 @@ export function parseArgs(args) {
 			throw new UsageError(`--${name} needs a value`);
 		}
 	}
+	resolveLocaleScope(options);
 
 	return options;
 }
@@ -115,6 +123,7 @@ export async function run(
 		plugins,
 		branches,
 		locale: options.locale,
+		allLocales: options.allLocales,
 		...overrides,
 	});
 	const json = JSON.stringify(report, null, 2);
