@@ -11,6 +11,13 @@ import { join } from 'path';
 
 export const SCHEMA_VERSION = 1;
 export const BRANCHES = ['stable', 'dev'];
+/** GlotPress locales reported unless a locale filter or all-locales is set. */
+export const DEFAULT_LOCALES = ['pl', 'es', 'de', 'fr', 'en'];
+export const LOCALE_SCOPE = {
+	default: 'default',
+	all: 'all',
+	explicit: 'explicit',
+};
 export const CONCURRENCY = 3;
 export const TIMEOUT_MS = 20000;
 export const MAX_RETRIES = 2;
@@ -397,6 +404,26 @@ export function matchesLocale(set, localeFilter) {
 }
 
 /**
+ * Work out which locales a report covers. An explicit filter replaces the
+ * default list; `locales: null` means every remote locale.
+ *
+ * @returns {{localeScope: string, locales: string[]|null}}
+ * @throws {UsageError} when both a locale filter and all-locales are given.
+ */
+export function resolveLocaleScope({ locale = null, allLocales = false }) {
+	if (locale && allLocales) {
+		throw new UsageError('--all-locales cannot be combined with --locale');
+	}
+	if (locale) {
+		return { localeScope: LOCALE_SCOPE.explicit, locales: [locale] };
+	}
+	if (allLocales) {
+		return { localeScope: LOCALE_SCOPE.all, locales: null };
+	}
+	return { localeScope: LOCALE_SCOPE.default, locales: DEFAULT_LOCALES };
+}
+
+/**
  * Fetch translation status for the given plugins and branches.
  *
  * Never throws for remote problems: successful rows and structured errors
@@ -405,7 +432,9 @@ export function matchesLocale(set, localeFilter) {
  * @param {object}   options
  * @param {{name: string, slug: string}[]} options.plugins
  * @param {string[]} options.branches       Subset of BRANCHES.
- * @param {string}   [options.locale]       Locale filter.
+ * @param {string}   [options.locale]       Locale filter; replaces the
+ *                                          default locales.
+ * @param {boolean}  [options.allLocales]   Report every remote locale.
  * @param {Function} [options.fetchImpl]    fetch replacement (tests).
  * @param {Function} [options.sleep]        (ms) => Promise (tests).
  * @param {Function} [options.now]          () => Date (tests).
@@ -414,10 +443,12 @@ export async function collectStatus({
 	plugins,
 	branches,
 	locale = null,
+	allLocales = false,
 	fetchImpl = fetch,
 	sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 	now = () => new Date(),
 }) {
+	const { localeScope, locales } = resolveLocaleScope({ locale, allLocales });
 	const limit = createLimiter(CONCURRENCY);
 	const io = { fetchImpl, sleep, now };
 	const get = (url) => limit(() => fetchJson(url, io));
@@ -476,7 +507,11 @@ export async function collectStatus({
 			}
 
 			const sets = parseTranslationSets(response.data);
-			const matched = sets.filter((set) => matchesLocale(set, locale));
+			const matched = locales
+				? sets.filter((set) =>
+						locales.some((wanted) => matchesLocale(set, wanted))
+				  )
+				: sets;
 			if (locale && matched.length === 0) {
 				throw new RequestError(
 					CATEGORY.missingLocale,
@@ -539,6 +574,8 @@ export async function collectStatus({
 			plugins: plugins.map((plugin) => plugin.name),
 			branches,
 			locale,
+			localeScope,
+			locales,
 		},
 		responses: outcomes.flatMap((o) => (o.response ? [o.response] : [])),
 		results: outcomes.flatMap((o) => o.rows ?? []),
@@ -569,6 +606,18 @@ function table(rows) {
 		.join('\n');
 }
 
+function localeScopeLabel({ localeScope, locales }) {
+	if (localeScope === LOCALE_SCOPE.all) {
+		return 'every remote locale (--all-locales)';
+	}
+	if (localeScope === LOCALE_SCOPE.explicit) {
+		return `${locales.join(', ')} (--locale)`;
+	}
+	return `${locales.join(
+		', '
+	)} (default; --all-locales reports every remote locale)`;
+}
+
 /**
  * Render the report for a terminal.
  */
@@ -576,6 +625,7 @@ export function formatText(report) {
 	const lines = [
 		'WordPress.org translation status',
 		`Retrieved: ${report.generatedAt}`,
+		`Locales: ${localeScopeLabel(report.filters)}`,
 	];
 
 	for (const response of report.responses) {
@@ -589,7 +639,11 @@ export function formatText(report) {
 			`${response.url}  (set pages: <locale>/<variant>/)`
 		);
 		if (rows.length === 0) {
-			lines.push('No translation sets returned.');
+			lines.push(
+				response.setCount === 0
+					? 'No translation sets returned.'
+					: `No translation sets for the selected locales (${response.setCount} sets in other locales).`
+			);
 			continue;
 		}
 		lines.push(

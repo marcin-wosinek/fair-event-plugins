@@ -229,10 +229,13 @@ actually approved — or waiting for review — on
 status report:
 
 ```bash
-# Every published plugin, stable and dev, every remote translation set
+# Every published plugin, stable and dev, the default locales (pl, es, de, fr, en)
 npm run translation:wporg-status
 
-# One plugin / one locale
+# Every remote translation set, whatever its locale
+npm run translation:wporg-status -- --all-locales
+
+# One plugin / one locale (any remote locale, also outside the default list)
 npm run translation:wporg-status -- --plugin=fair-events --locale=es_ES
 
 # One branch only
@@ -243,8 +246,8 @@ npm run --silent translation:wporg-status -- --json > wporg-status.json
 npm run translation:wporg-status -- --output=wporg-status.json
 ```
 
-**Options:** `--plugin=`, `--locale=`, `--set=stable|dev|both` (default `both`),
-`--json`, `--output=<file>`.
+**Options:** `--plugin=`, `--locale=`, `--all-locales`,
+`--set=stable|dev|both` (default `both`), `--json`, `--output=<file>`.
 
 The report is **read-only**. It reads no local catalog, submits nothing to
 WordPress.org, and writes a file only when `--output` asks for one. It is run
@@ -260,12 +263,28 @@ workspaces are not reported. `--plugin=` with an unpublished workspace or an
 unknown name is an error — a filter is never silently widened. Readme
 translation projects (`stable-readme`, `dev-readme`) are not included.
 
-**Locales and variants.** Every translation set WordPress.org returns is
-reported, whether or not the repository has a catalog for it — the four
-locales in `config.js` do not apply here. `--locale=` accepts the GlotPress
-locale (`de`, `es`, `pt-br`) or the WordPress locale (`de_DE`, `es_ES`,
-`de_DE_formal`). A GlotPress locale matches all of its variants (`de` matches
-both the default and the formal German set); a WordPress locale matches one.
+**Locales and variants.** By default the report covers the GlotPress locales
+`pl`, `es`, `de`, `fr` and `en`, whether or not the repository has a catalog
+for them — the locales in `config.js` do not apply here. The identifiers are
+matched exactly and include every variant of the locale: `de` covers both the
+default and the formal German set, while regional locales such as `en-gb` or
+`pt-br` are not part of the default. A default locale WordPress.org has no set
+for is simply absent from the report; it is not an error.
+
+Two options change the selection, and it applies equally to the terminal
+report, `--json` and `--output`:
+
+-   `--all-locales` reports every translation set WordPress.org returns.
+-   `--locale=` replaces the default list with one locale — any remote locale,
+    also one outside the default list. It accepts the GlotPress locale (`de`,
+    `es`, `pt-br`) or the WordPress locale (`de_DE`, `es_ES`, `de_DE_formal`).
+    A GlotPress locale matches all of its variants; a WordPress locale matches
+    one. A requested locale with no set is a `missing-locale` error.
+
+Combining `--all-locales` with `--locale=` is an invalid invocation (exit code
+`2`). The same branch endpoints are requested whatever the selection; it only
+narrows which of the returned sets are reported.
+
 The variant is the translation-set slug (`default`, `formal`, …) and is kept
 apart from the branch (`stable` is the latest release, `dev` is trunk), so the
 two branches are never merged.
@@ -287,7 +306,11 @@ the terminal; `0` always means a real zero.
 Each JSON row also carries `url` (the GlotPress page of that translation set),
 `sourceUrl` (the API response it was read from) and `retrievedAt`. The report
 itself has `schemaVersion`, `generatedAt`, the applied `filters`, one
-`responses` entry per branch that answered, and `errors`.
+`responses` entry per branch that answered, and `errors`. `filters` records
+the locale selection: `localeScope` is `default`, `all` or `explicit`,
+`locales` lists the locales matched (`null` for `all`), and `locale` is the
+`--locale=` value or `null`. Each `responses` entry has `setCount` (sets the
+branch returned) and `matchedCount` (sets in the selection).
 
 **Failures.** A request that fails never shows up as zero coverage: it
 produces an entry in `errors` instead of rows, and rows from the requests
@@ -304,8 +327,8 @@ that succeeded are still reported.
 
 At most three requests run at once. Network failures, HTTP 429 and HTTP 5xx
 are retried up to twice with a short backoff. A branch that answers with no
-translation sets at all (and no `--locale` filter) is a successful, empty
-result — not an error.
+translation sets at all, or none in the default locales (and no `--locale`
+filter), is a successful, empty result — not an error.
 
 **Exit codes:** `0` everything requested was reported; `1` at least one entry
 in `errors` (the successful rows are still printed); `2` invalid invocation or
