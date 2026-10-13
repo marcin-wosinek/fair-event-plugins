@@ -47,6 +47,11 @@ class Notifications {
 			BulkEmailDispatcher::init();
 		}
 
+		// Sent by this plugin alone, so there is no former owner to wait for,
+		// and no migration that would have created the delivery record.
+		DeliveryLog::maybe_install();
+		IndividualEmailDispatcher::init();
+
 		add_action(
 			'rest_api_init',
 			static function () {
@@ -66,5 +71,6 @@ class Notifications {
 	public static function deactivate() {
 		TelegramDispatcher::unschedule();
 		BulkEmailDispatcher::unschedule();
+		IndividualEmailDispatcher::unschedule();
 	}
 }

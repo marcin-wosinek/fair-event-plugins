@@ -144,4 +144,37 @@ class EmailServiceTest extends TestCase {
 		$this->assertStringContainsString( '<strong>the event</strong>', $sent['message'] );
 		$this->assertSame( 1, substr_count( $sent['message'], '<a href' ) );
 	}
+
+	/**
+	 * A weekly notification goes to the one given address as an HTML document.
+	 */
+	public function test_notification_is_sent_to_the_given_address(): void {
+		$result = ( new EmailService() )->send_notification( 'organizer@example.test', 'Events', '<p>Concert</p>' );
+
+		$this->assertTrue( $result );
+		$this->assertCount( 1, $GLOBALS['_fair_test_sent_emails'] );
+		$sent = $GLOBALS['_fair_test_sent_emails'][0];
+		$this->assertSame( 'organizer@example.test', $sent['to'] );
+		$this->assertSame( 'Events', $sent['subject'] );
+		$this->assertStringContainsString( '<!DOCTYPE html>', $sent['message'] );
+		$this->assertStringContainsString( '<p>Concert</p>', $sent['message'] );
+	}
+
+	/**
+	 * The temporary HTML content-type filter is removed even when sending
+	 * throws, so later mail does not inherit it.
+	 */
+	public function test_content_type_filter_is_removed_when_sending_throws(): void {
+		$GLOBALS['_fair_test_filters']     = array();
+		$GLOBALS['_fair_test_mail_throws'] = true;
+
+		try {
+			( new EmailService() )->send_notification( 'organizer@example.test', 'Events', '<p>Concert</p>' );
+			$this->fail( 'Expected the mail transport to throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 0, $GLOBALS['_fair_test_filters']['wp_mail_content_type'] );
+		} finally {
+			unset( $GLOBALS['_fair_test_mail_throws'] );
+		}
+	}
 }

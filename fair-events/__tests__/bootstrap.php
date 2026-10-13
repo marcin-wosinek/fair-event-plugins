@@ -672,8 +672,10 @@ if ( ! function_exists( 'wp_specialchars_decode' ) ) {
 
 if ( ! function_exists( 'add_filter' ) ) {
 	/**
-	 * Stub of WordPress add_filter() — a no-op for test purposes; nothing in
-	 * this bootstrap calls a real apply_filters() against registered filters.
+	 * Stub of WordPress add_filter() — nothing in this bootstrap calls a real
+	 * apply_filters() against registered filters. Callbacks are only counted
+	 * per hook in $GLOBALS['_fair_test_filters'], so a test can check that a
+	 * temporary filter was removed again.
 	 *
 	 * @param string   $hook_name     Hook name.
 	 * @param callable $callback      Callback.
@@ -681,21 +683,24 @@ if ( ! function_exists( 'add_filter' ) ) {
 	 * @param int      $accepted_args Number of accepted args (unused by the stub).
 	 * @return true
 	 */
-	function add_filter( $hook_name, $callback, $priority = 10, $accepted_args = 1 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- no-op stub.
+	function add_filter( $hook_name, $callback, $priority = 10, $accepted_args = 1 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- counting stub.
+		$GLOBALS['_fair_test_filters'][ $hook_name ] = ( $GLOBALS['_fair_test_filters'][ $hook_name ] ?? 0 ) + 1;
 		return true;
 	}
 }
 
 if ( ! function_exists( 'remove_filter' ) ) {
 	/**
-	 * Stub of WordPress remove_filter() — a no-op for test purposes.
+	 * Stub of WordPress remove_filter() — lowers the hook's count in
+	 * $GLOBALS['_fair_test_filters'].
 	 *
 	 * @param string   $hook_name Hook name.
 	 * @param callable $callback  Callback.
 	 * @param int      $priority  Priority (unused by the stub).
 	 * @return true
 	 */
-	function remove_filter( $hook_name, $callback, $priority = 10 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- no-op stub.
+	function remove_filter( $hook_name, $callback, $priority = 10 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- counting stub.
+		$GLOBALS['_fair_test_filters'][ $hook_name ] = ( $GLOBALS['_fair_test_filters'][ $hook_name ] ?? 0 ) - 1;
 		return true;
 	}
 }
@@ -763,13 +768,18 @@ if ( ! function_exists( 'wp_mail' ) ) {
 	/**
 	 * Stub of WordPress wp_mail() recording each send into
 	 * $GLOBALS['_fair_test_sent_emails'] so tests can assert on subject/message.
+	 * Throws instead while $GLOBALS['_fair_test_mail_throws'] is set.
 	 *
 	 * @param string $to      Recipient email address.
 	 * @param string $subject Email subject.
 	 * @param string $message Email body.
 	 * @return bool Always true.
+	 * @throws \RuntimeException When told to.
 	 */
 	function wp_mail( $to, $subject, $message ) {
+		if ( ! empty( $GLOBALS['_fair_test_mail_throws'] ) ) {
+			throw new \RuntimeException( 'mail transport down' );
+		}
 		if ( ! isset( $GLOBALS['_fair_test_sent_emails'] ) ) {
 			$GLOBALS['_fair_test_sent_emails'] = array();
 		}
@@ -902,6 +912,18 @@ if ( ! function_exists( 'sanitize_title' ) ) {
 	 */
 	function sanitize_title( $title ) {
 		return trim( (string) preg_replace( '/[^a-z0-9_\-]+/', '-', strtolower( (string) $title ) ), '-' );
+	}
+}
+
+if ( ! function_exists( 'wpautop' ) ) {
+	/**
+	 * Stub of WordPress wpautop() — wraps the text in one paragraph.
+	 *
+	 * @param string $text Text.
+	 * @return string
+	 */
+	function wpautop( $text ) {
+		return '<p>' . trim( (string) $text ) . '</p>';
 	}
 }
 

@@ -10,6 +10,7 @@ import { ExternalLink, Notice, Spinner } from '@wordpress/components';
  * Internal dependencies
  */
 import BulkEmailChannel from './BulkEmailChannel.js';
+import IndividualEmailChannel from './IndividualEmailChannel.js';
 import TelegramChannel from './TelegramChannel.js';
 import { PATH, errorMessage } from './shared.js';
 
@@ -20,6 +21,7 @@ import { PATH, errorMessage } from './shared.js';
 const CHANNELS = [
 	{ key: 'telegram', Component: TelegramChannel },
 	{ key: 'bulk_email', Component: BulkEmailChannel },
+	{ key: 'individual_email', Component: IndividualEmailChannel },
 ];
 
 /**
@@ -91,7 +93,7 @@ export default function EventNotifications( { sourcesUrl } ) {
 			{ data && 0 === data.sources.length && (
 				<Notice status="warning" isDismissible={ false }>
 					{ __(
-						'There is no event source yet. An event source decides which events a notification lists, so a channel can only be turned on once one exists.',
+						'There is no event source yet. Telegram and bulk email list the events of an event source, so they can only be turned on once one exists. Individual email can send all published local events without one.',
 						'fair-events'
 					) }{ ' ' }
 					{ sourcesUrl ? (

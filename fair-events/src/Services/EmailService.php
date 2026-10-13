@@ -193,6 +193,23 @@ class EmailService {
 	}
 
 	/**
+	 * Send a weekly event notification to one address.
+	 *
+	 * @param string $to      Recipient email address.
+	 * @param string $subject Email subject.
+	 * @param string $html    Email content, without the surrounding document.
+	 * @return bool True when the site's mail system accepted the message.
+	 */
+	public function send_notification( $to, $subject, $html ) {
+		$message = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>'
+			. '<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; font-size: 15px; line-height: 1.5; color: #1e1e1e;">'
+			. $html
+			. '</body></html>';
+
+		return $this->deliver( $to, $subject, $message );
+	}
+
+	/**
 	 * Send an email — the only wp_mail() call site in fair-events.
 	 *
 	 * @param string $to      Recipient email address.
@@ -206,9 +223,11 @@ class EmailService {
 		};
 
 		add_filter( 'wp_mail_content_type', $content_type );
-		$result = wp_mail( $to, $subject, $message );
-		remove_filter( 'wp_mail_content_type', $content_type );
-
-		return $result;
+		try {
+			return (bool) wp_mail( $to, $subject, $message );
+		} finally {
+			// Also when sending throws: later mail must not inherit the type.
+			remove_filter( 'wp_mail_content_type', $content_type );
+		}
 	}
 }

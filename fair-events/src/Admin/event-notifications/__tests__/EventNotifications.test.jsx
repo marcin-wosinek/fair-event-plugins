@@ -62,6 +62,28 @@ function bulkEmail( overrides ) {
 	};
 }
 
+function individualEmail( overrides ) {
+	return {
+		state: 'active',
+		state_message: '',
+		enabled: false,
+		recipient: 'organizer@example.test',
+		event_selection: '@local',
+		day_of_week: 3,
+		time_of_day: '07:15',
+		week_scope: 'current',
+		skip_empty: true,
+		subject: 'Organizer update: {week_start}',
+		intro: 'Team,',
+		outro: '',
+		configuration_error: null,
+		last_sent_week: '',
+		next_run: null,
+		runs: [],
+		...overrides,
+	};
+}
+
 function payload( channels = {} ) {
 	return {
 		sources: [
@@ -72,6 +94,7 @@ function payload( channels = {} ) {
 		channels: {
 			telegram: telegram( channels.telegram ),
 			bulk_email: bulkEmail( channels.bulk_email ),
+			individual_email: individualEmail( channels.individual_email ),
 		},
 	};
 }
@@ -510,6 +533,427 @@ describe( 'EventNotifications', () => {
 			window.dispatchEvent( dirtyEvent );
 			expect( dirtyEvent.defaultPrevented ).toBe( true );
 		} );
+	} );
+} );
+
+describe( 'Individual email', () => {
+	const INDIVIDUAL = `${ PATH }/individual-email`;
+
+	it( 'has its own recipient, schedule and event selection', async () => {
+		await renderPage();
+
+		const own = within( section( 'Individual email' ) );
+		expect( own.getByLabelText( 'Send to' ) ).toHaveValue(
+			'organizer@example.test'
+		);
+		expect( own.getByLabelText( 'Events to include' ) ).toHaveValue(
+			'@local'
+		);
+		expect( own.getByLabelText( 'Send on' ) ).toHaveValue( '3' );
+		expect( own.getByLabelText( 'Send at' ) ).toHaveValue( '07:15' );
+		expect(
+			own.getByRole( 'option', { name: 'All published local events' } )
+		).toBeInTheDocument();
+		expect(
+			own.getByRole( 'option', { name: 'City events' } )
+		).toBeInTheDocument();
+		// One typed address: no user or participant picker.
+		expect( own.getByLabelText( 'Send to' ) ).toHaveAttribute(
+			'type',
+			'email'
+		);
+		expect(
+			own.queryByRole( 'combobox', { name: /user|participant/i } )
+		).not.toBeInTheDocument();
+		// The other channels keep their own schedule.
+		expect(
+			within( section( 'Bulk email' ) ).getByLabelText( 'Send at' )
+		).toHaveValue( '08:00' );
+	} );
+
+	it( 'saves only its own section and keeps unsaved bulk email edits', async () => {
+		const saved = payload( {
+			individual_email: {
+				enabled: true,
+				recipient: 'team@example.test',
+				event_selection: 'city',
+				time_of_day: '06:00',
+			},
+		} );
+		await renderPage( payload(), {
+			[ `POST ${ INDIVIDUAL }` ]: () => Promise.resolve( saved ),
+		} );
+
+		const own = within( section( 'Individual email' ) );
+		const mail = within( section( 'Bulk email' ) );
+		fireEvent.change( mail.getByLabelText( 'Subject' ), {
+			target: { value: 'Draft subject' },
+		} );
+		fireEvent.click(
+			own.getByLabelText( 'Email the weekly summary to this address' )
+		);
+		fireEvent.change( own.getByLabelText( 'Send to' ), {
+			target: { value: ' team@example.test ' },
+		} );
+		fireEvent.change( own.getByLabelText( 'Events to include' ), {
+			target: { value: 'city' },
+		} );
+		fireEvent.change( own.getByLabelText( 'Send at' ), {
+			target: { value: '06:00' },
+		} );
+		expect( own.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+
+		fireEvent.click(
+			own.getByRole( 'button', {
+				name: 'Save individual email settings',
+			} )
+		);
+
+		expect(
+			await own.findByText( 'Individual email settings saved.' )
+		).toBeInTheDocument();
+		expect( calls( 'POST', INDIVIDUAL )[ 0 ][ 0 ].data ).toEqual( {
+			enabled: true,
+			recipient: 'team@example.test',
+			event_selection: 'city',
+			day_of_week: 3,
+			time_of_day: '06:00',
+			week_scope: 'current',
+			skip_empty: true,
+			subject: 'Organizer update: {week_start}',
+			intro: 'Team,',
+			outro: '',
+		} );
+		expect( calls( 'POST', `${ PATH }/bulk-email` ) ).toHaveLength( 0 );
+		expect( calls( 'POST', `${ PATH }/telegram` ) ).toHaveLength( 0 );
+		expect( own.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		expect( mail.getByLabelText( 'Subject' ) ).toHaveValue(
+			'Draft subject'
+		);
+		expect( mail.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+	} );
+
+	it( 'edits its wording without changing the bulk email wording', async () => {
+		await renderPage();
+
+		const own = within( section( 'Individual email' ) );
+		const mail = within( section( 'Bulk email' ) );
+		fireEvent.change( own.getByLabelText( 'Subject' ), {
+			target: { value: 'Just for me' },
+		} );
+		fireEvent.change(
+			own.getByLabelText( 'Text above the list of events' ),
+			{ target: { value: 'Hi team' } }
+		);
+		fireEvent.click(
+			own.getByLabelText( 'Skip the email when the week has no events' )
+		);
+
+		expect( mail.getByLabelText( 'Subject' ) ).toHaveValue(
+			'This week: {week_start}'
+		);
+		expect(
+			mail.getByLabelText( 'Text above the list of events' )
+		).toHaveValue( 'Hello' );
+		expect(
+			mail.getByLabelText( 'Skip the email when the week has no events' )
+		).toBeChecked();
+		expect( mail.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		expect( own.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+	} );
+
+	it( 'starts off and cannot be turned on without a recipient', async () => {
+		await renderPage( payload( { individual_email: { recipient: '' } } ) );
+
+		const own = within( section( 'Individual email' ) );
+		const toggle = own.getByLabelText(
+			'Email the weekly summary to this address'
+		);
+		expect( toggle ).not.toBeChecked();
+		const save = own.getByRole( 'button', {
+			name: 'Save individual email settings',
+		} );
+		expect( save ).toBeEnabled();
+
+		fireEvent.click( toggle );
+
+		expect( save ).toBeDisabled();
+		expect(
+			own.getByText(
+				'Enter the email address that receives the weekly email before turning it on.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'refuses a list of addresses before saving', async () => {
+		await renderPage();
+
+		const own = within( section( 'Individual email' ) );
+		fireEvent.change( own.getByLabelText( 'Send to' ), {
+			target: { value: 'a@example.test, b@example.test' },
+		} );
+
+		expect(
+			own.getByRole( 'button', {
+				name: 'Save individual email settings',
+			} )
+		).toBeDisabled();
+		expect(
+			own.getByText(
+				'Enter exactly one email address, for example name@example.com.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows a validation message from the server in its own section', async () => {
+		await renderPage( payload(), {
+			[ `POST ${ INDIVIDUAL }` ]: () =>
+				Promise.reject( {
+					message:
+						'The selected event source does not exist or is disabled.',
+				} ),
+		} );
+
+		const own = within( section( 'Individual email' ) );
+		fireEvent.click(
+			own.getByRole( 'button', {
+				name: 'Save individual email settings',
+			} )
+		);
+
+		expect(
+			await own.findByText(
+				'The selected event source does not exist or is disabled.'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( section( 'Telegram' ) ).queryByText(
+				'The selected event source does not exist or is disabled.'
+			)
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'names the destination of the test and of the preview', async () => {
+		await renderPage( payload(), {
+			[ `POST ${ INDIVIDUAL }/test` ]: () =>
+				Promise.resolve( { sent_to: 'organizer@example.test' } ),
+			[ `GET ${ INDIVIDUAL }/preview` ]: () =>
+				Promise.resolve( {
+					recipient: 'organizer@example.test',
+					subject: 'Organizer update: 2026-10-12',
+					html: '<p>Concert night</p>',
+					empty: false,
+					skip_empty: true,
+					week_title: '12–18 Oct 2026',
+				} ),
+		} );
+
+		const own = within( section( 'Individual email' ) );
+		fireEvent.click(
+			own.getByRole( 'button', { name: 'Preview next email' } )
+		);
+		expect(
+			await own.findByText( 'Organizer update: 2026-10-12' )
+		).toBeInTheDocument();
+		expect( own.getByText( 'To:' ).parentElement ).toHaveTextContent(
+			'To: organizer@example.test'
+		);
+		expect(
+			within(
+				own.getByRole( 'group', { name: 'Email preview' } )
+			).getByText( 'Concert night' )
+		).toBeInTheDocument();
+
+		// The test works while the weekly email is off.
+		fireEvent.click(
+			own.getByRole( 'button', {
+				name: 'Send test email to organizer@example.test',
+			} )
+		);
+		expect(
+			await own.findByText(
+				'Test email handed over for delivery to organizer@example.test. The schedule is unchanged.'
+			)
+		).toBeInTheDocument();
+		expect( calls( 'POST', `${ PATH }/bulk-email/test` ) ).toHaveLength(
+			0
+		);
+	} );
+
+	it( 'explains the saved empty-week policy in the preview', async () => {
+		let skipEmpty = true;
+		await renderPage( payload(), {
+			[ `GET ${ INDIVIDUAL }/preview` ]: () =>
+				Promise.resolve( {
+					recipient: 'organizer@example.test',
+					subject: 'Organizer update',
+					html: '<p>No events are scheduled for 12–18 Oct 2026.</p>',
+					empty: true,
+					skip_empty: skipEmpty,
+					week_title: '12–18 Oct 2026',
+				} ),
+		} );
+
+		const own = within( section( 'Individual email' ) );
+		const previewButton = own.getByRole( 'button', {
+			name: 'Preview next email',
+		} );
+		fireEvent.click( previewButton );
+		expect(
+			await own.findByText(
+				'No events for 12–18 Oct 2026, so no email would be sent.'
+			)
+		).toBeInTheDocument();
+
+		skipEmpty = false;
+		fireEvent.click( previewButton );
+		expect(
+			await own.findByText(
+				'No events for 12–18 Oct 2026. The email below would still be sent.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'makes preview and test wait for unsaved changes and a saved address', async () => {
+		await renderPage();
+
+		const own = within( section( 'Individual email' ) );
+		fireEvent.change( own.getByLabelText( 'Send to' ), {
+			target: { value: 'other@example.test' },
+		} );
+		expect(
+			own.getByRole( 'button', { name: 'Preview next email' } )
+		).toBeDisabled();
+		// Still names the saved address, which is where a test would go.
+		expect(
+			own.getByRole( 'button', {
+				name: 'Send test email to organizer@example.test',
+			} )
+		).toBeDisabled();
+		expect(
+			own.getByText(
+				'Save your changes first — the preview and the test use the saved settings.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'offers no test without a saved address', async () => {
+		await renderPage( payload( { individual_email: { recipient: '' } } ) );
+
+		const own = within( section( 'Individual email' ) );
+		expect(
+			own.getByRole( 'button', { name: 'Send test email' } )
+		).toBeDisabled();
+		expect(
+			own.getByText( 'Save an email address before sending a test.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps an unavailable event source visible and reports it', async () => {
+		await renderPage(
+			payload( {
+				individual_email: {
+					event_selection: 'gone',
+					configuration_error:
+						'The selected event source does not exist or is disabled.',
+				},
+			} )
+		);
+
+		const own = within( section( 'Individual email' ) );
+		expect( own.getByLabelText( 'Events to include' ) ).toHaveValue(
+			'gone'
+		);
+		expect(
+			own.getByRole( 'option', { name: 'gone (unavailable)' } )
+		).toBeInTheDocument();
+		expect(
+			own.getByText(
+				'The selected event source does not exist or is disabled.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows its delivery status, including failures, with the destination', async () => {
+		await renderPage(
+			payload( {
+				individual_email: {
+					enabled: true,
+					next_run: { time_local: 'October 21, 2026 7:15 am' },
+					runs: [
+						{
+							send_week: '2026-W42',
+							week_title: '12–18 Oct 2026',
+							destination: 'organizer@example.test',
+							status: 'failed',
+							message:
+								'The site could not hand the email over for delivery. It is not repeated automatically.',
+							time_local: 'October 14, 2026 7:15 am',
+						},
+						{
+							send_week: '2026-W41',
+							week_title: '5–11 Oct 2026',
+							destination: 'organizer@example.test',
+							status: 'sent',
+							message:
+								'Handed over to the site’s mail system. This does not confirm that it reached the inbox.',
+							time_local: 'October 7, 2026 7:15 am',
+						},
+					],
+				},
+			} )
+		);
+
+		const own = within( section( 'Individual email' ) );
+		expect(
+			own.getByText( 'Next send: October 21, 2026 7:15 am.' )
+		).toBeInTheDocument();
+		expect( own.getByText( 'Failed' ) ).toBeInTheDocument();
+		expect(
+			own.getByText( 'Handed over for delivery' )
+		).toBeInTheDocument();
+		expect( own.getAllByText( 'organizer@example.test' ) ).toHaveLength(
+			2
+		);
+		expect(
+			own.getByText(
+				'The site could not hand the email over for delivery. It is not repeated automatically.'
+			)
+		).toBeInTheDocument();
+		// A failure here leaves the other channels usable.
+		expect(
+			within( section( 'Telegram' ) ).getByRole( 'button', {
+				name: 'Save Telegram settings',
+			} )
+		).toBeEnabled();
+	} );
+
+	it( 'stays usable without an event source or Fair Audience', async () => {
+		await renderPage( {
+			...payload( {
+				bulk_email: {
+					state: 'inactive',
+					state_message:
+						'The weekly email is paused because Fair Audience is not active.',
+				},
+			} ),
+			sources: [],
+		} );
+
+		expect(
+			screen.getByText(
+				/Individual email can send all published local events without one\./
+			)
+		).toBeInTheDocument();
+		const own = within( section( 'Individual email' ) );
+		expect( own.getByLabelText( 'Events to include' ) ).toHaveValue(
+			'@local'
+		);
+		expect(
+			own.getByRole( 'button', {
+				name: 'Save individual email settings',
+			} )
+		).toBeEnabled();
 	} );
 } );
 

@@ -25,7 +25,7 @@ Fair Events provides event publishing, calendars, ticket configuration and signu
 * **Ticket Configuration and Signup:** Ticket types, sale periods, scheduled prices, pay-what-you-can pricing, ticket and activity capacity, and activity options. Free signup is included; paid checkout requires Fair Payments Connector
 * **Signup Administration:** Manage signups, edit tickets and answers, allocate activities, and export signup data
 * **Venues and Event Copies:** Reuse venues with addresses, coordinates and map links; copy events with adjusted dates and ticket configuration
-* **Weekly Event Notifications:** Post the week's events to Telegram chats and channels and, with Fair Audience, email them to your subscribers — each channel on its own schedule, with previews, test sends and delivery status
+* **Weekly Event Notifications:** Post the week's events to Telegram chats and channels, email them to one address of your choice and, with Fair Audience, to your subscribers — each channel on its own schedule, with previews, test sends and delivery status
 * **Suite Integrations:** Event statistics require Fair Audience; event budgets require Fair Finance; multilingual event links and activity options integrate with Polylang
 * **Responsive Calendar:** Monthly grid with category filtering that collapses gracefully on mobile
 * **Add to Calendar & iCal:** Visitors save events to Google, Apple, or Outlook; your site exposes an iCal feed
@@ -58,12 +58,25 @@ Fair Events works on its own and grows with the rest of the suite: add [Fair Pay
 
 = Event notifications =
 
-Fair Events → Event notifications is the one place to manage weekly event notifications. Each channel has its own on/off switch, event source, weekday, time, choice of week, save button, preview, test and delivery status, so one channel never changes or blocks another.
+Fair Events → Event notifications is the one place to manage weekly event notifications. Each channel has its own on/off switch, choice of events, weekday, time, choice of week, save button, preview, test and delivery status, so one channel never changes or blocks another.
 
 * **Telegram** posts the week's events to the chats and channels you list. It needs only Fair Events and a bot token. A test posts to the saved chats.
 * **Bulk email** sends the week's events to your subscribers. It needs Fair Audience, which decides who receives it (participants who agreed to marketing emails and did not opt out of the weekly summary), adds each recipient's unsubscribe link and sends the email. A test goes to your own address only.
+* **Individual email** sends the week's events to one email address you type in, such as your own inbox or a shared mailbox. It needs only Fair Events: no Fair Audience, no Fair Events Experimental and no event source.
 
-A notification lists the events of an event source. Event sources are created with Fair Events Experimental; existing sources keep working without it.
+Telegram and bulk email list the events of an event source. Event sources are created with Fair Events Experimental; existing sources keep working without it. Individual email can also list all published local events, with no event source at all.
+
+**Individual email setup.**
+
+1. Open Fair Events → Event notifications. Under Individual email enter the address in "Send to". Exactly one address is accepted; it does not have to belong to a WordPress user or a participant, and a list of addresses is refused rather than shortened.
+2. Choose the events to include — "All published local events" or one of your event sources — and the weekday, time and week. Weeks run from Monday to Sunday, in the site's timezone. Drafts and private events are never included.
+3. Optionally edit the subject (`{week_start}` and `{week_end}` insert the week's dates) and the text above and below the list of events.
+4. Save, then use "Preview next email" and "Send test email". Both use the saved settings and name the address they are for. The test goes to that address only, works while the weekly email is off, does not count as the week's send and does not move the next one.
+5. Turn on "Email the weekly summary to this address" and save. The channel starts off and cannot be turned on without a valid address.
+
+*Empty weeks.* By default no email is sent for a week without events, and the delivery status says so. Turn off "Skip the email when the week has no events" to receive an email that says no events are scheduled.
+
+*Delivery status.* The section lists the next send and the recent ones, each with its week, address and outcome. "Handed over for delivery" means the site's mail system accepted the email; it does not confirm that it reached the inbox. A failed send is shown as failed and is not repeated automatically: at most one email is sent per week, also when the address or schedule changes afterwards. If the selected event source is deleted or disabled, nothing is sent and the section reports it instead of falling back to other events.
 
 **Telegram setup.** Requires WordPress 7.0 or newer for the Connectors screen.
 
@@ -75,7 +88,7 @@ A notification lists the events of an event source. Event sources are created wi
 
 The token can also be supplied outside the database, as an environment variable or a PHP constant, both named `FAIR_EVENTS_EXPERIMENTAL_TELEGRAM_BOT_TOKEN` (the name is kept from Fair Events Experimental so existing configuration keeps working). The environment variable is used first, then the constant, then the token saved in Connectors. The page says which one is in use and never shows the token.
 
-**When a plugin is inactive.** Deactivating Fair Audience pauses the bulk email only: its settings are kept, Telegram keeps running, and sending resumes at the next scheduled time after Fair Audience is active again. Deactivating Fair Events pauses every channel until it is active again. A send that was missed in the meantime is not sent later.
+**When a plugin is inactive.** Deactivating Fair Audience pauses the bulk email only: its settings are kept, Telegram and individual email keep running, and sending resumes at the next scheduled time after Fair Audience is active again. Deactivating Fair Events pauses every channel until it is active again. A send that was missed in the meantime is not sent later.
 
 **Upgrading from Fair Events Experimental and Fair Audience.** Telegram summaries used to be set up in Fair Events → Settings → Experimental and the weekly email in Fair Audience → Weekly Digest. Fair Events takes both over the first time it runs next to versions of those plugins that hand them over (or while they are inactive): the settings, schedules, event sources, email wording, chats, the bot token and the delivery history are kept, each channel with its own schedule. Nothing is sent during the takeover and no channel is turned on by it; a channel that was not being sent arrives turned off. The former settings screens now lead to Event notifications. Update all three plugins together. While an older Fair Events Experimental or Fair Audience is still active, its channel keeps running from its old screen and Event notifications asks you to update it; the other channel is not affected. With an updated companion and an older Fair Events, that channel is paused until Fair Events is updated.
 
