@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import {
 	Button,
@@ -12,12 +12,12 @@ import {
 	CardBody,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
-	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 
 /**
  * Internal dependencies
  */
+import ConfirmActionModal from '../components/ConfirmActionModal.js';
 import {
 	loadOrganizerSettings,
 	loadAttachmentUrl,
@@ -509,18 +509,51 @@ export default function OrganizerTab( { onNotice } ) {
 					) }
 				</div>
 			</VStack>
-			<ConfirmDialog
-				isOpen={ removeLogoDialogOpen }
-				onConfirm={ () => {
-					updateField( 'logo_id', 0 );
-					setRemoveLogoDialogOpen( false );
-				} }
-				onCancel={ () => setRemoveLogoDialogOpen( false ) }
-				confirmButtonText={ __( 'Remove logo', 'fair-events' ) }
-				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
-			>
-				{ __( 'Remove organizer logo?', 'fair-events' ) }
-			</ConfirmDialog>
+			{ removeLogoDialogOpen && (
+				<ConfirmActionModal
+					title={ __( 'Remove organizer logo?', 'fair-events' ) }
+					confirmLabel={ __( 'Remove logo', 'fair-events' ) }
+					isDestructive
+					onConfirm={ () => {
+						updateField( 'logo_id', 0 );
+						setRemoveLogoDialogOpen( false );
+					} }
+					onCancel={ () => setRemoveLogoDialogOpen( false ) }
+				>
+					<p style={ { margin: 0 } }>
+						{ organizer.name || defaults.name
+							? sprintf(
+									/* translators: %s: organizer name */
+									__(
+										'Remove the logo chosen for the organizer %s?',
+										'fair-events'
+									),
+									organizer.name || defaults.name
+							  )
+							: __(
+									'Remove the logo chosen for the organizer?',
+									'fair-events'
+							  ) }
+					</p>
+					<p style={ { margin: 0 } }>
+						{ defaults.logoId
+							? __(
+									"The organizer will use the site's logo instead. The image you remove here stays in the Media Library.",
+									'fair-events'
+							  )
+							: __(
+									'The site has no logo of its own, so the organizer will have no logo. The image you remove here stays in the Media Library.',
+									'fair-events'
+							  ) }
+					</p>
+					<p style={ { margin: 0 } }>
+						{ __(
+							'Nothing is saved until you select Save organizer.',
+							'fair-events'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 		</form>
 	);
 }

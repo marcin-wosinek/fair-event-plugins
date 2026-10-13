@@ -1374,10 +1374,6 @@ test.describe( 'EventDatesController — ending a series', () => {
 	test( 'PUT rrule: "" clears the series and removes generated occurrences', async ( {
 		request: req,
 	} ) => {
-		test.skip(
-			true,
-			'Skipped pending #1406 — PUT rrule: "" does not clear the series'
-		);
 		const localApi = req;
 		const master = await createRecurringEvent(
 			localApi,
@@ -1395,7 +1391,90 @@ test.describe( 'EventDatesController — ending a series', () => {
 		expect( after.rrule ).toBeNull();
 		expect( after.occurrence_type ).toBe( 'single' );
 		expect( after.recurrence_mode ).toBe( 'none' );
-		expect( after.generated_occurrences.length ).toBe( 0 );
+		expect( after.generated_occurrences ?? [] ).toHaveLength( 0 );
+	} );
+
+	test( 'PUT rrule: "" ends a series linked to an event page and keeps its first date', async ( {
+		request: req,
+	} ) => {
+		const localApi = req;
+		const master = await createRecurringEvent(
+			localApi,
+			'FREQ=WEEKLY;COUNT=3'
+		);
+		const linkRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
+			{ headers: adminHeaders, data: { event_id: eventPostId } }
+		);
+		expect( linkRes.ok() ).toBeTruthy();
+		const removedId = master.generated_occurrences[ 0 ].id;
+
+		const putRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
+			{ headers: adminHeaders, data: { rrule: '' } }
+		);
+		expect( putRes.ok() ).toBeTruthy();
+		const body = await putRes.json();
+		expect( body.rrule ).toBeNull();
+		expect( body.recurrence_mode ).toBe( 'none' );
+
+		const after = await getMaster( localApi, masterEventDateId );
+		expect( after.event_id ).toBe( eventPostId );
+		expect( after.start_datetime ).toBe( master.start_datetime );
+		expect( after.occurrence_type ).toBe( 'single' );
+		expect( after.generated_occurrences ?? [] ).toHaveLength( 0 );
+
+		const removedRes = await localApi.get(
+			`/wp-json/fair-events/v1/event-dates/${ removedId }`,
+			{ headers: adminHeaders }
+		);
+		expect( removedRes.status() ).toBe( 404 );
+	} );
+
+	test( 'PUT rrule: "" ends an irregular series and keeps its first date', async ( {
+		request: req,
+	} ) => {
+		const localApi = req;
+		const edRes = await localApi.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `End irregular series test ${ Date.now() }`,
+					start_datetime: '2035-04-01 10:00:00',
+					end_datetime: '2035-04-01 12:00:00',
+				},
+			}
+		);
+		expect( edRes.ok() ).toBeTruthy();
+		masterEventDateId = ( await edRes.json() ).id;
+
+		const manualRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
+			{
+				headers: adminHeaders,
+				data: {
+					recurrence_mode: 'manual',
+					manual_dates: [ '2035-04-01', '2035-04-05', '2035-04-19' ],
+				},
+			}
+		);
+		expect( manualRes.ok() ).toBeTruthy();
+		const manual = await getMaster( localApi, masterEventDateId );
+		expect( manual.recurrence_mode ).toBe( 'manual' );
+		expect( manual.generated_occurrences.length ).toBe( 2 );
+
+		const putRes = await localApi.put(
+			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }`,
+			{ headers: adminHeaders, data: { rrule: '' } }
+		);
+		expect( putRes.ok() ).toBeTruthy();
+
+		const after = await getMaster( localApi, masterEventDateId );
+		expect( after.recurrence_mode ).toBe( 'none' );
+		expect( after.occurrence_type ).toBe( 'single' );
+		expect( after.start_datetime ).toBe( manual.start_datetime );
+		expect( after.generated_occurrences ?? [] ).toHaveLength( 0 );
 	} );
 
 	test( 'a details PUT that omits rrule leaves an existing series intact', async ( {
@@ -2174,7 +2253,9 @@ test.describe( 'EventDatesController — excluded dates of a regular series (#17
 		for ( const postId of postIds ) {
 			await api.delete(
 				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
-				{ headers: adminHeaders }
+				{
+					headers: adminHeaders,
+				}
 			);
 		}
 		if ( subscriberId ) {

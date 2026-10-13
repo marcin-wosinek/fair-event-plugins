@@ -444,3 +444,208 @@ test( 'ignores a stale preview response', async () => {
 		screen.getByRole( 'link', { name: 'Test Google Maps link' } )
 	).toHaveAttribute( 'href', 'https://example.com/second' );
 } );
+
+describe( 'venue deletion confirmation (#1772)', () => {
+	const otherVenue = { ...existingVenue, id: 2, name: 'Other Venue' };
+	let confirmSpy;
+
+	const mockVenues = ( { list = [ existingVenue ], onDelete } = {} ) => {
+		apiFetch.mockImplementation( ( options ) => {
+			if ( options.method === 'DELETE' ) {
+				return onDelete( options );
+			}
+			return Promise.resolve(
+				typeof list === 'function' ? list() : list
+			);
+		} );
+	};
+
+	// Scoped to the notice itself: the speak region that announces it
+	// outlives the test that rendered it.
+	const expectSuccessNotice = ( text ) =>
+		waitFor( () =>
+			expect(
+				document.querySelector( '.components-notice.is-success' )
+			).toHaveTextContent( text )
+		);
+
+	const deleteCalls = () =>
+		apiFetch.mock.calls.filter( ( [ o ] ) => o.method === 'DELETE' );
+
+	const openDeleteDialog = async () => {
+		render( <VenuesApp canDeleteVenues /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Delete' } )
+		);
+		return screen.findByRole( 'dialog', { name: 'Delete venue?' } );
+	};
+
+	beforeEach( () => {
+		confirmSpy = jest.spyOn( window, 'confirm' );
+	} );
+
+	afterEach( () => {
+		confirmSpy.mockRestore();
+	} );
+
+	test( 'names the venue and explains what happens to its events', async () => {
+		mockVenues( { onDelete: () => Promise.resolve( {} ) } );
+
+		const dialog = await openDeleteDialog();
+
+		expect( confirmSpy ).not.toHaveBeenCalled();
+		expect( dialog ).toHaveTextContent(
+			'Delete the venue Existing Venue (Gran Via 1, Valencia)?'
+		);
+		expect( dialog ).toHaveTextContent(
+			'Event dates that use this venue will be left without a venue. The events themselves and all their other details are kept.'
+		);
+		expect( dialog ).toHaveTextContent( 'This cannot be undone.' );
+		expect(
+			screen.getByRole( 'button', { name: 'Delete venue' } )
+		).toHaveClass( 'is-destructive' );
+	} );
+
+	test( 'says so when the venue has no address', async () => {
+		mockVenues( {
+			list: [ { ...existingVenue, address: '' } ],
+			onDelete: () => Promise.resolve( {} ),
+		} );
+
+		const dialog = await openDeleteDialog();
+
+		expect( dialog ).toHaveTextContent(
+			'Delete the venue Existing Venue? It has no address.'
+		);
+	} );
+
+	test( 'cancelling deletes nothing', async () => {
+		mockVenues( { onDelete: () => Promise.resolve( {} ) } );
+
+		await openDeleteDialog();
+		fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( deleteCalls() ).toHaveLength( 0 );
+		expect( screen.getByText( 'Existing Venue' ) ).toBeInTheDocument();
+	} );
+
+	test( 'confirming deletes once, shows progress and names the venue afterwards', async () => {
+		let finishDelete;
+		let list = [ existingVenue, otherVenue ];
+		mockVenues( {
+			list: () => list,
+			onDelete: () =>
+				new Promise( ( resolve ) => {
+					finishDelete = resolve;
+				} ),
+		} );
+
+		render( <VenuesApp canDeleteVenues /> );
+		fireEvent.click(
+			( await screen.findAllByRole( 'button', { name: 'Delete' } ) )[ 0 ]
+		);
+		const confirm = await screen.findByRole( 'button', {
+			name: 'Delete venue',
+		} );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
+
+		const busy = await screen.findByRole( 'button', { name: 'Deleting…' } );
+		expect( busy ).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect( deleteCalls() ).toHaveLength( 1 );
+		expect( deleteCalls()[ 0 ][ 0 ].path ).toBe(
+			'/fair-events/v1/venues/1'
+		);
+
+		list = [ otherVenue ];
+		await act( async () => finishDelete( { deleted: true } ) );
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		await expectSuccessNotice( 'Venue Existing Venue deleted.' );
+		expect( deleteCalls() ).toHaveLength( 1 );
+	} );
+
+	test( 'a failure keeps the dialog open with a contextual error and allows a retry', async () => {
+		const onDelete = jest
+			.fn()
+			.mockRejectedValueOnce( { message: 'Failed to delete venue.' } )
+			.mockResolvedValueOnce( { deleted: true } );
+		mockVenues( { onDelete } );
+
+		const dialog = await openDeleteDialog();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Delete venue' } )
+		);
+
+		await waitFor( () =>
+			expect( dialog ).toHaveTextContent(
+				'Existing Venue was not deleted: Failed to delete venue. It is still in the list, but event dates may already have lost it as their venue — check them before trying again.'
+			)
+		);
+		expect( dialog ).toHaveTextContent( 'Delete the venue Existing Venue' );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Delete venue' } )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( onDelete ).toHaveBeenCalledTimes( 2 );
+	} );
+
+	test( 'a failure whose venue is gone on reload is reported as deleted', async () => {
+		let list = [ existingVenue ];
+		mockVenues( {
+			list: () => list,
+			onDelete: () => {
+				list = [];
+				return Promise.reject( { message: 'Timed out.' } );
+			},
+		} );
+
+		await openDeleteDialog();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Delete venue' } )
+		);
+
+		await expectSuccessNotice( 'Venue Existing Venue deleted.' );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+	} );
+
+	test( 'withholds another attempt when the outcome cannot be confirmed', async () => {
+		let failing = false;
+		apiFetch.mockImplementation( ( options ) => {
+			if ( options.method === 'DELETE' ) {
+				failing = true;
+				return Promise.reject( { message: 'Offline.' } );
+			}
+			return failing
+				? Promise.reject( { message: 'Offline.' } )
+				: Promise.resolve( [ existingVenue ] );
+		} );
+
+		const dialog = await openDeleteDialog();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Delete venue' } )
+		);
+
+		await waitFor( () =>
+			expect( dialog ).toHaveTextContent(
+				'Could not confirm whether Existing Venue was deleted. Reload the page to see the current venues before trying again.'
+			)
+		);
+		expect(
+			screen.getByRole( 'button', { name: 'Delete venue' } )
+		).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Cancel' } )
+		).not.toBeDisabled();
+	} );
+} );

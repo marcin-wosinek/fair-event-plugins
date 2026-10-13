@@ -996,7 +996,7 @@ describe( 'EventTickets — single pricing period by default (#1138)', () => {
 		);
 
 		expect(
-			screen.getByText( /Merge to one sale window/i )
+			screen.getByRole( 'dialog', { name: 'Merge sale periods?' } )
 		).toBeInTheDocument();
 
 		fireEvent.click(

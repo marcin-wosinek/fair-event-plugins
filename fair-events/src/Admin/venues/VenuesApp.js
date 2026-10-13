@@ -18,6 +18,11 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
+/**
+ * Internal dependencies
+ */
+import ConfirmActionModal from '../components/ConfirmActionModal.js';
+
 const VENUE_FIELDS = [
 	'name',
 	'address',
@@ -131,6 +136,10 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 		website_url: '',
 	} );
 	const [ isSaving, setIsSaving ] = useState( false );
+	const [ deleteTarget, setDeleteTarget ] = useState( null );
+	const [ isDeleting, setIsDeleting ] = useState( false );
+	const [ deleteError, setDeleteError ] = useState( null );
+	const [ deleteOutcomeUnknown, setDeleteOutcomeUnknown ] = useState( false );
 	const [ selectedVenues, setSelectedVenues ] = useState( new Set() );
 	const [ isImporting, setIsImporting ] = useState( false );
 	const [ mapsPreviewUrl, setMapsPreviewUrl ] = useState( null );
@@ -249,32 +258,83 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 		setIsFormOpen( true );
 	};
 
-	const handleDelete = async ( id ) => {
-		if (
-			! window.confirm(
-				__(
-					'Are you sure you want to delete this venue?',
-					'fair-events'
-				)
-			)
-		) {
+	const handleDelete = ( venue ) => {
+		setDeleteError( null );
+		setDeleteOutcomeUnknown( false );
+		setDeleteTarget( venue );
+	};
+
+	const closeDeleteDialog = () => {
+		setDeleteTarget( null );
+		setDeleteError( null );
+		setDeleteOutcomeUnknown( false );
+	};
+
+	const confirmDelete = async () => {
+		if ( isDeleting || ! deleteTarget ) {
 			return;
 		}
 
+		const venue = deleteTarget;
+		const deletedMessage = sprintf(
+			/* translators: %s: venue name */
+			__( 'Venue %s deleted.', 'fair-events' ),
+			venue.name
+		);
+
+		setIsDeleting( true );
+		setDeleteError( null );
 		setError( null );
 		setSuccess( null );
 
 		try {
 			await apiFetch( {
-				path: `/fair-events/v1/venues/${ id }`,
+				path: `/fair-events/v1/venues/${ venue.id }`,
 				method: 'DELETE',
 			} );
-			setSuccess( __( 'Venue deleted successfully.', 'fair-events' ) );
+			closeDeleteDialog();
+			setSuccess( deletedMessage );
 			loadVenues();
 		} catch ( err ) {
-			setError(
-				err.message || __( 'Failed to delete venue.', 'fair-events' )
-			);
+			// A failed request says nothing certain about what was saved, so
+			// read the list back before offering another attempt.
+			try {
+				const data = await apiFetch( {
+					path: '/fair-events/v1/venues',
+				} );
+				setVenues( data );
+				if ( data.some( ( v ) => v.id === venue.id ) ) {
+					setDeleteError(
+						sprintf(
+							/* translators: 1: venue name, 2: error message */
+							__(
+								'%1$s was not deleted: %2$s It is still in the list, but event dates may already have lost it as their venue — check them before trying again.',
+								'fair-events'
+							),
+							venue.name,
+							err.message ||
+								__( 'Failed to delete venue.', 'fair-events' )
+						)
+					);
+				} else {
+					closeDeleteDialog();
+					setSuccess( deletedMessage );
+				}
+			} catch ( reloadErr ) {
+				setDeleteOutcomeUnknown( true );
+				setDeleteError(
+					sprintf(
+						/* translators: %s: venue name */
+						__(
+							'Could not confirm whether %s was deleted. Reload the page to see the current venues before trying again.',
+							'fair-events'
+						),
+						venue.name
+					)
+				);
+			}
+		} finally {
+			setIsDeleting( false );
 		}
 	};
 
@@ -652,7 +712,7 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 															isDestructive
 															onClick={ () =>
 																handleDelete(
-																	venue.id
+																	venue
 																)
 															}
 														>
@@ -672,6 +732,50 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 					</VStack>
 				</CardBody>
 			</Card>
+
+			{ deleteTarget && (
+				<ConfirmActionModal
+					title={ __( 'Delete venue?', 'fair-events' ) }
+					confirmLabel={ __( 'Delete venue', 'fair-events' ) }
+					busyLabel={ __( 'Deleting…', 'fair-events' ) }
+					isDestructive
+					isBusy={ isDeleting }
+					confirmDisabled={ deleteOutcomeUnknown }
+					error={ deleteError }
+					onConfirm={ confirmDelete }
+					onCancel={ closeDeleteDialog }
+				>
+					<p style={ { margin: 0 } }>
+						{ deleteTarget.address
+							? sprintf(
+									/* translators: 1: venue name, 2: venue address */
+									__(
+										'Delete the venue %1$s (%2$s)?',
+										'fair-events'
+									),
+									deleteTarget.name,
+									deleteTarget.address
+							  )
+							: sprintf(
+									/* translators: %s: venue name */
+									__(
+										'Delete the venue %s? It has no address.',
+										'fair-events'
+									),
+									deleteTarget.name
+							  ) }
+					</p>
+					<p style={ { margin: 0 } }>
+						{ __(
+							'Event dates that use this venue will be left without a venue. The events themselves and all their other details are kept.',
+							'fair-events'
+						) }
+					</p>
+					<p style={ { margin: 0 } }>
+						{ __( 'This cannot be undone.', 'fair-events' ) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			{ isFormOpen && (
 				<Modal

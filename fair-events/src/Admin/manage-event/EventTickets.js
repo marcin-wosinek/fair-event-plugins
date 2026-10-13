@@ -13,7 +13,6 @@ import {
 	CardBody,
 	Button,
 	CheckboxControl,
-	__experimentalConfirmDialog as ConfirmDialog,
 	DropdownMenu,
 	FormTokenField,
 	MenuGroup,
@@ -35,6 +34,7 @@ import { moreVertical } from '@wordpress/icons';
 import apiFetch from '@wordpress/api-fetch';
 import SalePeriodsCalendar, { salePeriodColor } from './SalePeriodsCalendar.js';
 import ReorderAddonsModal, { moveItem } from './ReorderAddonsModal.js';
+import ConfirmActionModal from '../components/ConfirmActionModal.js';
 import {
 	resolveEffectiveSalePeriods,
 	hasUsableSalePeriodRange,
@@ -121,6 +121,8 @@ export default function EventTickets( {
 	endDatetime: endDatetimeProp,
 	lastOccurrenceDatetime,
 	isSeries,
+	eventTitle,
+	eventDateLabel,
 	onDirtyChange,
 	onSavedSettingsChange,
 } ) {
@@ -146,6 +148,11 @@ export default function EventTickets( {
 	const [ loading, setLoading ] = useState( ! initialData );
 	const [ saving, setSaving ] = useState( false );
 	const [ importing, setImporting ] = useState( false );
+	// The file awaiting confirmation. Kept until the dialog closes so a failed
+	// import can be retried without choosing the file again.
+	const [ importFile, setImportFile ] = useState( null );
+	const [ importError, setImportError ] = useState( null );
+	const [ importOutcomeUnknown, setImportOutcomeUnknown ] = useState( false );
 	const [ error, setError ] = useState( null );
 	const [ success, setSuccess ] = useState( null );
 	const [ groups, setGroups ] = useState( [] );
@@ -397,67 +404,107 @@ export default function EventTickets( {
 		}
 	};
 
-	const handleImportFile = async ( event ) => {
+	const handleImportFile = ( event ) => {
 		const file = event.target.files && event.target.files[ 0 ];
 		if ( file ) {
+			setImportError( null );
+			setImportOutcomeUnknown( false );
+			setImportFile( file );
+		}
+	};
+
+	// Clearing the input lets the same file be chosen again afterwards.
+	const closeImportDialog = () => {
+		setImportFile( null );
+		setImportError( null );
+		setImportOutcomeUnknown( false );
+		if ( fileInputRef.current ) {
+			fileInputRef.current.value = '';
+		}
+	};
+
+	const confirmImport = async () => {
+		if ( importing || ! importFile ) {
+			return;
+		}
+
+		setImporting( true );
+		setImportError( null );
+		setError( null );
+		setSuccess( null );
+
+		let parsed;
+		try {
+			parsed = JSON.parse( await importFile.text() );
 			if (
-				! window.confirm(
-					__(
-						'Importing will replace all current ticket types, sale periods, prices, and settings for this event. Continue?',
-						'fair-events'
-					)
-				)
+				! parsed ||
+				typeof parsed !== 'object' ||
+				parsed.type !== 'fair-events-tickets'
 			) {
-				event.target.value = '';
-				return;
+				throw new Error();
 			}
-
-			setImporting( true );
-			setError( null );
-			setSuccess( null );
-
-			try {
-				const text = await file.text();
-				const parsed = JSON.parse( text );
-
-				if (
-					! parsed ||
-					typeof parsed !== 'object' ||
-					parsed.type !== 'fair-events-tickets'
-				) {
-					throw new Error(
-						__(
-							'Invalid file format. Expected a fair-events-tickets export.',
-							'fair-events'
-						)
-					);
-				}
-
-				const data = await apiFetch( {
-					path: `/fair-events/v1/event-dates/${ eventDateId }/tickets/import`,
-					method: 'POST',
-					data: parsed,
-				} );
-
-				populateFromData( data );
-				setSuccess(
+		} catch ( err ) {
+			setImportError(
+				sprintf(
+					/* translators: %s: name of the selected file */
 					__(
-						'Ticket configuration imported successfully.',
+						'Nothing was imported: %s is not a ticket settings export. Cancel and choose a file exported from an event.',
+						'fair-events'
+					),
+					importFile.name
+				)
+			);
+			setImporting( false );
+			return;
+		}
+
+		try {
+			const data = await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }/tickets/import`,
+				method: 'POST',
+				data: parsed,
+			} );
+
+			populateFromData( data );
+			closeImportDialog();
+			setSuccess(
+				sprintf(
+					/* translators: %s: name of the imported file */
+					__( 'Ticket settings imported from %s.', 'fair-events' ),
+					importFile.name
+				)
+			);
+		} catch ( err ) {
+			const status = err?.data?.status;
+			if ( status >= 400 && status < 500 ) {
+				// The server rejects an import before it changes anything.
+				setImportError(
+					sprintf(
+						/* translators: %s: error message */
+						__(
+							'Nothing was imported: %s The saved ticket settings are unchanged.',
+							'fair-events'
+						),
+						err.message ||
+							__(
+								'Failed to import ticket configuration.',
+								'fair-events'
+							)
+					)
+				);
+			} else {
+				// An import replaces data in several steps, so a request
+				// that broke off may have replaced part of it.
+				setImportOutcomeUnknown( true );
+				setImportError(
+					__(
+						'The import did not finish, and the saved ticket settings may be partly replaced. Reload the page to see what is saved before importing again.',
 						'fair-events'
 					)
 				);
-			} catch ( err ) {
-				setError(
-					err.message ||
-						__(
-							'Failed to import ticket configuration.',
-							'fair-events'
-						)
-				);
-			} finally {
-				setImporting( false );
-				event.target.value = '';
 			}
+		} finally {
+			setImporting( false );
 		}
 	};
 
@@ -2788,22 +2835,134 @@ export default function EventTickets( {
 					</PanelBody>
 				</Panel>
 			</Card>
-			<ConfirmDialog
-				isOpen={ mergePeriodsDialogOpen }
-				onConfirm={ mergeToSinglePeriod }
-				onCancel={ () => setMergePeriodsDialogOpen( false ) }
-				confirmButtonText={ __( 'Merge periods', 'fair-events' ) }
-				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
-			>
-				{ sprintf(
-					/* translators: %d: number of sale periods being merged */
-					__(
-						'Merge to one sale window? Prices for the other %d periods will be discarded.',
-						'fair-events'
-					),
-					Math.max( salePeriods.length - 1, 0 )
-				) }
-			</ConfirmDialog>
+			{ importFile && (
+				<ConfirmActionModal
+					title={ __( 'Import ticket settings?', 'fair-events' ) }
+					confirmLabel={ __( 'Import and replace', 'fair-events' ) }
+					busyLabel={ __( 'Importing…', 'fair-events' ) }
+					isDestructive
+					isBusy={ importing }
+					confirmDisabled={ importOutcomeUnknown }
+					error={ importError }
+					onConfirm={ confirmImport }
+					onCancel={ closeImportDialog }
+				>
+					<p style={ { margin: 0 } }>
+						{ eventTitle && eventDateLabel
+							? sprintf(
+									/* translators: 1: file name, 2: event title, 3: event date */
+									__(
+										'Import %1$s into %2$s on %3$s?',
+										'fair-events'
+									),
+									importFile.name,
+									eventTitle,
+									eventDateLabel
+							  )
+							: sprintf(
+									/* translators: %s: file name */
+									__(
+										'Import %s into this event?',
+										'fair-events'
+									),
+									importFile.name
+							  ) }
+					</p>
+					<p style={ { margin: 0 } }>
+						{ __(
+							"The import is saved immediately. It replaces all of this event's ticket types, sale periods, prices, and add-ons, and applies the total capacity and ticket options set in the file.",
+							'fair-events'
+						) }
+					</p>
+					{ dirty && (
+						<p style={ { margin: 0 } }>
+							{ __(
+								'Your unsaved ticket changes on this screen are replaced too.',
+								'fair-events'
+							) }
+						</p>
+					) }
+					<p style={ { margin: 0 } }>
+						{ __(
+							'This cannot be undone. Export the current ticket settings first if you may need them again.',
+							'fair-events'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
+			{ mergePeriodsDialogOpen && (
+				<ConfirmActionModal
+					title={ __( 'Merge sale periods?', 'fair-events' ) }
+					confirmLabel={ __( 'Merge periods', 'fair-events' ) }
+					isDestructive
+					onConfirm={ mergeToSinglePeriod }
+					onCancel={ () => setMergePeriodsDialogOpen( false ) }
+				>
+					<p style={ { margin: 0 } }>
+						{ eventTitle
+							? sprintf(
+									/* translators: 1: number of sale periods, 2: event title */
+									_n(
+										'Merge the %1$d sale period of %2$s into one sale window?',
+										'Merge the %1$d sale periods of %2$s into one sale window?',
+										salePeriods.length,
+										'fair-events'
+									),
+									salePeriods.length,
+									eventTitle
+							  )
+							: sprintf(
+									/* translators: %d: number of sale periods */
+									_n(
+										'Merge the %d sale period of this event into one sale window?',
+										'Merge the %d sale periods of this event into one sale window?',
+										salePeriods.length,
+										'fair-events'
+									),
+									salePeriods.length
+							  ) }
+					</p>
+					<p style={ { margin: 0 } }>
+						{ sprintf(
+							/* translators: 1: name of the first sale period, 2: number of other sale periods */
+							_n(
+								'Ticket prices from the first period, %1$s, are kept. Ticket prices from the %2$d other period are discarded.',
+								'Ticket prices from the first period, %1$s, are kept. Ticket prices from the %2$d other periods are discarded.',
+								Math.max( salePeriods.length - 1, 0 ),
+								'fair-events'
+							),
+							salePeriods[ 0 ]?.name ||
+								sprintf(
+									/* translators: %d: sale period number */
+									__( 'Period %d', 'fair-events' ),
+									1
+								),
+							Math.max( salePeriods.length - 1, 0 )
+						) }
+					</p>
+					<p style={ { margin: 0 } }>
+						{ __(
+							'The merged window starts when the first period starts and ends when the last period ends.',
+							'fair-events'
+						) }
+					</p>
+					{ settings.activity_period_pricing &&
+						options.length > 0 && (
+							<p style={ { margin: 0 } }>
+								{ __(
+									'Add-on prices set per sale period are not merged. Check the price of each add-on before saving.',
+									'fair-events'
+								) }
+							</p>
+						) }
+					<p style={ { margin: 0 } }>
+						{ __(
+							'Nothing is saved until you select Save tickets.',
+							'fair-events'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 			{ showReorderModal && (
 				<ReorderAddonsModal
 					options={ options }
