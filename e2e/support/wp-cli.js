@@ -7,6 +7,7 @@
  */
 
 import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 /** wp-env defaults; overridable per the API-test convention. */
 export const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -24,7 +25,7 @@ export const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 export function wpCli(args, { allowFailure = false } = {}) {
 	try {
 		return execSync(`npx wp-env run tests-cli wp ${args}`, {
-			cwd: process.cwd(),
+			cwd: fileURLToPath(new URL('../../', import.meta.url)),
 			encoding: 'utf8',
 			stdio: ['ignore', 'pipe', 'pipe'],
 		});

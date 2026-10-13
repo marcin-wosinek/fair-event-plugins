@@ -117,6 +117,29 @@ class WeekScheduleTest extends TestCase {
 		);
 	}
 
+	/** Immediate selection keeps today's week after the configured send has passed. */
+	public function test_immediate_week_differs_from_next_scheduled_week_at_year_end() {
+		$now = $this->moment( '2027-01-03 23:30', 'America/Los_Angeles' );
+		$this->assertSame( '2027-01-04', $now->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d' ) );
+		$this->assertSame(
+			array(
+				'start' => '2026-12-28',
+				'end'   => '2027-01-03',
+			),
+			WeekSchedule::target_week( $now, 'current', 1 )
+		);
+		$this->assertSame(
+			array(
+				'start' => '2027-01-04',
+				'end'   => '2027-01-10',
+			),
+			WeekSchedule::target_week( $now, 'next', 1 )
+		);
+		$this->assertSame( '2027-01-04', WeekSchedule::target_week( WeekSchedule::next_due( $now, 1, '08:00' ), 'current', 1 )['start'] );
+		$this->assertSame( '2027-01-03', WeekSchedule::target_week( $now, 'current', 0 )['start'] );
+		$this->assertSame( '2027-01-10', WeekSchedule::target_week( $now, 'next', 0 )['start'] );
+	}
+
 	/** A delayed run keeps the week fixed when it was scheduled. */
 	public function test_delayed_run_keeps_the_scheduled_week() {
 		$scheduled = WeekSchedule::target_week( $this->moment( '2026-09-14 09:00' ), 'current', 1 );

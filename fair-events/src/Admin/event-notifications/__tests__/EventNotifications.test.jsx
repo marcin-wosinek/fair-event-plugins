@@ -157,6 +157,20 @@ describe( 'EventNotifications', () => {
 		);
 	} );
 
+	it( 'explains today versus the scheduled week in every channel', async () => {
+		await renderPage();
+		for ( const name of [ 'Telegram', 'Bulk email', 'Individual email' ] ) {
+			expect(
+				within( section( name ) ).getByText(
+					/Previews and tests select the week relative to today in the site timezone\. Scheduled sends select it relative to their scheduled week\./
+				)
+			).toBeInTheDocument();
+		}
+		expect(
+			screen.queryByText( /next scheduled week/ )
+		).not.toBeInTheDocument();
+	} );
+
 	it( 'saves only the Telegram section and keeps unsaved bulk email edits', async () => {
 		const saved = payload( { telegram: { time_of_day: '18:00' } } );
 		await renderPage( payload(), {

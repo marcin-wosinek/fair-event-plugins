@@ -290,6 +290,25 @@ class IndividualEmailDispatcherTest extends TestCase {
 		$this->assertSame( array( IndividualEmailSettings::LOCAL_EVENTS, '2027-01-04', '2027-01-10' ), $this->events->requests[0] );
 	}
 
+	/** Immediate email dates stay in the local week across the ISO year boundary. */
+	public function test_immediate_event_week_at_local_year_boundary() {
+		$now = self::moment( '2027-01-03 23:30', 'America/Los_Angeles' );
+		$this->assertSame(
+			array(
+				'start' => '2026-12-28',
+				'end'   => '2027-01-03',
+			),
+			IndividualEmailDispatcher::event_week( 'current', $now )
+		);
+		$this->assertSame(
+			array(
+				'start' => '2027-01-04',
+				'end'   => '2027-01-10',
+			),
+			IndividualEmailDispatcher::event_week( 'next', $now )
+		);
+	}
+
 	/** The send week is judged in the site timezone, not in UTC. */
 	public function test_send_week_uses_the_site_timezone() {
 		// Monday 00:30 in Madrid is still Sunday in UTC.

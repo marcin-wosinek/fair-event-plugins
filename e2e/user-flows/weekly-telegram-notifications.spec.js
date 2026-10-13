@@ -227,7 +227,7 @@ test.describe('Weekly Telegram notifications', () => {
 		);
 		expect(await page.content()).not.toContain(TOKEN);
 
-		// An event in the week the next send covers, now the schedule is final.
+		// An event in the selected week relative to today.
 		event = runScript(
 			'weekly-summary-fixture.php',
 			'E2E_WEEKLY',
@@ -247,6 +247,15 @@ test.describe('Weekly Telegram notifications', () => {
 		await expect(
 			previewMessage.getByRole('link', { name: event.eventTitle })
 		).toHaveAttribute('href', event.eventUrl);
+
+		const previewText = await previewMessage.evaluate((element) => {
+			const copy = element.cloneNode(true);
+			// WordPress replaces emoji text with images in the browser.
+			for (const emoji of copy.querySelectorAll('img.emoji')) {
+				emoji.replaceWith(emoji.alt);
+			}
+			return copy.textContent;
+		});
 
 		// The test names where it goes before it is sent.
 		await expect(
@@ -276,6 +285,7 @@ test.describe('Weekly Telegram notifications', () => {
 			'@e2e_missing_chat',
 		]);
 		for (const request of requests) {
+			expect(request.text).toBe(previewText);
 			const lines = request.text.split('\n');
 			// Linked heading, visible date range, then bullet items.
 			expect(lines[0]).toBe(pageTitle);

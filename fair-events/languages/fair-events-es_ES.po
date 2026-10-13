@@ -306,7 +306,7 @@ msgstr "Título"
 #: src/Admin/components/ConfirmActionModal.js:84
 #: src/Admin/components/InlineVenueCreator.js:95
 #: src/Admin/manage-event/EditInstancesModal.js:75
-#: src/Admin/manage-event/EventSignups.js:991
+#: src/Admin/manage-event/EventSignups.js:1008
 #: src/Admin/manage-event/ManageEventApp.js:1617
 #: src/Admin/manage-event/ManageEventApp.js:1728
 #: src/Admin/manage-event/ManageEventApp.js:1745
@@ -426,7 +426,7 @@ msgid "Remove"
 msgstr "Eliminar"
 
 #: src/Admin/all-events/AllEvents.js:106
-#: src/Admin/manage-event/EventSignups.js:492
+#: src/Admin/manage-event/EventSignups.js:504
 #: src/Admin/manage-event/EventTickets.js:1330
 #: src/Admin/manage-event/EventTickets.js:2417
 #: src/Admin/manage-event/EventTickets.js:2457
@@ -438,7 +438,7 @@ msgid "Name"
 msgstr "Nombre"
 
 #: src/Admin/manage-event/EventFinance.js:591
-#: src/Admin/manage-event/EventSignups.js:500
+#: src/Admin/manage-event/EventSignups.js:512
 #: src/Admin/manage-event/SignupExportModal.js:101
 msgid "Status"
 msgstr "Estado"
@@ -1010,7 +1010,6 @@ msgstr "Saldo"
 #: src/Admin/manage-event/EventFinance.js:391
 #: src/Admin/manage-event/EventFinance.js:448
 #: src/Admin/manage-event/EventFinance.js:579
-#: src/Admin/manage-event/EventSignups.js:503
 #: src/Admin/manage-event/SignupExportModal.js:118
 msgid "Date"
 msgstr "Fecha"
@@ -1136,7 +1135,7 @@ msgstr "Enlazar entrada"
 msgid "Delete Event"
 msgstr "Eliminar evento"
 
-#: src/Admin/manage-event/EventSignups.js:354
+#: src/Admin/manage-event/EventSignups.js:366
 #: src/Admin/manage-event/ManageEventApp.js:1155
 msgid "Details"
 msgstr "Detalles"
@@ -1356,7 +1355,7 @@ msgstr "Tickets guardados correctamente."
 msgid "Failed to save tickets."
 msgstr "Error al guardar los tickets."
 
-#: src/Admin/manage-event/EventSignups.js:494
+#: src/Admin/manage-event/EventSignups.js:506
 #: src/Admin/manage-event/EventTickets.js:1694
 #: src/Admin/manage-event/SignupExportModal.js:76
 msgid "Ticket Type"
@@ -1813,7 +1812,7 @@ msgstr "Venta de entradas"
 msgid "Ticket types, sale periods, and pricing."
 msgstr "Tipos de entradas, períodos de venta y precios."
 
-#: src/Admin/manage-event/EventSignups.js:611
+#: src/Admin/manage-event/EventSignups.js:641
 msgid "Failed to load signups."
 msgstr "Error al cargar los registros."
 
@@ -1821,17 +1820,17 @@ msgstr "Error al cargar los registros."
 msgid "Email"
 msgstr "Correo electrónico"
 
-#: src/Admin/manage-event/EventSignups.js:502
+#: src/Admin/manage-event/EventSignups.js:513
 #: src/Admin/manage-event/SignupExportModal.js:112
 msgid "Mailing"
 msgstr "Boletín"
 
-#: src/Admin/manage-event/EventSignups.js:537
+#: src/Admin/manage-event/EventSignups.js:547
 #: ../fair-events-shared/src/TicketEditModal.js:382
 msgid "Yes"
 msgstr "Sí"
 
-#: src/Admin/manage-event/EventSignups.js:538
+#: src/Admin/manage-event/EventSignups.js:548
 #: ../fair-events-shared/src/TicketEditModal.js:383
 msgid "No"
 msgstr "No"
@@ -2414,7 +2413,7 @@ msgstr "Apple Calendar"
 
 #: src/API/GetTicketsController.php:740
 #: src/API/GetTicketsController.php:2200
-#: src/API/GetTicketsController.php:3465
+#: src/API/GetTicketsController.php:3506
 msgid "Paid tickets are not available because online payments are not configured."
 msgstr "Los tickets de pago no están disponibles porque los pagos en línea no están configurados."
 
@@ -2586,7 +2585,7 @@ msgstr "Confirmar"
 msgid "Link Existing Post"
 msgstr "Enlazar entrada existente"
 
-#: src/Admin/manage-event/EventSignups.js:890
+#: src/Admin/manage-event/EventSignups.js:907
 msgid "Mailing opt-ins only"
 msgstr "Solo suscripciones al correo"
 
@@ -2782,37 +2781,37 @@ msgstr "Guardar organizador"
 msgid "Organizer"
 msgstr "Organizador"
 
-#: src/API/GetTicketsController.php:3271
-#: src/API/GetTicketsController.php:3364
-#: src/API/GetTicketsController.php:3396
-#: src/API/GetTicketsController.php:3653
+#: src/API/GetTicketsController.php:3312
+#: src/API/GetTicketsController.php:3405
+#: src/API/GetTicketsController.php:3437
+#: src/API/GetTicketsController.php:3694
 msgid "Transaction not found."
 msgstr "Transacción no encontrada."
 
-#: src/API/GetTicketsController.php:3405
-#: src/API/GetTicketsController.php:3499
+#: src/API/GetTicketsController.php:3446
+#: src/API/GetTicketsController.php:3540
 msgid "This payment cannot be retried."
 msgstr "Este pago no se puede reintentar."
 
-#: src/API/GetTicketsController.php:3414
+#: src/API/GetTicketsController.php:3455
 msgid "This payment is not retriable from this endpoint."
 msgstr "Este pago no se puede reintentar desde este endpoint."
 
-#: src/API/GetTicketsController.php:3434
-#: src/API/GetTicketsController.php:3619
-#: src/API/GetTicketsController.php:3630
+#: src/API/GetTicketsController.php:3475
+#: src/API/GetTicketsController.php:3660
+#: src/API/GetTicketsController.php:3671
 msgid "This payment is missing context needed to retry."
 msgstr "Este pago no tiene el contexto necesario para reintentar."
 
-#: src/API/GetTicketsController.php:3457
+#: src/API/GetTicketsController.php:3498
 msgid "This payment session has expired. Please start over."
 msgstr "Esta sesión de pago ha caducado. Por favor, comienza de nuevo."
 
-#: src/API/GetTicketsController.php:3509
+#: src/API/GetTicketsController.php:3550
 msgid "Original line items could not be loaded."
 msgstr "No se pudieron cargar los artículos de línea originales."
 
-#: src/API/GetTicketsController.php:3662
+#: src/API/GetTicketsController.php:3703
 msgid "This payment is not manageable from this endpoint."
 msgstr "Este pago no se puede gestionar desde este endpoint."
 
@@ -3358,7 +3357,7 @@ msgstr "Cargando lugares…"
 msgid "No venues found. Create your first venue to get started."
 msgstr "No se han encontrado lugares. Crea tu primer lugar para empezar."
 
-#: src/Admin/manage-event/EventSignups.js:647
+#: src/Admin/manage-event/EventSignups.js:677
 #: src/Admin/venues/VenuesApp.js:639
 msgid "Actions"
 msgstr "Acciones"
@@ -3367,7 +3366,7 @@ msgstr "Acciones"
 msgid "No address"
 msgstr "Sin dirección"
 
-#: src/Admin/manage-event/EventSignups.js:751
+#: src/Admin/manage-event/EventSignups.js:781
 #: src/Admin/venues/VenuesApp.js:719
 msgid "Delete"
 msgstr "Borrar"
@@ -3434,16 +3433,15 @@ msgstr "Crear lugar"
 msgid "Tickets for %s"
 msgstr "Tiques para %s"
 
-#: src/Admin/manage-event/EventSignups.js:501
 #: src/Admin/manage-event/SignupExportModal.js:107
 msgid "Transaction"
 msgstr "Transacción"
 
-#: src/Admin/manage-event/EventSignups.js:323
+#: src/Admin/manage-event/EventSignups.js:335
 msgid "Confirmed — over capacity"
 msgstr "Confirmado — por encima de la capacidad"
 
-#: src/Admin/manage-event/EventSignups.js:324
+#: src/Admin/manage-event/EventSignups.js:336
 #: ../fair-events-shared/src/TicketEditModal.js:54
 msgid "Confirmed"
 msgstr "Confirmado"
@@ -3460,14 +3458,14 @@ msgstr "No tienes permiso para editar esta entrada."
 msgid "Failed to create event data."
 msgstr "No se pudieron crear los datos del evento."
 
-#: src/API/GetTicketsController.php:2750
-#: src/API/GetTicketsController.php:2789
-#: src/API/GetTicketsController.php:3110
+#: src/API/GetTicketsController.php:2791
+#: src/API/GetTicketsController.php:2830
+#: src/API/GetTicketsController.php:3151
 msgid "Signup not found."
 msgstr "Inscripción no encontrada."
 
-#: src/API/GetTicketsController.php:2758
-#: src/Admin/manage-event/EventSignups.js:870
+#: src/API/GetTicketsController.php:2799
+#: src/Admin/manage-event/EventSignups.js:887
 msgid "Failed to delete signup."
 msgstr "No se pudo eliminar la inscripción."
 
@@ -3476,7 +3474,7 @@ msgstr "No se pudo eliminar la inscripción."
 msgid "Loading calendar…"
 msgstr "Cargando calendario…"
 
-#: src/Admin/manage-event/EventSignups.js:1039
+#: src/Admin/manage-event/EventSignups.js:1056
 msgid "This deletion is permanent. It removes only the local signup record and does not refund or cancel any payment-provider transaction."
 msgstr "Esta eliminación es permanente. Solo elimina el registro de inscripción local y no reembolsa ni cancela ninguna transacción del proveedor de pagos."
 
@@ -3649,13 +3647,13 @@ msgstr "No hay disponible un enlace de Google Maps para estos valores."
 msgid "Includes the complete day of the last occurrence."
 msgstr "Incluye el día completo de la última ocurrencia."
 
-#: src/API/GetTicketsController.php:3671
-#: src/API/GetTicketsController.php:3705
-#: src/API/GetTicketsController.php:3714
+#: src/API/GetTicketsController.php:3712
+#: src/API/GetTicketsController.php:3746
+#: src/API/GetTicketsController.php:3755
 msgid "This payment could not be cancelled safely. Please try again."
 msgstr "No se pudo cancelar este pago de forma segura. Intenta de nuevo."
 
-#: src/API/GetTicketsController.php:3683
+#: src/API/GetTicketsController.php:3724
 msgid "We could not verify the payment status. Please try again."
 msgstr "No pudimos verificar el estado del pago. Intenta de nuevo."
 
@@ -3748,9 +3746,9 @@ msgstr "No tienes permiso para copiar eventos de calendario."
 msgid "The event copy could not be completed, and any partial copy was removed. Please try again."
 msgstr "No se pudo completar la copia del evento y se eliminó cualquier copia parcial. Inténtalo de nuevo."
 
-#: src/Admin/manage-event/EventSignups.js:880
+#: src/Admin/manage-event/EventSignups.js:897
 #: src/Admin/manage-event/ManageEventApp.js:969
-#: src/Admin/manage-event/signup-print.js:179
+#: src/Admin/manage-event/signup-print.js:177
 msgid "List"
 msgstr "Lista"
 
@@ -3909,7 +3907,7 @@ msgstr "Sin presupuesto"
 msgid "Save budget"
 msgstr "Guardar presupuesto"
 
-#: src/Admin/manage-event/EventSignups.js:904
+#: src/Admin/manage-event/EventSignups.js:921
 #: src/Admin/manage-event/SignupExportModal.js:388
 msgid "Export"
 msgstr "Exportar"
@@ -4255,23 +4253,23 @@ msgstr "Muestra eventos que aún no han comenzado. Una serie recurrente de este 
 msgid "Event Prices block is empty — every price is hidden in this block's settings."
 msgstr "El bloque de precios de eventos está vacío — todos los precios están ocultos en la configuración de este bloque."
 
-#: src/Admin/manage-event/EventSignups.js:431
+#: src/Admin/manage-event/EventSignups.js:443
 msgid "Selected"
 msgstr "Seleccionado"
 
-#: src/Admin/manage-event/EventSignups.js:434
+#: src/Admin/manage-event/EventSignups.js:446
 msgid "Not selected"
 msgstr "No seleccionado"
 
-#: src/Admin/manage-event/EventSignups.js:435
+#: src/Admin/manage-event/EventSignups.js:447
 msgid "Selection unavailable"
 msgstr "Selección no disponible"
 
-#: src/Admin/manage-event/EventSignups.js:943
+#: src/Admin/manage-event/EventSignups.js:960
 msgid "No confirmed registrations yet."
 msgstr "Aún no hay registros confirmados."
 
-#: src/Admin/manage-event/EventSignups.js:947
+#: src/Admin/manage-event/EventSignups.js:964
 msgid "Nothing to export — no registrations match the current filter."
 msgstr "Nada que exportar — no hay registros que coincidan con el filtro actual."
 
@@ -4317,34 +4315,34 @@ msgstr "Elige las actividades para cada entrada."
 msgid "One of the selected activities is not available for this event."
 msgstr "Una de las actividades seleccionadas no está disponible para este evento."
 
-#: src/API/GetTicketsController.php:2804
+#: src/API/GetTicketsController.php:2845
 msgid "Choose either a new date or a new ticket type."
 msgstr "Elige una fecha nueva o un tipo de entrada nuevo."
 
-#: src/API/GetTicketsController.php:2815
+#: src/API/GetTicketsController.php:2856
 msgid "Enter a reason for going over capacity."
 msgstr "Introduce un motivo para exceder la capacidad."
 
-#: src/API/GetTicketsController.php:2843
+#: src/API/GetTicketsController.php:2884
 msgid "The chosen date is not another active date of this series."
 msgstr "La fecha elegida no es otra fecha activa de esta serie."
 
-#: src/API/GetTicketsController.php:2844
+#: src/API/GetTicketsController.php:2885
 msgid "The chosen ticket type is not available for this signup."
 msgstr "El tipo de entrada elegido no está disponible para este registro."
 
-#: src/API/GetTicketsController.php:2885
-#: src/API/GetTicketsController.php:3168
+#: src/API/GetTicketsController.php:2926
+#: src/API/GetTicketsController.php:3209
 msgid "Only confirmed signups can be moved or given another ticket type."
 msgstr "Solo se pueden mover las inscripciones confirmadas o asignarles otro tipo de entrada."
 
-#: src/API/GetTicketsController.php:2892
+#: src/API/GetTicketsController.php:2933
 #: src/Admin/manage-event/SignupEditModal.js:208
 msgid "Failed to update signup."
 msgstr "Error al actualizar la inscripción."
 
 #. translators: 1: event date, ticket type or activity name, 2: places taken after the change, 3: capacity
-#: src/API/GetTicketsController.php:2938
+#: src/API/GetTicketsController.php:2979
 #: ../fair-events-shared/src/TicketEditModal.js:100
 #, php-format,js-format
 msgid "%1$s would have %2$d of %3$d place taken."
@@ -4368,15 +4366,15 @@ msgid_plural "The chosen ticket type requires at least %d activities per ticket.
 msgstr[0] "El tipo de entrada elegido requiere como mínimo %d actividad por entrada."
 msgstr[1] "El tipo de entrada elegido requiere como mínimo %d actividades por entrada."
 
-#: src/API/GetTicketsController.php:3187
+#: src/API/GetTicketsController.php:3228
 msgid "A whole-series ticket covers every date and cannot be moved."
 msgstr "Una entrada de toda la serie cubre todas las fechas y no se puede mover."
 
-#: src/API/GetTicketsController.php:3206
+#: src/API/GetTicketsController.php:3247
 msgid "This event has no other dates to move the signup to."
 msgstr "Este evento no tiene otras fechas a las que mover la inscripción."
 
-#: src/API/GetTicketsController.php:3237
+#: src/API/GetTicketsController.php:3278
 msgid "This signup has no ticket type to change."
 msgstr "Esta inscripción no tiene tipo de entrada para cambiar."
 
@@ -4466,48 +4464,48 @@ msgstr[0] "Solo queda %d plaza."
 msgstr[1] "Solo quedan %d plazas."
 
 #. translators: %s: activity name
-#: src/Admin/manage-event/EventSignups.js:299
+#: src/Admin/manage-event/EventSignups.js:311
 #, js-format
 msgid "Activity %s added"
 msgstr "Actividad %s añadida"
 
 #. translators: %s: activity name
-#: src/Admin/manage-event/EventSignups.js:307
+#: src/Admin/manage-event/EventSignups.js:319
 #, js-format
 msgid "Moved (activity %s over capacity)"
 msgstr "Movido (actividad %s fuera de capacidad)"
 
-#: src/Admin/manage-event/EventSignups.js:310
+#: src/Admin/manage-event/EventSignups.js:322
 msgid "Moved"
 msgstr "Movido"
 
-#: src/Admin/manage-event/EventSignups.js:312
+#: src/Admin/manage-event/EventSignups.js:324
 msgid "Ticket type changed"
 msgstr "Tipo de entrada cambiado"
 
-#: src/Admin/manage-event/EventSignups.js:353
+#: src/Admin/manage-event/EventSignups.js:365
 msgid "Hide details"
 msgstr "Ocultar detalles"
 
-#: src/Admin/manage-event/EventSignups.js:360
+#: src/Admin/manage-event/EventSignups.js:372
 msgid "Paid after its hold expired"
 msgstr "Pagado después de que su retención expirase"
 
 #. translators: 1: what the administrator did, 2: administrator name, 3: date and time, 4: reason given
-#: src/Admin/manage-event/EventSignups.js:370
+#: src/Admin/manage-event/EventSignups.js:382
 #, js-format
 msgid "%1$s by %2$s on %3$s: %4$s"
 msgstr "%1$s por %2$s el %3$s: %4$s"
 
-#: src/Admin/manage-event/EventSignups.js:376
+#: src/Admin/manage-event/EventSignups.js:388
 msgid "unknown user"
 msgstr "usuario desconocido"
 
-#: src/Admin/manage-event/EventSignups.js:730
+#: src/Admin/manage-event/EventSignups.js:760
 msgid "Move"
 msgstr "Mover"
 
-#: src/Admin/manage-event/EventSignups.js:743
+#: src/Admin/manage-event/EventSignups.js:773
 #: src/Admin/manage-event/SignupEditModal.js:357
 msgid "Change ticket type"
 msgstr "Cambiar tipo de entrada"
@@ -4605,7 +4603,7 @@ msgstr "Usar las actividades del primer ticket para todos los tickets"
 msgid "Ticket %d: select activities"
 msgstr "Ticket %d: selecciona actividades"
 
-#: src/API/GetTicketsController.php:3155
+#: src/API/GetTicketsController.php:3196
 msgid "Tickets in this purchase have been given their own types. Edit each ticket instead."
 msgstr "Los tickets de esta compra tienen sus propios tipos. Edita cada ticket en su lugar."
 
@@ -4614,12 +4612,12 @@ msgid "The chosen ticket type does not allow activities, and this ticket has som
 msgstr "El tipo de ticket elegido no permite actividades, y este ticket tiene algunas."
 
 #. translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)"
-#: src/Admin/manage-event/EventSignups.js:835
+#: src/Admin/manage-event/EventSignups.js:852
 #, js-format
 msgid "Edit %s"
 msgstr "Editar %s"
 
-#: src/Admin/manage-event/EventSignups.js:840
+#: src/Admin/manage-event/EventSignups.js:857
 #: ../fair-events-shared/src/TicketEditModal.js:649
 msgid "Edit ticket"
 msgstr "Editar ticket"
@@ -4719,27 +4717,27 @@ msgstr "Editar entrada — %s"
 msgid "(no name)"
 msgstr "(sin nombre)"
 
-#: src/Admin/manage-event/EventSignups.js:239
+#: src/Admin/manage-event/EventSignups.js:240
 msgid "Ticket not created yet"
 msgstr "Entrada no creada aún"
 
 #: src/Services/SignupFieldsetRenderer.php:61
-#: src/Admin/manage-event/EventSignups.js:493
+#: src/Admin/manage-event/EventSignups.js:505
 #: src/Admin/manage-event/SignupExportModal.js:71
 #: src/blocks/event-signup/frontend.js:997
 msgid "Ticket"
 msgstr "Ticket"
 
-#: src/Admin/manage-event/EventSignups.js:934
+#: src/Admin/manage-event/EventSignups.js:951
 msgid "Some older registrations are still being split into individual tickets. They are listed as one row for now; reload this page in a few minutes to see their tickets."
 msgstr "Algunos registros más antiguos aún se están dividiendo en entradas individuales. Se muestran como una fila por ahora; recarga esta página en unos minutos para ver sus entradas."
 
-#: src/Admin/manage-event/EventSignups.js:990
+#: src/Admin/manage-event/EventSignups.js:1007
 msgid "Delete registration"
 msgstr "Eliminar registro"
 
 #. translators: 1: signup name, 2: number of tickets, 3: payment status
-#: src/Admin/manage-event/EventSignups.js:998
+#: src/Admin/manage-event/EventSignups.js:1015
 #, js-format
 msgid "Delete the registration for %1$s, with its %2$d ticket? Its current payment status is %3$s."
 msgid_plural "Delete the registration for %1$s, with all %2$d of its tickets? Its current payment status is %3$s."
@@ -4871,7 +4869,7 @@ msgstr "Algunos pagos fueron excluidos porque utilizan diferentes monedas: %s."
 #. translators: %d: number of confirmed tickets.
 #. translators: %d: number of tickets on the printed list
 #: src/Admin/event-statistics/EventStatistics.js:378
-#: src/Admin/manage-event/signup-print.js:182
+#: src/Admin/manage-event/signup-print.js:180
 #, js-format
 msgid "%d ticket"
 msgid_plural "%d tickets"
@@ -5141,7 +5139,7 @@ msgid_plural "These linked pages will be published too, even if they are drafts 
 msgstr[0] "Esta página vinculada también se publicará, aunque ahora sea un borrador:"
 msgstr[1] "Estas páginas vinculadas también se publicarán, aunque ahora sean borradores:"
 
-#: src/API/EventNotificationsController.php:986
+#: src/API/EventNotificationsController.php:983
 #: src/Notifications/TelegramFormatter.php:66
 #: src/Admin/manage-event/ManageEventApp.js:1770
 msgid "(no title)"
@@ -5517,10 +5515,6 @@ msgstr ""
 msgid "Save at least one Telegram chat or channel before sending a test message."
 msgstr "Guarda al menos un chat o canal de Telegram antes de enviar un mensaje de prueba."
 
-#: src/API/EventNotificationsController.php:461
-msgid "There are no events in the next scheduled week, so there is nothing to send."
-msgstr "No hay eventos en la próxima semana programada, por lo que no hay nada que enviar."
-
 #: src/API/EventNotificationsController.php:523
 msgid "Choose an event source before turning on the weekly email."
 msgstr ""
@@ -5562,7 +5556,7 @@ msgstr ""
 msgid "Update Fair Audience to manage the weekly email here. Nothing was changed."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:887
+#: src/API/EventNotificationsController.php:886
 msgid "Choose an event source and save before previewing the weekly email."
 msgstr ""
 
@@ -5752,11 +5746,6 @@ msgstr "Enviar a las"
 msgid "Which week to include"
 msgstr "Qué semana incluir"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:248
-#: src/Admin/event-notifications/IndividualEmailChannel.js:337
-msgid "Weeks run from Monday to Sunday."
-msgstr ""
-
 #: src/Admin/event-notifications/EmailContentControls.js:35
 msgid "Skip the email when the week has no events"
 msgstr ""
@@ -5829,7 +5818,7 @@ msgstr ""
 
 #: src/Admin/event-notifications/BulkEmailChannel.js:358
 #: src/Admin/event-notifications/IndividualEmailChannel.js:466
-#: src/Admin/event-notifications/TelegramChannel.js:604
+#: src/Admin/event-notifications/TelegramChannel.js:605
 msgid "Delivery status"
 msgstr ""
 
@@ -6059,52 +6048,42 @@ msgstr "Página vinculada en el encabezado"
 msgid "Any published, public page. Its title and link head the message."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:456
+#: src/Admin/event-notifications/TelegramChannel.js:457
 msgid "Chats and channels"
 msgstr "Chats y canales"
 
-#: src/Admin/event-notifications/TelegramChannel.js:457
+#: src/Admin/event-notifications/TelegramChannel.js:458
 msgid "One per line: a numeric chat ID (e.g. -1001234567890) or a public @channel username. Add the bot to each chat or channel with permission to post."
 msgstr "Uno por línea: un ID de chat numérico (p. ej. -1001234567890) o un nombre de usuario de canal público @canal. Añade el bot a cada chat o canal con permiso para publicar."
 
-#: src/Admin/event-notifications/TelegramChannel.js:470
+#: src/Admin/event-notifications/TelegramChannel.js:471
 msgid "Manage in Connectors"
 msgstr "Gestionar en Conectores"
 
-#: src/Admin/event-notifications/TelegramChannel.js:490
+#: src/Admin/event-notifications/TelegramChannel.js:491
 msgid "Save Telegram settings"
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:498
+#: src/Admin/event-notifications/TelegramChannel.js:499
 msgid "Preview next Telegram message"
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:506
+#: src/Admin/event-notifications/TelegramChannel.js:507
 msgid "Send test to the saved chats"
 msgstr ""
 
-#. translators: %s: comma-separated list of Telegram chats
-#: src/Admin/event-notifications/TelegramChannel.js:513
-#, js-format
-msgid "The test posts the next scheduled week’s summary to: %s. It works while posting is off and is not recorded as a weekly send."
-msgstr ""
-
-#: src/Admin/event-notifications/TelegramChannel.js:519
-msgid "The test posts the next scheduled week’s summary to every saved chat. It works while posting is off and is not recorded as a weekly send."
-msgstr ""
-
-#: src/Admin/event-notifications/TelegramChannel.js:529
+#: src/Admin/event-notifications/TelegramChannel.js:530
 msgid "Save your changes to preview them."
 msgstr "Guarda tus cambios para verlos en vista previa."
 
 #. translators: %s: date range of a week
-#: src/Admin/event-notifications/TelegramChannel.js:564
+#: src/Admin/event-notifications/TelegramChannel.js:565
 #, js-format
 msgid "No events for %s, so nothing would be sent."
 msgstr ""
 
 #. translators: 1: number of Telegram messages, 2: date range of a week
-#: src/Admin/event-notifications/TelegramChannel.js:572
+#: src/Admin/event-notifications/TelegramChannel.js:573
 #, js-format
 msgid "Events for %2$s, sent as %1$d message."
 msgid_plural "Events for %2$s, sent as %1$d messages."
@@ -6112,31 +6091,31 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: message number, 2: number of messages
-#: src/Admin/event-notifications/TelegramChannel.js:589
+#: src/Admin/event-notifications/TelegramChannel.js:590
 #, js-format
 msgid "Telegram message %1$d of %2$d"
 msgstr "Mensaje de Telegram %1$d de %2$d"
 
 #. translators: 1: date and time of the next send, 2: date range of the week it covers
-#: src/Admin/event-notifications/TelegramChannel.js:609
+#: src/Admin/event-notifications/TelegramChannel.js:610
 #, js-format
 msgid "Next send: %1$s, with events for %2$s."
 msgstr "Próximo envío: %1$s, con eventos para %2$s."
 
-#: src/Admin/event-notifications/TelegramChannel.js:616
+#: src/Admin/event-notifications/TelegramChannel.js:617
 msgid "Nothing is scheduled. Turn on posting and save to schedule sends."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:623
+#: src/Admin/event-notifications/TelegramChannel.js:624
 msgid "No Telegram summary has been sent yet."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:646
+#: src/Admin/event-notifications/TelegramChannel.js:647
 msgid "Messages by chat"
 msgstr ""
 
 #. translators: 1: message part number, 2: number of parts
-#: src/Admin/event-notifications/TelegramChannel.js:660
+#: src/Admin/event-notifications/TelegramChannel.js:661
 #, js-format
 msgid "Part %1$d of %2$d"
 msgstr "Parte %1$d de %2$d"
@@ -6164,7 +6143,7 @@ msgstr[0] "%d en otra fecha"
 msgstr[1] "%d en otras fechas"
 
 #. translators: %d: number of confirmed tickets in the purchase, on every date
-#: src/Admin/manage-event/EventSignups.js:710
+#: src/Admin/manage-event/EventSignups.js:740
 #, js-format
 msgid "Entire purchase — %d ticket"
 msgid_plural "Entire purchase — %d tickets"
@@ -6172,13 +6151,13 @@ msgstr[0] "Compra completa — %d entrada"
 msgstr[1] "Compra completa — %d entradas"
 
 #. translators: %s: event date, e.g. "19:00—22:00, 10 June"
-#: src/Admin/manage-event/EventSignups.js:524
+#: src/Admin/manage-event/EventSignups.js:534
 #, js-format
 msgid "Purchase registered for %s"
 msgstr "Compra registrada para %s"
 
 #. translators: 1: number of tickets on the date shown, 2: number of tickets on other dates
-#: src/Admin/manage-event/EventSignups.js:1013
+#: src/Admin/manage-event/EventSignups.js:1030
 #, js-format
 msgid "This deletes the entire purchase on every date: %1$d on this date and %2$d ticket on another date."
 msgid_plural "This deletes the entire purchase on every date: %1$d on this date and %2$d tickets on other dates."
@@ -6186,7 +6165,7 @@ msgstr[0] "Esto elimina la compra completa en todas las fechas: %1$d en esta fec
 msgstr[1] "Esto elimina la compra completa en todas las fechas: %1$d en esta fecha y %2$d entradas en otras fechas."
 
 #. translators: %d: number of cancelled or otherwise inactive tickets
-#: src/Admin/manage-event/EventSignups.js:1028
+#: src/Admin/manage-event/EventSignups.js:1045
 #, js-format
 msgid "It also removes %d cancelled or otherwise inactive ticket of this purchase."
 msgid_plural "It also removes %d cancelled or otherwise inactive tickets of this purchase."
@@ -6239,15 +6218,15 @@ msgstr "Referencia de compra"
 msgid "Each purchase total appears once, on the row of the purchase’s first confirmed ticket, on whichever date that ticket is. The totals of one date are the purchases counted on that date, not the revenue from its attendance. To add up several dates, export them without changing tickets in between."
 msgstr "Cada total de compra aparece una vez, en la fila de la primera entrada confirmada de la compra, en la fecha en la que esté esa entrada. Los totales de una fecha son las compras contadas en esa fecha, no los ingresos por su asistencia. Para sumar varias fechas, expórtalas sin cambiar entradas entre medias."
 
-#: src/Admin/manage-event/EventSignups.js:676
+#: src/Admin/manage-event/EventSignups.js:706
 msgid "Some older registrations are still being split into individual tickets. They are listed as one row for now."
 msgstr "Algunos registros más antiguos aún se están dividiendo en entradas individuales. Se muestran como una fila por ahora."
 
-#: src/Admin/manage-event/EventSignups.js:686
+#: src/Admin/manage-event/EventSignups.js:716
 msgid "Could not open the print window. Allow pop-ups for this site and try again."
 msgstr "No se pudo abrir la ventana de impresión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo."
 
-#: src/Admin/manage-event/EventSignups.js:913
+#: src/Admin/manage-event/EventSignups.js:930
 msgid "Print list"
 msgstr "Imprimir lista"
 
@@ -6282,12 +6261,12 @@ msgid "No tickets on sale"
 msgstr ""
 
 #. translators: 1: number of this part of the printed table, 2: number of parts
-#: src/Admin/manage-event/signup-print.js:197
+#: src/Admin/manage-event/signup-print.js:195
 #, js-format
 msgid "Columns — part %1$d of %2$d"
 msgstr "Columnas — parte %1$d de %2$d"
 
-#: src/Admin/manage-event/signup-print.js:292
+#: src/Admin/manage-event/signup-print.js:290
 msgid "Print"
 msgstr "Imprimir"
 
@@ -6646,3 +6625,26 @@ msgstr "Las fechas de eventos que usan este lugar se quedarán sin lugar. Los ev
 #: src/Admin/venues/VenuesApp.js:775
 msgid "This cannot be undone."
 msgstr "Esto no se puede deshacer."
+
+#: src/API/EventNotificationsController.php:461
+msgid "There are no events in the selected week, so there is nothing to send."
+msgstr "No hay eventos en la semana seleccionada, así que no hay nada que enviar."
+
+#: src/Admin/event-notifications/BulkEmailChannel.js:248
+#: src/Admin/event-notifications/IndividualEmailChannel.js:337
+msgid "Weeks run from Monday to Sunday. Previews and tests select the week relative to today in the site timezone. Scheduled sends select it relative to their scheduled week."
+msgstr "Las semanas van de lunes a domingo. Las vistas previas y las pruebas seleccionan la semana respecto a hoy en la zona horaria de la web. Los envíos programados la seleccionan respecto a su semana programada."
+
+#: src/Admin/event-notifications/TelegramChannel.js:449
+msgid "Previews and tests select the week relative to today in the site timezone. Scheduled sends select it relative to their scheduled week."
+msgstr "Las vistas previas y las pruebas seleccionan la semana respecto a hoy en la zona horaria de la web. Los envíos programados la seleccionan respecto a su semana programada."
+
+#. translators: %s: comma-separated list of Telegram chats
+#: src/Admin/event-notifications/TelegramChannel.js:514
+#, js-format
+msgid "The test posts the selected week’s summary to: %s. It works while posting is off and is not recorded as a weekly send."
+msgstr "La prueba publica el resumen de la semana seleccionada en: %s. Funciona aunque la publicación esté desactivada y no se registra como un envío semanal."
+
+#: src/Admin/event-notifications/TelegramChannel.js:520
+msgid "The test posts the selected week’s summary to every saved chat. It works while posting is off and is not recorded as a weekly send."
+msgstr "La prueba publica el resumen de la semana seleccionada en todos los chats guardados. Funciona aunque la publicación esté desactivada y no se registra como un envío semanal."

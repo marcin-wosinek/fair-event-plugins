@@ -11,8 +11,7 @@
  *   wp eval-file wp-content/mu-plugins/scripts/individual-email-fixture.php restore-sources <sourceId>...
  *
  * `events` publishes one event and drafts another, both dated inside the week
- * an email covers under the saved settings: the next scheduled email
- * (`preview`, what the page previews and tests) or one sent right now (`now`).
+ * an email covers under the saved settings: a preview/test (`preview`) or a scheduled email sent right now (`now`).
  * `run` executes the scheduled send's cron callback for the current send
  * week, exactly as WP-Cron would. `state` reports the schedule and history.
  * `cleanup` removes the given events. `hide-sources` disables every enabled
@@ -47,10 +46,7 @@ $fixture_state = static function () {
 if ( 'events' === $fixture_step ) {
 	$settings = IndividualEmailSettings::get();
 	$now      = BulkEmailDispatcher::now();
-	$moment   = 'now' === ( $args[1] ?? '' )
-		? $now
-		: IndividualEmailDispatcher::next_due( $settings, $now, (string) get_option( IndividualEmailDispatcher::LAST_SENT_OPTION, '' ) );
-	$week     = IndividualEmailDispatcher::event_week( $settings['week_scope'], $moment );
+	$week     = IndividualEmailDispatcher::event_week( $settings['week_scope'], $now );
 	$start    = gmdate( 'Y-m-d', strtotime( $week['start'] . ' +3 days' ) ) . ' 18:00:00';
 	$suffix   = wp_rand( 1000, 9999 );
 	$content  = '<!-- wp:paragraph --><p>Individual email fixture.</p><!-- /wp:paragraph -->';
