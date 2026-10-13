@@ -41,6 +41,7 @@
 		"@wordpress/element": "^8.0.0",
 		"@wordpress/i18n": "^6.21.0",
 		"fair-events-shared": "*",
-		"fair-payments-connector": "*"
+		"fair-payments-connector": "*",
+		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
 	}
 }

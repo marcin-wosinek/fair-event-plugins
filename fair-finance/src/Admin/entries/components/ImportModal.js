@@ -14,9 +14,10 @@ import {
 } from '@wordpress/components';
 
 /**
- * External dependencies
+ * Internal dependencies
  */
-import * as XLSX from 'xlsx';
+import { readSpreadsheetFile } from '../../readSpreadsheet.js';
+import { parseEntryRows } from '../parseEntries.js';
 
 const ImportModal = ( { onImport, onCancel } ) => {
 	const [ file, setFile ] = useState( null );
@@ -26,6 +27,7 @@ const ImportModal = ( { onImport, onCancel } ) => {
 	const [ error, setError ] = useState( null );
 	const [ result, setResult ] = useState( null );
 	const fileInputRef = useRef( null );
+	const selectionRef = useRef( 0 );
 
 	const handleFileChange = async ( e ) => {
 		const selectedFile = e.target.files[ 0 ];
@@ -33,137 +35,34 @@ const ImportModal = ( { onImport, onCancel } ) => {
 			return;
 		}
 
+		const selection = ++selectionRef.current;
+
 		setFile( selectedFile );
 		setError( null );
 		setResult( null );
 		setParsedEntries( [] );
 		setIsParsing( true );
 
+		let entries = [];
+		let parseError = null;
 		try {
-			const entries = await parseExcelFile( selectedFile );
-			setParsedEntries( entries );
-		} catch ( err ) {
-			setError(
-				err.message ||
-					__( 'Failed to parse file.', 'fair-payments-connector' )
+			entries = parseEntryRows(
+				await readSpreadsheetFile( selectedFile )
 			);
-		} finally {
-			setIsParsing( false );
+		} catch ( err ) {
+			parseError =
+				err.message ||
+				__( 'Failed to parse file.', 'fair-payments-connector' );
 		}
-	};
 
-	const parseExcelFile = ( file ) => {
-		return new Promise( ( resolve, reject ) => {
-			const reader = new FileReader();
+		// A file chosen in the meantime owns the preview now.
+		if ( selection !== selectionRef.current ) {
+			return;
+		}
 
-			reader.onload = ( e ) => {
-				try {
-					const data = new Uint8Array( e.target.result );
-					const workbook = XLSX.read( data, { type: 'array' } );
-					const sheetName = workbook.SheetNames[ 0 ];
-					const sheet = workbook.Sheets[ sheetName ];
-					const rows = XLSX.utils.sheet_to_json( sheet, {
-						header: 1,
-					} );
-
-					// Find the header row (contains date column in Spanish or Catalan)
-					let headerRowIndex = -1;
-					for ( let i = 0; i < rows.length; i++ ) {
-						if (
-							rows[ i ] &&
-							rows[ i ].some(
-								( cell ) =>
-									typeof cell === 'string' &&
-									( cell.toLowerCase().includes( 'fecha' ) ||
-										cell
-											.toLowerCase()
-											.includes( 'data de l' ) )
-							)
-						) {
-							headerRowIndex = i;
-							break;
-						}
-					}
-
-					if ( headerRowIndex === -1 ) {
-						reject(
-							new Error(
-								__(
-									'Could not find header row in the file.',
-									'fair-payments-connector'
-								)
-							)
-						);
-						return;
-					}
-
-					// Parse data rows
-					const entries = [];
-					for ( let i = headerRowIndex + 1; i < rows.length; i++ ) {
-						const row = rows[ i ];
-						if (
-							! row ||
-							row.length < 4 ||
-							typeof row[ 0 ] !== 'number'
-						) {
-							continue;
-						}
-
-						// Convert Excel date serial to JS date
-						const excelDate = row[ 0 ];
-						const date = new Date(
-							( excelDate - 25569 ) * 86400 * 1000
-						);
-						const dateStr = date.toISOString().split( 'T' )[ 0 ];
-
-						const description = row[ 2 ] || '';
-						const amount = parseFloat( row[ 3 ] ) || 0;
-						const nroApunte = row[ 5 ] || i; // Use row index as fallback
-
-						// Determine entry type based on amount sign
-						const entryType = amount < 0 ? 'cost' : 'income';
-						const absAmount = Math.abs( amount );
-
-						// Create unique external reference
-						const externalReference = `import_${ dateStr }_${ nroApunte }_${ amount }`;
-
-						entries.push( {
-							entry_date: dateStr,
-							description: description,
-							amount: absAmount,
-							entry_type: entryType,
-							external_reference: externalReference,
-						} );
-					}
-
-					if ( entries.length === 0 ) {
-						reject(
-							new Error(
-								__(
-									'No valid entries found in the file.',
-									'fair-payments-connector'
-								)
-							)
-						);
-						return;
-					}
-
-					resolve( entries );
-				} catch ( err ) {
-					reject( err );
-				}
-			};
-
-			reader.onerror = () => {
-				reject(
-					new Error(
-						__( 'Failed to read file.', 'fair-payments-connector' )
-					)
-				);
-			};
-
-			reader.readAsArrayBuffer( file );
-		} );
+		setParsedEntries( entries );
+		setError( parseError );
+		setIsParsing( false );
 	};
 
 	const handleImport = async () => {

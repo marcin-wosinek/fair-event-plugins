@@ -1,6 +1,7 @@
 /**
  * Internal dependencies
  */
+import { readWorkbookRows } from '../../readSpreadsheet.js';
 import { parseSettlementRows } from '../parseSettlement.js';
 
 const HEADER = [
@@ -142,5 +143,63 @@ describe( 'parseSettlementRows', () => {
 
 	it( 'throws on empty input', () => {
 		expect( () => parseSettlementRows( [] ) ).toThrow();
+	} );
+} );
+
+describe( 'parseSettlementRows with a Mollie settlement CSV file', () => {
+	// The column layout of a real Mollie settlement export.
+	const CSV = [
+		'Date,Payment method,Currency,Amount,Status,ID,Description,Consumer name,Consumer bank account,Consumer BIC,Settlement currency,Settlement amount,Settlement reference,Amount refunded',
+		'2026-05-01 10:00:00,ideal,EUR,25.00,paid,tr_jrvX5d2SRpB2chSyrb7RJ,Ticket A,Jane Example,NL00BANK0123456789,,EUR,25.00,19415110.2605.03,',
+		'2026-05-01 10:05:00,creditcard,EUR,15.50,paid,tr_aaaBBBcccDDDeeeFFF111,"Ticket B, reduced",,,,EUR,15.50,19415110.2605.03,',
+		',,EUR,-1.45,,,Transaction fees ideal,,,,EUR,-1.45,19415110.2605.03,',
+		'',
+	].join( '\n' );
+
+	it( 'produces the settlement preview payload', () => {
+		const rows = readWorkbookRows(
+			new Uint8Array( Buffer.from( CSV, 'utf8' ) )
+		);
+
+		expect( parseSettlementRows( rows ) ).toEqual( {
+			settlement_reference: '19415110.2605.03',
+			currency: 'EUR',
+			payment_rows: [
+				{
+					mollie_payment_id: 'tr_jrvX5d2SRpB2chSyrb7RJ',
+					amount: 25,
+					status: 'paid',
+					description: 'Ticket A',
+					settlement_amount: 25,
+				},
+				{
+					mollie_payment_id: 'tr_aaaBBBcccDDDeeeFFF111',
+					amount: 15.5,
+					status: 'paid',
+					description: 'Ticket B, reduced',
+					settlement_amount: 15.5,
+				},
+			],
+			fee_rows: [
+				{ description: 'Transaction fees ideal', amount: -1.45 },
+			],
+			settlement_total: 25 + 15.5 - 1.45,
+		} );
+	} );
+
+	it( 'rejects a spreadsheet that is not a settlement export', () => {
+		const rows = readWorkbookRows(
+			new Uint8Array( Buffer.from( 'Name,Amount\nSomeone,10\n', 'utf8' ) )
+		);
+
+		expect( () => parseSettlementRows( rows ) ).toThrow(
+			'This does not look like a Mollie settlement export (missing expected columns).'
+		);
+	} );
+
+	it( 'rejects an empty file', () => {
+		expect( () =>
+			parseSettlementRows( readWorkbookRows( new Uint8Array( 0 ) ) )
+		).toThrow( 'The file is empty or could not be read.' );
 	} );
 } );

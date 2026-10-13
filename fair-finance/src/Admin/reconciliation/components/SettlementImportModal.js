@@ -15,13 +15,9 @@ import {
 } from '@wordpress/components';
 
 /**
- * External dependencies
- */
-import * as XLSX from 'xlsx';
-
-/**
  * Internal dependencies
  */
+import { readSpreadsheetFile } from '../../readSpreadsheet.js';
 import { parseSettlementRows } from '../parseSettlement.js';
 
 const formatAmount = ( amount, currency = 'EUR' ) => {
@@ -40,6 +36,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 	const [ selectedEntryId, setSelectedEntryId ] = useState( '' );
 	const [ success, setSuccess ] = useState( null );
 	const fileInputRef = useRef( null );
+	const selectionRef = useRef( 0 );
 
 	useEffect( () => {
 		if ( report?.suggested_entry ) {
@@ -49,76 +46,63 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 		}
 	}, [ report ] );
 
-	const readFile = ( selectedFile ) => {
-		return new Promise( ( resolve, reject ) => {
-			const reader = new FileReader();
-			reader.onload = ( e ) => {
-				try {
-					const data = new Uint8Array( e.target.result );
-					const workbook = XLSX.read( data, { type: 'array' } );
-					const sheetName = workbook.SheetNames[ 0 ];
-					const sheet = workbook.Sheets[ sheetName ];
-					const rows = XLSX.utils.sheet_to_json( sheet, {
-						header: 1,
-					} );
-					resolve( parseSettlementRows( rows ) );
-				} catch ( err ) {
-					reject( err );
-				}
-			};
-			reader.onerror = () =>
-				reject(
-					new Error(
-						__( 'Failed to read file.', 'fair-payments-connector' )
-					)
-				);
-			reader.readAsArrayBuffer( selectedFile );
-		} );
-	};
-
 	const handleFileChange = async ( e ) => {
 		const selectedFile = e.target.files[ 0 ];
 		if ( ! selectedFile ) {
 			return;
 		}
 
+		const selection = ++selectionRef.current;
+
 		setError( null );
 		setSuccess( null );
 		setReport( null );
+		setIsLoading( false );
 		setIsParsing( true );
 
 		let parsed;
 		try {
-			parsed = await readFile( selectedFile );
-		} catch ( err ) {
-			setError(
-				err.message ||
-					__( 'Failed to parse file.', 'fair-payments-connector' )
+			parsed = parseSettlementRows(
+				await readSpreadsheetFile( selectedFile )
 			);
-			setIsParsing( false );
+		} catch ( err ) {
+			// A file chosen in the meantime owns the preview now.
+			if ( selection === selectionRef.current ) {
+				setError(
+					err.message ||
+						__( 'Failed to parse file.', 'fair-payments-connector' )
+				);
+				setIsParsing( false );
+			}
+			return;
+		}
+
+		if ( selection !== selectionRef.current ) {
 			return;
 		}
 		setIsParsing( false );
-
 		setIsLoading( true );
+
+		let response = null;
+		let previewError = null;
 		try {
-			const response = await apiFetch( {
+			response = await apiFetch( {
 				path: '/fair-finance/v1/reconciliation/settlement/preview',
 				method: 'POST',
 				data: parsed,
 			} );
-			setReport( response );
 		} catch ( err ) {
-			setError(
+			previewError =
 				err.message ||
-					__(
-						'Failed to match settlement.',
-						'fair-payments-connector'
-					)
-			);
-		} finally {
-			setIsLoading( false );
+				__( 'Failed to match settlement.', 'fair-payments-connector' );
 		}
+
+		if ( selection !== selectionRef.current ) {
+			return;
+		}
+		setReport( response );
+		setError( previewError );
+		setIsLoading( false );
 	};
 
 	const handleConfirm = async () => {
