@@ -20,7 +20,8 @@ add_action(
 		/*
 		 * POST fair-e2e/v1/settlements/reset
 		 *
-		 * Empties every saved-settlement table and resets the double. With
+		 * Empties every saved-settlement table, removes the operation log rows
+		 * of settlement imports and resets the double. With
 		 * `restore`, also forgets the organization and permissions it set.
 		 */
 		register_rest_route(
@@ -36,6 +37,10 @@ add_action(
 						// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test-only cleanup.
 						$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $wpdb->prefix . 'fair_payment_' . $table ) );
 					}
+
+					// Import run IDs start over, so their operation log rows go too.
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test-only cleanup.
+					$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE settlement_run_id IS NOT NULL', $wpdb->prefix . 'fair_payment_external_update_runs' ) );
 
 					delete_option( 'fair_e2e_settlements' );
 					delete_option( 'fair_e2e_mollie_disconnected' );

@@ -12,6 +12,7 @@ beforeEach( () => {
 	window.fairPaymentsExternalUpdates = {
 		testMode: true,
 		mollieConnected: true,
+		financeActive: '',
 	};
 } );
 
@@ -110,5 +111,59 @@ it( 'disables every other action while one runs, and starts it only once', async
 			screen.getByRole( 'button', { name: 'Load missing Mollie fees' } )
 		).toBeEnabled()
 	);
+	expect( console ).toHaveLogged();
+} );
+
+const quietApi = () =>
+	apiFetch.mockImplementation( ( options ) => {
+		if (
+			options.path === '/fair-payments-connector/v1/admin/connected-sites'
+		) {
+			return Promise.resolve( [] );
+		}
+		if ( options.path === '/wp/v2/settings' ) {
+			return Promise.resolve( {
+				fair_payment_mollie_connected: true,
+				fair_payment_mode: 'test',
+			} );
+		}
+		if (
+			options.path === '/fair-payments-connector/v1/settlements/imports'
+		) {
+			return Promise.resolve( { run: null } );
+		}
+		return Promise.resolve( { items: [], total: 0, pages: 0, page: 1 } );
+	} );
+
+it( 'offers settlement loading only while Fair Finance is active', async () => {
+	quietApi();
+
+	const { unmount } = render( <ExternalUpdatesApp /> );
+
+	await screen.findByRole( 'button', { name: 'Load missing Mollie fees' } );
+	expect(
+		screen.queryByRole( 'heading', { name: 'Mollie settlements' } )
+	).not.toBeInTheDocument();
+	expect(
+		apiFetch.mock.calls.some( ( [ options ] ) =>
+			options.path.includes( '/settlements/' )
+		)
+	).toBe( false );
+	unmount();
+
+	window.fairPaymentsExternalUpdates = {
+		testMode: true,
+		mollieConnected: true,
+		financeActive: '1',
+		settlementsUrl: 'admin.php?page=fair-finance-settlements',
+	};
+	render( <ExternalUpdatesApp /> );
+
+	expect(
+		await screen.findByRole( 'heading', { name: 'Mollie settlements' } )
+	).toBeInTheDocument();
+	expect(
+		screen.getByRole( 'button', { name: 'Load new settlements' } )
+	).toBeEnabled();
 	expect( console ).toHaveLogged();
 } );

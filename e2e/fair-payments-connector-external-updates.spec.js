@@ -144,6 +144,103 @@ test.describe('External Updates', () => {
 		await expect(rows.nth(1)).toContainText('1 new');
 	});
 
+	test('loads new settlements, logs the run, and lets Fair Finance continue it', async ({
+		page,
+	}) => {
+		const settlementHelpers = '/wp-json/fair-e2e/v1/settlements';
+		const post = async (path, data = {}) => {
+			const res = await api.post(`${settlementHelpers}${path}`, {
+				headers: adminHeaders,
+				data,
+			});
+			expect(res.ok(), await res.text()).toBeTruthy();
+		};
+
+		await post('/reset');
+		// The second payment page of one settlement fails.
+		await post('/state', {
+			fail_match: 'stl_e2e0001/payments?from=tr_e2estl01b',
+		});
+
+		try {
+			await loginAsAdmin(page);
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-payments-connector-external-updates'
+			);
+
+			// Fair Finance is active, so settlements can be loaded here.
+			const settlements = page.locator('.components-card', {
+				hasText: 'Mollie settlements',
+			});
+			await expect(
+				settlements.getByRole('link', {
+					name: 'Inspect or reload settlements in Fair Finance.',
+				})
+			).toHaveAttribute('href', /page=fair-finance-settlements/);
+			await settlements
+				.getByRole('button', { name: 'Load new settlements' })
+				.click();
+			await expect(
+				settlements.getByText('“Load new settlements” did not finish.')
+			).toBeVisible({ timeout: 30000 });
+			// The page is free again for its other actions.
+			await expect(
+				page.getByRole('button', { name: 'Load missing Mollie fees' })
+			).toBeEnabled();
+
+			// The log has the run, with what the server recorded so far.
+			const logged = page
+				.locator('.fair-external-updates__log tbody tr')
+				.filter({ hasText: 'Settlement import #' });
+			await expect(logged).toHaveCount(1);
+			await expect(logged).toContainText('Load new settlements');
+			await expect(logged).toContainText('Partly completed');
+			await expect(logged).toContainText('Mollie could not be reached.');
+			await expect(logged).toContainText('2 new');
+			await expect(logged).toContainText(ADMIN_USER);
+
+			// Fair Finance finds the same unfinished import and continues it.
+			await post('/state', { fail_match: '' });
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-finance-settlements'
+			);
+			const finance = page.locator('#fair-finance-settlements-root');
+			await expect(
+				finance.getByText('A “Load new” import did not finish.')
+			).toBeVisible();
+			await page.getByRole('button', { name: 'Continue import' }).click();
+			await expect(
+				finance.getByText('Loaded 3 new settlements from Mollie.')
+			).toBeVisible({ timeout: 30000 });
+
+			// Still one log entry, now with the final outcome.
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-payments-connector-external-updates'
+			);
+			await expect(logged).toHaveCount(1);
+			await expect(logged).toContainText('Succeeded');
+			await expect(logged).toContainText('3 new');
+			await expect(
+				settlements.getByRole('button', { name: 'Continue import' })
+			).toHaveCount(0);
+
+			// Nothing new is said plainly, and logged as its own run.
+			await settlements
+				.getByRole('button', { name: 'Load new settlements' })
+				.click();
+			await expect(
+				settlements.getByText(
+					'Nothing new: all 3 settlements Mollie lists are already saved.'
+				)
+			).toBeVisible({ timeout: 30000 });
+			await expect(logged).toHaveCount(2);
+			await expect(logged.nth(0)).toContainText('Succeeded');
+			await expect(logged.nth(0)).toContainText('3 skipped');
+		} finally {
+			await post('/reset', { restore: true });
+		}
+	});
+
 	test('reports a connected-site failure after partial progress, and the log keeps it', async ({
 		page,
 	}) => {

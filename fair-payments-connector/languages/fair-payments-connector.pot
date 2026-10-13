@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-12T16:16:54+00:00\n"
+"POT-Creation-Date: 2026-10-13T05:18:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector\n"
@@ -57,7 +57,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:80
 #: src/Admin/AdminPages.php:81
-#: src/Admin/external-updates/ExternalUpdatesApp.js:51
+#: src/Admin/external-updates/ExternalUpdatesApp.js:52
 msgid "External Updates"
 msgstr ""
 
@@ -78,7 +78,7 @@ msgstr ""
 msgid "Notifications"
 msgstr ""
 
-#: src/Admin/AdminPages.php:251
+#: src/Admin/AdminPages.php:255
 msgid "Set up"
 msgstr ""
 
@@ -134,7 +134,7 @@ msgstr ""
 
 #. translators: %d: WordPress user ID
 #: src/API/AuditLogController.php:123
-#: src/Services/ExternalUpdateRuns.php:264
+#: src/Services/ExternalUpdateRuns.php:369
 #, php-format
 msgid "Deleted user #%d"
 msgstr ""
@@ -320,46 +320,51 @@ msgstr ""
 msgid "The setting change could not be recorded and was not saved. Please try again."
 msgstr ""
 
-#: src/API/SettlementController.php:271
-#: src/Services/SettlementApiImport.php:173
+#: src/API/SettlementController.php:284
+#: src/Services/SettlementApiImport.php:191
 msgid "Settlement not found."
 msgstr ""
 
-#: src/API/SettlementController.php:315
+#: src/API/SettlementController.php:328
 msgid "Connect Mollie before confirming which organization an account belongs to."
 msgstr ""
 
-#: src/API/SettlementController.php:323
+#: src/API/SettlementController.php:336
 msgid "An account can only be confirmed as the Mollie organization that is currently connected."
 msgstr ""
 
-#: src/API/SettlementController.php:370
+#: src/API/SettlementController.php:383
 msgid "Choose a settlement CSV file to upload."
 msgstr ""
 
-#: src/API/SettlementController.php:378
+#: src/API/SettlementController.php:391
 #: src/Settlements/CsvParser.php:99
 msgid "The file is larger than 2 MB. Export one settlement at a time."
 msgstr ""
 
-#: src/API/SettlementController.php:400
+#: src/API/SettlementController.php:413
 #: src/Services/SettlementStore.php:134
 msgid "Account not found."
 msgstr ""
 
-#: src/API/SettlementController.php:412
+#: src/API/SettlementController.php:425
 msgid "Choose the account this settlement belongs to, or name a new one."
 msgstr ""
 
-#: src/API/SettlementController.php:419
+#: src/API/SettlementController.php:432
 msgid "Confirm that this file was exported from the selected Mollie organization."
 msgstr ""
 
-#: src/API/SettlementController.php:455
+#: src/API/SettlementController.php:468
 msgid "The file could not be imported. Nothing was saved."
 msgstr ""
 
-#: src/API/SettlementController.php:486
+#: src/API/SettlementController.php:501
+#: src/Services/SettlementApiImport.php:270
+msgid "Import not found."
+msgstr ""
+
+#: src/API/SettlementController.php:518
 msgid "Choose the settlement to refresh."
 msgstr ""
 
@@ -764,168 +769,206 @@ msgstr ""
 msgid "Payment notification — %s"
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:71
+#: src/Services/ExternalUpdateRuns.php:79
 msgid "The connected site could not be reached."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:72
+#: src/Services/ExternalUpdateRuns.php:80
 msgid "The connected site rejected the access token."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:73
+#: src/Services/ExternalUpdateRuns.php:81
 msgid "The connected site returned an unexpected response."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:74
+#: src/Services/ExternalUpdateRuns.php:82
 msgid "The source is no longer available."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:75
+#: src/Services/ExternalUpdateRuns.php:83
 msgid "Mollie is not connected."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:76
+#: src/Services/ExternalUpdateRuns.php:84
 msgid "Mollie could not be reached."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:77
+#: src/Services/ExternalUpdateRuns.php:85
 msgid "The request was not valid."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:78
+#: src/Services/ExternalUpdateRuns.php:86
 msgid "Some requests did not complete."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:79
+#: src/Services/ExternalUpdateRuns.php:87
 msgid "The run stopped before it finished, for example because a request timed out or the page was closed."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:80
+#: src/Services/ExternalUpdateRuns.php:88
+msgid "The Mollie connection does not have permission to read settlements."
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:89
+msgid "The connected Mollie organization is not known."
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:90
+msgid "Mollie was connected to a different organization, so the import was stopped."
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:91
+msgid "Mollie returned data that could not be read."
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:92
+msgid "The data could not be saved."
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:93
+#: src/Services/SettlementApiImport.php:117
+msgid "A newer import was started instead."
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:94
 msgid "The run failed."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:105
+#: src/Services/ExternalUpdateRuns.php:119
 msgid "Unknown external update."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:141
+#: src/Services/ExternalUpdateRuns.php:155
 msgid "The external update could not be started."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:164
+#: src/Services/ExternalUpdateRuns.php:178
 msgid "External update run not found."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:172
+#: src/Services/ExternalUpdateRuns.php:186
 msgid "This external update was started by another user."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:180
+#: src/Services/ExternalUpdateRuns.php:194
 msgid "This external update run belongs to a different source or action."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:188
+#: src/Services/ExternalUpdateRuns.php:202
 msgid "This external update run has already finished. Start a new run to try again."
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:302
+#: src/Services/ExternalUpdateRuns.php:408
 msgid "Import payments"
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:304
+#: src/Services/ExternalUpdateRuns.php:410
 msgid "Load missing fees"
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:306
+#: src/Services/ExternalUpdateRuns.php:412
 #: src/Admin/external-updates/components/ConnectedSitesPanel.js:205
 msgid "Import transactions"
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:321
+#: src/Services/ExternalUpdateRuns.php:414
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:51
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:285
+msgid "Load new settlements"
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:416
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:55
+msgid "Reload all settlements"
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:418
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:53
+msgid "Refresh one settlement"
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:432
+msgid "Mollie"
+msgstr ""
+
+#: src/Services/ExternalUpdateRuns.php:438
 msgid "Mollie (live)"
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:323
+#: src/Services/ExternalUpdateRuns.php:440
 msgid "Mollie (test)"
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:325
+#: src/Services/ExternalUpdateRuns.php:442
 msgid "Mollie (all modes)"
 msgstr ""
 
 #. translators: %s: connected site ID
-#: src/Services/ExternalUpdateRuns.php:334
+#: src/Services/ExternalUpdateRuns.php:451
 #, php-format
 msgid "Connected site #%s"
 msgstr ""
 
-#: src/Services/ExternalUpdateRuns.php:346
+#: src/Services/ExternalUpdateRuns.php:463
 msgid "Another external update is still running. Wait for it to finish, then try again."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:98
+#: src/Services/SettlementApiImport.php:110
 msgid "Mollie is not connected. Connect Mollie in Fair Payments Connector settings, then continue."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:99
+#: src/Services/SettlementApiImport.php:111
 msgid "The Mollie connection does not have permission to read settlements. Reconnect Mollie in Fair Payments Connector settings and approve settlement access, then continue."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:100
+#: src/Services/SettlementApiImport.php:112
 msgid "The connected Mollie organization is not known. Reconnect Mollie in Fair Payments Connector settings."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:101
+#: src/Services/SettlementApiImport.php:113
 msgid "Mollie is now connected to a different organization than when this import started, so it was stopped. Start a new import for the connected organization."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:102
+#: src/Services/SettlementApiImport.php:114
 msgid "Mollie could not be reached or returned an error. Nothing already saved was changed; continue to try again."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:103
+#: src/Services/SettlementApiImport.php:115
 msgid "Mollie returned data that could not be read. Nothing already saved was changed."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:104
+#: src/Services/SettlementApiImport.php:116
 msgid "The import stopped before it finished, for example because a request timed out or the page was closed. Continue to pick up where it stopped."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:105
-msgid "A newer import was started instead."
-msgstr ""
-
-#: src/Services/SettlementApiImport.php:106
+#: src/Services/SettlementApiImport.php:118
 msgid "The data could not be saved. Continue to try again."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:178
+#: src/Services/SettlementApiImport.php:196
 msgid "This settlement belongs to a different account than the Mollie organization that is connected, so it cannot be refreshed."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:185
+#: src/Services/SettlementApiImport.php:203
 msgid "This settlement was only imported from a file. Load settlements from Mollie to match it with the provider record."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:227
+#: src/Services/SettlementApiImport.php:245
 #: src/Admin/external-updates/components/ConnectedSitesPanel.js:103
 #: src/Admin/external-updates/components/MollieImportPanel.js:194
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:112
 msgid "The import could not be started."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:244
+#: src/Services/SettlementApiImport.php:262
 msgid "This import is already being continued in another request."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:252
-msgid "Import not found."
-msgstr ""
-
-#: src/Services/SettlementApiImport.php:257
+#: src/Services/SettlementApiImport.php:275
 msgid "This import has already finished. Start a new one to load again."
 msgstr ""
 
-#: src/Services/SettlementApiImport.php:538
+#: src/Services/SettlementApiImport.php:614
 msgid "Another settlement import is still running. Wait for it to finish, then try again."
 msgstr ""
 
@@ -1302,61 +1345,147 @@ msgstr ""
 msgid "Select at least one payment to import."
 msgstr ""
 
+#. translators: %d: number of settlements loaded so far
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:33
+#, js-format
+msgid "%d settlement loaded so far."
+msgid_plural "%d settlements loaded so far."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:71
+msgid "Mollie lists no settlements yet."
+msgstr ""
+
+#. translators: %d: number of settlements already saved
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:77
+#, js-format
+msgid "Nothing new: the %d settlement Mollie lists is already saved."
+msgid_plural "Nothing new: all %d settlements Mollie lists are already saved."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of settlements loaded
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:89
+#, js-format
+msgid "Loaded %d settlement from Mollie."
+msgid_plural "Loaded %d settlements from Mollie."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:117
+msgid "The status of the import could not be read. Try again in a moment."
+msgstr ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:122
+msgid "The import could not continue. Its last known state is shown below."
+msgstr ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:166
+msgid "Mollie settlements"
+msgstr ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:172
+msgid "Load the Mollie settlements that are not saved here yet, with their payments, captures, refunds and chargebacks. Settlements already loaded from Mollie are left unchanged."
+msgstr ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:177
+msgid "Inspect or reload settlements in Fair Finance."
+msgstr ""
+
+#. translators: %s: kind of import, e.g. "Load new settlements"
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:202
+#, js-format
+msgid "“%s” did not finish."
+msgstr ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:210
+msgid "Continue it, or start another import instead. Settlements that were fully loaded stay saved either way."
+msgstr ""
+
+#. translators: %s: kind of import, e.g. "Load new settlements"
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:222
+#, js-format
+msgid "“%s” is running."
+msgstr ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:230
+msgid "It may be running in another window. Another import can be started once this one finishes, or after it has made no progress for five minutes."
+msgstr ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:256
+msgid "Continue import"
+msgstr ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:268
+msgid "Refresh status"
+msgstr ""
+
+#: src/Admin/external-updates/components/MollieSettlementsPanel.js:281
+msgid "Loading settlements…"
+msgstr ""
+
 #: src/Admin/external-updates/components/OperationLog.js:51
 msgid "Failed to load the operation log."
 msgstr ""
 
 #: src/Admin/external-updates/components/OperationLog.js:76
-#: src/Admin/external-updates/components/OperationLog.js:137
+#: src/Admin/external-updates/components/OperationLog.js:151
 msgid "Started"
 msgstr ""
 
 #: src/Admin/external-updates/components/OperationLog.js:79
-#: src/Admin/external-updates/components/OperationLog.js:143
+#: src/Admin/external-updates/components/OperationLog.js:157
 msgid "Source"
 msgstr ""
 
 #: src/Admin/external-updates/components/OperationLog.js:82
-#: src/Admin/external-updates/components/OperationLog.js:149
+#: src/Admin/external-updates/components/OperationLog.js:163
 #: src/Admin/settings/AuditLogTab.js:134
 msgid "Action"
 msgstr ""
 
-#: src/Admin/external-updates/components/OperationLog.js:86
-#: src/Admin/external-updates/components/OperationLog.js:155
+#. translators: %d: ID of a settlement import
+#: src/Admin/external-updates/components/OperationLog.js:89
+#, js-format
+msgid "Settlement import #%d"
+msgstr ""
+
+#: src/Admin/external-updates/components/OperationLog.js:100
+#: src/Admin/external-updates/components/OperationLog.js:169
 msgid "Started by"
 msgstr ""
 
-#: src/Admin/external-updates/components/OperationLog.js:90
-#: src/Admin/external-updates/components/OperationLog.js:161
+#: src/Admin/external-updates/components/OperationLog.js:104
+#: src/Admin/external-updates/components/OperationLog.js:175
 msgid "Outcome"
 msgstr ""
 
-#: src/Admin/external-updates/components/OperationLog.js:104
-#: src/Admin/external-updates/components/OperationLog.js:167
+#: src/Admin/external-updates/components/OperationLog.js:118
+#: src/Admin/external-updates/components/OperationLog.js:181
 msgid "Counts"
 msgstr ""
 
-#: src/Admin/external-updates/components/OperationLog.js:114
+#: src/Admin/external-updates/components/OperationLog.js:128
 msgid "Operation log"
 msgstr ""
 
-#: src/Admin/external-updates/components/OperationLog.js:126
+#: src/Admin/external-updates/components/OperationLog.js:140
 msgid "No external updates have run yet."
 msgstr ""
 
-#: src/Admin/external-updates/components/OperationLog.js:187
+#: src/Admin/external-updates/components/OperationLog.js:201
 msgid "Newer"
 msgstr ""
 
 #. translators: 1: current page, 2: total pages
-#: src/Admin/external-updates/components/OperationLog.js:192
+#: src/Admin/external-updates/components/OperationLog.js:206
 #: src/Admin/settings/AuditLogTab.js:187
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr ""
 
-#: src/Admin/external-updates/components/OperationLog.js:205
+#: src/Admin/external-updates/components/OperationLog.js:219
 msgid "Older"
 msgstr ""
 
@@ -1377,11 +1506,11 @@ msgstr ""
 msgid "Failed. %s"
 msgstr ""
 
-#: src/Admin/external-updates/ExternalUpdatesApp.js:53
+#: src/Admin/external-updates/ExternalUpdatesApp.js:54
 msgid "Fetch transactions and fees from connected sites and Mollie. Every run is recorded in the operation log. Only one update runs at a time."
 msgstr ""
 
-#: src/Admin/external-updates/ExternalUpdatesApp.js:58
+#: src/Admin/external-updates/ExternalUpdatesApp.js:59
 msgid "Import a file on the Transactions page."
 msgstr ""
 

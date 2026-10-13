@@ -167,6 +167,10 @@ class AdminPages {
 					'mollieSettingsUrl' => add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) ),
 					'connectedSitesUrl' => add_query_arg( 'page', 'fair-payments-connector-connected-sites', admin_url( 'admin.php' ) ),
 					'transactionsUrl'   => add_query_arg( 'page', 'fair-payments-connector-transactions', admin_url( 'admin.php' ) ),
+					// Saved settlements are inspected in Fair Finance, so loading
+					// them is offered only while it is active.
+					'financeActive'     => defined( 'FAIR_FINANCE_VERSION' ),
+					'settlementsUrl'    => add_query_arg( 'page', 'fair-finance-settlements', admin_url( 'admin.php' ) ),
 				)
 			);
 			return;

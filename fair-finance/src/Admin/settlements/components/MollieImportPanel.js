@@ -15,9 +15,14 @@ import {
 } from '@wordpress/components';
 
 /**
+ * External dependencies
+ */
+import { useSettlementImport } from 'fair-payments-connector/src/Admin/settlement-import/index.js';
+
+/**
  * Internal dependencies
  */
-import useImportRun from '../useImportRun.js';
+import { importErrorText } from '../format.js';
 
 const SETTINGS_URL = 'admin.php?page=fair-payments-connector-settings';
 
@@ -42,6 +47,119 @@ const progressText = ( run ) => {
 };
 
 /**
+ * Say which import stopped before it finished.
+ *
+ * @param {Object} run Import run.
+ * @return {string} Sentence naming the import.
+ */
+const unfinishedText = ( run ) => {
+	switch ( run.kind ) {
+		case 'new':
+			return __( 'A “Load new” import did not finish.', 'fair-finance' );
+		case 'refresh':
+			return __(
+				'A refresh of one settlement did not finish.',
+				'fair-finance'
+			);
+		default:
+			return __(
+				'A “Reload all” import did not finish.',
+				'fair-finance'
+			);
+	}
+};
+
+/**
+ * Say which import the server still counts as running.
+ *
+ * @param {Object} run Import run.
+ * @return {string} Sentence naming the import.
+ */
+const activeText = ( run ) => {
+	switch ( run.kind ) {
+		case 'new':
+			return __( 'A “Load new” import is running.', 'fair-finance' );
+		case 'refresh':
+			return __(
+				'A refresh of one settlement is running.',
+				'fair-finance'
+			);
+		default:
+			return __( 'A “Reload all” import is running.', 'fair-finance' );
+	}
+};
+
+/**
+ * Say what a finished import did.
+ *
+ * @param {Object} run Completed import run.
+ * @return {string} Result sentence.
+ */
+const completedText = ( run ) => {
+	const done = run.progress.settlements_done;
+	const skipped = run.progress.settlements_skipped || 0;
+
+	if ( run.kind !== 'new' ) {
+		return sprintf(
+			/* translators: %d: number of settlements loaded */
+			_n(
+				'Loaded %d settlement from Mollie.',
+				'Loaded %d settlements from Mollie.',
+				done,
+				'fair-finance'
+			),
+			done
+		);
+	}
+
+	if ( done === 0 ) {
+		return skipped === 0
+			? __( 'Mollie lists no settlements yet.', 'fair-finance' )
+			: sprintf(
+					/* translators: %d: number of settlements already saved */
+					_n(
+						'Nothing new: the %d settlement Mollie lists is already saved.',
+						'Nothing new: all %d settlements Mollie lists are already saved.',
+						skipped,
+						'fair-finance'
+					),
+					skipped
+			  );
+	}
+
+	const loaded = sprintf(
+		/* translators: %d: number of new settlements loaded */
+		_n(
+			'Loaded %d new settlement from Mollie.',
+			'Loaded %d new settlements from Mollie.',
+			done,
+			'fair-finance'
+		),
+		done
+	);
+
+	if ( skipped === 0 ) {
+		return loaded;
+	}
+
+	return sprintf(
+		/* translators: 1: sentence saying how many settlements were loaded, 2: sentence saying how many were left unchanged */
+		__( '%1$s %2$s', 'fair-finance' ),
+		loaded,
+		sprintf(
+			/* translators: %d: number of settlements already saved */
+			_n(
+				'%d already saved was left unchanged.',
+				'%d already saved were left unchanged.',
+				skipped,
+				'fair-finance'
+			),
+			skipped
+		)
+	);
+};
+
+/**
  * Loads settlements from Mollie in resumable batches.
  *
  * @param {Object}      props
@@ -55,9 +173,8 @@ export default function MollieImportPanel( {
 	openRun,
 	onChanged,
 } ) {
-	const { run, working, error, start, resume, adopt } = useImportRun( {
-		onFinished: onChanged,
-	} );
+	const { run, working, error, start, resume, refresh, adopt } =
+		useSettlementImport( { onFinished: onChanged } );
 
 	// Reopening the page picks up a run that was left unfinished.
 	useEffect( () => {
@@ -67,13 +184,13 @@ export default function MollieImportPanel( {
 	}, [ openRun, adopt ] );
 
 	const canImport = connection?.can_import === true;
-	const unfinished =
-		! working &&
-		run &&
-		( run.resumable || run.status === 'running' ) &&
-		run.kind === 'history';
+	// Every control below follows from the server's account of the run.
+	const stopped = ! working && run?.resumable === true;
+	const active = ! working && run?.status === 'running';
+	const unfinished = stopped || active;
 	const completed = ! working && run?.status === 'completed';
-	const stopped = ! working && run?.status === 'aborted';
+	const closed = ! working && run?.status === 'aborted';
+	const startVariant = unfinished ? 'secondary' : 'primary';
 
 	return (
 		<Card className="fair-finance-settlements-import">
@@ -84,7 +201,7 @@ export default function MollieImportPanel( {
 					</Text>
 					<Text variant="muted">
 						{ __(
-							'Loads every settlement Mollie lists for the connected organization, with its payments, captures, refunds and chargebacks. Settlements already saved are refreshed, not duplicated.',
+							'“Load new” brings in the settlements of the connected organization that are not saved here yet, with their payments, captures, refunds and chargebacks. Settlements already loaded from Mollie are left unchanged. “Reload all” retrieves every settlement again, which takes longer and is only needed when saved data looks wrong.',
 							'fair-finance'
 						) }
 					</Text>
@@ -114,7 +231,7 @@ export default function MollieImportPanel( {
 
 					{ error && (
 						<Notice status="error" isDismissible={ false }>
-							{ error }
+							{ importErrorText( error ) }
 						</Notice>
 					) }
 
@@ -125,19 +242,29 @@ export default function MollieImportPanel( {
 						</HStack>
 					) }
 
-					{ unfinished && (
+					{ stopped && (
 						<Notice status="warning" isDismissible={ false }>
-							<strong>
-								{ __(
-									'An import from Mollie did not finish.',
-									'fair-finance'
-								) }
-							</strong>{ ' ' }
-							{ run.error_message } { progressText( run ) }
+							<strong>{ unfinishedText( run ) }</strong>{ ' ' }
+							{ run.error_message } { progressText( run ) }{ ' ' }
+							{ __(
+								'Continue it, or start another import instead. Settlements that were fully loaded stay saved either way.',
+								'fair-finance'
+							) }
 						</Notice>
 					) }
 
-					{ stopped && (
+					{ active && (
+						<Notice status="info" isDismissible={ false }>
+							<strong>{ activeText( run ) }</strong>{ ' ' }
+							{ progressText( run ) }{ ' ' }
+							{ __(
+								'It may be running in another window. Another import can be started once this one finishes, or after it has made no progress for five minutes.',
+								'fair-finance'
+							) }
+						</Notice>
+					) }
+
+					{ closed && (
 						<Notice status="error" isDismissible={ false }>
 							{ run.error_message }
 						</Notice>
@@ -145,45 +272,42 @@ export default function MollieImportPanel( {
 
 					{ completed && (
 						<Notice status="success" isDismissible={ false }>
-							{ sprintf(
-								/* translators: %d: number of settlements loaded */
-								_n(
-									'Loaded %d settlement from Mollie.',
-									'Loaded %d settlements from Mollie.',
-									run.progress.settlements_done,
-									'fair-finance'
-								),
-								run.progress.settlements_done
-							) }
+							{ completedText( run ) }
 						</Notice>
 					) }
 
 					<HStack justify="flex-start" wrap>
 						{ unfinished && (
 							<Button
-								variant="primary"
+								variant={ stopped ? 'primary' : 'secondary' }
 								onClick={ resume }
 								disabled={ ! canImport }
 							>
 								{ __( 'Continue import', 'fair-finance' ) }
 							</Button>
 						) }
+						{ active && (
+							<Button variant="primary" onClick={ refresh }>
+								{ __( 'Refresh status', 'fair-finance' ) }
+							</Button>
+						) }
 						<Button
-							variant={ unfinished ? 'secondary' : 'primary' }
-							onClick={ () => start( 'history' ) }
-							disabled={
-								working ||
-								! canImport ||
-								run?.status === 'running'
-							}
-							isBusy={ working }
+							variant={ startVariant }
+							onClick={ () => start( 'new' ) }
+							disabled={ working || active || ! canImport }
+							isBusy={ working && run?.kind === 'new' }
 						>
-							{ unfinished
-								? __( 'Start over', 'fair-finance' )
-								: __(
-										'Load settlements from Mollie',
-										'fair-finance'
-								  ) }
+							{ __( 'Load new', 'fair-finance' ) }
+						</Button>
+						<Button
+							variant={
+								unfinished || working ? 'secondary' : 'tertiary'
+							}
+							onClick={ () => start( 'history' ) }
+							disabled={ working || active || ! canImport }
+							isBusy={ working && run?.kind === 'history' }
+						>
+							{ __( 'Reload all', 'fair-finance' ) }
 						</Button>
 					</HStack>
 				</VStack>

@@ -29,7 +29,19 @@ defined( 'WPINC' ) || die;
  */
 class SettlementApiImport {
 
+	/**
+	 * Load only the settlements that have no completed API import yet.
+	 */
+	const KIND_NEW = 'new';
+
+	/**
+	 * Load every settlement again, including those already imported.
+	 */
 	const KIND_HISTORY = 'history';
+
+	/**
+	 * Load one saved settlement again.
+	 */
 	const KIND_REFRESH = 'refresh';
 
 	/**
@@ -139,7 +151,7 @@ class SettlementApiImport {
 	/**
 	 * Start an import run.
 	 *
-	 * @param string   $kind          KIND_HISTORY or KIND_REFRESH.
+	 * @param string   $kind          KIND_NEW, KIND_HISTORY or KIND_REFRESH.
 	 * @param int|null $settlement_id Settlement to refresh.
 	 * @param int      $user_id       Initiating user.
 	 * @return array|WP_Error The new run row.
@@ -165,6 +177,12 @@ class SettlementApiImport {
 			'list_done' => false,
 			'queue'     => array(),
 			'current'   => null,
+			'skipped'   => 0,
+			'counts'    => array(
+				'created'   => 0,
+				'updated'   => 0,
+				'unchanged' => 0,
+			),
 		);
 
 		if ( self::KIND_REFRESH === $kind ) {
@@ -227,7 +245,7 @@ class SettlementApiImport {
 			return new WP_Error( 'settlement_import_not_started', __( 'The import could not be started.', 'fair-payments-connector' ), array( 'status' => 500 ) );
 		}
 
-		return $this->repository->get_run( $id );
+		return $this->log( $id );
 	}
 
 	/**
@@ -262,13 +280,13 @@ class SettlementApiImport {
 			$organization = self::connected_organization();
 			if ( '' !== $organization && $organization !== $run['organization_id'] ) {
 				$this->abandon( $run, 'account_switched' );
-				return $this->repository->get_run( (int) $run_id );
+				return $this->log( $run_id );
 			}
 
 			$problem = self::access_problem();
 			if ( null !== $problem ) {
 				$this->fail( $run, $problem );
-				return $this->repository->get_run( (int) $run_id );
+				return $this->log( $run_id );
 			}
 
 			// Resuming must not overtake a run that started in the meantime.
@@ -286,7 +304,7 @@ class SettlementApiImport {
 				$this->fail( $run, $e->get_category() );
 			}
 
-			return $this->repository->get_run( (int) $run_id );
+			return $this->log( $run_id );
 		} finally {
 			$this->repository->unlock( $lock );
 		}
@@ -327,11 +345,20 @@ class SettlementApiImport {
 			}
 
 			if ( $current['part'] >= count( MollieSettlementProvider::PARTS ) ) {
+				$before    = $this->repository->get_settlement( (int) $current['settlement_id'] );
 				$published = $this->store->publish_api_revision( (int) $current['revision_id'] );
 				if ( is_wp_error( $published ) ) {
 					$this->fail( $run, 'not_saved' );
 					return;
 				}
+
+				if ( 'published' !== $published ) {
+					$outcome = 'unchanged';
+				} else {
+					$outcome = $before && $before['api_revision_id'] ? 'updated' : 'created';
+				}
+				$state['counts'][ $outcome ] = (int) ( $state['counts'][ $outcome ] ?? 0 ) + 1;
+
 				$current = null;
 				++$done;
 			}
@@ -360,7 +387,21 @@ class SettlementApiImport {
 		} elseif ( empty( $state['list_done'] ) ) {
 			$page = $provider->list_settlements( $state['list_from'] ?? null, self::LIST_LIMIT );
 
+			// Loading only what is new leaves a settlement with a completed
+			// API import exactly as it is saved: no facts are rewritten and
+			// nothing more is requested for it. One without a completed
+			// import, or known only from a file, is still loaded. Every page
+			// is read, so a gap further back in the history is found too.
+			$imported = self::KIND_NEW === $run['kind']
+				? $this->repository->find_api_imported_provider_ids( (int) $account['id'], array_column( $page['settlements'], 'provider_id' ) )
+				: array();
+
 			foreach ( $page['settlements'] as $facts ) {
+				if ( in_array( (string) $facts['provider_id'], $imported, true ) ) {
+					$state['skipped'] = (int) ( $state['skipped'] ?? 0 ) + 1;
+					continue;
+				}
+
 				// Listed settlements show up straight away, marked incomplete.
 				if ( is_wp_error( $this->store->upsert_api_settlement( $account, $facts ) ) ) {
 					$this->fail( $run, 'not_saved' );
@@ -386,6 +427,22 @@ class SettlementApiImport {
 				'finished_at'      => $finished ? current_time( 'mysql', true ) : null,
 			)
 		);
+	}
+
+	/**
+	 * Bring a run's operation log row up to date and return the run.
+	 *
+	 * @param int $run_id Run ID.
+	 * @return array|null The run row.
+	 */
+	private function log( $run_id ) {
+		$run = $this->repository->get_run( (int) $run_id );
+
+		if ( $run ) {
+			ExternalUpdateRuns::sync_settlement_run( $run );
+		}
+
+		return $run;
 	}
 
 	/**
@@ -435,6 +492,8 @@ class SettlementApiImport {
 				'finished_at' => current_time( 'mysql', true ),
 			)
 		);
+
+		$this->log( (int) $run['id'] );
 	}
 
 	/**
@@ -463,7 +522,23 @@ class SettlementApiImport {
 	 * @return void
 	 */
 	public function interrupt_stale() {
-		$this->repository->interrupt_stale_runs( gmdate( 'Y-m-d H:i:s', time() - self::STALE_AFTER_SECONDS ) );
+		$stale = $this->repository->interrupt_stale_runs( gmdate( 'Y-m-d H:i:s', time() - self::STALE_AFTER_SECONDS ) );
+
+		foreach ( $stale as $run_id ) {
+			$this->log( $run_id );
+		}
+	}
+
+	/**
+	 * One run as it stands now.
+	 *
+	 * @param int $run_id Run ID.
+	 * @return array|null
+	 */
+	public function get_run( $run_id ) {
+		$this->interrupt_stale();
+
+		return $this->repository->get_run( (int) $run_id );
 	}
 
 	/**
@@ -512,11 +587,12 @@ class SettlementApiImport {
 			'account_id'    => (int) $run['account_id'],
 			'settlement_id' => $run['settlement_id'] ? (int) $run['settlement_id'] : null,
 			'progress'      => array(
-				'settlements_done'   => (int) $run['settlements_done'],
-				'settlements_queued' => count( (array) ( $state['queue'] ?? array() ) ) + ( $current ? 1 : 0 ),
-				'listing_done'       => ! empty( $state['list_done'] ),
-				'requests_done'      => (int) $run['requests_done'],
-				'current_part'       => $current ? ( MollieSettlementProvider::PARTS[ (int) $current['part'] ] ?? null ) : null,
+				'settlements_done'    => (int) $run['settlements_done'],
+				'settlements_skipped' => (int) ( $state['skipped'] ?? 0 ),
+				'settlements_queued'  => count( (array) ( $state['queue'] ?? array() ) ) + ( $current ? 1 : 0 ),
+				'listing_done'        => ! empty( $state['list_done'] ),
+				'requests_done'       => (int) $run['requests_done'],
+				'current_part'        => $current ? ( MollieSettlementProvider::PARTS[ (int) $current['part'] ] ?? null ) : null,
 			),
 			'error_code'    => $error_code,
 			'error_message' => $error_code ? ( $messages[ $error_code ] ?? $messages['mollie_request_failed'] ) : null,

@@ -29,6 +29,14 @@ class ExternalUpdateRuns {
 	const ACTION_LOAD_MISSING_FEES      = 'load_missing_mollie_fees';
 	const ACTION_IMPORT_CONNECTED_SITE  = 'import_connected_site';
 
+	/*
+	 * Settlement imports are started through the settlement routes, never
+	 * through this log; their rows mirror the settlement run (#1694).
+	 */
+	const ACTION_LOAD_NEW_SETTLEMENTS = 'load_new_mollie_settlements';
+	const ACTION_RELOAD_SETTLEMENTS   = 'reload_mollie_settlements';
+	const ACTION_REFRESH_SETTLEMENT   = 'refresh_mollie_settlement';
+
 	const SOURCE_MOLLIE         = 'mollie';
 	const SOURCE_CONNECTED_SITE = 'connected_site';
 
@@ -77,6 +85,12 @@ class ExternalUpdateRuns {
 			'invalid_request'         => __( 'The request was not valid.', 'fair-payments-connector' ),
 			'incomplete'              => __( 'Some requests did not complete.', 'fair-payments-connector' ),
 			'interrupted'             => __( 'The run stopped before it finished, for example because a request timed out or the page was closed.', 'fair-payments-connector' ),
+			'mollie_access_missing'   => __( 'The Mollie connection does not have permission to read settlements.', 'fair-payments-connector' ),
+			'mollie_account_unknown'  => __( 'The connected Mollie organization is not known.', 'fair-payments-connector' ),
+			'mollie_account_switched' => __( 'Mollie was connected to a different organization, so the import was stopped.', 'fair-payments-connector' ),
+			'mollie_invalid_response' => __( 'Mollie returned data that could not be read.', 'fair-payments-connector' ),
+			'not_saved'               => __( 'The data could not be saved.', 'fair-payments-connector' ),
+			'replaced'                => __( 'A newer import was started instead.', 'fair-payments-connector' ),
 			'unknown'                 => __( 'The run failed.', 'fair-payments-connector' ),
 		);
 	}
@@ -239,11 +253,102 @@ class ExternalUpdateRuns {
 	}
 
 	/**
+	 * Mirror a settlement import run in the operation log (#1694).
+	 *
+	 * The settlement run stays the authority: this derives the whole log row
+	 * from it each time, so a retried step, a continued run or a second page
+	 * driving the same run only ever rewrites the one linked row.
+	 *
+	 * @param array $settlement_run Row of the settlement import run.
+	 * @return void
+	 */
+	public static function sync_settlement_run( array $settlement_run ) {
+		$actions = array(
+			SettlementApiImport::KIND_NEW     => self::ACTION_LOAD_NEW_SETTLEMENTS,
+			SettlementApiImport::KIND_HISTORY => self::ACTION_RELOAD_SETTLEMENTS,
+			SettlementApiImport::KIND_REFRESH => self::ACTION_REFRESH_SETTLEMENT,
+		);
+		if ( ! isset( $actions[ $settlement_run['kind'] ] ) ) {
+			return;
+		}
+
+		$state   = (array) json_decode( (string) $settlement_run['state'], true );
+		$counts  = (array) ( $state['counts'] ?? array() );
+		$created = (int) ( $counts['created'] ?? 0 );
+		// A run started before these counts were kept only knows how many it loaded.
+		$updated  = isset( $state['counts'] ) ? (int) ( $counts['updated'] ?? 0 ) : (int) $settlement_run['settlements_done'];
+		$skipped  = (int) ( $state['skipped'] ?? 0 ) + (int) ( $counts['unchanged'] ?? 0 );
+		$progress = $created + $updated + $skipped;
+		$error    = $settlement_run['error_code'] ? (string) $settlement_run['error_code'] : null;
+		$stopped  = true;
+
+		switch ( $settlement_run['status'] ) {
+			case 'running':
+				$status  = 'running';
+				$error   = null;
+				$stopped = false;
+				break;
+			case 'completed':
+				$status = 'succeeded';
+				$error  = null;
+				break;
+			case 'interrupted':
+				$status = 'interrupted';
+				$error  = 'interrupted';
+				break;
+			default:
+				// Failed and waiting to be continued, or closed for good.
+				$status = $progress > 0 ? 'partial' : 'failed';
+				$error  = self::settlement_error_code( $error );
+		}
+
+		( new ExternalUpdateRunRepository() )->save_settlement_run(
+			(int) $settlement_run['id'],
+			array(
+				'source_type' => self::SOURCE_MOLLIE,
+				'source_id'   => substr( (string) $settlement_run['organization_id'], 0, 64 ),
+				'action'      => $actions[ $settlement_run['kind'] ],
+				'user_id'     => $settlement_run['user_id'] ? (int) $settlement_run['user_id'] : null,
+				'started_at'  => $settlement_run['started_at'],
+			),
+			array(
+				'status'        => $status,
+				'created_count' => $created,
+				'updated_count' => $updated,
+				'skipped_count' => $skipped,
+				'failed_count'  => 0,
+				'error_code'    => $error,
+				'finished_at'   => $stopped ? ( $settlement_run['finished_at'] ?? current_time( 'mysql', true ) ) : null,
+			)
+		);
+	}
+
+	/**
+	 * Translate a settlement import's failure category into the log's.
+	 *
+	 * @param string|null $code Settlement import failure category.
+	 * @return string
+	 */
+	private static function settlement_error_code( $code ) {
+		$map  = array(
+			'settlement_access_missing' => 'mollie_access_missing',
+			'account_unknown'           => 'mollie_account_unknown',
+			'account_switched'          => 'mollie_account_switched',
+		);
+		$code = $map[ $code ] ?? $code;
+
+		return null !== $code && array_key_exists( $code, self::error_messages() ) ? $code : 'unknown';
+	}
+
+	/**
 	 * Mark runs without a recent heartbeat as interrupted.
 	 *
 	 * @return void
 	 */
 	public static function interrupt_stale() {
+		// Settlement imports decide for themselves and update their log rows.
+		( new SettlementApiImport() )->interrupt_stale();
+
 		( new ExternalUpdateRunRepository() )->interrupt_stale(
 			gmdate( 'Y-m-d H:i:s', time() - self::STALE_AFTER_SECONDS )
 		);
@@ -267,26 +372,27 @@ class ExternalUpdateRuns {
 		$error_code = $run['error_code'] ? (string) $run['error_code'] : null;
 
 		return array(
-			'id'             => (int) $run['id'],
-			'action'         => (string) $run['action'],
-			'action_label'   => self::action_label( (string) $run['action'] ),
-			'source_type'    => (string) $run['source_type'],
-			'source_id'      => (string) $run['source_id'],
-			'source_label'   => self::source_label( $run ),
-			'status'         => (string) $run['status'],
-			'user_id'        => $user_id,
-			'user_name'      => $user_name,
-			'started_at'     => get_date_from_gmt( $run['started_at'] ),
-			'finished_at'    => $run['finished_at'] ? get_date_from_gmt( $run['finished_at'] ) : null,
-			'expected_total' => null === $run['expected_total'] ? null : (int) $run['expected_total'],
-			'counts'         => array(
+			'id'                => (int) $run['id'],
+			'action'            => (string) $run['action'],
+			'action_label'      => self::action_label( (string) $run['action'] ),
+			'source_type'       => (string) $run['source_type'],
+			'source_id'         => (string) $run['source_id'],
+			'source_label'      => self::source_label( $run ),
+			'status'            => (string) $run['status'],
+			'user_id'           => $user_id,
+			'user_name'         => $user_name,
+			'started_at'        => get_date_from_gmt( $run['started_at'] ),
+			'finished_at'       => $run['finished_at'] ? get_date_from_gmt( $run['finished_at'] ) : null,
+			'expected_total'    => null === $run['expected_total'] ? null : (int) $run['expected_total'],
+			'settlement_run_id' => empty( $run['settlement_run_id'] ) ? null : (int) $run['settlement_run_id'],
+			'counts'            => array(
 				'created' => (int) $run['created_count'],
 				'updated' => (int) $run['updated_count'],
 				'skipped' => (int) $run['skipped_count'],
 				'failed'  => (int) $run['failed_count'],
 			),
-			'error_code'     => $error_code,
-			'error_message'  => $error_code ? ( $messages[ $error_code ] ?? $messages['unknown'] ) : null,
+			'error_code'        => $error_code,
+			'error_message'     => $error_code ? ( $messages[ $error_code ] ?? $messages['unknown'] ) : null,
 		);
 	}
 
@@ -304,6 +410,12 @@ class ExternalUpdateRuns {
 				return __( 'Load missing fees', 'fair-payments-connector' );
 			case self::ACTION_IMPORT_CONNECTED_SITE:
 				return __( 'Import transactions', 'fair-payments-connector' );
+			case self::ACTION_LOAD_NEW_SETTLEMENTS:
+				return __( 'Load new settlements', 'fair-payments-connector' );
+			case self::ACTION_RELOAD_SETTLEMENTS:
+				return __( 'Reload all settlements', 'fair-payments-connector' );
+			case self::ACTION_REFRESH_SETTLEMENT:
+				return __( 'Refresh one settlement', 'fair-payments-connector' );
 		}
 		return $action;
 	}
@@ -315,6 +427,11 @@ class ExternalUpdateRuns {
 	 * @return string
 	 */
 	private static function source_label( array $run ) {
+		if ( ! empty( $run['settlement_run_id'] ) ) {
+			// Settlements belong to a Mollie organization, not to a mode.
+			return __( 'Mollie', 'fair-payments-connector' );
+		}
+
 		if ( self::SOURCE_MOLLIE === $run['source_type'] ) {
 			switch ( $run['source_id'] ) {
 				case 'live':

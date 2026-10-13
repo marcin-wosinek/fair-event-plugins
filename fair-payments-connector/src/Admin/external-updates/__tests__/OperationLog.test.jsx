@@ -105,3 +105,35 @@ it( 'shows an empty state', async () => {
 		await screen.findByText( 'No external updates have run yet.' )
 	).toBeInTheDocument();
 } );
+
+it( 'names the settlement import a run mirrors', async () => {
+	apiFetch.mockResolvedValueOnce( {
+		items: [
+			run( {
+				id: 9,
+				action: 'load_new_mollie_settlements',
+				action_label: 'Load new settlements',
+				source_type: 'mollie',
+				source_label: 'Mollie',
+				settlement_run_id: 12,
+				status: 'partial',
+				counts: { created: 2, updated: 0, skipped: 5, failed: 0 },
+				error_message: 'Mollie could not be reached.',
+			} ),
+			run( {} ),
+		],
+		total: 2,
+		pages: 1,
+		page: 1,
+	} );
+
+	render( <OperationLog refreshKey={ 0 } /> );
+
+	const rows = await screen.findAllByRole( 'row' );
+	expect( rows[ 1 ] ).toHaveTextContent( 'Load new settlements' );
+	expect( rows[ 1 ] ).toHaveTextContent( 'Settlement import #12' );
+	expect( rows[ 1 ] ).toHaveTextContent( 'Partly completed' );
+	expect( rows[ 1 ] ).toHaveTextContent( '2 new, 5 skipped' );
+	// Other runs carry no settlement import.
+	expect( rows[ 2 ] ).not.toHaveTextContent( 'Settlement import' );
+} );

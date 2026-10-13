@@ -1,7 +1,7 @@
 /**
  * Saved Mollie settlements (#1694): persistence from the API and from a CSV
- * export, convergence of both sources, pagination, failure recovery,
- * permissions and validation.
+ * export, convergence of both sources, loading only what is new, pagination,
+ * failure recovery, the operation log, permissions and validation.
  *
  * Mollie is served by e2e/mu-plugins/lib/mollie-http-double.php, which lists
  * three settlements over two pages (see settlement_response() there). The
@@ -21,6 +21,7 @@ const IMPORTS = `${ SETTLEMENTS }/imports`;
 const CSV_VALIDATE = `${ SETTLEMENTS }/csv/validate`;
 const CSV_IMPORT = `${ SETTLEMENTS }/csv/import`;
 const HELPERS = '/wp-json/fair-e2e/v1/settlements';
+const LOG = '/wp-json/fair-payments-connector/v1/external-updates/runs';
 
 const basic = ( user, pass ) => ( {
 	Authorization:
@@ -239,6 +240,8 @@ test.describe( 'Saved settlements', () => {
 				),
 			( headers ) => api.get( IMPORTS, { headers } ),
 			( headers ) => startImport( { kind: 'history' }, headers ),
+			( headers ) => startImport( { kind: 'new' }, headers ),
+			( headers ) => api.get( `${ IMPORTS }/1`, { headers } ),
 			( headers ) => api.post( `${ IMPORTS }/1/step`, { headers } ),
 		];
 
@@ -749,6 +752,326 @@ test.describe( 'Saved settlements', () => {
 		expect( ( await byProviderId( 'stl_e2e0003' ) ).completeness ).toBe(
 			'unverified'
 		);
+	} );
+
+	test( 'loads only new settlements and leaves the imported ones untouched', async () => {
+		await runImport();
+		const before = await byProviderId( 'stl_e2e0001' );
+		const requests = await mollieRequests();
+
+		// Mollie now reports different amounts for what is already saved.
+		await setState( { variant: 'changed' } );
+		const again = await runImport( { kind: 'new' } );
+
+		expect( again.kind ).toBe( 'new' );
+		expect( again.status ).toBe( 'completed' );
+		expect( again.progress.settlements_done ).toBe( 0 );
+		expect( again.progress.settlements_skipped ).toBe( 3 );
+		// Only the two list pages were read: no details, no movements.
+		expect( ( await mollieRequests() ) - requests ).toBe( 2 );
+
+		const after = await byProviderId( 'stl_e2e0001' );
+		expect( after.amount ).toBe( before.amount );
+		expect( after.status ).toBe( before.status );
+		expect( after.revisions.api.id ).toBe( before.revisions.api.id );
+		expect( after.last_refreshed_at ).toBe( before.last_refreshed_at );
+		expect( after.material_change_at ).toBeNull();
+		expect( ( await list() ).total ).toBe( 3 );
+
+		// Reloading everything still picks the change up.
+		const reloaded = await runImport( { kind: 'history' } );
+		expect( reloaded.progress.settlements_done ).toBe( 3 );
+		expect( reloaded.progress.settlements_skipped ).toBe( 0 );
+		expect(
+			( await byProviderId( 'stl_e2e0001' ) ).material_change_at
+		).not.toBeNull();
+	} );
+
+	test( 'loads everything on a first "new" run, across both list pages', async () => {
+		const first = await runImport( { kind: 'new' } );
+
+		expect( first.status ).toBe( 'completed' );
+		expect( first.progress.settlements_done ).toBe( 3 );
+		expect( first.progress.settlements_skipped ).toBe( 0 );
+		expect( ( await list() ).total ).toBe( 3 );
+		expect( ( await byProviderId( 'stl_e2e0001' ) ).completeness ).toBe(
+			'verified'
+		);
+	} );
+
+	test( 'recovers a settlement whose import never completed, past a page of known ones', async () => {
+		// stl_e2e0001 is on the second list page; its import dies half-way.
+		await setState( {
+			fail_match: 'stl_e2e0001/payments?from=tr_e2estl01b',
+		} );
+		const failed = await runImport();
+		expect( failed.status ).toBe( 'failed' );
+		expect( ( await byProviderId( 'stl_e2e0001' ) ).completeness ).toBe(
+			'incomplete'
+		);
+		await setState( { fail_match: '' } );
+
+		// A "new" run replaces the failed one. Everything on the first list
+		// page is known, and the scan still reaches the second page.
+		const recovered = await runImport( { kind: 'new' } );
+		expect( recovered.id ).not.toBe( failed.id );
+		expect( recovered.status ).toBe( 'completed' );
+		expect( recovered.progress.settlements_skipped ).toBe( 2 );
+		expect( recovered.progress.settlements_done ).toBe( 1 );
+
+		const complete = await byProviderId( 'stl_e2e0001' );
+		expect( complete.completeness ).toBe( 'verified' );
+		expect( complete.last_failure ).toBeNull();
+		expect( complete.movements ).toHaveLength( 2 );
+		expect( ( await list() ).total ).toBe( 3 );
+	} );
+
+	test( 'retries and continues a "new" run without recounting or duplicating', async () => {
+		await setState( {
+			fail_match: 'stl_e2e0001/payments?from=tr_e2estl01b',
+		} );
+		const failed = await runImport( { kind: 'new' } );
+		expect( failed.status ).toBe( 'failed' );
+		expect( failed.resumable ).toBe( true );
+		expect( failed.progress.settlements_done ).toBe( 2 );
+
+		// A retry while Mollie still fails changes nothing.
+		const stillFailed = await step( failed.id );
+		expect( stillFailed.status ).toBe( 'failed' );
+		expect( stillFailed.progress ).toEqual( failed.progress );
+
+		// The run as the server has it can be read without contacting Mollie.
+		const requests = await mollieRequests();
+		const read = await api.get( `${ IMPORTS }/${ failed.id }`, {
+			headers: admin,
+		} );
+		expect( read.status() ).toBe( 200 );
+		expect( ( await read.json() ).run ).toMatchObject( {
+			id: failed.id,
+			kind: 'new',
+			status: 'failed',
+			resumable: true,
+		} );
+		expect( await mollieRequests() ).toBe( requests );
+		expect(
+			(
+				await api.get( `${ IMPORTS }/999999`, { headers: admin } )
+			).status()
+		).toBe( 404 );
+
+		await setState( { fail_match: '' } );
+		const resumed = await drive( await step( failed.id ) );
+		expect( resumed.id ).toBe( failed.id );
+		expect( resumed.status ).toBe( 'completed' );
+		expect( resumed.progress.settlements_done ).toBe( 3 );
+		expect( resumed.progress.settlements_skipped ).toBe( 0 );
+		expect( ( await list() ).total ).toBe( 3 );
+		expect(
+			( await byProviderId( 'stl_e2e0001' ) ).movements
+		).toHaveLength( 2 );
+	} );
+
+	test( 'adds API data to a settlement known only from a file', async () => {
+		const local = await importCsv( MATCHING_CSV, {
+			account_label: 'Confirmed early',
+		} );
+		const [ localAccount ] = ( await accounts() ).accounts;
+		const confirmed = await api.post(
+			`${ ACCOUNTS }/${ localAccount.id }/confirm`,
+			{ headers: admin, data: { organization_id: 'org_e2e0001' } }
+		);
+		expect( confirmed.status(), await confirmed.text() ).toBe( 200 );
+
+		const loaded = await runImport( { kind: 'new' } );
+
+		// A file is not a completed API import, so nothing was skipped and
+		// Mollie's settlement adopted the record the file created.
+		expect( loaded.progress.settlements_skipped ).toBe( 0 );
+		expect( loaded.progress.settlements_done ).toBe( 3 );
+		expect( ( await list() ).total ).toBe( 3 );
+		const merged = await detail( local.settlement_id );
+		expect( merged.provider_id ).toBe( 'stl_e2e0001' );
+		expect( merged.sources ).toEqual( [ 'api', 'csv' ] );
+		expect( merged.discrepancies ).toEqual( [] );
+
+		// Now it is imported from the API too, and is skipped like the rest.
+		const again = await runImport( { kind: 'new' } );
+		expect( again.progress.settlements_skipped ).toBe( 3 );
+		expect( again.progress.settlements_done ).toBe( 0 );
+	} );
+
+	test( 'decides what is new per account', async () => {
+		await runImport( { kind: 'new' } );
+
+		// Another organization reports settlements with the same IDs.
+		await setState( { organization_id: 'org_e2e0002' } );
+		const other = await runImport( { kind: 'new' } );
+
+		expect( other.progress.settlements_skipped ).toBe( 0 );
+		expect( other.progress.settlements_done ).toBe( 3 );
+		expect( ( await list( '?per_page=100' ) ).total ).toBe( 6 );
+		expect( ( await accounts() ).accounts ).toHaveLength( 2 );
+
+		// Back on the first organization nothing is new.
+		await setState( { organization_id: 'org_e2e0001' } );
+		const back = await runImport( { kind: 'new' } );
+		expect( back.progress.settlements_skipped ).toBe( 3 );
+		expect( back.progress.settlements_done ).toBe( 0 );
+	} );
+
+	test( 'starts one import when two are requested at once, and replaces a stopped one', async () => {
+		const both = await Promise.all( [
+			startImport( { kind: 'new' } ),
+			startImport( { kind: 'new' } ),
+		] );
+		expect( both.map( ( res ) => res.status() ).sort() ).toEqual( [
+			201, 409,
+		] );
+		const started = both.find( ( res ) => res.status() === 201 );
+		const refused = both.find( ( res ) => res.status() === 409 );
+		const { run } = await started.json();
+		const refusal = await refused.json();
+		expect( refusal.code ).toBe( 'settlement_import_in_progress' );
+
+		// Two requests stepping one run never both advance it.
+		const steps = await Promise.all( [
+			api.post( `${ IMPORTS }/${ run.id }/step`, { headers: admin } ),
+			api.post( `${ IMPORTS }/${ run.id }/step`, { headers: admin } ),
+		] );
+		for ( const res of steps ) {
+			expect( [ 200, 409 ] ).toContain( res.status() );
+		}
+		expect( steps.some( ( res ) => res.status() === 200 ) ).toBe( true );
+
+		// While it is active it cannot be replaced, in either mode.
+		for ( const kind of [ 'new', 'history' ] ) {
+			expect( ( await startImport( { kind } ) ).status() ).toBe( 409 );
+		}
+
+		// Once its request is gone it can be: staged work is dropped,
+		// published settlements stay.
+		await setState( { age_running: true } );
+		const replacement = await runImport( { kind: 'new' } );
+		expect( replacement.id ).not.toBe( run.id );
+		expect( replacement.status ).toBe( 'completed' );
+		expect( ( await list() ).total ).toBe( 3 );
+		for ( const item of ( await list() ).items ) {
+			expect( item.sources ).toEqual( [ 'api' ] );
+		}
+
+		const closed = await api.get( `${ IMPORTS }/${ run.id }`, {
+			headers: admin,
+		} );
+		expect( ( await closed.json() ).run ).toMatchObject( {
+			status: 'aborted',
+			resumable: false,
+			error_code: 'replaced',
+		} );
+	} );
+
+	test( 'mirrors each import in the operation log once, with the server outcome', async () => {
+		const logged = async ( runId ) => {
+			const res = await api.get( `${ LOG }?per_page=100`, {
+				headers: admin,
+			} );
+			expect( res.ok(), await res.text() ).toBeTruthy();
+			return ( await res.json() ).items.filter(
+				( item ) => item.settlement_run_id === runId
+			);
+		};
+
+		await setState( {
+			fail_match: 'stl_e2e0001/payments?from=tr_e2estl01b',
+		} );
+		const started = await startImport( { kind: 'new' } );
+		const { run } = await started.json();
+
+		// Logged as running from the start.
+		let entries = await logged( run.id );
+		expect( entries ).toHaveLength( 1 );
+		expect( entries[ 0 ] ).toMatchObject( {
+			action: 'load_new_mollie_settlements',
+			action_label: 'Load new settlements',
+			source_type: 'mollie',
+			source_label: 'Mollie',
+			status: 'running',
+			user_name: ADMIN_USER,
+			finished_at: null,
+		} );
+		const logId = entries[ 0 ].id;
+
+		// A failure the import can be continued from, with progress so far.
+		const failed = await drive( run );
+		expect( failed.status ).toBe( 'failed' );
+		await step( run.id );
+		entries = await logged( run.id );
+		expect( entries ).toHaveLength( 1 );
+		expect( entries[ 0 ] ).toMatchObject( {
+			id: logId,
+			status: 'partial',
+			error_code: 'mollie_request_failed',
+			counts: { created: 2, updated: 0, skipped: 0, failed: 0 },
+		} );
+		expect( entries[ 0 ].error_message ).not.toContain( 'E2E' );
+		expect( entries[ 0 ].finished_at ).not.toBeNull();
+
+		// Continuing reuses the entry and closes it with the final outcome.
+		await setState( { fail_match: '' } );
+		const resumed = await drive( await step( run.id ) );
+		expect( resumed.status ).toBe( 'completed' );
+		entries = await logged( run.id );
+		expect( entries ).toHaveLength( 1 );
+		expect( entries[ 0 ] ).toMatchObject( {
+			id: logId,
+			status: 'succeeded',
+			error_code: null,
+			counts: { created: 3, updated: 0, skipped: 0, failed: 0 },
+		} );
+
+		// Nothing new is a run of its own: all skipped.
+		const nothingNew = await runImport( { kind: 'new' } );
+		expect( ( await logged( nothingNew.id ) )[ 0 ] ).toMatchObject( {
+			status: 'succeeded',
+			counts: { created: 0, updated: 0, skipped: 3, failed: 0 },
+		} );
+
+		// Reloading counts what Mollie changed and what it did not.
+		await setState( { variant: 'changed' } );
+		const reloaded = await runImport( { kind: 'history' } );
+		const [ reloadEntry ] = await logged( reloaded.id );
+		expect( reloadEntry.action ).toBe( 'reload_mollie_settlements' );
+		expect( reloadEntry.status ).toBe( 'succeeded' );
+		expect( reloadEntry.counts.created ).toBe( 0 );
+		expect( reloadEntry.counts.updated ).toBeGreaterThan( 0 );
+		expect( reloadEntry.counts.updated + reloadEntry.counts.skipped ).toBe(
+			3
+		);
+
+		// An interrupted import, then its replacement.
+		const abandoned = await startImport( { kind: 'new' } );
+		const abandonedRun = ( await abandoned.json() ).run;
+		await setState( { age_running: true } );
+		const logList = await api.get( LOG, { headers: admin } );
+		expect( logList.ok() ).toBeTruthy();
+		expect( ( await logged( abandonedRun.id ) )[ 0 ] ).toMatchObject( {
+			status: 'interrupted',
+			error_code: 'interrupted',
+		} );
+
+		await runImport( { kind: 'new' } );
+		entries = await logged( abandonedRun.id );
+		expect( entries ).toHaveLength( 1 );
+		expect( entries[ 0 ] ).toMatchObject( {
+			status: 'failed',
+			error_code: 'replaced',
+		} );
+
+		// Settlement imports are started through their own route only.
+		const direct = await api.post( LOG, {
+			headers: admin,
+			data: { action: 'load_new_mollie_settlements', source_id: '' },
+		} );
+		expect( direct.status() ).toBe( 400 );
 	} );
 
 	test( 'keeps the last complete data when a refresh fails, then exposes what changed', async () => {

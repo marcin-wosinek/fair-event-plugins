@@ -137,6 +137,7 @@ const run = ( overrides = {} ) => ( {
 	settlement_id: null,
 	progress: {
 		settlements_done: 0,
+		settlements_skipped: 0,
 		settlements_queued: 0,
 		listing_done: false,
 		requests_done: 0,
@@ -311,9 +312,7 @@ describe( 'SettlementsApp — saved list', () => {
 			await screen.findByText( /kept by Fair Payments Connector/ )
 		).toBeInTheDocument();
 		expect(
-			screen.queryByRole( 'button', {
-				name: 'Load settlements from Mollie',
-			} )
+			screen.queryByRole( 'button', { name: 'Load new' } )
 		).not.toBeInTheDocument();
 	} );
 
@@ -355,16 +354,46 @@ describe( 'SettlementsApp — saved list', () => {
 } );
 
 describe( 'SettlementsApp — loading from Mollie', () => {
-	it( 'steps the import until it completes, then reloads the list', async () => {
+	it( 'offers Load new first and Reload all as the lesser action', async () => {
+		mockApi();
+
+		render( <SettlementsApp /> );
+
+		expect(
+			await screen.findByRole( 'button', { name: 'Load new' } )
+		).toHaveClass( 'is-primary' );
+		expect(
+			screen.getByRole( 'button', { name: 'Reload all' } )
+		).not.toHaveClass( 'is-primary' );
+		expect(
+			screen.getByText(
+				/already loaded from Mollie are left unchanged\. “Reload all” retrieves every settlement again/
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Continue import' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'loads only new settlements, then reloads the list', async () => {
+		const progress = { ...run().progress, settlements_skipped: 0 };
 		const steps = [
-			run( { progress: { ...run().progress, settlements_done: 1 } } ),
 			run( {
+				kind: 'new',
+				progress: { ...progress, settlements_done: 1 },
+			} ),
+			run( {
+				kind: 'new',
 				status: 'completed',
-				progress: { ...run().progress, settlements_done: 3 },
+				progress: {
+					...progress,
+					settlements_done: 2,
+					settlements_skipped: 4,
+				},
 			} ),
 		];
 		const calls = mockApi( {
-			[ `POST ${ BASE }/imports` ]: { run: run() },
+			[ `POST ${ BASE }/imports` ]: { run: run( { kind: 'new' } ) },
 			[ `POST ${ BASE }/imports/5/step` ]: () => ( {
 				run: steps.shift(),
 			} ),
@@ -373,13 +402,13 @@ describe( 'SettlementsApp — loading from Mollie', () => {
 		render( <SettlementsApp /> );
 
 		fireEvent.click(
-			await screen.findByRole( 'button', {
-				name: 'Load settlements from Mollie',
-			} )
+			await screen.findByRole( 'button', { name: 'Load new' } )
 		);
 
 		expect(
-			await screen.findByText( 'Loaded 3 settlements from Mollie.' )
+			await screen.findByText(
+				'Loaded 2 new settlements from Mollie. 4 already saved were left unchanged.'
+			)
 		).toBeInTheDocument();
 		expect(
 			calls.filter( ( call ) => call.key.endsWith( '/imports/5/step' ) )
@@ -387,7 +416,7 @@ describe( 'SettlementsApp — loading from Mollie', () => {
 		expect(
 			calls.find( ( call ) => call.key === `POST ${ BASE }/imports` )
 				.request.data
-		).toEqual( { kind: 'history', settlement_id: 0 } );
+		).toEqual( { kind: 'new', settlement_id: 0 } );
 		// The list was loaded again after the run stopped.
 		expect(
 			calls.filter(
@@ -396,17 +425,79 @@ describe( 'SettlementsApp — loading from Mollie', () => {
 		).toBeGreaterThan( 1 );
 	} );
 
+	it( 'says so when nothing new was found', async () => {
+		mockApi( {
+			[ `POST ${ BASE }/imports` ]: { run: run( { kind: 'new' } ) },
+			[ `POST ${ BASE }/imports/5/step` ]: {
+				run: run( {
+					kind: 'new',
+					status: 'completed',
+					progress: {
+						...run().progress,
+						settlements_skipped: 3,
+					},
+				} ),
+			},
+		} );
+
+		render( <SettlementsApp /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Load new' } )
+		);
+
+		expect(
+			await screen.findByText(
+				'Nothing new: all 3 settlements Mollie lists are already saved.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'reloads every settlement on request', async () => {
+		const calls = mockApi( {
+			[ `POST ${ BASE }/imports` ]: { run: run() },
+			[ `POST ${ BASE }/imports/5/step` ]: {
+				run: run( {
+					status: 'completed',
+					progress: { ...run().progress, settlements_done: 3 },
+				} ),
+			},
+		} );
+
+		render( <SettlementsApp /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Reload all' } )
+		);
+
+		expect(
+			await screen.findByText( 'Loaded 3 settlements from Mollie.' )
+		).toBeInTheDocument();
+		expect(
+			calls.find( ( call ) => call.key === `POST ${ BASE }/imports` )
+				.request.data
+		).toEqual( { kind: 'history', settlement_id: 0 } );
+	} );
+
 	it( 'stops on a failure and continues the same run', async () => {
 		const failed = run( {
+			kind: 'new',
 			status: 'failed',
 			resumable: true,
 			error_code: 'mollie_request_failed',
 			error_message: 'Mollie could not be reached.',
 			progress: { ...run().progress, settlements_done: 2 },
 		} );
-		const answers = [ failed, run( { status: 'completed' } ) ];
+		const answers = [
+			failed,
+			run( {
+				kind: 'new',
+				status: 'completed',
+				progress: { ...run().progress, settlements_done: 3 },
+			} ),
+		];
 		const calls = mockApi( {
-			[ `POST ${ BASE }/imports` ]: { run: run() },
+			[ `POST ${ BASE }/imports` ]: { run: run( { kind: 'new' } ) },
 			[ `POST ${ BASE }/imports/5/step` ]: () => ( {
 				run: answers.shift(),
 			} ),
@@ -415,13 +506,12 @@ describe( 'SettlementsApp — loading from Mollie', () => {
 		render( <SettlementsApp /> );
 
 		fireEvent.click(
-			await screen.findByRole( 'button', {
-				name: 'Load settlements from Mollie',
-			} )
+			await screen.findByRole( 'button', { name: 'Load new' } )
 		);
 
+		// The notice names the import that stopped.
 		expect(
-			await screen.findByText( 'An import from Mollie did not finish.' )
+			await screen.findByText( 'A “Load new” import did not finish.' )
 		).toBeInTheDocument();
 		expect(
 			screen.getByText( /Mollie could not be reached\./ )
@@ -435,7 +525,7 @@ describe( 'SettlementsApp — loading from Mollie', () => {
 		);
 
 		expect(
-			await screen.findByText( /Loaded \d+ settlements? from Mollie\./ )
+			await screen.findByText( 'Loaded 3 new settlements from Mollie.' )
 		).toBeInTheDocument();
 		// Continued, not restarted.
 		expect(
@@ -443,8 +533,8 @@ describe( 'SettlementsApp — loading from Mollie', () => {
 		).toHaveLength( 1 );
 	} );
 
-	it( 'offers continuation when the page is reopened on an unfinished run', async () => {
-		mockApi( {
+	it( 'offers continuation or a replacement when reopened on an unfinished run', async () => {
+		const calls = mockApi( {
 			[ `GET ${ BASE }/imports` ]: {
 				run: run( {
 					status: 'interrupted',
@@ -453,19 +543,201 @@ describe( 'SettlementsApp — loading from Mollie', () => {
 					error_message: 'The import stopped before it finished.',
 				} ),
 			},
+			[ `POST ${ BASE }/imports` ]: {
+				run: run( { id: 6, kind: 'new' } ),
+			},
+			[ `POST ${ BASE }/imports/6/step` ]: {
+				run: run( { id: 6, kind: 'new', status: 'completed' } ),
+			},
+		} );
+
+		render( <SettlementsApp /> );
+
+		const resume = await screen.findByRole( 'button', {
+			name: 'Continue import',
+		} );
+		expect( resume ).toBeEnabled();
+		expect( resume ).toHaveClass( 'is-primary' );
+		expect(
+			screen.getByText( 'A “Reload all” import did not finish.' )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /The import stopped before it finished\./ )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Reload all' } )
+		).toBeEnabled();
+
+		// Starting another import replaces the unfinished one.
+		fireEvent.click( screen.getByRole( 'button', { name: 'Load new' } ) );
+
+		expect(
+			await screen.findByText( 'Mollie lists no settlements yet.' )
+		).toBeInTheDocument();
+		expect(
+			calls.filter( ( call ) => call.key.endsWith( '/imports/5/step' ) )
+		).toHaveLength( 0 );
+	} );
+
+	it( 'reads the run back after a failed request instead of leaving it running', async () => {
+		const calls = mockApi( {
+			[ `POST ${ BASE }/imports` ]: { run: run( { kind: 'new' } ) },
+			[ `POST ${ BASE }/imports/5/step` ]: {
+				reject: { code: 'fetch_error', message: 'You are offline.' },
+			},
+			[ `GET ${ BASE }/imports/5` ]: {
+				run: run( {
+					kind: 'new',
+					status: 'failed',
+					resumable: true,
+					error_code: 'mollie_request_failed',
+					error_message: 'Mollie could not be reached.',
+				} ),
+			},
+		} );
+
+		render( <SettlementsApp /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Load new' } )
+		);
+
+		expect(
+			await screen.findByText( 'You are offline.' )
+		).toBeInTheDocument();
+		expect(
+			await screen.findByText( 'A “Load new” import did not finish.' )
+		).toBeInTheDocument();
+		// Nothing is left disabled by what the browser last saw.
+		expect(
+			screen.getByRole( 'button', { name: 'Continue import' } )
+		).toBeEnabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Load new' } )
+		).toBeEnabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Reload all' } )
+		).toBeEnabled();
+		expect(
+			calls.filter( ( call ) => call.key === `GET ${ BASE }/imports/5` )
+		).toHaveLength( 1 );
+	} );
+
+	it( 'shows a run the server still counts as active and re-reads it on request', async () => {
+		const stillRunning = run( {
+			kind: 'new',
+			progress: { ...run().progress, settlements_done: 1 },
+		} );
+		const answers = [
+			stillRunning,
+			run( {
+				kind: 'new',
+				status: 'interrupted',
+				resumable: true,
+				error_code: 'interrupted',
+				error_message: 'The import stopped before it finished.',
+			} ),
+		];
+		const calls = mockApi( {
+			[ `GET ${ BASE }/imports` ]: { run: stillRunning },
+			[ `GET ${ BASE }/imports/5` ]: () => ( { run: answers.shift() } ),
 		} );
 
 		render( <SettlementsApp /> );
 
 		expect(
-			await screen.findByRole( 'button', { name: 'Continue import' } )
-		).toBeEnabled();
-		expect(
-			screen.getByRole( 'button', { name: 'Start over' } )
-		).toBeEnabled();
-		expect(
-			screen.getByText( /The import stopped before it finished\./ )
+			await screen.findByText( 'A “Load new” import is running.' )
 		).toBeInTheDocument();
+		expect(
+			screen.getByText( /after it has made no progress for five minutes/ )
+		).toBeInTheDocument();
+		// No replacement while the server protects the run.
+		expect(
+			screen.getByRole( 'button', { name: 'Load new' } )
+		).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Reload all' } )
+		).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Continue import' } )
+		).toBeEnabled();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Refresh status' } )
+		);
+		await waitFor( () =>
+			expect(
+				calls.filter(
+					( call ) => call.key === `GET ${ BASE }/imports/5`
+				)
+			).toHaveLength( 1 )
+		);
+		expect(
+			screen.getByRole( 'button', { name: 'Load new' } )
+		).toBeDisabled();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Refresh status' } )
+		);
+
+		expect(
+			await screen.findByText( 'A “Load new” import did not finish.' )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Load new' } )
+		).toBeEnabled();
+		expect(
+			screen.queryByRole( 'button', { name: 'Refresh status' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'does not let a late answer about an old run replace a newer one', async () => {
+		let answerOpenRun;
+		mockApi( {
+			[ `GET ${ BASE }/imports` ]: () =>
+				new Promise( ( resolve ) => {
+					answerOpenRun = resolve;
+				} ),
+			[ `POST ${ BASE }/imports` ]: {
+				run: run( { id: 6, kind: 'new' } ),
+			},
+			[ `POST ${ BASE }/imports/6/step` ]: {
+				run: run( {
+					id: 6,
+					kind: 'new',
+					status: 'completed',
+					progress: { ...run().progress, settlements_done: 1 },
+				} ),
+			},
+		} );
+
+		render( <SettlementsApp /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Load new' } )
+		);
+		expect(
+			await screen.findByText( 'Loaded 1 new settlement from Mollie.' )
+		).toBeInTheDocument();
+
+		// The page-load question is answered only now, about the older run.
+		await act( async () => {
+			answerOpenRun( {
+				run: run( {
+					id: 5,
+					status: 'interrupted',
+					resumable: true,
+					error_message: 'The import stopped before it finished.',
+				} ),
+			} );
+		} );
+
+		expect(
+			screen.getByText( 'Loaded 1 new settlement from Mollie.' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Continue import' } )
+		).not.toBeInTheDocument();
 	} );
 
 	it( 'explains why loading is unavailable while files still import', async () => {
@@ -491,9 +763,7 @@ describe( 'SettlementsApp — loading from Mollie', () => {
 			)
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'button', {
-				name: 'Load settlements from Mollie',
-			} )
+			screen.getByRole( 'button', { name: 'Load new' } )
 		).toBeDisabled();
 		expect(
 			screen.getByRole( 'link', {
