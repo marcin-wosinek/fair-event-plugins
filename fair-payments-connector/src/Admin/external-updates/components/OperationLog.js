@@ -80,7 +80,21 @@ const OperationLog = ( { refreshKey } ) => {
 					{ run.source_label }
 				</td>
 				<td data-label={ __( 'Action', 'fair-payments-connector' ) }>
-					{ run.action_label }
+					<div>
+						{ run.action_label }
+						{ run.settlement_run_id && (
+							<span className="fair-external-updates__reason">
+								{ sprintf(
+									/* translators: %d: ID of a settlement import */
+									__(
+										'Settlement import #%d',
+										'fair-payments-connector'
+									),
+									run.settlement_run_id
+								) }
+							</span>
+						) }
+					</div>
 				</td>
 				<td
 					data-label={ __( 'Started by', 'fair-payments-connector' ) }

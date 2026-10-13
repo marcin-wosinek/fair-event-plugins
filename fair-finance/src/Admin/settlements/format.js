@@ -282,3 +282,31 @@ export const settledTotals = ( movements ) => {
 		unknown,
 	};
 };
+
+/**
+ * Words for an import request that failed: the server's explanation when it
+ * gave one.
+ *
+ * @param {Object} error `{ phase, message }` from the import hook.
+ * @return {string} Message.
+ */
+export const importErrorText = ( error ) => {
+	if ( error.message ) {
+		return error.message;
+	}
+
+	switch ( error.phase ) {
+		case 'start':
+			return __( 'The import could not be started.', 'fair-finance' );
+		case 'refresh':
+			return __(
+				'The status of the import could not be read. Try again in a moment.',
+				'fair-finance'
+			);
+		default:
+			return __(
+				'The import could not continue. Its last known state is shown below.',
+				'fair-finance'
+			);
+	}
+};

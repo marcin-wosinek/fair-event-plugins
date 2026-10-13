@@ -169,10 +169,10 @@ test.describe('Fair Finance settlements', () => {
 		// 2. Load from Mollie: every page, in steps, with progress.
 		await page.goto(PAGE);
 		await page
-			.getByRole('button', { name: 'Load settlements from Mollie' })
+			.getByRole('button', { name: 'Load new', exact: true })
 			.click();
 		await expect(
-			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+			inApp(page).getByText('Loaded 3 new settlements from Mollie.')
 		).toBeVisible({ timeout: 30000 });
 
 		// The file's account is not confirmed, so its settlement stays apart.
@@ -216,7 +216,7 @@ test.describe('Fair Finance settlements', () => {
 			)
 		).toBeVisible();
 		await expect(
-			page.getByRole('button', { name: 'Load settlements from Mollie' })
+			page.getByRole('button', { name: 'Load new', exact: true })
 		).toBeDisabled();
 
 		await follow(
@@ -282,10 +282,10 @@ test.describe('Fair Finance settlements', () => {
 		await loginAsAdmin(page);
 		await page.goto(PAGE);
 		await page
-			.getByRole('button', { name: 'Load settlements from Mollie' })
+			.getByRole('button', { name: 'Load new', exact: true })
 			.click();
 		await expect(
-			inApp(page).getByText('An import from Mollie did not finish.')
+			inApp(page).getByText('A “Load new” import did not finish.')
 		).toBeVisible({ timeout: 30000 });
 
 		// The half-loaded settlement is marked, not presented as complete.
@@ -296,16 +296,62 @@ test.describe('Fair Finance settlements', () => {
 		await setState({ fail_match: '' });
 		await page.reload();
 		await expect(
-			inApp(page).getByText('An import from Mollie did not finish.')
+			inApp(page).getByText('A “Load new” import did not finish.')
 		).toBeVisible();
 		await page.getByRole('button', { name: 'Continue import' }).click();
 		await expect(
-			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+			inApp(page).getByText('Loaded 3 new settlements from Mollie.')
 		).toBeVisible({ timeout: 30000 });
 
 		const complete = rowFor(page, 'E2E.2605.01');
 		await expect(complete).toContainText('Adds up to payout');
 		await expect(complete).not.toContainText('Last load failed');
+		await expect(
+			page.locator('.fair-finance-settlements-table tbody tr')
+		).toHaveCount(3);
+	});
+
+	test('loads only what is new, and everything again on request', async ({
+		page,
+	}) => {
+		await loginAsAdmin(page);
+		await page.goto(PAGE);
+
+		// Load new is the main action; Reload all is the lesser one.
+		const loadNew = page.getByRole('button', {
+			name: 'Load new',
+			exact: true,
+		});
+		const reloadAll = page.getByRole('button', {
+			name: 'Reload all',
+			exact: true,
+		});
+		await expect(loadNew).toHaveClass(/is-primary/);
+		await expect(reloadAll).not.toHaveClass(/is-primary/);
+
+		await loadNew.click();
+		await expect(
+			inApp(page).getByText('Loaded 3 new settlements from Mollie.')
+		).toBeVisible({ timeout: 30000 });
+		const afterFirst = await mollieRequests();
+
+		// Nothing new: only the two list pages are read again.
+		await loadNew.click();
+		await expect(
+			inApp(page).getByText(
+				'Nothing new: all 3 settlements Mollie lists are already saved.'
+			)
+		).toBeVisible({ timeout: 30000 });
+		expect((await mollieRequests()) - afterFirst).toBe(2);
+		await expect(
+			page.locator('.fair-finance-settlements-table tbody tr')
+		).toHaveCount(3);
+
+		await reloadAll.click();
+		await expect(
+			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+		).toBeVisible({ timeout: 30000 });
+		expect((await mollieRequests()) - afterFirst).toBeGreaterThan(4);
 		await expect(
 			page.locator('.fair-finance-settlements-table tbody tr')
 		).toHaveCount(3);
@@ -317,10 +363,10 @@ test.describe('Fair Finance settlements', () => {
 		await loginAsAdmin(page);
 		await page.goto(PAGE);
 		await page
-			.getByRole('button', { name: 'Load settlements from Mollie' })
+			.getByRole('button', { name: 'Load new', exact: true })
 			.click();
 		await expect(
-			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+			inApp(page).getByText('Loaded 3 new settlements from Mollie.')
 		).toBeVisible({ timeout: 30000 });
 
 		await follow(
@@ -368,10 +414,10 @@ test.describe('Fair Finance settlements', () => {
 		await loginAsAdmin(page);
 		await page.goto(PAGE);
 		await page
-			.getByRole('button', { name: 'Load settlements from Mollie' })
+			.getByRole('button', { name: 'Load new', exact: true })
 			.click();
 		await expect(
-			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+			inApp(page).getByText('Loaded 3 new settlements from Mollie.')
 		).toBeVisible({ timeout: 30000 });
 
 		await follow(
@@ -422,10 +468,10 @@ test.describe('Fair Finance settlements', () => {
 		await loginAsAdmin(page);
 		await page.goto(PAGE);
 		await page
-			.getByRole('button', { name: 'Load settlements from Mollie' })
+			.getByRole('button', { name: 'Load new', exact: true })
 			.click();
 		await expect(
-			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+			inApp(page).getByText('Loaded 3 new settlements from Mollie.')
 		).toBeVisible({ timeout: 30000 });
 
 		await follow(
@@ -537,10 +583,10 @@ test.describe('Fair Finance settlements', () => {
 		await loginAsAdmin(page);
 		await page.goto(PAGE);
 		await page
-			.getByRole('button', { name: 'Load settlements from Mollie' })
+			.getByRole('button', { name: 'Load new', exact: true })
 			.click();
 		await expect(
-			inApp(page).getByText('Loaded 3 settlements from Mollie.')
+			inApp(page).getByText('Loaded 3 new settlements from Mollie.')
 		).toBeVisible({ timeout: 30000 });
 		// As saved before report details were kept.
 		await setState({ forget_reports: true });

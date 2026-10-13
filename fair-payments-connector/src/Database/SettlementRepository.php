@@ -277,6 +277,35 @@ class SettlementRepository {
 	}
 
 	/**
+	 * Which of the given Mollie settlements an account already holds a
+	 * completed API import of.
+	 *
+	 * @param int      $account_id   Account ID.
+	 * @param string[] $provider_ids Mollie settlement IDs.
+	 * @return string[] The provider IDs that are already imported.
+	 */
+	public function find_api_imported_provider_ids( $account_id, array $provider_ids ) {
+		global $wpdb;
+
+		if ( empty( $provider_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ', ', array_fill( 0, count( $provider_ids ), '%s' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholders are generated above, one per provider ID.
+		$found = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT provider_id FROM %i WHERE account_id = %d AND api_revision_id IS NOT NULL AND provider_id IN ( $placeholders )",
+				array_merge( array( Schema::get_settlements_table_name(), (int) $account_id ), array_values( $provider_ids ) )
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+
+		return $found ? array_map( 'strval', $found ) : array();
+	}
+
+	/**
 	 * Find the settlements of an account that carry a payout reference.
 	 *
 	 * @param int    $account_id Account ID.
@@ -657,10 +686,20 @@ class SettlementRepository {
 	 * Their cursors are kept so they can be continued.
 	 *
 	 * @param string $cutoff GMT datetime; runs last updated before it are stale.
-	 * @return void
+	 * @return int[] IDs of the runs that were running and stale.
 	 */
 	public function interrupt_stale_runs( $cutoff ) {
 		global $wpdb;
+
+		$table = Schema::get_settlement_import_runs_table_name();
+		$stale = $wpdb->get_col(
+			$wpdb->prepare( 'SELECT id FROM %i WHERE status = %s AND updated_at < %s', $table, 'running', $cutoff )
+		);
+
+		if ( empty( $stale ) ) {
+			return array();
+		}
+
 		$wpdb->query(
 			$wpdb->prepare(
 				'UPDATE %i SET status = %s, error_code = %s WHERE status = %s AND updated_at < %s',
@@ -671,6 +710,8 @@ class SettlementRepository {
 				$cutoff
 			)
 		);
+
+		return array_map( 'intval', $stale );
 	}
 
 	/**

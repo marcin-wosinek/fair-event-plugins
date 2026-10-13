@@ -250,9 +250,10 @@ class Schema {
 		self::migrate_to_v26();
 		self::migrate_to_v27();
 		self::migrate_to_v28();
+		self::migrate_to_v29();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '28.0' );
+		update_option( 'fair_payment_db_version', '29.0' );
 	}
 
 	/**
@@ -428,6 +429,9 @@ class Schema {
 	 * and a failure category. Tokens, Mollie credentials, payment data and
 	 * remote response bodies are never stored here. updated_at doubles as a
 	 * heartbeat so a run whose request died can be marked interrupted.
+	 * settlement_run_id links the one row that mirrors a settlement import
+	 * run (#1694); the unique key keeps a retried or continued import from
+	 * being logged twice.
 	 *
 	 * @return void
 	 */
@@ -451,10 +455,12 @@ class Schema {
 			skipped_count int(11) UNSIGNED NOT NULL DEFAULT 0,
 			failed_count int(11) UNSIGNED NOT NULL DEFAULT 0,
 			error_code varchar(50) DEFAULT NULL,
+			settlement_run_id bigint(20) UNSIGNED DEFAULT NULL,
 			started_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
 			finished_at datetime DEFAULT NULL,
 			PRIMARY KEY  (id),
+			UNIQUE KEY settlement_run_id (settlement_run_id),
 			KEY status (status),
 			KEY started_at (started_at)
 		) $charset_collate;";
@@ -1599,6 +1605,22 @@ class Schema {
 
 		if ( version_compare( $current_version, '28.0', '<' ) ) {
 			self::create_settlement_tables();
+		}
+	}
+
+	/**
+	 * Migrate database from v28.0 to v29.0
+	 *
+	 * Links operation log rows to the settlement import run they mirror
+	 * (#1694).
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v29() {
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '29.0', '<' ) ) {
+			self::create_external_update_runs_table();
 		}
 	}
 

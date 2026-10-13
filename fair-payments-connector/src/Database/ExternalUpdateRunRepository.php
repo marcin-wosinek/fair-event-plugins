@@ -198,6 +198,52 @@ class ExternalUpdateRunRepository {
 	}
 
 	/**
+	 * Write the one log row that mirrors a settlement import run.
+	 *
+	 * Every column is set outright rather than incremented, so writing the
+	 * same state twice changes nothing. The unique key on settlement_run_id
+	 * keeps concurrent first writes from creating two rows.
+	 *
+	 * @param int   $settlement_run_id Settlement import run ID.
+	 * @param array $identity          Columns set once: source_type, source_id, action, user_id, started_at.
+	 * @param array $outcome           Columns kept current: status, the four counts, error_code, finished_at.
+	 * @return void
+	 */
+	public function save_settlement_run( $settlement_run_id, array $identity, array $outcome ) {
+		global $wpdb;
+
+		$table                 = $this->get_table_name();
+		$outcome['updated_at'] = current_time( 'mysql', true );
+
+		$exists = $wpdb->get_var(
+			$wpdb->prepare( 'SELECT id FROM %i WHERE settlement_run_id = %d', $table, $settlement_run_id )
+		);
+
+		if ( ! $exists ) {
+			$suppress = $wpdb->suppress_errors( true );
+			$inserted = $wpdb->insert(
+				$table,
+				array_merge(
+					$identity,
+					$outcome,
+					array(
+						'source_label'      => '',
+						'settlement_run_id' => (int) $settlement_run_id,
+					)
+				)
+			);
+			$wpdb->suppress_errors( $suppress );
+
+			if ( $inserted ) {
+				return;
+			}
+			// Another request logged this run first; bring its row up to date.
+		}
+
+		$wpdb->update( $table, $outcome, array( 'settlement_run_id' => (int) $settlement_run_id ) );
+	}
+
+	/**
 	 * Get a page of runs, newest first.
 	 *
 	 * @param int $page     1-based page number.

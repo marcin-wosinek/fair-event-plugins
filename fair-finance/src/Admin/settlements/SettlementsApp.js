@@ -12,6 +12,11 @@ import {
 } from '@wordpress/components';
 
 /**
+ * External dependencies
+ */
+import { fetchOpenImport } from 'fair-payments-connector/src/Admin/settlement-import/index.js';
+
+/**
  * Internal dependencies
  */
 import CsvImportModal from './components/CsvImportModal.js';
@@ -21,7 +26,6 @@ import SettlementList from './components/SettlementList.js';
 import {
 	confirmAccount,
 	fetchAccounts,
-	fetchOpenImport,
 	fetchSettlement,
 	fetchSettlements,
 	isConnectorMissing,

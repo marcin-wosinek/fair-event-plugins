@@ -196,7 +196,7 @@ class SettlementController extends WP_REST_Controller {
 						'kind'          => array(
 							'type'     => 'string',
 							'required' => true,
-							'enum'     => array( SettlementApiImport::KIND_HISTORY, SettlementApiImport::KIND_REFRESH ),
+							'enum'     => array( SettlementApiImport::KIND_NEW, SettlementApiImport::KIND_HISTORY, SettlementApiImport::KIND_REFRESH ),
 						),
 						'settlement_id' => array(
 							'type'              => 'integer',
@@ -204,6 +204,19 @@ class SettlementController extends WP_REST_Controller {
 							'sanitize_callback' => 'absint',
 						),
 					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/settlements/imports/(?P<id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_import_run' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+					'args'                => $id_arg,
 				),
 			)
 		);
@@ -470,6 +483,25 @@ class SettlementController extends WP_REST_Controller {
 		$run = ( new SettlementApiImport() )->get_open_run();
 
 		return new WP_REST_Response( array( 'run' => $run ? SettlementApiImport::prepare_for_response( $run ) : null ), 200 );
+	}
+
+	/**
+	 * GET /settlements/imports/{id} — one import as the server has it now.
+	 *
+	 * A page whose request failed asks here instead of trusting what it last
+	 * saw. Never contacts Mollie.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_import_run( $request ) {
+		$run = ( new SettlementApiImport() )->get_run( (int) $request->get_param( 'id' ) );
+
+		if ( ! $run ) {
+			return new WP_Error( 'settlement_import_not_found', __( 'Import not found.', 'fair-payments-connector' ), array( 'status' => 404 ) );
+		}
+
+		return new WP_REST_Response( array( 'run' => SettlementApiImport::prepare_for_response( $run ) ), 200 );
 	}
 
 	/**

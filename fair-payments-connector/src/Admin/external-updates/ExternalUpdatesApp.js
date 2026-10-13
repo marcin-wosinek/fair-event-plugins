@@ -11,6 +11,7 @@ import { __experimentalVStack as VStack } from '@wordpress/components';
 import ConnectedSitesPanel from './components/ConnectedSitesPanel.js';
 import MollieImportPanel from './components/MollieImportPanel.js';
 import MollieFeesPanel from './components/MollieFeesPanel.js';
+import MollieSettlementsPanel from './components/MollieSettlementsPanel.js';
 import OperationLog from './components/OperationLog.js';
 
 /**
@@ -65,6 +66,10 @@ const ExternalUpdatesApp = () => {
 				<ConnectedSitesPanel { ...panelProps } />
 				<MollieImportPanel { ...panelProps } />
 				<MollieFeesPanel { ...panelProps } />
+				{ /* Localized script data arrives as '1' or ''. */ }
+				{ !! settings.financeActive && (
+					<MollieSettlementsPanel { ...panelProps } />
+				) }
 				<OperationLog refreshKey={ refreshKey } />
 			</VStack>
 		</div>

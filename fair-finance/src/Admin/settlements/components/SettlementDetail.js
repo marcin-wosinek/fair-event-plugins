@@ -15,13 +15,18 @@ import {
 } from '@wordpress/components';
 
 /**
+ * External dependencies
+ */
+import { useSettlementImport } from 'fair-payments-connector/src/Admin/settlement-import/index.js';
+
+/**
  * Internal dependencies
  */
-import useImportRun from '../useImportRun.js';
 import {
 	LIST_URL,
 	completenessBadge,
 	formatDatetime,
+	importErrorText,
 	formatMoney,
 	molliePaymentUrl,
 	mollieSettlementUrl,
@@ -119,7 +124,7 @@ export default function SettlementDetail( {
 	connection,
 	onChanged,
 } ) {
-	const { run, working, error, start, resume } = useImportRun( {
+	const { run, working, error, start, resume } = useSettlementImport( {
 		onFinished: onChanged,
 	} );
 
@@ -191,7 +196,7 @@ export default function SettlementDetail( {
 
 			{ error && (
 				<Notice status="error" isDismissible={ false }>
-					{ error }
+					{ importErrorText( error ) }
 				</Notice>
 			) }
 
