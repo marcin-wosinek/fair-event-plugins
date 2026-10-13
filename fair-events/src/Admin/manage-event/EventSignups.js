@@ -228,7 +228,8 @@ export function ticketDistributionLabel( { onThisDate, onOtherDates } ) {
 }
 
 /**
- * Label identifying a ticket row, e.g. "Ticket 2 (AE2671B5)".
+ * Label naming a ticket within its purchase, e.g. "Ticket 2 (AE2671B5)", for
+ * the ticket's actions and exports.
  *
  * @param {Object|null} ticket Ticket of the row, null when not created yet.
  * @return {string} Label
@@ -237,6 +238,17 @@ export function ticketRowLabel( ticket ) {
 	return ticket
 		? ticketReferenceLabel( ticket.position, ticket.reference )
 		: __( 'Ticket not created yet', 'fair-events' );
+}
+
+/**
+ * What the List shows in its Ticket column: the ticket's short reference,
+ * e.g. "AE2671B5".
+ *
+ * @param {Object|null} ticket Ticket of the row, null when not created yet.
+ * @return {string} Reference
+ */
+export function ticketRowReference( ticket ) {
+	return ticket?.reference || ticketRowLabel( ticket );
 }
 
 /**
@@ -498,9 +510,7 @@ export function listDataColumns( ticketOptions ) {
 			isExtra: true,
 		} ) ),
 		{ key: 'status', label: __( 'Status', 'fair-events' ) },
-		{ key: 'transaction', label: __( 'Transaction', 'fair-events' ) },
 		{ key: 'mailing', label: __( 'Mailing', 'fair-events' ) },
-		{ key: 'date', label: __( 'Date', 'fair-events' ) },
 	];
 }
 
@@ -539,8 +549,31 @@ export function mailingLabel( signup ) {
 }
 
 /**
+ * Mark printed for the mailing consent of a signup. The linked participant's
+ * current consent decides, as on the Audience printout; without one, only an
+ * explicit opt-in at registration counts, and nothing is read as a refusal.
+ *
+ * @param {Object} signup Signup row returned by the API.
+ * @return {string} "✓" consented, "✗" declined, empty when unspecified
+ */
+export function printedMailingSymbol( signup ) {
+	const consent = signup.newsletter_consent;
+	if ( consent === 'granted' ) {
+		return '✓';
+	}
+	if ( consent === 'declined' ) {
+		return '✗';
+	}
+	if ( consent ) {
+		return '';
+	}
+	return isMailingOptIn( signup.mailing_opt_in ) ? '✓' : '';
+}
+
+/**
  * Rows of the printed List: the text of every data column of each List row,
- * numbered from 1 in the order given.
+ * numbered from 1 in the order given. The mailing column prints the current
+ * consent as a mark, not the List's Yes/No.
  *
  * @param {Array}  rows          Rows from expandTicketRows().
  * @param {Array}  ticketOptions Extras of the event date.
@@ -556,12 +589,10 @@ export function printableListRows( rows, ticketOptions, eventDateId ) {
 				text: signup.name,
 				note: registeredForNote( signup, eventDateId ),
 			},
-			ticket: { text: ticketRowLabel( ticket ) },
+			ticket: { text: ticketRowReference( ticket ) },
 			ticket_type: { text: ticketRowTypeName( row ) },
 			status: { text: signupStatusLabel( signup ) },
-			transaction: { text: signup.transaction_id || '—' },
-			mailing: { text: mailingLabel( signup ) },
-			date: { text: signup.created_at },
+			mailing: { text: printedMailingSymbol( signup ) },
 		};
 		ticketOptions.forEach( ( opt ) => {
 			cells[ `option-${ opt.id }` ] = {
@@ -577,7 +608,6 @@ export default function EventSignups( {
 	eventTitle = '',
 	eventDateLabel = '',
 } ) {
-	const connectorActive = !! window.fairPaymentsConnector?.connectorActive;
 	const audienceActive = !! window.fairEventsManageEventData?.audienceUrl;
 	const [ signups, setSignups ] = useState( [] );
 	const [ ticketOptions, setTicketOptions ] = useState( [] );
@@ -757,7 +787,6 @@ export default function EventSignups( {
 
 	const renderRow = ( row, index ) => {
 		const { signup, ticket, isFirstTicket } = row;
-		const label = ticketRowLabel( ticket );
 		const registeredNote = registeredForNote( signup, eventDateId );
 		return (
 			<tr
@@ -790,7 +819,7 @@ export default function EventSignups( {
 					) }
 				</td>
 				<td style={ { ...cellStyle, whiteSpace: 'nowrap' } }>
-					{ label }
+					{ ticketRowReference( ticket ) }
 				</td>
 				<td style={ cellStyle }>{ ticketRowTypeName( row ) }</td>
 				{ ticketOptions.map( ( opt ) => (
@@ -804,19 +833,7 @@ export default function EventSignups( {
 				<td style={ cellStyle }>
 					<SignupStatus signup={ signup } />
 				</td>
-				<td style={ cellStyle }>
-					{ signup.transaction_id && connectorActive ? (
-						<a
-							href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ signup.transaction_id }` }
-						>
-							{ signup.transaction_id }
-						</a>
-					) : (
-						signup.transaction_id || '—'
-					) }
-				</td>
 				<td style={ cellStyle }>{ mailingLabel( signup ) }</td>
-				<td style={ cellStyle }>{ signup.created_at }</td>
 				<td style={ cellStyle }>
 					{ isFirstTicket && renderRegistrationActions( signup ) }
 					{ audienceActive && ticket && (
@@ -833,7 +850,7 @@ export default function EventSignups( {
 								label={ sprintf(
 									/* translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)" */
 									__( 'Edit %s', 'fair-events' ),
-									label
+									ticketRowLabel( ticket )
 								) }
 								showTooltip={ false }
 							>

@@ -267,13 +267,16 @@ describe( 'EventSignups — list and Export button (#1568)', () => {
 		}
 	);
 
-	it( 'links transaction references only when the connector is active', async () => {
+	it( 'leaves the transaction and the registration date out of the table', async () => {
 		window.fairPaymentsConnector = { connectorActive: true };
 		await renderSignups( { rows: [ signups[ 0 ] ] } );
-		expect( screen.getByRole( 'link', { name: '501' } ) ).toHaveAttribute(
-			'href',
-			'admin.php?page=fair-payments-connector-transaction&transaction_id=501'
-		);
+		const row = bodyRows()[ 0 ];
+
+		expect( columnHeaders() ).not.toContain( 'Transaction' );
+		expect( columnHeaders() ).not.toContain( 'Date' );
+		expect( within( row ).queryByRole( 'link' ) ).not.toBeInTheDocument();
+		expect( row ).not.toHaveTextContent( '501' );
+		expect( row ).not.toHaveTextContent( '2026-07-20 10:00:00' );
 	} );
 
 	it( 'narrows the table to mailing opt-ins when the filter is on', async () => {
@@ -453,9 +456,7 @@ describe( 'EventSignups — extras (#1683)', () => {
 			'Ticket',
 			'Ticket Type',
 			'Status',
-			'Transaction',
 			'Mailing',
-			'Date',
 			'Actions',
 		] );
 		expect(
@@ -475,9 +476,7 @@ describe( 'EventSignups — extras (#1683)', () => {
 				'Dinner',
 				'Afterparty',
 				'Status',
-				'Transaction',
 				'Mailing',
-				'Date',
 				'Actions',
 			] )
 		);
@@ -678,10 +677,10 @@ describe( 'EventSignups — confirmed tickets only (#1754)', () => {
 
 		const rows = bodyRows();
 		expect( rows ).toHaveLength( 3 );
-		expect( rows[ 1 ] ).toHaveTextContent( 'Ticket 2' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'REF00202' );
 		expect( rows[ 1 ] ).toHaveTextContent( 'Entire purchase — 2 tickets' );
 		expect( rows[ 1 ] ).toHaveTextContent( 'Delete' );
-		expect( rows[ 2 ] ).toHaveTextContent( 'Ticket 3' );
+		expect( rows[ 2 ] ).toHaveTextContent( 'REF00203' );
 		expect( screen.queryByText( 'Cancelled' ) ).not.toBeInTheDocument();
 	} );
 
@@ -1186,12 +1185,15 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 		} );
 
 		expect( bodyRows() ).toHaveLength( 2 );
-		expect( ticketRow( 301 ) ).toHaveTextContent( 'Ticket 1 (AAAA1111)' );
+		expect( ticketRow( 301 ) ).toHaveTextContent( 'AAAA1111' );
+		expect( ticketRow( 301 ) ).not.toHaveTextContent( 'Ticket 1 (' );
 		expect( ticketRow( 301 ) ).toHaveTextContent( 'General' );
 		expect(
 			within( ticketRow( 301 ) ).getByRole( 'img', { name: 'Selected' } )
 		).toBeInTheDocument();
-		expect( ticketRow( 302 ) ).toHaveTextContent( 'Ticket 2 (AE2671B5)' );
+		expect(
+			ticketRow( 302 ).querySelectorAll( 'td' )[ 2 ]
+		).toHaveTextContent( /^AE2671B5$/ );
 		expect( ticketRow( 302 ) ).toHaveTextContent( 'Reduced' );
 		expect(
 			within( ticketRow( 302 ) ).queryByRole( 'img', {
@@ -1307,7 +1309,7 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 				name: 'Change ticket type',
 			} )
 		).toBeInTheDocument();
-		expect( ticketRow( 302 ) ).toHaveTextContent( 'Ticket 2 (AE2671B5)' );
+		expect( ticketRow( 302 ) ).toHaveTextContent( 'AE2671B5' );
 		expect(
 			screen.queryByRole( 'button', { name: /^Edit Ticket/ } )
 		).not.toBeInTheDocument();
@@ -1410,13 +1412,10 @@ describe( 'EventSignups — tickets listed under their own date (#1791)', () => 
 
 		const row = ticketRow( 912 );
 		expect( row ).toHaveTextContent( 'Quinn Guest' );
-		expect( row ).toHaveTextContent( 'Ticket 2 (REF00912)' );
+		expect( row ).toHaveTextContent( 'REF00912' );
 		expect( row ).toHaveTextContent( 'Reduced' );
 		expect(
 			within( row ).getByRole( 'img', { name: 'Selected' } )
-		).toBeInTheDocument();
-		expect(
-			within( row ).getByRole( 'link', { name: '502' } )
 		).toBeInTheDocument();
 		expect( within( row ).getByText( 'Yes' ) ).toBeInTheDocument();
 	} );
@@ -1658,47 +1657,21 @@ describe( 'EventSignups — Print list (#1842)', () => {
 			'Dinner',
 			'Afterparty',
 			'Status',
-			'Transaction',
 			'Mailing',
-			'Date',
 		] );
 		expect( printedRows( doc ) ).toEqual( [
 			[
 				'1',
 				'Ada Lovelace',
-				'Ticket 1 (REF00101)',
+				'REF00101',
 				'General',
 				'',
 				'',
 				'Confirmed',
-				'501',
-				'Yes',
-				'2026-07-20 10:00:00',
+				'✓',
 			],
-			[
-				'2',
-				'Bob, Jr.',
-				'Ticket 1 (REF00201)',
-				'General',
-				'',
-				'',
-				'Confirmed',
-				'502',
-				'No',
-				'2026-07-21 10:00:00',
-			],
-			[
-				'3',
-				'Bob, Jr.',
-				'Ticket 2 (REF00202)',
-				'General',
-				'',
-				'',
-				'Confirmed',
-				'502',
-				'No',
-				'2026-07-21 10:00:00',
-			],
+			[ '2', 'Bob, Jr.', 'REF00201', 'General', '', '', 'Confirmed', '' ],
+			[ '3', 'Bob, Jr.', 'REF00202', 'General', '', '', 'Confirmed', '' ],
 		] );
 		expect( doc.querySelector( 'h1' ).textContent ).toBe( 'Summer Ball' );
 		expect( doc.querySelector( '.meta' ).textContent ).toBe(
@@ -1716,7 +1689,10 @@ describe( 'EventSignups — Print list (#1842)', () => {
 		expect( html ).not.toContain( 'Delete' );
 		expect( html ).not.toContain( 'Edit ticket' );
 		expect( html ).not.toContain( 'ada@example.com' );
-		expect( html ).not.toContain( '20.00' );
+		// The amount, wherever a column width happens to read the same.
+		expect( doc.body.textContent ).not.toContain( '20.00' );
+		expect( html ).not.toContain( 'Ticket 1 (' );
+		expect( html ).not.toContain( '2026-07-20 10:00:00' );
 		expect( html ).toContain( '.toolbar { display: none; }' );
 		expect( html ).toContain( 'size: landscape' );
 	} );
@@ -1806,8 +1782,8 @@ describe( 'EventSignups — Print list (#1842)', () => {
 		expect(
 			printedRows( doc ).map( ( row ) => row.slice( 2, 6 ) )
 		).toEqual( [
-			[ 'Ticket 1 (REF00201)', 'General', '✓', '' ],
-			[ 'Ticket 2 (REF00202)', 'General', '', '✓' ],
+			[ 'REF00201', 'General', '✓', '' ],
+			[ 'REF00202', 'General', '', '✓' ],
 			[ 'Ticket not created yet', 'General', '?', '?' ],
 		] );
 		expect(
@@ -1859,7 +1835,7 @@ describe( 'EventSignups — Print list (#1842)', () => {
 
 		expect(
 			printedRows( doc ).map( ( row ) => row.slice( 0, 3 ) )
-		).toEqual( [ [ '1', 'Bob, Jr.', 'Ticket 2 (REF00202)' ] ] );
+		).toEqual( [ [ '1', 'Bob, Jr.', 'REF00202' ] ] );
 		expect( html ).not.toContain( 'Unsuccessful' );
 		expect( html ).not.toContain( 'Gone Entirely' );
 		expect( doc.querySelector( '.meta' ).textContent ).toContain(
@@ -1910,11 +1886,11 @@ describe( 'EventSignups — Print list (#1842)', () => {
 		expect(
 			printedRows( doc ).map( ( row ) => row.slice( 0, 4 ) )
 		).toEqual( [
-			[ '1', 'Paula Purchaser', 'Ticket 1 (REF00901)', 'General' ],
+			[ '1', 'Paula Purchaser', 'REF00901', 'General' ],
 			[
 				'2',
 				'Quinn GuestPurchase registered for 17 June',
-				'Ticket 2 (REF00912)',
+				'REF00912',
 				'Reduced',
 			],
 		] );
@@ -2013,6 +1989,66 @@ describe( 'EventSignups — Print list (#1842)', () => {
 		);
 	} );
 
+	it( 'prints the participant’s current consent as a mark, and never reads a refusal into the registration', async () => {
+		const row = ( id, name, consent, optIn ) => ( {
+			...signups[ 0 ],
+			id,
+			name,
+			newsletter_consent: consent,
+			mailing_opt_in: optIn,
+			tickets: [ ticket( id * 100, 1 ) ],
+		} );
+		await renderForPrint( {
+			rows: [
+				row( 1, 'Granted Now', 'granted', false ),
+				row( 2, 'Declined Now', 'declined', true ),
+				row( 3, 'Unspecified Now', 'unspecified', true ),
+				row( 4, 'Unlinked Opt-in', null, true ),
+				row( 5, 'Unlinked No', null, false ),
+				row( 6, 'Older Response', undefined, 1 ),
+			],
+		} );
+		await screen.findByText( 'Granted Now' );
+
+		// The screen keeps the registration's own Yes/No.
+		expect(
+			bodyRows().map(
+				( tr ) => tr.querySelectorAll( 'td' )[ 5 ].textContent
+			)
+		).toEqual( [ 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes' ] );
+
+		const { doc } = print();
+
+		expect(
+			printedRows( doc ).map( ( cells ) => [ cells[ 1 ], cells[ 5 ] ] )
+		).toEqual( [
+			[ 'Granted Now', '✓' ],
+			[ 'Declined Now', '✗' ],
+			[ 'Unspecified Now', '' ],
+			[ 'Unlinked Opt-in', '✓' ],
+			[ 'Unlinked No', '' ],
+			[ 'Older Response', '✓' ],
+		] );
+		expect( doc.querySelector( 'tbody td.col-mailing' ).textContent ).toBe(
+			'✓'
+		);
+	} );
+
+	it( 'keeps seven extras in one section now that the date column is gone', async () => {
+		const sevenOptions = Array.from( { length: 7 }, ( _, index ) => ( {
+			id: 100 + index,
+			name: `Extra ${ index + 1 }`,
+		} ) );
+		await renderForPrint( { ticketOptions: sevenOptions } );
+		await screen.findByText( 'Ada Lovelace' );
+
+		const { doc } = print();
+
+		expect( doc.querySelectorAll( 'table' ) ).toHaveLength( 1 );
+		expect( doc.querySelector( 'h2' ) ).toBeNull();
+		expect( printedHeaders( doc ) ).toHaveLength( 13 );
+	} );
+
 	it( 'splits a table with many extras into sections that keep every column, row and value', async () => {
 		const manyOptions = Array.from( { length: 20 }, ( _, index ) => ( {
 			id: 100 + index,
@@ -2073,16 +2109,16 @@ describe( 'EventSignups — Print list (#1842)', () => {
 		expect( seenHeaders ).toEqual( screenHeaders );
 		expect( merged[ 0 ] ).toMatchObject( {
 			Name: 'Bob, Jr.',
-			Ticket: 'Ticket 1 (REF00201)',
+			Ticket: 'REF00201',
 			'Extra 1': '✓',
 			'Extra 2': '',
 			'Extra 11': '',
 			'Extra 20': '✓',
-			Mailing: 'No',
-			Date: '2026-07-21 10:00:00',
+			Status: 'Confirmed',
+			Mailing: '',
 		} );
 		expect( merged[ 1 ] ).toMatchObject( {
-			Ticket: 'Ticket 2 (REF00202)',
+			Ticket: 'REF00202',
 			'Extra 1': '',
 			'Extra 11': '✓',
 			'Extra 20': '',

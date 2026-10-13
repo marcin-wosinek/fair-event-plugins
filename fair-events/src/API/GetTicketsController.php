@@ -2372,6 +2372,8 @@ class GetTicketsController extends WP_REST_Controller {
 	 * requested date — the List's rows — and may be empty for a purchase
 	 * whose tickets all moved away. `accounting_anchor_ticket_id` names the
 	 * ticket whose row carries the purchase total in exports.
+	 * `newsletter_consent` is the linked participant's current consent, for
+	 * the printed List; `mailing_opt_in` stays what the registration recorded.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
@@ -2456,6 +2458,7 @@ class GetTicketsController extends WP_REST_Controller {
 		);
 		$user_names        = array();
 		$date_labels       = array();
+		$consents          = array();
 
 		foreach ( $signups as $signup ) {
 			$signup_tickets = $tickets_by_signup[ (int) $signup->id ] ?? array();
@@ -2571,6 +2574,10 @@ class GetTicketsController extends WP_REST_Controller {
 				},
 				$signup_tickets
 			);
+
+			// Read-only, for the printed List: what the linked participant
+			// consents to now, which the historical mailing_opt_in cannot tell.
+			$signup->newsletter_consent = $this->resolve_newsletter_consent( $signup->participant_id ?? null, $consents );
 		}
 
 		if ( $request->get_param( 'include_answers' ) ) {
@@ -2578,6 +2585,40 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response( $signups );
+	}
+
+	/**
+	 * Current newsletter consent of a signup's linked participant, as Fair
+	 * Audience holds it.
+	 *
+	 * @param int|string|null $participant_id Participant linked to the signup.
+	 * @param array           $cache          Consent by participant ID, filled as
+	 *                                        participants are looked up.
+	 * @return string|null 'granted', 'declined' or 'unspecified'; null when
+	 *                     Fair Audience is inactive or the signup has no
+	 *                     participant left to ask.
+	 */
+	private function resolve_newsletter_consent( $participant_id, array &$cache ) {
+		$participant_id = (int) $participant_id;
+		if ( ! $participant_id || ! class_exists( \FairAudience\Database\ParticipantRepository::class ) ) {
+			return null;
+		}
+
+		if ( ! array_key_exists( $participant_id, $cache ) ) {
+			$participant = ( new \FairAudience\Database\ParticipantRepository() )->get_by_id( $participant_id );
+			$consent     = null;
+			if ( $participant ) {
+				$consent = 'unspecified';
+				if ( 'marketing' === $participant->email_profile ) {
+					$consent = 'granted';
+				} elseif ( 'declined' === $participant->email_profile ) {
+					$consent = 'declined';
+				}
+			}
+			$cache[ $participant_id ] = $consent;
+		}
+
+		return $cache[ $participant_id ];
 	}
 
 	/**

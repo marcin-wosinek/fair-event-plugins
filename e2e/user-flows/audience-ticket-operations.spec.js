@@ -230,7 +230,6 @@ test.describe('Manage individual tickets from the Audience tab', () => {
 		expect(movedTicketIds).toHaveLength(1);
 		expect(await openList(otherDateId)).toEqual(movedTicketIds);
 		await expect(listRows).toContainText('Paula Purchaser');
-		await expect(listRows).toContainText('Ticket 1');
 		await expect(listRows).toContainText('Purchase registered for');
 		await expect(listRows).toContainText('Entire purchase — 2 tickets');
 		await expect(listRows).toContainText(
@@ -238,28 +237,37 @@ test.describe('Manage individual tickets from the Audience tab', () => {
 		);
 		let printed = await printedTickets();
 		expect(printed).toContain('Paula Purchaser');
-		expect(printed).toContain('Ticket 1 (');
 		expect(printed).toContain('Purchase registered for');
-		expect(printed).not.toContain('Ticket 2 (');
 		let listCsv = await readListExport();
 		expect(listCsv).toHaveLength(1);
-		expect(listCsv[0]).toContain('Ticket 1 (');
+		// The List and its printout name a ticket by its short reference; the
+		// export keeps the ticket's number within its purchase.
+		const movedReference = listCsv[0].match(
+			/Ticket 1 \(([0-9A-F]{8})\)/
+		)?.[1];
+		expect(movedReference).toBeTruthy();
+		await expect(listRows.locator('td').nth(2)).toHaveText(movedReference);
+		expect(printed).toContain(movedReference);
+		expect(printed).not.toContain('Ticket 1 (');
 
 		await openAudience(event.eventDateId);
 		const keptTicketIds = await audienceTicketIds();
 		expect(keptTicketIds).toHaveLength(1);
 		expect(keptTicketIds).not.toEqual(movedTicketIds);
 		expect(await openList(event.eventDateId)).toEqual(keptTicketIds);
-		await expect(listRows).toContainText('Ticket 2');
 		await expect(listRows).not.toContainText('Purchase registered for');
 		await expect(listRows).toContainText('Entire purchase — 2 tickets');
 		printed = await printedTickets();
-		expect(printed).toContain('Ticket 2 (');
-		expect(printed).not.toContain('Ticket 1 (');
+		expect(printed).not.toContain(movedReference);
 		expect(printed).not.toContain('Purchase registered for');
 		listCsv = await readListExport();
 		expect(listCsv).toHaveLength(1);
-		expect(listCsv[0]).toContain('Ticket 2 (');
+		const keptReference = listCsv[0].match(
+			/Ticket 2 \(([0-9A-F]{8})\)/
+		)?.[1];
+		expect(keptReference).toBeTruthy();
+		await expect(listRows.locator('td').nth(2)).toHaveText(keptReference);
+		expect(printed).toContain(keptReference);
 
 		// Cancel: the payment consequence is stated before anything changes.
 		await openAudience(event.eventDateId);
