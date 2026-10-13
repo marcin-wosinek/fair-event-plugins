@@ -346,8 +346,48 @@ class Plugin {
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Public form: the signed link authorizes it, deletion needs a confirmation proof, and the handler sanitizes each field it reads.
+		$post = wp_unslash( $_POST );
+		$page = ( new \FairAudience\Services\ManageSubscriptionPage() )->handle( sanitize_text_field( $token ), $post );
+
+		if ( $page['redirect'] ) {
+			wp_safe_redirect( $page['redirect'], 303 );
+			exit;
+		}
+
+		nocache_headers();
+		status_header( $page['status'] );
+
+		if ( \FairAudience\Services\ManageSubscriptionPage::VIEW_MANAGE === $page['view'] ) {
+			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_manage_subscription_script' ) );
+		}
+
 		// Load manage subscription template.
 		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/manage-subscription.php';
 		exit;
+	}
+
+	/**
+	 * Enqueue the script that opens the deletion confirmation dialog.
+	 */
+	public function enqueue_manage_subscription_script() {
+		$asset_file = FAIR_AUDIENCE_PLUGIN_DIR . 'build/frontend/manage-subscription/index.asset.php';
+
+		if ( ! file_exists( $asset_file ) ) {
+			return;
+		}
+
+		$asset_data = include $asset_file;
+
+		wp_enqueue_script(
+			'fair-audience-manage-subscription',
+			FAIR_AUDIENCE_PLUGIN_URL . 'build/frontend/manage-subscription/index.js',
+			$asset_data['dependencies'],
+			$asset_data['version'],
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
+		);
 	}
 }

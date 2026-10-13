@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-13T06:01:09+00:00\n"
+"POT-Creation-Date: 2026-10-13T09:32:35+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -1454,6 +1454,70 @@ msgstr ""
 msgid "%1$s discount applied (%2$s)"
 msgstr ""
 
+#: src/Services/ManageSubscriptionPage.php:92
+msgid "Invalid or expired link. Please use the link from your email."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:99
+msgid "Subscriber not found."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:114
+msgid "Your personal data has been deleted from your profile. Records such as tickets, event attendance, consent history and payments were kept."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:153
+msgid "Your data was not deleted because the confirmation was missing or has expired. Please try again."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:159
+msgid "Your data could not be deleted and nothing was changed. Please try again."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:190
+msgid "Failed to update preferences. Please try again."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:197
+msgid "Your preferences have been updated."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:225
+msgid "Your name, email address, phone number and Instagram handle are deleted from your profile."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:226
+msgid "Your email preferences and pending confirmation links are deleted."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:230
+msgid "Your questionnaire answers are deleted."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:233
+msgid "Your poll responses and poll links are deleted."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:236
+msgid "Your group memberships are deleted."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:244
+msgid "Your name and email address are deleted from your event signups."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:245
+msgid "Your event signups and tickets are kept, but are no longer connected to your profile."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:248
+msgid "Records of the events you took part in, your consent history and payment records are kept and may still contain your details."
+msgstr ""
+
+#: src/Services/ManageSubscriptionPage.php:249
+msgid "If you have a user account on this site, it is disconnected from your profile but not deleted."
+msgstr ""
+
 #: src/Services/ParticipantRemoval.php:134
 #: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:210
 msgid "The participant could not be removed. Nothing was changed; try again."
@@ -1642,83 +1706,101 @@ msgid "Confirmation Failed"
 msgstr ""
 
 #: templates/email-confirmation.php:179
-#: templates/manage-subscription.php:346
-#: templates/manage-subscription.php:438
-#: templates/manage-subscription.php:459
+#: templates/manage-subscription.php:466
+#: templates/manage-subscription.php:562
+#: templates/manage-subscription.php:592
 msgid "Return to Homepage"
 msgstr ""
 
-#: templates/manage-subscription.php:37
-msgid "Invalid or expired link. Please use the link from your email."
-msgstr ""
-
-#: templates/manage-subscription.php:43
-msgid "Subscriber not found."
-msgstr ""
-
-#: templates/manage-subscription.php:53
-msgid "Your data has been deleted. This page will no longer be accessible."
-msgstr ""
-
-#: templates/manage-subscription.php:57
-msgid "Failed to delete your data. Please try again."
-msgstr ""
-
-#: templates/manage-subscription.php:79
-msgid "Your preferences have been updated."
-msgstr ""
-
-#: templates/manage-subscription.php:82
-msgid "Failed to update preferences. Please try again."
-msgstr ""
-
-#: templates/manage-subscription.php:340
-msgid "Invalid Link"
-msgstr ""
-
-#: templates/manage-subscription.php:351
-msgid "Manage Your Subscription"
-msgstr ""
-
-#: templates/manage-subscription.php:372
-msgid "All emails"
-msgstr ""
-
-#: templates/manage-subscription.php:375
-msgid "Receive event invitations, photos, polls, and other updates."
-msgstr ""
-
-#: templates/manage-subscription.php:384
-msgid "Essential emails only"
-msgstr ""
-
-#: templates/manage-subscription.php:387
-msgid "Only receive emails about events you signed up for (photos, polls, confirmations). No promotional emails."
-msgstr ""
-
-#: templates/manage-subscription.php:407
-msgid "Weekly summary of upcoming events"
-msgstr ""
-
-#: templates/manage-subscription.php:415
-msgid "I want to receive updates about:"
-msgstr ""
-
-#: templates/manage-subscription.php:432
-msgid "Save Preferences"
-msgstr ""
-
-#: templates/manage-subscription.php:444
-#: templates/manage-subscription.php:452
+#: templates/manage-subscription.php:61
+#: templates/manage-subscription.php:112
+#: templates/manage-subscription.php:568
+#: templates/manage-subscription.php:576
 msgid "Delete My Data"
 msgstr ""
 
-#: templates/manage-subscription.php:447
-msgid "Permanently remove your personal data. This action cannot be undone."
+#. translators: %s: email address of the profile
+#: templates/manage-subscription.php:70
+#, php-format
+msgid "Delete the personal data stored for %s?"
 msgstr ""
 
-#: templates/manage-subscription.php:449
-msgid "Are you sure you want to delete all your personal data? This action cannot be undone."
+#: templates/manage-subscription.php:75
+msgid "Delete the personal data stored for this profile?"
+msgstr ""
+
+#: templates/manage-subscription.php:80
+msgid "What is deleted:"
+msgstr ""
+
+#: templates/manage-subscription.php:88
+msgid "What is kept:"
+msgstr ""
+
+#: templates/manage-subscription.php:96
+msgid "This cannot be undone."
+msgstr ""
+
+#: templates/manage-subscription.php:104
+#: templates/manage-subscription.php:108
+#: src/Admin/components/DeleteParticipantsModal.js:238
+#: src/Admin/custom-mail/CustomMail.js:644
+#: src/Admin/event-participants/EventParticipants.js:1117
+#: src/Admin/event-participants/EventParticipants.js:1193
+#: src/Admin/event-participants/EventParticipants.js:1460
+#: src/Admin/manage-event-audience-tab/AssignTicketModal.js:368
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2551
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2745
+#: src/Admin/manage-event-audience-tab/EventAudience.js:2978
+#: src/Admin/manage-event-audience-tab/EventAudience.js:3217
+#: src/Admin/manage-event-audience-tab/EventAudience.js:3334
+msgid "Cancel"
+msgstr ""
+
+#: templates/manage-subscription.php:111
+#: src/Admin/components/DeleteParticipantsModal.js:247
+#: src/Admin/manage-event-audience-tab/TicketOperationModals.js:405
+msgid "Deleting…"
+msgstr ""
+
+#: templates/manage-subscription.php:460
+msgid "Invalid Link"
+msgstr ""
+
+#: templates/manage-subscription.php:471
+msgid "Manage Your Subscription"
+msgstr ""
+
+#: templates/manage-subscription.php:496
+msgid "All emails"
+msgstr ""
+
+#: templates/manage-subscription.php:499
+msgid "Receive event invitations, photos, polls, and other updates."
+msgstr ""
+
+#: templates/manage-subscription.php:508
+msgid "Essential emails only"
+msgstr ""
+
+#: templates/manage-subscription.php:511
+msgid "Only receive emails about events you signed up for (photos, polls, confirmations). No promotional emails."
+msgstr ""
+
+#: templates/manage-subscription.php:531
+msgid "Weekly summary of upcoming events"
+msgstr ""
+
+#: templates/manage-subscription.php:539
+msgid "I want to receive updates about:"
+msgstr ""
+
+#: templates/manage-subscription.php:556
+msgid "Save Preferences"
+msgstr ""
+
+#: templates/manage-subscription.php:571
+msgid "Delete your contact details and preferences from your profile. Some records, such as tickets and payments, are kept. This cannot be undone."
 msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:118
@@ -1979,25 +2061,6 @@ msgstr ""
 
 #: src/Admin/components/DeleteParticipantsModal.js:226
 msgid "Deleting a profile does not cancel tickets, delete event registrations or refund payments. To take someone out of one event only, remove them from that event instead."
-msgstr ""
-
-#: src/Admin/components/DeleteParticipantsModal.js:238
-#: src/Admin/custom-mail/CustomMail.js:644
-#: src/Admin/event-participants/EventParticipants.js:1117
-#: src/Admin/event-participants/EventParticipants.js:1193
-#: src/Admin/event-participants/EventParticipants.js:1460
-#: src/Admin/manage-event-audience-tab/AssignTicketModal.js:368
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2551
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2745
-#: src/Admin/manage-event-audience-tab/EventAudience.js:2978
-#: src/Admin/manage-event-audience-tab/EventAudience.js:3217
-#: src/Admin/manage-event-audience-tab/EventAudience.js:3334
-msgid "Cancel"
-msgstr ""
-
-#: src/Admin/components/DeleteParticipantsModal.js:247
-#: src/Admin/manage-event-audience-tab/TicketOperationModals.js:405
-msgid "Deleting…"
 msgstr ""
 
 #. translators: %d: number of participant profiles
