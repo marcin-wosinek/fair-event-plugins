@@ -35,6 +35,7 @@ const RUN_KEYS = [
 	'expected_total',
 	'finished_at',
 	'id',
+	'settlement_run_id',
 	'source_id',
 	'source_label',
 	'source_type',
