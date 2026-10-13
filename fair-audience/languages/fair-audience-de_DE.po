@@ -403,6 +403,8 @@ msgstr "Status"
 msgid "Saving..."
 msgstr "Wird gespeichert..."
 
+#: templates/manage-subscription.php:104
+#: templates/manage-subscription.php:108
 #: src/Admin/components/DeleteParticipantsModal.js:238
 #: src/Admin/custom-mail/CustomMail.js:644
 #: src/Admin/event-participants/EventParticipants.js:1117
@@ -585,9 +587,9 @@ msgid "Confirmation Failed"
 msgstr "Bestätigung fehlgeschlagen"
 
 #: templates/email-confirmation.php:179
-#: templates/manage-subscription.php:346
-#: templates/manage-subscription.php:438
-#: templates/manage-subscription.php:459
+#: templates/manage-subscription.php:466
+#: templates/manage-subscription.php:562
+#: templates/manage-subscription.php:592
 msgid "Return to Homepage"
 msgstr "Zurück zur Startseite"
 
@@ -985,47 +987,47 @@ msgstr "Bereits angemeldet"
 msgid "Participant opted out of marketing emails."
 msgstr "Teilnehmer hat den Erhalt von Marketing-E-Mails abgelehnt."
 
-#: templates/manage-subscription.php:37
+#: src/Services/ManageSubscriptionPage.php:92
 msgid "Invalid or expired link. Please use the link from your email."
 msgstr "Ungültiger oder abgelaufener Link. Bitte verwenden Sie den Link aus Ihrer E-Mail."
 
-#: templates/manage-subscription.php:43
+#: src/Services/ManageSubscriptionPage.php:99
 msgid "Subscriber not found."
 msgstr "Abonnent nicht gefunden."
 
-#: templates/manage-subscription.php:79
+#: src/Services/ManageSubscriptionPage.php:197
 msgid "Your preferences have been updated."
 msgstr "Ihre Einstellungen wurden aktualisiert."
 
-#: templates/manage-subscription.php:82
+#: src/Services/ManageSubscriptionPage.php:190
 msgid "Failed to update preferences. Please try again."
 msgstr "Aktualisierung der Einstellungen fehlgeschlagen. Bitte versuchen Sie es erneut."
 
-#: templates/manage-subscription.php:340
+#: templates/manage-subscription.php:460
 msgid "Invalid Link"
 msgstr "Ungültiger Link"
 
-#: templates/manage-subscription.php:351
+#: templates/manage-subscription.php:471
 msgid "Manage Your Subscription"
 msgstr "Ihr Abonnement verwalten"
 
-#: templates/manage-subscription.php:372
+#: templates/manage-subscription.php:496
 msgid "All emails"
 msgstr "Alle E-Mails"
 
-#: templates/manage-subscription.php:375
+#: templates/manage-subscription.php:499
 msgid "Receive event invitations, photos, polls, and other updates."
 msgstr "Erhalten Sie Veranstaltungseinladungen, Fotos, Umfragen und andere Updates."
 
-#: templates/manage-subscription.php:384
+#: templates/manage-subscription.php:508
 msgid "Essential emails only"
 msgstr "Nur wesentliche E-Mails"
 
-#: templates/manage-subscription.php:387
+#: templates/manage-subscription.php:511
 msgid "Only receive emails about events you signed up for (photos, polls, confirmations). No promotional emails."
 msgstr "Erhalten Sie nur E-Mails zu Veranstaltungen, für die Sie sich angemeldet haben (Fotos, Umfragen, Bestätigungen). Keine Werbe-E-Mails."
 
-#: templates/manage-subscription.php:432
+#: templates/manage-subscription.php:556
 msgid "Save Preferences"
 msgstr "Einstellungen speichern"
 
@@ -1736,7 +1738,7 @@ msgstr "Fair Form"
 msgid "Category IDs used for marketing mailing"
 msgstr "Kategorie-IDs für Marketing-Mailings"
 
-#: templates/manage-subscription.php:415
+#: templates/manage-subscription.php:539
 msgid "I want to receive updates about:"
 msgstr "Ich möchte Updates erhalten über:"
 
@@ -2055,26 +2057,12 @@ msgstr "Wenn die Schaltfläche nicht funktioniert, kopieren Sie diesen Link und 
 msgid "See you soon,%1$sThe %2$s Team"
 msgstr "Bis bald,%1$sIhr %2$s Team"
 
-#: templates/manage-subscription.php:53
-msgid "Your data has been deleted. This page will no longer be accessible."
-msgstr "Ihre Daten wurden gelöscht. Diese Seite ist nicht mehr zugänglich."
-
-#: templates/manage-subscription.php:57
-msgid "Failed to delete your data. Please try again."
-msgstr "Fehler beim Löschen Ihrer Daten. Bitte versuchen Sie es erneut."
-
-#: templates/manage-subscription.php:444
-#: templates/manage-subscription.php:452
+#: templates/manage-subscription.php:61
+#: templates/manage-subscription.php:112
+#: templates/manage-subscription.php:568
+#: templates/manage-subscription.php:576
 msgid "Delete My Data"
 msgstr "Meine Daten löschen"
-
-#: templates/manage-subscription.php:447
-msgid "Permanently remove your personal data. This action cannot be undone."
-msgstr "Entfernen Sie Ihre persönlichen Daten dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden."
-
-#: templates/manage-subscription.php:449
-msgid "Are you sure you want to delete all your personal data? This action cannot be undone."
-msgstr "Sind Sie sicher, dass Sie alle Ihre persönlichen Daten löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
 
 #: src/Admin/all-participants/AllParticipants.js:462
 msgid "Copy subscription link"
@@ -2959,7 +2947,7 @@ msgstr "(von %s)"
 msgid "(by @%s)"
 msgstr "(von @%s)"
 
-#: templates/manage-subscription.php:407
+#: templates/manage-subscription.php:531
 msgid "Weekly summary of upcoming events"
 msgstr "Wöchentliche Zusammenfassung der kommenden Veranstaltungen"
 
@@ -3536,6 +3524,7 @@ msgstr "Durch das Löschen wird nichts erstattet und die Zahlung nicht geändert
 msgid "Only this cancelled ticket is removed from the audience, its search and its exports. The purchase’s other tickets are not changed, and the participant stays in the audience. This cannot be undone."
 msgstr "Nur dieses stornierte Ticket wird aus dem Publikum, der Suche und den Exporten entfernt. Die anderen Tickets des Kaufs werden nicht geändert, und der Teilnehmer bleibt im Publikum. Dies kann nicht rückgängig gemacht werden."
 
+#: templates/manage-subscription.php:111
 #: src/Admin/components/DeleteParticipantsModal.js:247
 #: src/Admin/manage-event-audience-tab/TicketOperationModals.js:405
 msgid "Deleting…"
@@ -4346,3 +4335,77 @@ msgid "Remove %d participant"
 msgid_plural "Remove %d participants"
 msgstr[0] "%d Teilnehmer entfernen"
 msgstr[1] "%d Teilnehmer entfernen"
+
+#: src/Services/ManageSubscriptionPage.php:114
+msgid "Your personal data has been deleted from your profile. Records such as tickets, event attendance, consent history and payments were kept."
+msgstr "Ihre persönlichen Daten wurden aus Ihrem Profil gelöscht. Einträge wie Tickets, Veranstaltungsteilnahmen, Einwilligungsverlauf und Zahlungen wurden beibehalten."
+
+#: src/Services/ManageSubscriptionPage.php:153
+msgid "Your data was not deleted because the confirmation was missing or has expired. Please try again."
+msgstr "Ihre Daten wurden nicht gelöscht, weil die Bestätigung fehlte oder abgelaufen ist. Bitte versuchen Sie es erneut."
+
+#: src/Services/ManageSubscriptionPage.php:159
+msgid "Your data could not be deleted and nothing was changed. Please try again."
+msgstr "Ihre Daten konnten nicht gelöscht werden und es wurde nichts geändert. Bitte versuchen Sie es erneut."
+
+#: src/Services/ManageSubscriptionPage.php:225
+msgid "Your name, email address, phone number and Instagram handle are deleted from your profile."
+msgstr "Ihr Name, Ihre E-Mail-Adresse, Ihre Telefonnummer und Ihr Instagram-Name werden aus Ihrem Profil gelöscht."
+
+#: src/Services/ManageSubscriptionPage.php:226
+msgid "Your email preferences and pending confirmation links are deleted."
+msgstr "Ihre E-Mail-Einstellungen und ausstehende Bestätigungslinks werden gelöscht."
+
+#: src/Services/ManageSubscriptionPage.php:230
+msgid "Your questionnaire answers are deleted."
+msgstr "Ihre Antworten auf Fragebögen werden gelöscht."
+
+#: src/Services/ManageSubscriptionPage.php:233
+msgid "Your poll responses and poll links are deleted."
+msgstr "Ihre Umfrageantworten und Umfragelinks werden gelöscht."
+
+#: src/Services/ManageSubscriptionPage.php:236
+msgid "Your group memberships are deleted."
+msgstr "Ihre Gruppenmitgliedschaften werden gelöscht."
+
+#: src/Services/ManageSubscriptionPage.php:244
+msgid "Your name and email address are deleted from your event signups."
+msgstr "Ihr Name und Ihre E-Mail-Adresse werden aus Ihren Veranstaltungsanmeldungen gelöscht."
+
+#: src/Services/ManageSubscriptionPage.php:245
+msgid "Your event signups and tickets are kept, but are no longer connected to your profile."
+msgstr "Ihre Veranstaltungsanmeldungen und Tickets bleiben erhalten, sind aber nicht mehr mit Ihrem Profil verknüpft."
+
+#: src/Services/ManageSubscriptionPage.php:248
+msgid "Records of the events you took part in, your consent history and payment records are kept and may still contain your details."
+msgstr "Aufzeichnungen über Veranstaltungen, an denen Sie teilgenommen haben, Ihr Einwilligungsverlauf und Zahlungsdaten bleiben erhalten und können weiterhin Ihre Angaben enthalten."
+
+#: src/Services/ManageSubscriptionPage.php:249
+msgid "If you have a user account on this site, it is disconnected from your profile but not deleted."
+msgstr "Falls Sie ein Benutzerkonto auf dieser Website haben, wird es von Ihrem Profil getrennt, aber nicht gelöscht."
+
+#. translators: %s: email address of the profile
+#: templates/manage-subscription.php:70
+#, php-format
+msgid "Delete the personal data stored for %s?"
+msgstr "Die für %s gespeicherten persönlichen Daten löschen?"
+
+#: templates/manage-subscription.php:75
+msgid "Delete the personal data stored for this profile?"
+msgstr "Die für dieses Profil gespeicherten persönlichen Daten löschen?"
+
+#: templates/manage-subscription.php:80
+msgid "What is deleted:"
+msgstr "Was gelöscht wird:"
+
+#: templates/manage-subscription.php:88
+msgid "What is kept:"
+msgstr "Was erhalten bleibt:"
+
+#: templates/manage-subscription.php:96
+msgid "This cannot be undone."
+msgstr "Dies kann nicht rückgängig gemacht werden."
+
+#: templates/manage-subscription.php:571
+msgid "Delete your contact details and preferences from your profile. Some records, such as tickets and payments, are kept. This cannot be undone."
+msgstr "Löschen Sie Ihre Kontaktdaten und Einstellungen aus Ihrem Profil. Einige Einträge, etwa Tickets und Zahlungen, bleiben erhalten. Dies kann nicht rückgängig gemacht werden."

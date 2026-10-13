@@ -42,6 +42,11 @@ const customConfig = {
 			process.cwd(),
 			'src/Admin/manage-event-audience-tab/index.js',
 		),
+		// Public page scripts
+		'frontend/manage-subscription/index': path.resolve(
+			process.cwd(),
+			'src/Frontend/manage-subscription/index.js',
+		),
 	}),
 	plugins: [
 		...defaultConfig.plugins,
