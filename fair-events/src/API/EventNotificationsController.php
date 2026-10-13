@@ -405,12 +405,12 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Preview the Telegram summary for the next scheduled week.
+	 * Preview the selected week relative to today in the site timezone.
 	 *
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function preview_telegram() {
-		$summary = $this->next_summary();
+		$summary = $this->compose_test_summary();
 		if ( is_wp_error( $summary ) ) {
 			return $summary;
 		}
@@ -428,7 +428,7 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Send the next scheduled week's summary to every saved Telegram chat,
+	 * Send the selected week's summary to every saved Telegram chat,
 	 * with the credential currently in effect.
 	 *
 	 * Test sends are not delivery records and do not affect scheduled sends.
@@ -453,12 +453,12 @@ class EventNotificationsController extends WP_REST_Controller {
 			return new WP_Error( 'missing_chat_ids', __( 'Save at least one Telegram chat or channel before sending a test message.', 'fair-events' ), array( 'status' => 400 ) );
 		}
 
-		$summary = $this->next_summary();
+		$summary = $this->compose_test_summary();
 		if ( is_wp_error( $summary ) ) {
 			return $summary;
 		}
 		if ( 0 === $summary['occurrence_count'] ) {
-			return new WP_Error( 'no_events', __( 'There are no events in the next scheduled week, so there is nothing to send.', 'fair-events' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_events', __( 'There are no events in the selected week, so there is nothing to send.', 'fair-events' ), array( 'status' => 400 ) );
 		}
 
 		$messages = $provider->split( $summary );
@@ -549,7 +549,7 @@ class EventNotificationsController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function preview_bulk_email() {
-		$email = $this->next_email();
+		$email = $this->compose_test_email();
 		if ( is_wp_error( $email ) ) {
 			return $email;
 		}
@@ -565,7 +565,7 @@ class EventNotificationsController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function test_bulk_email() {
-		$email = $this->next_email();
+		$email = $this->compose_test_email();
 		if ( is_wp_error( $email ) ) {
 			return $email;
 		}
@@ -648,7 +648,7 @@ class EventNotificationsController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function preview_individual_email() {
-		$email = $this->next_individual_email();
+		$email = $this->compose_test_individual_email();
 		if ( is_wp_error( $email ) ) {
 			return $email;
 		}
@@ -665,7 +665,7 @@ class EventNotificationsController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function test_individual_email() {
-		$email = $this->next_individual_email();
+		$email = $this->compose_test_individual_email();
 		if ( is_wp_error( $email ) ) {
 			return $email;
 		}
@@ -853,14 +853,13 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * The Telegram summary for the week the next scheduled send covers.
+	 * The Telegram preview/test summary for the selected week relative to today.
 	 *
 	 * @return array|WP_Error Summary with its `week`, or a 400 error.
 	 */
-	private function next_summary() {
+	private function compose_test_summary() {
 		$settings = TelegramSettings::get();
-		$due      = WeekSchedule::next_due( TelegramDispatcher::now(), $settings['day_of_week'], $settings['time_of_day'] );
-		$week     = WeekSchedule::target_week( $due, $settings['week_scope'], TelegramDispatcher::start_of_week() );
+		$week     = WeekSchedule::target_week( TelegramDispatcher::now(), $settings['week_scope'], TelegramDispatcher::start_of_week() );
 		$summary  = ( new SummaryBuilder() )->build( $settings, $week );
 
 		if ( is_wp_error( $summary ) ) {
@@ -872,11 +871,11 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * The weekly email as the next scheduled send would deliver it.
+	 * The weekly preview/test email for the selected week relative to today.
 	 *
 	 * @return array|WP_Error Subject, body and week, or an error.
 	 */
-	private function next_email() {
+	private function compose_test_email() {
 		$unavailable = $this->bulk_email_unavailable();
 		if ( $unavailable ) {
 			return $unavailable;
@@ -887,8 +886,7 @@ class EventNotificationsController extends WP_REST_Controller {
 			return new WP_Error( 'missing_source', __( 'Choose an event source and save before previewing the weekly email.', 'fair-events' ), array( 'status' => 400 ) );
 		}
 
-		$due  = BulkEmailDispatcher::next_due( $settings, BulkEmailDispatcher::now(), (string) get_option( BulkEmailDispatcher::LAST_SENT_OPTION, '' ) );
-		$week = ( new WeeklyEventsProvider() )->get_week( $settings['source_slug'], ...BulkEmailDispatcher::event_week( $settings['week_scope'], $due ) );
+		$week = ( new WeeklyEventsProvider() )->get_week( $settings['source_slug'], ...BulkEmailDispatcher::event_week( $settings['week_scope'], BulkEmailDispatcher::now() ) );
 		if ( is_wp_error( $week ) ) {
 			return new WP_Error( $week->get_error_code(), $week->get_error_message(), array( 'status' => 400 ) );
 		}
@@ -906,16 +904,15 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * The individual email as the next scheduled send would deliver it.
+	 * The individual preview/test email for the selected week relative to today.
 	 *
 	 * Built from the saved settings, also while the schedule is off.
 	 *
 	 * @return array|WP_Error Recipient, subject, body and week, or an error.
 	 */
-	private function next_individual_email() {
+	private function compose_test_individual_email() {
 		$settings = IndividualEmailSettings::get();
-		$due      = IndividualEmailDispatcher::next_due( $settings, BulkEmailDispatcher::now(), (string) get_option( IndividualEmailDispatcher::LAST_SENT_OPTION, '' ) );
-		$week     = IndividualEmailDispatcher::event_week( $settings['week_scope'], $due );
+		$week     = IndividualEmailDispatcher::event_week( $settings['week_scope'], BulkEmailDispatcher::now() );
 
 		$occurrences = ( new IndividualEmailEvents() )->for_week( $settings['event_selection'], $week );
 		if ( is_wp_error( $occurrences ) ) {

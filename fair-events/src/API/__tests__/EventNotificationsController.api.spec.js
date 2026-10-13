@@ -20,7 +20,8 @@
  * The retired routes of the former owners
  * (Fair Events Experimental, Fair Audience) must be gone.
  *
- * No case here reaches api.telegram.org: each is refused by a permission
+ * No case here reaches api.telegram.org: the #1883 regression uses the
+ * Telegram HTTP double; other cases are refused by a permission
  * check, validation, a missing-configuration guard, or an empty week first.
  * The successful test send is covered end to end by
  * e2e/user-flows/weekly-telegram-notifications.spec.js, which runs against
@@ -32,6 +33,7 @@
  */
 
 import { test, expect, request } from '@playwright/test';
+import { runScript } from '../../../../e2e/support/wp-cli.js';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -849,6 +851,155 @@ test.describe( 'EventNotificationsController', () => {
 			await api.delete(
 				`/wp-json/wp/v2/categories/${ categoryId }?force=true`,
 				{ headers: adminHeaders }
+			);
+		}
+	} );
+
+	test( 'previews and tests use today for both scopes across every channel (#1883)', async () => {
+		test.setTimeout( 240000 );
+		const fixture = ( action ) =>
+			runScript(
+				'notification-weeks-fixture.php',
+				'E2E_NOTIFICATION_WEEKS',
+				action
+			);
+		const site = fixture( 'site' );
+		expect( site.url.replace( /\/$/, '' ) ).toBe(
+			BASE_URL.replace( /\/$/, '' )
+		);
+		expect( site.offline ).toBe( true );
+		const source = runScript(
+			'weekly-summary-fixture.php',
+			'E2E_WEEKLY',
+			'source'
+		);
+		try {
+			const seeded = fixture( `seed ${ source.termId }` );
+			const page = await createPage( 'publish' );
+			const monday = new Date( `${ seeded.today }T12:00:00Z` );
+			monday.setUTCDate( monday.getUTCDate() - seeded.weekday + 1 );
+			for ( const scenario of [ 'passed', 'disabled', 'prior' ] ) {
+				if ( scenario === 'prior' ) {
+					fixture( 'prior' );
+				}
+				for ( const scope of [ 'current', 'next' ] ) {
+					for ( const [ route, key ] of [
+						[ TELEGRAM, 'telegram' ],
+						[ BULK_EMAIL, 'bulk_email' ],
+						[ INDIVIDUAL_EMAIL, 'individual_email' ],
+					] ) {
+						const data = {
+							enabled: scenario !== 'disabled',
+							day_of_week: seeded.weekday,
+							time_of_day: '00:00',
+							week_scope: scope,
+							source_slug: source.sourceSlug,
+						};
+						if ( key === 'telegram' ) {
+							Object.assign( data, {
+								page_id: page.id,
+								chat_ids: '@e2e_week_scope',
+							} );
+						} else if ( key === 'individual_email' ) {
+							delete data.source_slug;
+							Object.assign( data, {
+								recipient: RECIPIENT,
+								event_selection: source.sourceSlug,
+							} );
+						}
+						const saved = await api.post( route, {
+							headers: adminHeaders,
+							data,
+						} );
+						expect( saved.status() ).toBe( 200 );
+						const before = ( await saved.json() ).channels[ key ];
+						const previewResponse = await api.get(
+							`${ route }/preview`,
+							{ headers: adminHeaders }
+						);
+						expect( previewResponse.status() ).toBe( 200 );
+						const preview = await previewResponse.json();
+						const start = new Date( monday );
+						if ( key === 'telegram' && seeded.weekday !== 7 ) {
+							start.setUTCDate( start.getUTCDate() - 1 );
+						} else if ( key === 'telegram' ) {
+							start.setUTCDate( start.getUTCDate() + 6 );
+						}
+						if ( scope === 'next' ) {
+							start.setUTCDate( start.getUTCDate() + 7 );
+						}
+						const end = new Date( start );
+						end.setUTCDate( end.getUTCDate() + 6 );
+						expect( preview.week_start ).toBe(
+							start.toISOString().slice( 0, 10 )
+						);
+						expect( preview.week_end ).toBe(
+							end.toISOString().slice( 0, 10 )
+						);
+						const content =
+							key === 'telegram'
+								? preview.messages
+										.map( ( m ) => m.text )
+										.join( '\n' )
+								: preview.html;
+						for ( const event of seeded.events ) {
+							if (
+								event.date >= preview.week_start &&
+								event.date <= preview.week_end
+							) {
+								expect( content ).toContain( event.title );
+							} else {
+								expect( content ).not.toContain( event.title );
+							}
+						}
+						fixture( 'clear' );
+						const sent = await api.post( `${ route }/test`, {
+							headers: adminHeaders,
+						} );
+						expect( sent.status() ).toBe( 200 );
+						const captured = fixture( 'captured' );
+						if ( key === 'telegram' ) {
+							expect(
+								captured.telegram.map( ( m ) => ( {
+									text: m.text,
+									entities: m.entities,
+								} ) )
+							).toEqual( preview.messages );
+							expect( captured.mail ).toEqual( [] );
+						} else {
+							expect( captured.mail ).toHaveLength( 1 );
+							expect( captured.mail[ 0 ].subject ).toBe(
+								preview.subject
+							);
+							const eventItems = ( html ) =>
+								(
+									html.match(
+										/<li\b[^>]*>[\s\S]*?<\/li>/g
+									) || []
+								).map( ( item ) =>
+									item.replace( / style="[^"]*"/g, '' )
+								);
+							expect(
+								eventItems( captured.mail[ 0 ].body )
+							).toEqual( eventItems( preview.html ) );
+							expect( captured.telegram ).toEqual( [] );
+						}
+						const after = ( await readChannels() )[ key ];
+						expect( after.next_run ).toEqual( before.next_run );
+						expect( after.runs ).toEqual( before.runs );
+						expect( after.deliveries ).toEqual( before.deliveries );
+						expect( after.last_sent_week ).toBe(
+							before.last_sent_week
+						);
+					}
+				}
+			}
+		} finally {
+			fixture( 'cleanup' );
+			runScript(
+				'weekly-summary-fixture.php',
+				'E2E_WEEKLY',
+				`cleanup ${ source.termId } ${ source.sourceId }`
 			);
 		}
 	} );

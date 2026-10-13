@@ -8,8 +8,8 @@
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-summary-fixture.php cleanup <termId> <sourceId> [eventId]
  *
  * `source` creates a category and an enabled event source listing it.
- * `event` publishes an event in that category, dated inside the week the next
- * scheduled send covers under the saved Telegram notification settings. Its
+ * `event` publishes an event in that category, dated inside the selected week relative to today
+ * under the saved Telegram notification settings. Its
  * title carries Telegram markup characters, so the spec can check they are
  * delivered verbatim. `cleanup` removes all of it.
  *
@@ -55,11 +55,11 @@ if ( 'source' === $fixture_step ) {
 		'termId'     => (int) $category['term_id'],
 		'sourceId'   => (int) $source_id,
 		'sourceName' => $name,
+		'sourceSlug' => 'e2e-weekly-' . $suffix,
 	);
 } elseif ( 'event' === $fixture_step ) {
 	$settings    = TelegramSettings::get();
-	$due         = WeekSchedule::next_due( TelegramDispatcher::now(), $settings['day_of_week'], $settings['time_of_day'] );
-	$week        = WeekSchedule::target_week( $due, $settings['week_scope'], TelegramDispatcher::start_of_week() );
+	$week        = WeekSchedule::target_week( TelegramDispatcher::now(), $settings['week_scope'], TelegramDispatcher::start_of_week() );
 	$event_title = 'E2E *Weekly* _Jam_ [x](y) `z` & 🎉 ' . wp_rand( 1000, 9999 );
 	$event_id    = fair_e2e_create_event( $event_title, '<!-- wp:paragraph --><p>Weekly summary fixture.</p><!-- /wp:paragraph -->' );
 	wp_set_object_terms( $event_id, array( (int) ( $args[1] ?? 0 ) ), 'category' );

@@ -238,6 +238,14 @@ class BulkEmailDispatcherTest extends TestCase {
 		$this->assertSame( 'sent', $this->process( '2026-W41', self::settings(), $now )['status'] );
 	}
 
+	/** Immediate email selection retains the local week when UTC has rolled over. */
+	public function test_immediate_event_week_at_local_year_boundary() {
+		$now = self::moment( '2027-01-03 23:30', 'America/Los_Angeles' );
+		$this->assertSame( array( 2026, 53 ), BulkEmailDispatcher::event_week( 'current', $now ) );
+		$this->assertSame( array( 2027, 1 ), BulkEmailDispatcher::event_week( 'next', $now ) );
+		$this->assertSame( array( 2027, 1 ), BulkEmailDispatcher::event_week( 'current', $now->setTimezone( new \DateTimeZone( 'UTC' ) ) ) );
+	}
+
 	/** The next send skips a send week that is already used. */
 	public function test_next_due_skips_a_used_send_week() {
 		$settings = self::settings(

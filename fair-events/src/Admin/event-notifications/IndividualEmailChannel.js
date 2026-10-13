@@ -335,7 +335,7 @@ export default function IndividualEmailChannel( {
 						className="is-wide"
 						label={ __( 'Which week to include', 'fair-events' ) }
 						help={ __(
-							'Weeks run from Monday to Sunday.',
+							'Weeks run from Monday to Sunday. Previews and tests select the week relative to today in the site timezone. Scheduled sends select it relative to their scheduled week.',
 							'fair-events'
 						) }
 						value={ form.week_scope }

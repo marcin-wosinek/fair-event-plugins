@@ -446,6 +446,10 @@ export default function TelegramChannel( {
 					<SelectControl
 						className="is-wide"
 						label={ __( 'Which week to include', 'fair-events' ) }
+						help={ __(
+							'Previews and tests select the week relative to today in the site timezone. Scheduled sends select it relative to their scheduled week.',
+							'fair-events'
+						) }
 						value={ form.week_scope }
 						options={ WEEK_SCOPES }
 						onChange={ update( 'week_scope' ) }
@@ -511,13 +515,13 @@ export default function TelegramChannel( {
 						? sprintf(
 								/* translators: %s: comma-separated list of Telegram chats */
 								__(
-									'The test posts the next scheduled week’s summary to: %s. It works while posting is off and is not recorded as a weekly send.',
+									'The test posts the selected week’s summary to: %s. It works while posting is off and is not recorded as a weekly send.',
 									'fair-events'
 								),
 								channel.chat_ids.join( ', ' )
 						  )
 						: __(
-								'The test posts the next scheduled week’s summary to every saved chat. It works while posting is off and is not recorded as a weekly send.',
+								'The test posts the selected week’s summary to every saved chat. It works while posting is off and is not recorded as a weekly send.',
 								'fair-events'
 						  ) }
 				</p>
