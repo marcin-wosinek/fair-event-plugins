@@ -116,12 +116,7 @@ export default function FeeDetail() {
 	const [ isTransferModalOpen, setIsTransferModalOpen ] = useState( false );
 	const [ transferPayment, setTransferPayment ] = useState( null );
 	// Reloaded each time the transfer modal opens.
-	const {
-		status: budgetsStatus,
-		budgets,
-		error: budgetsError,
-		load: loadBudgets,
-	} = useBudgets();
+	const { status: budgetsStatus, budgets, load: loadBudgets } = useBudgets();
 	const [ transferData, setTransferData ] = useState( {
 		amount: '',
 		entry_date: '',
@@ -1499,7 +1494,6 @@ export default function FeeDetail() {
 					<BudgetLoadStatus
 						status={ budgetsStatus }
 						budgets={ budgets }
-						error={ budgetsError }
 						onRetry={ loadBudgets }
 						failureMessage={ __(
 							'A transfer needs a source and a target budget.',

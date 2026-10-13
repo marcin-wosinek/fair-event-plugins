@@ -184,7 +184,7 @@ msgstr "Toutes les photos sélectionnées seront attribuées à cet auteur."
 
 #: src/Admin/MediaBatchActions.php:257
 #: src/Admin/edit-extra-message/EditExtraMessage.js:272
-#: src/Admin/fee-detail/FeeDetail.js:1062
+#: src/Admin/fee-detail/FeeDetail.js:1057
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
 #: src/Admin/groups/Groups.js:449
@@ -329,111 +329,111 @@ msgstr "Le contenu est obligatoire."
 msgid "The specified category does not exist."
 msgstr "La catégorie spécifiée n'existe pas."
 
-#: src/API/FeesController.php:297
-#: src/API/FeesController.php:390
-#: src/API/FeesController.php:441
-#: src/API/FeesController.php:474
-#: src/API/FeesController.php:497
-#: src/API/FeesController.php:751
-#: src/API/FeesController.php:774
-#: src/API/FeesController.php:917
+#: src/API/FeesController.php:340
+#: src/API/FeesController.php:433
+#: src/API/FeesController.php:485
+#: src/API/FeesController.php:518
+#: src/API/FeesController.php:541
+#: src/API/FeesController.php:795
+#: src/API/FeesController.php:818
+#: src/API/FeesController.php:961
 msgid "Fee not found."
 msgstr "Frais non trouvés."
 
-#: src/API/FeesController.php:319
+#: src/API/FeesController.php:362
 msgid "Fee name is required."
 msgstr "Le nom des frais est obligatoire."
 
-#: src/API/FeesController.php:327
+#: src/API/FeesController.php:370
 msgid "Group is required."
 msgstr "Le groupe est obligatoire."
 
-#: src/API/FeesController.php:335
+#: src/API/FeesController.php:378
 msgid "Amount must be a positive number."
 msgstr "Le montant doit être un nombre positif."
 
-#: src/API/FeesController.php:360
+#: src/API/FeesController.php:403
 msgid "Failed to create fee."
 msgstr "Échec de la création des frais."
 
-#: src/API/FeesController.php:372
+#: src/API/FeesController.php:415
 msgid "Fee created successfully."
 msgstr "Frais créés avec succès."
 
-#: src/API/FeesController.php:415
+#: src/API/FeesController.php:459
 msgid "Failed to update fee."
 msgstr "Échec de la mise à jour des frais."
 
-#: src/API/FeesController.php:423
+#: src/API/FeesController.php:467
 msgid "Fee updated successfully."
 msgstr "Frais mis à jour avec succès."
 
-#: src/API/FeesController.php:449
+#: src/API/FeesController.php:493
 msgid "Failed to delete fee."
 msgstr "Échec de la suppression des frais."
 
-#: src/API/FeesController.php:456
+#: src/API/FeesController.php:500
 msgid "Fee deleted successfully."
 msgstr "Frais supprimés avec succès."
 
-#: src/API/FeesController.php:506
+#: src/API/FeesController.php:550
 msgid "Participant is required."
 msgstr "Le participant est obligatoire."
 
-#: src/API/FeesController.php:517
-#: src/API/FeesController.php:604
+#: src/API/FeesController.php:561
+#: src/API/FeesController.php:648
 msgid "Amount must be a non-negative number."
 msgstr "Le montant doit être un nombre non négatif."
 
-#: src/API/FeesController.php:537
+#: src/API/FeesController.php:581
 msgid "Participant is not a member of this fee's group."
 msgstr "Le participant n'est pas membre du groupe de ces frais."
 
-#: src/API/FeesController.php:547
+#: src/API/FeesController.php:591
 msgid "This participant already has a payment for this fee."
 msgstr "Ce participant a déjà un paiement pour ces frais."
 
-#: src/API/FeesController.php:565
+#: src/API/FeesController.php:609
 msgid "Failed to add participant to fee."
 msgstr "Échec de l'ajout du participant aux frais."
 
-#: src/API/FeesController.php:575
+#: src/API/FeesController.php:619
 msgid "Participant added manually."
 msgstr "Participant ajouté manuellement."
 
-#: src/API/FeesController.php:581
+#: src/API/FeesController.php:625
 msgid "Participant added to fee."
 msgstr "Participant ajouté aux frais."
 
-#: src/API/FeesController.php:612
+#: src/API/FeesController.php:656
 msgid "A reason for the adjustment is required."
 msgstr "Une raison pour l'ajustement est obligatoire."
 
-#: src/API/FeesController.php:623
+#: src/API/FeesController.php:667
 msgid "Failed to update payment amount."
 msgstr "Échec de la mise à jour du montant du paiement."
 
-#: src/API/FeesController.php:639
+#: src/API/FeesController.php:683
 msgid "Payment amount adjusted successfully."
 msgstr "Montant du paiement ajusté avec succès."
 
-#: src/API/FeesController.php:663
+#: src/API/FeesController.php:707
 msgid "Failed to mark payment as paid."
 msgstr "Échec du marquage du paiement comme payé."
 
-#: src/API/FeesController.php:678
+#: src/API/FeesController.php:722
 msgid "Payment marked as paid."
 msgstr "Paiement marqué comme payé."
 
-#: src/API/FeesController.php:701
+#: src/API/FeesController.php:745
 msgid "Failed to cancel payment."
 msgstr "Échec de l'annulation du paiement."
 
-#: src/API/FeesController.php:716
+#: src/API/FeesController.php:760
 msgid "Payment canceled."
 msgstr "Paiement annulé."
 
-#: src/API/FeesController.php:926
+#: src/API/FeesController.php:970
 #: templates/fee-payment.php:51
 msgid "Payment not found."
 msgstr "Paiement introuvable."
@@ -1142,12 +1142,12 @@ msgstr "Ces frais ont déjà été payés. Merci !"
 
 #: templates/fee-payment.php:385
 #: templates/fee-payment.php:459
-#: src/Admin/fee-detail/FeeDetail.js:1005
+#: src/Admin/fee-detail/FeeDetail.js:1000
 msgid "Fee:"
 msgstr "Frais :"
 
 #: templates/fee-payment.php:389
-#: src/Admin/fee-detail/FeeDetail.js:1011
+#: src/Admin/fee-detail/FeeDetail.js:1006
 msgid "Amount:"
 msgstr "Montant :"
 
@@ -1361,7 +1361,7 @@ msgstr "Membres"
 msgid "No members in this group."
 msgstr "Aucun membre dans ce groupe."
 
-#: src/Admin/fee-detail/FeeDetail.js:992
+#: src/Admin/fee-detail/FeeDetail.js:987
 #: src/Admin/group-detail/GroupDetail.js:357
 msgid "(unnamed)"
 msgstr "(sans nom)"
@@ -1828,7 +1828,7 @@ msgstr "Photos"
 msgid "Participant photo uploads, photo authors and tags, media library hooks."
 msgstr "Téléchargements de photos de participants, auteurs de photos et balises, crochets de la bibliothèque multimédia."
 
-#: src/Admin/components/BudgetLoadStatus.js:58
+#: src/Admin/components/BudgetLoadStatus.js:57
 #: src/Admin/manage-event-ext/GroupRules.js:465
 msgid "Retry"
 msgstr "Réessayer"
@@ -1837,69 +1837,69 @@ msgstr "Réessayer"
 msgid "Group rules could not be loaded."
 msgstr "Impossible de charger les règles de groupe."
 
-#: src/API/FeesController.php:802
+#: src/API/FeesController.php:846
 msgid "This payment is no longer pending, so no reminder was sent."
 msgstr "Ce paiement n'est plus en attente, donc aucun rappel n'a été envoyé."
 
-#: src/API/FeesController.php:812
+#: src/API/FeesController.php:856
 msgid "The member for this payment no longer exists, so no reminder was sent."
 msgstr "Le membre pour ce paiement n'existe plus, donc aucun rappel n'a été envoyé."
 
-#: src/API/FeesController.php:820
+#: src/API/FeesController.php:864
 msgid "This member has no valid email address, so no reminder was sent."
 msgstr "Ce membre n'a pas d'adresse e-mail valide, donc aucun rappel n'a été envoyé."
 
-#: src/API/FeesController.php:831
+#: src/API/FeesController.php:875
 msgid "The reminder email could not be sent."
 msgstr "L'e-mail de rappel n'a pas pu être envoyé."
 
-#: src/API/FeesController.php:849
+#: src/API/FeesController.php:893
 msgid "The reminder was sent, but it could not be recorded on the payment. Do not send it again."
 msgstr "Le rappel a été envoyé, mais il n'a pas pu être enregistré sur le paiement. Ne l'envoyez pas à nouveau."
 
-#: src/API/FeesController.php:860
+#: src/API/FeesController.php:904
 msgid "Payment reminder sent."
 msgstr "Rappel de paiement envoyé."
 
-#: src/Admin/fee-detail/FeeDetail.js:622
+#: src/Admin/fee-detail/FeeDetail.js:617
 msgid "The payment reminder could not be sent."
 msgstr "Le rappel de paiement n'a pas pu être envoyé."
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:665
+#: src/Admin/fee-detail/FeeDetail.js:660
 #, js-format
 msgid "Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again."
 msgstr "Rappel de paiement envoyé à %s, mais cette page n'a pas pu être actualisée. Rechargez la page pour voir la date du rappel ; l'e-mail n'a pas besoin d'être renvoyé."
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:677
+#: src/Admin/fee-detail/FeeDetail.js:672
 #, js-format
 msgid "Payment reminder sent to %s."
 msgstr "Rappel de paiement envoyé à %s."
 
-#: src/Admin/fee-detail/FeeDetail.js:773
-#: src/Admin/fee-detail/FeeDetail.js:959
-#: src/Admin/fee-detail/FeeDetail.js:1074
+#: src/Admin/fee-detail/FeeDetail.js:768
+#: src/Admin/fee-detail/FeeDetail.js:954
+#: src/Admin/fee-detail/FeeDetail.js:1069
 msgid "Send Payment Reminder"
 msgstr "Envoyer un rappel de paiement"
 
-#: src/Admin/fee-detail/FeeDetail.js:970
+#: src/Admin/fee-detail/FeeDetail.js:965
 msgid "One reminder email will be sent to this member only."
 msgstr "Un e-mail de rappel sera envoyé à ce membre uniquement."
 
-#: src/Admin/fee-detail/FeeDetail.js:986
+#: src/Admin/fee-detail/FeeDetail.js:981
 msgid "Member:"
 msgstr "Membre :"
 
-#: src/Admin/fee-detail/FeeDetail.js:999
+#: src/Admin/fee-detail/FeeDetail.js:994
 msgid "Email:"
 msgstr "E-mail :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1025
+#: src/Admin/fee-detail/FeeDetail.js:1020
 msgid "This member has no email address, so a reminder cannot be sent."
 msgstr "Ce membre n'a pas d'adresse e-mail, donc un rappel ne peut pas être envoyé."
 
-#: src/Admin/fee-detail/FeeDetail.js:1035
+#: src/Admin/fee-detail/FeeDetail.js:1030
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
 msgstr "Des rappels sont en cours d'envoi à tous les membres ayant des paiements en attente. Attendez que cela se termine avant d'envoyer celui-ci."
 
@@ -1912,42 +1912,69 @@ msgstr "Active les packs de fonctionnalités avancées pour Fair Audience (frais
 msgid "Custom mail to the whole audience, extra messages, scheduled messages."
 msgstr ""
 
-#: src/Admin/components/BudgetLoadStatus.js:34
+#: src/Admin/components/BudgetLoadStatus.js:33
 msgid "Loading budgets…"
 msgstr "Chargement des budgets…"
 
-#: src/Admin/components/BudgetLoadStatus.js:43
+#: src/Admin/components/BudgetLoadStatus.js:42
 msgid "Budgets are unavailable because Fair Finance is not active."
 msgstr "Les budgets ne sont pas disponibles, car Fair Finance n’est pas actif."
 
-#: src/Admin/components/BudgetLoadStatus.js:47
+#: src/Admin/components/BudgetLoadStatus.js:46
 msgid "Budgets could not be loaded."
 msgstr "Les budgets n’ont pas pu être chargés."
 
-#: src/Admin/fee-detail/FeeDetail.js:884
+#: src/Admin/fee-detail/FeeDetail.js:879
 msgid "Budget:"
 msgstr "Budget :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1504
+#: src/Admin/fee-detail/FeeDetail.js:1498
 msgid "A transfer needs a source and a target budget."
 msgstr "Un transfert nécessite un budget source et un budget cible."
 
-#: src/Admin/fee-detail/FeeDetail.js:1508
+#: src/Admin/fee-detail/FeeDetail.js:1502
 msgid "There are no budgets yet. Add budgets in Fair Finance to create a transfer."
 msgstr "Il n’y a pas encore de budgets. Ajoutez des budgets dans Fair Finance pour créer un transfert."
 
-#: src/Admin/fees-list/FeesList.js:518
+#: src/Admin/fees-list/FeesList.js:558
 msgid "You can still create this fee without a budget."
 msgstr "Vous pouvez tout de même créer ces frais sans budget."
 
-#: src/Admin/fees-list/FeesList.js:522
+#: src/Admin/fees-list/FeesList.js:562
+#: src/Admin/fees-list/FeesList.js:685
 msgid "There are no budgets yet. Add one in Fair Finance to link fees to it."
 msgstr "Il n’y a pas encore de budgets. Ajoutez-en un dans Fair Finance pour y rattacher des frais."
 
-#: src/Admin/fee-detail/FeeDetail.js:537
+#: src/Admin/fee-detail/FeeDetail.js:532
 msgid "The transfer could not be created."
 msgstr "Le transfert n’a pas pu être créé."
 
-#: src/Admin/fee-detail/FeeDetail.js:574
+#: src/Admin/fee-detail/FeeDetail.js:569
 msgid "The transfer was created, but the payment could not be marked as paid. Mark the payment as paid from its row actions; do not create the transfer again."
 msgstr "Le transfert a été créé, mais le paiement n’a pas pu être marqué comme payé. Marquez le paiement comme payé depuis les actions de sa ligne ; ne créez pas le transfert une seconde fois."
+
+#: src/API/FeesController.php:281
+msgid "Fair Finance budget the fee is linked to, or null for none."
+msgstr "Budget Fair Finance auquel les frais sont rattachés, ou null s’il n’y en a pas."
+
+#. translators: %d: budget ID
+#: src/Admin/fees-list/FeesList.js:448
+#, js-format
+msgid "Budget #%d"
+msgstr "Budget nº %d"
+
+#: src/Admin/fees-list/FeesList.js:655
+msgid "Budget"
+msgstr "Budget"
+
+#: src/Admin/fees-list/FeesList.js:666
+msgid "The budget this fee is linked to is not in the list. The fee stays linked to it unless you choose another."
+msgstr "Le budget auquel ces frais sont rattachés ne figure pas dans la liste. Les frais y restent rattachés tant que vous n’en choisissez pas un autre."
+
+#: src/Admin/fees-list/FeesList.js:670
+msgid "Optionally link to a budget for financial tracking."
+msgstr "Vous pouvez les rattacher à un budget pour le suivi financier."
+
+#: src/Admin/fees-list/FeesList.js:681
+msgid "The fee keeps its current budget unless you choose another."
+msgstr "Les frais conservent leur budget actuel tant que vous n’en choisissez pas un autre."

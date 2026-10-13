@@ -2,13 +2,13 @@ import { __ } from '@wordpress/i18n';
 import { Notice, Spinner } from '@wordpress/components';
 
 /**
- * Says what happened to a budget load: still running, failed (with Retry), or
- * finished without any budgets. Renders nothing once budgets are available.
+ * Says what happened to a budget load: still running, failed or unavailable
+ * (with Retry), or finished without any budgets. Renders nothing once budgets
+ * are available.
  *
  * @param {Object}   props
  * @param {string}   props.status         Load status from `useBudgets`.
  * @param {Array}    props.budgets        Loaded budgets.
- * @param {?Object}  props.error          The rejection of a failed load.
  * @param {Function} props.onRetry        Starts another load.
  * @param {string}   props.failureMessage What the failure means on this screen.
  * @param {string}   props.emptyMessage   What an empty list means on this screen.
@@ -16,7 +16,6 @@ import { Notice, Spinner } from '@wordpress/components';
 export default function BudgetLoadStatus( {
 	status,
 	budgets,
-	error,
 	onRetry,
 	failureMessage,
 	emptyMessage,
@@ -36,10 +35,10 @@ export default function BudgetLoadStatus( {
 		);
 	}
 
-	if ( status === 'error' ) {
+	if ( status === 'error' || status === 'unavailable' ) {
 		// The route is missing altogether when Fair Finance is not active.
 		const reason =
-			error?.code === 'rest_no_route'
+			status === 'unavailable'
 				? __(
 						'Budgets are unavailable because Fair Finance is not active.',
 						'fair-audience-experimental'

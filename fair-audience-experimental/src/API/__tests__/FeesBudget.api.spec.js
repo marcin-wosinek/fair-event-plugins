@@ -7,10 +7,12 @@
  *
  * Covers who may list budgets, creating a fee with and without a budget,
  * reading the link back by ID and by name, keeping it through an update that
- * does not mention it, and reading fees while the Fair Finance budgets table
- * is missing — the stored link stays, only the name is unavailable.
+ * does not mention it, moving it to another budget, clearing it with an
+ * explicit null, refusing a budget that is not a positive integer ID, and
+ * reading fees while the Fair Finance budgets table is missing — the stored
+ * link stays, only the name is unavailable.
  *
- * Fixtures (a budget, a group and the fees) are created through the admin
+ * Fixtures (two budgets, a group and the fees) are created through the admin
  * REST API and removed at the end of the suite. The budgets table is hidden
  * and restored by e2e/mu-plugins/fair-e2e-fee-budgets.php.
  */
@@ -36,6 +38,8 @@ test.describe( 'FeesController: the budget a fee is linked to', () => {
 	let groupId;
 	let budgetId;
 	let budgetName;
+	let otherBudgetId;
+	let otherBudgetName;
 	const feeIds = [];
 
 	const adminPost = async ( path, data ) => {
@@ -66,6 +70,12 @@ test.describe( 'FeesController: the budget a fee is linked to', () => {
 		return fee.id;
 	};
 
+	const updateFee = ( feeId, data ) =>
+		api.put( `/wp-json/fair-audience/v1/fees/${ feeId }`, {
+			headers: adminHeaders,
+			data,
+		} );
+
 	const listedFee = async ( feeId ) =>
 		( await adminGet( '/fair-audience/v1/fees' ) ).find(
 			( row ) => Number( row.id ) === feeId
@@ -93,6 +103,12 @@ test.describe( 'FeesController: the budget a fee is linked to', () => {
 				name: budgetName,
 			} )
 		).id;
+		otherBudgetName = `Other Fee Budget ${ Date.now() }`;
+		otherBudgetId = (
+			await adminPost( '/fair-finance/v1/budgets', {
+				name: otherBudgetName,
+			} )
+		).id;
 		groupId = (
 			await adminPost( '/fair-audience/v1/groups', {
 				name: `Fee Budget Members ${ Date.now() }`,
@@ -115,13 +131,12 @@ test.describe( 'FeesController: the budget a fee is linked to', () => {
 				headers: adminHeaders,
 			} );
 		}
-		if ( budgetId ) {
-			await api.delete(
-				`/wp-json/fair-finance/v1/budgets/${ budgetId }`,
-				{
+		for ( const id of [ budgetId, otherBudgetId ] ) {
+			if ( id ) {
+				await api.delete( `/wp-json/fair-finance/v1/budgets/${ id }`, {
 					headers: adminHeaders,
-				}
-			);
+				} );
+			}
 		}
 		await api.dispose();
 	} );
@@ -201,6 +216,88 @@ test.describe( 'FeesController: the budget a fee is linked to', () => {
 		expect( fee.status ).toBe( 'closed' );
 		expect( Number( fee.budget_id ) ).toBe( budgetId );
 		expect( fee.budget_name ).toBe( budgetName );
+	} );
+
+	test( 'an update with another budget moves the link to it', async () => {
+		const feeId = await createFee( { budget_id: budgetId } );
+
+		const res = await updateFee( feeId, { budget_id: otherBudgetId } );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+
+		const fee = await adminGet( `/fair-audience/v1/fees/${ feeId }` );
+		expect( Number( fee.budget_id ) ).toBe( otherBudgetId );
+		expect( fee.budget_name ).toBe( otherBudgetName );
+
+		const row = await listedFee( feeId );
+		expect( Number( row.budget_id ) ).toBe( otherBudgetId );
+		expect( row.budget_name ).toBe( otherBudgetName );
+	} );
+
+	test( 'an update can link a fee that had no budget', async () => {
+		const feeId = await createFee( {} );
+
+		const res = await updateFee( feeId, { budget_id: budgetId } );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+
+		const fee = await adminGet( `/fair-audience/v1/fees/${ feeId }` );
+		expect( Number( fee.budget_id ) ).toBe( budgetId );
+		expect( fee.budget_name ).toBe( budgetName );
+	} );
+
+	test( 'an update with a null budget clears the link and nothing else', async () => {
+		const feeId = await createFee( { budget_id: budgetId } );
+		const before = await adminGet( `/fair-audience/v1/fees/${ feeId }` );
+
+		const res = await updateFee( feeId, { budget_id: null } );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+
+		const fee = await adminGet( `/fair-audience/v1/fees/${ feeId }` );
+		expect( fee.budget_id ).toBeNull();
+		expect( fee.budget_name ).toBeNull();
+		expect( fee.name ).toBe( before.name );
+		expect( fee.status ).toBe( before.status );
+		expect( ( await listedFee( feeId ) ).budget_id ).toBeNull();
+	} );
+
+	test( 'a budget that is not a positive integer ID is refused and changes nothing', async () => {
+		const feeId = await createFee( { budget_id: budgetId } );
+
+		for ( const invalid of [ 0, -3, 1.5, 'abc', '', true, [ budgetId ] ] ) {
+			const res = await updateFee( feeId, {
+				name: 'Must not be saved',
+				budget_id: invalid,
+			} );
+			expect( res.status(), JSON.stringify( invalid ) ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe( 'rest_invalid_param' );
+		}
+
+		const fee = await adminGet( `/fair-audience/v1/fees/${ feeId }` );
+		expect( Number( fee.budget_id ) ).toBe( budgetId );
+		expect( fee.name ).not.toBe( 'Must not be saved' );
+
+		const created = await api.post( '/wp-json/fair-audience/v1/fees', {
+			headers: adminHeaders,
+			data: {
+				name: 'Invalid Budget Fee',
+				group_id: groupId,
+				amount: 25,
+				budget_id: 'abc',
+			},
+		} );
+		expect( created.status() ).toBe( 400 );
+	} );
+
+	test( 'changing a fee budget needs an administrator', async () => {
+		const feeId = await createFee( { budget_id: budgetId } );
+
+		const anonymous = await api.put(
+			`/wp-json/fair-audience/v1/fees/${ feeId }`,
+			{ data: { budget_id: null } }
+		);
+		expect( anonymous.status() ).toBe( 401 );
+
+		const fee = await adminGet( `/fair-audience/v1/fees/${ feeId }` );
+		expect( Number( fee.budget_id ) ).toBe( budgetId );
 	} );
 
 	test( 'fees stay readable and keep their link while the budgets table is missing', async () => {
