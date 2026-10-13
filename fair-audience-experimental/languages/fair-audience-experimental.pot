@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-12T14:53:32+00:00\n"
+"POT-Creation-Date: 2026-10-13T04:51:17+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience-experimental\n"
@@ -189,7 +189,7 @@ msgstr ""
 
 #: src/Admin/MediaBatchActions.php:257
 #: src/Admin/edit-extra-message/EditExtraMessage.js:272
-#: src/Admin/fee-detail/FeeDetail.js:1062
+#: src/Admin/fee-detail/FeeDetail.js:1057
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
 #: src/Admin/groups/Groups.js:449
@@ -334,135 +334,139 @@ msgstr ""
 msgid "The specified category does not exist."
 msgstr ""
 
-#: src/API/FeesController.php:297
-#: src/API/FeesController.php:390
-#: src/API/FeesController.php:441
-#: src/API/FeesController.php:474
-#: src/API/FeesController.php:497
-#: src/API/FeesController.php:751
-#: src/API/FeesController.php:774
-#: src/API/FeesController.php:917
+#: src/API/FeesController.php:281
+msgid "Fair Finance budget the fee is linked to, or null for none."
+msgstr ""
+
+#: src/API/FeesController.php:340
+#: src/API/FeesController.php:433
+#: src/API/FeesController.php:485
+#: src/API/FeesController.php:518
+#: src/API/FeesController.php:541
+#: src/API/FeesController.php:795
+#: src/API/FeesController.php:818
+#: src/API/FeesController.php:961
 msgid "Fee not found."
 msgstr ""
 
-#: src/API/FeesController.php:319
+#: src/API/FeesController.php:362
 msgid "Fee name is required."
 msgstr ""
 
-#: src/API/FeesController.php:327
+#: src/API/FeesController.php:370
 msgid "Group is required."
 msgstr ""
 
-#: src/API/FeesController.php:335
+#: src/API/FeesController.php:378
 msgid "Amount must be a positive number."
 msgstr ""
 
-#: src/API/FeesController.php:360
+#: src/API/FeesController.php:403
 msgid "Failed to create fee."
 msgstr ""
 
-#: src/API/FeesController.php:372
+#: src/API/FeesController.php:415
 msgid "Fee created successfully."
 msgstr ""
 
-#: src/API/FeesController.php:415
+#: src/API/FeesController.php:459
 msgid "Failed to update fee."
 msgstr ""
 
-#: src/API/FeesController.php:423
+#: src/API/FeesController.php:467
 msgid "Fee updated successfully."
 msgstr ""
 
-#: src/API/FeesController.php:449
+#: src/API/FeesController.php:493
 msgid "Failed to delete fee."
 msgstr ""
 
-#: src/API/FeesController.php:456
+#: src/API/FeesController.php:500
 msgid "Fee deleted successfully."
 msgstr ""
 
-#: src/API/FeesController.php:506
+#: src/API/FeesController.php:550
 msgid "Participant is required."
 msgstr ""
 
-#: src/API/FeesController.php:517
-#: src/API/FeesController.php:604
+#: src/API/FeesController.php:561
+#: src/API/FeesController.php:648
 msgid "Amount must be a non-negative number."
 msgstr ""
 
-#: src/API/FeesController.php:537
+#: src/API/FeesController.php:581
 msgid "Participant is not a member of this fee's group."
 msgstr ""
 
-#: src/API/FeesController.php:547
+#: src/API/FeesController.php:591
 msgid "This participant already has a payment for this fee."
 msgstr ""
 
-#: src/API/FeesController.php:565
+#: src/API/FeesController.php:609
 msgid "Failed to add participant to fee."
 msgstr ""
 
-#: src/API/FeesController.php:575
+#: src/API/FeesController.php:619
 msgid "Participant added manually."
 msgstr ""
 
-#: src/API/FeesController.php:581
+#: src/API/FeesController.php:625
 msgid "Participant added to fee."
 msgstr ""
 
-#: src/API/FeesController.php:612
+#: src/API/FeesController.php:656
 msgid "A reason for the adjustment is required."
 msgstr ""
 
-#: src/API/FeesController.php:623
+#: src/API/FeesController.php:667
 msgid "Failed to update payment amount."
 msgstr ""
 
-#: src/API/FeesController.php:639
+#: src/API/FeesController.php:683
 msgid "Payment amount adjusted successfully."
 msgstr ""
 
-#: src/API/FeesController.php:663
+#: src/API/FeesController.php:707
 msgid "Failed to mark payment as paid."
 msgstr ""
 
-#: src/API/FeesController.php:678
+#: src/API/FeesController.php:722
 msgid "Payment marked as paid."
 msgstr ""
 
-#: src/API/FeesController.php:701
+#: src/API/FeesController.php:745
 msgid "Failed to cancel payment."
 msgstr ""
 
-#: src/API/FeesController.php:716
+#: src/API/FeesController.php:760
 msgid "Payment canceled."
 msgstr ""
 
-#: src/API/FeesController.php:802
+#: src/API/FeesController.php:846
 msgid "This payment is no longer pending, so no reminder was sent."
 msgstr ""
 
-#: src/API/FeesController.php:812
+#: src/API/FeesController.php:856
 msgid "The member for this payment no longer exists, so no reminder was sent."
 msgstr ""
 
-#: src/API/FeesController.php:820
+#: src/API/FeesController.php:864
 msgid "This member has no valid email address, so no reminder was sent."
 msgstr ""
 
-#: src/API/FeesController.php:831
+#: src/API/FeesController.php:875
 msgid "The reminder email could not be sent."
 msgstr ""
 
-#: src/API/FeesController.php:849
+#: src/API/FeesController.php:893
 msgid "The reminder was sent, but it could not be recorded on the payment. Do not send it again."
 msgstr ""
 
-#: src/API/FeesController.php:860
+#: src/API/FeesController.php:904
 msgid "Payment reminder sent."
 msgstr ""
 
-#: src/API/FeesController.php:926
+#: src/API/FeesController.php:970
 #: templates/fee-payment.php:51
 msgid "Payment not found."
 msgstr ""
@@ -1183,12 +1187,12 @@ msgstr ""
 
 #: templates/fee-payment.php:385
 #: templates/fee-payment.php:459
-#: src/Admin/fee-detail/FeeDetail.js:1005
+#: src/Admin/fee-detail/FeeDetail.js:1000
 msgid "Fee:"
 msgstr ""
 
 #: templates/fee-payment.php:389
-#: src/Admin/fee-detail/FeeDetail.js:1011
+#: src/Admin/fee-detail/FeeDetail.js:1006
 msgid "Amount:"
 msgstr ""
 
@@ -1220,19 +1224,19 @@ msgstr ""
 msgid "Payment is taking longer than expected. Please reload this page to check the status."
 msgstr ""
 
-#: src/Admin/components/BudgetLoadStatus.js:34
+#: src/Admin/components/BudgetLoadStatus.js:33
 msgid "Loading budgets…"
 msgstr ""
 
-#: src/Admin/components/BudgetLoadStatus.js:43
+#: src/Admin/components/BudgetLoadStatus.js:42
 msgid "Budgets are unavailable because Fair Finance is not active."
 msgstr ""
 
-#: src/Admin/components/BudgetLoadStatus.js:47
+#: src/Admin/components/BudgetLoadStatus.js:46
 msgid "Budgets could not be loaded."
 msgstr ""
 
-#: src/Admin/components/BudgetLoadStatus.js:58
+#: src/Admin/components/BudgetLoadStatus.js:57
 #: src/Admin/manage-event-ext/GroupRules.js:465
 msgid "Retry"
 msgstr ""
@@ -1350,79 +1354,102 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:537
+#: src/Admin/fee-detail/FeeDetail.js:532
 msgid "The transfer could not be created."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:574
+#: src/Admin/fee-detail/FeeDetail.js:569
 msgid "The transfer was created, but the payment could not be marked as paid. Mark the payment as paid from its row actions; do not create the transfer again."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:622
+#: src/Admin/fee-detail/FeeDetail.js:617
 msgid "The payment reminder could not be sent."
 msgstr ""
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:665
+#: src/Admin/fee-detail/FeeDetail.js:660
 #, js-format
 msgid "Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again."
 msgstr ""
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:677
+#: src/Admin/fee-detail/FeeDetail.js:672
 #, js-format
 msgid "Payment reminder sent to %s."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:773
-#: src/Admin/fee-detail/FeeDetail.js:959
-#: src/Admin/fee-detail/FeeDetail.js:1074
+#: src/Admin/fee-detail/FeeDetail.js:768
+#: src/Admin/fee-detail/FeeDetail.js:954
+#: src/Admin/fee-detail/FeeDetail.js:1069
 msgid "Send Payment Reminder"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:884
+#: src/Admin/fee-detail/FeeDetail.js:879
 msgid "Budget:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:970
+#: src/Admin/fee-detail/FeeDetail.js:965
 msgid "One reminder email will be sent to this member only."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:986
+#: src/Admin/fee-detail/FeeDetail.js:981
 msgid "Member:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:992
+#: src/Admin/fee-detail/FeeDetail.js:987
 #: src/Admin/group-detail/GroupDetail.js:357
 msgid "(unnamed)"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:999
+#: src/Admin/fee-detail/FeeDetail.js:994
 msgid "Email:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1025
+#: src/Admin/fee-detail/FeeDetail.js:1020
 msgid "This member has no email address, so a reminder cannot be sent."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1035
+#: src/Admin/fee-detail/FeeDetail.js:1030
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1504
+#: src/Admin/fee-detail/FeeDetail.js:1498
 msgid "A transfer needs a source and a target budget."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1508
+#: src/Admin/fee-detail/FeeDetail.js:1502
 msgid "There are no budgets yet. Add budgets in Fair Finance to create a transfer."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:518
+#. translators: %d: budget ID
+#: src/Admin/fees-list/FeesList.js:448
+#, js-format
+msgid "Budget #%d"
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:558
 msgid "You can still create this fee without a budget."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:522
+#: src/Admin/fees-list/FeesList.js:562
+#: src/Admin/fees-list/FeesList.js:685
 msgid "There are no budgets yet. Add one in Fair Finance to link fees to it."
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:655
+msgid "Budget"
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:666
+msgid "The budget this fee is linked to is not in the list. The fee stays linked to it unless you choose another."
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:670
+msgid "Optionally link to a budget for financial tracking."
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:681
+msgid "The fee keeps its current budget unless you choose another."
 msgstr ""
 
 #: src/Admin/group-detail/GroupDetail.js:50

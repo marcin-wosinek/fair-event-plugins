@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -60,17 +60,15 @@ export default function FeesList() {
 	// Edit modal state.
 	const [ isEditModalOpen, setIsEditModalOpen ] = useState( false );
 	const [ editingFee, setEditingFee ] = useState( null );
+	const [ editBudgetId, setEditBudgetId ] = useState( '' );
 
 	// Groups for select.
 	const [ groups, setGroups ] = useState( [] );
 
-	// Budgets for select, reloaded each time the create modal opens.
-	const {
-		status: budgetsStatus,
-		budgets,
-		error: budgetsError,
-		load: loadBudgets,
-	} = useBudgets();
+	// Budgets for select, reloaded each time either modal opens.
+	const { status: budgetsStatus, budgets, load: loadBudgets } = useBudgets();
+	// Fair Finance is not active: the budget controls are left out entirely.
+	const budgetsUnavailable = budgetsStatus === 'unavailable';
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
@@ -296,7 +294,9 @@ export default function FeesList() {
 		setFeeName( fee.name );
 		setFeeDescription( fee.description || '' );
 		setFeeDueDate( fee.due_date || '' );
+		setEditBudgetId( fee.budget_id ? String( fee.budget_id ) : '' );
 		setIsEditModalOpen( true );
+		loadBudgets();
 	};
 
 	// Handle update fee.
@@ -307,15 +307,23 @@ export default function FeesList() {
 
 		setIsSaving( true );
 
+		const data = {
+			name: feeName.trim(),
+			description: feeDescription.trim(),
+			due_date: feeDueDate || null,
+			status: editingFee.status,
+		};
+		// Left out unless changed, so the fee keeps the budget it has.
+		if ( editBudgetChanged ) {
+			data.budget_id = selectedEditBudgetId
+				? parseInt( selectedEditBudgetId, 10 )
+				: null;
+		}
+
 		apiFetch( {
 			path: `/fair-audience/v1/fees/${ editingFee.id }`,
 			method: 'PUT',
-			data: {
-				name: feeName.trim(),
-				description: feeDescription.trim(),
-				due_date: feeDueDate || null,
-				status: editingFee.status,
-			},
+			data,
 		} )
 			.then( () => {
 				setIsEditModalOpen( false );
@@ -421,6 +429,37 @@ export default function FeesList() {
 		? feeBudgetId
 		: '';
 
+	// The budget the edited fee is saved with stays in the list whatever the
+	// load returned, so it is never cleared just by opening the dialog.
+	const savedBudgetId = editingFee?.budget_id
+		? String( editingFee.budget_id )
+		: '';
+	const savedBudgetMissing =
+		savedBudgetId !== '' &&
+		! budgets.some( ( b ) => String( b.id ) === savedBudgetId );
+	const editBudgetOptions = savedBudgetMissing
+		? [
+				...budgetOptions,
+				{
+					label:
+						editingFee.budget_name ||
+						sprintf(
+							/* translators: %d: budget ID */
+							__( 'Budget #%d', 'fair-audience-experimental' ),
+							editingFee.budget_id
+						),
+					value: savedBudgetId,
+				},
+		  ]
+		: budgetOptions;
+	const selectedEditBudgetId = editBudgetOptions.some(
+		( option ) => option.value === editBudgetId
+	)
+		? editBudgetId
+		: savedBudgetId;
+	const editBudgetChanged =
+		! budgetsUnavailable && selectedEditBudgetId !== savedBudgetId;
+
 	return (
 		<div className="wrap">
 			<h1>{ __( 'Membership Fees', 'fair-audience' ) }</h1>
@@ -498,32 +537,35 @@ export default function FeesList() {
 						onChange={ setFeeDueDate }
 					/>
 
-					<SelectControl
-						label={ __( 'Budget', 'fair-audience' ) }
-						value={ selectedBudgetId }
-						options={ budgetOptions }
-						onChange={ setFeeBudgetId }
-						disabled={ budgetsStatus === 'loading' }
-						help={ __(
-							'Optionally link to a budget for financial tracking.',
-							'fair-audience'
-						) }
-					/>
+					{ ! budgetsUnavailable && (
+						<>
+							<SelectControl
+								label={ __( 'Budget', 'fair-audience' ) }
+								value={ selectedBudgetId }
+								options={ budgetOptions }
+								onChange={ setFeeBudgetId }
+								disabled={ budgetsStatus === 'loading' }
+								help={ __(
+									'Optionally link to a budget for financial tracking.',
+									'fair-audience'
+								) }
+							/>
 
-					<BudgetLoadStatus
-						status={ budgetsStatus }
-						budgets={ budgets }
-						error={ budgetsError }
-						onRetry={ loadBudgets }
-						failureMessage={ __(
-							'You can still create this fee without a budget.',
-							'fair-audience-experimental'
-						) }
-						emptyMessage={ __(
-							'There are no budgets yet. Add one in Fair Finance to link fees to it.',
-							'fair-audience-experimental'
-						) }
-					/>
+							<BudgetLoadStatus
+								status={ budgetsStatus }
+								budgets={ budgets }
+								onRetry={ loadBudgets }
+								failureMessage={ __(
+									'You can still create this fee without a budget.',
+									'fair-audience-experimental'
+								) }
+								emptyMessage={ __(
+									'There are no budgets yet. Add one in Fair Finance to link fees to it.',
+									'fair-audience-experimental'
+								) }
+							/>
+						</>
+					) }
 
 					<div
 						style={ {
@@ -606,6 +648,47 @@ export default function FeesList() {
 							setEditingFee( { ...editingFee, status: value } )
 						}
 					/>
+
+					{ ! budgetsUnavailable && (
+						<>
+							<SelectControl
+								label={ __(
+									'Budget',
+									'fair-audience-experimental'
+								) }
+								value={ selectedEditBudgetId }
+								options={ editBudgetOptions }
+								onChange={ setEditBudgetId }
+								disabled={ budgetsStatus === 'loading' }
+								help={
+									budgetsStatus === 'success' &&
+									savedBudgetMissing
+										? __(
+												'The budget this fee is linked to is not in the list. The fee stays linked to it unless you choose another.',
+												'fair-audience-experimental'
+										  )
+										: __(
+												'Optionally link to a budget for financial tracking.',
+												'fair-audience-experimental'
+										  )
+								}
+							/>
+
+							<BudgetLoadStatus
+								status={ budgetsStatus }
+								budgets={ budgets }
+								onRetry={ loadBudgets }
+								failureMessage={ __(
+									'The fee keeps its current budget unless you choose another.',
+									'fair-audience-experimental'
+								) }
+								emptyMessage={ __(
+									'There are no budgets yet. Add one in Fair Finance to link fees to it.',
+									'fair-audience-experimental'
+								) }
+							/>
+						</>
+					) }
 
 					<div
 						style={ {

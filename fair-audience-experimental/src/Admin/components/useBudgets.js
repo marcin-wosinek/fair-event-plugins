@@ -6,9 +6,12 @@ export const BUDGETS_PATH = '/fair-finance/v1/budgets';
 /**
  * Budgets from Fair Finance, loaded on demand.
  *
- * `status` is `idle` until the first load, then `loading`, `success` or
- * `error`. The list is empty while a load is in flight and after a failure,
- * so a select built from it never offers a budget that was not just confirmed.
+ * `status` is `idle` until the first load, then `loading`, `success`,
+ * `unavailable` or `error`. `unavailable` means the budgets route does not
+ * exist, which is the case while Fair Finance is not active; every other
+ * failure (permissions, network) is `error`. The list is empty while a load is
+ * in flight and after a failure, so a select built from it never offers a
+ * budget that was not just confirmed.
  *
  * @return {{status: string, budgets: Array, error: ?Object, load: Function}} Budget state and loader.
  */
@@ -42,7 +45,12 @@ export default function useBudgets() {
 				if ( request !== latestRequest.current ) {
 					return;
 				}
-				setState( { status: 'error', budgets: [], error: err } );
+				setState( {
+					status:
+						err?.code === 'rest_no_route' ? 'unavailable' : 'error',
+					budgets: [],
+					error: err,
+				} );
 			} );
 	}, [] );
 

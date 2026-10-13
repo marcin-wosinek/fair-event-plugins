@@ -99,6 +99,9 @@ class FeesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => array(
+						'budget_id' => $this->get_budget_id_arg(),
+					),
 				),
 			)
 		);
@@ -117,6 +120,9 @@ class FeesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'budget_id' => $this->get_budget_id_arg(),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
@@ -263,6 +269,43 @@ class FeesController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Schema of the optional budget a fee is linked to.
+	 *
+	 * No default on purpose: an update has to tell a request that leaves
+	 * budget_id out from one that sends null.
+	 *
+	 * @return array Argument definition.
+	 */
+	private function get_budget_id_arg() {
+		return array(
+			'description'       => __( 'Fair Finance budget the fee is linked to, or null for none.', 'fair-audience-experimental' ),
+			'type'              => array( 'integer', 'null' ),
+			'validate_callback' => array( $this, 'validate_budget_id' ),
+			'sanitize_callback' => static function ( $value ) {
+				return null === $value ? null : absint( $value );
+			},
+		);
+	}
+
+	/**
+	 * Whether a budget_id is null or a positive integer ID.
+	 *
+	 * @param mixed $value Submitted value.
+	 * @return bool True when valid.
+	 */
+	public function validate_budget_id( $value ) {
+		if ( null === $value ) {
+			return true;
+		}
+
+		if ( is_int( $value ) ) {
+			return $value > 0;
+		}
+
+		return is_string( $value ) && ctype_digit( $value ) && (int) $value > 0;
+	}
+
+	/**
 	 * Get all fees.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -392,7 +435,8 @@ class FeesController extends WP_REST_Controller {
 			);
 		}
 
-		$budget_id = $request->get_param( 'budget_id' );
+		// A request that leaves budget_id out keeps the link; null clears it.
+		$budget_id = $request->has_param( 'budget_id' ) ? $request->get_param( 'budget_id' ) : $fee->budget_id;
 
 		$fee->populate(
 			array(
@@ -402,7 +446,7 @@ class FeesController extends WP_REST_Controller {
 				'group_id'    => $fee->group_id,
 				'amount'      => $fee->amount,
 				'currency'    => $fee->currency,
-				'budget_id'   => null !== $budget_id ? $budget_id : $fee->budget_id,
+				'budget_id'   => $budget_id,
 				'due_date'    => $request->get_param( 'due_date' ) ?? $fee->due_date,
 				'status'      => $request->get_param( 'status' ) ?? $fee->status,
 				'created_by'  => $fee->created_by,
