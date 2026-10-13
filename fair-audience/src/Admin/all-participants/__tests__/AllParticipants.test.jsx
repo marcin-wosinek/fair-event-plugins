@@ -7,10 +7,11 @@
  *     Phone/Instagram/Status/Email Profile in favor of a single Mailing
  *     column; profile and status filters remain available even though their
  *     columns are hidden.
- *   - Confirm-then-delete flow (#1056): `window.confirm` / `alert` were
- *     replaced with a state-controlled `ConfirmDialog` and notices; this
- *     covers the delete confirmation dialog opening, confirming (fires the
- *     DELETE requests and reloads), and cancelling (fires no request).
+ *   - Confirm-then-delete flow (#1056, #1775): deletion is confirmed in the
+ *     shared deletion popup; this covers the popup opening and naming the
+ *     participant, confirming (fires the DELETE request, reloads and
+ *     reports it), cancelling (fires no request), and a failure staying in
+ *     the popup.
  */
 import '@testing-library/jest-dom';
 import {
@@ -268,10 +269,10 @@ describe( 'AllParticipants — stat tiles (#1054)', () => {
 	} );
 } );
 
-describe( 'confirm-then-delete flow (#1056)', () => {
-	it( 'names the participant and requires confirmation before deleting', async () => {
-		mockList( [ mockParticipant ] );
+describe( 'confirm-then-delete flow (#1056, #1775)', () => {
+	const QUESTION = 'Permanently delete the participant profile of John Doe?';
 
+	const openDelete = async () => {
 		render( <AllParticipants /> );
 		await waitFor( () =>
 			expect( screen.getByText( 'John Doe' ) ).toBeInTheDocument()
@@ -279,32 +280,40 @@ describe( 'confirm-then-delete flow (#1056)', () => {
 
 		fireEvent.click( screen.getByRole( 'button', { name: 'Actions' } ) );
 		fireEvent.click( await screen.findByText( 'Delete' ) );
+		return screen.findByRole( 'dialog', {
+			name: 'Delete participant — John Doe',
+		} );
+	};
 
+	it( 'names the participant and requires confirmation before deleting', async () => {
+		mockList( [ mockParticipant ] );
+
+		const dialog = await openDelete();
+
+		expect( dialog ).toHaveTextContent( QUESTION );
+		expect( dialog ).toHaveTextContent(
+			'Deleting a profile does not cancel tickets, delete event registrations or refund payments.'
+		);
 		expect(
-			screen.getByText( 'Delete John Doe? This cannot be undone.' )
+			within( dialog ).getByRole( 'button', {
+				name: 'Delete participant',
+			} )
 		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'button', { name: 'Delete participant' } )
-		).toBeInTheDocument();
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( { method: 'DELETE' } )
+		);
 	} );
 
 	it( 'fires no DELETE request when cancelled', async () => {
 		mockList( [ mockParticipant ] );
 
-		render( <AllParticipants /> );
-		await waitFor( () =>
-			expect( screen.getByText( 'John Doe' ) ).toBeInTheDocument()
+		const dialog = await openDelete();
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
 		);
 
-		fireEvent.click( screen.getByRole( 'button', { name: 'Actions' } ) );
-		fireEvent.click( await screen.findByText( 'Delete' ) );
-		await screen.findByText( 'Delete John Doe? This cannot be undone.' );
-		fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
-
 		await waitFor( () =>
-			expect(
-				screen.queryByText( 'Delete John Doe? This cannot be undone.' )
-			).not.toBeInTheDocument()
+			expect( screen.queryByText( QUESTION ) ).not.toBeInTheDocument()
 		);
 
 		expect( apiFetch ).not.toHaveBeenCalledWith(
@@ -312,19 +321,19 @@ describe( 'confirm-then-delete flow (#1056)', () => {
 		);
 	} );
 
-	it( 'fires a DELETE request and reloads when confirmed', async () => {
+	it( 'fires a DELETE request, reloads and reports it when confirmed', async () => {
 		mockList( [ mockParticipant ] );
 
-		render( <AllParticipants /> );
-		await waitFor( () =>
-			expect( screen.getByText( 'John Doe' ) ).toBeInTheDocument()
-		);
-
-		fireEvent.click( screen.getByRole( 'button', { name: 'Actions' } ) );
-		fireEvent.click( await screen.findByText( 'Delete' ) );
-		await screen.findByText( 'Delete John Doe? This cannot be undone.' );
+		const dialog = await openDelete();
+		const listLoads = () =>
+			apiFetch.mock.calls.filter(
+				( [ request ] ) => request.parse === false
+			).length;
+		const loadsBefore = listLoads();
 		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Delete participant' } )
+			within( dialog ).getByRole( 'button', {
+				name: 'Delete participant',
+			} )
 		);
 
 		await waitFor( () =>
@@ -337,9 +346,50 @@ describe( 'confirm-then-delete flow (#1056)', () => {
 		);
 
 		await waitFor( () =>
-			expect(
-				screen.queryByText( 'Delete John Doe? This cannot be undone.' )
-			).not.toBeInTheDocument()
+			expect( screen.queryByText( QUESTION ) ).not.toBeInTheDocument()
 		);
+		// Shown in the snackbar and spoken through the live region.
+		expect(
+			( await screen.findAllByText( '1 participant profile deleted.' ) )
+				.length
+		).toBeGreaterThan( 0 );
+		expect( listLoads() ).toBeGreaterThan( loadsBefore );
+	} );
+
+	it( 'keeps the popup open with the reason when the deletion fails', async () => {
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.method === 'DELETE' ) {
+				return Promise.reject( {
+					message: 'Failed to delete participant.',
+				} );
+			}
+			if ( opts.parse === false ) {
+				return Promise.resolve( {
+					headers: new Map( [
+						[ 'X-WP-Total', '1' ],
+						[ 'X-WP-TotalPages', '1' ],
+					] ),
+					json: () => Promise.resolve( [ mockParticipant ] ),
+				} );
+			}
+			return Promise.resolve( {} );
+		} );
+
+		const dialog = await openDelete();
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Delete participant',
+			} )
+		);
+
+		await waitFor( () =>
+			expect( dialog ).toHaveTextContent(
+				'Failed to delete participant.'
+			)
+		);
+		expect( dialog ).toHaveTextContent( QUESTION );
+		expect(
+			screen.queryByText( '1 participant profile deleted.' )
+		).not.toBeInTheDocument();
 	} );
 } );

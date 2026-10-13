@@ -44,7 +44,7 @@ msgstr ""
 
 #: src/Admin/AdminHooks.php:149
 #: src/Admin/AdminHooks.php:150
-#: src/Admin/all-participants/AllParticipants.js:634
+#: src/Admin/all-participants/AllParticipants.js:622
 msgid "All Participants"
 msgstr "Tous les participants"
 
@@ -53,16 +53,16 @@ msgstr "Tous les participants"
 msgid "By Event"
 msgstr "Par événement"
 
-#: src/Admin/event-participants/EventParticipants.js:665
-#: src/Admin/event-participants/EventParticipants.js:674
-#: src/Admin/event-participants/EventParticipants.js:684
-#: src/Admin/event-participants/EventParticipants.js:706
+#: src/Admin/event-participants/EventParticipants.js:762
+#: src/Admin/event-participants/EventParticipants.js:771
+#: src/Admin/event-participants/EventParticipants.js:781
+#: src/Admin/event-participants/EventParticipants.js:803
 msgid "Event Participants"
 msgstr "Participants à l'événement"
 
 #: src/API/EventParticipantsController.php:568
 #: src/API/EventParticipantsController.php:1055
-#: src/API/EventParticipantsController.php:2816
+#: src/API/EventParticipantsController.php:2827
 #: src/API/EventSignupController.php:357
 #: src/API/EventSignupController.php:849
 #: src/API/EventSignupController.php:2134
@@ -87,7 +87,7 @@ msgstr "Événement non trouvé."
 #: src/Services/EmailService.php:1086
 #: src/Services/EmailService.php:1492
 #: src/Services/EmailService.php:2531
-#: src/Admin/participant-detail/ParticipantDetail.js:86
+#: src/Admin/participant-detail/ParticipantDetail.js:93
 msgid "Participant not found."
 msgstr "Participant non trouvé."
 
@@ -138,36 +138,27 @@ msgstr "Échec de la suppression du participant."
 msgid "Participant deleted successfully."
 msgstr "Participant supprimé avec succès."
 
-#: src/Admin/all-participants/AllParticipants.js:429
-#: src/Admin/all-participants/AllParticipants.js:485
-#: src/Admin/components/ParticipantEditModal.js:141
-#: src/Admin/event-participants/EventParticipants.js:422
-#: src/Admin/event-participants/EventParticipants.js:467
-#: src/Admin/event-participants/EventParticipants.js:676
-#: src/Admin/participant-detail/ParticipantDetail.js:120
+#: src/Admin/all-participants/AllParticipants.js:473
+#: src/Admin/event-participants/EventParticipants.js:773
 msgid "Error: "
 msgstr "Erreur : "
 
-#: src/Admin/participant-detail/ParticipantDetail.js:101
-msgid "Are you sure you want to delete this participant?"
-msgstr "Êtes-vous sûr de vouloir supprimer ce participant ?"
-
-#: src/Admin/all-participants/AllParticipants.js:641
-#: src/Admin/components/ParticipantEditModal.js:154
+#: src/Admin/all-participants/AllParticipants.js:629
+#: src/Admin/components/ParticipantEditModal.js:245
 msgid "Add Participant"
 msgstr "Ajouter un participant"
 
 #: src/blocks/event-interest/render.php:135
 #: src/Services/EmailService.php:1579
-#: src/Admin/all-participants/AllParticipants.js:96
+#: src/Admin/all-participants/AllParticipants.js:97
 #: src/Admin/custom-mail/RecipientPreview.js:158
 #: src/Admin/custom-mail/RecipientPreview.js:204
-#: src/Admin/event-participants/EventParticipants.js:607
+#: src/Admin/event-participants/EventParticipants.js:696
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:329
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1285
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1621
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1966
-#: src/Admin/participant-detail/ParticipantDetail.js:186
+#: src/Admin/participant-detail/ParticipantDetail.js:179
 msgid "Name"
 msgstr "Nom"
 
@@ -175,97 +166,97 @@ msgstr "Nom"
 #: src/blocks/event-interest/render.php:122
 #: src/blocks/mailing-signup/render.php:125
 #: src/Services/EmailService.php:1583
-#: src/Admin/all-participants/AllParticipants.js:111
-#: src/Admin/components/ParticipantEditModal.js:177
+#: src/Admin/all-participants/AllParticipants.js:112
+#: src/Admin/components/ParticipantEditModal.js:268
 #: src/Admin/custom-mail/RecipientPreview.js:159
 #: src/Admin/custom-mail/RecipientPreview.js:209
-#: src/Admin/participant-detail/ParticipantDetail.js:190
+#: src/Admin/participant-detail/ParticipantDetail.js:183
 msgid "Email"
 msgstr "E-mail"
 
 #: src/blocks/audience-signup/render.php:232
-#: src/Admin/all-participants/AllParticipants.js:145
-#: src/Admin/participant-detail/ParticipantDetail.js:228
+#: src/Admin/all-participants/AllParticipants.js:146
+#: src/Admin/participant-detail/ParticipantDetail.js:221
 #: src/Admin/settings/SettingsApp.js:136
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Admin/all-participants/AllParticipants.js:162
-#: src/Admin/components/ParticipantEditModal.js:204
+#: src/Admin/all-participants/AllParticipants.js:163
+#: src/Admin/components/ParticipantEditModal.js:295
 msgid "Email Profile"
 msgstr "Profil E-mail"
 
-#: src/Admin/all-participants/AllParticipants.js:467
-#: src/Admin/event-participants/EventParticipants.js:637
+#: src/Admin/all-participants/AllParticipants.js:455
+#: src/Admin/event-participants/EventParticipants.js:726
 msgid "Edit"
 msgstr "Modifier"
 
-#: src/Admin/all-participants/AllParticipants.js:528
+#: src/Admin/all-participants/AllParticipants.js:516
 #: src/Admin/custom-mail/MailHistory.js:177
 #: src/blocks/audience-signup/QuestionBuilder.js:128
 msgid "Delete"
 msgstr "Supprimer"
 
-#: src/Admin/components/ParticipantEditModal.js:153
-#: src/Admin/event-participants/EventParticipants.js:1038
+#: src/Admin/components/ParticipantEditModal.js:244
+#: src/Admin/event-participants/EventParticipants.js:1147
 msgid "Edit Participant"
 msgstr "Modifier le participant"
 
-#: src/Admin/components/ParticipantEditModal.js:162
+#: src/Admin/components/ParticipantEditModal.js:253
 msgid "Name *"
 msgstr "Nom *"
 
-#: src/Admin/components/ParticipantEditModal.js:193
+#: src/Admin/components/ParticipantEditModal.js:284
 msgid "Instagram Handle"
 msgstr "Identifiant Instagram"
 
-#: src/Admin/components/ParticipantEditModal.js:198
+#: src/Admin/components/ParticipantEditModal.js:289
 msgid "Enter handle only (without @)"
 msgstr "Saisissez uniquement l'identifiant (sans @)"
 
-#: src/Admin/all-participants/AllParticipants.js:128
-#: src/Admin/all-participants/AllParticipants.js:165
-#: src/Admin/all-participants/AllParticipants.js:174
-#: src/Admin/components/ParticipantEditModal.js:208
-#: src/Admin/participant-detail/ParticipantDetail.js:46
+#: src/Admin/all-participants/AllParticipants.js:129
+#: src/Admin/all-participants/AllParticipants.js:166
+#: src/Admin/all-participants/AllParticipants.js:175
+#: src/Admin/components/ParticipantEditModal.js:299
+#: src/Admin/participant-detail/ParticipantDetail.js:51
 msgid "Minimal"
 msgstr "Minimal"
 
-#: src/Admin/components/ParticipantEditModal.js:293
+#: src/Admin/components/ParticipantEditModal.js:413
 msgid "Update"
 msgstr "Mettre à jour"
 
-#: src/Admin/components/ParticipantEditModal.js:294
-#: src/Admin/event-participants/EventParticipants.js:585
+#: src/Admin/components/ParticipantEditModal.js:414
+#: src/Admin/event-participants/EventParticipants.js:674
 msgid "Add"
 msgstr "Ajouter"
 
-#: src/Admin/event-participants/EventParticipants.js:1046
+#: src/Admin/event-participants/EventParticipants.js:1155
 msgid "Label"
 msgstr "Libellé"
 
 #: src/Admin/custom-mail/CustomMail.js:503
 #: src/Admin/custom-mail/RecipientPreview.js:43
-#: src/Admin/event-participants/EventParticipants.js:597
-#: src/Admin/event-participants/EventParticipants.js:1050
+#: src/Admin/event-participants/EventParticipants.js:686
+#: src/Admin/event-participants/EventParticipants.js:1159
 #: src/Admin/manage-event-audience-tab/EventAudience.js:43
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2321
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2632
-#: src/Admin/participant-detail/ParticipantDetail.js:36
+#: src/Admin/participant-detail/ParticipantDetail.js:41
 msgid "Interested"
 msgstr "Intéressé"
 
-#: src/Admin/event-participants/EventParticipants.js:593
-#: src/Admin/event-participants/EventParticipants.js:1054
+#: src/Admin/event-participants/EventParticipants.js:682
+#: src/Admin/event-participants/EventParticipants.js:1163
 msgid "Signed Up"
 msgstr "Inscrit"
 
-#: src/Admin/event-participants/EventParticipants.js:642
+#: src/Admin/event-participants/EventParticipants.js:731
 msgid "Remove"
 msgstr "Retirer"
 
 #: src/Admin/events-list/EventsList.js:175
-#: src/Admin/participant-detail/ParticipantDetail.js:267
+#: src/Admin/participant-detail/ParticipantDetail.js:260
 msgid "Events"
 msgstr "Événements"
 
@@ -275,8 +266,8 @@ msgstr "Événements"
 #: src/Admin/custom-mail/CustomMail.js:451
 #: src/Admin/events-list/EventsList.js:37
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1115
-#: src/Admin/participant-detail/ParticipantDetail.js:277
-#: src/Admin/participant-detail/ParticipantDetail.js:400
+#: src/Admin/participant-detail/ParticipantDetail.js:270
+#: src/Admin/participant-detail/ParticipantDetail.js:393
 msgid "Event"
 msgstr "Événement"
 
@@ -285,8 +276,8 @@ msgid "Poll not found."
 msgstr "Sondage non trouvé."
 
 #: src/API/EventParticipantsController.php:2381
-#: src/API/EventParticipantsController.php:2443
-#: src/API/EventParticipantsController.php:2523
+#: src/API/EventParticipantsController.php:2454
+#: src/API/EventParticipantsController.php:2534
 msgid "Invalid event ID."
 msgstr "ID d'événement invalide."
 
@@ -361,7 +352,7 @@ msgstr "Si le bouton ci-dessus ne fonctionne pas, copiez et collez ce lien :"
 msgid "wp_mail() failed to send."
 msgstr "L'envoi par wp_mail() a échoué."
 
-#: src/Admin/components/ParticipantEditModal.js:170
+#: src/Admin/components/ParticipantEditModal.js:261
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:336
 msgid "Surname"
 msgstr "Nom de famille"
@@ -376,7 +367,7 @@ msgstr "Invitations envoyées à %d participants"
 msgid "Failed to send to:"
 msgstr "Échec de l'envoi à :"
 
-#: src/Admin/event-participants/EventParticipants.js:1353
+#: src/Admin/event-participants/EventParticipants.js:1475
 msgid "Sending..."
 msgstr "Envoi en cours..."
 
@@ -396,14 +387,14 @@ msgstr "Descendre"
 msgid "Add Option"
 msgstr "Ajouter une option"
 
-#: src/Admin/all-participants/AllParticipants.js:192
+#: src/Admin/all-participants/AllParticipants.js:193
 #: src/Admin/custom-mail/RecipientPreview.js:163
 #: src/Admin/custom-mail/RecipientPreview.js:225
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1624
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1988
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2074
 #: src/Admin/manage-event-audience-tab/ticketSearch.js:131
-#: src/Admin/participant-detail/ParticipantDetail.js:194
+#: src/Admin/participant-detail/ParticipantDetail.js:187
 msgid "Status"
 msgstr "Statut"
 
@@ -412,11 +403,11 @@ msgstr "Statut"
 msgid "Saving..."
 msgstr "Enregistrement..."
 
-#: src/Admin/all-participants/AllParticipants.js:771
+#: src/Admin/components/DeleteParticipantsModal.js:238
 #: src/Admin/custom-mail/CustomMail.js:644
-#: src/Admin/event-participants/EventParticipants.js:1010
-#: src/Admin/event-participants/EventParticipants.js:1076
-#: src/Admin/event-participants/EventParticipants.js:1339
+#: src/Admin/event-participants/EventParticipants.js:1117
+#: src/Admin/event-participants/EventParticipants.js:1193
+#: src/Admin/event-participants/EventParticipants.js:1460
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:368
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2551
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2745
@@ -426,7 +417,7 @@ msgstr "Enregistrement..."
 msgid "Cancel"
 msgstr "Annuler"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:254
+#: src/Admin/participant-detail/ParticipantDetail.js:247
 msgid "Created"
 msgstr "Créé"
 
@@ -438,19 +429,19 @@ msgid "Submitting..."
 msgstr "Envoi en cours..."
 
 #: src/Admin/custom-mail/RecipientPreview.js:41
-#: src/Admin/event-participants/EventParticipants.js:595
-#: src/Admin/event-participants/EventParticipants.js:1058
+#: src/Admin/event-participants/EventParticipants.js:684
+#: src/Admin/event-participants/EventParticipants.js:1167
 #: src/Admin/manage-event-audience-tab/EventAudience.js:41
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2307
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2625
-#: src/Admin/participant-detail/ParticipantDetail.js:34
+#: src/Admin/participant-detail/ParticipantDetail.js:39
 msgid "Collaborator"
 msgstr "Collaborateur"
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:2464
-#: src/API/EventParticipantsController.php:2553
-#: src/API/EventParticipantsController.php:2622
+#: src/API/EventParticipantsController.php:2475
+#: src/API/EventParticipantsController.php:2564
+#: src/API/EventParticipantsController.php:2633
 #, php-format
 msgid "Participant ID %d not found"
 msgstr "ID du participant %d non trouvé"
@@ -600,60 +591,53 @@ msgstr "Confirmation échouée"
 msgid "Return to Homepage"
 msgstr "Retour à la page d'accueil"
 
-#. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:387
-#, js-format
-msgid "Successfully added %d participant(s)"
-msgstr "%d participant(s) ajouté(s) avec succès"
-
-#: src/Admin/event-participants/EventParticipants.js:401
 #: src/Admin/manage-event-audience-tab/EventAudience.js:630
 msgid "Error adding participants: "
 msgstr "Erreur lors de l'ajout des participants : "
 
-#: src/Admin/event-participants/EventParticipants.js:579
-#: src/Admin/event-participants/EventParticipants.js:796
+#: src/Admin/event-participants/EventParticipants.js:668
+#: src/Admin/event-participants/EventParticipants.js:888
 msgid "Add Collaborators"
 msgstr "Ajouter des collaborateurs"
 
-#: src/Admin/event-participants/EventParticipants.js:581
-#: src/Admin/event-participants/EventParticipants.js:802
+#: src/Admin/event-participants/EventParticipants.js:670
+#: src/Admin/event-participants/EventParticipants.js:894
 msgid "Add Interested"
 msgstr "Ajouter des intéressés"
 
-#: src/Admin/event-participants/EventParticipants.js:583
-#: src/Admin/event-participants/EventParticipants.js:788
+#: src/Admin/event-participants/EventParticipants.js:672
+#: src/Admin/event-participants/EventParticipants.js:880
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2366
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2575
 msgid "Add Participants"
 msgstr "Ajouter des participants"
 
-#: src/Admin/event-participants/EventParticipants.js:836
+#: src/Admin/event-participants/EventParticipants.js:931
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2583
 msgid "All participants are already added to this event."
 msgstr "Tous les participants sont déjà ajoutés à cet événement."
 
 #. translators: %d: number of available participants
-#: src/Admin/event-participants/EventParticipants.js:915
+#: src/Admin/event-participants/EventParticipants.js:1010
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2663
 #, js-format
 msgid "%d participant(s) available"
 msgstr "%d participant(s) disponible(s)"
 
-#: src/Admin/event-participants/EventParticipants.js:932
+#: src/Admin/event-participants/EventParticipants.js:1027
 msgid "Deselect All"
 msgstr "Tout désélectionner"
 
-#: src/Admin/event-participants/EventParticipants.js:933
+#: src/Admin/event-participants/EventParticipants.js:1028
 msgid "Select All"
 msgstr "Tout sélectionner"
 
-#: src/Admin/event-participants/EventParticipants.js:1020
+#: src/Admin/event-participants/EventParticipants.js:1129
 msgid "Adding..."
 msgstr "Ajout en cours..."
 
 #. translators: %d: number of selected participants
-#: src/Admin/event-participants/EventParticipants.js:1023
+#: src/Admin/event-participants/EventParticipants.js:1132
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2758
 #, js-format
 msgid "Add %d Selected"
@@ -733,25 +717,25 @@ msgctxt "block keyword"
 msgid "mailing"
 msgstr "mailing"
 
-#: src/Admin/all-participants/AllParticipants.js:195
-#: src/Admin/all-participants/AllParticipants.js:203
-#: src/Admin/participant-detail/ParticipantDetail.js:41
-#: src/Admin/participant-detail/ParticipantDetail.js:52
+#: src/Admin/all-participants/AllParticipants.js:196
+#: src/Admin/all-participants/AllParticipants.js:204
+#: src/Admin/participant-detail/ParticipantDetail.js:46
+#: src/Admin/participant-detail/ParticipantDetail.js:57
 msgid "Pending"
 msgstr "En attente"
 
-#: src/Admin/all-participants/AllParticipants.js:196
-#: src/Admin/all-participants/AllParticipants.js:207
+#: src/Admin/all-participants/AllParticipants.js:197
+#: src/Admin/all-participants/AllParticipants.js:208
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:10
-#: src/Admin/participant-detail/ParticipantDetail.js:53
+#: src/Admin/participant-detail/ParticipantDetail.js:58
 msgid "Confirmed"
 msgstr "Confirmé"
 
-#: src/Admin/all-participants/AllParticipants.js:261
+#: src/Admin/all-participants/AllParticipants.js:262
 msgid "Events Signed Up"
 msgstr "Événements inscrits"
 
-#: src/Admin/all-participants/AllParticipants.js:287
+#: src/Admin/all-participants/AllParticipants.js:288
 msgid "Events Collaborated"
 msgstr "Événements collaborés"
 
@@ -769,7 +753,7 @@ msgstr "Voir l'événement"
 #: src/Admin/custom-mail/MailHistory.js:86
 #: src/Admin/custom-mail/MailHistory.js:141
 #: src/Admin/events-list/EventsList.js:51
-#: src/Admin/participant-detail/ParticipantDetail.js:278
+#: src/Admin/participant-detail/ParticipantDetail.js:271
 #: src/blocks/audience-signup/QuestionBuilder.js:19
 msgid "Date"
 msgstr "Date"
@@ -778,36 +762,30 @@ msgstr "Date"
 msgid "Edit Event"
 msgstr "Modifier l'événement"
 
-#. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:434
-#, js-format
-msgid "Remove %d participant(s) from this event?"
-msgstr "Supprimer %d participant(s) de cet événement ?"
-
-#: src/Admin/event-participants/EventParticipants.js:746
+#: src/Admin/event-participants/EventParticipants.js:843
 msgid "Date:"
 msgstr "Date :"
 
 #. translators: %d: number of signed up participants
-#: src/Admin/event-participants/EventParticipants.js:757
+#: src/Admin/event-participants/EventParticipants.js:849
 #, js-format
 msgid "%d Signed Up"
 msgstr "%d Inscrits"
 
 #. translators: %d: number of collaborators
-#: src/Admin/event-participants/EventParticipants.js:764
+#: src/Admin/event-participants/EventParticipants.js:856
 #, js-format
 msgid "%d Collaborators"
 msgstr "%d Collaborateurs"
 
-#: src/Admin/event-participants/EventParticipants.js:1079
+#: src/Admin/event-participants/EventParticipants.js:1201
 #: src/Admin/manage-event-audience-tab/EventAudience.js:3228
 #: src/Admin/settings/MailingTab.js:134
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src/Admin/all-participants/AllParticipants.js:217
-#: src/Admin/components/ParticipantEditModal.js:238
+#: src/Admin/all-participants/AllParticipants.js:218
+#: src/Admin/components/ParticipantEditModal.js:329
 #: src/Admin/custom-mail/CustomMail.js:525
 msgid "Groups"
 msgstr "Groupes"
@@ -858,13 +836,13 @@ msgstr "Tenez-moi informé des événements futurs"
 msgid "Sign Up Now"
 msgstr "S'inscrire maintenant"
 
-#: src/Admin/all-participants/AllParticipants.js:230
+#: src/Admin/all-participants/AllParticipants.js:231
 #: src/Admin/all-participants/UserLinkSection.js:117
 #: src/Admin/all-participants/UserLinkSection.js:171
 msgid "WordPress User"
 msgstr "Utilisateur WordPress"
 
-#: src/Admin/all-participants/AllParticipants.js:246
+#: src/Admin/all-participants/AllParticipants.js:247
 #: src/Admin/all-participants/UserLinkSection.js:135
 msgid "Email addresses do not match"
 msgstr "Les adresses e-mail ne correspondent pas"
@@ -897,13 +875,13 @@ msgstr "Rechercher par nom ou e-mail (min. 2 caractères)"
 msgid "No users found."
 msgstr "Aucun utilisateur trouvé."
 
-#: src/Admin/event-participants/EventParticipants.js:616
+#: src/Admin/event-participants/EventParticipants.js:705
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1286
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1622
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1973
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2295
 #: src/Admin/manage-event-audience-tab/EventAudience.js:3101
-#: src/Admin/participant-detail/ParticipantDetail.js:279
+#: src/Admin/participant-detail/ParticipantDetail.js:272
 msgid "Role"
 msgstr "Rôle"
 
@@ -1051,11 +1029,11 @@ msgstr "Recevoir uniquement les emails concernant les événements auxquels vous
 msgid "Save Preferences"
 msgstr "Enregistrer les préférences"
 
-#: src/Admin/all-participants/AllParticipants.js:125
-#: src/Admin/all-participants/AllParticipants.js:166
-#: src/Admin/all-participants/AllParticipants.js:178
-#: src/Admin/components/ParticipantEditModal.js:212
-#: src/Admin/participant-detail/ParticipantDetail.js:47
+#: src/Admin/all-participants/AllParticipants.js:126
+#: src/Admin/all-participants/AllParticipants.js:167
+#: src/Admin/all-participants/AllParticipants.js:179
+#: src/Admin/components/ParticipantEditModal.js:303
+#: src/Admin/participant-detail/ParticipantDetail.js:52
 msgid "Marketing"
 msgstr "Marketing"
 
@@ -1065,34 +1043,33 @@ msgstr "Marketing"
 msgid "%d skipped (already signed up or opted out of marketing)."
 msgstr "%d ignoré(s) (déjà inscrit(s) ou ayant refusé les communications marketing)."
 
-#: src/Admin/event-participants/EventParticipants.js:568
 #: src/Admin/manage-event-audience-tab/EventAudience.js:766
 msgid "Error sending invitations: "
 msgstr "Erreur lors de l'envoi des invitations : "
 
-#: src/Admin/event-participants/EventParticipants.js:808
+#: src/Admin/event-participants/EventParticipants.js:903
 msgid "Send Invitation"
 msgstr "Envoyer une invitation"
 
-#: src/Admin/event-participants/EventParticipants.js:1087
+#: src/Admin/event-participants/EventParticipants.js:1209
 msgid "Send Event Invitations"
 msgstr "Envoyer des invitations à l'événement"
 
-#: src/Admin/event-participants/EventParticipants.js:1097
+#: src/Admin/event-participants/EventParticipants.js:1214
 msgid "Participants already signed up or who opted out of marketing emails will be skipped."
 msgstr "Les participants déjà inscrits ou ayant refusé les emails marketing seront ignorés."
 
-#: src/Admin/event-participants/EventParticipants.js:1161
+#: src/Admin/event-participants/EventParticipants.js:1278
 msgid "No groups available. Create groups first."
 msgstr "Aucun groupe disponible. Créez d'abord des groupes."
 
 #. translators: 1: group name, 2: member count
-#: src/Admin/event-participants/EventParticipants.js:1190
+#: src/Admin/event-participants/EventParticipants.js:1307
 #, js-format
 msgid "%1$s (%2$d members)"
 msgstr "%1$s (%2$d membres)"
 
-#: src/Admin/event-participants/EventParticipants.js:1364
+#: src/Admin/event-participants/EventParticipants.js:1486
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2406
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2501
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2563
@@ -1110,9 +1087,9 @@ msgstr "Paramètres"
 #: src/API/EventParticipantsController.php:2268
 #: src/API/EventParticipantsController.php:2310
 #: src/API/EventParticipantsController.php:2370
-#: src/API/EventParticipantsController.php:2432
-#: src/API/EventParticipantsController.php:2512
-#: src/API/EventParticipantsController.php:2805
+#: src/API/EventParticipantsController.php:2443
+#: src/API/EventParticipantsController.php:2523
+#: src/API/EventParticipantsController.php:2816
 msgid "Event date not found."
 msgstr "Date de l'événement introuvable."
 
@@ -1201,83 +1178,83 @@ msgstr "Statut de connexion Instagram"
 msgid "Instagram Token Expiration (Unix timestamp)"
 msgstr "Expiration du jeton Instagram (horodatage Unix)"
 
-#: src/Admin/all-participants/AllParticipants.js:735
+#: src/Admin/all-participants/AllParticipants.js:725
 #: src/blocks/audience-signup/EventLinkPanel.js:244
 msgid "No events found."
 msgstr "Aucun événement trouvé."
 
-#: src/Admin/components/ParticipantEditModal.js:244
+#: src/Admin/components/ParticipantEditModal.js:335
 msgid "No groups available."
 msgstr "Aucun groupe disponible."
 
-#: src/Admin/components/ParticipantEditModal.js:216
-#: src/Admin/participant-detail/ParticipantDetail.js:48
+#: src/Admin/components/ParticipantEditModal.js:307
+#: src/Admin/participant-detail/ParticipantDetail.js:53
 msgid "No marketing"
 msgstr "Pas de marketing"
 
 #: src/Admin/custom-mail/MailHistory.js:80
 #: src/Admin/custom-mail/MailHistory.js:125
-#: src/Admin/participant-detail/ParticipantDetail.js:42
+#: src/Admin/participant-detail/ParticipantDetail.js:47
 msgid "Failed"
 msgstr "Échoué"
 
-#: src/Admin/event-participants/EventParticipants.js:720
+#: src/Admin/event-participants/EventParticipants.js:817
 msgid "Edit Article"
 msgstr "Modifier l'article"
 
-#: src/Admin/event-participants/EventParticipants.js:728
+#: src/Admin/event-participants/EventParticipants.js:825
 msgid "Manage Event"
 msgstr "Gérer l'événement"
 
-#: src/Admin/event-participants/EventParticipants.js:852
-#: src/Admin/event-participants/EventParticipants.js:1217
+#: src/Admin/event-participants/EventParticipants.js:947
+#: src/Admin/event-participants/EventParticipants.js:1334
 msgid "Search by name or email..."
 msgstr "Rechercher par nom ou e-mail..."
 
-#: src/Admin/event-participants/EventParticipants.js:872
+#: src/Admin/event-participants/EventParticipants.js:967
 msgid "All groups"
 msgstr "Tous les groupes"
 
 #. translators: 1: selected count, 2: shown count
-#: src/Admin/event-participants/EventParticipants.js:906
+#: src/Admin/event-participants/EventParticipants.js:1001
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2654
 #, js-format
 msgid "%1$d selected, %2$d shown"
 msgstr "%1$d sélectionné(s), %2$d affiché(s)"
 
-#: src/Admin/event-participants/EventParticipants.js:990
-#: src/Admin/event-participants/EventParticipants.js:1312
+#: src/Admin/event-participants/EventParticipants.js:1085
+#: src/Admin/event-participants/EventParticipants.js:1429
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:264
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2725
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2958
 msgid "No participants match your search."
 msgstr "Aucun participant ne correspond à votre recherche."
 
-#: src/Admin/event-participants/EventParticipants.js:1130
+#: src/Admin/event-participants/EventParticipants.js:1247
 msgid "By Group"
 msgstr "Par groupe"
 
-#: src/Admin/event-participants/EventParticipants.js:1153
+#: src/Admin/event-participants/EventParticipants.js:1270
 msgid "By Participant"
 msgstr "Par participant"
 
 #. translators: 1: selected count, 2: total count
-#: src/Admin/event-participants/EventParticipants.js:1242
+#: src/Admin/event-participants/EventParticipants.js:1359
 #, js-format
 msgid "%1$d selected of %2$d participants"
 msgstr "%1$d sélectionné(s) sur %2$d participants"
 
-#: src/Admin/event-participants/EventParticipants.js:1252
+#: src/Admin/event-participants/EventParticipants.js:1369
 msgid "No participants available."
 msgstr "Aucun participant disponible."
 
 #. translators: %d: number of selected participants
-#: src/Admin/event-participants/EventParticipants.js:1358
+#: src/Admin/event-participants/EventParticipants.js:1480
 #, js-format
 msgid "Send to %d Selected"
 msgstr "Envoyer aux %d sélectionnés"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:40
+#: src/Admin/participant-detail/ParticipantDetail.js:45
 msgid "Paid"
 msgstr "Payé"
 
@@ -1565,7 +1542,7 @@ msgstr "Afficher la case à cocher « Me tenir informé »"
 msgid "Allow users to opt-in to future event notifications."
 msgstr "Permettre aux utilisateurs de s'inscrire aux notifications d'événements futurs."
 
-#: src/Admin/event-participants/EventParticipants.js:623
+#: src/Admin/event-participants/EventParticipants.js:712
 #: src/blocks/audience-signup/editor.js:92
 msgid "Questions"
 msgstr "Questions"
@@ -1707,11 +1684,11 @@ msgstr "Annuler l'inscription"
 msgid "I am interested in:"
 msgstr "Je suis intéressé(e) par :"
 
-#: src/Admin/event-participants/EventParticipants.js:203
+#: src/Admin/event-participants/EventParticipants.js:216
 msgid "No event date ID provided"
 msgstr "Aucun ID de date d'événement fourni"
 
-#: src/Admin/event-participants/EventParticipants.js:222
+#: src/Admin/event-participants/EventParticipants.js:235
 msgid "No event date found for this event"
 msgstr "Aucune date d'événement trouvée pour cet événement"
 
@@ -1751,7 +1728,7 @@ msgstr "Catégories présélectionnées"
 msgid "Categories checked by default when the form loads."
 msgstr "Catégories cochées par défaut au chargement du formulaire."
 
-#: src/Admin/participant-detail/ParticipantDetail.js:417
+#: src/Admin/participant-detail/ParticipantDetail.js:410
 msgid "Fair Form"
 msgstr "Fair Form"
 
@@ -1764,7 +1741,7 @@ msgid "I want to receive updates about:"
 msgstr "Je souhaite recevoir des mises à jour sur :"
 
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2444
-#: src/Admin/participant-detail/ParticipantDetail.js:398
+#: src/Admin/participant-detail/ParticipantDetail.js:391
 msgid "Form"
 msgstr "Formulaire"
 
@@ -1792,12 +1769,12 @@ msgstr "Sélectionnez les catégories qui doivent être disponibles pour le mail
 msgid "No categories found."
 msgstr "Aucune catégorie trouvée."
 
-#: src/Admin/all-participants/AllParticipants.js:117
+#: src/Admin/all-participants/AllParticipants.js:118
 #: src/Admin/settings/SettingsApp.js:140
 msgid "Mailing"
 msgstr "Mailing"
 
-#: src/Admin/event-participants/EventParticipants.js:100
+#: src/Admin/event-participants/EventParticipants.js:103
 msgid "View file"
 msgstr "Afficher le fichier"
 
@@ -1842,76 +1819,76 @@ msgstr "Toutes les 5 minutes (fair-audience)"
 #: src/Admin/manage-event-audience-tab/EventAudience.js:42
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2314
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2618
-#: src/Admin/participant-detail/ParticipantDetail.js:35
+#: src/Admin/participant-detail/ParticipantDetail.js:40
 msgid "Signed up"
 msgstr "Inscrit"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:69
+#: src/Admin/participant-detail/ParticipantDetail.js:76
 msgid "No participant ID provided."
 msgstr "Aucun ID de participant fourni."
 
-#: src/Admin/participant-detail/ParticipantDetail.js:156
+#: src/Admin/participant-detail/ParticipantDetail.js:149
 msgid "All participants"
 msgstr "Tous les participants"
 
 #: src/Admin/custom-mail/RecipientPreview.js:39
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2056
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2208
-#: src/Admin/participant-detail/ParticipantDetail.js:160
+#: src/Admin/participant-detail/ParticipantDetail.js:153
 msgid "Participant"
 msgstr "Participant"
 
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1537
-#: src/Admin/participant-detail/ParticipantDetail.js:166
+#: src/Admin/participant-detail/ParticipantDetail.js:159
 msgid "Edit participant"
 msgstr "Modifier le participant"
 
-#: src/Admin/all-participants/AllParticipants.js:765
-#: src/Admin/participant-detail/ParticipantDetail.js:173
+#: src/Admin/components/DeleteParticipantsModal.js:260
+#: src/Admin/participant-detail/ParticipantDetail.js:166
 msgid "Delete participant"
 msgid_plural "Delete participants"
 msgstr[0] "Supprimer le participant"
 msgstr[1] "Supprimer les participants"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:180
+#: src/Admin/participant-detail/ParticipantDetail.js:173
 msgid "Profile"
 msgstr "Profil"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:203
+#: src/Admin/participant-detail/ParticipantDetail.js:196
 msgid "Email profile"
 msgstr "Profil e-mail"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:245
+#: src/Admin/participant-detail/ParticipantDetail.js:238
 msgid "WordPress user"
 msgstr "Utilisateur WordPress"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:272
+#: src/Admin/participant-detail/ParticipantDetail.js:265
 msgid "No events yet."
 msgstr "Aucun événement pour le moment."
 
-#: src/Admin/participant-detail/ParticipantDetail.js:281
+#: src/Admin/participant-detail/ParticipantDetail.js:274
 msgid "Signed up at"
 msgstr "Inscrit le"
 
 #: src/Admin/custom-mail/ContentEditor.js:271
-#: src/Admin/participant-detail/ParticipantDetail.js:305
+#: src/Admin/participant-detail/ParticipantDetail.js:298
 msgid "(untitled)"
 msgstr "(sans titre)"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:382
+#: src/Admin/participant-detail/ParticipantDetail.js:375
 msgid "Form submissions"
 msgstr "Soumissions de formulaire"
 
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2490
-#: src/Admin/participant-detail/ParticipantDetail.js:389
+#: src/Admin/participant-detail/ParticipantDetail.js:382
 msgid "No form submissions yet."
 msgstr "Aucune soumission de formulaire pour le moment."
 
-#: src/Admin/participant-detail/ParticipantDetail.js:399
+#: src/Admin/participant-detail/ParticipantDetail.js:392
 msgid "Page"
 msgstr "Page"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:402
+#: src/Admin/participant-detail/ParticipantDetail.js:395
 msgid "Submitted at"
 msgstr "Soumis le"
 
@@ -1974,9 +1951,9 @@ msgstr "Votre inscription pour %s a été confirmée et votre paiement a été r
 msgid "Your signup for %s has been confirmed."
 msgstr "Votre inscription pour %s a été confirmée."
 
-#: src/Admin/all-participants/AllParticipants.js:139
-#: src/Admin/components/ParticipantEditModal.js:185
-#: src/Admin/participant-detail/ParticipantDetail.js:224
+#: src/Admin/all-participants/AllParticipants.js:140
+#: src/Admin/components/ParticipantEditModal.js:276
+#: src/Admin/participant-detail/ParticipantDetail.js:217
 msgid "Phone"
 msgstr "Téléphone"
 
@@ -2099,11 +2076,11 @@ msgstr "Supprimez définitivement vos données personnelles. Cette action ne peu
 msgid "Are you sure you want to delete all your personal data? This action cannot be undone."
 msgstr "Êtes-vous sûr de vouloir supprimer toutes vos données personnelles ? Cette action ne peut pas être annulée."
 
-#: src/Admin/all-participants/AllParticipants.js:474
+#: src/Admin/all-participants/AllParticipants.js:462
 msgid "Copy subscription link"
 msgstr "Copier le lien d'abonnement"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:287
+#: src/Admin/participant-detail/ParticipantDetail.js:280
 msgid "Transaction"
 msgstr "Transaction"
 
@@ -2129,13 +2106,13 @@ msgid "Thanks! We will keep you posted about this event."
 msgstr "Merci ! Nous vous tiendrons informé de cet événement."
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:2580
+#: src/API/EventParticipantsController.php:2591
 #, php-format
 msgid "Failed to upgrade participant ID %d"
 msgstr "Échec de la mise à niveau du participant ID %d"
 
 #. translators: 1: admin display name, 2: date, 3: event title
-#: src/API/EventParticipantsController.php:2598
+#: src/API/EventParticipantsController.php:2609
 #, php-format
 msgid "Verbal consent recorded by %1$s on %2$s at event %3$s"
 msgstr "Consentement verbal enregistré par %1$s le %2$s à l'événement %3$s"
@@ -2290,7 +2267,7 @@ msgstr "Vous avez changé d'avis ?"
 msgid "Manage your subscription or unsubscribe"
 msgstr "Gérer votre abonnement ou vous désabonner"
 
-#: src/Admin/all-participants/AllParticipants.js:493
+#: src/Admin/all-participants/AllParticipants.js:481
 msgid "Resend mailing confirmation email"
 msgstr "Renvoyer l'e-mail de confirmation de la liste de diffusion"
 
@@ -2388,13 +2365,13 @@ msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-le là."
 
 #. translators: %d: participant ID
-#: src/API/EventParticipantsController.php:2647
+#: src/API/EventParticipantsController.php:2658
 #, php-format
 msgid "Failed to record decline for participant ID %d"
 msgstr "Impossible d'enregistrer le refus pour l'ID participant %d"
 
 #. translators: 1: admin display name, 2: date, 3: event title
-#: src/API/EventParticipantsController.php:2665
+#: src/API/EventParticipantsController.php:2676
 #, php-format
 msgid "Decline recorded by %1$s on %2$s at event %3$s"
 msgstr "Refus enregistré par %1$s le %2$s à l'événement %3$s"
@@ -2451,9 +2428,9 @@ msgstr "déjà inscrit"
 msgid "Powered by %s"
 msgstr "Propulsé par %s"
 
-#: src/Admin/all-participants/AllParticipants.js:131
-#: src/Admin/all-participants/AllParticipants.js:167
-#: src/Admin/all-participants/AllParticipants.js:182
+#: src/Admin/all-participants/AllParticipants.js:132
+#: src/Admin/all-participants/AllParticipants.js:168
+#: src/Admin/all-participants/AllParticipants.js:183
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2942
 msgid "No"
 msgstr "Non"
@@ -2549,46 +2526,32 @@ msgstr "Événements de cette semaine : {week_start} – {week_end}"
 msgid "All day"
 msgstr "Toute la journée"
 
-#: src/Admin/all-participants/AllParticipants.js:121
+#: src/Admin/all-participants/AllParticipants.js:122
 msgid "Marketing — pending confirmation"
 msgstr "Marketing — en attente de confirmation"
 
-#. translators: %s: participant name and surname
-#: src/Admin/all-participants/AllParticipants.js:445
-#, js-format
-msgid "Delete %s? This cannot be undone."
-msgstr "Supprimer %s ? Cette action ne peut pas être annulée."
-
-#. translators: %d: number of participants
-#: src/Admin/all-participants/AllParticipants.js:452
-#, js-format
-msgid "Delete %d participant? This cannot be undone."
-msgid_plural "Delete %d participants? This cannot be undone."
-msgstr[0] "Supprimer %d participant ? Cette action ne peut pas être annulée."
-msgstr[1] "Supprimer %d participants ? Cette action ne peut pas être annulée."
-
-#: src/Admin/all-participants/AllParticipants.js:482
+#: src/Admin/all-participants/AllParticipants.js:470
 msgid "Link copied."
 msgstr "Lien copié."
 
-#: src/Admin/all-participants/AllParticipants.js:549
+#: src/Admin/all-participants/AllParticipants.js:537
 msgid "Audience total"
 msgstr "Total de l'audience"
 
-#: src/Admin/all-participants/AllParticipants.js:555
+#: src/Admin/all-participants/AllParticipants.js:543
 msgid "In the mailing"
 msgstr "Dans l'envoi"
 
-#: src/Admin/all-participants/AllParticipants.js:568
+#: src/Admin/all-participants/AllParticipants.js:556
 msgid "Pending confirmation"
 msgstr "En attente de confirmation"
 
-#: src/Admin/all-participants/AllParticipants.js:576
+#: src/Admin/all-participants/AllParticipants.js:564
 msgid "Declined"
 msgstr "Refusé"
 
 #. translators: %d: number of confirmation emails sent
-#: src/Admin/all-participants/AllParticipants.js:621
+#: src/Admin/all-participants/AllParticipants.js:609
 #, js-format
 msgid "Sent %d confirmation email"
 msgid_plural "Sent %d confirmation emails"
@@ -3000,15 +2963,15 @@ msgstr "(par @%s)"
 msgid "Weekly summary of upcoming events"
 msgstr "Résumé hebdomadaire des événements à venir"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:215
+#: src/Admin/participant-detail/ParticipantDetail.js:208
 msgid "Weekly summary"
 msgstr "Résumé hebdomadaire"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:219
+#: src/Admin/participant-detail/ParticipantDetail.js:212
 msgid "Opted out"
 msgstr "Désinscrit"
 
-#: src/Admin/participant-detail/ParticipantDetail.js:220
+#: src/Admin/participant-detail/ParticipantDetail.js:213
 msgid "Subscribed"
 msgstr "Abonné"
 
@@ -3245,7 +3208,7 @@ msgstr "Échec de la mise à jour du billet."
 msgid "Check-in is available once the payment is complete."
 msgstr "L’enregistrement sera possible une fois le paiement effectué."
 
-#: src/Admin/event-participants/EventParticipants.js:78
+#: src/Admin/event-participants/EventParticipants.js:81
 msgid "Check which ticket these belong to"
 msgstr "Vérifiez à quel billet elles appartiennent"
 
@@ -3573,6 +3536,7 @@ msgstr "La suppression ne rembourse rien et ne modifie pas le paiement. L’acha
 msgid "Only this cancelled ticket is removed from the audience, its search and its exports. The purchase’s other tickets are not changed, and the participant stays in the audience. This cannot be undone."
 msgstr "Seul ce billet annulé est retiré de l’audience, de sa recherche et de ses exports. Les autres billets de l’achat ne sont pas modifiés et le participant reste dans l’audience. Cette action est irréversible."
 
+#: src/Admin/components/DeleteParticipantsModal.js:247
 #: src/Admin/manage-event-audience-tab/TicketOperationModals.js:405
 msgid "Deleting…"
 msgstr "Suppression en cours…"
@@ -3676,13 +3640,13 @@ msgid "This ticket type is not currently on sale."
 msgstr "Ce type de billet n'est actuellement pas en vente."
 
 #. translators: 1: participant ID, 2: why they were not removed
-#: src/API/EventParticipantsController.php:2406
+#: src/API/EventParticipantsController.php:2409
 #, php-format
 msgid "Failed to remove participant ID %1$d: %2$s"
 msgstr "Impossible de retirer le participant ID %1$d : %2$s"
 
 #: src/Services/ParticipantRemoval.php:134
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:193
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:210
 msgid "The participant could not be removed. Nothing was changed; try again."
 msgstr "Le participant n’a pas pu être retiré. Rien n’a été modifié ; réessayez."
 
@@ -3731,6 +3695,7 @@ msgstr[0] "Ce participant a acheté %d billet pour cette date que quelqu’un d�
 msgstr[1] "Ce participant a acheté %d billets pour cette date que d’autres personnes détiennent. Annulez-les puis supprimez-les avec les actions de chaque billet."
 
 #. translators: %s: participant name
+#: src/Admin/event-participants/EventParticipants.js:521
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1092
 #, js-format
 msgid "%s was removed from this date."
@@ -3741,65 +3706,68 @@ msgid "The participant"
 msgstr "Le participant"
 
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1553
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:228
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:245
 msgid "Remove participant"
 msgstr "Retirer le participant"
 
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:63
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:92
 msgid "this participant"
 msgstr "ce participant"
 
 #. translators: %s: participant name
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:104
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:133
 #, js-format
 msgid "Remove participant — %s"
 msgstr "Retirer le participant — %s"
 
 #. translators: 1: participant name, 2: event title, 3: event date and time
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:118
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:147
 #, js-format
 msgid "%1$s cannot be removed from %2$s on %3$s yet."
 msgstr "%1$s ne peut pas encore être retiré de %2$s (%3$s)."
 
 #. translators: 1: participant name, 2: event title
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:128
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:157
 #, js-format
 msgid "%1$s cannot be removed from %2$s yet."
 msgstr "%1$s ne peut pas encore être retiré de %2$s."
 
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:151
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:168
 msgid "Nothing was changed. Tickets are never cancelled, registrations never deleted and payments never refunded for you: once the points above are resolved, remove the participant here."
 msgstr "Rien n’a été modifié. Les billets ne sont jamais annulés, les inscriptions jamais supprimées et les paiements jamais remboursés à votre place : une fois les points ci-dessus résolus, retirez le participant ici."
 
 #. translators: 1: participant name, 2: event title, 3: event date and time
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:163
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:180
 #, js-format
 msgid "Remove %1$s from the audience of %2$s on %3$s?"
 msgstr "Retirer %1$s de l’audience de %2$s (%3$s) ?"
 
 #. translators: 1: participant name, 2: event title
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:173
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:190
 #, js-format
 msgid "Remove %1$s from the audience of %2$s?"
 msgstr "Retirer %1$s de l’audience de %2$s ?"
 
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:182
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:199
 msgid "Only their place in the audience of this date is removed, with the role, activities, check-in and comment recorded for it. Their participant profile, their other events and dates, and all payment records are kept. You can add them to this date again later."
 msgstr "Seule sa place dans l’audience de cette date est retirée, avec le rôle, les activités, l’enregistrement de présence et le commentaire qui y sont associés. Son profil de participant, ses autres évènements et dates, ainsi que toutes les données de paiement sont conservés. Vous pourrez l’ajouter de nouveau à cette date plus tard."
 
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:206
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:223
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:536
 msgid "Open the List tab"
 msgstr "Ouvrir l’onglet « Liste »"
 
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:215
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:232
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:548
 msgid "Back to the audience"
 msgstr "Retour à l’audience"
 
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:216
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:233
 msgid "Keep participant"
 msgstr "Conserver le participant"
 
-#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:227
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:244
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:559
 msgid "Removing…"
 msgstr "Retrait en cours…"
 
@@ -4148,3 +4116,233 @@ msgstr ""
 #: src/Admin/custom-mail/SendResult.js:127
 msgid "The emails were processed as shown above, but this message could not be saved to Mail History. Do not send it again."
 msgstr ""
+
+#. translators: %d: number of participant profiles
+#: src/Admin/all-participants/AllParticipants.js:428
+#, js-format
+msgid "%d participant profile deleted."
+msgid_plural "%d participant profiles deleted."
+msgstr[0] "%d profil de participant supprimé."
+msgstr[1] "%d profils de participant supprimés."
+
+#: src/Admin/all-participants/AllParticipants.js:444
+msgid "Participant added."
+msgstr "Participant ajouté."
+
+#: src/Admin/all-participants/AllParticipants.js:445
+#: src/Admin/participant-detail/ParticipantDetail.js:113
+msgid "Participant updated."
+msgstr "Participant mis à jour."
+
+#: src/Admin/components/DeleteParticipantsModal.js:96
+msgid "The profile could not be deleted."
+msgstr "Le profil n’a pas pu être supprimé."
+
+#: src/Admin/components/DeleteParticipantsModal.js:132
+msgid "Delete participant profiles"
+msgstr "Supprimer des profils de participant"
+
+#. translators: %s: participant name
+#: src/Admin/components/DeleteParticipantsModal.js:135
+#, js-format
+msgid "Delete participant — %s"
+msgstr "Supprimer le participant — %s"
+
+#. translators: %d: number of participant profiles
+#: src/Admin/components/DeleteParticipantsModal.js:147
+#, js-format
+msgid "%d participant profile was deleted."
+msgid_plural "%d participant profiles were deleted."
+msgstr[0] "%d profil de participant a été supprimé."
+msgstr[1] "%d profils de participant ont été supprimés."
+
+#. translators: %d: number of participant profiles
+#: src/Admin/components/DeleteParticipantsModal.js:163
+#, js-format
+msgid "%d participant profile could not be deleted and was kept. Try again:"
+msgid_plural "%d participant profiles could not be deleted and were kept. Try again:"
+msgstr[0] "%d profil de participant n’a pas pu être supprimé et a été conservé. Réessayez :"
+msgstr[1] "%d profils de participant n’ont pas pu être supprimés et ont été conservés. Réessayez :"
+
+#: src/Admin/components/DeleteParticipantsModal.js:173
+msgid "Profiles that could not be deleted"
+msgstr "Profils qui n’ont pas pu être supprimés"
+
+#. translators: %d: number of participant profiles
+#: src/Admin/components/DeleteParticipantsModal.js:187
+#, js-format
+msgid "Permanently delete the profile of %d participant?"
+msgid_plural "Permanently delete the profiles of %d participants?"
+msgstr[0] "Supprimer définitivement le profil de %d participant ?"
+msgstr[1] "Supprimer définitivement les profils de %d participants ?"
+
+#: src/Admin/components/DeleteParticipantsModal.js:198
+msgid "Participants to delete"
+msgstr "Participants à supprimer"
+
+#. translators: %s: participant name
+#: src/Admin/components/DeleteParticipantsModal.js:210
+#, js-format
+msgid "Permanently delete the participant profile of %s?"
+msgstr "Supprimer définitivement le profil de participant de %s ?"
+
+#: src/Admin/components/DeleteParticipantsModal.js:220
+msgid "A deleted profile is gone with the name, contact details and mailing settings stored on it. This cannot be undone."
+msgstr "Un profil supprimé disparaît avec le nom, les coordonnées et les réglages d’e-mail qui y sont enregistrés. Cette action est irréversible."
+
+#: src/Admin/components/DeleteParticipantsModal.js:226
+msgid "Deleting a profile does not cancel tickets, delete event registrations or refund payments. To take someone out of one event only, remove them from that event instead."
+msgstr "Supprimer un profil n’annule pas de billets, ne supprime pas d’inscriptions aux évènements et ne rembourse aucun paiement. Pour retirer quelqu’un d’un seul évènement, retirez-le plutôt de cet évènement."
+
+#. translators: %d: number of participant profiles
+#: src/Admin/components/DeleteParticipantsModal.js:252
+#, js-format
+msgid "Delete %d participant"
+msgid_plural "Delete %d participants"
+msgstr[0] "Supprimer %d participant"
+msgstr[1] "Supprimer %d participants"
+
+#. translators: %d: number of group changes
+#: src/Admin/components/ParticipantEditModal.js:183
+#, js-format
+msgid "The profile was saved, but %d group change failed. Your selection is kept: save again to retry it."
+msgid_plural "The profile was saved, but %d group changes failed. Your selection is kept: save again to retry them."
+msgstr[0] "Le profil a été enregistré, mais %d modification de groupe a échoué. Votre sélection est conservée : enregistrez de nouveau pour réessayer."
+msgstr[1] "Le profil a été enregistré, mais %d modifications de groupe ont échoué. Votre sélection est conservée : enregistrez de nouveau pour réessayer."
+
+#: src/Admin/components/ParticipantEditModal.js:217
+msgid "The participant could not be saved. Try again."
+msgstr "Le participant n’a pas pu être enregistré. Réessayez."
+
+#. translators: %d: participant ID
+#: src/Admin/components/participantIdentity.js:51
+#, js-format
+msgid "Participant #%d"
+msgstr "Participant nº %d"
+
+#. translators: %d: participant ID
+#: src/Admin/components/participantIdentity.js:93
+#, js-format
+msgid "ID %d"
+msgstr "ID %d"
+
+#. translators: %d: number of participants
+#: src/Admin/event-participants/EventParticipants.js:422
+#, js-format
+msgid "%d participant added."
+msgid_plural "%d participants added."
+msgstr[0] "%d participant ajouté."
+msgstr[1] "%d participants ajoutés."
+
+#. translators: %d: number of participants
+#: src/Admin/event-participants/EventParticipants.js:439
+#, js-format
+msgid "%d participant could not be added. They are still selected: try again."
+msgid_plural "%d participants could not be added. They are still selected: try again."
+msgstr[0] "%d participant n’a pas pu être ajouté. Il reste sélectionné : réessayez."
+msgstr[1] "%d participants n’ont pas pu être ajoutés. Ils restent sélectionnés : réessayez."
+
+#: src/Admin/event-participants/EventParticipants.js:454
+msgid "The participants could not be added. Nothing was changed; try again."
+msgstr "Les participants n’ont pas pu être ajoutés. Rien n’a été modifié ; réessayez."
+
+#: src/Admin/event-participants/EventParticipants.js:485
+msgid "Role updated."
+msgstr "Rôle mis à jour."
+
+#: src/Admin/event-participants/EventParticipants.js:489
+msgid "The role could not be saved. Nothing was changed; try again."
+msgstr "Le rôle n’a pas pu être enregistré. Rien n’a été modifié ; réessayez."
+
+#. translators: %d: number of participants
+#: src/Admin/event-participants/EventParticipants.js:526
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:396
+#, js-format
+msgid "%d participant was removed from this date."
+msgid_plural "%d participants were removed from this date."
+msgstr[0] "%d participant a été retiré de cette date."
+msgstr[1] "%d participants ont été retirés de cette date."
+
+#: src/Admin/event-participants/EventParticipants.js:654
+msgid "The invitations could not be sent. Your selection is kept; try again."
+msgstr "Les invitations n’ont pas pu être envoyées. Votre sélection est conservée ; réessayez."
+
+#: src/Admin/event-participants/EventParticipants.js:1496
+msgid "this event"
+msgstr "cet évènement"
+
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:384
+msgid "Remove participants from this event"
+msgstr "Retirer des participants de cet évènement"
+
+#. translators: 1: number of participants, 2: event title, 3: event date and time
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:413
+#, js-format
+msgid "Remove %1$d participant from the audience of %2$s on %3$s?"
+msgid_plural "Remove %1$d participants from the audience of %2$s on %3$s?"
+msgstr[0] "Retirer %1$d participant de l’audience de %2$s du %3$s ?"
+msgstr[1] "Retirer %1$d participants de l’audience de %2$s du %3$s ?"
+
+#. translators: 1: number of participants, 2: event title
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:425
+#, js-format
+msgid "Remove %1$d participant from the audience of %2$s?"
+msgid_plural "Remove %1$d participants from the audience of %2$s?"
+msgstr[0] "Retirer %1$d participant de l’audience de %2$s ?"
+msgstr[1] "Retirer %1$d participants de l’audience de %2$s ?"
+
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:436
+msgid "Participants to remove"
+msgstr "Participants à retirer"
+
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:446
+msgid "Only their place in the audience of this date is removed, with the role, activities, check-in and comment recorded for it. Their participant profiles, their other events and dates, and all payment records are kept. You can add them to this date again later."
+msgstr "Seule leur place dans l’audience de cette date est retirée, avec le rôle, les activités, l’enregistrement de présence et le commentaire qui y sont associés. Leurs profils de participant, leurs autres évènements et dates, ainsi que toutes les données de paiement sont conservés. Vous pourrez les ajouter de nouveau à cette date plus tard."
+
+#. translators: %d: number of participants
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:458
+#, js-format
+msgid "%d participant could not be removed and is still in the audience. The reason is shown with their name; try again."
+msgid_plural "%d participants could not be removed and are still in the audience. The reason is shown with each name; try again."
+msgstr[0] "%d participant n’a pas pu être retiré et reste dans l’audience. La raison est indiquée avec son nom ; réessayez."
+msgstr[1] "%d participants n’ont pas pu être retirés et restent dans l’audience. La raison est indiquée avec chaque nom ; réessayez."
+
+#. translators: 1: number of participants, 2: event title, 3: event date and time
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:476
+#, js-format
+msgid "%1$d participant cannot be removed from %2$s on %3$s yet and stays in the audience:"
+msgid_plural "%1$d participants cannot be removed from %2$s on %3$s yet and stay in the audience:"
+msgstr[0] "%1$d participant ne peut pas encore être retiré de %2$s du %3$s et reste dans l’audience :"
+msgstr[1] "%1$d participants ne peuvent pas encore être retirés de %2$s du %3$s et restent dans l’audience :"
+
+#. translators: 1: number of participants, 2: event title
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:488
+#, js-format
+msgid "%1$d participant cannot be removed from %2$s yet and stays in the audience:"
+msgid_plural "%1$d participants cannot be removed from %2$s yet and stay in the audience:"
+msgstr[0] "%1$d participant ne peut pas encore être retiré de %2$s et reste dans l’audience :"
+msgstr[1] "%1$d participants ne peuvent pas encore être retirés de %2$s et restent dans l’audience :"
+
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:499
+msgid "Participants who cannot be removed yet"
+msgstr "Participants qui ne peuvent pas encore être retirés"
+
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:510
+msgid "Nothing was changed for them. Tickets are never cancelled, registrations never deleted and payments never refunded for you: once the points above are resolved, remove them here."
+msgstr "Rien n’a été modifié pour eux. Les billets ne sont jamais annulés, les inscriptions jamais supprimées et les paiements jamais remboursés à votre place : une fois les points ci-dessus résolus, retirez-les ici."
+
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:521
+msgid "The participants could not be removed. Nothing was changed; try again."
+msgstr "Les participants n’ont pas pu être retirés. Rien n’a été modifié ; réessayez."
+
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:547
+msgid "Keep participants"
+msgstr "Conserver les participants"
+
+#. translators: %d: number of participants
+#: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:562
+#, js-format
+msgid "Remove %d participant"
+msgid_plural "Remove %d participants"
+msgstr[0] "Retirer %d participant"
+msgstr[1] "Retirer %d participants"

@@ -1,11 +1,12 @@
-import { __ } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { __, _n, sprintf } from '@wordpress/i18n';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
 	Card,
 	CardBody,
 	Modal,
+	Notice,
 	TextControl,
 	SelectControl,
 	CheckboxControl,
@@ -36,11 +37,23 @@ export default function ParticipantEditModal( {
 	const [ originalGroupIds, setOriginalGroupIds ] = useState( [] );
 	const [ groupsLoading, setGroupsLoading ] = useState( false );
 	const [ isSaving, setIsSaving ] = useState( false );
+	// The profile an earlier, partly failed attempt already created: saving
+	// again updates it instead of adding a second one.
+	const [ createdId, setCreatedId ] = useState( null );
+	// Why the last attempt failed: a message, and the group changes at fault.
+	const [ error, setError ] = useState( null );
+	// Refuses a second submission before the first one re-rendered the form.
+	const inFlight = useRef( false );
 
+	// Filled when the popup opens, and for another participant: a reload of
+	// the same participant behind an open popup must not wipe what was typed.
 	useEffect( () => {
 		if ( ! isOpen ) {
 			return;
 		}
+
+		setCreatedId( null );
+		setError( null );
 
 		if ( participant ) {
 			setFormData( {
@@ -73,7 +86,7 @@ export default function ParticipantEditModal( {
 				console.error( 'Error loading groups:', err );
 				setGroupsLoading( false );
 			} );
-	}, [ isOpen, participant ] );
+	}, [ isOpen, participant?.id ] );
 
 	const handleLinkUser = ( user ) => {
 		setFormData( { ...formData, wp_user_id: user.id, wp_user: user } );
@@ -84,12 +97,14 @@ export default function ParticipantEditModal( {
 	};
 
 	const handleSubmit = async () => {
+		if ( inFlight.current ) {
+			return;
+		}
+		inFlight.current = true;
 		setIsSaving( true );
-		const method = participant ? 'PUT' : 'POST';
-		const path = participant
-			? `/fair-audience/v1/participants/${ participant.id }`
-			: '/fair-audience/v1/participants';
+		setError( null );
 
+		const existingId = participant ? participant.id : createdId;
 		const dataToSend = {
 			name: formData.name,
 			surname: formData.surname,
@@ -101,8 +116,17 @@ export default function ParticipantEditModal( {
 		};
 
 		try {
-			const result = await apiFetch( { path, method, data: dataToSend } );
-			const participantId = participant ? participant.id : result.id;
+			const result = await apiFetch( {
+				path: existingId
+					? `/fair-audience/v1/participants/${ existingId }`
+					: '/fair-audience/v1/participants',
+				method: existingId ? 'PUT' : 'POST',
+				data: dataToSend,
+			} );
+			const participantId = existingId || result.id;
+			if ( ! existingId ) {
+				setCreatedId( participantId );
+			}
 
 			const groupsToAdd = selectedGroupIds.filter(
 				( id ) => ! originalGroupIds.includes( id )
@@ -111,34 +135,101 @@ export default function ParticipantEditModal( {
 				( id ) => ! selectedGroupIds.includes( id )
 			);
 
-			const addPromises = groupsToAdd.map( ( groupId ) =>
-				apiFetch( {
-					path: `/fair-audience/v1/groups/${ groupId }/participants`,
-					method: 'POST',
-					data: { participant_id: participantId },
-				} ).catch( ( err ) => {
-					if ( ! err.message?.includes( 'already' ) ) {
-						throw err;
-					}
-				} )
-			);
+			// Each group change stands on its own: the ones that went
+			// through are remembered, so a retry sends only the rest.
+			const outcomes = await Promise.all( [
+				...groupsToAdd.map( ( groupId ) =>
+					apiFetch( {
+						path: `/fair-audience/v1/groups/${ groupId }/participants`,
+						method: 'POST',
+						data: { participant_id: participantId },
+					} )
+						.then( () => ( { groupId, added: true } ) )
+						.catch( ( err ) =>
+							err.message?.includes( 'already' )
+								? { groupId, added: true }
+								: { groupId, added: true, err }
+						)
+				),
+				...groupsToRemove.map( ( groupId ) =>
+					apiFetch( {
+						path: `/fair-audience/v1/groups/${ groupId }/participants/${ participantId }`,
+						method: 'DELETE',
+					} )
+						.then( () => ( { groupId, added: false } ) )
+						.catch( ( err ) => ( { groupId, added: false, err } ) )
+				),
+			] );
 
-			const removePromises = groupsToRemove.map( ( groupId ) =>
-				apiFetch( {
-					path: `/fair-audience/v1/groups/${ groupId }/participants/${ participantId }`,
-					method: 'DELETE',
-				} )
-			);
+			const done = outcomes.filter( ( outcome ) => ! outcome.err );
+			const failed = outcomes.filter( ( outcome ) => outcome.err );
+			const doneAdded = done
+				.filter( ( outcome ) => outcome.added )
+				.map( ( outcome ) => outcome.groupId );
+			const doneRemoved = done
+				.filter( ( outcome ) => ! outcome.added )
+				.map( ( outcome ) => outcome.groupId );
+			setOriginalGroupIds( [
+				...originalGroupIds.filter(
+					( id ) => ! doneRemoved.includes( id )
+				),
+				...doneAdded,
+			] );
 
-			await Promise.all( [ ...addPromises, ...removePromises ] );
+			if ( failed.length > 0 ) {
+				setError( {
+					message: sprintf(
+						/* translators: %d: number of group changes */
+						_n(
+							'The profile was saved, but %d group change failed. Your selection is kept: save again to retry it.',
+							'The profile was saved, but %d group changes failed. Your selection is kept: save again to retry them.',
+							failed.length,
+							'fair-audience'
+						),
+						failed.length
+					),
+					groups: failed.map( ( outcome ) => ( {
+						id: outcome.groupId,
+						name:
+							allGroups.find(
+								( group ) => group.id === outcome.groupId
+							)?.name || `#${ outcome.groupId }`,
+						reason: outcome.err.message,
+					} ) ),
+				} );
+				onSaved?.( result, {
+					complete: false,
+					created: ! participant,
+				} );
+				return;
+			}
 
-			setIsSaving( false );
-			onSaved?.( result );
+			onSaved?.( result, {
+				complete: true,
+				// Created by this popup, whichever attempt completed it.
+				created: ! participant,
+			} );
 			onClose();
 		} catch ( err ) {
+			setError( {
+				message:
+					err.message ||
+					__(
+						'The participant could not be saved. Try again.',
+						'fair-audience'
+					),
+				groups: [],
+			} );
+		} finally {
+			inFlight.current = false;
 			setIsSaving( false );
-			// eslint-disable-next-line no-alert
-			alert( __( 'Error: ', 'fair-audience' ) + err.message );
+		}
+	};
+
+	// Closing mid-save would drop the form while its result is unknown.
+	const close = () => {
+		if ( ! isSaving ) {
+			onClose();
 		}
 	};
 
@@ -153,7 +244,7 @@ export default function ParticipantEditModal( {
 					? __( 'Edit Participant', 'fair-audience' )
 					: __( 'Add Participant', 'fair-audience' )
 			}
-			onRequestClose={ onClose }
+			onRequestClose={ close }
 			style={ { maxWidth: '500px', width: '100%' } }
 		>
 			<Card>
@@ -283,13 +374,42 @@ export default function ParticipantEditModal( {
 							</div>
 						) }
 					</div>
+					{ error && (
+						<div
+							className="fair-audience-participant-edit__error"
+							style={ { marginTop: '16px' } }
+						>
+							<Notice status="error" isDismissible={ false }>
+								<p style={ { margin: 0 } }>{ error.message }</p>
+								{ error.groups.length > 0 && (
+									<ul
+										style={ {
+											margin: '8px 0 0',
+											paddingLeft: '18px',
+											listStyle: 'disc',
+										} }
+									>
+										{ error.groups.map( ( group ) => (
+											<li key={ group.id }>
+												<strong>{ group.name }</strong>
+												{ group.reason && (
+													<div>{ group.reason }</div>
+												) }
+											</li>
+										) ) }
+									</ul>
+								) }
+							</Notice>
+						</div>
+					) }
 					<div style={ { marginTop: '16px' } }>
 						<Button
 							variant="primary"
 							onClick={ handleSubmit }
+							isBusy={ isSaving }
 							disabled={ isSaving }
 						>
-							{ participant
+							{ participant || createdId
 								? __( 'Update', 'fair-audience' )
 								: __( 'Add', 'fair-audience' ) }
 						</Button>

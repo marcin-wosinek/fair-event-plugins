@@ -10,6 +10,11 @@ import {
 	Notice,
 } from '@wordpress/components';
 import ParticipantEditModal from '../components/ParticipantEditModal.js';
+import DeleteParticipantsModal from '../components/DeleteParticipantsModal.js';
+import FeedbackSnackbar from '../components/FeedbackSnackbar.js';
+
+// The All Participants page, which is the plugin's top-level menu page.
+const ALL_PARTICIPANTS_URL = 'admin.php?page=fair-audience';
 
 function formatDateTime( dateString ) {
 	if ( ! dateString ) {
@@ -62,6 +67,8 @@ export default function ParticipantDetail() {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ isEditModalOpen, setIsEditModalOpen ] = useState( false );
+	const [ isDeleteModalOpen, setIsDeleteModalOpen ] = useState( false );
+	const [ snackbar, setSnackbar ] = useState( null );
 
 	const loadParticipant = useCallback( () => {
 		if ( ! participantId ) {
@@ -94,31 +101,17 @@ export default function ParticipantDetail() {
 		loadParticipant();
 	}, [ loadParticipant ] );
 
-	const handleDelete = () => {
-		// eslint-disable-next-line no-alert
-		if (
-			! confirm(
-				__(
-					'Are you sure you want to delete this participant?',
-					'fair-audience'
-				)
-			)
-		) {
-			return;
-		}
+	// The profile is gone: back to the list it was opened from.
+	const handleDeleted = () => {
+		setIsDeleteModalOpen( false );
+		window.location.href = ALL_PARTICIPANTS_URL;
+	};
 
-		apiFetch( {
-			path: `/fair-audience/v1/participants/${ participantId }`,
-			method: 'DELETE',
-		} )
-			.then( () => {
-				window.location.href =
-					'admin.php?page=fair-audience-all-participants';
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-alert
-				alert( __( 'Error: ', 'fair-audience' ) + err.message );
-			} );
+	const handleSaved = ( result, outcome ) => {
+		loadParticipant();
+		if ( outcome?.complete ) {
+			setSnackbar( __( 'Participant updated.', 'fair-audience' ) );
+		}
 	};
 
 	if ( isLoading ) {
@@ -152,7 +145,7 @@ export default function ParticipantDetail() {
 	return (
 		<div className="wrap fair-audience-participant-detail">
 			<p className="fair-audience-participant-detail__back">
-				<a href="admin.php?page=fair-audience-all-participants">
+				<a href={ ALL_PARTICIPANTS_URL }>
 					&larr; { __( 'All participants', 'fair-audience' ) }
 				</a>
 			</p>
@@ -168,7 +161,7 @@ export default function ParticipantDetail() {
 					<Button
 						variant="secondary"
 						isDestructive
-						onClick={ handleDelete }
+						onClick={ () => setIsDeleteModalOpen( true ) }
 					>
 						{ __( 'Delete participant', 'fair-audience' ) }
 					</Button>
@@ -440,7 +433,20 @@ export default function ParticipantDetail() {
 				isOpen={ isEditModalOpen }
 				participant={ participant }
 				onClose={ () => setIsEditModalOpen( false ) }
-				onSaved={ loadParticipant }
+				onSaved={ handleSaved }
+			/>
+
+			{ isDeleteModalOpen && (
+				<DeleteParticipantsModal
+					participants={ [ participant ] }
+					onClose={ () => setIsDeleteModalOpen( false ) }
+					onDeleted={ handleDeleted }
+				/>
+			) }
+
+			<FeedbackSnackbar
+				message={ snackbar }
+				onRemove={ () => setSnackbar( null ) }
 			/>
 		</div>
 	);

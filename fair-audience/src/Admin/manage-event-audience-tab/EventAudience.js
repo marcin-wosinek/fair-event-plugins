@@ -1083,7 +1083,7 @@ export default function EventAudience( {
 		}
 	};
 
-	const handleParticipantRemoved = ( removed ) => {
+	const handleParticipantRemoved = ( [ removed ] ) => {
 		setRemovingParticipant( null );
 		loadParticipants();
 		showToast(
@@ -3288,7 +3288,7 @@ export default function EventAudience( {
 			{ removingParticipant && (
 				<RemoveParticipantModal
 					eventDateId={ eventDateId }
-					participant={ removingParticipant }
+					participants={ [ removingParticipant ] }
 					eventTitle={ eventTitle }
 					dateLabel={ currentDateLabel }
 					onClose={ () => setRemovingParticipant( null ) }

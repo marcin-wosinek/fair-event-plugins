@@ -1,9 +1,10 @@
-import { __, sprintf } from '@wordpress/i18n';
-import { useState, useEffect, useMemo } from '@wordpress/element';
+import { __, _n, sprintf } from '@wordpress/i18n';
+import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
 	Modal,
+	Notice,
 	SelectControl,
 	Spinner,
 	CheckboxControl,
@@ -12,8 +13,10 @@ import {
 	CardBody,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
-import { dateI18n, getSettings } from '@wordpress/date';
+import { formatSiteLocalDatetime } from 'fair-events-shared/src/dateTime.js';
 import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
+import FeedbackSnackbar from '../components/FeedbackSnackbar.js';
+import RemoveParticipantModal from '../manage-event-audience-tab/RemoveParticipantModal.js';
 import { ticketShortLabel } from '../manage-event-audience-tab/ticketLabels.js';
 
 const DEFAULT_VIEW = {
@@ -175,12 +178,17 @@ export default function EventParticipants() {
 	const [ addSearch, setAddSearch ] = useState( '' );
 	const [ addGroupFilter, setAddGroupFilter ] = useState( '' );
 	const [ isAdding, setIsAdding ] = useState( false );
-	const [ isRemoving, setIsRemoving ] = useState( false );
+	const [ addError, setAddError ] = useState( null );
+	// The rows a removal is being confirmed for, or null.
+	const [ removing, setRemoving ] = useState( null );
+	const [ snackbar, setSnackbar ] = useState( null );
 	const [ view, setView ] = useState( DEFAULT_VIEW );
 	const [ selection, setSelection ] = useState( [] );
 	const [ editModalOpen, setEditModalOpen ] = useState( false );
 	const [ editingParticipant, setEditingParticipant ] = useState( null );
 	const [ editLabel, setEditLabel ] = useState( '' );
+	const [ isSavingLabel, setIsSavingLabel ] = useState( false );
+	const [ labelError, setLabelError ] = useState( null );
 	const [ showInvitationModal, setShowInvitationModal ] = useState( false );
 	const [ groups, setGroups ] = useState( [] );
 	const [ selectedGroups, setSelectedGroups ] = useState( new Set() );
@@ -190,6 +198,11 @@ export default function EventParticipants() {
 		useState( new Set() );
 	const [ inviteSearch, setInviteSearch ] = useState( '' );
 	const [ invitationSendResult, setInvitationSendResult ] = useState( null );
+	const [ invitationError, setInvitationError ] = useState( null );
+	// Refuse a second submission before the first one re-rendered its popup.
+	const addInFlight = useRef( false );
+	const labelInFlight = useRef( false );
+	const invitationInFlight = useRef( false );
 
 	const params = new URLSearchParams( window.location.search );
 	const urlEventDateId = params.get( 'event_date_id' );
@@ -322,18 +335,31 @@ export default function EventParticipants() {
 		return filtered;
 	}, [ availableParticipants, addSearch, addGroupFilter ] );
 
-	const handleOpenAddModal = ( label ) => {
+	// The selection that can still be added: someone added meanwhile is
+	// no longer offered, and no longer counted or sent.
+	const selectedAvailableIds = useMemo(
+		() =>
+			availableParticipants
+				.map( ( p ) => p.id )
+				.filter( ( id ) => selectedToAdd.has( id ) ),
+		[ availableParticipants, selectedToAdd ]
+	);
+
+	const resetAddModal = ( label ) => {
 		setAddModalLabel( label );
 		setSelectedToAdd( new Set() );
 		setAddSearch( '' );
 		setAddGroupFilter( '' );
+		setAddError( null );
 	};
 
+	const handleOpenAddModal = ( label ) => resetAddModal( label );
+
+	// Closing mid-request would drop the selection while its result is unknown.
 	const handleCloseAddModal = () => {
-		setAddModalLabel( null );
-		setSelectedToAdd( new Set() );
-		setAddSearch( '' );
-		setAddGroupFilter( '' );
+		if ( ! addInFlight.current ) {
+			resetAddModal( null );
+		}
 	};
 
 	const handleToggleParticipantToAdd = ( participantId ) => {
@@ -363,11 +389,17 @@ export default function EventParticipants() {
 	};
 
 	const handleBatchAdd = async () => {
-		if ( selectedToAdd.size === 0 || ! addModalLabel ) {
+		if (
+			selectedAvailableIds.length === 0 ||
+			! addModalLabel ||
+			addInFlight.current
+		) {
 			return;
 		}
 
+		addInFlight.current = true;
 		setIsAdding( true );
+		setAddError( null );
 
 		try {
 			const batchBasePath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/participants/batch`;
@@ -375,17 +407,22 @@ export default function EventParticipants() {
 				path: batchBasePath,
 				method: 'POST',
 				data: {
-					participant_ids: Array.from( selectedToAdd ),
+					participant_ids: selectedAvailableIds,
 					label: addModalLabel,
 				},
 			} );
 
+			loadParticipants();
+			loadEventInfo();
+
 			if ( response.added > 0 ) {
-				alert(
+				setSnackbar(
 					sprintf(
 						/* translators: %d: number of participants */
-						__(
-							'Successfully added %d participant(s)',
+						_n(
+							'%d participant added.',
+							'%d participants added.',
+							response.added,
 							'fair-audience'
 						),
 						response.added
@@ -393,20 +430,46 @@ export default function EventParticipants() {
 				);
 			}
 
-			handleCloseAddModal();
-			loadParticipants();
-			loadEventInfo();
+			if ( response.failed > 0 ) {
+				// The ones added drop out of the list; the rest stay selected.
+				loadAllParticipants();
+				setAddError(
+					sprintf(
+						/* translators: %d: number of participants */
+						_n(
+							'%d participant could not be added. They are still selected: try again.',
+							'%d participants could not be added. They are still selected: try again.',
+							response.failed,
+							'fair-audience'
+						),
+						response.failed
+					)
+				);
+			} else {
+				resetAddModal( null );
+			}
 		} catch ( err ) {
-			alert(
-				__( 'Error adding participants: ', 'fair-audience' ) +
-					err.message
+			setAddError(
+				err.message ||
+					__(
+						'The participants could not be added. Nothing was changed; try again.',
+						'fair-audience'
+					)
 			);
 		} finally {
+			addInFlight.current = false;
 			setIsAdding( false );
 		}
 	};
 
 	const handleUpdateLabel = async ( participantId, newLabel ) => {
+		if ( labelInFlight.current ) {
+			return;
+		}
+		labelInFlight.current = true;
+		setIsSavingLabel( true );
+		setLabelError( null );
+
 		try {
 			const updatePath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/participants/${ participantId }`;
 			await apiFetch( {
@@ -418,65 +481,70 @@ export default function EventParticipants() {
 			loadEventInfo();
 			setEditModalOpen( false );
 			setEditingParticipant( null );
+			setEditLabel( '' );
+			setSnackbar( __( 'Role updated.', 'fair-audience' ) );
 		} catch ( err ) {
-			alert( __( 'Error: ', 'fair-audience' ) + err.message );
+			setLabelError(
+				err.message ||
+					__(
+						'The role could not be saved. Nothing was changed; try again.',
+						'fair-audience'
+					)
+			);
+		} finally {
+			labelInFlight.current = false;
+			setIsSavingLabel( false );
 		}
 	};
 
-	const handleRemove = async ( items ) => {
-		const participantIds = items.map( ( item ) => item.participant_id );
-		const count = participantIds.length;
+	const handleRemove = ( items ) => {
+		setRemoving( items );
+	};
 
-		if (
-			! confirm(
-				sprintf(
-					/* translators: %d: number of participants */
-					__(
-						'Remove %d participant(s) from this event?',
-						'fair-audience'
-					),
-					count
-				)
-			)
-		) {
+	// Whoever was removed is gone from the list and the totals; whoever
+	// could not be removed stays selected, and in the popup with the reason.
+	const handleRemoved = ( removedRows, remainingRows ) => {
+		loadParticipants();
+		loadEventInfo();
+		setSelection( remainingRows.map( ( row ) => row.participant_id ) );
+
+		if ( remainingRows.length > 0 ) {
 			return;
 		}
 
-		setIsRemoving( true );
-
-		try {
-			const removeBasePath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/participants`;
-			if ( count === 1 ) {
-				await apiFetch( {
-					path: `${ removeBasePath }/${ participantIds[ 0 ] }`,
-					method: 'DELETE',
-				} );
-			} else {
-				await apiFetch( {
-					path: `${ removeBasePath }/batch`,
-					method: 'DELETE',
-					data: {
-						participant_ids: participantIds,
-					},
-				} );
-			}
-
-			loadParticipants();
-			loadEventInfo();
-		} catch ( err ) {
-			alert( __( 'Error: ', 'fair-audience' ) + err.message );
-		} finally {
-			setIsRemoving( false );
-		}
+		setRemoving( null );
+		const removedName = ( removedRows[ 0 ].participant_name || '' ).trim();
+		setSnackbar(
+			removedRows.length === 1 && removedName
+				? sprintf(
+						/* translators: %s: participant name */
+						__( '%s was removed from this date.', 'fair-audience' ),
+						removedName
+				  )
+				: sprintf(
+						/* translators: %d: number of participants */
+						_n(
+							'%d participant was removed from this date.',
+							'%d participants were removed from this date.',
+							removedRows.length,
+							'fair-audience'
+						),
+						removedRows.length
+				  )
+		);
 	};
 
 	const handleOpenEditModal = ( item ) => {
 		setEditingParticipant( item );
 		setEditLabel( item.label );
+		setLabelError( null );
 		setEditModalOpen( true );
 	};
 
 	const handleCloseEditModal = () => {
+		if ( labelInFlight.current ) {
+			return;
+		}
 		setEditModalOpen( false );
 		setEditingParticipant( null );
 		setEditLabel( '' );
@@ -523,6 +591,21 @@ export default function EventParticipants() {
 		);
 	}, [ allParticipants, inviteSearch ] );
 
+	const resetInvitationModal = () => {
+		setShowInvitationModal( false );
+		setSelectedGroups( new Set() );
+		setSelectedInviteParticipants( new Set() );
+		setInviteSearch( '' );
+		setInvitationError( null );
+	};
+
+	// Closing mid-request would drop the selection while its result is unknown.
+	const handleCloseInvitationModal = () => {
+		if ( ! invitationInFlight.current ) {
+			resetInvitationModal();
+		}
+	};
+
 	const handleSendInvitations = async () => {
 		const hasGroupSelection =
 			inviteMode === 'groups' && selectedGroups.size > 0;
@@ -530,11 +613,16 @@ export default function EventParticipants() {
 			inviteMode === 'participants' &&
 			selectedInviteParticipants.size > 0;
 
-		if ( ! hasGroupSelection && ! hasParticipantSelection ) {
+		if (
+			( ! hasGroupSelection && ! hasParticipantSelection ) ||
+			invitationInFlight.current
+		) {
 			return;
 		}
 
+		invitationInFlight.current = true;
 		setIsSendingInvitations( true );
+		setInvitationError( null );
 
 		try {
 			const requestData =
@@ -559,16 +647,17 @@ export default function EventParticipants() {
 				skipped_count: response.skipped_count,
 			} );
 
-			setShowInvitationModal( false );
-			setSelectedGroups( new Set() );
-			setSelectedInviteParticipants( new Set() );
-			setInviteSearch( '' );
+			resetInvitationModal();
 		} catch ( err ) {
-			alert(
-				__( 'Error sending invitations: ', 'fair-audience' ) +
-					err.message
+			setInvitationError(
+				err.message ||
+					__(
+						'The invitations could not be sent. Your selection is kept; try again.',
+						'fair-audience'
+					)
 			);
 		} finally {
+			invitationInFlight.current = false;
 			setIsSendingInvitations( false );
 		}
 	};
@@ -640,6 +729,11 @@ export default function EventParticipants() {
 			{
 				id: 'remove',
 				label: __( 'Remove', 'fair-audience' ),
+				// With an icon the bulk action stays reachable on narrow
+				// screens, where the selection bar shows icons only.
+				icon: 'remove',
+				// A series pass is managed on its series date, not here.
+				isEligible: ( item ) => ! item.is_series_pass,
 				callback: handleRemove,
 				supportsBulk: true,
 			},
@@ -656,8 +750,11 @@ export default function EventParticipants() {
 		[ participants.length, view.perPage ]
 	);
 
-	// Get date format.
-	const { formats } = getSettings();
+	// The stored date is the site's wall-clock time: shown as it is, in
+	// the header and in the removal popup alike.
+	const eventDateLabel = eventInfo?.event_date
+		? formatSiteLocalDatetime( eventInfo.event_date )
+		: '';
 
 	if ( isLoading ) {
 		return (
@@ -744,12 +841,7 @@ export default function EventParticipants() {
 							>
 								<span>
 									{ __( 'Date:', 'fair-audience' ) }{ ' ' }
-									{ eventInfo.event_date
-										? dateI18n(
-												formats.datetime,
-												eventInfo.event_date
-										  )
-										: '—' }
+									{ eventDateLabel || '—' }
 								</span>
 								<span>
 									{ sprintf(
@@ -803,7 +895,10 @@ export default function EventParticipants() {
 						</Button>
 						<Button
 							variant="secondary"
-							onClick={ () => setShowInvitationModal( true ) }
+							onClick={ () => {
+								setInvitationError( null );
+								setShowInvitationModal( true );
+							} }
 						>
 							{ __( 'Send Invitation', 'fair-audience' ) }
 						</Button>
@@ -817,7 +912,7 @@ export default function EventParticipants() {
 						actions={ actions }
 						paginationInfo={ paginationInfo }
 						defaultLayouts={ DEFAULT_LAYOUTS }
-						isLoading={ isLoading || isRemoving }
+						isLoading={ isLoading }
 						getItemId={ ( item ) => item.participant_id }
 						selection={ selection }
 						onChangeSelection={ setSelection }
@@ -900,14 +995,14 @@ export default function EventParticipants() {
 										color: '#666',
 									} }
 								>
-									{ selectedToAdd.size > 0
+									{ selectedAvailableIds.length > 0
 										? sprintf(
 												/* translators: 1: selected count, 2: shown count */
 												__(
 													'%1$d selected, %2$d shown',
 													'fair-audience'
 												),
-												selectedToAdd.size,
+												selectedAvailableIds.length,
 												filteredAvailableParticipants.length
 										  )
 										: sprintf(
@@ -995,6 +1090,17 @@ export default function EventParticipants() {
 								) }
 							</div>
 
+							{ addError && (
+								<div style={ { marginTop: '16px' } }>
+									<Notice
+										status="error"
+										isDismissible={ false }
+									>
+										{ addError }
+									</Notice>
+								</div>
+							) }
+
 							<div
 								style={ {
 									marginTop: '20px',
@@ -1006,14 +1112,17 @@ export default function EventParticipants() {
 								<Button
 									variant="secondary"
 									onClick={ handleCloseAddModal }
+									disabled={ isAdding }
 								>
 									{ __( 'Cancel', 'fair-audience' ) }
 								</Button>
 								<Button
 									isPrimary
 									onClick={ handleBatchAdd }
+									isBusy={ isAdding }
 									disabled={
-										selectedToAdd.size === 0 || isAdding
+										selectedAvailableIds.length === 0 ||
+										isAdding
 									}
 								>
 									{ isAdding
@@ -1024,7 +1133,7 @@ export default function EventParticipants() {
 													'Add %d Selected',
 													'fair-audience'
 												),
-												selectedToAdd.size
+												selectedAvailableIds.length
 										  ) }
 								</Button>
 							</div>
@@ -1061,6 +1170,13 @@ export default function EventParticipants() {
 						] }
 						onChange={ ( value ) => setEditLabel( value ) }
 					/>
+					{ labelError && (
+						<div style={ { marginTop: '16px' } }>
+							<Notice status="error" isDismissible={ false }>
+								{ labelError }
+							</Notice>
+						</div>
+					) }
 					<div
 						style={ {
 							marginTop: '20px',
@@ -1072,10 +1188,16 @@ export default function EventParticipants() {
 						<Button
 							variant="secondary"
 							onClick={ handleCloseEditModal }
+							disabled={ isSavingLabel }
 						>
 							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
-						<Button isPrimary onClick={ handleSaveEdit }>
+						<Button
+							isPrimary
+							onClick={ handleSaveEdit }
+							isBusy={ isSavingLabel }
+							disabled={ isSavingLabel }
+						>
 							{ __( 'Save', 'fair-audience' ) }
 						</Button>
 					</div>
@@ -1085,12 +1207,7 @@ export default function EventParticipants() {
 			{ showInvitationModal && (
 				<Modal
 					title={ __( 'Send Event Invitations', 'fair-audience' ) }
-					onRequestClose={ () => {
-						setShowInvitationModal( false );
-						setSelectedGroups( new Set() );
-						setSelectedInviteParticipants( new Set() );
-						setInviteSearch( '' );
-					} }
+					onRequestClose={ handleCloseInvitationModal }
 					style={ { maxWidth: '640px', width: '100%' } }
 				>
 					<p style={ { fontSize: '12px', color: '#666' } }>
@@ -1320,6 +1437,14 @@ export default function EventParticipants() {
 						</>
 					) }
 
+					{ invitationError && (
+						<div style={ { marginBottom: '16px' } }>
+							<Notice status="error" isDismissible={ false }>
+								{ invitationError }
+							</Notice>
+						</div>
+					) }
+
 					<div
 						style={ {
 							display: 'flex',
@@ -1329,18 +1454,15 @@ export default function EventParticipants() {
 					>
 						<Button
 							variant="secondary"
-							onClick={ () => {
-								setShowInvitationModal( false );
-								setSelectedGroups( new Set() );
-								setSelectedInviteParticipants( new Set() );
-								setInviteSearch( '' );
-							} }
+							onClick={ handleCloseInvitationModal }
+							disabled={ isSendingInvitations }
 						>
 							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
 						<Button
 							variant="primary"
 							onClick={ handleSendInvitations }
+							isBusy={ isSendingInvitations }
 							disabled={
 								( inviteMode === 'groups' &&
 									selectedGroups.size === 0 ) ||
@@ -1366,6 +1488,29 @@ export default function EventParticipants() {
 					</div>
 				</Modal>
 			) }
+			{ removing && (
+				<RemoveParticipantModal
+					eventDateId={ resolvedEventDateId }
+					participants={ removing }
+					eventTitle={
+						eventInfo?.title || __( 'this event', 'fair-audience' )
+					}
+					dateLabel={ eventDateLabel }
+					listUrl={
+						eventInfo?.manage_event_url
+							? `${ eventInfo.manage_event_url }&tab=list`
+							: undefined
+					}
+					onClose={ () => setRemoving( null ) }
+					onRemoved={ handleRemoved }
+					onRefused={ loadParticipants }
+				/>
+			) }
+
+			<FeedbackSnackbar
+				message={ snackbar }
+				onRemove={ () => setSnackbar( null ) }
+			/>
 		</div>
 	);
 }

@@ -2383,10 +2383,13 @@ class EventParticipantsController extends WP_REST_Controller {
 			);
 		}
 
+		// 'failures' says who was kept and why, so the removal popup can
+		// name them; 'errors' is the same as readable sentences.
 		$results = array(
-			'removed' => 0,
-			'failed'  => 0,
-			'errors'  => array(),
+			'removed'  => 0,
+			'failed'   => 0,
+			'errors'   => array(),
+			'failures' => array(),
 		);
 
 		$removal = new ParticipantRemoval( $this->event_participant_repo );
@@ -2406,6 +2409,14 @@ class EventParticipantsController extends WP_REST_Controller {
 					__( 'Failed to remove participant ID %1$d: %2$s', 'fair-audience' ),
 					$participant_id,
 					$removed->get_error_message()
+				);
+
+				$error_data            = $removed->get_error_data();
+				$results['failures'][] = array(
+					'participant_id' => $participant_id,
+					'code'           => $removed->get_error_code(),
+					'message'        => $removed->get_error_message(),
+					'blockers'       => is_array( $error_data ) && isset( $error_data['blockers'] ) ? $error_data['blockers'] : array(),
 				);
 			}
 		}
