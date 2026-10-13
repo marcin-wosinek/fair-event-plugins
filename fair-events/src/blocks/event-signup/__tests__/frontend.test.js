@@ -1466,6 +1466,125 @@ describe( 'Event Signup frontend.js — resuming from an emailed link (#1701)', 
 	} );
 } );
 
+describe( 'Event Signup frontend.js — mailing signup checkbox visibility (#1789)', () => {
+	const settle = () => new Promise( ( resolve ) => setTimeout( resolve ) );
+	const MAILING_ROW =
+		'<div class="form-row"><label class="form-checkbox-label"><input type="checkbox" name="mailing_opt_in" value="1" class="form-checkbox" /> Keep me informed about future events</label></div>';
+
+	// render.php omits the whole checkbox row when the block's
+	// showKeepInformed setting is off.
+	function buildForm( { showKeepInformed } ) {
+		const block = buildBlock();
+		const form = block.querySelector( 'form' );
+		if ( showKeepInformed ) {
+			form.querySelector( '.form-submit' ).insertAdjacentHTML(
+				'beforebegin',
+				MAILING_ROW
+			);
+		}
+		return form;
+	}
+
+	async function submitFilled( form ) {
+		form.querySelector( 'input[name="name"]' ).value = 'Ada';
+		form.querySelector( 'input[name="email"]' ).value = 'ada@example.test';
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+		await settle();
+		return initiatePayment.mock.calls.at( -1 )[ 0 ].data;
+	}
+
+	afterEach( () => {
+		window.history.replaceState( {}, '', '/' );
+	} );
+
+	test( 'sends the consent the visitor ticked', async () => {
+		const form = buildForm( { showKeepInformed: true } );
+		apiFetch.mockResolvedValue( noopResponse() );
+		initialize();
+		form.querySelector( 'input[name="mailing_opt_in"]' ).checked = true;
+
+		const data = await submitFilled( form );
+
+		expect( data.mailing_opt_in ).toBe( true );
+	} );
+
+	test( 'sends no consent when the visible checkbox is left unticked', async () => {
+		const form = buildForm( { showKeepInformed: true } );
+		apiFetch.mockResolvedValue( noopResponse() );
+		initialize();
+
+		const data = await submitFilled( form );
+
+		expect( data.mailing_opt_in ).toBe( false );
+	} );
+
+	test( 'sends no consent when the checkbox is hidden', async () => {
+		const form = buildForm( { showKeepInformed: false } );
+		apiFetch.mockResolvedValue( noopResponse() );
+		initialize();
+
+		const data = await submitFilled( form );
+
+		expect( initiatePayment ).toHaveBeenCalledTimes( 1 );
+		expect( data.mailing_opt_in ).toBe( false );
+	} );
+
+	test( 'restores a resumed submission without the checkbox and still sends no consent', async () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/?participant_token=signed-token&resume=stash-token'
+		);
+		const form = buildForm( { showKeepInformed: false } );
+		apiFetch
+			.mockResolvedValueOnce( {
+				...noopResponse(),
+				viewer_resolved: true,
+				token_identity_validated: true,
+				prefill_name: 'Ada Participant',
+				prefill_email: 'ada@example.test',
+				before_form_html:
+					'<div hidden data-resume-route="/fair-audience/v1/event-signup/resume"></div>',
+			} )
+			.mockResolvedValueOnce( {
+				success: true,
+				payload: {
+					name: 'Ada Typed',
+					ticket_type_id: 1,
+					quantity: 1,
+					// Stashed from a form that still showed the checkbox.
+					keep_informed: true,
+					ticket_option_ids: [],
+					questionnaire_answers: [],
+				},
+			} );
+
+		initialize();
+		await settle();
+
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ada Typed'
+		);
+		expect(
+			form.querySelector( '.fair-events-get-tickets-resume-notice' )
+		).not.toBeNull();
+		expect(
+			form.querySelector( 'input[name="mailing_opt_in"]' )
+		).toBeNull();
+
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+		await settle();
+
+		expect(
+			initiatePayment.mock.calls.at( -1 )[ 0 ].data.mailing_opt_in
+		).toBe( false );
+	} );
+} );
+
 describe( 'Event Signup frontend.js — buying another ticket (#1526)', () => {
 	const CARD =
 		'<div class="fair-events-signed-up-card" data-event-id="5" data-event-date-id="42" data-cancel-route="/fair-audience/v1/event-signup">' +

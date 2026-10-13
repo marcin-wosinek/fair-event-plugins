@@ -106,6 +106,7 @@ describe( 'Event Signup EditComponent', () => {
 					submitButtonText: 'Get Tickets',
 					showTicketPrice: true,
 					showOptionPrices: true,
+					showKeepInformed: true,
 					...attributes,
 				} }
 				setAttributes={ setAttributes }
@@ -217,6 +218,61 @@ describe( 'Event Signup EditComponent', () => {
 			expect( setAttributes ).toHaveBeenCalledWith( {
 				showOptionPrices: false,
 			} );
+		} );
+	} );
+
+	describe( 'mailing signup checkbox toggle', () => {
+		it( 'is on by default, also for blocks saved before the setting existed', () => {
+			expect( capturedSettings.attributes.showKeepInformed ).toEqual( {
+				type: 'boolean',
+				default: true,
+			} );
+
+			renderEdit( false );
+
+			expect(
+				screen.getByLabelText( 'Show mailing signup checkbox' )
+			).toBeChecked();
+		} );
+
+		it( 'toggles the showKeepInformed attribute', () => {
+			const setAttributes = jest.fn();
+			renderEdit( false, {}, setAttributes );
+
+			fireEvent.click(
+				screen.getByLabelText( 'Show mailing signup checkbox' )
+			);
+
+			expect( setAttributes ).toHaveBeenCalledWith( {
+				showKeepInformed: false,
+			} );
+		} );
+
+		it( 'reflects a hidden checkbox and can show it again', () => {
+			const setAttributes = jest.fn();
+			renderEdit( false, { showKeepInformed: false }, setAttributes );
+
+			const toggle = screen.getByLabelText(
+				'Show mailing signup checkbox'
+			);
+			expect( toggle ).not.toBeChecked();
+
+			fireEvent.click( toggle );
+
+			expect( setAttributes ).toHaveBeenCalledWith( {
+				showKeepInformed: true,
+			} );
+		} );
+
+		it( 'passes the setting to the preview renderer', () => {
+			const { unmount } = renderEdit( false );
+			const [ shown ] = mockServerSideRender.mock.calls.at( -1 );
+			expect( shown.attributes.showKeepInformed ).toBe( true );
+			unmount();
+
+			renderEdit( false, { showKeepInformed: false } );
+			const [ hidden ] = mockServerSideRender.mock.calls.at( -1 );
+			expect( hidden.attributes.showKeepInformed ).toBe( false );
 		} );
 	} );
 

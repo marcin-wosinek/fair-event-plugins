@@ -28,6 +28,9 @@ defined( 'WPINC' ) || die;
 $submit_button_text = $attributes['submitButtonText'] ?? __( 'Get Tickets', 'fair-events' );
 $show_ticket_price  = (bool) ( $attributes['showTicketPrice'] ?? true );
 $show_option_prices = (bool) ( $attributes['showOptionPrices'] ?? true );
+// Display-only: a hidden checkbox makes frontend.js submit
+// mailing_opt_in: false, so the signup grants no mailing consent.
+$show_keep_informed = (bool) ( $attributes['showKeepInformed'] ?? true );
 
 // Resolve event_date_id: query string (date, scoped to this post's series;
 // legacy numeric id kept for old links) → block attribute → current post's
@@ -753,17 +756,19 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 			/>
 		</div>
 
-		<div class="form-row">
-			<label class="form-checkbox-label">
-				<input
-					type="checkbox"
-					name="mailing_opt_in"
-					value="1"
-					class="form-checkbox"
-				/>
-				<?php esc_html_e( 'Keep me informed about future events', 'fair-events' ); ?>
-			</label>
-		</div>
+		<?php if ( $show_keep_informed ) : ?>
+			<div class="form-row">
+				<label class="form-checkbox-label">
+					<input
+						type="checkbox"
+						name="mailing_opt_in"
+						value="1"
+						class="form-checkbox"
+					/>
+					<?php esc_html_e( 'Keep me informed about future events', 'fair-events' ); ?>
+				</label>
+			</div>
+		<?php endif; ?>
 
 		<?php if ( ! empty( $attributes['isEditorPreview'] ) ) : ?>
 			<div class="fair-events-event-signup-questions-slot"></div>

@@ -510,12 +510,12 @@ msgid "4 hours"
 msgstr "4 Stunden"
 
 #: src/blocks/event-proposal/render.php:58
-#: src/blocks/event-signup/render.php:710
+#: src/blocks/event-signup/render.php:713
 msgid "Your Name"
 msgstr "Ihr Name"
 
 #: src/blocks/event-proposal/render.php:73
-#: src/blocks/event-signup/render.php:727
+#: src/blocks/event-signup/render.php:730
 msgid "Your Email"
 msgstr "Ihre E-Mail"
 
@@ -1807,15 +1807,15 @@ msgstr "Ungültige Importdaten."
 msgid "Get Tickets"
 msgstr "Tickets erhalten"
 
-#: src/blocks/event-signup/render.php:679
+#: src/blocks/event-signup/render.php:682
 msgid "Choose occurrences"
 msgstr "Vorkommen auswählen"
 
-#: src/blocks/event-signup/render.php:743
+#: src/blocks/event-signup/render.php:746
 msgid "Quantity"
 msgstr "Menge"
 
-#: src/blocks/event-signup/render.php:764
+#: src/blocks/event-signup/render.php:768
 msgid "Keep me informed about future events"
 msgstr "Halten Sie mich über zukünftige Veranstaltungen auf dem Laufenden"
 
@@ -2205,7 +2205,7 @@ msgstr "Jedes manuelle Datum muss ein gültiges Kalenderdatum sein."
 msgid "Manual dates must not contain duplicates — only one occurrence per day is supported."
 msgstr "Manuelle Daten dürfen keine Duplikate enthalten — nur ein Vorkommen pro Tag wird unterstützt."
 
-#: src/blocks/event-signup/render.php:73
+#: src/blocks/event-signup/render.php:76
 msgid "Event Signup: could not resolve an event date for this page."
 msgstr "Event Signup: konnte kein Veranstaltungsdatum für diese Seite auflösen."
 
@@ -2453,8 +2453,8 @@ msgstr "Bezahlte Tickets sind nicht verfügbar, da Online-Zahlungen nicht konfig
 msgid "Event Signup"
 msgstr "Event-Anmeldung"
 
-#: src/blocks/event-signup/render.php:560
-#: src/blocks/event-signup/render.php:581
+#: src/blocks/event-signup/render.php:563
+#: src/blocks/event-signup/render.php:584
 msgid "Ticket sales are temporarily unavailable. Please check back later."
 msgstr "Ticketverkäufe sind vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut."
 
@@ -2466,7 +2466,7 @@ msgstr "Tickettyp wählen"
 msgid "ticket sales temporarily unavailable"
 msgstr "Ticketverkäufe vorübergehend nicht verfügbar"
 
-#: src/blocks/event-signup/render.php:655
+#: src/blocks/event-signup/render.php:658
 msgid "Choose a date"
 msgstr "Datum wählen"
 
@@ -2506,11 +2506,11 @@ msgstr "Klicken Sie, um dieses Datum hinzuzufügen"
 msgid "%d dates selected"
 msgstr "%d Termine ausgewählt"
 
-#: src/blocks/event-signup/editor.js:185
+#: src/blocks/event-signup/editor.js:195
 msgid "Edit tickets"
 msgstr "Tickets bearbeiten"
 
-#: src/blocks/event-signup/editor.js:189
+#: src/blocks/event-signup/editor.js:199
 msgid "Connect this block to an event date to edit its tickets."
 msgstr "Verbinden Sie diesen Block mit einem Veranstaltungsdatum, um seine Tickets zu bearbeiten."
 
@@ -2846,72 +2846,72 @@ msgstr "Ursprüngliche Positionen konnten nicht geladen werden."
 msgid "This payment is not manageable from this endpoint."
 msgstr "Diese Zahlung kann von diesem Endpunkt aus nicht verwaltet werden."
 
-#: src/blocks/event-signup/render.php:452
+#: src/blocks/event-signup/render.php:455
 #: src/blocks/event-signup/frontend.js:923
 msgid "Payment confirmed"
 msgstr "Zahlung bestätigt"
 
 #. translators: %s: event title
-#: src/blocks/event-signup/render.php:458
+#: src/blocks/event-signup/render.php:461
 #, php-format
 msgid "You're signed up for %s."
 msgstr "Sie sind angemeldet für %s."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:468
+#: src/blocks/event-signup/render.php:471
 #, php-format
 msgid "Amount paid: %s"
 msgstr "Gezahlter Betrag: %s"
 
-#: src/blocks/event-signup/render.php:479
+#: src/blocks/event-signup/render.php:482
 #: src/blocks/event-signup/frontend.js:943
 msgid "A confirmation email is on its way. You can close this page."
 msgstr "Eine Bestätigungs-E-Mail ist unterwegs. Sie können diese Seite schließen."
 
-#: src/blocks/event-signup/render.php:490
+#: src/blocks/event-signup/render.php:493
 msgid "Thank you for your payment!"
 msgstr "Vielen Dank für Ihre Zahlung!"
 
-#: src/blocks/event-signup/render.php:492
+#: src/blocks/event-signup/render.php:495
 msgid "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done."
 msgstr "Wir bestätigen dies bei Ihrer Bank. Dies dauert normalerweise ein paar Sekunden — die Seite wird aktualisiert, sobald es fertig ist."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:498
+#: src/blocks/event-signup/render.php:501
 #, php-format
 msgid "Amount: %s"
 msgstr "Betrag: %s"
 
-#: src/blocks/event-signup/render.php:517
+#: src/blocks/event-signup/render.php:520
 msgid "Your payment is waiting."
 msgstr "Ihre Zahlung wartet."
 
-#: src/blocks/event-signup/render.php:519
+#: src/blocks/event-signup/render.php:522
 msgid "You can pick up where you left off on the secure payment page."
 msgstr "Sie können dort weitermachen, wo Sie auf der sicheren Zahlungsseite aufgehört haben."
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:525
-#: src/blocks/event-signup/render.php:549
+#: src/blocks/event-signup/render.php:528
+#: src/blocks/event-signup/render.php:552
 #, php-format
 msgid "Amount due: %s"
 msgstr "Fälliger Betrag: %s"
 
-#: src/blocks/event-signup/render.php:532
+#: src/blocks/event-signup/render.php:535
 msgid "Continue payment"
 msgstr "Zahlung fortsetzen"
 
-#: src/blocks/event-signup/render.php:509
-#: src/blocks/event-signup/render.php:536
-#: src/blocks/event-signup/render.php:570
+#: src/blocks/event-signup/render.php:512
+#: src/blocks/event-signup/render.php:539
+#: src/blocks/event-signup/render.php:573
 msgid "Cancel and start over"
 msgstr "Abbrechen und von vorne beginnen"
 
-#: src/blocks/event-signup/render.php:544
+#: src/blocks/event-signup/render.php:547
 msgid "Your payment didn't go through."
 msgstr "Ihre Zahlung ist fehlgeschlagen."
 
-#: src/blocks/event-signup/render.php:565
+#: src/blocks/event-signup/render.php:568
 msgid "Retry payment"
 msgstr "Zahlung erneut versuchen"
 
@@ -2955,8 +2955,8 @@ msgstr[1] "Bitte wählen Sie mindestens %d Aktivitäten aus, um sich anzumelden.
 msgid "full"
 msgstr "vollständig"
 
-#: src/blocks/event-signup/render.php:666
-#: src/blocks/event-signup/render.php:689
+#: src/blocks/event-signup/render.php:669
+#: src/blocks/event-signup/render.php:692
 #: src/blocks/event-signup/frontend.js:655
 msgid "already signed up"
 msgstr "bereits angemeldet"
@@ -3697,7 +3697,7 @@ msgstr "Diese Zahlung konnte nicht sicher storniert werden. Bitte versuchen Sie 
 msgid "We could not verify the payment status. Please try again."
 msgstr "Wir konnten den Zahlungsstatus nicht überprüfen. Bitte versuchen Sie es erneut."
 
-#: src/blocks/event-signup/render.php:505
+#: src/blocks/event-signup/render.php:508
 msgid "Check payment status again"
 msgstr "Zahlungsstatus erneut überprüfen"
 
@@ -4418,7 +4418,7 @@ msgstr "Dieses Event hat keine anderen Termine, zu denen die Anmeldung verschobe
 msgid "This signup has no ticket type to change."
 msgstr "Diese Anmeldung hat keinen Tickettyp zum Ändern."
 
-#: src/blocks/event-signup/render.php:824
+#: src/blocks/event-signup/render.php:829
 msgid "Total"
 msgstr "Gesamt"
 
@@ -5220,7 +5220,7 @@ msgid_plural "Please select no more than %d extensions."
 msgstr[0] "Bitte wählen Sie nicht mehr als %d Erweiterung."
 msgstr[1] "Bitte wählen Sie nicht mehr als %d Erweiterungen."
 
-#: src/blocks/event-signup/render.php:482
+#: src/blocks/event-signup/render.php:485
 #: src/blocks/event-signup/frontend.js:953
 #: src/blocks/event-signup/frontend.js:1395
 msgid "Back to the signup form"
@@ -5502,8 +5502,8 @@ msgstr "Fügt einen Tab „Programm“ hinzu, in dem du planst, wann und wo jede
 msgid "Recurring events, venues, calendar blocks, ticket configuration and signup for WordPress. Paid checkout requires Fair Payments Connector."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:556
-#: src/blocks/event-signup/render.php:577
+#: src/blocks/event-signup/render.php:559
+#: src/blocks/event-signup/render.php:580
 msgid "Online ticket sales for this event have closed."
 msgstr "Der Online-Ticketverkauf für diese Veranstaltung ist beendet."
 
@@ -6305,3 +6305,7 @@ msgstr "Spalten — Teil %1$d von %2$d"
 #: src/Admin/manage-event/signup-print.js:292
 msgid "Print"
 msgstr "Drucken"
+
+#: src/blocks/event-signup/editor.js:180
+msgid "Show mailing signup checkbox"
+msgstr "Kontrollkästchen für die Mailing-Anmeldung anzeigen"
