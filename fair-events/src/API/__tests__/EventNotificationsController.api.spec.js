@@ -9,7 +9,15 @@
  * to; these routes only report whether a token is configured.
  *
  * Bulk email: settings independent of Telegram, validation, the preview and
- * the administrator-only test. The retired routes of the former owners
+ * the administrator-only test.
+ *
+ * Individual email (#1852): one explicitly configured address, validated
+ * rather than repaired; its own schedule and event selection; a preview and
+ * a test that name their destination, use the saved settings and never
+ * count as a scheduled send. Mail is captured by the test support layer
+ * (e2e/mu-plugins), which can also make delivery to one address fail.
+ *
+ * The retired routes of the former owners
  * (Fair Events Experimental, Fair Audience) must be gone.
  *
  * No case here reaches api.telegram.org: each is refused by a permission
@@ -32,6 +40,22 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const PATH = '/wp-json/fair-events/v1/event-notifications';
 const TELEGRAM = `${ PATH }/telegram`;
 const BULK_EMAIL = `${ PATH }/bulk-email`;
+const INDIVIDUAL_EMAIL = `${ PATH }/individual-email`;
+const MAIL_LOG = '/wp-json/fair-e2e/v1/fee-reminders/mail';
+const MAIL_FAILURE = '/wp-json/fair-e2e/v1/fee-reminders/mail-failure';
+const RECIPIENT = 'organizer-1852-api@example.test';
+const INDIVIDUAL_FIELDS = [
+	'enabled',
+	'recipient',
+	'event_selection',
+	'day_of_week',
+	'time_of_day',
+	'week_scope',
+	'skip_empty',
+	'subject',
+	'intro',
+	'outro',
+];
 const SETTINGS_PATH = '/wp-json/wp/v2/settings';
 const TOKEN_OPTION = 'fair_events_experimental_weekly_telegram_token';
 const TOKEN = '123456789:AAEe2eWeeklyNotificationsToken0123456';
@@ -49,6 +73,7 @@ test.describe( 'EventNotificationsController', () => {
 	let api;
 	let original;
 	let originalBulk;
+	let originalIndividual;
 	let subscriberId;
 	let subscriberHeaders;
 	let sourceId;
@@ -91,9 +116,11 @@ test.describe( 'EventNotificationsController', () => {
 
 		const res = await api.get( PATH, { headers: adminHeaders } );
 		expect( res.ok() ).toBeTruthy();
-		( { telegram: original, bulk_email: originalBulk } = (
-			await res.json()
-		).channels );
+		( {
+			telegram: original,
+			bulk_email: originalBulk,
+			individual_email: originalIndividual,
+		} = ( await res.json() ).channels );
 
 		const userLogin = `weekly-notifications-${ Date.now() }`;
 		const userRes = await api.post( '/wp-json/wp/v2/users', {
@@ -163,6 +190,24 @@ test.describe( 'EventNotificationsController', () => {
 				].map( ( field ) => [ field, originalBulk[ field ] ] )
 			),
 		} );
+		// Turned off first, so restoring never depends on the saved selection.
+		await api.post( INDIVIDUAL_EMAIL, {
+			headers: adminHeaders,
+			data: { enabled: false },
+		} );
+		await api.post( INDIVIDUAL_EMAIL, {
+			headers: adminHeaders,
+			data: Object.fromEntries(
+				INDIVIDUAL_FIELDS.map( ( field ) => [
+					field,
+					originalIndividual[ field ],
+				] )
+			),
+		} );
+		await api.post( MAIL_FAILURE, {
+			headers: adminHeaders,
+			data: { email: '' },
+		} );
 		if ( ! original.token_configured ) {
 			await saveToken( '' );
 		}
@@ -198,7 +243,14 @@ test.describe( 'EventNotificationsController', () => {
 				await anon.post( BULK_EMAIL, { data: { enabled: true } } )
 			).status()
 		).toBe( 401 );
-		for ( const channel of [ TELEGRAM, BULK_EMAIL ] ) {
+		expect(
+			(
+				await anon.post( INDIVIDUAL_EMAIL, {
+					data: { enabled: true, recipient: RECIPIENT },
+				} )
+			).status()
+		).toBe( 401 );
+		for ( const channel of [ TELEGRAM, BULK_EMAIL, INDIVIDUAL_EMAIL ] ) {
 			expect( ( await anon.post( `${ channel }/test` ) ).status() ).toBe(
 				401
 			);
@@ -212,21 +264,23 @@ test.describe( 'EventNotificationsController', () => {
 	test( 'forbids non-administrators', async () => {
 		for ( const call of [
 			() => api.get( PATH, { headers: subscriberHeaders } ),
-			...[ TELEGRAM, BULK_EMAIL ].flatMap( ( channel ) => [
-				() =>
-					api.post( channel, {
-						headers: subscriberHeaders,
-						data: { enabled: false },
-					} ),
-				() =>
-					api.get( `${ channel }/preview`, {
-						headers: subscriberHeaders,
-					} ),
-				() =>
-					api.post( `${ channel }/test`, {
-						headers: subscriberHeaders,
-					} ),
-			] ),
+			...[ TELEGRAM, BULK_EMAIL, INDIVIDUAL_EMAIL ].flatMap(
+				( channel ) => [
+					() =>
+						api.post( channel, {
+							headers: subscriberHeaders,
+							data: { enabled: false },
+						} ),
+					() =>
+						api.get( `${ channel }/preview`, {
+							headers: subscriberHeaders,
+						} ),
+					() =>
+						api.post( `${ channel }/test`, {
+							headers: subscriberHeaders,
+						} ),
+				]
+			),
 			() => saveToken( TOKEN, subscriberHeaders ),
 			// Refused on permissions, not on the value's format.
 			() => saveToken( 'not-a-token', subscriberHeaders ),
@@ -277,6 +331,20 @@ test.describe( 'EventNotificationsController', () => {
 				skip_empty: expect.any( Boolean ),
 				subject: expect.any( String ),
 				test_recipient: expect.stringContaining( '@' ),
+				runs: expect.any( Array ),
+			} )
+		);
+		expect( body.channels.individual_email ).toEqual(
+			expect.objectContaining( {
+				state: 'active',
+				enabled: expect.any( Boolean ),
+				recipient: expect.any( String ),
+				event_selection: expect.any( String ),
+				day_of_week: expect.any( Number ),
+				time_of_day: expect.stringMatching( /^\d{2}:\d{2}$/ ),
+				week_scope: expect.stringMatching( /^(current|next)$/ ),
+				skip_empty: expect.any( Boolean ),
+				subject: expect.any( String ),
 				runs: expect.any( Array ),
 			} )
 		);
@@ -783,5 +851,275 @@ test.describe( 'EventNotificationsController', () => {
 				{ headers: adminHeaders }
 			);
 		}
+	} );
+
+	test.describe( 'individual email', () => {
+		const save = ( data ) =>
+			api.post( INDIVIDUAL_EMAIL, { headers: adminHeaders, data } );
+		const readIndividual = async () =>
+			( await readChannels() ).individual_email;
+		const capturedFor = async ( to ) =>
+			(
+				await api.get(
+					`${ MAIL_LOG }?to=${ encodeURIComponent( to ) }`,
+					{
+						headers: adminHeaders,
+					}
+				)
+			).json();
+
+		test.beforeEach( async () => {
+			await api.post( MAIL_FAILURE, {
+				headers: adminHeaders,
+				data: { email: '' },
+			} );
+			const res = await save( {
+				enabled: false,
+				recipient: '',
+				event_selection: '@local',
+				day_of_week: 1,
+				time_of_day: '08:00',
+				week_scope: 'current',
+				skip_empty: false,
+				subject: 'Organizer update {week_start}',
+				intro: '',
+				outro: '',
+			} );
+			expect( res.status() ).toBe( 200 );
+		} );
+
+		test( 'cannot be turned on without one valid address', async () => {
+			const missing = await save( { enabled: true } );
+			expect( missing.status() ).toBe( 400 );
+			const refusal = await missing.json();
+			expect( refusal.code ).toBe( 'missing_recipient' );
+			expect( refusal.message ).toContain( 'email address' );
+
+			const off = await readIndividual();
+			expect( off.enabled ).toBe( false );
+			expect( off.next_run ).toBeNull();
+		} );
+
+		test( 'refuses recipient lists and header injection without altering them', async () => {
+			expect( ( await save( { recipient: RECIPIENT } ) ).status() ).toBe(
+				200
+			);
+
+			for ( const recipient of [
+				`${ RECIPIENT }, second-1852@example.test`,
+				`${ RECIPIENT }; second-1852@example.test`,
+				`${ RECIPIENT } second-1852@example.test`,
+				`Organizer <${ RECIPIENT }>`,
+				`${ RECIPIENT }\r\nBcc: second-1852@example.test`,
+				`${ RECIPIENT }\n`,
+				'not-an-address',
+				[ RECIPIENT ],
+			] ) {
+				const res = await save( { enabled: true, recipient } );
+				expect( res.status() ).toBe( 400 );
+				expect( ( await res.json() ).code ).toMatch(
+					/^(invalid_recipient|rest_invalid_param)$/
+				);
+			}
+
+			// Nothing of the refused requests was saved, not even a part.
+			const kept = await readIndividual();
+			expect( kept.recipient ).toBe( RECIPIENT );
+			expect( kept.enabled ).toBe( false );
+		} );
+
+		test( 'rejects invalid schedules and event selections', async () => {
+			for ( const data of [
+				{ time_of_day: '25:00' },
+				{ day_of_week: 0 },
+				{ day_of_week: 8 },
+				{ week_scope: 'last' },
+				{ event_selection: '' },
+				{ event_selection: 'Not A Slug' },
+			] ) {
+				expect( ( await save( data ) ).status() ).toBe( 400 );
+			}
+
+			// A source that does not exist is kept as chosen, reported, and
+			// cannot be sent from: it never widens to every local event.
+			const gone = await save( {
+				recipient: RECIPIENT,
+				event_selection: 'no-such-source-1852',
+			} );
+			expect( gone.status() ).toBe( 200 );
+			const channel = ( await gone.json() ).channels.individual_email;
+			expect( channel.event_selection ).toBe( 'no-such-source-1852' );
+			expect( channel.configuration_error ).toBeTruthy();
+
+			const enable = await save( { enabled: true } );
+			expect( enable.status() ).toBe( 400 );
+			expect( ( await enable.json() ).code ).toBe( 'invalid_source' );
+			for ( const call of [
+				() =>
+					api.get( `${ INDIVIDUAL_EMAIL }/preview`, {
+						headers: adminHeaders,
+					} ),
+				() =>
+					api.post( `${ INDIVIDUAL_EMAIL }/test`, {
+						headers: adminHeaders,
+					} ),
+			] ) {
+				const res = await call();
+				expect( res.status() ).toBe( 400 );
+				expect( ( await res.json() ).code ).toBe( 'invalid_source' );
+			}
+			expect( await capturedFor( RECIPIENT ) ).toEqual( [] );
+		} );
+
+		test( 'keeps its schedule, selection and wording apart from the other channels', async () => {
+			const before = await readChannels();
+
+			const res = await save( {
+				recipient: RECIPIENT,
+				event_selection: sourceSlug,
+				day_of_week: 4,
+				time_of_day: '05:20',
+				week_scope: 'next',
+				skip_empty: true,
+				subject: 'Only for the organizer',
+				intro: '<strong>Hello</strong><script>alert(1)</script>',
+				outro: 'Bye',
+			} );
+			expect( res.status() ).toBe( 200 );
+
+			const after = await readChannels();
+			expect( after.individual_email ).toMatchObject( {
+				recipient: RECIPIENT,
+				event_selection: sourceSlug,
+				day_of_week: 4,
+				time_of_day: '05:20',
+				week_scope: 'next',
+				skip_empty: true,
+				subject: 'Only for the organizer',
+				outro: 'Bye',
+				configuration_error: null,
+			} );
+			expect( after.individual_email.intro ).toContain(
+				'<strong>Hello</strong>'
+			);
+			expect( after.individual_email.intro ).not.toContain( '<script' );
+			expect( after.telegram ).toEqual( before.telegram );
+			expect( after.bulk_email ).toEqual( before.bulk_email );
+
+			// And the other way round.
+			const bulkRes = await api.post( BULK_EMAIL, {
+				headers: adminHeaders,
+				data: { subject: 'Bulk subject 1852', time_of_day: '11:11' },
+			} );
+			expect( bulkRes.status() ).toBe( 200 );
+			expect(
+				( await bulkRes.json() ).channels.individual_email
+			).toEqual( after.individual_email );
+		} );
+
+		test( 'schedules the next future send only while it is on', async () => {
+			const on = await save( { enabled: true, recipient: RECIPIENT } );
+			expect( on.status() ).toBe( 200 );
+			const scheduled = ( await on.json() ).channels.individual_email;
+			expect( scheduled.enabled ).toBe( true );
+			expect( scheduled.next_run.timestamp ).toBeGreaterThan(
+				Date.now() / 1000
+			);
+			expect( scheduled.next_run.send_week ).toMatch( /^\d{4}-W\d{2}$/ );
+			// Saving sends nothing.
+			expect( await capturedFor( RECIPIENT ) ).toEqual( [] );
+
+			const off = await save( { enabled: false } );
+			const paused = ( await off.json() ).channels.individual_email;
+			expect( paused.enabled ).toBe( false );
+			expect( paused.next_run ).toBeNull();
+			expect( paused.recipient ).toBe( RECIPIENT );
+		} );
+
+		test( 'previews the saved email and names its destination', async () => {
+			await save( { recipient: RECIPIENT, intro: 'Hello organizer' } );
+
+			const res = await api.get( `${ INDIVIDUAL_EMAIL }/preview`, {
+				headers: adminHeaders,
+			} );
+			expect( res.status() ).toBe( 200 );
+			const email = await res.json();
+			expect( email.recipient ).toBe( RECIPIENT );
+			expect( email.subject ).toMatch(
+				/^Organizer update \d{4}-\d{2}-\d{2}$/
+			);
+			expect( email.html ).toContain( 'Hello organizer' );
+			expect( email.empty ).toEqual( expect.any( Boolean ) );
+			expect( email.skip_empty ).toBe( false );
+			expect( email.week_title ).toEqual( expect.any( String ) );
+			// A preview sends nothing.
+			expect( await capturedFor( RECIPIENT ) ).toEqual( [] );
+		} );
+
+		test( 'sends a test to the configured address only, without touching the schedule', async () => {
+			await api.delete( MAIL_LOG, { headers: adminHeaders } );
+			// Works while scheduled delivery is off.
+			await save( { recipient: RECIPIENT } );
+			const before = await readIndividual();
+			expect( before.enabled ).toBe( false );
+
+			const res = await api.post( `${ INDIVIDUAL_EMAIL }/test`, {
+				headers: adminHeaders,
+			} );
+			expect( res.status() ).toBe( 200 );
+			expect( ( await res.json() ).sent_to ).toBe( RECIPIENT );
+
+			const all = await (
+				await api.get( MAIL_LOG, { headers: adminHeaders } )
+			).json();
+			expect( all ).toHaveLength( 1 );
+			expect( all[ 0 ].to ).toEqual( [ RECIPIENT ] );
+			expect( all[ 0 ].subject ).toMatch( /^Organizer update / );
+
+			// A test never counts as the week's send or moves the next one.
+			const after = await readIndividual();
+			expect( after.last_sent_week ).toBe( before.last_sent_week );
+			expect( after.runs ).toEqual( before.runs );
+			expect( after.next_run ).toEqual( before.next_run );
+
+			// The same with a schedule in place.
+			const on = ( await ( await save( { enabled: true } ) ).json() )
+				.channels.individual_email;
+			await api.post( `${ INDIVIDUAL_EMAIL }/test`, {
+				headers: adminHeaders,
+			} );
+			const tested = await readIndividual();
+			expect( tested.next_run ).toEqual( on.next_run );
+			expect( tested.runs ).toEqual( on.runs );
+		} );
+
+		test( 'refuses a test without a saved address', async () => {
+			const res = await api.post( `${ INDIVIDUAL_EMAIL }/test`, {
+				headers: adminHeaders,
+			} );
+			expect( res.status() ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe( 'missing_recipient' );
+		} );
+
+		test( 'reports a failed test and leaves the other channels alone', async () => {
+			await save( { recipient: RECIPIENT } );
+			const before = await readChannels();
+			await api.post( MAIL_FAILURE, {
+				headers: adminHeaders,
+				data: { email: RECIPIENT },
+			} );
+
+			const res = await api.post( `${ INDIVIDUAL_EMAIL }/test`, {
+				headers: adminHeaders,
+			} );
+			expect( res.status() ).toBe( 500 );
+			const body = await res.json();
+			expect( body.code ).toBe( 'send_failed' );
+			expect( body.message ).toContain( RECIPIENT );
+
+			const after = await readChannels();
+			expect( after.telegram ).toEqual( before.telegram );
+			expect( after.bulk_email ).toEqual( before.bulk_email );
+		} );
 	} );
 } );

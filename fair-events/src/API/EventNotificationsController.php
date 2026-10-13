@@ -12,6 +12,10 @@ use FairEvents\Notifications\BulkEmailAdapter;
 use FairEvents\Notifications\BulkEmailDispatcher;
 use FairEvents\Notifications\BulkEmailSettings;
 use FairEvents\Notifications\DeliveryLog;
+use FairEvents\Notifications\IndividualEmailDispatcher;
+use FairEvents\Notifications\IndividualEmailEvents;
+use FairEvents\Notifications\IndividualEmailRenderer;
+use FairEvents\Notifications\IndividualEmailSettings;
 use FairEvents\Notifications\Ownership;
 use FairEvents\Notifications\SummaryBuilder;
 use FairEvents\Notifications\TelegramConnector;
@@ -19,6 +23,7 @@ use FairEvents\Notifications\TelegramDispatcher;
 use FairEvents\Notifications\TelegramProvider;
 use FairEvents\Notifications\TelegramSettings;
 use FairEvents\Notifications\WeekSchedule;
+use FairEvents\Services\EmailService;
 use FairEvents\Services\EventsWeekSummary;
 use FairEvents\Services\WeeklyEventsProvider;
 use WP_Error;
@@ -35,6 +40,10 @@ defined( 'WPINC' ) || die;
  * testing one never touches another. A channel this plugin does not run on
  * this request (its former owner still sends it, or the plugin that delivers
  * it is inactive) is read-only: its saved settings stay as they are.
+ *
+ * The individual email is sent by this plugin alone, to one address an
+ * administrator typed in. That address is only ever returned by these
+ * administrator-only routes.
  *
  * The Telegram bot token is managed in Settings → Connectors. Responses report
  * only whether one is configured and where it comes from, and provider errors
@@ -174,6 +183,57 @@ class EventNotificationsController extends WP_REST_Controller {
 				'permission_callback' => array( $this, 'permissions_check' ),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/individual-email',
+			array(
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'update_individual_email' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+				'args'                => array_diff_key( $schedule_args, array( 'source_slug' => true ) ) + array(
+					// Checked in the callback, so its message reaches the page.
+					'recipient'       => array( 'type' => 'string' ),
+					'event_selection' => array(
+						'type'              => 'string',
+						'validate_callback' => array( $this, 'validate_event_selection' ),
+					),
+					'skip_empty'      => array( 'type' => 'boolean' ),
+					'subject'         => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'intro'           => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'wp_kses_post',
+					),
+					'outro'           => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'wp_kses_post',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/individual-email/preview',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'preview_individual_email' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/individual-email/test',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'test_individual_email' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+			)
+		);
 	}
 
 	/**
@@ -206,6 +266,18 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Validate the individual email's event selection.
+	 *
+	 * @param mixed $value Selection.
+	 * @return true|WP_Error
+	 */
+	public function validate_event_selection( $value ) {
+		return IndividualEmailSettings::valid_selection( $value )
+			? true
+			: new WP_Error( 'invalid_event_selection', __( 'Choose which events to include.', 'fair-events' ), array( 'status' => 400 ) );
+	}
+
+	/**
 	 * Read every channel's settings and delivery status.
 	 *
 	 * @param WP_REST_Request|null $request Request, unused.
@@ -220,8 +292,9 @@ class EventNotificationsController extends WP_REST_Controller {
 				'sources'  => $this->sources(),
 				'pages'    => $this->pages( $telegram['page_id'] ),
 				'channels' => array(
-					'telegram'   => $this->telegram_channel( $telegram ),
-					'bulk_email' => $this->bulk_email_channel(),
+					'telegram'         => $this->telegram_channel( $telegram ),
+					'bulk_email'       => $this->bulk_email_channel(),
+					'individual_email' => $this->individual_email_channel(),
 				),
 			)
 		);
@@ -514,6 +587,120 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Save the individual email settings.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function update_individual_email( $request ) {
+		// Refused as a whole: a list or an address with extra headers is never
+		// trimmed down to something that could be saved.
+		if ( $request->has_param( 'recipient' ) && null === IndividualEmailSettings::parse_recipient( $request->get_param( 'recipient' ) ) ) {
+			return new WP_Error(
+				'invalid_recipient',
+				__( 'Enter exactly one email address, for example name@example.com. Nothing was saved.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$settings = IndividualEmailSettings::stored();
+		$previous = $settings;
+		foreach ( array_keys( IndividualEmailSettings::defaults() ) as $field ) {
+			if ( $request->has_param( $field ) ) {
+				$settings[ $field ] = $request->get_param( $field );
+			}
+		}
+		$settings = IndividualEmailSettings::sanitize( $settings );
+
+		if ( $settings['enabled'] ) {
+			if ( '' === $settings['recipient'] ) {
+				return new WP_Error(
+					'missing_recipient',
+					__( 'Enter the email address that receives the weekly email before turning it on.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+			$check = ( new IndividualEmailEvents() )->check( $settings['event_selection'] );
+			if ( is_wp_error( $check ) ) {
+				return new WP_Error( $check->get_error_code(), $check->get_error_message(), array( 'status' => 400 ) );
+			}
+		}
+
+		IndividualEmailSettings::save( $settings );
+
+		$schedule_fields = array( 'enabled', 'day_of_week', 'time_of_day' );
+		$changed         = array_filter(
+			$schedule_fields,
+			static function ( $field ) use ( $previous, $settings ) {
+				return $previous[ $field ] !== $settings[ $field ];
+			}
+		);
+		if ( $changed || ( $settings['enabled'] && ! IndividualEmailDispatcher::next_run() ) ) {
+			IndividualEmailDispatcher::reschedule( $settings );
+		}
+
+		return $this->get_item();
+	}
+
+	/**
+	 * Preview the individual email the next send would deliver, and to whom.
+	 *
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function preview_individual_email() {
+		$email = $this->next_individual_email();
+		if ( is_wp_error( $email ) ) {
+			return $email;
+		}
+
+		return rest_ensure_response( $email );
+	}
+
+	/**
+	 * Send the individual email to the saved address only.
+	 *
+	 * Works while the schedule is off. A test never counts as the week's
+	 * send and does not move the next scheduled one.
+	 *
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function test_individual_email() {
+		$email = $this->next_individual_email();
+		if ( is_wp_error( $email ) ) {
+			return $email;
+		}
+
+		$recipient = $email['recipient'];
+		if ( '' === $recipient ) {
+			return new WP_Error( 'missing_recipient', __( 'Save the email address that receives the weekly email before sending a test.', 'fair-events' ), array( 'status' => 400 ) );
+		}
+
+		try {
+			$sent = ( new EmailService() )->send_notification( $recipient, $email['subject'], $email['html'] );
+		} catch ( \Throwable $e ) {
+			$sent = false;
+		}
+		if ( ! $sent ) {
+			return new WP_Error(
+				'send_failed',
+				sprintf(
+					/* translators: %s: email address */
+					__( 'The test email to %s could not be sent.', 'fair-events' ),
+					$recipient
+				),
+				array( 'status' => 500 )
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'sent_to' => $recipient,
+				'empty'   => $email['empty'],
+			)
+		);
+	}
+
+	/**
 	 * Whether Telegram summaries are turned on in a settings array.
 	 *
 	 * @param array $settings Telegram settings.
@@ -590,6 +777,35 @@ class EventNotificationsController extends WP_REST_Controller {
 					)
 					: null,
 				'runs'           => array_map( array( $this, 'with_local_time' ), BulkEmailDispatcher::runs() ),
+			)
+		);
+	}
+
+	/**
+	 * Individual email channel payload.
+	 *
+	 * @return array
+	 */
+	private function individual_email_channel() {
+		$settings = IndividualEmailSettings::get();
+		$check    = ( new IndividualEmailEvents() )->check( $settings['event_selection'] );
+		$next     = IndividualEmailDispatcher::next_run();
+
+		return array_merge(
+			$settings,
+			array(
+				'state'               => 'active',
+				'state_message'       => '',
+				'configuration_error' => is_wp_error( $check ) ? $check->get_error_message() : null,
+				'last_sent_week'      => (string) get_option( IndividualEmailDispatcher::LAST_SENT_OPTION, '' ),
+				'next_run'            => $next
+					? array(
+						'timestamp'  => $next['timestamp'],
+						'time_local' => $this->local_time( $next['timestamp'] ),
+						'send_week'  => $next['send_week'],
+					)
+					: null,
+				'runs'                => array_map( array( $this, 'with_local_time' ), IndividualEmailDispatcher::runs() ),
 			)
 		);
 	}
@@ -686,6 +902,37 @@ class EventNotificationsController extends WP_REST_Controller {
 			'week_start' => $week['week']['start'],
 			'week_end'   => $week['week']['end'],
 			'week_title' => EventsWeekSummary::range_title( $week['week']['start'], $week['week']['end'] ),
+		);
+	}
+
+	/**
+	 * The individual email as the next scheduled send would deliver it.
+	 *
+	 * Built from the saved settings, also while the schedule is off.
+	 *
+	 * @return array|WP_Error Recipient, subject, body and week, or an error.
+	 */
+	private function next_individual_email() {
+		$settings = IndividualEmailSettings::get();
+		$due      = IndividualEmailDispatcher::next_due( $settings, BulkEmailDispatcher::now(), (string) get_option( IndividualEmailDispatcher::LAST_SENT_OPTION, '' ) );
+		$week     = IndividualEmailDispatcher::event_week( $settings['week_scope'], $due );
+
+		$occurrences = ( new IndividualEmailEvents() )->for_week( $settings['event_selection'], $week );
+		if ( is_wp_error( $occurrences ) ) {
+			return new WP_Error( $occurrences->get_error_code(), $occurrences->get_error_message(), array( 'status' => 400 ) );
+		}
+
+		$email = IndividualEmailRenderer::compose( $settings, $week, $occurrences );
+
+		return array(
+			'recipient'  => $settings['recipient'],
+			'subject'    => $email['subject'],
+			'html'       => wp_kses_post( $email['html'] ),
+			'empty'      => $email['empty'],
+			'skip_empty' => $settings['skip_empty'],
+			'week_start' => $week['start'],
+			'week_end'   => $week['end'],
+			'week_title' => EventsWeekSummary::range_title( $week['start'], $week['end'] ),
 		);
 	}
 

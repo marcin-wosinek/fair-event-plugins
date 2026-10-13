@@ -11,7 +11,6 @@ import {
 	CardHeader,
 	Notice,
 	SelectControl,
-	TextareaControl,
 	TextControl,
 	ToggleControl,
 } from '@wordpress/components';
@@ -19,6 +18,7 @@ import {
 /**
  * Internal dependencies
  */
+import EmailContentControls from './EmailContentControls.js';
 import {
 	DAYS,
 	PATH,
@@ -254,55 +254,11 @@ export default function BulkEmailChannel( { channel, sources, onSaved } ) {
 						onChange={ update( 'week_scope' ) }
 					/>
 
-					<ToggleControl
-						className="is-wide"
-						label={ __(
-							'Skip the email when the week has no events',
-							'fair-events'
-						) }
-						checked={ !! form.skip_empty }
-						onChange={ update( 'skip_empty' ) }
-					/>
-
-					<TextControl
-						className="is-wide"
-						label={ __( 'Subject', 'fair-events' ) }
-						help={ __(
-							'Use {week_start} and {week_end} to insert the week’s dates.',
-							'fair-events'
-						) }
-						value={ form.subject }
-						onChange={ update( 'subject' ) }
-					/>
-
-					<TextareaControl
-						className="is-wide"
-						label={ __(
-							'Text above the list of events',
-							'fair-events'
-						) }
-						help={ __(
-							'Optional. Basic HTML such as links and bold text is allowed.',
-							'fair-events'
-						) }
-						value={ form.intro }
-						onChange={ update( 'intro' ) }
-						rows={ 4 }
-					/>
-
-					<TextareaControl
-						className="is-wide"
-						label={ __(
-							'Text below the list of events',
-							'fair-events'
-						) }
-						help={ __(
-							'Optional. Basic HTML such as links and bold text is allowed.',
-							'fair-events'
-						) }
-						value={ form.outro }
-						onChange={ update( 'outro' ) }
-						rows={ 4 }
+					<EmailContentControls
+						values={ form }
+						onChange={ ( field, value ) =>
+							update( field )( value )
+						}
 					/>
 				</div>
 
