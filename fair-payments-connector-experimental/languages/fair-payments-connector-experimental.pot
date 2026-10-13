@@ -2,14 +2,14 @@
 # This file is distributed under the Private.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Payments Connector Experimental 0.5.0\n"
+"Project-Id-Version: Fair Payments Connector Experimental 0.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-payments-connector-experimental\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-09T07:52:49+00:00\n"
+"POT-Creation-Date: 2026-10-13T13:18:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector-experimental\n"
@@ -47,7 +47,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:50
 #: src/Admin/AdminPages.php:51
-#: src/Admin/connected-sites/ConnectedSitesApp.js:353
+#: src/Admin/connected-sites/ConnectedSitesApp.js:382
 msgid "Connected Sites"
 msgstr ""
 
@@ -189,14 +189,14 @@ msgstr ""
 
 #: src/Admin/api-tokens/ApiTokensApp.js:247
 #: src/Admin/api-tokens/ApiTokensApp.js:425
-#: src/Admin/connected-sites/ConnectedSitesApp.js:421
-#: src/Admin/connected-sites/ConnectedSitesApp.js:625
+#: src/Admin/connected-sites/ConnectedSitesApp.js:460
+#: src/Admin/connected-sites/ConnectedSitesApp.js:664
 msgid "Label"
 msgstr ""
 
 #: src/Admin/api-tokens/ApiTokensApp.js:253
 #: src/Admin/api-tokens/ApiTokensApp.js:444
-#: src/Admin/connected-sites/ConnectedSitesApp.js:433
+#: src/Admin/connected-sites/ConnectedSitesApp.js:472
 msgid "Scopes"
 msgstr ""
 
@@ -209,17 +209,17 @@ msgid "Last used"
 msgstr ""
 
 #: src/Admin/api-tokens/ApiTokensApp.js:271
-#: src/Admin/connected-sites/ConnectedSitesApp.js:445
+#: src/Admin/connected-sites/ConnectedSitesApp.js:484
 msgid "Status"
 msgstr ""
 
 #: src/Admin/api-tokens/ApiTokensApp.js:277
-#: src/Admin/connected-sites/ConnectedSitesApp.js:463
+#: src/Admin/connected-sites/ConnectedSitesApp.js:502
 msgid "Actions"
 msgstr ""
 
 #: src/Admin/api-tokens/ApiTokensApp.js:301
-#: src/Admin/connected-sites/ConnectedSitesApp.js:504
+#: src/Admin/connected-sites/ConnectedSitesApp.js:543
 msgid "Never"
 msgstr ""
 
@@ -264,7 +264,7 @@ msgid "A name to identify who this token is for, e.g. lamutable.es"
 msgstr ""
 
 #: src/Admin/api-tokens/ApiTokensApp.js:473
-#: src/Admin/connected-sites/ConnectedSitesApp.js:713
+#: src/Admin/connected-sites/ConnectedSitesApp.js:752
 msgid "Cancel"
 msgstr ""
 
@@ -284,167 +284,175 @@ msgstr ""
 msgid "Unverified"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:70
-msgid "Budgets are unavailable."
-msgstr ""
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:95
-msgid "Failed to load connected sites."
-msgstr ""
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:151
-msgid "Connected site updated."
-msgstr ""
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:168
-msgid "Connected site added."
-msgstr ""
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:179
-msgid "Failed to save connected site."
-msgstr ""
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:202
-msgid "no scopes"
-msgstr ""
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:204
-msgid "Connection succeeded. Granted scopes: "
-msgstr ""
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:213
+#: src/Admin/connected-sites/ConnectedSitesApp.js:44
 msgid "Connection test failed."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:237
+#: src/Admin/connected-sites/ConnectedSitesApp.js:83
+msgid "Budgets are unavailable."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:108
+msgid "Failed to load connected sites."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:165
+msgid "Connected site updated."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:182
+msgid "Connected site added."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:193
+msgid "Failed to save connected site."
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:218
+msgid "no scopes"
+msgstr ""
+
+#. translators: %s: comma-separated list of granted scopes
+#: src/Admin/connected-sites/ConnectedSitesApp.js:223
+#, js-format
+msgid "Connection succeeded. Granted scopes: %s"
+msgstr ""
+
+#. translators: 1: connected site label, 2: reason the test failed
+#: src/Admin/connected-sites/ConnectedSitesApp.js:235
+#, js-format
+msgid "Connection test failed for %1$s: %2$s"
+msgstr ""
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:265
 msgid "Connected site disabled."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:241
+#: src/Admin/connected-sites/ConnectedSitesApp.js:269
 msgid "Connected site enabled."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:250
+#: src/Admin/connected-sites/ConnectedSitesApp.js:278
 msgid "Failed to update the connected site."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:263
+#: src/Admin/connected-sites/ConnectedSitesApp.js:291
 msgid "Remove this connected site? Stored token will be deleted."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:281
+#: src/Admin/connected-sites/ConnectedSitesApp.js:310
 msgid "Connected site removed."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:290
+#: src/Admin/connected-sites/ConnectedSitesApp.js:319
 msgid "Failed to remove connected site."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:318
-#: src/Admin/connected-sites/ConnectedSitesApp.js:451
+#: src/Admin/connected-sites/ConnectedSitesApp.js:347
+#: src/Admin/connected-sites/ConnectedSitesApp.js:490
 msgid "Enabled"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:319
+#: src/Admin/connected-sites/ConnectedSitesApp.js:348
 msgid "Disabled"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:329
-#: src/Admin/connected-sites/ConnectedSitesApp.js:688
+#: src/Admin/connected-sites/ConnectedSitesApp.js:358
+#: src/Admin/connected-sites/ConnectedSitesApp.js:727
 msgid "No budget"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:340
+#: src/Admin/connected-sites/ConnectedSitesApp.js:369
 msgid "Unlinked"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:359
-#: src/Admin/connected-sites/ConnectedSitesApp.js:734
+#: src/Admin/connected-sites/ConnectedSitesApp.js:388
+#: src/Admin/connected-sites/ConnectedSitesApp.js:773
 msgid "Add Site"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:369
+#: src/Admin/connected-sites/ConnectedSitesApp.js:398
 msgid "Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:399
+#: src/Admin/connected-sites/ConnectedSitesApp.js:438
 msgid "Loading sites…"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:409
+#: src/Admin/connected-sites/ConnectedSitesApp.js:448
 msgid "No connected sites yet. Add one to pull data from another site."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:427
-#: src/Admin/connected-sites/ConnectedSitesApp.js:638
+#: src/Admin/connected-sites/ConnectedSitesApp.js:466
+#: src/Admin/connected-sites/ConnectedSitesApp.js:677
 msgid "Base URL"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:439
-#: src/Admin/connected-sites/ConnectedSitesApp.js:681
+#: src/Admin/connected-sites/ConnectedSitesApp.js:478
+#: src/Admin/connected-sites/ConnectedSitesApp.js:720
 msgid "Budget"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:457
+#: src/Admin/connected-sites/ConnectedSitesApp.js:496
 msgid "Last sync"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:533
+#: src/Admin/connected-sites/ConnectedSitesApp.js:572
 msgid "Test"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:547
+#: src/Admin/connected-sites/ConnectedSitesApp.js:586
 msgid "Edit"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:570
+#: src/Admin/connected-sites/ConnectedSitesApp.js:609
 msgid "Disable"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:574
+#: src/Admin/connected-sites/ConnectedSitesApp.js:613
 msgid "Enable"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:589
+#: src/Admin/connected-sites/ConnectedSitesApp.js:628
 msgid "Remove"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:610
+#: src/Admin/connected-sites/ConnectedSitesApp.js:649
 msgid "Edit Connected Site"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:614
+#: src/Admin/connected-sites/ConnectedSitesApp.js:653
 msgid "Add Connected Site"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:631
+#: src/Admin/connected-sites/ConnectedSitesApp.js:670
 msgid "A name to identify this site, e.g. acroyoga-club.es"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:645
+#: src/Admin/connected-sites/ConnectedSitesApp.js:684
 msgid "The other site’s address, e.g. https://acroyoga-club.es"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:652
+#: src/Admin/connected-sites/ConnectedSitesApp.js:691
 msgid "Token"
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:661
+#: src/Admin/connected-sites/ConnectedSitesApp.js:700
 msgid "Leave blank to keep the existing token."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:665
+#: src/Admin/connected-sites/ConnectedSitesApp.js:704
 msgid "Paste the token from the other site’s API Tokens page."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:674
+#: src/Admin/connected-sites/ConnectedSitesApp.js:713
 msgid "Budgets are unavailable right now; the site can still be saved without one."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:700
+#: src/Admin/connected-sites/ConnectedSitesApp.js:739
 msgid "Reconciliation proposes this budget for transactions imported from this site."
 msgstr ""
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:730
+#: src/Admin/connected-sites/ConnectedSitesApp.js:769
 msgid "Save"
 msgstr ""

@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -33,11 +33,24 @@ const STATUS_LABELS = {
 	},
 };
 
+const usableMessage = ( value ) =>
+	typeof value === 'string' && value.trim() !== '' ? value : null;
+
+// apiFetch rejects with the REST error body, but a network or parse failure
+// can carry anything — only a nonblank string is shown to the administrator.
+const testFailureReason = ( err ) =>
+	usableMessage( err?.message ) ||
+	usableMessage( err?.data?.message ) ||
+	__( 'Connection test failed.', 'fair-payments-connector-experimental' );
+
 const ConnectedSitesApp = () => {
 	const [ sites, setSites ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ success, setSuccess ] = useState( null );
+	// Kept apart from `error`, which every table reload clears: the outcome
+	// of a connection test must outlive the refresh that follows it.
+	const [ testFeedback, setTestFeedback ] = useState( null );
 	const [ isFormOpen, setIsFormOpen ] = useState( false );
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ editingId, setEditingId ] = useState( null );
@@ -131,6 +144,7 @@ const ConnectedSitesApp = () => {
 		e.preventDefault();
 		setIsSaving( true );
 		setError( null );
+		setTestFeedback( null );
 
 		try {
 			if ( editingId ) {
@@ -186,45 +200,59 @@ const ConnectedSitesApp = () => {
 		}
 	};
 
-	const handleTest = async ( id ) => {
-		setTestingId( id );
+	const handleTest = async ( site ) => {
+		const siteLabel = site.label;
+		setTestingId( site.id );
 		setError( null );
 		setSuccess( null );
+		setTestFeedback( null );
 
 		try {
 			const result = await apiFetch( {
-				path: `/fair-payments-connector/v1/admin/connected-sites/${ id }/test`,
+				path: `/fair-payments-connector/v1/admin/connected-sites/${ site.id }/test`,
 				method: 'POST',
 			} );
 			const scopes =
 				result.scopes && result.scopes.length
 					? result.scopes.join( ', ' )
 					: __( 'no scopes', 'fair-payments-connector-experimental' );
-			setSuccess(
-				__(
-					'Connection succeeded. Granted scopes: ',
-					'fair-payments-connector-experimental'
-				) + scopes
-			);
-			loadSites();
-		} catch ( err ) {
-			setError(
-				err.message ||
+			setTestFeedback( {
+				status: 'success',
+				message: sprintf(
+					/* translators: %s: comma-separated list of granted scopes */
 					__(
-						'Connection test failed.',
+						'Connection succeeded. Granted scopes: %s',
 						'fair-payments-connector-experimental'
-					)
-			);
-			loadSites();
-		} finally {
-			setTestingId( null );
+					),
+					scopes
+				),
+			} );
+		} catch ( err ) {
+			setTestFeedback( {
+				status: 'error',
+				message: sprintf(
+					/* translators: 1: connected site label, 2: reason the test failed */
+					__(
+						'Connection test failed for %1$s: %2$s',
+						'fair-payments-connector-experimental'
+					),
+					siteLabel,
+					testFailureReason( err )
+				),
+			} );
 		}
+
+		// The test changes the stored status either way; keep the row busy
+		// until the table shows it.
+		await loadSites();
+		setTestingId( null );
 	};
 
 	const handleToggleEnabled = async ( site ) => {
 		setTogglingId( site.id );
 		setError( null );
 		setSuccess( null );
+		setTestFeedback( null );
 
 		try {
 			await apiFetch( {
@@ -271,6 +299,7 @@ const ConnectedSitesApp = () => {
 
 		setError( null );
 		setSuccess( null );
+		setTestFeedback( null );
 
 		try {
 			await apiFetch( {
@@ -379,6 +408,16 @@ const ConnectedSitesApp = () => {
 									onRemove={ () => setError( null ) }
 								>
 									{ error }
+								</Notice>
+							) }
+
+							{ testFeedback && (
+								<Notice
+									status={ testFeedback.status }
+									isDismissible
+									onRemove={ () => setTestFeedback( null ) }
+								>
+									{ testFeedback.message }
 								</Notice>
 							) }
 
@@ -526,7 +565,7 @@ const ConnectedSitesApp = () => {
 															}
 															onClick={ () =>
 																handleTest(
-																	site.id
+																	site
 																)
 															}
 														>
