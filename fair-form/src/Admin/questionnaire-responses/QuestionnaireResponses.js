@@ -12,12 +12,12 @@ import {
 	TextControl,
 	TextareaControl,
 	Notice,
-	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 import { formatDate } from '../utils/format-date.js';
 import { formatSiteLocalDatetime, formatDateOnly } from 'fair-events-shared';
 import { buildBulkExportText } from '../utils/export-format.js';
+import DeleteSubmissionDialog from '../components/DeleteSubmissionDialog.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -49,7 +49,6 @@ export default function QuestionnaireResponses() {
 
 	// Delete confirmation state.
 	const [ deleteItem, setDeleteItem ] = useState( null );
-	const [ errorMessage, setErrorMessage ] = useState( null );
 
 	// Add-to-group modal state.
 	const [ isGroupModalOpen, setIsGroupModalOpen ] = useState( false );
@@ -366,49 +365,6 @@ export default function QuestionnaireResponses() {
 		[ responses.length, view.perPage ]
 	);
 
-	const handleDelete = ( item ) => {
-		setDeleteItem( item );
-	};
-
-	const confirmDelete = () => {
-		const item = deleteItem;
-
-		apiFetch( {
-			path: `/fair-form/v1/questionnaire-responses/${ item.id }`,
-			method: 'DELETE',
-		} )
-			.then( () => {
-				setResponses( ( prev ) =>
-					prev.filter( ( r ) => r.id !== item.id )
-				);
-			} )
-			.catch( ( err ) => {
-				setErrorMessage(
-					__( 'Error: ', 'fair-form' ) +
-						( err.message ||
-							__( 'Failed to delete response.', 'fair-form' ) )
-				);
-			} )
-			.finally( () => {
-				setDeleteItem( null );
-			} );
-	};
-
-	const deleteConfirmMessage = useMemo( () => {
-		if ( ! deleteItem ) {
-			return '';
-		}
-
-		return sprintf(
-			/* translators: %s: participant name, or the submission date when there is no participant */
-			__(
-				'Delete the response from %s? This cannot be undone.',
-				'fair-form'
-			),
-			deleteItem.participant_name || formatDate( deleteItem.created_at )
-		);
-	}, [ deleteItem ] );
-
 	const actions = useMemo(
 		() => [
 			{
@@ -424,7 +380,7 @@ export default function QuestionnaireResponses() {
 				id: 'delete',
 				label: __( 'Delete', 'fair-form' ),
 				icon: 'trash',
-				callback: ( [ item ] ) => handleDelete( item ),
+				callback: ( [ item ] ) => setDeleteItem( item ),
 				supportsBulk: false,
 			},
 		],
@@ -648,25 +604,19 @@ export default function QuestionnaireResponses() {
 				</Button>
 			</div>
 
-			{ errorMessage && (
-				<Notice
-					status="error"
-					isDismissible={ true }
-					onRemove={ () => setErrorMessage( null ) }
-				>
-					{ errorMessage }
-				</Notice>
+			{ deleteItem && (
+				<DeleteSubmissionDialog
+					key={ deleteItem.id }
+					submission={ deleteItem }
+					onCancel={ () => setDeleteItem( null ) }
+					onDeleted={ ( id ) => {
+						setResponses( ( prev ) =>
+							prev.filter( ( r ) => r.id !== id )
+						);
+						setDeleteItem( null );
+					} }
+				/>
 			) }
-
-			<ConfirmDialog
-				isOpen={ deleteItem !== null }
-				onConfirm={ confirmDelete }
-				onCancel={ () => setDeleteItem( null ) }
-				confirmButtonText={ __( 'Delete response', 'fair-form' ) }
-				cancelButtonText={ __( 'Cancel', 'fair-form' ) }
-			>
-				{ deleteConfirmMessage }
-			</ConfirmDialog>
 
 			{ isGroupModalOpen && (
 				<Modal

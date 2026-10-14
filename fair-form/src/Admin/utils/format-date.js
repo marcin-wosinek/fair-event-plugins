@@ -1,9 +1,13 @@
 // Stored datetimes are UTC without a timezone suffix — append one before parsing.
+// Returns '' for a missing or unparseable value so callers can show a fallback.
 export function formatDate( dateString ) {
 	if ( ! dateString ) {
 		return '';
 	}
 	const date = new Date( dateString + 'Z' );
+	if ( Number.isNaN( date.getTime() ) ) {
+		return '';
+	}
 	return date.toLocaleString();
 }
 
