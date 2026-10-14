@@ -37,20 +37,20 @@
 		"@wordpress/blocks": "^15.2.0",
 		"@wordpress/components": "37.0.0",
 		"@wordpress/i18n": "^6.21.0",
-		"calendar-link": "^2.11.0",
+		"calendar-link": "^2.11.6",
 		"date-fns": "^4.1.0",
 		"fair-events-shared": "*"
 	},
 	"devDependencies": {
-		"@babel/core": "^8.0.1",
-		"@babel/preset-env": "^8.0.2",
+		"@babel/core": "^8.0.7",
+		"@babel/preset-env": "^8.0.7",
 		"@babel/preset-react": "^8.0.1",
-		"@playwright/test": "^1.40.0",
-		"@testing-library/react": "^16.3.2",
+		"@playwright/test": "^1.64.0",
+		"@testing-library/react": "^16.3.3",
 		"@wordpress/scripts": "33.0.0",
-		"babel-jest": "^30.4.1",
+		"babel-jest": "^30.5.2",
 		"dotenv": "^16.3.1",
-		"jest": "^30.0.0",
+		"jest": "^30.5.2",
 		"webpack-bundle-output": "^1.1.0"
 	}
 }
