@@ -662,13 +662,25 @@ test.describe( 'CalendarFeedController — event links in DESCRIPTION (#1691)', 
 			const eventDate = await edRes.json();
 			const vevent = byId.get( id );
 
-			expect( vevent.url ).toBe( eventDate.display_url );
+			// The master's display_url is the series overview; the feed
+			// links it to its own session instead (#1884).
+			let expectedUrl = eventDate.display_url;
+			if ( 'master' === eventDate.occurrence_type ) {
+				const url = new URL( eventDate.display_url );
+				url.searchParams.set( 'event_date', '2035-10-01' );
+				expectedUrl = url.toString();
+			}
+
+			expect( vevent.url ).toBe( expectedUrl );
 			expect( vevent.description ).toBe(
-				`${ EXCERPT }\n\n${ eventDate.display_url }`
+				`${ EXCERPT }\n\n${ expectedUrl }`
 			);
 		}
 
-		// The generated occurrence points at its own date.
+		// Every session, including the master, points at its own date.
+		expect( byId.get( postSeriesIds[ 0 ] ).url ).toContain(
+			'event_date=2035-10-01'
+		);
 		expect( byId.get( postSeriesIds[ 1 ] ).url ).toContain(
 			'event_date=2035-10-08'
 		);
